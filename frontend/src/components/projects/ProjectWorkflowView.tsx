@@ -1,38 +1,41 @@
 "use client";
 
-import React, { useState, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import {
     ZoomIn,
     ZoomOut,
     RotateCcw,
     Maximize2,
     Layers,
-    FolderKanban,
-    CheckCircle2,
-    Clock,
-    AlertCircle,
-    User,
     Workflow as WorkflowIcon,
     GitFork,
+    DollarSign,
 } from 'lucide-react';
 import clsx from 'clsx';
-import type { ProjectRecord, ProjectTaskRecord } from '@/types/projects';
+import type { ProjectRecord, ProjectTaskRecord, ProjectComponent, ProjectComponentDetail, ProjectComponentsBreakdown } from '@/types/projects';
 import type { PhaseDef } from '@/context/ProjectUpdateContext';
 import { TaskStatusBadge, TaskPriorityBadge, ProjectStatusBadge } from '@/components/projects/badges';
 import { AvatarInitial } from '@/components/ui/AvatarInitial';
+import { useOptionalAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/http';
 
 export interface ProjectWorkflowViewProps {
     project?: ProjectRecord | null;
     tasks: ProjectTaskRecord[];
+    components?: (ProjectComponent | ProjectComponentDetail)[];
     phases?: readonly PhaseDef[];
     onOpenTask: (task: ProjectTaskRecord) => void;
 }
 
 interface LayoutNode {
     id: string;
-    level: 1 | 2 | 3 | 4 | 5;
+    level: number;
+    levelLabel: string;
     title: string;
     subtitle?: string;
+    code?: string;
+    budget?: number;
+    color?: string;
     status?: string;
     priority?: string;
     assigneeName?: string;
@@ -57,28 +60,33 @@ interface LayoutConnection {
     y2: number;
 }
 
-const DEFAULT_PHASES: PhaseDef[] = [
-    { slug: 'backlog', name: 'Planificación', color: '#64748b', order_index: 0 },
-    { slug: 'todo', name: 'Por hacer', color: '#3b82f6', order_index: 1 },
-    { slug: 'in_progress', name: 'En progreso', color: '#f59e0b', order_index: 2 },
-    { slug: 'review', name: 'Revisión', color: '#8b5cf6', order_index: 3 },
-    { slug: 'done', name: 'Completado', color: '#10b981', order_index: 4 },
-];
-
-const NODE_WIDTH = 260;
-const TASK_HEIGHT = 90;
-const PHASE_HEIGHT = 70;
+const ROOT_WIDTH = 270;
 const ROOT_HEIGHT = 100;
+const COMP_WIDTH = 260;
+const COMP_HEIGHT = 80;
+const TASK_WIDTH = 260;
+const TASK_HEIGHT = 90;
 const LEVEL_GAP_X = 140;
 const ROW_GAP_Y = 24;
+
+function getLevelLabel(level: number): string {
+    if (level === 1) return 'Nivel 1 · Proyecto';
+    if (level === 2) return 'Nivel 2 · Componente';
+    if (level === 3) return 'Nivel 3 · Actividad';
+    if (level === 4) return 'Nivel 4 · Subactividad';
+    if (level === 5) return 'Nivel 5 · Tarea';
+    return `Nivel ${level} · Tarea`;
+}
 
 export default function ProjectWorkflowView({
     project,
     tasks = [],
-    phases,
+    components: propComponents,
     onOpenTask,
 }: ProjectWorkflowViewProps) {
     const containerRef = useRef<HTMLDivElement>(null);
+    const auth = useOptionalAuth();
+    const token = auth?.token;
 
     // Canvas pan and zoom state
     const [zoom, setZoom] = useState(1);
@@ -87,180 +95,282 @@ export default function ProjectWorkflowView({
     const dragStartRef = useRef({ x: 0, y: 0 });
     const panStartRef = useRef({ x: 0, y: 0 });
 
-    // Effective phases
-    const effectivePhases = useMemo(() => {
-        if (phases && phases.length > 0) return phases;
-        return DEFAULT_PHASES;
-    }, [phases]);
+    // Components state (either from props or fetched from components-breakdown)
+    const [fetchedComponents, setFetchedComponents] = useState<ProjectComponentDetail[]>([]);
 
-    // Build hierarchical layout
+    useEffect(() => {
+        if (propComponents && propComponents.length > 0) return;
+        if (!project?.id) return;
+
+        let isMounted = true;
+        apiFetch<ProjectComponentsBreakdown>(`/projects/${project.id}/components-breakdown`, { token })
+            .then(res => {
+                if (isMounted && res?.components) {
+                    setFetchedComponents(res.components);
+                }
+            })
+            .catch(() => {
+                // Silently fallback if endpoint unavailable or offline
+            });
+
+        return () => { isMounted = false; };
+    }, [project?.id, propComponents, token]);
+
+    const effectiveComponents = useMemo(() => {
+        if (propComponents && propComponents.length > 0) {
+            return propComponents;
+        }
+        return fetchedComponents;
+    }, [propComponents, fetchedComponents]);
+
+    // Build hierarchical layout with arbitrary depth recursion
     const { nodes, connections, bounds } = useMemo(() => {
         const nodeList: LayoutNode[] = [];
         const connList: LayoutConnection[] = [];
 
-        // Level 1: Project Root
+        // Level 1: Project Root Node
         const rootId = 'node-root-project';
-        const rootWidth = 270;
         const rootX = 60;
+        const xLevel2 = rootX + ROOT_WIDTH + LEVEL_GAP_X;
+        const xLevel3 = xLevel2 + COMP_WIDTH + LEVEL_GAP_X;
 
-        // Group tasks into top-level and subtasks
-        const subtasksByParent: Record<string, ProjectTaskRecord[]> = {};
-        const topLevelTasks: ProjectTaskRecord[] = [];
+        // Map tasks by ID and build adjacency tree (childrenMap)
+        const taskMap = new Map<string, ProjectTaskRecord>();
+        const childrenMap = new Map<string, ProjectTaskRecord[]>();
 
         tasks.forEach(task => {
-            if (task.parent_id) {
-                if (!subtasksByParent[task.parent_id]) {
-                    subtasksByParent[task.parent_id] = [];
+            taskMap.set(task.id, task);
+        });
+
+        tasks.forEach(task => {
+            if (task.parent_id && taskMap.has(task.parent_id)) {
+                if (!childrenMap.has(task.parent_id)) {
+                    childrenMap.set(task.parent_id, []);
                 }
-                subtasksByParent[task.parent_id].push(task);
-            } else {
-                topLevelTasks.push(task);
+                childrenMap.get(task.parent_id)!.push(task);
             }
         });
 
-        // Group top-level tasks by phase
-        const tasksByPhase: Record<string, ProjectTaskRecord[]> = {};
-        effectivePhases.forEach(ph => {
-            tasksByPhase[ph.slug] = [];
+        // Determine components list
+        interface CompItem {
+            id: string;
+            code: string;
+            name: string;
+            budget?: number;
+            color?: string;
+            isSynthetic?: boolean;
+        }
+
+        const compItems: CompItem[] = [];
+        const knownCompIds = new Set<string>();
+
+        if (effectiveComponents.length > 0) {
+            effectiveComponents.forEach(c => {
+                knownCompIds.add(c.id);
+                compItems.push({
+                    id: c.id,
+                    code: c.code || 'COMP',
+                    name: c.name,
+                    budget: c.budget_allocated,
+                    color: c.color || '#3b82f6',
+                });
+            });
+        }
+
+        // Check if there are root tasks with no component or with unknown component_id
+        const hasUnassignedTasks = tasks.some(t => {
+            const isRoot = !t.parent_id || !taskMap.has(t.parent_id);
+            return isRoot && (!t.component_id || !knownCompIds.has(t.component_id));
         });
 
-        topLevelTasks.forEach(task => {
-            const status = (task.status || 'todo').toLowerCase();
-            if (tasksByPhase[status]) {
-                tasksByPhase[status].push(task);
-            } else {
-                // If task status doesn't match any phase, assign to first phase or backlog
-                const fallbackSlug = effectivePhases[0]?.slug || 'todo';
-                if (!tasksByPhase[fallbackSlug]) {
-                    tasksByPhase[fallbackSlug] = [];
-                }
-                tasksByPhase[fallbackSlug].push(task);
-            }
-        });
+        if (compItems.length === 0) {
+            // No components defined in project yet: provide default general component
+            compItems.push({
+                id: 'comp-default',
+                code: 'COMP-01',
+                name: 'Componente General',
+                color: '#3b82f6',
+                isSynthetic: true,
+            });
+        } else if (hasUnassignedTasks) {
+            // Append general component for tasks without explicit component assignment
+            compItems.push({
+                id: 'comp-general',
+                code: 'GRAL',
+                name: 'Actividades Generales',
+                color: '#64748b',
+                isSynthetic: true,
+            });
+        }
 
-        // Calculate rows required per phase
         let currentY = 60;
-        const phaseChildrenIds: string[] = [];
+        const compChildrenIds: string[] = [];
 
-        const xLevel2 = rootX + rootWidth + LEVEL_GAP_X;
-        const xLevel3 = xLevel2 + NODE_WIDTH + LEVEL_GAP_X;
-        const xLevel4 = xLevel3 + NODE_WIDTH + LEVEL_GAP_X;
+        // Recursive subtree layout function for tasks at any arbitrary depth (Level 3, 4, 5, ... N)
+        const visitedTasks = new Set<string>();
 
-        // Iterate phases to position nodes
-        effectivePhases.forEach(phase => {
-            const phaseTasks = tasksByPhase[phase.slug] || [];
-            const phaseNodeId = `node-phase-${phase.slug}`;
-            phaseChildrenIds.push(phaseNodeId);
+        function layoutTaskSubtree(task: ProjectTaskRecord, level: number): { topY: number; bottomY: number; centerY: number } {
+            visitedTasks.add(task.id);
+            const taskId = `node-task-${task.id}`;
+            const x = xLevel3 + (level - 3) * (TASK_WIDTH + LEVEL_GAP_X);
+            const children = (childrenMap.get(task.id) || []).filter(c => !visitedTasks.has(c.id));
 
-            const phaseStartY = currentY;
+            if (children.length === 0) {
+                const y = currentY;
+                currentY += TASK_HEIGHT + ROW_GAP_Y;
+
+                nodeList.push({
+                    id: taskId,
+                    level,
+                    levelLabel: getLevelLabel(level),
+                    title: task.title,
+                    status: task.status,
+                    priority: task.priority,
+                    assigneeName: task.assignee_id ? `Asignado (${task.assignee_id.slice(0, 4)})` : undefined,
+                    progress: task.physical_progress_pct,
+                    task,
+                    x,
+                    y,
+                    width: TASK_WIDTH,
+                    height: TASK_HEIGHT,
+                    childrenIds: [],
+                });
+
+                return { topY: y, bottomY: y + TASK_HEIGHT, centerY: y };
+            }
+
+            // Has children: recursively layout each child subtree
+            const childIds: string[] = [];
+            const childCenterYs: number[] = [];
+            let minChildY = Infinity;
+            let maxChildY = -Infinity;
+
+            children.forEach(child => {
+                childIds.push(`node-task-${child.id}`);
+                const res = layoutTaskSubtree(child, level + 1);
+                childCenterYs.push(res.centerY);
+                minChildY = Math.min(minChildY, res.topY);
+                maxChildY = Math.max(maxChildY, res.bottomY);
+            });
+
+            // Parent node is vertically centered relative to its direct children
+            const y = childCenterYs.length > 0
+                ? (childCenterYs[0] + childCenterYs[childCenterYs.length - 1]) / 2
+                : minChildY;
+
+            nodeList.push({
+                id: taskId,
+                level,
+                levelLabel: getLevelLabel(level),
+                title: task.title,
+                status: task.status,
+                priority: task.priority,
+                assigneeName: task.assignee_id ? `Asignado (${task.assignee_id.slice(0, 4)})` : undefined,
+                progress: task.physical_progress_pct,
+                subtasksCount: children.length,
+                task,
+                x,
+                y,
+                width: TASK_WIDTH,
+                height: TASK_HEIGHT,
+                childrenIds: childIds,
+            });
+
+            return { topY: minChildY, bottomY: maxChildY, centerY: y };
+        }
+
+        // Layout each Component (Level 2) and its root activities
+        compItems.forEach(comp => {
+            const compNodeId = `node-comp-${comp.id}`;
+            compChildrenIds.push(compNodeId);
+
+            // Filter direct root activities under this component
+            const isSynthetic = comp.isSynthetic;
+            const rootTasks = tasks.filter(t => {
+                const isRoot = !t.parent_id || !taskMap.has(t.parent_id);
+                if (!isRoot) return false;
+
+                if (comp.id === 'comp-default') return true;
+                if (comp.id === 'comp-general') {
+                    return !t.component_id || !knownCompIds.has(t.component_id);
+                }
+                return t.component_id === comp.id;
+            });
+
+            const compStartY = currentY;
             const taskChildrenIds: string[] = [];
 
-            if (phaseTasks.length === 0) {
-                // Empty phase placeholder height
-                currentY += PHASE_HEIGHT + ROW_GAP_Y;
+            if (rootTasks.length === 0) {
+                // Empty component row
+                currentY += COMP_HEIGHT + ROW_GAP_Y;
+                nodeList.push({
+                    id: compNodeId,
+                    level: 2,
+                    levelLabel: getLevelLabel(2),
+                    code: comp.code,
+                    title: comp.name,
+                    subtitle: '0 actividades',
+                    budget: comp.budget,
+                    color: comp.color,
+                    x: xLevel2,
+                    y: compStartY,
+                    width: COMP_WIDTH,
+                    height: COMP_HEIGHT,
+                    parentId: rootId,
+                    childrenIds: [],
+                });
             } else {
-                phaseTasks.forEach(task => {
-                    const taskId = `node-task-${task.id}`;
-                    taskChildrenIds.push(taskId);
+                const rootCenterYs: number[] = [];
+                rootTasks.forEach(task => {
+                    const taskNodeId = `node-task-${task.id}`;
+                    taskChildrenIds.push(taskNodeId);
+                    const res = layoutTaskSubtree(task, 3);
+                    rootCenterYs.push(res.centerY);
+                });
 
-                    const subtasks = subtasksByParent[task.id] || task.subtasks || [];
-                    const subtaskChildrenIds: string[] = [];
+                const compY = (rootCenterYs[0] + rootCenterYs[rootCenterYs.length - 1]) / 2;
 
-                    let taskRowStartY = currentY;
-
-                    if (subtasks.length === 0) {
-                        currentY += TASK_HEIGHT + ROW_GAP_Y;
-                    } else {
-                        subtasks.forEach(subtask => {
-                            const subtaskId = `node-subtask-${subtask.id}`;
-                            subtaskChildrenIds.push(subtaskId);
-
-                            nodeList.push({
-                                id: subtaskId,
-                                level: 4,
-                                title: subtask.title,
-                                status: subtask.status,
-                                priority: subtask.priority,
-                                assigneeName: subtask.assignee_id ? `Asignado (${subtask.assignee_id.slice(0, 4)})` : undefined,
-                                progress: subtask.physical_progress_pct,
-                                task: subtask,
-                                x: xLevel4,
-                                y: currentY,
-                                width: NODE_WIDTH,
-                                height: TASK_HEIGHT,
-                                parentId: taskId,
-                                childrenIds: [],
-                            });
-
-                            currentY += TASK_HEIGHT + ROW_GAP_Y;
-                        });
-                    }
-
-                    // Top-level activity position
-                    const taskY = subtasks.length > 0
-                        ? taskRowStartY + (currentY - ROW_GAP_Y - taskRowStartY - TASK_HEIGHT) / 2
-                        : taskRowStartY;
-
-                    nodeList.push({
-                        id: taskId,
-                        level: 3,
-                        title: task.title,
-                        subtitle: phase.name,
-                        status: task.status,
-                        priority: task.priority,
-                        assigneeName: task.assignee_id ? `Asignado (${task.assignee_id.slice(0, 4)})` : undefined,
-                        progress: task.physical_progress_pct,
-                        subtasksCount: subtasks.length,
-                        task,
-                        x: xLevel3,
-                        y: taskY,
-                        width: NODE_WIDTH,
-                        height: TASK_HEIGHT,
-                        parentId: phaseNodeId,
-                        childrenIds: subtaskChildrenIds,
-                    });
+                nodeList.push({
+                    id: compNodeId,
+                    level: 2,
+                    levelLabel: getLevelLabel(2),
+                    code: comp.code,
+                    title: comp.name,
+                    subtitle: `${rootTasks.length} ${rootTasks.length === 1 ? 'actividad' : 'actividades'}`,
+                    budget: comp.budget,
+                    color: comp.color,
+                    x: xLevel2,
+                    y: compY,
+                    width: COMP_WIDTH,
+                    height: COMP_HEIGHT,
+                    parentId: rootId,
+                    childrenIds: taskChildrenIds,
                 });
             }
 
-            // Phase Node position (centered over its tasks)
-            const phaseEndY = Math.max(currentY - ROW_GAP_Y, phaseStartY + PHASE_HEIGHT);
-            const phaseY = phaseStartY + (phaseEndY - phaseStartY - PHASE_HEIGHT) / 2;
-
-            nodeList.push({
-                id: phaseNodeId,
-                level: 2,
-                title: phase.name,
-                subtitle: `${phaseTasks.length} ${phaseTasks.length === 1 ? 'actividad' : 'actividades'}`,
-                x: xLevel2,
-                y: phaseY,
-                width: NODE_WIDTH,
-                height: PHASE_HEIGHT,
-                parentId: rootId,
-                childrenIds: taskChildrenIds,
-            });
-
-            // Extra space between phases
             currentY += ROW_GAP_Y;
         });
 
-        // Root project position (centered across all phases)
+        // Level 1: Project Root position (centered across all components)
         const totalHeight = Math.max(currentY, ROOT_HEIGHT + 120);
         const rootY = Math.max(60, (totalHeight - ROOT_HEIGHT) / 2);
 
         nodeList.unshift({
             id: rootId,
             level: 1,
+            levelLabel: getLevelLabel(1),
             title: project?.title || 'Proyecto CCF',
-            subtitle: `${tasks.length} actividades en total`,
+            subtitle: `${compItems.length} ${compItems.length === 1 ? 'componente' : 'componentes'} · ${tasks.length} actividades`,
             status: project?.status || 'active',
+            budget: project?.budget_allocated ?? undefined,
             x: rootX,
             y: rootY,
-            width: rootWidth,
+            width: ROOT_WIDTH,
             height: ROOT_HEIGHT,
-            childrenIds: phaseChildrenIds,
+            childrenIds: compChildrenIds,
         });
 
-        // Build connections
+        // Build connections list from parent-child relationships
         const nodeMap = new Map<string, LayoutNode>();
         nodeList.forEach(n => nodeMap.set(n.id, n));
 
@@ -281,19 +391,18 @@ export default function ProjectWorkflowView({
             });
         });
 
-        const maxX = Math.max(...nodeList.map(n => n.x + n.width), 1200) + 100;
-        const maxY = Math.max(...nodeList.map(n => n.y + n.height), 800) + 100;
+        const maxX = Math.max(...nodeList.map(n => n.x + n.width), 1200) + 120;
+        const maxY = Math.max(...nodeList.map(n => n.y + n.height), 800) + 120;
 
         return {
             nodes: nodeList,
             connections: connList,
             bounds: { width: maxX, height: maxY },
         };
-    }, [project, tasks, effectivePhases]);
+    }, [project, tasks, effectiveComponents]);
 
     // Pan & Drag handlers
     const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-        // Only start pan if clicking the canvas background
         if ((e.target as HTMLElement).closest('[data-interactive="true"]')) return;
         setIsDragging(true);
         dragStartRef.current = { x: e.clientX, y: e.clientY };
@@ -320,7 +429,6 @@ export default function ProjectWorkflowView({
             const delta = e.deltaY < 0 ? 0.1 : -0.1;
             setZoom(prev => Math.min(2.5, Math.max(0.3, Number((prev + delta).toFixed(2)))));
         } else {
-            // Scroll pans vertically
             setPan(prev => ({
                 x: prev.x - e.deltaX * 0.8,
                 y: prev.y - e.deltaY * 0.8,
@@ -434,7 +542,7 @@ export default function ProjectWorkflowView({
                                 <div
                                     key={node.id}
                                     data-testid={`workflow-node-${node.id}`}
-                                    className="absolute p-4 rounded-xl border-2 border-[hsl(var(--primary)/0.6)] bg-[hsl(var(--surface-1))] shadow-lg flex flex-col justify-between"
+                                    className="absolute p-4 rounded-xl border-2 border-[hsl(var(--primary)/0.7)] bg-[hsl(var(--surface-1))] shadow-lg flex flex-col justify-between"
                                     style={{
                                         left: node.x,
                                         top: node.y,
@@ -445,27 +553,33 @@ export default function ProjectWorkflowView({
                                     <div className="flex items-center justify-between gap-2">
                                         <span className="flex items-center gap-1.5 text-2xs font-bold uppercase tracking-wider text-[hsl(var(--primary))]">
                                             <WorkflowIcon size={14} />
-                                            Proyecto
+                                            {node.levelLabel}
                                         </span>
                                         <ProjectStatusBadge value={node.status} />
                                     </div>
                                     <h2 className="text-base font-bold text-[hsl(var(--text-primary))] truncate" title={node.title}>
                                         {node.title}
                                     </h2>
-                                    <p className="text-2xs text-[hsl(var(--text-secondary))] font-medium">
-                                        {node.subtitle}
-                                    </p>
+                                    <div className="flex items-center justify-between text-2xs text-[hsl(var(--text-secondary))] font-medium">
+                                        <span>{node.subtitle}</span>
+                                        {Boolean(node.budget) && (
+                                            <span className="font-semibold text-[hsl(var(--text-primary))] flex items-center">
+                                                <DollarSign size={10} className="inline" />
+                                                {node.budget?.toLocaleString('es-CO')}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                             );
                         }
 
-                        // Level 2: Component / Phase Node
+                        // Level 2: Component Node (EDT / WBS)
                         if (node.level === 2) {
                             return (
                                 <div
                                     key={node.id}
                                     data-testid={`workflow-node-${node.id}`}
-                                    className="absolute p-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2)/0.6)] backdrop-blur shadow-sm flex flex-col justify-center"
+                                    className="absolute p-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2)/0.75)] backdrop-blur shadow-sm flex flex-col justify-between"
                                     style={{
                                         left: node.x,
                                         top: node.y,
@@ -474,22 +588,33 @@ export default function ProjectWorkflowView({
                                     }}
                                 >
                                     <div className="flex items-center justify-between gap-2">
-                                        <span className="flex items-center gap-1 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
-                                            <FolderKanban size={13} />
-                                            Fase / Componente
+                                        <span className="flex items-center gap-1.5 text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-primary))]">
+                                            <Layers size={13} style={{ color: node.color }} />
+                                            <span className="px-1.5 py-0.5 rounded bg-[hsl(var(--surface-3))] font-mono text-3xs font-extrabold" style={{ color: node.color }}>
+                                                {node.code}
+                                            </span>
                                         </span>
-                                        <span className="text-2xs font-bold px-1.5 py-0.5 rounded-full bg-[hsl(var(--surface-3))] text-[hsl(var(--text-primary))]">
-                                            {node.subtitle?.split(' ')[0] ?? 0}
+                                        <span className="text-3xs font-semibold px-1.5 py-0.5 rounded bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]">
+                                            Nivel 2 · Componente
                                         </span>
                                     </div>
-                                    <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] truncate mt-1" title={node.title}>
+                                    <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] truncate" title={node.title}>
                                         {node.title}
                                     </h3>
+                                    <div className="flex items-center justify-between text-2xs text-[hsl(var(--text-secondary))]">
+                                        <span>{node.subtitle}</span>
+                                        {Boolean(node.budget) && (
+                                            <span className="font-medium text-[hsl(var(--text-primary))] flex items-center">
+                                                <DollarSign size={10} className="inline" />
+                                                {node.budget?.toLocaleString('es-CO')}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                             );
                         }
 
-                        // Level 3 & 4: Task / Subtask Nodes
+                        // Level 3, 4, 5 ... N: Recursive Task / Activity Nodes
                         const isSubtask = node.level >= 4;
                         return (
                             <div
@@ -498,7 +623,7 @@ export default function ProjectWorkflowView({
                                 data-interactive="true"
                                 role="button"
                                 tabIndex={0}
-                                aria-label={`${isSubtask ? 'Subactividad' : 'Actividad'}: ${node.title}`}
+                                aria-label={`${node.levelLabel}: ${node.title}`}
                                 onClick={() => node.task && onOpenTask(node.task)}
                                 onKeyDown={e => {
                                     if (e.key === 'Enter' || e.key === ' ') {
@@ -519,12 +644,16 @@ export default function ProjectWorkflowView({
                                     height: node.height,
                                 }}
                             >
-                                <div className="flex items-center justify-between gap-2">
-                                    <span className="text-xs font-semibold text-[hsl(var(--text-primary))] truncate flex-1" title={node.title}>
-                                        {node.title}
+                                <div className="flex items-center justify-between gap-1.5">
+                                    <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                                        {node.levelLabel}
                                     </span>
                                     <AvatarInitial name={node.assigneeName || 'CCF'} size="sm" />
                                 </div>
+
+                                <span className="text-xs font-semibold text-[hsl(var(--text-primary))] truncate my-1" title={node.title}>
+                                    {node.title}
+                                </span>
 
                                 <div className="flex items-center justify-between gap-1.5 pt-1 border-t border-[hsl(var(--border)/0.5)]">
                                     <div className="flex items-center gap-1">

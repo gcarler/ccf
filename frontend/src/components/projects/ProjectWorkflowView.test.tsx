@@ -3,85 +3,141 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMockProject, createMockTask } from '@/test-utils/factories';
-import type { PhaseDef } from '@/context/ProjectUpdateContext';
+import type { ProjectComponentDetail } from '@/types/projects';
 import ProjectWorkflowView from './ProjectWorkflowView';
 
 describe('ProjectWorkflowView', () => {
-    const phases: PhaseDef[] = [
-        { slug: 'backlog', name: 'Planificación', color: '#64748b', order_index: 0 },
-        { slug: 'in_progress', name: 'En Desarrollo', color: '#f59e0b', order_index: 1 },
-        { slug: 'done', name: 'Completado', color: '#10b981', order_index: 2 },
+    const components: ProjectComponentDetail[] = [
+        {
+            id: 'comp-1',
+            project_id: 'proj-1',
+            code: 'COMP-01',
+            name: 'Infraestructura & Datos',
+            budget_allocated: 5000000,
+            order_index: 0,
+            color: '#3b82f6',
+            status: 'active',
+            created_at: '2026-01-01',
+            tasks_count: 1,
+            expenses_count: 0,
+        },
+        {
+            id: 'comp-2',
+            project_id: 'proj-1',
+            code: 'COMP-02',
+            name: 'Experiencia de Usuario',
+            budget_allocated: 8000000,
+            order_index: 1,
+            color: '#10b981',
+            status: 'active',
+            created_at: '2026-01-01',
+            tasks_count: 1,
+            expenses_count: 0,
+        },
     ];
 
     const project = createMockProject({
         id: 'proj-1',
         title: 'Campaña Anual CCF',
         status: 'active',
+        budget_allocated: 13000000,
     });
 
+    // Level 3: Actividad Principal
     const task1 = createMockTask({
         id: 't-1',
         project_id: 'proj-1',
-        title: 'Diseñar arquitectura',
-        status: 'backlog',
+        component_id: 'comp-1',
+        title: 'Diseñar arquitectura de base de datos',
+        status: 'todo',
         priority: 'high',
         assignee_id: 'usr-1234',
     });
 
-    const task2 = createMockTask({
-        id: 't-2',
-        project_id: 'proj-1',
-        title: 'Construir prototipo',
-        status: 'in_progress',
-        priority: 'urgent',
-        assignee_id: 'usr-5678',
-    });
-
-    const subtask1 = createMockTask({
-        id: 'sub-1',
+    // Level 4: Subactividad (hijo de task1)
+    const taskLevel4 = createMockTask({
+        id: 't-lvl4',
         project_id: 'proj-1',
         parent_id: 't-1',
-        title: 'Diagramas de secuencia',
-        status: 'backlog',
+        title: 'Definir tablas y esquemas relacionales',
+        status: 'in_progress',
+        priority: 'urgent',
+    });
+
+    // Level 5: Tarea nivel 5 (hijo de taskLevel4)
+    const taskLevel5 = createMockTask({
+        id: 't-lvl5',
+        project_id: 'proj-1',
+        parent_id: 't-lvl4',
+        title: 'Crear índices y claves foráneas',
+        status: 'in_progress',
         priority: 'medium',
     });
 
-    it('renders project root, phase nodes, activity nodes, and subtask nodes', () => {
+    // Level 6: Tarea nivel 6 (hijo de taskLevel5)
+    const taskLevel6 = createMockTask({
+        id: 't-lvl6',
+        project_id: 'proj-1',
+        parent_id: 't-lvl5',
+        title: 'Validación de rendimiento con pg_stat',
+        status: 'done',
+        priority: 'low',
+    });
+
+    // Actividad en el segundo componente
+    const task2 = createMockTask({
+        id: 't-2',
+        project_id: 'proj-1',
+        component_id: 'comp-2',
+        title: 'Diseñar wireframes en Figma',
+        status: 'in_progress',
+        priority: 'high',
+    });
+
+    it('renders project root, components, and deep multi-level tasks (levels 1 to 6)', () => {
         render(
             <ProjectWorkflowView
                 project={project}
-                tasks={[task1, task2, subtask1]}
-                phases={phases}
+                tasks={[task1, taskLevel4, taskLevel5, taskLevel6, task2]}
+                components={components}
                 onOpenTask={vi.fn()}
             />
         );
 
         // Nivel 1: Proyecto
         expect(screen.getByText('Campaña Anual CCF')).toBeInTheDocument();
-        expect(screen.getByText('Proyecto')).toBeInTheDocument();
+        expect(screen.getByText('Nivel 1 · Proyecto')).toBeInTheDocument();
 
-        // Nivel 2: Fases / Componentes
-        expect(screen.getByText('Planificación')).toBeInTheDocument();
-        expect(screen.getByText('En Desarrollo')).toBeInTheDocument();
+        // Nivel 2: Componentes EDT
+        expect(screen.getByText('Infraestructura & Datos')).toBeInTheDocument();
+        expect(screen.getByText('COMP-01')).toBeInTheDocument();
+        expect(screen.getByText('Experiencia de Usuario')).toBeInTheDocument();
+        expect(screen.getByText('COMP-02')).toBeInTheDocument();
 
-        // Nivel 3: Actividades
-        expect(screen.getByText('Diseñar arquitectura')).toBeInTheDocument();
-        expect(screen.getByText('Construir prototipo')).toBeInTheDocument();
+        // Nivel 3: Actividad Principal
+        expect(screen.getByText('Diseñar arquitectura de base de datos')).toBeInTheDocument();
+        expect(screen.getByText('Diseñar wireframes en Figma')).toBeInTheDocument();
 
-        // Nivel 4: Subactividades
-        expect(screen.getByText('Diagramas de secuencia')).toBeInTheDocument();
+        // Nivel 4: Subactividad
+        expect(screen.getByText('Definir tablas y esquemas relacionales')).toBeInTheDocument();
+
+        // Nivel 5: Tarea
+        expect(screen.getByText('Crear índices y claves foráneas')).toBeInTheDocument();
+
+        // Nivel 6: Tarea profunda
+        expect(screen.getByText('Validación de rendimiento con pg_stat')).toBeInTheDocument();
 
         // SVG connectors container
         expect(screen.getByTestId('workflow-svg-connectors')).toBeInTheDocument();
     });
 
-    it('allows zoom in, zoom out, and reset via toolbar controls', async () => {
+    it('allows zoom in, zoom out, reset, and fit view via toolbar controls', async () => {
         const user = userEvent.setup();
         render(
             <ProjectWorkflowView
                 project={project}
                 tasks={[task1]}
-                phases={phases}
+                components={components}
                 onOpenTask={vi.fn()}
             />
         );
@@ -107,52 +163,55 @@ describe('ProjectWorkflowView', () => {
         const resetBtn = screen.getByRole('button', { name: 'Restablecer vista' });
         await user.click(resetBtn);
         expect(zoomLabel).toHaveTextContent('100%');
+
+        // Fit View
+        const fitBtn = screen.getByRole('button', { name: 'Ajustar al lienzo' });
+        await user.click(fitBtn);
+        expect(zoomLabel).toBeInTheDocument();
     });
 
-    it('invokes onOpenTask when clicking an activity or subtask node', async () => {
+    it('invokes onOpenTask when clicking any activity node at any level', async () => {
         const user = userEvent.setup();
         const onOpenTask = vi.fn();
 
         render(
             <ProjectWorkflowView
                 project={project}
-                tasks={[task1, subtask1]}
-                phases={phases}
+                tasks={[task1, taskLevel4, taskLevel5, taskLevel6]}
+                components={components}
                 onOpenTask={onOpenTask}
             />
         );
 
-        const activityBtn = screen.getByRole('button', { name: 'Actividad: Diseñar arquitectura' });
-        await user.click(activityBtn);
-
-        expect(onOpenTask).toHaveBeenCalledTimes(1);
+        // Click Level 3
+        const nodeLvl3 = screen.getByRole('button', { name: /Diseñar arquitectura de base de datos/i });
+        await user.click(nodeLvl3);
         expect(onOpenTask).toHaveBeenCalledWith(task1);
 
-        const subtaskBtn = screen.getByRole('button', { name: 'Subactividad: Diagramas de secuencia' });
-        await user.click(subtaskBtn);
-
-        expect(onOpenTask).toHaveBeenCalledTimes(2);
-        expect(onOpenTask).toHaveBeenCalledWith(subtask1);
+        // Click Level 6
+        const nodeLvl6 = screen.getByRole('button', { name: /Validación de rendimiento con pg_stat/i });
+        await user.click(nodeLvl6);
+        expect(onOpenTask).toHaveBeenCalledWith(taskLevel6);
     });
 
-    it('invokes onOpenTask when pressing Enter on a focused node', async () => {
+    it('invokes onOpenTask with keyboard Enter on a focused activity node', async () => {
         const user = userEvent.setup();
         const onOpenTask = vi.fn();
 
         render(
             <ProjectWorkflowView
                 project={project}
-                tasks={[task2]}
-                phases={phases}
+                tasks={[taskLevel5]}
+                components={components}
                 onOpenTask={onOpenTask}
             />
         );
 
-        const activityBtn = screen.getByRole('button', { name: 'Actividad: Construir prototipo' });
-        activityBtn.focus();
+        const nodeLvl5 = screen.getByRole('button', { name: /Crear índices y claves foráneas/i });
+        nodeLvl5.focus();
         await user.keyboard('{Enter}');
 
-        expect(onOpenTask).toHaveBeenCalledWith(task2);
+        expect(onOpenTask).toHaveBeenCalledWith(taskLevel5);
     });
 
     it('renders empty state notice when project has no tasks', () => {
@@ -160,7 +219,7 @@ describe('ProjectWorkflowView', () => {
             <ProjectWorkflowView
                 project={project}
                 tasks={[]}
-                phases={phases}
+                components={components}
                 onOpenTask={vi.fn()}
             />
         );
