@@ -151,7 +151,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
                                     if (e.key === 'Enter') handleSave();
                                     if (e.key === 'Escape') handleCancel();
                                 }}
-                                placeholder="Nombre de la tarea..."
+                                placeholder="Nombre de la actividad..."
                                 className="w-full text-base font-medium bg-transparent outline-none text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))]"
                             />
                             <div className="flex items-center gap-2">
@@ -180,7 +180,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
                     onClick={handleStartAdd}
                     className="w-full flex items-center gap-2 py-2 px-3 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--surface-2))] rounded-lg border border-dashed border-[hsl(var(--border))] transition-all text-sm font-bold"
                 >
-                    <Plus size={13} /> Nuevo
+                    <Plus size={13} /> + Nueva actividad
                 </button>
             )}
         </div>

@@ -143,7 +143,7 @@ describe('TaskTableView', () => {
         onAddTask={handleAddTask}
       />
     );
-    fireEvent.click(screen.getByText('Nueva tarea'));
+    fireEvent.click(screen.getByText('+ Nueva actividad'));
     expect(handleAddTask).toHaveBeenCalledTimes(1);
   });
 });

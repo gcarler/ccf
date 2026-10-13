@@ -39,11 +39,18 @@ export default function ProjectsLayoutClient({ children, initialProjectPage }: P
     const initialPageAvailable = useRef(Boolean(initialProjectPage));
 
     const { openLayer, layers } = useSidebarLayers();
+    const initialLayersChecked = useRef(false);
     useEffect(() => {
         if (!layers.S1) {
             openLayer('S1');
         }
-    }, [openLayer, layers.S1]);
+        if (!initialLayersChecked.current) {
+            initialLayersChecked.current = true;
+            if (!layers.S2) {
+                openLayer('S2');
+            }
+        }
+    }, [openLayer, layers.S1, layers.S2]);
 
     const currentProjectRef = useRef<ProjectRecord | null>(null);
     currentProjectRef.current = currentProject;

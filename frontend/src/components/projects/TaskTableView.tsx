@@ -414,7 +414,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                         </div>
                     )}
                     <button onClick={() => onAddTask('todo')} className="flex shrink-0 items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.85)] text-[hsl(var(--primary-foreground))] transition-colors">
-                        <Plus size={13} /> Nueva tarea
+                        <Plus size={13} /> + Nueva actividad
                     </button>
                 </div>
             </div>
@@ -433,7 +433,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                                 if (e.key === 'Enter' && quickAddTitle.trim()) handleQuickAdd(quickAddGroup, quickAddTitle.trim());
                                 if (e.key === 'Escape') { setQuickAddGroup(null); setQuickAddTitle(''); }
                             }}
-                            placeholder="Nombre de la tarea... (Enter para crear)"
+                            placeholder="Nombre de la actividad... (Enter para crear)"
                             className="flex-1 text-base font-medium text-[hsl(var(--text-primary))] bg-transparent outline-none placeholder:text-[hsl(var(--text-secondary))]"
                         />
                         <button onClick={() => quickAddTitle.trim() && handleQuickAdd(quickAddGroup, quickAddTitle.trim())} className="px-3 py-1 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-bold rounded-lg hover:bg-[hsl(var(--primary))] transition-colors shrink-0">Crear</button>
@@ -447,9 +447,9 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                 {tasks.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full gap-3 text-[hsl(var(--text-secondary))]">
                         <Circle size={28} className="text-[hsl(var(--text-secondary))]" />
-                        <p className="text-sm font-medium">Sin tareas en este proyecto</p>
+                        <p className="text-sm font-medium">Sin actividades en este proyecto</p>
                         <button onClick={() => onAddTask('todo')} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.85)] text-[hsl(var(--primary-foreground))] transition-colors">
-                            <Plus size={13} /> Crear primera tarea
+                            <Plus size={13} /> Crear primera actividad
                         </button>
                     </div>
                 ) : (

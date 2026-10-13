@@ -9,6 +9,8 @@ const layoutMocks = vi.hoisted(() => ({
   pathname: '/plataforma/projects/project-a',
   token: 'test-token',
   apiFetch: vi.fn(),
+  openLayer: vi.fn(),
+  layers: { S1: true, S2: true, S3: false },
 }));
 
 vi.mock('next/navigation', () => ({
@@ -22,8 +24,8 @@ vi.mock('@/context/AuthContext', () => ({
 
 vi.mock('@/context/SidebarLayerContext', () => ({
   useSidebarLayers: () => ({
-    layers: { S1: true, S2: true, S3: false },
-    openLayer: vi.fn(),
+    layers: layoutMocks.layers,
+    openLayer: layoutMocks.openLayer,
     closeLayer: vi.fn(),
   }),
 }));
@@ -81,6 +83,8 @@ describe('ProjectsLayoutClient', () => {
     layoutMocks.projectId = 'project-a';
     layoutMocks.pathname = '/plataforma/projects/project-a';
     layoutMocks.token = 'test-token';
+    layoutMocks.layers = { S1: true, S2: true, S3: false };
+    layoutMocks.openLayer.mockClear();
     layoutMocks.apiFetch.mockReset();
   });
 
@@ -222,5 +226,15 @@ describe('ProjectsLayoutClient', () => {
     });
 
     expect(screen.getByRole('link', { name: 'Tarea persistente A (actualizada)' })).toBeInTheDocument();
+  });
+
+  it('opens sidebar layers S1 and S2 by default if they are closed', async () => {
+    layoutMocks.apiFetch.mockReturnValue(new Promise(() => {}));
+    layoutMocks.layers = { S1: false, S2: false, S3: false };
+    render(
+      <ProjectsLayoutClient initialProjectPage={null}><main>Contenido</main></ProjectsLayoutClient>,
+    );
+    expect(layoutMocks.openLayer).toHaveBeenCalledWith('S1');
+    expect(layoutMocks.openLayer).toHaveBeenCalledWith('S2');
   });
 });

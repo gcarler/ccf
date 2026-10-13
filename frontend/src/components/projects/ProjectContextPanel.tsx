@@ -359,7 +359,7 @@ export default function ProjectContextPanel({
               <Metric label="Total" value={tasks.length} />
               <Metric label="Completadas" value={completedTasks} />
               <Metric label="Abiertas" value={openTasks} />
-              <Metric label="Actividad" value={activities.length} />
+              <Metric label="Historial de eventos" value={activities.length} />
             </div>
 
             <section className="mt-5 space-y-3">
