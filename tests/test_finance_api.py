@@ -147,3 +147,22 @@ def test_finance_impact(client, db_session):
     assert "total_miembros" in data
     assert "total_familias" in data
     assert "distribucion" in data
+
+
+def test_finance_impact_contract_total_personas(client, db_session):
+    """Contrato del módulo Transparencia del frontend.
+
+    /plataforma/finances/transparency consume `total_personas` del payload
+    de /api/finance/impact (ImpactData.total_personas). Si la clave falta,
+    el componente lanza TypeError al llamar .toLocaleString(). El backend
+    debe emitir la clave alias sin eliminar total_miembros (retrocompat).
+    """
+    _seed_admin(db_session)
+    headers = _auth_headers(client)
+    resp = client.get("/api/finance/impact", headers=headers)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "total_personas" in data
+    assert data["total_personas"] == data["total_miembros"]
+    assert isinstance(data["total_personas"], int)
+    assert "total_donaciones_cop" in data
