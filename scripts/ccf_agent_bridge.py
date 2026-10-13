@@ -506,9 +506,12 @@ def send_to_tmux(event: dict) -> tuple[bool, str]:
             return False, str(exc)
         if result.returncode != 0:
             return False, result.stderr.strip() or f"tmux exit={result.returncode}"
+    time.sleep(0.75)
+    subprocess.run(["tmux", "send-keys", "-t", pane_id, "C-m"], capture_output=True, text=True, timeout=5, check=False)
     time.sleep(0.25)
-    for enter_key in ("C-m", "Enter"):
-        subprocess.run(["tmux", "send-keys", "-t", pane_id, enter_key], capture_output=True, text=True, timeout=5, check=False)
+    subprocess.run(["tmux", "send-keys", "-t", pane_id, "Enter"], capture_output=True, text=True, timeout=5, check=False)
+    time.sleep(0.25)
+    subprocess.run(["tmux", "send-keys", "-t", pane_id, "C-m"], capture_output=True, text=True, timeout=5, check=False)
     return True, ""
 
 
