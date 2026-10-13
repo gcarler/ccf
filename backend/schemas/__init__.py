@@ -541,6 +541,7 @@ from backend.schemas.projects import (  # noqa: F401
     ProjectFileLinkDrivePayload,
     ProjectFilesSummary,
     ProjectFileUpdate,
+    ProjectWikiImageUpload,
     ProjectInboxItem,
     ProjectIndicator,
     ProjectIndicatorBase,

@@ -1015,6 +1015,12 @@ class ProjectDocumentUpdate(BaseModel):
 ProjectDocumentRead = ProjectDocument
 
 
+class ProjectWikiImageUpload(BaseModel):
+    """Respuesta al subir una imagen para la wiki del proyecto."""
+
+    url: str
+
+
 class ProjectWhiteboard(BaseModel):
     id: UUIDStr
     project_id: UUIDStr

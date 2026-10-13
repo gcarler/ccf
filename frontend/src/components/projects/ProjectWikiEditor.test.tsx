@@ -7,6 +7,7 @@ const harness = vi.hoisted(() => ({
     html: '',
     active: new Set<string>(),
     revision: 0,
+    images: [] as Array<{ src?: string; alt?: string }>,
 }));
 
 vi.mock('@tiptap/react', async (importOriginal) => {
@@ -31,6 +32,13 @@ vi.mock('@tiptap/react', async (importOriginal) => {
             if (property === 'toggleBold') toggle('bold');
             if (property === 'toggleItalic') toggle('italic');
             if (property === 'toggleTaskList') toggle('taskList');
+            if (property === 'toggleUnderline') toggle('underline');
+            if (property === 'toggleCode') toggle('code');
+            if (property === 'setParagraph') toggle('paragraph');
+            if (property === 'setImage') {
+                toggle('image');
+                harness.images.push((args as unknown as [{ src?: string; alt?: string }])[0] ?? {});
+            }
             emitUpdate();
             return chain;
         },
@@ -86,6 +94,7 @@ beforeEach(() => {
     harness.html = '';
     harness.active.clear();
     harness.revision = 0;
+    harness.images = [];
     apiFetchMock.mockResolvedValue({ content: '<p>Inicial</p>' } as never);
 });
 
@@ -101,8 +110,15 @@ describe('ProjectWikiEditor', () => {
         const toolbarActions = [
             ['Encabezado 1', 'heading-1'],
             ['Encabezado 2', 'heading-2'],
+            ['Encabezado 3', 'heading-3'],
+            ['Párrafo', 'paragraph'],
+            ['Negrita', 'bold'],
+            ['Cursiva', 'italic'],
+            ['Subrayado', 'underline'],
+            ['Código', 'code'],
             ['Lista con viñetas', 'bulletList'],
             ['Lista numerada', 'orderedList'],
+            ['Lista de tareas', 'taskList'],
             ['Cita', 'blockquote'],
             ['Separador horizontal', 'horizontalRule'],
         ];
@@ -113,6 +129,37 @@ describe('ProjectWikiEditor', () => {
             expect(button).toHaveAttribute('aria-pressed', 'true');
             expect(harness.active.has(activeKey)).toBe(true);
         }
+    });
+
+    it('abre el panel de imagen e inserta una imagen por URL', async () => {
+        render(<ProjectWikiEditor project_id="project-1" />);
+        await screen.findByText('Inicial');
+
+        expect(screen.queryByTestId('wiki-image-panel')).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: 'Insertar imagen' }));
+        expect(screen.getByTestId('wiki-image-panel')).toBeInTheDocument();
+
+        fireEvent.change(screen.getByLabelText('URL de la imagen'), { target: { value: 'https://ejemplo.org/plan.png' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Añadir imagen por URL' }));
+
+        await waitFor(() => expect(harness.images).toHaveLength(1));
+        expect(harness.images[0]).toEqual({ src: 'https://ejemplo.org/plan.png', alt: 'imagen de wiki' });
+        expect(screen.queryByTestId('wiki-image-panel')).toBeNull();
+    });
+
+    it('sube la imagen a POST /projects/{id}/wiki/images y la inserta con URL normalizada', async () => {
+        render(<ProjectWikiEditor project_id="project-1" />);
+        await screen.findByText('Inicial');
+
+        apiFetchMock.mockResolvedValueOnce({ url: '/static/projects/wiki/plan.png' } as never);
+        fireEvent.click(screen.getByRole('button', { name: 'Insertar imagen' }));
+        const file = new File(['píxeles'], 'plan.png', { type: 'image/png' });
+        fireEvent.change(screen.getByLabelText('Cargar imagen desde archivo'), { target: { files: [file] } });
+
+        await waitFor(() => expect(harness.images).toHaveLength(1));
+        expect(apiFetchMock).toHaveBeenCalledWith('/projects/project-1/wiki/images', { method: 'POST', token: 'test-token', body: expect.any(FormData) });
+        expect(harness.images[0]).toEqual({ src: '/api/static/projects/wiki/plan.png', alt: 'plan.png' });
+        expect(screen.queryByTestId('wiki-image-panel')).toBeNull();
     });
 
     it('guarda manualmente el borrador e impide un POST automático duplicado', async () => {

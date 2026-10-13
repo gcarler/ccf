@@ -2906,7 +2906,51 @@ def update_project_wiki(
     return _normalize_dates(doc)
 
 
-@router.post("/{project_id}/documents/convert-and-publish", response_model=schemas.ConvertAndPublishWikiResponse)
+@router.post(
+    "/{project_id}/wiki/images",
+    response_model=schemas.ProjectWikiImageUpload,
+    tags=["Projects Wiki"],
+)
+async def upload_project_wiki_image(
+    project_id: str,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("edit")),
+):
+    """Sube una imagen para insertarla en la wiki del proyecto.
+
+    Usa el mismo guard `require_project_access("edit")` que la escritura de
+    la wiki, valida el proyecto con aislamiento multi-tenant (Axioma 3) y
+    persiste el binario vía StorageService (`projects/wiki`). Devuelve la
+    URL pública lista para insertar en el contenido HTML de la wiki.
+    """
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    content_type = (file.content_type or "").lower()
+    if not content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Solo se permiten imágenes")
+
+    contents = await file.read()
+    if len(contents) > MAX_UPLOAD_SIZE:
+        raise HTTPException(status_code=400, detail="El archivo excede el tamaño máximo permitido")
+
+    filename = sanitize_filename(file.filename or "imagen")
+    url = storage_service.save_file(contents, filename, subfolder="projects/wiki")
+
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "wiki_updated",
+        f"Imagen '{filename}' insertada en la wiki del proyecto.",
+    )
+    db.commit()
+    return schemas.ProjectWikiImageUpload(url=url)
+
+
+@router.post(
+    "/{project_id}/documents/convert-and-publish", response_model=schemas.ConvertAndPublishWikiResponse)
 async def convert_and_publish_document(
     project_id: str,
     request: Request,

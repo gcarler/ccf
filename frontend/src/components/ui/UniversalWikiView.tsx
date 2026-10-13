@@ -1,11 +1,14 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
+import { useEditor, EditorContent, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
+import Image from '@tiptap/extension-image';
+import Underline from '@tiptap/extension-underline';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
+import clsx from 'clsx';
 import {
     BookOpen,
     Save,
@@ -21,8 +24,26 @@ import {
     Loader2,
     Download,
     Eye,
+    Heading1,
+    Heading2,
+    Heading3,
+    Pilcrow,
+    Bold,
+    Italic,
+    Underline as UnderlineIcon,
+    Code,
+    List,
+    ListOrdered,
+    CheckSquare,
+    Quote,
+    Image as ImageIcon,
+    X,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
+import { WIKI_PROSE_CLASS, WIKI_PROSE_CSS } from '@/components/wiki/wikiProse';
+import { getCmsMediaUrl } from '@/lib/cms/media';
+import { toast } from 'sonner';
 
 interface WikiProps {
     moduleName: string;
@@ -32,6 +53,33 @@ interface WikiProps {
 
 function toWikiKey(moduleName: string) {
     return `wiki_${moduleName.toLowerCase().replace(/\s+/g, '_').replace(/[^\w-]/g, '')}`;
+}
+
+function ToolbarButton({ onClick, isActive, disabled, icon: Icon, label }: {
+    onClick: () => void;
+    isActive?: boolean;
+    disabled?: boolean;
+    icon: LucideIcon;
+    label: string;
+}) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            disabled={disabled}
+            aria-label={label}
+            aria-pressed={Boolean(isActive)}
+            className={clsx(
+                'p-2 rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))] transition-all',
+                isActive
+                    ? 'bg-[hsl(var(--surface-2))] text-[hsl(var(--primary))] ring-1 ring-[hsl(var(--border))]'
+                    : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--text-primary))]',
+                disabled && 'opacity-30 cursor-not-allowed'
+            )}
+        >
+            <Icon size={16} aria-hidden />
+        </button>
+    );
 }
 
 export default function UniversalWikiView({ moduleName, storageKey, onSave }: WikiProps) {
@@ -47,9 +95,21 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
     } = useWikiDocument(pageKey, { title: `${moduleName} Wiki` });
 
     const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
-    const editor = useEditor({
+    const [imagePanelOpen, setImagePanelOpen] = useState(false);
+    const [imageUrl, setImageUrl] = useState('');
+    const imagePanelOpenRef = useRef<() => void>(() => {});
+    const openImagePanel = useCallback(() => {
+        setImagePanelOpen(true);
+    }, []);
+    imagePanelOpenRef.current = openImagePanel;
+
+    const editor: Editor | null = useEditor({
         extensions: [
-            StarterKit,
+            // Subrayado vía @tiptap/extension-underline extendido; el que trae
+            // StarterKit se desactiva para no duplicar la extensión.
+            StarterKit.configure({ underline: false }),
+            Underline,
+            Image.configure({ allowBase64: false }),
             Placeholder.configure({ placeholder: "Comienza a redactar la documentación oficial para este espacio de trabajo..." }),
             TaskList,
             TaskItem.configure({ nested: true }),
@@ -57,7 +117,7 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
         content: content || '',
         editorProps: {
             attributes: {
-                class: 'prose prose-slate dark:prose-invert max-w-none focus:outline-none min-h-48 text-sm leading-relaxed',
+                class: `${WIKI_PROSE_CLASS} max-w-none focus:outline-none min-h-48 text-sm leading-relaxed`,
             },
         },
         onUpdate: ({ editor: ed }) => {
@@ -112,6 +172,15 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
         a.click();
         URL.revokeObjectURL(url);
     }, [editor, content, moduleName]);
+
+    const insertImageFromUrl = useCallback(() => {
+        const raw = imageUrl.trim();
+        if (!raw || !editor) return;
+        editor.chain().focus().setImage({ src: getCmsMediaUrl(raw), alt: 'imagen de wiki' }).run();
+        setImagePanelOpen(false);
+        setImageUrl('');
+        toast.success('Imagen insertada en la wiki');
+    }, [imageUrl, editor]);
 
     return (
         <div className="flex min-h-[400px] flex-1 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-[hsl(var(--border))] overflow-hidden shadow-sm">
@@ -207,6 +276,62 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                     </div>
                 </header>
 
+                {viewMode === 'edit' && (
+                    <div
+                        data-testid="wiki-format-toolbar"
+                        role="toolbar"
+                        aria-label="Herramientas de la wiki"
+                        className="px-4 py-1.5 border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))] flex flex-wrap items-center gap-1 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))]"
+                    >
+                        <ToolbarButton label="Encabezado 1" onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()} isActive={Boolean(editor?.isActive('heading', { level: 1 }))} icon={Heading1} />
+                        <ToolbarButton label="Encabezado 2" onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()} isActive={Boolean(editor?.isActive('heading', { level: 2 }))} icon={Heading2} />
+                        <ToolbarButton label="Encabezado 3" onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()} isActive={Boolean(editor?.isActive('heading', { level: 3 }))} icon={Heading3} />
+                        <ToolbarButton label="Párrafo" onClick={() => editor?.chain().focus().setParagraph().run()} isActive={Boolean(editor?.isActive('paragraph') && !editor?.isActive('heading'))} icon={Pilcrow} />
+                        <div className="w-[1px] h-5 bg-[hsl(var(--border))] mx-1" />
+                        <ToolbarButton label="Negrita" onClick={() => editor?.chain().focus().toggleBold().run()} isActive={Boolean(editor?.isActive('bold'))} icon={Bold} />
+                        <ToolbarButton label="Cursiva" onClick={() => editor?.chain().focus().toggleItalic().run()} isActive={Boolean(editor?.isActive('italic'))} icon={Italic} />
+                        <ToolbarButton label="Subrayado" onClick={() => editor?.chain().focus().toggleUnderline().run()} isActive={Boolean(editor?.isActive('underline'))} icon={UnderlineIcon} />
+                        <ToolbarButton label="Código" onClick={() => editor?.chain().focus().toggleCode().run()} isActive={Boolean(editor?.isActive('code'))} icon={Code} />
+                        <div className="w-[1px] h-5 bg-[hsl(var(--border))] mx-1" />
+                        <ToolbarButton label="Lista con viñetas" onClick={() => editor?.chain().focus().toggleBulletList().run()} isActive={Boolean(editor?.isActive('bulletList'))} icon={List} />
+                        <ToolbarButton label="Lista numerada" onClick={() => editor?.chain().focus().toggleOrderedList().run()} isActive={Boolean(editor?.isActive('orderedList'))} icon={ListOrdered} />
+                        <ToolbarButton label="Lista de tareas" onClick={() => editor?.chain().focus().toggleTaskList().run()} isActive={Boolean(editor?.isActive('taskList'))} icon={CheckSquare} />
+                        <div className="w-[1px] h-5 bg-[hsl(var(--border))] mx-1" />
+                        <ToolbarButton label="Cita" onClick={() => editor?.chain().focus().toggleBlockquote().run()} isActive={Boolean(editor?.isActive('blockquote'))} icon={Quote} />
+                        <ToolbarButton label="Insertar imagen" onClick={openImagePanel} isActive={imagePanelOpen} icon={ImageIcon} />
+                    </div>
+                )}
+
+                {imagePanelOpen && viewMode === 'edit' && (
+                    <div
+                        data-testid="wiki-image-panel"
+                        role="group"
+                        aria-label="Insertar imagen en la wiki"
+                        className="mx-4 mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-2"
+                    >
+                        <ImageIcon size={16} className="text-[hsl(var(--primary))] shrink-0" aria-hidden />
+                        <input
+                            type="url"
+                            value={imageUrl}
+                            onChange={(e) => setImageUrl(e.currentTarget.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter' && imageUrl.trim()) { e.preventDefault(); insertImageFromUrl(); } }}
+                            placeholder="https://… o /static/…"
+                            aria-label="URL de la imagen"
+                            className="min-w-0 flex-1 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2.5 py-1.5 text-sm text-[hsl(var(--foreground))] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]"
+                        />
+                        <button
+                            type="button"
+                            onClick={insertImageFromUrl}
+                            disabled={!imageUrl.trim()}
+                            aria-label="Añadir imagen por URL"
+                            className="px-3 py-2 rounded-md bg-[hsl(var(--surface-1))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--foreground))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-3))]/40 disabled:opacity-40 transition-all"
+                        >
+                            Añadir por URL
+                        </button>
+                        <ToolbarButton label="Cerrar panel de imagen" onClick={() => { setImagePanelOpen(false); setImageUrl(''); }} icon={X} />
+                    </div>
+                )}
+
                 <div className="flex-1 p-4 relative overflow-y-auto">
                     <div className="absolute top-10 right-10 opacity-5 pointer-events-none">
                         <Zap size={200} fill="currentColor" className="text-[hsl(var(--primary))]" aria-hidden="true" focusable="false" />
@@ -218,7 +343,8 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                         </div>
                     ) : viewMode === 'preview' ? (
                         <div
-                            className="prose prose-slate dark:prose-invert max-w-none text-lg"
+                            className={`${WIKI_PROSE_CLASS} max-w-none text-lg`}
+                            data-testid="wiki-preview"
                             dangerouslySetInnerHTML={{ __html: editor?.getHTML() || content }}
                         />
                     ) : (
@@ -245,6 +371,10 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                     </div>
                 </footer>
             </main>
+
+            <style jsx global>{`
+                ${WIKI_PROSE_CSS}
+            `}</style>
         </div>
     );
 }
