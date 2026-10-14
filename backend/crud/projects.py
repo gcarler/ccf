@@ -4792,9 +4792,9 @@ def get_project_files(
     if file_source:
         q = q.filter(models.ProjectFile.file_source == file_source)
     if task_id:
-        q = q.filter(models.ProjectFile.task_id == task_id)
+        q = q.filter(models.ProjectFile.task_id == _to_uuid(task_id))
     if phase_id:
-        q = q.filter(models.ProjectFile.phase_id == phase_id)
+        q = q.filter(models.ProjectFile.phase_id == _to_uuid(phase_id))
     if search:
         term = f"%{search.strip()}%"
         q = q.filter(models.ProjectFile.name.ilike(term) | models.ProjectFile.description.ilike(term))

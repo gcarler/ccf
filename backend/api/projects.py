@@ -870,7 +870,7 @@ def _normalize_dates(obj):
 @router.get("/assignee-candidates", response_model=List[schemas.ProjectAssigneeCandidate])
 def list_project_assignee_candidates(
     search: Optional[str] = Query(None, max_length=100),
-    limit: int = Query(50, ge=1, le=50),
+    limit: int = Query(200, ge=1, le=1000),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
@@ -2906,7 +2906,51 @@ def update_project_wiki(
     return _normalize_dates(doc)
 
 
-@router.post("/{project_id}/documents/convert-and-publish", response_model=schemas.ConvertAndPublishWikiResponse)
+@router.post(
+    "/{project_id}/wiki/images",
+    response_model=schemas.ProjectWikiImageUpload,
+    tags=["Projects Wiki"],
+)
+async def upload_project_wiki_image(
+    project_id: str,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("edit")),
+):
+    """Sube una imagen para insertarla en la wiki del proyecto.
+
+    Usa el mismo guard `require_project_access("edit")` que la escritura de
+    la wiki, valida el proyecto con aislamiento multi-tenant (Axioma 3) y
+    persiste el binario vía StorageService (`projects/wiki`). Devuelve la
+    URL pública lista para insertar en el contenido HTML de la wiki.
+    """
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    content_type = (file.content_type or "").lower()
+    if not content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Solo se permiten imágenes")
+
+    contents = await file.read()
+    if len(contents) > MAX_UPLOAD_SIZE:
+        raise HTTPException(status_code=400, detail="El archivo excede el tamaño máximo permitido")
+
+    filename = sanitize_filename(file.filename or "imagen")
+    url = storage_service.save_file(contents, filename, subfolder="projects/wiki")
+
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "wiki_updated",
+        f"Imagen '{filename}' insertada en la wiki del proyecto.",
+    )
+    db.commit()
+    return schemas.ProjectWikiImageUpload(url=url)
+
+
+@router.post(
+    "/{project_id}/documents/convert-and-publish", response_model=schemas.ConvertAndPublishWikiResponse)
 async def convert_and_publish_document(
     project_id: str,
     request: Request,
@@ -3343,6 +3387,36 @@ async def upload_task_attachment(
         uploader_id=uploader_persona_id,
     )
     db.add(attachment)
+
+    # Sincronizar archivo en el Drive del proyecto
+    existing_pf = (
+        db.query(models.ProjectFile)
+        .filter(
+            models.ProjectFile.project_id == _to_uuid(project_id),
+            models.ProjectFile.task_id == _to_uuid(task_id),
+            models.ProjectFile.file_url == url,
+            models.ProjectFile.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not existing_pf:
+        try:
+            crud.create_project_file(
+                db,
+                _to_uuid(project_id),
+                name=filename,
+                file_url=url,
+                file_source="local",
+                category="attachments",
+                file_type=file.content_type,
+                file_size=len(contents),
+                task_id=_to_uuid(task_id),
+                phase_id=task.phase_id,
+                uploaded_by=uploader_persona_id,
+                sede_id=user_sede,
+            )
+        except Exception:
+            pass
     _log_project_activity(
         db,
         project_id,
@@ -6107,6 +6181,32 @@ async def upload_project_file_endpoint(
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+    if task_id:
+        try:
+            task_uuid = _to_uuid(task_id)
+            existing_att = (
+                db.query(models.ProjectAttachment)
+                .filter(
+                    models.ProjectAttachment.task_id == task_uuid,
+                    models.ProjectAttachment.file_url == url,
+                    models.ProjectAttachment.deleted_at.is_(None),
+                )
+                .first()
+            )
+            if not existing_att:
+                att = models.ProjectAttachment(
+                    task_id=task_uuid,
+                    filename=doc_name,
+                    file_url=url,
+                    file_type=file.content_type,
+                    file_size=len(contents),
+                    uploader_id=persona_id,
+                )
+                db.add(att)
+                db.commit()
+        except Exception:
+            pass
 
     _log_project_activity(
         db,

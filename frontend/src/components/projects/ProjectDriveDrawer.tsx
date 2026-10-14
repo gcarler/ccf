@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/ConfirmActionDrawer";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import type { ProjectFileRecord, ProjectFilesSummary } from "@/types/projects";
-import { FolderArchive, Upload, Link2, Search, FileText, FileSpreadsheet, FileCode, Image as ImageIcon, Music, Video, HardDrive, Trash2, Eye, ExternalLink, Download, RefreshCw, Globe } from "lucide-react";
+import { FolderArchive, Upload, Link2, Search, FileText, FileSpreadsheet, FileCode, Image as ImageIcon, Music, Video, HardDrive, Trash2, Eye, ExternalLink, Download, RefreshCw, Globe, CheckSquare } from "lucide-react";
 import clsx from "clsx";
 import { toast } from "sonner";
 import { ProjectFileViewerDrawer } from "./ProjectFileViewerDrawer";
@@ -54,6 +54,8 @@ export function ProjectDriveDrawer({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [selectedSource, setSelectedSource] = useState("ALL");
+  const [selectedTaskId, setSelectedTaskId] = useState("ALL");
+  const [projectTasks, setProjectTasks] = useState<Array<{ id: string; title: string }>>([]);
 
   // Estado de visor embebido
   const [viewingFile, setViewingFile] = useState<ProjectFileRecord | null>(null);
@@ -62,6 +64,7 @@ export function ProjectDriveDrawer({
   // Formulario Local Upload
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadCategory, setUploadCategory] = useState("general");
+  const [uploadTaskId, setUploadTaskId] = useState("none");
   const [uploadCustomName, setUploadCustomName] = useState("");
   const [uploadDescription, setUploadDescription] = useState("");
   const [isUploading, setIsUploading] = useState(false);
@@ -72,8 +75,46 @@ export function ProjectDriveDrawer({
   const [driveUrl, setDriveUrl] = useState("");
   const [driveName, setDriveName] = useState("");
   const [driveCategory, setDriveCategory] = useState("general");
+  const [driveTaskId, setDriveTaskId] = useState("none");
   const [driveDescription, setDriveDescription] = useState("");
   const [isLinking, setIsLinking] = useState(false);
+
+  // Cargar actividades/tareas del proyecto para el filtro
+  useEffect(() => {
+    if (!isOpen || !projectId || !token) return;
+    let active = true;
+    apiFetch<any[]>(`/projects/${projectId}/tasks`, { token })
+      .then((data) => {
+        if (!active || !Array.isArray(data)) return;
+        setProjectTasks(
+          data
+            .filter((t) => t && t.id && (t.title || (!t.file_source && t.name)))
+            .map((t) => ({
+              id: String(t.id),
+              title: t.title || t.name || `Actividad #${t.id}`,
+            }))
+        );
+      })
+      .catch(() => {
+        // En caso de que no haya tareas o endpoint mockeado, continúa normalmente
+      });
+    return () => {
+      active = false;
+    };
+  }, [isOpen, projectId, token]);
+
+  const availableTasks = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const t of projectTasks) {
+      map.set(t.id, t.title);
+    }
+    for (const f of files) {
+      if (f.task_id && f.task_title && !map.has(f.task_id)) {
+        map.set(f.task_id, f.task_title);
+      }
+    }
+    return Array.from(map.entries()).map(([id, title]) => ({ id, title }));
+  }, [projectTasks, files]);
 
   // Carga de Archivos
   const loadFiles = useCallback(async () => {
@@ -83,6 +124,7 @@ export function ProjectDriveDrawer({
       const query: Record<string, string> = {};
       if (selectedCategory !== "ALL") query.category = selectedCategory;
       if (selectedSource !== "ALL") query.file_source = selectedSource;
+      if (selectedTaskId !== "ALL") query.task_id = selectedTaskId;
       if (searchQuery.trim()) query.search = searchQuery.trim();
 
       const [filesData, summaryData] = await Promise.all([
@@ -106,7 +148,16 @@ export function ProjectDriveDrawer({
     } finally {
       setLoading(false);
     }
-  }, [token, projectId, selectedCategory, selectedSource, searchQuery]);
+  }, [token, projectId, selectedCategory, selectedSource, selectedTaskId, searchQuery]);
+
+  const displayedFiles = useMemo(() => {
+    return files.filter((file) => {
+      if (selectedTaskId !== "ALL" && file.task_id !== selectedTaskId) {
+        return false;
+      }
+      return true;
+    });
+  }, [files, selectedTaskId]);
 
   useEffect(() => {
     if (isOpen) {
@@ -133,6 +184,7 @@ export function ProjectDriveDrawer({
       const formData = new FormData();
       formData.append("file", uploadFile);
       if (uploadCategory) formData.append("category", uploadCategory);
+      if (uploadTaskId && uploadTaskId !== "none") formData.append("task_id", uploadTaskId);
       if (uploadCustomName.trim()) formData.append("name", uploadCustomName.trim());
       if (uploadDescription.trim()) formData.append("description", uploadDescription.trim());
 
@@ -144,6 +196,7 @@ export function ProjectDriveDrawer({
 
       toast.success("Archivo subido a la bóveda exitosamente");
       setUploadFile(null);
+      setUploadTaskId("none");
       setUploadCustomName("");
       setUploadDescription("");
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -174,6 +227,7 @@ export function ProjectDriveDrawer({
           drive_url: driveUrl.trim(),
           name: driveName.trim() || undefined,
           category: driveCategory,
+          task_id: driveTaskId && driveTaskId !== "none" ? driveTaskId : undefined,
           description: driveDescription.trim() || undefined,
         },
         token,
@@ -182,6 +236,7 @@ export function ProjectDriveDrawer({
       toast.success("Documento de Google Drive vinculado exitosamente");
       setDriveUrl("");
       setDriveName("");
+      setDriveTaskId("none");
       setDriveDescription("");
       setActiveTab("explorer");
       void loadFiles();
@@ -262,7 +317,7 @@ export function ProjectDriveDrawer({
               <div>
                 <h2 className="text-sm font-bold flex items-center gap-2">
                   <FolderArchive size={18} className="text-[hsl(var(--primary))]" />
-                  Bóveda de Archivos & Drive
+                  Drive
                 </h2>
                 <p className="text-2xs text-[hsl(var(--text-secondary))]">
                   Almacenamiento unificado de planos, actas, minutas y documentos sincronizados de Google Workspace
@@ -370,8 +425,8 @@ export function ProjectDriveDrawer({
             {activeTab === "explorer" && (
               <div className="space-y-4">
                 {/* Controles de Búsqueda y Filtros */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                  <div className="relative sm:col-span-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                  <div className="relative">
                     <Search
                       size={14}
                       className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]"
@@ -415,20 +470,36 @@ export function ProjectDriveDrawer({
                       ))}
                     </select>
                   </div>
+
+                  <div>
+                    <select
+                      aria-label="Filtrar por actividad"
+                      value={selectedTaskId}
+                      onChange={(e) => setSelectedTaskId(e.target.value)}
+                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                    >
+                      <option value="ALL">Todas las actividades</option>
+                      {availableTasks.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 {/* Lista de Archivos */}
-                {loading && files.length === 0 ? (
+                {loading && displayedFiles.length === 0 ? (
                   <div className="py-12 flex flex-col items-center justify-center gap-2 text-[hsl(var(--text-secondary))]">
                     <div className="w-6 h-6 border-2 border-[hsl(var(--primary))] border-t-transparent rounded-full animate-spin" />
                     <p className="text-2xs">Cargando archivos...</p>
                   </div>
-                ) : files.length === 0 ? (
+                ) : displayedFiles.length === 0 ? (
                   <div className="py-12 text-center border-2 border-dashed border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--surface-2))]/30 flex flex-col items-center justify-center p-6 space-y-3">
                     <FolderArchive size={36} className="text-[hsl(var(--text-secondary))]" />
                     <div className="space-y-1">
                       <p className="text-xs font-bold text-[hsl(var(--text-primary))]">
-                        No hay archivos en la bóveda
+                        {selectedTaskId !== "ALL" ? "No hay archivos vinculados a esta actividad" : "No hay archivos en Drive"}
                       </p>
                       <p className="text-2xs text-[hsl(var(--text-secondary))] max-w-sm">
                         Sube planos, especificaciones o vincula carpetas y documentos de Google Drive para mantener todo centralizado en el proyecto.
@@ -451,7 +522,7 @@ export function ProjectDriveDrawer({
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {files.map((file) => {
+                    {displayedFiles.map((file) => {
                       const safeFileUrl = getSafeProjectLink(file.file_url);
                       return (
                         <div
@@ -464,7 +535,7 @@ export function ProjectDriveDrawer({
                             {getFileIcon(file)}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
                               <p className="text-xs font-bold text-[hsl(var(--text-primary))] truncate group-hover:text-[hsl(var(--primary))] transition-colors">
                                 {file.name}
                               </p>
@@ -474,6 +545,20 @@ export function ProjectDriveDrawer({
                               {file.file_source === "drive" && (
                                 <span className="text-2xs font-extrabold px-1.5 py-0.5 rounded bg-[hsl(var(--primary))]/15 text-[hsl(var(--primary))] uppercase">
                                   Drive
+                                </span>
+                              )}
+                              {file.task_title ? (
+                                <span
+                                  data-testid={`file-task-badge-${file.id}`}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-bold bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.25)] max-w-[220px]"
+                                  title={`Actividad vinculada: ${file.task_title}`}
+                                >
+                                  <CheckSquare size={11} className="shrink-0" />
+                                  <span className="truncate">Actividad: {file.task_title}</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-2xs text-[hsl(var(--text-secondary))]/60 italic bg-[hsl(var(--surface-2))]">
+                                  Sin actividad
                                 </span>
                               )}
                             </div>
@@ -486,11 +571,6 @@ export function ProjectDriveDrawer({
                                   month: "short",
                                 })}
                               </span>
-                              {file.task_title && (
-                                <span className="text-[hsl(var(--primary))] truncate max-w-[140px]">
-                                  • {file.task_title}
-                                </span>
-                              )}
                             </div>
                           </div>
                         </div>
@@ -645,6 +725,24 @@ export function ProjectDriveDrawer({
                         className="w-full px-3 py-2 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                       />
                     </div>
+                    <div>
+                      <label className="block text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">
+                        Actividad Asociada (Opcional)
+                      </label>
+                      <select
+                        aria-label="Vincular a actividad"
+                        value={uploadTaskId}
+                        onChange={(e) => setUploadTaskId(e.target.value)}
+                        className="w-full px-3 py-2 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                      >
+                        <option value="none">Sin actividad vinculada</option>
+                        {availableTasks.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.title}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
 
                   <div className="pt-3 flex justify-end gap-2">
@@ -663,7 +761,7 @@ export function ProjectDriveDrawer({
                       {isUploading && (
                         <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
                       )}
-                      Subir a la Bóveda
+                      Subir a Drive
                     </button>
                   </div>
                 </div>
@@ -740,6 +838,24 @@ export function ProjectDriveDrawer({
                         className="w-full px-3 py-2 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                       />
                     </div>
+                    <div>
+                      <label className="block text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">
+                        Actividad Asociada (Opcional)
+                      </label>
+                      <select
+                        aria-label="Vincular enlace a actividad"
+                        value={driveTaskId}
+                        onChange={(e) => setDriveTaskId(e.target.value)}
+                        className="w-full px-3 py-2 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                      >
+                        <option value="none">Sin actividad vinculada</option>
+                        {availableTasks.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.title}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
 
                   <div className="pt-3 flex justify-end gap-2">
@@ -758,7 +874,7 @@ export function ProjectDriveDrawer({
                       {isLinking && (
                         <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
                       )}
-                      Vincular a la Bóveda
+                      Vincular a Drive
                     </button>
                   </div>
                 </div>

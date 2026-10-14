@@ -77,7 +77,7 @@ const PROJECT_HUB_MODULE_META: ProjectHubModuleMeta[] = [
   { key: 'reports', label: 'Reportes', icon: FileText },
   { key: 'indicators', label: 'Indicadores (IDP)', icon: BarChart3 },
   { key: 'evm', label: 'Valor Ganado (EVM / CPI)', icon: TrendingUp },
-  { key: 'drive', label: 'Bóveda y Drive', icon: FolderArchive },
+  { key: 'drive', label: 'Drive', icon: FolderArchive },
 ];
 
 const PROJECT_DETAIL_VIEWS: ViewType[] = [
@@ -391,7 +391,7 @@ export default function ProjectDetailPage() {
     { key: 'reports', label: 'Reportes', icon: FileText, onSelect: () => openHubModule('reports') },
     { key: 'indicators', label: 'Indicadores (IDP)', icon: BarChart3, onSelect: () => openHubModule('indicators') },
     { key: 'evm', label: 'Valor Ganado (EVM / CPI)', icon: TrendingUp, onSelect: () => openHubModule('evm') },
-    { key: 'drive', label: 'Bóveda y Drive', icon: FolderArchive, onSelect: () => openHubModule('drive') },
+    { key: 'drive', label: 'Drive', icon: FolderArchive, onSelect: () => openHubModule('drive') },
     { key: 'settings', label: 'Editar proyecto', icon: Edit3, onSelect: () => setShowProjectSettings(true), variant: 'warning' as const },
     { key: 'delete', label: 'Eliminar proyecto', icon: Trash2, onSelect: handleDeleteProject, variant: 'destructive' as const, visible: canDeleteProjectFromApiPolicy },
   ].filter((action) => action.visible !== false);

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useRef, useState } from "react";
-import { Activity, Bell, CheckCircle2, ChevronLeft, ChevronRight, ExternalLink, Inbox, Maximize2, MessageSquare, Minimize2, Minus, Users, X } from "lucide-react";
+import { Activity, Bell, CheckCircle2, ChevronLeft, ExternalLink, Inbox, Maximize2, MessageSquare, Minimize2, Minus, Users, X } from "lucide-react";
 import clsx from "clsx";
 import { useProjectUpdate } from "@/context/ProjectUpdateContext";
 import { useAuth } from "@/context/AuthContext";
@@ -370,8 +370,8 @@ export default function ProjectContextPanel({
 
             {project?.description ? (
               <section className="mt-5 rounded-lg border border-[hsl(var(--border))] p-3">
-                <p className="mb-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Descripción</p>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-[hsl(var(--muted-foreground))]">
+                <p className="mb-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Descripción</p>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-[hsl(var(--text-primary))]">
                   {project.description}
                 </p>
               </section>
@@ -382,7 +382,7 @@ export default function ProjectContextPanel({
               </div>
             )}
 
-            <div className="mt-5 flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))]">
+            <div className="mt-5 flex items-center gap-2 text-xs text-[hsl(var(--text-primary))]">
               <CheckCircle2 size={14} className="text-[hsl(var(--success))]" />
               Los cambios se sincronizan con List y Kanban.
             </div>
@@ -540,8 +540,8 @@ function ProjectInboxContent({
 function Metric({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-lg border border-[hsl(var(--border))] p-3">
-      <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">{label}</p>
-      <p className="mt-1 text-xl font-bold text-[hsl(var(--foreground))]">{value}</p>
+      <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
+      <p className="mt-1 text-xl font-bold text-[hsl(var(--text-primary))]">{value}</p>
     </div>
   );
 }
@@ -549,8 +549,8 @@ function Metric({ label, value }: { label: string; value: number }) {
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-3 border-b border-[hsl(var(--border))] pb-2">
-      <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">{label}</span>
-      <span className="truncate text-right text-xs font-semibold text-[hsl(var(--foreground))]">{value}</span>
+      <span className="text-xs font-medium text-[hsl(var(--text-secondary))]">{label}</span>
+      <span className="truncate text-right text-xs font-semibold text-[hsl(var(--text-primary))]">{value}</span>
     </div>
   );
 }

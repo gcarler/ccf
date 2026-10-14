@@ -357,6 +357,10 @@ def get_mission_impact(
         distribucion = [{"label": "Ofrendas Generales", "pct": 100, "desc": "Donaciones recibidas."}]
 
     result = {
+        # Alias "total_personas": contrato consumido por el módulo de
+        # Transparencia del frontend (/plataforma/finances/transparency).
+        # "total_miembros" se conserva por retrocompatibilidad.
+        "total_personas": total_personas,
         "total_miembros": total_personas,
         "total_familias": total_families,
         "total_donaciones_cop": round(total_donations),

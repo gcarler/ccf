@@ -44,9 +44,11 @@ const summary: ProjectFilesSummary = {
 describe("ProjectDriveDrawer", () => {
   beforeEach(() => {
     mocks.apiFetch.mockReset();
-    mocks.apiFetch.mockImplementation((path: string) =>
-      path.endsWith("/summary") ? Promise.resolve(summary) : Promise.resolve([unsafeFile]),
-    );
+    mocks.apiFetch.mockImplementation((path: string) => {
+      if (path.endsWith("/summary")) return Promise.resolve(summary);
+      if (path.endsWith("/tasks")) return Promise.resolve([]);
+      return Promise.resolve([unsafeFile]);
+    });
   });
 
   it("labels file actions and blocks unsafe historical URLs", async () => {
@@ -95,6 +97,7 @@ describe("ProjectDriveDrawer", () => {
   it("keeps the file and confirmation visible when removal fails", async () => {
     mocks.apiFetch.mockImplementation((path: string, options?: { method?: string }) => {
       if (path.endsWith("/summary")) return Promise.resolve(summary);
+      if (path.endsWith("/tasks")) return Promise.resolve([]);
       if (options?.method === "DELETE") return Promise.reject(new Error("Servicio no disponible"));
       return Promise.resolve([unsafeFile]);
     });

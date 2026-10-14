@@ -147,6 +147,19 @@ describe("ProjectContextPanel", () => {
     expect(screen.getByRole("tabpanel")).toHaveAttribute("aria-labelledby", "project-context-tab-details");
   });
 
+  it("uses high-contrast semantic text tokens for detail labels and values", async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    await user.click(screen.getByRole("tab", { name: "Detalles" }));
+
+    expect(screen.getByText("Total")).toHaveClass("text-[hsl(var(--text-secondary))]");
+    expect(screen.getByText("2")).toHaveClass("text-[hsl(var(--text-primary))]");
+    expect(screen.getByText("Estado")).toHaveClass("text-[hsl(var(--text-secondary))]");
+    expect(screen.getByText("Descripción")).toHaveClass("text-[hsl(var(--text-secondary))]");
+    expect(screen.getByText("Descripción del proyecto")).toHaveClass("text-[hsl(var(--text-primary))]");
+  });
+
   it("renders project inbox items, marks them read, and opens the related task", async () => {
     const user = userEvent.setup();
     const onOpenTask = vi.fn();

@@ -53,13 +53,16 @@ export default function ViewSwitcher({
             {options.map(({ id, label, icon: Icon }) => (
                 <button
                     key={id}
+                    type="button"
                     title={label}
+                    aria-label={label}
+                    aria-pressed={viewType === id}
                     onClick={() => setViewType(id)}
                     className={clsx(
-                        "flex items-center justify-center w-7 h-7 rounded-md transition-all",
+                        "flex items-center justify-center w-8 h-8 rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2",
                         viewType === id
-                            ? "bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] dark:text-white shadow-sm"
-                            : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]"
+                            ? "border-[hsl(var(--primary)/0.5)] bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))] shadow-sm"
+                            : "border-transparent text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-3))] hover:text-[hsl(var(--text-primary))]"
                     )}
                 >
                     <Icon size={14} />
