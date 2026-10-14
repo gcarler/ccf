@@ -144,7 +144,7 @@ export function ProjectDriveDrawer({
         setSummary(summaryData);
       }
     } catch {
-      toast.error("Error al cargar la bóveda documental");
+      toast.error("Error al cargar Drive");
     } finally {
       setLoading(false);
     }
@@ -194,7 +194,7 @@ export function ProjectDriveDrawer({
         token,
       });
 
-      toast.success("Archivo subido a la bóveda exitosamente");
+      toast.success("Archivo subido a Drive exitosamente");
       setUploadFile(null);
       setUploadTaskId("none");
       setUploadCustomName("");
@@ -257,7 +257,7 @@ export function ProjectDriveDrawer({
         method: "DELETE",
         token,
       });
-      toast.success(`"${fileName}" eliminado de la bóveda`);
+      toast.success(`"${fileName}" eliminado de Drive`);
       void loadFiles();
       onFileUpdated?.();
     } catch (error) {
@@ -521,7 +521,7 @@ export function ProjectDriveDrawer({
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-3">
                     {displayedFiles.map((file) => {
                       const safeFileUrl = getSafeProjectLink(file.file_url);
                       return (
@@ -695,7 +695,7 @@ export function ProjectDriveDrawer({
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">
                         Categoría Documental
@@ -808,7 +808,7 @@ export function ProjectDriveDrawer({
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">
                         Categoría Documental

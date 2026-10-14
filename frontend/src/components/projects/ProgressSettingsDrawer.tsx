@@ -169,7 +169,7 @@ export function ProgressSettingsDrawer({
           <label className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
             Modo de Cálculo de Avance
           </label>
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
             {MODES.map((m) => {
               const Icon = m.icon;
               const isSelected = mode === m.id;
@@ -245,7 +245,7 @@ export function ProgressSettingsDrawer({
           <label className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
             Semáforo de Salud Operativa
           </label>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
             {HEALTH_OPTIONS.map((h) => {
               const isSelected = healthOverride === h.id;
               const Icon = h.icon;

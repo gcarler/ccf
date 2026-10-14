@@ -292,7 +292,8 @@ export function ProjectWorkloadDrawer({
               </p>
             </div>
           ) : (
-            summary?.members?.map((member) => {
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 content-start">
+              {summary?.members?.map((member) => {
               const memberKey = member.persona_id || "unassigned";
               const isExpanded = !!expandedMembers[memberKey];
               const capCfg = CAPACITY_CONFIG[member.capacity_status] || CAPACITY_CONFIG.available;
@@ -591,7 +592,8 @@ export function ProjectWorkloadDrawer({
                   )}
                 </div>
               );
-            })
+              })}
+            </div>
           )}
         </div>
       </div>

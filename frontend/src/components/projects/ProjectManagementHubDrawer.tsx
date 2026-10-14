@@ -97,14 +97,14 @@ export function ProjectManagementHubDrawer({
       onClose={onCloseHub}
       title={title}
       subtitle="Navega entre los módulos de control con pestañas"
-      width={isMaximized ? 'w-screen' : 'w-full sm:max-w-2xl'}
+      width={isMaximized ? 'w-screen max-w-none' : 'w-full sm:w-[90vw] lg:w-[78vw] xl:w-[74vw] 2xl:w-[70vw] max-w-none'}
       contentClassName="bg-[hsl(var(--surface-1))] flex flex-col"
     >
       {isOpen && (
         <div
           className={clsx(
             'flex h-full min-h-0 flex-col',
-            isMaximized && 'mx-auto w-full max-w-5xl px-2'
+            isMaximized && 'mx-auto w-full px-4 sm:px-6 lg:px-8'
           )}
         >
           {/* Tira de pestañas abiertas + controles del panel */}

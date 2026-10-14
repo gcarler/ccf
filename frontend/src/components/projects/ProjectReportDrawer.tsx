@@ -658,7 +658,7 @@ export function ProjectReportDrawer({
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3">
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-3">
                   {/* Tarjeta 1: Informe Ejecutivo PDF */}
                   <div
                     className="p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all hover:border-[hsl(var(--primary))]"

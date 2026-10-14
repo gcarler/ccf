@@ -407,6 +407,9 @@ export function ProjectRiskMatrixDrawer({
           </div>
         </div>
 
+        {/* MATRIZ 5×5 + LISTADO: layout lado a lado en pantallas grandes (TKT-PROJECTS-RESPONSIVE-HUB-TOOLBOX-THEME-01) */}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+          <div className="xl:col-span-5 min-w-0">
         {/* MATRIZ RAID 5X5 INTERACTIVA */}
         <div
           className="p-4 rounded-xl border"
@@ -557,6 +560,9 @@ export function ProjectRiskMatrixDrawer({
             </button>
           )}
         </div>
+          </div>
+
+          <div className="xl:col-span-7 min-w-0">
 
         {/* FORMULARIO DE CREACIÓN O EDICIÓN */}
         {isCreating && (
@@ -1017,6 +1023,8 @@ export function ProjectRiskMatrixDrawer({
               );
             })
           )}
+        </div>
+          </div>
         </div>
       </div>
       <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />

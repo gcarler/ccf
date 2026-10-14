@@ -246,7 +246,7 @@ export function PhaseManagerDrawer({ projectId, onClose }: Props) {
     };
 
     return (
-        <RightPanel open={true} onClose={onClose} title="Gestionar Fases" width={480}>
+        <RightPanel open={true} onClose={onClose} title="Gestionar Fases" width="w-full sm:w-[85vw] lg:w-[68vw] xl:w-[60vw] max-w-5xl">
             <div className="flex flex-col h-full">
                 {error && (
                     <div className="mx-3 mt-3 rounded-md border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-3 text-[hsl(var(--warning))]">
@@ -254,7 +254,8 @@ export function PhaseManagerDrawer({ projectId, onClose }: Props) {
                     </div>
                 )}
                 {/* Body */}
-                <div className="flex-1 overflow-y-auto scrollbar-thin p-3 space-y-2">
+                <div className="flex-1 overflow-y-auto scrollbar-thin p-3 space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 content-start">
                     {items.map((phase, i) => (
                         <div
                             key={phase.slug}
@@ -310,6 +311,7 @@ export function PhaseManagerDrawer({ projectId, onClose }: Props) {
                             </button>
                         </div>
                     ))}
+                    </div>
 
                     {/* Add phase */}
                     <button

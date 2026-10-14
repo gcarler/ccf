@@ -398,7 +398,8 @@ export function ProjectKpiDrawer({
               </p>
             </div>
           ) : (
-            kpis.map((kpi) => {
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 content-start">
+              {kpis.map((kpi) => {
               const status = getStatusBadge(kpi.current_value, kpi.target_value);
               const StatusIcon = status.icon;
               const pct = kpi.target_value > 0
@@ -504,7 +505,8 @@ export function ProjectKpiDrawer({
                   </div>
                 </div>
               );
-            })
+              })}
+            </div>
           )}
         </div>
       </div>

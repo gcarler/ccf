@@ -757,7 +757,7 @@ export default function ProjectDetailPage() {
                 title="Caja de herramientas"
                 className="flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-2xs font-bold uppercase tracking-wide text-[hsl(var(--foreground))] transition-colors hover:bg-[hsl(var(--surface-2))] active:scale-95"
               >
-                <Wrench size={14} aria-hidden="true" className="text-[hsl(var(--primary)))]" />
+                <Wrench size={14} aria-hidden="true" className="text-[hsl(var(--primary))]" />
                 <span className="hidden sm:inline">Caja de herramientas</span>
               </button>
               {/* Selector de tema (claro/oscuro/apariencia) junto al perfil */}

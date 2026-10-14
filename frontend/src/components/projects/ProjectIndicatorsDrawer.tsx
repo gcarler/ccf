@@ -572,7 +572,7 @@ export function ProjectIndicatorsDrawer({
                   </button>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 content-start">
                   {filteredIndicators.map((ind) => {
                     const isExpanded = expandedIndicatorId === ind.id;
                     const spi = ind.last_spi;

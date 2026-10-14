@@ -713,7 +713,8 @@ export function ProjectBudgetDrawer({
               <span>No se encontraron partidas de gasto registradas.</span>
             </div>
           ) : (
-            filteredExpenses.map((exp) => {
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 content-start">
+              {filteredExpenses.map((exp) => {
               const st = STATUS_CONFIG[exp.status] || STATUS_CONFIG.planned;
               const StatusIcon = st.icon;
               const catLabel =
@@ -876,7 +877,8 @@ export function ProjectBudgetDrawer({
                   </div>
                 </div>
               );
-            })
+              })}
+            </div>
           )}
         </div>
       </div>
