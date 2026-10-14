@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import WorkspaceLayout from './WorkspaceLayout';
 import WorkspaceMiniSidebar from './WorkspaceMiniSidebar';
@@ -351,5 +351,32 @@ describe('WorkspaceLayout and WorkspaceMiniSidebar S2 behavior', () => {
         expect(localStorage.getItem('workspace:s2:projects')).toBe('visible');
         expect(localStorage.getItem('workspace:focus:projects')).toBe('0');
         expect(localStorage.getItem('s2Width')).toBe('280');
+    });
+
+    it('keeps the S1 hide chevron fixed below a scrollable navigation list', async () => {
+        const user = userEvent.setup();
+        navigationState.pathname = '/plataforma/crm';
+
+        render(
+            <SidebarLayerProvider>
+                <WorkspaceLayout sidebarTitle="CRM" sidebarSections={[]}>
+                    <LayerStatusConsumer />
+                    <div>Contenido</div>
+                </WorkspaceLayout>
+            </SidebarLayerProvider>,
+        );
+
+        const hideButton = screen.getByRole('button', { name: 'Ocultar sidebar principal' });
+        await waitFor(() => expect(hideButton).toBeVisible());
+        const sidebar = hideButton.closest('aside');
+        expect(sidebar).not.toBeNull();
+        const navList = sidebar?.querySelector(':scope > div.flex-1.min-h-0.w-full');
+        expect(navList).toHaveClass('overflow-y-auto', 'overflow-x-hidden');
+        expect(hideButton.closest('div.shrink-0.w-full')).toHaveClass('border-t', 'pt-1.5');
+
+        await user.click(hideButton);
+
+        expect(screen.getByTestId('layer-s1-status')).toHaveTextContent('closed');
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Mostrar navegación principal' })).toBeVisible());
     });
 });

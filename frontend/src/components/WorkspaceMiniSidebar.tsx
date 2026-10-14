@@ -122,11 +122,11 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
     );
 
     return (
-        <aside className="w-16 h-full bg-[hsl(var(--bg-primary))] dark:bg-black border-r border-[hsl(var(--border))] dark:border-white/5 rounded-lg flex flex-col items-center py-2 gap-1 shadow-2xl relative overflow-hidden" style={{ paddingBottom: '2.5rem' }}>
+        <aside className="w-16 h-full bg-[hsl(var(--bg-primary))] dark:bg-black border-r border-[hsl(var(--border))] dark:border-white/5 rounded-lg flex flex-col items-center py-2 gap-1 shadow-2xl relative overflow-hidden">
             {/* Global Add Button */}
             <button
                 onClick={() => openModal('task')}
-                className="size-10 rounded-lg bg-[hsl(var(--primary))] text-white flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-lg shadow-[hsl(var(--info)/40%)] group relative mb-4"
+                className="size-10 shrink-0 rounded-lg bg-[hsl(var(--primary))] text-white flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-lg shadow-[hsl(var(--info)/40%)] group relative mb-4"
             >
                 <Plus size={20} />
                 <div className="absolute left-14 px-2 py-1 bg-[hsl(var(--surface-2))] text-white text-2xs font-bold rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-[100]">
@@ -134,25 +134,27 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
                 </div>
             </button>
 
-            {/* Primary workspace items */}
-            {visiblePrimaryItems.map(item => <NavItem key={item.id} {...item} pathname={pathname} onClick={() => handleNavItemClick(item)} />)}
+            <div className="flex-1 min-h-0 w-full overflow-y-auto overflow-x-hidden scrollbar-none flex flex-col items-center gap-1 py-1">
+                {/* Primary workspace items */}
+                {visiblePrimaryItems.map(item => <NavItem key={item.id} {...item} pathname={pathname} onClick={() => handleNavItemClick(item)} />)}
 
-            {/* Separator */}
-            <div className="w-6 h-px bg-[hsl(var(--surface-2))] dark:bg-white/10 my-2" />
+                {/* Separator */}
+                <div className="w-6 h-px shrink-0 bg-[hsl(var(--surface-2))] dark:bg-white/10 my-2" />
 
-            {/* Module items */}
-            {visibleModuleItems.map(item => <NavItem key={item.id} {...item} pathname={pathname} onClick={() => handleNavItemClick(item)} />)}
+                {/* Module items */}
+                {visibleModuleItems.map(item => <NavItem key={item.id} {...item} pathname={pathname} onClick={() => handleNavItemClick(item)} />)}
 
-            {/* Separator */}
-            <div className="w-6 h-px bg-[hsl(var(--surface-2))] dark:bg-white/10 my-2" />
+                {/* Separator */}
+                <div className="w-6 h-px shrink-0 bg-[hsl(var(--surface-2))] dark:bg-white/10 my-2" />
 
-            {/* Inbox with badge */}
-            {canAccessWorkspaceHref('/plataforma/inbox', { hasModuleAccess, hasPermission }) && (
-                <NavItem id="inbox" icon={Inbox} href="/plataforma/inbox" label="Bandeja" badge={3} pathname={pathname} onClick={() => handleNavItemClick({ id: 'inbox', href: '/plataforma/inbox' })} />
-            )}
+                {/* Inbox with badge */}
+                {canAccessWorkspaceHref('/plataforma/inbox', { hasModuleAccess, hasPermission }) && (
+                    <NavItem id="inbox" icon={Inbox} href="/plataforma/inbox" label="Bandeja" badge={3} pathname={pathname} onClick={() => handleNavItemClick({ id: 'inbox', href: '/plataforma/inbox' })} />
+                )}
+            </div>
 
             {/* ── Footer: Mi Perfil + Settings + Collapse */}
-            <div className="flex flex-col items-center gap-1 mb-2">
+            <div className="shrink-0 w-full border-t border-[hsl(var(--border))] dark:border-white/5 pt-1.5 flex flex-col items-center gap-1">
                 <DSTooltip content="Mi Perfil" side="right">
                     <Link href="/plataforma/account" prefetch={false} aria-label="Mi Perfil">
                         <div className={clsx(
