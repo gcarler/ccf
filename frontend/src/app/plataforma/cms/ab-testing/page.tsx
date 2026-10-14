@@ -34,7 +34,10 @@ import {
 import { CmsAbTest, CmsAbTestResults, CmsAbTestStatus, CmsPage, CmsSection, CmsSite } from "@/types/cms-v2";
 import { canEditCms } from "@/lib/cms/permissions";
 import { apiFetch } from "@/lib/http";
-import { CmsModuleNav } from "@/components/cms/CmsModuleNav";
+// NOTA: no renderizar <CmsModuleNav /> aquí — el layout del segmento CMS
+// (app/plataforma/cms/layout.tsx) ya lo pinta una sola vez para todas las
+// páginas; duplicarlo causa la doble barra de navegación.
+
 
 export default function CmsAbTestingManagement() {
   const { token, user } = useAuth();
@@ -270,8 +273,6 @@ export default function CmsAbTestingManagement() {
 
   return (
     <div className="min-h-screen bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))]">
-      <CmsModuleNav />
-
       <main className="p-6 max-w-7xl mx-auto space-y-6">
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[hsl(var(--border))] pb-4">
