@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import WorkspaceLayout from './WorkspaceLayout';
 import WorkspaceMiniSidebar from './WorkspaceMiniSidebar';
@@ -58,11 +58,13 @@ vi.mock('@/components/ui/NotificationBell', () => ({ default: () => null }));
 vi.mock('@/components/WorkspaceInbox', () => ({ default: () => null }));
 
 function LayerStatusConsumer() {
-    const { layers } = useSidebarLayers();
+    const { layers, openLayer } = useSidebarLayers();
     return (
         <div>
             <span data-testid="layer-s1-status">{layers.S1 ? 'open' : 'closed'}</span>
             <span data-testid="layer-s2-status">{layers.S2 ? 'open' : 'closed'}</span>
+            <span data-testid="layer-right-status">{layers.RIGHT ? 'open' : 'closed'}</span>
+            <button type="button" onClick={() => openLayer('RIGHT')}>Open RIGHT layer</button>
         </div>
     );
 }
@@ -110,6 +112,50 @@ describe('WorkspaceLayout and WorkspaceMiniSidebar S2 behavior', () => {
         );
 
         expect(screen.getByTestId('layer-s2-status')).toHaveTextContent('open');
+    });
+
+    it('ignores a persisted projects focus mode and restores a mini S2 width on entry', () => {
+        navigationState.pathname = '/plataforma/projects';
+        localStorage.setItem('workspace:focus:projects', '1');
+        localStorage.setItem('workspace:s2:projects', 'hidden');
+        localStorage.setItem('s2Width', '64');
+
+        render(
+            <SidebarLayerProvider>
+                <WorkspaceLayout
+                    sidebarTitle="Proyectos"
+                    sidebarSections={[{ title: 'General', items: [{ id: 'all', label: 'Todos', href: '/plataforma/projects' }] }]}
+                >
+                    <LayerStatusConsumer />
+                    <div>Contenido de Proyectos</div>
+                </WorkspaceLayout>
+            </SidebarLayerProvider>
+        );
+
+        expect(screen.getByTestId('layer-s1-status')).toHaveTextContent('open');
+        expect(screen.getByTestId('layer-s2-status')).toHaveTextContent('open');
+        expect(localStorage.getItem('workspace:focus:projects')).toBe('0');
+        expect(localStorage.getItem('workspace:s2:projects')).toBe('visible');
+        expect(localStorage.getItem('s2Width')).toBe('280');
+    });
+
+    it.each(['not-a-number', '481'])('restores an invalid projects S2 width (%s) to its default', (savedWidth) => {
+        navigationState.pathname = '/plataforma/projects';
+        localStorage.setItem('s2Width', savedWidth);
+
+        render(
+            <SidebarLayerProvider>
+                <WorkspaceLayout
+                    sidebarTitle="Proyectos"
+                    sidebarSections={[{ title: 'General', items: [{ id: 'all', label: 'Todos', href: '/plataforma/projects' }] }]}
+                >
+                    <LayerStatusConsumer />
+                    <div>Contenido de Proyectos</div>
+                </WorkspaceLayout>
+            </SidebarLayerProvider>
+        );
+
+        expect(localStorage.getItem('s2Width')).toBe('280');
     });
 
     it('respects stored hidden state for other modules like crm', async () => {
@@ -160,6 +206,35 @@ describe('WorkspaceLayout and WorkspaceMiniSidebar S2 behavior', () => {
         const expandBtn = screen.getByRole('button', { name: /Expandir sidebar/i });
         await user.click(expandBtn);
 
+        expect(screen.getByTestId('layer-s2-status')).toHaveTextContent('open');
+    });
+
+    it('keeps S2 open when Escape is pressed with no RIGHT drawer open', () => {
+        render(
+            <SidebarLayerProvider>
+                <LayerStatusConsumer />
+            </SidebarLayerProvider>
+        );
+
+        fireEvent.keyDown(document, { key: 'Escape' });
+
+        expect(screen.getByTestId('layer-s2-status')).toHaveTextContent('open');
+        expect(screen.getByTestId('layer-right-status')).toHaveTextContent('closed');
+    });
+
+    it('closes only RIGHT on Escape and leaves S2 open', async () => {
+        const user = userEvent.setup();
+        render(
+            <SidebarLayerProvider>
+                <LayerStatusConsumer />
+            </SidebarLayerProvider>
+        );
+        await user.click(screen.getByRole('button', { name: 'Open RIGHT layer' }));
+        expect(screen.getByTestId('layer-right-status')).toHaveTextContent('open');
+
+        fireEvent.keyDown(document, { key: 'Escape' });
+
+        expect(screen.getByTestId('layer-right-status')).toHaveTextContent('closed');
         expect(screen.getByTestId('layer-s2-status')).toHaveTextContent('open');
     });
 

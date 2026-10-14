@@ -42,7 +42,6 @@ export function SidebarLayerProvider({ children }: { children: React.ReactNode }
     const closeTopLayer = useCallback(() => {
         setLayers(prev => {
             if (prev.RIGHT) return {...prev, RIGHT: false};
-            if (prev.S2) return {...prev, S2: false};
             return prev;
         });
     }, []);

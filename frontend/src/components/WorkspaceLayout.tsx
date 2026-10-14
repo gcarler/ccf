@@ -131,7 +131,16 @@ function WorkspaceLayoutInner({
         const savedS2 = isProjects
             ? true
             : localStorage.getItem(`workspace:s2:${moduleKey}`) !== 'hidden';
-        const savedFocusMode = localStorage.getItem(`workspace:focus:${moduleKey}`) === '1';
+        const savedFocusMode = !isProjects && localStorage.getItem(`workspace:focus:${moduleKey}`) === '1';
+
+        if (isProjects) {
+            try {
+                localStorage.setItem('workspace:focus:projects', '0');
+                localStorage.setItem('workspace:s2:projects', 'visible');
+            } catch {
+                // Sidebar visibility still works for this session when storage is unavailable.
+            }
+        }
 
         if (s1ShouldBeOpen) openLayer('S1');
         else closeLayer('S1');
@@ -255,11 +264,16 @@ function WorkspaceLayoutInner({
     const minS2Width = 64; // Permite reducirse a sÃ³lo los iconos (64px)
     const snapThreshold = 130; // Debajo de esto se 'snappea' a 64px
     const maxS2Width = 480;
+    const defaultS2Width = 280;
 
     const [s2WidthNum, setS2WidthNum] = useState<number>(() => {
         if (typeof window === 'undefined') return 280;
         const saved = localStorage.getItem('s2Width');
-        return saved ? parseInt(saved, 10) : 280;
+        const initialWidth = saved ? parseInt(saved, 10) : defaultS2Width;
+        if (moduleKey === 'projects' && (!Number.isFinite(initialWidth) || initialWidth <= snapThreshold || initialWidth > maxS2Width)) {
+            return defaultS2Width;
+        }
+        return initialWidth;
     });
     const [isDraggingS2, setIsDraggingS2] = useState(false);
     const startPosRef = useRef<number>(0);
@@ -270,6 +284,15 @@ function WorkspaceLayoutInner({
             localStorage.setItem('s2Width', s2WidthNum.toString());
         }
     }, [s2WidthNum]);
+
+    useEffect(() => {
+        if (moduleKey !== 'projects') return;
+        setS2WidthNum((current) => (
+            !Number.isFinite(current) || current <= snapThreshold || current > maxS2Width
+                ? defaultS2Width
+                : current
+        ));
+    }, [moduleKey]);
 
     useEffect(() => {
         if (isTabletViewport && s2WidthNum > 340) {
@@ -323,7 +346,6 @@ function WorkspaceLayoutInner({
     const isMiniSidebar = inlineS2Visible && resolvedS2Width <= snapThreshold;
     const currentS2Width = inlineS2Visible ? `${resolvedS2Width}px` : '0px';
 
-    const defaultS2Width = 280;
     const expandedS2Width = 440;
     const isS2Expanded = resolvedS2Width >= 400;
 

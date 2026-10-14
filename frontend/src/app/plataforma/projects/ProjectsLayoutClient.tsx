@@ -38,22 +38,20 @@ export default function ProjectsLayoutClient({ children, initialProjectPage }: P
     const [currentProject, setCurrentProject] = useState<ProjectRecord | null>(null);
     const initialPageAvailable = useRef(Boolean(initialProjectPage));
 
-    const { openLayer, layers } = useSidebarLayers();
-    const initialLayersChecked = useRef(false);
+    const { openLayer } = useSidebarLayers();
+    const routeTarget = projectId ? `project:${projectId}` : 'projects-root';
+    const previousRouteTarget = useRef<string | null>(null);
     useEffect(() => {
-        if (!layers.S1) {
-            openLayer('S1');
+        if (previousRouteTarget.current === routeTarget) return;
+        previousRouteTarget.current = routeTarget;
+        openLayer('S1');
+        openLayer('S2');
+        try {
+            localStorage.setItem('workspace:s2:projects', 'visible');
+        } catch {
+            // The current route still opens both sidebars if storage is unavailable.
         }
-        if (!initialLayersChecked.current) {
-            initialLayersChecked.current = true;
-            if (!layers.S2) {
-                openLayer('S2');
-            }
-            try {
-                localStorage.setItem('workspace:s2:projects', 'visible');
-            } catch {}
-        }
-    }, [openLayer, layers.S1, layers.S2]);
+    }, [openLayer, routeTarget]);
 
     const currentProjectRef = useRef<ProjectRecord | null>(null);
     currentProjectRef.current = currentProject;

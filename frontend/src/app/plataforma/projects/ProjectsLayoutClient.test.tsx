@@ -86,6 +86,7 @@ describe('ProjectsLayoutClient', () => {
     layoutMocks.layers = { S1: true, S2: true, S3: false };
     layoutMocks.openLayer.mockClear();
     layoutMocks.apiFetch.mockReset();
+    localStorage.clear();
   });
 
   it('clears the previous project navigation and ignores stale responses after a project switch', async () => {
@@ -228,12 +229,37 @@ describe('ProjectsLayoutClient', () => {
     expect(screen.getByRole('link', { name: 'Tarea persistente A (actualizada)' })).toBeInTheDocument();
   });
 
-  it('opens sidebar layers S1 and S2 by default if they are closed', async () => {
-    layoutMocks.apiFetch.mockReturnValue(new Promise(() => {}));
+  it('opens S1 and S2 for root and project routes, but respects a manual close on the same route', async () => {
+    layoutMocks.apiFetch.mockResolvedValue({ items: [], total: 0, skip: 0, limit: 100 });
+    layoutMocks.projectId = undefined;
+    layoutMocks.pathname = '/plataforma/projects';
     layoutMocks.layers = { S1: false, S2: false, S3: false };
-    render(
+    const { rerender } = render(
       <ProjectsLayoutClient initialProjectPage={null}><main>Contenido</main></ProjectsLayoutClient>,
     );
+
+    expect(layoutMocks.openLayer).toHaveBeenCalledWith('S1');
+    expect(layoutMocks.openLayer).toHaveBeenCalledWith('S2');
+    expect(localStorage.getItem('workspace:s2:projects')).toBe('visible');
+
+    layoutMocks.openLayer.mockClear();
+    layoutMocks.layers = { S1: true, S2: false, S3: false };
+    localStorage.setItem('workspace:s2:projects', 'hidden');
+    rerender(<ProjectsLayoutClient initialProjectPage={null}><main>Contenido</main></ProjectsLayoutClient>);
+    expect(layoutMocks.openLayer).not.toHaveBeenCalled();
+    expect(localStorage.getItem('workspace:s2:projects')).toBe('hidden');
+
+    layoutMocks.projectId = 'project-a';
+    layoutMocks.pathname = '/plataforma/projects/project-a';
+    rerender(<ProjectsLayoutClient initialProjectPage={null}><main>Contenido</main></ProjectsLayoutClient>);
+    expect(layoutMocks.openLayer).toHaveBeenCalledWith('S1');
+    expect(layoutMocks.openLayer).toHaveBeenCalledWith('S2');
+    expect(localStorage.getItem('workspace:s2:projects')).toBe('visible');
+
+    layoutMocks.openLayer.mockClear();
+    layoutMocks.projectId = undefined;
+    layoutMocks.pathname = '/plataforma/projects';
+    rerender(<ProjectsLayoutClient initialProjectPage={null}><main>Contenido</main></ProjectsLayoutClient>);
     expect(layoutMocks.openLayer).toHaveBeenCalledWith('S1');
     expect(layoutMocks.openLayer).toHaveBeenCalledWith('S2');
   });
