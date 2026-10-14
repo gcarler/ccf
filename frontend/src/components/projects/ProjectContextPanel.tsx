@@ -39,13 +39,50 @@ interface ProjectContextPanelProps {
   }>;
 }
 
-const TABS: Array<{ id: ContextTab; label: string; icon: typeof MessageSquare }> = [
-  { id: "tools", label: "Herramientas", icon: Wrench },
+/** Orden por defecto (TKT-PRO-SCROLLBARS-AND-MOVABLE-TABS-01): donde reordenar las pestañas sigue respetando esta secuencia base. */
+const DEFAULT_TABS: Array<{ id: ContextTab; label: string; icon: typeof MessageSquare }> = [
   { id: "chat", label: "Chat", icon: MessageSquare },
   { id: "inbox", label: "Inbox", icon: Inbox },
+  { id: "tools", label: "Herramientas", icon: Wrench },
   { id: "details", label: "Detalles", icon: Users },
   { id: "activity", label: "Historia", icon: Activity },
 ];
+const DEFAULT_TAB_ORDER = DEFAULT_TABS.map((tab) => tab.id);
+const TAB_BY_ID = new Map(DEFAULT_TABS.map((tab) => [tab.id, tab]));
+const TAB_ID_SET = new Set<ContextTab>(DEFAULT_TAB_ORDER);
+
+/**
+ * Preferencia de orden de pestañas por usuario (persistida en localStorage).
+ * Debe validar contra los IDs canónicos: un valor corrupto o parcial no debe
+ * romper el panel (merge con el orden por defecto para conservar todo).
+ */
+const TABS_ORDER_STORAGE_KEY = "workspace:project_context_tabs_order";
+
+function sanitizeTabOrder(raw: unknown): ContextTab[] {
+  if (!Array.isArray(raw)) return [...DEFAULT_TAB_ORDER];
+  const seen = new Set<ContextTab>();
+  for (const item of raw) {
+    if (typeof item === "string" && TAB_ID_SET.has(item as ContextTab)) {
+      seen.add(item as ContextTab);
+    }
+  }
+  const order = raw.filter((item): item is ContextTab =>
+    typeof item === "string" && TAB_ID_SET.has(item as ContextTab) && seen.has(item as ContextTab),
+  );
+  for (const id of DEFAULT_TAB_ORDER) {
+    if (!order.includes(id)) order.push(id);
+  }
+  return order;
+}
+
+function readStoredTabOrder(): ContextTab[] {
+  if (typeof window === "undefined") return [...DEFAULT_TAB_ORDER];
+  try {
+    return sanitizeTabOrder(JSON.parse(localStorage.getItem(TABS_ORDER_STORAGE_KEY) ?? ""));
+  } catch {
+    return [...DEFAULT_TAB_ORDER];
+  }
+}
 
 export default function ProjectContextPanel({
   className,
@@ -62,10 +99,17 @@ export default function ProjectContextPanel({
 }: ProjectContextPanelProps) {
   const { project, tasks, activities, reloadProject } = useProjectUpdate();
   const { token } = useAuth();
-  // Herramientas activa por defecto cuando el panel recibe tools (TKT-PROJECTS-CONTEXT-TABS-ORDER-01)
-  const [activeTab, setActiveTab] = useState<ContextTab>(
-    defaultTab ?? (tools?.length ? "tools" : "chat"),
-  );
+  // Orden personalizado de pestañas, oculta en localStorage (TKT-PRO-SCROLLBARS-AND-MOVABLE-TABS-01)
+  const [tabOrder, setTabOrder] = useState<ContextTab[]>(() => readStoredTabOrder());
+  // Primera pestaña visible activa por defecto: 'chat' salvo que defaultTab
+  // llegue explícito o el usuario haya reordenado (su primera pestaña gana).
+  const [activeTab, setActiveTab] = useState<ContextTab>(() => {
+    if (defaultTab) return defaultTab;
+    const stored = readStoredTabOrder();
+    return (tools?.length ? stored[0] : stored.find((id) => id !== "tools")) ?? "chat";
+  });
+  const [dragTab, setDragTab] = useState<ContextTab | null>(null);
+  const [dragOverTab, setDragOverTab] = useState<ContextTab | null>(null);
   const [internalMaximized, setInternalMaximized] = useState(false);
   const [internalMinimized, setInternalMinimized] = useState(false);
   const [width, setWidth] = useState<number>(() => {
@@ -130,7 +174,61 @@ export default function ProjectContextPanel({
   });
   const globalUnread = notifications.filter((notification) => !notification.read).length;
 
-  const visibleTabs = tools?.length ? TABS : TABS.filter((item) => item.id !== "tools");
+  const visibleTabs = (tools?.length ? tabOrder : tabOrder.filter((id) => id !== "tools"))
+    .map((id) => TAB_BY_ID.get(id))
+    .filter((tab): tab is NonNullable<typeof tab> => Boolean(tab));
+
+  /** Reordena 'from' a la posición exacta de 'to' (splice: las demás siguen su curso) y persiste. */
+  const moveTabTo = useCallback((from: ContextTab, to: ContextTab) => {
+    if (from === to) return;
+    setTabOrder((previous) => {
+      if (!previous.includes(from) || !previous.includes(to)) return previous;
+      const next = previous.filter((id) => id !== from);
+      next.splice(next.indexOf(to), 0, from);
+      try {
+        localStorage.setItem(TABS_ORDER_STORAGE_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  }, []);
+
+  const persistTabOrder = useCallback((next: ContextTab[]) => {
+    setTabOrder(next);
+    try {
+      localStorage.setItem(TABS_ORDER_STORAGE_KEY, JSON.stringify(next));
+    } catch {}
+  }, []);
+
+  const handleTabDragStart = useCallback((event: React.DragEvent<HTMLButtonElement>, id: ContextTab) => {
+    setDragTab(id);
+    event.dataTransfer.effectAllowed = "move";
+    try {
+      event.dataTransfer.setData("text/plain", id);
+    } catch {}
+  }, []);
+
+  const handleTabDragOver = useCallback((event: React.DragEvent<HTMLButtonElement>, id: ContextTab) => {
+    if (dragTab && dragTab !== id) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+      setDragOverTab(id);
+    }
+  }, [dragTab]);
+
+  const handleTabDragLeave = useCallback((event: React.DragEvent<HTMLButtonElement>, id: ContextTab) => {
+    setDragOverTab((current) => (current === id ? null : current));
+  }, []);
+
+  const handleTabDrop = useCallback((event: React.DragEvent<HTMLButtonElement>, id: ContextTab) => {
+    event.preventDefault();
+    if (dragTab) moveTabTo(dragTab, id);
+    setDragOverTab(null);
+  }, [dragTab, moveTabTo]);
+
+  const handleTabDragEnd = useCallback(() => {
+    setDragTab(null);
+    setDragOverTab(null);
+  }, []);
 
   const focusTab = (tab: ContextTab) => {
     setActiveTab(tab);
@@ -139,6 +237,19 @@ export default function ProjectContextPanel({
 
   const handleTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, tab: ContextTab) => {
     const currentIndex = visibleTabs.findIndex((item) => item.id === tab);
+    if ((event.key === "ArrowLeft" || event.key === "ArrowRight") && event.altKey && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
+      // Reordenamiento accesible: Alt+Flechas mueve la pestaña en el orden global sin robar el foco (TKT-PRO-SCROLLBARS-AND-MOVABLE-TABS-01).
+      event.preventDefault();
+      const orderIndex = tabOrder.indexOf(tab);
+      const targetIndex = event.key === "ArrowLeft" ? orderIndex - 1 : orderIndex + 1;
+      if (targetIndex >= 0 && targetIndex < tabOrder.length) {
+        const next = [...tabOrder];
+        next.splice(orderIndex, 1);
+        next.splice(targetIndex, 0, tab);
+        persistTabOrder(next);
+      }
+      return;
+    }
     if (event.key === "ArrowRight" || event.key === "ArrowDown") {
       event.preventDefault();
       focusTab(visibleTabs[(currentIndex + 1) % visibleTabs.length].id);
@@ -186,17 +297,25 @@ export default function ProjectContextPanel({
                 key={id}
                 type="button"
                 role="tab"
+                draggable={true}
                 aria-label={id === "inbox" && projectInboxUnread > 0 ? `${label}, ${projectInboxUnread} sin leer` : label}
                 aria-selected={activeTab === id}
+                aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight"
+                onDragStart={(event) => handleTabDragStart(event, id)}
+                onDragOver={(event) => handleTabDragOver(event, id)}
+                onDragLeave={(event) => handleTabDragLeave(event, id)}
+                onDrop={(event) => handleTabDrop(event, id)}
+                onDragEnd={handleTabDragEnd}
                 onClick={() => {
                   setActiveTab(id);
                   toggleMinimize();
                 }}
                 className={clsx(
-                  "relative flex h-8 w-8 items-center justify-center rounded-md transition-colors",
+                  "relative flex h-8 w-8 items-center justify-center rounded-md transition-colors cursor-grab active:cursor-grabbing",
                   activeTab === id
                     ? "bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))]"
-                    : "text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--foreground))]"
+                    : "text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--foreground))]",
+                  dragOverTab === id && dragTab && dragTab !== id && "ring-1 ring-[hsl(var(--primary))]",
                 )}
               >
                 <Icon size={16} />
@@ -316,17 +435,26 @@ export default function ProjectContextPanel({
             id={`project-context-tab-${id}`}
             type="button"
             role="tab"
+            draggable={true}
             aria-label={id === "inbox" && projectInboxUnread > 0 ? `${label}, ${projectInboxUnread} sin leer` : label}
             aria-selected={activeTab === id}
             aria-controls="project-context-panel"
+            aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight"
+            title="Arrastra para reordenar (Alt+←/→ con teclado)"
             ref={(element) => { tabRefs.current[id] = element; }}
             onClick={() => setActiveTab(id)}
             onKeyDown={(event) => handleTabKeyDown(event, id)}
+            onDragStart={(event) => handleTabDragStart(event, id)}
+            onDragOver={(event) => handleTabDragOver(event, id)}
+            onDragLeave={(event) => handleTabDragLeave(event, id)}
+            onDrop={(event) => handleTabDrop(event, id)}
+            onDragEnd={handleTabDragEnd}
             className={clsx(
-              "flex min-w-[5.5rem] flex-1 items-center justify-center gap-1.5 border-b-2 px-2 py-2 text-2xs font-bold transition-colors",
+              "flex min-w-[5.5rem] flex-1 items-center justify-center gap-1.5 border-b-2 px-2 py-2 text-2xs font-bold transition-colors cursor-grab active:cursor-grabbing",
               activeTab === id
                 ? "border-[hsl(var(--primary))] text-[hsl(var(--primary))]"
                 : "border-transparent text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]",
+              dragOverTab === id && dragTab && dragTab !== id && "border-b-[hsl(var(--primary))] outline outline-1 outline-[hsl(var(--primary))] rounded-t-md",
             )}
           >
             <Icon size={13} />

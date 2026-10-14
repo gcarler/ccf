@@ -492,26 +492,91 @@
     color: white !important;
   }
 
+  /* --------------------------------------------------------------
+     Scrollbars Pro — verticales y horizontales
+     (TKT-PRO-SCROLLBARS-AND-MOVABLE-TABS-01)
+     Toda la plataforma obtiene thumbs tipo cápsula flotante con
+     transición suave y tinte primario al interactuar. Solo tokens
+     semánticos (se adaptan a day/night sin reglas por tema).
+     .scrollbar-none / .hide-scrollbar se declaran después para
+     conservar intacta su capacidad de ocultar la barra.
+     -------------------------------------------------------------- */
+  .workspace-platform,
+  .workspace-platform *,
+  .scrollbar-thin,
+  .scrollbar-pro,
+  .scrollbar-pro * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--text-secondary) / 0.28) transparent;
+  }
+
+  .workspace-platform *:hover,
+  .scrollbar-thin:hover,
+  .scrollbar-pro:hover,
+  .scrollbar-pro *:hover {
+    scrollbar-color: hsl(var(--primary) / 0.55) hsl(var(--surface-2) / 0.5);
+  }
+
+  .workspace-platform ::-webkit-scrollbar,
+  .workspace-platform *::-webkit-scrollbar,
+  .scrollbar-thin::-webkit-scrollbar,
+  .scrollbar-pro::-webkit-scrollbar,
+  .scrollbar-pro *::-webkit-scrollbar {
+    width: 7px;
+    height: 7px; /* la misma regla cubre barras horizontales */
+  }
+
+  .workspace-platform ::-webkit-scrollbar-track,
+  .workspace-platform *::-webkit-scrollbar-track,
+  .scrollbar-thin::-webkit-scrollbar-track,
+  .scrollbar-pro::-webkit-scrollbar-track,
+  .scrollbar-pro *::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 9999px;
+  }
+
+  .workspace-platform ::-webkit-scrollbar-thumb,
+  .workspace-platform *::-webkit-scrollbar-thumb,
+  .scrollbar-thin::-webkit-scrollbar-thumb,
+  .scrollbar-pro::-webkit-scrollbar-thumb,
+  .scrollbar-pro *::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    border: 1.5px solid transparent;
+    background-clip: padding-box; /* cápsula flotante sobre el track */
+    background-color: hsl(var(--text-secondary) / 0.28);
+    transition: background-color 0.2s ease;
+  }
+
+  .workspace-platform ::-webkit-scrollbar-thumb:hover,
+  .workspace-platform *::-webkit-scrollbar-thumb:hover,
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover,
+  .scrollbar-pro::-webkit-scrollbar-thumb:hover,
+  .scrollbar-pro *::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--primary) / 0.65);
+  }
+
+  .workspace-platform ::-webkit-scrollbar-thumb:active,
+  .workspace-platform *::-webkit-scrollbar-thumb:active,
+  .scrollbar-thin::-webkit-scrollbar-thumb:active,
+  .scrollbar-pro::-webkit-scrollbar-thumb:active,
+  .scrollbar-pro *::-webkit-scrollbar-thumb:active {
+    background-color: hsl(var(--primary) / 0.85);
+  }
+
+  .workspace-platform ::-webkit-scrollbar-corner,
+  .workspace-platform *::-webkit-scrollbar-corner,
+  .scrollbar-pro::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Preservadas intactas: ocultar scrollbars donde el diseño lo pide */
   .scrollbar-none::-webkit-scrollbar {
     display: none;
   }
 
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.05);
-    border-radius: 10px;
-  }
-
-  .dark .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.05);
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
 
   .hide-scrollbar::-webkit-scrollbar {

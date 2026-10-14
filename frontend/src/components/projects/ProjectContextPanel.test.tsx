@@ -1,6 +1,6 @@
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ProjectContextPanel from "./ProjectContextPanel";
 import { ProjectUpdateProvider, type ProjectUpdateContextValue } from "@/context/ProjectUpdateContext";
@@ -111,11 +111,15 @@ function renderPanel(
 }
 
 describe("ProjectContextPanel", () => {
+  const TABS_STORAGE_KEY = "workspace:project_context_tabs_order";
+  const getTabIds = () => screen.getAllByRole("tab").map((tab) => tab.id);
+
   beforeEach(() => {
     socketMock.onEvent = null;
     socketMock.calls = [];
     projectInboxMock.refresh.mockClear();
     projectInboxMock.markAsRead.mockClear();
+    window.localStorage.clear();
   });
 
   it("renders the default chat tab and keeps the inbox socket disabled in Chat", () => {
@@ -295,15 +299,16 @@ describe("ProjectContextPanel", () => {
       },
     );
 
-    // Orden exacto de pestañas + Herramientas activa por defecto (TKT-PROJECTS-CONTEXT-TABS-ORDER-01)
-    expect(screen.getAllByRole("tab").map((tab) => tab.id)).toEqual([
-      "project-context-tab-tools",
+    // Orden por defecto 1°Chat 2°Inbox 3°Herramientas 4°Detalles 5°Historia, Chat activa (TKT-PRO-SCROLLBARS-AND-MOVABLE-TABS-01)
+    expect(getTabIds()).toEqual([
       "project-context-tab-chat",
       "project-context-tab-inbox",
+      "project-context-tab-tools",
       "project-context-tab-details",
       "project-context-tab-activity",
     ]);
-    expect(screen.getByRole("tab", { name: "Herramientas" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "Chat" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "Herramientas" })).toHaveAttribute("aria-selected", "false");
 
     const toolsTab = screen.getByRole("tab", { name: "Herramientas" });
     await user.click(toolsTab);
@@ -313,4 +318,120 @@ describe("ProjectContextPanel", () => {
     await user.click(driveBtn);
     expect(onSelectDrive).toHaveBeenCalledTimes(1);
   });
+
+  it("reorders tabs by drag & drop (Historia al primer lugar) and persists the custom order", () => {
+    renderPanel({}, { tools: [{ key: "drive", label: "Drive", onSelect: vi.fn() }] });
+
+    const historia = screen.getByRole("tab", { name: "Historia" });
+    const chat = screen.getByRole("tab", { name: "Chat" });
+
+    fireEvent.dragStart(historia, { dataTransfer: new MockDataTransfer("activity") });
+    fireEvent.dragOver(chat, { dataTransfer: new MockDataTransfer("activity") });
+    fireEvent.drop(chat, { dataTransfer: new MockDataTransfer("activity") });
+    fireEvent.dragEnd(historia, { dataTransfer: new MockDataTransfer("activity") });
+
+    // Las demás pestañas siguen su curso manteniendo su secuencia relativa (splice)
+    expect(getTabIds()).toEqual([
+      "project-context-tab-activity",
+      "project-context-tab-chat",
+      "project-context-tab-inbox",
+      "project-context-tab-tools",
+      "project-context-tab-details",
+    ]);
+    expect(JSON.parse(window.localStorage.getItem(TABS_STORAGE_KEY) ?? "null")).toEqual([
+      "activity",
+      "chat",
+      "inbox",
+      "tools",
+      "details",
+    ]);
+  });
+
+  it("reorders tabs with the keyboard (Alt+ArrowLeft) and persists the custom order", () => {
+    renderPanel({}, { tools: [{ key: "drive", label: "Drive", onSelect: vi.fn() }] });
+
+    fireEvent.keyDown(screen.getByRole("tab", { name: /Inbox/ }), {
+      key: "ArrowLeft",
+      altKey: true,
+      shiftKey: false,
+      ctrlKey: false,
+      metaKey: false,
+    });
+
+    expect(getTabIds()).toEqual([
+      "project-context-tab-inbox",
+      "project-context-tab-chat",
+      "project-context-tab-tools",
+      "project-context-tab-details",
+      "project-context-tab-activity",
+    ]);
+    expect(JSON.parse(window.localStorage.getItem(TABS_STORAGE_KEY) ?? "null")).toEqual([
+      "inbox",
+      "chat",
+      "tools",
+      "details",
+      "activity",
+    ]);
+  });
+
+  it("hydrates the custom tab order from localStorage and activates the user's first tab by default", () => {
+    window.localStorage.setItem(
+      TABS_STORAGE_KEY,
+      JSON.stringify(["activity", "chat", "inbox", "tools", "details"]),
+    );
+
+    renderPanel({}, { tools: [{ key: "drive", label: "Drive", onSelect: vi.fn() }] });
+
+    expect(getTabIds()).toEqual([
+      "project-context-tab-activity",
+      "project-context-tab-chat",
+      "project-context-tab-inbox",
+      "project-context-tab-tools",
+      "project-context-tab-details",
+    ]);
+    // La primera pestaña colocada por el usuario gana como activa por defecto
+    expect(screen.getByRole("tab", { name: "Historia" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "Chat" })).toHaveAttribute("aria-selected", "false");
+  });
+
+  it("ignores corrupted localStorage orders and falls back to the default sequence", () => {
+    window.localStorage.setItem(TABS_STORAGE_KEY, "no-json{{");
+
+    renderPanel({}, { tools: [{ key: "drive", label: "Drive", onSelect: vi.fn() }] });
+
+    expect(getTabIds()).toEqual([
+      "project-context-tab-chat",
+      "project-context-tab-inbox",
+      "project-context-tab-tools",
+      "project-context-tab-details",
+      "project-context-tab-activity",
+    ]);
+    expect(screen.getByRole("tab", { name: "Chat" })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("shows a primary-token drop indicator on the drop target while dragging", () => {
+    renderPanel();
+
+    const historia = screen.getByRole("tab", { name: "Historia" });
+    const chat = screen.getByRole("tab", { name: "Chat" });
+
+    fireEvent.dragStart(historia, { dataTransfer: new MockDataTransfer("activity") });
+    fireEvent.dragOver(chat, { dataTransfer: new MockDataTransfer("activity") });
+
+    expect(chat.className).toContain("outline-[hsl(var(--primary))]");
+    expect(screen.getByRole("tab", { name: "Historia" }).className).toContain("cursor-grab");
+  });
 });
+
+class MockDataTransfer {
+  private values = new Map<string, string>();
+  constructor(initial?: string) {
+    if (initial) this.setData("text/plain", initial);
+  }
+  setData(type: string, value: string) {
+    this.values.set(type, value);
+  }
+  getData(type: string) {
+    return this.values.get(type) ?? "";
+  }
+}
