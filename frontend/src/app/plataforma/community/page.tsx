@@ -1,1251 +1,285 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import { apiFetch } from '@/lib/http';
-import CommunityToolbarChip from '@/components/community/ToolbarChip';
-import CommunityQuickCommentCard from '@/components/community/QuickCommentCard';
-import CommunityListRow from '@/components/community/ListRow';
-import { formatDueLabel, getInitials } from '@/lib/community/utils';
-import {
-    Bell,
-    Megaphone,
-    MessageSquare,
-    Calendar,
-    HeartHandshake,
-    Heart,
-    Users,
-    Search,
-    Star,
-    ArrowUpRight,
-    CheckCircle2,
-    MessageCircle,
-    Tag,
-    Clock4,
-    Filter,
-    SlidersHorizontal,
-    RefreshCcw,
-    ArrowLeft,
-    Share2,
-    Zap,
-    UserMinus,
-    List,
-    KanbanSquare,
-    GanttChart,
-    Table as TableIcon,
-    Columns3
-} from 'lucide-react';
-import { Plus } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import Link from "next/link";
+import { Bell, CalendarDays, Download, Heart, HeartHandshake, Megaphone, MessageSquare, Plus, RefreshCw, Search, Star, Users } from "lucide-react";
+import { toast } from "sonner";
+import { DSButton, DSCard, DSInput, DSSkeleton } from "@/design";
+import RightPanel from "@/components/ui/RightPanel";
+import { useAuth } from "@/context/AuthContext";
+import { apiFetch } from "@/lib/http";
+import { formatDate } from "@/lib/format";
 
-type ColumnId = 'canales' | 'cuidado' | 'grupos' | 'generosidad';
-type ViewId = 'list' | 'board' | 'calendar' | 'gantt' | 'table';
+interface CommunityBoardCard {
+  id: string;
+  title: string;
+  body?: string | null;
+  created_at: string;
+}
 
-type BoardItem = {
-    id: string;
-    name: string;
-    stage: string;
-    owner: string;
-    due: string;
-    priority: 'Alta' | 'Media' | 'Baja';
-    status: string;
-    comments: string;
-    link: string;
-};
-
-type CommunityApiCard = {
-    id: number;
-    column_id: ColumnId;
-    name: string;
-    stage: string;
-    owner: string;
-    due_date?: string | null;
-    priority: BoardItem['priority'];
-    status: string;
-    comments?: string | null;
-    link?: string | null;
-};
-
-type NewCardForm = {
-    columnId: ColumnId;
-    name: string;
-    stage: string;
-    owner: string;
-    due: string;
-    priority: BoardItem['priority'];
-    status: string;
-    comments: string;
-};
-
-const initialBoardColumns: { id: ColumnId; title: string; description: string; accent: string; items: BoardItem[] }[] = [
-    {
-        id: 'canales',
-        title: 'Flujo de canales',
-        description: 'Notificaciones, anuncios y bandejas que requieren respuesta hoy.',
-        accent: 'text-[hsl(var(--info))]',
-        items: [
-            {
-                id: 'notif-rollup',
-                name: 'Resumen semanal de notificaciones',
-                stage: 'Notificaciones',
-                owner: 'Equipo Comms',
-                due: 'Hoy 6:00 p.m.',
-                priority: 'Alta',
-                status: 'En curso',
-                comments: '12 alertas sin leer',
-                link: '/plataforma/community/notifications'
-            },
-            {
-                id: 'broadcast',
-                name: 'Broadcast pastoral “Familias”',
-                stage: 'Anuncios',
-                owner: 'Ps. Laura',
-                due: 'Mañana',
-                priority: 'Media',
-                status: 'Listo',
-                comments: 'Programado en MailerLite',
-                link: '/plataforma/community/announcements'
-            },
-            {
-                id: 'dm-bandeja',
-                name: 'Bandeja de mensajes',
-                stage: 'Mensajes',
-                owner: 'Coordinación',
-                due: '—',
-                priority: 'Media',
-                status: 'Pendiente',
-                comments: '8 hilos activos',
-                link: '/plataforma/messages'
-            }
-        ]
-    },
-    {
-        id: 'cuidado',
-        title: 'Cuidado pastoral',
-        description: 'Seguimiento de oraciones, testimonios y acompañamientos clave.',
-        accent: 'text-[hsl(var(--danger))]',
-        items: [
-            {
-                id: 'prayer-wall',
-                name: 'Revisión del muro de oración',
-                stage: 'Oración',
-                owner: 'Intercesión',
-                due: 'Hoy 9:00 p.m.',
-                priority: 'Alta',
-                status: 'En curso',
-                comments: '5 peticiones nuevas',
-                link: '/plataforma/community/prayer'
-            },
-            {
-                id: 'testimonios',
-                name: 'Testimonios para el domingo',
-                stage: 'Testimonios',
-                owner: 'Creative Team',
-                due: 'Viernes',
-                priority: 'Media',
-                status: 'Revisión',
-                comments: '3 historias en cola',
-                link: '/plataforma/community/testimonies'
-            }
-        ]
-    },
-    {
-        id: 'grupos',
-        title: 'Grupos & eventos',
-        description: 'Coordinación de grupos pequeños, descubrimiento y calendario.',
-        accent: 'text-[hsl(var(--warning))]',
-        items: [
-            {
-                id: 'grupos-lideres',
-                name: 'Rotaciones de líderes',
-                stage: 'Grupos',
-                owner: 'Coaching',
-                due: 'Próx. martes',
-                priority: 'Media',
-                status: 'En curso',
-                comments: '18 grupos confirmados',
-                link: '/plataforma/community/grupos'
-            },
-            {
-                id: 'discover-labs',
-                name: 'Labs “Descubrir tu llamado”',
-                stage: 'Descubrir',
-                owner: 'RR.HH. Voluntarios',
-                due: 'Jueves',
-                priority: 'Baja',
-                status: 'Planificado',
-                comments: '26 registros',
-                link: '/plataforma/community/discover'
-            },
-            {
-                id: 'ensayo-worship',
-                name: 'Ensayo Worship Night',
-                stage: 'Eventos',
-                owner: 'Producción',
-                due: 'Sábado',
-                priority: 'Alta',
-                status: 'Listo',
-                comments: 'Calendario sincronizado',
-                link: '/plataforma/community/events'
-            }
-        ]
-    },
-    {
-        id: 'generosidad',
-        title: 'Impacto & generosidad',
-        description: 'Campañas de ofrendas, ayudas y reportes de impacto.',
-        accent: 'text-[hsl(var(--success))]',
-        items: [
-            {
-                id: 'ofrendas',
-                name: 'Campaña “Navidad Generosa”',
-                stage: 'Ofrendas',
-                owner: 'Finanzas',
-                due: '15 Dic',
-                priority: 'Alta',
-                status: 'En curso',
-                comments: '$18.4M recaudados',
-                link: '/plataforma/community/give'
-            },
-            {
-                id: 'ayuda-social',
-                name: 'Entrega de despensas Zona Norte',
-                stage: 'Impacto social',
-                owner: 'Serve Team',
-                due: 'Domingo',
-                priority: 'Media',
-                status: 'Coordinando',
-                comments: '40 familias enlistadas',
-                link: '/plataforma/community/give'
-            }
-        ]
-    }
-];
-
-const columnIcons: Record<ColumnId, LucideIcon> = {
-    canales: Bell,
-    cuidado: Heart,
-    grupos: Users,
-    generosidad: HeartHandshake
-};
-
-const featureCards = [
-    {
-        title: 'Notificaciones',
-        description: 'Resumen inteligente de lo que está pasando en tus equipos y ministerios.',
-        icon: Bell,
-        href: '/plataforma/community/notifications',
-        tone: 'from-[hsl(var(--primary)/0.15)] to-[hsl(var(--primary)/0.05)]'
-    },
-    {
-        title: 'Anuncios',
-        description: 'Mensajes oficiales del equipo pastoral y de comunicaciones.',
-        icon: Megaphone,
-        href: '/plataforma/community/announcements',
-        tone: 'to-[hsl(var(--warning)/40%)] to-[hsl(var(--warning)/30%)]'
-    },
-    {
-        title: 'Mensajes',
-        description: 'Chats privados y grupos para coordinar iniciativas.',
-        icon: MessageSquare,
-        href: '/plataforma/messages',
-        tone: 'to-[hsl(var(--success)/40%)] to-[hsl(var(--success)/30%)]'
-    },
-    {
-        title: 'Eventos',
-        description: 'Calendario vivo con reuniones, ensayos y experiencias.',
-        icon: Calendar,
-        href: '/plataforma/community/events',
-        tone: 'to-[hsl(var(--info)/40%)] to-[hsl(var(--info)/30%)]'
-    },
-    {
-        title: 'Ofrendas & generosidad',
-        description: 'Facilita ofrendas especiales y campañas solidarias.',
-        icon: HeartHandshake,
-        href: '/plataforma/community/give',
-        tone: 'to-[hsl(var(--danger)/40%)] to-[hsl(var(--danger)/30%)]'
-    },
-    {
-        title: 'Muro de oración',
-        description: 'Comparte peticiones y celebra respuestas en comunidad.',
-        icon: Heart,
-        href: '/plataforma/community/prayer',
-        tone: 'to-[hsl(var(--info)/40%)] to-[hsl(var(--info)/30%)]'
-    },
-    {
-        title: 'Testimonios',
-        description: 'Historias reales que inspiran y fortalecen la fe.',
-        icon: Star,
-        href: '/plataforma/community/testimonies',
-        tone: 'from-[hsl(var(--warning)/0.25)] to-[hsl(var(--warning)/0.1)]'
-    },
-    {
-        title: 'Grupos pequeños',
-        description: 'Encuentra tu círculo y mantente conectado entre semana.',
-        icon: Users,
-        href: '/plataforma/community/grupos',
-        tone: 'from-[hsl(var(--surface-2))]/40 to-[hsl(var(--surface-1))]/30'
-    },
-    {
-        title: 'Descubrir',
-        description: 'Explora nuevos ministerios, serving teams y oportunidades.',
-        icon: Search,
-        href: '/plataforma/community/discover',
-        tone: 'to-[hsl(var(--info)/40%)] to-[hsl(var(--info)/30%)]'
-    }
-];
-
-const priorityTone: Record<'Alta' | 'Media' | 'Baja', string> = {
-    Alta: 'bg-[hsl(var(--destructive)/0.15)] text-[hsl(var(--destructive))] border-[hsl(var(--destructive)/0.3)]',
-    Media: 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.3)]',
-    Baja: 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))]'
-};
-
-const statusTone = 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))]';
-
-const mapApiCardToBoardItem = (card: CommunityApiCard): BoardItem => ({
-    id: `community-card-${card.id}`,
-    name: card.name,
-    stage: card.stage,
-    owner: card.owner,
-    due: formatDueLabel(card.due_date),
-    priority: card.priority ?? 'Media',
-    status: card.status,
-    comments: card.comments || 'Sin comentarios',
-    link: card.link || `/plataforma/community/${card.column_id}`
-});
-
-const palette = ['bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]', 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]', 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))]'];
-const columnAccentDot: Record<ColumnId, string> = {
-    canales: 'bg-[hsl(var(--primary))]',
-    cuidado: 'bg-[hsl(var(--danger))]',
-    grupos: 'bg-[hsl(var(--warning))]',
-    generosidad: 'bg-[hsl(var(--success))]'
-};
-const listColumnHeaders = ['Nombre', 'Persona asignada', 'Fecha límite', 'Prioridad', 'Estado', 'Comentarios'];
-const listGridClass = 'grid grid-cols-[32px_minmax(0,2.4fr)_1.4fr_1.1fr_0.9fr_1fr_0.9fr] items-center gap-4';
-const summaryIcons: Record<string, LucideIcon> = {
-    Notificaciones: Bell,
-    Anuncios: Megaphone,
-    Mensajes: MessageSquare,
-    Oración: Heart,
-    Eventos: Calendar
-};
-const viewOptions: Array<{ id: ViewId; label: string; icon: LucideIcon; description: string }> = [
-    { id: 'list', label: 'Lista', icon: List, description: 'Vista lineal para priorizar rápidamente' },
-    { id: 'board', label: 'Tablero', icon: KanbanSquare, description: 'Vista de columnas para gestionar estado' },
-    { id: 'calendar', label: 'Calendario', icon: Calendar, description: 'Agenda visual' },
-    { id: 'gantt', label: 'Gantt', icon: GanttChart, description: 'Dependencias y progreso' },
-    { id: 'table', label: 'Tabla', icon: TableIcon, description: 'Datos sin distracciones' }
+const COMMUNITY_MODULES = [
+  { title: "Notificaciones", description: "Avisos y actualizaciones de la comunidad.", icon: Bell, href: "/plataforma/community/notifications" },
+  { title: "Anuncios", description: "Comunicaciones oficiales para la comunidad.", icon: Megaphone, href: "/plataforma/community/announcements" },
+  { title: "Mensajes", description: "Conversaciones y coordinación de equipos.", icon: MessageSquare, href: "/plataforma/community/messages" },
+  { title: "Eventos", description: "Calendario de reuniones y actividades.", icon: CalendarDays, href: "/plataforma/community/events" },
+  { title: "Ofrendas", description: "Campañas de generosidad y apoyo.", icon: HeartHandshake, href: "/plataforma/community/give" },
+  { title: "Oración", description: "Peticiones y testimonios de oración.", icon: Heart, href: "/plataforma/community/prayer" },
+  { title: "Testimonios", description: "Historias compartidas por la comunidad.", icon: Star, href: "/plataforma/community/testimonies" },
+  { title: "Grupos pequeños", description: "Conexión y vida en grupos.", icon: Users, href: "/plataforma/community/grupos" },
+  { title: "Descubrir", description: "Explora grupos y oportunidades para participar.", icon: Search, href: "/plataforma/community/discover" },
 ];
 
 export default function CommunityHubPage() {
-    const router = useRouter();
-    const { token } = useAuth();
-    const metrics = [
-        { label: 'Equipos activos', value: '32', detail: '+5 esta semana', icon: Users },
-        { label: 'Oraciones respondidas', value: '18', detail: 'Últimos 30 días', icon: Heart },
-        { label: 'Eventos próximos', value: '11', detail: 'Mes actual', icon: Calendar }
+  const { token } = useAuth();
+  const [cards, setCards] = useState<CommunityBoardCard[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const requestInFlight = useRef(false);
+  const submitInFlight = useRef(false);
+  const requestVersion = useRef(0);
+  const sessionGeneration = useRef(0);
+  const sessionToken = useRef(token);
+
+  const loadCards = useCallback(async (force = false) => {
+    if (requestInFlight.current && !force) return;
+    requestInFlight.current = true;
+    const version = ++requestVersion.current;
+    setRefreshing(true);
+    try {
+      const result = await apiFetch<CommunityBoardCard[]>("/community/cards", {
+        ...(token ? { token } : {}),
+        cache: "no-store",
+      });
+      if (version !== requestVersion.current) return;
+      setCards(Array.isArray(result) ? result : []);
+      setLoadError(false);
+    } catch {
+      if (version === requestVersion.current) setLoadError(true);
+    } finally {
+      if (version === requestVersion.current) {
+        requestInFlight.current = false;
+        setLoading(false);
+        setRefreshing(false);
+      }
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (sessionToken.current !== token) {
+      sessionToken.current = token;
+      setCreateOpen(false);
+      setTitle("");
+      setBody("");
+    }
+    sessionGeneration.current += 1;
+    const activeSession = sessionGeneration.current;
+    requestVersion.current += 1;
+    requestInFlight.current = false;
+    setCards([]);
+    setLoading(true);
+    void loadCards();
+    return () => {
+      if (sessionGeneration.current === activeSession) sessionGeneration.current += 1;
+      requestVersion.current += 1;
+      requestInFlight.current = false;
+    };
+  }, [loadCards, token]);
+
+  const resetForm = () => {
+    setTitle("");
+    setBody("");
+  };
+
+  const closeCreatePanel = () => setCreateOpen(false);
+
+  const handleCreateCard = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (submitInFlight.current || !title.trim()) return;
+
+    const submittingSession = sessionGeneration.current;
+    submitInFlight.current = true;
+    setSubmitting(true);
+    try {
+      const createdCard = await apiFetch<CommunityBoardCard>("/community/cards", {
+        method: "POST",
+        ...(token ? { token } : {}),
+        body: { title: title.trim(), body: body.trim() || null },
+      });
+      if (submittingSession !== sessionGeneration.current) return;
+      setCards((current) => [createdCard, ...current.filter((card) => card.id !== createdCard.id)]);
+      setLoadError(false);
+      toast.success("Tarjeta creada");
+      resetForm();
+      closeCreatePanel();
+      await loadCards(true);
+    } catch {
+      if (submittingSession === sessionGeneration.current) {
+        toast.error("No se pudo crear la tarjeta. Revisa tus permisos e inténtalo de nuevo.");
+      }
+    } finally {
+      submitInFlight.current = false;
+      setSubmitting(false);
+    }
+  };
+
+  const handleExport = () => {
+    if (cards.length === 0 || typeof window === "undefined") return;
+    const csvRows = [
+      ["Título", "Descripción", "Fecha de creación"],
+      ...cards.map((card) => [card.title, card.body ?? "", formatDate(card.created_at, { fallback: "" })]),
     ];
-    const stageSummary = [
-        { label: 'Notificaciones', count: 12 },
-        { label: 'Anuncios', count: 8 },
-        { label: 'Mensajes', count: 5 },
-        { label: 'Oración', count: 5 },
-        { label: 'Eventos', count: 11 }
-    ];
-    const filterPills = [
-        { label: 'Hoy', icon: Clock4 },
-        { label: 'Esta semana', icon: Calendar },
-        { label: 'Alta prioridad', icon: Zap },
-        { label: 'Sin responsable', icon: UserMinus }
-    ];
-    const toolbarFilterChips = [
-        { label: 'Filtro', icon: Filter },
-        { label: 'Cerrada', icon: CheckCircle2 },
-        { label: 'Persona asignada', icon: Users }
-    ];
-    const shareableTeams = ['Líderes', 'Comms', 'Pastoral', 'Campus Norte', 'Innovación'];
-    const shareLink = 'https://app.ccf.community/hub';
-    const priorityOptions: BoardItem['priority'][] = ['Alta', 'Media', 'Baja'];
-    const statusOptions = ['Pendiente', 'En curso', 'Listo'];
-    const [sharedTeams, setSharedTeams] = useState<string[]>(shareableTeams.slice(0, 3));
-    const [shareOpen, setShareOpen] = useState(false);
-    const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
-    const [isCreatingCard, setIsCreatingCard] = useState(false);
-    const [isExporting, setIsExporting] = useState(false);
-    const [newCard, setNewCard] = useState<NewCardForm>({
-        columnId: initialBoardColumns[0]?.id ?? 'canales',
-        name: '',
-        stage: '',
-        owner: '',
-        due: '',
-        priority: 'Media',
-        status: 'Pendiente',
-        comments: ''
-    });
-    const [columns, setColumns] = useState(initialBoardColumns);
-    const [activeView, setActiveView] = useState<ViewId>('board');
-    const [loadingCards, setLoadingCards] = useState(false);
-    const [isSubmittingCard, setIsSubmittingCard] = useState(false);
-    const visibleSharedTeams = sharedTeams.slice(0, 3);
-    const extraSharedTeams = Math.max(sharedTeams.length - visibleSharedTeams.length, 0);
-    const allItems = columns.flatMap((column) =>
-        column.items.map((item, index) => ({ ...item, columnTitle: column.title, index }))
-    );
+    const csv = csvRows.map((row) => row.map(escapeCsvCell).join(",")).join("\r\n");
+    const blob = new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "comunidad-tarjetas.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
-    const hydrateColumns = useCallback((persistedCards: CommunityApiCard[]) => {
-        const merged = initialBoardColumns.map((column) => ({
-            ...column,
-            items: [
-                ...column.items,
-                ...persistedCards
-                    .filter((card) => card.column_id === column.id)
-                    .map((card) => mapApiCardToBoardItem(card))
-            ]
-        }));
-        setColumns(merged);
-    }, []);
+  return (
+    <div className="mx-auto w-full max-w-7xl space-y-8 px-4 py-5 pb-10 sm:px-6">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 space-y-1">
+          <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Comunidad CCF</p>
+          <h1 className="text-2xl font-bold tracking-tight text-[hsl(var(--text-primary))]">Comunidad</h1>
+          <p className="max-w-2xl text-sm text-[hsl(var(--text-secondary))]">
+            Canales y recursos para mantener conectada a la comunidad.
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <DSButton variant="secondary" onClick={() => void loadCards()} disabled={refreshing} aria-label="Actualizar tarjetas">
+            <RefreshCw size={14} aria-hidden="true" className={refreshing ? "animate-spin" : undefined} />
+            Actualizar
+          </DSButton>
+          <DSButton onClick={() => setCreateOpen(true)}>
+            <Plus size={15} aria-hidden="true" /> Nueva tarjeta
+          </DSButton>
+        </div>
+      </header>
 
-    const refreshBoardCards = useCallback(async () => {
-        setLoadingCards(true);
-        try {
-            const response = await apiFetch<CommunityApiCard[]>(
-                '/community/cards',
-                token ? { token, cache: 'no-store' } : { cache: 'no-store' }
-            );
-            hydrateColumns(Array.isArray(response) ? response : []);
-        } catch (error) {
-            console.error('Error fetching community cards', error);
-        } finally {
-            setLoadingCards(false);
-        }
-    }, [token, hydrateColumns]);
+      <section aria-labelledby="community-cards-title" className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="space-y-1">
+            <h2 id="community-cards-title" className="text-lg font-semibold text-[hsl(var(--text-primary))]">Tablero de la comunidad</h2>
+            <p className="text-sm text-[hsl(var(--text-secondary))]">Tarjetas y comunicados compartidos con la comunidad.</p>
+          </div>
+          {cards.length > 0 && (
+            <DSButton variant="ghost" onClick={handleExport}>
+              <Download size={14} aria-hidden="true" /> Exportar CSV
+            </DSButton>
+          )}
+        </div>
 
-    useEffect(() => {
-        refreshBoardCards();
-    }, [refreshBoardCards]);
+        {loadError && (
+          <div className="flex flex-col gap-3 rounded-lg border border-[hsl(var(--destructive)/0.3)] bg-[hsl(var(--surface-1))] p-4 sm:flex-row sm:items-center sm:justify-between" role="alert">
+            <p className="text-sm text-[hsl(var(--destructive))]">No se pudieron cargar las tarjetas de Comunidad.</p>
+            <DSButton variant="secondary" onClick={() => void loadCards()} disabled={refreshing}>Reintentar</DSButton>
+          </div>
+        )}
 
-    useEffect(() => {
-        if (!toast) return;
-        const timeout = setTimeout(() => setToast(null), 3500);
-        return () => clearTimeout(timeout);
-    }, [toast]);
-
-    useEffect(() => {
-        if (!shareOpen) return;
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') {
-                setShareOpen(false);
-            }
-        };
-        if (typeof window !== 'undefined') {
-            window.addEventListener('keydown', handleKeyDown);
-            return () => window.removeEventListener('keydown', handleKeyDown);
-        }
-    }, [shareOpen]);
-
-    const navigateTo = (path: string) => () => {
-        router.push(path);
-    };
-
-    const handleShareToggle = () => setShareOpen((prev) => !prev);
-
-    const handleCopyShareLink = async () => {
-        try {
-            if (typeof navigator !== 'undefined' && navigator.clipboard) {
-                await navigator.clipboard.writeText(shareLink);
-                setToast({ message: 'Enlace copiado al portapapeles', type: 'success' });
-            } else {
-                throw new Error('Clipboard no disponible');
-            }
-        } catch (error) {
-            console.warn(error);
-            setToast({ message: `Copia manual: ${shareLink}`, type: 'info' });
-        }
-    };
-
-    const handleTeamToggle = (team: string) => {
-        setSharedTeams((prev) =>
-            prev.includes(team) ? prev.filter((persona) => persona !== team) : [...prev, team]
-        );
-    };
-
-    const resetNewCardForm = () => {
-        setNewCard({
-            columnId: columns[0]?.id ?? initialBoardColumns[0]?.id ?? 'canales',
-            name: '',
-            stage: '',
-            owner: '',
-            due: '',
-            priority: 'Media',
-            status: 'Pendiente',
-            comments: ''
-        });
-    };
-
-    const handleNewCardField = <K extends keyof NewCardForm>(field: K, value: NewCardForm[K]) => {
-        setNewCard((prev) => ({ ...prev, [field]: value }));
-    };
-
-    const handleCreateCard = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        if (!newCard.name.trim()) {
-            setToast({ message: 'Agrega un nombre a la tarjeta', type: 'info' });
-            return;
-        }
-        if (isSubmittingCard) return;
-        const columnIndex = columns.findIndex((column) => column.id === newCard.columnId);
-        if (columnIndex === -1) {
-            setToast({ message: 'Selecciona una lista válida', type: 'info' });
-            return;
-        }
-        const payload = {
-            column_id: newCard.columnId,
-            name: newCard.name.trim(),
-            stage: newCard.stage.trim() || columns[columnIndex].title,
-            owner: newCard.owner.trim() || 'Equipo Comunidad',
-            due_date: newCard.due ? new Date(newCard.due).toISOString() : null,
-            priority: newCard.priority,
-            status: newCard.status.trim() || 'Pendiente',
-            comments: newCard.comments.trim() || 'Sin comentarios',
-            link: `/plataforma/community/${newCard.columnId}`
-        };
-        try {
-            setIsSubmittingCard(true);
-            await apiFetch<CommunityApiCard>('/community/cards', {
-                method: 'POST',
-                token: token ?? undefined,
-                body: payload
-            });
-            setToast({ message: 'Tarjeta agregada al tablero', type: 'success' });
-            setIsCreatingCard(false);
-            resetNewCardForm();
-            await refreshBoardCards();
-        } catch (error) {
-            console.error('Error creating card', error);
-            setToast({ message: 'No se pudo crear la tarjeta', type: 'info' });
-        } finally {
-            setIsSubmittingCard(false);
-        }
-    };
-
-    const handleExportReport = () => {
-        if (isExporting || typeof window === 'undefined') return;
-        try {
-            setIsExporting(true);
-            const headerRow = 'Nombre,Columna,Estado,Prioridad,Responsable,Fecha límite';
-            const rows = columns.flatMap((column) =>
-                column.items.map((item) =>
-                    [item.name, column.title, item.status, item.priority, item.owner, item.due].join(',')
-                )
-            );
-            const csv = [headerRow, ...rows].join('\n');
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', 'community-board.csv');
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.URL.revokeObjectURL(url);
-            setToast({ message: 'Reporte exportado en CSV', type: 'success' });
-        } catch (error) {
-            console.error(error);
-            setToast({ message: 'No se pudo exportar el reporte', type: 'info' });
-        } finally {
-            setIsExporting(false);
-        }
-    };
-
-    const renderBoardView = () => (
-        <>
-            <div className="flex flex-col gap-4 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                    <div className="flex flex-wrap gap-3">
-                        {filterPills.map(({ label, icon }) => (
-                            <CommunityToolbarChip key={label} label={label} icon={icon} size="md" />
-                        ))}
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                        <button className="px-4 h-8 rounded-lg border border-[hsl(var(--border))] text-2xs font-medium uppercase tracking-wide flex items-center gap-2 text-[hsl(var(--text-secondary))]">
-                            <Filter size={14} /> Filtros
-                        </button>
-                        <button className="px-4 h-8 rounded-lg border border-[hsl(var(--border))] text-2xs font-medium uppercase tracking-wide flex items-center gap-2 text-[hsl(var(--text-secondary))]">
-                            <SlidersHorizontal size={14} /> Columnas
-                        </button>
-                        <button className="px-4 h-8 rounded-lg border border-[hsl(var(--border))] text-2xs font-medium uppercase tracking-wide flex items-center gap-2 text-[hsl(var(--text-secondary))]">
-                            <RefreshCcw size={14} /> Actualizar
-                        </button>
-                    </div>
-                </div>
-
-                <div className="flex gap-4 overflow-x-auto pb-1">
-                    {stageSummary.map((stage) => {
-                        const Icon = summaryIcons[stage.label] || Tag;
-                        return (
-                            <div key={stage.label} className="min-w-[150px] rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] p-4 space-y-2">
-                                <div className="flex items-center gap-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-                                    <Icon size={14} /> {stage.label}
-                                </div>
-                                <p className="text-lg font-semibold text-[hsl(var(--text-primary))]">{stage.count}</p>
-                                <div className="w-full h-1 rounded-full bg-gradient-to-r from-[hsl(var(--primary))] to-transparent"></div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-
-            <div className="-mx-4 sm:-mx-6 px-4 sm:px-4 pb-2 overflow-x-auto">
-                <div className="flex gap-4 sm:gap-4 min-w-full snap-x snap-mandatory">
-                    {columns.map((column) => {
-                        const Icon = columnIcons[column.id];
-                        return (
-                            <div key={column.id} className="min-w-[280px] sm:min-w-[320px] snap-start flex-1">
-                                <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md p-4 shadow-xl flex flex-col h-full transition-transform duration-300 hover:-translate-y-1">
-                                    <div className="flex items-start justify-between gap-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`size-9 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex items-center justify-center ${column.accent}`}>
-                                                <Icon size={22} />
-                                            </div>
-                                            <div>
-                                                <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Lista</p>
-                                                <h3 className="text-base font-semibold text-[hsl(var(--text-primary))]">{column.title}</h3>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Total</p>
-                                            <p className="text-xl font-semibold text-[hsl(var(--text-primary))]">{column.items.length}</p>
-                                        </div>
-                                    </div>
-                                    <p className="text-sm text-[hsl(var(--text-secondary))] mt-3">{column.description}</p>
-                                    <button className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--text-primary))] text-[hsl(var(--surface-1))] text-2xs font-semibold uppercase tracking-wide">
-                                        <ArrowUpRight size={14} /> Crear tarjeta
-                                    </button>
-
-                                    <div className="mt-3 space-y-4">
-                                        {column.items.map((item, idx) => {
-                                            const watchers = [item.owner, 'Equipo Comunidad', 'Coordinación'];
-                                            return (
-                                                <div key={item.id} className="p-4 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] space-y-4 hover:border-[hsl(var(--primary)/0.4)] transition-colors">
-                                                    <div className="flex items-center justify-between text-2xs uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-                                                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-[hsl(var(--border))] text-[hsl(var(--text-primary))] text-2xs font-semibold">
-                                                            <Tag size={12} /> {item.stage}
-                                                        </span>
-                                                        <span className="inline-flex items-center gap-1 font-semibold text-[hsl(var(--text-primary))]">
-                                                            <Clock4 size={12} /> {item.due}
-                                                        </span>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-semibold text-[hsl(var(--text-primary))] tracking-tight">{item.name}</p>
-                                                        <p className="text-xs text-[hsl(var(--text-secondary))] font-medium mt-1">{item.comments}</p>
-                                                    </div>
-                                                    <div className="grid grid-cols-2 gap-3 text-xs uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-                                                        <div>
-                                                            <p className="mb-1">Prioridad</p>
-                                                            <span className={`inline-flex items-center justify-center px-2 py-1 rounded-md border text-2xs font-semibold tracking-wide ${priorityTone[item.priority]}`}>
-                                                                {item.priority}
-                                                            </span>
-                                                        </div>
-                                                        <div>
-                                                            <p className="mb-1">Estado</p>
-                                                            <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg border text-2xs font-semibold tracking-wide ${statusTone}`}>
-                                                                <CheckCircle2 size={14} /> {item.status}
-                                                            </span>
-                                                        </div>
-                                                        <div>
-                                                            <p className="mb-1">Persona</p>
-                                                            <div className="flex items-center gap-2 text-[hsl(var(--text-primary))] font-semibold tracking-normal normal-case">
-                                                                <div className="size-8 rounded-full bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] font-semibold text-xs flex items-center justify-center">
-                                                                    {getInitials(item.owner)}
-                                                                </div>
-                                                                <span>{item.owner}</span>
-                                                            </div>
-                                                        </div>
-                                                        <div>
-                                                            <p className="mb-1">Seguimiento</p>
-                                                            <p className="text-[hsl(var(--text-primary))] font-semibold tracking-normal normal-case">{column.title}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center justify-between pt-1 border-t border-dashed border-[hsl(var(--border))] pt-3">
-                                                        <div className="flex -space-x-2">
-                                                            {watchers.slice(0, 3).map((person, watcherIdx) => (
-                                                                <div key={watcherIdx} className={`size-8 rounded-full border border-[hsl(var(--border))] shadow-sm flex items-center justify-center text-2xs font-semibold ${palette[(idx + watcherIdx) % palette.length]}`}>
-                                                                    {getInitials(person)}
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">
-                                                            <Link href={item.link} className="hover:underline">Abrir</Link>
-                                                            <button className="inline-flex items-center gap-1 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))]">
-                                                                <MessageCircle size={14} />
-                                                                Notas
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-        </>
-    );
-
-    const renderListView = () => (
-        <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 space-y-3">
-            <div className="flex flex-wrap gap-2">
-                {['Grupo: Estado', 'Subtareas', 'Columnas'].map((pill) => (
-                    <CommunityToolbarChip key={pill} label={pill} size="md" />
-                ))}
-            </div>
-
-            {columns.map((column) => (
-                <div key={`${column.id}-list`} className="space-y-3">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-xs font-semibold text-[hsl(var(--text-secondary))]">
-                            <span className={`size-2 rounded-full ${columnAccentDot[column.id]}`}></span>
-                            <span className="uppercase tracking-wide text-2xs text-[hsl(var(--text-primary))]">{column.title}</span>
-                            <span className="px-2 py-0.5 rounded-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-2xs font-medium">{column.items.length}</span>
-                        </div>
-                        <button className="text-2xs font-medium uppercase tracking-wide text-[hsl(var(--primary))] flex items-center gap-2">
-                            <Plus size={12} /> Nuevo
-                        </button>
-                    </div>
-
-                    <div className="rounded-lg border border-[hsl(var(--border))] overflow-hidden bg-[hsl(var(--bg-primary))]">
-                        <div className={`${listGridClass} text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] px-4 py-1.5`}>
-                            <div className="text-center">#</div>
-                            {listColumnHeaders.map((header) => (
-                                <div key={header}>{header}</div>
-                            ))}
-                        </div>
-                        {column.items.map((item, idx) => (
-                            <CommunityListRow
-                                key={`${column.id}-${item.id}-row`}
-                                index={idx}
-                                item={item}
-                                accentClass={columnAccentDot[column.id]}
-                                priorityClass={priorityTone[item.priority]}
-                                statusClass={statusTone}
-                            />
-                        ))}
-                    </div>
-                </div>
+        {loading ? (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-label="Cargando tarjetas" aria-busy="true">
+            {Array.from({ length: 3 }, (_, index) => (
+              <DSCard key={index} className="space-y-3 p-4">
+                <DSSkeleton className="h-4 w-2/3" />
+                <DSSkeleton className="h-3 w-full" />
+                <DSSkeleton className="h-3 w-1/2" />
+              </DSCard>
             ))}
-
-            <button className="text-2xs font-medium uppercase tracking-wide text-[hsl(var(--text-secondary))] border border-dashed border-[hsl(var(--border))] rounded-lg px-4 py-2">
-                + Nuevo estado
-            </button>
-        </div>
-    );
-
-    const renderCalendarView = () => (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {allItems.map((item) => (
-                <div key={`${item.columnTitle}-${item.id}-cal`} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3 space-y-2">
-                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{item.due || 'Sin fecha'}</p>
-                    <h4 className="text-sm font-semibold text-[hsl(var(--text-primary))]">{item.name}</h4>
-                    <p className="text-sm text-[hsl(var(--text-secondary))]">{item.columnTitle} · {item.stage}</p>
-                    <div className="flex justify-between items-center text-xs text-[hsl(var(--text-secondary))]">
-                        <span>{item.owner}</span>
-                        <span className="px-2 py-1 rounded-full bg-[hsl(var(--bg-primary))] text-2xs font-semibold">{item.priority}</span>
-                    </div>
-                </div>
+          </div>
+        ) : cards.length === 0 && !loadError ? (
+          <div className="rounded-lg border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-5 py-10 text-center">
+            <h3 className="text-base font-semibold text-[hsl(var(--text-primary))]">Aún no hay tarjetas</h3>
+            <p className="mx-auto mt-1 max-w-md text-sm text-[hsl(var(--text-secondary))]">
+              Cuando se publiquen tarjetas de Comunidad, aparecerán aquí.
+            </p>
+            <DSButton className="mt-4" onClick={() => setCreateOpen(true)}>
+              <Plus size={14} aria-hidden="true" /> Crear tarjeta
+            </DSButton>
+          </div>
+        ) : cards.length > 0 ? (
+          <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {cards.map((card) => (
+              <DSCard key={card.id} className="min-w-0 p-4">
+                <article aria-labelledby={`community-card-${card.id}`}>
+                  <h3 id={`community-card-${card.id}`} className="break-words text-base font-semibold text-[hsl(var(--text-primary))]">
+                    {card.title}
+                  </h3>
+                  {card.body ? (
+                    <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-[hsl(var(--text-secondary))]">{card.body}</p>
+                  ) : null}
+                  <p className="mt-4 border-t border-[hsl(var(--border))] pt-3 text-2xs text-[hsl(var(--text-secondary))]">
+                    Publicada {formatDate(card.created_at, { fallback: "en fecha no disponible" })}
+                  </p>
+                </article>
+              </DSCard>
             ))}
+          </div>
+        ) : null}
+      </section>
+
+      <section aria-labelledby="community-modules-title" className="space-y-4">
+        <div className="space-y-1">
+          <h2 id="community-modules-title" className="text-lg font-semibold text-[hsl(var(--text-primary))]">Explora Comunidad</h2>
+          <p className="text-sm text-[hsl(var(--text-secondary))]">Accede directamente a los espacios de interacción.</p>
         </div>
-    );
-
-    const renderGanttView = () => (
-        <div className="space-y-4 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4">
-            {allItems.map((item, idx) => {
-                const progress = Math.min(100, 30 + (idx / (allItems.length || 1)) * 70);
-                return (
-                    <div key={`${item.columnTitle}-${item.id}-gantt`} className="space-y-1">
-                        <div className="flex justify-between text-xs text-[hsl(var(--text-secondary))]">
-                            <span>{item.name}</span>
-                            <span>{item.due}</span>
-                        </div>
-                        <div className="h-3 rounded-full bg-[hsl(var(--surface-2))] overflow-hidden">
-                            <div
-                                className="h-full rounded-full bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--primary)/0.4)]"
-                                style={{ width: `${progress}%` }}
-                            ></div>
-                        </div>
-                    </div>
-                );
-            })}
+        <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {COMMUNITY_MODULES.map(({ title: moduleTitle, description, icon: Icon, href }) => (
+            <Link key={moduleTitle} href={href} className="group min-w-0 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]">
+              <DSCard className="flex h-full min-w-0 items-start gap-3 p-4 transition-colors group-hover:border-[hsl(var(--primary)/0.4)] group-hover:bg-[hsl(var(--surface-2))]">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--primary))]">
+                  <Icon size={17} aria-hidden="true" />
+                </span>
+                <span className="min-w-0 space-y-1">
+                  <span className="block text-sm font-semibold text-[hsl(var(--text-primary))] group-hover:text-[hsl(var(--primary))]">{moduleTitle}</span>
+                  <span className="block break-words text-xs leading-relaxed text-[hsl(var(--text-secondary))]">{description}</span>
+                </span>
+              </DSCard>
+            </Link>
+          ))}
         </div>
-    );
+      </section>
 
-    const renderTableView = () => (
-        <div className="overflow-x-auto rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] density-table">
-            <table className="density-table min-w-full text-sm">
-                <thead className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-                    <tr>
-                        <th className="text-left px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))]">Nombre</th>
-                        <th className="text-left px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))]">Lista</th>
-                        <th className="text-left px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))]">Persona</th>
-                        <th className="text-left px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))]">Prioridad</th>
-                        <th className="text-left px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))]">Estado</th>
-                        <th className="text-left px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))]">Entrega</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {allItems.map((item) => (
-                        <tr key={`${item.columnTitle}-${item.id}-table`} className="border-t border-[hsl(var(--border))]">
-                            <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] font-semibold text-[hsl(var(--text-primary))]">{item.name}</td>
-                            <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-[hsl(var(--text-secondary))]">{item.columnTitle}</td>
-                            <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-[hsl(var(--text-secondary))]">{item.owner}</td>
-                            <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))]">
-                                <span className={`px-2 py-1 rounded-full text-2xs font-semibold uppercase tracking-wide ${priorityTone[item.priority]}`}>{item.priority}</span>
-                            </td>
-                            <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-[hsl(var(--text-secondary))]">{item.status}</td>
-                            <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-[hsl(var(--text-secondary))]">{item.due}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-    );
+      <RightPanel open={createOpen} onClose={closeCreatePanel} title="Nueva tarjeta" subtitle="Publica una tarjeta para la comunidad." width="w-full sm:max-w-xl">
+        <form onSubmit={handleCreateCard} className="space-y-5 p-4">
+          <DSInput
+            label="Título"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            maxLength={200}
+            required
+            autoFocus
+            placeholder="Escribe un título"
+          />
+          <label className="flex flex-col gap-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]" htmlFor="community-card-body">
+            Descripción <span className="font-normal normal-case">(opcional)</span>
+            <textarea
+              id="community-card-body"
+              value={body}
+              onChange={(event) => setBody(event.target.value)}
+              rows={6}
+              className="w-full resize-y rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-normal normal-case text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))] focus:ring-1 focus:ring-[hsl(var(--primary))]"
+              placeholder="Agrega contexto para la comunidad"
+            />
+          </label>
+          <div className="flex justify-end gap-2 border-t border-[hsl(var(--border))] pt-4">
+            <DSButton variant="secondary" onClick={() => { closeCreatePanel(); resetForm(); }} disabled={submitting}>Cancelar</DSButton>
+            <DSButton type="submit" loading={submitting} disabled={!title.trim() || submitting}>Publicar tarjeta</DSButton>
+          </div>
+        </form>
+      </RightPanel>
+    </div>
+  );
+}
 
-    const renderActiveView = () => {
-        switch (activeView) {
-            case 'list':
-                return renderListView();
-            case 'calendar':
-                return renderCalendarView();
-            case 'gantt':
-                return renderGanttView();
-            case 'table':
-                return renderTableView();
-            default:
-                return renderBoardView();
-        }
-    };
-
-    return (
-        <div className="space-y-4 animate-in fade-in duration-500 px-4 sm:px-4 pb-16 w-full">
-            <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between text-2xs uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-                <div className="flex items-center gap-2">
-                    <button type="button" onClick={navigateTo('/')} className="font-medium text-[hsl(var(--text-primary))] hover:text-[hsl(var(--primary))]">
-                        CCF
-                    </button>
-                    <span>/</span>
-                    <button type="button" onClick={navigateTo('/plataforma/crm')} className="font-medium text-[hsl(var(--text-primary))] hover:text-[hsl(var(--primary))]">
-                        CRM Pastoral
-                    </button>
-                </div>
-                <div className="flex flex-wrap items-center gap-1.5">
-                    {(['table', 'board'] as ViewId[]).map((view) => (
-                        <button
-                            key={view}
-                            onClick={() => setActiveView(view)}
-                            className={`px-[calc(0.75rem+var(--density-pad-x-delta,0px))] h-[calc(2rem+var(--density-h-delta,0px))] rounded-full border text-2xs uppercase tracking-wide ${activeView === view ? 'bg-[hsl(var(--text-primary))] text-[hsl(var(--surface-1))] font-semibold' : 'text-[hsl(var(--text-secondary))] font-normal'}`}
-                        >
-                            {view === 'table' ? 'Tabla' : 'Grid'}
-                        </button>
-                    ))}
-                    <div className="relative w-[150px] hidden sm:block">
-                        <Search size={10} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
-                        <input
-                            placeholder="Buscar en esta vista..."
-                            className="w-full h-[calc(2rem+var(--density-h-delta,0px))] rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] pl-7 pr-3 text-2xs"
-                        />
-                    </div>
-                    <button className="p-1.5 rounded-full border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]"><Filter size={10} /></button>
-                    <button className="p-1.5 rounded-full border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]"><Columns3 size={10} /></button>
-                    <button className="p-1.5 rounded-full border border-[hsl(var(--text-primary))] text-[hsl(var(--text-primary))]"><SlidersHorizontal size={10} /></button>
-                    <button className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] h-[calc(2rem+var(--density-h-delta,0px))] rounded-full bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] text-2xs font-semibold uppercase tracking-wide">+ Nuevo</button>
-                </div>
-            </div>
-            <header className="rounded-lg border border-[hsl(var(--border))] bg-gradient-to-br from-[hsl(var(--surface-2))] to-[hsl(var(--surface-1))] p-4 md:p-3 space-y-3">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div className="flex items-center gap-3 text-2xs font-medium uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-                        <button
-                            type="button"
-                            onClick={() => router.back()}
-                            className="size-6 rounded-full border border-[hsl(var(--border))] flex items-center justify-center hover:text-[hsl(var(--primary))]"
-                        >
-                            <ArrowLeft size={16} />
-                        </button>
-                        <button type="button" onClick={navigateTo('/plataforma')} className="hover:text-[hsl(var(--primary))]">
-                            Workspace
-                        </button>
-                        <span className="opacity-40">/</span>
-                        <button type="button" onClick={navigateTo('/plataforma/community')} className="hover:text-[hsl(var(--primary))]">
-                            Comunidad
-                        </button>
-                        <span className="opacity-40">/</span>
-                        <button
-                            type="button"
-                            onClick={() => setActiveView('board')}
-                            className="text-[hsl(var(--primary))] hover:opacity-80"
-                        >
-                            Tablero
-                        </button>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                        <div className="flex -space-x-2 items-center">
-                            {visibleSharedTeams.map((team, idx) => (
-                                <div key={team} className={`size-8 rounded-full border border-[hsl(var(--border))] shadow-sm flex items-center justify-center text-2xs font-semibold ${palette[idx % palette.length]}`}>
-                                    {team.slice(0, 2).toUpperCase()}
-                                </div>
-                            ))}
-                            {extraSharedTeams > 0 && (
-                                <div className="size-8 rounded-full border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-2xs font-medium flex items-center justify-center text-[hsl(var(--text-secondary))]">
-                                    +{extraSharedTeams}
-                                </div>
-                            )}
-                        </div>
-                        <div className="relative">
-                            <button
-                                type="button"
-                                onClick={handleShareToggle}
-                                aria-expanded={shareOpen}
-                                className="px-4 h-9 rounded-lg border border-[hsl(var(--border))] text-2xs font-medium uppercase tracking-wide flex items-center gap-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
-                            >
-                                <Share2 size={14} /> Compartir acceso
-                            </button>
-                            {shareOpen && (
-                                <div className="absolute right-0 z-10 mt-3 w-72 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-xl p-4 space-y-4">
-                                    <div className="flex items-center justify-between text-xs font-semibold text-[hsl(var(--text-primary))]">
-                                        <span>Compartir tablero</span>
-                                        <button type="button" onClick={() => setShareOpen(false)} className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))]">
-                                            Cerrar
-                                        </button>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <p className="text-2xs uppercase tracking-wide text-[hsl(var(--text-secondary))]">Enlace rápido</p>
-                                        <div className="flex items-center gap-2">
-                                            <code className="flex-1 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-1.5 text-xs text-[hsl(var(--text-primary))] overflow-hidden text-ellipsis">
-                                                {shareLink}
-                                            </code>
-                                            <button type="button" onClick={handleCopyShareLink} className="px-3 py-1.5 rounded-md bg-[hsl(var(--text-primary))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--surface-1))]">
-                                                Copiar
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <p className="text-2xs uppercase tracking-wide text-[hsl(var(--text-secondary))]">Equipos</p>
-                                        <div className="space-y-1.5 text-sm text-[hsl(var(--text-primary))]">
-                                            {shareableTeams.map((team) => (
-                                                <label key={team} className="flex items-center justify-between rounded-md border border-[hsl(var(--border))] px-3 py-2">
-                                                    <span>{team}</span>
-                                                    <input
-                                                        type="checkbox"
-                                                        className="accent-[hsl(var(--primary))] size-4"
-                                                        checked={sharedTeams.includes(team)}
-                                                        onChange={() => handleTeamToggle(team)}
-                                                    />
-                                                </label>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-[hsl(var(--text-secondary))]">
-                    <span className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                        <span className="size-2 rounded-full bg-[hsl(var(--success))] animate-pulse"></span>
-                        En vivo - sincronizado hace 5 min
-                    </span>
-                    <span className="inline-flex items-center gap-2">
-                        <Clock4 size={14} /> Próxima revisión: 6:00 p.m.
-                    </span>
-                </div>
-
-                <div className="space-y-4">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                        <div>
-                            <h1 className="sr-only">Tablero comunitario</h1>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            <button
-                                type="button"
-                                onClick={handleExportReport}
-                                disabled={isExporting}
-                                className="px-4 h-9 rounded-lg border border-[hsl(var(--border))] text-2xs font-semibold uppercase tracking-wide disabled:opacity-60 disabled:cursor-not-allowed"
-                            >
-                                Exportar reporte
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setIsCreatingCard((prev) => !prev);
-                                    if (!isCreatingCard && shareOpen) {
-                                        setShareOpen(false);
-                                    }
-                                    if (isCreatingCard) {
-                                        resetNewCardForm();
-                                    }
-                                }}
-                                aria-expanded={isCreatingCard}
-                                className="px-4 h-9 rounded-lg bg-[hsl(var(--text-primary))] text-[hsl(var(--surface-1))] text-2xs font-semibold uppercase tracking-wide"
-                            >
-                                {isCreatingCard ? 'Cerrar formulario' : 'Nueva tarjeta'}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {metrics.map(({ label, value, detail, icon: Icon }) => (
-                            <div key={label} className="rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] p-3 space-y-2.5">
-                                <div className="flex items-center gap-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-                                    <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--primary))]">
-                                        <Icon size={16} />
-                                    </div>
-                                    <span>{label}</span>
-                                </div>
-                                <p className="text-lg md:text-xl font-semibold text-[hsl(var(--text-primary))]">{value}</p>
-                                <p className="text-xs text-[hsl(var(--text-secondary))] font-medium">{detail}</p>
-                                <div className="h-[3px] rounded-full bg-gradient-to-r from-[hsl(var(--primary))] via-transparent to-[hsl(var(--primary)/0.2)]"></div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {isCreatingCard && (
-                        <form onSubmit={handleCreateCard} className="space-y-4 rounded-lg border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <label className="text-2xs uppercase tracking-wide text-[hsl(var(--text-secondary))] space-y-2">
-                                    Lista destino
-                                    <select
-                                        value={newCard.columnId}
-                                        onChange={(event) => handleNewCardField('columnId', event.target.value as ColumnId)}
-                                        className="h-[calc(2rem+var(--density-h-delta,0px))] w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-[calc(0.75rem+var(--density-pad-x-delta,0px))] text-sm text-[hsl(var(--text-primary))]"
-                                    >
-                                        {columns.map((column) => (
-                                            <option key={column.id} value={column.id} className="text-[hsl(var(--text-primary))]">
-                                                {column.title}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </label>
-                                <label className="text-2xs uppercase tracking-wide text-[hsl(var(--text-secondary))] space-y-2">
-                                    Nombre
-                                    <input
-                                        value={newCard.name}
-                                        onChange={(event) => handleNewCardField('name', event.target.value)}
-                                        placeholder="Ej. Seguimiento visitas"
-                                        className="h-[calc(2rem+var(--density-h-delta,0px))] w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-[calc(0.75rem+var(--density-pad-x-delta,0px))] text-sm text-[hsl(var(--text-primary))]"
-                                    />
-                                </label>
-                                <label className="text-2xs uppercase tracking-wide text-[hsl(var(--text-secondary))] space-y-2">
-                                    Etapa
-                                    <input
-                                        value={newCard.stage}
-                                        onChange={(event) => handleNewCardField('stage', event.target.value)}
-                                        placeholder="Mensajes, Oración, etc."
-                                        className="h-[calc(2rem+var(--density-h-delta,0px))] w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-[calc(0.75rem+var(--density-pad-x-delta,0px))] text-sm text-[hsl(var(--text-primary))]"
-                                    />
-                                </label>
-                                <label className="text-2xs uppercase tracking-wide text-[hsl(var(--text-secondary))] space-y-2">
-                                    Responsable
-                                    <input
-                                        value={newCard.owner}
-                                        onChange={(event) => handleNewCardField('owner', event.target.value)}
-                                        placeholder="Equipo o persona"
-                                        className="h-[calc(2rem+var(--density-h-delta,0px))] w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-[calc(0.75rem+var(--density-pad-x-delta,0px))] text-sm text-[hsl(var(--text-primary))]"
-                                    />
-                                </label>
-                                <label className="text-2xs uppercase tracking-wide text-[hsl(var(--text-secondary))] space-y-2">
-                                    Fecha límite
-                                    <input
-                                        type="date"
-                                        value={newCard.due}
-                                        onChange={(event) => handleNewCardField('due', event.target.value)}
-                                        className="h-[calc(2rem+var(--density-h-delta,0px))] w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-[calc(0.75rem+var(--density-pad-x-delta,0px))] text-sm text-[hsl(var(--text-primary))]"
-                                    />
-                                </label>
-                                <label className="text-2xs uppercase tracking-wide text-[hsl(var(--text-secondary))] space-y-2">
-                                    Prioridad
-                                    <select
-                                        value={newCard.priority}
-                                        onChange={(event) => handleNewCardField('priority', event.target.value as BoardItem['priority'])}
-                                        className="h-[calc(2rem+var(--density-h-delta,0px))] w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-[calc(0.75rem+var(--density-pad-x-delta,0px))] text-sm text-[hsl(var(--text-primary))]"
-                                    >
-                                        {priorityOptions.map((priority) => (
-                                            <option key={priority} value={priority} className="text-[hsl(var(--text-primary))]">
-                                                {priority}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </label>
-                                <label className="text-2xs uppercase tracking-wide text-[hsl(var(--text-secondary))] space-y-2">
-                                    Estado
-                                    <select
-                                        value={newCard.status}
-                                        onChange={(event) => handleNewCardField('status', event.target.value)}
-                                        className="h-[calc(2rem+var(--density-h-delta,0px))] w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-[calc(0.75rem+var(--density-pad-x-delta,0px))] text-sm text-[hsl(var(--text-primary))]"
-                                    >
-                                        {statusOptions.map((status) => (
-                                            <option key={status} value={status} className="text-[hsl(var(--text-primary))]">
-                                                {status}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </label>
-                                <label className="md:col-span-2 text-2xs uppercase tracking-wide text-[hsl(var(--text-secondary))] space-y-2">
-                                    Comentarios
-                                    <textarea
-                                        value={newCard.comments}
-                                        onChange={(event) => handleNewCardField('comments', event.target.value)}
-                                        placeholder="Contexto rápido para el equipo"
-                                        className="min-h-[96px] w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-sm text-[hsl(var(--text-primary))]"
-                                    />
-                                </label>
-                            </div>
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setIsCreatingCard(false);
-                                        resetNewCardForm();
-                                    }}
-                                    className="px-[calc(1rem+var(--density-pad-x-delta,0px))] h-[calc(2.5rem+var(--density-h-delta,0px))] rounded-lg border border-[hsl(var(--border))] text-2xs font-medium uppercase tracking-wide text-[hsl(var(--text-secondary))]"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={isSubmittingCard}
-                                    className="px-[calc(1rem+var(--density-pad-x-delta,0px))] h-[calc(2.5rem+var(--density-h-delta,0px))] rounded-lg bg-[hsl(var(--text-primary))] text-[hsl(var(--surface-1))] text-2xs font-semibold uppercase tracking-wide disabled:opacity-60 disabled:cursor-not-allowed"
-                                >
-                                    {isSubmittingCard ? 'Guardando...' : 'Guardar tarjeta'}
-                                </button>
-                            </div>
-                        </form>
-                    )}
-                </div>
-            </header>
-
-            <section className="space-y-2">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div>
-                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Vista de tablero</p>
-                        <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))]">Tablero operativo</h2>
-                        <p className="text-[hsl(var(--text-secondary))] text-sm font-medium">Etapa, prioridad, responsables y comentarios agrupados por columna.</p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                        <button className="px-3 h-8 rounded-lg border border-[hsl(var(--border))] text-2xs font-medium uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
-                            Compartir tablero
-                        </button>
-                        <button className="px-3 h-8 rounded-lg bg-[hsl(var(--text-primary))] text-[hsl(var(--surface-1))] text-2xs font-semibold uppercase tracking-wide">
-                            Crear nota
-                        </button>
-                    </div>
-                </div>
-
-                <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 space-y-4">
-                    <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
-                    <div className="flex flex-wrap items-center gap-3" aria-label="Vista toolbar">
-                        <CommunityToolbarChip label="Añadir canal" icon={Plus} size="sm" />
-                        <div className="flex flex-wrap items-center gap-1">
-                            {viewOptions.map(({ id, label, icon }) => (
-                                <CommunityToolbarChip
-                                    key={id}
-                                    label={label}
-                                    icon={icon}
-                                    active={activeView === id}
-                                    variant={activeView === id ? 'solid' : 'outline'}
-                                    onClick={() => setActiveView(id)}
-                                    title={`Cambiar a ${label}`}
-                                />
-                            ))}
-                            <CommunityToolbarChip label="+ Vista" variant="dashed" />
-                        </div>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                        {toolbarFilterChips.map(({ label, icon }) => (
-                            <CommunityToolbarChip key={label} label={label} icon={icon} size="sm" />
-                        ))}
-                        <CommunityToolbarChip label="Personalizar" icon={SlidersHorizontal} size="sm" />
-                        <CommunityToolbarChip label="Add tarea" icon={Plus} variant="solid" className="bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] border-[hsl(var(--border))]" />
-                    </div>
-                </div>
-                    <p className="text-xs text-[hsl(var(--text-secondary))] flex items-center gap-3">
-                        {viewOptions.find((view) => view.id === activeView)?.description}
-                        {loadingCards && (
-                            <span className="text-2xs uppercase tracking-wide text-[hsl(var(--primary))]">
-                                Sincronizando…
-                            </span>
-                        )}
-                    </p>
-                </div>
-
-                {activeView === 'list' && <CommunityQuickCommentCard />}
-
-                {renderActiveView()}
-            </section>
-
-            <section className="space-y-4">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div>
-                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Atajos rápidos</p>
-                        <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))]">Explora los módulos</h2>
-                    </div>
-                    <div className="text-sm text-[hsl(var(--text-secondary))] font-medium">
-                        Selecciona una tarjeta para ir directamente al área correspondiente.
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {featureCards.map(({ title, description, icon: Icon, href, tone }) => (
-                        <Link
-                            key={title}
-                            href={href}
-                            className="group relative rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 overflow-hidden"
-                        >
-                            <div className={`absolute inset-0 bg-gradient-to-br ${tone} opacity-0 group-hover:opacity-100 transition-opacity`} />
-                            <div className="relative flex items-start gap-4">
-                                <div className="size-7 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--primary))] group-hover:scale-105 transition-transform">
-                                    <Icon size={24} strokeWidth={2.5} />
-                                </div>
-                                <div className="flex-1 space-y-2">
-                                    <div className="flex items-center gap-2">
-                                        <h3 className="text-base font-semibold text-[hsl(var(--text-primary))] group-hover:text-[hsl(var(--primary))] transition-colors">{title}</h3>
-                                        <ArrowUpRight size={18} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))]" />
-                                    </div>
-                                    <p className="text-sm text-[hsl(var(--text-secondary))] font-medium">{description}</p>
-                                </div>
-                            </div>
-                        </Link>
-                    ))}
-                </div>
-            </section>
-
-            <section className="rounded-lg border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-3))] p-3 text-center space-y-4">
-                <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">¿Falta algo?</p>
-                <h3 className="text-lg font-semibold text-[hsl(var(--text-primary))]">Súmate al roadmap comunitario</h3>
-                <p className="text-[hsl(var(--text-secondary))] max-w-xl mx-auto font-medium">
-                    Mándanos tus ideas para mejorar este hub. Puedes proponer nuevos módulos, integraciones o métricas que faciliten la colaboración.
-                </p>
-                <button className="px-3 h-8 rounded-lg bg-[hsl(var(--text-primary))] text-[hsl(var(--surface-1))] font-semibold uppercase tracking-wide text-2xs">
-                    Enviar propuesta
-                </button>
-            </section>
-
-            {toast && (
-                <div
-                    role="status"
-                    aria-live="polite"
-                    className={`fixed bottom-6 right-6 z-20 rounded-lg px-3 py-1.5 text-sm font-medium text-[hsl(var(--primary-foreground))] shadow-lg ${
-                        toast.type === 'success' ? 'bg-[hsl(var(--success))]' : 'bg-[hsl(var(--surface-2))]'
-                    }`}
-                >
-                    {toast.message}
-                </div>
-            )}
-        </div>
-    );
+function escapeCsvCell(value: string): string {
+  const safeValue = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+  return `"${safeValue.replaceAll('"', '""')}"`;
 }
