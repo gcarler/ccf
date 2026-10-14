@@ -249,11 +249,35 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
 
     useEffect(() => {
         const view = searchParams?.get('view');
-        if (!view) return;
-        if ((PROJECT_VIEWS as string[]).includes(view)) {
+        if (view && (PROJECT_VIEWS as string[]).includes(view)) {
             setViewType(view as ViewType);
         }
+        const statusParam = searchParams?.get('status');
+        if (statusParam) {
+            setStatusFilter(statusParam);
+        }
     }, [searchParams]);
+
+    // ── Estado compartible (S5, rev_ui_13102026.md): la URL refleja la vista
+    // y el filtro activo (viewType + statusFilter ⇄ ?view=...&status=...),
+    // de modo que un enlace compartido abre el módulo exactamente como se ve.
+    // El write-back es ignorado por el efecto de arriba cuando ya coincide,
+    // así que no hay loops URL ⇄ estado.
+    useEffect(() => {
+        const params = new URLSearchParams(searchParams?.toString() ?? '');
+        const statusUrl = params.get('status') ?? 'all';
+        if (params.get('view') === viewType && statusUrl === statusFilter) {
+            return;
+        }
+        params.set('view', viewType);
+        if (statusFilter === 'all') {
+            params.delete('status');
+        } else {
+            params.set('status', statusFilter);
+        }
+        const qs = params.toString();
+        router.replace(qs ? `/plataforma/projects?${qs}` : '/plataforma/projects', { scroll: false });
+    }, [viewType, statusFilter, searchParams, router]);
 
     // Scroll del listado al entrar en la vista list. Disparado por
     // `onAnimationComplete` del motion.div (no por un setTimeout fijo):
