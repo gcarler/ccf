@@ -57,6 +57,25 @@ const PROJECT_VIEW_LABELS: Record<ViewType, string> = {
     chat: 'Chat',
 };
 
+export function resolveProjectViewParam(
+    rawView: string | null | undefined,
+    fallback: ViewType = 'dashboard'
+): ViewType {
+    if (!rawView) return fallback;
+    const normalized = rawView.trim().toLowerCase();
+    if ((PROJECT_VIEWS as string[]).includes(normalized)) {
+        return normalized as ViewType;
+    }
+    if (normalized.startsWith('dashboar')) {
+        return 'dashboard';
+    }
+    const matched = PROJECT_VIEWS.find((v) => v.startsWith(normalized));
+    if (matched) {
+        return matched;
+    }
+    return fallback;
+}
+
 interface ProjectsClientProps {
     initialProjects: ProjectRecord[];
     initialViewType?: ViewType;
@@ -80,9 +99,13 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
     const [isLoadingDashboard, setIsLoadingDashboard] = useState(true);
     const [dashboardLoadError, setDashboardLoadError] = useState(false);
     const [dashboardLoadAttempt, setDashboardLoadAttempt] = useState(0);
-    const [viewType, setViewType] = useState<ViewType>(initialViewType);
+    const [viewType, setViewType] = useState<ViewType>(() =>
+        resolveProjectViewParam(searchParams?.get('view'), initialViewType)
+    );
     const [search, setSearch] = useState('');
-    const [statusFilter, setStatusFilter] = useState<string>('all');
+    const [statusFilter, setStatusFilter] = useState<string>(() =>
+        searchParams?.get('status') || 'all'
+    );
     const [isCreating, setIsCreating] = useState(false);
     const [showCreateForm, setShowCreateForm] = useState(false);
     const { updateProject, deleteProject } = useProjects();
@@ -91,6 +114,9 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
     const projectQueryKey = `${projectOffset}:${search.trim()}:${statusFilter}`;
     const projectQueryKeyRef = useRef(projectQueryKey);
     projectQueryKeyRef.current = projectQueryKey;
+    const lastRawViewRef = useRef<string | null>(searchParams?.get('view') ?? null);
+    const lastStatusRef = useRef<string | null>(searchParams?.get('status') ?? null);
+    const isFirstMountRef = useRef(true);
 
     // Reload projects from the backend when the token becomes available.
     // The SSR (page.tsx → fetchProjects) cannot authenticate because the
@@ -141,10 +167,42 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
         setProjectOffset(0);
     }, []);
 
-    const handleStatusFilterChange = useCallback((value: string) => {
-        setStatusFilter(value);
-        setProjectOffset(0);
-    }, []);
+    const updateUrl = useCallback(
+        (nextView: ViewType, nextStatus: string) => {
+            const params = new URLSearchParams(searchParams?.toString() ?? '');
+            const currentView = params.get('view');
+            const currentStatus = params.get('status') ?? 'all';
+            if (currentView === nextView && currentStatus === nextStatus) {
+                return;
+            }
+            params.set('view', nextView);
+            if (nextStatus === 'all') {
+                params.delete('status');
+            } else {
+                params.set('status', nextStatus);
+            }
+            const qs = params.toString();
+            router.replace(qs ? `/plataforma/projects?${qs}` : '/plataforma/projects', { scroll: false });
+        },
+        [searchParams, router]
+    );
+
+    const handleViewChange = useCallback(
+        (nextView: ViewType) => {
+            setViewType(nextView);
+            updateUrl(nextView, statusFilter);
+        },
+        [statusFilter, updateUrl]
+    );
+
+    const handleStatusFilterChange = useCallback(
+        (nextStatus: string) => {
+            setStatusFilter(nextStatus);
+            setProjectOffset(0);
+            updateUrl(viewType, nextStatus);
+        },
+        [viewType, updateUrl]
+    );
 
     const handleProjectPageChange = useCallback((nextOffset: number) => {
         setProjectOffset(Math.max(0, nextOffset));
@@ -247,37 +305,59 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
         };
     }, [authLoading, dashboardLoadAttempt, token, viewType]);
 
+    // Sincronizar estado cuando searchParams cambie externamente (navegación o enlace compartido).
+    // Si la URL inicial no tiene ?view o contiene un valor no canónico (ej. 'dashboar'),
+    // normalizar la URL hacia la vista canónica correspondiente sin causar carreras.
     useEffect(() => {
-        const view = searchParams?.get('view');
-        if (view && (PROJECT_VIEWS as string[]).includes(view)) {
-            setViewType(view as ViewType);
-        }
-        const statusParam = searchParams?.get('status');
-        if (statusParam) {
-            setStatusFilter(statusParam);
-        }
-    }, [searchParams]);
+        const rawView = searchParams?.get('view');
+        const resolvedView = resolveProjectViewParam(rawView, initialViewType);
+        const statusParam = searchParams?.get('status') || 'all';
 
-    // ── Estado compartible (S5, rev_ui_13102026.md): la URL refleja la vista
-    // y el filtro activo (viewType + statusFilter ⇄ ?view=...&status=...),
-    // de modo que un enlace compartido abre el módulo exactamente como se ve.
-    // El write-back es ignorado por el efecto de arriba cuando ya coincide,
-    // así que no hay loops URL ⇄ estado.
-    useEffect(() => {
-        const params = new URLSearchParams(searchParams?.toString() ?? '');
-        const statusUrl = params.get('status') ?? 'all';
-        if (params.get('view') === viewType && statusUrl === statusFilter) {
+        if (isFirstMountRef.current) {
+            isFirstMountRef.current = false;
+            lastRawViewRef.current = rawView ?? null;
+            lastStatusRef.current = searchParams?.get('status') ?? null;
+
+            // Si la URL inicial no tiene ?view o contiene un valor no canónico (ej. 'dashboar'), normalizarla
+            if (!rawView || !(PROJECT_VIEWS as string[]).includes(rawView)) {
+                const params = new URLSearchParams(searchParams?.toString() ?? '');
+                params.set('view', resolvedView);
+                if (statusParam === 'all') {
+                    params.delete('status');
+                } else {
+                    params.set('status', statusParam);
+                }
+                const qs = params.toString();
+                router.replace(qs ? `/plataforma/projects?${qs}` : '/plataforma/projects', { scroll: false });
+            }
             return;
         }
-        params.set('view', viewType);
-        if (statusFilter === 'all') {
-            params.delete('status');
-        } else {
-            params.set('status', statusFilter);
+
+        // Si searchParams cambió externamente (navegación o enlace compartido)
+        if (rawView !== lastRawViewRef.current) {
+            lastRawViewRef.current = rawView ?? null;
+            if (rawView) {
+                setViewType(resolvedView);
+                if (!(PROJECT_VIEWS as string[]).includes(rawView)) {
+                    const params = new URLSearchParams(searchParams?.toString() ?? '');
+                    params.set('view', resolvedView);
+                    if (statusParam === 'all') {
+                        params.delete('status');
+                    } else {
+                        params.set('status', statusParam);
+                    }
+                    const qs = params.toString();
+                    router.replace(qs ? `/plataforma/projects?${qs}` : '/plataforma/projects', { scroll: false });
+                }
+            }
         }
-        const qs = params.toString();
-        router.replace(qs ? `/plataforma/projects?${qs}` : '/plataforma/projects', { scroll: false });
-    }, [viewType, statusFilter, searchParams, router]);
+
+        const rawStatus = searchParams?.get('status') ?? null;
+        if (rawStatus !== lastStatusRef.current) {
+            lastStatusRef.current = rawStatus;
+            setStatusFilter(rawStatus || 'all');
+        }
+    }, [searchParams, initialViewType, router]);
 
     // Scroll del listado al entrar en la vista list. Disparado por
     // `onAnimationComplete` del motion.div (no por un setTimeout fijo):
@@ -440,7 +520,7 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
             <ProjectsShell
             breadcrumbs={[{ label: 'Proyectos', icon: Folder }, { label: 'Centro de Comando', icon: Layers }]}
             viewType={viewType}
-            onViewChange={setViewType}
+            onViewChange={handleViewChange}
             viewOptions={PROJECT_VIEWS}
                 onSearch={handleSearchChange}
             rightActions={
@@ -465,7 +545,7 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                     id="projects-mobile-view"
                     aria-label="Vista de proyectos"
                     value={viewType}
-                    onChange={(event) => setViewType(event.target.value as ViewType)}
+                    onChange={(event) => handleViewChange(event.target.value as ViewType)}
                     className="h-[calc(2.5rem+var(--density-h-delta,0px))] min-w-0 flex-1 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] text-sm text-[hsl(var(--text-primary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/40 sm:hidden"
                 >
                     {PROJECT_VIEWS.map((view) => (
@@ -535,7 +615,7 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                             onClick={() => {
                                 const targetUrl = getProjectMetricHref(label);
                                 if (targetUrl.includes('view=list')) {
-                                    setViewType('list');
+                                    handleViewChange('list');
                                 }
                             }}
                         />

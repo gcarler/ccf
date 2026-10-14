@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import ProjectsClient from './ProjectsClient';
+import ProjectsClient, { resolveProjectViewParam } from './ProjectsClient';
 import { createMockProject } from '@/test-utils/factories';
 import { PROJECTS_LIST_ANCHOR } from './projectsLinks';
 import type { ProjectRecord } from '@/types/projects';
@@ -21,11 +21,22 @@ type CreateProjectMockInput = {
   color: string;
 };
 
-const { apiFetchMock, updateProjectMock, deleteProjectMock, toastErrorMock } = vi.hoisted(() => ({
+const {
+  apiFetchMock,
+  updateProjectMock,
+  deleteProjectMock,
+  toastErrorMock,
+  routerPushMock,
+  routerReplaceMock,
+  mockSearchParamsState,
+} = vi.hoisted(() => ({
   apiFetchMock: vi.fn(),
   updateProjectMock: vi.fn(),
   deleteProjectMock: vi.fn(),
   toastErrorMock: vi.fn(),
+  routerPushMock: vi.fn(),
+  routerReplaceMock: vi.fn(),
+  mockSearchParamsState: { current: new URLSearchParams() },
 }));
 
 // Captura el onAnimationComplete del motion.div para dispararlo en el test
@@ -43,8 +54,8 @@ vi.mock('framer-motion', () => ({
 }));
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
-  useSearchParams: () => new URLSearchParams(),
+  useRouter: () => ({ push: routerPushMock, replace: routerReplaceMock }),
+  useSearchParams: () => mockSearchParamsState.current,
 }));
 
 vi.mock('next/link', () => ({
@@ -118,6 +129,9 @@ describe('ProjectsClient scroll-to-list (fix carrera 100ms vs ~300ms)', () => {
   beforeEach(() => {
     capturedAnimationComplete = null;
     vi.clearAllMocks();
+    mockSearchParamsState.current = new URLSearchParams();
+    routerPushMock.mockReset();
+    routerReplaceMock.mockReset();
     updateProjectMock.mockResolvedValue(project);
     deleteProjectMock.mockResolvedValue(true);
     apiFetchMock.mockImplementation((path: string) =>
@@ -424,3 +438,141 @@ describe('ProjectsClient scroll-to-list (fix carrera 100ms vs ~300ms)', () => {
     }
   });
 });
+
+describe('resolveProjectViewParam helper', () => {
+  it('resuelve correctamente todas las vistas canónicas válidas', () => {
+    const validViews = ['dashboard', 'grid', 'table', 'list', 'board', 'kanban', 'calendar', 'gantt', 'wiki'] as const;
+    validViews.forEach((view) => {
+      expect(resolveProjectViewParam(view)).toBe(view);
+    });
+  });
+
+  it('normaliza el prefijo dashboar y variantes a dashboard', () => {
+    expect(resolveProjectViewParam('dashboar')).toBe('dashboard');
+    expect(resolveProjectViewParam('  dashboar  ')).toBe('dashboard');
+    expect(resolveProjectViewParam('Dashboar')).toBe('dashboard');
+    expect(resolveProjectViewParam('DASHBOARD')).toBe('dashboard');
+  });
+
+  it('normaliza vistas válidas con espacios o mayúsculas', () => {
+    expect(resolveProjectViewParam('  LiSt ')).toBe('list');
+    expect(resolveProjectViewParam('TABLE')).toBe('table');
+  });
+
+  it('retorna el fallback especificado cuando el valor es nulo, vacío o desconocido', () => {
+    expect(resolveProjectViewParam(null, 'grid')).toBe('grid');
+    expect(resolveProjectViewParam(undefined, 'table')).toBe('table');
+    expect(resolveProjectViewParam('', 'board')).toBe('board');
+    expect(resolveProjectViewParam('unknown_view', 'list')).toBe('list');
+    expect(resolveProjectViewParam(null)).toBe('dashboard');
+  });
+});
+
+describe('ProjectsClient view URL conflict & synchronization', () => {
+  const project = createMockProject({ id: 'p1', title: 'Proyecto Alpha', description: 'Desc' });
+
+  beforeEach(() => {
+    capturedAnimationComplete = null;
+    vi.clearAllMocks();
+    mockSearchParamsState.current = new URLSearchParams();
+    routerPushMock.mockReset();
+    routerReplaceMock.mockReset();
+    updateProjectMock.mockResolvedValue(project);
+    deleteProjectMock.mockResolvedValue(true);
+    apiFetchMock.mockImplementation((path: string) =>
+      path === '/projects/summary-page'
+        ? Promise.resolve({ items: [project], total: 1, skip: 0, limit: 50 })
+        : Promise.resolve({ cards: [], workload_distribution: [], delayed_tasks_count: 0 }),
+    );
+  });
+
+  it('montaje con initialViewType=dashboard y searchParams view=list no reemplaza a dashboard ni consulta /dashboard/projects', async () => {
+    mockSearchParamsState.current = new URLSearchParams('view=list');
+    render(<ProjectsClient initialProjects={[project]} initialViewType="dashboard" />);
+    await act(async () => {});
+
+    // No debe consultar /dashboard/projects porque la vista inicial es 'list'
+    expect(apiFetchMock).not.toHaveBeenCalledWith('/dashboard/projects', expect.anything());
+
+    // No debe haber conflicto ni sobreescritura a view=dashboard en router.replace
+    expect(routerReplaceMock).not.toHaveBeenCalledWith(expect.stringContaining('view=dashboard'), expect.anything());
+
+    // El selector móvil refleja la vista 'list'
+    const viewSelect = screen.getByRole('combobox', { name: 'Vista de proyectos' });
+    expect(viewSelect).toHaveValue('list');
+  });
+
+  it('sincroniza el cambio externo de searchParams de dashboard a list sin revertir la URL', async () => {
+    mockSearchParamsState.current = new URLSearchParams('view=dashboard');
+    const { rerender } = render(<ProjectsClient initialProjects={[project]} initialViewType="dashboard" />);
+    await act(async () => {});
+
+    routerReplaceMock.mockClear();
+
+    // Simular que Next.js actualiza searchParams externamente a ?view=list
+    mockSearchParamsState.current = new URLSearchParams('view=list');
+    rerender(<ProjectsClient initialProjects={[project]} initialViewType="dashboard" />);
+    await act(async () => {});
+
+    // La vista se sincroniza a 'list'
+    const viewSelect = screen.getByRole('combobox', { name: 'Vista de proyectos' });
+    expect(viewSelect).toHaveValue('list');
+
+    // No debe revertir la URL con router.replace a view=dashboard
+    expect(routerReplaceMock).not.toHaveBeenCalledWith(expect.stringContaining('view=dashboard'), expect.anything());
+  });
+
+  it('normaliza view=dashboar a view=dashboard en el montaje inicial', async () => {
+    mockSearchParamsState.current = new URLSearchParams('view=dashboar');
+    render(<ProjectsClient initialProjects={[project]} initialViewType="list" />);
+    await act(async () => {});
+
+    // La vista resuelta es dashboard
+    const viewSelect = screen.getByRole('combobox', { name: 'Vista de proyectos' });
+    expect(viewSelect).toHaveValue('dashboard');
+
+    // router.replace debe invocarse normalizando a view=dashboard
+    expect(routerReplaceMock).toHaveBeenCalledWith(
+      '/plataforma/projects?view=dashboard',
+      expect.objectContaining({ scroll: false }),
+    );
+    expect(routerReplaceMock).not.toHaveBeenCalledWith(
+      expect.stringMatching(/[?&]view=dashboar(?:&|$)/),
+      expect.anything(),
+    );
+  });
+
+  it('actualiza router.replace cuando el usuario cambia la vista desde la interfaz', async () => {
+    mockSearchParamsState.current = new URLSearchParams('view=dashboard');
+    render(<ProjectsClient initialProjects={[project]} initialViewType="dashboard" />);
+    await act(async () => {});
+
+    routerReplaceMock.mockClear();
+
+    const viewSelect = screen.getByRole('combobox', { name: 'Vista de proyectos' });
+    fireEvent.change(viewSelect, { target: { value: 'board' } });
+
+    expect(viewSelect).toHaveValue('board');
+    expect(routerReplaceMock).toHaveBeenCalledWith(
+      expect.stringContaining('view=board'),
+      expect.objectContaining({ scroll: false }),
+    );
+  });
+
+  it('actualiza router.replace cuando el usuario cambia el filtro de estado desde la interfaz', async () => {
+    mockSearchParamsState.current = new URLSearchParams('view=grid');
+    render(<ProjectsClient initialProjects={[project]} initialViewType="grid" />);
+    await act(async () => {});
+
+    routerReplaceMock.mockClear();
+
+    const activeFilterButton = screen.getByRole('button', { name: 'Activo' });
+    fireEvent.click(activeFilterButton);
+
+    expect(routerReplaceMock).toHaveBeenCalledWith(
+      expect.stringContaining('status=active'),
+      expect.objectContaining({ scroll: false }),
+    );
+  });
+});
+
