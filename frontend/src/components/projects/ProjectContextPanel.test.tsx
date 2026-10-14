@@ -281,4 +281,26 @@ describe("ProjectContextPanel", () => {
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it("renders and triggers project tools in the Herramientas tab when tools are provided", async () => {
+    const user = userEvent.setup();
+    const onSelectDrive = vi.fn();
+    renderPanel(
+      {},
+      {
+        tools: [
+          { key: "drive", label: "Drive", onSelect: onSelectDrive },
+          { key: "kpis", label: "KPIs", onSelect: vi.fn() },
+        ],
+      },
+    );
+
+    const toolsTab = screen.getByRole("tab", { name: "Herramientas" });
+    await user.click(toolsTab);
+    expect(toolsTab).toHaveAttribute("aria-selected", "true");
+
+    const driveBtn = screen.getByRole("button", { name: "Drive" });
+    await user.click(driveBtn);
+    expect(onSelectDrive).toHaveBeenCalledTimes(1);
+  });
 });

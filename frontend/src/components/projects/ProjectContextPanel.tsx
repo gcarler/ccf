@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useRef, useState } from "react";
-import { Activity, Bell, CheckCircle2, ChevronLeft, ExternalLink, Inbox, Maximize2, MessageSquare, Minimize2, Minus, Users, X } from "lucide-react";
+import { Activity, Bell, CheckCircle2, ChevronLeft, ExternalLink, Inbox, Maximize2, MessageSquare, Minimize2, Minus, Users, Wrench, X } from "lucide-react";
 import clsx from "clsx";
 import { useProjectUpdate } from "@/context/ProjectUpdateContext";
 import { useAuth } from "@/context/AuthContext";
@@ -16,7 +16,7 @@ import type { WsEvent } from "@/types/directMessages";
 import type { ProjectTaskRecord } from "@/types/projects";
 import { formatDate } from "@/lib/format";
 
-type ContextTab = "chat" | "activity" | "details" | "inbox";
+type ContextTab = "chat" | "activity" | "details" | "inbox" | "tools";
 
 interface ProjectContextPanelProps {
   className?: string;
@@ -29,6 +29,14 @@ interface ProjectContextPanelProps {
   onToggleMaximize?: () => void;
   isMinimized?: boolean;
   onToggleMinimize?: () => void;
+  /** Herramientas del proyecto: viven en la pestaña Herramientas del sidebar derecho (TKT-PROJECTS-RIGHT-SIDEBAR-TOOLS-NO-PROFILE-ICONS-01). */
+  tools?: Array<{
+    key: string;
+    label: string;
+    icon?: React.ElementType;
+    onSelect?: () => void | Promise<void>;
+    variant?: "warning" | "destructive";
+  }>;
 }
 
 const TABS: Array<{ id: ContextTab; label: string; icon: typeof MessageSquare }> = [
@@ -36,6 +44,7 @@ const TABS: Array<{ id: ContextTab; label: string; icon: typeof MessageSquare }>
   { id: "activity", label: "Historia", icon: Activity },
   { id: "inbox", label: "Inbox", icon: Inbox },
   { id: "details", label: "Detalles", icon: Users },
+  { id: "tools", label: "Herramientas", icon: Wrench },
 ];
 
 export default function ProjectContextPanel({
@@ -49,6 +58,7 @@ export default function ProjectContextPanel({
   onToggleMaximize,
   isMinimized: controlledMinimized,
   onToggleMinimize,
+  tools,
 }: ProjectContextPanelProps) {
   const { project, tasks, activities, reloadProject } = useProjectUpdate();
   const { token } = useAuth();
@@ -117,25 +127,27 @@ export default function ProjectContextPanel({
   });
   const globalUnread = notifications.filter((notification) => !notification.read).length;
 
+  const visibleTabs = tools?.length ? TABS : TABS.filter((item) => item.id !== "tools");
+
   const focusTab = (tab: ContextTab) => {
     setActiveTab(tab);
     tabRefs.current[tab]?.focus();
   };
 
   const handleTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, tab: ContextTab) => {
-    const currentIndex = TABS.findIndex((item) => item.id === tab);
+    const currentIndex = visibleTabs.findIndex((item) => item.id === tab);
     if (event.key === "ArrowRight" || event.key === "ArrowDown") {
       event.preventDefault();
-      focusTab(TABS[(currentIndex + 1) % TABS.length].id);
+      focusTab(visibleTabs[(currentIndex + 1) % visibleTabs.length].id);
     } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
       event.preventDefault();
-      focusTab(TABS[(currentIndex - 1 + TABS.length) % TABS.length].id);
+      focusTab(visibleTabs[(currentIndex - 1 + visibleTabs.length) % visibleTabs.length].id);
     } else if (event.key === "Home") {
       event.preventDefault();
-      focusTab(TABS[0].id);
+      focusTab(visibleTabs[0].id);
     } else if (event.key === "End") {
       event.preventDefault();
-      focusTab(TABS[TABS.length - 1].id);
+      focusTab(visibleTabs[visibleTabs.length - 1].id);
     }
   };
 
@@ -165,7 +177,7 @@ export default function ProjectContextPanel({
         <div className="w-6 border-b border-[hsl(var(--border))]" />
 
         <div className="flex flex-col items-center space-y-2 w-full px-1" role="tablist" aria-label="Contexto del proyecto (minimizado)">
-          {TABS.map(({ id, label, icon: Icon }) => (
+          {visibleTabs.map(({ id, label, icon: Icon }) => (
             <DSTooltip key={id} content={label} side="left">
               <button
                 key={id}
@@ -295,7 +307,7 @@ export default function ProjectContextPanel({
       </div>
 
       <div className="flex min-w-0 overflow-x-auto border-b border-[hsl(var(--border))] px-2 pt-2" role="tablist" aria-label="Contexto del proyecto">
-        {TABS.map(({ id, label, icon: Icon }) => (
+        {visibleTabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             id={`project-context-tab-${id}`}
@@ -351,6 +363,40 @@ export default function ProjectContextPanel({
               if (task) onOpenTask?.(task);
             }}
           />
+        ) : null}
+
+        {activeTab === "tools" && tools?.length ? (
+          <div className="h-full overflow-y-auto p-3">
+            <div className="grid grid-cols-1 gap-2">
+              {tools.map((tool) => {
+                const ToolIcon = tool.icon;
+                const variantClass =
+                  tool.variant === "destructive"
+                    ? "border-[hsl(var(--destructive)/0.35)] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)]"
+                    : tool.variant === "warning"
+                      ? "border-[hsl(var(--warning)/0.35)] bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning-text))] hover:bg-[hsl(var(--warning-muted))]"
+                      : "border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))]";
+                return (
+                  <button
+                    key={tool.key}
+                    type="button"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      void tool.onSelect?.();
+                    }}
+                    aria-label={tool.label}
+                    className={clsx(
+                      "flex min-h-9 min-w-0 items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs font-semibold transition-colors",
+                      variantClass
+                    )}
+                  >
+                    {ToolIcon ? <ToolIcon size={14} aria-hidden="true" className="shrink-0" /> : null}
+                    <span className="truncate">{tool.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         ) : null}
 
         {activeTab === "details" ? (

@@ -31,7 +31,6 @@ import {
   TrendingUp,
   FolderArchive,
   ChevronLeft,
-  Wrench,
   PanelRightOpen,
   TableProperties,
   List,
@@ -47,7 +46,6 @@ import { UserMenuDropdown } from '@/components/WorkspaceLayout';
 import { DSTooltip } from '@/design';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import AppearanceDrawer from '@/components/ui/AppearanceDrawer';
-import RightPanel from '@/components/ui/RightPanel';
 import {
   ProjectManagementHubDrawer,
   type ProjectHubModuleKey,
@@ -339,7 +337,6 @@ export default function ProjectDetailPage() {
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [taskCreationStatus, setTaskCreationStatus] = useState('todo');
   const [showProjectSettings, setShowProjectSettings] = useState(false);
-  const [showProjectActions, setShowProjectActions] = useState(false);
   const [showAppearance, setShowAppearance] = useState(false);
   const [whiteboardOpen, setWhiteboardOpen] = useState(false);
   const [showPhaseManager, setShowPhaseManager] = useState(false);
@@ -497,37 +494,6 @@ export default function ProjectDetailPage() {
     { key: 'settings', label: 'Editar proyecto', icon: Edit3, onSelect: () => setShowProjectSettings(true), variant: 'warning' as const },
     { key: 'delete', label: 'Eliminar proyecto', icon: Trash2, onSelect: handleDeleteProject, variant: 'destructive' as const, visible: canDeleteProjectFromApiPolicy },
   ].filter((action) => action.visible !== false);
-
-  const renderProjectActionList = (mobile = false) => (
-    <div className={clsx(mobile ? 'grid grid-cols-1 gap-2 p-3 sm:grid-cols-2' : 'flex items-center gap-2')}>
-      {projectActions.map((action) => {
-        const ActionIcon = action.icon;
-        const variantClass = action.variant === 'destructive'
-          ? 'border-[hsl(var(--destructive)/0.35)] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)]'
-          : action.variant === 'warning'
-            ? 'border-[hsl(var(--warning)/0.35)] bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning-text))] hover:bg-[hsl(var(--warning-muted))]'
-            : 'border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))]';
-        return (
-          <button
-            key={action.key}
-            type="button"
-            onClick={() => {
-              setShowProjectActions(false);
-              void action.onSelect();
-            }}
-            className={clsx(
-              'flex min-h-10 min-w-0 items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs font-semibold transition-colors',
-              variantClass,
-              mobile ? 'w-full' : 'whitespace-nowrap',
-            )}
-          >
-            <ActionIcon size={14} aria-hidden="true" className="shrink-0" />
-            <span className="truncate">{action.label}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
 
   const moduleRenderers = {
     kpis: () => (
@@ -745,34 +711,10 @@ export default function ProjectDetailPage() {
                 <Plus size={14} aria-hidden="true" />
                 <span className="hidden md:inline">Nueva actividad</span>
               </button>
-              {/* Caja de herramientas única (TKT-PROJECTS-RESPONSIVE-HUB-TOOLBOX-THEME-01):
-                  los iconos sueltos se consolidan en un solo botón que abre el panel
-                  de utilidades, liberando toolbar para el selector de tema. */}
-              <button
-                type="button"
-                onClick={() => setShowProjectActions(true)}
-                aria-label="Abrir caja de herramientas del proyecto"
-                aria-haspopup="dialog"
-                aria-expanded={showProjectActions}
-                title="Caja de herramientas"
-                className="flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-2xs font-bold uppercase tracking-wide text-[hsl(var(--foreground))] transition-colors hover:bg-[hsl(var(--surface-2))] active:scale-95"
-              >
-                <Wrench size={14} aria-hidden="true" className="text-[hsl(var(--primary))]" />
-                <span className="hidden sm:inline">Caja de herramientas</span>
-              </button>
               {/* Selector de tema (claro/oscuro/apariencia) junto al perfil */}
               <ThemeToggle variant="pill" onOpenAppearance={() => setShowAppearance(true)} />
               <div className="w-px h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-0.5 shrink-0" />
               <UserMenuDropdown onOpenAppearance={() => setShowAppearance(true)} />
-              <RightPanel
-                open={showProjectActions}
-                onClose={() => setShowProjectActions(false)}
-                title="Caja de herramientas"
-                width="w-full sm:w-[480px] lg:w-[560px]"
-                contentClassName="bg-[hsl(var(--surface-1))]"
-              >
-                {renderProjectActionList(true)}
-              </RightPanel>
             </div>
           }
         />
@@ -808,6 +750,7 @@ export default function ProjectDetailPage() {
           </div>
           {viewType !== 'chat' && !selectedTask && showContextPanel && (
             <ProjectContextPanel
+              tools={projectActions}
               onOpenTask={handleOpenTask}
               onClose={() => {
                 setShowContextPanel(false);
@@ -817,7 +760,7 @@ export default function ProjectDetailPage() {
               onToggleMaximize={() => setIsContextMaximized((prev) => !prev)}
             />
           )}
-          {viewType !== 'chat' && !selectedTask && !showContextPanel && (
+          {viewType !== 'chat' && !selectedTask && !showContextPanel && !isContextMaximized && (
             <button
               type="button"
               onClick={() => setShowContextPanel(true)}
