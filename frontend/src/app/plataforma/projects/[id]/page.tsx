@@ -30,8 +30,8 @@ import {
   BarChart3,
   TrendingUp,
   FolderArchive,
-  MoreHorizontal,
   ChevronLeft,
+  Wrench,
   PanelRightOpen,
   TableProperties,
   List,
@@ -45,6 +45,8 @@ import {
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { UserMenuDropdown } from '@/components/WorkspaceLayout';
 import { DSTooltip } from '@/design';
+import ThemeToggle from '@/components/ui/ThemeToggle';
+import AppearanceDrawer from '@/components/ui/AppearanceDrawer';
 import RightPanel from '@/components/ui/RightPanel';
 import {
   ProjectManagementHubDrawer,
@@ -66,11 +68,6 @@ import type { ProjectTaskRecord } from '@/types/projects';
 
 const TOOLBAR_ICON_BUTTON_CLASS =
   'flex size-9 shrink-0 items-center justify-center rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] transition-colors hover:bg-[hsl(var(--surface-2))] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]';
-
-const INLINE_TOOLBAR_ACTION_KEYS = [
-  'whiteboard', 'phases', 'kpis', 'progress', 'budget', 'risks',
-  'workload', 'reports', 'indicators', 'drive',
-];
 
 // Hub unificado de gestión: metadatos de los 12 módulos de control.
 const PROJECT_HUB_MODULE_META: ProjectHubModuleMeta[] = [
@@ -343,6 +340,7 @@ export default function ProjectDetailPage() {
   const [taskCreationStatus, setTaskCreationStatus] = useState('todo');
   const [showProjectSettings, setShowProjectSettings] = useState(false);
   const [showProjectActions, setShowProjectActions] = useState(false);
+  const [showAppearance, setShowAppearance] = useState(false);
   const [whiteboardOpen, setWhiteboardOpen] = useState(false);
   const [showPhaseManager, setShowPhaseManager] = useState(false);
   // Hub de gestión: una sola pestaña activa dentro de un único panel.
@@ -747,46 +745,30 @@ export default function ProjectDetailPage() {
                 <Plus size={14} aria-hidden="true" />
                 <span className="hidden md:inline">Nueva actividad</span>
               </button>
-              {/* Herramientas del proyecto: solo icono + tooltip (xl+). En pantallas
-                  menores o con zoom alto viven en el drawer «Acciones». */}
-              <div className="hidden min-w-0 items-center gap-1 xl:flex" role="toolbar" aria-label="Herramientas del proyecto">
-                {projectActions
-                  .filter((action) => INLINE_TOOLBAR_ACTION_KEYS.includes(action.key))
-                  .map((action) => {
-                    const ActionIcon = action.icon;
-                    return (
-                      <DSTooltip key={action.key} content={action.label} side="bottom">
-                        <button
-                          type="button"
-                          onClick={() => void action.onSelect()}
-                          aria-label={action.label}
-                          className={TOOLBAR_ICON_BUTTON_CLASS}
-                        >
-                          <ActionIcon size={15} aria-hidden="true" className="text-[hsl(var(--primary))]" />
-                        </button>
-                      </DSTooltip>
-                    );
-                  })}
-              </div>
-              <DSTooltip content="Todas las acciones del proyecto" side="bottom">
-                <button
-                  type="button"
-                  onClick={() => setShowProjectActions(true)}
-                  aria-label="Abrir acciones del proyecto"
-                  aria-haspopup="dialog"
-                  aria-expanded={showProjectActions}
-                  className={TOOLBAR_ICON_BUTTON_CLASS}
-                >
-                  <MoreHorizontal size={16} aria-hidden="true" />
-                </button>
-              </DSTooltip>
+              {/* Caja de herramientas única (TKT-PROJECTS-RESPONSIVE-HUB-TOOLBOX-THEME-01):
+                  los iconos sueltos se consolidan en un solo botón que abre el panel
+                  de utilidades, liberando toolbar para el selector de tema. */}
+              <button
+                type="button"
+                onClick={() => setShowProjectActions(true)}
+                aria-label="Abrir caja de herramientas del proyecto"
+                aria-haspopup="dialog"
+                aria-expanded={showProjectActions}
+                title="Caja de herramientas"
+                className="flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-2xs font-bold uppercase tracking-wide text-[hsl(var(--foreground))] transition-colors hover:bg-[hsl(var(--surface-2))] active:scale-95"
+              >
+                <Wrench size={14} aria-hidden="true" className="text-[hsl(var(--primary)))]" />
+                <span className="hidden sm:inline">Caja de herramientas</span>
+              </button>
+              {/* Selector de tema (claro/oscuro/apariencia) junto al perfil */}
+              <ThemeToggle variant="pill" onOpenAppearance={() => setShowAppearance(true)} />
               <div className="w-px h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-0.5 shrink-0" />
-              <UserMenuDropdown />
+              <UserMenuDropdown onOpenAppearance={() => setShowAppearance(true)} />
               <RightPanel
                 open={showProjectActions}
                 onClose={() => setShowProjectActions(false)}
-                title="Acciones del proyecto"
-                width="w-full sm:w-[420px]"
+                title="Caja de herramientas"
+                width="w-full sm:w-[480px] lg:w-[560px]"
                 contentClassName="bg-[hsl(var(--surface-1))]"
               >
                 {renderProjectActionList(true)}
@@ -794,6 +776,9 @@ export default function ProjectDetailPage() {
             </div>
           }
         />
+
+        {/* Apariencia: drawer de tema claro/oscuro para el detalle de Proyectos */}
+        <AppearanceDrawer isOpen={showAppearance} onClose={() => setShowAppearance(false)} />
 
         {loadWarning && (
           <div role="alert" className="mx-4 mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[hsl(var(--warning)/0.35)] bg-[hsl(var(--warning-muted))] px-4 py-3 text-sm text-[hsl(var(--warning-text))]">
