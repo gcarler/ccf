@@ -10,6 +10,7 @@ const layoutMocks = vi.hoisted(() => ({
   token: 'test-token',
   apiFetch: vi.fn(),
   openLayer: vi.fn(),
+  resetSidebarStack: vi.fn(),
   layers: { S1: true, S2: true, S3: false },
 }));
 
@@ -27,6 +28,7 @@ vi.mock('@/context/SidebarLayerContext', () => ({
     layers: layoutMocks.layers,
     openLayer: layoutMocks.openLayer,
     closeLayer: vi.fn(),
+    resetSidebarStack: layoutMocks.resetSidebarStack,
   }),
 }));
 
@@ -85,6 +87,7 @@ describe('ProjectsLayoutClient', () => {
     layoutMocks.token = 'test-token';
     layoutMocks.layers = { S1: true, S2: true, S3: false };
     layoutMocks.openLayer.mockClear();
+    layoutMocks.resetSidebarStack.mockClear();
     layoutMocks.apiFetch.mockReset();
     localStorage.clear();
   });
@@ -262,5 +265,45 @@ describe('ProjectsLayoutClient', () => {
     rerender(<ProjectsLayoutClient initialProjectPage={null}><main>Contenido</main></ProjectsLayoutClient>);
     expect(layoutMocks.openLayer).toHaveBeenCalledWith('S1');
     expect(layoutMocks.openLayer).toHaveBeenCalledWith('S2');
+  });
+
+  it('reopens both sidebars and resets the drill-down stack for each Projects pathname', () => {
+    layoutMocks.projectId = undefined;
+    layoutMocks.pathname = '/plataforma/projects/tasks';
+    layoutMocks.layers = { S1: false, S2: false, S3: false };
+    localStorage.setItem('s2Width', '64');
+    const { rerender } = render(
+      <ProjectsLayoutClient initialProjectPage={null}><main>Contenido</main></ProjectsLayoutClient>,
+    );
+
+    expect(layoutMocks.resetSidebarStack).toHaveBeenCalledTimes(1);
+    expect(layoutMocks.openLayer).toHaveBeenCalledWith('S1');
+    expect(layoutMocks.openLayer).toHaveBeenCalledWith('S2');
+    expect(localStorage.getItem('s2Width')).toBe('280');
+
+    layoutMocks.resetSidebarStack.mockClear();
+    layoutMocks.openLayer.mockClear();
+    layoutMocks.layers = { S1: true, S2: false, S3: false };
+    rerender(<ProjectsLayoutClient initialProjectPage={null}><main>Contenido</main></ProjectsLayoutClient>);
+    expect(layoutMocks.resetSidebarStack).not.toHaveBeenCalled();
+    expect(layoutMocks.openLayer).not.toHaveBeenCalled();
+
+    layoutMocks.pathname = '/plataforma/projects';
+    rerender(<ProjectsLayoutClient initialProjectPage={null}><main>Contenido</main></ProjectsLayoutClient>);
+    expect(layoutMocks.resetSidebarStack).toHaveBeenCalledTimes(1);
+    expect(layoutMocks.openLayer).toHaveBeenCalledWith('S1');
+    expect(layoutMocks.openLayer).toHaveBeenCalledWith('S2');
+
+    layoutMocks.resetSidebarStack.mockClear();
+    layoutMocks.openLayer.mockClear();
+    layoutMocks.apiFetch.mockResolvedValue(projectRecord('project-a', 'Proyecto A', 'task-a', 'Tarea A'));
+    layoutMocks.projectId = 'project-a';
+    layoutMocks.pathname = '/plataforma/projects/project-a';
+    rerender(<ProjectsLayoutClient initialProjectPage={null}><main>Contenido</main></ProjectsLayoutClient>);
+    expect(layoutMocks.resetSidebarStack).toHaveBeenCalledTimes(1);
+    expect(layoutMocks.openLayer).toHaveBeenCalledWith('S1');
+    expect(layoutMocks.openLayer).toHaveBeenCalledWith('S2');
+    expect(localStorage.getItem('workspace:s2:projects')).toBe('visible');
+    expect(localStorage.getItem('workspace:focus:projects')).toBe('0');
   });
 });

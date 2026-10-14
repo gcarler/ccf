@@ -81,6 +81,7 @@ function WorkspaceLayoutInner({
     const [viewportMode, setViewportMode] = useState<'mobile' | 'tablet' | 'desktop'>('desktop');
     const { isModalOpen, closeModal, defaultType } = useCreation();
     const previousLayerStateRef = useRef<{ s1: boolean; s2: boolean } | null>(null);
+    const persistedModuleRef = useRef(moduleKey);
     const workspaceHeaderRef = useRef<HTMLDivElement>(null);
     const [workspaceHeaderHeight, setWorkspaceHeaderHeight] = useState(40);
 
@@ -234,6 +235,11 @@ function WorkspaceLayoutInner({
 
     useEffect(() => {
         if (!isMounted || isFocusMode) return;
+        const isEnteringProjectsWithClosedPreviousLayer = moduleKey === 'projects'
+            && persistedModuleRef.current !== 'projects'
+            && !layers.S2;
+        persistedModuleRef.current = moduleKey;
+        if (isEnteringProjectsWithClosedPreviousLayer) return;
         localStorage.setItem('workspace:s1', layers.S1 ? 'visible' : 'hidden');
         localStorage.setItem(`workspace:s2:${moduleKey}`, layers.S2 ? 'visible' : 'hidden');
     }, [isFocusMode, isMounted, layers.S1, layers.S2, moduleKey]);
@@ -286,13 +292,29 @@ function WorkspaceLayoutInner({
     }, [s2WidthNum]);
 
     useEffect(() => {
-        if (moduleKey !== 'projects') return;
+        const handleS2WidthReset = () => setS2WidthNum(defaultS2Width);
+        window.addEventListener('workspace:s2-width-reset', handleS2WidthReset);
+        return () => window.removeEventListener('workspace:s2-width-reset', handleS2WidthReset);
+    }, []);
+
+    useEffect(() => {
+        if (moduleKey !== 'projects' || isMobileViewport) return;
+        openLayer('S1');
+        openLayer('S2');
+        setIsFocusMode(false);
+        previousLayerStateRef.current = null;
+        try {
+            localStorage.setItem('workspace:focus:projects', '0');
+            localStorage.setItem('workspace:s2:projects', 'visible');
+        } catch {
+            // The current route still opens both sidebars if storage is unavailable.
+        }
         setS2WidthNum((current) => (
             !Number.isFinite(current) || current <= snapThreshold || current > maxS2Width
                 ? defaultS2Width
                 : current
         ));
-    }, [moduleKey]);
+    }, [defaultS2Width, isMobileViewport, maxS2Width, moduleKey, openLayer, pathname, snapThreshold]);
 
     useEffect(() => {
         if (isTabletViewport && s2WidthNum > 340) {

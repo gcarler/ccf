@@ -76,6 +76,21 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
     const handleNavItemClick = (item: { id: string; href: string }) => {
         resetSidebarStack();
         if (item.id === 'projects' || item.href === PROJECTS_LIST_ROUTE || item.href.startsWith('/plataforma/projects')) {
+            let resetWidth = false;
+            try {
+                localStorage.setItem('workspace:s2:projects', 'visible');
+                localStorage.setItem('workspace:focus:projects', '0');
+                const savedWidth = Number.parseInt(localStorage.getItem('s2Width') ?? '', 10);
+                resetWidth = !Number.isFinite(savedWidth) || savedWidth <= 130 || savedWidth > 480;
+                if (resetWidth) {
+                    localStorage.setItem('s2Width', '280');
+                }
+            } catch {
+                // The sidebars still open even if browser storage is unavailable.
+                resetWidth = true;
+            }
+            if (resetWidth) window.dispatchEvent(new Event('workspace:s2-width-reset'));
+            openLayer('S1');
             openLayer('S2');
         }
     };

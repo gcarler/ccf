@@ -199,7 +199,7 @@ export default function WorkspaceMainSidebar({
     } = useSidebarLayers();
 
     // Auto-reset when navigating to a different top-level module
-    const currentModule = pathname?.split('/')[1] ?? '';
+    const currentModule = pathname?.split('/')[2] ?? '';
     const prevModuleRef = useRef(currentModule);
     useEffect(() => {
         if (prevModuleRef.current !== currentModule) {

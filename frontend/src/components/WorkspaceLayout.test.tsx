@@ -18,6 +18,15 @@ vi.mock('next/navigation', () => ({
     }),
 }));
 
+vi.mock('next/link', () => ({
+    default: ({ href, children, onClick, prefetch: _prefetch, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; prefetch?: boolean }) => (
+        <a href={href} onClick={(event) => { onClick?.(event); event.preventDefault(); }} {...props}>{children}</a>
+    ),
+}));
+vi.mock('@/design', () => ({
+    DSTooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
 vi.mock('@/context/AuthContext', () => ({
     useAuth: () => ({
         user: { id: 'usr-1', email: 'test@ccf.com', first_name: 'Carlos', role: 'admin' },
@@ -58,13 +67,14 @@ vi.mock('@/components/ui/NotificationBell', () => ({ default: () => null }));
 vi.mock('@/components/WorkspaceInbox', () => ({ default: () => null }));
 
 function LayerStatusConsumer() {
-    const { layers, openLayer } = useSidebarLayers();
+    const { layers, openLayer, closeLayer } = useSidebarLayers();
     return (
         <div>
             <span data-testid="layer-s1-status">{layers.S1 ? 'open' : 'closed'}</span>
             <span data-testid="layer-s2-status">{layers.S2 ? 'open' : 'closed'}</span>
             <span data-testid="layer-right-status">{layers.RIGHT ? 'open' : 'closed'}</span>
             <button type="button" onClick={() => openLayer('RIGHT')}>Open RIGHT layer</button>
+            <button type="button" onClick={() => closeLayer('S2')}>Close S2 layer</button>
         </div>
     );
 }
@@ -177,6 +187,52 @@ describe('WorkspaceLayout and WorkspaceMiniSidebar S2 behavior', () => {
         expect(screen.getByTestId('layer-s2-status')).toHaveTextContent('closed');
     });
 
+    it('opens S2 on every Projects route transition from a closed module and keeps same-route manual close', async () => {
+        const user = userEvent.setup();
+        navigationState.pathname = '/plataforma/crm';
+        localStorage.setItem('workspace:s2:crm', 'hidden');
+        localStorage.setItem('s2Width', '64');
+        const props = {
+            sidebarTitle: 'Proyectos',
+            sidebarSections: [{ title: 'General', items: [{ id: 'all', label: 'Todos', href: '/plataforma/projects' }] }],
+        };
+        const { rerender } = render(
+            <SidebarLayerProvider>
+                <WorkspaceLayout {...props}><LayerStatusConsumer /><div>Contenido</div></WorkspaceLayout>
+            </SidebarLayerProvider>,
+        );
+        expect(screen.getByTestId('layer-s2-status')).toHaveTextContent('closed');
+
+        navigationState.pathname = '/plataforma/projects/tasks';
+        rerender(
+            <SidebarLayerProvider>
+                <WorkspaceLayout {...props}><LayerStatusConsumer /><div>Contenido</div></WorkspaceLayout>
+            </SidebarLayerProvider>,
+        );
+        expect(screen.getByTestId('layer-s1-status')).toHaveTextContent('open');
+        expect(screen.getByTestId('layer-s2-status')).toHaveTextContent('open');
+        expect(localStorage.getItem('workspace:s2:projects')).toBe('visible');
+        expect(localStorage.getItem('workspace:focus:projects')).toBe('0');
+        expect(localStorage.getItem('s2Width')).toBe('280');
+
+        await user.click(screen.getByRole('button', { name: 'Close S2 layer' }));
+        expect(screen.getByTestId('layer-s2-status')).toHaveTextContent('closed');
+        rerender(
+            <SidebarLayerProvider>
+                <WorkspaceLayout {...props}><LayerStatusConsumer /><div>Contenido</div></WorkspaceLayout>
+            </SidebarLayerProvider>,
+        );
+        expect(screen.getByTestId('layer-s2-status')).toHaveTextContent('closed');
+
+        navigationState.pathname = '/plataforma/projects/project-a';
+        rerender(
+            <SidebarLayerProvider>
+                <WorkspaceLayout {...props}><LayerStatusConsumer /><div>Contenido</div></WorkspaceLayout>
+            </SidebarLayerProvider>,
+        );
+        expect(screen.getByTestId('layer-s2-status')).toHaveTextContent('open');
+    });
+
     it('allows manually collapsing and expanding S2 during the session without immediately overriding it', async () => {
         const user = userEvent.setup();
         navigationState.pathname = '/plataforma/projects';
@@ -259,6 +315,7 @@ describe('WorkspaceLayout and WorkspaceMiniSidebar S2 behavior', () => {
         );
 
         // Manually close S2
+        localStorage.setItem('s2Width', '64');
         await user.click(screen.getByRole('button', { name: 'Cerrar S2 Manual' }));
         expect(screen.getByTestId('wrapper-s2-status')).toHaveTextContent('closed');
 
@@ -268,5 +325,31 @@ describe('WorkspaceLayout and WorkspaceMiniSidebar S2 behavior', () => {
 
         // S2 should now be opened reactively
         expect(screen.getByTestId('wrapper-s2-status')).toHaveTextContent('open');
+        expect(localStorage.getItem('workspace:s2:projects')).toBe('visible');
+        expect(localStorage.getItem('workspace:focus:projects')).toBe('0');
+    });
+
+    it('restores the actual S2 width when Proyectos is selected from the mini sidebar', async () => {
+        const user = userEvent.setup();
+        navigationState.pathname = '/plataforma/crm';
+        localStorage.setItem('workspace:s2:crm', 'hidden');
+        localStorage.setItem('s2Width', '64');
+
+        render(
+            <SidebarLayerProvider>
+                <WorkspaceLayout sidebarTitle="CRM" sidebarSections={[]}>
+                    <LayerStatusConsumer />
+                    <div>Contenido</div>
+                </WorkspaceLayout>
+            </SidebarLayerProvider>,
+        );
+
+        await user.click(screen.getByRole('link', { name: 'Proyectos' }));
+
+        expect(screen.getByTestId('layer-s1-status')).toHaveTextContent('open');
+        expect(screen.getByTestId('layer-s2-status')).toHaveTextContent('open');
+        expect(localStorage.getItem('workspace:s2:projects')).toBe('visible');
+        expect(localStorage.getItem('workspace:focus:projects')).toBe('0');
+        expect(localStorage.getItem('s2Width')).toBe('280');
     });
 });
