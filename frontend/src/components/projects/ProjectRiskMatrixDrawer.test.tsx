@@ -67,7 +67,10 @@ describe("ProjectRiskMatrixDrawer owner flow", () => {
     expect(totalCount).toHaveStyle({ color: "hsl(var(--text-primary))" });
     expect(screen.getByText("Total Registrados").parentElement?.className).toContain("text-[hsl(var(--text-primary))]");
     expect(document.querySelector(".text-muted")).not.toBeInTheDocument();
-    expect(document.querySelector('[aria-label="Matriz RAID de Riesgos y Supuestos"]')?.innerHTML).not.toMatch(
+    // El drawer renderiza su resumen directamente (sin shell RightPanel):
+    // validamos la grilla de tarjetas de severidad como contenedor del contenido.
+    const summaryGrid = screen.getByText("Total Registrados").closest(".grid");
+    expect(summaryGrid?.innerHTML).not.toMatch(
       /--(?:text-main|foreground|muted-foreground|destructive-foreground)/,
     );
   });

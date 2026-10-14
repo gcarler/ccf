@@ -63,9 +63,9 @@ describe('ProjectEVMDrawer', () => {
       />
     );
 
-    // Debe mostrar título y subtítulo
-    expect(await screen.findByText(/Gestión del Valor Ganado/i)).toBeInTheDocument();
-    expect(screen.getByText(/Construcción Templo Sede Norte/i)).toBeInTheDocument();
+    // La vista inicial de Curva S renderiza el gráfico de desempeño acumulado
+    // (el drawer migró de RightPanel a header con pestañas: "Curva S / 4 Cuadrantes / WBS")
+    expect(await screen.findByText(/Curva S de Desempeño Acumulado/i)).toBeInTheDocument();
 
     // Debe mostrar los indicadores CPI y SPI calculados
     expect(await screen.findByText('1.11')).toBeInTheDocument();

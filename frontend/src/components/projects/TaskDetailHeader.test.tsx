@@ -7,10 +7,11 @@ import type { ProjectTaskRecord } from '@/types/projects';
 
 vi.mock('@/lib/projects/constants', () => ({
   getStatusOption: (val: string) => {
+    // Fixture normalizada a tokens semánticos del Design System (rev-ui B-T1-13102026)
     const map: Record<string, { label: string; dot: string; bg: string; text: string; border: string }> = {
-      todo:        { label: 'Pendiente',   dot: '', bg: 'bg-slate-100 dark:bg-white/5', text: 'text-slate-600 dark:text-slate-300', border: '' },
-      in_progress: { label: 'En Progreso', dot: '', bg: 'bg-blue-100 dark:bg-blue-900/20', text: 'text-blue-600 dark:text-blue-300', border: '' },
-      completed:   { label: 'Completado',  dot: '', bg: 'bg-green-100 dark:bg-green-900/20', text: 'text-green-600 dark:text-green-300', border: '' },
+      todo:        { label: 'Pendiente',   dot: '', bg: 'bg-[hsl(var(--surface-2))]', text: 'text-[hsl(var(--muted-foreground))]', border: '' },
+      in_progress: { label: 'En Progreso', dot: '', bg: 'bg-[hsl(var(--primary)/0.1)]', text: 'text-[hsl(var(--primary))]', border: '' },
+      completed:   { label: 'Completado',  dot: '', bg: 'bg-[hsl(var(--success)/0.1)]', text: 'text-[hsl(var(--success))]', border: '' },
     };
     return map[val] ?? map.todo;
   },

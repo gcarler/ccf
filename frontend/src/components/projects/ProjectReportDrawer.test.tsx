@@ -67,7 +67,9 @@ describe("ProjectReportDrawer", () => {
     const { container } = renderDrawer();
     await screen.findByText("Campamento de verano");
 
-    const reportBody = container.querySelector('[role="dialog"] > .flex-1');
+    // El drawer migró de RightPanel a header propio: el body del reporte es .flex-1.overflow-y-auto
+    const reportBody = container.querySelector(".flex-1.overflow-y-auto");
+    expect(reportBody).not.toBeNull();
     expect(reportBody?.innerHTML).not.toMatch(/--(?:card|foreground|muted-foreground)\b/);
   });
 
@@ -82,7 +84,8 @@ describe("ProjectReportDrawer", () => {
     resolveReport?.(reportData);
 
     expect(await screen.findByText("Campamento de verano")).toBeInTheDocument();
-    expect(screen.getByRole("dialog", { name: "Reportes y Exportación Ejecutiva" })).toBeInTheDocument();
+    // Header con pestañas propio del drawer (ya no hay shell role=dialog)
+    expect(screen.getByText("Previsualización Ejecutiva")).toBeInTheDocument();
     expect(screen.getByText("Ana Pérez")).toBeInTheDocument();
     expect(apiFetch).toHaveBeenCalledWith("/projects/project-1/export/executive-data", { token: "test-token" });
     expect((await axe(container)).violations).toEqual([]);
