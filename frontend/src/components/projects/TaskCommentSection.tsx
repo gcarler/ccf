@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { apiFetch } from '@/lib/http';
-import type { ProjectTaskRecord, ProjectCommentItem, ProjectCommentAttachment } from '@/types/projects';
+import type { AssigneeCandidate, ProjectTaskRecord, ProjectCommentItem, ProjectCommentAttachment } from '@/types/projects';
 import { Loader2, MessageSquare, Pin, Send, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import clsx from 'clsx';
@@ -59,8 +59,8 @@ export default function TaskCommentSection({
         const query = mentionState.query.trim();
         const queryParam = `?limit=500${query ? `&search=${encodeURIComponent(query)}` : ''}`;
 
-        apiFetch<Array<any>>(`/projects/assignee-candidates${queryParam}`, { token: token ?? undefined })
-            .catch(() => apiFetch<Array<any>>(`/crm/personas${queryParam}`, { token: token ?? undefined }))
+        apiFetch<AssigneeCandidate[]>(`/projects/assignee-candidates${queryParam}`, { token: token ?? undefined })
+            .catch(() => apiFetch<AssigneeCandidate[]>(`/crm/personas${queryParam}`, { token: token ?? undefined }))
             .then(data => {
                 if (!active) return;
                 const list = (Array.isArray(data) ? data : []).map(p => ({

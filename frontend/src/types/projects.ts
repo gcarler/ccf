@@ -1,5 +1,47 @@
 import type { ProjectStatus } from '@/lib/projects/constants';
 
+/**
+ * Candidato para menciones/asignaciones que regresa
+ * `GET /projects/assignee-candidates` (y, en fallback, `GET /crm/personas`).
+ * El fallback de CRM envuelve la persona en `user`, por eso es opcional.
+ */
+export interface AssigneeCandidate {
+  id?: string | number;
+  user?: { id?: string | number };
+  nombre_completo?: string;
+  first_name?: string;
+  last_name?: string;
+  username?: string;
+}
+
+/** Respuesta de `POST .../files/upload` (o attachments de tarea). */
+export interface AttachmentUploadResponse {
+  id?: string;
+  name?: string;
+  file_url?: string;
+  url?: string;
+  file_type?: string;
+  file_size?: number;
+}
+
+/** Adjunto normalizado para adjuntar a un comentario. */
+export interface CommentAttachmentInput {
+  id?: string;
+  name: string;
+  url: string;
+  type: string;
+  size?: number;
+}
+
+/** Cuerpo de `POST /projects.../comments`. */
+export interface CommentPayload {
+  content: string;
+  task_id?: string | null;
+  mentions: string[];
+  project_id?: string;
+  attachments?: CommentAttachmentInput[];
+}
+
 export interface ProjectKPI {
   id: string;
   project_id: string;

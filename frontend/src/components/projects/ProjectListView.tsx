@@ -11,7 +11,14 @@ import clsx from 'clsx';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import type { ProjectTaskRecord, ProjectUserFavorite } from '@/types/projects';
+import type {
+    AssigneeCandidate,
+    AttachmentUploadResponse,
+    CommentAttachmentInput,
+    CommentPayload,
+    ProjectTaskRecord,
+    ProjectUserFavorite,
+} from '@/types/projects';
 
 import { buildStatusOptions, getStatusOption, PROJECT_ASSIGNEE_CANDIDATES_ENDPOINT, STATUS_GROUP_PILL } from '@/lib/projects/constants';
 import { useProjectUpdate, type PhaseDef } from '@/context/ProjectUpdateContext';
@@ -74,8 +81,8 @@ function CommentPopover({ onClose, placement = 'bottom', taskId, projectId }: Co
         const query = mentionState.query.trim();
         const queryParam = `?limit=500${query ? `&search=${encodeURIComponent(query)}` : ''}`;
 
-        apiFetch<Array<any>>(`/projects/assignee-candidates${queryParam}`, { token: token ?? undefined })
-            .catch(() => apiFetch<Array<any>>(`/crm/personas${queryParam}`, { token: token ?? undefined }))
+        apiFetch<AssigneeCandidate[]>(`/projects/assignee-candidates${queryParam}`, { token: token ?? undefined })
+            .catch(() => apiFetch<AssigneeCandidate[]>(`/crm/personas${queryParam}`, { token: token ?? undefined }))
             .then(data => {
                 if (!active) return;
                 const list = (Array.isArray(data) ? data : []).map(p => ({
@@ -187,7 +194,7 @@ function CommentPopover({ onClose, placement = 'bottom', taskId, projectId }: Co
                 .filter(m => text.includes(`@${m.name}`))
                 .map(m => m.id);
 
-            let uploadedAttachments: any[] = [];
+            let uploadedAttachments: CommentAttachmentInput[] = [];
             if (attachedFile) {
                 const formData = new FormData();
                 formData.append('file', attachedFile);
@@ -200,7 +207,7 @@ function CommentPopover({ onClose, placement = 'bottom', taskId, projectId }: Co
                     ? `/projects/${projectId}/files/upload`
                     : (taskId ? `/projects/tasks/${taskId}/attachments` : '/projects/files/upload');
                 try {
-                    const uploadRes = await apiFetch<any>(uploadEndpoint, {
+                    const uploadRes = await apiFetch<AttachmentUploadResponse>(uploadEndpoint, {
                         method: 'POST',
                         body: formData,
                         token: token ?? undefined,
@@ -222,7 +229,7 @@ function CommentPopover({ onClose, placement = 'bottom', taskId, projectId }: Co
                 }
             }
 
-            const payload: any = {
+            const payload: CommentPayload = {
                 content: text.trim(),
                 task_id: taskId,
                 mentions: mentionIds,
