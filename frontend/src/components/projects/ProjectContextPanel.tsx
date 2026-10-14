@@ -40,16 +40,16 @@ interface ProjectContextPanelProps {
 }
 
 const TABS: Array<{ id: ContextTab; label: string; icon: typeof MessageSquare }> = [
+  { id: "tools", label: "Herramientas", icon: Wrench },
   { id: "chat", label: "Chat", icon: MessageSquare },
-  { id: "activity", label: "Historia", icon: Activity },
   { id: "inbox", label: "Inbox", icon: Inbox },
   { id: "details", label: "Detalles", icon: Users },
-  { id: "tools", label: "Herramientas", icon: Wrench },
+  { id: "activity", label: "Historia", icon: Activity },
 ];
 
 export default function ProjectContextPanel({
   className,
-  defaultTab = "chat",
+  defaultTab,
   onOpenTask,
   onClose,
   isExpanded: controlledExpanded,
@@ -62,7 +62,10 @@ export default function ProjectContextPanel({
 }: ProjectContextPanelProps) {
   const { project, tasks, activities, reloadProject } = useProjectUpdate();
   const { token } = useAuth();
-  const [activeTab, setActiveTab] = useState<ContextTab>(defaultTab);
+  // Herramientas activa por defecto cuando el panel recibe tools (TKT-PROJECTS-CONTEXT-TABS-ORDER-01)
+  const [activeTab, setActiveTab] = useState<ContextTab>(
+    defaultTab ?? (tools?.length ? "tools" : "chat"),
+  );
   const [internalMaximized, setInternalMaximized] = useState(false);
   const [internalMinimized, setInternalMinimized] = useState(false);
   const [width, setWidth] = useState<number>(() => {

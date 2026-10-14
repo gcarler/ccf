@@ -226,12 +226,12 @@ describe("ProjectContextPanel", () => {
     const chatTab = screen.getByRole("tab", { name: "Chat" });
     chatTab.focus();
     await user.keyboard("{ArrowRight}");
-    expect(screen.getByRole("tab", { name: "Historia" })).toHaveFocus();
-    expect(screen.getByRole("tab", { name: "Historia" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: /Inbox/ })).toHaveFocus();
+    expect(screen.getByRole("tab", { name: /Inbox/ })).toHaveAttribute("aria-selected", "true");
 
     await user.keyboard("{End}");
-    expect(screen.getByRole("tab", { name: "Detalles" })).toHaveFocus();
-    expect(screen.getByRole("tab", { name: "Detalles" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "Historia" })).toHaveFocus();
+    expect(screen.getByRole("tab", { name: "Historia" })).toHaveAttribute("aria-selected", "true");
   });
 
   it("allows toggling expand to full width (extender todo/restaurar)", async () => {
@@ -294,6 +294,16 @@ describe("ProjectContextPanel", () => {
         ],
       },
     );
+
+    // Orden exacto de pestañas + Herramientas activa por defecto (TKT-PROJECTS-CONTEXT-TABS-ORDER-01)
+    expect(screen.getAllByRole("tab").map((tab) => tab.id)).toEqual([
+      "project-context-tab-tools",
+      "project-context-tab-chat",
+      "project-context-tab-inbox",
+      "project-context-tab-details",
+      "project-context-tab-activity",
+    ]);
+    expect(screen.getByRole("tab", { name: "Herramientas" })).toHaveAttribute("aria-selected", "true");
 
     const toolsTab = screen.getByRole("tab", { name: "Herramientas" });
     await user.click(toolsTab);
