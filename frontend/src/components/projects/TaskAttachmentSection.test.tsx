@@ -1,11 +1,16 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render as rtlRender, screen, fireEvent, waitFor } from '@testing-library/react';
 import { axe } from 'jest-axe';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { SidebarLayerProvider } from '@/context/SidebarLayerContext';
 import TaskAttachmentSection from './TaskAttachmentSection';
 import type { ProjectTaskRecord } from '@/types/projects';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/http';
+
+function render(ui: React.ReactElement, options?: Parameters<typeof rtlRender>[1]) {
+  return rtlRender(ui, { wrapper: SidebarLayerProvider, ...options });
+}
 
 vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
@@ -326,5 +331,70 @@ describe('TaskAttachmentSection', () => {
     const clickSpy = vi.spyOn(input, 'click');
     externalRef.current?.click();
     expect(clickSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('muestra botón Previsualizar para cada archivo seguro junto a Abrir', () => {
+    render(
+      <TaskAttachmentSection
+        task={taskWithAttachments}
+        uploading={false}
+        deletingAttachmentId={null}
+        onUpload={vi.fn()}
+        onDelete={vi.fn()}
+        onUploadingChange={vi.fn()}
+      />
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Previsualizar archivo design.pdf' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Previsualizar archivo notes.txt' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Abrir archivo design.pdf en una pestaña nueva' })
+    ).toBeInTheDocument();
+  });
+
+  it('abre el lector PDF in-app con ProjectFileViewerDrawer al hacer clic en Previsualizar', async () => {
+    render(
+      <TaskAttachmentSection
+        task={taskWithAttachments}
+        uploading={false}
+        deletingAttachmentId={null}
+        onUpload={vi.fn()}
+        onDelete={vi.fn()}
+        onUploadingChange={vi.fn()}
+      />
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Previsualizar archivo design.pdf' })
+    );
+
+    expect(
+      await screen.findByRole('dialog', { name: 'Visor Universal Embebido' })
+    ).toBeInTheDocument();
+    const iframe = screen.getByTitle('design.pdf');
+    expect(iframe).toHaveAttribute('src', 'https://example.com/design.pdf#toolbar=1&navpanes=0');
+  });
+
+  it('abre el lector in-app al hacer clic en el nombre del archivo', async () => {
+    render(
+      <TaskAttachmentSection
+        task={taskWithAttachments}
+        uploading={false}
+        deletingAttachmentId={null}
+        onUpload={vi.fn()}
+        onDelete={vi.fn()}
+        onUploadingChange={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('notes.txt'));
+
+    expect(
+      await screen.findByRole('dialog', { name: 'Visor Universal Embebido' })
+    ).toBeInTheDocument();
   });
 });

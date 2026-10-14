@@ -7,6 +7,13 @@ import { SidebarLayerProvider } from "@/context/SidebarLayerContext";
 import type { ProjectFileRecord } from "@/types/projects";
 import { ProjectFileViewerDrawer } from "./ProjectFileViewerDrawer";
 
+vi.mock("@/lib/http", () => ({
+  apiFetch: vi.fn(),
+}));
+
+import { apiFetch } from "@/lib/http";
+const mockApiFetch = vi.mocked(apiFetch);
+
 const imageFile: ProjectFileRecord = {
   id: "file-image-1",
   project_id: "project-1",
@@ -89,4 +96,121 @@ describe("ProjectFileViewerDrawer", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(/enlace.*se bloqueó/i);
     expect(document.querySelector("iframe, img, audio, video, a[href]")).toBeNull();
   });
+
+  it("renders embedded PDF iframe with toolbar and navpanes parameters", () => {
+    const pdfFile: ProjectFileRecord = {
+      ...imageFile,
+      id: "file-pdf-1",
+      name: "Especificaciones.pdf",
+      file_url: "https://example.com/files/spec.pdf",
+      file_type: "application/pdf",
+    };
+    renderViewer(pdfFile);
+
+    const iframe = screen.getByTitle(pdfFile.name);
+    expect(iframe).toBeInTheDocument();
+    expect(iframe).toHaveAttribute(
+      "src",
+      "https://example.com/files/spec.pdf#toolbar=1&navpanes=0",
+    );
+  });
+
+  it("converts and displays Office document (Excel) with GFM table, badges, stats, and tabs", async () => {
+    const user = userEvent.setup();
+    mockApiFetch.mockResolvedValueOnce({
+      filename: "Presupuesto_2026.xlsx",
+      format: "xlsx",
+      markdown: "# Presupuesto General\n\n| Partida | Monto USD | Estado |\n| --- | --- | --- |\n| Personal | $15,000 | Aprobado |\n| Licencias | $2,500 | En revisión |\n\n> Fin del documento.",
+      char_count: 140,
+      word_count: 18,
+      processing_time_ms: 45,
+      engine: "anydoc_rs",
+      success: true,
+    });
+
+    const excelFile: ProjectFileRecord = {
+      ...imageFile,
+      id: "file-excel-1",
+      name: "Presupuesto_2026.xlsx",
+      file_url: "https://example.com/files/presupuesto.xlsx",
+      file_type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    };
+
+    const { container } = renderViewer(excelFile);
+
+    expect(await screen.findByText("Presupuesto General")).toBeInTheDocument();
+    expect(screen.getByText("Partida")).toBeInTheDocument();
+    expect(screen.getByText("Personal")).toBeInTheDocument();
+    expect(screen.getByText("$15,000")).toBeInTheDocument();
+    expect(screen.getByText("XLSX")).toBeInTheDocument();
+    expect(screen.getByText("18")).toBeInTheDocument();
+    expect(screen.getByText(/palabras/)).toBeInTheDocument();
+    expect(screen.getByText(/45 ms/)).toBeInTheDocument();
+
+    const previewTab = screen.getByRole("tab", { name: "Vista Previa" });
+    const rawTab = screen.getByRole("tab", { name: "Markdown" });
+    expect(previewTab).toHaveAttribute("aria-selected", "true");
+
+    await user.click(rawTab);
+    expect(rawTab).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByText(/\| Partida \| Monto USD \|/)).toBeInTheDocument();
+
+    // Verify strict semantic tokens compliance
+    expect(screen.getByTestId("anydoc-reader-area").innerHTML).not.toMatch(
+      /--(?:foreground|muted-foreground)\b/
+    );
+    expect((await axe(container)).violations).toEqual([]);
+  });
+
+  it("renders markdown files directly with native structured reader", async () => {
+    const originalFetch = global.fetch;
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      text: async () => "# Guía Rápida\n\nInstrucciones de configuración del proyecto.",
+    } as Response);
+
+    const mdFile: ProjectFileRecord = {
+      ...imageFile,
+      id: "file-md-1",
+      name: "README.md",
+      file_url: "https://example.com/files/README.md",
+      file_type: "text/markdown",
+    };
+
+    const { container } = renderViewer(mdFile);
+
+    expect(await screen.findByText("Guía Rápida")).toBeInTheDocument();
+    expect(screen.getByText("Instrucciones de configuración del proyecto.")).toBeInTheDocument();
+    expect(screen.getByText("MD")).toBeInTheDocument();
+
+    expect(screen.getByTestId("anydoc-reader-area").innerHTML).not.toMatch(
+      /--(?:foreground|muted-foreground)\b/
+    );
+    expect((await axe(container)).violations).toEqual([]);
+
+    global.fetch = originalFetch;
+  });
+
+  it("displays accessible error state and fallback download button when conversion fails", async () => {
+    mockApiFetch.mockRejectedValueOnce(new Error("Documento dañado o corrupto"));
+
+    const docxFile: ProjectFileRecord = {
+      ...imageFile,
+      id: "file-doc-1",
+      name: "Contrato.docx",
+      file_url: "https://example.com/files/contrato.docx",
+      file_type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    };
+
+    renderViewer(docxFile);
+
+    expect(await screen.findByText("Documento dañado o corrupto")).toBeInTheDocument();
+    const downloadLinks = screen.getAllByRole("link", { name: /Descargar/i });
+    expect(downloadLinks.length).toBeGreaterThan(0);
+    expect(downloadLinks[0]).toHaveAttribute(
+      "href",
+      "https://example.com/files/contrato.docx",
+    );
+  });
 });
+

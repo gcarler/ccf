@@ -1,8 +1,14 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import React from 'react';
+import { render as rtlRender, screen, fireEvent, waitFor } from '@testing-library/react';
 import { axe } from 'jest-axe';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { SidebarLayerProvider } from '@/context/SidebarLayerContext';
 import TaskCommentSection from './TaskCommentSection';
 import type { ProjectTaskRecord, ProjectCommentItem } from '@/types/projects';
+
+function render(ui: React.ReactElement, options?: Parameters<typeof rtlRender>[1]) {
+  return rtlRender(ui, { wrapper: SidebarLayerProvider, ...options });
+}
 
 vi.mock('@/lib/http', () => ({
   apiFetch: vi.fn(),
@@ -138,4 +144,58 @@ describe('TaskCommentSection', () => {
       );
     });
   });
+
+  it('renders comment attachments with open link and preview button opening ProjectFileViewerDrawer', async () => {
+    mockApiFetch.mockResolvedValueOnce([
+      {
+        id: 'c10',
+        project_id: 'p1',
+        author_id: 'u1',
+        author_name: 'Carlos',
+        content: 'Adjunto el entregable de la fase',
+        created_at: '2026-01-01T10:00:00Z',
+        updated_at: '2026-01-01T10:00:00Z',
+        is_resolved: false,
+        attachments: [
+          {
+            name: 'entregable.pdf',
+            url: 'https://example.com/entregable.pdf',
+            size: 2048,
+            type: 'application/pdf',
+          },
+        ],
+      },
+    ] as ProjectCommentItem[]);
+
+    const { container } = render(
+      <TaskCommentSection task={task} token="test-token" onDeleteComment={vi.fn()} />
+    );
+
+    await screen.findByText('Carlos');
+    expect(screen.getByText('entregable.pdf')).toBeInTheDocument();
+
+    const openLink = screen.getByRole('link', {
+      name: 'Abrir archivo entregable.pdf en una pestaña nueva',
+    });
+    expect(openLink).toHaveAttribute('href', 'https://example.com/entregable.pdf');
+    expect(openLink).toHaveAttribute('target', '_blank');
+
+    const previewButton = screen.getByRole('button', {
+      name: 'Previsualizar archivo entregable.pdf',
+    });
+    expect(previewButton).toBeInTheDocument();
+
+    // Verify accessibility before opening drawer
+    expect((await axe(container)).violations).toEqual([]);
+
+    // Click preview button to open in-app drawer
+    fireEvent.click(previewButton);
+
+    expect(
+      await screen.findByRole('dialog', { name: 'Visor Universal Embebido' })
+    ).toBeInTheDocument();
+    const iframe = screen.getByTitle('entregable.pdf');
+    expect(iframe).toHaveAttribute('src', 'https://example.com/entregable.pdf#toolbar=1&navpanes=0');
+  });
 });
+

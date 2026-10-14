@@ -2,10 +2,12 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { apiFetch } from '@/lib/http';
-import type { AssigneeCandidate, ProjectTaskRecord, ProjectCommentItem, ProjectCommentAttachment } from '@/types/projects';
-import { Loader2, MessageSquare, Pin, Send, Trash2 } from 'lucide-react';
+import type { AssigneeCandidate, ProjectTaskRecord, ProjectCommentItem, ProjectCommentAttachment, ProjectFileRecord } from '@/types/projects';
+import { Eye, Loader2, MessageSquare, Paperclip, Pin, Send, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import clsx from 'clsx';
+import { getSafeProjectLink } from '@/lib/projects/safeProjectLink';
+import { ProjectFileViewerDrawer } from './ProjectFileViewerDrawer';
 
 interface Comment {
     id: string;
@@ -46,6 +48,23 @@ export default function TaskCommentSection({
     const [sendingComment, setSendingComment] = useState(false);
     const [loadingComments, setLoadingComments] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [viewingFile, setViewingFile] = useState<ProjectFileRecord | null>(null);
+
+    const handlePreviewCommentAttachment = (c: Comment, att: ProjectCommentAttachment, attIdx: number) => {
+        setViewingFile({
+            id: `comment-att-${c.id}-${attIdx}`,
+            project_id: task.project_id,
+            name: att.name,
+            category: 'attachments',
+            file_source: 'local',
+            file_url: att.url,
+            file_type: att.type,
+            file_size: att.size,
+            task_id: task.id,
+            task_title: task.title,
+            created_at: c.timestamp.toISOString(),
+        });
+    };
 
     const [mentionState, setMentionState] = useState<{ query: string; start: number } | null>(null);
     const [candidates, setCandidates] = useState<Array<{ id: string; name: string }>>([]);
@@ -75,7 +94,7 @@ export default function TaskCommentSection({
             });
 
         return () => { active = false; };
-    }, [mentionState?.query, token]);
+    }, [mentionState, token]);
 
     const filteredCandidates = useMemo(() => {
         if (!mentionState) return [];
@@ -317,6 +336,62 @@ export default function TaskCommentSection({
                                 </div>
                             </div>
                             <p className="text-sm text-[hsl(var(--foreground))] leading-relaxed">{c.text}</p>
+                            {c.attachments && c.attachments.length > 0 && (
+                                <div className="mt-2 space-y-1.5 pt-1.5 border-t border-[hsl(var(--border)/0.5)]">
+                                    {c.attachments.map((att, attIdx) => {
+                                        const safeUrl = getSafeProjectLink(att.url);
+                                        return (
+                                            <div
+                                                key={`${c.id}-att-${attIdx}`}
+                                                className="flex items-center justify-between gap-2 p-1.5 rounded-md bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-2xs"
+                                            >
+                                                <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                                    <Paperclip size={12} className="text-[hsl(var(--muted-foreground))] shrink-0" />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handlePreviewCommentAttachment(c, att, attIdx)}
+                                                        title={`Previsualizar ${att.name}`}
+                                                        className="font-semibold text-[hsl(var(--foreground))] hover:text-[hsl(var(--primary))] truncate text-left transition-colors cursor-pointer"
+                                                    >
+                                                        {att.name}
+                                                    </button>
+                                                    {att.size ? (
+                                                        <span className="text-[hsl(var(--muted-foreground))] shrink-0">
+                                                            ({Math.max(1, Math.round(att.size / 1024))} KB)
+                                                        </span>
+                                                    ) : null}
+                                                </div>
+                                                <div className="flex items-center gap-1.5 shrink-0">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handlePreviewCommentAttachment(c, att, attIdx)}
+                                                        aria-label={`Previsualizar archivo ${att.name}`}
+                                                        className="inline-flex items-center gap-1 text-2xs font-semibold text-[hsl(var(--primary))] hover:underline px-1.5 py-0.5 rounded hover:bg-[hsl(var(--surface-2))]"
+                                                    >
+                                                        <Eye size={11} />
+                                                        <span>Previsualizar</span>
+                                                    </button>
+                                                    {safeUrl ? (
+                                                        <a
+                                                            href={safeUrl}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            aria-label={`Abrir archivo ${att.name} en una pestaña nueva`}
+                                                            className="text-2xs font-semibold text-[hsl(var(--primary))] hover:underline px-1 py-0.5"
+                                                        >
+                                                            Abrir
+                                                        </a>
+                                                    ) : (
+                                                        <span className="text-2xs text-[hsl(var(--muted-foreground))]">
+                                                            Enlace no disponible
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
                     </div>
                 ))}
@@ -383,6 +458,11 @@ export default function TaskCommentSection({
                 </div>
             </div>
 
+            <ProjectFileViewerDrawer
+                file={viewingFile}
+                isOpen={Boolean(viewingFile)}
+                onClose={() => setViewingFile(null)}
+            />
         </section>
     );
 }

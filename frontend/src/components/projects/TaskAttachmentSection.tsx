@@ -1,11 +1,12 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { apiFetch } from '@/lib/http';
-import type { ProjectTaskRecord } from '@/types/projects';
-import { Loader2, Paperclip, Trash2, Upload } from 'lucide-react';
+import type { ProjectAttachment, ProjectFileRecord, ProjectTaskRecord } from '@/types/projects';
+import { Eye, Loader2, Paperclip, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { getSafeProjectLink } from '@/lib/projects/safeProjectLink';
+import { ProjectFileViewerDrawer } from './ProjectFileViewerDrawer';
 
 export default function TaskAttachmentSection({
   task,
@@ -28,6 +29,23 @@ export default function TaskAttachmentSection({
   const internalInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = externalInputRef ?? internalInputRef;
   const attachments = task.attachments ?? [];
+  const [viewingFile, setViewingFile] = useState<ProjectFileRecord | null>(null);
+
+  const handlePreviewAttachment = (attachment: ProjectAttachment) => {
+    setViewingFile({
+      id: attachment.id,
+      project_id: task.project_id,
+      name: attachment.filename,
+      category: 'attachments',
+      file_source: 'local',
+      file_url: attachment.file_url,
+      file_type: attachment.file_type ?? undefined,
+      file_size: attachment.file_size ?? undefined,
+      task_id: task.id,
+      task_title: task.title,
+      created_at: attachment.created_at ?? new Date().toISOString(),
+    });
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -126,9 +144,20 @@ export default function TaskAttachmentSection({
                 className="flex items-center justify-between gap-3 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-2"
               >
                 <div className="min-w-0 flex-1 text-left">
-                  <p className="truncate text-sm font-bold text-[hsl(var(--foreground))]">
-                    {attachment.filename}
-                  </p>
+                  {fileUrl ? (
+                    <button
+                      type="button"
+                      onClick={() => handlePreviewAttachment(attachment)}
+                      title={`Previsualizar ${attachment.filename}`}
+                      className="truncate text-sm font-bold text-[hsl(var(--foreground))] hover:text-[hsl(var(--primary))] text-left transition-colors cursor-pointer block max-w-full"
+                    >
+                      {attachment.filename}
+                    </button>
+                  ) : (
+                    <p className="truncate text-sm font-bold text-[hsl(var(--foreground))]">
+                      {attachment.filename}
+                    </p>
+                  )}
                   <p className="text-2xs text-[hsl(var(--muted-foreground))]">
                     {attachment.file_size
                       ? `${Math.max(1, Math.round(attachment.file_size / 1024))} KB`
@@ -137,15 +166,27 @@ export default function TaskAttachmentSection({
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   {fileUrl ? (
-                    <a
-                      href={fileUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label={`Abrir archivo ${attachment.filename} en una pestaña nueva`}
-                      className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:underline"
-                    >
-                      Abrir
-                    </a>
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handlePreviewAttachment(attachment)}
+                        aria-label={`Previsualizar archivo ${attachment.filename}`}
+                        title="Previsualizar archivo"
+                        className="inline-flex items-center gap-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:underline px-1.5 py-1 rounded hover:bg-[hsl(var(--surface-2))]"
+                      >
+                        <Eye size={12} />
+                        <span>Previsualizar</span>
+                      </button>
+                      <a
+                        href={fileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`Abrir archivo ${attachment.filename} en una pestaña nueva`}
+                        className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:underline px-1.5 py-1"
+                      >
+                        Abrir
+                      </a>
+                    </>
                   ) : (
                     <span className="text-2xs text-[hsl(var(--muted-foreground))]">
                       Enlace no disponible
@@ -179,6 +220,12 @@ export default function TaskAttachmentSection({
         className="hidden"
         onChange={handleFileUpload}
         aria-label="Adjuntar archivos a la tarea"
+      />
+
+      <ProjectFileViewerDrawer
+        file={viewingFile}
+        isOpen={Boolean(viewingFile)}
+        onClose={() => setViewingFile(null)}
       />
     </section>
   );
