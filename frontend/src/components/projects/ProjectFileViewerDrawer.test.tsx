@@ -9,10 +9,12 @@ import { ProjectFileViewerDrawer } from "./ProjectFileViewerDrawer";
 
 vi.mock("@/lib/http", () => ({
   apiFetch: vi.fn(),
+  apiFetchBlob: vi.fn(),
 }));
 
-import { apiFetch } from "@/lib/http";
+import { apiFetch, apiFetchBlob } from "@/lib/http";
 const mockApiFetch = vi.mocked(apiFetch);
+const mockApiFetchBlob = vi.mocked(apiFetchBlob);
 
 const imageFile: ProjectFileRecord = {
   id: "file-image-1",
@@ -163,11 +165,9 @@ describe("ProjectFileViewerDrawer", () => {
   });
 
   it("renders markdown files directly with native structured reader", async () => {
-    const originalFetch = global.fetch;
-    global.fetch = vi.fn().mockResolvedValueOnce({
-      ok: true,
+    mockApiFetchBlob.mockResolvedValueOnce({
       text: async () => "# Guía Rápida\n\nInstrucciones de configuración del proyecto.",
-    } as Response);
+    } as unknown as Blob);
 
     const mdFile: ProjectFileRecord = {
       ...imageFile,
@@ -187,8 +187,6 @@ describe("ProjectFileViewerDrawer", () => {
       /--(?:foreground|muted-foreground)\b/
     );
     expect((await axe(container)).violations).toEqual([]);
-
-    global.fetch = originalFetch;
   });
 
   it("displays accessible error state and fallback download button when conversion fails", async () => {

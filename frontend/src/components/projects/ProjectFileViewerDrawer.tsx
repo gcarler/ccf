@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { RightPanel } from "@/components/ui/RightPanel";
-import { apiFetch } from "@/lib/http";
+import { apiFetch, apiFetchBlob } from "@/lib/http";
 import type { ProjectFileRecord, DocumentConversionResponse } from "@/types/projects";
 import {
   ExternalLink,
@@ -365,19 +365,17 @@ export function ProjectFileViewerDrawer({
 
         if (safeFileUrl) {
           try {
-            const res = await fetch(safeFileUrl);
-            if (res.ok) {
-              if (isDirectText) {
-                textContent = await res.text();
-              } else {
-                const buffer = await res.arrayBuffer();
-                const bytes = new Uint8Array(buffer);
-                let binary = "";
-                for (let i = 0; i < bytes.byteLength; i++) {
-                  binary += String.fromCharCode(bytes[i]);
-                }
-                base64 = btoa(binary);
+            const blob = await apiFetchBlob(safeFileUrl);
+            if (isDirectText) {
+              textContent = await blob.text();
+            } else {
+              const buffer = await blob.arrayBuffer();
+              const bytes = new Uint8Array(buffer);
+              let binary = "";
+              for (let i = 0; i < bytes.byteLength; i++) {
+                binary += String.fromCharCode(bytes[i]);
               }
+              base64 = btoa(binary);
             }
           } catch {
             // Fetch might fail in tests or cross-origin environments
