@@ -227,4 +227,74 @@ describe('ProjectWorkflowView', () => {
         expect(screen.getByText('Lienzo de Workflow Vacío')).toBeInTheDocument();
         expect(screen.getByText(/Aún no hay actividades en este proyecto/i)).toBeInTheDocument();
     });
+
+    it('invokes onManageComponents when clicking the + Componentes (EDT) toolbar button', async () => {
+        const user = userEvent.setup();
+        const onManageComponents = vi.fn();
+
+        render(
+            <ProjectWorkflowView
+                project={project}
+                tasks={[task1]}
+                components={components}
+                onOpenTask={vi.fn()}
+                onManageComponents={onManageComponents}
+            />
+        );
+
+        const btn = screen.getByRole('button', { name: '+ Componentes (EDT)' });
+        expect(btn).toBeInTheDocument();
+        await user.click(btn);
+
+        expect(onManageComponents).toHaveBeenCalledTimes(1);
+    });
+
+    it('invokes onManageComponents when clicking a Level 2 component node', async () => {
+        const user = userEvent.setup();
+        const onManageComponents = vi.fn();
+
+        render(
+            <ProjectWorkflowView
+                project={project}
+                tasks={[task1]}
+                components={components}
+                onOpenTask={vi.fn()}
+                onManageComponents={onManageComponents}
+            />
+        );
+
+        const compNode = screen.getByRole('button', { name: /Gestionar componentes: Infraestructura & Datos/i });
+        expect(compNode).toBeInTheDocument();
+        await user.click(compNode);
+
+        expect(onManageComponents).toHaveBeenCalledTimes(1);
+    });
+
+    it('invokes onManageComponents when clicking a synthetic component node for unassigned tasks', async () => {
+        const user = userEvent.setup();
+        const onManageComponents = vi.fn();
+        const unassignedTask = createMockTask({
+            id: 't-unassigned',
+            project_id: 'proj-1',
+            title: 'Tarea sin componente asignado',
+            component_id: undefined,
+        });
+
+        render(
+            <ProjectWorkflowView
+                project={project}
+                tasks={[unassignedTask]}
+                components={[]}
+                onOpenTask={vi.fn()}
+                onManageComponents={onManageComponents}
+            />
+        );
+
+        const syntheticNode = screen.getByRole('button', { name: /Gestionar componentes: Componente General/i });
+        expect(syntheticNode).toBeInTheDocument();
+        expect(screen.getByText('+ Configurar EDT')).toBeInTheDocument();
+
+        await user.click(syntheticNode);
+        expect(onManageComponents).toHaveBeenCalledTimes(1);
+    });
 });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import TaskMetaFields from './TaskMetaFields';
 import type { ProjectTaskRecord } from '@/types/projects';
@@ -100,5 +100,63 @@ describe('TaskMetaFields', () => {
 
     expect(screen.queryByText('Nodo Operativo')).not.toBeInTheDocument();
     expect(screen.queryByText('Sin nodo')).not.toBeInTheDocument();
+  });
+
+  it('renders Componente (EDT) select and allows reassigning component', () => {
+    const onComponentChange = vi.fn();
+    const mockComponents = [
+      { id: 'comp-1', code: 'EDT-1.0', name: 'Arquitectura' },
+      { id: 'comp-2', code: 'EDT-2.0', name: 'Frontend' },
+    ];
+    const taskWithComp: ProjectTaskRecord = { ...mockTask, component_id: 'comp-1' };
+
+    render(
+      <TaskMetaFields
+        task={taskWithComp}
+        labels={[]}
+        components={mockComponents}
+        onLabelsChange={vi.fn()}
+        onAssigneeChange={vi.fn()}
+        onPriorityCycle={vi.fn()}
+        onComponentChange={onComponentChange}
+        priority={defaultPriority}
+        token="test-token"
+      />
+    );
+
+    const compSelect = screen.getByRole('combobox', { name: 'Componente (EDT)' });
+    expect(compSelect).toBeInTheDocument();
+    expect(compSelect).toHaveValue('comp-1');
+
+    // Change to comp-2
+    fireEvent.change(compSelect, { target: { value: 'comp-2' } });
+    expect(onComponentChange).toHaveBeenCalledWith('comp-2');
+
+    // Change to empty (Sin componente)
+    fireEvent.change(compSelect, { target: { value: '' } });
+    expect(onComponentChange).toHaveBeenCalledWith(null);
+  });
+
+  it('renders read-only Componente (EDT) label when onComponentChange is not provided', () => {
+    const mockComponents = [
+      { id: 'comp-1', code: 'EDT-1.0', name: 'Arquitectura' },
+    ];
+    const taskWithComp: ProjectTaskRecord = { ...mockTask, component_id: 'comp-1' };
+
+    render(
+      <TaskMetaFields
+        task={taskWithComp}
+        labels={[]}
+        components={mockComponents}
+        onLabelsChange={vi.fn()}
+        onAssigneeChange={vi.fn()}
+        onPriorityCycle={vi.fn()}
+        priority={defaultPriority}
+        token="test-token"
+      />
+    );
+
+    expect(screen.queryByRole('combobox', { name: 'Componente (EDT)' })).not.toBeInTheDocument();
+    expect(screen.getByText('Arquitectura')).toBeInTheDocument();
   });
 });

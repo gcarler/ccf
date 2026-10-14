@@ -39,6 +39,7 @@ import {
   Workflow,
   BookOpen,
   MessageSquare,
+  Layers,
   type LucideIcon,
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
@@ -67,8 +68,9 @@ import type { ProjectTaskRecord } from '@/types/projects';
 const TOOLBAR_ICON_BUTTON_CLASS =
   'flex size-9 shrink-0 items-center justify-center rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] transition-colors hover:bg-[hsl(var(--surface-2))] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]';
 
-// Hub unificado de gestión: metadatos de los 12 módulos de control.
+// Hub unificado de gestión: metadatos de los módulos de control.
 const PROJECT_HUB_MODULE_META: ProjectHubModuleMeta[] = [
+  { key: 'components', label: 'Componentes (EDT)', icon: Layers },
   { key: 'kpis', label: 'KPIs', icon: Target },
   { key: 'progress', label: 'Avance', icon: Sliders },
   { key: 'budget', label: 'Presupuesto', icon: Wallet },
@@ -233,6 +235,13 @@ const ProjectEVMDrawer = dynamic(
   () =>
     import('@/components/projects/ProjectEVMDrawer').then(
       module => module.ProjectEVMDrawer
+    ),
+  { loading: ProjectDrawerLoading }
+);
+const ProjectComponentDrawer = dynamic(
+  () =>
+    import('@/components/projects/ProjectComponentDrawer').then(
+      module => module.ProjectComponentDrawer
     ),
   { loading: ProjectDrawerLoading }
 );
@@ -405,6 +414,14 @@ export default function ProjectDetailPage() {
         action: () => setShowTaskModal(true),
       },
       {
+        id: 'project-detail-hub-components',
+        label: 'Abrir Componentes (EDT)',
+        description: 'Estructura de Desglose de Trabajo (Nivel 2 WBS/EDT)',
+        icon: Layers,
+        group: 'Hub de gestión',
+        action: () => openHubModule('components'),
+      },
+      {
         id: 'project-detail-hub-kpis',
         label: 'Abrir KPIs',
         description: 'Indicadores clave de desempeño del proyecto',
@@ -479,6 +496,7 @@ export default function ProjectDetailPage() {
   }[] = [
     { key: 'whiteboard', label: 'Pizarra', icon: PencilRuler, onSelect: () => setWhiteboardOpen(true) },
     { key: 'phases', label: 'Fases', icon: Edit3, onSelect: () => setShowPhaseManager(true) },
+    { key: 'components', label: 'Componentes (EDT)', icon: Layers, onSelect: () => openHubModule('components') },
     { key: 'kpis', label: 'KPIs', icon: Target, onSelect: () => openHubModule('kpis') },
     { key: 'progress', label: 'Avance', icon: Sliders, onSelect: () => openHubModule('progress') },
     { key: 'budget', label: 'Presupuesto', icon: Wallet, onSelect: () => openHubModule('budget') },
@@ -496,6 +514,15 @@ export default function ProjectDetailPage() {
   ].filter((action) => action.visible !== false);
 
   const moduleRenderers = {
+    components: () => (
+      <ProjectComponentDrawer
+        projectId={project?.id || id}
+        projectTitle={project?.title}
+        isOpen
+        onClose={() => closeHubModule('components')}
+        onUpdated={() => reloadProject()}
+      />
+    ),
     kpis: () => (
       <ProjectKpiDrawer
         projectId={project?.id || id}
@@ -746,6 +773,7 @@ export default function ProjectDetailPage() {
               setShowTaskModal={setShowTaskModal}
               setWhiteboardOpen={setWhiteboardOpen}
               setTaskCreationStatus={setTaskCreationStatus}
+              onManageComponents={() => openHubModule('components')}
             />
           </div>
           {viewType !== 'chat' && !selectedTask && showContextPanel && (
@@ -794,6 +822,7 @@ export default function ProjectDetailPage() {
         <DeferredMount open={showTaskModal}>
           <TaskCreationDrawer
             isOpen={showTaskModal}
+            projectId={project?.id || id}
             defaultStatus={taskCreationStatus}
             onClose={() => setShowTaskModal(false)}
             onSubmit={async data => {

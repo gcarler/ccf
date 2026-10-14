@@ -5,7 +5,7 @@ import MetaRow from '@/components/ui/MetaRow';
 import TaskLabelManager from './TaskLabelManager';
 import { InlineDatePicker } from '@/components/ui/inline-editors/InlineDatePicker';
 import type { ProjectTaskRecord } from '@/types/projects';
-import { CalendarDays, Flag, Tag, UserRound } from 'lucide-react';
+import { CalendarDays, Flag, Tag, UserRound, Layers } from 'lucide-react';
 import clsx from 'clsx';
 
 function formatCalendarDate(value: string): string {
@@ -22,21 +22,25 @@ function formatCalendarDate(value: string): string {
 export default function TaskMetaFields({
     task,
     labels,
+    components,
     onLabelsChange,
     onAssigneeChange,
     onDueDateChange,
     onPriorityCycle,
-    onNodeCycle,
+    onNodeCycle: _onNodeCycle,
+    onComponentChange,
     priority,
     token,
 }: {
     task: ProjectTaskRecord;
     labels: string[];
+    components?: { id: string; code: string; name: string }[];
     onLabelsChange: (labels: string[]) => void;
     onAssigneeChange: (id: string | null) => void;
     onDueDateChange?: (date: string | null) => void;
     onPriorityCycle: () => void;
     onNodeCycle?: () => void;
+    onComponentChange?: (componentId: string | null) => void;
     priority: { color: string; dot: string; label: string };
     token: string | null;
 }) {
@@ -80,6 +84,30 @@ export default function TaskMetaFields({
 
             <MetaRow icon={<Tag size={13} className="text-[hsl(var(--muted-foreground))]" />} label="Etiquetas">
                 <TaskLabelManager task={task} labels={labels} onLabelsChange={onLabelsChange} token={token} />
+            </MetaRow>
+
+            <MetaRow icon={<Layers size={13} className="text-[hsl(var(--muted-foreground))]" />} label="Componente (EDT)">
+                {onComponentChange ? (
+                    <select
+                        aria-label="Componente (EDT)"
+                        value={task.component_id ?? ''}
+                        onChange={(e) => onComponentChange(e.target.value ? e.target.value : null)}
+                        className="bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md px-2.5 py-1 text-xs font-medium text-[hsl(var(--foreground))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                    >
+                        <option value="">Sin componente (General)</option>
+                        {components?.map((c) => (
+                            <option key={c.id} value={c.id}>
+                                {c.code} · {c.name}
+                            </option>
+                        ))}
+                    </select>
+                ) : (
+                    <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium text-[hsl(var(--muted-foreground))]">
+                        {task.component_id
+                            ? components?.find((c) => c.id === task.component_id)?.name ?? 'Asignado'
+                            : 'Sin componente (General)'}
+                    </span>
+                )}
             </MetaRow>
         </section>
     );

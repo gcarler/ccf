@@ -110,14 +110,16 @@ vi.mock("@/components/ui/RightPanel", () => ({
     children,
     title,
     subtitle,
+    width,
   }: {
     isOpen: boolean;
     children: React.ReactNode;
     title?: React.ReactNode;
     subtitle?: React.ReactNode;
+    width?: string;
   }) =>
     isOpen ? (
-      <aside data-testid="right-panel">
+      <aside data-testid="right-panel" data-width={width}>
         <div>{title}</div>
         <div>{subtitle}</div>
         {children}
@@ -231,5 +233,21 @@ describe("ProjectComponentDrawer", () => {
         })
       );
     });
+  });
+
+  it("renders RightPanel with responsive wide dimensions (max-w-6xl)", async () => {
+    render(
+      <ProjectComponentDrawer
+        projectId="proj-123"
+        projectTitle="Construcción Templo Sede Norte"
+        isOpen={true}
+        onClose={vi.fn()}
+      />
+    );
+
+    const panel = screen.getByTestId("right-panel");
+    expect(panel.getAttribute("data-width")).toBe(
+      "w-full sm:w-[88vw] lg:w-[72vw] xl:w-[64vw] max-w-6xl"
+    );
   });
 });

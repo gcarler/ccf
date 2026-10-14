@@ -47,6 +47,7 @@ interface ProjectViewsContentProps {
     setShowTaskModal: (open: boolean) => void;
     setTaskCreationStatus: (status: string) => void;
     setWhiteboardOpen: (open: boolean) => void;
+    onManageComponents?: () => void;
 }
 
 /**
@@ -69,6 +70,7 @@ export function ProjectViewsContent({
     setShowTaskModal,
     setTaskCreationStatus,
     setWhiteboardOpen: _setWhiteboardOpen,
+    onManageComponents,
 }: ProjectViewsContentProps) {
     const { project, tasks, phases, activities, createTask, reloadProject, updateTask } = useProjectUpdate();
 
@@ -189,6 +191,7 @@ export function ProjectViewsContent({
                         tasks={tasks}
                         phases={phases}
                         onOpenTask={onOpenTask}
+                        onManageComponents={onManageComponents}
                     />
                 </div>
             )}

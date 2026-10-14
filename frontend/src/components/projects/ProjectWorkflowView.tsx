@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useRef, useMemo, useEffect } from 'react';
+import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import {
     ZoomIn,
     ZoomOut,
@@ -19,12 +20,18 @@ import { AvatarInitial } from '@/components/ui/AvatarInitial';
 import { useOptionalAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 
+const ProjectComponentDrawer = dynamic(
+    () => import('@/components/projects/ProjectComponentDrawer').then(m => m.ProjectComponentDrawer),
+    { ssr: false }
+);
+
 export interface ProjectWorkflowViewProps {
     project?: ProjectRecord | null;
     tasks: ProjectTaskRecord[];
     components?: (ProjectComponent | ProjectComponentDetail)[];
     phases?: readonly PhaseDef[];
     onOpenTask: (task: ProjectTaskRecord) => void;
+    onManageComponents?: () => void;
 }
 
 interface LayoutNode {
@@ -42,6 +49,7 @@ interface LayoutNode {
     progress?: number;
     subtasksCount?: number;
     task?: ProjectTaskRecord;
+    isSynthetic?: boolean;
     x: number;
     y: number;
     width: number;
@@ -83,6 +91,7 @@ export default function ProjectWorkflowView({
     tasks = [],
     components: propComponents,
     onOpenTask,
+    onManageComponents,
 }: ProjectWorkflowViewProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const auth = useOptionalAuth();
@@ -97,24 +106,33 @@ export default function ProjectWorkflowView({
 
     // Components state (either from props or fetched from components-breakdown)
     const [fetchedComponents, setFetchedComponents] = useState<ProjectComponentDetail[]>([]);
+    const [isComponentDrawerOpen, setIsComponentDrawerOpen] = useState(false);
 
-    useEffect(() => {
-        if (propComponents && propComponents.length > 0) return;
+    const loadComponents = useCallback(() => {
         if (!project?.id) return;
-
-        let isMounted = true;
         apiFetch<ProjectComponentsBreakdown>(`/projects/${project.id}/components-breakdown`, { token })
             .then(res => {
-                if (isMounted && res?.components) {
+                if (res?.components) {
                     setFetchedComponents(res.components);
                 }
             })
             .catch(() => {
                 // Silently fallback if endpoint unavailable or offline
             });
+    }, [project?.id, token]);
 
-        return () => { isMounted = false; };
-    }, [project?.id, propComponents, token]);
+    useEffect(() => {
+        if (propComponents && propComponents.length > 0) return;
+        loadComponents();
+    }, [project?.id, propComponents, loadComponents]);
+
+    const handleOpenComponents = useCallback(() => {
+        if (onManageComponents) {
+            onManageComponents();
+        } else {
+            setIsComponentDrawerOpen(true);
+        }
+    }, [onManageComponents]);
 
     const effectiveComponents = useMemo(() => {
         if (propComponents && propComponents.length > 0) {
@@ -285,7 +303,6 @@ export default function ProjectWorkflowView({
             compChildrenIds.push(compNodeId);
 
             // Filter direct root activities under this component
-            const isSynthetic = comp.isSynthetic;
             const rootTasks = tasks.filter(t => {
                 const isRoot = !t.parent_id || !taskMap.has(t.parent_id);
                 if (!isRoot) return false;
@@ -312,6 +329,7 @@ export default function ProjectWorkflowView({
                     subtitle: '0 actividades',
                     budget: comp.budget,
                     color: comp.color,
+                    isSynthetic: comp.isSynthetic,
                     x: xLevel2,
                     y: compStartY,
                     width: COMP_WIDTH,
@@ -339,6 +357,7 @@ export default function ProjectWorkflowView({
                     subtitle: `${rootTasks.length} ${rootTasks.length === 1 ? 'actividad' : 'actividades'}`,
                     budget: comp.budget,
                     color: comp.color,
+                    isSynthetic: comp.isSynthetic,
                     x: xLevel2,
                     y: compY,
                     width: COMP_WIDTH,
@@ -579,7 +598,18 @@ export default function ProjectWorkflowView({
                                 <div
                                     key={node.id}
                                     data-testid={`workflow-node-${node.id}`}
-                                    className="absolute p-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2)/0.75)] backdrop-blur shadow-sm flex flex-col justify-between"
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={handleOpenComponents}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            handleOpenComponents();
+                                        }
+                                    }}
+                                    aria-label={`Gestionar componentes: ${node.title}`}
+                                    title="Click para gestionar o configurar Componentes EDT"
+                                    className="absolute p-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2)/0.75)] backdrop-blur shadow-sm flex flex-col justify-between cursor-pointer hover:border-[hsl(var(--primary)/0.6)] hover:shadow-md transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))]"
                                     style={{
                                         left: node.x,
                                         top: node.y,
@@ -594,21 +624,25 @@ export default function ProjectWorkflowView({
                                                 {node.code}
                                             </span>
                                         </span>
-                                        <span className="text-3xs font-semibold px-1.5 py-0.5 rounded bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]">
-                                            Nivel 2 · Componente
+                                        <span className="text-3xs font-semibold px-1.5 py-0.5 rounded bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors">
+                                            {node.isSynthetic ? '+ Configurar EDT' : 'Nivel 2 · Componente'}
                                         </span>
                                     </div>
-                                    <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] truncate" title={node.title}>
+                                    <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] truncate group-hover:text-[hsl(var(--primary))] transition-colors" title={node.title}>
                                         {node.title}
                                     </h3>
                                     <div className="flex items-center justify-between text-2xs text-[hsl(var(--text-secondary))]">
                                         <span>{node.subtitle}</span>
-                                        {Boolean(node.budget) && (
+                                        {Boolean(node.budget) ? (
                                             <span className="font-medium text-[hsl(var(--text-primary))] flex items-center">
                                                 <DollarSign size={10} className="inline" />
                                                 {node.budget?.toLocaleString('es-CO')}
                                             </span>
-                                        )}
+                                        ) : node.isSynthetic ? (
+                                            <span className="text-3xs text-[hsl(var(--primary))] font-semibold">
+                                                Gestionar
+                                            </span>
+                                        ) : null}
                                     </div>
                                 </div>
                             );
@@ -696,6 +730,17 @@ export default function ProjectWorkflowView({
             >
                 <button
                     type="button"
+                    onClick={handleOpenComponents}
+                    aria-label="+ Componentes (EDT)"
+                    title="Gestionar Componentes (EDT)"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold text-[hsl(var(--text-primary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--surface-2))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))]"
+                >
+                    <Layers size={14} className="text-[hsl(var(--primary))]" />
+                    <span>+ Componentes (EDT)</span>
+                </button>
+                <div className="w-[1px] h-4 bg-[hsl(var(--border))] mx-0.5" />
+                <button
+                    type="button"
                     onClick={handleZoomIn}
                     aria-label="Acercar"
                     title="Acercar (+)"
@@ -738,6 +783,18 @@ export default function ProjectWorkflowView({
                     <Maximize2 size={14} />
                 </button>
             </div>
+
+            {project?.id && isComponentDrawerOpen && (
+                <ProjectComponentDrawer
+                    projectId={project.id}
+                    projectTitle={project.title}
+                    isOpen={isComponentDrawerOpen}
+                    onClose={() => setIsComponentDrawerOpen(false)}
+                    onUpdated={() => {
+                        loadComponents();
+                    }}
+                />
+            )}
         </div>
     );
 }

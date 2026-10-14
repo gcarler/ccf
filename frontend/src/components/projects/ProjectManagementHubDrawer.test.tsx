@@ -112,4 +112,17 @@ describe("ProjectManagementHubDrawer", () => {
     expect(screen.queryByTestId("kpis-content")).not.toBeInTheDocument();
     expect(screen.queryByTestId("drive-content")).not.toBeInTheDocument();
   });
+
+  it("renderiza correctamente el módulo 'components' cuando está activo", () => {
+    renderHub({
+      openModules: ["components"],
+      moduleMeta: [{ key: "components", label: "Componentes (EDT)", icon: Target }],
+      activeModule: "components",
+      moduleRenderers: {
+        components: () => <div data-testid="components-content">Componentes EDT</div>,
+      },
+    });
+    expect(screen.getByTestId("components-content")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Componentes \(EDT\)/ })).toHaveAttribute("aria-selected", "true");
+  });
 });

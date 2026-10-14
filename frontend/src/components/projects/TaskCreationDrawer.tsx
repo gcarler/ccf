@@ -1,18 +1,31 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { CheckSquare, Type, AlignLeft, Flag, Loader2, User } from 'lucide-react';
+import { CheckSquare, Type, AlignLeft, Flag, Loader2, User, Layers } from 'lucide-react';
 import PersonaSelect from '@/components/ui/PersonaSelect';
 import clsx from 'clsx';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { PRIORITY_LABELS, TASK_TITLE_MAX_LENGTH } from '@/lib/projects/constants';
+import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/http';
+import type { ProjectComponentsBreakdown } from '@/types/projects';
 
 interface Props {
     isOpen: boolean;
+    projectId?: string;
     defaultStatus?: string;
+    defaultComponentId?: string | null;
     onClose: () => void;
-    onSubmit: (data: { title: string; description: string; priority: string; status: string; assignee_id?: string | null; node?: string | null }) => Promise<boolean> | Promise<void> | boolean | void;
+    onSubmit: (data: {
+        title: string;
+        description: string;
+        priority: string;
+        status: string;
+        assignee_id?: string | null;
+        node?: string | null;
+        component_id?: string | null;
+    }) => Promise<boolean> | Promise<void> | boolean | void;
 }
 
 interface FormValues {
@@ -21,6 +34,7 @@ interface FormValues {
     priority: string;
     assignee_id: string | null;
     node: string | null;
+    component_id: string | null;
 }
 
 const PRIORITIES = [
@@ -30,7 +44,17 @@ const PRIORITIES = [
     { value: 'low', label: PRIORITY_LABELS.low, color: 'bg-[hsl(var(--surface-2))]', iconColor: 'text-[hsl(var(--text-secondary))]' }
 ];
 
-export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onClose, onSubmit }: Props) {
+export default function TaskCreationDrawer({
+    isOpen,
+    projectId,
+    defaultStatus = 'todo',
+    defaultComponentId,
+    onClose,
+    onSubmit,
+}: Props) {
+    const { token } = useAuth();
+    const [components, setComponents] = useState<Array<{ id: string; code: string; name: string }>>([]);
+
     const { register, handleSubmit, reset, setValue, watch, formState: { isSubmitting } } = useForm<FormValues>({
         defaultValues: {
             title: '',
@@ -38,6 +62,7 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
             priority: 'medium',
             assignee_id: null,
             node: null,
+            component_id: defaultComponentId ?? '',
         }
     });
 
@@ -45,13 +70,40 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
     const assigneeId = watch('assignee_id');
 
     useEffect(() => {
-        if (isOpen) {
-            reset({ title: '', description: '', priority: 'medium', assignee_id: null, node: null });
+        if (!isOpen || !projectId || !token) {
+            setComponents([]);
+            return;
         }
-    }, [isOpen, reset]);
+        let isCurrent = true;
+        Promise.resolve(apiFetch<ProjectComponentsBreakdown>(`/projects/${projectId}/components-breakdown`, { token }))
+            .then((res) => {
+                if (isCurrent && res?.components) {
+                    setComponents(res.components.map((c) => ({ id: c.id, code: c.code, name: c.name })));
+                }
+            })
+            .catch(() => {});
+        return () => { isCurrent = false; };
+    }, [isOpen, projectId, token]);
+
+    useEffect(() => {
+        if (isOpen) {
+            reset({
+                title: '',
+                description: '',
+                priority: 'medium',
+                assignee_id: null,
+                node: null,
+                component_id: defaultComponentId ?? '',
+            });
+        }
+    }, [isOpen, defaultComponentId, reset]);
 
     const onFormSubmit = async (data: FormValues) => {
-        const result = await onSubmit({ ...data, status: defaultStatus });
+        const result = await onSubmit({
+            ...data,
+            component_id: data.component_id ? data.component_id : null,
+            status: defaultStatus,
+        });
         if (result === true || result === undefined) {
             onClose();
         }
@@ -142,6 +194,25 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
                         onChange={(v) => setValue('assignee_id', v)}
                         placeholder="Seleccionar responsable"
                     />
+                </div>
+
+                <div className="space-y-1.5">
+                    <label htmlFor="task-component" className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
+                        <Layers size={12} /> Componente (EDT)
+                    </label>
+                    <select
+                        id="task-component"
+                        aria-label="Componente (EDT)"
+                        {...register('component_id')}
+                        className="w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 transition-all text-[hsl(var(--foreground))]"
+                    >
+                        <option value="">Sin componente (General)</option>
+                        {components.map((c) => (
+                            <option key={c.id} value={c.id}>
+                                {c.code} · {c.name}
+                            </option>
+                        ))}
+                    </select>
                 </div>
             </form>
         </WorkspaceDrawer>

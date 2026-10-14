@@ -16,16 +16,13 @@ import {
   Edit2,
   DollarSign,
   TrendingUp,
-  CheckCircle2,
   AlertTriangle,
-  AlertCircle,
   Save,
   X,
   RefreshCw,
   PieChart,
   ListTodo,
   Receipt,
-  HelpCircle,
 } from "lucide-react";
 import clsx from "clsx";
 import { toast } from "sonner";
@@ -242,7 +239,7 @@ export function ProjectComponentDrawer({
     <RightPanel
       isOpen={isOpen}
       onClose={onClose}
-      width="w-full sm:max-w-2xl"
+      width="w-full sm:w-[88vw] lg:w-[72vw] xl:w-[64vw] max-w-6xl"
       title={
         <div className="flex items-center gap-2">
           <Layers className="h-5 w-5 text-primary" style={{ color: "hsl(var(--primary))" }} />

@@ -11,7 +11,7 @@ import {
     getPriorityOption,
 } from '@/lib/projects/constants';
 import type { TaskPriority } from '@/lib/projects/constants';
-import type { ProjectTaskRecord, TaskSupplyRecord, ProjectUserFavorite } from '@/types/projects';
+import type { ProjectTaskRecord, TaskSupplyRecord, ProjectUserFavorite, ProjectComponentsBreakdown } from '@/types/projects';
 import { AlignLeft } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
@@ -120,9 +120,26 @@ export default function TaskDetailPanel({
     const [deletingAttachmentId, setDeletingAttachmentId] = useState<string | null>(null);
     const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
     const [error, setError] = useState<string | null>(null);
+    const [components, setComponents] = useState<Array<{ id: string; code: string; name: string }>>([]);
     const panelRef = useRef<HTMLElement>(null);
     const previousFocusRef = useRef<HTMLElement | null>(null);
     const panelOpen = Boolean(task) && !authLoading;
+
+    useEffect(() => {
+        if (!task?.project_id || !token) {
+            setComponents([]);
+            return;
+        }
+        let isCurrent = true;
+        Promise.resolve(apiFetch<ProjectComponentsBreakdown>(`/projects/${task.project_id}/components-breakdown`, { token }))
+            .then((res) => {
+                if (isCurrent && res?.components) {
+                    setComponents(res.components.map((c) => ({ id: c.id, code: c.code, name: c.name })));
+                }
+            })
+            .catch(() => {});
+        return () => { isCurrent = false; };
+    }, [task?.project_id, token]);
 
     useEffect(() => {
         if (!panelOpen) return;
@@ -400,6 +417,22 @@ export default function TaskDetailPanel({
         }
     };
 
+    const handleComponentChange = async (newComponentId: string | null) => {
+        if (!task || !requireAuth('Debes iniciar sesión para reasignar el componente de la tarea.')) return;
+        const normalized = newComponentId || null;
+        onUpdate?.({ ...task, component_id: normalized });
+        try {
+            await apiFetch(`/projects/${task.project_id}/tasks/${task.id}`, {
+                method: 'PATCH',
+                token,
+                body: { component_id: normalized },
+            });
+            onActivityCreated?.();
+        } catch {
+            setError('No se pudo reasignar el componente de la tarea.');
+        }
+    };
+
     const confirmDeleteTask = async () => {
         if (!task || !requireAuth('Debes iniciar sesión para eliminar la tarea.')) return;
         try {
@@ -562,11 +595,13 @@ export default function TaskDetailPanel({
                     <TaskMetaFields
                         task={task}
                         labels={labels}
+                        components={components}
                         onLabelsChange={setLabels}
                         onAssigneeChange={handleAssigneeChange}
                         onDueDateChange={handleDueDateChange}
                         onPriorityCycle={handlePriorityCycle}
                         onNodeCycle={handleNodeCycle}
+                        onComponentChange={handleComponentChange}
                         priority={priority}
                         token={token}
                     />

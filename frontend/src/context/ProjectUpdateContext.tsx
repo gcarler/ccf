@@ -23,6 +23,8 @@ export interface CreateTaskPayload {
   status: string;
   assignee_id?: string | null;
   due_date?: string | null;
+  node?: string | null;
+  component_id?: string | null;
 }
 
 export interface ProjectUpdateContextValue {
