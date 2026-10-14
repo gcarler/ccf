@@ -33,6 +33,13 @@ import {
   MoreHorizontal,
   ChevronLeft,
   PanelRightOpen,
+  TableProperties,
+  List,
+  Kanban,
+  GanttChart,
+  Workflow,
+  BookOpen,
+  MessageSquare,
   type LucideIcon,
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
@@ -50,6 +57,7 @@ import {
   ProjectDrawerLoading,
 } from '@/components/projects/DeferredMount';
 import { ProjectUpdateProvider } from '@/context/ProjectUpdateContext';
+import { useRegisterCommands } from '@/context/CommandCenterContext';
 import { ProjectViewsContent } from '@/components/projects/ProjectViewsContent';
 import ProjectContextPanel from '@/components/projects/ProjectContextPanel';
 import { useProjectPageData } from '@/hooks/useProjectPageData';
@@ -92,6 +100,22 @@ const PROJECT_DETAIL_VIEWS: ViewType[] = [
   'wiki',
   'chat',
 ];
+
+// Iconos/labels de las vistas del detalle, alineados con ViewSwitcher
+// para que la CommandPalette represente la misma navegación con los mismos
+// símbolos que la barra del workspace.
+const PROJECT_DETAIL_VIEW_META: Partial<Record<ViewType, { label: string; icon: LucideIcon }>> = {
+  dashboard: { label: 'Resumen', icon: LayoutDashboard },
+  table: { label: 'Tabla', icon: TableProperties },
+  list: { label: 'Lista', icon: List },
+  board: { label: 'Tablero', icon: Kanban },
+  kanban: { label: 'Kanban', icon: Kanban },
+  calendar: { label: 'Calendario', icon: Calendar },
+  gantt: { label: 'Gantt', icon: GanttChart },
+  workflow: { label: 'Workflow', icon: Workflow },
+  wiki: { label: 'Wiki', icon: BookOpen },
+  chat: { label: 'Chat', icon: MessageSquare },
+};
 
 const TaskDetailPanel = dynamic(
   () => import('@/components/projects/TaskDetailPanel'),
@@ -351,6 +375,86 @@ export default function ProjectDetailPage() {
   const closeHub = useCallback(() => {
     setHubState({ open: [], active: null });
   }, []);
+
+  // ── Command Palette (S3/S4, rev_ui_13102026.md §5): comandos Ctrl+K que
+  // reflejan la navegación del detalle: cambiar de vista, crear actividad
+  // y abrir los módulos clave del Hub (KPIs, EVM, Riesgos, Presupuesto, Drive).
+  const changeDetailView = useCallback((view: ViewType) => {
+    setViewType(view);
+    const viewParams = new URLSearchParams(searchParams?.toString() ?? '');
+    viewParams.set('view', view);
+    router.replace(`/plataforma/projects/${id}?${viewParams.toString()}`);
+  }, [id, router, searchParams]);
+
+  const detailViewCommands = useMemo(
+    () =>
+      PROJECT_DETAIL_VIEWS.map((view) => ({
+        id: `project-detail-view-${view}`,
+        label: `Vista: ${PROJECT_DETAIL_VIEW_META[view]?.label ?? view}`,
+        description: 'Cambiar de vista en el detalle del proyecto',
+        icon: PROJECT_DETAIL_VIEW_META[view]?.icon,
+        group: 'Vistas del proyecto',
+        action: () => changeDetailView(view),
+      })),
+    [changeDetailView]
+  );
+
+  const detailActionCommands = useMemo(
+    () => [
+      {
+        id: 'project-detail-new-activity',
+        label: 'Nueva actividad',
+        description: 'Crear una tarea en este proyecto',
+        icon: Plus as LucideIcon,
+        group: 'Acciones',
+        action: () => setShowTaskModal(true),
+      },
+      {
+        id: 'project-detail-hub-kpis',
+        label: 'Abrir KPIs',
+        description: 'Indicadores clave de desempeño del proyecto',
+        icon: Target,
+        group: 'Hub de gestión',
+        action: () => openHubModule('kpis'),
+      },
+      {
+        id: 'project-detail-hub-evm',
+        label: 'Abrir EVM (Valor Ganado)',
+        description: 'Curva S, CPI/SPI y salud del proyecto',
+        icon: TrendingUp,
+        group: 'Hub de gestión',
+        action: () => openHubModule('evm'),
+      },
+      {
+        id: 'project-detail-hub-risks',
+        label: 'Abrir Riesgos',
+        description: 'Matriz RAID de riesgos y supuestos',
+        icon: ShieldAlert,
+        group: 'Hub de gestión',
+        action: () => openHubModule('risks'),
+      },
+      {
+        id: 'project-detail-hub-budget',
+        label: 'Abrir Presupuesto',
+        description: 'Gastos, saldo y desglose de presupuesto',
+        icon: Wallet,
+        group: 'Hub de gestión',
+        action: () => openHubModule('budget'),
+      },
+      {
+        id: 'project-detail-hub-drive',
+        label: 'Abrir Drive',
+        description: 'Archivos y carpetas del proyecto',
+        icon: FolderArchive,
+        group: 'Hub de gestión',
+        action: () => openHubModule('drive'),
+      },
+    ],
+    [openHubModule]
+  );
+
+  useRegisterCommands(`project-detail-${id}`, [...detailViewCommands, ...detailActionCommands]);
+
   const [showContextPanel, setShowContextPanel] = useState(true);
   const [isContextMaximized, setIsContextMaximized] = useState(false);
   const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
