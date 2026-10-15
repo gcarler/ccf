@@ -33,14 +33,15 @@ function PriorityRenderer({ value }: { value: string }) {
     return <TaskPriorityBadge value={value} className="max-w-full" title={opt.label} />;
 }
 
-function AssigneeRenderer({ value }: { value: string | null | undefined }) {
+function AssigneeRenderer({ value, assigneeMap }: { value: string | null | undefined; assigneeMap?: Record<string, string> }) {
     if (!value) return <span className="text-xs text-[hsl(var(--muted-foreground))]">—</span>;
+    const name = (assigneeMap && assigneeMap[value]) || value;
     return (
         <span
             className="text-xs font-bold text-[hsl(var(--foreground))]"
-            title={value}
+            title={name}
         >
-            {String(value).replace(/-/g, '').slice(0, 8)}
+            {name}
         </span>
     );
 }
@@ -55,8 +56,31 @@ export default function ProjectTableView({ tasks, projectId }: { tasks: ProjectT
     const { token } = useAuth();
     const [onlyFavorites, setOnlyFavorites] = useState(false);
     const [favoriteTaskIds, setFavoriteTaskIds] = useState<Set<string>>(new Set());
+    const [assigneeMap, setAssigneeMap] = useState<Record<string, string>>({});
 
     const effectiveProjectId = projectId || tasks[0]?.project_id;
+
+    useEffect(() => {
+        let active = true;
+        if (!token) return;
+        apiFetch<Array<{ id: string; nombre_completo?: string; first_name?: string; last_name?: string; username?: string; user?: { id?: string; username?: string } }>>(
+            '/projects/assignee-candidates?limit=1000',
+            { token }
+        )
+            .then(data => {
+                if (!active || !Array.isArray(data)) return;
+                const map: Record<string, string> = {};
+                for (const p of data) {
+                    const fullName = [p.first_name, p.last_name].filter(Boolean).join(' ').trim();
+                    const name = p.nombre_completo || fullName || p.user?.username || p.username || p.id;
+                    if (p.id) map[p.id] = name;
+                    if (p.user?.id) map[p.user.id] = name;
+                }
+                setAssigneeMap(map);
+            })
+            .catch(() => {});
+        return () => { active = false; };
+    }, [token]);
 
     useEffect(() => {
         let active = true;
@@ -79,10 +103,17 @@ export default function ProjectTableView({ tasks, projectId }: { tasks: ProjectT
     const colDefs = useMemo<ColDef[]>(() => [
         { field: 'title',    headerName: 'Tarea',        flex: 2, cellRenderer: TitleRenderer },
         { field: 'status',   headerName: 'Estado',       width: 140, cellRenderer: StatusRenderer },
-        { field: 'assignee_id', headerName: 'Responsable', width: 130, cellRenderer: AssigneeRenderer },
+        {
+            field: 'assignee_id',
+            headerName: 'Responsable',
+            width: 160,
+            cellRenderer: (params: { value: string | null | undefined }) => (
+                <AssigneeRenderer value={params.value} assigneeMap={assigneeMap} />
+            ),
+        },
         { field: 'due_date', headerName: 'Entrega',      width: 120, cellRenderer: DateRenderer },
         { field: 'priority', headerName: 'Prioridad',    width: 120, cellRenderer: PriorityRenderer },
-    ], []);
+    ], [assigneeMap]);
 
     // Inline height is dynamic (based on row count) and cannot be expressed with
     // static Tailwind classes. It is intentionally kept as an inline style.

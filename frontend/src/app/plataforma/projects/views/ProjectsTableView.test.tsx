@@ -63,4 +63,10 @@ describe('ProjectsTableView', () => {
         expect(onUpdate).toHaveBeenCalledWith('p1', { title: 'Campamento 2026' });
         expect(pushMock).not.toHaveBeenCalled();
     });
+
+    it('renders owner picker for each project row', () => {
+        render(<ProjectsTableView projects={projects} onUpdate={vi.fn()} />);
+        const pickers = screen.getAllByRole('button', { name: 'Selector de persona asignada' });
+        expect(pickers.length).toBe(projects.length);
+    });
 });

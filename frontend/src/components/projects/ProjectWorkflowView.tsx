@@ -107,6 +107,29 @@ export default function ProjectWorkflowView({
     // Components state (either from props or fetched from components-breakdown)
     const [fetchedComponents, setFetchedComponents] = useState<ProjectComponentDetail[]>([]);
     const [isComponentDrawerOpen, setIsComponentDrawerOpen] = useState(false);
+    const [assigneeMap, setAssigneeMap] = useState<Record<string, string>>({});
+
+    useEffect(() => {
+        let active = true;
+        if (!token) return;
+        apiFetch<Array<{ id: string; nombre_completo?: string; first_name?: string; last_name?: string; username?: string; user?: { id?: string; username?: string } }>>(
+            '/projects/assignee-candidates?limit=1000',
+            { token }
+        )
+            .then(data => {
+                if (!active || !Array.isArray(data)) return;
+                const map: Record<string, string> = {};
+                for (const p of data) {
+                    const fullName = [p.first_name, p.last_name].filter(Boolean).join(' ').trim();
+                    const name = p.nombre_completo || fullName || p.user?.username || p.username || p.id;
+                    if (p.id) map[p.id] = name;
+                    if (p.user?.id) map[p.user.id] = name;
+                }
+                setAssigneeMap(map);
+            })
+            .catch(() => {});
+        return () => { active = false; };
+    }, [token]);
 
     const loadComponents = useCallback(() => {
         if (!project?.id) return;
@@ -244,7 +267,7 @@ export default function ProjectWorkflowView({
                     title: task.title,
                     status: task.status,
                     priority: task.priority,
-                    assigneeName: task.assignee_id ? `Asignado (${task.assignee_id.slice(0, 4)})` : undefined,
+                    assigneeName: task.assignee_id ? (assigneeMap[task.assignee_id] || task.assignee_id) : undefined,
                     progress: task.physical_progress_pct,
                     task,
                     x,
@@ -283,7 +306,7 @@ export default function ProjectWorkflowView({
                 title: task.title,
                 status: task.status,
                 priority: task.priority,
-                assigneeName: task.assignee_id ? `Asignado (${task.assignee_id.slice(0, 4)})` : undefined,
+                assigneeName: task.assignee_id ? (assigneeMap[task.assignee_id] || task.assignee_id) : undefined,
                 progress: task.physical_progress_pct,
                 subtasksCount: children.length,
                 task,
@@ -418,7 +441,7 @@ export default function ProjectWorkflowView({
             connections: connList,
             bounds: { width: maxX, height: maxY },
         };
-    }, [project, tasks, effectiveComponents]);
+    }, [project, tasks, effectiveComponents, assigneeMap]);
 
     // Pan & Drag handlers
     const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {

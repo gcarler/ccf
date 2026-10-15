@@ -3,7 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { ArrowUpRight } from 'lucide-react';
 import { InlineTextInput } from '@/components/ui/inline-editors/InlineTextInput';
-import { PROJECT_TITLE_MAX_LENGTH } from '@/lib/projects/constants';
+import { InlineUserPicker } from '@/components/ui/inline-editors/InlineUserPicker';
+import { PROJECT_ASSIGNEE_CANDIDATES_ENDPOINT, PROJECT_TITLE_MAX_LENGTH } from '@/lib/projects/constants';
 import { InlineProjectStatusPicker } from '@/components/ui/inline-editors/InlineProjectStatusPicker';
 import type { ProjectRecord } from '@/types/projects';
 import type { BaseProjectViewProps } from './types';
@@ -35,6 +36,11 @@ export default function ProjectsListView({ projects, onUpdate }: ProjectsListVie
                             </p>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
+                            <InlineUserPicker
+                                endpoint={PROJECT_ASSIGNEE_CANDIDATES_ENDPOINT}
+                                value={project.owner_id}
+                                onChange={(userId) => onUpdate(project.id, { owner_id: userId })}
+                            />
                             <InlineProjectStatusPicker
                                 value={(project.status || 'active') as ProjectRecord['status']}
                                 onChange={(v) => onUpdate(project.id, { status: v })}

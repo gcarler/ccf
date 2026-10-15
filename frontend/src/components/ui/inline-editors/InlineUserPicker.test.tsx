@@ -13,6 +13,9 @@ describe('InlineUserPicker', () => {
     vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
       token: 'test-token',
     } as Partial<AuthContext.AuthContextType> as AuthContext.AuthContextType);
+    vi.spyOn(AuthContext, 'useOptionalAuth').mockReturnValue({
+      token: 'test-token',
+    } as Partial<AuthContext.AuthContextType> as AuthContext.AuthContextType);
   });
 
   it('uses the supplied Projects endpoint and server-side search parameter', async () => {
@@ -41,7 +44,7 @@ describe('InlineUserPicker', () => {
       '/projects/assignee-candidates',
       expect.objectContaining({
         token: 'test-token',
-        query: { search: 'Lucía', limit: 50, skip: 0 },
+        query: { search: 'Lucía', limit: 1000, skip: 0 },
       })
     );
     expect(mockApiFetch).not.toHaveBeenCalledWith(
@@ -134,14 +137,14 @@ describe('InlineUserPicker', () => {
   });
 
   it('appends the next page when clicking "Cargar más personas"', async () => {
-    const pageOne = Array.from({ length: 50 }, (_, i) => ({
+    const pageOne = Array.from({ length: 1000 }, (_, i) => ({
       id: `p1-${i}`,
       first_name: `Lucía${i}`,
       last_name: 'Ramírez',
     }));
     const pageTwo = [{ id: 'p2-0', first_name: 'Etzel', last_name: 'Iriarte' }];
     mockApiFetch.mockImplementation(async (_endpoint, options) => {
-      if (options?.query?.skip === 50) return pageTwo as never;
+      if (options?.query?.skip === 1000) return pageTwo as never;
       return pageOne as never;
     });
 
@@ -167,14 +170,14 @@ describe('InlineUserPicker', () => {
   });
 
   it('automatically loads next page when scrolling near the bottom of the list container', async () => {
-    const pageOne = Array.from({ length: 50 }, (_, i) => ({
+    const pageOne = Array.from({ length: 1000 }, (_, i) => ({
       id: `p1-${i}`,
       first_name: `Persona${i}`,
       last_name: 'Test',
     }));
     const pageTwo = [{ id: 'p2-0', first_name: 'Lucía', last_name: 'Scroll' }];
     mockApiFetch.mockImplementation(async (_endpoint, options) => {
-      if (options?.query?.skip === 50) return pageTwo as never;
+      if (options?.query?.skip === 1000) return pageTwo as never;
       return pageOne as never;
     });
 
@@ -194,7 +197,7 @@ describe('InlineUserPicker', () => {
     expect(mockApiFetch).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({
-        query: expect.objectContaining({ skip: 50 }),
+        query: expect.objectContaining({ skip: 1000 }),
       })
     );
   });

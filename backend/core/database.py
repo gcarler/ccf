@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime as dt
 import sqlite3
 
-from sqlalchemy import ARRAY, create_engine
+from sqlalchemy import ARRAY, create_engine, event
 from sqlalchemy.dialects.postgresql import CITEXT, JSONB
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -31,6 +31,17 @@ engine = create_engine(
     pool_pre_ping=True,
     **_pool_kwargs,
 )
+
+
+@event.listens_for(engine, "connect")
+def _register_sqlite_functions(dbapi_connection, connection_record):
+    if hasattr(dbapi_connection, "create_function"):
+        def _sqlite_translate(val, from_chars, to_chars):
+            if val is None:
+                return None
+            return str(val).translate(str.maketrans(str(from_chars), str(to_chars)))
+
+        dbapi_connection.create_function("translate", 3, _sqlite_translate)
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 Base = declarative_base()

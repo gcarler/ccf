@@ -145,6 +145,27 @@ describe('TaskCommentSection', () => {
     });
   });
 
+  it('triggers mention autocomplete when clicking the @ button', async () => {
+    mockApiFetch.mockImplementation(async (url: string) => {
+      if (url.includes('/projects/comments')) return [];
+      if (url.includes('/projects/assignee-candidates') || url.includes('/crm/personas')) {
+        return [
+          { id: 'usr-carlos-1', nombre_completo: 'Carlos Gomez' },
+        ];
+      }
+      return [];
+    });
+
+    render(<TaskCommentSection task={task} token="test-token" onDeleteComment={vi.fn()} />);
+    await screen.findByText(/Sin comentarios aún/);
+
+    const atButton = screen.getByRole('button', { name: 'Mencionar usuario con @' });
+    fireEvent.click(atButton);
+
+    const option = await screen.findByRole('option', { name: /Carlos Gomez/i });
+    expect(option).toBeInTheDocument();
+  });
+
   it('renders comment attachments with open link and preview button opening ProjectFileViewerDrawer', async () => {
     mockApiFetch.mockResolvedValueOnce([
       {

@@ -5,7 +5,7 @@ import * as Popover from "@radix-ui/react-popover";
 import clsx from "clsx";
 import { Check, Loader2, Search, User, X } from "lucide-react";
 import { apiFetch } from "@/lib/http";
-import { useAuth } from "@/context/AuthContext";
+import { useOptionalAuth } from "@/context/AuthContext";
 
 interface UserRecord {
   id: string;
@@ -31,15 +31,23 @@ export function normalizeText(text: string): string {
 export function clientPrefixSortUsers(list: UserRecord[], termRaw: string): UserRecord[] {
   const term = normalizeText(termRaw);
   if (!term) return list;
+  const tokens = term.split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return list;
+
+  const filtered = list.filter((u) => {
+    const full = normalizeText(u.username);
+    return tokens.every((tok) => full.includes(tok));
+  });
+
   const rank = (u: UserRecord) => {
     const full = normalizeText(u.username);
-    if (full.startsWith(term)) return 0;
+    if (full.startsWith(term) || (tokens.length > 0 && full.startsWith(tokens[0]))) return 0;
     const words = full.split(/\s+/);
-    if (words.some((w, idx) => idx > 0 && w.startsWith(term))) return 1;
-    if (full.includes(term)) return 2;
-    return 3;
+    if (words.some((w, idx) => idx > 0 && w.startsWith(tokens[0]))) return 1;
+    return 2;
   };
-  return [...list].sort((a, b) => {
+
+  return filtered.sort((a, b) => {
     const ra = rank(a);
     const rb = rank(b);
     if (ra !== rb) return ra - rb;
@@ -64,7 +72,8 @@ interface InlineUserPickerProps {
 }
 
 export function InlineUserPicker({ value, onChange, disabled, endpoint = "/crm/personas" }: InlineUserPickerProps) {
-  const { token } = useAuth();
+  const auth = useOptionalAuth();
+  const token = auth?.token;
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -129,7 +138,7 @@ export function InlineUserPicker({ value, onChange, disabled, endpoint = "/crm/p
     };
   }, [value, users, token, endpoint]);
 
-  const PAGE_SIZE = 50;
+  const PAGE_SIZE = 1000;
 
   const loadPage = useCallback(
     async (trimmed: string, page: number, append: boolean, signal?: AbortSignal) => {

@@ -1,13 +1,16 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, KeyboardEvent } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, KeyboardEvent } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import { useWorkspaceSocket } from "@/hooks/useWorkspaceSocket";
 import type { WsEvent } from "@/types/directMessages";
-import { Send, Trash2, MessageSquare } from "lucide-react";
+import type { AssigneeCandidate } from "@/types/projects";
+import { Send, Trash2, MessageSquare, AtSign } from "lucide-react";
+import clsx from "clsx";
 import { toast } from "sonner";
 import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/ConfirmActionDrawer";
+import { sortMentionCandidates } from "./utils";
 
 interface ChatMessage {
   id: string;
@@ -126,28 +129,151 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
     onEvent: handleSocketEvent,
   });
 
+  // Mentions autocomplete state
+  const [mentionState, setMentionState] = useState<{ query: string; start: number } | null>(null);
+  const [candidates, setCandidates] = useState<Array<{ id: string; name: string }>>([]);
+  const [selectedMentions, setSelectedMentions] = useState<Array<{ id: string; name: string }>>([]);
+  const [activeMentionIndex, setActiveMentionIndex] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch candidate mentions when mention query changes
+  useEffect(() => {
+    if (!mentionState) return;
+    let active = true;
+    const query = mentionState.query.trim();
+    const queryParam = `?limit=1000${query ? `&search=${encodeURIComponent(query)}` : ''}`;
+
+    apiFetch<AssigneeCandidate[]>(`/projects/assignee-candidates${queryParam}`, { token: token ?? undefined })
+      .catch(() => apiFetch<AssigneeCandidate[]>(`/crm/personas${queryParam}`, { token: token ?? undefined }))
+      .then((data) => {
+        if (!active) return;
+        const list = (Array.isArray(data) ? data : []).map((p) => ({
+          id: String(p.user?.id ?? p.id),
+          name: p.nombre_completo || [p.first_name, p.last_name].filter(Boolean).join(" ") || p.username || `#${p.id}`,
+        }));
+        setCandidates(list);
+        setActiveMentionIndex(0);
+      })
+      .catch(() => {
+        if (active) setCandidates([]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [mentionState?.query, token]);
+
+  const filteredCandidates = useMemo(() => {
+    if (!mentionState) return [];
+    return sortMentionCandidates(candidates, mentionState.query);
+  }, [candidates, mentionState]);
+
+  const handleSelectMention = (candidate: { id: string; name: string }) => {
+    if (!mentionState) return;
+    const before = input.slice(0, mentionState.start);
+    const after = input.slice(mentionState.start + 1 + mentionState.query.length);
+    const next = `${before}@${candidate.name} ${after}`;
+    setInput(next);
+    setSelectedMentions((prev) => (prev.some((m) => m.id === candidate.id) ? prev : [...prev, candidate]));
+    setMentionState(null);
+    setTimeout(() => inputRef.current?.focus(), 20);
+  };
+
+  const handleInsertAt = () => {
+    const inputEl = inputRef.current;
+    const current = input;
+    const pos = inputEl?.selectionStart ?? current.length;
+    const needsSpace = pos > 0 && !current.slice(0, pos).endsWith(' ');
+    const insert = needsSpace ? ' @' : '@';
+    const next = current.slice(0, pos) + insert + current.slice(pos);
+    setInput(next);
+    const newPos = pos + insert.length;
+    setMentionState({ query: '', start: newPos - 1 });
+    setTimeout(() => {
+      if (inputEl) {
+        inputEl.focus();
+        inputEl.setSelectionRange(newPos, newPos);
+      }
+    }, 20);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setInput(val);
+    const pos = e.target.selectionStart ?? val.length;
+    const before = val.slice(0, pos);
+    const lastAt = before.lastIndexOf('@');
+    if (lastAt !== -1) {
+      const isAtStartOrSpace = lastAt === 0 || /\s/.test(val[lastAt - 1]);
+      if (isAtStartOrSpace) {
+        const query = before.slice(lastAt + 1);
+        if (!query.includes('\n') && query.split(/\s+/).filter(Boolean).length <= 3) {
+          setMentionState({ query, start: lastAt });
+          return;
+        }
+      }
+    }
+    setMentionState(null);
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (mentionState && filteredCandidates.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setActiveMentionIndex((prev) => (prev + 1) % filteredCandidates.length);
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setActiveMentionIndex((prev) => (prev - 1 + filteredCandidates.length) % filteredCandidates.length);
+        return;
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        handleSelectMention(filteredCandidates[activeMentionIndex]);
+        return;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setMentionState(null);
+        return;
+      }
+    }
+
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
   const handleSend = async () => {
     if (!input.trim() || !token) return;
     shouldAutoScroll.current = true;
     try {
+      const mentionIds = selectedMentions
+        .filter((m) => input.includes(`@${m.name}`))
+        .map((m) => m.id);
+
+      const payload: { content: string; mentions?: string[] } = {
+        content: input.trim(),
+      };
+      if (mentionIds.length > 0) {
+        payload.mentions = mentionIds;
+      }
+
       const msg = await apiFetch<ChatMessage>(`/projects/${projectId}/messages`, {
         method: "POST",
         token,
-        body: { content: input.trim() },
+        body: payload,
       });
       // Dedup guard (defensive): if the WS broadcast arrived before the POST
       // resolved, the message is already in the list — skip adding it again.
       setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
       setInput("");
+      setSelectedMentions([]);
+      setMentionState(null);
     } catch (err) {
       toast.error("Failed to send message");
-    }
-  };
-
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
     }
   };
 
@@ -276,15 +402,55 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
           </div>
         </>
       )}
-      <div className="border-t border-[hsl(var(--border))] p-3">
-        <div className="flex gap-2 items-end">
+      <div className="border-t border-[hsl(var(--border))] p-3 relative">
+        {mentionState && filteredCandidates.length > 0 && (
+          <div
+            role="listbox"
+            aria-label="Sugerencias de mención"
+            data-testid="mention-autocomplete-list"
+            className="absolute left-3 right-3 bottom-full mb-1 z-50 max-h-56 overflow-y-auto rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-lg p-1 space-y-0.5"
+          >
+            {filteredCandidates.slice(0, 50).map((candidate, idx) => (
+              <button
+                key={candidate.id}
+                type="button"
+                role="option"
+                aria-selected={idx === activeMentionIndex}
+                onClick={() => handleSelectMention(candidate)}
+                className={clsx(
+                  "w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-colors",
+                  idx === activeMentionIndex
+                    ? "bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))] font-semibold"
+                    : "text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))]"
+                )}
+              >
+                <span className="size-5 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] flex items-center justify-center text-2xs font-bold shrink-0">
+                  {candidate.name.charAt(0).toUpperCase()}
+                </span>
+                <span className="truncate">{candidate.name}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="flex gap-2 items-center">
+          <button
+            type="button"
+            onClick={handleInsertAt}
+            aria-label="Mencionar usuario con @"
+            title="Mencionar usuario con @"
+            className="p-2 rounded-xl text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] transition-colors shrink-0"
+          >
+            <AtSign className="w-4 h-4" />
+          </button>
           <div className="flex-1 relative">
             <input
+              ref={inputRef}
               type="text"
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={handleInputChange}
               onKeyDown={handleKeyDown}
-              placeholder="Escribe un mensaje..."
+              placeholder="Escribe un mensaje... Usa @ para mencionar"
               aria-label="Escribir mensaje en el chat del proyecto"
               className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all pr-10"
             />
@@ -300,9 +466,9 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
             )}
           </div>
         </div>
-      <p className="text-2xs text-[hsl(var(--muted-foreground))] text-center mt-1.5 opacity-50">
-        Enter para enviar · Shift+Enter para salto de línea
-      </p>
+        <p className="text-2xs text-[hsl(var(--muted-foreground))] text-center mt-1.5 opacity-50">
+          Enter para enviar · Shift+Enter para salto de línea
+        </p>
       </div>
       <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
     </div>

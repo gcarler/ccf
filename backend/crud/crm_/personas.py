@@ -5,7 +5,7 @@ import logging
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy import case, func, inspect, or_, true
+from sqlalchemy import and_, case, func, inspect, or_, true
 from sqlalchemy.orm import Session, load_only, selectinload
 
 from backend import models, schemas
@@ -13,6 +13,20 @@ from backend.crud._utils import _to_uuid, _utcnow
 from backend.crud.crm_.shared import _audit_log
 
 logger = logging.getLogger(__name__)
+
+ACCENT_FROM = "áéíóúÁÉÍÓÚñÑüÜ"
+ACCENT_TO = "aeiouAEIOUnNuU"
+_ACCENT_TRANS_TABLE = str.maketrans(ACCENT_FROM, ACCENT_TO)
+
+
+def normalize_search_string(value: str) -> str:
+    if not value:
+        return ""
+    return value.translate(_ACCENT_TRANS_TABLE).lower().strip()
+
+
+def normalize_search_expr(col):
+    return func.lower(func.translate(func.coalesce(col, ""), ACCENT_FROM, ACCENT_TO))
 
 
 def _persona_live_column_names(db: Session) -> set[str]:
@@ -163,28 +177,37 @@ def _build_persona_search_query(
         query = query.filter(models.Persona.sede_id == sede_id)
     if search:
         search_term = search.strip()
-        like = f"%{search_term}%"
-        # NOTA: nombre_completo es @hybrid_property con expresión SQL, funciona en filter
-        name_filters = or_(
-            models.Persona.first_name.ilike(like),
-            models.Persona.last_name.ilike(like),
-            models.Persona.nombre_completo.ilike(like),
-        )
-        # TKT-PERSONA-SEARCH-PREFIX-AND-PAGINATION-01: términos cortos ('l', 'ca')
-        # NO tocan email/teléfono/documento — '@gmail.com' contiene 'l','m','g','c','o'
-        # y matchearía a toda la base (600-2000+ registros) con ruido de nombres 'A...'.
-        if len(search_term) < 3:
-            query = query.filter(name_filters)
-        else:
-            query = query.filter(
-                or_(
-                    name_filters,
-                    models.Persona.email.ilike(like),
-                    models.Persona.id_number.ilike(like),
-                    models.Persona.phone.ilike(like),
-                    models.Persona.mobile_phone.ilike(like),
+        tokens = [t for t in search_term.split() if t]
+        if tokens:
+            token_conditions = []
+            for token in tokens:
+                norm_token = normalize_search_string(token)
+                token_like = f"%{norm_token}%"
+                norm_first = normalize_search_expr(models.Persona.first_name)
+                norm_last = normalize_search_expr(models.Persona.last_name)
+                norm_full = normalize_search_expr(models.Persona.nombre_completo)
+                name_filters = or_(
+                    norm_first.like(token_like),
+                    norm_last.like(token_like),
+                    norm_full.like(token_like),
                 )
-            )
+                if len(token) < 3:
+                    token_conditions.append(name_filters)
+                else:
+                    norm_email = normalize_search_expr(models.Persona.email)
+                    norm_id_number = normalize_search_expr(models.Persona.id_number)
+                    norm_phone = normalize_search_expr(models.Persona.phone)
+                    norm_mobile = normalize_search_expr(models.Persona.mobile_phone)
+                    token_conditions.append(
+                        or_(
+                            name_filters,
+                            norm_email.like(token_like),
+                            norm_id_number.like(token_like),
+                            norm_phone.like(token_like),
+                            norm_mobile.like(token_like),
+                        )
+                    )
+            query = query.filter(and_(*token_conditions))
     if role:
         query = query.filter(models.Persona.church_role == role)
     if estado_vital:
@@ -213,23 +236,34 @@ def _build_persona_search_query(
 def persona_prefix_search_order(search: str):
     """Orden de relevancia por prefijo para buscadores de personas.
 
-    TKT-PERSONA-SEARCH-PREFIX-AND-PAGINATION-01: al escribir 'l' o 'ca', las
-    personas cuyo nombre empieza por lo tecleado encabezan la lista:
-    - Tier 0: first_name o nombre_completo empieza por ``term`` ('l' → Laura/Luis).
-    - Tier 1: apellido o segundo nombre empieza por ``term``.
+    TKT-PROJECTS-PERSONAS-AND-MENTIONS-ALL-VIEWS-01: al escribir 'l', 'ca' o 'Carlos Administrador',
+    las personas cuyo nombre empieza por lo tecleado encabezan la lista con búsqueda insensible a tildes:
+    - Tier 0: first_name o nombre_completo empieza por el término ('l' → Laura/Luis).
+    - Tier 1: apellido o segundo nombre empieza por el término.
     - Tier 2: resto de coincidencias parciales '%term%'.
     Dentro de cada tier, alfabético por nombre completo (+ id para determinismo
     con skip/offset en paginación).
     """
     term = (search or "").strip()
-    prefix = f"{term}%"
-    second_name = f"% {term}%"
-    first = func.trim(func.coalesce(models.Persona.first_name, ""))
-    last = func.trim(func.coalesce(models.Persona.last_name, ""))
-    full = func.trim(func.coalesce(models.Persona.nombre_completo, ""))
+    norm_term = normalize_search_string(term)
+    if not norm_term:
+        full = normalize_search_expr(models.Persona.nombre_completo)
+        return [full.asc(), models.Persona.id.asc()]
+
+    tokens = norm_term.split()
+    first_token = tokens[0] if tokens else norm_term
+
+    prefix_full = f"{norm_term}%"
+    prefix_first = f"{first_token}%"
+    second_name = f"% {first_token}%"
+
+    first = normalize_search_expr(models.Persona.first_name)
+    last = normalize_search_expr(models.Persona.last_name)
+    full = normalize_search_expr(models.Persona.nombre_completo)
+
     tier = case(
-        (or_(first.ilike(prefix), full.ilike(prefix)), 0),
-        (or_(last.ilike(prefix), full.ilike(second_name)), 1),
+        (or_(full.like(prefix_full), first.like(prefix_first), full.like(prefix_first)), 0),
+        (or_(last.like(prefix_first), full.like(second_name)), 1),
         else_=2,
     )
     return [tier.asc(), full.asc(), models.Persona.id.asc()]

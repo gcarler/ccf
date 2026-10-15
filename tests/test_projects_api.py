@@ -99,6 +99,57 @@ class TestProjectsCRUD:
         assert str(other_sede.id) not in candidate_ids
         assert all(set(item) == {"id", "nombre_completo"} for item in payload)
 
+    def test_assignee_candidates_includes_global_personas_and_multiword_accent_search(self, client, db_session):
+        """TKT-PROJECTS-PERSONAS-AND-MENTIONS-ALL-VIEWS-01:
+        1. Personas con sede_id NULL (globales) son visibles.
+        2. Búsqueda multi-palabra ('Carlos Administrador' -> 'Carlos Ernesto Administrador').
+        3. Búsqueda insensible a tildes ('maria' -> 'María González').
+        4. Detalle de candidato global accesible.
+        """
+        from backend.models_crm import Persona
+
+        _, _, sede_a = seed_admin(db_session, email="assignee-global-a@test.com")
+        _, _, sede_b = seed_admin(db_session, email="assignee-global-b@test.com")
+        carlos = Persona(first_name="Carlos", last_name="Ernesto Administrador", sede_id=sede_a.id)
+        maria_global = Persona(first_name="María", last_name="González", sede_id=None)
+        foreign = Persona(first_name="Pedro", last_name="Foráneo", sede_id=sede_b.id)
+        db_session.add_all([carlos, maria_global, foreign])
+        db_session.flush()
+
+        reader, _, _ = seed_user_with_role(
+            db_session,
+            role_name="ProjectsGlobalReader",
+            email="projects-global-reader@test.com",
+            sede_id=sede_a.id,
+            permisos={"projects:read": "allow"},
+        )
+        headers = auth_headers(client, email=reader.email)
+
+        # 1. Sin búsqueda: incluye local y global, excluye otra sede
+        res_all = client.get("/api/projects/assignee-candidates", headers=headers)
+        assert res_all.status_code == 200, res_all.text
+        ids_all = {item["id"] for item in res_all.json()}
+        assert str(carlos.id) in ids_all
+        assert str(maria_global.id) in ids_all
+        assert str(foreign.id) not in ids_all
+
+        # 2. Multi-palabra: 'Carlos Administrador'
+        res_multi = client.get("/api/projects/assignee-candidates?search=Carlos+Administrador", headers=headers)
+        assert res_multi.status_code == 200, res_multi.text
+        names_multi = [item["nombre_completo"] for item in res_multi.json()]
+        assert "Carlos Ernesto Administrador" in names_multi
+
+        # 3. Sin tilde: 'maria' coincide con 'María González'
+        res_accent = client.get("/api/projects/assignee-candidates?search=maria", headers=headers)
+        assert res_accent.status_code == 200, res_accent.text
+        names_accent = [item["nombre_completo"] for item in res_accent.json()]
+        assert "María González" in names_accent
+
+        # 4. Detalle de persona global
+        res_detail = client.get(f"/api/projects/assignee-candidates/{maria_global.id}", headers=headers)
+        assert res_detail.status_code == 200, res_detail.text
+        assert res_detail.json()["nombre_completo"] == "María González"
+
     def test_assignee_candidates_prioritize_name_prefix_over_partial_matches(self, client, db_session):
         """TKT-PERSONA-SEARCH-PREFIX-AND-PAGINATION-01: buscar 'l' encabeza la
         lista con personas cuyo nombre empieza por 'L', no coincidencias

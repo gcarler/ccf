@@ -32,6 +32,7 @@ import {
     InlineDatePicker,
     InlineUserPicker,
 } from '@/components/ui/inline-editors';
+import { sortMentionCandidates } from './utils';
 
 // ─── TYPE DEFINITIONS ─────────────────────────────────────────────────────────
 interface Props {
@@ -83,7 +84,7 @@ function CommentPopover({ onClose, placement = 'bottom', taskId, projectId }: Co
         if (!mentionState) return;
         let active = true;
         const query = mentionState.query.trim();
-        const queryParam = `?limit=500${query ? `&search=${encodeURIComponent(query)}` : ''}`;
+        const queryParam = `?limit=1000${query ? `&search=${encodeURIComponent(query)}` : ''}`;
 
         apiFetch<AssigneeCandidate[]>(`/projects/assignee-candidates${queryParam}`, { token: token ?? undefined })
             .catch(() => apiFetch<AssigneeCandidate[]>(`/crm/personas${queryParam}`, { token: token ?? undefined }))
@@ -105,9 +106,7 @@ function CommentPopover({ onClose, placement = 'bottom', taskId, projectId }: Co
 
     const filteredCandidates = useMemo(() => {
         if (!mentionState) return [];
-        const q = mentionState.query.toLowerCase().trim();
-        if (!q) return candidates;
-        return candidates.filter(c => c.name.toLowerCase().includes(q));
+        return sortMentionCandidates(candidates, mentionState.query);
     }, [candidates, mentionState]);
 
     const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -117,10 +116,13 @@ function CommentPopover({ onClose, placement = 'bottom', taskId, projectId }: Co
         const before = val.slice(0, pos);
         const lastAt = before.lastIndexOf('@');
         if (lastAt !== -1) {
-            const query = before.slice(lastAt + 1);
-            if (!query.includes(' ') && !query.includes('\n')) {
-                setMentionState({ query, start: lastAt });
-                return;
+            const isAtStartOrSpace = lastAt === 0 || /\s/.test(val[lastAt - 1]);
+            if (isAtStartOrSpace) {
+                const query = before.slice(lastAt + 1);
+                if (!query.includes('\n') && query.split(/\s+/).filter(Boolean).length <= 3) {
+                    setMentionState({ query, start: lastAt });
+                    return;
+                }
             }
         }
         setMentionState(null);
@@ -300,7 +302,7 @@ function CommentPopover({ onClose, placement = 'bottom', taskId, projectId }: Co
         <div
             data-testid="quick-comment-popover"
             data-placement={placement}
-            className="w-80 bg-[hsl(var(--surface-1))] rounded-lg shadow-xl border border-[hsl(var(--border))] z-[600] overflow-hidden relative"
+            className="w-80 bg-[hsl(var(--surface-1))] rounded-lg shadow-xl border border-[hsl(var(--border))] z-[600] relative"
         >
             {/* Header */}
             <div className="flex items-center justify-between px-3 py-2 border-b border-[hsl(var(--border))]">
@@ -331,9 +333,9 @@ function CommentPopover({ onClose, placement = 'bottom', taskId, projectId }: Co
                     <div
                         role="listbox"
                         data-testid="mention-autocomplete-list"
-                        className="absolute left-2 right-2 bottom-1 z-[700] max-h-40 overflow-y-auto rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-lg p-1 space-y-0.5"
+                        className="absolute left-2 right-2 bottom-full mb-1 z-[700] max-h-56 overflow-y-auto rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-lg p-1 space-y-0.5"
                     >
-                        {filteredCandidates.slice(0, 5).map((candidate, idx) => (
+                        {filteredCandidates.slice(0, 50).map((candidate, idx) => (
                             <button
                                 key={candidate.id}
                                 type="button"

@@ -23,7 +23,7 @@ import pytest
 # también acepte strings (lo que ocurre en comparaciones como
 # UUIDColumn == string_param en SQLite).
 import sqlalchemy.types as _satypes
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import SAWarning
 from sqlalchemy.orm import sessionmaker
@@ -134,6 +134,17 @@ if database_url.drivername.startswith("sqlite"):
         engine_kwargs["poolclass"] = StaticPool
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL, **engine_kwargs)
+
+
+@event.listens_for(engine, "connect")
+def _register_sqlite_functions(dbapi_connection, connection_record):
+    if hasattr(dbapi_connection, "create_function"):
+        def _sqlite_translate(val, from_chars, to_chars):
+            if val is None:
+                return None
+            return str(val).translate(str.maketrans(str(from_chars), str(to_chars)))
+
+        dbapi_connection.create_function("translate", 3, _sqlite_translate)
 
 
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

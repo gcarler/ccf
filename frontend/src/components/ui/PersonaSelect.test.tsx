@@ -23,7 +23,7 @@ describe('PersonaSelect (Reactive Server-side Search QA-002)', () => {
         render(<PersonaSelect value={null} onChange={() => {}} />);
         await waitFor(() => expect(screen.getByText('Sin asignar')).toBeInTheDocument());
         await waitFor(() =>
-            expect(mockApiFetch).toHaveBeenCalledWith('/crm/personas?limit=50&skip=0', { token: 'test-token' })
+            expect(mockApiFetch).toHaveBeenCalledWith('/crm/personas?limit=1000&skip=0', { token: 'test-token' })
         );
     });
 
@@ -59,7 +59,7 @@ describe('PersonaSelect (Reactive Server-side Search QA-002)', () => {
         expect(handleChange).toHaveBeenCalledTimes(1);
     });
 
-    it('executes server-side search with debounce querying /crm/personas?search=...&limit=50', async () => {
+    it('executes server-side search with debounce querying /crm/personas?search=...&limit=1000', async () => {
         // Initial list
         mockApiFetch.mockImplementation(async (endpoint: string) => {
             if (endpoint.includes('search=Laury')) {
@@ -90,7 +90,7 @@ describe('PersonaSelect (Reactive Server-side Search QA-002)', () => {
         await waitFor(
             () => {
                 expect(mockApiFetch).toHaveBeenCalledWith(
-                    '/crm/personas?limit=50&skip=0&search=Laury',
+                    '/crm/personas?limit=1000&skip=0&search=Laury',
                     { token: 'test-token' }
                 );
             },
@@ -245,7 +245,7 @@ describe('PersonaSelect (Reactive Server-side Search QA-002)', () => {
     });
 
     it('appends the next page when clicking "Cargar más personas" instead of replacing results', async () => {
-        const pageOne = Array.from({ length: 50 }, (_, i) =>
+        const pageOne = Array.from({ length: 1000 }, (_, i) =>
             createMockPersonaSelectOption({ id: `p1-${i}`, first_name: `Alonso${i}`, last_name: 'Zapata' })
         );
         const pageTwo = [
@@ -253,20 +253,20 @@ describe('PersonaSelect (Reactive Server-side Search QA-002)', () => {
             createMockPersonaSelectOption({ id: 'p2-1', first_name: 'Etzel', last_name: 'Iriarte' }),
         ];
         mockApiFetch.mockImplementation(async (endpoint: string) => {
-            if (endpoint.includes('skip=50')) return pageTwo;
+            if (endpoint.includes('skip=1000')) return pageTwo;
             return pageOne;
         });
 
         render(<PersonaSelect value={null} onChange={() => {}} />);
         fireEvent.click(screen.getByRole('button', { name: /sin asignar/i }));
 
-        await waitFor(() => expect(mockApiFetch).toHaveBeenCalledWith('/crm/personas?limit=50&skip=0', { token: 'test-token' }));
+        await waitFor(() => expect(mockApiFetch).toHaveBeenCalledWith('/crm/personas?limit=1000&skip=0', { token: 'test-token' }));
 
         const loadMore = await screen.findByTestId('persona-load-more');
         fireEvent.click(loadMore);
 
         await waitFor(() =>
-            expect(mockApiFetch).toHaveBeenCalledWith('/crm/personas?limit=50&skip=50', { token: 'test-token' })
+            expect(mockApiFetch).toHaveBeenCalledWith('/crm/personas?limit=1000&skip=1000', { token: 'test-token' })
         );
         await waitFor(() => {
             expect(screen.getByText('Lucía Ramírez')).toBeInTheDocument();
@@ -306,7 +306,7 @@ describe('PersonaSelect (Reactive Server-side Search QA-002)', () => {
         fireEvent.click(screen.getByRole('button', { name: /sin asignar/i }));
 
         await waitFor(() =>
-            expect(mockApiFetch).toHaveBeenCalledWith('/projects/assignee-candidates?limit=50', { token: 'test-token' })
+            expect(mockApiFetch).toHaveBeenCalledWith('/projects/assignee-candidates?limit=1000', { token: 'test-token' })
         );
         expect(await screen.findByText('Lucía Ramírez')).toBeInTheDocument();
         expect(screen.queryByTestId('persona-load-error')).not.toBeInTheDocument();
@@ -335,13 +335,12 @@ describe('PersonaSelect (Reactive Server-side Search QA-002)', () => {
     });
 
     it('prioritizes people whose name starts with the search term on the client', async () => {
-        // El servidor devuelve el orden alfabético plano ([E, L, M]); con el
-        // término 'LUC' solo 'Lucía Ramírez' empieza con él: el cliente debe
-        // reunirla al frente y mantener el orden alfabético en el resto.
+        // El servidor devuelve el orden alfabético plano; con el término 'LUC'
+        // 'Lucía Ramírez' (Tier 0) encabeza antes que 'Ana Lucas' (Tier 1) y 'Mila De Lucas' (Tier 2).
         const serverOrder = [
-            createMockPersonaSelectOption({ id: 'c3', first_name: 'Etzel', last_name: 'Sandoval' }),
+            createMockPersonaSelectOption({ id: 'c3', first_name: 'Ana', last_name: 'Lucas' }),
             createMockPersonaSelectOption({ id: 'c1', first_name: 'Lucía', last_name: 'Ramírez' }),
-            createMockPersonaSelectOption({ id: 'c2', first_name: 'Mila', last_name: 'Ferrer' }),
+            createMockPersonaSelectOption({ id: 'c2', first_name: 'Mila', last_name: 'De Lucas' }),
         ];
         mockApiFetch.mockImplementation(async () => serverOrder);
 
@@ -359,18 +358,20 @@ describe('PersonaSelect (Reactive Server-side Search QA-002)', () => {
             expect(options.length).toBeGreaterThanOrEqual(4); // "Sin asignar" + 3 personas
             const names = options.map((o) => o.textContent ?? '');
             expect(names[1]).toContain('Lucía Ramírez'); // [0] es "Sin asignar"
+            expect(names[2]).toContain('Ana Lucas');
+            expect(names[3]).toContain('Mila De Lucas');
         });
     });
 
     it('automatically loads next page when scrolling near the bottom of the options container', async () => {
-        const pageOne = Array.from({ length: 50 }, (_, i) =>
+        const pageOne = Array.from({ length: 1000 }, (_, i) =>
             createMockPersonaSelectOption({ id: `scroll-p1-${i}`, first_name: `Persona${i}`, last_name: 'Test' })
         );
         const pageTwo = [
             createMockPersonaSelectOption({ id: 'scroll-p2-0', first_name: 'Lucía', last_name: 'Scroll' }),
         ];
         mockApiFetch.mockImplementation(async (endpoint: string) => {
-            if (endpoint.includes('skip=50')) return pageTwo;
+            if (endpoint.includes('skip=1000')) return pageTwo;
             return pageOne;
         });
 
@@ -387,7 +388,7 @@ describe('PersonaSelect (Reactive Server-side Search QA-002)', () => {
 
         await waitFor(() => expect(screen.getByText('Lucía Scroll')).toBeInTheDocument());
         expect(mockApiFetch).toHaveBeenCalledWith(
-            expect.stringContaining('skip=50'),
+            expect.stringContaining('skip=1000'),
             expect.objectContaining({ token: 'test-token' })
         );
     });

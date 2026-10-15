@@ -4,7 +4,8 @@ import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { DataTable } from '@/components/ui/DataTable';
 import { InlineTextInput } from '@/components/ui/inline-editors/InlineTextInput';
-import { PROJECT_TITLE_MAX_LENGTH } from '@/lib/projects/constants';
+import { InlineUserPicker } from '@/components/ui/inline-editors/InlineUserPicker';
+import { PROJECT_ASSIGNEE_CANDIDATES_ENDPOINT, PROJECT_TITLE_MAX_LENGTH } from '@/lib/projects/constants';
 import { InlineProjectStatusPicker } from '@/components/ui/inline-editors/InlineProjectStatusPicker';
 import { formatDate } from '@/components/projects/utils';
 import { normalizeProjectColor } from '@/lib/projects/palette';
@@ -47,6 +48,20 @@ export default function ProjectsTableView({ projects, onUpdate }: ProjectsTableV
                                 </p>
                             </div>
                         </div>
+                    );
+                },
+            },
+            {
+                accessorKey: 'owner_id',
+                header: 'Responsable',
+                cell: ({ row }) => {
+                    const project = row.original;
+                    return (
+                        <InlineUserPicker
+                            endpoint={PROJECT_ASSIGNEE_CANDIDATES_ENDPOINT}
+                            value={project.owner_id}
+                            onChange={(userId) => onUpdate(project.id, { owner_id: userId })}
+                        />
                     );
                 },
             },

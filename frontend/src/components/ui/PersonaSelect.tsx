@@ -22,7 +22,7 @@ export interface PersonaSelectProps {
     showMetadata?: boolean;
 }
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 1000;
 
 export function displayName(p: PersonaOption): string {
     if (p.nombre_completo) return p.nombre_completo;
@@ -43,28 +43,38 @@ export function normalizeText(text: string): string {
 }
 
 /**
- * TCR-003 · PR-2 — Priorización en cliente por prefijo:
+ * TCR-003 · PR-2 — Priorización en cliente por prefijo con filtrado estricto:
+ * - Filtra: la persona DEBE contener todos los tokens normalizados sin tildes.
  * - Tier 0: primer nombre o nombre completo empieza por el término ('l' -> Laura/Luis, 'ca' -> Carlos/Camilo).
- * - Tier 1: apellido o segundo nombre empieza por el término ('l' -> Ana López, Juan Luis).
+ * - Tier 1: apellido o segunda palabra empieza por el término ('l' -> Ana López, Juan Luis).
  * - Tier 2: coincidencia parcial en nombre/apellido ('l' -> Mila Ferrer).
- * - Tier 3: resto de candidatos.
  * Dentro de cada tier se conserva el orden alfabético por nombre completo.
- * Evita que apellidos con 'A...' o '@gmail.com' desplacen a nombres que inician con la letra buscada.
  */
 export function clientPrefixSort(list: PersonaOption[], termRaw: string): PersonaOption[] {
     const term = normalizeText(termRaw);
     if (!term) return list;
+    const tokens = term.split(/\s+/).filter(Boolean);
+    if (tokens.length === 0) return list;
+
+    const filtered = list.filter((p) => {
+        const name = normalizeText(nameParts(p));
+        const first = normalizeText(p.first_name ?? "");
+        const last = normalizeText(p.last_name ?? "");
+        const full = `${name} ${first} ${last}`;
+        return tokens.every((tok) => full.includes(tok));
+    });
+
     const rank = (p: PersonaOption) => {
         const name = normalizeText(nameParts(p));
         const first = normalizeText(p.first_name ?? "");
         const last = normalizeText(p.last_name ?? "");
-        if (first.startsWith(term) || name.startsWith(term)) return 0;
+        if (first.startsWith(term) || name.startsWith(term) || (tokens.length > 0 && (first.startsWith(tokens[0]) || name.startsWith(tokens[0])))) return 0;
         const words = name.split(/\s+/);
-        if (last.startsWith(term) || words.some((w, idx) => idx > 0 && w.startsWith(term))) return 1;
-        if (name.includes(term) || first.includes(term) || last.includes(term)) return 2;
-        return 3;
+        if (last.startsWith(term) || (tokens.length > 0 && last.startsWith(tokens[0])) || words.some((w, idx) => idx > 0 && w.startsWith(tokens[0]))) return 1;
+        return 2;
     };
-    return [...list].sort((a, b) => {
+
+    return filtered.sort((a, b) => {
         const ra = rank(a);
         const rb = rank(b);
         if (ra !== rb) return ra - rb;

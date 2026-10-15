@@ -64,4 +64,10 @@ describe('ProjectsListView', () => {
         expect(onUpdate).toHaveBeenCalledWith('p1', { title: 'Campamento Juventud 2026' });
         expect(pushMock).not.toHaveBeenCalled();
     });
+
+    it('renders owner picker for each project', () => {
+        render(<ProjectsListView projects={projects} onUpdate={vi.fn()} />);
+        const pickers = screen.getAllByRole('button', { name: 'Selector de persona asignada' });
+        expect(pickers.length).toBe(projects.length);
+    });
 });

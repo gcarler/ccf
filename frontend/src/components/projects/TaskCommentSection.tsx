@@ -3,11 +3,12 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { apiFetch } from '@/lib/http';
 import type { AssigneeCandidate, ProjectTaskRecord, ProjectCommentItem, ProjectCommentAttachment, ProjectFileRecord } from '@/types/projects';
-import { Eye, Loader2, MessageSquare, Paperclip, Pin, Send, Trash2 } from 'lucide-react';
+import { AtSign, Eye, Loader2, MessageSquare, Paperclip, Pin, Send, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import clsx from 'clsx';
 import { getSafeProjectLink } from '@/lib/projects/safeProjectLink';
 import { ProjectFileViewerDrawer } from './ProjectFileViewerDrawer';
+import { sortMentionCandidates } from './utils';
 
 interface Comment {
     id: string;
@@ -76,7 +77,7 @@ export default function TaskCommentSection({
         if (!mentionState) return;
         let active = true;
         const query = mentionState.query.trim();
-        const queryParam = `?limit=500${query ? `&search=${encodeURIComponent(query)}` : ''}`;
+        const queryParam = `?limit=1000${query ? `&search=${encodeURIComponent(query)}` : ''}`;
 
         apiFetch<AssigneeCandidate[]>(`/projects/assignee-candidates${queryParam}`, { token: token ?? undefined })
             .catch(() => apiFetch<AssigneeCandidate[]>(`/crm/personas${queryParam}`, { token: token ?? undefined }))
@@ -94,13 +95,11 @@ export default function TaskCommentSection({
             });
 
         return () => { active = false; };
-    }, [mentionState, token]);
+    }, [mentionState?.query, token]);
 
     const filteredCandidates = useMemo(() => {
         if (!mentionState) return [];
-        const q = mentionState.query.toLowerCase().trim();
-        if (!q) return candidates;
-        return candidates.filter(c => c.name.toLowerCase().includes(q));
+        return sortMentionCandidates(candidates, mentionState.query);
     }, [candidates, mentionState]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -110,13 +109,34 @@ export default function TaskCommentSection({
         const before = val.slice(0, pos);
         const lastAt = before.lastIndexOf('@');
         if (lastAt !== -1) {
-            const query = before.slice(lastAt + 1);
-            if (!query.includes(' ')) {
-                setMentionState({ query, start: lastAt });
-                return;
+            const isAtStartOrSpace = lastAt === 0 || /\s/.test(val[lastAt - 1]);
+            if (isAtStartOrSpace) {
+                const query = before.slice(lastAt + 1);
+                if (!query.includes('\n') && query.split(/\s+/).filter(Boolean).length <= 3) {
+                    setMentionState({ query, start: lastAt });
+                    return;
+                }
             }
         }
         setMentionState(null);
+    };
+
+    const handleInsertAt = () => {
+        const inputEl = inputRef.current;
+        const current = commentInput;
+        const pos = inputEl?.selectionStart ?? current.length;
+        const needsSpace = pos > 0 && !current.slice(0, pos).endsWith(' ');
+        const insert = needsSpace ? ' @' : '@';
+        const next = current.slice(0, pos) + insert + current.slice(pos);
+        setCommentInput(next);
+        const newPos = pos + insert.length;
+        setMentionState({ query: '', start: newPos - 1 });
+        setTimeout(() => {
+            if (inputEl) {
+                inputEl.focus();
+                inputEl.setSelectionRange(newPos, newPos);
+            }
+        }, 20);
     };
 
     const handleSelectMention = (candidate: { id: string; name: string }) => {
@@ -403,9 +423,9 @@ export default function TaskCommentSection({
                     <div
                         role="listbox"
                         data-testid="mention-autocomplete-list"
-                        className="absolute left-8 right-0 bottom-full mb-1 z-50 max-h-40 overflow-y-auto rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-lg p-1 space-y-0.5"
+                        className="absolute left-8 right-0 bottom-full mb-1 z-50 max-h-56 overflow-y-auto rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-lg p-1 space-y-0.5"
                     >
-                        {filteredCandidates.slice(0, 5).map((candidate, idx) => (
+                        {filteredCandidates.slice(0, 50).map((candidate, idx) => (
                             <button
                                 key={candidate.id}
                                 type="button"
@@ -443,13 +463,22 @@ export default function TaskCommentSection({
                             placeholder="Menciona @Dzin para crear, encontrar y preguntar..."
                             className="flex-1 text-sm bg-transparent outline-none text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))]"
                         />
+                        <button
+                            type="button"
+                            onClick={handleInsertAt}
+                            aria-label="Mencionar usuario con @"
+                            title="Mencionar usuario con @"
+                            className="p-1 rounded text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] transition-colors shrink-0"
+                        >
+                            <AtSign size={14} />
+                        </button>
                         {commentInput.trim() && (
                             <button
                                 type="button"
                                 onClick={handleSendComment}
                                 disabled={sendingComment}
                                 aria-label={sendingComment ? 'Enviando comentario' : 'Enviar comentario'}
-                                className="text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
+                                className="text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors shrink-0"
                             >
                                 {sendingComment ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             </button>

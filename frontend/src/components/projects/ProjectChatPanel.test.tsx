@@ -81,4 +81,101 @@ describe('ProjectChatPanel action access', () => {
     expect(screen.getByText('Actualización del proyecto')).toBeInTheDocument();
     expect(screen.getByRole('complementary', { name: 'Eliminar mensaje' })).toBeInTheDocument();
   });
+
+  it('shows mention suggestions when typing @ and inserts mention on selection', async () => {
+    const mockCandidates = [
+      { id: 'user-2', nombre_completo: 'Carlos Gomez' },
+      { id: 'user-3', nombre_completo: 'Ana Maria' },
+    ];
+    mocks.apiFetch.mockImplementation((path: string, options?: { method?: string; body?: string }) => {
+      if (options?.method === 'POST') {
+        const body = JSON.parse(options.body || '{}');
+        return Promise.resolve({
+          id: 'new-msg',
+          sender_id: 'user-1',
+          sender_name: 'Ada',
+          content: body.content,
+          mentions: body.mentions,
+          created_at: '2026-10-01T10:05:00Z',
+        });
+      }
+      if (path.includes('/projects/assignee-candidates')) return Promise.resolve(mockCandidates);
+      if (path.endsWith('/messages')) return Promise.resolve(messages);
+      return Promise.resolve([]);
+    });
+
+    render(<ProjectChatPanel projectId="project-1" />);
+    const textarea = await screen.findByRole('textbox', { name: 'Escribir mensaje en el chat del proyecto' });
+
+    // Focus and click @ button
+    const atButton = screen.getByRole('button', { name: 'Mencionar usuario con @' });
+    expect(atButton).toBeInTheDocument();
+    fireEvent.click(atButton);
+
+    // Should insert @ and show candidate suggestions
+    await waitFor(() => {
+      expect(screen.getByRole('listbox', { name: 'Sugerencias de mención' })).toBeInTheDocument();
+    });
+    expect(screen.getByText('Carlos Gomez')).toBeInTheDocument();
+    expect(screen.getByText('Ana Maria')).toBeInTheDocument();
+
+    // Select Carlos Gomez
+    fireEvent.click(screen.getByRole('option', { name: /Carlos Gomez/ }));
+
+    // Textarea should now have @Carlos Gomez and suggestion list is closed
+    expect(textarea).toHaveValue('@Carlos Gomez ');
+    await waitFor(() => {
+      expect(screen.queryByRole('listbox', { name: 'Sugerencias de mención' })).not.toBeInTheDocument();
+    });
+
+    // Send the message
+    const sendButton = screen.getByRole('button', { name: 'Enviar mensaje' });
+    fireEvent.click(sendButton);
+
+    await waitFor(() => {
+      expect(mocks.apiFetch).toHaveBeenCalledWith(
+        '/projects/project-1/messages',
+        expect.objectContaining({
+          method: 'POST',
+          body: {
+            content: '@Carlos Gomez',
+            mentions: ['user-2'],
+          },
+        }),
+      );
+    });
+  });
+
+  it('supports keyboard navigation (ArrowDown, Enter) to select mention', async () => {
+    const mockCandidates = [
+      { id: 'user-2', nombre_completo: 'Carlos Gomez' },
+      { id: 'user-3', nombre_completo: 'Camila Perez' },
+    ];
+    mocks.apiFetch.mockImplementation((path: string) => {
+      if (path.includes('/projects/assignee-candidates')) return Promise.resolve(mockCandidates);
+      if (path.endsWith('/messages')) return Promise.resolve(messages);
+      return Promise.resolve([]);
+    });
+
+    render(<ProjectChatPanel projectId="project-1" />);
+    const textarea = await screen.findByRole('textbox', { name: 'Escribir mensaje en el chat del proyecto' });
+
+    // Type @Ca
+    fireEvent.change(textarea, { target: { value: 'Hola @Ca' } });
+
+    await waitFor(() => {
+      expect(screen.getByRole('listbox', { name: 'Sugerencias de mención' })).toBeInTheDocument();
+    });
+
+    // Initial item is Camila Perez (alphabetical first). ArrowDown moves to Carlos Gomez.
+    fireEvent.keyDown(textarea, { key: 'ArrowDown' });
+    // Press Enter to select Carlos Gomez
+    fireEvent.keyDown(textarea, { key: 'Enter' });
+
+    expect(textarea).toHaveValue('Hola @Carlos Gomez ');
+    await waitFor(() => {
+      expect(screen.queryByRole('listbox', { name: 'Sugerencias de mención' })).not.toBeInTheDocument();
+    });
+  });
 });
+
