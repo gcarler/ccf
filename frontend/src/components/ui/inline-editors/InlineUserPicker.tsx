@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import clsx from "clsx";
 import { Check, Loader2, Search, User, X } from "lucide-react";
@@ -35,6 +35,10 @@ export function InlineUserPicker({ value, onChange, disabled, endpoint = "/crm/p
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const nextPageRef = useRef<number | null>(null);
+  const termRef = useRef<string>("");
   const [loadError, setLoadError] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
   const [displayName, setDisplayName] = useState<string | null>(null);
@@ -90,44 +94,74 @@ export function InlineUserPicker({ value, onChange, disabled, endpoint = "/crm/p
     };
   }, [value, users, token, endpoint]);
 
-  useEffect(() => {
-    if (!open) return;
-    setLoading(true);
-    setLoadError(false);
-    const controller = new AbortController();
-    const trimmed = debouncedQuery.trim();
-    apiFetch<PersonaLookupRecord[]>(endpoint, {
-      method: "GET",
-      token: token ?? undefined,
-      query: { search: trimmed || undefined, limit: 50 },
-      signal: controller.signal,
-    })
-      .then((data) => {
-        if (controller.signal.aborted) return;
-        const list: UserRecord[] = Array.isArray(data) ? data.map((person) => {
-          const fullName = [person.first_name, person.last_name].filter(Boolean).join(" ").trim();
-          return {
-            id: String(person.user?.id ?? person.id),
-            username: person.nombre_completo || fullName || person.user?.username || person.username || `#${person.id}`,
-          };
-        }) : [];
-        setUsers(list);
-        if (value) {
+  const PAGE_SIZE = 50;
+
+  const loadPage = useCallback(
+    async (trimmed: string, page: number, append: boolean, signal?: AbortSignal) => {
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+        setLoadError(false);
+      }
+      try {
+        const data = await apiFetch<PersonaLookupRecord[]>(endpoint, {
+          method: "GET",
+          token: token ?? undefined,
+          query: { search: trimmed || undefined, limit: PAGE_SIZE, skip: page * PAGE_SIZE },
+          signal,
+        });
+        if (signal?.aborted) return;
+        const list: UserRecord[] = Array.isArray(data)
+          ? data.map((person) => {
+              const fullName = [person.first_name, person.last_name].filter(Boolean).join(" ").trim();
+              return {
+                id: String(person.user?.id ?? person.id),
+                username:
+                  person.nombre_completo || fullName || person.user?.username || person.username || `#${person.id}`,
+              };
+            })
+          : [];
+        setUsers((prev) => {
+          if (!append) return list;
+          const seen = new Set(prev.map((u) => u.id));
+          return [...prev, ...list.filter((u) => !seen.has(u.id))];
+        });
+        termRef.current = trimmed;
+        const hasNext = list.length === PAGE_SIZE;
+        nextPageRef.current = hasNext ? page + 1 : null;
+        setHasMore(hasNext);
+        if (!append && value) {
           const found = list.find((u) => u.id === value);
           if (found) setDisplayName(found.username);
         }
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) {
+      } catch {
+        if (!signal?.aborted && !append) {
           setUsers([]);
           setLoadError(true);
         }
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
-      });
+      } finally {
+        if (!signal?.aborted) {
+          if (append) setLoadingMore(false);
+          else setLoading(false);
+        }
+      }
+    },
+    [endpoint, token, value]
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    const controller = new AbortController();
+    void loadPage(debouncedQuery.trim(), 0, false, controller.signal);
     return () => controller.abort();
-  }, [open, debouncedQuery, token, value, endpoint, retryKey]);
+  }, [open, debouncedQuery, retryKey, loadPage]);
+
+  const handleLoadMore = useCallback(() => {
+    if (nextPageRef.current === null || loading || loadingMore) return;
+    const controller = new AbortController();
+    void loadPage(termRef.current, nextPageRef.current, true, controller.signal);
+  }, [loadPage, loading, loadingMore]);
 
   const isDebouncing = query.trim() !== debouncedQuery.trim();
   const filtered = users;
@@ -242,6 +276,18 @@ export function InlineUserPicker({ value, onChange, disabled, endpoint = "/crm/p
                     {u.id === value && <Check size={12} className="text-[hsl(var(--primary))]" />}
                   </button>
                 ))}
+                {hasMore && (
+                  <button
+                    type="button"
+                    data-testid="userpicker-load-more"
+                    onClick={handleLoadMore}
+                    disabled={loadingMore}
+                    className="w-full flex items-center justify-center gap-1.5 py-2 text-2xs font-bold text-[hsl(var(--primary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-[hsl(var(--surface-2))] transition-colors disabled:opacity-60"
+                  >
+                    {loadingMore && <Loader2 size={10} className="animate-spin" />}
+                    Cargar más personas
+                  </button>
+                )}
               </>
             )}
           </div>

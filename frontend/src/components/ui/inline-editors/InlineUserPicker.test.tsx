@@ -41,7 +41,7 @@ describe('InlineUserPicker', () => {
       '/projects/assignee-candidates',
       expect.objectContaining({
         token: 'test-token',
-        query: { search: 'Lucía', limit: 50 },
+        query: { search: 'Lucía', limit: 50, skip: 0 },
       })
     );
     expect(mockApiFetch).not.toHaveBeenCalledWith(
@@ -131,5 +131,38 @@ describe('InlineUserPicker', () => {
       '/projects/assignee-candidates/persona-uuid',
       expect.objectContaining({ method: 'GET', token: 'test-token' })
     );
+  });
+
+  it('appends the next page when clicking "Cargar más personas"', async () => {
+    const pageOne = Array.from({ length: 50 }, (_, i) => ({
+      id: `p1-${i}`,
+      first_name: `Lucía${i}`,
+      last_name: 'Ramírez',
+    }));
+    const pageTwo = [{ id: 'p2-0', first_name: 'Etzel', last_name: 'Iriarte' }];
+    mockApiFetch.mockImplementation(async (_endpoint, options) => {
+      if (options?.query?.skip === 50) return pageTwo as never;
+      return pageOne as never;
+    });
+
+    render(<InlineUserPicker endpoint="/projects/assignee-candidates" value={null} onChange={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Selector de persona asignada' }));
+
+    const loadMore = await screen.findByTestId('userpicker-load-more');
+    fireEvent.click(loadMore);
+
+    await waitFor(() => expect(screen.getByText('Etzel Iriarte')).toBeInTheDocument());
+    expect(screen.getByText('Lucía0 Ramírez')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByTestId('userpicker-load-more')).not.toBeInTheDocument());
+  });
+
+  it('does not offer pagination when the listing is shorter than a full page', async () => {
+    mockApiFetch.mockResolvedValueOnce([{ id: 'persona-uuid', nombre_completo: 'Lucía Ramírez' }] as never);
+
+    render(<InlineUserPicker endpoint="/projects/assignee-candidates" value={null} onChange={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Selector de persona asignada' }));
+
+    await screen.findByRole('button', { name: /Lucía Ramírez/ });
+    expect(screen.queryByTestId('userpicker-load-more')).not.toBeInTheDocument();
   });
 });

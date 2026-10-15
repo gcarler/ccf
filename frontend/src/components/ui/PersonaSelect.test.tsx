@@ -23,7 +23,7 @@ describe('PersonaSelect (Reactive Server-side Search QA-002)', () => {
         render(<PersonaSelect value={null} onChange={() => {}} />);
         await waitFor(() => expect(screen.getByText('Sin asignar')).toBeInTheDocument());
         await waitFor(() =>
-            expect(mockApiFetch).toHaveBeenCalledWith('/crm/personas?limit=50', { token: 'test-token' })
+            expect(mockApiFetch).toHaveBeenCalledWith('/crm/personas?limit=50&skip=0', { token: 'test-token' })
         );
     });
 
@@ -90,7 +90,7 @@ describe('PersonaSelect (Reactive Server-side Search QA-002)', () => {
         await waitFor(
             () => {
                 expect(mockApiFetch).toHaveBeenCalledWith(
-                    '/crm/personas?search=Laury&limit=50',
+                    '/crm/personas?limit=50&skip=0&search=Laury',
                     { token: 'test-token' }
                 );
             },
@@ -242,5 +242,123 @@ describe('PersonaSelect (Reactive Server-side Search QA-002)', () => {
         expect(onChange).toHaveBeenCalledWith(null);
         expect(trigger).toHaveFocus();
         expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    });
+
+    it('appends the next page when clicking "Cargar más personas" instead of replacing results', async () => {
+        const pageOne = Array.from({ length: 50 }, (_, i) =>
+            createMockPersonaSelectOption({ id: `p1-${i}`, first_name: `Alonso${i}`, last_name: 'Zapata' })
+        );
+        const pageTwo = [
+            createMockPersonaSelectOption({ id: 'p2-0', first_name: 'Lucía', last_name: 'Ramírez' }),
+            createMockPersonaSelectOption({ id: 'p2-1', first_name: 'Etzel', last_name: 'Iriarte' }),
+        ];
+        mockApiFetch.mockImplementation(async (endpoint: string) => {
+            if (endpoint.includes('skip=50')) return pageTwo;
+            return pageOne;
+        });
+
+        render(<PersonaSelect value={null} onChange={() => {}} />);
+        fireEvent.click(screen.getByRole('button', { name: /sin asignar/i }));
+
+        await waitFor(() => expect(mockApiFetch).toHaveBeenCalledWith('/crm/personas?limit=50&skip=0', { token: 'test-token' }));
+
+        const loadMore = await screen.findByTestId('persona-load-more');
+        fireEvent.click(loadMore);
+
+        await waitFor(() =>
+            expect(mockApiFetch).toHaveBeenCalledWith('/crm/personas?limit=50&skip=50', { token: 'test-token' })
+        );
+        await waitFor(() => {
+            expect(screen.getByText('Lucía Ramírez')).toBeInTheDocument();
+            expect(screen.getByText('Etzel Iriarte')).toBeInTheDocument();
+            // Las personas de la página 1 siguen visibles tras el append
+            expect(screen.getByText('Alonso0 Zapata')).toBeInTheDocument();
+        });
+        // La segunda página es corta: el botón de paginación desaparece
+        await waitFor(() => expect(screen.queryByTestId('persona-load-more')).not.toBeInTheDocument());
+    });
+
+    it('shows the load-more button only when the server reports a full page', async () => {
+        mockApiFetch.mockResolvedValueOnce([
+            createMockPersonaSelectOption({ id: '1', first_name: 'Juan', last_name: 'Pérez' }),
+        ]);
+
+        render(<PersonaSelect value={null} onChange={() => {}} />);
+        fireEvent.click(screen.getByRole('button', { name: /sin asignar/i }));
+
+        await waitFor(() => expect(screen.getByText('Juan Pérez')).toBeInTheDocument());
+        expect(screen.queryByTestId('persona-load-more')).not.toBeInTheDocument();
+    });
+
+    it('falls back to /projects/assignee-candidates when the primary listing fails', async () => {
+        const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+        mockApiFetch.mockImplementation(async (endpoint: string) => {
+            if (endpoint.startsWith('/crm/personas?')) {
+                throw new Error('500 upstream');
+            }
+            if (endpoint.startsWith('/projects/assignee-candidates?')) {
+                return [createMockPersonaSelectOption({ id: 'fb-1', first_name: 'Lucía', last_name: 'Ramírez' })];
+            }
+            return [];
+        });
+
+        render(<PersonaSelect value={null} onChange={() => {}} />);
+        fireEvent.click(screen.getByRole('button', { name: /sin asignar/i }));
+
+        await waitFor(() =>
+            expect(mockApiFetch).toHaveBeenCalledWith('/projects/assignee-candidates?limit=50', { token: 'test-token' })
+        );
+        expect(await screen.findByText('Lucía Ramírez')).toBeInTheDocument();
+        expect(screen.queryByTestId('persona-load-error')).not.toBeInTheDocument();
+        consoleError.mockRestore();
+    });
+
+    it('shows the retriable error state when both the listing and the fallback fail', async () => {
+        const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+        mockApiFetch.mockRejectedValue(new Error('Offline'));
+
+        render(<PersonaSelect value={null} onChange={() => {}} />);
+        fireEvent.click(screen.getByRole('button', { name: /sin asignar/i }));
+
+        await screen.findByRole('button', { name: 'Reintentar' });
+        mockApiFetch.mockResolvedValueOnce([
+            createMockPersonaSelectOption({ id: 'retry-1', first_name: 'Etzel', last_name: 'Iriarte' }),
+        ]);
+        // Se re-consulta el botón para actuar sobre el nodo vivo: el panel de
+        // error se recrea en cada render y el nodo obtenido puede quedar
+        // desmontado (isConnected=false) en el momento del click.
+        fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
+
+        await waitFor(() => expect(screen.getByText('Etzel Iriarte')).toBeInTheDocument());
+        expect(screen.queryByTestId('persona-load-error')).not.toBeInTheDocument();
+        consoleError.mockRestore();
+    });
+
+    it('prioritizes people whose name starts with the search term on the client', async () => {
+        // El servidor devuelve el orden alfabético plano ([E, L, M]); con el
+        // término 'LUC' solo 'Lucía Ramírez' empieza con él: el cliente debe
+        // reunirla al frente y mantener el orden alfabético en el resto.
+        const serverOrder = [
+            createMockPersonaSelectOption({ id: 'c3', first_name: 'Etzel', last_name: 'Sandoval' }),
+            createMockPersonaSelectOption({ id: 'c1', first_name: 'Lucía', last_name: 'Ramírez' }),
+            createMockPersonaSelectOption({ id: 'c2', first_name: 'Mila', last_name: 'Ferrer' }),
+        ];
+        mockApiFetch.mockImplementation(async () => serverOrder);
+
+        render(<PersonaSelect value={null} onChange={() => {}} />);
+        fireEvent.click(screen.getByRole('button', { name: /sin asignar/i }));
+
+        await waitFor(() => expect(screen.getByText('Lucía Ramírez')).toBeInTheDocument());
+        const input = screen.getByRole('textbox', { name: 'Buscar persona' });
+        fireEvent.change(input, { target: { value: 'LUC' } });
+
+        // El backend ya ordena por prefijo; el cliente lo re-afirma para términos
+        // compuestos. 'LUC' (case-insensitive) empieza en 'Lucía Ramírez'.
+        await waitFor(() => {
+            const options = screen.getAllByRole('option');
+            expect(options.length).toBeGreaterThanOrEqual(4); // "Sin asignar" + 3 personas
+            const names = options.map((o) => o.textContent ?? '');
+            expect(names[1]).toContain('Lucía Ramírez'); // [0] es "Sin asignar"
+        });
     });
 });
