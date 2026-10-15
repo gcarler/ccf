@@ -5,7 +5,7 @@ import logging
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy import func, inspect, or_, true
+from sqlalchemy import case, func, inspect, or_, true
 from sqlalchemy.orm import Session, load_only, selectinload
 
 from backend import models, schemas
@@ -162,19 +162,29 @@ def _build_persona_search_query(
     if sede_id is not None:
         query = query.filter(models.Persona.sede_id == sede_id)
     if search:
-        like = f"%{search}%"
+        search_term = search.strip()
+        like = f"%{search_term}%"
         # NOTA: nombre_completo es @hybrid_property con expresión SQL, funciona en filter
-        query = query.filter(
-            or_(
-                models.Persona.first_name.ilike(like),
-                models.Persona.last_name.ilike(like),
-                models.Persona.nombre_completo.ilike(like),
-                models.Persona.email.ilike(like),
-                models.Persona.id_number.ilike(like),
-                models.Persona.phone.ilike(like),
-                models.Persona.mobile_phone.ilike(like),
-            )
+        name_filters = or_(
+            models.Persona.first_name.ilike(like),
+            models.Persona.last_name.ilike(like),
+            models.Persona.nombre_completo.ilike(like),
         )
+        # TKT-PERSONA-SEARCH-PREFIX-AND-PAGINATION-01: términos cortos ('l', 'ca')
+        # NO tocan email/teléfono/documento — '@gmail.com' contiene 'l','m','g','c','o'
+        # y matchearía a toda la base (600-2000+ registros) con ruido de nombres 'A...'.
+        if len(search_term) < 3:
+            query = query.filter(name_filters)
+        else:
+            query = query.filter(
+                or_(
+                    name_filters,
+                    models.Persona.email.ilike(like),
+                    models.Persona.id_number.ilike(like),
+                    models.Persona.phone.ilike(like),
+                    models.Persona.mobile_phone.ilike(like),
+                )
+            )
     if role:
         query = query.filter(models.Persona.church_role == role)
     if estado_vital:
@@ -198,6 +208,31 @@ def _build_persona_search_query(
     if family_id:
         query = query.filter(models.Persona.family_id == family_id)
     return query
+
+
+def persona_prefix_search_order(search: str):
+    """Orden de relevancia por prefijo para buscadores de personas.
+
+    TKT-PERSONA-SEARCH-PREFIX-AND-PAGINATION-01: al escribir 'l' o 'ca', las
+    personas cuyo nombre empieza por lo tecleado encabezan la lista:
+    - Tier 0: first_name o nombre_completo empieza por ``term`` ('l' → Laura/Luis).
+    - Tier 1: apellido o segundo nombre empieza por ``term``.
+    - Tier 2: resto de coincidencias parciales '%term%'.
+    Dentro de cada tier, alfabético por nombre completo (+ id para determinismo
+    con skip/offset en paginación).
+    """
+    term = (search or "").strip()
+    prefix = f"{term}%"
+    second_name = f"% {term}%"
+    first = func.trim(func.coalesce(models.Persona.first_name, ""))
+    last = func.trim(func.coalesce(models.Persona.last_name, ""))
+    full = func.trim(func.coalesce(models.Persona.nombre_completo, ""))
+    tier = case(
+        (or_(first.ilike(prefix), full.ilike(prefix)), 0),
+        (or_(last.ilike(prefix), full.ilike(second_name)), 1),
+        else_=2,
+    )
+    return [tier.asc(), full.asc(), models.Persona.id.asc()]
 
 
 def search_personas(
@@ -235,7 +270,11 @@ def search_personas(
         sede_id=sede_id,
     )
     sort_col = getattr(models.Persona, sort_by or "nombre_completo", models.Persona.nombre_completo)
-    query = query.order_by(sort_col.desc() if sort_dir == "desc" else sort_col.asc())
+    search_term = (search or "").strip()
+    if search_term and not sort_by:
+        query = query.order_by(*persona_prefix_search_order(search_term))
+    else:
+        query = query.order_by(sort_col.desc() if sort_dir == "desc" else sort_col.asc())
 
     personas = query.offset(skip).limit(limit).all()
     personas = [prepare_persona_for_output(db, p) for p in personas]
@@ -285,7 +324,16 @@ def search_personas_page(
         if row[0]
     ]
     sort_col = getattr(models.Persona, sort_by or "nombre_completo", models.Persona.nombre_completo)
-    personas = query.order_by(sort_col.desc() if sort_dir == "desc" else sort_col.asc()).offset(skip).limit(limit).all()
+    search_term = (search or "").strip()
+    if search_term and not sort_by:
+        personas = query.order_by(*persona_prefix_search_order(search_term)).offset(skip).limit(limit).all()
+    else:
+        personas = (
+            query.order_by(sort_col.desc() if sort_dir == "desc" else sort_col.asc())
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
     personas = [prepare_persona_for_output(db, p) for p in personas]
     return {
         "items": _enrich_personas_with_progress(db, personas),

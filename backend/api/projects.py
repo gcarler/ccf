@@ -46,6 +46,7 @@ from backend.core.permissions import (
 from backend.core.storage import storage_service
 from backend.core.uploads import MAX_UPLOAD_SIZE, sanitize_filename
 from backend.crud.crm import get_user_sede_id
+from backend.crud.crm_.personas import persona_prefix_search_order
 from backend.crud.projects import (
     create_milestone as _projects_create_milestone,
 )
@@ -870,7 +871,8 @@ def _normalize_dates(obj):
 @router.get("/assignee-candidates", response_model=List[schemas.ProjectAssigneeCandidate])
 def list_project_assignee_candidates(
     search: Optional[str] = Query(None, max_length=100),
-    limit: int = Query(200, ge=1, le=1000),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(200, ge=1, le=2000),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
@@ -891,10 +893,17 @@ def list_project_assignee_candidates(
                 models.Persona.nombre_completo.ilike(pattern),
             )
         )
+        # TKT-PERSONA-SEARCH-PREFIX-AND-PAGINATION-01: al buscar 'l' o 'ca', las
+        # personas cuyo nombre empieza por lo tecleado encabezan la lista (no
+        # coincidencias parciales ni de apellidos). El id cierra el orden para
+        # que skip/limit pagine de forma determinista.
+        query = query.order_by(*persona_prefix_search_order(search_term))
+    else:
+        query = query.order_by(
+            models.Persona.first_name.asc(), models.Persona.last_name.asc(), models.Persona.id.asc()
+        )
 
-    candidates = query.order_by(
-        models.Persona.first_name.asc(), models.Persona.last_name.asc(), models.Persona.id.asc()
-    ).limit(limit).all()
+    candidates = query.offset(skip).limit(limit).all()
     return [
         schemas.ProjectAssigneeCandidate(id=person.id, nombre_completo=person.nombre_completo)
         for person in candidates
