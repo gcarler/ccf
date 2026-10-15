@@ -137,7 +137,7 @@ export default function TaskDetailHeader({
                         type="button"
                         onClick={handleVerRutaBtnClick}
                         title="Ver ruta jerárquica"
-                        aria-label="Ver ruta jerárquica de la tarea"
+                        aria-label="Ver ruta jerárquica de la actividad"
                         aria-expanded={isRouteTreeOpen}
                         className={clsx(
                             "flex items-center gap-1 px-2 py-1 rounded-lg text-2xs font-bold transition-all border focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[hsl(var(--primary))]",
@@ -163,7 +163,7 @@ export default function TaskDetailHeader({
                     <button
                         onClick={onStarToggle}
                         title={starred ? 'Quitar de favoritos' : 'Marcar como favorito'}
-                        aria-label={starred ? 'Quitar tarea de favoritos' : 'Marcar tarea como favorita'}
+                        aria-label={starred ? 'Quitar actividad de favoritos' : 'Marcar actividad como favorita'}
                         className={clsx(
                             'p-1.5 rounded-lg transition-all',
                             starred
@@ -176,7 +176,7 @@ export default function TaskDetailHeader({
 
                     <button
                         title="Expandir a pantalla completa"
-                        aria-label="Expandir detalle de tarea"
+                        aria-label="Expandir detalle de actividad"
                         className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] transition-all"
                         onClick={onExpandToggle}
                     >
@@ -185,8 +185,8 @@ export default function TaskDetailHeader({
 
                     <button
                         onClick={onDeleteTask}
-                        title="Eliminar tarea"
-                        aria-label="Eliminar tarea"
+                        title="Eliminar actividad"
+                        aria-label="Eliminar actividad"
                         className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] transition-all"
                     >
                         <Trash2 size={14} />
@@ -195,7 +195,7 @@ export default function TaskDetailHeader({
                     <button
                         onClick={onClose}
                         title="Cerrar panel"
-                        aria-label="Cerrar detalle de tarea"
+                        aria-label="Cerrar detalle de actividad"
                         className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] transition-all ml-0.5"
                     >
                         <X size={14} />
@@ -207,7 +207,7 @@ export default function TaskDetailHeader({
                 <button
                     onClick={onStatusCycle}
                     title="Click para cambiar estado"
-                    aria-label={`Cambiar estado de la tarea. Estado actual: ${status.label}`}
+                    aria-label={`Cambiar estado de la actividad. Estado actual: ${status.label}`}
                     className={clsx(
                         'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border border-current/15 transition-all hover:border-current/30 cursor-pointer',
                         status.color, status.bg
@@ -219,13 +219,13 @@ export default function TaskDetailHeader({
             </div>
 
             <textarea
-                aria-label="Título de la tarea"
+                aria-label="Título de la actividad"
                 value={title}
                 onChange={e => onTitleChange(e.target.value)}
                 onBlur={onSave}
                 rows={1}
                 className="w-full min-h-[28px] text-sm font-bold text-[hsl(var(--foreground))] bg-transparent resize-none outline-none leading-snug placeholder:text-[hsl(var(--muted-foreground))] pb-3"
-                placeholder="Nombre de la tarea..."
+                placeholder="Nombre de la actividad..."
                 onInput={e => {
                     const t = e.currentTarget;
                     t.style.height = 'auto';

@@ -5,6 +5,7 @@ import {
     ChevronDown, ChevronRight, Plus,
     MessageSquare, MoreHorizontal, CheckCircle2, X, Send,
     Paperclip, AtSign, Smile, Check, Star, Pencil, Loader2,
+    Layers,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
@@ -18,6 +19,8 @@ import type {
     CommentPayload,
     ProjectTaskRecord,
     ProjectUserFavorite,
+    ProjectComponentDetail,
+    ProjectComponentsBreakdown,
 } from '@/types/projects';
 
 import { buildStatusOptions, getStatusOption, PROJECT_ASSIGNEE_CANDIDATES_ENDPOINT, STATUS_GROUP_PILL } from '@/lib/projects/constants';
@@ -41,6 +44,7 @@ interface Props {
     /** Parent-owned persistence callback; it also owns optimistic updates
      *  and rollback so List and Kanban share one source of truth. */
     onTaskUpdate?: (taskId: string, patch: Partial<ProjectTaskRecord>) => void;
+    onManageComponents?: () => void;
     quickAddStatus?: string | null;
     quickAddTitle?: string;
     onQuickAddTitleChange?: (v: string) => void;
@@ -456,11 +460,13 @@ function TaskRow({
     onOpen,
     onChange,
     phases,
+    componentsMap,
 }: {
     task: ProjectTaskRecord;
     onOpen: () => void;
     onChange: (patch: Partial<ProjectTaskRecord>) => void;
     phases?: readonly PhaseDef[];
+    componentsMap?: Map<string, { code: string; name: string; color?: string | null }>;
 }) {
     const [commentOpen, setCommentOpen] = useState(false);
     const [commentPlacement, setCommentPlacement] = useState<'bottom' | 'top'>('bottom');
@@ -532,7 +538,7 @@ function TaskRow({
                             ? 'bg-[hsl(var(--success))] border-[hsl(var(--success))] text-[hsl(var(--primary-foreground))]'
                             : 'border-[hsl(var(--border))] text-transparent hover:border-[hsl(var(--success)/0.4)] hover:bg-[hsl(var(--success)/0.1)]'
                     )}
-                    aria-label={status === 'completed' ? 'Desmarcar tarea' : 'Completar tarea'}
+                    aria-label={status === 'completed' ? 'Desmarcar actividad' : 'Completar actividad'}
                 >
                     {status === 'completed' && <Check size={9} />}
                 </button>
@@ -551,6 +557,15 @@ function TaskRow({
                 )}>
                     {task.title}
                 </span>
+                {task.component_id && componentsMap?.has(task.component_id) && (
+                    <span
+                        title={componentsMap.get(task.component_id)!.name}
+                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-2xs font-semibold shrink-0 bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)]"
+                    >
+                        <Layers size={9} aria-hidden="true" />
+                        <span>{componentsMap.get(task.component_id)!.code}</span>
+                    </span>
+                )}
             </button>
 
             {/* ── PERSONA ASIGNADA ─────── */}
@@ -661,6 +676,7 @@ function StatusGroup({
     isFirst,
     onChangeTask,
     phaseDefs,
+    componentsMap,
     quickAddStatus,
     quickAddTitle = '',
     onQuickAddTitleChange,
@@ -678,6 +694,7 @@ function StatusGroup({
     isFirst?: boolean;
     onChangeTask: (taskId: number | string, patch: Partial<ProjectTaskRecord>) => void;
     phaseDefs?: readonly PhaseDef[];
+    componentsMap?: Map<string, { code: string; name: string; color?: string | null }>;
     quickAddStatus?: string | null;
     quickAddTitle?: string;
     onQuickAddTitleChange?: (v: string) => void;
@@ -751,6 +768,7 @@ function StatusGroup({
                                 onOpen={() => onOpenTask(task)}
                                 onChange={(patch) => onChangeTask(task.id, patch)}
                                 phases={phaseDefs}
+                                componentsMap={componentsMap}
                             />
                         ))}
 
@@ -817,6 +835,7 @@ export default function ProjectListView({
     onOpenTask,
     onAddTask,
     onTaskUpdate,
+    onManageComponents,
     quickAddStatus,
     quickAddTitle,
     onQuickAddTitleChange,
@@ -827,6 +846,8 @@ export default function ProjectListView({
     const { createTask } = useProjectUpdate();
     const [onlyFavorites, setOnlyFavorites] = useState(false);
     const [favoriteTaskIds, setFavoriteTaskIds] = useState<Set<string>>(new Set());
+    const [components, setComponents] = useState<ProjectComponentDetail[]>([]);
+    const [selectedComponentId, setSelectedComponentId] = useState<string>('all');
     const [internalInlineStatus, setInternalInlineStatus] = useState<string | null>(null);
     const [internalInlineTitle, setInternalInlineTitle] = useState('');
     const [isSubmittingInline, setIsSubmittingInline] = useState(false);
@@ -891,10 +912,37 @@ export default function ProjectListView({
         return () => { active = false; };
     }, [effectiveProjectId, token]);
 
+    useEffect(() => {
+        let active = true;
+        if (!effectiveProjectId || !token) return;
+        apiFetch<ProjectComponentsBreakdown>(`/projects/${effectiveProjectId}/components-breakdown`, { token })
+            .then(res => {
+                if (active && res?.components) {
+                    setComponents(res.components);
+                }
+            })
+            .catch(() => {});
+        return () => { active = false; };
+    }, [effectiveProjectId, token]);
+
+    const componentsMap = useMemo(() => {
+        const map = new Map<string, { code: string; name: string; color?: string | null }>();
+        components.forEach(c => map.set(c.id, { code: c.code, name: c.name, color: c.color }));
+        return map;
+    }, [components]);
+
     const displayedTasks = useMemo(() => {
-        if (!onlyFavorites) return tasks;
-        return tasks.filter(t => favoriteTaskIds.has(t.id));
-    }, [tasks, onlyFavorites, favoriteTaskIds]);
+        let list = tasks;
+        if (onlyFavorites) {
+            list = list.filter(t => favoriteTaskIds.has(t.id));
+        }
+        if (selectedComponentId === 'none') {
+            list = list.filter(t => !t.component_id);
+        } else if (selectedComponentId !== 'all') {
+            list = list.filter(t => t.component_id === selectedComponentId);
+        }
+        return list;
+    }, [tasks, onlyFavorites, favoriteTaskIds, selectedComponentId]);
 
     const handleChangeTask = useCallback((taskId: number | string, patch: Partial<ProjectTaskRecord>) => {
         onTaskUpdate?.(String(taskId), patch);
@@ -920,34 +968,66 @@ export default function ProjectListView({
 
     return (
         <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))] scrollbar-thin">
-            {/* ── TOOLBAR / FAVORITE FILTER ── */}
-            <div className="shrink-0 flex items-center justify-between px-4 py-2 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
-                <button
-                    type="button"
-                    onClick={() => setOnlyFavorites(prev => !prev)}
-                    className={clsx(
-                        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all border',
-                        onlyFavorites
-                            ? 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning-text))] border-[hsl(var(--warning)/0.3)] shadow-xs'
-                            : 'text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--text-primary))]'
-                    )}
-                    title="Filtrar por tareas favoritas"
-                >
-                    <Star size={13} className={clsx(onlyFavorites ? 'fill-current text-[hsl(var(--warning-text))]' : '')} />
-                    <span>Solo Mis Favoritas</span>
-                    {favoriteTaskIds.size > 0 && (
-                        <span className={clsx(
-                            'px-1.5 py-0.5 rounded-full text-2xs font-bold',
+            {/* ── TOOLBAR / FAVORITE FILTER / COMPONENT FILTER ── */}
+            <div className="shrink-0 flex flex-wrap items-center justify-between gap-2 px-4 py-2 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
+                <div className="flex flex-wrap items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setOnlyFavorites(prev => !prev)}
+                        className={clsx(
+                            'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all border',
                             onlyFavorites
-                                ? 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning-text))]'
-                                : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]'
-                        )}>
-                            {favoriteTaskIds.size}
-                        </span>
+                                ? 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning-text))] border-[hsl(var(--warning)/0.3)] shadow-xs'
+                                : 'text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--text-primary))]'
+                        )}
+                        title="Filtrar por actividades favoritas"
+                    >
+                        <Star size={13} className={clsx(onlyFavorites ? 'fill-current text-[hsl(var(--warning-text))]' : '')} />
+                        <span>Solo Mis Favoritas</span>
+                        {favoriteTaskIds.size > 0 && (
+                            <span className={clsx(
+                                'px-1.5 py-0.5 rounded-full text-2xs font-bold',
+                                onlyFavorites
+                                    ? 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning-text))]'
+                                    : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]'
+                            )}>
+                                {favoriteTaskIds.size}
+                            </span>
+                        )}
+                    </button>
+
+                    {/* Selector de componente EDT */}
+                    <select
+                        value={selectedComponentId}
+                        onChange={(e) => setSelectedComponentId(e.target.value)}
+                        aria-label="Filtrar por componente EDT"
+                        className="h-7 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                    >
+                        <option value="all">Todos los componentes</option>
+                        <option value="none">Sin componente (General)</option>
+                        {components.map((comp) => (
+                            <option key={comp.id} value={comp.id}>
+                                {comp.code} - {comp.name}
+                            </option>
+                        ))}
+                    </select>
+
+                    {onManageComponents && (
+                        <button
+                            type="button"
+                            onClick={onManageComponents}
+                            aria-label="Gestionar componentes EDT"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--text-primary))]"
+                            title="Gestionar componentes de la Estructura de Desglose de Trabajo (EDT)"
+                        >
+                            <Layers size={13} className="text-[hsl(var(--primary))]" />
+                            <span>+ Componentes (EDT)</span>
+                        </button>
                     )}
-                </button>
+                </div>
+
                 <span className="text-2xs text-[hsl(var(--text-secondary))]">
-                    {displayedTasks.length} de {tasks.length} tareas
+                    {displayedTasks.length} de {tasks.length} actividades
                 </span>
             </div>
 
@@ -983,6 +1063,7 @@ export default function ProjectListView({
                     isFirst={i === 0}
                     onChangeTask={handleChangeTask}
                     phaseDefs={phaseDefs}
+                    componentsMap={componentsMap}
                     isAddingHere={activeInlineStatus === g.status}
                     quickAddTitle={activeInlineTitle}
                     onQuickAddTitleChange={handleInlineTitleChange}
@@ -1002,6 +1083,7 @@ export default function ProjectListView({
                     onStartInlineAdd={() => handleStartInlineAdd('todo')}
                     onChangeTask={handleChangeTask}
                     phaseDefs={phaseDefs}
+                    componentsMap={componentsMap}
                     isAddingHere={activeInlineStatus === 'todo'}
                     quickAddTitle={activeInlineTitle}
                     onQuickAddTitleChange={handleInlineTitleChange}
@@ -1018,10 +1100,10 @@ export default function ProjectListView({
                     </div>
                     <div className="text-center">
                         <p className="text-sm font-bold text-[hsl(var(--text-secondary))]">
-                            {onlyFavorites ? 'No tienes tareas favoritas en este proyecto' : 'Sin tareas en este proyecto'}
+                            {onlyFavorites ? 'No tienes actividades favoritas en este proyecto' : 'Sin actividades en este proyecto'}
                         </p>
                         <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">
-                            {onlyFavorites ? 'Marca tareas con la estrella para verlas aquí' : 'Haz clic en "+ Nuevo" para empezar'}
+                            {onlyFavorites ? 'Marca actividades con la estrella para verlas aquí' : 'Haz clic en "+ Nuevo" para empezar'}
                         </p>
                     </div>
                 </div>
@@ -1057,7 +1139,7 @@ function QuickAddBar({
                     if (e.key === 'Enter') onQuickAddConfirm?.();
                     if (e.key === 'Escape') onQuickAddCancel?.();
                 }}
-                placeholder="Nombre de la tarea... (Enter para guardar, Esc para cancelar)"
+                placeholder="Nombre de la actividad... (Enter para guardar, Esc para cancelar)"
                 className="flex-1 text-base font-medium bg-transparent outline-none text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))]"
             />
             <button
@@ -1068,7 +1150,7 @@ function QuickAddBar({
             </button>
             <button
                 onClick={onQuickAddCancel}
-                aria-label="Cancelar tarea rápida"
+                aria-label="Cancelar actividad rápida"
                 className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2"
             >
                 <X size={14} />

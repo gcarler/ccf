@@ -164,7 +164,7 @@ export default function TaskRouteTree({
         <div className="flex flex-col h-full">
             {/* Header */}
             <div className="px-4 py-3 border-b border-[hsl(var(--border))]">
-                <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))] mb-2">Ruta de la tarea</p>
+                <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))] mb-2">Ruta de la actividad</p>
 
                 {/* Breadcrumb path */}
                 <div className="flex flex-col gap-1">

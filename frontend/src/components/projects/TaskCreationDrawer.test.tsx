@@ -26,7 +26,7 @@ describe('TaskCreationDrawer accessibility', () => {
     it('associates form fields and labels priority/node selections', () => {
         render(<TaskCreationDrawer isOpen onClose={vi.fn()} onSubmit={vi.fn()} />);
 
-        expect(screen.getByRole('textbox', { name: 'Título de la tarea' })).toBeInTheDocument();
+        expect(screen.getByRole('textbox', { name: 'Título de la actividad' })).toBeInTheDocument();
         expect(screen.getByRole('textbox', { name: 'Descripción (Opcional)' })).toBeInTheDocument();
         expect(screen.getByRole('group', { name: 'Nivel de Prioridad' })).toBeInTheDocument();
         expect(screen.queryByRole('group', { name: 'Nodo Operativo' })).not.toBeInTheDocument();
@@ -51,20 +51,74 @@ describe('TaskCreationDrawer accessibility', () => {
             expect(screen.getByText('EDT-1.0 · Arquitectura')).toBeInTheDocument();
         });
 
-        fireEvent.change(screen.getByRole('textbox', { name: 'Título de la tarea' }), {
+        fireEvent.change(screen.getByRole('textbox', { name: 'Título de la actividad' }), {
             target: { value: 'Nueva tarea con EDT' },
         });
 
         const compSelect = screen.getByRole('combobox', { name: 'Componente (EDT)' });
         fireEvent.change(compSelect, { target: { value: 'comp-1' } });
 
-        fireEvent.click(screen.getByRole('button', { name: 'Crear Tarea' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Crear Actividad' }));
 
         await waitFor(() => {
             expect(onSubmit).toHaveBeenCalledWith(
                 expect.objectContaining({
                     title: 'Nueva tarea con EDT',
                     component_id: 'comp-1',
+                })
+            );
+        });
+    });
+
+    it('allows creating an EDT component inline without closing the drawer', async () => {
+        mockApiFetch.mockImplementation((url: string, opts?: any) => {
+            if (url.includes('/components-breakdown')) {
+                return Promise.resolve({
+                    components: [
+                        { id: 'comp-1', code: 'EDT-1.0', name: 'Arquitectura' },
+                    ],
+                });
+            }
+            if (url.includes('/components') && opts?.method === 'POST') {
+                return Promise.resolve({
+                    id: 'comp-new',
+                    code: 'EDT-2.0',
+                    name: 'Nuevo Modulo',
+                });
+            }
+            return Promise.resolve({});
+        });
+
+        render(
+            <TaskCreationDrawer
+                isOpen
+                projectId="proj-1"
+                onClose={vi.fn()}
+                onSubmit={vi.fn()}
+            />
+        );
+
+        await waitFor(() => {
+            expect(screen.getByText('+ Nuevo componente')).toBeInTheDocument();
+        });
+
+        fireEvent.click(screen.getByText('+ Nuevo componente'));
+        expect(screen.getByTestId('inline-edt-form')).toBeInTheDocument();
+
+        fireEvent.change(screen.getByLabelText('Nombre del Componente'), {
+            target: { value: 'Nuevo Modulo' },
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+        await waitFor(() => {
+            expect(mockApiFetch).toHaveBeenCalledWith(
+                '/projects/proj-1/components',
+                expect.objectContaining({
+                    method: 'POST',
+                    body: expect.objectContaining({
+                        name: 'Nuevo Modulo',
+                    }),
                 })
             );
         });

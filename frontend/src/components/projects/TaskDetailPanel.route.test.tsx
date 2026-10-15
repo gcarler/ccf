@@ -72,7 +72,7 @@ describe('TaskDetailPanel - Ver Ruta y Navegación Jerárquica', () => {
         expect(screen.queryByText('Visualizar EDT completo en el lienzo')).not.toBeInTheDocument();
 
         // Pulsar Ver Ruta
-        const verRutaBtn = screen.getByRole('button', { name: 'Ver ruta jerárquica de la tarea' });
+        const verRutaBtn = screen.getByRole('button', { name: 'Ver ruta jerárquica de la actividad' });
         fireEvent.click(verRutaBtn);
 
         // Debe invocar onVerRutaClick para cambiar el fondo a vista workflow inmediatamente
@@ -80,7 +80,7 @@ describe('TaskDetailPanel - Ver Ruta y Navegación Jerárquica', () => {
 
         // Debe mostrar TaskRouteTree con la jerarquía completa
         await waitFor(() => {
-            expect(screen.getByText('Ruta de la tarea')).toBeInTheDocument();
+            expect(screen.getByText('Ruta de la actividad')).toBeInTheDocument();
         });
         expect(screen.getAllByText('Espacio de Proyectos').length).toBeGreaterThanOrEqual(1);
         expect(screen.getAllByText('Mega Templo CCF').length).toBeGreaterThanOrEqual(1);
@@ -109,7 +109,7 @@ describe('TaskDetailPanel - Ver Ruta y Navegación Jerárquica', () => {
             />
         );
 
-        fireEvent.click(screen.getByRole('button', { name: 'Ver ruta jerárquica de la tarea' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Ver ruta jerárquica de la actividad' }));
 
         await waitFor(() => {
             expect(screen.getByText('Componente General')).toBeInTheDocument();
@@ -125,7 +125,7 @@ describe('TaskDetailPanel - Ver Ruta y Navegación Jerárquica', () => {
             />
         );
 
-        const verRutaBtn = screen.getByRole('button', { name: 'Ver ruta jerárquica de la tarea' });
+        const verRutaBtn = screen.getByRole('button', { name: 'Ver ruta jerárquica de la actividad' });
         fireEvent.click(verRutaBtn);
 
         expect(mockPush).toHaveBeenCalledWith('/plataforma/projects/project-100?view=workflow');

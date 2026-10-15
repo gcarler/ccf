@@ -744,6 +744,7 @@ export default function TaskDetailPanel({
                         onPriorityCycle={handlePriorityCycle}
                         onNodeCycle={handleNodeCycle}
                         onComponentChange={handleComponentChange}
+                        onComponentCreated={(newComp) => setComponents((prev) => [...prev, newComp])}
                         priority={priority}
                         token={token}
                     />

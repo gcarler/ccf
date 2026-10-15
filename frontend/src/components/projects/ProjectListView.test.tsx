@@ -25,6 +25,14 @@ const { mockApiFetch, mockToast } = vi.hoisted(() => ({
     if (typeof endpoint === 'string' && endpoint.includes('/comments') && options?.method === 'POST') {
       return { id: 'comment-123' };
     }
+    if (typeof endpoint === 'string' && endpoint.includes('/components-breakdown')) {
+      return {
+        components: [
+          { id: 'comp-1', code: 'EDT-1.0', name: 'Arquitectura' },
+          { id: 'comp-2', code: 'EDT-2.0', name: 'Desarrollo' },
+        ],
+      };
+    }
     return [];
   }),
   mockToast: {
@@ -477,5 +485,64 @@ describe('ProjectListView', () => {
       expect(mockToast.success).toHaveBeenCalledWith('Comentario guardado');
       expect(screen.queryByTestId('quick-comment-popover')).not.toBeInTheDocument();
     });
+  });
+
+  it('renders EDT component selector, filters tasks, and renders component code badge on activities', async () => {
+    const user = userEvent.setup();
+    const tasks = [
+      createMockTask({ id: 'task-1', project_id: 'p1', title: 'Tarea Infraestructura', status: 'backlog', component_id: 'comp-1' }),
+      createMockTask({ id: 'task-2', project_id: 'p1', title: 'Tarea General', status: 'backlog', component_id: null }),
+    ];
+
+    render(
+      <ProjectListView
+        tasks={tasks}
+        projectId="p1"
+        phaseDefs={phases}
+        onOpenTask={vi.fn()}
+        onAddTask={vi.fn()}
+      />
+    );
+
+    // Initial state: both tasks displayed
+    await waitFor(() => {
+      expect(screen.getByText('Tarea Infraestructura')).toBeInTheDocument();
+      expect(screen.getByText('Tarea General')).toBeInTheDocument();
+    });
+
+    // Badge EDT-1.0 rendered on task-1
+    expect(screen.getByText('EDT-1.0')).toBeInTheDocument();
+
+    // Filter by comp-1
+    const select = screen.getByRole('combobox', { name: 'Filtrar por componente EDT' });
+    await user.selectOptions(select, 'comp-1');
+
+    expect(screen.getByText('Tarea Infraestructura')).toBeInTheDocument();
+    expect(screen.queryByText('Tarea General')).not.toBeInTheDocument();
+
+    // Filter by none
+    await user.selectOptions(select, 'none');
+    expect(screen.queryByText('Tarea Infraestructura')).not.toBeInTheDocument();
+    expect(screen.getByText('Tarea General')).toBeInTheDocument();
+  });
+
+  it('invokes onManageComponents when + Componentes (EDT) button is clicked', async () => {
+    const user = userEvent.setup();
+    const onManageComponents = vi.fn();
+
+    render(
+      <ProjectListView
+        tasks={[createMockTask({ id: 'task-1', project_id: 'p1', title: 'Tarea 1', status: 'backlog' })]}
+        phaseDefs={phases}
+        onOpenTask={vi.fn()}
+        onAddTask={vi.fn()}
+        onManageComponents={onManageComponents}
+      />
+    );
+
+    const btn = screen.getByRole('button', { name: 'Gestionar componentes EDT' });
+    expect(btn).toBeInTheDocument();
+    await user.click(btn);
+    expect(onManageComponents).toHaveBeenCalledTimes(1);
   });
 });

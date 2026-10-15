@@ -728,6 +728,15 @@ export default function ProjectDetailPage() {
               )}
               <button
                 type="button"
+                onClick={() => openHubModule('components')}
+                aria-label="Componentes (EDT)"
+                className="flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-[calc(0.625rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-2xs font-semibold text-[hsl(var(--foreground))] shadow-sm transition-colors hover:bg-[hsl(var(--surface-2))] active:scale-95"
+              >
+                <Layers size={14} aria-hidden="true" className="text-[hsl(var(--primary))]" />
+                <span className="hidden md:inline">Componentes (EDT)</span>
+              </button>
+              <button
+                type="button"
                 onClick={() => {
                   setTaskCreationStatus('todo');
                   setShowTaskModal(true);

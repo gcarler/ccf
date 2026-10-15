@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import TaskMetaFields from './TaskMetaFields';
 import type { ProjectTaskRecord } from '@/types/projects';
 
@@ -11,6 +11,10 @@ vi.mock('@/lib/http', () => ({
 vi.mock('@/context/AuthContext', () => ({
   useAuth: () => ({ token: 'test-token', user: null, loading: false, isAuthenticated: true }),
 }));
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 const mockTask: ProjectTaskRecord = {
   id: 't-123',
@@ -26,6 +30,8 @@ const defaultPriority = { color: 'text-info', dot: 'bg-info', label: 'Media' };
 
 describe('TaskMetaFields', () => {
   it('renders interactive InlineDatePicker without timezone shift (keeps day 22)', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-01T12:00:00Z"));
     const onDueDateChange = vi.fn();
     render(
       <TaskMetaFields
@@ -158,5 +164,65 @@ describe('TaskMetaFields', () => {
 
     expect(screen.queryByRole('combobox', { name: 'Componente (EDT)' })).not.toBeInTheDocument();
     expect(screen.getByText('Arquitectura')).toBeInTheDocument();
+  });
+
+  it('allows creating an EDT component inline and triggers onComponentCreated', async () => {
+    const onComponentChange = vi.fn();
+    const onComponentCreated = vi.fn();
+    const mockComponents = [
+      { id: 'comp-1', code: 'EDT-1.0', name: 'Arquitectura' },
+    ];
+    const { apiFetch } = await import('@/lib/http');
+    (apiFetch as any).mockImplementation((url: string) => {
+      if (url.includes('/components')) {
+        return Promise.resolve({
+          id: 'comp-new',
+          code: 'EDT-2.0',
+          name: 'Infraestructura',
+        });
+      }
+      return Promise.resolve([]);
+    });
+
+    render(
+      <TaskMetaFields
+        task={mockTask}
+        labels={[]}
+        components={mockComponents}
+        onLabelsChange={vi.fn()}
+        onAssigneeChange={vi.fn()}
+        onPriorityCycle={vi.fn()}
+        onComponentChange={onComponentChange}
+        onComponentCreated={onComponentCreated}
+        priority={defaultPriority}
+        token="test-token"
+      />
+    );
+
+    const newBtn = screen.getByText('+ Nuevo componente');
+    expect(newBtn).toBeInTheDocument();
+    fireEvent.click(newBtn);
+
+    expect(screen.getByTestId('meta-inline-edt-form')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Nombre del Componente'), {
+      target: { value: 'Infraestructura' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    const { waitFor } = await import('@testing-library/react');
+    await waitFor(() => {
+      expect(apiFetch).toHaveBeenCalledWith(
+        '/projects/p-456/components',
+        expect.objectContaining({
+          method: 'POST',
+          body: { code: 'EDT-2.0', name: 'Infraestructura' },
+        })
+      );
+      expect(onComponentChange).toHaveBeenCalledWith('comp-new');
+      expect(onComponentCreated).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'comp-new', name: 'Infraestructura' })
+      );
+    });
   });
 });

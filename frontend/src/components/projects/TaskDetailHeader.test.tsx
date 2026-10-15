@@ -77,10 +77,10 @@ describe('TaskDetailHeader', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: 'Cerrar detalle de tarea' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Marcar tarea como favorita' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Cambiar estado de la tarea. Estado actual: En Progreso' })).toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: 'Título de la tarea' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cerrar detalle de actividad' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Marcar actividad como favorita' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cambiar estado de la actividad. Estado actual: En Progreso' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Título de la actividad' })).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });
 
@@ -236,7 +236,7 @@ describe('TaskDetailHeader', () => {
         onVerRutaClick={onVerRutaClick}
       />
     );
-    const verRutaBtn = screen.getByRole('button', { name: 'Ver ruta jerárquica de la tarea' });
+    const verRutaBtn = screen.getByRole('button', { name: 'Ver ruta jerárquica de la actividad' });
     fireEvent.click(verRutaBtn);
     expect(onVerRutaClick).toHaveBeenCalledTimes(1);
   });

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { CheckSquare, Type, AlignLeft, Flag, Loader2, User, Layers } from 'lucide-react';
+import { CheckSquare, Type, AlignLeft, Flag, Loader2, User, Layers, Plus } from 'lucide-react';
+import { toast } from 'sonner';
 import PersonaSelect from '@/components/ui/PersonaSelect';
 import clsx from 'clsx';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
@@ -54,6 +55,11 @@ export default function TaskCreationDrawer({
 }: Props) {
     const { token } = useAuth();
     const [components, setComponents] = useState<Array<{ id: string; code: string; name: string }>>([]);
+    const [showNewComponentForm, setShowNewComponentForm] = useState(false);
+    const [newComponentCode, setNewComponentCode] = useState('');
+    const [newComponentName, setNewComponentName] = useState('');
+    const [isCreatingComponent, setIsCreatingComponent] = useState(false);
+    const [componentError, setComponentError] = useState<string | null>(null);
 
     const { register, handleSubmit, reset, setValue, watch, formState: { isSubmitting } } = useForm<FormValues>({
         defaultValues: {
@@ -95,8 +101,55 @@ export default function TaskCreationDrawer({
                 node: null,
                 component_id: defaultComponentId ?? '',
             });
+            setShowNewComponentForm(false);
+            setComponentError(null);
         }
     }, [isOpen, defaultComponentId, reset]);
+
+    const handleOpenNewComponent = () => {
+        setNewComponentCode(`EDT-${components.length + 1}.0`);
+        setNewComponentName('');
+        setComponentError(null);
+        setShowNewComponentForm(true);
+    };
+
+    const handleCreateComponent = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!projectId || !token) return;
+        const code = newComponentCode.trim();
+        const name = newComponentName.trim();
+        if (!code || !name) {
+            setComponentError('El código y el nombre son obligatorios');
+            return;
+        }
+        setIsCreatingComponent(true);
+        setComponentError(null);
+        try {
+            const created = await apiFetch<{ id: string; code: string; name: string }>(
+                `/projects/${projectId}/components`,
+                {
+                    method: 'POST',
+                    token,
+                    body: { code, name },
+                }
+            );
+            if (created?.id) {
+                setComponents((prev) => [...prev, { id: created.id, code: created.code, name: created.name }]);
+                setValue('component_id', created.id);
+                setShowNewComponentForm(false);
+                setNewComponentCode('');
+                setNewComponentName('');
+                toast.success('Componente EDT creado correctamente');
+            }
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Error al crear componente';
+            setComponentError(message);
+            toast.error('No se pudo crear el componente');
+        } finally {
+            setIsCreatingComponent(false);
+        }
+    };
 
     const onFormSubmit = async (data: FormValues) => {
         const result = await onSubmit({
@@ -113,7 +166,7 @@ export default function TaskCreationDrawer({
         <WorkspaceDrawer
             isOpen={isOpen}
             onClose={onClose}
-            title="Nueva Tarea"
+            title="Nueva Actividad"
             subtitle="Definición de Acción"
             actions={
                 <>
@@ -127,7 +180,7 @@ export default function TaskCreationDrawer({
                         className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-bold uppercase tracking-wide shadow-md shadow-[hsl(var(--primary))]/20 hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all disabled:opacity-50"
                     >
                         {isSubmitting ? <Loader2 className="animate-spin" size={12} /> : <CheckSquare size={12} />}
-                        {isSubmitting ? 'Creando...' : 'Crear Tarea'}
+                        {isSubmitting ? 'Creando...' : 'Crear Actividad'}
                     </button>
                 </>
             }
@@ -135,7 +188,7 @@ export default function TaskCreationDrawer({
             <form onSubmit={handleSubmit(onFormSubmit)} className="mt-3 space-y-4">
                 <div className="space-y-1.5">
                     <label htmlFor="task-title" className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
-                        <Type size={12} /> Título de la tarea
+                        <Type size={12} /> Título de la actividad
                     </label>
                     <input
                         id="task-title"
@@ -197,9 +250,27 @@ export default function TaskCreationDrawer({
                 </div>
 
                 <div className="space-y-1.5">
-                    <label htmlFor="task-component" className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
-                        <Layers size={12} /> Componente (EDT)
-                    </label>
+                    <div className="flex items-center justify-between">
+                        <label htmlFor="task-component" className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
+                            <Layers size={12} /> Componente (EDT)
+                        </label>
+                        {projectId && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (showNewComponentForm) {
+                                        setShowNewComponentForm(false);
+                                    } else {
+                                        handleOpenNewComponent();
+                                    }
+                                }}
+                                className="text-2xs font-bold text-[hsl(var(--primary))] hover:underline flex items-center gap-1"
+                            >
+                                <Plus size={10} />
+                                {showNewComponentForm ? 'Cancelar nuevo' : '+ Nuevo componente'}
+                            </button>
+                        )}
+                    </div>
                     <select
                         id="task-component"
                         aria-label="Componente (EDT)"
@@ -213,6 +284,64 @@ export default function TaskCreationDrawer({
                             </option>
                         ))}
                     </select>
+
+                    {showNewComponentForm && (
+                        <div data-testid="inline-edt-form" className="p-2.5 rounded-md border border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--surface-1))] space-y-2 mt-2">
+                            <p className="text-2xs font-bold text-[hsl(var(--text-primary))] uppercase tracking-wide flex items-center gap-1">
+                                <Layers size={11} className="text-[hsl(var(--primary))]" />
+                                Crear Componente EDT
+                            </p>
+                            {componentError && (
+                                <p className="text-2xs text-[hsl(var(--destructive))] font-medium">{componentError}</p>
+                            )}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                <div>
+                                    <label htmlFor="inline-edt-code" className="text-3xs font-bold uppercase text-[hsl(var(--text-secondary))] block mb-1">
+                                        Código
+                                    </label>
+                                    <input
+                                        id="inline-edt-code"
+                                        aria-label="Código del componente EDT"
+                                        value={newComponentCode}
+                                        onChange={(e) => setNewComponentCode(e.target.value)}
+                                        placeholder="Ej: EDT-1.0"
+                                        className="w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                                    />
+                                </div>
+                                <div className="sm:col-span-2">
+                                    <label htmlFor="inline-edt-name" className="text-3xs font-bold uppercase text-[hsl(var(--text-secondary))] block mb-1">
+                                        Nombre del Componente
+                                    </label>
+                                    <input
+                                        id="inline-edt-name"
+                                        aria-label="Nombre del componente EDT"
+                                        value={newComponentName}
+                                        onChange={(e) => setNewComponentName(e.target.value)}
+                                        placeholder="Ej: Infraestructura y Redes"
+                                        className="w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex items-center justify-end gap-2 pt-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowNewComponentForm(false)}
+                                    className="px-2 py-1 text-2xs font-semibold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleCreateComponent}
+                                    disabled={isCreatingComponent}
+                                    className="flex items-center gap-1 px-2.5 py-1 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded text-2xs font-bold shadow-xs hover:opacity-90 disabled:opacity-50"
+                                >
+                                    {isCreatingComponent ? <Loader2 size={10} className="animate-spin" /> : <Plus size={10} />}
+                                    Guardar
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </form>
         </WorkspaceDrawer>

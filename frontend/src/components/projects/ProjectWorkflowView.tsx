@@ -82,8 +82,8 @@ function getLevelLabel(level: number): string {
     if (level === 2) return 'Nivel 2 · Componente';
     if (level === 3) return 'Nivel 3 · Actividad';
     if (level === 4) return 'Nivel 4 · Subactividad';
-    if (level === 5) return 'Nivel 5 · Tarea';
-    return `Nivel ${level} · Tarea`;
+    if (level === 5) return 'Nivel 5 · Actividad';
+    return `Nivel ${level} · Actividad`;
 }
 
 export default function ProjectWorkflowView({

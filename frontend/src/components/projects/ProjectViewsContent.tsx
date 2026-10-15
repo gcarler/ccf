@@ -140,6 +140,7 @@ export function ProjectViewsContent({
                             setTaskCreationStatus(status);
                             setShowTaskModal(true);
                         }}
+                        onManageComponents={onManageComponents}
                         // List and Kanban intentionally consume the same
                         // ProjectUpdateContext source of truth. The list owns
                         // only its presentation; persistence and optimistic
