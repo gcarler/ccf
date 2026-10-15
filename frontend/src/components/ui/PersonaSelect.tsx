@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
-import { Check, ChevronDown, User as UserIcon, Search, Shield, Loader2 } from "lucide-react";
+import { Check, ChevronDown, User as UserIcon, Search, Shield, Loader2, CircleAlert } from "lucide-react";
 
 export interface PersonaOption {
     id: string;
@@ -22,9 +22,54 @@ export interface PersonaSelectProps {
     showMetadata?: boolean;
 }
 
+const PAGE_SIZE = 50;
+
 export function displayName(p: PersonaOption): string {
     if (p.nombre_completo) return p.nombre_completo;
     return [p.first_name, p.last_name].filter(Boolean).join(" ") || "Sin nombre";
+}
+
+function nameParts(p: PersonaOption): string {
+    if (p.nombre_completo) return p.nombre_completo;
+    return [p.first_name, p.last_name].filter(Boolean).join(" ");
+}
+
+export function normalizeText(text: string): string {
+    return text
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+}
+
+/**
+ * TCR-003 · PR-2 — Priorización en cliente por prefijo:
+ * - Tier 0: primer nombre o nombre completo empieza por el término ('l' -> Laura/Luis, 'ca' -> Carlos/Camilo).
+ * - Tier 1: apellido o segundo nombre empieza por el término ('l' -> Ana López, Juan Luis).
+ * - Tier 2: coincidencia parcial en nombre/apellido ('l' -> Mila Ferrer).
+ * - Tier 3: resto de candidatos.
+ * Dentro de cada tier se conserva el orden alfabético por nombre completo.
+ * Evita que apellidos con 'A...' o '@gmail.com' desplacen a nombres que inician con la letra buscada.
+ */
+export function clientPrefixSort(list: PersonaOption[], termRaw: string): PersonaOption[] {
+    const term = normalizeText(termRaw);
+    if (!term) return list;
+    const rank = (p: PersonaOption) => {
+        const name = normalizeText(nameParts(p));
+        const first = normalizeText(p.first_name ?? "");
+        const last = normalizeText(p.last_name ?? "");
+        if (first.startsWith(term) || name.startsWith(term)) return 0;
+        const words = name.split(/\s+/);
+        if (last.startsWith(term) || words.some((w, idx) => idx > 0 && w.startsWith(term))) return 1;
+        if (name.includes(term) || first.includes(term) || last.includes(term)) return 2;
+        return 3;
+    };
+    return [...list].sort((a, b) => {
+        const ra = rank(a);
+        const rb = rank(b);
+        if (ra !== rb) return ra - rb;
+        return nameParts(a).localeCompare(nameParts(b), "es", { sensitivity: "base" });
+    });
 }
 
 export default function PersonaSelect({
@@ -41,9 +86,19 @@ export default function PersonaSelect({
     const [search, setSearch] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
     const [loading, setLoading] = useState(false);
+    const [loadError, setLoadError] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const triggerRef = useRef<HTMLButtonElement>(null);
+    const activeTermRef = useRef<string>(""); // término original (sin trim) de la página cargada
+    const nextPageRef = useRef<number | null>(null);
+    // Espejo síncrono de `personas` para fusionar páginas dentro de callbacks.
+    const personasRef = useRef<PersonaOption[]>([]);
+    useEffect(() => {
+        personasRef.current = personas;
+    }, [personas]);
 
     // Debounce de 300ms para la búsqueda reactiva
     useEffect(() => {
@@ -53,45 +108,127 @@ export default function PersonaSelect({
         return () => clearTimeout(handler);
     }, [search]);
 
-    // Búsqueda server-side reactiva con debouncedSearch
-    useEffect(() => {
-        if (!token) return;
-
-        let active = true;
-        setLoading(true);
-
-        const query = debouncedSearch.trim();
-        const endpoint = query
-            ? `/crm/personas?search=${encodeURIComponent(query)}&limit=50`
-            : `/crm/personas?limit=50`;
-
-        apiFetch<PersonaOption[]>(endpoint, { token })
-            .then((data) => {
-                if (!active) return;
+    const fetchPage = useCallback(
+        async (
+            query: string,
+            skip: number,
+            append: boolean
+        ): Promise<{ ok: boolean; list: PersonaOption[] }> => {
+            if (!token) return { ok: false, list: [] };
+            const active = true;
+            if (!append) {
+                setLoading(true);
+                setLoadError(false);
+            } else {
+                setLoadingMore(true);
+            }
+            try {
+                const params = new URLSearchParams({ limit: String(PAGE_SIZE), skip: String(skip) });
+                if (query) params.set("search", query);
+                const endpoint = `/crm/personas?${params.toString()}`;
+                const data = await apiFetch<PersonaOption[]>(endpoint, { token });
+                if (!active) return { ok: false, list: [] };
                 const list = Array.isArray(data) ? data : [];
-                setPersonas(list);
-
-                // Si hay un value seleccionado y está en la lista obtenida, sincronizar selectedPersona
-                if (value) {
-                    const match = list.find((p) => p.id === value);
-                    if (match) {
-                        setSelectedPersona(match);
+                const base = append ? personasRef.current : [];
+                const seen = new Set(base.map((p) => p.id));
+                const merged = [...base];
+                for (const p of list) {
+                    if (p && p.id && !seen.has(p.id)) {
+                        seen.add(p.id);
+                        merged.push(p);
                     }
                 }
-            })
-            .catch((err) => {
+                setPersonas(merged);
+                // El backend anota `next_page` absoluta (sub-skip); si no viene,
+                // inferimos que hay más cuando la página vino llena.
+                const reported = (data as unknown as { next_page?: unknown } | null)?.next_page;
+                const hasNext = typeof reported === "number" && reported > 0;
+                nextPageRef.current = hasNext
+                    ? (reported as number)
+                    : list.length === PAGE_SIZE
+                      ? Math.floor(skip / PAGE_SIZE) + 1
+                      : null;
+                activeTermRef.current = query;
+                setHasMore(hasNext || list.length === PAGE_SIZE);
+                return { ok: true, list: merged };
+            } catch (err) {
                 console.error("[PersonaSelect] Error cargando personas:", err);
-            })
-            .finally(() => {
+                if (!append) setLoadError(true);
+                return { ok: false, list: [] };
+            } finally {
                 if (active) {
-                    setLoading(false);
+                    if (!append) setLoading(false);
+                    else setLoadingMore(false);
                 }
-            });
+            }
+        },
+        [token]
+    );
+
+    const fetchFromFallback = useCallback(
+        async (query: string): Promise<{ ok: boolean; list: PersonaOption[] }> => {
+            if (!token) return { ok: false, list: [] };
+            setLoading(true);
+            setLoadError(false);
+            const active = true;
+            try {
+                const params = new URLSearchParams({ limit: String(PAGE_SIZE) });
+                if (query) params.set("search", query);
+                const endpoint = `/projects/assignee-candidates?${params.toString()}`;
+                const data = await apiFetch<PersonaOption[]>(endpoint, { token });
+                if (!active) return { ok: false, list: [] };
+                const list = Array.isArray(data) ? data : [];
+                setPersonas(list);
+                setHasMore(false);
+                return { ok: true, list };
+            } catch (err) {
+                console.error("[PersonaSelect] Error en endpoint alternativo:", err);
+                if (active) setLoadError(true);
+                return { ok: false, list: [] };
+            } finally {
+                if (active) setLoading(false);
+            }
+        },
+        [token]
+    );
+
+    // Búsqueda server-side reactiva con debounce y paginación incremental
+    useEffect(() => {
+        if (!token) return;
+        let cancelled = false;
+
+        const query = debouncedSearch.trim();
+        void (async () => {
+            const result = await fetchPage(query, 0, false);
+            // Reintento por un path / fallback solo si falló la primera vez
+            if (!result.ok && !cancelled) {
+                const fallback = await fetchFromFallback(query);
+                if (fallback.ok) return;
+            }
+            if (!cancelled && value) {
+                // Si hay un value seleccionado y está en la lista obtenida, sincronizar selectedPersona
+                const match = result.list.find((p) => p.id === value);
+                if (match) setSelectedPersona(match);
+            }
+        })();
 
         return () => {
-            active = false;
+            cancelled = true;
         };
-    }, [token, debouncedSearch, value]);
+    }, [token, debouncedSearch, fetchPage, fetchFromFallback, value]);
+
+    const handleLoadMore = useCallback(async () => {
+        if (nextPageRef.current === null || loading || loadingMore) return;
+        const term = activeTermRef.current;
+        await fetchPage(term, nextPageRef.current * PAGE_SIZE, true);
+    }, [fetchPage, loading, loadingMore]);
+
+    const handleRetry = useCallback(async () => {
+        const term = debouncedSearch.trim();
+        const result = await fetchPage(term, 0, false);
+        if (result.ok) return;
+        await fetchFromFallback(term);
+    }, [debouncedSearch, fetchPage, fetchFromFallback]);
 
     // Preservar / consultar la persona seleccionada por ID si no está en la lista actual
     useEffect(() => {
@@ -151,14 +288,28 @@ export default function PersonaSelect({
 
     // La persona seleccionada para mostrar en el botón
     const currentSelected = selectedPersona || personas.find((p) => p.id === value);
+    const activeSearch = search.trim() || debouncedSearch.trim();
+    const sortedPersonas = clientPrefixSort(personas, activeSearch);
+
+    const handleScroll = useCallback(
+        (e: React.UIEvent<HTMLDivElement>) => {
+            const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+            if (scrollHeight - scrollTop - clientHeight < 48) {
+                if (hasMore && !loading && !loadingMore && nextPageRef.current !== null) {
+                    void handleLoadMore();
+                }
+            }
+        },
+        [hasMore, loading, loadingMore, handleLoadMore]
+    );
 
     const handleSelect = useCallback(
         (persona: PersonaOption) => {
             setSelectedPersona(persona);
-        onChange(persona.id);
-        setOpen(false);
-        setSearch("");
-        triggerRef.current?.focus();
+            onChange(persona.id);
+            setOpen(false);
+            setSearch("");
+            triggerRef.current?.focus();
         },
         [onChange]
     );
@@ -242,7 +393,13 @@ export default function PersonaSelect({
                             />
                         </div>
                     </div>
-                    <div id="persona-select-options" className="overflow-y-auto max-h-56" role="listbox" aria-label="Personas disponibles">
+                    <div
+                        id="persona-select-options"
+                        className="overflow-y-auto max-h-56"
+                        role="listbox"
+                        aria-label="Personas disponibles"
+                        onScroll={handleScroll}
+                    >
                         <button
                             type="button"
                             onClick={handleClear}
@@ -256,7 +413,7 @@ export default function PersonaSelect({
                             Sin asignar
                             {value === null && <Check size={12} className="ml-auto text-[hsl(var(--primary))]" />}
                         </button>
-                        {personas.map((persona) => {
+                        {sortedPersonas.map((persona) => {
                             const isSelected = persona.id === value;
                             return (
                                 <button
@@ -286,8 +443,46 @@ export default function PersonaSelect({
                                 </button>
                             );
                         })}
+                        {hasMore && !loading && (
+                            <div className="border-t border-[hsl(var(--border))]">
+                                <button
+                                    type="button"
+                                    onClick={handleLoadMore}
+                                    disabled={loadingMore}
+                                    data-testid="persona-load-more"
+                                    className="w-full flex items-center justify-center gap-2 py-2 text-2xs font-semibold text-[hsl(var(--primary))] hover:bg-[hsl(var(--surface-1))] transition-colors disabled:opacity-60"
+                                >
+                                    {loadingMore && <Loader2 size={10} className="animate-spin" />}
+                                    Cargar más personas
+                                </button>
+                            </div>
+                        )}
                     </div>
-                    {!loading && personas.length === 0 && (
+                    {loading && personas.length === 0 && (
+                        <p role="status" className="px-3 py-4 text-center text-2xs text-[hsl(var(--text-secondary))]">
+                            Buscando personas…
+                        </p>
+                    )}
+                    {loadError && (
+                        <div
+                            role="alert"
+                            data-testid="persona-load-error"
+                            className="mx-3 my-2 flex flex-col items-start gap-2 rounded-md border border-[hsl(var(--destructive)_/_0.4)] bg-[hsl(var(--destructive)_/_0.08)] p-2.5"
+                        >
+                            <p className="flex items-center gap-1.5 text-2xs font-semibold text-[hsl(var(--destructive))]">
+                                <CircleAlert size={12} />
+                                No se pudo cargar el listado. Revisa tu conexión.
+                            </p>
+                            <button
+                                type="button"
+                                onClick={handleRetry}
+                                className="rounded-md border border-[hsl(var(--destructive)_/_0.5)] px-2 py-1 text-2xs font-bold text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)_/_0.12)] transition-colors"
+                            >
+                                Reintentar
+                            </button>
+                        </div>
+                    )}
+                    {!loading && !loadError && personas.length === 0 && (
                         <p role="status" className="px-3 py-4 text-center text-2xs text-[hsl(var(--text-secondary))]">
                             No se encontraron personas
                         </p>

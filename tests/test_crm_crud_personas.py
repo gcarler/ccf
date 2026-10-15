@@ -397,6 +397,63 @@ def test_search_personas_sort_dir_desc(db_session):
     assert result[0].first_name == "Beta"
 
 
+def test_search_personas_short_term_ignores_email_and_phone(db_session):
+    """TKT-PERSONA-SEARCH-PREFIX-AND-PAGINATION-01: términos de menos de 3
+    caracteres ('l', 'ca') no deben filtrar por email/teléfono/documento —
+    '@gmail.com' contiene 'l','m','g','c','o' y matchearía a toda la base."""
+    from backend.crud.crm_.personas import search_personas
+
+    sede = _seed_sede(db_session)
+    # Sin ningún 'l' en el nombre; SOLO el email contiene 'l': no debe aparecer.
+    _persona_in(db_session, sede_id=sede.id, first_name="Omar", email="zuluaga@gmail.com")
+    _persona_in(db_session, sede_id=sede.id, first_name="Zully", phone="300l11")
+    # Nombres que sí contienen 'l' en el texto del nombre.
+    _persona_in(db_session, sede_id=sede.id, first_name="Laura")
+    _persona_in(db_session, sede_id=sede.id, first_name="Luis")
+    _persona_in(db_session, sede_id=sede.id, first_name="Mila")  # parcial, tier 2
+    _commit(db_session)
+
+    result = search_personas(db_session, search="l")
+
+    names = [p.first_name for p in result]
+    assert "Omar" not in names
+    assert names[:2] == ["Laura", "Luis"]
+    assert names == ["Laura", "Luis", "Mila", "Zully"]
+
+
+def test_search_personas_orders_by_prefix_tiers(db_session):
+    """'te' enumera: Teo (empieza), Ana (segundo nombre 'Test', tier 1) y
+    Mateo (coincidencia parcial '%te%', tier 2), en ese orden."""
+    from backend.crud.crm_.personas import search_personas
+
+    sede = _seed_sede(db_session)
+    _persona_in(db_session, sede_id=sede.id, first_name="Mateo")
+    _persona_in(db_session, sede_id=sede.id, first_name="Ana")    # full: 'Ana Test'
+    _persona_in(db_session, sede_id=sede.id, first_name="Teo")
+    _commit(db_session)
+
+    result = search_personas(db_session, search="te")
+
+    names = [p.first_name for p in result]
+    assert names == ["Teo", "Ana", "Mateo"]
+
+
+def test_search_personas_page_orders_by_prefix_tiers(db_session):
+    from backend.crud.crm_.personas import search_personas_page
+
+    sede = _seed_sede(db_session)
+    _persona_in(db_session, sede_id=sede.id, first_name="Mateo")
+    _persona_in(db_session, sede_id=sede.id, first_name="Ana")
+    _persona_in(db_session, sede_id=sede.id, first_name="Teo")
+    _commit(db_session)
+
+    result = search_personas_page(db_session, search="te", skip=0, limit=2)
+
+    names = [p.first_name for p in result["items"]]
+    assert names == ["Teo", "Ana"]
+    assert result["total"] == 3
+
+
 def test_search_personas_paginated_basic(db_session):
     from backend.crud.crm_.personas import search_personas_paginated
 

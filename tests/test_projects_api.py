@@ -99,6 +99,78 @@ class TestProjectsCRUD:
         assert str(other_sede.id) not in candidate_ids
         assert all(set(item) == {"id", "nombre_completo"} for item in payload)
 
+    def test_assignee_candidates_prioritize_name_prefix_over_partial_matches(self, client, db_session):
+        """TKT-PERSONA-SEARCH-PREFIX-AND-PAGINATION-01: buscar 'l' encabeza la
+        lista con personas cuyo nombre empieza por 'L', no coincidencias
+        parciales ordenadas alfabéticamente (Ana antes de Laura)."""
+        from backend.models_crm import Persona
+
+        _, _, sede_a = seed_admin(db_session, email="assignee-prefix-a@test.com")
+        db_session.add_all(
+            [
+                Persona(first_name="Ana", last_name="Lpez", sede_id=sede_a.id),
+                Persona(first_name="Laura", last_name="Prado", sede_id=sede_a.id),
+                Persona(first_name="Lucía", last_name="Torres", sede_id=sede_a.id),
+                Persona(first_name="Milá", last_name="Ospina", sede_id=sede_a.id),
+            ]
+        )
+        db_session.flush()
+        reader, _, _ = seed_user_with_role(
+            db_session,
+            role_name="ProjectsPrefixReader",
+            email="projects-prefix-reader@test.com",
+            sede_id=sede_a.id,
+            permisos={"projects:read": "allow"},
+        )
+        headers = auth_headers(client, email=reader.email)
+
+        response = client.get(
+            "/api/projects/assignee-candidates?search=l&limit=10",
+            headers=headers,
+        )
+
+        assert response.status_code == 200, response.text
+        names = [item["nombre_completo"] for item in response.json()]
+        # Tier 0: empiezan por 'l' (alfabético) → Tier 1: apellido 'Lpez' → Tier 2: parcial.
+        assert names == ["Laura Prado", "Lucía Torres", "Ana Lpez", "Milá Ospina"]
+
+    def test_assignee_candidates_support_skip_pagination(self, client, db_session):
+        """El parámetro skip permite recorrer 600-2000+ personas por bloques."""
+        from backend.models_crm import Persona
+
+        _, _, sede_a = seed_admin(db_session, email="assignee-skip-a@test.com")
+        created = [
+            Persona(first_name=f"Persona{i:03d}", last_name="Lpez", sede_id=sede_a.id)
+            for i in range(5)
+        ]
+        db_session.add_all(created)
+        db_session.flush()
+        reader, _, _ = seed_user_with_role(
+            db_session,
+            role_name="ProjectsSkipReader",
+            email="projects-skip-reader@test.com",
+            sede_id=sede_a.id,
+            permisos={"projects:read": "allow"},
+        )
+        headers = auth_headers(client, email=reader.email)
+
+        first_page = client.get(
+            "/api/projects/assignee-candidates?search=per&skip=0&limit=2",
+            headers=headers,
+        )
+        second_page = client.get(
+            "/api/projects/assignee-candidates?search=per&skip=2&limit=2",
+            headers=headers,
+        )
+
+        assert first_page.status_code == 200, first_page.text
+        assert second_page.status_code == 200, second_page.text
+        names = [item["nombre_completo"] for item in first_page.json()]
+        continued = [item["nombre_completo"] for item in second_page.json()]
+        # Ambas páginas sin solapamiento y en el orden prefijo+alfabético.
+        assert names == ["Persona000 Lpez", "Persona001 Lpez"]
+        assert continued == ["Persona002 Lpez", "Persona003 Lpez"]
+
     def test_assignee_candidate_detail_is_scoped_to_actor_sede(self, client, db_session):
         from backend.models_crm import Persona
 
