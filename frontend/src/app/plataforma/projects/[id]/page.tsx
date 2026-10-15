@@ -808,6 +808,7 @@ export default function ProjectDetailPage() {
               onUpdate={handleTaskUpdated}
               onActivityCreated={() => void reloadProject()}
               onDelete={handleDeleteFromPanel}
+              onVerRutaClick={() => changeDetailView('workflow')}
             />
           )}
         </div>

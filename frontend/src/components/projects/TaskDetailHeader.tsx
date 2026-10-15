@@ -2,10 +2,19 @@
 
 import { ChevronRight, Eye, CheckCircle2, Circle, Loader2, GitBranch, Home, FolderOpen, Paperclip, Star, Maximize2, Trash2, X } from 'lucide-react';
 import type { ElementType } from 'react';
+import { useRouter } from 'next/navigation';
 import type { ProjectTaskRecord } from '@/types/projects';
 import type { TaskStatus } from '@/lib/projects/constants';
 import { getStatusOption } from '@/lib/projects/constants';
 import clsx from 'clsx';
+
+function useSafeRouter() {
+    try {
+        return useRouter();
+    } catch {
+        return null;
+    }
+}
 
 const STATUS_ICONS: Record<TaskStatus, ElementType> = {
     todo: Circle,
@@ -36,6 +45,8 @@ export default function TaskDetailHeader({
     onExpandToggle,
     onDeleteTask,
     onVerRutaClick,
+    onProjectClick,
+    isRouteTreeOpen,
 }: {
     task: ProjectTaskRecord;
     projectTitle: string;
@@ -53,9 +64,35 @@ export default function TaskDetailHeader({
     onExpandToggle: () => void;
     onDeleteTask: () => void;
     onVerRutaClick?: () => void;
+    onProjectClick?: () => void;
+    isRouteTreeOpen?: boolean;
 }) {
+    const router = useSafeRouter();
     const status = getStatusMap((task.status ?? 'todo') as TaskStatus);
     const StatusIcon = status.icon;
+
+    const handleVerRutaBtnClick = () => {
+        if (onVerRutaClick) {
+            onVerRutaClick();
+        } else if (task.project_id) {
+            router?.push(`/plataforma/projects/${task.project_id}?view=workflow`);
+        }
+    };
+
+    const handleProjectClick = () => {
+        if (onProjectClick) {
+            onProjectClick();
+        } else if (onVerRutaClick) {
+            onVerRutaClick();
+            onClose();
+        } else if (task.project_id) {
+            router?.push(`/plataforma/projects/${task.project_id}`);
+        }
+    };
+
+    const handleHomeClick = () => {
+        router?.push('/plataforma/projects');
+    };
 
     return (
         <header className="shrink-0 px-4 pt-3 pb-0 border-b border-[hsl(var(--border))]">
@@ -67,24 +104,47 @@ export default function TaskDetailHeader({
 
             <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-1 text-xs text-[hsl(var(--muted-foreground))] min-w-0">
-                    <Home size={11} className="shrink-0" />
+                    <button
+                        type="button"
+                        onClick={handleHomeClick}
+                        title="Ir al listado de proyectos"
+                        aria-label="Ir al listado de proyectos"
+                        className="p-1 rounded-md text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] transition-colors inline-flex items-center focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[hsl(var(--primary))]"
+                    >
+                        <Home size={11} className="shrink-0" />
+                    </button>
                     <ChevronRight size={10} className="text-[hsl(var(--muted-foreground))] shrink-0" />
-                    <FolderOpen size={11} className="shrink-0" />
-                    <span className="truncate max-w-[100px] hover:text-[hsl(var(--foreground))] cursor-pointer transition-colors">
-                        {projectTitle}
-                    </span>
+                    <button
+                        type="button"
+                        onClick={handleProjectClick}
+                        title={`Ir al proyecto: ${projectTitle}`}
+                        aria-label={`Ir al proyecto: ${projectTitle}`}
+                        className="flex items-center gap-1 p-1 rounded-md text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] transition-colors min-w-0 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[hsl(var(--primary))]"
+                    >
+                        <FolderOpen size={11} className="shrink-0" />
+                        <span className="truncate max-w-[120px]">
+                            {projectTitle}
+                        </span>
+                    </button>
                     <ChevronRight size={10} className="text-[hsl(var(--muted-foreground))] shrink-0" />
-                    <span className="font-semibold text-[hsl(var(--foreground))] truncate max-w-[120px]">
+                    <span className="font-semibold text-[hsl(var(--foreground))] truncate max-w-[120px]" title={task.title}>
                         {task.title}
                     </span>
                 </div>
 
                 <div className="flex items-center gap-0.5 shrink-0">
                     <button
-                        onClick={onVerRutaClick}
+                        type="button"
+                        onClick={handleVerRutaBtnClick}
                         title="Ver ruta jerárquica"
                         aria-label="Ver ruta jerárquica de la tarea"
-                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-2xs font-bold text-[hsl(var(--info-text))] bg-[hsl(var(--info-muted))] hover:bg-[hsl(var(--info-muted))] transition-all border border-[hsl(var(--primary)/0.2)]"
+                        aria-expanded={isRouteTreeOpen}
+                        className={clsx(
+                            "flex items-center gap-1 px-2 py-1 rounded-lg text-2xs font-bold transition-all border focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[hsl(var(--primary))]",
+                            isRouteTreeOpen
+                                ? "text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.15)] border-[hsl(var(--primary))]"
+                                : "text-[hsl(var(--info-text))] bg-[hsl(var(--info-muted))] hover:bg-[hsl(var(--info-muted))] border-[hsl(var(--primary)/0.2)]"
+                        )}
                     >
                         <GitBranch size={11} />
                         Ver Ruta

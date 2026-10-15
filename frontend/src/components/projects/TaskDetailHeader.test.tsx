@@ -5,6 +5,11 @@ import { axe } from 'jest-axe';
 import TaskDetailHeader from './TaskDetailHeader';
 import type { ProjectTaskRecord } from '@/types/projects';
 
+const mockPush = vi.fn();
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: mockPush }),
+}));
+
 vi.mock('@/lib/projects/constants', () => ({
   getStatusOption: (val: string) => {
     // Fixture normalizada a tokens semánticos del Design System (rev-ui B-T1-13102026)
@@ -153,5 +158,86 @@ describe('TaskDetailHeader', () => {
     const closeBtn = screen.getByTitle('Cerrar panel');
     fireEvent.click(closeBtn);
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('navigates to /plataforma/projects when Home icon is clicked', () => {
+    render(
+      <TaskDetailHeader
+        task={task}
+        projectTitle="CCF App"
+        title="Tarea"
+        saving={false}
+        uploading={false}
+        starred={false}
+        error={null}
+        onClose={vi.fn()}
+        onTitleChange={vi.fn()}
+        onSave={vi.fn()}
+        onStatusCycle={vi.fn()}
+        onFileClick={vi.fn()}
+        onStarToggle={vi.fn()}
+        onExpandToggle={vi.fn()}
+        onDeleteTask={vi.fn()}
+      />
+    );
+    const homeBtn = screen.getByRole('button', { name: 'Ir al listado de proyectos' });
+    fireEvent.click(homeBtn);
+    expect(mockPush).toHaveBeenCalledWith('/plataforma/projects');
+  });
+
+  it('triggers onVerRutaClick and onClose when projectTitle breadcrumb is clicked', () => {
+    const onVerRutaClick = vi.fn();
+    const onClose = vi.fn();
+    render(
+      <TaskDetailHeader
+        task={task}
+        projectTitle="CCF App"
+        title="Tarea"
+        saving={false}
+        uploading={false}
+        starred={false}
+        error={null}
+        onClose={onClose}
+        onTitleChange={vi.fn()}
+        onSave={vi.fn()}
+        onStatusCycle={vi.fn()}
+        onFileClick={vi.fn()}
+        onStarToggle={vi.fn()}
+        onExpandToggle={vi.fn()}
+        onDeleteTask={vi.fn()}
+        onVerRutaClick={onVerRutaClick}
+      />
+    );
+    const projBtn = screen.getByRole('button', { name: 'Ir al proyecto: CCF App' });
+    fireEvent.click(projBtn);
+    expect(onVerRutaClick).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('triggers onVerRutaClick when Ver Ruta button is clicked', () => {
+    const onVerRutaClick = vi.fn();
+    render(
+      <TaskDetailHeader
+        task={task}
+        projectTitle="CCF App"
+        title="Tarea"
+        saving={false}
+        uploading={false}
+        starred={false}
+        error={null}
+        onClose={vi.fn()}
+        onTitleChange={vi.fn()}
+        onSave={vi.fn()}
+        onStatusCycle={vi.fn()}
+        onFileClick={vi.fn()}
+        onStarToggle={vi.fn()}
+        onExpandToggle={vi.fn()}
+        onDeleteTask={vi.fn()}
+        onVerRutaClick={onVerRutaClick}
+      />
+    );
+    const verRutaBtn = screen.getByRole('button', { name: 'Ver ruta jerárquica de la tarea' });
+    fireEvent.click(verRutaBtn);
+    expect(onVerRutaClick).toHaveBeenCalledTimes(1);
   });
 });

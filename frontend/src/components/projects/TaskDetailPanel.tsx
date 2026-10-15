@@ -9,12 +9,14 @@ import {
     getValidStatus,
     getValidPriority,
     getPriorityOption,
+    getStatusOption,
 } from '@/lib/projects/constants';
 import type { TaskPriority } from '@/lib/projects/constants';
 import type { ProjectTaskRecord, TaskSupplyRecord, ProjectUserFavorite, ProjectComponentsBreakdown } from '@/types/projects';
-import { AlignLeft } from 'lucide-react';
+import { AlignLeft, GitBranch } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 import TaskDetailHeader from './TaskDetailHeader';
@@ -27,6 +29,15 @@ import { toggleActivity, addChild, updateTitle } from './TaskActivitySection';
 import TaskCommentSection from './TaskCommentSection';
 import TaskTimeTrackingSection from './TaskTimeTrackingSection';
 import TaskDimensionsSection from './TaskDimensionsSection';
+import TaskRouteTree, { type RouteNode } from './TaskRouteTree';
+
+function useSafeRouter() {
+    try {
+        return useRouter();
+    } catch {
+        return null;
+    }
+}
 
 const MIN_WIDTH = 400;
 const DEFAULT_WIDTH = 520;
@@ -121,6 +132,8 @@ export default function TaskDetailPanel({
     const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
     const [error, setError] = useState<string | null>(null);
     const [components, setComponents] = useState<Array<{ id: string; code: string; name: string }>>([]);
+    const router = useSafeRouter();
+    const [showRouteTree, setShowRouteTree] = useState(false);
     const panelRef = useRef<HTMLElement>(null);
     const previousFocusRef = useRef<HTMLElement | null>(null);
     const panelOpen = Boolean(task) && !authLoading;
@@ -293,6 +306,7 @@ export default function TaskDetailPanel({
             setNewActivityTitle('');
             setLabels(task.labels ?? []);
             setSupplies(task.supplies ?? []);
+            setShowRouteTree(false);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [task?.id]);
@@ -432,6 +446,90 @@ export default function TaskDetailPanel({
             setError('No se pudo reasignar el componente de la tarea.');
         }
     };
+
+    const handleGoToWorkflow = useCallback(() => {
+        if (onVerRutaClick) {
+            onVerRutaClick();
+        } else if (task?.project_id) {
+            router?.push(`/plataforma/projects/${task.project_id}?view=workflow`);
+        }
+    }, [onVerRutaClick, task?.project_id, router]);
+
+    const handleVerRuta = useCallback(() => {
+        setShowRouteTree((prev) => {
+            const next = !prev;
+            if (next) {
+                handleGoToWorkflow();
+            }
+            return next;
+        });
+    }, [handleGoToWorkflow]);
+
+    const handleViewFullRouteOnCanvas = useCallback(() => {
+        handleGoToWorkflow();
+        onClose();
+    }, [handleGoToWorkflow, onClose]);
+
+    const routeBreadcrumb = useMemo<Array<{ label: string; type: RouteNode['type'] }>>(() => {
+        if (!task) return [];
+        const currentComp = components.find((c) => c.id === task.component_id);
+        const compLabel = currentComp ? `${currentComp.code} · ${currentComp.name}` : 'Componente General';
+        const statusLabel = getStatusOption(task.status).label;
+
+        return [
+            { label: 'Espacio de Proyectos', type: 'workspace' },
+            { label: projectTitle || 'Proyecto', type: 'project' },
+            { label: compLabel, type: 'portfolio' },
+            { label: statusLabel, type: 'section' },
+            { label: task.title, type: 'task' },
+        ];
+    }, [task, components, projectTitle]);
+
+    const routeTree = useMemo<RouteNode[]>(() => {
+        if (!task) return [];
+        const currentComp = components.find((c) => c.id === task.component_id);
+        const compLabel = currentComp ? `${currentComp.code} · ${currentComp.name}` : 'Componente General';
+        const statusLabel = getStatusOption(task.status).label;
+
+        return [
+            {
+                id: 'workspace-projects',
+                label: 'Espacio de Proyectos',
+                type: 'workspace',
+                href: '/plataforma/projects',
+                children: [
+                    {
+                        id: `project-${task.project_id}`,
+                        label: projectTitle || 'Proyecto',
+                        type: 'project',
+                        href: `/plataforma/projects/${task.project_id}`,
+                        children: [
+                            {
+                                id: task.component_id ? `comp-${task.component_id}` : 'comp-general',
+                                label: compLabel,
+                                type: 'portfolio',
+                                children: [
+                                    {
+                                        id: `status-${task.status}`,
+                                        label: statusLabel,
+                                        type: 'section',
+                                        children: [
+                                            {
+                                                id: task.id,
+                                                label: task.title,
+                                                type: 'task',
+                                                active: true,
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ];
+    }, [task, components, projectTitle]);
 
     const confirmDeleteTask = async () => {
         if (!task || !requireAuth('Debes iniciar sesión para eliminar la tarea.')) return;
@@ -587,11 +685,55 @@ export default function TaskDetailPanel({
                         setWidth(prev => prev < maxW - 50 ? maxW : DEFAULT_WIDTH);
                     }}
                     onDeleteTask={handleDeleteTask}
-                    onVerRutaClick={onVerRutaClick}
+                    onVerRutaClick={handleVerRuta}
+                    onProjectClick={handleViewFullRouteOnCanvas}
+                    isRouteTreeOpen={showRouteTree}
                 />
 
                 {/* Body (scrollable) */}
                 <div className="flex-1 overflow-y-auto scrollbar-thin">
+                    {/* Seccion colapsable interactiva con TaskRouteTree */}
+                    <AnimatePresence initial={false}>
+                        {showRouteTree && (
+                            <motion.section
+                                key="task-route-tree-section"
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.2 }}
+                                aria-label="Ruta jerárquica de la actividad"
+                                className="border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-2)/0.4)] overflow-hidden"
+                            >
+                                <TaskRouteTree
+                                    breadcrumb={routeBreadcrumb}
+                                    tree={routeTree}
+                                    activeId={task.id}
+                                    onNavigate={(node) => {
+                                        if (node.href) {
+                                            router?.push(node.href);
+                                        } else if (node.type === 'project' || node.type === 'portfolio') {
+                                            handleViewFullRouteOnCanvas();
+                                        }
+                                    }}
+                                />
+                                <div className="p-3 bg-[hsl(var(--surface-2))] border-t border-[hsl(var(--border))] flex items-center justify-between gap-2">
+                                    <span className="text-2xs text-[hsl(var(--muted-foreground))]">
+                                        Visualizar EDT completo en el lienzo
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={handleViewFullRouteOnCanvas}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:opacity-90 transition-all shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))]"
+                                        aria-label="Ver ruta completa en el lienzo"
+                                    >
+                                        <GitBranch size={13} />
+                                        Ver ruta completa en el lienzo
+                                    </button>
+                                </div>
+                            </motion.section>
+                        )}
+                    </AnimatePresence>
+
                     <TaskMetaFields
                         task={task}
                         labels={labels}
