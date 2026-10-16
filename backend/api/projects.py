@@ -527,7 +527,7 @@ def require_project_access(min_level: str = "read"):
 
     Rules:
     * Admin/Gestor/Editor pass via role-based permissions (existing model).
-    * For ``read`` and ``edit`` levels, any authenticated user with a
+    * For ``read`` and ``edit`` (or ``write``) levels, any authenticated user with a
       persona assigned to the project/task also passes.
     * ``manage`` level remains strictly role-based.
     * Endpoints without a ``project_id`` or ``task_id`` path parameter
@@ -540,6 +540,7 @@ def require_project_access(min_level: str = "read"):
     This implements the product decision that in the Projects module
     access is driven by task/project assignment, not only by platform role.
     """
+    effective_level = "edit" if min_level in ("write", "edit") else min_level
 
     async def _check(
         request: Request,
@@ -601,11 +602,11 @@ def require_project_access(min_level: str = "read"):
         # Role-based access is granted only after the resource scope check
         # above. This prevents an admin/editor role from probing or mutating
         # a project belonging to another sede.
-        if _has_role_based_project_access(db, current_user, min_level):
+        if _has_role_based_project_access(db, current_user, effective_level):
             return current_user
 
         # manage level is strictly role-based
-        if min_level == "manage":
+        if effective_level == "manage":
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Permisos insuficientes. Se requiere: projects:{min_level}",
@@ -1236,6 +1237,169 @@ def sync_pmi_doctrine_compendium(
 
 
 # ── Phases / Kanban Columns ─────────────────────────────
+
+
+@router.get("/{project_id}/labels", response_model=List[schemas.ProjectLabelItem])
+def list_project_labels(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("read")),
+):
+    """Lista las etiquetas únicas asociadas a las tareas activas de un proyecto con su task_count."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+    tasks = (
+        db.query(models.ProjectTask)
+        .filter(
+            models.ProjectTask.project_id == project.id,
+            models.ProjectTask.deleted_at.is_(None),
+        )
+        .all()
+    )
+    counts: Dict[str, int] = {}
+    for task in tasks:
+        task_labels = task.labels if isinstance(task.labels, list) else []
+        seen_in_task = set()
+        for lbl in task_labels:
+            if isinstance(lbl, str) and lbl.strip():
+                clean_lbl = lbl.strip()
+                if clean_lbl not in seen_in_task:
+                    counts[clean_lbl] = counts.get(clean_lbl, 0) + 1
+                    seen_in_task.add(clean_lbl)
+    return sorted(
+        [schemas.ProjectLabelItem(name=name, task_count=count) for name, count in counts.items()],
+        key=lambda item: item.name.lower(),
+    )
+
+
+@router.patch("/{project_id}/labels", response_model=List[schemas.ProjectLabelItem])
+def rename_project_label(
+    project_id: str,
+    payload: schemas.ProjectLabelRenameInput,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("write")),
+):
+    """Renombra una etiqueta en todas las tareas activas de un proyecto."""
+    old_name = payload.old_name.strip() if payload.old_name else ""
+    new_name = payload.new_name.strip() if payload.new_name else ""
+    if not old_name or not new_name:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="old_name y new_name son obligatorios y no pueden estar vacíos",
+        )
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+
+    tasks = (
+        db.query(models.ProjectTask)
+        .filter(
+            models.ProjectTask.project_id == project.id,
+            models.ProjectTask.deleted_at.is_(None),
+        )
+        .all()
+    )
+    now_utc = datetime.now(timezone.utc)
+    modified_count = 0
+    for task in tasks:
+        task_labels = task.labels if isinstance(task.labels, list) else []
+        if old_name in task_labels:
+            new_labels: List[str] = []
+            for lbl in task_labels:
+                val = new_name if lbl == old_name else lbl
+                if val not in new_labels:
+                    new_labels.append(val)
+            task.labels = new_labels
+            task.updated_at = now_utc
+            modified_count += 1
+
+    if modified_count > 0:
+        db.commit()
+
+    _log_project_activity(
+        db,
+        project.id,
+        current_user.id,
+        action_type="label_renamed",
+        description=f"Etiqueta renombrada de '{old_name}' a '{new_name}' en {modified_count} actividades",
+    )
+    db.commit()
+
+    counts: Dict[str, int] = {}
+    for task in tasks:
+        task_labels = task.labels if isinstance(task.labels, list) else []
+        seen_in_task = set()
+        for lbl in task_labels:
+            if isinstance(lbl, str) and lbl.strip():
+                clean_lbl = lbl.strip()
+                if clean_lbl not in seen_in_task:
+                    counts[clean_lbl] = counts.get(clean_lbl, 0) + 1
+                    seen_in_task.add(clean_lbl)
+    return sorted(
+        [schemas.ProjectLabelItem(name=name, task_count=count) for name, count in counts.items()],
+        key=lambda item: item.name.lower(),
+    )
+
+
+@router.delete("/{project_id}/labels", response_model=List[schemas.ProjectLabelItem])
+def delete_project_label(
+    project_id: str,
+    name: str = Query(..., min_length=1, description="Nombre de la etiqueta a eliminar"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("write")),
+):
+    """Elimina una etiqueta de todas las tareas activas de un proyecto."""
+    label_name = name.strip() if name else ""
+    if not label_name:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El nombre de la etiqueta no puede estar vacío",
+        )
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+
+    tasks = (
+        db.query(models.ProjectTask)
+        .filter(
+            models.ProjectTask.project_id == project.id,
+            models.ProjectTask.deleted_at.is_(None),
+        )
+        .all()
+    )
+    now_utc = datetime.now(timezone.utc)
+    modified_count = 0
+    for task in tasks:
+        task_labels = task.labels if isinstance(task.labels, list) else []
+        if label_name in task_labels:
+            task.labels = [lbl for lbl in task_labels if lbl != label_name]
+            task.updated_at = now_utc
+            modified_count += 1
+
+    if modified_count > 0:
+        db.commit()
+
+    _log_project_activity(
+        db,
+        project.id,
+        current_user.id,
+        action_type="label_deleted",
+        description=f"Etiqueta '{label_name}' eliminada de {modified_count} actividades",
+    )
+    db.commit()
+
+    counts: Dict[str, int] = {}
+    for task in tasks:
+        task_labels = task.labels if isinstance(task.labels, list) else []
+        seen_in_task = set()
+        for lbl in task_labels:
+            if isinstance(lbl, str) and lbl.strip():
+                clean_lbl = lbl.strip()
+                if clean_lbl not in seen_in_task:
+                    counts[clean_lbl] = counts.get(clean_lbl, 0) + 1
+                    seen_in_task.add(clean_lbl)
+    return sorted(
+        [schemas.ProjectLabelItem(name=name, task_count=count) for name, count in counts.items()],
+        key=lambda item: item.name.lower(),
+    )
 
 
 @router.get("/{project_id}/phases", response_model=List[schemas.ProjectPhaseSchema])

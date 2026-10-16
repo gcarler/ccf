@@ -1843,6 +1843,14 @@ class PMIDoctrineIndexResponse(BaseModel):
     model_config = orm_config
 
 
+class ProjectLabelItem(BaseModel):
+    """Etiqueta de proyecto con conteo de tareas activas."""
+    name: str
+    task_count: int = 0
+    model_config = orm_config
 
 
-
+class ProjectLabelRenameInput(BaseModel):
+    """Entrada para renombrar una etiqueta a nivel de proyecto."""
+    old_name: str
+    new_name: str

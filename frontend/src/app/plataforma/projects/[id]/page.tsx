@@ -40,6 +40,7 @@ import {
   BookOpen,
   MessageSquare,
   Layers,
+  Tag,
   type LucideIcon,
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
@@ -71,6 +72,7 @@ const TOOLBAR_ICON_BUTTON_CLASS =
 // Hub unificado de gestión: metadatos de los módulos de control.
 const PROJECT_HUB_MODULE_META: ProjectHubModuleMeta[] = [
   { key: 'components', label: 'Componentes (EDT)', icon: Layers },
+  { key: 'labels', label: 'Etiquetas', icon: Tag },
   { key: 'kpis', label: 'KPIs', icon: Target },
   { key: 'progress', label: 'Avance', icon: Sliders },
   { key: 'budget', label: 'Presupuesto', icon: Wallet },
@@ -242,6 +244,13 @@ const ProjectComponentDrawer = dynamic(
   () =>
     import('@/components/projects/ProjectComponentDrawer').then(
       module => module.ProjectComponentDrawer
+    ),
+  { loading: ProjectDrawerLoading }
+);
+const ProjectLabelsDrawer = dynamic(
+  () =>
+    import('@/components/projects/ProjectLabelsDrawer').then(
+      module => module.ProjectLabelsDrawer
     ),
   { loading: ProjectDrawerLoading }
 );
@@ -461,6 +470,14 @@ export default function ProjectDetailPage() {
         group: 'Hub de gestión',
         action: () => openHubModule('drive'),
       },
+      {
+        id: 'project-detail-hub-labels',
+        label: 'Abrir Gestor de Etiquetas',
+        description: 'Crear, renombrar y organizar etiquetas del proyecto',
+        icon: Tag,
+        group: 'Hub de gestión',
+        action: () => openHubModule('labels'),
+      },
     ],
     [openHubModule]
   );
@@ -497,6 +514,7 @@ export default function ProjectDetailPage() {
     { key: 'whiteboard', label: 'Pizarra', icon: PencilRuler, onSelect: () => setWhiteboardOpen(true) },
     { key: 'phases', label: 'Fases', icon: Edit3, onSelect: () => setShowPhaseManager(true) },
     { key: 'components', label: 'Componentes (EDT)', icon: Layers, onSelect: () => openHubModule('components') },
+    { key: 'labels', label: 'Etiquetas', icon: Tag, onSelect: () => openHubModule('labels') },
     { key: 'kpis', label: 'KPIs', icon: Target, onSelect: () => openHubModule('kpis') },
     { key: 'progress', label: 'Avance', icon: Sliders, onSelect: () => openHubModule('progress') },
     { key: 'budget', label: 'Presupuesto', icon: Wallet, onSelect: () => openHubModule('budget') },
@@ -520,6 +538,15 @@ export default function ProjectDetailPage() {
         projectTitle={project?.title}
         isOpen
         onClose={() => closeHubModule('components')}
+        onUpdated={() => reloadProject()}
+      />
+    ),
+    labels: () => (
+      <ProjectLabelsDrawer
+        projectId={project?.id || id}
+        isOpen
+        embedded
+        onClose={() => closeHubModule('labels')}
         onUpdated={() => reloadProject()}
       />
     ),

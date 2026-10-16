@@ -3467,3 +3467,92 @@ class TestProjectTaskDependencyScoping:
             create_task_dependency(db_session, project.id, payload)
 
         assert db_session.query(ProjectTaskDependency).count() == 0
+
+
+class TestProjectLabels:
+    """Tests for GET, PATCH, and DELETE /api/projects/{project_id}/labels."""
+
+    def test_get_project_labels(self, client, db_session):
+        user, _, sede = seed_admin(db_session, email="labels-admin-get@test.com")
+        headers = auth_headers(client, email=user.email)
+        project = create_project_factory(db_session, sede_id=sede.id)
+        # Create tasks with labels
+        create_task_factory(db_session, project.id, labels=["Urgente", "Diseño"])
+        create_task_factory(db_session, project.id, labels=["Urgente", "Backend"])
+        # Soft-deleted task should not contribute
+        t_deleted = create_task_factory(db_session, project.id, labels=["Ignorado"])
+        from datetime import datetime, timezone
+        t_deleted.deleted_at = datetime.now(timezone.utc)
+        db_session.commit()
+
+        resp = client.get(f"/api/projects/{project.id}/labels", headers=headers)
+        assert resp.status_code == 200, resp.text
+        data = resp.json()
+        # Alphabetical order: Backend (1), Diseño (1), Urgente (2)
+        assert len(data) == 3
+        assert data[0] == {"name": "Backend", "task_count": 1}
+        assert data[1] == {"name": "Diseño", "task_count": 1}
+        assert data[2] == {"name": "Urgente", "task_count": 2}
+
+    def test_rename_project_label(self, client, db_session):
+        user, _, sede = seed_admin(db_session, email="labels-admin-rename@test.com")
+        headers = auth_headers(client, email=user.email)
+        project = create_project_factory(db_session, sede_id=sede.id)
+        t1 = create_task_factory(db_session, project.id, labels=["Urgente", "Frontend"])
+        t2 = create_task_factory(db_session, project.id, labels=["Urgente", "Prioridad Alta"])
+
+        payload = {"old_name": "Urgente", "new_name": "Prioridad Alta"}
+        resp = client.patch(
+            f"/api/projects/{project.id}/labels",
+            json=payload,
+            headers=headers,
+        )
+        assert resp.status_code == 200, resp.text
+        data = resp.json()
+
+        # "Prioridad Alta" should now have count 2 (deduplicated on t2), "Frontend" has 1
+        labels_map = {item["name"]: item["task_count"] for item in data}
+        assert "Urgente" not in labels_map
+        assert labels_map["Prioridad Alta"] == 2
+        assert labels_map["Frontend"] == 1
+
+        db_session.refresh(t1)
+        db_session.refresh(t2)
+        assert t1.labels == ["Prioridad Alta", "Frontend"]
+        assert t2.labels == ["Prioridad Alta"]
+
+    def test_delete_project_label(self, client, db_session):
+        user, _, sede = seed_admin(db_session, email="labels-admin-delete@test.com")
+        headers = auth_headers(client, email=user.email)
+        project = create_project_factory(db_session, sede_id=sede.id)
+        t1 = create_task_factory(db_session, project.id, labels=["Urgente", "Frontend"])
+        t2 = create_task_factory(db_session, project.id, labels=["Backend"])
+
+        resp = client.delete(
+            f"/api/projects/{project.id}/labels?name=Urgente",
+            headers=headers,
+        )
+        assert resp.status_code == 200, resp.text
+        data = resp.json()
+        assert len(data) == 2
+        names = [item["name"] for item in data]
+        assert "Urgente" not in names
+        assert "Backend" in names
+        assert "Frontend" in names
+
+        db_session.refresh(t1)
+        assert t1.labels == ["Frontend"]
+
+    def test_rename_rejects_empty_names(self, client, db_session):
+        user, _, sede = seed_admin(db_session, email="labels-admin-empty@test.com")
+        headers = auth_headers(client, email=user.email)
+        project = create_project_factory(db_session, sede_id=sede.id)
+        resp = client.patch(
+            f"/api/projects/{project.id}/labels",
+            json={"old_name": "  ", "new_name": "Algo"},
+            headers=headers,
+        )
+        assert resp.status_code == 400
+
+
+

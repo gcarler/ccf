@@ -60,3 +60,8 @@ export function useProjectUpdate() {
   }
   return ctx;
 }
+
+export function useOptionalProjectUpdate(): ProjectUpdateContextValue | null {
+  return useContext(ProjectUpdateContext);
+}
+

@@ -553,6 +553,8 @@ from backend.schemas.projects import (  # noqa: F401
     ProjectKPI,
     ProjectKPICreate,
     ProjectKPIUpdate,
+    ProjectLabelItem,
+    ProjectLabelRenameInput,
     ProjectMember,
     ProjectMemberCreate,
     ProjectMemberWorkload,

@@ -268,6 +268,7 @@ export interface ProjectTaskRecord {
   description?: string | null;
   created_at?: string;
   updated_at?: string | null;
+  deleted_at?: string | null;
   status: string;
   priority: string;
   assignee_id?: string | null;
