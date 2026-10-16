@@ -210,5 +210,92 @@ describe("ProjectFileViewerDrawer", () => {
       "https://example.com/files/contrato.docx",
     );
   });
+
+  it("converts and previews Word (.docx) documents passing file_url to backend", async () => {
+    mockApiFetch.mockResolvedValueOnce({
+      filename: "Acta_Comite.docx",
+      format: "docx",
+      markdown: "# Acta de Comité\n\n- Punto 1: Aprobación de alcance\n- Punto 2: Asignación de recursos",
+      char_count: 85,
+      word_count: 14,
+      processing_time_ms: 32,
+      engine: "anydoc_v0.2.4",
+      success: true,
+    });
+
+    const docxFile: ProjectFileRecord = {
+      ...imageFile,
+      id: "file-doc-2",
+      name: "Acta_Comite.docx",
+      file_url: "/api/static/projects/acta_123.docx",
+      file_type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    };
+
+    renderViewer(docxFile);
+
+    expect(await screen.findByText("Acta de Comité")).toBeInTheDocument();
+    expect(screen.getByText("Punto 1: Aprobación de alcance")).toBeInTheDocument();
+    expect(screen.getByText("DOCX")).toBeInTheDocument();
+
+    expect(mockApiFetch).toHaveBeenCalledWith(
+      "/projects/convert-document",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.objectContaining({
+          filename: "Acta_Comite.docx",
+          file_url: "/api/static/projects/acta_123.docx",
+          format_hint: "docx",
+        }),
+      }),
+    );
+  });
+
+  it("identifies and previews images converted to .webp in file_url even when file.name lacks extension", () => {
+    const webpFile: ProjectFileRecord = {
+      ...imageFile,
+      id: "file-img-custom",
+      name: "Fotografía del Evento Inaugural",
+      file_url: "/api/static/projects/evento_inaugural_987.webp",
+      file_type: "image/jpeg",
+    };
+
+    renderViewer(webpFile);
+
+    const img = screen.getByRole("img", { name: webpFile.name });
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute("src", webpFile.file_url);
+    expect(screen.getByRole("button", { name: "Acercar" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Rotar 90°" })).toBeInTheDocument();
+  });
+
+  it("converts and displays CSV documents as GFM tables", async () => {
+    mockApiFetch.mockResolvedValueOnce({
+      filename: "Reporte_Metricas.csv",
+      format: "csv",
+      markdown: "| Indicador | Meta | Actual |\n| --- | --- | --- |\n| Asistencia | 500 | 520 |\n| Conversiones | 50 | 62 |",
+      char_count: 110,
+      word_count: 12,
+      processing_time_ms: 18,
+      engine: "anydoc_v0.2.4",
+      success: true,
+    });
+
+    const csvFile: ProjectFileRecord = {
+      ...imageFile,
+      id: "file-csv-1",
+      name: "Reporte_Metricas.csv",
+      file_url: "/api/static/projects/metricas.csv",
+      file_type: "text/csv",
+    };
+
+    renderViewer(csvFile);
+
+    expect(await screen.findByText("Indicador")).toBeInTheDocument();
+    expect(screen.getByText("Meta")).toBeInTheDocument();
+    expect(screen.getByText("Actual")).toBeInTheDocument();
+    expect(screen.getByText("Asistencia")).toBeInTheDocument();
+    expect(screen.getByText("520")).toBeInTheDocument();
+    expect(screen.getByText("CSV")).toBeInTheDocument();
+  });
 });
 

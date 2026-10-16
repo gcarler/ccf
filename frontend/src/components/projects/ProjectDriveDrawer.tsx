@@ -185,7 +185,14 @@ export function ProjectDriveDrawer({
       formData.append("file", uploadFile);
       if (uploadCategory) formData.append("category", uploadCategory);
       if (uploadTaskId && uploadTaskId !== "none") formData.append("task_id", uploadTaskId);
-      if (uploadCustomName.trim()) formData.append("name", uploadCustomName.trim());
+      let finalName = uploadCustomName.trim();
+      if (finalName && uploadFile.name && uploadFile.name.includes(".")) {
+        const origExt = uploadFile.name.slice(uploadFile.name.lastIndexOf("."));
+        if (!finalName.toLowerCase().endsWith(origExt.toLowerCase()) && !finalName.includes(".")) {
+          finalName = `${finalName}${origExt}`;
+        }
+      }
+      if (finalName) formData.append("name", finalName);
       if (uploadDescription.trim()) formData.append("description", uploadDescription.trim());
 
       await apiFetch<ProjectFileRecord>(`/projects/${projectId}/files/upload`, {

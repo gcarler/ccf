@@ -9,5 +9,10 @@ export const API_BASE_URL = isServer ? SERVER_API_URL : CLIENT_API_URL;
 
 export function apiUrl(path: string): string {
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
-  return `${API_BASE_URL}${cleanPath}`;
+  const base = API_BASE_URL.replace(/\/$/, "");
+  if (base.endsWith("/api") && cleanPath.startsWith("/api/")) {
+    return `${base.slice(0, -4)}${cleanPath}`;
+  }
+  return `${base}${cleanPath}`;
 }
+

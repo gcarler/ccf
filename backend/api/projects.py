@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import uuid
 from datetime import datetime, timezone
 from typing import Any, List, Optional
@@ -1140,8 +1141,29 @@ async def convert_document_endpoint(
             b64_content = body.get("content_base64", "")
             if b64_content:
                 data = base64.b64decode(b64_content)
+
+            file_url = body.get("file_url")
+            if not data and file_url:
+                static_idx = file_url.find("/api/static/")
+                prefix_len = len("/api/static/")
+                if static_idx == -1:
+                    static_idx = file_url.find("/static/")
+                    prefix_len = len("/static/")
+
+                if static_idx != -1:
+                    rel_path = file_url[static_idx + prefix_len:].split("?")[0].split("#")[0]
+                    base_dir_abs = os.path.abspath(storage_service.base_dir)
+                    resolved_path = os.path.abspath(os.path.join(base_dir_abs, rel_path))
+                    if resolved_path.startswith(base_dir_abs) and os.path.isfile(resolved_path):
+                        with open(resolved_path, "rb") as f:
+                            data = f.read()
+                        if not filename or filename == "document":
+                            filename = os.path.basename(resolved_path)
+
             format_hint = body.get("format_hint") or format_hint
             ocr = body.get("ocr") or ocr
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Payload JSON inválido: {e}")
     elif file and file.filename:
@@ -1151,7 +1173,7 @@ async def convert_document_endpoint(
     if not data:
         raise HTTPException(
             status_code=400,
-            detail="Debe proporcionar un archivo (multipart) o un payload JSON con 'content_base64'",
+            detail="Debe proporcionar un archivo (multipart) o un payload JSON con 'content_base64' o 'file_url'",
         )
 
     try:
@@ -1256,7 +1278,7 @@ def list_project_labels(
         )
         .all()
     )
-    counts: Dict[str, int] = {}
+    counts: dict[str, int] = {}
     for task in tasks:
         task_labels = task.labels if isinstance(task.labels, list) else []
         seen_in_task = set()
@@ -1324,7 +1346,7 @@ def rename_project_label(
     )
     db.commit()
 
-    counts: Dict[str, int] = {}
+    counts: dict[str, int] = {}
     for task in tasks:
         task_labels = task.labels if isinstance(task.labels, list) else []
         seen_in_task = set()
@@ -1386,7 +1408,7 @@ def delete_project_label(
     )
     db.commit()
 
-    counts: Dict[str, int] = {}
+    counts: dict[str, int] = {}
     for task in tasks:
         task_labels = task.labels if isinstance(task.labels, list) else []
         seen_in_task = set()

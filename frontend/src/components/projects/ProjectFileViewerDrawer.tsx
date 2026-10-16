@@ -253,6 +253,73 @@ function getSafeGoogleDriveLink(value?: string | null): string | null {
   }
 }
 
+const KNOWN_DOC_EXTENSIONS = new Set([
+  ".docx", ".doc", ".docm",
+  ".xlsx", ".xls", ".xlsm",
+  ".pptx", ".ppt", ".pptm",
+  ".pdf",
+  ".md", ".markdown",
+  ".txt", ".csv", ".tsv",
+  ".odt", ".ods", ".odp",
+  ".rtf", ".epub",
+  ".json", ".xml", ".yaml", ".yml",
+  ".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp", ".ico",
+  ".mp3", ".wav", ".ogg", ".m4a", ".aac", ".flac",
+  ".mp4", ".webm", ".mov", ".mkv", ".avi",
+]);
+
+function getKnownExtension(pathOrName?: string | null): string {
+  if (!pathOrName) return "";
+  const clean = pathOrName.split("?")[0].split("#")[0].trim();
+  const lastDot = clean.lastIndexOf(".");
+  if (lastDot === -1) return "";
+  const ext = clean.slice(lastDot).toLowerCase();
+  return KNOWN_DOC_EXTENSIONS.has(ext) ? ext : "";
+}
+
+function getExtensionFromMime(mime?: string | null): string {
+  if (!mime) return "";
+  const m = mime.toLowerCase().trim();
+  if (m.includes("wordprocessingml") || m === "application/msword") return ".docx";
+  if (m.includes("spreadsheetml") || m.includes("ms-excel")) return ".xlsx";
+  if (m.includes("presentationml") || m.includes("ms-powerpoint")) return ".pptx";
+  if (m.includes("opendocument.text")) return ".odt";
+  if (m.includes("opendocument.spreadsheet")) return ".ods";
+  if (m.includes("opendocument.presentation")) return ".odp";
+  if (m === "application/pdf") return ".pdf";
+  if (m === "text/markdown") return ".md";
+  if (m === "text/csv") return ".csv";
+  if (m === "text/plain") return ".txt";
+  if (m === "application/json") return ".json";
+  if (m === "application/xml" || m === "text/xml") return ".xml";
+  if (m.includes("yaml")) return ".yaml";
+  if (m === "application/rtf" || m === "text/rtf") return ".rtf";
+  if (m === "image/webp") return ".webp";
+  if (m === "image/png") return ".png";
+  if (m === "image/jpeg" || m === "image/jpg") return ".jpg";
+  if (m === "image/gif") return ".gif";
+  if (m === "image/svg+xml") return ".svg";
+  if (m.startsWith("image/")) return ".webp";
+  if (m.startsWith("audio/")) return ".mp3";
+  if (m.startsWith("video/")) return ".mp4";
+  return "";
+}
+
+function resolveFileExtension(file: ProjectFileRecord | null): string {
+  if (!file) return "";
+  const fromName = getKnownExtension(file.name);
+  if (fromName) return fromName;
+  const fromUrl = getKnownExtension(file.file_url);
+  if (fromUrl) return fromUrl;
+  const fromMime = getExtensionFromMime(file.file_type);
+  if (fromMime) return fromMime;
+  if (file.name && file.name.includes(".")) {
+    const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+    if (/^\.[a-z0-9]{1,8}$/i.test(ext)) return ext;
+  }
+  return "";
+}
+
 interface ProjectFileViewerDrawerProps {
   file: ProjectFileRecord | null;
   isOpen: boolean;
@@ -284,40 +351,48 @@ export function ProjectFileViewerDrawer({
     ? safeDriveEmbedUrl ?? safeDriveFileUrl
     : null;
 
+  const fileExt = resolveFileExtension(file);
+
   const isPdf = Boolean(
     file &&
     (file.file_type?.toLowerCase() === "application/pdf" ||
-      file.name.toLowerCase().endsWith(".pdf") ||
-      file.file_url.toLowerCase().includes(".pdf"))
+      /\.pdf$/i.test(file.name) ||
+      /\.pdf($|[?#])/i.test(file.file_url) ||
+      fileExt === ".pdf")
   );
 
   const isImage = Boolean(
     file &&
     ((file.file_type && file.file_type.toLowerCase().startsWith("image/")) ||
-      /\.(png|jpe?g|gif|webp|svg|bmp|ico)$/i.test(file.name))
+      /\.(png|jpe?g|gif|webp|svg|bmp|ico)$/i.test(file.name) ||
+      /\.(png|jpe?g|gif|webp|svg|bmp|ico)($|[?#])/i.test(file.file_url) ||
+      [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp", ".ico"].includes(fileExt))
   );
 
   const isAudio = Boolean(
     file &&
     ((file.file_type && file.file_type.toLowerCase().startsWith("audio/")) ||
-      /\.(mp3|wav|ogg|m4a|aac)$/i.test(file.name))
+      /\.(mp3|wav|ogg|m4a|aac|flac)$/i.test(file.name) ||
+      /\.(mp3|wav|ogg|m4a|aac|flac)($|[?#])/i.test(file.file_url) ||
+      [".mp3", ".wav", ".ogg", ".m4a", ".aac", ".flac"].includes(fileExt))
   );
 
   const isVideo = Boolean(
     file &&
     ((file.file_type && file.file_type.toLowerCase().startsWith("video/")) ||
-      /\.(mp4|webm|mov|mkv)$/i.test(file.name))
+      /\.(mp4|webm|mov|mkv|avi)$/i.test(file.name) ||
+      /\.(mp4|webm|mov|mkv|avi)($|[?#])/i.test(file.file_url) ||
+      [".mp4", ".webm", ".mov", ".mkv", ".avi"].includes(fileExt))
   );
 
   const OFFICE_AND_TEXT_EXTENSIONS = [
-    ".docx", ".doc", ".xlsx", ".xls", ".pptx", ".ppt",
-    ".md", ".markdown", ".txt", ".csv",
+    ".docx", ".doc", ".docm",
+    ".xlsx", ".xls", ".xlsm",
+    ".pptx", ".ppt", ".pptm",
+    ".md", ".markdown", ".txt", ".csv", ".tsv",
     ".odt", ".ods", ".odp", ".rtf", ".epub",
+    ".json", ".xml", ".yaml", ".yml",
   ];
-
-  const fileExt = file?.name && file.name.includes(".")
-    ? file.name.slice(file.name.lastIndexOf(".")).toLowerCase()
-    : "";
 
   const isOfficeOrText = Boolean(
     file &&
@@ -340,7 +415,10 @@ export function ProjectFileViewerDrawer({
             file.file_type.includes("officedocument") ||
             file.file_type.includes("opendocument") ||
             file.file_type.includes("rtf") ||
-            file.file_type.includes("epub"))
+            file.file_type.includes("epub") ||
+            file.file_type.includes("json") ||
+            file.file_type.includes("xml") ||
+            file.file_type.includes("yaml"))
       ))
   );
 
@@ -359,7 +437,7 @@ export function ProjectFileViewerDrawer({
 
     const loadAndConvert = async () => {
       try {
-        const isDirectText = [".md", ".markdown", ".txt"].includes(fileExt);
+        const isDirectText = [".md", ".markdown", ".txt", ".json", ".xml", ".yaml", ".yml"].includes(fileExt);
         let textContent: string | null = null;
         let base64 = "";
 
@@ -384,12 +462,16 @@ export function ProjectFileViewerDrawer({
 
         if (isDirectText && textContent !== null) {
           if (!active) return;
+          const fmt = fileExt.replace(".", "") || "text";
+          const formattedMarkdown = ["json", "xml", "yaml", "yml"].includes(fmt)
+            ? `\`\`\`${fmt}\n${textContent}\n\`\`\``
+            : textContent;
           setConversion({
             filename: file.name,
-            format: fileExt.replace(".", "") || "text",
-            markdown: textContent,
-            char_count: textContent.length,
-            word_count: textContent.trim().split(/\s+/).filter(Boolean).length,
+            format: fmt,
+            markdown: formattedMarkdown,
+            char_count: formattedMarkdown.length,
+            word_count: formattedMarkdown.trim().split(/\s+/).filter(Boolean).length,
             processing_time_ms: 10,
             engine: "native_reader",
             success: true,
@@ -398,13 +480,30 @@ export function ProjectFileViewerDrawer({
           return;
         }
 
+        const requestBody: {
+          filename: string;
+          content_base64?: string;
+          file_url?: string;
+          format_hint: string;
+        } = {
+          filename: file.name,
+          format_hint: fileExt.replace(".", "") || "docx",
+        };
+
+        if (base64) {
+          requestBody.content_base64 = base64;
+          if (file.file_url) {
+            requestBody.file_url = file.file_url;
+          }
+        } else if (file.file_url) {
+          requestBody.file_url = file.file_url;
+        } else {
+          requestBody.content_base64 = "Y29udGVuaWRvIGRvY3VtZW50bw==";
+        }
+
         const data = await apiFetch<DocumentConversionResponse>("/projects/convert-document", {
           method: "POST",
-          body: {
-            filename: file.name,
-            content_base64: base64 || "Y29udGVuaWRvIGRvY3VtZW50bw==",
-            format_hint: fileExt.replace(".", "") || "docx",
-          },
+          body: requestBody,
         });
 
         if (!active) return;
