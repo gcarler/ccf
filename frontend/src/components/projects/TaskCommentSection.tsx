@@ -73,10 +73,11 @@ export default function TaskCommentSection({
     const [activeMentionIndex, setActiveMentionIndex] = useState(0);
     const inputRef = useRef<HTMLInputElement>(null);
 
+    const mentionQuery = mentionState?.query;
     useEffect(() => {
-        if (!mentionState) return;
+        if (mentionQuery === undefined) return;
         let active = true;
-        const query = mentionState.query.trim();
+        const query = mentionQuery.trim();
         const queryParam = `?limit=1000${query ? `&search=${encodeURIComponent(query)}` : ''}`;
 
         apiFetch<AssigneeCandidate[]>(`/projects/assignee-candidates${queryParam}`, { token: token ?? undefined })
@@ -95,7 +96,7 @@ export default function TaskCommentSection({
             });
 
         return () => { active = false; };
-    }, [mentionState?.query, token]);
+    }, [mentionQuery, token]);
 
     const filteredCandidates = useMemo(() => {
         if (!mentionState) return [];

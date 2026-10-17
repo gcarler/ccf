@@ -18,7 +18,7 @@ vi.mock('@/context/AuthContext', () => ({
 }));
 
 const { mockApiFetch, mockToast } = vi.hoisted(() => ({
-  mockApiFetch: vi.fn().mockImplementation(async (endpoint: string, options?: any) => {
+  mockApiFetch: vi.fn().mockImplementation(async (endpoint: string, options?: { method?: string; body?: unknown }) => {
     if (typeof endpoint === 'string' && (endpoint.includes('assignee-candidates') || endpoint.includes('/crm/personas'))) {
       return [{ id: 'user-laury', nombre_completo: 'Laury Rodríguez' }];
     }

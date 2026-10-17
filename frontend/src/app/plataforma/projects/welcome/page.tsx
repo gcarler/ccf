@@ -44,7 +44,7 @@ export default function ProjectsWelcomePage() {
                 },
             });
             router.push(`/plataforma/projects/${project.id}?view=list`);
-        } catch (error) {
+        } catch {
             toast.error('Error al crear proyecto');
         } finally {
             setCreating(false);

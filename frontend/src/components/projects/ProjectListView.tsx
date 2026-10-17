@@ -80,10 +80,11 @@ function CommentPopover({ onClose, placement = 'bottom', taskId, projectId }: Co
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     // Fetch candidate mentions when mention query changes
+    const mentionQuery = mentionState?.query;
     useEffect(() => {
-        if (!mentionState) return;
+        if (mentionQuery === undefined) return;
         let active = true;
-        const query = mentionState.query.trim();
+        const query = mentionQuery.trim();
         const queryParam = `?limit=1000${query ? `&search=${encodeURIComponent(query)}` : ''}`;
 
         apiFetch<AssigneeCandidate[]>(`/projects/assignee-candidates${queryParam}`, { token: token ?? undefined })
@@ -102,7 +103,7 @@ function CommentPopover({ onClose, placement = 'bottom', taskId, projectId }: Co
             });
 
         return () => { active = false; };
-    }, [mentionState?.query, token]);
+    }, [mentionQuery, token]);
 
     const filteredCandidates = useMemo(() => {
         if (!mentionState) return [];

@@ -23,6 +23,9 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FRONTEND_DIR="$ROOT_DIR/frontend"
 PM2_BIN="$(command -v pm2 || echo /usr/local/bin/pm2)"
+if [ -z "${PM2_HOME:-}" ] && [ -d "/root/.pm2" ]; then
+    export PM2_HOME="/root/.pm2"
+fi
 FRONT_PORT="${FRONTEND_PORT:-3000}"
 
 # PATH hardening: el shell no-interactivo del deploy (appleboy/ssh-action) puede

@@ -40,7 +40,7 @@ const SOURCES: { id: string; label: string }[] = [
 export function ProjectDriveDrawer({
   projectId,
   isOpen,
-  onClose,
+  onClose: _onClose,
   onFileUpdated,
 }: ProjectDriveDrawerProps) {
   const { token } = useAuth();
@@ -83,7 +83,7 @@ export function ProjectDriveDrawer({
   useEffect(() => {
     if (!isOpen || !projectId || !token) return;
     let active = true;
-    apiFetch<any[]>(`/projects/${projectId}/tasks`, { token })
+    apiFetch<Array<{ id?: string; title?: string; name?: string; file_source?: string }>>(`/projects/${projectId}/tasks`, { token })
       .then((data) => {
         if (!active || !Array.isArray(data)) return;
         setProjectTasks(
