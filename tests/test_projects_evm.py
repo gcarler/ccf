@@ -351,6 +351,26 @@ def test_sync_execution_and_connected_kpis_indicators_endpoints(client, db_sessi
     assert created_kpi["component_id"] == str(comp.id)
     assert "EDT-A" in (created_kpi["component_name"] or "")
 
+    # 5. Verificar que GET /export/executive-data y GET /export/summary-pdf incluyen execution_matrix, kpis, indicators y roll-up continuo (75%)
+    r_exec_report = client.get(f"/api/projects/{project.id}/export/executive-data", headers=headers)
+    assert r_exec_report.status_code == 200, r_exec_report.text
+    exec_report = r_exec_report.json()
+    assert exec_report["project"]["progress_percentage"] == 75.0
+    assert exec_report["execution_matrix"]["frentes"]["tiempo"]["progress_pct"] == 75.0
+    assert len(exec_report["kpis"]) >= 7
+    assert len(exec_report["indicators"]) >= 6
+
+    r_pdf = client.get(f"/api/projects/{project.id}/export/summary-pdf", headers=headers)
+    assert r_pdf.status_code == 200
+    assert r_pdf.content.startswith(b"%PDF")
+
+    # 6. Verificar que GET /evm/curve-s incluye execution_matrix para ProjectEVMDrawer
+    r_curve = client.get(f"/api/projects/{project.id}/evm/curve-s?points=8", headers=headers)
+    assert r_curve.status_code == 200, r_curve.text
+    curve_json = r_curve.json()
+    assert curve_json["summary"]["progress_percentage"] == 75.0
+    assert curve_json["execution_matrix"]["rollup_hierarchy"]["overall_progress_pct"] == 75.0
+
 
 if __name__ == "__main__":
     test_evm_balanced_project()
@@ -359,3 +379,4 @@ if __name__ == "__main__":
     test_evm_zero_cost_edge_case()
     test_curve_s_generation()
     print("✅ All EVM tests passed successfully!")
+

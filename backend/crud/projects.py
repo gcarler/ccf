@@ -3627,6 +3627,21 @@ def get_project_executive_report_data(
         p = project.owner
         owner_name = getattr(p, "nombre_completo", None) or f"{getattr(p, 'nombres', '')} {getattr(p, 'apellidos', '')}".strip() or "Líder"
 
+    from backend.services.project_evm_service import build_project_execution_matrix
+
+    execution_matrix = build_project_execution_matrix(db, project)
+    rolled_progress_pct = float(
+        execution_matrix.get("rollup_hierarchy", {}).get("overall_progress_pct", completion_rate)
+    )
+    eff_progress_pct = (
+        float(getattr(project, "manual_progress", 0.0) or 0.0)
+        if project.progress_mode == "manual"
+        else rolled_progress_pct
+    )
+
+    kpis_list = get_project_kpis(db, project.id)
+    indicators_list = get_project_indicators(db, project.id, sede_id=user_sede_id)
+
     return {
         "project": {
             "id": str(project.id),
@@ -3636,7 +3651,7 @@ def get_project_executive_report_data(
             "priority": getattr(project, "priority", None) or "medium",
             "health_override": project.health_override,
             "progress_mode": project.progress_mode,
-            "progress_percentage": float(getattr(project, "manual_progress", 0.0) if project.progress_mode == "manual" else completion_rate),
+            "progress_percentage": eff_progress_pct,
             "budget_allocated": float(project.budget_allocated or 0.0),
             "budget_spent": float(project.budget_spent or 0.0),
             "start_date": project.start_date.isoformat() if project.start_date else None,
@@ -3658,6 +3673,9 @@ def get_project_executive_report_data(
         "cpm_metrics": cpm_summary,
         "time_metrics": time_summary,
         "phases": phase_data,
+        "execution_matrix": execution_matrix,
+        "kpis": kpis_list,
+        "indicators": indicators_list,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "organization": "Comunidad Cristiana El Faro - Dirección de Proyectos",
     }
@@ -3758,6 +3776,7 @@ def generate_project_summary_pdf(report_data: dict) -> bytes:
     r_kpi = report_data.get("raid_kpis", {})
     cpm = report_data.get("cpm_metrics", {})
     time_met = report_data.get("time_metrics", {})
+    exec_mat = report_data.get("execution_matrix") or {}
 
     # 2. Ficha Técnica del Proyecto
     meta_table_data = [
@@ -3801,14 +3820,14 @@ def generate_project_summary_pdf(report_data: dict) -> bytes:
     story.append(Paragraph("RESUMEN DE INDICADORES CLAVE (KPIS)", section_title_style))
     kpi_table_data = [
         [
-            Paragraph("<b>AVANCE TAREAS</b>", cell_header),
+            Paragraph("<b>AVANCE PONDERADO</b>", cell_header),
             Paragraph("<b>PRESUPUESTO EJECUTADO</b>", cell_header),
             Paragraph("<b>RIESGOS CRÍTICOS</b>", cell_header),
             Paragraph("<b>DURACIÓN CRÍTICA</b>", cell_header),
             Paragraph("<b>HORAS TOTALES</b>", cell_header),
         ],
         [
-            Paragraph(f"<font size=11><b>{t_met.get('completion_rate', 0.0)}%</b></font><br/>{t_met.get('completed', 0)}/{t_met.get('total', 0)} Tareas", cell_style),
+            Paragraph(f"<font size=11><b>{proj.get('progress_percentage', t_met.get('completion_rate', 0.0))}%</b></font><br/>{t_met.get('completed', 0)}/{t_met.get('total', 0)} Tareas", cell_style),
             Paragraph(f"<font size=11><b>${f_kpi.get('budget_spent', 0.0):,.2f}</b></font><br/>de ${f_kpi.get('budget_allocated', 0.0):,.2f}", cell_style),
             Paragraph(f"<font size=11 color='#DC2626'><b>{r_kpi.get('critical_count', 0)}</b></font><br/>de {r_kpi.get('total_risks', 0)} Riesgos", cell_style),
             Paragraph(f"<font size=11><b>{cpm.get('total_duration_days', 0)}d</b></font><br/>{cpm.get('critical_tasks_count', 0)} Tareas Ruta", cell_style),
@@ -3827,6 +3846,133 @@ def generate_project_summary_pdf(report_data: dict) -> bytes:
     ]))
     story.append(kpi_table)
     story.append(Spacer(1, 8))
+
+    # 3b. Balance de los 3 Frentes de Ejecución y Tributación EDT (si está disponible)
+    frentes = exec_mat.get("frentes") or {}
+    ft = frentes.get("tiempo") or exec_mat.get("frente_tiempo") or {}
+    ff = frentes.get("financiero") or exec_mat.get("frente_financiero") or {}
+    fc = frentes.get("cruce_evm") or exec_mat.get("frente_cruce_evm") or {}
+
+    if ft or ff or fc:
+        story.append(Paragraph("BALANCE INTEGRAL DE LOS 3 FRENTES DE EJECUCIÓN (PMI / EVM)", section_title_style))
+        frentes_table_data = [
+            [
+                Paragraph("<b>FRENTE TIEMPO (CRONOGRAMA)</b>", cell_header),
+                Paragraph("<b>FRENTE FINANCIERO (PRESUPUESTO)</b>", cell_header),
+                Paragraph("<b>FRENTE CRUCE EVM (TIEMPO × COSTO)</b>", cell_header),
+            ],
+            [
+                Paragraph(
+                    f"<b>Avance Físico:</b> {ft.get('progress_pct', ft.get('time_progress_pct', 0.0))}%<br/>"
+                    f"<b>SPI / SPI(t):</b> {ft.get('spi', 1.0)} / {ft.get('spi_t', 1.0)}<br/>"
+                    f"<b>Tiempo Ganado (ES):</b> {ft.get('earned_schedule_days', 0.0)}d de {ft.get('planned_duration_days', 0.0)}d<br/>"
+                    f"<b>Eficiencia Horas:</b> {ft.get('hours_efficiency_pct', 100.0)}% ({ft.get('actual_hours', 0.0)}h / {ft.get('estimated_hours', ft.get('total_estimated_hours', 0.0))}h)",
+                    cell_style,
+                ),
+                Paragraph(
+                    f"<b>Presupuesto (BAC):</b> ${ff.get('bac', 0.0):,.2f}<br/>"
+                    f"<b>Costo Real (AC):</b> ${ff.get('ac', 0.0):,.2f} ({ff.get('burn_rate_pct', ff.get('financial_execution_pct', 0.0))}%)<br/>"
+                    f"<b>Remanente:</b> ${ff.get('remaining_budget', ff.get('available_budget', 0.0)):,.2f}<br/>"
+                    f"<b>Regla 100% EDT:</b> {ff.get('budget_100_rule', {}).get('allocation_percentage', 0.0)}%",
+                    cell_style,
+                ),
+                Paragraph(
+                    f"<b>Valor Ganado (EV):</b> ${fc.get('ev', 0.0):,.2f} (PV: ${fc.get('pv', 0.0):,.2f})<br/>"
+                    f"<b>CPI (Costo) / CR:</b> {fc.get('cpi', 1.0)} / {fc.get('cr', 1.0)}<br/>"
+                    f"<b>Brecha Físico-Financiera:</b> {fc.get('balance_gap_pct', 0.0)}%<br/>"
+                    f"<b>Salud EVM:</b> {safe_text(fc.get('health_status', 'OPTIMO'))}",
+                    cell_style,
+                ),
+            ],
+        ]
+        frentes_table = Table(frentes_table_data, colWidths=[180, 180, 180])
+        frentes_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1E3A8A')),
+            ('BACKGROUND', (0, 1), (-1, 1), colors.HexColor('#F8FAFC')),
+            ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#94A3B8')),
+            ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1')),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ]))
+        story.append(frentes_table)
+        story.append(Spacer(1, 6))
+
+    edt_comps = exec_mat.get("rollup_hierarchy", {}).get("components") or []
+    if edt_comps:
+        story.append(Paragraph("TRIBUTACIÓN JERÁRQUICA EDT (SUBTAREAS → ACTIVIDADES → COMPONENTES → PROYECTO)", section_title_style))
+        edt_rows = [
+            [
+                Paragraph("<b>Componente EDT</b>", cell_header),
+                Paragraph("<b>Presupuesto / Peso</b>", cell_header),
+                Paragraph("<b>Avance Físico</b>", cell_header),
+                Paragraph("<b>Ejec. Financiera</b>", cell_header),
+                Paragraph("<b>CPI / SPI</b>", cell_header),
+            ]
+        ]
+        for comp in edt_comps[:8]:
+            c_code = safe_text(comp.get("code") or "EDT")
+            c_name = safe_text(comp.get("name") or "Componente")
+            c_bac = float(comp.get("budget_allocated") or 0.0)
+            c_weight = float(comp.get("budget_weight_pct", comp.get("weight_pct", 0.0)))
+            c_phys = float(comp.get("physical_progress_pct") or 0.0)
+            c_fin = float(comp.get("financial_progress_pct") or 0.0)
+            c_cpi = float(comp.get("cpi") or 1.0)
+            c_spi = float(comp.get("spi") or 1.0)
+            edt_rows.append([
+                Paragraph(f"<b>[{c_code}]</b> {c_name}", cell_style),
+                Paragraph(f"${c_bac:,.2f} ({c_weight}%)", cell_style),
+                Paragraph(f"<b>{c_phys}%</b> ({comp.get('activities_count', 0)} act.)", cell_style),
+                Paragraph(f"{c_fin}% (${float(comp.get('ac') or 0.0):,.2f})", cell_style),
+                Paragraph(f"CPI {c_cpi} • SPI {c_spi}", cell_style),
+            ])
+        edt_table = Table(edt_rows, colWidths=[170, 110, 90, 90, 80])
+        edt_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#334155')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F8FAFC')]),
+            ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1')),
+            ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E2E8F0')),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ]))
+        story.append(edt_table)
+        story.append(Spacer(1, 6))
+
+    pro_fams = exec_mat.get("pro_families") or list((exec_mat.get("familias_pro") or {}).values())
+    if pro_fams:
+        story.append(Paragraph("MATRIZ DE LAS 6 FAMILIAS DE INDICADORES PRO", section_title_style))
+        fam_rows = [
+            [
+                Paragraph("<b>Código / Familia Pro</b>", cell_header),
+                Paragraph("<b>Frente</b>", cell_header),
+                Paragraph("<b>Actual / Meta</b>", cell_header),
+                Paragraph("<b>SPI</b>", cell_header),
+            ]
+        ]
+        for fam in pro_fams[:6]:
+            f_code = safe_text(fam.get("code") or "PRO")
+            f_title = safe_text(fam.get("title") or fam.get("name") or "Indicador")
+            f_frente = safe_text(fam.get("frente") or "tiempo").upper()
+            f_curr = fam.get("current_value", 0.0)
+            f_targ = fam.get("target_value", 100.0)
+            f_unit = safe_text(fam.get("unit") or "%")
+            f_spi = fam.get("spi", 1.0)
+            fam_rows.append([
+                Paragraph(f"<b>{f_code}</b> — {f_title}", cell_style),
+                Paragraph(f_frente, cell_style),
+                Paragraph(f"<b>{f_curr}</b> / {f_targ} {f_unit}", cell_style),
+                Paragraph(f"<b>{f_spi}</b>", cell_style),
+            ])
+        fam_table = Table(fam_rows, colWidths=[240, 80, 130, 90])
+        fam_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1E3A8A')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F8FAFC')]),
+            ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1')),
+            ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E2E8F0')),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ]))
+        story.append(fam_table)
+        story.append(Spacer(1, 6))
 
     # 4. Control Presupuestario
     story.append(Paragraph("CONTROL PRESUPUESTARIO Y DESEMBOLSOS", section_title_style))

@@ -126,4 +126,117 @@ describe("ProjectReportDrawer", () => {
     })));
     expect(apiFetchBlob).toHaveBeenCalledWith("/projects/project-1/export/summary-pdf", { token: "test-token" });
   });
+
+  it("renders 3 Frentes de Ejecución, Tributación EDT and 6 Familias Pro when execution_matrix is present", async () => {
+    vi.mocked(apiFetch).mockResolvedValueOnce({
+      ...reportData,
+      project: { ...reportData.project, progress_percentage: 68 },
+      execution_matrix: {
+        project_id: "project-1",
+        calculated_at: "2026-10-17T00:00:00Z",
+        frentes: {
+          tiempo: {
+            spi: 1.05,
+            spi_t: 1.02,
+            sv: 500,
+            progress_pct: 68,
+            planned_duration_days: 30,
+            actual_time_days: 20,
+            earned_schedule_days: 20.4,
+            estimated_hours: 100,
+            actual_hours: 65,
+            hours_efficiency_pct: 104.6,
+            milestones_total: 2,
+            milestones_completed: 2,
+            milestones_ontime: 2,
+            milestones_ontime_pct: 100,
+            tasks_total: 5,
+            tasks_completed: 2,
+            tasks_overdue: 0,
+          },
+          financiero: {
+            cpi: 1.36,
+            cv: 1800,
+            bac: 10000,
+            ac: 5000,
+            remaining_budget: 5000,
+            burn_rate_pct: 50,
+            financial_progress_pct: 50,
+            expenses_count: 2,
+          },
+          cruce_evm: {
+            ev: 6800,
+            pv: 6476,
+            ac: 5000,
+            bac: 10000,
+            cpi: 1.36,
+            spi: 1.05,
+            cr: 1.43,
+            eac: 7352.94,
+            vac: 2647.06,
+            balance_gap_pct: 18,
+            health_status: "OPTIMO",
+            health_color: "success",
+          },
+        },
+        familias_pro: {
+          pro_edt_progress: {
+            code: "PRO-01",
+            title: "Avance Físico Ponderado (EDT -> Proyecto)",
+            current_value: 68,
+            target_value: 100,
+            unit: "%",
+            spi: 0.68,
+            frente: "tiempo",
+          },
+        },
+        rollup_hierarchy: {
+          overall_progress_pct: 68,
+          components: [
+            {
+              component_id: "comp-1",
+              code: "EDT-01",
+              name: "Infraestructura Base",
+              budget_allocated: 6000,
+              budget_weight_pct: 60,
+              physical_progress_pct: 80,
+              financial_progress_pct: 50,
+              spi: 1.1,
+              cpi: 1.6,
+              cr: 1.76,
+              ev: 4800,
+              pv: 4363,
+              ac: 3000,
+              health_status: "OPTIMO",
+              health_color: "success",
+              activities_count: 2,
+              subtasks_count: 3,
+              estimated_hours: 60,
+              actual_hours: 40,
+              activities: [],
+            },
+          ],
+          unassigned_activities_count: 0,
+          unassigned_progress_pct: 0,
+        },
+        raid_summary: {
+          total_risks: 0,
+          mitigated_risks: 0,
+          active_risks: 0,
+          occurred_risks: 0,
+          mitigated_pct: 100,
+        },
+        sources_catalog: {},
+      },
+    });
+
+    const { container } = renderDrawer();
+    expect(await screen.findByText(/Balance Integral de los 3 Frentes de Ejecución/i)).toBeInTheDocument();
+    expect(screen.getByText(/\[EDT-01\] Infraestructura Base/i)).toBeInTheDocument();
+    expect(screen.getByText("PRO-01")).toBeInTheDocument();
+
+    const reportBody = container.querySelector(".flex-1.overflow-y-auto");
+    expect(reportBody?.innerHTML).not.toMatch(/--(?:card|foreground|muted-foreground)\b/);
+  });
 });
+

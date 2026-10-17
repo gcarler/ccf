@@ -735,8 +735,12 @@ class ProjectExecutiveReportData(BaseModel):
     cpm_metrics: ProjectCriticalPathSummary
     time_metrics: ProjectTimeTrackingSummary
     phases: List[ProjectExecutivePhaseItem] = Field(default_factory=list)
+    execution_matrix: Optional[dict] = Field(default_factory=dict)
+    kpis: List[ProjectKPI] = Field(default_factory=list)
+    indicators: List[ProjectIndicator] = Field(default_factory=list)
     generated_at: datetime
     organization: str
+    model_config = orm_config
 
 
 
@@ -1541,6 +1545,7 @@ class ProjectCurveSResponse(BaseModel):
     project_id: UUIDStr
     summary: ProjectEVMMetrics
     points: List[ProjectCurveSPoint] = Field(default_factory=list)
+    execution_matrix: Optional[dict] = None
 
 
 # ── EDT Nivel 2: Componentes y Regla del 100% ──────────────────────────────
@@ -1916,4 +1921,8 @@ class ProjectExecutionSyncResponse(BaseModel):
     indicators: List[ProjectIndicator] = Field(default_factory=list)
     kpis: List[ProjectKPI] = Field(default_factory=list)
     model_config = orm_config
+
+
+ProjectExecutiveReportData.model_rebuild()
+
 

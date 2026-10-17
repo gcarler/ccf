@@ -2713,14 +2713,20 @@ def get_project_curve_s(
     """Genera las series temporales acumuladas de PV, EV y AC para graficar la Curva S Físico-Financiera."""
     user_sede = get_user_sede_id(db, current_user.id)
     project = _ensure_project(db, project_id, user_sede=user_sede)
-    from backend.services.project_evm_service import calculate_project_evm, generate_curve_s_data
+    from backend.services.project_evm_service import (
+        build_project_execution_matrix,
+        calculate_project_evm,
+        generate_curve_s_data,
+    )
 
     evm_data = calculate_project_evm(db, project)
     curve_points = generate_curve_s_data(db, project, points_count=points)
+    execution_matrix = build_project_execution_matrix(db, project)
     return schemas.ProjectCurveSResponse(
         project_id=str(project.id),
         summary=schemas.ProjectEVMMetrics(**evm_data),
         points=[schemas.ProjectCurveSPoint(**p) for p in curve_points],
+        execution_matrix=execution_matrix,
     )
 
 

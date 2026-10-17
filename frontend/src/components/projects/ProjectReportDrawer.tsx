@@ -34,8 +34,8 @@ function getErrorMessage(error: unknown, fallback: string): string {
 export function ProjectReportDrawer({
   projectId,
   isOpen,
-  onClose,
-  projectTitle,
+  onClose: _onClose,
+  projectTitle: _projectTitle,
 }: ProjectReportDrawerProps) {
   const { token } = useAuth();
   const { addToast } = useToast();
@@ -121,6 +121,9 @@ export function ProjectReportDrawer({
   const raidKpi = data?.raid_kpis;
   const cpmMet = data?.cpm_metrics;
   const timeMet = data?.time_metrics;
+  const execMat = data?.execution_matrix;
+  const kpisList = data?.kpis ?? [];
+  const indicatorsList = data?.indicators ?? [];
 
   return (
     <>
@@ -322,7 +325,7 @@ export function ProjectReportDrawer({
                     </div>
                     <div className="mt-1">
                       <div className="text-lg font-bold" style={{ color: "hsl(var(--text-primary))" }}>
-                        {tasksMet?.completion_rate}%
+                        {proj?.progress_percentage ?? tasksMet?.completion_rate}%
                       </div>
                       <div className="text-[10px]" style={{ color: "hsl(var(--text-secondary))" }}>
                         {tasksMet?.completed} de {tasksMet?.total} tareas
@@ -634,6 +637,164 @@ export function ProjectReportDrawer({
                       <p className="text-xs italic" style={{ color: "hsl(var(--text-secondary))" }}>
                         Sin registros de tiempo para este proyecto.
                       </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Sección 5: 3 Frentes de Ejecución, Tributación EDT e Indicadores/KPIs Pro */}
+                {execMat && execMat.frentes && (
+                  <div
+                    className="p-4 rounded-xl border space-y-3"
+                    style={{
+                      backgroundColor: "hsl(var(--surface-1))",
+                      borderColor: "hsl(var(--border))",
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4 text-[hsl(var(--primary))]" />
+                        <h3 className="text-sm font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
+                          Balance Integral de los 3 Frentes de Ejecución (PMI / EVM)
+                        </h3>
+                      </div>
+                      <span className="text-xs font-semibold text-[hsl(var(--primary))]">
+                        CR: {execMat.frentes.cruce_evm?.cr ?? 1.0} • {execMat.frentes.cruce_evm?.health_status || "OPTIMO"}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                      {/* Frente 1: Tiempo */}
+                      <div
+                        className="p-3 rounded-lg border space-y-1"
+                        style={{
+                          backgroundColor: "hsl(var(--surface-2))",
+                          borderColor: "hsl(var(--border))",
+                        }}
+                      >
+                        <div className="font-semibold text-[hsl(var(--primary))]">
+                          1. Frente Tiempo (Cronograma)
+                        </div>
+                        <div className="text-[11px]" style={{ color: "hsl(var(--text-primary))" }}>
+                          Avance Ponderado: <b>{execMat.frentes.tiempo.progress_pct}%</b>
+                        </div>
+                        <div className="text-[11px]" style={{ color: "hsl(var(--text-secondary))" }}>
+                          SPI: <b>{execMat.frentes.tiempo.spi}</b> • SPI(t): <b>{execMat.frentes.tiempo.spi_t ?? execMat.frentes.tiempo.spi}</b>
+                        </div>
+                        <div className="text-[11px]" style={{ color: "hsl(var(--text-secondary))" }}>
+                          Tiempo Ganado (ES): <b>{execMat.frentes.tiempo.earned_schedule_days ?? 0}d</b> / {execMat.frentes.tiempo.planned_duration_days ?? 0}d
+                        </div>
+                      </div>
+
+                      {/* Frente 2: Financiero */}
+                      <div
+                        className="p-3 rounded-lg border space-y-1"
+                        style={{
+                          backgroundColor: "hsl(var(--surface-2))",
+                          borderColor: "hsl(var(--border))",
+                        }}
+                      >
+                        <div className="font-semibold text-[hsl(var(--success))]">
+                          2. Frente Financiero (Presupuesto)
+                        </div>
+                        <div className="text-[11px]" style={{ color: "hsl(var(--text-primary))" }}>
+                          Ejecución (AC/BAC): <b>{execMat.frentes.financiero.burn_rate_pct}%</b>
+                        </div>
+                        <div className="text-[11px]" style={{ color: "hsl(var(--text-secondary))" }}>
+                          BAC: <b>${execMat.frentes.financiero.bac.toLocaleString()}</b> • AC: <b>${execMat.frentes.financiero.ac.toLocaleString()}</b>
+                        </div>
+                        <div className="text-[11px]" style={{ color: "hsl(var(--text-secondary))" }}>
+                          Remanente: <b>${execMat.frentes.financiero.remaining_budget.toLocaleString()}</b>
+                        </div>
+                      </div>
+
+                      {/* Frente 3: Cruce EVM */}
+                      <div
+                        className="p-3 rounded-lg border space-y-1"
+                        style={{
+                          backgroundColor: "hsl(var(--surface-2))",
+                          borderColor: "hsl(var(--border))",
+                        }}
+                      >
+                        <div className="font-semibold text-[hsl(var(--warning))]">
+                          3. Frente Cruce EVM (Tiempo × Costo)
+                        </div>
+                        <div className="text-[11px]" style={{ color: "hsl(var(--text-primary))" }}>
+                          CPI: <b>{execMat.frentes.cruce_evm.cpi}</b> • CR: <b>{execMat.frentes.cruce_evm.cr}</b>
+                        </div>
+                        <div className="text-[11px]" style={{ color: "hsl(var(--text-secondary))" }}>
+                          EV: <b>${execMat.frentes.cruce_evm.ev.toLocaleString()}</b> • PV: <b>${execMat.frentes.cruce_evm.pv.toLocaleString()}</b>
+                        </div>
+                        <div className="text-[11px]" style={{ color: "hsl(var(--text-secondary))" }}>
+                          Brecha Físico-Financiera: <b>{execMat.frentes.cruce_evm.balance_gap_pct}%</b>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Tributación EDT */}
+                    {execMat.rollup_hierarchy?.components && execMat.rollup_hierarchy.components.length > 0 && (
+                      <div className="pt-2 border-t space-y-2" style={{ borderColor: "hsl(var(--border))" }}>
+                        <h4 className="text-xs font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
+                          Tributación Jerárquica EDT ({execMat.rollup_hierarchy.components.length} Componentes → {execMat.rollup_hierarchy.overall_progress_pct}%)
+                        </h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                          {execMat.rollup_hierarchy.components.map((comp) => (
+                            <div
+                              key={comp.component_id}
+                              className="p-2.5 rounded-lg border flex items-center justify-between gap-2"
+                              style={{
+                                backgroundColor: "hsl(var(--surface-2))",
+                                borderColor: "hsl(var(--border))",
+                              }}
+                            >
+                              <div>
+                                <div className="font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
+                                  [{comp.code}] {comp.name}
+                                </div>
+                                <div className="text-[11px]" style={{ color: "hsl(var(--text-secondary))" }}>
+                                  Peso: {comp.budget_weight_pct}% • {comp.activities_count} act. / {comp.subtasks_count} sub.
+                                </div>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <div className="font-bold text-[hsl(var(--primary))]">
+                                  {comp.physical_progress_pct}%
+                                </div>
+                                <div className="text-[10px]" style={{ color: "hsl(var(--text-secondary))" }}>
+                                  CPI {comp.cpi} • SPI {comp.spi}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 6 Familias Pro / Indicadores y KPIs */}
+                    {(Object.keys(execMat.familias_pro || {}).length > 0 || kpisList.length > 0 || indicatorsList.length > 0) && (
+                      <div className="pt-2 border-t space-y-2" style={{ borderColor: "hsl(var(--border))" }}>
+                        <h4 className="text-xs font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
+                          Matriz de Indicadores Pro y KPIs Conectados
+                        </h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                          {Object.values(execMat.familias_pro || {}).map((fam) => (
+                            <div
+                              key={fam.code}
+                              className="p-2 rounded-lg border flex items-center justify-between gap-2"
+                              style={{
+                                backgroundColor: "hsl(var(--surface-2))",
+                                borderColor: "hsl(var(--border))",
+                              }}
+                            >
+                              <div className="truncate">
+                                <span className="font-bold text-[hsl(var(--primary))]">{fam.code}</span>{" "}
+                                <span style={{ color: "hsl(var(--text-primary))" }}>{fam.title}</span>
+                              </div>
+                              <span className="font-semibold shrink-0" style={{ color: "hsl(var(--text-secondary))" }}>
+                                {fam.current_value}/{fam.target_value} {fam.unit}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     )}
                   </div>
                 )}

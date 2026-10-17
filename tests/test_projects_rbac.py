@@ -159,8 +159,10 @@ _READ_ENDPOINTS = [
     ("GET", f"/api/projects/{FAKE}/expenses/{FAKE_TASK}"),
     ("GET", f"/api/projects/{FAKE}/files"),
     ("GET", f"/api/projects/{FAKE}/files/summary"),
+    ("GET", f"/api/projects/{FAKE}/indicators/execution-matrix"),
     ("GET", f"/api/projects/{FAKE}/indicators/{FAKE_TASK}/records"),
     ("GET", f"/api/projects/{FAKE}/kpis"),
+    ("GET", f"/api/projects/{FAKE}/labels"),
     ("GET", f"/api/projects/{FAKE}/risks"),
     ("GET", f"/api/projects/{FAKE}/risks-summary"),
     ("GET", f"/api/projects/{FAKE}/risks/{FAKE_TASK}"),
@@ -218,6 +220,7 @@ _READ_ENDPOINTS_MIEMBRO_403 = [
     ("GET", f"/api/projects/{FAKE}/expenses/{FAKE_TASK}"),
     ("GET", f"/api/projects/{FAKE}/files"),
     ("GET", f"/api/projects/{FAKE}/files/summary"),
+    ("GET", f"/api/projects/{FAKE}/indicators/execution-matrix"),
     ("GET", f"/api/projects/{FAKE}/indicators/{FAKE_TASK}/records"),
     ("GET", f"/api/projects/{FAKE}/kpis"),
     ("GET", f"/api/projects/{FAKE}/risks"),
@@ -235,6 +238,7 @@ _READ_ENDPOINTS_MIEMBRO_403 = [
 # Axioma 3 requires 404 for non-existent or out-of-scope resources.
 _READ_ENDPOINTS_MIEMBRO_404 = [
     ("GET", f"/api/projects/{FAKE}"),
+    ("GET", f"/api/projects/{FAKE}/labels"),
     ("GET", f"/api/projects/{FAKE}/phases"),
     ("GET", f"/api/projects/{FAKE}/wiki"),
     ("GET", f"/api/projects/{FAKE}/whiteboard"),
@@ -426,7 +430,7 @@ def test_mutating_route_guards_match_role_policy_without_persisting(client, db_s
             )
 
         member_response = _issue(client, method, path, None, role_headers["miembro"])
-        if guard in {"project access: edit", "project access: manage"}:
+        if guard in {"project access: edit", "project access: write", "project access: manage"}:
             expected_member_status = status.HTTP_404_NOT_FOUND
         elif guard in {"projects:edit", "projects:read", "projects:manage", "academy:manage"}:
             expected_member_status = status.HTTP_403_FORBIDDEN

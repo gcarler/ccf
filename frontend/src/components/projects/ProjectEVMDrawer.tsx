@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import type { ProjectEVMMetrics, ProjectCurveSPoint, ProjectCurveSResponse } from '@/types/projects';
+import type { ProjectEVMMetrics, ProjectCurveSPoint, ProjectCurveSResponse, ProjectExecutionMatrix } from '@/types/projects';
 import {
     Activity,
     AlertTriangle,
@@ -37,7 +37,7 @@ export function ProjectEVMDrawer({
     projectId,
     projectTitle = 'Proyecto',
     isOpen,
-    onClose,
+    onClose: _onClose,
 }: ProjectEVMDrawerProps) {
     const { token } = useAuth();
     const [activeTab, setActiveTab] = useState<'balance' | 'quadrants' | 'wbs'>('balance');
@@ -47,6 +47,7 @@ export function ProjectEVMDrawer({
     const [error, setError] = useState<string | null>(null);
     const [evmData, setEvmData] = useState<ProjectEVMMetrics | null>(null);
     const [curveData, setCurveData] = useState<ProjectCurveSPoint[]>([]);
+    const [execMatrix, setExecMatrix] = useState<ProjectExecutionMatrix | null>(null);
     const [hoveredPoint, setHoveredPoint] = useState<ProjectCurveSPoint | null>(null);
 
     const loadData = useCallback(async () => {
@@ -60,6 +61,7 @@ export function ProjectEVMDrawer({
             );
             setEvmData(curveRes.summary);
             setCurveData(curveRes.points);
+            setExecMatrix(curveRes.execution_matrix ?? null);
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : 'Error al cargar métricas de Valor Ganado';
             setError(msg);
@@ -661,6 +663,94 @@ export function ProjectEVMDrawer({
                                 </div>
                             </div>
                         </div>
+
+                        {/* 4b. Tiempo Ganado (ES / SPI_t) y Tributación Jerárquica EDT */}
+                        {execMatrix && execMatrix.frentes && (
+                            <div className="p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] space-y-3">
+                                <h4 className="text-xs font-medium uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
+                                    <Activity size={14} className="text-[hsl(var(--primary))]" />
+                                    Tiempo Ganado (ES / SPI(t)) y Tributación EDT
+                                </h4>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                                    <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                                        <span className="text-2xs uppercase text-[hsl(var(--muted-foreground))] font-semibold">
+                                            Tiempo Ganado (ES)
+                                        </span>
+                                        <div className="text-base font-extrabold text-[hsl(var(--primary))] mt-0.5">
+                                            {execMatrix.frentes.tiempo.earned_schedule_days ?? 0}d / {execMatrix.frentes.tiempo.planned_duration_days ?? 0}d
+                                        </div>
+                                        <span className="text-2xs text-[hsl(var(--muted-foreground))]">
+                                            SPI(t): {execMatrix.frentes.tiempo.spi_t ?? execMatrix.frentes.tiempo.spi}
+                                        </span>
+                                    </div>
+
+                                    <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                                        <span className="text-2xs uppercase text-[hsl(var(--muted-foreground))] font-semibold">
+                                            Eficiencia de Esfuerzo
+                                        </span>
+                                        <div className="text-base font-extrabold text-[hsl(var(--foreground))] mt-0.5">
+                                            {execMatrix.frentes.tiempo.hours_efficiency_pct}%
+                                        </div>
+                                        <span className="text-2xs text-[hsl(var(--muted-foreground))]">
+                                            {execMatrix.frentes.tiempo.actual_hours}h reales / {execMatrix.frentes.tiempo.estimated_hours}h est.
+                                        </span>
+                                    </div>
+
+                                    <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                                        <span className="text-2xs uppercase text-[hsl(var(--muted-foreground))] font-semibold">
+                                            Brecha Físico-Financiera
+                                        </span>
+                                        <div className={clsx(
+                                            "text-base font-extrabold mt-0.5",
+                                            execMatrix.frentes.cruce_evm.balance_gap_pct >= 0
+                                                ? "text-[hsl(var(--success))]"
+                                                : "text-[hsl(var(--destructive))]"
+                                        )}>
+                                            {execMatrix.frentes.cruce_evm.balance_gap_pct >= 0
+                                                ? `+${execMatrix.frentes.cruce_evm.balance_gap_pct}%`
+                                                : `${execMatrix.frentes.cruce_evm.balance_gap_pct}%`}
+                                        </div>
+                                        <span className="text-2xs text-[hsl(var(--muted-foreground))]">
+                                            Roll-up Total: {execMatrix.rollup_hierarchy?.overall_progress_pct ?? evmData.progress_percentage}%
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {execMatrix.rollup_hierarchy?.components && execMatrix.rollup_hierarchy.components.length > 0 && (
+                                    <div className="pt-2 border-t border-[hsl(var(--border))] space-y-2">
+                                        <span className="text-2xs uppercase tracking-wider font-semibold text-[hsl(var(--muted-foreground))] block">
+                                            Tributación por Componente EDT ({execMatrix.rollup_hierarchy.components.length})
+                                        </span>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                            {execMatrix.rollup_hierarchy.components.map((comp) => (
+                                                <div
+                                                    key={comp.component_id}
+                                                    className="p-2.5 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex items-center justify-between gap-2"
+                                                >
+                                                    <div>
+                                                        <div className="font-bold text-[hsl(var(--foreground))]">
+                                                            [{comp.code}] {comp.name}
+                                                        </div>
+                                                        <div className="text-2xs text-[hsl(var(--muted-foreground))]">
+                                                            Peso: {comp.budget_weight_pct}% • {comp.activities_count} act. / {comp.subtasks_count} sub.
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right shrink-0">
+                                                        <div className="font-extrabold text-[hsl(var(--primary))]">
+                                                            {comp.physical_progress_pct}%
+                                                        </div>
+                                                        <div className="text-2xs text-[hsl(var(--muted-foreground))]">
+                                                            CPI {comp.cpi} • SPI {comp.spi}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* 5. Recomendaciones Estratégicas del PMI */}
                         {evmData.recommendations && evmData.recommendations.length > 0 && (

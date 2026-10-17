@@ -728,6 +728,9 @@ export interface ProjectExecutiveReportData {
     start_date?: string | null;
     end_date?: string | null;
   }>;
+  execution_matrix?: ProjectExecutionMatrix | null;
+  kpis?: ProjectKPI[];
+  indicators?: ProjectIndicator[];
   generated_at: string;
   organization: string;
 }
@@ -905,8 +908,12 @@ export interface ProjectExecutionMatrix {
   frentes: {
     tiempo: {
       spi: number;
+      spi_t?: number;
       sv: number;
       progress_pct: number;
+      planned_duration_days?: number;
+      actual_time_days?: number;
+      earned_schedule_days?: number;
       estimated_hours: number;
       actual_hours: number;
       hours_efficiency_pct: number;
@@ -927,6 +934,14 @@ export interface ProjectExecutionMatrix {
       burn_rate_pct: number;
       financial_progress_pct: number;
       expenses_count: number;
+      budget_100_rule?: {
+        is_satisfied?: boolean;
+        is_fully_allocated?: boolean;
+        allocation_percentage?: number;
+        components_budget_total?: number;
+        budget_difference?: number;
+        status?: string;
+      };
     };
     cruce_evm: {
       ev: number;
@@ -1062,6 +1077,7 @@ export interface ProjectCurveSResponse {
   project_id: string;
   summary: ProjectEVMMetrics;
   points: ProjectCurveSPoint[];
+  execution_matrix?: ProjectExecutionMatrix | null;
 }
 
 // ── EDT Nivel 2: Componentes y Regla del 100% ──────────────────────────────
