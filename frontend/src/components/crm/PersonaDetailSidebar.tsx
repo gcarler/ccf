@@ -25,8 +25,46 @@ import { useToast } from '@/context/ToastContext';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 
+type ModalTabId = 'timeline' | 'profile' | 'messages' | 'finance' | 'tasks';
+
+export interface PersonaDetailRecord {
+    id: string;
+    nombre_completo?: string;
+    role_in_family?: string | null;
+    spiritual_health?: number;
+    academy_progress?: number;
+    talents?: string | null;
+    spiritual_gifts?: string | null;
+    pastoral_notes?: string | null;
+    [key: string]: unknown;
+}
+
+interface TimelineEventItem {
+    date: string;
+    type?: string;
+    color?: string;
+    title?: string;
+    name?: string;
+    event_name?: string;
+    description?: string;
+}
+
+interface DonationItem {
+    amount: number;
+    donation_type?: string;
+    created_at: string;
+}
+
+interface CrmTaskItem {
+    id: number | string;
+    title: string;
+    status: string;
+    due_date?: string | null;
+    priority?: string;
+}
+
 interface PersonaDetailSidebarProps {
-    persona: any;
+    persona: PersonaDetailRecord;
     onUpdate?: () => void;
     onClose?: () => void;
 }
@@ -36,15 +74,15 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
     const { addToast } = useToast();
     const router = useRouter();
 
-    const [selectedPersona, setSelectedPersona] = useState(initialPersona);
-    const [editedPersona, setEditedPersona] = useState(initialPersona);
+    const [selectedPersona, setSelectedPersona] = useState<PersonaDetailRecord>(initialPersona);
+    const [editedPersona, setEditedPersona] = useState<PersonaDetailRecord>(initialPersona);
     const [editMode, setEditMode] = useState(false);
-    const [modalTab, setModalTab] = useState<'timeline' | 'profile' | 'messages' | 'finance' | 'tasks'>('timeline');
+    const [modalTab, setModalTab] = useState<ModalTabId>('timeline');
 
     // Sub-data states
-    const [history, setHistory] = useState<any[]>([]);
-    const [donations, setDonations] = useState<any[]>([]);
-    const [tasks, setTasks] = useState<any[]>([]);
+    const [history, setHistory] = useState<TimelineEventItem[]>([]);
+    const [donations, setDonations] = useState<DonationItem[]>([]);
+    const [tasks, setTasks] = useState<CrmTaskItem[]>([]);
 
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [loadingFinance, setLoadingFinance] = useState(false);
@@ -57,9 +95,9 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
     const fetchTimeline = useCallback(async (id: string) => {
         setLoadingHistory(true);
         try {
-            const data = await apiFetch(`/crm/personas/${id}/timeline`, { token, cache: 'no-store' });
+            const data = await apiFetch<TimelineEventItem[]>(`/crm/personas/${id}/timeline`, { token, cache: 'no-store' });
             setHistory(Array.isArray(data) ? data : []);
-        } catch (err) {
+        } catch {
             setHistory([]);
         } finally {
             setLoadingHistory(false);
@@ -69,9 +107,9 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
     const fetchFinance = useCallback(async (id: string) => {
         setLoadingFinance(true);
         try {
-            const data = await apiFetch<any[]>(`/crm/personas/${id}/donations`, { token });
+            const data = await apiFetch<DonationItem[]>(`/crm/personas/${id}/donations`, { token });
             setDonations(Array.isArray(data) ? data : []);
-        } catch (e) {
+        } catch {
             setDonations([]);
         } finally {
             setLoadingFinance(false);
@@ -81,9 +119,9 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
     const fetchTasks = useCallback(async (id: string) => {
         setLoadingTasks(true);
         try {
-            const data = await apiFetch<any[]>(`/crm/tasks?assignee_id=${id}`, { token });
+            const data = await apiFetch<CrmTaskItem[]>(`/crm/tasks?assignee_id=${id}`, { token });
             setTasks(Array.isArray(data) ? data : []);
-        } catch (e) {
+        } catch {
             setTasks([]);
         } finally {
             setLoadingTasks(false);
@@ -114,12 +152,12 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
             setEditMode(false);
             setSelectedPersona({ ...selectedPersona, ...editedPersona });
             if (onUpdate) onUpdate();
-        } catch (err) {
+        } catch {
             addToast("Error al actualizar", "error");
         }
     };
 
-    const handleUpdateTaskStatus = async (taskId: number, newStatus: string) => {
+    const handleUpdateTaskStatus = async (taskId: number | string, newStatus: string) => {
         try {
             await apiFetch(`/crm/tasks/${taskId}`, {
                 method: 'PATCH',
@@ -128,7 +166,7 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
             });
             addToast("Estado de tarea actualizado", "success");
             fetchTasks(selectedPersona.id);
-        } catch (err) {
+        } catch {
             addToast("Error al actualizar tarea", "error");
         }
     };
@@ -151,7 +189,7 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
             addToast("Mensaje enviado exitosamente", "success");
             setNewMessageContent('');
             fetchTimeline(selectedPersona.id);
-        } catch (err) {
+        } catch {
             addToast("Error al enviar mensaje", "error");
         }
     };
@@ -224,8 +262,8 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
                 {/* Glass KPI Cards */}
                 <div className="grid grid-cols-3 gap-3 mt-3 relative z-10">
                     {[
-                        { label: 'Salud Esp.', value: `${Math.round(selectedPersona.spiritual_health * 100)}%`, color: 'text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success)/0.1)]', border: 'border-[hsl(var(--success)/0.2)]' },
-                        { label: 'Academia', value: `${Math.round(selectedPersona.academy_progress)}%`, color: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--primary)/0.1)]', border: 'border-[hsl(var(--primary)/0.2)]' },
+                        { label: 'Salud Esp.', value: `${Math.round((selectedPersona.spiritual_health ?? 0) * 100)}%`, color: 'text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success)/0.1)]', border: 'border-[hsl(var(--success)/0.2)]' },
+                        { label: 'Academia', value: `${Math.round(selectedPersona.academy_progress ?? 0)}%`, color: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--primary)/0.1)]', border: 'border-[hsl(var(--primary)/0.2)]' },
                         { label: 'Asistencia', value: '92%', color: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--primary)/0.1)]', border: 'border-[hsl(var(--primary)/0.2)]' }
                     ].map((kpi, i) => (
                         <div key={i} className={clsx(
@@ -242,16 +280,16 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
 
             {/* Sidebar Tabs */}
             <div className="flex px-4 border-b border-[hsl(var(--border))] shrink-0 overflow-x-auto no-scrollbar bg-[hsl(var(--surface-1))] sticky top-0 z-30">
-                {[
+                {([
                     { id: 'timeline', label: 'CV', icon: History },
                     { id: 'tasks', label: 'Tareas', icon: ListTodo },
                     { id: 'finance', label: 'Diezmos', icon: DollarSign },
                     { id: 'messages', label: 'Chat', icon: Mail },
                     { id: 'profile', label: 'Ficha', icon: ShieldCheck }
-                ].map(tab => (
+                ] as Array<{ id: ModalTabId; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }>).map(tab => (
                     <button
                         key={tab.id}
-                        onClick={() => setModalTab(tab.id as any)}
+                        onClick={() => setModalTab(tab.id)}
                         className={clsx(
                             "px-3 py-2 text-2xs font-bold uppercase tracking-wide border-b-2 transition-all flex items-center gap-2.5 shrink-0",
                             modalTab === tab.id ? "border-[hsl(var(--primary))] text-[hsl(var(--primary))]" : "border-transparent text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"

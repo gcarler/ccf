@@ -3,19 +3,19 @@
 import React from 'react';
 import { DndContext, DragEndEvent, PointerSensor, TouchSensor, KeyboardSensor, closestCorners, useSensor, useSensors } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { PersonaPipelineColumn } from '@/components/crm/PersonaPipeline';
+import { PersonaPipelineColumn, type PipelinePersonaItem } from '@/components/crm/PersonaPipeline';
 
 interface PipelineColumn {
     id: string;
     title: string;
     color: string;
-    personas: any[];
+    personas: PipelinePersonaItem[];
 }
 
 interface CrmKanbanViewProps {
     columns: PipelineColumn[];
     onDragEnd: (event: DragEndEvent) => void;
-    onOpenPersona: (persona: any) => void;
+    onOpenPersona: (persona: PipelinePersonaItem) => void;
 }
 
 export default function CrmKanbanView({ columns, onDragEnd, onOpenPersona }: CrmKanbanViewProps) {

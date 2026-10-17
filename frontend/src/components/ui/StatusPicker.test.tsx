@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
@@ -9,15 +8,15 @@ import type { StatusOption } from './StatusPicker';
 
 vi.mock('framer-motion', () => ({
     motion: {
-        div: ({ children, ...props }: any) => <div {...filterMotionProps(props)}>{children}</div>,
+        div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement> & Record<string, unknown>) => <div {...filterMotionProps(props)}>{children}</div>,
     },
-    AnimatePresence: ({ children }: any) => <>{children}</>,
+    AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
 }));
 
 const options: StatusOption[] = [
-    { label: 'Pendiente', value: 'todo', color: 'bg-gray-400', text: 'text-gray-600', bg: 'bg-gray-100' },
-    { label: 'En Progreso', value: 'in_progress', color: 'bg-blue-500', text: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Completado', value: 'completed', color: 'bg-green-500', text: 'text-green-600', bg: 'bg-green-50' },
+    { label: 'Pendiente', value: 'todo', color: 'bg-[hsl(var(--muted-foreground))]', text: 'text-[hsl(var(--muted-foreground))]', bg: 'bg-[hsl(var(--surface-2))]' },
+    { label: 'En Progreso', value: 'in_progress', color: 'bg-[hsl(var(--info))]', text: 'text-[hsl(var(--info))]', bg: 'bg-[hsl(var(--info)/0.1)]' },
+    { label: 'Completado', value: 'completed', color: 'bg-[hsl(var(--success))]', text: 'text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success)/0.1)]' },
 ];
 
 describe('StatusPicker', () => {

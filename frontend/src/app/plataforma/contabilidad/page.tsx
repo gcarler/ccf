@@ -40,27 +40,62 @@ function fmtCOP(n: number) {
   return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 }
 
+interface BankAccountItem {
+  id: string;
+  current_balance?: number | string | null;
+}
+
+interface BankTransactionItem {
+  id: string;
+  description?: string | null;
+  reference?: string | null;
+  transaction_type?: string | null;
+  amount?: number | string | null;
+}
+
+interface InvoiceItem {
+  id: string;
+  invoice_number?: string | null;
+  customer_name?: string | null;
+  total?: number | string | null;
+  status?: string | null;
+}
+
+interface ExpenseReportItem {
+  id: string;
+  status?: string | null;
+}
+
+interface FinanceDocumentItem {
+  id: string;
+}
+
+interface SignRequestItem {
+  id: string;
+  status?: string | null;
+}
+
 export default function ContabilidadPage() {
   const { token } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [invoices, setInvoices] = useState<any[]>([]);
-  const [expenseReports, setExpenseReports] = useState<any[]>([]);
-  const [documents, setDocuments] = useState<any[]>([]);
-  const [signRequests, setSignRequests] = useState<any[]>([]);
+  const [bankAccounts, setBankAccounts] = useState<BankAccountItem[]>([]);
+  const [transactions, setTransactions] = useState<BankTransactionItem[]>([]);
+  const [invoices, setInvoices] = useState<InvoiceItem[]>([]);
+  const [expenseReports, setExpenseReports] = useState<ExpenseReportItem[]>([]);
+  const [documents, setDocuments] = useState<FinanceDocumentItem[]>([]);
+  const [signRequests, setSignRequests] = useState<SignRequestItem[]>([]);
 
   useEffect(() => {
     const ctrl = new AbortController();
     if (!token) { setLoading(false); return; }
     Promise.all([
-      apiFetch<any[]>("/finance-suite/bank-accounts", { token, cache: "no-store" }),
-      apiFetch<any[]>("/finance-suite/bank-transactions?limit=5", { token, cache: "no-store" }),
-      apiFetch<any[]>("/finance-suite/invoices?limit=5", { token, cache: "no-store" }),
-      apiFetch<any[]>("/finance-suite/expense-reports?limit=5", { token, cache: "no-store" }),
-      apiFetch<any[]>("/finance-suite/documents?limit=5", { token, cache: "no-store" }),
-      apiFetch<any[]>("/finance-suite/sign-requests?limit=5", { token, cache: "no-store" }),
+      apiFetch<BankAccountItem[]>("/finance-suite/bank-accounts", { token, cache: "no-store" }),
+      apiFetch<BankTransactionItem[]>("/finance-suite/bank-transactions?limit=5", { token, cache: "no-store" }),
+      apiFetch<InvoiceItem[]>("/finance-suite/invoices?limit=5", { token, cache: "no-store" }),
+      apiFetch<ExpenseReportItem[]>("/finance-suite/expense-reports?limit=5", { token, cache: "no-store" }),
+      apiFetch<FinanceDocumentItem[]>("/finance-suite/documents?limit=5", { token, cache: "no-store" }),
+      apiFetch<SignRequestItem[]>("/finance-suite/sign-requests?limit=5", { token, cache: "no-store" }),
     ]).then(([ba, tx, inv, exp, doc, sign]) => {
       if (Array.isArray(ba)) setBankAccounts(ba);
       if (Array.isArray(tx)) setTransactions(tx);

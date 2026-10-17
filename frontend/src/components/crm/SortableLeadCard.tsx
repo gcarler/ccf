@@ -12,9 +12,36 @@ import {
 import clsx from 'clsx';
 import { SOURCES, STAGE_PROGRESS } from '@/app/plataforma/crm/pipeline/constants';
 
+export interface PipelineKanbanLeadItem {
+    id: string | number;
+    nombre?: string;
+    nombre_completo?: string;
+    first_name?: string | null;
+    last_name?: string | null;
+    phone?: string | null;
+    telefono?: string | null;
+    stage?: string;
+    source?: string;
+    notes?: string | null;
+    created_at?: string | null;
+    sort_order?: number | null;
+}
+
+export interface PipelineKanbanStageItem {
+    id?: string | number;
+    value: string;
+    label: string;
+    color: string;
+    text?: string;
+    bg?: string;
+    border?: string;
+    dot?: string;
+    emptyIcon?: React.ElementType;
+}
+
 interface SortableLeadCardProps {
-    lead: any;
-    stage: any;
+    lead: PipelineKanbanLeadItem;
+    stage: PipelineKanbanStageItem;
     onClick: () => void;
     isDragging?: boolean;
 }
@@ -42,7 +69,7 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
         ? Math.floor((Date.now() - new Date(lead.created_at).getTime()) / (1000 * 60 * 60 * 24))
         : null;
 
-    const progress = STAGE_PROGRESS[lead.stage] || 0;
+    const progress = (lead.stage ? STAGE_PROGRESS[lead.stage] : 0) || 0;
     const radius = 18;
     const circumference = 2 * Math.PI * radius;
     const offset = circumference - (progress / 100) * circumference;
@@ -132,14 +159,14 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
             {/* Quick Actions (Hover Reveal) */}
             <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100">
                 <button
-                    onClick={(e) => { e.stopPropagation(); window.open(`tel:${lead.phone}`); }}
+                    onClick={(e) => { e.stopPropagation(); window.open(`tel:${lead.phone ?? ''}`); }}
                     className="size-7 rounded-lg bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] flex items-center justify-center hover:bg-[hsl(var(--primary))] hover:text-[hsl(var(--primary-foreground))] transition-all shadow-sm"
                     aria-label="Llamar"
                 >
                     <Phone size={12} />
                 </button>
                 <button
-                    onClick={(e) => { e.stopPropagation(); window.open(`https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}`); }}
+                    onClick={(e) => { e.stopPropagation(); window.open(`https://wa.me/${(lead.phone ?? '').replace(/[^0-9]/g, '')}`); }}
                     className="size-7 rounded-lg bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))] flex items-center justify-center hover:bg-[hsl(var(--success))] hover:text-[hsl(var(--success-foreground))] transition-all shadow-sm"
                     aria-label="WhatsApp"
                 >
@@ -154,7 +181,7 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <div className="px-2 py-0.5 rounded-lg bg-[hsl(var(--surface-2))] text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide flex items-center gap-1.5">
-                        <span className="text-sm">{SOURCES[lead.source] ?? '📌'}</span>
+                        <span className="text-sm">{(lead.source ? SOURCES[lead.source] : undefined) ?? '📌'}</span>
                         {lead.source}
                     </div>
                 </div>

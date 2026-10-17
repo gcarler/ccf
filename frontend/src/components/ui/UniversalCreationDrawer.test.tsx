@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
@@ -6,13 +5,15 @@ import { axe } from 'jest-axe';
 import { filterMotionProps } from '@/test-utils/filter-motion-props';
 import UniversalCreationDrawer from './UniversalCreationDrawer';
 
+type MotionMockProps = React.HTMLAttributes<HTMLElement> & Record<string, unknown>;
+
 vi.mock('framer-motion', () => ({
     motion: {
-        div: ({ children, ...props }: any) => <div {...filterMotionProps(props)}>{children}</div>,
-        aside: ({ children, ...props }: any) => <aside {...filterMotionProps(props)}>{children}</aside>,
-        p: ({ children, ...props }: any) => <p {...filterMotionProps(props)}>{children}</p>,
+        div: ({ children, ...props }: MotionMockProps) => <div {...filterMotionProps(props)}>{children}</div>,
+        aside: ({ children, ...props }: MotionMockProps) => <aside {...filterMotionProps(props)}>{children}</aside>,
+        p: ({ children, ...props }: MotionMockProps) => <p {...filterMotionProps(props)}>{children}</p>,
     },
-    AnimatePresence: ({ children }: any) => <>{children}</>,
+    AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
 }));
 
 vi.mock('@/context/AuthContext', () => ({
@@ -23,8 +24,15 @@ vi.mock('@/context/CreationContext', () => ({
     useCreation: () => ({ initialData: null }),
 }));
 
+interface MockRightPanelProps {
+    children?: React.ReactNode;
+    title?: React.ReactNode;
+    onClose?: () => void;
+    open?: boolean;
+}
+
 vi.mock('./RightPanel', () => ({
-    RightPanel: ({ children, title, onClose, open }: any) => (
+    RightPanel: ({ children, title, onClose, open }: MockRightPanelProps) => (
         open ? (
             <div data-testid="right-panel">
                 <div data-testid="right-panel-title">{title}</div>

@@ -16,20 +16,20 @@ import {
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable';
 import { DroppablePipelineColumn } from './DroppablePipelineColumn';
-import { SortableLeadCard } from './SortableLeadCard';
+import { SortableLeadCard, type PipelineKanbanLeadItem, type PipelineKanbanStageItem } from './SortableLeadCard';
 import { PIPELINE_STAGES } from '@/app/plataforma/crm/pipeline/constants';
 
-interface PipelineKanbanBoardProps {
-    leads: any[];
-    stages: any[];
-    onLeadClick: (lead: any) => void;
+interface PipelineKanbanBoardProps<T extends PipelineKanbanLeadItem = PipelineKanbanLeadItem> {
+    leads: T[];
+    stages: PipelineKanbanStageItem[];
+    onLeadClick: (lead: T) => void;
     onDropLead: (leadId: string, stage: string, stageId: string, reorderPayload: { id: string, sort_order: number, etapa_actual_id: string }[]) => void;
     onNewLead: (stage?: string) => void;
     allowEditing?: boolean;
 }
 
-export function PipelineKanbanBoard({ leads = [], stages = [], onLeadClick, onDropLead, onNewLead, allowEditing = true }: PipelineKanbanBoardProps) {
-    const [activeLead, setActiveLead] = useState<any | null>(null);
+export function PipelineKanbanBoard<T extends PipelineKanbanLeadItem = PipelineKanbanLeadItem>({ leads = [], stages = [], onLeadClick, onDropLead, onNewLead, allowEditing = true }: PipelineKanbanBoardProps<T>) {
+    const [activeLead, setActiveLead] = useState<T | null>(null);
     const safeLeads = React.useMemo(() => Array.isArray(leads) ? leads : [], [leads]);
     const safeStages = Array.isArray(stages) ? stages : [];
 
@@ -85,7 +85,7 @@ export function PipelineKanbanBoard({ leads = [], stages = [], onLeadClick, onDr
         const activeLead = safeLeads.find(l => l.id.toString() === leadId);
         if (!activeLead) return;
 
-        const sourceStage = activeLead.stage;
+        const sourceStage = activeLead.stage || '';
         const sourceStageId = safeStages.find(s => s.value === sourceStage)?.id?.toString() || sourceStage;
         const targetStageId = overStageId || safeStages.find(s => s.value === targetStage)?.id?.toString() || targetStage;
 
@@ -187,7 +187,7 @@ export function PipelineKanbanBoard({ leads = [], stages = [], onLeadClick, onDr
                             <div className="rotate-2 scale-110 opacity-100 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] backdrop-blur-3xl ring-4 ring-[hsl(var(--primary))]/20 rounded-lg">
                                 <SortableLeadCard
                                     lead={activeLead}
-                                    stage={(safeStages.find(s => s.value === activeLead.stage) || PIPELINE_STAGES.find(s => s.value === activeLead.stage))}
+                                    stage={(safeStages.find(s => s.value === activeLead.stage) || PIPELINE_STAGES.find(s => s.value === activeLead.stage) || PIPELINE_STAGES[0])}
                                     onClick={() => onLeadClick(activeLead)}
                                     isDragging={true}
                                 />

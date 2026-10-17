@@ -83,7 +83,7 @@ interface ProfileData {
     level?: LevelInfo;
 }
 
-const BADGE_ICONS: Record<string, React.ComponentType<any>> = {
+const BADGE_ICONS: Record<string, React.ElementType> = {
     star: Star,
     heart: Heart,
     shield: Shield,
@@ -107,8 +107,11 @@ export default function MinistryProfilePage() {
         if (!token) return;
         apiFetch<ProfileData>('/crm/personas/me/profile', { token })
             .then(data => setProfile(data))
-            .catch(err => {
-                const msg = (err as any)?.detail?.detail || 'No se pudo cargar el perfil ministerial';
+            .catch((err: unknown) => {
+                const detail = err && typeof err === 'object' ? (err as { detail?: { detail?: unknown } }).detail : undefined;
+                const msg = (detail && typeof detail === 'object' && typeof detail.detail === 'string')
+                    ? detail.detail
+                    : 'No se pudo cargar el perfil ministerial';
                 setError(msg);
             })
             .finally(() => setLoading(false));

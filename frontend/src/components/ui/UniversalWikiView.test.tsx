@@ -12,7 +12,7 @@ const harness = vi.hoisted(() => ({
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
-vi.mock('@/hooks/useWikiDocument', async (importOriginal) => {
+vi.mock('@/hooks/useWikiDocument', async () => {
     const { useState } = await import('react') as typeof import('react');
     return {
         useWikiDocument: () => {

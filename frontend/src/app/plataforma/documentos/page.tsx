@@ -33,11 +33,28 @@ const SECTIONS = [
   },
 ];
 
+interface DocumentTagItem {
+  id: string;
+  name: string;
+  color: string;
+}
+
+interface DocumentItem {
+  id: string;
+  title?: string;
+  description?: string | null;
+  file_url?: string;
+  document_type: string;
+  ai_summary?: string | null;
+  tags?: DocumentTagItem[];
+  ai_tags?: string[];
+}
+
 export default function DocumentosPage() {
   const { token } = useAuth();
   const router = useRouter();
-  const [documents, setDocuments] = useState<any[]>([]);
-  const [tags, setTags] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<DocumentItem[]>([]);
+  const [tags, setTags] = useState<DocumentTagItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -51,8 +68,8 @@ export default function DocumentosPage() {
     setLoading(true);
     try {
       const [d, t] = await Promise.all([
-        apiFetch<any[]>("/finance-suite/documents?limit=100", { token, cache: "no-store" }),
-        apiFetch<any[]>("/finance-suite/document-tags", { token, cache: "no-store" }),
+        apiFetch<DocumentItem[]>("/finance-suite/documents?limit=100", { token, cache: "no-store" }),
+        apiFetch<DocumentTagItem[]>("/finance-suite/document-tags", { token, cache: "no-store" }),
       ]);
       if (Array.isArray(d)) setDocuments(d);
       if (Array.isArray(t)) setTags(t);
@@ -68,7 +85,7 @@ export default function DocumentosPage() {
 
   const filtered = documents.filter((d) => {
     const matchesSearch = d.title?.toLowerCase().includes(search.toLowerCase()) || d.description?.toLowerCase().includes(search.toLowerCase());
-    const matchesTag = selectedTag ? d.tags?.some((t: any) => t.id === selectedTag) : true;
+    const matchesTag = selectedTag ? d.tags?.some((t) => t.id === selectedTag) : true;
     return matchesSearch && matchesTag;
   });
 
@@ -195,7 +212,7 @@ export default function DocumentosPage() {
                       </div>
                     )}
                     <div className="flex flex-wrap gap-1">
-                      {doc.tags?.map((t: any) => (
+                      {doc.tags?.map((t) => (
                         <span key={t.id} className="px-1.5 py-0.5 rounded-full text-2xs font-bold text-[hsl(var(--primary-foreground))]" style={{ backgroundColor: t.color }}>{t.name}</span>
                       ))}
                       {doc.ai_tags?.map((tag: string, idx: number) => (

@@ -115,7 +115,7 @@ export function CrmTableView({ personas, onSelect, isList = false }: TableProps)
         const cols: ColDef[] = [
             {
                 headerName: 'Persona', flex: 2, minWidth: 180,
-                cellRenderer: ({ data }: any) => {
+                cellRenderer: ({ data }: { data?: Persona }) => {
                     const initials = data?.nombre_completo?.charAt(0) ?? '';
                     return (
                         <div className="flex items-center gap-3 h-full">
@@ -132,7 +132,7 @@ export function CrmTableView({ personas, onSelect, isList = false }: TableProps)
             },
             {
                 headerName: 'Contacto', flex: 2, minWidth: 160,
-                cellRenderer: ({ data }: any) => (
+                cellRenderer: ({ data }: { data?: Persona }) => (
                     <div className="flex flex-col justify-center gap-0.5 h-full">
                         <div className="text-xs font-bold text-[hsl(var(--muted-foreground))] flex items-center gap-1"><Mail size={11} /> {data?.email || '—'}</div>
                         <div className="text-xs text-[hsl(var(--muted-foreground))] flex items-center gap-1"><Phone size={11} /> {data?.phone || '—'}</div>
@@ -141,7 +141,7 @@ export function CrmTableView({ personas, onSelect, isList = false }: TableProps)
             },
             {
                 field: 'church_role', headerName: 'Rol', width: 140,
-                cellRenderer: ({ value }: any) => {
+                cellRenderer: ({ value }: { value?: string }) => {
                     const isLeader = String(value ?? '').toLowerCase().includes('líder') || String(value ?? '').toLowerCase().includes('lider');
                     return <span className={`px-2.5 py-0.5 rounded-lg text-xs font-bold uppercase tracking-wider ${isLeader ? 'bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))] border border-[hsl(var(--warning)/0.3)]' : 'bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]'}`}>{value || 'Persona'}</span>;
                 },
@@ -151,7 +151,7 @@ export function CrmTableView({ personas, onSelect, isList = false }: TableProps)
         if (!isList) {
             cols.splice(2, 0, {
                 field: 'spiritual_status', headerName: 'Estado Espiritual', width: 160,
-                cellRenderer: ({ value }: any) => (
+                cellRenderer: ({ value }: { value?: string }) => (
                     <span className="px-2.5 py-0.5 bg-[hsl(var(--surface-2))] rounded-lg text-xs font-bold uppercase text-[hsl(var(--muted-foreground))] tracking-wider">
                         {value || 'Nuevo'}
                     </span>
@@ -159,7 +159,7 @@ export function CrmTableView({ personas, onSelect, isList = false }: TableProps)
             });
             cols.push({
                 headerName: 'Salud', width: 100,
-                cellRenderer: ({ data }: any) => (
+                cellRenderer: ({ data }: { data?: Persona }) => (
                     <div className="flex items-center gap-1 text-[hsl(var(--primary))] font-bold text-xs">
                         <Heart size={13} fill="currentColor" />
                         {Math.round((data?.spiritual_health || 0.8) * 100)}%

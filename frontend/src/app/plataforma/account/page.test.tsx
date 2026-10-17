@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
@@ -10,11 +9,11 @@ import { SidebarLayerProvider } from '@/context/SidebarLayerContext';
 
 vi.mock('framer-motion', () => ({
     motion: {
-        div: React.forwardRef<HTMLDivElement, any>(({ children, ...props }, ref) => (
-            <div ref={ref} {...filterMotionProps(props)}>{children}</div>
-        )),
+        div: React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(function MockMotionDiv({ children, ...props }, ref) {
+            return <div ref={ref} {...filterMotionProps(props as Record<string, unknown>)}>{children}</div>;
+        }),
     },
-    AnimatePresence: ({ children }: any) => <>{children}</>,
+    AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
 }));
 
 vi.mock('@/components/WorkspaceLayout', () => ({

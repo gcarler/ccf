@@ -1,13 +1,14 @@
 "use client";
 
 import React from 'react';
+import type { AppIcon } from '@/types/icons';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { ViewType } from '@/components/ViewSwitcher';
 
 export interface BreadcrumbOption {
     label: string;
     href?: string;
-    icon?: any;
+    icon?: AppIcon;
 }
 
 interface CrmShellProps {

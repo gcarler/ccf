@@ -5,14 +5,23 @@ import AgGridTable, { ColDef, type AgGridTableRef } from '@/components/ui/AgGrid
 
 
 
-interface Props {
-    personas: any[];
+export interface CrmTablePersonaRow {
+    id: string | number;
+    nombre_completo?: string;
+    email?: string | null;
+    phone?: string | null;
+    church_role?: string | null;
+    spiritual_status?: string | null;
+}
+
+interface Props<T extends CrmTablePersonaRow = CrmTablePersonaRow> {
+    personas: T[];
     search: string;
-    onRowClick: (persona: any) => void;
+    onRowClick: (persona: T) => void;
     isList?: boolean;
 }
 
-function AvatarNameRenderer({ data }: any) {
+function AvatarNameRenderer({ data }: { data?: CrmTablePersonaRow }) {
     const initials = data?.nombre_completo?.charAt(0) ?? '';
     return (
         <div className="flex items-center gap-2.5 h-full">
@@ -27,7 +36,7 @@ function AvatarNameRenderer({ data }: any) {
     );
 }
 
-function RoleRenderer({ value }: any) {
+function RoleRenderer({ value }: { value?: string }) {
     const isLeader = String(value ?? '').toLowerCase().includes('líder') || String(value ?? '').toLowerCase().includes('lider');
     return (
         <span className={`px-2.5 py-0.5 rounded-lg text-2xs font-bold uppercase tracking-wider ${isLeader ? 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))]' : 'bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]'}`}>
@@ -36,7 +45,7 @@ function RoleRenderer({ value }: any) {
     );
 }
 
-export default function CrmTableView({ personas, search, onRowClick, isList = false }: Props) {
+export default function CrmTableView<T extends CrmTablePersonaRow = CrmTablePersonaRow>({ personas, search, onRowClick, isList = false }: Props<T>) {
     const gridRef = useRef<AgGridTableRef>(null);
 
     const filtered = useMemo(

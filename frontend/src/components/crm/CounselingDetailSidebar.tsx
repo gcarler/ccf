@@ -21,8 +21,28 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import clsx from 'clsx';
 
+type CounselingTabId = 'details' | 'timeline' | 'ai';
+
+interface CounselingHistoryItem {
+    id: string | number;
+    text: string;
+    date: string;
+}
+
+export interface CounselingSessionItem {
+    id: number | string;
+    status?: string;
+    topic?: string | null;
+    persona_name?: string | null;
+    scheduled_at?: string | null;
+    duration_minutes?: number | null;
+    summary?: string | null;
+    confidential_notes?: string | null;
+    history?: CounselingHistoryItem[];
+}
+
 interface CounselingDetailSidebarProps {
-    session: any;
+    session: CounselingSessionItem;
     onUpdate?: () => void;
     onClose?: () => void;
 }
@@ -31,15 +51,15 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
     const { token } = useAuth();
     const { addToast } = useToast();
 
-    const [session, setSession] = useState(initialSession);
+    const [session, setSession] = useState<CounselingSessionItem>(initialSession);
     const [loading, setLoading] = useState(false);
     const [showNotes, setShowNotes] = useState(false);
-    const [activeTab, setActiveTab] = useState<'details' | 'timeline' | 'ai'>('details');
+    const [activeTab, setActiveTab] = useState<CounselingTabId>('details');
 
-    const fetchSessionDetails = useCallback(async (id: number) => {
+    const fetchSessionDetails = useCallback(async (id: number | string) => {
         setLoading(true);
         try {
-            const data = await apiFetch(`/crm/counseling/${id}`, { token });
+            const data = await apiFetch<CounselingSessionItem>(`/crm/counseling/${id}`, { token });
             if (data) setSession(data);
         } catch (err) {
             console.error("Error fetching session details", err);
@@ -138,14 +158,14 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
 
             {/* Tabs */}
             <div className="flex px-4 border-b border-[hsl(var(--border))] shrink-0 bg-[hsl(var(--surface-1))] overflow-x-auto no-scrollbar sticky top-0 z-30">
-                {[
+                {([
                     { id: 'details', label: 'Expediente', icon: BookOpen },
                     { id: 'timeline', label: 'Historial', icon: History },
                     { id: 'ai', label: 'Análisis IA', icon: Zap }
-                ].map(tab => (
+                ] as Array<{ id: CounselingTabId; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }>).map(tab => (
                     <button
                         key={tab.id}
-                        onClick={() => setActiveTab(tab.id as any)}
+                        onClick={() => setActiveTab(tab.id)}
                         className={clsx(
                             "px-3 py-2 text-2xs font-bold uppercase tracking-wide border-b-2 transition-all flex items-center gap-2.5 shrink-0",
                             activeTab === tab.id ? "border-[hsl(var(--primary))] text-[hsl(var(--primary))]" : "border-transparent text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
@@ -245,9 +265,9 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                     {activeTab === 'timeline' && (
                         <motion.div key="timeline" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="space-y-3">
                             <h3 className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Seguimiento Histórico</h3>
-                            {session.history?.length > 0 ? (
+                            {session.history && session.history.length > 0 ? (
                                 <div className="relative border-l-2 border-[hsl(var(--border))] ml-2 space-y-3 pl-6">
-                                    {session.history.map((h: any) => (
+                                    {session.history.map((h) => (
                                         <div key={h.id} className="relative">
                                             <div className="absolute -left-[31px] top-1 size-4 rounded-full border-4 border-[hsl(var(--surface-1))] bg-[hsl(var(--primary))] shadow-sm" />
                                             <div className="p-4 bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))]">

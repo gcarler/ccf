@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import {
     User, Mail, Shield, Palette, Bell, Save, Camera, ChevronRight, UserCircle,
-    Fingerprint, Moon, Sun, Monitor, Globe, Lock, ShieldCheck, Smartphone, Layout,
+    Fingerprint, Globe, Lock, ShieldCheck, Smartphone, Layout,
     Sparkles, LogOut, Settings as SettingsIcon, Zap, Crown, Share2, Instagram, Facebook, Twitter
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
@@ -23,11 +23,38 @@ import AppearanceDrawer from '@/components/ui/AppearanceDrawer';
 import PaletteSelector from '@/app/plataforma/theme/PaletteSelector';
 import { useTheme } from '@/app/plataforma/theme/ThemeContext';
 
+type AccountTabId = 'profile' | 'security' | 'appearance' | 'notifications';
+
+interface PersonaProfilePayload {
+    first_name?: string | null;
+    last_name?: string | null;
+    phone?: string | null;
+    mobile_phone?: string | null;
+    bio_short?: string | null;
+    social_instagram?: string | null;
+    social_facebook?: string | null;
+    social_twitter?: string | null;
+}
+
+function extractApiErrorMessage(err: unknown, fallback: string): string {
+    if (err && typeof err === 'object') {
+        const detailObj = (err as { detail?: { detail?: unknown }; message?: unknown }).detail;
+        if (detailObj && typeof detailObj === 'object' && typeof detailObj.detail === 'string') {
+            return detailObj.detail;
+        }
+        const msg = (err as { message?: unknown }).message;
+        if (typeof msg === 'string' && msg) {
+            return msg;
+        }
+    }
+    return fallback;
+}
+
 export default function AccountSettingsPage() {
     const { user, logout, refresh } = useAuth();
     const { addToast } = useToast();
     const { theme, currentScale, currentAccent, currentDensity, zoomPercentage } = useTheme();
-    const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'appearance' | 'notifications'>('profile');
+    const [activeTab, setActiveTab] = useState<AccountTabId>('profile');
     const [isSaving, setIsSaving] = useState(false);
     const [isChangingPassword, setIsChangingPassword] = useState(false);
     const [is2FADrawerOpen, setIs2FADrawerOpen] = useState(false);
@@ -65,7 +92,7 @@ export default function AccountSettingsPage() {
         const loadPersonaProfile = async () => {
             if (!user?.id) return;
             try {
-                const profile = await apiFetch<any>('/crm/personas/me/profile', { cache: 'no-store' });
+                const profile = await apiFetch<PersonaProfilePayload>('/crm/personas/me/profile', { cache: 'no-store' });
                 if (cancelled || !profile) return;
                 setFormValues(f => ({
                     ...f,
@@ -95,7 +122,7 @@ export default function AccountSettingsPage() {
         return () => { cancelled = true; };
     }, []);
 
-    const tabs = [
+    const tabs: Array<{ id: AccountTabId; label: string; icon: React.ElementType }> = [
         { id: 'profile', label: 'Mi Perfil', icon: UserCircle },
         { id: 'security', label: 'Seguridad', icon: Shield },
         { id: 'appearance', label: 'Apariencia', icon: Palette },
@@ -109,7 +136,7 @@ export default function AccountSettingsPage() {
             if (formValues.username !== user?.username) authBody.username = formValues.username;
             if (formValues.email !== user?.email) authBody.email = formValues.email;
 
-            const profileBody: Record<string, any> = {};
+            const profileBody: Record<string, string | null> = {};
             if (formValues.firstName) profileBody.first_name = formValues.firstName;
             if (formValues.lastName) profileBody.last_name = formValues.lastName;
             if (formValues.phone) profileBody.phone = formValues.phone;
@@ -131,9 +158,8 @@ export default function AccountSettingsPage() {
             }
             await refresh();
             addToast("Perfil actualizado exitosamente", "success");
-        } catch (err: any) {
-            const serverMsg = (err as any)?.detail?.detail;
-            const msg = typeof serverMsg === 'string' ? serverMsg : err?.message || "Error al actualizar perfil";
+        } catch (err: unknown) {
+            const msg = extractApiErrorMessage(err, "Error al actualizar perfil");
             addToast(msg, "error");
         } finally {
             setIsSaving(false);
@@ -219,7 +245,7 @@ export default function AccountSettingsPage() {
                         <button
                             key={tab.id}
                             data-testid={`tab-${tab.id}`}
-                            onClick={() => setActiveTab(tab.id as any)}
+                            onClick={() => setActiveTab(tab.id)}
                             className={clsx(
                                 "w-full flex items-center gap-4 px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg font-semibold transition-all group relative overflow-hidden",
                                 activeTab === tab.id
@@ -406,9 +432,8 @@ export default function AccountSettingsPage() {
                                                         });
                                                         setPasswordForm({ current: '', newPass: '', confirm: '' });
                                                         addToast("Contraseña actualizada exitosamente", "success");
-                                                    } catch (err: any) {
-                                                        const serverMsg = (err as any)?.detail?.detail;
-                                                        const msg = typeof serverMsg === 'string' ? serverMsg : err?.message || "Error al cambiar contraseña";
+                                                    } catch (err: unknown) {
+                                                        const msg = extractApiErrorMessage(err, "Error al cambiar contraseña");
                                                         addToast(msg, "error");
                                                     } finally {
                                                         setIsChangingPassword(false);
@@ -538,7 +563,17 @@ export default function AccountSettingsPage() {
     );
 }
 
-function InputField({ label, icon: Icon, value, placeholder, type = "text", onChange, id: explicitId }: any) {
+interface InputFieldProps {
+    label: string;
+    icon?: React.ElementType;
+    value: string;
+    placeholder?: string;
+    type?: string;
+    onChange?: (val: string) => void;
+    id?: string;
+}
+
+function InputField({ label, icon: Icon, value, placeholder, type = "text", onChange, id: explicitId }: InputFieldProps) {
     const autoId = React.useId();
     const inputId = explicitId || `${autoId}-${label.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
     return (

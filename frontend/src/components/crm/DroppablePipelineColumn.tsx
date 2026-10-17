@@ -9,7 +9,7 @@ import {
 import { UserPlus, MoreHorizontal } from 'lucide-react';
 import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SortableLeadCard } from './SortableLeadCard';
+import { SortableLeadCard, type PipelineKanbanLeadItem, type PipelineKanbanStageItem } from './SortableLeadCard';
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -35,15 +35,15 @@ const itemVariants = {
     }
 };
 
-interface DroppablePipelineColumnProps {
-    stage: any;
-    leads: any[];
-    onLeadClick: (lead: any) => void;
+interface DroppablePipelineColumnProps<T extends PipelineKanbanLeadItem = PipelineKanbanLeadItem> {
+    stage: PipelineKanbanStageItem;
+    leads: T[];
+    onLeadClick: (lead: T) => void;
     onNewLead: () => void;
     allowEditing?: boolean;
 }
 
-export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead, allowEditing = true }: DroppablePipelineColumnProps) {
+export function DroppablePipelineColumn<T extends PipelineKanbanLeadItem = PipelineKanbanLeadItem>({ stage, leads, onLeadClick, onNewLead, allowEditing = true }: DroppablePipelineColumnProps<T>) {
     const { setNodeRef, isOver } = useDroppable({
         id: stage.id || stage.value,
     });
@@ -102,7 +102,7 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead, 
                     className="flex flex-col gap-1 overflow-y-auto scrollbar-none pb-4"
                 >
                     <SortableContext
-                        id={stage.id || stage.value}
+                        id={String(stage.id || stage.value)}
                         items={leads.map(l => l.id.toString())}
                         strategy={verticalListSortingStrategy}
                     >

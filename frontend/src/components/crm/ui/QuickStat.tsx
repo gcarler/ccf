@@ -4,7 +4,7 @@ import React, { ElementType } from 'react';
 
 interface QuickStatProps {
   label: string;
-  value: any;
+  value: React.ReactNode;
   icon: ElementType;
   color: string;
 }

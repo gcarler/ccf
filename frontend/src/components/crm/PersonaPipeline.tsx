@@ -7,9 +7,15 @@ import { CSS } from '@dnd-kit/utilities';
 import { MessageSquare, MoreHorizontal, Star } from 'lucide-react';
 import clsx from 'clsx';
 
+export interface PipelinePersonaItem {
+    id: string;
+    name: string;
+    group?: string;
+}
+
 interface PersonaCardProps {
-    persona: any;
-    onClick: (persona: any) => void;
+    persona: PipelinePersonaItem;
+    onClick: (persona: PipelinePersonaItem) => void;
 }
 
 function SortablePersonaCard({ persona, onClick }: PersonaCardProps) {
@@ -47,7 +53,15 @@ function SortablePersonaCard({ persona, onClick }: PersonaCardProps) {
     );
 }
 
-export function PersonaPipelineColumn({ id, title, color, personas, onOpenPersona }: any) {
+interface PersonaPipelineColumnProps {
+    id: string;
+    title: string;
+    color?: string;
+    personas: PipelinePersonaItem[];
+    onOpenPersona: (persona: PipelinePersonaItem) => void;
+}
+
+export function PersonaPipelineColumn({ id, title, color, personas, onOpenPersona }: PersonaPipelineColumnProps) {
     const { setNodeRef } = useDroppable({ id });
 
     return (
@@ -62,8 +76,8 @@ export function PersonaPipelineColumn({ id, title, color, personas, onOpenPerson
             </div>
 
             <div ref={setNodeRef} className="flex flex-col gap-3 min-h-48">
-                <SortableContext id={id} items={personas.map((m: any) => m.id)} strategy={verticalListSortingStrategy}>
-                    {personas.map((persona: any) => (
+                <SortableContext id={id} items={personas.map((m) => m.id)} strategy={verticalListSortingStrategy}>
+                    {personas.map((persona) => (
                         <SortablePersonaCard key={persona.id} persona={persona} onClick={onOpenPersona} />
                     ))}
                 </SortableContext>

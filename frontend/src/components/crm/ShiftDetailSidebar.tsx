@@ -19,7 +19,7 @@ import {
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 
-const iconMap: Record<string, any> = {
+const iconMap: Record<string, React.ElementType> = {
     'Alabanza': Music,
     'Generación G': Baby,
     'Niños': Baby,
@@ -39,8 +39,17 @@ const colorMap: Record<string, string> = {
     'Media': 'bg-[hsl(var(--destructive))]'
 };
 
+export interface ShiftItem {
+    id?: string | number;
+    team_name: string;
+    role_name?: string;
+    status?: string;
+    shift_start: string;
+    time?: string;
+}
+
 interface ShiftDetailSidebarProps {
-    shift: any;
+    shift: ShiftItem;
     onClose?: () => void;
 }
 

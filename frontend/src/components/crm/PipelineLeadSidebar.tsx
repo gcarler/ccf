@@ -20,16 +20,44 @@ import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import { STAGE_LABEL } from '@/app/plataforma/crm/pipeline/constants';
 
+export interface PipelineLeadItem {
+    id: string;
+    nombre_completo?: string;
+    stage?: string;
+    telefono?: string | null;
+    phone?: string | null;
+}
+
+export interface PipelineStageItem {
+    id?: string | number;
+    value: string;
+    label: string;
+    bg?: string;
+    text?: string;
+    border?: string;
+    color?: string;
+}
+
+interface PipelineAuditLogItem {
+    id: string | number;
+    action: string;
+    created_at: string;
+    metadata?: {
+        stage?: string;
+        [key: string]: unknown;
+    } | null;
+}
+
 interface PipelineLeadSidebarProps {
-    lead: any;
-    stages: any[];
+    lead: PipelineLeadItem | null;
+    stages: PipelineStageItem[];
     onUpdateStage: (leadId: string, stage: string, stageId?: string) => void;
     onViewFullProfile: (leadId: string) => void;
 }
 
 export default function PipelineLeadSidebar({ lead, stages = [], onUpdateStage, onViewFullProfile }: PipelineLeadSidebarProps) {
     const { token } = useAuth();
-    const [auditLogs, setAuditLogs] = useState<any[]>([]);
+    const [auditLogs, setAuditLogs] = useState<PipelineAuditLogItem[]>([]);
     const [loadingAudit, setLoadingAudit] = useState(false);
     const safeStages = Array.isArray(stages) ? stages : [];
 
@@ -39,7 +67,7 @@ export default function PipelineLeadSidebar({ lead, stages = [], onUpdateStage, 
         const fetchAudit = async () => {
             try {
                 setLoadingAudit(true);
-                const logs = await apiFetch<any[]>(`/crm/casos/${lead.id}/audit`, { token });
+                const logs = await apiFetch<PipelineAuditLogItem[]>(`/crm/casos/${lead.id}/audit`, { token });
                 setAuditLogs(logs || []);
             } catch (err) {
                 console.error("Error fetching audit:", err);
