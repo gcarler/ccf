@@ -30,6 +30,23 @@ import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import { useRegisterCommands } from '@/context/CommandCenterContext';
 import { useRouter } from 'next/navigation';
 
+interface SupportTicket {
+    id: string | number;
+    subject: string;
+    description: string;
+    category?: string;
+    status?: string;
+    priority?: string;
+    created_at: string;
+    updated_at?: string;
+}
+
+interface DrawerStatProps {
+    label: string;
+    value?: string | number | null;
+    icon: React.ElementType;
+}
+
 const SUPPORT_VIEWS: ViewType[] = ['grid', 'table', 'list', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
 export default function SupportPage() {
@@ -37,8 +54,8 @@ export default function SupportPage() {
     const { addToast } = useToast();
     const router = useRouter();
     const [viewType, setViewType] = useState<ViewType>('table');
-    const [tickets, setTickets] = useState<any[]>([]);
-    const [selectedTicket, setSelectedTicket] = useState<any>(null);
+    const [tickets, setTickets] = useState<SupportTicket[]>([]);
+    const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
     const [search, setSearch] = useState('');
@@ -54,7 +71,7 @@ export default function SupportPage() {
         const fetchTickets = async () => {
             if (!token) return;
             try {
-                const data = await apiFetch('/support/', { token });
+                const data = await apiFetch<SupportTicket[]>('/support/', { token });
                 if (Array.isArray(data)) {
                     setTickets(data);
                 }
@@ -76,7 +93,7 @@ export default function SupportPage() {
 
         setIsSubmitting(true);
         try {
-            const created = await apiFetch('/support/', {
+            const created = await apiFetch<SupportTicket>('/support/', {
                 method: 'POST',
                 token,
                 body: newTicket
@@ -93,7 +110,7 @@ export default function SupportPage() {
         }
     };
 
-    const handleOpenTicket = (ticket: any) => {
+    const handleOpenTicket = (ticket: SupportTicket) => {
         setSelectedTicket(ticket);
         setIsDrawerOpen(true);
     };
@@ -175,7 +192,7 @@ export default function SupportPage() {
                                 label: 'Asunto / Descripción',
                                 type: 'text',
                                 width: '400px',
-                                render: (val, ticket) => (
+                                render: (_val, ticket) => (
                                     <div className="flex flex-col pr-4">
                                         <span className="text-base font-bold text-[hsl(var(--text-primary))] truncate">{ticket.subject}</span>
                                         <span className="text-2xs text-[hsl(var(--text-secondary))] font-medium truncate">{ticket.description}</span>
@@ -187,10 +204,10 @@ export default function SupportPage() {
                                 label: 'Categoría',
                                 type: 'text',
                                 width: '150px',
-                                render: (val: any) => (
+                                render: (val: unknown) => (
                                     <span className="text-xs font-bold text-[hsl(var(--text-secondary))] flex items-center gap-2">
                                         <Book size={12} className="text-[hsl(var(--text-secondary))]" />
-                                        {val}
+                                        {String(val ?? '')}
                                     </span>
                                 )
                             },
@@ -419,7 +436,7 @@ export default function SupportPage() {
     );
 }
 
-function DrawerStat({ label, value, icon: Icon }: any) {
+function DrawerStat({ label, value, icon: Icon }: DrawerStatProps) {
     return (
         <div className="p-3 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md">
             <div className="flex items-center gap-2 mb-1">

@@ -14,9 +14,18 @@ import { apiFetch } from '@/lib/http';
 import { useWorkspaceSocket } from '@/hooks/useWorkspaceSocket';
 import { toast } from 'sonner';
 
+interface InboxNotificationItem {
+    id: number;
+    title: string;
+    content: string;
+    created_at: string;
+    is_read?: boolean;
+    notif_type?: string;
+}
+
 export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
     const { token, user } = useAuth();
-    const [notifications, setNotifications] = useState<any[]>([]);
+    const [notifications, setNotifications] = useState<InboxNotificationItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'mentions' | 'assigned'>('all');
     const [isExpanded, setIsExpanded] = useState(false);
@@ -25,7 +34,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<any[]>('/messaging/notifications', { token, silent: true });
+            const data = await apiFetch<InboxNotificationItem[]>('/messaging/notifications', { token, silent: true });
             if (Array.isArray(data)) setNotifications(data);
         } catch { /* silent */ }
         finally { setLoading(false); }
@@ -48,11 +57,12 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
         return () => document.removeEventListener('keydown', handleEscape);
     }, [isOpen, onClose]);
 
-    const handleSocketEvent = useCallback((payload: any) => {
+    const handleSocketEvent = useCallback((payload: { event?: string; body?: InboxNotificationItem } | null | undefined) => {
         if (payload?.event === 'notification:new' && payload.body) {
+            const nextNotif = payload.body;
             setNotifications((prev) => {
-                if (prev.some((item) => item.id === payload.body.id)) return prev;
-                return [payload.body, ...prev];
+                if (prev.some((item) => item.id === nextNotif.id)) return prev;
+                return [nextNotif, ...prev];
             });
         }
     }, []);
@@ -69,7 +79,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
             await apiFetch(`/messaging/notifications/${id}`, { method: 'PATCH', token });
             setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
             toast.success("Notificación marcada como leída");
-        } catch (err) {
+        } catch {
             toast.error("No se pudo actualizar");
         }
     };
@@ -234,7 +244,15 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
     );
 }
 
-function HeaderAction({ icon: Icon, tooltip, ariaLabel = tooltip, onClick, pressed }: any) {
+interface HeaderActionProps {
+    icon: React.ElementType;
+    tooltip: string;
+    ariaLabel?: string;
+    onClick?: () => void;
+    pressed?: boolean;
+}
+
+function HeaderAction({ icon: Icon, tooltip, ariaLabel = tooltip, onClick, pressed }: HeaderActionProps) {
     return (
         <button
             onClick={onClick}
@@ -251,7 +269,14 @@ function HeaderAction({ icon: Icon, tooltip, ariaLabel = tooltip, onClick, press
     );
 }
 
-function Tab({ active, label, count, onClick }: any) {
+interface TabProps {
+    active: boolean;
+    label: string;
+    count?: number;
+    onClick: () => void;
+}
+
+function Tab({ active, label, count, onClick }: TabProps) {
     return (
         <button
             onClick={onClick}

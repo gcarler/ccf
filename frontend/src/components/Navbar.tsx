@@ -17,13 +17,24 @@ import {
 import { SITE_NAME } from '@/lib/site-config';
 import { PROJECTS_LIST_ROUTE } from '@/app/plataforma/projects/projectsLinks';
 
+interface NavSubItem {
+    label: string;
+    href: string;
+}
+
+interface NavItem {
+    label: string;
+    href: string;
+    submenu?: NavSubItem[];
+}
+
 export default function Navbar() {
     const { isAuthenticated, logout } = useAuth();
     const { logoUrl, logoName } = useSiteBranding({ logoName: SITE_NAME });
     const [logoError, setLogoError] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const navItems = [
+    const navItems: NavItem[] = [
         { label: 'Inicio', href: '/' },
         { label: 'Academia', href: '/plataforma/academy' },
         { label: 'Proyectos', href: PROJECTS_LIST_ROUTE },
@@ -72,7 +83,7 @@ export default function Navbar() {
 
                     {/* Desktop Menu */}
                     <div className="hidden lg:flex items-center gap-1">
-                        {navItems.map((item: any) => {
+                        {navItems.map((item) => {
                             const isActive = item.href === '/'
                                 ? (pathname || '') === '/'
                                 : (pathname || '').startsWith(item.href);
@@ -142,12 +153,12 @@ export default function Navbar() {
             {mobileMenuOpen && (
                 <div className="lg:hidden px-4 mt-2">
                     <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] rounded-lg p-4 space-y-1.5 shadow-xl border border-[hsl(var(--border))]/50 dark:border-white/5 animate-in slide-in-from-top-4 duration-200 max-h-[70vh] overflow-y-auto">
-                        {navItems.map((item: any) => (
+                        {navItems.map((item) => (
                             <div key={item.label}>
                                 {item.submenu ? (
                                     <div className="space-y-1 py-1">
                                         <div className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 mb-0.5">{item.label}</div>
-                                        {item.submenu.map((sub: any) => (
+                                        {item.submenu.map((sub) => (
                                             <Link
                                                 key={sub.href}
                                                 href={sub.href}
@@ -179,7 +190,7 @@ export default function Navbar() {
     );
 }
 
-function NavDropdown({ label, items, active }: { label: string, items: any[], active: boolean }) {
+function NavDropdown({ label, items, active }: { label: string, items: NavSubItem[], active: boolean }) {
     const [isOpen, setIsOpen] = useState(false);
 
     return (

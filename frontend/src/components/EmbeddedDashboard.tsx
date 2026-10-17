@@ -25,12 +25,44 @@ import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 
 // Types
 interface MetricData { title: string; value: string; trend?: string; tone?: string; icon?: string; }
-interface ChartPoint { label: string; value: number; secondary_value?: number; metadata?: any; }
+interface ChartPoint { label: string; value: number; secondary_value?: number; metadata?: Record<string, unknown>; }
 interface FunnelStage { stage: string; count: number; conversion_rate?: number; }
-interface TableRow { id: string; columns: Record<string, any>; link?: string; }
+interface TableRow { id: string; columns: Record<string, string | number | null | undefined>; link?: string; }
 interface AlertRule {
     id: string; metric: string; operator: 'gt' | 'lt' | 'eq'; threshold: number;
     label: string; enabled: boolean;
+}
+interface EmbeddedFilterDef {
+    key: string;
+    label: string;
+    type?: string;
+    options?: { label: string; value: string }[];
+    default?: string;
+}
+interface EmbeddedGeoItem {
+    label: string;
+    value?: number;
+    lat?: number;
+    lng?: number;
+}
+interface EmbeddedDashboardData {
+    cards?: MetricData[];
+    filters?: EmbeddedFilterDef[];
+    attendance_rate?: number;
+    seguimientos_pendientes?: number;
+    slas_vencidos?: number;
+    conversion_rate?: number;
+    delayed_tasks_count?: number;
+    pipeline_funnel?: FunnelStage[];
+    growth_chart?: ChartPoint[];
+    asistencia_por_sesion?: ChartPoint[];
+    income_by_category?: ChartPoint[];
+    monthly_series?: ChartPoint[];
+    enrollment_trends?: ChartPoint[];
+    status_distribution?: ChartPoint[];
+    usuarios_por_rol?: ChartPoint[];
+    grupos_por_ubicacion?: EmbeddedGeoItem[];
+    ausentes_detalle?: TableRow[];
 }
 
 // ─── PDF Export ──────────────────────────────────────────────────────
@@ -168,7 +200,7 @@ function AlertConfigDrawer({
                     />
                     <select
                         value={newOp}
-                        onChange={e => setNewOp(e.target.value as any)}
+                        onChange={e => setNewOp(e.target.value as AlertRule['operator'])}
                         className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-muted))] px-1 py-1.5 text-xs text-[hsl(var(--text-primary))]"
                     >
                         <option value="gt">&gt;</option><option value="lt">&lt;</option><option value="eq">=</option>
@@ -218,13 +250,13 @@ export default function EmbeddedDashboard({
     const { token } = useAuth();
     const toast = useToast();
     const exportRef = useRef<HTMLDivElement>(null);
-    const [data, setData] = useState<any>(null);
+    const [data, setData] = useState<EmbeddedDashboardData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [alertConfigOpen, setAlertConfigOpen] = useState(false);
     const [alertRules, setAlertRules] = useState<AlertRule[]>([]);
     const [filters, setFilters] = useState<Record<string, string>>({});
-    const [filterDefs, setFilterDefs] = useState<any[]>([]);
+    const [filterDefs, setFilterDefs] = useState<EmbeddedFilterDef[]>([]);
     const [showFilters, setShowFilters] = useState(false);
 
     const fetchData = useCallback(async () => {
@@ -235,11 +267,11 @@ export default function EmbeddedDashboard({
             const params = new URLSearchParams();
             Object.entries(filters).forEach(([k, v]) => { if (v) params.set(k, v); });
             const qs = params.toString();
-            const res = await apiFetch<any>(`/dashboard/${module}${qs ? `?${qs}` : ''}`, { token });
+            const res = await apiFetch<EmbeddedDashboardData>(`/dashboard/${module}${qs ? `?${qs}` : ''}`, { token });
             setData(res);
             if (res.filters) setFilterDefs(res.filters);
-        } catch (err: any) {
-            setError(err?.message || 'Error al cargar');
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Error al cargar');
         } finally {
             setLoading(false);
         }
@@ -352,13 +384,13 @@ export default function EmbeddedDashboard({
             {/* Filters */}
             {showFilters && filterDefs.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2 mb-3 p-2 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-md">
-                    {filterDefs.map((f: any) => (
+                    {filterDefs.map((f) => (
                         <div key={f.key} className="flex items-center gap-1.5">
                             <label className="text-2xs font-semibold uppercase text-[hsl(var(--text-secondary))]">{f.label}:</label>
                             <select value={filters[f.key] ?? f.default ?? ''}
                                 onChange={e => setFilters(prev => ({...prev, [f.key]: e.target.value}))}
                                 className="text-2xs font-medium bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md px-1.5 py-0.5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
-                                {(f.options || []).map((o: any) => (
+                                {(f.options || []).map((o) => (
                                     <option key={o.value} value={o.value}>{o.label}</option>
                                 ))}
                             </select>
@@ -388,11 +420,11 @@ export default function EmbeddedDashboard({
                 {!loading && !error && data && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
                         {/* Metric Cards */}
-                        {data.cards?.length > 0 && (
+                        {(data.cards?.length ?? 0) > 0 && (
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                {data.cards.map((card: MetricData, i: number) => (
+                                {data.cards?.map((card: MetricData, i: number) => (
                                     <DSMetric key={i} label={card.title} value={card.value}
-                                        trend={card.trend} tone={card.tone as any || 'blue'} />
+                                        trend={card.trend} tone={(card.tone as React.ComponentProps<typeof DSMetric>['tone']) || 'blue'} />
                                 ))}
                             </div>
                         )}
@@ -403,7 +435,7 @@ export default function EmbeddedDashboard({
                                 {data.pipeline_funnel && (
                                     <DSCard padding="sm"><div className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase mb-2">Pipeline</div>
                                         {data.pipeline_funnel.map((s: FunnelStage) => {
-                                            const max = Math.max(...data.pipeline_funnel.map((x: FunnelStage) => x.count), 1);
+                                            const max = Math.max(...(data.pipeline_funnel ?? []).map((x: FunnelStage) => x.count), 1);
                                             return (
                                                 <div key={s.stage} className="flex items-center gap-2 py-0.5">
                                                     <span className="text-2xs text-[hsl(var(--text-secondary))] w-20 truncate">{s.stage}</span>
@@ -463,11 +495,11 @@ export default function EmbeddedDashboard({
                                     <DSCard padding="sm">
                                         <div className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Grupos x Ubicación</div>
                                         <div className="space-y-1">
-                                            {data.grupos_por_ubicacion.map((g: any) => (
+                                            {data.grupos_por_ubicacion.map((g) => (
                                                 <div key={g.label} className="flex items-center gap-2 text-xs">
                                                     <div className="size-1.5 rounded-full bg-[hsl(var(--primary))]" />
                                                     <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{g.label}</span>
-                                                    {g.lat && <span className="text-2xs text-[hsl(var(--text-secondary))] ml-auto">({g.lat.toFixed(3)}, {g.lng.toFixed(3)})</span>}
+                                                    {g.lat !== undefined && g.lng !== undefined && <span className="text-2xs text-[hsl(var(--text-secondary))] ml-auto">({g.lat.toFixed(3)}, {g.lng.toFixed(3)})</span>}
                                                 </div>
                                             ))}
                                         </div>
@@ -477,14 +509,13 @@ export default function EmbeddedDashboard({
                         )}
 
                         {/* Ausentes/Asistentes tables */}
-                        {data.ausentes_detalle?.length > 0 && (
+                        {(data.ausentes_detalle?.length ?? 0) > 0 && (
                             <DSCard padding="sm">
                                 <div className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase mb-1 flex items-center gap-1">
-                                    <AlertTriangle size={10} className="text-[hsl(var(--warning))]" /> Ausentes - {data.ausentes_detalle.length} registros
+                                    <AlertTriangle size={10} className="text-[hsl(var(--warning))]" /> Ausentes - {data.ausentes_detalle?.length} registros
                                 </div>
                                 <div className="max-h-32 overflow-y-auto text-2xs">
-                                    {// eslint-disable-next-line @typescript-eslint/no-unused-vars
-data.ausentes_detalle.slice(0, 10).map((r: TableRow) => (
+                                    {data.ausentes_detalle?.slice(0, 10).map((r: TableRow) => (
                                         <div key={r.id} className="flex items-center gap-2 py-0.5 border-b border-[hsl(var(--border))] dark:border-white/5">
                                             <span className="font-medium text-[hsl(var(--text-secondary))] w-28 truncate">{r.columns.persona || ''}</span>
                                             <span className="text-[hsl(var(--text-secondary))] w-20 truncate">{r.columns.grupo || ''}</span>

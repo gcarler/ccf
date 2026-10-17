@@ -4,30 +4,30 @@ import React from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { DSTable } from '@/design';
 
-interface DataTableProps {
-    data: any[];
-    columns: ColumnDef<any, any>[];
-    onRowClick?: (row: any) => void;
+interface DataTableProps<TData = Record<string, unknown>, TValue = unknown> {
+    data: TData[];
+    columns: ColumnDef<TData, TValue>[];
+    onRowClick?: (row: TData) => void;
     /** Activa el menú "Columnas" (checklist de visibilidad) — ver getVisibleLeafColumns(). */
     enableColumnVisibility?: boolean;
     /** Activa la columna inicial de checkboxes para selección de filas (bulk actions). */
     enableRowSelection?: boolean;
     /** Callback con las filas seleccionadas cuando enableRowSelection está activo. */
-    onSelectionChange?: (selectedRows: any[]) => void;
+    onSelectionChange?: (selectedRows: TData[]) => void;
 }
 
 /**
  * @note Obsolete: use `DSTable` from `@/design` instead.
  * `DataTable` is now a thin wrapper kept for backwards compatibility.
  */
-export function DataTable({
+export function DataTable<TData = Record<string, unknown>, TValue = unknown>({
     data,
     columns,
     onRowClick,
     enableColumnVisibility = false,
     enableRowSelection = false,
     onSelectionChange,
-}: DataTableProps) {
+}: DataTableProps<TData, TValue>) {
     return (
         <DSTable
             data={data}

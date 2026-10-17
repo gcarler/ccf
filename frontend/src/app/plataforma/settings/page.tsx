@@ -18,7 +18,7 @@ import { useTheme } from '@/app/plataforma/theme/ThemeContext';
 
 export interface SettingsItemConfig {
     id?: string;
-    icon: any;
+    icon: React.ElementType;
     label: string;
     desc: string;
     href?: string;
@@ -71,7 +71,7 @@ const COLOR_MAP: Record<string, string> = {
 export default function SettingsPage() {
     const { logout, user } = useAuth();
     const router = useRouter();
-    const { theme, setTheme, currentScale, currentAccent, currentDensity, zoomPercentage } = useTheme();
+    const { theme, setTheme, currentAccent, currentDensity, zoomPercentage } = useTheme();
     const [isAppearanceOpen, setIsAppearanceOpen] = useState(false);
 
     const sidebarSections = [
@@ -109,14 +109,14 @@ export default function SettingsPage() {
                     className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-3 flex items-center gap-3 shadow-sm"
                 >
                     <div className="size-8 rounded-lg bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] flex items-center justify-center text-[hsl(var(--primary-foreground))] text-xl font-bold shadow-sm shadow-[hsl(var(--info)/20%)] shrink-0">
-                        {(user as any)?.name?.[0] ?? 'A'}
+                        {user?.name?.[0] ?? 'A'}
                     </div>
                     <div className="flex-1 min-w-0">
                         <p className="text-base font-bold text-[hsl(var(--text-primary))] truncate">
-                            {(user as any)?.name ?? 'Usuario CCF'}
+                            {user?.name ?? 'Usuario CCF'}
                         </p>
                         <p className="text-xs text-[hsl(var(--text-secondary))] font-medium truncate">
-                            {(user as any)?.email ?? 'usuario@ccf.com'}
+                            {user?.email ?? 'usuario@ccf.com'}
                         </p>
                         <span className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide">
                             <Shield size={9} /> Admin

@@ -38,7 +38,7 @@ interface Tool {
     name: string;
     description: string;
     module: string;
-    parameters: any[];
+    parameters: Record<string, unknown>[];
 }
 
 interface Conversation {
@@ -49,6 +49,8 @@ interface Conversation {
     updated_at: string;
     message_count: number;
 }
+
+type AgentsTabId = 'agents' | 'tools' | 'conversations' | 'chat';
 
 const STAGE_LABELS: Record<string, string> = {
     visitor: 'Visitante',
@@ -62,7 +64,7 @@ const STAGE_LABELS: Record<string, string> = {
 export default function AgentsPage() {
     const { token } = useAuth();
     const { addToast } = useToast();
-    const [activeTab, setActiveTab] = useState<'agents' | 'tools' | 'conversations' | 'chat'>('agents');
+    const [activeTab, setActiveTab] = useState<AgentsTabId>('agents');
     const [agents, setAgents] = useState<Agent[]>([]);
     const [tools, setTools] = useState<Tool[]>([]);
     const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -83,7 +85,7 @@ export default function AgentsPage() {
             ]);
             setAgents(Array.isArray(agentsRes) ? agentsRes : []);
             setConversations(Array.isArray(convRes) ? convRes : []);
-        } catch (err) {
+        } catch {
             addToast('Error al cargar datos', 'error');
         } finally {
             setLoading(false);
@@ -94,19 +96,18 @@ export default function AgentsPage() {
         fetchData();
     }, [fetchData]);
 
-    const fetchTools = async () => {
+    const fetchTools = useCallback(async () => {
         try {
-            const res = await apiFetch('/agents/tools', { token }).catch(() => null);
+            const res = await apiFetch<Tool[]>('/agents/tools', { token }).catch(() => null);
             if (res && Array.isArray(res)) setTools(res);
         } catch {
             // Tools endpoint may not exist yet
         }
-    };
+    }, [token]);
 
     useEffect(() => {
         if (activeTab === 'tools') fetchTools();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeTab, token]);
+    }, [activeTab, fetchTools]);
 
     const sendChat = async () => {
         if (!chatInput.trim() || !token) return;
@@ -116,13 +117,13 @@ export default function AgentsPage() {
         setChatInput('');
 
         try {
-            const res = await apiFetch('/agents/ask', {
+            const res = await apiFetch<{ answer?: string; conversation_id?: number }>('/agents/ask', {
                 token,
                 method: 'POST',
                 body: { query: chatInput, conversation_id: activeConversation },
-            }) as any;
+            });
             if (res?.answer) {
-                setChatMessages(prev => [...prev, { role: 'assistant', content: res.answer }]);
+                setChatMessages(prev => [...prev, { role: 'assistant', content: res.answer! }]);
                 if (res.conversation_id) setActiveConversation(res.conversation_id);
             }
         } catch {
@@ -135,11 +136,11 @@ export default function AgentsPage() {
     const createConversation = async () => {
         if (!token) return;
         try {
-            const res = await apiFetch('/agents/conversations', {
+            const res = await apiFetch<{ id?: number }>('/agents/conversations', {
                 token,
                 method: 'POST',
                 body: { agent_name: 'Optimus' },
-            }) as any;
+            });
             if (res?.id) {
                 setActiveConversation(res.id);
                 setChatMessages([]);
@@ -166,6 +167,13 @@ export default function AgentsPage() {
         a.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const tabs: { id: AgentsTabId; label: string; icon: React.ElementType }[] = [
+        { id: 'agents', label: 'Agentes', icon: Bot },
+        { id: 'tools', label: 'Herramientas', icon: Zap },
+        { id: 'conversations', label: 'Conversaciones', icon: MessageSquare },
+        { id: 'chat', label: 'Chat Optimus', icon: MessageCircle },
+    ];
+
     return (
         <div className="min-h-screen bg-[hsl(var(--surface-1))] p-6">
             <div className="max-w-7xl mx-auto">
@@ -184,15 +192,10 @@ export default function AgentsPage() {
 
                 {/* Tabs */}
                 <div className="flex gap-2 mb-6 border-b border-[hsl(var(--border))]">
-                    {[
-                        { id: 'agents', label: 'Agentes', icon: Bot },
-                        { id: 'tools', label: 'Herramientas', icon: Zap },
-                        { id: 'conversations', label: 'Conversaciones', icon: MessageSquare },
-                        { id: 'chat', label: 'Chat Optimus', icon: MessageCircle },
-                    ].map(tab => (
+                    {tabs.map(tab => (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id as any)}
+                            onClick={() => setActiveTab(tab.id)}
                             className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition-colors ${
                                 activeTab === tab.id
                                     ? 'bg-[hsl(var(--surface-2))] border-b-2 border-[hsl(var(--primary))] text-[hsl(var(--primary))] font-semibold'

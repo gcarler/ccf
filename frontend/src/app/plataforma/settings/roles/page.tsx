@@ -30,7 +30,7 @@ export default function RolesSettingsPage() {
             setLoading(true);
             const data = await apiFetch<RoleDef[]>('/crm/roles', { token });
             setRoles(data);
-        } catch (err) {
+        } catch {
             toast.error("Error al cargar los roles");
         } finally {
             setLoading(false);
@@ -41,8 +41,8 @@ export default function RolesSettingsPage() {
         if (token) loadRoles();
     }, [token, loadRoles]);
 
-    const handleSave = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSave = async (e?: React.FormEvent | React.MouseEvent) => {
+        e?.preventDefault();
         if (!token || !isEditing) return;
 
         try {
@@ -65,13 +65,13 @@ export default function RolesSettingsPage() {
             }
             setIsEditing(null);
             loadRoles();
-        } catch (err: any) {
-            toast.error(err.message || "Error al guardar el rol");
+        } catch (err: unknown) {
+            toast.error(err instanceof Error ? err.message : "Error al guardar el rol");
         }
     };
 
-    const handleDelete = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleDelete = async (e?: React.FormEvent | React.MouseEvent) => {
+        e?.preventDefault();
         if (!token || !isDeleting || fallbackId === '') return;
 
         try {
@@ -83,8 +83,8 @@ export default function RolesSettingsPage() {
             setIsDeleting(null);
             setFallbackId('');
             loadRoles();
-        } catch (err: any) {
-            toast.error(err.message || "Error al eliminar el rol");
+        } catch (err: unknown) {
+            toast.error(err instanceof Error ? err.message : "Error al eliminar el rol");
         }
     };
 
@@ -150,7 +150,7 @@ export default function RolesSettingsPage() {
                         <button type="button" onClick={() => setIsEditing(null)} className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
                             Cancelar
                         </button>
-                        <button type="button" onClick={handleSave as any} className="flex items-center gap-2 px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-md shadow-[hsl(var(--primary)/0.2)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
+                        <button type="button" onClick={handleSave} className="flex items-center gap-2 px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-md shadow-[hsl(var(--primary)/0.2)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
                             <Save size={16}/> Guardar
                         </button>
                     </>
@@ -190,7 +190,7 @@ export default function RolesSettingsPage() {
                         <button type="button" onClick={() => setIsDeleting(null)} className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
                             Cancelar
                         </button>
-                        <button type="button" onClick={handleDelete as any} className="flex items-center gap-2 px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--destructive))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-md shadow-[hsl(var(--destructive)/0.2)] hover:bg-[hsl(var(--destructive))] active:scale-95 transition-all">
+                        <button type="button" onClick={handleDelete} className="flex items-center gap-2 px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--destructive))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-md shadow-[hsl(var(--destructive)/0.2)] hover:bg-[hsl(var(--destructive))] active:scale-95 transition-all">
                             <Trash2 size={16}/> Confirmar Eliminación
                         </button>
                     </>

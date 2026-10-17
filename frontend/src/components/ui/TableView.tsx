@@ -46,15 +46,15 @@ export interface TableColumn {
 export interface TableAction {
   label: string;
   icon?: React.ReactNode;
-  onClick: (selectedRows: any[]) => void;
+  onClick: (selectedRows: string[]) => void;
   danger?: boolean;
 }
 
-export interface TableViewProps<T = any> {
+export interface TableViewProps<T = Record<string, unknown>> {
   data: T[];
   columns: TableColumn[];
-  idAccessor: keyof T | ((row: T) => string);
-  onChange?: (rowId: string, columnId: string, value: any) => void;
+  idAccessor: keyof T | string | ((row: T) => string);
+  onChange?: (rowId: string, columnId: string, value: unknown) => void;
   onAddRow?: () => T;
   onDeleteRows?: (rowIds: string[]) => void;
   actions?: TableAction[];
@@ -86,8 +86,17 @@ const CELL_COLORS: Record<string, string> = {
   pink:   "hsl(336 80% 58%)", gray:   "hsl(var(--text-secondary))",
 };
 
-function SelectRenderer({ value, colDef }: any) {
-  const opts = colDef.cellEditorParams?.values as { label: string; value: string; color?: string }[] | undefined;
+interface SelectRendererProps {
+  value?: unknown;
+  colDef?: {
+    cellEditorParams?: {
+      values?: { label: string; value: string; color?: string }[];
+    };
+  };
+}
+
+function SelectRenderer({ value, colDef }: SelectRendererProps) {
+  const opts = colDef?.cellEditorParams?.values;
   const opt = opts?.find((o) => o.value === value);
   const color = opt?.color ? (CELL_COLORS[opt.color] ?? opt.color) : undefined;
   if (!opt) return <span className="text-[hsl(var(--text-secondary))] text-xs">—</span>;
@@ -99,22 +108,35 @@ function SelectRenderer({ value, colDef }: any) {
   );
 }
 
-function CheckboxRenderer({ value, node, column }: any) {
+interface CheckboxRendererProps {
+  value?: unknown;
+  node?: {
+    data?: Record<string, unknown>;
+    setDataValue: (colKey: string, newValue: unknown) => void;
+  };
+  column?: {
+    getColId: () => string;
+  };
+}
+
+function CheckboxRenderer({ value, node, column }: CheckboxRendererProps) {
   const rowName = node?.data?.name ?? node?.data?.title ?? node?.data?.id;
   return (
     <input
       type="checkbox"
       checked={!!value}
       onChange={(e) => {
-        node.setDataValue(column.getColId(), e.target.checked);
+        if (node && column) {
+          node.setDataValue(column.getColId(), e.target.checked);
+        }
       }}
-      aria-label={rowName ? `Seleccionar fila ${rowName}` : 'Seleccionar fila'}
+      aria-label={rowName ? `Seleccionar fila ${String(rowName)}` : 'Seleccionar fila'}
       className="w-4 h-4 rounded cursor-pointer accent-[hsl(var(--primary))]"
     />
   );
 }
 
-function RatingRenderer({ value }: any) {
+function RatingRenderer({ value }: { value?: unknown }) {
   const n = Math.round(Number(value) || 0);
   return (
     <span className="flex gap-0.5" role="img" aria-label={`Calificación: ${n} de 5 estrellas`}>
@@ -125,7 +147,7 @@ function RatingRenderer({ value }: any) {
   );
 }
 
-function ProgressRenderer({ value }: any) {
+function ProgressRenderer({ value }: { value?: unknown }) {
   const pct = Math.min(100, Math.max(0, Number(value) || 0));
   return (
     <div
@@ -240,7 +262,7 @@ function toColDef(col: TableColumn): ColDef {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function TableView<T extends Record<string, any>>({
+export default function TableView<T extends object = Record<string, unknown>>({
   data,
   columns,
   idAccessor,
@@ -262,7 +284,7 @@ export default function TableView<T extends Record<string, any>>({
   const getId = useCallback(
     (row: T): string => {
       if (typeof idAccessor === "function") return String(idAccessor(row));
-      return String(row[idAccessor]);
+      return String((row as Record<string, unknown>)[String(idAccessor)]);
     },
     [idAccessor]
   );
@@ -333,8 +355,9 @@ export default function TableView<T extends Record<string, any>>({
   const searchRef = useRef(quickFilter);
   React.useEffect(() => { searchRef.current = quickFilter; }, [quickFilter]);
 
+  const hasServerSide = Boolean(serverSide);
   const datasource = useMemo<IDatasource | undefined>(() => {
-    if (!serverSide) return undefined;
+    if (!hasServerSide) return undefined;
     return {
       getRows: (params: IGetRowsParams) => {
         const offset = params.startRow;
@@ -348,8 +371,7 @@ export default function TableView<T extends Record<string, any>>({
       },
       rowCount: undefined,
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [!!serverSide]);
+  }, [hasServerSide]);
 
   const density: AgGridDensity = rowHeight <= 36 ? "compact" : rowHeight >= 44 ? "comfortable" : "default";
 
@@ -395,7 +417,7 @@ export default function TableView<T extends Record<string, any>>({
             <>
               <span className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mr-1">{selectedIds.length} seleccionados</span>
               {actions?.map((a, i) => (
-                <button key={i} onClick={() => a.onClick(selectedIds as any)} className={clsx("flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors", a.danger ? "bg-danger-soft text-danger-text hover:bg-danger-muted" : "bg-info-soft text-info-text hover:bg-info-muted")}>
+                <button key={i} onClick={() => a.onClick(selectedIds)} className={clsx("flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors", a.danger ? "bg-danger-soft text-danger-text hover:bg-danger-muted" : "bg-info-soft text-info-text hover:bg-info-muted")}>
                   {a.icon}{a.label}
                 </button>
               ))}
@@ -425,15 +447,15 @@ export default function TableView<T extends Record<string, any>>({
           </div>
         ) : serverSide ? (
           /* ── Server-side InfiniteRowModel ── */
-          <AgGridTable<any>
-            ref={gridRef as any}
+          <AgGridTable<T>
+            ref={gridRef}
             density={density}
             rowModelType="infinite"
             datasource={datasource}
             cacheBlockSize={serverSide.pageSize ?? 100}
             maxBlocksInCache={5}
             columnDefs={colDefs}
-            defaultColDef={{ ...(defaultColDef as ColDef<any>), filter: false }}
+            defaultColDef={{ ...(defaultColDef as ColDef<T>), filter: false }}
             rowHeight={rowHeight}
             onSortChanged={() => {
               // Refresh cache to re-request from row 0 with new sort

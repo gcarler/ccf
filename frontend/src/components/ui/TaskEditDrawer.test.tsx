@@ -1,5 +1,4 @@
 import React from 'react';
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { axe } from 'jest-axe';
@@ -7,13 +6,15 @@ import { filterMotionProps } from '@/test-utils/filter-motion-props';
 import TaskEditDrawer from './TaskEditDrawer';
 import type { TaskDetail } from './TaskEditDrawer';
 
+type MotionMockProps = React.HTMLAttributes<HTMLElement> & Record<string, unknown>;
+
 vi.mock('framer-motion', () => ({
     motion: {
-        div: ({ children, ...props }: any) => <div {...filterMotionProps(props)}>{children}</div>,
-        aside: ({ children, ...props }: any) => <aside {...filterMotionProps(props)}>{children}</aside>,
-        p: ({ children, ...props }: any) => <p {...filterMotionProps(props)}>{children}</p>,
+        div: ({ children, ...props }: MotionMockProps) => <div {...filterMotionProps(props)}>{children}</div>,
+        aside: ({ children, ...props }: MotionMockProps) => <aside {...filterMotionProps(props)}>{children}</aside>,
+        p: ({ children, ...props }: MotionMockProps) => <p {...filterMotionProps(props)}>{children}</p>,
     },
-    AnimatePresence: ({ children }: any) => <>{children}</>,
+    AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
 }));
 
 vi.mock('@/lib/http', () => ({

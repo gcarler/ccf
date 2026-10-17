@@ -35,12 +35,56 @@ interface FilterDef {
     label: string;
     type: string;
     options?: { label: string; value: string }[];
-    default?: any;
+    default?: string;
 }
+
+interface TopCourseItem {
+    title: string;
+    count: number;
+}
+
+interface LatestDonationItem {
+    donor: string;
+    type: string;
+    amount: number | string;
+}
+
+interface UpcomingEventItem {
+    titulo: string;
+    ubicacion: string;
+    participantes: number;
+    fecha: string;
+}
+
+type DSChartDataPoint = NonNullable<React.ComponentProps<typeof DSChart>['data']>[number];
 
 interface DashboardData {
     cards?: MetricCardData[];
-    [key: string]: any;
+    filters?: FilterDef[];
+    last_updated?: string;
+    seo_trend?: SeoTrendResponse;
+    pipeline_funnel?: FunnelStage[];
+    growth_chart?: DSChartDataPoint[];
+    enrollment_trends?: DSChartDataPoint[];
+    income_by_category?: DSChartDataPoint[];
+    monthly_series?: DSChartDataPoint[];
+    interaction_heatmap?: HeatmapItem[];
+    embudo?: FunnelStage[];
+    asistencia_por_sesion?: DSChartDataPoint[];
+    grupos_por_ubicacion?: GeoBucket[];
+    grade_distribution?: DSChartDataPoint[];
+    versiones_por_pagina?: DSChartDataPoint[];
+    publicaciones_por_mes?: DSChartDataPoint[];
+    workload_distribution?: DSChartDataPoint[];
+    status_distribution?: DSChartDataPoint[];
+    usuarios_por_rol?: DSChartDataPoint[];
+    participacion_por_evento?: DSChartDataPoint[];
+    recursos_ocupados?: DSChartDataPoint[];
+    ausentes_detalle?: TableRow[];
+    asistentes_detalle?: TableRow[];
+    top_courses?: TopCourseItem[];
+    latest_donations?: LatestDonationItem[];
+    eventos_proximos?: UpcomingEventItem[];
 }
 
 interface MetricCardData {
@@ -63,7 +107,7 @@ interface GeoBucket {
     value: number;
     lat?: number;
     lng?: number;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
 }
 
 interface HeatmapItem {
@@ -74,7 +118,7 @@ interface HeatmapItem {
 
 interface TableRow {
     id: string;
-    columns: Record<string, any>;
+    columns: Record<string, string | number | null | undefined>;
     link?: string;
 }
 
@@ -345,11 +389,11 @@ export default function DashboardShell({
                 if (v) params.set(k, v);
             });
             const qs = params.toString();
-            const res = await apiFetch<any>(`/dashboard/${module}${qs ? `?${qs}` : ''}`, { token });
+            const res = await apiFetch<DashboardData>(`/dashboard/${module}${qs ? `?${qs}` : ''}`, { token });
             setData(res);
             if (res.filters) setFilterDefs(res.filters);
-        } catch (err: any) {
-            setError(err?.message || 'Error al cargar dashboard');
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Error al cargar dashboard');
         } finally {
             setLoading(false);
         }
@@ -471,7 +515,7 @@ export default function DashboardShell({
                                     label={card.title}
                                     value={card.value}
                                     trend={card.trend}
-                                    tone={(card.tone as any) || 'blue'}
+                                    tone={(card.tone as React.ComponentProps<typeof DSMetric>['tone']) || 'blue'}
                                 />
                             ))}
                         </motion.div>
@@ -705,7 +749,7 @@ export default function DashboardShell({
                                             type="line"
                                             data={data.publicaciones_por_mes}
                                             height={200}
-                                            color="#06b6d4"
+                                            color="hsl(var(--info))"
                                         />
                                     </div>
                                 </DSCard>
@@ -855,7 +899,7 @@ export default function DashboardShell({
                                     title="Top 5 Cursos por Matrícula"
                                 />
                                 <div className="mt-3 space-y-2">
-                                    {data.top_courses.map((c: any, i: number) => (
+                                    {data.top_courses.map((c, i) => (
                                         <div
                                             key={i}
                                             className="flex items-center justify-between py-1.5 px-2 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5"
@@ -882,7 +926,7 @@ export default function DashboardShell({
                                     title="Últimos 5 Aportes"
                                 />
                                 <div className="mt-3 space-y-2">
-                                    {data.latest_donations.map((d: any, i: number) => (
+                                    {data.latest_donations.map((d, i) => (
                                         <div
                                             key={i}
                                             className="flex items-center justify-between py-1.5 px-2 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5"
@@ -912,7 +956,7 @@ export default function DashboardShell({
                                     title="Próximos 5 Eventos"
                                 />
                                 <div className="mt-3 space-y-2">
-                                    {data.eventos_proximos.map((e: any, i: number) => (
+                                    {data.eventos_proximos.map((e, i) => (
                                         <div
                                             key={i}
                                             className="flex items-center justify-between py-1.5 px-2 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5"
