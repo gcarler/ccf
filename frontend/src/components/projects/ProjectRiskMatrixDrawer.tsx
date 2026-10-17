@@ -104,7 +104,7 @@ const STATUS_CONFIG = {
 export function ProjectRiskMatrixDrawer({
   projectId,
   isOpen,
-  onClose,
+  onClose: _onClose,
   onRiskUpdated,
 }: ProjectRiskMatrixDrawerProps) {
   const { token } = useAuth();

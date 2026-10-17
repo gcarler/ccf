@@ -137,10 +137,11 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Fetch candidate mentions when mention query changes
+  const mentionQuery = mentionState?.query;
   useEffect(() => {
-    if (!mentionState) return;
+    if (mentionQuery === undefined) return;
     let active = true;
-    const query = mentionState.query.trim();
+    const query = mentionQuery.trim();
     const queryParam = `?limit=1000${query ? `&search=${encodeURIComponent(query)}` : ''}`;
 
     apiFetch<AssigneeCandidate[]>(`/projects/assignee-candidates${queryParam}`, { token: token ?? undefined })
@@ -161,7 +162,7 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
     return () => {
       active = false;
     };
-  }, [mentionState?.query, token]);
+  }, [mentionQuery, token]);
 
   const filteredCandidates = useMemo(() => {
     if (!mentionState) return [];

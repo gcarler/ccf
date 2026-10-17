@@ -26,7 +26,7 @@ type ActiveTab = "stopwatch" | "manual" | "logs";
 export function ProjectTimeTrackingDrawer({
   projectId,
   isOpen,
-  onClose,
+  onClose: _onClose,
   tasks = [],
   onTimeLogged,
 }: ProjectTimeTrackingDrawerProps) {

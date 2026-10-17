@@ -11,11 +11,6 @@ import {
     Copy,
     Check,
     Tag,
-    ChevronRight,
-    Sparkles,
-    ShieldCheck,
-    Layers,
-    Activity
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -64,7 +59,7 @@ export function ProjectPMIKnowledgeDrawer({
         };
     }, [isOpen]);
 
-    const filteredVolumes = useMemo(() => {
+    const _filteredVolumes = useMemo(() => {
         if (!searchTerm.trim()) return volumes;
         const q = searchTerm.toLowerCase();
         return volumes.filter(

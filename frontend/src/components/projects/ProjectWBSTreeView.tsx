@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import type { ProjectWBSTreeResponse, WBSNode } from '@/types/projects';
@@ -19,8 +19,6 @@ import {
     Minimize2,
     RefreshCw,
     Search,
-    ShieldAlert,
-    Sliders,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { toast } from 'sonner';
@@ -33,7 +31,7 @@ interface ProjectWBSTreeViewProps {
 
 export function ProjectWBSTreeView({
     projectId,
-    projectTitle = 'Proyecto',
+    projectTitle: _projectTitle = 'Proyecto',
     onSelectNode,
 }: ProjectWBSTreeViewProps) {
     const { token } = useAuth();

@@ -45,7 +45,7 @@ const CAPACITY_CONFIG = {
 export function ProjectWorkloadDrawer({
   projectId,
   isOpen,
-  onClose,
+  onClose: _onClose,
   onWorkloadUpdated,
   onOpenTask,
 }: ProjectWorkloadDrawerProps) {

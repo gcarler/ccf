@@ -5,21 +5,13 @@ import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import type { ProjectEVMAdvancedResponse } from '@/types/projects';
 import {
-    Activity,
     AlertOctagon,
     AlertTriangle,
-    ArrowUpRight,
-    Calendar,
-    CheckCircle2,
     Clock,
-    DollarSign,
-    HelpCircle,
-    Info,
     RefreshCw,
     ShieldAlert,
     TrendingDown,
     TrendingUp,
-    Zap,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { toast } from 'sonner';
@@ -32,7 +24,7 @@ interface ProjectQuadrantsMatrixProps {
 
 export function ProjectQuadrantsMatrix({
     projectId,
-    projectTitle = 'Proyecto',
+    projectTitle: _projectTitle = 'Proyecto',
     onRefresh,
 }: ProjectQuadrantsMatrixProps) {
     const { token } = useAuth();

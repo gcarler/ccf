@@ -79,7 +79,7 @@ const ACTION_OPTIONS = [
 export function ProjectAutomationsDrawer({
   projectId,
   isOpen,
-  onClose,
+  onClose: _onClose,
   tasks = [],
 }: ProjectAutomationsDrawerProps) {
   const { token } = useAuth();

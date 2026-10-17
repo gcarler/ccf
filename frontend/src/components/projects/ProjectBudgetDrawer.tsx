@@ -76,7 +76,7 @@ const STATUS_CONFIG = {
 export function ProjectBudgetDrawer({
   projectId,
   isOpen,
-  onClose,
+  onClose: _onClose,
   budgetAllocated = 0,
   onBudgetUpdated,
 }: ProjectBudgetDrawerProps) {

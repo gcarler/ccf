@@ -51,7 +51,7 @@ describe("ProjectLabelsDrawer", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
-    (apiFetch as any).mockResolvedValue([
+    vi.mocked(apiFetch).mockResolvedValue([
       { name: "Backend", task_count: 3 },
       { name: "Frontend", task_count: 5 },
     ]);
@@ -117,7 +117,7 @@ describe("ProjectLabelsDrawer", () => {
   });
 
   it("handles inline rename of a label", async () => {
-    (apiFetch as any).mockImplementation((url: string, opts: any) => {
+    vi.mocked(apiFetch).mockImplementation((_url: string, opts?: { method?: string }) => {
       if (opts?.method === "PATCH") {
         return Promise.resolve([
           { name: "Backend Core", task_count: 3 },
@@ -166,7 +166,7 @@ describe("ProjectLabelsDrawer", () => {
   });
 
   it("handles inline delete without any AlertDialog/modals", async () => {
-    (apiFetch as any).mockImplementation((url: string, opts: any) => {
+    vi.mocked(apiFetch).mockImplementation((_url: string, opts?: { method?: string }) => {
       if (opts?.method === "DELETE") {
         return Promise.resolve([
           { name: "Frontend", task_count: 5 },

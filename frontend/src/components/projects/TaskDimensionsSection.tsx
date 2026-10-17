@@ -11,13 +11,11 @@ import {
   Clock,
   Percent,
   DollarSign,
-  TrendingUp,
   AlertTriangle,
   Layers,
   ChevronDown,
   ChevronUp,
   Save,
-  CheckCircle2,
   Receipt,
   Sparkles,
 } from "lucide-react";

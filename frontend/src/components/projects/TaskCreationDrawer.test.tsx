@@ -71,7 +71,7 @@ describe('TaskCreationDrawer accessibility', () => {
     });
 
     it('allows creating an EDT component inline without closing the drawer', async () => {
-        mockApiFetch.mockImplementation((url: string, opts?: any) => {
+        mockApiFetch.mockImplementation((url: string, opts?: { method?: string }) => {
             if (url.includes('/components-breakdown')) {
                 return Promise.resolve({
                     components: [

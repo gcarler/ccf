@@ -173,7 +173,7 @@ describe('TaskMetaFields', () => {
       { id: 'comp-1', code: 'EDT-1.0', name: 'Arquitectura' },
     ];
     const { apiFetch } = await import('@/lib/http');
-    (apiFetch as any).mockImplementation((url: string) => {
+    vi.mocked(apiFetch).mockImplementation((url: string) => {
       if (url.includes('/components')) {
         return Promise.resolve({
           id: 'comp-new',
