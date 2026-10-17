@@ -53,17 +53,15 @@ from backend.crud.crm_.personas import (
     persona_prefix_search_order,
 )
 from backend.crud.projects import (
+    _prepare_kpi_response,
     create_milestone as _projects_create_milestone,
-)
-from backend.crud.projects import (
     delete_milestone as _projects_delete_milestone,
-)
-from backend.crud.projects import (
     get_user_persona_id,
 )
 from backend.mesh_websockets import manager
 from backend.services.comment_notifications import notify_mention
 from backend.services.mention_parser import resolve_mentions
+from backend.services.project_evm_service import build_project_execution_matrix
 from backend.services.task_notifications import notify_task_assigned
 
 settings = get_settings()
@@ -827,6 +825,8 @@ def _prepare_project_for_response(project: models.Project) -> models.Project:
         _normalize_dates(milestone)
     for task in getattr(project, "tasks", []) or []:
         _prepare_task_for_response(task)
+    if hasattr(project, "kpis") and project.kpis:
+        project.kpis = [k for k in project.kpis if getattr(k, "deleted_at", None) is None]
     for kpi in getattr(project, "kpis", []) or []:
         _normalize_dates(kpi)
     for dep in getattr(project, "dependencies", []) or []:
@@ -2586,6 +2586,9 @@ def get_project(
     p.budget_summary = crud.get_project_budget_summary(db, p.id)
     p.risks_summary = crud.get_project_risks_summary(db, p.id)
     p.workload_summary = crud.get_project_workload(db, p.id)
+    p.execution_matrix = build_project_execution_matrix(db, p)
+    for kpi in getattr(p, "kpis", []) or []:
+        _prepare_kpi_response(db, kpi, p, p.execution_matrix)
     return p
 
 
@@ -6181,6 +6184,64 @@ def list_project_indicator_records_endpoint(
     for r in records:
         _normalize_dates(r)
     return records
+
+
+@router.get(
+    "/{project_id}/indicators/execution-matrix",
+    tags=["Projects MGA CREMA Indicators"],
+)
+def get_project_execution_matrix_endpoint(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene la matriz integral de ejecución de los 3 frentes, 6 familias Pro y tributación EDT."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    p = _ensure_project(db, project_id, user_sede=user_sede)
+    return build_project_execution_matrix(db, p)
+
+
+@router.post(
+    "/{project_id}/indicators/sync-execution",
+    response_model=schemas.ProjectExecutionSyncResponse,
+    tags=["Projects MGA CREMA Indicators"],
+)
+def sync_project_execution_indicators_endpoint(
+    project_id: str,
+    payload: Optional[schemas.ProjectExecutionSyncRequest] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Sincroniza indicadores y KPIs con la ejecución real de los 3 frentes y opcionalmente siembra las 6 familias Pro."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    req = payload or schemas.ProjectExecutionSyncRequest()
+    persona_id = _get_persona_id_for_user(db, current_user.id)
+    result = crud.sync_project_indicators_and_kpis(
+        db,
+        _to_uuid(project_id),
+        actor_id=persona_id,
+        sede_id=user_sede,
+        seed_pro_families=req.seed_pro_families,
+        seed_pro_indicators=req.seed_pro_indicators,
+        seed_kpis=req.seed_kpis,
+        seed_pro_kpis=req.seed_pro_kpis,
+        period_label=req.period_label,
+        record_period=req.record_period,
+    )
+    if not result:
+        raise HTTPException(status_code=404, detail="Proyecto no encontrado")
+
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "indicators_synced",
+        f"Sincronización Pro de indicadores y KPIs ejecutada (Indicadores: {result['synced_indicators']}, KPIs: {result['synced_kpis']})",
+    )
+    db.commit()
+    return result
 
 
 # ─────────────────────────────────────────────────────────────────────────────

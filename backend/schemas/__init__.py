@@ -525,6 +525,8 @@ from backend.schemas.projects import (  # noqa: F401
     ProjectDocumentUpdate,
     ProjectEVMAdvancedResponse,
     ProjectEVMMetrics,
+    ProjectExecutionSyncRequest,
+    ProjectExecutionSyncResponse,
     ProjectExecutivePhaseItem,
     ProjectExecutiveReportData,
     ProjectExecutiveReportProject,

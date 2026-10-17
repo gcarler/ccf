@@ -1,3 +1,4 @@
+import json
 import uuid
 import uuid as _uuid
 from typing import Any, Optional
@@ -321,6 +322,70 @@ class ProjectKPI(Base):
 
     project = relationship("Project", back_populates="kpis")
 
+    @property
+    def source_type(self) -> str:
+        val = self.__dict__.get("_source_type")
+        if val:
+            return str(val)
+        _, meta = decode_kpi_meta(self.__dict__.get("description"))
+        return str(meta.get("source_type") or "manual")
+
+    @source_type.setter
+    def source_type(self, value: str | None) -> None:
+        self.__dict__["_source_type"] = str(value).strip() if value else "manual"
+
+    @property
+    def component_id(self) -> str | None:
+        val = self.__dict__.get("_component_id")
+        if val:
+            return str(val)
+        _, meta = decode_kpi_meta(self.__dict__.get("description"))
+        comp = meta.get("component_id")
+        return str(comp) if comp else None
+
+    @component_id.setter
+    def component_id(self, value: object) -> None:
+        self.__dict__["_component_id"] = str(value) if value else None
+
+
+_KPI_META_PREFIX = "<!--ccf_kpi_meta:"
+_KPI_META_SUFFIX = "-->"
+
+
+def decode_kpi_meta(raw_description: str | None) -> tuple[str | None, dict[str, Any]]:
+    if not raw_description or not isinstance(raw_description, str):
+        return raw_description, {}
+    idx = raw_description.rfind(_KPI_META_PREFIX)
+    if idx == -1 or not raw_description.endswith(_KPI_META_SUFFIX):
+        return raw_description, {}
+    json_part = raw_description[idx + len(_KPI_META_PREFIX) : -len(_KPI_META_SUFFIX)]
+    clean_desc = raw_description[:idx].rstrip()
+    try:
+        parsed = json.loads(json_part)
+        if isinstance(parsed, dict):
+            return (clean_desc if clean_desc else None), parsed
+    except Exception:
+        pass
+    return raw_description, {}
+
+
+def encode_kpi_meta(
+    description: str | None,
+    source_type: str | None = None,
+    component_id: object = None,
+) -> str | None:
+    clean_desc, existing_meta = decode_kpi_meta(description)
+    src = str(source_type or existing_meta.get("source_type") or "manual").strip()
+    comp = str(component_id) if component_id else existing_meta.get("component_id")
+    if src == "manual" and not comp:
+        return clean_desc
+    meta = {"source_type": src, "component_id": str(comp) if comp else None}
+    tag = f"{_KPI_META_PREFIX}{json.dumps(meta, separators=(',', ':'))}{_KPI_META_SUFFIX}"
+    if clean_desc:
+        return f"{clean_desc}\n{tag}"
+    return tag
+
+
 
 class ProjectTaskDependency(Base):
     __tablename__ = "project_task_dependencies"
@@ -496,6 +561,46 @@ class ProjectIndicator(Base):
     project = relationship("Project", back_populates="indicators")
     creator = relationship("Persona", foreign_keys=[created_by])
     records = relationship("ProjectIndicatorRecord", back_populates="indicator", cascade="all, delete-orphan")
+
+    @property
+    def source_type(self) -> str:
+        val = self.__dict__.get("_source_type")
+        if val:
+            return str(val)
+        eval_dict = self.crema_evaluation if isinstance(self.crema_evaluation, dict) else {}
+        link = eval_dict.get("execution_link") if isinstance(eval_dict.get("execution_link"), dict) else {}
+        src = link.get("source_type")
+        return str(src) if src else "manual"
+
+    @source_type.setter
+    def source_type(self, value: str | None) -> None:
+        clean = str(value).strip() if value else "manual"
+        self.__dict__["_source_type"] = clean
+        eval_dict = dict(self.crema_evaluation) if isinstance(self.crema_evaluation, dict) else {}
+        link = dict(eval_dict.get("execution_link")) if isinstance(eval_dict.get("execution_link"), dict) else {}
+        link["source_type"] = clean
+        eval_dict["execution_link"] = link
+        self.crema_evaluation = eval_dict
+
+    @property
+    def component_id(self) -> str | None:
+        val = self.__dict__.get("_component_id")
+        if val:
+            return str(val)
+        eval_dict = self.crema_evaluation if isinstance(self.crema_evaluation, dict) else {}
+        link = eval_dict.get("execution_link") if isinstance(eval_dict.get("execution_link"), dict) else {}
+        comp = link.get("component_id")
+        return str(comp) if comp else None
+
+    @component_id.setter
+    def component_id(self, value: object) -> None:
+        clean = str(value) if value else None
+        self.__dict__["_component_id"] = clean
+        eval_dict = dict(self.crema_evaluation) if isinstance(self.crema_evaluation, dict) else {}
+        link = dict(eval_dict.get("execution_link")) if isinstance(eval_dict.get("execution_link"), dict) else {}
+        link["component_id"] = clean
+        eval_dict["execution_link"] = link
+        self.crema_evaluation = eval_dict
 
 
 class ProjectIndicatorRecord(Base):

@@ -13,8 +13,10 @@ import type {
   CremaValidationResult,
   MgaIndicatorLevel,
   MgaCalculationType,
+  ProjectComponent,
 } from "@/types/projects";
 import { getIndicatorSpiStatus } from "@/lib/projects/indicators";
+import { KPI_EXECUTION_SOURCES } from "./ProjectKpiDrawer";
 
 function isCremaValidationResult(value: unknown): value is CremaValidationResult {
   if (!value || typeof value !== "object") return false;
@@ -71,7 +73,7 @@ const FREQUENCIES = [
 export function ProjectIndicatorsDrawer({
   projectId,
   isOpen,
-  onClose,
+  onClose: _onClose,
   onIndicatorUpdated,
 }: ProjectIndicatorsDrawerProps) {
   const { token } = useAuth();
@@ -81,8 +83,10 @@ export function ProjectIndicatorsDrawer({
   const [loadError, setLoadError] = useState(false);
   const [hasLoadedIndicators, setHasLoadedIndicators] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [syncingPro, setSyncingPro] = useState(false);
   const [validatingCrema, setValidatingCrema] = useState(false);
   const [indicators, setIndicators] = useState<ProjectIndicator[]>([]);
+  const [components, setComponents] = useState<ProjectComponent[]>([]);
   const [selectedLevelFilter, setSelectedLevelFilter] = useState<string>("ALL");
   const [expandedIndicatorId, setExpandedIndicatorId] = useState<string | null>(null);
 
@@ -97,6 +101,8 @@ export function ProjectIndicatorsDrawer({
   const [baselineValue, setBaselineValue] = useState("0");
   const [targetValue, setTargetValue] = useState("100");
   const [frequency, setFrequency] = useState("mensual");
+  const [sourceType, setSourceType] = useState("manual");
+  const [componentId, setComponentId] = useState("");
   const [cremaResult, setCremaResult] = useState<CremaValidationResult | null>(null);
 
   // Form State para Reporte Periódico de SPI
@@ -133,6 +139,46 @@ export function ProjectIndicatorsDrawer({
       void loadIndicators();
     }
   }, [isOpen, loadIndicators]);
+
+  useEffect(() => {
+    if (!isOpen || activeTab !== "form" || !token || !projectId) return;
+    apiFetch<{ components?: ProjectComponent[] } | ProjectComponent[]>(
+      `/projects/${projectId}/components`,
+      { token }
+    )
+      .then((res) => {
+        if (Array.isArray(res)) setComponents(res);
+        else if (res && Array.isArray(res.components)) setComponents(res.components);
+      })
+      .catch(() => setComponents([]));
+  }, [isOpen, activeTab, projectId, token]);
+
+  const handleSyncAndSeedProIndicators = async () => {
+    if (!token || !projectId) return;
+    setSyncingPro(true);
+    try {
+      const res = await apiFetch<{
+        synced_indicators: number;
+        seeded_indicators: number;
+      }>(`/projects/${projectId}/indicators/sync-execution`, {
+        method: "POST",
+        token,
+        body: JSON.stringify({
+          seed_pro_indicators: true,
+          seed_pro_kpis: true,
+        }),
+      });
+      toast.success(
+        `Sincronización Pro completada: ${res?.synced_indicators ?? 0} indicadores conectados a los 3 frentes`
+      );
+      void loadIndicators();
+      onIndicatorUpdated?.();
+    } catch {
+      toast.error("Error al sincronizar indicadores con ejecución real");
+    } finally {
+      setSyncingPro(false);
+    }
+  };
 
   // Ejecución del Asistente CREMA en Tiempo Real
   const handleValidateCrema = async () => {
@@ -179,6 +225,8 @@ export function ProjectIndicatorsDrawer({
     setBaselineValue("0");
     setTargetValue("100");
     setFrequency("mensual");
+    setSourceType("manual");
+    setComponentId("");
     setCremaResult(null);
   };
 
@@ -193,6 +241,8 @@ export function ProjectIndicatorsDrawer({
     setBaselineValue(String(ind.baseline_value || 0));
     setTargetValue(String(ind.target_value || 0));
     setFrequency(ind.frequency || "mensual");
+    setSourceType(ind.source_type || "manual");
+    setComponentId(ind.component_id || "");
     if (isCremaValidationResult(ind.crema_evaluation)) {
       setCremaResult(ind.crema_evaluation);
     } else {
@@ -224,6 +274,8 @@ export function ProjectIndicatorsDrawer({
         frequency,
         crema_score: cremaResult?.score,
         crema_evaluation: cremaResult || undefined,
+        source_type: sourceType || "manual",
+        component_id: componentId || null,
       };
 
       if (editingId) {
@@ -439,48 +491,59 @@ export function ProjectIndicatorsDrawer({
           </div>}
 
           {/* Selector de Pestañas */}
-          <div className="flex items-center gap-2 pt-1">
-            <button
-              onClick={() => {
-                resetForm();
-                setActiveTab("list");
-              }}
-              className={clsx(
-                "px-3 py-1.5 rounded-md text-2xs font-medium uppercase tracking-wider transition-all flex items-center gap-1.5",
-                activeTab === "list"
-                  ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm"
-                  : "bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))]"
-              )}
-            >
-              <BarChart3 size={13} /> Matriz IDP ({indicators.length})
-            </button>
-            <button
-              onClick={() => {
-                resetForm();
-                setActiveTab("form");
-              }}
-              className={clsx(
-                "px-3 py-1.5 rounded-md text-2xs font-medium uppercase tracking-wider transition-all flex items-center gap-1.5",
-                activeTab === "form"
-                  ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm"
-                  : "bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))]"
-              )}
-            >
-              <Plus size={13} /> {editingId ? "Editar Indicador" : "Nuevo Indicador & Asistente CREMA"}
-            </button>
-            {targetIndicator && (
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
-                onClick={() => setActiveTab("record")}
+                onClick={() => {
+                  resetForm();
+                  setActiveTab("list");
+                }}
                 className={clsx(
                   "px-3 py-1.5 rounded-md text-2xs font-medium uppercase tracking-wider transition-all flex items-center gap-1.5",
-                  activeTab === "record"
+                  activeTab === "list"
                     ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm"
                     : "bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))]"
                 )}
               >
-                <Clock size={13} /> Reportar Medición SPI
+                <BarChart3 size={13} /> Matriz IDP ({indicators.length})
               </button>
-            )}
+              <button
+                onClick={() => {
+                  resetForm();
+                  setActiveTab("form");
+                }}
+                className={clsx(
+                  "px-3 py-1.5 rounded-md text-2xs font-medium uppercase tracking-wider transition-all flex items-center gap-1.5",
+                  activeTab === "form"
+                    ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm"
+                    : "bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))]"
+                )}
+              >
+                <Plus size={13} /> {editingId ? "Editar Indicador" : "Nuevo Indicador & Asistente CREMA"}
+              </button>
+              {targetIndicator && (
+                <button
+                  onClick={() => setActiveTab("record")}
+                  className={clsx(
+                    "px-3 py-1.5 rounded-md text-2xs font-medium uppercase tracking-wider transition-all flex items-center gap-1.5",
+                    activeTab === "record"
+                      ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm"
+                      : "bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))]"
+                  )}
+                >
+                  <Clock size={13} /> Reportar Medición SPI
+                </button>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => void handleSyncAndSeedProIndicators()}
+              disabled={syncingPro}
+              className="px-2.5 py-1.5 rounded-md border border-[hsl(var(--primary))]/40 bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] text-2xs font-bold uppercase tracking-wider hover:bg-[hsl(var(--primary))]/20 transition-all flex items-center gap-1.5"
+            >
+              <RotateCw size={12} className={clsx(syncingPro && "animate-spin")} />
+              {syncingPro ? "Sincronizando..." : "Sincronizar 6 Pro"}
+            </button>
           </div>
         </div>
 
@@ -577,9 +640,11 @@ export function ProjectIndicatorsDrawer({
                     const isExpanded = expandedIndicatorId === ind.id;
                     const spi = ind.last_spi;
                     const progress =
-                                        ind.target_value > 0
+                      ind.target_value > 0
                         ? Math.min(100, Math.round((ind.current_value / ind.target_value) * 100))
                         : 0;
+                    const isAuto = Boolean(ind.source_type && ind.source_type !== "manual");
+                    const sourceMeta = KPI_EXECUTION_SOURCES.find((s) => s.id === ind.source_type);
 
                     return (
                       <div
@@ -590,10 +655,10 @@ export function ProjectIndicatorsDrawer({
                           {/* Fila Superior: Código, Nivel MGA y Score CREMA */}
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-mono  font-extraboldpx-2 py-0.5 rounded bg-[hsl(var(--surface-3))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))]">
+                              <span className="font-mono font-extrabold px-2 py-0.5 rounded bg-[hsl(var(--surface-3))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))]">
                                 {ind.code || "IND"}
                               </span>
-                              <span className=" font-boldpx-2 py-0.5 rounded bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border border-[hsl(var(--primary))]/20">
+                              <span className="font-bold px-2 py-0.5 rounded bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border border-[hsl(var(--primary))]/20">
                                 {ind.level}
                               </span>
                               <span className="text-2xs text-[hsl(var(--text-secondary))] flex items-center gap-1">
@@ -605,7 +670,7 @@ export function ProjectIndicatorsDrawer({
                               {ind.crema_score !== null && ind.crema_score !== undefined && (
                                 <span
                                   className={clsx(
-                                    " font-extraboldpx-2 py-0.5 rounded-full flex items-center gap-1 border",
+                                    "font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1 border",
                                     ind.crema_score >= 85
                                       ? "bg-[hsl(var(--success))]/15 border-[hsl(var(--success))]/30 text-[hsl(var(--success))]"
                                       : ind.crema_score >= 70
@@ -621,7 +686,7 @@ export function ProjectIndicatorsDrawer({
                               {/* Semáforo SPI */}
                               <div
                                 className={clsx(
-                                  " font-extraboldpx-2 py-0.5 rounded-full flex items-center gap-1 border",
+                                  "font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1 border",
                                   spi === null || spi === undefined
                                     ? "bg-[hsl(var(--surface-3))] border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]"
                                     : spi >= 1.0
@@ -654,7 +719,23 @@ export function ProjectIndicatorsDrawer({
 
                           {/* Título y Descripción */}
                           <div>
-                            <h4 className=" font-boldtext-[hsl(var(--text-primary))]">{ind.name}</h4>
+                            <h4 className="font-bold text-[hsl(var(--text-primary))]">{ind.name}</h4>
+                            {(isAuto || ind.component_name) && (
+                              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                                {isAuto && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] text-2xs font-bold border border-[hsl(var(--primary))]/30">
+                                    <Activity size={10} />
+                                    Auto: {sourceMeta?.label || ind.source_type}
+                                  </span>
+                                )}
+                                {ind.component_name && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] text-2xs font-bold border border-[hsl(var(--border))]">
+                                    <Layers size={10} />
+                                    EDT: {ind.component_name}
+                                  </span>
+                                )}
+                              </div>
+                            )}
                             {ind.description && (
                               <p className="text-2xs text-[hsl(var(--text-secondary))] mt-0.5 line-clamp-2">
                                 {ind.description}
@@ -832,6 +913,56 @@ export function ProjectIndicatorsDrawer({
                     <Sparkles size={12} className={clsx(validatingCrema && "animate-spin")} />
                     {validatingCrema ? "Auditando..." : "Auditar Criterios CREMA"}
                   </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                      Fuente de Ejecución (Auto-Rollup)
+                    </label>
+                    <select
+                      aria-label="Fuente de Ejecución"
+                      value={sourceType}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setSourceType(val);
+                        const meta = KPI_EXECUTION_SOURCES.find((s) => s.id === val);
+                        if (meta && val !== "manual") {
+                          setUnitOfMeasure(meta.unit);
+                          setTargetValue(String(meta.defaultTarget));
+                          if (!name.trim()) {
+                            setName(meta.label.replace(/^Pro \d+ — /, "").replace(/^Frente [^—]+ — /, ""));
+                          }
+                        }
+                      }}
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-xs focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                    >
+                      {KPI_EXECUTION_SOURCES.map((src) => (
+                        <option key={src.id} value={src.id}>
+                          {src.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                      Componente EDT (Opcional)
+                    </label>
+                    <select
+                      aria-label="Componente EDT"
+                      value={componentId}
+                      onChange={(e) => setComponentId(e.target.value)}
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-xs focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                    >
+                      <option value="">Proyecto Global (Todos los componentes)</option>
+                      {components.map((comp) => (
+                        <option key={comp.id} value={comp.id}>
+                          {comp.code} — {comp.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">

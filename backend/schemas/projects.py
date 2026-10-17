@@ -260,6 +260,8 @@ class ProjectKPIBase(BaseModel):
     unit: str = Field(default="unidades", max_length=30)
     category: str = Field(default="impact", max_length=50)
     due_date: Optional[datetime] = None
+    source_type: str = Field(default="manual", max_length=60)
+    component_id: Optional[UUIDStr] = None
 
 
 class ProjectKPICreate(ProjectKPIBase):
@@ -274,6 +276,8 @@ class ProjectKPIUpdate(BaseModel):
     unit: Optional[str] = Field(default=None, max_length=30)
     category: Optional[str] = Field(default=None, max_length=50)
     due_date: Optional[datetime] = None
+    source_type: Optional[str] = Field(default=None, max_length=60)
+    component_id: Optional[UUIDStr] = None
 
 
 class ProjectKPI(ProjectKPIBase):
@@ -282,15 +286,27 @@ class ProjectKPI(ProjectKPIBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     progress_percent: int = 0
+    component_name: Optional[str] = None
+    last_spi: Optional[float] = None
+    frente: Optional[str] = None
+    is_auto_synced: bool = False
     model_config = orm_config
 
     @classmethod
     def model_validate(cls, obj, **kwargs):
         instance = super().model_validate(obj, **kwargs)
+        if instance.description and "<!--ccf_kpi_meta:" in instance.description:
+            idx = instance.description.rfind("<!--ccf_kpi_meta:")
+            clean = instance.description[:idx].rstrip()
+            instance.description = clean if clean else None
         if instance.target_value and instance.target_value > 0:
             pct = round((instance.current_value / instance.target_value) * 100)
             instance.progress_percent = max(0, min(100, pct))
+            if instance.last_spi is None:
+                instance.last_spi = round(instance.current_value / instance.target_value, 4)
+        instance.is_auto_synced = bool(instance.source_type and instance.source_type != "manual")
         return instance
+
 
 
 class ProjectTaskDependencyCreate(BaseModel):
@@ -819,6 +835,7 @@ class Project(ProjectBase):
     risks: List[ProjectRisk] = Field(default_factory=list)
     risks_summary: Optional[ProjectRiskSummary] = None
     workload_summary: Optional[ProjectWorkloadSummary] = None
+    execution_matrix: Optional[dict] = None
     progress_percent: int = 0
     health_status: Literal["on_track", "at_risk", "off_track", "completed"] = "on_track"
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
@@ -852,9 +869,19 @@ class Project(ProjectBase):
             total_m = len(instance.milestones)
             done_m = sum(1 for milestone in instance.milestones if milestone.is_completed)
             instance.progress_percent = round((done_m / total_m) * 100) if total_m else 0
+        elif isinstance(instance.execution_matrix, dict) and instance.execution_matrix.get("rollup_hierarchy", {}).get("project_progress_pct") is not None:
+            instance.progress_percent = max(
+                0,
+                min(100, round(float(instance.execution_matrix["rollup_hierarchy"]["project_progress_pct"]))),
+            )
         elif instance.tasks:
-            done = sum(1 for task in instance.tasks if task.status == "completed")
-            instance.progress_percent = round((done / len(instance.tasks)) * 100)
+            has_continuous = any((getattr(t, "physical_progress_pct", 0.0) or 0.0) > 0 for t in instance.tasks)
+            if has_continuous:
+                from backend.services.project_evm_service import _compute_tasks_weighted_progress_pct
+                instance.progress_percent = max(0, min(100, round(_compute_tasks_weighted_progress_pct(instance.tasks))))
+            else:
+                done = sum(1 for task in instance.tasks if task.status == "completed")
+                instance.progress_percent = round((done / len(instance.tasks)) * 100)
         else:
             instance.progress_percent = 0
 
@@ -1315,6 +1342,8 @@ class ProjectIndicatorBase(BaseModel):
     period_targets: dict = Field(default_factory=dict)
     crema_score: Optional[float] = None
     crema_evaluation: dict = Field(default_factory=dict)
+    source_type: str = Field(default="manual", max_length=60)
+    component_id: Optional[UUIDStr] = None
 
 
 class ProjectIndicatorCreate(ProjectIndicatorBase):
@@ -1336,6 +1365,8 @@ class ProjectIndicatorUpdate(BaseModel):
     period_targets: Optional[dict] = None
     crema_score: Optional[float] = None
     crema_evaluation: Optional[dict] = None
+    source_type: Optional[str] = Field(default=None, max_length=60)
+    component_id: Optional[UUIDStr] = None
 
 
 class ProjectIndicator(ProjectIndicatorBase):
@@ -1346,10 +1377,14 @@ class ProjectIndicator(ProjectIndicatorBase):
     sede_id: Optional[UUIDStr] = None
     records_count: int = 0
     last_spi: Optional[float] = None
+    component_name: Optional[str] = None
+    frente: Optional[str] = None
+    is_auto_synced: bool = False
     created_at: datetime
     updated_at: datetime
     records: List[ProjectIndicatorRecord] = Field(default_factory=list)
     model_config = orm_config
+
 
 
 class ValidateCremaPayload(BaseModel):
@@ -1854,3 +1889,31 @@ class ProjectLabelRenameInput(BaseModel):
     """Entrada para renombrar una etiqueta a nivel de proyecto."""
     old_name: str
     new_name: str
+
+
+class ProjectExecutionSyncRequest(BaseModel):
+    """Petición para sincronizar y/o autogenerar indicadores Pro y KPIs desde la ejecución real."""
+    seed_pro_families: Optional[bool] = None
+    seed_pro_indicators: Optional[bool] = None
+    seed_kpis: Optional[bool] = None
+    seed_pro_kpis: Optional[bool] = None
+    period_label: Optional[str] = None
+    record_period: Optional[str] = None
+
+
+class ProjectExecutionSyncResponse(BaseModel):
+    """Respuesta tras sincronizar la Matriz de Indicadores y KPIs con los 3 Frentes de ejecución."""
+    project_id: UUIDStr
+    synced_indicators: int = 0
+    seeded_indicators: int = 0
+    synced_kpis: int = 0
+    seeded_kpis: int = 0
+    synced_indicators_count: int = 0
+    seeded_indicators_count: int = 0
+    synced_kpis_count: int = 0
+    seeded_kpis_count: int = 0
+    execution_matrix: dict = Field(default_factory=dict)
+    indicators: List[ProjectIndicator] = Field(default_factory=list)
+    kpis: List[ProjectKPI] = Field(default_factory=list)
+    model_config = orm_config
+

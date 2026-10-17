@@ -1034,17 +1034,70 @@ def get_workload_summary(db: Session, sede_id=None):
 # ── KPIs ──────────────────────────────────────────────
 
 
+def _prepare_kpi_response(
+    db: Session,
+    row: models.ProjectKPI,
+    project: Optional[models.Project] = None,
+    matrix: Optional[dict] = None,
+) -> models.ProjectKPI:
+    if not row:
+        return row
+    from backend.models_projects import decode_kpi_meta
+    from backend.services.project_evm_service import evaluate_execution_metric
+
+    _, meta = decode_kpi_meta(getattr(row, "description", None))
+    src = str(meta.get("source_type") or getattr(row, "source_type", "manual") or "manual").strip()
+    comp_id = meta.get("component_id") or getattr(row, "component_id", None)
+    row.source_type = src
+    row.component_id = str(comp_id) if comp_id else None
+
+    if src != "manual":
+        proj = project or get_project(db, row.project_id)
+        if proj:
+            eval_res = evaluate_execution_metric(
+                db,
+                proj,
+                src,
+                component_id=row.component_id,
+                target_value=row.target_value,
+                matrix=matrix,
+            )
+            if eval_res.get("current_value") is not None:
+                row.current_value = float(eval_res["current_value"])
+            row.__dict__["last_spi"] = eval_res.get("spi")
+            row.__dict__["frente"] = eval_res.get("frente")
+            row.__dict__["component_name"] = eval_res.get("component_name")
+            row.__dict__["is_auto_synced"] = True
+            return row
+
+    target = float(row.target_value or 0.0)
+    curr = float(row.current_value or 0.0)
+    row.__dict__["last_spi"] = round(curr / target, 4) if target > 0 else None
+    row.__dict__["frente"] = "manual"
+    row.__dict__["component_name"] = None
+    row.__dict__["is_auto_synced"] = False
+    return row
+
+
 def get_project_kpis(db: Session, project_id: UUID | str) -> list[models.ProjectKPI]:
-    return (
+    rows = (
         db.query(models.ProjectKPI)
         .filter(models.ProjectKPI.project_id == project_id, models.ProjectKPI.deleted_at.is_(None))
         .order_by(models.ProjectKPI.created_at.asc())
         .all()
     )
+    if not rows:
+        return []
+    project = get_project(db, project_id)
+    matrix = None
+    if project and any(getattr(r, "source_type", "manual") != "manual" for r in rows):
+        from backend.services.project_evm_service import build_project_execution_matrix
+        matrix = build_project_execution_matrix(db, project)
+    return [_prepare_kpi_response(db, r, project=project, matrix=matrix) for r in rows]
 
 
 def get_project_kpi(db: Session, project_id: UUID | str, kpi_id: UUID | str) -> Optional[models.ProjectKPI]:
-    return (
+    row = (
         db.query(models.ProjectKPI)
         .filter(
             models.ProjectKPI.id == kpi_id,
@@ -1053,41 +1106,104 @@ def get_project_kpi(db: Session, project_id: UUID | str, kpi_id: UUID | str) -> 
         )
         .first()
     )
+    if not row:
+        return None
+    return _prepare_kpi_response(db, row)
 
 
 def create_project_kpi(
     db: Session, project_id: UUID | str, kpi_in: schemas.ProjectKPICreate
 ) -> models.ProjectKPI:
+    from backend.models_projects import encode_kpi_meta
+    from backend.services.project_evm_service import evaluate_execution_metric
+
     data = kpi_in.model_dump()
+    src = str(data.pop("source_type", "manual") or "manual").strip()
+    comp_id = data.pop("component_id", None)
+    data["description"] = encode_kpi_meta(data.get("description"), src, comp_id)
+
+    project = get_project(db, project_id)
+    if src != "manual" and project:
+        eval_res = evaluate_execution_metric(
+            db, project, src, component_id=comp_id, target_value=data.get("target_value")
+        )
+        if eval_res.get("current_value") is not None:
+            data["current_value"] = float(eval_res["current_value"])
+
     row = models.ProjectKPI(project_id=project_id, **data)
+    row.source_type = src
+    row.component_id = str(comp_id) if comp_id else None
     db.add(row)
     db.commit()
     db.refresh(row)
-    return row
+    return _prepare_kpi_response(db, row, project=project)
 
 
 def update_project_kpi(
     db: Session, project_id: UUID | str, kpi_id: UUID | str, kpi_in: schemas.ProjectKPIUpdate
 ) -> Optional[models.ProjectKPI]:
-    row = get_project_kpi(db, project_id, kpi_id)
+    from backend.models_projects import decode_kpi_meta, encode_kpi_meta
+    from backend.services.project_evm_service import evaluate_execution_metric
+
+    row = (
+        db.query(models.ProjectKPI)
+        .filter(
+            models.ProjectKPI.id == kpi_id,
+            models.ProjectKPI.project_id == project_id,
+            models.ProjectKPI.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not row:
         return None
-    for k, v in kpi_in.model_dump(exclude_unset=True).items():
+
+    clean_desc, existing_meta = decode_kpi_meta(row.description)
+    update_data = kpi_in.model_dump(exclude_unset=True)
+    src = str(update_data.pop("source_type", existing_meta.get("source_type") or "manual") or "manual").strip()
+    if "component_id" in update_data:
+        comp_id = update_data.pop("component_id")
+    else:
+        comp_id = existing_meta.get("component_id")
+
+    new_desc = update_data.pop("description", clean_desc)
+    row.description = encode_kpi_meta(new_desc, src, comp_id)
+
+    for k, v in update_data.items():
         if v is not None:
             setattr(row, k, v)
+
+    project = get_project(db, project_id)
+    if src != "manual" and project:
+        eval_res = evaluate_execution_metric(
+            db, project, src, component_id=comp_id, target_value=row.target_value
+        )
+        if eval_res.get("current_value") is not None:
+            row.current_value = float(eval_res["current_value"])
+
+    row.source_type = src
+    row.component_id = str(comp_id) if comp_id else None
     row.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(row)
-    return row
+    return _prepare_kpi_response(db, row, project=project)
 
 
 def delete_project_kpi(db: Session, project_id: UUID | str, kpi_id: UUID | str) -> bool:
-    row = get_project_kpi(db, project_id, kpi_id)
+    row = (
+        db.query(models.ProjectKPI)
+        .filter(
+            models.ProjectKPI.id == kpi_id,
+            models.ProjectKPI.project_id == project_id,
+            models.ProjectKPI.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not row:
         return False
     row.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return True
+
 
 
 # ── Dependencies (Gantt) ──────────────────────────────
@@ -3989,6 +4105,10 @@ def validate_crema_indicator(payload: schemas.ValidateCremaPayload | dict) -> di
         "GESTION_PROCESO",
         "EFICIENCIA",
         "CALIDAD",
+        "COMPONENTE_EDT",
+        "IMPACTO_MINISTERIAL",
+        "ACTIVIDAD_CRITICA",
+        "FINANCIERO_EVM",
     }
     if level in valid_levels:
         r_score = 20.0
@@ -4065,11 +4185,11 @@ def validate_crema_indicator(payload: schemas.ValidateCremaPayload | dict) -> di
     }
     if calculation_type in valid_calcs:
         a_score += 15.0
-        if level in ["EFICIENCIA", "CALIDAD"] and calculation_type in ["COSTO_EFICIENCIA", "PORCENTAJE_PROPORCION"]:
+        if level in ["EFICIENCIA", "CALIDAD", "FINANCIERO_EVM"] and calculation_type in ["COSTO_EFICIENCIA", "PORCENTAJE_PROPORCION"]:
             a_score += 5.0
-        elif level in ["RESULTADO_EFICACIA"] and calculation_type in ["PORCENTAJE_PROPORCION", "TASA_VARIACION"]:
+        elif level in ["RESULTADO_EFICACIA", "IMPACTO_MINISTERIAL"] and calculation_type in ["PORCENTAJE_PROPORCION", "TASA_VARIACION", "COSTO_EFICIENCIA"]:
             a_score += 5.0
-        elif level in ["PRODUCTO_PRINCIPAL", "PRODUCTO_SECUNDARIO", "GESTION_PROCESO"]:
+        elif level in ["PRODUCTO_PRINCIPAL", "PRODUCTO_SECUNDARIO", "GESTION_PROCESO", "COMPONENTE_EDT", "ACTIVIDAD_CRITICA"]:
             a_score += 5.0
         else:
             a_score += 3.0
@@ -4108,7 +4228,12 @@ def validate_crema_indicator(payload: schemas.ValidateCremaPayload | dict) -> di
     }
 
 
-def _prepare_indicator_response(ind: models.ProjectIndicator) -> models.ProjectIndicator:
+def _prepare_indicator_response(
+    ind: models.ProjectIndicator,
+    db: Optional[Session] = None,
+    project: Optional[models.Project] = None,
+    matrix: Optional[dict] = None,
+) -> models.ProjectIndicator:
     if ind:
         if hasattr(ind, "creator") and ind.creator:
             p = ind.creator
@@ -4118,14 +4243,39 @@ def _prepare_indicator_response(ind: models.ProjectIndicator) -> models.ProjectI
 
         records = [r for r in getattr(ind, "records", []) if r.deleted_at is None]
         ind.records_count = len(records)
-        if records:
-            sorted_recs = sorted(records, key=lambda x: x.reported_at or x.created_at)
-            ind.last_spi = sorted_recs[-1].spi
-            # También preparar los nombres de reporter en cada record
-            for r in records:
-                _prepare_record_response(r)
+        for r in records:
+            _prepare_record_response(r)
+
+        src = getattr(ind, "source_type", "manual") or "manual"
+        comp_id = getattr(ind, "component_id", None)
+
+        if src != "manual" and db is not None and project is not None:
+            from backend.services.project_evm_service import evaluate_execution_metric
+            eval_res = evaluate_execution_metric(
+                db,
+                project,
+                src,
+                component_id=comp_id,
+                target_value=ind.target_value,
+                matrix=matrix,
+            )
+            if eval_res.get("current_value") is not None:
+                ind.current_value = float(eval_res["current_value"])
+            ind.last_spi = eval_res.get("spi")
+            ind.__dict__["component_name"] = eval_res.get("component_name")
+            ind.__dict__["frente"] = eval_res.get("frente")
+            ind.__dict__["is_auto_synced"] = True
         else:
-            ind.last_spi = None
+            if records:
+                sorted_recs = sorted(records, key=lambda x: x.reported_at or x.created_at)
+                ind.last_spi = sorted_recs[-1].spi
+            elif ind.target_value and float(ind.target_value) > 0 and float(ind.current_value or 0.0) > 0:
+                ind.last_spi = round(float(ind.current_value) / float(ind.target_value), 4)
+            else:
+                ind.last_spi = None
+            ind.__dict__["component_name"] = None
+            ind.__dict__["frente"] = "manual"
+            ind.__dict__["is_auto_synced"] = False
     return ind
 
 
@@ -4164,7 +4314,12 @@ def get_project_indicators(
         .all()
     )
 
-    return [_prepare_indicator_response(ind) for ind in indicators]
+    matrix = None
+    if indicators and any(getattr(ind, "source_type", "manual") != "manual" for ind in indicators):
+        from backend.services.project_evm_service import build_project_execution_matrix
+        matrix = build_project_execution_matrix(db, project)
+
+    return [_prepare_indicator_response(ind, db=db, project=project, matrix=matrix) for ind in indicators]
 
 
 def get_project_indicator(
@@ -4193,12 +4348,11 @@ def get_project_indicator(
     if not ind:
         return None
 
-    if sede_id is not None:
-        project = get_project(db, ind.project_id, sede_id=sede_id)
-        if not project:
-            return None
+    project = get_project(db, ind.project_id, sede_id=sede_id) if sede_id is not None else get_project(db, ind.project_id)
+    if sede_id is not None and not project:
+        return None
 
-    return _prepare_indicator_response(ind)
+    return _prepare_indicator_response(ind, db=db, project=project)
 
 
 def create_project_indicator(
@@ -4209,28 +4363,52 @@ def create_project_indicator(
     *,
     sede_id: Optional[UUID | str] = None,
 ) -> models.ProjectIndicator:
-    """Crea un indicador con evaluación CREMA automática y trazabilidad UTC."""
+    """Crea un indicador con evaluación CREMA automática, enlace de ejecución y trazabilidad UTC."""
+    from backend.services.project_evm_service import evaluate_execution_metric
+
     project = get_project(db, project_id, sede_id=sede_id)
     if not project:
         raise ValueError("Proyecto no encontrado o no pertenece a la sede (Axioma 3)")
 
     effective_sede_id = sede_id or project.sede_id
+    src = str(getattr(indicator_in, "source_type", "manual") or "manual").strip()
+    comp_id = getattr(indicator_in, "component_id", None)
+
+    target_val = float(indicator_in.target_value or 0.0)
+    current_val = float(indicator_in.current_value or indicator_in.baseline_value or 0.0)
+    unit_val = indicator_in.unit_of_measure
+
+    if src != "manual":
+        eval_res = evaluate_execution_metric(
+            db, project, src, component_id=comp_id, target_value=target_val if target_val > 0 else None
+        )
+        if eval_res.get("current_value") is not None:
+            current_val = float(eval_res["current_value"])
+        if target_val <= 0 and eval_res.get("suggested_target"):
+            target_val = float(eval_res["suggested_target"])
+        if not unit_val and eval_res.get("unit"):
+            unit_val = str(eval_res["unit"])
 
     # Auto-evaluación CREMA si no viene provista
-    crema_eval = indicator_in.crema_evaluation or {}
+    crema_eval = dict(indicator_in.crema_evaluation or {})
     crema_score = indicator_in.crema_score
-    if not crema_eval or crema_score is None:
+    if not crema_eval.get("criteria") or crema_score is None:
         validation = validate_crema_indicator({
             "name": indicator_in.name,
             "description": indicator_in.description,
             "level": indicator_in.level,
             "calculation_type": indicator_in.calculation_type,
-            "unit_of_measure": indicator_in.unit_of_measure,
-            "target_value": indicator_in.target_value,
+            "unit_of_measure": unit_val,
+            "target_value": target_val,
             "frequency": indicator_in.frequency,
         })
-        crema_eval = validation
+        crema_eval = dict(validation)
         crema_score = validation["score"]
+
+    crema_eval["execution_link"] = {
+        "source_type": src,
+        "component_id": str(comp_id) if comp_id else None,
+    }
 
     # Generar código correlativo si no viene provisto
     code = indicator_in.code
@@ -4250,10 +4428,10 @@ def create_project_indicator(
         description=indicator_in.description,
         level=indicator_in.level or "PRODUCTO_PRINCIPAL",
         calculation_type=indicator_in.calculation_type or "ABSOLUTO_ACUMULADO",
-        unit_of_measure=indicator_in.unit_of_measure,
+        unit_of_measure=unit_val,
         baseline_value=indicator_in.baseline_value or 0.0,
-        target_value=indicator_in.target_value or 0.0,
-        current_value=indicator_in.current_value or indicator_in.baseline_value or 0.0,
+        target_value=target_val,
+        current_value=current_val,
         frequency=indicator_in.frequency or "mensual",
         period_targets=indicator_in.period_targets or {},
         crema_score=crema_score,
@@ -4267,7 +4445,7 @@ def create_project_indicator(
     db.add(indicator)
     db.commit()
     db.refresh(indicator)
-    return _prepare_indicator_response(indicator)
+    return _prepare_indicator_response(indicator, db=db, project=project)
 
 
 def update_project_indicator(
@@ -4279,14 +4457,30 @@ def update_project_indicator(
     sede_id: Optional[UUID | str] = None,
     project_id: Optional[UUID | str] = None,
 ) -> Optional[models.ProjectIndicator]:
-    """Actualiza un indicador recalculando CREMA si cambiaron atributos clave."""
+    """Actualiza un indicador recalculando CREMA y sincronizando su enlace de ejecución."""
+    from backend.services.project_evm_service import evaluate_execution_metric
+
     indicator = get_project_indicator(db, indicator_id, project_id=project_id, sede_id=sede_id)
     if not indicator:
         return None
 
     update_data = indicator_in.model_dump(exclude_unset=True)
+    src = str(update_data.pop("source_type", indicator.source_type) or "manual").strip()
+    if "component_id" in update_data:
+        comp_id = update_data.pop("component_id")
+    else:
+        comp_id = indicator.component_id
+
     for field, val in update_data.items():
         setattr(indicator, field, val)
+
+    project = get_project(db, indicator.project_id, sede_id=sede_id)
+    if src != "manual" and project:
+        eval_res = evaluate_execution_metric(
+            db, project, src, component_id=comp_id, target_value=indicator.target_value
+        )
+        if eval_res.get("current_value") is not None:
+            indicator.current_value = float(eval_res["current_value"])
 
     # Si se alteraron atributos clave y no se pasó crema_score explícito, recalcular CREMA
     recalc_keys = {"name", "description", "level", "calculation_type", "unit_of_measure", "target_value", "frequency"}
@@ -4300,13 +4494,27 @@ def update_project_indicator(
             "target_value": indicator.target_value,
             "frequency": indicator.frequency,
         })
-        indicator.crema_evaluation = val_res
+        new_eval = dict(val_res)
+        new_eval["execution_link"] = {
+            "source_type": src,
+            "component_id": str(comp_id) if comp_id else None,
+        }
+        indicator.crema_evaluation = new_eval
         indicator.crema_score = val_res["score"]
+    else:
+        existing_eval = dict(indicator.crema_evaluation) if isinstance(indicator.crema_evaluation, dict) else {}
+        existing_eval["execution_link"] = {
+            "source_type": src,
+            "component_id": str(comp_id) if comp_id else None,
+        }
+        indicator.crema_evaluation = existing_eval
 
+    indicator.source_type = src
+    indicator.component_id = str(comp_id) if comp_id else None
     indicator.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(indicator)
-    return _prepare_indicator_response(indicator)
+    return _prepare_indicator_response(indicator, db=db, project=project)
 
 
 def delete_project_indicator(
@@ -4403,6 +4611,353 @@ def get_project_indicator_records(
     )
 
     return [_prepare_record_response(r) for r in records]
+
+
+def sync_project_indicators_and_kpis(
+    db: Session,
+    project_id: UUID | str,
+    actor_id: Optional[UUID | str] = None,
+    *,
+    user_id: Optional[UUID | str] = None,
+    sede_id: Optional[UUID | str] = None,
+    seed_pro_families: Optional[bool] = None,
+    seed_pro_indicators: Optional[bool] = None,
+    seed_kpis: Optional[bool] = None,
+    seed_pro_kpis: Optional[bool] = None,
+    period_label: Optional[str] = None,
+    record_period: Optional[str] = None,
+) -> dict:
+    """Sincroniza en tiempo real la Matriz de Indicadores y KPIs con los 3 Frentes de Ejecución.
+
+    - Si seed_pro_families/seed_pro_indicators=True, autogenera las 6 Familias de Indicadores Pro del proyecto
+      y el indicador de avance físico de cada Componente EDT activo si aún no existen.
+    - Si seed_kpis/seed_pro_kpis=True, autogenera los 6 KPIs ejecutivos Pro vinculados a los 3 Frentes si no existen.
+    - Recalcula current_value y SPI para todos los indicadores y KPIs vinculados a fuentes automáticas.
+    """
+    from backend.models_projects import encode_kpi_meta
+    from backend.services.project_evm_service import (
+        build_project_execution_matrix,
+        evaluate_execution_metric,
+    )
+
+    project = get_project(db, project_id, sede_id=sede_id)
+    if not project:
+        raise ValueError("Proyecto no encontrado o no pertenece a la sede (Axioma 3)")
+
+    eff_actor = actor_id or user_id
+    eff_seed_indicators = (
+        seed_pro_indicators
+        if seed_pro_indicators is not None
+        else (seed_pro_families if seed_pro_families is not None else True)
+    )
+    eff_seed_kpis = (
+        seed_pro_kpis
+        if seed_pro_kpis is not None
+        else (seed_kpis if seed_kpis is not None else False)
+    )
+
+    now = datetime.now(timezone.utc)
+    eff_period = (record_period or period_label or now.strftime("%Y-%m")).strip()
+    matrix = build_project_execution_matrix(db, project)
+
+    existing_indicators = (
+        db.query(models.ProjectIndicator)
+        .filter(
+            models.ProjectIndicator.project_id == project.id,
+            models.ProjectIndicator.deleted_at.is_(None),
+        )
+        .all()
+    )
+
+    seeded_indicators_count = 0
+    synced_indicators_count = 0
+
+    if eff_seed_indicators:
+        existing_links = {
+            (getattr(ind, "source_type", "manual"), getattr(ind, "component_id", None))
+            for ind in existing_indicators
+        }
+        pro_blueprints = [
+            {
+                "code": "PRO-01",
+                "name": "Porcentaje de Avance Físico Ponderado (Tributación EDT -> Proyecto)",
+                "description": "Mide el avance continuo ponderando Subtareas -> Actividades -> Componentes EDT -> Proyecto.",
+                "level": "COMPONENTE_EDT",
+                "calculation_type": "PORCENTAJE_PROPORCION",
+                "unit_of_measure": "%",
+                "target_value": 100.0,
+                "source_type": "pro_edt_progress",
+                "component_id": None,
+            },
+            {
+                "code": "PRO-02",
+                "name": "Índice de Eficiencia de Esfuerzo y Horas Trabajadas",
+                "description": "Relación porcentual entre las horas ganadas por avance físico y las horas reales registradas.",
+                "level": "ACTIVIDAD_CRITICA",
+                "calculation_type": "PORCENTAJE_PROPORCION",
+                "unit_of_measure": "%",
+                "target_value": 100.0,
+                "source_type": "pro_hours_efficiency",
+                "component_id": None,
+            },
+            {
+                "code": "PRO-03",
+                "name": "Índice de Costo-Eficiencia Presupuestal (CPI = EV / AC)",
+                "description": "Cruce físico-financiero entre el Valor Ganado (EV) y el Costo Real ejecutado (AC).",
+                "level": "FINANCIERO_EVM",
+                "calculation_type": "COSTO_EFICIENCIA",
+                "unit_of_measure": "índice",
+                "target_value": 1.0,
+                "source_type": "pro_cost_efficiency",
+                "component_id": None,
+            },
+            {
+                "code": "PRO-04",
+                "name": "Porcentaje de Cumplimiento de Hitos en Cronograma",
+                "description": "Proporción de hitos del proyecto completados dentro de la fecha objetivo comprometida.",
+                "level": "PRODUCTO_PRINCIPAL",
+                "calculation_type": "PORCENTAJE_PROPORCION",
+                "unit_of_measure": "%",
+                "target_value": 100.0,
+                "source_type": "pro_milestones_ontime",
+                "component_id": None,
+            },
+            {
+                "code": "PRO-05",
+                "name": "Tasa de Mitigación y Control de Riesgos RAID",
+                "description": "Porcentaje de riesgos identificados con estado mitigado o plan de mitigación activo.",
+                "level": "IMPACTO_MINISTERIAL",
+                "calculation_type": "PORCENTAJE_PROPORCION",
+                "unit_of_measure": "%",
+                "target_value": 100.0,
+                "source_type": "pro_raid_mitigated",
+                "component_id": None,
+            },
+            {
+                "code": "PRO-06",
+                "name": "Índice Compuesto de Salud Global del Proyecto (CR = CPI × SPI)",
+                "description": "Razón Crítica PMI que combina el desempeño del cronograma (SPI) y la eficiencia del gasto (CPI).",
+                "level": "IMPACTO_MINISTERIAL",
+                "calculation_type": "COSTO_EFICIENCIA",
+                "unit_of_measure": "índice",
+                "target_value": 1.0,
+                "source_type": "pro_global_health",
+                "component_id": None,
+            },
+        ]
+
+        # También incluir un indicador de avance por cada Componente EDT activo
+        for idx, comp_info in enumerate(matrix.get("rollup_hierarchy", {}).get("components", []), start=1):
+            c_id = str(comp_info["component_id"])
+            c_code = comp_info.get("code") or f"EDT-{idx:02d}"
+            c_name = comp_info.get("name") or f"Componente {idx}"
+            pro_blueprints.append(
+                {
+                    "code": f"EDT-{idx:02d}",
+                    "name": f"Avance Físico Componente [{c_code}] {c_name}",
+                    "description": f"Tributación directa de actividades y subtareas del componente {c_name} (Peso presupuestal: {comp_info.get('weight_pct', 0)}%).",
+                    "level": "COMPONENTE_EDT",
+                    "calculation_type": "PORCENTAJE_PROPORCION",
+                    "unit_of_measure": "%",
+                    "target_value": 100.0,
+                    "source_type": "pro_edt_progress",
+                    "component_id": c_id,
+                }
+            )
+
+        for bp in pro_blueprints:
+            key = (bp["source_type"], bp["component_id"])
+            if key in existing_links:
+                continue
+            created_ind = create_project_indicator(
+                db,
+                project.id,
+                schemas.ProjectIndicatorCreate(**bp),
+                created_by=eff_actor,
+                sede_id=sede_id or project.sede_id,
+            )
+            existing_indicators.append(created_ind)
+            existing_links.add(key)
+            seeded_indicators_count += 1
+
+    # Sincronizar todos los indicadores conectados a fuentes automáticas
+    for ind in existing_indicators:
+        src = getattr(ind, "source_type", "manual") or "manual"
+        if src == "manual":
+            continue
+        eval_res = evaluate_execution_metric(
+            db,
+            project,
+            src,
+            component_id=getattr(ind, "component_id", None),
+            target_value=ind.target_value,
+            matrix=matrix,
+        )
+        if eval_res.get("current_value") is not None:
+            ind.current_value = float(eval_res["current_value"])
+            ind.updated_at = now
+            synced_indicators_count += 1
+
+            # Registrar o actualizar medición automática del período actual
+            existing_rec = (
+                db.query(models.ProjectIndicatorRecord)
+                .filter(
+                    models.ProjectIndicatorRecord.indicator_id == ind.id,
+                    models.ProjectIndicatorRecord.period == eff_period,
+                    models.ProjectIndicatorRecord.deleted_at.is_(None),
+                )
+                .first()
+            )
+            spi_val = round(float(eval_res.get("spi") or 0.0), 2)
+            if existing_rec:
+                existing_rec.actual_value = float(eval_res["current_value"])
+                existing_rec.target_value = float(ind.target_value or eval_res.get("suggested_target") or 100.0)
+                existing_rec.spi = spi_val
+                existing_rec.updated_at = now
+            else:
+                db.add(
+                    models.ProjectIndicatorRecord(
+                        indicator_id=ind.id,
+                        period=eff_period,
+                        target_value=float(ind.target_value or eval_res.get("suggested_target") or 100.0),
+                        actual_value=float(eval_res["current_value"]),
+                        spi=spi_val,
+                        notes=f"Sincronización automática desde ejecución real ({src}).",
+                        reported_by=eff_actor,
+                        reported_at=now,
+                        created_at=now,
+                        updated_at=now,
+                    )
+                )
+
+    # KPIs ejecutivos (6 Familias Pro)
+    existing_kpis = (
+        db.query(models.ProjectKPI)
+        .filter(
+            models.ProjectKPI.project_id == project.id,
+            models.ProjectKPI.deleted_at.is_(None),
+        )
+        .all()
+    )
+    seeded_kpis_count = 0
+    synced_kpis_count = 0
+
+    if eff_seed_kpis:
+        existing_kpi_sources = {
+            (getattr(k, "source_type", "manual"), getattr(k, "component_id", None))
+            for k in existing_kpis
+        }
+        kpi_blueprints = [
+            {
+                "title": "Avance Físico Ponderado (Tributación EDT)",
+                "description": "Roll-up continuo Subtareas -> Actividades -> Componentes EDT -> Proyecto.",
+                "target_value": 100.0,
+                "unit": "%",
+                "category": "operational",
+                "source_type": "pro_edt_progress",
+            },
+            {
+                "title": "Eficiencia de Esfuerzo y Horas Trabajadas",
+                "description": "Relación porcentual entre horas ganadas por avance y horas reales.",
+                "target_value": 100.0,
+                "unit": "%",
+                "category": "operational",
+                "source_type": "pro_hours_efficiency",
+            },
+            {
+                "title": "Eficiencia Presupuestal Valor Ganado (CPI)",
+                "description": "Cruce Tiempo × Financiero (EV / AC).",
+                "target_value": 1.0,
+                "unit": "índice",
+                "category": "financial",
+                "source_type": "pro_cost_efficiency",
+            },
+            {
+                "title": "Cumplimiento de Hitos en Cronograma",
+                "description": "Porcentaje de hitos completados en fecha objetivo.",
+                "target_value": 100.0,
+                "unit": "%",
+                "category": "quality",
+                "source_type": "pro_milestones_ontime",
+            },
+            {
+                "title": "Mitigación de Riesgos RAID",
+                "description": "Porcentaje de riesgos mitigados o con plan activo.",
+                "target_value": 100.0,
+                "unit": "%",
+                "category": "quality",
+                "source_type": "pro_raid_mitigated",
+            },
+            {
+                "title": "Salud Global del Proyecto (Razón Crítica CR)",
+                "description": "Índice compuesto CPI × SPI de desempeño integral.",
+                "target_value": 1.0,
+                "unit": "índice",
+                "category": "impact",
+                "source_type": "pro_global_health",
+            },
+        ]
+        for kbp in kpi_blueprints:
+            k_key = (kbp["source_type"], None)
+            if k_key in existing_kpi_sources:
+                continue
+            eval_res = evaluate_execution_metric(
+                db, project, kbp["source_type"], target_value=kbp["target_value"], matrix=matrix
+            )
+            new_kpi = models.ProjectKPI(
+                project_id=project.id,
+                title=kbp["title"],
+                description=encode_kpi_meta(kbp["description"], kbp["source_type"], None),
+                target_value=kbp["target_value"],
+                current_value=float(eval_res.get("current_value") or 0.0),
+                unit=kbp["unit"],
+                category=kbp["category"],
+                created_at=now,
+                updated_at=now,
+            )
+            new_kpi.source_type = kbp["source_type"]
+            db.add(new_kpi)
+            existing_kpis.append(new_kpi)
+            existing_kpi_sources.add(k_key)
+            seeded_kpis_count += 1
+
+    for k in existing_kpis:
+        k_src = getattr(k, "source_type", "manual") or "manual"
+        if k_src == "manual":
+            continue
+        eval_res = evaluate_execution_metric(
+            db,
+            project,
+            k_src,
+            component_id=getattr(k, "component_id", None),
+            target_value=k.target_value,
+            matrix=matrix,
+        )
+        if eval_res.get("current_value") is not None:
+            k.current_value = float(eval_res["current_value"])
+            k.updated_at = now
+            synced_kpis_count += 1
+
+    db.commit()
+
+    final_indicators = get_project_indicators(db, project.id, sede_id=sede_id)
+    final_kpis = get_project_kpis(db, project.id)
+
+    return {
+        "project_id": str(project.id),
+        "synced_indicators": synced_indicators_count,
+        "seeded_indicators": seeded_indicators_count,
+        "synced_kpis": synced_kpis_count,
+        "seeded_kpis": seeded_kpis_count,
+        "synced_indicators_count": synced_indicators_count,
+        "seeded_indicators_count": seeded_indicators_count,
+        "synced_kpis_count": synced_kpis_count,
+        "seeded_kpis_count": seeded_kpis_count,
+        "execution_matrix": matrix,
+        "indicators": final_indicators,
+        "kpis": final_kpis,
+    }
+
 
 
 # ── Project User Favorites and Pinning (Super-PRO Files Fase 1) ───────────

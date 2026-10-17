@@ -19,6 +19,7 @@ para control físico-financiero de proyectos:
 from __future__ import annotations
 
 import datetime
+import uuid
 from datetime import timedelta, timezone
 from typing import Any, Dict, List, Optional
 
@@ -57,6 +58,7 @@ try:
         ProjectComponent,
         ProjectExpense,
         ProjectMilestone,
+        ProjectRisk,
         ProjectTask,
         ProjectTimeLog,
     )
@@ -66,6 +68,7 @@ except ImportError:
     ProjectComponent = _DummyModel  # type: ignore
     ProjectExpense = _DummyModel  # type: ignore
     ProjectMilestone = _DummyModel  # type: ignore
+    ProjectRisk = _DummyModel  # type: ignore
     ProjectTask = _DummyModel  # type: ignore
     ProjectTimeLog = _DummyModel  # type: ignore
 
@@ -95,13 +98,154 @@ def _safe_float(val: Any, default: float = 0.0) -> float:
     return default
 
 
+def _is_valid_id(val: Any) -> bool:
+    return isinstance(val, (str, uuid.UUID)) and bool(str(val).strip())
+
+
 def _utcnow() -> datetime.datetime:
     return datetime.datetime.now(timezone.utc)
 
 
-def calculate_project_evm(db: Session, project: Project) -> Dict[str, Any]:
+def _compute_tasks_weighted_progress_pct(tasks: List[Any]) -> float:
+    """Calcula el avance físico continuo ponderado haciendo roll-up Subtareas -> Actividades.
+
+    - Si existen relaciones jerárquicas (parent_id dentro del conjunto de tareas),
+      las subtareas tributan primero a su actividad padre ponderadas por estimated_hours.
+    - Las actividades raíz tributan al nivel superior ponderadas por su esfuerzo total
+      (estimated_hours propio + subtareas) o en proporción igual si no hay horas estimadas.
+    """
+    if not tasks:
+        return 0.0
+
+    task_map: Dict[str, Any] = {}
+    for t in tasks:
+        tid = getattr(t, "id", None)
+        if _is_valid_id(tid):
+            task_map[str(tid)] = t
+
+    children_map: Dict[str, List[Any]] = {}
+    child_ids: set[str] = set()
+    for t in tasks:
+        tid = getattr(t, "id", None)
+        pid = getattr(t, "parent_id", None)
+        if _is_valid_id(pid) and str(pid) in task_map:
+            if not _is_valid_id(tid) or str(tid) != str(pid):
+                children_map.setdefault(str(pid), []).append(t)
+                if _is_valid_id(tid):
+                    child_ids.add(str(tid))
+
+    visited: set[str] = set()
+
+    def _eval_node(node: Any) -> tuple[float, float]:
+        nid_raw = getattr(node, "id", None)
+        nid = str(nid_raw) if _is_valid_id(nid_raw) else None
+        if nid and nid in visited:
+            children: List[Any] = []
+        else:
+            if nid:
+                visited.add(nid)
+            children = children_map.get(nid, []) if nid else []
+
+        own_est = max(0.0, _safe_float(getattr(node, "estimated_hours", 0.0)))
+        raw_pct = _safe_float(getattr(node, "physical_progress_pct", 0.0))
+        if getattr(node, "status", None) in ("completed", "done") and raw_pct == 0.0:
+            raw_pct = 100.0
+        own_pct = max(0.0, min(100.0, raw_pct))
+
+        if not children:
+            return own_pct, own_est
+
+        child_evals = [_eval_node(ch) for ch in children]
+        total_child_hours = sum(w for _, w in child_evals if w > 0)
+        if total_child_hours > 0:
+            rolled_pct = sum(p * (w if w > 0 else 1.0) for p, w in child_evals) / sum(
+                (w if w > 0 else 1.0) for _, w in child_evals
+            )
+        else:
+            rolled_pct = sum(p for p, _ in child_evals) / len(child_evals)
+
+        total_hours = (own_est + total_child_hours) if own_est > 0 else total_child_hours
+        return round(rolled_pct, 2), total_hours
+
+    root_tasks = [
+        t
+        for t in tasks
+        if not (_is_valid_id(getattr(t, "id", None)) and str(getattr(t, "id", None)) in child_ids)
+    ]
+    if not root_tasks:
+        root_tasks = list(tasks)
+
+    root_evals = [_eval_node(rt) for rt in root_tasks]
+    has_hours = any(w > 0 for _, w in root_evals)
+    if has_hours:
+        weighted_sum = sum(p * (w if w > 0 else 1.0) for p, w in root_evals)
+        weight_denom = sum((w if w > 0 else 1.0) for _, w in root_evals)
+        return round(weighted_sum / weight_denom, 1)
+
+    return round(sum(p for p, _ in root_evals) / len(root_evals), 1)
+
+
+def _compute_project_continuous_progress_pct(
+    db: Session,
+    project: Project,
+    tasks: List[Any],
+) -> float:
+    """Calcula el avance físico continuo del proyecto integrando la cadena:
+    Subtareas -> Actividades -> Componentes EDT -> Proyecto.
+    """
+    if not tasks:
+        return 0.0
+
+    # Intentar obtener componentes activos del proyecto
+    components: List[Any] = []
+    try:
+        comp_q = db.query(ProjectComponent).filter(
+            ProjectComponent.project_id == project.id,
+            ProjectComponent.deleted_at.is_(None),
+        )
+        raw_comps = comp_q.all()
+        if not isinstance(raw_comps, list):
+            raw_comps = comp_q.order_by(ProjectComponent.order_index.asc()).all()
+        if isinstance(raw_comps, list):
+            components = [c for c in raw_comps if _is_valid_id(getattr(c, "id", None))]
+    except Exception:
+        components = []
+
+    if components:
+        tasks_by_comp: Dict[str, List[Any]] = {}
+        unassigned_tasks: List[Any] = []
+        comp_ids = {str(c.id) for c in components}
+        for t in tasks:
+            cid = getattr(t, "component_id", None)
+            if _is_valid_id(cid) and str(cid) in comp_ids:
+                tasks_by_comp.setdefault(str(cid), []).append(t)
+            else:
+                unassigned_tasks.append(t)
+
+        # Solo ponderar por componentes si al menos una tarea está vinculada a un componente
+        if tasks_by_comp:
+            comp_entries: List[tuple[float, float, int]] = []
+            for comp in components:
+                c_tasks = tasks_by_comp.get(str(comp.id), [])
+                c_pct = _compute_tasks_weighted_progress_pct(c_tasks) if c_tasks else 0.0
+                c_bac = max(0.0, _safe_float(getattr(comp, "budget_allocated", 0.0)))
+                comp_entries.append((c_pct, c_bac, len(c_tasks)))
+
+            total_comp_budget = sum(b for _, b, cnt in comp_entries if cnt > 0)
+            if total_comp_budget > 0 and not unassigned_tasks:
+                weighted_ev = sum(pct * b for pct, b, cnt in comp_entries if cnt > 0 and b > 0)
+                budget_denom = sum(b for _, b, cnt in comp_entries if cnt > 0 and b > 0)
+                if budget_denom > 0:
+                    return round(weighted_ev / budget_denom, 1)
+
+    return _compute_tasks_weighted_progress_pct(tasks)
+
+
+def calculate_project_evm(
+    db: Session, project: Project, now: Optional[datetime] = None
+) -> Dict[str, Any]:
     """Calcula las métricas canónicas de EVM para un proyecto dado."""
-    now = _utcnow()
+    now = _as_utc(now) or _utcnow()
     bac = float(project.budget_allocated or 0.0)
 
     # 1. Costo Real (AC): Gastos reales registrados o campo budget_spent
@@ -118,7 +262,7 @@ def calculate_project_evm(db: Session, project: Project) -> Dict[str, Any]:
     direct_spent = float(project.budget_spent or 0.0)
     ac = round(max(direct_spent, expenses_total), 2)
 
-    # 2. Avance Físico (%)
+    # 2. Avance Físico (%) — Roll-Up Continuo Subtareas -> Actividades -> Componentes EDT -> Proyecto
     tasks = (
         db.query(ProjectTask)
         .filter(
@@ -128,7 +272,6 @@ def calculate_project_evm(db: Session, project: Project) -> Dict[str, Any]:
         .all()
     )
     total_tasks = len(tasks)
-    completed_tasks = sum(1 for t in tasks if t.status in ("completed", "done"))
 
     if project.progress_mode == "manual":
         progress_pct = max(0.0, min(100.0, float(project.manual_progress or 0.0)))
@@ -145,9 +288,9 @@ def calculate_project_evm(db: Session, project: Project) -> Dict[str, Any]:
             done_m = sum(1 for m in milestones if m.is_completed)
             progress_pct = round((done_m / len(milestones)) * 100.0, 1)
         else:
-            progress_pct = round((completed_tasks / max(total_tasks, 1)) * 100.0, 1) if total_tasks else 0.0
+            progress_pct = _compute_project_continuous_progress_pct(db, project, tasks)
     else:
-        progress_pct = round((completed_tasks / max(total_tasks, 1)) * 100.0, 1) if total_tasks else 0.0
+        progress_pct = _compute_project_continuous_progress_pct(db, project, tasks)
 
     # 3. Valor Ganado (EV) = BAC * (% Avance Físico)
     ev = round(bac * (progress_pct / 100.0), 2)
@@ -365,47 +508,8 @@ def calculate_component_evm(
     total_tasks = len(tasks)
     completed_tasks = sum(1 for t in tasks if t.status in ("completed", "done"))
 
-    # Avance físico continuo ponderado por esfuerzo o conteo
-    if total_tasks > 0:
-        total_hours = sum(_safe_float(getattr(t, "estimated_hours", 0.0)) for t in tasks)
-        has_continuous_progress = any(_safe_float(getattr(t, "physical_progress_pct", 0.0)) > 0 for t in tasks)
-
-        if total_hours > 0:
-            weighted_sum = sum(
-                (
-                    _safe_float(getattr(t, "physical_progress_pct", 0.0))
-                    or (100.0 if t.status in ("completed", "done") else 0.0)
-                )
-                * (
-                    _safe_float(getattr(t, "estimated_hours", 0.0))
-                    if _safe_float(getattr(t, "estimated_hours", 0.0)) > 0
-                    else 1.0
-                )
-                for t in tasks
-            )
-            weight_denom = sum(
-                (
-                    _safe_float(getattr(t, "estimated_hours", 0.0))
-                    if _safe_float(getattr(t, "estimated_hours", 0.0)) > 0
-                    else 1.0
-                )
-                for t in tasks
-            )
-            physical_pct = round(weighted_sum / weight_denom, 1)
-        elif has_continuous_progress:
-            physical_pct = round(
-                sum(
-                    _safe_float(getattr(t, "physical_progress_pct", 0.0))
-                    or (100.0 if t.status in ("completed", "done") else 0.0)
-                    for t in tasks
-                )
-                / total_tasks,
-                1,
-            )
-        else:
-            physical_pct = round((completed_tasks / total_tasks) * 100.0, 1)
-    else:
-        physical_pct = 0.0
+    # Avance físico continuo ponderado por jerarquía Subtareas -> Actividades -> Componente
+    physical_pct = _compute_tasks_weighted_progress_pct(tasks) if total_tasks > 0 else 0.0
 
     # 2. EV (Earned Value)
     ev = round(bac * (physical_pct / 100.0), 2)
@@ -1527,6 +1631,771 @@ def build_project_wbs_tree(db: Session, project: Project) -> Dict[str, Any]:
         "max_depth": max_depth,
         "root": root_node,
     }
+
+
+# ============================================================================
+# Fase 5: 3 Frentes de Ejecución + 6 Familias de Indicadores Pro + Tributación
+# ============================================================================
+
+EXECUTION_SOURCES_CATALOG: List[Dict[str, Any]] = [
+    {
+        "source_type": "manual",
+        "code": "MAN-00",
+        "label": "Captura Manual (Tradicional)",
+        "frente": "manual",
+        "unit": "unidades",
+        "default_target": 100.0,
+        "recommended_level": "PRODUCTO_PRINCIPAL",
+        "supports_component": False,
+        "description": "El valor actual se registra manualmente mediante avances periódicos.",
+    },
+    {
+        "source_type": "pro_edt_progress",
+        "code": "PRO-01",
+        "label": "Familia Pro 1: Avance Físico Ponderado (EDT / Proyecto)",
+        "frente": "tiempo",
+        "unit": "%",
+        "default_target": 100.0,
+        "recommended_level": "COMPONENTE_EDT",
+        "supports_component": True,
+        "description": "Tributación continua Subtareas -> Actividades -> Componente EDT -> Proyecto ponderada por horas y presupuesto.",
+    },
+    {
+        "source_type": "pro_hours_efficiency",
+        "code": "PRO-02",
+        "label": "Familia Pro 2: Eficiencia de Esfuerzo y Horas",
+        "frente": "tiempo",
+        "unit": "%",
+        "default_target": 100.0,
+        "recommended_level": "ACTIVIDAD_CRITICA",
+        "supports_component": True,
+        "description": "Relación entre las horas ganadas por avance físico y las horas reales registradas en bitácora.",
+    },
+    {
+        "source_type": "pro_cost_efficiency",
+        "code": "PRO-03",
+        "label": "Familia Pro 3: Costo-Eficiencia Presupuestal (CPI)",
+        "frente": "cruce_evm",
+        "unit": "índice",
+        "default_target": 1.0,
+        "recommended_level": "FINANCIERO_EVM",
+        "supports_component": True,
+        "description": "Índice de Desempeño del Costo (CPI = EV / AC) cruzando valor ganado físico contra gasto aprobado/pagado.",
+    },
+    {
+        "source_type": "pro_milestones_ontime",
+        "code": "PRO-04",
+        "label": "Familia Pro 4: Cumplimiento de Hitos a Tiempo",
+        "frente": "tiempo",
+        "unit": "%",
+        "default_target": 100.0,
+        "recommended_level": "PRODUCTO_PRINCIPAL",
+        "supports_component": False,
+        "description": "Porcentaje de hitos contractuales o ministeriales completados dentro de su fecha objetivo.",
+    },
+    {
+        "source_type": "pro_raid_mitigated",
+        "code": "PRO-05",
+        "label": "Familia Pro 5: Mitigación de Riesgos RAID",
+        "frente": "tiempo",
+        "unit": "%",
+        "default_target": 100.0,
+        "recommended_level": "IMPACTO_MINISTERIAL",
+        "supports_component": False,
+        "description": "Porcentaje de riesgos del proyecto con estado mitigado/cerrado o con plan de mitigación activo.",
+    },
+    {
+        "source_type": "pro_global_health",
+        "code": "PRO-06",
+        "label": "Familia Pro 6: Salud Global Compuesta (Razón Crítica CR)",
+        "frente": "cruce_evm",
+        "unit": "índice",
+        "default_target": 1.0,
+        "recommended_level": "IMPACTO_MINISTERIAL",
+        "supports_component": True,
+        "description": "Razón Crítica PMI (CR = CPI × SPI) que integra desempeño cronológico y eficiencia financiera.",
+    },
+    {
+        "source_type": "frente_tiempo_spi",
+        "code": "FRT-SPI",
+        "label": "Frente Tiempo: Índice de Cronograma (SPI)",
+        "frente": "tiempo",
+        "unit": "índice",
+        "default_target": 1.0,
+        "recommended_level": "ACTIVIDAD_CRITICA",
+        "supports_component": True,
+        "description": "Índice de Desempeño del Cronograma (SPI = EV / PV) del proyecto o componente EDT.",
+    },
+    {
+        "source_type": "frente_financiero_execution_pct",
+        "code": "FRF-EXEC",
+        "label": "Frente Financiero: % Ejecución Presupuestal (AC / BAC)",
+        "frente": "financiero",
+        "unit": "%",
+        "default_target": 100.0,
+        "recommended_level": "FINANCIERO_EVM",
+        "supports_component": True,
+        "description": "Porcentaje del presupuesto aprobado (BAC) ejecutado en gastos reales (AC).",
+    },
+    {
+        "source_type": "frente_financiero_rule_100",
+        "code": "FRF-R100",
+        "label": "Frente Financiero: Cobertura Regla del 100% EDT",
+        "frente": "financiero",
+        "unit": "%",
+        "default_target": 100.0,
+        "recommended_level": "FINANCIERO_EVM",
+        "supports_component": False,
+        "description": "Porcentaje del presupuesto global del proyecto distribuido en componentes de la EDT.",
+    },
+    {
+        "source_type": "frente_cruce_ev",
+        "code": "FRC-EV",
+        "label": "Frente Cruce EVM: Valor Ganado Monetizado (EV)",
+        "frente": "cruce_evm",
+        "unit": "USD",
+        "default_target": 0.0,
+        "recommended_level": "FINANCIERO_EVM",
+        "supports_component": True,
+        "description": "Valor monetario del trabajo físico realmente completado (EV = BAC × % Avance).",
+    },
+]
+
+
+def build_project_execution_matrix(
+    db: Session, project: Project, now: Optional[datetime] = None
+) -> Dict[str, Any]:
+    """Construye la Matriz Integral de Ejecución en 3 Frentes + Tributación Jerárquica + 6 Familias Pro.
+
+    1. Frente Tiempo: SPI, SPI(t), SV, horas estimadas/reales, eficiencia de horas, hitos a tiempo.
+    2. Frente Financiero: BAC, AC, comprometido, planificado, % ejecución, Regla del 100% EDT.
+    3. Frente Cruce (Tiempo × Financiero): EV, PV, CPI, SPI, CR, CV, SV, EAC, VAC, TCPI, Brecha.
+    4. Matriz de Tributación: Subtareas -> Actividades -> Componentes EDT -> Proyecto.
+    5. 6 Familias de Indicadores Pro evaluadas en tiempo real.
+    """
+    now = _as_utc(now) or _utcnow()
+    adv_evm = calculate_project_evm_advanced(db, project, now=now)
+    std_evm = adv_evm["standard_evm"]
+    es_metrics = adv_evm["earned_schedule"]
+    tcpi_metrics = adv_evm["tcpi"]
+    budget_rule = validate_project_budget_100_rule(db, project)
+
+    # Tareas activas
+    raw_tasks = (
+        db.query(ProjectTask)
+        .filter(ProjectTask.project_id == project.id, ProjectTask.deleted_at.is_(None))
+        .all()
+    )
+    all_tasks = raw_tasks if isinstance(raw_tasks, list) else []
+
+    # Logs de tiempo
+    raw_logs = (
+        db.query(ProjectTimeLog)
+        .filter(ProjectTimeLog.project_id == project.id, ProjectTimeLog.deleted_at.is_(None))
+        .all()
+    )
+    all_logs = raw_logs if isinstance(raw_logs, list) else []
+
+    # Gastos (todos los estados para desglose financiero)
+    raw_expenses = (
+        db.query(ProjectExpense)
+        .filter(ProjectExpense.project_id == project.id, ProjectExpense.deleted_at.is_(None))
+        .all()
+    )
+    all_expenses = raw_expenses if isinstance(raw_expenses, list) else []
+
+    # Hitos
+    raw_milestones = (
+        db.query(ProjectMilestone)
+        .filter(ProjectMilestone.project_id == project.id, ProjectMilestone.deleted_at.is_(None))
+        .all()
+    )
+    all_milestones = raw_milestones if isinstance(raw_milestones, list) else []
+
+    # Riesgos RAID
+    try:
+        raw_risks = (
+            db.query(ProjectRisk)
+            .filter(ProjectRisk.project_id == project.id, ProjectRisk.deleted_at.is_(None))
+            .all()
+        )
+        all_risks = raw_risks if isinstance(raw_risks, list) else []
+    except Exception:
+        all_risks = []
+
+    # Componentes EDT
+    try:
+        comp_q = db.query(ProjectComponent).filter(
+            ProjectComponent.project_id == project.id,
+            ProjectComponent.deleted_at.is_(None),
+        )
+        raw_comps = comp_q.order_by(ProjectComponent.order_index.asc()).all()
+        if not isinstance(raw_comps, list):
+            raw_comps = comp_q.all()
+        components = [c for c in raw_comps if _is_valid_id(getattr(c, "id", None))] if isinstance(raw_comps, list) else []
+    except Exception:
+        components = []
+
+    # Jerarquía de tareas: separar actividades raíz y subtareas
+    task_map: Dict[str, Any] = {
+        str(t.id): t for t in all_tasks if _is_valid_id(getattr(t, "id", None))
+    }
+    children_by_parent: Dict[str, List[Any]] = {}
+    subtasks_count = 0
+    for t in all_tasks:
+        pid = getattr(t, "parent_id", None)
+        tid = getattr(t, "id", None)
+        if _is_valid_id(pid) and str(pid) in task_map and (not _is_valid_id(tid) or str(tid) != str(pid)):
+            children_by_parent.setdefault(str(pid), []).append(t)
+            subtasks_count += 1
+
+    activities_count = max(0, len(all_tasks) - subtasks_count)
+    completed_tasks_count = sum(1 for t in all_tasks if getattr(t, "status", None) in ("completed", "done"))
+    overdue_tasks_count = sum(
+        1
+        for t in all_tasks
+        if getattr(t, "status", None) not in ("completed", "done")
+        and _as_utc(getattr(t, "due_date", None)) is not None
+        and _as_utc(getattr(t, "due_date", None)) < now
+    )
+
+    # Horas por tarea
+    hours_by_task: Dict[str, float] = {}
+    total_actual_hours = 0.0
+    for tl in all_logs:
+        h = max(0.0, _safe_float(getattr(tl, "hours", 0.0)))
+        total_actual_hours += h
+        tid = getattr(tl, "task_id", None)
+        if _is_valid_id(tid):
+            hours_by_task[str(tid)] = hours_by_task.get(str(tid), 0.0) + h
+    total_actual_hours = round(total_actual_hours, 2)
+
+    # Esfuerzo estimado total (evitando doble conteo entre padre e hijas cuando el padre no suma sus hijas)
+    def _calc_subtree_hours(t: Any, visited_ids: set[str]) -> tuple[float, float]:
+        tid_raw = getattr(t, "id", None)
+        tid = str(tid_raw) if _is_valid_id(tid_raw) else None
+        if tid and tid in visited_ids:
+            return 0.0, 0.0
+        if tid:
+            visited_ids.add(tid)
+        own_est = max(0.0, _safe_float(getattr(t, "estimated_hours", 0.0)))
+        own_act = hours_by_task.get(tid, 0.0) if tid else 0.0
+        ch_list = children_by_parent.get(tid, []) if tid else []
+        ch_est_sum = 0.0
+        ch_act_sum = 0.0
+        for ch in ch_list:
+            ce, ca = _calc_subtree_hours(ch, visited_ids)
+            ch_est_sum += ce
+            ch_act_sum += ca
+        tot_est = (own_est + ch_est_sum) if own_est > 0 else ch_est_sum
+        tot_act = own_act + ch_act_sum
+        return round(tot_est, 2), round(tot_act, 2)
+
+    root_tasks_all = [
+        t
+        for t in all_tasks
+        if not (_is_valid_id(getattr(t, "parent_id", None)) and str(getattr(t, "parent_id", None)) in task_map)
+    ]
+    visited_global: set[str] = set()
+    total_estimated_hours = 0.0
+    for rt in root_tasks_all:
+        re, _ = _calc_subtree_hours(rt, visited_global)
+        total_estimated_hours += re
+    total_estimated_hours = round(total_estimated_hours, 2)
+
+    progress_pct = float(std_evm["progress_percentage"])
+    earned_hours = round(total_estimated_hours * (progress_pct / 100.0), 2)
+    if total_estimated_hours > 0 and total_actual_hours > 0:
+        hours_efficiency_pct = round(min(150.0, (earned_hours / total_actual_hours) * 100.0), 1)
+        hours_utilization_pct = round((total_actual_hours / total_estimated_hours) * 100.0, 1)
+    elif total_estimated_hours > 0 and total_actual_hours == 0:
+        hours_efficiency_pct = round(progress_pct, 1) if progress_pct > 0 else 100.0
+        hours_utilization_pct = 0.0
+    else:
+        hours_efficiency_pct = round(progress_pct, 1)
+        hours_utilization_pct = 0.0
+
+    # Hitos a tiempo
+    milestones_total = len(all_milestones)
+    milestones_completed = 0
+    milestones_on_time = 0
+    for m in all_milestones:
+        is_comp = bool(getattr(m, "is_completed", False))
+        due_dt = _as_utc(getattr(m, "due_date", None) or getattr(m, "target_date", None))
+        comp_dt = _as_utc(getattr(m, "completed_at", None))
+        if is_comp:
+            milestones_completed += 1
+            if not due_dt or not comp_dt or comp_dt <= due_dt:
+                milestones_on_time += 1
+    if milestones_total > 0:
+        milestones_on_time_pct = round((milestones_on_time / milestones_total) * 100.0, 1)
+    else:
+        milestones_on_time_pct = round(progress_pct, 1)
+
+    # Riesgos RAID mitigados
+    risks_total = len(all_risks)
+    risks_mitigated = 0
+    risks_active = 0
+    risks_occurred = 0
+    for r in all_risks:
+        r_status = str(getattr(r, "status", "") or "").lower()
+        has_plan = bool(str(getattr(r, "mitigation_plan", "") or "").strip())
+        if r_status in ("mitigated", "closed", "resolved") or has_plan:
+            risks_mitigated += 1
+        elif r_status == "occurred":
+            risks_occurred += 1
+        else:
+            risks_active += 1
+    risks_mitigated_pct = round((risks_mitigated / risks_total) * 100.0, 1) if risks_total > 0 else 100.0
+
+    # Desglose de gastos financieros
+    committed_cost = round(
+        sum(_safe_float(getattr(e, "amount", 0.0)) for e in all_expenses if getattr(e, "status", None) == "committed"),
+        2,
+    )
+    planned_cost = round(
+        sum(_safe_float(getattr(e, "amount", 0.0)) for e in all_expenses if getattr(e, "status", None) == "planned"),
+        2,
+    )
+
+    # Tributación por Componente EDT
+    bac = float(std_evm["bac"])
+    comp_ids_set = {str(c.id) for c in components}
+    tasks_by_comp: Dict[Optional[str], List[Any]] = {}
+    for t in all_tasks:
+        cid = getattr(t, "component_id", None)
+        key = str(cid) if (_is_valid_id(cid) and str(cid) in comp_ids_set) else None
+        tasks_by_comp.setdefault(key, []).append(t)
+
+    component_rollups: List[Dict[str, Any]] = []
+    total_comp_budget = sum(max(0.0, _safe_float(getattr(c, "budget_allocated", 0.0))) for c in components)
+
+    for comp in components:
+        cid_str = str(comp.id)
+        comp_evm = calculate_component_evm(db, comp, now=now)
+        c_tasks = tasks_by_comp.get(cid_str, [])
+        c_root_tasks = [
+            t
+            for t in c_tasks
+            if not (_is_valid_id(getattr(t, "parent_id", None)) and str(getattr(t, "parent_id", None)) in task_map)
+        ]
+        c_visited: set[str] = set()
+        c_est_hours = 0.0
+        c_act_hours = 0.0
+        c_subtasks_count = 0
+        activities_summary: List[Dict[str, Any]] = []
+        for rt in c_root_tasks:
+            re, ra = _calc_subtree_hours(rt, c_visited)
+            c_est_hours += re
+            c_act_hours += ra
+            rt_id = str(rt.id) if _is_valid_id(getattr(rt, "id", None)) else ""
+            rt_children = children_by_parent.get(rt_id, []) if rt_id else []
+            c_subtasks_count += len(rt_children)
+            rt_pct = _compute_tasks_weighted_progress_pct([rt] + rt_children)
+            activities_summary.append(
+                {
+                    "id": rt_id,
+                    "title": getattr(rt, "title", "Actividad"),
+                    "status": getattr(rt, "status", "pending"),
+                    "progress_pct": rt_pct,
+                    "estimated_hours": round(re, 2),
+                    "actual_hours": round(ra, 2),
+                    "subtasks_count": len(rt_children),
+                }
+            )
+
+        c_bac = float(comp_evm["budget_allocated"])
+        weight_pct = (
+            round((c_bac / bac) * 100.0, 1)
+            if bac > 0
+            else (round((c_bac / total_comp_budget) * 100.0, 1) if total_comp_budget > 0 else round(100.0 / max(len(components), 1), 1))
+        )
+        if c_est_hours > 0 and c_act_hours > 0:
+            c_earned_h = c_est_hours * (float(comp_evm["physical_progress_pct"]) / 100.0)
+            c_hours_eff = round(min(150.0, (c_earned_h / c_act_hours) * 100.0), 1)
+        else:
+            c_hours_eff = float(comp_evm["physical_progress_pct"])
+
+        component_rollups.append(
+            {
+                "component_id": cid_str,
+                "code": getattr(comp, "code", None) or "EDT",
+                "name": getattr(comp, "name", "Componente EDT"),
+                "budget_allocated": c_bac,
+                "weight_pct": weight_pct,
+                "budget_weight_pct": weight_pct,
+                "physical_progress_pct": float(comp_evm["physical_progress_pct"]),
+                "financial_progress_pct": float(comp_evm["financial_progress_pct"]),
+                "balance_gap_pct": float(comp_evm["balance_gap_pct"]),
+                "ev": float(comp_evm["ev"]),
+                "pv": float(comp_evm["pv"]),
+                "ac": float(comp_evm["ac"]),
+                "cpi": float(comp_evm["cpi"]),
+                "spi": float(comp_evm["spi"]),
+                "cr": float(comp_evm["cr"]),
+                "tasks_count": int(comp_evm["total_tasks"]),
+                "completed_tasks": int(comp_evm["completed_tasks"]),
+                "activities_count": len(c_root_tasks),
+                "subtasks_count": c_subtasks_count,
+                "estimated_hours": round(c_est_hours, 2),
+                "actual_hours": round(c_act_hours, 2),
+                "hours_efficiency_pct": c_hours_eff,
+                "health_status": comp_evm["health_status"],
+                "health_color": comp_evm["health_color"],
+                "activities": activities_summary,
+            }
+        )
+
+    unassigned_tasks = tasks_by_comp.get(None, [])
+    unassigned_pct = _compute_tasks_weighted_progress_pct(unassigned_tasks) if unassigned_tasks else 0.0
+
+    if getattr(project, "progress_mode", "auto_tasks") == "manual":
+        rollup_method = "manual"
+    elif getattr(project, "progress_mode", "auto_tasks") == "milestones" and milestones_total > 0:
+        rollup_method = "milestones"
+    elif components and total_comp_budget > 0 and not unassigned_tasks:
+        rollup_method = "components_budget_weighted"
+    else:
+        rollup_method = "tasks_hours_weighted"
+
+    frente_tiempo = {
+        "time_progress_pct": progress_pct,
+        "progress_pct": progress_pct,
+        "spi": float(std_evm["spi"]),
+        "spi_t": float(es_metrics["schedule_performance_index_time"]),
+        "sv": float(std_evm["sv"]),
+        "planned_duration_days": float(es_metrics["planned_duration_days"]),
+        "actual_time_days": float(es_metrics["actual_time_days"]),
+        "earned_schedule_days": float(es_metrics["earned_schedule_days"]),
+        "total_estimated_hours": total_estimated_hours,
+        "estimated_hours": total_estimated_hours,
+        "actual_hours": total_actual_hours,
+        "earned_hours": earned_hours,
+        "hours_efficiency_pct": hours_efficiency_pct,
+        "hours_utilization_pct": hours_utilization_pct,
+        "milestones_total": milestones_total,
+        "milestones_completed": milestones_completed,
+        "milestones_on_time": milestones_on_time,
+        "milestones_ontime": milestones_on_time,
+        "milestones_on_time_pct": milestones_on_time_pct,
+        "milestones_ontime_pct": milestones_on_time_pct,
+        "tasks_total": len(all_tasks),
+        "tasks_completed": completed_tasks_count,
+        "tasks_overdue": overdue_tasks_count,
+        "activities_count": activities_count,
+        "subtasks_count": subtasks_count,
+    }
+
+    available_budget = round(max(0.0, bac - float(std_evm["ac"]) - committed_cost), 2)
+    fin_exec_pct = float(std_evm["financial_percentage"])
+    frente_financiero = {
+        "cpi": float(std_evm["cpi"]),
+        "cv": float(std_evm["cv"]),
+        "bac": bac,
+        "ac": float(std_evm["ac"]),
+        "committed_cost": committed_cost,
+        "planned_cost": planned_cost,
+        "available_budget": available_budget,
+        "remaining_budget": available_budget,
+        "financial_execution_pct": fin_exec_pct,
+        "burn_rate_pct": fin_exec_pct,
+        "financial_progress_pct": fin_exec_pct,
+        "expenses_count": len(all_expenses),
+        "budget_100_rule": {
+            "is_satisfied": bool(budget_rule["is_rule_satisfied"]),
+            "is_fully_allocated": bool(budget_rule["is_fully_allocated"]),
+            "allocation_percentage": float(budget_rule["allocation_percentage"]),
+            "components_budget_total": float(budget_rule["components_budget_total"]),
+            "budget_difference": float(budget_rule["budget_difference"]),
+            "status": str(budget_rule["status"]),
+        },
+    }
+
+    balance_gap_pct = round(progress_pct - fin_exec_pct, 1)
+    frente_cruce_evm = {
+        "ev": float(std_evm["ev"]),
+        "pv": float(std_evm["pv"]),
+        "ac": float(std_evm["ac"]),
+        "bac": bac,
+        "cpi": float(std_evm["cpi"]),
+        "spi": float(std_evm["spi"]),
+        "cr": float(std_evm["cr"]),
+        "cv": float(std_evm["cv"]),
+        "sv": float(std_evm["sv"]),
+        "eac": float(std_evm["eac"]),
+        "vac": float(std_evm["vac"]),
+        "tcpi_bac": float(tcpi_metrics["tcpi_bac"]) if tcpi_metrics.get("tcpi_bac") is not None else 1.0,
+        "balance_gap_pct": balance_gap_pct,
+        "health_status": str(std_evm["health_status"]),
+        "health_color": str(std_evm["health_color"]),
+        "quadrant_name": str(adv_evm["quadrant"]["name"]),
+    }
+
+    rollup_hierarchy = {
+        "project_progress_pct": progress_pct,
+        "overall_progress_pct": progress_pct,
+        "rollup_method": rollup_method,
+        "subtasks_count": subtasks_count,
+        "activities_count": activities_count,
+        "components_count": len(component_rollups),
+        "components": component_rollups,
+        "unassigned_tasks_count": len(unassigned_tasks),
+        "unassigned_activities_count": len(unassigned_tasks),
+        "unassigned_progress_pct": unassigned_pct,
+    }
+
+    pro_families = [
+        {
+            "family_key": "pro_edt_progress",
+            "code": "PRO-01",
+            "name": "Avance Físico Ponderado (EDT -> Proyecto)",
+            "title": "Avance Físico Ponderado (EDT -> Proyecto)",
+            "frente": "tiempo",
+            "level": "COMPONENTE_EDT",
+            "unit": "%",
+            "target_value": 100.0,
+            "current_value": progress_pct,
+            "spi": round(progress_pct / 100.0, 4),
+            "status_color": "success" if progress_pct >= 80.0 else ("warning" if progress_pct >= 40.0 else "destructive"),
+            "formula": "Σ(Avance Subtareas × Horas) -> Actividades -> Componentes EDT -> Proyecto",
+        },
+        {
+            "family_key": "pro_hours_efficiency",
+            "code": "PRO-02",
+            "name": "Eficiencia de Esfuerzo y Horas",
+            "title": "Eficiencia de Esfuerzo y Horas",
+            "frente": "tiempo",
+            "level": "ACTIVIDAD_CRITICA",
+            "unit": "%",
+            "target_value": 100.0,
+            "current_value": hours_efficiency_pct,
+            "spi": round(hours_efficiency_pct / 100.0, 4),
+            "status_color": "success" if hours_efficiency_pct >= 90.0 else ("warning" if hours_efficiency_pct >= 70.0 else "destructive"),
+            "formula": "(Horas Estimadas × % Avance) / Horas Reales Registradas",
+        },
+        {
+            "family_key": "pro_cost_efficiency",
+            "code": "PRO-03",
+            "name": "Costo-Eficiencia Presupuestal (CPI)",
+            "title": "Costo-Eficiencia Presupuestal (CPI)",
+            "frente": "cruce_evm",
+            "level": "FINANCIERO_EVM",
+            "unit": "índice",
+            "target_value": 1.0,
+            "current_value": float(std_evm["cpi"]),
+            "spi": round(float(std_evm["cpi"]), 4),
+            "status_color": "success" if float(std_evm["cpi"]) >= 1.0 else ("warning" if float(std_evm["cpi"]) >= 0.85 else "destructive"),
+            "formula": "CPI = Valor Ganado (EV) / Costo Real Ejecutado (AC)",
+        },
+        {
+            "family_key": "pro_milestones_ontime",
+            "code": "PRO-04",
+            "name": "Cumplimiento de Hitos a Tiempo",
+            "title": "Cumplimiento de Hitos a Tiempo",
+            "frente": "tiempo",
+            "level": "PRODUCTO_PRINCIPAL",
+            "unit": "%",
+            "target_value": 100.0,
+            "current_value": milestones_on_time_pct,
+            "spi": round(milestones_on_time_pct / 100.0, 4),
+            "status_color": "success" if milestones_on_time_pct >= 85.0 else ("warning" if milestones_on_time_pct >= 60.0 else "destructive"),
+            "formula": "Hitos Completados en Fecha / Total Hitos Planificados × 100",
+        },
+        {
+            "family_key": "pro_raid_mitigated",
+            "code": "PRO-05",
+            "name": "Mitigación de Riesgos RAID",
+            "title": "Mitigación de Riesgos RAID",
+            "frente": "tiempo",
+            "level": "IMPACTO_MINISTERIAL",
+            "unit": "%",
+            "target_value": 100.0,
+            "current_value": risks_mitigated_pct,
+            "spi": round(risks_mitigated_pct / 100.0, 4),
+            "status_color": "success" if risks_mitigated_pct >= 85.0 else ("warning" if risks_mitigated_pct >= 60.0 else "destructive"),
+            "formula": "Riesgos Mitigados o con Plan Activo / Total Riesgos RAID × 100",
+        },
+        {
+            "family_key": "pro_global_health",
+            "code": "PRO-06",
+            "name": "Salud Global Compuesta (Razón Crítica CR)",
+            "title": "Salud Global Compuesta (Razón Crítica CR)",
+            "frente": "cruce_evm",
+            "level": "IMPACTO_MINISTERIAL",
+            "unit": "índice",
+            "target_value": 1.0,
+            "current_value": float(std_evm["cr"]),
+            "spi": round(float(std_evm["cr"]), 4),
+            "status_color": "success" if float(std_evm["cr"]) >= 1.0 else ("warning" if float(std_evm["cr"]) >= 0.80 else "destructive"),
+            "formula": "CR = CPI (Eficiencia Costo) × SPI (Eficiencia Tiempo)",
+        },
+    ]
+
+    familias_pro_map = {f["family_key"]: f for f in pro_families}
+    sources_catalog_map = {
+        s["source_type"]: {
+            "label": s["label"],
+            "frente": s["frente"],
+            "unit": s["unit"],
+            "default_target": s["default_target"],
+            "category": s.get("recommended_level", "operational"),
+        }
+        for s in EXECUTION_SOURCES_CATALOG
+    }
+
+    return {
+        "project_id": str(project.id),
+        "calculated_at": now.isoformat(),
+        "frentes": {
+            "tiempo": frente_tiempo,
+            "financiero": frente_financiero,
+            "cruce_evm": frente_cruce_evm,
+        },
+        "frente_tiempo": frente_tiempo,
+        "frente_financiero": frente_financiero,
+        "frente_cruce_evm": frente_cruce_evm,
+        "rollup_hierarchy": rollup_hierarchy,
+        "familias_pro": familias_pro_map,
+        "pro_families": pro_families,
+        "raid_summary": {
+            "total_risks": risks_total,
+            "mitigated_risks": risks_mitigated,
+            "active_risks": risks_active,
+            "occurred_risks": risks_occurred,
+            "mitigated_pct": risks_mitigated_pct,
+        },
+        "sources_catalog": sources_catalog_map,
+        "available_sources": EXECUTION_SOURCES_CATALOG,
+    }
+
+
+def evaluate_execution_metric(
+    db: Session,
+    project: Project,
+    source_type: Optional[str],
+    component_id: Optional[Any] = None,
+    target_value: Optional[float] = None,
+    matrix: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Evalúa el valor actual, meta sugerida y SPI de un KPI o Indicador conectado a la ejecución real."""
+    src = str(source_type or "manual").strip()
+    if src == "manual":
+        return {
+            "is_auto": False,
+            "source_type": "manual",
+            "frente": "manual",
+            "current_value": None,
+            "suggested_target": target_value,
+            "spi": None,
+            "unit": None,
+            "component_name": None,
+        }
+
+    exec_matrix = matrix or build_project_execution_matrix(db, project)
+    comp_id_str = str(component_id).strip() if _is_valid_id(component_id) else None
+    comp_data: Optional[Dict[str, Any]] = None
+    if comp_id_str:
+        for c in exec_matrix.get("rollup_hierarchy", {}).get("components", []):
+            if str(c.get("component_id")) == comp_id_str:
+                comp_data = c
+                break
+
+    ft = exec_matrix["frente_tiempo"]
+    ff = exec_matrix["frente_financiero"]
+    fc = exec_matrix["frente_cruce_evm"]
+
+    current_val = 0.0
+    default_target = 100.0
+    unit = "%"
+    frente = "tiempo"
+
+    if src in ("pro_edt_progress", "tasks_completion_pct"):
+        current_val = float(comp_data["physical_progress_pct"]) if comp_data else float(ft["time_progress_pct"])
+        default_target = 100.0
+        unit = "%"
+        frente = "tiempo"
+    elif src == "pro_hours_efficiency":
+        current_val = float(comp_data["hours_efficiency_pct"]) if comp_data else float(ft["hours_efficiency_pct"])
+        default_target = 100.0
+        unit = "%"
+        frente = "tiempo"
+    elif src == "hours_logged":
+        current_val = float(comp_data["actual_hours"]) if comp_data else float(ft["actual_hours"])
+        default_target = max(1.0, float(comp_data["estimated_hours"]) if comp_data else float(ft["total_estimated_hours"]))
+        unit = "h"
+        frente = "tiempo"
+    elif src in ("pro_cost_efficiency", "evm_cpi"):
+        current_val = float(comp_data["cpi"]) if comp_data else float(fc["cpi"])
+        default_target = 1.0
+        unit = "índice"
+        frente = "financiero" if src == "evm_cpi" else "cruce_evm"
+    elif src == "pro_milestones_ontime":
+        current_val = float(ft["milestones_on_time_pct"])
+        default_target = 100.0
+        unit = "%"
+        frente = "tiempo"
+    elif src == "pro_raid_mitigated":
+        raid_fam = next(
+            (f for f in exec_matrix.get("pro_families", []) if f["family_key"] == "pro_raid_mitigated"),
+            None,
+        )
+        current_val = float(raid_fam["current_value"]) if raid_fam else 100.0
+        default_target = 100.0
+        unit = "%"
+        frente = "tiempo"
+    elif src in ("pro_global_health", "evm_cr"):
+        current_val = float(comp_data["cr"]) if comp_data else float(fc["cr"])
+        default_target = 1.0
+        unit = "índice"
+        frente = "cruce_evm"
+    elif src in ("frente_tiempo_spi", "evm_spi"):
+        current_val = float(comp_data["spi"]) if comp_data else float(ft["spi"])
+        default_target = 1.0
+        unit = "índice"
+        frente = "tiempo"
+    elif src in ("frente_financiero_execution_pct", "budget_burn_pct"):
+        current_val = (
+            float(comp_data["financial_progress_pct"]) if comp_data else float(ff["financial_execution_pct"])
+        )
+        default_target = 100.0
+        unit = "%"
+        frente = "financiero"
+    elif src == "frente_financiero_rule_100":
+        current_val = float(ff["budget_100_rule"]["allocation_percentage"])
+        default_target = 100.0
+        unit = "%"
+        frente = "financiero"
+    elif src == "frente_cruce_ev":
+        current_val = float(comp_data["ev"]) if comp_data else float(fc["ev"])
+        default_target = float(comp_data["budget_allocated"]) if comp_data else float(fc["bac"])
+        unit = "USD"
+        frente = "cruce_evm"
+    else:
+        current_val = float(ft["time_progress_pct"])
+        default_target = 100.0
+        unit = "%"
+        frente = "tiempo"
+
+    eff_target = float(target_value) if (target_value is not None and float(target_value) > 0) else default_target
+    spi = round(current_val / eff_target, 4) if eff_target > 0 else 1.0
+
+    comp_label: Optional[str] = None
+    if comp_data:
+        c_code = comp_data.get("code")
+        c_name = comp_data.get("name")
+        comp_label = f"[{c_code}] {c_name}" if c_code and c_name else (c_name or c_code)
+
+    return {
+        "is_auto": True,
+        "source_type": src,
+        "frente": frente,
+        "current_value": round(current_val, 2),
+        "suggested_target": round(eff_target, 2),
+        "spi": spi,
+        "unit": unit,
+        "component_name": comp_label,
+    }
+
 
 
 

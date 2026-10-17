@@ -51,6 +51,12 @@ export interface ProjectKPI {
   current_value: number;
   unit: string;
   category: string;
+  source_type?: string | null;
+  component_id?: string | null;
+  component_name?: string | null;
+  last_spi?: number | null;
+  frente?: string | null;
+  is_auto_synced?: boolean;
   due_date?: string | null;
   created_at?: string;
   updated_at?: string | null;
@@ -129,6 +135,7 @@ export interface ProjectRecord {
   risks?: ProjectRisk[];
   risks_summary?: ProjectRiskSummary;
   workload_summary?: ProjectWorkloadSummary;
+  execution_matrix?: ProjectExecutionMatrix | null;
 }
 
 export interface ProjectPageResponse {
@@ -808,6 +815,11 @@ export interface ProjectIndicator {
   period_targets: Record<string, number>;
   crema_score?: number | null;
   crema_evaluation: CremaValidationResult | Record<string, unknown>;
+  source_type?: string | null;
+  component_id?: string | null;
+  component_name?: string | null;
+  frente?: string | null;
+  is_auto_synced?: boolean;
   created_by?: string | null;
   creator_name?: string | null;
   sede_id?: string | null;
@@ -832,6 +844,8 @@ export interface ProjectIndicatorCreate {
   period_targets?: Record<string, number>;
   crema_score?: number;
   crema_evaluation?: CremaValidationResult | Record<string, unknown>;
+  source_type?: string | null;
+  component_id?: string | null;
 }
 
 export interface ProjectIndicatorUpdate {
@@ -846,6 +860,133 @@ export interface ProjectIndicatorUpdate {
   current_value?: number;
   frequency?: string;
   period_targets?: Record<string, number>;
+  source_type?: string | null;
+  component_id?: string | null;
+}
+
+export interface ProjectExecutionComponentActivity {
+  task_id: string;
+  title: string;
+  status: string;
+  physical_progress_pct: number;
+  rolled_up_progress_pct: number;
+  estimated_hours: number;
+  actual_hours: number;
+  subtasks_count: number;
+  completed_subtasks_count: number;
+}
+
+export interface ProjectExecutionComponentRollup {
+  component_id: string;
+  code: string;
+  name: string;
+  budget_allocated: number;
+  budget_weight_pct: number;
+  physical_progress_pct: number;
+  financial_progress_pct: number;
+  spi: number;
+  cpi: number;
+  cr: number;
+  ev: number;
+  pv: number;
+  ac: number;
+  health_status: string;
+  health_color: string;
+  activities_count: number;
+  subtasks_count: number;
+  estimated_hours: number;
+  actual_hours: number;
+  activities: ProjectExecutionComponentActivity[];
+}
+
+export interface ProjectExecutionMatrix {
+  project_id: string;
+  calculated_at: string;
+  frentes: {
+    tiempo: {
+      spi: number;
+      sv: number;
+      progress_pct: number;
+      estimated_hours: number;
+      actual_hours: number;
+      hours_efficiency_pct: number;
+      milestones_total: number;
+      milestones_completed: number;
+      milestones_ontime: number;
+      milestones_ontime_pct: number;
+      tasks_total: number;
+      tasks_completed: number;
+      tasks_overdue: number;
+    };
+    financiero: {
+      cpi: number;
+      cv: number;
+      bac: number;
+      ac: number;
+      remaining_budget: number;
+      burn_rate_pct: number;
+      financial_progress_pct: number;
+      expenses_count: number;
+    };
+    cruce_evm: {
+      ev: number;
+      pv: number;
+      ac: number;
+      bac: number;
+      cpi: number;
+      spi: number;
+      cr: number;
+      eac: number;
+      vac: number;
+      balance_gap_pct: number;
+      health_status: string;
+      health_color: string;
+    };
+  };
+  familias_pro: Record<
+    string,
+    {
+      code: string;
+      title: string;
+      current_value: number;
+      target_value: number;
+      unit: string;
+      spi: number;
+      frente: string;
+    }
+  >;
+  rollup_hierarchy: {
+    overall_progress_pct: number;
+    components: ProjectExecutionComponentRollup[];
+    unassigned_activities_count: number;
+    unassigned_progress_pct: number;
+  };
+  raid_summary: {
+    total_risks: number;
+    mitigated_risks: number;
+    active_risks: number;
+    occurred_risks: number;
+    mitigated_pct: number;
+  };
+  sources_catalog: Record<
+    string,
+    {
+      label: string;
+      frente: string;
+      unit: string;
+      default_target: number;
+      category: string;
+    }
+  >;
+}
+
+export interface ProjectExecutionSyncResponse {
+  project_id: string;
+  synced_indicators: number;
+  synced_kpis: number;
+  seeded_indicators: number;
+  seeded_kpis: number;
+  execution_matrix: ProjectExecutionMatrix;
 }
 
 // ============================================================================
