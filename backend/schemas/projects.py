@@ -4596,3 +4596,85 @@ def validate_fpif_point_of_total_assumption(
         "contract_posture": contract_posture,
         "is_within_pta": is_within_pta,
     }
+
+
+def validate_schedule_network_lead_lag_and_float_feasibility(
+    predecessor_duration_days: float,
+    successor_duration_days: float,
+    relationship_type: str = "FS",
+    lag_days: float = 0.0,
+    total_float_days: float = 0.0,
+    max_lead_ratio_pct: float = 50.0,
+) -> dict[str, Any]:
+    """Valida la lógica de red PDM (Precedence Diagramming Method) y DCMA 14-Point Schedule Assessment según PMI PMBOK §6.3 y §6.5."""
+    pred_dur = float(predecessor_duration_days)
+    succ_dur = float(successor_duration_days)
+    max_lead_ratio = float(max_lead_ratio_pct)
+
+    if pred_dur <= 0.0:
+        raise ValueError("predecessor_duration_days debe ser > 0.")
+    if succ_dur <= 0.0:
+        raise ValueError("successor_duration_days debe ser > 0.")
+    if not (0.0 < max_lead_ratio <= 100.0):
+        raise ValueError("max_lead_ratio_pct debe estar en (0.0, 100.0].")
+
+    norm_rel = str(relationship_type or "").strip().upper()
+    if norm_rel not in {"FS", "SS", "FF", "SF"}:
+        raise ValueError(
+            "relationship_type inválido; use 'FS', 'SS', 'FF' o 'SF'."
+        )
+
+    lag_val = round(float(lag_days), 2)
+    float_val = round(float(total_float_days), 2)
+    lead_days = round(max(0.0, -float(lag_days)), 2)
+    lead_ratio_pct = (
+        round((lead_days / pred_dur) * 100.0, 2) if lead_days > 0.0 else 0.0
+    )
+
+    excessive_lead_detected = bool(
+        lead_ratio_pct > max_lead_ratio
+        or (lead_days > 0.0 and lead_days >= succ_dur)
+    )
+    sf_relationship_warning = bool(norm_rel == "SF")
+    negative_float_detected = bool(float(total_float_days) < 0.0)
+
+    is_schedule_logic_healthy = bool(
+        not excessive_lead_detected
+        and not sf_relationship_warning
+        and not negative_float_detected
+    )
+
+    recommendations: list[str] = []
+    if negative_float_detected:
+        recommendations.append(
+            "Resolver la holgura total negativa mediante fast-tracking, crashing o ajuste formal de restricciones de fecha (DCMA 14-Point)."
+        )
+    if excessive_lead_detected:
+        recommendations.append(
+            "Descomponer la actividad predecesora y reemplazar el adelanto (lead) excesivo por relaciones Finish-to-Start o Start-to-Start explícitas."
+        )
+    if sf_relationship_warning:
+        recommendations.append(
+            "Evitar relaciones Start-to-Finish (SF) salvo justificación técnica documentada; preferir relaciones FS."
+        )
+
+    if negative_float_detected or excessive_lead_detected:
+        status = "critical"
+    elif sf_relationship_warning:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "relationship_type": norm_rel,
+        "lag_days": lag_val,
+        "lead_days": lead_days,
+        "lead_ratio_pct": lead_ratio_pct,
+        "total_float_days": float_val,
+        "excessive_lead_detected": excessive_lead_detected,
+        "sf_relationship_warning": sf_relationship_warning,
+        "negative_float_detected": negative_float_detected,
+        "is_schedule_logic_healthy": is_schedule_logic_healthy,
+        "status": status,
+        "recommendations": recommendations,
+    }

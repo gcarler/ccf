@@ -2812,6 +2812,7 @@ __all__ = [
     "evaluate_ccb_emergency_change_retrospective_compliance",
     "evaluate_quality_aql_lot_sampling_acceptance",
     "evaluate_copq_rework_and_scrap_ratio",
+    "audit_ccb_change_request_sla_and_aging_backlog",
     "ProjectCCBService",
 ]
 
@@ -3176,4 +3177,101 @@ def evaluate_copq_rework_and_scrap_ratio(
 
 ProjectCCBService.evaluate_copq_rework_and_scrap_ratio = staticmethod(
     evaluate_copq_rework_and_scrap_ratio
+)
+
+
+def audit_ccb_change_request_sla_and_aging_backlog(
+    change_requests: Sequence[Mapping[str, Any]] | None,
+    *,
+    normal_sla_days: float = 14.0,
+    urgent_sla_days: float = 3.0,
+    max_deferred_ratio_pct: float = 25.0,
+) -> dict[str, Any]:
+    """PMBOK §4.6 — envejecimiento SLA y backlog diferido de solicitudes del CCB.
+
+    - Abiertas {pending, under_review, submitted, in_review} con edad mayor al
+      SLA aplicable (urgent: urgent_sla_days; resto: normal_sla_days) ->
+      ``sla_breached_cr_ids``; sin ``impact_assessment_owner`` ->
+      ``unassigned_impact_owner_cr_ids``.
+    - Diferidas {deferred, on_hold} sin ``re_evaluation_date`` ->
+      ``deferred_without_review_date_cr_ids``.
+    - ``deferred_ratio_pct`` sobre ``total_evaluated`` con umbral
+      ``max_deferred_ratio_pct`` -> ``deferred_backlog_excess``.
+    """
+    if not isinstance(change_requests, (list, tuple)):
+        change_requests = []
+
+    total_evaluated = 0
+    open_pending_count = 0
+    deferred_count = 0
+    sla_breached_cr_ids: list[str] = []
+    unassigned_impact_owner_cr_ids: list[str] = []
+    deferred_without_review_date_cr_ids: list[str] = []
+
+    OPEN_STATUSES = {"pending", "under_review", "submitted", "in_review"}
+    DEFERRED_STATUSES = {"deferred", "on_hold"}
+    URGENT_PRIORITIES = {"urgent", "critical", "high", "emergency"}
+
+    def _safe_float(value: Any) -> float:
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return 0.0
+
+    for item in change_requests:
+        if not isinstance(item, Mapping):
+            continue
+        cr_id = str(item.get("cr_id") or item.get("id") or "").strip()
+        if not cr_id:
+            continue
+        total_evaluated += 1
+
+        status = str(item.get("status") or "pending").strip().lower()
+        priority = str(item.get("priority") or "normal").strip().lower()
+
+        if status in OPEN_STATUSES:
+            open_pending_count += 1
+
+            sla_days = urgent_sla_days if priority in URGENT_PRIORITIES else normal_sla_days
+            age_days = _safe_float(item.get("age_days") or 0.0)
+            if age_days > sla_days:
+                sla_breached_cr_ids.append(cr_id)
+
+            if not str(item.get("impact_assessment_owner") or "").strip():
+                unassigned_impact_owner_cr_ids.append(cr_id)
+
+        elif status in DEFERRED_STATUSES:
+            deferred_count += 1
+
+            if not str(item.get("re_evaluation_date") or "").strip():
+                deferred_without_review_date_cr_ids.append(cr_id)
+
+    deferred_ratio_pct = (
+        round((deferred_count / total_evaluated) * 100.0, 2)
+        if total_evaluated > 0
+        else 0.0
+    )
+    deferred_backlog_excess = bool(deferred_ratio_pct > max_deferred_ratio_pct)
+    is_ccb_sla_compliant = bool(
+        len(sla_breached_cr_ids) == 0
+        and len(unassigned_impact_owner_cr_ids) == 0
+        and len(deferred_without_review_date_cr_ids) == 0
+        and not deferred_backlog_excess
+    )
+
+    return {
+        "total_evaluated": total_evaluated,
+        "open_pending_count": open_pending_count,
+        "deferred_count": deferred_count,
+        "deferred_ratio_pct": deferred_ratio_pct,
+        "sla_breached_cr_ids": sla_breached_cr_ids,
+        "unassigned_impact_owner_cr_ids": unassigned_impact_owner_cr_ids,
+        "deferred_without_review_date_cr_ids": deferred_without_review_date_cr_ids,
+        "deferred_backlog_excess": deferred_backlog_excess,
+        "is_ccb_sla_compliant": is_ccb_sla_compliant,
+    }
+
+
+ProjectCCBService.audit_ccb_change_request_sla_and_aging_backlog = staticmethod(
+    audit_ccb_change_request_sla_and_aging_backlog
 )

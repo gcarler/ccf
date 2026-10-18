@@ -3001,6 +3001,7 @@ __all__ = [
     "audit_markdown_task_list_checklist_hygiene",
     "audit_markdown_heading_hierarchy_and_duplicates",
     "audit_markdown_external_url_scheme_hygiene",
+    "audit_markdown_admonition_callout_hygiene",
     "AnyDocService",
     "AnydocService",
 ]
@@ -3364,6 +3365,180 @@ def audit_markdown_external_url_scheme_hygiene(
 
 AnyDocService.audit_markdown_external_url_scheme_hygiene = staticmethod(
     audit_markdown_external_url_scheme_hygiene
+)
+
+
+_NESTED_ALERT_HEADER_RE = re.compile(
+    r"^\s*>\s*>+\s*\[!([A-Za-z0-9_-]+)\](.*)$"
+)
+_SINGLE_ALERT_HEADER_RE = re.compile(
+    r"^\s*>\s*\[!([A-Za-z0-9_-]+)\](.*)$"
+)
+
+
+def audit_markdown_admonition_callout_hygiene(
+    markdown_text: str,
+) -> dict[str, Any]:
+    """Audita la higiene de bloques de alerta GitHub-style (> [!NOTE], > [!TIP], > [!IMPORTANT], > [!WARNING], > [!CAUTION]) en artefactos de conocimiento PMI PMBOK §4.4 y §10.2."""
+    lines = (
+        markdown_text.splitlines()
+        if isinstance(markdown_text, str) and markdown_text
+        else []
+    )
+
+    total_alerts = 0
+    valid_alerts_count = 0
+    unsupported_alert_types: list[str] = []
+    empty_alert_lines: list[int] = []
+    nested_alert_lines: list[int] = []
+    consecutive_alert_lines: list[int] = []
+
+    in_backtick_fence = False
+    in_tilde_fence = False
+
+    in_alert = False
+    current_alert_line: int | None = None
+    current_alert_type_valid = False
+    current_alert_has_body = False
+    current_alert_is_consecutive = False
+    has_previous_alert = False
+    saw_separator_since_last_alert = True
+
+    def _finalize_current_alert() -> None:
+        nonlocal in_alert, current_alert_line, current_alert_type_valid
+        nonlocal current_alert_has_body, current_alert_is_consecutive, valid_alerts_count
+        if not in_alert or current_alert_line is None:
+            return
+        if not current_alert_has_body:
+            empty_alert_lines.append(current_alert_line)
+        elif current_alert_type_valid and not current_alert_is_consecutive:
+            valid_alerts_count += 1
+        in_alert = False
+        current_alert_line = None
+        current_alert_type_valid = False
+        current_alert_has_body = False
+        current_alert_is_consecutive = False
+
+    for line_no, line in enumerate(lines, start=1):
+        stripped = line.strip()
+        if not in_tilde_fence and stripped.startswith("```"):
+            if in_alert:
+                _finalize_current_alert()
+                has_previous_alert = True
+                saw_separator_since_last_alert = False
+            in_backtick_fence = not in_backtick_fence
+            continue
+        if not in_backtick_fence and stripped.startswith("~~~"):
+            if in_alert:
+                _finalize_current_alert()
+                has_previous_alert = True
+                saw_separator_since_last_alert = False
+            in_tilde_fence = not in_tilde_fence
+            continue
+        if in_backtick_fence or in_tilde_fence:
+            continue
+
+        m_nested = _NESTED_ALERT_HEADER_RE.match(line)
+        if m_nested:
+            total_alerts += 1
+            nested_alert_lines.append(line_no)
+            nested_type = m_nested.group(1).upper()
+            if (
+                nested_type not in _CANONICAL_CALLOUT_ADMONITION_TYPES
+                and nested_type not in unsupported_alert_types
+            ):
+                unsupported_alert_types.append(nested_type)
+            continue
+
+        m_alert = _SINGLE_ALERT_HEADER_RE.match(line)
+        if m_alert:
+            total_alerts += 1
+            is_consecutive = False
+            if in_alert:
+                _finalize_current_alert()
+                has_previous_alert = True
+                saw_separator_since_last_alert = False
+
+            if has_previous_alert and not saw_separator_since_last_alert:
+                consecutive_alert_lines.append(line_no)
+                is_consecutive = True
+
+            alert_type = m_alert.group(1).upper()
+            inline_body = m_alert.group(2).strip()
+            type_valid = alert_type in _CANONICAL_CALLOUT_ADMONITION_TYPES
+            if not type_valid and alert_type not in unsupported_alert_types:
+                unsupported_alert_types.append(alert_type)
+
+            in_alert = True
+            current_alert_line = line_no
+            current_alert_type_valid = type_valid
+            current_alert_has_body = bool(inline_body)
+            current_alert_is_consecutive = is_consecutive
+            continue
+
+        m_quote = _BLOCKQUOTE_LINE_RE.match(line)
+        if m_quote:
+            if in_alert and m_quote.group(1).strip():
+                current_alert_has_body = True
+            continue
+
+        if in_alert:
+            _finalize_current_alert()
+            has_previous_alert = True
+            saw_separator_since_last_alert = True
+        elif has_previous_alert:
+            saw_separator_since_last_alert = True
+
+    if in_alert:
+        _finalize_current_alert()
+
+    is_compliant = bool(
+        len(unsupported_alert_types) == 0
+        and len(empty_alert_lines) == 0
+        and len(nested_alert_lines) == 0
+        and len(consecutive_alert_lines) == 0
+    )
+
+    recommendations: list[str] = []
+    if unsupported_alert_types:
+        recommendations.append(
+            "Usar únicamente tipos de alerta canónicos: NOTE, TIP, IMPORTANT, WARNING, CAUTION."
+        )
+    if empty_alert_lines:
+        recommendations.append(
+            "Incluir contenido descriptivo dentro de cada bloque de alerta."
+        )
+    if nested_alert_lines:
+        recommendations.append(
+            "Evitar el anidamiento de bloques de alerta (> > [!TYPE]); mantenerlos en el nivel raíz."
+        )
+    if consecutive_alert_lines:
+        recommendations.append(
+            "Separar bloques de alerta consecutivos mediante al menos una línea en blanco o párrafo intermedio."
+        )
+
+    if is_compliant:
+        status = "healthy"
+    elif len(unsupported_alert_types) > 0 or len(empty_alert_lines) > 0:
+        status = "critical"
+    else:
+        status = "warning"
+
+    return {
+        "total_alerts": total_alerts,
+        "valid_alerts_count": valid_alerts_count,
+        "unsupported_alert_types": unsupported_alert_types,
+        "empty_alert_lines": empty_alert_lines,
+        "nested_alert_lines": nested_alert_lines,
+        "consecutive_alert_lines": consecutive_alert_lines,
+        "is_compliant": is_compliant,
+        "status": status,
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_markdown_admonition_callout_hygiene = staticmethod(
+    audit_markdown_admonition_callout_hygiene
 )
 
 AnydocService = AnyDocService

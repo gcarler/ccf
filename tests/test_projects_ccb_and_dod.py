@@ -4017,3 +4017,232 @@ def test_evaluate_copq_rework_and_scrap_ratio_invalid_inputs():
             "copq_posture": "invalid_inputs",
             "is_copq_controlled": False,
         }
+
+
+def test_audit_ccb_change_request_sla_and_aging_backlog_compliant():
+    """> Cola dentro de SLA (normal/urgente), diferidos con fecha bajo umbral -> compliant."""
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_ccb_change_request_sla_and_aging_backlog,
+    )
+
+    res = audit_ccb_change_request_sla_and_aging_backlog(
+        [
+            {
+                "cr_id": "CR-1",
+                "status": "pending",
+                "priority": "normal",
+                "age_days": 14.0,
+                "impact_assessment_owner": "u-1",
+            },
+            {
+                "cr_id": "CR-2",
+                "status": "in_review",
+                "priority": "urgent",
+                "age_days": 3.0,
+                "impact_assessment_owner": "u-2",
+            },
+            {
+                "cr_id": "CR-3",
+                "status": "deferred",
+                "re_evaluation_date": "2026-11-01",
+            },
+            {
+                "cr_id": "CR-4",
+                "status": "approved",
+                "impact_assessment_owner": "u-1",
+            },
+        ]
+    )
+    assert res["total_evaluated"] == 4
+    assert res["open_pending_count"] == 2
+    assert res["deferred_count"] == 1
+    assert res["deferred_ratio_pct"] == 25.0
+    assert res["sla_breached_cr_ids"] == []
+    assert res["unassigned_impact_owner_cr_ids"] == []
+    assert res["deferred_without_review_date_cr_ids"] == []
+    assert res["deferred_backlog_excess"] is False
+    assert res["is_ccb_sla_compliant"] is True
+
+    static_res = ProjectCCBService.audit_ccb_change_request_sla_and_aging_backlog(
+        [
+            {
+                "cr_id": "CR-1",
+                "status": "pending",
+                "priority": "normal",
+                "age_days": 10.0,
+                "impact_assessment_owner": "u-1",
+            },
+        ]
+    )
+    assert static_res["is_ccb_sla_compliant"] is True
+
+
+def test_audit_ccb_change_request_sla_and_aging_backlog_sla_and_owner_breaches():
+    """> SLA violado en prioridad normal y urgent/critical; sin dueño de impacto."""
+    from backend.services.project_ccb_service import (
+        audit_ccb_change_request_sla_and_aging_backlog,
+    )
+
+    res = audit_ccb_change_request_sla_and_aging_backlog(
+        [
+            {
+                "cr_id": "CR-SLA-NORMAL",
+                "status": "submitted",
+                "age_days": 15.0,
+                "impact_assessment_owner": "u-1",
+            },
+            {
+                "cr_id": "CR-SLA-URGENT",
+                "status": "under_review",
+                "priority": "critical",
+                "age_days": 4.0,
+                "impact_assessment_owner": "u-2",
+            },
+            {
+                "cr_id": "CR-NO-OWNER",
+                "status": "pending",
+                "age_days": 1.0,
+            },
+            {
+                "cr_id": "CR-EDGE-OK",
+                "status": "pending",
+                "age_days": 14.0,
+                "impact_assessment_owner": "u-3",
+            },
+        ]
+    )
+    assert res["total_evaluated"] == 4
+    assert res["open_pending_count"] == 4
+    assert res["sla_breached_cr_ids"] == ["CR-SLA-NORMAL", "CR-SLA-URGENT"]
+    assert res["unassigned_impact_owner_cr_ids"] == ["CR-NO-OWNER"]
+    assert res["deferred_count"] == 0
+    assert res["deferred_backlog_excess"] is False
+    assert res["is_ccb_sla_compliant"] is False
+
+    res_custom_sla = audit_ccb_change_request_sla_and_aging_backlog(
+        [
+            {
+                "cr_id": "CR-SLA-NORMAL",
+                "status": "submitted",
+                "age_days": 15.0,
+                "impact_assessment_owner": "u-1",
+            },
+        ],
+        normal_sla_days=20.0,
+    )
+    assert res_custom_sla["sla_breached_cr_ids"] == []
+    assert res_custom_sla["is_ccb_sla_compliant"] is True
+
+
+def test_audit_ccb_change_request_sla_and_aging_backlog_deferred_backlog_excess():
+    """> Ratio diferido > 25% y diferidos sin re_evaluation_date."""
+    from backend.services.project_ccb_service import (
+        audit_ccb_change_request_sla_and_aging_backlog,
+    )
+
+    res = audit_ccb_change_request_sla_and_aging_backlog(
+        [
+            {
+                "cr_id": "CR-DEF-1",
+                "status": "deferred",
+                "re_evaluation_date": "  ",
+            },
+            {"cr_id": "CR-DEF-2", "status": "on_hold"},
+            {
+                "cr_id": "CR-OPEN",
+                "status": "pending",
+                "age_days": 2.0,
+                "impact_assessment_owner": "u-1",
+            },
+        ]
+    )
+    assert res["total_evaluated"] == 3
+    assert res["deferred_count"] == 2
+    assert res["deferred_ratio_pct"] == 66.67
+    assert res["deferred_backlog_excess"] is True
+    assert res["deferred_without_review_date_cr_ids"] == ["CR-DEF-1", "CR-DEF-2"]
+    assert res["is_ccb_sla_compliant"] is False
+
+    res_within = audit_ccb_change_request_sla_and_aging_backlog(
+        [
+            {"cr_id": "CR-DEF-OK", "status": "deferred", "re_evaluation_date": "2026-12-01"},
+            {"cr_id": "CR-OPEN", "status": "pending", "age_days": 1.0, "impact_assessment_owner": "u-1"},
+            {"cr_id": "CR-OPEN2", "status": "pending", "age_days": 1.0, "impact_assessment_owner": "u-1"},
+            {"cr_id": "CR-OPEN3", "status": "pending", "age_days": 1.0, "impact_assessment_owner": "u-1"},
+        ],
+    )
+    assert res_within["deferred_ratio_pct"] == 25.0
+    assert res_within["deferred_backlog_excess"] is False
+    assert res_within["is_ccb_sla_compliant"] is True
+
+
+def test_audit_ccb_change_request_sla_and_aging_backlog_empty_or_none():
+    """None, no-secuencia, str, Mapping, 42 o basura -> 0 evaluadas."""
+    from backend.services.project_ccb_service import (
+        audit_ccb_change_request_sla_and_aging_backlog,
+    )
+
+    # Literal del spec: sin requisito total_evaluated>0 -> compliant=True con 0 entradas.
+    empty_result = {
+        "total_evaluated": 0,
+        "open_pending_count": 0,
+        "deferred_count": 0,
+        "deferred_ratio_pct": 0.0,
+        "sla_breached_cr_ids": [],
+        "unassigned_impact_owner_cr_ids": [],
+        "deferred_without_review_date_cr_ids": [],
+        "deferred_backlog_excess": False,
+        "is_ccb_sla_compliant": True,
+    }
+
+    for payload in (
+        None,
+        "changes-string",
+        42,
+        [],
+        ["no-dict", {"status": "pending"}],
+        [{"cr_id": "   "}, {"id": ""}],
+    ):
+        assert audit_ccb_change_request_sla_and_aging_backlog(payload) == empty_result  # type: ignore[arg-type]
+
+    # ID válido con tipos basura: 1 evaluada, pending sin owner -> unassigned.
+    assert audit_ccb_change_request_sla_and_aging_backlog(
+        [{"cr_id": "CR-BAD", "age_days": "x"}]
+    ) == {
+        "total_evaluated": 1,
+        "open_pending_count": 1,
+        "deferred_count": 0,
+        "deferred_ratio_pct": 0.0,
+        "sla_breached_cr_ids": [],
+        "unassigned_impact_owner_cr_ids": ["CR-BAD"],
+        "deferred_without_review_date_cr_ids": [],
+        "deferred_backlog_excess": False,
+        "is_ccb_sla_compliant": False,
+    }
+    assert audit_ccb_change_request_sla_and_aging_backlog([{"cr_id": "X"}]) == {
+        "total_evaluated": 1,
+        "open_pending_count": 1,
+        "deferred_count": 0,
+        "deferred_ratio_pct": 0.0,
+        "sla_breached_cr_ids": [],
+        "unassigned_impact_owner_cr_ids": ["X"],
+        "deferred_without_review_date_cr_ids": [],
+        "deferred_backlog_excess": False,
+        "is_ccb_sla_compliant": False,
+    }
+
+    res_bad_types = audit_ccb_change_request_sla_and_aging_backlog(
+        [{"cr_id": "CR-BAD", "age_days": "x"}]
+    )
+    assert res_bad_types == {
+        "total_evaluated": 1,
+        "open_pending_count": 1,
+        "deferred_count": 0,
+        "deferred_ratio_pct": 0.0,
+        "sla_breached_cr_ids": [],
+        "unassigned_impact_owner_cr_ids": ["CR-BAD"],
+        "deferred_without_review_date_cr_ids": [],
+        "deferred_backlog_excess": False,
+        "is_ccb_sla_compliant": False,
+    }

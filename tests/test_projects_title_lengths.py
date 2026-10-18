@@ -3018,3 +3018,117 @@ def test_validate_fpif_point_of_total_assumption_invalid_inputs():
     )
     for payload in bad_contracts:
         assert validate_fpif_point_of_total_assumption(payload) == invalid_result  # type: ignore[arg-type]
+
+
+def test_validate_schedule_network_lead_lag_and_float_feasibility_healthy():
+    """Relaciones FS y SS con lag positivo o lead moderado y holgura no negativa pasan con status='healthy'."""
+    from backend.schemas.projects import (
+        validate_schedule_network_lead_lag_and_float_feasibility,
+    )
+
+    res_fs = validate_schedule_network_lead_lag_and_float_feasibility(
+        predecessor_duration_days=10.0,
+        successor_duration_days=8.0,
+        relationship_type="fs",
+        lag_days=2.0,
+        total_float_days=4.0,
+    )
+    assert res_fs == {
+        "relationship_type": "FS",
+        "lag_days": 2.0,
+        "lead_days": 0.0,
+        "lead_ratio_pct": 0.0,
+        "total_float_days": 4.0,
+        "excessive_lead_detected": False,
+        "sf_relationship_warning": False,
+        "negative_float_detected": False,
+        "is_schedule_logic_healthy": True,
+        "status": "healthy",
+        "recommendations": [],
+    }
+
+    res_ss = validate_schedule_network_lead_lag_and_float_feasibility(
+        predecessor_duration_days=10.0,
+        successor_duration_days=8.0,
+        relationship_type="SS",
+        lag_days=-3.0,
+        total_float_days=0.0,
+        max_lead_ratio_pct=50.0,
+    )
+    assert res_ss["lead_days"] == 3.0
+    assert res_ss["lead_ratio_pct"] == 30.0
+    assert res_ss["is_schedule_logic_healthy"] is True
+    assert res_ss["status"] == "healthy"
+
+
+def test_validate_schedule_network_lead_lag_and_float_feasibility_excessive_lead_critical():
+    """Lead > max_lead_ratio_pct (ej. lag_days=-8.0 sobre predecesora de 10.0 días) dispara excessive_lead_detected=True y status='critical'."""
+    from backend.schemas.projects import (
+        validate_schedule_network_lead_lag_and_float_feasibility,
+    )
+
+    res = validate_schedule_network_lead_lag_and_float_feasibility(
+        predecessor_duration_days=10.0,
+        successor_duration_days=12.0,
+        relationship_type="FS",
+        lag_days=-8.0,
+        total_float_days=2.0,
+        max_lead_ratio_pct=50.0,
+    )
+    assert res["lead_days"] == 8.0
+    assert res["lead_ratio_pct"] == 80.0
+    assert res["excessive_lead_detected"] is True
+    assert res["is_schedule_logic_healthy"] is False
+    assert res["status"] == "critical"
+    assert len(res["recommendations"]) == 1
+
+
+def test_validate_schedule_network_lead_lag_and_float_feasibility_negative_float_and_sf_warning():
+    """Holgura total negativa retorna status='critical'; relación SF con holgura positiva retorna status='warning'."""
+    from backend.schemas.projects import (
+        validate_schedule_network_lead_lag_and_float_feasibility,
+    )
+
+    res_neg = validate_schedule_network_lead_lag_and_float_feasibility(
+        predecessor_duration_days=10.0,
+        successor_duration_days=5.0,
+        relationship_type="FS",
+        lag_days=0.0,
+        total_float_days=-3.5,
+    )
+    assert res_neg["negative_float_detected"] is True
+    assert res_neg["is_schedule_logic_healthy"] is False
+    assert res_neg["status"] == "critical"
+
+    res_sf = validate_schedule_network_lead_lag_and_float_feasibility(
+        predecessor_duration_days=10.0,
+        successor_duration_days=5.0,
+        relationship_type="sf",
+        lag_days=0.0,
+        total_float_days=1.0,
+    )
+    assert res_sf["relationship_type"] == "SF"
+    assert res_sf["sf_relationship_warning"] is True
+    assert res_sf["is_schedule_logic_healthy"] is False
+    assert res_sf["status"] == "warning"
+
+
+def test_validate_schedule_network_lead_lag_and_float_feasibility_invalid_inputs_raise():
+    """Rechaza con ValueError duraciones <= 0, max_lead_ratio_pct fuera de rango o relationship_type inválido."""
+    import pytest
+    from backend.schemas.projects import (
+        validate_schedule_network_lead_lag_and_float_feasibility,
+    )
+
+    with pytest.raises(ValueError):
+        validate_schedule_network_lead_lag_and_float_feasibility(0.0, 5.0)
+    with pytest.raises(ValueError):
+        validate_schedule_network_lead_lag_and_float_feasibility(5.0, -2.0)
+    with pytest.raises(ValueError):
+        validate_schedule_network_lead_lag_and_float_feasibility(
+            5.0, 5.0, relationship_type="INVALID"
+        )
+    with pytest.raises(ValueError):
+        validate_schedule_network_lead_lag_and_float_feasibility(
+            5.0, 5.0, max_lead_ratio_pct=0.0
+        )

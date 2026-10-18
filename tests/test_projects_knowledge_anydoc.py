@@ -3114,3 +3114,101 @@ def test_audit_markdown_external_url_scheme_hygiene_empty_or_non_string():
             "is_url_hygiene_clean": True,
         }
 
+
+def test_audit_markdown_admonition_callout_hygiene_healthy_with_fenced_code_ignored():
+    """Documento con alertas válidas bien separadas y ejemplos ignorados dentro de bloques de código -> healthy."""
+    from backend.services.anydoc_service import (
+        audit_markdown_admonition_callout_hygiene,
+    )
+
+    md = (
+        "# Guía Operativa PMI\n"
+        "> [!NOTE]\n"
+        "> Esta nota documenta el alcance de la línea base.\n"
+        "\n"
+        "Párrafo separador entre alertas.\n"
+        "\n"
+        "> [!IMPORTANT] Revisar criterios de aceptación antes del Gate.\n"
+        "\n"
+        "```markdown\n"
+        "> [!DANGER]\n"
+        ">> [!NOTE] Anidado en código ignorado\n"
+        "```\n"
+    )
+    res = audit_markdown_admonition_callout_hygiene(md)
+    assert res == {
+        "total_alerts": 2,
+        "valid_alerts_count": 2,
+        "unsupported_alert_types": [],
+        "empty_alert_lines": [],
+        "nested_alert_lines": [],
+        "consecutive_alert_lines": [],
+        "is_compliant": True,
+        "status": "healthy",
+        "recommendations": [],
+    }
+
+
+def test_audit_markdown_admonition_callout_hygiene_unsupported_and_empty_critical():
+    """Detecta tipo de alerta no soportado (> [!DANGER]) y bloque vacío (> [!WARNING] sin cuerpo) -> critical."""
+    from backend.services.anydoc_service import (
+        audit_markdown_admonition_callout_hygiene,
+    )
+
+    md = (
+        "> [!DANGER]\n"
+        "> Tipo fuera del estándar GitHub.\n"
+        "\n"
+        "> [!WARNING]\n"
+        ">   \n"
+    )
+    res = audit_markdown_admonition_callout_hygiene(md)
+    assert res["total_alerts"] == 2
+    assert res["valid_alerts_count"] == 0
+    assert res["unsupported_alert_types"] == ["DANGER"]
+    assert res["empty_alert_lines"] == [4]
+    assert res["is_compliant"] is False
+    assert res["status"] == "critical"
+    assert len(res["recommendations"]) == 2
+
+
+def test_audit_markdown_admonition_callout_hygiene_consecutive_and_nested_warning():
+    """Detecta alertas consecutivas sin separador y alertas anidadas (>> [!NOTE]) -> warning."""
+    from backend.services.anydoc_service import (
+        audit_markdown_admonition_callout_hygiene,
+    )
+
+    md = (
+        "> [!NOTE]\n"
+        "> Primera alerta válida.\n"
+        "> [!TIP]\n"
+        "> Segunda alerta consecutiva en el mismo blockquote.\n"
+        "\n"
+        ">> [!CAUTION]\n"
+        ">> Alerta anidada no permitida.\n"
+    )
+    res = audit_markdown_admonition_callout_hygiene(md)
+    assert res["total_alerts"] == 3
+    assert res["valid_alerts_count"] == 1
+    assert res["unsupported_alert_types"] == []
+    assert res["empty_alert_lines"] == []
+    assert res["consecutive_alert_lines"] == [3]
+    assert res["nested_alert_lines"] == [6]
+    assert res["is_compliant"] is False
+    assert res["status"] == "warning"
+    assert len(res["recommendations"]) == 2
+
+
+def test_audit_markdown_admonition_callout_hygiene_via_service_staticmethod():
+    """Verifica invocación desde AnydocService.audit_markdown_admonition_callout_hygiene."""
+    from backend.services.anydoc_service import (
+        AnydocService,
+        audit_markdown_admonition_callout_hygiene,
+    )
+
+    md = "> [!CAUTION]\n> Acción irreversible sobre la línea base.\n"
+    assert (
+        AnydocService.audit_markdown_admonition_callout_hygiene(md)
+        == audit_markdown_admonition_callout_hygiene(md)
+    )
+

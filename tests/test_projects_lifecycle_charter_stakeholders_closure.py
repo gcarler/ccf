@@ -3710,3 +3710,142 @@ def test_audit_team_conflict_resolution_governance_empty_or_invalid():
             "collaborative_resolution_rate_pct": 0.0,
             "is_conflict_governance_healthy": False,
         }
+
+
+def test_audit_stage_gate_phase_transition_governance_healthy():
+    """Compuertas Stage-Gate íntegras con firma de patrocinador, entregables verificados y caso de negocio revalidado -> healthy."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stage_gate_phase_transition_governance,
+    )
+
+    gates = [
+        {
+            "gate_id": "GATE-INIT-PLAN",
+            "decision": "go",
+            "deliverables_verified": True,
+            "sponsor_signed_off": True,
+            "business_case_revalidated": True,
+            "open_blocker_count": 0,
+            "next_phase_started": True,
+        },
+        {
+            "phase_id": "GATE-PLAN-EXEC",
+            "decision": "conditional_go",
+            "deliverables_verified": True,
+            "sponsor_signed_off": True,
+            "business_case_revalidated": True,
+            "open_blocker_count": 0,
+            "next_phase_started": True,
+            "remediation_plan": "Cerrar observaciones menores de arquitectura",
+            "remediation_due_date": "2026-11-15",
+        },
+    ]
+    res = audit_stage_gate_phase_transition_governance(gates)
+    assert res == {
+        "total_gates": 2,
+        "approved_gates_count": 2,
+        "premature_phase_transitions": [],
+        "unvalidated_business_case_gates": [],
+        "conditional_go_missing_action_plan_gates": [],
+        "is_stage_gate_compliant": True,
+        "status": "healthy",
+        "recommendations": [],
+    }
+
+
+def test_audit_stage_gate_phase_transition_governance_premature_transition_critical():
+    """Transición prematura de fase con bloqueadores abiertos o sin aprobación del patrocinador -> critical."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stage_gate_phase_transition_governance,
+    )
+
+    res = audit_stage_gate_phase_transition_governance(
+        [
+            {
+                "gate_id": "GATE-01",
+                "decision": "go",
+                "deliverables_verified": True,
+                "sponsor_signed_off": False,
+                "business_case_revalidated": True,
+                "open_blocker_count": 0,
+                "next_phase_started": True,
+            },
+            {
+                "gate_id": "GATE-02",
+                "decision": "go",
+                "deliverables_verified": True,
+                "sponsor_signed_off": True,
+                "business_case_revalidated": True,
+                "open_blocker_count": 2,
+                "next_phase_started": True,
+            },
+        ]
+    )
+    assert res["premature_phase_transitions"] == ["GATE-01", "GATE-02"]
+    assert res["is_stage_gate_compliant"] is False
+    assert res["status"] == "critical"
+    assert len(res["recommendations"]) >= 1
+
+
+def test_audit_stage_gate_phase_transition_governance_conditional_go_and_unvalidated_warning():
+    """conditional_go sin plan/fecha de remediación o sin revalidación de caso de negocio -> warning."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stage_gate_phase_transition_governance,
+    )
+
+    res = audit_stage_gate_phase_transition_governance(
+        [
+            {
+                "gate_id": "GATE-COND",
+                "decision": "conditional_go",
+                "deliverables_verified": True,
+                "sponsor_signed_off": True,
+                "business_case_revalidated": False,
+                "open_blocker_count": 0,
+                "next_phase_started": False,
+                "remediation_plan": "",
+                "remediation_due_date": "",
+            }
+        ]
+    )
+    assert res["premature_phase_transitions"] == []
+    assert res["unvalidated_business_case_gates"] == ["GATE-COND"]
+    assert res["conditional_go_missing_action_plan_gates"] == ["GATE-COND"]
+    assert res["is_stage_gate_compliant"] is False
+    assert res["status"] == "warning"
+    assert len(res["recommendations"]) == 2
+
+
+def test_audit_stage_gate_phase_transition_governance_empty_and_service_staticmethod():
+    """Entradas vacías/None e invocación vía ProjectLifecyclePMIService.audit_stage_gate_phase_transition_governance."""
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_stage_gate_phase_transition_governance,
+    )
+
+    for payload in (None, [], "invalid", [{"gate_id": "   "}]):
+        res = audit_stage_gate_phase_transition_governance(payload)  # type: ignore[arg-type]
+        assert res["total_gates"] == 0
+        assert res["approved_gates_count"] == 0
+        assert res["is_stage_gate_compliant"] is True
+        assert res["status"] == "healthy"
+
+    gates = [
+        {
+            "gate_id": "G-1",
+            "decision": "go",
+            "deliverables_verified": True,
+            "sponsor_signed_off": False,
+            "business_case_revalidated": True,
+            "open_blocker_count": 0,
+            "next_phase_started": True,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_stage_gate_phase_transition_governance(
+            gates, require_sponsor_signoff=False
+        )
+        == audit_stage_gate_phase_transition_governance(
+            gates, require_sponsor_signoff=False
+        )
+    )

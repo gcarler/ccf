@@ -3133,6 +3133,7 @@ __all__ = [
     "audit_stakeholder_salience_mitchell_classification",
     "audit_business_case_financial_viability_governance",
     "audit_team_conflict_resolution_governance",
+    "audit_stage_gate_phase_transition_governance",
     "ProjectLifecyclePMIService",
 ]
 
@@ -3368,4 +3369,113 @@ def audit_team_conflict_resolution_governance(
 
 ProjectLifecyclePMIService.audit_team_conflict_resolution_governance = staticmethod(
     audit_team_conflict_resolution_governance
+)
+
+
+def audit_stage_gate_phase_transition_governance(
+    phase_gates: Sequence[Mapping[str, Any]] | None,
+    require_sponsor_signoff: bool = True,
+) -> dict[str, Any]:
+    """Audita las revisiones de transición de fase (Stage-Gates) y revalidación del Caso de Negocio según PMI PMBOK §2.4 y §4.1."""
+    if (
+        not phase_gates
+        or not isinstance(phase_gates, Sequence)
+        or isinstance(phase_gates, (str, bytes, Mapping))
+    ):
+        items: Sequence[Any] = []
+    else:
+        items = phase_gates
+
+    total_gates = 0
+    approved_gates_count = 0
+    premature_phase_transitions: list[str] = []
+    unvalidated_business_case_gates: list[str] = []
+    conditional_go_missing_action_plan_gates: list[str] = []
+
+    approved_decisions = {"go", "conditional_go"}
+
+    for item in items:
+        if not isinstance(item, Mapping):
+            continue
+        gate_id = str(item.get("gate_id") or item.get("phase_id") or "").strip()
+        if not gate_id:
+            continue
+
+        total_gates += 1
+        decision = str(item.get("decision") or "pending").strip().lower()
+        deliverables_verified = bool(item.get("deliverables_verified") is True)
+        sponsor_signed_off = bool(item.get("sponsor_signed_off") is True)
+        business_case_revalidated = bool(
+            item.get("business_case_revalidated") is True
+        )
+        try:
+            open_blocker_count = int(item.get("open_blocker_count") or 0)
+        except (TypeError, ValueError):
+            open_blocker_count = 0
+        next_phase_started = bool(item.get("next_phase_started") is True)
+
+        if decision in approved_decisions:
+            approved_gates_count += 1
+
+        if next_phase_started and (
+            decision not in approved_decisions
+            or not deliverables_verified
+            or (require_sponsor_signoff and not sponsor_signed_off)
+            or open_blocker_count > 0
+        ):
+            premature_phase_transitions.append(gate_id)
+
+        if decision in approved_decisions and not business_case_revalidated:
+            unvalidated_business_case_gates.append(gate_id)
+
+        if decision == "conditional_go" and (
+            not str(item.get("remediation_plan") or "").strip()
+            or not str(item.get("remediation_due_date") or "").strip()
+        ):
+            conditional_go_missing_action_plan_gates.append(gate_id)
+
+    is_stage_gate_compliant = bool(
+        len(premature_phase_transitions) == 0
+        and len(unvalidated_business_case_gates) == 0
+        and len(conditional_go_missing_action_plan_gates) == 0
+    )
+
+    recommendations: list[str] = []
+    if premature_phase_transitions:
+        recommendations.append(
+            "Detener el inicio de fases subsiguientes hasta obtener firma del patrocinador, verificación de entregables y cierre de bloqueadores en la compuerta."
+        )
+    if unvalidated_business_case_gates:
+        recommendations.append(
+            "Revalidar formalmente el Caso de Negocio y el Plan de Gestión de Beneficios en cada Stage-Gate aprobado."
+        )
+    if conditional_go_missing_action_plan_gates:
+        recommendations.append(
+            "Documentar plan de remediación y fecha compromiso para toda decisión Conditional Go."
+        )
+
+    if len(premature_phase_transitions) > 0:
+        status = "critical"
+    elif (
+        len(unvalidated_business_case_gates) > 0
+        or len(conditional_go_missing_action_plan_gates) > 0
+    ):
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_gates": total_gates,
+        "approved_gates_count": approved_gates_count,
+        "premature_phase_transitions": premature_phase_transitions,
+        "unvalidated_business_case_gates": unvalidated_business_case_gates,
+        "conditional_go_missing_action_plan_gates": conditional_go_missing_action_plan_gates,
+        "is_stage_gate_compliant": is_stage_gate_compliant,
+        "status": status,
+        "recommendations": recommendations,
+    }
+
+
+ProjectLifecyclePMIService.audit_stage_gate_phase_transition_governance = staticmethod(
+    audit_stage_gate_phase_transition_governance
 )

@@ -3695,3 +3695,99 @@ def test_audit_evm_accrual_method_inflation_bias_empty_or_invalid():
             "inflated_or_unsubstantiated_wp_ids": [],
             "is_accrual_governance_sound": False,
         }
+
+
+def test_evaluate_evm_critical_path_drag_decoupling_healthy_aligned():
+    """Cronograma alineado con SPI >= 1.0, sin atraso en ruta crítica y alta participación EV crítica -> healthy."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_critical_path_drag_decoupling,
+    )
+
+    res = evaluate_evm_critical_path_drag_decoupling(
+        spi=1.03,
+        sv_amount=5000.0,
+        critical_path_slip_days=0.0,
+        critical_path_ev_share_pct=65.0,
+        non_critical_float_consumed_days=1.5,
+    )
+    assert res["spi"] == 1.03
+    assert res["sv_amount"] == 5000.0
+    assert res["critical_path_slip_days"] == 0.0
+    assert res["critical_path_ev_share_pct"] == 65.0
+    assert res["non_critical_float_consumed_days"] == 1.5
+    assert res["false_schedule_optimism_detected"] is False
+    assert res["cp_ev_dilution_detected"] is False
+    assert res["float_exhaustion_warning"] is False
+    assert res["is_schedule_aligned"] is True
+    assert res["status"] == "healthy"
+    assert res["violations"] == []
+
+
+def test_evaluate_evm_critical_path_drag_decoupling_false_schedule_optimism_critical():
+    """SPI >= 1.0 con deslizamiento en ruta crítica dispara false_schedule_optimism_detected=True y status='critical'."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_critical_path_drag_decoupling,
+    )
+
+    res = evaluate_evm_critical_path_drag_decoupling(
+        spi=1.05,
+        sv_amount=12000.0,
+        critical_path_slip_days=4.0,
+        critical_path_ev_share_pct=55.0,
+        non_critical_float_consumed_days=2.0,
+        max_acceptable_cp_slip_days=0.0,
+    )
+    assert res["false_schedule_optimism_detected"] is True
+    assert res["cp_ev_dilution_detected"] is False
+    assert res["is_schedule_aligned"] is False
+    assert res["status"] == "critical"
+    assert len(res["violations"]) >= 1
+    assert len(res["recommendations"]) >= 1
+
+
+def test_evaluate_evm_critical_path_drag_decoupling_cp_ev_dilution_warning():
+    """Dilución de EV en ruta crítica con atraso moderado (SPI < 1.0 y slip <= max + 5) retorna cp_ev_dilution_detected=True y status='warning'."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_critical_path_drag_decoupling,
+    )
+
+    res = evaluate_evm_critical_path_drag_decoupling(
+        spi=0.96,
+        sv_amount=-3200.0,
+        critical_path_slip_days=2.0,
+        critical_path_ev_share_pct=25.0,
+        non_critical_float_consumed_days=6.0,
+        max_acceptable_cp_slip_days=0.0,
+        min_cp_ev_share_pct=40.0,
+    )
+    assert res["false_schedule_optimism_detected"] is False
+    assert res["cp_ev_dilution_detected"] is True
+    assert res["float_exhaustion_warning"] is True
+    assert res["is_schedule_aligned"] is False
+    assert res["status"] == "warning"
+    assert len(res["violations"]) == 2
+
+
+def test_evaluate_evm_critical_path_drag_decoupling_via_service_staticmethod():
+    """Verifica invocación vía ProjectEVMService.evaluate_evm_critical_path_drag_decoupling."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_critical_path_drag_decoupling,
+    )
+
+    kwargs = {
+        "spi": 0.88,
+        "sv_amount": -9500.0,
+        "critical_path_slip_days": 8.0,
+        "critical_path_ev_share_pct": 30.0,
+        "non_critical_float_consumed_days": 4.0,
+        "max_acceptable_cp_slip_days": 1.0,
+        "min_cp_ev_share_pct": 40.0,
+    }
+    direct = evaluate_evm_critical_path_drag_decoupling(**kwargs)
+    via_service = ProjectEVMService.evaluate_evm_critical_path_drag_decoupling(
+        **kwargs
+    )
+    assert via_service == direct
+    assert via_service["status"] == "critical"
+    assert via_service["cp_ev_dilution_detected"] is True

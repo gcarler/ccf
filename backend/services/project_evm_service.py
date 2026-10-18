@@ -5486,6 +5486,7 @@ __all__ = [
     "evaluate_evm_vac_rebaseline_threshold",
     "evaluate_evm_tcpi_eac_vs_bac_divergence",
     "audit_evm_accrual_method_inflation_bias",
+    "evaluate_evm_critical_path_drag_decoupling",
     "ProjectEVMService",
 ]
 
@@ -5670,4 +5671,93 @@ def audit_evm_accrual_method_inflation_bias(
 
 ProjectEVMService.audit_evm_accrual_method_inflation_bias = staticmethod(
     audit_evm_accrual_method_inflation_bias
+)
+
+
+def evaluate_evm_critical_path_drag_decoupling(
+    spi: float,
+    sv_amount: float,
+    critical_path_slip_days: float = 0.0,
+    critical_path_ev_share_pct: float = 100.0,
+    non_critical_float_consumed_days: float = 0.0,
+    max_acceptable_cp_slip_days: float = 0.0,
+    min_cp_ev_share_pct: float = 40.0,
+) -> dict[str, Any]:
+    """Evalúa la divergencia entre SPI/SV y el atraso real de la Ruta Crítica (Critical Path Drag & SV Masking) según PMI PMBOK §7.4 y §6.5."""
+    spi_val = round(float(spi), 4)
+    sv_val = round(float(sv_amount), 2)
+    cp_slip_val = round(float(critical_path_slip_days), 2)
+    cp_share_val = round(float(critical_path_ev_share_pct), 2)
+    float_consumed_val = round(float(non_critical_float_consumed_days), 2)
+    max_slip_val = float(max_acceptable_cp_slip_days)
+    min_share_val = float(min_cp_ev_share_pct)
+
+    false_schedule_optimism_detected = bool(
+        spi_val >= 1.0 and cp_slip_val > max_slip_val
+    )
+    cp_ev_dilution_detected = bool(
+        cp_share_val < min_share_val and cp_slip_val > 0.0
+    )
+    float_exhaustion_warning = bool(
+        float_consumed_val > 5.0 and cp_share_val < 50.0
+    )
+
+    violations: list[str] = []
+    recommendations: list[str] = []
+
+    if false_schedule_optimism_detected:
+        violations.append(
+            f"Optimismo falso de cronograma: SPI ({spi_val}) >= 1.0 oculta un atraso de {cp_slip_val} días en la ruta crítica."
+        )
+        recommendations.append(
+            "Reorientar recursos de actividades con holgura hacia la ruta crítica (fast-tracking/crashing) y complementar SPI con Earned Schedule SPI(t)."
+        )
+    elif cp_slip_val > max_slip_val:
+        violations.append(
+            f"Deslizamiento en la ruta crítica ({cp_slip_val} días) excede el umbral aceptable ({round(max_slip_val, 2)} días)."
+        )
+        recommendations.append(
+            "Aplicar compresión de cronograma sobre las actividades con mayor Critical Path Drag."
+        )
+
+    if cp_ev_dilution_detected:
+        violations.append(
+            f"Dilución de Valor Ganado en ruta crítica: solo {cp_share_val}% del EV proviene de actividades críticas (mínimo requerido {round(min_share_val, 2)}%) mientras la ruta crítica se desliza."
+        )
+        recommendations.append(
+            "Restringir el devengo prematuro de paquetes no críticos y priorizar entregables de ruta crítica."
+        )
+
+    if float_exhaustion_warning:
+        recommendations.append(
+            f"Erosión de holgura no crítica ({float_consumed_val} días consumidos): vigilar rutas cuasi-críticas para evitar nuevas rutas críticas."
+        )
+
+    is_schedule_aligned = bool(len(violations) == 0)
+
+    if false_schedule_optimism_detected or cp_slip_val > max_slip_val + 5.0:
+        status = "critical"
+    elif len(violations) > 0 or float_exhaustion_warning:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "spi": spi_val,
+        "sv_amount": sv_val,
+        "critical_path_slip_days": cp_slip_val,
+        "critical_path_ev_share_pct": cp_share_val,
+        "non_critical_float_consumed_days": float_consumed_val,
+        "false_schedule_optimism_detected": false_schedule_optimism_detected,
+        "cp_ev_dilution_detected": cp_ev_dilution_detected,
+        "float_exhaustion_warning": float_exhaustion_warning,
+        "is_schedule_aligned": is_schedule_aligned,
+        "status": status,
+        "violations": violations,
+        "recommendations": recommendations,
+    }
+
+
+ProjectEVMService.evaluate_evm_critical_path_drag_decoupling = staticmethod(
+    evaluate_evm_critical_path_drag_decoupling
 )
