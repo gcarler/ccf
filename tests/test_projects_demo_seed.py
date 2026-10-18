@@ -166,3 +166,94 @@ def test_audit_demo_seed_blueprint_rejects_empty_spec():
         "has_lifecycle_diversity": False,
         "is_blueprint_valid": False,
     }
+
+
+# ── summarize_demo_seed_budget_allocation (PMBOK §7.3, pure helper) ───────
+
+
+def test_budget_allocation_default_spec_diversified():
+    """DEMO_PROJECTS con budgets (150k/90k/60k) → 'diversified_funded'."""
+    from scripts.seeding.seed_projects_demo import summarize_demo_seed_budget_allocation
+
+    result = summarize_demo_seed_budget_allocation()
+
+    assert result == {
+        "total_projects": 3,
+        "funded_projects_count": 3,
+        "unfunded_projects_count": 0,
+        "total_portfolio_budget": 300000.0,
+        "avg_project_budget": 100000.0,
+        "max_project_budget": 150000.0,
+        "max_budget_share_pct": 50.0,
+        "allocation_status": "diversified_funded",
+    }
+
+
+def test_budget_allocation_over_concentrated():
+    """>= 2 proyectos con >= 75% del presupuesto en uno → 'over_concentrated'."""
+    from scripts.seeding.seed_projects_demo import summarize_demo_seed_budget_allocation
+
+    projects = [
+        {"budget": 90000.0},
+        {"bac": 6000.0},   # cae en la variante 'bac'
+        {},                # sin presupuesto
+    ]
+    result = summarize_demo_seed_budget_allocation(projects)
+
+    assert result["total_projects"] == 3
+    assert result["funded_projects_count"] == 2
+    assert result["unfunded_projects_count"] == 1
+    assert result["total_portfolio_budget"] == 96000.0
+    assert result["max_project_budget"] == 90000.0
+    assert result["max_budget_share_pct"] == round(90000 / 96000 * 100.0, 2)
+    assert result["allocation_status"] == "over_concentrated"
+
+    # borde: exactamente 75% también concentra
+    edge = summarize_demo_seed_budget_allocation([{"budget": 3}, {"budget": 1}])
+    assert edge["max_budget_share_pct"] == 75.0
+    assert edge["allocation_status"] == "over_concentrated"
+
+
+def test_budget_allocation_partially_funded():
+    """Alguno con budget 0 sin llegar a 75% de concentración → 'partially_funded'."""
+    from scripts.seeding.seed_projects_demo import summarize_demo_seed_budget_allocation
+
+    projects = [
+        {"budget": 50000.0},
+        {"budget": 30000.0},
+        {"budget": 0.0},
+    ]
+    result = summarize_demo_seed_budget_allocation(projects)
+
+    assert result["total_projects"] == 3
+    assert result["funded_projects_count"] == 2
+    assert result["unfunded_projects_count"] == 1
+    assert result["total_portfolio_budget"] == 80000.0
+    assert result["avg_project_budget"] == round(80000 / 3, 2)
+    assert result["max_budget_share_pct"] == 62.5
+    assert result["allocation_status"] == "partially_funded"
+
+
+def test_budget_allocation_empty_and_unfunded():
+    """Lista vacía → 'empty_seed'; presupuestos en 0 → 'unfunded_portfolio'."""
+    from scripts.seeding.seed_projects_demo import summarize_demo_seed_budget_allocation
+
+    empty = summarize_demo_seed_budget_allocation([])
+    assert empty == {
+        "total_projects": 0,
+        "funded_projects_count": 0,
+        "unfunded_projects_count": 0,
+        "total_portfolio_budget": 0.0,
+        "avg_project_budget": 0.0,
+        "max_project_budget": 0.0,
+        "max_budget_share_pct": 0.0,
+        "allocation_status": "empty_seed",
+    }
+
+    # presupuesto en cero y valores negativos clampean a 0
+    unfunded = summarize_demo_seed_budget_allocation(
+        [{"budget": -5}, {"bac": 0.0}, "no-dict"]
+    )
+    assert unfunded["total_projects"] == 2  # el str no-dict se filtra
+    assert unfunded["total_portfolio_budget"] == 0.0
+    assert unfunded["allocation_status"] == "unfunded_portfolio"

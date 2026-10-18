@@ -1152,3 +1152,78 @@ def test_evaluate_ccb_backlog_velocity_no_requests():
             "ccb_velocity_status": "no_requests",
         }
 
+
+# ─── 12. Evaluador de Contención de Defectos DRE (PMI PMBOK §8.3) ───
+
+
+def test_evaluate_defect_containment_efficiency_world_class_and_acceptable():
+    """Valida DRE >= 95% ('world_class_containment') y 85%-95% ('acceptable_containment')."""
+    from backend.services.project_ccb_service import (
+        evaluate_defect_containment_efficiency,
+    )
+
+    world_class = evaluate_defect_containment_efficiency(19, 1, 20)
+    assert world_class == {
+        "pre_delivery_defects": 19,
+        "post_delivery_defects": 1,
+        "total_defects": 20,
+        "reworked_verified_count": 20,
+        "unverified_defects_count": 0,
+        "containment_efficiency_pct": 95.0,
+        "defect_escape_rate_pct": 5.0,
+        "rework_verification_pct": 100.0,
+        "quality_containment_status": "world_class_containment",
+    }
+
+    acceptable = evaluate_defect_containment_efficiency(9, 1, 10)
+    assert acceptable["containment_efficiency_pct"] == 90.0
+    assert acceptable["defect_escape_rate_pct"] == 10.0
+    assert acceptable["unverified_defects_count"] == 0
+    assert acceptable["quality_containment_status"] == "acceptable_containment"
+
+
+def test_evaluate_defect_containment_efficiency_high_escape_breach():
+    """Escape a producción > 15% -> 'high_escape_breach'."""
+    from backend.services.project_ccb_service import (
+        evaluate_defect_containment_efficiency,
+    )
+
+    res = evaluate_defect_containment_efficiency(7, 3, 10)
+    assert res["total_defects"] == 10
+    assert res["containment_efficiency_pct"] == 70.0
+    assert res["defect_escape_rate_pct"] == 30.0
+    assert res["quality_containment_status"] == "high_escape_breach"
+
+
+def test_evaluate_defect_containment_efficiency_pending_defect_rework():
+    """Escape <= 15% pero defectos sin retrabajo verificado -> 'pending_defect_rework'."""
+    from backend.services.project_ccb_service import (
+        evaluate_defect_containment_efficiency,
+    )
+
+    res = evaluate_defect_containment_efficiency(10, 0, 7)
+    assert res["total_defects"] == 10
+    assert res["reworked_verified_count"] == 7
+    assert res["unverified_defects_count"] == 3
+    assert res["rework_verification_pct"] == 70.0
+    assert res["quality_containment_status"] == "pending_defect_rework"
+
+
+def test_evaluate_defect_containment_efficiency_zero_defects():
+    """Cero defectos registrados -> 'zero_defects_recorded' y 100.0% de eficiencia."""
+    from backend.services.project_ccb_service import (
+        evaluate_defect_containment_efficiency,
+    )
+
+    res = evaluate_defect_containment_efficiency(0, 0, 0)
+    assert res == {
+        "pre_delivery_defects": 0,
+        "post_delivery_defects": 0,
+        "total_defects": 0,
+        "reworked_verified_count": 0,
+        "unverified_defects_count": 0,
+        "containment_efficiency_pct": 100.0,
+        "defect_escape_rate_pct": 0.0,
+        "rework_verification_pct": 100.0,
+        "quality_containment_status": "zero_defects_recorded",
+    }

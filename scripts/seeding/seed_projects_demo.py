@@ -5,6 +5,7 @@ import os
 import re
 import sys
 import uuid
+from typing import Any
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -34,18 +35,21 @@ DEMO_PROJECTS = (
         "description": "Semilla estructural de evangelismo para validar proyectos, tareas y actividades.",
         "status": "active",
         "color": "#2563eb",
+        "budget": 150000.0,
     },
     {
         "title": "Demo Proyecto 2",
         "description": "Segundo proyecto demo con fechas distintas para probar calendarios y tablas.",
         "status": "planning",
         "color": "#0f766e",
+        "budget": 90000.0,
     },
     {
         "title": "Demo Proyecto 3",
         "description": "Tercer proyecto demo con el mismo contrato de datos en otra línea temporal.",
         "status": "on_hold",
         "color": "#b45309",
+        "budget": 60000.0,
     },
 )
 
@@ -370,3 +374,65 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+
+def summarize_demo_seed_budget_allocation(
+    projects: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Resume la asignación de presupuesto del portafolio demo (PMBOK §7.3).
+
+    Con `projects=None` usa DEMO_PROJECTS; filtra solo elementos dict y
+    extrae `budget = round(max(0.0, float(p.get("budget") or p.get("bac")
+    or 0.0)), 2)` por proyecto. Calcula:
+    - `total_projects` / `funded_projects_count` / `unfunded_projects_count`.
+    - `total_portfolio_budget` (round 2) y `avg_project_budget`
+      (round 2; 0.0 sin proyectos).
+    - `max_project_budget` y `max_budget_share_pct` (round 2; 0.0 sin
+      presupuesto total).
+    - `allocation_status` (precedencia): 'empty_seed' (sin proyectos),
+      'unfunded_portfolio' (presupuesto total == 0), 'over_concentrated'
+      (>= 2 proyectos y max share >= 75%), 'partially_funded' (alguno sin
+      presupuesto) o 'diversified_funded'.
+    """
+    valid_projects = [p for p in (DEMO_PROJECTS if projects is None else projects) if isinstance(p, dict)]
+    budgets = [
+        round(max(0.0, float(p.get("budget") or p.get("bac") or 0.0)), 2)
+        for p in valid_projects
+    ]
+
+    total_projects = len(valid_projects)
+    funded_projects_count = sum(1 for b in budgets if b > 0)
+    unfunded_projects_count = total_projects - funded_projects_count
+    total_portfolio_budget = round(sum(budgets), 2)
+    avg_project_budget = (
+        round(total_portfolio_budget / total_projects, 2) if total_projects > 0 else 0.0
+    )
+    max_project_budget = round(max(budgets, default=0.0), 2)
+    max_budget_share_pct = (
+        round((max_project_budget / total_portfolio_budget) * 100.0, 2)
+        if total_portfolio_budget > 0
+        else 0.0
+    )
+
+    if total_projects == 0:
+        allocation_status = "empty_seed"
+    elif total_portfolio_budget == 0.0:
+        allocation_status = "unfunded_portfolio"
+    elif total_projects >= 2 and max_budget_share_pct >= 75.0:
+        allocation_status = "over_concentrated"
+    elif unfunded_projects_count > 0:
+        allocation_status = "partially_funded"
+    else:
+        allocation_status = "diversified_funded"
+
+    return {
+        "total_projects": total_projects,
+        "funded_projects_count": funded_projects_count,
+        "unfunded_projects_count": unfunded_projects_count,
+        "total_portfolio_budget": total_portfolio_budget,
+        "avg_project_budget": avg_project_budget,
+        "max_project_budget": max_project_budget,
+        "max_budget_share_pct": max_budget_share_pct,
+        "allocation_status": allocation_status,
+    }

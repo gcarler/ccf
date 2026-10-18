@@ -646,3 +646,54 @@ def evaluate_ccb_backlog_velocity(
         "ccb_velocity_status": ccb_velocity_status,
     }
 
+
+def evaluate_defect_containment_efficiency(
+    pre_delivery_defects: int,
+    post_delivery_defects: int,
+    reworked_verified_count: int = 0,
+) -> dict[str, Any]:
+    """Evalúa la Eficiencia de Contención de Defectos (DRE) y tasa de escape según PMI PMBOK §8.3."""
+    pre_defects = max(0, int(pre_delivery_defects or 0))
+    post_defects = max(0, int(post_delivery_defects or 0))
+    total_defects = pre_defects + post_defects
+    verified_rework = min(total_defects, max(0, int(reworked_verified_count or 0)))
+
+    containment_efficiency_pct = (
+        round((pre_defects / total_defects) * 100.0, 2)
+        if total_defects > 0
+        else 100.0
+    )
+    defect_escape_rate_pct = (
+        round((post_defects / total_defects) * 100.0, 2)
+        if total_defects > 0
+        else 0.0
+    )
+    rework_verification_pct = (
+        round((verified_rework / total_defects) * 100.0, 2)
+        if total_defects > 0
+        else 100.0
+    )
+    unverified_defects_count = total_defects - verified_rework
+
+    if total_defects == 0:
+        quality_containment_status = "zero_defects_recorded"
+    elif defect_escape_rate_pct > 15.0:
+        quality_containment_status = "high_escape_breach"
+    elif unverified_defects_count > 0:
+        quality_containment_status = "pending_defect_rework"
+    elif containment_efficiency_pct >= 95.0 and unverified_defects_count == 0:
+        quality_containment_status = "world_class_containment"
+    else:
+        quality_containment_status = "acceptable_containment"
+
+    return {
+        "pre_delivery_defects": pre_defects,
+        "post_delivery_defects": post_defects,
+        "total_defects": total_defects,
+        "reworked_verified_count": verified_rework,
+        "unverified_defects_count": unverified_defects_count,
+        "containment_efficiency_pct": containment_efficiency_pct,
+        "defect_escape_rate_pct": defect_escape_rate_pct,
+        "rework_verification_pct": rework_verification_pct,
+        "quality_containment_status": quality_containment_status,
+    }
