@@ -1779,9 +1779,9 @@ def calculate_project_evm_advanced(
         "tcpi": tcpi,
         "quadrant": quadrant,
         "early_warnings": quadrant["alerts"],
-        "reserves": std_evm["reserves"],
-        "cpi_stability_rule": std_evm["cpi_stability_rule"],
-        "early_warning_sentinel": std_evm["early_warning_sentinel"],
+        "reserves": std_evm.get("reserves") or compute_project_reserves_breakdown(db, project, bac=bac),
+        "cpi_stability_rule": std_evm.get("cpi_stability_rule") or calculate_cpi_stability_rule(physical_pct, cpi),
+        "early_warning_sentinel": std_evm.get("early_warning_sentinel") or calculate_early_warning_sentinel(cpi, spi),
     }
 
 
@@ -2767,6 +2767,35 @@ def calculate_project_metrics(
     return calculate_project_evm(session, project_or_id, now=now)
 
 
+def calculate_reserve_burn_index(contingency_reserve: float, cv: float) -> Dict[str, Any]:
+    """Calcula el Índice de Consumo de Reserva de Contingencia (Reserve Burn Index — PMI §7.4.2.2)."""
+    reserve = round(max(0.0, _safe_float(contingency_reserve, 0.0)), 2)
+    consumed_amount = round(max(0.0, -_safe_float(cv, 0.0)), 2)
+    remaining_reserve = round(max(0.0, reserve - consumed_amount), 2)
+    if reserve > 0:
+        burn_rate_pct = round(min(100.0, (consumed_amount / reserve) * 100.0), 1)
+    else:
+        burn_rate_pct = 100.0 if consumed_amount > 0 else 0.0
+
+    if burn_rate_pct == 0.0:
+        status = "intact"
+    elif burn_rate_pct <= 50.0:
+        status = "controlled"
+    elif burn_rate_pct < 100.0:
+        status = "warning"
+    else:
+        status = "exhausted"
+
+    return {
+        "contingency_reserve": reserve,
+        "consumed_amount": consumed_amount,
+        "remaining_reserve": remaining_reserve,
+        "burn_rate_pct": burn_rate_pct,
+        "status": status,
+        "requires_reserve_drawdown_request": bool(burn_rate_pct > 50.0),
+    }
+
+
 class ProjectEVMService:
     """Fachada canónica del servicio EVM y Diagnóstico Predictivo PMI (Vol. 5 y Vol. 6)."""
 
@@ -2814,6 +2843,10 @@ class ProjectEVMService:
         return compute_project_reserves_breakdown(db, project, bac=bac)
 
     @staticmethod
+    def calculate_reserve_burn_index(contingency_reserve: float, cv: float) -> Dict[str, Any]:
+        return calculate_reserve_burn_index(contingency_reserve, cv)
+
+    @staticmethod
     def generate_curve_s_data(
         db: Session, project: Project, points_count: int = 8
     ) -> List[Dict[str, Any]]:
@@ -2824,3 +2857,4 @@ class ProjectEVMService:
         db: Session, project: Project, now: Optional[datetime.datetime] = None
     ) -> Dict[str, Any]:
         return build_project_execution_matrix(db, project, now=now)
+

@@ -12,12 +12,14 @@ from unittest.mock import MagicMock, patch
 
 from backend import models, schemas
 from backend.services.project_evm_service import (
+    ProjectEVMService,
     build_project_wbs_tree,
     calculate_cpi_spi_quadrant,
     calculate_eac_forecasts,
     calculate_earned_schedule,
     calculate_project_evm,
     calculate_project_evm_advanced,
+    calculate_reserve_burn_index,
     calculate_tcpi,
 )
 
@@ -540,4 +542,56 @@ def test_evm_canonical_edge_cases_no_zero_division_or_nan():
     assert_no_nan_or_inf(es_over)
     # Si EV >= BAC, earned_schedule_days se limita a planned_duration_days
     assert es_over["earned_schedule_days"] == es_over["planned_duration_days"]
+
+
+def test_calculate_reserve_burn_index_all_states_and_edge_cases():
+    """Valida el Índice de Consumo de Reserva de Contingencia (PMI §7.4.2.2) en todos sus estados."""
+    intact = calculate_reserve_burn_index(contingency_reserve=10000.0, cv=2500.0)
+    assert intact == {
+        "contingency_reserve": 10000.0,
+        "consumed_amount": 0.0,
+        "remaining_reserve": 10000.0,
+        "burn_rate_pct": 0.0,
+        "status": "intact",
+        "requires_reserve_drawdown_request": False,
+    }
+
+    controlled = calculate_reserve_burn_index(contingency_reserve=10000.0, cv=-4000.0)
+    assert controlled == {
+        "contingency_reserve": 10000.0,
+        "consumed_amount": 4000.0,
+        "remaining_reserve": 6000.0,
+        "burn_rate_pct": 40.0,
+        "status": "controlled",
+        "requires_reserve_drawdown_request": False,
+    }
+
+    warning = calculate_reserve_burn_index(contingency_reserve=10000.0, cv=-7500.0)
+    assert warning == {
+        "contingency_reserve": 10000.0,
+        "consumed_amount": 7500.0,
+        "remaining_reserve": 2500.0,
+        "burn_rate_pct": 75.0,
+        "status": "warning",
+        "requires_reserve_drawdown_request": True,
+    }
+
+    exhausted = calculate_reserve_burn_index(contingency_reserve=10000.0, cv=-12000.0)
+    assert exhausted == {
+        "contingency_reserve": 10000.0,
+        "consumed_amount": 12000.0,
+        "remaining_reserve": 0.0,
+        "burn_rate_pct": 100.0,
+        "status": "exhausted",
+        "requires_reserve_drawdown_request": True,
+    }
+
+    zero_reserve_overrun = calculate_reserve_burn_index(contingency_reserve=0.0, cv=-500.0)
+    assert zero_reserve_overrun["burn_rate_pct"] == 100.0
+    assert zero_reserve_overrun["status"] == "exhausted"
+    assert zero_reserve_overrun["requires_reserve_drawdown_request"] is True
+
+    service_res = ProjectEVMService.calculate_reserve_burn_index(contingency_reserve=10000.0, cv=-7500.0)
+    assert service_res == warning
+
 
