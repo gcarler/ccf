@@ -4971,3 +4971,117 @@ def test_temporal_timestamp_format_hygiene_ignores_non_project_schemas():
     assert res["is_temporal_hygiene_compliant"] is True
 
 
+def test_uuid_and_identifier_format_hygiene_live_openapi():
+    """Valida contra el esquema OpenAPI real que todos los identificadores de proyectos sean de tipo string."""
+    res = audit_projects_api_contracts.summarize_projects_uuid_and_identifier_field_hygiene()
+    assert res["total_identifier_properties_inspected"] > 0
+    assert res["non_string_identifier_properties"] == []
+    assert res["is_identifier_type_hygiene_compliant"] is True
+    assert (
+        len(res["uuid_formatted_properties"]) + len(res["plain_string_identifier_properties"])
+        == res["total_identifier_properties_inspected"]
+    )
+
+
+def test_uuid_and_identifier_format_hygiene_classifies_uuid_vs_plain_string_including_anyof():
+    """Clasifica propiedades con format=uuid frente a string plano, incluyendo uniones anyOf con null."""
+    schema = {
+        "components": {
+            "schemas": {
+                "ProjectTaskRead": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string", "format": "uuid"},
+                        "parent_task_id": {
+                            "anyOf": [
+                                {"type": "string", "format": "uuid"},
+                                {"type": "null"},
+                            ]
+                        },
+                        "external_reference_id": {"type": "string"},
+                        "assignee_uuid": {
+                            "anyOf": [
+                                {"type": "string"},
+                                {"type": "null"},
+                            ]
+                        },
+                        "title": {"type": "string"},
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_uuid_and_identifier_field_hygiene(
+        schema
+    )
+    assert res["total_identifier_properties_inspected"] == 4
+    assert res["uuid_formatted_properties"] == [
+        "ProjectTaskRead.id",
+        "ProjectTaskRead.parent_task_id",
+    ]
+    assert res["plain_string_identifier_properties"] == [
+        "ProjectTaskRead.assignee_uuid",
+        "ProjectTaskRead.external_reference_id",
+    ]
+    assert res["non_string_identifier_properties"] == []
+    assert res["is_identifier_type_hygiene_compliant"] is True
+
+
+def test_uuid_and_identifier_format_hygiene_detects_non_string_identifiers():
+    """Detecta identificadores tipados como integer, number o boolean como incumplimiento de higiene."""
+    schema = {
+        "components": {
+            "schemas": {
+                "WbsNodeCreate": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "integer"},
+                        "project_id": {
+                            "anyOf": [
+                                {"type": "number"},
+                                {"type": "null"},
+                            ]
+                        },
+                        "legacy_uuid": {"type": "boolean"},
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_uuid_and_identifier_field_hygiene(
+        schema
+    )
+    assert res["total_identifier_properties_inspected"] == 3
+    assert res["uuid_formatted_properties"] == []
+    assert res["plain_string_identifier_properties"] == []
+    assert res["non_string_identifier_properties"] == [
+        "WbsNodeCreate.id",
+        "WbsNodeCreate.legacy_uuid",
+        "WbsNodeCreate.project_id",
+    ]
+    assert res["is_identifier_type_hygiene_compliant"] is False
+
+
+def test_uuid_and_identifier_format_hygiene_ignores_non_project_schemas():
+    """Ignora esquemas fuera del dominio de proyectos y retorna cumplimiento limpio."""
+    schema = {
+        "components": {
+            "schemas": {
+                "FinanceLedgerEntry": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "integer"},
+                        "account_id": {"type": "number"},
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_uuid_and_identifier_field_hygiene(
+        schema
+    )
+    assert res["total_identifier_properties_inspected"] == 0
+    assert res["uuid_formatted_properties"] == []
+    assert res["plain_string_identifier_properties"] == []
+    assert res["non_string_identifier_properties"] == []
+    assert res["is_identifier_type_hygiene_compliant"] is True

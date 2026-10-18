@@ -3455,6 +3455,124 @@ def summarize_projects_schema_required_and_default_hygiene(
     }
 
 
+def _collect_non_null_branch_schemas(
+    prop_schema: Mapping[str, Any],
+    all_schemas: Mapping[str, Any],
+) -> list[Mapping[str, Any]]:
+    """Extrae ramas no nulas de un esquema de propiedad (incluyendo anyOf/oneOf y $ref)."""
+    branches: list[Mapping[str, Any]] = []
+    composite = prop_schema.get("anyOf") or prop_schema.get("oneOf")
+    candidates = composite if isinstance(composite, list) else [prop_schema]
+    for cand in candidates:
+        if not isinstance(cand, Mapping):
+            continue
+        if cand.get("type") == "null":
+            continue
+        ref = cand.get("$ref")
+        if isinstance(ref, str) and ref.startswith("#/components/schemas/"):
+            ref_name = ref.split("/")[-1]
+            resolved = all_schemas.get(ref_name)
+            if isinstance(resolved, Mapping):
+                branches.append(resolved)
+                continue
+        branches.append(cand)
+    return branches
+
+
+def summarize_projects_uuid_and_identifier_field_hygiene(
+    openapi_schema: Mapping[str, object] | None = None,
+) -> dict[str, object]:
+    """Audita la higiene de tipos y formato UUID en campos identificadores de esquemas OpenAPI de proyectos."""
+    if openapi_schema is None:
+        from backend.app import app
+
+        schema_dict: Mapping[str, Any] = app.openapi()
+    else:
+        schema_dict = openapi_schema
+
+    referenced_schemas: set[str] = set()
+    paths = schema_dict.get("paths", {})
+    if isinstance(paths, Mapping):
+        for path, methods in paths.items():
+            if not str(path).startswith(PROJECT_PREFIX) or not isinstance(methods, Mapping):
+                continue
+            for method, operation in methods.items():
+                if str(method).lower() not in HTTP_METHODS or not isinstance(operation, Mapping):
+                    continue
+                for ref in schema_refs(operation):
+                    referenced_schemas.add(ref)
+
+    components = schema_dict.get("components", {})
+    schemas = components.get("schemas", {}) if isinstance(components, Mapping) else {}
+
+    if isinstance(schemas, Mapping) and referenced_schemas:
+        queue = list(referenced_schemas)
+        while queue:
+            current = queue.pop()
+            s_obj = schemas.get(current)
+            if isinstance(s_obj, Mapping):
+                for nested_ref in schema_refs(dict(s_obj)):
+                    if nested_ref not in referenced_schemas:
+                        referenced_schemas.add(nested_ref)
+                        queue.append(nested_ref)
+
+    total_identifier_properties_inspected = 0
+    uuid_formatted_properties: list[str] = []
+    plain_string_identifier_properties: list[str] = []
+    non_string_identifier_properties: list[str] = []
+
+    if isinstance(schemas, Mapping):
+        for s_name in sorted(schemas.keys()):
+            s_obj = schemas[s_name]
+            if not isinstance(s_obj, Mapping):
+                continue
+            is_proj = (
+                "project" in s_name.lower()
+                or s_name.startswith(_PROJECT_DOMAIN_SCHEMA_PREFIXES)
+                or s_name in referenced_schemas
+            )
+            if not is_proj:
+                continue
+
+            props = s_obj.get("properties", {})
+            if not isinstance(props, Mapping):
+                continue
+
+            for prop_name in sorted(props.keys()):
+                prop_schema = props[prop_name]
+                if not isinstance(prop_schema, Mapping):
+                    continue
+
+                is_identifier = prop_name == "id" or prop_name.endswith(("_id", "_uuid"))
+                if not is_identifier:
+                    continue
+
+                total_identifier_properties_inspected += 1
+                qualified = f"{s_name}.{prop_name}"
+                branches = _collect_non_null_branch_schemas(prop_schema, schemas)
+
+                has_uuid_format = any(
+                    b.get("type") == "string" and b.get("format") == "uuid"
+                    for b in branches
+                )
+                has_string_type = any(b.get("type") == "string" for b in branches)
+
+                if has_uuid_format:
+                    uuid_formatted_properties.append(qualified)
+                elif has_string_type:
+                    plain_string_identifier_properties.append(qualified)
+                else:
+                    non_string_identifier_properties.append(qualified)
+
+    return {
+        "total_identifier_properties_inspected": total_identifier_properties_inspected,
+        "uuid_formatted_properties": sorted(uuid_formatted_properties),
+        "plain_string_identifier_properties": sorted(plain_string_identifier_properties),
+        "non_string_identifier_properties": sorted(non_string_identifier_properties),
+        "is_identifier_type_hygiene_compliant": len(non_string_identifier_properties) == 0,
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()
