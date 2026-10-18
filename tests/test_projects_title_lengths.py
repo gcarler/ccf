@@ -2146,3 +2146,101 @@ def test_validate_monte_carlo_schedule_confidence_buffer_invalid_inputs():
             "meets_p80_confidence": False,
             "monte_carlo_posture": "INVALID_MONTE_CARLO_INPUTS",
         }
+
+
+def test_validate_resource_leveling_overallocation_leveled_and_smoothed():
+    """Recursos con carga <= capacidad y ratio pico/promedio <= 1.5 -> LEVELED_AND_SMOOTHED_RESOURCES."""
+    import backend.schemas.projects as projects_module
+    from backend.schemas.projects import validate_resource_leveling_overallocation
+
+    allocations = [
+        {
+            "resource_id": "RES-01",
+            "capacity_hours_per_period": 40.0,
+            "period_loads": [32.0, 36.0, 40.0, 36.0],
+        },
+        {
+            "id": "RES-02",
+            "capacity_hours": 30.0,
+            "period_loads": [20.0, 24.0, 28.0, 24.0],
+        },
+    ]
+    res = validate_resource_leveling_overallocation(
+        allocations, max_peak_to_average_ratio=1.5
+    )
+    assert res == {
+        "total_resources": 2,
+        "overallocated_resource_ids": [],
+        "unsmoothed_peak_resource_ids": [],
+        "is_resource_schedule_leveled": True,
+        "leveling_posture": "LEVELED_AND_SMOOTHED_RESOURCES",
+    }
+    assert "validate_resource_leveling_overallocation" in projects_module.__all__
+
+
+def test_validate_resource_leveling_overallocation_capacity_overallocated():
+    """Recurso con carga pico > capacidad -> RESOURCE_CAPACITY_OVERALLOCATED."""
+    from backend.schemas.projects import validate_resource_leveling_overallocation
+
+    res = validate_resource_leveling_overallocation(
+        [
+            {
+                "resource_id": "RES-OVER",
+                "capacity_hours_per_period": 40.0,
+                "period_loads": [38.0, 48.0, 36.0],
+            },
+            {
+                "resource_id": "RES-OK",
+                "capacity_hours_per_period": 40.0,
+                "period_loads": [35.0, 35.0, 35.0],
+            },
+        ]
+    )
+    assert res["total_resources"] == 2
+    assert res["overallocated_resource_ids"] == ["RES-OVER"]
+    assert res["is_resource_schedule_leveled"] is False
+    assert res["leveling_posture"] == "RESOURCE_CAPACITY_OVERALLOCATED"
+
+
+def test_validate_resource_leveling_overallocation_unsmoothed_peaks():
+    """Sin sobre-asignación pero ratio pico/promedio > límite -> UNSMOOTHED_RESOURCE_LOAD_PEAKS."""
+    from backend.schemas.projects import validate_resource_leveling_overallocation
+
+    res = validate_resource_leveling_overallocation(
+        [
+            {
+                "resource_id": "RES-SPIKE",
+                "capacity_hours_per_period": 40.0,
+                "period_loads": [5.0, 5.0, 40.0, 10.0],
+            }
+        ],
+        max_peak_to_average_ratio=1.5,
+    )
+    assert res == {
+        "total_resources": 1,
+        "overallocated_resource_ids": [],
+        "unsmoothed_peak_resource_ids": ["RES-SPIKE"],
+        "is_resource_schedule_leveled": False,
+        "leveling_posture": "UNSMOOTHED_RESOURCE_LOAD_PEAKS",
+    }
+
+
+def test_validate_resource_leveling_overallocation_no_allocations():
+    """Lista vacía, None o entradas sin cargas válidas -> NO_RESOURCE_ALLOCATIONS."""
+    from backend.schemas.projects import validate_resource_leveling_overallocation
+
+    for payload in (
+        None,
+        [],
+        [{"resource_id": ""}],
+        [{"resource_id": "RES-EMPTY", "period_loads": []}],
+    ):
+        res = validate_resource_leveling_overallocation(payload)
+        assert res == {
+            "total_resources": 0,
+            "overallocated_resource_ids": [],
+            "unsmoothed_peak_resource_ids": [],
+            "is_resource_schedule_leveled": False,
+            "leveling_posture": "NO_RESOURCE_ALLOCATIONS",
+        }
+

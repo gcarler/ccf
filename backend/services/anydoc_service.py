@@ -2350,6 +2350,12 @@ class AnyDocService:
     ) -> dict[str, Any]:
         return audit_markdown_mermaid_diagram_hygiene(markdown_text)
 
+    @staticmethod
+    def audit_markdown_footnote_reference_hygiene(
+        markdown_text: str | None = None,
+    ) -> dict[str, Any]:
+        return audit_markdown_footnote_reference_hygiene(markdown_text)
+
 
 _CODE_FENCE_OPEN_AUDIT_RE = re.compile(r"^\s*(`{3,}|~{3,})\s*(.*)$")
 _CODE_FENCE_CLOSE_AUDIT_RE = re.compile(r"^\s*(`{3,}|~{3,})\s*$")
@@ -2660,6 +2666,89 @@ def audit_markdown_mermaid_diagram_hygiene(
     }
 
 
+_FOOTNOTE_DEFINITION_AUDIT_RE = re.compile(
+    r"^[ \t]*\[\^([A-Za-z0-9_.-]+)\]:[ \t]*(.*)$"
+)
+_FOOTNOTE_REFERENCE_AUDIT_RE = re.compile(r"\[\^([A-Za-z0-9_.-]+)\](?!:)")
+
+
+def audit_markdown_footnote_reference_hygiene(
+    markdown_text: str | None = None,
+) -> dict[str, Any]:
+    """Audita integridad bidireccional de referencias y definiciones de notas al pie en Markdown según PMI PMBOK §4.4 y §10.2."""
+    lines = (
+        markdown_text.splitlines()
+        if isinstance(markdown_text, str) and markdown_text
+        else []
+    )
+
+    defined_ids: list[str] = []
+    referenced_ids: list[str] = []
+    empty_footnote_definition_ids: list[str] = []
+
+    in_fence = False
+    for line in lines:
+        if line.strip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+
+        m_def = _FOOTNOTE_DEFINITION_AUDIT_RE.match(line)
+        if m_def:
+            fn_id, content = m_def.group(1), m_def.group(2)
+            if fn_id not in defined_ids:
+                defined_ids.append(fn_id)
+            if not content.strip() and fn_id not in empty_footnote_definition_ids:
+                empty_footnote_definition_ids.append(fn_id)
+            continue
+
+        for m_ref in _FOOTNOTE_REFERENCE_AUDIT_RE.finditer(line):
+            ref_id = m_ref.group(1)
+            if ref_id not in referenced_ids:
+                referenced_ids.append(ref_id)
+
+    defined_set = set(defined_ids)
+    referenced_set = set(referenced_ids)
+
+    unresolved_reference_ids = [
+        ref_id for ref_id in referenced_ids if ref_id not in defined_set
+    ]
+    orphan_definition_ids = [
+        def_id for def_id in defined_ids if def_id not in referenced_set
+    ]
+
+    total_references = len(referenced_ids)
+    total_definitions = len(defined_ids)
+    is_footnote_hygienic = bool(
+        total_references > 0
+        and len(unresolved_reference_ids) == 0
+        and len(orphan_definition_ids) == 0
+        and len(empty_footnote_definition_ids) == 0
+    )
+
+    if total_references == 0 and total_definitions == 0:
+        footnote_posture = "NO_FOOTNOTES_PRESENT"
+    elif len(unresolved_reference_ids) > 0:
+        footnote_posture = "UNRESOLVED_FOOTNOTE_REFERENCES"
+    elif len(empty_footnote_definition_ids) > 0:
+        footnote_posture = "EMPTY_FOOTNOTE_DEFINITIONS"
+    elif len(orphan_definition_ids) > 0:
+        footnote_posture = "ORPHAN_FOOTNOTE_DEFINITIONS"
+    else:
+        footnote_posture = "HYGIENIC_FOOTNOTE_CITATIONS"
+
+    return {
+        "total_references": total_references,
+        "total_definitions": total_definitions,
+        "unresolved_reference_ids": unresolved_reference_ids,
+        "orphan_definition_ids": orphan_definition_ids,
+        "empty_footnote_definition_ids": empty_footnote_definition_ids,
+        "is_footnote_hygienic": is_footnote_hygienic,
+        "footnote_posture": footnote_posture,
+    }
+
+
 __all__ = [
     "ANYDOC_AVAILABLE",
     "SUPPORTED_EXTENSIONS",
@@ -2690,5 +2779,7 @@ __all__ = [
     "audit_markdown_code_fence_hygiene",
     "audit_markdown_image_asset_hygiene",
     "audit_markdown_mermaid_diagram_hygiene",
+    "audit_markdown_footnote_reference_hygiene",
     "AnyDocService",
 ]
+

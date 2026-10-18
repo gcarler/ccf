@@ -2762,3 +2762,135 @@ def test_audit_eac_forecast_optimism_bias_insufficient_evm_data():
             "is_forecast_credible": False,
             "forecast_posture": "INSUFFICIENT_EVM_DATA",
         }
+
+
+def test_audit_work_package_evmt_governance_governed():
+    """> Fórmulas con tope respetado, LOE dentro del share y paquetes cortos -> GOVERNED."""
+    from backend.services.project_evm_service import (
+        audit_work_package_evmt_governance as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "id": "WP-1",
+                "budget": 8000.0,
+                "evmt": "0_100",
+                "status": "COMPLETED",
+                "claimed_pct": 100.0,
+                "duration_periods": 2,
+            },
+            {
+                "id": "WP-2",
+                "budget": 6000.0,
+                "evmt": "50_50",
+                "claimed_pct": 50.0,
+                "duration_periods": 1,
+            },
+            {
+                "id": "WP-3",
+                "budget": 4000.0,
+                "evmt": "20_80",
+                "claimed_pct": 20.0,
+            },
+            {
+                "id": "WP-4",
+                "budget": 2000.0,
+                "evmt": "PERCENT_COMPLETE",
+                "claimed_pct": 75.0,
+                "duration_periods": 5,
+            },
+        ],
+        max_loe_share_pct=15.0,
+    )
+    assert res["total_work_packages"] == 4
+    assert res["loe_share_pct"] == 0.0
+    assert res["formula_cap_violation_ids"] == []
+    assert res["long_duration_fixed_formula_ids"] == []
+    assert res["is_evmt_governed"] is True
+    assert res["evmt_posture"] == "GOVERNED_EVMT_BASELINE"
+
+
+def test_audit_work_package_evmt_governance_cap_violation():
+    """> Paquete IN_PROGRESS con fórmula fija reclamando más del tope -> CAP violation."""
+    from backend.services.project_evm_service import (
+        audit_work_package_evmt_governance as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "id": "WP-OK",
+                "evmt": "0_100",
+                "claimed_pct": 0.0,
+                "duration_periods": 2,
+            },
+            {
+                "id": "WP-GREEDY-50",
+                "budget": 1000.0,
+                "evmt": "50_50",
+                "claimed_pct": 75.0,
+            },
+            {
+                "id": "WP-GREEDY-20",
+                "budget": 2000.0,
+                "evmt": "20_80",
+                "claimed_pct": 80.0,
+            },
+        ]
+    )
+    assert res["total_work_packages"] == 3
+    assert res["formula_cap_violation_ids"] == ["WP-GREEDY-50", "WP-GREEDY-20"]
+    assert res["long_duration_fixed_formula_ids"] == []
+    assert res["is_evmt_governed"] is False
+    assert res["evmt_posture"] == "FIXED_FORMULA_PERCENT_CAP_VIOLATION"
+
+
+def test_audit_work_package_evmt_governance_long_duration_and_loe():
+    """> Fórmula fija en paquete largo y share LOE excesivo (precedencia cap)."""
+    from backend.services.project_evm_service import (
+        audit_work_package_evmt_governance as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "id": "WP-LONG",
+                "budget": 5000.0,
+                "evmt": "0_100",
+                "claimed_pct": 0.0,
+                "duration_periods": 6,
+            },
+            {
+                "id": "WP-LOE",
+                "budget": 45000.0,
+                "evmt": "LEVEL_OF_EFFORT",
+            },
+        ],
+        max_loe_share_pct=15.0,
+    )
+    assert res["total_work_packages"] == 2
+    # LOE: 45000/50000 = 90.0% > 15%.
+    assert res["loe_share_pct"] == 90.0
+    assert res["long_duration_fixed_formula_ids"] == ["WP-LONG"]
+    assert res["formula_cap_violation_ids"] == []
+    assert res["is_evmt_governed"] is False
+    assert res["evmt_posture"] == "FIXED_FORMULA_ON_LONG_WORK_PACKAGE"
+
+
+def test_audit_work_package_evmt_governance_empty_or_none():
+    """None, lista vacía, entradas no-dict o sin wp_id -> NO_WORK_PACKAGES."""
+    from backend.services.project_evm_service import (
+        audit_work_package_evmt_governance as audit_fn,
+    )
+
+    for payload in (None, [], ["invalid", 42, {"budget": 100.0}]):
+        res = audit_fn(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_work_packages": 0,
+            "loe_share_pct": 0.0,
+            "formula_cap_violation_ids": [],
+            "long_duration_fixed_formula_ids": [],
+            "is_evmt_governed": False,
+            "evmt_posture": "NO_WORK_PACKAGES",
+        }

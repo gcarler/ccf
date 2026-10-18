@@ -2321,3 +2321,101 @@ def test_audit_markdown_mermaid_diagram_hygiene_no_diagrams():
             "is_mermaid_hygienic": False,
             "mermaid_posture": "NO_MERMAID_DIAGRAMS",
         }
+
+
+def test_audit_markdown_footnote_reference_hygiene_hygienic_citations():
+    """Referencias y definiciones de notas al pie emparejadas (ignorando bloques ```) -> HYGIENIC_FOOTNOTE_CITATIONS."""
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_footnote_reference_hygiene,
+    )
+
+    md = (
+        "# Informe de Lecciones Aprendidas\n"
+        "El cálculo de EVM se basa en la línea base aprobada[^pmbok-7] y el acta de CCB[^ccb-12].\n"
+        "Repetimos la cita principal[^pmbok-7] para trazabilidad.\n"
+        "```markdown\n"
+        "Referencia ignorada en código[^fake-ref]\n"
+        "[^fake-orphan]: Definición ignorada en bloque de código\n"
+        "```\n"
+        "\n"
+        "[^pmbok-7]: PMI PMBOK Guide, Sección 7.4 Controlar los Costos.\n"
+        "[^ccb-12]: Acta de Comité de Control de Cambios #12 del 2026-10-10.\n"
+    )
+    res = audit_markdown_footnote_reference_hygiene(md)
+    assert res == {
+        "total_references": 2,
+        "total_definitions": 2,
+        "unresolved_reference_ids": [],
+        "orphan_definition_ids": [],
+        "empty_footnote_definition_ids": [],
+        "is_footnote_hygienic": True,
+        "footnote_posture": "HYGIENIC_FOOTNOTE_CITATIONS",
+    }
+    assert AnyDocService.audit_markdown_footnote_reference_hygiene(md) == res
+
+
+def test_audit_markdown_footnote_reference_hygiene_unresolved_references():
+    """Referencia [^id] sin definición correspondiente -> UNRESOLVED_FOOTNOTE_REFERENCES."""
+    from backend.services.anydoc_service import (
+        audit_markdown_footnote_reference_hygiene,
+    )
+
+    md = (
+        "Hallazgo crítico documentado en auditoría[^aud-1] y anexo faltante[^missing-99].\n"
+        "[^aud-1]: Informe de Auditoría Interna Q3.\n"
+    )
+    res = audit_markdown_footnote_reference_hygiene(md)
+    assert res["total_references"] == 2
+    assert res["total_definitions"] == 1
+    assert res["unresolved_reference_ids"] == ["missing-99"]
+    assert res["orphan_definition_ids"] == []
+    assert res["empty_footnote_definition_ids"] == []
+    assert res["is_footnote_hygienic"] is False
+    assert res["footnote_posture"] == "UNRESOLVED_FOOTNOTE_REFERENCES"
+
+
+def test_audit_markdown_footnote_reference_hygiene_empty_and_orphan_definitions():
+    """Definición vacía -> EMPTY_FOOTNOTE_DEFINITIONS; definición no referenciada -> ORPHAN_FOOTNOTE_DEFINITIONS."""
+    from backend.services.anydoc_service import (
+        audit_markdown_footnote_reference_hygiene,
+    )
+
+    md_empty = (
+        "Texto con nota al pie sin contenido[^empty-1].\n"
+        "[^empty-1]:    \n"
+    )
+    res_empty = audit_markdown_footnote_reference_hygiene(md_empty)
+    assert res_empty["empty_footnote_definition_ids"] == ["empty-1"]
+    assert res_empty["is_footnote_hygienic"] is False
+    assert res_empty["footnote_posture"] == "EMPTY_FOOTNOTE_DEFINITIONS"
+
+    md_orphan = (
+        "Texto con cita válida[^ref-ok].\n"
+        "[^ref-ok]: Fuente primaria verificada.\n"
+        "[^unused-note]: Nota al pie huérfana nunca citada en el cuerpo.\n"
+    )
+    res_orphan = audit_markdown_footnote_reference_hygiene(md_orphan)
+    assert res_orphan["orphan_definition_ids"] == ["unused-note"]
+    assert res_orphan["is_footnote_hygienic"] is False
+    assert res_orphan["footnote_posture"] == "ORPHAN_FOOTNOTE_DEFINITIONS"
+
+
+def test_audit_markdown_footnote_reference_hygiene_no_footnotes():
+    """Documento sin notas al pie o vacío -> NO_FOOTNOTES_PRESENT."""
+    from backend.services.anydoc_service import (
+        audit_markdown_footnote_reference_hygiene,
+    )
+
+    for payload in (None, "", "# Acta simple sin notas al pie\n"):
+        res = audit_markdown_footnote_reference_hygiene(payload)
+        assert res == {
+            "total_references": 0,
+            "total_definitions": 0,
+            "unresolved_reference_ids": [],
+            "orphan_definition_ids": [],
+            "empty_footnote_definition_ids": [],
+            "is_footnote_hygienic": False,
+            "footnote_posture": "NO_FOOTNOTES_PRESENT",
+        }
+

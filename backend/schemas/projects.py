@@ -3692,6 +3692,7 @@ __all__ = [
     "validate_schedule_compression_options",
     "validate_wbs_work_package_sizing_heuristic",
     "validate_monte_carlo_schedule_confidence_buffer",
+    "validate_resource_leveling_overallocation",
 ]
 
 
@@ -3967,3 +3968,76 @@ def validate_monte_carlo_schedule_confidence_buffer(
         "meets_p80_confidence": meets_p80,
         "monte_carlo_posture": monte_carlo_posture,
     }
+
+
+def validate_resource_leveling_overallocation(
+    resource_allocations: list[dict[str, Any]] | None = None,
+    max_peak_to_average_ratio: float = 1.5,
+) -> dict[str, Any]:
+    """Valida nivelación de recursos (Resource Leveling & Smoothing), sobre-asignación y ratio pico-promedio según PMI PMBOK §6.5.2.3 y §9.6."""
+    total_resources = 0
+    overallocated_resource_ids: list[str] = []
+    unsmoothed_peak_resource_ids: list[str] = []
+
+    for item in resource_allocations or []:
+        if not isinstance(item, dict):
+            continue
+        resource_id = str(item.get("resource_id") or item.get("id") or "").strip()
+        if not resource_id:
+            continue
+
+        raw_cap = item.get("capacity_hours_per_period")
+        if raw_cap is None:
+            raw_cap = item.get("capacity_hours")
+        try:
+            capacity_hours = max(
+                0.0, float(raw_cap if raw_cap is not None else 40.0)
+            )
+        except (TypeError, ValueError):
+            capacity_hours = 40.0
+
+        raw_loads = item.get("period_loads")
+        period_loads: list[float] = []
+        if isinstance(raw_loads, list):
+            for h in raw_loads:
+                try:
+                    period_loads.append(max(0.0, float(h)))
+                except (TypeError, ValueError):
+                    continue
+
+        if len(period_loads) == 0 or capacity_hours <= 0.0:
+            continue
+
+        total_resources += 1
+        peak_load = max(period_loads)
+        avg_load = sum(period_loads) / len(period_loads)
+        pta_ratio = (peak_load / avg_load) if avg_load > 1e-6 else 1.0
+
+        if peak_load > capacity_hours + 1e-6:
+            overallocated_resource_ids.append(resource_id)
+        if pta_ratio > float(max_peak_to_average_ratio) + 1e-6:
+            unsmoothed_peak_resource_ids.append(resource_id)
+
+    is_resource_schedule_leveled = bool(
+        total_resources > 0
+        and len(overallocated_resource_ids) == 0
+        and len(unsmoothed_peak_resource_ids) == 0
+    )
+
+    if total_resources == 0:
+        leveling_posture = "NO_RESOURCE_ALLOCATIONS"
+    elif len(overallocated_resource_ids) > 0:
+        leveling_posture = "RESOURCE_CAPACITY_OVERALLOCATED"
+    elif len(unsmoothed_peak_resource_ids) > 0:
+        leveling_posture = "UNSMOOTHED_RESOURCE_LOAD_PEAKS"
+    else:
+        leveling_posture = "LEVELED_AND_SMOOTHED_RESOURCES"
+
+    return {
+        "total_resources": total_resources,
+        "overallocated_resource_ids": overallocated_resource_ids,
+        "unsmoothed_peak_resource_ids": unsmoothed_peak_resource_ids,
+        "is_resource_schedule_leveled": is_resource_schedule_leveled,
+        "leveling_posture": leveling_posture,
+    }
+

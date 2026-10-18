@@ -3968,6 +3968,98 @@ def evaluate_tcpi_recovery_feasibility(
     }
 
 
+def audit_work_package_evmt_governance(
+    work_packages: list[dict[str, Any]] | None = None,
+    max_loe_share_pct: float = 15.0,
+) -> dict[str, Any]:
+    """Audita la gestión de técnicas EVMT en paquetes de trabajo (PMBOK §7.4).
+
+    Paquetes válidos (dict con `id`/`wp_id` no vacío). Cada uno declara
+    presupuesto (`budget`), técnica (`evmt`, default 'PERCENT_COMPLETE'),
+    estado (`status`, default 'IN_PROGRESS'), avance reclamado (`claimed_pct`,
+    clamp [0, 100]) y duración (`duration_periods`, default 1):
+    - `formula_cap_violation_ids`: paquetes IN_PROGRESS con fórmula fija que
+      reclaman avance por encima del tope (0/100 → > 0, 50/50 → > 50, 20/80 → > 20).
+    - `long_duration_fixed_formula_ids`: fórmula fija con duration_periods > 2.
+    - `loe_share_pct` del presupuesto LEVEL_OF_EFFORT (2 decimales; 0.0 sin presupuesto).
+    - `is_evmt_governed`: paquetes, traspaso del tope LOE y sin hallazgos.
+    - `evmt_posture`: 'NO_WORK_PACKAGES' sin paquetes;
+      'FIXED_FORMULA_PERCENT_CAP_VIOLATION'; 'FIXED_FORMULA_ON_LONG_WORK_PACKAGE';
+      'EXCESSIVE_LEVEL_OF_EFFORT_SHARE'; 'GOVERNED_EVMT_BASELINE'.
+    """
+    FIXED_FORMULA_CAPS = {"0_100": 0.0, "50_50": 50.0, "20_80": 20.0}
+    CLOSED_STATUSES = {"COMPLETED", "DONE", "CLOSED"}
+    valid_packages = [
+        wp
+        for wp in (work_packages or [])
+        if isinstance(wp, dict) and str(wp.get("id") or wp.get("wp_id") or "").strip()
+    ]
+    total_work_packages = len(valid_packages)
+    if total_work_packages == 0:
+        return {
+            "total_work_packages": 0,
+            "loe_share_pct": 0.0,
+            "formula_cap_violation_ids": [],
+            "long_duration_fixed_formula_ids": [],
+            "is_evmt_governed": False,
+            "evmt_posture": "NO_WORK_PACKAGES",
+        }
+
+    total_budget = 0.0
+    loe_budget = 0.0
+    formula_cap_violation_ids: list[str] = []
+    long_duration_fixed_formula_ids: list[str] = []
+
+    for wp in valid_packages:
+        wp_id = str(wp.get("id") or wp.get("wp_id") or "").strip()
+        budget = max(0.0, float(wp.get("budget") or 0.0))
+        evmt = str(wp.get("evmt") or "PERCENT_COMPLETE").strip().upper()
+        status = str(wp.get("status") or "IN_PROGRESS").strip().upper()
+        claimed_pct = max(0.0, min(100.0, float(wp.get("claimed_pct") or 0.0)))
+        duration_periods = max(1, int(wp.get("duration_periods") or 1))
+
+        total_budget += budget
+        if evmt == "LEVEL_OF_EFFORT":
+            loe_budget += budget
+
+        if status not in CLOSED_STATUSES:
+            cap = FIXED_FORMULA_CAPS.get(evmt)
+            if cap is not None and claimed_pct > cap + 1e-6:
+                formula_cap_violation_ids.append(wp_id)
+        if evmt in FIXED_FORMULA_CAPS and duration_periods > 2:
+            long_duration_fixed_formula_ids.append(wp_id)
+
+    loe_share_pct = (
+        round((loe_budget / total_budget) * 100.0, 2) if total_budget > 0.0 else 0.0
+    )
+    is_evmt_governed = bool(
+        total_work_packages > 0
+        and len(formula_cap_violation_ids) == 0
+        and len(long_duration_fixed_formula_ids) == 0
+        and loe_share_pct <= float(max_loe_share_pct)
+    )
+
+    if total_work_packages == 0:
+        evmt_posture = "NO_WORK_PACKAGES"
+    elif len(formula_cap_violation_ids) > 0:
+        evmt_posture = "FIXED_FORMULA_PERCENT_CAP_VIOLATION"
+    elif len(long_duration_fixed_formula_ids) > 0:
+        evmt_posture = "FIXED_FORMULA_ON_LONG_WORK_PACKAGE"
+    elif loe_share_pct > float(max_loe_share_pct):
+        evmt_posture = "EXCESSIVE_LEVEL_OF_EFFORT_SHARE"
+    else:
+        evmt_posture = "GOVERNED_EVMT_BASELINE"
+
+    return {
+        "total_work_packages": total_work_packages,
+        "loe_share_pct": loe_share_pct,
+        "formula_cap_violation_ids": formula_cap_violation_ids,
+        "long_duration_fixed_formula_ids": long_duration_fixed_formula_ids,
+        "is_evmt_governed": is_evmt_governed,
+        "evmt_posture": evmt_posture,
+    }
+
+
 class ProjectEVMService:
     """Fachada canónica del servicio EVM y Diagnóstico Predictivo PMI (Vol. 5 y Vol. 6)."""
 
@@ -4907,6 +4999,10 @@ ProjectEVMService.audit_pmb_undistributed_budget_reconciliation = staticmethod(
     audit_pmb_undistributed_budget_reconciliation
 )
 
+ProjectEVMService.audit_work_package_evmt_governance = staticmethod(
+    audit_work_package_evmt_governance
+)
+
 
 def audit_eac_forecast_optimism_bias(
     bac: float = 0.0,
@@ -5007,6 +5103,7 @@ ProjectEVMService.audit_eac_forecast_optimism_bias = staticmethod(
 
 
 __all__ = [
+    "audit_work_package_evmt_governance",
     "evaluate_tcpi_recovery_feasibility",
     "evaluate_funding_limit_periods_reconciliation",
     "evaluate_earned_schedule_performance",
