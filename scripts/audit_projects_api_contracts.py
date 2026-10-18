@@ -373,6 +373,66 @@ def summarize_projects_schema_reference_density(
     }
 
 
+def summarize_projects_error_response_coverage(
+    openapi: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Audita la cobertura de códigos de estado HTTP 2xx y 4xx en rutas /api/projects."""
+    safe_openapi = (
+        openapi
+        if isinstance(openapi, dict) and isinstance(openapi.get("paths", {}), dict)
+        else {}
+    )
+    operations = route_inventory(safe_openapi)
+    total_operations = len(operations)
+
+    has_2xx_success_count = 0
+    has_4xx_or_422_count = 0
+    missing_success_status_routes: list[str] = []
+    missing_error_status_routes: list[str] = []
+
+    for method, path, operation in operations:
+        responses = operation.get("responses", {})
+        codes = [str(k) for k in responses.keys()] if isinstance(responses, dict) else []
+        has_2xx = any(c.startswith("2") for c in codes)
+        has_4xx = any(c.startswith("4") for c in codes)
+        if has_2xx:
+            has_2xx_success_count += 1
+        else:
+            missing_success_status_routes.append(f"{method} {path}")
+        if has_4xx:
+            has_4xx_or_422_count += 1
+        else:
+            missing_error_status_routes.append(f"{method} {path}")
+
+    missing_success_sorted = sorted(missing_success_status_routes)
+    missing_error_sorted = sorted(missing_error_status_routes)
+    error_coverage_pct = (
+        round((has_4xx_or_422_count / total_operations) * 100.0, 2)
+        if total_operations > 0
+        else 0.0
+    )
+
+    if total_operations == 0:
+        status_posture = "EMPTY_OPENAPI_INVENTORY"
+    elif len(missing_success_sorted) > 0:
+        status_posture = "MISSING_SUCCESS_CONTRACT"
+    elif error_coverage_pct >= 80.0:
+        status_posture = "COMPREHENSIVE_STATUS_COVERAGE"
+    else:
+        status_posture = "PARTIAL_ERROR_DOCUMENTATION"
+
+    return {
+        "total_operations": total_operations,
+        "has_2xx_success_count": has_2xx_success_count,
+        "has_4xx_or_422_count": has_4xx_or_422_count,
+        "missing_success_status_routes": missing_success_sorted,
+        "missing_error_status_routes": missing_error_sorted,
+        "error_coverage_pct": error_coverage_pct,
+        "status_posture": status_posture,
+    }
+
+
+
 
 
 def render_inventory(openapi: dict[str, Any]) -> str:

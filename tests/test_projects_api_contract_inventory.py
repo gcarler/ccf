@@ -736,4 +736,153 @@ def test_schema_reference_density_empty_openapi():
     )
 
 
+# ─── summarize_projects_error_response_coverage (pure helper) ─────────────────
+
+
+def test_error_response_coverage_comprehensive():
+    """100% con 2xx y >= 80% con 4xx/422 -> COMPREHENSIVE_STATUS_COVERAGE."""
+    openapi = {
+        "paths": {
+            "/api/projects": {
+                "get": {
+                    "operationId": "list_projects",
+                    "responses": {"200": {"description": "OK"}},
+                },
+                "post": {
+                    "operationId": "create_project",
+                    "responses": {
+                        "201": {"description": "Created"},
+                        "422": {"description": "Validation Error"},
+                    },
+                },
+            },
+            "/api/projects/{project_id}": {
+                "get": {
+                    "operationId": "get_project",
+                    "responses": {
+                        "200": {"description": "OK"},
+                        "404": {"description": "Not Found"},
+                    },
+                },
+                "patch": {
+                    "operationId": "update_project",
+                    "responses": {
+                        "200": {"description": "OK"},
+                        "422": {"description": "Validation Error"},
+                    },
+                },
+                "delete": {
+                    "operationId": "delete_project",
+                    "responses": {
+                        "204": {"description": "No Content"},
+                        "403": {"description": "Forbidden"},
+                    },
+                },
+            },
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_error_response_coverage(openapi)
+
+    assert res == {
+        "total_operations": 5,
+        "has_2xx_success_count": 5,
+        "has_4xx_or_422_count": 4,
+        "missing_success_status_routes": [],
+        "missing_error_status_routes": ["GET /api/projects"],
+        "error_coverage_pct": 80.0,
+        "status_posture": "COMPREHENSIVE_STATUS_COVERAGE",
+    }
+
+
+def test_error_response_coverage_missing_success_contract():
+    """Operaciones sin ningún código 2xx -> MISSING_SUCCESS_CONTRACT (prioridad sobre error_coverage_pct)."""
+    openapi = {
+        "paths": {
+            "/api/projects/{project_id}/export": {
+                "get": {
+                    "operationId": "export_project",
+                    "responses": {"422": {"description": "Validation Error"}},
+                }
+            },
+            "/api/projects": {
+                "post": {
+                    "operationId": "create_project",
+                    "responses": {
+                        "201": {"description": "Created"},
+                        "400": {"description": "Bad Request"},
+                    },
+                }
+            },
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_error_response_coverage(openapi)
+
+    assert res == {
+        "total_operations": 2,
+        "has_2xx_success_count": 1,
+        "has_4xx_or_422_count": 2,
+        "missing_success_status_routes": ["GET /api/projects/{project_id}/export"],
+        "missing_error_status_routes": [],
+        "error_coverage_pct": 100.0,
+        "status_posture": "MISSING_SUCCESS_CONTRACT",
+    }
+
+
+def test_error_response_coverage_partial_error_documentation():
+    """Todas las rutas tienen 2xx pero < 80% tienen códigos 4xx -> PARTIAL_ERROR_DOCUMENTATION."""
+    openapi = {
+        "paths": {
+            "/api/projects": {
+                "get": {
+                    "operationId": "list_projects",
+                    "responses": {"200": {"description": "OK"}},
+                },
+                "post": {
+                    "operationId": "create_project",
+                    "responses": {
+                        "201": {"description": "Created"},
+                        "422": {"description": "Validation Error"},
+                    },
+                },
+            }
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_error_response_coverage(openapi)
+
+    assert res == {
+        "total_operations": 2,
+        "has_2xx_success_count": 2,
+        "has_4xx_or_422_count": 1,
+        "missing_success_status_routes": [],
+        "missing_error_status_routes": ["GET /api/projects"],
+        "error_coverage_pct": 50.0,
+        "status_posture": "PARTIAL_ERROR_DOCUMENTATION",
+    }
+
+
+def test_error_response_coverage_empty_openapi():
+    """OpenAPI vacío o sin rutas bajo /api/projects -> EMPTY_OPENAPI_INVENTORY."""
+    expected = {
+        "total_operations": 0,
+        "has_2xx_success_count": 0,
+        "has_4xx_or_422_count": 0,
+        "missing_success_status_routes": [],
+        "missing_error_status_routes": [],
+        "error_coverage_pct": 0.0,
+        "status_posture": "EMPTY_OPENAPI_INVENTORY",
+    }
+    assert audit_projects_api_contracts.summarize_projects_error_response_coverage({}) == expected
+    assert audit_projects_api_contracts.summarize_projects_error_response_coverage(None) == expected
+    assert (
+        audit_projects_api_contracts.summarize_projects_error_response_coverage(
+            {"paths": {"/api/crm/contacts": {"get": {"operationId": "list_crm"}}}}
+        )
+        == expected
+    )
+
+
+
 
