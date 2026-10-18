@@ -344,3 +344,61 @@ def get_project_ccb_and_quality_summary(db: Session, project_id: UUID) -> dict:
         "coq_conformance_ratio_pct": coq_conformance_ratio_pct,
         "total_cost_of_non_conformance": total_cost_of_non_conformance,
     }
+
+
+def compute_ccb_approval_rate_pct(approved_count: int, rejected_count: int) -> float:
+    """Tasa de aprobación del Comité de Control de Cambios (Vol. 6 §5).
+
+    Devuelve el porcentaje (1 decimal) de CRs aprobadas sobre el total
+    dictaminado (aprobadas + rechazadas); 0.0 si no hay dictámenes.
+    Entradas negativas se clampan a 0.
+    """
+    approved = max(int(approved_count or 0), 0)
+    rejected = max(int(rejected_count or 0), 0)
+    decided = approved + rejected
+    if decided <= 0:
+        return 0.0
+    return round((approved / decided * 100.0), 1)
+
+
+def evaluate_coq_balance_status(
+    coq_conformance_ratio_pct: float, total_coq_cost: float
+) -> str:
+    """Clasifica el balance del Costo de la Calidad (CoQ, regla Juran/Crosby).
+
+    - 'unmeasured': sin CoQ registrado (total_coq_cost <= 0).
+    - 'optimal_prevention': conformidad ≥ 70% del CoQ total.
+    - 'balanced': conformidad ≥ 50% del CoQ total.
+    - 'high_failure_risk': conformidad < 50% (riesgo alto de fallas).
+    """
+    if float(total_coq_cost or 0.0) <= 0.0:
+        return "unmeasured"
+    ratio = float(coq_conformance_ratio_pct or 0.0)
+    if ratio >= 70.0:
+        return "optimal_prevention"
+    if ratio >= 50.0:
+        return "balanced"
+    return "high_failure_risk"
+
+
+def build_ccb_coq_diagnostic(summary: dict) -> dict:
+    """Diagnóstico ejecutivo CCB + CoQ a partir de un resumen (Vol. 6 §4/§5).
+
+    Acepta un dict（p. ej. el retorno de get_project_ccb_and_quality_summary) y
+    devuelve la tasa de aprobación del Comité, el estado de balance CoQ y si el
+    proyecto exige intervención de calidad (riesgo alto de fallas o ≥3 CRs
+    pendientes de dictamen).
+    """
+    approved_count = int(summary.get("approved_count", 0) or 0)
+    rejected_count = int(summary.get("rejected_count", 0) or 0)
+    coq_ratio = float(summary.get("coq_conformance_ratio_pct", 0.0) or 0.0)
+    total_coq = float(summary.get("total_coq_cost", 0.0) or 0.0)
+    coq_status = evaluate_coq_balance_status(coq_ratio, total_coq)
+    return {
+        "ccb_approval_rate_pct": compute_ccb_approval_rate_pct(approved_count, rejected_count),
+        "coq_balance_status": coq_status,
+        "requires_quality_intervention": bool(
+            coq_status == "high_failure_risk"
+            or int(summary.get("pending_ccb_count", 0) or 0) >= 3
+        ),
+    }

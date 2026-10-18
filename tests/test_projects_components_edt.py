@@ -20,7 +20,9 @@ from fastapi.testclient import TestClient
 
 from backend import crud, models, schemas
 from backend.services.project_evm_service import (
+    ProjectEVMService,
     calculate_component_evm,
+    evaluate_control_accounts_concentration,
     get_project_components_breakdown,
     validate_project_budget_100_rule,
 )
@@ -468,3 +470,63 @@ def test_api_components_endpoints_flow(client: TestClient, db_session):
     # Verificar que ya no está en la lista activa
     resp_list2 = client.get(f"/api/projects/{project.id}/components", headers=headers)
     assert len(resp_list2.json()) == 0
+
+
+def test_evaluate_control_accounts_concentration_levels():
+    """Valida el diagnóstico de concentración de variación en Cuentas de Control EDT Nivel 2 (PMI §5.4 / §7.4)."""
+    empty_res = evaluate_control_accounts_concentration([])
+    assert empty_res == {
+        "total_components": 0,
+        "critical_components_count": 0,
+        "overbudget_components_count": 0,
+        "delayed_components_count": 0,
+        "worst_cpi_component_code": None,
+        "worst_spi_component_code": None,
+        "concentration_risk_level": "none",
+    }
+
+    low_res = evaluate_control_accounts_concentration(
+        [
+            {"code": "CMP-01", "cpi": 1.10, "spi": 1.05, "cv": 2000.0, "sv": 1000.0, "health_status": "OPTIMO"},
+            {"code": "CMP-02", "cpi": 1.00, "spi": 1.02, "cv": 0.0, "sv": 500.0, "health_status": "OPTIMO"},
+        ]
+    )
+    assert low_res == {
+        "total_components": 2,
+        "critical_components_count": 0,
+        "overbudget_components_count": 0,
+        "delayed_components_count": 0,
+        "worst_cpi_component_code": None,
+        "worst_spi_component_code": None,
+        "concentration_risk_level": "low",
+    }
+
+    moderate_res = evaluate_control_accounts_concentration(
+        [
+            {"code": "CMP-01", "cpi": 1.05, "spi": 1.02, "cv": 1000.0, "sv": 400.0, "health_status": "OPTIMO"},
+            {"code": "CMP-02", "cpi": 1.00, "spi": 0.90, "cv": 0.0, "sv": -2000.0, "health_status": "ATRASADO_SIN_SOBRECOSTO"},
+            {"code": "CMP-03", "cpi": 1.08, "spi": 1.00, "cv": 1500.0, "sv": 0.0, "health_status": "OPTIMO"},
+        ]
+    )
+    assert moderate_res["concentration_risk_level"] == "moderate"
+    assert moderate_res["delayed_components_count"] == 1
+    assert moderate_res["worst_spi_component_code"] == "CMP-02"
+    assert moderate_res["worst_cpi_component_code"] is None
+
+    high_components = [
+        {"code": "CMP-01", "cpi": 0.75, "spi": 0.92, "cv": -5000.0, "sv": -1200.0, "health_status": "CRITICO"},
+        {"code": "CMP-02", "cpi": 0.95, "spi": 0.80, "cv": -800.0, "sv": -4500.0, "health_status": "CRITICO_RETRASO_Y_SOBRECOSTO"},
+        {"code": "CMP-03", "cpi": 1.04, "spi": 1.01, "cv": 600.0, "sv": 200.0, "health_status": "OPTIMO"},
+    ]
+    high_res = evaluate_control_accounts_concentration(high_components)
+    assert high_res == {
+        "total_components": 3,
+        "critical_components_count": 2,
+        "overbudget_components_count": 2,
+        "delayed_components_count": 2,
+        "worst_cpi_component_code": "CMP-01",
+        "worst_spi_component_code": "CMP-02",
+        "concentration_risk_level": "high",
+    }
+    assert ProjectEVMService.evaluate_control_accounts_concentration(high_components) == high_res
+

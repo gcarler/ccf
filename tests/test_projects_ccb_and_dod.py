@@ -555,3 +555,223 @@ def test_dod_status_not_recorded_and_accepted_name(client, db_session):
     assert isinstance(body["accepted_by_name"], str) and body["accepted_by_name"]
     assert body["accepted_at"] is not None
     assert body["coq_amount"] == pytest.approx(300.0)
+
+
+# ─────────────────────────────────────────────────────────────────────────────────────
+# 8. Helpers de diagnóstico: tasa de aprobación CCB y balance CoQ (Juran/Crosby)
+# ─────────────────────────────────────────────────────────────────────────────────────
+
+
+def test_compute_ccb_approval_rate_pct_zero_decided():
+    """Sin CRs dictaminadas (0 aprobadas + 0 rechazadas) la tasa es 0.0."""
+    from backend.services.project_ccb_service import compute_ccb_approval_rate_pct
+
+    assert compute_ccb_approval_rate_pct(0, 0) == 0.0
+    # Entradas negativas se clampan a 0 antes de decidir
+    assert compute_ccb_approval_rate_pct(-2, -3) == 0.0
+
+
+def test_compute_ccb_approval_rate_pct_all_approved():
+    """Todas las CRs dictaminadas aprobadas → 100.0%."""
+    from backend.services.project_ccb_service import compute_ccb_approval_rate_pct
+
+    assert compute_ccb_approval_rate_pct(4, 0) == 100.0
+
+
+def test_compute_ccb_approval_rate_pct_mixed():
+    """Mezcla aprobadas/rechazadas → proporción con 1 decimal."""
+    from backend.services.project_ccb_service import compute_ccb_approval_rate_pct
+
+    assert compute_ccb_approval_rate_pct(3, 1) == 75.0
+    assert compute_ccb_approval_rate_pct(2, 3) == 40.0
+
+
+def test_evaluate_coq_balance_status_unmeasured():
+    """Sin CoQ registrado (total ≤ 0) el balance es 'unmeasured' a aún con ratio alto."""
+    from backend.services.project_ccb_service import evaluate_coq_balance_status
+
+    assert evaluate_coq_balance_status(100.0, 0.0) == "unmeasured"
+    assert evaluate_coq_balance_status(85.0, -1.0) == "unmeasured"
+
+
+def test_evaluate_coq_balance_status_optimal_prevention():
+    """Conformidad ≥ 70% del CoQ → 'optimal_prevention' (Prevención dominante)."""
+    from backend.services.project_ccb_service import evaluate_coq_balance_status
+
+    assert evaluate_coq_balance_status(70.0, 1000.0) == "optimal_prevention"
+    assert evaluate_coq_balance_status(85.0, 500.0) == "optimal_prevention"
+
+
+def test_evaluate_coq_balance_status_balanced():
+    """Conformidad en [50%, 70%) del CoQ → 'balanced'."""
+    from backend.services.project_ccb_service import evaluate_coq_balance_status
+
+    assert evaluate_coq_balance_status(50.0, 1000.0) == "balanced"
+    assert evaluate_coq_balance_status(65.0, 400.0) == "balanced"
+
+
+def test_evaluate_coq_balance_status_high_failure_risk():
+    """Conformidad < 50% del CoQ → 'high_failure_risk' (Juran/Crosby)."""
+    from backend.services.project_ccb_service import evaluate_coq_balance_status
+
+    assert evaluate_coq_balance_status(49.9, 1000.0) == "high_failure_risk"
+    assert evaluate_coq_balance_status(0.0, 250.0) == "high_failure_risk"
+
+
+def test_build_ccb_coq_diagnostic_unit_levels(client, db_session):
+    """build_ccb_coq_diagnostic mapea combinaciones de resumen a dictamen e intervención."""
+    from backend.services.project_ccb_service import build_ccb_coq_diagnostic
+
+    # Proyecto sano: 75% aprobación, CoQ conformista 85% → sin intervención
+    diag_sano = build_ccb_coq_diagnostic(
+        {
+            "approved_count": 3,
+            "rejected_count": 1,
+            "pending_ccb_count": 0,
+            "coq_conformance_ratio_pct": 85.0,
+            "total_coq_cost": 400.0,
+        }
+    )
+    assert diag_sano["ccb_approval_rate_pct"] == pytest.approx(75.0)
+    assert diag_sano["coq_balance_status"] == "optimal_prevention"
+    assert diag_sano["requires_quality_intervention"] is False
+
+    # Proyecto en riesgo: 1 de 3 dictaminadas aprobadas y CoQ fallas 40% → intervención
+    diag_riesgo = build_ccb_coq_diagnostic(
+        {
+            "approved_count": 1,
+            "rejected_count": 2,
+            "pending_ccb_count": 0,
+            "coq_conformance_ratio_pct": 40.0,
+            "total_coq_cost": 900.0,
+        }
+    )
+    assert diag_riesgo["ccb_approval_rate_pct"] == pytest.approx(33.3)
+    assert diag_riesgo["coq_balance_status"] == "high_failure_risk"
+    assert diag_riesgo["requires_quality_intervention"] is True
+
+    # CoQ sin medir: estado 'unmeasured' pero ≥3 CR pendientes fuerzan intervención
+    diag_pendientes = build_ccb_coq_diagnostic(
+        {
+            "approved_count": 0,
+            "rejected_count": 0,
+            "pending_ccb_count": 3,
+            "coq_conformance_ratio_pct": 0.0,
+            "total_coq_cost": 0.0,
+        }
+    )
+    assert diag_pendientes["ccb_approval_rate_pct"] == 0.0
+    assert diag_pendientes["coq_balance_status"] == "unmeasured"
+    assert diag_pendientes["requires_quality_intervention"] is True
+
+    # Resumen vacío/tolerante: claves ausentes no rompen el diagnóstico
+    diag_vacio = build_ccb_coq_diagnostic({})
+    assert diag_vacio == {
+        "ccb_approval_rate_pct": 0.0,
+        "coq_balance_status": "unmeasured",
+        "requires_quality_intervention": False,
+    }
+
+
+def test_build_ccb_coq_diagnostic_from_real_summary(client, db_session):
+    """Integración end to end: summary real de get_project_ccb_and_quality_summary al diagnóstico."""
+    from backend.services.project_ccb_service import (
+        build_ccb_coq_diagnostic,
+        get_project_ccb_and_quality_summary,
+    )
+
+    seed_admin(db_session, email="ccb-diag-admin@example.com")
+    headers = auth_headers(client, email="ccb-diag-admin@example.com")
+    project = _make_project(client, headers, db_session, title="Diagnóstico CCB CoQ Pro", budget=60000.0)
+
+    # ── CCB: 1 aprobada, 1 rechazada, 3 pendientes (umbral de intervención) ──
+    cr1 = _make_cr(client, headers, project, title="CR diag aprobada")
+    r_dec = client.post(
+        f"/api/projects/{project.id}/change-requests/{cr1['id']}/decide",
+        json={"decision": "approved", "review_notes": "Favorable"},
+        headers=headers,
+    )
+    assert r_dec.status_code == 200, r_dec.text
+
+    cr2 = client.post(
+        f"/api/projects/{project.id}/change-requests",
+        json={
+            "title": "CR diag rechazada",
+            "justification": "Sin mérito",
+            "change_type": "scope",
+        },
+        headers=headers,
+    ).json()
+    r_dec2 = client.post(
+        f"/api/projects/{project.id}/change-requests/{cr2['id']}/decide",
+        json={"decision": "rejected", "review_notes": "No"},
+        headers=headers,
+    )
+    assert r_dec2.status_code == 200, r_dec2.text
+
+    for i in range(3):
+        resp_cr = client.post(
+            f"/api/projects/{project.id}/change-requests",
+            json={
+                "title": f"CR diag pendiente {i}",
+                "justification": "En espera de dictamen",
+                "change_type": "scope",
+            },
+            headers=headers,
+        )
+        assert resp_cr.status_code == 201, resp_cr.text
+
+    # ── CoQ: conformidad 400 (prevención) vs falla externa 100 → ratio 80% ──
+    task_ok = _make_task(db_session, project.id, title="Entregable diag aceptado")
+    resp_ok = client.post(
+        f"/api/projects/{project.id}/tasks/{task_ok.id}/dod-acceptance",
+        json={
+            "specification_met": True,
+            "tests_no_critical_failures": True,
+            "evidence_archived": True,
+            "supervisor_sign_off": True,
+            "coq_classification": "prevention",
+            "coq_amount": 400.0,
+        },
+        headers=headers,
+    )
+    assert resp_ok.status_code == 200, resp_ok.text
+
+    task_fail = _make_task(db_session, project.id, title="Entregable diag falla")
+    resp_fail = client.post(
+        f"/api/projects/{project.id}/tasks/{task_fail.id}/dod-acceptance",
+        json={
+            "specification_met": False,
+            "tests_no_critical_failures": False,
+            "evidence_archived": True,
+            "supervisor_sign_off": False,
+            "coq_classification": "external_failure",
+            "coq_amount": 100.0,
+        },
+        headers=headers,
+    )
+    assert resp_fail.status_code == 200, resp_fail.text
+
+    # ── Diagnóstico a partir del resumen ejecutivo real ──
+    summary = get_project_ccb_and_quality_summary(db_session, project.id)
+    assert summary["approved_count"] == 1
+    assert summary["rejected_count"] == 1
+    assert summary["pending_ccb_count"] == 3
+    assert summary["coq_conformance_ratio_pct"] == pytest.approx(80.0)
+
+    diag = build_ccb_coq_diagnostic(summary)
+    # 1 de 2 dictaminadas aprobadas → 50.0%
+    assert diag["ccb_approval_rate_pct"] == pytest.approx(50.0)
+    # 80% conformidad ≥ 70% → prevención óptima vertiginosa pese a las 3 pendientes
+    assert diag["coq_balance_status"] == "optimal_prevention"
+    # Las 3 CR pendientes (≥3) fuerzan intervención de calidad igualmente
+    assert diag["requires_quality_intervention"] is True
+
+    # ── Contraste: el proyecto vacío no exige intervención ──
+    other = _make_project(client, headers, db_session, title="Diagnostico vacío")
+    diag_empty = build_ccb_coq_diagnostic(get_project_ccb_and_quality_summary(db_session, other.id))
+    assert diag_empty == {
+        "ccb_approval_rate_pct": 0.0,
+        "coq_balance_status": "unmeasured",
+        "requires_quality_intervention": False,
+    }

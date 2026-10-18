@@ -2796,6 +2796,80 @@ def calculate_reserve_burn_index(contingency_reserve: float, cv: float) -> Dict[
     }
 
 
+def evaluate_control_accounts_concentration(
+    components_metrics: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Evalúa la concentración de variación en Cuentas de Control EDT Nivel 2 (PMI §5.4 / §7.4)."""
+    if not components_metrics:
+        return {
+            "total_components": 0,
+            "critical_components_count": 0,
+            "overbudget_components_count": 0,
+            "delayed_components_count": 0,
+            "worst_cpi_component_code": None,
+            "worst_spi_component_code": None,
+            "concentration_risk_level": "none",
+        }
+
+    critical_count = 0
+    overbudget_count = 0
+    delayed_count = 0
+    worst_cpi: Optional[float] = None
+    worst_cpi_code: Optional[str] = None
+    worst_spi: Optional[float] = None
+    worst_spi_code: Optional[str] = None
+
+    for comp in components_metrics:
+        evm_data = comp.get("evm") if isinstance(comp.get("evm"), dict) else comp
+        code = (
+            str(
+                comp.get("code")
+                or evm_data.get("code")
+                or comp.get("name")
+                or evm_data.get("name")
+                or ""
+            ).strip()
+            or None
+        )
+        cpi = _safe_float(evm_data.get("cpi"), 1.0)
+        spi = _safe_float(evm_data.get("spi"), 1.0)
+        cv = _safe_float(evm_data.get("cv"), 0.0)
+        sv = _safe_float(evm_data.get("sv"), 0.0)
+        health = str(evm_data.get("health_status") or "")
+
+        if health == "CRITICO" or health.startswith("CRITICO") or cpi < 0.85 or spi < 0.85:
+            critical_count += 1
+        if cv < 0.0 or cpi < 1.0:
+            overbudget_count += 1
+        if sv < 0.0 or spi < 1.0:
+            delayed_count += 1
+
+        if cpi < 1.0 and (worst_cpi is None or cpi < worst_cpi):
+            worst_cpi = cpi
+            worst_cpi_code = code
+        if spi < 1.0 and (worst_spi is None or spi < worst_spi):
+            worst_spi = spi
+            worst_spi_code = code
+
+    total = len(components_metrics)
+    if critical_count >= 2 or (total > 0 and (critical_count / total) >= 0.5):
+        risk_level = "high"
+    elif critical_count == 1 or overbudget_count > 0 or delayed_count > 0:
+        risk_level = "moderate"
+    else:
+        risk_level = "low"
+
+    return {
+        "total_components": total,
+        "critical_components_count": critical_count,
+        "overbudget_components_count": overbudget_count,
+        "delayed_components_count": delayed_count,
+        "worst_cpi_component_code": worst_cpi_code,
+        "worst_spi_component_code": worst_spi_code,
+        "concentration_risk_level": risk_level,
+    }
+
+
 class ProjectEVMService:
     """Fachada canónica del servicio EVM y Diagnóstico Predictivo PMI (Vol. 5 y Vol. 6)."""
 
@@ -2847,6 +2921,12 @@ class ProjectEVMService:
         return calculate_reserve_burn_index(contingency_reserve, cv)
 
     @staticmethod
+    def evaluate_control_accounts_concentration(
+        components_metrics: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        return evaluate_control_accounts_concentration(components_metrics)
+
+    @staticmethod
     def generate_curve_s_data(
         db: Session, project: Project, points_count: int = 8
     ) -> List[Dict[str, Any]]:
@@ -2857,4 +2937,5 @@ class ProjectEVMService:
         db: Session, project: Project, now: Optional[datetime.datetime] = None
     ) -> Dict[str, Any]:
         return build_project_execution_matrix(db, project, now=now)
+
 
