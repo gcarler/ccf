@@ -4330,3 +4330,170 @@ def test_enum_and_status_field_hygiene_nullable_anyof_oneof_support():
     }
 
 
+def test_request_string_bounds_hygiene_clean_and_live_schema():
+    """Esquema sintético de mutación con maxLength válido + esquema real de FastAPI con strict_short_field_bounds=False."""
+    schema = {
+        "components": {
+            "schemas": {
+                "ProjectCreate": {
+                    "type": "object",
+                    "properties": {
+                        "title": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 200,
+                        },
+                        "code": {
+                            "type": "string",
+                            "pattern": "^[A-Z0-9_-]{3,20}$",
+                        },
+                    },
+                },
+                "ProjectSummaryOut": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string"},
+                    },
+                },
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_request_string_bounds_hygiene(
+        schema, strict_short_field_bounds=True
+    )
+    assert res == {
+        "evaluated_schemas_count": 1,
+        "total_string_fields": 2,
+        "bounded_string_fields_count": 2,
+        "unbounded_short_string_fields": [],
+        "invalid_string_bounds": [],
+        "is_hygienic": True,
+    }
+
+    from backend.app import app
+
+    live_res = (
+        audit_projects_api_contracts.summarize_projects_request_string_bounds_hygiene(
+            app.openapi(), strict_short_field_bounds=False
+        )
+    )
+    assert live_res["evaluated_schemas_count"] > 0
+    assert live_res["total_string_fields"] > 0
+    assert live_res["invalid_string_bounds"] == []
+    assert live_res["unbounded_short_string_fields"] == []
+    assert live_res["is_hygienic"] is True
+
+
+def test_request_string_bounds_hygiene_strict_short_fields_unbounded():
+    """Detecta campos cortos (title, name, code, slug) sin maxLength/pattern cuando strict_short_field_bounds=True."""
+    schema = {
+        "components": {
+            "schemas": {
+                "ProjectMilestoneUpdate": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string"},
+                        "name": {"type": "string"},
+                        "project_code": {"type": "string"},
+                        "slug": {"type": "string"},
+                        "contact_email": {
+                            "type": "string",
+                            "format": "email",
+                        },
+                        "description": {"type": "string"},
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_request_string_bounds_hygiene(
+        schema, strict_short_field_bounds=True
+    )
+    assert res["evaluated_schemas_count"] == 1
+    assert res["total_string_fields"] == 6
+    assert res["bounded_string_fields_count"] == 0
+    assert res["unbounded_short_string_fields"] == [
+        "ProjectMilestoneUpdate.name",
+        "ProjectMilestoneUpdate.project_code",
+        "ProjectMilestoneUpdate.slug",
+        "ProjectMilestoneUpdate.title",
+    ]
+    assert res["is_hygienic"] is False
+
+
+def test_request_string_bounds_hygiene_invalid_string_bounds():
+    """Detecta cotas inválidas (maxLength=0, minLength=-1, minLength > maxLength)."""
+    schema = {
+        "components": {
+            "schemas": {
+                "ProjectTaskInput": {
+                    "type": "object",
+                    "properties": {
+                        "zero_max": {"type": "string", "maxLength": 0},
+                        "negative_min": {"type": "string", "minLength": -1},
+                        "inverted_bounds": {
+                            "type": "string",
+                            "minLength": 50,
+                            "maxLength": 10,
+                        },
+                        "valid_title": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 120,
+                        },
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_request_string_bounds_hygiene(
+        schema, strict_short_field_bounds=False
+    )
+    assert res["total_string_fields"] == 4
+    assert res["bounded_string_fields_count"] == 1
+    assert res["invalid_string_bounds"] == [
+        "ProjectTaskInput.inverted_bounds",
+        "ProjectTaskInput.negative_min",
+        "ProjectTaskInput.zero_max",
+    ]
+    assert res["is_hygienic"] is False
+
+
+def test_request_string_bounds_hygiene_nullable_and_excluded_formats():
+    """Soporta propiedades nullable con anyOf/oneOf y excluye campos uuid/date-time/enum."""
+    schema = {
+        "components": {
+            "schemas": {
+                "ProjectPatchPayload": {
+                    "type": "object",
+                    "properties": {
+                        "project_id": {"type": "string", "format": "uuid"},
+                        "due_at": {"type": "string", "format": "date-time"},
+                        "status": {
+                            "type": "string",
+                            "enum": ["OPEN", "CLOSED"],
+                        },
+                        "title": {
+                            "anyOf": [
+                                {"type": "string", "maxLength": 150},
+                                {"type": "null"},
+                            ]
+                        },
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_request_string_bounds_hygiene(
+        schema, strict_short_field_bounds=True
+    )
+    assert res == {
+        "evaluated_schemas_count": 1,
+        "total_string_fields": 1,
+        "bounded_string_fields_count": 1,
+        "unbounded_short_string_fields": [],
+        "invalid_string_bounds": [],
+        "is_hygienic": True,
+    }
+
+

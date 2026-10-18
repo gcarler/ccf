@@ -2835,6 +2835,189 @@ def summarize_projects_enum_and_status_field_hygiene(
     }
 
 
+_MUTATION_SCHEMA_SUFFIXES = (
+    "create",
+    "update",
+    "upsert",
+    "patch",
+    "request",
+    "input",
+    "payload",
+)
+_EXCLUDED_STRING_FORMATS = {"uuid", "date", "date-time", "binary", "byte"}
+_SHORT_STRING_FIELD_TOKENS = (
+    "title",
+    "titulo",
+    "name",
+    "nombre",
+    "code",
+    "codigo",
+    "slug",
+    "email",
+    "phone",
+    "telefono",
+)
+
+
+def summarize_projects_request_string_bounds_hygiene(
+    openapi: Mapping[str, Any] | None = None,
+    *,
+    strict_short_field_bounds: bool = False,
+    include_all_schemas: bool = False,
+) -> dict[str, Any]:
+    """Audita cotas maxLength/minLength/pattern en campos string de esquemas de mutación/entrada en OpenAPI."""
+    if not isinstance(openapi, Mapping):
+        return {
+            "evaluated_schemas_count": 0,
+            "total_string_fields": 0,
+            "bounded_string_fields_count": 0,
+            "unbounded_short_string_fields": [],
+            "invalid_string_bounds": [],
+            "is_hygienic": True,
+        }
+
+    components = openapi.get("components")
+    schemas = (
+        components.get("schemas")
+        if isinstance(components, Mapping)
+        and isinstance(components.get("schemas"), Mapping)
+        else {}
+    )
+
+    evaluated_schemas_count = 0
+    total_string_fields = 0
+    bounded_string_fields_count = 0
+    unbounded_short_string_fields: list[str] = []
+    invalid_string_bounds: list[str] = []
+
+    for schema_name, schema_obj in sorted(schemas.items()):
+        s_name = str(schema_name)
+        if not isinstance(schema_obj, Mapping):
+            continue
+        if not include_all_schemas and not s_name.lower().endswith(
+            _MUTATION_SCHEMA_SUFFIXES
+        ):
+            continue
+
+        evaluated_schemas_count += 1
+        props = schema_obj.get("properties")
+        if not isinstance(props, Mapping):
+            continue
+
+        for prop_name, prop_schema in sorted(props.items()):
+            p_name = str(prop_name)
+            if not isinstance(prop_schema, Mapping):
+                continue
+
+            composite = (
+                prop_schema.get("anyOf")
+                or prop_schema.get("oneOf")
+                or prop_schema.get("allOf")
+            )
+            if isinstance(composite, list):
+                non_null_branches = [
+                    b
+                    for b in composite
+                    if isinstance(b, Mapping) and b.get("type") != "null"
+                ]
+            else:
+                non_null_branches = [prop_schema]
+
+            if any(
+                "enum" in b
+                or (
+                    _resolve_ref_schema(b, schemas) is not None
+                    and "enum" in (_resolve_ref_schema(b, schemas) or {})
+                )
+                for b in non_null_branches
+            ):
+                continue
+
+            string_branches = [
+                b
+                for b in non_null_branches
+                if b.get("type") == "string"
+                and str(b.get("format") or "").strip().lower()
+                not in _EXCLUDED_STRING_FORMATS
+            ]
+            if not string_branches:
+                continue
+
+            total_string_fields += 1
+            field_ref = f"{s_name}.{p_name}"
+
+            has_invalid_bounds = False
+            has_valid_bound = False
+            has_any_short_constraint = False
+
+            for b in string_branches:
+                has_max = "maxLength" in b and b.get("maxLength") is not None
+                has_min = "minLength" in b and b.get("minLength") is not None
+                max_val = b.get("maxLength")
+                min_val = b.get("minLength")
+
+                max_ok = (
+                    isinstance(max_val, (int, float))
+                    and not isinstance(max_val, bool)
+                    and max_val > 0
+                )
+                min_ok = (
+                    isinstance(min_val, (int, float))
+                    and not isinstance(min_val, bool)
+                    and min_val >= 0
+                )
+
+                branch_invalid = False
+                if has_max and not max_ok:
+                    branch_invalid = True
+                if has_min and not min_ok:
+                    branch_invalid = True
+                if has_max and has_min and max_ok and min_ok and min_val > max_val:
+                    branch_invalid = True
+
+                if branch_invalid:
+                    has_invalid_bounds = True
+
+                pat = b.get("pattern")
+                has_pat = isinstance(pat, str) and bool(pat.strip())
+                fmt = b.get("format")
+                has_fmt = isinstance(fmt, str) and bool(fmt.strip())
+
+                if (has_max and max_ok and not branch_invalid) or has_pat:
+                    has_valid_bound = True
+                if (has_max and max_ok and not branch_invalid) or has_pat or has_fmt:
+                    has_any_short_constraint = True
+
+            if has_invalid_bounds:
+                invalid_string_bounds.append(field_ref)
+
+            if has_valid_bound:
+                bounded_string_fields_count += 1
+
+            if strict_short_field_bounds:
+                p_lower = p_name.lower()
+                is_short_field = p_lower in _SHORT_STRING_FIELD_TOKENS or any(
+                    p_lower.endswith(f"_{tok}") or p_lower.endswith(tok)
+                    for tok in _SHORT_STRING_FIELD_TOKENS
+                )
+                if is_short_field and not has_any_short_constraint:
+                    unbounded_short_string_fields.append(field_ref)
+
+    is_hygienic = bool(
+        len(unbounded_short_string_fields) == 0
+        and len(invalid_string_bounds) == 0
+    )
+
+    return {
+        "evaluated_schemas_count": evaluated_schemas_count,
+        "total_string_fields": total_string_fields,
+        "bounded_string_fields_count": bounded_string_fields_count,
+        "unbounded_short_string_fields": unbounded_short_string_fields,
+        "invalid_string_bounds": invalid_string_bounds,
+        "is_hygienic": is_hygienic,
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()
