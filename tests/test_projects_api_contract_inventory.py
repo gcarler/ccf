@@ -2297,3 +2297,171 @@ def test_query_parameter_schema_hygiene_no_query_parameters():
         )
         == expected
     )
+
+
+# ─── summarize_projects_request_body_schema_hygiene (pure helper) ────────────
+
+
+def test_request_body_schema_hygiene_clean_and_real_fastapi_schema():
+    """requestBody con content-type soportado y schema tipado (y schema real de FastAPI) -> HYGIENIC_REQUEST_BODY_CONTRACTS."""
+    openapi = {
+        "paths": {
+            "/api/projects": {
+                "post": {
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/ProjectCreate"}
+                            }
+                        }
+                    }
+                }
+            },
+            "/api/projects/{project_id}/upload": {
+                "post": {
+                    "requestBody": {
+                        "content": {
+                            "multipart/form-data": {
+                                "schema": {"type": "object"}
+                            }
+                        }
+                    }
+                }
+            },
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_request_body_schema_hygiene(
+        openapi
+    )
+    assert res == {
+        "operations_with_request_body": 2,
+        "empty_content_operations": [],
+        "unsupported_media_types": [],
+        "untyped_request_body_schemas": [],
+        "is_request_body_hygienic": True,
+        "request_body_posture": "HYGIENIC_REQUEST_BODY_CONTRACTS",
+    }
+
+    real_res = (
+        audit_projects_api_contracts.summarize_projects_request_body_schema_hygiene(
+            None
+        )
+    )
+    assert real_res["operations_with_request_body"] > 0
+    assert real_res["empty_content_operations"] == []
+    assert real_res["unsupported_media_types"] == []
+    assert real_res["untyped_request_body_schemas"] == []
+    assert real_res["is_request_body_hygienic"] is True
+    assert real_res["request_body_posture"] == "HYGIENIC_REQUEST_BODY_CONTRACTS"
+
+
+def test_request_body_schema_hygiene_empty_content():
+    """requestBody con content vacío -> EMPTY_REQUEST_BODY_CONTENT."""
+    openapi = {
+        "paths": {
+            "/api/projects": {
+                "post": {
+                    "requestBody": {"required": True, "content": {}},
+                }
+            }
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_request_body_schema_hygiene(
+        openapi
+    )
+    assert res == {
+        "operations_with_request_body": 1,
+        "empty_content_operations": ["POST /api/projects"],
+        "unsupported_media_types": [],
+        "untyped_request_body_schemas": [],
+        "is_request_body_hygienic": False,
+        "request_body_posture": "EMPTY_REQUEST_BODY_CONTENT",
+    }
+
+
+def test_request_body_schema_hygiene_untyped_and_unsupported_media_type():
+    """requestBody sin schema tipado o con MIME no soportado -> UNTYPED_REQUEST_BODY_SCHEMA / UNSUPPORTED_REQUEST_BODY_MEDIA_TYPE."""
+    untyped_openapi = {
+        "paths": {
+            "/api/projects": {
+                "post": {
+                    "requestBody": {
+                        "content": {
+                            "application/json": {"schema": {}}
+                        }
+                    }
+                }
+            }
+        }
+    }
+    res_untyped = (
+        audit_projects_api_contracts.summarize_projects_request_body_schema_hygiene(
+            untyped_openapi
+        )
+    )
+    assert res_untyped == {
+        "operations_with_request_body": 1,
+        "empty_content_operations": [],
+        "unsupported_media_types": [],
+        "untyped_request_body_schemas": ["POST /api/projects:application/json"],
+        "is_request_body_hygienic": False,
+        "request_body_posture": "UNTYPED_REQUEST_BODY_SCHEMA",
+    }
+
+    unsupported_openapi = {
+        "paths": {
+            "/api/projects/raw": {
+                "put": {
+                    "requestBody": {
+                        "content": {
+                            "text/plain": {"schema": {"type": "string"}}
+                        }
+                    }
+                }
+            }
+        }
+    }
+    res_unsupported = (
+        audit_projects_api_contracts.summarize_projects_request_body_schema_hygiene(
+            unsupported_openapi
+        )
+    )
+    assert res_unsupported == {
+        "operations_with_request_body": 1,
+        "empty_content_operations": [],
+        "unsupported_media_types": ["PUT /api/projects/raw:text/plain"],
+        "untyped_request_body_schemas": [],
+        "is_request_body_hygienic": False,
+        "request_body_posture": "UNSUPPORTED_REQUEST_BODY_MEDIA_TYPE",
+    }
+
+
+def test_request_body_schema_hygiene_no_request_bodies():
+    """Esquema sin requestBody en /api/projects -> NO_REQUEST_BODIES_DEFINED."""
+    expected = {
+        "operations_with_request_body": 0,
+        "empty_content_operations": [],
+        "unsupported_media_types": [],
+        "untyped_request_body_schemas": [],
+        "is_request_body_hygienic": False,
+        "request_body_posture": "NO_REQUEST_BODIES_DEFINED",
+    }
+    assert (
+        audit_projects_api_contracts.summarize_projects_request_body_schema_hygiene(
+            {}
+        )
+        == expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_request_body_schema_hygiene(
+            {
+                "paths": {
+                    "/api/projects": {"get": {"operationId": "list_projects"}},
+                    "/api/projects/action": {"post": {"requestBody": {}}},
+                }
+            }
+        )
+        == expected
+    )

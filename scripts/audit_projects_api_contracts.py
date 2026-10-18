@@ -1305,6 +1305,113 @@ def summarize_projects_query_parameter_schema_hygiene(
     }
 
 
+_SUPPORTED_REQUEST_BODY_MEDIA_TYPES = {
+    "application/json",
+    "multipart/form-data",
+    "application/x-www-form-urlencoded",
+}
+
+
+def summarize_projects_request_body_schema_hygiene(
+    openapi_schema: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Audita el MIME content-type y tipado de esquema en requestBody de endpoints /api/projects (PMI §10.2)."""
+    if openapi_schema is None:
+        from backend.app import app
+
+        openapi_schema = app.openapi()
+
+    if not isinstance(openapi_schema, dict) or not isinstance(
+        openapi_schema.get("paths"), dict
+    ):
+        return {
+            "operations_with_request_body": 0,
+            "empty_content_operations": [],
+            "unsupported_media_types": [],
+            "untyped_request_body_schemas": [],
+            "is_request_body_hygienic": False,
+            "request_body_posture": "NO_REQUEST_BODIES_DEFINED",
+        }
+
+    operations_with_request_body = 0
+    empty_content_operations: list[str] = []
+    unsupported_media_types: list[str] = []
+    untyped_request_body_schemas: list[str] = []
+
+    for path, path_item in sorted(openapi_schema["paths"].items()):
+        if not isinstance(path, str) or not path.startswith("/api/projects"):
+            continue
+        if not isinstance(path_item, dict):
+            continue
+
+        for method in ("get", "post", "put", "patch", "delete", "head", "options", "trace"):
+            op = path_item.get(method)
+            if not isinstance(op, dict):
+                continue
+
+            req_body = op.get("requestBody")
+            if not isinstance(req_body, dict) or len(req_body) == 0:
+                continue
+
+            operations_with_request_body += 1
+            content = (
+                req_body.get("content")
+                if isinstance(req_body.get("content"), dict)
+                else {}
+            )
+            if len(content) == 0:
+                empty_content_operations.append(f"{method.upper()} {path}")
+                continue
+
+            for media_type, media_obj in content.items():
+                media_ref = f"{method.upper()} {path}:{media_type}"
+                if media_type not in _SUPPORTED_REQUEST_BODY_MEDIA_TYPES:
+                    unsupported_media_types.append(media_ref)
+
+                schema = (
+                    media_obj.get("schema")
+                    if isinstance(media_obj, dict)
+                    else None
+                )
+                has_valid_schema = (
+                    isinstance(schema, dict)
+                    and len(schema) > 0
+                    and any(
+                        bool(schema.get(k))
+                        for k in ("$ref", "type", "anyOf", "oneOf")
+                    )
+                )
+                if not has_valid_schema:
+                    untyped_request_body_schemas.append(media_ref)
+
+    if operations_with_request_body == 0:
+        request_body_posture = "NO_REQUEST_BODIES_DEFINED"
+    elif len(empty_content_operations) > 0:
+        request_body_posture = "EMPTY_REQUEST_BODY_CONTENT"
+    elif len(untyped_request_body_schemas) > 0:
+        request_body_posture = "UNTYPED_REQUEST_BODY_SCHEMA"
+    elif len(unsupported_media_types) > 0:
+        request_body_posture = "UNSUPPORTED_REQUEST_BODY_MEDIA_TYPE"
+    else:
+        request_body_posture = "HYGIENIC_REQUEST_BODY_CONTRACTS"
+
+    is_request_body_hygienic = (
+        operations_with_request_body > 0
+        and len(empty_content_operations) == 0
+        and len(unsupported_media_types) == 0
+        and len(untyped_request_body_schemas) == 0
+    )
+
+    return {
+        "operations_with_request_body": operations_with_request_body,
+        "empty_content_operations": empty_content_operations,
+        "unsupported_media_types": unsupported_media_types,
+        "untyped_request_body_schemas": untyped_request_body_schemas,
+        "is_request_body_hygienic": is_request_body_hygienic,
+        "request_body_posture": request_body_posture,
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()
