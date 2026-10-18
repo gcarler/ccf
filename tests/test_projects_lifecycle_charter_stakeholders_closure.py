@@ -738,3 +738,108 @@ def test_evaluate_phase_gate_transition_readiness_empty_phase():
     assert "empty_phase_scope" in res["gate_blockers"]
     assert res["can_transition_cleanly"] is False
     assert res["gate_decision"] == "hold_at_current_phase"
+
+
+# ─── evaluate_lessons_learned_institutional_reuse (pure helper) ────────────
+
+
+def test_lessons_learned_reuse_institutionalized_opa_learning():
+    """Lecciones accionables >= 75% y reuso OPA >= 50% -> INSTITUTIONALIZED_OPA_LEARNING."""
+    lessons = [
+        {
+            "action_item": "Estandarizar el cierre con checklist OPA",
+            "category": "Integration Management",
+            "reused": True,
+        },
+        {
+            "recommendation": "Automatizar la conciliación financiera mensual",
+            "knowledge_area": "Cost Management",
+            "applied_to_opa": True,
+        },
+        {"action_item": "Validar calendario con stakeholders antes", "category": "Comms"},
+    ]
+
+    res = project_lifecycle_pmi_service.evaluate_lessons_learned_institutional_reuse(
+        lessons
+    )
+
+    assert res["total_lessons"] == 3
+    assert res["actionable_count"] == 3
+    assert res["categorized_count"] == 3
+    assert res["reused_or_applied_count"] == 2
+    assert res["actionability_rate"] == 100.0
+    assert res["opa_reuse_rate"] == 66.67
+    assert res["posture"] == "INSTITUTIONALIZED_OPA_LEARNING"
+
+
+def test_lessons_learned_reuse_passive_archive():
+    """Accionables >= 50% pero reuso OPA < 50% -> PASSIVE_ARCHIVE."""
+    lessons = [
+        {"action_item": "Documentar el proceso de cierre definitivo"},
+        {"action_item": "Revisar métricas EVM antes del corte"},
+        {"description": "Retrospectiva sin acción concretadifusa"},
+    ]
+
+    res = project_lifecycle_pmi_service.evaluate_lessons_learned_institutional_reuse(
+        lessons
+    )
+
+    assert res["total_lessons"] == 3
+    assert res["actionable_count"] == 2
+    assert res["categorized_count"] == 0
+    assert res["reused_or_applied_count"] == 0
+    assert res["actionability_rate"] == 66.67
+    assert res["opa_reuse_rate"] == 0.0
+    assert res["posture"] == "PASSIVE_ARCHIVE"
+
+
+def test_lessons_learned_reuse_low_quality_retrospective():
+    """Accionables < 50% -> LOW_QUALITY_RETROSPECTIVE aunque haya reuso OPA."""
+    lessons = [
+        {"action_item": "ok", "reused": True},
+        {"category": "Risk"},
+        {"description": "muy corto"},
+    ]
+
+    res = project_lifecycle_pmi_service.evaluate_lessons_learned_institutional_reuse(
+        lessons
+    )
+
+    assert res["total_lessons"] == 3
+    assert res["actionable_count"] == 0
+    assert res["categorized_count"] == 1
+    assert res["reused_or_applied_count"] == 1
+    assert res["actionability_rate"] == 0.0
+    assert res["opa_reuse_rate"] == 33.33
+    assert res["posture"] == "LOW_QUALITY_RETROSPECTIVE"
+
+
+def test_lessons_learned_reuse_no_lessons_recorded():
+    """None, lista vacía o items no-dict -> NO_LESSONS_RECORDED con tasas 0.0."""
+    for lessons in (None, [], ["no soy un dict", 42]):
+        res = project_lifecycle_pmi_service.evaluate_lessons_learned_institutional_reuse(
+            lessons
+        )
+        assert res == {
+            "total_lessons": 0,
+            "actionable_count": 0,
+            "categorized_count": 0,
+            "reused_or_applied_count": 0,
+            "actionability_rate": 0.0,
+            "opa_reuse_rate": 0.0,
+            "posture": "NO_LESSONS_RECORDED",
+        }
+
+
+def test_lessons_learned_reuse_facade_delegates():
+    """La fachada ProjectLifecyclePMIService delega al helper puro."""
+    lessons = [{"action_item": "Estandarizar cierre con OPAs", "reused": True}]
+
+    assert (
+        project_lifecycle_pmi_service.ProjectLifecyclePMIService.
+        evaluate_lessons_learned_institutional_reuse(lessons)
+        == project_lifecycle_pmi_service.evaluate_lessons_learned_institutional_reuse(
+            lessons
+        )
+    )
+

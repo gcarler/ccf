@@ -28,6 +28,7 @@ __all__ = [
     "summarize_executive_report_risk_posture",
     "audit_expenses_csv_financial_totals",
     "audit_tasks_csv_schedule_completeness",
+    "audit_executive_report_milestone_coverage",
     "ProjectExportService",
 ]
 
@@ -273,6 +274,12 @@ class ProjectExportService:
         csv_content: str | bytes | None,
     ) -> dict[str, Any]:
         return audit_tasks_csv_schedule_completeness(csv_content)
+
+    @staticmethod
+    def audit_executive_report_milestone_coverage(
+        html_content: str | None,
+    ) -> dict[str, Any]:
+        return audit_executive_report_milestone_coverage(html_content)
 
 
 def summarize_executive_report_risk_posture(report_data: Optional[dict]) -> dict:
@@ -574,3 +581,58 @@ def audit_tasks_csv_schedule_completeness(
         "schedule_coverage_pct": schedule_coverage_pct,
         "schedule_completeness_status": schedule_completeness_status,
     }
+
+
+def audit_executive_report_milestone_coverage(
+    html_content: str | None,
+) -> dict[str, Any]:
+    """Audita la cobertura de hitos, alertas de atraso y KPIs financieros en el reporte ejecutivo (PMI PMBOK §10.2)."""
+    text = (html_content if isinstance(html_content, str) else "").lower()
+
+    if not text.strip():
+        return {
+            "has_milestone_section": False,
+            "completed_markers_count": 0,
+            "overdue_or_delayed_markers_count": 0,
+            "financial_kpi_mentions": 0,
+            "coverage_score": 0.0,
+            "posture": "EMPTY_REPORT",
+        }
+
+    milestone_tokens = ("hito", "milestone", "fase", "entregable", "cronograma")
+    completed_tokens = ("completad", "100%", "finalizad", "cumplid")
+    overdue_tokens = ("vencid", "retrasad", "atrasad", "overdue", "bloquead")
+    financial_tokens = ("presupuesto", "cpi", "spi", "eac", "vac", "bac", "gasto")
+
+    has_milestone_section = any(token in text for token in milestone_tokens)
+    completed_markers_count = int(sum(text.count(token) for token in completed_tokens))
+    overdue_or_delayed_markers_count = int(
+        sum(text.count(token) for token in overdue_tokens)
+    )
+    financial_kpi_mentions = int(sum(text.count(token) for token in financial_tokens))
+
+    score = 0.0
+    if has_milestone_section:
+        score += 40.0
+    if financial_kpi_mentions > 0:
+        score += 30.0
+    if (completed_markers_count + overdue_or_delayed_markers_count) > 0:
+        score += 30.0
+    coverage_score = round(score, 2)
+
+    if overdue_or_delayed_markers_count > 0:
+        posture = "EXECUTIVE_ATTENTION_REQUIRED"
+    elif coverage_score >= 80.0 and overdue_or_delayed_markers_count == 0:
+        posture = "COMPREHENSIVE_EXECUTIVE_SUMMARY"
+    else:
+        posture = "PARTIAL_REPORT_COVERAGE"
+
+    return {
+        "has_milestone_section": has_milestone_section,
+        "completed_markers_count": completed_markers_count,
+        "overdue_or_delayed_markers_count": overdue_or_delayed_markers_count,
+        "financial_kpi_mentions": financial_kpi_mentions,
+        "coverage_score": coverage_score,
+        "posture": posture,
+    }
+

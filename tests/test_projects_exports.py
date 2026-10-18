@@ -1014,3 +1014,94 @@ def test_audit_tasks_csv_schedule_completeness_empty_or_headers_only():
         assert res["total_tasks"] == 0
         assert res["schedule_coverage_pct"] == 0.0
         assert res["schedule_completeness_status"] == "empty_export"
+
+
+# ── audit_executive_report_milestone_coverage (PMBOK §10.2, pure helper) ────
+
+
+def test_audit_executive_report_milestone_coverage_comprehensive():
+    """Hitos, KPIs financieros y marcadores de completitud sin atrasos -> 'COMPREHENSIVE_EXECUTIVE_SUMMARY' (100.0)."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_milestone_coverage,
+    )
+
+    html = (
+        "<h2>Hitos del Cronograma</h2>"
+        "<p>Fase 1 completada al 100%. Entregable finalizado y cumplido.</p>"
+        "<p>Indicadores EVM: Presupuesto BAC $50,000, CPI 1.05, SPI 1.02.</p>"
+    )
+    res = audit_executive_report_milestone_coverage(html)
+    assert res == {
+        "has_milestone_section": True,
+        "completed_markers_count": 4,
+        "overdue_or_delayed_markers_count": 0,
+        "financial_kpi_mentions": 4,
+        "coverage_score": 100.0,
+        "posture": "COMPREHENSIVE_EXECUTIVE_SUMMARY",
+    }
+    assert ProjectExportService.audit_executive_report_milestone_coverage(html) == res
+
+
+def test_audit_executive_report_milestone_coverage_executive_attention_required():
+    """Cualquier marcador de atraso o bloqueo activa 'EXECUTIVE_ATTENTION_REQUIRED' incluso con score 100.0."""
+    from backend.services.project_export_service import (
+        audit_executive_report_milestone_coverage,
+    )
+
+    html = (
+        "<h2>Seguimiento de Milestone</h2>"
+        "<p>Hito 1 completado, pero el entregable 2 está retrasado y vencido por bloqueo externo.</p>"
+        "<p>Presupuesto y gasto monitoreados con EAC y VAC.</p>"
+    )
+    res = audit_executive_report_milestone_coverage(html)
+    assert res["has_milestone_section"] is True
+    assert res["completed_markers_count"] == 1
+    assert res["overdue_or_delayed_markers_count"] == 2
+    assert res["financial_kpi_mentions"] == 4
+    assert res["coverage_score"] == 100.0
+    assert res["posture"] == "EXECUTIVE_ATTENTION_REQUIRED"
+
+
+def test_audit_executive_report_milestone_coverage_partial_coverage():
+    """Reporte parcial sin algunas dimensiones y sin atrasos -> 'PARTIAL_REPORT_COVERAGE' (< 80.0)."""
+    from backend.services.project_export_service import (
+        audit_executive_report_milestone_coverage,
+    )
+
+    only_milestone_html = "<h2>Cronograma de Fases</h2><p>Planificación preliminar en curso.</p>"
+    res_m = audit_executive_report_milestone_coverage(only_milestone_html)
+    assert res_m == {
+        "has_milestone_section": True,
+        "completed_markers_count": 0,
+        "overdue_or_delayed_markers_count": 0,
+        "financial_kpi_mentions": 0,
+        "coverage_score": 40.0,
+        "posture": "PARTIAL_REPORT_COVERAGE",
+    }
+
+    milestone_and_finance_html = (
+        "<h2>Hitos del Proyecto</h2><p>Presupuesto aprobado con CPI 1.00.</p>"
+    )
+    res_mf = audit_executive_report_milestone_coverage(milestone_and_finance_html)
+    assert res_mf["coverage_score"] == 70.0
+    assert res_mf["posture"] == "PARTIAL_REPORT_COVERAGE"
+
+
+def test_audit_executive_report_milestone_coverage_empty_or_none():
+    """None o texto en blanco -> 'EMPTY_REPORT' con coverage_score 0.0."""
+    from backend.services.project_export_service import (
+        audit_executive_report_milestone_coverage,
+    )
+
+    for empty_val in (None, "", "   \n\t  "):
+        res = audit_executive_report_milestone_coverage(empty_val)
+        assert res == {
+            "has_milestone_section": False,
+            "completed_markers_count": 0,
+            "overdue_or_delayed_markers_count": 0,
+            "financial_kpi_mentions": 0,
+            "coverage_score": 0.0,
+            "posture": "EMPTY_REPORT",
+        }
+

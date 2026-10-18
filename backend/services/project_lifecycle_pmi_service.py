@@ -782,8 +782,79 @@ def evaluate_phase_gate_transition_readiness(
     }
 
 
+def evaluate_lessons_learned_institutional_reuse(
+    lessons: list[dict[str, Any]] | None,
+) -> dict[str, Any]:
+    """Audita el aprendizaje institucional de Lessons Learned (PMBOK §4.4 / §4.7).
+
+    Evalúa si las lecciones registradas son accionables, categorizadas y
+    reutilizadas hacia los activos de proceso organizacional (OPA):
+    - `total_lessons`: lecciones registradas (ítems dict).
+    - `actionable_count`: items con `action_item`/`recommendation` >= 10 chars.
+    - `categorized_count`: items con `category`/`knowledge_area` no vacío.
+    - `reused_or_applied_count`: items con `reused` o `applied_to_opa` truthy.
+    - `actionability_rate`: % accionables (2 decimales; 0.0 sin lecciones).
+    - `opa_reuse_rate`: % reutilizadas en OPA (2 decimales; 0.0 sin lecciones).
+    - `posture`: 'NO_LESSONS_RECORDED' sin lecciones;
+      'INSTITUTIONALIZED_OPA_LEARNING' con accionables >= 75% y reuso >= 50%;
+      'PASSIVE_ARCHIVE' con accionables >= 50% pero reuso < 50%;
+      'LOW_QUALITY_RETROSPECTIVE' en otro caso.
+    """
+    items = [item for item in (lessons or []) if isinstance(item, dict)]
+    total_lessons = len(items)
+
+    actionable_count = 0
+    categorized_count = 0
+    reused_or_applied_count = 0
+    for item in items:
+        actionable_text = str(item.get("action_item") or item.get("recommendation") or "").strip()
+        if len(actionable_text) >= 10:
+            actionable_count += 1
+        categorized_text = str(item.get("category") or item.get("knowledge_area") or "").strip()
+        if categorized_text:
+            categorized_count += 1
+        if bool(item.get("reused") or item.get("applied_to_opa")):
+            reused_or_applied_count += 1
+
+    actionability_rate = (
+        round((actionable_count / total_lessons) * 100.0, 2)
+        if total_lessons > 0
+        else 0.0
+    )
+    opa_reuse_rate = (
+        round((reused_or_applied_count / total_lessons) * 100.0, 2)
+        if total_lessons > 0
+        else 0.0
+    )
+
+    if total_lessons == 0:
+        posture = "NO_LESSONS_RECORDED"
+    elif actionability_rate >= 75.0 and opa_reuse_rate >= 50.0:
+        posture = "INSTITUTIONALIZED_OPA_LEARNING"
+    elif actionability_rate >= 50.0 and opa_reuse_rate < 50.0:
+        posture = "PASSIVE_ARCHIVE"
+    else:
+        posture = "LOW_QUALITY_RETROSPECTIVE"
+
+    return {
+        "total_lessons": total_lessons,
+        "actionable_count": actionable_count,
+        "categorized_count": categorized_count,
+        "reused_or_applied_count": reused_or_applied_count,
+        "actionability_rate": actionability_rate,
+        "opa_reuse_rate": opa_reuse_rate,
+        "posture": posture,
+    }
+
+
 class ProjectLifecyclePMIService:
     """Canonical facade for PMI project lifecycle, governance maturity, and automation readiness."""
+
+    @staticmethod
+    def evaluate_lessons_learned_institutional_reuse(
+        lessons: list[dict[str, Any]] | None,
+    ) -> dict[str, Any]:
+        return evaluate_lessons_learned_institutional_reuse(lessons)
 
     @staticmethod
     def compute_closure_readiness_pct(
