@@ -53,6 +53,74 @@ ACTIVITY_TYPES = ("project_created", "task_created", "status_changed", "comment_
 RESET_DATABASE_MARKER = re.compile(r"(?:^|_)(?:e2e|test|quality)(?:_|$)", re.IGNORECASE)
 
 
+def audit_demo_seed_blueprint(
+    projects_spec: Iterable[dict] = DEMO_PROJECTS,
+) -> dict:
+    """Audita la sanidad del blueprint del portafolio demo (función pura).
+
+    Inspecciona la especificación `projects_spec` (por defecto
+    DEMO_PROJECTS) y retorna:
+    - `project_count`: número de proyectos en la especificación.
+    - `expected_tasks_per_project` / `expected_phases_per_project` /
+      `expected_activities_per_project`: esperanzas por bundle (5 / 4 /
+      len(ACTIVITY_TYPES)).
+    - `total_*`: multiplicación por el número de proyectos.
+    - `status_distribution`: conteo por status (limpio), ordenado
+      alfabéticamente.
+    - `has_unique_titles`: True si hay proyectos y todos los títulos
+      limpios no vacíos son únicos.
+    - `has_lifecycle_diversity`: True si existen ≥ 2 estados distintos
+      no vacíos.
+    - `is_blueprint_valid`: True si hay proyectos, títulos únicos y
+      diversidad de estados.
+    """
+    projects = list(projects_spec)
+    project_count = len(projects)
+
+    expected_tasks_per_project = 5
+    expected_phases_per_project = 4
+    expected_activities_per_project = len(ACTIVITY_TYPES)
+
+    status_distribution: dict[str, int] = {}
+    for payload in projects:
+        status = str(payload.get("status", "")).strip()
+        if status:
+            status_distribution[status] = status_distribution.get(status, 0) + 1
+
+    cleaned_titles = [
+        str(payload.get("title", "")).strip()
+        for payload in projects
+        if str(payload.get("title", "")).strip()
+    ]
+    has_unique_titles = project_count > 0 and len(cleaned_titles) == len(set(cleaned_titles))
+
+    clean_statuses = {
+        status
+        for payload in projects
+        if (status := str(payload.get("status", "")).strip())
+    }
+    has_lifecycle_diversity = len(clean_statuses) >= 2
+    is_blueprint_valid = bool(
+        project_count > 0 and has_unique_titles and has_lifecycle_diversity
+    )
+
+    return {
+        "project_count": project_count,
+        "expected_tasks_per_project": expected_tasks_per_project,
+        "expected_phases_per_project": expected_phases_per_project,
+        "expected_activities_per_project": expected_activities_per_project,
+        "total_expected_tasks": project_count * expected_tasks_per_project,
+        "total_expected_phases": project_count * expected_phases_per_project,
+        "total_expected_activities": project_count * expected_activities_per_project,
+        "status_distribution": {
+            status: count for status, count in sorted(status_distribution.items())
+        },
+        "has_unique_titles": has_unique_titles,
+        "has_lifecycle_diversity": has_lifecycle_diversity,
+        "is_blueprint_valid": is_blueprint_valid,
+    }
+
+
 def validate_seed_target(database_url: str, confirmed_database: str | None, *, reset: bool) -> str:
     """Require explicit confirmation before standalone demo data writes."""
     database_name = make_url(database_url).database

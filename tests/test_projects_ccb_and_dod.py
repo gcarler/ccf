@@ -775,3 +775,84 @@ def test_build_ccb_coq_diagnostic_from_real_summary(client, db_session):
         "coq_balance_status": "unmeasured",
         "requires_quality_intervention": False,
     }
+
+
+def test_dod_gate_compliance_no_leaf_tasks():
+    """Proyecto sin paquetes hoja retorna no_leaf_tasks y 100.0% de integridad de firma."""
+    from backend.services.project_ccb_service import evaluate_dod_gate_compliance
+
+    res = evaluate_dod_gate_compliance({"total_leaf_tasks": 0, "dod_signed_off_count": 0, "dod_all_four_met_count": 0})
+    assert res == {
+        "total_leaf_tasks": 0,
+        "dod_signed_off_count": 0,
+        "dod_all_four_met_count": 0,
+        "unsigned_leaf_tasks": 0,
+        "premature_sign_off_count": 0,
+        "strict_dod_compliance_pct": 0.0,
+        "sign_off_integrity_pct": 100.0,
+        "dod_gate_status": "no_leaf_tasks",
+    }
+
+
+def test_dod_gate_compliance_certified():
+    """Cumplimiento estricto >= 80% sin firmas prematuras retorna certified."""
+    from backend.services.project_ccb_service import evaluate_dod_gate_compliance
+
+    res = evaluate_dod_gate_compliance({
+        "total_leaf_tasks": 10,
+        "dod_signed_off_count": 9,
+        "dod_all_four_met_count": 9,
+    })
+    assert res["dod_gate_status"] == "certified"
+    assert res["strict_dod_compliance_pct"] == 90.0
+    assert res["sign_off_integrity_pct"] == 100.0
+    assert res["premature_sign_off_count"] == 0
+    assert res["unsigned_leaf_tasks"] == 1
+
+
+def test_dod_gate_compliance_integrity_breach():
+    """Firmas de supervisor sin los 4 criterios DoD cumplidos disparan integrity_breach."""
+    from backend.services.project_ccb_service import evaluate_dod_gate_compliance
+
+    res = evaluate_dod_gate_compliance({
+        "total_leaf_tasks": 10,
+        "dod_signed_off_count": 8,
+        "dod_all_four_met_count": 6,
+    })
+    assert res["dod_gate_status"] == "integrity_breach"
+    assert res["premature_sign_off_count"] == 2
+    assert res["sign_off_integrity_pct"] == 75.0
+    assert res["strict_dod_compliance_pct"] == 60.0
+    assert res["unsigned_leaf_tasks"] == 2
+
+
+def test_dod_gate_compliance_in_progress():
+    """Cumplimiento entre 40% y 79.9% sin brecha de integridad retorna in_progress."""
+    from backend.services.project_ccb_service import evaluate_dod_gate_compliance
+
+    res = evaluate_dod_gate_compliance({
+        "total_leaf_tasks": 10,
+        "dod_signed_off_count": 5,
+        "dod_all_four_met_count": 5,
+    })
+    assert res["dod_gate_status"] == "in_progress"
+    assert res["strict_dod_compliance_pct"] == 50.0
+    assert res["sign_off_integrity_pct"] == 100.0
+    assert res["premature_sign_off_count"] == 0
+    assert res["unsigned_leaf_tasks"] == 5
+
+
+def test_dod_gate_compliance_at_risk():
+    """Cumplimiento < 40% sin brecha de integridad retorna at_risk."""
+    from backend.services.project_ccb_service import evaluate_dod_gate_compliance
+
+    res = evaluate_dod_gate_compliance({
+        "total_leaf_tasks": 10,
+        "dod_signed_off_count": 3,
+        "dod_all_four_met_count": 3,
+    })
+    assert res["dod_gate_status"] == "at_risk"
+    assert res["strict_dod_compliance_pct"] == 30.0
+    assert res["sign_off_integrity_pct"] == 100.0
+    assert res["premature_sign_off_count"] == 0
+    assert res["unsigned_leaf_tasks"] == 7

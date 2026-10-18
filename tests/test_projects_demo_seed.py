@@ -85,3 +85,84 @@ def test_projects_demo_seed_roundtrip(client, db_session):
     summary_rows = summary_resp.json()
     assert sum(row["total_projects"] for row in summary_rows) == 3
     assert sum(row["total_tasks"] for row in summary_rows) == 15
+
+
+# ── audit_demo_seed_blueprint (pure helper) ──────────────────────────────────
+
+
+def test_audit_demo_seed_blueprint_default_spec():
+    """DEMO_PROJECTS por defecto: 3 proyectos, títulos únicos y diversidad de estados."""
+    from scripts.seeding.seed_projects_demo import ACTIVITY_TYPES, audit_demo_seed_blueprint
+
+    audit = audit_demo_seed_blueprint()
+
+    assert audit == {
+        "project_count": 3,
+        "expected_tasks_per_project": 5,
+        "expected_phases_per_project": 4,
+        "expected_activities_per_project": len(ACTIVITY_TYPES),
+        "total_expected_tasks": 15,
+        "total_expected_phases": 12,
+        "total_expected_activities": 3 * len(ACTIVITY_TYPES),
+        "status_distribution": {"active": 1, "on_hold": 1, "planning": 1},
+        "has_unique_titles": True,
+        "has_lifecycle_diversity": True,
+        "is_blueprint_valid": True,
+    }
+    assert list(audit["status_distribution"].items()) == [
+        ("active", 1),
+        ("on_hold", 1),
+        ("planning", 1),
+    ]
+
+
+def test_audit_demo_seed_blueprint_detects_duplicate_titles():
+    """Títulos duplicados (o vacíos tras limpiar) invalidan el blueprint."""
+    from scripts.seeding.seed_projects_demo import audit_demo_seed_blueprint
+
+    spec = [
+        {"title": "Mismo Titulo", "status": "active"},
+        {"title": "Mismo Titulo", "status": "planning"},
+    ]
+    audit = audit_demo_seed_blueprint(spec)
+    assert audit["project_count"] == 2
+    assert audit["has_unique_titles"] is False
+    assert audit["has_lifecycle_diversity"] is True
+    assert audit["is_blueprint_valid"] is False
+
+
+def test_audit_demo_seed_blueprint_detects_single_status_lack_of_diversity():
+    """Un único estado repetido → sin diversidad de ciclo de vida."""
+    from scripts.seeding.seed_projects_demo import audit_demo_seed_blueprint
+
+    spec = [
+        {"title": "Proyecto A", "status": "active"},
+        {"title": "Proyecto B", "status": "active"},
+        {"title": "Proyecto C", "status": "  active  "},  # espacios se limpian
+    ]
+    audit = audit_demo_seed_blueprint(spec)
+    assert audit["status_distribution"] == {"active": 3}
+    assert audit["has_unique_titles"] is True
+    assert audit["has_lifecycle_diversity"] is False
+    assert audit["is_blueprint_valid"] is False
+
+
+def test_audit_demo_seed_blueprint_rejects_empty_spec():
+    """Especificación vacía → 0 proyectos y False en validaciones."""
+    from scripts.seeding.seed_projects_demo import ACTIVITY_TYPES, audit_demo_seed_blueprint
+
+    audit = audit_demo_seed_blueprint([])
+
+    assert audit == {
+        "project_count": 0,
+        "expected_tasks_per_project": 5,
+        "expected_phases_per_project": 4,
+        "expected_activities_per_project": len(ACTIVITY_TYPES),
+        "total_expected_tasks": 0,
+        "total_expected_phases": 0,
+        "total_expected_activities": 0,
+        "status_distribution": {},
+        "has_unique_titles": False,
+        "has_lifecycle_diversity": False,
+        "is_blueprint_valid": False,
+    }

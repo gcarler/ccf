@@ -402,3 +402,46 @@ def build_ccb_coq_diagnostic(summary: dict) -> dict:
             or int(summary.get("pending_ccb_count", 0) or 0) >= 3
         ),
     }
+
+
+def evaluate_dod_gate_compliance(summary: dict) -> dict:
+    """Audita la disciplina de Control de Calidad y Validación del Alcance (PMI Vol. 6 §4.2 Definition of Done)."""
+    data = summary if isinstance(summary, dict) else {}
+    total_leaf_tasks = max(0, int(data.get("total_leaf_tasks") or 0))
+    dod_signed_off_count = max(0, int(data.get("dod_signed_off_count") or 0))
+    dod_all_four_met_count = max(0, int(data.get("dod_all_four_met_count") or 0))
+
+    unsigned_leaf_tasks = max(0, total_leaf_tasks - dod_signed_off_count)
+    premature_sign_off_count = max(0, dod_signed_off_count - dod_all_four_met_count)
+    strict_dod_compliance_pct = (
+        round((dod_all_four_met_count / total_leaf_tasks) * 100.0, 1)
+        if total_leaf_tasks > 0
+        else 0.0
+    )
+    sign_off_integrity_pct = (
+        round((dod_all_four_met_count / dod_signed_off_count) * 100.0, 1)
+        if dod_signed_off_count > 0
+        else 100.0
+    )
+
+    if total_leaf_tasks == 0:
+        dod_gate_status = "no_leaf_tasks"
+    elif premature_sign_off_count > 0:
+        dod_gate_status = "integrity_breach"
+    elif strict_dod_compliance_pct >= 80.0:
+        dod_gate_status = "certified"
+    elif strict_dod_compliance_pct >= 40.0:
+        dod_gate_status = "in_progress"
+    else:
+        dod_gate_status = "at_risk"
+
+    return {
+        "total_leaf_tasks": total_leaf_tasks,
+        "dod_signed_off_count": dod_signed_off_count,
+        "dod_all_four_met_count": dod_all_four_met_count,
+        "unsigned_leaf_tasks": unsigned_leaf_tasks,
+        "premature_sign_off_count": premature_sign_off_count,
+        "strict_dod_compliance_pct": strict_dod_compliance_pct,
+        "sign_off_integrity_pct": sign_off_integrity_pct,
+        "dod_gate_status": dod_gate_status,
+    }
