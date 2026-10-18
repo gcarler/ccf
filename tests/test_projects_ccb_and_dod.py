@@ -1734,3 +1734,113 @@ def test_evaluate_deliverable_first_time_right_yield_no_deliverables_inspected()
         assert len(res["recommendations"]) == 1
 
 
+# ─── audit_emergency_change_retroactive_ratification (pure helper) ─────
+
+
+def test_audit_emergency_change_governed_protocol():
+    """Emergencias ratificadas con PIR y share bajo -> GOVERNED_EMERGENCY_PROTOCOL."""
+    from backend.services.project_ccb_service import (
+        audit_emergency_change_retroactive_ratification,
+    )
+
+    res = audit_emergency_change_retroactive_ratification(
+        [
+            {
+                "id": "CR-1",
+                "is_emergency": False,
+                "retroactively_ratified": True,
+            },
+            {
+                "code": "CR-2",
+                "fast_track": True,
+                "retroactively_ratified": True,
+                "pir_completed": True,
+            },
+            {
+                "id": "CR-3",
+                "is_emergency": True,
+                "ccb_ratified": True,
+                "post_implementation_review_done": True,
+            },
+        ],
+        max_emergency_share_pct=70.0,
+    )
+
+    assert res["total_evaluated"] == 3
+    assert res["emergency_count"] == 2
+    assert res["unratified_emergency_ids"] == []
+    assert res["missing_pir_emergency_ids"] == []
+    assert res["emergency_share_pct"] == 66.67
+    assert res["emergency_governance_posture"] == "GOVERNED_EMERGENCY_PROTOCOL"
+    assert len(res["recommendations"]) == 1
+
+
+def test_audit_emergency_change_unratified_bypass_takes_precedence():
+    """Emergencia sin ratificación CCB -> UNRATIFIED_EMERGENCY_BYPASS aunque el share no exceda."""
+    from backend.services.project_ccb_service import (
+        audit_emergency_change_retroactive_ratification,
+    )
+
+    res = audit_emergency_change_retroactive_ratification(
+        [
+            {"id": "ER-1", "is_emergency": True},
+            {"id": "ER-2", "fast_track": True, "retroactively_ratified": True, "pir_completed": True},
+            {"id": "CR-7"},
+        ]
+    )
+
+    assert res["emergency_count"] == 2
+    assert res["unratified_emergency_ids"] == ["ER-1"]
+    assert len(res["missing_pir_emergency_ids"]) == 1
+    assert res["emergency_share_pct"] == 66.67
+    assert res["emergency_governance_posture"] == "UNRATIFIED_EMERGENCY_BYPASS"
+    assert len(res["recommendations"]) == 2  # ratificación + PIR
+
+
+def test_audit_emergency_change_excessive_fast_track_abuse():
+    """Ratificadas con PIR pero share > máximo -> EXCESSIVE_FAST_TRACK_ABUSE con ventana custom."""
+    from backend.services.project_ccb_service import (
+        audit_emergency_change_retroactive_ratification,
+    )
+
+    res = audit_emergency_change_retroactive_ratification(
+        [
+            {"id": "ER-1", "is_emergency": True, "retroactively_ratified": True, "pir_completed": True},
+            {"id": "ER-2", "is_emergency": True, "retroactively_ratified": True, "pir_completed": True},
+        ],
+        total_requests_window=5,
+        max_emergency_share_pct=30.0,
+    )
+
+    assert res["total_evaluated"] == 5
+    assert res["emergency_count"] == 2
+    assert res["emergency_share_pct"] == 40.0
+    assert res["emergency_governance_posture"] == "EXCESSIVE_FAST_TRACK_ABUSE"
+    assert len(res["recommendations"]) == 1
+
+
+def test_audit_emergency_change_no_emergencies_and_missing_pir_only():
+    """Sin emergencias -> NO_EMERGENCY_CHANGES; ratificadas pero sin PIR -> PENDING_POST_IMPLEMENTATION_REVIEW."""
+    from backend.services.project_ccb_service import (
+        audit_emergency_change_retroactive_ratification,
+    )
+
+    for payload in (None, [], ["no dict", 5]):
+        res = audit_emergency_change_retroactive_ratification(payload)  # type: ignore[arg-type]
+        assert res["emergency_count"] == 0
+        assert res["emergency_share_pct"] == 0.0
+        assert res["emergency_governance_posture"] == "NO_EMERGENCY_CHANGES"
+
+    pending_pir = audit_emergency_change_retroactive_ratification(
+        [
+            {"code": "ER-9", "fast_track": True, "ccb_ratified": True},
+        ],
+        total_requests_window=10,
+    )
+    assert pending_pir["total_evaluated"] == 10
+    assert pending_pir["emergency_share_pct"] == 10.0
+    assert pending_pir["missing_pir_emergency_ids"] == ["ER-9"]
+    assert pending_pir["emergency_governance_posture"] == "PENDING_POST_IMPLEMENTATION_REVIEW"
+    assert len(pending_pir["recommendations"]) == 1
+
+

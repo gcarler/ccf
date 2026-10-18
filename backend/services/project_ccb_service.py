@@ -1034,6 +1034,103 @@ def evaluate_deliverable_first_time_right_yield(
     }
 
 
+def audit_emergency_change_retroactive_ratification(
+    change_requests: Optional[list[dict]],
+    total_requests_window: Optional[int] = None,
+    max_emergency_share_pct: float = 20.0,
+) -> dict:
+    """Audita la ratificación retroactiva de cambios de emergencia (PMBOK §4.6).
+
+    Los cambios fast-track de emergencia deben ratificarse luego ante el CCB
+    y completar una revisión post-implementación (PIR):
+    - `total_evaluated`: máximo entre los dicts válidos y la ventana declarada.
+    - `emergency_count`: cambios con `is_emergency`/`fast_track` verdadero.
+    - `unratified_emergency_ids`: ids/code de emergencias sin ratificación CCB
+      (`retroactively_ratified`/`ccb_ratified`).
+    - `missing_pir_emergency_ids`: emergencias sin PIR (`post_implementation_review_done`/
+      `pir_completed`).
+    - `emergency_share_pct`: % de emergencias sobre lo evaluado (2 decimales;
+      0.0 sin nada).
+    - `emergency_governance_posture`: 'NO_EMERGENCY_CHANGES' sin emergencias;
+      'UNRATIFIED_EMERGENCY_BYPASS' con emergencias sin ratificar;
+      'EXCESSIVE_FAST_TRACK_ABUSE' con share > max_emergency_share_pct;
+      'PENDING_POST_IMPLEMENTATION_REVIEW' con PIRs faltantes; y
+      'GOVERNED_EMERGENCY_PROTOCOL' en el protocolo completo.
+    - `recommendations`: acciones correctivas según el hallazgo.
+    """
+    items = [item for item in (change_requests or []) if isinstance(item, dict)]
+    total_evaluated = max(len(items), int(total_requests_window or 0))
+
+    emergency_count = 0
+    unratified_emergency_ids: list[str] = []
+    missing_pir_emergency_ids: list[str] = []
+
+    for item in items:
+        is_emergency = bool(item.get("is_emergency") or item.get("fast_track"))
+        if not is_emergency:
+            continue
+        emergency_count += 1
+        change_id = str(item.get("id") or item.get("code") or "").strip()
+        if not bool(item.get("retroactively_ratified") or item.get("ccb_ratified")):
+            unratified_emergency_ids.append(change_id)
+        if not bool(
+            item.get("post_implementation_review_done") or item.get("pir_completed")
+        ):
+            missing_pir_emergency_ids.append(change_id)
+
+    emergency_share_pct = (
+        round((emergency_count / total_evaluated) * 100.0, 2)
+        if total_evaluated > 0
+        else 0.0
+    )
+
+    if emergency_count == 0:
+        emergency_governance_posture = "NO_EMERGENCY_CHANGES"
+    elif unratified_emergency_ids:
+        emergency_governance_posture = "UNRATIFIED_EMERGENCY_BYPASS"
+    elif emergency_share_pct > max_emergency_share_pct:
+        emergency_governance_posture = "EXCESSIVE_FAST_TRACK_ABUSE"
+    elif missing_pir_emergency_ids:
+        emergency_governance_posture = "PENDING_POST_IMPLEMENTATION_REVIEW"
+    else:
+        emergency_governance_posture = "GOVERNED_EMERGENCY_PROTOCOL"
+
+    recommendations: list[str] = []
+    if emergency_governance_posture == "UNRATIFIED_EMERGENCY_BYPASS":
+        recommendations.append(
+            "Ratificar retroactivamente ante el CCB los cambios de emergencia pendientes"
+        )
+    if emergency_governance_posture == "EXCESSIVE_FAST_TRACK_ABUSE":
+        recommendations.append(
+            "Revisar el umbral de uso del fast-track y reforzar el control de cambios de rutina"
+        )
+    if emergency_governance_posture in (
+        "PENDING_POST_IMPLEMENTATION_REVIEW",
+        "UNRATIFIED_EMERGENCY_BYPASS",
+    ) and missing_pir_emergency_ids:
+        recommendations.append(
+            "Programar la revisión post-implementación (PIR) de los cambios de emergencia"
+        )
+    if emergency_governance_posture == "NO_EMERGENCY_CHANGES":
+        recommendations.append(
+            "Mantener el protocolo de emergencia documentado y el CCB en alerta"
+        )
+    if emergency_governance_posture == "GOVERNED_EMERGENCY_PROTOCOL":
+        recommendations.append(
+            "Registrar la ratificación y el PIR en el backlog de gobernanza CCB"
+        )
+
+    return {
+        "total_evaluated": total_evaluated,
+        "emergency_count": emergency_count,
+        "unratified_emergency_ids": unratified_emergency_ids,
+        "missing_pir_emergency_ids": missing_pir_emergency_ids,
+        "emergency_share_pct": emergency_share_pct,
+        "emergency_governance_posture": emergency_governance_posture,
+        "recommendations": recommendations,
+    }
+
+
 class ProjectCCBService:
     """Fachada canónica de Control Integrado de Cambios (CCB) y Calidad DoD PMI."""
 
@@ -1190,6 +1287,18 @@ class ProjectCCBService:
         return audit_ccb_decision_sla_breaches(requests, sla_hours=sla_hours)
 
     @staticmethod
+    def audit_emergency_change_retroactive_ratification(
+        change_requests: Optional[list[dict]],
+        total_requests_window: Optional[int] = None,
+        max_emergency_share_pct: float = 20.0,
+    ) -> dict:
+        return audit_emergency_change_retroactive_ratification(
+            change_requests,
+            total_requests_window=total_requests_window,
+            max_emergency_share_pct=max_emergency_share_pct,
+        )
+
+    @staticmethod
     def evaluate_deliverable_first_time_right_yield(
         deliverables: Optional[list[dict[str, Any]]],
         target_ftr_pct: float = 85.0,
@@ -1220,6 +1329,7 @@ __all__ = [
     "evaluate_scope_creep_baseline_drift",
     "evaluate_ccb_voting_consensus",
     "audit_ccb_decision_sla_breaches",
+    "audit_emergency_change_retroactive_ratification",
     "evaluate_deliverable_first_time_right_yield",
     "ProjectCCBService",
 ]
