@@ -545,4 +545,102 @@ describe('ProjectListView', () => {
     await user.click(btn);
     expect(onManageComponents).toHaveBeenCalledTimes(1);
   });
+
+  it('renders PMI execution summary (0/50/100 progress, BAC, RACI gaps, overdue)', () => {
+    const pmiTasks = [
+      createMockTask({
+        id: 't1',
+        title: 'Paquete Pendiente',
+        status: 'backlog',
+        budget_allocated: 150000,
+        assignee_id: null,
+      }),
+      createMockTask({
+        id: 't2',
+        title: 'Paquete En Revisión',
+        status: 'review_custom',
+        budget_allocated: 250000,
+        assignee_id: 'user-1',
+        due_date: '2020-01-01',
+      }),
+      createMockTask({
+        id: 't3',
+        title: 'Paquete Completado',
+        status: 'completed',
+        budget_allocated: 100000,
+        assignee_id: null,
+      }),
+    ];
+
+    render(
+      <ProjectListView
+        tasks={pmiTasks}
+        phaseDefs={phases}
+        onOpenTask={vi.fn()}
+        onAddTask={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('list-view-pmi-summary')).toBeInTheDocument();
+    // (0 + 50 + 100) / 3 = 50%
+    expect(screen.getByTestId('list-view-pmi-progress')).toHaveTextContent('50%');
+    expect(screen.getByTestId('list-view-pmi-bac')).toHaveTextContent('$500.000');
+    expect(screen.getByTestId('list-view-pmi-raci-gaps')).toHaveTextContent('Brechas RACI: 1');
+    expect(screen.getByTestId('list-view-pmi-overdue')).toHaveTextContent('Vencidas: 1');
+  });
+
+  it('filters tasks using PMI overdue and RACI gap quick filters', async () => {
+    const user = userEvent.setup();
+    const filterTasks = [
+      createMockTask({
+        id: 't-normal',
+        title: 'Actividad al día asignada',
+        status: 'backlog',
+        assignee_id: 'user-1',
+        due_date: '2099-12-31',
+      }),
+      createMockTask({
+        id: 't-overdue',
+        title: 'Actividad vencida asignada',
+        status: 'backlog',
+        assignee_id: 'user-1',
+        due_date: '2020-01-01',
+      }),
+      createMockTask({
+        id: 't-raci-gap',
+        title: 'Actividad sin responsable RACI',
+        status: 'backlog',
+        assignee_id: null,
+      }),
+    ];
+
+    render(
+      <ProjectListView
+        tasks={filterTasks}
+        phaseDefs={phases}
+        onOpenTask={vi.fn()}
+        onAddTask={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('Actividad al día asignada')).toBeInTheDocument();
+    expect(screen.getByText('Actividad vencida asignada')).toBeInTheDocument();
+    expect(screen.getByText('Actividad sin responsable RACI')).toBeInTheDocument();
+
+    await user.click(screen.getByTestId('list-filter-overdue'));
+    expect(screen.queryByText('Actividad al día asignada')).not.toBeInTheDocument();
+    expect(screen.getByText('Actividad vencida asignada')).toBeInTheDocument();
+    expect(screen.queryByText('Actividad sin responsable RACI')).not.toBeInTheDocument();
+
+    await user.click(screen.getByTestId('list-filter-raci-gap'));
+    expect(screen.queryByText('Actividad al día asignada')).not.toBeInTheDocument();
+    expect(screen.queryByText('Actividad vencida asignada')).not.toBeInTheDocument();
+    expect(screen.getByText('Actividad sin responsable RACI')).toBeInTheDocument();
+
+    await user.click(screen.getByTestId('list-filter-all'));
+    expect(screen.getByText('Actividad al día asignada')).toBeInTheDocument();
+    expect(screen.getByText('Actividad vencida asignada')).toBeInTheDocument();
+    expect(screen.getByText('Actividad sin responsable RACI')).toBeInTheDocument();
+  });
 });
+

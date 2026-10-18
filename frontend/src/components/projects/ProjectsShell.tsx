@@ -14,6 +14,28 @@ export interface BreadcrumbOption {
     icon?: AppIcon;
 }
 
+/** PMI — Dominio de gobernanza activo según la vista del portafolio. */
+export function getPmiDomainLabel(viewType?: ViewType): string {
+    switch (viewType) {
+        case 'board':
+        case 'kanban':
+            return 'Control de Flujo WIP';
+        case 'gantt':
+        case 'calendar':
+            return 'Ruta Critica y Cronograma';
+        case 'table':
+        case 'list':
+        case 'workflow':
+            return 'Desglose de Paquetes WBS';
+        case 'wiki':
+            return 'Activos de Conocimiento OPA';
+        case 'chat':
+            return 'Comunicaciones e Incidentes';
+        default:
+            return 'Monitoreo Ejecutivo EVM';
+    }
+}
+
 interface ProjectsShellProps {
     breadcrumbs: BreadcrumbOption[];
     viewOptions?: ViewType[];
@@ -48,9 +70,16 @@ export default function ProjectsShell({
                 searchValue={searchValue}
                 rightActions={
                     <div className="flex items-center gap-1.5 shrink-0">
+                        <span
+                            data-testid="projects-shell-pmi-domain"
+                            title="Dominio de Gobernanza PMI activo"
+                            className="hidden md:inline-block max-w-45 truncate rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-2 py-0.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]"
+                        >
+                            {getPmiDomainLabel(viewType)}
+                        </span>
                         {rightActions}
                         <ThemeToggle variant="pill" onOpenAppearance={() => setShowAppearance(true)} />
-                        <div className="w-px h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-0.5 shrink-0" />
+                        <div className="w-px h-4 bg-[hsl(var(--border))] mx-0.5 shrink-0" />
                         <UserMenuDropdown onOpenAppearance={() => setShowAppearance(true)} />
                     </div>
                 }

@@ -851,6 +851,7 @@ export default function ProjectListView({
     const [favoriteTaskIds, setFavoriteTaskIds] = useState<Set<string>>(new Set());
     const [components, setComponents] = useState<ProjectComponentDetail[]>([]);
     const [selectedComponentId, setSelectedComponentId] = useState<string>('all');
+    const [pmiFilter, setPmiFilter] = useState<'all' | 'overdue' | 'raci_gap'>('all');
     const [internalInlineStatus, setInternalInlineStatus] = useState<string | null>(null);
     const [internalInlineTitle, setInternalInlineTitle] = useState('');
     const [isSubmittingInline, setIsSubmittingInline] = useState(false);
@@ -934,6 +935,36 @@ export default function ProjectListView({
         return map;
     }, [components]);
 
+    const isTaskCompleted = useCallback((status?: string | null) => {
+        const normalized = (status || 'todo').toLowerCase().trim();
+        return normalized === 'done' || normalized === 'completed';
+    }, []);
+
+    const isTaskOverdue = useCallback((task: ProjectTaskRecord) => {
+        if (isTaskCompleted(task.status) || !task.due_date) return false;
+        const dueTime = new Date(task.due_date).getTime();
+        if (Number.isNaN(dueTime)) return false;
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        return dueTime < todayStart.getTime();
+    }, [isTaskCompleted]);
+
+    const pmiSummary = useMemo(() => {
+        const total = tasks.length;
+        const weightedSum = tasks.reduce((acc, t) => {
+            const normalized = (t.status || 'todo').toLowerCase().trim();
+            if (normalized === 'done' || normalized === 'completed') return acc + 100;
+            if (['todo', 'pending', 'backlog'].includes(normalized)) return acc + 0;
+            const explicitProgress = typeof t.progress === 'number' && t.progress > 0 ? t.progress : 50;
+            return acc + explicitProgress;
+        }, 0);
+        const weightedProgress = total > 0 ? Math.round(weightedSum / total) : 0;
+        const totalBac = tasks.reduce((acc, t) => acc + (Number(t.budget_allocated) || 0), 0);
+        const raciGaps = tasks.filter(t => !isTaskCompleted(t.status) && !t.assignee_id).length;
+        const overdueCount = tasks.filter(t => isTaskOverdue(t)).length;
+        return { weightedProgress, totalBac, raciGaps, overdueCount };
+    }, [tasks, isTaskCompleted, isTaskOverdue]);
+
     const displayedTasks = useMemo(() => {
         let list = tasks;
         if (onlyFavorites) {
@@ -944,8 +975,13 @@ export default function ProjectListView({
         } else if (selectedComponentId !== 'all') {
             list = list.filter(t => t.component_id === selectedComponentId);
         }
+        if (pmiFilter === 'overdue') {
+            list = list.filter(t => isTaskOverdue(t));
+        } else if (pmiFilter === 'raci_gap') {
+            list = list.filter(t => !isTaskCompleted(t.status) && !t.assignee_id);
+        }
         return list;
-    }, [tasks, onlyFavorites, favoriteTaskIds, selectedComponentId]);
+    }, [tasks, onlyFavorites, favoriteTaskIds, selectedComponentId, pmiFilter, isTaskCompleted, isTaskOverdue]);
 
     const handleChangeTask = useCallback((taskId: number | string, patch: Partial<ProjectTaskRecord>) => {
         onTaskUpdate?.(String(taskId), patch);
@@ -1027,11 +1063,99 @@ export default function ProjectListView({
                             <span>+ Componentes (EDT)</span>
                         </button>
                     )}
+
+                    {/* Diagnóstico PMI de Lista */}
+                    <div
+                        data-testid="list-view-pmi-summary"
+                        className="inline-flex flex-wrap items-center gap-1.5"
+                    >
+                        <span
+                            data-testid="list-view-pmi-progress"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-bold border border-[hsl(var(--primary)/0.25)] bg-[hsl(var(--primary)/0.08)] text-[hsl(var(--primary))]"
+                        >
+                            Avance PMI (0/50/100): {pmiSummary.weightedProgress}%
+                        </span>
+                        <span
+                            data-testid="list-view-pmi-bac"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-bold border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))]"
+                        >
+                            BAC: ${pmiSummary.totalBac.toLocaleString('es-CO')}
+                        </span>
+                        <span
+                            data-testid="list-view-pmi-raci-gaps"
+                            className={clsx(
+                                'inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-bold border',
+                                pmiSummary.raciGaps > 0
+                                    ? 'border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning-text))]'
+                                    : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]'
+                            )}
+                        >
+                            Brechas RACI: {pmiSummary.raciGaps}
+                        </span>
+                        <span
+                            data-testid="list-view-pmi-overdue"
+                            className={clsx(
+                                'inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-bold border',
+                                pmiSummary.overdueCount > 0
+                                    ? 'border-[hsl(var(--destructive)/0.3)] bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))]'
+                                    : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]'
+                            )}
+                        >
+                            Vencidas: {pmiSummary.overdueCount}
+                        </span>
+                    </div>
                 </div>
 
-                <span className="text-2xs text-[hsl(var(--text-secondary))]">
-                    {displayedTasks.length} de {tasks.length} actividades
-                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                    <div
+                        data-testid="list-view-pmi-filters"
+                        className="inline-flex items-center gap-1 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-0.5"
+                    >
+                        <button
+                            type="button"
+                            data-testid="list-filter-all"
+                            onClick={() => setPmiFilter('all')}
+                            className={clsx(
+                                'px-2 py-0.5 rounded-md text-2xs font-bold transition-colors',
+                                pmiFilter === 'all'
+                                    ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
+                                    : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]'
+                            )}
+                        >
+                            Todas
+                        </button>
+                        <button
+                            type="button"
+                            data-testid="list-filter-overdue"
+                            onClick={() => setPmiFilter('overdue')}
+                            className={clsx(
+                                'px-2 py-0.5 rounded-md text-2xs font-bold transition-colors',
+                                pmiFilter === 'overdue'
+                                    ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
+                                    : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]'
+                            )}
+                        >
+                            Vencidas
+                        </button>
+                        <button
+                            type="button"
+                            data-testid="list-filter-raci-gap"
+                            onClick={() => setPmiFilter('raci_gap')}
+                            className={clsx(
+                                'px-2 py-0.5 rounded-md text-2xs font-bold transition-colors',
+                                pmiFilter === 'raci_gap'
+                                    ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
+                                    : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]'
+                            )}
+                        >
+                            Sin RACI
+                        </button>
+                    </div>
+
+                    <span className="text-2xs text-[hsl(var(--text-secondary))]">
+                        {displayedTasks.length} de {tasks.length} actividades
+                    </span>
+                </div>
             </div>
 
             {/* ── STICKY QUICK-ADD BAR ── */}

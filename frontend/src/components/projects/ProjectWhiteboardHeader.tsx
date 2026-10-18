@@ -3,9 +3,23 @@
 import { useEffect, useState } from "react";
 import { Cloud, Loader2, PencilRuler, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
+import clsx from "clsx";
 import { RightPanel } from "@/components/ui/RightPanel";
 
 export type WhiteboardSaveStatus = "idle" | "saving" | "saved" | "error";
+
+// PMI §5.2 & §10.1 — Modos de taller de modelado colaborativo.
+export const PMI_WORKSHOP_MODES = [
+  { value: "wbs_pdm", label: "Modelado WBS / Red PDM" },
+  { value: "risk_ishikawa", label: "Taller de Riesgos / Ishikawa" },
+  { value: "stakeholder_map", label: "Mapa de Interesados / Impacto" },
+] as const;
+
+export type PmiWorkshopMode = (typeof PMI_WORKSHOP_MODES)[number]["value"];
+
+export function getPmiWorkshopModeLabel(mode: PmiWorkshopMode): string {
+  return PMI_WORKSHOP_MODES.find((m) => m.value === mode)?.label ?? PMI_WORKSHOP_MODES[0].label;
+}
 
 interface Props {
   title: string;
@@ -20,6 +34,7 @@ export default function ProjectWhiteboardHeader({ title, saveStatus, isDirty, ha
   const [confirmClose, setConfirmClose] = useState(false);
   const [closeAfterSave, setCloseAfterSave] = useState(false);
   const [closeSaveFailed, setCloseSaveFailed] = useState(false);
+  const [pmiWorkshopMode, setPmiWorkshopMode] = useState<PmiWorkshopMode>("wbs_pdm");
 
   useEffect(() => {
     if (!closeAfterSave) return;
@@ -47,6 +62,17 @@ export default function ProjectWhiteboardHeader({ title, saveStatus, isDirty, ha
     onClose();
   };
 
+  // PMI §5.2 & §10.1 — Indicador de Integridad OPA (prioridad de estados).
+  const pmiOpaStatus = hasConflict
+    ? { label: "Conflicto de Concurrencia OPA", tone: "text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.12)] border-[hsl(var(--destructive)/0.4)]" }
+    : saveStatus === "saving"
+      ? { label: "Sincronizando Artefacto...", tone: "text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.12)] border-[hsl(var(--primary)/0.4)]" }
+      : saveStatus === "error"
+        ? { label: "Error de Sincronizacion", tone: "text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.12)] border-[hsl(var(--destructive)/0.4)]" }
+        : isDirty
+          ? { label: "Cambios Locales Pendientes", tone: "text-[hsl(var(--warning))] bg-[hsl(var(--warning)/0.12)] border-[hsl(var(--warning)/0.4)]" }
+          : { label: "Sincronizado con OPA", tone: "text-[hsl(var(--success))] bg-[hsl(var(--success)/0.12)] border-[hsl(var(--success)/0.4)]" };
+
   return (
     <>
       <header className="h-11 px-4 shrink-0 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--surface-1))] shadow-sm">
@@ -58,6 +84,44 @@ export default function ProjectWhiteboardHeader({ title, saveStatus, isDirty, ha
             {title || "Pizarra del Proyecto"}
           </span>
           <div className="ml-2 flex shrink-0 items-center gap-1.5" role="status" aria-live="polite">
+            {/* Franja de Gobernanza de Modelado Colaborativo y Sincronización OPA — PMI §5.2 & §10.1 */}
+            <div
+              data-testid="whiteboard-header-pmi-strip"
+              aria-label="Gobernanza PMI del taller"
+              className="hidden md:flex items-center gap-1.5 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 py-0.5"
+            >
+              <select
+                data-testid="whiteboard-pmi-mode-select"
+                aria-label="Modo de taller PMI"
+                value={pmiWorkshopMode}
+                onChange={(event) => {
+                  const next = event.target.value as PmiWorkshopMode;
+                  setPmiWorkshopMode(next);
+                }}
+                className="bg-transparent text-2xs font-semibold text-[hsl(var(--foreground))] outline-none"
+              >
+                {PMI_WORKSHOP_MODES.map((mode) => (
+                  <option key={mode.value} value={mode.value} className="text-[hsl(var(--foreground))]">
+                    {mode.label}
+                  </option>
+                ))}
+              </select>
+              <span
+                data-testid="whiteboard-pmi-active-mode"
+                className="rounded-full bg-[hsl(var(--primary)/0.12)] px-2 py-0.5 text-2xs font-bold text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.4)]"
+              >
+                {getPmiWorkshopModeLabel(pmiWorkshopMode)}
+              </span>
+              <span
+                data-testid="whiteboard-pmi-opa-status"
+                className={clsx(
+                  "rounded-full px-2 py-0.5 text-2xs font-bold border",
+                  pmiOpaStatus.tone
+                )}
+              >
+                {pmiOpaStatus.label}
+              </span>
+            </div>
             {saveStatus === "saving" ? (
               <>
                 <Loader2 size={10} className="animate-spin text-[hsl(var(--primary))]" />

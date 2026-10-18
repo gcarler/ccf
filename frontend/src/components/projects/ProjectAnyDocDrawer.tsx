@@ -194,6 +194,48 @@ export function ProjectAnyDocDrawer({
             width="w-full sm:max-w-2xl md:max-w-3xl"
         >
             <div className="p-4 sm:p-6 space-y-6">
+                {/* Tarjeta de Ingesta de Conocimiento y Activos OPA PMI §4.4 */}
+                <div
+                    data-testid="anydoc-pmi-opa-card"
+                    className="p-3.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2)/0.5)] space-y-2.5"
+                >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
+                            <Sparkles size={13} className="text-[hsl(var(--primary))]" />
+                            Activos de Procesos de la Organización (OPA PMI §4.4)
+                        </span>
+                        <span className="text-2xs font-semibold px-2 py-0.5 rounded-full border border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]">
+                            Repositorio de Conocimiento
+                        </span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2.5 py-1.5">
+                            <span className="text-2xs font-bold text-[hsl(var(--foreground))] block">
+                                Actas y Gobernanza
+                            </span>
+                            <span className="text-2xs text-[hsl(var(--muted-foreground))] block">
+                                Project Charter, minutas CCB y aprobaciones
+                            </span>
+                        </div>
+                        <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2.5 py-1.5">
+                            <span className="text-2xs font-bold text-[hsl(var(--foreground))] block">
+                                Líneas Base y Matrices
+                            </span>
+                            <span className="text-2xs text-[hsl(var(--muted-foreground))] block">
+                                Diccionario EDT/WBS, presupuesto BAC y riesgos
+                            </span>
+                        </div>
+                        <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2.5 py-1.5">
+                            <span className="text-2xs font-bold text-[hsl(var(--foreground))] block">
+                                Lecciones Aprendidas y Cierre
+                            </span>
+                            <span className="text-2xs text-[hsl(var(--muted-foreground))] block">
+                                Retrospectivas, transferencia y cierre §4.7
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Drag and Drop Zone */}
                 <div
                     onDragOver={(e) => e.preventDefault()}
@@ -240,7 +282,16 @@ export function ProjectAnyDocDrawer({
                 )}
 
                 {/* Conversion Results */}
-                {conversion && !isConverting && (
+                {conversion && !isConverting && (() => {
+                    const combinedSource = `${conversion.filename || ''} ${conversion.markdown || ''}`;
+                    const opaType = /acta|charter|comite|patrocinador|alcance|objetivo/i.test(combinedSource)
+                        ? 'Acta / Gobernanza PMI'
+                        : /cronograma|presupuesto|riesgo|edt|wbs|evm|indicador|\|.*\|/i.test(combinedSource)
+                        ? 'Matriz / Línea Base Técnica'
+                        : 'Base de Conocimiento / Lecciones Aprendidas';
+                    const hasRichGfm = (/^#{1,3}\s+/m.test(conversion.markdown || '') || /\|.*\|/.test(conversion.markdown || '')) && conversion.word_count >= 5;
+
+                    return (
                     <div className="space-y-4">
                         {/* Header Stats */}
                         <div className="p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] flex flex-wrap items-center justify-between gap-3">
@@ -279,6 +330,34 @@ export function ProjectAnyDocDrawer({
                                     <span className="text-[hsl(var(--muted-foreground))]">Caracteres</span>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Diagnóstico de Clasificación OPA PMI */}
+                        <div
+                            data-testid="anydoc-pmi-opa-diagnostics"
+                            className="p-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2)/0.6)] flex flex-wrap items-center justify-between gap-2"
+                        >
+                            <div className="flex items-center gap-2">
+                                <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                                    Clasificación OPA:
+                                </span>
+                                <span
+                                    data-testid="anydoc-pmi-opa-type"
+                                    className="px-2 py-0.5 rounded-md text-2xs font-bold border border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]"
+                                >
+                                    {opaType}
+                                </span>
+                            </div>
+                            <span
+                                data-testid="anydoc-pmi-structure-quality"
+                                className={
+                                    hasRichGfm
+                                        ? 'px-2 py-0.5 rounded-md text-2xs font-bold border border-[hsl(var(--success)/0.35)] bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))]'
+                                        : 'px-2 py-0.5 rounded-md text-2xs font-bold border border-[hsl(var(--warning)/0.35)] bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning))]'
+                                }
+                            >
+                                {hasRichGfm ? 'Estructura Óptima para Wiki PMI' : 'Texto Plano Básico'}
+                            </span>
                         </div>
 
                         {/* Actions Toolbar */}
@@ -403,8 +482,10 @@ export function ProjectAnyDocDrawer({
                             )}
                         </div>
                     </div>
-                )}
+                    );
+                })()}
             </div>
         </RightPanel>
     );
 }
+

@@ -170,4 +170,60 @@ describe("ProjectAnyDocDrawer Component", () => {
       expect(onPublishedMock).toHaveBeenCalled();
     });
   });
+
+  it("muestra la tarjeta de ingesta OPA PMI §4.4 con los tres pilares documentales", () => {
+    render(
+      <ProjectAnyDocDrawer
+        projectId="proj-test-123"
+        projectTitle="Proyecto Catedral"
+        isOpen={true}
+        onClose={vi.fn()}
+      />
+    );
+
+    const opaCard = screen.getByTestId("anydoc-pmi-opa-card");
+    expect(opaCard).toBeInTheDocument();
+    expect(opaCard).toHaveTextContent("Actas y Gobernanza");
+    expect(opaCard).toHaveTextContent("Líneas Base y Matrices");
+    expect(opaCard).toHaveTextContent("Lecciones Aprendidas y Cierre");
+  });
+
+  it("clasifica automáticamente el tipo de activo OPA y evalúa la calidad de estructura GFM tras convertir", async () => {
+    mocks.apiFetch.mockResolvedValueOnce({
+      filename: "acta-constitucion-charter.docx",
+      format: "docx",
+      markdown: "# Acta de Constitución del Proyecto\n\nAlcance aprobado por el comité patrocinador.",
+      char_count: 82,
+      word_count: 11,
+      processing_time_ms: 9.2,
+      engine: "anydoc_v0.2.4",
+      success: true,
+      error: null,
+    });
+
+    render(
+      <ProjectAnyDocDrawer
+        projectId="proj-test-123"
+        projectTitle="Proyecto Catedral"
+        isOpen={true}
+        onClose={vi.fn()}
+      />
+    );
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File(["charter content"], "acta-constitucion-charter.docx", {
+      type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("anydoc-pmi-opa-diagnostics")).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId("anydoc-pmi-opa-type")).toHaveTextContent("Acta / Gobernanza PMI");
+    expect(screen.getByTestId("anydoc-pmi-structure-quality")).toHaveTextContent(
+      "Estructura Óptima para Wiki PMI"
+    );
+  });
 });
+

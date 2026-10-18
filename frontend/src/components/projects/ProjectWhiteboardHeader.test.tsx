@@ -148,4 +148,130 @@ describe("ProjectWhiteboardHeader close safety", () => {
     expect(onClose).toHaveBeenCalledOnce();
     expect(screen.queryByRole("dialog", { name: "Cerrar pizarra" })).not.toBeInTheDocument();
   });
+
+  describe("PMI §5.2 & §10.1 — Gobernanza de Modelado Colaborativo y Sincronización OPA", () => {
+    it("cambia el modo de taller PMI desde el selector y refleja el badge activo", () => {
+      render(
+        <ProjectWhiteboardHeader
+          title="Pizarra de prueba"
+          saveStatus="idle"
+          isDirty={false}
+          saveNow={vi.fn()}
+          onClose={vi.fn()}
+        />,
+      );
+
+      expect(screen.getByTestId("whiteboard-header-pmi-strip")).toBeInTheDocument();
+      expect(screen.getByTestId("whiteboard-pmi-mode-select")).toHaveAttribute(
+        "aria-label",
+        "Modo de taller PMI",
+      );
+      expect(screen.getByTestId("whiteboard-pmi-active-mode")).toHaveTextContent(
+        "Modelado WBS / Red PDM",
+      );
+
+      fireEvent.change(screen.getByTestId("whiteboard-pmi-mode-select"), {
+        target: { value: "risk_ishikawa" },
+      });
+      expect(screen.getByTestId("whiteboard-pmi-active-mode")).toHaveTextContent(
+        "Taller de Riesgos / Ishikawa",
+      );
+
+      fireEvent.change(screen.getByTestId("whiteboard-pmi-mode-select"), {
+        target: { value: "stakeholder_map" },
+      });
+      expect(screen.getByTestId("whiteboard-pmi-active-mode")).toHaveTextContent(
+        "Mapa de Interesados / Impacto",
+      );
+    });
+
+    it("muestra el indicador de integridad OPA con la prioridad correcta de estados", () => {
+      // Conflicto de concurrencia: prioridad máxima
+      const { unmount: unmountConflict } = render(
+        <ProjectWhiteboardHeader
+          title="Pizarra de prueba"
+          saveStatus="error"
+          isDirty
+          hasConflict
+          saveNow={vi.fn()}
+          onClose={vi.fn()}
+        />,
+      );
+      expect(screen.getByTestId("whiteboard-pmi-opa-status")).toHaveTextContent(
+        "Conflicto de Concurrencia OPA",
+      );
+      expect(screen.getByTestId("whiteboard-pmi-opa-status")).toHaveClass(
+        "text-[hsl(var(--destructive))]",
+      );
+      unmountConflict();
+
+      // Sincronizando artefacto
+      const { unmount: unmountSaving } = render(
+        <ProjectWhiteboardHeader
+          title="Pizarra de prueba"
+          saveStatus="saving"
+          isDirty
+          saveNow={vi.fn()}
+          onClose={vi.fn()}
+        />,
+      );
+      expect(screen.getByTestId("whiteboard-pmi-opa-status")).toHaveTextContent(
+        "Sincronizando Artefacto...",
+      );
+      expect(screen.getByTestId("whiteboard-pmi-opa-status")).toHaveClass(
+        "text-[hsl(var(--primary))]",
+      );
+      unmountSaving();
+
+      // Error de sincronización sin conflicto
+      const { unmount: unmountError } = render(
+        <ProjectWhiteboardHeader
+          title="Pizarra de prueba"
+          saveStatus="error"
+          isDirty
+          saveNow={vi.fn()}
+          onClose={vi.fn()}
+        />,
+      );
+      expect(screen.getByTestId("whiteboard-pmi-opa-status")).toHaveTextContent(
+        "Error de Sincronizacion",
+      );
+      unmountError();
+
+      // Cambios locales pendientes
+      const { unmount: unmountDirty } = render(
+        <ProjectWhiteboardHeader
+          title="Pizarra de prueba"
+          saveStatus="idle"
+          isDirty
+          saveNow={vi.fn()}
+          onClose={vi.fn()}
+        />,
+      );
+      expect(screen.getByTestId("whiteboard-pmi-opa-status")).toHaveTextContent(
+        "Cambios Locales Pendientes",
+      );
+      expect(screen.getByTestId("whiteboard-pmi-opa-status")).toHaveClass(
+        "text-[hsl(var(--warning))]",
+      );
+      unmountDirty();
+
+      // Sincronizado con OPA (estado base)
+      render(
+        <ProjectWhiteboardHeader
+          title="Pizarra de prueba"
+          saveStatus="idle"
+          isDirty={false}
+          saveNow={vi.fn()}
+          onClose={vi.fn()}
+        />,
+      );
+      expect(screen.getByTestId("whiteboard-pmi-opa-status")).toHaveTextContent(
+        "Sincronizado con OPA",
+      );
+      expect(screen.getByTestId("whiteboard-pmi-opa-status")).toHaveClass(
+        "text-[hsl(var(--success))]",
+      );
+    });
+  });
 });
