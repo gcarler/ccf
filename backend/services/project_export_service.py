@@ -2996,6 +2996,7 @@ __all__ = [
     "audit_executive_report_disaster_recovery_rto_rpo_readiness",
     "audit_executive_report_software_license_true_up_and_shelfware",
     "audit_executive_report_pentest_remediation_sla_and_zero_trust",
+    "audit_executive_report_esg_carbon_footprint_and_green_cloud_pue",
     "ProjectExportService",
 ]
 
@@ -6468,3 +6469,89 @@ def audit_executive_report_pentest_remediation_sla_and_zero_trust(
 ProjectExportService.audit_executive_report_pentest_remediation_sla_and_zero_trust = staticmethod(
     audit_executive_report_pentest_remediation_sla_and_zero_trust
 )
+
+
+def audit_executive_report_esg_carbon_footprint_and_green_cloud_pue(
+    workloads: list[dict[str, Any]],
+    *,
+    max_pue_ratio: float = 1.4,
+    max_carbon_intensity_g_per_kwh: float = 350.0,
+    carbon_budget_kg_co2e: float = 1000.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §1.2.6 & §9.6 — Executive Report ESG Carbon Footprint (Scope 2/3), Green Cloud PUE & Sustainability Budget Auditor."""
+    inefficient_pue_workload_ids: list[str] = []
+    high_carbon_grid_workload_ids: list[str] = []
+
+    valid_workloads = (
+        [
+            w
+            for w in workloads
+            if isinstance(w, dict) and str(w.get("workload_id", "")).strip()
+        ]
+        if isinstance(workloads, list)
+        else []
+    )
+
+    total_net_co2e_raw = 0.0
+
+    for wl in valid_workloads:
+        workload_id = str(wl.get("workload_id", "")).strip()
+        energy_consumed_kwh = float(wl.get("energy_consumed_kwh", 0.0) or 0.0)
+        datacenter_pue = float(
+            wl.get("datacenter_pue", 1.2)
+            if wl.get("datacenter_pue") is not None
+            else 1.2
+        )
+        grid_carbon_intensity_g_per_kwh = float(
+            wl.get("grid_carbon_intensity_g_per_kwh", 250.0)
+            if wl.get("grid_carbon_intensity_g_per_kwh") is not None
+            else 250.0
+        )
+        renewable_energy_offset_pct = float(
+            wl.get("renewable_energy_offset_pct", 0.0) or 0.0
+        )
+
+        gross_co2e_kg = (
+            energy_consumed_kwh
+            * datacenter_pue
+            * grid_carbon_intensity_g_per_kwh
+        ) / 1000.0
+        offset_clamped = min(max(renewable_energy_offset_pct, 0.0), 100.0)
+        net_co2e_kg = gross_co2e_kg * (1.0 - offset_clamped / 100.0)
+        total_net_co2e_raw += net_co2e_kg
+
+        if datacenter_pue > max_pue_ratio:
+            inefficient_pue_workload_ids.append(workload_id)
+
+        if grid_carbon_intensity_g_per_kwh > max_carbon_intensity_g_per_kwh:
+            high_carbon_grid_workload_ids.append(workload_id)
+
+    total_net_co2e_kg = round(total_net_co2e_raw, 2)
+    budget_utilization_pct = (
+        round((total_net_co2e_kg / carbon_budget_kg_co2e) * 100.0, 2)
+        if carbon_budget_kg_co2e > 0.0
+        else 0.0
+    )
+
+    if total_net_co2e_kg > carbon_budget_kg_co2e:
+        esg_sustainability_status = "CARBON_BUDGET_BREACH"
+    elif inefficient_pue_workload_ids or high_carbon_grid_workload_ids:
+        esg_sustainability_status = "INEFFICIENT_INFRASTRUCTURE"
+    else:
+        esg_sustainability_status = "GREEN_SUSTAINABLE"
+
+    return {
+        "total_workloads_evaluated": len(valid_workloads),
+        "total_net_co2e_kg": total_net_co2e_kg,
+        "budget_utilization_pct": budget_utilization_pct,
+        "inefficient_pue_workload_ids": inefficient_pue_workload_ids,
+        "high_carbon_grid_workload_ids": high_carbon_grid_workload_ids,
+        "esg_sustainability_status": esg_sustainability_status,
+        "is_esg_compliant": esg_sustainability_status == "GREEN_SUSTAINABLE",
+    }
+
+
+ProjectExportService.audit_executive_report_esg_carbon_footprint_and_green_cloud_pue = staticmethod(
+    audit_executive_report_esg_carbon_footprint_and_green_cloud_pue
+)
+

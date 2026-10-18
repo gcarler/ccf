@@ -8302,3 +8302,140 @@ def test_audit_executive_report_pentest_remediation_sla_and_zero_trust_staticmet
         "audit_executive_report_pentest_remediation_sla_and_zero_trust"
         in mod.__all__
     )
+
+
+def test_audit_executive_report_esg_carbon_footprint_green_sustainable():
+    """Caso 1: Workloads con PUE eficiente (<=1.4), red limpia (<=350 g/kWh) y emisiones dentro del presupuesto -> GREEN_SUSTAINABLE."""
+    from backend.services.project_export_service import (
+        audit_executive_report_esg_carbon_footprint_and_green_cloud_pue,
+    )
+
+    workloads = [
+        {
+            "workload_id": "WKL-K8S-EU",
+            "energy_consumed_kwh": 1000.0,
+            "datacenter_pue": 1.15,
+            "grid_carbon_intensity_g_per_kwh": 200.0,
+            "renewable_energy_offset_pct": 50.0,  # gross=230 kg, net=115 kg
+        },
+        {
+            "workload_id": "WKL-DB-US",
+            "energy_consumed_kwh": 500.0,
+            "datacenter_pue": 1.20,
+            "grid_carbon_intensity_g_per_kwh": 300.0,
+            "renewable_energy_offset_pct": 0.0,  # gross=180 kg, net=180 kg
+        },
+    ]
+    res = audit_executive_report_esg_carbon_footprint_and_green_cloud_pue(
+        workloads,
+        max_pue_ratio=1.4,
+        max_carbon_intensity_g_per_kwh=350.0,
+        carbon_budget_kg_co2e=1000.0,
+    )
+    assert res["total_workloads_evaluated"] == 2
+    assert res["total_net_co2e_kg"] == 295.0
+    assert res["budget_utilization_pct"] == 29.5
+    assert res["inefficient_pue_workload_ids"] == []
+    assert res["high_carbon_grid_workload_ids"] == []
+    assert res["esg_sustainability_status"] == "GREEN_SUSTAINABLE"
+    assert res["is_esg_compliant"] is True
+
+
+def test_audit_executive_report_esg_carbon_footprint_inefficient_infrastructure():
+    """Caso 2: PUE > 1.4 o intensidad de red > 350 g/kWh sin exceder presupuesto de carbono -> INEFFICIENT_INFRASTRUCTURE."""
+    from backend.services.project_export_service import (
+        audit_executive_report_esg_carbon_footprint_and_green_cloud_pue,
+    )
+
+    workloads = [
+        {
+            "workload_id": "WKL-LEGACY-DC",
+            "energy_consumed_kwh": 400.0,
+            "datacenter_pue": 1.65,
+            "grid_carbon_intensity_g_per_kwh": 450.0,
+            "renewable_energy_offset_pct": 20.0,  # gross=297 kg, net=237.6 kg
+        }
+    ]
+    res = audit_executive_report_esg_carbon_footprint_and_green_cloud_pue(
+        workloads,
+        max_pue_ratio=1.4,
+        max_carbon_intensity_g_per_kwh=350.0,
+        carbon_budget_kg_co2e=1000.0,
+    )
+    assert res["total_workloads_evaluated"] == 1
+    assert res["total_net_co2e_kg"] == 237.6
+    assert res["budget_utilization_pct"] == 23.76
+    assert res["inefficient_pue_workload_ids"] == ["WKL-LEGACY-DC"]
+    assert res["high_carbon_grid_workload_ids"] == ["WKL-LEGACY-DC"]
+    assert res["esg_sustainability_status"] == "INEFFICIENT_INFRASTRUCTURE"
+    assert res["is_esg_compliant"] is False
+
+
+def test_audit_executive_report_esg_carbon_footprint_budget_breach():
+    """Caso 3: Emisiones netas superan el presupuesto de carbono -> CARBON_BUDGET_BREACH."""
+    from backend.services.project_export_service import (
+        audit_executive_report_esg_carbon_footprint_and_green_cloud_pue,
+    )
+
+    workloads = [
+        {
+            "workload_id": "WKL-GPU-TRAIN",
+            "energy_consumed_kwh": 5000.0,
+            "datacenter_pue": 1.50,
+            "grid_carbon_intensity_g_per_kwh": 400.0,
+            "renewable_energy_offset_pct": 10.0,  # gross=3000 kg, net=2700 kg > 1000 kg
+        }
+    ]
+    res = audit_executive_report_esg_carbon_footprint_and_green_cloud_pue(
+        workloads,
+        max_pue_ratio=1.4,
+        max_carbon_intensity_g_per_kwh=350.0,
+        carbon_budget_kg_co2e=1000.0,
+    )
+    assert res["total_workloads_evaluated"] == 1
+    assert res["total_net_co2e_kg"] == 2700.0
+    assert res["budget_utilization_pct"] == 270.0
+    assert res["inefficient_pue_workload_ids"] == ["WKL-GPU-TRAIN"]
+    assert res["high_carbon_grid_workload_ids"] == ["WKL-GPU-TRAIN"]
+    assert res["esg_sustainability_status"] == "CARBON_BUDGET_BREACH"
+    assert res["is_esg_compliant"] is False
+
+
+def test_audit_executive_report_esg_carbon_footprint_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en ProjectExportService + __all__."""
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_esg_carbon_footprint_and_green_cloud_pue,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_executive_report_esg_carbon_footprint_and_green_cloud_pue(payload)  # type: ignore[arg-type]
+        assert empty["total_workloads_evaluated"] == 0
+        assert empty["total_net_co2e_kg"] == 0.0
+        assert empty["budget_utilization_pct"] == 0.0
+        assert empty["inefficient_pue_workload_ids"] == []
+        assert empty["high_carbon_grid_workload_ids"] == []
+        assert empty["esg_sustainability_status"] == "GREEN_SUSTAINABLE"
+        assert empty["is_esg_compliant"] is True
+
+    sample = [
+        {
+            "workload_id": "WKL-99",
+            "energy_consumed_kwh": 200.0,
+            "datacenter_pue": 1.1,
+            "grid_carbon_intensity_g_per_kwh": 150.0,
+            "renewable_energy_offset_pct": 100.0,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_esg_carbon_footprint_and_green_cloud_pue(
+            sample
+        )
+        == audit_executive_report_esg_carbon_footprint_and_green_cloud_pue(sample)
+    )
+    assert (
+        "audit_executive_report_esg_carbon_footprint_and_green_cloud_pue"
+        in mod.__all__
+    )
+
