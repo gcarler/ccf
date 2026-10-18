@@ -267,6 +267,57 @@ def summarize_projects_route_path_complexity(
     }
 
 
+def summarize_projects_subresource_domains(
+    inventory: list[dict[str, Any]] | None,
+) -> dict[str, Any]:
+    """Agrupa un inventario de rutas de proyectos por dominio de subrecurso (PMBOK 8.2 / 10.2).
+
+    Ignora entradas que no sean ``dict``. Para cada ruta ``path``, extrae los segmentos
+    separados por ``'/'`` ignorando vacíos, ``'api'``, ``'v1'``, ``'projects'`` y
+    parámetros ``'{...}'``, tomando el primer segmento restante en minúsculas como
+    nombre de dominio (o ``'root'`` si no queda ningún segmento literal).
+    """
+    counts: dict[str, int] = {}
+    total_routes = 0
+
+    for item in inventory or []:
+        if not isinstance(item, dict):
+            continue
+        total_routes += 1
+        path = str(item.get("path") or "").strip()
+        remaining = [
+            seg.strip().lower()
+            for seg in path.split("/")
+            if seg.strip()
+            and seg.strip().lower() not in {"api", "v1", "projects"}
+            and not (seg.strip().startswith("{") and seg.strip().endswith("}"))
+        ]
+        domain = remaining[0] if remaining else "root"
+        counts[domain] = counts.get(domain, 0) + 1
+
+    domain_counts = dict(sorted(counts.items()))
+    unique_domains_count = len(domain_counts)
+
+    if total_routes == 0:
+        top_domain = "none"
+        posture = "EMPTY_INVENTORY"
+    else:
+        top_domain = min(domain_counts.items(), key=lambda kv: (-kv[1], kv[0]))[0]
+        if unique_domains_count >= 5:
+            posture = "COMPREHENSIVE_DOMAIN_MODULARITY"
+        else:
+            posture = "NARROW_DOMAIN_SCOPE"
+
+    return {
+        "total_routes": total_routes,
+        "unique_domains_count": unique_domains_count,
+        "domain_counts": domain_counts,
+        "top_domain": top_domain,
+        "posture": posture,
+    }
+
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()

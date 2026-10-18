@@ -414,3 +414,101 @@ def test_route_path_complexity_empty_openapi_and_non_project_routes():
     assert res_non_project["total_project_paths"] == 0
     assert res_non_project["hierarchy_status"] == "no_project_routes"
 
+
+# ─── summarize_projects_subresource_domains (pure helper) ─────────────────────
+
+
+def test_subresource_domains_comprehensive_modularity():
+    """Al menos 5 dominios únicos de subrecurso -> COMPREHENSIVE_DOMAIN_MODULARITY."""
+    inventory = [
+        {"path": "/api/v1/projects"},
+        {"path": "/api/v1/projects/{project_id}"},
+        {"path": "/api/v1/projects/{project_id}/tasks"},
+        {"path": "/api/v1/projects/{project_id}/tasks/{task_id}"},
+        {"path": "/api/v1/projects/{project_id}/tasks/{task_id}/comments"},
+        {"path": "/api/v1/projects/{project_id}/risks"},
+        {"path": "/api/v1/projects/{project_id}/stakeholders"},
+        {"path": "/api/v1/projects/{project_id}/evm/summary"},
+    ]
+
+    res = audit_projects_api_contracts.summarize_projects_subresource_domains(inventory)
+
+    assert res == {
+        "total_routes": 8,
+        "unique_domains_count": 5,
+        "domain_counts": {
+            "evm": 1,
+            "risks": 1,
+            "root": 2,
+            "stakeholders": 1,
+            "tasks": 3,
+        },
+        "top_domain": "tasks",
+        "posture": "COMPREHENSIVE_DOMAIN_MODULARITY",
+    }
+
+
+def test_subresource_domains_narrow_scope_and_alphabetical_tie_break():
+    """Menos de 5 dominios -> NARROW_DOMAIN_SCOPE y desempate alfabético ascendente en top_domain."""
+    inventory = [
+        {"path": "/api/projects/{id}/Wiki/pages"},
+        {"path": "/api/projects/{id}/wiki/{page_id}"},
+        {"path": "/api/v1/projects/{id}/budget/expenses"},
+        {"path": "/api/v1/projects/{id}/Budget/summary"},
+        {"path": "/api/v1/projects/{id}/charter"},
+    ]
+
+    res = audit_projects_api_contracts.summarize_projects_subresource_domains(inventory)
+
+    assert res == {
+        "total_routes": 5,
+        "unique_domains_count": 3,
+        "domain_counts": {
+            "budget": 2,
+            "charter": 1,
+            "wiki": 2,
+        },
+        "top_domain": "budget",
+        "posture": "NARROW_DOMAIN_SCOPE",
+    }
+
+
+def test_subresource_domains_root_fallback_and_non_dict_filtering():
+    """Ignora entradas no-dict y asigna 'root' cuando solo hay prefijos o parámetros."""
+    inventory = [
+        None,
+        "invalid-entry",
+        123,
+        {"path": "/api/v1/projects"},
+        {"path": "/api/v1/projects/{project_id}"},
+        {"path": ""},
+    ]
+
+    res = audit_projects_api_contracts.summarize_projects_subresource_domains(inventory)  # type: ignore[arg-type]
+
+    assert res == {
+        "total_routes": 3,
+        "unique_domains_count": 1,
+        "domain_counts": {"root": 3},
+        "top_domain": "root",
+        "posture": "NARROW_DOMAIN_SCOPE",
+    }
+
+
+def test_subresource_domains_empty_inventory():
+    """Inventario vacío o None -> EMPTY_INVENTORY y top_domain='none'."""
+    expected = {
+        "total_routes": 0,
+        "unique_domains_count": 0,
+        "domain_counts": {},
+        "top_domain": "none",
+        "posture": "EMPTY_INVENTORY",
+    }
+    assert audit_projects_api_contracts.summarize_projects_subresource_domains(None) == expected
+    assert audit_projects_api_contracts.summarize_projects_subresource_domains([]) == expected
+    assert (
+        audit_projects_api_contracts.summarize_projects_subresource_domains(["not-a-dict"])  # type: ignore[list-item]
+        == expected
+    )
+
+
