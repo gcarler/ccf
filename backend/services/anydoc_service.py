@@ -3026,6 +3026,7 @@ __all__ = [
     "audit_markdown_admonition_callout_and_actionability_hygiene",
     "audit_markdown_heading_anchor_slug_and_fragment_hygiene",
     "audit_markdown_table_column_parity_and_empty_cell_hygiene",
+    "audit_markdown_blockquote_attribution_and_nesting_hygiene",
     "AnydocService",
 ]
 
@@ -7145,4 +7146,136 @@ AnyDocService.audit_markdown_table_column_parity_and_empty_cell_hygiene = static
 )
 AnydocService.audit_markdown_table_column_parity_and_empty_cell_hygiene = staticmethod(
     audit_markdown_table_column_parity_and_empty_cell_hygiene
+)
+
+
+_GH_ALERT_MARKER_RE = re.compile(
+    r"^\s*>\s*\[!(?:NOTE|TIP|IMPORTANT|WARNING|CAUTION)\b",
+    re.IGNORECASE,
+)
+
+
+def audit_markdown_blockquote_attribution_and_nesting_hygiene(
+    markdown_text: str,
+    *,
+    max_nesting_depth: int = 2,
+    max_quote_block_lines: int = 15,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 — AnyDoc Markdown Blockquote Nesting Depth, Empty Quote Line & Citation Attribution Hygiene Auditor."""
+    if not isinstance(markdown_text, str) or not markdown_text.strip():
+        return {
+            "total_blockquotes": 0,
+            "deeply_nested_quote_lines": [],
+            "oversized_quote_start_lines": [],
+            "empty_blockquote_start_lines": [],
+            "blockquote_hygiene_status": "CLEAN",
+            "is_blockquote_hygiene_clean": True,
+            "recommendations": [],
+        }
+
+    lines = markdown_text.splitlines()
+    in_fence = False
+    fence_char = ""
+
+    raw_blocks: list[list[tuple[int, str]]] = []
+    current_block: list[tuple[int, str]] = []
+
+    for idx, raw_line in enumerate(lines, start=1):
+        stripped = raw_line.strip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            marker = stripped[:3]
+            if not in_fence:
+                in_fence = True
+                fence_char = marker
+            elif stripped.startswith(fence_char):
+                in_fence = False
+                fence_char = ""
+            if current_block:
+                raw_blocks.append(current_block)
+                current_block = []
+            continue
+
+        if in_fence:
+            if current_block:
+                raw_blocks.append(current_block)
+                current_block = []
+            continue
+
+        if stripped.startswith(">"):
+            current_block.append((idx, stripped))
+        else:
+            if current_block:
+                raw_blocks.append(current_block)
+                current_block = []
+
+    if current_block:
+        raw_blocks.append(current_block)
+
+    quote_blocks: list[list[tuple[int, str]]] = []
+    for block in raw_blocks:
+        if any(_GH_ALERT_MARKER_RE.match(line_text) for _, line_text in block):
+            continue
+        quote_blocks.append(block)
+
+    total_blockquotes = len(quote_blocks)
+    deeply_nested_quote_lines: list[int] = []
+    oversized_quote_start_lines: list[int] = []
+    empty_blockquote_start_lines: list[int] = []
+
+    for block in quote_blocks:
+        start_line = block[0][0]
+        if len(block) > max_quote_block_lines:
+            oversized_quote_start_lines.append(start_line)
+
+        has_non_empty_text = False
+        for line_no, line_text in block:
+            m = re.match(r"^(?:>\s*)+", line_text)
+            prefix = m.group(0) if m else ">"
+            depth = prefix.count(">")
+            content_after = line_text[len(prefix) :].strip()
+            if content_after:
+                has_non_empty_text = True
+            if depth > max_nesting_depth:
+                deeply_nested_quote_lines.append(line_no)
+
+        if not has_non_empty_text:
+            empty_blockquote_start_lines.append(start_line)
+
+    recommendations: list[str] = []
+    if empty_blockquote_start_lines:
+        recommendations.append(
+            f"Remove or populate empty blockquote block(s) starting at line(s): {', '.join(map(str, empty_blockquote_start_lines))}."
+        )
+    if deeply_nested_quote_lines:
+        recommendations.append(
+            f"Flatten blockquote nesting exceeding depth {max_nesting_depth} at line(s): {', '.join(map(str, deeply_nested_quote_lines))}."
+        )
+    if oversized_quote_start_lines:
+        recommendations.append(
+            f"Split or summarize oversized blockquote block(s) (> {max_quote_block_lines} lines) starting at line(s): {', '.join(map(str, oversized_quote_start_lines))}."
+        )
+
+    if empty_blockquote_start_lines:
+        blockquote_hygiene_status = "CRITICAL"
+    elif deeply_nested_quote_lines or oversized_quote_start_lines:
+        blockquote_hygiene_status = "WARNING"
+    else:
+        blockquote_hygiene_status = "CLEAN"
+
+    return {
+        "total_blockquotes": total_blockquotes,
+        "deeply_nested_quote_lines": deeply_nested_quote_lines,
+        "oversized_quote_start_lines": oversized_quote_start_lines,
+        "empty_blockquote_start_lines": empty_blockquote_start_lines,
+        "blockquote_hygiene_status": blockquote_hygiene_status,
+        "is_blockquote_hygiene_clean": blockquote_hygiene_status == "CLEAN",
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_markdown_blockquote_attribution_and_nesting_hygiene = staticmethod(
+    audit_markdown_blockquote_attribution_and_nesting_hygiene
+)
+AnydocService.audit_markdown_blockquote_attribution_and_nesting_hygiene = staticmethod(
+    audit_markdown_blockquote_attribution_and_nesting_hygiene
 )

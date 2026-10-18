@@ -2521,6 +2521,8 @@ __all__ = [
     "audit_wiki_slo_error_budget_and_runbook_linkage",
     "audit_wiki_chaos_gameday_resilience_and_action_closure",
     "audit_wiki_api_deprecation_sunset_and_migration_readiness",
+    "audit_wiki_operational_runbook_idempotency_and_preflight_hygiene",
+    "audit_wiki_database_migration_expand_contract_and_lock_safety",
     "WikiPMIService",
 ]
 
@@ -5722,3 +5724,207 @@ WikiPMIService.audit_wiki_api_deprecation_sunset_and_migration_readiness = stati
     audit_wiki_api_deprecation_sunset_and_migration_readiness
 )
 
+
+def audit_wiki_operational_runbook_idempotency_and_preflight_hygiene(
+    runbooks: list[dict[str, Any]],
+    *,
+    max_days_since_dry_run: int = 90,
+    max_manual_steps_count: int = 8,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §11.2 — Wiki Operational Runbook Idempotency, Pre-Flight Check & Rollback Verification Auditor."""
+    valid_runbooks: list[dict[str, Any]] = []
+    for item in runbooks or []:
+        if not isinstance(item, dict):
+            continue
+        rid = str(item.get("runbook_id") or "").strip()
+        if not rid:
+            continue
+        valid_runbooks.append({**item, "_rid": rid})
+
+    if not valid_runbooks:
+        return {
+            "total_runbooks": 0,
+            "missing_preflight_or_rollback_ids": [],
+            "non_idempotent_runbook_ids": [],
+            "toil_heavy_runbook_ids": [],
+            "stale_dry_run_runbook_ids": [],
+            "unlinked_alert_runbook_ids": [],
+            "runbook_governance_status": "PRODUCTION_GRADE",
+            "is_runbook_production_ready": True,
+            "recommendations": [],
+        }
+
+    missing_preflight_or_rollback_ids: list[str] = []
+    non_idempotent_runbook_ids: list[str] = []
+    toil_heavy_runbook_ids: list[str] = []
+    stale_dry_run_runbook_ids: list[str] = []
+    unlinked_alert_runbook_ids: list[str] = []
+
+    for rb in valid_runbooks:
+        rid = rb["_rid"]
+        has_preflight = bool(rb.get("has_preflight_validation_checks", False))
+        is_idempotent = bool(rb.get("is_idempotent_or_reentrant", False))
+        has_rollback = bool(rb.get("has_explicit_rollback_commands", False))
+        manual_steps = max(0, int(rb.get("manual_steps_count", 0) or 0))
+        days_since_dry_run = max(0, int(rb.get("days_since_last_dry_run", 0) or 0))
+
+        if "linked_alert_rule_id" in rb:
+            raw_alert = rb.get("linked_alert_rule_id")
+            alert_id = str(raw_alert).strip() if raw_alert is not None else ""
+        else:
+            alert_id = "ALERT-DEFAULT"
+
+        if not has_preflight or not has_rollback:
+            missing_preflight_or_rollback_ids.append(rid)
+        if not is_idempotent:
+            non_idempotent_runbook_ids.append(rid)
+        if manual_steps > max_manual_steps_count:
+            toil_heavy_runbook_ids.append(rid)
+        if days_since_dry_run > max_days_since_dry_run:
+            stale_dry_run_runbook_ids.append(rid)
+        if not alert_id:
+            unlinked_alert_runbook_ids.append(rid)
+
+    recommendations: list[str] = []
+    if missing_preflight_or_rollback_ids:
+        recommendations.append(
+            f"Add pre-flight validation checks and explicit rollback commands for runbook(s): {', '.join(missing_preflight_or_rollback_ids)}."
+        )
+    if non_idempotent_runbook_ids:
+        recommendations.append(
+            f"Refactor non-idempotent operational steps to be safely re-entrant in runbook(s): {', '.join(non_idempotent_runbook_ids)}."
+        )
+    if toil_heavy_runbook_ids:
+        recommendations.append(
+            f"Automate repetitive manual steps exceeding threshold ({max_manual_steps_count}) in runbook(s): {', '.join(toil_heavy_runbook_ids)}."
+        )
+    if stale_dry_run_runbook_ids:
+        recommendations.append(
+            f"Execute dry-run verification (> {max_days_since_dry_run} days elapsed) for runbook(s): {', '.join(stale_dry_run_runbook_ids)}."
+        )
+    if unlinked_alert_runbook_ids:
+        recommendations.append(
+            f"Link monitoring/alert rules to operational runbook(s): {', '.join(unlinked_alert_runbook_ids)}."
+        )
+
+    if missing_preflight_or_rollback_ids or non_idempotent_runbook_ids:
+        runbook_governance_status = "UNSAFE_RUNBOOK"
+    elif (
+        toil_heavy_runbook_ids
+        or stale_dry_run_runbook_ids
+        or unlinked_alert_runbook_ids
+    ):
+        runbook_governance_status = "WARNING"
+    else:
+        runbook_governance_status = "PRODUCTION_GRADE"
+
+    return {
+        "total_runbooks": len(valid_runbooks),
+        "missing_preflight_or_rollback_ids": missing_preflight_or_rollback_ids,
+        "non_idempotent_runbook_ids": non_idempotent_runbook_ids,
+        "toil_heavy_runbook_ids": toil_heavy_runbook_ids,
+        "stale_dry_run_runbook_ids": stale_dry_run_runbook_ids,
+        "unlinked_alert_runbook_ids": unlinked_alert_runbook_ids,
+        "runbook_governance_status": runbook_governance_status,
+        "is_runbook_production_ready": runbook_governance_status == "PRODUCTION_GRADE",
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_operational_runbook_idempotency_and_preflight_hygiene = staticmethod(
+    audit_wiki_operational_runbook_idempotency_and_preflight_hygiene
+)
+
+
+def audit_wiki_database_migration_expand_contract_and_lock_safety(
+    migrations: Any,
+    *,
+    max_lock_timeout_ms: int = 3000,
+) -> Dict[str, object]:
+    """Auditoría PMBOK 4.6 y 8.2: migraciones zero-downtime (expand-contract).
+
+    Evalúa por migración la reversibilidad (downgrade), el patrón
+    expand-contract para operaciones destructivas, el lock timeout
+    configurado (0 o por encima del máximo = riesgo) y la creación
+    concurrente de índices, determinando el estado de seguridad
+    (ZERO_DOWNTIME_SAFE / WARNING / OUTAGE_RISK).
+    """
+    entries = migrations if isinstance(migrations, list) else []
+    rows = [item for item in entries if isinstance(item, dict)]
+
+    irreversible_migration_ids: List[str] = []
+    unsafe_destructive_migration_ids: List[str] = []
+    missing_lock_timeout_migration_ids: List[str] = []
+    blocking_index_migration_ids: List[str] = []
+
+    for item in rows:
+        migration_id = item.get("migration_id")
+
+        if item.get("has_reversible_downgrade", False) is not True:
+            irreversible_migration_ids.append(migration_id)
+
+        if (
+            item.get("contains_destructive_drop_or_rename", False) is True
+            and item.get("uses_expand_contract_pattern", True) is not True
+        ):
+            unsafe_destructive_migration_ids.append(migration_id)
+
+        lock_timeout_ms = item.get("lock_timeout_ms_configured", 2000)
+        if (
+            not isinstance(lock_timeout_ms, (int, float))
+            or lock_timeout_ms == 0
+            or lock_timeout_ms > max_lock_timeout_ms
+        ):
+            missing_lock_timeout_migration_ids.append(migration_id)
+
+        if item.get("index_created_concurrently", True) is not True:
+            blocking_index_migration_ids.append(migration_id)
+
+    if (
+        irreversible_migration_ids
+        or unsafe_destructive_migration_ids
+        or blocking_index_migration_ids
+    ):
+        migration_governance_status = "OUTAGE_RISK"
+    elif missing_lock_timeout_migration_ids:
+        migration_governance_status = "WARNING"
+    else:
+        migration_governance_status = "ZERO_DOWNTIME_SAFE"
+
+    recommendations: List[str] = []
+    if irreversible_migration_ids:
+        recommendations.append(
+            "Add a reversible downgrade() to migrations: "
+            + ", ".join(str(m) for m in irreversible_migration_ids)
+        )
+    if unsafe_destructive_migration_ids:
+        recommendations.append(
+            "Split destructive drop/rename into expand-contract phases for migrations: "
+            + ", ".join(str(m) for m in unsafe_destructive_migration_ids)
+        )
+    if missing_lock_timeout_migration_ids:
+        recommendations.append(
+            f"Configure lock_timeout_ms between 1 and {max_lock_timeout_ms} ms for migrations: "
+            + ", ".join(str(m) for m in missing_lock_timeout_migration_ids)
+        )
+    if blocking_index_migration_ids:
+        recommendations.append(
+            "Create indexes CONCURRENTLY in migrations: "
+            + ", ".join(str(m) for m in blocking_index_migration_ids)
+        )
+
+    return {
+        "total_migrations": len(rows),
+        "irreversible_migration_ids": irreversible_migration_ids,
+        "unsafe_destructive_migration_ids": unsafe_destructive_migration_ids,
+        "missing_lock_timeout_migration_ids": missing_lock_timeout_migration_ids,
+        "blocking_index_migration_ids": blocking_index_migration_ids,
+        "migration_governance_status": migration_governance_status,
+        "is_migration_safe": migration_governance_status == "ZERO_DOWNTIME_SAFE",
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_database_migration_expand_contract_and_lock_safety = staticmethod(
+    audit_wiki_database_migration_expand_contract_and_lock_safety
+)

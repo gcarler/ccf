@@ -7585,3 +7585,142 @@ def test_evaluate_evm_learning_curve_cost_improvement_and_productivity_empty_and
         "evaluate_evm_learning_curve_cost_improvement_and_productivity" in mod.__all__
     )
 
+
+def test_evaluate_evm_milestone_payment_holdback_and_acceptance_gate_disbursement_breach():
+    from backend.services.project_evm_service import (
+        evaluate_evm_milestone_payment_holdback_and_acceptance_gate,
+    )
+
+    res = evaluate_evm_milestone_payment_holdback_and_acceptance_gate(
+        [
+            {
+                "milestone_id": "MS-01",
+                "scheduled_payment_amount": 100000.0,
+                "disbursed_amount": 50000.0,
+                "deliverable_formally_accepted": False,
+                "open_punchlist_defects": 0,
+                "warranty_holdback_retained": 0.0,
+            },
+            {
+                "milestone_id": "MS-02",
+                "scheduled_payment_amount": 80000.0,
+                "disbursed_amount": 85000.0,
+                "deliverable_formally_accepted": True,
+                "open_punchlist_defects": 0,
+                "warranty_holdback_retained": 5000.0,
+            },
+        ],
+        max_advance_disbursement_pct=20.0,
+    )
+    assert res["total_milestones"] == 2
+    assert res["total_scheduled_payments"] == 180000.0
+    assert res["total_disbursed_amount"] == 135000.0
+    assert res["unaccepted_disbursed_amount"] == 50000.0
+    assert res["advance_disbursement_share_pct"] == 27.78
+    assert res["premature_disbursement_milestone_ids"] == ["MS-01"]
+    assert res["overpaid_milestone_ids"] == ["MS-02"]
+    assert res["payment_gate_status"] == "DISBURSEMENT_BREACH"
+    assert res["is_payment_gate_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_evaluate_evm_milestone_payment_holdback_and_acceptance_gate_warning_punchlist_bypass():
+    from backend.services.project_evm_service import (
+        evaluate_evm_milestone_payment_holdback_and_acceptance_gate,
+    )
+
+    res = evaluate_evm_milestone_payment_holdback_and_acceptance_gate(
+        [
+            {
+                "milestone_id": "MS-10",
+                "scheduled_payment_amount": 50000.0,
+                "disbursed_amount": 50000.0,
+                "deliverable_formally_accepted": True,
+                "open_punchlist_defects": 3,
+                "warranty_holdback_retained": 0.0,
+            }
+        ],
+        max_advance_disbursement_pct=20.0,
+    )
+    assert res["premature_disbursement_milestone_ids"] == []
+    assert res["overpaid_milestone_ids"] == []
+    assert res["punchlist_bypass_milestone_ids"] == ["MS-10"]
+    assert res["payment_gate_status"] == "WARNING"
+    assert res["is_payment_gate_compliant"] is False
+
+
+def test_evaluate_evm_milestone_payment_holdback_and_acceptance_gate_gated_and_empty():
+    from backend.services.project_evm_service import (
+        evaluate_evm_milestone_payment_holdback_and_acceptance_gate,
+    )
+
+    empty = evaluate_evm_milestone_payment_holdback_and_acceptance_gate(
+        [{"milestone_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_milestones"] == 0
+    assert empty["total_scheduled_payments"] == 0.0
+    assert empty["total_disbursed_amount"] == 0.0
+    assert empty["unaccepted_disbursed_amount"] == 0.0
+    assert empty["advance_disbursement_share_pct"] == 0.0
+    assert empty["payment_gate_status"] == "GATED"
+    assert empty["is_payment_gate_compliant"] is True
+    assert empty["recommendations"] == []
+
+    gated = evaluate_evm_milestone_payment_holdback_and_acceptance_gate(
+        [
+            {
+                "milestone_id": "MS-20",
+                "scheduled_payment_amount": 100000.0,
+                "disbursed_amount": 90000.0,
+                "deliverable_formally_accepted": True,
+                "open_punchlist_defects": 2,
+                "warranty_holdback_retained": 10000.0,
+            },
+            {
+                "milestone_id": "MS-21",
+                "scheduled_payment_amount": 100000.0,
+                "disbursed_amount": 15000.0,
+                "deliverable_formally_accepted": False,
+                "open_punchlist_defects": 0,
+                "warranty_holdback_retained": 0.0,
+            },
+        ],
+        max_advance_disbursement_pct=20.0,
+    )
+    assert gated["total_milestones"] == 2
+    assert gated["advance_disbursement_share_pct"] == 7.5
+    assert gated["premature_disbursement_milestone_ids"] == []
+    assert gated["punchlist_bypass_milestone_ids"] == []
+    assert gated["overpaid_milestone_ids"] == []
+    assert gated["payment_gate_status"] == "GATED"
+    assert gated["is_payment_gate_compliant"] is True
+    assert gated["recommendations"] == []
+
+
+def test_evaluate_evm_milestone_payment_holdback_and_acceptance_gate_staticmethod_and_dunder_all():
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_milestone_payment_holdback_and_acceptance_gate,
+    )
+
+    sample = [
+        {
+            "milestone_id": "MS-99",
+            "scheduled_payment_amount": 40000.0,
+            "disbursed_amount": 40000.0,
+            "deliverable_formally_accepted": True,
+            "open_punchlist_defects": 0,
+            "warranty_holdback_retained": 0.0,
+        }
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_milestone_payment_holdback_and_acceptance_gate(
+            sample
+        )
+        == evaluate_evm_milestone_payment_holdback_and_acceptance_gate(sample)
+    )
+    assert (
+        "evaluate_evm_milestone_payment_holdback_and_acceptance_gate"
+        in mod.__all__
+    )

@@ -5514,6 +5514,7 @@ __all__ = [
     "evaluate_evm_economic_price_adjustment_and_inflation_erosion",
     "evaluate_evm_capex_opex_classification_and_amortization",
     "evaluate_evm_learning_curve_cost_improvement_and_productivity",
+    "evaluate_evm_milestone_payment_holdback_and_acceptance_gate",
     "ProjectEVMService",
 ]
 
@@ -8702,4 +8703,123 @@ def evaluate_evm_learning_curve_cost_improvement_and_productivity(
 
 ProjectEVMService.evaluate_evm_learning_curve_cost_improvement_and_productivity = staticmethod(
     evaluate_evm_learning_curve_cost_improvement_and_productivity
+)
+
+
+def evaluate_evm_milestone_payment_holdback_and_acceptance_gate(
+    milestones: list[dict[str, Any]],
+    *,
+    max_advance_disbursement_pct: float = 20.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §7.4 & §12.3 — EVM Milestone Payment Gate, Deliverable Sign-Off Holdback & Premature Disbursement Evaluator."""
+    valid_milestones: list[dict[str, Any]] = []
+    for item in milestones or []:
+        if not isinstance(item, dict):
+            continue
+        mid = str(item.get("milestone_id") or "").strip()
+        if not mid:
+            continue
+        valid_milestones.append({**item, "_mid": mid})
+
+    if not valid_milestones:
+        return {
+            "total_milestones": 0,
+            "total_scheduled_payments": 0.0,
+            "total_disbursed_amount": 0.0,
+            "unaccepted_disbursed_amount": 0.0,
+            "advance_disbursement_share_pct": 0.0,
+            "premature_disbursement_milestone_ids": [],
+            "punchlist_bypass_milestone_ids": [],
+            "overpaid_milestone_ids": [],
+            "payment_gate_status": "GATED",
+            "is_payment_gate_compliant": True,
+            "recommendations": [],
+        }
+
+    raw_scheduled_sum = 0.0
+    raw_disbursed_sum = 0.0
+    raw_unaccepted_disbursed_sum = 0.0
+
+    premature_disbursement_milestone_ids: list[str] = []
+    punchlist_bypass_milestone_ids: list[str] = []
+    overpaid_milestone_ids: list[str] = []
+
+    for ms in valid_milestones:
+        mid = ms["_mid"]
+        sched = max(0.0, float(ms.get("scheduled_payment_amount", 0.0) or 0.0))
+        disb = max(0.0, float(ms.get("disbursed_amount", 0.0) or 0.0))
+        accepted = bool(ms.get("deliverable_formally_accepted", False))
+        defects = max(0, int(ms.get("open_punchlist_defects", 0) or 0))
+        holdback = max(0.0, float(ms.get("warranty_holdback_retained", 0.0) or 0.0))
+
+        raw_scheduled_sum += sched
+        raw_disbursed_sum += disb
+        if not accepted:
+            raw_unaccepted_disbursed_sum += disb
+
+        if not accepted and disb > sched * (max_advance_disbursement_pct / 100.0):
+            premature_disbursement_milestone_ids.append(mid)
+
+        if accepted and defects > 0 and disb >= sched and holdback <= 0.0:
+            punchlist_bypass_milestone_ids.append(mid)
+
+        if disb > sched:
+            overpaid_milestone_ids.append(mid)
+
+    total_scheduled_payments = round(raw_scheduled_sum, 2)
+    total_disbursed_amount = round(raw_disbursed_sum, 2)
+    unaccepted_disbursed_amount = round(raw_unaccepted_disbursed_sum, 2)
+
+    if total_scheduled_payments > 0:
+        advance_disbursement_share_pct = round(
+            (unaccepted_disbursed_amount / total_scheduled_payments) * 100.0, 2
+        )
+    else:
+        advance_disbursement_share_pct = 0.0
+
+    recommendations: list[str] = []
+    if premature_disbursement_milestone_ids:
+        recommendations.append(
+            f"Halt premature disbursement exceeding {max_advance_disbursement_pct}% advance cap prior to formal deliverable acceptance on milestone(s): {', '.join(premature_disbursement_milestone_ids)}."
+        )
+    if overpaid_milestone_ids:
+        recommendations.append(
+            f"Recover or offset milestone overpayment exceeding scheduled contract value on milestone(s): {', '.join(overpaid_milestone_ids)}."
+        )
+    if punchlist_bypass_milestone_ids:
+        recommendations.append(
+            f"Enforce warranty/punchlist holdback retention until open defects are closed on milestone(s): {', '.join(punchlist_bypass_milestone_ids)}."
+        )
+    if advance_disbursement_share_pct > max_advance_disbursement_pct:
+        recommendations.append(
+            f"Reduce portfolio advance disbursement share ({advance_disbursement_share_pct:.2f}%) below {max_advance_disbursement_pct:.2f}% ceiling."
+        )
+
+    if premature_disbursement_milestone_ids or overpaid_milestone_ids:
+        payment_gate_status = "DISBURSEMENT_BREACH"
+    elif (
+        punchlist_bypass_milestone_ids
+        or advance_disbursement_share_pct > max_advance_disbursement_pct
+    ):
+        payment_gate_status = "WARNING"
+    else:
+        payment_gate_status = "GATED"
+
+    return {
+        "total_milestones": len(valid_milestones),
+        "total_scheduled_payments": total_scheduled_payments,
+        "total_disbursed_amount": total_disbursed_amount,
+        "unaccepted_disbursed_amount": unaccepted_disbursed_amount,
+        "advance_disbursement_share_pct": advance_disbursement_share_pct,
+        "premature_disbursement_milestone_ids": premature_disbursement_milestone_ids,
+        "punchlist_bypass_milestone_ids": punchlist_bypass_milestone_ids,
+        "overpaid_milestone_ids": overpaid_milestone_ids,
+        "payment_gate_status": payment_gate_status,
+        "is_payment_gate_compliant": payment_gate_status == "GATED",
+        "recommendations": recommendations,
+    }
+
+
+ProjectEVMService.evaluate_evm_milestone_payment_holdback_and_acceptance_gate = staticmethod(
+    evaluate_evm_milestone_payment_holdback_and_acceptance_gate
 )

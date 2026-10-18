@@ -6003,3 +6003,110 @@ def test_audit_markdown_table_parity_fences_and_invalid_and_binding():
         == audit_markdown_table_column_parity_and_empty_cell_hygiene(valid)
     )
     assert "audit_markdown_table_column_parity_and_empty_cell_hygiene" in mod.__all__
+
+
+def test_audit_markdown_blockquote_attribution_and_nesting_hygiene_critical_empty():
+    from backend.services.anydoc_service import (
+        audit_markdown_blockquote_attribution_and_nesting_hygiene,
+    )
+
+    md = (
+        "# Executive Summary\n"
+        ">   \n"
+        "> > \n"
+        "\n"
+        "> Valid quote line\n"
+    )
+    res = audit_markdown_blockquote_attribution_and_nesting_hygiene(md)
+    assert res["total_blockquotes"] == 2
+    assert res["empty_blockquote_start_lines"] == [2]
+    assert res["blockquote_hygiene_status"] == "CRITICAL"
+    assert res["is_blockquote_hygiene_clean"] is False
+    assert len(res["recommendations"]) >= 1
+
+
+def test_audit_markdown_blockquote_attribution_and_nesting_hygiene_warning_depth_and_oversized():
+    from backend.services.anydoc_service import (
+        audit_markdown_blockquote_attribution_and_nesting_hygiene,
+    )
+
+    md = (
+        "> Level 1\n"
+        ">> Level 2\n"
+        ">>> Level 3 too deep\n"
+        "> > > > Level 4 too deep\n"
+    )
+    res = audit_markdown_blockquote_attribution_and_nesting_hygiene(
+        md,
+        max_nesting_depth=2,
+        max_quote_block_lines=3,
+    )
+    assert res["total_blockquotes"] == 1
+    assert res["deeply_nested_quote_lines"] == [3, 4]
+    assert res["oversized_quote_start_lines"] == [1]
+    assert res["empty_blockquote_start_lines"] == []
+    assert res["blockquote_hygiene_status"] == "WARNING"
+    assert res["is_blockquote_hygiene_clean"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_markdown_blockquote_attribution_and_nesting_hygiene_ignores_fences_and_callouts():
+    from backend.services.anydoc_service import (
+        audit_markdown_blockquote_attribution_and_nesting_hygiene,
+    )
+
+    md = (
+        "```markdown\n"
+        ">>> inside code fence\n"
+        ">\n"
+        "```\n"
+        "> [!NOTE]\n"
+        "> This is a GitHub alert callout, not a standard blockquote.\n"
+        "\n"
+        "> Standard clean blockquote.\n"
+        ">> Nested level 2 allowed.\n"
+    )
+    res = audit_markdown_blockquote_attribution_and_nesting_hygiene(
+        md,
+        max_nesting_depth=2,
+        max_quote_block_lines=15,
+    )
+    assert res["total_blockquotes"] == 1
+    assert res["deeply_nested_quote_lines"] == []
+    assert res["oversized_quote_start_lines"] == []
+    assert res["empty_blockquote_start_lines"] == []
+    assert res["blockquote_hygiene_status"] == "CLEAN"
+    assert res["is_blockquote_hygiene_clean"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_markdown_blockquote_attribution_and_nesting_hygiene_empty_and_bindings():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_blockquote_attribution_and_nesting_hygiene,
+    )
+
+    for payload in (None, "", "   ", 123):
+        empty = audit_markdown_blockquote_attribution_and_nesting_hygiene(payload)  # type: ignore[arg-type]
+        assert empty["total_blockquotes"] == 0
+        assert empty["deeply_nested_quote_lines"] == []
+        assert empty["oversized_quote_start_lines"] == []
+        assert empty["empty_blockquote_start_lines"] == []
+        assert empty["blockquote_hygiene_status"] == "CLEAN"
+        assert empty["is_blockquote_hygiene_clean"] is True
+        assert empty["recommendations"] == []
+
+    sample = "> Clean quote — PMBOK §4.4"
+    assert (
+        AnyDocService.audit_markdown_blockquote_attribution_and_nesting_hygiene(sample)
+        == audit_markdown_blockquote_attribution_and_nesting_hygiene(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_blockquote_attribution_and_nesting_hygiene(sample)
+        == audit_markdown_blockquote_attribution_and_nesting_hygiene(sample)
+    )
+    assert (
+        "audit_markdown_blockquote_attribution_and_nesting_hygiene" in mod.__all__
+    )

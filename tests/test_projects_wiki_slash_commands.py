@@ -7369,3 +7369,284 @@ def test_audit_wiki_api_deprecation_sunset_and_migration_readiness_empty_and_bin
         "audit_wiki_api_deprecation_sunset_and_migration_readiness" in mod.__all__
     )
 
+
+def test_audit_wiki_operational_runbook_idempotency_and_preflight_hygiene_unsafe_runbook():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_operational_runbook_idempotency_and_preflight_hygiene,
+    )
+
+    res = audit_wiki_operational_runbook_idempotency_and_preflight_hygiene(
+        [
+            {
+                "runbook_id": "RB-DB-MIGRATE",
+                "has_preflight_validation_checks": False,
+                "is_idempotent_or_reentrant": True,
+                "has_explicit_rollback_commands": True,
+                "manual_steps_count": 3,
+                "days_since_last_dry_run": 15,
+                "linked_alert_rule_id": "ALR-101",
+            },
+            {
+                "runbook_id": "RB-CACHE-FLUSH",
+                "has_preflight_validation_checks": True,
+                "is_idempotent_or_reentrant": False,
+                "has_explicit_rollback_commands": False,
+                "manual_steps_count": 2,
+                "days_since_last_dry_run": 10,
+                "linked_alert_rule_id": "ALR-102",
+            },
+        ]
+    )
+    assert res["total_runbooks"] == 2
+    assert res["missing_preflight_or_rollback_ids"] == [
+        "RB-DB-MIGRATE",
+        "RB-CACHE-FLUSH",
+    ]
+    assert res["non_idempotent_runbook_ids"] == ["RB-CACHE-FLUSH"]
+    assert res["runbook_governance_status"] == "UNSAFE_RUNBOOK"
+    assert res["is_runbook_production_ready"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_wiki_operational_runbook_idempotency_and_preflight_hygiene_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_operational_runbook_idempotency_and_preflight_hygiene,
+    )
+
+    res = audit_wiki_operational_runbook_idempotency_and_preflight_hygiene(
+        [
+            {
+                "runbook_id": "RB-FAILOVER-01",
+                "has_preflight_validation_checks": True,
+                "is_idempotent_or_reentrant": True,
+                "has_explicit_rollback_commands": True,
+                "manual_steps_count": 12,
+                "days_since_last_dry_run": 120,
+                "linked_alert_rule_id": "   ",
+            }
+        ],
+        max_days_since_dry_run=90,
+        max_manual_steps_count=8,
+    )
+    assert res["missing_preflight_or_rollback_ids"] == []
+    assert res["non_idempotent_runbook_ids"] == []
+    assert res["toil_heavy_runbook_ids"] == ["RB-FAILOVER-01"]
+    assert res["stale_dry_run_runbook_ids"] == ["RB-FAILOVER-01"]
+    assert res["unlinked_alert_runbook_ids"] == ["RB-FAILOVER-01"]
+    assert res["runbook_governance_status"] == "WARNING"
+    assert res["is_runbook_production_ready"] is False
+
+
+def test_audit_wiki_operational_runbook_idempotency_and_preflight_hygiene_production_grade_and_empty():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_operational_runbook_idempotency_and_preflight_hygiene,
+    )
+
+    empty = audit_wiki_operational_runbook_idempotency_and_preflight_hygiene(
+        [{"runbook_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_runbooks"] == 0
+    assert empty["runbook_governance_status"] == "PRODUCTION_GRADE"
+    assert empty["is_runbook_production_ready"] is True
+    assert empty["recommendations"] == []
+
+    healthy = audit_wiki_operational_runbook_idempotency_and_preflight_hygiene(
+        [
+            {
+                "runbook_id": "RB-SCALE-OUT",
+                "has_preflight_validation_checks": True,
+                "is_idempotent_or_reentrant": True,
+                "has_explicit_rollback_commands": True,
+                "manual_steps_count": 4,
+                "days_since_last_dry_run": 30,
+            }
+        ]
+    )
+    assert healthy["total_runbooks"] == 1
+    assert healthy["unlinked_alert_runbook_ids"] == []
+    assert healthy["runbook_governance_status"] == "PRODUCTION_GRADE"
+    assert healthy["is_runbook_production_ready"] is True
+    assert healthy["recommendations"] == []
+
+
+def test_audit_wiki_operational_runbook_idempotency_and_preflight_hygiene_staticmethod_and_dunder_all():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_operational_runbook_idempotency_and_preflight_hygiene,
+    )
+
+    sample = [
+        {
+            "runbook_id": "RB-01",
+            "has_preflight_validation_checks": True,
+            "is_idempotent_or_reentrant": True,
+            "has_explicit_rollback_commands": True,
+            "manual_steps_count": 2,
+            "days_since_last_dry_run": 10,
+            "linked_alert_rule_id": "ALR-01",
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_operational_runbook_idempotency_and_preflight_hygiene(
+            sample
+        )
+        == audit_wiki_operational_runbook_idempotency_and_preflight_hygiene(sample)
+    )
+    assert (
+        "audit_wiki_operational_runbook_idempotency_and_preflight_hygiene"
+        in mod.__all__
+    )
+
+
+def test_audit_wiki_migration_expand_contract_outage_risk_paths():
+    """Caso 1: irreversible, destructiva sin expand-contract o índice bloqueante -> OUTAGE_RISK."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_database_migration_expand_contract_and_lock_safety,
+    )
+
+    res = audit_wiki_database_migration_expand_contract_and_lock_safety(
+        [
+            {
+                "migration_id": "MIG-01",
+                "has_reversible_downgrade": False,
+                "lock_timeout_ms_configured": 2000,
+            },
+            {
+                "migration_id": "MIG-02",
+                "has_reversible_downgrade": True,
+                "contains_destructive_drop_or_rename": True,
+                "uses_expand_contract_pattern": False,
+                "lock_timeout_ms_configured": 2000,
+            },
+            {
+                "migration_id": "MIG-03",
+                "has_reversible_downgrade": True,
+                "index_created_concurrently": False,
+                "lock_timeout_ms_configured": 2000,
+            },
+        ]
+    )
+    assert res["total_migrations"] == 3
+    assert res["irreversible_migration_ids"] == ["MIG-01"]
+    assert res["unsafe_destructive_migration_ids"] == ["MIG-02"]
+    assert res["blocking_index_migration_ids"] == ["MIG-03"]
+    assert res["missing_lock_timeout_migration_ids"] == []
+    assert res["migration_governance_status"] == "OUTAGE_RISK"
+    assert res["is_migration_safe"] is False
+    assert len(res["recommendations"]) == 3
+
+    # Destructiva CON expand-contract: queda fuera de unsafe (patrón correcto).
+    res_safe_destructive = audit_wiki_database_migration_expand_contract_and_lock_safety(
+        [
+            {
+                "migration_id": "MIG-04",
+                "has_reversible_downgrade": True,
+                "contains_destructive_drop_or_rename": True,
+                "uses_expand_contract_pattern": True,
+                "lock_timeout_ms_configured": 2000,
+            },
+        ]
+    )
+    assert res_safe_destructive["unsafe_destructive_migration_ids"] == []
+    assert res_safe_destructive["migration_governance_status"] == "ZERO_DOWNTIME_SAFE"
+
+
+def test_audit_wiki_migration_expand_contract_warning_lock_timeout():
+    """Caso 2: lock_timeout 0 o por encima del máximo, sin otros riesgos -> WARNING."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_database_migration_expand_contract_and_lock_safety,
+    )
+
+    res = audit_wiki_database_migration_expand_contract_and_lock_safety(
+        [
+            {
+                "migration_id": "MIG-10",
+                "has_reversible_downgrade": True,
+                "lock_timeout_ms_configured": 0,
+            },
+            {
+                "migration_id": "MIG-11",
+                "has_reversible_downgrade": True,
+                "lock_timeout_ms_configured": 5001,
+            },
+        ],
+        max_lock_timeout_ms=3000,
+    )
+    assert res["total_migrations"] == 2
+    assert res["missing_lock_timeout_migration_ids"] == ["MIG-10", "MIG-11"]
+    assert res["irreversible_migration_ids"] == []
+    assert res["unsafe_destructive_migration_ids"] == []
+    assert res["blocking_index_migration_ids"] == []
+    assert res["migration_governance_status"] == "WARNING"
+    assert res["is_migration_safe"] is False
+    # Precisión: OUTAGE_RISK domina sobre WARNING.
+    res_mixed = audit_wiki_database_migration_expand_contract_and_lock_safety(
+        [
+            {"migration_id": "MIG-12", "has_reversible_downgrade": False},
+            {"migration_id": "MIG-13", "has_reversible_downgrade": True, "lock_timeout_ms_configured": 0},
+        ]
+    )
+    assert res_mixed["migration_governance_status"] == "OUTAGE_RISK"
+
+
+def test_audit_wiki_migration_expand_contract_safe_and_boundaries():
+    """Caso 3: fronteras exactas de lock_timeout (1 y max inclusive) -> ZERO_DOWNTIME_SAFE."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_database_migration_expand_contract_and_lock_safety,
+    )
+
+    res = audit_wiki_database_migration_expand_contract_and_lock_safety(
+        [
+            {
+                "migration_id": "MIG-20",
+                "has_reversible_downgrade": True,
+                "lock_timeout_ms_configured": 1,
+                "max_lock_timeout_ms": 3000,
+            },
+            {
+                "migration_id": "MIG-21",
+                "has_reversible_downgrade": True,
+                "lock_timeout_ms_configured": 3000,
+                "max_lock_timeout_ms": 3000,
+            },
+        ],
+    )
+    assert res["total_migrations"] == 2
+    assert res["missing_lock_timeout_migration_ids"] == []
+    assert res["migration_governance_status"] == "ZERO_DOWNTIME_SAFE"
+    assert res["is_migration_safe"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_wiki_migration_expand_contract_invalid_and_binding():
+    """Caso 4: entradas no-lista/no-dict y binding + __all__."""
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_database_migration_expand_contract_and_lock_safety,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_wiki_database_migration_expand_contract_and_lock_safety(payload)  # type: ignore[arg-type]
+        assert empty["total_migrations"] == 0
+        assert empty["irreversible_migration_ids"] == []
+        assert empty["unsafe_destructive_migration_ids"] == []
+        assert empty["missing_lock_timeout_migration_ids"] == []
+        assert empty["blocking_index_migration_ids"] == []
+        assert empty["migration_governance_status"] == "ZERO_DOWNTIME_SAFE"
+        assert empty["is_migration_safe"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "migration_id": "MIG-30",
+            "has_reversible_downgrade": True,
+            "lock_timeout_ms_configured": 2000,
+        },
+    ]
+    assert (
+        WikiPMIService.audit_wiki_database_migration_expand_contract_and_lock_safety(sample)
+        == audit_wiki_database_migration_expand_contract_and_lock_safety(sample)
+    )
+    assert "audit_wiki_database_migration_expand_contract_and_lock_safety" in mod.__all__
