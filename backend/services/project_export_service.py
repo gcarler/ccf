@@ -2975,6 +2975,7 @@ __all__ = [
     "audit_executive_report_rag_status_and_narrative_consistency",
     "audit_executive_report_reserve_drawdown_burn_rate",
     "audit_executive_report_post_implementation_handover_sla",
+    "audit_executive_report_team_burnout_and_turnover_risk",
     "ProjectExportService",
 ]
 
@@ -4061,4 +4062,103 @@ def audit_executive_report_post_implementation_handover_sla(
 
 ProjectExportService.audit_executive_report_post_implementation_handover_sla = staticmethod(
     audit_executive_report_post_implementation_handover_sla
+)
+
+
+def audit_executive_report_team_burnout_and_turnover_risk(
+    team_health_snapshots: list[dict[str, object]],
+    *,
+    max_sustainable_utilization_pct: float = 100.0,
+    max_attrition_rate_pct: float = 15.0,
+) -> dict[str, object]:
+    """Audita el riesgo de agotamiento del equipo (burnout por sobreutilización o sprints consecutivos en sobretiempo), rotación anualizada y roles SPOF sin plan de cross-training según PMI PMBOK §9.4 y §9.5."""
+    try:
+        max_util = float(max_sustainable_utilization_pct)
+    except (TypeError, ValueError):
+        max_util = 100.0
+
+    try:
+        max_attrition = float(max_attrition_rate_pct)
+    except (TypeError, ValueError):
+        max_attrition = 15.0
+
+    total_teams = 0
+    invalid_health_metric_team_ids: list[str] = []
+    chronic_burnout_risk_team_ids: list[str] = []
+    high_turnover_attrition_team_ids: list[str] = []
+    unmitigated_key_person_spof_team_ids: list[str] = []
+
+    if isinstance(team_health_snapshots, Sequence) and not isinstance(
+        team_health_snapshots, (str, bytes, bytearray)
+    ):
+        for item in team_health_snapshots:
+            if not isinstance(item, Mapping):
+                continue
+            team_id = str(item.get("team_id") or item.get("id") or "").strip()
+            if not team_id:
+                continue
+
+            total_teams += 1
+
+            def _float_val(key: str, default: float = 0.0) -> float:
+                raw = item.get(key, default)
+                if raw is None or isinstance(raw, bool):
+                    return default
+                try:
+                    return float(raw)
+                except (TypeError, ValueError):
+                    return -1.0
+
+            def _int_val(key: str, default: int = 0) -> int:
+                raw = item.get(key, default)
+                if raw is None or isinstance(raw, bool):
+                    return default
+                try:
+                    return int(float(raw))
+                except (TypeError, ValueError):
+                    return -1
+
+            avg_util = _float_val("avg_utilization_pct", 0.0)
+            overtime_sprints = _int_val("consecutive_overtime_sprints", 0)
+            attrition_rate = _float_val("annualized_attrition_rate_pct", 0.0)
+            spof_roles = _int_val("single_point_of_failure_roles_count", 0)
+            cross_training_active = bool(
+                item.get("cross_training_plan_active", False)
+            )
+
+            if (
+                avg_util < 0.0
+                or overtime_sprints < 0
+                or attrition_rate < 0.0
+                or spof_roles < 0
+            ):
+                invalid_health_metric_team_ids.append(team_id)
+                continue
+
+            if avg_util > max_util or overtime_sprints >= 3:
+                chronic_burnout_risk_team_ids.append(team_id)
+
+            if attrition_rate > max_attrition:
+                high_turnover_attrition_team_ids.append(team_id)
+
+            if spof_roles > 0 and not cross_training_active:
+                unmitigated_key_person_spof_team_ids.append(team_id)
+
+    return {
+        "total_teams": total_teams,
+        "invalid_health_metric_team_ids": invalid_health_metric_team_ids,
+        "chronic_burnout_risk_team_ids": chronic_burnout_risk_team_ids,
+        "high_turnover_attrition_team_ids": high_turnover_attrition_team_ids,
+        "unmitigated_key_person_spof_team_ids": unmitigated_key_person_spof_team_ids,
+        "is_team_sustainability_compliant": (
+            len(invalid_health_metric_team_ids) == 0
+            and len(chronic_burnout_risk_team_ids) == 0
+            and len(high_turnover_attrition_team_ids) == 0
+            and len(unmitigated_key_person_spof_team_ids) == 0
+        ),
+    }
+
+
+ProjectExportService.audit_executive_report_team_burnout_and_turnover_risk = staticmethod(
+    audit_executive_report_team_burnout_and_turnover_risk
 )

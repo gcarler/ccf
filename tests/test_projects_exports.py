@@ -5297,3 +5297,132 @@ def test_audit_executive_report_handover_sla_invalid_inputs_and_export():
             "blocking_critical_defect_handover_ids": [],
             "is_handover_sla_compliant": True,
         }
+
+
+def test_audit_executive_report_team_burnout_and_turnover_risk_compliant():
+    """Equipos con utilización sostenible, baja rotación y cross-training para roles SPOF cumplen §9.4 y §9.5."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_team_burnout_and_turnover_risk,
+    )
+
+    snapshots = [
+        {
+            "team_id": "TEAM-BACKEND",
+            "avg_utilization_pct": 85.0,
+            "consecutive_overtime_sprints": 1,
+            "annualized_attrition_rate_pct": 8.0,
+            "single_point_of_failure_roles_count": 1,
+            "cross_training_plan_active": True,
+        },
+        {
+            "team_id": "TEAM-QA",
+            "avg_utilization_pct": 92.0,
+            "consecutive_overtime_sprints": 0,
+            "annualized_attrition_rate_pct": 5.0,
+            "single_point_of_failure_roles_count": 0,
+            "cross_training_plan_active": False,
+        },
+    ]
+    res = audit_executive_report_team_burnout_and_turnover_risk(snapshots)
+    assert res == {
+        "total_teams": 2,
+        "invalid_health_metric_team_ids": [],
+        "chronic_burnout_risk_team_ids": [],
+        "high_turnover_attrition_team_ids": [],
+        "unmitigated_key_person_spof_team_ids": [],
+        "is_team_sustainability_compliant": True,
+    }
+    assert (
+        ProjectExportService.audit_executive_report_team_burnout_and_turnover_risk(
+            snapshots
+        )
+        == res
+    )
+
+
+def test_audit_executive_report_team_burnout_and_turnover_chronic_overtime():
+    """Detecta riesgo de burnout por utilización > max_sustainable_utilization_pct o >= 3 sprints en sobretiempo."""
+    from backend.services.project_export_service import (
+        audit_executive_report_team_burnout_and_turnover_risk,
+    )
+
+    snapshots = [
+        {
+            "team_id": "TEAM-OVERUTIL",
+            "avg_utilization_pct": 112.0,
+            "consecutive_overtime_sprints": 1,
+            "annualized_attrition_rate_pct": 10.0,
+        },
+        {
+            "team_id": "TEAM-3-SPRINTS-OT",
+            "avg_utilization_pct": 95.0,
+            "consecutive_overtime_sprints": 3,
+            "annualized_attrition_rate_pct": 10.0,
+        },
+    ]
+    res = audit_executive_report_team_burnout_and_turnover_risk(snapshots)
+    assert res["total_teams"] == 2
+    assert res["chronic_burnout_risk_team_ids"] == [
+        "TEAM-OVERUTIL",
+        "TEAM-3-SPRINTS-OT",
+    ]
+    assert res["is_team_sustainability_compliant"] is False
+
+
+def test_audit_executive_report_team_burnout_and_turnover_attrition_and_spof():
+    """Detecta rotación anualizada > max_attrition_rate_pct y roles SPOF sin plan de cross-training."""
+    from backend.services.project_export_service import (
+        audit_executive_report_team_burnout_and_turnover_risk,
+    )
+
+    snapshots = [
+        {
+            "team_id": "TEAM-HIGH-ATTRITION",
+            "avg_utilization_pct": 88.0,
+            "consecutive_overtime_sprints": 0,
+            "annualized_attrition_rate_pct": 22.5,
+            "single_point_of_failure_roles_count": 0,
+        },
+        {
+            "team_id": "TEAM-UNMITIGATED-SPOF",
+            "avg_utilization_pct": 80.0,
+            "consecutive_overtime_sprints": 0,
+            "annualized_attrition_rate_pct": 5.0,
+            "single_point_of_failure_roles_count": 2,
+            "cross_training_plan_active": False,
+        },
+    ]
+    res = audit_executive_report_team_burnout_and_turnover_risk(
+        snapshots, max_attrition_rate_pct=15.0
+    )
+    assert res["high_turnover_attrition_team_ids"] == ["TEAM-HIGH-ATTRITION"]
+    assert res["unmitigated_key_person_spof_team_ids"] == [
+        "TEAM-UNMITIGATED-SPOF"
+    ]
+    assert res["is_team_sustainability_compliant"] is False
+
+
+def test_audit_executive_report_team_burnout_and_turnover_invalid_and_export():
+    """Detecta métricas negativas, ignora entradas no secuencia y verifica exportación en __all__."""
+    import backend.services.project_export_service as _m
+    from backend.services.project_export_service import (
+        audit_executive_report_team_burnout_and_turnover_risk,
+    )
+
+    assert "audit_executive_report_team_burnout_and_turnover_risk" in _m.__all__
+    res = audit_executive_report_team_burnout_and_turnover_risk(
+        [{"team_id": "TEAM-NEG", "avg_utilization_pct": -10.0}]
+    )
+    assert res["invalid_health_metric_team_ids"] == ["TEAM-NEG"]
+    assert res["is_team_sustainability_compliant"] is False
+
+    for bad in (None, "not-a-seq", b"bytes", [{"team_id": "  "}]):
+        assert audit_executive_report_team_burnout_and_turnover_risk(bad) == {
+            "total_teams": 0,
+            "invalid_health_metric_team_ids": [],
+            "chronic_burnout_risk_team_ids": [],
+            "high_turnover_attrition_team_ids": [],
+            "unmitigated_key_person_spof_team_ids": [],
+            "is_team_sustainability_compliant": True,
+        }

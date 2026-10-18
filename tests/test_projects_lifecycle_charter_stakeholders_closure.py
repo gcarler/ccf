@@ -4682,3 +4682,134 @@ def test_audit_stakeholder_engagement_seam_gap_invalid_levels_and_export():
             "regressing_engagement_drift_ids": [],
             "is_seam_governance_compliant": True,
         }
+
+
+def test_audit_project_governance_tailoring_and_hybrid_justification_compliant():
+    """Tailoring con artefactos eximibles justificados y firmados, y proyectos híbridos con mapeo cumplen §2.4 y §4.2."""
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_project_governance_tailoring_and_hybrid_justification,
+    )
+
+    records = [
+        {
+            "project_id": "PRJ-PRED-01",
+            "delivery_approach": "predictive",
+            "omitted_standard_artifacts": [],
+            "tailoring_justification_documented": False,
+            "pmo_or_sponsor_signoff": False,
+        },
+        {
+            "project_id": "PRJ-AGILE-02",
+            "delivery_approach": "Agile",
+            "omitted_standard_artifacts": ["detailed_gantt_baseline"],
+            "tailoring_justification_documented": True,
+            "pmo_or_sponsor_signoff": True,
+        },
+        {
+            "project_id": "PRJ-HYB-03",
+            "delivery_approach": "hybrid",
+            "omitted_standard_artifacts": ["formal_ccb_for_sprint_tasks"],
+            "tailoring_justification_documented": True,
+            "pmo_or_sponsor_signoff": True,
+            "cadence_and_stage_gate_mapping_defined": True,
+        },
+    ]
+    res = audit_project_governance_tailoring_and_hybrid_justification(records)
+    assert res == {
+        "total_projects": 3,
+        "invalid_approach_project_ids": [],
+        "non_waivable_artifact_omitted_project_ids": [],
+        "unapproved_tailoring_omission_project_ids": [],
+        "unmapped_hybrid_cadence_project_ids": [],
+        "is_tailoring_governance_compliant": True,
+    }
+    assert (
+        ProjectLifecyclePMIService.audit_project_governance_tailoring_and_hybrid_justification(
+            records
+        )
+        == res
+    )
+
+
+def test_audit_project_governance_tailoring_non_waivable_and_unapproved_omission():
+    """Detecta omisión de artefactos obligatorios (charter/risk_register/lessons_learned) y omisiones sin firma PMO."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_governance_tailoring_and_hybrid_justification,
+    )
+
+    records = [
+        {
+            "project_id": "PRJ-NO-CHARTER",
+            "delivery_approach": "agile",
+            "omitted_standard_artifacts": ["Charter", "wbs_dictionary"],
+            "tailoring_justification_documented": True,
+            "pmo_or_sponsor_signoff": True,
+        },
+        {
+            "project_id": "PRJ-UNAPPROVED-OMIT",
+            "delivery_approach": "predictive",
+            "omitted_standard_artifacts": ["procurement_plan"],
+            "tailoring_justification_documented": True,
+            "pmo_or_sponsor_signoff": False,
+        },
+    ]
+    res = audit_project_governance_tailoring_and_hybrid_justification(records)
+    assert res["total_projects"] == 2
+    assert res["non_waivable_artifact_omitted_project_ids"] == [
+        "PRJ-NO-CHARTER"
+    ]
+    assert res["unapproved_tailoring_omission_project_ids"] == [
+        "PRJ-UNAPPROVED-OMIT"
+    ]
+    assert res["is_tailoring_governance_compliant"] is False
+
+
+def test_audit_project_governance_tailoring_unmapped_hybrid_and_invalid_approach():
+    """Detecta enfoque híbrido sin mapeo de cadencia/stage-gate y enfoques desconocidos."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_governance_tailoring_and_hybrid_justification,
+    )
+
+    records = [
+        {
+            "project_id": "PRJ-HYB-UNMAPPED",
+            "delivery_approach": "hybrid",
+            "omitted_standard_artifacts": [],
+            "cadence_and_stage_gate_mapping_defined": False,
+        },
+        {
+            "project_id": "PRJ-BAD-APPROACH",
+            "delivery_approach": "chaos_driven",
+            "omitted_standard_artifacts": [],
+        },
+    ]
+    res = audit_project_governance_tailoring_and_hybrid_justification(records)
+    assert res["invalid_approach_project_ids"] == ["PRJ-BAD-APPROACH"]
+    assert res["unmapped_hybrid_cadence_project_ids"] == ["PRJ-HYB-UNMAPPED"]
+    assert res["is_tailoring_governance_compliant"] is False
+
+
+def test_audit_project_governance_tailoring_invalid_inputs_and_export():
+    """Maneja entradas vacías o no secuencia y verifica exportación en __all__."""
+    import backend.services.project_lifecycle_pmi_service as _m
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_governance_tailoring_and_hybrid_justification,
+    )
+
+    assert (
+        "audit_project_governance_tailoring_and_hybrid_justification"
+        in _m.__all__
+    )
+    for bad in (None, "not-a-seq", b"bytes", [{"project_id": "  "}]):
+        assert (
+            audit_project_governance_tailoring_and_hybrid_justification(bad)
+            == {
+                "total_projects": 0,
+                "invalid_approach_project_ids": [],
+                "non_waivable_artifact_omitted_project_ids": [],
+                "unapproved_tailoring_omission_project_ids": [],
+                "unmapped_hybrid_cadence_project_ids": [],
+                "is_tailoring_governance_compliant": True,
+            }
+        )

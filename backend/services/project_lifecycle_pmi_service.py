@@ -3140,6 +3140,7 @@ __all__ = [
     "audit_steering_committee_quorum_and_escalation_governance",
     "audit_charter_pm_authority_and_variance_tolerances",
     "audit_stakeholder_engagement_seam_gap_and_drift",
+    "audit_project_governance_tailoring_and_hybrid_justification",
     "ProjectLifecyclePMIService",
 ]
 
@@ -4104,4 +4105,84 @@ def audit_stakeholder_engagement_seam_gap_and_drift(
 
 ProjectLifecyclePMIService.audit_stakeholder_engagement_seam_gap_and_drift = staticmethod(
     audit_stakeholder_engagement_seam_gap_and_drift
+)
+
+
+def audit_project_governance_tailoring_and_hybrid_justification(
+    tailoring_records: list[dict[str, object]],
+) -> dict[str, object]:
+    """Audita las decisiones de adaptación metodológica (Tailoring) y la justificación de gobernanza en enfoques predictivos, ágiles e híbridos según PMI PMBOK §2.4 y §4.2."""
+    valid_approaches = {"predictive", "agile", "hybrid"}
+    non_waivable_artifacts = {"charter", "risk_register", "lessons_learned"}
+
+    total_projects = 0
+    invalid_approach_project_ids: list[str] = []
+    non_waivable_artifact_omitted_project_ids: list[str] = []
+    unapproved_tailoring_omission_project_ids: list[str] = []
+    unmapped_hybrid_cadence_project_ids: list[str] = []
+
+    if isinstance(tailoring_records, Sequence) and not isinstance(
+        tailoring_records, (str, bytes, bytearray)
+    ):
+        for item in tailoring_records:
+            if not isinstance(item, Mapping):
+                continue
+            project_id = str(
+                item.get("project_id") or item.get("id") or ""
+            ).strip()
+            if not project_id:
+                continue
+
+            total_projects += 1
+            approach = str(item.get("delivery_approach") or "").strip().lower()
+            if approach not in valid_approaches:
+                invalid_approach_project_ids.append(project_id)
+
+            raw_omitted = item.get("omitted_standard_artifacts")
+            if isinstance(raw_omitted, Sequence) and not isinstance(
+                raw_omitted, (str, bytes, bytearray)
+            ):
+                omitted = [
+                    str(a).strip().lower()
+                    for a in raw_omitted
+                    if a is not None and str(a).strip()
+                ]
+            else:
+                omitted = []
+
+            if any(art in non_waivable_artifacts for art in omitted):
+                non_waivable_artifact_omitted_project_ids.append(project_id)
+
+            justification_documented = bool(
+                item.get("tailoring_justification_documented", False)
+            )
+            pmo_signoff = bool(item.get("pmo_or_sponsor_signoff", False))
+            if len(omitted) > 0 and (
+                not justification_documented or not pmo_signoff
+            ):
+                unapproved_tailoring_omission_project_ids.append(project_id)
+
+            cadence_mapped = bool(
+                item.get("cadence_and_stage_gate_mapping_defined", False)
+            )
+            if approach == "hybrid" and not cadence_mapped:
+                unmapped_hybrid_cadence_project_ids.append(project_id)
+
+    return {
+        "total_projects": total_projects,
+        "invalid_approach_project_ids": invalid_approach_project_ids,
+        "non_waivable_artifact_omitted_project_ids": non_waivable_artifact_omitted_project_ids,
+        "unapproved_tailoring_omission_project_ids": unapproved_tailoring_omission_project_ids,
+        "unmapped_hybrid_cadence_project_ids": unmapped_hybrid_cadence_project_ids,
+        "is_tailoring_governance_compliant": (
+            len(invalid_approach_project_ids) == 0
+            and len(non_waivable_artifact_omitted_project_ids) == 0
+            and len(unapproved_tailoring_omission_project_ids) == 0
+            and len(unmapped_hybrid_cadence_project_ids) == 0
+        ),
+    }
+
+
+ProjectLifecyclePMIService.audit_project_governance_tailoring_and_hybrid_justification = staticmethod(
+    audit_project_governance_tailoring_and_hybrid_justification
 )
