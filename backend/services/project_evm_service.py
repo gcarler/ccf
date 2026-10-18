@@ -55,6 +55,7 @@ class _DummyModel(metaclass=_DummyModelMeta):
 try:
     from backend.models_projects import (
         Project,
+        ProjectBaseline,
         ProjectComponent,
         ProjectExpense,
         ProjectMilestone,
@@ -65,6 +66,7 @@ try:
 except ImportError:
     # Fallback for testing environments without C-extension dependencies
     Project = _DummyModel  # type: ignore
+    ProjectBaseline = _DummyModel  # type: ignore
     ProjectComponent = _DummyModel  # type: ignore
     ProjectExpense = _DummyModel  # type: ignore
     ProjectMilestone = _DummyModel  # type: ignore
@@ -104,6 +106,27 @@ def _is_valid_id(val: Any) -> bool:
 
 def _utcnow() -> datetime.datetime:
     return datetime.datetime.now(timezone.utc)
+
+
+def _get_active_baseline(db: Session, project_id: Any) -> Optional[Any]:
+    """Obtiene la última línea base activa del proyecto (seguro ante MagicMock en tests unitarios)."""
+    if not _is_valid_id(project_id):
+        return None
+    try:
+        q = db.query(ProjectBaseline).filter(
+            ProjectBaseline.project_id == project_id,
+            ProjectBaseline.deleted_at.is_(None),
+        )
+        candidate = q.order_by(ProjectBaseline.created_at.desc()).first()
+        if (
+            candidate is not None
+            and _is_valid_id(getattr(candidate, "id", None))
+            and isinstance(getattr(candidate, "snapshot_data", None), dict)
+        ):
+            return candidate
+    except Exception:
+        pass
+    return None
 
 
 def _compute_tasks_weighted_progress_pct(tasks: List[Any]) -> float:
@@ -371,6 +394,39 @@ def calculate_project_evm(
         recommendations.append("Convocar comité de proyecto para revisar la línea base y aplicar plan de contingencia.")
         recommendations.append(f"Pronóstico de costo final estimado al cierre: ${eac:,.2f} (Variación estimada: ${vac:,.2f}).")
 
+    # 11. Conexión con Línea Base Activa (ProjectBaseline)
+    active_baseline = _get_active_baseline(db, getattr(project, "id", None))
+    has_baseline = active_baseline is not None
+    baseline_id: Optional[str] = None
+    baseline_name: Optional[str] = None
+    baseline_bac: Optional[float] = None
+    baseline_progress_pct: Optional[float] = None
+    baseline_variance_cost: float = 0.0
+    baseline_variance_schedule: float = 0.0
+
+    if active_baseline is not None:
+        snap = active_baseline.snapshot_data or {}
+        baseline_id = str(active_baseline.id)
+        baseline_name = str(getattr(active_baseline, "name", "") or "Línea Base")
+        raw_b_bac = snap.get("bac", snap.get("budget_allocated"))
+        baseline_bac = round(_safe_float(raw_b_bac, bac), 2)
+        evm_snap = snap.get("evm") if isinstance(snap.get("evm"), dict) else {}
+        raw_b_prog = evm_snap.get("progress_percentage", snap.get("progress_percentage"))
+        if raw_b_prog is None:
+            snap_tasks = snap.get("tasks") if isinstance(snap.get("tasks"), list) else []
+            if snap_tasks:
+                done_snap = sum(
+                    1
+                    for st in snap_tasks
+                    if isinstance(st, dict) and st.get("status") in ("completed", "done")
+                )
+                raw_b_prog = round((done_snap / len(snap_tasks)) * 100.0, 1)
+            else:
+                raw_b_prog = 0.0
+        baseline_progress_pct = round(_safe_float(raw_b_prog, 0.0), 1)
+        baseline_variance_cost = round(baseline_bac - ac, 2)
+        baseline_variance_schedule = round(progress_pct - baseline_progress_pct, 1)
+
     return {
         "project_id": str(project.id),
         "calculated_at": now.isoformat(),
@@ -389,6 +445,13 @@ def calculate_project_evm(
         "vac": vac,
         "health_status": health_status,
         "health_color": health_color,
+        "has_baseline": has_baseline,
+        "baseline_id": baseline_id,
+        "baseline_name": baseline_name,
+        "baseline_bac": baseline_bac,
+        "baseline_progress_pct": baseline_progress_pct,
+        "baseline_variance_cost": baseline_variance_cost,
+        "baseline_variance_schedule": baseline_variance_schedule,
         "recommendations": recommendations,
     }
 
@@ -421,6 +484,8 @@ def generate_curve_s_data(db: Session, project: Project, points_count: int = 8) 
     current_evm = calculate_project_evm(db, project)
     final_ev = current_evm["ev"]
     final_ac = current_evm["ac"]
+    baseline_bac = current_evm.get("baseline_bac")
+    ref_baseline_bac = float(baseline_bac) if baseline_bac is not None else bac
 
     points: List[Dict[str, Any]] = []
 
@@ -432,6 +497,7 @@ def generate_curve_s_data(db: Session, project: Project, points_count: int = 8) 
         # Formula sigmoidea estándar normalizada: 3*t^2 - 2*t^3
         smooth_ratio = (3 * (time_ratio ** 2)) - (2 * (time_ratio ** 3))
         pv_val = round(bac * smooth_ratio, 2)
+        baseline_pv_val = round(ref_baseline_bac * smooth_ratio, 2)
 
         # 2. AC acumulado a la fecha pt_dt
         if pt_dt <= now:
@@ -464,6 +530,7 @@ def generate_curve_s_data(db: Session, project: Project, points_count: int = 8) 
                 "date": pt_dt.strftime("%Y-%m-%d"),
                 "label": pt_dt.strftime("%d %b"),
                 "pv": pv_val,
+                "baseline_pv": baseline_pv_val,
                 "ev": ev_val,
                 "ac": ac_val,
                 "cpi": cpi_pt,

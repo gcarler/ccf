@@ -48,7 +48,9 @@ def _validate_project_link_url(value: Optional[str]) -> Optional[str]:
 class TaskSupplyBase(BaseModel):
     item_name: str
     quantity: int = Field(default=1, ge=0)
-    status: Literal["pending", "ready", "unavailable"] = "pending"
+    status: Literal["pending", "ready", "unavailable", "received", "approved", "purchased", "paid"] = "pending"
+    unit_cost: float = Field(default=0.0, ge=0.0)
+    total_cost: float = Field(default=0.0, ge=0.0)
 
 
 class TaskSupplyCreate(TaskSupplyBase):
@@ -59,11 +61,14 @@ class TaskSupplyUpdate(BaseModel):
     item_name: Optional[str] = None
     quantity: Optional[int] = Field(default=None, ge=0)
     status: Optional[str] = None
+    unit_cost: Optional[float] = Field(default=None, ge=0.0)
+    total_cost: Optional[float] = Field(default=None, ge=0.0)
 
 
 class TaskSupply(TaskSupplyBase):
     id: UUIDStr
     task_id: UUIDStr
+    expense_id: Optional[UUIDStr] = None
     model_config = orm_config
 
 
@@ -243,6 +248,7 @@ class ProjectTask(ProjectTaskBase):
     parent_id: Optional[UUIDStr] = None
     order_index: int = 0
     actual_cost: float = 0.0
+    actual_hours: float = 0.0
     supplies: List[TaskSupply] = Field(default_factory=list)
     subtasks: List["ProjectTask"] = Field(default_factory=list)
     model_config = orm_config
@@ -333,7 +339,7 @@ class ProjectExpenseBase(BaseModel):
     amount: float = Field(default=0.0, ge=0)
     date: Optional[datetime] = None
     receipt_url: Optional[str] = Field(default=None, max_length=500)
-    status: Literal["planned", "committed", "paid"] = "planned"
+    status: Literal["planned", "committed", "approved", "paid"] = "planned"
     component_id: Optional[UUIDStr] = None
     task_id: Optional[UUIDStr] = None
 
@@ -353,7 +359,7 @@ class ProjectExpenseUpdate(BaseModel):
     amount: Optional[float] = Field(default=None, ge=0)
     date: Optional[datetime] = None
     receipt_url: Optional[str] = Field(default=None, max_length=500)
-    status: Optional[Literal["planned", "committed", "paid"]] = None
+    status: Optional[Literal["planned", "committed", "approved", "paid"]] = None
     component_id: Optional[UUIDStr] = None
     task_id: Optional[UUIDStr] = None
 
@@ -486,6 +492,8 @@ class ProjectWorkloadTaskItem(BaseModel):
     priority: str = "medium"
     due_date: Optional[datetime] = None
     is_overdue: bool = False
+    estimated_hours: float = 0.0
+    actual_hours: float = 0.0
     model_config = orm_config
 
 
@@ -502,6 +510,9 @@ class ProjectMemberWorkload(BaseModel):
     high_tasks: int = 0
     medium_tasks: int = 0
     low_tasks: int = 0
+    estimated_hours_total: float = 0.0
+    actual_hours_logged: float = 0.0
+    hours_utilization_pct: float = 0.0
     capacity_status: Literal["available", "balanced", "overloaded"] = "available"
     workload_percent: int = 0
     tasks: List[ProjectWorkloadTaskItem] = Field(default_factory=list)
@@ -514,6 +525,8 @@ class ProjectWorkloadSummary(BaseModel):
     total_active_tasks: int = 0
     total_completed_tasks: int = 0
     total_overdue_tasks: int = 0
+    total_estimated_hours: float = 0.0
+    total_actual_hours: float = 0.0
     overloaded_members_count: int = 0
     balanced_members_count: int = 0
     available_members_count: int = 0
@@ -530,6 +543,7 @@ class TaskCriticalPathItem(BaseModel):
     task_id: UUIDStr
     title: str
     duration_days: int
+    lag_days: int = 0
     early_start: int
     early_finish: int
     late_start: int
@@ -547,6 +561,8 @@ class ProjectCriticalPathSummary(BaseModel):
     project_id: UUIDStr
     total_duration_days: int
     critical_tasks_count: int
+    excluded_parent_tasks_count: int = 0
+    total_lag_days: int = 0
     critical_path_task_ids: List[UUIDStr] = Field(default_factory=list)
     tasks: List[TaskCriticalPathItem] = Field(default_factory=list)
     has_cycles: bool = False
@@ -1528,6 +1544,13 @@ class ProjectEVMMetrics(BaseModel):
     vac: float = Field(..., description="Variación presupuestaria al finalizar (BAC - EAC)")
     health_status: str = Field(..., description="Diagnóstico general de desempeño EVM")
     health_color: str = Field(..., description="Código de color semántico (success, warning, destructive)")
+    has_baseline: bool = Field(default=False, description="Indica si el proyecto tiene una línea base activa")
+    baseline_id: Optional[UUIDStr] = Field(default=None, description="ID de la línea base activa")
+    baseline_name: Optional[str] = Field(default=None, description="Nombre de la línea base activa")
+    baseline_bac: Optional[float] = Field(default=None, description="BAC congelado en la línea base")
+    baseline_progress_pct: Optional[float] = Field(default=None, description="Avance congelado en la línea base")
+    baseline_variance_cost: float = Field(default=0.0, description="Variación de costo actual frente al BAC de línea base (baseline_bac - ac)")
+    baseline_variance_schedule: float = Field(default=0.0, description="Variación de avance frente a línea base (progress_percentage - baseline_progress_pct)")
     recommendations: List[str] = Field(default_factory=list)
 
 
@@ -1535,6 +1558,7 @@ class ProjectCurveSPoint(BaseModel):
     date: str
     label: str
     pv: float
+    baseline_pv: Optional[float] = None
     ev: Optional[float] = None
     ac: Optional[float] = None
     cpi: Optional[float] = None

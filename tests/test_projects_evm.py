@@ -372,6 +372,287 @@ def test_sync_execution_and_connected_kpis_indicators_endpoints(client, db_sessi
     assert curve_json["execution_matrix"]["rollup_hierarchy"]["overall_progress_pct"] == 75.0
 
 
+def test_six_submodules_connected_to_real_execution(client, db_session):
+    """Verifica la conexión en tiempo real de los 6 submódulos:
+    1) Automatizaciones (task_completed, milestone_completed, expense_approved)
+    2) Suministros -> ProjectExpense (AC de tarea, componente y proyecto)
+    3) Línea Base -> EVM y Curva S (baseline_bac, baseline_pv, varianzas)
+    4) TimeTracking -> actual_hours, physical_progress_pct y roll-up EDT al padre
+    5) Workload -> horas estimadas, horas reales registradas y % utilización
+    6) Ruta Crítica CPM -> exclusión de padres contenedores EDT y lag_days
+    """
+    from backend import models
+    from tests.conftest import auth_headers, seed_admin
+
+    user, persona, sede = seed_admin(db_session, email="submodules-pro@example.com")
+    headers = auth_headers(client, email="submodules-pro@example.com")
+    now = datetime.datetime.now(timezone.utc)
+
+    project = models.Project(
+        id=uuid.uuid4(),
+        title="Proyecto 6 Submódulos Conectados",
+        sede_id=sede.id,
+        owner_id=persona.id,
+        budget_allocated=100000.0,
+        progress_mode="auto_tasks",
+        start_date=now - timedelta(days=15),
+        target_date=now + timedelta(days=15),
+    )
+    db_session.add(project)
+    db_session.flush()
+
+    comp = models.ProjectComponent(
+        id=uuid.uuid4(),
+        project_id=project.id,
+        code="COMP-1",
+        name="Infraestructura",
+        budget_allocated=100000.0,
+        order_index=1,
+    )
+    db_session.add(comp)
+    db_session.commit()
+
+    # ── 1. Automatizaciones: crear reglas activas ───────────────────────────
+    r_rule_task = client.post(
+        f"/api/projects/{project.id}/automations",
+        json={
+            "name": "Auto Seguimiento al Completar",
+            "trigger_event": "task_completed",
+            "condition_data": {},
+            "action_type": "create_followup_task",
+            "action_data": {
+                "title": "Verificación QA Automática",
+                "priority": "high",
+                "duration_days": 3,
+            },
+            "is_active": True,
+        },
+        headers=headers,
+    )
+    assert r_rule_task.status_code == 201, r_rule_task.text
+    rule_task_id = r_rule_task.json()["id"]
+
+    r_rule_ms = client.post(
+        f"/api/projects/{project.id}/automations",
+        json={
+            "name": "Notificar al Completar Hito",
+            "trigger_event": "milestone_completed",
+            "condition_data": {},
+            "action_type": "notify_assignee",
+            "action_data": {},
+            "is_active": True,
+        },
+        headers=headers,
+    )
+    assert r_rule_ms.status_code == 201, r_rule_ms.text
+    rule_ms_id = r_rule_ms.json()["id"]
+
+    r_rule_exp = client.post(
+        f"/api/projects/{project.id}/automations",
+        json={
+            "name": "Notificar Gasto Pagado",
+            "trigger_event": "expense_approved",
+            "condition_data": {},
+            "action_type": "notify_assignee",
+            "action_data": {},
+            "is_active": True,
+        },
+        headers=headers,
+    )
+    assert r_rule_exp.status_code == 201, r_rule_exp.text
+    rule_exp_id = r_rule_exp.json()["id"]
+
+    # Crear actividad padre y dos subtareas hoja
+    parent_task = models.ProjectTask(
+        id=uuid.uuid4(),
+        project_id=project.id,
+        component_id=comp.id,
+        title="Actividad Contenedora Padre",
+        status="todo",
+        assignee_id=persona.id,
+        estimated_hours=20.0,
+        start_date=now - timedelta(days=10),
+        due_date=now + timedelta(days=5),
+    )
+    db_session.add(parent_task)
+    db_session.flush()
+
+    leaf_1 = models.ProjectTask(
+        id=uuid.uuid4(),
+        project_id=project.id,
+        component_id=comp.id,
+        parent_id=parent_task.id,
+        title="Subtarea Hoja 1 (Diseño)",
+        status="todo",
+        assignee_id=persona.id,
+        estimated_hours=10.0,
+        start_date=now - timedelta(days=10),
+        due_date=now - timedelta(days=6),  # 5 días de duración
+    )
+    leaf_2 = models.ProjectTask(
+        id=uuid.uuid4(),
+        project_id=project.id,
+        component_id=comp.id,
+        parent_id=parent_task.id,
+        title="Subtarea Hoja 2 (Implementación)",
+        status="todo",
+        assignee_id=persona.id,
+        estimated_hours=10.0,
+        start_date=now - timedelta(days=5),
+        due_date=now - timedelta(days=2),  # 4 días de duración
+    )
+    db_session.add_all([leaf_1, leaf_2])
+    db_session.commit()
+
+    # ── 2. TimeTracking -> actual_hours, avance físico de tarea y roll-up al padre ──
+    r_log = client.post(
+        f"/api/projects/{project.id}/time-logs",
+        json={
+            "task_id": str(leaf_2.id),
+            "hours": 5.0,
+            "description": "Desarrollo backend 5h de 10h",
+            "is_billable": True,
+        },
+        headers=headers,
+    )
+    assert r_log.status_code == 201, r_log.text
+
+    db_session.expire_all()
+    refreshed_leaf_2 = db_session.query(models.ProjectTask).filter_by(id=leaf_2.id).first()
+    refreshed_parent = db_session.query(models.ProjectTask).filter_by(id=parent_task.id).first()
+    assert refreshed_leaf_2.actual_hours == 5.0
+    assert refreshed_leaf_2.physical_progress_pct == 50.0
+    assert refreshed_leaf_2.status == "in_progress"
+    # Padre tiene 2 subtareas de 10h cada una (0% y 50% -> 25% ponderado)
+    assert refreshed_parent.physical_progress_pct == 25.0
+
+    # ── 3. Suministros -> Costo Real AC (ProjectExpense + budget_spent + EVM) ──
+    r_sup = client.post(
+        f"/api/projects/{project.id}/tasks/{leaf_1.id}/supplies",
+        json={
+            "item_name": "Servidores Dedicados",
+            "quantity": 2,
+            "unit_cost": 4000.0,
+            "status": "ready",
+        },
+        headers=headers,
+    )
+    assert r_sup.status_code == 201, r_sup.text
+    sup_json = r_sup.json()
+    assert sup_json["unit_cost"] == 4000.0
+    assert sup_json["total_cost"] == 8000.0
+    assert sup_json["expense_id"] is not None
+
+    db_session.expire_all()
+    refreshed_proj = db_session.query(models.Project).filter_by(id=project.id).first()
+    assert float(refreshed_proj.budget_spent) == 8000.0
+    assert float(leaf_1.actual_cost) == 8000.0
+    # Regla de expense_approved disparada automáticamente por el suministro pagado
+    rule_exp_db = db_session.query(models.ProjectAutomationRule).filter_by(id=uuid.UUID(rule_exp_id)).first()
+    assert (rule_exp_db.execution_count or 0) >= 1
+
+    # ── 4. Línea Base Conectada a EVM y Curva S ─────────────────────────────
+    r_base = client.post(
+        f"/api/projects/{project.id}/baselines",
+        json={"name": "Línea Base Oficial v1", "description": "Congelamiento inicial"},
+        headers=headers,
+    )
+    assert r_base.status_code == 201, r_base.text
+    base_json = r_base.json()
+    assert base_json["snapshot_data"]["bac"] == 100000.0
+    assert "evm" in base_json["snapshot_data"]
+
+    # Modificar el BAC del proyecto a 120000 para verificar comparación contra baseline_bac (100000)
+    refreshed_proj.budget_allocated = 120000.0
+    db_session.commit()
+
+    r_curve = client.get(f"/api/projects/{project.id}/evm/curve-s?points=6", headers=headers)
+    assert r_curve.status_code == 200, r_curve.text
+    curve_data = r_curve.json()
+    assert curve_data["summary"]["has_baseline"] is True
+    assert curve_data["summary"]["baseline_name"] == "Línea Base Oficial v1"
+    assert curve_data["summary"]["baseline_bac"] == 100000.0
+    assert curve_data["summary"]["baseline_variance_cost"] == 92000.0  # 100000 - 8000 AC
+    assert curve_data["points"][-1]["pv"] == 120000.0
+    assert curve_data["points"][-1]["baseline_pv"] == 100000.0
+
+    # ── 5. Workload Ponderado por Horas ─────────────────────────────────────
+    r_wl = client.get(f"/api/projects/{project.id}/workload", headers=headers)
+    assert r_wl.status_code == 200, r_wl.text
+    wl_data = r_wl.json()
+    # Las 2 subtareas hoja suman 20h estimadas (sin duplicar las 20h del padre contenedor)
+    assert wl_data["total_estimated_hours"] == 20.0
+    assert wl_data["total_actual_hours"] == 5.0
+    member_entry = next(m for m in wl_data["members"] if m["persona_id"] == str(persona.id))
+    assert member_entry["estimated_hours_total"] == 20.0
+    assert member_entry["actual_hours_logged"] == 5.0
+    assert member_entry["hours_utilization_pct"] == 25.0
+
+    # ── 6. CPM Consciente de EDT y lag_days ─────────────────────────────────
+    r_dep = client.post(
+        f"/api/projects/{project.id}/dependencies",
+        json={
+            "predecessor_id": str(leaf_1.id),
+            "successor_id": str(leaf_2.id),
+            "dependency_type": "FS",
+            "lag_days": 3,
+        },
+        headers=headers,
+    )
+    assert r_dep.status_code == 201, r_dep.text
+
+    r_cpm = client.get(f"/api/projects/{project.id}/critical-path", headers=headers)
+    assert r_cpm.status_code == 200, r_cpm.text
+    cpm_data = r_cpm.json()
+    assert cpm_data["excluded_parent_tasks_count"] >= 1
+    assert cpm_data["total_lag_days"] == 3
+    cpm_task_ids = [t["task_id"] for t in cpm_data["tasks"]]
+    assert str(parent_task.id) not in cpm_task_ids
+    leaf2_cpm = next(t for t in cpm_data["tasks"] if t["task_id"] == str(leaf_2.id))
+    assert leaf2_cpm["lag_days"] == 3
+    # Duración total = 5 días (leaf_1) + 3 días (lag) + 4 días (leaf_2) = 12 días
+    assert cpm_data["total_duration_days"] == 12
+
+    # ── Disparar automatización de tarea completada y de hito completado en tiempo real ──
+    r_done = client.patch(
+        f"/api/projects/{project.id}/tasks/{leaf_1.id}",
+        json={"status": "completed"},
+        headers=headers,
+    )
+    assert r_done.status_code == 200, r_done.text
+
+    db_session.expire_all()
+    rule_task_db = db_session.query(models.ProjectAutomationRule).filter_by(id=uuid.UUID(rule_task_id)).first()
+    assert (rule_task_db.execution_count or 0) == 1
+    followup = (
+        db_session.query(models.ProjectTask)
+        .filter(
+            models.ProjectTask.project_id == project.id,
+            models.ProjectTask.title == "Verificación QA Automática",
+        )
+        .first()
+    )
+    assert followup is not None
+
+    r_ms = client.post(
+        f"/api/projects/{project.id}/milestones",
+        json={"title": "Hito Entrega Fase 1", "is_completed": False},
+        headers=headers,
+    )
+    assert r_ms.status_code == 201, r_ms.text
+    ms_id = r_ms.json()["id"]
+
+    r_ms_done = client.patch(
+        f"/api/projects/{project.id}/milestones/{ms_id}",
+        json={"is_completed": True},
+        headers=headers,
+    )
+    assert r_ms_done.status_code == 200, r_ms_done.text
+    db_session.expire_all()
+    rule_ms_db = db_session.query(models.ProjectAutomationRule).filter_by(id=uuid.UUID(rule_ms_id)).first()
+    assert (rule_ms_db.execution_count or 0) == 1
+
+
 if __name__ == "__main__":
     test_evm_balanced_project()
     test_evm_cost_overrun_critical()

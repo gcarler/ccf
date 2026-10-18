@@ -56,7 +56,10 @@ from backend.crud.projects import (
     _prepare_kpi_response,
     create_milestone as _projects_create_milestone,
     delete_milestone as _projects_delete_milestone,
+    evaluate_task_mutation_automations,
     get_user_persona_id,
+    sync_supply_expense,
+    trigger_project_automations_safe,
 )
 from backend.mesh_websockets import manager
 from backend.services.comment_notifications import notify_mention
@@ -2016,6 +2019,9 @@ def update_task(
     user_sede = get_user_sede_id(db, current_user.id)
     task = _ensure_task(db, task_id)
     _ensure_project(db, str(task.project_id), user_sede=user_sede)
+    raw_req_status = payload.status
+    prev_status = task.status
+    prev_progress = float(getattr(task, "physical_progress_pct", 0.0) or 0.0)
     update_data = payload.model_dump(exclude_unset=True)
     _normalize_task_payload(update_data)
     if "status" in update_data:
@@ -2045,6 +2051,8 @@ def update_task(
     for key, value in update_data.items():
         setattr(task, key, value)
     _normalize_task_enums(task)
+    if task.status in ("completed", "done") and float(getattr(task, "physical_progress_pct", 0.0) or 0.0) < 100.0:
+        task.physical_progress_pct = 100.0
     changed_fields = [key for key in update_data if previous_values[key] != getattr(task, key, None)]
     if changed_fields:
         _log_project_activity(
@@ -2057,6 +2065,21 @@ def update_task(
     task.updated_at = _utcnow()
     db.commit()
     db.refresh(task)
+    if task.parent_id:
+        try:
+            from backend.services.project_evm_service import sync_parent_task_rollup
+            sync_parent_task_rollup(db, task.parent_id)
+        except Exception:
+            pass
+    evaluate_task_mutation_automations(
+        db,
+        task,
+        prev_status=prev_status,
+        prev_progress_pct=prev_progress,
+        requested_status=raw_req_status,
+        actor_persona_id=get_user_persona_id(db, current_user.id),
+        user_sede_id=user_sede,
+    )
     if (
         "assignee_id" in update_data
         and _assignment_changed(previous_assignee_id, getattr(task, "assignee_id", None))
@@ -3679,6 +3702,9 @@ def update_project_task(
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
     task = _ensure_task_in_project(db, project_id, task_id)
+    raw_req_status = payload.status
+    prev_status = task.status
+    prev_progress = float(getattr(task, "physical_progress_pct", 0.0) or 0.0)
     update_data = payload.model_dump(exclude_unset=True)
     _normalize_task_payload(update_data)
     if "status" in update_data:
@@ -3738,6 +3764,8 @@ def update_project_task(
             changed_fields.append(key)
 
     _normalize_task_enums(task)
+    if task.status in ("completed", "done") and float(getattr(task, "physical_progress_pct", 0.0) or 0.0) < 100.0:
+        task.physical_progress_pct = 100.0
     if changed_fields:
         _log_project_activity(
             db,
@@ -3754,6 +3782,15 @@ def update_project_task(
             sync_parent_task_rollup(db, task.parent_id)
         except Exception:
             pass
+    evaluate_task_mutation_automations(
+        db,
+        task,
+        prev_status=prev_status,
+        prev_progress_pct=prev_progress,
+        requested_status=raw_req_status,
+        actor_persona_id=get_user_persona_id(db, current_user.id),
+        user_sede_id=user_sede,
+    )
     if (
         "assignee_id" in update_data
         and _assignment_changed(previous_assignee_id, getattr(task, "assignee_id", None))
@@ -3849,6 +3886,7 @@ def create_task_supply(
     )
     db.commit()
     db.refresh(supply)
+    sync_supply_expense(db, supply, created_by=get_user_persona_id(db, current_user.id))
     return supply
 
 
@@ -3870,6 +3908,12 @@ def update_task_supply(
     task = _ensure_task_in_project(db, project_id, task_id)
     supply = _ensure_supply_in_task(db, project_id, task_id, supply_id)
     update_data = payload.model_dump(exclude_unset=True)
+    if "unit_cost" in update_data and "total_cost" not in update_data:
+        eff_qty = max(1, int(update_data.get("quantity", supply.quantity) or 1))
+        update_data["total_cost"] = round(float(update_data["unit_cost"] or 0.0) * eff_qty, 2)
+    elif "quantity" in update_data and "total_cost" not in update_data and float(getattr(supply, "unit_cost", 0.0) or 0.0) > 0:
+        eff_qty = max(1, int(update_data["quantity"] or 1))
+        update_data["total_cost"] = round(float(supply.unit_cost) * eff_qty, 2)
     for key, value in update_data.items():
         setattr(supply, key, value)
     _log_project_activity(
@@ -3881,6 +3925,7 @@ def update_task_supply(
     )
     db.commit()
     db.refresh(supply)
+    sync_supply_expense(db, supply, created_by=get_user_persona_id(db, current_user.id))
     return supply
 
 
@@ -3957,6 +4002,11 @@ def create_subtask(
     )
     db.commit()
     db.refresh(db_subtask)
+    try:
+        from backend.services.project_evm_service import sync_parent_task_rollup
+        sync_parent_task_rollup(db, db_subtask.parent_id)
+    except Exception:
+        pass
     if getattr(db_subtask, "assignee_id", None):
         notify_task_assigned(
             db,
@@ -3986,6 +4036,9 @@ def update_subtask(
     subtask = _ensure_task_in_project(db, project_id, subtask_id)
     if str(subtask.parent_id) != str(task_id):
         raise HTTPException(status_code=404, detail="Subtask not found under task")
+    raw_req_status = payload.status
+    prev_status = subtask.status
+    prev_progress = float(getattr(subtask, "physical_progress_pct", 0.0) or 0.0)
     update_data = payload.model_dump(exclude_unset=True)
     _normalize_task_payload(update_data)
     if "status" in update_data:
@@ -3996,8 +4049,25 @@ def update_subtask(
     for key, value in update_data.items():
         setattr(subtask, key, value)
     _normalize_task_enums(subtask)
+    if subtask.status in ("completed", "done") and float(getattr(subtask, "physical_progress_pct", 0.0) or 0.0) < 100.0:
+        subtask.physical_progress_pct = 100.0
     db.commit()
     db.refresh(subtask)
+    if subtask.parent_id:
+        try:
+            from backend.services.project_evm_service import sync_parent_task_rollup
+            sync_parent_task_rollup(db, subtask.parent_id)
+        except Exception:
+            pass
+    evaluate_task_mutation_automations(
+        db,
+        subtask,
+        prev_status=prev_status,
+        prev_progress_pct=prev_progress,
+        requested_status=raw_req_status,
+        actor_persona_id=get_user_persona_id(db, current_user.id),
+        user_sede_id=user_sede,
+    )
     if (
         "assignee_id" in update_data
         and _assignment_changed(previous_assignee_id, getattr(subtask, "assignee_id", None))
@@ -4617,6 +4687,15 @@ def update_project_milestone(
     )
     db.commit()
     db.refresh(milestone)
+    if milestone.is_completed and not previous_completed:
+        trigger_project_automations_safe(
+            db,
+            project_id,
+            "milestone_completed",
+            {"milestone_id": str(milestone.id), "milestone_title": milestone.title},
+            actor_persona_id=get_user_persona_id(db, current_user.id),
+            user_sede_id=user_sede,
+        )
     _normalize_dates(milestone)
     return milestone
 
@@ -5339,6 +5418,12 @@ def get_project_critical_path(
 @router.post(
     "/{project_id}/baseline",
     response_model=schemas.ProjectBaseline,
+    tags=["Projects Super-PRO"],
+)
+@router.post(
+    "/{project_id}/baselines",
+    response_model=schemas.ProjectBaseline,
+    status_code=status.HTTP_201_CREATED,
     tags=["Projects Super-PRO"],
 )
 def create_project_baseline_endpoint(

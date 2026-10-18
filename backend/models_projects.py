@@ -190,6 +190,94 @@ class ProjectTask(Base):
         cascade="all, delete-orphan",
     )
 
+    @property
+    def actual_hours(self) -> float:
+        if "_actual_hours" in self.__dict__ and self.__dict__["_actual_hours"] is not None:
+            return float(self.__dict__["_actual_hours"])
+        total = 0.0
+        try:
+            from sqlalchemy.orm import object_session
+            sess = object_session(self)
+            if sess is not None and self.id is not None:
+                logs = (
+                    sess.query(ProjectTimeLog)
+                    .filter(
+                        ProjectTimeLog.task_id == self.id,
+                        ProjectTimeLog.deleted_at.is_(None),
+                    )
+                    .all()
+                )
+                total += sum(float(getattr(tl, "hours", 0.0) or 0.0) for tl in logs)
+                children = (
+                    sess.query(ProjectTask)
+                    .filter(
+                        ProjectTask.parent_id == self.id,
+                        ProjectTask.deleted_at.is_(None),
+                    )
+                    .all()
+                )
+                for ch in children:
+                    total += float(ch.actual_hours or 0.0)
+                return round(total, 2)
+        except Exception:
+            pass
+        own_logs = [
+            tl for tl in (self.__dict__.get("time_logs") or [])
+            if getattr(tl, "deleted_at", None) is None
+        ]
+        total += sum(float(getattr(tl, "hours", 0.0) or 0.0) for tl in own_logs)
+        for sub in (self.__dict__.get("subtasks") or []):
+            if getattr(sub, "deleted_at", None) is None:
+                total += float(getattr(sub, "actual_hours", 0.0) or 0.0)
+        return round(total, 2)
+
+    @actual_hours.setter
+    def actual_hours(self, value: float | None) -> None:
+        self.__dict__["_actual_hours"] = round(float(value or 0.0), 2) if value is not None else None
+
+    @property
+    def actual_cost(self) -> float:
+        if "_actual_cost" in self.__dict__ and self.__dict__["_actual_cost"] is not None:
+            return float(self.__dict__["_actual_cost"])
+        total = 0.0
+        try:
+            from sqlalchemy.orm import object_session
+            sess = object_session(self)
+            if sess is not None and self.id is not None:
+                exps = (
+                    sess.query(ProjectExpense)
+                    .filter(
+                        ProjectExpense.task_id == self.id,
+                        ProjectExpense.deleted_at.is_(None),
+                        ProjectExpense.status.in_(["approved", "paid"]),
+                    )
+                    .all()
+                )
+                total += sum(float(getattr(e, "amount", 0.0) or 0.0) for e in exps)
+                children = (
+                    sess.query(ProjectTask)
+                    .filter(
+                        ProjectTask.parent_id == self.id,
+                        ProjectTask.deleted_at.is_(None),
+                    )
+                    .all()
+                )
+                for ch in children:
+                    total += float(ch.actual_cost or 0.0)
+                return round(total, 2)
+        except Exception:
+            pass
+        own_exps = [
+            e for e in (self.__dict__.get("expenses") or [])
+            if getattr(e, "deleted_at", None) is None and getattr(e, "status", None) in ("approved", "paid")
+        ]
+        total += sum(float(getattr(e, "amount", 0.0) or 0.0) for e in own_exps)
+        return round(total, 2)
+
+    @actual_cost.setter
+    def actual_cost(self, value: float | None) -> None:
+        self.__dict__["_actual_cost"] = round(float(value or 0.0), 2) if value is not None else None
+
 
 class ProjectAttachment(Base):
     __tablename__ = "project_attachments"
@@ -217,6 +305,96 @@ class TaskSupply(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     task = relationship("ProjectTask", back_populates="supplies")
+
+    def __init__(self, **kwargs: Any) -> None:
+        u_cost = kwargs.pop("unit_cost", None)
+        t_cost = kwargs.pop("total_cost", None)
+        exp_id = kwargs.pop("expense_id", None)
+        super().__init__(**kwargs)
+        qty = max(1, int(self.quantity or 1))
+        if u_cost is not None or t_cost is not None:
+            uc = float(u_cost or 0.0)
+            tc = float(t_cost) if (t_cost is not None and float(t_cost) > 0) else round(uc * qty, 2)
+            if uc == 0.0 and tc > 0:
+                uc = round(tc / qty, 2)
+            self.__dict__["_unit_cost"] = round(uc, 2)
+            self.__dict__["_total_cost"] = round(tc, 2)
+        if exp_id is not None:
+            self.__dict__["_expense_id"] = str(exp_id)
+
+    def _resolve_linked_expense(self) -> Optional["ProjectExpense"]:
+        try:
+            from sqlalchemy.orm import object_session
+            sess = object_session(self)
+            if sess is not None and self.id is not None and self.task_id is not None:
+                tag = f"[supply_id:{self.id}]"
+                return (
+                    sess.query(ProjectExpense)
+                    .filter(
+                        ProjectExpense.task_id == self.task_id,
+                        ProjectExpense.category == "supplies",
+                        ProjectExpense.deleted_at.is_(None),
+                        ProjectExpense.description.contains(tag),
+                    )
+                    .first()
+                )
+        except Exception:
+            pass
+        return None
+
+    @property
+    def unit_cost(self) -> float:
+        if "_unit_cost" in self.__dict__ and self.__dict__["_unit_cost"] is not None:
+            return float(self.__dict__["_unit_cost"])
+        exp = self._resolve_linked_expense()
+        if exp is not None:
+            qty = max(1, int(self.quantity or 1))
+            tc = float(exp.amount or 0.0)
+            uc = round(tc / qty, 2)
+            self.__dict__["_unit_cost"] = uc
+            self.__dict__["_total_cost"] = round(tc, 2)
+            self.__dict__["_expense_id"] = str(exp.id)
+            return uc
+        return 0.0
+
+    @unit_cost.setter
+    def unit_cost(self, value: float | None) -> None:
+        self.__dict__["_unit_cost"] = round(float(value or 0.0), 2) if value is not None else 0.0
+
+    @property
+    def total_cost(self) -> float:
+        if "_total_cost" in self.__dict__ and self.__dict__["_total_cost"] is not None:
+            return float(self.__dict__["_total_cost"])
+        if "_unit_cost" in self.__dict__ and self.__dict__["_unit_cost"]:
+            qty = max(1, int(self.quantity or 1))
+            return round(float(self.__dict__["_unit_cost"]) * qty, 2)
+        exp = self._resolve_linked_expense()
+        if exp is not None:
+            qty = max(1, int(self.quantity or 1))
+            tc = round(float(exp.amount or 0.0), 2)
+            self.__dict__["_total_cost"] = tc
+            self.__dict__["_unit_cost"] = round(tc / qty, 2)
+            self.__dict__["_expense_id"] = str(exp.id)
+            return tc
+        return 0.0
+
+    @total_cost.setter
+    def total_cost(self, value: float | None) -> None:
+        self.__dict__["_total_cost"] = round(float(value or 0.0), 2) if value is not None else 0.0
+
+    @property
+    def expense_id(self) -> Optional[str]:
+        if "_expense_id" in self.__dict__ and self.__dict__["_expense_id"] is not None:
+            return str(self.__dict__["_expense_id"])
+        exp = self._resolve_linked_expense()
+        if exp is not None:
+            self.__dict__["_expense_id"] = str(exp.id)
+            return str(exp.id)
+        return None
+
+    @expense_id.setter
+    def expense_id(self, value: object) -> None:
+        self.__dict__["_expense_id"] = str(value) if value else None
 
 
 class ProjectComment(Base):

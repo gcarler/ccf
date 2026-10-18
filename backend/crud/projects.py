@@ -505,10 +505,88 @@ def get_project_task(db: Session, task_id):
     )
 
 
+def trigger_project_automations_safe(
+    db: Session,
+    project_id: Any,
+    trigger_event: str,
+    context: Optional[dict] = None,
+    *,
+    actor_persona_id: Optional[UUID | str] = None,
+    user_sede_id: Optional[UUID | str] = None,
+) -> list[dict]:
+    """Dispara de forma segura las reglas de automatización activas del proyecto."""
+    if not project_id or not trigger_event:
+        return []
+    try:
+        effective_sede = user_sede_id
+        if effective_sede is None:
+            proj = get_project(db, project_id)
+            if proj and getattr(proj, "sede_id", None):
+                effective_sede = proj.sede_id
+        return evaluate_project_automations(
+            db,
+            project_id,
+            trigger_event,
+            context or {},
+            actor_persona_id=actor_persona_id,
+            user_sede_id=effective_sede,
+            dry_run=False,
+        )
+    except Exception:
+        return []
+
+
+def evaluate_task_mutation_automations(
+    db: Session,
+    task: models.ProjectTask,
+    *,
+    prev_status: Optional[str] = None,
+    prev_progress_pct: float = 0.0,
+    requested_status: Optional[str] = None,
+    actor_persona_id: Optional[UUID | str] = None,
+    user_sede_id: Optional[UUID | str] = None,
+) -> None:
+    """Evalúa y dispara automatizaciones tras mutar estado o avance de una tarea/subtarea."""
+    if not task or not getattr(task, "project_id", None):
+        return
+    curr_status = getattr(task, "status", None)
+    curr_pct = float(getattr(task, "physical_progress_pct", 0.0) or 0.0)
+    ctx = {
+        "task_id": str(task.id),
+        "task_title": getattr(task, "title", ""),
+        "status": curr_status,
+        "priority": getattr(task, "priority", "medium"),
+        "node": getattr(task, "node", None),
+        "assignee_id": str(task.assignee_id) if getattr(task, "assignee_id", None) else None,
+    }
+    was_completed = prev_status in ("completed", "done") or prev_progress_pct >= 100.0
+    is_now_completed = curr_status in ("completed", "done") or curr_pct >= 100.0
+    if is_now_completed and not was_completed:
+        trigger_project_automations_safe(
+            db,
+            task.project_id,
+            "task_completed",
+            ctx,
+            actor_persona_id=actor_persona_id,
+            user_sede_id=user_sede_id,
+        )
+    elif (requested_status == "blocked" or curr_status == "blocked") and prev_status != "blocked":
+        trigger_project_automations_safe(
+            db,
+            task.project_id,
+            "task_blocked",
+            ctx,
+            actor_persona_id=actor_persona_id,
+            user_sede_id=user_sede_id,
+        )
+
+
 def update_project_task(db: Session, task_id, payload: schemas.ProjectTaskUpdate):
     row = get_project_task(db, task_id)
     if not row:
         return None
+    prev_status = row.status
+    prev_progress = float(getattr(row, "physical_progress_pct", 0.0) or 0.0)
     update_data = payload.model_dump(exclude_unset=True)
 
     effective_status = update_data.get("status", row.status)
@@ -528,6 +606,8 @@ def update_project_task(db: Session, task_id, payload: schemas.ProjectTaskUpdate
 
     for key, value in update_data.items():
         setattr(row, key, value)
+    if row.status in ("completed", "done") and float(getattr(row, "physical_progress_pct", 0.0) or 0.0) < 100.0:
+        row.physical_progress_pct = 100.0
     db.commit()
     db.refresh(row)
     if row.parent_id:
@@ -536,6 +616,13 @@ def update_project_task(db: Session, task_id, payload: schemas.ProjectTaskUpdate
             sync_parent_task_rollup(db, row.parent_id)
         except Exception:
             pass
+    evaluate_task_mutation_automations(
+        db,
+        row,
+        prev_status=prev_status,
+        prev_progress_pct=prev_progress,
+        requested_status=update_data.get("status"),
+    )
     return row
 
 
@@ -690,6 +777,13 @@ def create_milestone(
     db.add(row)
     db.commit()
     db.refresh(row)
+    if row.is_completed:
+        trigger_project_automations_safe(
+            db,
+            row.project_id,
+            "milestone_completed",
+            {"milestone_id": str(row.id), "milestone_title": row.title},
+        )
     return row
 
 
@@ -699,10 +793,18 @@ def update_milestone(
     row = get_milestone(db, milestone_id)
     if not row:
         return None
+    was_completed = bool(row.is_completed)
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(row, key, value)
     db.commit()
     db.refresh(row)
+    if row.is_completed and not was_completed:
+        trigger_project_automations_safe(
+            db,
+            row.project_id,
+            "milestone_completed",
+            {"milestone_id": str(row.id), "milestone_title": row.title},
+        )
     return row
 
 
@@ -901,6 +1003,109 @@ def update_project_wiki(db: Session, project_id, content: str, author_id=None) -
 # ── Task Supplies ───────────────────────────────────────
 
 
+def sync_supply_expense(
+    db: Session,
+    supply: models.TaskSupply,
+    *,
+    created_by: Optional[UUID | str] = None,
+) -> Optional[models.ProjectExpense]:
+    """Sincroniza automáticamente un suministro con costo hacia ProjectExpense (AC de tarea/componente/proyecto)."""
+    if not supply or not getattr(supply, "task_id", None):
+        return None
+    task = (
+        db.query(models.ProjectTask)
+        .filter(models.ProjectTask.id == _to_uuid(supply.task_id))
+        .first()
+    )
+    if not task or not getattr(task, "project_id", None):
+        return None
+
+    tag = f"[supply_id:{supply.id}]"
+    linked = (
+        db.query(models.ProjectExpense)
+        .filter(
+            models.ProjectExpense.project_id == task.project_id,
+            models.ProjectExpense.description.ilike(f"%{tag}%"),
+        )
+        .order_by(models.ProjectExpense.created_at.desc())
+        .first()
+    )
+
+    if supply.deleted_at is not None or supply.status == "unavailable":
+        if linked and linked.deleted_at is None:
+            linked.deleted_at = datetime.now(timezone.utc)
+            db.commit()
+            recalculate_project_budget(db, task.project_id)
+        return None
+
+    qty = max(1, int(getattr(supply, "quantity", 1) or 1))
+    unit_cost = float(getattr(supply, "unit_cost", 0.0) or 0.0)
+    total_cost = float(getattr(supply, "total_cost", 0.0) or 0.0)
+    if total_cost <= 0.0 and unit_cost > 0.0:
+        total_cost = round(unit_cost * qty, 2)
+    elif unit_cost <= 0.0 and total_cost > 0.0:
+        unit_cost = round(total_cost / qty, 2)
+
+    supply.unit_cost = round(unit_cost, 2)
+    supply.total_cost = round(total_cost, 2)
+
+    if total_cost <= 0.0:
+        if linked and linked.deleted_at is None:
+            linked.deleted_at = datetime.now(timezone.utc)
+            db.commit()
+            recalculate_project_budget(db, task.project_id)
+        return None
+
+    paid_statuses = {"ready", "received", "approved", "purchased", "paid"}
+    exp_status = "paid" if str(supply.status or "").lower() in paid_statuses else "planned"
+    desc_text = f"{tag} Suministro: {supply.item_name} (x{qty}) [unit_cost={round(unit_cost, 2)}]"
+
+    prev_exp_status = linked.status if linked and linked.deleted_at is None else None
+    if linked:
+        linked.component_id = task.component_id
+        linked.task_id = task.id
+        linked.category = "supplies"
+        linked.description = desc_text
+        linked.amount = round(total_cost, 2)
+        linked.status = exp_status
+        linked.deleted_at = None
+        linked.updated_at = datetime.now(timezone.utc)
+    else:
+        linked = models.ProjectExpense(
+            project_id=task.project_id,
+            component_id=task.component_id,
+            task_id=task.id,
+            category="supplies",
+            description=desc_text,
+            amount=round(total_cost, 2),
+            date=datetime.now(timezone.utc),
+            status=exp_status,
+            created_by=_to_uuid(created_by) if created_by else None,
+        )
+        db.add(linked)
+
+    db.commit()
+    db.refresh(linked)
+    supply.expense_id = str(linked.id)
+    recalculate_project_budget(db, task.project_id)
+
+    if exp_status in ("approved", "paid") and prev_exp_status not in ("approved", "paid"):
+        trigger_project_automations_safe(
+            db,
+            task.project_id,
+            "expense_approved",
+            {
+                "expense_id": str(linked.id),
+                "amount": float(linked.amount or 0.0),
+                "category": linked.category,
+                "task_id": str(task.id),
+                "supply_id": str(supply.id),
+            },
+            actor_persona_id=created_by,
+        )
+    return linked
+
+
 def get_task_supplies(db: Session, task_id):
     return (
         db.query(models.TaskSupply)
@@ -914,22 +1119,54 @@ def get_supply(db: Session, supply_id: UUID):
     return db.query(models.TaskSupply).filter(models.TaskSupply.id == supply_id).first()
 
 
-def create_supply(db: Session, task_id, item_name: str, quantity: int = 1, status: str = "pending"):
-    row = models.TaskSupply(task_id=task_id, item_name=item_name, quantity=quantity, status=status)
+def create_supply(
+    db: Session,
+    task_id,
+    item_name: str,
+    quantity: int = 1,
+    status: str = "pending",
+    *,
+    unit_cost: float = 0.0,
+    total_cost: Optional[float] = None,
+    created_by: Optional[UUID | str] = None,
+):
+    row = models.TaskSupply(
+        task_id=task_id,
+        item_name=item_name,
+        quantity=quantity,
+        status=status,
+        unit_cost=unit_cost,
+        total_cost=total_cost,
+    )
     db.add(row)
     db.commit()
     db.refresh(row)
+    sync_supply_expense(db, row, created_by=created_by)
     return row
 
 
-def update_supply(db: Session, supply_id: UUID, payload: schemas.TaskSupplyUpdate) -> Optional[models.TaskSupply]:
+def update_supply(
+    db: Session,
+    supply_id: UUID,
+    payload: schemas.TaskSupplyUpdate,
+    *,
+    created_by: Optional[UUID | str] = None,
+) -> Optional[models.TaskSupply]:
     row = get_supply(db, supply_id)
     if not row:
         return None
-    for key, value in payload.model_dump(exclude_unset=True).items():
+    update_data = payload.model_dump(exclude_unset=True)
+    if "unit_cost" in update_data and "total_cost" not in update_data:
+        eff_qty = max(1, int(update_data.get("quantity", row.quantity) or 1))
+        update_data["total_cost"] = round(float(update_data["unit_cost"] or 0.0) * eff_qty, 2)
+    elif "quantity" in update_data and "total_cost" not in update_data and float(getattr(row, "unit_cost", 0.0) or 0.0) > 0:
+        eff_qty = max(1, int(update_data["quantity"] or 1))
+        update_data["total_cost"] = round(float(row.unit_cost) * eff_qty, 2)
+    for key, value in update_data.items():
         setattr(row, key, value)
     db.commit()
     db.refresh(row)
+    sync_supply_expense(db, row, created_by=created_by)
     return row
 
 
@@ -939,6 +1176,7 @@ def delete_supply(db: Session, supply_id: UUID) -> bool:
         return False
     row.deleted_at = _utcnow()
     db.commit()
+    sync_supply_expense(db, row)
     return True
 
 
@@ -1395,7 +1633,7 @@ def recalculate_project_budget(db: Session, project_id: UUID | str) -> Optional[
         )
         .all()
     )
-    paid_sum = sum(e.amount for e in expenses if e.status == "paid")
+    paid_sum = sum(e.amount for e in expenses if e.status in ("paid", "approved"))
     project.budget_spent = round(float(paid_sum), 2)
     db.commit()
     db.refresh(project)
@@ -1468,6 +1706,19 @@ def create_project_expense(
     db.commit()
     db.refresh(row)
     recalculate_project_budget(db, project_id)
+    if row.status in ("approved", "paid"):
+        trigger_project_automations_safe(
+            db,
+            project_id,
+            "expense_approved",
+            {
+                "expense_id": str(row.id),
+                "amount": float(row.amount or 0.0),
+                "category": row.category,
+                "task_id": str(row.task_id) if row.task_id else None,
+            },
+            actor_persona_id=created_by,
+        )
     if row.creator:
         row.creator_name = row.creator.nombre_completo
     if getattr(row, "task", None):
@@ -1484,6 +1735,7 @@ def update_project_expense(
     row = get_project_expense(db, project_id, expense_id)
     if not row:
         return None
+    prev_status = row.status
     nullable_fields = {"description", "receipt_url", "component_id", "task_id"}
     for k, v in expense_in.model_dump(exclude_unset=True).items():
         if v is not None or k in nullable_fields:
@@ -1497,6 +1749,19 @@ def update_project_expense(
     db.commit()
     db.refresh(row)
     recalculate_project_budget(db, project_id)
+    if row.status in ("approved", "paid") and prev_status not in ("approved", "paid"):
+        trigger_project_automations_safe(
+            db,
+            project_id,
+            "expense_approved",
+            {
+                "expense_id": str(row.id),
+                "amount": float(row.amount or 0.0),
+                "category": row.category,
+                "task_id": str(row.task_id) if row.task_id else None,
+            },
+            actor_persona_id=row.created_by,
+        )
     if row.creator:
         row.creator_name = row.creator.nombre_completo
     if getattr(row, "task", None):
@@ -1529,7 +1794,7 @@ def get_project_budget_summary(db: Session, project_id: UUID | str) -> Optional[
     allocated = float(project.budget_allocated or 0.0)
     planned = sum(e.amount for e in expenses if e.status == "planned")
     committed = sum(e.amount for e in expenses if e.status == "committed")
-    paid = sum(e.amount for e in expenses if e.status == "paid")
+    paid = sum(e.amount for e in expenses if e.status in ("paid", "approved"))
 
     # This helper is called by GET endpoints and must remain read-only. Expense
     # create/update/delete mutations persist the derived field via
@@ -1808,6 +2073,33 @@ def get_project_workload(db: Session, project_id: UUID | str) -> Optional[dict]:
         .all()
     )
 
+    all_task_ids = {str(t.id) for t in tasks}
+    parent_ids_with_children = {
+        str(t.parent_id)
+        for t in tasks
+        if t.parent_id and str(t.parent_id) in all_task_ids and str(t.parent_id) != str(t.id)
+    }
+
+    # Obtener registros de tiempo reales (ProjectTimeLog)
+    time_logs = (
+        db.query(models.ProjectTimeLog)
+        .filter(
+            models.ProjectTimeLog.project_id == project_id,
+            models.ProjectTimeLog.deleted_at.is_(None),
+        )
+        .all()
+    )
+    hours_by_task: dict[str, float] = {}
+    hours_by_persona: dict[str, float] = {}
+    for tl in time_logs:
+        h = float(tl.hours or 0.0)
+        if tl.task_id:
+            tid_s = str(tl.task_id)
+            hours_by_task[tid_s] = round(hours_by_task.get(tid_s, 0.0) + h, 2)
+        if tl.persona_id:
+            pid_s = str(tl.persona_id)
+            hours_by_persona[pid_s] = round(hours_by_persona.get(pid_s, 0.0) + h, 2)
+
     # 2. Obtener miembros explícitos del proyecto
     members_rows = (
         db.query(models.ProjectMember)
@@ -1853,6 +2145,8 @@ def get_project_workload(db: Session, project_id: UUID | str) -> Optional[dict]:
     total_active_tasks = 0
     total_completed_tasks = 0
     total_overdue_tasks = 0
+    total_estimated_hours = 0.0
+    total_actual_hours = 0.0
 
     overloaded_count = 0
     balanced_count = 0
@@ -1881,21 +2175,45 @@ def get_project_workload(db: Session, project_id: UUID | str) -> Optional[dict]:
         total_completed_tasks += len(completed_t)
         total_overdue_tasks += len(overdue_t)
 
+        # Esfuerzo en horas (ponderando tareas hoja para evitar doble conteo padre+subtarea)
+        leaf_assigned = [t for t in assigned if str(t.id) not in parent_ids_with_children]
+        est_hours_member = round(
+            sum(float(getattr(t, "estimated_hours", 0.0) or 0.0) for t in (leaf_assigned or assigned)),
+            2,
+        )
+        task_logged_member = sum(hours_by_task.get(str(t.id), 0.0) for t in assigned)
+        act_hours_member = round(max(hours_by_persona.get(pid_str, 0.0), task_logged_member), 2)
+        hours_util_pct = (
+            round((act_hours_member / est_hours_member) * 100.0, 1)
+            if est_hours_member > 0.0
+            else (100.0 if act_hours_member > 0.0 else 0.0)
+        )
+        total_estimated_hours = round(total_estimated_hours + est_hours_member, 2)
+        total_actual_hours = round(total_actual_hours + act_hours_member, 2)
+
+        active_est_hours = sum(
+            float(getattr(t, "estimated_hours", 0.0) or 0.0)
+            for t in (leaf_assigned or assigned)
+            if t.status != "completed"
+        )
+
         # Regla de capacidad:
-        # - Overloaded: 5 o más activas, o 2 o más vencidas, o 2 o más urgentes
-        # - Balanced: 2 a 4 activas
+        # - Overloaded: 5 o más activas, o 2 o más vencidas, o 2 o más urgentes, o >= 40h activas estimadas
+        # - Balanced: 2 a 4 activas (o >= 16h activas estimadas)
         # - Available: 0 a 1 activas
-        if active_count >= 5 or len(overdue_t) >= 2 or urgent_count >= 2:
+        if active_count >= 5 or len(overdue_t) >= 2 or urgent_count >= 2 or active_est_hours >= 40.0:
             status = "overloaded"
             overloaded_count += 1
-        elif active_count >= 2:
+        elif active_count >= 2 or active_est_hours >= 16.0:
             status = "balanced"
             balanced_count += 1
         else:
             status = "available"
             available_count += 1
 
-        workload_pct = min(100, round((active_count / 5.0) * 100))
+        task_pct = round((active_count / 5.0) * 100)
+        hours_pct = round((active_est_hours / 40.0) * 100) if active_est_hours > 0 else 0
+        workload_pct = min(100, max(task_pct, hours_pct))
 
         # Tareas serializadas para UI
         task_items = []
@@ -1904,6 +2222,8 @@ def get_project_workload(db: Session, project_id: UUID | str) -> Optional[dict]:
             if t.status != "completed" and t.due_date:
                 t_due = t.due_date if getattr(t.due_date, "tzinfo", None) else t.due_date.replace(tzinfo=timezone.utc)
                 is_od = bool(t_due < now_utc)
+            t_est = round(float(getattr(t, "estimated_hours", 0.0) or 0.0), 2)
+            t_act = round(hours_by_task.get(str(t.id), 0.0), 2)
             task_items.append({
                 "id": str(t.id),
                 "title": t.title,
@@ -1911,6 +2231,8 @@ def get_project_workload(db: Session, project_id: UUID | str) -> Optional[dict]:
                 "priority": t.priority,
                 "due_date": t.due_date,
                 "is_overdue": is_od,
+                "estimated_hours": t_est,
+                "actual_hours": t_act,
             })
 
         name = getattr(persona, "nombre_completo", None) or f"{getattr(persona, 'nombres', '')} {getattr(persona, 'apellidos', '')}".strip() or "Miembro"
@@ -1927,6 +2249,9 @@ def get_project_workload(db: Session, project_id: UUID | str) -> Optional[dict]:
             "high_tasks": high_count,
             "medium_tasks": medium_count,
             "low_tasks": low_count,
+            "estimated_hours_total": est_hours_member,
+            "actual_hours_logged": act_hours_member,
+            "hours_utilization_pct": hours_util_pct,
             "capacity_status": status,
             "workload_percent": workload_pct,
             "tasks": task_items,
@@ -1940,6 +2265,16 @@ def get_project_workload(db: Session, project_id: UUID | str) -> Optional[dict]:
     total_completed_tasks += sum(1 for t in unassigned if t.status == "completed")
 
     if unassigned:
+        unassigned_leaf = [t for t in unassigned if str(t.id) not in parent_ids_with_children]
+        unassigned_est = round(
+            sum(float(getattr(t, "estimated_hours", 0.0) or 0.0) for t in (unassigned_leaf or unassigned)),
+            2,
+        )
+        unassigned_act = round(sum(hours_by_task.get(str(t.id), 0.0) for t in unassigned), 2)
+        total_estimated_hours = round(total_estimated_hours + unassigned_est, 2)
+        total_actual_hours = round(total_actual_hours + unassigned_act, 2)
+        unassigned_util = round((unassigned_act / unassigned_est) * 100.0, 1) if unassigned_est > 0 else 0.0
+
         unassigned_task_items = []
         for t in unassigned:
             is_od = False
@@ -1953,6 +2288,8 @@ def get_project_workload(db: Session, project_id: UUID | str) -> Optional[dict]:
                 "priority": t.priority,
                 "due_date": t.due_date,
                 "is_overdue": is_od,
+                "estimated_hours": round(float(getattr(t, "estimated_hours", 0.0) or 0.0), 2),
+                "actual_hours": round(hours_by_task.get(str(t.id), 0.0), 2),
             })
 
         member_workloads.append({
@@ -1968,6 +2305,9 @@ def get_project_workload(db: Session, project_id: UUID | str) -> Optional[dict]:
             "high_tasks": sum(1 for t in unassigned_active if t.priority == "high"),
             "medium_tasks": sum(1 for t in unassigned_active if t.priority in ("medium", "normal")),
             "low_tasks": sum(1 for t in unassigned_active if t.priority == "low"),
+            "estimated_hours_total": unassigned_est,
+            "actual_hours_logged": unassigned_act,
+            "hours_utilization_pct": unassigned_util,
             "capacity_status": "available",
             "workload_percent": 0,
             "tasks": unassigned_task_items,
@@ -1985,6 +2325,8 @@ def get_project_workload(db: Session, project_id: UUID | str) -> Optional[dict]:
         "total_active_tasks": total_active_tasks,
         "total_completed_tasks": total_completed_tasks,
         "total_overdue_tasks": total_overdue_tasks,
+        "total_estimated_hours": total_estimated_hours,
+        "total_actual_hours": total_actual_hours,
         "overloaded_members_count": overloaded_count,
         "balanced_members_count": balanced_count,
         "available_members_count": available_count,
@@ -2026,7 +2368,7 @@ def calculate_critical_path(db: Session, project_id: UUID | str) -> Optional[dic
     if not project:
         return None
 
-    tasks = (
+    all_tasks = (
         db.query(models.ProjectTask)
         .filter(
             models.ProjectTask.project_id == project_id,
@@ -2036,15 +2378,29 @@ def calculate_critical_path(db: Session, project_id: UUID | str) -> Optional[dic
         .all()
     )
 
-    if not tasks:
+    if not all_tasks:
         return {
             "project_id": str(project.id),
             "total_duration_days": 0,
             "critical_tasks_count": 0,
+            "excluded_parent_tasks_count": 0,
+            "total_lag_days": 0,
             "critical_path_task_ids": [],
             "tasks": [],
             "has_cycles": False,
         }
+
+    # Filtrar actividades contenedoras padre que tienen subtareas activas para evitar caminos duplicados en CPM
+    all_ids_set = {str(t.id) for t in all_tasks}
+    parent_ids_with_active_subtasks = {
+        str(t.parent_id)
+        for t in all_tasks
+        if t.parent_id and str(t.parent_id) in all_ids_set and str(t.parent_id) != str(t.id)
+    }
+    tasks = [t for t in all_tasks if str(t.id) not in parent_ids_with_active_subtasks]
+    if not tasks:
+        tasks = list(all_tasks)
+    excluded_parent_tasks_count = len(all_tasks) - len(tasks)
 
     task_map = {str(t.id): t for t in tasks}
     task_ids = list(task_map.keys())
@@ -2077,15 +2433,20 @@ def calculate_critical_path(db: Session, project_id: UUID | str) -> Optional[dic
     succs = {t_id: [] for t_id in task_ids}
     preds = {t_id: [] for t_id in task_ids}
     in_degree = {t_id: 0 for t_id in task_ids}
+    max_incoming_lag = {t_id: 0 for t_id in task_ids}
+    total_lag_days = 0
 
     for dep in deps:
         p_id = str(dep.predecessor_id)
         s_id = str(dep.successor_id)
         if p_id in task_map and s_id in task_map and p_id != s_id:
-            lag = dep.lag_days or 0
+            lag = int(dep.lag_days or 0)
+            total_lag_days += lag
             succs[p_id].append((s_id, lag))
             preds[s_id].append((p_id, lag))
             in_degree[s_id] += 1
+            if lag > max_incoming_lag[s_id]:
+                max_incoming_lag[s_id] = lag
 
     # Orden topológico (Algoritmo de Kahn)
     queue = [t_id for t_id in task_ids if in_degree[t_id] == 0]
@@ -2163,6 +2524,7 @@ def calculate_critical_path(db: Session, project_id: UUID | str) -> Optional[dic
             "task_id": t_id,
             "title": t.title,
             "duration_days": dur,
+            "lag_days": max_incoming_lag[t_id],
             "early_start": es,
             "early_finish": ef,
             "late_start": ls,
@@ -2179,6 +2541,8 @@ def calculate_critical_path(db: Session, project_id: UUID | str) -> Optional[dic
         "project_id": str(project.id),
         "total_duration_days": total_project_duration,
         "critical_tasks_count": len(critical_path_ids),
+        "excluded_parent_tasks_count": excluded_parent_tasks_count,
+        "total_lag_days": total_lag_days,
         "critical_path_task_ids": critical_path_ids,
         "tasks": task_items,
         "has_cycles": has_cycles,
@@ -2205,9 +2569,38 @@ def create_project_baseline(
         .all()
     )
 
+    evm_snapshot: dict[str, Any] = {}
+    try:
+        from backend.services.project_evm_service import calculate_project_evm
+        evm_now = calculate_project_evm(db, project)
+        evm_snapshot = {
+            "bac": evm_now.get("bac", float(project.budget_allocated or 0.0)),
+            "ac": evm_now.get("ac", float(project.budget_spent or 0.0)),
+            "ev": evm_now.get("ev", 0.0),
+            "pv": evm_now.get("pv", 0.0),
+            "progress_percentage": evm_now.get("progress_percentage", 0.0),
+            "cpi": evm_now.get("cpi", 1.0),
+            "spi": evm_now.get("spi", 1.0),
+        }
+    except Exception:
+        evm_snapshot = {
+            "bac": float(project.budget_allocated or 0.0),
+            "ac": float(project.budget_spent or 0.0),
+            "ev": 0.0,
+            "pv": 0.0,
+            "progress_percentage": 0.0,
+            "cpi": 1.0,
+            "spi": 1.0,
+        }
+
     snapshot_data = {
         "project_id": str(project.id),
         "project_title": project.title,
+        "bac": float(project.budget_allocated or 0.0),
+        "budget_allocated": float(project.budget_allocated or 0.0),
+        "budget_spent": float(project.budget_spent or 0.0),
+        "progress_percentage": evm_snapshot.get("progress_percentage", 0.0),
+        "evm": evm_snapshot,
         "start_date": project.start_date.isoformat() if project.start_date else None,
         "target_date": project.target_date.isoformat() if project.target_date else None,
         "frozen_at": datetime.now(timezone.utc).isoformat(),
@@ -2218,6 +2611,8 @@ def create_project_baseline(
                 "title": t.title,
                 "status": t.status,
                 "priority": t.priority,
+                "estimated_hours": float(getattr(t, "estimated_hours", 0.0) or 0.0),
+                "physical_progress_pct": float(getattr(t, "physical_progress_pct", 0.0) or 0.0),
                 "start_date": t.start_date.isoformat() if t.start_date else None,
                 "due_date": t.due_date.isoformat() if t.due_date else None,
                 "order_index": t.order_index,
@@ -2332,6 +2727,62 @@ def list_project_baselines(db: Session, project_id: UUID | str) -> list[models.P
 # ── Time Tracking & Sheets (Super-PRO Fase 5) ───────────────────────────────
 
 
+def sync_task_time_logs(db: Session, task_id: Any) -> None:
+    """Sincroniza las horas registradas en ProjectTimeLog con la tarea (actual_hours, avance y roll-up EDT)."""
+    if not task_id:
+        return
+    task = (
+        db.query(models.ProjectTask)
+        .filter(
+            models.ProjectTask.id == _to_uuid(task_id),
+            models.ProjectTask.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not task:
+        return
+
+    from sqlalchemy import func
+    logged_sum = (
+        db.query(func.coalesce(func.sum(models.ProjectTimeLog.hours), 0.0))
+        .filter(
+            models.ProjectTimeLog.task_id == task.id,
+            models.ProjectTimeLog.deleted_at.is_(None),
+        )
+        .scalar()
+    )
+    actual_h = round(float(logged_sum or 0.0), 2)
+    task.actual_hours = actual_h
+
+    has_subtasks = (
+        db.query(models.ProjectTask.id)
+        .filter(
+            models.ProjectTask.parent_id == task.id,
+            models.ProjectTask.deleted_at.is_(None),
+        )
+        .first()
+        is not None
+    )
+    est_h = float(getattr(task, "estimated_hours", 0.0) or 0.0)
+    if not has_subtasks and est_h > 0.0 and task.status not in ("completed", "done"):
+        derived_pct = round(min(100.0, (actual_h / est_h) * 100.0), 1)
+        task.physical_progress_pct = derived_pct
+        if actual_h > 0.0 and task.status == "todo":
+            task.status = "in_progress"
+        task.updated_at = datetime.now(timezone.utc)
+        db.commit()
+        db.refresh(task)
+
+    try:
+        from backend.services.project_evm_service import sync_parent_task_rollup
+        if task.parent_id:
+            sync_parent_task_rollup(db, task.parent_id)
+        elif has_subtasks:
+            sync_parent_task_rollup(db, task.id)
+    except Exception:
+        pass
+
+
 def _prepare_time_log_response(log: models.ProjectTimeLog) -> models.ProjectTimeLog:
     if log and hasattr(log, "persona") and log.persona:
         p = log.persona
@@ -2390,6 +2841,9 @@ def create_project_time_log(
     db.commit()
     db.refresh(time_log)
 
+    if time_log.task_id:
+        sync_task_time_logs(db, time_log.task_id)
+
     # Cargar relaciones
     db.query(models.ProjectTimeLog).options(
         selectinload(models.ProjectTimeLog.persona),
@@ -2444,8 +2898,11 @@ def delete_project_time_log(
     if not log:
         return False
 
+    affected_task_id = log.task_id
     log.deleted_at = datetime.now(timezone.utc)
     db.commit()
+    if affected_task_id:
+        sync_task_time_logs(db, affected_task_id)
     return True
 
 
