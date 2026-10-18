@@ -2826,6 +2826,7 @@ __all__ = [
     "audit_retrospective_action_item_closure_and_process_improvement",
     "audit_procurement_warranty_claims_and_holdback_release",
     "audit_change_request_reserve_drawdown_authorization",
+    "audit_deliverable_formal_acceptance_and_waiver_expiration",
     "ProjectCCBService",
 ]
 
@@ -4696,5 +4697,169 @@ def audit_change_request_reserve_drawdown_authorization(
 ProjectCCBService.audit_change_request_reserve_drawdown_authorization = staticmethod(
     audit_change_request_reserve_drawdown_authorization
 )
+
+
+def audit_deliverable_formal_acceptance_and_waiver_expiration(
+    deliverable_acceptances: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_conditional_waiver_days: int = 30,
+    require_customer_or_sponsor_signoff: bool = True,
+    forbid_open_critical_defects: bool = True,
+) -> dict[str, Any]:
+    """Audita firma de aceptación formal de entregables, verificación previa de calidad (QC) y vigencia de dispensas condicionales (PMI PMBOK §8.3 y §5.5)."""
+    if (
+        deliverable_acceptances is None
+        or isinstance(deliverable_acceptances, (str, bytes))
+        or not isinstance(deliverable_acceptances, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = deliverable_acceptances
+
+    try:
+        max_waiver_days = int(max_conditional_waiver_days)
+    except (TypeError, ValueError):
+        max_waiver_days = 30
+
+    allowed_signoff_roles = {
+        "customer",
+        "sponsor",
+        "product_owner",
+        "client_representative",
+    }
+
+    total_deliverables = 0
+    compliant_deliverables = 0
+
+    unverified_scope_acceptance_ids: list[str] = []
+    unauthorized_signoff_or_critical_defect_ids: list[str] = []
+    expired_or_unplanned_waiver_ids: list[str] = []
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_deliverables += 1
+
+        deliverable_id = (
+            str(raw.get("id") or raw.get("deliverable_id") or "").strip()
+            or "DEL-UNKNOWN"
+        )
+        acceptance_status = (
+            str(raw.get("acceptance_status") or "pending").strip().lower()
+        )
+        qc_verified = bool(raw.get("qc_verified"))
+        signed_off_by_role = (
+            str(raw.get("signed_off_by_role") or "").strip().lower()
+        )
+
+        try:
+            open_critical_defects = max(
+                0, int(raw.get("open_critical_defects") or 0)
+            )
+        except (TypeError, ValueError):
+            open_critical_defects = 0
+
+        try:
+            waiver_days_elapsed = max(
+                0, int(raw.get("waiver_days_elapsed") or 0)
+            )
+        except (TypeError, ValueError):
+            waiver_days_elapsed = 0
+
+        waiver_remediation_plan_linked = bool(
+            raw.get("waiver_remediation_plan_linked")
+        )
+
+        is_accepted_or_conditional = acceptance_status in {
+            "accepted",
+            "conditionally_accepted",
+        }
+
+        is_unverified_scope = is_accepted_or_conditional and (not qc_verified)
+        is_unauthorized_or_crit_defect = is_accepted_or_conditional and (
+            (
+                bool(require_customer_or_sponsor_signoff)
+                and signed_off_by_role not in allowed_signoff_roles
+            )
+            or (
+                bool(forbid_open_critical_defects)
+                and open_critical_defects > 0
+            )
+        )
+        is_expired_or_unplanned_waiver = (
+            acceptance_status == "conditionally_accepted"
+            and (
+                waiver_days_elapsed > max_waiver_days
+                or not waiver_remediation_plan_linked
+            )
+        )
+
+        if is_unverified_scope:
+            unverified_scope_acceptance_ids.append(deliverable_id)
+        if is_unauthorized_or_crit_defect:
+            unauthorized_signoff_or_critical_defect_ids.append(deliverable_id)
+        if is_expired_or_unplanned_waiver:
+            expired_or_unplanned_waiver_ids.append(deliverable_id)
+
+        if (
+            not is_unverified_scope
+            and not is_unauthorized_or_crit_defect
+            and not is_expired_or_unplanned_waiver
+        ):
+            compliant_deliverables += 1
+
+    acceptance_integrity_score = (
+        100.0
+        if total_deliverables == 0
+        else round((compliant_deliverables / total_deliverables) * 100.0, 2)
+    )
+
+    is_compliant = (
+        len(unverified_scope_acceptance_ids) == 0
+        and len(unauthorized_signoff_or_critical_defect_ids) == 0
+        and len(expired_or_unplanned_waiver_ids) == 0
+    )
+
+    if is_compliant:
+        acceptance_governance_health = "healthy"
+    elif (
+        len(unverified_scope_acceptance_ids) > 0
+        or len(unauthorized_signoff_or_critical_defect_ids) > 0
+    ):
+        acceptance_governance_health = "critical"
+    else:
+        acceptance_governance_health = "at_risk"
+
+    recommendations: list[str] = []
+    if unverified_scope_acceptance_ids:
+        recommendations.append(
+            f"Completar verificación técnica de Control Quality (qc_verified=True) antes de aceptar alcance en {unverified_scope_acceptance_ids}."
+        )
+    if unauthorized_signoff_or_critical_defect_ids:
+        recommendations.append(
+            f"Exigir firma de cliente/sponsor/PO y cero defectos críticos abiertos antes de aceptar entregables en {unauthorized_signoff_or_critical_defect_ids}."
+        )
+    if expired_or_unplanned_waiver_ids:
+        recommendations.append(
+            f"Vincular plan de remediación y regularizar dispensas condicionales vencidas (> {max_waiver_days}d) en {expired_or_unplanned_waiver_ids}."
+        )
+
+    return {
+        "total_deliverables": total_deliverables,
+        "compliant_deliverables": compliant_deliverables,
+        "unverified_scope_acceptance_ids": unverified_scope_acceptance_ids,
+        "unauthorized_signoff_or_critical_defect_ids": unauthorized_signoff_or_critical_defect_ids,
+        "expired_or_unplanned_waiver_ids": expired_or_unplanned_waiver_ids,
+        "acceptance_integrity_score": acceptance_integrity_score,
+        "acceptance_governance_health": acceptance_governance_health,
+        "is_compliant": is_compliant,
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.audit_deliverable_formal_acceptance_and_waiver_expiration = staticmethod(
+    audit_deliverable_formal_acceptance_and_waiver_expiration
+)
+
 
 

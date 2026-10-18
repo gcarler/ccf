@@ -6041,3 +6041,149 @@ def test_audit_change_request_reserve_drawdown_authorization_empty_and_service_b
     assert "audit_change_request_reserve_drawdown_authorization" in mod.__all__
 
 
+def test_audit_deliverable_formal_acceptance_and_waiver_expiration_healthy():
+    """Entregables aceptados y condicionalmente aceptados con qc_verified=True, firma válida, 0 defectos críticos y waiver vigente con plan."""
+    from backend.services.project_ccb_service import (
+        audit_deliverable_formal_acceptance_and_waiver_expiration,
+    )
+
+    items = [
+        {
+            "id": "DEL-01",
+            "acceptance_status": "accepted",
+            "qc_verified": True,
+            "signed_off_by_role": "customer",
+            "open_critical_defects": 0,
+        },
+        {
+            "id": "DEL-02",
+            "acceptance_status": "conditionally_accepted",
+            "qc_verified": True,
+            "signed_off_by_role": "sponsor",
+            "open_critical_defects": 0,
+            "waiver_days_elapsed": 15,
+            "waiver_remediation_plan_linked": True,
+        },
+    ]
+    res = audit_deliverable_formal_acceptance_and_waiver_expiration(
+        items, max_conditional_waiver_days=30
+    )
+    assert res["total_deliverables"] == 2
+    assert res["compliant_deliverables"] == 2
+    assert res["unverified_scope_acceptance_ids"] == []
+    assert res["unauthorized_signoff_or_critical_defect_ids"] == []
+    assert res["expired_or_unplanned_waiver_ids"] == []
+    assert res["acceptance_integrity_score"] == 100.0
+    assert res["acceptance_governance_health"] == "healthy"
+    assert res["is_compliant"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_deliverable_formal_acceptance_and_waiver_expiration_at_risk_waiver():
+    """Detecta expired_or_unplanned_waiver_ids cuando la dispensa condicional expiró o carece de plan (at_risk)."""
+    from backend.services.project_ccb_service import (
+        audit_deliverable_formal_acceptance_and_waiver_expiration,
+    )
+
+    items = [
+        {
+            "deliverable_id": "DEL-10",
+            "acceptance_status": "conditionally_accepted",
+            "qc_verified": True,
+            "signed_off_by_role": "product_owner",
+            "open_critical_defects": 0,
+            "waiver_days_elapsed": 45,
+            "waiver_remediation_plan_linked": True,
+        },
+        {
+            "deliverable_id": "DEL-11",
+            "acceptance_status": "conditionally_accepted",
+            "qc_verified": True,
+            "signed_off_by_role": "client_representative",
+            "open_critical_defects": 0,
+            "waiver_days_elapsed": 10,
+            "waiver_remediation_plan_linked": False,
+        },
+    ]
+    res = audit_deliverable_formal_acceptance_and_waiver_expiration(
+        items, max_conditional_waiver_days=30
+    )
+    assert res["total_deliverables"] == 2
+    assert res["compliant_deliverables"] == 0
+    assert res["expired_or_unplanned_waiver_ids"] == ["DEL-10", "DEL-11"]
+    assert res["unverified_scope_acceptance_ids"] == []
+    assert res["unauthorized_signoff_or_critical_defect_ids"] == []
+    assert res["acceptance_integrity_score"] == 0.0
+    assert res["acceptance_governance_health"] == "at_risk"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 1
+
+
+def test_audit_deliverable_formal_acceptance_and_waiver_expiration_critical_qc_and_signoff():
+    """Detecta unverified_scope_acceptance_ids y unauthorized_signoff_or_critical_defect_ids (critical)."""
+    from backend.services.project_ccb_service import (
+        audit_deliverable_formal_acceptance_and_waiver_expiration,
+    )
+
+    items = [
+        {
+            "deliverable_id": "DEL-20",
+            "acceptance_status": "accepted",
+            "qc_verified": False,
+            "signed_off_by_role": "customer",
+            "open_critical_defects": 0,
+        },
+        {
+            "deliverable_id": "DEL-21",
+            "acceptance_status": "accepted",
+            "qc_verified": True,
+            "signed_off_by_role": "developer",
+            "open_critical_defects": 2,
+        },
+    ]
+    res = audit_deliverable_formal_acceptance_and_waiver_expiration(items)
+    assert res["total_deliverables"] == 2
+    assert res["compliant_deliverables"] == 0
+    assert res["unverified_scope_acceptance_ids"] == ["DEL-20"]
+    assert res["unauthorized_signoff_or_critical_defect_ids"] == ["DEL-21"]
+    assert res["acceptance_governance_health"] == "critical"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_deliverable_formal_acceptance_and_waiver_expiration_empty_and_service_binding():
+    """Manejo defensivo de entradas vacías/no-secuencia y exposición en ProjectCCBService y __all__."""
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_deliverable_formal_acceptance_and_waiver_expiration,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_deliverable_formal_acceptance_and_waiver_expiration(payload)  # type: ignore[arg-type]
+        assert empty["total_deliverables"] == 0
+        assert empty["compliant_deliverables"] == 0
+        assert empty["acceptance_integrity_score"] == 100.0
+        assert empty["acceptance_governance_health"] == "healthy"
+        assert empty["is_compliant"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "id": "DEL-99",
+            "acceptance_status": "accepted",
+            "qc_verified": True,
+            "signed_off_by_role": "customer",
+            "open_critical_defects": 0,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_deliverable_formal_acceptance_and_waiver_expiration(
+            sample
+        )
+        == audit_deliverable_formal_acceptance_and_waiver_expiration(sample)
+    )
+    assert "audit_deliverable_formal_acceptance_and_waiver_expiration" in mod.__all__
+
+
+

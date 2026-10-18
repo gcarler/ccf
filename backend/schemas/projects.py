@@ -3792,6 +3792,7 @@ __all__ = [
     "validate_funding_limit_reconciliation_and_cash_flow_cliff",
     "validate_business_case_npv_irr_and_payback_hurdle",
     "validate_monte_carlo_confidence_band_and_reserve_adequacy",
+    "validate_resource_leveling_and_smoothing_constraints",
 ]
 
 
@@ -5838,3 +5839,154 @@ def validate_monte_carlo_confidence_band_and_reserve_adequacy(
         "simulation_governance_status": simulation_governance_status,
         "violations": violations,
     }
+
+
+def validate_resource_leveling_and_smoothing_constraints(
+    optimization_runs: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_peak_to_average_ratio: float = 1.6,
+    max_leveling_schedule_slip_pct: float = 15.0,
+) -> dict[str, Any]:
+    """Valida restricciones de suavizado (smoothing) frente a nivelación (leveling) de recursos y picos de utilización FTE (PMI PMBOK §6.5 y §9.6)."""
+    if (
+        optimization_runs is None
+        or isinstance(optimization_runs, (str, bytes))
+        or not isinstance(optimization_runs, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = optimization_runs
+
+    try:
+        max_pta_ratio = float(max_peak_to_average_ratio)
+    except (TypeError, ValueError):
+        max_pta_ratio = 1.6
+
+    try:
+        max_slip_pct = float(max_leveling_schedule_slip_pct)
+    except (TypeError, ValueError):
+        max_slip_pct = 15.0
+
+    total_runs = 0
+    compliant_runs = 0
+
+    smoothing_violates_float_or_critical_path_ids: list[str] = []
+    unapproved_or_excessive_leveling_slip_ids: list[str] = []
+    unresolved_over_allocation_or_spike_ids: list[str] = []
+
+    def _positive_float(val: Any) -> float:
+        try:
+            return max(0.0, float(val or 0.0))
+        except (TypeError, ValueError):
+            return 0.0
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_runs += 1
+
+        run_id = (
+            str(raw.get("id") or raw.get("run_id") or "").strip()
+            or "OPT-UNKNOWN"
+        )
+        mode = str(raw.get("mode") or "").strip().lower()
+
+        total_float_available_days = _positive_float(
+            raw.get("total_float_available_days")
+        )
+        activity_delay_days = _positive_float(raw.get("activity_delay_days"))
+        baseline_duration_days = _positive_float(
+            raw.get("baseline_duration_days")
+        )
+        critical_path_extended_days = _positive_float(
+            raw.get("critical_path_extended_days")
+        )
+        ccb_approved_slip = bool(raw.get("ccb_approved_slip"))
+        peak_allocation_fte = _positive_float(raw.get("peak_allocation_fte"))
+        average_allocation_fte = _positive_float(
+            raw.get("average_allocation_fte")
+        )
+        capacity_ceiling_fte = _positive_float(raw.get("capacity_ceiling_fte"))
+
+        smoothing_violation = mode == "smoothing" and (
+            activity_delay_days > total_float_available_days
+            or critical_path_extended_days > 0.0
+        )
+        leveling_slip_violation = (
+            mode == "leveling"
+            and critical_path_extended_days > 0.0
+            and (
+                (not ccb_approved_slip)
+                or (
+                    baseline_duration_days > 0.0
+                    and (
+                        critical_path_extended_days / baseline_duration_days
+                    )
+                    * 100.0
+                    > max_slip_pct
+                )
+            )
+        )
+        over_allocation_or_spike = (
+            capacity_ceiling_fte > 0.0
+            and peak_allocation_fte > capacity_ceiling_fte
+        ) or (
+            average_allocation_fte > 0.0
+            and (peak_allocation_fte / average_allocation_fte) > max_pta_ratio
+        )
+
+        if smoothing_violation:
+            smoothing_violates_float_or_critical_path_ids.append(run_id)
+        if leveling_slip_violation:
+            unapproved_or_excessive_leveling_slip_ids.append(run_id)
+        if over_allocation_or_spike:
+            unresolved_over_allocation_or_spike_ids.append(run_id)
+
+        if (
+            not smoothing_violation
+            and not leveling_slip_violation
+            and not over_allocation_or_spike
+        ):
+            compliant_runs += 1
+
+    is_valid = (
+        len(smoothing_violates_float_or_critical_path_ids) == 0
+        and len(unapproved_or_excessive_leveling_slip_ids) == 0
+        and len(unresolved_over_allocation_or_spike_ids) == 0
+    )
+
+    if is_valid:
+        optimization_governance_status = "HEALTHY"
+    elif (
+        len(smoothing_violates_float_or_critical_path_ids) > 0
+        or len(unapproved_or_excessive_leveling_slip_ids) > 0
+    ):
+        optimization_governance_status = "CRITICAL"
+    else:
+        optimization_governance_status = "AT_RISK"
+
+    recommendations: list[str] = []
+    if smoothing_violates_float_or_critical_path_ids:
+        recommendations.append(
+            f"Restringir Resource Smoothing a la holgura disponible sin extender la ruta crítica en {smoothing_violates_float_or_critical_path_ids}."
+        )
+    if unapproved_or_excessive_leveling_slip_ids:
+        recommendations.append(
+            f"Tramitar aprobación CCB o acotar el deslizamiento de Resource Leveling (<= {max_slip_pct}%) en {unapproved_or_excessive_leveling_slip_ids}."
+        )
+    if unresolved_over_allocation_or_spike_ids:
+        recommendations.append(
+            f"Rebalancear sobreasignaciones FTE que exceden la capacidad o el ratio pico/promedio (> {max_pta_ratio}) en {unresolved_over_allocation_or_spike_ids}."
+        )
+
+    return {
+        "total_runs": total_runs,
+        "compliant_runs": compliant_runs,
+        "smoothing_violates_float_or_critical_path_ids": smoothing_violates_float_or_critical_path_ids,
+        "unapproved_or_excessive_leveling_slip_ids": unapproved_or_excessive_leveling_slip_ids,
+        "unresolved_over_allocation_or_spike_ids": unresolved_over_allocation_or_spike_ids,
+        "optimization_governance_status": optimization_governance_status,
+        "is_valid": is_valid,
+        "recommendations": recommendations,
+    }
+

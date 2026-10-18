@@ -4581,3 +4581,123 @@ def test_audit_markdown_admonition_and_callout_hygiene_empty_and_service_binding
     )
     assert "audit_markdown_admonition_and_callout_hygiene" in mod.__all__
 
+
+
+def test_audit_markdown_raw_html_and_script_injection_hygiene_critical():
+    """Tags peligrosos, eventos inline y URIs js/data/vbscript -> CRITICAL."""
+    from backend.services.anydoc_service import (
+        audit_markdown_raw_html_and_script_injection_hygiene,
+    )
+
+    res = audit_markdown_raw_html_and_script_injection_hygiene(
+        "Texto <br> normal.\n"
+        "<script>alert(1)</script>\n"
+        "<a href=\"javascript:alert(2)\">link</a>\n"
+        "<img src=\"x\" onerror=\"alert(3)\">\n"
+        "<a href=\"data:text/html;base64,XXXX\">d</a>\n"
+        "<a href='vbscript:boom'>v</a>\n"
+    )
+    assert res["dangerous_executable_tag_lines"] == [2]
+    assert res["inline_event_or_js_uri_lines"] == [3, 4, 5, 6]
+    # a/img no permitidas pero <script> ya es peligrosa: no se duplica en disallowed.
+    assert res["disallowed_raw_html_tag_lines"] == [3, 4, 5, 6]
+    assert res["html_hygiene_status"] == "CRITICAL"
+    assert res["is_compliant"] is False
+    assert isinstance(res["total_html_tags_detected"], int)
+
+    # Case-insensitive: <SCRIPT> y <SVG onload=...>.
+    upper = audit_markdown_raw_html_and_script_injection_hygiene(
+        "<SCRIPT>x</SCRIPT>\n<SVG onload=x>\n"
+    )
+    assert upper["dangerous_executable_tag_lines"] == [1, 2]
+    assert upper["inline_event_or_js_uri_lines"] == [2]
+
+    # Autocerrada <br/> y cierre con espacios no rompen el parseo.
+    selfclose = audit_markdown_raw_html_and_script_injection_hygiene(
+        "<br/>linea<br />\n<IFRAME src=x onerror=y></iframe>\n"
+    )
+    assert selfclose["dangerous_executable_tag_lines"] == [2]
+    assert selfclose["inline_event_or_js_uri_lines"] == [2]
+    # iframe es peligrosa: la lista disallowed excluye las peligrosas (spec).
+    assert selfclose["disallowed_raw_html_tag_lines"] == []
+    assert selfclose["is_compliant"] is False
+
+
+def test_audit_markdown_raw_html_and_script_injection_hygiene_at_risk():
+    """Solo etiquetas no permitidas (div/span/font) -> AT_RISK; allowed custom relaja."""
+    from backend.services.anydoc_service import (
+        audit_markdown_raw_html_and_script_injection_hygiene,
+    )
+
+    risk = audit_markdown_raw_html_and_script_injection_hygiene(
+        "<div>hola</div>\n<span>x</span>\n<font size=\"3\">y</font>\n"
+    )
+    assert risk["disallowed_raw_html_tag_lines"] == [1, 2, 3]
+    assert risk["dangerous_executable_tag_lines"] == []
+    assert risk["inline_event_or_js_uri_lines"] == []
+    assert risk["html_hygiene_status"] == "AT_RISK"
+    assert risk["is_compliant"] is False
+
+    custom = audit_markdown_raw_html_and_script_injection_hygiene(
+        "<div>ok</div>", allowed_html_tags=("div",)
+    )
+    assert custom["disallowed_raw_html_tag_lines"] == []
+    assert custom["is_compliant"] is True
+    assert custom["html_hygiene_status"] == "HEALTHY"
+
+
+def test_audit_markdown_raw_html_and_script_injection_hygiene_ignores():
+    """Code spans inline, fences, comentarios HTML y callouts se ignoran."""
+    from backend.services.anydoc_service import (
+        audit_markdown_raw_html_and_script_injection_hygiene,
+    )
+
+    clean = audit_markdown_raw_html_and_script_injection_hygiene(
+        "Texto <br> salto, <sub>x</sub>, <sup>2</sup>, <kbd>Ctrl</kbd>.\n"
+        "<details><summary>ver</summary>mas</details>\n"
+        "`<script>x</script>` inline code ignorado.\n"
+        "```html\n<script>ignore</script>\n<span>ign</span>\n```\n"
+        "> [!NOTE]\n"
+        "> <div>callout ignorado</div>\n"
+        "Texto final sin html.\n"
+    )
+    assert clean["dangerous_executable_tag_lines"] == []
+    assert clean["inline_event_or_js_uri_lines"] == []
+    assert clean["disallowed_raw_html_tag_lines"] == []
+    assert clean["html_hygiene_status"] == "HEALTHY"
+    assert clean["is_compliant"] is True
+
+    commented = audit_markdown_raw_html_and_script_injection_hygiene(
+        "<!-- <script>evil</script> -->\nTexto.\n<!-- parcial\ncomentario --> <b>bold</b>\n"
+    )
+    assert commented["dangerous_executable_tag_lines"] == []
+    # b aparece solo tras el cierre del comentario multilinea (linea 4).
+    assert commented["disallowed_raw_html_tag_lines"] == [4]
+
+
+def test_audit_markdown_raw_html_and_script_injection_hygiene_neutral_and_export():
+    """Entradas no-str/None, proxies estaticos de AnyDocService/AnydocService y __all__."""
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_raw_html_and_script_injection_hygiene,
+    )
+    import backend.services.anydoc_service as mod
+
+    for payload in (None, "", 42):
+        empty = audit_markdown_raw_html_and_script_injection_hygiene(payload)
+        assert empty["total_html_tags_detected"] == 0
+        assert empty["is_compliant"] is True
+        assert empty["html_hygiene_status"] == "HEALTHY"
+        assert empty["dangerous_executable_tag_lines"] == []
+
+    sample = "<div>x</div>"
+    assert (
+        AnyDocService.audit_markdown_raw_html_and_script_injection_hygiene(sample)
+        == audit_markdown_raw_html_and_script_injection_hygiene(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_raw_html_and_script_injection_hygiene(sample)
+        == audit_markdown_raw_html_and_script_injection_hygiene(sample)
+    )
+    assert "audit_markdown_raw_html_and_script_injection_hygiene" in mod.__all__

@@ -4751,3 +4751,137 @@ def test_validate_monte_carlo_confidence_band_and_reserve_adequacy_custom_and_em
         assert empty["violations"] == []
 
     assert "validate_monte_carlo_confidence_band_and_reserve_adequacy" in mod.__all__
+
+
+def test_validate_resource_leveling_and_smoothing_constraints_healthy():
+    """Corridas válidas de smoothing (dentro de holgura, sin extender CP) y leveling (con CCB y slip moderado)."""
+    from backend.schemas.projects import (
+        validate_resource_leveling_and_smoothing_constraints,
+    )
+
+    runs = [
+        {
+            "id": "OPT-01",
+            "mode": "smoothing",
+            "total_float_available_days": 5.0,
+            "activity_delay_days": 3.0,
+            "baseline_duration_days": 60.0,
+            "critical_path_extended_days": 0.0,
+            "ccb_approved_slip": False,
+            "peak_allocation_fte": 4.0,
+            "average_allocation_fte": 3.0,
+            "capacity_ceiling_fte": 5.0,
+        },
+        {
+            "id": "OPT-02",
+            "mode": "leveling",
+            "total_float_available_days": 0.0,
+            "activity_delay_days": 6.0,
+            "baseline_duration_days": 60.0,
+            "critical_path_extended_days": 6.0,
+            "ccb_approved_slip": True,
+            "peak_allocation_fte": 4.5,
+            "average_allocation_fte": 3.5,
+            "capacity_ceiling_fte": 5.0,
+        },
+    ]
+    res = validate_resource_leveling_and_smoothing_constraints(runs)
+    assert res["total_runs"] == 2
+    assert res["compliant_runs"] == 2
+    assert res["smoothing_violates_float_or_critical_path_ids"] == []
+    assert res["unapproved_or_excessive_leveling_slip_ids"] == []
+    assert res["unresolved_over_allocation_or_spike_ids"] == []
+    assert res["optimization_governance_status"] == "HEALTHY"
+    assert res["is_valid"] is True
+    assert res["recommendations"] == []
+
+
+def test_validate_resource_leveling_and_smoothing_constraints_critical_smoothing_and_leveling():
+    """Detecta smoothing que viola holgura/ruta crítica y leveling sin CCB o con deslizamiento excesivo (CRITICAL)."""
+    from backend.schemas.projects import (
+        validate_resource_leveling_and_smoothing_constraints,
+    )
+
+    runs = [
+        {
+            "run_id": "OPT-10",
+            "mode": "smoothing",
+            "total_float_available_days": 2.0,
+            "activity_delay_days": 4.0,
+            "baseline_duration_days": 50.0,
+            "critical_path_extended_days": 2.0,
+            "peak_allocation_fte": 3.0,
+            "average_allocation_fte": 2.5,
+            "capacity_ceiling_fte": 4.0,
+        },
+        {
+            "run_id": "OPT-11",
+            "mode": "leveling",
+            "baseline_duration_days": 50.0,
+            "critical_path_extended_days": 10.0,
+            "ccb_approved_slip": True,
+            "peak_allocation_fte": 3.0,
+            "average_allocation_fte": 2.5,
+            "capacity_ceiling_fte": 4.0,
+        },
+    ]
+    res = validate_resource_leveling_and_smoothing_constraints(
+        runs, max_leveling_schedule_slip_pct=15.0
+    )
+    assert res["total_runs"] == 2
+    assert res["compliant_runs"] == 0
+    assert res["smoothing_violates_float_or_critical_path_ids"] == ["OPT-10"]
+    assert res["unapproved_or_excessive_leveling_slip_ids"] == ["OPT-11"]
+    assert res["optimization_governance_status"] == "CRITICAL"
+    assert res["is_valid"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_validate_resource_leveling_and_smoothing_constraints_at_risk_overallocation_spike():
+    """Detecta sobreasignación sobre capacity_ceiling_fte o ratio pico/promedio excesivo (AT_RISK)."""
+    from backend.schemas.projects import (
+        validate_resource_leveling_and_smoothing_constraints,
+    )
+
+    runs = [
+        {
+            "run_id": "OPT-20",
+            "mode": "smoothing",
+            "total_float_available_days": 5.0,
+            "activity_delay_days": 2.0,
+            "critical_path_extended_days": 0.0,
+            "peak_allocation_fte": 6.0,
+            "average_allocation_fte": 3.0,
+            "capacity_ceiling_fte": 5.0,
+        }
+    ]
+    res = validate_resource_leveling_and_smoothing_constraints(
+        runs, max_peak_to_average_ratio=1.6
+    )
+    assert res["total_runs"] == 1
+    assert res["compliant_runs"] == 0
+    assert res["unresolved_over_allocation_or_spike_ids"] == ["OPT-20"]
+    assert res["smoothing_violates_float_or_critical_path_ids"] == []
+    assert res["unapproved_or_excessive_leveling_slip_ids"] == []
+    assert res["optimization_governance_status"] == "AT_RISK"
+    assert res["is_valid"] is False
+    assert len(res["recommendations"]) >= 1
+
+
+def test_validate_resource_leveling_and_smoothing_constraints_empty_and_export():
+    """Manejo defensivo de entradas vacías/no-secuencia y exportación en __all__."""
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_resource_leveling_and_smoothing_constraints,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = validate_resource_leveling_and_smoothing_constraints(payload)  # type: ignore[arg-type]
+        assert empty["total_runs"] == 0
+        assert empty["compliant_runs"] == 0
+        assert empty["optimization_governance_status"] == "HEALTHY"
+        assert empty["is_valid"] is True
+        assert empty["recommendations"] == []
+
+    assert "validate_resource_leveling_and_smoothing_constraints" in mod.__all__
+

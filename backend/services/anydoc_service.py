@@ -3014,6 +3014,7 @@ __all__ = [
     "audit_markdown_definition_list_and_spec_hygiene",
     "audit_markdown_horizontal_rule_and_section_break_hygiene",
     "audit_markdown_admonition_and_callout_hygiene",
+    "audit_markdown_raw_html_and_script_injection_hygiene",
     "AnyDocService",
     "AnydocService",
 ]
@@ -5329,3 +5330,166 @@ AnyDocService.audit_markdown_admonition_and_callout_hygiene = staticmethod(
     audit_markdown_admonition_and_callout_hygiene
 )
 
+
+
+def audit_markdown_raw_html_and_script_injection_hygiene(
+    markdown_text: str | None,
+    *,
+    allowed_html_tags: tuple[str, ...] = ("br", "sub", "sup", "kbd", "details", "summary"),
+) -> dict[str, object]:
+    """Audita etiquetas HTML crudas y vectores de inyección en Markdown (PMBOK §4.4).
+
+    Ignora bloques cercados (``` / ~~~), spans de código inline (backticks
+    simples), comentarios HTML <!-- --> y bloques callout [!...]:
+    - dangerous_executable_tag_lines: script/iframe/object/embed/style/
+      form/input/svg/math en cualquier capitalización.
+    - inline_event_or_js_uri_lines: atributos on[a-z]+= o URIs
+      javascript:/data:/vbscript: en href/src/action.
+    - disallowed_raw_html_tag_lines: etiquetas fuera de los permitidos
+      y de las peligrosas (p. ej. div, span, table, font, center).
+    - html_hygiene_status: 'HEALTHY' si las 3 listas vacías; 'CRITICAL'
+      con etiquetas peligrosas o vectores inline; 'AT_RISK' solo con
+      etiquetas no permitidas; e is_compliant para las 3 vacías.
+    """
+    neutral = {
+        "total_html_tags_detected": 0,
+        "dangerous_executable_tag_lines": [],
+        "inline_event_or_js_uri_lines": [],
+        "disallowed_raw_html_tag_lines": [],
+        "html_hygiene_status": "HEALTHY",
+        "is_compliant": True,
+    }
+    if not isinstance(markdown_text, str):
+        return neutral
+
+    dangerous_tags = {
+        "script", "iframe", "object", "embed", "style", "form",
+        "input", "svg", "math",
+    }
+    allowed_tags = {t.lower() for t in allowed_html_tags}
+
+    tag_pattern = re.compile(
+        r"</?\s*([A-Za-z][A-Za-z0-9-]*)((?:\s+[^<>]*?)?)(/?)\s*>",
+    )
+    event_attr_pattern = re.compile(r"\bon[a-z]+\s*=", re.IGNORECASE)
+    js_uri_pattern = re.compile(
+        r"(?i)\s(?:href|src|action)\s*=\s*(?:\"|')?\s*(?:javascript|data|vbscript)\s*:",
+    )
+    fence_pattern = re.compile(r"^\s*(```|~~~)")
+    comment_open_pattern = re.compile(r"<!--")
+    comment_close_pattern = re.compile(r"-->")
+
+    lines = markdown_text.splitlines()
+    in_code = False
+    fence_marker = ""
+    in_comment = False
+    in_callout = False
+
+    dangerous_lines: list[int] = []
+    inline_lines: list[int] = []
+    disallowed_lines: list[int] = []
+    total_tags = 0
+
+    for line_no, raw in enumerate(lines, start=1):
+        stripped = raw.strip()
+
+        match = fence_pattern.match(raw)
+        if match:
+            marker = match.group(1)
+            if not in_code:
+                in_code = True
+                fence_marker = marker
+            elif marker == fence_marker:
+                in_code = False
+                fence_marker = ""
+            continue
+
+        if in_code:
+            continue
+
+        # Callouts consecutivos > [!...]: toda línea '>' del callout se ignora.
+        if not stripped:
+            continue
+        if stripped.startswith(">") and "[!" in stripped:
+            in_callout = True
+            continue
+        if in_callout:
+            if stripped.startswith(">"):
+                continue
+            in_callout = False
+
+        # Comentarios HTML
+        if in_comment:
+            if comment_close_pattern.search(raw):
+                in_comment = False
+                raw = comment_close_pattern.sub("", raw)
+                if not raw.strip():
+                    continue
+            else:
+                continue
+
+        if comment_open_pattern.search(raw):
+            before = raw.split("<!--", 1)[0]
+            if comment_close_pattern.search(raw):
+                rest = comment_close_pattern.split(raw, 1)[1] if len(
+                    comment_close_pattern.split(raw, 1)
+                ) > 1 else ""
+                raw = before + rest
+            else:
+                in_comment = True
+                raw = before
+            if not raw.strip():
+                continue
+
+        # Spans de código inline (backticks simples no anidados al fence).
+        work = re.sub(r"`+[^`]*`+", "", raw)
+        if not work.strip():
+            continue
+
+        line_dangerous = False
+        line_inline = False
+        line_disallowed = False
+
+        for tm in tag_pattern.finditer(work):
+            total_tags += 1
+            tag_name = tm.group(1).lower().lstrip("/")
+            if tag_name in dangerous_tags:
+                line_dangerous = True
+            elif tag_name not in allowed_tags:
+                line_disallowed = True
+
+        if event_attr_pattern.search(work) or js_uri_pattern.search(work):
+            line_inline = True
+
+        if line_dangerous and line_no not in dangerous_lines:
+            dangerous_lines.append(line_no)
+        if line_inline and line_no not in inline_lines:
+            inline_lines.append(line_no)
+        if line_disallowed and line_no not in disallowed_lines:
+            disallowed_lines.append(line_no)
+
+    if dangerous_lines or inline_lines:
+        html_hygiene_status = "CRITICAL"
+    elif disallowed_lines:
+        html_hygiene_status = "AT_RISK"
+    else:
+        html_hygiene_status = "HEALTHY"
+
+    return {
+        "total_html_tags_detected": total_tags,
+        "dangerous_executable_tag_lines": dangerous_lines,
+        "inline_event_or_js_uri_lines": inline_lines,
+        "disallowed_raw_html_tag_lines": disallowed_lines,
+        "html_hygiene_status": html_hygiene_status,
+        "is_compliant": (
+            not dangerous_lines and not inline_lines and not disallowed_lines
+        ),
+    }
+
+
+AnyDocService.audit_markdown_raw_html_and_script_injection_hygiene = staticmethod(
+    audit_markdown_raw_html_and_script_injection_hygiene
+)
+AnydocService.audit_markdown_raw_html_and_script_injection_hygiene = staticmethod(
+    audit_markdown_raw_html_and_script_injection_hygiene
+)
