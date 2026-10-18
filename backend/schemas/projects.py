@@ -2412,3 +2412,71 @@ def validate_raci_assignment_matrix(
         "is_raci_compliant": is_raci_compliant,
         "raci_violation_reason": raci_violation_reason,
     }
+
+
+THREAT_STRATEGIES = {"avoid", "mitigate", "transfer", "escalate", "accept"}
+OPPORTUNITY_STRATEGIES = {"exploit", "enhance", "share", "escalate", "accept"}
+PMI_VALID_RISK_TYPES = {"threat", "opportunity"}
+
+
+def validate_pmi_risk_response_strategy(
+    risk_type: Optional[str] = "threat",
+    strategy: Optional[str] = None,
+    contingency_reserve: float = 0.0,
+) -> dict:
+    """Valida la estrategia de respuesta a riesgos PMI (PMBOK §11.5, Plan Risk Responses).
+
+    Normaliza `risk_type` (default 'threat' si vacío/None) y `strategy`
+    (default '' si None), y consulta los conjuntos canónicos:
+    - THREAT_STRATEGIES: avoid / mitigate / transfer / escalate / accept.
+    - OPPORTUNITY_STRATEGIES: exploit / enhance / share / escalate / accept.
+    La contingencia se clampa a >= 0.0 y se redondea a 2 decimales; cuando
+    la estrategia es 'accept', la contingencia > 0 implica aceptación
+    activa y la contingencia == 0 aceptación pasiva.
+    `response_validity_status`:
+    - 'invalid_risk_type' si el tipo no es threat/opportunity;
+    - 'missing_strategy' si la estrategia viene vacía;
+    - 'misaligned_strategy' si la estrategia no pertenece a su tipo;
+    - 'valid_response' si la estrategia es válida y alineada.
+    """
+    risk_type_norm = str(risk_type or "").strip().lower() or "threat"
+    if risk_type_norm not in PMI_VALID_RISK_TYPES:
+        risk_type_norm = str(risk_type or "").strip().lower()
+    strategy_norm = str(strategy or "").strip().lower()
+    contingency = round(max(0.0, float(contingency_reserve or 0.0)), 2)
+
+    is_valid_risk_type = risk_type_norm in PMI_VALID_RISK_TYPES
+    allowed_strategies = (
+        sorted(THREAT_STRATEGIES if risk_type_norm == "threat" else OPPORTUNITY_STRATEGIES)
+        if is_valid_risk_type
+        else []
+    )
+    is_aligned_strategy = bool(is_valid_risk_type and strategy_norm in allowed_strategies)
+
+    if strategy_norm != "accept":
+        acceptance_mode = "not_applicable"
+    elif contingency > 0:
+        acceptance_mode = "active_acceptance"
+    else:
+        acceptance_mode = "passive_acceptance"
+
+    if not is_valid_risk_type:
+        response_validity_status = "invalid_risk_type"
+    elif not strategy_norm:
+        response_validity_status = "missing_strategy"
+    elif not is_aligned_strategy:
+        response_validity_status = "misaligned_strategy"
+    else:
+        response_validity_status = "valid_response"
+
+    return {
+        "risk_type": risk_type_norm,
+        "strategy": strategy_norm,
+        "contingency_reserve": contingency,
+        "is_valid_risk_type": is_valid_risk_type,
+        "is_aligned_strategy": is_aligned_strategy,
+        "acceptance_mode": acceptance_mode,
+        "allowed_strategies": allowed_strategies,
+        "response_validity_status": response_validity_status,
+    }
+

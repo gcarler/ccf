@@ -585,3 +585,82 @@ def test_estimate_document_reading_metrics_comprehensive_manual_and_wpm_floor():
         "estimated_reading_minutes": 24.0,
         "artifact_depth_tier": "comprehensive_manual",
     }
+
+
+def test_extract_markdown_governance_markers_pending_actions():
+    """Mezcla de acciones abiertas/cerradas, DECISIÓN: y [RIESGO] -> 'pending_actions'."""
+    from backend.services.anydoc_service import extract_markdown_governance_markers
+
+    md = (
+        "# Acta de Comité\n"
+        "- [x] Validar presupuesto inicial\n"
+        "- [ ] Firmar acta de constitución\n"
+        "* [ ] Notificar a interesados\n"
+        "DECISIÓN: Se aprueba reserva de contingencia del 10%\n"
+        "[RIESGO] Posible retraso en proveedor externo\n"
+    )
+    res = extract_markdown_governance_markers(md)
+    assert res == {
+        "open_action_items_count": 2,
+        "completed_action_items_count": 1,
+        "total_action_items": 3,
+        "action_completion_pct": 33.33,
+        "decision_markers_count": 1,
+        "risk_markers_count": 1,
+        "governance_traceability_status": "pending_actions",
+    }
+
+
+def test_extract_markdown_governance_markers_actions_closed():
+    """Todos los ítems de acción completados (- [x] y * [X]) -> 'actions_closed' y 100.0%."""
+    from backend.services.anydoc_service import extract_markdown_governance_markers
+
+    md = (
+        "- [x] Entregar plan de gestión\n"
+        "* [X] Publicar matriz RACI\n"
+    )
+    res = extract_markdown_governance_markers(md)
+    assert res == {
+        "open_action_items_count": 0,
+        "completed_action_items_count": 2,
+        "total_action_items": 2,
+        "action_completion_pct": 100.0,
+        "decision_markers_count": 0,
+        "risk_markers_count": 0,
+        "governance_traceability_status": "actions_closed",
+    }
+
+
+def test_extract_markdown_governance_markers_decisions_only_dict_input():
+    """Entrada dict con ACUERDO: y BLOQUEO: sin checkboxes -> 'decisions_recorded'."""
+    from backend.services.anydoc_service import extract_markdown_governance_markers
+
+    res = extract_markdown_governance_markers(
+        {"markdown": "ACUERDO: Aprobar línea base\nBLOQUEO: Falta firma"}
+    )
+    assert res == {
+        "open_action_items_count": 0,
+        "completed_action_items_count": 0,
+        "total_action_items": 0,
+        "action_completion_pct": 0.0,
+        "decision_markers_count": 1,
+        "risk_markers_count": 1,
+        "governance_traceability_status": "decisions_recorded",
+    }
+
+
+def test_extract_markdown_governance_markers_empty_or_no_markers():
+    """Texto sin marcadores o None -> 'no_markers' y 0.0%."""
+    from backend.services.anydoc_service import extract_markdown_governance_markers
+
+    for val in (None, "", "Texto informativo sin acciones ni acuerdos.", {}):
+        res = extract_markdown_governance_markers(val)
+        assert res == {
+            "open_action_items_count": 0,
+            "completed_action_items_count": 0,
+            "total_action_items": 0,
+            "action_completion_pct": 0.0,
+            "decision_markers_count": 0,
+            "risk_markers_count": 0,
+            "governance_traceability_status": "no_markers",
+        }

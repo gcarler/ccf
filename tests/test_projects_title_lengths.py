@@ -229,3 +229,99 @@ def test_validate_raci_assignment_matrix_missing_responsible_and_invalid_role():
     assert invalid_role["invalid_role_count"] == 1
     assert invalid_role["is_raci_compliant"] is False
     assert invalid_role["raci_violation_reason"] == "invalid_role"
+
+
+# ── validate_pmi_risk_response_strategy (PMBOK §11.5, pure helper) ────────
+
+
+def test_risk_response_strategy_valid_threat_and_acceptance_modes():
+    """Threat alineado (mitigate/avoid) y accept con contingencia activa vs pasiva."""
+    from backend.schemas.projects import validate_pmi_risk_response_strategy
+
+    mitigate = validate_pmi_risk_response_strategy("THREAT", " Mitigate ", -3)
+    assert mitigate == {
+        "risk_type": "threat",
+        "strategy": "mitigate",
+        "contingency_reserve": 0.0,  # negativa se clampea a 0
+        "is_valid_risk_type": True,
+        "is_aligned_strategy": True,
+        "acceptance_mode": "not_applicable",
+        "allowed_strategies": ["accept", "avoid", "escalate", "mitigate", "transfer"],
+        "response_validity_status": "valid_response",
+    }
+
+    active = validate_pmi_risk_response_strategy("threat", "accept", 2500.0)
+    assert active["acceptance_mode"] == "active_acceptance"
+    assert active["contingency_reserve"] == 2500.0
+    assert active["response_validity_status"] == "valid_response"
+
+    passive = validate_pmi_risk_response_strategy("threat", "ACCEPT", 0.0)
+    assert passive["acceptance_mode"] == "passive_acceptance"
+    assert passive["response_validity_status"] == "valid_response"
+    assert passive["is_aligned_strategy"] is True
+
+
+def test_risk_response_strategy_valid_opportunity():
+    """Opportunity con exploit/enhance alineados → valid_response."""
+    from backend.schemas.projects import OPPORTUNITY_STRATEGIES, validate_pmi_risk_response_strategy
+
+    exploit = validate_pmi_risk_response_strategy("opportunity", "exploit", 150.75)
+    assert exploit == {
+        "risk_type": "opportunity",
+        "strategy": "exploit",
+        "contingency_reserve": 150.75,
+        "is_valid_risk_type": True,
+        "is_aligned_strategy": True,
+        "acceptance_mode": "not_applicable",
+        "allowed_strategies": ["accept", "enhance", "escalate", "exploit", "share"],
+        "response_validity_status": "valid_response",
+    }
+    enhance = validate_pmi_risk_response_strategy("Opportunity", "ENHANCE")
+    assert enhance["is_aligned_strategy"] is True
+    assert enhance["response_validity_status"] == "valid_response"
+    # 'escalate' y 'accept' comparten ambos conjuntos
+    assert "escalate" in OPPORTUNITY_STRATEGIES and "accept" in OPPORTUNITY_STRATEGIES
+
+
+def test_risk_response_strategy_misaligned():
+    """Estrategia del tipo opuesto → 'misaligned_strategy'."""
+    from backend.schemas.projects import validate_pmi_risk_response_strategy
+
+    exploit_en_threat = validate_pmi_risk_response_strategy("threat", "exploit")
+    assert exploit_en_threat["is_aligned_strategy"] is False
+    assert exploit_en_threat["response_validity_status"] == "misaligned_strategy"
+
+    mitigate_en_oportunity = validate_pmi_risk_response_strategy("opportunity", "mitigate")
+    assert mitigate_en_oportunity["is_aligned_strategy"] is False
+    # acceptance_mode aún aplica por regla de estrategia 'accept' sólo si es accept;
+    # mitigate no es accept → not_applicable
+    assert mitigate_en_oportunity["acceptance_mode"] == "not_applicable"
+
+
+def test_risk_response_strategy_invalid_type_and_missing_strategy():
+    """Tipo inválido → 'invalid_risk_type' (sin allowed); estrategia vacía → 'missing_strategy'."""
+    from backend.schemas.projects import validate_pmi_risk_response_strategy
+
+    weird = validate_pmi_risk_response_strategy("hybrid", "mitigate")
+    assert weird == {
+        "risk_type": "hybrid",
+        "strategy": "mitigate",
+        "contingency_reserve": 0.0,
+        "is_valid_risk_type": False,
+        "is_aligned_strategy": False,
+        "acceptance_mode": "not_applicable",
+        "allowed_strategies": [],
+        "response_validity_status": "invalid_risk_type",
+    }
+
+    missing = validate_pmi_risk_response_strategy(None, None)
+    assert missing["risk_type"] == "threat"  # default por tipo vacío/None
+    assert missing["strategy"] == ""
+    assert missing["is_valid_risk_type"] is True
+    assert missing["is_aligned_strategy"] is False
+    assert missing["response_validity_status"] == "missing_strategy"
+
+    blank = validate_pmi_risk_response_strategy("threat", "   ")
+    assert blank["strategy"] == ""
+    assert blank["response_validity_status"] == "missing_strategy"
+

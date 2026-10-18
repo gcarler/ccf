@@ -799,3 +799,67 @@ def estimate_document_reading_metrics(
         "estimated_reading_minutes": estimated_reading_minutes,
         "artifact_depth_tier": artifact_depth_tier,
     }
+
+
+def extract_markdown_governance_markers(
+    markdown_or_result: str | dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Extrae compromisos de acción, ítems completados y marcadores explícitos de decisión/riesgo en Markdown (PMBOK §4.4)."""
+    if isinstance(markdown_or_result, dict):
+        text = str(markdown_or_result.get("markdown") or "")
+    elif isinstance(markdown_or_result, str):
+        text = markdown_or_result
+    else:
+        text = ""
+
+    open_action_items_count = 0
+    completed_action_items_count = 0
+    decision_markers_count = 0
+    risk_markers_count = 0
+
+    decision_tokens = ("[DECISION]", "DECISIÓN:", "DECISION:", "ACUERDO:")
+    risk_tokens = ("[RISK]", "[RIESGO]", "RIESGO:", "BLOQUEO:")
+
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("- [ ] ") or stripped.startswith("* [ ] "):
+            open_action_items_count += 1
+        elif (
+            stripped.startswith("- [x] ")
+            or stripped.startswith("- [X] ")
+            or stripped.startswith("* [x] ")
+            or stripped.startswith("* [X] ")
+        ):
+            completed_action_items_count += 1
+
+        upper_line = stripped.upper()
+        if any(token in upper_line for token in decision_tokens):
+            decision_markers_count += 1
+        if any(token in upper_line for token in risk_tokens):
+            risk_markers_count += 1
+
+    total_action_items = open_action_items_count + completed_action_items_count
+    action_completion_pct = (
+        round((completed_action_items_count / total_action_items) * 100.0, 2)
+        if total_action_items > 0
+        else 0.0
+    )
+
+    if total_action_items == 0 and decision_markers_count == 0 and risk_markers_count == 0:
+        governance_traceability_status = "no_markers"
+    elif open_action_items_count > 0:
+        governance_traceability_status = "pending_actions"
+    elif total_action_items > 0 and open_action_items_count == 0:
+        governance_traceability_status = "actions_closed"
+    else:
+        governance_traceability_status = "decisions_recorded"
+
+    return {
+        "open_action_items_count": open_action_items_count,
+        "completed_action_items_count": completed_action_items_count,
+        "total_action_items": total_action_items,
+        "action_completion_pct": action_completion_pct,
+        "decision_markers_count": decision_markers_count,
+        "risk_markers_count": risk_markers_count,
+        "governance_traceability_status": governance_traceability_status,
+    }
