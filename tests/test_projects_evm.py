@@ -3228,3 +3228,126 @@ def test_evaluate_evm_joint_cost_schedule_index_high_tcpi_triggers_rebaseline():
     assert res["tradeoff_imbalance"] == 0.25
     assert res["requires_formal_rebaseline"] is True
     assert res["is_jointly_healthy"] is False
+
+
+def test_evaluate_evm_earned_schedule_tspi_feasibility_on_track_and_completed():
+    """Verifica posturas on_track y completed con is_recovery_feasible=True."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_earned_schedule_tspi_feasibility,
+    )
+
+    on_track_metrics = {
+        "planned_duration_days": 100.0,
+        "actual_time_days": 50.0,
+        "earned_schedule_days": 50.0,
+        "deadline_extension_days": 0.0,
+    }
+    res_on_track = evaluate_evm_earned_schedule_tspi_feasibility(on_track_metrics)
+    assert res_on_track == {
+        "spi_t": 1.0,
+        "sv_t_days": 0.0,
+        "tspi_pd": 1.0,
+        "tspi_ed": 1.0,
+        "ieac_t_days": 100.0,
+        "schedule_posture": "on_track",
+        "is_recovery_feasible": True,
+    }
+    assert (
+        ProjectEVMService.evaluate_evm_earned_schedule_tspi_feasibility(
+            on_track_metrics
+        )
+        == res_on_track
+    )
+
+    res_completed = evaluate_evm_earned_schedule_tspi_feasibility(
+        {
+            "planned_duration_days": 100.0,
+            "actual_time_days": 105.0,
+            "earned_schedule_days": 100.0,
+        }
+    )
+    assert res_completed["schedule_posture"] == "completed"
+    assert res_completed["tspi_pd"] == 0.0
+    assert res_completed["is_recovery_feasible"] is True
+
+
+def test_evaluate_evm_earned_schedule_tspi_feasibility_recoverable_baseline_and_extension():
+    """Verifica recoverable_within_baseline (tspi_pd <= 1.10) y recoverable_with_extension (tspi_ed <= 1.10)."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_earned_schedule_tspi_feasibility,
+    )
+
+    res_baseline = evaluate_evm_earned_schedule_tspi_feasibility(
+        {
+            "planned_duration_days": 100.0,
+            "actual_time_days": 50.0,
+            "earned_schedule_days": 46.0,
+        }
+    )
+    assert res_baseline["spi_t"] == 0.92
+    assert res_baseline["tspi_pd"] == 1.08
+    assert res_baseline["schedule_posture"] == "recoverable_within_baseline"
+    assert res_baseline["is_recovery_feasible"] is True
+
+    res_ext = evaluate_evm_earned_schedule_tspi_feasibility(
+        {
+            "planned_duration_days": 100.0,
+            "actual_time_days": 60.0,
+            "earned_schedule_days": 50.0,
+            "deadline_extension_days": 10.0,
+        }
+    )
+    assert res_ext["tspi_pd"] == 1.25
+    assert res_ext["tspi_ed"] == 1.0
+    assert res_ext["schedule_posture"] == "recoverable_with_extension"
+    assert res_ext["is_recovery_feasible"] is True
+
+
+def test_evaluate_evm_earned_schedule_tspi_feasibility_unrecoverable_slippage():
+    """Cuando tspi_pd > 1.10 y tspi_ed > 1.10 reporta unrecoverable_slippage e is_recovery_feasible=False."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_earned_schedule_tspi_feasibility,
+    )
+
+    res = evaluate_evm_earned_schedule_tspi_feasibility(
+        {
+            "planned_duration_days": 100.0,
+            "actual_time_days": 80.0,
+            "earned_schedule_days": 50.0,
+            "deadline_extension_days": 5.0,
+        }
+    )
+    assert res == {
+        "spi_t": 0.625,
+        "sv_t_days": -30.0,
+        "tspi_pd": 2.5,
+        "tspi_ed": 2.0,
+        "ieac_t_days": 160.0,
+        "schedule_posture": "unrecoverable_slippage",
+        "is_recovery_feasible": False,
+    }
+
+
+def test_evaluate_evm_earned_schedule_tspi_feasibility_invalid_inputs():
+    """Entradas no-Mapping o con duraciones inválidas devuelven schedule_posture=invalid_inputs."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_earned_schedule_tspi_feasibility,
+    )
+
+    for bad_payload in (
+        None,
+        {},
+        {"planned_duration_days": 0.0, "actual_time_days": 10.0, "earned_schedule_days": 5.0},
+        {"planned_duration_days": 100.0, "actual_time_days": -1.0, "earned_schedule_days": 5.0},
+    ):
+        assert evaluate_evm_earned_schedule_tspi_feasibility(bad_payload) == {  # type: ignore[arg-type]
+            "spi_t": 0.0,
+            "sv_t_days": 0.0,
+            "tspi_pd": 0.0,
+            "tspi_ed": 0.0,
+            "ieac_t_days": 0.0,
+            "schedule_posture": "invalid_inputs",
+            "is_recovery_feasible": False,
+        }
+

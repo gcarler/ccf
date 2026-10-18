@@ -2368,6 +2368,12 @@ class AnyDocService:
     ) -> dict[str, Any]:
         return audit_markdown_callout_admonition_hygiene(markdown_text)
 
+    @staticmethod
+    def audit_markdown_table_column_alignment_hygiene(
+        markdown_text: str | None = None,
+    ) -> dict[str, Any]:
+        return audit_markdown_table_column_alignment_hygiene(markdown_text)
+
 
 
 _CODE_FENCE_OPEN_AUDIT_RE = re.compile(r"^\s*(`{3,}|~{3,})\s*(.*)$")
@@ -2978,7 +2984,109 @@ __all__ = [
     "audit_markdown_footnote_reference_hygiene",
     "audit_markdown_internal_anchor_links",
     "audit_markdown_callout_admonition_hygiene",
+    "audit_markdown_table_column_alignment_hygiene",
     "AnyDocService",
 ]
 
 
+
+
+_GFM_DELIMITER_CELL_RE = re.compile(r"^:?-{3,}:?$")
+
+
+def audit_markdown_table_column_alignment_hygiene(
+    markdown_text: str | None = None,
+) -> dict[str, Any]:
+    """PMBOK §4.4 / §10.2 — paridad de columnas e higiene de filas delimitadoras en tablas GFM.
+
+    Ignora bloques fenced code (triple backtick o triple tilde). Agrupa
+    líneas contiguas de tabla para validar delimitador GFM, celdas de
+    encabezado vacías y desbalanceo de columnas (ragged).
+    """
+    lines = (
+        markdown_text.splitlines()
+        if isinstance(markdown_text, str) and markdown_text
+        else []
+    )
+
+    total_tables = 0
+    malformed_delimiter_table_indices: list[int] = []
+    empty_header_cell_table_indices: list[int] = []
+    ragged_column_table_indices: list[int] = []
+
+    def _is_table_line(raw_line: str) -> bool:
+        stripped = raw_line.strip()
+        return stripped.startswith("|") and stripped.endswith("|") and stripped.count("|") >= 2
+
+    def _row_cells(raw_line: str) -> list[str]:
+        stripped = raw_line.strip()
+        return [cell.strip() for cell in stripped[1:-1].split("|")]
+
+    in_backtick_fence = False
+    in_tilde_fence = False
+    table_index = 0
+    block: list[str] = []
+
+    def _evaluate_block(block_lines: list[str]) -> None:
+        nonlocal total_tables, table_index
+        if not block_lines:
+            return
+        table_index += 1
+        total_tables += 1
+
+        header_cells = _row_cells(block_lines[0])
+        expected_cols = len(header_cells)
+
+        block_ok = True
+
+        if len(block_lines) < 2:
+            malformed_delimiter_table_indices.append(table_index)
+            block_ok = False
+        else:
+            delim_cells = _row_cells(block_lines[1])
+            if len(delim_cells) != expected_cols or not all(
+                _GFM_DELIMITER_CELL_RE.match(cell) for cell in delim_cells
+            ):
+                malformed_delimiter_table_indices.append(table_index)
+                block_ok = False
+
+        if "" in header_cells:
+            empty_header_cell_table_indices.append(table_index)
+
+        for data_line in block_lines[2:]:
+            if len(_row_cells(data_line)) != expected_cols:
+                ragged_column_table_indices.append(table_index)
+                block_ok = False
+                break
+
+    for line in lines:
+        stripped = line.strip()
+        if not in_tilde_fence and not in_backtick_fence and stripped.startswith("```"):
+            in_backtick_fence = not in_backtick_fence
+            continue
+        if not in_backtick_fence and not in_tilde_fence and stripped.startswith("~~~"):
+            in_tilde_fence = not in_tilde_fence
+            continue
+        if in_backtick_fence or in_tilde_fence:
+            continue
+
+        if _is_table_line(line):
+            block.append(line)
+        else:
+            _evaluate_block(block)
+            block = []
+    _evaluate_block(block)
+
+    is_table_hygiene_clean = bool(
+        not malformed_delimiter_table_indices
+        and not empty_header_cell_table_indices
+        and not ragged_column_table_indices
+    )
+
+    return {
+        "total_tables": total_tables,
+        "malformed_delimiter_table_indices": malformed_delimiter_table_indices,
+        "empty_header_cell_table_indices": empty_header_cell_table_indices,
+        "ragged_column_table_indices": ragged_column_table_indices,
+        "is_table_hygiene_clean": is_table_hygiene_clean,
+    }

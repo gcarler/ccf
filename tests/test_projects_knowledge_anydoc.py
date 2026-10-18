@@ -2727,3 +2727,104 @@ def test_audit_markdown_callout_admonition_hygiene_empty_or_no_callouts():
             "is_hygienic": True,
         }
 
+
+
+def test_audit_markdown_table_column_alignment_hygiene_clean_tables():
+    """Tablas GFM limpias (alineaciones :---, :---:, ---:) e ignores en fences -> clean."""
+    from backend.services.anydoc_service import (
+        audit_markdown_table_column_alignment_hygiene,
+        AnyDocService,
+    )
+
+    md = (
+        "| Activo | Fecha | Importe |\n"
+        "| :--- | :---: | ---: |\n"
+        "| Caja | 2026-10-18 | 500 |\n"
+        "\n"
+        "Texto entre tablas.\n"
+        "\n"
+        "| Estado | Nota |\n"
+        "| :--- | :--- |\n"
+        "| OK | - |\n"
+        "```markdown\n"
+        "| Falso | Encabezado |\n"
+        "| a | b |\n"
+        "```\n"
+    )
+    res = audit_markdown_table_column_alignment_hygiene(md)
+    assert res["total_tables"] == 2
+    assert res["malformed_delimiter_table_indices"] == []
+    assert res["empty_header_cell_table_indices"] == []
+    assert res["ragged_column_table_indices"] == []
+    assert res["is_table_hygiene_clean"] is True
+
+    static_res = AnyDocService.audit_markdown_table_column_alignment_hygiene(
+        "| A | B |\n| :--- | ---: |\n| 1 | 2 |\n"
+    )
+    assert static_res["is_table_hygiene_clean"] is True
+    assert static_res["total_tables"] == 1
+
+
+def test_audit_markdown_table_column_alignment_hygiene_malformed_delimiters():
+    """Delimitador con <3 guiones o bloque sin fila delimitadora -> malformed."""
+    from backend.services.anydoc_service import (
+        audit_markdown_table_column_alignment_hygiene,
+    )
+
+    md = (
+        "| Activo | Fecha |\n"
+        "| :-- | --- |\n"
+        "| Caja | 1 |\n"
+        "\n"
+        "| Sin delimitador | X |\n"
+        "| 1 | 2 |\n"
+    )
+    res = audit_markdown_table_column_alignment_hygiene(md)
+    assert res["total_tables"] == 2
+    assert res["malformed_delimiter_table_indices"] == [1, 2]
+    assert res["empty_header_cell_table_indices"] == []
+    assert res["ragged_column_table_indices"] == []
+    assert res["is_table_hygiene_clean"] is False
+
+
+def test_audit_markdown_table_column_alignment_hygiene_empty_header_and_ragged():
+    """Encabezado vacío y filas ragged -> listas separadas por tabla."""
+    from backend.services.anydoc_service import (
+        audit_markdown_table_column_alignment_hygiene,
+    )
+
+    md = (
+        "| Activo |  | Importe |\n"
+        "| --- | --- | --- |\n"
+        "| Caja | 1 | 2 |\n"
+        "\n"
+        "| Activo | Fecha |\n"
+        "| --- | --- |\n"
+        "| Caja | 1 | extra |\n"
+        "| Corto |\n"
+        "\n"
+        "| Solo header |\n"
+    )
+    res = audit_markdown_table_column_alignment_hygiene(md)
+    assert res["total_tables"] == 3
+    assert res["empty_header_cell_table_indices"] == [1]
+    assert res["ragged_column_table_indices"] == [2]
+    assert res["malformed_delimiter_table_indices"] == [3]
+    assert res["is_table_hygiene_clean"] is False
+
+
+def test_audit_markdown_table_column_alignment_hygiene_no_tables():
+    """None, vacío o texto sin tablas -> total 0 y clean True."""
+    from backend.services.anydoc_service import (
+        audit_markdown_table_column_alignment_hygiene,
+    )
+
+    for payload in (None, "", "Texto sin tablas GFM.\n", "| sin cierre\n", None):
+        res = audit_markdown_table_column_alignment_hygiene(payload)
+        assert res == {
+            "total_tables": 0,
+            "malformed_delimiter_table_indices": [],
+            "empty_header_cell_table_indices": [],
+            "ragged_column_table_indices": [],
+            "is_table_hygiene_clean": True,
+        }

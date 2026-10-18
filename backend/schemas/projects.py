@@ -4292,3 +4292,98 @@ def validate_schedule_path_convergence_risk(
         "is_valid": is_valid,
     }
 
+
+def validate_schedule_risk_mitigation_residual_delay(
+    risk_responses: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_acceptable_residual_days: float = 5.0,
+) -> dict[str, Any]:
+    """Valida la efectividad de las respuestas a riesgos de cronograma y la exposición de demora residual según PMI PMBOK §11.5 y §6.5."""
+    if (
+        risk_responses is None
+        or isinstance(risk_responses, (str, bytes, Mapping))
+        or not isinstance(risk_responses, Sequence)
+    ):
+        items: Sequence[Any] = []
+    else:
+        items = risk_responses
+
+    valid_strategies = {"avoid", "mitigate", "transfer", "accept", "escalate"}
+    total_evaluated = 0
+    total_pre_mitigation_days = 0.0
+    total_post_mitigation_days = 0.0
+    ineffective_response_risk_ids: list[str] = []
+    excessive_residual_risk_ids: list[str] = []
+    missing_fallback_risk_ids: list[str] = []
+
+    for item in items:
+        if not isinstance(item, Mapping):
+            continue
+        risk_id = str(item.get("risk_id") or "").strip()
+        if not risk_id:
+            continue
+
+        try:
+            pre_mitigation_delay_days = max(
+                0.0, float(item.get("pre_mitigation_delay_days", 0.0) or 0.0)
+            )
+        except (TypeError, ValueError):
+            pre_mitigation_delay_days = 0.0
+
+        try:
+            post_mitigation_delay_days = max(
+                0.0, float(item.get("post_mitigation_delay_days", 0.0) or 0.0)
+            )
+        except (TypeError, ValueError):
+            post_mitigation_delay_days = 0.0
+
+        strategy = str(item.get("strategy") or "").strip().lower()
+        fallback_plan = str(item.get("fallback_plan") or "").strip()
+
+        total_evaluated += 1
+        total_pre_mitigation_days += pre_mitigation_delay_days
+        total_post_mitigation_days += post_mitigation_delay_days
+
+        if strategy not in valid_strategies or (
+            strategy in {"avoid", "mitigate"}
+            and post_mitigation_delay_days >= pre_mitigation_delay_days > 0.0
+        ):
+            ineffective_response_risk_ids.append(risk_id)
+
+        if post_mitigation_delay_days > float(max_acceptable_residual_days):
+            excessive_residual_risk_ids.append(risk_id)
+            if not fallback_plan:
+                missing_fallback_risk_ids.append(risk_id)
+
+    delay_reduction_pct = (
+        round(
+            (
+                (total_pre_mitigation_days - total_post_mitigation_days)
+                / total_pre_mitigation_days
+            )
+            * 100.0,
+            2,
+        )
+        if total_pre_mitigation_days > 0.0
+        else 0.0
+    )
+
+    is_schedule_risk_controlled = bool(
+        total_evaluated > 0
+        and not ineffective_response_risk_ids
+        and not excessive_residual_risk_ids
+        and not missing_fallback_risk_ids
+    )
+
+    return {
+        "total_evaluated": total_evaluated,
+        "total_pre_mitigation_days": round(total_pre_mitigation_days, 2),
+        "total_post_mitigation_days": round(total_post_mitigation_days, 2),
+        "delay_reduction_pct": delay_reduction_pct,
+        "ineffective_response_risk_ids": ineffective_response_risk_ids,
+        "excessive_residual_risk_ids": excessive_residual_risk_ids,
+        "missing_fallback_risk_ids": missing_fallback_risk_ids,
+        "is_schedule_risk_controlled": is_schedule_risk_controlled,
+    }
+
+

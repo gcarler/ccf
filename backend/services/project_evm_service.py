@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import datetime
 import uuid
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import timedelta, timezone
 from typing import Any, Dict, List, Optional
 
@@ -5293,6 +5293,98 @@ def evaluate_evm_joint_cost_schedule_index(
     }
 
 
+def evaluate_evm_earned_schedule_tspi_feasibility(
+    metrics: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Evalúa el To-Complete Schedule Performance Index (TSPI) en Earned Schedule y la factibilidad de recuperación según PMI PMBOK §7.4 y Practice Standard for EVM."""
+    invalid_result: dict[str, Any] = {
+        "spi_t": 0.0,
+        "sv_t_days": 0.0,
+        "tspi_pd": 0.0,
+        "tspi_ed": 0.0,
+        "ieac_t_days": 0.0,
+        "schedule_posture": "invalid_inputs",
+        "is_recovery_feasible": False,
+    }
+    if not isinstance(metrics, Mapping):
+        return invalid_result
+
+    try:
+        planned_duration_days = float(metrics.get("planned_duration_days", 0.0) or 0.0)
+        actual_time_days = float(metrics.get("actual_time_days", 0.0) or 0.0)
+        earned_schedule_days = float(metrics.get("earned_schedule_days", 0.0) or 0.0)
+        deadline_extension_days = max(
+            0.0, float(metrics.get("deadline_extension_days", 0.0) or 0.0)
+        )
+    except (TypeError, ValueError):
+        return invalid_result
+
+    if (
+        planned_duration_days <= 0.0
+        or actual_time_days < 0.0
+        or earned_schedule_days < 0.0
+    ):
+        return invalid_result
+
+    if actual_time_days > 0.0:
+        spi_t = round(earned_schedule_days / actual_time_days, 4)
+    else:
+        spi_t = 1.0 if earned_schedule_days > 0.0 else 0.0
+
+    sv_t_days = round(earned_schedule_days - actual_time_days, 2)
+    remaining_work_days = max(0.0, planned_duration_days - earned_schedule_days)
+    remaining_time_pd = planned_duration_days - actual_time_days
+
+    if remaining_time_pd > 0.0:
+        tspi_pd = round(remaining_work_days / remaining_time_pd, 4)
+    else:
+        tspi_pd = 0.0 if remaining_work_days == 0.0 else 999.0
+
+    effective_deadline_days = planned_duration_days + deadline_extension_days
+    remaining_time_ed = effective_deadline_days - actual_time_days
+
+    if remaining_time_ed > 0.0:
+        tspi_ed = round(remaining_work_days / remaining_time_ed, 4)
+    else:
+        tspi_ed = 0.0 if remaining_work_days == 0.0 else 999.0
+
+    if spi_t > 0.0:
+        ieac_t_days = round(planned_duration_days / spi_t, 2)
+    else:
+        ieac_t_days = round(effective_deadline_days * 2.0, 2)
+
+    if remaining_work_days == 0.0:
+        schedule_posture = "completed"
+    elif tspi_pd <= 1.05 and spi_t >= 0.95:
+        schedule_posture = "on_track"
+    elif tspi_pd <= 1.10:
+        schedule_posture = "recoverable_within_baseline"
+    elif tspi_ed <= 1.10:
+        schedule_posture = "recoverable_with_extension"
+    else:
+        schedule_posture = "unrecoverable_slippage"
+
+    is_recovery_feasible = bool(
+        schedule_posture
+        in {
+            "completed",
+            "on_track",
+            "recoverable_within_baseline",
+            "recoverable_with_extension",
+        }
+    )
+
+    return {
+        "spi_t": spi_t,
+        "sv_t_days": sv_t_days,
+        "tspi_pd": tspi_pd,
+        "tspi_ed": tspi_ed,
+        "ieac_t_days": ieac_t_days,
+        "schedule_posture": schedule_posture,
+        "is_recovery_feasible": is_recovery_feasible,
+    }
+
+
 ProjectEVMService.audit_eac_forecast_optimism_bias = staticmethod(
     audit_eac_forecast_optimism_bias
 )
@@ -5304,6 +5396,9 @@ ProjectEVMService.evaluate_evm_funding_runway_exhaustion = staticmethod(
 )
 ProjectEVMService.evaluate_evm_joint_cost_schedule_index = staticmethod(
     evaluate_evm_joint_cost_schedule_index
+)
+ProjectEVMService.evaluate_evm_earned_schedule_tspi_feasibility = staticmethod(
+    evaluate_evm_earned_schedule_tspi_feasibility
 )
 
 
@@ -5320,5 +5415,7 @@ __all__ = [
     "evaluate_management_reserve_ceiling_utilization",
     "evaluate_evm_funding_runway_exhaustion",
     "evaluate_evm_joint_cost_schedule_index",
+    "evaluate_evm_earned_schedule_tspi_feasibility",
     "ProjectEVMService",
 ]
+

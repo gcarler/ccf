@@ -2595,3 +2595,126 @@ def test_validate_schedule_path_convergence_risk_empty_or_non_mapping():
             "is_valid": False,
         }
 
+
+def test_validate_schedule_risk_mitigation_residual_delay_controlled():
+    """Respuestas válidas con reducción real de demora y residual dentro del umbral pasan is_schedule_risk_controlled=True."""
+    from backend.schemas.projects import (
+        validate_schedule_risk_mitigation_residual_delay,
+    )
+
+    res = validate_schedule_risk_mitigation_residual_delay(
+        [
+            {
+                "risk_id": "RSK-01",
+                "strategy": "Mitigate",
+                "pre_mitigation_delay_days": 12.0,
+                "post_mitigation_delay_days": 3.0,
+                "fallback_plan": "Activar proveedor secundario",
+            },
+            {
+                "risk_id": "RSK-02",
+                "strategy": "avoid",
+                "pre_mitigation_delay_days": 8.0,
+                "post_mitigation_delay_days": 0.0,
+            },
+        ],
+        max_acceptable_residual_days=5.0,
+    )
+    assert res == {
+        "total_evaluated": 2,
+        "total_pre_mitigation_days": 20.0,
+        "total_post_mitigation_days": 3.0,
+        "delay_reduction_pct": 85.0,
+        "ineffective_response_risk_ids": [],
+        "excessive_residual_risk_ids": [],
+        "missing_fallback_risk_ids": [],
+        "is_schedule_risk_controlled": True,
+    }
+
+
+def test_validate_schedule_risk_mitigation_residual_delay_ineffective_strategy():
+    """Detecta estrategias inválidas o avoid/mitigate que no reducen la demora pre-mitigación."""
+    from backend.schemas.projects import (
+        validate_schedule_risk_mitigation_residual_delay,
+    )
+
+    res = validate_schedule_risk_mitigation_residual_delay(
+        [
+            {
+                "risk_id": "RSK-NO-REDUCTION",
+                "strategy": "mitigate",
+                "pre_mitigation_delay_days": 4.0,
+                "post_mitigation_delay_days": 4.0,
+            },
+            {
+                "risk_id": "RSK-BAD-STRAT",
+                "strategy": "ignore",
+                "pre_mitigation_delay_days": 3.0,
+                "post_mitigation_delay_days": 1.0,
+            },
+        ]
+    )
+    assert res["total_evaluated"] == 2
+    assert res["ineffective_response_risk_ids"] == [
+        "RSK-NO-REDUCTION",
+        "RSK-BAD-STRAT",
+    ]
+    assert res["is_schedule_risk_controlled"] is False
+
+
+def test_validate_schedule_risk_mitigation_residual_delay_excessive_and_missing_fallback():
+    """Detecta demora residual superior al umbral y ausencia de fallback_plan."""
+    from backend.schemas.projects import (
+        validate_schedule_risk_mitigation_residual_delay,
+    )
+
+    res = validate_schedule_risk_mitigation_residual_delay(
+        [
+            {
+                "risk_id": "RSK-RES-WITH-FB",
+                "strategy": "transfer",
+                "pre_mitigation_delay_days": 15.0,
+                "post_mitigation_delay_days": 7.0,
+                "fallback_plan": "Usar reserva de contingencia de cronograma",
+            },
+            {
+                "risk_id": "RSK-RES-NO-FB",
+                "strategy": "accept",
+                "pre_mitigation_delay_days": 10.0,
+                "post_mitigation_delay_days": 8.0,
+                "fallback_plan": "   ",
+            },
+        ],
+        max_acceptable_residual_days=5.0,
+    )
+    assert res == {
+        "total_evaluated": 2,
+        "total_pre_mitigation_days": 25.0,
+        "total_post_mitigation_days": 15.0,
+        "delay_reduction_pct": 40.0,
+        "ineffective_response_risk_ids": [],
+        "excessive_residual_risk_ids": ["RSK-RES-WITH-FB", "RSK-RES-NO-FB"],
+        "missing_fallback_risk_ids": ["RSK-RES-NO-FB"],
+        "is_schedule_risk_controlled": False,
+    }
+
+
+def test_validate_schedule_risk_mitigation_residual_delay_empty_or_invalid():
+    """Entradas vacías, None o no-secuencia devuelven total_evaluated=0 e is_schedule_risk_controlled=False."""
+    from backend.schemas.projects import (
+        validate_schedule_risk_mitigation_residual_delay,
+    )
+
+    for payload in (None, [], "invalid", {"risk_id": "RSK-1"}, [{"risk_id": "  "}]):
+        assert validate_schedule_risk_mitigation_residual_delay(payload) == {  # type: ignore[arg-type]
+            "total_evaluated": 0,
+            "total_pre_mitigation_days": 0.0,
+            "total_post_mitigation_days": 0.0,
+            "delay_reduction_pct": 0.0,
+            "ineffective_response_risk_ids": [],
+            "excessive_residual_risk_ids": [],
+            "missing_fallback_risk_ids": [],
+            "is_schedule_risk_controlled": False,
+        }
+
+
