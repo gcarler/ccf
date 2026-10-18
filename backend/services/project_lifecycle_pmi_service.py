@@ -596,6 +596,68 @@ def evaluate_charter_authorization_readiness(
     }
 
 
+def evaluate_administrative_closure_audit(
+    closure_data: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Audita la completitud formal del cierre del proyecto o fase según PMI PMBOK §4.7."""
+    data = closure_data if isinstance(closure_data, dict) else {}
+
+    deliverables_accepted = bool(data.get("deliverables_accepted_verified"))
+    financial_closed = bool(data.get("financial_reconciliation_completed"))
+    contracts_closed = bool(data.get("procurement_contracts_closed", True))
+    resources_released = bool(data.get("team_resources_released", False))
+
+    raw_lessons = data.get("lessons_learned")
+    if isinstance(raw_lessons, list):
+        lessons_count = len(
+            [
+                item
+                for item in raw_lessons
+                if (
+                    isinstance(item, dict)
+                    and str(item.get("summary") or item.get("lesson") or "").strip()
+                )
+                or (isinstance(item, str) and item.strip())
+            ]
+        )
+    else:
+        lessons_count = max(0, int(data.get("lessons_learned_count") or 0))
+
+    final_report_summary = str(data.get("final_report_summary") or "").strip()
+
+    missing_pillars: list[str] = []
+    if not deliverables_accepted:
+        missing_pillars.append("deliverables_acceptance")
+    if not financial_closed:
+        missing_pillars.append("financial_reconciliation")
+    if not contracts_closed:
+        missing_pillars.append("contractual_closure")
+    if not resources_released:
+        missing_pillars.append("resource_release")
+    if lessons_count < 1 or len(final_report_summary) < 15:
+        missing_pillars.append("lessons_learned_repository")
+
+    completed_pillars_count = 5 - len(missing_pillars)
+    closure_index_pct = round((completed_pillars_count / 5) * 100.0, 2)
+    can_archive_project = len(missing_pillars) == 0
+
+    if can_archive_project:
+        closure_verdict = "ready_for_archive"
+    elif deliverables_accepted and financial_closed:
+        closure_verdict = "pending_SignOff"
+    else:
+        closure_verdict = "blocked_open_obligations"
+
+    return {
+        "completed_pillars_count": completed_pillars_count,
+        "closure_index_pct": closure_index_pct,
+        "lessons_learned_count": lessons_count,
+        "missing_pillars": missing_pillars,
+        "can_archive_project": can_archive_project,
+        "closure_verdict": closure_verdict,
+    }
+
+
 class ProjectLifecyclePMIService:
     """Canonical facade for PMI project lifecycle, governance maturity, and automation readiness."""
 
@@ -648,3 +710,9 @@ class ProjectLifecyclePMIService:
         charter_data: dict[str, Any] | None,
     ) -> dict[str, Any]:
         return evaluate_charter_authorization_readiness(charter_data)
+
+    @staticmethod
+    def evaluate_administrative_closure_audit(
+        closure_data: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        return evaluate_administrative_closure_audit(closure_data)

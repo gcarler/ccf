@@ -713,3 +713,132 @@ def test_audit_pdf_export_binary_empty_none_or_non_pdf():
     assert non_pdf_res["estimated_page_count"] == 0
     assert non_pdf_res["is_export_ready"] is False
 
+
+# ── summarize_executive_report_risk_posture (PMBOK §11.7, pure helper) ─────
+
+
+def test_risk_posture_unassessed():
+    """Sin RISK RAID ni CCB pendientes → 'unassessed' con población 0."""
+    from backend.services.project_export_service import summarize_executive_report_risk_posture
+
+    for report in (None, {}, {"raid_kpis": {}, "ccb_and_quality_summary": {}}):
+        result = summarize_executive_report_risk_posture(report)
+        assert result == {
+            "total_risks": 0,
+            "critical_risks": 0,
+            "high_risks": 0,
+            "elevated_risks_count": 0,
+            "elevated_risk_share_pct": 0.0,
+            "pending_ccb_changes": 0,
+            "requires_sponsor_escalation": False,
+            "risk_posture_status": "unassessed",
+        }
+    # RAID no-dict se ignora
+    assert summarize_executive_report_risk_posture({"raid_kpis": "n/a"})["risk_posture_status"] == "unassessed"
+
+
+def test_risk_posture_controlled():
+    """Riesgos mapeados sin elevados ni pendientes CCB → 'controlled'."""
+    from backend.services.project_export_service import summarize_executive_report_risk_posture
+
+    result = summarize_executive_report_risk_posture(
+        {
+            "raid_kpis": {"total_risks": 4, "critical_risks_count": 0, "high_risks_count": 0},
+            "ccb_and_quality_summary": {"pending_ccb_count": 0},
+        }
+    )
+    assert result == {
+        "total_risks": 4,
+        "critical_risks": 0,
+        "high_risks": 0,
+        "elevated_risks_count": 0,
+        "elevated_risk_share_pct": 0.0,
+        "pending_ccb_changes": 0,
+        "requires_sponsor_escalation": False,
+        "risk_posture_status": "controlled",
+    }
+    # 1 riesgo alto sin otros pendientes → 'watch_list' (per spec)
+    watch = summarize_executive_report_risk_posture(
+        {
+            "raid_kpis": {"total_risks": 4, "critical_risks_count": 0, "high_risks_count": 1},
+            "ccb_and_quality_summary": {"pending_ccb_count": 0},
+        }
+    )
+    assert watch["elevated_risk_share_pct"] == 25.0
+    assert watch["risk_posture_status"] == "watch_list"
+
+
+def test_risk_posture_watch_list():
+    """Riesgo elevado o pendiente CCB (sin umbral de escalado) → 'watch_list'."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        summarize_executive_report_risk_posture,
+    )
+
+    result_altas = summarize_executive_report_risk_posture(
+        {
+            "raid_kpis": {"total_risks": 6, "critical_risks_count": 0, "high_risks_count": 2},
+            "ccb_and_quality_summary": {"pending_ccb_count": 1},
+        }
+    )
+    assert result_altas["elevated_risks_count"] == 2
+    assert result_altas["elevated_risk_share_pct"] == round(2 / 6 * 100.0, 2)
+    assert result_altas["requires_sponsor_escalation"] is False
+    assert result_altas["risk_posture_status"] == "watch_list"
+
+    result_pendiente = summarize_executive_report_risk_posture(
+        {
+            "raid_kpis": {"total_risks": 2, "high_risks": 0},
+            "ccb_and_quality_summary": {"pending_ccb_count": 2},
+        }
+    )
+    assert result_pendiente["pending_ccb_changes"] == 2
+    assert result_pendiente["risk_posture_status"] == "watch_list"
+
+    # Facade de clase expone el mismo resultado
+    facade = ProjectExportService.summarize_executive_report_risk_posture(
+        result_altas if False else {
+            "raid_kpis": {"total_risks": 6, "critical_risks_count": 0, "high_risks_count": 2},
+            "ccb_and_quality_summary": {"pending_ccb_count": 1},
+        }
+    )
+    assert facade == result_altas
+
+
+def test_risk_posture_sponsor_escalation_by_critical_risk():
+    """1 riesgo crítico → 'sponsor_escalation' (se expone en __all__)."""
+    import backend.services.project_export_service as export_module
+    from backend.services.project_export_service import summarize_executive_report_risk_posture
+
+    result = summarize_executive_report_risk_posture(
+        {
+            "raid_kpis": {"total_risks": 5, "critical_risks_count": 1, "high_risks_count": 1},
+            "ccb_and_quality_summary": {"pending_ccb_count": 1},
+        }
+    )
+    assert result["elevated_risks_count"] == 2
+    assert result["requires_sponsor_escalation"] is True
+    assert result["risk_posture_status"] == "sponsor_escalation"
+
+    # high_risks >= 3 también escala
+    result_altas = summarize_executive_report_risk_posture(
+        {"raid_kpis": {"total_risks": 3, "high_risks_count": 3}}
+    )
+    assert result_altas["requires_sponsor_escalation"] is True
+    assert result_altas["risk_posture_status"] == "sponsor_escalation"
+
+    assert "summarize_executive_report_risk_posture" in export_module.__all__
+
+
+def test_risk_posture_sponsor_escalation_by_pending_ccb():
+    """≥ 3 CRs pendientes de dictamen → 'sponsor_escalation' aún con 0 riesgos."""
+    from backend.services.project_export_service import summarize_executive_report_risk_posture
+
+    result = summarize_executive_report_risk_posture(
+        {"ccb_and_quality_summary": {"pending_ccb_count": 3}}
+    )
+    assert result["pending_ccb_changes"] == 3
+    assert result["requires_sponsor_escalation"] is True
+    # total_risks == 0 pero pending > 0 → no 'unassessed'
+    assert result["risk_posture_status"] == "sponsor_escalation"
+

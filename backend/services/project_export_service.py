@@ -25,6 +25,7 @@ __all__ = [
     "evaluate_executive_report_completeness",
     "audit_csv_export_integrity",
     "audit_pdf_export_binary",
+    "summarize_executive_report_risk_posture",
     "ProjectExportService",
 ]
 
@@ -242,3 +243,74 @@ class ProjectExportService:
         user_sede_id: Optional[UUID | str] = None,
     ) -> str:
         return generate_project_expenses_csv(db, project_id, user_sede_id=user_sede_id)
+
+    @staticmethod
+    def summarize_executive_report_risk_posture(report_data: Optional[dict]) -> dict:
+        return summarize_executive_report_risk_posture(report_data)
+
+
+def summarize_executive_report_risk_posture(report_data: Optional[dict]) -> dict:
+    """Audita la postura de riesgo ejecutivo del informe (PMBOK §11.7).
+
+    Extrae `raid_kpis` y `ccb_and_quality_summary` (dicts si corresponde)
+    y retorna:
+    - `total_risks` / `critical_risks` / `high_risks`: saneados (>= 0),
+      tolerando las variantes `critical_risks_count`/`critical_risks` y
+      `high_risks_count`/`high_risks`.
+    - `elevated_risks_count`: críticas + altas.
+    - `elevated_risk_share_pct`: % de riesgo elevado (round 2; 0.0 sin
+      riesgos).
+    - `pending_ccb_changes`: CRs pendientes de dictamen (>= 0).
+    - `requires_sponsor_escalation`: críticas >= 1, altas >= 3 o
+      pendientes >= 3.
+    - `risk_posture_status`: 'unassessed' (sin riesgos ni pendientes),
+      'sponsor_escalation', 'watch_list' (≥ 1 elevado o pendiente) o
+      'controlled'.
+    """
+    data = report_data if isinstance(report_data, dict) else {}
+    raid = data.get("raid_kpis") if isinstance(data.get("raid_kpis"), dict) else {}
+    ccb = (
+        data.get("ccb_and_quality_summary")
+        if isinstance(data.get("ccb_and_quality_summary"), dict)
+        else {}
+    )
+
+    total_risks = max(0, int(raid.get("total_risks") or 0))
+    critical_risks = max(
+        0, int(raid.get("critical_risks_count") or raid.get("critical_risks") or 0)
+    )
+    high_risks = max(
+        0, int(raid.get("high_risks_count") or raid.get("high_risks") or 0)
+    )
+    elevated_risks_count = critical_risks + high_risks
+    elevated_risk_share_pct = (
+        round((elevated_risks_count / total_risks) * 100.0, 2)
+        if total_risks > 0
+        else 0.0
+    )
+    pending_ccb_changes = max(0, int(ccb.get("pending_ccb_count") or 0))
+
+    requires_sponsor_escalation = bool(
+        critical_risks >= 1 or high_risks >= 3 or pending_ccb_changes >= 3
+    )
+
+    if total_risks == 0 and pending_ccb_changes == 0:
+        risk_posture_status = "unassessed"
+    elif requires_sponsor_escalation:
+        risk_posture_status = "sponsor_escalation"
+    elif elevated_risks_count >= 1 or pending_ccb_changes >= 1:
+        risk_posture_status = "watch_list"
+    else:
+        risk_posture_status = "controlled"
+
+    return {
+        "total_risks": total_risks,
+        "critical_risks": critical_risks,
+        "high_risks": high_risks,
+        "elevated_risks_count": elevated_risks_count,
+        "elevated_risk_share_pct": elevated_risk_share_pct,
+        "pending_ccb_changes": pending_ccb_changes,
+        "requires_sponsor_escalation": requires_sponsor_escalation,
+        "risk_posture_status": risk_posture_status,
+    }
+

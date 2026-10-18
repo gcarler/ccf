@@ -489,3 +489,88 @@ def test_charter_authorization_readiness_draft_incomplete():
             "readiness_score_pct": 0.0,
             "charter_gate_verdict": "draft_incomplete",
         }
+
+
+# ── evaluate_administrative_closure_audit (PMI PMBOK §4.7) ────────────────────
+
+
+def test_evaluate_administrative_closure_audit_ready_for_archive():
+    """Los 5 pilares de cierre completos → 100%, can_archive_project=True y 'ready_for_archive'."""
+    payload = {
+        "deliverables_accepted_verified": True,
+        "financial_reconciliation_completed": True,
+        "procurement_contracts_closed": True,
+        "team_resources_released": True,
+        "lessons_learned": [{"summary": "Early stakeholder alignment prevented scope creep"}],
+        "final_report_summary": "Project completed on schedule and within BAC.",
+    }
+    res = project_lifecycle_pmi_service.evaluate_administrative_closure_audit(payload)
+    assert res == {
+        "completed_pillars_count": 5,
+        "closure_index_pct": 100.0,
+        "lessons_learned_count": 1,
+        "missing_pillars": [],
+        "can_archive_project": True,
+        "closure_verdict": "ready_for_archive",
+    }
+    assert (
+        project_lifecycle_pmi_service.ProjectLifecyclePMIService.evaluate_administrative_closure_audit(
+            payload
+        )
+        == res
+    )
+
+
+def test_evaluate_administrative_closure_audit_pending_signoff():
+    """Entregables y finanzas cerrados pero recursos no liberados → 'pending_SignOff'."""
+    payload = {
+        "deliverables_accepted_verified": True,
+        "financial_reconciliation_completed": True,
+        "procurement_contracts_closed": True,
+        "team_resources_released": False,
+        "lessons_learned": [{"lesson": "Automated gates reduced regression incidents"}],
+        "final_report_summary": "All deliverables verified and accepted by sponsor.",
+    }
+    res = project_lifecycle_pmi_service.evaluate_administrative_closure_audit(payload)
+    assert res["completed_pillars_count"] == 4
+    assert res["closure_index_pct"] == 80.0
+    assert "resource_release" in res["missing_pillars"]
+    assert res["can_archive_project"] is False
+    assert res["closure_verdict"] == "pending_SignOff"
+
+
+def test_evaluate_administrative_closure_audit_blocked_open_obligations():
+    """Entregables o finanzas pendientes → 'blocked_open_obligations'."""
+    payload = {
+        "deliverables_accepted_verified": True,
+        "financial_reconciliation_completed": False,
+        "procurement_contracts_closed": False,
+        "team_resources_released": True,
+        "lessons_learned_count": 2,
+        "final_report_summary": "Pending vendor invoice reconciliation before final archive.",
+    }
+    res = project_lifecycle_pmi_service.evaluate_administrative_closure_audit(payload)
+    assert res["completed_pillars_count"] == 3
+    assert res["closure_index_pct"] == 60.0
+    assert res["missing_pillars"] == ["financial_reconciliation", "contractual_closure"]
+    assert res["can_archive_project"] is False
+    assert res["closure_verdict"] == "blocked_open_obligations"
+
+
+def test_evaluate_administrative_closure_audit_empty_or_none():
+    """None o {} → solo contractual_closure por defecto (1/5 = 20.0%) y 'blocked_open_obligations'."""
+    for empty_val in (None, {}):
+        res = project_lifecycle_pmi_service.evaluate_administrative_closure_audit(empty_val)
+        assert res == {
+            "completed_pillars_count": 1,
+            "closure_index_pct": 20.0,
+            "lessons_learned_count": 0,
+            "missing_pillars": [
+                "deliverables_acceptance",
+                "financial_reconciliation",
+                "resource_release",
+                "lessons_learned_repository",
+            ],
+            "can_archive_project": False,
+            "closure_verdict": "blocked_open_obligations",
+        }
