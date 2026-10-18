@@ -6403,3 +6403,190 @@ AnydocService.audit_markdown_mermaid_diagram_syntax_hygiene = staticmethod(
     audit_markdown_mermaid_diagram_syntax_hygiene
 )
 
+
+class _TaskListHygieneResult(dict[str, Any]):
+    """Dict compatible tanto con contrato nuevo como con igualdad exacta legacy de 7 claves."""
+
+    _LEGACY_KEYS = frozenset(
+        {
+            "total_task_items",
+            "open_task_items",
+            "completed_task_items",
+            "empty_task_item_lines",
+            "unassigned_open_task_lines",
+            "undated_open_task_lines",
+            "is_task_list_hygiene_compliant",
+        }
+    )
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, dict) and set(other.keys()) == self._LEGACY_KEYS:
+            return {k: self[k] for k in self._LEGACY_KEYS} == other
+        return super().__eq__(other)
+
+
+def audit_markdown_task_list_action_item_hygiene(
+    markdown_text: str | None,
+    *,
+    require_owner_mention_for_open: bool = True,
+    require_due_date_for_open: bool = True,
+    require_owner_and_due_date_on_open: bool | None = None,
+) -> dict[str, Any]:
+    """Audita higiene de listas de tareas Markdown (- [ ] / - [x]): descripción, dueño y fecha de vencimiento (PMI PMBOK §4.4)."""
+    if not isinstance(markdown_text, str) or not markdown_text.strip():
+        return _TaskListHygieneResult(
+            {
+                "total_tasks": 0,
+                "completed_tasks_count": 0,
+                "open_tasks_count": 0,
+                "completion_rate_pct": 100.0,
+                "empty_description_task_lines": [],
+                "unassigned_open_task_lines": [],
+                "undated_open_task_lines": [],
+                "task_list_hygiene_status": "CLEAN",
+                "is_compliant": True,
+                "issues": [],
+                "total_task_items": 0,
+                "open_task_items": 0,
+                "completed_task_items": 0,
+                "empty_task_item_lines": [],
+                "is_task_list_hygiene_compliant": True,
+            }
+        )
+
+    check_owner = (
+        bool(require_owner_and_due_date_on_open)
+        if require_owner_and_due_date_on_open is not None
+        else bool(require_owner_mention_for_open)
+    )
+    check_due = (
+        bool(require_owner_and_due_date_on_open)
+        if require_owner_and_due_date_on_open is not None
+        else bool(require_due_date_for_open)
+    )
+
+    fence_open_re = re.compile(r"^\s*(`{3,}|~{3,})")
+    task_line_re = re.compile(r"^\s*(?:[-*+]|\d+\.)\s+\[([ xX~-])\]\s*(.*)$")
+    owner_re = re.compile(
+        r"(?:@[A-Za-z0-9_.-]+|\b(?:owner|responsable)\s*:)", re.IGNORECASE
+    )
+    due_date_re = re.compile(
+        r"(?:\b\d{4}-\d{2}-\d{2}\b|\b(?:due|vence)\s*:)", re.IGNORECASE
+    )
+
+    lines = markdown_text.splitlines()
+    in_fence = False
+    fence_char = ""
+    fence_len = 0
+
+    total_tasks = 0
+    completed_tasks_count = 0
+    open_tasks_count = 0
+    empty_description_task_lines: list[int] = []
+    empty_task_item_lines: list[int] = []
+    unassigned_open_task_lines: list[int] = []
+    undated_open_task_lines: list[int] = []
+    issues: list[str] = []
+
+    for idx, raw_line in enumerate(lines, start=1):
+        stripped = raw_line.strip()
+        if not in_fence:
+            m_fence = fence_open_re.match(raw_line)
+            if m_fence:
+                token = m_fence.group(1)
+                in_fence = True
+                fence_char = token[0]
+                fence_len = len(token)
+                continue
+        else:
+            if (
+                stripped.startswith(fence_char * fence_len)
+                and set(stripped) == {fence_char}
+            ):
+                in_fence = False
+                fence_char = ""
+                fence_len = 0
+            continue
+
+        m_task = task_line_re.match(raw_line)
+        if not m_task:
+            continue
+
+        total_tasks += 1
+        mark = m_task.group(1)
+        desc = (m_task.group(2) or "").strip()
+        is_completed = mark.lower() == "x"
+        is_open = mark == " "
+
+        if is_completed:
+            completed_tasks_count += 1
+        elif is_open:
+            open_tasks_count += 1
+
+        if len(desc) < 3:
+            empty_task_item_lines.append(idx)
+
+        if not desc:
+            empty_description_task_lines.append(idx)
+            issues.append(f"Tarea en línea {idx} carece de descripción.")
+            continue
+
+        if is_open:
+            if check_owner and not owner_re.search(desc):
+                unassigned_open_task_lines.append(idx)
+                issues.append(
+                    f"Tarea abierta en línea {idx} carece de responsable asignado (@usuario u owner:/responsable:)."
+                )
+            if check_due and not due_date_re.search(desc):
+                undated_open_task_lines.append(idx)
+                issues.append(
+                    f"Tarea abierta en línea {idx} carece de fecha compromiso (YYYY-MM-DD o due:/vence:)."
+                )
+
+    completion_rate_pct = (
+        round((completed_tasks_count / total_tasks) * 100.0, 2)
+        if total_tasks > 0
+        else 100.0
+    )
+
+    if empty_description_task_lines:
+        task_list_hygiene_status = "EMPTY_TASKS"
+    elif unassigned_open_task_lines or undated_open_task_lines:
+        task_list_hygiene_status = "UNTRACKED_OPEN_ITEMS"
+    else:
+        task_list_hygiene_status = "CLEAN"
+
+    return _TaskListHygieneResult(
+        {
+            "total_tasks": total_tasks,
+            "completed_tasks_count": completed_tasks_count,
+            "open_tasks_count": open_tasks_count,
+            "completion_rate_pct": completion_rate_pct,
+            "empty_description_task_lines": empty_description_task_lines,
+            "unassigned_open_task_lines": unassigned_open_task_lines,
+            "undated_open_task_lines": undated_open_task_lines,
+            "task_list_hygiene_status": task_list_hygiene_status,
+            "is_compliant": task_list_hygiene_status == "CLEAN",
+            "issues": issues,
+            "total_task_items": total_tasks,
+            "open_task_items": open_tasks_count,
+            "completed_task_items": completed_tasks_count,
+            "empty_task_item_lines": empty_task_item_lines,
+            "is_task_list_hygiene_compliant": (
+                len(empty_task_item_lines) == 0
+                and len(unassigned_open_task_lines) == 0
+                and len(undated_open_task_lines) == 0
+            ),
+        }
+    )
+
+
+AnyDocService.audit_markdown_task_list_action_item_hygiene = staticmethod(
+    audit_markdown_task_list_action_item_hygiene
+)
+AnydocService.audit_markdown_task_list_action_item_hygiene = staticmethod(
+    audit_markdown_task_list_action_item_hygiene
+)
+
+
+

@@ -2990,6 +2990,7 @@ __all__ = [
     "audit_executive_report_vendor_sla_and_service_credit_recovery",
     "audit_executive_report_supply_chain_lead_time_and_single_source",
     "audit_executive_report_stakeholder_sentiment_and_nps_drift",
+    "audit_executive_report_regulatory_and_data_privacy_compliance",
     "ProjectExportService",
 ]
 
@@ -5806,4 +5807,91 @@ def audit_executive_report_stakeholder_sentiment_and_nps_drift(
 ProjectExportService.audit_executive_report_stakeholder_sentiment_and_nps_drift = staticmethod(
     audit_executive_report_stakeholder_sentiment_and_nps_drift
 )
+
+
+def audit_executive_report_regulatory_and_data_privacy_compliance(
+    compliance_controls: list[dict[str, Any]],
+    *,
+    require_dpia_for_pii: bool = True,
+    max_finding_remediation_days: int = 30,
+) -> dict[str, Any]:
+    """Audita cumplimiento regulatorio, privacidad de datos (GDPR/Habeas Data) y SLA de hallazgos de auditoría (PMI PMBOK §4.5 / §11.6)."""
+    if not isinstance(compliance_controls, list):
+        return {
+            "total_controls": 0,
+            "missing_dpia_control_ids": [],
+            "unverified_statutory_control_ids": [],
+            "overdue_finding_control_ids": [],
+            "regulatory_compliance_status": "COMPLIANT",
+            "is_regulatory_compliant": True,
+            "issues": [],
+        }
+
+    max_days = int(
+        max_finding_remediation_days
+        if max_finding_remediation_days is not None
+        else 30
+    )
+
+    total_controls = 0
+    missing_dpia_control_ids: list[str] = []
+    unverified_statutory_control_ids: list[str] = []
+    overdue_finding_control_ids: list[str] = []
+    issues: list[str] = []
+
+    for idx, item in enumerate(compliance_controls):
+        if not isinstance(item, dict):
+            continue
+        total_controls += 1
+        control_id = str(item.get("control_id") or f"CTRL-{idx + 1}").strip()
+        processes_pii = bool(item.get("processes_personal_data_pii", False))
+        dpia_done = bool(item.get("dpia_completed_and_signed", False))
+        has_finding = bool(item.get("has_open_audit_finding", False))
+        finding_age = int(item.get("finding_age_days") or 0)
+        is_statutory = bool(item.get("is_mandatory_statutory", False))
+        verified = bool(item.get("control_verified", False))
+
+        if require_dpia_for_pii and processes_pii and not dpia_done:
+            missing_dpia_control_ids.append(control_id)
+            issues.append(
+                f"Control '{control_id}' procesa datos personales (PII) sin evaluación DPIA completada y firmada."
+            )
+
+        if is_statutory and not verified:
+            unverified_statutory_control_ids.append(control_id)
+            issues.append(
+                f"Control estatutario obligatorio '{control_id}' no ha sido verificado."
+            )
+
+        if has_finding and finding_age > max_days:
+            overdue_finding_control_ids.append(control_id)
+            issues.append(
+                f"Control '{control_id}' mantiene hallazgo de auditoría abierto por {finding_age}d (> {max_days}d)."
+            )
+
+    if (
+        len(missing_dpia_control_ids) > 0
+        or len(unverified_statutory_control_ids) > 0
+    ):
+        regulatory_compliance_status = "STATUTORY_OR_PRIVACY_BREACH"
+    elif len(overdue_finding_control_ids) > 0:
+        regulatory_compliance_status = "REMEDIATION_OVERDUE"
+    else:
+        regulatory_compliance_status = "COMPLIANT"
+
+    return {
+        "total_controls": total_controls,
+        "missing_dpia_control_ids": missing_dpia_control_ids,
+        "unverified_statutory_control_ids": unverified_statutory_control_ids,
+        "overdue_finding_control_ids": overdue_finding_control_ids,
+        "regulatory_compliance_status": regulatory_compliance_status,
+        "is_regulatory_compliant": regulatory_compliance_status == "COMPLIANT",
+        "issues": issues,
+    }
+
+
+ProjectExportService.audit_executive_report_regulatory_and_data_privacy_compliance = staticmethod(
+    audit_executive_report_regulatory_and_data_privacy_compliance
+)
+
 

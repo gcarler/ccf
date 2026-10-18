@@ -5425,3 +5425,110 @@ def test_audit_markdown_mermaid_diagram_syntax_hygiene_empty_and_binding():
     )
     assert "audit_markdown_mermaid_diagram_syntax_hygiene" in mod.__all__
 
+
+def test_audit_markdown_task_list_action_item_hygiene_clean():
+    """Caso 1: Tareas cerradas y abiertas con propietario (@usuario o owner:) y fecha ISO/due: -> CLEAN."""
+    from backend.services.anydoc_service import (
+        audit_markdown_task_list_action_item_hygiene,
+    )
+
+    md = (
+        "# Plan de Acción\n\n"
+        "- [x] Revisar acta de constitución\n"
+        "- [ ] Actualizar matriz RACI @ana.perez 2026-11-15\n"
+        "* [ ] Validar presupuesto owner: carlos due: 2026-12-01\n"
+        "```markdown\n"
+        "- [ ] Ignorado en bloque cercado\n"
+        "```\n"
+    )
+    res = audit_markdown_task_list_action_item_hygiene(md)
+    assert res["total_tasks"] == 3
+    assert res["completed_tasks_count"] == 1
+    assert res["open_tasks_count"] == 2
+    assert res["completion_rate_pct"] == 33.33
+    assert res["empty_description_task_lines"] == []
+    assert res["unassigned_open_task_lines"] == []
+    assert res["undated_open_task_lines"] == []
+    assert res["task_list_hygiene_status"] == "CLEAN"
+    assert res["is_compliant"] is True
+    assert res["issues"] == []
+
+
+def test_audit_markdown_task_list_action_item_hygiene_untracked_open_items():
+    """Caso 2: Tareas abiertas sin responsable o sin fecha -> UNTRACKED_OPEN_ITEMS."""
+    from backend.services.anydoc_service import (
+        audit_markdown_task_list_action_item_hygiene,
+    )
+
+    md = (
+        "- [ ] Tarea sin dueño pero con fecha 2026-11-20\n"
+        "- [ ] Tarea con @pedro pero sin fecha\n"
+        "- [X] Tarea completada sin metadatos\n"
+    )
+    res = audit_markdown_task_list_action_item_hygiene(md)
+    assert res["total_tasks"] == 3
+    assert res["completed_tasks_count"] == 1
+    assert res["open_tasks_count"] == 2
+    assert res["empty_description_task_lines"] == []
+    assert res["unassigned_open_task_lines"] == [1]
+    assert res["undated_open_task_lines"] == [2]
+    assert res["task_list_hygiene_status"] == "UNTRACKED_OPEN_ITEMS"
+    assert res["is_compliant"] is False
+    assert len(res["issues"]) >= 2
+
+
+def test_audit_markdown_task_list_action_item_hygiene_empty_tasks():
+    """Caso 3: Tarea con descripción vacía domina -> EMPTY_TASKS."""
+    from backend.services.anydoc_service import (
+        audit_markdown_task_list_action_item_hygiene,
+    )
+
+    md = (
+        "- [ ]    \n"
+        "1. [x] \n"
+        "- [ ] Tarea abierta sin dueño ni fecha\n"
+    )
+    res = audit_markdown_task_list_action_item_hygiene(md)
+    assert res["total_tasks"] == 3
+    assert res["empty_description_task_lines"] == [1, 2]
+    assert res["unassigned_open_task_lines"] == [3]
+    assert res["undated_open_task_lines"] == [3]
+    assert res["task_list_hygiene_status"] == "EMPTY_TASKS"
+    assert res["is_compliant"] is False
+    assert len(res["issues"]) >= 2
+
+
+def test_audit_markdown_task_list_action_item_hygiene_empty_and_binding():
+    """Caso 4: Entradas vacías/None y exposición en AnyDocService, AnydocService y __all__."""
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_task_list_action_item_hygiene,
+    )
+
+    for payload in (None, "", "   \n", "Texto sin tareas\n"):
+        empty = audit_markdown_task_list_action_item_hygiene(payload)
+        assert empty["total_tasks"] == 0
+        assert empty["completed_tasks_count"] == 0
+        assert empty["open_tasks_count"] == 0
+        assert empty["completion_rate_pct"] == 100.0
+        assert empty["empty_description_task_lines"] == []
+        assert empty["unassigned_open_task_lines"] == []
+        assert empty["undated_open_task_lines"] == []
+        assert empty["task_list_hygiene_status"] == "CLEAN"
+        assert empty["is_compliant"] is True
+        assert empty["issues"] == []
+
+    sample = "- [ ] Cerrar entregable responsable: maria vence: 2026-10-30\n"
+    assert (
+        AnyDocService.audit_markdown_task_list_action_item_hygiene(sample)
+        == audit_markdown_task_list_action_item_hygiene(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_task_list_action_item_hygiene(sample)
+        == audit_markdown_task_list_action_item_hygiene(sample)
+    )
+    assert "audit_markdown_task_list_action_item_hygiene" in mod.__all__
+
+

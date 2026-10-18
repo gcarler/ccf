@@ -7399,3 +7399,150 @@ def test_audit_executive_report_stakeholder_sentiment_empty_and_binding():
         in mod.__all__
     )
 
+
+def test_audit_executive_report_regulatory_and_data_privacy_compliant():
+    """Caso 1: Controles con DPIA firmado, estatutarios verificados y hallazgos en SLA -> COMPLIANT."""
+    from backend.services.project_export_service import (
+        audit_executive_report_regulatory_and_data_privacy_compliance,
+    )
+
+    controls = [
+        {
+            "control_id": "CTRL-PII-01",
+            "processes_personal_data_pii": True,
+            "dpia_completed_and_signed": True,
+            "has_open_audit_finding": False,
+            "finding_age_days": 0,
+            "is_mandatory_statutory": True,
+            "control_verified": True,
+        },
+        {
+            "control_id": "CTRL-OPS-02",
+            "processes_personal_data_pii": False,
+            "dpia_completed_and_signed": False,
+            "has_open_audit_finding": True,
+            "finding_age_days": 15,
+            "is_mandatory_statutory": False,
+            "control_verified": True,
+        },
+    ]
+    res = audit_executive_report_regulatory_and_data_privacy_compliance(
+        controls, require_dpia_for_pii=True, max_finding_remediation_days=30
+    )
+    assert res["total_controls"] == 2
+    assert res["missing_dpia_control_ids"] == []
+    assert res["unverified_statutory_control_ids"] == []
+    assert res["overdue_finding_control_ids"] == []
+    assert res["regulatory_compliance_status"] == "COMPLIANT"
+    assert res["is_regulatory_compliant"] is True
+    assert res["issues"] == []
+
+
+def test_audit_executive_report_regulatory_and_data_privacy_remediation_overdue():
+    """Caso 2: DPIA y controles estatutarios cumplidos pero hallazgo de auditoría > 30d -> REMEDIATION_OVERDUE."""
+    from backend.services.project_export_service import (
+        audit_executive_report_regulatory_and_data_privacy_compliance,
+    )
+
+    controls = [
+        {
+            "control_id": "CTRL-FIND-01",
+            "processes_personal_data_pii": False,
+            "dpia_completed_and_signed": False,
+            "has_open_audit_finding": True,
+            "finding_age_days": 45,
+            "is_mandatory_statutory": True,
+            "control_verified": True,
+        }
+    ]
+    res = audit_executive_report_regulatory_and_data_privacy_compliance(
+        controls, require_dpia_for_pii=True, max_finding_remediation_days=30
+    )
+    assert res["total_controls"] == 1
+    assert res["missing_dpia_control_ids"] == []
+    assert res["unverified_statutory_control_ids"] == []
+    assert res["overdue_finding_control_ids"] == ["CTRL-FIND-01"]
+    assert res["regulatory_compliance_status"] == "REMEDIATION_OVERDUE"
+    assert res["is_regulatory_compliant"] is False
+    assert len(res["issues"]) >= 1
+
+
+def test_audit_executive_report_regulatory_and_data_privacy_statutory_breach():
+    """Caso 3: Falta DPIA en tratamiento PII o control estatutario no verificado -> STATUTORY_OR_PRIVACY_BREACH."""
+    from backend.services.project_export_service import (
+        audit_executive_report_regulatory_and_data_privacy_compliance,
+    )
+
+    controls = [
+        {
+            "control_id": "CTRL-NO-DPIA",
+            "processes_personal_data_pii": True,
+            "dpia_completed_and_signed": False,
+            "has_open_audit_finding": False,
+            "finding_age_days": 0,
+            "is_mandatory_statutory": False,
+            "control_verified": True,
+        },
+        {
+            "control_id": "CTRL-UNVERIFIED-STAT",
+            "processes_personal_data_pii": False,
+            "dpia_completed_and_signed": False,
+            "has_open_audit_finding": True,
+            "finding_age_days": 60,
+            "is_mandatory_statutory": True,
+            "control_verified": False,
+        },
+    ]
+    res = audit_executive_report_regulatory_and_data_privacy_compliance(
+        controls, require_dpia_for_pii=True, max_finding_remediation_days=30
+    )
+    assert res["total_controls"] == 2
+    assert res["missing_dpia_control_ids"] == ["CTRL-NO-DPIA"]
+    assert res["unverified_statutory_control_ids"] == ["CTRL-UNVERIFIED-STAT"]
+    assert res["overdue_finding_control_ids"] == ["CTRL-UNVERIFIED-STAT"]
+    assert res["regulatory_compliance_status"] == "STATUTORY_OR_PRIVACY_BREACH"
+    assert res["is_regulatory_compliant"] is False
+    assert len(res["issues"]) >= 3
+
+
+def test_audit_executive_report_regulatory_and_data_privacy_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en ProjectExportService + __all__."""
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_regulatory_and_data_privacy_compliance,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_executive_report_regulatory_and_data_privacy_compliance(payload)  # type: ignore[arg-type]
+        assert empty["total_controls"] == 0
+        assert empty["missing_dpia_control_ids"] == []
+        assert empty["unverified_statutory_control_ids"] == []
+        assert empty["overdue_finding_control_ids"] == []
+        assert empty["regulatory_compliance_status"] == "COMPLIANT"
+        assert empty["is_regulatory_compliant"] is True
+        assert empty["issues"] == []
+
+    sample = [
+        {
+            "control_id": "CTRL-99",
+            "processes_personal_data_pii": True,
+            "dpia_completed_and_signed": True,
+            "has_open_audit_finding": False,
+            "finding_age_days": 0,
+            "is_mandatory_statutory": True,
+            "control_verified": True,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_regulatory_and_data_privacy_compliance(
+            sample
+        )
+        == audit_executive_report_regulatory_and_data_privacy_compliance(sample)
+    )
+    assert (
+        "audit_executive_report_regulatory_and_data_privacy_compliance"
+        in mod.__all__
+    )
+
+
