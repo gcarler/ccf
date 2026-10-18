@@ -2143,3 +2143,157 @@ def test_operation_metadata_hygiene_empty_or_none():
         )
         == expected
     )
+
+
+# ─── summarize_projects_query_parameter_schema_hygiene (pure helper) ─────────
+
+
+def test_query_parameter_schema_hygiene_clean_and_real_fastapi_schema():
+    """Parámetros query en snake_case con schema tipado (y schema real de FastAPI) -> HYGIENIC_QUERY_PARAMETER_CONTRACTS."""
+    openapi = {
+        "paths": {
+            "/api/projects": {
+                "get": {
+                    "parameters": [
+                        {
+                            "in": "query",
+                            "name": "page_size",
+                            "schema": {"type": "integer"},
+                        },
+                        {
+                            "in": "query",
+                            "name": "status_filter",
+                            "schema": {
+                                "anyOf": [{"type": "string"}, {"type": "null"}]
+                            },
+                        },
+                    ]
+                }
+            }
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_query_parameter_schema_hygiene(
+        openapi
+    )
+    assert res == {
+        "total_query_parameters": 2,
+        "operations_with_query_params": 1,
+        "non_snake_case_query_params": [],
+        "untyped_query_params": [],
+        "is_query_contract_hygienic": True,
+        "query_hygiene_posture": "HYGIENIC_QUERY_PARAMETER_CONTRACTS",
+    }
+
+    real_res = (
+        audit_projects_api_contracts.summarize_projects_query_parameter_schema_hygiene(
+            None
+        )
+    )
+    assert real_res["total_query_parameters"] > 0
+    assert real_res["operations_with_query_params"] > 0
+    assert real_res["non_snake_case_query_params"] == []
+    assert real_res["untyped_query_params"] == []
+    assert real_res["is_query_contract_hygienic"] is True
+    assert real_res["query_hygiene_posture"] == "HYGIENIC_QUERY_PARAMETER_CONTRACTS"
+
+
+def test_query_parameter_schema_hygiene_untyped_schema():
+    """Parámetro query con schema vacío o sin type/anyOf/$ref -> UNTYPED_QUERY_PARAMETER_SCHEMA."""
+    openapi = {
+        "paths": {
+            "/api/projects": {
+                "get": {
+                    "parameters": [
+                        {"in": "query", "name": "filter_by", "schema": {}},
+                        {
+                            "in": "query",
+                            "name": "limit",
+                            "schema": {"type": "integer"},
+                        },
+                    ]
+                }
+            }
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_query_parameter_schema_hygiene(
+        openapi
+    )
+    assert res == {
+        "total_query_parameters": 2,
+        "operations_with_query_params": 1,
+        "non_snake_case_query_params": [],
+        "untyped_query_params": ["GET /api/projects:filter_by"],
+        "is_query_contract_hygienic": False,
+        "query_hygiene_posture": "UNTYPED_QUERY_PARAMETER_SCHEMA",
+    }
+
+
+def test_query_parameter_schema_hygiene_non_snake_case():
+    """Parámetro query en camelCase con schema válido -> NON_SNAKE_CASE_QUERY_PARAMETER."""
+    openapi = {
+        "paths": {
+            "/api/projects/tasks": {
+                "get": {
+                    "parameters": [
+                        {
+                            "in": "query",
+                            "name": "pageSize",
+                            "schema": {"type": "integer"},
+                        }
+                    ]
+                }
+            }
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_query_parameter_schema_hygiene(
+        openapi
+    )
+    assert res == {
+        "total_query_parameters": 1,
+        "operations_with_query_params": 1,
+        "non_snake_case_query_params": ["GET /api/projects/tasks:pageSize"],
+        "untyped_query_params": [],
+        "is_query_contract_hygienic": False,
+        "query_hygiene_posture": "NON_SNAKE_CASE_QUERY_PARAMETER",
+    }
+
+
+def test_query_parameter_schema_hygiene_no_query_parameters():
+    """Esquema sin parámetros query en /api/projects -> NO_QUERY_PARAMETERS_DEFINED."""
+    expected = {
+        "total_query_parameters": 0,
+        "operations_with_query_params": 0,
+        "non_snake_case_query_params": [],
+        "untyped_query_params": [],
+        "is_query_contract_hygienic": False,
+        "query_hygiene_posture": "NO_QUERY_PARAMETERS_DEFINED",
+    }
+    assert (
+        audit_projects_api_contracts.summarize_projects_query_parameter_schema_hygiene(
+            {}
+        )
+        == expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_query_parameter_schema_hygiene(
+            {
+                "paths": {
+                    "/api/projects/{project_id}": {
+                        "get": {
+                            "parameters": [
+                                {
+                                    "in": "path",
+                                    "name": "project_id",
+                                    "schema": {"type": "string"},
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        )
+        == expected
+    )

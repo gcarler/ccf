@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import difflib
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -1196,6 +1197,111 @@ def summarize_projects_operation_metadata_hygiene(
         "untagged_ops": untagged_sorted,
         "is_metadata_hygiene_compliant": is_metadata_hygiene_compliant,
         "metadata_hygiene_posture": metadata_hygiene_posture,
+    }
+
+
+_SNAKE_CASE_QUERY_PARAM_RE = re.compile(r"^[a-z][a-z0-9_]*$")
+
+
+def summarize_projects_query_parameter_schema_hygiene(
+    openapi_schema: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Audita el tipado de esquema y convención snake_case en parámetros query de endpoints /api/projects (PMI §10.2)."""
+    if openapi_schema is None:
+        from backend.app import app
+
+        openapi_schema = app.openapi()
+
+    if not isinstance(openapi_schema, dict) or not isinstance(
+        openapi_schema.get("paths"), dict
+    ):
+        return {
+            "total_query_parameters": 0,
+            "operations_with_query_params": 0,
+            "non_snake_case_query_params": [],
+            "untyped_query_params": [],
+            "is_query_contract_hygienic": False,
+            "query_hygiene_posture": "NO_QUERY_PARAMETERS_DEFINED",
+        }
+
+    total_query_parameters = 0
+    operations_with_query_params = 0
+    non_snake_case_query_params: list[str] = []
+    untyped_query_params: list[str] = []
+
+    for path, path_item in sorted(openapi_schema["paths"].items()):
+        if not isinstance(path, str) or not path.startswith("/api/projects"):
+            continue
+        if not isinstance(path_item, dict):
+            continue
+
+        path_params = (
+            path_item.get("parameters")
+            if isinstance(path_item.get("parameters"), list)
+            else []
+        )
+
+        for method in ("get", "post", "put", "patch", "delete", "head", "options", "trace"):
+            op_spec = path_item.get(method)
+            if not isinstance(op_spec, dict):
+                continue
+
+            op_params = (
+                op_spec.get("parameters")
+                if isinstance(op_spec.get("parameters"), list)
+                else []
+            )
+            has_query_param = False
+            for param in (*path_params, *op_params):
+                if not isinstance(param, dict):
+                    continue
+                if param.get("in") != "query":
+                    continue
+
+                total_query_parameters += 1
+                has_query_param = True
+                name = str(param.get("name") or "")
+                param_ref = f"{method.upper()} {path}:{name}"
+
+                if not _SNAKE_CASE_QUERY_PARAM_RE.match(name):
+                    non_snake_case_query_params.append(param_ref)
+
+                schema = param.get("schema")
+                has_valid_schema = (
+                    isinstance(schema, dict)
+                    and len(schema) > 0
+                    and any(
+                        bool(schema.get(k)) for k in ("type", "anyOf", "$ref")
+                    )
+                )
+                if not has_valid_schema:
+                    untyped_query_params.append(param_ref)
+
+            if has_query_param:
+                operations_with_query_params += 1
+
+    if total_query_parameters == 0:
+        query_hygiene_posture = "NO_QUERY_PARAMETERS_DEFINED"
+    elif len(untyped_query_params) > 0:
+        query_hygiene_posture = "UNTYPED_QUERY_PARAMETER_SCHEMA"
+    elif len(non_snake_case_query_params) > 0:
+        query_hygiene_posture = "NON_SNAKE_CASE_QUERY_PARAMETER"
+    else:
+        query_hygiene_posture = "HYGIENIC_QUERY_PARAMETER_CONTRACTS"
+
+    is_query_contract_hygienic = (
+        total_query_parameters > 0
+        and len(non_snake_case_query_params) == 0
+        and len(untyped_query_params) == 0
+    )
+
+    return {
+        "total_query_parameters": total_query_parameters,
+        "operations_with_query_params": operations_with_query_params,
+        "non_snake_case_query_params": non_snake_case_query_params,
+        "untyped_query_params": untyped_query_params,
+        "is_query_contract_hygienic": is_query_contract_hygienic,
+        "query_hygiene_posture": query_hygiene_posture,
     }
 
 
