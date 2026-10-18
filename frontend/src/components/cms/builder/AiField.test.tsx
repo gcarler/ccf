@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -77,7 +76,7 @@ describe("AiField", () => {
 
   it("executes /system/ai/generate API call and updates value when prompt is submitted", async () => {
     const onChange = vi.fn();
-    (apiFetch as any).mockResolvedValueOnce({
+    vi.mocked(apiFetch).mockResolvedValueOnce({
       response: "### **Título:** Misión Institucional Pro",
     });
 
@@ -106,7 +105,7 @@ describe("AiField", () => {
 
   it("executes /system/ai/generate when clicking a quick-suggestion chip", async () => {
     const onChange = vi.fn();
-    (apiFetch as any).mockResolvedValueOnce({
+    vi.mocked(apiFetch).mockResolvedValueOnce({
       response: "Un llamado a la acción transformador",
     });
 
@@ -128,7 +127,7 @@ describe("AiField", () => {
 
   it("displays toast error on API failure without calling onChange", async () => {
     const onChange = vi.fn();
-    (apiFetch as any).mockRejectedValueOnce(new Error("Network Error"));
+    vi.mocked(apiFetch).mockRejectedValueOnce(new Error("Network Error"));
 
     render(<AiField label="Título" value="" onChange={onChange} />);
 
@@ -147,11 +146,11 @@ describe("AiField", () => {
 
   it("renders disabled state and loading indicator while generating", async () => {
     const onChange = vi.fn();
-    let resolveApi: any;
+    let resolveApi: ((value: unknown) => void) | undefined;
     const apiPromise = new Promise((resolve) => {
       resolveApi = resolve;
     });
-    (apiFetch as any).mockReturnValueOnce(apiPromise);
+    vi.mocked(apiFetch).mockReturnValueOnce(apiPromise);
 
     render(<AiField label="Título" value="Original" onChange={onChange} />);
 
@@ -163,7 +162,7 @@ describe("AiField", () => {
 
     expect(screen.getByText("Redactando...")).toBeInTheDocument();
 
-    resolveApi({ response: "Nuevo Texto Generado" });
+    resolveApi?.({ response: "Nuevo Texto Generado" });
 
     await waitFor(() => {
       expect(onChange).toHaveBeenCalledWith("Nuevo Texto Generado");

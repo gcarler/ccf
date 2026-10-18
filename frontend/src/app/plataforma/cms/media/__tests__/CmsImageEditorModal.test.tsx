@@ -30,8 +30,7 @@ beforeEach(() => {
                 if (this.onload) this.onload();
             }, 0);
         }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any;
+    } as unknown as typeof Image;
 
     HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue({
         save: vi.fn(),

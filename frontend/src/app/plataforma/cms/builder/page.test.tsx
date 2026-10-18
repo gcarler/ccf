@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
+import { makeCmsPage, makeDbSection, type CapturedPuckProps, type PuckMockProps } from "@/types/cms-test-fixtures";
 import { render, screen, waitFor, fireEvent, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import CmsBuilderPage from "./page";
@@ -70,9 +70,14 @@ vi.mock("sonner", () => ({
   },
 }));
 
-let puckPropsCaptured: any = null;
+function getCapturedPuckProps(): PuckMockProps {
+  if (!puckPropsCaptured) throw new Error("El stub de <Puck> aún no capturó props");
+  return puckPropsCaptured;
+}
+
+let puckPropsCaptured: CapturedPuckProps = null;
 vi.mock("@puckeditor/core", () => ({
-  Puck: (props: any) => {
+  Puck: (props: PuckMockProps) => {
     puckPropsCaptured = props;
     return (
       <div data-testid="puck-editor-mock">
@@ -96,15 +101,10 @@ describe("CmsBuilderPage (Puck visual editor main route)", () => {
     mockSearchParams = new URLSearchParams("site=ccf&page=home&mode=visual");
     mockAuth = { token: "mock-token", user: { role: "admin" } };
     puckPropsCaptured = null;
-    (cmsV2.listCmsSections as any).mockResolvedValue([
-      {
-        id: "sec-hero-1",
-        type: "hero",
-        props_json: { title: "Hero Test Title" },
-        sort_order: 1,
-      },
+    vi.mocked(cmsV2.listCmsSections).mockResolvedValue([
+      makeDbSection({ id: "sec-hero-1", type: "hero", props_json: { title: "Hero Test Title" }, sort_order: 1 }),
     ]);
-    (cmsV2.workflowCmsPage as any).mockResolvedValue({ status: "published" });
+    vi.mocked(cmsV2.workflowCmsPage).mockResolvedValue(makeCmsPage({ status: "published" }));
   });
 
   it("preserves the selected media id alongside its URL in native and JSON sections", () => {
@@ -190,8 +190,8 @@ describe("CmsBuilderPage (Puck visual editor main route)", () => {
     const props = { title: "Contenido editable", nested: { enabled: true } };
     // The API returns an array; keep the mock explicit for both initial load
     // and the post-save refresh.
-    (cmsV2.listCmsSections as any).mockResolvedValue([
-      { id: "sec-feed-1", type: "feed", props_json: props, sort_order: 0 },
+    vi.mocked(cmsV2.listCmsSections).mockResolvedValue([
+      makeDbSection({ id: "sec-feed-1", type: "feed", props_json: props, sort_order: 0 }),
     ]);
 
     render(<CmsBuilderPage />);
@@ -201,7 +201,7 @@ describe("CmsBuilderPage (Puck visual editor main route)", () => {
     });
 
     await act(async () => {
-      await puckPropsCaptured.onPublish({
+      await getCapturedPuckProps().onPublish!({
         content: [
           {
             type: "feed",
@@ -233,8 +233,8 @@ describe("CmsBuilderPage (Puck visual editor main route)", () => {
   });
 
   it("rejects invalid generic JSON without overwriting the stored section", async () => {
-    (cmsV2.listCmsSections as any).mockResolvedValue([
-      { id: "sec-feed-1", type: "feed", props_json: { title: "Seguro" }, sort_order: 0 },
+    vi.mocked(cmsV2.listCmsSections).mockResolvedValue([
+      makeDbSection({ id: "sec-feed-1", type: "feed", props_json: { title: "Seguro" }, sort_order: 0 }),
     ]);
 
     render(<CmsBuilderPage />);
@@ -243,7 +243,7 @@ describe("CmsBuilderPage (Puck visual editor main route)", () => {
     });
 
     await act(async () => {
-      await puckPropsCaptured.onPublish({
+      await getCapturedPuckProps().onPublish!({
         content: [{ type: "feed", props: { id: "sec-feed-1", __cms_json: "{ inválido" } }],
       });
     });
@@ -253,7 +253,7 @@ describe("CmsBuilderPage (Puck visual editor main route)", () => {
   });
 
   it("reports when the draft is saved but publishing fails", async () => {
-    (cmsV2.workflowCmsPage as any).mockRejectedValueOnce(new Error("workflow unavailable"));
+    vi.mocked(cmsV2.workflowCmsPage).mockRejectedValueOnce(new Error("workflow unavailable"));
 
     render(<CmsBuilderPage />);
     await waitFor(() => {

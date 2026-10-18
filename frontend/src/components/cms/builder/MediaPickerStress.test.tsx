@@ -33,10 +33,11 @@ vi.mock("@/lib/cms/v2", () => ({
   workflowCmsPage: vi.fn(),
 }));
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { type PuckConfigMock, type PuckMockProps } from "@/types/cms-test-fixtures";
+
 vi.mock("@puckeditor/core", () => ({
-  Puck: (props: any) => {
-    const config = props?.config;
+  Puck: (props: PuckMockProps) => {
+    const config = props.config as PuckConfigMock | undefined;
     // Helper to render puck custom fields for empirical verification
     const bgImageField = config?.components?.hero?.fields?.bg_image;
     const galleryUrlField = config?.components?.gallery?.fields?.items?.arrayFields?.url;
@@ -57,7 +58,6 @@ vi.mock("@puckeditor/core", () => ({
     );
   },
 }));
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 describe("Empirical Stress Suite - M2 MediaPicker & MediaPickerField", () => {
   beforeEach(() => {

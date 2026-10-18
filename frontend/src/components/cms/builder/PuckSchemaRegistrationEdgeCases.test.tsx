@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import PuckBuilderPage from "@/app/plataforma/cms/builder-puck/page";
-import type { Config } from "@puckeditor/core";
+import { puckField, puckRenderOf, type PuckConfigMock, type PuckMockProps } from "@/types/cms-test-fixtures";
 
 // Mock dependencies for PuckBuilderPage
 vi.mock("next/navigation", () => ({
@@ -32,10 +31,10 @@ vi.mock("@/lib/http", () => ({
   apiFetch: vi.fn().mockResolvedValue(null),
 }));
 
-let capturedConfig: Config | null = null;
+let capturedConfig: PuckConfigMock | null = null;
 vi.mock("@puckeditor/core", () => ({
-  Puck: (props: any) => {
-    capturedConfig = props?.config;
+  Puck: (props: PuckMockProps) => {
+    capturedConfig = (props?.config as PuckConfigMock | null) ?? null;
     return <div data-testid="puck-editor-mock">Puck Editor</div>;
   },
 }));
@@ -47,9 +46,8 @@ describe("M4 Schema Edge Cases & Empirical Stress Tests", () => {
       expect(screen.getByTestId("puck-editor-mock")).toBeInTheDocument();
     });
 
-    const components = capturedConfig?.components as any;
-    const galleryGetItemSummary = components.gallery.fields.items.getItemSummary;
-    const cardsGetItemSummary = components.cards.fields.items.getItemSummary;
+    const galleryGetItemSummary = puckField(capturedConfig, "gallery", "items").getItemSummary;
+    const cardsGetItemSummary = puckField(capturedConfig, "cards", "items").getItemSummary;
 
     // Gallery getItemSummary edge cases
     expect(galleryGetItemSummary(null, undefined)).toBe("Imagen #1");
@@ -79,15 +77,13 @@ describe("M4 Schema Edge Cases & Empirical Stress Tests", () => {
       expect(screen.getByTestId("puck-editor-mock")).toBeInTheDocument();
     });
 
-    const components = capturedConfig?.components as any;
-
     // Gallery array field limits
-    expect(components.gallery.fields.items.min).toBe(1);
-    expect(components.gallery.fields.items.max).toBe(12);
+    expect(puckField(capturedConfig, "gallery", "items").min).toBe(1);
+    expect(puckField(capturedConfig, "gallery", "items").max).toBe(12);
 
     // Cards array field limits
-    expect(components.cards.fields.items.min).toBe(1);
-    expect(components.cards.fields.items.max).toBe(6);
+    expect(puckField(capturedConfig, "cards", "items").min).toBe(1);
+    expect(puckField(capturedConfig, "cards", "items").max).toBe(6);
   });
 
   it("renders gallery block under edge cases: null items, array with undefined/empty elements", async () => {
@@ -96,8 +92,7 @@ describe("M4 Schema Edge Cases & Empirical Stress Tests", () => {
       expect(screen.getByTestId("puck-editor-mock")).toBeInTheDocument();
     });
 
-    const components = capturedConfig?.components as any;
-    const galleryRender = components.gallery.render;
+    const galleryRender = puckRenderOf(capturedConfig, "gallery");
 
     // 1. null items -> renders empty placeholder without throw
     render(galleryRender({ items: null }));
@@ -124,8 +119,7 @@ describe("M4 Schema Edge Cases & Empirical Stress Tests", () => {
       expect(screen.getByTestId("puck-editor-mock")).toBeInTheDocument();
     });
 
-    const components = capturedConfig?.components as any;
-    const cardsRender = components.cards.render;
+    const cardsRender = puckRenderOf(capturedConfig, "cards");
 
     // 1. null items -> renders empty placeholder without throw
     render(cardsRender({ items: null }));

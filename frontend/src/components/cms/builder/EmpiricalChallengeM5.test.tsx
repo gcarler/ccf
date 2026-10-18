@@ -1,10 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import PuckBuilderPage from "@/app/plataforma/cms/builder-puck/page";
 import * as cmsV2 from "@/lib/cms/v2";
 import { toast } from "sonner";
+import { makeDbSection, type CapturedPuckProps, type PuckMockProps } from "@/types/cms-test-fixtures";
+import type { CmsSection } from "@/types/cms-v2";
 
 // Mocks
 vi.mock("next/navigation", () => ({
@@ -40,9 +41,14 @@ vi.mock("sonner", () => ({
   },
 }));
 
-let puckPropsCaptured: any = null;
+function getCapturedPuckProps(): PuckMockProps {
+  if (!puckPropsCaptured) throw new Error("El stub de <Puck> aún no capturó props");
+  return puckPropsCaptured;
+}
+
+let puckPropsCaptured: CapturedPuckProps = null;
 vi.mock("@puckeditor/core", () => ({
-  Puck: (props: any) => {
+  Puck: (props: PuckMockProps) => {
     puckPropsCaptured = props;
     return (
       <div data-testid="puck-editor-mock">
@@ -58,12 +64,12 @@ describe("Empirical Challenge M5: Keyboard Shortcuts, Save Button UI & Toast Not
     vi.clearAllMocks();
     vi.useFakeTimers();
     puckPropsCaptured = null;
-    (cmsV2.listCmsSections as any).mockResolvedValue([
-      { id: "sec-1", type: "hero", sort_order: 0, props_json: { title: "Initial Title" } },
+    vi.mocked(cmsV2.listCmsSections).mockResolvedValue([
+      makeDbSection({ id: "sec-1", type: "hero", sort_order: 0, props_json: { title: "Initial Title" } }),
     ]);
-    (cmsV2.patchCmsSection as any).mockResolvedValue({ id: "sec-1", type: "hero" });
-    (cmsV2.createCmsSection as any).mockResolvedValue({ id: "sec-2", type: "rich_text" });
-    (cmsV2.deleteCmsSection as any).mockResolvedValue({ success: true });
+    vi.mocked(cmsV2.patchCmsSection).mockResolvedValue(makeDbSection({ id: "sec-1", type: "hero" }));
+    vi.mocked(cmsV2.createCmsSection).mockResolvedValue(makeDbSection({ id: "sec-2", type: "rich_text" }));
+    vi.mocked(cmsV2.deleteCmsSection).mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -170,9 +176,9 @@ describe("Empirical Challenge M5: Keyboard Shortcuts, Save Button UI & Toast Not
     });
 
     it("suppresses e.preventDefault() even when a save is already in progress, but prevents duplicate API calls", async () => {
-      let resolveSave: (val: any) => void;
-      (cmsV2.patchCmsSection as any).mockImplementation(
-        () => new Promise((res) => { resolveSave = res; })
+      let resolveSave: (value: CmsSection) => void;
+      vi.mocked(cmsV2.patchCmsSection).mockImplementation(
+        () => new Promise<CmsSection>((res) => { resolveSave = res; })
       );
 
       render(<PuckBuilderPage />);
@@ -203,7 +209,7 @@ describe("Empirical Challenge M5: Keyboard Shortcuts, Save Button UI & Toast Not
 
       // Clean up in-flight promise
       await act(async () => {
-        resolveSave!({ id: "sec-1" });
+        resolveSave!(makeDbSection({ id: "sec-1" }));
         await vi.runAllTimersAsync();
       });
     });
@@ -211,9 +217,9 @@ describe("Empirical Challenge M5: Keyboard Shortcuts, Save Button UI & Toast Not
 
   describe("3. Save Button UI Disabled States during active save operations", () => {
     it("shows enabled button in idle state and transitions to disabled state with spinner while saving", async () => {
-      let resolveSave: (val: any) => void;
-      (cmsV2.patchCmsSection as any).mockImplementation(
-        () => new Promise((res) => { resolveSave = res; })
+      let resolveSave: (value: CmsSection) => void;
+      vi.mocked(cmsV2.patchCmsSection).mockImplementation(
+        () => new Promise<CmsSection>((res) => { resolveSave = res; })
       );
 
       render(<PuckBuilderPage />);
@@ -241,7 +247,7 @@ describe("Empirical Challenge M5: Keyboard Shortcuts, Save Button UI & Toast Not
 
       // Finish save operation
       await act(async () => {
-        resolveSave!({ id: "sec-1" });
+        resolveSave!(makeDbSection({ id: "sec-1" }));
         await vi.runAllTimersAsync();
       });
 
@@ -251,9 +257,9 @@ describe("Empirical Challenge M5: Keyboard Shortcuts, Save Button UI & Toast Not
     });
 
     it("disables save button during debounced background auto-save", async () => {
-      let resolveSave: (val: any) => void;
-      (cmsV2.patchCmsSection as any).mockImplementation(
-        () => new Promise((res) => { resolveSave = res; })
+      let resolveSave: (value: CmsSection) => void;
+      vi.mocked(cmsV2.patchCmsSection).mockImplementation(
+        () => new Promise<CmsSection>((res) => { resolveSave = res; })
       );
 
       render(<PuckBuilderPage />);
@@ -263,12 +269,12 @@ describe("Empirical Challenge M5: Keyboard Shortcuts, Save Button UI & Toast Not
 
       // Suppress initial mount
       act(() => {
-        puckPropsCaptured.onChange({ content: [] });
+        getCapturedPuckProps().onChange({ content: [] });
       });
 
       // Trigger user change
       act(() => {
-        puckPropsCaptured.onChange({
+        getCapturedPuckProps().onChange({
           content: [{ type: "hero", props: { id: "sec-1", title: "Background AutoSave" } }],
         });
       });
@@ -284,7 +290,7 @@ describe("Empirical Challenge M5: Keyboard Shortcuts, Save Button UI & Toast Not
       expect(screen.getByText("Guardando cambios...")).toBeInTheDocument();
 
       await act(async () => {
-        resolveSave!({ id: "sec-1" });
+        resolveSave!(makeDbSection({ id: "sec-1" }));
         await vi.runAllTimersAsync();
       });
 
@@ -301,12 +307,12 @@ describe("Empirical Challenge M5: Keyboard Shortcuts, Save Button UI & Toast Not
 
       // Suppress initial mount
       act(() => {
-        puckPropsCaptured.onChange({ content: [] });
+        getCapturedPuckProps().onChange({ content: [] });
       });
 
       // 1. Auto-save edit
       act(() => {
-        puckPropsCaptured.onChange({
+        getCapturedPuckProps().onChange({
           content: [{ type: "hero", props: { id: "sec-1", title: "Auto Save Toast Test" } }],
         });
       });
@@ -322,7 +328,7 @@ describe("Empirical Challenge M5: Keyboard Shortcuts, Save Button UI & Toast Not
 
       // 2. Manual save edit
       act(() => {
-        puckPropsCaptured.onChange({
+        getCapturedPuckProps().onChange({
           content: [{ type: "hero", props: { id: "sec-1", title: "Manual Save Toast Test" } }],
         });
       });
@@ -337,7 +343,7 @@ describe("Empirical Challenge M5: Keyboard Shortcuts, Save Button UI & Toast Not
     });
 
     it("fires distinct error toast on manual save vs auto-save failure", async () => {
-      (cmsV2.patchCmsSection as any).mockRejectedValue(new Error("API failure"));
+      vi.mocked(cmsV2.patchCmsSection).mockRejectedValue(new Error("API failure"));
 
       render(<PuckBuilderPage />);
       await act(async () => {
@@ -346,12 +352,12 @@ describe("Empirical Challenge M5: Keyboard Shortcuts, Save Button UI & Toast Not
 
       // Suppress initial mount
       act(() => {
-        puckPropsCaptured.onChange({ content: [] });
+        getCapturedPuckProps().onChange({ content: [] });
       });
 
       // 1. Auto-save failure toast
       act(() => {
-        puckPropsCaptured.onChange({
+        getCapturedPuckProps().onChange({
           content: [{ type: "hero", props: { id: "sec-1", title: "Auto Save Failure" } }],
         });
       });
@@ -365,7 +371,7 @@ describe("Empirical Challenge M5: Keyboard Shortcuts, Save Button UI & Toast Not
 
       // 2. Manual save failure toast
       act(() => {
-        puckPropsCaptured.onChange({
+        getCapturedPuckProps().onChange({
           content: [{ type: "hero", props: { id: "sec-1", title: "Manual Save Failure" } }],
         });
       });

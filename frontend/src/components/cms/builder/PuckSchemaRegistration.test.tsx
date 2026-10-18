@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import PuckBuilderPage from "@/app/plataforma/cms/builder-puck/page";
-import type { Config } from "@puckeditor/core";
+import { puckComponents, puckField, puckNode, type PuckConfigMock, type PuckMockProps } from "@/types/cms-test-fixtures";
 
 // Mock dependencies for PuckBuilderPage
 vi.mock("next/navigation", () => ({
@@ -33,10 +32,10 @@ vi.mock("@/lib/http", () => ({
 }));
 
 // Capture config passed to Puck
-let capturedConfig: Config | null = null;
+let capturedConfig: PuckConfigMock | null = null;
 vi.mock("@puckeditor/core", () => ({
-  Puck: (props: any) => {
-    capturedConfig = props?.config;
+  Puck: (props: PuckMockProps) => {
+    capturedConfig = (props?.config as PuckConfigMock | null) ?? null;
     return <div data-testid="puck-editor-mock">Puck Editor</div>;
   },
 }));
@@ -50,30 +49,28 @@ describe("Puck Block Schema Registrations for MediaPicker", () => {
     });
     expect(capturedConfig).not.toBeNull();
 
-    const components = capturedConfig?.components;
+    const components = puckComponents(capturedConfig);
     expect(components).toBeDefined();
 
     // 1. Hero bg_image
-    const heroField = components?.hero?.fields?.bg_image as any;
+    const heroField = components.hero?.fields?.bg_image;
     expect(heroField).toBeDefined();
     expect(heroField?.type).toBe("custom");
     expect(typeof heroField?.render).toBe("function");
 
     // 2. Gallery items[].url
-    const galleryItems = components?.gallery?.fields?.items as any;
-    expect(galleryItems).toBeDefined();
-    expect(galleryItems?.type).toBe("array");
-    expect(galleryItems?.arrayFields?.url).toBeDefined();
-    expect(galleryItems?.arrayFields?.url?.type).toBe("custom");
-    expect(typeof galleryItems?.arrayFields?.url?.render).toBe("function");
+    const galleryItems = puckField(capturedConfig, "gallery", "items");
+    expect(galleryItems.type).toBe("array");
+    expect(galleryItems.arrayFields?.url).toBeDefined();
+    expect(galleryItems.arrayFields?.url?.type).toBe("custom");
+    expect(typeof galleryItems.arrayFields?.url?.render).toBe("function");
 
     // 3. Cards items[].image_url
-    const cardsItems = components?.cards?.fields?.items as any;
-    expect(cardsItems).toBeDefined();
-    expect(cardsItems?.type).toBe("array");
-    expect(cardsItems?.arrayFields?.image_url).toBeDefined();
-    expect(cardsItems?.arrayFields?.image_url?.type).toBe("custom");
-    expect(typeof cardsItems?.arrayFields?.image_url?.render).toBe("function");
+    const cardsItems = puckField(capturedConfig, "cards", "items");
+    expect(cardsItems.type).toBe("array");
+    expect(cardsItems.arrayFields?.image_url).toBeDefined();
+    expect(cardsItems.arrayFields?.image_url?.type).toBe("custom");
+    expect(typeof cardsItems.arrayFields?.image_url?.render).toBe("function");
   });
 
   it("registers JSON editors for every public projection section type", async () => {
@@ -82,11 +79,11 @@ describe("Puck Block Schema Registrations for MediaPicker", () => {
       expect(screen.getByTestId("puck-editor-mock")).toBeInTheDocument();
     });
 
-    const components = capturedConfig?.components as any;
+    const components = puckComponents(capturedConfig);
     for (const type of ["contact_form", "course_grid", "locations_list", "testimonials_masonry"]) {
       expect(components[type]).toBeDefined();
-      expect(components[type].fields.__cms_json.type).toBe("custom");
-      expect(typeof components[type].fields.__cms_json.render).toBe("function");
+      expect(components[type]?.fields?.__cms_json?.type).toBe("custom");
+      expect(typeof components[type]?.fields?.__cms_json?.render).toBe("function");
     }
   });
 
@@ -95,9 +92,9 @@ describe("Puck Block Schema Registrations for MediaPicker", () => {
     await waitFor(() => {
       expect(screen.getByTestId("puck-editor-mock")).toBeInTheDocument();
     });
-    const bgImageField = capturedConfig?.components?.hero?.fields?.bg_image as any;
+    const bgImageField = puckField(capturedConfig, "hero", "bg_image");
     
-    const { container } = render(bgImageField.render({ value: "http://test.com/bg.jpg", onChange: vi.fn() }));
+    const { container } = render(puckNode(bgImageField.render, { value: "http://test.com/bg.jpg", onChange: vi.fn() }));
     expect(container.querySelector("img")).toHaveAttribute("src", "http://test.com/bg.jpg");
     expect(screen.getByText("Cambiar Imagen")).toBeInTheDocument();
     expect(screen.getByText("Quitar")).toBeInTheDocument();
@@ -108,9 +105,9 @@ describe("Puck Block Schema Registrations for MediaPicker", () => {
     await waitFor(() => {
       expect(screen.getByTestId("puck-editor-mock")).toBeInTheDocument();
     });
-    const galleryUrlField = (capturedConfig?.components?.gallery?.fields?.items as any)?.arrayFields?.url;
+    const galleryUrlField = puckField(capturedConfig, "gallery", "items").arrayFields?.url;
     
-    const { container } = render(galleryUrlField.render({ value: "", onChange: vi.fn() }));
+    const { container } = render(puckNode(galleryUrlField?.render, { value: "", onChange: vi.fn() }));
     expect(container.querySelector("img")).toBeNull();
     expect(screen.getByText("Seleccionar Imagen")).toBeInTheDocument();
   });
@@ -120,9 +117,9 @@ describe("Puck Block Schema Registrations for MediaPicker", () => {
     await waitFor(() => {
       expect(screen.getByTestId("puck-editor-mock")).toBeInTheDocument();
     });
-    const cardsImageField = (capturedConfig?.components?.cards?.fields?.items as any)?.arrayFields?.image_url;
+    const cardsImageField = puckField(capturedConfig, "cards", "items").arrayFields?.image_url;
     
-    const { container } = render(cardsImageField.render({ value: "http://test.com/card.png", onChange: vi.fn() }));
+    const { container } = render(puckNode(cardsImageField?.render, { value: "http://test.com/card.png", onChange: vi.fn() }));
     expect(container.querySelector("img")).toHaveAttribute("src", "http://test.com/card.png");
     expect(screen.getByText("Cambiar Imagen")).toBeInTheDocument();
   });
@@ -133,25 +130,25 @@ describe("Puck Block Schema Registrations for MediaPicker", () => {
       expect(screen.getByTestId("puck-editor-mock")).toBeInTheDocument();
     });
 
-    const components = capturedConfig?.components as any;
+    const components = puckComponents(capturedConfig);
     expect(components).toBeDefined();
 
     // Hero AI fields
-    expect(components.hero.fields.title.type).toBe("custom");
-    expect(components.hero.fields.body.type).toBe("custom");
-    expect(components.hero.fields.cta_label.type).toBe("custom");
+    expect(components.hero?.fields?.title?.type).toBe("custom");
+    expect(components.hero?.fields?.body?.type).toBe("custom");
+    expect(components.hero?.fields?.cta_label?.type).toBe("custom");
 
     // Rich Text AI fields
-    expect(components.rich_text.fields.title.type).toBe("custom");
-    expect(components.rich_text.fields.body.type).toBe("custom");
+    expect(components.rich_text?.fields?.title?.type).toBe("custom");
+    expect(components.rich_text?.fields?.body?.type).toBe("custom");
 
     // CTA Banner AI fields
-    expect(components.cta_banner.fields.title.type).toBe("custom");
-    expect(components.cta_banner.fields.body.type).toBe("custom");
-    expect(components.cta_banner.fields.cta_label.type).toBe("custom");
+    expect(components.cta_banner?.fields?.title?.type).toBe("custom");
+    expect(components.cta_banner?.fields?.body?.type).toBe("custom");
+    expect(components.cta_banner?.fields?.cta_label?.type).toBe("custom");
 
     // Test rendering of one of the fields (e.g. Hero title)
-    render(components.hero.fields.title.render({ value: "Hero Title", onChange: vi.fn() }));
+    render(puckNode(components.hero?.fields?.title?.render, { value: "Hero Title", onChange: vi.fn() }));
     expect(screen.getByText("Título Principal")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Hero Title")).toBeInTheDocument();
     expect(screen.getByText("Redactar con IA")).toBeInTheDocument();
@@ -163,16 +160,17 @@ describe("Puck Block Schema Registrations for MediaPicker", () => {
       expect(screen.getByTestId("puck-editor-mock")).toBeInTheDocument();
     });
 
-    const components = capturedConfig?.components as any;
+    const components = puckComponents(capturedConfig);
     expect(components).toBeDefined();
 
     // 1. Gallery defaultProps
-    expect(components.gallery.defaultProps).toBeDefined();
-    expect(components.gallery.defaultProps.items).toHaveLength(3);
-    expect(components.gallery.defaultProps.items[0]).toEqual({ url: "", alt: "Galería 1", caption: "Imagen 1" });
+    expect(components.gallery?.defaultProps).toBeDefined();
+    const galleryDefaults = components.gallery?.defaultProps as { items?: unknown[] } | undefined;
+    expect(galleryDefaults?.items).toHaveLength(3);
+    expect((galleryDefaults?.items as unknown[] | undefined)?.[0]).toEqual({ url: "", alt: "Galería 1", caption: "Imagen 1" });
 
     // 2. Gallery items schema (min, max, getItemSummary)
-    const galleryItems = components.gallery.fields.items;
+    const galleryItems = puckField(capturedConfig, "gallery", "items");
     expect(galleryItems.min).toBe(1);
     expect(galleryItems.max).toBe(12);
     expect(galleryItems.getItemSummary({ caption: "Mi leyenda" }, 0)).toBe("Mi leyenda");
@@ -181,9 +179,10 @@ describe("Puck Block Schema Registrations for MediaPicker", () => {
     expect(galleryItems.getItemSummary({}, 0)).toBe("Imagen #1");
 
     // 3. Cards defaultProps
-    expect(components.cards.defaultProps).toBeDefined();
-    expect(components.cards.defaultProps.items).toHaveLength(3);
-    expect(components.cards.defaultProps.items[0]).toEqual({
+    expect(components.cards?.defaultProps).toBeDefined();
+    const cardsDefaults = components.cards?.defaultProps as { items?: unknown[] } | undefined;
+    expect(cardsDefaults?.items).toHaveLength(3);
+    expect((cardsDefaults?.items as unknown[] | undefined)?.[0]).toEqual({
       title: "Tarjeta 1",
       body: "Descripción de la tarjeta 1...",
       cta_label: "Saber más",
@@ -192,22 +191,22 @@ describe("Puck Block Schema Registrations for MediaPicker", () => {
     });
 
     // 4. Cards items schema (min, max, getItemSummary, AiField arrayFields)
-    const cardsItems = components.cards.fields.items;
+    const cardsItems = puckField(capturedConfig, "cards", "items");
     expect(cardsItems.min).toBe(1);
     expect(cardsItems.max).toBe(6);
     expect(cardsItems.getItemSummary({ title: "Tarjeta Test" }, 0)).toBe("Tarjeta Test");
     expect(cardsItems.getItemSummary({}, 3)).toBe("Tarjeta #4");
 
     // Cards sub-element arrayFields AiFields
-    expect(cardsItems.arrayFields.title.type).toBe("custom");
-    expect(typeof cardsItems.arrayFields.title.render).toBe("function");
-    expect(cardsItems.arrayFields.body.type).toBe("custom");
-    expect(typeof cardsItems.arrayFields.body.render).toBe("function");
+    expect(cardsItems.arrayFields?.title.type).toBe("custom");
+    expect(typeof cardsItems.arrayFields?.title.render).toBe("function");
+    expect(cardsItems.arrayFields?.body.type).toBe("custom");
+    expect(typeof cardsItems.arrayFields?.body.render).toBe("function");
 
-    render(cardsItems.arrayFields.title.render({ value: "Título de Tarjeta Test", onChange: vi.fn() }));
+    render(cardsItems.arrayFields?.title.render?.({ value: "Título de Tarjeta Test", onChange: vi.fn() }));
     expect(screen.getByDisplayValue("Título de Tarjeta Test")).toBeInTheDocument();
 
-    render(cardsItems.arrayFields.body.render({ value: "Descripción de Tarjeta Test", onChange: vi.fn() }));
+    render(cardsItems.arrayFields?.body.render?.({ value: "Descripción de Tarjeta Test", onChange: vi.fn() }));
     expect(screen.getByDisplayValue("Descripción de Tarjeta Test")).toBeInTheDocument();
   });
 
@@ -217,29 +216,29 @@ describe("Puck Block Schema Registrations for MediaPicker", () => {
       expect(screen.getByTestId("puck-editor-mock")).toBeInTheDocument();
     });
 
-    const components = capturedConfig?.components as any;
+    const components = puckComponents(capturedConfig);
 
     // Gallery empty items fallback
     render(
-      components.gallery.render({ title: "Galería Vacía", items: [] })
+      puckNode(components.gallery?.render, { title: "Galería Vacía", items: [] })
     );
     expect(screen.getByText("No hay imágenes agregadas. Añade elementos desde el panel lateral.")).toBeInTheDocument();
 
     // Gallery item with empty image url -> renders "Sin imagen" badge
     render(
-      components.gallery.render({ title: "Galería Con Items", items: [{ url: "", alt: "Imagen" }] })
+      puckNode(components.gallery?.render, { title: "Galería Con Items", items: [{ url: "", alt: "Imagen" }] })
     );
     expect(screen.getByText("Sin imagen")).toBeInTheDocument();
 
     // Cards empty items fallback
     render(
-      components.cards.render({ title: "Tarjetas Vacías", items: [] })
+      puckNode(components.cards?.render, { title: "Tarjetas Vacías", items: [] })
     );
     expect(screen.getByText("No hay tarjetas agregadas. Añade elementos desde el panel lateral.")).toBeInTheDocument();
 
     // Cards item with empty image url -> renders "Sin imagen" badge
     render(
-      components.cards.render({ title: "Tarjetas Con Items", items: [{ title: "Tarjeta 1", image_url: "" }] })
+      puckNode(components.cards?.render, { title: "Tarjetas Con Items", items: [{ title: "Tarjeta 1", image_url: "" }] })
     );
     expect(screen.getAllByText("Sin imagen").length).toBeGreaterThan(0);
   });

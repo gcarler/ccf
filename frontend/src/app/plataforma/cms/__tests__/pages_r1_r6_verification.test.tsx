@@ -1,28 +1,29 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { toast } from 'sonner';
+import type { CmsPostWithTaxonomies } from '@/types/cms-v2';
+
+/** Props del stub de componentes de framer-motion (index signature para props extra). */
+interface MotionStubProps extends React.HTMLAttributes<HTMLElement> {
+  [key: string]: unknown;
+}
 
 // Mock Framer Motion to prevent AnimatePresence async exit delays in tests
 vi.mock('framer-motion', () => ({
   motion: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    div: ({ children, onClick, className, style, layout: _layout, initial: _initial, animate: _animate, exit: _exit, transition: _transition, ...props }: any) => (
+    div: ({ children, onClick, className, style, layout: _layout, initial: _initial, animate: _animate, exit: _exit, transition: _transition, ...props }: MotionStubProps) => (
       <div onClick={onClick} className={className} style={style} {...props}>{children}</div>
     ),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    aside: ({ children, className, style, ...props }: any) => (
+    aside: ({ children, className, style, ...props }: MotionStubProps) => (
       <aside className={className} style={style} {...props}>{children}</aside>
     ),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    section: ({ children, className, style, ...props }: any) => (
+    section: ({ children, className, style, ...props }: MotionStubProps) => (
       <section className={className} style={style} {...props}>{children}</section>
     ),
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  AnimatePresence: ({ children }: any) => <>{children}</>,
+  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
 }));
 
 // Mocks
@@ -45,7 +46,7 @@ vi.mock('@/context/AuthContext', () => ({
 
 const mockApiFetch = vi.fn();
 vi.mock('@/lib/http', () => ({
-  apiFetch: (...args: any[]) => mockApiFetch(...args),
+  apiFetch: <T,>(...args: Parameters<typeof import('@/lib/http').apiFetch<T>>) => mockApiFetch(...args),
 }));
 
 const mockPatchCmsPostByCategory = vi.fn();
@@ -54,11 +55,11 @@ const mockSaveTestimonialV2 = vi.fn();
 const mockListCmsPostsByCategory = vi.fn();
 
 vi.mock('@/lib/cms/v2', () => ({
-  listCmsPostsByCategory: (...args: any[]) => mockListCmsPostsByCategory(...args),
-  patchCmsPostByCategory: (...args: any[]) => mockPatchCmsPostByCategory(...args),
-  deleteCmsPostByCategory: (...args: any[]) => mockDeleteCmsPostByCategory(...args),
-  saveTestimonial: (...args: any[]) => mockSaveTestimonialV2(...args),
-  postToTestimonial: (post: any) => post,
+  listCmsPostsByCategory: (...args: Parameters<typeof import('@/lib/cms/v2').listCmsPostsByCategory>) => mockListCmsPostsByCategory(...args),
+  patchCmsPostByCategory: (...args: Parameters<typeof import('@/lib/cms/v2').patchCmsPostByCategory>) => mockPatchCmsPostByCategory(...args),
+  deleteCmsPostByCategory: (...args: Parameters<typeof import('@/lib/cms/v2').deleteCmsPostByCategory>) => mockDeleteCmsPostByCategory(...args),
+  saveTestimonial: (...args: Parameters<typeof import('@/lib/cms/v2').saveTestimonial>) => mockSaveTestimonialV2(...args),
+  postToTestimonial: (post: CmsPostWithTaxonomies) => post,
   // ⚠️ SUPUESTO DE FIXTURE PLANO (2026-08-02): postToAnnouncement se mockea
   // como identity (devuelve el post tal cual) para que los fixtures de
   // `listCmsPostsByCategory` (ver beforeEach) lleguen directo a
@@ -70,7 +71,7 @@ vi.mock('@/lib/cms/v2', () => ({
   // comportamiento EN SILENCIO: `category` caería al fallback "announcements"
   // y los campos shape-específicos de `seo_json` se perderían — habría que
   // darles `seo_json` y el contrato completo para mantener el comportamiento.
-  postToAnnouncement: (post: any) => post,
+  postToAnnouncement: (post: CmsPostWithTaxonomies) => post,
   listCmsSites: vi.fn().mockResolvedValue([
     { site_key: 'ccf', name: 'Centro Cristiano' },
   ]),

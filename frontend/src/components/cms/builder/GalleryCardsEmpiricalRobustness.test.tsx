@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import PuckBuilderPage from "@/app/plataforma/cms/builder-puck/page";
-import type { Config } from "@puckeditor/core";
+import { puckRenderOf, type PuckConfigMock, type PuckMockProps } from "@/types/cms-test-fixtures";
 
 // Mock dependencies for PuckBuilderPage
 vi.mock("next/navigation", () => ({
@@ -30,10 +29,10 @@ vi.mock("@/lib/http", () => ({
   apiFetch: vi.fn().mockResolvedValue(null),
 }));
 
-let capturedConfig: Config | null = null;
+let capturedConfig: PuckConfigMock | null = null;
 vi.mock("@puckeditor/core", () => ({
-  Puck: (props: any) => {
-    capturedConfig = props?.config;
+  Puck: (props: PuckMockProps) => {
+    capturedConfig = (props?.config as PuckConfigMock | null) ?? null;
     return <div data-testid="puck-editor-mock">Puck Editor</div>;
   },
 }));
@@ -51,7 +50,7 @@ describe("Empirical Robustness Suite: Gallery & Cards Blocks", () => {
   describe("Gallery Block Empirical Tests", () => {
     it("renders gallery with 0 items (empty array, null, undefined)", async () => {
       const config = await setupConfig();
-      const galleryRender = (config.components.gallery.render as any);
+      const galleryRender = puckRenderOf(config, "gallery");
 
       const { container: c0 } = render(galleryRender({ items: [] }));
       expect(c0.textContent).toContain("No hay imágenes agregadas");
@@ -65,7 +64,7 @@ describe("Empirical Robustness Suite: Gallery & Cards Blocks", () => {
 
     it("renders gallery with 1 item, 2 items, 3 items, 6 items, and 12 items", async () => {
       const config = await setupConfig();
-      const galleryRender = (config.components.gallery.render as any);
+      const galleryRender = puckRenderOf(config, "gallery");
 
       const counts = [1, 2, 3, 6, 12];
       for (const count of counts) {
@@ -84,7 +83,7 @@ describe("Empirical Robustness Suite: Gallery & Cards Blocks", () => {
 
     it("renders gallery under special characters, XSS attempts, long titles/captions", async () => {
       const config = await setupConfig();
-      const galleryRender = (config.components.gallery.render as any);
+      const galleryRender = puckRenderOf(config, "gallery");
 
       const longTitle = "A".repeat(300);
       const xssCaption = "<script>alert('xss')</script> & <b>bold</b> 😊";
@@ -110,7 +109,7 @@ describe("Empirical Robustness Suite: Gallery & Cards Blocks", () => {
   describe("Cards Block Empirical Tests", () => {
     it("renders cards with 0 items (empty array, null, undefined)", async () => {
       const config = await setupConfig();
-      const cardsRender = (config.components.cards.render as any);
+      const cardsRender = puckRenderOf(config, "cards");
 
       const { container: c0 } = render(cardsRender({ items: [] }));
       expect(c0.textContent).toContain("No hay tarjetas agregadas");
@@ -124,7 +123,7 @@ describe("Empirical Robustness Suite: Gallery & Cards Blocks", () => {
 
     it("renders cards with 1 item, 2 items, 3 items, and 6 items", async () => {
       const config = await setupConfig();
-      const cardsRender = (config.components.cards.render as any);
+      const cardsRender = puckRenderOf(config, "cards");
 
       const counts = [1, 2, 3, 6];
       for (const count of counts) {
@@ -145,7 +144,7 @@ describe("Empirical Robustness Suite: Gallery & Cards Blocks", () => {
 
     it("handles CTA links edge cases: missing cta_href, missing cta_label, empty string href", async () => {
       const config = await setupConfig();
-      const cardsRender = (config.components.cards.render as any);
+      const cardsRender = puckRenderOf(config, "cards");
 
       const { container } = render(
         cardsRender({
@@ -179,7 +178,7 @@ describe("Empirical Robustness Suite: Gallery & Cards Blocks", () => {
 
     it("handles extreme text lengths, special characters, and missing images in cards", async () => {
       const config = await setupConfig();
-      const cardsRender = (config.components.cards.render as any);
+      const cardsRender = puckRenderOf(config, "cards");
 
       const hugeTitle = "T".repeat(250);
       const hugeBody = "B".repeat(1500);

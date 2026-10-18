@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -69,7 +68,7 @@ describe("AiField Adversarial & Edge Case Suite", () => {
       mockAuthToken = "auth-context-token";
       sessionStorage.setItem("ccf_token", "session-storage-token");
       const onChange = vi.fn();
-      (apiFetch as any).mockResolvedValueOnce({ response: "Response Text" });
+      vi.mocked(apiFetch).mockResolvedValueOnce({ response: "Response Text" });
 
       render(<AiField label="Title" value="" onChange={onChange} token="explicit-prop-token" />);
 
@@ -89,7 +88,7 @@ describe("AiField Adversarial & Edge Case Suite", () => {
       mockAuthToken = "auth-context-token";
       sessionStorage.setItem("ccf_token", "session-storage-token");
       const onChange = vi.fn();
-      (apiFetch as any).mockResolvedValueOnce({ response: "Response Text" });
+      vi.mocked(apiFetch).mockResolvedValueOnce({ response: "Response Text" });
 
       render(<AiField label="Title" value="" onChange={onChange} />);
 
@@ -109,7 +108,7 @@ describe("AiField Adversarial & Edge Case Suite", () => {
       mockAuthToken = null;
       sessionStorage.setItem("ccf_token", "session-storage-token");
       const onChange = vi.fn();
-      (apiFetch as any).mockResolvedValueOnce({ response: "Response Text" });
+      vi.mocked(apiFetch).mockResolvedValueOnce({ response: "Response Text" });
 
       render(<AiField label="Title" value="" onChange={onChange} />);
 
@@ -151,7 +150,7 @@ describe("AiField Adversarial & Edge Case Suite", () => {
       mockAuthToken = "token-123";
 
       // Test markdown noise: ### Header, **Título:**, * bullets, quotes
-      (apiFetch as any).mockResolvedValueOnce({
+      vi.mocked(apiFetch).mockResolvedValueOnce({
         response: '"### **Título:** Bienvenido a nuestra comunidad CCF"',
       });
 
@@ -169,7 +168,7 @@ describe("AiField Adversarial & Edge Case Suite", () => {
       const onChange = vi.fn();
       mockAuthToken = "token-123";
 
-      (apiFetch as any).mockResolvedValueOnce({
+      vi.mocked(apiFetch).mockResolvedValueOnce({
         response: "## **Cuerpo:**\n* Primer punto informativo\n* Segundo punto relevante",
       });
 
@@ -188,7 +187,7 @@ describe("AiField Adversarial & Edge Case Suite", () => {
     it("triggers toast.error on API rejection", async () => {
       const onChange = vi.fn();
       mockAuthToken = "token-123";
-      (apiFetch as any).mockRejectedValueOnce(new Error("500 Server Error"));
+      vi.mocked(apiFetch).mockRejectedValueOnce(new Error("500 Server Error"));
 
       render(<AiField label="Title" value="" onChange={onChange} />);
 
@@ -204,7 +203,7 @@ describe("AiField Adversarial & Edge Case Suite", () => {
     it("triggers toast.error when API response object has no response property", async () => {
       const onChange = vi.fn();
       mockAuthToken = "token-123";
-      (apiFetch as any).mockResolvedValueOnce(null);
+      vi.mocked(apiFetch).mockResolvedValueOnce(null);
 
       render(<AiField label="Title" value="" onChange={onChange} />);
 
@@ -222,7 +221,7 @@ describe("AiField Adversarial & Edge Case Suite", () => {
     it("sends single-line prompt instruction for input (isTextArea=false)", async () => {
       const onChange = vi.fn();
       mockAuthToken = "token-123";
-      (apiFetch as any).mockResolvedValueOnce({ response: "Título Genial" });
+      vi.mocked(apiFetch).mockResolvedValueOnce({ response: "Título Genial" });
 
       render(<AiField label="Hero Title" value="" onChange={onChange} isTextArea={false} fieldType="title" />);
 
@@ -243,7 +242,7 @@ describe("AiField Adversarial & Edge Case Suite", () => {
     it("sends multi-line prompt instruction for textarea (isTextArea=true)", async () => {
       const onChange = vi.fn();
       mockAuthToken = "token-123";
-      (apiFetch as any).mockResolvedValueOnce({ response: "Texto largo..." });
+      vi.mocked(apiFetch).mockResolvedValueOnce({ response: "Texto largo..." });
 
       render(<AiField label="Hero Body" value="" onChange={onChange} isTextArea={true} fieldType="body" />);
 

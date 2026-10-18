@@ -1,8 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import type { PageBuilderState } from "@/hooks/usePageBuilder";
+import type { CmsPage } from "@/types/cms-v2";
 import BuilderSidebar from "./BuilderSidebar";
 
 function createMockBuilder(overrides: Partial<PageBuilderState> = {}): PageBuilderState {
@@ -38,7 +38,19 @@ describe("BuilderSidebar", () => {
 
   it("switches active page when clicking a page in the list", () => {
     const setActiveSlug = vi.fn();
-    const pages = [{ id: "p1", slug: "home", title: "Inicio", status: "published" }] as any;
+    const pages: CmsPage[] = [{
+      id: "p1",
+      site_id: "site-fixture",
+      slug: "home",
+      title: "Inicio",
+      status: "published",
+      seo_json: {},
+      published_version_id: null,
+      publish_at: null,
+      expires_at: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    }];
     const builder = createMockBuilder({ pages, setActiveSlug });
 
     render(<BuilderSidebar builder={builder} />);

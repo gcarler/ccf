@@ -926,7 +926,7 @@ export default function CmsPostsManagement() {
                       <label className="text-xs font-medium text-[hsl(var(--text-secondary))]">Estado</label>
                       <select
                         value={selectedPost.status}
-                        onChange={(e) => setSelectedPost({ ...selectedPost, status: e.target.value as any })}
+                        onChange={(e) => setSelectedPost({ ...selectedPost, status: e.target.value as CmsPostWithTaxonomies["status"] })}
                         className="w-full px-3 py-2 text-xs bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] rounded-lg text-[hsl(var(--text-primary))]"
                         disabled={!canEdit}
                       >

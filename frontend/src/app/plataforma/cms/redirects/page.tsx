@@ -92,7 +92,7 @@ export default function RedirectsPage() {
 
  <select
  value={typeFilter}
- onChange={(e) => setTypeFilter(e.target.value as any)}
+ onChange={(e) => setTypeFilter(e.target.value as "all" | "301" | "302")}
  className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-1.5 text-sm shrink-0 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/20%]"
  >
  <option value="all">Todos</option>

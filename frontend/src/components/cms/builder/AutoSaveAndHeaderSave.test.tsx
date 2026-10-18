@@ -1,10 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import PuckBuilderPage from "@/app/plataforma/cms/builder-puck/page";
 import * as cmsV2 from "@/lib/cms/v2";
 import { toast } from "sonner";
+import { makeDbSection, payloadTitle, type CapturedPuckProps, type PuckMockProps } from "@/types/cms-test-fixtures";
+import type { PuckSectionData } from "@/types/cms-builder";
+import type { CmsSection } from "@/types/cms-v2";
 
 // Mocks
 vi.mock("next/navigation", () => ({
@@ -40,9 +42,14 @@ vi.mock("sonner", () => ({
   },
 }));
 
-let puckPropsCaptured: any = null;
+function getCapturedPuckProps(): PuckMockProps {
+  if (!puckPropsCaptured) throw new Error("El stub de <Puck> aún no capturó props");
+  return puckPropsCaptured;
+}
+
+let puckPropsCaptured: CapturedPuckProps = null;
 vi.mock("@puckeditor/core", () => ({
-  Puck: (props: any) => {
+  Puck: (props: PuckMockProps) => {
     puckPropsCaptured = props;
     return (
       <div data-testid="puck-editor-mock">
@@ -68,12 +75,12 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
     vi.clearAllMocks();
     vi.useFakeTimers();
     puckPropsCaptured = null;
-    (cmsV2.listCmsSections as any).mockResolvedValue([
-      { id: "sec-1", type: "hero", sort_order: 0, props_json: { title: "Initial Title" } },
+    vi.mocked(cmsV2.listCmsSections).mockResolvedValue([
+      makeDbSection({ id: "sec-1", type: "hero", sort_order: 0, props_json: { title: "Initial Title" } }),
     ]);
-    (cmsV2.patchCmsSection as any).mockResolvedValue({ id: "sec-1", type: "hero" });
-    (cmsV2.createCmsSection as any).mockResolvedValue({ id: "sec-2", type: "rich_text" });
-    (cmsV2.deleteCmsSection as any).mockResolvedValue({ success: true });
+    vi.mocked(cmsV2.patchCmsSection).mockResolvedValue(makeDbSection({ id: "sec-1", type: "hero" }));
+    vi.mocked(cmsV2.createCmsSection).mockResolvedValue(makeDbSection({ id: "sec-2", type: "rich_text" }));
+    vi.mocked(cmsV2.deleteCmsSection).mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -101,7 +108,7 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
 
     // Simulate Puck firing onChange immediately upon mount with initial data
     await act(async () => {
-      puckPropsCaptured.onChange({
+      getCapturedPuckProps().onChange({
         content: [{ type: "hero", props: { id: "sec-1", title: "Initial Title" } }],
       });
     });
@@ -121,14 +128,14 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
 
     // Suppress initial mount
     act(() => {
-      puckPropsCaptured.onChange({
+      getCapturedPuckProps().onChange({
         content: [{ type: "hero", props: { id: "sec-1", title: "Initial Title" } }],
       });
     });
 
     // User makes an edit
     act(() => {
-      puckPropsCaptured.onChange({
+      getCapturedPuckProps().onChange({
         content: [{ type: "hero", props: { id: "sec-1", title: "Edited Title" } }],
       });
     });
@@ -168,12 +175,12 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
 
     // Suppress initial mount
     act(() => {
-      puckPropsCaptured.onChange({ content: [] });
+      getCapturedPuckProps().onChange({ content: [] });
     });
 
     // User makes an edit
     act(() => {
-      puckPropsCaptured.onChange({
+      getCapturedPuckProps().onChange({
         content: [{ type: "hero", props: { id: "sec-1", title: "Manual Save Target" } }],
       });
     });
@@ -208,7 +215,7 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
 
     // Suppress initial mount with edit content
     act(() => {
-      puckPropsCaptured.onChange({
+      getCapturedPuckProps().onChange({
         content: [{ type: "hero", props: { id: "sec-1", title: "Shortcut Save" } }],
       });
     });
@@ -250,10 +257,9 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
   });
 
   it("assigns DB section IDs in-place when creating new sections", async () => {
-    (cmsV2.createCmsSection as any).mockResolvedValue({
-      id: "generated-db-id-999",
-      type: "rich_text",
-    });
+    vi.mocked(cmsV2.createCmsSection).mockResolvedValue(
+      makeDbSection({ id: "generated-db-id-999", type: "rich_text" })
+    );
 
     render(<PuckBuilderPage />);
 
@@ -263,14 +269,14 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
 
     // Suppress initial mount
     act(() => {
-      puckPropsCaptured.onChange({ content: [] });
+      getCapturedPuckProps().onChange({ content: [] });
     });
 
-    const newBlock = { type: "rich_text", props: { title: "New Section Without ID" } };
+    const newBlock: PuckSectionData = { type: "rich_text", props: { title: "New Section Without ID" } };
 
     // User adds a new section without an ID
     act(() => {
-      puckPropsCaptured.onChange({
+      getCapturedPuckProps().onChange({
         content: [newBlock],
       });
     });
@@ -290,23 +296,23 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
     );
 
     // Verify in-place ID assignment
-    expect((newBlock.props as any).id).toBe("generated-db-id-999");
+    expect(newBlock.props.id).toBe("generated-db-id-999");
   });
 
   it("discards out-of-order HTTP responses using sequence tracking", async () => {
     // We create slow response for call 1, fast response for call 2
-    let resolveFirstSave: (val: any) => void;
-    const slowFirstPromise = new Promise((resolve) => {
+    let resolveFirstSave: (value: CmsSection | PromiseLike<CmsSection>) => void;
+    const slowFirstPromise = new Promise<CmsSection>((resolve) => {
       resolveFirstSave = resolve;
     });
 
     let callCount = 0;
-    (cmsV2.patchCmsSection as any).mockImplementation(() => {
+    vi.mocked(cmsV2.patchCmsSection).mockImplementation(() => {
       callCount++;
       if (callCount === 1) {
         return slowFirstPromise;
       }
-      return Promise.resolve({ id: "sec-1", type: "hero" });
+      return Promise.resolve(makeDbSection({ id: "sec-1", type: "hero" }));
     });
 
     render(<PuckBuilderPage />);
@@ -317,12 +323,12 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
 
     // Suppress initial mount
     act(() => {
-      puckPropsCaptured.onChange({ content: [] });
+      getCapturedPuckProps().onChange({ content: [] });
     });
 
     // First edit -> triggers save #1 (slow)
     act(() => {
-      puckPropsCaptured.onChange({
+      getCapturedPuckProps().onChange({
         content: [{ type: "hero", props: { id: "sec-1", title: "Version 1" } }],
       });
     });
@@ -333,7 +339,7 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
 
     // Second edit -> triggers manual save #2 (fast)
     act(() => {
-      puckPropsCaptured.onChange({
+      getCapturedPuckProps().onChange({
         content: [{ type: "hero", props: { id: "sec-1", title: "Version 2" } }],
       });
     });
@@ -349,7 +355,7 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
 
     // Now resolve slow save #1
     await act(async () => {
-      resolveFirstSave!({ id: "sec-1", type: "hero" });
+      resolveFirstSave!(makeDbSection({ id: "sec-1", type: "hero" }));
       await vi.runAllTimersAsync();
     });
 
@@ -358,22 +364,22 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
   });
 
   it("serializes server writes: patchCmsSection is not called for save #2 until save #1 resolves", async () => {
-    let resolveFirstSave: (val: any) => void;
-    const slowFirstPromise = new Promise((resolve) => {
+    let resolveFirstSave: (value: CmsSection | PromiseLike<CmsSection>) => void;
+    const slowFirstPromise = new Promise<CmsSection>((resolve) => {
       resolveFirstSave = resolve;
     });
 
     const calls: Array<{ callIndex: number; title: string }> = [];
 
-    (cmsV2.patchCmsSection as any).mockImplementation((_site: string, _slug: string, _id: string, payload: any) => {
+    vi.mocked(cmsV2.patchCmsSection).mockImplementation((_site, _slug, _id, payload) => {
       const callIndex = calls.length + 1;
-      const title = payload?.props_json?.title;
+      const title = payloadTitle(payload);
       calls.push({ callIndex, title });
 
       if (callIndex === 1) {
         return slowFirstPromise;
       }
-      return Promise.resolve({ id: "sec-1", type: "hero", props_json: payload?.props_json });
+      return Promise.resolve(makeDbSection({ id: "sec-1", type: "hero", props_json: payload?.props_json ?? {} }));
     });
 
     render(<PuckBuilderPage />);
@@ -384,12 +390,12 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
 
     // Suppress initial mount
     act(() => {
-      puckPropsCaptured.onChange({ content: [] });
+      getCapturedPuckProps().onChange({ content: [] });
     });
 
     // First edit -> triggers save #1 (slow)
     act(() => {
-      puckPropsCaptured.onChange({
+      getCapturedPuckProps().onChange({
         content: [{ type: "hero", props: { id: "sec-1", title: "Version 1" } }],
       });
     });
@@ -404,7 +410,7 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
 
     // Second edit -> triggers manual save #2 (fast)
     act(() => {
-      puckPropsCaptured.onChange({
+      getCapturedPuckProps().onChange({
         content: [{ type: "hero", props: { id: "sec-1", title: "Version 2" } }],
       });
     });
@@ -421,7 +427,7 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
 
     // Now resolve slow save #1
     await act(async () => {
-      resolveFirstSave!({ id: "sec-1", type: "hero" });
+      resolveFirstSave!(makeDbSection({ id: "sec-1", type: "hero" }));
       await vi.runAllTimersAsync();
     });
 
@@ -432,7 +438,7 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
   });
 
   it("displays error status badge and error toast when save fails", async () => {
-    (cmsV2.patchCmsSection as any).mockRejectedValue(new Error("Network Error"));
+    vi.mocked(cmsV2.patchCmsSection).mockRejectedValue(new Error("Network Error"));
 
     render(<PuckBuilderPage />);
 
@@ -442,12 +448,12 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
 
     // Suppress initial mount
     act(() => {
-      puckPropsCaptured.onChange({ content: [] });
+      getCapturedPuckProps().onChange({ content: [] });
     });
 
     // User edit
     act(() => {
-      puckPropsCaptured.onChange({
+      getCapturedPuckProps().onChange({
         content: [{ type: "hero", props: { id: "sec-1", title: "Error Test" } }],
       });
     });
@@ -472,12 +478,12 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
 
     // Suppress initial mount
     act(() => {
-      puckPropsCaptured.onChange({ content: [] });
+      getCapturedPuckProps().onChange({ content: [] });
     });
 
     // Edit 1 at t=0
     act(() => {
-      puckPropsCaptured.onChange({
+      getCapturedPuckProps().onChange({
         content: [{ type: "hero", props: { id: "sec-1", title: "Edit 1" } }],
       });
     });
@@ -490,7 +496,7 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
 
     // Edit 2 at t=1000
     act(() => {
-      puckPropsCaptured.onChange({
+      getCapturedPuckProps().onChange({
         content: [{ type: "hero", props: { id: "sec-1", title: "Edit 2" } }],
       });
     });
@@ -503,7 +509,7 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
 
     // Edit 3 at t=3000
     act(() => {
-      puckPropsCaptured.onChange({
+      getCapturedPuckProps().onChange({
         content: [{ type: "hero", props: { id: "sec-1", title: "Edit 3" } }],
       });
     });
@@ -532,7 +538,7 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
 
   it("recovers from save error state when user makes new edits and saves successfully", async () => {
     // First save fails
-    (cmsV2.patchCmsSection as any).mockRejectedValueOnce(new Error("Network Failure"));
+    vi.mocked(cmsV2.patchCmsSection).mockRejectedValueOnce(new Error("Network Failure"));
 
     render(<PuckBuilderPage />);
 
@@ -542,12 +548,12 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
 
     // Suppress initial mount
     act(() => {
-      puckPropsCaptured.onChange({ content: [] });
+      getCapturedPuckProps().onChange({ content: [] });
     });
 
     // Edit 1
     act(() => {
-      puckPropsCaptured.onChange({
+      getCapturedPuckProps().onChange({
         content: [{ type: "hero", props: { id: "sec-1", title: "Failing Edit" } }],
       });
     });
@@ -562,7 +568,7 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
 
     // User makes a new Edit 2 after error
     act(() => {
-      puckPropsCaptured.onChange({
+      getCapturedPuckProps().onChange({
         content: [{ type: "hero", props: { id: "sec-1", title: "Recovery Edit" } }],
       });
     });
@@ -571,7 +577,7 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
     expect(screen.getByText("Sin guardar")).toBeInTheDocument();
 
     // Subsequent save succeeds
-    (cmsV2.patchCmsSection as any).mockResolvedValueOnce({ id: "sec-1", type: "hero" });
+    vi.mocked(cmsV2.patchCmsSection).mockResolvedValueOnce(makeDbSection({ id: "sec-1", type: "hero" }));
 
     await act(async () => {
       vi.advanceTimersByTime(3000);

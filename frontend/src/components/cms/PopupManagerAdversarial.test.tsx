@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { PopupManager } from "./PopupManager";
 import CmsPopupsManagement from "@/app/plataforma/cms/popups/page";
 import { listPublicPopups, listCmsPopups, patchCmsPopup, deleteCmsPopup, createCmsPopup } from "@/lib/cms/v2";
-import { PopupTriggerType } from "@/types/cms-v2";
+import { PopupTriggerType, type CmsPopup } from "@/types/cms-v2";
 
 const mockUsePathname = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -359,8 +359,7 @@ describe("Empirical Adversarial Tests for PopupManager and Popups Admin UI", () 
         },
       ];
       vi.mocked(listCmsPopups).mockResolvedValue(initialPopups);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(deleteCmsPopup).mockResolvedValue(true as any);
+      vi.mocked(deleteCmsPopup).mockResolvedValue(undefined);
 
       render(<CmsPopupsManagement />);
 
@@ -388,8 +387,7 @@ describe("Empirical Adversarial Tests for PopupManager and Popups Admin UI", () 
 
     it("4.3 Create popup drawer: validates empty name and calls createCmsPopup with formatted payload", async () => {
       vi.mocked(listCmsPopups).mockResolvedValue([]);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vi.mocked(createCmsPopup).mockResolvedValue({} as any);
+      vi.mocked(createCmsPopup).mockResolvedValue({} as CmsPopup);
 
       render(<CmsPopupsManagement />);
 
