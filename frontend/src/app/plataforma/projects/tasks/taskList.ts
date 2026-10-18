@@ -126,6 +126,54 @@ export function flattenProjectTasks(projects: ProjectRecord[]): TaskViewItem[] {
     });
 }
 
+/** PMI §5.4 / §7.3 — Agregador WBS/EVMT sobre un lote de paquetes de trabajo. */
+export interface WbsTaskMetricsSummary {
+  total: number;
+  completed: number;
+  inProgress: number;
+  overdue: number;
+  /** Crédito EVMT consolidado (regla fija 0/50/100) del lote, en %. */
+  evmtPercent: number;
+  /** Paquetes con definición WBS completa: descripción + fecha + responsable. */
+  wbsDefinedCount: number;
+  /** Preparación WBS del lote, en %. */
+  wbsReadinessPercent: number;
+}
+
+export type WbsMetricTask = Pick<
+  ProjectTaskRecord,
+  'status' | 'due_date' | 'assignee_id' | 'description'
+>;
+
+export function computeWbsTaskMetrics(tasks: ReadonlyArray<WbsMetricTask>): WbsTaskMetricsSummary {
+  let completed = 0;
+  let inProgress = 0;
+  let overdue = 0;
+  let wbsDefinedCount = 0;
+
+  for (const task of tasks) {
+    const status = normalizeTaskStatus(task.status);
+    if (status === 'completed') completed += 1;
+    else if (status === 'in_progress' || status === 'review') inProgress += 1;
+    if (isTaskOverdue(task)) overdue += 1;
+    const hasWbsDefinition = Boolean(task.description && task.description.trim().length > 0)
+      && Boolean(task.due_date)
+      && Boolean(task.assignee_id);
+    if (hasWbsDefinition) wbsDefinedCount += 1;
+  }
+
+  const total = tasks.length;
+  return {
+    total,
+    completed,
+    inProgress,
+    overdue,
+    evmtPercent: total > 0 ? Math.round(((completed * 100 + inProgress * 50) / (total * 100)) * 100) : 0,
+    wbsDefinedCount,
+    wbsReadinessPercent: total > 0 ? Math.round((wbsDefinedCount / total) * 100) : 0,
+  };
+}
+
 export function isTaskOverdue(task: Pick<ProjectTaskRecord, 'due_date' | 'status'>): boolean {
     if (!task.due_date) return false;
     if ((task.status || '').toLowerCase() === 'completed') return false;

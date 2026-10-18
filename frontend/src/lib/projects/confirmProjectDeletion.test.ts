@@ -3,7 +3,9 @@ import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
 import {
   confirmProjectDeletion,
+  confirmProjectArchival,
   PROJECT_DELETE_CONFIRMATION_DESCRIPTION,
+  PROJECT_ARCHIVE_CONFIRMATION_DESCRIPTION,
 } from './confirmProjectDeletion';
 
 vi.mock('@/lib/http', () => ({ apiFetch: vi.fn() }));
@@ -47,5 +49,45 @@ describe('confirmProjectDeletion', () => {
     expect(toast.error).toHaveBeenCalledWith('Error al eliminar proyecto');
     expect(toast.success).not.toHaveBeenCalled();
     expect(onDeleted).not.toHaveBeenCalled();
+  });
+});
+
+describe('confirmProjectArchival — OPA PMI §4.7', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('describes the OPA archival guarantee (línea base, lecciones y paquetes conservados)', () => {
+    expect(PROJECT_ARCHIVE_CONFIRMATION_DESCRIPTION).toContain('Activos de Procesos de la Organización');
+    expect(PROJECT_ARCHIVE_CONFIRMATION_DESCRIPTION).toContain('OPA PMI');
+    expect(PROJECT_ARCHIVE_CONFIRMATION_DESCRIPTION).toContain('línea base');
+    expect(PROJECT_ARCHIVE_CONFIRMATION_DESCRIPTION).toContain('auditoría');
+  });
+
+  it('sends PATCH status archived and notifies success only after API confirms', async () => {
+    const onArchived = vi.fn();
+    vi.mocked(apiFetch).mockResolvedValue({ ok: true });
+
+    await confirmProjectArchival('project-1', 'token', onArchived);
+
+    expect(apiFetch).toHaveBeenCalledWith('/projects/project-1', {
+      method: 'PATCH',
+      token: 'token',
+      body: { status: 'archived' },
+    });
+    expect(toast.success).toHaveBeenCalledWith('Proyecto archivado en OPA');
+    expect(onArchived).toHaveBeenCalledOnce();
+  });
+
+  it('notifies and rejects a failed archival so the drawer remains open', async () => {
+    const onArchived = vi.fn();
+    vi.mocked(apiFetch).mockRejectedValue(new Error('offline'));
+
+    await expect(confirmProjectArchival('project-1', 'token', onArchived))
+      .rejects.toThrow('No se pudo archivar el proyecto.');
+
+    expect(toast.error).toHaveBeenCalledWith('Error al archivar proyecto');
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(onArchived).not.toHaveBeenCalled();
   });
 });
