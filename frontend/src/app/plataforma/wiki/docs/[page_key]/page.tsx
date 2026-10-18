@@ -43,8 +43,8 @@ export default function WikiDocEditPage() {
         try {
             const data = await apiFetch<WikiDoc>(`/wiki/pages/${page_key}`, { token, signal });
             setDoc(data);
-        } catch (err: any) {
-            if (err?.name === 'AbortError') return;
+        } catch (err: unknown) {
+            if (err instanceof Error && err.name === 'AbortError') return;
             console.error("Error fetching doc:", err);
             addToast('No se pudo cargar el documento. Intenta de nuevo.', 'error');
             setError("No se pudo cargar el documento. Intenta de nuevo.");

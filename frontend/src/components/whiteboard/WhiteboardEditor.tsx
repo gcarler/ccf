@@ -626,8 +626,9 @@ export default function WhiteboardEditor({
             
             // Broadcast object updates
             if (e.target) {
-                const objects = e.target.type === 'activeSelection' ? (e.target as any)._objects : [e.target];
-                objects.forEach((obj: any) => {
+                const activeSel = e.target as fabric.FabricObject & { _objects?: fabric.FabricObject[] };
+                const objects = e.target.type === 'activeSelection' && Array.isArray(activeSel._objects) ? activeSel._objects : [e.target];
+                objects.forEach((obj: fabric.FabricObject) => {
                     broadcastObjectUpdate("object_modified", obj);
                 });
             }
@@ -1834,7 +1835,7 @@ export default function WhiteboardEditor({
                             const obj = fabricCanvas.current?.getActiveObject();
                             if (obj) {
                                 const data = obj.data || {};
-                                const comments: any[] = Array.isArray(data.comments) ? data.comments : [];
+                                const comments: Array<{ id: string; text: string; author: string; timestamp: number }> = Array.isArray(data.comments) ? data.comments : [];
                                 comments.push({
                                     id: crypto.randomUUID(),
                                     text,

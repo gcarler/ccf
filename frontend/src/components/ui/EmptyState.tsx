@@ -7,7 +7,7 @@ import { DSButton } from '@/design';
 interface EmptyStateProps {
     title: string;
     description: string;
-    icon?: any;
+    icon?: React.ComponentType<{ size?: string | number; strokeWidth?: string | number; className?: string }>;
     onAction?: () => void;
     actionLabel?: string;
 }

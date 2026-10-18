@@ -42,8 +42,8 @@ export default function WikiHomePage() {
             const url = searchTerm ? `/wiki/pages?search=${encodeURIComponent(searchTerm)}` : '/wiki/pages';
             const data = await apiFetch<WikiDoc[]>(url, { token, signal });
             setDocs(Array.isArray(data) ? data : []);
-        } catch (err: any) {
-            if (err?.name === 'AbortError') return;
+        } catch (err: unknown) {
+            if (err instanceof Error && err.name === 'AbortError') return;
             console.error("Error fetching docs:", err);
             addToast('No se pudieron cargar los documentos. Intenta de nuevo.', 'error');
             setError("No se pudieron cargar los documentos. Intenta de nuevo.");

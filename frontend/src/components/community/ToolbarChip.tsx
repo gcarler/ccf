@@ -28,7 +28,7 @@ export default function CommunityToolbarChip({
     onClick,
     title,
 }: CommunityToolbarChipProps) {
-    const mappedVariant = variant === 'dashed' ? 'outline' : variant === 'solid' ? 'solid' : 'outline';
+    const mappedVariant: 'outline' | 'solid' = variant === 'dashed' ? 'outline' : variant === 'solid' ? 'solid' : 'outline';
     const extraClass = variant === 'dashed' ? 'border-dashed' : '';
 
     return (
@@ -36,7 +36,7 @@ export default function CommunityToolbarChip({
             label={label}
             icon={icon}
             active={active}
-            variant={mappedVariant as any}
+            variant={mappedVariant}
             size={size}
             className={className ? `${extraClass} ${className}` : extraClass}
             onClick={onClick}

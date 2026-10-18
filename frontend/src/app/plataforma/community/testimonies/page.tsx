@@ -8,17 +8,27 @@ import { getPublicTestimonials } from '@/lib/cms/v2';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 
+interface TestimonialRecord {
+    id: string;
+    content: string;
+    emotion?: string | null;
+    created_at: string;
+    author?: {
+        username?: string | null;
+    } | null;
+}
+
 export default function TestimoniesWall() {
     const { isAuthenticated } = useAuth();
     const [activeTab, setActiveTab] = useState('Todos');
-    const [testimonials, setTestimonials] = useState<any[]>([]);
+    const [testimonials, setTestimonials] = useState<TestimonialRecord[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchTestimonials = async () => {
             try {
                 const data = await getPublicTestimonials(SITE_KEY);
-                setTestimonials(data);
+                setTestimonials(data as unknown as TestimonialRecord[]);
             } catch (err) {
                 console.error('Error fetching testimonials:', err);
             } finally {

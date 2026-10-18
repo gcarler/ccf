@@ -19,7 +19,7 @@ import { CalEvent, EVENT_TYPE_META } from '@/types/calendar';
 interface MonthViewProps {
   currentDate: Date;
   events: CalEvent[];
-  onSave?: (data: any) => void;
+  onSave?: (data: { title: string; type: 'event' | 'task'; description: string; location: string; date: Date }) => Promise<void> | void;
   onEventClick: (event: CalEvent) => void;
 }
 

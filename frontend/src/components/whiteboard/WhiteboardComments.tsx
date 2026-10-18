@@ -20,7 +20,8 @@ export function WhiteboardComments({ object, onClose, onAddComment }: Whiteboard
 
     if (!object) return null;
 
-    const comments: Comment[] = (object as any).data?.comments || [];
+    const objectWithData = object as FabricObject & { data?: { comments?: Comment[] } };
+    const comments: Comment[] = objectWithData.data?.comments || [];
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

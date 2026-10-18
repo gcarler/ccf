@@ -28,7 +28,7 @@ interface UniversalCalendarViewProps {
     todayButtonClassName?: string;
 }
 
-const COLORS: any = {
+const COLORS: Record<string, string> = {
     blue: 'bg-[hsl(var(--primary))] shadow-[hsl(var(--primary))/0.2] text-white',
     sky: 'bg-[hsl(var(--info))] shadow-[hsl(var(--info))/0.2] text-white',
     emerald: 'bg-[hsl(var(--success))] shadow-[hsl(var(--success))/0.2] text-white',

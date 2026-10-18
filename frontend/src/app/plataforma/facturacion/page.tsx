@@ -135,9 +135,11 @@ export default function FacturacionPage() {
       await apiFetch(`/finance-suite/invoices/${id}/send-electronic`, { token, method: "POST" });
       toast.success("Factura enviada");
       fetchData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      const msg = err?.response?.data?.detail?.message || err?.response?.data?.detail || err?.detail?.message || err?.detail || err?.message || "Error al enviar factura electrónica";
+      const errObj = err as { response?: { data?: { detail?: { message?: string } | string } }; detail?: { message?: string } | string; message?: string };
+      const detail = errObj?.response?.data?.detail ?? errObj?.detail;
+      const msg = (typeof detail === "object" && detail !== null ? detail.message : detail) || errObj?.message || "Error al enviar factura electrónica";
       toast.error(msg);
     }
   };

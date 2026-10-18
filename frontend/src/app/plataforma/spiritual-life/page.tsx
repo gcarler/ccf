@@ -58,9 +58,9 @@ export default function SpiritualLifePage() {
     const loadAcademyProgress = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         try {
-            const courses = await apiFetch<any>('/academy/enrollments', { token, cache: 'no-store', signal });
+            const courses = await apiFetch<Array<{ completed?: boolean }>>('/academy/enrollments', { token, cache: 'no-store', signal });
             if (Array.isArray(courses)) {
-                const completed = courses.filter((c: any) => c.completed).length;
+                const completed = courses.filter((c) => c.completed).length;
                 setAcademyProgress({ completed_courses: completed, total_courses: courses.length, level: 'Fundamentos' });
             }
         } catch {

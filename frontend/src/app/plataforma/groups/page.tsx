@@ -15,17 +15,23 @@ import { DSCard } from '@/design';
 import { DSMetric } from '@/design';
 import { toast } from 'sonner';
 
+interface GroupRecord {
+    id: string;
+    name: string;
+    address?: string | null;
+}
+
 export default function GroupsPage() {
     const { token } = useAuth();
-    const [groups, setGroups] = useState<any[]>([]);
+    const [groups, setGroups] = useState<GroupRecord[]>([]);
 
     useEffect(() => {
         if (!token) return;
         const loadGroups = async () => {
             try {
-                const data = await apiFetch<any[]>('/evangelism/grupos', { token }).catch(() => []);
+                const data = await apiFetch<GroupRecord[]>('/evangelism/grupos', { token }).catch(() => []);
                 setGroups(data);
-            } catch (err) {
+            } catch {
                 toast.error('Error al cargar grupos');
             }
         };

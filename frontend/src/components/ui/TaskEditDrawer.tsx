@@ -586,7 +586,7 @@ function MetaRow({ label, icon, children }: { label: string; icon?: React.ReactN
     );
 }
 
-function QuickBtn({ icon: Icon, label, onClick, danger = false }: { icon: any; label: string; onClick?: () => void; danger?: boolean }) {
+function QuickBtn({ icon: Icon, label, onClick, danger = false }: { icon: React.ComponentType<{ size?: string | number; className?: string }>; label: string; onClick?: () => void; danger?: boolean }) {
     return (
         <button
             onClick={onClick}

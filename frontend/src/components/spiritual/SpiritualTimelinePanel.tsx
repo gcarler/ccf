@@ -17,7 +17,7 @@ interface Milestone {
     notes?: string;
 }
 
-const MILESTONE_DEFS: Record<string, { label: string; icon: any; color: string; bg: string; border: string }> = {
+const MILESTONE_DEFS: Record<string, { label: string; icon: React.ComponentType<{ size?: string | number; className?: string }>; color: string; bg: string; border: string }> = {
     Decision_Fe:       { label: 'Decisión de Fe',        icon: Zap,    color: 'text-[hsl(var(--warning))]',  bg: 'bg-[hsl(var(--warning)/10%)]',    border: 'border-[hsl(var(--warning)/25%)]' },
     Bautismo_Aguas:    { label: 'Bautismo en Aguas',      icon: Waves,  color: 'text-[hsl(var(--domain-cyan)/90%)]',   bg: 'bg-[hsl(var(--domain-cyan)/10%)]',      border: 'border-[hsl(var(--domain-cyan)/25%)]'   },
     Bautismo_Espiritu: { label: 'Bautismo del Espíritu',  icon: Star,   color: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--primary)/10%)]',  border: 'border-[hsl(var(--primary)/25%)]'},

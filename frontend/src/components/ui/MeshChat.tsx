@@ -56,7 +56,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
         setLoading(true);
 
         try {
-            const res = await apiFetch<any>('/agents/ask', {
+            const res = await apiFetch<{ answer: string; sources?: string[] }>('/agents/ask', {
                 method: 'POST',
                 token,
                 body: { query: input }
@@ -71,7 +71,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
             };
 
             setMessages(prev => [...prev, botMsg]);
-        } catch (err) {
+        } catch {
             setMessages(prev => [...prev, {
                 id: 'err',
                 role: 'bot',

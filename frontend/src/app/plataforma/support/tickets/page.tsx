@@ -32,7 +32,7 @@ interface SupportTicket {
 
 const STATUS_ORDER = ['open', 'pending', 'in_progress', 'resolved', 'closed'];
 
-const STATUS_CONFIG: Record<string, { icon: any; label: string; color: string; bg: string }> = {
+const STATUS_CONFIG: Record<string, { icon: React.ComponentType<{ size?: string | number; className?: string }>; label: string; color: string; bg: string }> = {
     open: { icon: AlertCircle, label: 'Abierto', color: 'text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning))]/10' },
     pending: { icon: Clock, label: 'Pendiente', color: 'text-[hsl(var(--text-secondary))]', bg: 'bg-[hsl(var(--surface-2))]' },
     in_progress: { icon: Clock, label: 'En Proceso', color: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--info))]/10' },

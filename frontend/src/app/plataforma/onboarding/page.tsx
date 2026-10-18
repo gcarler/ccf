@@ -190,7 +190,13 @@ export default function OnboardingPage() {
     );
 }
 
-function FeatureItem({ icon: Icon, title, desc }: any) {
+interface FeatureItemProps {
+    icon: React.ComponentType<{ size?: string | number; className?: string }>;
+    title: string;
+    desc: string;
+}
+
+function FeatureItem({ icon: Icon, title, desc }: FeatureItemProps) {
     return (
         <div className="flex items-start gap-3 p-3 bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] group transition-all hover:border-[hsl(var(--primary))] hover:shadow-lg">
             <div className="size-7 rounded-lg bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:bg-[hsl(var(--primary))] group-hover:text-[hsl(var(--primary-foreground))] transition-all shadow-sm">

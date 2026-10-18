@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -6,7 +5,7 @@ import { axe } from 'jest-axe';
 import ThemeToggle from './ThemeToggle';
 
 vi.mock('@/design', () => ({
-    DSTooltip: ({ children }: any) => <div>{children}</div>,
+    DSTooltip: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 const mockToggleTheme = vi.fn();
