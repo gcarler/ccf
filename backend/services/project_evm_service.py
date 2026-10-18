@@ -1510,6 +1510,108 @@ def evaluate_earned_schedule_duration_posture(
     }
 
 
+def evaluate_remaining_investment_viability(
+    bac: float,
+    ac: float,
+    ev: float,
+    expected_benefits_npv: float,
+    cpi_floor: float = 0.70,
+) -> Dict[str, Any]:
+    """Evalúa la viabilidad de negocio de la inversión restante (PMBOK §7.4 / §1.2.6).
+
+    Pronostica el costo de completar (ETC = (BAC-EV)/CPI_effectiva, EAC = AC+ETC)
+    y compara contra el VAN de beneficios esperado:
+    - `cpi`: EV/AC (1.0 si ac==0 y ev>0; 0.0 si ambos son 0).
+    - `effective_cpi`: piso de estabilidad (max(cpi, 0.01) si cpi>0, si no 1.0).
+    - `etc_forecast`/`eac_forecast`: pronóstico IPA/PPC; 0.0 si ev >= bac.
+    - `benefit_cost_ratio_at_completion`: VAN / EAC.
+    - `incremental_benefit_to_etc_ratio`: VAN / ETC (999.0 señal infinita solo
+      si hay EV y no queda inversión; 0.0 si no hay beneficios).
+    - `viability_posture`: 'NO_INVESTMENT_BASELINE' sin baseline ni beneficios;
+      'TERMINATION_OR_RESTRUCTURE_REVIEW' con ratio incremental < 1.0;
+      'NEGATIVE_NET_BENEFIT_AT_COMPLETION' con BCR < 1.0;
+      'MARGINAL_INVESTMENT_EFFICIENCY' con BCR >= 1.0 pero CPI bajo el piso; y
+      'VIABLE_BUSINESS_CASE' en el caso viable.
+    - `recommendations`: decisiones de gobernanza según el hallazgo.
+    """
+    safe_bac = float(bac or 0.0)
+    safe_ac = float(ac or 0.0)
+    safe_ev = float(ev or 0.0)
+    safe_npv = float(expected_benefits_npv or 0.0)
+    safe_cpi_floor = float(cpi_floor or 0.70)
+
+    if safe_ac > 0:
+        cpi = round(safe_ev / safe_ac, 4)
+    else:
+        cpi = 1.0 if safe_ev > 0 else 0.0
+
+    effective_cpi = max(cpi, 0.01) if cpi > 0 else 1.0
+
+    if safe_bac > safe_ev:
+        etc_forecast = round(max(0.0, safe_bac - safe_ev) / effective_cpi, 2)
+    else:
+        etc_forecast = 0.0
+    eac_forecast = round(safe_ac + etc_forecast, 2)
+
+    benefit_cost_ratio_at_completion = (
+        round(safe_npv / eac_forecast, 4)
+        if eac_forecast > 0
+        else 0.0
+    )
+    if etc_forecast > 0:
+        incremental_benefit_to_etc_ratio = round(safe_npv / etc_forecast, 4)
+    else:
+        incremental_benefit_to_etc_ratio = 999.0 if safe_npv > 0 else 0.0
+
+    if safe_bac <= 0 and safe_npv <= 0:
+        viability_posture = "NO_INVESTMENT_BASELINE"
+    elif incremental_benefit_to_etc_ratio < 1.0:
+        viability_posture = "TERMINATION_OR_RESTRUCTURE_REVIEW"
+    elif benefit_cost_ratio_at_completion < 1.0:
+        viability_posture = "NEGATIVE_NET_BENEFIT_AT_COMPLETION"
+    elif benefit_cost_ratio_at_completion >= 1.0 and 0 < cpi < safe_cpi_floor:
+        viability_posture = "MARGINAL_INVESTMENT_EFFICIENCY"
+    else:
+        viability_posture = "VIABLE_BUSINESS_CASE"
+
+    recommendations: list[str] = []
+    if viability_posture == "NO_INVESTMENT_BASELINE":
+        recommendations.append(
+            "Definir el BAC y el VAN de beneficios esperado para poder pronosticar la inversión restante (PMBOK §7.4)."
+        )
+    elif viability_posture == "TERMINATION_OR_RESTRUCTURE_REVIEW":
+        recommendations.append(
+            "Convocar revisión de negocio: los beneficios esperados no cubren la inversión remanente; evaluar terminación o reestructuración (PMBOK §1.2.6)."
+        )
+    elif viability_posture == "NEGATIVE_NET_BENEFIT_AT_COMPLETION":
+        recommendations.append(
+            "El VAN esperado es inferior al EAC pronosticado: renegociar alcance o beneficios antes de liberar la inversión restante."
+        )
+    elif viability_posture == "MARGINAL_INVESTMENT_EFFICIENCY":
+        recommendations.append(
+            "La eficiencia de costo opera bajo el piso de estabilidad: plan de recuperación de CPI y control de compras antes de comprometer los fondos finales."
+        )
+    else:
+        recommendations.append(
+            "Caso de negocio viable: liberar la inversión remanente por tramos verificando el CPI y el VAN en cada gate."
+        )
+
+    return {
+        "bac": safe_bac,
+        "ac": safe_ac,
+        "ev": safe_ev,
+        "expected_benefits_npv": safe_npv,
+        "cpi": cpi,
+        "effective_cpi": effective_cpi,
+        "etc_forecast": etc_forecast,
+        "eac_forecast": eac_forecast,
+        "benefit_cost_ratio_at_completion": benefit_cost_ratio_at_completion,
+        "incremental_benefit_to_etc_ratio": incremental_benefit_to_etc_ratio,
+        "viability_posture": viability_posture,
+        "recommendations": recommendations,
+    }
+
+
 def calculate_eac_forecasts(
     bac: float,
     ev: float,
@@ -3704,6 +3806,18 @@ class ProjectEVMService:
     @staticmethod
     def calculate_cpi_stability_rule(progress_pct: float, cpi: float) -> Dict[str, Any]:
         return calculate_cpi_stability_rule(progress_pct, cpi)
+
+    @staticmethod
+    def evaluate_remaining_investment_viability(
+        bac: float,
+        ac: float,
+        ev: float,
+        expected_benefits_npv: float,
+        cpi_floor: float = 0.70,
+    ) -> Dict[str, Any]:
+        return evaluate_remaining_investment_viability(
+            bac, ac, ev, expected_benefits_npv, cpi_floor=cpi_floor
+        )
 
     @staticmethod
     def calculate_early_warning_sentinel(cpi: float, spi: float) -> Dict[str, Any]:

@@ -1131,6 +1131,132 @@ def audit_emergency_change_retroactive_ratification(
     }
 
 
+def audit_configuration_baseline_integrity(
+    configuration_items: Optional[list[dict]],
+) -> dict[str, Any]:
+    """Audita la integridad de la línea base de configuración y deriva de versiones de CIs según PMI PMBOK §4.6."""
+    items = [item for item in (configuration_items or []) if isinstance(item, dict)]
+    total_items = len(items)
+
+    unauthorized_drift_ids: list[str] = []
+    unverified_checksum_ids: list[str] = []
+    compliant_count = 0
+
+    for idx, item in enumerate(items, start=1):
+        raw_id = (
+            item.get("id")
+            if item.get("id") is not None
+            else item.get("ci_id")
+            if item.get("ci_id") is not None
+            else item.get("artifact_id")
+            if item.get("artifact_id") is not None
+            else item.get("code")
+            if item.get("code") is not None
+            else item.get("name")
+        )
+        ci_id = (
+            str(raw_id).strip()
+            if raw_id is not None and str(raw_id).strip()
+            else f"CI-{idx}"
+        )
+
+        raw_approved = (
+            item.get("approved_version")
+            if item.get("approved_version") is not None
+            else item.get("baseline_version")
+        )
+        approved_ver = str(raw_approved or "").strip()
+        raw_deployed = (
+            item.get("deployed_version")
+            if item.get("deployed_version") is not None
+            else item.get("current_version")
+        )
+        deployed_ver = str(raw_deployed or "").strip()
+
+        cr_ref = str(
+            item.get("authorized_by_cr")
+            or item.get("cr_id")
+            or item.get("ccb_approved_change_id")
+            or item.get("approved_cr_id")
+            or ""
+        ).strip()
+
+        has_drift = (not approved_ver or not deployed_ver) or (deployed_ver != approved_ver)
+        is_unauthorized_drift = (not approved_ver or not deployed_ver) or (
+            has_drift and not bool(cr_ref)
+        )
+        if is_unauthorized_drift:
+            unauthorized_drift_ids.append(ci_id)
+
+        raw_has_checksum = (
+            item.get("has_checksum")
+            if item.get("has_checksum") is not None
+            else item.get("checksum_verified")
+            if item.get("checksum_verified") is not None
+            else item.get("integrity_verified")
+        )
+        raw_verified_hash = (
+            item.get("verified_hash")
+            if item.get("verified_hash") is not None
+            else item.get("hash_match")
+        )
+        has_valid_checksum = bool(
+            (isinstance(raw_has_checksum, bool) and raw_has_checksum)
+            or (
+                isinstance(raw_has_checksum, str)
+                and raw_has_checksum.strip().lower() not in ("", "false", "0", "none")
+            )
+            or (isinstance(raw_verified_hash, bool) and raw_verified_hash)
+            or (
+                isinstance(raw_verified_hash, str)
+                and raw_verified_hash.strip().lower() not in ("", "false", "0", "none")
+            )
+        )
+        if not has_valid_checksum:
+            unverified_checksum_ids.append(ci_id)
+
+        if not is_unauthorized_drift and has_valid_checksum:
+            compliant_count += 1
+
+    integrity_rate_pct = (
+        round((compliant_count / total_items) * 100.0, 2)
+        if total_items > 0
+        else 0.0
+    )
+
+    recommendations: list[str] = []
+    if total_items == 0:
+        configuration_posture = "NO_CONFIGURATION_ITEMS"
+        recommendations.append(
+            "Registrar los elementos de configuración (CIs) y sus versiones de línea base aprobadas en el sistema de gestión de configuración (PMBOK §4.6)."
+        )
+    elif len(unauthorized_drift_ids) > 0:
+        configuration_posture = "UNAUTHORIZED_VERSION_DRIFT"
+        recommendations.append(
+            f"Revertir o someter a ratificación del CCB los elementos con deriva de versión no autorizada ({', '.join(unauthorized_drift_ids)}) conforme a PMBOK §4.6."
+        )
+    elif len(unverified_checksum_ids) > 0:
+        configuration_posture = "UNVERIFIED_ARTIFACT_CHECKSUMS"
+        recommendations.append(
+            f"Generar y verificar hashes/checksums criptográficos para los artefactos sin verificación de integridad ({', '.join(unverified_checksum_ids)}) según auditoría de configuración PMBOK §4.6."
+        )
+    else:
+        configuration_posture = "VERIFIED_CONFIGURATION_BASELINE"
+        recommendations.append(
+            "Línea base de configuración íntegra y verificada con trazabilidad CCB y hashes validados (PMBOK §4.6)."
+        )
+
+    return {
+        "total_items": total_items,
+        "unauthorized_drift_ids": unauthorized_drift_ids,
+        "unverified_checksum_ids": unverified_checksum_ids,
+        "compliant_count": compliant_count,
+        "integrity_rate_pct": integrity_rate_pct,
+        "configuration_posture": configuration_posture,
+        "recommendations": recommendations,
+    }
+
+
 class ProjectCCBService:
     """Fachada canónica de Control Integrado de Cambios (CCB) y Calidad DoD PMI."""
 
@@ -1307,6 +1433,12 @@ class ProjectCCBService:
             deliverables, target_ftr_pct=target_ftr_pct
         )
 
+    @staticmethod
+    def audit_configuration_baseline_integrity(
+        configuration_items: Optional[list[dict]],
+    ) -> dict[str, Any]:
+        return audit_configuration_baseline_integrity(configuration_items)
+
 
 __all__ = [
     "list_change_requests",
@@ -1331,6 +1463,8 @@ __all__ = [
     "audit_ccb_decision_sla_breaches",
     "audit_emergency_change_retroactive_ratification",
     "evaluate_deliverable_first_time_right_yield",
+    "audit_configuration_baseline_integrity",
     "ProjectCCBService",
 ]
+
 

@@ -1844,3 +1844,122 @@ def test_audit_emergency_change_no_emergencies_and_missing_pir_only():
     assert len(pending_pir["recommendations"]) == 1
 
 
+def test_audit_configuration_baseline_integrity_verified_baseline():
+    """CIs con versión coincidente o cambio aprobado por CCB y checksum verificado -> VERIFIED_CONFIGURATION_BASELINE."""
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_configuration_baseline_integrity,
+    )
+
+    items = [
+        {
+            "ci_id": "CI-101",
+            "approved_version": "v1.0.0",
+            "current_version": "v1.0.0",
+            "has_checksum": True,
+        },
+        {
+            "id": "CI-102",
+            "approved_version": "1.0",
+            "deployed_version": "1.1",
+            "authorized_by_cr": "CR-2026-09",
+            "verified_hash": "sha256:9f86d081884c7d659a2feaa0c55ad015",
+        },
+    ]
+
+    res = audit_configuration_baseline_integrity(items)
+    assert res["total_items"] == 2
+    assert res["unauthorized_drift_ids"] == []
+    assert res["unverified_checksum_ids"] == []
+    assert res["compliant_count"] == 2
+    assert res["integrity_rate_pct"] == 100.0
+    assert res["configuration_posture"] == "VERIFIED_CONFIGURATION_BASELINE"
+    assert len(res["recommendations"]) == 1
+    assert ProjectCCBService.audit_configuration_baseline_integrity(items) == res
+
+
+def test_audit_configuration_baseline_integrity_unauthorized_version_drift():
+    """CI con cambio de versión sin CR aprobado o sin versión aprobada -> UNAUTHORIZED_VERSION_DRIFT."""
+    from backend.services.project_ccb_service import (
+        audit_configuration_baseline_integrity,
+    )
+
+    items = [
+        {
+            "id": "CI-201",
+            "approved_version": "2.0.0",
+            "current_version": "2.0.0",
+            "has_checksum": True,
+        },
+        {
+            "artifact_id": "CI-202",
+            "approved_version": "2.0.0",
+            "deployed_version": "2.1.0-hotfix",
+            "authorized_by_cr": "",
+            "has_checksum": True,
+        },
+        {
+            "ci_id": "CI-203",
+            "approved_version": "",
+            "current_version": "1.0.0",
+            "has_checksum": False,
+        },
+    ]
+
+    res = audit_configuration_baseline_integrity(items)
+    assert res["total_items"] == 3
+    assert res["unauthorized_drift_ids"] == ["CI-202", "CI-203"]
+    assert res["unverified_checksum_ids"] == ["CI-203"]
+    assert res["compliant_count"] == 1
+    assert res["integrity_rate_pct"] == 33.33
+    assert res["configuration_posture"] == "UNAUTHORIZED_VERSION_DRIFT"
+    assert any("CI-202" in r and "CI-203" in r for r in res["recommendations"])
+
+
+def test_audit_configuration_baseline_integrity_unverified_artifact_checksums():
+    """Sin deriva no autorizada pero con artefactos sin verificación de checksum -> UNVERIFIED_ARTIFACT_CHECKSUMS."""
+    from backend.services.project_ccb_service import (
+        audit_configuration_baseline_integrity,
+    )
+
+    items = [
+        {
+            "ci_id": "CI-301",
+            "approved_version": "3.1",
+            "current_version": "3.2",
+            "cr_id": "CCB-88",
+            "has_checksum": True,
+        },
+        {
+            "ci_id": "CI-302",
+            "approved_version": "1.4",
+            "current_version": "1.4",
+            "has_checksum": False,
+        },
+    ]
+
+    res = audit_configuration_baseline_integrity(items)
+    assert res["total_items"] == 2
+    assert res["unauthorized_drift_ids"] == []
+    assert res["unverified_checksum_ids"] == ["CI-302"]
+    assert res["compliant_count"] == 1
+    assert res["integrity_rate_pct"] == 50.0
+    assert res["configuration_posture"] == "UNVERIFIED_ARTIFACT_CHECKSUMS"
+    assert any("CI-302" in r for r in res["recommendations"])
+
+
+def test_audit_configuration_baseline_integrity_no_configuration_items():
+    """Lista vacía, None o entradas no-dict -> NO_CONFIGURATION_ITEMS."""
+    from backend.services.project_ccb_service import (
+        audit_configuration_baseline_integrity,
+    )
+
+    for payload in (None, [], ["invalid", 42, None]):
+        res = audit_configuration_baseline_integrity(payload)  # type: ignore[arg-type]
+        assert res["total_items"] == 0
+        assert res["unauthorized_drift_ids"] == []
+        assert res["unverified_checksum_ids"] == []
+        assert res["compliant_count"] == 0
+        assert res["integrity_rate_pct"] == 0.0
+        assert res["configuration_posture"] == "NO_CONFIGURATION_ITEMS"
+        assert len(res["recommendations"]) == 1

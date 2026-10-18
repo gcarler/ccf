@@ -1630,6 +1630,97 @@ def test_evaluate_management_reserve_release_governance_no_reserve():
         assert len(res["recommendations"]) == 1
 
 
+# ─── evaluate_remaining_investment_viability (pure helper) ──────────────
+
+
+def test_remaining_investment_viability_viable_business_case():
+    """CPI sobre el piso y BCR >= 1 -> VIABLE_BUSINESS_CASE con pronóstico IPA/PPC."""
+    from backend.services.project_evm_service import (
+        evaluate_remaining_investment_viability,
+    )
+
+    res = evaluate_remaining_investment_viability(
+        bac=100000.0, ac=40000.0, ev=45000.0, expected_benefits_npv=200000.0
+    )
+
+    assert res["cpi"] == 1.125
+    assert res["effective_cpi"] == 1.125
+    assert res["etc_forecast"] == 48888.89
+    assert res["eac_forecast"] == 88888.89
+    assert res["benefit_cost_ratio_at_completion"] == 2.25
+    assert res["incremental_benefit_to_etc_ratio"] == 4.0909
+    assert res["viability_posture"] == "VIABLE_BUSINESS_CASE"
+    assert len(res["recommendations"]) == 1
+
+
+def test_remaining_investment_viability_termination_or_restructure():
+    """Beneficios insuficientes frente a la inversión remanente -> TERMINATION_OR_RESTRUCTURE_REVIEW."""
+    from backend.services.project_evm_service import (
+        evaluate_remaining_investment_viability,
+    )
+
+    res = evaluate_remaining_investment_viability(
+        bac=100000.0, ac=20000.0, ev=10000.0, expected_benefits_npv=1000.0
+    )
+
+    assert res["cpi"] == 0.5
+    assert res["etc_forecast"] == 180000.0
+    assert res["eac_forecast"] == 200000.0
+    assert res["benefit_cost_ratio_at_completion"] == 0.005
+    assert res["incremental_benefit_to_etc_ratio"] == 0.0056
+    assert res["viability_posture"] == "TERMINATION_OR_RESTRUCTURE_REVIEW"
+
+
+def test_remaining_investment_viability_negative_net_benefit():
+    """Ratio incremental >= 1 pero BCR < 1 -> NEGATIVE_NET_BENEFIT_AT_COMPLETION."""
+    from backend.services.project_evm_service import (
+        evaluate_remaining_investment_viability,
+    )
+
+    res = evaluate_remaining_investment_viability(
+        bac=100000.0, ac=50000.0, ev=50000.0, expected_benefits_npv=60000.0
+    )
+
+    assert res["cpi"] == 1.0
+    assert res["etc_forecast"] == 50000.0
+    assert res["eac_forecast"] == 100000.0
+    assert res["benefit_cost_ratio_at_completion"] == 0.6
+    assert res["incremental_benefit_to_etc_ratio"] == 1.2
+    assert res["viability_posture"] == "NEGATIVE_NET_BENEFIT_AT_COMPLETION"
+
+
+def test_remaining_investment_viability_marginal_and_no_baseline():
+    """BCR >= 1 con CPI bajo el piso -> MARGINAL; sin BAC ni VAN -> NO_INVESTMENT_BASELINE; ev>=bac -> ETC 0."""
+    from backend.services.project_evm_service import (
+        evaluate_remaining_investment_viability,
+    )
+
+    marginal = evaluate_remaining_investment_viability(
+        bac=100000.0, ac=50000.0, ev=20000.0, expected_benefits_npv=300000.0
+    )
+    assert marginal["cpi"] == 0.4
+    assert marginal["etc_forecast"] == 200000.0
+    assert marginal["eac_forecast"] == 250000.0
+    assert marginal["benefit_cost_ratio_at_completion"] == 1.2
+    assert marginal["incremental_benefit_to_etc_ratio"] == 1.5
+    assert marginal["viability_posture"] == "MARGINAL_INVESTMENT_EFFICIENCY"
+
+    no_baseline = evaluate_remaining_investment_viability(
+        bac=0.0, ac=0.0, ev=0.0, expected_benefits_npv=None  # type: ignore[arg-type]
+    )
+    assert no_baseline["viability_posture"] == "NO_INVESTMENT_BASELINE"
+    assert no_baseline["etc_forecast"] == 0.0
+
+    completed = evaluate_remaining_investment_viability(
+        bac=1000.0, ac=800.0, ev=1000.0, expected_benefits_npv=5000.0
+    )
+    assert completed["etc_forecast"] == 0.0
+    assert completed["eac_forecast"] == 800.0
+    assert completed["incremental_benefit_to_etc_ratio"] == 999.0
+    assert completed["benefit_cost_ratio_at_completion"] == 6.25
+    assert completed["viability_posture"] == "VIABLE_BUSINESS_CASE"
+
+
 if __name__ == "__main__":
     test_evm_balanced_project()
     test_evm_cost_overrun_critical()
