@@ -1081,6 +1081,7 @@ export interface ProjectIndicator {
   creator_name?: string | null;
   sede_id?: string | null;
   records_count?: number;
+  current_spi?: number | null;
   last_spi?: number | null;
   created_at: string;
   updated_at: string;

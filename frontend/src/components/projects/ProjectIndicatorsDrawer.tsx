@@ -35,6 +35,26 @@ function isCremaValidationResult(value: unknown): value is CremaValidationResult
       Array.isArray(detail.recommendations) && detail.recommendations.every((item) => typeof item === "string");
   });
 }
+
+function getCremaValidationResult(value: unknown): CremaValidationResult | null {
+  if (isCremaValidationResult(value)) return value;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const evaluation = value as Record<string, unknown>;
+  return isCremaValidationResult(evaluation.crema_validation)
+    ? evaluation.crema_validation
+    : null;
+}
+
+function getCurrentIndicatorSpi(indicator: ProjectIndicator): number | null {
+  const reportedSpi = indicator.current_spi ?? indicator.last_spi;
+  if (typeof reportedSpi === "number" && Number.isFinite(reportedSpi)) return reportedSpi;
+  if (
+    typeof indicator.current_value === "number" && Number.isFinite(indicator.current_value) &&
+    typeof indicator.target_value === "number" && Number.isFinite(indicator.target_value) &&
+    indicator.target_value > 0
+  ) return indicator.current_value / indicator.target_value;
+  return null;
+}
 import { BarChart3, TrendingUp, Plus, Trash2, Edit2, CheckCircle2, AlertTriangle, Clock, ExternalLink, Save, Check, RotateCw, Sparkles, Award, Layers, FileCheck2, Activity, History, Sliders } from "lucide-react";
 import clsx from "clsx";
 import { toast } from "sonner";
@@ -243,8 +263,9 @@ export function ProjectIndicatorsDrawer({
     setFrequency(ind.frequency || "mensual");
     setSourceType(ind.source_type || "manual");
     setComponentId(ind.component_id || "");
-    if (isCremaValidationResult(ind.crema_evaluation)) {
-      setCremaResult(ind.crema_evaluation);
+    const validation = getCremaValidationResult(ind.crema_evaluation);
+    if (validation) {
+      setCremaResult(validation);
     } else {
       setCremaResult(null);
     }
@@ -403,6 +424,62 @@ export function ProjectIndicatorsDrawer({
     return { optimal, warning, critical, avgCrema };
   }, [indicators]);
 
+  const valueChainStats = useMemo(() => {
+    const links = [
+      {
+        id: "operational",
+        title: "Eslabón Operativo / Proceso",
+        levels: ["GESTION_PROCESO", "EFICIENCIA", "CALIDAD"],
+      },
+      {
+        id: "product",
+        title: "Eslabón de Salida / Entregables",
+        levels: ["PRODUCTO_PRINCIPAL", "PRODUCTO_SECUNDARIO"],
+      },
+      {
+        id: "outcome",
+        title: "Eslabón de Impacto / Beneficios",
+        levels: ["RESULTADO_EFICACIA"],
+      },
+    ];
+    const chain = links.map((link) => {
+      const members = indicators.filter((indicator) => link.levels.includes(indicator.level));
+      const measuredSpis = members
+        .map(getCurrentIndicatorSpi)
+        .filter((spi): spi is number => spi !== null);
+      return {
+        ...link,
+        count: members.length,
+        averageSpi: measuredSpis.length > 0
+          ? measuredSpis.reduce((total, spi) => total + spi, 0) / measuredSpis.length
+          : null,
+      };
+    });
+    const allSpis = indicators
+      .map(getCurrentIndicatorSpi)
+      .filter((spi): spi is number => spi !== null);
+    const validatedCrema = indicators
+      .map((indicator) => getCremaValidationResult(indicator.crema_evaluation))
+      .filter((validation): validation is CremaValidationResult => validation !== null);
+    const missingLinks = chain.filter((link) => link.count === 0);
+
+    return {
+      chain,
+      missingLinks,
+      consolidatedSpi: allSpis.length > 0
+        ? allSpis.reduce((total, spi) => total + spi, 0) / allSpis.length
+        : null,
+      measuredSpiCount: allSpis.length,
+      validatedCremaCount: validatedCrema.length,
+      validatedCremaPercent: indicators.length > 0
+        ? (validatedCrema.length / indicators.length) * 100
+        : 0,
+      averageCremaScore: validatedCrema.length > 0
+        ? validatedCrema.reduce((total, validation) => total + validation.score, 0) / validatedCrema.length
+        : null,
+    };
+  }, [indicators]);
+
   // SPI calculado en vivo en el formulario de reporte
   const calculatedSpi = useMemo(() => {
     const t = parseFloat(recordTarget) || 0;
@@ -552,6 +629,64 @@ export function ProjectIndicatorsDrawer({
           {/* TAB 1: LISTADO DE INDICADORES Y SEMÁFORO SPI */}
           {activeTab === "list" && (
             <div className="space-y-4">
+              {indicators.length > 0 && (
+                <section
+                  aria-labelledby="pmi-value-chain-governance-title"
+                  className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 space-y-4"
+                >
+                  <div>
+                    <h3 id="pmi-value-chain-governance-title" className="text-sm font-bold text-[hsl(var(--text-primary))]">
+                      Gobernanza PMI de Cadena de Valor y Madurez CREMA (Vol. 1 &amp; 5)
+                    </h3>
+                    <p className="mt-1 text-xs text-[hsl(var(--text-secondary))]">
+                      Traza la gestión que produce entregables y los resultados que realizan beneficios.
+                    </p>
+                  </div>
+
+                  <div className="grid gap-2 md:grid-cols-3">
+                    {valueChainStats.chain.map((link) => (
+                      <div key={link.id} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
+                        <p className="text-xs font-bold text-[hsl(var(--text-primary))]">{link.title}</p>
+                        <p className="mt-2 text-lg font-extrabold text-[hsl(var(--primary))]">{link.count} indicador{link.count === 1 ? "" : "es"}</p>
+                        <p className="text-2xs text-[hsl(var(--text-secondary))]">
+                          SPI promedio: {link.averageSpi === null ? "—" : link.averageSpi.toFixed(2)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {valueChainStats.missingLinks.length > 0 && (
+                    <div role="alert" className="rounded-md border border-[hsl(var(--warning))]/30 bg-[hsl(var(--warning))]/10 p-3 text-xs text-[hsl(var(--warning-text))]">
+                      <strong>Brecha en Cadena de Valor PMI:</strong> Se recomienda vincular indicadores tanto de Producto como de Resultado/Eficacia.
+                      <span className="mt-1 block text-2xs">
+                        Eslabones sin indicadores: {valueChainStats.missingLinks.map((link) => link.title.replace("Eslabón ", "")).join(", ")}.
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
+                      <p className="text-xs font-bold text-[hsl(var(--text-primary))]">Índice de Madurez Metodológica CREMA</p>
+                      <p className="mt-1 text-sm font-extrabold text-[hsl(var(--primary))]">
+                        {valueChainStats.validatedCremaCount}/{indicators.length} validados · {valueChainStats.validatedCremaPercent.toFixed(1)}%
+                      </p>
+                      <p className="text-2xs text-[hsl(var(--text-secondary))]">
+                        Puntaje CREMA promedio: {valueChainStats.averageCremaScore === null ? "—" : `${valueChainStats.averageCremaScore.toFixed(1)}/100`}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
+                      <p className="text-xs font-bold text-[hsl(var(--text-primary))]">SPI Consolidado del Proyecto</p>
+                      <p className="mt-1 text-lg font-extrabold text-[hsl(var(--primary))]">
+                        {valueChainStats.consolidatedSpi === null ? "—" : valueChainStats.consolidatedSpi.toFixed(2)}
+                      </p>
+                      <p className="text-2xs text-[hsl(var(--text-secondary))]">
+                        Promedio de SPI actual en {valueChainStats.measuredSpiCount} de {indicators.length} indicadores.
+                      </p>
+                    </div>
+                  </div>
+                </section>
+              )}
+
               {/* Filtro por Nivel MGA */}
               <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1">
                 <div className="flex items-center gap-1.5 text-2xs">

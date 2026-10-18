@@ -83,4 +83,90 @@ describe("ProjectIndicatorsDrawer loading recovery", () => {
     );
     expect(mocks.toastError).toHaveBeenCalledWith("Error al eliminar indicador");
   });
+
+  it("summarizes the value chain, flags missing outcomes and consolidates CREMA and SPI", async () => {
+    const validCrema = {
+      score: 80,
+      status: "BUENO",
+      summary: "Indicador metodológicamente válido",
+      criteria: {
+        C: { score: 80, passed: true, recommendations: [] },
+      },
+    };
+    const chainIndicators = [
+      {
+        id: "indicator-process",
+        project_id: "project-1",
+        name: "Proceso de atención",
+        level: "GESTION_PROCESO",
+        calculation_type: "PORCENTAJE_PROPORCION",
+        baseline_value: 0,
+        target_value: 40,
+        current_value: 40,
+        frequency: "mensual",
+        period_targets: {},
+        crema_score: 80,
+        crema_evaluation: validCrema,
+        last_spi: 1.1,
+        created_at: "2026-01-01T00:00:00Z",
+        updated_at: "2026-01-01T00:00:00Z",
+      },
+      {
+        id: "indicator-efficiency",
+        project_id: "project-1",
+        name: "Eficiencia operativa",
+        level: "EFICIENCIA",
+        calculation_type: "PORCENTAJE_PROPORCION",
+        baseline_value: 0,
+        target_value: 10,
+        current_value: 9,
+        frequency: "mensual",
+        period_targets: {},
+        crema_score: 90,
+        crema_evaluation: { crema_validation: { ...validCrema, score: 90 } },
+        current_spi: 0.9,
+        created_at: "2026-01-01T00:00:00Z",
+        updated_at: "2026-01-01T00:00:00Z",
+      },
+      {
+        id: "indicator-product",
+        project_id: "project-1",
+        name: "Entregables producidos",
+        level: "PRODUCTO_PRINCIPAL",
+        calculation_type: "ABSOLUTO_ACUMULADO",
+        baseline_value: 0,
+        target_value: 100,
+        current_value: 80,
+        frequency: "mensual",
+        period_targets: {},
+        crema_evaluation: {},
+        last_spi: 0.8,
+        created_at: "2026-01-01T00:00:00Z",
+        updated_at: "2026-01-01T00:00:00Z",
+      },
+    ];
+    vi.mocked(apiFetch).mockResolvedValueOnce(chainIndicators);
+
+    const { container } = renderDrawer();
+
+    expect(await screen.findByRole("heading", {
+      name: "Gobernanza PMI de Cadena de Valor y Madurez CREMA (Vol. 1 & 5)",
+    })).toBeInTheDocument();
+    const governancePanel = screen.getByRole("region", {
+      name: "Gobernanza PMI de Cadena de Valor y Madurez CREMA (Vol. 1 & 5)",
+    });
+    expect(within(governancePanel).getByText("2 indicadores")).toBeInTheDocument();
+    expect(within(governancePanel).getByText("1 indicador")).toBeInTheDocument();
+    expect(within(governancePanel).getByText("SPI promedio: 1.00")).toBeInTheDocument();
+    expect(within(governancePanel).getByText("SPI promedio: 0.80")).toBeInTheDocument();
+    expect(within(governancePanel).getByText("SPI promedio: —")).toBeInTheDocument();
+    expect(within(governancePanel).getByText("2/3 validados · 66.7%")).toBeInTheDocument();
+    expect(within(governancePanel).getByText("Puntaje CREMA promedio: 85.0/100")).toBeInTheDocument();
+    expect(within(governancePanel).getByText("0.93")).toBeInTheDocument();
+    expect(within(governancePanel).getByText(/Promedio de SPI actual en 3 de 3 indicadores/)).toBeInTheDocument();
+    expect(within(governancePanel).getByRole("alert")).toHaveTextContent(
+      "Brecha en Cadena de Valor PMI: Se recomienda vincular indicadores tanto de Producto como de Resultado/Eficacia",
+    );
+    expect((await axe(container)).violations).toEqual([]);
+  });
 });

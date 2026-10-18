@@ -24,7 +24,7 @@ vi.mock("@/context/AuthContext", () => ({
 const mockWBSTreeResponse: ProjectWBSTreeResponse = {
   project_id: "proj-123",
   project_title: "Plataforma Educativa",
-  total_nodes: 4,
+  total_nodes: 5,
   max_depth: 3,
   root: {
     id: "proj-123",
@@ -36,7 +36,7 @@ const mockWBSTreeResponse: ProjectWBSTreeResponse = {
     progress_pct: 60,
     estimated_hours: 80,
     actual_hours: 45,
-    budget_allocated: 100000,
+    budget_allocated: 50000,
     cost: 45000,
     is_leaf: false,
     health_status: "OPTIMO",
@@ -91,6 +91,22 @@ const mockWBSTreeResponse: ProjectWBSTreeResponse = {
           },
         ],
       },
+      {
+        id: "comp-2",
+        wbs_code: "2",
+        title: "Integración y Despliegue",
+        type: "component",
+        level: 1,
+        status: "active",
+        progress_pct: 0,
+        estimated_hours: 0,
+        actual_hours: 0,
+        budget_allocated: 10000,
+        cost: 0,
+        is_leaf: true,
+        health_status: "PENDIENTE",
+        children: [],
+      },
     ],
   },
 };
@@ -115,7 +131,7 @@ describe("ProjectWBSTreeView Component", () => {
 
     // Comprobar presencia de badges de código WBS
     expect(screen.getByText("0")).toBeInTheDocument();
-    expect(screen.getByText("1")).toBeInTheDocument();
+    expect(screen.getAllByText("1").length).toBeGreaterThan(0);
     expect(screen.getByText("1.1")).toBeInTheDocument();
   });
 
@@ -148,5 +164,42 @@ describe("ProjectWBSTreeView Component", () => {
     fireEvent.click(compNode);
 
     expect(onSelectNode).toHaveBeenCalled();
+  });
+
+  it("muestra el diagnóstico PMI, la Regla del 100% y los roles de cada nodo", async () => {
+    mocks.apiFetch.mockResolvedValueOnce(mockWBSTreeResponse);
+
+    render(<ProjectWBSTreeView projectId="proj-123" />);
+
+    expect(await screen.findByLabelText("Diagnóstico de Descomposición EDT / WBS (PMI Vol. 3)"))
+      .toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Expandir" }));
+    expect(screen.getByText("Cuentas de Control Activas (CA)").nextElementSibling)
+      .toHaveTextContent("1");
+    expect(screen.getByText("Paquetes de Planificación (Rolling Wave)").nextElementSibling)
+      .toHaveTextContent("1");
+    expect(screen.getByText("Paquetes de Trabajo Hoja (WP)").nextElementSibling)
+      .toHaveTextContent("1");
+    expect(screen.getByText("Validada")).toBeInTheDocument();
+    expect(screen.getByText("Entregable Mayor (Nivel 1)")).toBeInTheDocument();
+    expect(screen.getByText("Cuenta de Control (CA)")).toBeInTheDocument();
+    expect(screen.getByText("Paquete Planificación (Rolling Wave)")).toBeInTheDocument();
+    expect(screen.getByText("Tarea Resumen")).toBeInTheDocument();
+    expect(screen.getByText("Paquete de Trabajo (WP Hoja)")).toBeInTheDocument();
+  });
+
+  it("filtra Paquetes Hoja (WP) manteniendo visible su jerarquía", async () => {
+    mocks.apiFetch.mockResolvedValueOnce(mockWBSTreeResponse);
+
+    render(<ProjectWBSTreeView projectId="proj-123" />);
+
+    await screen.findByText("Configurar Clúster Kubernetes");
+    fireEvent.click(screen.getByRole("button", { name: "Solo Paquetes Hoja (WP)" }));
+
+    expect(screen.getByText("Plataforma Educativa")).toBeInTheDocument();
+    expect(screen.getByText("Infraestructura Cloud")).toBeInTheDocument();
+    expect(screen.getByText("Configurar Clúster Kubernetes")).toBeInTheDocument();
+    expect(screen.getByText("Instalar Ingress Controller")).toBeInTheDocument();
+    expect(screen.queryByText("Integración y Despliegue")).not.toBeInTheDocument();
   });
 });

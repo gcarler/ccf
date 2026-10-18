@@ -7,6 +7,7 @@ import type { ProjectWBSTreeResponse, WBSNode } from '@/types/projects';
 import {
     Activity,
     AlertCircle,
+    CheckCircle2,
     ChevronDown,
     ChevronRight,
     Clock,
@@ -19,6 +20,9 @@ import {
     Minimize2,
     RefreshCw,
     Search,
+    ShieldCheck,
+    Target,
+    Workflow,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { toast } from 'sonner';
@@ -40,7 +44,30 @@ export function ProjectWBSTreeView({
     const [treeData, setTreeData] = useState<ProjectWBSTreeResponse | null>(null);
     const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({});
     const [searchTerm, setSearchTerm] = useState('');
-    const [typeFilter, setTypeFilter] = useState<'all' | 'component' | 'task'>('all');
+    const [typeFilter, setTypeFilter] = useState<'all' | 'component' | 'task' | 'work-packages'>('all');
+
+    const getDecompositionMetrics = (root: WBSNode) => {
+        const metrics = { controlAccounts: 0, planningPackages: 0, workPackages: 0 };
+        const visit = (node: WBSNode) => {
+            const hasChildren = node.children.length > 0;
+            if (node.type === 'component' && hasChildren) metrics.controlAccounts += 1;
+            if (node.type === 'component' && !hasChildren) metrics.planningPackages += 1;
+            if (node.type === 'task' && !hasChildren) metrics.workPackages += 1;
+            node.children.forEach(visit);
+        };
+        visit(root);
+
+        const rootChildrenHaveBudgets = root.children.every(child => child.budget_allocated != null);
+        const budgetRuleVerifiable = root.budget_allocated != null && rootChildrenHaveBudgets;
+        const allocatedChildrenBudget = root.children.reduce(
+            (sum, child) => sum + (child.budget_allocated ?? 0),
+            0
+        );
+        const budgetRuleValid = budgetRuleVerifiable &&
+            Math.abs(allocatedChildrenBudget - (root.budget_allocated ?? 0)) < 0.01;
+
+        return { ...metrics, allocatedChildrenBudget, budgetRuleVerifiable, budgetRuleValid };
+    };
 
     const loadTree = useCallback(async () => {
         if (!projectId || !token) return;
@@ -95,8 +122,8 @@ export function ProjectWBSTreeView({
 
     // Render recursivo de un nodo del árbol
     const renderNode = (node: WBSNode, depth = 0) => {
-        const isExpanded = !!expandedMap[node.id];
-        const hasChildren = node.children && node.children.length > 0;
+        const hasChildren = node.children.length > 0;
+        const isExpanded = typeFilter === 'work-packages' || !!expandedMap[node.id];
 
         // Filtro de búsqueda y tipo
         const termLower = searchTerm.toLowerCase();
@@ -105,17 +132,33 @@ export function ProjectWBSTreeView({
             node.title.toLowerCase().includes(termLower) ||
             node.wbs_code.includes(termLower);
 
-        const matchesType = typeFilter === 'all' || node.type === typeFilter || depth === 0;
+        const matchesType = typeFilter === 'all' ||
+            (typeFilter === 'work-packages'
+                ? node.type === 'task' && !hasChildren
+                : node.type === typeFilter || depth === 0);
 
-        // Si los hijos coinciden con la búsqueda, debemos mostrar este nodo
-        const hasMatchingChild = (n: WBSNode): boolean => {
-            if (!searchTerm) return true;
-            if (n.title.toLowerCase().includes(termLower) || n.wbs_code.includes(termLower)) return true;
-            return n.children?.some(hasMatchingChild) ?? false;
+        // Mantiene visibles los ancestros necesarios para conservar la jerarquía filtrada.
+        const subtreeMatches = (candidate: WBSNode, candidateDepth: number): boolean => {
+            const candidateHasChildren = candidate.children.length > 0;
+            const candidateMatchesSearch = !searchTerm ||
+                candidate.title.toLowerCase().includes(termLower) || candidate.wbs_code.includes(termLower);
+            const candidateMatchesType = typeFilter === 'all' ||
+                (typeFilter === 'work-packages'
+                    ? candidate.type === 'task' && !candidateHasChildren
+                    : candidate.type === typeFilter || candidateDepth === 0);
+            return (candidateMatchesSearch && candidateMatchesType) ||
+                candidate.children.some(child => subtreeMatches(child, candidateDepth + 1));
         };
 
-        const shouldRender = (matchesSearch || hasMatchingChild(node)) && matchesType;
+        const shouldRender = (matchesSearch && matchesType) ||
+            node.children.some(child => subtreeMatches(child, depth + 1));
         if (!shouldRender) return null;
+
+        const roleLabel = depth === 0 ? 'Entregable Mayor (Nivel 1)' :
+            node.type === 'component' && hasChildren ? 'Cuenta de Control (CA)' :
+                node.type === 'component' ? 'Paquete Planificación (Rolling Wave)' :
+                    node.type === 'task' && hasChildren ? 'Tarea Resumen' :
+                        'Paquete de Trabajo (WP Hoja)';
 
         return (
             <div key={node.id} className="space-y-1" data-testid={`wbs-node-${node.wbs_code}`}>
@@ -176,6 +219,12 @@ export function ProjectWBSTreeView({
                         {/* Título del nodo */}
                         <span className="truncate font-semibold text-[hsl(var(--foreground))]">
                             {node.title}
+                        </span>
+                        <span className="hidden lg:inline-flex items-center gap-1 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-2 py-0.5 text-[9px] font-semibold text-[hsl(var(--muted-foreground))]">
+                            {node.type === 'component' && hasChildren && <ShieldCheck size={10} />}
+                            {node.type === 'component' && !hasChildren && <Workflow size={10} />}
+                            {node.type === 'task' && !hasChildren && <Target size={10} />}
+                            {roleLabel}
                         </span>
                     </div>
 
@@ -290,7 +339,7 @@ export function ProjectWBSTreeView({
                 </div>
 
                 <div className="flex rounded-lg p-0.5 border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-xs">
-                    {(['all', 'component', 'task'] as const).map(type => (
+                    {(['all', 'component', 'task', 'work-packages'] as const).map(type => (
                         <button
                             key={type}
                             type="button"
@@ -305,6 +354,7 @@ export function ProjectWBSTreeView({
                             {type === 'all' && 'Todos'}
                             {type === 'component' && 'Componentes'}
                             {type === 'task' && 'Tareas'}
+                            {type === 'work-packages' && 'Solo Paquetes Hoja (WP)'}
                         </button>
                     ))}
                 </div>
@@ -328,7 +378,48 @@ export function ProjectWBSTreeView({
 
             {/* Árbol renderizado */}
             {treeData && (
-                <div className="space-y-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3">
+                <div className="space-y-3">
+                    {(() => {
+                        const metrics = getDecompositionMetrics(treeData.root);
+                        return (
+                            <section className="space-y-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3" aria-label="Diagnóstico de Descomposición EDT / WBS (PMI Vol. 3)">
+                                <div className="flex items-center gap-2">
+                                    <ListTree size={16} className="text-[hsl(var(--primary))]" />
+                                    <h4 className="text-xs font-bold text-[hsl(var(--foreground))]">Diagnóstico de Descomposición EDT / WBS (PMI Vol. 3)</h4>
+                                </div>
+                                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                                    <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-2">
+                                        <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Cuentas de Control Activas (CA)</p>
+                                        <p className="text-lg font-bold text-[hsl(var(--foreground))]">{metrics.controlAccounts}</p>
+                                    </div>
+                                    <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-2">
+                                        <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Paquetes de Planificación (Rolling Wave)</p>
+                                        <p className="text-lg font-bold text-[hsl(var(--foreground))]">{metrics.planningPackages}</p>
+                                    </div>
+                                    <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-2">
+                                        <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Paquetes de Trabajo Hoja (WP)</p>
+                                        <p className="text-lg font-bold text-[hsl(var(--foreground))]">{metrics.workPackages}</p>
+                                    </div>
+                                    <div className={clsx(
+                                        'rounded-lg border p-2',
+                                        !metrics.budgetRuleVerifiable && 'border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]',
+                                        metrics.budgetRuleValid && 'border-[hsl(var(--success)/0.35)] bg-[hsl(var(--success)/0.08)]',
+                                        metrics.budgetRuleVerifiable && !metrics.budgetRuleValid && 'border-[hsl(var(--destructive)/0.35)] bg-[hsl(var(--destructive)/0.08)]'
+                                    )}>
+                                        <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Regla del 100% Presupuestal</p>
+                                        <p className="inline-flex items-center gap-1 text-xs font-bold text-[hsl(var(--foreground))]">
+                                            {metrics.budgetRuleValid && <CheckCircle2 size={13} className="text-[hsl(var(--success))]" />}
+                                            {metrics.budgetRuleVerifiable ? (metrics.budgetRuleValid ? 'Validada' : 'Brecha detectada') : 'No verificable'}
+                                        </p>
+                                        <p className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                                            Hijos: {metrics.allocatedChildrenBudget.toLocaleString()} / Raíz: {treeData.root.budget_allocated?.toLocaleString() ?? 'Sin presupuesto'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </section>
+                        );
+                    })()}
+                    <div className="space-y-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3">
                     <div className="flex items-center justify-between text-[11px] font-semibold text-[hsl(var(--muted-foreground))] px-2 pb-1 border-b border-[hsl(var(--border)/0.5)]">
                         <span>Total Nodos: {treeData.total_nodes} • Profundidad: {treeData.max_depth}</span>
                         <span>Avance Físico Continuo</span>
@@ -336,6 +427,7 @@ export function ProjectWBSTreeView({
 
                     <div className="space-y-1 pt-1 max-h-[500px] overflow-y-auto">
                         {renderNode(treeData.root, 0)}
+                    </div>
                     </div>
                 </div>
             )}

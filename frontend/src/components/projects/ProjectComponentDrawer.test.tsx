@@ -235,6 +235,88 @@ describe("ProjectComponentDrawer", () => {
     });
   });
 
+  it("clasifica Cuentas de Control (CA) y Paquetes de Planificación (Rolling Wave — PMI Vol. 3)", async () => {
+    const breakdownWithPlanning: ProjectComponentsBreakdown = {
+      project_id: "proj-123",
+      components: [
+        ...mockBreakdownResponse.components,
+        {
+          id: "comp-3",
+          project_id: "proj-123",
+          code: "EDT-3.0",
+          name: "Mobiliario Litúrgico",
+          description: "Reserva presupuestal pendiente de descomposición",
+          budget_allocated: 0,
+          order_index: 3,
+          color: "#f59e0b",
+          status: "active",
+          created_at: "2026-10-10T00:00:00Z",
+          tasks_count: 0,
+          expenses_count: 0,
+          evm: null,
+        },
+      ],
+      budget_rule: {
+        ...mockBreakdownResponse.budget_rule,
+        components_count: 3,
+      },
+    };
+    mocks.apiFetch.mockResolvedValueOnce(breakdownWithPlanning);
+
+    render(
+      <ProjectComponentDrawer
+        projectId="proj-123"
+        projectTitle="Construcción Templo Sede Norte"
+        isOpen={true}
+        onClose={vi.fn()}
+      />
+    );
+
+    // Resumen de gobernanza: 2 Cuentas de Control + 1 Paquete de Planificación
+    const summary = await screen.findByTestId("control-accounts-summary");
+    expect(summary).toHaveTextContent("Gobernanza de Cuentas de Control y Planificación Gradual (Rolling Wave — PMI Vol. 3)");
+    expect(summary).toHaveTextContent("2 Cuenta(s) de Control (CA)");
+    expect(summary).toHaveTextContent("1 Paquete(s) de Planificación");
+
+    // Badge doctrinal por tarjeta: 2 CA (con tareas) + 1 Rolling Wave (sin tareas)
+    const caBadges = await screen.findAllByTestId("control-account-badge");
+    expect(caBadges).toHaveLength(3);
+    expect(
+      caBadges.filter((badge) => badge.textContent === "Cuenta de Control (CA)")
+    ).toHaveLength(2);
+    expect(screen.getByText("Paquete de Planificación (Rolling Wave)")).toBeInTheDocument();
+    expect(screen.getByText("Mobiliario Litúrgico")).toBeInTheDocument();
+  });
+
+  it("muestra la tupla EVM completa PV, EV, AC, CV, SV y EAC por Cuenta de Control", async () => {
+    render(
+      <ProjectComponentDrawer
+        projectId="proj-123"
+        projectTitle="Construcción Templo Sede Norte"
+        isOpen={true}
+        onClose={vi.fn()}
+      />
+    );
+
+    const tuples = await screen.findAllByTestId("evm-tuple");
+    expect(tuples).toHaveLength(2); // una por Cuenta de Control con evm
+
+    // Comp-1: PV 20000, EV 24000, AC 18000, CV +6000, SV +4000, EAC = 40000 / 1.33 ≈ 30,075
+    expect(screen.getAllByText("PV (Valor Planificado)")).toHaveLength(2);
+    expect(screen.getByText("$20,000")).toBeInTheDocument();
+    expect(screen.getByText("$24,000")).toBeInTheDocument();
+    // $18,000 también aparece en la métrica existente “Gastos Reales (AC)”
+    expect(screen.getAllByText("$18,000")).toHaveLength(2);
+    expect(screen.getByText("+$6,000")).toBeInTheDocument(); // CV favorable
+    expect(screen.getByText("+$4,000")).toBeInTheDocument(); // SV favorable
+    expect(screen.getAllByText(/EAC Proyectado \(CA\)/).length).toBe(2);
+
+    // Comp-2: CV -5000 desfavorable (sin prefijo +) y SV 0
+    expect(screen.getByText("$-5,000")).toBeInTheDocument();
+    // $0 aparece al menos 2 veces: SV de comp-2 y el BAC del paquete de planificación
+    expect(screen.getAllByText("$0").length).toBeGreaterThanOrEqual(2);
+  });
+
   it("renders RightPanel with responsive wide dimensions (max-w-6xl)", async () => {
     render(
       <ProjectComponentDrawer

@@ -357,6 +357,14 @@ export function ProjectQuadrantsMatrix({
                                 Meta BAC: {tcpi.tcpi_bac.toFixed(2)}
                             </span>
                         )}
+                        {typeof tcpi.tcpi_eac === 'number' && (
+                            <span
+                                data-testid="tcpi-eac-badge"
+                                className="px-2 py-1 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] font-mono font-bold"
+                            >
+                                Meta EAC Típico: {tcpi.tcpi_eac.toFixed(2)}
+                            </span>
+                        )}
                         <span
                             className={clsx(
                                 "px-2 py-1 rounded-md text-[10px] font-bold uppercase",
@@ -428,6 +436,82 @@ export function ProjectQuadrantsMatrix({
                         </div>
                     </div>
                 </div>
+
+                {(() => {
+                    const pd = earned_schedule.planned_duration_days;
+                    const at = earned_schedule.actual_time_days;
+                    const es = earned_schedule.earned_schedule_days;
+                    const svt = earned_schedule.schedule_variance_time_days ?? es - at;
+                    const plazoVencido = at >= pd && es < pd;
+                    const tspi = pd > at ? (pd - es) / (pd - at) : null;
+                    const tspiLabel = (() => {
+                        if (tspi === null) return null;
+                        if (tspi <= 1.05) return 'Ritmo Temporal Viable';
+                        if (tspi <= 1.10) return 'Exigencia Temporal Alta (Requiere Compresión)';
+                        return 'Alerta PMI TSPI (>1.10): Meta temporal original irrecuperable sin Crashing / Fast-Tracking o Re-baseline CCB';
+                    })();
+                    const tspiTone = (() => {
+                        if (tspi === null || plazoVencido) return 'text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.15)]';
+                        if (tspi <= 1.05) return 'text-[hsl(var(--success))] bg-[hsl(var(--success)/0.15)]';
+                        if (tspi <= 1.10) return 'text-[hsl(var(--warning))] bg-[hsl(var(--warning)/0.15)]';
+                        return 'text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.15)]';
+                    })();
+                    const svtTone = svt >= 0 ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]';
+
+                    return (
+                        <div
+                            data-testid="earned-schedule-block"
+                            className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs"
+                        >
+                            <div className="p-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2)/0.4)]">
+                                <span className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))]">
+                                    Duración Planificada (PD)
+                                </span>
+                                <div className="text-sm font-bold text-[hsl(var(--foreground))] mt-0.5">
+                                    {pd} días
+                                </div>
+                            </div>
+
+                            <div className="p-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2)/0.4)]">
+                                <span className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))]">
+                                    Varianza Temporal SV(t) = ES − AT
+                                </span>
+                                <div data-testid="svt-value" className={clsx('text-sm font-bold mt-0.5', svtTone)}>
+                                    {svt >= 0 ? '+' : ''}{svt} días
+                                </div>
+                                <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-1">
+                                    SV(t) mide el adelanto/atraso real en días sin distorsión al cierre del proyecto.
+                                </p>
+                            </div>
+
+                            <div className="p-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2)/0.4)]">
+                                <span className="text-[11px] font-semibold text-[hsl(var(--muted-foreground))]">
+                                    Índice Temporal por Completar (TSPI)
+                                </span>
+                                {tspi === null ? (
+                                    <div
+                                        data-testid="tspi-diagnosis"
+                                        className={clsx('text-xs font-bold mt-0.5 px-2 py-1 rounded-md', tspiTone)}
+                                    >
+                                        Plazo Vencido / Crítico
+                                    </div>
+                                ) : (
+                                    <div className="mt-0.5 space-y-1">
+                                        <div className="text-sm font-bold text-[hsl(var(--foreground))]">
+                                            TSPI: {tspi.toFixed(2)}
+                                        </div>
+                                        <div
+                                            data-testid="tspi-diagnosis"
+                                            className={clsx('text-[10px] font-bold uppercase px-2 py-1 rounded-md inline-block', tspiTone)}
+                                        >
+                                            {tspiLabel}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })()}
             </div>
         </div>
     );

@@ -181,4 +181,78 @@ describe("ProjectQuadrantsMatrix Component", () => {
     expect(screen.getByText(/48.5 días/i)).toBeInTheDocument();
     expect(screen.getByText("1.08")).toBeInTheDocument();
   });
+
+  it("muestra Meta EAC Típico (TCPI) y el bloque Earned Schedule con PD, SV(t) y TSPI viable", async () => {
+    mocks.apiFetch.mockResolvedValueOnce(mockAdvancedResponse);
+
+    render(<ProjectQuadrantsMatrix projectId="proj-123" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("project-quadrants-matrix")).toBeInTheDocument();
+    });
+
+    // TCPI(EAC): badge de Meta EAC Típico junto a Meta BAC
+    expect(screen.getByTestId("tcpi-eac-badge")).toHaveTextContent("Meta EAC Típico: 1.11");
+    expect(screen.getByText("Meta BAC: 0.91")).toBeInTheDocument();
+
+    // Bloque Earned Schedule: PD 90 días y SV(t) = ES - AT = 48.5 - 45 = +3.5
+    const block = screen.getByTestId("earned-schedule-block");
+    expect(block).toHaveTextContent("Duración Planificada (PD)");
+    expect(block).toHaveTextContent("90 días");
+    expect(screen.getByTestId("svt-value")).toHaveTextContent("+3.5 días");
+
+    // TSPI = (90 - 48.5) / (90 - 45) = 0.92 → Ritmo Temporal Viable (<= 1.05)
+    expect(screen.getAllByText(/TSPI: 0.92/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByTestId("tspi-diagnosis")).toHaveTextContent("Ritmo Temporal Viable");
+  });
+
+  it("dispara la alerta TSPI (>1.10) y el estado Plazo Vencido / Crítico en el caso límite", async () => {
+    const responseCritical: ProjectEVMAdvancedResponse = {
+      ...mockAdvancedResponse,
+      earned_schedule: {
+        ...mockAdvancedResponse.earned_schedule,
+        planned_duration_days: 90,
+        actual_time_days: 60,
+        earned_schedule_days: 10,
+        schedule_variance_time_days: null as unknown as number,
+      },
+    };
+    mocks.apiFetch.mockResolvedValueOnce(responseCritical);
+
+    render(<ProjectQuadrantsMatrix projectId="proj-123" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("tspi-diagnosis")).toBeInTheDocument();
+    });
+
+    // TSPI = (90 - 10) / (90 - 60) ≈ 2.67 → meta temporal irrecuperable sin Crashing/Ciclo Acelerado (Fast-Tracking)/Re-baseline CCB
+    const diagnosis = screen.getByTestId("tspi-diagnosis");
+    expect(diagnosis).toHaveTextContent(
+      "Alerta PMI TSPI (>1.10): Meta temporal original irrecuperable sin Crashing / Fast-Tracking o Re-baseline CCB",
+    );
+    // SV(t) sin datos del backend usa fallback = ES - AT = 10 - 60 = -50 (atraso real)
+    expect(screen.getByTestId("svt-value")).toHaveTextContent("-50 días");
+  });
+
+  it("marca Plazo Vencido / Crítico cuando AT >= PD y aún queda alcance por ganar", async () => {
+    const responseExpired: ProjectEVMAdvancedResponse = {
+      ...mockAdvancedResponse,
+      earned_schedule: {
+        ...mockAdvancedResponse.earned_schedule,
+        planned_duration_days: 90,
+        actual_time_days: 95,
+        earned_schedule_days: 80,
+        schedule_variance_time_days: 88 - 95 ? 88 - 95 : 0,
+      },
+    };
+    mocks.apiFetch.mockResolvedValueOnce(responseExpired);
+
+    render(<ProjectQuadrantsMatrix projectId="proj-123" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("tspi-diagnosis")).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId("tspi-diagnosis")).toHaveTextContent("Plazo Vencido / Crítico");
+  });
 });

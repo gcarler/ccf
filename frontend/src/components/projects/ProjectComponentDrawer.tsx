@@ -623,8 +623,46 @@ export function ProjectComponentDrawer({
           </div>
         ) : (
           <div className="space-y-3">
+            {/* Gobernanza de Cuentas de Control y Planificación Gradual (Rolling Wave — PMI Vol. 3) */}
+            {(() => {
+              const controlAccounts = components.filter((c) => c.tasks_count > 0);
+              const planningPackages = components.filter((c) => c.tasks_count === 0);
+              return (
+                <div
+                  data-testid="control-accounts-summary"
+                  className="rounded-xl border p-3 text-xs space-y-1"
+                  style={{
+                    backgroundColor: "hsl(var(--surface-2))",
+                    borderColor: "hsl(var(--border))",
+                  }}
+                >
+                  <p className="font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
+                    Gobernanza de Cuentas de Control y Planificación Gradual (Rolling Wave — PMI Vol. 3)
+                  </p>
+                  <p style={{ color: "hsl(var(--text-secondary))" }}>
+                    <span style={{ color: "hsl(var(--success))" }} className="font-medium">
+                      {controlAccounts.length} Cuenta(s) de Control (CA)
+                    </span>
+                    {" "}descompuestas en paquetes de trabajo ejecutables ·{" "}
+                    <span style={{ color: "hsl(var(--warning-text))" }} className="font-medium">
+                      {planningPackages.length} Paquete(s) de Planificación
+                    </span>
+                    {" "}(Rolling Wave) con alcance y presupuesto reservados (Regla 100% EDT).
+                  </p>
+                </div>
+              );
+            })()}
+
             {components.map((comp) => {
               const evm = comp.evm;
+              const isControlAccount = comp.tasks_count > 0;
+              const cv = evm ? evm.cv ?? evm.ev - evm.ac : null;
+              const sv = evm ? evm.sv ?? evm.ev - evm.pv : null;
+              const eac = evm
+                ? evm.cpi > 0
+                  ? comp.budget_allocated / evm.cpi
+                  : evm.ac + Math.max(0, comp.budget_allocated - evm.ev)
+                : null;
               const isDeleting = deletingComponentId === comp.id;
 
               return (
@@ -653,6 +691,23 @@ export function ProjectComponentDrawer({
                             }}
                           >
                             {comp.code}
+                          </span>
+                          <span
+                            data-testid="control-account-badge"
+                            className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide"
+                            style={{
+                              backgroundColor: isControlAccount
+                                ? "hsl(var(--success) / 0.10)"
+                                : "hsl(var(--warning) / 0.10)",
+                              color: isControlAccount ? "hsl(var(--success))" : "hsl(var(--warning-text))",
+                            }}
+                            title={
+                              isControlAccount
+                                ? "Cuenta de Control (CA): componente descompuesto en paquetes de trabajo ejecutables"
+                                : "Paquete de Planificación (Rolling Wave): requiere descomposición en paquetes de trabajo antes de iniciar ejecución"
+                            }
+                          >
+                            {isControlAccount ? "Cuenta de Control (CA)" : "Paquete de Planificación (Rolling Wave)"}
                           </span>
                           <h4 className="text-sm font-semibold leading-tight">{comp.name}</h4>
                         </div>
@@ -810,6 +865,37 @@ export function ProjectComponentDrawer({
                         >
                           {evm.balance_gap_pct > 0 ? `+${evm.balance_gap_pct}%` : `${evm.balance_gap_pct}%`}
                         </span>
+                      </div>
+
+                      {/* Tupla EVM completa de la Cuenta de Control (PMI Vol. 5) */}
+                      <div
+                        data-testid="evm-tuple"
+                        className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs"
+                      >
+                        {[
+                          { label: "PV (Valor Planificado)", value: `$${evm.pv.toLocaleString()}` },
+                          { label: "EV (Valor Ganado)", value: `$${evm.ev.toLocaleString()}` },
+                          { label: "AC (Costo Real)", value: `$${evm.ac.toLocaleString()}` },
+                          { label: "CV (Varianza de Costo)", value: `${cv && cv > 0 ? "+" : ""}$${(cv ?? 0).toLocaleString()}` },
+                          { label: "SV (Varianza de Cronograma)", value: `${sv && sv > 0 ? "+" : ""}$${(sv ?? 0).toLocaleString()}` },
+                          { label: "EAC Proyectado (CA)", value: `$${(eac ?? 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}` },
+                        ].map((metric) => (
+                          <div
+                            key={metric.label}
+                            className="rounded-lg border p-2"
+                            style={{
+                              backgroundColor: "hsl(var(--surface-2))",
+                              borderColor: "hsl(var(--border))",
+                            }}
+                          >
+                            <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "hsl(var(--text-secondary))" }}>
+                              {metric.label}
+                            </p>
+                            <p className="font-bold" style={{ color: "hsl(var(--text-primary))" }}>
+                              {metric.value}
+                            </p>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
