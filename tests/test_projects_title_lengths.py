@@ -1368,6 +1368,135 @@ def test_validate_pert_three_point_estimates_empty_or_none():
         }
 
 
+def test_validate_requirements_traceability_matrix_bidirectional_compliant():
+    """Matriz RTM 100% trazada en ambas direcciones e ignorando requisitos cancelados/diferidos."""
+    from backend.schemas.projects import validate_requirements_traceability_matrix
+
+    res = validate_requirements_traceability_matrix(
+        [
+            {
+                "id": "REQ-01",
+                "status": "approved",
+                "business_objective": "OBJ-01 Reducir tiempo de acreditación",
+                "wbs_deliverable": "1.2.1 Módulo QR",
+                "verification_test_id": "TC-101",
+            },
+            {
+                "req_id": "REQ-02",
+                "status": "active",
+                "objective_id": "OBJ-02",
+                "wbs_code": "1.3.4",
+                "test_case_id": "TC-102",
+            },
+            {
+                "code": "REQ-03",
+                "status": "cancelled",
+                "business_objective": "",
+                "wbs_deliverable": "",
+                "verification_test_id": "",
+            },
+        ]
+    )
+    assert res == {
+        "total_requirements": 3,
+        "active_requirements_count": 2,
+        "fully_traced_count": 2,
+        "traceability_coverage_pct": 100.0,
+        "orphan_business_objective_ids": [],
+        "unmapped_wbs_deliverable_ids": [],
+        "unverified_test_case_ids": [],
+        "is_valid": True,
+        "rtm_posture": "BIDIRECTIONAL_RTM_COMPLIANT",
+    }
+
+
+def test_validate_requirements_traceability_matrix_orphan_business_objective():
+    """Requisito activo sin business_objective -> ORPHAN_REQUIREMENTS_WITHOUT_BUSINESS_NEED."""
+    from backend.schemas.projects import validate_requirements_traceability_matrix
+
+    res = validate_requirements_traceability_matrix(
+        [
+            {
+                "id": "REQ-GOLD-1",
+                "status": "active",
+                "business_objective": "   ",
+                "wbs_deliverable": "2.1.1",
+                "verification_test_id": "TC-201",
+            },
+            {
+                "id": "REQ-OK",
+                "status": "active",
+                "strategic_goal": "GOAL-5",
+                "deliverable_id": "DEL-9",
+                "acceptance_test": "UAT-04",
+            },
+        ]
+    )
+    assert res["total_requirements"] == 2
+    assert res["active_requirements_count"] == 2
+    assert res["fully_traced_count"] == 1
+    assert res["traceability_coverage_pct"] == 50.0
+    assert res["orphan_business_objective_ids"] == ["REQ-GOLD-1"]
+    assert res["unmapped_wbs_deliverable_ids"] == []
+    assert res["unverified_test_case_ids"] == []
+    assert res["is_valid"] is False
+    assert res["rtm_posture"] == "ORPHAN_REQUIREMENTS_WITHOUT_BUSINESS_NEED"
+
+
+def test_validate_requirements_traceability_matrix_unmapped_wbs_and_unverified_test():
+    """Requisito activo sin WBS -> UNMAPPED_WBS_DELIVERABLE_GAPS y sin test -> MISSING_VERIFICATION_TEST_COVERAGE."""
+    from backend.schemas.projects import validate_requirements_traceability_matrix
+
+    unmapped_res = validate_requirements_traceability_matrix(
+        [
+            {
+                "id": "REQ-NOWBS",
+                "status": "active",
+                "business_objective": "OBJ-10",
+                "wbs_deliverable": "",
+                "verification_test_id": "TC-300",
+            }
+        ]
+    )
+    assert unmapped_res["unmapped_wbs_deliverable_ids"] == ["REQ-NOWBS"]
+    assert unmapped_res["is_valid"] is False
+    assert unmapped_res["rtm_posture"] == "UNMAPPED_WBS_DELIVERABLE_GAPS"
+
+    unverified_res = validate_requirements_traceability_matrix(
+        [
+            {
+                "id": "REQ-NOTEST",
+                "status": "active",
+                "business_objective": "OBJ-11",
+                "wbs_deliverable": "3.1.2",
+                "verification_test_id": None,
+            }
+        ]
+    )
+    assert unverified_res["unverified_test_case_ids"] == ["REQ-NOTEST"]
+    assert unverified_res["is_valid"] is False
+    assert unverified_res["rtm_posture"] == "MISSING_VERIFICATION_TEST_COVERAGE"
+
+
+def test_validate_requirements_traceability_matrix_empty_or_none():
+    """Lista vacía o None -> NO_REQUIREMENTS_DEFINED."""
+    from backend.schemas.projects import validate_requirements_traceability_matrix
+
+    for payload in (None, [], ["invalid", 42]):
+        res = validate_requirements_traceability_matrix(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_requirements": 0,
+            "active_requirements_count": 0,
+            "fully_traced_count": 0,
+            "traceability_coverage_pct": 0.0,
+            "orphan_business_objective_ids": [],
+            "unmapped_wbs_deliverable_ids": [],
+            "unverified_test_case_ids": [],
+            "is_valid": True,
+            "rtm_posture": "NO_REQUIREMENTS_DEFINED",
+        }
+
+
 
 
 

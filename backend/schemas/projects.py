@@ -3220,3 +3220,120 @@ def validate_pert_three_point_estimates(
         "pert_posture": pert_posture,
     }
 
+
+_INACTIVE_REQUIREMENT_STATUSES = frozenset(
+    {
+        "cancelled",
+        "deferred",
+        "rejected",
+        "cancelado",
+        "diferido",
+        "rechazado",
+    }
+)
+
+
+def validate_requirements_traceability_matrix(
+    requirements: Optional[List[Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
+    """Valida la cobertura bidireccional de la Matriz de Trazabilidad de Requisitos (RTM) según PMI PMBOK §5.2.3.2."""
+    valid_reqs = [item for item in (requirements or []) if isinstance(item, dict)]
+    total_requirements = len(valid_reqs)
+    if total_requirements == 0:
+        return {
+            "total_requirements": 0,
+            "active_requirements_count": 0,
+            "fully_traced_count": 0,
+            "traceability_coverage_pct": 0.0,
+            "orphan_business_objective_ids": [],
+            "unmapped_wbs_deliverable_ids": [],
+            "unverified_test_case_ids": [],
+            "is_valid": True,
+            "rtm_posture": "NO_REQUIREMENTS_DEFINED",
+        }
+
+    active_requirements_count = 0
+    fully_traced_count = 0
+    orphan_business_objective_ids: List[str] = []
+    unmapped_wbs_deliverable_ids: List[str] = []
+    unverified_test_case_ids: List[str] = []
+
+    for idx, item in enumerate(valid_reqs, start=1):
+        req_id = (
+            str(
+                item.get("id")
+                or item.get("req_id")
+                or item.get("code")
+                or ""
+            ).strip()
+            or f"REQ-{idx}"
+        )
+        status = str(item.get("status") or "").strip().lower()
+        is_active = status not in _INACTIVE_REQUIREMENT_STATUSES
+        if is_active:
+            active_requirements_count += 1
+            has_obj = bool(
+                str(
+                    item.get("business_objective")
+                    or item.get("objective_id")
+                    or item.get("strategic_goal")
+                    or ""
+                ).strip()
+            )
+            has_wbs = bool(
+                str(
+                    item.get("wbs_deliverable")
+                    or item.get("wbs_code")
+                    or item.get("deliverable_id")
+                    or ""
+                ).strip()
+            )
+            has_test = bool(
+                str(
+                    item.get("verification_test_id")
+                    or item.get("test_case_id")
+                    or item.get("acceptance_test")
+                    or ""
+                ).strip()
+            )
+            if not has_obj:
+                orphan_business_objective_ids.append(req_id)
+            if not has_wbs:
+                unmapped_wbs_deliverable_ids.append(req_id)
+            if not has_test:
+                unverified_test_case_ids.append(req_id)
+            if has_obj and has_wbs and has_test:
+                fully_traced_count += 1
+
+    traceability_coverage_pct = (
+        round((fully_traced_count / active_requirements_count) * 100.0, 2)
+        if active_requirements_count > 0
+        else 100.0
+    )
+    is_valid = bool(
+        len(orphan_business_objective_ids) == 0
+        and len(unmapped_wbs_deliverable_ids) == 0
+        and len(unverified_test_case_ids) == 0
+    )
+
+    if len(orphan_business_objective_ids) > 0:
+        rtm_posture = "ORPHAN_REQUIREMENTS_WITHOUT_BUSINESS_NEED"
+    elif len(unmapped_wbs_deliverable_ids) > 0:
+        rtm_posture = "UNMAPPED_WBS_DELIVERABLE_GAPS"
+    elif len(unverified_test_case_ids) > 0:
+        rtm_posture = "MISSING_VERIFICATION_TEST_COVERAGE"
+    else:
+        rtm_posture = "BIDIRECTIONAL_RTM_COMPLIANT"
+
+    return {
+        "total_requirements": total_requirements,
+        "active_requirements_count": active_requirements_count,
+        "fully_traced_count": fully_traced_count,
+        "traceability_coverage_pct": traceability_coverage_pct,
+        "orphan_business_objective_ids": orphan_business_objective_ids,
+        "unmapped_wbs_deliverable_ids": unmapped_wbs_deliverable_ids,
+        "unverified_test_case_ids": unverified_test_case_ids,
+        "is_valid": is_valid,
+        "rtm_posture": rtm_posture,
+    }
+
