@@ -761,6 +761,104 @@ def summarize_projects_security_requirement_coverage(
     }
 
 
+TYPED_SCHEMA_KEYS = ("$ref", "properties", "allOf", "anyOf", "oneOf", "type")
+
+
+def summarize_projects_mutation_request_body_contracts(
+    openapi_schema: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Audita el tipado de esquemas en requestBody para operaciones de mutación (POST/PUT/PATCH) de proyectos."""
+    if not isinstance(openapi_schema, dict) or not isinstance(
+        openapi_schema.get("paths"), dict
+    ):
+        return {
+            "mutation_operations_count": 0,
+            "with_request_body_count": 0,
+            "typed_request_body_count": 0,
+            "untyped_request_body_ops": [],
+            "typing_rate_pct": 0.0,
+            "request_body_posture": "NO_MUTATION_OPERATIONS",
+        }
+
+    mutation_operations_count = 0
+    with_request_body_count = 0
+    typed_request_body_count = 0
+    untyped_request_body_ops: list[str] = []
+
+    for path, path_item in sorted(openapi_schema["paths"].items()):
+        if not isinstance(path, str) or "/projects" not in path:
+            continue
+        if not isinstance(path_item, dict):
+            continue
+
+        for method in ("post", "put", "patch"):
+            op_spec = path_item.get(method)
+            if not isinstance(op_spec, dict):
+                continue
+
+            mutation_operations_count += 1
+            if "requestBody" not in op_spec:
+                continue
+
+            with_request_body_count += 1
+            req_body = (
+                op_spec.get("requestBody")
+                if isinstance(op_spec.get("requestBody"), dict)
+                else {}
+            )
+            content = (
+                req_body.get("content")
+                if isinstance(req_body.get("content"), dict)
+                else {}
+            )
+
+            is_typed = False
+            for media_obj in content.values():
+                if not isinstance(media_obj, dict):
+                    continue
+                schema = media_obj.get("schema")
+                if isinstance(schema, dict) and any(
+                    bool(schema.get(k)) for k in TYPED_SCHEMA_KEYS
+                ):
+                    is_typed = True
+                    break
+
+            if is_typed:
+                typed_request_body_count += 1
+            else:
+                untyped_request_body_ops.append(f"{method.upper()} {path}")
+
+    if mutation_operations_count == 0 or with_request_body_count == 0:
+        return {
+            "mutation_operations_count": mutation_operations_count,
+            "with_request_body_count": with_request_body_count,
+            "typed_request_body_count": typed_request_body_count,
+            "untyped_request_body_ops": untyped_request_body_ops,
+            "typing_rate_pct": 0.0,
+            "request_body_posture": "NO_MUTATION_OPERATIONS",
+        }
+
+    typing_rate_pct = round(
+        (typed_request_body_count / with_request_body_count) * 100.0, 2
+    )
+    if len(untyped_request_body_ops) == 0:
+        request_body_posture = "STRICT_TYPED_MUTATION_BODIES"
+    elif typing_rate_pct >= 50.0:
+        request_body_posture = "PARTIAL_MUTATION_BODY_TYPING"
+    else:
+        request_body_posture = "UNTYPED_MUTATION_PAYLOAD_RISK"
+
+    return {
+        "mutation_operations_count": mutation_operations_count,
+        "with_request_body_count": with_request_body_count,
+        "typed_request_body_count": typed_request_body_count,
+        "untyped_request_body_ops": untyped_request_body_ops,
+        "typing_rate_pct": typing_rate_pct,
+        "request_body_posture": request_body_posture,
+    }
+
+
+
 
 
 

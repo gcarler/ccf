@@ -1469,6 +1469,179 @@ def test_security_requirement_coverage_empty_or_no_projects_operations():
     )
 
 
+# ─── summarize_projects_mutation_request_body_contracts (pure helper) ────────
+
+
+def test_mutation_request_body_contracts_strict_typed():
+    """100% de requestBody en POST/PUT/PATCH con schema tipado ($ref o properties/type) -> STRICT_TYPED_MUTATION_BODIES."""
+    openapi = {
+        "paths": {
+            "/api/projects": {
+                "post": {
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/ProjectCreate"}
+                            }
+                        }
+                    }
+                }
+            },
+            "/api/projects/{project_id}": {
+                "patch": {
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {"title": {"type": "string"}},
+                                }
+                            }
+                        }
+                    }
+                },
+                "post": {
+                    # Action endpoint without requestBody does not penalize with_request_body_count
+                    "operationId": "archive_project",
+                },
+            },
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_mutation_request_body_contracts(
+        openapi
+    )
+
+    assert res == {
+        "mutation_operations_count": 3,
+        "with_request_body_count": 2,
+        "typed_request_body_count": 2,
+        "untyped_request_body_ops": [],
+        "typing_rate_pct": 100.0,
+        "request_body_posture": "STRICT_TYPED_MUTATION_BODIES",
+    }
+
+
+def test_mutation_request_body_contracts_partial_typing():
+    """>= 50% de requestBody tipados pero >= 1 con schema vacío -> PARTIAL_MUTATION_BODY_TYPING."""
+    openapi = {
+        "paths": {
+            "/api/projects": {
+                "post": {
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/ProjectCreate"}
+                            }
+                        }
+                    }
+                }
+            },
+            "/api/projects/{project_id}": {
+                "put": {
+                    "requestBody": {
+                        "content": {
+                            "application/json": {"schema": {}}
+                        }
+                    }
+                }
+            },
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_mutation_request_body_contracts(
+        openapi
+    )
+
+    assert res == {
+        "mutation_operations_count": 2,
+        "with_request_body_count": 2,
+        "typed_request_body_count": 1,
+        "untyped_request_body_ops": ["PUT /api/projects/{project_id}"],
+        "typing_rate_pct": 50.0,
+        "request_body_posture": "PARTIAL_MUTATION_BODY_TYPING",
+    }
+
+
+def test_mutation_request_body_contracts_untyped_payload_risk():
+    """< 50% de requestBody tipados -> UNTYPED_MUTATION_PAYLOAD_RISK."""
+    openapi = {
+        "paths": {
+            "/api/projects": {
+                "post": {"requestBody": {"content": {"application/json": {}}}},
+            },
+            "/api/projects/{project_id}/tasks": {
+                "post": {"requestBody": {}},
+                "patch": {
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {"anyOf": [{"type": "object"}]}
+                            }
+                        }
+                    }
+                },
+            },
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_mutation_request_body_contracts(
+        openapi
+    )
+
+    assert res == {
+        "mutation_operations_count": 3,
+        "with_request_body_count": 3,
+        "typed_request_body_count": 1,
+        "untyped_request_body_ops": [
+            "POST /api/projects",
+            "POST /api/projects/{project_id}/tasks",
+        ],
+        "typing_rate_pct": 33.33,
+        "request_body_posture": "UNTYPED_MUTATION_PAYLOAD_RISK",
+    }
+
+
+def test_mutation_request_body_contracts_empty_or_no_request_bodies():
+    """Esquema vacío, None o mutaciones sin requestBody -> NO_MUTATION_OPERATIONS."""
+    expected_zero = {
+        "mutation_operations_count": 0,
+        "with_request_body_count": 0,
+        "typed_request_body_count": 0,
+        "untyped_request_body_ops": [],
+        "typing_rate_pct": 0.0,
+        "request_body_posture": "NO_MUTATION_OPERATIONS",
+    }
+    assert (
+        audit_projects_api_contracts.summarize_projects_mutation_request_body_contracts(None)
+        == expected_zero
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_mutation_request_body_contracts({})
+        == expected_zero
+    )
+    res_no_body = (
+        audit_projects_api_contracts.summarize_projects_mutation_request_body_contracts(
+            {
+                "paths": {
+                    "/api/projects/{project_id}/close": {
+                        "post": {"operationId": "close_project"}
+                    }
+                }
+            }
+        )
+    )
+    assert res_no_body == {
+        "mutation_operations_count": 1,
+        "with_request_body_count": 0,
+        "typed_request_body_count": 0,
+        "untyped_request_body_ops": [],
+        "typing_rate_pct": 0.0,
+        "request_body_posture": "NO_MUTATION_OPERATIONS",
+    }
+
+
+
 
 
 
