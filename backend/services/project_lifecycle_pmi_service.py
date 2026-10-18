@@ -3134,6 +3134,7 @@ __all__ = [
     "audit_business_case_financial_viability_governance",
     "audit_team_conflict_resolution_governance",
     "audit_stage_gate_phase_transition_governance",
+    "audit_stakeholder_engagement_seam_drift",
     "ProjectLifecyclePMIService",
 ]
 
@@ -3479,3 +3480,139 @@ def audit_stage_gate_phase_transition_governance(
 ProjectLifecyclePMIService.audit_stage_gate_phase_transition_governance = staticmethod(
     audit_stage_gate_phase_transition_governance
 )
+
+
+_SEAM_ORDINAL_SCALE: dict[str, int] = {
+    "unaware": 1,
+    "resistant": 2,
+    "neutral": 3,
+    "supportive": 4,
+    "leading": 5,
+}
+
+
+def audit_stakeholder_engagement_seam_drift(
+    stakeholders: Sequence[Mapping[str, Any]] | None,
+) -> dict[str, Any]:
+    """Audita la Matriz de Evaluación del Involucramiento de los Interesados (SEAM), brechas de actitud y deriva de resistencia según PMI PMBOK §13.2.2.5 y §13.4."""
+    if (
+        not stakeholders
+        or not isinstance(stakeholders, Sequence)
+        or isinstance(stakeholders, (str, bytes, Mapping))
+    ):
+        items: Sequence[Any] = []
+    else:
+        items = stakeholders
+
+    total_evaluated = 0
+    engagement_gap_stakeholder_ids: list[str] = []
+    unmitigated_gap_stakeholder_ids: list[str] = []
+    high_impact_resistant_stakeholder_ids: list[str] = []
+    regressing_engagement_stakeholder_ids: list[str] = []
+    invalid_level_stakeholder_ids: list[str] = []
+
+    for item in items:
+        if not isinstance(item, Mapping):
+            continue
+        stakeholder_id = str(
+            item.get("stakeholder_id") or item.get("id") or ""
+        ).strip()
+        if not stakeholder_id:
+            continue
+
+        total_evaluated += 1
+        current_engagement = (
+            str(item.get("current_engagement") or "").strip().lower()
+        )
+        desired_engagement = (
+            str(item.get("desired_engagement") or "").strip().lower()
+        )
+
+        if (
+            current_engagement not in _SEAM_ORDINAL_SCALE
+            or desired_engagement not in _SEAM_ORDINAL_SCALE
+        ):
+            invalid_level_stakeholder_ids.append(stakeholder_id)
+            continue
+
+        current_score = _SEAM_ORDINAL_SCALE[current_engagement]
+        desired_score = _SEAM_ORDINAL_SCALE[desired_engagement]
+
+        if current_score < desired_score:
+            engagement_gap_stakeholder_ids.append(stakeholder_id)
+            if not str(item.get("engagement_action_plan") or "").strip():
+                unmitigated_gap_stakeholder_ids.append(stakeholder_id)
+
+        if current_engagement == "resistant" and bool(
+            item.get("is_high_power_or_impact") is True
+        ):
+            high_impact_resistant_stakeholder_ids.append(stakeholder_id)
+
+        previous_engagement = (
+            str(item.get("previous_engagement") or "").strip().lower()
+        )
+        if previous_engagement in _SEAM_ORDINAL_SCALE:
+            previous_score = _SEAM_ORDINAL_SCALE[previous_engagement]
+            if current_score < previous_score:
+                regressing_engagement_stakeholder_ids.append(stakeholder_id)
+
+    is_seam_governance_healthy = bool(
+        len(unmitigated_gap_stakeholder_ids) == 0
+        and len(high_impact_resistant_stakeholder_ids) == 0
+        and len(regressing_engagement_stakeholder_ids) == 0
+        and len(invalid_level_stakeholder_ids) == 0
+    )
+
+    recommendations: list[str] = []
+    if invalid_level_stakeholder_ids:
+        recommendations.append(
+            "Clasificar a todos los interesados dentro de la escala canónica SEAM (unaware, resistant, neutral, supportive, leading)."
+        )
+    if high_impact_resistant_stakeholder_ids:
+        recommendations.append(
+            "Intervenir prioritariamente con patrocinio ejecutivo a los interesados resistentes de alto poder o impacto."
+        )
+    if unmitigated_gap_stakeholder_ids:
+        recommendations.append(
+            "Documentar un plan de acción de involucramiento (engagement_action_plan) para cada interesado con brecha entre nivel actual y deseado."
+        )
+    if regressing_engagement_stakeholder_ids:
+        recommendations.append(
+            "Analizar las causas de regresión de actitud en interesados cuyo involucramiento disminuyó respecto al ciclo previo."
+        )
+    if engagement_gap_stakeholder_ids and not unmitigated_gap_stakeholder_ids:
+        recommendations.append(
+            "Monitorear la ejecución de los planes de acción para cerrar las brechas SEAM activas."
+        )
+
+    if (
+        len(high_impact_resistant_stakeholder_ids) > 0
+        or len(unmitigated_gap_stakeholder_ids) > 0
+        or len(invalid_level_stakeholder_ids) > 0
+    ):
+        status = "critical"
+    elif (
+        len(regressing_engagement_stakeholder_ids) > 0
+        or len(engagement_gap_stakeholder_ids) > 0
+    ):
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_evaluated": total_evaluated,
+        "engagement_gap_stakeholder_ids": engagement_gap_stakeholder_ids,
+        "unmitigated_gap_stakeholder_ids": unmitigated_gap_stakeholder_ids,
+        "high_impact_resistant_stakeholder_ids": high_impact_resistant_stakeholder_ids,
+        "regressing_engagement_stakeholder_ids": regressing_engagement_stakeholder_ids,
+        "invalid_level_stakeholder_ids": invalid_level_stakeholder_ids,
+        "is_seam_governance_healthy": is_seam_governance_healthy,
+        "status": status,
+        "recommendations": recommendations,
+    }
+
+
+ProjectLifecyclePMIService.audit_stakeholder_engagement_seam_drift = staticmethod(
+    audit_stakeholder_engagement_seam_drift
+)
+

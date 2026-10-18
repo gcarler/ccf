@@ -2496,6 +2496,7 @@ __all__ = [
     "audit_wiki_retrospective_action_closure_governance",
     "audit_wiki_monte_carlo_contingency_governance",
     "audit_wiki_make_or_buy_and_source_selection_governance",
+    "audit_wiki_opa_template_versioning_governance",
     "WikiPMIService",
 ]
 
@@ -3101,3 +3102,125 @@ def audit_wiki_make_or_buy_and_source_selection_governance(
 WikiPMIService.audit_wiki_make_or_buy_and_source_selection_governance = staticmethod(
     audit_wiki_make_or_buy_and_source_selection_governance
 )
+
+
+_OPA_TEMPLATE_SEMVER_RE = re.compile(r"^\d+\.\d+(\.\d+)?(-[A-Za-z0-9._-]+)?$")
+
+
+def audit_wiki_opa_template_versioning_governance(
+    templates: Sequence[Mapping[str, Any]] | None,
+    max_review_age_days: float = 365.0,
+) -> dict[str, Any]:
+    """Audita el versionado semántico, custodia PMO y deprecación de plantillas de Activos de los Procesos de la Organización (OPA) según PMI PMBOK §2.5 y §4.4."""
+    if (
+        not templates
+        or not isinstance(templates, Sequence)
+        or isinstance(templates, (str, bytes, Mapping))
+    ):
+        items: Sequence[Any] = []
+    else:
+        items = templates
+
+    total_templates = 0
+    invalid_semver_template_ids: list[str] = []
+    deprecated_without_replacement_ids: list[str] = []
+    active_usage_on_deprecated_template_ids: list[str] = []
+    stale_or_unowned_active_template_ids: list[str] = []
+
+    for item in items:
+        if not isinstance(item, Mapping):
+            continue
+        template_id = str(
+            item.get("template_id") or item.get("id") or ""
+        ).strip()
+        if not template_id:
+            continue
+
+        total_templates += 1
+        semver = str(item.get("semver") or item.get("version") or "").strip()
+        if not _OPA_TEMPLATE_SEMVER_RE.match(semver):
+            invalid_semver_template_ids.append(template_id)
+
+        status = str(item.get("status") or "active").strip().lower()
+        if status in {"deprecated", "superseded"}:
+            if not str(item.get("replacement_template_id") or "").strip():
+                deprecated_without_replacement_ids.append(template_id)
+
+            try:
+                active_projects_using_count = int(
+                    item.get("active_projects_using_count") or 0
+                )
+            except (TypeError, ValueError):
+                active_projects_using_count = 0
+
+            if active_projects_using_count > 0:
+                active_usage_on_deprecated_template_ids.append(template_id)
+
+        elif status == "active":
+            try:
+                days_since_last_review = float(
+                    item.get("days_since_last_review") or 0.0
+                )
+            except (TypeError, ValueError):
+                days_since_last_review = 0.0
+
+            if (
+                days_since_last_review > float(max_review_age_days)
+                or not str(item.get("pmo_steward") or "").strip()
+            ):
+                stale_or_unowned_active_template_ids.append(template_id)
+
+    is_opa_governance_compliant = bool(
+        len(invalid_semver_template_ids) == 0
+        and len(deprecated_without_replacement_ids) == 0
+        and len(active_usage_on_deprecated_template_ids) == 0
+        and len(stale_or_unowned_active_template_ids) == 0
+    )
+
+    recommendations: list[str] = []
+    if invalid_semver_template_ids:
+        recommendations.append(
+            "Estandarizar el versionado semántico (MAJOR.MINOR[.PATCH]) en las plantillas OPA: "
+            + ", ".join(invalid_semver_template_ids)
+            + "."
+        )
+    if deprecated_without_replacement_ids:
+        recommendations.append(
+            "Vincular un identificador de plantilla sustituta (replacement_template_id) a toda plantilla deprecada o superada."
+        )
+    if active_usage_on_deprecated_template_ids:
+        recommendations.append(
+            "Migrar los proyectos activos que continúan utilizando plantillas OPA deprecadas hacia la versión vigente."
+        )
+    if stale_or_unowned_active_template_ids:
+        recommendations.append(
+            "Designar custodio PMO (pmo_steward) y ejecutar la revisión periódica anual de las plantillas OPA activas."
+        )
+
+    if (
+        len(invalid_semver_template_ids) > 0
+        or len(deprecated_without_replacement_ids) > 0
+        or len(active_usage_on_deprecated_template_ids) > 0
+    ):
+        overall_status = "critical"
+    elif len(stale_or_unowned_active_template_ids) > 0:
+        overall_status = "warning"
+    else:
+        overall_status = "healthy"
+
+    return {
+        "total_templates": total_templates,
+        "invalid_semver_template_ids": invalid_semver_template_ids,
+        "deprecated_without_replacement_ids": deprecated_without_replacement_ids,
+        "active_usage_on_deprecated_template_ids": active_usage_on_deprecated_template_ids,
+        "stale_or_unowned_active_template_ids": stale_or_unowned_active_template_ids,
+        "is_opa_governance_compliant": is_opa_governance_compliant,
+        "status": overall_status,
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_opa_template_versioning_governance = staticmethod(
+    audit_wiki_opa_template_versioning_governance
+)
+

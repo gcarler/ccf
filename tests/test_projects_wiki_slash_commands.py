@@ -3798,3 +3798,133 @@ def test_audit_wiki_make_or_buy_and_source_selection_governance_empty_and_servic
         )
         == audit_wiki_make_or_buy_and_source_selection_governance(sample)
     )
+
+
+def test_audit_wiki_opa_template_versioning_governance_healthy():
+    """Catálogo OPA con semver válido, custodia PMO al día y plantillas deprecadas con reemplazo y 0 proyectos activos (healthy)."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_opa_template_versioning_governance,
+    )
+
+    templates = [
+        {
+            "template_id": "OPA-TPL-CHARTER-V2",
+            "semver": "2.1.0",
+            "status": "active",
+            "days_since_last_review": 90,
+            "pmo_steward": "pmo.governance@ccf.org",
+        },
+        {
+            "template_id": "OPA-TPL-CHARTER-V1",
+            "version": "1.4.2-legacy",
+            "status": "deprecated",
+            "replacement_template_id": "OPA-TPL-CHARTER-V2",
+            "active_projects_using_count": 0,
+        },
+    ]
+    res = audit_wiki_opa_template_versioning_governance(templates, max_review_age_days=365.0)
+    assert res == {
+        "total_templates": 2,
+        "invalid_semver_template_ids": [],
+        "deprecated_without_replacement_ids": [],
+        "active_usage_on_deprecated_template_ids": [],
+        "stale_or_unowned_active_template_ids": [],
+        "is_opa_governance_compliant": True,
+        "status": "healthy",
+        "recommendations": [],
+    }
+
+
+def test_audit_wiki_opa_template_versioning_governance_critical_semver_and_deprecated_violations():
+    """Plantilla deprecada sin replacement_template_id o en uso por proyectos activos, y semver inválido (critical)."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_opa_template_versioning_governance,
+    )
+
+    templates = [
+        {
+            "template_id": "OPA-BAD-VER",
+            "semver": "v2-final-final",
+            "status": "active",
+            "days_since_last_review": 30,
+            "pmo_steward": "pmo@ccf.org",
+        },
+        {
+            "template_id": "OPA-DEP-NO-REPL",
+            "semver": "1.0.0",
+            "status": "superseded",
+            "replacement_template_id": "   ",
+            "active_projects_using_count": 3,
+        },
+    ]
+    res = audit_wiki_opa_template_versioning_governance(templates)
+    assert res["total_templates"] == 2
+    assert res["invalid_semver_template_ids"] == ["OPA-BAD-VER"]
+    assert res["deprecated_without_replacement_ids"] == ["OPA-DEP-NO-REPL"]
+    assert res["active_usage_on_deprecated_template_ids"] == ["OPA-DEP-NO-REPL"]
+    assert res["stale_or_unowned_active_template_ids"] == []
+    assert res["is_opa_governance_compliant"] is False
+    assert res["status"] == "critical"
+    assert len(res["recommendations"]) == 3
+
+
+def test_audit_wiki_opa_template_versioning_governance_warning_stale_or_unowned_active():
+    """Plantilla activa con days_since_last_review > max_review_age_days o sin pmo_steward (warning)."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_opa_template_versioning_governance,
+    )
+
+    templates = [
+        {
+            "template_id": "OPA-STALE",
+            "semver": "3.0",
+            "status": "active",
+            "days_since_last_review": 410,
+            "pmo_steward": "pmo@ccf.org",
+        },
+        {
+            "template_id": "OPA-UNOWNED",
+            "semver": "1.2.0",
+            "status": "active",
+            "days_since_last_review": 45,
+            "pmo_steward": "",
+        },
+    ]
+    res = audit_wiki_opa_template_versioning_governance(templates, max_review_age_days=365.0)
+    assert res["total_templates"] == 2
+    assert res["invalid_semver_template_ids"] == []
+    assert res["deprecated_without_replacement_ids"] == []
+    assert res["active_usage_on_deprecated_template_ids"] == []
+    assert res["stale_or_unowned_active_template_ids"] == ["OPA-STALE", "OPA-UNOWNED"]
+    assert res["is_opa_governance_compliant"] is False
+    assert res["status"] == "warning"
+    assert len(res["recommendations"]) == 1
+
+
+def test_audit_wiki_opa_template_versioning_governance_empty_and_service_staticmethod():
+    """Entradas vacías/None e invocación vía WikiPMIService.audit_wiki_opa_template_versioning_governance."""
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_opa_template_versioning_governance,
+    )
+
+    for payload in (None, [], "invalid", [{"id": "  "}]):
+        res = audit_wiki_opa_template_versioning_governance(payload)  # type: ignore[arg-type]
+        assert res["total_templates"] == 0
+        assert res["is_opa_governance_compliant"] is True
+        assert res["status"] == "healthy"
+
+    sample = [
+        {
+            "id": "OPA-OK",
+            "semver": "1.0.0",
+            "status": "active",
+            "days_since_last_review": 10,
+            "pmo_steward": "steward@ccf.org",
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_opa_template_versioning_governance(sample)
+        == audit_wiki_opa_template_versioning_governance(sample)
+    )
+

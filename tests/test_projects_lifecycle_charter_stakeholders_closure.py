@@ -3849,3 +3849,151 @@ def test_audit_stage_gate_phase_transition_governance_empty_and_service_staticme
             gates, require_sponsor_signoff=False
         )
     )
+
+
+def test_audit_stakeholder_engagement_seam_drift_healthy():
+    """Interesados en su nivel deseado (supportive/leading) -> healthy."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stakeholder_engagement_seam_drift,
+    )
+
+    stakeholders = [
+        {
+            "stakeholder_id": "SH-01",
+            "current_engagement": "leading",
+            "desired_engagement": "leading",
+            "previous_engagement": "supportive",
+            "is_high_power_or_impact": True,
+        },
+        {
+            "stakeholder_id": "SH-02",
+            "current_engagement": "supportive",
+            "desired_engagement": "supportive",
+            "previous_engagement": "supportive",
+            "is_high_power_or_impact": False,
+        },
+    ]
+    res = audit_stakeholder_engagement_seam_drift(stakeholders)
+    assert res == {
+        "total_evaluated": 2,
+        "engagement_gap_stakeholder_ids": [],
+        "unmitigated_gap_stakeholder_ids": [],
+        "high_impact_resistant_stakeholder_ids": [],
+        "regressing_engagement_stakeholder_ids": [],
+        "invalid_level_stakeholder_ids": [],
+        "is_seam_governance_healthy": True,
+        "status": "healthy",
+        "recommendations": [],
+    }
+
+
+def test_audit_stakeholder_engagement_seam_drift_warning_and_critical_gaps():
+    """Brecha SEAM con plan de acción (warning) vs brecha sin plan o resistente de alto impacto (critical)."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stakeholder_engagement_seam_drift,
+    )
+
+    # Warning: brecha mitigada con plan de acción
+    mitigated = [
+        {
+            "stakeholder_id": "SH-GAP-OK",
+            "current_engagement": "neutral",
+            "desired_engagement": "supportive",
+            "engagement_action_plan": "Sesiones quincenales de co-diseño con PMO.",
+            "is_high_power_or_impact": True,
+        }
+    ]
+    res_warn = audit_stakeholder_engagement_seam_drift(mitigated)
+    assert res_warn["total_evaluated"] == 1
+    assert res_warn["engagement_gap_stakeholder_ids"] == ["SH-GAP-OK"]
+    assert res_warn["unmitigated_gap_stakeholder_ids"] == []
+    assert res_warn["high_impact_resistant_stakeholder_ids"] == []
+    assert res_warn["is_seam_governance_healthy"] is True
+    assert res_warn["status"] == "warning"
+    assert len(res_warn["recommendations"]) >= 1
+
+    # Critical: brecha sin plan + resistente de alto impacto
+    critical_list = [
+        {
+            "stakeholder_id": "SH-UNMIT",
+            "current_engagement": "unaware",
+            "desired_engagement": "supportive",
+            "engagement_action_plan": "   ",
+        },
+        {
+            "stakeholder_id": "SH-RES-HIGH",
+            "current_engagement": "resistant",
+            "desired_engagement": "neutral",
+            "engagement_action_plan": "Reunión ejecutiva 1:1",
+            "is_high_power_or_impact": True,
+        },
+    ]
+    res_crit = audit_stakeholder_engagement_seam_drift(critical_list)
+    assert res_crit["total_evaluated"] == 2
+    assert res_crit["engagement_gap_stakeholder_ids"] == ["SH-UNMIT", "SH-RES-HIGH"]
+    assert res_crit["unmitigated_gap_stakeholder_ids"] == ["SH-UNMIT"]
+    assert res_crit["high_impact_resistant_stakeholder_ids"] == ["SH-RES-HIGH"]
+    assert res_crit["is_seam_governance_healthy"] is False
+    assert res_crit["status"] == "critical"
+    assert len(res_crit["recommendations"]) >= 2
+
+
+def test_audit_stakeholder_engagement_seam_drift_regression_and_invalid_levels():
+    """Regresión respecto a previous_engagement y detección de niveles fuera de la escala SEAM."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stakeholder_engagement_seam_drift,
+    )
+
+    # Caso regresión sin brecha no mitigada -> warning
+    regressing = [
+        {
+            "stakeholder_id": "SH-REG",
+            "current_engagement": "supportive",
+            "desired_engagement": "supportive",
+            "previous_engagement": "leading",
+        }
+    ]
+    res_reg = audit_stakeholder_engagement_seam_drift(regressing)
+    assert res_reg["regressing_engagement_stakeholder_ids"] == ["SH-REG"]
+    assert res_reg["is_seam_governance_healthy"] is False
+    assert res_reg["status"] == "warning"
+
+    # Caso nivel inválido -> critical
+    invalid = [
+        {
+            "stakeholder_id": "SH-BAD",
+            "current_engagement": "hostile",
+            "desired_engagement": "supportive",
+        }
+    ]
+    res_bad = audit_stakeholder_engagement_seam_drift(invalid)
+    assert res_bad["invalid_level_stakeholder_ids"] == ["SH-BAD"]
+    assert res_bad["is_seam_governance_healthy"] is False
+    assert res_bad["status"] == "critical"
+
+
+def test_audit_stakeholder_engagement_seam_drift_empty_and_service_staticmethod():
+    """Entradas vacías/None e invocación vía ProjectLifecyclePMIService.audit_stakeholder_engagement_seam_drift."""
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_stakeholder_engagement_seam_drift,
+    )
+
+    for payload in (None, [], "invalid", [{"id": "  "}]):
+        res = audit_stakeholder_engagement_seam_drift(payload)  # type: ignore[arg-type]
+        assert res["total_evaluated"] == 0
+        assert res["is_seam_governance_healthy"] is True
+        assert res["status"] == "healthy"
+
+    sample = [
+        {
+            "id": "SH-10",
+            "current_engagement": "supportive",
+            "desired_engagement": "supportive",
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_stakeholder_engagement_seam_drift(sample)
+        == audit_stakeholder_engagement_seam_drift(sample)
+    )
+
