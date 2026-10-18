@@ -4156,3 +4156,131 @@ def test_evaluate_evm_loe_masking_and_variance_distortion_invalid_inputs_and_exp
             "loe_masked_delay_ca_ids": [],
             "is_loe_accounting_compliant": True,
         }
+
+
+def test_evaluate_evm_apportioned_effort_base_coherence_compliant():
+    """Valida paquetes AE vinculados a trabajo discreto, factor (0, 100] y avance sincronizado."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_apportioned_effort_base_coherence,
+    )
+
+    packages = [
+        {
+            "wp_id": "WP-AE-QA-01",
+            "base_discrete_wp_id": "WP-DEV-01",
+            "base_wp_evmt": "fixed_formula",
+            "apportionment_factor_pct": 15.0,
+            "base_progress_pct": 60.0,
+            "reported_ae_progress_pct": 60.3,
+        },
+        {
+            "id": "WP-AE-INSP-02",
+            "base_discrete_wp_id": "WP-DEV-02",
+            "base_wp_evmt": "weighted_milestones",
+            "apportionment_factor_pct": 10.0,
+            "base_progress_pct": 100.0,
+            "reported_ae_progress_pct": 100.0,
+        },
+    ]
+    res = evaluate_evm_apportioned_effort_base_coherence(packages)
+    assert res == {
+        "total_evaluated": 2,
+        "unlinked_or_non_discrete_base_wp_ids": [],
+        "invalid_factor_wp_ids": [],
+        "progress_desync_wp_ids": [],
+        "is_apportioned_effort_coherent": True,
+    }
+    assert (
+        ProjectEVMService.evaluate_evm_apportioned_effort_base_coherence(
+            packages
+        )
+        == res
+    )
+
+
+def test_evaluate_evm_apportioned_effort_base_coherence_unlinked_and_loe_base():
+    """Detecta paquetes AE sin base_discrete_wp_id o vinculados a un paquete LOE."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_apportioned_effort_base_coherence,
+    )
+
+    packages = [
+        {
+            "wp_id": "WP-AE-NO-BASE",
+            "base_discrete_wp_id": "   ",
+            "base_wp_evmt": "discrete",
+            "apportionment_factor_pct": 12.0,
+            "base_progress_pct": 40.0,
+            "reported_ae_progress_pct": 40.0,
+        },
+        {
+            "wp_id": "WP-AE-ON-LOE",
+            "base_discrete_wp_id": "WP-PMO-LOE",
+            "base_wp_evmt": "LOE",
+            "apportionment_factor_pct": 20.0,
+            "base_progress_pct": 50.0,
+            "reported_ae_progress_pct": 50.0,
+        },
+    ]
+    res = evaluate_evm_apportioned_effort_base_coherence(packages)
+    assert res["total_evaluated"] == 2
+    assert res["unlinked_or_non_discrete_base_wp_ids"] == [
+        "WP-AE-NO-BASE",
+        "WP-AE-ON-LOE",
+    ]
+    assert res["invalid_factor_wp_ids"] == []
+    assert res["progress_desync_wp_ids"] == []
+    assert res["is_apportioned_effort_coherent"] is False
+
+
+def test_evaluate_evm_apportioned_effort_base_coherence_factor_and_desync():
+    """Detecta factores de prorrateo fuera de (0, 100] y desincronización de avance > 0.5%."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_apportioned_effort_base_coherence,
+    )
+
+    packages = [
+        {
+            "wp_id": "WP-AE-ZERO-FACTOR",
+            "base_discrete_wp_id": "WP-DISC-1",
+            "apportionment_factor_pct": 0.0,
+            "base_progress_pct": 30.0,
+            "reported_ae_progress_pct": 30.0,
+        },
+        {
+            "wp_id": "WP-AE-OVER-FACTOR",
+            "base_discrete_wp_id": "WP-DISC-2",
+            "apportionment_factor_pct": 125.0,
+            "base_progress_pct": 50.0,
+            "reported_ae_progress_pct": 65.0,
+        },
+    ]
+    res = evaluate_evm_apportioned_effort_base_coherence(packages)
+    assert res["total_evaluated"] == 2
+    assert res["unlinked_or_non_discrete_base_wp_ids"] == []
+    assert res["invalid_factor_wp_ids"] == [
+        "WP-AE-ZERO-FACTOR",
+        "WP-AE-OVER-FACTOR",
+    ]
+    assert res["progress_desync_wp_ids"] == ["WP-AE-OVER-FACTOR"]
+    assert res["is_apportioned_effort_coherent"] is False
+
+
+def test_evaluate_evm_apportioned_effort_base_coherence_invalid_inputs_and_export():
+    """Maneja entradas no secuencia o ítems sin wp_id e incluye exportación en __all__."""
+    import backend.services.project_evm_service as _m
+    from backend.services.project_evm_service import (
+        evaluate_evm_apportioned_effort_base_coherence,
+    )
+
+    assert "evaluate_evm_apportioned_effort_base_coherence" in _m.__all__
+    for bad in (None, "str", b"bytes", bytearray(b"123"), [{"wp_id": ""}, 99]):
+        assert evaluate_evm_apportioned_effort_base_coherence(bad) == {
+            "total_evaluated": 0,
+            "unlinked_or_non_discrete_base_wp_ids": [],
+            "invalid_factor_wp_ids": [],
+            "progress_desync_wp_ids": [],
+            "is_apportioned_effort_coherent": True,
+        }
+

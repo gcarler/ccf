@@ -3005,6 +3005,7 @@ __all__ = [
     "audit_markdown_frontmatter_metadata_hygiene",
     "audit_markdown_image_alt_text_and_asset_hygiene",
     "audit_markdown_code_fence_language_and_secret_hygiene",
+    "audit_markdown_blockquote_depth_and_citation_hygiene",
     "AnyDocService",
     "AnydocService",
 ]
@@ -3962,3 +3963,140 @@ def audit_markdown_code_fence_language_and_secret_hygiene(
         "unclosed_fence_line": unclosed_fence_line,
         "is_code_fence_hygiene_compliant": is_code_fence_hygiene_compliant,
     }
+
+
+AnyDocService.audit_markdown_code_fence_language_and_secret_hygiene = staticmethod(
+    audit_markdown_code_fence_language_and_secret_hygiene
+)
+
+
+def audit_markdown_blockquote_depth_and_citation_hygiene(
+    markdown_text: object,
+    *,
+    max_nesting_depth: int = 2,
+) -> dict[str, object]:
+    """Audita profundidad de anidamiento, bloques vacíos y atribución de fuentes en citas normativas de blockquotes Markdown según PMI PMBOK §4.4 y §10.2."""
+    if not isinstance(markdown_text, str) or not markdown_text.strip():
+        return {
+            "total_blockquote_blocks": 0,
+            "excessive_nesting_block_lines": [],
+            "empty_blockquote_block_lines": [],
+            "unattributed_normative_quote_lines": [],
+            "is_blockquote_hygiene_compliant": True,
+        }
+
+    max_depth = int(max_nesting_depth)
+    lines = markdown_text.splitlines()
+    blockquote_re = re.compile(r"^\s*((?:>\s*)+)(.*)$")
+    admonition_re = re.compile(r"^\[![A-Za-z0-9_-]+\]")
+
+    normative_terms = (
+        "pmbok",
+        "iso ",
+        "ieee",
+        "cláusula",
+        "clausula",
+        "artículo",
+        "articulo",
+        "según norma",
+        "segun norma",
+    )
+    attribution_markers = (
+        "—",
+        "--",
+        "fuente:",
+        "ref:",
+        "[",
+        "§",
+    )
+
+    total_blockquote_blocks = 0
+    excessive_nesting_block_lines: list[int] = []
+    empty_blockquote_block_lines: list[int] = []
+    unattributed_normative_quote_lines: list[int] = []
+
+    in_backtick_fence = False
+    in_tilde_fence = False
+
+    current_block: dict[str, Any] | None = None
+
+    def _finalize_block(block: dict[str, Any] | None) -> None:
+        nonlocal total_blockquote_blocks
+        if block is None or block["is_admonition"]:
+            return
+        total_blockquote_blocks += 1
+        start_line = int(block["start_line"])
+        if int(block["max_depth"]) > max_depth:
+            excessive_nesting_block_lines.append(start_line)
+
+        combined_text = " ".join(
+            part for part in block["texts"] if part
+        ).strip()
+        if not combined_text:
+            empty_blockquote_block_lines.append(start_line)
+            return
+
+        lowered = combined_text.lower()
+        if any(term in lowered for term in normative_terms) and not any(
+            marker in lowered for marker in attribution_markers
+        ):
+            unattributed_normative_quote_lines.append(start_line)
+
+    for line_no, raw_line in enumerate(lines, start=1):
+        stripped = raw_line.strip()
+        if not in_tilde_fence and stripped.startswith("```"):
+            if current_block is not None:
+                _finalize_block(current_block)
+                current_block = None
+            in_backtick_fence = not in_backtick_fence
+            continue
+        if not in_backtick_fence and stripped.startswith("~~~"):
+            if current_block is not None:
+                _finalize_block(current_block)
+                current_block = None
+            in_tilde_fence = not in_tilde_fence
+            continue
+        if in_backtick_fence or in_tilde_fence:
+            continue
+
+        match = blockquote_re.match(raw_line)
+        if match:
+            prefix = match.group(1)
+            body = match.group(2).strip()
+            depth = prefix.count(">")
+            if current_block is None:
+                current_block = {
+                    "start_line": line_no,
+                    "max_depth": depth,
+                    "texts": [body],
+                    "is_admonition": bool(admonition_re.match(body)),
+                }
+            else:
+                if depth > int(current_block["max_depth"]):
+                    current_block["max_depth"] = depth
+                current_block["texts"].append(body)
+        else:
+            if current_block is not None:
+                _finalize_block(current_block)
+                current_block = None
+
+    if current_block is not None:
+        _finalize_block(current_block)
+
+    return {
+        "total_blockquote_blocks": total_blockquote_blocks,
+        "excessive_nesting_block_lines": excessive_nesting_block_lines,
+        "empty_blockquote_block_lines": empty_blockquote_block_lines,
+        "unattributed_normative_quote_lines": unattributed_normative_quote_lines,
+        "is_blockquote_hygiene_compliant": (
+            len(excessive_nesting_block_lines) == 0
+            and len(empty_blockquote_block_lines) == 0
+            and len(unattributed_normative_quote_lines) == 0
+        ),
+    }
+
+
+AnyDocService.audit_markdown_blockquote_depth_and_citation_hygiene = staticmethod(
+    audit_markdown_blockquote_depth_and_citation_hygiene
+)
+

@@ -5490,6 +5490,7 @@ __all__ = [
     "evaluate_evm_undistributed_budget_and_planning_packages",
     "evaluate_evm_reserve_burn_vs_risk_exposure",
     "evaluate_evm_loe_masking_and_variance_distortion",
+    "evaluate_evm_apportioned_effort_base_coherence",
     "ProjectEVMService",
 ]
 
@@ -6034,3 +6035,82 @@ def evaluate_evm_loe_masking_and_variance_distortion(
 ProjectEVMService.evaluate_evm_loe_masking_and_variance_distortion = staticmethod(
     evaluate_evm_loe_masking_and_variance_distortion
 )
+
+
+def evaluate_evm_apportioned_effort_base_coherence(
+    apportioned_packages: object,
+) -> dict[str, object]:
+    """Evalúa coherencia de paquetes de Esfuerzo Prorrateado (Apportioned Effort - AE) respecto a su paquete discreto base, factor de prorrateo y sincronización de avance según PMI PMBOK §7.4 y ANSI/EIA-748."""
+    total_evaluated = 0
+    unlinked_or_non_discrete_base_wp_ids: list[str] = []
+    invalid_factor_wp_ids: list[str] = []
+    progress_desync_wp_ids: list[str] = []
+
+    if isinstance(apportioned_packages, Sequence) and not isinstance(
+        apportioned_packages, (str, bytes, bytearray)
+    ):
+        for item in apportioned_packages:
+            if not isinstance(item, Mapping):
+                continue
+            wp_id = str(item.get("wp_id") or item.get("id") or "").strip()
+            if not wp_id:
+                continue
+
+            total_evaluated += 1
+            base_discrete_wp_id = str(
+                item.get("base_discrete_wp_id") or ""
+            ).strip()
+            base_wp_evmt = (
+                str(item.get("base_wp_evmt") or "discrete").strip().lower()
+            )
+
+            try:
+                apportionment_factor_pct = float(
+                    item.get("apportionment_factor_pct", 0.0) or 0.0
+                )
+            except (TypeError, ValueError):
+                apportionment_factor_pct = 0.0
+
+            try:
+                base_progress_pct = float(
+                    item.get("base_progress_pct", 0.0) or 0.0
+                )
+            except (TypeError, ValueError):
+                base_progress_pct = 0.0
+
+            try:
+                reported_ae_progress_pct = float(
+                    item.get("reported_ae_progress_pct", 0.0) or 0.0
+                )
+            except (TypeError, ValueError):
+                reported_ae_progress_pct = 0.0
+
+            if not base_discrete_wp_id or base_wp_evmt == "loe":
+                unlinked_or_non_discrete_base_wp_ids.append(wp_id)
+
+            if (
+                apportionment_factor_pct <= 0.0
+                or apportionment_factor_pct > 100.0
+            ):
+                invalid_factor_wp_ids.append(wp_id)
+
+            if abs(reported_ae_progress_pct - base_progress_pct) > 0.5:
+                progress_desync_wp_ids.append(wp_id)
+
+    return {
+        "total_evaluated": total_evaluated,
+        "unlinked_or_non_discrete_base_wp_ids": unlinked_or_non_discrete_base_wp_ids,
+        "invalid_factor_wp_ids": invalid_factor_wp_ids,
+        "progress_desync_wp_ids": progress_desync_wp_ids,
+        "is_apportioned_effort_coherent": (
+            len(unlinked_or_non_discrete_base_wp_ids) == 0
+            and len(invalid_factor_wp_ids) == 0
+            and len(progress_desync_wp_ids) == 0
+        ),
+    }
+
+
+ProjectEVMService.evaluate_evm_apportioned_effort_base_coherence = staticmethod(
+    evaluate_evm_apportioned_effort_base_coherence
+)
+

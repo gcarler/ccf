@@ -3534,3 +3534,101 @@ def test_audit_markdown_code_fence_unclosed_and_scope():
 
     import backend.services.anydoc_service as _m
     assert "audit_markdown_code_fence_language_and_secret_hygiene" in _m.__all__
+
+
+def test_audit_markdown_blockquote_depth_and_citation_hygiene_compliant():
+    """Valida citas con atribución explícita, anidamiento permitido e ignora admonitions y code fences."""
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_blockquote_depth_and_citation_hygiene,
+    )
+
+    doc = (
+        "# Acta de Gobernanza\n\n"
+        "> [!NOTE]\n"
+        "> Esta alerta no se contabiliza como blockquote estándar.\n\n"
+        "> El control integrado de cambios según PMBOK §4.6 exige trazabilidad formal.\n"
+        "> > Nota complementaria de segundo nivel.\n\n"
+        "```markdown\n"
+        "> > > > Bloque dentro de code fence ignorado\n"
+        "```\n"
+    )
+    res = audit_markdown_blockquote_depth_and_citation_hygiene(
+        doc, max_nesting_depth=2
+    )
+    assert res == {
+        "total_blockquote_blocks": 1,
+        "excessive_nesting_block_lines": [],
+        "empty_blockquote_block_lines": [],
+        "unattributed_normative_quote_lines": [],
+        "is_blockquote_hygiene_compliant": True,
+    }
+    assert (
+        AnyDocService.audit_markdown_blockquote_depth_and_citation_hygiene(doc)
+        == res
+    )
+
+
+def test_audit_markdown_blockquote_excessive_nesting_and_empty_blocks():
+    """Detecta bloques con anidamiento superior a max_nesting_depth y blockquotes vacíos."""
+    from backend.services.anydoc_service import (
+        audit_markdown_blockquote_depth_and_citation_hygiene,
+    )
+
+    doc = (
+        "> Nivel 1\n"
+        "> > Nivel 2\n"
+        "> > > Nivel 3 excesivo\n\n"
+        ">    \n"
+        "> >   \n"
+    )
+    res = audit_markdown_blockquote_depth_and_citation_hygiene(
+        doc, max_nesting_depth=2
+    )
+    assert res["total_blockquote_blocks"] == 2
+    assert res["excessive_nesting_block_lines"] == [1]
+    assert res["empty_blockquote_block_lines"] == [5]
+    assert res["unattributed_normative_quote_lines"] == []
+    assert res["is_blockquote_hygiene_compliant"] is False
+
+
+def test_audit_markdown_blockquote_unattributed_normative_quotes():
+    """Exige marcador de atribución cuando un blockquote cita normas (PMBOK, ISO, IEEE, cláusula, artículo)."""
+    from backend.services.anydoc_service import (
+        audit_markdown_blockquote_depth_and_citation_hygiene,
+    )
+
+    doc = (
+        "> Según el estándar PMBOK toda línea base requiere aprobación del comité.\n\n"
+        "> La cláusula de penalización aplica tras 15 días de mora — Fuente: Contrato Marco.\n\n"
+        "> El estándar ISO 21502 define la gobernanza de proyectos sin referencia explícita.\n"
+    )
+    res = audit_markdown_blockquote_depth_and_citation_hygiene(doc)
+    assert res["total_blockquote_blocks"] == 3
+    assert res["excessive_nesting_block_lines"] == []
+    assert res["empty_blockquote_block_lines"] == []
+    assert res["unattributed_normative_quote_lines"] == [1, 5]
+    assert res["is_blockquote_hygiene_compliant"] is False
+
+
+def test_audit_markdown_blockquote_invalid_inputs_and_export():
+    """Retorna estructura limpia ante entradas vacías o no-string y verifica exportación en __all__."""
+    import backend.services.anydoc_service as _m
+    from backend.services.anydoc_service import (
+        audit_markdown_blockquote_depth_and_citation_hygiene,
+    )
+
+    assert "audit_markdown_blockquote_depth_and_citation_hygiene" in _m.__all__
+    expected_empty = {
+        "total_blockquote_blocks": 0,
+        "excessive_nesting_block_lines": [],
+        "empty_blockquote_block_lines": [],
+        "unattributed_normative_quote_lines": [],
+        "is_blockquote_hygiene_compliant": True,
+    }
+    for bad in (None, "", "   \n  ", 123, ["blockquote"]):
+        assert (
+            audit_markdown_blockquote_depth_and_citation_hygiene(bad)
+            == expected_empty
+        )
+
