@@ -1318,3 +1318,84 @@ def test_evaluate_dod_checklist_verification_depth_no_dod_checklist():
             "posture": "NO_DOD_CHECKLIST",
         }
 
+
+# ─── evaluate_scope_creep_baseline_drift (pure helper) ─────────────
+
+
+def test_evaluate_scope_creep_drift_controlled_baseline():
+    """Tareas actuales dentro del alcance autorizado -> CONTROLLED_BASELINE (delta 0)."""
+    from backend.services.project_ccb_service import (
+        evaluate_scope_creep_baseline_drift,
+    )
+
+    res = evaluate_scope_creep_baseline_drift(
+        baseline_tasks_count=20,
+        current_tasks_count=23,
+        approved_change_requests_tasks_delta=3,
+    )
+
+    assert res["authorized_scope_count"] == 23
+    assert res["unapproved_tasks_delta"] == 0
+    assert res["scope_creep_pct"] == 0.0
+    assert res["posture"] == "CONTROLLED_BASELINE"
+
+
+def test_evaluate_scope_creep_drift_moderate_and_critical():
+    """Drift <= 15% -> MODERATE_SCOPE_DRIFT; drift > 15% -> CRITICAL_SCOPE_CREEP."""
+    from backend.services.project_ccb_service import (
+        evaluate_scope_creep_baseline_drift,
+    )
+
+    moderate = evaluate_scope_creep_baseline_drift(20, 23, 0)
+    assert moderate["unapproved_tasks_delta"] == 3
+    assert moderate["scope_creep_pct"] == 15.0
+    assert moderate["posture"] == "MODERATE_SCOPE_DRIFT"
+
+    critical = evaluate_scope_creep_baseline_drift(10, 13, 0)
+    assert critical["scope_creep_pct"] == 30.0
+    assert critical["posture"] == "CRITICAL_SCOPE_CREEP"
+
+
+def test_evaluate_scope_creep_drift_negative_gamma_edge_cases():
+    """None/negativos se clamparan; CR negativo reduce el alcance autorizado; drift sin autorizado -> 100.0."""
+    from backend.services.project_ccb_service import (
+        evaluate_scope_creep_baseline_drift,
+    )
+
+    no_baseline = evaluate_scope_creep_baseline_drift(None, None, None)
+    assert no_baseline == {
+        "baseline_tasks_count": 0,
+        "current_tasks_count": 0,
+        "approved_change_requests_tasks_delta": 0,
+        "authorized_scope_count": 0,
+        "unapproved_tasks_delta": 0,
+        "scope_creep_pct": 0.0,
+        "posture": "NO_BASELINE_SCOPE",
+    }
+
+    reduced_scope = evaluate_scope_creep_baseline_drift(10, 8, -3)
+    assert reduced_scope["approved_change_requests_tasks_delta"] == -3
+    assert reduced_scope["authorized_scope_count"] == 7
+    assert reduced_scope["unapproved_tasks_delta"] == 1
+    assert reduced_scope["scope_creep_pct"] == 14.29
+    assert reduced_scope["posture"] == "MODERATE_SCOPE_DRIFT"
+
+    orphan_tasks = evaluate_scope_creep_baseline_drift(None, 2, 0)
+    assert orphan_tasks["authorized_scope_count"] == 0
+    assert orphan_tasks["unapproved_tasks_delta"] == 2
+    assert orphan_tasks["scope_creep_pct"] == 100.0
+    assert orphan_tasks["posture"] == "CRITICAL_SCOPE_CREEP"
+
+
+def test_evaluate_scope_creep_drift_empty_with_orphan_counts():
+    """Sin baseline pero con tareas actuales y autorizado 0 -> 100% drift crítico."""
+    from backend.services.project_ccb_service import (
+        evaluate_scope_creep_baseline_drift,
+    )
+
+    res = evaluate_scope_creep_baseline_drift(0, 5, 0)
+    assert res["authorized_scope_count"] == 0
+    assert res["unapproved_tasks_delta"] == 5
+    assert res["scope_creep_pct"] == 100.0
+    assert res["posture"] == "CRITICAL_SCOPE_CREEP"
+

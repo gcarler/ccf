@@ -601,3 +601,86 @@ def test_validate_ccb_change_request_defaults_and_normalization():
     assert stripped["clean_justification"] == "ok"  # 2 chars -> invalid
     assert stripped["is_valid"] is False
 
+
+# ─── validate_milestone_deliverable_gate (PMBOK §6.2 / §5.5, pure helper) ───
+
+
+def test_validate_milestone_deliverable_gate_verified():
+    """Hito con título >= 5, criterio >= 15, fecha >= 8 y avance >= 100.0 -> 'MILESTONE_GATE_VERIFIED'."""
+    from backend.schemas.projects import validate_milestone_deliverable_gate
+
+    res = validate_milestone_deliverable_gate(
+        title="  Cierre Fase 1  ",
+        acceptance_criteria="  Acta firmada por sponsor y pruebas QA al 100%  ",
+        due_date="2026-10-30",
+        progress_pct=105.0,
+    )
+    assert res == {
+        "clean_title": "Cierre Fase 1",
+        "clean_criteria": "Acta firmada por sponsor y pruebas QA al 100%",
+        "clean_due_date": "2026-10-30",
+        "safe_progress": 100.0,
+        "has_valid_title": True,
+        "has_acceptance_criteria": True,
+        "has_due_date": True,
+        "is_gate_ready": True,
+        "posture": "MILESTONE_GATE_VERIFIED",
+    }
+
+
+def test_validate_milestone_deliverable_gate_in_execution():
+    """Hito gate-ready pero con safe_progress < 100.0 -> 'MILESTONE_IN_EXECUTION'."""
+    from backend.schemas.projects import validate_milestone_deliverable_gate
+
+    res = validate_milestone_deliverable_gate(
+        title="Despliegue Producción",
+        acceptance_criteria="Verificación de humo HTTP 200 en todos los módulos",
+        due_date="2026-11-15",
+        progress_pct=65.5,
+    )
+    assert res["is_gate_ready"] is True
+    assert res["safe_progress"] == 65.5
+    assert res["posture"] == "MILESTONE_IN_EXECUTION"
+
+
+def test_validate_milestone_deliverable_gate_missing_acceptance_criteria():
+    """Título y fecha válidos pero criterio < 15 caracteres -> 'MISSING_ACCEPTANCE_CRITERIA'."""
+    from backend.schemas.projects import validate_milestone_deliverable_gate
+
+    res = validate_milestone_deliverable_gate(
+        title="Hito Intermedio",
+        acceptance_criteria="Muy corto",
+        due_date="2026-11-01",
+        progress_pct=100.0,
+    )
+    assert res["has_valid_title"] is True
+    assert res["has_due_date"] is True
+    assert res["has_acceptance_criteria"] is False
+    assert res["is_gate_ready"] is False
+    assert res["posture"] == "MISSING_ACCEPTANCE_CRITERIA"
+
+
+def test_validate_milestone_deliverable_gate_invalid_spec():
+    """Sin título válido (< 5) o sin fecha válida (< 8) -> 'INVALID_MILESTONE_SPEC'."""
+    from backend.schemas.projects import validate_milestone_deliverable_gate
+
+    no_title = validate_milestone_deliverable_gate(
+        title="abc",
+        acceptance_criteria="Criterio suficientemente detallado para validación",
+        due_date="2026-12-01",
+        progress_pct=-10.0,
+    )
+    assert no_title["has_valid_title"] is False
+    assert no_title["safe_progress"] == 0.0
+    assert no_title["is_gate_ready"] is False
+    assert no_title["posture"] == "INVALID_MILESTONE_SPEC"
+
+    no_date = validate_milestone_deliverable_gate(
+        title="Hito Sin Fecha",
+        acceptance_criteria="Criterio suficientemente detallado para validación",
+        due_date=None,
+    )
+    assert no_date["has_due_date"] is False
+    assert no_date["is_gate_ready"] is False
+    assert no_date["posture"] == "INVALID_MILESTONE_SPEC"
+

@@ -754,3 +754,54 @@ def evaluate_dod_checklist_verification_depth(
         "posture": posture,
     }
 
+
+def evaluate_scope_creep_baseline_drift(
+    baseline_tasks_count: int | None,
+    current_tasks_count: int | None,
+    approved_change_requests_tasks_delta: int | None = 0,
+) -> dict[str, Any]:
+    """Audita la pérdida de control del alcance (scope creep / baseline drift — PMBOK §5.6, §4.6).
+
+    - `safe_baseline`/`safe_current`: conteos clampados a >= 0; el delta de CRs
+      aprobadas puede ser negativo (ej. reducción de alcance aprobado).
+    - `authorized_scope_count`: baseline + CRs aprobadas (>= 0).
+    - `unapproved_tasks_delta`: tareas actuales por encima del alcance autorizado.
+    - `scope_creep_pct`: drift % sobre el alcance autorizado (2 decimales);
+      con autorizado 0: 100.0 si hay tareas no autorizadas, 0.0 en otro caso.
+    - `posture`: 'NO_BASELINE_SCOPE' sin baseline ni tareas actuales;
+      'CONTROLLED_BASELINE' sin drift; 'MODERATE_SCOPE_DRIFT' con drift <= 15.0;
+      'CRITICAL_SCOPE_CREEP' con drift > 15.0.
+    """
+    safe_baseline = max(0, int(baseline_tasks_count or 0))
+    safe_current = max(0, int(current_tasks_count or 0))
+    safe_approved_delta = int(approved_change_requests_tasks_delta or 0)
+
+    authorized_scope_count = max(0, safe_baseline + safe_approved_delta)
+    unapproved_tasks_delta = max(0, safe_current - authorized_scope_count)
+
+    if authorized_scope_count > 0:
+        scope_creep_pct = round(
+            (unapproved_tasks_delta / authorized_scope_count) * 100.0, 2
+        )
+    else:
+        scope_creep_pct = 100.0 if unapproved_tasks_delta > 0 else 0.0
+
+    if safe_baseline == 0 and safe_current == 0:
+        posture = "NO_BASELINE_SCOPE"
+    elif unapproved_tasks_delta == 0:
+        posture = "CONTROLLED_BASELINE"
+    elif scope_creep_pct <= 15.0:
+        posture = "MODERATE_SCOPE_DRIFT"
+    else:
+        posture = "CRITICAL_SCOPE_CREEP"
+
+    return {
+        "baseline_tasks_count": safe_baseline,
+        "current_tasks_count": safe_current,
+        "approved_change_requests_tasks_delta": safe_approved_delta,
+        "authorized_scope_count": authorized_scope_count,
+        "unapproved_tasks_delta": unapproved_tasks_delta,
+        "scope_creep_pct": scope_creep_pct,
+        "posture": posture,
+    }
+

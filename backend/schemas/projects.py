@@ -2656,3 +2656,44 @@ def validate_ccb_change_request_justification(
         "posture": posture,
     }
 
+
+def validate_milestone_deliverable_gate(
+    title: str | None,
+    acceptance_criteria: str | None,
+    due_date: str | None,
+    progress_pct: float | int | None = 0.0,
+) -> dict[str, Any]:
+    """Valida un hito (milestone) y sus criterios de aceptación según PMI PMBOK §6.2 (Define Activities) y §5.5 (Validate Scope)."""
+    clean_title = (title or "").strip()
+    clean_criteria = (acceptance_criteria or "").strip()
+    clean_due_date = (due_date or "").strip()
+    safe_progress = max(0.0, min(100.0, round(float(progress_pct or 0.0), 2)))
+
+    has_valid_title = bool(len(clean_title) >= 5)
+    has_acceptance_criteria = bool(len(clean_criteria) >= 15)
+    has_due_date = bool(len(clean_due_date) >= 8)
+    is_gate_ready = bool(
+        has_valid_title and has_acceptance_criteria and has_due_date
+    )
+
+    if not has_valid_title or not has_due_date:
+        posture = "INVALID_MILESTONE_SPEC"
+    elif not has_acceptance_criteria:
+        posture = "MISSING_ACCEPTANCE_CRITERIA"
+    elif safe_progress >= 100.0:
+        posture = "MILESTONE_GATE_VERIFIED"
+    else:
+        posture = "MILESTONE_IN_EXECUTION"
+
+    return {
+        "clean_title": clean_title,
+        "clean_criteria": clean_criteria,
+        "clean_due_date": clean_due_date,
+        "safe_progress": safe_progress,
+        "has_valid_title": has_valid_title,
+        "has_acceptance_criteria": has_acceptance_criteria,
+        "has_due_date": has_due_date,
+        "is_gate_ready": is_gate_ready,
+        "posture": posture,
+    }
+
