@@ -47,7 +47,7 @@ export default function ProjectsInboxPage() {
                 setLoadFailed(false);
                 const data = await apiFetch<ProjectInboxItem[]>('/projects/inbox', { token, cache: 'no-store' });
                 setMessages(Array.isArray(data) ? data : []);
-            } catch (err) {
+            } catch {
                 setMessages([]);
                 setError('No se pudo cargar el inbox de proyectos.');
                 setLoadFailed(true);
@@ -58,6 +58,9 @@ export default function ProjectsInboxPage() {
         if (!authLoading) fetchInbox();
     }, [authLoading, token, loadAttempt]);
 
+    const unreadCount = messages.filter((msg) => !msg.is_read).length;
+    const assignedTasksCount = messages.filter((msg) => msg.type === 'task_assigned').length;
+    const mentionsCount = messages.filter((msg) => msg.type === 'comment').length;
     const filteredMessages = messages.filter((msg) => {
         if (filter === 'unread') return !msg.is_read;
         if (filter === 'mentions') return msg.type === 'comment';
@@ -87,7 +90,7 @@ export default function ProjectsInboxPage() {
                 body: { is_read: true }
             });
             setMessages((prev) => prev.map((row) => (row.id === msg.id ? { ...row, is_read: true } : row)));
-        } catch (err) {
+        } catch {
             toast.error('Error al resolver elemento');
         } finally {
             setResolvingId(null);
@@ -114,6 +117,29 @@ export default function ProjectsInboxPage() {
                     className="mx-4 mt-4"
                 />
             )}
+            <div
+                data-testid="projects-inbox-pmi-header"
+                className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-2)/0.45)] shrink-0"
+            >
+                <div className="flex flex-wrap items-center gap-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
+                    <span className="font-bold text-[hsl(var(--foreground))]">Triage PMI §10.3</span>
+                    <span>Total Bandeja: {messages.length}</span>
+                    <span>Pendientes de Atención: {unreadCount}</span>
+                    <span>Paquetes Asignados: {assignedTasksCount}</span>
+                    <span>Menciones / Consultas: {mentionsCount}</span>
+                </div>
+                <span
+                    data-testid="projects-inbox-sla-badge"
+                    className={clsx(
+                        'px-2 py-0.5 rounded-full text-2xs font-bold uppercase tracking-wide border',
+                        unreadCount > 0
+                            ? 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning,var(--primary)))] border-[hsl(var(--warning)/0.3)]'
+                            : 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success,var(--primary)))] border-[hsl(var(--success)/0.3)]'
+                    )}
+                >
+                    {unreadCount > 0 ? `Atención Requerida (${unreadCount})` : 'Bandeja al Día (SLA 100%)'}
+                </span>
+            </div>
             <div className="flex px-3 py-1.5 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shrink-0">
                 <Tab active={filter === 'all'} onClick={() => setFilter('all')} label="Todo" />
                 <Tab active={filter === 'unread'} onClick={() => setFilter('unread')} label="No leídos" />

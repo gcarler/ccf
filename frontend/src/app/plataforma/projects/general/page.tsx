@@ -107,8 +107,42 @@ export default function ProjectsGeneralPage() {
                 />
             )}
             <main className="flex-1 overflow-y-auto p-4">
+                {/* Cintillo de Gestión de las Comunicaciones PMI §10.1 */}
+                <div
+                    data-testid="projects-general-pmi-header"
+                    aria-label="Gestión de las comunicaciones PMI"
+                    className="flex flex-wrap items-center gap-3 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-1.5 text-2xs font-semibold text-[hsl(var(--text-secondary))] mb-3"
+                >
+                    <span>Proyectos Conectados: {projects.length}</span>
+                    <span>Eventos Registrados: {activities.length}</span>
+                    <span>Cobertura Activa: {Object.keys(groupedActivities).length}</span>
+                </div>
+
                 <section className="rounded-lg border border-[hsl(var(--border))] p-3 bg-[hsl(var(--surface-1))] mb-3">
                     <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] mb-2">Publicar en canal</p>
+                    {/* Barra de plantillas rápidas PMI */}
+                    <div
+                        data-testid="projects-general-pmi-templates"
+                        aria-label="Plantillas rapidas PMI"
+                        className="flex flex-wrap items-center gap-2 mb-2"
+                    >
+                        <button
+                            type="button"
+                            data-testid="general-template-status"
+                            onClick={() => setContent('[Reporte PMI §10.2] Avance de línea base en ruta; sin desviaciones críticas en alcance ni cronograma.')}
+                            className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-2 py-1 text-2xs font-semibold text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--foreground))] transition-colors"
+                        >
+                            Reporte de Estado PMI §10.2
+                        </button>
+                        <button
+                            type="button"
+                            data-testid="general-template-escalation"
+                            onClick={() => setContent('[Escalamiento PMI §11.6] Se requiere atención de Sponsor/PMO por restricción en paquete de trabajo crítico.')}
+                            className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-2 py-1 text-2xs font-semibold text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--foreground))] transition-colors"
+                        >
+                            Escalamiento de Riesgo PMI §11.6
+                        </button>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
                         <label htmlFor="general-channel-project" className="sr-only">Proyecto del canal</label>
                         <select

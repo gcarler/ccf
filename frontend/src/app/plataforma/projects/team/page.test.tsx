@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import TeamPage from './page';
 
@@ -91,5 +91,41 @@ describe('TeamPage member removal confirmation', () => {
       expect.objectContaining({ method: 'DELETE', token: 'test-token' }),
     ));
     await waitFor(() => expect(screen.queryByText('Ana Pérez')).toBeNull());
+  });
+
+  describe('projects-team-pmi-header — Nivelación de Recursos PMI §9.6', () => {
+    it('muestra el pool, sobrecargados, tareas críticas y diagnóstico', async () => {
+      apiFetchMock.mockImplementation((path: string) => {
+        if (path === '/system/workload') return Promise.resolve([
+          { persona_id: 'p1', name: 'Ana Pérez', load_status: 'sobrecargado', open: 6, critical: 2, capacity_percent: 95 },
+          { persona_id: 'p2', name: 'Luis Gómez', load_status: 'en_capacidad', open: 3, critical: 0, capacity_percent: 50 },
+          { persona_id: 'p3', name: 'Mila Ferrer', load_status: 'disponible', open: 1, critical: 1, capacity_percent: 40 },
+        ]);
+        return Promise.resolve([]);
+      });
+
+      render(<TeamPage />);
+
+      const header = await screen.findByTestId('projects-team-pmi-header');
+      expect(header).toHaveTextContent('Pool Ministerial: 3');
+      expect(header).toHaveTextContent('Sobrecargados: 1');
+      expect(header).toHaveTextContent('Tareas Criticas: 3');
+      expect(header).toHaveTextContent('Requiere Nivelación de Recursos (§9.6)');
+      expect(screen.getByTestId('projects-team-pmi-header').innerHTML).toContain('text-[hsl(var(--destructive))]');
+      cleanup();
+
+      // Sin sobrecarga → diagnóstico óptimo y badge success
+      apiFetchMock.mockImplementation((path: string) => {
+        if (path === '/system/workload') return Promise.resolve([
+          { persona_id: 'p2', name: 'Luis Gómez', load_status: 'en_capacidad', open: 3, critical: 0, capacity_percent: 50 },
+          { persona_id: 'p3', name: 'Mila Ferrer', load_status: 'disponible', open: 1, critical: 1, capacity_percent: 40 },
+        ]);
+        return Promise.resolve([]);
+      });
+      render(<TeamPage />);
+      expect(await screen.findByTestId('projects-team-pmi-header')).toHaveTextContent(
+        'Asignación Nivelada Óptima'
+      );
+    });
   });
 });

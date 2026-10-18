@@ -119,4 +119,40 @@ describe('ProjectsInboxPage', () => {
     expect(toastErrorMock).toHaveBeenCalledOnce();
     expect(mockApiFetch).toHaveBeenCalledTimes(2);
   });
+
+  it('renders PMI §10.3 communications triage header and SLA badge', async () => {
+    mockApiFetch.mockResolvedValueOnce([
+      {
+        id: 'inbox-1',
+        type: 'comment',
+        user: 'Nora',
+        content: 'Revisar el presupuesto',
+        project: 'Campaña anual',
+        project_id: 'project-1',
+        is_read: false,
+        created_at: '2026-10-03T12:00:00Z',
+      },
+      {
+        id: 'inbox-2',
+        type: 'task_assigned',
+        user: 'Carlos',
+        content: 'Validar cronograma',
+        project: 'Campaña anual',
+        project_id: 'project-1',
+        task_id: 'task-2',
+        is_read: true,
+        created_at: '2026-10-03T13:00:00Z',
+      },
+    ]);
+
+    render(<ProjectsInboxPage />);
+    await screen.findByText('Revisar el presupuesto');
+
+    const pmiHeader = screen.getByTestId('projects-inbox-pmi-header');
+    expect(pmiHeader).toHaveTextContent('Total Bandeja: 2');
+    expect(pmiHeader).toHaveTextContent('Pendientes de Atención: 1');
+    expect(pmiHeader).toHaveTextContent('Paquetes Asignados: 1');
+    expect(pmiHeader).toHaveTextContent('Menciones / Consultas: 1');
+    expect(screen.getByTestId('projects-inbox-sla-badge')).toHaveTextContent('Atención Requerida (1)');
+  });
 });

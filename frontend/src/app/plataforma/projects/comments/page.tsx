@@ -54,7 +54,7 @@ export default function ProjectsCommentsPage() {
             if (!projectId && projectList.length > 0) {
                 setProjectId(projectList[0].id);
             }
-        } catch (error) {
+        } catch {
             setComments([]);
             setProjects([]);
             setError('No se pudieron cargar los comentarios de proyectos.');
@@ -77,6 +77,9 @@ export default function ProjectsCommentsPage() {
             return acc;
         }, {});
     }, [comments]);
+    const openCommentsCount = useMemo(() => comments.filter((c) => !c.is_resolved).length, [comments]);
+    const resolvedCommentsCount = useMemo(() => comments.filter((c) => c.is_resolved).length, [comments]);
+    const activeProjectThreadsCount = Object.keys(grouped).length;
     const calendarEvents = comments.map((comment) => ({ id: comment.id, title: comment.author_name, date: comment.created_at.split('T')[0], color: comment.is_resolved ? 'emerald' as const : 'blue' as const, location: comment.content }));
     const ganttItems = comments.map((comment) => ({ id: comment.id, title: comment.author_name, subtitle: comment.content, start_date: comment.created_at, end_date: comment.updated_at || comment.created_at, color: comment.is_resolved ? 'emerald' as const : 'blue' as const, progress: comment.is_resolved ? 100 : 35 }));
 
@@ -91,7 +94,7 @@ export default function ProjectsCommentsPage() {
             });
             setComments((prev) => [created, ...prev]);
             setContent('');
-        } catch (error) {
+        } catch {
             toast.error('Error al publicar comentario');
         } finally {
             setSaving(false);
@@ -107,7 +110,7 @@ export default function ProjectsCommentsPage() {
                 body: { is_resolved: true },
             });
             setComments((prev) => prev.map((row) => (row.id === updated.id ? updated : row)));
-        } catch (error) {
+        } catch {
             toast.error('No se pudo resolver el comentario.');
         }
     };
@@ -127,8 +130,57 @@ export default function ProjectsCommentsPage() {
                 />
             )}
             <main className="flex-1 overflow-y-auto p-4 space-y-3">
+                <section
+                    data-testid="projects-comments-pmi-header"
+                    aria-label="Control de Observaciones e Incidentes PMI §4.3"
+                    className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 bg-[hsl(var(--surface-2)/0.45)] flex flex-wrap items-center justify-between gap-2"
+                >
+                    <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--foreground))]">
+                        Bitácora de Observaciones e Incidentes PMI §4.3
+                    </span>
+                    <div className="flex flex-wrap items-center gap-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
+                        <span>Observaciones Abiertas: {openCommentsCount}</span>
+                        <span>Resueltas / Cerradas: {resolvedCommentsCount}</span>
+                        <span>Proyectos con Hilos Activos: {activeProjectThreadsCount}</span>
+                    </div>
+                </section>
+
                 <section className="rounded-lg border border-[hsl(var(--border))] p-3 bg-[hsl(var(--surface-1))]">
-                    <h2 className="text-sm font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] mb-2">Nuevo comentario</h2>
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                        <h2 className="text-sm font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Nuevo comentario</h2>
+                        <div
+                            data-testid="projects-comments-pmi-templates"
+                            className="flex flex-wrap items-center gap-2"
+                        >
+                            <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
+                                Plantillas PMI:
+                            </span>
+                            <button
+                                type="button"
+                                data-testid="comment-template-blocker"
+                                onClick={() =>
+                                    setContent(
+                                        '[IMPEDIMENTO PMI §11.6] Bloqueo detectado en entregable; requiere acción correctiva.'
+                                    )
+                                }
+                                className="px-2.5 py-1 rounded-md border border-[hsl(var(--warning)/0.35)] bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning,var(--primary)))] text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--warning)/0.2)] transition-colors"
+                            >
+                                Impedimento PMI §11.6
+                            </button>
+                            <button
+                                type="button"
+                                data-testid="comment-template-decision"
+                                onClick={() =>
+                                    setContent(
+                                        '[DECISIÓN PMI §4.3] Acuerdo técnico registrado sobre el alcance del paquete de trabajo.'
+                                    )
+                                }
+                                className="px-2.5 py-1 rounded-md border border-[hsl(var(--primary)/0.35)] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--primary)/0.2)] transition-colors"
+                            >
+                                Decisión Técnica PMI §4.3
+                            </button>
+                        </div>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                         <label htmlFor="project-comment-project" className="sr-only">Proyecto del comentario</label>
                         <select

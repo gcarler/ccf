@@ -44,7 +44,7 @@ export default function ProjectsResponsesPage() {
                 setLoadFailed(false);
                 const data = await apiFetch<ProjectInboxItem[]>('/projects/inbox', { token, cache: 'no-store' });
                 setItems(Array.isArray(data) ? data : []);
-            } catch (error) {
+            } catch {
                 setItems([]);
                 setError('No se pudieron cargar las respuestas de proyectos.');
                 setLoadFailed(true);
@@ -57,6 +57,18 @@ export default function ProjectsResponsesPage() {
     }, [authLoading, token, loadAttempt]);
 
     const unread = useMemo(() => items.filter((item) => !item.is_read), [items]);
+    const pendingTaskAssignmentsCount = useMemo(
+        () => unread.filter((i) => i.type === 'task_assigned').length,
+        [unread]
+    );
+    const pendingCommentsCount = useMemo(
+        () => unread.filter((i) => i.type === 'comment').length,
+        [unread]
+    );
+    const resolvedInSessionCount = useMemo(
+        () => items.filter((i) => i.is_read).length,
+        [items]
+    );
     const grouped = [
         { id: 'comments', label: 'Comentarios', rows: unread.filter((item) => item.type === 'comment') },
         { id: 'tasks', label: 'Tareas Asignadas', rows: unread.filter((item) => item.type === 'task_assigned') },
@@ -81,7 +93,7 @@ export default function ProjectsResponsesPage() {
                 body: { is_read: true },
             });
             setItems((prev) => prev.map((row) => (row.id === item.id ? { ...row, is_read: true } : row)));
-        } catch (error) {
+        } catch {
             toast.error('Error al resolver respuesta');
         } finally {
             setResolvingId(null);
@@ -97,6 +109,21 @@ export default function ProjectsResponsesPage() {
         >
 
             <main className="flex-1 overflow-y-auto p-4">
+                <section
+                    data-testid="projects-responses-pmi-header"
+                    aria-label="Respuestas Accionables y Cierre de Ciclo Comunicacional PMI §10.2"
+                    className="mb-3 rounded-lg border border-[hsl(var(--border))] px-3 py-2 bg-[hsl(var(--surface-2)/0.45)] flex flex-wrap items-center justify-between gap-2"
+                >
+                    <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--foreground))]">
+                        Cola de Respuestas Accionables PMI §10.2
+                    </span>
+                    <div className="flex flex-wrap items-center gap-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
+                        <span>Respuestas Pendientes: {unread.length}</span>
+                        <span>Asignaciones WBS por Confirmar: {pendingTaskAssignmentsCount}</span>
+                        <span>Consultas / Menciones: {pendingCommentsCount}</span>
+                        <span>Resueltas en Sesión: {resolvedInSessionCount}</span>
+                    </div>
+                </section>
                 {error && (
                     <ProjectsLoadError
                         message={error}

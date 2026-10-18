@@ -92,6 +92,12 @@ export default function TeamPage() {
             .catch(() => setMembers(prev => ({ ...prev, [selectedProjectId]: [] })));
     }, [token, viewMode, selectedProjectId]);
 
+    // PMI §9.6 — Nivelación de recursos: personas con carga crítica o saturación > 80%.
+    const overloadedCount = team.filter(
+        (persona) => persona.load_status === 'sobrecargado' || persona.capacity_percent > 80
+    ).length;
+    const criticalCount = team.reduce((sum, persona) => sum + persona.critical, 0);
+
     const handleSelect = (persona: TeamPersona) => {
         setSelectedPersona(persona);
         setRightMode('overlay');
@@ -164,6 +170,38 @@ export default function TeamPage() {
                     {error && (
                         <div className="rounded-lg border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.15)] p-3 text-[hsl(var(--warning))]">
                             <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
+                        </div>
+                    )}
+
+                    {/* Cintillo de Nivelación de Recursos PMI §9.6 */}
+                    {viewMode === 'workload' && (
+                        <div
+                            data-testid="projects-team-pmi-header"
+                            aria-label="Nivelación de recursos PMI"
+                            className="flex flex-wrap items-center gap-3 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-1.5 text-2xs font-semibold text-[hsl(var(--text-secondary))]"
+                        >
+                            <span>Pool Ministerial: {team.length}</span>
+                            <span
+                                className={clsx(
+                                    'rounded-full border px-2 py-0.5',
+                                    overloadedCount > 0
+                                        ? 'bg-[hsl(var(--destructive)/0.12)] text-[hsl(var(--destructive))] border-[hsl(var(--destructive)/0.4)]'
+                                        : 'bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))] border-[hsl(var(--success)/0.4)]'
+                                )}
+                            >
+                                Sobrecargados: {overloadedCount}
+                            </span>
+                            <span>Tareas Criticas: {criticalCount}</span>
+                            <span
+                                className={clsx(
+                                    'rounded-full border px-2 py-0.5',
+                                    overloadedCount > 0
+                                        ? 'bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.4)]'
+                                        : 'bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))] border-[hsl(var(--success)/0.4)]'
+                                )}
+                            >
+                                {overloadedCount > 0 ? 'Requiere Nivelación de Recursos (§9.6)' : 'Asignación Nivelada Óptima'}
+                            </span>
                         </div>
                     )}
 
