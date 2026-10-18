@@ -1874,3 +1874,115 @@ def test_audit_phase_gate_transition_readiness_empty_or_none():
         }
 
 
+def test_audit_make_or_buy_and_vendor_bids_sound_selection():
+    """Decisiones make y buy competitivas (o con sole_source_justification) y score >= 70 -> SOUND_PROCUREMENT_SOURCE_SELECTION."""
+    decisions = [
+        {
+            "id": "MOB-01",
+            "decision": "make",
+        },
+        {
+            "decision_id": "MOB-02",
+            "strategy": "buy",
+            "bids_received": 3,
+            "selected_vendor_score": 88.5,
+        },
+        {
+            "item_id": "MOB-03",
+            "decision": "comprar",
+            "bids_count": 1,
+            "sole_source_justification": "Proveedor certificado exclusivo de hardware biométrico",
+            "evaluation_score": 75.0,
+        },
+    ]
+    res = project_lifecycle_pmi_service.audit_make_or_buy_and_vendor_bids(decisions)
+    assert res == {
+        "total_decisions": 3,
+        "buy_decisions_count": 2,
+        "unjustified_decision_ids": [],
+        "non_competitive_buy_ids": [],
+        "low_scoring_vendor_award_ids": [],
+        "is_compliant": True,
+        "procurement_decision_posture": "SOUND_PROCUREMENT_SOURCE_SELECTION",
+    }
+    assert (
+        project_lifecycle_pmi_service.ProjectLifecyclePMIService.audit_make_or_buy_and_vendor_bids(
+            decisions
+        )
+        == res
+    )
+
+
+def test_audit_make_or_buy_and_vendor_bids_unjustified_choice():
+    """Decisión con estrategia inválida o vacía -> UNJUSTIFIED_MAKE_OR_BUY_CHOICE."""
+    res = project_lifecycle_pmi_service.audit_make_or_buy_and_vendor_bids(
+        [
+            {"id": "MOB-BAD", "decision": "maybe_lease"},
+            {"id": "MOB-OK", "decision": "hacer"},
+        ]
+    )
+    assert res["total_decisions"] == 2
+    assert res["buy_decisions_count"] == 0
+    assert res["unjustified_decision_ids"] == ["MOB-BAD"]
+    assert res["non_competitive_buy_ids"] == []
+    assert res["low_scoring_vendor_award_ids"] == []
+    assert res["is_compliant"] is False
+    assert res["procurement_decision_posture"] == "UNJUSTIFIED_MAKE_OR_BUY_CHOICE"
+
+
+def test_audit_make_or_buy_and_vendor_bids_non_competitive_and_low_score():
+    """Buy con 1 oferta sin justificación -> NON_COMPETITIVE_SINGLE_BID_RISK; score < 70 -> SUBTHRESHOLD_VENDOR_TECHNICAL_SCORE."""
+    non_comp_res = project_lifecycle_pmi_service.audit_make_or_buy_and_vendor_bids(
+        [
+            {
+                "id": "MOB-SINGLE",
+                "decision": "buy",
+                "bids_received": 1,
+                "sole_source_justification": "   ",
+                "selected_vendor_score": 82.0,
+            }
+        ],
+        min_competitive_bids=2,
+    )
+    assert non_comp_res["non_competitive_buy_ids"] == ["MOB-SINGLE"]
+    assert non_comp_res["low_scoring_vendor_award_ids"] == []
+    assert non_comp_res["is_compliant"] is False
+    assert (
+        non_comp_res["procurement_decision_posture"]
+        == "NON_COMPETITIVE_SINGLE_BID_RISK"
+    )
+
+    low_score_res = project_lifecycle_pmi_service.audit_make_or_buy_and_vendor_bids(
+        [
+            {
+                "id": "MOB-LOW",
+                "decision": "buy",
+                "bids_received": 3,
+                "selected_vendor_score": 64.0,
+            }
+        ]
+    )
+    assert low_score_res["non_competitive_buy_ids"] == []
+    assert low_score_res["low_scoring_vendor_award_ids"] == ["MOB-LOW"]
+    assert low_score_res["is_compliant"] is False
+    assert (
+        low_score_res["procurement_decision_posture"]
+        == "SUBTHRESHOLD_VENDOR_TECHNICAL_SCORE"
+    )
+
+
+def test_audit_make_or_buy_and_vendor_bids_empty_or_none():
+    """Lista vacía o None -> NO_MAKE_OR_BUY_DECISIONS."""
+    for payload in (None, [], ["invalid", 99]):
+        res = project_lifecycle_pmi_service.audit_make_or_buy_and_vendor_bids(
+            payload  # type: ignore[arg-type]
+        )
+        assert res == {
+            "total_decisions": 0,
+            "buy_decisions_count": 0,
+            "unjustified_decision_ids": [],
+            "non_competitive_buy_ids": [],
+            "low_scoring_vendor_award_ids": [],
+            "is_compliant": True,
+            "procurement_decision_posture": "NO_MAKE_OR_BUY_DECISIONS",
+        }

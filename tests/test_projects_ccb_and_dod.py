@@ -2257,3 +2257,97 @@ def test_evaluate_cost_of_quality_prevention_balance_empty_or_none():
             "is_balanced": False,
             "coq_posture": "NO_COQ_ENTRIES_RECORDED",
         }
+
+
+def test_evaluate_defect_containment_and_escape_rate_effective():
+    """DCE >= 85% sin críticos escapados -> EFFECTIVE_QA_DEFECT_CONTAINMENT."""
+    from backend.services.project_ccb_service import (
+        evaluate_defect_containment_and_escape_rate as eval_fn,
+    )
+
+    res = eval_fn(
+        [
+            {"id": "DEF-1", "detected_in": "code_review", "severity": "critical"},
+            {"defect_id": "DEF-2", "phase": "Testing QA", "priority": "medium"},
+            {"id": "DEF-3", "stage": "UAT", "severity": "low"},
+            {"id": "DEF-4", "detected_in": "staging", "severity": "high"},
+            {"id": "DEF-5", "detected_in": "unit_test", "severity": "low"},
+            {"id": "DEF-6", "phase": "smoke", "severity": "medium"},
+            {"id": "DEF-7", "phase": " producción ", "severity": "low", "escaped_to_production": True},
+        ]
+    )
+    assert res["is_contained"] is True
+    assert res["total_defects"] == 7
+    assert res["pre_release_defects_count"] == 6
+    assert res["escaped_production_defects_count"] == 1
+    assert res["critical_escaped_defect_ids"] == []
+    assert res["containment_effectiveness_pct"] == 85.71
+    assert res["escape_rate_pct"] == 14.29
+    assert res["containment_posture"] == "EFFECTIVE_QA_DEFECT_CONTAINMENT"
+
+
+def test_evaluate_defect_containment_and_escape_rate_critical_escape():
+    """Critical/high escapado a producción -> CRITICAL_PRODUCTION_DEFECT_ESCAPE."""
+    from backend.services.project_ccb_service import (
+        evaluate_defect_containment_and_escape_rate as eval_fn,
+    )
+
+    res = eval_fn(
+        [
+            {"id": "DEF-A", "detected_in": "qa", "severity": "medium"},
+            {"id": "DEF-B", "detected_in": "production", "severity": "P1"},
+            {"defect_id": "DEF-C", "phase": "cliente", "severity": "low", "escaped_to_production": True},
+        ]
+    )
+    assert res["is_contained"] is False
+    assert res["total_defects"] == 3
+    assert res["pre_release_defects_count"] == 1
+    assert res["escaped_production_defects_count"] == 2
+    assert res["critical_escaped_defect_ids"] == ["DEF-B"]
+    assert res["containment_effectiveness_pct"] == 33.33
+    assert res["escape_rate_pct"] == 66.67
+    assert res["containment_posture"] == "CRITICAL_PRODUCTION_DEFECT_ESCAPE"
+
+
+def test_evaluate_defect_containment_and_escape_rate_low_containment():
+    """DCE < 85% con escapes de severidad low/medium -> LOW_DEFECT_CONTAINMENT_EFFECTIVENESS."""
+    from backend.services.project_ccb_service import (
+        evaluate_defect_containment_and_escape_rate as eval_fn,
+    )
+
+    res = eval_fn(
+        [
+            {"id": "DEF-X", "detected_in": "unit", "severity": "low"},
+            {"id": "DEF-Y", "detected_in": "field", "severity": "low"},
+            {"id": "DEF-Z", "detected_in": "post_release", "severity": "medium"},
+        ],
+        min_containment_effectiveness_pct=85.0,
+    )
+    assert res["is_contained"] is False
+    assert res["total_defects"] == 3
+    assert res["pre_release_defects_count"] == 1
+    assert res["escaped_production_defects_count"] == 2
+    assert res["critical_escaped_defect_ids"] == []
+    assert res["containment_effectiveness_pct"] == 33.33
+    assert res["escape_rate_pct"] == 66.67
+    assert res["containment_posture"] == "LOW_DEFECT_CONTAINMENT_EFFECTIVENESS"
+
+
+def test_evaluate_defect_containment_and_escape_rate_empty_or_none():
+    """None, lista vacía o entradas no-dict -> NO_DEFECTS_EVALUATED."""
+    from backend.services.project_ccb_service import (
+        evaluate_defect_containment_and_escape_rate as eval_fn,
+    )
+
+    for payload in (None, [], ["invalid", 42, None]):
+        res = eval_fn(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_defects": 0,
+            "pre_release_defects_count": 0,
+            "escaped_production_defects_count": 0,
+            "critical_escaped_defect_ids": [],
+            "containment_effectiveness_pct": 100.0,
+            "escape_rate_pct": 0.0,
+            "is_contained": True,
+            "containment_posture": "NO_DEFECTS_EVALUATED",
+        }

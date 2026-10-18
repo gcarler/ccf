@@ -1885,6 +1885,103 @@ def audit_markdown_footnote_citations(
     }
 
 
+_FRONTMATTER_KV_RE = re.compile(r"^\s*([A-Za-z0-9_.-]+)\s*:\s*(.*?)\s*$")
+_FRONTMATTER_PLACEHOLDER_VALUES = frozenset(
+    {"tbd", "n/a", "na", "null", "none", "unknown", "~"}
+)
+
+
+def audit_markdown_frontmatter_governance(
+    markdown_text: Optional[str],
+    required_keys: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """Audita el bloque YAML Frontmatter de gobernanza documental al inicio del documento Markdown (PMI §4.4)."""
+    req_keys = [
+        str(k).strip().lower()
+        for k in (
+            required_keys
+            if required_keys is not None
+            else ["title", "owner", "version", "status"]
+        )
+        if str(k).strip()
+    ]
+    if (
+        not markdown_text
+        or not isinstance(markdown_text, str)
+        or not markdown_text.strip()
+    ):
+        return {
+            "has_frontmatter": False,
+            "parsed_keys_count": 0,
+            "missing_required_keys": list(req_keys),
+            "completeness_pct": 0.0,
+            "is_compliant": False,
+            "frontmatter_posture": "MISSING_FRONTMATTER_BLOCK",
+        }
+
+    lines = markdown_text.lstrip().splitlines()
+    if not lines or lines[0].strip() != "---":
+        return {
+            "has_frontmatter": False,
+            "parsed_keys_count": 0,
+            "missing_required_keys": list(req_keys),
+            "completeness_pct": 0.0,
+            "is_compliant": False,
+            "frontmatter_posture": "MISSING_FRONTMATTER_BLOCK",
+        }
+
+    end_idx: Optional[int] = None
+    for idx in range(1, len(lines)):
+        if lines[idx].strip() in {"---", "..."}:
+            end_idx = idx
+            break
+
+    if end_idx is None:
+        return {
+            "has_frontmatter": False,
+            "parsed_keys_count": 0,
+            "missing_required_keys": list(req_keys),
+            "completeness_pct": 0.0,
+            "is_compliant": False,
+            "frontmatter_posture": "UNCLOSED_FRONTMATTER_BLOCK",
+        }
+
+    valid_keys_set: set[str] = set()
+    for line in lines[1:end_idx]:
+        match = _FRONTMATTER_KV_RE.match(line)
+        if not match:
+            continue
+        key = match.group(1).strip().lower()
+        raw_val = match.group(2)
+        val = raw_val.strip().strip("'\"")
+        if val and val.lower() not in _FRONTMATTER_PLACEHOLDER_VALUES:
+            valid_keys_set.add(key)
+
+    parsed_keys_count = len(valid_keys_set)
+    missing_required_keys = [k for k in req_keys if k not in valid_keys_set]
+    present_req_count = len(req_keys) - len(missing_required_keys)
+    completeness_pct = (
+        round((present_req_count / len(req_keys)) * 100.0, 2)
+        if len(req_keys) > 0
+        else 100.0
+    )
+    is_compliant = bool(len(missing_required_keys) == 0)
+    frontmatter_posture = (
+        "COMPLIANT_DOCUMENT_FRONTMATTER"
+        if len(missing_required_keys) == 0
+        else "INCOMPLETE_FRONTMATTER_METADATA"
+    )
+
+    return {
+        "has_frontmatter": True,
+        "parsed_keys_count": parsed_keys_count,
+        "missing_required_keys": missing_required_keys,
+        "completeness_pct": completeness_pct,
+        "is_compliant": is_compliant,
+        "frontmatter_posture": frontmatter_posture,
+    }
+
+
 class AnyDocService:
     """Fachada canónica de conversión y auditoría documental AnyDoc PMI."""
 
@@ -2011,6 +2108,15 @@ class AnyDocService:
     ) -> Dict[str, Any]:
         return audit_markdown_footnote_citations(markdown_text)
 
+    @staticmethod
+    def audit_markdown_frontmatter_governance(
+        markdown_text: Optional[str],
+        required_keys: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        return audit_markdown_frontmatter_governance(
+            markdown_text, required_keys=required_keys
+        )
+
 
 __all__ = [
     "ANYDOC_AVAILABLE",
@@ -2036,6 +2142,6 @@ __all__ = [
     "audit_markdown_toc_anchor_alignment",
     "extract_markdown_checklist_progress",
     "audit_markdown_footnote_citations",
+    "audit_markdown_frontmatter_governance",
     "AnyDocService",
 ]
-

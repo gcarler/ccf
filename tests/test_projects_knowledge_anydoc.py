@@ -1772,3 +1772,94 @@ def test_audit_markdown_footnote_citations_no_footnotes_present():
         }
 
 
+def test_audit_markdown_frontmatter_governance_compliant():
+    """Documento con YAML frontmatter completo -> COMPLIANT_DOCUMENT_FRONTMATTER."""
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_frontmatter_governance,
+    )
+
+    md = (
+        "---\n"
+        'title: "Manual de Gestión de Configuración PMI"\n'
+        "owner: PMO-Ministerial\n"
+        "version: '2.1.0'\n"
+        "status: Approved\n"
+        "classification: Internal\n"
+        "---\n"
+        "# Introducción\n"
+        "Contenido del documento.\n"
+    )
+    res = audit_markdown_frontmatter_governance(md)
+    assert res == {
+        "has_frontmatter": True,
+        "parsed_keys_count": 5,
+        "missing_required_keys": [],
+        "completeness_pct": 100.0,
+        "is_compliant": True,
+        "frontmatter_posture": "COMPLIANT_DOCUMENT_FRONTMATTER",
+    }
+    assert AnyDocService.audit_markdown_frontmatter_governance(md) == res
+
+
+def test_audit_markdown_frontmatter_governance_incomplete_or_placeholder():
+    """Frontmatter incompleto o con valores placeholder (TBD, vacío) -> INCOMPLETE_FRONTMATTER_METADATA."""
+    from backend.services.anydoc_service import audit_markdown_frontmatter_governance
+
+    md = (
+        "---\n"
+        "title: Plan de Calidad\n"
+        "owner: TBD\n"
+        "version: ''\n"
+        "status: Draft\n"
+        "...\n"
+        "# Alcance\n"
+    )
+    res = audit_markdown_frontmatter_governance(md)
+    assert res == {
+        "has_frontmatter": True,
+        "parsed_keys_count": 2,
+        "missing_required_keys": ["owner", "version"],
+        "completeness_pct": 50.0,
+        "is_compliant": False,
+        "frontmatter_posture": "INCOMPLETE_FRONTMATTER_METADATA",
+    }
+
+
+def test_audit_markdown_frontmatter_governance_unclosed_block():
+    """Bloque frontmatter abierto sin --- de cierre -> UNCLOSED_FRONTMATTER_BLOCK."""
+    from backend.services.anydoc_service import audit_markdown_frontmatter_governance
+
+    md = (
+        "---\n"
+        "title: Acta sin cierre de frontmatter\n"
+        "owner: PMO\n"
+        "version: 1.0\n"
+        "status: Active\n"
+        "# Encabezado nunca precedido por cierre YAML\n"
+    )
+    res = audit_markdown_frontmatter_governance(md)
+    assert res == {
+        "has_frontmatter": False,
+        "parsed_keys_count": 0,
+        "missing_required_keys": ["title", "owner", "version", "status"],
+        "completeness_pct": 0.0,
+        "is_compliant": False,
+        "frontmatter_posture": "UNCLOSED_FRONTMATTER_BLOCK",
+    }
+
+
+def test_audit_markdown_frontmatter_governance_missing_or_empty():
+    """Documento sin frontmatter o vacío -> MISSING_FRONTMATTER_BLOCK."""
+    from backend.services.anydoc_service import audit_markdown_frontmatter_governance
+
+    for payload in (None, "", "   ", "# Título directo sin YAML\n---\ntitle: X\n---\n"):
+        res = audit_markdown_frontmatter_governance(payload, required_keys=["title", "owner"])
+        assert res == {
+            "has_frontmatter": False,
+            "parsed_keys_count": 0,
+            "missing_required_keys": ["title", "owner"],
+            "completeness_pct": 0.0,
+            "is_compliant": False,
+            "frontmatter_posture": "MISSING_FRONTMATTER_BLOCK",
+        }

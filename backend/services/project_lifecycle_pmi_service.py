@@ -1945,6 +1945,115 @@ def audit_phase_gate_transition_readiness(
     }
 
 
+_VALID_MAKE_OR_BUY_CHOICES = frozenset({"make", "buy", "hacer", "comprar"})
+_BUY_CHOICES = frozenset({"buy", "comprar"})
+
+
+def audit_make_or_buy_and_vendor_bids(
+    decisions: Optional[list[dict[str, Any]]] = None,
+    min_competitive_bids: int = 2,
+) -> dict[str, Any]:
+    """Audita el Análisis Hacer-o-Comprar (Make-or-Buy) y la evaluación competitiva de ofertas según PMI PMBOK §12.1.3 y §12.2."""
+    valid_decisions = [item for item in (decisions or []) if isinstance(item, dict)]
+    total_decisions = len(valid_decisions)
+    if total_decisions == 0:
+        return {
+            "total_decisions": 0,
+            "buy_decisions_count": 0,
+            "unjustified_decision_ids": [],
+            "non_competitive_buy_ids": [],
+            "low_scoring_vendor_award_ids": [],
+            "is_compliant": True,
+            "procurement_decision_posture": "NO_MAKE_OR_BUY_DECISIONS",
+        }
+
+    try:
+        min_bids_req = max(1, int(min_competitive_bids))
+    except (TypeError, ValueError):
+        min_bids_req = 2
+
+    buy_decisions_count = 0
+    unjustified_decision_ids: list[str] = []
+    non_competitive_buy_ids: list[str] = []
+    low_scoring_vendor_award_ids: list[str] = []
+
+    for idx, item in enumerate(valid_decisions, start=1):
+        dec_id = (
+            str(
+                item.get("id")
+                or item.get("decision_id")
+                or item.get("item_id")
+                or ""
+            ).strip()
+            or f"MOB-{idx}"
+        )
+        choice = str(item.get("decision") or item.get("strategy") or "").strip().lower()
+        if choice not in _VALID_MAKE_OR_BUY_CHOICES:
+            unjustified_decision_ids.append(dec_id)
+
+        if choice in _BUY_CHOICES:
+            buy_decisions_count += 1
+            raw_bids = (
+                item.get("bids_received")
+                if item.get("bids_received") is not None
+                else (item.get("bids_count") or 0)
+            )
+            try:
+                bids = max(0, int(raw_bids))
+            except (TypeError, ValueError):
+                bids = 0
+
+            sole_just = str(item.get("sole_source_justification") or "").strip()
+
+            raw_score = (
+                item.get("selected_vendor_score")
+                if item.get("selected_vendor_score") is not None
+                else (item.get("evaluation_score") or 0.0)
+            )
+            try:
+                score = float(raw_score)
+            except (TypeError, ValueError):
+                score = 0.0
+
+            if bids < min_bids_req and not sole_just:
+                non_competitive_buy_ids.append(dec_id)
+            if score < 70.0:
+                low_scoring_vendor_award_ids.append(dec_id)
+
+    is_compliant = bool(
+        len(unjustified_decision_ids) == 0
+        and len(non_competitive_buy_ids) == 0
+        and len(low_scoring_vendor_award_ids) == 0
+    )
+
+    if len(unjustified_decision_ids) > 0:
+        procurement_decision_posture = "UNJUSTIFIED_MAKE_OR_BUY_CHOICE"
+    elif len(non_competitive_buy_ids) > 0:
+        procurement_decision_posture = "NON_COMPETITIVE_SINGLE_BID_RISK"
+    elif len(low_scoring_vendor_award_ids) > 0:
+        procurement_decision_posture = "SUBTHRESHOLD_VENDOR_TECHNICAL_SCORE"
+    else:
+        procurement_decision_posture = "SOUND_PROCUREMENT_SOURCE_SELECTION"
+
+    return {
+        "total_decisions": total_decisions,
+        "buy_decisions_count": buy_decisions_count,
+        "unjustified_decision_ids": unjustified_decision_ids,
+        "non_competitive_buy_ids": non_competitive_buy_ids,
+        "low_scoring_vendor_award_ids": low_scoring_vendor_award_ids,
+        "is_compliant": is_compliant,
+        "procurement_decision_posture": procurement_decision_posture,
+    }
+
+
+ProjectLifecyclePMIService.audit_phase_gate_transition_readiness = staticmethod(
+    audit_phase_gate_transition_readiness
+)
+ProjectLifecyclePMIService.audit_make_or_buy_and_vendor_bids = staticmethod(
+    audit_make_or_buy_and_vendor_bids
+)
+
+
 __all__ = [
     "build_pmo_portfolio_matrix",
     "build_governance_summary",
@@ -1975,7 +2084,7 @@ __all__ = [
     "audit_benefits_realization_sustainability",
     "audit_team_charter_and_tuckman_governance",
     "audit_phase_gate_transition_readiness",
+    "audit_make_or_buy_and_vendor_bids",
     "ProjectLifecyclePMIService",
 ]
-
 

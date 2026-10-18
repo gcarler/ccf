@@ -1546,6 +1546,95 @@ def evaluate_cost_of_quality_prevention_balance(
     }
 
 
+def evaluate_defect_containment_and_escape_rate(
+    defects: Optional[List[Dict[str, Any]]] = None,
+    min_containment_effectiveness_pct: float = 85.0,
+) -> Dict[str, Any]:
+    """Evalúa la contención de defectos pre-release y su escape a producción (PMBOK §8.3).
+
+    Cada defecto declara `id`/`defect_id` (fallback 'DEF-{idx}'), etapa de
+    detección (`detected_in`/`phase`/`stage`) y gravedad (`severity`/`priority`);
+    se considera escapado a producción si la etapa pertenece a
+    {production, prod, post_release, customer, field, produccion, cliente} o
+    `escaped_to_production` es True:
+    - `critical_escaped_defect_ids`: escapados con severity crítica
+      ({critical, blocker, high, sev1, p0, p1, critico, alta}).
+    - `containment_effectiveness_pct` / `escape_rate_pct` (2 decimales).
+    - `is_contained`: sin críticos escapados y DCE >= minimo tolerado.
+    - `containment_posture`: 'NO_DEFECTS_EVALUATED' vacío;
+      'CRITICAL_PRODUCTION_DEFECT_ESCAPE'; 'LOW_DEFECT_CONTAINMENT_EFFECTIVENESS';
+      'EFFECTIVE_QA_DEFECT_CONTAINMENT'.
+    """
+    records = [d for d in (defects or []) if isinstance(d, dict)]
+    if not records:
+        return {
+            "total_defects": 0,
+            "pre_release_defects_count": 0,
+            "escaped_production_defects_count": 0,
+            "critical_escaped_defect_ids": [],
+            "containment_effectiveness_pct": 100.0,
+            "escape_rate_pct": 0.0,
+            "is_contained": True,
+            "containment_posture": "NO_DEFECTS_EVALUATED",
+        }
+
+    ESCAPED_STAGES = {
+        "production", "prod", "post_release", "customer", "field",
+        "produccion", "producción", "cliente",
+    }
+    CRITICAL_SEVERITIES = {
+        "critical", "blocker", "high", "sev1", "p0", "p1",
+        "critico", "crítico", "alta",
+    }
+
+    total_defects = len(records)
+    pre_release_defects_count = 0
+    escaped_production_defects_count = 0
+    critical_escaped_defect_ids: List[str] = []
+
+    for idx, item in enumerate(records, start=1):
+        def_id = str(item.get("id") or item.get("defect_id") or "").strip() or f"DEF-{idx}"
+        stage = str(item.get("detected_in") or item.get("phase") or item.get("stage") or "").strip().lower()
+        severity = str(item.get("severity") or item.get("priority") or "").strip().lower()
+        is_escaped = stage in ESCAPED_STAGES or item.get("escaped_to_production") is True
+
+        if is_escaped:
+            escaped_production_defects_count += 1
+            if severity in CRITICAL_SEVERITIES:
+                critical_escaped_defect_ids.append(def_id)
+        else:
+            pre_release_defects_count += 1
+
+    containment_effectiveness_pct = round(
+        (pre_release_defects_count / total_defects) * 100.0, 2
+    )
+    escape_rate_pct = round(
+        (escaped_production_defects_count / total_defects) * 100.0, 2
+    )
+    is_contained = bool(
+        len(critical_escaped_defect_ids) == 0
+        and containment_effectiveness_pct + 1e-9 >= float(min_containment_effectiveness_pct)
+    )
+
+    if len(critical_escaped_defect_ids) > 0:
+        containment_posture = "CRITICAL_PRODUCTION_DEFECT_ESCAPE"
+    elif containment_effectiveness_pct + 1e-9 < float(min_containment_effectiveness_pct):
+        containment_posture = "LOW_DEFECT_CONTAINMENT_EFFECTIVENESS"
+    else:
+        containment_posture = "EFFECTIVE_QA_DEFECT_CONTAINMENT"
+
+    return {
+        "total_defects": total_defects,
+        "pre_release_defects_count": pre_release_defects_count,
+        "escaped_production_defects_count": escaped_production_defects_count,
+        "critical_escaped_defect_ids": critical_escaped_defect_ids,
+        "containment_effectiveness_pct": containment_effectiveness_pct,
+        "escape_rate_pct": escape_rate_pct,
+        "is_contained": is_contained,
+        "containment_posture": containment_posture,
+    }
+
+
 class ProjectCCBService:
     """Fachada canónica de Control Integrado de Cambios (CCB) y Calidad DoD PMI."""
 
@@ -1756,6 +1845,16 @@ class ProjectCCBService:
             max_failure_cost_share_pct=max_failure_cost_share_pct,
         )
 
+    @staticmethod
+    def evaluate_defect_containment_and_escape_rate(
+        defects: Optional[List[Dict[str, Any]]] = None,
+        min_containment_effectiveness_pct: float = 85.0,
+    ) -> Dict[str, Any]:
+        return evaluate_defect_containment_and_escape_rate(
+            defects,
+            min_containment_effectiveness_pct=min_containment_effectiveness_pct,
+        )
+
 
 __all__ = [
     "list_change_requests",
@@ -1782,6 +1881,7 @@ __all__ = [
     "audit_pareto_defect_root_causes",
     "audit_unapproved_scope_creep_exposure",
     "evaluate_cost_of_quality_prevention_balance",
+    "evaluate_defect_containment_and_escape_rate",
     "evaluate_deliverable_first_time_right_yield",
     "audit_configuration_baseline_integrity",
     "ProjectCCBService",
