@@ -3,8 +3,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const { apiFetchMock } = vi.hoisted(() => ({ apiFetchMock: vi.fn() }));
 vi.mock('@/lib/http', () => ({ apiFetch: apiFetchMock }));
 
-import { getAllAssignedProjectTasks, getAllProjectSummaries, getAllProjects } from './api';
-import type { ProjectSummaryPageResponse } from '@/types/projects';
+import {
+  getAllAssignedProjectTasks,
+  getAllProjectSummaries,
+  getAllProjects,
+  summarizeProjectPortfolioPage,
+  type PortfolioSummaryAggregation,
+} from './api';
+import type { ProjectSummaryPageResponse, ProjectSummaryRecord } from '@/types/projects';
 
 describe('getAllProjects', () => {
   beforeEach(() => apiFetchMock.mockReset());
@@ -98,5 +104,69 @@ describe('getAllProjects', () => {
     await expect(getAllAssignedProjectTasks('token')).rejects.toThrow(
       'Invalid or incomplete project tasks page response',
     );
+  });
+});
+
+describe('summarizeProjectPortfolioPage — agregador PMI §6', () => {
+  const baseSummary: Omit<ProjectSummaryRecord, 'task_count' | 'completed_task_count' | 'in_progress_task_count' | 'progress_percent' | 'health_status'> = {
+    id: 'p1',
+    title: 'Proyecto Alpha',
+    status: 'active',
+    created_at: '2026-01-01T00:00:00Z',
+  };
+
+  it('devuelve todos los agregados en cero para un arreglo vacío', () => {
+    expect(summarizeProjectPortfolioPage([])).toEqual<PortfolioSummaryAggregation>({
+      totalProjects: 0,
+      activeCount: 0,
+      completedCount: 0,
+      onHoldCount: 0,
+      delayedCount: 0,
+      avgProgress: 0,
+      totalTasks: 0,
+      completedTasks: 0,
+    });
+  });
+
+  it('agrega lote mixto: conteos por estado, progreso promedio y sumas de tareas', () => {
+    const summaries = [
+      { ...baseSummary, id: 'a', status: 'active', progress_percent: 40, task_count: 10, completed_task_count: 4, in_progress_task_count: 3, health_status: 'on_track' },
+      { ...baseSummary, id: 'b', status: 'active', progress_percent: 60, task_count: 4, completed_task_count: 3, in_progress_task_count: 1, health_status: 'on_track' },
+      { ...baseSummary, id: 'c', status: 'completed', progress_percent: 100, task_count: 6, completed_task_count: 6, in_progress_task_count: 0, health_status: 'completed' },
+      { ...baseSummary, id: 'd', status: 'on_hold', progress_percent: 20, task_count: 5, completed_task_count: 1, in_progress_task_count: 0, health_status: 'at_risk' },
+      { ...baseSummary, id: 'e', status: 'delayed', progress_percent: 130, task_count: 2, completed_task_count: 0, in_progress_task_count: 1, health_status: 'off_track' },
+    ] as ProjectSummaryRecord[];
+
+    expect(summarizeProjectPortfolioPage(summaries)).toEqual({
+      totalProjects: 5,
+      activeCount: 2,
+      completedCount: 1,
+      onHoldCount: 1,
+      delayedCount: 1,
+      // clamp del 130% a 100 → (40+60+100+20+100)/5 = 64%
+      avgProgress: 64,
+      totalTasks: 27,
+      completedTasks: 14,
+    });
+  });
+
+  it('es resiliente con progress/contadores nullish (wire format progress_pct)', () => {
+    const flexible = baseSummary as unknown;
+    const summaries = [
+      { ...(flexible as object), id: 'n1', status: 'active' } as ProjectSummaryRecord,
+      { ...(flexible as object), id: 'n2', status: 'active', progress_percent: 80, task_count: null as unknown as number, completed_task_count: null as unknown as number, in_progress_task_count: 0, health_status: 'on_track' } as ProjectSummaryRecord,
+    ];
+
+    expect(summarizeProjectPortfolioPage(summaries)).toEqual({
+      totalProjects: 2,
+      activeCount: 2,
+      completedCount: 0,
+      onHoldCount: 0,
+      delayedCount: 0,
+      // progress ausente → 0 y 80 promediado
+      avgProgress: 40,
+      totalTasks: 0,
+      completedTasks: 0,
+    });
   });
 });

@@ -15,3 +15,15 @@ export function getSafeProjectLink(value?: string | null): string | null {
     return null;
   }
 }
+
+/**
+ * PMI — Guarda de enlaces internos de plataforma: true sólo cuando el enlace
+ * seguro es una ruta interna de proyectos ('/plataforma/projects') o un
+ * artefacto estático del módulo ('/api/static/projects'). Enlaces externos,
+ * directos a otras rutas o no seguros devuelven false.
+ */
+export function isInternalPlatformProjectLink(value?: string | null): boolean {
+  const safe = getSafeProjectLink(value);
+  if (!safe) return false;
+  return safe.startsWith('/plataforma/projects') || safe.startsWith('/api/static/projects');
+}
