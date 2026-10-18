@@ -664,3 +664,91 @@ def test_extract_markdown_governance_markers_empty_or_no_markers():
             "risk_markers_count": 0,
             "governance_traceability_status": "no_markers",
         }
+
+
+# ── summarize_markdown_tables_schema (PMBOK §4.4, pure helper) ───────────
+
+
+def test_tables_schema_single_table_with_data_rows():
+    """Una tabla con filas de datos → 'single_table_summary' con conteos exactos."""
+    from backend.services.anydoc_service import summarize_markdown_tables_schema
+
+    markdown = (
+        "| Fase | Presupuesto | Responsable |\n"
+        "|---|---|---|\n"
+        "| Iniciacion | 25000 | Pastor General |\n"
+        "| Planificacion | 45000 | Director |\n"
+        "| Ejecucion | 30000 | Coordinador |\n"
+    )
+    result = summarize_markdown_tables_schema(markdown)
+
+    assert result == {
+        "tables_count": 1,
+        "total_data_rows": 3,
+        "max_columns_count": 3,
+        "distinct_column_headers": ["fase", "presupuesto", "responsable"],
+        "tabular_richness_status": "single_table_summary",
+    }
+
+
+def test_tables_schema_multi_table_dedup_headers():
+    """Dos tablas con cabeceras solapadas → 'multi_table_dataset' y dedup en minúsculas."""
+    from backend.services.anydoc_service import summarize_markdown_tables_schema
+
+    markdown = (
+        "| Fase | Presupuesto |\n"
+        "| --- | --- |\n"
+        "| Iniciacion | 100 |\n"
+        "| Cierre | 200 |\n"
+        "\n"
+        "Texto intermedio.\n"
+        "\n"
+        "| FASE | Responsable |\n"
+        "|-|-|\n"
+        "| Cierre | Auditor |\n"
+    )
+    result = summarize_markdown_tables_schema(markdown)
+
+    assert result == {
+        "tables_count": 2,
+        "total_data_rows": 3,
+        "max_columns_count": 2,
+        "distinct_column_headers": ["fase", "presupuesto", "responsable"],
+        "tabular_richness_status": "multi_table_dataset",
+    }
+
+
+def test_tables_schema_headers_only_no_data_rows():
+    """Tablas solo con cabecera + separador sin filas → 'empty_headers_only'."""
+    from backend.services.anydoc_service import summarize_markdown_tables_schema
+
+    markdown = (
+        "| Riesgo | Impacto |\n"
+        "| --- | --- |\n"
+        "Prose sin tablas adjuntas.\n"
+        "| KPI | Meta |\n"
+        "| :-: | --- |\n"
+    )
+    result = summarize_markdown_tables_schema(markdown)
+
+    assert result["tables_count"] == 2
+    assert result["total_data_rows"] == 0
+    assert result["tabular_richness_status"] == "empty_headers_only"
+    assert result["distinct_column_headers"] == ["impacto", "kpi", "meta", "riesgo"]
+
+
+def test_tables_schema_no_tables_and_none():
+    """Texto sin tablas, None, dict vacío y inválido → 'no_tables' en todo cero."""
+    from backend.services.anydoc_service import summarize_markdown_tables_schema
+
+    prose = "Solo texto corrido\nsin ninguna tabla.\n| incompleta\n"
+    for source in (None, {}, "nope", prose):
+        result = summarize_markdown_tables_schema(source)
+        assert result == {
+            "tables_count": 0,
+            "total_data_rows": 0,
+            "max_columns_count": 0,
+            "distinct_column_headers": [],
+            "tabular_richness_status": "no_tables",
+        }
+

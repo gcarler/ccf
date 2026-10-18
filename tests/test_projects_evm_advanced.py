@@ -649,3 +649,71 @@ def test_evaluate_ieac_forecast_spread_unanchored_and_negative_clamping():
     }
 
 
+def test_evaluate_cost_schedule_index_csi_optimal_aligned():
+    """Valida ejecución alineada con CSI óptimo >= 0.95 y recuperación on_track."""
+    from backend.services.project_evm_service import evaluate_cost_schedule_index_csi
+
+    res = evaluate_cost_schedule_index_csi(cpi=1.02, spi=0.98, percent_complete=40.0)
+    assert res == {
+        "cpi": 1.02,
+        "spi": 0.98,
+        "csi": 0.9996,
+        "percent_complete": 40.0,
+        "tradeoff_mode": "aligned_execution",
+        "csi_health_band": "optimal",
+        "recovery_likelihood": "on_track",
+    }
+    assert ProjectEVMService.evaluate_cost_schedule_index_csi(1.02, 0.98, 40.0) == res
+
+
+def test_evaluate_cost_schedule_index_csi_crashing_vs_underspending():
+    """Valida modos de compensación: aceleración a costa de gasto y subgasto con retraso."""
+    from backend.services.project_evm_service import evaluate_cost_schedule_index_csi
+
+    crashing = evaluate_cost_schedule_index_csi(0.88, 1.05, 15.0)
+    assert crashing["cpi"] == 0.88
+    assert crashing["spi"] == 1.05
+    assert crashing["csi"] == 0.924
+    assert crashing["tradeoff_mode"] == "crashing_cost_for_speed"
+    assert crashing["csi_health_band"] == "caution"
+    assert crashing["recovery_likelihood"] == "corrective_action_viable"
+
+    underspending = evaluate_cost_schedule_index_csi(1.05, 0.85, 15.0)
+    assert underspending["cpi"] == 1.05
+    assert underspending["spi"] == 0.85
+    assert underspending["csi"] == 0.8925
+    assert underspending["tradeoff_mode"] == "under_spending_behind_schedule"
+    assert underspending["csi_health_band"] == "caution"
+    assert underspending["recovery_likelihood"] == "corrective_action_viable"
+
+
+def test_evaluate_cost_schedule_index_csi_irreversible_past_20_pct():
+    """Valida degradación dual con CSI < 0.80 tras superar 20% de avance (Fleming & Koppelman)."""
+    from backend.services.project_evm_service import evaluate_cost_schedule_index_csi
+
+    res = evaluate_cost_schedule_index_csi(cpi=0.82, spi=0.85, percent_complete=35.0)
+    assert res["cpi"] == 0.82
+    assert res["spi"] == 0.85
+    assert res["csi"] == 0.697
+    assert res["percent_complete"] == 35.0
+    assert res["tradeoff_mode"] == "dual_degradation"
+    assert res["csi_health_band"] == "critical"
+    assert res["recovery_likelihood"] == "irreversible_overrun_likely"
+
+
+def test_evaluate_cost_schedule_index_csi_insufficient_data():
+    """Valida entradas nulas o no positivas retornando insufficient_data y unassessed."""
+    from backend.services.project_evm_service import evaluate_cost_schedule_index_csi
+
+    none_res = evaluate_cost_schedule_index_csi(None, 1.0, 25.0)
+    assert none_res["csi"] == 0.0
+    assert none_res["tradeoff_mode"] == "insufficient_data"
+    assert none_res["csi_health_band"] == "unassessed"
+    assert none_res["recovery_likelihood"] == "unassessed"
+
+    zero_res = evaluate_cost_schedule_index_csi(0.95, 0.0, 50.0)
+    assert zero_res["csi"] == 0.0
+    assert zero_res["tradeoff_mode"] == "insufficient_data"
+    assert zero_res["csi_health_band"] == "unassessed"
+    assert zero_res["recovery_likelihood"] == "unassessed"
+

@@ -863,3 +863,84 @@ def extract_markdown_governance_markers(
         "risk_markers_count": risk_markers_count,
         "governance_traceability_status": governance_traceability_status,
     }
+
+
+def summarize_markdown_tables_schema(
+    markdown_or_result: str | dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Extrae el esquema de las tablas Markdown del documento (PMBOK §4.4).
+
+    Acepta un texto markdown o un dict de conversión AnyDoc (usa su clave
+    'markdown'). Agrupa bloques contiguos de líneas que al hacer strip()
+    inicien y terminen con '|'; un bloque es una tabla válida si tiene
+    ≥ 2 líneas y la segunda es un separador cuyas celdas contienen solo
+    '-', ':' y espacios (≥ 1 '-' por celda). Calcula:
+    - `tables_count`: nº de tablas Markdown válidas.
+    - `total_data_rows`: suma de filas de datos (bloques − 2 por tabla).
+    - `max_columns_count`: máximo de columnas entre tablas válidas (0 si
+      no hay tablas).
+    - `distinct_column_headers`: cabeceras únicas en minúsculas, ordenadas.
+    - `tabular_richness_status`: 'no_tables' (0 tablas),
+      'empty_headers_only' (≥ 1 tabla sin filas de datos),
+      'multi_table_dataset' (≥ 2 tablas y ≥ 2 filas totales) o
+      'single_table_summary'.
+    """
+    if isinstance(markdown_or_result, dict):
+        text = str(markdown_or_result.get("markdown") or "")
+    elif isinstance(markdown_or_result, str):
+        text = markdown_or_result
+    else:
+        text = ""
+
+    tables: list[list[str]] = []
+    current_block: list[str] = []
+    for line in text.splitlines():
+        cell = line.strip()
+        if cell.startswith("|") and cell.endswith("|"):
+            current_block.append(cell)
+        else:
+            if current_block:
+                tables.append(current_block)
+                current_block = []
+    if current_block:
+        tables.append(current_block)
+
+    tables_count = 0
+    total_data_rows = 0
+    max_columns_count = 0
+    all_headers: set[str] = set()
+
+    for block in tables:
+        if len(block) < 2:
+            continue
+        separator = block[1].strip()[1:-1]
+        sep_cells = [c.strip() for c in separator.split("|")]
+        if not sep_cells or any(
+            not (set(c) <= {"-", ":", " "} and "-" in c) for c in sep_cells
+        ):
+            continue
+        tables_count += 1
+        headers = [c.strip() for c in block[0].strip()[1:-1].split("|") if c.strip()]
+        all_headers.update(h.lower() for h in headers)
+        max_columns_count = max(max_columns_count, len(headers))
+        total_data_rows += max(0, len(block) - 2)
+
+    distinct_column_headers = sorted(all_headers)
+
+    if tables_count == 0:
+        tabular_richness_status = "no_tables"
+    elif tables_count >= 1 and total_data_rows == 0:
+        tabular_richness_status = "empty_headers_only"
+    elif tables_count >= 2 and total_data_rows >= 2:
+        tabular_richness_status = "multi_table_dataset"
+    else:
+        tabular_richness_status = "single_table_summary"
+
+    return {
+        "tables_count": tables_count,
+        "total_data_rows": total_data_rows,
+        "max_columns_count": max_columns_count,
+        "distinct_column_headers": distinct_column_headers,
+        "tabular_richness_status": tabular_richness_status,
+    }
+

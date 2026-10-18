@@ -3202,6 +3202,64 @@ def evaluate_contingency_reserve_burn_alignment(
     }
 
 
+def evaluate_cost_schedule_index_csi(
+    cpi: float | None,
+    spi: float | None,
+    percent_complete: float = 0.0,
+) -> dict[str, Any]:
+    """Evalúa el Cost-Schedule Index (CSI = CPI * SPI) y la viabilidad de recuperación según PMI EVM / PMBOK §7.4."""
+    pct = round(min(100.0, max(0.0, float(percent_complete or 0.0))), 2)
+    if cpi is None or spi is None or float(cpi) <= 0 or float(spi) <= 0:
+        cpi_val = round(max(0.0, float(cpi or 0.0)), 4)
+        spi_val = round(max(0.0, float(spi or 0.0)), 4)
+        return {
+            "cpi": cpi_val,
+            "spi": spi_val,
+            "csi": 0.0,
+            "percent_complete": pct,
+            "tradeoff_mode": "insufficient_data",
+            "csi_health_band": "unassessed",
+            "recovery_likelihood": "unassessed",
+        }
+
+    cpi_val = round(float(cpi), 4)
+    spi_val = round(float(spi), 4)
+    csi = round(cpi_val * spi_val, 4)
+
+    if spi_val >= 1.0 and cpi_val < 0.95:
+        tradeoff_mode = "crashing_cost_for_speed"
+    elif cpi_val >= 1.0 and spi_val < 0.95:
+        tradeoff_mode = "under_spending_behind_schedule"
+    elif cpi_val < 0.95 and spi_val < 0.95:
+        tradeoff_mode = "dual_degradation"
+    else:
+        tradeoff_mode = "aligned_execution"
+
+    if csi >= 0.95:
+        csi_health_band = "optimal"
+    elif csi >= 0.80:
+        csi_health_band = "caution"
+    else:
+        csi_health_band = "critical"
+
+    if csi < 0.80 and pct >= 20.0:
+        recovery_likelihood = "irreversible_overrun_likely"
+    elif csi < 0.95:
+        recovery_likelihood = "corrective_action_viable"
+    else:
+        recovery_likelihood = "on_track"
+
+    return {
+        "cpi": cpi_val,
+        "spi": spi_val,
+        "csi": csi,
+        "percent_complete": pct,
+        "tradeoff_mode": tradeoff_mode,
+        "csi_health_band": csi_health_band,
+        "recovery_likelihood": recovery_likelihood,
+    }
+
+
 class ProjectEVMService:
     """Fachada canónica del servicio EVM y Diagnóstico Predictivo PMI (Vol. 5 y Vol. 6)."""
 
@@ -3320,6 +3378,14 @@ class ProjectEVMService:
         return evaluate_contingency_reserve_burn_alignment(
             contingency_allocated, contingency_consumed, percent_complete
         )
+
+    @staticmethod
+    def evaluate_cost_schedule_index_csi(
+        cpi: float | None,
+        spi: float | None,
+        percent_complete: float = 0.0,
+    ) -> dict[str, Any]:
+        return evaluate_cost_schedule_index_csi(cpi, spi, percent_complete)
 
     @staticmethod
     def build_project_execution_matrix(
