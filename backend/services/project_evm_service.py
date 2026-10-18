@@ -3300,6 +3300,57 @@ def evaluate_variance_at_completion_alert(
     }
 
 
+def evaluate_etc_forecasting_method_posture(
+    bac: float | int | None,
+    ev: float | int | None,
+    ac: float | int | None,
+    cpi: float | int | None = None,
+    spi: float | int | None = None,
+) -> dict[str, Any]:
+    """Evalúa las 3 fórmulas canónicas de pronóstico ETC según PMI PMBOK §7.4 (Control Costs)."""
+    safe_bac = max(0.0, float(bac or 0.0))
+    safe_ev = max(0.0, min(safe_bac, float(ev or 0.0)))
+    safe_ac = max(0.0, float(ac or 0.0))
+    remaining_work = round(max(0.0, safe_bac - safe_ev), 2)
+
+    if cpi is not None and float(cpi) > 0:
+        effective_cpi = round(float(cpi), 4)
+    elif safe_ac > 0 and safe_ev > 0:
+        effective_cpi = round(safe_ev / safe_ac, 4)
+    else:
+        effective_cpi = 1.0
+
+    if spi is not None and float(spi) > 0:
+        effective_spi = round(float(spi), 4)
+    else:
+        effective_spi = 1.0
+
+    etc_atypical = remaining_work
+    etc_typical_cpi = round(remaining_work / effective_cpi, 2)
+    etc_composite_cpi_spi = round(
+        remaining_work / (effective_cpi * effective_spi), 2
+    )
+
+    if remaining_work == 0.0:
+        recommended_method = "COMPLETED_NO_ETC"
+    elif effective_cpi < 0.95 and effective_spi < 0.95:
+        recommended_method = "COMPOSITE_CPI_SPI"
+    elif effective_cpi < 0.95:
+        recommended_method = "TYPICAL_CPI"
+    else:
+        recommended_method = "ATYPICAL_REMAINING_BUDGET"
+
+    return {
+        "remaining_work": remaining_work,
+        "effective_cpi": effective_cpi,
+        "effective_spi": effective_spi,
+        "etc_atypical": etc_atypical,
+        "etc_typical_cpi": etc_typical_cpi,
+        "etc_composite_cpi_spi": etc_composite_cpi_spi,
+        "recommended_method": recommended_method,
+    }
+
+
 class ProjectEVMService:
     """Fachada canónica del servicio EVM y Diagnóstico Predictivo PMI (Vol. 5 y Vol. 6)."""
 
@@ -3436,7 +3487,18 @@ class ProjectEVMService:
         return evaluate_variance_at_completion_alert(bac, eac, management_reserve)
 
     @staticmethod
+    def evaluate_etc_forecasting_method_posture(
+        bac: float | int | None,
+        ev: float | int | None,
+        ac: float | int | None,
+        cpi: float | int | None = None,
+        spi: float | int | None = None,
+    ) -> dict[str, Any]:
+        return evaluate_etc_forecasting_method_posture(bac, ev, ac, cpi=cpi, spi=spi)
+
+    @staticmethod
     def build_project_execution_matrix(
         db: Session, project: Project, now: Optional[datetime.datetime] = None
     ) -> Dict[str, Any]:
         return build_project_execution_matrix(db, project, now=now)
+

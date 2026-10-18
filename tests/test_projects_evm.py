@@ -1063,6 +1063,93 @@ def test_evaluate_variance_at_completion_alert_unbaselined():
     assert res["vac_alert_status"] == "unbaselined"
 
 
+def test_evaluate_etc_forecasting_method_posture_completed_no_etc():
+    """remaining_work == 0.0 (EV >= BAC o BAC == 0) -> 'COMPLETED_NO_ETC'."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_etc_forecasting_method_posture,
+    )
+
+    res = evaluate_etc_forecasting_method_posture(
+        bac=100000.0, ev=100000.0, ac=95000.0, cpi=1.05, spi=1.0
+    )
+    assert res == {
+        "remaining_work": 0.0,
+        "effective_cpi": 1.05,
+        "effective_spi": 1.0,
+        "etc_atypical": 0.0,
+        "etc_typical_cpi": 0.0,
+        "etc_composite_cpi_spi": 0.0,
+        "recommended_method": "COMPLETED_NO_ETC",
+    }
+    assert (
+        ProjectEVMService.evaluate_etc_forecasting_method_posture(
+            100000.0, 100000.0, 95000.0, cpi=1.05, spi=1.0
+        )
+        == res
+    )
+
+
+def test_evaluate_etc_forecasting_method_posture_composite_cpi_spi():
+    """effective_cpi < 0.95 y effective_spi < 0.95 -> 'COMPOSITE_CPI_SPI'."""
+    from backend.services.project_evm_service import (
+        evaluate_etc_forecasting_method_posture,
+    )
+
+    res = evaluate_etc_forecasting_method_posture(
+        bac=100000.0, ev=40000.0, ac=50000.0, cpi=0.80, spi=0.75
+    )
+    assert res == {
+        "remaining_work": 60000.0,
+        "effective_cpi": 0.8,
+        "effective_spi": 0.75,
+        "etc_atypical": 60000.0,
+        "etc_typical_cpi": 75000.0,
+        "etc_composite_cpi_spi": 100000.0,
+        "recommended_method": "COMPOSITE_CPI_SPI",
+    }
+
+
+def test_evaluate_etc_forecasting_method_posture_typical_cpi():
+    """effective_cpi < 0.95 (derivado de EV/AC cuando cpi=None) y effective_spi >= 0.95 -> 'TYPICAL_CPI'."""
+    from backend.services.project_evm_service import (
+        evaluate_etc_forecasting_method_posture,
+    )
+
+    res = evaluate_etc_forecasting_method_posture(
+        bac=100000.0, ev=40000.0, ac=50000.0, cpi=None, spi=1.0
+    )
+    assert res == {
+        "remaining_work": 60000.0,
+        "effective_cpi": 0.8,
+        "effective_spi": 1.0,
+        "etc_atypical": 60000.0,
+        "etc_typical_cpi": 75000.0,
+        "etc_composite_cpi_spi": 75000.0,
+        "recommended_method": "TYPICAL_CPI",
+    }
+
+
+def test_evaluate_etc_forecasting_method_posture_atypical_remaining_budget():
+    """effective_cpi >= 0.95 -> 'ATYPICAL_REMAINING_BUDGET'."""
+    from backend.services.project_evm_service import (
+        evaluate_etc_forecasting_method_posture,
+    )
+
+    res = evaluate_etc_forecasting_method_posture(
+        bac=100000.0, ev=50000.0, ac=50000.0, cpi=1.0, spi=1.0
+    )
+    assert res == {
+        "remaining_work": 50000.0,
+        "effective_cpi": 1.0,
+        "effective_spi": 1.0,
+        "etc_atypical": 50000.0,
+        "etc_typical_cpi": 50000.0,
+        "etc_composite_cpi_spi": 50000.0,
+        "recommended_method": "ATYPICAL_REMAINING_BUDGET",
+    }
+
+
 if __name__ == "__main__":
     test_evm_balanced_project()
     test_evm_cost_overrun_critical()
@@ -1082,4 +1169,9 @@ if __name__ == "__main__":
     test_evaluate_variance_at_completion_alert_overrun_absorbed_by_mr()
     test_evaluate_variance_at_completion_alert_budget_breach_beyond_mr()
     test_evaluate_variance_at_completion_alert_unbaselined()
+    test_evaluate_etc_forecasting_method_posture_completed_no_etc()
+    test_evaluate_etc_forecasting_method_posture_composite_cpi_spi()
+    test_evaluate_etc_forecasting_method_posture_typical_cpi()
+    test_evaluate_etc_forecasting_method_posture_atypical_remaining_budget()
     print("✅ All EVM tests passed successfully!")
+

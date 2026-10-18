@@ -484,3 +484,66 @@ def summarize_wiki_revision_history_velocity(
         "curation_status": curation_status,
     }
 
+
+def audit_wiki_crosslink_reference_integrity(
+    content: str | None,
+    known_slugs: list[str] | set[str] | None = None,
+) -> dict[str, Any]:
+    """Audita la integridad de referencias cruzadas [[slug]] / [[slug|label]] y (wiki:slug) según PMI PMBOK §4.4.
+
+    - Los slugs se normalizan en minúsculas y sin espacios antes de comparar.
+    - `total_references`: ocurrencias totales encontradas (con repetidos).
+    - `unique_targets`: slugs únicos en orden de aparición.
+    - `resolved_targets`: targets presentes en `known_slugs` (o todos si es
+      None); `broken_targets`: ausentes (o [] si es None).
+    - `integrity_pct`: % de targets resueltos (2 decimales; 100.0 sin targets).
+    - `posture`: 'ISOLATED_NO_CROSSLINKS' sin referencias;
+      'BROKEN_KNOWLEDGE_LINKS' con algún target roto; y
+      'CONNECTED_KNOWLEDGE_GRAPH' en otro caso.
+    """
+    content_norm = str(content or "")
+    referenced: list[str] = []
+    for match in re.finditer(
+        r"\[\[([^\]]+?)\s*(?:\|[^\]]*)?\]\]|\(\s*wiki:([^)\s]+)\s*\)",
+        content_norm,
+    ):
+        raw_slug = match.group(1) if match.group(1) is not None else match.group(2)
+        if raw_slug is None:
+            continue
+        referenced.append(re.sub(r"\s+", "", str(raw_slug)).strip().lower())
+
+    total_references = len(referenced)
+    unique_targets: list[str] = list(dict.fromkeys(referenced))
+
+    if known_slugs is None:
+        resolved_targets = list(unique_targets)
+        broken_targets: list[str] = []
+    else:
+        known_norm = {
+            re.sub(r"\s+", "", str(slug)).strip().lower() for slug in known_slugs
+        }
+        resolved_targets = [t for t in unique_targets if t in known_norm]
+        broken_targets = [t for t in unique_targets if t not in known_norm]
+
+    integrity_pct = (
+        round((len(resolved_targets) / len(unique_targets)) * 100.0, 2)
+        if unique_targets
+        else 100.0
+    )
+
+    if not unique_targets:
+        posture = "ISOLATED_NO_CROSSLINKS"
+    elif len(broken_targets) > 0:
+        posture = "BROKEN_KNOWLEDGE_LINKS"
+    else:
+        posture = "CONNECTED_KNOWLEDGE_GRAPH"
+
+    return {
+        "total_references": total_references,
+        "unique_targets": unique_targets,
+        "resolved_targets": resolved_targets,
+        "broken_targets": broken_targets,
+        "integrity_pct": integrity_pct,
+        "posture": posture,
+    }
+

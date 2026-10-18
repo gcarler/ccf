@@ -692,3 +692,86 @@ def test_summarize_wiki_revision_history_velocity_unversioned():
             "curation_status": "unversioned",
         }
 
+
+# ─── audit_wiki_crosslink_reference_integrity (pure helper) ──────────
+
+
+def test_audit_wiki_crosslink_connected_graph_with_known_slugs():
+    """Referencias [[slug]], [[slug|label]] y (wiki:slug) resueltas -> CONNECTED_KNOWLEDGE_GRAPH."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_crosslink_reference_integrity,
+    )
+
+    content = (
+        "Ver [[pmbok-4-4|gestion del conocimiento]] y [[Acta de Proyecto]] "
+        "más la plantilla (wiki:cierre_administrative)."
+    )
+
+    res = audit_wiki_crosslink_reference_integrity(
+        content, ["pmbok-4-4", "actadeproyecto", "cierre_administrative"]
+    )
+
+    assert res["total_references"] == 3
+    assert res["unique_targets"] == ["pmbok-4-4", "actadeproyecto", "cierre_administrative"]
+    assert res["resolved_targets"] == res["unique_targets"]
+    assert res["broken_targets"] == []
+    assert res["integrity_pct"] == 100.0
+    assert res["posture"] == "CONNECTED_KNOWLEDGE_GRAPH"
+
+
+def test_audit_wiki_crosslink_broken_links_detected():
+    """Targets ausentes de known_slugs -> BROKEN_KNOWLEDGE_LINKS con integrity_pct parcial."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_crosslink_reference_integrity,
+    )
+
+    content = "Ver [[pmbok-4-4]] y [[slug-inexistente]] y otra vez [[pmbok-4-4]]."
+
+    res = audit_wiki_crosslink_reference_integrity(
+        content, ["pmbok-4-4", "otra-pagina"]
+    )
+
+    assert res["total_references"] == 3
+    assert res["unique_targets"] == ["pmbok-4-4", "slug-inexistente"]
+    assert res["resolved_targets"] == ["pmbok-4-4"]
+    assert res["broken_targets"] == ["slug-inexistente"]
+    assert res["integrity_pct"] == 50.0
+    assert res["posture"] == "BROKEN_KNOWLEDGE_LINKS"
+
+
+def test_audit_wiki_crosslink_isolated_no_crosslinks():
+    """Contenido sin referencias -> ISOLATED_NO_CROSSLINKS con integridad 100.0."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_crosslink_reference_integrity,
+    )
+
+    for empty_content in (None, "Sin referencias cruzadas aquí."):
+        res = audit_wiki_crosslink_reference_integrity(empty_content, ["pmbok"])
+        assert res == {
+            "total_references": 0,
+            "unique_targets": [],
+            "resolved_targets": [],
+            "broken_targets": [],
+            "integrity_pct": 100.0,
+            "posture": "ISOLATED_NO_CROSSLINKS",
+        }
+
+
+def test_audit_wiki_crosslink_without_known_slugs_resolves_all():
+    """known_slugs None -> todos los targets resueltos, broken [] y CONNECTED_KNOWLEDGE_GRAPH."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_crosslink_reference_integrity,
+    )
+
+    res = audit_wiki_crosslink_reference_integrity(
+        "Ver [[Wiki PMBOK]] y (wiki:levantamiento) sin catálogo",
+        None,
+    )
+
+    assert res["total_references"] == 2
+    assert res["unique_targets"] == ["wikipmbok", "levantamiento"]
+    assert res["resolved_targets"] == res["unique_targets"]
+    assert res["broken_targets"] == []
+    assert res["integrity_pct"] == 100.0
+    assert res["posture"] == "CONNECTED_KNOWLEDGE_GRAPH"
+
