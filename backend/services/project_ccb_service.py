@@ -805,3 +805,236 @@ def evaluate_scope_creep_baseline_drift(
         "posture": posture,
     }
 
+
+def evaluate_ccb_voting_consensus(
+    votes: list[dict[str, Any]] | None,
+    required_quorum: int | None = 3,
+) -> dict[str, Any]:
+    """Evalúa el quórum y consenso de votación del Comité de Control de Cambios (CCB) según PMI PMBOK §4.6."""
+    valid_votes = [item for item in (votes or []) if isinstance(item, dict)]
+    safe_quorum = max(1, int(required_quorum or 3))
+    total_votes = len(valid_votes)
+
+    approve_tokens = ("approve", "approved", "aprobar", "aprobado", "yes", "si")
+    reject_tokens = ("reject", "rejected", "rechazar", "rechazado", "no", "veto")
+
+    approve_votes = 0
+    reject_votes = 0
+    veto_cast = False
+
+    for item in valid_votes:
+        val = str(item.get("vote") or item.get("decision") or "").strip().lower()
+        if val in approve_tokens:
+            approve_votes += 1
+        elif val in reject_tokens:
+            reject_votes += 1
+
+        if bool(item.get("is_veto")) or val == "veto":
+            veto_cast = True
+
+    quorum_met = bool(total_votes >= safe_quorum)
+    approval_ratio = (
+        round((approve_votes / total_votes) * 100.0, 2)
+        if total_votes > 0
+        else 0.0
+    )
+
+    if veto_cast:
+        posture = "VETOED_BY_AUTHORITY"
+    elif not quorum_met:
+        posture = "INSUFFICIENT_QUORUM"
+    elif approve_votes == total_votes:
+        posture = "UNANIMOUS_CCB_APPROVAL"
+    elif (
+        approve_votes < total_votes
+        and approve_votes > reject_votes
+        and approval_ratio >= 60.0
+    ):
+        posture = "MAJORITY_CCB_APPROVAL"
+    else:
+        posture = "CCB_REJECTED_OR_DEADLOCKED"
+
+    return {
+        "safe_quorum": safe_quorum,
+        "total_votes": total_votes,
+        "approve_votes": approve_votes,
+        "reject_votes": reject_votes,
+        "veto_cast": veto_cast,
+        "quorum_met": quorum_met,
+        "approval_ratio": approval_ratio,
+        "posture": posture,
+    }
+
+
+class ProjectCCBService:
+    """Fachada canónica de Control Integrado de Cambios (CCB) y Calidad DoD PMI."""
+
+    @staticmethod
+    def list_change_requests(
+        db: Session, project: models.Project
+    ) -> schemas.ProjectChangeRequestListResponse:
+        return list_change_requests(db, project)
+
+    @staticmethod
+    def create_change_request(
+        db: Session,
+        project: models.Project,
+        cr_in: schemas.ProjectChangeRequestCreate,
+        actor_persona_id: UUID,
+    ) -> models.ProjectChangeRequest:
+        return create_change_request(db, project, cr_in, actor_persona_id)
+
+    @staticmethod
+    def decide_change_request(
+        db: Session,
+        project: models.Project,
+        cr: models.ProjectChangeRequest,
+        decision_in: schemas.ProjectChangeRequestDecide,
+        actor_persona_id: UUID,
+    ) -> models.ProjectChangeRequest:
+        return decide_change_request(db, project, cr, decision_in, actor_persona_id)
+
+    @staticmethod
+    def get_dod_acceptance(
+        db: Session, project: models.Project, task_id: UUID
+    ) -> Optional[models.ProjectDodAcceptance]:
+        return get_dod_acceptance(db, project, task_id)
+
+    @staticmethod
+    def upsert_dod_acceptance(
+        db: Session,
+        project: models.Project,
+        task: models.ProjectTask,
+        payload: schemas.ProjectDodAcceptanceUpdate,
+        actor_persona_id: UUID,
+    ) -> models.ProjectDodAcceptance:
+        return upsert_dod_acceptance(db, project, task, payload, actor_persona_id)
+
+    @staticmethod
+    def get_project_ccb_and_quality_summary(db: Session, project_id: UUID) -> dict:
+        return get_project_ccb_and_quality_summary(db, project_id)
+
+    @staticmethod
+    def compute_ccb_approval_rate_pct(
+        approved_count: int, rejected_count: int
+    ) -> float:
+        return compute_ccb_approval_rate_pct(approved_count, rejected_count)
+
+    @staticmethod
+    def evaluate_coq_balance_status(
+        coq_conformance_ratio_pct: float, total_coq_cost: float
+    ) -> str:
+        return evaluate_coq_balance_status(coq_conformance_ratio_pct, total_coq_cost)
+
+    @staticmethod
+    def build_ccb_coq_diagnostic(summary: dict) -> dict:
+        return build_ccb_coq_diagnostic(summary)
+
+    @staticmethod
+    def evaluate_dod_gate_compliance(summary: dict) -> dict:
+        return evaluate_dod_gate_compliance(summary)
+
+    @staticmethod
+    def evaluate_project_communications_complexity(
+        participant_count: int, message_count: int = 0
+    ) -> dict:
+        return evaluate_project_communications_complexity(
+            participant_count, message_count=message_count
+        )
+
+    @staticmethod
+    def evaluate_ccb_baseline_creep_impact(
+        net_approved_cost_delta: float,
+        bac: float,
+        net_approved_schedule_days: int,
+        planned_duration_days: int = 0,
+    ) -> dict:
+        return evaluate_ccb_baseline_creep_impact(
+            net_approved_cost_delta,
+            bac,
+            net_approved_schedule_days,
+            planned_duration_days=planned_duration_days,
+        )
+
+    @staticmethod
+    def evaluate_cost_of_quality_balance(
+        prevention_cost: float = 0.0,
+        appraisal_cost: float = 0.0,
+        internal_failure_cost: float = 0.0,
+        external_failure_cost: float = 0.0,
+    ) -> dict:
+        return evaluate_cost_of_quality_balance(
+            prevention_cost=prevention_cost,
+            appraisal_cost=appraisal_cost,
+            internal_failure_cost=internal_failure_cost,
+            external_failure_cost=external_failure_cost,
+        )
+
+    @staticmethod
+    def evaluate_ccb_backlog_velocity(
+        change_requests: list[dict[str, Any]] | None,
+        sla_days: float = 7.0,
+    ) -> dict[str, Any]:
+        return evaluate_ccb_backlog_velocity(change_requests, sla_days=sla_days)
+
+    @staticmethod
+    def evaluate_defect_containment_efficiency(
+        pre_delivery_defects: int,
+        post_delivery_defects: int,
+        reworked_verified_count: int = 0,
+    ) -> dict[str, Any]:
+        return evaluate_defect_containment_efficiency(
+            pre_delivery_defects,
+            post_delivery_defects,
+            reworked_verified_count=reworked_verified_count,
+        )
+
+    @staticmethod
+    def evaluate_dod_checklist_verification_depth(
+        checklist_items: list[dict[str, Any]] | None,
+    ) -> dict[str, Any]:
+        return evaluate_dod_checklist_verification_depth(checklist_items)
+
+    @staticmethod
+    def evaluate_scope_creep_baseline_drift(
+        baseline_tasks_count: int | None,
+        current_tasks_count: int | None,
+        approved_change_requests_tasks_delta: int | None = 0,
+    ) -> dict[str, Any]:
+        return evaluate_scope_creep_baseline_drift(
+            baseline_tasks_count,
+            current_tasks_count,
+            approved_change_requests_tasks_delta=approved_change_requests_tasks_delta,
+        )
+
+    @staticmethod
+    def evaluate_ccb_voting_consensus(
+        votes: list[dict[str, Any]] | None,
+        required_quorum: int | None = 3,
+    ) -> dict[str, Any]:
+        return evaluate_ccb_voting_consensus(votes, required_quorum=required_quorum)
+
+
+__all__ = [
+    "list_change_requests",
+    "row_list_adapter",
+    "create_change_request",
+    "decide_change_request",
+    "get_dod_acceptance",
+    "upsert_dod_acceptance",
+    "get_project_ccb_and_quality_summary",
+    "compute_ccb_approval_rate_pct",
+    "evaluate_coq_balance_status",
+    "build_ccb_coq_diagnostic",
+    "evaluate_dod_gate_compliance",
+    "evaluate_project_communications_complexity",
+    "evaluate_ccb_baseline_creep_impact",
+    "evaluate_cost_of_quality_balance",
+    "evaluate_ccb_backlog_velocity",
+    "evaluate_defect_containment_efficiency",
+    "evaluate_dod_checklist_verification_depth",
+    "evaluate_scope_creep_baseline_drift",
+    "evaluate_ccb_voting_consensus",
+    "ProjectCCBService",
+]
+

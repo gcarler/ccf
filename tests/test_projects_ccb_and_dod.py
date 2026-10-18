@@ -1399,3 +1399,128 @@ def test_evaluate_scope_creep_drift_empty_with_orphan_counts():
     assert res["scope_creep_pct"] == 100.0
     assert res["posture"] == "CRITICAL_SCOPE_CREEP"
 
+
+# ─── 15. Evaluador de Quórum y Consenso de Votación CCB (PMI PMBOK §4.6) ───
+
+
+def test_evaluate_ccb_voting_consensus_unanimous_and_majority():
+    """Quórum cumplido con 100% aprobación ('UNANIMOUS_CCB_APPROVAL') o mayoría >= 60% ('MAJORITY_CCB_APPROVAL')."""
+    import backend.services.project_ccb_service as ccb_module
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        evaluate_ccb_voting_consensus,
+    )
+
+    unanimous_votes = [
+        {"member": "PMO", "vote": "approve"},
+        {"member": "Sponsor", "decision": "aprobado"},
+        {"member": "Arquitectura", "vote": "yes"},
+        "invalid_entry_ignored",  # type: ignore[list-item]
+    ]
+    res_unanimous = evaluate_ccb_voting_consensus(unanimous_votes, required_quorum=3)
+    assert res_unanimous == {
+        "safe_quorum": 3,
+        "total_votes": 3,
+        "approve_votes": 3,
+        "reject_votes": 0,
+        "veto_cast": False,
+        "quorum_met": True,
+        "approval_ratio": 100.0,
+        "posture": "UNANIMOUS_CCB_APPROVAL",
+    }
+    assert (
+        ProjectCCBService.evaluate_ccb_voting_consensus(
+            unanimous_votes, required_quorum=3
+        )
+        == res_unanimous
+    )
+    assert "evaluate_ccb_voting_consensus" in ccb_module.__all__
+
+    majority_votes = [
+        {"member": "PMO", "vote": "approved"},
+        {"member": "Sponsor", "vote": "aprobar"},
+        {"member": "Finanzas", "vote": "si"},
+        {"member": "Operaciones", "vote": "reject"},
+        {"member": "Calidad", "vote": "abstain"},
+    ]
+    res_majority = evaluate_ccb_voting_consensus(majority_votes, required_quorum=3)
+    assert res_majority == {
+        "safe_quorum": 3,
+        "total_votes": 5,
+        "approve_votes": 3,
+        "reject_votes": 1,
+        "veto_cast": False,
+        "quorum_met": True,
+        "approval_ratio": 60.0,
+        "posture": "MAJORITY_CCB_APPROVAL",
+    }
+
+
+def test_evaluate_ccb_voting_consensus_vetoed_by_authority():
+    """Voto con is_veto=True o vote='veto' -> 'VETOED_BY_AUTHORITY' sin importar el quórum o mayoría."""
+    from backend.services.project_ccb_service import evaluate_ccb_voting_consensus
+
+    votes_flag = [
+        {"member": "PMO", "vote": "approve"},
+        {"member": "Sponsor", "vote": "reject", "is_veto": True},
+        {"member": "Finanzas", "vote": "approve"},
+    ]
+    res_flag = evaluate_ccb_voting_consensus(votes_flag, required_quorum=3)
+    assert res_flag["veto_cast"] is True
+    assert res_flag["posture"] == "VETOED_BY_AUTHORITY"
+
+    votes_token = [{"member": "Sponsor", "decision": "VETO"}]
+    res_token = evaluate_ccb_voting_consensus(votes_token, required_quorum=3)
+    assert res_token["veto_cast"] is True
+    assert res_token["quorum_met"] is False
+    assert res_token["posture"] == "VETOED_BY_AUTHORITY"
+
+
+def test_evaluate_ccb_voting_consensus_insufficient_quorum():
+    """Sin veto pero total_votes < safe_quorum -> 'INSUFFICIENT_QUORUM'."""
+    from backend.services.project_ccb_service import evaluate_ccb_voting_consensus
+
+    res = evaluate_ccb_voting_consensus(
+        [{"member": "PMO", "vote": "approve"}, {"member": "QA", "vote": "approve"}],
+        required_quorum=3,
+    )
+    assert res == {
+        "safe_quorum": 3,
+        "total_votes": 2,
+        "approve_votes": 2,
+        "reject_votes": 0,
+        "veto_cast": False,
+        "quorum_met": False,
+        "approval_ratio": 100.0,
+        "posture": "INSUFFICIENT_QUORUM",
+    }
+
+    empty_res = evaluate_ccb_voting_consensus(None, required_quorum=0)
+    assert empty_res["safe_quorum"] == 3
+    assert empty_res["total_votes"] == 0
+    assert empty_res["quorum_met"] is False
+    assert empty_res["posture"] == "INSUFFICIENT_QUORUM"
+
+
+def test_evaluate_ccb_voting_consensus_rejected_or_deadlocked():
+    """Quórum cumplido pero mayoría de rechazos o empate (< 60% aprobación) -> 'CCB_REJECTED_OR_DEADLOCKED'."""
+    from backend.services.project_ccb_service import evaluate_ccb_voting_consensus
+
+    deadlock_votes = [
+        {"member": "M1", "vote": "approve"},
+        {"member": "M2", "vote": "approve"},
+        {"member": "M3", "vote": "rejected"},
+        {"member": "M4", "vote": "no"},
+    ]
+    res = evaluate_ccb_voting_consensus(deadlock_votes, required_quorum=4)
+    assert res == {
+        "safe_quorum": 4,
+        "total_votes": 4,
+        "approve_votes": 2,
+        "reject_votes": 2,
+        "veto_cast": False,
+        "quorum_met": True,
+        "approval_ratio": 50.0,
+        "posture": "CCB_REJECTED_OR_DEADLOCKED",
+    }
+

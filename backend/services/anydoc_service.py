@@ -1076,6 +1076,83 @@ def extract_markdown_action_checklists(
     }
 
 
+_MARKDOWN_LINK_RE = re.compile(r"(?<!!)\[(?P<label>[^\]]*)\]\((?P<url>[^)]*)\)")
+
+
+def audit_markdown_reference_citations(
+    markdown_or_result: str | dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Audita enlaces e hipervínculos de referencia Markdown [label](url) fuera de bloques de código según PMI PMBOK §10.2 y §4.4."""
+    if isinstance(markdown_or_result, dict):
+        text = str(markdown_or_result.get("markdown") or "")
+    elif isinstance(markdown_or_result, str):
+        text = markdown_or_result
+    else:
+        text = ""
+
+    total_links = 0
+    https_secure_links = 0
+    insecure_http_links = 0
+    internal_or_anchor_links = 0
+    empty_or_placeholder_links = 0
+
+    placeholder_urls = ("", "#", "todo", "tbd", "http://", "https://")
+
+    in_code_block = False
+    for line in text.splitlines():
+        if line.strip().startswith("```"):
+            in_code_block = not in_code_block
+            continue
+        if in_code_block:
+            continue
+
+        for match in _MARKDOWN_LINK_RE.finditer(line):
+            total_links += 1
+            label = match.group("label")
+            url_clean = match.group("url").strip()
+            url_low = url_clean.lower()
+
+            if url_low.startswith("https://"):
+                https_secure_links += 1
+            if url_low.startswith("http://"):
+                insecure_http_links += 1
+            if url_clean.startswith(("/", "#")) and url_clean != "#":
+                internal_or_anchor_links += 1
+            if not label.strip() or url_low in placeholder_urls:
+                empty_or_placeholder_links += 1
+
+    citation_hygiene_pct = (
+        round(
+            max(
+                0.0,
+                (total_links - insecure_http_links - empty_or_placeholder_links)
+                / total_links,
+            )
+            * 100.0,
+            2,
+        )
+        if total_links > 0
+        else 100.0
+    )
+
+    if total_links == 0:
+        posture = "NO_CITATIONS"
+    elif insecure_http_links > 0 or empty_or_placeholder_links > 0:
+        posture = "MALFORMED_OR_INSECURE_CITATIONS"
+    else:
+        posture = "VERIFIED_CITATION_HYGIENE"
+
+    return {
+        "total_links": total_links,
+        "https_secure_links": https_secure_links,
+        "insecure_http_links": insecure_http_links,
+        "internal_or_anchor_links": internal_or_anchor_links,
+        "empty_or_placeholder_links": empty_or_placeholder_links,
+        "citation_hygiene_pct": citation_hygiene_pct,
+        "posture": posture,
+    }
+
+
 class AnyDocService:
     """Fachada canónica de conversión y auditoría documental AnyDoc PMI."""
 
@@ -1148,6 +1225,12 @@ class AnyDocService:
     ) -> dict[str, Any]:
         return extract_markdown_action_checklists(markdown_or_result)
 
+    @staticmethod
+    def audit_markdown_reference_citations(
+        markdown_or_result: str | dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        return audit_markdown_reference_citations(markdown_or_result)
+
 
 __all__ = [
     "ANYDOC_AVAILABLE",
@@ -1164,6 +1247,7 @@ __all__ = [
     "summarize_markdown_tables_schema",
     "summarize_markdown_code_blocks",
     "extract_markdown_action_checklists",
+    "audit_markdown_reference_citations",
     "AnyDocService",
 ]
 

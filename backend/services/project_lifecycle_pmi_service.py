@@ -1007,3 +1007,82 @@ def audit_charter_measurable_objectives(
         "smart_compliance_rate": smart_compliance_rate,
         "posture": posture,
     }
+
+
+def audit_stakeholder_communication_cadence(
+    stakeholders: list[dict[str, Any]] | None,
+) -> dict[str, Any]:
+    """Audita el plan de comunicaciones de interesados (PMBOK §10.1 / §13.2).
+
+    Ignora entradas que no sean dict y calcula:
+    - `total_stakeholders`: interesados validos.
+    - `channel_defined_count`: items con `channel`/`preferred_channel`/
+      `canal` no vacío.
+    - `cadence_defined_count`: items con `cadence`/`frequency`/`frecuencia`
+      dentro de la gramatica valida (daily/diaria, weekly/semanal,
+      biweekly/quincenal, monthly/mensual, milestone/por_hito).
+    - `fully_planned_count`: canal definido Y cadencia valida.
+    - `coverage_rate`: % de interesados con plan completo (2 decimales;
+      0.0 sin interesados).
+    - `posture`: 'NO_STAKEHOLDERS_REGISTERED' sin interesados;
+      'GOVERNED_COMMUNICATION_PLAN' con coverage >= 80.0;
+      'PARTIAL_COMMUNICATION_PLAN' con coverage >= 40.0; y
+      'UNPLANNED_STAKEHOLDER_OUTREACH' en otro caso.
+    """
+    VALID_CADENCES = {
+        "daily", "diaria", "weekly", "semanal", "biweekly", "quincenal",
+        "monthly", "mensual", "milestone", "por_hito",
+    }
+
+    items = [item for item in (stakeholders or []) if isinstance(item, dict)]
+    total_stakeholders = len(items)
+
+    channel_defined_count = 0
+    cadence_defined_count = 0
+    fully_planned_count = 0
+    for item in items:
+        channel_text = str(
+            item.get("channel")
+            or item.get("preferred_channel")
+            or item.get("canal")
+            or ""
+        ).strip()
+        cadence_text = str(
+            item.get("cadence")
+            or item.get("frequency")
+            or item.get("frecuencia")
+            or ""
+        ).strip().lower()
+
+        has_channel = bool(channel_text)
+        has_cadence = cadence_text in VALID_CADENCES
+        if has_channel:
+            channel_defined_count += 1
+        if has_cadence:
+            cadence_defined_count += 1
+        if has_channel and has_cadence:
+            fully_planned_count += 1
+
+    coverage_rate = (
+        round((fully_planned_count / total_stakeholders) * 100.0, 2)
+        if total_stakeholders > 0
+        else 0.0
+    )
+
+    if total_stakeholders == 0:
+        posture = "NO_STAKEHOLDERS_REGISTERED"
+    elif coverage_rate >= 80.0:
+        posture = "GOVERNED_COMMUNICATION_PLAN"
+    elif coverage_rate >= 40.0:
+        posture = "PARTIAL_COMMUNICATION_PLAN"
+    else:
+        posture = "UNPLANNED_STAKEHOLDER_OUTREACH"
+
+    return {
+        "total_stakeholders": total_stakeholders,
+        "channel_defined_count": channel_defined_count,
+        "cadence_defined_count": cadence_defined_count,
+        "fully_planned_count": fully_planned_count,
+        "coverage_rate": coverage_rate,
+        "posture": posture,
+    }

@@ -932,3 +932,84 @@ def test_charter_objectives_no_objectives_recorded():
             "posture": "NO_CHARTER_OBJECTIVES",
         }
 
+
+# ─── audit_stakeholder_communication_cadence (pure helper) ──────────
+
+
+def test_stakeholder_communication_cadence_governed_plan():
+    """Canal + cadencia válida (aliases diario/semanal/mensual/hito) -> GOVERNED_COMMUNICATION_PLAN."""
+    stakeholders = [
+        {"channel": "email", "cadence": "weekly"},
+        {"preferred_channel": "meeting", "frequency": "semanal"},
+        {"canal": "tablero", "cadence": "MENSUAL"},
+        {"channel": "nexus", "cadence": "por_hito"},
+    ]
+
+    res = project_lifecycle_pmi_service.audit_stakeholder_communication_cadence(
+        stakeholders
+    )
+
+    assert res["total_stakeholders"] == 4
+    assert res["channel_defined_count"] == 4
+    assert res["cadence_defined_count"] == 4
+    assert res["fully_planned_count"] == 4
+    assert res["coverage_rate"] == 100.0
+    assert res["posture"] == "GOVERNED_COMMUNICATION_PLAN"
+
+
+def test_stakeholder_communication_cadence_partial_plan():
+    """Solo la mitad con canal + cadencia -> PARTIAL_COMMUNICATION_PLAN (coverage 50)."""
+    stakeholders = [
+        {"channel": "email", "cadence": "weekly"},
+        {"channel": "chat"},  # sin cadencia
+        {"cadence": "daily"},  # sin canal
+        {"channel": "voz", "frequency": "mensual"},
+    ]
+
+    res = project_lifecycle_pmi_service.audit_stakeholder_communication_cadence(
+        stakeholders
+    )
+
+    assert res["total_stakeholders"] == 4
+    assert res["channel_defined_count"] == 3
+    assert res["cadence_defined_count"] == 3
+    assert res["fully_planned_count"] == 2
+    assert res["coverage_rate"] == 50.0
+    assert res["posture"] == "PARTIAL_COMMUNICATION_PLAN"
+
+
+def test_stakeholder_communication_cadence_invalid_values_and_unplanned():
+    """Canales vacíos y cadencias fuera de gramática (< 40% coverage) -> UNPLANNED_STAKEHOLDER_OUTREACH."""
+    stakeholders = [
+        {"channel": " ", "cadence": "cuando-los-vientos-faborezcan"},
+        {"preferred_channel": "pizarra", "frequency": "cada tanto"},
+        {"canal": "email", "cadence": "transcurrido el quinquenio"},
+    ]
+
+    res = project_lifecycle_pmi_service.audit_stakeholder_communication_cadence(
+        stakeholders
+    )
+
+    assert res["total_stakeholders"] == 3
+    assert res["channel_defined_count"] == 2
+    assert res["cadence_defined_count"] == 0
+    assert res["fully_planned_count"] == 0
+    assert res["coverage_rate"] == 0.0
+    assert res["posture"] == "UNPLANNED_STAKEHOLDER_OUTREACH"
+
+
+def test_stakeholder_communication_cadence_no_stakeholders_registered():
+    """None, lista vacía o items no-dict -> NO_STAKEHOLDERS_REGISTERED con coverage 0.0."""
+    for stakeholders in (None, [], ["no dict", 99]):
+        res = project_lifecycle_pmi_service.audit_stakeholder_communication_cadence(
+            stakeholders
+        )
+        assert res == {
+            "total_stakeholders": 0,
+            "channel_defined_count": 0,
+            "cadence_defined_count": 0,
+            "fully_planned_count": 0,
+            "coverage_rate": 0.0,
+            "posture": "NO_STAKEHOLDERS_REGISTERED",
+        }
+

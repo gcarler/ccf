@@ -927,3 +927,97 @@ def test_extract_markdown_action_checklists_no_checklist_items():
             "posture": "NO_CHECKLIST_ITEMS",
         }
 
+
+# ── audit_markdown_reference_citations (PMBOK §10.2 / §4.4, pure helper) ───
+
+
+def test_audit_markdown_reference_citations_verified_hygiene():
+    """Enlaces HTTPS seguros y anclas/rutas internas válidas -> 'VERIFIED_CITATION_HYGIENE' (100.0%)."""
+    import backend.services.anydoc_service as anydoc_module
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_reference_citations,
+    )
+
+    md = (
+        "# Referencias del Proyecto\n"
+        "- [Guía PMBOK](https://www.pmi.org/pmbok-guide)\n"
+        "- [Panel de Proyecto](/plataforma/proyectos)\n"
+        "- [Sección Alcance](#alcance)\n"
+    )
+    res = audit_markdown_reference_citations(md)
+    assert res == {
+        "total_links": 3,
+        "https_secure_links": 1,
+        "insecure_http_links": 0,
+        "internal_or_anchor_links": 2,
+        "empty_or_placeholder_links": 0,
+        "citation_hygiene_pct": 100.0,
+        "posture": "VERIFIED_CITATION_HYGIENE",
+    }
+    assert AnyDocService.audit_markdown_reference_citations({"markdown": md}) == res
+    assert "audit_markdown_reference_citations" in anydoc_module.__all__
+
+
+def test_audit_markdown_reference_citations_malformed_or_insecure():
+    """Enlaces http:// inseguros o placeholders (TODO, #, vacío) -> 'MALFORMED_OR_INSECURE_CITATIONS'."""
+    from backend.services.anydoc_service import audit_markdown_reference_citations
+
+    md = (
+        "- [Repositorio Oficial](https://github.com/org/repo)\n"
+        "- [Sitio Legacy](http://legacy.example.com/doc)\n"
+        "- [Pendiente](TODO)\n"
+        "- [   ](https://valid.org)\n"
+    )
+    res = audit_markdown_reference_citations(md)
+    assert res == {
+        "total_links": 4,
+        "https_secure_links": 2,
+        "insecure_http_links": 1,
+        "internal_or_anchor_links": 0,
+        "empty_or_placeholder_links": 2,
+        "citation_hygiene_pct": 25.0,
+        "posture": "MALFORMED_OR_INSECURE_CITATIONS",
+    }
+
+
+def test_audit_markdown_reference_citations_ignores_images_and_code_blocks():
+    """Ignora imágenes ![alt](url) y enlaces dentro de bloques ```."""
+    from backend.services.anydoc_service import audit_markdown_reference_citations
+
+    md = (
+        "![Diagrama WBS](http://insecure-image-ignored.com/wbs.png)\n"
+        "```markdown\n"
+        "[Enlace en código](http://insecure-in-code.com)\n"
+        "[Placeholder en código](TBD)\n"
+        "```\n"
+        "Ver [Acta Firmada](https://ccf.org/charter.pdf).\n"
+    )
+    res = audit_markdown_reference_citations(md)
+    assert res == {
+        "total_links": 1,
+        "https_secure_links": 1,
+        "insecure_http_links": 0,
+        "internal_or_anchor_links": 0,
+        "empty_or_placeholder_links": 0,
+        "citation_hygiene_pct": 100.0,
+        "posture": "VERIFIED_CITATION_HYGIENE",
+    }
+
+
+def test_audit_markdown_reference_citations_no_citations():
+    """None, texto sin enlaces o solo imágenes -> 'NO_CITATIONS' con hygiene 100.0%."""
+    from backend.services.anydoc_service import audit_markdown_reference_citations
+
+    for val in (None, "", "Texto plano sin citas.", {}, "![Logo](https://ccf.org/logo.png)"):
+        res = audit_markdown_reference_citations(val)
+        assert res == {
+            "total_links": 0,
+            "https_secure_links": 0,
+            "insecure_http_links": 0,
+            "internal_or_anchor_links": 0,
+            "empty_or_placeholder_links": 0,
+            "citation_hygiene_pct": 100.0,
+            "posture": "NO_CITATIONS",
+        }
+
