@@ -1076,3 +1076,104 @@ def test_audit_wiki_decision_log_entries_no_decisions_logged():
         }
 
 
+def test_audit_wiki_raid_register_tables_governed_matrix():
+    """completeness_rate >= 80.0 y sin filas sin propietario -> 'GOVERNED_RAID_MATRIX'."""
+    import backend.services.wiki_pmi_service as wiki_module
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_raid_register_tables,
+    )
+
+    md = (
+        "# Registro RAID del Proyecto\n\n"
+        "| ID | Descripción | Severidad | Responsable | Plan de Mitigación |\n"
+        "|---|---|---|---|---|\n"
+        "| RISK-01 | Latencia en enlace satelital | HIGH | @infra_lead | Configurar redundancia SD-WAN secundaria |\n"
+        "| ISS-02 | Demora en firma de proveedor | ALTA | Coordinador PMO | Escalar con dirección administrativa |\n"
+        "| ACT-03 | Actualizar matriz RACI | MEDIA | @pm_sede | Publicar versión revisada en Wiki |\n"
+        "| DEP-04 | Aprobación municipal | CRITICAL | Legal | Seguimiento semanal en mesa técnica |\n"
+        "| RSK-05 | Variación cambiaria menor | BAJA | Finanzas | Corto |\n"
+    )
+
+    res = WikiPMIService.audit_wiki_raid_register_tables(md)
+    assert res["total_raid_rows"] == 5
+    assert res["fully_specified_count"] == 4
+    assert res["unassigned_raid_ids"] == []
+    assert res["unmitigated_raid_ids"] == ["RSK-05"]
+    assert res["completeness_rate"] == 80.0
+    assert res["raid_table_posture"] == "GOVERNED_RAID_MATRIX"
+    assert isinstance(res["recommendations"], list) and len(res["recommendations"]) >= 1
+    assert audit_wiki_raid_register_tables(md) == res
+    assert "audit_wiki_raid_register_tables" in wiki_module.__all__
+
+
+def test_audit_wiki_raid_register_tables_unassigned_ownership():
+    """Al menos un ítem RAID sin propietario válido (TBD / SIN ASIGNAR / vacío) -> 'UNASSIGNED_RAID_OWNERSHIP'."""
+    from backend.services.wiki_pmi_service import audit_wiki_raid_register_tables
+
+    md = (
+        "| ID | Evento | Prioridad | Owner | Respuesta |\n"
+        "|---|---|---|---|---|\n"
+        "| RISK-10 | Sobrecosto en licencias | HIGH | @finanzas | Renegociar contrato marco anual |\n"
+        "| ISSUE-11 | Falla en entorno staging | CRITICAL | TBD | Reaprovisionar contenedores base |\n"
+        "| ACT-12 | Capacitación de usuarios | MEDIUM | SIN ASIGNAR | Programar talleres por sede |\n"
+    )
+
+    res = audit_wiki_raid_register_tables(md)
+    assert res["total_raid_rows"] == 3
+    assert res["fully_specified_count"] == 1
+    assert res["unassigned_raid_ids"] == ["ISSUE-11", "ACT-12"]
+    assert res["unmitigated_raid_ids"] == []
+    assert res["completeness_rate"] == 33.33
+    assert res["raid_table_posture"] == "UNASSIGNED_RAID_OWNERSHIP"
+
+
+def test_audit_wiki_raid_register_tables_incomplete_mitigation_plans():
+    """Todos con propietario pero completeness_rate < 80.0 por mitigación faltante -> 'INCOMPLETE_MITIGATION_PLANS'."""
+    from backend.services.wiki_pmi_service import audit_wiki_raid_register_tables
+
+    md = (
+        "| ID | Descripción | Severidad | Responsable | Plan de Mitigación |\n"
+        "|---|---|---|---|---|\n"
+        "| RISK-20 | Rotación de personal clave | ALTA | @rrhh_lead | Documentar procesos y pares técnicos |\n"
+        "| RISK-21 | Retraso de aduana | MEDIA | @logistica | TBD |\n"
+        "| ISS-22 | Bug en reporte PDF | LOW | @qa_engineer | N/A |\n"
+    )
+
+    res = audit_wiki_raid_register_tables(md)
+    assert res["total_raid_rows"] == 3
+    assert res["fully_specified_count"] == 1
+    assert res["unassigned_raid_ids"] == []
+    assert res["unmitigated_raid_ids"] == ["RISK-21", "ISS-22"]
+    assert res["completeness_rate"] == 33.33
+    assert res["raid_table_posture"] == "INCOMPLETE_MITIGATION_PLANS"
+
+
+def test_audit_wiki_raid_register_tables_no_raid_rows():
+    """Texto vacío, sin tablas RAID o tablas dentro de bloques ``` -> 'NO_RAID_TABLE_ROWS'."""
+    from backend.services.wiki_pmi_service import audit_wiki_raid_register_tables
+
+    fenced_md = (
+        "```markdown\n"
+        "| ID | Riesgo | Severidad | Responsable | Mitigación |\n"
+        "|---|---|---|---|---|\n"
+        "| RISK-99 | Falso positivo en código | HIGH | @dev | Mitigación de prueba |\n"
+        "```\n"
+    )
+    non_raid_table = (
+        "| Fase | Entregable | Estado |\n"
+        "|---|---|---|\n"
+        "| Inicio | Project Charter | Aprobado |\n"
+    )
+
+    for empty_val in (None, "", fenced_md, non_raid_table):
+        res = audit_wiki_raid_register_tables(empty_val)
+        assert res["total_raid_rows"] == 0
+        assert res["fully_specified_count"] == 0
+        assert res["unassigned_raid_ids"] == []
+        assert res["unmitigated_raid_ids"] == []
+        assert res["completeness_rate"] == 0.0
+        assert res["raid_table_posture"] == "NO_RAID_TABLE_ROWS"
+
+
+

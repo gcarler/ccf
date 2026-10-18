@@ -750,6 +750,167 @@ def audit_wiki_decision_log_entries(
     }
 
 
+def audit_wiki_raid_register_tables(
+    markdown_text: Optional[str],
+) -> dict[str, Any]:
+    """Audita tablas Markdown GFM de registros RAID (Riesgos, Problemas, Acciones, Dependencias) según PMI PMBOK §11.2 y §4.4."""
+    text = str(markdown_text or "")
+    raid_prefix_re = re.compile(
+        r"^(?:RISK|RSK|ISS|ISSUE|ACT|DEP)-\w+",
+        re.IGNORECASE,
+    )
+    separator_cell_re = re.compile(r"^:?-{2,}:?$")
+    severity_re = re.compile(
+        r"\b(?:HIGH|MEDIUM|LOW|CRITICAL|ALTA|MEDIA|BAJA|CRITICA|CRÍTICA)\b",
+        re.IGNORECASE,
+    )
+
+    invalid_placeholders = {"", "TBD", "N/A", "NA", "SIN ASIGNAR", "-", "NONE", "UNASSIGNED"}
+    owner_header_keywords = (
+        "owner",
+        "propietario",
+        "responsable",
+        "asignado",
+        "assigned",
+        "lider",
+        "líder",
+    )
+    mitigation_header_keywords = (
+        "mitigacion",
+        "mitigación",
+        "mitigation",
+        "respuesta",
+        "response",
+        "plan",
+        "accion",
+        "acción",
+        "action",
+        "contingencia",
+    )
+
+    total_raid_rows = 0
+    fully_specified_count = 0
+    unassigned_raid_ids: list[str] = []
+    unmitigated_raid_ids: list[str] = []
+
+    in_fence = False
+    owner_col_idx: Optional[int] = None
+    mitigation_col_idx: Optional[int] = None
+
+    for raw_line in text.splitlines():
+        stripped = raw_line.strip()
+        if stripped.startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+
+        if not (stripped.startswith("|") and stripped.endswith("|")):
+            if not stripped:
+                owner_col_idx = None
+                mitigation_col_idx = None
+            continue
+
+        cells = [c.strip() for c in stripped[1:-1].split("|")]
+        if not cells or all(not c for c in cells):
+            continue
+
+        if all(separator_cell_re.match(c) for c in cells if c):
+            continue
+
+        first_cell_clean = re.sub(r"^[*`\s]+|[*`\s]+$", "", cells[0]).strip()
+        if not raid_prefix_re.match(first_cell_clean):
+            owner_col_idx = None
+            mitigation_col_idx = None
+            for idx, col_name in enumerate(cells):
+                col_lower = col_name.lower()
+                if owner_col_idx is None and any(
+                    kw in col_lower for kw in owner_header_keywords
+                ):
+                    owner_col_idx = idx
+                if mitigation_col_idx is None and any(
+                    kw in col_lower for kw in mitigation_header_keywords
+                ):
+                    mitigation_col_idx = idx
+            continue
+
+        total_raid_rows += 1
+        raid_id = first_cell_clean
+
+        has_severity = any(bool(severity_re.search(c)) for c in cells[1:])
+
+        has_owner = False
+        if any(bool(re.search(r"@[A-Za-z0-9_.-]+", c)) for c in cells[1:]):
+            has_owner = True
+        elif owner_col_idx is not None and owner_col_idx < len(cells):
+            candidate_owner = cells[owner_col_idx].strip()
+            has_owner = candidate_owner.upper() not in invalid_placeholders
+        else:
+            fallback_owner_idx = 3 if len(cells) >= 5 else (2 if len(cells) == 4 else None)
+            if fallback_owner_idx is not None and fallback_owner_idx < len(cells):
+                candidate_owner = cells[fallback_owner_idx].strip()
+                has_owner = candidate_owner.upper() not in invalid_placeholders
+
+        has_mitigation = False
+        if mitigation_col_idx is not None and mitigation_col_idx < len(cells):
+            candidate_mit = cells[mitigation_col_idx].strip()
+            has_mitigation = (
+                len(candidate_mit) >= 8
+                and candidate_mit.upper() not in invalid_placeholders
+            )
+        elif len(cells) >= 3:
+            candidate_mit = cells[-1].strip()
+            has_mitigation = (
+                len(candidate_mit) >= 8
+                and candidate_mit.upper() not in invalid_placeholders
+            )
+
+        if not has_owner:
+            unassigned_raid_ids.append(raid_id)
+        if not has_mitigation:
+            unmitigated_raid_ids.append(raid_id)
+        if has_severity and has_owner and has_mitigation:
+            fully_specified_count += 1
+
+    completeness_rate = (
+        round((fully_specified_count / total_raid_rows) * 100.0, 2)
+        if total_raid_rows > 0
+        else 0.0
+    )
+
+    recommendations: list[str] = []
+    if total_raid_rows == 0:
+        raid_table_posture = "NO_RAID_TABLE_ROWS"
+        recommendations.append(
+            "Incorporar tabla Markdown de registro RAID con prefijos canónicos (RISK-, ISS-, ACT-, DEP-) según PMI PMBOK §11.2."
+        )
+    elif len(unassigned_raid_ids) > 0:
+        raid_table_posture = "UNASSIGNED_RAID_OWNERSHIP"
+        recommendations.append(
+            f"Asignar propietario responsable (@usuario o rol nominal) a los ítems RAID huérfanos: {', '.join(unassigned_raid_ids)}."
+        )
+    elif completeness_rate >= 80.0:
+        raid_table_posture = "GOVERNED_RAID_MATRIX"
+        recommendations.append(
+            "Matriz RAID adecuadamente gobernada con severidad, propietario y planes de respuesta documentados."
+        )
+    else:
+        raid_table_posture = "INCOMPLETE_MITIGATION_PLANS"
+        recommendations.append(
+            "Completar planes de respuesta/mitigación (>= 8 caracteres) y severidad explícita en las filas RAID incompletas."
+        )
+
+    return {
+        "total_raid_rows": total_raid_rows,
+        "fully_specified_count": fully_specified_count,
+        "unassigned_raid_ids": unassigned_raid_ids,
+        "unmitigated_raid_ids": unmitigated_raid_ids,
+        "completeness_rate": completeness_rate,
+        "raid_table_posture": raid_table_posture,
+        "recommendations": recommendations,
+    }
+
+
 class WikiPMIService:
     """Fachada canónica de doctrina y gobernanza documental Wiki PMI."""
 
@@ -843,6 +1004,12 @@ class WikiPMIService:
     ) -> dict[str, Any]:
         return audit_wiki_decision_log_entries(decisions)
 
+    @staticmethod
+    def audit_wiki_raid_register_tables(
+        markdown_text: Optional[str],
+    ) -> dict[str, Any]:
+        return audit_wiki_raid_register_tables(markdown_text)
+
 
 __all__ = [
     "DEFAULT_PMI_KB_DIR",
@@ -861,7 +1028,9 @@ __all__ = [
     "audit_wiki_stakeholder_signoffs",
     "audit_wiki_template_section_compliance",
     "audit_wiki_decision_log_entries",
+    "audit_wiki_raid_register_tables",
     "WikiPMIService",
 ]
+
 
 
