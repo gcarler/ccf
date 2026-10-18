@@ -2326,6 +2326,121 @@ def summarize_projects_collection_pagination_hygiene(
     }
 
 
+_NON_STRING_TEMPORAL_TYPES = {
+    "integer",
+    "number",
+    "boolean",
+    "array",
+    "object",
+}
+
+
+def summarize_projects_datetime_and_temporal_field_hygiene(
+    openapi: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Audita el formato ISO-8601 (date-time / date) de propiedades temporales (*_at, *_date) en esquemas de proyectos."""
+    if not isinstance(openapi, Mapping):
+        return {
+            "total_temporal_fields": 0,
+            "unformatted_datetime_fields": [],
+            "unformatted_date_fields": [],
+            "non_string_temporal_fields": [],
+            "is_temporal_hygiene_clean": False,
+        }
+
+    referenced_schemas: set[str] = set()
+    paths = openapi.get("paths")
+    if isinstance(paths, Mapping):
+        for path, path_item in paths.items():
+            if isinstance(path, str) and (
+                path.startswith("/api/projects") or path.startswith("/projects")
+            ):
+                referenced_schemas.update(schema_refs(path_item))
+
+    components = openapi.get("components")
+    schemas = (
+        components.get("schemas")
+        if isinstance(components, Mapping)
+        and isinstance(components.get("schemas"), Mapping)
+        else {}
+    )
+
+    total_temporal_fields = 0
+    unformatted_datetime_fields: list[str] = []
+    unformatted_date_fields: list[str] = []
+    non_string_temporal_fields: list[str] = []
+
+    for schema_name, schema_obj in sorted(schemas.items()):
+        s_name = str(schema_name)
+        if (
+            "project" not in s_name.lower()
+            and s_name not in referenced_schemas
+        ):
+            continue
+        if not isinstance(schema_obj, Mapping):
+            continue
+        props = schema_obj.get("properties")
+        if not isinstance(props, Mapping):
+            continue
+
+        for prop_name, prop_schema in sorted(props.items()):
+            p_name = str(prop_name)
+            if not (p_name.endswith("_at") or p_name.endswith("_date")):
+                continue
+            if not isinstance(prop_schema, Mapping):
+                continue
+
+            total_temporal_fields += 1
+            field_ref = f"{s_name}.{p_name}"
+
+            composite = prop_schema.get("anyOf") or prop_schema.get("oneOf")
+            if isinstance(composite, list):
+                branches = [
+                    b
+                    for b in composite
+                    if isinstance(b, Mapping) and b.get("type") != "null"
+                ]
+            else:
+                branches = [prop_schema]
+
+            if any(
+                b.get("type") in _NON_STRING_TEMPORAL_TYPES for b in branches
+            ):
+                non_string_temporal_fields.append(field_ref)
+
+            if p_name.endswith("_at"):
+                has_valid_dt = any(
+                    b.get("type") == "string"
+                    and b.get("format") == "date-time"
+                    for b in branches
+                )
+                if not has_valid_dt:
+                    unformatted_datetime_fields.append(field_ref)
+            elif p_name.endswith("_date"):
+                has_valid_date = any(
+                    b.get("type") == "string"
+                    and b.get("format") in {"date", "date-time"}
+                    for b in branches
+                )
+                if not has_valid_date:
+                    unformatted_date_fields.append(field_ref)
+
+    is_temporal_hygiene_clean = bool(
+        total_temporal_fields > 0
+        and not unformatted_datetime_fields
+        and not unformatted_date_fields
+        and not non_string_temporal_fields
+    )
+
+    return {
+        "total_temporal_fields": total_temporal_fields,
+        "unformatted_datetime_fields": unformatted_datetime_fields,
+        "unformatted_date_fields": unformatted_date_fields,
+        "non_string_temporal_fields": non_string_temporal_fields,
+        "is_temporal_hygiene_clean": is_temporal_hygiene_clean,
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()

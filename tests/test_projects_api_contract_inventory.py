@@ -3794,3 +3794,161 @@ def test_collection_pagination_hygiene_empty_and_live_openapi():
         )
     )
     assert live_res["total_collection_get_operations"] > 0
+
+
+def test_datetime_and_temporal_field_hygiene_clean():
+    """Propiedades *_at con format=date-time y *_date con format in {date, date-time} -> is_temporal_hygiene_clean=True."""
+    schema = {
+        "paths": {
+            "/api/projects": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/MilestoneOut"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "ProjectSummary": {
+                    "type": "object",
+                    "properties": {
+                        "created_at": {
+                            "type": "string",
+                            "format": "date-time",
+                        },
+                        "start_date": {"type": "string", "format": "date"},
+                    },
+                },
+                "MilestoneOut": {
+                    "type": "object",
+                    "properties": {
+                        "due_date": {
+                            "anyOf": [
+                                {"type": "string", "format": "date-time"},
+                                {"type": "null"},
+                            ]
+                        }
+                    },
+                },
+                "UnrelatedAudit": {
+                    "type": "object",
+                    "properties": {
+                        "logged_at": {"type": "integer"}
+                    },
+                },
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_datetime_and_temporal_field_hygiene(
+        schema
+    )
+    assert res == {
+        "total_temporal_fields": 3,
+        "unformatted_datetime_fields": [],
+        "unformatted_date_fields": [],
+        "non_string_temporal_fields": [],
+        "is_temporal_hygiene_clean": True,
+    }
+
+
+def test_datetime_and_temporal_field_hygiene_unformatted_fields():
+    """Detecta propiedades *_at sin format=date-time y *_date sin format in {date, date-time}."""
+    schema = {
+        "components": {
+            "schemas": {
+                "ProjectTaskInput": {
+                    "type": "object",
+                    "properties": {
+                        "completed_at": {"type": "string"},
+                        "target_date": {"type": "string", "format": "uuid"},
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_datetime_and_temporal_field_hygiene(
+        schema
+    )
+    assert res["total_temporal_fields"] == 2
+    assert res["unformatted_datetime_fields"] == [
+        "ProjectTaskInput.completed_at"
+    ]
+    assert res["unformatted_date_fields"] == ["ProjectTaskInput.target_date"]
+    assert res["non_string_temporal_fields"] == []
+    assert res["is_temporal_hygiene_clean"] is False
+
+
+def test_datetime_and_temporal_field_hygiene_non_string_fields():
+    """Detecta campos temporales declarados como integer/number/boolean/array/object."""
+    schema = {
+        "components": {
+            "schemas": {
+                "ProjectBaseline": {
+                    "type": "object",
+                    "properties": {
+                        "approved_at": {"type": "integer"},
+                        "baseline_date": {
+                            "anyOf": [
+                                {"type": "number"},
+                                {"type": "null"},
+                            ]
+                        },
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_datetime_and_temporal_field_hygiene(
+        schema
+    )
+    assert res["non_string_temporal_fields"] == [
+        "ProjectBaseline.approved_at",
+        "ProjectBaseline.baseline_date",
+    ]
+    assert res["unformatted_datetime_fields"] == [
+        "ProjectBaseline.approved_at"
+    ]
+    assert res["unformatted_date_fields"] == ["ProjectBaseline.baseline_date"]
+    assert res["is_temporal_hygiene_clean"] is False
+
+
+def test_datetime_and_temporal_field_hygiene_empty_and_live_openapi():
+    """Manejo de schema vacío/None y auditoría sobre el esquema OpenAPI real de la aplicación."""
+    empty_expected = {
+        "total_temporal_fields": 0,
+        "unformatted_datetime_fields": [],
+        "unformatted_date_fields": [],
+        "non_string_temporal_fields": [],
+        "is_temporal_hygiene_clean": False,
+    }
+    assert (
+        audit_projects_api_contracts.summarize_projects_datetime_and_temporal_field_hygiene(
+            None
+        )
+        == empty_expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_datetime_and_temporal_field_hygiene(
+            {}
+        )
+        == empty_expected
+    )
+
+    from backend.app import app
+
+    live_res = (
+        audit_projects_api_contracts.summarize_projects_datetime_and_temporal_field_hygiene(
+            app.openapi()
+        )
+    )
+    assert live_res["total_temporal_fields"] > 0
+    assert live_res["non_string_temporal_fields"] == []
