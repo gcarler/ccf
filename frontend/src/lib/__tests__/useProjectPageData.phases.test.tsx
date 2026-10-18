@@ -177,10 +177,13 @@ describe("useProjectPageData — phase sync reset (PEND-QUALITY-PHASE-SYNC-001)"
     expect(await screen.findByTestId("project-id")).toHaveTextContent("__placeholder__");
     expect(screen.getByTestId("loading-state")).toHaveTextContent("false");
 
-    let reloadResolvers: (() => void)[] = [];
-    vi.mocked(apiFetch).mockImplementation(() => new Promise((resolve) => {
-      reloadResolvers.push(() => resolve([]));
-    }));
+    const reloadResolvers: (() => void)[] = [];
+    vi.mocked(apiFetch).mockImplementation(() => {
+      const prom = new Promise((resolve) => {
+        reloadResolvers.push(() => resolve([]));
+      });
+      return prom;
+    });
 
     await act(async () => {
       fireEvent.click(screen.getByText("reload"));

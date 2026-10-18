@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
 import { axe } from 'jest-axe';
-import { ThemeProvider, useTheme, UiDensity } from './ThemeContext';
+import { ThemeProvider, useTheme } from './ThemeContext';
 import { DSButton } from '@/design/components/DSButton';
 import { DSInput } from '@/design/components/DSInput';
 import { DSTable } from '@/design/components/DSTable';

@@ -13,7 +13,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { Bell, Mail, Monitor, Loader2 } from 'lucide-react';
+import { Bell, Mail, Loader2 } from 'lucide-react';
 import clsx from 'clsx';
 
 import { apiFetch } from '@/lib/http';
