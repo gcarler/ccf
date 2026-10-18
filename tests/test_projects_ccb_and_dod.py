@@ -1963,3 +1963,102 @@ def test_audit_configuration_baseline_integrity_no_configuration_items():
         assert res["integrity_rate_pct"] == 0.0
         assert res["configuration_posture"] == "NO_CONFIGURATION_ITEMS"
         assert len(res["recommendations"]) == 1
+
+
+# ─── audit_pareto_defect_root_causes (pure helper) ───────────────
+
+
+def test_audit_pareto_defect_root_causes_concentrated_bottleneck():
+    """Causa dominante >= 50% -> CONCENTRATED_PARETO_BOTTLENECK con top y vital few."""
+    from backend.services.project_ccb_service import audit_pareto_defect_root_causes
+
+    defects = [
+        {"root_cause": "CONFIG-DRIFT", "count": 12},
+        {"root_cause": "config-drift", "occurrences": 8},
+        {"category": "human-error", "count": 4},
+        {"root_cause": "supplier-delay", "count": 2},
+    ]
+
+    res = audit_pareto_defect_root_causes(defects)
+
+    assert res["total_defect_occurrences"] == 26
+    assert res["unique_causes_count"] == 3
+    assert res["uncategorized_occurrences"] == 0
+    assert res["top_cause"] == "CONFIG-DRIFT"
+    assert res["top_cause_share_pct"] == 76.92
+    # 76.92 < 80 -> acumula también HUMAN-ERROR (24/26 = 92.3% >= 80).
+    assert res["vital_few_causes"] == ["CONFIG-DRIFT", "HUMAN-ERROR"]
+    assert res["pareto_posture"] == "CONCENTRATED_PARETO_BOTTLENECK"
+    assert len(res["recommendations"]) == 1
+
+
+def test_audit_pareto_defect_root_causes_uncategorized_blindspot():
+    """>= 30% sin categorizar (vacío, TBD, N/A, accénto) -> UNCATEGORIZED_ROOT_CAUSE_BLINDSPOT."""
+    from backend.services.project_ccb_service import audit_pareto_defect_root_causes
+
+    res = audit_pareto_defect_root_causes(
+        [
+            {"root_cause": "network", "count": 7},
+            {"root_cause": "", "count": 3},
+            {"category": "TBD", "occurrences": 1},
+        ]
+    )
+
+    assert res["total_defect_occurrences"] == 11
+    assert res["unique_causes_count"] == 2
+    assert res["uncategorized_occurrences"] == 4
+    assert res["top_cause"] == "NETWORK"
+    assert res["top_cause_share_pct"] == 63.64
+    assert res["pareto_posture"] == "UNCATEGORIZED_ROOT_CAUSE_BLINDSPOT"
+    assert any("causa raíz" in rec for rec in res["recommendations"])
+
+
+def test_audit_pareto_defect_root_causes_diffuse_distribution():
+    """Causas repartidas con vital few >= 3 -> DIFFUSE_DEFECT_DISTRIBUTION."""
+    from backend.services.project_ccb_service import audit_pareto_defect_root_causes
+
+    res = audit_pareto_defect_root_causes(
+        [
+            {"root_cause": "alpha", "count": 3},
+            {"root_cause": "beta", "count": 3},
+            {"root_cause": "gamma", "count": 3},
+            {"root_cause": "delta", "count": 1},
+        ]
+    )
+
+    assert res["total_defect_occurrences"] == 10
+    assert res["unique_causes_count"] == 4
+    assert res["top_cause"] == "ALPHA"
+    assert res["top_cause_share_pct"] == 30.0
+    # Umbral 80: ALPHA (30) -> +BETA (60) -> +GAMMA (90 >= 80) -> 3 causas.
+    assert res["vital_few_causes"] == ["ALPHA", "BETA", "GAMMA"]
+    assert res["pareto_posture"] == "DIFFUSE_DEFECT_DISTRIBUTION"
+
+
+def test_audit_pareto_defect_root_causes_empty_and_degenerate_counts():
+    """None/vacíos/no-dicts -> NO_DEFECTS_RECORDED; counts degenerados clampan >= 1; vital few por borde."""
+    from backend.services.project_ccb_service import audit_pareto_defect_root_causes
+
+    for payload in (None, [], ["no dict", 5]):
+        res = audit_pareto_defect_root_causes(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_defect_occurrences": 0,
+            "unique_causes_count": 0,
+            "uncategorized_occurrences": 0,
+            "top_cause": None,
+            "top_cause_share_pct": 0.0,
+            "vital_few_causes": [],
+            "pareto_posture": "NO_DEFECTS_RECORDED",
+            "recommendations": [
+                "Registrar los defectos con su causa raíz para habilitar el analisis Pareto (PMBOK §8.3)."
+            ],
+        }
+
+    clamped = audit_pareto_defect_root_causes(
+        [{"root_cause": "flip", "count": 0}, {"root_cause": "flip"}]
+    )
+    assert clamped["total_defect_occurrences"] == 2
+    assert clamped["unique_causes_count"] == 1
+    assert clamped["top_cause_share_pct"] == 100.0
+    assert clamped["vital_few_causes"] == ["FLIP"]
+    assert clamped["pareto_posture"] == "CONCENTRATED_PARETO_BOTTLENECK"

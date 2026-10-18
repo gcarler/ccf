@@ -1257,6 +1257,116 @@ def audit_configuration_baseline_integrity(
     }
 
 
+def audit_pareto_defect_root_causes(
+    defects: Optional[list[dict]],
+    vital_few_threshold_pct: float = 80.0,
+) -> dict:
+    """Audita la concentración de causas raíz de defectos (Pareto 80-20 — PMBOK §8.3).
+
+    Cada defecto declara `root_cause`/`category` (vacío o "UNKNOWN"/"TBD"/
+    "N/A"/"SIN CATEGORIA"/"SIN CATEGORÍA" -> 'UNCATEGORIZED') y
+    `count`/`occurrences` (default 1, clamp >= 1). Agrupa por causa en
+    mayúsculas, ordenado de mayor a menor (desempate por acumulación):
+    - `total_defect_occurrences` / `unique_causes_count` / `uncategorized_occurrences`.
+    - `top_cause` (None sin defectos) y `top_cause_share_pct` (2 dec; 0.0 vacío).
+    - `vital_few_causes`: primeras causas acumulando hasta >= threshold %.
+    - `pareto_posture`: 'NO_DEFECTS_RECORDED' sin.defectos;
+      'UNCATEGORIZED_ROOT_CAUSE_BLINDSPOT' con >= 30% de sin categorizar;
+      'CONCENTRATED_PARETO_BOTTLENECK' con top >= 50% o vital few <= 2
+      causas >= 3; y 'DIFFUSE_DEFECT_DISTRIBUTION' difuso.
+    - `recommendations`: acciones correctivas por hallazgo.
+    """
+    UNKNOWN_TOKENS = {"unknown", "tbd", "n/a", "sin categoria", "sin categoría"}
+    items = [item for item in (defects or []) if isinstance(item, dict)]
+
+    grouped: dict[str, int] = {}
+    uncategorized_occurrences = 0
+    for item in items:
+        raw_cause = str(item.get("root_cause") or item.get("category") or "").strip()
+        normalized = raw_cause.lower() or "uncategorized"
+        if normalized in UNKNOWN_TOKENS or not raw_cause:
+            normalized = "uncategorized"
+        try:
+            occurrences = max(1, int(float(item.get("count") or item.get("occurrences") or 1)))
+        except (TypeError, ValueError):
+            occurrences = 1
+        grouped[normalized.upper()] = grouped.get(normalized.upper(), 0) + occurrences
+        if normalized == "uncategorized":
+            uncategorized_occurrences += occurrences
+
+    if "UNCATEGORIZED" in grouped:
+        uncat_total = grouped["UNCATEGORIZED"]
+        uncategorized_occurrences = uncat_total
+
+    ordered_causes = sorted(
+        grouped.items(), key=lambda pair: (-pair[1], pair[0])
+    )
+    total_defect_occurrences = sum(grouped.values())
+
+    safe_threshold = float(vital_few_threshold_pct if vital_few_threshold_pct is not None else 80.0)
+    vital_few_causes: list[str] = []
+    cumulative = 0
+    top_cause = ordered_causes[0][0] if ordered_causes else None
+    top_cause_share_pct = (
+        round((ordered_causes[0][1] / total_defect_occurrences) * 100.0, 2)
+        if ordered_causes
+        else 0.0
+    )
+    if ordered_causes:
+        for cause, occurrences in ordered_causes:
+            vital_few_causes.append(cause)
+            cumulative += occurrences
+            if (cumulative / total_defect_occurrences) * 100.0 >= safe_threshold:
+                break
+
+    uncategorized_pct = (
+        (uncategorized_occurrences / total_defect_occurrences) * 100.0
+        if total_defect_occurrences > 0
+        else 0.0
+    )
+
+    if total_defect_occurrences == 0:
+        pareto_posture = "NO_DEFECTS_RECORDED"
+    elif uncategorized_pct >= 30.0:
+        pareto_posture = "UNCATEGORIZED_ROOT_CAUSE_BLINDSPOT"
+    elif (
+        top_cause_share_pct >= 50.0
+        or (len(grouped) >= 3 and len(vital_few_causes) <= 2)
+    ):
+        pareto_posture = "CONCENTRATED_PARETO_BOTTLENECK"
+    else:
+        pareto_posture = "DIFFUSE_DEFECT_DISTRIBUTION"
+
+    recommendations: list[str] = []
+    if pareto_posture == "NO_DEFECTS_RECORDED":
+        recommendations.append(
+            "Registrar los defectos con su causa raíz para habilitar el analisis Pareto (PMBOK §8.3)."
+        )
+    elif pareto_posture == "UNCATEGORIZED_ROOT_CAUSE_BLINDSPOT":
+        recommendations.append(
+            "Exigir causa raíz obligatoria en el registro de defectos: el punto ciego impide el Pareto."
+        )
+    elif pareto_posture == "CONCENTRATED_PARETO_BOTTLENECK":
+        recommendations.append(
+            "Atacar el few vital con acciones correctivas dirigidas antes de ampliar el colegio de causas."
+        )
+    else:
+        recommendations.append(
+            "Distribución difusa: aplicar la herramienta 5 Whys para consolidar causas reales dispersas."
+        )
+
+    return {
+        "total_defect_occurrences": total_defect_occurrences,
+        "unique_causes_count": len(grouped),
+        "uncategorized_occurrences": uncategorized_occurrences,
+        "top_cause": top_cause,
+        "top_cause_share_pct": top_cause_share_pct,
+        "vital_few_causes": vital_few_causes,
+        "pareto_posture": pareto_posture,
+        "recommendations": recommendations,
+    }
+
+
 class ProjectCCBService:
     """Fachada canónica de Control Integrado de Cambios (CCB) y Calidad DoD PMI."""
 
@@ -1425,6 +1535,15 @@ class ProjectCCBService:
         )
 
     @staticmethod
+    def audit_pareto_defect_root_causes(
+        defects: Optional[list[dict]],
+        vital_few_threshold_pct: float = 80.0,
+    ) -> dict:
+        return audit_pareto_defect_root_causes(
+            defects, vital_few_threshold_pct=vital_few_threshold_pct
+        )
+
+    @staticmethod
     def evaluate_deliverable_first_time_right_yield(
         deliverables: Optional[list[dict[str, Any]]],
         target_ftr_pct: float = 85.0,
@@ -1462,6 +1581,7 @@ __all__ = [
     "evaluate_ccb_voting_consensus",
     "audit_ccb_decision_sla_breaches",
     "audit_emergency_change_retroactive_ratification",
+    "audit_pareto_defect_root_causes",
     "evaluate_deliverable_first_time_right_yield",
     "audit_configuration_baseline_integrity",
     "ProjectCCBService",
