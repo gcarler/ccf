@@ -5043,3 +5043,154 @@ def test_audit_dod_defect_escape_and_first_time_right_rate_thresholds_and_scope(
         ProjectCCBService.audit_dod_defect_escape_and_first_time_right_rate(sample)
         == audit_dod_defect_escape_and_first_time_right_rate(sample)
     )
+
+
+def test_audit_contract_change_order_cumulative_escalation_compliant():
+    """Órdenes de cambio con adenda firmada y ratificación ejecutiva cuando superan umbral cumplen §4.6 y §12.2."""
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_contract_change_order_cumulative_escalation,
+    )
+
+    ledgers = [
+        {
+            "contract_id": "CNT-MINOR-01",
+            "original_contract_value": 100000.0,
+            "change_orders": [
+                {
+                    "co_id": "CO-1",
+                    "cost_delta": 5000.0,
+                    "executive_board_ratified": False,
+                    "legal_amendment_signed": True,
+                }
+            ],
+        },
+        {
+            "contract_id": "CNT-MAJOR-RATIFIED-02",
+            "original_contract_value": 100000.0,
+            "change_orders": [
+                {
+                    "co_id": "CO-2",
+                    "cost_delta": 25000.0,
+                    "executive_board_ratified": True,
+                    "legal_amendment_signed": True,
+                }
+            ],
+        },
+    ]
+    res = audit_contract_change_order_cumulative_escalation(ledgers)
+    assert res == {
+        "total_contracts": 2,
+        "invalid_base_contract_ids": [],
+        "unsigned_legal_amendment_contract_ids": [],
+        "unratified_threshold_breach_contract_ids": [],
+        "is_change_order_escalation_compliant": True,
+    }
+    assert (
+        ProjectCCBService.audit_contract_change_order_cumulative_escalation(
+            ledgers
+        )
+        == res
+    )
+
+
+def test_audit_contract_change_order_cumulative_splitting_and_single_breach():
+    """Detecta fraccionamiento de órdenes (cada una <= 10% pero acumulado > 20%) sin ratificación ejecutiva."""
+    from backend.services.project_ccb_service import (
+        audit_contract_change_order_cumulative_escalation,
+    )
+
+    ledgers = [
+        {
+            "contract_id": "CNT-SPLIT-BYPASS",
+            "original_contract_value": 100000.0,
+            "change_orders": [
+                {
+                    "co_id": "CO-A",
+                    "cost_delta": 8000.0,
+                    "executive_board_ratified": False,
+                    "legal_amendment_signed": True,
+                },
+                {
+                    "co_id": "CO-B",
+                    "cost_delta": 8000.0,
+                    "executive_board_ratified": False,
+                    "legal_amendment_signed": True,
+                },
+                {
+                    "co_id": "CO-C",
+                    "cost_delta": 8000.0,  # Acumulado 24% > 20%
+                    "executive_board_ratified": False,
+                    "legal_amendment_signed": True,
+                },
+            ],
+        },
+        {
+            "contract_id": "CNT-SINGLE-SPIKE",
+            "original_contract_value": 100000.0,
+            "change_orders": [
+                {
+                    "co_id": "CO-SPIKE",
+                    "cost_delta": 14000.0,  # Individual 14% > 10%
+                    "executive_board_ratified": False,
+                    "legal_amendment_signed": True,
+                }
+            ],
+        },
+    ]
+    res = audit_contract_change_order_cumulative_escalation(ledgers)
+    assert res["total_contracts"] == 2
+    assert res["unratified_threshold_breach_contract_ids"] == [
+        "CNT-SPLIT-BYPASS",
+        "CNT-SINGLE-SPIKE",
+    ]
+    assert res["is_change_order_escalation_compliant"] is False
+
+
+def test_audit_contract_change_order_cumulative_unsigned_legal_amendment():
+    """Detecta órdenes de cambio con impacto en costo que carecen de adenda legal firmada."""
+    from backend.services.project_ccb_service import (
+        audit_contract_change_order_cumulative_escalation,
+    )
+
+    ledgers = [
+        {
+            "contract_id": "CNT-NO-AMENDMENT",
+            "original_contract_value": 200000.0,
+            "change_orders": [
+                {
+                    "co_id": "CO-UNSIGNED",
+                    "cost_delta": 5000.0,
+                    "executive_board_ratified": True,
+                    "legal_amendment_signed": False,
+                }
+            ],
+        }
+    ]
+    res = audit_contract_change_order_cumulative_escalation(ledgers)
+    assert res["unsigned_legal_amendment_contract_ids"] == ["CNT-NO-AMENDMENT"]
+    assert res["is_change_order_escalation_compliant"] is False
+
+
+def test_audit_contract_change_order_cumulative_invalid_base_and_export():
+    """Detecta valor contractual original <= 0, maneja entradas no secuencia y verifica __all__."""
+    import backend.services.project_ccb_service as _m
+    from backend.services.project_ccb_service import (
+        audit_contract_change_order_cumulative_escalation,
+    )
+
+    assert "audit_contract_change_order_cumulative_escalation" in _m.__all__
+    res = audit_contract_change_order_cumulative_escalation(
+        [{"contract_id": "CNT-ZERO-BASE", "original_contract_value": 0.0}]
+    )
+    assert res["invalid_base_contract_ids"] == ["CNT-ZERO-BASE"]
+    assert res["is_change_order_escalation_compliant"] is False
+
+    for bad in (None, "not-a-seq", b"bytes", [{"contract_id": "  "}]):
+        assert audit_contract_change_order_cumulative_escalation(bad) == {
+            "total_contracts": 0,
+            "invalid_base_contract_ids": [],
+            "unsigned_legal_amendment_contract_ids": [],
+            "unratified_threshold_breach_contract_ids": [],
+            "is_change_order_escalation_compliant": True,
+        }

@@ -5494,6 +5494,7 @@ __all__ = [
     "evaluate_evm_retroactive_adjustment_and_negative_period_anomalies",
     "evaluate_evm_contract_budget_base_and_ub_reconciliation",
     "evaluate_evm_etc_bottom_up_vs_formulaic_divergence",
+    "evaluate_evm_critical_path_drag_and_float_masking",
     "ProjectEVMService",
 ]
 
@@ -6401,4 +6402,106 @@ def evaluate_evm_etc_bottom_up_vs_formulaic_divergence(
 
 ProjectEVMService.evaluate_evm_etc_bottom_up_vs_formulaic_divergence = staticmethod(
     evaluate_evm_etc_bottom_up_vs_formulaic_divergence
+)
+
+
+def evaluate_evm_critical_path_drag_and_float_masking(
+    work_package_earned_schedule: list[dict[str, object]],
+    *,
+    overall_spi_t: float = 1.0,
+) -> dict[str, object]:
+    """Evalúa el arrastre de ruta crítica (Critical Path Drag) y el enmascaramiento de atrasos críticos por adelanto de paquetes con holgura (Non-Critical Float Masking) según PMI PMBOK §6.5 y §7.4."""
+    try:
+        spi_t_val = float(overall_spi_t)
+    except (TypeError, ValueError):
+        spi_t_val = 1.0
+
+    critical_pv_sum = 0.0
+    critical_ev_sum = 0.0
+    non_critical_pv_sum = 0.0
+    non_critical_ev_sum = 0.0
+
+    invalid_schedule_metric_wp_ids: list[str] = []
+    contradictory_critical_float_wp_ids: list[str] = []
+    high_drag_lagging_critical_wp_ids: list[str] = []
+
+    if isinstance(work_package_earned_schedule, Sequence) and not isinstance(
+        work_package_earned_schedule, (str, bytes, bytearray)
+    ):
+        for item in work_package_earned_schedule:
+            if not isinstance(item, Mapping):
+                continue
+            wp_id = str(item.get("wp_id") or item.get("id") or "").strip()
+            if not wp_id:
+                continue
+
+            def _num(key: str, default: float = -1.0) -> float:
+                raw = item.get(key)
+                if raw is None:
+                    return default
+                if isinstance(raw, bool):
+                    return -1.0
+                try:
+                    return float(raw)
+                except (TypeError, ValueError):
+                    return -1.0
+
+            pv = _num("planned_value_pv", -1.0)
+            ev = _num("earned_value_ev", -1.0)
+            total_float = _num("total_float_days", 0.0)
+            drag_days = _num("critical_path_drag_days", 0.0)
+            is_critical = bool(item.get("is_critical_path", False))
+
+            if pv < 0.0 or ev < 0.0 or drag_days < 0.0:
+                invalid_schedule_metric_wp_ids.append(wp_id)
+                continue
+
+            if is_critical:
+                critical_pv_sum += pv
+                critical_ev_sum += ev
+                if total_float > 0.0:
+                    contradictory_critical_float_wp_ids.append(wp_id)
+                if (
+                    drag_days >= 5.0
+                    and pv > 0.0
+                    and (ev / pv) < 0.90
+                ):
+                    high_drag_lagging_critical_wp_ids.append(wp_id)
+            else:
+                non_critical_pv_sum += pv
+                non_critical_ev_sum += ev
+
+    critical_path_spi = (
+        round(critical_ev_sum / critical_pv_sum, 4)
+        if critical_pv_sum > 0.0
+        else 1.0
+    )
+    non_critical_spi = (
+        round(non_critical_ev_sum / non_critical_pv_sum, 4)
+        if non_critical_pv_sum > 0.0
+        else 1.0
+    )
+
+    has_non_critical_float_masking = (
+        critical_pv_sum > 0.0 and critical_path_spi < 0.90
+    ) and (spi_t_val >= 0.95 or non_critical_spi >= 1.05)
+
+    return {
+        "critical_path_spi": critical_path_spi,
+        "non_critical_spi": non_critical_spi,
+        "has_non_critical_float_masking": has_non_critical_float_masking,
+        "invalid_schedule_metric_wp_ids": invalid_schedule_metric_wp_ids,
+        "contradictory_critical_float_wp_ids": contradictory_critical_float_wp_ids,
+        "high_drag_lagging_critical_wp_ids": high_drag_lagging_critical_wp_ids,
+        "is_earned_schedule_critical_path_coherent": (
+            len(invalid_schedule_metric_wp_ids) == 0
+            and len(contradictory_critical_float_wp_ids) == 0
+            and len(high_drag_lagging_critical_wp_ids) == 0
+            and not has_non_critical_float_masking
+        ),
+    }
+
+
+ProjectEVMService.evaluate_evm_critical_path_drag_and_float_masking = staticmethod(
+    evaluate_evm_critical_path_drag_and_float_masking
 )

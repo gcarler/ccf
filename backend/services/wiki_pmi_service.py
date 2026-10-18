@@ -2491,6 +2491,7 @@ __all__ = [
     "audit_wiki_adr_governance_hygiene",
     "audit_wiki_risk_breakdown_structure_coverage",
     "audit_wiki_assumption_and_constraint_log_governance",
+    "audit_wiki_issue_log_escalation_and_aging_sla",
     "audit_wiki_postmortem_root_cause_governance",
     "audit_wiki_benefits_realization_governance",
     "audit_wiki_raid_log_traceability_governance",
@@ -3658,4 +3659,96 @@ def audit_wiki_cost_of_quality_prevention_vs_failure_balance(
 
 WikiPMIService.audit_wiki_cost_of_quality_prevention_vs_failure_balance = staticmethod(
     audit_wiki_cost_of_quality_prevention_vs_failure_balance
+)
+
+
+def audit_wiki_issue_log_escalation_and_aging_sla(
+    issue_entries: list[dict[str, object]],
+    *,
+    critical_sla_days: int = 3,
+    high_sla_days: int = 7,
+) -> dict[str, object]:
+    """Audita escalamiento de severidad, workarounds y SLA de resolución del Issue Log en wikis según PMI PMBOK §4.3 y §9.5."""
+    total_issues = 0
+    active_issue_count = 0
+    invalid_issue_metadata_ids: list[str] = []
+    unassigned_active_issue_ids: list[str] = []
+    overdue_sla_issue_ids: list[str] = []
+    unescalated_critical_blocker_ids: list[str] = []
+
+    critical_sla = float(critical_sla_days)
+    high_sla = float(high_sla_days)
+    active_statuses = {"open", "in_progress", "escalated"}
+    valid_severities = {"critical", "high", "medium", "low"}
+    valid_statuses = {"open", "in_progress", "escalated", "resolved", "closed"}
+    items: Sequence[Any] = (
+        issue_entries
+        if isinstance(issue_entries, Sequence)
+        and not isinstance(issue_entries, (str, bytes, bytearray, Mapping))
+        else []
+    )
+
+    for item in items:
+        if not isinstance(item, Mapping):
+            continue
+        issue_id = str(item.get("issue_id") or "").strip()
+        if not issue_id:
+            continue
+
+        total_issues += 1
+
+        severity = str(item.get("severity") or "").strip().lower()
+        status = str(item.get("status") or "").strip().lower()
+        owner_id = str(item.get("owner_id") or "").strip()
+        try:
+            age_days = float(item.get("age_days", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            age_days = 0.0
+        workaround_documented = bool(item.get("workaround_documented", False))
+        escalated_to_sponsor_or_ccb = bool(
+            item.get("escalated_to_sponsor_or_ccb", False)
+        )
+
+        if (
+            severity not in valid_severities
+            or status not in valid_statuses
+            or age_days < 0.0
+        ):
+            invalid_issue_metadata_ids.append(issue_id)
+            continue
+
+        if status in active_statuses:
+            active_issue_count += 1
+
+            if not owner_id:
+                unassigned_active_issue_ids.append(issue_id)
+
+            if severity == "critical" and age_days > critical_sla:
+                overdue_sla_issue_ids.append(issue_id)
+                if not escalated_to_sponsor_or_ccb or not workaround_documented:
+                    unescalated_critical_blocker_ids.append(issue_id)
+
+            if severity == "high" and age_days > high_sla:
+                overdue_sla_issue_ids.append(issue_id)
+
+    is_issue_log_sla_compliant = bool(
+        len(invalid_issue_metadata_ids) == 0
+        and len(unassigned_active_issue_ids) == 0
+        and len(overdue_sla_issue_ids) == 0
+        and len(unescalated_critical_blocker_ids) == 0
+    )
+
+    return {
+        "total_issues": total_issues,
+        "active_issue_count": active_issue_count,
+        "invalid_issue_metadata_ids": invalid_issue_metadata_ids,
+        "unassigned_active_issue_ids": unassigned_active_issue_ids,
+        "overdue_sla_issue_ids": overdue_sla_issue_ids,
+        "unescalated_critical_blocker_ids": unescalated_critical_blocker_ids,
+        "is_issue_log_sla_compliant": is_issue_log_sla_compliant,
+    }
+
+
+WikiPMIService.audit_wiki_issue_log_escalation_and_aging_sla = staticmethod(
+    audit_wiki_issue_log_escalation_and_aging_sla
 )

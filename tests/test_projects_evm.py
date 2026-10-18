@@ -4679,3 +4679,136 @@ def test_evaluate_evm_etc_bottom_up_invalid_metrics_and_export():
             "unrealistic_recovery_etc_ca_ids": [],
             "is_etc_forecast_credible": True,
         }
+
+
+def test_evaluate_evm_critical_path_drag_and_float_masking_coherent():
+    """Paquetes en ruta crítica con holgura <= 0, SPI crítico >= 0.90 y sin enmascaramiento cumplen §6.5 y §7.4."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_critical_path_drag_and_float_masking,
+    )
+
+    wps = [
+        {
+            "wp_id": "WP-CRIT-01",
+            "is_critical_path": True,
+            "planned_value_pv": 100000.0,
+            "earned_value_ev": 98000.0,
+            "total_float_days": 0.0,
+            "critical_path_drag_days": 4.0,
+        },
+        {
+            "wp_id": "WP-NONCRIT-02",
+            "is_critical_path": False,
+            "planned_value_pv": 50000.0,
+            "earned_value_ev": 50000.0,
+            "total_float_days": 8.0,
+            "critical_path_drag_days": 0.0,
+        },
+    ]
+    res = evaluate_evm_critical_path_drag_and_float_masking(
+        wps, overall_spi_t=0.98
+    )
+    assert res == {
+        "critical_path_spi": 0.98,
+        "non_critical_spi": 1.0,
+        "has_non_critical_float_masking": False,
+        "invalid_schedule_metric_wp_ids": [],
+        "contradictory_critical_float_wp_ids": [],
+        "high_drag_lagging_critical_wp_ids": [],
+        "is_earned_schedule_critical_path_coherent": True,
+    }
+    assert (
+        ProjectEVMService.evaluate_evm_critical_path_drag_and_float_masking(
+            wps, overall_spi_t=0.98
+        )
+        == res
+    )
+
+
+def test_evaluate_evm_critical_path_drag_float_masking_and_high_drag_lag():
+    """Detecta enmascaramiento de atraso en ruta crítica por tareas no críticas adelantadas y paquetes críticos con drag >= 5d."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_critical_path_drag_and_float_masking,
+    )
+
+    wps = [
+        {
+            "wp_id": "WP-CRIT-LAGGING",
+            "is_critical_path": True,
+            "planned_value_pv": 100000.0,
+            "earned_value_ev": 75000.0,  # SPI 0.75 < 0.90
+            "total_float_days": 0.0,
+            "critical_path_drag_days": 6.5,
+        },
+        {
+            "wp_id": "WP-NONCRIT-AHEAD",
+            "is_critical_path": False,
+            "planned_value_pv": 100000.0,
+            "earned_value_ev": 125000.0,  # SPI 1.25 >= 1.05
+            "total_float_days": 12.0,
+            "critical_path_drag_days": 0.0,
+        },
+    ]
+    res = evaluate_evm_critical_path_drag_and_float_masking(
+        wps, overall_spi_t=1.0
+    )
+    assert res["critical_path_spi"] == 0.75
+    assert res["non_critical_spi"] == 1.25
+    assert res["has_non_critical_float_masking"] is True
+    assert res["high_drag_lagging_critical_wp_ids"] == ["WP-CRIT-LAGGING"]
+    assert res["is_earned_schedule_critical_path_coherent"] is False
+
+
+def test_evaluate_evm_critical_path_drag_contradictory_float():
+    """Detecta paquetes marcados en ruta crítica que reportan holgura total positiva."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_critical_path_drag_and_float_masking,
+    )
+
+    wps = [
+        {
+            "wp_id": "WP-CRIT-WITH-FLOAT",
+            "is_critical_path": True,
+            "planned_value_pv": 50000.0,
+            "earned_value_ev": 50000.0,
+            "total_float_days": 5.0,
+            "critical_path_drag_days": 2.0,
+        }
+    ]
+    res = evaluate_evm_critical_path_drag_and_float_masking(wps)
+    assert res["contradictory_critical_float_wp_ids"] == ["WP-CRIT-WITH-FLOAT"]
+    assert res["is_earned_schedule_critical_path_coherent"] is False
+
+
+def test_evaluate_evm_critical_path_drag_invalid_metrics_and_export():
+    """Detecta métricas negativas, maneja entradas vacías y verifica exportación en __all__."""
+    import backend.services.project_evm_service as _m
+    from backend.services.project_evm_service import (
+        evaluate_evm_critical_path_drag_and_float_masking,
+    )
+
+    assert "evaluate_evm_critical_path_drag_and_float_masking" in _m.__all__
+    res = evaluate_evm_critical_path_drag_and_float_masking(
+        [
+            {
+                "wp_id": "WP-NEG-PV",
+                "is_critical_path": True,
+                "planned_value_pv": -1000.0,
+                "earned_value_ev": 0.0,
+            }
+        ]
+    )
+    assert res["invalid_schedule_metric_wp_ids"] == ["WP-NEG-PV"]
+    assert res["is_earned_schedule_critical_path_coherent"] is False
+
+    for bad in (None, "not-a-seq", b"bytes", [{"wp_id": "  "}]):
+        assert evaluate_evm_critical_path_drag_and_float_masking(bad) == {
+            "critical_path_spi": 1.0,
+            "non_critical_spi": 1.0,
+            "has_non_critical_float_masking": False,
+            "invalid_schedule_metric_wp_ids": [],
+            "contradictory_critical_float_wp_ids": [],
+            "high_drag_lagging_critical_wp_ids": [],
+            "is_earned_schedule_critical_path_coherent": True,
+        }

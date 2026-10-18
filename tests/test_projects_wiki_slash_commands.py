@@ -4558,3 +4558,132 @@ def test_audit_wiki_cost_of_quality_invalid_items_and_export():
             "unlinked_failure_cost_ids": [],
             "is_coq_balance_compliant": True,
         }
+
+
+def test_audit_wiki_issue_log_escalation_and_aging_sla_compliant():
+    """Issues activos asignados dentro del SLA y bloqueantes criticos gestionados."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_issue_log_escalation_and_aging_sla,
+    )
+
+    entries = [
+        {"issue_id": "IS-1", "severity": "Critical", "status": "Open", "owner_id": "PM-1",
+         "age_days": 2.0, "workaround_documented": True,
+         "escalated_to_sponsor_or_ccb": True},  # dentro del SLA de 3 dias.
+        {"issue_id": "IS-2", "severity": "high", "status": "in_progress", "owner_id": "PM-2",
+         "age_days": 7.0},  # borde == umbral -> no overdue.
+        {"issue_id": "IS-3", "severity": "medium", "status": "resolved", "owner_id": "PM-3",
+         "age_days": 900.0},  # inactivo -> sin chequeo de SLA.
+    ]
+    res = audit_wiki_issue_log_escalation_and_aging_sla(entries)
+    assert res == {
+        "total_issues": 3,
+        "active_issue_count": 2,
+        "invalid_issue_metadata_ids": [],
+        "unassigned_active_issue_ids": [],
+        "overdue_sla_issue_ids": [],
+        "unescalated_critical_blocker_ids": [],
+        "is_issue_log_sla_compliant": True,
+    }
+
+
+def test_audit_wiki_issue_log_escalation_and_aging_sla_invalid_metadata():
+    """Severidad/status fuera del catalogo y age_days negativo -> metadata invalida."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_issue_log_escalation_and_aging_sla,
+    )
+
+    entries = [
+        {"issue_id": "M-1", "severity": "urgent", "status": "open", "owner_id": "PM-1",
+         "age_days": 1.0},
+        {"issue_id": "M-2", "severity": "high", "status": "on_hold", "owner_id": "PM-1",
+         "age_days": 1.0},
+        {"issue_id": "M-3", "severity": "high", "status": "open", "owner_id": "PM-1",
+         "age_days": -5.0},
+    ]
+    res = audit_wiki_issue_log_escalation_and_aging_sla(entries)
+    assert res["total_issues"] == 3
+    assert res["active_issue_count"] == 0
+    assert res["invalid_issue_metadata_ids"] == ["M-1", "M-2", "M-3"]
+    assert res["is_issue_log_sla_compliant"] is False
+
+    # Coercion segura: age_days invalido -> 0.0, no invalida.
+    bad = audit_wiki_issue_log_escalation_and_aging_sla(
+        [
+            {"issue_id": "B-1", "severity": "high", "status": "open", "owner_id": "PM-2",
+             "age_days": "oops"},
+        ]
+    )
+    assert bad["invalid_issue_metadata_ids"] == []
+    assert bad["is_issue_log_sla_compliant"] is True
+
+
+def test_audit_wiki_issue_log_escalation_and_aging_sla_overdue_and_blockers():
+    """Unassigned activos, overdue SLA (critical >3 / high >7) y bloqueantes sin gestion."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_issue_log_escalation_and_aging_sla,
+    )
+
+    entries = [
+        {"issue_id": "U-1", "severity": "medium", "status": "open",
+         "age_days": 1.0},  # activo sin owner.
+        {"issue_id": "C-1", "severity": "critical", "status": "open", "owner_id": "PM-4",
+         "age_days": 3.5},  # overdue + sin escalar ni workaround.
+        {"issue_id": "C-2", "severity": "critical", "status": "escalated", "owner_id": "PM-5",
+         "age_days": 4.0, "escalated_to_sponsor_or_ccb": True,
+         "workaround_documented": True},  # overdue pero gestionado.
+        {"issue_id": "H-1", "severity": "high", "status": "in_progress", "owner_id": "PM-6",
+         "age_days": 8.0},  # overdue high.
+        {"issue_id": "H-2", "severity": "high", "status": "open", "owner_id": "PM-7",
+         "age_days": 7.5, "workaround_documented": False},  # overdue high; no critical.
+    ]
+    res = audit_wiki_issue_log_escalation_and_aging_sla(entries)
+    assert res["total_issues"] == 5
+    assert res["active_issue_count"] == 5
+    assert res["unassigned_active_issue_ids"] == ["U-1"]
+    assert res["overdue_sla_issue_ids"] == ["C-1", "C-2", "H-1", "H-2"]
+    assert res["unescalated_critical_blocker_ids"] == ["C-1"]
+    assert res["is_issue_log_sla_compliant"] is False
+
+    # Umbrales personalizados mas estrictos.
+    strict = audit_wiki_issue_log_escalation_and_aging_sla(
+        entries, critical_sla_days=1, high_sla_days=5
+    )
+    assert strict["overdue_sla_issue_ids"] == ["C-1", "C-2", "H-1", "H-2"]
+
+
+def test_audit_wiki_issue_log_escalation_and_aging_sla_empty_and_service_proxy():
+    """Entradas vacias/None/invalidas + llamada via WikiPMIService (staticmethod + __all__)."""
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_issue_log_escalation_and_aging_sla,
+    )
+    import backend.services.wiki_pmi_service as _m
+
+    res_none = audit_wiki_issue_log_escalation_and_aging_sla(None)
+    assert res_none == {
+        "total_issues": 0,
+        "active_issue_count": 0,
+        "invalid_issue_metadata_ids": [],
+        "unassigned_active_issue_ids": [],
+        "overdue_sla_issue_ids": [],
+        "unescalated_critical_blocker_ids": [],
+        "is_issue_log_sla_compliant": True,
+    }
+    assert audit_wiki_issue_log_escalation_and_aging_sla("no-seq")["total_issues"] == 0
+    assert (
+        audit_wiki_issue_log_escalation_and_aging_sla(
+            ["no-map", {"issue_id": "   "}, {"other_id": "x"}]
+        )["total_issues"]
+        == 0
+    )
+    assert "audit_wiki_issue_log_escalation_and_aging_sla" in _m.__all__
+
+    sample = [
+        {"issue_id": "IS-1", "severity": "low", "status": "open", "owner_id": "PM-1",
+         "age_days": 1.0},
+    ]
+    assert (
+        WikiPMIService.audit_wiki_issue_log_escalation_and_aging_sla(sample)
+        == audit_wiki_issue_log_escalation_and_aging_sla(sample)
+    )

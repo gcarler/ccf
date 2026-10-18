@@ -2819,6 +2819,7 @@ __all__ = [
     "audit_dod_defect_escape_and_first_time_right_rate",
     "audit_requirements_traceability_matrix_coverage",
     "audit_emergency_change_fast_track_ratification",
+    "audit_contract_change_order_cumulative_escalation",
     "ProjectCCBService",
 ]
 
@@ -3834,4 +3835,119 @@ def audit_dod_defect_escape_and_first_time_right_rate(
 
 ProjectCCBService.audit_dod_defect_escape_and_first_time_right_rate = staticmethod(
     audit_dod_defect_escape_and_first_time_right_rate
+)
+
+
+def audit_contract_change_order_cumulative_escalation(
+    contract_change_ledgers: list[dict[str, object]],
+    *,
+    max_cumulative_variation_pct: float = 20.0,
+    max_single_order_variation_pct: float = 10.0,
+) -> dict[str, object]:
+    """Audita el escalamiento acumulado y el fraccionamiento de órdenes de cambio contractuales (order-splitting) frente a umbrales individuales y acumulados, exigiendo adenda legal firmada y ratificación ejecutiva según PMI PMBOK §4.6 y §12.2."""
+    try:
+        max_cum_pct = float(max_cumulative_variation_pct)
+    except (TypeError, ValueError):
+        max_cum_pct = 20.0
+
+    try:
+        max_single_pct = float(max_single_order_variation_pct)
+    except (TypeError, ValueError):
+        max_single_pct = 10.0
+
+    total_contracts = 0
+    invalid_base_contract_ids: list[str] = []
+    unsigned_legal_amendment_contract_ids: list[str] = []
+    unratified_threshold_breach_contract_ids: list[str] = []
+
+    if isinstance(contract_change_ledgers, Sequence) and not isinstance(
+        contract_change_ledgers, (str, bytes, bytearray)
+    ):
+        for item in contract_change_ledgers:
+            if not isinstance(item, Mapping):
+                continue
+            contract_id = str(
+                item.get("contract_id") or item.get("id") or ""
+            ).strip()
+            if not contract_id:
+                continue
+
+            total_contracts += 1
+            raw_base = item.get("original_contract_value")
+            if raw_base is None or isinstance(raw_base, bool):
+                base_val = -1.0
+            else:
+                try:
+                    base_val = float(raw_base)
+                except (TypeError, ValueError):
+                    base_val = -1.0
+
+            if base_val <= 0.0:
+                invalid_base_contract_ids.append(contract_id)
+                continue
+
+            raw_orders = item.get("change_orders")
+            orders = (
+                [co for co in raw_orders if isinstance(co, Mapping)]
+                if isinstance(raw_orders, Sequence)
+                and not isinstance(raw_orders, (str, bytes, bytearray))
+                else []
+            )
+
+            deltas: list[float] = []
+            has_unsigned_legal = False
+            has_unratified_order = False
+
+            for co in orders:
+                raw_delta = co.get("cost_delta", 0.0)
+                if raw_delta is None or isinstance(raw_delta, bool):
+                    delta = 0.0
+                else:
+                    try:
+                        delta = float(raw_delta)
+                    except (TypeError, ValueError):
+                        delta = 0.0
+                deltas.append(delta)
+
+                if delta != 0.0 and not bool(
+                    co.get("legal_amendment_signed", False)
+                ):
+                    has_unsigned_legal = True
+
+                if not bool(co.get("executive_board_ratified", False)):
+                    has_unratified_order = True
+
+            net_cost_delta = sum(deltas)
+            abs_cost_delta_max = max((abs(d) for d in deltas), default=0.0)
+            cumulative_variation_pct = round(
+                (abs(net_cost_delta) / base_val) * 100.0, 2
+            )
+            max_single_variation_pct = round(
+                (abs_cost_delta_max / base_val) * 100.0, 2
+            )
+
+            if has_unsigned_legal:
+                unsigned_legal_amendment_contract_ids.append(contract_id)
+
+            if (
+                cumulative_variation_pct > max_cum_pct
+                or max_single_variation_pct > max_single_pct
+            ) and has_unratified_order:
+                unratified_threshold_breach_contract_ids.append(contract_id)
+
+    return {
+        "total_contracts": total_contracts,
+        "invalid_base_contract_ids": invalid_base_contract_ids,
+        "unsigned_legal_amendment_contract_ids": unsigned_legal_amendment_contract_ids,
+        "unratified_threshold_breach_contract_ids": unratified_threshold_breach_contract_ids,
+        "is_change_order_escalation_compliant": (
+            len(invalid_base_contract_ids) == 0
+            and len(unsigned_legal_amendment_contract_ids) == 0
+            and len(unratified_threshold_breach_contract_ids) == 0
+        ),
+    }
+
+
+ProjectCCBService.audit_contract_change_order_cumulative_escalation = staticmethod(
+    audit_contract_change_order_cumulative_escalation
 )
