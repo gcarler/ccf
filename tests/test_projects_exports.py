@@ -5822,3 +5822,165 @@ def test_audit_executive_report_stakeholder_escalation_and_briefing_cadence_empt
         )
 
 
+
+
+def test_audit_esg_compliance_healthy():
+    """Controles sin breach y con permisos vigentes."""
+    from backend.services.project_export_service import (
+        audit_executive_report_esg_sustainability_and_regulatory_compliance,
+    )
+
+    res = audit_executive_report_esg_sustainability_and_regulatory_compliance(
+        [
+            {"control_id": "C-1", "status": "COMPLIANT", "days_until_permit_expiry": 200,
+             "non_compliance_fine_exposure": 0.0, "corrective_action_assigned": False,
+             "regulatory_authority_notified": False},
+            {"control_id": "C-2", "status": "active", "days_until_permit_expiry": None,
+             "non_compliance_fine_exposure": 0.0, "corrective_action_assigned": False,
+             "regulatory_authority_notified": False},
+        ]
+    )
+    assert res == {
+        "total_controls": 2,
+        "compliant_controls_count": 2,
+        "breached_controls_count": 0,
+        "expiring_permits_count": 0,
+        "unmitigated_breaches_count": 0,
+        "total_fine_exposure_amount": 0.0,
+        "regulatory_governance_status": "HEALTHY",
+        "findings": [],
+    }
+
+
+def test_audit_esg_compliance_breached_critical():
+    """BREACHED/REVOKED (case-insensitive) sin accion correctiva ni notificacion -> CRITICAL."""
+    from backend.services.project_export_service import (
+        audit_executive_report_esg_sustainability_and_regulatory_compliance,
+    )
+
+    res = audit_executive_report_esg_sustainability_and_regulatory_compliance(
+        [
+            {"control_id": "C-3", "status": "breached", "days_until_permit_expiry": 500,
+             "non_compliance_fine_exposure": 250000.0, "corrective_action_assigned": False,
+             "regulatory_authority_notified": False},
+            {"control_id": "C-4", "status": "REVOKED", "days_until_permit_expiry": None,
+             "non_compliance_fine_exposure": 0.0, "corrective_action_assigned": False,
+             "regulatory_authority_notified": False},
+        ]
+    )
+    assert res["breached_controls_count"] == 2
+    # Spec: falta de accion correctiva basta para unmitigated (independiente de la multa).
+    assert res["unmitigated_breaches_count"] == 2
+    assert res["total_fine_exposure_amount"] == 250000.0
+    assert res["regulatory_governance_status"] == "CRITICAL"
+    assert res["findings"][0]["issues"] == [
+        "REGULATORY_BREACH (BREACHED)",
+        "CORRECTIVE_ACTION_UNASSIGNED",
+        "AUTHORITY_NOT_NOTIFIED",
+    ]
+    assert res["findings"][1]["issues"] == [
+        "REGULATORY_BREACH (REVOKED)",
+        "CORRECTIVE_ACTION_UNASSIGNED",
+    ]
+
+    # Breach mitigado (accion + notificado con multa) sigue siendo breached -> CRITICAL.
+    mitigated = audit_executive_report_esg_sustainability_and_regulatory_compliance(
+        [
+            {"control_id": "C-5", "status": "non_compliant", "days_until_permit_expiry": 400,
+             "non_compliance_fine_exposure": 5000.0, "corrective_action_assigned": True,
+             "regulatory_authority_notified": True},
+        ]
+    )
+    assert mitigated["breached_controls_count"] == 1
+    assert mitigated["unmitigated_breaches_count"] == 0
+    assert mitigated["regulatory_governance_status"] == "CRITICAL"
+    assert mitigated["total_fine_exposure_amount"] == 5000.0
+
+    # Multa 0.0 no exige notificacion cuando hay accion correctiva.
+    zero = audit_executive_report_esg_sustainability_and_regulatory_compliance(
+        [
+            {"control_id": "C-6", "status": "BREACHED", "days_until_permit_expiry": 400,
+             "non_compliance_fine_exposure": 0.0, "corrective_action_assigned": True,
+             "regulatory_authority_notified": False},
+        ]
+    )
+    assert zero["unmitigated_breaches_count"] == 0
+
+
+def test_audit_esg_compliance_expiring_permits_at_risk():
+    """Permiso proximo a vencer o vencido (<= SLA, borde 30 incluido, negativo tambien) -> AT_RISK."""
+    from backend.services.project_export_service import (
+        audit_executive_report_esg_sustainability_and_regulatory_compliance,
+    )
+
+    res = audit_executive_report_esg_sustainability_and_regulatory_compliance(
+        [
+            {"control_id": "C-7", "status": "COMPLIANT", "days_until_permit_expiry": 31,
+             "non_compliance_fine_exposure": 0.0, "corrective_action_assigned": False,
+             "regulatory_authority_notified": False},
+            {"control_id": "C-8", "status": "COMPLIANT", "days_until_permit_expiry": 30,
+             "non_compliance_fine_exposure": 0.0, "corrective_action_assigned": False,
+             "regulatory_authority_notified": False},
+            {"control_id": "C-9", "status": "COMPLIANT", "days_until_permit_expiry": -5,
+             "non_compliance_fine_exposure": 0.0, "corrective_action_assigned": False,
+             "regulatory_authority_notified": False},
+        ]
+    )
+    assert res["expiring_permits_count"] == 2  # 30 y -5; 31 fuera del SLA
+    assert res["compliant_controls_count"] == 1
+    assert res["regulatory_governance_status"] == "AT_RISK"
+    assert res["findings"][0]["issues"] == ["PERMIT_EXPIRY_WARNING (30<=30)"]
+
+    # SLA custom: con max 15, 30 deja de contar.
+    custom = audit_executive_report_esg_sustainability_and_regulatory_compliance(
+        [
+            {"control_id": "C-10", "status": "COMPLIANT", "days_until_permit_expiry": 16,
+             "non_compliance_fine_exposure": 0.0, "corrective_action_assigned": False,
+             "regulatory_authority_notified": False},
+        ],
+        max_permit_expiry_warning_days=15,
+    )
+    assert custom["expiring_permits_count"] == 0
+    assert custom["regulatory_governance_status"] == "HEALTHY"
+
+
+def test_audit_esg_compliance_fine_exposure_and_empty():
+    """Suma de exposicion a multas con coerciones, entrada vacia/None y proxy + __all__."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_esg_sustainability_and_regulatory_compliance,
+    )
+    import backend.services.project_export_service as mod
+
+    sums = audit_executive_report_esg_sustainability_and_regulatory_compliance(
+        [
+            {"control_id": "S1", "status": "COMPLIANT", "days_until_permit_expiry": None,
+             "non_compliance_fine_exposure": 123.456, "corrective_action_assigned": False,
+             "regulatory_authority_notified": False},
+            {"control_id": "S2", "status": "COMPLIANT", "days_until_permit_expiry": None,
+             "non_compliance_fine_exposure": None, "corrective_action_assigned": False,
+             "regulatory_authority_notified": False},
+            {"control_id": "S3", "status": "COMPLIANT", "days_until_permit_expiry": None,
+             "non_compliance_fine_exposure": "oops", "corrective_action_assigned": False,
+             "regulatory_authority_notified": False},
+        ]
+    )
+    # None y no-numericos se tratan como 0.0 en la suma.
+    assert sums["total_fine_exposure_amount"] == 123.46
+    assert sums["regulatory_governance_status"] == "HEALTHY"
+
+    for payload in ([], None, 42):
+        empty = audit_executive_report_esg_sustainability_and_regulatory_compliance(payload)
+        assert empty["total_controls"] == 0
+        assert empty["total_fine_exposure_amount"] == 0.0
+        assert empty["regulatory_governance_status"] == "HEALTHY"
+        assert empty["findings"] == []
+
+    sample = [{"control_id": "SM", "status": "COMPLIANT", "days_until_permit_expiry": None,
+               "non_compliance_fine_exposure": 0.0, "corrective_action_assigned": False,
+               "regulatory_authority_notified": False}]
+    assert (
+        ProjectExportService.audit_executive_report_esg_sustainability_and_regulatory_compliance(sample)
+        == audit_executive_report_esg_sustainability_and_regulatory_compliance(sample)
+    )
+    assert "audit_executive_report_esg_sustainability_and_regulatory_compliance" in mod.__all__

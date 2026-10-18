@@ -3145,6 +3145,7 @@ __all__ = [
     "audit_steering_committee_quorum_and_decision_governance",
     "audit_portfolio_strategic_alignment_and_benefits_drift",
     "audit_stage_gate_conditional_go_remediation_sla",
+    "audit_team_virtual_overlap_and_onboarding_readiness",
     "ProjectLifecyclePMIService",
 ]
 
@@ -4654,3 +4655,95 @@ def audit_stage_gate_conditional_go_remediation_sla(
 ProjectLifecyclePMIService.audit_stage_gate_conditional_go_remediation_sla = staticmethod(
     audit_stage_gate_conditional_go_remediation_sla
 )
+
+
+def audit_team_virtual_overlap_and_onboarding_readiness(
+    team_members: list[dict[str, Any]],
+    *,
+    min_daily_overlap_hours: float = 3.0,
+    max_onboarding_lead_days: int = 5,
+) -> dict[str, Any]:
+    """Audita traslape horario sincronico en equipos virtuales, provision de herramientas/onboarding y firma de Team Charter (PMBOK §9.3, §9.4)."""
+    if not isinstance(team_members, list):
+        team_members = []
+
+    min_overlap = float(min_daily_overlap_hours)
+    max_lead_days = int(max_onboarding_lead_days)
+
+    total_team_members = 0
+    ready_members_count = 0
+    insufficient_overlap_members_count = 0
+    delayed_onboarding_members_count = 0
+    unacknowledged_charter_members_count = 0
+    violations: list[dict[str, Any]] = []
+
+    for raw in team_members:
+        if not isinstance(raw, dict):
+            continue
+        total_team_members += 1
+        member_id = str(raw.get("member_id") or "").strip() or f"MBR-{total_team_members}"
+        is_remote = bool(raw.get("is_remote", False))
+        daily_core_overlap_hours = float(raw.get("daily_core_overlap_hours", 0.0) or 0.0)
+        access_and_tooling_provisioned = bool(raw.get("access_and_tooling_provisioned", False))
+        onboarding_lead_days = int(raw.get("onboarding_lead_days", 0) or 0)
+        team_charter_acknowledged = bool(raw.get("team_charter_acknowledged", False))
+
+        insufficient_overlap = is_remote and (daily_core_overlap_hours < min_overlap)
+        delayed_or_unprovisioned = (
+            not access_and_tooling_provisioned
+        ) or (onboarding_lead_days > max_lead_days)
+        unacknowledged_charter = not team_charter_acknowledged
+
+        reasons: list[str] = []
+        if insufficient_overlap:
+            insufficient_overlap_members_count += 1
+            reasons.append("insufficient_remote_timezone_overlap")
+        if delayed_or_unprovisioned:
+            delayed_onboarding_members_count += 1
+            reasons.append("delayed_or_unprovisioned_onboarding")
+        if unacknowledged_charter:
+            unacknowledged_charter_members_count += 1
+            reasons.append("unacknowledged_team_charter")
+
+        if not reasons:
+            ready_members_count += 1
+        else:
+            violations.append(
+                {
+                    "member_id": member_id,
+                    "reasons": reasons,
+                }
+            )
+
+    team_readiness_pct = (
+        round((ready_members_count / total_team_members) * 100.0, 2)
+        if total_team_members > 0
+        else 100.0
+    )
+    if (
+        insufficient_overlap_members_count == 0
+        and delayed_onboarding_members_count == 0
+        and unacknowledged_charter_members_count == 0
+    ):
+        status = "HEALTHY"
+    elif delayed_onboarding_members_count > 0:
+        status = "CRITICAL"
+    else:
+        status = "AT_RISK"
+
+    return {
+        "total_team_members": total_team_members,
+        "ready_members_count": ready_members_count,
+        "insufficient_overlap_members_count": insufficient_overlap_members_count,
+        "delayed_onboarding_members_count": delayed_onboarding_members_count,
+        "unacknowledged_charter_members_count": unacknowledged_charter_members_count,
+        "team_readiness_pct": team_readiness_pct,
+        "team_onboarding_governance_status": status,
+        "violations": violations,
+    }
+
+
+ProjectLifecyclePMIService.audit_team_virtual_overlap_and_onboarding_readiness = staticmethod(
+    audit_team_virtual_overlap_and_onboarding_readiness
+)
+

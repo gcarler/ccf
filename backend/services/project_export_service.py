@@ -36,6 +36,7 @@ __all__ = [
     "audit_expenses_vendor_concentration",
     "audit_executive_report_change_governance",
     "audit_executive_report_benefits_realization",
+    "audit_executive_report_esg_sustainability_and_regulatory_compliance",
     "ProjectExportService",
 ]
 
@@ -2979,6 +2980,7 @@ __all__ = [
     "audit_executive_report_monte_carlo_p50_p80_confidence",
     "audit_executive_report_vendor_sla_and_liquidated_damages",
     "audit_executive_report_stakeholder_escalation_and_briefing_cadence",
+    "audit_executive_report_esg_sustainability_and_regulatory_compliance",
     "ProjectExportService",
 ]
 
@@ -4512,3 +4514,116 @@ ProjectExportService.audit_executive_report_stakeholder_escalation_and_briefing_
 )
 
 
+
+
+def audit_executive_report_esg_sustainability_and_regulatory_compliance(
+    compliance_controls: list[dict],
+    *,
+    max_permit_expiry_warning_days: int = 30,
+) -> dict:
+    """Audita cumplimiento regulatorio, permisos y sostenibilidad ESG (PMBOK §2.2 y §8.1).
+
+    Cada control aporta control_id, status, days_until_permit_expiry,
+    non_compliance_fine_exposure, corrective_action_assigned y
+    regulatory_authority_notified:
+    - is_breached: status en {BREACHED, NON_COMPLIANT, REVOKED}
+      (case-insensitive).
+    - expiring_permit: days_until_permit_expiry no nulo con dias <= SLA
+      de aviso.
+    - unmitigated_breach: breach sin acción correctiva, o con exposición
+      a multa positiva sin notificación a la autoridad.
+    - total_fine_exposure_amount: suma de exposición a multas (2 dec).
+    - regulatory_governance_status: 'HEALTHY' sin hallazgos; 'CRITICAL'
+      con breaches o breaches sin mitigar; 'AT_RISK' en otro caso;
+      findings con {control_id, issues}.
+    """
+    if not isinstance(compliance_controls, list):
+        compliance_controls = []
+    controls = [c for c in compliance_controls if isinstance(c, dict)]
+
+    total_controls = len(controls)
+    compliant_controls_count = 0
+    breached_controls_count = 0
+    expiring_permits_count = 0
+    unmitigated_breaches_count = 0
+    findings: list[dict] = []
+
+    for idx, control in enumerate(controls, start=1):
+        control_id = str(control.get("control_id", f"CONTROL-{idx}"))
+        issues: list[str] = []
+        is_breached = False
+        has_expiring = False
+        has_unmitigated = False
+
+        status = str(control.get("status") or "").strip().upper()
+        raw_days = control.get("days_until_permit_expiry")
+        try:
+            fine_exposure = float(control.get("non_compliance_fine_exposure", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            fine_exposure = 0.0
+
+        if status in {"BREACHED", "NON_COMPLIANT", "REVOKED"}:
+            is_breached = True
+            issues.append(f"REGULATORY_BREACH ({status})")
+        if raw_days is not None:
+            try:
+                days = int(raw_days)
+            except (TypeError, ValueError):
+                days = None
+            if days is not None and days <= int(max_permit_expiry_warning_days):
+                has_expiring = True
+                issues.append(f"PERMIT_EXPIRY_WARNING ({days}<={max_permit_expiry_warning_days})")
+        if is_breached and (
+            (not bool(control.get("corrective_action_assigned", False)))
+            or (fine_exposure > 0.0 and not bool(control.get("regulatory_authority_notified", False)))
+        ):
+            has_unmitigated = True
+            if not control.get("corrective_action_assigned", False):
+                issues.append("CORRECTIVE_ACTION_UNASSIGNED")
+            if fine_exposure > 0.0 and not control.get("regulatory_authority_notified", False):
+                issues.append("AUTHORITY_NOT_NOTIFIED")
+
+        if is_breached:
+            breached_controls_count += 1
+        if has_expiring:
+            expiring_permits_count += 1
+        if has_unmitigated:
+            unmitigated_breaches_count += 1
+        if not (is_breached or has_expiring or has_unmitigated):
+            compliant_controls_count += 1
+        if issues:
+            findings.append({"control_id": control_id, "issues": issues})
+
+    def _safe_fine(item: dict) -> float:
+        try:
+            return float(item.get("non_compliance_fine_exposure", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            return 0.0
+
+    total_fine_exposure_amount = round(sum(_safe_fine(c) for c in controls), 2)
+
+    regulatory_governance_status = (
+        "CRITICAL"
+        if breached_controls_count > 0 or unmitigated_breaches_count > 0
+        else (
+            "AT_RISK"
+            if expiring_permits_count > 0
+            else "HEALTHY"
+        )
+    )
+
+    return {
+        "total_controls": total_controls,
+        "compliant_controls_count": compliant_controls_count,
+        "breached_controls_count": breached_controls_count,
+        "expiring_permits_count": expiring_permits_count,
+        "unmitigated_breaches_count": unmitigated_breaches_count,
+        "total_fine_exposure_amount": total_fine_exposure_amount,
+        "regulatory_governance_status": regulatory_governance_status,
+        "findings": findings,
+    }
+
+
+ProjectExportService.audit_executive_report_esg_sustainability_and_regulatory_compliance = staticmethod(
+    audit_executive_report_esg_sustainability_and_regulatory_compliance
+)

@@ -5325,3 +5325,156 @@ def test_audit_stage_gate_conditional_go_remediation_sla_custom_and_empty():
         == audit_stage_gate_conditional_go_remediation_sla(sample)
     )
     assert "audit_stage_gate_conditional_go_remediation_sla" in mod.__all__
+
+
+def test_audit_team_virtual_overlap_and_onboarding_readiness_healthy():
+    """Equipo con traslape remoto >= 3h, accesos provisionados en <= 5d y Team Charter firmado -> HEALTHY."""
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_team_virtual_overlap_and_onboarding_readiness,
+    )
+
+    members = [
+        {
+            "member_id": "DEV-01",
+            "is_remote": True,
+            "daily_core_overlap_hours": 4.5,
+            "access_and_tooling_provisioned": True,
+            "onboarding_lead_days": 3,
+            "team_charter_acknowledged": True,
+        },
+        {
+            "member_id": "QA-02",
+            "is_remote": False,
+            "daily_core_overlap_hours": 0.0,
+            "access_and_tooling_provisioned": True,
+            "onboarding_lead_days": 5,
+            "team_charter_acknowledged": True,
+        },
+    ]
+    res = audit_team_virtual_overlap_and_onboarding_readiness(members)
+    assert res == {
+        "total_team_members": 2,
+        "ready_members_count": 2,
+        "insufficient_overlap_members_count": 0,
+        "delayed_onboarding_members_count": 0,
+        "unacknowledged_charter_members_count": 0,
+        "team_readiness_pct": 100.0,
+        "team_onboarding_governance_status": "HEALTHY",
+        "violations": [],
+    }
+    assert (
+        ProjectLifecyclePMIService.audit_team_virtual_overlap_and_onboarding_readiness(
+            members
+        )
+        == res
+    )
+
+
+def test_audit_team_virtual_overlap_and_onboarding_readiness_critical_onboarding():
+    """Detecta falta de provision de herramientas o demora de onboarding > max_onboarding_lead_days como CRITICAL."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_team_virtual_overlap_and_onboarding_readiness,
+    )
+
+    res = audit_team_virtual_overlap_and_onboarding_readiness(
+        [
+            {
+                "member_id": "DEV-UNPROV",
+                "is_remote": True,
+                "daily_core_overlap_hours": 4.0,
+                "access_and_tooling_provisioned": False,
+                "onboarding_lead_days": 2,
+                "team_charter_acknowledged": True,
+            },
+            {
+                "member_id": "DEV-SLOW",
+                "is_remote": False,
+                "daily_core_overlap_hours": 8.0,
+                "access_and_tooling_provisioned": True,
+                "onboarding_lead_days": 9,
+                "team_charter_acknowledged": True,
+            },
+        ],
+        min_daily_overlap_hours=3.0,
+        max_onboarding_lead_days=5,
+    )
+    assert res["total_team_members"] == 2
+    assert res["ready_members_count"] == 0
+    assert res["delayed_onboarding_members_count"] == 2
+    assert res["team_readiness_pct"] == 0.0
+    assert res["team_onboarding_governance_status"] == "CRITICAL"
+    assert len(res["violations"]) == 2
+    assert res["violations"][0]["member_id"] == "DEV-UNPROV"
+    assert "delayed_or_unprovisioned_onboarding" in res["violations"][0]["reasons"]
+    assert res["violations"][1]["member_id"] == "DEV-SLOW"
+    assert "delayed_or_unprovisioned_onboarding" in res["violations"][1]["reasons"]
+
+
+def test_audit_team_virtual_overlap_and_onboarding_readiness_at_risk_overlap_or_charter():
+    """Detecta traslape horario insuficiente en remoto o falta de firma del Team Charter sin bloqueo de accesos como AT_RISK."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_team_virtual_overlap_and_onboarding_readiness,
+    )
+
+    res = audit_team_virtual_overlap_and_onboarding_readiness(
+        [
+            {
+                "member_id": "REM-LOW-OVERLAP",
+                "is_remote": True,
+                "daily_core_overlap_hours": 1.5,
+                "access_and_tooling_provisioned": True,
+                "onboarding_lead_days": 2,
+                "team_charter_acknowledged": True,
+            },
+            {
+                "member_id": "COLOC-NO-CHARTER",
+                "is_remote": False,
+                "daily_core_overlap_hours": 8.0,
+                "access_and_tooling_provisioned": True,
+                "onboarding_lead_days": 1,
+                "team_charter_acknowledged": False,
+            },
+            {
+                "member_id": "REM-READY",
+                "is_remote": True,
+                "daily_core_overlap_hours": 5.0,
+                "access_and_tooling_provisioned": True,
+                "onboarding_lead_days": 2,
+                "team_charter_acknowledged": True,
+            },
+        ],
+        min_daily_overlap_hours=3.0,
+        max_onboarding_lead_days=5,
+    )
+    assert res["total_team_members"] == 3
+    assert res["ready_members_count"] == 1
+    assert res["insufficient_overlap_members_count"] == 1
+    assert res["delayed_onboarding_members_count"] == 0
+    assert res["unacknowledged_charter_members_count"] == 1
+    assert res["team_readiness_pct"] == 33.33
+    assert res["team_onboarding_governance_status"] == "AT_RISK"
+    assert len(res["violations"]) == 2
+
+
+def test_audit_team_virtual_overlap_and_onboarding_readiness_empty_and_export():
+    """Maneja entradas vacias o invalidas devolviendo 100.0% HEALTHY y verifica exportacion en __all__."""
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_team_virtual_overlap_and_onboarding_readiness,
+    )
+
+    assert "audit_team_virtual_overlap_and_onboarding_readiness" in mod.__all__
+    for payload in ([], None, "invalid"):
+        empty = audit_team_virtual_overlap_and_onboarding_readiness(payload)  # type: ignore[arg-type]
+        assert empty == {
+            "total_team_members": 0,
+            "ready_members_count": 0,
+            "insufficient_overlap_members_count": 0,
+            "delayed_onboarding_members_count": 0,
+            "unacknowledged_charter_members_count": 0,
+            "team_readiness_pct": 100.0,
+            "team_onboarding_governance_status": "HEALTHY",
+            "violations": [],
+        }
+

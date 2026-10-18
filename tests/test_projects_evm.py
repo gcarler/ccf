@@ -5189,3 +5189,143 @@ def test_evaluate_evm_loe_masking_and_discrete_variance_distortion_empty_and_exp
             "loe_governance_status": "HEALTHY",
         }
 
+
+def test_evaluate_evm_retroactive_change_and_negative_period_anomaly_healthy():
+    """Periodos sin ajustes retroactivos no autorizados y con variaciones negativas justificadas -> HEALTHY."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_retroactive_change_and_negative_period_anomaly,
+    )
+
+    periods = [
+        {
+            "period_id": "2026-08",
+            "period_pv": 25000.0,
+            "period_ev": 24000.0,
+            "period_ac": 23500.0,
+            "prior_closed_period_adjusted": False,
+            "authorized_reprogramming_cr_id": None,
+            "justification_documented": False,
+        },
+        {
+            "period_id": "2026-09",
+            "period_pv": 20000.0,
+            "period_ev": -1500.0,
+            "period_ac": -500.0,
+            "prior_closed_period_adjusted": True,
+            "authorized_reprogramming_cr_id": "CR-EVM-104",
+            "justification_documented": True,
+        },
+    ]
+    res = evaluate_evm_retroactive_change_and_negative_period_anomaly(periods)
+    assert res == {
+        "total_periods_evaluated": 2,
+        "compliant_periods_count": 2,
+        "unauthorized_retroactive_periods_count": 0,
+        "unexplained_negative_ev_pv_periods_count": 0,
+        "unexplained_negative_ac_periods_count": 0,
+        "period_accounting_integrity_status": "HEALTHY",
+        "anomalies": [],
+    }
+    assert (
+        ProjectEVMService.evaluate_evm_retroactive_change_and_negative_period_anomaly(
+            periods
+        )
+        == res
+    )
+
+
+def test_evaluate_evm_retroactive_change_and_negative_period_anomaly_critical():
+    """Detecta ajuste retroactivo sin CR o PV/EV negativo sin justificacion como CRITICAL."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_retroactive_change_and_negative_period_anomaly,
+    )
+
+    res = evaluate_evm_retroactive_change_and_negative_period_anomaly(
+        [
+            {
+                "period_id": "2026-05",
+                "period_pv": 15000.0,
+                "period_ev": 15000.0,
+                "period_ac": 14000.0,
+                "prior_closed_period_adjusted": True,
+                "authorized_reprogramming_cr_id": "   ",
+                "justification_documented": True,
+            },
+            {
+                "period_id": "2026-06",
+                "period_pv": 18000.0,
+                "period_ev": -2000.0,
+                "period_ac": 12000.0,
+                "prior_closed_period_adjusted": False,
+                "authorized_reprogramming_cr_id": None,
+                "justification_documented": False,
+            },
+        ]
+    )
+    assert res["total_periods_evaluated"] == 2
+    assert res["compliant_periods_count"] == 0
+    assert res["unauthorized_retroactive_periods_count"] == 1
+    assert res["unexplained_negative_ev_pv_periods_count"] == 1
+    assert res["unexplained_negative_ac_periods_count"] == 0
+    assert res["period_accounting_integrity_status"] == "CRITICAL"
+    assert len(res["anomalies"]) == 2
+    assert res["anomalies"][0]["period_id"] == "2026-05"
+    assert "unauthorized_retroactive_baseline_change" in res["anomalies"][0]["reasons"]
+    assert res["anomalies"][1]["period_id"] == "2026-06"
+    assert "unexplained_negative_period_ev_or_pv" in res["anomalies"][1]["reasons"]
+
+
+def test_evaluate_evm_retroactive_change_and_negative_period_anomaly_at_risk_negative_ac():
+    """Detecta AC negativo sin justificacion (sin retroactivos ni EV/PV negativos) como AT_RISK."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_retroactive_change_and_negative_period_anomaly,
+    )
+
+    res = evaluate_evm_retroactive_change_and_negative_period_anomaly(
+        [
+            {
+                "period_id": "2026-07",
+                "period_pv": 10000.0,
+                "period_ev": 9500.0,
+                "period_ac": -1200.0,
+                "prior_closed_period_adjusted": False,
+                "authorized_reprogramming_cr_id": None,
+                "justification_documented": False,
+            }
+        ]
+    )
+    assert res["total_periods_evaluated"] == 1
+    assert res["compliant_periods_count"] == 0
+    assert res["unauthorized_retroactive_periods_count"] == 0
+    assert res["unexplained_negative_ev_pv_periods_count"] == 0
+    assert res["unexplained_negative_ac_periods_count"] == 1
+    assert res["period_accounting_integrity_status"] == "AT_RISK"
+    assert res["anomalies"] == [
+        {
+            "period_id": "2026-07",
+            "reasons": ["unexplained_negative_period_ac"],
+        }
+    ]
+
+
+def test_evaluate_evm_retroactive_change_and_negative_period_anomaly_empty_and_export():
+    """Maneja entradas vacias o invalidas devolviendo HEALTHY y verifica exportacion en __all__."""
+    import backend.services.project_evm_service as _m
+    from backend.services.project_evm_service import (
+        evaluate_evm_retroactive_change_and_negative_period_anomaly,
+    )
+
+    assert "evaluate_evm_retroactive_change_and_negative_period_anomaly" in _m.__all__
+    for bad in ([], None, "invalid"):
+        assert evaluate_evm_retroactive_change_and_negative_period_anomaly(bad) == {
+            "total_periods_evaluated": 0,
+            "compliant_periods_count": 0,
+            "unauthorized_retroactive_periods_count": 0,
+            "unexplained_negative_ev_pv_periods_count": 0,
+            "unexplained_negative_ac_periods_count": 0,
+            "period_accounting_integrity_status": "HEALTHY",
+            "anomalies": [],
+        }
+
+

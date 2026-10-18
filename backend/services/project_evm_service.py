@@ -5498,6 +5498,7 @@ __all__ = [
     "evaluate_evm_critical_path_drag_and_float_masking",
     "evaluate_evm_rolling_wave_planning_package_freeze_horizon",
     "evaluate_evm_loe_masking_and_discrete_variance_distortion",
+    "evaluate_evm_retroactive_change_and_negative_period_anomaly",
     "ProjectEVMService",
 ]
 
@@ -6816,4 +6817,90 @@ def evaluate_evm_loe_masking_and_discrete_variance_distortion(
 ProjectEVMService.evaluate_evm_loe_masking_and_discrete_variance_distortion = staticmethod(
     evaluate_evm_loe_masking_and_discrete_variance_distortion
 )
+
+
+def evaluate_evm_retroactive_change_and_negative_period_anomaly(
+    reporting_periods: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Evalua cambios retroactivos en periodos cerrados y anomalias de PV/EV/AC negativos (PMBOK §7.4, EVM Practice Standard)."""
+    if not isinstance(reporting_periods, list):
+        reporting_periods = []
+
+    total_periods_evaluated = 0
+    compliant_periods_count = 0
+    unauthorized_retroactive_periods_count = 0
+    unexplained_negative_ev_pv_periods_count = 0
+    unexplained_negative_ac_periods_count = 0
+    anomalies: list[dict[str, Any]] = []
+
+    for raw in reporting_periods:
+        if not isinstance(raw, dict):
+            continue
+        total_periods_evaluated += 1
+        period_id = str(raw.get("period_id") or "").strip() or f"PERIOD-{total_periods_evaluated}"
+        period_pv = float(raw.get("period_pv", 0.0) or 0.0)
+        period_ev = float(raw.get("period_ev", 0.0) or 0.0)
+        period_ac = float(raw.get("period_ac", 0.0) or 0.0)
+        prior_closed_period_adjusted = bool(raw.get("prior_closed_period_adjusted", False))
+        authorized_reprogramming_cr_id = raw.get("authorized_reprogramming_cr_id")
+        justification_documented = bool(raw.get("justification_documented", False))
+
+        unauthorized_retroactive = prior_closed_period_adjusted and (
+            not bool(str(authorized_reprogramming_cr_id or "").strip())
+        )
+        unexplained_negative_ev_pv = (
+            period_pv < 0.0 or period_ev < 0.0
+        ) and (not justification_documented)
+        unexplained_negative_ac = (period_ac < 0.0) and (not justification_documented)
+
+        reasons: list[str] = []
+        if unauthorized_retroactive:
+            unauthorized_retroactive_periods_count += 1
+            reasons.append("unauthorized_retroactive_baseline_change")
+        if unexplained_negative_ev_pv:
+            unexplained_negative_ev_pv_periods_count += 1
+            reasons.append("unexplained_negative_period_ev_or_pv")
+        if unexplained_negative_ac:
+            unexplained_negative_ac_periods_count += 1
+            reasons.append("unexplained_negative_period_ac")
+
+        if not reasons:
+            compliant_periods_count += 1
+        else:
+            anomalies.append(
+                {
+                    "period_id": period_id,
+                    "reasons": reasons,
+                }
+            )
+
+    if (
+        unauthorized_retroactive_periods_count == 0
+        and unexplained_negative_ev_pv_periods_count == 0
+        and unexplained_negative_ac_periods_count == 0
+    ):
+        status = "HEALTHY"
+    elif (
+        unauthorized_retroactive_periods_count > 0
+        or unexplained_negative_ev_pv_periods_count > 0
+    ):
+        status = "CRITICAL"
+    else:
+        status = "AT_RISK"
+
+    return {
+        "total_periods_evaluated": total_periods_evaluated,
+        "compliant_periods_count": compliant_periods_count,
+        "unauthorized_retroactive_periods_count": unauthorized_retroactive_periods_count,
+        "unexplained_negative_ev_pv_periods_count": unexplained_negative_ev_pv_periods_count,
+        "unexplained_negative_ac_periods_count": unexplained_negative_ac_periods_count,
+        "period_accounting_integrity_status": status,
+        "anomalies": anomalies,
+    }
+
+
+ProjectEVMService.evaluate_evm_retroactive_change_and_negative_period_anomaly = staticmethod(
+    evaluate_evm_retroactive_change_and_negative_period_anomaly
+)
+
 
