@@ -7650,3 +7650,135 @@ def test_audit_wiki_migration_expand_contract_invalid_and_binding():
         == audit_wiki_database_migration_expand_contract_and_lock_safety(sample)
     )
     assert "audit_wiki_database_migration_expand_contract_and_lock_safety" in mod.__all__
+
+
+def test_audit_wiki_blameless_postmortem_five_whys_and_action_sla_culture_or_action_breach():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_blameless_postmortem_five_whys_and_action_sla,
+    )
+
+    res = audit_wiki_blameless_postmortem_five_whys_and_action_sla(
+        [
+            {
+                "postmortem_id": "PIR-101",
+                "incident_severity": "SEV1",
+                "why_analysis_depth": 4,
+                "hours_to_publish_draft": 24.0,
+                "contains_blameful_language": True,
+                "has_preventive_action_with_owner_and_due_date": True,
+                "has_timeline_with_utc_timestamps": True,
+            },
+            {
+                "postmortem_id": "PIR-102",
+                "incident_severity": "SEV2",
+                "why_analysis_depth": 5,
+                "hours_to_publish_draft": 12.0,
+                "contains_blameful_language": False,
+                "has_preventive_action_with_owner_and_due_date": False,
+                "has_timeline_with_utc_timestamps": True,
+            },
+        ],
+        min_why_depth=3,
+        max_publish_delay_hours=48.0,
+    )
+    assert res["total_postmortems_evaluated"] == 2
+    assert res["blameful_culture_violation_ids"] == ["PIR-101"]
+    assert res["unactionable_postmortem_ids"] == ["PIR-102"]
+    assert res["pir_governance_status"] == "CULTURE_OR_ACTION_BREACH"
+    assert res["is_pir_compliant"] is False
+
+
+def test_audit_wiki_blameless_postmortem_five_whys_and_action_sla_analytical_or_sla_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_blameless_postmortem_five_whys_and_action_sla,
+    )
+
+    res = audit_wiki_blameless_postmortem_five_whys_and_action_sla(
+        [
+            {
+                "postmortem_id": "PIR-201",
+                "incident_severity": "SEV1",
+                "why_analysis_depth": 2,
+                "hours_to_publish_draft": 72.0,
+                "contains_blameful_language": False,
+                "has_preventive_action_with_owner_and_due_date": True,
+                "has_timeline_with_utc_timestamps": True,
+            }
+        ],
+        min_why_depth=3,
+        max_publish_delay_hours=48.0,
+    )
+    assert res["shallow_root_cause_ids"] == ["PIR-201"]
+    assert res["late_published_ids"] == ["PIR-201"]
+    assert res["blameful_culture_violation_ids"] == []
+    assert res["unactionable_postmortem_ids"] == []
+    assert res["pir_governance_status"] == "ANALYTICAL_OR_SLA_WARNING"
+    assert res["is_pir_compliant"] is False
+
+
+def test_audit_wiki_blameless_postmortem_five_whys_and_action_sla_exemplary_and_empty():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_blameless_postmortem_five_whys_and_action_sla,
+    )
+
+    empty = audit_wiki_blameless_postmortem_five_whys_and_action_sla(
+        [{"postmortem_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_postmortems_evaluated"] == 0
+    assert empty["pir_governance_status"] == "BLAMELESS_EXEMPLARY"
+    assert empty["is_pir_compliant"] is True
+
+    exemplary = audit_wiki_blameless_postmortem_five_whys_and_action_sla(
+        [
+            {
+                "postmortem_id": "PIR-301",
+                "incident_severity": "SEV1",
+                "why_analysis_depth": 5,
+                "hours_to_publish_draft": 18.0,
+                "contains_blameful_language": False,
+                "has_preventive_action_with_owner_and_due_date": True,
+                "has_timeline_with_utc_timestamps": True,
+            },
+            {
+                "postmortem_id": "PIR-302",
+                "incident_severity": "SEV3",
+                "why_analysis_depth": 3,
+                "hours_to_publish_draft": 96.0,
+                "contains_blameful_language": False,
+                "has_preventive_action_with_owner_and_due_date": True,
+                "has_timeline_with_utc_timestamps": True,
+            },
+        ]
+    )
+    assert exemplary["total_postmortems_evaluated"] == 2
+    assert exemplary["shallow_root_cause_ids"] == []
+    assert exemplary["late_published_ids"] == []
+    assert exemplary["pir_governance_status"] == "BLAMELESS_EXEMPLARY"
+    assert exemplary["is_pir_compliant"] is True
+
+
+def test_audit_wiki_blameless_postmortem_five_whys_and_action_sla_staticmethod_and_dunder_all():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_blameless_postmortem_five_whys_and_action_sla,
+    )
+
+    sample = [
+        {
+            "postmortem_id": "PIR-99",
+            "incident_severity": "SEV2",
+            "why_analysis_depth": 4,
+            "hours_to_publish_draft": 20.0,
+            "contains_blameful_language": False,
+            "has_preventive_action_with_owner_and_due_date": True,
+            "has_timeline_with_utc_timestamps": True,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_blameless_postmortem_five_whys_and_action_sla(sample)
+        == audit_wiki_blameless_postmortem_five_whys_and_action_sla(sample)
+    )
+    assert (
+        "audit_wiki_blameless_postmortem_five_whys_and_action_sla" in mod.__all__
+    )

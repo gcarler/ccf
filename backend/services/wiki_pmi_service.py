@@ -2523,6 +2523,7 @@ __all__ = [
     "audit_wiki_api_deprecation_sunset_and_migration_readiness",
     "audit_wiki_operational_runbook_idempotency_and_preflight_hygiene",
     "audit_wiki_database_migration_expand_contract_and_lock_safety",
+    "audit_wiki_blameless_postmortem_five_whys_and_action_sla",
     "WikiPMIService",
 ]
 
@@ -5927,4 +5928,99 @@ def audit_wiki_database_migration_expand_contract_and_lock_safety(
 
 WikiPMIService.audit_wiki_database_migration_expand_contract_and_lock_safety = staticmethod(
     audit_wiki_database_migration_expand_contract_and_lock_safety
+)
+
+
+def audit_wiki_blameless_postmortem_five_whys_and_action_sla(
+    postmortems: list[dict[str, Any]],
+    *,
+    min_why_depth: int = 3,
+    max_publish_delay_hours: float = 48.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §11.2 & §10.2 — Wiki Post-Incident Review (PIR) Blameless Postmortem Timeline, Root Cause Five-Whys & Action Item SLA Auditor."""
+    valid_pirs: list[dict[str, Any]] = []
+    for item in postmortems or []:
+        if not isinstance(item, dict):
+            continue
+        pid = str(item.get("postmortem_id") or "").strip()
+        if not pid:
+            continue
+        valid_pirs.append({**item, "_pid": pid})
+
+    if not valid_pirs:
+        return {
+            "total_postmortems_evaluated": 0,
+            "shallow_root_cause_ids": [],
+            "late_published_ids": [],
+            "blameful_culture_violation_ids": [],
+            "unactionable_postmortem_ids": [],
+            "pir_governance_status": "BLAMELESS_EXEMPLARY",
+            "is_pir_compliant": True,
+            "recommendations": [],
+        }
+
+    shallow_root_cause_ids: list[str] = []
+    late_published_ids: list[str] = []
+    blameful_culture_violation_ids: list[str] = []
+    unactionable_postmortem_ids: list[str] = []
+
+    for pir in valid_pirs:
+        pid = pir["_pid"]
+        sev = str(pir.get("incident_severity") or "").strip().upper()
+        why_depth = int(pir.get("why_analysis_depth", 0) or 0)
+        delay_hrs = float(pir.get("hours_to_publish_draft", 0.0) or 0.0)
+        blameful = bool(pir.get("contains_blameful_language", False))
+        has_action = bool(
+            pir.get("has_preventive_action_with_owner_and_due_date", False)
+        )
+        has_timeline = bool(pir.get("has_timeline_with_utc_timestamps", False))
+
+        if why_depth < min_why_depth:
+            shallow_root_cause_ids.append(pid)
+        if sev in {"SEV1", "SEV2"} and delay_hrs > max_publish_delay_hours:
+            late_published_ids.append(pid)
+        if blameful:
+            blameful_culture_violation_ids.append(pid)
+        if not has_action or not has_timeline:
+            unactionable_postmortem_ids.append(pid)
+
+    recommendations: list[str] = []
+    if blameful_culture_violation_ids:
+        recommendations.append(
+            f"Rewrite blameful statements to focus on systemic factors in postmortem(s): {', '.join(blameful_culture_violation_ids)}."
+        )
+    if unactionable_postmortem_ids:
+        recommendations.append(
+            f"Add UTC incident timeline and owner-assigned preventive action items with due dates in postmortem(s): {', '.join(unactionable_postmortem_ids)}."
+        )
+    if shallow_root_cause_ids:
+        recommendations.append(
+            f"Deepen 5-Whys root-cause analysis to at least {min_why_depth} levels in postmortem(s): {', '.join(shallow_root_cause_ids)}."
+        )
+    if late_published_ids:
+        recommendations.append(
+            f"Enforce {max_publish_delay_hours}-hour postmortem draft publication SLA for SEV1/SEV2 incident(s): {', '.join(late_published_ids)}."
+        )
+
+    if blameful_culture_violation_ids or unactionable_postmortem_ids:
+        pir_governance_status = "CULTURE_OR_ACTION_BREACH"
+    elif shallow_root_cause_ids or late_published_ids:
+        pir_governance_status = "ANALYTICAL_OR_SLA_WARNING"
+    else:
+        pir_governance_status = "BLAMELESS_EXEMPLARY"
+
+    return {
+        "total_postmortems_evaluated": len(valid_pirs),
+        "shallow_root_cause_ids": shallow_root_cause_ids,
+        "late_published_ids": late_published_ids,
+        "blameful_culture_violation_ids": blameful_culture_violation_ids,
+        "unactionable_postmortem_ids": unactionable_postmortem_ids,
+        "pir_governance_status": pir_governance_status,
+        "is_pir_compliant": pir_governance_status == "BLAMELESS_EXEMPLARY",
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_blameless_postmortem_five_whys_and_action_sla = staticmethod(
+    audit_wiki_blameless_postmortem_five_whys_and_action_sla
 )

@@ -3027,6 +3027,7 @@ __all__ = [
     "audit_markdown_heading_anchor_slug_and_fragment_hygiene",
     "audit_markdown_table_column_parity_and_empty_cell_hygiene",
     "audit_markdown_blockquote_attribution_and_nesting_hygiene",
+    "audit_markdown_frontmatter_metadata_and_classification_hygiene",
     "AnydocService",
 ]
 
@@ -7278,4 +7279,126 @@ AnyDocService.audit_markdown_blockquote_attribution_and_nesting_hygiene = static
 )
 AnydocService.audit_markdown_blockquote_attribution_and_nesting_hygiene = staticmethod(
     audit_markdown_blockquote_attribution_and_nesting_hygiene
+)
+
+
+def audit_markdown_frontmatter_metadata_and_classification_hygiene(
+    documents: list[dict[str, Any]],
+    *,
+    required_keys: tuple[str, ...] = (
+        "title",
+        "owner",
+        "classification",
+        "last_reviewed",
+    ),
+    allowed_classifications: tuple[str, ...] = (
+        "PUBLIC",
+        "INTERNAL",
+        "CONFIDENTIAL",
+        "RESTRICTED",
+    ),
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §10.2 — AnyDoc Markdown Frontmatter YAML Metadata Completeness, Owner Attribution & Classification Tag Hygiene Auditor."""
+    valid_docs: list[dict[str, Any]] = []
+    if isinstance(documents, (list, tuple)):
+        for item in documents:
+            if not isinstance(item, dict):
+                continue
+            did = str(item.get("doc_id") or "").strip()
+            if not did:
+                continue
+            valid_docs.append({**item, "_did": did})
+
+    if not valid_docs:
+        return {
+            "total_documents_evaluated": 0,
+            "missing_frontmatter_doc_ids": [],
+            "incomplete_metadata_doc_ids": [],
+            "invalid_classification_doc_ids": [],
+            "metadata_compliance_pct": 100.0,
+            "frontmatter_hygiene_status": "COMPLIANT",
+            "is_frontmatter_compliant": True,
+            "recommendations": [],
+        }
+
+    allowed_set = {str(c).strip().upper() for c in allowed_classifications}
+    missing_frontmatter_doc_ids: list[str] = []
+    incomplete_metadata_doc_ids: list[str] = []
+    invalid_classification_doc_ids: list[str] = []
+    compliant_count = 0
+
+    for doc in valid_docs:
+        did = doc["_did"]
+        has_delims = bool(doc.get("has_yaml_frontmatter_delimiters", False))
+        raw_fields = doc.get("frontmatter_fields")
+        fields = raw_fields if isinstance(raw_fields, dict) else {}
+
+        has_infraction = False
+        if not has_delims or not fields:
+            missing_frontmatter_doc_ids.append(did)
+            has_infraction = True
+        else:
+            missing_req = any(
+                k not in fields
+                or fields.get(k) is None
+                or str(fields.get(k)).strip() == ""
+                for k in required_keys
+            )
+            if missing_req:
+                incomplete_metadata_doc_ids.append(did)
+                has_infraction = True
+
+            raw_cls = fields.get("classification")
+            cls_norm = str(raw_cls).strip().upper() if raw_cls is not None else ""
+            if not cls_norm or cls_norm not in allowed_set:
+                if cls_norm:
+                    invalid_classification_doc_ids.append(did)
+                    has_infraction = True
+
+        if not has_infraction:
+            compliant_count += 1
+
+    total_documents_evaluated = len(valid_docs)
+    metadata_compliance_pct = round(
+        (compliant_count / total_documents_evaluated) * 100.0, 2
+    )
+
+    recommendations: list[str] = []
+    if missing_frontmatter_doc_ids:
+        recommendations.append(
+            f"Add YAML frontmatter block (`---`) to document(s): {', '.join(missing_frontmatter_doc_ids)}."
+        )
+    if incomplete_metadata_doc_ids:
+        recommendations.append(
+            f"Populate required frontmatter keys ({', '.join(required_keys)}) in document(s): {', '.join(incomplete_metadata_doc_ids)}."
+        )
+    if invalid_classification_doc_ids:
+        recommendations.append(
+            f"Assign valid classification tag ({', '.join(allowed_classifications)}) in document(s): {', '.join(invalid_classification_doc_ids)}."
+        )
+
+    if invalid_classification_doc_ids or metadata_compliance_pct < 70.0:
+        frontmatter_hygiene_status = "GOVERNANCE_NON_COMPLIANT"
+    elif missing_frontmatter_doc_ids or incomplete_metadata_doc_ids:
+        frontmatter_hygiene_status = "METADATA_GAPS"
+    else:
+        frontmatter_hygiene_status = "COMPLIANT"
+
+    return {
+        "total_documents_evaluated": total_documents_evaluated,
+        "missing_frontmatter_doc_ids": missing_frontmatter_doc_ids,
+        "incomplete_metadata_doc_ids": incomplete_metadata_doc_ids,
+        "invalid_classification_doc_ids": invalid_classification_doc_ids,
+        "metadata_compliance_pct": metadata_compliance_pct,
+        "frontmatter_hygiene_status": frontmatter_hygiene_status,
+        "is_frontmatter_compliant": frontmatter_hygiene_status == "COMPLIANT",
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_markdown_frontmatter_metadata_and_classification_hygiene = staticmethod(
+    audit_markdown_frontmatter_metadata_and_classification_hygiene
+)
+AnydocService.audit_markdown_frontmatter_metadata_and_classification_hygiene = staticmethod(
+    audit_markdown_frontmatter_metadata_and_classification_hygiene
 )

@@ -6110,3 +6110,151 @@ def test_audit_markdown_blockquote_attribution_and_nesting_hygiene_empty_and_bin
     assert (
         "audit_markdown_blockquote_attribution_and_nesting_hygiene" in mod.__all__
     )
+
+
+def test_audit_markdown_frontmatter_metadata_and_classification_hygiene_governance_non_compliant():
+    from backend.services.anydoc_service import (
+        audit_markdown_frontmatter_metadata_and_classification_hygiene,
+    )
+
+    res = audit_markdown_frontmatter_metadata_and_classification_hygiene(
+        [
+            {
+                "doc_id": "DOC-01",
+                "has_yaml_frontmatter_delimiters": False,
+                "frontmatter_fields": {},
+            },
+            {
+                "doc_id": "DOC-02",
+                "has_yaml_frontmatter_delimiters": True,
+                "frontmatter_fields": {
+                    "title": "Runbook",
+                    "owner": "   ",
+                    "classification": "TOP_SECRET",
+                    "last_reviewed": "2026-10-01",
+                },
+            },
+        ]
+    )
+    assert res["total_documents_evaluated"] == 2
+    assert res["missing_frontmatter_doc_ids"] == ["DOC-01"]
+    assert res["incomplete_metadata_doc_ids"] == ["DOC-02"]
+    assert res["invalid_classification_doc_ids"] == ["DOC-02"]
+    assert res["metadata_compliance_pct"] == 0.0
+    assert res["frontmatter_hygiene_status"] == "GOVERNANCE_NON_COMPLIANT"
+    assert res["is_frontmatter_compliant"] is False
+
+
+def test_audit_markdown_frontmatter_metadata_and_classification_hygiene_metadata_gaps():
+    from backend.services.anydoc_service import (
+        audit_markdown_frontmatter_metadata_and_classification_hygiene,
+    )
+
+    docs = [
+        {
+            "doc_id": f"DOC-OK-{i}",
+            "has_yaml_frontmatter_delimiters": True,
+            "frontmatter_fields": {
+                "title": f"Doc {i}",
+                "owner": "pmo@ccf.org",
+                "classification": "INTERNAL",
+                "last_reviewed": "2026-10-01",
+            },
+        }
+        for i in range(1, 4)
+    ] + [
+        {
+            "doc_id": "DOC-GAP-4",
+            "has_yaml_frontmatter_delimiters": True,
+            "frontmatter_fields": {
+                "title": "Incomplete Doc",
+                "owner": "",
+                "classification": "PUBLIC",
+                "last_reviewed": "2026-10-01",
+            },
+        }
+    ]
+    res = audit_markdown_frontmatter_metadata_and_classification_hygiene(docs)
+    assert res["total_documents_evaluated"] == 4
+    assert res["missing_frontmatter_doc_ids"] == []
+    assert res["incomplete_metadata_doc_ids"] == ["DOC-GAP-4"]
+    assert res["invalid_classification_doc_ids"] == []
+    assert res["metadata_compliance_pct"] == 75.0
+    assert res["frontmatter_hygiene_status"] == "METADATA_GAPS"
+    assert res["is_frontmatter_compliant"] is False
+
+
+def test_audit_markdown_frontmatter_metadata_and_classification_hygiene_compliant():
+    from backend.services.anydoc_service import (
+        audit_markdown_frontmatter_metadata_and_classification_hygiene,
+    )
+
+    res = audit_markdown_frontmatter_metadata_and_classification_hygiene(
+        [
+            {
+                "doc_id": "DOC-100",
+                "has_yaml_frontmatter_delimiters": True,
+                "frontmatter_fields": {
+                    "title": "Architecture Charter",
+                    "owner": "arch@ccf.org",
+                    "classification": "confidential",
+                    "last_reviewed": "2026-10-15",
+                },
+            }
+        ]
+    )
+    assert res["total_documents_evaluated"] == 1
+    assert res["missing_frontmatter_doc_ids"] == []
+    assert res["incomplete_metadata_doc_ids"] == []
+    assert res["invalid_classification_doc_ids"] == []
+    assert res["metadata_compliance_pct"] == 100.0
+    assert res["frontmatter_hygiene_status"] == "COMPLIANT"
+    assert res["is_frontmatter_compliant"] is True
+
+
+def test_audit_markdown_frontmatter_metadata_and_classification_hygiene_empty_and_bindings():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_frontmatter_metadata_and_classification_hygiene,
+    )
+
+    for payload in (None, [], "invalid", [{"doc_id": "   "}]):
+        empty = audit_markdown_frontmatter_metadata_and_classification_hygiene(payload)  # type: ignore[arg-type]
+        assert empty["total_documents_evaluated"] == 0
+        assert empty["missing_frontmatter_doc_ids"] == []
+        assert empty["incomplete_metadata_doc_ids"] == []
+        assert empty["invalid_classification_doc_ids"] == []
+        assert empty["metadata_compliance_pct"] == 100.0
+        assert empty["frontmatter_hygiene_status"] == "COMPLIANT"
+        assert empty["is_frontmatter_compliant"] is True
+
+    sample = [
+        {
+            "doc_id": "DOC-99",
+            "has_yaml_frontmatter_delimiters": True,
+            "frontmatter_fields": {
+                "title": "SOP",
+                "owner": "ops",
+                "classification": "RESTRICTED",
+                "last_reviewed": "2026-10-18",
+            },
+        }
+    ]
+    assert (
+        AnyDocService.audit_markdown_frontmatter_metadata_and_classification_hygiene(
+            sample
+        )
+        == audit_markdown_frontmatter_metadata_and_classification_hygiene(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_frontmatter_metadata_and_classification_hygiene(
+            sample
+        )
+        == audit_markdown_frontmatter_metadata_and_classification_hygiene(sample)
+    )
+    assert (
+        "audit_markdown_frontmatter_metadata_and_classification_hygiene"
+        in mod.__all__
+    )
