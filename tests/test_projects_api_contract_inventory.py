@@ -3613,3 +3613,184 @@ def test_path_parameter_uuid_hygiene_empty_and_live_openapi():
     assert live_res["total_parameterized_operations"] > 0
     assert live_res["total_path_parameters"] > 0
     assert live_res["undeclared_or_optional_path_params"] == []
+
+
+def test_collection_pagination_hygiene_clean():
+    """Operaciones GET de colección con envoltorio paginado, par de paginación y límite máximo acotado -> is_pagination_hygiene_clean=True."""
+    schema = {
+        "components": {
+            "schemas": {
+                "ProjectListEnvelope": {
+                    "type": "object",
+                    "properties": {
+                        "items": {"type": "array", "items": {"type": "object"}},
+                        "total": {"type": "integer"},
+                    },
+                }
+            }
+        },
+        "paths": {
+            "/api/projects": {
+                "get": {
+                    "parameters": [
+                        {
+                            "name": "limit",
+                            "in": "query",
+                            "schema": {"type": "integer", "maximum": 100},
+                        },
+                        {
+                            "name": "offset",
+                            "in": "query",
+                            "schema": {"type": "integer", "minimum": 0},
+                        },
+                    ],
+                    "responses": {
+                        "200": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/ProjectListEnvelope"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                }
+            },
+            "/projects/{project_id}": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {"type": "array"}
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_collection_pagination_hygiene(
+        schema
+    )
+    assert res == {
+        "total_collection_get_operations": 1,
+        "unpaginated_collection_operations": [],
+        "unbounded_limit_operations": [],
+        "bare_array_response_operations": [],
+        "is_pagination_hygiene_clean": True,
+    }
+
+
+def test_collection_pagination_hygiene_unpaginated_and_bare_array():
+    """Detecta operaciones de colección sin par de paginación y con bare array directo."""
+    schema = {
+        "paths": {
+            "/api/projects/tasks": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "array",
+                                        "items": {"type": "object"},
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_collection_pagination_hygiene(
+        schema
+    )
+    assert res == {
+        "total_collection_get_operations": 1,
+        "unpaginated_collection_operations": ["GET /api/projects/tasks"],
+        "unbounded_limit_operations": [],
+        "bare_array_response_operations": ["GET /api/projects/tasks"],
+        "is_pagination_hygiene_clean": False,
+    }
+
+
+def test_collection_pagination_hygiene_unbounded_limit():
+    """Detecta parámetros limit o page_size sin maximum ni exclusiveMaximum."""
+    schema = {
+        "paths": {
+            "/api/projects/risks": {
+                "get": {
+                    "parameters": [
+                        {
+                            "name": "page",
+                            "in": "query",
+                            "schema": {"type": "integer"},
+                        },
+                        {
+                            "name": "page_size",
+                            "in": "query",
+                            "schema": {"type": "integer"},
+                        },
+                    ],
+                    "responses": {
+                        "200": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "results": {"type": "array"}
+                                        },
+                                    }
+                                }
+                            }
+                        }
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_collection_pagination_hygiene(
+        schema
+    )
+    assert res["total_collection_get_operations"] == 1
+    assert res["unpaginated_collection_operations"] == []
+    assert res["unbounded_limit_operations"] == ["GET /api/projects/risks"]
+    assert res["bare_array_response_operations"] == []
+    assert res["is_pagination_hygiene_clean"] is False
+
+
+def test_collection_pagination_hygiene_empty_and_live_openapi():
+    """Manejo de schema vacío/None y auditoría sobre el esquema OpenAPI real de la aplicación."""
+    empty_expected = {
+        "total_collection_get_operations": 0,
+        "unpaginated_collection_operations": [],
+        "unbounded_limit_operations": [],
+        "bare_array_response_operations": [],
+        "is_pagination_hygiene_clean": False,
+    }
+    assert (
+        audit_projects_api_contracts.summarize_projects_collection_pagination_hygiene(
+            None
+        )
+        == empty_expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_collection_pagination_hygiene(
+            {}
+        )
+        == empty_expected
+    )
+
+    from backend.app import app
+
+    live_res = (
+        audit_projects_api_contracts.summarize_projects_collection_pagination_hygiene(
+            app.openapi()
+        )
+    )
+    assert live_res["total_collection_get_operations"] > 0

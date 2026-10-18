@@ -2148,6 +2148,184 @@ def summarize_projects_path_parameter_uuid_hygiene(
     }
 
 
+def _resolve_schema_ref(
+    schema: Any, openapi: Mapping[str, Any]
+) -> Mapping[str, Any]:
+    if not isinstance(schema, Mapping):
+        return {}
+    ref = schema.get("$ref")
+    if isinstance(ref, str) and ref.startswith("#/components/schemas/"):
+        name = ref.rsplit("/", maxsplit=1)[-1]
+        components = openapi.get("components")
+        schemas = (
+            components.get("schemas")
+            if isinstance(components, Mapping)
+            and isinstance(components.get("schemas"), Mapping)
+            else {}
+        )
+        target = schemas.get(name)
+        if isinstance(target, Mapping):
+            return target
+    return schema
+
+
+def _has_bounded_max_schema(schema: Any) -> bool:
+    if not isinstance(schema, Mapping):
+        return False
+    if (
+        schema.get("maximum") is not None
+        or schema.get("exclusiveMaximum") is not None
+    ):
+        return True
+    for composite_key in ("anyOf", "oneOf"):
+        members = schema.get(composite_key)
+        if isinstance(members, list) and any(
+            isinstance(m, Mapping)
+            and (
+                m.get("maximum") is not None
+                or m.get("exclusiveMaximum") is not None
+            )
+            for m in members
+        ):
+            return True
+    return False
+
+
+def summarize_projects_collection_pagination_hygiene(
+    openapi: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Audita paginación, límite máximo acotado y envoltorio de respuesta en operaciones GET de colección bajo /api/projects o /projects."""
+    if not isinstance(openapi, Mapping):
+        return {
+            "total_collection_get_operations": 0,
+            "unpaginated_collection_operations": [],
+            "unbounded_limit_operations": [],
+            "bare_array_response_operations": [],
+            "is_pagination_hygiene_clean": False,
+        }
+
+    total_collection_get_operations = 0
+    unpaginated_collection_operations: list[str] = []
+    unbounded_limit_operations: list[str] = []
+    bare_array_response_operations: list[str] = []
+
+    paths = openapi.get("paths")
+    if isinstance(paths, Mapping):
+        for path, path_item in sorted(paths.items()):
+            if not isinstance(path, str) or not (
+                path.startswith("/api/projects") or path.startswith("/projects")
+            ):
+                continue
+            if path.rstrip("/").endswith("}"):
+                continue
+            if not isinstance(path_item, Mapping):
+                continue
+
+            op = path_item.get("get")
+            if not isinstance(op, Mapping):
+                continue
+
+            responses = (
+                op.get("responses")
+                if isinstance(op.get("responses"), Mapping)
+                else {}
+            )
+            resp_200 = responses.get("200")
+            if not isinstance(resp_200, Mapping):
+                continue
+            content = (
+                resp_200.get("content")
+                if isinstance(resp_200.get("content"), Mapping)
+                else {}
+            )
+            json_media = content.get("application/json")
+            if not isinstance(json_media, Mapping):
+                continue
+
+            resolved_schema = _resolve_schema_ref(
+                json_media.get("schema"), openapi
+            )
+            if not resolved_schema:
+                continue
+
+            is_bare_array = resolved_schema.get("type") == "array"
+            is_envelope_collection = False
+            if (
+                not is_bare_array
+                and resolved_schema.get("type") in ("object", None)
+                and isinstance(resolved_schema.get("properties"), Mapping)
+            ):
+                props = resolved_schema["properties"]
+                for col_key in ("items", "results", "data"):
+                    prop_schema = _resolve_schema_ref(
+                        props.get(col_key), openapi
+                    )
+                    if prop_schema.get("type") == "array":
+                        is_envelope_collection = True
+                        break
+
+            if not (is_bare_array or is_envelope_collection):
+                continue
+
+            total_collection_get_operations += 1
+            op_key = f"GET {path}"
+
+            path_params = (
+                path_item.get("parameters")
+                if isinstance(path_item.get("parameters"), list)
+                else []
+            )
+            op_params = (
+                op.get("parameters")
+                if isinstance(op.get("parameters"), list)
+                else []
+            )
+            query_params: dict[str, Mapping[str, Any]] = {}
+            for p in (*path_params, *op_params):
+                if isinstance(p, Mapping) and p.get("in") == "query":
+                    p_name = str(p.get("name") or "")
+                    if p_name:
+                        query_params[p_name] = p
+
+            qnames = set(query_params.keys())
+            has_pagination_pair = (
+                ({"limit", "offset"} <= qnames)
+                or ({"page", "page_size"} <= qnames)
+                or ({"skip", "limit"} <= qnames)
+                or ({"cursor", "limit"} <= qnames)
+            )
+            if not has_pagination_pair:
+                unpaginated_collection_operations.append(op_key)
+
+            has_unbounded_limit = False
+            for limit_key in ("limit", "page_size"):
+                if limit_key in query_params:
+                    param_obj = query_params[limit_key]
+                    if not _has_bounded_max_schema(param_obj.get("schema")):
+                        has_unbounded_limit = True
+                        break
+            if has_unbounded_limit:
+                unbounded_limit_operations.append(op_key)
+
+            if is_bare_array:
+                bare_array_response_operations.append(op_key)
+
+    is_pagination_hygiene_clean = bool(
+        total_collection_get_operations > 0
+        and not unpaginated_collection_operations
+        and not unbounded_limit_operations
+        and not bare_array_response_operations
+    )
+
+    return {
+        "total_collection_get_operations": total_collection_get_operations,
+        "unpaginated_collection_operations": unpaginated_collection_operations,
+        "unbounded_limit_operations": unbounded_limit_operations,
+        "bare_array_response_operations": bare_array_response_operations,
+        "is_pagination_hygiene_clean": is_pagination_hygiene_clean,
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()
