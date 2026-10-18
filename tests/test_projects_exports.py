@@ -1303,3 +1303,88 @@ def test_stakeholders_csv_engagement_empty_export():
         }
 
 
+def test_audit_expenses_vendor_concentration_diversified():
+    """Todas las filas con proveedor y ninguno concentra >= 70% (con >= 2 filas) -> 'DIVERSIFIED_PROCUREMENT_POSTURE'."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_expenses_vendor_concentration,
+    )
+
+    csv_content = (
+        "Concepto,Proveedor,Monto\n"
+        'Licencias Cloud,AWS,"$4,000.00"\n'
+        'Consultoría QA,DevSecOps SAS,"$3,500.00"\n'
+        'Hardware, TechCorp ,"$2,500.00"\n'
+    )
+    res = ProjectExportService.audit_expenses_vendor_concentration(csv_content)
+    assert res == {
+        "total_rows": 3,
+        "total_spend": 10000.0,
+        "vendor_documented_rows": 3,
+        "unique_vendors_count": 3,
+        "top_vendor_share_pct": 40.0,
+        "posture": "DIVERSIFIED_PROCUREMENT_POSTURE",
+    }
+    assert audit_expenses_vendor_concentration(csv_content) == res
+
+
+def test_audit_expenses_vendor_concentration_single_source_risk():
+    """Todas con proveedor, >= 2 filas y top_vendor_share_pct >= 70.0 -> 'SINGLE_SOURCE_CONCENTRATION_RISK'."""
+    from backend.services.project_export_service import (
+        audit_expenses_vendor_concentration,
+    )
+
+    csv_content = (
+        "Item,Vendor,Amount\n"
+        "Fase 1,MegaVendor,5000\n"
+        "Fase 2,megavendor,3000\n"
+        "Soporte,OtroProveedor,2000\n"
+    )
+    res = audit_expenses_vendor_concentration(csv_content)
+    assert res["total_rows"] == 3
+    assert res["total_spend"] == 10000.0
+    assert res["vendor_documented_rows"] == 3
+    assert res["unique_vendors_count"] == 2
+    assert res["top_vendor_share_pct"] == 80.0
+    assert res["posture"] == "SINGLE_SOURCE_CONCENTRATION_RISK"
+
+
+def test_audit_expenses_vendor_concentration_unattributed_vendor():
+    """Al menos una fila sin proveedor documentado -> 'UNATTRIBUTED_VENDOR_SPEND'."""
+    from backend.services.project_export_service import (
+        audit_expenses_vendor_concentration,
+    )
+
+    csv_content = (
+        "Concepto,Beneficiario,Importe\n"
+        "Suministros,Proveedor A,1500.50\n"
+        "Caja menor,   ,499.50\n"
+    )
+    res = audit_expenses_vendor_concentration(csv_content)
+    assert res["total_rows"] == 2
+    assert res["total_spend"] == 2000.0
+    assert res["vendor_documented_rows"] == 1
+    assert res["unique_vendors_count"] == 1
+    assert res["top_vendor_share_pct"] == 75.02
+    assert res["posture"] == "UNATTRIBUTED_VENDOR_SPEND"
+
+
+def test_audit_expenses_vendor_concentration_empty_export():
+    """CSV vacío, None o solo encabezados -> 'EMPTY_EXPENSES_EXPORT'."""
+    from backend.services.project_export_service import (
+        audit_expenses_vendor_concentration,
+    )
+
+    for empty_csv in (None, "", "  \n ", "Concepto,Proveedor,Monto\n,,\n"):
+        res = audit_expenses_vendor_concentration(empty_csv)
+        assert res == {
+            "total_rows": 0,
+            "total_spend": 0.0,
+            "vendor_documented_rows": 0,
+            "unique_vendors_count": 0,
+            "top_vendor_share_pct": 0.0,
+            "posture": "EMPTY_EXPENSES_EXPORT",
+        }
+
+
+

@@ -1153,6 +1153,105 @@ def audit_markdown_reference_citations(
     }
 
 
+def audit_markdown_frontmatter_metadata(
+    markdown_or_result: str | dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Audita el bloque YAML frontmatter inicial según PMI PMBOK §10.2 / §4.4.
+
+    Acepta markdown crudo o el dict de resultado de conversión (clave 'markdown').
+    El frontmatter es el bloque delimitado por líneas '---' al inicio del
+    documento. Extrae pares "clave: valor" con valor no vacío (claves en
+    minúsculas, valores sin comillas/espacios) y calcula:
+    - `has_frontmatter`: delimitadores '---' inicial y de cierre presentes.
+    - `present_keys`: claves con valor no vacío, ordenadas.
+    - `has_title`: alguna clave en ('title', 'titulo', 'título').
+    - `has_owner`: alguna clave en ('author', 'owner', 'autor', 'responsable').
+    - `has_version_or_date`: alguna clave en ('version', 'versión', 'date',
+      'fecha', 'updated_at').
+    - `completeness_score`: cobertura de los 3 pilares de control documental
+      en % (2 decimales; 0.0 sin frontmatter).
+    - `posture`: 'NO_FRONTMATTER' sin bloque; 'GOVERNED_DOCUMENT_HEADER'
+      con 100.0; 'PARTIAL_FRONTMATTER' con > 0.0; y
+      'EMPTY_OR_UNCONTROLLED_FRONTMATTER' con frontmatter sin pilares.
+    """
+    if isinstance(markdown_or_result, dict):
+        text = str(markdown_or_result.get("markdown") or "")
+    elif isinstance(markdown_or_result, str):
+        text = markdown_or_result
+    else:
+        text = ""
+
+    lines = text.splitlines()
+    idx = 0
+    while idx < len(lines) and not lines[idx].strip():
+        idx += 1
+
+    has_frontmatter = False
+    present_keys: list[str] = []
+    if idx < len(lines) and lines[idx].strip() == "---":
+        closing = None
+        for cursor in range(idx + 1, len(lines)):
+            if lines[cursor].strip() == "---":
+                closing = cursor
+                break
+        if closing is not None:
+            has_frontmatter = True
+            for line in lines[idx + 1 : closing]:
+                if not line.strip() or line.strip().startswith("#"):
+                    continue
+                if ":" not in line:
+                    continue
+                raw_key, raw_value = line.split(":", 1)
+                key = raw_key.strip().lower()
+                value = raw_value.strip().strip('"').strip("'").strip()
+                if key and value:
+                    present_keys.append(key)
+
+    present_keys = sorted(set(present_keys))
+
+    title_keys = {"title", "titulo", "título"}
+    owner_keys = {"author", "owner", "autor", "responsable"}
+    version_date_keys = {"version", "versión", "date", "fecha", "updated_at"}
+
+    has_title = any(key in title_keys for key in present_keys)
+    has_owner = any(key in owner_keys for key in present_keys)
+    has_version_or_date = any(
+        key in version_date_keys for key in present_keys
+    )
+
+    completeness_score = (
+        round(
+            (
+                (int(has_title) + int(has_owner) + int(has_version_or_date))
+                / 3.0
+            )
+            * 100.0,
+            2,
+        )
+        if has_frontmatter
+        else 0.0
+    )
+
+    if not has_frontmatter:
+        posture = "NO_FRONTMATTER"
+    elif completeness_score == 100.0:
+        posture = "GOVERNED_DOCUMENT_HEADER"
+    elif completeness_score > 0.0:
+        posture = "PARTIAL_FRONTMATTER"
+    else:
+        posture = "EMPTY_OR_UNCONTROLLED_FRONTMATTER"
+
+    return {
+        "has_frontmatter": has_frontmatter,
+        "present_keys": present_keys,
+        "has_title": has_title,
+        "has_owner": has_owner,
+        "has_version_or_date": has_version_or_date,
+        "completeness_score": completeness_score,
+        "posture": posture,
+    }
+
+
 class AnyDocService:
     """Fachada canónica de conversión y auditoría documental AnyDoc PMI."""
 
@@ -1231,6 +1330,12 @@ class AnyDocService:
     ) -> dict[str, Any]:
         return audit_markdown_reference_citations(markdown_or_result)
 
+    @staticmethod
+    def audit_markdown_frontmatter_metadata(
+        markdown_or_result: str | dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        return audit_markdown_frontmatter_metadata(markdown_or_result)
+
 
 __all__ = [
     "ANYDOC_AVAILABLE",
@@ -1248,6 +1353,7 @@ __all__ = [
     "summarize_markdown_code_blocks",
     "extract_markdown_action_checklists",
     "audit_markdown_reference_citations",
+    "audit_markdown_frontmatter_metadata",
     "AnyDocService",
 ]
 

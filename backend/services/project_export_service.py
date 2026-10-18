@@ -30,6 +30,8 @@ __all__ = [
     "audit_tasks_csv_schedule_completeness",
     "audit_executive_report_milestone_coverage",
     "audit_risks_csv_register_completeness",
+    "audit_stakeholders_csv_engagement_gaps",
+    "audit_expenses_vendor_concentration",
     "ProjectExportService",
 ]
 
@@ -287,6 +289,12 @@ class ProjectExportService:
         csv_content: str | None,
     ) -> dict[str, Any]:
         return audit_risks_csv_register_completeness(csv_content)
+
+    @staticmethod
+    def audit_expenses_vendor_concentration(
+        csv_content: str | None,
+    ) -> dict[str, Any]:
+        return audit_expenses_vendor_concentration(csv_content)
 
 
 def summarize_executive_report_risk_posture(report_data: Optional[dict]) -> dict:
@@ -835,5 +843,100 @@ def audit_stakeholders_csv_engagement_gaps(
         "alignment_rate": alignment_rate,
         "posture": posture,
     }
+
+
+def audit_expenses_vendor_concentration(
+    csv_content: str | None,
+) -> dict[str, Any]:
+    """Audita la concentración de proveedores y trazabilidad de adquisiciones en un CSV exportado de gastos según PMI PMBOK §12.1 y §7.4."""
+    text = (csv_content if isinstance(csv_content, str) else "").lstrip("\ufeff")
+    if not text.strip():
+        return {
+            "total_rows": 0,
+            "total_spend": 0.0,
+            "vendor_documented_rows": 0,
+            "unique_vendors_count": 0,
+            "top_vendor_share_pct": 0.0,
+            "posture": "EMPTY_EXPENSES_EXPORT",
+        }
+
+    reader = csv.DictReader(io.StringIO(text))
+    amount_keys = ("monto", "amount", "importe", "costo", "cost", "valor")
+    vendor_keys = ("proveedor", "vendor", "supplier", "beneficiario", "contratista")
+
+    total_rows = 0
+    total_spend_raw = 0.0
+    vendor_documented_rows = 0
+    vendor_totals: dict[str, float] = {}
+
+    for raw_row in reader:
+        if not isinstance(raw_row, dict):
+            continue
+        norm_row: dict[str, str] = {}
+        for k, v in raw_row.items():
+            if k is None:
+                continue
+            key = str(k).lstrip("\ufeff").strip().lower()
+            if isinstance(v, list):
+                norm_row[key] = ",".join(str(part) for part in v)
+            else:
+                norm_row[key] = str(v or "")
+        if not any(val.strip() for val in norm_row.values()):
+            continue
+
+        total_rows += 1
+
+        amount_str = next(
+            (norm_row.get(k, "") for k in amount_keys if norm_row.get(k, "").strip()),
+            "",
+        ).strip()
+        cleaned_amount = amount_str.replace("$", "").replace(",", "").strip()
+        try:
+            row_amount = max(0.0, float(cleaned_amount)) if cleaned_amount else 0.0
+        except (ValueError, TypeError):
+            row_amount = 0.0
+
+        total_spend_raw += row_amount
+
+        vendor_str = next(
+            (norm_row.get(k, "") for k in vendor_keys if norm_row.get(k, "").strip()),
+            "",
+        ).strip()
+        if vendor_str:
+            vendor_documented_rows += 1
+            vendor_key = vendor_str.lower()
+            vendor_totals[vendor_key] = vendor_totals.get(vendor_key, 0.0) + row_amount
+
+    total_spend = round(total_spend_raw, 2)
+    unique_vendors_count = len(vendor_totals)
+    max_vendor_spend = max(vendor_totals.values(), default=0.0)
+    top_vendor_share_pct = (
+        round((max_vendor_spend / total_spend) * 100.0, 2)
+        if total_spend > 0 and unique_vendors_count > 0
+        else 0.0
+    )
+
+    if total_rows == 0:
+        posture = "EMPTY_EXPENSES_EXPORT"
+    elif vendor_documented_rows < total_rows:
+        posture = "UNATTRIBUTED_VENDOR_SPEND"
+    elif (
+        vendor_documented_rows == total_rows
+        and total_rows >= 2
+        and top_vendor_share_pct >= 70.0
+    ):
+        posture = "SINGLE_SOURCE_CONCENTRATION_RISK"
+    else:
+        posture = "DIVERSIFIED_PROCUREMENT_POSTURE"
+
+    return {
+        "total_rows": total_rows,
+        "total_spend": total_spend,
+        "vendor_documented_rows": vendor_documented_rows,
+        "unique_vendors_count": unique_vendors_count,
+        "top_vendor_share_pct": top_vendor_share_pct,
+        "posture": posture,
+    }
+
 
 

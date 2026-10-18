@@ -1021,3 +1021,95 @@ def test_audit_markdown_reference_citations_no_citations():
             "posture": "NO_CITATIONS",
         }
 
+
+# ─── audit_markdown_frontmatter_metadata (pure helper) ────────────
+
+
+def test_frontmatter_governed_document_header():
+    """Título + autor + versión completos -> GOVERNED_DOCUMENT_HEADER (100.0) con claves ordenadas."""
+    from backend.services.anydoc_service import audit_markdown_frontmatter_metadata
+
+    markdown = (
+        "---\n"
+        "Título: Plan de Gestión de Riesgos\n"
+        'owner: "Oficina de Proyectos"\n'
+        'version: "1.0"\n'
+        "updated_at: 2026-10-18\n"
+        "---\n"
+        "\n# Encabezado\n"
+    )
+
+    res = audit_markdown_frontmatter_metadata(markdown)
+
+    assert res["has_frontmatter"] is True
+    assert res["present_keys"] == ["owner", "título", "updated_at", "version"]
+    assert res["has_title"] is True
+    assert res["has_owner"] is True
+    assert res["has_version_or_date"] is True
+    assert res["completeness_score"] == 100.0
+    assert res["posture"] == "GOVERNED_DOCUMENT_HEADER"
+
+
+def test_frontmatter_partial_via_conversion_dict_and_aliases():
+    """Dict de conversión (clave 'markdown'), aliases título/versión con acentos -> PARTIAL_FRONTMATTER."""
+    from backend.services.anydoc_service import audit_markdown_frontmatter_metadata
+
+    conversion_result = {
+        "markdown": (
+            "---\n"
+            "título: Acta de Constitución\n"
+            "versión: 2\n"
+            "tags: pmi\n"
+            "---\n"
+        )
+    }
+
+    res = audit_markdown_frontmatter_metadata(conversion_result)
+
+    assert res["has_frontmatter"] is True
+    assert res["present_keys"] == ["tags", "título", "versión"]
+    assert res["has_title"] is True
+    assert res["has_owner"] is False
+    assert res["has_version_or_date"] is True
+    assert res["completeness_score"] == 66.67
+    assert res["posture"] == "PARTIAL_FRONTMATTER"
+
+
+def test_frontmatter_missing_block_and_uncontrolled():
+    """Sin delimitadores -> NO_FRONTMATTER; delimitadores sin claves útiles -> EMPTY_OR_UNCONTROLLED."""
+    from backend.services.anydoc_service import audit_markdown_frontmatter_metadata
+
+    for val in (None, "", "# Doc sin frontmatter\n", "sin delimitadores --- en el medio"):
+        res = audit_markdown_frontmatter_metadata(val)
+        assert res["has_frontmatter"] is False
+        assert res["present_keys"] == []
+        assert res["completeness_score"] == 0.0
+        assert res["posture"] == "NO_FRONTMATTER"
+
+    empty_keys = audit_markdown_frontmatter_metadata(
+        "---\ndescription \nstatus:\nautor:   \n---\n"
+    )
+    assert empty_keys["has_frontmatter"] is True
+    assert empty_keys["present_keys"] == []
+    assert empty_keys["completeness_score"] == 0.0
+    assert empty_keys["posture"] == "EMPTY_OR_UNCONTROLLED_FRONTMATTER"
+
+
+def test_frontmatter_unclosed_block_is_ignored_and_blank_prefix_tolerated():
+    """'---' sin cierre no es frontmatter; líneas en blanco previas se toleran; valores con comillas se limpian."""
+    from backend.services.anydoc_service import audit_markdown_frontmatter_metadata
+
+    unclosed = audit_markdown_frontmatter_metadata("---\ntitle: Song\n# Cuerpo\n")
+    assert unclosed["has_frontmatter"] is False
+    assert unclosed["posture"] == "NO_FRONTMATTER"
+
+    prefixed = audit_markdown_frontmatter_metadata(
+        "\n\n---\n\nTitulo: \'Sesiones de Formación\'\n   # comentario\n---\n# Cuerpo\n"
+    )
+    assert prefixed["has_frontmatter"] is True
+    assert prefixed["present_keys"] == ["titulo"]
+    assert prefixed["has_title"] is True
+    assert prefixed["has_owner"] is False
+    assert prefixed["completeness_score"] == 33.33
+    assert prefixed["posture"] == "PARTIAL_FRONTMATTER"
+
