@@ -3981,6 +3981,154 @@ def summarize_projects_security_scheme_and_auth_hygiene(
     }
 
 
+def _is_numeric_value(val: object) -> bool:
+    return isinstance(val, (int, float)) and not isinstance(val, bool)
+
+
+def summarize_projects_numeric_bounds_and_range_hygiene(
+    openapi_schema: Mapping[str, object] | None = None,
+) -> dict[str, object]:
+    """Audita la coherencia de cotas numéricas (minimum/maximum/exclusive/multipleOf) en esquemas de proyectos."""
+    if openapi_schema is None:
+        from backend.app import app
+
+        schema_dict: Mapping[str, Any] = app.openapi()
+    else:
+        schema_dict = openapi_schema
+
+    referenced_schemas: set[str] = set()
+    paths = schema_dict.get("paths", {}) if isinstance(schema_dict, Mapping) else {}
+    if isinstance(paths, Mapping):
+        for path, methods in paths.items():
+            if not str(path).startswith(("/api/projects", "/api/v1/projects", "/projects")) or not isinstance(methods, Mapping):
+                continue
+            for method, operation in methods.items():
+                if str(method).lower() not in HTTP_METHODS or not isinstance(operation, Mapping):
+                    continue
+                for ref in schema_refs(dict(operation)):
+                    referenced_schemas.add(ref)
+
+    components = schema_dict.get("components", {}) if isinstance(schema_dict, Mapping) else {}
+    schemas = components.get("schemas", {}) if isinstance(components, Mapping) else {}
+
+    if isinstance(schemas, Mapping) and referenced_schemas:
+        queue = list(referenced_schemas)
+        while queue:
+            current = queue.pop()
+            s_obj = schemas.get(current)
+            if isinstance(s_obj, Mapping):
+                for nested_ref in schema_refs(dict(s_obj)):
+                    if nested_ref not in referenced_schemas:
+                        referenced_schemas.add(nested_ref)
+                        queue.append(nested_ref)
+
+    total_numeric_properties = 0
+    inverted_min_max_bounds: list[str] = []
+    non_positive_multiple_of_properties: list[str] = []
+    negative_floor_on_percentage_or_count_properties: list[str] = []
+
+    if isinstance(schemas, Mapping):
+        for s_name in sorted(schemas.keys()):
+            s_obj = schemas[s_name]
+            if not isinstance(s_obj, Mapping):
+                continue
+            is_proj = (
+                "project" in s_name.lower()
+                or s_name.startswith(_PROJECT_DOMAIN_SCHEMA_PREFIXES)
+                or s_name in referenced_schemas
+            )
+            if not is_proj:
+                continue
+
+            props = s_obj.get("properties", {})
+            if not isinstance(props, Mapping):
+                continue
+
+            for prop_name in sorted(props.keys()):
+                prop_schema = props[prop_name]
+                if not isinstance(prop_schema, Mapping):
+                    continue
+
+                numeric_nodes: list[Mapping[str, Any]] = []
+                if prop_schema.get("type") in {"integer", "number"}:
+                    numeric_nodes.append(prop_schema)
+                for union_key in ("anyOf", "oneOf"):
+                    branches = prop_schema.get(union_key)
+                    if isinstance(branches, list):
+                        for b in branches:
+                            if isinstance(b, Mapping) and b.get("type") in {"integer", "number"}:
+                                merged = {**prop_schema, **b}
+                                numeric_nodes.append(merged)
+
+                if not numeric_nodes:
+                    continue
+
+                total_numeric_properties += 1
+                qualified = f"{s_name}.{prop_name}"
+                has_inverted = False
+                has_bad_multiple = False
+                has_neg_floor = False
+
+                for node in numeric_nodes:
+                    min_val = node.get("minimum")
+                    excl_min = node.get("exclusiveMinimum")
+                    max_val = node.get("maximum")
+                    excl_max = node.get("exclusiveMaximum")
+
+                    lower: float | None = None
+                    lower_excl = False
+                    if _is_numeric_value(excl_min):
+                        lower = float(excl_min)  # type: ignore[arg-type]
+                        lower_excl = True
+                    elif _is_numeric_value(min_val):
+                        lower = float(min_val)  # type: ignore[arg-type]
+                        lower_excl = excl_min is True
+
+                    upper: float | None = None
+                    upper_excl = False
+                    if _is_numeric_value(excl_max):
+                        upper = float(excl_max)  # type: ignore[arg-type]
+                        upper_excl = True
+                    elif _is_numeric_value(max_val):
+                        upper = float(max_val)  # type: ignore[arg-type]
+                        upper_excl = excl_max is True
+
+                    if lower is not None and upper is not None:
+                        if lower > upper or (
+                            lower == upper and (lower_excl or upper_excl)
+                        ):
+                            has_inverted = True
+
+                    mult = node.get("multipleOf")
+                    if _is_numeric_value(mult) and float(mult) <= 0:  # type: ignore[arg-type]
+                        has_bad_multiple = True
+
+                    if prop_name.endswith(("_count", "_pct", "_percent", "_total")):
+                        if _is_numeric_value(min_val) and float(min_val) < 0:  # type: ignore[arg-type]
+                            has_neg_floor = True
+
+                if has_inverted:
+                    inverted_min_max_bounds.append(qualified)
+                if has_bad_multiple:
+                    non_positive_multiple_of_properties.append(qualified)
+                if has_neg_floor:
+                    negative_floor_on_percentage_or_count_properties.append(qualified)
+
+    return {
+        "total_numeric_properties": total_numeric_properties,
+        "inverted_min_max_bounds": sorted(inverted_min_max_bounds),
+        "non_positive_multiple_of_properties": sorted(non_positive_multiple_of_properties),
+        "negative_floor_on_percentage_or_count_properties": sorted(
+            negative_floor_on_percentage_or_count_properties
+        ),
+        "is_numeric_bounds_hygiene_compliant": (
+            len(inverted_min_max_bounds) == 0
+            and len(non_positive_multiple_of_properties) == 0
+            and len(negative_floor_on_percentage_or_count_properties) == 0
+        ),
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()

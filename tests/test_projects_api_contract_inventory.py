@@ -5510,3 +5510,125 @@ def test_security_scheme_and_auth_hygiene_ignores_non_project_routes():
     assert res["unknown_security_scheme_references"] == []
     assert res["missing_auth_error_doc_on_secured_operations"] == []
     assert res["is_security_scheme_hygiene_compliant"] is True
+
+
+def test_numeric_bounds_and_range_hygiene_live_openapi():
+    """Valida contra el esquema OpenAPI real la coherencia de cotas numéricas en proyectos."""
+    assert "summarize_projects_numeric_bounds_and_range_hygiene" in audit_projects_api_contracts.__all__
+    res = audit_projects_api_contracts.summarize_projects_numeric_bounds_and_range_hygiene()
+    assert res["total_numeric_properties"] > 0
+    assert res["inverted_min_max_bounds"] == []
+    assert res["non_positive_multiple_of_properties"] == []
+    assert res["negative_floor_on_percentage_or_count_properties"] == []
+    assert res["is_numeric_bounds_hygiene_compliant"] is True
+
+
+def test_numeric_bounds_and_range_hygiene_detects_inverted_and_contradictory_exclusive_bounds():
+    """Detecta rangos invertidos (min > max) o colapsados con cota exclusiva (exclusiveMinimum == maximum)."""
+    schema = {
+        "components": {
+            "schemas": {
+                "ProjectBudgetMetrics": {
+                    "type": "object",
+                    "properties": {
+                        "inverted_score": {
+                            "type": "number",
+                            "minimum": 100,
+                            "maximum": 50,
+                        },
+                        "contradictory_exclusive": {
+                            "anyOf": [
+                                {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 10,
+                                    "maximum": 10,
+                                },
+                                {"type": "null"},
+                            ]
+                        },
+                        "valid_range": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 100,
+                        },
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_numeric_bounds_and_range_hygiene(
+        schema
+    )
+    assert res["total_numeric_properties"] == 3
+    assert res["inverted_min_max_bounds"] == [
+        "ProjectBudgetMetrics.contradictory_exclusive",
+        "ProjectBudgetMetrics.inverted_score",
+    ]
+    assert res["non_positive_multiple_of_properties"] == []
+    assert res["negative_floor_on_percentage_or_count_properties"] == []
+    assert res["is_numeric_bounds_hygiene_compliant"] is False
+
+
+def test_numeric_bounds_and_range_hygiene_detects_bad_multiple_of_and_negative_floor():
+    """Detecta multipleOf <= 0 y minimum < 0 en propiedades _count, _pct, _percent o _total."""
+    schema = {
+        "components": {
+            "schemas": {
+                "WbsRollupSummary": {
+                    "type": "object",
+                    "properties": {
+                        "step_allocation": {
+                            "type": "number",
+                            "multipleOf": 0,
+                        },
+                        "completion_pct": {
+                            "type": "number",
+                            "minimum": -5,
+                            "maximum": 100,
+                        },
+                        "defect_count": {
+                            "type": "integer",
+                            "minimum": -1,
+                        },
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_numeric_bounds_and_range_hygiene(
+        schema
+    )
+    assert res["total_numeric_properties"] == 3
+    assert res["inverted_min_max_bounds"] == []
+    assert res["non_positive_multiple_of_properties"] == [
+        "WbsRollupSummary.step_allocation"
+    ]
+    assert res["negative_floor_on_percentage_or_count_properties"] == [
+        "WbsRollupSummary.completion_pct",
+        "WbsRollupSummary.defect_count",
+    ]
+    assert res["is_numeric_bounds_hygiene_compliant"] is False
+
+
+def test_numeric_bounds_and_range_hygiene_ignores_non_project_schemas():
+    """Ignora esquemas ajenos al dominio de proyectos y retorna cumplimiento limpio."""
+    schema = {
+        "components": {
+            "schemas": {
+                "InventoryAdjustment": {
+                    "type": "object",
+                    "properties": {
+                        "item_count": {"type": "integer", "minimum": -10, "maximum": -20},
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_numeric_bounds_and_range_hygiene(
+        schema
+    )
+    assert res["total_numeric_properties"] == 0
+    assert res["inverted_min_max_bounds"] == []
+    assert res["non_positive_multiple_of_properties"] == []
+    assert res["negative_floor_on_percentage_or_count_properties"] == []
+    assert res["is_numeric_bounds_hygiene_compliant"] is True
