@@ -5923,3 +5923,247 @@ def test_audit_stakeholder_power_interest_and_salience_drift_empty_and_service_b
     assert "audit_stakeholder_power_interest_and_salience_drift" in mod.__all__
 
 
+def test_ocm_adkar_adoption_healthy_and_critical():
+    """Unidad conforme -> compliant; champion ausente + go-live prematuro -> CRITICAL."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_organizational_change_management_adkar_and_adoption,
+    )
+
+    healthy = audit_organizational_change_management_adkar_and_adoption(
+        [
+            {
+                "unit_id": "BU-1",
+                "change_champion_assigned": True,
+                "training_completion_pct": 90.0,
+                "active_adoption_pct": 80.0,
+                "min_adkar_score": 4.0,
+                "go_live_approved": True,
+            }
+        ]
+    )
+    assert healthy["total_units"] == 1
+    assert healthy["compliant_units_count"] == 1
+    assert healthy["unchampioned_or_premature_golive_count"] == 0
+    assert healthy["adkar_barrier_or_training_gap_count"] == 0
+    assert healthy["post_launch_adoption_shortfall_count"] == 0
+    assert healthy["ocm_governance_status"] == "HEALTHY"
+    assert healthy["violations"] == []
+
+    critical = audit_organizational_change_management_adkar_and_adoption(
+        [
+            {
+                "unit_id": "BU-2",
+                "change_champion_assigned": False,
+                "training_completion_pct": 40.0,
+                "active_adoption_pct": 30.0,
+                "min_adkar_score": 2.0,
+                "go_live_approved": True,
+            }
+        ]
+    )
+    assert critical["violations"][0]["unit_id"] == "BU-2"
+    assert critical["violations"][0]["reasons"] == [
+        "unchampioned_or_premature_golive",
+        "adkar_barrier_or_training_gap",
+        "post_launch_adoption_shortfall",
+    ]
+    assert critical["unchampioned_or_premature_golive_count"] == 1
+    assert critical["post_launch_adoption_shortfall_count"] == 1
+    assert critical["ocm_governance_status"] == "CRITICAL"
+
+    # Champion asignado y adopción OK, pero go_live con entrenamiento insuficiente.
+    premature = audit_organizational_change_management_adkar_and_adoption(
+        [
+            {
+                "unit_id": "BU-3",
+                "change_champion_assigned": True,
+                "training_completion_pct": 84.9,
+                "active_adoption_pct": 90.0,
+                "min_adkar_score": 4.0,
+                "go_live_approved": True,
+            }
+        ]
+    )
+    assert premature["violations"][0]["reasons"] == [
+        "unchampioned_or_premature_golive",
+        "adkar_barrier_or_training_gap",
+    ]
+    assert premature["adkar_barrier_or_training_gap_count"] == 1
+    assert premature["ocm_governance_status"] == "CRITICAL"
+
+
+def test_ocm_adkar_adoption_at_risk_and_thresholds():
+    """Solo barrera ADKAR o brecha de entrenamiento -> AT_RISK; umbrales custom; límites."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_organizational_change_management_adkar_and_adoption,
+    )
+
+    at_risk = audit_organizational_change_management_adkar_and_adoption(
+        [
+            {
+                "unit_id": "BU-4",
+                "change_champion_assigned": True,
+                "training_completion_pct": 80.0,
+                "min_adkar_score": 4.0,
+            }
+        ]
+    )
+    assert at_risk["adkar_barrier_or_training_gap_count"] == 1
+    assert at_risk["violations"][0]["reasons"] == ["adkar_barrier_or_training_gap"]
+    assert at_risk["ocm_governance_status"] == "AT_RISK"
+
+    adkar_only = audit_organizational_change_management_adkar_and_adoption(
+        [{"unit_id": "BU-5", "change_champion_assigned": True, "min_adkar_score": 3.4}]
+    )
+    assert adkar_only["adkar_barrier_or_training_gap_count"] == 1
+    assert adkar_only["ocm_governance_status"] == "AT_RISK"
+
+    total = audit_organizational_change_management_adkar_and_adoption(
+        [
+            {
+                "unit_id": "BU-6",
+                "change_champion_assigned": True,
+                "training_completion_pct": 90.0,
+                "min_adkar_score": 4.5,
+                "go_live_approved": True,
+                "active_adoption_pct": 80.0,
+            }
+        ],
+        min_adkar_dimension_score=4.8,
+    )
+    assert total["adkar_barrier_or_training_gap_count"] == 1
+    assert total["ocm_governance_status"] == "AT_RISK"
+
+    # Sin go_live aprobado no hay shortfall de adopción aunque la adopción baje:
+    not_launched = audit_organizational_change_management_adkar_and_adoption(
+        [
+            {
+                "unit_id": "BU-7",
+                "change_champion_assigned": True,
+                "training_completion_pct": 90.0,
+                "min_adkar_score": 4.0,
+                "active_adoption_pct": 10.0,
+            }
+        ]
+    )
+    assert not_launched["post_launch_adoption_shortfall_count"] == 0
+    assert not_launched["ocm_governance_status"] == "HEALTHY"
+
+    # Límites exactos: min_adkar_score == umbral NO barrera; adopt pct == min NO shortfall.
+    boundary = audit_organizational_change_management_adkar_and_adoption(
+        [
+            {
+                "unit_id": "BU-8",
+                "change_champion_assigned": True,
+                "training_completion_pct": 85.0,
+                "min_adkar_score": 3.5,
+                "go_live_approved": True,
+                "active_adoption_pct": 75.0,
+            }
+        ]
+    )
+    assert boundary["ocm_governance_status"] == "HEALTHY"
+    assert boundary["compliant_units_count"] == 1
+
+
+def test_ocm_adkar_adoption_ignores_bad_entries():
+    """No-lista/None -> vacío; elementos no-dict ignorados; dict sin champion -> regla 1."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_organizational_change_management_adkar_and_adoption,
+    )
+
+    for payload in (None, "not-a-list", 42):
+        empty = audit_organizational_change_management_adkar_and_adoption(payload)
+        assert empty["total_units"] == 0
+        assert empty["compliant_units_count"] == 0
+        assert empty["ocm_governance_status"] == "HEALTHY"
+        assert empty["violations"] == []
+
+    mixed = audit_organizational_change_management_adkar_and_adoption(
+        [
+            "no-dict",
+            42,
+            None,
+            {
+                "unit_id": "BU-9",
+                "change_champion_assigned": True,
+                "training_completion_pct": 100.0,
+                "min_adkar_score": 5.0,
+            },
+        ]
+    )
+    assert mixed["total_units"] == 1
+    assert mixed["compliant_units_count"] == 1
+    assert mixed["violations"] == []
+
+    # Sin champion: regla 1 dispara pese a métricas sanas.
+    bare = audit_organizational_change_management_adkar_and_adoption(
+        [
+            {
+                "unit_id": "BU-10",
+                "training_completion_pct": 100.0,
+                "min_adkar_score": 5.0,
+            }
+        ]
+    )
+    assert bare["violations"][0]["reasons"] == ["unchampioned_or_premature_golive"]
+    assert bare["ocm_governance_status"] == "CRITICAL"
+
+
+def test_ocm_adkar_adoption_precedence_and_binding():
+    """Precedencia CRITICAL > AT_RISK; proxy @staticmethod y __all__."""
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_organizational_change_management_adkar_and_adoption,
+    )
+
+    # Champion OK + múltiple shortfall solo vía adopción -> 2 conteos distintos correlacionados.
+    multi_units = audit_organizational_change_management_adkar_and_adoption(
+        [
+            {
+                "unit_id": "BU-11",
+                "change_champion_assigned": True,
+                "training_completion_pct": 90.0,
+                "min_adkar_score": 4.0,
+                "go_live_approved": True,
+                "active_adoption_pct": 20.0,
+            }
+        ]
+    )
+    assert multi_units["post_launch_adoption_shortfall_count"] == 1
+    assert multi_units["ocm_governance_status"] == "CRITICAL"
+
+    # AT_RISK se reporta solo si NO hay nada critical.
+    at_risk_mixed = audit_organizational_change_management_adkar_and_adoption(
+        [
+            {
+                "unit_id": "BU-12",
+                "change_champion_assigned": True,
+                "training_completion_pct": 50.0,
+                "min_adkar_score": 4.0,
+            },
+            {
+                "unit_id": "BU-13",
+                "change_champion_assigned": True,
+                "training_completion_pct": 90.0,
+                "min_adkar_score": 1.0,
+            },
+        ]
+    )
+    assert at_risk_mixed["adkar_barrier_or_training_gap_count"] == 2
+    assert at_risk_mixed["unchampioned_or_premature_golive_count"] == 0
+    assert at_risk_mixed["ocm_governance_status"] == "AT_RISK"
+
+    sample = [
+        {
+            "unit_id": "BU-14",
+            "change_champion_assigned": False,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_organizational_change_management_adkar_and_adoption(sample)
+        == audit_organizational_change_management_adkar_and_adoption(sample)
+    )
+    assert "audit_organizational_change_management_adkar_and_adoption" in mod.__all__
+

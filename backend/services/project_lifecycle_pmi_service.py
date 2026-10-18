@@ -3149,6 +3149,7 @@ __all__ = [
     "audit_post_implementation_benefits_sustainment_and_handover",
     "audit_project_charter_measurable_criteria_and_authority",
     "audit_stakeholder_power_interest_and_salience_drift",
+    "audit_organizational_change_management_adkar_and_adoption",
     "ProjectLifecyclePMIService",
 ]
 
@@ -5169,3 +5170,117 @@ ProjectLifecyclePMIService.audit_stakeholder_power_interest_and_salience_drift =
 )
 
 
+def audit_organizational_change_management_adkar_and_adoption(
+    business_units: Sequence[Mapping[str, Any]] | None,
+    *,
+    min_training_completion_pct: float = 85.0,
+    min_active_adoption_pct: float = 75.0,
+    min_adkar_dimension_score: float = 3.5,
+) -> dict[str, Any]:
+    """PMI Managing Change in Organizations & PMBOK 4.7 — OCM / ADKAR.
+
+    Auditoría pura sobre ``business_units``. Entradas no-lista/None se
+    tratan como lista vacía y elementos no-dict se ignoran. Reglas:
+
+    1. ``unchampioned_or_premature_golive``: NOT ``change_champion_assigned``
+       OR (``go_live_approved`` AND ``training_completion_pct <
+       min_training_completion_pct``).
+    2. ``adkar_barrier_or_training_gap``: ``min_adkar_score <
+       min_adkar_dimension_score`` OR ``training_completion_pct <
+       min_training_completion_pct``.
+    3. ``post_launch_adoption_shortfall``: ``go_live_approved`` AND
+       ``active_adoption_pct < min_active_adoption_pct``.
+
+    Returns dict con total_units, compliant_units_count, los 3 conteos,
+    ocm_governance_status (HEALTHY/AT_RISK/CRITICAL) y violations (dicts
+    con ``unit_id`` / ``reasons``).
+    """
+    raw_items = business_units if isinstance(business_units, list) else []
+    items = [entry for entry in raw_items if isinstance(entry, Mapping)]
+
+    total = 0
+    unchampioned_count = 0
+    adkar_gap_count = 0
+    shortfall_count = 0
+    compliant_count = 0
+    violations: list[dict[str, Any]] = []
+
+    for entry in items:
+        total += 1
+
+        unit_id = entry.get("unit_id")
+        champion_assigned = entry.get("change_champion_assigned")
+        training_pct = entry.get("training_completion_pct")
+        adoption_pct = entry.get("active_adoption_pct")
+        adkar_score = entry.get("min_adkar_score")
+        go_live_approved = entry.get("go_live_approved")
+
+        def _num_ok(value):
+            return isinstance(value, (int, float))
+
+        reasons: list[str] = []
+
+        # Regla 1
+        if champion_assigned is not True:
+            reasons.append("unchampioned_or_premature_golive")
+        elif (
+            go_live_approved is True
+            and _num_ok(training_pct)
+            and training_pct < min_training_completion_pct
+        ):
+            reasons.append("unchampioned_or_premature_golive")
+
+        # Regla 2
+        training_gap = _num_ok(training_pct) and training_pct < min_training_completion_pct
+        adkar_barrier = _num_ok(adkar_score) and adkar_score < min_adkar_dimension_score
+        if adkar_barrier or training_gap:
+            reasons.append("adkar_barrier_or_training_gap")
+
+        # Regla 3
+        if (
+            go_live_approved is True
+            and _num_ok(adoption_pct)
+            and adoption_pct < min_active_adoption_pct
+        ):
+            reasons.append("post_launch_adoption_shortfall")
+
+        ordered_reasons = list(dict.fromkeys(reasons))
+        if not ordered_reasons:
+            compliant_count += 1
+            continue
+
+        if "unchampioned_or_premature_golive" in ordered_reasons:
+            unchampioned_count += 1
+        if "adkar_barrier_or_training_gap" in ordered_reasons:
+            adkar_gap_count += 1
+        if "post_launch_adoption_shortfall" in ordered_reasons:
+            shortfall_count += 1
+
+        violations.append(
+            {
+                "unit_id": unit_id,
+                "reasons": ordered_reasons,
+            }
+        )
+
+    if unchampioned_count > 0 or shortfall_count > 0:
+        status = "CRITICAL"
+    elif adkar_gap_count > 0:
+        status = "AT_RISK"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "total_units": total,
+        "compliant_units_count": compliant_count,
+        "unchampioned_or_premature_golive_count": unchampioned_count,
+        "adkar_barrier_or_training_gap_count": adkar_gap_count,
+        "post_launch_adoption_shortfall_count": shortfall_count,
+        "ocm_governance_status": status,
+        "violations": violations,
+    }
+
+
+ProjectLifecyclePMIService.audit_organizational_change_management_adkar_and_adoption = staticmethod(
+    audit_organizational_change_management_adkar_and_adoption
+)

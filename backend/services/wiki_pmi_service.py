@@ -2511,6 +2511,7 @@ __all__ = [
     "audit_wiki_decision_log_daci_accountability_and_reversal",
     "audit_wiki_assumptions_and_constraints_empirical_validation",
     "audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness",
+    "audit_wiki_communications_matrix_cadence_and_escalation",
     "WikiPMIService",
 ]
 
@@ -4625,5 +4626,136 @@ def audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness(
 
 WikiPMIService.audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness = staticmethod(
     audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness
+)
+
+
+def audit_wiki_communications_matrix_cadence_and_escalation(
+    comm_artifacts: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_delivery_delay_days: int = 3,
+    min_interactive_ack_rate_pct: float = 80.0,
+) -> dict[str, Any]:
+    """Audita la Matriz de Gestión de Comunicaciones en Wiki: definición de método (interactive/push/pull), responsable, audiencia, ruta de escalamiento, adherencia a cadencia y tasa de confirmación interactiva (PMI PMBOK §10.1 y §10.3)."""
+    if (
+        comm_artifacts is None
+        or isinstance(comm_artifacts, (str, bytes))
+        or not isinstance(comm_artifacts, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = comm_artifacts
+
+    try:
+        max_delay = int(max_delivery_delay_days)
+    except (TypeError, ValueError):
+        max_delay = 3
+
+    try:
+        min_ack_pct = float(min_interactive_ack_rate_pct)
+    except (TypeError, ValueError):
+        min_ack_pct = 80.0
+
+    allowed_methods = {"interactive", "push", "pull"}
+
+    total_artifacts = 0
+    compliant_artifacts = 0
+    incomplete_matrix_definition_ids: list[str] = []
+    cadence_delivery_overdue_ids: list[str] = []
+    low_interactive_engagement_ids: list[str] = []
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_artifacts += 1
+
+        comm_id = (
+            str(raw.get("id") or raw.get("comm_id") or "").strip()
+            or "COM-UNKNOWN"
+        )
+        method = str(raw.get("method") or "").strip().lower()
+        sender_owner = str(raw.get("sender_owner") or "").strip()
+        target_audience = str(raw.get("target_audience") or "").strip()
+        escalation_path_defined = bool(raw.get("escalation_path_defined"))
+
+        try:
+            delivery_delay_days = max(
+                0, int(raw.get("delivery_delay_days") or 0)
+            )
+        except (TypeError, ValueError):
+            delivery_delay_days = 0
+
+        raw_ack = raw.get("recipient_ack_rate_pct")
+        if raw_ack is None:
+            recipient_ack_rate_pct = 100.0
+        else:
+            try:
+                recipient_ack_rate_pct = max(
+                    0.0, min(100.0, float(raw_ack))
+                )
+            except (TypeError, ValueError):
+                recipient_ack_rate_pct = 100.0
+
+        is_incomplete = (
+            not sender_owner
+            or not target_audience
+            or method not in allowed_methods
+            or not escalation_path_defined
+        )
+        is_overdue = delivery_delay_days > max_delay
+        is_low_ack = (
+            method == "interactive" and recipient_ack_rate_pct < min_ack_pct
+        )
+
+        if is_incomplete:
+            incomplete_matrix_definition_ids.append(comm_id)
+        if is_overdue:
+            cadence_delivery_overdue_ids.append(comm_id)
+        if is_low_ack:
+            low_interactive_engagement_ids.append(comm_id)
+
+        if not is_incomplete and not is_overdue and not is_low_ack:
+            compliant_artifacts += 1
+
+    is_compliant = (
+        len(incomplete_matrix_definition_ids) == 0
+        and len(cadence_delivery_overdue_ids) == 0
+        and len(low_interactive_engagement_ids) == 0
+    )
+
+    if is_compliant:
+        communications_governance_health = "healthy"
+    elif len(incomplete_matrix_definition_ids) > 0:
+        communications_governance_health = "critical"
+    else:
+        communications_governance_health = "at_risk"
+
+    recommendations: list[str] = []
+    if incomplete_matrix_definition_ids:
+        recommendations.append(
+            f"Completar responsable emisor, audiencia, método canónico (interactive/push/pull) y ruta de escalamiento en {incomplete_matrix_definition_ids}."
+        )
+    if cadence_delivery_overdue_ids:
+        recommendations.append(
+            f"Regularizar retrasos en la cadencia de distribución (> {max_delay} días) en {cadence_delivery_overdue_ids}."
+        )
+    if low_interactive_engagement_ids:
+        recommendations.append(
+            f"Reforzar participación y confirmación de receptores (>= {min_ack_pct}%) en canales interactivos de {low_interactive_engagement_ids}."
+        )
+
+    return {
+        "total_artifacts": total_artifacts,
+        "compliant_artifacts": compliant_artifacts,
+        "incomplete_matrix_definition_ids": incomplete_matrix_definition_ids,
+        "cadence_delivery_overdue_ids": cadence_delivery_overdue_ids,
+        "low_interactive_engagement_ids": low_interactive_engagement_ids,
+        "communications_governance_health": communications_governance_health,
+        "is_compliant": is_compliant,
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_communications_matrix_cadence_and_escalation = staticmethod(
+    audit_wiki_communications_matrix_cadence_and_escalation
 )
 

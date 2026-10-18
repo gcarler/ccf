@@ -5502,6 +5502,7 @@ __all__ = [
     "evaluate_evm_subcontractor_flowdown_and_invoice_overbilling",
     "evaluate_evm_earning_rule_gaming_and_duration_split",
     "evaluate_evm_cost_schedule_index_compound_degradation",
+    "evaluate_evm_undistributed_budget_and_planning_package_aging",
     "ProjectEVMService",
 ]
 
@@ -7319,6 +7320,162 @@ def evaluate_evm_cost_schedule_index_compound_degradation(
 ProjectEVMService.evaluate_evm_cost_schedule_index_compound_degradation = staticmethod(
     evaluate_evm_cost_schedule_index_compound_degradation
 )
+
+
+def evaluate_evm_undistributed_budget_and_planning_package_aging(
+    budget_buckets: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_ub_holding_days: int = 30,
+    min_planning_package_conversion_lead_days: int = 30,
+    max_ub_to_pmb_pct: float = 10.0,
+) -> dict[str, Any]:
+    """Evalúa el envejecimiento del Presupuesto No Distribuido (UB), la conversión oportuna de Planning Packages en Rolling Wave Planning y la prohibición de reclamar EV fuera de Work Packages (PMI PMBOK §7.3 y §7.4)."""
+    if (
+        budget_buckets is None
+        or isinstance(budget_buckets, (str, bytes))
+        or not isinstance(budget_buckets, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = budget_buckets
+
+    try:
+        max_ub_days = int(max_ub_holding_days)
+    except (TypeError, ValueError):
+        max_ub_days = 30
+
+    try:
+        min_pp_lead_days = int(min_planning_package_conversion_lead_days)
+    except (TypeError, ValueError):
+        min_pp_lead_days = 30
+
+    try:
+        max_ub_pct = float(max_ub_to_pmb_pct)
+    except (TypeError, ValueError):
+        max_ub_pct = 10.0
+
+    def _pos_float(val: Any) -> float:
+        try:
+            return max(0.0, float(val or 0.0))
+        except (TypeError, ValueError):
+            return 0.0
+
+    total_buckets = 0
+    compliant_buckets = 0
+    total_ub_amount_accum = 0.0
+
+    stale_or_unscoped_ub_ids: list[str] = []
+    unconverted_imminent_planning_package_ids: list[str] = []
+    illegal_ev_on_non_work_package_ids: list[str] = []
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_buckets += 1
+
+        bucket_id = (
+            str(raw.get("id") or raw.get("bucket_id") or "").strip()
+            or "BKT-UNKNOWN"
+        )
+        bucket_type = str(raw.get("bucket_type") or "").strip().lower()
+        amount = _pos_float(raw.get("amount"))
+        pmb_total = _pos_float(raw.get("pmb_total"))
+
+        try:
+            days_held_in_ub = max(0, int(raw.get("days_held_in_ub") or 0))
+        except (TypeError, ValueError):
+            days_held_in_ub = 0
+
+        raw_lead = raw.get("days_until_scheduled_start")
+        if raw_lead is None:
+            days_until_scheduled_start = 90
+        else:
+            try:
+                days_until_scheduled_start = int(raw_lead)
+            except (TypeError, ValueError):
+                days_until_scheduled_start = 90
+
+        scope_statement_linked = bool(raw.get("scope_statement_linked"))
+        ev_claimed = _pos_float(raw.get("ev_claimed"))
+
+        if bucket_type == "undistributed_budget":
+            total_ub_amount_accum += amount
+
+        is_stale_or_unscoped_ub = bucket_type == "undistributed_budget" and (
+            days_held_in_ub > max_ub_days
+            or not scope_statement_linked
+            or (
+                pmb_total > 0.0
+                and (amount / pmb_total) * 100.0 > max_ub_pct
+            )
+        )
+        is_unconverted_pp = (
+            bucket_type == "planning_package"
+            and days_until_scheduled_start < min_pp_lead_days
+        )
+        is_illegal_ev = (
+            bucket_type in {"undistributed_budget", "planning_package"}
+            and ev_claimed > 0.0
+        )
+
+        if is_stale_or_unscoped_ub:
+            stale_or_unscoped_ub_ids.append(bucket_id)
+        if is_unconverted_pp:
+            unconverted_imminent_planning_package_ids.append(bucket_id)
+        if is_illegal_ev:
+            illegal_ev_on_non_work_package_ids.append(bucket_id)
+
+        if (
+            not is_stale_or_unscoped_ub
+            and not is_unconverted_pp
+            and not is_illegal_ev
+        ):
+            compliant_buckets += 1
+
+    is_compliant = (
+        len(stale_or_unscoped_ub_ids) == 0
+        and len(unconverted_imminent_planning_package_ids) == 0
+        and len(illegal_ev_on_non_work_package_ids) == 0
+    )
+
+    if is_compliant:
+        pmb_governance_health = "healthy"
+    elif len(illegal_ev_on_non_work_package_ids) > 0:
+        pmb_governance_health = "critical"
+    else:
+        pmb_governance_health = "at_risk"
+
+    recommendations: list[str] = []
+    if stale_or_unscoped_ub_ids:
+        recommendations.append(
+            f"Distribuir oportunamente el Undistributed Budget (<= {max_ub_days}d, <= {max_ub_pct}% PMB y con alcance vinculado) a Cuentas de Control en {stale_or_unscoped_ub_ids}."
+        )
+    if unconverted_imminent_planning_package_ids:
+        recommendations.append(
+            f"Descomponer los Planning Packages inminentes (< {min_pp_lead_days}d para inicio) en Work Packages detallados en {unconverted_imminent_planning_package_ids}."
+        )
+    if illegal_ev_on_non_work_package_ids:
+        recommendations.append(
+            f"Revertir el Earned Value reclamado ilegalmente sobre partidas UB o Planning Packages en {illegal_ev_on_non_work_package_ids}."
+        )
+
+    return {
+        "total_buckets": total_buckets,
+        "compliant_buckets": compliant_buckets,
+        "total_ub_amount": round(total_ub_amount_accum, 2),
+        "stale_or_unscoped_ub_ids": stale_or_unscoped_ub_ids,
+        "unconverted_imminent_planning_package_ids": unconverted_imminent_planning_package_ids,
+        "illegal_ev_on_non_work_package_ids": illegal_ev_on_non_work_package_ids,
+        "pmb_governance_health": pmb_governance_health,
+        "is_compliant": is_compliant,
+        "recommendations": recommendations,
+    }
+
+
+ProjectEVMService.evaluate_evm_undistributed_budget_and_planning_package_aging = staticmethod(
+    evaluate_evm_undistributed_budget_and_planning_package_aging
+)
+
 
 
 

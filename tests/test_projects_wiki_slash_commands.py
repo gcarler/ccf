@@ -5911,3 +5911,160 @@ def test_wiki_runbook_rto_rpo_readiness_status_precedence_and_binding():
         == audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness(sample)
     )
     assert "audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness" in mod.__all__
+
+
+def test_audit_wiki_communications_matrix_cadence_and_escalation_healthy():
+    """Valida matriz de comunicaciones con métodos interactive/push/pull, dueño, audiencia, ruta de escalamiento, entrega oportuna y alta confirmación."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_communications_matrix_cadence_and_escalation,
+    )
+
+    artifacts = [
+        {
+            "id": "COM-01",
+            "method": "interactive",
+            "sender_owner": "PMO Lead",
+            "target_audience": "Steering Committee",
+            "escalation_path_defined": True,
+            "delivery_delay_days": 0,
+            "recipient_ack_rate_pct": 95.0,
+        },
+        {
+            "id": "COM-02",
+            "method": "push",
+            "sender_owner": "Project Manager",
+            "target_audience": "Key Stakeholders",
+            "escalation_path_defined": True,
+            "delivery_delay_days": 1,
+            "recipient_ack_rate_pct": 70.0,
+        },
+        {
+            "id": "COM-03",
+            "method": "pull",
+            "sender_owner": "Knowledge Manager",
+            "target_audience": "Project Team",
+            "escalation_path_defined": True,
+            "delivery_delay_days": 0,
+        },
+    ]
+    res = audit_wiki_communications_matrix_cadence_and_escalation(artifacts)
+    assert res["total_artifacts"] == 3
+    assert res["compliant_artifacts"] == 3
+    assert res["incomplete_matrix_definition_ids"] == []
+    assert res["cadence_delivery_overdue_ids"] == []
+    assert res["low_interactive_engagement_ids"] == []
+    assert res["communications_governance_health"] == "healthy"
+    assert res["is_compliant"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_wiki_communications_matrix_cadence_and_escalation_at_risk():
+    """Detecta retrasos en la cadencia de distribución y baja confirmación interactiva ('at_risk')."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_communications_matrix_cadence_and_escalation,
+    )
+
+    artifacts = [
+        {
+            "comm_id": "COM-10",
+            "method": "push",
+            "sender_owner": "Project Manager",
+            "target_audience": "Sponsors",
+            "escalation_path_defined": True,
+            "delivery_delay_days": 6,
+            "recipient_ack_rate_pct": 90.0,
+        },
+        {
+            "comm_id": "COM-11",
+            "method": "interactive",
+            "sender_owner": "Scrum Master",
+            "target_audience": "Core Team",
+            "escalation_path_defined": True,
+            "delivery_delay_days": 1,
+            "recipient_ack_rate_pct": 60.0,
+        },
+    ]
+    res = audit_wiki_communications_matrix_cadence_and_escalation(artifacts)
+    assert res["total_artifacts"] == 2
+    assert res["compliant_artifacts"] == 0
+    assert res["incomplete_matrix_definition_ids"] == []
+    assert res["cadence_delivery_overdue_ids"] == ["COM-10"]
+    assert res["low_interactive_engagement_ids"] == ["COM-11"]
+    assert res["communications_governance_health"] == "at_risk"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_wiki_communications_matrix_cadence_and_escalation_critical_incomplete():
+    """Detecta artefactos sin responsable, sin audiencia, método inválido o sin ruta de escalamiento ('critical')."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_communications_matrix_cadence_and_escalation,
+    )
+
+    artifacts = [
+        {
+            "comm_id": "COM-20",
+            "method": "interactive",
+            "sender_owner": "",
+            "target_audience": "Board",
+            "escalation_path_defined": True,
+            "delivery_delay_days": 0,
+            "recipient_ack_rate_pct": 95.0,
+        },
+        {
+            "comm_id": "COM-21",
+            "method": "telepathy",
+            "sender_owner": "PM",
+            "target_audience": "Team",
+            "escalation_path_defined": False,
+            "delivery_delay_days": 0,
+        },
+    ]
+    res = audit_wiki_communications_matrix_cadence_and_escalation(artifacts)
+    assert res["total_artifacts"] == 2
+    assert res["compliant_artifacts"] == 0
+    assert res["incomplete_matrix_definition_ids"] == ["COM-20", "COM-21"]
+    assert res["communications_governance_health"] == "critical"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 1
+
+
+def test_audit_wiki_communications_matrix_cadence_and_escalation_empty_and_service_binding():
+    """Manejo defensivo de entradas vacías/no-secuencia y exposición en WikiPMIService y __all__."""
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_communications_matrix_cadence_and_escalation,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_wiki_communications_matrix_cadence_and_escalation(payload)  # type: ignore[arg-type]
+        assert empty["total_artifacts"] == 0
+        assert empty["compliant_artifacts"] == 0
+        assert empty["incomplete_matrix_definition_ids"] == []
+        assert empty["cadence_delivery_overdue_ids"] == []
+        assert empty["low_interactive_engagement_ids"] == []
+        assert empty["communications_governance_health"] == "healthy"
+        assert empty["is_compliant"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "id": "COM-99",
+            "method": "push",
+            "sender_owner": "PM",
+            "target_audience": "Sponsors",
+            "escalation_path_defined": True,
+            "delivery_delay_days": 0,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_communications_matrix_cadence_and_escalation(
+            sample
+        )
+        == audit_wiki_communications_matrix_cadence_and_escalation(sample)
+    )
+    assert (
+        "audit_wiki_communications_matrix_cadence_and_escalation" in mod.__all__
+    )
+

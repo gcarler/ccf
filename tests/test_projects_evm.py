@@ -5708,6 +5708,165 @@ def test_evaluate_evm_cost_schedule_index_compound_degradation_empty_and_service
     assert "evaluate_evm_cost_schedule_index_compound_degradation" in mod.__all__
 
 
+def test_evaluate_evm_undistributed_budget_and_planning_package_aging_healthy():
+    """Valida partidas UB recientes y acotadas con alcance vinculado, PP lejanos y WP con EV legítimo."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_undistributed_budget_and_planning_package_aging,
+    )
+
+    buckets = [
+        {
+            "id": "BKT-01",
+            "bucket_type": "undistributed_budget",
+            "amount": 5000.0,
+            "pmb_total": 100000.0,
+            "days_held_in_ub": 12,
+            "scope_statement_linked": True,
+            "ev_claimed": 0.0,
+        },
+        {
+            "id": "BKT-02",
+            "bucket_type": "planning_package",
+            "amount": 25000.0,
+            "pmb_total": 100000.0,
+            "days_until_scheduled_start": 60,
+            "scope_statement_linked": True,
+            "ev_claimed": 0.0,
+        },
+        {
+            "id": "BKT-03",
+            "bucket_type": "work_package",
+            "amount": 70000.0,
+            "pmb_total": 100000.0,
+            "scope_statement_linked": True,
+            "ev_claimed": 35000.0,
+        },
+    ]
+    res = evaluate_evm_undistributed_budget_and_planning_package_aging(buckets)
+    assert res["total_buckets"] == 3
+    assert res["compliant_buckets"] == 3
+    assert res["total_ub_amount"] == 5000.0
+    assert res["stale_or_unscoped_ub_ids"] == []
+    assert res["unconverted_imminent_planning_package_ids"] == []
+    assert res["illegal_ev_on_non_work_package_ids"] == []
+    assert res["pmb_governance_health"] == "healthy"
+    assert res["is_compliant"] is True
+    assert res["recommendations"] == []
+
+
+def test_evaluate_evm_undistributed_budget_and_planning_package_aging_at_risk():
+    """Detecta UB estancado/excesivo y Planning Package inminente sin convertir ('at_risk')."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_undistributed_budget_and_planning_package_aging,
+    )
+
+    buckets = [
+        {
+            "bucket_id": "BKT-10",
+            "bucket_type": "undistributed_budget",
+            "amount": 15000.0,
+            "pmb_total": 100000.0,
+            "days_held_in_ub": 45,
+            "scope_statement_linked": False,
+            "ev_claimed": 0.0,
+        },
+        {
+            "bucket_id": "BKT-11",
+            "bucket_type": "planning_package",
+            "amount": 20000.0,
+            "pmb_total": 100000.0,
+            "days_until_scheduled_start": 10,
+            "scope_statement_linked": True,
+            "ev_claimed": 0.0,
+        },
+    ]
+    res = evaluate_evm_undistributed_budget_and_planning_package_aging(buckets)
+    assert res["total_buckets"] == 2
+    assert res["compliant_buckets"] == 0
+    assert res["stale_or_unscoped_ub_ids"] == ["BKT-10"]
+    assert res["unconverted_imminent_planning_package_ids"] == ["BKT-11"]
+    assert res["illegal_ev_on_non_work_package_ids"] == []
+    assert res["pmb_governance_health"] == "at_risk"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_evaluate_evm_undistributed_budget_and_planning_package_aging_critical_illegal_ev():
+    """Detecta reclamo ilegal de Earned Value sobre UB o Planning Package ('critical')."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_undistributed_budget_and_planning_package_aging,
+    )
+
+    buckets = [
+        {
+            "id": "BKT-20",
+            "bucket_type": "undistributed_budget",
+            "amount": 4000.0,
+            "pmb_total": 100000.0,
+            "days_held_in_ub": 5,
+            "scope_statement_linked": True,
+            "ev_claimed": 1500.0,
+        },
+        {
+            "id": "BKT-21",
+            "bucket_type": "planning_package",
+            "amount": 18000.0,
+            "pmb_total": 100000.0,
+            "days_until_scheduled_start": 45,
+            "scope_statement_linked": True,
+            "ev_claimed": 3000.0,
+        },
+    ]
+    res = evaluate_evm_undistributed_budget_and_planning_package_aging(buckets)
+    assert res["total_buckets"] == 2
+    assert res["compliant_buckets"] == 0
+    assert res["illegal_ev_on_non_work_package_ids"] == ["BKT-20", "BKT-21"]
+    assert res["pmb_governance_health"] == "critical"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 1
+
+
+def test_evaluate_evm_undistributed_budget_and_planning_package_aging_empty_and_service_binding():
+    """Manejo defensivo de entradas vacías/no-secuencia y exposición en ProjectEVMService y __all__."""
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_undistributed_budget_and_planning_package_aging,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = evaluate_evm_undistributed_budget_and_planning_package_aging(payload)  # type: ignore[arg-type]
+        assert empty["total_buckets"] == 0
+        assert empty["compliant_buckets"] == 0
+        assert empty["total_ub_amount"] == 0.0
+        assert empty["pmb_governance_health"] == "healthy"
+        assert empty["is_compliant"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "id": "BKT-99",
+            "bucket_type": "undistributed_budget",
+            "amount": 2000.0,
+            "pmb_total": 50000.0,
+            "days_held_in_ub": 10,
+            "scope_statement_linked": True,
+            "ev_claimed": 0.0,
+        }
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_undistributed_budget_and_planning_package_aging(
+            sample
+        )
+        == evaluate_evm_undistributed_budget_and_planning_package_aging(sample)
+    )
+    assert (
+        "evaluate_evm_undistributed_budget_and_planning_package_aging"
+        in mod.__all__
+    )
+
+
+
 
 
 
