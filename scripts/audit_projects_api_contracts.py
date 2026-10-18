@@ -5307,6 +5307,184 @@ def summarize_projects_additional_properties_and_map_hygiene(
     }
 
 
+_HTTP_HEADER_TOKEN_RE = re.compile(r"^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$")
+_FORBIDDEN_OPENAPI_HEADER_PARAMS = frozenset({"accept", "content-type", "authorization"})
+
+
+def summarize_projects_header_parameter_and_response_header_hygiene(
+    schema: Mapping[str, Any] | None = None,
+    *,
+    path_prefix: str = "/api/v1/projects",
+) -> dict[str, Any]:
+    """Audita la higiene de parámetros in=='header' y cabeceras de respuesta en operaciones bajo path_prefix."""
+    if schema is None:
+        from backend.app import app
+
+        schema_dict: Mapping[str, Any] = app.openapi()
+    else:
+        schema_dict = schema
+
+    paths = schema_dict.get("paths", {}) if isinstance(schema_dict, Mapping) else {}
+    if not isinstance(paths, Mapping):
+        paths = {}
+
+    has_exact_prefix = any(str(p).startswith(path_prefix) for p in paths.keys())
+    if has_exact_prefix:
+        effective_prefixes: tuple[str, ...] = (path_prefix,)
+    elif path_prefix in ("/api/v1/projects", "/api/projects", "/projects"):
+        effective_prefixes = ("/api/v1/projects", "/api/projects", "/projects")
+    else:
+        effective_prefixes = (path_prefix,)
+
+    total_headers_inspected = 0
+    valid_headers_count = 0
+    forbidden_standard_header_parameter_count = 0
+    untyped_header_schema_count = 0
+    non_ascii_or_whitespace_header_name_count = 0
+    violations: list[dict[str, Any]] = []
+
+    def _audit_header_entry(
+        op_label: str,
+        raw_name: Any,
+        h_schema: Any,
+        *,
+        is_request_param: bool,
+    ) -> None:
+        nonlocal total_headers_inspected, valid_headers_count
+        nonlocal forbidden_standard_header_parameter_count, untyped_header_schema_count
+        nonlocal non_ascii_or_whitespace_header_name_count
+
+        total_headers_inspected += 1
+        name_str = str(raw_name) if raw_name is not None else ""
+        has_violation = False
+
+        if not name_str or not _HTTP_HEADER_TOKEN_RE.match(name_str):
+            non_ascii_or_whitespace_header_name_count += 1
+            has_violation = True
+            violations.append(
+                {
+                    "operation": op_label,
+                    "header_name": name_str,
+                    "reason": "non_ascii_or_whitespace_header_name",
+                }
+            )
+
+        if (
+            is_request_param
+            and name_str.strip().lower() in _FORBIDDEN_OPENAPI_HEADER_PARAMS
+        ):
+            forbidden_standard_header_parameter_count += 1
+            has_violation = True
+            violations.append(
+                {
+                    "operation": op_label,
+                    "header_name": name_str,
+                    "reason": "forbidden_standard_header_parameter",
+                }
+            )
+
+        has_valid_schema = isinstance(h_schema, Mapping) and any(
+            k in h_schema for k in ("type", "$ref", "anyOf", "oneOf", "allOf")
+        )
+        if not has_valid_schema:
+            untyped_header_schema_count += 1
+            has_violation = True
+            violations.append(
+                {
+                    "operation": op_label,
+                    "header_name": name_str,
+                    "reason": "untyped_header_schema",
+                }
+            )
+
+        if not has_violation:
+            valid_headers_count += 1
+
+    for path in sorted(paths.keys()):
+        path_str = str(path)
+        if not path_str.startswith(effective_prefixes):
+            continue
+        path_item = paths[path]
+        if not isinstance(path_item, Mapping):
+            continue
+
+        path_params = (
+            path_item.get("parameters")
+            if isinstance(path_item.get("parameters"), list)
+            else []
+        )
+
+        for method in ("get", "post", "put", "patch", "delete", "head", "options", "trace"):
+            op_spec = path_item.get(method)
+            if not isinstance(op_spec, Mapping):
+                continue
+
+            op_label = f"{method.upper()} {path_str}"
+            op_params = (
+                op_spec.get("parameters")
+                if isinstance(op_spec.get("parameters"), list)
+                else []
+            )
+
+            for param in (*path_params, *op_params):
+                if not isinstance(param, Mapping):
+                    continue
+                if str(param.get("in") or "").lower() != "header":
+                    continue
+                _audit_header_entry(
+                    op_label,
+                    param.get("name"),
+                    param.get("schema"),
+                    is_request_param=True,
+                )
+
+            responses = op_spec.get("responses")
+            if isinstance(responses, Mapping):
+                for status_code in sorted(responses.keys()):
+                    resp_obj = responses[status_code]
+                    if not isinstance(resp_obj, Mapping):
+                        continue
+                    resp_headers = resp_obj.get("headers")
+                    if not isinstance(resp_headers, Mapping):
+                        continue
+                    for h_name in sorted(resp_headers.keys()):
+                        h_obj = resp_headers[h_name]
+                        h_schema = (
+                            h_obj.get("schema")
+                            if isinstance(h_obj, Mapping)
+                            else None
+                        )
+                        _audit_header_entry(
+                            f"{op_label}:{status_code}",
+                            h_name,
+                            h_schema,
+                            is_request_param=False,
+                        )
+
+    hygiene_score = (
+        100.0
+        if total_headers_inspected == 0
+        else round((valid_headers_count / total_headers_inspected) * 100.0, 2)
+    )
+    is_compliant = (
+        forbidden_standard_header_parameter_count == 0
+        and untyped_header_schema_count == 0
+        and non_ascii_or_whitespace_header_name_count == 0
+    )
+
+    return {
+        "path_prefix": path_prefix,
+        "total_headers_inspected": total_headers_inspected,
+        "valid_headers_count": valid_headers_count,
+        "forbidden_standard_header_parameter_count": forbidden_standard_header_parameter_count,
+        "untyped_header_schema_count": untyped_header_schema_count,
+        "non_ascii_or_whitespace_header_name_count": non_ascii_or_whitespace_header_name_count,
+        "violations": violations,
+        "hygiene_score": hygiene_score,
+        "is_compliant": is_compliant,
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()

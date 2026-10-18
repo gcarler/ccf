@@ -6650,3 +6650,147 @@ def test_additional_properties_and_map_hygiene_real_openapi():
     assert res["is_compliant"] is True
 
 
+def test_header_parameter_and_response_header_hygiene_clean_schema():
+    """Verifica que cabeceras personalizadas válidas con schema tipado pasen la auditoría."""
+    schema = {
+        "paths": {
+            "/api/v1/projects/sync": {
+                "post": {
+                    "parameters": [
+                        {
+                            "name": "X-Request-ID",
+                            "in": "header",
+                            "schema": {"type": "string", "format": "uuid"},
+                        },
+                        {
+                            "name": "Idempotency-Key",
+                            "in": "header",
+                            "schema": {"type": "string"},
+                        },
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "OK",
+                            "headers": {
+                                "X-RateLimit-Remaining": {
+                                    "schema": {"type": "integer"},
+                                }
+                            },
+                        }
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_header_parameter_and_response_header_hygiene(
+        schema, path_prefix="/api/v1/projects"
+    )
+    assert res["path_prefix"] == "/api/v1/projects"
+    assert res["total_headers_inspected"] == 3
+    assert res["valid_headers_count"] == 3
+    assert res["forbidden_standard_header_parameter_count"] == 0
+    assert res["untyped_header_schema_count"] == 0
+    assert res["non_ascii_or_whitespace_header_name_count"] == 0
+    assert res["violations"] == []
+    assert res["hygiene_score"] == 100.0
+    assert res["is_compliant"] is True
+
+
+def test_header_parameter_and_response_header_hygiene_detects_forbidden_standard_headers():
+    """Detecta redeclaración prohibida de Accept, Content-Type o Authorization como header parameters."""
+    schema = {
+        "paths": {
+            "/api/v1/projects/items": {
+                "get": {
+                    "parameters": [
+                        {
+                            "name": "Authorization",
+                            "in": "header",
+                            "schema": {"type": "string"},
+                        },
+                        {
+                            "name": "content-type",
+                            "in": "header",
+                            "schema": {"type": "string"},
+                        },
+                        {
+                            "name": "Accept",
+                            "in": "header",
+                            "schema": {"type": "string"},
+                        },
+                    ],
+                    "responses": {"200": {"description": "OK"}},
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_header_parameter_and_response_header_hygiene(
+        schema, path_prefix="/api/v1/projects"
+    )
+    assert res["total_headers_inspected"] == 3
+    assert res["valid_headers_count"] == 0
+    assert res["forbidden_standard_header_parameter_count"] == 3
+    assert res["hygiene_score"] == 0.0
+    assert res["is_compliant"] is False
+    assert [v["reason"] for v in res["violations"]] == [
+        "forbidden_standard_header_parameter",
+        "forbidden_standard_header_parameter",
+        "forbidden_standard_header_parameter",
+    ]
+
+
+def test_header_parameter_and_response_header_hygiene_detects_untyped_and_invalid_names():
+    """Detecta cabeceras sin schema tipado o con nombres con espacios/no-ASCII."""
+    schema = {
+        "paths": {
+            "/api/v1/projects/export": {
+                "get": {
+                    "parameters": [
+                        {
+                            "name": "X Correlation ID",
+                            "in": "header",
+                            "schema": {"type": "string"},
+                        },
+                        {
+                            "name": "X-Untyped-Header",
+                            "in": "header",
+                            "schema": {},
+                        },
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "OK",
+                            "headers": {
+                                "X-Año-Fiscal": {
+                                    "schema": {"type": "integer"},
+                                },
+                                "X-Missing-Schema": {},
+                            },
+                        }
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_header_parameter_and_response_header_hygiene(
+        schema, path_prefix="/api/v1/projects"
+    )
+    assert res["total_headers_inspected"] == 4
+    assert res["valid_headers_count"] == 0
+    assert res["untyped_header_schema_count"] == 2
+    assert res["non_ascii_or_whitespace_header_name_count"] == 2
+    assert res["hygiene_score"] == 0.0
+    assert res["is_compliant"] is False
+
+
+def test_header_parameter_and_response_header_hygiene_real_openapi():
+    """Verifica que el schema OpenAPI real de FastAPI cumpla la higiene de cabeceras."""
+    res = audit_projects_api_contracts.summarize_projects_header_parameter_and_response_header_hygiene()
+    assert res["forbidden_standard_header_parameter_count"] == 0
+    assert res["untyped_header_schema_count"] == 0
+    assert res["non_ascii_or_whitespace_header_name_count"] == 0
+    assert res["violations"] == []
+    assert res["hygiene_score"] == 100.0
+    assert res["is_compliant"] is True
+
+
