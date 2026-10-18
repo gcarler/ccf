@@ -3543,3 +3543,127 @@ def test_audit_configuration_items_baseline_integrity_v2_empty_or_none():
             "unverified_checksum_ci_ids": [],
             "is_integrity_verified": False,
         }
+
+
+def test_evaluate_quality_capa_root_cause_effectiveness_healthy():
+    """CAPAs con método RCA válido, verificación aprobada y 0 recurrencias pasan is_capa_system_healthy=True."""
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        evaluate_quality_capa_root_cause_effectiveness,
+    )
+
+    records = [
+        {
+            "capa_id": "CAPA-01",
+            "root_cause_method": "5_Whys",
+            "verification_passed": True,
+            "recurrence_count": 0,
+            "status": "closed",
+        },
+        {
+            "capa_id": "CAPA-02",
+            "root_cause_method": "ishikawa",
+            "verification_passed": True,
+            "recurrence_count": 0,
+            "status": "verified",
+        },
+    ]
+    res = evaluate_quality_capa_root_cause_effectiveness(records)
+    assert res == {
+        "total_capas": 2,
+        "missing_rca_method_capa_ids": [],
+        "unverified_closure_capa_ids": [],
+        "recurring_defect_capa_ids": [],
+        "effectiveness_rate_pct": 100.0,
+        "is_capa_system_healthy": True,
+    }
+    assert (
+        ProjectCCBService.evaluate_quality_capa_root_cause_effectiveness(records)
+        == res
+    )
+
+
+def test_evaluate_quality_capa_root_cause_effectiveness_missing_rca_and_unverified_closure():
+    """Detecta método RCA no canónico y cierre sin verificación."""
+    from backend.services.project_ccb_service import (
+        evaluate_quality_capa_root_cause_effectiveness,
+    )
+
+    res = evaluate_quality_capa_root_cause_effectiveness(
+        [
+            {
+                "capa_id": "CAPA-NO-RCA",
+                "root_cause_method": "guesswork",
+                "verification_passed": True,
+                "recurrence_count": 0,
+                "status": "closed",
+            },
+            {
+                "capa_id": "CAPA-UNVERIF",
+                "root_cause_method": "fmea",
+                "verification_passed": False,
+                "recurrence_count": 0,
+                "status": "Closed",
+            },
+        ]
+    )
+    assert res == {
+        "total_capas": 2,
+        "missing_rca_method_capa_ids": ["CAPA-NO-RCA"],
+        "unverified_closure_capa_ids": ["CAPA-UNVERIF"],
+        "recurring_defect_capa_ids": [],
+        "effectiveness_rate_pct": 0.0,
+        "is_capa_system_healthy": False,
+    }
+
+
+def test_evaluate_quality_capa_root_cause_effectiveness_recurring_defects():
+    """Detecta CAPAs con recurrencia posterior (recurrence_count > 0)."""
+    from backend.services.project_ccb_service import (
+        evaluate_quality_capa_root_cause_effectiveness,
+    )
+
+    res = evaluate_quality_capa_root_cause_effectiveness(
+        [
+            {
+                "capa_id": "CAPA-OK",
+                "root_cause_method": "fault_tree",
+                "verification_passed": True,
+                "recurrence_count": 0,
+                "status": "effective",
+            },
+            {
+                "capa_id": "CAPA-REC",
+                "root_cause_method": "pareto",
+                "verification_passed": True,
+                "recurrence_count": 2,
+                "status": "closed",
+            },
+        ]
+    )
+    assert res == {
+        "total_capas": 2,
+        "missing_rca_method_capa_ids": [],
+        "unverified_closure_capa_ids": [],
+        "recurring_defect_capa_ids": ["CAPA-REC"],
+        "effectiveness_rate_pct": 50.0,
+        "is_capa_system_healthy": False,
+    }
+
+
+def test_evaluate_quality_capa_root_cause_effectiveness_empty_or_invalid():
+    """Entradas vacías, None o no-secuencia devuelven total_capas=0 e is_capa_system_healthy=False."""
+    from backend.services.project_ccb_service import (
+        evaluate_quality_capa_root_cause_effectiveness,
+    )
+
+    for payload in (None, [], "invalid", {"capa_id": "C1"}, [{"capa_id": "  "}]):
+        assert evaluate_quality_capa_root_cause_effectiveness(payload) == {  # type: ignore[arg-type]
+            "total_capas": 0,
+            "missing_rca_method_capa_ids": [],
+            "unverified_closure_capa_ids": [],
+            "recurring_defect_capa_ids": [],
+            "effectiveness_rate_pct": 0.0,
+            "is_capa_system_healthy": False,
+        }
+

@@ -2808,6 +2808,7 @@ __all__ = [
     "evaluate_deliverable_acceptance_traceability",
     "evaluate_cost_of_quality_conformance_balance",
     "evaluate_spc_control_chart_stability",
+    "evaluate_quality_capa_root_cause_effectiveness",
     "ProjectCCBService",
 ]
 
@@ -2875,3 +2876,80 @@ def audit_configuration_items_baseline_integrity(
         "unverified_checksum_ci_ids": unverified_checksum_ci_ids,
         "is_integrity_verified": is_integrity_verified,
     }
+
+
+def evaluate_quality_capa_root_cause_effectiveness(
+    capa_records: Sequence[Mapping[str, Any]] | None,
+) -> dict[str, Any]:
+    """Evalúa la efectividad de acciones correctivas y preventivas (CAPA) mediante análisis de causa raíz (RCA), verificación de cierre y no recurrencia según PMI PMBOK §8.2 y §8.3."""
+    if (
+        capa_records is None
+        or isinstance(capa_records, (str, bytes, Mapping))
+        or not isinstance(capa_records, Sequence)
+    ):
+        items: Sequence[Any] = []
+    else:
+        items = capa_records
+
+    valid_rca_methods = {"5_whys", "ishikawa", "fmea", "fault_tree", "pareto"}
+    total_capas = 0
+    effective_count = 0
+    missing_rca_method_capa_ids: list[str] = []
+    unverified_closure_capa_ids: list[str] = []
+    recurring_defect_capa_ids: list[str] = []
+
+    for item in items:
+        if not isinstance(item, Mapping):
+            continue
+        capa_id = str(item.get("capa_id") or "").strip()
+        if not capa_id:
+            continue
+
+        total_capas += 1
+        root_cause_method = str(item.get("root_cause_method") or "").strip().lower()
+        verification_passed = bool(item.get("verification_passed", False))
+        try:
+            recurrence_count = max(0, int(item.get("recurrence_count", 0) or 0))
+        except (TypeError, ValueError):
+            recurrence_count = 0
+        status = str(item.get("status") or "").strip().lower()
+
+        has_valid_rca = root_cause_method in valid_rca_methods
+        if not has_valid_rca:
+            missing_rca_method_capa_ids.append(capa_id)
+
+        if status in {"closed", "verified", "effective"} and not verification_passed:
+            unverified_closure_capa_ids.append(capa_id)
+
+        if recurrence_count > 0:
+            recurring_defect_capa_ids.append(capa_id)
+
+        if has_valid_rca and verification_passed and recurrence_count == 0:
+            effective_count += 1
+
+    effectiveness_rate_pct = (
+        round((effective_count / total_capas) * 100.0, 2)
+        if total_capas > 0
+        else 0.0
+    )
+    is_capa_system_healthy = bool(
+        total_capas > 0
+        and not missing_rca_method_capa_ids
+        and not unverified_closure_capa_ids
+        and not recurring_defect_capa_ids
+    )
+
+    return {
+        "total_capas": total_capas,
+        "missing_rca_method_capa_ids": missing_rca_method_capa_ids,
+        "unverified_closure_capa_ids": unverified_closure_capa_ids,
+        "recurring_defect_capa_ids": recurring_defect_capa_ids,
+        "effectiveness_rate_pct": effectiveness_rate_pct,
+        "is_capa_system_healthy": is_capa_system_healthy,
+    }
+
+
+ProjectCCBService.evaluate_quality_capa_root_cause_effectiveness = staticmethod(
+    evaluate_quality_capa_root_cause_effectiveness
+)
+

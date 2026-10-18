@@ -3013,6 +3013,81 @@ ProjectLifecyclePMIService.audit_charter_assumption_log_validity = staticmethod(
 )
 
 
+def audit_project_closure_handover_and_release_readiness(
+    closure_package: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Audita la preparación de cierre administrativo, cierre de adquisiciones, transferencia operativa y liberación de recursos según PMI PMBOK §4.7 y §12.3."""
+    pkg: Mapping[str, Any] = (
+        closure_package if isinstance(closure_package, Mapping) else {}
+    )
+
+    try:
+        open_claims_count = max(0, int(pkg.get("open_claims_count", 0) or 0))
+    except (TypeError, ValueError):
+        open_claims_count = 0
+
+    try:
+        unreleased_retention_amount = round(
+            max(0.0, float(pkg.get("unreleased_retention_amount", 0.0) or 0.0)),
+            2,
+        )
+    except (TypeError, ValueError):
+        unreleased_retention_amount = 0.0
+
+    final_acceptance_signed = bool(pkg.get("final_acceptance_signed", False))
+    operations_handover_accepted = bool(
+        pkg.get("operations_handover_accepted", False)
+    )
+
+    try:
+        resources_released_pct = round(
+            max(
+                0.0,
+                min(
+                    100.0,
+                    float(pkg.get("resources_released_pct", 0.0) or 0.0),
+                ),
+            ),
+            2,
+        )
+    except (TypeError, ValueError):
+        resources_released_pct = 0.0
+
+    final_report_archived = bool(pkg.get("final_report_archived", False))
+
+    blocking_gates: list[str] = []
+    if not final_acceptance_signed:
+        blocking_gates.append("missing_final_acceptance_signoff")
+    if open_claims_count > 0:
+        blocking_gates.append("unresolved_procurement_claims")
+    if unreleased_retention_amount > 0.0:
+        blocking_gates.append("unreleased_financial_retention")
+    if not operations_handover_accepted:
+        blocking_gates.append("pending_operations_handover")
+    if resources_released_pct < 100.0:
+        blocking_gates.append("incomplete_team_resource_release")
+    if not final_report_archived:
+        blocking_gates.append("unarchived_final_project_report")
+
+    completed_criteria = 6 - len(blocking_gates)
+    closure_readiness_pct = round((completed_criteria / 6.0) * 100.0, 2)
+    is_ready_for_administrative_closure = bool(len(blocking_gates) == 0)
+
+    return {
+        "open_claims_count": open_claims_count,
+        "unreleased_retention_amount": unreleased_retention_amount,
+        "resources_released_pct": resources_released_pct,
+        "blocking_gates": blocking_gates,
+        "closure_readiness_pct": closure_readiness_pct,
+        "is_ready_for_administrative_closure": is_ready_for_administrative_closure,
+    }
+
+
+ProjectLifecyclePMIService.audit_project_closure_handover_and_release_readiness = staticmethod(
+    audit_project_closure_handover_and_release_readiness
+)
+
+
 __all__ = [
     "build_pmo_portfolio_matrix",
     "build_governance_summary",
@@ -3054,6 +3129,8 @@ __all__ = [
     "audit_stakeholder_escalation_matrix_readiness",
     "audit_team_calendar_burnout_contention",
     "audit_charter_assumption_log_validity",
+    "audit_project_closure_handover_and_release_readiness",
     "ProjectLifecyclePMIService",
 ]
+
 

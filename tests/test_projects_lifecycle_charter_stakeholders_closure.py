@@ -3213,3 +3213,117 @@ def test_audit_charter_assumption_log_validity_empty_or_none():
             "is_valid": False,
         }
 
+
+def test_audit_project_closure_handover_and_release_readiness_all_gates_passed():
+    """Paquete de cierre completo con los 6 criterios cumplidos retorna 100% e is_ready_for_administrative_closure=True."""
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_project_closure_handover_and_release_readiness,
+    )
+
+    pkg = {
+        "final_acceptance_signed": True,
+        "open_claims_count": 0,
+        "unreleased_retention_amount": 0.0,
+        "operations_handover_accepted": True,
+        "resources_released_pct": 100.0,
+        "final_report_archived": True,
+    }
+    res = audit_project_closure_handover_and_release_readiness(pkg)
+    assert res == {
+        "open_claims_count": 0,
+        "unreleased_retention_amount": 0.0,
+        "resources_released_pct": 100.0,
+        "blocking_gates": [],
+        "closure_readiness_pct": 100.0,
+        "is_ready_for_administrative_closure": True,
+    }
+    assert (
+        ProjectLifecyclePMIService.audit_project_closure_handover_and_release_readiness(
+            pkg
+        )
+        == res
+    )
+
+
+def test_audit_project_closure_handover_and_release_readiness_procurement_blockers():
+    """Detecta reclamos abiertos y retención financiera pendiente de liberación."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_closure_handover_and_release_readiness,
+    )
+
+    res = audit_project_closure_handover_and_release_readiness(
+        {
+            "final_acceptance_signed": True,
+            "open_claims_count": 2,
+            "unreleased_retention_amount": 15000.5,
+            "operations_handover_accepted": True,
+            "resources_released_pct": 100.0,
+            "final_report_archived": True,
+        }
+    )
+    assert res == {
+        "open_claims_count": 2,
+        "unreleased_retention_amount": 15000.5,
+        "resources_released_pct": 100.0,
+        "blocking_gates": [
+            "unresolved_procurement_claims",
+            "unreleased_financial_retention",
+        ],
+        "closure_readiness_pct": 66.67,
+        "is_ready_for_administrative_closure": False,
+    }
+
+
+def test_audit_project_closure_handover_and_release_readiness_handover_and_release_blockers():
+    """Detecta falta de transferencia a operaciones, liberación parcial de equipo y reporte final sin archivar."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_closure_handover_and_release_readiness,
+    )
+
+    res = audit_project_closure_handover_and_release_readiness(
+        {
+            "final_acceptance_signed": True,
+            "open_claims_count": 0,
+            "unreleased_retention_amount": 0.0,
+            "operations_handover_accepted": False,
+            "resources_released_pct": 75.0,
+            "final_report_archived": False,
+        }
+    )
+    assert res == {
+        "open_claims_count": 0,
+        "unreleased_retention_amount": 0.0,
+        "resources_released_pct": 75.0,
+        "blocking_gates": [
+            "pending_operations_handover",
+            "incomplete_team_resource_release",
+            "unarchived_final_project_report",
+        ],
+        "closure_readiness_pct": 50.0,
+        "is_ready_for_administrative_closure": False,
+    }
+
+
+def test_audit_project_closure_handover_and_release_readiness_empty_or_none():
+    """Diccionario vacío o None activa las 4 compuertas booleanas/porcentuales faltantes."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_closure_handover_and_release_readiness,
+    )
+
+    for payload in (None, {}, "invalid"):
+        assert audit_project_closure_handover_and_release_readiness(payload) == {  # type: ignore[arg-type]
+            "open_claims_count": 0,
+            "unreleased_retention_amount": 0.0,
+            "resources_released_pct": 0.0,
+            "blocking_gates": [
+                "missing_final_acceptance_signoff",
+                "pending_operations_handover",
+                "incomplete_team_resource_release",
+                "unarchived_final_project_report",
+            ],
+            "closure_readiness_pct": 33.33,
+            "is_ready_for_administrative_closure": False,
+        }
+
+
