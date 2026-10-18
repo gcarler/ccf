@@ -5471,6 +5471,7 @@ ProjectEVMService.evaluate_evm_vac_rebaseline_threshold = staticmethod(
 
 __all__ = [
     "audit_work_package_evmt_governance",
+    "evaluate_evm_to_complete_schedule_performance_index_tspi",
     "evaluate_tcpi_recovery_feasibility",
     "evaluate_funding_limit_periods_reconciliation",
     "evaluate_earned_schedule_performance",
@@ -6614,3 +6615,84 @@ ProjectEVMService.evaluate_evm_rolling_wave_planning_package_freeze_horizon = st
     evaluate_evm_rolling_wave_planning_package_freeze_horizon
 )
 
+
+
+def evaluate_evm_to_complete_schedule_performance_index_tspi(
+    planned_duration_days: float,
+    earned_schedule_days: float,
+    actual_time_days: float,
+    estimated_duration_days: float = 0.0,
+    *,
+    max_achievable_tspi: float = 1.10,
+) -> dict:
+    """Evalúa TSPI de Earned Schedule y factibilidad de recuperación (Practice Standard for EVM).
+
+    Validaciones (ValueError): planned_duration_days > 0, earned_schedule_days >= 0,
+    actual_time_days >= 0, estimated_duration_days >= 0, max_achievable_tspi >= 1.0.
+    - remaining_earned_schedule_days = max(0, planned - earned).
+    - remaining_planned_time_days = max(0, planned - actual).
+    - tspi_pd: 0.0 si no queda earned schedule por consumir; si queda tiempo
+      planeado, round(remaining_es / remaining_pt, 4); None si el plazo
+      original se agotó con trabajo pendiente.
+    - tspi_ed: solo si estimated_duration_days > 0 y > actual_time_days;
+      round(remaining_es / (estimated - actual), 4); None en otro caso.
+    - schedule_recovery_feasibility: 'ACHIEVABLE' (tspi_pd <= 1.0),
+      'CHALLENGING' (1.0 < tspi_pd <= max_achievable_tspi),
+      'UNACHIEVABLE' (tspi_pd None o > max).
+    - requires_schedule_rebaseline = (feasibility == 'UNACHIEVABLE').
+    """
+    planned = float(planned_duration_days)
+    earned = float(earned_schedule_days)
+    actual = float(actual_time_days)
+    estimated = float(estimated_duration_days)
+    max_tspi = float(max_achievable_tspi)
+
+    if planned <= 0:
+        raise ValueError("planned_duration_days debe ser > 0")
+    if earned < 0:
+        raise ValueError("earned_schedule_days debe ser >= 0")
+    if actual < 0:
+        raise ValueError("actual_time_days debe ser >= 0")
+    if estimated < 0:
+        raise ValueError("estimated_duration_days debe ser >= 0")
+    if max_tspi < 1.0:
+        raise ValueError("max_achievable_tspi debe ser >= 1.0")
+
+    remaining_earned_schedule_days = round(max(0.0, planned - earned), 2)
+    remaining_planned_time_days = round(max(0.0, planned - actual), 2)
+
+    if remaining_earned_schedule_days == 0.0:
+        tspi_pd: float | None = 0.0
+    elif remaining_planned_time_days > 0.0:
+        tspi_pd = round(remaining_earned_schedule_days / remaining_planned_time_days, 4)
+    else:
+        # Plazo original agotado con trabajo pendiente.
+        tspi_pd = None
+
+    if estimated > 0 and estimated > actual:
+        tspi_ed: float | None = round(remaining_earned_schedule_days / (estimated - actual), 4)
+    else:
+        tspi_ed = None
+
+    if tspi_pd is None or tspi_pd > max_tspi:
+        schedule_recovery_feasibility = "UNACHIEVABLE"
+    elif tspi_pd <= 1.0:
+        schedule_recovery_feasibility = "ACHIEVABLE"
+    else:
+        schedule_recovery_feasibility = "CHALLENGING"
+
+    requires_schedule_rebaseline = schedule_recovery_feasibility == "UNACHIEVABLE"
+
+    return {
+        "tspi_pd": tspi_pd,
+        "tspi_ed": tspi_ed,
+        "remaining_earned_schedule_days": remaining_earned_schedule_days,
+        "remaining_planned_time_days": remaining_planned_time_days,
+        "schedule_recovery_feasibility": schedule_recovery_feasibility,
+        "requires_schedule_rebaseline": requires_schedule_rebaseline,
+    }
+
+
+ProjectEVMService.evaluate_evm_to_complete_schedule_performance_index_tspi = staticmethod(
+    evaluate_evm_to_complete_schedule_performance_index_tspi
+)

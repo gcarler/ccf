@@ -5069,3 +5069,139 @@ def test_audit_steering_committee_quorum_and_decision_governance_thresholds_and_
         == audit_steering_committee_quorum_and_decision_governance(sample)
     )
     assert "audit_steering_committee_quorum_and_decision_governance" in mod.__all__
+
+
+def test_audit_portfolio_strategic_alignment_and_benefits_drift_healthy():
+    """Verifica estado HEALTHY cuando todos los objetivos tienen entregables, gobernanza y realización de beneficios en rango."""
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_portfolio_strategic_alignment_and_benefits_drift,
+    )
+
+    objectives = [
+        {
+            "objective_id": "OBJ-DIG-01",
+            "strategic_weight_pct": 60.0,
+            "linked_deliverables_count": 3,
+            "target_benefit_value": 100000.0,
+            "realized_or_projected_benefit_value": 95000.0,
+            "benefit_owner_assigned": True,
+            "measurement_kpi_defined": True,
+        },
+        {
+            "objective_id": "OBJ-EFF-02",
+            "strategic_weight_pct": 40.0,
+            "linked_deliverables_count": 2,
+            "target_benefit_value": 50000.0,
+            "realized_or_projected_benefit_value": 48000.0,
+            "benefit_owner_assigned": True,
+            "measurement_kpi_defined": True,
+        },
+    ]
+    res = audit_portfolio_strategic_alignment_and_benefits_drift(
+        objectives,
+        min_strategic_weight_coverage_pct=80.0,
+        max_benefit_shortfall_pct=15.0,
+    )
+    assert res == {
+        "total_objectives": 2,
+        "compliant_objectives_count": 2,
+        "unlinked_objectives_count": 0,
+        "missing_governance_objectives_count": 0,
+        "benefit_shortfall_objectives_count": 0,
+        "covered_strategic_weight_pct": 100.0,
+        "strategic_alignment_status": "HEALTHY",
+        "findings": [],
+    }
+    assert (
+        ProjectLifecyclePMIService.audit_portfolio_strategic_alignment_and_benefits_drift(
+            objectives
+        )
+        == res
+    )
+
+
+def test_audit_portfolio_strategic_alignment_and_benefits_drift_at_risk():
+    """Verifica estado AT_RISK cuando falta dueño/KPI o existe un objetivo menor sin entregables pero cobertura >= 80%."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_portfolio_strategic_alignment_and_benefits_drift,
+    )
+
+    res = audit_portfolio_strategic_alignment_and_benefits_drift(
+        [
+            {
+                "objective_id": "OBJ-MAIN",
+                "strategic_weight_pct": 85.0,
+                "linked_deliverables_count": 4,
+                "target_benefit_value": 100000.0,
+                "realized_or_projected_benefit_value": 92000.0,
+                "benefit_owner_assigned": True,
+                "measurement_kpi_defined": False,
+            },
+            {
+                "objective_id": "OBJ-MINOR",
+                "strategic_weight_pct": 15.0,
+                "linked_deliverables_count": 0,
+                "target_benefit_value": 20000.0,
+                "realized_or_projected_benefit_value": 20000.0,
+                "benefit_owner_assigned": True,
+                "measurement_kpi_defined": True,
+            },
+        ],
+        min_strategic_weight_coverage_pct=80.0,
+        max_benefit_shortfall_pct=15.0,
+    )
+    assert res["unlinked_objectives_count"] == 1
+    assert res["missing_governance_objectives_count"] == 1
+    assert res["benefit_shortfall_objectives_count"] == 0
+    assert res["covered_strategic_weight_pct"] == 85.0
+    assert res["strategic_alignment_status"] == "AT_RISK"
+    assert len(res["findings"]) == 2
+
+
+def test_audit_portfolio_strategic_alignment_and_benefits_drift_critical():
+    """Verifica estado CRITICAL cuando existe déficit de beneficios sobre tolerancia o cobertura estratégica insuficiente."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_portfolio_strategic_alignment_and_benefits_drift,
+    )
+
+    res = audit_portfolio_strategic_alignment_and_benefits_drift(
+        [
+            {
+                "objective_id": "OBJ-SHORTFALL",
+                "strategic_weight_pct": 90.0,
+                "linked_deliverables_count": 2,
+                "target_benefit_value": 100000.0,
+                "realized_or_projected_benefit_value": 70000.0,
+                "benefit_owner_assigned": True,
+                "measurement_kpi_defined": True,
+            }
+        ],
+        min_strategic_weight_coverage_pct=80.0,
+        max_benefit_shortfall_pct=15.0,
+    )
+    assert res["benefit_shortfall_objectives_count"] == 1
+    assert res["strategic_alignment_status"] == "CRITICAL"
+    assert res["findings"][0]["benefit_shortfall_pct"] == 30.0
+
+
+def test_audit_portfolio_strategic_alignment_and_benefits_drift_empty_and_export():
+    """Verifica manejo de entradas vacías o no secuencia y exportación en __all__."""
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_portfolio_strategic_alignment_and_benefits_drift,
+    )
+
+    assert "audit_portfolio_strategic_alignment_and_benefits_drift" in mod.__all__
+    for bad in ([], None, "invalid"):
+        assert audit_portfolio_strategic_alignment_and_benefits_drift(bad) == {
+            "total_objectives": 0,
+            "compliant_objectives_count": 0,
+            "unlinked_objectives_count": 0,
+            "missing_governance_objectives_count": 0,
+            "benefit_shortfall_objectives_count": 0,
+            "covered_strategic_weight_pct": 100.0,
+            "strategic_alignment_status": "HEALTHY",
+            "findings": [],
+        }
+

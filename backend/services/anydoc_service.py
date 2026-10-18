@@ -3011,6 +3011,7 @@ __all__ = [
     "audit_markdown_task_list_action_item_hygiene",
     "audit_markdown_mermaid_diagram_syntax_and_complexity",
     "audit_markdown_footnote_reference_coherence",
+    "audit_markdown_definition_list_and_spec_hygiene",
     "AnyDocService",
     "AnydocService",
 ]
@@ -4689,4 +4690,126 @@ def audit_markdown_footnote_reference_coherence(
 AnyDocService.audit_markdown_footnote_reference_coherence = staticmethod(
     audit_markdown_footnote_reference_coherence
 )
+
+
+_DEF_LIST_COLON_RE = re.compile(r"^\s*:\s+(.*)$")
+_NON_TERM_LINE_RE = re.compile(
+    r"^\s*(?:#|\||>|[-*+]\s|\d+\.\s|(?:-{3,}|\*{3,}|_{3,})\s*$)"
+)
+
+
+def audit_markdown_definition_list_and_spec_hygiene(
+    markdown_text: str | None,
+    *,
+    min_definition_chars: int = 10,
+) -> dict[str, Any]:
+    """PMBOK §4.4 / §10.2 — higiene de listas de definiciones y especificaciones clave-valor en Markdown."""
+    if not isinstance(markdown_text, str) or not markdown_text.strip():
+        return {
+            "total_terms_count": 0,
+            "total_definitions_count": 0,
+            "orphan_definitions": [],
+            "underspecified_definitions": [],
+            "duplicate_terms": [],
+            "is_definition_list_hygiene_clean": True,
+        }
+
+    try:
+        min_chars = int(min_definition_chars)
+    except (TypeError, ValueError):
+        min_chars = 10
+
+    fence_re = re.compile(r"^\s*(`{3,}|~{3,})")
+    in_fence = False
+    fence_marker = ""
+
+    placeholders = {"todo", "tbd", "n/a", "...", "pendiente", "-", "tba"}
+
+    total_terms_count = 0
+    total_definitions_count = 0
+    orphan_definitions: list[int] = []
+    underspecified_definitions: list[str] = []
+    duplicate_terms: list[str] = []
+
+    seen_terms: set[str] = set()
+    candidate_term: str | None = None
+    active_term: str | None = None
+
+    for idx, raw_line in enumerate(markdown_text.splitlines(), start=1):
+        m_fence = fence_re.match(raw_line)
+        if m_fence:
+            marker_char = m_fence.group(1)[0]
+            if not in_fence:
+                in_fence = True
+                fence_marker = marker_char
+            elif marker_char == fence_marker:
+                in_fence = False
+                fence_marker = ""
+            candidate_term = None
+            active_term = None
+            continue
+
+        if in_fence:
+            continue
+
+        stripped = raw_line.strip()
+        if not stripped:
+            candidate_term = None
+            active_term = None
+            continue
+
+        m_def = _DEF_LIST_COLON_RE.match(raw_line)
+        if m_def:
+            total_definitions_count += 1
+            def_body = m_def.group(1).strip()
+
+            if active_term is None and candidate_term is not None:
+                active_term = candidate_term
+                candidate_term = None
+                total_terms_count += 1
+                norm_term = active_term.lower()
+                if norm_term in seen_terms:
+                    if norm_term not in duplicate_terms:
+                        duplicate_terms.append(norm_term)
+                else:
+                    seen_terms.add(norm_term)
+
+            if active_term is None:
+                orphan_definitions.append(idx)
+                term_label = "<orphan>"
+            else:
+                term_label = active_term
+
+            if (
+                len(def_body) < min_chars
+                or def_body.lower() in placeholders
+            ):
+                if term_label not in underspecified_definitions:
+                    underspecified_definitions.append(term_label)
+            continue
+
+        active_term = None
+        if _NON_TERM_LINE_RE.match(raw_line):
+            candidate_term = None
+        else:
+            candidate_term = stripped
+
+    return {
+        "total_terms_count": total_terms_count,
+        "total_definitions_count": total_definitions_count,
+        "orphan_definitions": orphan_definitions,
+        "underspecified_definitions": underspecified_definitions,
+        "duplicate_terms": duplicate_terms,
+        "is_definition_list_hygiene_clean": (
+            len(orphan_definitions) == 0
+            and len(underspecified_definitions) == 0
+            and len(duplicate_terms) == 0
+        ),
+    }
+
+
+AnyDocService.audit_markdown_definition_list_and_spec_hygiene = staticmethod(
+    audit_markdown_definition_list_and_spec_hygiene
+)
+
 

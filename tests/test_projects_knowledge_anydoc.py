@@ -4147,3 +4147,93 @@ def test_audit_markdown_footnote_reference_coherence_edge_cases_and_export():
             "is_footnote_hygiene_compliant": True,
         }
 
+
+def test_audit_markdown_definition_list_and_spec_hygiene_clean():
+    """Cumple cuando los términos técnicos tienen definiciones completas, sin huérfanas ni duplicados."""
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_definition_list_and_spec_hygiene,
+    )
+
+    md = (
+        "RPO (Recovery Point Objective)\n"
+        ": Máximo período tolerable de pérdida de datos ante un desastre.\n"
+        ": Sincronización continua cada 5 minutos en base de datos.\n\n"
+        "```markdown\n"
+        ": Definición huérfana ignorada dentro de bloque de código\n"
+        "```\n\n"
+        "RTO (Recovery Time Objective)\n"
+        ": Tiempo máximo de restauración del servicio tras una interrupción.\n"
+    )
+    res = audit_markdown_definition_list_and_spec_hygiene(md, min_definition_chars=10)
+    assert res == {
+        "total_terms_count": 2,
+        "total_definitions_count": 3,
+        "orphan_definitions": [],
+        "underspecified_definitions": [],
+        "duplicate_terms": [],
+        "is_definition_list_hygiene_clean": True,
+    }
+    assert AnyDocService.audit_markdown_definition_list_and_spec_hygiene(md) == res
+
+
+def test_audit_markdown_definition_list_orphan_definitions():
+    """Detecta líneas de definición (: ...) sin término válido previo (inicio, tras línea en blanco o encabezado)."""
+    from backend.services.anydoc_service import (
+        audit_markdown_definition_list_and_spec_hygiene,
+    )
+
+    md = (
+        ": Definición huérfana al inicio del documento sin término.\n\n"
+        "# Sección Técnica\n"
+        ": Otra definición huérfana inmediatamente tras un encabezado.\n"
+    )
+    res = audit_markdown_definition_list_and_spec_hygiene(md)
+    assert res["total_terms_count"] == 0
+    assert res["total_definitions_count"] == 2
+    assert len(res["orphan_definitions"]) == 2
+    assert res["is_definition_list_hygiene_clean"] is False
+
+
+def test_audit_markdown_definition_list_duplicate_and_underspecified():
+    """Detecta términos redefinidos en bloques separados y definiciones vagas o con marcadores TBD/TODO."""
+    from backend.services.anydoc_service import (
+        audit_markdown_definition_list_and_spec_hygiene,
+    )
+
+    md = (
+        "SLA Disponibilidad\n"
+        ": Garantía contractual de uptime mensual de 99.95% en producción.\n\n"
+        "Latencia P99\n"
+        ": TBD\n\n"
+        "sla disponibilidad\n"
+        ": Corto\n"
+    )
+    res = audit_markdown_definition_list_and_spec_hygiene(md, min_definition_chars=10)
+    assert res["total_terms_count"] == 3
+    assert res["total_definitions_count"] == 3
+    assert res["duplicate_terms"] == ["sla disponibilidad"]
+    assert "Latencia P99" in res["underspecified_definitions"]
+    assert "sla disponibilidad" in res["underspecified_definitions"]
+    assert res["is_definition_list_hygiene_clean"] is False
+
+
+def test_audit_markdown_definition_list_edge_cases_and_export():
+    """Verifica manejo de entradas vacías o no string y exportación en __all__."""
+    import backend.services.anydoc_service as _m
+    from backend.services.anydoc_service import (
+        audit_markdown_definition_list_and_spec_hygiene,
+    )
+
+    assert "audit_markdown_definition_list_and_spec_hygiene" in _m.__all__
+    for empty_in in ("", "   \n  ", None, 42):
+        assert audit_markdown_definition_list_and_spec_hygiene(empty_in) == {
+            "total_terms_count": 0,
+            "total_definitions_count": 0,
+            "orphan_definitions": [],
+            "underspecified_definitions": [],
+            "duplicate_terms": [],
+            "is_definition_list_hygiene_clean": True,
+        }
+
+

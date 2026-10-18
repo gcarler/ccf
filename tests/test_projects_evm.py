@@ -4954,3 +4954,108 @@ def test_evaluate_evm_rolling_wave_invalid_package_and_export():
             "is_rolling_wave_horizon_compliant": True,
         }
 
+
+
+def test_evaluate_evm_tspi_achievable_and_earned_schedule_consumed():
+    """tspi_pd <= 1.0 -> ACHIEVABLE; res_es == 0 -> tspi_pd 0.0 aunque plazo agotado."""
+    import pytest
+
+    from backend.services.project_evm_service import (
+        evaluate_evm_to_complete_schedule_performance_index_tspi as fn,
+    )
+
+    res = fn(20.0, 10.0, 8.0)
+    assert res == {
+        "tspi_pd": 0.8333,
+        "tspi_ed": None,
+        "remaining_earned_schedule_days": 10.0,
+        "remaining_planned_time_days": 12.0,
+        "schedule_recovery_feasibility": "ACHIEVABLE",
+        "requires_schedule_rebaseline": False,
+    }
+
+    # Borde exacto tspi_pd == 1.0 -> ACHIEVABLE (no CHALLENGING).
+    border = fn(20.0, 10.0, 10.0)
+    assert border["tspi_pd"] == 1.0
+    assert border["schedule_recovery_feasibility"] == "ACHIEVABLE"
+
+    # Earned schedule consumido por completo -> tspi_pd = 0.0 (regla primero).
+    consumed = fn(20.0, 20.0, 25.0)
+    assert consumed["tspi_pd"] == 0.0
+    assert consumed["remaining_earned_schedule_days"] == 0.0
+    assert consumed["remaining_planned_time_days"] == 0.0
+    assert consumed["schedule_recovery_feasibility"] == "ACHIEVABLE"
+    assert consumed["requires_schedule_rebaseline"] is False
+
+
+def test_evaluate_evm_tspi_challenging_unachievable_and_tspi_ed():
+    """1.0 < tspi_pd <= max -> CHALLENGING; None o > max -> UNACHIEVABLE; tspi_ed."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_to_complete_schedule_performance_index_tspi as fn,
+    )
+
+    # 1.2 > default 1.10 -> UNACHIEVABLE con rebaseline.
+    over = fn(20.0, 8.0, 10.0)
+    assert over["tspi_pd"] == 1.2
+    assert over["schedule_recovery_feasibility"] == "UNACHIEVABLE"
+    assert over["requires_schedule_rebaseline"] is True
+
+    # max 1.30 -> 1.2 en rango CHALLENGING, sin rebaseline.
+    challenging = fn(20.0, 8.0, 10.0, max_achievable_tspi=1.30)
+    assert challenging["schedule_recovery_feasibility"] == "CHALLENGING"
+    assert challenging["requires_schedule_rebaseline"] is False
+
+    # tspi_ed con estimated > 0 y > actual: 12 / (30-10) = 0.6
+    with_estimate = fn(20.0, 8.0, 10.0, 30.0)
+    assert with_estimate["tspi_ed"] == 0.6
+
+    # estimated 0 o <= actual -> tspi_ed None.
+    assert fn(20.0, 8.0, 10.0, 0.0)["tspi_ed"] is None
+    assert fn(20.0, 8.0, 30.0, 20.0)["tspi_ed"] is None
+
+    # Plazo original agotado con trabajo pendiente -> tspi_pd None -> UNACHIEVABLE.
+    expired = fn(20.0, 10.0, 20.0)
+    assert expired["tspi_pd"] is None
+    assert expired["tspi_ed"] is None
+    assert expired["schedule_recovery_feasibility"] == "UNACHIEVABLE"
+    assert expired["requires_schedule_rebaseline"] is True
+
+
+def test_evaluate_evm_tspi_validation_valueerrors():
+    """Validaciones de dominio: ValueError en planned <= 0, negativos y max < 1.0."""
+    import pytest
+
+    from backend.services.project_evm_service import (
+        evaluate_evm_to_complete_schedule_performance_index_tspi as fn,
+    )
+
+    invalid_cases = [
+        ((0.0, 1.0, 1.0), {}),                 # planned_duration_days <= 0
+        ((20.0, -1.0, 1.0), {}),                # earned_schedule_days < 0
+        ((20.0, 1.0, -1.0), {}),                # actual_time_days < 0
+        ((20.0, 1.0, 1.0, -5.0), {}),           # estimated_duration_days < 0
+        ((20.0, 1.0, 1.0, 0.0), {"max_achievable_tspi": 0.9}),  # max < 1.0
+    ]
+    for args, kwargs in invalid_cases:
+        with pytest.raises(ValueError):
+            fn(*args, **kwargs)
+
+    # Bloque kwarg-only en max_achievable_tspi.
+    with pytest.raises(TypeError):
+        fn(20.0, 10.0, 8.0, 25.0, 1.20)  # type: ignore[misc]
+
+
+def test_evaluate_evm_tspi_proxy_staticmethod_and_all():
+    """Proxy estatico en ProjectEVMService + entrada en __all__."""
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_to_complete_schedule_performance_index_tspi as fn,
+    )
+
+    sample = (20.0, 10.0, 8.0)
+    assert (
+        ProjectEVMService.evaluate_evm_to_complete_schedule_performance_index_tspi(*sample)
+        == fn(*sample)
+    )
+    assert "evaluate_evm_to_complete_schedule_performance_index_tspi" in mod.__all__

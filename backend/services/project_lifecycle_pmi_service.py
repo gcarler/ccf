@@ -3143,6 +3143,7 @@ __all__ = [
     "audit_project_governance_tailoring_and_hybrid_justification",
     "audit_administrative_closure_financial_and_resource_release",
     "audit_steering_committee_quorum_and_decision_governance",
+    "audit_portfolio_strategic_alignment_and_benefits_drift",
     "ProjectLifecyclePMIService",
 ]
 
@@ -4413,3 +4414,136 @@ def audit_steering_committee_quorum_and_decision_governance(
 ProjectLifecyclePMIService.audit_steering_committee_quorum_and_decision_governance = staticmethod(
     audit_steering_committee_quorum_and_decision_governance
 )
+
+
+def audit_portfolio_strategic_alignment_and_benefits_drift(
+    strategic_objectives: list[dict[str, Any]],
+    *,
+    min_strategic_weight_coverage_pct: float = 80.0,
+    max_benefit_shortfall_pct: float = 15.0,
+) -> dict[str, Any]:
+    """PMBOK §1.2 / §2.4 — auditoría de alineación estratégica de portafolio y deriva de realización de beneficios."""
+    if not isinstance(strategic_objectives, Sequence) or isinstance(
+        strategic_objectives, (str, bytes)
+    ):
+        return {
+            "total_objectives": 0,
+            "compliant_objectives_count": 0,
+            "unlinked_objectives_count": 0,
+            "missing_governance_objectives_count": 0,
+            "benefit_shortfall_objectives_count": 0,
+            "covered_strategic_weight_pct": 100.0,
+            "strategic_alignment_status": "HEALTHY",
+            "findings": [],
+        }
+
+    try:
+        min_cov = float(min_strategic_weight_coverage_pct)
+    except (TypeError, ValueError):
+        min_cov = 80.0
+
+    try:
+        max_shortfall = float(max_benefit_shortfall_pct)
+    except (TypeError, ValueError):
+        max_shortfall = 15.0
+
+    total_objectives = 0
+    compliant_objectives_count = 0
+    unlinked_objectives_count = 0
+    missing_governance_objectives_count = 0
+    benefit_shortfall_objectives_count = 0
+    covered_weight_sum = 0.0
+    findings: list[dict[str, Any]] = []
+
+    for item in strategic_objectives:
+        if not isinstance(item, Mapping):
+            continue
+        raw_id = item.get("objective_id")
+        if raw_id is None:
+            continue
+        objective_id = str(raw_id).strip()
+        if not objective_id:
+            continue
+
+        total_objectives += 1
+
+        weight_pct = float(item.get("strategic_weight_pct", 0.0) or 0.0)
+        linked_count = int(item.get("linked_deliverables_count", 0) or 0)
+        target_val = float(item.get("target_benefit_value", 0.0) or 0.0)
+        realized_val = float(
+            item.get("realized_or_projected_benefit_value", 0.0) or 0.0
+        )
+        owner_assigned = bool(item.get("benefit_owner_assigned", False))
+        kpi_defined = bool(item.get("measurement_kpi_defined", False))
+
+        unlinked_objective = linked_count <= 0
+        if not unlinked_objective:
+            covered_weight_sum += weight_pct
+
+        missing_governance = (not owner_assigned) or (not kpi_defined)
+        if target_val > 0.0:
+            benefit_shortfall_pct = round(
+                ((target_val - realized_val) / target_val) * 100.0, 2
+            )
+        else:
+            benefit_shortfall_pct = 0.0
+
+        has_benefit_shortfall = benefit_shortfall_pct > max_shortfall
+
+        issues: list[str] = []
+        if unlinked_objective:
+            unlinked_objectives_count += 1
+            issues.append("unlinked_strategic_objective")
+        if missing_governance:
+            missing_governance_objectives_count += 1
+            issues.append("missing_benefit_owner_or_kpi")
+        if has_benefit_shortfall:
+            benefit_shortfall_objectives_count += 1
+            issues.append("benefit_realization_shortfall")
+
+        if not issues:
+            compliant_objectives_count += 1
+        else:
+            findings.append(
+                {
+                    "objective_id": objective_id,
+                    "benefit_shortfall_pct": benefit_shortfall_pct,
+                    "issues": issues,
+                }
+            )
+
+    if total_objectives == 0:
+        covered_strategic_weight_pct = 100.0
+    else:
+        covered_strategic_weight_pct = round(covered_weight_sum, 2)
+
+    if (
+        unlinked_objectives_count == 0
+        and missing_governance_objectives_count == 0
+        and benefit_shortfall_objectives_count == 0
+        and covered_strategic_weight_pct >= min_cov
+    ):
+        status = "HEALTHY"
+    elif benefit_shortfall_objectives_count > 0 or (
+        total_objectives > 0 and covered_strategic_weight_pct < min_cov
+    ):
+        status = "CRITICAL"
+    else:
+        status = "AT_RISK"
+
+    return {
+        "total_objectives": total_objectives,
+        "compliant_objectives_count": compliant_objectives_count,
+        "unlinked_objectives_count": unlinked_objectives_count,
+        "missing_governance_objectives_count": missing_governance_objectives_count,
+        "benefit_shortfall_objectives_count": benefit_shortfall_objectives_count,
+        "covered_strategic_weight_pct": covered_strategic_weight_pct,
+        "strategic_alignment_status": status,
+        "findings": findings,
+    }
+
+
+ProjectLifecyclePMIService.audit_portfolio_strategic_alignment_and_benefits_drift = staticmethod(
+    audit_portfolio_strategic_alignment_and_benefits_drift
+)
+
