@@ -417,3 +417,75 @@ def test_stakeholder_engagement_gaps_defaults_and_class_facade():
     assert callable(
         project_lifecycle_pmi_service.evaluate_stakeholder_engagement_gaps
     )
+
+
+def test_charter_authorization_readiness_authorized_complete():
+    """5/5 pilares cumplidos con autorización formal → 'authorized_complete' y 100.0%."""
+    charter = {
+        "business_case": "Optimización de infraestructura pastoral y administrativa",
+        "measurable_objectives": ["Reducir costos operativos 15%", "Certificar 100% de entregables DoD"],
+        "high_level_risks": ["Retraso de suministros importados"],
+        "sponsor_id": "11111111-2222-3333-4444-555555555555",
+        "charter_status": "authorized",
+    }
+    res = project_lifecycle_pmi_service.evaluate_charter_authorization_readiness(charter)
+    assert res == {
+        "has_business_case": True,
+        "has_measurable_objectives": True,
+        "has_high_level_risks_or_assumptions": True,
+        "has_assigned_sponsor": True,
+        "is_formally_authorized": True,
+        "pillars_satisfied_count": 5,
+        "readiness_score_pct": 100.0,
+        "charter_gate_verdict": "authorized_complete",
+    }
+
+
+def test_charter_authorization_readiness_premature_authorization():
+    """Autorizado formalmente pero sin caso de negocio ni objetivos medibles → 'premature_authorization'."""
+    charter = {
+        "business_case": "   ",
+        "measurable_objectives": [],
+        "high_level_risks": "Riesgo regulatorio menor",
+        "sponsor_name": "Director General PMO",
+        "status": "approved",
+    }
+    res = project_lifecycle_pmi_service.ProjectLifecyclePMIService.evaluate_charter_authorization_readiness(charter)
+    assert res["is_formally_authorized"] is True
+    assert res["has_business_case"] is False
+    assert res["has_measurable_objectives"] is False
+    assert res["pillars_satisfied_count"] == 3
+    assert res["readiness_score_pct"] == 60.0
+    assert res["charter_gate_verdict"] == "premature_authorization"
+
+
+def test_charter_authorization_readiness_ready_for_signoff():
+    """4/5 pilares técnicos completos en estado draft/under_review → 'ready_for_signoff' y 80.0%."""
+    charter = {
+        "business_case": "Caso de negocio validado por comité financiero",
+        "measurable_objectives": ["Meta trimestral Q4"],
+        "assumptions_and_constraints": "Presupuesto tope $120,000 USD",
+        "sponsor_id": "aaaa1111-bbbb-2222-cccc-333344445555",
+        "charter_status": "under_review",
+    }
+    res = project_lifecycle_pmi_service.evaluate_charter_authorization_readiness(charter)
+    assert res["is_formally_authorized"] is False
+    assert res["pillars_satisfied_count"] == 4
+    assert res["readiness_score_pct"] == 80.0
+    assert res["charter_gate_verdict"] == "ready_for_signoff"
+
+
+def test_charter_authorization_readiness_draft_incomplete():
+    """Diccionario vacío o None → 0 pilares, 0.0% y 'draft_incomplete'."""
+    for empty_val in (None, {}, {"charter_status": "draft", "measurable_objectives": [""]}):
+        res = project_lifecycle_pmi_service.evaluate_charter_authorization_readiness(empty_val)
+        assert res == {
+            "has_business_case": False,
+            "has_measurable_objectives": False,
+            "has_high_level_risks_or_assumptions": False,
+            "has_assigned_sponsor": False,
+            "is_formally_authorized": False,
+            "pillars_satisfied_count": 0,
+            "readiness_score_pct": 0.0,
+            "charter_gate_verdict": "draft_incomplete",
+        }

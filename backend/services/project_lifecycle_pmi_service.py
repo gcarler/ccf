@@ -534,6 +534,68 @@ def evaluate_stakeholder_engagement_gaps(
     }
 
 
+def evaluate_charter_authorization_readiness(
+    charter_data: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Audita los 5 pilares canónicos del Acta de Constitución del Proyecto (PMBOK §4.1 Project Charter)."""
+    data = charter_data if isinstance(charter_data, dict) else {}
+
+    has_business_case = bool(str(data.get("business_case") or "").strip())
+    has_measurable_objectives = bool(
+        isinstance(data.get("measurable_objectives"), list)
+        and len([o for o in data.get("measurable_objectives", []) if o]) >= 1
+    )
+
+    raw_risks = data.get("high_level_risks")
+    if isinstance(raw_risks, list):
+        has_high_level_risks_or_assumptions = bool(
+            len([r for r in raw_risks if r]) > 0
+            or str(data.get("assumptions_and_constraints") or "").strip()
+        )
+    else:
+        has_high_level_risks_or_assumptions = bool(
+            str(raw_risks or data.get("assumptions_and_constraints") or "").strip()
+        )
+
+    has_assigned_sponsor = bool(
+        str(data.get("sponsor_id") or data.get("sponsor_name") or "").strip()
+    )
+    is_formally_authorized = bool(
+        str(data.get("charter_status") or data.get("status") or "").strip().lower()
+        in {"authorized", "approved", "signed"}
+    )
+
+    pillars = (
+        has_business_case,
+        has_measurable_objectives,
+        has_high_level_risks_or_assumptions,
+        has_assigned_sponsor,
+        is_formally_authorized,
+    )
+    pillars_satisfied_count = int(sum(1 for flag in pillars if flag))
+    readiness_score_pct = round((pillars_satisfied_count / 5) * 100.0, 2)
+
+    if is_formally_authorized and pillars_satisfied_count == 5:
+        charter_gate_verdict = "authorized_complete"
+    elif is_formally_authorized and pillars_satisfied_count < 5:
+        charter_gate_verdict = "premature_authorization"
+    elif not is_formally_authorized and pillars_satisfied_count == 4:
+        charter_gate_verdict = "ready_for_signoff"
+    else:
+        charter_gate_verdict = "draft_incomplete"
+
+    return {
+        "has_business_case": has_business_case,
+        "has_measurable_objectives": has_measurable_objectives,
+        "has_high_level_risks_or_assumptions": has_high_level_risks_or_assumptions,
+        "has_assigned_sponsor": has_assigned_sponsor,
+        "is_formally_authorized": is_formally_authorized,
+        "pillars_satisfied_count": pillars_satisfied_count,
+        "readiness_score_pct": readiness_score_pct,
+        "charter_gate_verdict": charter_gate_verdict,
+    }
+
+
 class ProjectLifecyclePMIService:
     """Canonical facade for PMI project lifecycle, governance maturity, and automation readiness."""
 
@@ -580,3 +642,9 @@ class ProjectLifecyclePMIService:
         stakeholders: list[dict[str, Any]] | None,
     ) -> dict[str, Any]:
         return evaluate_stakeholder_engagement_gaps(stakeholders)
+
+    @staticmethod
+    def evaluate_charter_authorization_readiness(
+        charter_data: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        return evaluate_charter_authorization_readiness(charter_data)
