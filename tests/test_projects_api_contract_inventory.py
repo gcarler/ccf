@@ -2853,3 +2853,150 @@ def test_security_scheme_hygiene_empty_and_live_openapi():
     assert live_res["unprotected_write_ops"] == []
     assert live_res["undefined_scheme_refs"] == []
     assert live_res["is_hygienic"] is True
+
+
+def test_deprecation_and_sunset_hygiene_compliant():
+    """Endpoints activos y deprecados con x-sunset y guía de migración completos (is_hygienic=True)."""
+    schema = {
+        "paths": {
+            "/api/projects": {
+                "get": {
+                    "summary": "List projects",
+                    "responses": {"200": {"description": "OK"}},
+                },
+                "post": {
+                    "deprecated": True,
+                    "x-sunset": "2027-01-01",
+                    "x-replacement-path": "/api/v2/projects",
+                    "responses": {"201": {"description": "Created"}},
+                },
+            },
+            "/projects/legacy": {
+                "delete": {
+                    "deprecated": True,
+                    "x-sunset": "2026-12-31",
+                    "description": "Deprecated endpoint: please migrate to /api/projects/{id}/archive.",
+                    "responses": {"204": {"description": "Deleted"}},
+                }
+            },
+            "/api/other": {
+                "get": {
+                    "deprecated": True,
+                    "responses": {"200": {"description": "OK"}},
+                }
+            },
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_deprecation_and_sunset_hygiene(
+        schema
+    )
+    assert res == {
+        "evaluated_operation_count": 3,
+        "active_ops": ["GET /api/projects"],
+        "deprecated_ops": [
+            "POST /api/projects",
+            "DELETE /projects/legacy",
+        ],
+        "deprecated_missing_sunset_ops": [],
+        "deprecated_missing_migration_guide_ops": [],
+        "inconsistent_sunset_on_active_ops": [],
+        "is_hygienic": True,
+    }
+
+
+def test_deprecation_and_sunset_hygiene_missing_sunset_or_migration():
+    """Endpoints deprecados sin x-sunset o sin guía de migración (is_hygienic=False)."""
+    schema = {
+        "paths": {
+            "/api/projects/old-export": {
+                "get": {
+                    "deprecated": True,
+                    "description": "Legacy CSV export endpoint.",
+                    "responses": {"200": {"description": "OK"}},
+                },
+                "post": {
+                    "deprecated": True,
+                    "x-sunset": "2027-06-30",
+                    "description": "Legacy export trigger endpoint.",
+                    "responses": {"200": {"description": "OK"}},
+                },
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_deprecation_and_sunset_hygiene(
+        schema
+    )
+    assert res["evaluated_operation_count"] == 2
+    assert res["deprecated_ops"] == [
+        "GET /api/projects/old-export",
+        "POST /api/projects/old-export",
+    ]
+    assert res["deprecated_missing_sunset_ops"] == [
+        "GET /api/projects/old-export"
+    ]
+    assert res["deprecated_missing_migration_guide_ops"] == [
+        "GET /api/projects/old-export",
+        "POST /api/projects/old-export",
+    ]
+    assert res["is_hygienic"] is False
+
+
+def test_deprecation_and_sunset_hygiene_inconsistent_sunset_on_active():
+    """Endpoints activos con x-sunset inconsistente (is_hygienic=False)."""
+    schema = {
+        "paths": {
+            "/api/projects/active-with-sunset": {
+                "patch": {
+                    "deprecated": False,
+                    "x-sunset": "2027-03-01",
+                    "responses": {"200": {"description": "OK"}},
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_deprecation_and_sunset_hygiene(
+        schema
+    )
+    assert res["active_ops"] == ["PATCH /api/projects/active-with-sunset"]
+    assert res["inconsistent_sunset_on_active_ops"] == [
+        "PATCH /api/projects/active-with-sunset"
+    ]
+    assert res["is_hygienic"] is False
+
+
+def test_deprecation_and_sunset_hygiene_empty_and_live_openapi():
+    """Esquema OpenAPI en vivo de la app FastAPI y manejo de schema vacío/None."""
+    empty_expected = {
+        "evaluated_operation_count": 0,
+        "active_ops": [],
+        "deprecated_ops": [],
+        "deprecated_missing_sunset_ops": [],
+        "deprecated_missing_migration_guide_ops": [],
+        "inconsistent_sunset_on_active_ops": [],
+        "is_hygienic": True,
+    }
+    assert (
+        audit_projects_api_contracts.summarize_projects_deprecation_and_sunset_hygiene(
+            None
+        )
+        == empty_expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_deprecation_and_sunset_hygiene(
+            {}
+        )
+        == empty_expected
+    )
+
+    from backend.app import app
+
+    live_res = (
+        audit_projects_api_contracts.summarize_projects_deprecation_and_sunset_hygiene(
+            app.openapi()
+        )
+    )
+    assert live_res["evaluated_operation_count"] > 0
+    assert live_res["deprecated_missing_sunset_ops"] == []
+    assert live_res["deprecated_missing_migration_guide_ops"] == []
+    assert live_res["inconsistent_sunset_on_active_ops"] == []
+    assert live_res["is_hygienic"] is True

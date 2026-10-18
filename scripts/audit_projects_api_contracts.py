@@ -1617,6 +1617,83 @@ def summarize_projects_security_scheme_hygiene(
     }
 
 
+def summarize_projects_deprecation_and_sunset_hygiene(
+    openapi_schema: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Audita la gobernanza de deprecación, fecha sunset (x-sunset) y guía de migración en endpoints /api/projects o /projects."""
+    if not isinstance(openapi_schema, Mapping):
+        return {
+            "evaluated_operation_count": 0,
+            "active_ops": [],
+            "deprecated_ops": [],
+            "deprecated_missing_sunset_ops": [],
+            "deprecated_missing_migration_guide_ops": [],
+            "inconsistent_sunset_on_active_ops": [],
+            "is_hygienic": True,
+        }
+
+    evaluated_operation_count = 0
+    active_ops: list[str] = []
+    deprecated_ops: list[str] = []
+    deprecated_missing_sunset_ops: list[str] = []
+    deprecated_missing_migration_guide_ops: list[str] = []
+    inconsistent_sunset_on_active_ops: list[str] = []
+
+    paths = openapi_schema.get("paths")
+    if isinstance(paths, Mapping):
+        for path, path_item in sorted(paths.items()):
+            if not isinstance(path, str) or not (
+                path.startswith("/api/projects") or path.startswith("/projects")
+            ):
+                continue
+            if not isinstance(path_item, Mapping):
+                continue
+
+            for method in ("get", "post", "put", "patch", "delete"):
+                op = path_item.get(method)
+                if not isinstance(op, Mapping):
+                    continue
+
+                evaluated_operation_count += 1
+                op_key = f"{method.upper()} {path}"
+                is_deprecated = bool(op.get("deprecated"))
+                sunset_str = str(op.get("x-sunset") or "").strip()
+                replacement_str = str(
+                    op.get("x-replacement-path") or ""
+                ).strip()
+                desc_lower = str(op.get("description") or "").lower()
+
+                if is_deprecated:
+                    deprecated_ops.append(op_key)
+                    if not sunset_str:
+                        deprecated_missing_sunset_ops.append(op_key)
+                    if not replacement_str and not any(
+                        token in desc_lower
+                        for token in ("use ", "replace", "migrat")
+                    ):
+                        deprecated_missing_migration_guide_ops.append(op_key)
+                else:
+                    active_ops.append(op_key)
+                    if sunset_str:
+                        inconsistent_sunset_on_active_ops.append(op_key)
+
+    is_hygienic = (
+        len(deprecated_missing_sunset_ops) == 0
+        and len(deprecated_missing_migration_guide_ops) == 0
+        and len(inconsistent_sunset_on_active_ops) == 0
+    )
+
+    return {
+        "evaluated_operation_count": evaluated_operation_count,
+        "active_ops": active_ops,
+        "deprecated_ops": deprecated_ops,
+        "deprecated_missing_sunset_ops": deprecated_missing_sunset_ops,
+        "deprecated_missing_migration_guide_ops": deprecated_missing_migration_guide_ops,
+        "inconsistent_sunset_on_active_ops": inconsistent_sunset_on_active_ops,
+        "is_hygienic": is_hygienic,
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()
