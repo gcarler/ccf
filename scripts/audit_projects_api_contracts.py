@@ -2333,14 +2333,64 @@ _NON_STRING_TEMPORAL_TYPES = {
     "array",
     "object",
 }
+_PROJECT_DOMAIN_SCHEMA_PREFIXES = (
+    "Project",
+    "Task",
+    "Milestone",
+    "Sprint",
+    "Risk",
+    "Issue",
+    "Wbs",
+    "WBS",
+    "Evm",
+    "EVM",
+    "Charter",
+    "Stakeholder",
+    "ChangeRequest",
+    "Ccb",
+    "CCB",
+    "Baseline",
+    "Deliverable",
+    "Phase",
+    "Portfolio",
+    "Program",
+    "Kanban",
+    "Gantt",
+    "Wiki",
+    "AnyDoc",
+    "Procurement",
+    "Quality",
+    "Resource",
+    "Retrospective",
+    "Lesson",
+)
+_TEMPORAL_SUFFIXES = ("_at", "_date", "_timestamp", "_deadline")
+_TEMPORAL_EXACT_NAMES = {
+    "created_at",
+    "updated_at",
+    "deleted_at",
+    "start_date",
+    "end_date",
+    "due_date",
+    "target_date",
+    "baseline_start_date",
+    "baseline_end_date",
+    "approved_at",
+    "closed_at",
+    "submitted_at",
+}
 
 
 def summarize_projects_datetime_and_temporal_field_hygiene(
     openapi: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Audita el formato ISO-8601 (date-time / date) de propiedades temporales (*_at, *_date) en esquemas de proyectos."""
+    """Audita el formato ISO-8601 (date-time / date) de propiedades temporales (*_at, *_date, *_timestamp, *_deadline) en esquemas de proyectos."""
     if not isinstance(openapi, Mapping):
         return {
+            "total_temporal_properties_inspected": 0,
+            "unformatted_temporal_properties": [],
+            "date_only_on_timestamp_properties": [],
+            "is_temporal_hygiene_compliant": True,
             "total_temporal_fields": 0,
             "unformatted_datetime_fields": [],
             "unformatted_date_fields": [],
@@ -2369,11 +2419,14 @@ def summarize_projects_datetime_and_temporal_field_hygiene(
     unformatted_datetime_fields: list[str] = []
     unformatted_date_fields: list[str] = []
     non_string_temporal_fields: list[str] = []
+    unformatted_temporal_properties: list[str] = []
+    date_only_on_timestamp_properties: list[str] = []
 
     for schema_name, schema_obj in sorted(schemas.items()):
         s_name = str(schema_name)
         if (
             "project" not in s_name.lower()
+            and not s_name.startswith(_PROJECT_DOMAIN_SCHEMA_PREFIXES)
             and s_name not in referenced_schemas
         ):
             continue
@@ -2385,7 +2438,10 @@ def summarize_projects_datetime_and_temporal_field_hygiene(
 
         for prop_name, prop_schema in sorted(props.items()):
             p_name = str(prop_name)
-            if not (p_name.endswith("_at") or p_name.endswith("_date")):
+            if not (
+                p_name.endswith(_TEMPORAL_SUFFIXES)
+                or p_name in _TEMPORAL_EXACT_NAMES
+            ):
                 continue
             if not isinstance(prop_schema, Mapping):
                 continue
@@ -2395,20 +2451,42 @@ def summarize_projects_datetime_and_temporal_field_hygiene(
 
             composite = prop_schema.get("anyOf") or prop_schema.get("oneOf")
             if isinstance(composite, list):
-                branches = [
+                raw_branches = [
                     b
                     for b in composite
                     if isinstance(b, Mapping) and b.get("type") != "null"
                 ]
             else:
-                branches = [prop_schema]
+                raw_branches = [prop_schema]
+
+            branches: list[Mapping[str, Any]] = []
+            for rb in raw_branches:
+                ref = rb.get("$ref")
+                if isinstance(ref, str) and ref.startswith(
+                    "#/components/schemas/"
+                ):
+                    ref_target = schemas.get(ref.split("/")[-1])
+                    if isinstance(ref_target, Mapping):
+                        branches.append(ref_target)
+                        continue
+                branches.append(rb)
 
             if any(
                 b.get("type") in _NON_STRING_TEMPORAL_TYPES for b in branches
             ):
                 non_string_temporal_fields.append(field_ref)
 
-            if p_name.endswith("_at"):
+            has_any_iso_format = any(
+                b.get("type") == "string"
+                and b.get("format") in {"date-time", "date"}
+                for b in branches
+            )
+            if not has_any_iso_format:
+                unformatted_temporal_properties.append(field_ref)
+
+            if p_name.endswith(("_at", "_timestamp")):
+                if any(b.get("format") == "date" for b in branches):
+                    date_only_on_timestamp_properties.append(field_ref)
                 has_valid_dt = any(
                     b.get("type") == "string"
                     and b.get("format") == "date-time"
@@ -2416,7 +2494,7 @@ def summarize_projects_datetime_and_temporal_field_hygiene(
                 )
                 if not has_valid_dt:
                     unformatted_datetime_fields.append(field_ref)
-            elif p_name.endswith("_date"):
+            elif p_name.endswith(("_date", "_deadline")):
                 has_valid_date = any(
                     b.get("type") == "string"
                     and b.get("format") in {"date", "date-time"}
@@ -2431,8 +2509,17 @@ def summarize_projects_datetime_and_temporal_field_hygiene(
         and not unformatted_date_fields
         and not non_string_temporal_fields
     )
+    unformatted_sorted = sorted(unformatted_temporal_properties)
+    date_only_sorted = sorted(date_only_on_timestamp_properties)
+    is_temporal_hygiene_compliant = bool(
+        len(unformatted_sorted) == 0 and len(date_only_sorted) == 0
+    )
 
     return {
+        "total_temporal_properties_inspected": total_temporal_fields,
+        "unformatted_temporal_properties": unformatted_sorted,
+        "date_only_on_timestamp_properties": date_only_sorted,
+        "is_temporal_hygiene_compliant": is_temporal_hygiene_compliant,
         "total_temporal_fields": total_temporal_fields,
         "unformatted_datetime_fields": unformatted_datetime_fields,
         "unformatted_date_fields": unformatted_date_fields,

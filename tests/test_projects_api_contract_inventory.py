@@ -3851,13 +3851,15 @@ def test_datetime_and_temporal_field_hygiene_clean():
     res = audit_projects_api_contracts.summarize_projects_datetime_and_temporal_field_hygiene(
         schema
     )
-    assert res == {
-        "total_temporal_fields": 3,
-        "unformatted_datetime_fields": [],
-        "unformatted_date_fields": [],
-        "non_string_temporal_fields": [],
-        "is_temporal_hygiene_clean": True,
-    }
+    assert res["total_temporal_fields"] == 3
+    assert res["unformatted_datetime_fields"] == []
+    assert res["unformatted_date_fields"] == []
+    assert res["non_string_temporal_fields"] == []
+    assert res["is_temporal_hygiene_clean"] is True
+    assert res["total_temporal_properties_inspected"] == 3
+    assert res["unformatted_temporal_properties"] == []
+    assert res["date_only_on_timestamp_properties"] == []
+    assert res["is_temporal_hygiene_compliant"] is True
 
 
 def test_datetime_and_temporal_field_hygiene_unformatted_fields():
@@ -3923,25 +3925,15 @@ def test_datetime_and_temporal_field_hygiene_non_string_fields():
 
 def test_datetime_and_temporal_field_hygiene_empty_and_live_openapi():
     """Manejo de schema vacío/None y auditoría sobre el esquema OpenAPI real de la aplicación."""
-    empty_expected = {
-        "total_temporal_fields": 0,
-        "unformatted_datetime_fields": [],
-        "unformatted_date_fields": [],
-        "non_string_temporal_fields": [],
-        "is_temporal_hygiene_clean": False,
-    }
-    assert (
-        audit_projects_api_contracts.summarize_projects_datetime_and_temporal_field_hygiene(
-            None
+    for empty_in in (None, {}):
+        res_empty = audit_projects_api_contracts.summarize_projects_datetime_and_temporal_field_hygiene(
+            empty_in
         )
-        == empty_expected
-    )
-    assert (
-        audit_projects_api_contracts.summarize_projects_datetime_and_temporal_field_hygiene(
-            {}
-        )
-        == empty_expected
-    )
+        assert res_empty["total_temporal_fields"] == 0
+        assert res_empty["unformatted_datetime_fields"] == []
+        assert res_empty["unformatted_date_fields"] == []
+        assert res_empty["non_string_temporal_fields"] == []
+        assert res_empty["is_temporal_hygiene_clean"] is False
 
     from backend.app import app
 
@@ -4849,5 +4841,133 @@ def test_schema_required_and_default_hygiene_type_mismatched_defaults_and_anyof(
         "ProjectConfigPayload.bad_str",
     ]
     assert res["is_hygienic"] is False
+
+
+def test_temporal_timestamp_format_hygiene_compliant_with_deadlines_and_refs():
+    """Verifica campos *_at, *_timestamp, *_date y *_deadline válidos (incluyendo $ref y anyOf)."""
+    schema = {
+        "components": {
+            "schemas": {
+                "IsoTimestampDef": {
+                    "type": "string",
+                    "format": "date-time",
+                },
+                "ProjectTimelineOut": {
+                    "type": "object",
+                    "properties": {
+                        "created_at": {
+                            "type": "string",
+                            "format": "date-time",
+                        },
+                        "sync_timestamp": {
+                            "$ref": "#/components/schemas/IsoTimestampDef"
+                        },
+                        "submission_deadline": {
+                            "anyOf": [
+                                {"type": "string", "format": "date"},
+                                {"type": "null"},
+                            ]
+                        },
+                        "baseline_start_date": {
+                            "type": "string",
+                            "format": "date",
+                        },
+                    },
+                },
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_datetime_and_temporal_field_hygiene(
+        schema
+    )
+    assert res["total_temporal_properties_inspected"] == 4
+    assert res["unformatted_temporal_properties"] == []
+    assert res["date_only_on_timestamp_properties"] == []
+    assert res["is_temporal_hygiene_compliant"] is True
+
+
+def test_temporal_timestamp_format_hygiene_detects_date_only_on_timestamp_fields():
+    """Detecta campos *_at y *_timestamp que declaran format='date' en vez de 'date-time'."""
+    schema = {
+        "components": {
+            "schemas": {
+                "TaskAuditRecord": {
+                    "type": "object",
+                    "properties": {
+                        "approved_at": {"type": "string", "format": "date"},
+                        "event_timestamp": {
+                            "anyOf": [
+                                {"type": "string", "format": "date"},
+                                {"type": "null"},
+                            ]
+                        },
+                        "due_date": {"type": "string", "format": "date"},
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_datetime_and_temporal_field_hygiene(
+        schema
+    )
+    assert res["total_temporal_properties_inspected"] == 3
+    assert res["unformatted_temporal_properties"] == []
+    assert res["date_only_on_timestamp_properties"] == [
+        "TaskAuditRecord.approved_at",
+        "TaskAuditRecord.event_timestamp",
+    ]
+    assert res["is_temporal_hygiene_compliant"] is False
+
+
+def test_temporal_timestamp_format_hygiene_detects_unformatted_properties():
+    """Detecta propiedades temporales sin format ISO-8601 ('date-time' o 'date')."""
+    schema = {
+        "components": {
+            "schemas": {
+                "MilestoneScheduleInput": {
+                    "type": "object",
+                    "properties": {
+                        "closed_at": {"type": "string"},
+                        "gate_deadline": {"type": "string"},
+                        "audit_timestamp": {"type": "integer"},
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_datetime_and_temporal_field_hygiene(
+        schema
+    )
+    assert res["total_temporal_properties_inspected"] == 3
+    assert res["unformatted_temporal_properties"] == [
+        "MilestoneScheduleInput.audit_timestamp",
+        "MilestoneScheduleInput.closed_at",
+        "MilestoneScheduleInput.gate_deadline",
+    ]
+    assert res["is_temporal_hygiene_compliant"] is False
+
+
+def test_temporal_timestamp_format_hygiene_ignores_non_project_schemas():
+    """Ignora esquemas ajenos al dominio de proyectos y retorna cumplimiento limpio en esquema vacío."""
+    schema = {
+        "components": {
+            "schemas": {
+                "AuthSessionRecord": {
+                    "type": "object",
+                    "properties": {
+                        "created_at": {"type": "string"},
+                        "login_timestamp": {"type": "string", "format": "date"},
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_datetime_and_temporal_field_hygiene(
+        schema
+    )
+    assert res["total_temporal_properties_inspected"] == 0
+    assert res["unformatted_temporal_properties"] == []
+    assert res["date_only_on_timestamp_properties"] == []
+    assert res["is_temporal_hygiene_compliant"] is True
 
 
