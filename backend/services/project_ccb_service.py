@@ -2809,6 +2809,7 @@ __all__ = [
     "evaluate_cost_of_quality_conformance_balance",
     "evaluate_spc_control_chart_stability",
     "evaluate_quality_capa_root_cause_effectiveness",
+    "evaluate_ccb_emergency_change_retrospective_compliance",
     "ProjectCCBService",
 ]
 
@@ -2952,4 +2953,78 @@ def evaluate_quality_capa_root_cause_effectiveness(
 ProjectCCBService.evaluate_quality_capa_root_cause_effectiveness = staticmethod(
     evaluate_quality_capa_root_cause_effectiveness
 )
+
+
+def evaluate_ccb_emergency_change_retrospective_compliance(
+    change_requests: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_retrospective_sla_hours: float = 48.0,
+) -> dict[str, Any]:
+    """Evalúa el cumplimiento retrospectivo de cambios de emergencia (fast-track) ante el CCB verificando plan de reversión, ratificación formal y revisión post-implementación (PIR) dentro del SLA según PMI PMBOK §4.6."""
+    if (
+        change_requests is None
+        or isinstance(change_requests, (str, bytes, Mapping))
+        or not isinstance(change_requests, Sequence)
+    ):
+        items: Sequence[Any] = []
+    else:
+        items = change_requests
+
+    total_emergency_changes = 0
+    missing_rollback_plan_cr_ids: list[str] = []
+    unratified_emergency_cr_ids: list[str] = []
+    sla_breached_pir_cr_ids: list[str] = []
+
+    for item in items:
+        if not isinstance(item, Mapping):
+            continue
+        if not bool(item.get("is_emergency", False)):
+            continue
+        cr_id = str(item.get("cr_id") or "").strip()
+        if not cr_id:
+            continue
+
+        total_emergency_changes += 1
+        raw_pir = item.get("post_implementation_review_hours")
+        try:
+            pir_hours = (
+                float(raw_pir)
+                if raw_pir is not None and not isinstance(raw_pir, bool)
+                else -1.0
+            )
+        except (TypeError, ValueError):
+            pir_hours = -1.0
+
+        rollback_plan_documented = bool(
+            item.get("rollback_plan_documented", False)
+        )
+        ccb_ratified = bool(item.get("ccb_ratified", False))
+
+        if not rollback_plan_documented:
+            missing_rollback_plan_cr_ids.append(cr_id)
+        if not ccb_ratified:
+            unratified_emergency_cr_ids.append(cr_id)
+        if pir_hours < 0.0 or pir_hours > float(max_retrospective_sla_hours):
+            sla_breached_pir_cr_ids.append(cr_id)
+
+    is_emergency_governance_compliant = bool(
+        total_emergency_changes > 0
+        and not missing_rollback_plan_cr_ids
+        and not unratified_emergency_cr_ids
+        and not sla_breached_pir_cr_ids
+    )
+
+    return {
+        "total_emergency_changes": total_emergency_changes,
+        "missing_rollback_plan_cr_ids": missing_rollback_plan_cr_ids,
+        "unratified_emergency_cr_ids": unratified_emergency_cr_ids,
+        "sla_breached_pir_cr_ids": sla_breached_pir_cr_ids,
+        "is_emergency_governance_compliant": is_emergency_governance_compliant,
+    }
+
+
+ProjectCCBService.evaluate_ccb_emergency_change_retrospective_compliance = staticmethod(
+    evaluate_ccb_emergency_change_retrospective_compliance
+)
+
 

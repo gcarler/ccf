@@ -2828,3 +2828,99 @@ def test_audit_markdown_table_column_alignment_hygiene_no_tables():
             "ragged_column_table_indices": [],
             "is_table_hygiene_clean": True,
         }
+
+
+def test_audit_markdown_task_list_checklist_hygiene_clean_and_assigned():
+    """Items con sintaxis válida y tareas abiertas con responsable (@ o owner:) pasan is_checklist_hygiene_clean=True."""
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_task_list_checklist_hygiene,
+    )
+
+    md = (
+        "# Checklist de Liberación\n"
+        "- [x] Congelar rama de release\n"
+        "- [X] Ejecutar pruebas de regresión\n"
+        "- [ ] Validar backup de base de datos @dba-team\n"
+        "* [ ] Confirmar ventana de cambio owner: pmo-lead\n"
+        "```markdown\n"
+        "- [?] Ignorado dentro de bloque cercado\n"
+        "- [ ] Sin dueño pero en código\n"
+        "```\n"
+    )
+    res = audit_markdown_task_list_checklist_hygiene(md)
+    assert res == {
+        "total_task_items": 4,
+        "completed_task_items": 2,
+        "completion_rate_pct": 50.0,
+        "invalid_checkbox_syntax_lines": [],
+        "empty_task_description_lines": [],
+        "unassigned_open_task_lines": [],
+        "is_checklist_hygiene_clean": True,
+    }
+    assert AnyDocService.audit_markdown_task_list_checklist_hygiene(md) == res
+
+
+def test_audit_markdown_task_list_checklist_hygiene_invalid_mark_and_empty_body():
+    """Detecta marcas fuera de {' ', 'x', 'X'} y descripciones vacías."""
+    from backend.services.anydoc_service import (
+        audit_markdown_task_list_checklist_hygiene,
+    )
+
+    md = (
+        "- [?] Tarea con estado ambiguo @dev\n"
+        "- [x]   \n"
+        "+ [ ]   \n"
+    )
+    res = audit_markdown_task_list_checklist_hygiene(md)
+    assert res == {
+        "total_task_items": 3,
+        "completed_task_items": 1,
+        "completion_rate_pct": 33.33,
+        "invalid_checkbox_syntax_lines": [1],
+        "empty_task_description_lines": [2, 3],
+        "unassigned_open_task_lines": [],
+        "is_checklist_hygiene_clean": False,
+    }
+
+
+def test_audit_markdown_task_list_checklist_hygiene_unassigned_open_tasks():
+    """Detecta tareas abiertas sin responsable (@usuario ni owner:)."""
+    from backend.services.anydoc_service import (
+        audit_markdown_task_list_checklist_hygiene,
+    )
+
+    md = (
+        "- [x] Tarea ya completada sin mención\n"
+        "- [ ] Tarea huérfana pendiente de revisión\n"
+        "- [ ] Segunda tarea abierta sin responsable\n"
+    )
+    res = audit_markdown_task_list_checklist_hygiene(md)
+    assert res == {
+        "total_task_items": 3,
+        "completed_task_items": 1,
+        "completion_rate_pct": 33.33,
+        "invalid_checkbox_syntax_lines": [],
+        "empty_task_description_lines": [],
+        "unassigned_open_task_lines": [2, 3],
+        "is_checklist_hygiene_clean": False,
+    }
+
+
+def test_audit_markdown_task_list_checklist_hygiene_empty_or_none():
+    """Texto vacío, None o sin items de checklist retorna contadores en 0 e is_checklist_hygiene_clean=True."""
+    from backend.services.anydoc_service import (
+        audit_markdown_task_list_checklist_hygiene,
+    )
+
+    for payload in (None, "", "# Solo texto\n- Viñeta normal sin checkbox\n"):
+        assert audit_markdown_task_list_checklist_hygiene(payload) == {
+            "total_task_items": 0,
+            "completed_task_items": 0,
+            "completion_rate_pct": 0.0,
+            "invalid_checkbox_syntax_lines": [],
+            "empty_task_description_lines": [],
+            "unassigned_open_task_lines": [],
+            "is_checklist_hygiene_clean": True,
+        }
+

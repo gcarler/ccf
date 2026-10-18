@@ -3667,3 +3667,132 @@ def test_evaluate_quality_capa_root_cause_effectiveness_empty_or_invalid():
             "is_capa_system_healthy": False,
         }
 
+
+def test_evaluate_ccb_emergency_change_retrospective_compliance_compliant():
+    """Cambios de emergencia con rollback documentado, ratificación CCB y PIR dentro del SLA pasan is_emergency_governance_compliant=True."""
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        evaluate_ccb_emergency_change_retrospective_compliance,
+    )
+
+    crs = [
+        {
+            "cr_id": "CR-EMG-01",
+            "is_emergency": True,
+            "rollback_plan_documented": True,
+            "ccb_ratified": True,
+            "post_implementation_review_hours": 24.0,
+        },
+        {
+            "cr_id": "CR-STD-02",
+            "is_emergency": False,
+            "rollback_plan_documented": False,
+            "ccb_ratified": False,
+        },
+    ]
+    res = evaluate_ccb_emergency_change_retrospective_compliance(
+        crs, max_retrospective_sla_hours=48.0
+    )
+    assert res == {
+        "total_emergency_changes": 1,
+        "missing_rollback_plan_cr_ids": [],
+        "unratified_emergency_cr_ids": [],
+        "sla_breached_pir_cr_ids": [],
+        "is_emergency_governance_compliant": True,
+    }
+    assert (
+        ProjectCCBService.evaluate_ccb_emergency_change_retrospective_compliance(
+            crs, max_retrospective_sla_hours=48.0
+        )
+        == res
+    )
+
+
+def test_evaluate_ccb_emergency_change_retrospective_compliance_missing_rollback_and_unratified():
+    """Detecta cambios de emergencia sin rollback_plan_documented o sin ccb_ratified."""
+    from backend.services.project_ccb_service import (
+        evaluate_ccb_emergency_change_retrospective_compliance,
+    )
+
+    res = evaluate_ccb_emergency_change_retrospective_compliance(
+        [
+            {
+                "cr_id": "CR-NO-RB",
+                "is_emergency": True,
+                "rollback_plan_documented": False,
+                "ccb_ratified": True,
+                "post_implementation_review_hours": 12.0,
+            },
+            {
+                "cr_id": "CR-UNRAT",
+                "is_emergency": True,
+                "rollback_plan_documented": True,
+                "ccb_ratified": False,
+                "post_implementation_review_hours": 36.0,
+            },
+        ]
+    )
+    assert res == {
+        "total_emergency_changes": 2,
+        "missing_rollback_plan_cr_ids": ["CR-NO-RB"],
+        "unratified_emergency_cr_ids": ["CR-UNRAT"],
+        "sla_breached_pir_cr_ids": [],
+        "is_emergency_governance_compliant": False,
+    }
+
+
+def test_evaluate_ccb_emergency_change_retrospective_compliance_pir_sla_breach():
+    """Detecta PIR ausente (None), negativo o mayor a max_retrospective_sla_hours."""
+    from backend.services.project_ccb_service import (
+        evaluate_ccb_emergency_change_retrospective_compliance,
+    )
+
+    res = evaluate_ccb_emergency_change_retrospective_compliance(
+        [
+            {
+                "cr_id": "CR-PIR-NONE",
+                "is_emergency": True,
+                "rollback_plan_documented": True,
+                "ccb_ratified": True,
+                "post_implementation_review_hours": None,
+            },
+            {
+                "cr_id": "CR-PIR-LATE",
+                "is_emergency": True,
+                "rollback_plan_documented": True,
+                "ccb_ratified": True,
+                "post_implementation_review_hours": 72.0,
+            },
+        ],
+        max_retrospective_sla_hours=48.0,
+    )
+    assert res == {
+        "total_emergency_changes": 2,
+        "missing_rollback_plan_cr_ids": [],
+        "unratified_emergency_cr_ids": [],
+        "sla_breached_pir_cr_ids": ["CR-PIR-NONE", "CR-PIR-LATE"],
+        "is_emergency_governance_compliant": False,
+    }
+
+
+def test_evaluate_ccb_emergency_change_retrospective_compliance_empty_or_no_emergency():
+    """Entradas vacías, None o sin cambios de emergencia devuelven total_emergency_changes=0 e is_emergency_governance_compliant=False."""
+    from backend.services.project_ccb_service import (
+        evaluate_ccb_emergency_change_retrospective_compliance,
+    )
+
+    for payload in (
+        None,
+        [],
+        "invalid",
+        [{"cr_id": "CR-NORMAL", "is_emergency": False}],
+    ):
+        assert evaluate_ccb_emergency_change_retrospective_compliance(payload) == {  # type: ignore[arg-type]
+            "total_emergency_changes": 0,
+            "missing_rollback_plan_cr_ids": [],
+            "unratified_emergency_cr_ids": [],
+            "sla_breached_pir_cr_ids": [],
+            "is_emergency_governance_compliant": False,
+        }
+
+

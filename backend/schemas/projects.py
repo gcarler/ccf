@@ -3695,6 +3695,7 @@ __all__ = [
     "validate_resource_leveling_overallocation",
     "validate_schedule_buffer_fever_chart_status",
     "validate_rolling_wave_planning_horizon",
+    "validate_resource_smoothing_float_boundaries",
 ]
 
 
@@ -4387,3 +4388,66 @@ def validate_schedule_risk_mitigation_residual_delay(
     }
 
 
+
+
+def validate_resource_smoothing_float_boundaries(
+    activities: Sequence[Mapping[str, Any]] | None,
+) -> dict[str, Any]:
+    """Valida suavizado de recursos (Resource Smoothing, PMBOK §6.5.2.3).
+
+    - Desplazamiento sobre actividades de la ruta crítica -> ``critical_path_shifted_activity_ids``.
+    - Desplazamiento que excede la holgura libre -> ``float_exceeded_activity_ids``.
+    - Sobreasignación residual (pico > 100%) -> ``unresolved_overallocation_activity_ids``.
+    """
+    if not isinstance(activities, (list, tuple)):
+        activities = []
+
+    total_activities = 0
+    critical_path_shifted_activity_ids: list[str] = []
+    float_exceeded_activity_ids: list[str] = []
+    unresolved_overallocation_activity_ids: list[str] = []
+
+    def _safe_float(value: Any, default: float) -> float:
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return default
+
+    for item in activities:
+        if not isinstance(item, Mapping):
+            continue
+        activity_id = str(item.get("activity_id") or "").strip()
+        if not activity_id:
+            continue
+
+        free_float_days = max(0.0, _safe_float(item.get("free_float_days", 0.0) or 0.0, 0.0))
+        total_float_days = max(0.0, _safe_float(item.get("total_float_days", 0.0) or 0.0, 0.0))
+        smoothing_shift_days = max(0.0, _safe_float(item.get("smoothing_shift_days", 0.0) or 0.0, 0.0))
+        peak_utilization_pct = max(0.0, _safe_float(item.get("peak_utilization_pct", 0.0) or 0.0, 0.0))
+        is_critical = bool(item.get("is_critical", False)) or (total_float_days == 0.0)
+
+        total_activities += 1
+
+        if is_critical and smoothing_shift_days > 0.0:
+            critical_path_shifted_activity_ids.append(activity_id)
+
+        if smoothing_shift_days > free_float_days:
+            float_exceeded_activity_ids.append(activity_id)
+
+        if peak_utilization_pct > 100.0:
+            unresolved_overallocation_activity_ids.append(activity_id)
+
+    is_smoothing_valid = bool(
+        total_activities > 0
+        and not critical_path_shifted_activity_ids
+        and not float_exceeded_activity_ids
+        and not unresolved_overallocation_activity_ids
+    )
+
+    return {
+        "total_activities": total_activities,
+        "critical_path_shifted_activity_ids": critical_path_shifted_activity_ids,
+        "float_exceeded_activity_ids": float_exceeded_activity_ids,
+        "unresolved_overallocation_activity_ids": unresolved_overallocation_activity_ids,
+        "is_smoothing_valid": is_smoothing_valid,
+    }

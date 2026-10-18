@@ -2718,3 +2718,117 @@ def test_validate_schedule_risk_mitigation_residual_delay_empty_or_invalid():
         }
 
 
+
+
+def test_validate_resource_smoothing_float_boundaries_valid():
+    """> Suavizado dentro de holgura libre sin tocar ruta crítica -> is_smoothing_valid."""
+    from backend.schemas.projects import validate_resource_smoothing_float_boundaries
+
+    res = validate_resource_smoothing_float_boundaries(
+        [
+            {
+                "activity_id": "ACT-A",
+                "free_float_days": 5.0,
+                "total_float_days": 8.0,
+                "smoothing_shift_days": 3.0,
+                "peak_utilization_pct": 90.0,
+            },
+            {
+                "activity_id": "ACT-B",
+                "free_float_days": 2.0,
+                "total_float_days": 6.0,
+                "smoothing_shift_days": 2.0,
+                "peak_utilization_pct": 100.0,
+            },
+            {
+                "activity_id": "ACT-C",
+                "is_critical": True,
+                "free_float_days": 0.0,
+                "total_float_days": 0.0,
+                "smoothing_shift_days": 0.0,
+                "peak_utilization_pct": 75.0,
+            },
+        ]
+    )
+    assert res["total_activities"] == 3
+    assert res["critical_path_shifted_activity_ids"] == []
+    assert res["float_exceeded_activity_ids"] == []
+    assert res["unresolved_overallocation_activity_ids"] == []
+    assert res["is_smoothing_valid"] is True
+
+
+def test_validate_resource_smoothing_float_boundaries_critical_shifted():
+    """> is_critical=True o total_float_days=0 desplazadas -> critical_path_shifted."""
+    from backend.schemas.projects import validate_resource_smoothing_float_boundaries
+
+    res = validate_resource_smoothing_float_boundaries(
+        [
+            {
+                "activity_id": "ACT-FLAG-CP",
+                "is_critical": True,
+                "free_float_days": 4.0,
+                "total_float_days": 9.0,
+                "smoothing_shift_days": 1.0,
+            },
+            {
+                "activity_id": "ACT-ZERO-TF",
+                "free_float_days": 2.0,
+                "smoothing_shift_days": 0.5,
+            },
+        ]
+    )
+    assert res["total_activities"] == 2
+    assert res["critical_path_shifted_activity_ids"] == ["ACT-FLAG-CP", "ACT-ZERO-TF"]
+    assert res["is_smoothing_valid"] is False
+
+
+def test_validate_resource_smoothing_float_boundaries_float_exceeded_and_overallocation():
+    """> Shift > free_float_days y pico > 100% -> listas separadas."""
+    from backend.schemas.projects import validate_resource_smoothing_float_boundaries
+
+    res = validate_resource_smoothing_float_boundaries(
+        [
+            {
+                "activity_id": "ACT-EXCEED",
+                "free_float_days": 3.0,
+                "total_float_days": 7.0,
+                "smoothing_shift_days": 3.5,
+                "peak_utilization_pct": 80.0,
+            },
+            {
+                "activity_id": "ACT-OVERALLOC",
+                "free_float_days": 10.0,
+                "total_float_days": 12.0,
+                "smoothing_shift_days": 4.0,
+                "peak_utilization_pct": 120.5,
+            },
+            {
+                "activity_id": "ACT-EDGE-OK",
+                "free_float_days": 2.0,
+                "total_float_days": 5.0,
+                "smoothing_shift_days": 2.0,
+                "peak_utilization_pct": 100.0,
+            },
+        ]
+    )
+    assert res["total_activities"] == 3
+    assert res["float_exceeded_activity_ids"] == ["ACT-EXCEED"]
+    assert res["unresolved_overallocation_activity_ids"] == ["ACT-OVERALLOC"]
+    assert res["critical_path_shifted_activity_ids"] == []
+    assert res["is_smoothing_valid"] is False
+
+
+def test_validate_resource_smoothing_float_boundaries_empty_or_none():
+    """None, str, Mapping, 42 o entradas malformadas -> 0 actividades y valid False."""
+    from backend.schemas.projects import validate_resource_smoothing_float_boundaries
+
+    empty_result = {
+        "total_activities": 0,
+        "critical_path_shifted_activity_ids": [],
+        "float_exceeded_activity_ids": [],
+        "unresolved_overallocation_activity_ids": [],
+        "is_smoothing_valid": False,
+    }
+
+    for payload in (None, "activities-string", {"activity_id": "X"}, 42, [], ["no-dict", {"is_critical": True}]):
+        assert validate_resource_smoothing_float_boundaries(payload) == empty_result  # type: ignore[arg-type]

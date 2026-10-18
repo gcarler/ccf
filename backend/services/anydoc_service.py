@@ -2374,6 +2374,13 @@ class AnyDocService:
     ) -> dict[str, Any]:
         return audit_markdown_table_column_alignment_hygiene(markdown_text)
 
+    @staticmethod
+    def audit_markdown_task_list_checklist_hygiene(
+        markdown_text: str | None = None,
+    ) -> dict[str, Any]:
+        return audit_markdown_task_list_checklist_hygiene(markdown_text)
+
+
 
 
 _CODE_FENCE_OPEN_AUDIT_RE = re.compile(r"^\s*(`{3,}|~{3,})\s*(.*)$")
@@ -2985,7 +2992,9 @@ __all__ = [
     "audit_markdown_internal_anchor_links",
     "audit_markdown_callout_admonition_hygiene",
     "audit_markdown_table_column_alignment_hygiene",
+    "audit_markdown_task_list_checklist_hygiene",
     "AnyDocService",
+    "AnydocService",
 ]
 
 
@@ -3090,3 +3099,94 @@ def audit_markdown_table_column_alignment_hygiene(
         "ragged_column_table_indices": ragged_column_table_indices,
         "is_table_hygiene_clean": is_table_hygiene_clean,
     }
+
+
+_TASK_LIST_ITEM_HYGIENE_RE = re.compile(
+    r"^\s*[-*+]\s+\[(?P<mark>.)\]\s*(?P<body>.*)$"
+)
+
+
+def audit_markdown_task_list_checklist_hygiene(
+    markdown_text: str | None = None,
+) -> dict[str, Any]:
+    """Audita listas de tareas (checklists) en Markdown verificando sintaxis de casilla, descripción no vacía y asignación de responsable en items abiertos según PMI PMBOK §4.4 y §10.2."""
+    if not isinstance(markdown_text, str) or not markdown_text:
+        return {
+            "total_task_items": 0,
+            "completed_task_items": 0,
+            "completion_rate_pct": 0.0,
+            "invalid_checkbox_syntax_lines": [],
+            "empty_task_description_lines": [],
+            "unassigned_open_task_lines": [],
+            "is_checklist_hygiene_clean": True,
+        }
+
+    lines = markdown_text.splitlines()
+    total_task_items = 0
+    completed_task_items = 0
+    invalid_checkbox_syntax_lines: list[int] = []
+    empty_task_description_lines: list[int] = []
+    unassigned_open_task_lines: list[int] = []
+
+    in_backtick_fence = False
+    in_tilde_fence = False
+
+    for line_num, line in enumerate(lines, start=1):
+        stripped = line.strip()
+        if not in_tilde_fence and not in_backtick_fence and stripped.startswith("```"):
+            in_backtick_fence = not in_backtick_fence
+            continue
+        if not in_backtick_fence and not in_tilde_fence and stripped.startswith("~~~"):
+            in_tilde_fence = not in_tilde_fence
+            continue
+        if in_backtick_fence or in_tilde_fence:
+            continue
+
+        match = _TASK_LIST_ITEM_HYGIENE_RE.match(line)
+        if not match:
+            continue
+
+        total_task_items += 1
+        mark = match.group("mark")
+        body = match.group("body").strip()
+
+        if mark not in {" ", "x", "X"}:
+            invalid_checkbox_syntax_lines.append(line_num)
+
+        if not body:
+            empty_task_description_lines.append(line_num)
+
+        if mark in {"x", "X"}:
+            completed_task_items += 1
+
+        if (
+            mark == " "
+            and body
+            and ("@" not in body and "owner:" not in body.lower())
+        ):
+            unassigned_open_task_lines.append(line_num)
+
+    completion_rate_pct = (
+        round((completed_task_items / total_task_items) * 100.0, 2)
+        if total_task_items > 0
+        else 0.0
+    )
+    is_checklist_hygiene_clean = bool(
+        not invalid_checkbox_syntax_lines
+        and not empty_task_description_lines
+        and not unassigned_open_task_lines
+    )
+
+    return {
+        "total_task_items": total_task_items,
+        "completed_task_items": completed_task_items,
+        "completion_rate_pct": completion_rate_pct,
+        "invalid_checkbox_syntax_lines": invalid_checkbox_syntax_lines,
+        "empty_task_description_lines": empty_task_description_lines,
+        "unassigned_open_task_lines": unassigned_open_task_lines,
+        "is_checklist_hygiene_clean": is_checklist_hygiene_clean,
+    }
+
+
+AnydocService = AnyDocService
+
