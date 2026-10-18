@@ -7,6 +7,7 @@ import argparse
 import difflib
 import re
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -1513,6 +1514,106 @@ def summarize_projects_json_response_schema_hygiene(
         "untyped_json_response_schemas": untyped_json_response_schemas,
         "is_json_response_hygienic": is_json_response_hygienic,
         "response_schema_posture": response_schema_posture,
+    }
+
+
+def summarize_projects_security_scheme_hygiene(
+    openapi_schema: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Audita la higiene de esquemas de seguridad y protección de mutaciones en endpoints /api/projects o /projects."""
+    if not isinstance(openapi_schema, Mapping):
+        return {
+            "evaluated_operation_count": 0,
+            "defined_security_schemes": [],
+            "has_global_security": False,
+            "explicit_security_ops": [],
+            "public_override_ops": [],
+            "auth_error_documented_ops": [],
+            "unprotected_write_ops": [],
+            "undefined_scheme_refs": [],
+            "is_hygienic": True,
+        }
+
+    components = openapi_schema.get("components")
+    sec_schemes = (
+        components.get("securitySchemes")
+        if isinstance(components, Mapping)
+        and isinstance(components.get("securitySchemes"), Mapping)
+        else {}
+    )
+    defined_security_schemes = sorted(str(k) for k in sec_schemes.keys())
+    has_global_security = bool(openapi_schema.get("security"))
+
+    evaluated_operation_count = 0
+    explicit_security_ops: list[str] = []
+    public_override_ops: list[str] = []
+    auth_error_documented_ops: list[str] = []
+    unprotected_write_ops: list[str] = []
+    undefined_scheme_refs: list[str] = []
+
+    paths = openapi_schema.get("paths")
+    if isinstance(paths, Mapping):
+        for path, path_item in sorted(paths.items()):
+            if not isinstance(path, str) or not (
+                path.startswith("/api/projects") or path.startswith("/projects")
+            ):
+                continue
+            if not isinstance(path_item, Mapping):
+                continue
+
+            for method in ("get", "post", "put", "patch", "delete"):
+                op = path_item.get(method)
+                if not isinstance(op, Mapping):
+                    continue
+
+                evaluated_operation_count += 1
+                op_key = f"{method.upper()} {path}"
+                op_security = op.get("security")
+
+                if isinstance(op_security, list) and len(op_security) > 0:
+                    explicit_security_ops.append(op_key)
+                if "security" in op and op_security == []:
+                    public_override_ops.append(op_key)
+                    if method in {"post", "put", "patch", "delete"}:
+                        unprotected_write_ops.append(op_key)
+
+                responses = (
+                    op.get("responses")
+                    if isinstance(op.get("responses"), Mapping)
+                    else {}
+                )
+                resp_keys = {str(k) for k in responses.keys()}
+                if "401" in resp_keys or "403" in resp_keys:
+                    auth_error_documented_ops.append(op_key)
+
+                for sec_req in (
+                    op_security if isinstance(op_security, list) else []
+                ):
+                    if isinstance(sec_req, Mapping):
+                        for scheme_name in sec_req.keys():
+                            if (
+                                len(defined_security_schemes) > 0
+                                and str(scheme_name)
+                                not in defined_security_schemes
+                            ):
+                                undefined_scheme_refs.append(
+                                    f"{op_key}:{scheme_name}"
+                                )
+
+    is_hygienic = (
+        len(unprotected_write_ops) == 0 and len(undefined_scheme_refs) == 0
+    )
+
+    return {
+        "evaluated_operation_count": evaluated_operation_count,
+        "defined_security_schemes": defined_security_schemes,
+        "has_global_security": has_global_security,
+        "explicit_security_ops": explicit_security_ops,
+        "public_override_ops": public_override_ops,
+        "auth_error_documented_ops": auth_error_documented_ops,
+        "unprotected_write_ops": unprotected_write_ops,
+        "undefined_scheme_refs": undefined_scheme_refs,
+        "is_hygienic": is_hygienic,
     }
 
 

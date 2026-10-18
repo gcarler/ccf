@@ -2678,3 +2678,178 @@ def test_json_response_schema_hygiene_no_responses():
         )
         == expected
     )
+
+
+def test_security_scheme_hygiene_protected_operations():
+    """Operaciones protegidas con esquemas definidos y respuestas 401/403 (is_hygienic=True)."""
+    schema = {
+        "security": [{"BearerAuth": []}],
+        "components": {
+            "securitySchemes": {
+                "BearerAuth": {"type": "http", "scheme": "bearer"},
+                "ApiKeyAuth": {
+                    "type": "apiKey",
+                    "in": "header",
+                    "name": "X-API-Key",
+                },
+            }
+        },
+        "paths": {
+            "/api/projects": {
+                "get": {
+                    "security": [],
+                    "responses": {"200": {"description": "OK"}},
+                },
+                "post": {
+                    "security": [{"BearerAuth": []}],
+                    "responses": {
+                        "201": {"description": "Created"},
+                        "401": {"description": "Unauthorized"},
+                        "403": {"description": "Forbidden"},
+                    },
+                },
+            },
+            "/projects/{project_id}": {
+                "patch": {
+                    "security": [{"BearerAuth": []}, {"ApiKeyAuth": []}],
+                    "responses": {
+                        "200": {"description": "Updated"},
+                        "403": {"description": "Forbidden"},
+                    },
+                }
+            },
+            "/api/other": {
+                "delete": {
+                    "security": [],
+                    "responses": {"204": {"description": "Deleted"}},
+                }
+            },
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_security_scheme_hygiene(
+        schema
+    )
+    assert res == {
+        "evaluated_operation_count": 3,
+        "defined_security_schemes": ["ApiKeyAuth", "BearerAuth"],
+        "has_global_security": True,
+        "explicit_security_ops": [
+            "POST /api/projects",
+            "PATCH /projects/{project_id}",
+        ],
+        "public_override_ops": ["GET /api/projects"],
+        "auth_error_documented_ops": [
+            "POST /api/projects",
+            "PATCH /projects/{project_id}",
+        ],
+        "unprotected_write_ops": [],
+        "undefined_scheme_refs": [],
+        "is_hygienic": True,
+    }
+
+
+def test_security_scheme_hygiene_unprotected_write_ops():
+    """Detección de mutaciones con security=[] en unprotected_write_ops (is_hygienic=False)."""
+    schema = {
+        "components": {
+            "securitySchemes": {
+                "BearerAuth": {"type": "http", "scheme": "bearer"}
+            }
+        },
+        "paths": {
+            "/api/projects": {
+                "post": {
+                    "security": [],
+                    "responses": {"201": {"description": "Created"}},
+                },
+                "delete": {
+                    "security": [],
+                    "responses": {"204": {"description": "Deleted"}},
+                },
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_security_scheme_hygiene(
+        schema
+    )
+    assert res["evaluated_operation_count"] == 2
+    assert res["public_override_ops"] == [
+        "POST /api/projects",
+        "DELETE /api/projects",
+    ]
+    assert res["unprotected_write_ops"] == [
+        "POST /api/projects",
+        "DELETE /api/projects",
+    ]
+    assert res["is_hygienic"] is False
+
+
+def test_security_scheme_hygiene_undefined_scheme_refs():
+    """Detección de referencias a esquemas inexistentes en undefined_scheme_refs (is_hygienic=False)."""
+    schema = {
+        "components": {
+            "securitySchemes": {
+                "BearerAuth": {"type": "http", "scheme": "bearer"}
+            }
+        },
+        "paths": {
+            "/api/projects/tasks": {
+                "get": {
+                    "security": [{"GhostOAuth2": ["read:tasks"]}],
+                    "responses": {"401": {"description": "Unauthorized"}},
+                },
+                "put": {
+                    "security": [{"BearerAuth": [], "UnknownKey": []}],
+                    "responses": {"200": {"description": "OK"}},
+                },
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_security_scheme_hygiene(
+        schema
+    )
+    assert res["defined_security_schemes"] == ["BearerAuth"]
+    assert res["undefined_scheme_refs"] == [
+        "GET /api/projects/tasks:GhostOAuth2",
+        "PUT /api/projects/tasks:UnknownKey",
+    ]
+    assert res["is_hygienic"] is False
+
+
+def test_security_scheme_hygiene_empty_and_live_openapi():
+    """Manejo de schema vacío/None y auditoría del esquema OpenAPI en vivo de la app FastAPI."""
+    empty_expected = {
+        "evaluated_operation_count": 0,
+        "defined_security_schemes": [],
+        "has_global_security": False,
+        "explicit_security_ops": [],
+        "public_override_ops": [],
+        "auth_error_documented_ops": [],
+        "unprotected_write_ops": [],
+        "undefined_scheme_refs": [],
+        "is_hygienic": True,
+    }
+    assert (
+        audit_projects_api_contracts.summarize_projects_security_scheme_hygiene(
+            None
+        )
+        == empty_expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_security_scheme_hygiene(
+            {}
+        )
+        == empty_expected
+    )
+
+    from backend.app import app
+
+    live_res = (
+        audit_projects_api_contracts.summarize_projects_security_scheme_hygiene(
+            app.openapi()
+        )
+    )
+    assert live_res["evaluated_operation_count"] > 0
+    assert live_res["unprotected_write_ops"] == []
+    assert live_res["undefined_scheme_refs"] == []
+    assert live_res["is_hygienic"] is True
