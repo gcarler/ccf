@@ -3690,6 +3690,7 @@ __all__ = [
     "validate_emv_decision_tree_exposure",
     "validate_pdm_dependency_leads_and_lags",
     "validate_schedule_compression_options",
+    "validate_wbs_work_package_sizing_heuristic",
 ]
 
 
@@ -3818,3 +3819,81 @@ def validate_schedule_compression_options(
         "compression_posture": compression_posture,
     }
 
+
+def validate_wbs_work_package_sizing_heuristic(
+    work_packages: list[dict[str, Any]] | None = None,
+    min_effort_hours: float = 8.0,
+    max_effort_hours: float = 80.0,
+) -> dict[str, Any]:
+    """Valida la heurística 8/80 horas y propietario único en paquetes de trabajo hoja de la EDT/WBS (PMBOK §5.4 / §6.2).
+
+    Reglas:
+    - Ignora paquetes sin `id`/`wp_id` o con `is_leaf` en `False` (nodos resumen).
+    - `effort = float(item.get("estimated_hours") if item.get("estimated_hours") is not None else 0.0)`
+    - Si `effort < float(min_effort_hours)` -> `undersized_package_ids`.
+    - Si `effort > float(max_effort_hours)` -> `oversized_package_ids`.
+    - Si `len(owners_list) != 1` -> `invalid_ownership_package_ids`.
+    - `is_wbs_sizing_compliant = bool(total_leaf_packages > 0 and len(undersized_package_ids) == 0 and len(oversized_package_ids) == 0 and len(invalid_ownership_package_ids) == 0)`
+    """
+    total_leaf_packages = 0
+    undersized_package_ids: list[str] = []
+    oversized_package_ids: list[str] = []
+    invalid_ownership_package_ids: list[str] = []
+
+    for item in work_packages or []:
+        if not isinstance(item, dict):
+            continue
+        wp_id = str(item.get("id") or item.get("wp_id") or "").strip()
+        if not wp_id:
+            continue
+        is_leaf = bool(item.get("is_leaf", True))
+        if not is_leaf:
+            continue
+
+        total_leaf_packages += 1
+        raw_effort = item.get("estimated_hours")
+        try:
+            effort = float(raw_effort if raw_effort is not None else 0.0)
+        except (TypeError, ValueError):
+            effort = 0.0
+
+        owner_id = str(item.get("owner_id") or "").strip()
+        raw_owners = item.get("owners")
+        if isinstance(raw_owners, list):
+            owners_list = [str(o).strip() for o in raw_owners if str(o).strip()]
+        else:
+            owners_list = [owner_id] if owner_id else []
+
+        if effort < float(min_effort_hours):
+            undersized_package_ids.append(wp_id)
+        if effort > float(max_effort_hours):
+            oversized_package_ids.append(wp_id)
+        if len(owners_list) != 1:
+            invalid_ownership_package_ids.append(wp_id)
+
+    is_wbs_sizing_compliant = bool(
+        total_leaf_packages > 0
+        and len(undersized_package_ids) == 0
+        and len(oversized_package_ids) == 0
+        and len(invalid_ownership_package_ids) == 0
+    )
+
+    if total_leaf_packages == 0:
+        sizing_posture = "NO_LEAF_WORK_PACKAGES"
+    elif len(oversized_package_ids) > 0:
+        sizing_posture = "OVERSIZED_WORK_PACKAGES_NEED_DECOMPOSITION"
+    elif len(invalid_ownership_package_ids) > 0:
+        sizing_posture = "INVALID_WORK_PACKAGE_OWNERSHIP"
+    elif len(undersized_package_ids) > 0:
+        sizing_posture = "UNDERSIZED_MICRO_WORK_PACKAGES"
+    else:
+        sizing_posture = "BALANCED_8_80_WBS_DECOMPOSITION"
+
+    return {
+        "total_leaf_packages": total_leaf_packages,
+        "undersized_package_ids": undersized_package_ids,
+        "oversized_package_ids": oversized_package_ids,
+        "invalid_ownership_package_ids": invalid_ownership_package_ids,
+        "is_wbs_sizing_compliant": is_wbs_sizing_compliant,
+        "sizing_posture": sizing_posture,
+    }

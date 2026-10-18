@@ -2117,3 +2117,113 @@ def test_audit_markdown_image_asset_hygiene_no_images():
             "image_hygiene_posture": "NO_IMAGES_FOUND",
         }
 
+
+
+def test_audit_markdown_task_checklist_governance_governed():
+    """Checklist con cierres y acciones trazables -> GOVERNED_ACTION_CHECKLIST."""
+    from backend.services.anydoc_service import (
+        audit_markdown_task_checklist_governance as audit_fn,
+    )
+
+    res = audit_fn(
+        "\n".join(
+            [
+                "# Actas CCB",
+                "- [x] Aprobar charter firmado el 2026-09-30",
+                "- [x] Publicar minutas en la wiki @secretaria",
+                "- [ ] Enviar acta a patrocinadores @mediacion 2026-10-25",
+                "- [ ] Agendar retro del cierre @pm",
+            ]
+        )
+    )
+    assert res["total_checklist_items"] == 4
+    assert res["completed_items_count"] == 2
+    assert res["open_items_count"] == 2
+    assert res["completion_rate_pct"] == 50.0
+    assert res["empty_task_item_lines"] == []
+    assert res["untraceable_open_item_lines"] == []
+    assert res["is_checklist_governed"] is True
+    assert res["checklist_posture"] == "GOVERNED_ACTION_CHECKLIST"
+
+
+def test_audit_markdown_task_checklist_governance_empty_item_text():
+    """Ítems sin texto -> EMPTY_CHECKLIST_ITEM_TEXT (precedencia)."""
+    from backend.services.anydoc_service import (
+        audit_markdown_task_checklist_governance as audit_fn,
+    )
+
+    res = audit_fn(
+        "\n".join(
+            [
+                "- [x] Cierre fiscal 2026-09-30 completado",
+                "- [ ]",
+                "- [ ]   ",
+                "- [x] Redactar checklist final @lider",
+            ]
+        )
+    )
+    assert res["total_checklist_items"] == 4
+    assert res["completed_items_count"] == 2
+    assert res["open_items_count"] == 2
+    assert res["empty_task_item_lines"] == [2, 3]
+    assert res["untraceable_open_item_lines"] == []
+    assert res["is_checklist_governed"] is False
+    assert res["checklist_posture"] == "EMPTY_CHECKLIST_ITEM_TEXT"
+
+
+def test_audit_markdown_task_checklist_governance_untraceable_open_items():
+    """Ítems abiertos sin responsable ni fecha -> UNASSIGNED_OPEN_ACTION_ITEMS."""
+    from backend.services.anydoc_service import (
+        audit_markdown_task_checklist_governance as audit_fn,
+    )
+
+    res = audit_fn(
+        "\n".join(
+            [
+                "- [x] Convocatoria aprobada @consejo",
+                "- [ ] Contactar sedes nuevas",
+                "- [ ] Preparar telemetria @tecnica",
+                "- [ ] Rpondear peticiones sin dueño ni fecha",
+            ]
+        )
+    )
+    assert res["total_checklist_items"] == 4
+    assert res["completed_items_count"] == 1
+    assert res["open_items_count"] == 3
+    assert res["empty_task_item_lines"] == []
+    assert res["untraceable_open_item_lines"] == [2, 4]
+    assert res["is_checklist_governed"] is False
+    assert res["checklist_posture"] == "UNASSIGNED_OPEN_ACTION_ITEMS"
+
+
+def test_audit_markdown_task_checklist_governance_empty_or_fenced():
+    """> Sin ítems (o solo dentro de fences) -> NO_CHECKLIST_ITEMS."""
+    from backend.services.anydoc_service import (
+        audit_markdown_task_checklist_governance as audit_fn,
+    )
+
+    for payload in (None, "Sin checklist en el texto", ""):
+        res = audit_fn(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_checklist_items": 0,
+            "completed_items_count": 0,
+            "open_items_count": 0,
+            "completion_rate_pct": 0.0,
+            "empty_task_item_lines": [],
+            "untraceable_open_item_lines": [],
+            "is_checklist_governed": False,
+            "checklist_posture": "NO_CHECKLIST_ITEMS",
+        }
+
+    fenced = "\n".join(
+        [
+            "```markdown",
+            "- [x] Item invisible dentro del fence",
+            "```",
+            "- [ ] Visible fuera del fence @responsable",
+        ]
+    )
+    res = audit_fn(fenced)
+    assert res["total_checklist_items"] == 1
+    assert res["completed_items_count"] == 0
+    assert res["is_checklist_governed"] is True

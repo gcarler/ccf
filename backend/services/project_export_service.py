@@ -2369,6 +2369,109 @@ def audit_executive_report_closure_readiness(
     }
 
 
+def audit_executive_report_distribution_cadence(
+    report_payload: dict[str, Any] | None = None,
+    max_days_since_last_dispatch: int = 14,
+    min_ack_rate_pct: float = 80.0,
+) -> dict[str, Any]:
+    """Audita cadencia de distribución y acuse de recibo del reporte ejecutivo (PMBOK §10.3 / §4.5).
+
+    Reglas:
+    - Extrae `distribution = (report_payload or {}).get("distribution_governance") or {}`.
+    - Filtra destinatarios válidos (`id` o `recipient_id` no vacío).
+    - `days_since_last_dispatch`: entero extraído de `distribution.get("days_since_last_dispatch")` (por defecto `-1`).
+    - Por cada destinatario:
+      - `is_mandatory = bool(r.get("mandatory", True))`
+      - `is_dispatched = bool(r.get("dispatched", False))`
+      - `is_acknowledged = bool(r.get("acknowledged", False))`
+      - Si `is_mandatory and not is_dispatched`: agrega a `undispatched_mandatory_recipient_ids`.
+      - Si `is_dispatched`: incrementa `dispatched_count`; si `is_acknowledged` incrementa `acknowledged_count`,
+        de lo contrario agrega a `unacknowledged_recipient_ids`.
+    - `ack_rate_pct = round((acknowledged_count / dispatched_count) * 100.0, 2) if dispatched_count > 0 else 0.0`
+    - `is_cadence_overdue = bool(days_since_last_dispatch < 0 or days_since_last_dispatch > max(1, int(max_days_since_last_dispatch)))`
+    - `is_distribution_governed = bool(len(recipients) > 0 and not is_cadence_overdue and len(undispatched_mandatory_recipient_ids) == 0 and ack_rate_pct >= float(min_ack_rate_pct))`
+    """
+    payload = report_payload if isinstance(report_payload, dict) else {}
+    raw_distribution = payload.get("distribution_governance")
+    distribution = raw_distribution if isinstance(raw_distribution, dict) else {}
+
+    raw_recipients = distribution.get("recipients") or []
+    recipients: list[dict[str, Any]] = []
+    if isinstance(raw_recipients, list):
+        for r in raw_recipients:
+            if not isinstance(r, dict):
+                continue
+            r_id = str(r.get("id") or r.get("recipient_id") or "").strip()
+            if r_id:
+                recipients.append(r)
+
+    raw_days = distribution.get("days_since_last_dispatch")
+    try:
+        days_since_last_dispatch = int(raw_days) if raw_days is not None else -1
+    except (TypeError, ValueError):
+        days_since_last_dispatch = -1
+
+    undispatched_mandatory_recipient_ids: list[str] = []
+    unacknowledged_recipient_ids: list[str] = []
+    dispatched_count = 0
+    acknowledged_count = 0
+
+    for r in recipients:
+        recipient_id = str(r.get("id") or r.get("recipient_id") or "").strip()
+        is_mandatory = bool(r.get("mandatory", True))
+        is_dispatched = bool(r.get("dispatched", False))
+        is_acknowledged = bool(r.get("acknowledged", False))
+
+        if is_mandatory and not is_dispatched:
+            undispatched_mandatory_recipient_ids.append(recipient_id)
+
+        if is_dispatched:
+            dispatched_count += 1
+            if is_acknowledged:
+                acknowledged_count += 1
+            else:
+                unacknowledged_recipient_ids.append(recipient_id)
+
+    ack_rate_pct = (
+        round((acknowledged_count / dispatched_count) * 100.0, 2)
+        if dispatched_count > 0
+        else 0.0
+    )
+    is_cadence_overdue = bool(
+        days_since_last_dispatch < 0
+        or days_since_last_dispatch > max(1, int(max_days_since_last_dispatch))
+    )
+    is_distribution_governed = bool(
+        len(recipients) > 0
+        and not is_cadence_overdue
+        and len(undispatched_mandatory_recipient_ids) == 0
+        and ack_rate_pct >= float(min_ack_rate_pct)
+    )
+
+    if len(recipients) == 0:
+        distribution_posture = "NO_DISTRIBUTION_RECIPIENTS"
+    elif len(undispatched_mandatory_recipient_ids) > 0:
+        distribution_posture = "UNDISPATCHED_MANDATORY_STAKEHOLDERS"
+    elif is_cadence_overdue:
+        distribution_posture = "REPORT_DISPATCH_CADENCE_OVERDUE"
+    elif ack_rate_pct < float(min_ack_rate_pct):
+        distribution_posture = "LOW_STAKEHOLDER_ACKNOWLEDGMENT_RATE"
+    else:
+        distribution_posture = "GOVERNED_EXECUTIVE_DISTRIBUTION"
+
+    return {
+        "total_recipients": len(recipients),
+        "dispatched_count": dispatched_count,
+        "acknowledged_count": acknowledged_count,
+        "ack_rate_pct": ack_rate_pct,
+        "undispatched_mandatory_recipient_ids": undispatched_mandatory_recipient_ids,
+        "unacknowledged_recipient_ids": unacknowledged_recipient_ids,
+        "is_cadence_overdue": is_cadence_overdue,
+        "is_distribution_governed": is_distribution_governed,
+        "distribution_posture": distribution_posture,
+    }
+
+
 ProjectExportService.audit_executive_report_risk_burndown = staticmethod(
     audit_executive_report_risk_burndown
 )
@@ -2380,6 +2483,9 @@ ProjectExportService.audit_executive_report_resource_spof_and_utilization = stat
 )
 ProjectExportService.audit_executive_report_closure_readiness = staticmethod(
     audit_executive_report_closure_readiness
+)
+ProjectExportService.audit_executive_report_distribution_cadence = staticmethod(
+    audit_executive_report_distribution_cadence
 )
 
 
@@ -2408,8 +2514,6 @@ __all__ = [
     "audit_executive_report_change_control_log",
     "audit_executive_report_resource_spof_and_utilization",
     "audit_executive_report_closure_readiness",
+    "audit_executive_report_distribution_cadence",
     "ProjectExportService",
 ]
-
-
-

@@ -1967,3 +1967,83 @@ def test_validate_schedule_compression_options_empty_or_none():
             "is_compression_plan_sound": True,
             "compression_posture": "NO_COMPRESSION_OPTIONS",
         }
+
+
+def test_validate_wbs_work_package_sizing_heuristic_balanced():
+    """Paquetes hoja entre 8 y 80h con 1 owner -> BALANCED_8_80_WBS_DECOMPOSITION; ignora nodos resumen."""
+    from backend.schemas.projects import validate_wbs_work_package_sizing_heuristic
+
+    res = validate_wbs_work_package_sizing_heuristic(
+        [
+            {"id": "WBS-1.0", "is_leaf": False, "estimated_hours": 240.0},
+            {"id": "WP-1.1", "is_leaf": True, "estimated_hours": 16.0, "owner_id": "USR-1"},
+            {"wp_id": "WP-1.2", "estimated_hours": 80.0, "owners": ["USR-2"]},
+            {"id": "WP-1.3", "estimated_hours": 8.0, "owner_id": "USR-3"},
+        ]
+    )
+    assert res == {
+        "total_leaf_packages": 3,
+        "undersized_package_ids": [],
+        "oversized_package_ids": [],
+        "invalid_ownership_package_ids": [],
+        "is_wbs_sizing_compliant": True,
+        "sizing_posture": "BALANCED_8_80_WBS_DECOMPOSITION",
+    }
+
+
+def test_validate_wbs_work_package_sizing_heuristic_oversized():
+    """Paquetes hoja > 80h -> OVERSIZED_WORK_PACKAGES_NEED_DECOMPOSITION."""
+    from backend.schemas.projects import validate_wbs_work_package_sizing_heuristic
+
+    res = validate_wbs_work_package_sizing_heuristic(
+        [
+            {"id": "WP-BIG", "estimated_hours": 120.0, "owner_id": "USR-1"},
+            {"id": "WP-OK", "estimated_hours": 40.0, "owner_id": "USR-2"},
+        ]
+    )
+    assert res["total_leaf_packages"] == 2
+    assert res["oversized_package_ids"] == ["WP-BIG"]
+    assert res["undersized_package_ids"] == []
+    assert res["invalid_ownership_package_ids"] == []
+    assert res["is_wbs_sizing_compliant"] is False
+    assert res["sizing_posture"] == "OVERSIZED_WORK_PACKAGES_NEED_DECOMPOSITION"
+
+
+def test_validate_wbs_work_package_sizing_heuristic_invalid_ownership_and_undersized():
+    """Sin owner o múltiples owners -> INVALID_WORK_PACKAGE_OWNERSHIP; < 8h -> UNDERSIZED_MICRO_WORK_PACKAGES."""
+    from backend.schemas.projects import validate_wbs_work_package_sizing_heuristic
+
+    res_own = validate_wbs_work_package_sizing_heuristic(
+        [
+            {"id": "WP-NO-OWN", "estimated_hours": 24.0},
+            {"id": "WP-DUAL-OWN", "estimated_hours": 32.0, "owners": ["USR-1", "USR-2"]},
+        ]
+    )
+    assert res_own["invalid_ownership_package_ids"] == ["WP-NO-OWN", "WP-DUAL-OWN"]
+    assert res_own["is_wbs_sizing_compliant"] is False
+    assert res_own["sizing_posture"] == "INVALID_WORK_PACKAGE_OWNERSHIP"
+
+    res_micro = validate_wbs_work_package_sizing_heuristic(
+        [
+            {"id": "WP-MICRO", "estimated_hours": 4.0, "owner_id": "USR-1"},
+        ]
+    )
+    assert res_micro["undersized_package_ids"] == ["WP-MICRO"]
+    assert res_micro["is_wbs_sizing_compliant"] is False
+    assert res_micro["sizing_posture"] == "UNDERSIZED_MICRO_WORK_PACKAGES"
+
+
+def test_validate_wbs_work_package_sizing_heuristic_empty_or_only_summary():
+    """Lista vacía, None o solo nodos resumen -> NO_LEAF_WORK_PACKAGES."""
+    from backend.schemas.projects import validate_wbs_work_package_sizing_heuristic
+
+    for payload in (None, [], [{"id": "WBS-ROOT", "is_leaf": False, "estimated_hours": 500.0}]):
+        res = validate_wbs_work_package_sizing_heuristic(payload)
+        assert res == {
+            "total_leaf_packages": 0,
+            "undersized_package_ids": [],
+            "oversized_package_ids": [],
+            "invalid_ownership_package_ids": [],
+            "is_wbs_sizing_compliant": False,
+            "sizing_posture": "NO_LEAF_WORK_PACKAGES",
+        }

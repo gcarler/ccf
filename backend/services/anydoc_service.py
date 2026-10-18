@@ -2102,9 +2102,92 @@ def audit_markdown_admonition_callouts(
     }
 
 
+def audit_markdown_task_checklist_governance(
+    markdown_text: str | None = None,
+) -> dict[str, Any]:
+    """Audita listas de verificación y compromisos de acción en Markdown (PMBOK §4.4 y §8.3).
+
+    Ignora bloques de código cercados (```). Cada ítem de checklist
+    (`- [ ]` / `- [x]`) debe declarar texto y, si esta abierto, trazabilidad
+    PMI: responsable (@handle) o fecha compromiso (YYYY-MM-DD):
+    - `empty_task_item_lines`: líneas de ítems sin texto.
+    - `untraceable_open_item_lines`: ítems abiertos sin responsable ni fecha.
+    - `completion_rate_pct` (2 decimales; 0.0 sin ítems).
+    - `is_checklist_governed`: con ítems y ambas listas vacías.
+    - `checklist_posture`: 'NO_CHECKLIST_ITEMS' sin ítems;
+      'EMPTY_CHECKLIST_ITEM_TEXT'; 'UNASSIGNED_OPEN_ACTION_ITEMS';
+      'GOVERNED_ACTION_CHECKLIST'.
+    """
+    lines = (markdown_text if isinstance(markdown_text, str) else "").splitlines()
+    checklist_re = re.compile(r"^[ \t]*[-*+]\s+\[([ xX])\]\s*(.*)$")
+    owner_re = re.compile(r"@[A-Za-z0-9_.-]+")
+    date_re = re.compile(r"\b\d{4}-\d{2}-\d{2}\b")
+
+    total_checklist_items = 0
+    completed_items_count = 0
+    open_items_count = 0
+    empty_task_item_lines: list[int] = []
+    untraceable_open_item_lines: list[int] = []
+    in_fence = False
+
+    for line_number, line in enumerate(lines, start=1):
+        if line.strip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+
+        match = checklist_re.match(line)
+        if not match:
+            continue
+
+        total_checklist_items += 1
+        marker = match.group(1)
+        item_text = match.group(2).strip()
+
+        if marker in ("x", "X"):
+            completed_items_count += 1
+        else:
+            open_items_count += 1
+
+        if not item_text:
+            empty_task_item_lines.append(line_number)
+        elif marker not in ("x", "X"):
+            if not owner_re.search(item_text) and not date_re.search(item_text):
+                untraceable_open_item_lines.append(line_number)
+
+    completion_rate_pct = (
+        round((completed_items_count / total_checklist_items) * 100.0, 2)
+        if total_checklist_items > 0
+        else 0.0
+    )
+    is_checklist_governed = bool(
+        total_checklist_items > 0 and not empty_task_item_lines and not untraceable_open_item_lines
+    )
+
+    if total_checklist_items == 0:
+        checklist_posture = "NO_CHECKLIST_ITEMS"
+    elif empty_task_item_lines:
+        checklist_posture = "EMPTY_CHECKLIST_ITEM_TEXT"
+    elif untraceable_open_item_lines:
+        checklist_posture = "UNASSIGNED_OPEN_ACTION_ITEMS"
+    else:
+        checklist_posture = "GOVERNED_ACTION_CHECKLIST"
+
+    return {
+        "total_checklist_items": total_checklist_items,
+        "completed_items_count": completed_items_count,
+        "open_items_count": open_items_count,
+        "completion_rate_pct": completion_rate_pct,
+        "empty_task_item_lines": empty_task_item_lines,
+        "untraceable_open_item_lines": untraceable_open_item_lines,
+        "is_checklist_governed": is_checklist_governed,
+        "checklist_posture": checklist_posture,
+    }
+
+
 class AnyDocService:
     """Fachada canónica de conversión y auditoría documental AnyDoc PMI."""
-
     @staticmethod
     def is_anydoc_available() -> bool:
         return is_anydoc_available()
@@ -2242,6 +2325,12 @@ class AnyDocService:
         markdown_text: str | None = None,
     ) -> dict[str, Any]:
         return audit_markdown_admonition_callouts(markdown_text)
+
+    @staticmethod
+    def audit_markdown_task_checklist_governance(
+        markdown_text: str | None = None,
+    ) -> dict[str, Any]:
+        return audit_markdown_task_checklist_governance(markdown_text)
 
     @staticmethod
     def audit_markdown_code_fence_hygiene(
@@ -2476,6 +2565,7 @@ __all__ = [
     "audit_markdown_footnote_citations",
     "audit_markdown_frontmatter_governance",
     "audit_markdown_admonition_callouts",
+    "audit_markdown_task_checklist_governance",
     "audit_markdown_code_fence_hygiene",
     "audit_markdown_image_asset_hygiene",
     "AnyDocService",

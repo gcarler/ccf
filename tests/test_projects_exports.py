@@ -2775,3 +2775,123 @@ def test_audit_executive_report_closure_readiness_empty_or_none():
         }
 
 
+def test_audit_executive_report_distribution_cadence_governed():
+    """Todos los destinatarios obligatorios despachados en cadencia con acuse >= 80% -> GOVERNED_EXECUTIVE_DISTRIBUTION."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_distribution_cadence,
+    )
+
+    payload = {
+        "distribution_governance": {
+            "days_since_last_dispatch": 7,
+            "recipients": [
+                {"id": "STK-1", "mandatory": True, "dispatched": True, "acknowledged": True},
+                {"id": "STK-2", "mandatory": True, "dispatched": True, "acknowledged": True},
+                {"id": "STK-3", "mandatory": True, "dispatched": True, "acknowledged": True},
+                {"id": "STK-4", "mandatory": True, "dispatched": True, "acknowledged": True},
+                {"recipient_id": "STK-5", "mandatory": False, "dispatched": True, "acknowledged": False},
+            ],
+        }
+    }
+    res = audit_executive_report_distribution_cadence(payload, max_days_since_last_dispatch=14, min_ack_rate_pct=80.0)
+    assert res == {
+        "total_recipients": 5,
+        "dispatched_count": 5,
+        "acknowledged_count": 4,
+        "ack_rate_pct": 80.0,
+        "undispatched_mandatory_recipient_ids": [],
+        "unacknowledged_recipient_ids": ["STK-5"],
+        "is_cadence_overdue": False,
+        "is_distribution_governed": True,
+        "distribution_posture": "GOVERNED_EXECUTIVE_DISTRIBUTION",
+    }
+    assert ProjectExportService.audit_executive_report_distribution_cadence(payload) == res
+
+
+def test_audit_executive_report_distribution_cadence_undispatched_mandatory():
+    """Destinatario obligatorio sin envío -> UNDISPATCHED_MANDATORY_STAKEHOLDERS."""
+    from backend.services.project_export_service import (
+        audit_executive_report_distribution_cadence,
+    )
+
+    res = audit_executive_report_distribution_cadence(
+        {
+            "distribution_governance": {
+                "days_since_last_dispatch": 5,
+                "recipients": [
+                    {"id": "STK-SPONSOR", "mandatory": True, "dispatched": False, "acknowledged": False},
+                    {"id": "STK-PMO", "mandatory": True, "dispatched": True, "acknowledged": True},
+                ],
+            }
+        }
+    )
+    assert res["total_recipients"] == 2
+    assert res["dispatched_count"] == 1
+    assert res["acknowledged_count"] == 1
+    assert res["ack_rate_pct"] == 100.0
+    assert res["undispatched_mandatory_recipient_ids"] == ["STK-SPONSOR"]
+    assert res["is_cadence_overdue"] is False
+    assert res["is_distribution_governed"] is False
+    assert res["distribution_posture"] == "UNDISPATCHED_MANDATORY_STAKEHOLDERS"
+
+
+def test_audit_executive_report_distribution_cadence_overdue_and_low_ack():
+    """Cadencia vencida -> REPORT_DISPATCH_CADENCE_OVERDUE; baja tasa de acuse -> LOW_STAKEHOLDER_ACKNOWLEDGMENT_RATE."""
+    from backend.services.project_export_service import (
+        audit_executive_report_distribution_cadence,
+    )
+
+    res_overdue = audit_executive_report_distribution_cadence(
+        {
+            "distribution_governance": {
+                "days_since_last_dispatch": 21,
+                "recipients": [
+                    {"id": "STK-1", "mandatory": True, "dispatched": True, "acknowledged": True},
+                ],
+            }
+        },
+        max_days_since_last_dispatch=14,
+    )
+    assert res_overdue["is_cadence_overdue"] is True
+    assert res_overdue["is_distribution_governed"] is False
+    assert res_overdue["distribution_posture"] == "REPORT_DISPATCH_CADENCE_OVERDUE"
+
+    res_low_ack = audit_executive_report_distribution_cadence(
+        {
+            "distribution_governance": {
+                "days_since_last_dispatch": 4,
+                "recipients": [
+                    {"id": "STK-1", "mandatory": True, "dispatched": True, "acknowledged": True},
+                    {"id": "STK-2", "mandatory": True, "dispatched": True, "acknowledged": False},
+                ],
+            }
+        },
+        min_ack_rate_pct=80.0,
+    )
+    assert res_low_ack["ack_rate_pct"] == 50.0
+    assert res_low_ack["unacknowledged_recipient_ids"] == ["STK-2"]
+    assert res_low_ack["is_cadence_overdue"] is False
+    assert res_low_ack["is_distribution_governed"] is False
+    assert res_low_ack["distribution_posture"] == "LOW_STAKEHOLDER_ACKNOWLEDGMENT_RATE"
+
+
+def test_audit_executive_report_distribution_cadence_empty_or_none():
+    """Sin destinatarios o payload vacío/None -> NO_DISTRIBUTION_RECIPIENTS."""
+    from backend.services.project_export_service import (
+        audit_executive_report_distribution_cadence,
+    )
+
+    for payload in (None, {}, {"distribution_governance": {"recipients": []}}):
+        res = audit_executive_report_distribution_cadence(payload)
+        assert res == {
+            "total_recipients": 0,
+            "dispatched_count": 0,
+            "acknowledged_count": 0,
+            "ack_rate_pct": 0.0,
+            "undispatched_mandatory_recipient_ids": [],
+            "unacknowledged_recipient_ids": [],
+            "is_cadence_overdue": True,
+            "is_distribution_governed": False,
+            "distribution_posture": "NO_DISTRIBUTION_RECIPIENTS",
+        }
