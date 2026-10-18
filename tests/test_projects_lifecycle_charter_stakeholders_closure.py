@@ -2581,3 +2581,121 @@ def test_audit_charter_funding_limit_reconciliation_no_schedule_or_zero_budget()
     )
     assert res_zero_budget["is_funding_reconciled"] is False
     assert res_zero_budget["funding_posture"] == "NO_FUNDING_SCHEDULE_DEFINED"
+
+
+def test_audit_lessons_learned_actionable_followup_governed():
+    """Recomendaciones accionables, HIGH con dueño y cierres institucionalizados -> GOVERNED."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_lessons_learned_actionable_followup as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "id": "LL-1",
+                "impact_level": "high",
+                "recommendation": "Duplicar la cobertura de retención en horarios nocturnos",
+                "action_owner_id": "USR-12",
+                "status": "OPEN",
+            },
+            {
+                "lesson_id": "LL-2",
+                "recommendation": "Documentar el flujo de salas por sede",
+                "opa_updated": True,
+                "status": "INSTITUTIONALIZED",
+            },
+            {
+                "id": "LL-3",
+                "impact_level": "LOW",
+                "recommendation": "Refrescar los enlaces de la wiki",
+                "status": "CLOSED",
+                "opa_updated": True,
+            },
+        ]
+    )
+    assert res["total_lessons"] == 3
+    assert res["missing_recommendation_ids"] == []
+    assert res["unassigned_high_impact_ids"] == []
+    assert res["uninstitutionalized_closed_ids"] == []
+    assert res["is_lessons_followup_governed"] is True
+    assert res["lessons_followup_posture"] == "GOVERNED_LESSONS_FOLLOWUP"
+
+
+def test_audit_lessons_learned_actionable_followup_uninstitutionalized_closure():
+    """Cierro/INSTITUTIONALIZED sin OPA actualizada -> UNINSTITUTIONALIZED_OPA_CLOSURE."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_lessons_learned_actionable_followup as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "id": "LL-OK",
+                "impact_level": "MEDIUM",
+                "recommendation": "Estandarizar el checklist de despliegues",
+                "opa_updated": True,
+                "status": "ARCHIVED",
+            },
+            {
+                "id": "LL-BAD",
+                "impact_level": "CRITICAL",
+                "recommendation": "Añadir respaldo ante caídas de stream",
+                "action_owner_id": "USR-7",
+                "status": "CLOSED",
+            },
+        ]
+    )
+    assert res["total_lessons"] == 2
+    assert res["uninstitutionalized_closed_ids"] == ["LL-BAD"]
+    assert res["missing_recommendation_ids"] == []
+    assert res["unassigned_high_impact_ids"] == []
+    assert res["is_lessons_followup_governed"] is False
+    assert res["lessons_followup_posture"] == "UNINSTITUTIONALIZED_OPA_CLOSURE"
+
+
+def test_audit_lessons_learned_actionable_followup_high_unassigned_and_missing_rec():
+    """> HIGH sin dueño (precedencia) y lección sin recomendación por pilar."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_lessons_learned_actionable_followup as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "id": "LL-HIGH",
+                "impact_level": "HIGH",
+                "recommendation": "Activar voluntariado de apoyo en navidad",
+                "status": "OPEN",
+            },
+            {
+                "id": "LL-NOREC",
+                "impact_level": "LOW",
+                "status": "OPEN",
+            },
+        ]
+    )
+    assert res["total_lessons"] == 2
+    assert res["unassigned_high_impact_ids"] == ["LL-HIGH"]
+    assert res["missing_recommendation_ids"] == ["LL-NOREC"]
+    assert res["uninstitutionalized_closed_ids"] == []
+    assert res["is_lessons_followup_governed"] is False
+    # Precedencia: uninstitutionalized > unassigned high > missing recommendation.
+    assert res["lessons_followup_posture"] == "UNASSIGNED_HIGH_IMPACT_LESSON"
+
+
+def test_audit_lessons_learned_actionable_followup_empty_or_none():
+    """None, lista vacía, registros no-dict o sin lesson_id -> NO_LESSONS_RECORDED."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_lessons_learned_actionable_followup as audit_fn,
+    )
+
+    for payload in (None, [], ["invalid", 42, {"status": "OPEN"}]):
+        res = audit_fn(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_lessons": 0,
+            "missing_recommendation_ids": [],
+            "unassigned_high_impact_ids": [],
+            "uninstitutionalized_closed_ids": [],
+            "is_lessons_followup_governed": False,
+            "lessons_followup_posture": "NO_LESSONS_RECORDED",
+        }

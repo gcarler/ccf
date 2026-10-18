@@ -849,6 +849,85 @@ def evaluate_lessons_learned_institutional_reuse(
     }
 
 
+def audit_lessons_learned_actionable_followup(
+    lessons: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Audita el seguimiento accionable e integración OPA/CAPA de lecciones (PMBOK §4.4 y §4.7).
+
+    Cada registro válido (dict con `id`/`lesson_id` no vacío) declara nivel de
+    impacto (`impact_level`, default 'MEDIUM'), recomendación, responsable
+    (`action_owner_id`), integración OPA (`opa_updated`) y estado
+    (`status`, default 'OPEN'):
+    - `missing_recommendation_ids`: sin recomendación accionable.
+    - `unassigned_high_impact_ids`: HIGH/CRITICAL sin responsable de acción.
+    - `uninstitutionalized_closed_ids`: ARCHIVED/CLOSED/INSTITUTIONALIZED sin OPA actualizada.
+    - `is_lessons_followup_governed`: con lecciones y las 3 listas vacías.
+    - `lessons_followup_posture`: 'NO_LESSONS_RECORDED' sin registros;
+      'UNINSTITUTIONALIZED_OPA_CLOSURE'; 'UNASSIGNED_HIGH_IMPACT_LESSON';
+      'MISSING_ACTIONABLE_RECOMMENDATION'; 'GOVERNED_LESSONS_FOLLOWUP'.
+    """
+    valid_lessons = [
+        lesson
+        for lesson in (lessons or [])
+        if isinstance(lesson, dict) and str(lesson.get("id") or lesson.get("lesson_id") or "").strip()
+    ]
+    total_lessons = len(valid_lessons)
+    if total_lessons == 0:
+        return {
+            "total_lessons": 0,
+            "missing_recommendation_ids": [],
+            "unassigned_high_impact_ids": [],
+            "uninstitutionalized_closed_ids": [],
+            "is_lessons_followup_governed": False,
+            "lessons_followup_posture": "NO_LESSONS_RECORDED",
+        }
+
+    missing_recommendation_ids: list[str] = []
+    unassigned_high_impact_ids: list[str] = []
+    uninstitutionalized_closed_ids: list[str] = []
+
+    for lesson in valid_lessons:
+        lesson_id = str(lesson.get("id") or lesson.get("lesson_id") or "").strip()
+        impact_level = str(lesson.get("impact_level") or "MEDIUM").strip().upper()
+        recommendation = str(lesson.get("recommendation") or "").strip()
+        action_owner_id = str(lesson.get("action_owner_id") or "").strip()
+        opa_updated = bool(lesson.get("opa_updated", False))
+        status = str(lesson.get("status") or "OPEN").strip().upper()
+
+        if not recommendation:
+            missing_recommendation_ids.append(lesson_id)
+        if impact_level in {"HIGH", "CRITICAL"} and not action_owner_id:
+            unassigned_high_impact_ids.append(lesson_id)
+        if status in {"ARCHIVED", "CLOSED", "INSTITUTIONALIZED"} and not opa_updated:
+            uninstitutionalized_closed_ids.append(lesson_id)
+
+    is_lessons_followup_governed = bool(
+        len(missing_recommendation_ids) == 0
+        and len(unassigned_high_impact_ids) == 0
+        and len(uninstitutionalized_closed_ids) == 0
+    )
+
+    if total_lessons == 0:
+        lessons_followup_posture = "NO_LESSONS_RECORDED"
+    elif len(uninstitutionalized_closed_ids) > 0:
+        lessons_followup_posture = "UNINSTITUTIONALIZED_OPA_CLOSURE"
+    elif len(unassigned_high_impact_ids) > 0:
+        lessons_followup_posture = "UNASSIGNED_HIGH_IMPACT_LESSON"
+    elif len(missing_recommendation_ids) > 0:
+        lessons_followup_posture = "MISSING_ACTIONABLE_RECOMMENDATION"
+    else:
+        lessons_followup_posture = "GOVERNED_LESSONS_FOLLOWUP"
+
+    return {
+        "total_lessons": total_lessons,
+        "missing_recommendation_ids": missing_recommendation_ids,
+        "unassigned_high_impact_ids": unassigned_high_impact_ids,
+        "uninstitutionalized_closed_ids": uninstitutionalized_closed_ids,
+        "is_lessons_followup_governed": is_lessons_followup_governed,
+        "lessons_followup_posture": lessons_followup_posture,
+    }
+
+
 class ProjectLifecyclePMIService:
     """Canonical facade for PMI project lifecycle, governance maturity, and automation readiness."""
 
@@ -857,6 +936,12 @@ class ProjectLifecyclePMIService:
         lessons: list[dict[str, Any]] | None,
     ) -> dict[str, Any]:
         return evaluate_lessons_learned_institutional_reuse(lessons)
+
+    @staticmethod
+    def audit_lessons_learned_actionable_followup(
+        lessons: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        return audit_lessons_learned_actionable_followup(lessons)
 
     @staticmethod
     def audit_charter_measurable_objectives(
@@ -2620,6 +2705,7 @@ __all__ = [
     "evaluate_phase_gate_transition_readiness",
     "evaluate_lessons_learned_institutional_reuse",
     "audit_charter_measurable_objectives",
+    "audit_lessons_learned_actionable_followup",
     "audit_stakeholder_communication_cadence",
     "evaluate_benefits_realization_posture",
     "audit_assumption_and_constraint_log",
