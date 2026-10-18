@@ -1634,3 +1634,122 @@ def test_audit_wiki_lessons_learned_taxonomy_empty_or_none():
             "is_compliant": True,
             "lessons_posture": "NO_LESSONS_RECORDED",
         }
+
+
+def test_audit_wiki_adr_lifecycle_traceability_traceable():
+    """Registro ADR con ADR-1 superseded por ADR-2 y ADR-2 accepted con context y consequences."""
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_adr_lifecycle_traceability,
+    )
+
+    adrs = [
+        {
+            "id": "ADR-1",
+            "status": "superseded",
+            "superseded_by": "ADR-2",
+            "context": "Autenticación inicial basada en sesiones monolíticas",
+        },
+        {
+            "id": "ADR-2",
+            "status": "accepted",
+            "context": "Escalabilidad multi-sede requiere tokens firmados stateless",
+            "consequences": "Rotación de llaves JWT y validación en API Gateway",
+        },
+    ]
+    res = audit_wiki_adr_lifecycle_traceability(adrs)
+    assert res == {
+        "total_adrs": 2,
+        "accepted_adrs_count": 1,
+        "invalid_status_adr_ids": [],
+        "broken_supersession_adr_ids": [],
+        "incomplete_accepted_adr_ids": [],
+        "is_traceable": True,
+        "adr_posture": "TRACEABLE_ADR_ARCHITECTURE_LOG",
+    }
+    assert WikiPMIService.audit_wiki_adr_lifecycle_traceability(adrs) == res
+
+
+def test_audit_wiki_adr_lifecycle_traceability_invalid_status():
+    """ADR con estado fuera de gramática -> INVALID_ADR_LIFECYCLE_STATUS."""
+    from backend.services.wiki_pmi_service import audit_wiki_adr_lifecycle_traceability
+
+    res = audit_wiki_adr_lifecycle_traceability(
+        [
+            {
+                "id": "ADR-10",
+                "status": "draft-unknown",
+                "context": "Exploración inicial",
+            },
+            {
+                "id": "ADR-11",
+                "status": "aceptado",
+                "problem": "Latencia en consultas de reportes",
+                "impact": "Índices compuestos en PostgreSQL",
+            },
+        ]
+    )
+    assert res["total_adrs"] == 2
+    assert res["accepted_adrs_count"] == 1
+    assert res["invalid_status_adr_ids"] == ["ADR-10"]
+    assert res["broken_supersession_adr_ids"] == []
+    assert res["incomplete_accepted_adr_ids"] == []
+    assert res["is_traceable"] is False
+    assert res["adr_posture"] == "INVALID_ADR_LIFECYCLE_STATUS"
+
+
+def test_audit_wiki_adr_lifecycle_traceability_broken_supersession_and_incomplete_accepted():
+    """ADR superseded sin destino válido -> BROKEN_ADR_SUPERSESSION_CHAIN y accepted incompleto -> INCOMPLETE_ACCEPTED_ADR_RATIONALE."""
+    from backend.services.wiki_pmi_service import audit_wiki_adr_lifecycle_traceability
+
+    broken_res = audit_wiki_adr_lifecycle_traceability(
+        [
+            {
+                "adr_id": "ADR-01",
+                "status": "superseded",
+                "superseded_by": "ADR-999",
+            },
+            {
+                "code": "ADR-02",
+                "status": "reemplazado",
+                "replaced_by": "",
+            },
+        ]
+    )
+    assert broken_res["total_adrs"] == 2
+    assert broken_res["broken_supersession_adr_ids"] == ["ADR-01", "ADR-02"]
+    assert broken_res["is_traceable"] is False
+    assert broken_res["adr_posture"] == "BROKEN_ADR_SUPERSESSION_CHAIN"
+
+    incomplete_res = audit_wiki_adr_lifecycle_traceability(
+        [
+            {
+                "id": "ADR-03",
+                "status": "accepted",
+                "context": "Se requiere almacenamiento de objetos para adjuntos",
+                "consequences": "   ",
+            }
+        ]
+    )
+    assert incomplete_res["total_adrs"] == 1
+    assert incomplete_res["accepted_adrs_count"] == 1
+    assert incomplete_res["incomplete_accepted_adr_ids"] == ["ADR-03"]
+    assert incomplete_res["is_traceable"] is False
+    assert incomplete_res["adr_posture"] == "INCOMPLETE_ACCEPTED_ADR_RATIONALE"
+
+
+def test_audit_wiki_adr_lifecycle_traceability_empty_or_none():
+    """Lista vacía o None -> NO_ADRS_REGISTERED."""
+    from backend.services.wiki_pmi_service import audit_wiki_adr_lifecycle_traceability
+
+    for payload in (None, [], ["not-a-dict", 123]):
+        res = audit_wiki_adr_lifecycle_traceability(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_adrs": 0,
+            "accepted_adrs_count": 0,
+            "invalid_status_adr_ids": [],
+            "broken_supersession_adr_ids": [],
+            "incomplete_accepted_adr_ids": [],
+            "is_traceable": True,
+            "adr_posture": "NO_ADRS_REGISTERED",
+        }

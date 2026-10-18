@@ -1347,6 +1347,107 @@ def audit_wiki_lessons_learned_taxonomy(
     }
 
 
+_VALID_ADR_STATUSES = frozenset(
+    {
+        "proposed",
+        "accepted",
+        "deprecated",
+        "superseded",
+        "propuesto",
+        "aceptado",
+        "deprecado",
+        "reemplazado",
+    }
+)
+_SUPERSEDED_ADR_STATUSES = frozenset({"superseded", "reemplazado"})
+_ACCEPTED_ADR_STATUSES = frozenset({"accepted", "aceptado"})
+
+
+def audit_wiki_adr_lifecycle_traceability(
+    adrs: Optional[List[Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
+    """Audita el ciclo de vida y trazabilidad de reemplazo de Registros de Decisiones de Arquitectura (ADR) (PMI §4.4 / §10.2)."""
+    valid_adrs = [item for item in (adrs or []) if isinstance(item, dict)]
+    total_adrs = len(valid_adrs)
+    if total_adrs == 0:
+        return {
+            "total_adrs": 0,
+            "accepted_adrs_count": 0,
+            "invalid_status_adr_ids": [],
+            "broken_supersession_adr_ids": [],
+            "incomplete_accepted_adr_ids": [],
+            "is_traceable": True,
+            "adr_posture": "NO_ADRS_REGISTERED",
+        }
+
+    known_adr_ids: set[str] = set()
+    resolved_adrs: List[tuple[str, Dict[str, Any]]] = []
+    for idx, item in enumerate(valid_adrs, start=1):
+        adr_id = (
+            str(item.get("id") or item.get("adr_id") or item.get("code") or "").strip()
+            or f"ADR-{idx}"
+        )
+        known_adr_ids.add(adr_id)
+        resolved_adrs.append((adr_id, item))
+
+    accepted_adrs_count = 0
+    invalid_status_adr_ids: List[str] = []
+    broken_supersession_adr_ids: List[str] = []
+    incomplete_accepted_adr_ids: List[str] = []
+
+    for adr_id, item in resolved_adrs:
+        raw_status = str(item.get("status") or "").strip().lower()
+        if raw_status not in _VALID_ADR_STATUSES:
+            invalid_status_adr_ids.append(adr_id)
+
+        if raw_status in _SUPERSEDED_ADR_STATUSES:
+            target_id = str(
+                item.get("superseded_by") or item.get("replaced_by") or ""
+            ).strip()
+            if (
+                not target_id
+                or target_id == adr_id
+                or target_id not in known_adr_ids
+            ):
+                broken_supersession_adr_ids.append(adr_id)
+
+        if raw_status in _ACCEPTED_ADR_STATUSES:
+            accepted_adrs_count += 1
+            has_ctx = bool(
+                str(item.get("context") or item.get("problem") or "").strip()
+            )
+            has_conseq = bool(
+                str(item.get("consequences") or item.get("impact") or "").strip()
+            )
+            if not (has_ctx and has_conseq):
+                incomplete_accepted_adr_ids.append(adr_id)
+
+    is_traceable = bool(
+        len(invalid_status_adr_ids) == 0
+        and len(broken_supersession_adr_ids) == 0
+        and len(incomplete_accepted_adr_ids) == 0
+    )
+
+    if len(invalid_status_adr_ids) > 0:
+        adr_posture = "INVALID_ADR_LIFECYCLE_STATUS"
+    elif len(broken_supersession_adr_ids) > 0:
+        adr_posture = "BROKEN_ADR_SUPERSESSION_CHAIN"
+    elif len(incomplete_accepted_adr_ids) > 0:
+        adr_posture = "INCOMPLETE_ACCEPTED_ADR_RATIONALE"
+    else:
+        adr_posture = "TRACEABLE_ADR_ARCHITECTURE_LOG"
+
+    return {
+        "total_adrs": total_adrs,
+        "accepted_adrs_count": accepted_adrs_count,
+        "invalid_status_adr_ids": invalid_status_adr_ids,
+        "broken_supersession_adr_ids": broken_supersession_adr_ids,
+        "incomplete_accepted_adr_ids": incomplete_accepted_adr_ids,
+        "is_traceable": is_traceable,
+        "adr_posture": adr_posture,
+    }
+
+
 class WikiPMIService:
     """Fachada canónica de doctrina y gobernanza documental Wiki PMI."""
 
@@ -1470,6 +1571,12 @@ class WikiPMIService:
     ) -> dict:
         return audit_wiki_operational_runbook_readiness(markdown_text)
 
+    @staticmethod
+    def audit_wiki_adr_lifecycle_traceability(
+        adrs: Optional[List[Dict[str, Any]]] = None,
+    ) -> Dict[str, Any]:
+        return audit_wiki_adr_lifecycle_traceability(adrs)
+
 
 __all__ = [
     "DEFAULT_PMI_KB_DIR",
@@ -1490,10 +1597,10 @@ __all__ = [
     "audit_wiki_decision_log_entries",
     "audit_wiki_raid_register_tables",
     "audit_wiki_meeting_minutes_governance",
+    "audit_wiki_postmortem_incident_rca",
+    "audit_wiki_lessons_learned_taxonomy",
     "audit_wiki_operational_runbook_readiness",
+    "audit_wiki_adr_lifecycle_traceability",
     "WikiPMIService",
 ]
-
-
-
 
