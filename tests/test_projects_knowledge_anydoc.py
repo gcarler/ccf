@@ -3325,3 +3325,96 @@ def test_audit_markdown_frontmatter_metadata_hygiene_via_service_staticmethod():
         == audit_markdown_frontmatter_metadata_hygiene(md)
     )
 
+
+def test_audit_markdown_image_alt_text_and_asset_hygiene_healthy_and_fences_ignored():
+    """Imágenes con alt descriptivo y rutas válidas + ejemplos ignorados en bloques de código -> healthy."""
+    from backend.services.anydoc_service import (
+        audit_markdown_image_alt_text_and_asset_hygiene,
+    )
+
+    md = (
+        "# Arquitectura de Solución\n"
+        '![Diagrama de red de cronograma PDM](https://cdn.ccf.org/pmo/pdm-network.svg "Red PDM")\n'
+        "![Flujo de aprobación CCB](<assets/ccb approval flow.png>)\n"
+        "```markdown\n"
+        "![image](javascript:alert(1))\n"
+        "![]()\n"
+        "```\n"
+    )
+    res = audit_markdown_image_alt_text_and_asset_hygiene(md)
+    assert res == {
+        "total_images": 2,
+        "valid_images_count": 2,
+        "missing_or_generic_alt_lines": [],
+        "invalid_asset_targets": [],
+        "is_compliant": True,
+        "status": "healthy",
+        "recommendations": [],
+    }
+
+
+def test_audit_markdown_image_alt_text_and_asset_hygiene_warning_missing_or_generic_alt():
+    """Imágenes sin alt, con alt corto, genérico o nombre de archivo -> warning."""
+    from backend.services.anydoc_service import (
+        audit_markdown_image_alt_text_and_asset_hygiene,
+    )
+
+    md = (
+        "![](https://cdn.ccf.org/a.png)\n"
+        "![image](https://cdn.ccf.org/b.png)\n"
+        "![diagram.png](https://cdn.ccf.org/c.png)\n"
+        "![Matriz RACI aprobada](https://cdn.ccf.org/raci.png)\n"
+    )
+    res = audit_markdown_image_alt_text_and_asset_hygiene(md)
+    assert res["total_images"] == 4
+    assert res["valid_images_count"] == 1
+    assert res["missing_or_generic_alt_lines"] == [1, 2, 3]
+    assert res["invalid_asset_targets"] == []
+    assert res["is_compliant"] is False
+    assert res["status"] == "warning"
+    assert len(res["recommendations"]) == 1
+
+
+def test_audit_markdown_image_alt_text_and_asset_hygiene_critical_invalid_targets():
+    """Imágenes con target vacío, javascript:/file://, ruta Windows o espacios sin <...> -> critical."""
+    from backend.services.anydoc_service import (
+        audit_markdown_image_alt_text_and_asset_hygiene,
+    )
+
+    md = (
+        "![Curva S de Valor Ganado]()\n"
+        "![Organigrama del proyecto](javascript:evil())\n"
+        "![Acta escaneada](file:///etc/passwd)\n"
+        "![Cronograma maestro](C:\\Users\\pmo\\gantt.png)\n"
+        "![Estructura de Desglose del Trabajo](assets/wbs tree diagram.png)\n"
+    )
+    res = audit_markdown_image_alt_text_and_asset_hygiene(md)
+    assert res["total_images"] == 5
+    assert res["valid_images_count"] == 0
+    assert res["missing_or_generic_alt_lines"] == []
+    assert res["invalid_asset_targets"] == [
+        "<empty>",
+        "javascript:evil()",
+        "file:///etc/passwd",
+        "C:\\Users\\pmo\\gantt.png",
+        "assets/wbs tree diagram.png",
+    ]
+    assert res["is_compliant"] is False
+    assert res["status"] == "critical"
+    assert len(res["recommendations"]) == 1
+
+
+def test_audit_markdown_image_alt_text_and_asset_hygiene_via_service_staticmethod():
+    """Verifica invocación vía AnydocService.audit_markdown_image_alt_text_and_asset_hygiene."""
+    from backend.services.anydoc_service import (
+        AnydocService,
+        audit_markdown_image_alt_text_and_asset_hygiene,
+    )
+
+    md = "![Histograma de recursos críticos](https://cdn.ccf.org/pmo/resources.webp)\n"
+    assert (
+        AnydocService.audit_markdown_image_alt_text_and_asset_hygiene(md)
+        == audit_markdown_image_alt_text_and_asset_hygiene(md)
+    )
+
+

@@ -2969,6 +2969,7 @@ __all__ = [
     "audit_executive_report_stakeholder_feedback_sla",
     "audit_executive_report_benefits_handover_kpis",
     "audit_executive_report_resource_spof_and_overallocation",
+    "audit_executive_report_change_readiness_and_adoption",
     "ProjectExportService",
 ]
 
@@ -3498,4 +3499,100 @@ def audit_executive_report_resource_spof_and_overallocation(
 
 ProjectExportService.audit_executive_report_resource_spof_and_overallocation = staticmethod(
     audit_executive_report_resource_spof_and_overallocation
+)
+
+
+def audit_executive_report_change_readiness_and_adoption(
+    report: Mapping[str, Any] | None,
+    *,
+    min_training_completion_pct: float = 85.0,
+    min_readiness_score_pct: float = 75.0,
+) -> dict[str, Any]:
+    """Audita preparación para el cambio organizacional y adopción operativa (ADKAR / Training Readiness) en reportes ejecutivos según PMI PMBOK §13.3."""
+    readiness_units: Sequence[Any] = []
+    if isinstance(report, Mapping):
+        raw_root = report.get("change_readiness_units")
+        if isinstance(raw_root, Sequence) and not isinstance(
+            raw_root, (str, bytes, Mapping)
+        ):
+            readiness_units = raw_root
+        elif isinstance(report.get("governance"), Mapping):
+            raw_gov = report["governance"].get("change_readiness_units")
+            if isinstance(raw_gov, Sequence) and not isinstance(
+                raw_gov, (str, bytes, Mapping)
+            ):
+                readiness_units = raw_gov
+
+    min_training = float(min_training_completion_pct)
+    min_readiness = float(min_readiness_score_pct)
+
+    total_units = 0
+    insufficient_training_unit_ids: list[str] = []
+    low_readiness_unit_ids: list[str] = []
+    missing_champion_or_hypercare_unit_ids: list[str] = []
+
+    for item in readiness_units:
+        if not isinstance(item, Mapping):
+            continue
+        unit_id = str(item.get("unit_id") or item.get("id") or "").strip()
+        if not unit_id:
+            continue
+
+        total_units += 1
+
+        try:
+            raw_training = item.get("training_completion_pct")
+            training_pct = (
+                float(raw_training)
+                if isinstance(raw_training, (int, float))
+                and not isinstance(raw_training, bool)
+                else 0.0
+            )
+        except (TypeError, ValueError):
+            training_pct = 0.0
+        if not (
+            isinstance(raw_training, (int, float))
+            and not isinstance(raw_training, bool)
+        ) or training_pct < min_training:
+            insufficient_training_unit_ids.append(unit_id)
+
+        try:
+            raw_readiness = item.get("readiness_score_pct")
+            readiness_pct = (
+                float(raw_readiness)
+                if isinstance(raw_readiness, (int, float))
+                and not isinstance(raw_readiness, bool)
+                else 0.0
+            )
+        except (TypeError, ValueError):
+            readiness_pct = 0.0
+        if not (
+            isinstance(raw_readiness, (int, float))
+            and not isinstance(raw_readiness, bool)
+        ) or readiness_pct < min_readiness:
+            low_readiness_unit_ids.append(unit_id)
+
+        change_champion = str(item.get("change_champion") or "").strip()
+        hypercare_ready = bool(item.get("hypercare_support_ready") is True)
+        if not change_champion or not hypercare_ready:
+            missing_champion_or_hypercare_unit_ids.append(unit_id)
+
+    is_change_readiness_compliant = bool(
+        total_units > 0
+        and len(insufficient_training_unit_ids) == 0
+        and len(low_readiness_unit_ids) == 0
+        and len(missing_champion_or_hypercare_unit_ids) == 0
+    )
+
+    return {
+        "total_units": total_units,
+        "insufficient_training_unit_ids": insufficient_training_unit_ids,
+        "low_readiness_unit_ids": low_readiness_unit_ids,
+        "missing_champion_or_hypercare_unit_ids": missing_champion_or_hypercare_unit_ids,
+        "is_change_readiness_compliant": is_change_readiness_compliant,
+    }
+
+
+ProjectExportService.audit_executive_report_change_readiness_and_adoption = staticmethod(
+    audit_executive_report_change_readiness_and_adoption
 )

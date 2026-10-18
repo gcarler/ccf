@@ -3913,3 +3913,124 @@ def test_evaluate_evm_undistributed_budget_and_planning_packages_value_errors():
     assert ProjectEVMService.evaluate_evm_undistributed_budget_and_planning_packages(
         100.0, 100.0
     )["is_pmb_baseline_healthy"] is True
+
+
+def test_evaluate_evm_reserve_burn_vs_risk_exposure_healthy():
+    """Reserva suficiente y consumo proporcional al avance físico -> healthy."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_reserve_burn_vs_risk_exposure,
+    )
+
+    res = evaluate_evm_reserve_burn_vs_risk_exposure(
+        initial_contingency_reserve=20000.0,
+        remaining_contingency_reserve=12000.0,
+        remaining_emv_exposure=8000.0,
+        percent_complete=45.0,
+        management_reserve_used=0.0,
+        mr_ccb_approved=True,
+        max_burn_disproportion_pct=20.0,
+    )
+    assert res == {
+        "contingency_burn_pct": 40.0,
+        "reserve_coverage_ratio": 1.5,
+        "burn_vs_progress_delta_pct": -5.0,
+        "reserve_shortfall_detected": False,
+        "premature_reserve_depletion": False,
+        "unapproved_mr_drawdown": False,
+        "is_reserve_healthy": True,
+        "status": "healthy",
+        "recommendations": [],
+    }
+
+
+def test_evaluate_evm_reserve_burn_vs_risk_exposure_critical_shortfall_and_unapproved_mr():
+    """Déficit de reserva frente a EMV residual o uso de Reserva de Gestión sin aprobación CCB -> critical."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_reserve_burn_vs_risk_exposure,
+    )
+
+    res_shortfall = evaluate_evm_reserve_burn_vs_risk_exposure(
+        initial_contingency_reserve=10000.0,
+        remaining_contingency_reserve=4000.0,
+        remaining_emv_exposure=5500.0,
+        percent_complete=55.0,
+    )
+    assert res_shortfall["contingency_burn_pct"] == 60.0
+    assert res_shortfall["reserve_coverage_ratio"] == 0.7273
+    assert res_shortfall["reserve_shortfall_detected"] is True
+    assert res_shortfall["premature_reserve_depletion"] is False
+    assert res_shortfall["unapproved_mr_drawdown"] is False
+    assert res_shortfall["is_reserve_healthy"] is False
+    assert res_shortfall["status"] == "critical"
+    assert len(res_shortfall["recommendations"]) >= 1
+
+    res_mr = evaluate_evm_reserve_burn_vs_risk_exposure(
+        initial_contingency_reserve=10000.0,
+        remaining_contingency_reserve=8000.0,
+        remaining_emv_exposure=5000.0,
+        percent_complete=25.0,
+        management_reserve_used=1500.0,
+        mr_ccb_approved=False,
+    )
+    assert res_mr["reserve_shortfall_detected"] is False
+    assert res_mr["unapproved_mr_drawdown"] is True
+    assert res_mr["is_reserve_healthy"] is False
+    assert res_mr["status"] == "critical"
+    assert len(res_mr["recommendations"]) >= 1
+
+
+def test_evaluate_evm_reserve_burn_vs_risk_exposure_warning_premature_depletion():
+    """Agotamiento prematuro de contingencia respecto al avance físico sin déficit EMV -> warning."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_reserve_burn_vs_risk_exposure,
+    )
+
+    res = evaluate_evm_reserve_burn_vs_risk_exposure(
+        initial_contingency_reserve=10000.0,
+        remaining_contingency_reserve=4500.0,
+        remaining_emv_exposure=3000.0,
+        percent_complete=20.0,
+        max_burn_disproportion_pct=20.0,
+    )
+    assert res["contingency_burn_pct"] == 55.0
+    assert res["burn_vs_progress_delta_pct"] == 35.0
+    assert res["reserve_coverage_ratio"] == 1.5
+    assert res["reserve_shortfall_detected"] is False
+    assert res["premature_reserve_depletion"] is True
+    assert res["unapproved_mr_drawdown"] is False
+    assert res["is_reserve_healthy"] is False
+    assert res["status"] == "warning"
+    assert len(res["recommendations"]) == 1
+
+
+def test_evaluate_evm_reserve_burn_vs_risk_exposure_value_errors_and_staticmethod():
+    """Rechaza entradas inválidas con ValueError y verifica llamada vía ProjectEVMService.evaluate_evm_reserve_burn_vs_risk_exposure."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_reserve_burn_vs_risk_exposure,
+    )
+
+    bad_calls = [
+        (0.0, 0.0, 100.0, 50.0),
+        (-100.0, 50.0, 100.0, 50.0),
+        (1000.0, -10.0, 100.0, 50.0),
+        (1000.0, 1200.0, 100.0, 50.0),
+        (1000.0, 500.0, -1.0, 50.0),
+        (1000.0, 500.0, 100.0, -5.0),
+        (1000.0, 500.0, 100.0, 105.0),
+        (1000.0, 500.0, 100.0, 50.0, -10.0),
+        (1000.0, 500.0, 100.0, 50.0, 0.0, True, -1.0),
+        (True, 500.0, 100.0, 50.0),
+        (1000.0, float("nan"), 100.0, 50.0),
+    ]
+    for args in bad_calls:
+        with pytest.raises(ValueError):
+            evaluate_evm_reserve_burn_vs_risk_exposure(*args)  # type: ignore[arg-type]
+
+    assert (
+        ProjectEVMService.evaluate_evm_reserve_burn_vs_risk_exposure(
+            10000.0, 10000.0, 0.0, 10.0
+        )
+        == evaluate_evm_reserve_burn_vs_risk_exposure(10000.0, 10000.0, 0.0, 10.0)
+    )
+

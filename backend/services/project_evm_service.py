@@ -5488,6 +5488,7 @@ __all__ = [
     "audit_evm_accrual_method_inflation_bias",
     "evaluate_evm_critical_path_drag_decoupling",
     "evaluate_evm_undistributed_budget_and_planning_packages",
+    "evaluate_evm_reserve_burn_vs_risk_exposure",
     "ProjectEVMService",
 ]
 
@@ -5845,3 +5846,108 @@ def evaluate_evm_undistributed_budget_and_planning_packages(
 ProjectEVMService.evaluate_evm_undistributed_budget_and_planning_packages = staticmethod(
     evaluate_evm_undistributed_budget_and_planning_packages
 )
+
+
+def evaluate_evm_reserve_burn_vs_risk_exposure(
+    initial_contingency_reserve: float,
+    remaining_contingency_reserve: float,
+    remaining_emv_exposure: float,
+    percent_complete: float,
+    management_reserve_used: float = 0.0,
+    mr_ccb_approved: bool = True,
+    max_burn_disproportion_pct: float = 20.0,
+) -> dict[str, Any]:
+    """Audita la tasa de consumo de la Reserva de Contingencia frente al avance físico y la exposición EMV residual, así como la gobernanza de la Reserva de Gestión (MR) según PMI PMBOK §7.4 y §11.6."""
+    numeric_inputs = {
+        "initial_contingency_reserve": initial_contingency_reserve,
+        "remaining_contingency_reserve": remaining_contingency_reserve,
+        "remaining_emv_exposure": remaining_emv_exposure,
+        "percent_complete": percent_complete,
+        "management_reserve_used": management_reserve_used,
+        "max_burn_disproportion_pct": max_burn_disproportion_pct,
+    }
+    for name, value in numeric_inputs.items():
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not (value == value)
+            or abs(float(value)) == float("inf")
+        ):
+            raise ValueError(f"EVM Reserve: {name} debe ser numérico real, no bool/NaN/Inf")
+
+    init_res = float(initial_contingency_reserve)
+    rem_res = float(remaining_contingency_reserve)
+    rem_emv = float(remaining_emv_exposure)
+    pct_comp = float(percent_complete)
+    mr_used = float(management_reserve_used)
+    max_disp = float(max_burn_disproportion_pct)
+
+    if init_res <= 0.0:
+        raise ValueError("EVM Reserve: initial_contingency_reserve debe ser > 0")
+    if rem_res < 0.0 or rem_res > init_res:
+        raise ValueError(
+            "EVM Reserve: remaining_contingency_reserve debe estar en [0, initial_contingency_reserve]"
+        )
+    if rem_emv < 0.0:
+        raise ValueError("EVM Reserve: remaining_emv_exposure debe ser >= 0")
+    if pct_comp < 0.0 or pct_comp > 100.0:
+        raise ValueError("EVM Reserve: percent_complete debe estar en [0, 100]")
+    if mr_used < 0.0:
+        raise ValueError("EVM Reserve: management_reserve_used debe ser >= 0")
+    if max_disp < 0.0:
+        raise ValueError("EVM Reserve: max_burn_disproportion_pct debe ser >= 0")
+
+    contingency_burn_pct = round(((init_res - rem_res) / init_res) * 100.0, 2)
+    reserve_coverage_ratio = (
+        round(rem_res / rem_emv, 4) if rem_emv > 0.0 else 1.0
+    )
+    burn_vs_progress_delta_pct = round(contingency_burn_pct - pct_comp, 2)
+
+    reserve_shortfall_detected = bool(rem_res < rem_emv)
+    premature_reserve_depletion = bool(burn_vs_progress_delta_pct > max_disp)
+    unapproved_mr_drawdown = bool(mr_used > 0.0 and not bool(mr_ccb_approved is True))
+
+    is_reserve_healthy = bool(
+        not reserve_shortfall_detected
+        and not premature_reserve_depletion
+        and not unapproved_mr_drawdown
+    )
+
+    recommendations: list[str] = []
+    if reserve_shortfall_detected:
+        recommendations.append(
+            "Solicitar suplemento de reserva o re-evaluar respuestas a riesgos: la reserva de contingencia remanente no cubre la exposición EMV residual."
+        )
+    if unapproved_mr_drawdown:
+        recommendations.append(
+            "Someter a ratificación formal del CCB el uso de Reserva de Gestión (MR) e incorporarla a la línea base de costos."
+        )
+    if premature_reserve_depletion:
+        recommendations.append(
+            "Auditar las causas de consumo acelerado de contingencia respecto al porcentaje de avance físico ejecutado."
+        )
+
+    if reserve_shortfall_detected or unapproved_mr_drawdown:
+        status = "critical"
+    elif premature_reserve_depletion:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "contingency_burn_pct": contingency_burn_pct,
+        "reserve_coverage_ratio": reserve_coverage_ratio,
+        "burn_vs_progress_delta_pct": burn_vs_progress_delta_pct,
+        "reserve_shortfall_detected": reserve_shortfall_detected,
+        "premature_reserve_depletion": premature_reserve_depletion,
+        "unapproved_mr_drawdown": unapproved_mr_drawdown,
+        "is_reserve_healthy": is_reserve_healthy,
+        "status": status,
+        "recommendations": recommendations,
+    }
+
+
+ProjectEVMService.evaluate_evm_reserve_burn_vs_risk_exposure = staticmethod(
+    evaluate_evm_reserve_burn_vs_risk_exposure
+)
+

@@ -4417,3 +4417,191 @@ def test_audit_executive_report_resource_spof_and_overallocation_empty_and_servi
         )
         == audit_executive_report_resource_spof_and_overallocation(sample)
     )
+
+
+def test_audit_executive_report_change_readiness_and_adoption_ready_units():
+    """Unidades listas: formación y preparación sobre los mínimos, champion e hypercare ok."""
+    from backend.services.project_export_service import (
+        audit_executive_report_change_readiness_and_adoption,
+    )
+
+    report = {
+        "change_readiness_units": [
+            {
+                "unit_id": "U-1",
+                "training_completion_pct": 90.0,
+                "readiness_score_pct": 80.0,
+                "change_champion": "Ana", 
+                "hypercare_support_ready": True,
+            },
+            {
+                "id": "U-2",
+                "training_completion_pct": 100,
+                "readiness_score_pct": 85,
+                "change_champion": "Luis",
+                "hypercare_support_ready": True,
+            },
+        ]
+    }
+    res = audit_executive_report_change_readiness_and_adoption(report)
+    assert res == {
+        "total_units": 2,
+        "insufficient_training_unit_ids": [],
+        "low_readiness_unit_ids": [],
+        "missing_champion_or_hypercare_unit_ids": [],
+        "is_change_readiness_compliant": True,
+    }
+
+    # Bordes exactos de los mínimos (>=) siguen siendo compliant.
+    edge = audit_executive_report_change_readiness_and_adoption(
+        {
+            "change_readiness_units": [
+                {
+                    "unit_id": "U-edge",
+                    "training_completion_pct": 85.0,
+                    "readiness_score_pct": 75.0,
+                    "change_champion": "Champion",
+                    "hypercare_support_ready": True,
+                }
+            ]
+        }
+    )
+    assert edge["is_change_readiness_compliant"] is True
+
+
+def test_audit_executive_report_change_readiness_and_adoption_low_scores():
+    """Detecta capacitación insuficiente y puntaje de preparación bajo por unidad."""
+    from backend.services.project_export_service import (
+        audit_executive_report_change_readiness_and_adoption,
+    )
+
+    report = {
+        "change_readiness_units": [
+            {
+                "unit_id": "U-1",
+                "training_completion_pct": 50.0,
+                "readiness_score_pct": 60.0,
+                "change_champion": "Ana",
+                "hypercare_support_ready": True,
+            },
+            {
+                "unit_id": "U-2",
+                "training_completion_pct": 84.99,
+                "readiness_score_pct": 74.99,
+                "change_champion": "Luis",
+                "hypercare_support_ready": True,
+            },
+            # bool no es un pct válido -> cuenta como 0.0 en ambas bandas.
+            {
+                "unit_id": "U-3",
+                "training_completion_pct": True,
+                "readiness_score_pct": True,
+                "change_champion": "Marta",
+                "hypercare_support_ready": True,
+            },
+        ]
+    }
+    res = audit_executive_report_change_readiness_and_adoption(report)
+    assert res["total_units"] == 3
+    assert res["insufficient_training_unit_ids"] == ["U-1", "U-2", "U-3"]
+    assert res["low_readiness_unit_ids"] == ["U-1", "U-2", "U-3"]
+    assert res["missing_champion_or_hypercare_unit_ids"] == []
+    assert res["is_change_readiness_compliant"] is False
+
+    # Umbrales personalizados elevan la exigencia.
+    strict = audit_executive_report_change_readiness_and_adoption(
+        report,
+        min_training_completion_pct=95.0,
+        min_readiness_score_pct=90.0,
+    )
+    assert strict["insufficient_training_unit_ids"] == ["U-1", "U-2", "U-3"]
+    assert strict["low_readiness_unit_ids"] == ["U-1", "U-2", "U-3"]
+
+
+def test_audit_executive_report_change_readiness_and_adoption_missing_champion_and_fallback():
+    """Champion ausente o hypercare no listo falla; soporta fallback governance."""
+    from backend.services.project_export_service import (
+        audit_executive_report_change_readiness_and_adoption,
+    )
+
+    report = {
+        "governance": {
+            "change_readiness_units": [
+                {
+                    "unit_id": "U-1",
+                    "training_completion_pct": 90.0,
+                    "readiness_score_pct": 80.0,
+                    "hypercare_support_ready": True,
+                },
+                {
+                    "unit_id": "U-2",
+                    "training_completion_pct": 90.0,
+                    "readiness_score_pct": 80.0,
+                    "change_champion": "   ",
+                    "hypercare_support_ready": True,
+                },
+                {
+                    "unit_id": "U-3",
+                    "training_completion_pct": 90.0,
+                    "readiness_score_pct": 80.0,
+                    "change_champion": "Marta",
+                    "hypercare_support_ready": False,
+                },
+            ]
+        }
+    }
+    res = audit_executive_report_change_readiness_and_adoption(report)
+    assert res["total_units"] == 3
+    assert res["insufficient_training_unit_ids"] == []
+    assert res["low_readiness_unit_ids"] == []
+    assert res["missing_champion_or_hypercare_unit_ids"] == ["U-1", "U-2", "U-3"]
+    assert res["is_change_readiness_compliant"] is False
+
+
+def test_audit_executive_report_change_readiness_and_adoption_empty_and_service_proxy():
+    """Entradas vacías/None -> compliant False (total_units==0); proxy estático de la clase."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_change_readiness_and_adoption,
+    )
+
+    res_none = audit_executive_report_change_readiness_and_adoption(None)
+    assert res_none == {
+        "total_units": 0,
+        "insufficient_training_unit_ids": [],
+        "low_readiness_unit_ids": [],
+        "missing_champion_or_hypercare_unit_ids": [],
+        "is_change_readiness_compliant": False,
+    }
+    assert audit_executive_report_change_readiness_and_adoption({})["total_units"] == 0
+    assert (
+        audit_executive_report_change_readiness_and_adoption(
+            {"change_readiness_units": "not-a-sequence"}
+        )["total_units"]
+        == 0
+    )
+    assert (
+        audit_executive_report_change_readiness_and_adoption(
+            {"change_readiness_units": [{"unit_id": "   ", "nested_id": "x"}]}
+        )["total_units"]
+        == 0
+    )
+
+    sample = {
+        "change_readiness_units": [
+            {
+                "unit_id": "U-1",
+                "training_completion_pct": 90.0,
+                "readiness_score_pct": 80.0,
+                "change_champion": "Ana",
+                "hypercare_support_ready": True,
+            }
+        ]
+    }
+    assert (
+        ProjectExportService.audit_executive_report_change_readiness_and_adoption(sample)
+        == audit_executive_report_change_readiness_and_adoption(sample)
+    )
+    import backend.services.project_export_service as _m
+
+    assert "audit_executive_report_change_readiness_and_adoption" in _m.__all__

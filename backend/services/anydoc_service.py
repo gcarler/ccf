@@ -3003,6 +3003,7 @@ __all__ = [
     "audit_markdown_external_url_scheme_hygiene",
     "audit_markdown_admonition_callout_hygiene",
     "audit_markdown_frontmatter_metadata_hygiene",
+    "audit_markdown_image_alt_text_and_asset_hygiene",
     "AnyDocService",
     "AnydocService",
 ]
@@ -3704,6 +3705,148 @@ AnyDocService.audit_markdown_frontmatter_metadata_hygiene = staticmethod(
     audit_markdown_frontmatter_metadata_hygiene
 )
 
+
+_MARKDOWN_IMAGE_HYGIENE_RE = re.compile(
+    r"!\[(?P<alt>[^\]]*)\]\((?P<raw_target>(?:[^()\n]|\([^()\n]*\))*)\)"
+)
+_GENERIC_IMAGE_ALT_PLACEHOLDERS = {
+    "image",
+    "img",
+    "photo",
+    "screenshot",
+    "diagram",
+    "picture",
+    "untitled",
+    "todo",
+    "tbd",
+    "imagen",
+    "foto",
+}
+_IMAGE_FILE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".svg", ".gif", ".webp")
+_WINDOWS_DRIVE_PATH_RE = re.compile(r"^[A-Za-z]:\\")
+_TRAILING_QUOTED_TITLE_RE = re.compile(r"""\s+(?:"[^"]*"|'[^']*')\s*$""")
+
+
+def audit_markdown_image_alt_text_and_asset_hygiene(
+    markdown_text: str,
+    min_alt_length: int = 4,
+) -> dict[str, Any]:
+    """Audita accesibilidad (alt text) y validez de referencias de activos de imagen ![alt](target) según PMI PMBOK §4.4 y §10.2."""
+    lines = (
+        markdown_text.splitlines()
+        if isinstance(markdown_text, str) and markdown_text
+        else []
+    )
+    min_len = max(1, int(min_alt_length))
+
+    total_images = 0
+    valid_images_count = 0
+    missing_or_generic_alt_lines: list[int] = []
+    invalid_asset_targets: list[str] = []
+
+    in_backtick_fence = False
+    in_tilde_fence = False
+
+    for line_num, line in enumerate(lines, start=1):
+        stripped = line.strip()
+        if not in_tilde_fence and stripped.startswith("```"):
+            in_backtick_fence = not in_backtick_fence
+            continue
+        if not in_backtick_fence and stripped.startswith("~~~"):
+            in_tilde_fence = not in_tilde_fence
+            continue
+        if in_backtick_fence or in_tilde_fence:
+            continue
+
+        for match in _MARKDOWN_IMAGE_HYGIENE_RE.finditer(line):
+            total_images += 1
+            alt_clean = match.group("alt").strip()
+            alt_lower = alt_clean.lower()
+
+            alt_ok = True
+            if (
+                not alt_clean
+                or len(alt_clean) < min_len
+                or alt_lower in _GENERIC_IMAGE_ALT_PLACEHOLDERS
+                or alt_lower.endswith(_IMAGE_FILE_EXTENSIONS)
+            ):
+                alt_ok = False
+                if line_num not in missing_or_generic_alt_lines:
+                    missing_or_generic_alt_lines.append(line_num)
+
+            raw_target = match.group("raw_target").strip()
+            target_no_title = _TRAILING_QUOTED_TITLE_RE.sub("", raw_target).strip()
+
+            is_angle_wrapped = (
+                len(target_no_title) >= 2
+                and target_no_title.startswith("<")
+                and target_no_title.endswith(">")
+            )
+            inner_target = (
+                target_no_title[1:-1].strip()
+                if is_angle_wrapped
+                else target_no_title
+            )
+            low_target = inner_target.lower()
+
+            target_ok = True
+            if not inner_target:
+                target_ok = False
+                invalid_asset_targets.append("<empty>")
+            elif (
+                low_target.startswith(
+                    ("javascript:", "vbscript:", "data:text/html", "file://")
+                )
+                or bool(_WINDOWS_DRIVE_PATH_RE.match(inner_target))
+                or (
+                    not is_angle_wrapped
+                    and any(ch.isspace() for ch in target_no_title)
+                )
+            ):
+                target_ok = False
+                invalid_asset_targets.append(inner_target)
+
+            if alt_ok and target_ok:
+                valid_images_count += 1
+
+    is_compliant = bool(
+        len(missing_or_generic_alt_lines) == 0
+        and len(invalid_asset_targets) == 0
+    )
+
+    recommendations: list[str] = []
+    if invalid_asset_targets:
+        recommendations.append(
+            "Corregir las referencias de imagen inválidas, esquemas inseguros/locales o rutas con espacios sin envolver en <...>."
+        )
+    if missing_or_generic_alt_lines:
+        recommendations.append(
+            "Proveer texto alternativo (alt text) descriptivo y específico para cada imagen o diagrama."
+        )
+
+    if is_compliant:
+        status = "healthy"
+    elif len(invalid_asset_targets) > 0:
+        status = "critical"
+    else:
+        status = "warning"
+
+    return {
+        "total_images": total_images,
+        "valid_images_count": valid_images_count,
+        "missing_or_generic_alt_lines": missing_or_generic_alt_lines,
+        "invalid_asset_targets": invalid_asset_targets,
+        "is_compliant": is_compliant,
+        "status": status,
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_markdown_image_alt_text_and_asset_hygiene = staticmethod(
+    audit_markdown_image_alt_text_and_asset_hygiene
+)
+
 AnydocService = AnyDocService
+
 
 
