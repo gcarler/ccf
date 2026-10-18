@@ -3804,6 +3804,7 @@ __all__ = [
     "validate_monte_carlo_confidence_percentiles_and_contingency",
     "validate_make_or_buy_tco_and_strategic_lock_in",
     "validate_resource_calendar_timezone_overlap_and_allocation",
+    "validate_wbs_work_package_8_80_granularity_and_dictionary",
 ]
 
 
@@ -7260,5 +7261,108 @@ def validate_resource_calendar_timezone_overlap_and_allocation(
         "holiday_conflict_member_ids": holiday_conflict_member_ids,
         "calendar_governance_status": calendar_governance_status,
         "is_calendar_valid": calendar_governance_status == "ALIGNED",
+        "recommendations": recommendations,
+    }
+
+
+def validate_wbs_work_package_8_80_granularity_and_dictionary(
+    work_packages: list[dict[str, Any]],
+    *,
+    min_effort_hours: float = 8.0,
+    max_effort_hours: float = 80.0,
+    max_wbs_depth_level: int = 6,
+) -> dict[str, Any]:
+    """Validate PMI PMBOK §5.4 & §6.5 WBS work package 8/80-hour decomposition granularity and WBS dictionary completeness."""
+    micromanaged_wp_ids: list[str] = []
+    oversized_wp_ids: list[str] = []
+    excessive_depth_wp_ids: list[str] = []
+    incomplete_dictionary_wp_ids: list[str] = []
+    recommendations: list[str] = []
+
+    valid_wps = (
+        [
+            wp
+            for wp in work_packages
+            if isinstance(wp, dict) and str(wp.get("wp_id", "")).strip()
+        ]
+        if isinstance(work_packages, list)
+        else []
+    )
+
+    for wp in valid_wps:
+        wp_id = str(wp.get("wp_id", "")).strip()
+        is_leaf_package = (
+            bool(wp.get("is_leaf_package", True))
+            if wp.get("is_leaf_package") is not None
+            else True
+        )
+        estimated_effort_hours = float(
+            wp.get("estimated_effort_hours", 0.0) or 0.0
+        )
+        wbs_level = int(wp.get("wbs_level", 1) or 1)
+        has_acceptance_criteria = (
+            bool(wp.get("has_acceptance_criteria", True))
+            if wp.get("has_acceptance_criteria") is not None
+            else True
+        )
+        has_assigned_control_account = (
+            bool(wp.get("has_assigned_control_account", True))
+            if wp.get("has_assigned_control_account") is not None
+            else True
+        )
+        deliverable_noun_phrase_valid = (
+            bool(wp.get("deliverable_noun_phrase_valid", True))
+            if wp.get("deliverable_noun_phrase_valid") is not None
+            else True
+        )
+
+        if wbs_level > max_wbs_depth_level:
+            excessive_depth_wp_ids.append(wp_id)
+
+        if is_leaf_package:
+            if estimated_effort_hours < min_effort_hours:
+                micromanaged_wp_ids.append(wp_id)
+            elif estimated_effort_hours > max_effort_hours:
+                oversized_wp_ids.append(wp_id)
+
+            if (
+                not has_acceptance_criteria
+                or not has_assigned_control_account
+                or not deliverable_noun_phrase_valid
+            ):
+                incomplete_dictionary_wp_ids.append(wp_id)
+
+    if oversized_wp_ids:
+        recommendations.append(
+            f"Decompose oversized leaf work packages exceeding {max_effort_hours:.1f}h (8/80 rule) into smaller deliverable units: {', '.join(oversized_wp_ids)}."
+        )
+    if incomplete_dictionary_wp_ids:
+        recommendations.append(
+            f"Complete WBS Dictionary entries (acceptance criteria, control account, noun-phrase deliverable) for: {', '.join(incomplete_dictionary_wp_ids)}."
+        )
+    if micromanaged_wp_ids:
+        recommendations.append(
+            f"Consolidate micro-managed leaf work packages below {min_effort_hours:.1f}h into cohesive work packages: {', '.join(micromanaged_wp_ids)}."
+        )
+    if excessive_depth_wp_ids:
+        recommendations.append(
+            f"Flatten WBS hierarchy levels exceeding depth {max_wbs_depth_level} on: {', '.join(excessive_depth_wp_ids)}."
+        )
+
+    if oversized_wp_ids or incomplete_dictionary_wp_ids:
+        wbs_governance_status = "INVALID_WBS"
+    elif micromanaged_wp_ids or excessive_depth_wp_ids:
+        wbs_governance_status = "WARNING"
+    else:
+        wbs_governance_status = "WELL_DECOMPOSED"
+
+    return {
+        "total_work_packages": len(valid_wps),
+        "micromanaged_wp_ids": micromanaged_wp_ids,
+        "oversized_wp_ids": oversized_wp_ids,
+        "excessive_depth_wp_ids": excessive_depth_wp_ids,
+        "incomplete_dictionary_wp_ids": incomplete_dictionary_wp_ids,
+        "wbs_governance_status": wbs_governance_status,
+        "is_wbs_valid": wbs_governance_status == "WELL_DECOMPOSED",
         "recommendations": recommendations,
     }

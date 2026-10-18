@@ -8018,3 +8018,136 @@ def test_audit_executive_report_dr_rto_rpo_invalid_and_binding():
         == audit_executive_report_disaster_recovery_rto_rpo_readiness(sample)
     )
     assert "audit_executive_report_disaster_recovery_rto_rpo_readiness" in mod.__all__
+
+
+def test_audit_executive_report_software_license_true_up_and_shelfware_optimized():
+    """Caso 1: Suscripciones sin sobre-despliegue y shelfware <=20% -> OPTIMIZED."""
+    from backend.services.project_export_service import (
+        audit_executive_report_software_license_true_up_and_shelfware,
+    )
+
+    licenses = [
+        {
+            "subscription_id": "SUB-GITHUB-ENT",
+            "purchased_seats": 100,
+            "deployed_active_seats": 92,
+            "annual_cost_per_seat": 250.0,
+            "days_until_renewal": 120,
+        },
+        {
+            "subscription_id": "SUB-JIRA-CLOUD",
+            "purchased_seats": 50,
+            "deployed_active_seats": 45,
+            "annual_cost_per_seat": 150.0,
+            "days_until_renewal": 60,
+        },
+    ]
+    res = audit_executive_report_software_license_true_up_and_shelfware(
+        licenses, max_shelfware_waste_pct=20.0, true_up_penalty_multiplier=1.25
+    )
+    assert res["total_subscriptions"] == 2
+    assert res["total_true_up_exposure_cost"] == 0.0
+    assert res["total_annual_shelfware_waste_cost"] == 2750.0
+    assert res["overdeployed_subscription_ids"] == []
+    assert res["shelfware_subscription_ids"] == []
+    assert res["imminent_renewal_rightsizing_ids"] == []
+    assert res["license_governance_status"] == "OPTIMIZED"
+    assert res["is_license_compliant"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_executive_report_software_license_true_up_and_shelfware_warning():
+    """Caso 2: Suscripción con shelfware >20% y renovación próxima (<=30d) sin sobre-despliegue -> WARNING."""
+    from backend.services.project_export_service import (
+        audit_executive_report_software_license_true_up_and_shelfware,
+    )
+
+    licenses = [
+        {
+            "subscription_id": "SUB-FIGMA-PRO",
+            "purchased_seats": 100,
+            "deployed_active_seats": 60,
+            "annual_cost_per_seat": 500.0,
+            "days_until_renewal": 20,
+        }
+    ]
+    res = audit_executive_report_software_license_true_up_and_shelfware(
+        licenses, max_shelfware_waste_pct=20.0, true_up_penalty_multiplier=1.25
+    )
+    assert res["total_subscriptions"] == 1
+    assert res["total_true_up_exposure_cost"] == 0.0
+    assert res["total_annual_shelfware_waste_cost"] == 20000.0
+    assert res["overdeployed_subscription_ids"] == []
+    assert res["shelfware_subscription_ids"] == ["SUB-FIGMA-PRO"]
+    assert res["imminent_renewal_rightsizing_ids"] == ["SUB-FIGMA-PRO"]
+    assert res["license_governance_status"] == "WARNING"
+    assert res["is_license_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_executive_report_software_license_true_up_and_shelfware_compliance_risk():
+    """Caso 3: Asientos activos exceden los contratados (riesgo de penalización True-Up) -> COMPLIANCE_RISK."""
+    from backend.services.project_export_service import (
+        audit_executive_report_software_license_true_up_and_shelfware,
+    )
+
+    licenses = [
+        {
+            "subscription_id": "SUB-ORACLE-DB",
+            "purchased_seats": 40,
+            "deployed_active_seats": 50,
+            "annual_cost_per_seat": 1000.0,
+            "days_until_renewal": 15,
+        }
+    ]
+    res = audit_executive_report_software_license_true_up_and_shelfware(
+        licenses, max_shelfware_waste_pct=20.0, true_up_penalty_multiplier=1.25
+    )
+    assert res["total_subscriptions"] == 1
+    assert res["total_true_up_exposure_cost"] == 12500.0
+    assert res["overdeployed_subscription_ids"] == ["SUB-ORACLE-DB"]
+    assert res["imminent_renewal_rightsizing_ids"] == ["SUB-ORACLE-DB"]
+    assert res["license_governance_status"] == "COMPLIANCE_RISK"
+    assert res["is_license_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_executive_report_software_license_true_up_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en ProjectExportService + __all__."""
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_software_license_true_up_and_shelfware,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_executive_report_software_license_true_up_and_shelfware(payload)  # type: ignore[arg-type]
+        assert empty["total_subscriptions"] == 0
+        assert empty["total_true_up_exposure_cost"] == 0.0
+        assert empty["total_annual_shelfware_waste_cost"] == 0.0
+        assert empty["overdeployed_subscription_ids"] == []
+        assert empty["shelfware_subscription_ids"] == []
+        assert empty["imminent_renewal_rightsizing_ids"] == []
+        assert empty["license_governance_status"] == "OPTIMIZED"
+        assert empty["is_license_compliant"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "subscription_id": "SUB-99",
+            "purchased_seats": 20,
+            "deployed_active_seats": 19,
+            "annual_cost_per_seat": 100.0,
+            "days_until_renewal": 90,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_software_license_true_up_and_shelfware(
+            sample
+        )
+        == audit_executive_report_software_license_true_up_and_shelfware(sample)
+    )
+    assert (
+        "audit_executive_report_software_license_true_up_and_shelfware"
+        in mod.__all__
+    )

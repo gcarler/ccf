@@ -5512,6 +5512,7 @@ __all__ = [
     "evaluate_evm_fx_currency_volatility_and_hedging_coverage",
     "evaluate_evm_time_and_materials_nte_and_rate_blend",
     "evaluate_evm_economic_price_adjustment_and_inflation_erosion",
+    "evaluate_evm_capex_opex_classification_and_amortization",
     "ProjectEVMService",
 ]
 
@@ -8500,6 +8501,129 @@ def evaluate_evm_economic_price_adjustment_and_inflation_erosion(
 
 ProjectEVMService.evaluate_evm_economic_price_adjustment_and_inflation_erosion = staticmethod(
     evaluate_evm_economic_price_adjustment_and_inflation_erosion
+)
+
+
+def evaluate_evm_capex_opex_classification_and_amortization(
+    cost_entries: list[dict[str, Any]],
+    *,
+    min_capex_share_target_pct: float = 50.0,
+    max_misclassification_pct: float = 5.0,
+) -> dict[str, Any]:
+    """Evaluate PMI PMBOK §7.4 & §1.2.6 CapEx vs OpEx accounting classification eligibility (ASC 350-40 / IAS 38)."""
+    improper_capitalization_entry_ids: list[str] = []
+    unclaimed_capex_entry_ids: list[str] = []
+    recommendations: list[str] = []
+
+    valid_entries = (
+        [
+            e
+            for e in cost_entries
+            if isinstance(e, dict) and str(e.get("entry_id", "")).strip()
+        ]
+        if isinstance(cost_entries, list)
+        else []
+    )
+
+    total_recorded_capex = 0.0
+    total_recorded_opex = 0.0
+    improper_capex_amount = 0.0
+
+    for entry in valid_entries:
+        entry_id = str(entry.get("entry_id", "")).strip()
+        project_stage = (
+            str(entry.get("project_stage", "APPLICATION_DEVELOPMENT")).strip().upper()
+        )
+        recorded_category = (
+            str(entry.get("recorded_category", "OPEX")).strip().upper()
+        )
+        amount = float(entry.get("amount", 0.0) or 0.0)
+        is_maintenance_or_training = bool(
+            entry.get("is_maintenance_or_training", False)
+        )
+        useful_life_months = int(
+            entry.get("useful_life_months", 36)
+            if entry.get("useful_life_months") is not None
+            else 36
+        )
+
+        is_capex_eligible = (
+            project_stage == "APPLICATION_DEVELOPMENT"
+            and not is_maintenance_or_training
+            and useful_life_months >= 12
+        )
+
+        if recorded_category == "CAPEX":
+            total_recorded_capex += amount
+            if not is_capex_eligible:
+                improper_capitalization_entry_ids.append(entry_id)
+                improper_capex_amount += amount
+        else:
+            total_recorded_opex += amount
+            if is_capex_eligible:
+                unclaimed_capex_entry_ids.append(entry_id)
+
+    total_recorded_capex = round(total_recorded_capex, 2)
+    total_recorded_opex = round(total_recorded_opex, 2)
+    total_spend = round(total_recorded_capex + total_recorded_opex, 2)
+    improper_capex_amount = round(improper_capex_amount, 2)
+    adjusted_valid_capex = round(total_recorded_capex - improper_capex_amount, 2)
+
+    valid_capex_share_pct = (
+        round((adjusted_valid_capex / total_spend) * 100.0, 2)
+        if total_spend > 0.0
+        else 100.0
+    )
+    misclassification_share_pct = (
+        round((improper_capex_amount / total_spend) * 100.0, 2)
+        if total_spend > 0.0
+        else 0.0
+    )
+
+    if improper_capitalization_entry_ids:
+        recommendations.append(
+            f"Reclassify improper CapEx entries (preliminary/post-implementation/training or useful life <12m) to OpEx: {', '.join(improper_capitalization_entry_ids)}."
+        )
+    if unclaimed_capex_entry_ids:
+        recommendations.append(
+            f"Capitalize eligible APPLICATION_DEVELOPMENT software/infrastructure assets currently expensed as OpEx: {', '.join(unclaimed_capex_entry_ids)}."
+        )
+    if total_spend > 0.0 and valid_capex_share_pct < min_capex_share_target_pct:
+        recommendations.append(
+            f"Review work package structure to improve valid CapEx ratio ({valid_capex_share_pct:.2f}% < {min_capex_share_target_pct:.2f}%)."
+        )
+
+    if (
+        improper_capitalization_entry_ids
+        and misclassification_share_pct > max_misclassification_pct
+    ):
+        accounting_governance_status = "AUDIT_RISK"
+    elif (
+        improper_capitalization_entry_ids
+        or unclaimed_capex_entry_ids
+        or (total_spend > 0.0 and valid_capex_share_pct < min_capex_share_target_pct)
+    ):
+        accounting_governance_status = "WARNING"
+    else:
+        accounting_governance_status = "COMPLIANT"
+
+    return {
+        "total_entries": len(valid_entries),
+        "total_recorded_capex": total_recorded_capex,
+        "total_recorded_opex": total_recorded_opex,
+        "adjusted_valid_capex": adjusted_valid_capex,
+        "improper_capex_amount": improper_capex_amount,
+        "valid_capex_share_pct": valid_capex_share_pct,
+        "misclassification_share_pct": misclassification_share_pct,
+        "improper_capitalization_entry_ids": improper_capitalization_entry_ids,
+        "unclaimed_capex_entry_ids": unclaimed_capex_entry_ids,
+        "accounting_governance_status": accounting_governance_status,
+        "recommendations": recommendations,
+    }
+
+
+ProjectEVMService.evaluate_evm_capex_opex_classification_and_amortization = staticmethod(
+    evaluate_evm_capex_opex_classification_and_amortization
 )
 
 

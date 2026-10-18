@@ -2994,6 +2994,7 @@ __all__ = [
     "audit_executive_report_finops_cloud_cost_and_idle_capacity",
     "audit_executive_report_sbom_cve_and_oss_license_compliance",
     "audit_executive_report_disaster_recovery_rto_rpo_readiness",
+    "audit_executive_report_software_license_true_up_and_shelfware",
     "ProjectExportService",
 ]
 
@@ -6244,4 +6245,115 @@ def audit_executive_report_disaster_recovery_rto_rpo_readiness(
 
 ProjectExportService.audit_executive_report_disaster_recovery_rto_rpo_readiness = staticmethod(
     audit_executive_report_disaster_recovery_rto_rpo_readiness
+)
+
+
+def audit_executive_report_software_license_true_up_and_shelfware(
+    licenses: list[dict[str, Any]],
+    *,
+    max_shelfware_waste_pct: float = 20.0,
+    true_up_penalty_multiplier: float = 1.25,
+) -> dict[str, Any]:
+    """Audit PMI PMBOK §12.3 & §7.4 software license true-up exposure, seat over-deployment, and shelfware waste."""
+    overdeployed_subscription_ids: list[str] = []
+    shelfware_subscription_ids: list[str] = []
+    imminent_renewal_rightsizing_ids: list[str] = []
+    recommendations: list[str] = []
+
+    valid_licenses = (
+        [
+            lic
+            for lic in licenses
+            if isinstance(lic, dict) and str(lic.get("subscription_id", "")).strip()
+        ]
+        if isinstance(licenses, list)
+        else []
+    )
+
+    total_true_up_exposure_cost = 0.0
+    total_annual_shelfware_waste_cost = 0.0
+
+    for lic in valid_licenses:
+        subscription_id = str(lic.get("subscription_id", "")).strip()
+        purchased_seats = int(lic.get("purchased_seats", 0) or 0)
+        deployed_active_seats = int(lic.get("deployed_active_seats", 0) or 0)
+        annual_cost_per_seat = float(lic.get("annual_cost_per_seat", 0.0) or 0.0)
+        days_until_renewal = int(
+            lic.get("days_until_renewal", 90)
+            if lic.get("days_until_renewal") is not None
+            else 90
+        )
+
+        overdeployed_seats = max(0, deployed_active_seats - purchased_seats)
+        unused_shelfware_seats = max(0, purchased_seats - deployed_active_seats)
+        shelfware_ratio_pct = (
+            round((unused_shelfware_seats / purchased_seats) * 100.0, 2)
+            if purchased_seats > 0
+            else 0.0
+        )
+
+        true_up_exposure_cost = round(
+            overdeployed_seats * annual_cost_per_seat * true_up_penalty_multiplier,
+            2,
+        )
+        annual_shelfware_waste_cost = round(
+            unused_shelfware_seats * annual_cost_per_seat, 2
+        )
+
+        total_true_up_exposure_cost += true_up_exposure_cost
+        total_annual_shelfware_waste_cost += annual_shelfware_waste_cost
+
+        is_overdeployed = overdeployed_seats > 0
+        is_shelfware = (
+            shelfware_ratio_pct > max_shelfware_waste_pct
+            and unused_shelfware_seats > 0
+        )
+
+        if is_overdeployed:
+            overdeployed_subscription_ids.append(subscription_id)
+
+        if is_shelfware:
+            shelfware_subscription_ids.append(subscription_id)
+
+        if (is_overdeployed or is_shelfware) and days_until_renewal <= 30:
+            imminent_renewal_rightsizing_ids.append(subscription_id)
+
+    total_true_up_exposure_cost = round(total_true_up_exposure_cost, 2)
+    total_annual_shelfware_waste_cost = round(total_annual_shelfware_waste_cost, 2)
+
+    if overdeployed_subscription_ids:
+        recommendations.append(
+            f"Reclaim inactive accounts or execute pre-audit seat expansion to eliminate True-Up penalty exposure on: {', '.join(overdeployed_subscription_ids)}."
+        )
+    if shelfware_subscription_ids:
+        recommendations.append(
+            f"Deprovision unused shelfware seats (>{max_shelfware_waste_pct:.1f}% idle) on subscriptions: {', '.join(shelfware_subscription_ids)}."
+        )
+    if imminent_renewal_rightsizing_ids:
+        recommendations.append(
+            f"Expedite contract right-sizing negotiations before imminent renewal (<=30d) for: {', '.join(imminent_renewal_rightsizing_ids)}."
+        )
+
+    if overdeployed_subscription_ids:
+        license_governance_status = "COMPLIANCE_RISK"
+    elif shelfware_subscription_ids:
+        license_governance_status = "WARNING"
+    else:
+        license_governance_status = "OPTIMIZED"
+
+    return {
+        "total_subscriptions": len(valid_licenses),
+        "total_true_up_exposure_cost": total_true_up_exposure_cost,
+        "total_annual_shelfware_waste_cost": total_annual_shelfware_waste_cost,
+        "overdeployed_subscription_ids": overdeployed_subscription_ids,
+        "shelfware_subscription_ids": shelfware_subscription_ids,
+        "imminent_renewal_rightsizing_ids": imminent_renewal_rightsizing_ids,
+        "license_governance_status": license_governance_status,
+        "is_license_compliant": license_governance_status == "OPTIMIZED",
+        "recommendations": recommendations,
+    }
+
+
+ProjectExportService.audit_executive_report_software_license_true_up_and_shelfware = staticmethod(
+    audit_executive_report_software_license_true_up_and_shelfware
 )

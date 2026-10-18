@@ -7302,3 +7302,156 @@ def test_evaluate_evm_epa_inflation_erosion_empty_and_binding():
     assert (
         "evaluate_evm_economic_price_adjustment_and_inflation_erosion" in mod.__all__
     )
+
+
+def test_evaluate_evm_capex_opex_classification_and_amortization_compliant():
+    """Caso 1: Entradas correctamente clasificadas ASC 350-40 / IAS 38 y CapEx válido >=50% -> COMPLIANT."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_capex_opex_classification_and_amortization,
+    )
+
+    entries = [
+        {
+            "entry_id": "COST-DEV-01",
+            "project_stage": "APPLICATION_DEVELOPMENT",
+            "recorded_category": "CAPEX",
+            "amount": 120000.0,
+            "is_maintenance_or_training": False,
+            "useful_life_months": 36,
+        },
+        {
+            "entry_id": "COST-DISC-02",
+            "project_stage": "PRELIMINARY",
+            "recorded_category": "OPEX",
+            "amount": 40000.0,
+            "is_maintenance_or_training": False,
+            "useful_life_months": 0,
+        },
+    ]
+    res = evaluate_evm_capex_opex_classification_and_amortization(
+        entries, min_capex_share_target_pct=50.0, max_misclassification_pct=5.0
+    )
+    assert res["total_entries"] == 2
+    assert res["total_recorded_capex"] == 120000.0
+    assert res["total_recorded_opex"] == 40000.0
+    assert res["adjusted_valid_capex"] == 120000.0
+    assert res["improper_capex_amount"] == 0.0
+    assert res["valid_capex_share_pct"] == 75.0
+    assert res["misclassification_share_pct"] == 0.0
+    assert res["improper_capitalization_entry_ids"] == []
+    assert res["unclaimed_capex_entry_ids"] == []
+    assert res["accounting_governance_status"] == "COMPLIANT"
+    assert res["recommendations"] == []
+
+
+def test_evaluate_evm_capex_opex_classification_and_amortization_warning():
+    """Caso 2: Oportunidad CapEx no reclamada (registrada como OPEX) o ratio CapEx bajo sin riesgo de auditoría -> WARNING."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_capex_opex_classification_and_amortization,
+    )
+
+    entries = [
+        {
+            "entry_id": "COST-DEV-CAP",
+            "project_stage": "APPLICATION_DEVELOPMENT",
+            "recorded_category": "CAPEX",
+            "amount": 80000.0,
+            "is_maintenance_or_training": False,
+            "useful_life_months": 36,
+        },
+        {
+            "entry_id": "COST-DEV-MISSED",
+            "project_stage": "APPLICATION_DEVELOPMENT",
+            "recorded_category": "OPEX",
+            "amount": 40000.0,
+            "is_maintenance_or_training": False,
+            "useful_life_months": 24,
+        },
+    ]
+    res = evaluate_evm_capex_opex_classification_and_amortization(
+        entries, min_capex_share_target_pct=50.0, max_misclassification_pct=5.0
+    )
+    assert res["total_entries"] == 2
+    assert res["improper_capitalization_entry_ids"] == []
+    assert res["unclaimed_capex_entry_ids"] == ["COST-DEV-MISSED"]
+    assert res["accounting_governance_status"] == "WARNING"
+    assert len(res["recommendations"]) >= 1
+
+
+def test_evaluate_evm_capex_opex_classification_and_amortization_audit_risk():
+    """Caso 3: Sobre-capitalización indebida en etapa preliminar o entrenamiento (>5% del gasto) -> AUDIT_RISK."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_capex_opex_classification_and_amortization,
+    )
+
+    entries = [
+        {
+            "entry_id": "COST-DEV-OK",
+            "project_stage": "APPLICATION_DEVELOPMENT",
+            "recorded_category": "CAPEX",
+            "amount": 100000.0,
+            "is_maintenance_or_training": False,
+            "useful_life_months": 36,
+        },
+        {
+            "entry_id": "COST-TRAIN-BAD",
+            "project_stage": "POST_IMPLEMENTATION",
+            "recorded_category": "CAPEX",
+            "amount": 25000.0,
+            "is_maintenance_or_training": True,
+            "useful_life_months": 36,
+        },
+    ]
+    res = evaluate_evm_capex_opex_classification_and_amortization(
+        entries, min_capex_share_target_pct=50.0, max_misclassification_pct=5.0
+    )
+    assert res["total_entries"] == 2
+    assert res["improper_capex_amount"] == 25000.0
+    assert res["adjusted_valid_capex"] == 100000.0
+    assert res["misclassification_share_pct"] == 20.0
+    assert res["improper_capitalization_entry_ids"] == ["COST-TRAIN-BAD"]
+    assert res["accounting_governance_status"] == "AUDIT_RISK"
+    assert len(res["recommendations"]) >= 1
+
+
+def test_evaluate_evm_capex_opex_classification_and_amortization_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en ProjectEVMService + __all__."""
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_capex_opex_classification_and_amortization,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = evaluate_evm_capex_opex_classification_and_amortization(payload)  # type: ignore[arg-type]
+        assert empty["total_entries"] == 0
+        assert empty["total_recorded_capex"] == 0.0
+        assert empty["total_recorded_opex"] == 0.0
+        assert empty["adjusted_valid_capex"] == 0.0
+        assert empty["improper_capex_amount"] == 0.0
+        assert empty["valid_capex_share_pct"] == 100.0
+        assert empty["misclassification_share_pct"] == 0.0
+        assert empty["improper_capitalization_entry_ids"] == []
+        assert empty["unclaimed_capex_entry_ids"] == []
+        assert empty["accounting_governance_status"] == "COMPLIANT"
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "entry_id": "COST-99",
+            "project_stage": "APPLICATION_DEVELOPMENT",
+            "recorded_category": "CAPEX",
+            "amount": 50000.0,
+            "is_maintenance_or_training": False,
+            "useful_life_months": 36,
+        }
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_capex_opex_classification_and_amortization(
+            sample
+        )
+        == evaluate_evm_capex_opex_classification_and_amortization(sample)
+    )
+    assert (
+        "evaluate_evm_capex_opex_classification_and_amortization" in mod.__all__
+    )

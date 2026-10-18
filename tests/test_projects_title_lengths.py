@@ -6421,3 +6421,130 @@ def test_validate_resource_calendar_timezone_overlap_and_allocation_empty_and_ex
     assert (
         "validate_resource_calendar_timezone_overlap_and_allocation" in mod.__all__
     )
+
+
+def test_validate_wbs_work_package_8_80_granularity_and_dictionary_well_decomposed():
+    """Caso 1: Paquetes hoja entre 8h y 80h, nivel <=6 y diccionario WBS completo -> WELL_DECOMPOSED."""
+    from backend.schemas.projects import (
+        validate_wbs_work_package_8_80_granularity_and_dictionary,
+    )
+
+    wps = [
+        {
+            "wp_id": "WBS-1.0",
+            "is_leaf_package": False,
+            "estimated_effort_hours": 120.0,
+            "wbs_level": 1,
+            "has_acceptance_criteria": True,
+            "has_assigned_control_account": True,
+            "deliverable_noun_phrase_valid": True,
+        },
+        {
+            "wp_id": "WBS-1.1",
+            "is_leaf_package": True,
+            "estimated_effort_hours": 40.0,
+            "wbs_level": 2,
+            "has_acceptance_criteria": True,
+            "has_assigned_control_account": True,
+            "deliverable_noun_phrase_valid": True,
+        },
+        {
+            "wp_id": "WBS-1.2",
+            "is_leaf_package": True,
+            "estimated_effort_hours": 80.0,
+            "wbs_level": 2,
+            "has_acceptance_criteria": True,
+            "has_assigned_control_account": True,
+            "deliverable_noun_phrase_valid": True,
+        },
+    ]
+    res = validate_wbs_work_package_8_80_granularity_and_dictionary(
+        wps, min_effort_hours=8.0, max_effort_hours=80.0, max_wbs_depth_level=6
+    )
+    assert res["total_work_packages"] == 3
+    assert res["micromanaged_wp_ids"] == []
+    assert res["oversized_wp_ids"] == []
+    assert res["excessive_depth_wp_ids"] == []
+    assert res["incomplete_dictionary_wp_ids"] == []
+    assert res["wbs_governance_status"] == "WELL_DECOMPOSED"
+    assert res["is_wbs_valid"] is True
+    assert res["recommendations"] == []
+
+
+def test_validate_wbs_work_package_8_80_granularity_and_dictionary_warning():
+    """Caso 2: Paquete hoja <8h (micromanagement) y nivel >6 sin paquetes >80h ni diccionario incompleto -> WARNING."""
+    from backend.schemas.projects import (
+        validate_wbs_work_package_8_80_granularity_and_dictionary,
+    )
+
+    wps = [
+        {
+            "wp_id": "WBS-1.1.1.1.1.1.1",
+            "is_leaf_package": True,
+            "estimated_effort_hours": 3.5,
+            "wbs_level": 7,
+            "has_acceptance_criteria": True,
+            "has_assigned_control_account": True,
+            "deliverable_noun_phrase_valid": True,
+        }
+    ]
+    res = validate_wbs_work_package_8_80_granularity_and_dictionary(
+        wps, min_effort_hours=8.0, max_effort_hours=80.0, max_wbs_depth_level=6
+    )
+    assert res["total_work_packages"] == 1
+    assert res["micromanaged_wp_ids"] == ["WBS-1.1.1.1.1.1.1"]
+    assert res["oversized_wp_ids"] == []
+    assert res["excessive_depth_wp_ids"] == ["WBS-1.1.1.1.1.1.1"]
+    assert res["incomplete_dictionary_wp_ids"] == []
+    assert res["wbs_governance_status"] == "WARNING"
+    assert res["is_wbs_valid"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_validate_wbs_work_package_8_80_granularity_and_dictionary_invalid():
+    """Caso 3: Paquete hoja >80h y diccionario WBS sin criterios de aceptación o cuenta de control -> INVALID_WBS."""
+    from backend.schemas.projects import (
+        validate_wbs_work_package_8_80_granularity_and_dictionary,
+    )
+
+    wps = [
+        {
+            "wp_id": "WBS-2.1",
+            "is_leaf_package": True,
+            "estimated_effort_hours": 160.0,
+            "wbs_level": 2,
+            "has_acceptance_criteria": False,
+            "has_assigned_control_account": True,
+            "deliverable_noun_phrase_valid": True,
+        }
+    ]
+    res = validate_wbs_work_package_8_80_granularity_and_dictionary(wps)
+    assert res["total_work_packages"] == 1
+    assert res["oversized_wp_ids"] == ["WBS-2.1"]
+    assert res["incomplete_dictionary_wp_ids"] == ["WBS-2.1"]
+    assert res["wbs_governance_status"] == "INVALID_WBS"
+    assert res["is_wbs_valid"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_validate_wbs_work_package_8_80_granularity_and_dictionary_empty_and_export():
+    """Caso 4: Entradas vacías/inválidas y exportación en __all__."""
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_wbs_work_package_8_80_granularity_and_dictionary,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = validate_wbs_work_package_8_80_granularity_and_dictionary(payload)  # type: ignore[arg-type]
+        assert empty["total_work_packages"] == 0
+        assert empty["micromanaged_wp_ids"] == []
+        assert empty["oversized_wp_ids"] == []
+        assert empty["excessive_depth_wp_ids"] == []
+        assert empty["incomplete_dictionary_wp_ids"] == []
+        assert empty["wbs_governance_status"] == "WELL_DECOMPOSED"
+        assert empty["is_wbs_valid"] is True
+        assert empty["recommendations"] == []
+
+    assert (
+        "validate_wbs_work_package_8_80_granularity_and_dictionary" in mod.__all__
+    )

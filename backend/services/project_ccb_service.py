@@ -2837,6 +2837,7 @@ __all__ = [
     "audit_cost_of_quality_conformance_and_failure_ratio",
     "audit_technical_debt_interest_and_remediation_quota",
     "audit_canary_rollout_blast_radius_and_rollback_readiness",
+    "audit_feature_flag_lifecycle_debt_and_kill_switch_hygiene",
     "ProjectCCBService",
 ]
 
@@ -5975,4 +5976,113 @@ def audit_canary_rollout_blast_radius_and_rollback_readiness(
 
 ProjectCCBService.audit_canary_rollout_blast_radius_and_rollback_readiness = staticmethod(
     audit_canary_rollout_blast_radius_and_rollback_readiness
+)
+
+
+def audit_feature_flag_lifecycle_debt_and_kill_switch_hygiene(
+    feature_flags: list[dict[str, Any]],
+    *,
+    max_rollout_flag_ttl_days: int = 30,
+    max_active_release_flags: int = 10,
+) -> dict[str, Any]:
+    """Audit PMI PMBOK §8.3 & §4.6 CCB feature flag lifecycle debt, kill-switch ownership, and CI branch coverage."""
+    zombie_flag_ids: list[str] = []
+    unowned_flag_ids: list[str] = []
+    untested_branch_flag_ids: list[str] = []
+    missing_cleanup_ticket_flag_ids: list[str] = []
+    recommendations: list[str] = []
+
+    valid_flags = (
+        [
+            f
+            for f in feature_flags
+            if isinstance(f, dict) and str(f.get("flag_id", "")).strip()
+        ]
+        if isinstance(feature_flags, list)
+        else []
+    )
+
+    active_release_flags_count = 0
+
+    for flag in valid_flags:
+        flag_id = str(flag.get("flag_id", "")).strip()
+        flag_type = str(flag.get("flag_type", "RELEASE")).strip().upper()
+        age_days = int(flag.get("age_days", 0) or 0)
+        rollout_pct = float(flag.get("rollout_pct", 0.0) or 0.0)
+        owner_raw = flag.get("owner_id")
+        owner_id = str(owner_raw).strip() if owner_raw is not None else ""
+        has_cleanup_ticket = bool(flag.get("has_cleanup_ticket", False))
+        both_paths_tested_in_ci = (
+            bool(flag.get("both_paths_tested_in_ci", True))
+            if flag.get("both_paths_tested_in_ci") is not None
+            else True
+        )
+
+        if flag_type in ("RELEASE", "EXPERIMENT"):
+            active_release_flags_count += 1
+            if (
+                rollout_pct == 100.0 and age_days > max_rollout_flag_ttl_days
+            ) or age_days > max_rollout_flag_ttl_days * 2:
+                zombie_flag_ids.append(flag_id)
+                if not has_cleanup_ticket:
+                    missing_cleanup_ticket_flag_ids.append(flag_id)
+
+        if not owner_id:
+            unowned_flag_ids.append(flag_id)
+
+        if not both_paths_tested_in_ci:
+            untested_branch_flag_ids.append(flag_id)
+
+    combinatorial_explosion_risk = bool(
+        active_release_flags_count > max_active_release_flags
+    )
+
+    if untested_branch_flag_ids:
+        recommendations.append(
+            f"Add dual-path (ON/OFF) CI automated tests for feature flags: {', '.join(untested_branch_flag_ids)}."
+        )
+    if unowned_flag_ids:
+        recommendations.append(
+            f"Assign explicit engineering owners to orphaned feature flags: {', '.join(unowned_flag_ids)}."
+        )
+    if zombie_flag_ids:
+        recommendations.append(
+            f"Retire stale/100%-rolled-out zombie feature flags from codebase: {', '.join(zombie_flag_ids)}."
+        )
+    if missing_cleanup_ticket_flag_ids:
+        recommendations.append(
+            f"Create backlog cleanup tickets for zombie feature flags: {', '.join(missing_cleanup_ticket_flag_ids)}."
+        )
+    if combinatorial_explosion_risk:
+        recommendations.append(
+            f"Reduce active release/experiment feature flags ({active_release_flags_count} > {max_active_release_flags}) to limit combinatorial test matrix explosion."
+        )
+
+    if (
+        untested_branch_flag_ids
+        or unowned_flag_ids
+        or len(zombie_flag_ids) >= 2
+    ):
+        flag_governance_status = "CRITICAL"
+    elif zombie_flag_ids or combinatorial_explosion_risk:
+        flag_governance_status = "WARNING"
+    else:
+        flag_governance_status = "CLEAN"
+
+    return {
+        "total_flags": len(valid_flags),
+        "active_release_flags_count": active_release_flags_count,
+        "combinatorial_explosion_risk": combinatorial_explosion_risk,
+        "zombie_flag_ids": zombie_flag_ids,
+        "unowned_flag_ids": unowned_flag_ids,
+        "untested_branch_flag_ids": untested_branch_flag_ids,
+        "missing_cleanup_ticket_flag_ids": missing_cleanup_ticket_flag_ids,
+        "flag_governance_status": flag_governance_status,
+        "is_flag_hygiene_compliant": flag_governance_status == "CLEAN",
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.audit_feature_flag_lifecycle_debt_and_kill_switch_hygiene = staticmethod(
+    audit_feature_flag_lifecycle_debt_and_kill_switch_hygiene
 )

@@ -7691,3 +7691,154 @@ def test_audit_canary_rollout_blast_radius_and_rollback_empty_and_binding():
     assert (
         "audit_canary_rollout_blast_radius_and_rollback_readiness" in mod.__all__
     )
+
+
+def test_audit_feature_flag_lifecycle_debt_and_kill_switch_hygiene_clean():
+    """Caso 1: Flags con propietario, ambas ramas probadas en CI y sin flags zombi -> CLEAN."""
+    from backend.services.project_ccb_service import (
+        audit_feature_flag_lifecycle_debt_and_kill_switch_hygiene,
+    )
+
+    flags = [
+        {
+            "flag_id": "FF-NEW-CHECKOUT",
+            "flag_type": "RELEASE",
+            "age_days": 12,
+            "rollout_pct": 50.0,
+            "owner_id": "TEAM-PAYMENTS",
+            "has_cleanup_ticket": True,
+            "both_paths_tested_in_ci": True,
+        },
+        {
+            "flag_id": "FF-KILL-SMS-GATEWAY",
+            "flag_type": "OPS_KILL_SWITCH",
+            "age_days": 180,
+            "rollout_pct": 100.0,
+            "owner_id": "TEAM-SRE",
+            "has_cleanup_ticket": False,
+            "both_paths_tested_in_ci": True,
+        },
+    ]
+    res = audit_feature_flag_lifecycle_debt_and_kill_switch_hygiene(
+        flags, max_rollout_flag_ttl_days=30, max_active_release_flags=10
+    )
+    assert res["total_flags"] == 2
+    assert res["active_release_flags_count"] == 1
+    assert res["combinatorial_explosion_risk"] is False
+    assert res["zombie_flag_ids"] == []
+    assert res["unowned_flag_ids"] == []
+    assert res["untested_branch_flag_ids"] == []
+    assert res["missing_cleanup_ticket_flag_ids"] == []
+    assert res["flag_governance_status"] == "CLEAN"
+    assert res["is_flag_hygiene_compliant"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_feature_flag_lifecycle_debt_and_kill_switch_hygiene_warning():
+    """Caso 2: Un flag zombi (100% rollout y >30d) o explosión combinatoria (>max_active_release_flags) -> WARNING."""
+    from backend.services.project_ccb_service import (
+        audit_feature_flag_lifecycle_debt_and_kill_switch_hygiene,
+    )
+
+    flags = [
+        {
+            "flag_id": "FF-ZOMBIE-01",
+            "flag_type": "RELEASE",
+            "age_days": 45,
+            "rollout_pct": 100.0,
+            "owner_id": "TEAM-CORE",
+            "has_cleanup_ticket": False,
+            "both_paths_tested_in_ci": True,
+        },
+        {
+            "flag_id": "FF-EXP-02",
+            "flag_type": "EXPERIMENT",
+            "age_days": 10,
+            "rollout_pct": 25.0,
+            "owner_id": "TEAM-GROWTH",
+            "has_cleanup_ticket": True,
+            "both_paths_tested_in_ci": True,
+        },
+    ]
+    res = audit_feature_flag_lifecycle_debt_and_kill_switch_hygiene(
+        flags, max_rollout_flag_ttl_days=30, max_active_release_flags=1
+    )
+    assert res["total_flags"] == 2
+    assert res["active_release_flags_count"] == 2
+    assert res["combinatorial_explosion_risk"] is True
+    assert res["zombie_flag_ids"] == ["FF-ZOMBIE-01"]
+    assert res["missing_cleanup_ticket_flag_ids"] == ["FF-ZOMBIE-01"]
+    assert res["flag_governance_status"] == "WARNING"
+    assert res["is_flag_hygiene_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_feature_flag_lifecycle_debt_and_kill_switch_hygiene_critical():
+    """Caso 3: Flag sin propietario y sin cobertura dual en CI -> CRITICAL."""
+    from backend.services.project_ccb_service import (
+        audit_feature_flag_lifecycle_debt_and_kill_switch_hygiene,
+    )
+
+    flags = [
+        {
+            "flag_id": "FF-ORPHAN-RISKY",
+            "flag_type": "RELEASE",
+            "age_days": 75,
+            "rollout_pct": 100.0,
+            "owner_id": None,
+            "has_cleanup_ticket": False,
+            "both_paths_tested_in_ci": False,
+        }
+    ]
+    res = audit_feature_flag_lifecycle_debt_and_kill_switch_hygiene(flags)
+    assert res["total_flags"] == 1
+    assert res["zombie_flag_ids"] == ["FF-ORPHAN-RISKY"]
+    assert res["unowned_flag_ids"] == ["FF-ORPHAN-RISKY"]
+    assert res["untested_branch_flag_ids"] == ["FF-ORPHAN-RISKY"]
+    assert res["missing_cleanup_ticket_flag_ids"] == ["FF-ORPHAN-RISKY"]
+    assert res["flag_governance_status"] == "CRITICAL"
+    assert res["is_flag_hygiene_compliant"] is False
+    assert len(res["recommendations"]) >= 3
+
+
+def test_audit_feature_flag_lifecycle_debt_and_kill_switch_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en ProjectCCBService + __all__."""
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_feature_flag_lifecycle_debt_and_kill_switch_hygiene,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_feature_flag_lifecycle_debt_and_kill_switch_hygiene(payload)  # type: ignore[arg-type]
+        assert empty["total_flags"] == 0
+        assert empty["active_release_flags_count"] == 0
+        assert empty["combinatorial_explosion_risk"] is False
+        assert empty["zombie_flag_ids"] == []
+        assert empty["unowned_flag_ids"] == []
+        assert empty["untested_branch_flag_ids"] == []
+        assert empty["missing_cleanup_ticket_flag_ids"] == []
+        assert empty["flag_governance_status"] == "CLEAN"
+        assert empty["is_flag_hygiene_compliant"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "flag_id": "FF-99",
+            "flag_type": "RELEASE",
+            "age_days": 5,
+            "rollout_pct": 10.0,
+            "owner_id": "TEAM-01",
+            "has_cleanup_ticket": True,
+            "both_paths_tested_in_ci": True,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_feature_flag_lifecycle_debt_and_kill_switch_hygiene(
+            sample
+        )
+        == audit_feature_flag_lifecycle_debt_and_kill_switch_hygiene(sample)
+    )
+    assert (
+        "audit_feature_flag_lifecycle_debt_and_kill_switch_hygiene" in mod.__all__
+    )
