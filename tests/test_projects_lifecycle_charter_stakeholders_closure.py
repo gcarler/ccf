@@ -5205,3 +5205,123 @@ def test_audit_portfolio_strategic_alignment_and_benefits_drift_empty_and_export
             "findings": [],
         }
 
+
+
+def test_audit_stage_gate_conditional_go_remediation_sla_healthy():
+    """Compuertas sin anomalías: GO limpio y CONDITIONAL_GO dentro del SLA con owner."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stage_gate_conditional_go_remediation_sla,
+    )
+
+    res = audit_stage_gate_conditional_go_remediation_sla(
+        [
+            {"gate_id": "G-1", "decision": "GO", "open_conditions_count": 0,
+             "days_since_conditional_approval": 0, "next_phase_execution_started": True,
+             "sponsor_waiver_signed": False, "remediation_owner_assigned": False},
+            {"gate_id": "G-2", "decision": "conditional_go", "open_conditions_count": 2,
+             "days_since_conditional_approval": 14, "next_phase_execution_started": False,
+             "sponsor_waiver_signed": False, "remediation_owner_assigned": True},
+        ]
+    )
+    assert res == {
+        "total_gates_evaluated": 2,
+        "compliant_gates_count": 2,
+        "expired_conditional_gates_count": 0,
+        "unauthorized_phase_advancement_count": 0,
+        "unassigned_remediation_gates_count": 0,
+        "stage_gate_governance_status": "HEALTHY",
+        "violations": [],
+    }
+
+
+def test_audit_stage_gate_conditional_go_remediation_sla_critical():
+    """Conditional-go vencido y avance no autorizado -> CRITICAL."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stage_gate_conditional_go_remediation_sla,
+    )
+
+    res = audit_stage_gate_conditional_go_remediation_sla(
+        [
+            {"gate_id": "G-3", "decision": "CONDITIONAL_GO", "open_conditions_count": 1,
+             "days_since_conditional_approval": 15, "next_phase_execution_started": False,
+             "sponsor_waiver_signed": False, "remediation_owner_assigned": True},
+            {"gate_id": "G-4", "decision": "HOLD", "open_conditions_count": 0,
+             "days_since_conditional_approval": 0, "next_phase_execution_started": True,
+             "sponsor_waiver_signed": False, "remediation_owner_assigned": False},
+        ]
+    )
+    assert res["expired_conditional_gates_count"] == 1
+    assert res["unauthorized_phase_advancement_count"] == 1
+    assert res["compliant_gates_count"] == 0
+    assert res["stage_gate_governance_status"] == "CRITICAL"
+    assert res["violations"] == [
+        {"gate_id": "G-3", "reasons": ["CONDITIONAL_GO_SLA_EXPIRED (15>14, 1 condiciones abiertas)"]},
+        {"gate_id": "G-4", "reasons": ["UNAUTHORIZED_PHASE_ADVANCEMENT (HOLD sin dispensa del sponsor)"]},
+    ]
+
+    # Waiver firmado mitiga el avance no autorizado (KILL con waiver -> sin hallazgo).
+    waived = audit_stage_gate_conditional_go_remediation_sla(
+        [
+            {"gate_id": "G-5", "decision": "KILL", "open_conditions_count": 0,
+             "days_since_conditional_approval": 0, "next_phase_execution_started": True,
+             "sponsor_waiver_signed": True, "remediation_owner_assigned": False},
+        ]
+    )
+    assert waived["unauthorized_phase_advancement_count"] == 0
+    assert waived["stage_gate_governance_status"] == "HEALTHY"
+
+
+def test_audit_stage_gate_conditional_go_remediation_sla_at_risk():
+    """Condiciones abiertas sin responsable -> AT_RISK (decision NO_GO sin avance)."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stage_gate_conditional_go_remediation_sla,
+    )
+
+    res = audit_stage_gate_conditional_go_remediation_sla(
+        [
+            {"gate_id": "G-6", "decision": "NO_GO", "open_conditions_count": 2,
+             "days_since_conditional_approval": 0, "next_phase_execution_started": False,
+             "sponsor_waiver_signed": False, "remediation_owner_assigned": False},
+        ]
+    )
+    assert res["unassigned_remediation_gates_count"] == 1
+    assert res["compliant_gates_count"] == 0
+    assert res["stage_gate_governance_status"] == "AT_RISK"
+    assert res["violations"] == [
+        {"gate_id": "G-6", "reasons": ["REMEDIATION_OWNER_UNASSIGNED"]},
+    ]
+
+
+def test_audit_stage_gate_conditional_go_remediation_sla_custom_and_empty():
+    """Umbrales custom, entrada vacia/None y proxy estatico + __all__."""
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_stage_gate_conditional_go_remediation_sla,
+    )
+    import backend.services.project_lifecycle_pmi_service as mod
+
+    custom = audit_stage_gate_conditional_go_remediation_sla(
+        [
+            {"gate_id": "G-7", "decision": "CONDITIONAL_GO", "open_conditions_count": 1,
+             "days_since_conditional_approval": 6, "next_phase_execution_started": False,
+             "sponsor_waiver_signed": False, "remediation_owner_assigned": True},
+        ],
+        max_conditional_remediation_days=5,
+    )
+    assert custom["expired_conditional_gates_count"] == 1
+    assert custom["stage_gate_governance_status"] == "CRITICAL"
+
+    for payload in ([], None, 42):
+        empty = audit_stage_gate_conditional_go_remediation_sla(payload)
+        assert empty["total_gates_evaluated"] == 0
+        assert empty["stage_gate_governance_status"] == "HEALTHY"
+        assert empty["violations"] == []
+
+    sample = [{"gate_id": "SM", "decision": "GO", "open_conditions_count": 0,
+               "days_since_conditional_approval": 0, "next_phase_execution_started": False,
+               "sponsor_waiver_signed": False, "remediation_owner_assigned": False}]
+    assert (
+        ProjectLifecyclePMIService.audit_stage_gate_conditional_go_remediation_sla(sample)
+        == audit_stage_gate_conditional_go_remediation_sla(sample)
+    )
+    assert "audit_stage_gate_conditional_go_remediation_sla" in mod.__all__

@@ -5497,6 +5497,7 @@ __all__ = [
     "evaluate_evm_etc_bottom_up_vs_formulaic_divergence",
     "evaluate_evm_critical_path_drag_and_float_masking",
     "evaluate_evm_rolling_wave_planning_package_freeze_horizon",
+    "evaluate_evm_loe_masking_and_discrete_variance_distortion",
     "ProjectEVMService",
 ]
 
@@ -6696,3 +6697,123 @@ def evaluate_evm_to_complete_schedule_performance_index_tspi(
 ProjectEVMService.evaluate_evm_to_complete_schedule_performance_index_tspi = staticmethod(
     evaluate_evm_to_complete_schedule_performance_index_tspi
 )
+
+
+def evaluate_evm_loe_masking_and_discrete_variance_distortion(
+    work_packages: list[dict[str, Any]],
+    *,
+    max_loe_share_pct: float = 20.0,
+    discrete_spi_alert_threshold: float = 0.90,
+) -> dict[str, Any]:
+    """PMBOK §7.4 — evalúa enmascaramiento por Level of Effort (LOE) y distorsión de varianza discreta."""
+    if not isinstance(work_packages, Sequence) or isinstance(
+        work_packages, (str, bytes)
+    ):
+        return {
+            "total_work_packages": 0,
+            "loe_work_packages_count": 0,
+            "loe_share_pct": 0.0,
+            "composite_spi": 1.0,
+            "discrete_only_spi": 1.0,
+            "spi_masking_spread": 0.0,
+            "is_loe_masking_discrete_delay": False,
+            "loe_ev_pv_mismatch_wps": [],
+            "loe_governance_status": "HEALTHY",
+        }
+
+    try:
+        max_loe_pct = float(max_loe_share_pct)
+    except (TypeError, ValueError):
+        max_loe_pct = 20.0
+
+    try:
+        spi_thresh = float(discrete_spi_alert_threshold)
+    except (TypeError, ValueError):
+        spi_thresh = 0.90
+
+    total_work_packages = 0
+    loe_work_packages_count = 0
+    total_pv = 0.0
+    total_ev = 0.0
+    total_ac = 0.0
+    loe_pv = 0.0
+    discrete_pv = 0.0
+    discrete_ev = 0.0
+    discrete_ac = 0.0
+    loe_ev_pv_mismatch_wps: list[str] = []
+
+    for item in work_packages:
+        if not isinstance(item, Mapping):
+            continue
+        raw_id = item.get("wp_id")
+        if raw_id is None:
+            continue
+        wp_id = str(raw_id).strip()
+        if not wp_id:
+            continue
+
+        total_work_packages += 1
+
+        is_loe = bool(item.get("is_level_of_effort", False))
+        pv = float(item.get("planned_value_pv", 0.0) or 0.0)
+        ev = float(item.get("earned_value_ev", 0.0) or 0.0)
+        ac = float(item.get("actual_cost_ac", 0.0) or 0.0)
+
+        total_pv += pv
+        total_ev += ev
+        total_ac += ac
+
+        if is_loe:
+            loe_work_packages_count += 1
+            loe_pv += pv
+            if abs(ev - pv) > 0.01:
+                loe_ev_pv_mismatch_wps.append(wp_id)
+        else:
+            discrete_pv += pv
+            discrete_ev += ev
+            discrete_ac += ac
+
+    loe_share_pct = round((loe_pv / total_pv) * 100.0, 2) if total_pv > 0.0 else 0.0
+    composite_spi = round(total_ev / total_pv, 4) if total_pv > 0.0 else 1.0
+    discrete_only_spi = (
+        round(discrete_ev / discrete_pv, 4) if discrete_pv > 0.0 else 1.0
+    )
+    spi_masking_spread = round(composite_spi - discrete_only_spi, 4)
+
+    is_loe_masking_discrete_delay = bool(
+        (
+            discrete_pv > 0.0
+            and discrete_only_spi < spi_thresh
+            and composite_spi >= spi_thresh
+        )
+        or (loe_share_pct > max_loe_pct and spi_masking_spread >= 0.05)
+    )
+
+    if (
+        loe_share_pct <= max_loe_pct
+        and not is_loe_masking_discrete_delay
+        and len(loe_ev_pv_mismatch_wps) == 0
+    ):
+        status = "HEALTHY"
+    elif is_loe_masking_discrete_delay or len(loe_ev_pv_mismatch_wps) > 0:
+        status = "CRITICAL"
+    else:
+        status = "AT_RISK"
+
+    return {
+        "total_work_packages": total_work_packages,
+        "loe_work_packages_count": loe_work_packages_count,
+        "loe_share_pct": loe_share_pct,
+        "composite_spi": composite_spi,
+        "discrete_only_spi": discrete_only_spi,
+        "spi_masking_spread": spi_masking_spread,
+        "is_loe_masking_discrete_delay": is_loe_masking_discrete_delay,
+        "loe_ev_pv_mismatch_wps": loe_ev_pv_mismatch_wps,
+        "loe_governance_status": status,
+    }
+
+
+ProjectEVMService.evaluate_evm_loe_masking_and_discrete_variance_distortion = staticmethod(
+    evaluate_evm_loe_masking_and_discrete_variance_distortion
+)
+

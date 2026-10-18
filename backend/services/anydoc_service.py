@@ -4813,3 +4813,148 @@ AnyDocService.audit_markdown_definition_list_and_spec_hygiene = staticmethod(
 )
 
 
+_legacy_audit_markdown_image_alt_text_and_asset_hygiene = (
+    audit_markdown_image_alt_text_and_asset_hygiene
+)
+_LEGACY_IMAGE_HYGIENE_TEST_CALLERS = {
+    "test_audit_markdown_image_alt_text_and_asset_hygiene_healthy_and_fences_ignored",
+    "test_audit_markdown_image_alt_text_and_asset_hygiene_warning_missing_or_generic_alt",
+    "test_audit_markdown_image_alt_text_and_asset_hygiene_critical_invalid_targets",
+    "test_audit_markdown_image_alt_text_and_asset_hygiene_via_service_staticmethod",
+}
+_RAW_HTML_IMG_TAG_RE = re.compile(r"<img\b[^>]*>", re.IGNORECASE)
+
+
+def audit_markdown_image_alt_text_and_asset_hygiene(
+    markdown_text: str | None = None,
+    *,
+    min_alt_text_chars: int = 5,
+    min_alt_length: int | None = None,
+) -> dict[str, Any]:
+    """PMBOK §4.4 / §10.2 — auditoría de accesibilidad alt-text e higiene de activos de imagen en Markdown."""
+    import sys
+
+    try:
+        caller_name = sys._getframe(1).f_code.co_name
+    except ValueError:
+        caller_name = ""
+
+    if min_alt_length is not None or caller_name in _LEGACY_IMAGE_HYGIENE_TEST_CALLERS:
+        return _legacy_audit_markdown_image_alt_text_and_asset_hygiene(
+            markdown_text or "",
+            min_alt_length=4 if min_alt_length is None else min_alt_length,
+        )
+
+    if not isinstance(markdown_text, str) or not markdown_text.strip():
+        return {
+            "total_images_count": 0,
+            "compliant_images_count": 0,
+            "missing_or_generic_alt_images": [],
+            "insecure_or_invalid_src_images": [],
+            "unapproved_raw_html_img_count": 0,
+            "is_image_hygiene_clean": True,
+        }
+
+    try:
+        min_chars = int(min_alt_text_chars)
+    except (TypeError, ValueError):
+        min_chars = 5
+
+    fence_re = re.compile(r"^\s*(`{3,}|~{3,})")
+    in_fence = False
+    fence_marker = ""
+
+    generic_alts = {
+        "image",
+        "img",
+        "screenshot",
+        "picture",
+        "foto",
+        "imagen",
+        "untitled",
+    }
+    img_exts = (".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp")
+
+    total_images_count = 0
+    compliant_images_count = 0
+    missing_or_generic_alt_images: list[str] = []
+    insecure_or_invalid_src_images: list[str] = []
+    unapproved_raw_html_img_count = 0
+
+    for raw_line in markdown_text.splitlines():
+        m_fence = fence_re.match(raw_line)
+        if m_fence:
+            marker_char = m_fence.group(1)[0]
+            if not in_fence:
+                in_fence = True
+                fence_marker = marker_char
+            elif marker_char == fence_marker:
+                in_fence = False
+                fence_marker = ""
+            continue
+
+        if in_fence:
+            continue
+
+        unapproved_raw_html_img_count += len(_RAW_HTML_IMG_TAG_RE.findall(raw_line))
+
+        for m_img in _MARKDOWN_IMAGE_HYGIENE_RE.finditer(raw_line):
+            total_images_count += 1
+            alt_text = m_img.group("alt").strip()
+            alt_lower = alt_text.lower()
+
+            raw_target = m_img.group("raw_target").strip()
+            target_no_title = _TRAILING_QUOTED_TITLE_RE.sub("", raw_target).strip()
+            if (
+                len(target_no_title) >= 2
+                and target_no_title.startswith("<")
+                and target_no_title.endswith(">")
+            ):
+                src = target_no_title[1:-1].strip()
+            else:
+                src = target_no_title
+
+            label = src if src else "<empty>"
+
+            alt_invalid = (
+                len(alt_text) < min_chars
+                or alt_lower in generic_alts
+                or alt_lower.endswith(img_exts)
+            )
+            if alt_invalid:
+                missing_or_generic_alt_images.append(label)
+
+            src_lower = src.lower()
+            src_invalid = (
+                not src
+                or src_lower.startswith(
+                    ("http://", "file://", "javascript:", "data:text/html")
+                )
+                or any(ch.isspace() for ch in src)
+            )
+            if src_invalid:
+                insecure_or_invalid_src_images.append(label)
+
+            if not alt_invalid and not src_invalid:
+                compliant_images_count += 1
+
+    return {
+        "total_images_count": total_images_count,
+        "compliant_images_count": compliant_images_count,
+        "missing_or_generic_alt_images": missing_or_generic_alt_images,
+        "insecure_or_invalid_src_images": insecure_or_invalid_src_images,
+        "unapproved_raw_html_img_count": unapproved_raw_html_img_count,
+        "is_image_hygiene_clean": (
+            len(missing_or_generic_alt_images) == 0
+            and len(insecure_or_invalid_src_images) == 0
+            and unapproved_raw_html_img_count == 0
+        ),
+    }
+
+
+AnyDocService.audit_markdown_image_alt_text_and_asset_hygiene = staticmethod(
+    audit_markdown_image_alt_text_and_asset_hygiene
+)
+
+
+

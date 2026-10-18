@@ -4237,3 +4237,90 @@ def test_audit_markdown_definition_list_edge_cases_and_export():
         }
 
 
+def test_audit_markdown_image_alt_text_and_asset_hygiene_clean_v2():
+    """Verifica que imágenes Markdown con alt descriptivo (>=5 chars) y URLs HTTPS/relativas limpias pasen sin hallazgos."""
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_image_alt_text_and_asset_hygiene,
+    )
+
+    md = (
+        "![Diagrama de Arquitectura Cloud](https://cdn.ccf.org/arch-v2.svg \"Arquitectura\")\n"
+        "![Curva S de Valor Ganado](assets/evm-s-curve.png)\n\n"
+        "```html\n"
+        "<img src=\"http://insecure-ignored.local/a.png\">\n"
+        "![img](http://insecure-ignored.local/b.png)\n"
+        "```\n"
+    )
+    res = audit_markdown_image_alt_text_and_asset_hygiene(md, min_alt_text_chars=5)
+    assert res == {
+        "total_images_count": 2,
+        "compliant_images_count": 2,
+        "missing_or_generic_alt_images": [],
+        "insecure_or_invalid_src_images": [],
+        "unapproved_raw_html_img_count": 0,
+        "is_image_hygiene_clean": True,
+    }
+    assert (
+        AnyDocService.audit_markdown_image_alt_text_and_asset_hygiene(
+            md, min_alt_text_chars=5
+        )
+        == res
+    )
+
+
+def test_audit_markdown_image_alt_text_generic_or_filename_v2():
+    """Detecta textos alternativos cortos, genéricos (image, foto, screenshot) o terminados en extensión de archivo."""
+    from backend.services.anydoc_service import (
+        audit_markdown_image_alt_text_and_asset_hygiene,
+    )
+
+    md = (
+        "![foto](https://cdn.ccf.org/photo1.jpg)\n"
+        "![chart.png](https://cdn.ccf.org/chart.png)\n"
+        "![ui](https://cdn.ccf.org/ui.webp)\n"
+    )
+    res = audit_markdown_image_alt_text_and_asset_hygiene(md, min_alt_text_chars=5)
+    assert res["total_images_count"] == 3
+    assert res["compliant_images_count"] == 0
+    assert len(res["missing_or_generic_alt_images"]) == 3
+    assert res["is_image_hygiene_clean"] is False
+
+
+def test_audit_markdown_image_alt_text_insecure_src_and_raw_html_v2():
+    """Detecta orígenes HTTP/file/javascript o con espacios sin codificar y etiquetas HTML <img> crudas."""
+    from backend.services.anydoc_service import (
+        audit_markdown_image_alt_text_and_asset_hygiene,
+    )
+
+    md = (
+        "<img src=\"https://cdn.ccf.org/raw.png\" alt=\"raw\" />\n"
+        "![Cronograma Maestro del Proyecto](http://unencrypted.ccf.org/gantt.png)\n"
+        "![Matriz de Riesgos](assets/uninlined space file.png)\n"
+    )
+    res = audit_markdown_image_alt_text_and_asset_hygiene(md)
+    assert res["unapproved_raw_html_img_count"] == 1
+    assert len(res["insecure_or_invalid_src_images"]) == 2
+    assert res["is_image_hygiene_clean"] is False
+
+
+def test_audit_markdown_image_alt_text_edge_cases_and_export_v2():
+    """Verifica manejo de entradas vacías o no string y exportación en __all__."""
+    import backend.services.anydoc_service as _m
+    from backend.services.anydoc_service import (
+        audit_markdown_image_alt_text_and_asset_hygiene,
+    )
+
+    assert "audit_markdown_image_alt_text_and_asset_hygiene" in _m.__all__
+    for empty_in in ("", "   \n  ", None, 99):
+        assert audit_markdown_image_alt_text_and_asset_hygiene(empty_in) == {
+            "total_images_count": 0,
+            "compliant_images_count": 0,
+            "missing_or_generic_alt_images": [],
+            "insecure_or_invalid_src_images": [],
+            "unapproved_raw_html_img_count": 0,
+            "is_image_hygiene_clean": True,
+        }
+
+
+

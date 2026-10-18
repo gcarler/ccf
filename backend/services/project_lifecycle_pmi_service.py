@@ -3144,6 +3144,7 @@ __all__ = [
     "audit_administrative_closure_financial_and_resource_release",
     "audit_steering_committee_quorum_and_decision_governance",
     "audit_portfolio_strategic_alignment_and_benefits_drift",
+    "audit_stage_gate_conditional_go_remediation_sla",
     "ProjectLifecyclePMIService",
 ]
 
@@ -4547,3 +4548,109 @@ ProjectLifecyclePMIService.audit_portfolio_strategic_alignment_and_benefits_drif
     audit_portfolio_strategic_alignment_and_benefits_drift
 )
 
+
+
+def audit_stage_gate_conditional_go_remediation_sla(
+    stage_gates: list[dict],
+    *,
+    max_conditional_remediation_days: int = 14,
+) -> dict:
+    """Audita SLA de remediación conditional-go y bloqueo de stage-gates (PMBOK §2.4 y §4.2).
+
+    Cada compuerta aporta gate_id, decision, open_conditions_count,
+    days_since_conditional_approval, next_phase_execution_started,
+    sponsor_waiver_signed y remediation_owner_assigned:
+    - expired_conditional_go: CONDITIONAL_GO con condiciones abiertas y
+      días desde la aprobación > SLA.
+    - unauthorized_phase_advancement: HOLD/NO_GO/KILL con la fase
+      siguiente iniciada sin dispensa firmada del patrocinador.
+    - unauthorized remediation: condiciones abiertas sin responsable.
+    - stage_gate_governance_status: 'HEALTHY' sin hallazgos; 'CRITICAL'
+      con avances no autorizados o conditional-go vencidos; 'AT_RISK' en
+      otro caso; violations con {gate_id, reasons}.
+    """
+    if not isinstance(stage_gates, list):
+        stage_gates = []
+    gates = [g for g in stage_gates if isinstance(g, dict)]
+
+    total_gates_evaluated = len(gates)
+    compliant_gates_count = 0
+    expired_conditional_gates_count = 0
+    unauthorized_phase_advancement_count = 0
+    unassigned_remediation_gates_count = 0
+    violations: list[dict] = []
+
+    for idx, gate in enumerate(gates, start=1):
+        gate_id = str(gate.get("gate_id", f"GATE-{idx}"))
+        reasons: list[str] = []
+        has_expired = False
+        has_unauthorized = False
+        has_unassigned = False
+
+        decision = str(gate.get("decision") or "").strip().upper()
+        raw_conditions = gate.get("open_conditions_count")
+        try:
+            open_conditions = int(raw_conditions if raw_conditions is not None else 0)
+        except (TypeError, ValueError):
+            open_conditions = 0
+        raw_days = gate.get("days_since_conditional_approval")
+        try:
+            days_since = int(raw_days if raw_days is not None else 0)
+        except (TypeError, ValueError):
+            days_since = 0
+        phase_started = bool(gate.get("next_phase_execution_started", False))
+        waiver_signed = bool(gate.get("sponsor_waiver_signed", False))
+        owner_assigned = bool(gate.get("remediation_owner_assigned", False))
+
+        if (
+            decision == "CONDITIONAL_GO"
+            and open_conditions > 0
+            and days_since > int(max_conditional_remediation_days)
+        ):
+            has_expired = True
+            reasons.append(
+                f"CONDITIONAL_GO_SLA_EXPIRED ({days_since}>{max_conditional_remediation_days},"
+                f" {open_conditions} condiciones abiertas)"
+            )
+        if decision in {"HOLD", "NO_GO", "KILL"} and phase_started and not waiver_signed:
+            has_unauthorized = True
+            reasons.append(f"UNAUTHORIZED_PHASE_ADVANCEMENT ({decision} sin dispensa del sponsor)")
+        if open_conditions > 0 and not owner_assigned:
+            has_unassigned = True
+            reasons.append("REMEDIATION_OWNER_UNASSIGNED")
+
+        if has_expired:
+            expired_conditional_gates_count += 1
+        if has_unauthorized:
+            unauthorized_phase_advancement_count += 1
+        if has_unassigned:
+            unassigned_remediation_gates_count += 1
+        if not (has_expired or has_unauthorized or has_unassigned):
+            compliant_gates_count += 1
+        if reasons:
+            violations.append({"gate_id": gate_id, "reasons": reasons})
+
+    stage_gate_governance_status = (
+        "CRITICAL"
+        if unauthorized_phase_advancement_count > 0 or expired_conditional_gates_count > 0
+        else (
+            "AT_RISK"
+            if unassigned_remediation_gates_count > 0
+            else "HEALTHY"
+        )
+    )
+
+    return {
+        "total_gates_evaluated": total_gates_evaluated,
+        "compliant_gates_count": compliant_gates_count,
+        "expired_conditional_gates_count": expired_conditional_gates_count,
+        "unauthorized_phase_advancement_count": unauthorized_phase_advancement_count,
+        "unassigned_remediation_gates_count": unassigned_remediation_gates_count,
+        "stage_gate_governance_status": stage_gate_governance_status,
+        "violations": violations,
+    }
+
+
+ProjectLifecyclePMIService.audit_stage_gate_conditional_go_remediation_sla = staticmethod(
+    audit_stage_gate_conditional_go_remediation_sla
+)

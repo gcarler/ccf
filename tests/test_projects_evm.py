@@ -5059,3 +5059,133 @@ def test_evaluate_evm_tspi_proxy_staticmethod_and_all():
         == fn(*sample)
     )
     assert "evaluate_evm_to_complete_schedule_performance_index_tspi" in mod.__all__
+
+
+def test_evaluate_evm_loe_masking_and_discrete_variance_distortion_healthy():
+    """Verifica estado HEALTHY cuando la proporción LOE es baja, EV==PV en LOE y el trabajo discreto cumple SPI."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_loe_masking_and_discrete_variance_distortion,
+    )
+
+    wps = [
+        {
+            "wp_id": "WP-DISC-01",
+            "is_level_of_effort": False,
+            "planned_value_pv": 85000.0,
+            "earned_value_ev": 83300.0,
+            "actual_cost_ac": 82000.0,
+        },
+        {
+            "wp_id": "WP-LOE-PMO",
+            "is_level_of_effort": True,
+            "planned_value_pv": 15000.0,
+            "earned_value_ev": 15000.0,
+            "actual_cost_ac": 14800.0,
+        },
+    ]
+    res = evaluate_evm_loe_masking_and_discrete_variance_distortion(
+        wps, max_loe_share_pct=20.0, discrete_spi_alert_threshold=0.90
+    )
+    assert res == {
+        "total_work_packages": 2,
+        "loe_work_packages_count": 1,
+        "loe_share_pct": 15.0,
+        "composite_spi": 0.983,
+        "discrete_only_spi": 0.98,
+        "spi_masking_spread": 0.003,
+        "is_loe_masking_discrete_delay": False,
+        "loe_ev_pv_mismatch_wps": [],
+        "loe_governance_status": "HEALTHY",
+    }
+    assert (
+        ProjectEVMService.evaluate_evm_loe_masking_and_discrete_variance_distortion(wps)
+        == res
+    )
+
+
+def test_evaluate_evm_loe_masking_and_discrete_variance_distortion_at_risk():
+    """Verifica estado AT_RISK cuando el peso LOE supera max_loe_share_pct pero no enmascara atraso discreto ni tiene mismatch."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_loe_masking_and_discrete_variance_distortion,
+    )
+
+    res = evaluate_evm_loe_masking_and_discrete_variance_distortion(
+        [
+            {
+                "wp_id": "WP-DISC-OK",
+                "is_level_of_effort": False,
+                "planned_value_pv": 70000.0,
+                "earned_value_ev": 68600.0,
+                "actual_cost_ac": 68000.0,
+            },
+            {
+                "wp_id": "WP-LOE-HEAVY",
+                "is_level_of_effort": True,
+                "planned_value_pv": 30000.0,
+                "earned_value_ev": 30000.0,
+                "actual_cost_ac": 30000.0,
+            },
+        ],
+        max_loe_share_pct=20.0,
+        discrete_spi_alert_threshold=0.90,
+    )
+    assert res["loe_share_pct"] == 30.0
+    assert res["is_loe_masking_discrete_delay"] is False
+    assert res["loe_governance_status"] == "AT_RISK"
+
+
+def test_evaluate_evm_loe_masking_and_discrete_variance_distortion_critical_masking_and_mismatch():
+    """Verifica estado CRITICAL cuando paquetes LOE maquillan un SPI discreto < 0.90 o presentan EV != PV."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_loe_masking_and_discrete_variance_distortion,
+    )
+
+    res = evaluate_evm_loe_masking_and_discrete_variance_distortion(
+        [
+            {
+                "wp_id": "WP-DISC-LAGGING",
+                "is_level_of_effort": False,
+                "planned_value_pv": 60000.0,
+                "earned_value_ev": 51000.0,
+                "actual_cost_ac": 55000.0,
+            },
+            {
+                "wp_id": "WP-LOE-INFLATED",
+                "is_level_of_effort": True,
+                "planned_value_pv": 40000.0,
+                "earned_value_ev": 41000.0,
+                "actual_cost_ac": 40000.0,
+            },
+        ],
+        max_loe_share_pct=20.0,
+        discrete_spi_alert_threshold=0.90,
+    )
+    assert res["discrete_only_spi"] == 0.85
+    assert res["composite_spi"] == 0.92
+    assert res["is_loe_masking_discrete_delay"] is True
+    assert res["loe_ev_pv_mismatch_wps"] == ["WP-LOE-INFLATED"]
+    assert res["loe_governance_status"] == "CRITICAL"
+
+
+def test_evaluate_evm_loe_masking_and_discrete_variance_distortion_empty_and_export():
+    """Verifica manejo de entradas vacías o no secuencia y exportación en __all__."""
+    import backend.services.project_evm_service as _m
+    from backend.services.project_evm_service import (
+        evaluate_evm_loe_masking_and_discrete_variance_distortion,
+    )
+
+    assert "evaluate_evm_loe_masking_and_discrete_variance_distortion" in _m.__all__
+    for bad in ([], None, "invalid"):
+        assert evaluate_evm_loe_masking_and_discrete_variance_distortion(bad) == {
+            "total_work_packages": 0,
+            "loe_work_packages_count": 0,
+            "loe_share_pct": 0.0,
+            "composite_spi": 1.0,
+            "discrete_only_spi": 1.0,
+            "spi_masking_spread": 0.0,
+            "is_loe_masking_discrete_delay": False,
+            "loe_ev_pv_mismatch_wps": [],
+            "loe_governance_status": "HEALTHY",
+        }
+
