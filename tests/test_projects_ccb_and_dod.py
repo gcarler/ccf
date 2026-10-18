@@ -856,3 +856,129 @@ def test_dod_gate_compliance_at_risk():
     assert res["sign_off_integrity_pct"] == 100.0
     assert res["premature_sign_off_count"] == 0
     assert res["unsigned_leaf_tasks"] == 7
+
+
+# ─── 9. Helper de creep de línea base CCB (PMBOK §4.6) ───
+
+
+def _assert_creep(result, **expected):
+    for key, value in expected.items():
+        assert result[key] == pytest.approx(value) if isinstance(value, float) else result[key] == value
+
+
+def test_ccb_baseline_creep_stable():
+    from backend.services.project_ccb_service import evaluate_ccb_baseline_creep_impact
+
+    result = evaluate_ccb_baseline_creep_impact(
+        net_approved_cost_delta=3000.0,
+        bac=120000.0,
+        net_approved_schedule_days=2,
+        planned_duration_days=90,
+    )
+    _assert_creep(
+        result,
+        net_approved_cost_delta=3000.0,
+        cost_creep_pct=2.5,
+        net_approved_schedule_days=2,
+        schedule_creep_pct=2.22,
+        requires_rebaselining=False,
+        baseline_stability_status="stable",
+    )
+
+
+def test_ccb_baseline_creep_moderate_expansion():
+    from backend.services.project_ccb_service import evaluate_ccb_baseline_creep_impact
+
+    result = evaluate_ccb_baseline_creep_impact(
+        net_approved_cost_delta=12000.0,
+        bac=120000.0,
+        net_approved_schedule_days=7,
+        planned_duration_days=90,
+    )
+    _assert_creep(
+        result,
+        cost_creep_pct=10.0,
+        schedule_creep_pct=7.78,
+        requires_rebaselining=False,
+        baseline_stability_status="moderate_expansion",
+    )
+
+
+def test_ccb_baseline_creep_rebaseline_required_by_cost():
+    from backend.services.project_ccb_service import evaluate_ccb_baseline_creep_impact
+
+    result = evaluate_ccb_baseline_creep_impact(
+        net_approved_cost_delta=18000.0,
+        bac=120000.0,
+        net_approved_schedule_days=1,
+        planned_duration_days=90,
+    )
+    _assert_creep(
+        result,
+        cost_creep_pct=15.0,
+        schedule_creep_pct=1.11,
+        requires_rebaselining=True,
+        baseline_stability_status="rebaseline_required",
+    )
+
+
+def test_ccb_baseline_creep_rebaseline_required_by_schedule():
+    from backend.services.project_ccb_service import evaluate_ccb_baseline_creep_impact
+
+    result = evaluate_ccb_baseline_creep_impact(
+        net_approved_cost_delta=1000.0,
+        bac=120000.0,
+        net_approved_schedule_days=15,
+        planned_duration_days=90,
+    )
+    _assert_creep(
+        result,
+        cost_creep_pct=0.83,
+        schedule_creep_pct=16.67,
+        requires_rebaselining=True,
+        baseline_stability_status="rebaseline_required",
+    )
+
+
+def test_ccb_baseline_creep_zero_denominators():
+    from backend.services.project_ccb_service import evaluate_ccb_baseline_creep_impact
+
+    result_bac_cero = evaluate_ccb_baseline_creep_impact(
+        net_approved_cost_delta=5000.0,
+        bac=0.0,
+        net_approved_schedule_days=0,
+        planned_duration_days=60,
+    )
+    _assert_creep(
+        result_bac_cero,
+        cost_creep_pct=0.0,
+        schedule_creep_pct=0.0,
+        requires_rebaselining=False,
+        baseline_stability_status="stable",
+    )
+
+    result_pd_cero = evaluate_ccb_baseline_creep_impact(
+        net_approved_cost_delta=0.0,
+        bac=50000.0,
+        net_approved_schedule_days=20,
+        planned_duration_days=0,
+    )
+    _assert_creep(
+        result_pd_cero,
+        cost_creep_pct=0.0,
+        schedule_creep_pct=0.0,
+        requires_rebaselining=False,
+        baseline_stability_status="stable",
+    )
+
+    # Ambos denominadores cero
+    result_ambos = evaluate_ccb_baseline_creep_impact(0.0, 0.0, 0, 0)
+    _assert_creep(
+        result_ambos,
+        net_approved_cost_delta=0.0,
+        cost_creep_pct=0.0,
+        schedule_creep_pct=0.0,
+        requires_rebaselining=False,
+        baseline_stability_status="stable",
+    )
+

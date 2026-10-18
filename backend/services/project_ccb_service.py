@@ -476,3 +476,52 @@ def evaluate_project_communications_complexity(
         "network_topology_tier": network_topology_tier,
         "requires_formal_comms_plan": requires_formal_comms_plan,
     }
+
+
+def evaluate_ccb_baseline_creep_impact(
+    net_approved_cost_delta: float,
+    bac: float,
+    net_approved_schedule_days: int,
+    planned_duration_days: int = 0,
+) -> dict:
+    """Evalúa la expansión acumulada de líneas base por CRs aprobadas (PMBOK §4.6).
+
+    Compara el Δ$ neto y Δdías netos de las CRs aprobadas contra el BAC
+    vigente y la duración planificada, y determina si exigió re-basado:
+    - `cost_creep_pct` = Δ$ / BAC (2 decimales; 0.0 si BAC <= 0).
+    - `schedule_creep_pct` = Δdías / duración planificada (2 decimales;
+      0.0 si duración <= 0).
+    - `requires_rebaselining`: True si |creep%| >= 15 en costo o cronograma.
+    - `baseline_stability_status`: 'rebaseline_required' si requiere,
+      'stable' si ambos |creep%| < 5.0, o 'moderate_expansion'.
+    """
+    cost_delta = round(float(net_approved_cost_delta or 0.0), 2)
+    bac_val = max(0.0, float(bac or 0.0))
+    schedule_delta = int(net_approved_schedule_days or 0)
+    pd_val = max(0, int(planned_duration_days or 0))
+
+    cost_creep_pct = round((cost_delta / bac_val) * 100.0, 2) if bac_val > 0 else 0.0
+    schedule_creep_pct = (
+        round((schedule_delta / pd_val) * 100.0, 2) if pd_val > 0 else 0.0
+    )
+
+    requires_rebaselining = bool(
+        abs(cost_creep_pct) >= 15.0 or abs(schedule_creep_pct) >= 15.0
+    )
+
+    if requires_rebaselining:
+        baseline_stability_status = "rebaseline_required"
+    elif abs(cost_creep_pct) < 5.0 and abs(schedule_creep_pct) < 5.0:
+        baseline_stability_status = "stable"
+    else:
+        baseline_stability_status = "moderate_expansion"
+
+    return {
+        "net_approved_cost_delta": cost_delta,
+        "cost_creep_pct": cost_creep_pct,
+        "net_approved_schedule_days": schedule_delta,
+        "schedule_creep_pct": schedule_creep_pct,
+        "requires_rebaselining": requires_rebaselining,
+        "baseline_stability_status": baseline_stability_status,
+    }
+

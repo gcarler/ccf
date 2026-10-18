@@ -23,6 +23,7 @@ from backend.services.project_evm_service import (
     ProjectEVMService,
     calculate_component_evm,
     evaluate_control_accounts_concentration,
+    evaluate_wbs_scope_coverage,
     get_project_components_breakdown,
     validate_project_budget_100_rule,
 )
@@ -529,4 +530,75 @@ def test_evaluate_control_accounts_concentration_levels():
         "concentration_risk_level": "high",
     }
     assert ProjectEVMService.evaluate_control_accounts_concentration(high_components) == high_res
+
+
+def test_evaluate_wbs_scope_coverage_rule_100_compliant():
+    """Valida cumplimiento estricto de la Regla del 100% de Alcance (sin paquetes huérfanos)."""
+    res = evaluate_wbs_scope_coverage(total_tasks=20, unassigned_tasks=0, components_count=4)
+    assert res == {
+        "total_tasks": 20,
+        "assigned_tasks": 20,
+        "unassigned_tasks": 0,
+        "components_count": 4,
+        "scope_coverage_pct": 100.0,
+        "orphan_leakage_pct": 0.0,
+        "wbs_scope_status": "rule_100_compliant",
+    }
+    assert ProjectEVMService.evaluate_wbs_scope_coverage(20, 0, 4) == res
+
+
+def test_evaluate_wbs_scope_coverage_minor_scope_leakage():
+    """Valida fuga menor de alcance (0% < orphan_leakage_pct <= 15%)."""
+    res = evaluate_wbs_scope_coverage(total_tasks=20, unassigned_tasks=2, components_count=3)
+    assert res == {
+        "total_tasks": 20,
+        "assigned_tasks": 18,
+        "unassigned_tasks": 2,
+        "components_count": 3,
+        "scope_coverage_pct": 90.0,
+        "orphan_leakage_pct": 10.0,
+        "wbs_scope_status": "minor_scope_leakage",
+    }
+    assert ProjectEVMService.evaluate_wbs_scope_coverage(20, 2, 3) == res
+
+
+def test_evaluate_wbs_scope_coverage_critical_scope_leakage():
+    """Valida fuga crítica de alcance (orphan_leakage_pct > 15%)."""
+    res = evaluate_wbs_scope_coverage(total_tasks=20, unassigned_tasks=5, components_count=3)
+    assert res == {
+        "total_tasks": 20,
+        "assigned_tasks": 15,
+        "unassigned_tasks": 5,
+        "components_count": 3,
+        "scope_coverage_pct": 75.0,
+        "orphan_leakage_pct": 25.0,
+        "wbs_scope_status": "critical_scope_leakage",
+    }
+    assert ProjectEVMService.evaluate_wbs_scope_coverage(20, 5, 3) == res
+
+
+def test_evaluate_wbs_scope_coverage_empty_and_unstructured():
+    """Valida estados empty_wbs (sin tareas) y unstructured (sin componentes EDT)."""
+    empty_res = evaluate_wbs_scope_coverage(total_tasks=0, unassigned_tasks=0, components_count=2)
+    assert empty_res == {
+        "total_tasks": 0,
+        "assigned_tasks": 0,
+        "unassigned_tasks": 0,
+        "components_count": 2,
+        "scope_coverage_pct": 100.0,
+        "orphan_leakage_pct": 0.0,
+        "wbs_scope_status": "empty_wbs",
+    }
+
+    unstructured_res = evaluate_wbs_scope_coverage(total_tasks=10, unassigned_tasks=0, components_count=0)
+    assert unstructured_res == {
+        "total_tasks": 10,
+        "assigned_tasks": 10,
+        "unassigned_tasks": 0,
+        "components_count": 0,
+        "scope_coverage_pct": 100.0,
+        "orphan_leakage_pct": 0.0,
+        "wbs_scope_status": "unstructured",
+    }
+    assert ProjectEVMService.evaluate_wbs_scope_coverage(10, 0, 0) == unstructured_res
 

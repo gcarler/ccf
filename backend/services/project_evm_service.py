@@ -3070,6 +3070,42 @@ def predict_schedule_slippage_days(
     }
 
 
+def evaluate_wbs_scope_coverage(
+    total_tasks: int,
+    unassigned_tasks: int,
+    components_count: int,
+) -> Dict[str, Any]:
+    """Audita el cumplimiento de la Regla del 100% de Alcance en la EDT/WBS (PMI Practice Standard for WBS)."""
+    total = max(0, int(total_tasks or 0))
+    unassigned = min(total, max(0, int(unassigned_tasks or 0)))
+    assigned = total - unassigned
+    comps = max(0, int(components_count or 0))
+
+    scope_coverage_pct = round((assigned / total) * 100.0, 2) if total > 0 else 100.0
+    orphan_leakage_pct = round((unassigned / total) * 100.0, 2) if total > 0 else 0.0
+
+    if total == 0:
+        wbs_scope_status = "empty_wbs"
+    elif comps == 0 and total > 0:
+        wbs_scope_status = "unstructured"
+    elif unassigned == 0 and comps > 0:
+        wbs_scope_status = "rule_100_compliant"
+    elif 0.0 < orphan_leakage_pct <= 15.0:
+        wbs_scope_status = "minor_scope_leakage"
+    else:
+        wbs_scope_status = "critical_scope_leakage"
+
+    return {
+        "total_tasks": total,
+        "assigned_tasks": assigned,
+        "unassigned_tasks": unassigned,
+        "components_count": comps,
+        "scope_coverage_pct": scope_coverage_pct,
+        "orphan_leakage_pct": orphan_leakage_pct,
+        "wbs_scope_status": wbs_scope_status,
+    }
+
+
 class ProjectEVMService:
     """Fachada canónica del servicio EVM y Diagnóstico Predictivo PMI (Vol. 5 y Vol. 6)."""
 
@@ -3162,6 +3198,14 @@ class ProjectEVMService:
         spi_t: float,
     ) -> Dict[str, Any]:
         return predict_schedule_slippage_days(planned_duration_days, spi_t)
+
+    @staticmethod
+    def evaluate_wbs_scope_coverage(
+        total_tasks: int,
+        unassigned_tasks: int,
+        components_count: int,
+    ) -> Dict[str, Any]:
+        return evaluate_wbs_scope_coverage(total_tasks, unassigned_tasks, components_count)
 
     @staticmethod
     def build_project_execution_matrix(
