@@ -137,8 +137,8 @@ export function DocumentUploadSection({ section }: { section: CmsSection<"docume
       formData.append("file", selectedFile);
       await apiFetch<void>("/public/documents", { method: "POST", body: formData, silent: true });
       setUploaded(true);
-    } catch (err: any) {
-      setError(err.message || "Error al subir el documento");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al subir el documento");
     } finally {
       setUploading(false);
     }

@@ -198,8 +198,8 @@ export default function CmsAbTestingManagement() {
       toast.success("Experimento A/B creado exitosamente");
       setTests((prev) => [created, ...prev]);
       setIsDrawerOpen(false);
-    } catch (err: any) {
-      toast.error(err.message || "Error al crear experimento");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Error al crear experimento");
     } finally {
       setSaving(false);
     }
@@ -213,8 +213,8 @@ export default function CmsAbTestingManagement() {
         nextStatus === "active" ? "Experimento reanudado" : "Experimento pausado"
       );
       setTests((prev) => prev.map((t) => (t.id === test.id ? updated : t)));
-    } catch (err: any) {
-      toast.error(err.message || "Error al cambiar estado");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Error al cambiar estado");
     }
   };
 
@@ -229,8 +229,8 @@ export default function CmsAbTestingManagement() {
         setSelectedTestResults(null);
       }
       setPendingDelete(null);
-    } catch (err: any) {
-      toast.error(err.message || "Error al eliminar experimento");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Error al eliminar experimento");
     } finally {
       setDeleting(false);
     }
@@ -241,7 +241,7 @@ export default function CmsAbTestingManagement() {
     try {
       const results = await getCmsAbTestResults(siteKey, test.id, token);
       setSelectedTestResults({ test, results });
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error("Error al cargar resultados del experimento");
     } finally {
       setLoadingResults(false);
@@ -264,8 +264,8 @@ export default function CmsAbTestingManagement() {
           prev ? { ...prev, test: updated } : null
         );
       }
-    } catch (err: any) {
-      toast.error(err.message || "Error al aplicar ganador");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Error al aplicar ganador");
     } finally {
       setApplyingWinner(false);
     }

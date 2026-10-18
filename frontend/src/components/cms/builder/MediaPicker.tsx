@@ -19,6 +19,7 @@ interface CmsMediaItem {
   url: string;
   filename?: string | null;
   mime_type?: string | null;
+  mimetype?: string | null;
   alt_text?: string | null;
   section?: string;
   tags?: string[];
@@ -90,7 +91,7 @@ export default function MediaPicker({
 
   const imageItems = useMemo(
     () =>
-      items.filter((item: any) => {
+      items.filter((item: CmsMediaItem) => {
         const mime = item.mime_type || item.mimetype || "";
         return (
           mime.startsWith("image/") ||

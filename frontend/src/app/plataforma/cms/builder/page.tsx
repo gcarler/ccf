@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { Puck, Config } from "@puckeditor/core";
+import type { PuckData, PuckRootRenderProps, DbSection, FieldProps, HeroRenderProps, BannerRenderProps, DoubleCtaRenderProps, ListSectionRenderProps, FaqItem, AuthorItem, OptionItem, GalleryItem, CardItem } from "@/types/cms-builder";
 import "@puckeditor/core/dist/index.css";
 import { useSearchParams, useRouter } from "next/navigation";
 import { LayoutPanelTop, ArrowLeft, Loader2, Palette, CheckCircle2, AlertTriangle, Save } from "lucide-react";
@@ -140,18 +141,18 @@ export default function PuckBuilderPage() {
 
  const [loading, setLoading] = useState(true);
  const [saving, setSaving] = useState(false);
- const [initialData, setInitialData] = useState<{ content: any[] }>({ content: [] });
- const [dbSections, setDbSections] = useState<any[]>([]);
+ const [initialData, setInitialData] = useState<PuckData>({ content: [] });
+ const [dbSections, setDbSections] = useState<DbSection[]>([]);
 
  const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
 
  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
- const latestDataRef = useRef<{ content: any[] }>({ content: [] });
+ const latestDataRef = useRef<PuckData>({ content: [] });
  const saveSequenceRef = useRef<number>(0);
  const latestCompletedSeqRef = useRef<number>(0);
  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
  const isInitialLoadRef = useRef<boolean>(true);
- const dbSectionsRef = useRef<any[]>([]);
+ const dbSectionsRef = useRef<DbSection[]>([]);
  const savingRef = useRef<boolean>(false);
 
  useEffect(() => {
@@ -199,7 +200,7 @@ export default function PuckBuilderPage() {
  dbSectionsRef.current = sections || [];
  
  // Convert array of database sections to Puck's data schema
- const puckContent = (sections || []).map((sec: any) => ({
+ const puckContent = (sections || []).map((sec: DbSection) => ({
  type: sec.type,
  props: {
  ...(NATIVE_PUCK_SECTION_TYPES.has(sec.type)
@@ -243,7 +244,7 @@ export default function PuckBuilderPage() {
  __cms_json: {
  type: "custom",
  label: "Contenido editable (JSON)",
- render: ({ value, onChange }: any) => (
+ render: ({ value, onChange }: FieldProps<string>) => (
  <CmsJsonMediaField
  label="Contenido editable (JSON)"
  value={value || "{}"}
@@ -271,7 +272,7 @@ export default function PuckBuilderPage() {
 
  return {
  root: {
- render: ({ children }: any) => (
+ render: ({ children }: PuckRootRenderProps) => (
  <div 
  className="p-8 min-h-screen transition-colors duration-200"
  style={{
@@ -293,31 +294,31 @@ export default function PuckBuilderPage() {
  fields: {
  title: {
  type: "custom",
- render: ({ value, onChange }: any) => (
+ render: ({ value, onChange }: FieldProps<string>) => (
  <AiField label="Título Principal" value={value} onChange={onChange} fieldType="title" token={token} />
  )
  },
  body: {
  type: "custom",
- render: ({ value, onChange }: any) => (
+ render: ({ value, onChange }: FieldProps<string>) => (
  <AiField label="Cuerpo del Mensaje" value={value} onChange={onChange} isTextArea fieldType="body" token={token} />
  )
  },
  cta_label: {
  type: "custom",
- render: ({ value, onChange }: any) => (
+ render: ({ value, onChange }: FieldProps<string>) => (
  <AiField label="Texto del Botón" value={value} onChange={onChange} fieldType="cta" placeholder="ej. Comenzar ahora" token={token} />
  )
  },
  cta_href: { type: "text", label: "Enlace del Botón" },
  bg_image: {
  type: "custom",
- render: ({ value, onChange }: any) => (
+ render: ({ value, onChange }: FieldProps<string>) => (
  <MediaPickerField label="Imagen de Fondo" value={value} onChange={onChange} />
  )
  },
  },
- render: ({ title, body, cta_label, cta_href, bg_image }: any) => (
+ render: ({ title, body, cta_label, cta_href, bg_image }: HeroRenderProps) => (
  <section
  className="relative py-20 px-6 text-center bg-cover bg-center rounded-lg overflow-hidden my-4 border border-[var(--site-outline-variant,rgba(255,255,255,0.05))]"
  style={{
@@ -362,20 +363,20 @@ export default function PuckBuilderPage() {
  fields: {
  title: {
  type: "custom",
- render: ({ value, onChange }: any) => (
+ render: ({ value, onChange }: FieldProps<string>) => (
  <AiField label="Título de la Sección" value={value} onChange={onChange} fieldType="title" token={token} />
  )
  },
  body: {
  type: "custom",
- render: ({ value, onChange }: any) => (
+ render: ({ value, onChange }: FieldProps<string>) => (
  <AiField label="Contenido de Texto" value={value} onChange={onChange} isTextArea fieldType="body" token={token} />
  )
  },
  cta_label: { type: "text", label: "Texto del Enlace" },
  cta_href: { type: "text", label: "Destino del Enlace" },
  },
- render: ({ title, body, cta_label, cta_href }: any) => (
+ render: ({ title, body, cta_label, cta_href }: BannerRenderProps) => (
  <section 
  className="py-12 px-6 max-w-3xl mx-auto my-4 border rounded-lg shadow-sm"
  style={{
@@ -416,19 +417,19 @@ export default function PuckBuilderPage() {
  fields: {
  title: {
  type: "custom",
- render: ({ value, onChange }: any) => (
+ render: ({ value, onChange }: FieldProps<string>) => (
  <AiField label="Título" value={value} onChange={onChange} fieldType="title" token={token} />
  )
  },
  body: {
  type: "custom",
- render: ({ value, onChange }: any) => (
+ render: ({ value, onChange }: FieldProps<string>) => (
  <AiField label="Descripción" value={value} onChange={onChange} isTextArea fieldType="description" token={token} />
  )
  },
  cta_label: {
  type: "custom",
- render: ({ value, onChange }: any) => (
+ render: ({ value, onChange }: FieldProps<string>) => (
  <AiField label="Botón Principal" value={value} onChange={onChange} fieldType="cta" placeholder="ej. Inscribirme" token={token} />
  )
  },
@@ -436,7 +437,7 @@ export default function PuckBuilderPage() {
  cta_label_2: { type: "text", label: "Botón Secundario" },
  cta_href_2: { type: "text", label: "Enlace Botón Secundario" },
  },
- render: ({ title, body, cta_label, cta_href, cta_label_2, cta_href_2 }: any) => (
+ render: ({ title, body, cta_label, cta_href, cta_label_2, cta_href_2 }: DoubleCtaRenderProps) => (
  <section 
  className="py-12 px-6 border rounded-lg text-center my-4 max-w-4xl mx-auto"
  style={{
@@ -494,7 +495,7 @@ export default function PuckBuilderPage() {
  items: {
  type: "array",
  label: "Preguntas",
- getItemSummary: (item: any) => item.q || "Pregunta vacía",
+ getItemSummary: (item: FaqItem) => item.q || "Pregunta vacía",
  defaultItemProps: { q: "Nueva Pregunta", a: "Respuesta..." },
  arrayFields: {
  q: { type: "text", label: "Pregunta" },
@@ -502,7 +503,7 @@ export default function PuckBuilderPage() {
  },
  },
  },
- render: ({ title, items }: any) => (
+ render: ({ title, items }: ListSectionRenderProps<FaqItem>) => (
  <section 
  className="py-12 px-6 max-w-3xl mx-auto my-4 border rounded-lg"
  style={{
@@ -519,7 +520,7 @@ export default function PuckBuilderPage() {
  </h2>
  )}
  <div className="space-y-4">
- {(items || []).map((item: any, idx: number) => (
+ {(items || []).map((item: FaqItem, idx: number) => (
  <div 
  key={idx} 
  className="border-b pb-4 last:border-0"
@@ -550,7 +551,7 @@ export default function PuckBuilderPage() {
  items: {
  type: "array",
  label: "Testimonios",
- getItemSummary: (item: any) => item.author || "Autor vacío",
+ getItemSummary: (item: AuthorItem) => item.author || "Autor vacío",
  defaultItemProps: { author: "Nombre del Autor", role: "Colaborador", content: "El testimonio...", stars: 5 },
  arrayFields: {
  author: { type: "text", label: "Autor" },
@@ -560,7 +561,7 @@ export default function PuckBuilderPage() {
  },
  },
  },
- render: ({ title, items }: any) => (
+ render: ({ title, items }: ListSectionRenderProps<AuthorItem>) => (
  <section className="py-12 px-6 max-w-4xl mx-auto my-4">
  {title && (
  <h2 
@@ -571,7 +572,7 @@ export default function PuckBuilderPage() {
  </h2>
  )}
  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
- {(items || []).map((item: any, idx: number) => (
+ {(items || []).map((item: AuthorItem, idx: number) => (
  <div 
  key={idx} 
  className="p-6 border rounded-lg shadow-sm"
@@ -620,7 +621,7 @@ export default function PuckBuilderPage() {
  items: {
  type: "array",
  label: "Estadísticas",
- getItemSummary: (item: any) => `${item.value || ""} - ${item.label || ""}`,
+ getItemSummary: (item: OptionItem) => `${item.value || ""} - ${item.label || ""}`,
  defaultItemProps: { value: "100%", label: "Descripción" },
  arrayFields: {
  value: { type: "text", label: "Valor (ej: 15K, 100%)" },
@@ -628,7 +629,7 @@ export default function PuckBuilderPage() {
  },
  },
  },
- render: ({ title, items }: any) => (
+ render: ({ title, items }: ListSectionRenderProps<OptionItem>) => (
  <section 
  className="py-12 px-6 text-center max-w-4xl mx-auto my-4 border rounded-lg"
  style={{
@@ -645,7 +646,7 @@ export default function PuckBuilderPage() {
  </h2>
  )}
  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
- {(items || []).map((item: any, idx: number) => (
+ {(items || []).map((item: OptionItem, idx: number) => (
  <div key={idx} className="space-y-2">
  <p 
  className="text-3xl font-extrabold"
@@ -678,13 +679,13 @@ export default function PuckBuilderPage() {
  fields: {
  title: {
  type: "custom",
- render: ({ value, onChange }: any) => (
+ render: ({ value, onChange }: FieldProps<string>) => (
  <AiField label="Título de la Sección" value={value} onChange={onChange} fieldType="title" token={token} />
  )
  },
  body: {
  type: "custom",
- render: ({ value, onChange }: any) => (
+ render: ({ value, onChange }: FieldProps<string>) => (
  <AiField label="Descripción" value={value} onChange={onChange} isTextArea fieldType="body" token={token} />
  )
  },
@@ -693,14 +694,14 @@ export default function PuckBuilderPage() {
  label: "Imágenes de la Galería",
  min: 1,
  max: 12,
- getItemSummary: (item: any, idx?: number) =>
+ getItemSummary: (item: GalleryItem, idx?: number) =>
  item?.caption || (item?.alt && item.alt !== "Imagen" ? item.alt : `Imagen #${(idx ?? 0) + 1}`),
  defaultItemProps: { url: "", alt: "Imagen", caption: "" },
  arrayFields: {
  url: {
  type: "custom",
  label: "Imagen",
- render: ({ value, onChange }: any) => (
+ render: ({ value, onChange }: FieldProps<string>) => (
  <MediaPickerField label="Imagen" value={value} onChange={onChange} />
  )
  },
@@ -709,7 +710,7 @@ export default function PuckBuilderPage() {
  }
  }
  },
- render: ({ title, body, items }: any) => {
+ render: ({ title, body, items }: ListSectionRenderProps<GalleryItem>) => {
  const itemList = items || [];
  return (
  <section 
@@ -749,7 +750,7 @@ export default function PuckBuilderPage() {
  </div>
  ) : (
  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
- {itemList.map((item: any, idx: number) => (
+ {itemList.map((item: GalleryItem, idx: number) => (
  <div 
  key={idx} 
  className="group relative aspect-square overflow-hidden rounded-lg bg-black/10 border flex items-center justify-center"
@@ -804,13 +805,13 @@ export default function PuckBuilderPage() {
  fields: {
  title: {
  type: "custom",
- render: ({ value, onChange }: any) => (
+ render: ({ value, onChange }: FieldProps<string>) => (
  <AiField label="Título de la Sección" value={value} onChange={onChange} fieldType="title" token={token} />
  )
  },
  body: {
  type: "custom",
- render: ({ value, onChange }: any) => (
+ render: ({ value, onChange }: FieldProps<string>) => (
  <AiField label="Descripción de la Sección" value={value} onChange={onChange} isTextArea fieldType="body" token={token} />
  )
  },
@@ -819,21 +820,21 @@ export default function PuckBuilderPage() {
  label: "Tarjetas",
  min: 1,
  max: 6,
- getItemSummary: (item: any, idx?: number) =>
+ getItemSummary: (item: CardItem, idx?: number) =>
  item?.title || `Tarjeta #${(idx ?? 0) + 1}`,
  defaultItemProps: { title: "Título de Tarjeta", body: "Descripción corta...", cta_label: "Saber más", cta_href: "/", image_url: "" },
  arrayFields: {
  title: {
  type: "custom",
  label: "Título",
- render: ({ value, onChange }: any) => (
+ render: ({ value, onChange }: FieldProps<string>) => (
  <AiField label="Título" value={value} onChange={onChange} fieldType="title" token={token} />
  )
  },
  body: {
  type: "custom",
  label: "Descripción",
- render: ({ value, onChange }: any) => (
+ render: ({ value, onChange }: FieldProps<string>) => (
  <AiField label="Descripción" value={value} onChange={onChange} isTextArea fieldType="body" token={token} />
  )
  },
@@ -842,14 +843,14 @@ export default function PuckBuilderPage() {
  image_url: {
  type: "custom",
  label: "Imagen",
- render: ({ value, onChange }: any) => (
+ render: ({ value, onChange }: FieldProps<string>) => (
  <MediaPickerField label="Imagen" value={value} onChange={onChange} />
  )
  }
  }
  }
  },
- render: ({ title, body, items }: any) => {
+ render: ({ title, body, items }: ListSectionRenderProps<CardItem>) => {
  const itemList = items || [];
  return (
  <section 
@@ -889,7 +890,7 @@ export default function PuckBuilderPage() {
  </div>
  ) : (
  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
- {itemList.map((item: any, idx: number) => (
+ {itemList.map((item: CardItem, idx: number) => (
  <div 
  key={idx} 
  className="overflow-hidden border rounded-lg flex flex-col shadow-sm"
@@ -958,7 +959,7 @@ export default function PuckBuilderPage() {
 
  const savePageData = useCallback(
  async (
- dataToSave: { content: any[] },
+ dataToSave: PuckData,
  options: { isAutoSave: boolean }
  ) => {
  if (!token || !pageSlug || !canEdit) {
@@ -1127,7 +1128,7 @@ export default function PuckBuilderPage() {
  [token, pageSlug, canEdit, canPublish, siteKey]
  );
 
- const handlePuckChange = (newData: { content: any[] }) => {
+ const handlePuckChange = (newData: PuckData) => {
  if (isInitialLoadRef.current) {
  isInitialLoadRef.current = false;
  latestDataRef.current = newData;
@@ -1147,7 +1148,7 @@ export default function PuckBuilderPage() {
  };
 
  const handlePublish = useCallback(
- async (data?: { content: any[] }) => {
+ async (data?: PuckData) => {
  if (debounceTimerRef.current) {
  clearTimeout(debounceTimerRef.current);
  debounceTimerRef.current = null;
