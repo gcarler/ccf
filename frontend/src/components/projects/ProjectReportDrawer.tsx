@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch, apiFetchBlob } from "@/lib/http";
 import type { ProjectExecutiveReportData } from "@/types/projects";
-import { FileText, Download, Printer, FileSpreadsheet, AlertTriangle, Clock, DollarSign, TrendingUp, ShieldAlert, Activity, Check, RefreshCw, Sliders } from "lucide-react";
+import { FileText, Download, Printer, FileSpreadsheet, AlertTriangle, Clock, DollarSign, TrendingUp, ShieldAlert, Activity, Check, RefreshCw, Sliders, ClipboardCheck } from "lucide-react";
 import clsx from "clsx";
 
 interface ProjectReportDrawerProps {
@@ -124,6 +124,7 @@ export function ProjectReportDrawer({
   const execMat = data?.execution_matrix;
   const kpisList = data?.kpis ?? [];
   const indicatorsList = data?.indicators ?? [];
+  const governanceSummary = data?.governance_summary;
 
   return (
     <>
@@ -422,6 +423,66 @@ export function ProjectReportDrawer({
                   </div>
                 </div>
 
+                {governanceSummary && (
+                  <section
+                    data-testid="governance-summary"
+                    aria-label="Gobernanza PMI del proyecto"
+                    className="space-y-3 rounded-xl border p-4"
+                    style={{
+                      backgroundColor: "hsl(var(--surface-1))",
+                      borderColor: "hsl(var(--border))",
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <ClipboardCheck className="h-4 w-4" style={{ color: "hsl(var(--primary))" }} />
+                      <h3 className="text-sm font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
+                        Gobernanza del Ciclo de Vida PMI
+                      </h3>
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-3">
+                      <div className="rounded-lg border p-3" style={{ backgroundColor: "hsl(var(--surface-2))", borderColor: "hsl(var(--border))" }}>
+                        <h4 className="text-xs font-semibold" style={{ color: "hsl(var(--text-primary))" }}>Acta de Constitución</h4>
+                        <p className="mt-1 text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
+                          Estado: <b>{governanceSummary.charter_status === "authorized" ? "Autorizada" : "Borrador"}</b>
+                        </p>
+                        <p className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
+                          Objetivos medibles: <b>{governanceSummary.measurable_objectives_count}</b>
+                        </p>
+                        <p className="truncate text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
+                          Sponsor: <b>{governanceSummary.sponsor_id || "Sin asignar"}</b>
+                        </p>
+                      </div>
+                      <div className="rounded-lg border p-3" style={{ backgroundColor: "hsl(var(--surface-2))", borderColor: "hsl(var(--border))" }}>
+                        <h4 className="text-xs font-semibold" style={{ color: "hsl(var(--text-primary))" }}>Interesados · Poder × Interés</h4>
+                        <p className="mt-1 text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
+                          Total registrados: <b>{governanceSummary.stakeholders_total}</b>
+                        </p>
+                        <ul className="mt-1 space-y-0.5 text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
+                          <li>Gestionar de cerca: <b>{governanceSummary.stakeholders_by_quadrant.manage_closely}</b></li>
+                          <li>Mantener satisfechos: <b>{governanceSummary.stakeholders_by_quadrant.keep_satisfied}</b></li>
+                          <li>Mantener informados: <b>{governanceSummary.stakeholders_by_quadrant.keep_informed}</b></li>
+                          <li>Monitorear: <b>{governanceSummary.stakeholders_by_quadrant.monitor}</b></li>
+                        </ul>
+                      </div>
+                      <div className="rounded-lg border p-3" style={{ backgroundColor: "hsl(var(--surface-2))", borderColor: "hsl(var(--border))" }}>
+                        <h4 className="text-xs font-semibold" style={{ color: "hsl(var(--text-primary))" }}>Cierre y Lecciones</h4>
+                        <p className="mt-1 text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
+                          Estado: <b>{governanceSummary.closure_status === "closed" ? "Cerrado" : "Abierto"}</b>
+                        </p>
+                        <p className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
+                          Entregables: <b>{governanceSummary.deliverables_accepted_verified ? "Verificados" : "Pendientes"}</b>
+                        </p>
+                        <p className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
+                          Conciliación financiera: <b>{governanceSummary.financial_reconciliation_completed ? "Completa" : "Pendiente"}</b>
+                        </p>
+                        <p className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
+                          Lecciones aprendidas: <b>{governanceSummary.lessons_learned_count}</b>
+                        </p>
+                      </div>
+                    </div>
+                  </section>
+                )}
+
                 {/* Sección 1: Control Presupuestario */}
                 {includeSections.financials && (
                   <div
@@ -457,6 +518,178 @@ export function ProjectReportDrawer({
                         <span>Asignado Total: ${finKpi?.budget_allocated.toLocaleString()}</span>
                       </div>
                     </div>
+
+                    {/* Estructura Canónica de Reservas (PMI Vol. 6 / EMV) */}
+                    {(() => {
+                      const ff = execMat?.frentes?.financiero;
+                      const fc = execMat?.frentes?.cruce_evm;
+                      const wpBudget =
+                        finKpi?.work_packages_budget ??
+                        ff?.work_packages_budget ??
+                        finKpi?.budget_allocated ??
+                        0;
+                      const contReserve =
+                        finKpi?.contingency_reserve ??
+                        ff?.contingency_reserve ??
+                        0;
+                      const mgmtReserve =
+                        finKpi?.management_reserve ??
+                        ff?.management_reserve ??
+                        0;
+                      const totProjBudget =
+                        finKpi?.total_project_budget ??
+                        ff?.total_project_budget ??
+                        (finKpi?.budget_allocated ?? 0) + mgmtReserve;
+                      const cpiRule =
+                        finKpi?.cpi_stability_rule ??
+                        data?.cpi_stability_rule ??
+                        fc?.cpi_stability_rule ??
+                        null;
+                      const sentinel =
+                        finKpi?.early_warning_sentinel ??
+                        data?.early_warning_sentinel ??
+                        fc?.early_warning_sentinel ??
+                        null;
+
+                      return (
+                        <div className="space-y-2 pt-2 border-t" style={{ borderColor: "hsl(var(--border))" }}>
+                          <div
+                            data-testid="report-canonical-reserves"
+                            className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]"
+                          >
+                            <div
+                              className="rounded-lg border p-2"
+                              style={{
+                                backgroundColor: "hsl(var(--surface-2))",
+                                borderColor: "hsl(var(--border))",
+                              }}
+                            >
+                              <div className="font-medium" style={{ color: "hsl(var(--text-secondary))" }}>
+                                Paquetes de Trabajo
+                              </div>
+                              <div className="font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
+                                ${Number(wpBudget).toLocaleString()}
+                              </div>
+                            </div>
+                            <div
+                              className="rounded-lg border p-2"
+                              style={{
+                                backgroundColor: "hsl(var(--surface-2))",
+                                borderColor: "hsl(var(--border))",
+                              }}
+                            >
+                              <div className="font-medium" style={{ color: "hsl(var(--text-secondary))" }}>
+                                Reserva Contingencia (EMV)
+                              </div>
+                              <div className="font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
+                                ${Number(contReserve).toLocaleString()}
+                              </div>
+                            </div>
+                            <div
+                              className="rounded-lg border p-2"
+                              style={{
+                                backgroundColor: "hsl(var(--surface-2))",
+                                borderColor: "hsl(var(--border))",
+                              }}
+                            >
+                              <div className="font-medium" style={{ color: "hsl(var(--text-secondary))" }}>
+                                Reserva de Gestión
+                              </div>
+                              <div className="font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
+                                ${Number(mgmtReserve).toLocaleString()}
+                              </div>
+                            </div>
+                            <div
+                              className="rounded-lg border p-2"
+                              style={{
+                                backgroundColor: "hsl(var(--surface-2))",
+                                borderColor: "hsl(var(--border))",
+                              }}
+                            >
+                              <div className="font-medium" style={{ color: "hsl(var(--text-secondary))" }}>
+                                Presupuesto Total Proyecto
+                              </div>
+                              <div className="font-semibold" style={{ color: "hsl(var(--primary))" }}>
+                                ${Number(totProjBudget).toLocaleString()}
+                              </div>
+                            </div>
+                          </div>
+
+                          {(cpiRule || sentinel) && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                              {cpiRule && (
+                                <div
+                                  data-testid="report-cpi-stability-rule"
+                                  className="rounded-lg border p-2.5 space-y-0.5"
+                                  style={{
+                                    backgroundColor: "hsl(var(--surface-2))",
+                                    borderColor: "hsl(var(--border))",
+                                  }}
+                                >
+                                  <div className="flex items-center justify-between font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
+                                    <span>Regla del 15% de Estabilidad CPI</span>
+                                    <span
+                                      className="px-1.5 py-0.5 rounded text-[10px]"
+                                      style={{
+                                        backgroundColor: (cpiRule.is_locked ?? cpiRule.is_applicable)
+                                          ? "hsl(var(--primary) / 0.14)"
+                                          : "hsl(var(--surface-3))",
+                                        color: (cpiRule.is_locked ?? cpiRule.is_applicable)
+                                          ? "hsl(var(--primary))"
+                                          : "hsl(var(--text-secondary))",
+                                      }}
+                                    >
+                                      {(cpiRule.is_locked ?? cpiRule.is_applicable)
+                                        ? "CPI Bloqueado (≥15%)"
+                                        : "En Calibración (<15%)"}
+                                    </span>
+                                  </div>
+                                  <div style={{ color: "hsl(var(--text-secondary))" }}>
+                                    {cpiRule.eac_floor != null ? (
+                                      <>
+                                        Piso EAC: <b>${Number(cpiRule.eac_floor).toLocaleString()}</b> · Techo TCPI:{" "}
+                                        <b>${Number(cpiRule.eac_ceiling ?? 0).toLocaleString()}</b>
+                                      </>
+                                    ) : (
+                                      <>
+                                        Banda CPI: <b>{cpiRule.expected_cpi_floor}</b> –{" "}
+                                        <b>{cpiRule.expected_cpi_ceiling}</b> · {cpiRule.diagnostic_message}
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                              {sentinel && (
+                                <div
+                                  data-testid="report-early-warning-sentinel"
+                                  className="rounded-lg border p-2.5 space-y-0.5"
+                                  style={{
+                                    backgroundColor: "hsl(var(--surface-2))",
+                                    borderColor: "hsl(var(--border))",
+                                  }}
+                                >
+                                  <div className="flex items-center justify-between font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
+                                    <span>Early Warning Sentinel</span>
+                                    <span
+                                      className="px-1.5 py-0.5 rounded text-[10px]"
+                                      style={{
+                                        backgroundColor: "hsl(var(--primary) / 0.14)",
+                                        color: "hsl(var(--primary))",
+                                      }}
+                                    >
+                                      {sentinel.level}
+                                    </span>
+                                  </div>
+                                  <div style={{ color: "hsl(var(--text-secondary))" }}>
+                                    <b>{sentinel.label}:</b> {sentinel.message ?? sentinel.protocol_action}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {finKpi?.by_category && Object.keys(finKpi.by_category).length > 0 && (
                       <div className="pt-2 border-t flex flex-wrap gap-2 text-xs" style={{ borderColor: "hsl(var(--border))" }}>

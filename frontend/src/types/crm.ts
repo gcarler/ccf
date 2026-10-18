@@ -352,7 +352,11 @@ export interface AutomationRule {
   name: string;
   trigger: string;
   action: string;
-  payload: Record<string, any>;
+  payload: {
+    message?: string;
+    task_title?: string;
+    [key: string]: unknown;
+  };
   active: boolean;
 }
 

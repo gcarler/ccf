@@ -1081,9 +1081,12 @@ def sync_supply_expense(
             date=datetime.now(timezone.utc),
             status=exp_status,
             created_by=_to_uuid(created_by) if created_by else None,
+            is_auto_generated=True,
         )
         db.add(linked)
 
+    # El gasto de origen quedó marcado como auto-generado desde suministros.
+    linked.is_auto_generated = True
     db.commit()
     db.refresh(linked)
     supply.expense_id = str(linked.id)
@@ -4340,6 +4343,10 @@ def get_project_executive_report_data(
         "automations": automations_block,
     }
 
+    from backend.services.project_lifecycle_pmi_service import build_governance_summary
+
+    governance_summary = build_governance_summary(db, project.id)
+
     return {
         "project": {
             "id": str(project.id),
@@ -4367,12 +4374,15 @@ def get_project_executive_report_data(
             "completion_rate": completion_rate,
         },
         "financial_kpis": budget_summary,
+        "cpi_stability_rule": budget_summary.get("cpi_stability_rule"),
+        "early_warning_sentinel": budget_summary.get("early_warning_sentinel"),
         "raid_kpis": executive_risks,
         "cpm_metrics": cpm_summary,
         "time_metrics": time_summary,
         "phases": phase_data,
         "execution_matrix": execution_matrix,
         "submodules_summary": submodules_summary,
+        "governance_summary": governance_summary,
         "kpis": kpis_list,
         "indicators": indicators_list,
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -4687,16 +4697,30 @@ def generate_project_summary_pdf(
         story.append(fam_table)
         story.append(Spacer(1, 6))
 
-    # 4. Control Presupuestario
-    story.append(Paragraph("CONTROL PRESUPUESTARIO Y DESEMBOLSOS", section_title_style))
+    # 4. Control Presupuestario y Estructura Canónica de Reservas (EMV / PMI Vol. 5 y 6)
+    story.append(Paragraph("CONTROL PRESUPUESTARIO, RESERVAS EMV Y EARLY WARNING SENTINEL", section_title_style))
     by_cat = f_kpi.get("by_category", {})
     cat_text = ", ".join([f"{safe_text(k).capitalize()}: ${v:,.2f}" for k, v in by_cat.items()]) or "Sin partidas registradas"
     rem_budget = f_kpi.get('remaining_budget', 0.0)
     burn_pct = f_kpi.get('burn_rate_percent', 0.0)
+    wp_budget = float(f_kpi.get('work_packages_budget') or ff.get('work_packages_budget') or f_kpi.get('budget_allocated', 0.0))
+    cont_res = float(f_kpi.get('contingency_reserve') or ff.get('contingency_reserve') or 0.0)
+    mgmt_res = float(f_kpi.get('management_reserve') or ff.get('management_reserve') or 0.0)
+    tot_proj_budget = float(f_kpi.get('total_project_budget') or ff.get('total_project_budget') or (float(f_kpi.get('budget_allocated', 0.0)) + mgmt_res))
+    cpi_rule = f_kpi.get('cpi_stability_rule') or report_data.get('cpi_stability_rule') or fc.get('cpi_stability_rule') or {}
+    sentinel = f_kpi.get('early_warning_sentinel') or report_data.get('early_warning_sentinel') or fc.get('early_warning_sentinel') or {}
     fin_text = (
-        f"<b>Asignado:</b> ${f_kpi.get('budget_allocated', 0.0):,.2f} | "
+        f"<b>Asignado (BAC):</b> ${f_kpi.get('budget_allocated', 0.0):,.2f} | "
         f"<b>Gastado:</b> ${f_kpi.get('budget_spent', 0.0):,.2f} ({burn_pct}%) | "
         f"<b>Disponible:</b> ${rem_budget:,.2f}<br/>"
+        f"<b>Estructura de Reservas (PMI Vol. 6):</b> Paquetes de Trabajo: ${wp_budget:,.2f} • "
+        f"Reserva Contingencia (EMV): ${cont_res:,.2f} • "
+        f"Reserva Gestión: ${mgmt_res:,.2f} • "
+        f"<b>Presupuesto Total:</b> ${tot_proj_budget:,.2f}<br/>"
+        f"<b>Regla 15% Estabilidad CPI:</b> {'Bloqueada (≥15%)' if cpi_rule.get('is_locked') else 'En calibración (<15%)'} "
+        f"(Rango EAC: ${float(cpi_rule.get('eac_floor') or 0.0):,.2f} – ${float(cpi_rule.get('eac_ceiling') or 0.0):,.2f})<br/>"
+        f"<b>Early Warning Sentinel:</b> [{safe_text(sentinel.get('level', 'OPTIMO'))}] "
+        f"{safe_text(sentinel.get('label', 'Ejecución dentro de parámetros'))}<br/>"
         f"<b>Desglose por Categoría:</b> {cat_text}"
     )
     story.append(Paragraph(fin_text, body_style))
@@ -4858,6 +4882,54 @@ def generate_project_summary_pdf(
     ]))
     story.append(submodules_table)
     story.append(Spacer(1, 10))
+
+    # 7c. Gobernanza del ciclo de vida PMI
+    governance = report_data.get("governance_summary")
+    if governance:
+        quadrants = governance.get("stakeholders_by_quadrant") or {}
+        story.append(Paragraph("GOBERNANZA DEL CICLO DE VIDA PMI", section_title_style))
+        charter_status = str(governance.get("charter_status") or "draft").replace("_", " ").capitalize()
+        sponsor_id = governance.get("sponsor_id") or "Sin asignar"
+        authorized_at = governance.get("authorized_at") or "Sin autorizar"
+        story.append(Paragraph(
+            f"<b>Project Charter:</b> {safe_text(charter_status)} • "
+            f"<b>Sponsor (Persona):</b> {safe_text(sponsor_id)} • "
+            f"<b>Autorización:</b> {safe_text(authorized_at)} • "
+            f"<b>Objetivos medibles:</b> {int(governance.get('measurable_objectives_count') or 0)}",
+            body_style,
+        ))
+        stakeholder_total = int(governance.get("stakeholders_total") or 0)
+        quadrant_table_data = [
+            [Paragraph("<b>Matriz Poder × Interés</b>", cell_header), Paragraph("<b>Interesados</b>", cell_header)],
+            [Paragraph("Gestionar de cerca", cell_style), int(quadrants.get("manage_closely") or 0)],
+            [Paragraph("Mantener satisfechos", cell_style), int(quadrants.get("keep_satisfied") or 0)],
+            [Paragraph("Mantener informados", cell_style), int(quadrants.get("keep_informed") or 0)],
+            [Paragraph("Monitorear", cell_style), int(quadrants.get("monitor") or 0)],
+            [Paragraph("<b>Total</b>", cell_style), stakeholder_total],
+        ]
+        quadrant_table = Table(quadrant_table_data, colWidths=[390, 150])
+        quadrant_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1E3A8A")),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F8FAFC")]),
+            ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
+            ("INNERGRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
+            ("ALIGN", (1, 1), (1, -1), "CENTER"),
+            ("TOPPADDING", (0, 0), (-1, -1), 3),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+        ]))
+        story.append(quadrant_table)
+        closure_status = str(governance.get("closure_status") or "open").replace("_", " ").capitalize()
+        deliverables_status = "Sí" if governance.get("deliverables_accepted_verified") else "Pendiente"
+        reconciliation_status = "Sí" if governance.get("financial_reconciliation_completed") else "Pendiente"
+        lessons_count = int(governance.get("lessons_learned_count") or 0)
+        story.append(Paragraph(
+            f"<b>Cierre formal:</b> {safe_text(closure_status)} • "
+            f"<b>Entregables aceptados y verificados:</b> {deliverables_status} • "
+            f"<b>Conciliación financiera:</b> {reconciliation_status} • "
+            f"<b>Lecciones aprendidas:</b> {lessons_count}",
+            body_style,
+        ))
+        story.append(Spacer(1, 8))
 
     # 8. Pie de página
     story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#94A3B8'), spaceBefore=2, spaceAfter=4))

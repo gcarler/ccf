@@ -11,7 +11,7 @@ const BOOKS = [
     { id: 2, title: 'Liderazgo con Propósito', author: 'Rick Warren', category: 'Liderazgo', rating: 4.8, free: false, cover: 'from-[hsl(var(--success))] to-[hsl(var(--domain-teal))]', desc: 'Descubre cómo liderar con propósito eterno en cada área de tu vida.' },
     { id: 3, title: 'La Oración que Mueve a Dios', author: 'E.M. Bounds', category: 'Oración', rating: 4.7, free: true, cover: 'from-[hsl(var(--info))] to-[hsl(var(--info))]', desc: 'Las enseñanzas más profundas sobre el poder transformador de la oración.' },
     { id: 4, title: 'Gracia Divina para el Matrimonio', author: 'Tim Keller', category: 'Familia', rating: 4.8, free: false, cover: 'from-[hsl(var(--danger))] to-[hsl(var(--domain-pink))]', desc: 'Una perspectiva bíblica profunda sobre el matrimonio como reflejo del evangelio.' },
-    { id: 5, title: 'Finanzas con Fe', author: 'Equipo CCF', category: 'Mayordomía', rating: 4.6, free: true, cover: 'from-[hsl(var(--warning))] to-orange-600', desc: 'Manual práctico para manejar las finanzas con principios del Reino de Dios.' },
+    { id: 5, title: 'Finanzas con Fe', author: 'Equipo CCF', category: 'Mayordomía', rating: 4.6, free: true, cover: 'from-[hsl(var(--warning))] to-[hsl(var(--warning))]', desc: 'Manual práctico para manejar las finanzas con principios del Reino de Dios.' },
     { id: 6, title: 'Sanidad Interior', author: 'Leanne Payne', category: 'Consejería', rating: 4.7, free: false, cover: 'from-[hsl(var(--surface-3))] to-[hsl(var(--bg-muted))]', desc: 'Un camino bíblico hacia la restauración emocional y espiritual profunda.' },
 ];
 

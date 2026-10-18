@@ -65,6 +65,7 @@ from backend.mesh_websockets import manager
 from backend.services.comment_notifications import notify_mention
 from backend.services.mention_parser import resolve_mentions
 from backend.services.project_evm_service import build_project_execution_matrix
+from backend.services import project_lifecycle_pmi_service
 from backend.services.task_notifications import notify_task_assigned
 
 settings = get_settings()
@@ -280,6 +281,31 @@ def _ensure_project(db: Session, project_id: str, user_sede=None) -> models.Proj
         if project.sede_id is None or str(project.sede_id) != str(user_sede):
             raise HTTPException(status_code=404, detail="Project not found")
     return project
+
+
+def _project_lifecycle_actor(db: Session, current_user: models.User) -> UUID:
+    """Resolve the authenticated user to the canonical Persona UUID for audit fields."""
+    try:
+        user_uuid = UUID(str(current_user.id))
+    except (TypeError, ValueError, AttributeError) as exc:
+        raise HTTPException(status_code=401, detail="Actor UUID inválido") from exc
+    persona_id = get_user_persona_id(db, user_uuid)
+    if not persona_id:
+        raise HTTPException(status_code=401, detail="El actor no tiene Persona canónica")
+    try:
+        return UUID(str(persona_id))
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=401, detail="El actor no tiene Persona canónica") from exc
+
+
+def _validate_project_persona(db: Session, persona_id: UUID | None, project: models.Project) -> None:
+    if persona_id is None:
+        return
+    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+    if persona is None:
+        raise HTTPException(status_code=422, detail="Persona no encontrada")
+    if project.sede_id is not None and str(persona.sede_id) != str(project.sede_id):
+        raise HTTPException(status_code=404, detail="Persona no encontrada")
 
 
 def _ensure_task(db: Session, task_id: str) -> models.ProjectTask:
@@ -6733,3 +6759,290 @@ def delete_project_file_endpoint(
         f"Archivo '{file_id}' eliminado de la bóveda documental",
     )
     return {"deleted": True, "file_id": file_id}
+
+
+@router.get("/{project_id}/charter", response_model=schemas.ProjectCharterRead, tags=["Projects PMI Lifecycle"])
+def get_project_charter(
+    project_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    project = _ensure_project(db, str(project_id), user_sede=get_user_sede_id(db, current_user.id))
+    lifecycle = project_lifecycle_pmi_service.get_lifecycle(db, project.id)
+    return schemas.ProjectCharterRead.model_validate(lifecycle)
+
+
+@router.put("/{project_id}/charter", response_model=schemas.ProjectCharterRead, tags=["Projects PMI Lifecycle"])
+def update_project_charter(
+    project_id: UUID,
+    payload: schemas.ProjectCharterUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    actor_persona_id = _project_lifecycle_actor(db, current_user)
+    project = _ensure_project(db, str(project_id), user_sede=get_user_sede_id(db, current_user.id))
+    _validate_project_persona(db, payload.sponsor_id, project)
+    lifecycle = project_lifecycle_pmi_service.save_charter(
+        db, project.id, payload.model_dump(exclude_unset=True), actor_persona_id
+    )
+    return schemas.ProjectCharterRead.model_validate(lifecycle)
+
+
+@router.get("/{project_id}/stakeholders", response_model=list[schemas.ProjectStakeholderRead], tags=["Projects PMI Lifecycle"])
+def get_project_stakeholders(
+    project_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    project = _ensure_project(db, str(project_id), user_sede=get_user_sede_id(db, current_user.id))
+    return project_lifecycle_pmi_service.list_stakeholders(db, project.id)
+
+
+@router.post(
+    "/{project_id}/stakeholders",
+    response_model=schemas.ProjectStakeholderRead,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects PMI Lifecycle"],
+)
+def create_project_stakeholder(
+    project_id: UUID,
+    payload: schemas.ProjectStakeholderCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    _project_lifecycle_actor(db, current_user)
+    project = _ensure_project(db, str(project_id), user_sede=get_user_sede_id(db, current_user.id))
+    _validate_project_persona(db, payload.persona_id, project)
+    return project_lifecycle_pmi_service.create_stakeholder(db, project.id, payload.model_dump())
+
+
+@router.patch(
+    "/{project_id}/stakeholders/{stakeholder_id}",
+    response_model=schemas.ProjectStakeholderRead,
+    tags=["Projects PMI Lifecycle"],
+)
+def update_project_stakeholder(
+    project_id: UUID,
+    stakeholder_id: UUID,
+    payload: schemas.ProjectStakeholderUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    _project_lifecycle_actor(db, current_user)
+    project = _ensure_project(db, str(project_id), user_sede=get_user_sede_id(db, current_user.id))
+    values = payload.model_dump(exclude_unset=True)
+    _validate_project_persona(db, values.get("persona_id"), project)
+    return project_lifecycle_pmi_service.update_stakeholder(db, project.id, stakeholder_id, values)
+
+
+@router.delete(
+    "/{project_id}/stakeholders/{stakeholder_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["Projects PMI Lifecycle"],
+)
+def delete_project_stakeholder(
+    project_id: UUID,
+    stakeholder_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    _project_lifecycle_actor(db, current_user)
+    project = _ensure_project(db, str(project_id), user_sede=get_user_sede_id(db, current_user.id))
+    project_lifecycle_pmi_service.soft_delete_stakeholder(db, project.id, stakeholder_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/{project_id}/closure", response_model=schemas.ProjectClosureRead, tags=["Projects PMI Lifecycle"])
+def get_project_closure(
+    project_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    project = _ensure_project(db, str(project_id), user_sede=get_user_sede_id(db, current_user.id))
+    lifecycle = project_lifecycle_pmi_service.get_lifecycle(db, project.id)
+    return schemas.ProjectClosureRead.model_validate(lifecycle)
+
+
+@router.post(
+    "/{project_id}/closure/finalize",
+    response_model=schemas.ProjectClosureRead,
+    tags=["Projects PMI Lifecycle"],
+)
+def finalize_project_closure(
+    project_id: UUID,
+    payload: schemas.ProjectClosureFinalize,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    actor_persona_id = _project_lifecycle_actor(db, current_user)
+    project = _ensure_project(db, str(project_id), user_sede=get_user_sede_id(db, current_user.id))
+    lifecycle = project_lifecycle_pmi_service.finalize_closure(
+        db, project.id, payload.model_dump(), actor_persona_id
+    )
+    return schemas.ProjectClosureRead.model_validate(lifecycle)
+
+
+# ---------------------------------------------------------------------------
+# CONTROL INTEGRADO DE CAMBIOS (CCB) — PMI Vol. 6 §5
+# ---------------------------------------------------------------------------
+
+
+@router.get(
+    "/{project_id}/change-requests",
+    response_model=schemas.ProjectChangeRequestListResponse,
+    tags=["Projects CCB"],
+)
+def list_project_change_requests(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("read")),
+):
+    """Lista las Solicitudes de Cambio Formal del proyecto + impacto acumulado."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+    from backend.services import project_ccb_service
+
+    return project_ccb_service.list_change_requests(db, project)
+
+
+@router.post(
+    "/{project_id}/change-requests",
+    response_model=schemas.ProjectChangeRequest,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects CCB"],
+)
+def create_project_change_request(
+    project_id: str,
+    payload: schemas.ProjectChangeRequestCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("edit")),
+):
+    """Crea una Solicitud de Cambio Formal (CR) en estado 'pending_ccb' con actor UUID obligatorio."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+    actor_persona_id = get_user_persona_id(db, current_user.id)
+    if not actor_persona_id:
+        raise HTTPException(status_code=409, detail="El actor no tiene persona asociada en esta sede")
+    from backend.services import project_ccb_service
+
+    cr = project_ccb_service.create_change_request(db, project, payload, actor_persona_id)
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "change_request_created",
+        f"Solicitud de cambio '{cr.title}' registrada (tipo: {cr.change_type}, Δ$={cr.cost_impact_delta}, Δdías={cr.schedule_impact_days})",
+    )
+    _normalize_dates(cr)
+    return cr
+
+
+@router.post(
+    "/{project_id}/change-requests/{cr_id}/decide",
+    response_model=schemas.ProjectChangeRequest,
+    tags=["Projects CCB"],
+)
+def decide_project_change_request(
+    project_id: str,
+    cr_id: str,
+    payload: schemas.ProjectChangeRequestDecide,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("edit")),
+):
+    """Dictamen del Comité de Control de Cambios: aprobar (con Re-baseline automático) o rechazar."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+    cr = (
+        db.query(models.ProjectChangeRequest)
+        .filter(
+            models.ProjectChangeRequest.id == _to_uuid(cr_id),
+            models.ProjectChangeRequest.project_id == project.id,
+        )
+        .first()
+    )
+    if not cr:
+        raise HTTPException(status_code=404, detail="Solicitud de cambio no encontrada")
+    actor_persona_id = get_user_persona_id(db, current_user.id)
+    if not actor_persona_id:
+        raise HTTPException(status_code=409, detail="El actor no tiene persona asociada en esta sede")
+    from backend.services import project_ccb_service
+
+    try:
+        cr = project_ccb_service.decide_change_request(db, project, cr, payload, actor_persona_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "change_request_decided",
+        f"Dictamen CCB '{payload.decision}' sobre '{cr.title}'"
+        + (" con Re-baseline automático" if cr.resulting_baseline_id else ""),
+    )
+    _normalize_dates(cr)
+    return cr
+
+
+# ---------------------------------------------------------------------------
+# CRITERIOS DE ACEPTACIÓN (DoD / VALIDATE SCOPE) — PMI Vol. 6 §4
+# ---------------------------------------------------------------------------
+
+
+@router.get(
+    "/{project_id}/tasks/{task_id}/dod-acceptance",
+    response_model=schemas.ProjectDodAcceptance,
+    tags=["Projects DoD"],
+)
+def get_task_dod_acceptance(
+    project_id: str,
+    task_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("read")),
+):
+    """Estado de los 4 criterios de aceptación (DoD) de un paquete de trabajo."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+    task = _ensure_task_in_project(db, project_id, task_id)
+    from backend.services import project_ccb_service
+
+    dod = project_ccb_service.get_dod_acceptance(db, project, task.id)
+    if not dod:
+        raise HTTPException(status_code=404, detail="Verificación DoD no registrada para esta tarea")
+    _normalize_dates(dod)
+    return dod
+
+
+@router.post(
+    "/{project_id}/tasks/{task_id}/dod-acceptance",
+    response_model=schemas.ProjectDodAcceptance,
+    tags=["Projects DoD"],
+)
+def upsert_task_dod_acceptance(
+    project_id: str,
+    task_id: str,
+    payload: schemas.ProjectDodAcceptanceUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("edit")),
+):
+    """Registra la verificación de los 4 criterios DoD; al cumplirse todos, acepta con firma del supervisor."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+    task = _ensure_task_in_project(db, project_id, task_id)
+    actor_persona_id = get_user_persona_id(db, current_user.id)
+    if not actor_persona_id:
+        raise HTTPException(status_code=409, detail="El actor no tiene persona asociada en esta sede")
+    from backend.services import project_ccb_service
+
+    dod = project_ccb_service.upsert_dod_acceptance(db, project, task, payload, actor_persona_id)
+    if dod.status == "accepted":
+        _log_project_activity(
+            db,
+            project_id,
+            current_user.id,
+            "dod_accepted",
+            f"Entregable '{task.title}' aceptado (DoD completo de PMI Vol. 6 §4)"
+            + (f" — CoQ: {dod.coq_classification}" if dod.coq_classification else ""),
+        )
+    _normalize_dates(dod)
+    return dod
+

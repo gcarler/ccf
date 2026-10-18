@@ -63,6 +63,8 @@ class Project(Base):
     components = relationship(
         "ProjectComponent", back_populates="project", cascade="all, delete-orphan", order_by="ProjectComponent.order_index"
     )
+    lifecycle = relationship("ProjectLifecycle", back_populates="project", uselist=False, cascade="all, delete-orphan")
+    stakeholders = relationship("ProjectStakeholder", back_populates="project", cascade="all, delete-orphan")
 
     # ``name`` is a thin alias over ``title`` so callers that pass or read
     # ``name`` (e.g. ``tests/test_crud_integration.py::TestProjectsCrud``)
@@ -114,6 +116,68 @@ class Project(Base):
     @management_reserve_pct.setter
     def management_reserve_pct(self, value: float | None) -> None:
         self.__dict__["_management_reserve_pct"] = round(max(0.0, float(value)), 2) if value is not None else None
+
+
+class ProjectLifecycle(Base):
+    """Project charter and formal closure record, one lifecycle per project."""
+
+    __tablename__ = "project_lifecycles"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    sponsor_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
+    business_case = Column(Text, nullable=True)
+    strategic_justification = Column(Text, nullable=True)
+    measurable_objectives = Column(JSON, nullable=False, default=list)
+    key_assumptions = Column(JSON, nullable=False, default=list)
+    key_constraints = Column(JSON, nullable=False, default=list)
+    high_level_risks = Column(JSON, nullable=False, default=list)
+    preliminary_budget = Column(Float, nullable=True)
+    charter_status = Column(String(20), nullable=False, default="draft")
+    authorized_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
+    authorized_at = Column(DateTime(timezone=True), nullable=True)
+    closure_status = Column(String(20), nullable=False, default="open")
+    deliverables_accepted_verified = Column(Boolean, nullable=False, default=False)
+    financial_reconciliation_completed = Column(Boolean, nullable=False, default=False)
+    final_bac = Column(Float, nullable=True)
+    final_ac = Column(Float, nullable=True)
+    final_variance = Column(Float, nullable=True)
+    operational_handover_to = Column(String(255), nullable=True)
+    lessons_learned = Column(JSON, nullable=False, default=list)
+    closed_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
+    closed_at = Column(DateTime(timezone=True), nullable=True)
+    wiki_synced = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow, onupdate=_utcnow)
+
+    project = relationship("Project", back_populates="lifecycle")
+    sponsor = relationship("Persona", foreign_keys=[sponsor_id])
+    authorizer = relationship("Persona", foreign_keys=[authorized_by])
+    closer = relationship("Persona", foreign_keys=[closed_by])
+
+
+class ProjectStakeholder(Base):
+    """Stakeholder register entry with calculated power/interest quadrant."""
+
+    __tablename__ = "project_stakeholders"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+    display_name = Column(String(200), nullable=True)
+    role_title = Column(String(200), nullable=True)
+    organization_or_ministry = Column(String(200), nullable=True)
+    power_level = Column(Integer, nullable=False)
+    interest_level = Column(Integer, nullable=False)
+    quadrant = Column(String(30), nullable=False)
+    engagement_level = Column(String(20), nullable=False, default="neutral")
+    management_strategy = Column(Text, nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow, onupdate=_utcnow)
+
+    project = relationship("Project", back_populates="stakeholders")
+    persona = relationship("Persona", foreign_keys=[persona_id])
 
 
 class ProjectMilestone(Base):
@@ -1067,6 +1131,70 @@ class ProjectFile(Base):
                 return f"https://drive.google.com/file/d/{self.drive_file_id}/preview"
         return self.file_url
 
+class ProjectChangeRequest(Base):
+    """Solicitud de Cambio Formal (Change Request) del proceso CCB de PMI Vol 6 sec 5.
+
+    Trazabilidad inmutable: los campos de impacto no se mutan tras la creacion;
+    el dictamen del Comite se registra en status/review_notes/reviewed_by/reviewed_at
+    y el Re-baseline automatico queda vinculado en resulting_baseline_id.
+    """
+
+    __tablename__ = "project_change_requests"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String(200), nullable=False)
+    justification = Column(Text, nullable=False)
+    change_type = Column(
+        String(20), default="integrated", nullable=False, index=True
+    )  # scope | schedule | budget | integrated
+    cost_impact_delta = Column(Float, default=0.0, nullable=False)
+    schedule_impact_days = Column(Integer, default=0, nullable=False)
+    scope_impact_summary = Column(Text, nullable=True)
+    status = Column(String(20), default="pending_ccb", nullable=False, index=True)
+    # pending_ccb | approved | rejected
+    requested_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="RESTRICT"), nullable=False, index=True)
+    reviewed_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+    review_notes = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False, index=True)
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)
+    resulting_baseline_id = Column(
+        UUID(as_uuid=True), ForeignKey("project_baselines.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="RESTRICT"), nullable=True, index=True)
+
+    project = relationship("Project", backref="change_requests")
+    requester = relationship("Persona", foreign_keys=[requested_by])
+    reviewer = relationship("Persona", foreign_keys=[reviewed_by])
+    resulting_baseline = relationship("ProjectBaseline", foreign_keys=[resulting_baseline_id])
 
 
+class ProjectDodAcceptance(Base):
+    """Criterios de aceptacion (Definition of Done / Validate Scope) de PMI Vol 6 sec 4.
 
+    Registra la verificacion de los 4 criterios canonicos de un paquete de trabajo
+    y clasificacion opcional del Costo de Calidad (CoQ).
+    """
+
+    __tablename__ = "project_dod_acceptances"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    task_id = Column(UUID(as_uuid=True), ForeignKey("project_tasks.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    specification_met = Column(Boolean, default=False, nullable=False)
+    tests_no_critical_failures = Column(Boolean, default=False, nullable=False)
+    evidence_archived = Column(Boolean, default=False, nullable=False)
+    supervisor_sign_off = Column(Boolean, default=False, nullable=False)
+    status = Column(String(20), default="pending", nullable=False, index=True)  # pending | accepted
+    accepted_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+    accepted_at = Column(DateTime(timezone=True), nullable=True)
+    coq_classification = Column(
+        String(30), nullable=True
+    )  # prevention | appraisal | internal_failure | external_failure
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="RESTRICT"), nullable=True, index=True)
+
+    project = relationship("Project", backref="dod_acceptances")
+    task = relationship("ProjectTask", backref="dod_acceptance", uselist=False)
+    acceptor = relationship("Persona", foreign_keys=[accepted_by])

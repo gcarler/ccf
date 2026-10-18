@@ -48,7 +48,7 @@ interface InlineEditorPanelProps {
 }
 
 export function InlineEditorPanel({ section, builder, onClose }: InlineEditorPanelProps) {
-  const [propsJson, setPropsJson] = React.useState<Record<string, any>>(() => ({
+  const [propsJson, setPropsJson] = React.useState<Record<string, unknown>>(() => ({
     ...(section.props_json || {}),
   }));
   const [saveStatus, setSaveStatus] = React.useState<string | null>(null);

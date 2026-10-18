@@ -2,7 +2,7 @@ import React from "react";
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { FolderArchive, Target } from "lucide-react";
+import { ClipboardCheck, FolderArchive, Target } from "lucide-react";
 import { SidebarLayerProvider } from "@/context/SidebarLayerContext";
 import {
   ProjectManagementHubDrawer,
@@ -12,11 +12,13 @@ import {
 const META: ProjectHubModuleMeta[] = [
   { key: "kpis", label: "KPIs", icon: Target },
   { key: "drive", label: "Drive", icon: FolderArchive },
+  { key: "governance", label: "Gobernanza PMI", icon: ClipboardCheck },
 ];
 
 const RENDERERS = {
   kpis: () => <div data-testid="kpis-content">KPIs</div>,
   drive: () => <div data-testid="drive-content">Drive</div>,
+  governance: () => <div data-testid="governance-content">Gobernanza PMI</div>,
 };
 
 function renderHub(
@@ -124,5 +126,25 @@ describe("ProjectManagementHubDrawer", () => {
     });
     expect(screen.getByTestId("components-content")).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Componentes \(EDT\)/ })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("expone Gobernanza PMI en las pestañas del hub y monta su renderer activo", async () => {
+    const user = userEvent.setup();
+    const { props, rerender } = renderHub({
+      openModules: ["governance"],
+      activeModule: "governance",
+    });
+
+    expect(screen.getByRole("tab", { name: /Gobernanza PMI/ })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByTestId("governance-content")).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: /Gobernanza PMI/ }));
+    expect(props.onActivateModule).toHaveBeenCalledWith("governance");
+
+    rerender(
+      <SidebarLayerProvider>
+        <ProjectManagementHubDrawer {...props} activeModule="governance" />
+      </SidebarLayerProvider>
+    );
+    expect(screen.getByTestId("governance-content")).toBeInTheDocument();
   });
 });

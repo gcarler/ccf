@@ -1,4 +1,4 @@
-"""Servicio de exportación y reporte ejecutivo 360° de Proyectos (Plataforma CCF)."""
+"""Servicio de exportación 360° de Proyectos, incluida la gobernanza PMI."""
 
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ __all__ = [
 
 
 class ProjectExportService:
-    """Fachada canónica para el Informe Ejecutivo 360° y exportaciones de Proyectos."""
+    """Fachada canónica de informes ejecutivos con ``governance_summary`` PMI."""
 
     @staticmethod
     def get_project_executive_report_data(

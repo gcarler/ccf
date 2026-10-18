@@ -38,6 +38,7 @@ import {
   GanttChart,
   Workflow,
   BookOpen,
+  ClipboardCheck,
   MessageSquare,
   Layers,
   Tag,
@@ -85,6 +86,7 @@ const PROJECT_HUB_MODULE_META: ProjectHubModuleMeta[] = [
   { key: 'indicators', label: 'Indicadores (IDP)', icon: BarChart3 },
   { key: 'evm', label: 'Valor Ganado (EVM / CPI)', icon: TrendingUp },
   { key: 'drive', label: 'Drive', icon: FolderArchive },
+  { key: 'governance', label: 'Gobernanza PMI', icon: ClipboardCheck },
 ];
 
 const PROJECT_DETAIL_VIEWS: ViewType[] = [
@@ -230,6 +232,13 @@ const ProjectDriveDrawer = dynamic(
   () =>
     import('@/components/projects/ProjectDriveDrawer').then(
       module => module.ProjectDriveDrawer
+    ),
+  { loading: ProjectDrawerLoading }
+);
+const ProjectLifecycleGovernanceDrawer = dynamic(
+  () =>
+    import('@/components/projects/ProjectLifecycleGovernanceDrawer').then(
+      module => module.ProjectLifecycleGovernanceDrawer
     ),
   { loading: ProjectDrawerLoading }
 );
@@ -527,6 +536,7 @@ export default function ProjectDetailPage() {
     { key: 'indicators', label: 'Indicadores (IDP)', icon: BarChart3, onSelect: () => openHubModule('indicators') },
     { key: 'evm', label: 'Valor Ganado (EVM / CPI)', icon: TrendingUp, onSelect: () => openHubModule('evm') },
     { key: 'drive', label: 'Drive', icon: FolderArchive, onSelect: () => openHubModule('drive') },
+    { key: 'governance', label: 'Gobernanza PMI', icon: ClipboardCheck, onSelect: () => openHubModule('governance') },
     { key: 'settings', label: 'Editar proyecto', icon: Edit3, onSelect: () => setShowProjectSettings(true), variant: 'warning' as const },
     { key: 'delete', label: 'Eliminar proyecto', icon: Trash2, onSelect: handleDeleteProject, variant: 'destructive' as const, visible: canDeleteProjectFromApiPolicy },
   ].filter((action) => action.visible !== false);
@@ -649,6 +659,13 @@ export default function ProjectDetailPage() {
         isOpen
         onClose={() => closeHubModule('drive')}
         onFileUpdated={() => reloadProject()}
+      />
+    ),
+    governance: () => (
+      <ProjectLifecycleGovernanceDrawer
+        projectId={project?.id || id}
+        isOpen
+        onClose={() => closeHubModule('governance')}
       />
     ),
   } satisfies Partial<Record<ProjectHubModuleKey, () => React.ReactNode>>;

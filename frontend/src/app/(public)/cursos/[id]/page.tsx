@@ -372,7 +372,7 @@ export default function CursoDetailPage() {
 
                                 {enrolled ? (
                                     <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-4">
-                                        <div className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                                        <div className="w-16 h-16 rounded-full bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] flex items-center justify-center">
                                             <CheckCircle2 size={36} />
                                         </div>
                                         <div>

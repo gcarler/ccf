@@ -274,7 +274,7 @@ export default function TwoFactorDrawer({
                 >
                   {copiedBackups ? (
                     <>
-                      <Check className="size-3.5 text-green-500" />
+                      <Check className="size-3.5 text-[hsl(var(--success))]" />
                       Copiados
                     </>
                   ) : (
@@ -335,7 +335,7 @@ export default function TwoFactorDrawer({
                     title="Copiar Clave"
                   >
                     {copiedSecret ? (
-                      <Check className="size-4 text-green-500" />
+                      <Check className="size-4 text-[hsl(var(--success))]" />
                     ) : (
                       <Copy className="size-4" />
                     )}

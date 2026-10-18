@@ -92,16 +92,23 @@ export interface ProjectExpense {
   updated_at?: string | null;
 }
 
-export type EarlyWarningSentinelLevel = 'normal' | 'attention' | 'high_risk' | 'critical';
+export type EarlyWarningSentinelLevel = 'normal' | 'attention' | 'high_risk' | 'critical' | string;
 
 export interface ProjectCPIStabilityRule {
   is_applicable: boolean;
+  is_locked?: boolean;
+  threshold_pct?: number;
   progress_pct: number;
   current_cpi: number;
+  cpi_locked_value?: number | null;
   expected_cpi_floor: number;
   expected_cpi_ceiling: number;
+  eac_floor?: number;
+  eac_ceiling?: number;
+  status?: string;
   is_irrecoverable_without_rebaseline: boolean;
   diagnostic_message: string;
+  explanation?: string;
 }
 
 export interface ProjectEarlyWarningSentinel {
@@ -111,12 +118,17 @@ export interface ProjectEarlyWarningSentinel {
   min_index: number;
   cpi: number;
   spi: number;
+  tcpi?: number;
   limiting_metric?: 'CPI' | 'SPI' | string;
   threshold_range?: string;
   threshold_condition?: string;
   protocol_action: string;
+  message?: string;
+  recommended_action?: string;
   action?: string;
+  color?: string;
   severity_color?: 'success' | 'warning' | 'destructive';
+  is_recoverable_without_ccb?: boolean;
   requires_ccb?: boolean;
   requires_pmo_audit?: boolean;
 }
@@ -769,13 +781,29 @@ export interface ProjectExecutiveReportData {
     burn_rate_percent: number;
     total_expenses_count: number;
     by_category: Record<string, number>;
+    work_packages_budget?: number;
+    contingency_reserve?: number;
+    management_reserve?: number;
+    management_reserve_pct?: number;
+    total_project_budget?: number;
+    threats_emv?: number;
+    opportunities_emv?: number;
+    net_emv?: number;
+    cpi_stability_rule?: ProjectCPIStabilityRule | null;
+    early_warning_sentinel?: ProjectEarlyWarningSentinel | null;
   };
+  cpi_stability_rule?: ProjectCPIStabilityRule | null;
+  early_warning_sentinel?: ProjectEarlyWarningSentinel | null;
   raid_kpis: {
     total_risks: number;
     critical_count: number;
     high_count: number;
     medium_count: number;
     low_count: number;
+    threats_emv?: number;
+    opportunities_emv?: number;
+    net_emv?: number;
+    contingency_reserve_recommended?: number;
     risks: Array<{
       id: string;
       title: string;
@@ -783,6 +811,10 @@ export interface ProjectExecutiveReportData {
       probability: number;
       impact: number;
       severity: number;
+      risk_type?: "threat" | "opportunity" | string;
+      probability_pct?: number;
+      financial_impact?: number;
+      emv?: number;
       status: string;
       mitigation_plan?: string | null;
     }>;
@@ -820,10 +852,29 @@ export interface ProjectExecutiveReportData {
   }>;
   execution_matrix?: ProjectExecutionMatrix | null;
   submodules_summary?: ProjectSubmodulesSummary | null;
+  governance_summary?: ProjectGovernanceSummary | null;
   kpis?: ProjectKPI[];
   indicators?: ProjectIndicator[];
   generated_at: string;
   organization: string;
+}
+
+export interface ProjectGovernanceSummary {
+  charter_status: "draft" | "authorized";
+  sponsor_id: string | null;
+  authorized_at: string | null;
+  measurable_objectives_count: number;
+  stakeholders_total: number;
+  stakeholders_by_quadrant: {
+    manage_closely: number;
+    keep_satisfied: number;
+    keep_informed: number;
+    monitor: number;
+  };
+  closure_status: "open" | "closed";
+  deliverables_accepted_verified: boolean;
+  financial_reconciliation_completed: boolean;
+  lessons_learned_count: number;
 }
 
 export interface ProjectSubmodulesSummary {
@@ -1067,6 +1118,14 @@ export interface ProjectExecutionMatrix {
       burn_rate_pct: number;
       financial_progress_pct: number;
       expenses_count: number;
+      work_packages_budget?: number;
+      contingency_reserve?: number;
+      management_reserve?: number;
+      management_reserve_pct?: number;
+      total_project_budget?: number;
+      threats_emv?: number;
+      opportunities_emv?: number;
+      net_emv?: number;
       budget_100_rule?: {
         is_satisfied?: boolean;
         is_fully_allocated?: boolean;
@@ -1089,6 +1148,8 @@ export interface ProjectExecutionMatrix {
       balance_gap_pct: number;
       health_status: string;
       health_color: string;
+      cpi_stability_rule?: ProjectCPIStabilityRule | null;
+      early_warning_sentinel?: ProjectEarlyWarningSentinel | null;
     };
   };
   familias_pro: Record<

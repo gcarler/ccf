@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -89,6 +89,37 @@ describe("ProjectReportDrawer", () => {
     expect(screen.getByText("Ana Pérez")).toBeInTheDocument();
     expect(apiFetch).toHaveBeenCalledWith("/projects/project-1/export/executive-data", { token: "test-token" });
     expect((await axe(container)).violations).toEqual([]);
+  });
+
+  it("renders the PMI governance summary when the API includes it", async () => {
+    vi.mocked(apiFetch).mockResolvedValueOnce({
+      ...reportData,
+      governance_summary: {
+        charter_status: "authorized",
+        sponsor_id: "persona-sponsor-1",
+        authorized_at: "2026-10-18T12:00:00Z",
+        measurable_objectives_count: 3,
+        stakeholders_total: 4,
+        stakeholders_by_quadrant: {
+          manage_closely: 1,
+          keep_satisfied: 1,
+          keep_informed: 1,
+          monitor: 1,
+        },
+        closure_status: "open",
+        deliverables_accepted_verified: false,
+        financial_reconciliation_completed: false,
+        lessons_learned_count: 0,
+      },
+    });
+
+    renderDrawer();
+
+    const summary = await screen.findByTestId("governance-summary");
+    expect(within(summary).getByText("Gobernanza del Ciclo de Vida PMI")).toBeInTheDocument();
+    expect(within(summary).getByText(/Gestionar de cerca:/).parentElement).toHaveTextContent("1");
+    expect(within(summary).getByText("persona-sponsor-1")).toBeInTheDocument();
+    expect(within(summary).getByText(/Lecciones aprendidas:/).parentElement).toHaveTextContent("0");
   });
 
   it("announces report loading errors and provides the empty recovery state", async () => {
@@ -302,6 +333,69 @@ describe("ProjectReportDrawer", () => {
 
     const reportBody = container.querySelector(".flex-1.overflow-y-auto");
     expect(reportBody?.innerHTML).not.toMatch(/--(?:card|foreground|muted-foreground)\b/);
+  });
+
+  it("renders Canonical Reserves (EMV), 15% CPI Stability Rule, and Early Warning Sentinel in the financial section", async () => {
+    vi.mocked(apiFetch).mockResolvedValueOnce({
+      ...reportData,
+      financial_kpis: {
+        ...reportData.financial_kpis,
+        work_packages_budget: 8500,
+        contingency_reserve: 1500,
+        management_reserve: 1000,
+        total_project_budget: 11000,
+        cpi_stability_rule: {
+          is_applicable: true,
+          is_locked: true,
+          threshold_pct: 15,
+          progress_pct: 40,
+          current_cpi: 0.92,
+          cpi_locked_value: 0.92,
+          expected_cpi_floor: 0.82,
+          expected_cpi_ceiling: 1.02,
+          eac_floor: 10869.57,
+          eac_ceiling: 11500,
+          status: "LOCKED",
+          is_irrecoverable_without_rebaseline: false,
+          diagnostic_message: "Con 40% de avance (≥15%), el CPI es estadísticamente estable.",
+          explanation: "Con 40% de avance (≥15%), el CPI es estadísticamente estable.",
+        },
+        early_warning_sentinel: {
+          level: "ALERTA_PREVENTIVA",
+          label: "Alerta Preventiva (CPI < 0.95)",
+          color: "warning",
+          min_index: 0.92,
+          cpi: 0.92,
+          spi: 0.96,
+          tcpi: 1.05,
+          protocol_action: "Revisar paquetes de trabajo activos.",
+          is_recoverable_without_ccb: true,
+          requires_ccb: false,
+          message: "Ligera desviación de costos detectada antes de umbral crítico.",
+          recommended_action: "Revisar paquetes de trabajo activos.",
+        },
+      },
+    });
+
+    renderDrawer();
+
+    const reserves = await screen.findByTestId("report-canonical-reserves");
+    expect(within(reserves).getByText("Paquetes de Trabajo")).toBeInTheDocument();
+    expect(within(reserves).getByText("$8,500")).toBeInTheDocument();
+    expect(within(reserves).getByText("Reserva Contingencia (EMV)")).toBeInTheDocument();
+    expect(within(reserves).getByText("$1,500")).toBeInTheDocument();
+    expect(within(reserves).getByText("Reserva de Gestión")).toBeInTheDocument();
+    expect(within(reserves).getByText("$1,000")).toBeInTheDocument();
+    expect(within(reserves).getByText("Presupuesto Total Proyecto")).toBeInTheDocument();
+    expect(within(reserves).getByText("$11,000")).toBeInTheDocument();
+
+    const cpiRule = screen.getByTestId("report-cpi-stability-rule");
+    expect(within(cpiRule).getByText(/Regla del 15% de Estabilidad CPI/i)).toBeInTheDocument();
+    expect(within(cpiRule).getByText(/CPI Bloqueado \(≥15%\)/i)).toBeInTheDocument();
+
+    const sentinel = screen.getByTestId("report-early-warning-sentinel");
+    expect(within(sentinel).getByText("ALERTA_PREVENTIVA")).toBeInTheDocument();
+    expect(within(sentinel).getByText(/Ligera desviación de costos detectada/i)).toBeInTheDocument();
   });
 });
 

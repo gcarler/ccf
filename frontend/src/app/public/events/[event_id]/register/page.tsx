@@ -299,7 +299,7 @@ function RegisterSuccess({ result, event, baseUrl }: { result: RegistrationResul
                 <div className="p-5 flex flex-col items-center text-center space-y-3 bg-[hsl(var(--surface-1))]">
                     {showQr && result.qr_token ? (
                         <>
-                            <div className="p-3 bg-white rounded-xl shadow-md border border-neutral-200">
+                            <div className="p-3 bg-white rounded-xl shadow-md border border-[hsl(var(--border))]">
                                 <QRCodeSVG
                                     id="registration-qr-code"
                                     value={`${baseUrl}/public/events/${event.id}/qr?token=${result.qr_token}`}

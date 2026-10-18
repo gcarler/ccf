@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { History, Calendar, MessageSquare, CheckCircle, AlertCircle, Clock, ChevronRight, RotateCcw } from 'lucide-react';
+import { History, Calendar, MessageSquare, CheckCircle, AlertCircle, Clock, ChevronRight, RotateCcw, type LucideIcon } from 'lucide-react';
 import clsx from 'clsx';
 
 const HISTORY = [
@@ -11,7 +11,7 @@ const HISTORY = [
     { id: 'CCF-0XX', title: 'Solicitar permisos de administrador para módulo CMS', date: '2026-03-15', closedDate: '2026-03-16', status: 'closed', resolution: 'Permisos actualizados. Se asignó el rol "Editor CMS" al usuario solicitante.', category: 'Permisos', rating: 4 },
 ];
 
-const STATUS_CONFIG: Record<string, any> = {
+const STATUS_CONFIG: Record<string, { icon: LucideIcon; label: string; color: string; bg: string }> = {
     closed: { icon: CheckCircle, label: 'Cerrado', color: 'text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success))]/10' },
     in_progress: { icon: Clock, label: 'En Proceso', color: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--info))]/10' },
     open: { icon: AlertCircle, label: 'Abierto', color: 'text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning))]/10' },

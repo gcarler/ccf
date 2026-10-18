@@ -109,6 +109,86 @@ class ProjectAttachment(BaseModel):
     model_config = orm_config
 
 
+class ProjectCharterUpdate(BaseModel):
+    sponsor_id: Optional[UUID] = None
+    business_case: Optional[str] = None
+    strategic_justification: Optional[str] = None
+    measurable_objectives: List[str] = Field(default_factory=list)
+    key_assumptions: List[str] = Field(default_factory=list)
+    key_constraints: List[str] = Field(default_factory=list)
+    high_level_risks: List[str] = Field(default_factory=list)
+    preliminary_budget: Optional[float] = Field(default=None, ge=0)
+    charter_status: Optional[Literal["draft", "authorized"]] = None
+
+
+class ProjectCharterRead(ProjectCharterUpdate):
+    project_id: UUID
+    authorized_by: Optional[UUID] = None
+    authorized_at: Optional[datetime] = None
+    model_config = orm_config
+
+
+class ProjectStakeholderCreate(BaseModel):
+    persona_id: Optional[UUID] = None
+    display_name: Optional[str] = Field(default=None, max_length=200)
+    role_title: Optional[str] = Field(default=None, max_length=200)
+    organization_or_ministry: Optional[str] = Field(default=None, max_length=200)
+    power_level: int = Field(ge=1, le=5)
+    interest_level: int = Field(ge=1, le=5)
+    engagement_level: Literal["unaware", "resistant", "neutral", "supportive", "leading"] = "neutral"
+    management_strategy: Optional[str] = None
+
+    @model_validator(mode="after")
+    def require_identity(self) -> "ProjectStakeholderCreate":
+        if self.persona_id is None and not ((self.display_name or "").strip() or (self.role_title or "").strip()):
+            raise ValueError("persona_id, display_name o role_title es obligatorio")
+        return self
+
+
+class ProjectStakeholderUpdate(BaseModel):
+    persona_id: Optional[UUID] = None
+    display_name: Optional[str] = Field(default=None, max_length=200)
+    role_title: Optional[str] = Field(default=None, max_length=200)
+    organization_or_ministry: Optional[str] = Field(default=None, max_length=200)
+    power_level: Optional[int] = Field(default=None, ge=1, le=5)
+    interest_level: Optional[int] = Field(default=None, ge=1, le=5)
+    engagement_level: Optional[Literal["unaware", "resistant", "neutral", "supportive", "leading"]] = None
+    management_strategy: Optional[str] = None
+
+
+class ProjectStakeholderRead(ProjectStakeholderCreate):
+    id: UUID
+    project_id: UUID
+    quadrant: Literal["manage_closely", "keep_satisfied", "keep_informed", "monitor"]
+    model_config = orm_config
+
+
+class ProjectLessonLearned(BaseModel):
+    category: str = Field(min_length=1, max_length=100)
+    what_worked: Optional[str] = None
+    what_failed: Optional[str] = None
+    recommendation: Optional[str] = None
+
+
+class ProjectClosureFinalize(BaseModel):
+    deliverables_accepted_verified: bool
+    financial_reconciliation_completed: bool
+    final_bac: Optional[float] = Field(default=None, ge=0)
+    final_ac: Optional[float] = Field(default=None, ge=0)
+    operational_handover_to: Optional[str] = Field(default=None, max_length=255)
+    lessons_learned: List[ProjectLessonLearned] = Field(default_factory=list)
+
+
+class ProjectClosureRead(ProjectClosureFinalize):
+    project_id: UUID
+    closure_status: Literal["open", "closed"]
+    final_variance: Optional[float] = None
+    closed_by: Optional[UUID] = None
+    closed_at: Optional[datetime] = None
+    wiki_synced: bool = False
+    model_config = orm_config
+
+
 def _normalize_priority_value(v: Any) -> Any:
     """Map accepted priority aliases to canonical enums before validation."""
     if isinstance(v, str):
@@ -779,16 +859,37 @@ class ProjectExecutivePhaseItem(BaseModel):
     progress_percent: float
 
 
+class ProjectGovernanceSummary(BaseModel):
+    charter_status: Literal["draft", "authorized"] = "draft"
+    sponsor_id: Optional[UUIDStr] = None
+    authorized_at: Optional[datetime] = None
+    measurable_objectives_count: int = 0
+    stakeholders_total: int = 0
+    stakeholders_by_quadrant: dict[str, int] = Field(default_factory=lambda: {
+        "manage_closely": 0,
+        "keep_satisfied": 0,
+        "keep_informed": 0,
+        "monitor": 0,
+    })
+    closure_status: Literal["open", "closed"] = "open"
+    deliverables_accepted_verified: bool = False
+    financial_reconciliation_completed: bool = False
+    lessons_learned_count: int = 0
+
+
 class ProjectExecutiveReportData(BaseModel):
     project: ProjectExecutiveReportProject
     tasks_metrics: ProjectExecutiveTasksMetrics
     financial_kpis: ProjectBudgetSummary
+    cpi_stability_rule: Optional[dict] = None
+    early_warning_sentinel: Optional[dict] = None
     raid_kpis: ProjectExecutiveRiskKpis
     cpm_metrics: ProjectCriticalPathSummary
     time_metrics: ProjectTimeTrackingSummary
     phases: List[ProjectExecutivePhaseItem] = Field(default_factory=list)
     execution_matrix: Optional[dict] = Field(default_factory=dict)
     submodules_summary: Optional[dict] = Field(default_factory=dict)
+    governance_summary: Optional[ProjectGovernanceSummary] = None
     kpis: List[ProjectKPI] = Field(default_factory=list)
     indicators: List[ProjectIndicator] = Field(default_factory=list)
     generated_at: datetime
@@ -1997,4 +2098,87 @@ class ProjectExecutionSyncResponse(BaseModel):
 
 ProjectExecutiveReportData.model_rebuild()
 
+# ============================================================================
+# Control Integrado de Cambios (CCB) — PMI Vol. 6 §5
+# ============================================================================
 
+CRChangeType = Literal["scope", "schedule", "budget", "integrated"]
+CRStatus = Literal["pending_ccb", "approved", "rejected"]
+
+
+class ProjectChangeRequestCreate(BaseModel):
+    title: str = Field(..., min_length=1, max_length=200)
+    justification: str = Field(..., min_length=1)
+    change_type: CRChangeType = "integrated"
+    cost_impact_delta: float = Field(default=0.0)
+    schedule_impact_days: int = Field(default=0)
+    scope_impact_summary: Optional[str] = None
+
+
+class ProjectChangeRequestDecide(BaseModel):
+    decision: Literal["approved", "rejected"]
+    review_notes: str = Field(..., min_length=1)
+
+
+class ProjectChangeRequest(BaseModel):
+    id: UUIDStr
+    project_id: UUIDStr
+    title: str
+    justification: str
+    change_type: str
+    cost_impact_delta: float
+    schedule_impact_days: int
+    scope_impact_summary: Optional[str] = None
+    status: str
+    requested_by: UUIDStr
+    reviewed_by: Optional[UUIDStr] = None
+    review_notes: Optional[str] = None
+    created_at: datetime
+    reviewed_at: Optional[datetime] = None
+    resulting_baseline_id: Optional[UUIDStr] = None
+    model_config = orm_config
+
+
+class ProjectChangeRequestSummary(BaseModel):
+    pending_ccb: int = 0
+    approved: int = 0
+    rejected: int = 0
+    approved_cost_impact_total: float = 0.0
+    approved_schedule_impact_days_total: int = 0
+    pending_cost_impact_total: float = 0.0
+    pending_schedule_impact_days_total: int = 0
+
+
+class ProjectChangeRequestListResponse(BaseModel):
+    project_id: UUIDStr
+    items: List[ProjectChangeRequest] = Field(default_factory=list)
+    summary: ProjectChangeRequestSummary = Field(default_factory=ProjectChangeRequestSummary)
+
+
+# ============================================================================
+# Criterios de Aceptación (DoD / Validate Scope) — PMI Vol. 6 §4
+# ============================================================================
+
+CoQClassification = Literal["prevention", "appraisal", "internal_failure", "external_failure"]
+
+
+class ProjectDodAcceptanceUpdate(BaseModel):
+    specification_met: bool = False
+    tests_no_critical_failures: bool = False
+    evidence_archived: bool = False
+    supervisor_sign_off: bool = False
+    coq_classification: Optional[CoQClassification] = None
+
+
+class ProjectDodAcceptance(BaseModel):
+    task_id: UUIDStr
+    project_id: UUIDStr
+    specification_met: bool
+    tests_no_critical_failures: bool
+    evidence_archived: bool
+    supervisor_sign_off: bool
+    status: str
+    accepted_by: Optional[UUIDStr] = None
+    accepted_at: Optional[datetime] = None
+    coq_classification: Optional[str] = None
+    model_config = orm_config

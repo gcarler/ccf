@@ -10,8 +10,8 @@ describe('StatCard component', () => {
         label="Total Personas"
         value={1250}
         icon={Users}
-        color="text-blue-500"
-        bg="bg-blue-500/10"
+        color="text-[hsl(var(--primary))]"
+        bg="bg-[hsl(var(--primary))]/10"
       />
     );
 
@@ -25,8 +25,8 @@ describe('StatCard component', () => {
         label="Nuevos Miembros"
         value="45"
         icon={Users}
-        color="text-emerald-500"
-        bg="bg-emerald-500/10"
+        color="text-[hsl(var(--success))]"
+        bg="bg-[hsl(var(--success))]/10"
         desc="+12% respecto al mes anterior"
         trend="+12%"
       />

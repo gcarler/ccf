@@ -40,7 +40,7 @@ export const EVENT_TYPE_META: Record<CalEventType, { label: string; chip: string
   },
   agenda_event: {
     label: 'Agenda',
-    chip: 'bg-red-50 text-[hsl(var(--destructive))] dark:bg-red-500/10 dark:text-red-300',
+    chip: 'bg-[hsl(var(--destructive)/10%)] text-[hsl(var(--destructive))] dark:bg-[hsl(var(--destructive))]/10 dark:text-[hsl(var(--destructive)/90%)]',
     color: '#ef4444',
   },
   evangelism_event: {
@@ -55,7 +55,7 @@ export const EVENT_TYPE_META: Record<CalEventType, { label: string; chip: string
   },
   evangelism_session: {
     label: 'Sesión grupo',
-    chip: 'bg-green-50 text-[hsl(var(--secondary))] dark:bg-green-500/10 dark:text-green-300',
+    chip: 'bg-success-soft text-success-text dark:bg-[hsl(var(--success))]/10 dark:text-success-text',
     color: '#16a34a',
   },
   consolidation_case: {
@@ -65,7 +65,7 @@ export const EVENT_TYPE_META: Record<CalEventType, { label: string; chip: string
   },
   consolidation_task: {
     label: 'Tarea CRM',
-    chip: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-300',
+    chip: 'bg-[hsl(var(--info)/10%)] text-[hsl(var(--info))] dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--info)/90%)]',
     color: '#06b6d4',
   },
   project_milestone: {

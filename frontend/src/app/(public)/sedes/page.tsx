@@ -604,7 +604,7 @@ export default function SedesPage() {
                         className="p-1.5 rounded-lg border border-site-outline-variant/20 hover:bg-site-surface-container text-site-on-surface-variant transition-colors"
                       >
                         {copiedId === loc.id ? (
-                          <Check size={12} className="text-emerald-600" />
+                          <Check size={12} className="text-[hsl(var(--success))]" />
                         ) : (
                           <Copy size={12} />
                         )}
@@ -652,7 +652,7 @@ export default function SedesPage() {
       >
         {/* Floating Active Sede Overlay Card & Map View Mode Switcher */}
         <div className="absolute top-4 left-4 right-4 z-20 pointer-events-none">
-          <div className="pointer-events-auto max-w-xl mx-auto md:mx-0 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md p-3.5 rounded-2xl border border-site-outline-variant/20 shadow-xl flex items-center justify-between gap-3">
+          <div className="pointer-events-auto max-w-xl mx-auto md:mx-0 bg-white/95 dark:bg-[hsl(var(--surface-2))]/95 backdrop-blur-md p-3.5 rounded-2xl border border-site-outline-variant/20 shadow-xl flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
@@ -671,7 +671,7 @@ export default function SedesPage() {
                       : activeSede?.name || "Sede El Faro"}
                   </h2>
                   {activeSede?.isMain && !useGeneralMap && (
-                    <span className="text-3xs font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300 shrink-0">
+                    <span className="text-3xs font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[hsl(var(--warning)/20%)] text-[hsl(var(--warning-text))] dark:text-[hsl(var(--warning-text))] shrink-0">
                       Principal
                     </span>
                   )}

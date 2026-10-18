@@ -258,7 +258,7 @@ export function updateCmsSectionProps(
   siteKey: string,
   slug: string,
   sectionId: string,
-  props: Record<string, any>,
+  props: Record<string, unknown>,
   token?: string | null,
 ) {
   return patchCmsSection(siteKey, slug, sectionId, { props_json: props }, token);

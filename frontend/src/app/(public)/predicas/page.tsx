@@ -164,7 +164,7 @@ function VideoCard({
         <div className="absolute top-2.5 left-2.5 flex gap-1.5 flex-wrap">
           {featured && (
             <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/70 text-white text-3xs font-bold uppercase tracking-wider backdrop-blur-md">
-              <Youtube size={10} className="text-red-500" /> {featuredBadge || "Destacado"}
+              <Youtube size={10} className="text-[hsl(var(--destructive))]" /> {featuredBadge || "Destacado"}
             </span>
           )}
           {watched && (
@@ -238,7 +238,7 @@ function VideoCard({
               title={copyLinkLabel}
               className="p-1.5 rounded-lg hover:bg-site-primary/10 text-site-outline hover:text-site-primary transition-colors"
             >
-              {copied ? <Check size={14} className="text-emerald-500" /> : <Link2 size={14} />}
+              {copied ? <Check size={14} className="text-[hsl(var(--success))]" /> : <Link2 size={14} />}
             </button>
           </div>
         </div>
@@ -429,7 +429,7 @@ export default function PredicasPage() {
                   className="text-xs font-extrabold uppercase tracking-widest flex items-center gap-2"
                   style={{ color: "var(--site-primary, #2563eb)" }}
                 >
-                  <Youtube size={14} className="text-red-600" /> {heroEyebrow}
+                  <Youtube size={14} className="text-[hsl(var(--destructive)/90%)]" /> {heroEyebrow}
                 </span>
               </div>
             )}

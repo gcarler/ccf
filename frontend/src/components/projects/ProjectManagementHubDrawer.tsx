@@ -6,7 +6,7 @@ import clsx from "clsx";
 import { RightPanel } from "@/components/ui/RightPanel";
 
 /**
- * Llaves canónicas de los 12 módulos de control que viven en el hub.
+ * Llaves canónicas de los módulos de gestión, control y gobernanza del hub.
  * El orden de la unión define el orden estable de la tira de pestañas.
  */
 export type ProjectHubModuleKey =
@@ -23,7 +23,8 @@ export type ProjectHubModuleKey =
   | 'reports'
   | 'indicators'
   | 'evm'
-  | 'drive';
+  | 'drive'
+  | 'governance';
 
 export interface ProjectHubModuleMeta {
   key: ProjectHubModuleKey;
@@ -61,7 +62,7 @@ interface ProjectManagementHubDrawerProps {
  * ProjectManagementHubDrawer — Hub unificado de pestañas para los módulos de
  * gestión y control de un proyecto (KPIs, Avance, Presupuesto, Riesgos, Carga,
  * Horas, Plantillas, Automatizaciones, Reportes, Indicadores IDP, EVM y
- * Bóveda/Drive).
+ * Bóveda/Drive, además de la Gobernanza PMI del ciclo de vida).
  *
  * Garantías del hub:
  *  - Un único panel lateral contenedor: los módulos participan como pestañas,
