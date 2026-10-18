@@ -238,5 +238,71 @@ describe("ProjectReportDrawer", () => {
     const reportBody = container.querySelector(".flex-1.overflow-y-auto");
     expect(reportBody?.innerHTML).not.toMatch(/--(?:card|foreground|muted-foreground)\b/);
   });
+
+  it("renders the 360° summary of all 6 operational submodules when submodules_summary is present", async () => {
+    vi.mocked(apiFetch).mockResolvedValueOnce({
+      ...reportData,
+      submodules_summary: {
+        baseline: {
+          has_active_baseline: true,
+          baseline_id: "base-1",
+          baseline_name: "Línea Base Inicial Q4",
+          baseline_bac: 10000,
+          baseline_variance_cost: 7500,
+          baseline_variance_schedule: 15,
+          snapshots_count: 2,
+        },
+        supplies: {
+          total_supplies_count: 4,
+          delivered_supplies_count: 3,
+          total_supplies_cost: 1800,
+          auto_generated_expenses_count: 2,
+          auto_generated_expenses_total: 1200,
+        },
+        time_tracking: {
+          logs_count: 5,
+          billable_hours: 32,
+          non_billable_hours: 8,
+          total_logged_hours: 40,
+          estimated_hours_total: 80,
+          hours_utilization_pct: 50,
+        },
+        workload: {
+          members_with_tasks_count: 3,
+          overloaded_members_count: 1,
+          avg_utilization_pct: 62.5,
+        },
+        cpm: {
+          critical_tasks_count: 3,
+          critical_completed_count: 2,
+          dependencies_count: 4,
+        },
+        automations: {
+          total_rules_count: 3,
+          active_rules_count: 2,
+          total_executions_count: 9,
+        },
+      },
+    });
+
+    const { container } = renderDrawer();
+    expect(await screen.findByText(/Estado 360° de Submódulos de Control Operativo/i)).toBeInTheDocument();
+    expect(screen.getByText(/1\. Línea Base EVM/i)).toBeInTheDocument();
+    expect(screen.getByText(/Línea Base Inicial Q4/i)).toBeInTheDocument();
+    expect(screen.getByText(/2\. Suministros e Insumos/i)).toBeInTheDocument();
+    expect(screen.getByText(/3\/4 entregados/i)).toBeInTheDocument();
+    expect(screen.getByText(/3\. Hojas de Tiempo/i)).toBeInTheDocument();
+    expect(screen.getByText(/5 registros/i)).toBeInTheDocument();
+    expect(screen.getByText(/4\. Carga de Equipo \(Workload\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/62\.5%/i)).toBeInTheDocument();
+    expect(screen.getByText(/5\. Ruta Crítica \(CPM \/ EDT\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/4 dependencias/i)).toBeInTheDocument();
+    expect(screen.getByText(/6\. Automatizaciones/i)).toBeInTheDocument();
+    expect(screen.getByText(/2\/3 activas/i)).toBeInTheDocument();
+
+    const reportBody = container.querySelector(".flex-1.overflow-y-auto");
+    expect(reportBody?.innerHTML).not.toMatch(/--(?:card|foreground|muted-foreground)\b/);
+  });
 });
+
 

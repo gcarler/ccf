@@ -798,6 +798,201 @@ export function ProjectReportDrawer({
                     )}
                   </div>
                 )}
+
+                {/* Sección 6: Resumen 360° de los 6 Submódulos de Control Operativo */}
+                {data?.submodules_summary && (
+                  <div
+                    className="p-4 rounded-xl border space-y-3"
+                    style={{
+                      backgroundColor: "hsl(var(--surface-1))",
+                      borderColor: "hsl(var(--border))",
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Activity className="w-4 h-4 text-[hsl(var(--primary))]" />
+                        <h3 className="text-sm font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
+                          Estado 360° de Submódulos de Control Operativo
+                        </h3>
+                      </div>
+                      <span className="text-xs font-semibold text-[hsl(var(--primary))]">
+                        6 Submódulos Conectados
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 text-xs">
+                      {/* 1. Línea Base EVM */}
+                      <div
+                        className="p-3 rounded-lg border space-y-1"
+                        style={{
+                          backgroundColor: "hsl(var(--surface-2))",
+                          borderColor: "hsl(var(--border))",
+                        }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-[hsl(var(--primary))]">
+                            1. Línea Base EVM
+                          </span>
+                          <span
+                            className="px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                            style={{
+                              backgroundColor: data.submodules_summary.baseline.has_active_baseline
+                                ? "hsl(var(--success) / 0.15)"
+                                : "hsl(var(--warning) / 0.15)",
+                              color: data.submodules_summary.baseline.has_active_baseline
+                                ? "hsl(var(--success))"
+                                : "hsl(var(--warning))",
+                            }}
+                          >
+                            {data.submodules_summary.baseline.has_active_baseline ? "Activa" : "Sin base"}
+                          </span>
+                        </div>
+                        <div className="text-[11px]" style={{ color: "hsl(var(--text-primary))" }}>
+                          {data.submodules_summary.baseline.baseline_name || "Sin línea base fijada"} •{" "}
+                          <b>{data.submodules_summary.baseline.snapshots_count}</b> snapshots
+                        </div>
+                        <div className="text-[11px]" style={{ color: "hsl(var(--text-secondary))" }}>
+                          BAC Base: <b>${(data.submodules_summary.baseline.baseline_bac ?? 0).toLocaleString()}</b> • Var. Costo:{" "}
+                          <b>${data.submodules_summary.baseline.baseline_variance_cost.toLocaleString()}</b> • Var. Cronog.:{" "}
+                          <b>{data.submodules_summary.baseline.baseline_variance_schedule}%</b>
+                        </div>
+                      </div>
+
+                      {/* 2. Suministros -> AC */}
+                      <div
+                        className="p-3 rounded-lg border space-y-1"
+                        style={{
+                          backgroundColor: "hsl(var(--surface-2))",
+                          borderColor: "hsl(var(--border))",
+                        }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-[hsl(var(--success))]">
+                            2. Suministros e Insumos
+                          </span>
+                          <span className="text-[10px] font-semibold" style={{ color: "hsl(var(--text-secondary))" }}>
+                            {data.submodules_summary.supplies.delivered_supplies_count}/
+                            {data.submodules_summary.supplies.total_supplies_count} entregados
+                          </span>
+                        </div>
+                        <div className="text-[11px]" style={{ color: "hsl(var(--text-primary))" }}>
+                          Costo Insumos: <b>${data.submodules_summary.supplies.total_supplies_cost.toLocaleString()}</b>
+                        </div>
+                        <div className="text-[11px]" style={{ color: "hsl(var(--text-secondary))" }}>
+                          Gastos Auto-generados (AC):{" "}
+                          <b>{data.submodules_summary.supplies.auto_generated_expenses_count}</b> ($
+                          {data.submodules_summary.supplies.auto_generated_expenses_total.toLocaleString()})
+                        </div>
+                      </div>
+
+                      {/* 3. Hojas de Tiempo (TimeTracking) */}
+                      <div
+                        className="p-3 rounded-lg border space-y-1"
+                        style={{
+                          backgroundColor: "hsl(var(--surface-2))",
+                          borderColor: "hsl(var(--border))",
+                        }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-[hsl(var(--warning))]">
+                            3. Hojas de Tiempo
+                          </span>
+                          <span className="text-[10px] font-semibold" style={{ color: "hsl(var(--text-secondary))" }}>
+                            {data.submodules_summary.time_tracking.logs_count} registros
+                          </span>
+                        </div>
+                        <div className="text-[11px]" style={{ color: "hsl(var(--text-primary))" }}>
+                          Registradas: <b>{data.submodules_summary.time_tracking.total_logged_hours}h</b> /{" "}
+                          {data.submodules_summary.time_tracking.estimated_hours_total}h est. (
+                          <b>{data.submodules_summary.time_tracking.hours_utilization_pct}%</b>)
+                        </div>
+                        <div className="text-[11px]" style={{ color: "hsl(var(--text-secondary))" }}>
+                          Facturables: <b>{data.submodules_summary.time_tracking.billable_hours}h</b> • No fact.:{" "}
+                          <b>{data.submodules_summary.time_tracking.non_billable_hours}h</b>
+                        </div>
+                      </div>
+
+                      {/* 4. Carga de Equipo (Workload) */}
+                      <div
+                        className="p-3 rounded-lg border space-y-1"
+                        style={{
+                          backgroundColor: "hsl(var(--surface-2))",
+                          borderColor: "hsl(var(--border))",
+                        }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-[hsl(var(--primary))]">
+                            4. Carga de Equipo (Workload)
+                          </span>
+                          <span className="text-[10px] font-semibold" style={{ color: "hsl(var(--text-secondary))" }}>
+                            {data.submodules_summary.workload.members_with_tasks_count} miembros
+                          </span>
+                        </div>
+                        <div className="text-[11px]" style={{ color: "hsl(var(--text-primary))" }}>
+                          Utilización Promedio: <b>{data.submodules_summary.workload.avg_utilization_pct}%</b>
+                        </div>
+                        <div className="text-[11px]" style={{ color: "hsl(var(--text-secondary))" }}>
+                          Miembros sobrecargados: <b>{data.submodules_summary.workload.overloaded_members_count}</b>
+                        </div>
+                      </div>
+
+                      {/* 5. Ruta Crítica (CPM / EDT) */}
+                      <div
+                        className="p-3 rounded-lg border space-y-1"
+                        style={{
+                          backgroundColor: "hsl(var(--surface-2))",
+                          borderColor: "hsl(var(--border))",
+                        }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-[hsl(var(--destructive))]">
+                            5. Ruta Crítica (CPM / EDT)
+                          </span>
+                          <span className="text-[10px] font-semibold" style={{ color: "hsl(var(--text-secondary))" }}>
+                            {data.submodules_summary.cpm.dependencies_count} dependencias
+                          </span>
+                        </div>
+                        <div className="text-[11px]" style={{ color: "hsl(var(--text-primary))" }}>
+                          Tareas Críticas:{" "}
+                          <b>
+                            {data.submodules_summary.cpm.critical_completed_count}/
+                            {data.submodules_summary.cpm.critical_tasks_count}
+                          </b>{" "}
+                          completadas
+                        </div>
+                        <div className="text-[11px]" style={{ color: "hsl(var(--text-secondary))" }}>
+                          Sincronización automática de banderas críticas EDT
+                        </div>
+                      </div>
+
+                      {/* 6. Automatizaciones */}
+                      <div
+                        className="p-3 rounded-lg border space-y-1"
+                        style={{
+                          backgroundColor: "hsl(var(--surface-2))",
+                          borderColor: "hsl(var(--border))",
+                        }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-[hsl(var(--success))]">
+                            6. Automatizaciones
+                          </span>
+                          <span className="text-[10px] font-semibold" style={{ color: "hsl(var(--text-secondary))" }}>
+                            {data.submodules_summary.automations.active_rules_count}/
+                            {data.submodules_summary.automations.total_rules_count} activas
+                          </span>
+                        </div>
+                        <div className="text-[11px]" style={{ color: "hsl(var(--text-primary))" }}>
+                          Ejecuciones Disparadas:{" "}
+                          <b>{data.submodules_summary.automations.total_executions_count}</b>
+                        </div>
+                        <div className="text-[11px]" style={{ color: "hsl(var(--text-secondary))" }}>
+                          Reglas operativas sobre tareas y gastos
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

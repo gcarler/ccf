@@ -752,6 +752,7 @@ class ProjectExecutiveReportData(BaseModel):
     time_metrics: ProjectTimeTrackingSummary
     phases: List[ProjectExecutivePhaseItem] = Field(default_factory=list)
     execution_matrix: Optional[dict] = Field(default_factory=dict)
+    submodules_summary: Optional[dict] = Field(default_factory=dict)
     kpis: List[ProjectKPI] = Field(default_factory=list)
     indicators: List[ProjectIndicator] = Field(default_factory=list)
     generated_at: datetime

@@ -755,10 +755,53 @@ export interface ProjectExecutiveReportData {
     end_date?: string | null;
   }>;
   execution_matrix?: ProjectExecutionMatrix | null;
+  submodules_summary?: ProjectSubmodulesSummary | null;
   kpis?: ProjectKPI[];
   indicators?: ProjectIndicator[];
   generated_at: string;
   organization: string;
+}
+
+export interface ProjectSubmodulesSummary {
+  baseline: {
+    has_active_baseline: boolean;
+    baseline_id?: string | null;
+    baseline_name?: string | null;
+    baseline_bac?: number | null;
+    baseline_variance_cost: number;
+    baseline_variance_schedule: number;
+    snapshots_count: number;
+  };
+  supplies: {
+    total_supplies_count: number;
+    delivered_supplies_count: number;
+    total_supplies_cost: number;
+    auto_generated_expenses_count: number;
+    auto_generated_expenses_total: number;
+  };
+  time_tracking: {
+    logs_count: number;
+    billable_hours: number;
+    non_billable_hours: number;
+    total_logged_hours: number;
+    estimated_hours_total: number;
+    hours_utilization_pct: number;
+  };
+  workload: {
+    members_with_tasks_count: number;
+    overloaded_members_count: number;
+    avg_utilization_pct: number;
+  };
+  cpm: {
+    critical_tasks_count: number;
+    critical_completed_count: number;
+    dependencies_count: number;
+  };
+  automations: {
+    total_rules_count: number;
+    active_rules_count: number;
+    total_executions_count: number;
+  };
 }
 
 

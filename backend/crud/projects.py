@@ -4084,7 +4084,7 @@ def get_project_executive_report_data(
         p = project.owner
         owner_name = getattr(p, "nombre_completo", None) or f"{getattr(p, 'nombres', '')} {getattr(p, 'apellidos', '')}".strip() or "Líder"
 
-    from backend.services.project_evm_service import build_project_execution_matrix
+    from backend.services.project_evm_service import build_project_execution_matrix, calculate_project_evm
 
     execution_matrix = build_project_execution_matrix(db, project)
     rolled_progress_pct = float(
@@ -4098,6 +4098,164 @@ def get_project_executive_report_data(
 
     kpis_list = get_project_kpis(db, project.id)
     indicators_list = get_project_indicators(db, project.id, sede_id=user_sede_id)
+
+    # Resumen 360° de los 6 Submódulos de Control Operativo
+    evm_summary = calculate_project_evm(db, project) or {}
+    baselines_rows = (
+        db.query(models.ProjectBaseline)
+        .filter(
+            models.ProjectBaseline.project_id == project.id,
+            models.ProjectBaseline.deleted_at.is_(None),
+        )
+        .order_by(models.ProjectBaseline.created_at.desc())
+        .all()
+    )
+    baseline_block = {
+        "has_active_baseline": bool(evm_summary.get("has_baseline", False)),
+        "baseline_id": evm_summary.get("baseline_id"),
+        "baseline_name": evm_summary.get("baseline_name"),
+        "baseline_bac": (
+            round(float(evm_summary["baseline_bac"]), 2)
+            if evm_summary.get("baseline_bac") is not None
+            else None
+        ),
+        "baseline_variance_cost": round(float(evm_summary.get("baseline_variance_cost") or 0.0), 2),
+        "baseline_variance_schedule": round(float(evm_summary.get("baseline_variance_schedule") or 0.0), 1),
+        "snapshots_count": len(baselines_rows),
+    }
+
+    task_ids = [t.id for t in tasks if getattr(t, "id", None) is not None]
+    supplies_rows = (
+        db.query(models.TaskSupply)
+        .filter(
+            models.TaskSupply.task_id.in_(task_ids),
+            models.TaskSupply.deleted_at.is_(None),
+        )
+        .all()
+        if task_ids
+        else []
+    )
+    delivered_statuses = {"ready", "received", "delivered", "approved", "purchased", "paid", "completed"}
+    delivered_supplies_count = sum(
+        1 for s in supplies_rows if str(getattr(s, "status", "") or "").lower() in delivered_statuses
+    )
+    total_supplies_cost = round(
+        sum(float(getattr(s, "total_cost", 0.0) or 0.0) for s in supplies_rows), 2
+    )
+    project_expenses_rows = (
+        db.query(models.ProjectExpense)
+        .filter(
+            models.ProjectExpense.project_id == project.id,
+            models.ProjectExpense.deleted_at.is_(None),
+        )
+        .all()
+    )
+    auto_expenses = [
+        e
+        for e in project_expenses_rows
+        if bool(getattr(e, "is_auto_generated", False) or (e.description and "[supply_id:" in str(e.description)))
+    ]
+    supplies_block = {
+        "total_supplies_count": len(supplies_rows),
+        "delivered_supplies_count": delivered_supplies_count,
+        "total_supplies_cost": total_supplies_cost,
+        "auto_generated_expenses_count": len(auto_expenses),
+        "auto_generated_expenses_total": round(sum(float(e.amount or 0.0) for e in auto_expenses), 2),
+    }
+
+    all_t_ids = {str(t.id) for t in tasks if getattr(t, "id", None) is not None}
+    parent_t_ids = {
+        str(t.parent_id)
+        for t in tasks
+        if getattr(t, "parent_id", None)
+        and str(t.parent_id) in all_t_ids
+        and str(t.parent_id) != str(t.id)
+    }
+    leaf_tasks = [t for t in tasks if str(t.id) not in parent_t_ids] or list(tasks)
+    estimated_hours_total = round(
+        sum(float(getattr(t, "estimated_hours", 0.0) or 0.0) for t in leaf_tasks), 2
+    )
+    total_logged_hours = round(float(time_summary.get("total_hours", 0.0) or 0.0), 2)
+    hours_utilization_pct = (
+        round((total_logged_hours / estimated_hours_total) * 100.0, 1)
+        if estimated_hours_total > 0.0
+        else (100.0 if total_logged_hours > 0.0 else 0.0)
+    )
+    time_tracking_block = {
+        "logs_count": int(time_summary.get("total_logs", 0) or 0),
+        "billable_hours": round(float(time_summary.get("billable_hours", 0.0) or 0.0), 2),
+        "non_billable_hours": round(float(time_summary.get("non_billable_hours", 0.0) or 0.0), 2),
+        "total_logged_hours": total_logged_hours,
+        "estimated_hours_total": estimated_hours_total,
+        "hours_utilization_pct": hours_utilization_pct,
+    }
+
+    workload_data = get_project_workload(db, project.id) or {}
+    wl_members = [
+        m
+        for m in (workload_data.get("members") or [])
+        if m.get("persona_id") is not None and int(m.get("total_tasks", 0) or 0) > 0
+    ]
+    if wl_members:
+        m_hours_utils = [float(m.get("hours_utilization_pct", 0.0) or 0.0) for m in wl_members]
+        m_wl_pcts = [float(m.get("workload_percent", 0.0) or 0.0) for m in wl_members]
+        avg_utilization_pct = (
+            round(sum(m_hours_utils) / len(wl_members), 1)
+            if any(u > 0.0 for u in m_hours_utils)
+            else round(sum(m_wl_pcts) / len(wl_members), 1)
+        )
+    else:
+        avg_utilization_pct = 0.0
+    workload_block = {
+        "members_with_tasks_count": len(wl_members),
+        "overloaded_members_count": int(workload_data.get("overloaded_members_count", 0) or 0),
+        "avg_utilization_pct": avg_utilization_pct,
+    }
+
+    crit_ids = {str(cid) for cid in (cpm_summary.get("critical_path_task_ids") or [])}
+    critical_tasks_count = int(cpm_summary.get("critical_tasks_count", len(crit_ids)) or 0)
+    critical_completed_count = sum(
+        1
+        for t in tasks
+        if (str(t.id) in crit_ids or bool(getattr(t, "is_critical", False)))
+        and getattr(t, "status", None) in ("completed", "done")
+    )
+    dependencies_count = (
+        db.query(models.ProjectTaskDependency)
+        .filter(
+            models.ProjectTaskDependency.project_id == project.id,
+            models.ProjectTaskDependency.deleted_at.is_(None),
+        )
+        .count()
+    )
+    cpm_block = {
+        "critical_tasks_count": critical_tasks_count,
+        "critical_completed_count": critical_completed_count,
+        "dependencies_count": dependencies_count,
+    }
+
+    automation_rules = (
+        db.query(models.ProjectAutomationRule)
+        .filter(
+            models.ProjectAutomationRule.project_id == project.id,
+            models.ProjectAutomationRule.deleted_at.is_(None),
+        )
+        .all()
+    )
+    automations_block = {
+        "total_rules_count": len(automation_rules),
+        "active_rules_count": sum(1 for r in automation_rules if bool(r.is_active)),
+        "total_executions_count": sum(int(r.execution_count or 0) for r in automation_rules),
+    }
+
+    submodules_summary = {
+        "baseline": baseline_block,
+        "supplies": supplies_block,
+        "time_tracking": time_tracking_block,
+        "workload": workload_block,
+        "cpm": cpm_block,
+        "automations": automations_block,
+    }
 
     return {
         "project": {
@@ -4131,6 +4289,7 @@ def get_project_executive_report_data(
         "time_metrics": time_summary,
         "phases": phase_data,
         "execution_matrix": execution_matrix,
+        "submodules_summary": submodules_summary,
         "kpis": kpis_list,
         "indicators": indicators_list,
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -4138,12 +4297,25 @@ def get_project_executive_report_data(
     }
 
 
-def generate_project_summary_pdf(report_data: dict) -> bytes:
+def generate_project_summary_pdf(
+    report_data: dict | Session,
+    project_id: Optional[UUID | str] = None,
+    *,
+    user_sede_id: Optional[UUID | str] = None,
+) -> bytes:
     """Genera un informe ejecutivo PDF profesional con membrete CCF y ReportLab."""
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import letter
     from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
     from reportlab.platypus import HRFlowable, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+    if not isinstance(report_data, dict):
+        if project_id is None:
+            raise ValueError("project_id es obligatorio cuando se invoca con sesión de base de datos")
+        report_data = (
+            get_project_executive_report_data(report_data, project_id, user_sede_id=user_sede_id)
+            or {}
+        )
 
     def safe_text(value: Any) -> str:
         """Render project-controlled fields as text, never as ReportLab markup."""
@@ -4157,6 +4329,7 @@ def generate_project_summary_pdf(report_data: dict) -> bytes:
         rightMargin=36,
         topMargin=36,
         bottomMargin=36,
+        pageCompression=0,
     )
 
     styles = getSampleStyleSheet()
@@ -4507,6 +4680,100 @@ def generate_project_summary_pdf(report_data: dict) -> bytes:
         f"<b>Participación de Equipo:</b> {mem_str}"
     )
     story.append(Paragraph(time_text, body_style))
+    story.append(Spacer(1, 6))
+
+    # 7b. Estado de Submódulos de Control Operativo (360°)
+    sub_sum = report_data.get("submodules_summary") or {}
+    sub_base = sub_sum.get("baseline") or {}
+    sub_sup = sub_sum.get("supplies") or {}
+    sub_time = sub_sum.get("time_tracking") or {}
+    sub_wl = sub_sum.get("workload") or {}
+    sub_cpm = sub_sum.get("cpm") or {}
+    sub_auto = sub_sum.get("automations") or {}
+
+    story.append(
+        Paragraph(
+            "Estado de Submódulos de Control Operativo (Línea Base, Insumos, Horas, Carga, Ruta Crítica y Automatizaciones)",
+            section_title_style,
+        )
+    )
+    base_status_txt = (
+        f"Activa: {safe_text(sub_base.get('baseline_name') or 'Línea Base')} "
+        f"(BAC: ${float(sub_base.get('baseline_bac') or 0.0):,.2f} | "
+        f"Var Costo: ${float(sub_base.get('baseline_variance_cost') or 0.0):,.2f} | "
+        f"Var Cronog.: {float(sub_base.get('baseline_variance_schedule') or 0.0)}%)"
+        if sub_base.get("has_active_baseline")
+        else f"Sin línea base activa ({int(sub_base.get('snapshots_count') or 0)} snapshots)"
+    )
+    submodules_table_data = [
+        [
+            Paragraph("<b>Submódulo Operativo</b>", cell_header),
+            Paragraph("<b>Indicadores de Ejecución Real</b>", cell_header),
+        ],
+        [
+            Paragraph("<b>1. Línea Base EVM</b>", cell_style),
+            Paragraph(
+                f"{base_status_txt} • Snapshots: {int(sub_base.get('snapshots_count') or 0)}",
+                cell_style,
+            ),
+        ],
+        [
+            Paragraph("<b>2. Suministros e Insumos</b>", cell_style),
+            Paragraph(
+                f"Insumos: {int(sub_sup.get('delivered_supplies_count') or 0)}/{int(sub_sup.get('total_supplies_count') or 0)} entregados • "
+                f"Costo Insumos: ${float(sub_sup.get('total_supplies_cost') or 0.0):,.2f} • "
+                f"Gastos Auto-generados (AC): {int(sub_sup.get('auto_generated_expenses_count') or 0)} "
+                f"(${float(sub_sup.get('auto_generated_expenses_total') or 0.0):,.2f})",
+                cell_style,
+            ),
+        ],
+        [
+            Paragraph("<b>3. Hojas de Tiempo (TimeTracking)</b>", cell_style),
+            Paragraph(
+                f"Registros: {int(sub_time.get('logs_count') or 0)} • "
+                f"Horas Registradas: {float(sub_time.get('total_logged_hours') or 0.0)}h "
+                f"({float(sub_time.get('billable_hours') or 0.0)}h fact. / {float(sub_time.get('non_billable_hours') or 0.0)}h no fact.) • "
+                f"Estimadas: {float(sub_time.get('estimated_hours_total') or 0.0)}h "
+                f"({float(sub_time.get('hours_utilization_pct') or 0.0)}%)",
+                cell_style,
+            ),
+        ],
+        [
+            Paragraph("<b>4. Carga de Equipo (Workload)</b>", cell_style),
+            Paragraph(
+                f"Miembros con tareas: {int(sub_wl.get('members_with_tasks_count') or 0)} • "
+                f"Sobrecargados: {int(sub_wl.get('overloaded_members_count') or 0)} • "
+                f"Utilización Promedio: {float(sub_wl.get('avg_utilization_pct') or 0.0)}%",
+                cell_style,
+            ),
+        ],
+        [
+            Paragraph("<b>5. Ruta Crítica (CPM / EDT)</b>", cell_style),
+            Paragraph(
+                f"Tareas Críticas: {int(sub_cpm.get('critical_completed_count') or 0)}/{int(sub_cpm.get('critical_tasks_count') or 0)} completadas • "
+                f"Dependencias Activas: {int(sub_cpm.get('dependencies_count') or 0)}",
+                cell_style,
+            ),
+        ],
+        [
+            Paragraph("<b>6. Automatizaciones</b>", cell_style),
+            Paragraph(
+                f"Reglas Activas: {int(sub_auto.get('active_rules_count') or 0)}/{int(sub_auto.get('total_rules_count') or 0)} • "
+                f"Ejecuciones Disparadas: {int(sub_auto.get('total_executions_count') or 0)}",
+                cell_style,
+            ),
+        ],
+    ]
+    submodules_table = Table(submodules_table_data, colWidths=[160, 380])
+    submodules_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1E3A8A')),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F8FAFC')]),
+        ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1')),
+        ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E2E8F0')),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+    ]))
+    story.append(submodules_table)
     story.append(Spacer(1, 10))
 
     # 8. Pie de página

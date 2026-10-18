@@ -610,6 +610,22 @@ class ProjectExpense(Base):
     task = relationship("ProjectTask", back_populates="expenses")
     creator = relationship("Persona", foreign_keys=[created_by])
 
+    def __init__(self, **kwargs: Any) -> None:
+        auto_gen = kwargs.pop("is_auto_generated", None)
+        super().__init__(**kwargs)
+        if auto_gen is not None:
+            self.__dict__["_is_auto_generated"] = bool(auto_gen)
+
+    @property
+    def is_auto_generated(self) -> bool:
+        if "_is_auto_generated" in self.__dict__ and self.__dict__["_is_auto_generated"] is not None:
+            return bool(self.__dict__["_is_auto_generated"])
+        return bool(self.description and "[supply_id:" in str(self.description))
+
+    @is_auto_generated.setter
+    def is_auto_generated(self, value: bool) -> None:
+        self.__dict__["_is_auto_generated"] = bool(value)
+
 
 class ProjectRisk(Base):
     __tablename__ = "project_risks"
