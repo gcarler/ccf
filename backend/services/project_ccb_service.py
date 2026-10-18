@@ -2352,6 +2352,25 @@ class ProjectCCBService:
             max_external_failure_share_pct=max_external_failure_share_pct,
         )
 
+    @staticmethod
+    def evaluate_spc_control_chart_stability(
+        measurements: Sequence[float] | None,
+        *,
+        center_line: float,
+        upper_control_limit: float,
+        lower_control_limit: float,
+        upper_spec_limit: float | None = None,
+        lower_spec_limit: float | None = None,
+    ) -> dict[str, Any]:
+        return evaluate_spc_control_chart_stability(
+            measurements,
+            center_line=center_line,
+            upper_control_limit=upper_control_limit,
+            lower_control_limit=lower_control_limit,
+            upper_spec_limit=upper_spec_limit,
+            lower_spec_limit=lower_spec_limit,
+        )
+
 
 def evaluate_quality_ncr_sla_compliance(
     ncrs: list[dict[str, Any]] | None = None,
@@ -2683,6 +2702,71 @@ def evaluate_cost_of_quality_conformance_balance(
     }
 
 
+def evaluate_spc_control_chart_stability(
+    measurements: Sequence[float] | None,
+    *,
+    center_line: float,
+    upper_control_limit: float,
+    lower_control_limit: float,
+    upper_spec_limit: float | None = None,
+    lower_spec_limit: float | None = None,
+) -> dict[str, Any]:
+    """Evalúa la estabilidad de un proceso mediante Diagramas de Control Estadístico (SPC Control Charts y Regla de Siete) según PMI PMBOK §8.3.2.4."""
+    cl = float(center_line)
+    ucl = float(upper_control_limit)
+    lcl = float(lower_control_limit)
+    usl = float(upper_spec_limit) if upper_spec_limit is not None else None
+    lsl = float(lower_spec_limit) if lower_spec_limit is not None else None
+
+    has_invalid_limits = bool(ucl <= lcl or not (lcl <= cl <= ucl))
+
+    samples = list(measurements or [])
+    sample_count = len(samples)
+    out_of_control_indices: list[int] = []
+    out_of_spec_indices: list[int] = []
+    rule_of_seven_violation_indices: list[int] = []
+
+    above_streak = 0
+    below_streak = 0
+
+    for idx, raw_val in enumerate(samples):
+        val = float(raw_val)
+        if val > ucl or val < lcl:
+            out_of_control_indices.append(idx)
+        if (usl is not None and val > usl) or (lsl is not None and val < lsl):
+            out_of_spec_indices.append(idx)
+
+        if val > cl:
+            above_streak += 1
+            below_streak = 0
+        elif val < cl:
+            below_streak += 1
+            above_streak = 0
+        else:
+            above_streak = 0
+            below_streak = 0
+
+        if above_streak >= 7 or below_streak >= 7:
+            rule_of_seven_violation_indices.append(idx)
+
+    is_in_statistical_control = bool(
+        sample_count > 0
+        and not has_invalid_limits
+        and len(out_of_control_indices) == 0
+        and len(out_of_spec_indices) == 0
+        and len(rule_of_seven_violation_indices) == 0
+    )
+
+    return {
+        "sample_count": sample_count,
+        "has_invalid_limits": has_invalid_limits,
+        "out_of_control_indices": out_of_control_indices,
+        "out_of_spec_indices": out_of_spec_indices,
+        "rule_of_seven_violation_indices": rule_of_seven_violation_indices,
+        "is_in_statistical_control": is_in_statistical_control,
+    }
+
+
 __all__ = [
     "list_change_requests",
     "row_list_adapter",
@@ -2719,6 +2803,7 @@ __all__ = [
     "evaluate_pareto_vital_few_defect_causes",
     "evaluate_deliverable_acceptance_traceability",
     "evaluate_cost_of_quality_conformance_balance",
+    "evaluate_spc_control_chart_stability",
     "ProjectCCBService",
 ]
 

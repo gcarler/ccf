@@ -2971,3 +2971,119 @@ def test_audit_stakeholder_escalation_matrix_readiness_channels_or_missing_tier1
             "readiness_score_pct": 0.0,
             "is_ready": False,
         }
+
+
+def test_audit_team_calendar_burnout_contention_sustainable():
+    """Integrantes con utilización <= 85%, proyectos concurrentes <= 3 y 0 conflictos PTO -> is_sustainable True."""
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_team_calendar_burnout_contention,
+    )
+
+    allocations = [
+        {
+            "member_id": "MEM-1",
+            "available_hours": 40.0,
+            "allocated_hours": 32.0,
+            "concurrent_project_count": 2,
+            "pto_conflict_hours": 0.0,
+        },
+        {
+            "member_id": "MEM-2",
+            "available_hours": 40.0,
+            "allocated_hours": 28.0,
+            "concurrent_project_count": 3,
+            "pto_conflict_hours": 0.0,
+        },
+    ]
+    res = audit_team_calendar_burnout_contention(allocations)
+    assert res == {
+        "evaluated_member_count": 2,
+        "burnout_risk_member_ids": [],
+        "context_switching_member_ids": [],
+        "pto_conflict_member_ids": [],
+        "invalid_calendar_member_ids": [],
+        "average_utilization_pct": 75.0,
+        "is_sustainable": True,
+    }
+    assert (
+        ProjectLifecyclePMIService.audit_team_calendar_burnout_contention(
+            allocations
+        )
+        == res
+    )
+
+
+def test_audit_team_calendar_burnout_contention_burnout_context_and_pto():
+    """Utilización > 85%, proyectos > 3 y horas PTO > 0 -> listas de problemas pobladas e is_sustainable False."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_team_calendar_burnout_contention,
+    )
+
+    res = audit_team_calendar_burnout_contention(
+        [
+            {
+                "member_id": "MEM-BURN",
+                "available_hours": 40.0,
+                "allocated_hours": 38.0,
+                "concurrent_project_count": 2,
+                "pto_conflict_hours": 0.0,
+            },
+            {
+                "member_id": "MEM-CTX-PTO",
+                "available_hours": 40.0,
+                "allocated_hours": 30.0,
+                "concurrent_project_count": 5,
+                "pto_conflict_hours": 8.0,
+            },
+        ],
+        max_sustainable_utilization_pct=85.0,
+        max_concurrent_projects=3,
+    )
+    assert res == {
+        "evaluated_member_count": 2,
+        "burnout_risk_member_ids": ["MEM-BURN"],
+        "context_switching_member_ids": ["MEM-CTX-PTO"],
+        "pto_conflict_member_ids": ["MEM-CTX-PTO"],
+        "invalid_calendar_member_ids": [],
+        "average_utilization_pct": 85.0,
+        "is_sustainable": False,
+    }
+
+
+def test_audit_team_calendar_burnout_contention_invalid_calendar():
+    """available_hours <= 0 o allocated_hours < 0 -> invalid_calendar_member_ids poblado."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_team_calendar_burnout_contention,
+    )
+
+    res = audit_team_calendar_burnout_contention(
+        [
+            {"member_id": "MEM-ZERO-AVAIL", "available_hours": 0.0, "allocated_hours": 20.0},
+            {"member_id": "MEM-NEG-ALLOC", "available_hours": 40.0, "allocated_hours": -5.0},
+            {"member_id": "MEM-OK", "available_hours": 40.0, "allocated_hours": 20.0},
+        ]
+    )
+    assert res["evaluated_member_count"] == 3
+    assert res["invalid_calendar_member_ids"] == ["MEM-ZERO-AVAIL", "MEM-NEG-ALLOC"]
+    assert res["average_utilization_pct"] == 50.0
+    assert res["is_sustainable"] is False
+
+
+def test_audit_team_calendar_burnout_contention_empty_or_none():
+    """Lista vacía, None o entradas sin member_id -> evaluated_member_count 0, is_sustainable False."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_team_calendar_burnout_contention,
+    )
+
+    for payload in (None, [], [{"member_id": "  "}], ["invalid"]):
+        res = audit_team_calendar_burnout_contention(payload)  # type: ignore[arg-type]
+        assert res == {
+            "evaluated_member_count": 0,
+            "burnout_risk_member_ids": [],
+            "context_switching_member_ids": [],
+            "pto_conflict_member_ids": [],
+            "invalid_calendar_member_ids": [],
+            "average_utilization_pct": 0.0,
+            "is_sustainable": False,
+        }

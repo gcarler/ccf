@@ -2381,89 +2381,67 @@ _GENERIC_IMAGE_ALT_TEXTS = {
 def audit_markdown_code_fence_hygiene(
     markdown_text: str | None = None,
 ) -> dict[str, Any]:
-    """Audita los bloques de código cercados verificando etiqueta de lenguaje, cuerpo no vacío y cierre de bloque según PMI PMBOK §4.4 y §10.2."""
+    """Audita los bloques de código cercados con triple backtick verificando etiqueta de lenguaje, cuerpo no vacío y cierre de bloque según PMI PMBOK §4.4 y §10.2."""
     if not markdown_text or not isinstance(markdown_text, str):
         lines: list[str] = []
     else:
         lines = markdown_text.splitlines()
 
-    total_code_blocks = 0
-    untyped_fence_lines: list[int] = []
-    empty_fence_lines: list[int] = []
-    unclosed_fence_lines: list[int] = []
+    closed_block_count = 0
+    detected_languages: list[str] = []
+    untagged_fence_lines: list[int] = []
+    empty_code_block_lines: list[int] = []
 
-    in_fence = False
-    start_line = 0
-    fence_char = ""
-    fence_len = 0
-    non_empty_body_lines = 0
+    in_block = False
+    open_line: int | None = None
+    lang_tag = ""
+    body_lines: list[str] = []
 
     for line_no, line in enumerate(lines, start=1):
-        if not in_fence:
-            m_open = _CODE_FENCE_OPEN_AUDIT_RE.match(line)
-            if m_open:
-                marker = m_open.group(1)
-                info_string = m_open.group(2)
-                in_fence = True
-                start_line = line_no
-                fence_char = marker[0]
-                fence_len = len(marker)
-                total_code_blocks += 1
-                lang = (
-                    info_string.strip().split()[0]
-                    if info_string.strip()
-                    else ""
+        stripped = line.strip()
+        if not in_block:
+            if stripped.startswith("```"):
+                in_block = True
+                open_line = line_no
+                after_fence = stripped[3:].strip()
+                lang_tag = (
+                    after_fence.split()[0].lower() if after_fence else ""
                 )
-                if not lang:
-                    untyped_fence_lines.append(start_line)
-                non_empty_body_lines = 0
+                body_lines = []
         else:
-            m_close = _CODE_FENCE_CLOSE_AUDIT_RE.match(line)
-            if (
-                m_close
-                and m_close.group(1)[0] == fence_char
-                and len(m_close.group(1)) >= fence_len
-            ):
-                if non_empty_body_lines == 0:
-                    empty_fence_lines.append(start_line)
-                in_fence = False
-                start_line = 0
-                fence_char = ""
-                fence_len = 0
-                non_empty_body_lines = 0
+            if stripped.startswith("```"):
+                closed_block_count += 1
+                assert open_line is not None
+                if lang_tag == "":
+                    untagged_fence_lines.append(open_line)
+                else:
+                    if lang_tag not in detected_languages:
+                        detected_languages.append(lang_tag)
+                if not any(ln.strip() for ln in body_lines):
+                    empty_code_block_lines.append(open_line)
+                in_block = False
+                open_line = None
+                lang_tag = ""
+                body_lines = []
             else:
-                if line.strip():
-                    non_empty_body_lines += 1
+                body_lines.append(line)
 
-    if in_fence and start_line > 0:
-        unclosed_fence_lines.append(start_line)
-
-    typed_code_blocks_count = total_code_blocks - len(untyped_fence_lines)
-    is_fence_hygiene_valid = bool(
-        len(untyped_fence_lines) == 0
-        and len(empty_fence_lines) == 0
-        and len(unclosed_fence_lines) == 0
+    has_unclosed_fence = in_block and open_line is not None
+    unclosed_fence_line = open_line if has_unclosed_fence else None
+    is_hygienic = bool(
+        not has_unclosed_fence
+        and len(untagged_fence_lines) == 0
+        and len(empty_code_block_lines) == 0
     )
 
-    if total_code_blocks == 0:
-        fence_posture = "NO_CODE_BLOCKS_FOUND"
-    elif len(unclosed_fence_lines) > 0:
-        fence_posture = "UNCLOSED_CODE_FENCE_ERROR"
-    elif len(untyped_fence_lines) > 0:
-        fence_posture = "UNTYPED_CODE_FENCE_WARNING"
-    elif len(empty_fence_lines) > 0:
-        fence_posture = "EMPTY_CODE_FENCE_WARNING"
-    else:
-        fence_posture = "CLEAN_CODE_FENCE_HYGIENE"
-
     return {
-        "total_code_blocks": total_code_blocks,
-        "typed_code_blocks_count": typed_code_blocks_count,
-        "untyped_fence_lines": untyped_fence_lines,
-        "empty_fence_lines": empty_fence_lines,
-        "unclosed_fence_lines": unclosed_fence_lines,
-        "is_fence_hygiene_valid": is_fence_hygiene_valid,
-        "fence_posture": fence_posture,
+        "closed_block_count": closed_block_count,
+        "detected_languages": detected_languages,
+        "untagged_fence_lines": untagged_fence_lines,
+        "empty_code_block_lines": empty_code_block_lines,
+        "has_unclosed_fence": has_unclosed_fence,
+        "unclosed_fence_line": unclosed_fence_line,
+        "is_hygienic": is_hygienic,
     }
 
 
@@ -2770,7 +2748,7 @@ def _markdown_github_heading_slug(text: str) -> str:
 def audit_markdown_internal_anchor_links(
     markdown_text: str | None = None,
 ) -> dict[str, Any]:
-    """Audita resolución de enlaces de ancla internos (#slug) contra encabezados Markdown según PMI PMBOK §4.4 y §10.2."""
+    """Audita resolución de enlaces de ancla internos (#slug) contra encabezados Markdown (ignorando bloques cercados) según PMI PMBOK §4.4 y §10.2."""
     lines = (
         markdown_text.splitlines()
         if isinstance(markdown_text, str) and markdown_text

@@ -3295,3 +3295,117 @@ def test_evaluate_cost_of_quality_conformance_balance_empty():
             "invalid_entry_ids": [],
             "is_conformance_balanced": False,
         }
+
+
+def test_evaluate_spc_control_chart_stability_in_statistical_control():
+    """Muestras dentro de límites de control y especificación sin rachas >= 7 -> is_in_statistical_control True."""
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        evaluate_spc_control_chart_stability,
+    )
+
+    samples = [10.1, 9.8, 10.2, 10.0, 9.9, 10.3, 9.7, 10.1]
+    res = evaluate_spc_control_chart_stability(
+        samples,
+        center_line=10.0,
+        upper_control_limit=11.0,
+        lower_control_limit=9.0,
+        upper_spec_limit=11.5,
+        lower_spec_limit=8.5,
+    )
+    assert res == {
+        "sample_count": 8,
+        "has_invalid_limits": False,
+        "out_of_control_indices": [],
+        "out_of_spec_indices": [],
+        "rule_of_seven_violation_indices": [],
+        "is_in_statistical_control": True,
+    }
+    assert (
+        ProjectCCBService.evaluate_spc_control_chart_stability(
+            samples,
+            center_line=10.0,
+            upper_control_limit=11.0,
+            lower_control_limit=9.0,
+            upper_spec_limit=11.5,
+            lower_spec_limit=8.5,
+        )
+        == res
+    )
+
+
+def test_evaluate_spc_control_chart_stability_out_of_control_and_spec():
+    """Muestras fuera de UCL/LCL y USL/LSL -> out_of_control_indices y out_of_spec_indices poblados."""
+    from backend.services.project_ccb_service import (
+        evaluate_spc_control_chart_stability,
+    )
+
+    res = evaluate_spc_control_chart_stability(
+        [10.0, 11.2, 8.4, 10.0],
+        center_line=10.0,
+        upper_control_limit=11.0,
+        lower_control_limit=9.0,
+        upper_spec_limit=11.5,
+        lower_spec_limit=8.5,
+    )
+    assert res == {
+        "sample_count": 4,
+        "has_invalid_limits": False,
+        "out_of_control_indices": [1, 2],
+        "out_of_spec_indices": [2],
+        "rule_of_seven_violation_indices": [],
+        "is_in_statistical_control": False,
+    }
+
+
+def test_evaluate_spc_control_chart_stability_rule_of_seven_violation():
+    """7 o más puntos consecutivos del mismo lado de center_line -> rule_of_seven_violation_indices."""
+    from backend.services.project_ccb_service import (
+        evaluate_spc_control_chart_stability,
+    )
+
+    res = evaluate_spc_control_chart_stability(
+        [10.1, 10.2, 10.3, 10.1, 10.4, 10.2, 10.1, 10.3, 9.8],
+        center_line=10.0,
+        upper_control_limit=11.0,
+        lower_control_limit=9.0,
+    )
+    assert res == {
+        "sample_count": 9,
+        "has_invalid_limits": False,
+        "out_of_control_indices": [],
+        "out_of_spec_indices": [],
+        "rule_of_seven_violation_indices": [6, 7],
+        "is_in_statistical_control": False,
+    }
+
+
+def test_evaluate_spc_control_chart_stability_invalid_limits_or_empty():
+    """Límites inválidos o muestras vacías -> is_in_statistical_control False."""
+    from backend.services.project_ccb_service import (
+        evaluate_spc_control_chart_stability,
+    )
+
+    res_inv = evaluate_spc_control_chart_stability(
+        [10.0, 10.1],
+        center_line=12.0,
+        upper_control_limit=11.0,
+        lower_control_limit=9.0,
+    )
+    assert res_inv["has_invalid_limits"] is True
+    assert res_inv["is_in_statistical_control"] is False
+
+    res_empty = evaluate_spc_control_chart_stability(
+        None,
+        center_line=10.0,
+        upper_control_limit=11.0,
+        lower_control_limit=9.0,
+    )
+    assert res_empty == {
+        "sample_count": 0,
+        "has_invalid_limits": False,
+        "out_of_control_indices": [],
+        "out_of_spec_indices": [],
+        "rule_of_seven_violation_indices": [],
+        "is_in_statistical_control": False,
+    }

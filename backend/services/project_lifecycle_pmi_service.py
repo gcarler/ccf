@@ -2853,6 +2853,91 @@ ProjectLifecyclePMIService.audit_stakeholder_escalation_matrix_readiness = stati
 )
 
 
+def audit_team_calendar_burnout_contention(
+    member_allocations: Sequence[Mapping[str, Any]] | None = None,
+    *,
+    max_sustainable_utilization_pct: float = 85.0,
+    max_concurrent_projects: int = 3,
+) -> dict[str, Any]:
+    """Audita calendarios de recursos, sobreasignación sostenible y cambio de contexto según PMI PMBOK §9.2.3.2 & §9.5."""
+    evaluated_member_count = 0
+    burnout_risk_member_ids: list[str] = []
+    context_switching_member_ids: list[str] = []
+    pto_conflict_member_ids: list[str] = []
+    invalid_calendar_member_ids: list[str] = []
+    utilizations: list[float] = []
+
+    for item in member_allocations or []:
+        if not isinstance(item, Mapping):
+            continue
+        member_id = str(item.get("member_id") or "").strip()
+        if not member_id:
+            continue
+
+        evaluated_member_count += 1
+        try:
+            available_hours = float(item.get("available_hours", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            available_hours = 0.0
+        try:
+            allocated_hours = float(item.get("allocated_hours", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            allocated_hours = -1.0
+
+        if available_hours <= 0.0 or allocated_hours < 0.0:
+            invalid_calendar_member_ids.append(member_id)
+            continue
+
+        utilization_pct = round((allocated_hours / available_hours) * 100.0, 2)
+        utilizations.append(utilization_pct)
+
+        if utilization_pct > float(max_sustainable_utilization_pct):
+            burnout_risk_member_ids.append(member_id)
+
+        raw_conc = item.get("concurrent_project_count", 1)
+        try:
+            concurrent_project_count = int(1 if raw_conc is None else raw_conc)
+        except (TypeError, ValueError):
+            concurrent_project_count = 1
+        if concurrent_project_count > int(max_concurrent_projects):
+            context_switching_member_ids.append(member_id)
+
+        try:
+            pto_conflict_hours = float(item.get("pto_conflict_hours", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            pto_conflict_hours = 0.0
+        if pto_conflict_hours > 0.0:
+            pto_conflict_member_ids.append(member_id)
+
+    average_utilization_pct = (
+        round(sum(utilizations) / len(utilizations), 2)
+        if utilizations
+        else 0.0
+    )
+    is_sustainable = bool(
+        evaluated_member_count > 0
+        and len(burnout_risk_member_ids) == 0
+        and len(context_switching_member_ids) == 0
+        and len(pto_conflict_member_ids) == 0
+        and len(invalid_calendar_member_ids) == 0
+    )
+
+    return {
+        "evaluated_member_count": evaluated_member_count,
+        "burnout_risk_member_ids": burnout_risk_member_ids,
+        "context_switching_member_ids": context_switching_member_ids,
+        "pto_conflict_member_ids": pto_conflict_member_ids,
+        "invalid_calendar_member_ids": invalid_calendar_member_ids,
+        "average_utilization_pct": average_utilization_pct,
+        "is_sustainable": is_sustainable,
+    }
+
+
+ProjectLifecyclePMIService.audit_team_calendar_burnout_contention = staticmethod(
+    audit_team_calendar_burnout_contention
+)
+
+
 __all__ = [
     "build_pmo_portfolio_matrix",
     "build_governance_summary",
@@ -2892,6 +2977,6 @@ __all__ = [
     "audit_charter_funding_limit_reconciliation",
     "audit_team_tuckman_and_skill_redundancy",
     "audit_stakeholder_escalation_matrix_readiness",
+    "audit_team_calendar_burnout_contention",
     "ProjectLifecyclePMIService",
 ]
-

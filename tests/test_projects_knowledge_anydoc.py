@@ -1948,7 +1948,7 @@ def test_audit_markdown_admonition_callouts_no_callouts_found():
 
 
 def test_audit_markdown_code_fence_hygiene_clean():
-    """Bloques de código bien formados con etiqueta de lenguaje y contenido -> CLEAN_CODE_FENCE_HYGIENE."""
+    """Bloques de código bien formados con etiqueta de lenguaje y contenido -> is_hygienic True."""
     from backend.services.anydoc_service import (
         AnyDocService,
         audit_markdown_code_fence_hygiene,
@@ -1956,29 +1956,32 @@ def test_audit_markdown_code_fence_hygiene_clean():
 
     md = (
         "# Especificación Técnica\n"
-        "```python\n"
+        "```Python\n"
         "def calc_cpi(ev: float, ac: float) -> float:\n"
         "    return ev / ac\n"
         "```\n\n"
-        "~~~sql\n"
+        "```SQL\n"
         "SELECT id, title FROM projects;\n"
-        "~~~\n"
+        "```\n\n"
+        "```python\n"
+        "print('duplicado de lenguaje no repite en detected_languages')\n"
+        "```\n"
     )
     res = audit_markdown_code_fence_hygiene(md)
     assert res == {
-        "total_code_blocks": 2,
-        "typed_code_blocks_count": 2,
-        "untyped_fence_lines": [],
-        "empty_fence_lines": [],
-        "unclosed_fence_lines": [],
-        "is_fence_hygiene_valid": True,
-        "fence_posture": "CLEAN_CODE_FENCE_HYGIENE",
+        "closed_block_count": 3,
+        "detected_languages": ["python", "sql"],
+        "untagged_fence_lines": [],
+        "empty_code_block_lines": [],
+        "has_unclosed_fence": False,
+        "unclosed_fence_line": None,
+        "is_hygienic": True,
     }
     assert AnyDocService.audit_markdown_code_fence_hygiene(md) == res
 
 
 def test_audit_markdown_code_fence_hygiene_unclosed_fence():
-    """Bloque de código sin cerrar al final del documento -> UNCLOSED_CODE_FENCE_ERROR."""
+    """Bloque de código sin cerrar al final del documento -> has_unclosed_fence True y unclosed_fence_line."""
     from backend.services.anydoc_service import audit_markdown_code_fence_hygiene
 
     md = (
@@ -1989,47 +1992,47 @@ def test_audit_markdown_code_fence_hygiene_unclosed_fence():
     )
     res = audit_markdown_code_fence_hygiene(md)
     assert res == {
-        "total_code_blocks": 1,
-        "typed_code_blocks_count": 1,
-        "untyped_fence_lines": [],
-        "empty_fence_lines": [],
-        "unclosed_fence_lines": [2],
-        "is_fence_hygiene_valid": False,
-        "fence_posture": "UNCLOSED_CODE_FENCE_ERROR",
+        "closed_block_count": 0,
+        "detected_languages": [],
+        "untagged_fence_lines": [],
+        "empty_code_block_lines": [],
+        "has_unclosed_fence": True,
+        "unclosed_fence_line": 2,
+        "is_hygienic": False,
     }
 
 
-def test_audit_markdown_code_fence_hygiene_untyped_and_empty_blocks():
-    """Bloque sin lenguaje -> UNTYPED_CODE_FENCE_WARNING y bloque vacío -> EMPTY_CODE_FENCE_WARNING."""
+def test_audit_markdown_code_fence_hygiene_untagged_and_empty_blocks():
+    """Bloque sin lenguaje -> untagged_fence_lines y bloque vacío -> empty_code_block_lines."""
     from backend.services.anydoc_service import audit_markdown_code_fence_hygiene
 
-    untyped_md = "```\necho 'sin lenguaje'\n```\n"
-    untyped_res = audit_markdown_code_fence_hygiene(untyped_md)
-    assert untyped_res["untyped_fence_lines"] == [1]
-    assert untyped_res["is_fence_hygiene_valid"] is False
-    assert untyped_res["fence_posture"] == "UNTYPED_CODE_FENCE_WARNING"
+    untagged_md = "```\necho 'sin lenguaje'\n```\n"
+    untagged_res = audit_markdown_code_fence_hygiene(untagged_md)
+    assert untagged_res["untagged_fence_lines"] == [1]
+    assert untagged_res["empty_code_block_lines"] == []
+    assert untagged_res["is_hygienic"] is False
 
     empty_md = "```bash\n   \n```\n"
     empty_res = audit_markdown_code_fence_hygiene(empty_md)
-    assert empty_res["empty_fence_lines"] == [1]
-    assert empty_res["is_fence_hygiene_valid"] is False
-    assert empty_res["fence_posture"] == "EMPTY_CODE_FENCE_WARNING"
+    assert empty_res["detected_languages"] == ["bash"]
+    assert empty_res["empty_code_block_lines"] == [1]
+    assert empty_res["is_hygienic"] is False
 
 
 def test_audit_markdown_code_fence_hygiene_no_code_blocks():
-    """Documento sin bloques de código o None -> NO_CODE_BLOCKS_FOUND."""
+    """Documento sin bloques de código o None -> closed_block_count 0, is_hygienic True."""
     from backend.services.anydoc_service import audit_markdown_code_fence_hygiene
 
     for payload in (None, "", "   ", "# Solo prosa sin bloques cercados\n"):
         res = audit_markdown_code_fence_hygiene(payload)
         assert res == {
-            "total_code_blocks": 0,
-            "typed_code_blocks_count": 0,
-            "untyped_fence_lines": [],
-            "empty_fence_lines": [],
-            "unclosed_fence_lines": [],
-            "is_fence_hygiene_valid": True,
-            "fence_posture": "NO_CODE_BLOCKS_FOUND",
+            "closed_block_count": 0,
+            "detected_languages": [],
+            "untagged_fence_lines": [],
+            "empty_code_block_lines": [],
+            "has_unclosed_fence": False,
+            "unclosed_fence_line": None,
+            "is_hygienic": True,
         }
 
 
@@ -2534,3 +2537,96 @@ def test_audit_markdown_internal_anchor_links_no_anchors():
             "is_anchor_navigation_valid": False,
             "anchor_posture": "NO_INTERNAL_ANCHORS",
         }
+
+
+def test_audit_markdown_code_fence_hygiene_info_string_with_attributes():
+    """Info-string con atributos adicionales tras el lenguaje extrae solo el primer token en minúsculas."""
+    from backend.services.anydoc_service import audit_markdown_code_fence_hygiene
+
+    md = (
+        "```TypeScript title=\"api.ts\" {1-3}\n"
+        "export const cpi = 1.05;\n"
+        "```\n"
+        "```JSON\n"
+        "{\"ok\": true}\n"
+        "```\n"
+    )
+    res = audit_markdown_code_fence_hygiene(md)
+    assert res == {
+        "closed_block_count": 2,
+        "detected_languages": ["typescript", "json"],
+        "untagged_fence_lines": [],
+        "empty_code_block_lines": [],
+        "has_unclosed_fence": False,
+        "unclosed_fence_line": None,
+        "is_hygienic": True,
+    }
+
+
+def test_audit_markdown_code_fence_hygiene_multiple_violations_combined():
+    """Combina bloque sin lenguaje, bloque vacío y bloque final sin cerrar."""
+    from backend.services.anydoc_service import audit_markdown_code_fence_hygiene
+
+    md = (
+        "```\n"
+        "echo 'bloque 1 sin tag'\n"
+        "```\n"
+        "```yaml\n"
+        "\n"
+        "```\n"
+        "```sql\n"
+        "SELECT 1;\n"
+    )
+    res = audit_markdown_code_fence_hygiene(md)
+    assert res == {
+        "closed_block_count": 2,
+        "detected_languages": ["yaml"],
+        "untagged_fence_lines": [1],
+        "empty_code_block_lines": [4],
+        "has_unclosed_fence": True,
+        "unclosed_fence_line": 7,
+        "is_hygienic": False,
+    }
+
+
+def test_audit_markdown_code_fence_hygiene_indented_fences():
+    """Bloques cercados con sangría en listas son detectados tras strip()."""
+    from backend.services.anydoc_service import audit_markdown_code_fence_hygiene
+
+    md = (
+        "- Paso 1:\n"
+        "  ```bash\n"
+        "  pytest -q\n"
+        "  ```\n"
+    )
+    res = audit_markdown_code_fence_hygiene(md)
+    assert res == {
+        "closed_block_count": 1,
+        "detected_languages": ["bash"],
+        "untagged_fence_lines": [],
+        "empty_code_block_lines": [],
+        "has_unclosed_fence": False,
+        "unclosed_fence_line": None,
+        "is_hygienic": True,
+    }
+
+
+def test_audit_markdown_internal_anchor_links_and_code_fence_coexistence():
+    """Verifica coexistencia de audit_markdown_internal_anchor_links y audit_markdown_code_fence_hygiene sobre el mismo artefacto."""
+    from backend.services.anydoc_service import (
+        audit_markdown_code_fence_hygiene,
+        audit_markdown_internal_anchor_links,
+    )
+
+    md = (
+        "# Plan de Gestión\n"
+        "## Arquitectura Base\n"
+        "Ver [sección técnica](#arquitectura-base).\n"
+        "```python\n"
+        "assert True\n"
+        "```\n"
+    )
+    anchor_res = audit_markdown_internal_anchor_links(md)
+    fence_res = audit_markdown_code_fence_hygiene(md)
+    assert anchor_res["is_anchor_navigation_valid"] is True
+    assert fence_res["is_hygienic"] is True
