@@ -3693,6 +3693,7 @@ __all__ = [
     "validate_wbs_work_package_sizing_heuristic",
     "validate_monte_carlo_schedule_confidence_buffer",
     "validate_resource_leveling_overallocation",
+    "validate_schedule_buffer_fever_chart_status",
 ]
 
 
@@ -4040,4 +4041,97 @@ def validate_resource_leveling_overallocation(
         "is_resource_schedule_leveled": is_resource_schedule_leveled,
         "leveling_posture": leveling_posture,
     }
+
+
+def validate_schedule_buffer_fever_chart_status(
+    buffer_records: Sequence[Mapping[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Evalúa consumo de buffers de cronograma frente al avance de la cadena crítica (Critical Chain Fever Chart, PMI PMBOK §6.4 / §6.5.2.6)."""
+    evaluated_chain_count = 0
+    green_zone_chain_ids: list[str] = []
+    yellow_zone_chain_ids: list[str] = []
+    red_zone_chain_ids: list[str] = []
+    unmitigated_red_zone_ids: list[str] = []
+    invalid_buffer_ids: list[str] = []
+    max_burn_rate_index = 0.0
+
+    for item in buffer_records or []:
+        if not isinstance(item, dict):
+            continue
+        chain_id = str(item.get("chain_id") or "").strip()
+        if not chain_id:
+            continue
+
+        evaluated_chain_count += 1
+        try:
+            raw_prog = float(item.get("chain_progress_pct") or 0.0)
+        except (TypeError, ValueError):
+            raw_prog = 0.0
+        chain_progress_pct = max(0.0, min(100.0, raw_prog))
+
+        try:
+            buffer_total_days = float(item.get("buffer_total_days") or 0.0)
+        except (TypeError, ValueError):
+            buffer_total_days = 0.0
+
+        try:
+            buffer_consumed_days = float(item.get("buffer_consumed_days") or 0.0)
+        except (TypeError, ValueError):
+            buffer_consumed_days = 0.0
+
+        recovery_plan_defined = bool(item.get("recovery_plan_defined", False))
+
+        if buffer_total_days <= 0.0:
+            invalid_buffer_ids.append(chain_id)
+
+        buffer_consumption_pct = (
+            round((buffer_consumed_days / buffer_total_days) * 100.0, 2)
+            if buffer_total_days > 0.0
+            else 100.0
+        )
+        if chain_progress_pct > 0.0:
+            burn_rate_index = round(
+                buffer_consumption_pct / max(chain_progress_pct, 1.0), 2
+            )
+        else:
+            burn_rate_index = (
+                round(buffer_consumption_pct, 2)
+                if buffer_consumption_pct > 0.0
+                else 0.0
+            )
+        if burn_rate_index > max_burn_rate_index:
+            max_burn_rate_index = burn_rate_index
+
+        red_threshold_pct = 33.33 + 0.6667 * chain_progress_pct
+        yellow_threshold_pct = 16.67 + 0.5 * chain_progress_pct
+
+        if (
+            buffer_consumption_pct > red_threshold_pct
+            or buffer_consumed_days > buffer_total_days
+        ):
+            red_zone_chain_ids.append(chain_id)
+            if not recovery_plan_defined:
+                unmitigated_red_zone_ids.append(chain_id)
+        elif buffer_consumption_pct > yellow_threshold_pct:
+            yellow_zone_chain_ids.append(chain_id)
+        else:
+            green_zone_chain_ids.append(chain_id)
+
+    is_valid = bool(
+        evaluated_chain_count > 0
+        and len(unmitigated_red_zone_ids) == 0
+        and len(invalid_buffer_ids) == 0
+    )
+
+    return {
+        "evaluated_chain_count": evaluated_chain_count,
+        "green_zone_chain_ids": green_zone_chain_ids,
+        "yellow_zone_chain_ids": yellow_zone_chain_ids,
+        "red_zone_chain_ids": red_zone_chain_ids,
+        "unmitigated_red_zone_ids": unmitigated_red_zone_ids,
+        "invalid_buffer_ids": invalid_buffer_ids,
+        "max_burn_rate_index": max_burn_rate_index,
+        "is_valid": is_valid,
+    }
+
 

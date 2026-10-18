@@ -2419,3 +2419,118 @@ def test_audit_markdown_footnote_reference_hygiene_no_footnotes():
             "footnote_posture": "NO_FOOTNOTES_PRESENT",
         }
 
+
+
+def test_audit_markdown_internal_anchor_links_valid_navigation():
+    """> Anclas internas que resuelven contra slugs de encabezado -> VALID."""
+    from backend.services.anydoc_service import (
+        audit_markdown_internal_anchor_links,
+    )
+
+    md = (
+        "# Setup Guide\n"
+        "## Configuration Reference\n"
+        "Consulta [la guía de configuración](#setup-guide) y la "
+        "[referencia de parámetros](#configuration-reference).\n"
+    )
+    res = audit_markdown_internal_anchor_links(md)
+    assert res["total_headings"] == 2
+    assert res["total_anchor_links"] == 2
+    assert res["broken_anchor_targets"] == []
+    assert res["empty_label_anchor_targets"] == []
+    assert res["duplicate_heading_slugs"] == []
+    assert res["is_anchor_navigation_valid"] is True
+    assert res["anchor_posture"] == "VALID_INTERNAL_ANCHOR_NAVIGATION"
+
+    from backend.services.anydoc_service import AnyDocService
+
+    assert AnyDocService.audit_markdown_internal_anchor_links(md) == res
+
+
+def test_audit_markdown_internal_anchor_links_broken_empty_and_duplicates():
+    """> Ancla rota (precedencia 1), etiqueta vacía y encabezados duplicados."""
+    from backend.services.anydoc_service import (
+        audit_markdown_internal_anchor_links,
+    )
+
+    md = (
+        "# Setup Guide\n"
+        "## Setup Guide\n"
+        "Enlace roto [a resolver](#missing-slug), etiqueta vacía "
+        "[](#setup-guide) y otro roto [x](#NO-SLUG).\n"
+    )
+    res = audit_markdown_internal_anchor_links(md)
+    assert res["total_headings"] == 2
+    assert res["total_anchor_links"] == 3
+    assert res["broken_anchor_targets"] == ["missing-slug", "no-slug"]
+    assert res["empty_label_anchor_targets"] == ["setup-guide"]
+    assert res["duplicate_heading_slugs"] == ["setup-guide"]
+    assert res["is_anchor_navigation_valid"] is False
+    assert res["anchor_posture"] == "BROKEN_INTERNAL_ANCHOR_TARGET"
+
+
+    md_only_empty = (
+        "# Resumen Ejecutivo\n"
+        "[](#resumen-ejecutivo)\n"
+    )
+    res2 = audit_markdown_internal_anchor_links(md_only_empty)
+    assert res2["total_anchor_links"] == 1
+    assert res2["broken_anchor_targets"] == []
+    assert res2["empty_label_anchor_targets"] == ["resumen-ejecutivo"]
+    assert res2["anchor_posture"] == "EMPTY_ANCHOR_LINK_LABEL"
+
+
+    md_only_duplicates = (
+        "# Estado Financiero\n"
+        "## Estado Financiero\n"
+        "[corte contable](#estado-financiero)\n"
+    )
+    res3 = audit_markdown_internal_anchor_links(md_only_duplicates)
+    assert res3["total_anchor_links"] == 1
+    assert res3["broken_anchor_targets"] == []
+    assert res3["empty_label_anchor_targets"] == []
+    assert res3["duplicate_heading_slugs"] == ["estado-financiero"]
+    assert res3["anchor_posture"] == "DUPLICATE_HEADING_ANCHOR_SLUGS"
+
+
+def test_audit_markdown_internal_anchor_links_ignores_fenced_code():
+    """> Encabezados y anclas dentro de bloques cercados se ignoran."""
+    from backend.services.anydoc_service import (
+        audit_markdown_internal_anchor_links,
+    )
+
+    md = (
+        "# Reporte Mensual\n"
+        "[ver detalle](#reporte-mensual)\n"
+        "```bash\n"
+        "# comando falso como encabezado\n"
+        "grep '[fake](#no-existo)' archivo.md\n"
+        "```\n"
+    )
+    res = audit_markdown_internal_anchor_links(md)
+    assert res["total_headings"] == 1
+    assert res["total_anchor_links"] == 1
+    assert res["broken_anchor_targets"] == []
+    assert res["empty_label_anchor_targets"] == []
+    assert res["duplicate_heading_slugs"] == []
+    assert res["is_anchor_navigation_valid"] is True
+    assert res["anchor_posture"] == "VALID_INTERNAL_ANCHOR_NAVIGATION"
+
+
+def test_audit_markdown_internal_anchor_links_no_anchors():
+    """> None, vacío o documento sin anclas internas -> NO_INTERNAL_ANCHORS."""
+    from backend.services.anydoc_service import (
+        audit_markdown_internal_anchor_links,
+    )
+
+    for payload in (None, "", "# Solo encabezados, sin anclas\n"):
+        res = audit_markdown_internal_anchor_links(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_headings": 1 if isinstance(payload, str) and payload else 0,
+            "total_anchor_links": 0,
+            "broken_anchor_targets": [],
+            "empty_label_anchor_targets": [],
+            "duplicate_heading_slugs": [],
+            "is_anchor_navigation_valid": False,
+            "anchor_posture": "NO_INTERNAL_ANCHORS",
+        }

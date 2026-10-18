@@ -15,6 +15,7 @@ Reglas doctrinales implementadas:
 from __future__ import annotations
 
 import uuid as _uuid
+from collections.abc import Mapping, Sequence
 from datetime import timedelta, timezone
 from typing import Any, Optional, Union
 from uuid import UUID
@@ -2338,6 +2339,19 @@ class ProjectCCBService:
     ) -> dict[str, Any]:
         return evaluate_deliverable_acceptance_traceability(deliverables)
 
+    @staticmethod
+    def evaluate_cost_of_quality_conformance_balance(
+        coq_entries: Sequence[Mapping[str, Any]] | None = None,
+        *,
+        min_conformance_share_pct: float = 50.0,
+        max_external_failure_share_pct: float = 15.0,
+    ) -> dict[str, Any]:
+        return evaluate_cost_of_quality_conformance_balance(
+            coq_entries,
+            min_conformance_share_pct=min_conformance_share_pct,
+            max_external_failure_share_pct=max_external_failure_share_pct,
+        )
+
 
 def evaluate_quality_ncr_sla_compliance(
     ncrs: list[dict[str, Any]] | None = None,
@@ -2570,6 +2584,105 @@ def evaluate_deliverable_acceptance_traceability(
     }
 
 
+def evaluate_cost_of_quality_conformance_balance(
+    coq_entries: Sequence[Mapping[str, Any]] | None = None,
+    *,
+    min_conformance_share_pct: float = 50.0,
+    max_external_failure_share_pct: float = 15.0,
+) -> dict[str, Any]:
+    """Evalúa el equilibrio de Costo de la Calidad (CoQ: Conformidad vs No Conformidad) según PMI PMBOK §8.1.2.3."""
+    valid_categories = {
+        "prevention",
+        "appraisal",
+        "internal_failure",
+        "external_failure",
+    }
+    evaluated_entry_count = 0
+    prevention_cost = 0.0
+    appraisal_cost = 0.0
+    internal_failure_cost = 0.0
+    external_failure_cost = 0.0
+    invalid_entry_ids: list[str] = []
+
+    for item in coq_entries or []:
+        if not isinstance(item, Mapping):
+            continue
+        entry_id = str(item.get("entry_id") or "").strip()
+        if not entry_id:
+            continue
+
+        evaluated_entry_count += 1
+        category = str(item.get("category") or "").strip().lower()
+        raw_amount = item.get("amount", 0.0)
+        try:
+            amount = float(0.0 if raw_amount is None else raw_amount)
+        except (TypeError, ValueError):
+            invalid_entry_ids.append(entry_id)
+            continue
+
+        if category not in valid_categories or amount < 0.0:
+            invalid_entry_ids.append(entry_id)
+            continue
+
+        if category == "prevention":
+            prevention_cost += amount
+        elif category == "appraisal":
+            appraisal_cost += amount
+        elif category == "internal_failure":
+            internal_failure_cost += amount
+        elif category == "external_failure":
+            external_failure_cost += amount
+
+    prevention_cost = round(prevention_cost, 2)
+    appraisal_cost = round(appraisal_cost, 2)
+    internal_failure_cost = round(internal_failure_cost, 2)
+    external_failure_cost = round(external_failure_cost, 2)
+
+    conformance_cost = round(prevention_cost + appraisal_cost, 2)
+    nonconformance_cost = round(internal_failure_cost + external_failure_cost, 2)
+    total_coq = round(conformance_cost + nonconformance_cost, 2)
+
+    if total_coq > 0.0:
+        conformance_share_pct = round((conformance_cost / total_coq) * 100.0, 2)
+        nonconformance_share_pct = round((nonconformance_cost / total_coq) * 100.0, 2)
+        external_failure_share_pct = round(
+            (external_failure_cost / total_coq) * 100.0, 2
+        )
+    else:
+        conformance_share_pct = 100.0
+        nonconformance_share_pct = 0.0
+        external_failure_share_pct = 0.0
+
+    if nonconformance_cost > 0.0:
+        prevention_to_failure_ratio = round(prevention_cost / nonconformance_cost, 2)
+    else:
+        prevention_to_failure_ratio = round(prevention_cost, 2)
+
+    is_conformance_balanced = bool(
+        evaluated_entry_count > 0
+        and len(invalid_entry_ids) == 0
+        and conformance_share_pct >= float(min_conformance_share_pct)
+        and external_failure_share_pct <= float(max_external_failure_share_pct)
+    )
+
+    return {
+        "evaluated_entry_count": evaluated_entry_count,
+        "prevention_cost": prevention_cost,
+        "appraisal_cost": appraisal_cost,
+        "internal_failure_cost": internal_failure_cost,
+        "external_failure_cost": external_failure_cost,
+        "conformance_cost": conformance_cost,
+        "nonconformance_cost": nonconformance_cost,
+        "total_coq": total_coq,
+        "conformance_share_pct": conformance_share_pct,
+        "nonconformance_share_pct": nonconformance_share_pct,
+        "external_failure_share_pct": external_failure_share_pct,
+        "prevention_to_failure_ratio": prevention_to_failure_ratio,
+        "invalid_entry_ids": invalid_entry_ids,
+        "is_conformance_balanced": is_conformance_balanced,
+    }
+
+
 __all__ = [
     "list_change_requests",
     "row_list_adapter",
@@ -2605,7 +2718,7 @@ __all__ = [
     "evaluate_quality_ncr_sla_compliance",
     "evaluate_pareto_vital_few_defect_causes",
     "evaluate_deliverable_acceptance_traceability",
+    "evaluate_cost_of_quality_conformance_balance",
     "ProjectCCBService",
 ]
-
 

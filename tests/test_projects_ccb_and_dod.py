@@ -3186,3 +3186,112 @@ def test_evaluate_deliverable_acceptance_traceability_no_deliverables():
             "acceptance_posture": "NO_DELIVERABLES_REGISTERED",
         }
 
+
+def test_evaluate_cost_of_quality_conformance_balance_balanced():
+    """Conformidad >= 50% y falla externa <= 15% sin entradas inválidas -> is_conformance_balanced True."""
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        evaluate_cost_of_quality_conformance_balance,
+    )
+
+    entries = [
+        {"entry_id": "COQ-1", "category": "prevention", "amount": 4000.0},
+        {"entry_id": "COQ-2", "category": "appraisal", "amount": 2500.0},
+        {"entry_id": "COQ-3", "category": "internal_failure", "amount": 2500.0},
+        {"entry_id": "COQ-4", "category": "external_failure", "amount": 1000.0},
+    ]
+    res = evaluate_cost_of_quality_conformance_balance(entries)
+    assert res == {
+        "evaluated_entry_count": 4,
+        "prevention_cost": 4000.0,
+        "appraisal_cost": 2500.0,
+        "internal_failure_cost": 2500.0,
+        "external_failure_cost": 1000.0,
+        "conformance_cost": 6500.0,
+        "nonconformance_cost": 3500.0,
+        "total_coq": 10000.0,
+        "conformance_share_pct": 65.0,
+        "nonconformance_share_pct": 35.0,
+        "external_failure_share_pct": 10.0,
+        "prevention_to_failure_ratio": 1.14,
+        "invalid_entry_ids": [],
+        "is_conformance_balanced": True,
+    }
+    assert (
+        ProjectCCBService.evaluate_cost_of_quality_conformance_balance(entries) == res
+    )
+
+
+def test_evaluate_cost_of_quality_conformance_balance_high_external_failure_or_low_conformance():
+    """Falla externa > 15% o conformidad < 50% -> is_conformance_balanced False."""
+    from backend.services.project_ccb_service import (
+        evaluate_cost_of_quality_conformance_balance,
+    )
+
+    res_ext = evaluate_cost_of_quality_conformance_balance(
+        [
+            {"entry_id": "COQ-P", "category": "prevention", "amount": 6000.0},
+            {"entry_id": "COQ-E", "category": "external_failure", "amount": 2000.0},
+        ],
+        max_external_failure_share_pct=15.0,
+    )
+    assert res_ext["conformance_share_pct"] == 75.0
+    assert res_ext["external_failure_share_pct"] == 25.0
+    assert res_ext["is_conformance_balanced"] is False
+
+    res_low_conf = evaluate_cost_of_quality_conformance_balance(
+        [
+            {"entry_id": "COQ-P2", "category": "prevention", "amount": 2000.0},
+            {"entry_id": "COQ-I2", "category": "internal_failure", "amount": 3000.0},
+        ],
+        min_conformance_share_pct=50.0,
+    )
+    assert res_low_conf["conformance_share_pct"] == 40.0
+    assert res_low_conf["nonconformance_share_pct"] == 60.0
+    assert res_low_conf["is_conformance_balanced"] is False
+
+
+def test_evaluate_cost_of_quality_conformance_balance_invalid_entries():
+    """Categoría desconocida o monto negativo -> invalid_entry_ids poblado, is_conformance_balanced False."""
+    from backend.services.project_ccb_service import (
+        evaluate_cost_of_quality_conformance_balance,
+    )
+
+    res = evaluate_cost_of_quality_conformance_balance(
+        [
+            {"entry_id": "COQ-OK", "category": "prevention", "amount": 1000.0},
+            {"entry_id": "COQ-BAD-CAT", "category": "unknown_type", "amount": 500.0},
+            {"entry_id": "COQ-NEG", "category": "appraisal", "amount": -100.0},
+        ]
+    )
+    assert res["evaluated_entry_count"] == 3
+    assert res["invalid_entry_ids"] == ["COQ-BAD-CAT", "COQ-NEG"]
+    assert res["prevention_cost"] == 1000.0
+    assert res["prevention_to_failure_ratio"] == 1000.0
+    assert res["is_conformance_balanced"] is False
+
+
+def test_evaluate_cost_of_quality_conformance_balance_empty():
+    """Lista vacía, None o entradas sin entry_id -> evaluated_entry_count 0, is_conformance_balanced False."""
+    from backend.services.project_ccb_service import (
+        evaluate_cost_of_quality_conformance_balance,
+    )
+
+    for payload in (None, [], [{"entry_id": "  "}], ["invalid"]):
+        res = evaluate_cost_of_quality_conformance_balance(payload)  # type: ignore[arg-type]
+        assert res == {
+            "evaluated_entry_count": 0,
+            "prevention_cost": 0.0,
+            "appraisal_cost": 0.0,
+            "internal_failure_cost": 0.0,
+            "external_failure_cost": 0.0,
+            "conformance_cost": 0.0,
+            "nonconformance_cost": 0.0,
+            "total_coq": 0.0,
+            "conformance_share_pct": 100.0,
+            "nonconformance_share_pct": 0.0,
+            "external_failure_share_pct": 0.0,
+            "prevention_to_failure_ratio": 0.0,
+            "invalid_entry_ids": [],
+            "is_conformance_balanced": False,
+        }

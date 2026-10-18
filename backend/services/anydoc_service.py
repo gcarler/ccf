@@ -2356,6 +2356,12 @@ class AnyDocService:
     ) -> dict[str, Any]:
         return audit_markdown_footnote_reference_hygiene(markdown_text)
 
+    @staticmethod
+    def audit_markdown_internal_anchor_links(
+        markdown_text: str | None = None,
+    ) -> dict[str, Any]:
+        return audit_markdown_internal_anchor_links(markdown_text)
+
 
 _CODE_FENCE_OPEN_AUDIT_RE = re.compile(r"^\s*(`{3,}|~{3,})\s*(.*)$")
 _CODE_FENCE_CLOSE_AUDIT_RE = re.compile(r"^\s*(`{3,}|~{3,})\s*$")
@@ -2749,6 +2755,91 @@ def audit_markdown_footnote_reference_hygiene(
     }
 
 
+_MARKDOWN_HEADING_AUDIT_RE = re.compile(r"^[ \t]*#{1,6}\s+(.+?)[ \t]*$")
+_ANCHOR_INTERNAL_LINK_RE = re.compile(r"\[([^\]]*)\]\(#([^)\s]+)\)")
+
+
+def _markdown_github_heading_slug(text: str) -> str:
+    """Normaliza texto de encabezado a slug estilo GitHub (minúsculas, alfanuméricos, espacios->'-')."""
+    slug = text.lower()
+    slug = re.sub(r"[^a-z0-9\s-]", "", slug)
+    slug = re.sub(r"\s+", "-", slug)
+    return slug.strip("-")
+
+
+def audit_markdown_internal_anchor_links(
+    markdown_text: str | None = None,
+) -> dict[str, Any]:
+    """Audita resolución de enlaces de ancla internos (#slug) contra encabezados Markdown según PMI PMBOK §4.4 y §10.2."""
+    lines = (
+        markdown_text.splitlines()
+        if isinstance(markdown_text, str) and markdown_text
+        else []
+    )
+
+    heading_slugs: list[str] = []
+    duplicate_heading_slugs: list[str] = []
+    broken_anchor_targets: list[str] = []
+    empty_label_anchor_targets: list[str] = []
+    total_headings = 0
+    total_anchor_links = 0
+
+    in_fence = False
+    for line in lines:
+        if line.strip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+
+        m_heading = _MARKDOWN_HEADING_AUDIT_RE.match(line)
+        if m_heading:
+            total_headings += 1
+            slug = _markdown_github_heading_slug(m_heading.group(1))
+            if slug:
+                if slug in heading_slugs and slug not in duplicate_heading_slugs:
+                    duplicate_heading_slugs.append(slug)
+                if slug not in heading_slugs:
+                    heading_slugs.append(slug)
+
+        for m_link in _ANCHOR_INTERNAL_LINK_RE.finditer(line):
+            total_anchor_links += 1
+            label = m_link.group(1).strip()
+            target_slug = m_link.group(2).lower()
+            if not label and target_slug not in empty_label_anchor_targets:
+                empty_label_anchor_targets.append(target_slug)
+            if target_slug not in heading_slugs and target_slug not in broken_anchor_targets:
+                broken_anchor_targets.append(target_slug)
+
+    is_anchor_navigation_valid = bool(
+        total_anchor_links > 0
+        and len(broken_anchor_targets) == 0
+        and len(empty_label_anchor_targets) == 0
+        and len(duplicate_heading_slugs) == 0
+    )
+
+    if total_anchor_links == 0:
+        anchor_posture = "NO_INTERNAL_ANCHORS"
+    elif len(broken_anchor_targets) > 0:
+        anchor_posture = "BROKEN_INTERNAL_ANCHOR_TARGET"
+    elif len(empty_label_anchor_targets) > 0:
+        anchor_posture = "EMPTY_ANCHOR_LINK_LABEL"
+    elif len(duplicate_heading_slugs) > 0:
+        anchor_posture = "DUPLICATE_HEADING_ANCHOR_SLUGS"
+    else:
+        anchor_posture = "VALID_INTERNAL_ANCHOR_NAVIGATION"
+
+    return {
+        "total_headings": total_headings,
+        "total_anchor_links": total_anchor_links,
+        "broken_anchor_targets": broken_anchor_targets,
+        "empty_label_anchor_targets": empty_label_anchor_targets,
+        "duplicate_heading_slugs": duplicate_heading_slugs,
+        "is_anchor_navigation_valid": is_anchor_navigation_valid,
+        "anchor_posture": anchor_posture,
+    }
+
+
 __all__ = [
     "ANYDOC_AVAILABLE",
     "SUPPORTED_EXTENSIONS",
@@ -2780,6 +2871,7 @@ __all__ = [
     "audit_markdown_image_asset_hygiene",
     "audit_markdown_mermaid_diagram_hygiene",
     "audit_markdown_footnote_reference_hygiene",
+    "audit_markdown_internal_anchor_links",
     "AnyDocService",
 ]
 

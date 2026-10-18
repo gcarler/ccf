@@ -2244,3 +2244,111 @@ def test_validate_resource_leveling_overallocation_no_allocations():
             "leveling_posture": "NO_RESOURCE_ALLOCATIONS",
         }
 
+
+def test_validate_schedule_buffer_fever_chart_status_green_and_yellow_zones():
+    """Cadenas en zona verde y amarilla sin violaciones -> is_valid True."""
+    from backend.schemas.projects import validate_schedule_buffer_fever_chart_status
+
+    res = validate_schedule_buffer_fever_chart_status(
+        [
+            {
+                "chain_id": "CHAIN-GREEN",
+                "chain_progress_pct": 50.0,
+                "buffer_total_days": 20.0,
+                "buffer_consumed_days": 4.0,
+                "recovery_plan_defined": False,
+            },
+            {
+                "chain_id": "CHAIN-YELLOW",
+                "chain_progress_pct": 50.0,
+                "buffer_total_days": 20.0,
+                "buffer_consumed_days": 10.0,
+                "recovery_plan_defined": False,
+            },
+        ]
+    )
+    assert res == {
+        "evaluated_chain_count": 2,
+        "green_zone_chain_ids": ["CHAIN-GREEN"],
+        "yellow_zone_chain_ids": ["CHAIN-YELLOW"],
+        "red_zone_chain_ids": [],
+        "unmitigated_red_zone_ids": [],
+        "invalid_buffer_ids": [],
+        "max_burn_rate_index": 1.0,
+        "is_valid": True,
+    }
+
+
+def test_validate_schedule_buffer_fever_chart_status_red_zone_mitigated_and_unmitigated():
+    """Zona roja con plan de recuperación -> is_valid True; sin plan -> unmitigated_red_zone_ids y is_valid False."""
+    from backend.schemas.projects import validate_schedule_buffer_fever_chart_status
+
+    res_mitigated = validate_schedule_buffer_fever_chart_status(
+        [
+            {
+                "chain_id": "CHAIN-RED-OK",
+                "chain_progress_pct": 20.0,
+                "buffer_total_days": 10.0,
+                "buffer_consumed_days": 6.0,
+                "recovery_plan_defined": True,
+            }
+        ]
+    )
+    assert res_mitigated["red_zone_chain_ids"] == ["CHAIN-RED-OK"]
+    assert res_mitigated["unmitigated_red_zone_ids"] == []
+    assert res_mitigated["max_burn_rate_index"] == 3.0
+    assert res_mitigated["is_valid"] is True
+
+    res_unmitigated = validate_schedule_buffer_fever_chart_status(
+        [
+            {
+                "chain_id": "CHAIN-RED-BAD",
+                "chain_progress_pct": 20.0,
+                "buffer_total_days": 10.0,
+                "buffer_consumed_days": 6.0,
+                "recovery_plan_defined": False,
+            }
+        ]
+    )
+    assert res_unmitigated["red_zone_chain_ids"] == ["CHAIN-RED-BAD"]
+    assert res_unmitigated["unmitigated_red_zone_ids"] == ["CHAIN-RED-BAD"]
+    assert res_unmitigated["is_valid"] is False
+
+
+def test_validate_schedule_buffer_fever_chart_status_invalid_buffer_total():
+    """Buffer total <= 0 -> invalid_buffer_ids poblado, consumo 100%, is_valid False."""
+    from backend.schemas.projects import validate_schedule_buffer_fever_chart_status
+
+    res = validate_schedule_buffer_fever_chart_status(
+        [
+            {
+                "chain_id": "CHAIN-ZERO-BUF",
+                "chain_progress_pct": 40.0,
+                "buffer_total_days": 0.0,
+                "buffer_consumed_days": 2.0,
+                "recovery_plan_defined": True,
+            }
+        ]
+    )
+    assert res["invalid_buffer_ids"] == ["CHAIN-ZERO-BUF"]
+    assert res["red_zone_chain_ids"] == ["CHAIN-ZERO-BUF"]
+    assert res["max_burn_rate_index"] == 2.5
+    assert res["is_valid"] is False
+
+
+def test_validate_schedule_buffer_fever_chart_status_empty_or_invalid_entries():
+    """Lista vacía, None o entradas sin chain_id -> evaluated_chain_count 0, is_valid False."""
+    from backend.schemas.projects import validate_schedule_buffer_fever_chart_status
+
+    for payload in (None, [], [{"chain_id": "   "}], ["invalid"]):
+        res = validate_schedule_buffer_fever_chart_status(payload)  # type: ignore[arg-type]
+        assert res == {
+            "evaluated_chain_count": 0,
+            "green_zone_chain_ids": [],
+            "yellow_zone_chain_ids": [],
+            "red_zone_chain_ids": [],
+            "unmitigated_red_zone_ids": [],
+            "invalid_buffer_ids": [],
+            "max_burn_rate_index": 0.0,
+            "is_valid": False,
+        }
