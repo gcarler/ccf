@@ -3004,6 +3004,7 @@ __all__ = [
     "audit_markdown_admonition_callout_hygiene",
     "audit_markdown_frontmatter_metadata_hygiene",
     "audit_markdown_image_alt_text_and_asset_hygiene",
+    "audit_markdown_code_fence_language_and_secret_hygiene",
     "AnyDocService",
     "AnydocService",
 ]
@@ -3849,4 +3850,115 @@ AnyDocService.audit_markdown_image_alt_text_and_asset_hygiene = staticmethod(
 AnydocService = AnyDocService
 
 
+def audit_markdown_code_fence_language_and_secret_hygiene(
+    markdown_text: object,
+    *,
+    max_lines_per_block: int = 80,
+) -> dict[str, object]:
+    """Audita etiquetas de lenguaje, longitud y fugas de secretos en bloques de código Markdown según PMI PMBOK §4.4 y §10.2."""
+    if not isinstance(markdown_text, str) or not markdown_text.strip():
+        return {
+            "total_code_blocks": 0,
+            "unlabeled_language_block_lines": [],
+            "oversized_block_lines": [],
+            "suspected_secret_block_lines": [],
+            "unclosed_fence_line": None,
+            "is_code_fence_hygiene_compliant": True,
+        }
 
+    max_lines = int(max_lines_per_block)
+    lines = markdown_text.splitlines()
+    pattern = re.compile(r"^(```|~~~)\s*([^\n]*)$")
+
+    total_code_blocks = 0
+    unlabeled_language_block_lines: list[int] = []
+    oversized_block_lines: list[int] = []
+    suspected_secret_block_lines: list[int] = []
+
+    active_block: dict[str, object] | None = None
+    active_delimiter = ""
+    unclosed_fence_line: int | None = None
+
+    secret_patterns = (
+        re.compile(r"api[_-]?key\s*=", re.IGNORECASE),
+        re.compile(r"secret[_-]?key\s*=", re.IGNORECASE),
+        re.compile(r"password\s*=", re.IGNORECASE),
+        re.compile(r"bearer\s+eyj", re.IGNORECASE),
+        re.compile(r"-----begin\s", re.IGNORECASE),
+        re.compile(r"ghp_[a-z0-9]{20,}", re.IGNORECASE),
+        re.compile(r"sk-[a-z0-9]{20,}", re.IGNORECASE),
+        re.compile(r"aws_secret_access_key\s*=", re.IGNORECASE),
+    )
+    placeholder_patterns = (
+        re.compile(r"redacted", re.IGNORECASE),
+        re.compile(r"example", re.IGNORECASE),
+        re.compile(r"your_", re.IGNORECASE),
+        re.compile(r"<"),
+        re.compile(r"\*\*\*"),
+    )
+
+    def _looks_like_secret(raw_value: str) -> bool:
+        value = raw_value.strip()
+        for ph in placeholder_patterns:
+            if ph.search(value):
+                return False
+        for sp in secret_patterns:
+            if sp.search(value):
+                return True
+        return False
+
+    for idx, raw_line in enumerate(lines, start=1):
+        normalized = raw_line.replace("\t", "    ")
+        match = pattern.match(normalized.strip())
+        if match:
+            delimiter = match.group(1)
+            if active_block is None:
+                active_block = {"start_line": idx}
+                active_delimiter = delimiter
+                total_code_blocks += 1
+
+                label = match.group(2).strip()
+                if not label:
+                    unlabeled_language_block_lines.append(idx)
+                continue
+            else:
+                closing_marker = (
+                    match.group(2).strip() == "" and delimiter == active_delimiter
+                )
+                if closing_marker:
+                    start_line = int(active_block["start_line"])
+                    inner_line_count = idx - start_line - 1
+                    if inner_line_count > max_lines:
+                        oversized_block_lines.append(start_line)
+
+                    body_lines = lines[start_line - 1 : idx - 1]
+                    body = "\n".join(body_lines[1:])
+                    if _looks_like_secret(body):
+                        suspected_secret_block_lines.append(start_line)
+
+                    active_block = None
+                    active_delimiter = ""
+                    continue
+
+        # Contenido interno: un cierre con estilo distinto no cuenta como línea interna.
+        if active_block is not None:
+            continue
+
+    if active_block is not None:
+        unclosed_fence_line = int(active_block["start_line"])
+
+    is_code_fence_hygiene_compliant = bool(
+        len(unlabeled_language_block_lines) == 0
+        and len(oversized_block_lines) == 0
+        and len(suspected_secret_block_lines) == 0
+        and unclosed_fence_line is None
+    )
+
+    return {
+        "total_code_blocks": total_code_blocks,
+        "unlabeled_language_block_lines": unlabeled_language_block_lines,
+        "oversized_block_lines": oversized_block_lines,
+        "suspected_secret_block_lines": suspected_secret_block_lines,
+        "unclosed_fence_line": unclosed_fence_line,
+        "is_code_fence_hygiene_compliant": is_code_fence_hygiene_compliant,
+    }

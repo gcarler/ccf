@@ -3314,3 +3314,116 @@ def test_validate_three_point_pert_skew_and_confidence_band_value_errors():
         with pytest.raises(ValueError):
             validate_three_point_pert_skew_and_confidence_band(*args)  # type: ignore[arg-type]
 
+
+def test_validate_deliverable_acceptance_criteria_measurability_compliant():
+    """Entregables con criterios >= 15 chars, rol aprobador, método válido y umbral cuantitativo -> measurable True."""
+    from backend.schemas.projects import (
+        validate_deliverable_acceptance_criteria_measurability,
+    )
+
+    deliverables = [
+        {
+            "deliverable_id": "DEL-01",
+            "acceptance_criteria": "Latencia p95 menor a 200ms bajo carga de 500 usuarios concurrentes",
+            "verification_method": "test",
+            "designated_approver_role": "Arquitecto Líder",
+            "has_quantitative_threshold": True,
+        },
+        {
+            "id": "DEL-02",
+            "acceptance_criteria": "Manual operativo revisado con 100% de procedimientos firmados por QA",
+            "verification_method": "inspection",
+            "designated_approver_role": "Líder de Operaciones",
+            "has_quantitative_threshold": False,
+        },
+    ]
+    res = validate_deliverable_acceptance_criteria_measurability(deliverables)
+    assert res == {
+        "total_evaluated": 2,
+        "missing_criteria_deliverable_ids": [],
+        "invalid_verification_method_deliverable_ids": [],
+        "ambiguous_subjective_deliverable_ids": [],
+        "is_acceptance_criteria_measurable": True,
+    }
+
+
+def test_validate_deliverable_acceptance_criteria_measurability_missing_and_invalid_method():
+    """Criterio corto (< 15 chars), sin rol aprobador o método de verificación fuera de catálogo."""
+    from backend.schemas.projects import (
+        validate_deliverable_acceptance_criteria_measurability,
+    )
+
+    deliverables = [
+        {
+            "deliverable_id": "DEL-SHORT",
+            "acceptance_criteria": "Todo listo",
+            "verification_method": "audit",
+            "designated_approver_role": "Sponsor",
+            "has_quantitative_threshold": True,
+        },
+        {
+            "deliverable_id": "DEL-NO-APPROVER",
+            "acceptance_criteria": "Cobertura de pruebas unitarias superior al 90 por ciento",
+            "verification_method": "guesswork",
+            "designated_approver_role": "   ",
+            "has_quantitative_threshold": True,
+        },
+    ]
+    res = validate_deliverable_acceptance_criteria_measurability(deliverables)
+    assert res["total_evaluated"] == 2
+    assert res["missing_criteria_deliverable_ids"] == [
+        "DEL-SHORT",
+        "DEL-NO-APPROVER",
+    ]
+    assert res["invalid_verification_method_deliverable_ids"] == [
+        "DEL-NO-APPROVER"
+    ]
+    assert res["ambiguous_subjective_deliverable_ids"] == []
+    assert res["is_acceptance_criteria_measurable"] is False
+
+
+def test_validate_deliverable_acceptance_criteria_measurability_ambiguous_subjective():
+    """Términos subjetivos sin has_quantitative_threshold -> ambiguous_subjective_deliverable_ids."""
+    from backend.schemas.projects import (
+        validate_deliverable_acceptance_criteria_measurability,
+    )
+
+    deliverables = [
+        {
+            "deliverable_id": "DEL-VAGUE-1",
+            "acceptance_criteria": "El sistema debe ser intuitivo, amigable y de buena calidad para el usuario",
+            "verification_method": "demonstration",
+            "designated_approver_role": "Product Owner",
+            "has_quantitative_threshold": False,
+        },
+        {
+            "deliverable_id": "DEL-VAGUE-QUANTIFIED",
+            "acceptance_criteria": "Rendimiento óptimo con tiempo de respuesta p99 <= 150ms",
+            "verification_method": "analysis",
+            "designated_approver_role": "QA Lead",
+            "has_quantitative_threshold": True,
+        },
+    ]
+    res = validate_deliverable_acceptance_criteria_measurability(deliverables)
+    assert res["total_evaluated"] == 2
+    assert res["missing_criteria_deliverable_ids"] == []
+    assert res["invalid_verification_method_deliverable_ids"] == []
+    assert res["ambiguous_subjective_deliverable_ids"] == ["DEL-VAGUE-1"]
+    assert res["is_acceptance_criteria_measurable"] is False
+
+
+def test_validate_deliverable_acceptance_criteria_measurability_invalid_inputs():
+    """Ignora entradas no secuencia o sin id válido."""
+    from backend.schemas.projects import (
+        validate_deliverable_acceptance_criteria_measurability,
+    )
+
+    for bad in (None, "not-a-seq", b"bytes", bytearray(b"123"), [{"id": "  "}, 99]):
+        res = validate_deliverable_acceptance_criteria_measurability(bad)
+        assert res == {
+            "total_evaluated": 0,
+            "missing_criteria_deliverable_ids": [],
+            "invalid_verification_method_deliverable_ids": [],
+            "ambiguous_subjective_deliverable_ids": [],
+            "is_acceptance_criteria_measurable": True,
+        }

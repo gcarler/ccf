@@ -4830,3 +4830,84 @@ def validate_three_point_pert_skew_and_confidence_band(
         "is_estimate_reliable": is_estimate_reliable,
     }
 
+
+def validate_deliverable_acceptance_criteria_measurability(
+    deliverables: object,
+) -> dict[str, object]:
+    """Valida que los criterios de aceptación de entregables del Enunciado del Alcance y Diccionario WBS sean medibles, verificables y libres de ambigüedad subjetiva según PMI PMBOK §5.3 y §5.4."""
+    total_evaluated = 0
+    missing_criteria_deliverable_ids: list[str] = []
+    invalid_verification_method_deliverable_ids: list[str] = []
+    ambiguous_subjective_deliverable_ids: list[str] = []
+
+    valid_verification_methods = {
+        "inspection",
+        "test",
+        "demonstration",
+        "analysis",
+        "audit",
+    }
+    subjective_terms = (
+        "adecuado",
+        "optimo",
+        "óptimo",
+        "rapido",
+        "rápido",
+        "intuitivo",
+        "amigable",
+        "buena calidad",
+        "según corresponda",
+        "tbd",
+        "por definir",
+    )
+
+    if isinstance(deliverables, Sequence) and not isinstance(
+        deliverables, (str, bytes, bytearray)
+    ):
+        for item in deliverables:
+            if not isinstance(item, Mapping):
+                continue
+            deliv_id = str(
+                item.get("deliverable_id") or item.get("id") or ""
+            ).strip()
+            if not deliv_id:
+                continue
+
+            total_evaluated += 1
+            acceptance_criteria = str(
+                item.get("acceptance_criteria") or ""
+            ).strip()
+            verification_method = (
+                str(item.get("verification_method") or "").strip().lower()
+            )
+            designated_approver_role = str(
+                item.get("designated_approver_role") or ""
+            ).strip()
+            has_quantitative_threshold = bool(
+                item.get("has_quantitative_threshold", False)
+            )
+
+            if len(acceptance_criteria) < 15 or not designated_approver_role:
+                missing_criteria_deliverable_ids.append(deliv_id)
+
+            if verification_method not in valid_verification_methods:
+                invalid_verification_method_deliverable_ids.append(deliv_id)
+
+            criteria_lower = acceptance_criteria.lower()
+            if not has_quantitative_threshold and any(
+                term in criteria_lower for term in subjective_terms
+            ):
+                ambiguous_subjective_deliverable_ids.append(deliv_id)
+
+    return {
+        "total_evaluated": total_evaluated,
+        "missing_criteria_deliverable_ids": missing_criteria_deliverable_ids,
+        "invalid_verification_method_deliverable_ids": invalid_verification_method_deliverable_ids,
+        "ambiguous_subjective_deliverable_ids": ambiguous_subjective_deliverable_ids,
+        "is_acceptance_criteria_measurable": (
+            len(missing_criteria_deliverable_ids) == 0
+            and len(invalid_verification_method_deliverable_ids) == 0
+            and len(ambiguous_subjective_deliverable_ids) == 0
+        ),
+    }
+

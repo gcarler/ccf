@@ -3136,6 +3136,7 @@ __all__ = [
     "audit_stage_gate_phase_transition_governance",
     "audit_stakeholder_engagement_seam_drift",
     "audit_communications_management_plan_matrix",
+    "audit_risk_response_secondary_and_fallback_readiness",
     "ProjectLifecyclePMIService",
 ]
 
@@ -3737,4 +3738,92 @@ def audit_communications_management_plan_matrix(
 
 ProjectLifecyclePMIService.audit_communications_management_plan_matrix = staticmethod(
     audit_communications_management_plan_matrix
+)
+
+
+def audit_risk_response_secondary_and_fallback_readiness(
+    risk_responses: object,
+) -> dict[str, object]:
+    """Audita ejecución de respuestas a riesgos, riesgos residuales frente a umbral con plan de respaldo (fallback plan) y cobertura de riesgos secundarios según PMI PMBOK §11.6 y §11.7."""
+    total_evaluated = 0
+    missing_fallback_high_residual_risk_ids: list[str] = []
+    unmitigated_secondary_risk_ids: list[str] = []
+    unassigned_active_response_risk_ids: list[str] = []
+
+    active_strategies = {
+        "mitigate",
+        "transfer",
+        "avoid",
+        "exploit",
+        "enhance",
+        "share",
+    }
+
+    if isinstance(risk_responses, Sequence) and not isinstance(
+        risk_responses, (str, bytes, bytearray)
+    ):
+        for item in risk_responses:
+            if not isinstance(item, Mapping):
+                continue
+            risk_id = str(item.get("risk_id") or item.get("id") or "").strip()
+            if not risk_id:
+                continue
+
+            total_evaluated += 1
+            response_strategy = (
+                str(item.get("response_strategy") or "").strip().lower()
+            )
+            try:
+                residual_severity_score = float(
+                    item.get("residual_severity_score", 0.0) or 0.0
+                )
+            except (TypeError, ValueError):
+                residual_severity_score = 0.0
+
+            try:
+                residual_threshold_score = float(
+                    item.get("residual_threshold_score", 10.0) or 10.0
+                )
+            except (TypeError, ValueError):
+                residual_threshold_score = 10.0
+
+            has_fallback_plan = bool(item.get("has_fallback_plan", False))
+            secondary_risks_identified = bool(
+                item.get("secondary_risks_identified", False)
+            )
+            secondary_risk_mitigation_linked = bool(
+                item.get("secondary_risk_mitigation_linked", False)
+            )
+            action_owner_id = str(item.get("action_owner_id") or "").strip()
+
+            if (
+                residual_severity_score > residual_threshold_score
+                and not has_fallback_plan
+            ):
+                missing_fallback_high_residual_risk_ids.append(risk_id)
+
+            if (
+                secondary_risks_identified is True
+                and not secondary_risk_mitigation_linked
+            ):
+                unmitigated_secondary_risk_ids.append(risk_id)
+
+            if response_strategy in active_strategies and not action_owner_id:
+                unassigned_active_response_risk_ids.append(risk_id)
+
+    return {
+        "total_evaluated": total_evaluated,
+        "missing_fallback_high_residual_risk_ids": missing_fallback_high_residual_risk_ids,
+        "unmitigated_secondary_risk_ids": unmitigated_secondary_risk_ids,
+        "unassigned_active_response_risk_ids": unassigned_active_response_risk_ids,
+        "is_risk_response_execution_ready": (
+            len(missing_fallback_high_residual_risk_ids) == 0
+            and len(unmitigated_secondary_risk_ids) == 0
+            and len(unassigned_active_response_risk_ids) == 0
+        ),
+    }
+
+
+ProjectLifecyclePMIService.audit_risk_response_secondary_and_fallback_readiness = staticmethod(
+    audit_risk_response_secondary_and_fallback_readiness
 )

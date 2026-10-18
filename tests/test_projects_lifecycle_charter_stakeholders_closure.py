@@ -4138,3 +4138,124 @@ def test_audit_communications_management_plan_matrix_empty_and_service_staticmet
     )
 
 
+def test_audit_risk_response_secondary_and_fallback_readiness_compliant():
+    """Respuestas con dueño activo, fallback en alto riesgo residual y secundarios mitigados -> ready True."""
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_risk_response_secondary_and_fallback_readiness,
+    )
+
+    responses = [
+        {
+            "risk_id": "RSK-101",
+            "response_strategy": "mitigate",
+            "residual_severity_score": 14.0,
+            "residual_threshold_score": 10.0,
+            "has_fallback_plan": True,
+            "secondary_risks_identified": True,
+            "secondary_risk_mitigation_linked": True,
+            "action_owner_id": "OWN-1",
+        },
+        {
+            "id": "RSK-102",
+            "response_strategy": "accept",
+            "residual_severity_score": 5.0,
+            "residual_threshold_score": 10.0,
+            "has_fallback_plan": False,
+            "secondary_risks_identified": False,
+            "secondary_risk_mitigation_linked": False,
+            "action_owner_id": "",
+        },
+    ]
+    res = audit_risk_response_secondary_and_fallback_readiness(responses)
+    assert res == {
+        "total_evaluated": 2,
+        "missing_fallback_high_residual_risk_ids": [],
+        "unmitigated_secondary_risk_ids": [],
+        "unassigned_active_response_risk_ids": [],
+        "is_risk_response_execution_ready": True,
+    }
+    assert (
+        ProjectLifecyclePMIService.audit_risk_response_secondary_and_fallback_readiness(
+            responses
+        )
+        == res
+    )
+
+
+def test_audit_risk_response_secondary_and_fallback_readiness_missing_fallback_and_secondary():
+    """Detecta riesgo residual sobre umbral sin fallback y riesgos secundarios sin mitigación vinculada."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_risk_response_secondary_and_fallback_readiness,
+    )
+
+    responses = [
+        {
+            "risk_id": "RSK-HIGH-RES",
+            "response_strategy": "mitigate",
+            "residual_severity_score": 15.0,
+            "residual_threshold_score": 10.0,
+            "has_fallback_plan": False,
+            "secondary_risks_identified": False,
+            "action_owner_id": "OWN-1",
+        },
+        {
+            "risk_id": "RSK-SEC-UNLINKED",
+            "response_strategy": "transfer",
+            "residual_severity_score": 6.0,
+            "residual_threshold_score": 10.0,
+            "has_fallback_plan": False,
+            "secondary_risks_identified": True,
+            "secondary_risk_mitigation_linked": False,
+            "action_owner_id": "OWN-2",
+        },
+    ]
+    res = audit_risk_response_secondary_and_fallback_readiness(responses)
+    assert res["total_evaluated"] == 2
+    assert res["missing_fallback_high_residual_risk_ids"] == ["RSK-HIGH-RES"]
+    assert res["unmitigated_secondary_risk_ids"] == ["RSK-SEC-UNLINKED"]
+    assert res["unassigned_active_response_risk_ids"] == []
+    assert res["is_risk_response_execution_ready"] is False
+
+
+def test_audit_risk_response_secondary_and_fallback_readiness_unassigned_active_strategy():
+    """Estrategia activa (avoid/exploit/enhance/share/mitigate/transfer) sin action_owner_id -> unassigned."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_risk_response_secondary_and_fallback_readiness,
+    )
+
+    responses = [
+        {
+            "risk_id": "RSK-NO-OWNER",
+            "response_strategy": "avoid",
+            "residual_severity_score": 2.0,
+            "residual_threshold_score": 10.0,
+            "has_fallback_plan": False,
+            "action_owner_id": "   ",
+        }
+    ]
+    res = audit_risk_response_secondary_and_fallback_readiness(responses)
+    assert res["total_evaluated"] == 1
+    assert res["missing_fallback_high_residual_risk_ids"] == []
+    assert res["unmitigated_secondary_risk_ids"] == []
+    assert res["unassigned_active_response_risk_ids"] == ["RSK-NO-OWNER"]
+    assert res["is_risk_response_execution_ready"] is False
+
+
+def test_audit_risk_response_secondary_and_fallback_readiness_invalid_inputs_and_export():
+    """Ignora entradas no secuencia o sin risk_id válido y verifica exportación en __all__."""
+    import backend.services.project_lifecycle_pmi_service as _m
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_risk_response_secondary_and_fallback_readiness,
+    )
+
+    assert "audit_risk_response_secondary_and_fallback_readiness" in _m.__all__
+    for bad in (None, "not-a-seq", b"bytes", bytearray(b"abc"), [{"risk_id": "  "}, 123]):
+        res = audit_risk_response_secondary_and_fallback_readiness(bad)
+        assert res == {
+            "total_evaluated": 0,
+            "missing_fallback_high_residual_risk_ids": [],
+            "unmitigated_secondary_risk_ids": [],
+            "unassigned_active_response_risk_ids": [],
+            "is_risk_response_execution_ready": True,
+        }

@@ -3418,3 +3418,119 @@ def test_audit_markdown_image_alt_text_and_asset_hygiene_via_service_staticmetho
     )
 
 
+def test_audit_markdown_code_fence_hygiene_compliant_blocks():
+    """Bloques etiquetados, cortos, sin secretos y cerrados -> compliant."""
+    from backend.services.anydoc_service import (
+        audit_markdown_code_fence_language_and_secret_hygiene,
+    )
+
+    doc = (
+        "Intro.\n"
+        "\n"
+        "```python\n"
+        'print("hola")\n'
+        "```\n"
+        "\n"
+        "~~~sql\n"
+        "SELECT 1;\n"
+        "~~~\n"
+        "\n"
+        "Fin.\n"
+    )
+    res = audit_markdown_code_fence_language_and_secret_hygiene(doc)
+    assert res == {
+        "total_code_blocks": 2,
+        "unlabeled_language_block_lines": [],
+        "oversized_block_lines": [],
+        "suspected_secret_block_lines": [],
+        "unclosed_fence_line": None,
+        "is_code_fence_hygiene_compliant": True,
+    }
+
+
+def test_audit_markdown_code_fence_unlabeled_and_oversized():
+    """Bloques sin etiqueta de lenguaje y bloques que exceden max_lines_per_block."""
+    from backend.services.anydoc_service import (
+        audit_markdown_code_fence_language_and_secret_hygiene,
+    )
+
+    doc = (
+        "```\n"
+        "sin etiqueta\n"
+        "```\n"
+        "\n"
+        "```js\n"
+        "a\n"
+        "b\n"
+        "c\n"
+        "```\n"
+    )
+    res = audit_markdown_code_fence_language_and_secret_hygiene(doc, max_lines_per_block=2)
+    assert res["total_code_blocks"] == 2
+    assert res["unlabeled_language_block_lines"] == [1]
+    assert res["oversized_block_lines"] == [5]
+    assert res["is_code_fence_hygiene_compliant"] is False
+
+    # Con el maximo por defecto (80) el segundo bloque ya no es oversized.
+    ok = audit_markdown_code_fence_language_and_secret_hygiene(doc)
+    assert ok["oversized_block_lines"] == []
+    assert ok["unlabeled_language_block_lines"] == [1]
+
+
+def test_audit_markdown_code_fence_secret_leak_detection():
+    """Detecta credenciales expuestas e ignora placeholders REDACTED/EXAMPLE/YOUR_/</***."""
+    from backend.services.anydoc_service import (
+        audit_markdown_code_fence_language_and_secret_hygiene,
+    )
+
+    leaky_bits = (
+        ('```bash\napi_key=abc123realkey\n```\n', 'api_key='), 
+        ('```yaml\nsecret_key=deadbeef1234\n```\n', 'secret_key='),
+        ('```sh\ntoken=ghp_abcdefghijklmnopqrst1234\n```\n', 'ghp_'),
+        ('```json\nAuthorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\n```\n', 'bearer'),
+        ('```pem\n-----BEGIN RSA PRIVATE KEY-----\n```\n', '-----begin '),
+        ('```env\naws_secret_access_key=wJalrXUtnFEMI\n```\n', 'aws_secret_access_key='),
+    )
+    for doc, hint in leaky_bits:
+        res = audit_markdown_code_fence_language_and_secret_hygiene(doc)
+        assert res["suspected_secret_block_lines"] == [1], (hint, res)
+        assert res["is_code_fence_hygiene_compliant"] is False
+
+    # Placeholders que contienen REDACTED, EXAMPLE, YOUR_, < o *** no se reportan.
+    placeholders = (
+        "```bash\napi_key=REDACTED\n```\n", 
+        "```py\npassword=EXAMPLE_PLACEHOLDER\n```\n", 
+        "```env\nDB_PASSWORD=YOUR_SECRET_HERE\n```\n", 
+        "```env\nTOKEN=<paste-your-token>\n```\n", 
+        "```env\nAWS_SECRET_ACCESS_KEY=***\n```\n", 
+    )
+    for doc in placeholders:
+        res = audit_markdown_code_fence_language_and_secret_hygiene(doc)
+        assert res["suspected_secret_block_lines"] == [], res
+        assert res["is_code_fence_hygiene_compliant"] is True
+
+
+def test_audit_markdown_code_fence_unclosed_and_scope():
+    """Bloque sin cerrar; entradas vacias/None y limpieza sanitaria del escaneo."""
+    from backend.services.anydoc_service import (
+        audit_markdown_code_fence_language_and_secret_hygiene,
+    )
+
+    doc = "# Documento de gobierno\n\n```text\ncontenido sin cerrar\n"
+    res = audit_markdown_code_fence_language_and_secret_hygiene(doc)
+    assert res["unclosed_fence_line"] == 3
+    assert res["is_code_fence_hygiene_compliant"] is False
+
+    empty = {
+        "total_code_blocks": 0,
+        "unlabeled_language_block_lines": [],
+        "oversized_block_lines": [],
+        "suspected_secret_block_lines": [],
+        "unclosed_fence_line": None,
+        "is_code_fence_hygiene_compliant": True,
+    }
+    for payload in (None, "", "   \n  ", 42, ["x"]):
+        assert audit_markdown_code_fence_language_and_secret_hygiene(payload) == empty
+
+    import backend.services.anydoc_service as _m
+    assert "audit_markdown_code_fence_language_and_secret_hygiene" in _m.__all__
