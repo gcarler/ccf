@@ -373,6 +373,7 @@ export interface ProjectTaskRecord {
   node?: string | null;
   physical_progress_pct?: number;
   progress_pct?: number;
+  progress?: number | null;
   estimated_hours?: number;
   actual_hours?: number;
   budget_allocated?: number | null;

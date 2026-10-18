@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import TaskDimensionsSection from "./TaskDimensionsSection";
 import type { ProjectTaskRecord, TaskDimensionsDetail } from "@/types/projects";
@@ -109,9 +109,9 @@ describe("TaskDimensionsSection Component", () => {
     // Avance físico asignado
     expect(screen.getByText("40%")).toBeInTheDocument();
 
-    // Costos acumulados
+    // Costos acumulados ($350,00 aparece en Costo Real y en AC_wp de la tupla EVM)
     expect(screen.getByText("$450,00")).toBeInTheDocument();
-    expect(screen.getByText("$350,00")).toBeInTheDocument(); // Costo real (AC)
+    expect(screen.getAllByText("$350,00").length).toBe(2); // Costo real (AC) + AC_wp EVM
     expect(screen.getByText("Servidor Redis")).toBeInTheDocument();
   });
 
@@ -187,5 +187,75 @@ describe("TaskDimensionsSection Component", () => {
       );
       expect(mocks.toast.success).toHaveBeenCalledWith("Horas estimadas actualizadas");
     });
+  });
+});
+
+describe("TaskDimensionsSection — Tupla EVM de Paquete de Trabajo (PMBOK 7)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.apiFetch.mockResolvedValue(mockDimensionsResponse);
+  });
+
+  it("calcula la tupla EVM sana del paquete sin alerta de sobrecosto", async () => {
+    render(
+      <TaskDimensionsSection
+        task={{ ...mockTask, budget_allocated: 1000 }}
+        token="fake-token"
+      />
+    );
+
+    await screen.findByTestId("task-dimensions-pmi-evm-card");
+    const card = screen.getByTestId("task-dimensions-pmi-evm-card");
+    const text = () => card.textContent ?? "";
+
+    // BAC_wp=1000 · progreso hoja 40% → EV_wp=400 · AC_wp=350
+    // CV_wp=+50 · CPI_wp=1.14 · EAC_wp=350+600=950 (< BAC → sin alerta)
+    expect(within(card).getByTestId("task-dimensions-pmi-evm-bac_wp")).toHaveTextContent("$1000,00");
+    expect(within(card).getByTestId("task-dimensions-pmi-evm-ev_wp")).toHaveTextContent("$400,00");
+    expect(within(card).getByTestId("task-dimensions-pmi-evm-ac_wp")).toHaveTextContent("$350,00");
+    expect(within(card).getByTestId("task-dimensions-pmi-evm-cv_wp")).toHaveTextContent("+$50,00");
+    expect(within(card).getByTestId("task-dimensions-pmi-evm-cpi_wp")).toHaveTextContent("1.14");
+    expect(within(card).getByTestId("task-dimensions-pmi-evm-eac_wp")).toHaveTextContent("$950,00");
+    expect(text()).not.toMatch(/Sobrecosto Proyectado en Paquete/);
+  });
+
+  it("proyecta sobrecosto y muestra la alerta semántica cuando EAC_wp > BAC_wp y CPI_wp < 1", async () => {
+    render(
+      <TaskDimensionsSection
+        task={{ ...mockTask, budget_allocated: 500 }}
+        token="fake-token"
+      />
+    );
+
+    await screen.findByTestId("task-dimensions-pmi-evm-overbudget-badge");
+    const card = screen.getByTestId("task-dimensions-pmi-evm-card");
+
+    // BAC_wp=500 · EV_wp=500*0.4=200 · AC_wp=350
+    // CV_wp=-150 · CPI_wp=0.57 · EAC_wp=350+300=650 > 500 → alerta
+    expect(within(card).getByTestId("task-dimensions-pmi-evm-bac_wp")).toHaveTextContent("$500,00");
+    expect(within(card).getByTestId("task-dimensions-pmi-evm-ev_wp")).toHaveTextContent("$200,00");
+    expect(within(card).getByTestId("task-dimensions-pmi-evm-cv_wp")).toHaveTextContent("-$150,00");
+    expect(within(card).getByTestId("task-dimensions-pmi-evm-cpi_wp")).toHaveTextContent("0.57");
+    expect(within(card).getByTestId("task-dimensions-pmi-evm-eac_wp")).toHaveTextContent("$650,00");
+    expect(screen.getByTestId("task-dimensions-pmi-evm-overbudget-badge")).toHaveTextContent(
+      "Sobrecosto Proyectado en Paquete",
+    );
+  });
+
+  it("muestra CPI_wp nulo cuando el paquete no registra costo real", async () => {
+    mocks.apiFetch.mockResolvedValue({
+      ...mockDimensionsResponse,
+      cost: { ...mockDimensionsResponse.cost, actual_cost: 0 },
+    });
+
+    render(
+      <TaskDimensionsSection
+        task={{ ...mockTask, budget_allocated: 1000 }}
+        token="fake-token"
+      />
+    );
+
+    await screen.findByTestId("task-dimensions-pmi-evm-card");
+    expect(within(screen.getByTestId("task-dimensions-pmi-evm-card")).getByTestId("task-dimensions-pmi-evm-cpi_wp")).toHaveTextContent("—");
   });
 });

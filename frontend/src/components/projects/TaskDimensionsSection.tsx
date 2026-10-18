@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { apiFetch } from "@/lib/http";
 import type {
   ProjectTaskRecord,
@@ -145,6 +145,31 @@ export default function TaskDimensionsSection({
   const actualHours = dimensions?.time?.actual_hours ?? 0;
   const isOverworked = estimatedHours > 0 && actualHours > estimatedHours;
   const expensesList: ProjectExpense[] = dimensions?.expenses ?? [];
+
+  // Tupla EVM del Paquete de Trabajo (Work Package EVM — PMBOK 7ma Ed.)
+  const taskProgressPct = isLeaf ? physicalProgress : rolledUpProgress;
+  const wpEvm = useMemo(() => {
+    const bacWp = Number(
+      task.budget_allocated ?? dimensions?.cost?.planned_cost ?? totalCost ?? 0,
+    );
+    const evWp = bacWp * (taskProgressPct / 100);
+    const acWp = Number(actualCost ?? 0);
+    const cvWp = evWp - acWp;
+    const cpiWp = acWp > 0 ? evWp / acWp : null;
+    const eacWp = acWp + Math.max(0, bacWp - evWp);
+    const isOverBudget =
+      (eacWp > bacWp && bacWp > 0) || (cpiWp !== null && cpiWp < 1.0);
+    return { bacWp, evWp, acWp, cvWp, cpiWp, eacWp, isOverBudget };
+  }, [
+    task.budget_allocated,
+    dimensions,
+    totalCost,
+    taskProgressPct,
+    actualCost,
+  ]);
+
+  const formatMoney = (value: number) =>
+    value.toLocaleString("es-ES", { minimumFractionDigits: 2 });
 
   return (
     <section className="px-4 py-3 border-b border-[hsl(var(--border))] space-y-3">
@@ -337,7 +362,7 @@ export default function TaskDimensionsSection({
                         className={clsx(
                           "px-2 py-0.5 text-2xs font-medium rounded border transition-colors cursor-pointer",
                           physicalProgress === preset
-                            ? "bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]"
+                            ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] border-[hsl(var(--primary))]"
                             : "bg-[hsl(var(--surface-1))] text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-3))]"
                         )}
                       >
@@ -382,6 +407,94 @@ export default function TaskDimensionsSection({
                     (dimensions?.cost?.committed_cost ?? 0)
                   ).toLocaleString("es-ES", { minimumFractionDigits: 2 })}
                 </span>
+              </div>
+            </div>
+
+            {/* Tupla EVM del Paquete de Trabajo (Work Package EVM — PMBOK 7ma Ed.) */}
+            <div
+              data-testid="task-dimensions-pmi-evm-card"
+              className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-2 space-y-2"
+            >
+              <div className="flex items-center justify-between flex-wrap gap-1.5">
+                <span className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                  EVM del Paquete de Trabajo
+                </span>
+                {wpEvm.isOverBudget && (
+                  <span
+                    data-testid="task-dimensions-pmi-evm-overbudget-badge"
+                    className="inline-flex items-center gap-1 rounded bg-[hsl(var(--destructive))]/0.15 px-1.5 py-0.5 text-2xs font-semibold text-[hsl(var(--destructive))] border border-[hsl(var(--destructive))]/0.3"
+                  >
+                    <AlertTriangle size={10} />
+                    Sobrecosto Proyectado en Paquete
+                  </span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 text-2xs">
+                {([
+                  {
+                    key: "bac_wp",
+                    label: "BAC_wp · Presupuesto",
+                    value: `$${formatMoney(wpEvm.bacWp)}`,
+                    className: "text-[hsl(var(--warning))]",
+                  },
+                  {
+                    key: "ev_wp",
+                    label: "EV_wp · Valor Ganado",
+                    value: `$${formatMoney(wpEvm.evWp)}`,
+                    className: "text-[hsl(var(--primary))]",
+                  },
+                  {
+                    key: "ac_wp",
+                    label: "AC_wp · Costo Real",
+                    value: `$${formatMoney(wpEvm.acWp)}`,
+                    className: "text-[hsl(var(--foreground))]",
+                  },
+                  {
+                    key: "cv_wp",
+                    label: "CV_wp · Varianza de Costo",
+                    value: `${
+                      wpEvm.cvWp > 0 ? "+" : wpEvm.cvWp < 0 ? "-" : ""
+                    }$${formatMoney(Math.abs(wpEvm.cvWp))}`,
+                    className:
+                      wpEvm.cvWp >= 0
+                        ? "text-[hsl(var(--success))]"
+                        : "text-[hsl(var(--destructive))]",
+                  },
+                  {
+                    key: "cpi_wp",
+                    label: "CPI_wp · Índice de Costo",
+                    value: wpEvm.cpiWp === null ? "—" : wpEvm.cpiWp.toFixed(2),
+                    className:
+                      wpEvm.cpiWp !== null && wpEvm.cpiWp < 1
+                        ? "text-[hsl(var(--destructive))]"
+                        : "text-[hsl(var(--success))]",
+                  },
+                  {
+                    key: "eac_wp",
+                    label: "EAC_wp · Pronóstico Atípico",
+                    value: `$${formatMoney(wpEvm.eacWp)}`,
+                    className:
+                      wpEvm.eacWp > wpEvm.bacWp && wpEvm.bacWp > 0
+                        ? "text-[hsl(var(--destructive))]"
+                        : "text-[hsl(var(--success))]",
+                  },
+                ] as const).map((metric) => (
+                  <div
+                    key={metric.key}
+                    className="p-1.5 rounded bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]"
+                  >
+                    <span className="text-[hsl(var(--muted-foreground))] block">
+                      {metric.label}
+                    </span>
+                    <span
+                      className={clsx("font-semibold", metric.className)}
+                      data-testid={`task-dimensions-pmi-evm-${metric.key}`}
+                    >
+                      {metric.value}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
 
