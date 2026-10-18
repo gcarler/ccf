@@ -2997,6 +2997,7 @@ __all__ = [
     "audit_executive_report_software_license_true_up_and_shelfware",
     "audit_executive_report_pentest_remediation_sla_and_zero_trust",
     "audit_executive_report_esg_carbon_footprint_and_green_cloud_pue",
+    "audit_executive_report_dora_four_keys_and_delivery_stability",
     "ProjectExportService",
 ]
 
@@ -6555,3 +6556,104 @@ ProjectExportService.audit_executive_report_esg_carbon_footprint_and_green_cloud
     audit_executive_report_esg_carbon_footprint_and_green_cloud_pue
 )
 
+
+def audit_executive_report_dora_four_keys_and_delivery_stability(
+    services: list[dict[str, Any]],
+    *,
+    min_deploys_per_week: float = 3.0,
+    max_lead_time_hours: float = 24.0,
+    max_change_failure_rate_pct: float = 15.0,
+    max_mttr_hours: float = 1.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §10.2 & §11.6 — Executive Report DORA Four-Keys Elite Performance, Deployment Frequency & Change Failure Rate Auditor."""
+    valid_services: list[dict[str, Any]] = []
+    if isinstance(services, (list, tuple)):
+        for item in services:
+            if not isinstance(item, dict):
+                continue
+            sid = str(item.get("service_id") or "").strip()
+            if not sid:
+                continue
+            valid_services.append({**item, "_sid": sid})
+
+    if not valid_services:
+        return {
+            "total_services_evaluated": 0,
+            "elite_performer_service_ids": [],
+            "low_throughput_service_ids": [],
+            "instability_breach_service_ids": [],
+            "elite_performer_ratio_pct": 100.0,
+            "dora_maturity_tier": "ELITE",
+            "is_dora_compliant": True,
+            "recommendations": [],
+        }
+
+    elite_performer_service_ids: list[str] = []
+    low_throughput_service_ids: list[str] = []
+    instability_breach_service_ids: list[str] = []
+
+    for svc in valid_services:
+        sid = svc["_sid"]
+        deploys = float(svc.get("deployments_per_week", 0.0) or 0.0)
+        lead_time = float(svc.get("lead_time_for_changes_hours", 0.0) or 0.0)
+        cfr_pct = float(svc.get("change_failure_rate_pct", 0.0) or 0.0)
+        mttr_hrs = float(svc.get("mean_time_to_restore_hours", 0.0) or 0.0)
+
+        is_low_throughput = (
+            deploys < min_deploys_per_week or lead_time > max_lead_time_hours
+        )
+        is_unstable = (
+            cfr_pct > max_change_failure_rate_pct or mttr_hrs > max_mttr_hours
+        )
+
+        if is_low_throughput:
+            low_throughput_service_ids.append(sid)
+        if is_unstable:
+            instability_breach_service_ids.append(sid)
+        if not is_low_throughput and not is_unstable:
+            elite_performer_service_ids.append(sid)
+
+    total_services_evaluated = len(valid_services)
+    elite_performer_ratio_pct = round(
+        (len(elite_performer_service_ids) / total_services_evaluated) * 100.0, 2
+    )
+
+    recommendations: list[str] = []
+    if instability_breach_service_ids:
+        recommendations.append(
+            f"Reduce change failure rate (<= {max_change_failure_rate_pct}%) and MTTR (<= {max_mttr_hours}h) for unstable service(s): {', '.join(instability_breach_service_ids)}."
+        )
+    if low_throughput_service_ids:
+        recommendations.append(
+            f"Accelerate deployment frequency (>= {min_deploys_per_week}/week) and reduce lead time (<= {max_lead_time_hours}h) for low-velocity service(s): {', '.join(low_throughput_service_ids)}."
+        )
+
+    if instability_breach_service_ids and low_throughput_service_ids:
+        dora_maturity_tier = "LOW_PERFORMING_AT_RISK"
+    elif instability_breach_service_ids:
+        dora_maturity_tier = "HIGH_THROUGHPUT_UNSTABLE"
+    elif low_throughput_service_ids:
+        dora_maturity_tier = "STABLE_LOW_VELOCITY"
+    else:
+        dora_maturity_tier = "ELITE"
+
+    is_dora_compliant = (
+        len(instability_breach_service_ids) == 0
+        and len(low_throughput_service_ids) == 0
+    )
+
+    return {
+        "total_services_evaluated": total_services_evaluated,
+        "elite_performer_service_ids": elite_performer_service_ids,
+        "low_throughput_service_ids": low_throughput_service_ids,
+        "instability_breach_service_ids": instability_breach_service_ids,
+        "elite_performer_ratio_pct": elite_performer_ratio_pct,
+        "dora_maturity_tier": dora_maturity_tier,
+        "is_dora_compliant": is_dora_compliant,
+        "recommendations": recommendations,
+    }
+
+
+ProjectExportService.audit_executive_report_dora_four_keys_and_delivery_stability = staticmethod(
+    audit_executive_report_dora_four_keys_and_delivery_stability
+)

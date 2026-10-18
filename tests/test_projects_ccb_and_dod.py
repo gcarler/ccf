@@ -8166,3 +8166,127 @@ def test_audit_architectural_fitness_functions_invalid_and_binding():
         == audit_architectural_fitness_functions_and_coupling_drift(sample)
     )
     assert "audit_architectural_fitness_functions_and_coupling_drift" in mod.__all__
+
+
+def test_audit_api_backward_compatibility_and_contract_versioning_breaking_blocked():
+    from backend.services.project_ccb_service import (
+        audit_api_backward_compatibility_and_contract_versioning,
+    )
+
+    res = audit_api_backward_compatibility_and_contract_versioning(
+        [
+            {
+                "endpoint_id": "POST /v1/orders",
+                "removes_required_response_field": True,
+                "adds_mandatory_request_parameter_without_default": False,
+                "bumps_major_api_version": False,
+                "consumer_contract_tests_passed": True,
+                "deprecation_notice_days_provided": 45,
+            },
+            {
+                "endpoint_id": "GET /v1/invoices",
+                "removes_required_response_field": False,
+                "adds_mandatory_request_parameter_without_default": False,
+                "bumps_major_api_version": False,
+                "consumer_contract_tests_passed": False,
+                "deprecation_notice_days_provided": 60,
+            },
+        ],
+        min_deprecation_notice_days=30,
+    )
+    assert res["total_endpoints_evaluated"] == 2
+    assert res["breaking_change_count"] == 1
+    assert res["unversioned_breaking_change_ids"] == ["POST /v1/orders"]
+    assert res["failed_contract_test_ids"] == ["GET /v1/invoices"]
+    assert res["insufficient_deprecation_window_ids"] == []
+    assert res["contract_governance_status"] == "BREAKING_BLOCKED"
+    assert res["is_contract_gate_compliant"] is False
+
+
+def test_audit_api_backward_compatibility_and_contract_versioning_deprecation_window_warning():
+    from backend.services.project_ccb_service import (
+        audit_api_backward_compatibility_and_contract_versioning,
+    )
+
+    res = audit_api_backward_compatibility_and_contract_versioning(
+        [
+            {
+                "endpoint_id": "PUT /v2/users",
+                "removes_required_response_field": False,
+                "adds_mandatory_request_parameter_without_default": True,
+                "bumps_major_api_version": True,
+                "consumer_contract_tests_passed": True,
+                "deprecation_notice_days_provided": 10,
+            }
+        ],
+        min_deprecation_notice_days=30,
+    )
+    assert res["breaking_change_count"] == 1
+    assert res["unversioned_breaking_change_ids"] == []
+    assert res["failed_contract_test_ids"] == []
+    assert res["insufficient_deprecation_window_ids"] == ["PUT /v2/users"]
+    assert res["contract_governance_status"] == "DEPRECATION_WINDOW_WARNING"
+    assert res["is_contract_gate_compliant"] is False
+
+
+def test_audit_api_backward_compatibility_and_contract_versioning_safe_and_empty():
+    from backend.services.project_ccb_service import (
+        audit_api_backward_compatibility_and_contract_versioning,
+    )
+
+    empty = audit_api_backward_compatibility_and_contract_versioning(
+        [{"endpoint_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_endpoints_evaluated"] == 0
+    assert empty["breaking_change_count"] == 0
+    assert empty["contract_governance_status"] == "BACKWARD_COMPATIBLE_SAFE"
+    assert empty["is_contract_gate_compliant"] is True
+
+    safe = audit_api_backward_compatibility_and_contract_versioning(
+        [
+            {
+                "endpoint_id": "GET /v2/projects",
+                "removes_required_response_field": True,
+                "adds_mandatory_request_parameter_without_default": False,
+                "bumps_major_api_version": True,
+                "consumer_contract_tests_passed": True,
+                "deprecation_notice_days_provided": 60,
+            }
+        ],
+        min_deprecation_notice_days=30,
+    )
+    assert safe["total_endpoints_evaluated"] == 1
+    assert safe["breaking_change_count"] == 1
+    assert safe["unversioned_breaking_change_ids"] == []
+    assert safe["failed_contract_test_ids"] == []
+    assert safe["insufficient_deprecation_window_ids"] == []
+    assert safe["contract_governance_status"] == "BACKWARD_COMPATIBLE_SAFE"
+    assert safe["is_contract_gate_compliant"] is True
+
+
+def test_audit_api_backward_compatibility_and_contract_versioning_staticmethod_and_dunder_all():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_api_backward_compatibility_and_contract_versioning,
+    )
+
+    sample = [
+        {
+            "endpoint_id": "GET /v1/health",
+            "removes_required_response_field": False,
+            "adds_mandatory_request_parameter_without_default": False,
+            "bumps_major_api_version": False,
+            "consumer_contract_tests_passed": True,
+            "deprecation_notice_days_provided": 30,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_api_backward_compatibility_and_contract_versioning(
+            sample
+        )
+        == audit_api_backward_compatibility_and_contract_versioning(sample)
+    )
+    assert (
+        "audit_api_backward_compatibility_and_contract_versioning" in mod.__all__
+    )

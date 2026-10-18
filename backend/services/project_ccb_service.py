@@ -2840,6 +2840,7 @@ __all__ = [
     "audit_feature_flag_lifecycle_debt_and_kill_switch_hygiene",
     "audit_requirements_volatility_churn_and_scope_freeze_breaches",
     "audit_architectural_fitness_functions_and_coupling_drift",
+    "audit_api_backward_compatibility_and_contract_versioning",
     "ProjectCCBService",
 ]
 
@@ -6278,4 +6279,101 @@ def audit_architectural_fitness_functions_and_coupling_drift(
 
 ProjectCCBService.audit_architectural_fitness_functions_and_coupling_drift = staticmethod(
     audit_architectural_fitness_functions_and_coupling_drift
+)
+
+
+def audit_api_backward_compatibility_and_contract_versioning(
+    api_changes: list[dict[str, Any]],
+    *,
+    min_deprecation_notice_days: int = 30,
+) -> dict[str, Any]:
+    """PMI PMBOK §8.3 & §11.6 — CCB API Backward-Compatibility Contract, Breaking Schema Change & Consumer Versioning Gate Auditor."""
+    valid_endpoints: list[dict[str, Any]] = []
+    if isinstance(api_changes, (list, tuple)):
+        for item in api_changes:
+            if not isinstance(item, dict):
+                continue
+            eid = str(item.get("endpoint_id") or "").strip()
+            if not eid:
+                continue
+            valid_endpoints.append({**item, "_eid": eid})
+
+    if not valid_endpoints:
+        return {
+            "total_endpoints_evaluated": 0,
+            "breaking_change_count": 0,
+            "unversioned_breaking_change_ids": [],
+            "failed_contract_test_ids": [],
+            "insufficient_deprecation_window_ids": [],
+            "contract_governance_status": "BACKWARD_COMPATIBLE_SAFE",
+            "is_contract_gate_compliant": True,
+            "recommendations": [],
+        }
+
+    breaking_change_count = 0
+    unversioned_breaking_change_ids: list[str] = []
+    failed_contract_test_ids: list[str] = []
+    insufficient_deprecation_window_ids: list[str] = []
+
+    for ep in valid_endpoints:
+        eid = ep["_eid"]
+        removes_field = bool(ep.get("removes_required_response_field", False))
+        adds_param = bool(
+            ep.get("adds_mandatory_request_parameter_without_default", False)
+        )
+        bumps_major = bool(ep.get("bumps_major_api_version", False))
+        contract_passed = bool(ep.get("consumer_contract_tests_passed", True))
+        notice_days = int(
+            ep.get("deprecation_notice_days_provided", min_deprecation_notice_days)
+            if ep.get("deprecation_notice_days_provided") is not None
+            else min_deprecation_notice_days
+        )
+
+        is_breaking = removes_field or adds_param
+        if is_breaking:
+            breaking_change_count += 1
+            if not bumps_major:
+                unversioned_breaking_change_ids.append(eid)
+            if notice_days < min_deprecation_notice_days:
+                insufficient_deprecation_window_ids.append(eid)
+
+        if not contract_passed:
+            failed_contract_test_ids.append(eid)
+
+    recommendations: list[str] = []
+    if unversioned_breaking_change_ids:
+        recommendations.append(
+            f"Bump major API version or restore backward compatibility for breaking endpoint(s): {', '.join(unversioned_breaking_change_ids)}."
+        )
+    if failed_contract_test_ids:
+        recommendations.append(
+            f"Resolve failing consumer-driven contract tests before CCB sign-off on endpoint(s): {', '.join(failed_contract_test_ids)}."
+        )
+    if insufficient_deprecation_window_ids:
+        recommendations.append(
+            f"Extend consumer deprecation notice window to at least {min_deprecation_notice_days} days for breaking endpoint(s): {', '.join(insufficient_deprecation_window_ids)}."
+        )
+
+    if unversioned_breaking_change_ids or failed_contract_test_ids:
+        contract_governance_status = "BREAKING_BLOCKED"
+    elif insufficient_deprecation_window_ids:
+        contract_governance_status = "DEPRECATION_WINDOW_WARNING"
+    else:
+        contract_governance_status = "BACKWARD_COMPATIBLE_SAFE"
+
+    return {
+        "total_endpoints_evaluated": len(valid_endpoints),
+        "breaking_change_count": breaking_change_count,
+        "unversioned_breaking_change_ids": unversioned_breaking_change_ids,
+        "failed_contract_test_ids": failed_contract_test_ids,
+        "insufficient_deprecation_window_ids": insufficient_deprecation_window_ids,
+        "contract_governance_status": contract_governance_status,
+        "is_contract_gate_compliant": contract_governance_status
+        == "BACKWARD_COMPATIBLE_SAFE",
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.audit_api_backward_compatibility_and_contract_versioning = staticmethod(
+    audit_api_backward_compatibility_and_contract_versioning
 )

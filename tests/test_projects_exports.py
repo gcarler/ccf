@@ -8439,3 +8439,135 @@ def test_audit_executive_report_esg_carbon_footprint_empty_and_binding():
         in mod.__all__
     )
 
+
+def test_audit_executive_report_dora_four_keys_and_delivery_stability_low_performing_at_risk():
+    from backend.services.project_export_service import (
+        audit_executive_report_dora_four_keys_and_delivery_stability,
+    )
+
+    res = audit_executive_report_dora_four_keys_and_delivery_stability(
+        [
+            {
+                "service_id": "SVC-AUTH",
+                "deployments_per_week": 1.0,
+                "lead_time_for_changes_hours": 48.0,
+                "change_failure_rate_pct": 25.0,
+                "mean_time_to_restore_hours": 3.5,
+            },
+            {
+                "service_id": "SVC-PAY",
+                "deployments_per_week": 10.0,
+                "lead_time_for_changes_hours": 4.0,
+                "change_failure_rate_pct": 5.0,
+                "mean_time_to_restore_hours": 0.5,
+            },
+        ],
+        min_deploys_per_week=3.0,
+        max_lead_time_hours=24.0,
+        max_change_failure_rate_pct=15.0,
+        max_mttr_hours=1.0,
+    )
+    assert res["total_services_evaluated"] == 2
+    assert res["elite_performer_service_ids"] == ["SVC-PAY"]
+    assert res["low_throughput_service_ids"] == ["SVC-AUTH"]
+    assert res["instability_breach_service_ids"] == ["SVC-AUTH"]
+    assert res["elite_performer_ratio_pct"] == 50.0
+    assert res["dora_maturity_tier"] == "LOW_PERFORMING_AT_RISK"
+    assert res["is_dora_compliant"] is False
+
+
+def test_audit_executive_report_dora_four_keys_and_delivery_stability_unstable_and_low_velocity():
+    from backend.services.project_export_service import (
+        audit_executive_report_dora_four_keys_and_delivery_stability,
+    )
+
+    unstable = audit_executive_report_dora_four_keys_and_delivery_stability(
+        [
+            {
+                "service_id": "SVC-FAST-BROKEN",
+                "deployments_per_week": 15.0,
+                "lead_time_for_changes_hours": 2.0,
+                "change_failure_rate_pct": 30.0,
+                "mean_time_to_restore_hours": 0.5,
+            }
+        ]
+    )
+    assert unstable["low_throughput_service_ids"] == []
+    assert unstable["instability_breach_service_ids"] == ["SVC-FAST-BROKEN"]
+    assert unstable["dora_maturity_tier"] == "HIGH_THROUGHPUT_UNSTABLE"
+    assert unstable["is_dora_compliant"] is False
+
+    slow = audit_executive_report_dora_four_keys_and_delivery_stability(
+        [
+            {
+                "service_id": "SVC-SLOW-STABLE",
+                "deployments_per_week": 0.5,
+                "lead_time_for_changes_hours": 72.0,
+                "change_failure_rate_pct": 2.0,
+                "mean_time_to_restore_hours": 0.2,
+            }
+        ]
+    )
+    assert slow["low_throughput_service_ids"] == ["SVC-SLOW-STABLE"]
+    assert slow["instability_breach_service_ids"] == []
+    assert slow["dora_maturity_tier"] == "STABLE_LOW_VELOCITY"
+    assert slow["is_dora_compliant"] is False
+
+
+def test_audit_executive_report_dora_four_keys_and_delivery_stability_elite_and_empty():
+    from backend.services.project_export_service import (
+        audit_executive_report_dora_four_keys_and_delivery_stability,
+    )
+
+    empty = audit_executive_report_dora_four_keys_and_delivery_stability(
+        [{"service_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_services_evaluated"] == 0
+    assert empty["elite_performer_ratio_pct"] == 100.0
+    assert empty["dora_maturity_tier"] == "ELITE"
+    assert empty["is_dora_compliant"] is True
+
+    elite = audit_executive_report_dora_four_keys_and_delivery_stability(
+        [
+            {
+                "service_id": "SVC-CORE",
+                "deployments_per_week": 12.0,
+                "lead_time_for_changes_hours": 6.0,
+                "change_failure_rate_pct": 4.0,
+                "mean_time_to_restore_hours": 0.4,
+            }
+        ]
+    )
+    assert elite["total_services_evaluated"] == 1
+    assert elite["elite_performer_service_ids"] == ["SVC-CORE"]
+    assert elite["elite_performer_ratio_pct"] == 100.0
+    assert elite["dora_maturity_tier"] == "ELITE"
+    assert elite["is_dora_compliant"] is True
+
+
+def test_audit_executive_report_dora_four_keys_and_delivery_stability_staticmethod_and_dunder_all():
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_dora_four_keys_and_delivery_stability,
+    )
+
+    sample = [
+        {
+            "service_id": "SVC-99",
+            "deployments_per_week": 5.0,
+            "lead_time_for_changes_hours": 10.0,
+            "change_failure_rate_pct": 5.0,
+            "mean_time_to_restore_hours": 0.5,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_dora_four_keys_and_delivery_stability(
+            sample
+        )
+        == audit_executive_report_dora_four_keys_and_delivery_stability(sample)
+    )
+    assert (
+        "audit_executive_report_dora_four_keys_and_delivery_stability"
+        in mod.__all__
+    )
