@@ -5754,3 +5754,118 @@ def test_audit_markdown_admonition_callout_and_actionability_hygiene_empty_and_b
     assert (
         "audit_markdown_admonition_callout_and_actionability_hygiene" in mod.__all__
     )
+
+
+def test_audit_markdown_heading_anchor_slug_and_fragment_hygiene_clean():
+    """Caso 1: Encabezados únicos y enlaces internos #fragment que resuelven correctamente -> CLEAN."""
+    from backend.services.anydoc_service import (
+        audit_markdown_heading_anchor_slug_and_fragment_hygiene,
+    )
+
+    md = (
+        "# Manual de Arquitectura\n\n"
+        "Ver [Requisitos de Red](#requisitos-de-red) y [Seguridad API](#seguridad-api).\n\n"
+        "```markdown\n"
+        "# Requisitos de Red\n"
+        "[Enlace ignorado en bloque de código](#no-existe)\n"
+        "```\n\n"
+        "## Requisitos de Red\n"
+        "Detalle de topología.\n\n"
+        "## Seguridad API!\n"
+        "Detalle de OAuth2.\n"
+    )
+    res = audit_markdown_heading_anchor_slug_and_fragment_hygiene(md)
+    assert res["total_headings"] == 3
+    assert res["duplicate_heading_slugs"] == []
+    assert res["total_internal_fragment_links"] == 2
+    assert res["broken_fragment_targets"] == []
+    assert res["anchor_hygiene_status"] == "CLEAN"
+    assert res["is_anchor_hygiene_clean"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_markdown_heading_anchor_slug_and_fragment_hygiene_warning():
+    """Caso 2: Slugs de encabezado duplicados pero todos los enlaces #fragment resuelven (incluyendo -1) -> WARNING."""
+    from backend.services.anydoc_service import (
+        audit_markdown_heading_anchor_slug_and_fragment_hygiene,
+    )
+
+    md = (
+        "# Guía de Servicios\n\n"
+        "Ir a [Configuración Inicial](#configuracin-1).\n\n"
+        "## Configuración\n"
+        "Módulo A.\n\n"
+        "## Configuración\n"
+        "Módulo B.\n"
+    )
+    # Con soporte unicode o ascii: probemos con un slug sin tildes ambiguas
+    md_ascii = (
+        "# Guia de Servicios\n\n"
+        "Ir a [Configuracion B](#configuracion-1).\n\n"
+        "## Configuracion\n"
+        "Modulo A.\n\n"
+        "## Configuracion\n"
+        "Modulo B.\n"
+    )
+    res = audit_markdown_heading_anchor_slug_and_fragment_hygiene(md_ascii)
+    assert res["total_headings"] == 3
+    assert res["duplicate_heading_slugs"] == ["configuracion"]
+    assert res["total_internal_fragment_links"] == 1
+    assert res["broken_fragment_targets"] == []
+    assert res["anchor_hygiene_status"] == "WARNING"
+    assert res["is_anchor_hygiene_clean"] is False
+    assert len(res["recommendations"]) >= 1
+
+
+def test_audit_markdown_heading_anchor_slug_and_fragment_hygiene_critical():
+    """Caso 3: Enlaces internos #fragment rotos o vacíos (#) -> CRITICAL."""
+    from backend.services.anydoc_service import (
+        audit_markdown_heading_anchor_slug_and_fragment_hygiene,
+    )
+
+    md = (
+        "# Plan de Contingencia\n\n"
+        "Consulte [Fase de Rollback](#fase-de-rollback) o [Vacío](#).\n\n"
+        "## Fase de Deteccion\n"
+        "Alertas tempranas.\n"
+    )
+    res = audit_markdown_heading_anchor_slug_and_fragment_hygiene(md)
+    assert res["total_headings"] == 2
+    assert res["total_internal_fragment_links"] == 2
+    assert res["broken_fragment_targets"] == ["#fase-de-rollback", "#"]
+    assert res["anchor_hygiene_status"] == "CRITICAL"
+    assert res["is_anchor_hygiene_clean"] is False
+    assert len(res["recommendations"]) >= 1
+
+
+def test_audit_markdown_heading_anchor_slug_and_fragment_hygiene_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en AnyDocService, AnydocService y __all__."""
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_heading_anchor_slug_and_fragment_hygiene,
+    )
+
+    for payload in (None, "", "   \n"):
+        empty = audit_markdown_heading_anchor_slug_and_fragment_hygiene(payload)  # type: ignore[arg-type]
+        assert empty["total_headings"] == 0
+        assert empty["duplicate_heading_slugs"] == []
+        assert empty["total_internal_fragment_links"] == 0
+        assert empty["broken_fragment_targets"] == []
+        assert empty["anchor_hygiene_status"] == "CLEAN"
+        assert empty["is_anchor_hygiene_clean"] is True
+        assert empty["recommendations"] == []
+
+    sample = "# Seccion Uno\n\nVer [Uno](#seccion-uno).\n"
+    assert (
+        AnyDocService.audit_markdown_heading_anchor_slug_and_fragment_hygiene(sample)
+        == audit_markdown_heading_anchor_slug_and_fragment_hygiene(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_heading_anchor_slug_and_fragment_hygiene(sample)
+        == audit_markdown_heading_anchor_slug_and_fragment_hygiene(sample)
+    )
+    assert (
+        "audit_markdown_heading_anchor_slug_and_fragment_hygiene" in mod.__all__
+    )

@@ -3024,6 +3024,7 @@ __all__ = [
     "audit_markdown_mermaid_diagram_syntax_hygiene",
     "audit_markdown_code_fence_and_secret_leak_hygiene",
     "audit_markdown_admonition_callout_and_actionability_hygiene",
+    "audit_markdown_heading_anchor_slug_and_fragment_hygiene",
     "AnydocService",
 ]
 
@@ -6886,4 +6887,113 @@ AnyDocService.audit_markdown_admonition_callout_and_actionability_hygiene = stat
 )
 AnydocService.audit_markdown_admonition_callout_and_actionability_hygiene = staticmethod(
     audit_markdown_admonition_callout_and_actionability_hygiene
+)
+
+
+def audit_markdown_heading_anchor_slug_and_fragment_hygiene(
+    markdown_text: str,
+) -> dict[str, Any]:
+    """Audit PMI PMBOK §4.4 Markdown ATX heading anchor slug collisions and internal #fragment link resolution."""
+    if not isinstance(markdown_text, str) or not markdown_text.strip():
+        return {
+            "total_headings": 0,
+            "duplicate_heading_slugs": [],
+            "total_internal_fragment_links": 0,
+            "broken_fragment_targets": [],
+            "anchor_hygiene_status": "CLEAN",
+            "is_anchor_hygiene_clean": True,
+            "recommendations": [],
+        }
+
+    fence_re = re.compile(r"^\s*(`{3,}|~{3,})")
+    heading_re = re.compile(r"^\s*#{1,6}\s+(.+?)\s*#*\s*$")
+    fragment_link_re = re.compile(r"(?<!!)\[[^\]]*\]\(\s*(#[^)\s]*)\s*\)")
+
+    non_fenced_lines: list[str] = []
+    in_fence = False
+    fence_marker = ""
+
+    for line in markdown_text.splitlines():
+        m_fence = fence_re.match(line)
+        if m_fence:
+            marker_char = m_fence.group(1)[0]
+            if not in_fence:
+                in_fence = True
+                fence_marker = marker_char
+            elif marker_char == fence_marker:
+                in_fence = False
+                fence_marker = ""
+            continue
+        if not in_fence:
+            non_fenced_lines.append(line)
+
+    total_headings = 0
+    slug_counts: dict[str, int] = {}
+    duplicate_heading_slugs: list[str] = []
+    valid_slugs: set[str] = set()
+
+    for line in non_fenced_lines:
+        h_match = heading_re.match(line)
+        if not h_match:
+            continue
+        total_headings += 1
+        raw_title = h_match.group(1).strip().lower()
+        cleaned = re.sub(r"[^\w\s-]", "", raw_title).replace("_", "")
+        base_slug = re.sub(r"\s+", "-", cleaned).strip()
+        if not base_slug:
+            continue
+
+        occurrence = slug_counts.get(base_slug, 0)
+        slug_counts[base_slug] = occurrence + 1
+        if occurrence == 0:
+            valid_slugs.add(base_slug)
+        else:
+            valid_slugs.add(f"{base_slug}-{occurrence}")
+            if base_slug not in duplicate_heading_slugs:
+                duplicate_heading_slugs.append(base_slug)
+
+    total_internal_fragment_links = 0
+    broken_fragment_targets: list[str] = []
+
+    for line in non_fenced_lines:
+        for l_match in fragment_link_re.finditer(line):
+            raw_target = l_match.group(1).strip()
+            total_internal_fragment_links += 1
+            slug_target = raw_target[1:].strip().lower()
+            if not slug_target or slug_target not in valid_slugs:
+                broken_fragment_targets.append(raw_target)
+
+    recommendations: list[str] = []
+    if broken_fragment_targets:
+        recommendations.append(
+            f"Fix broken or empty internal fragment links so they resolve to existing ATX headings: {', '.join(broken_fragment_targets)}."
+        )
+    if duplicate_heading_slugs:
+        recommendations.append(
+            f"Disambiguate duplicate ATX heading titles to prevent anchor slug collisions: {', '.join(duplicate_heading_slugs)}."
+        )
+
+    if broken_fragment_targets:
+        anchor_hygiene_status = "CRITICAL"
+    elif duplicate_heading_slugs:
+        anchor_hygiene_status = "WARNING"
+    else:
+        anchor_hygiene_status = "CLEAN"
+
+    return {
+        "total_headings": total_headings,
+        "duplicate_heading_slugs": duplicate_heading_slugs,
+        "total_internal_fragment_links": total_internal_fragment_links,
+        "broken_fragment_targets": broken_fragment_targets,
+        "anchor_hygiene_status": anchor_hygiene_status,
+        "is_anchor_hygiene_clean": anchor_hygiene_status == "CLEAN",
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_markdown_heading_anchor_slug_and_fragment_hygiene = staticmethod(
+    audit_markdown_heading_anchor_slug_and_fragment_hygiene
+)
+AnydocService.audit_markdown_heading_anchor_slug_and_fragment_hygiene = staticmethod(
+    audit_markdown_heading_anchor_slug_and_fragment_hygiene
 )

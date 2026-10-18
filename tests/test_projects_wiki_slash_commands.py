@@ -7089,3 +7089,149 @@ def test_audit_wiki_slo_error_budget_and_runbook_linkage_empty_and_binding():
     assert (
         "audit_wiki_slo_error_budget_and_runbook_linkage" in mod.__all__
     )
+
+
+def test_audit_wiki_chaos_gameday_resilience_and_action_closure_resilient():
+    """Caso 1: Experimentos GameDay con hipótesis, abort condition, recientes y validados -> RESILIENT."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_chaos_gameday_resilience_and_action_closure,
+    )
+
+    experiments = [
+        {
+            "experiment_id": "CHAOS-AZ-FAILOVER",
+            "steady_state_hypothesis_defined": True,
+            "abort_stop_condition_defined": True,
+            "days_since_executed": 30,
+            "hypothesis_validated": True,
+            "open_remediation_items": 0,
+            "oldest_remediation_age_days": 0,
+        },
+        {
+            "experiment_id": "CHAOS-REDIS-LATENCY",
+            "steady_state_hypothesis_defined": True,
+            "abort_stop_condition_defined": True,
+            "days_since_executed": 45,
+            "hypothesis_validated": False,
+            "open_remediation_items": 2,
+            "oldest_remediation_age_days": 10,
+        },
+    ]
+    res = audit_wiki_chaos_gameday_resilience_and_action_closure(
+        experiments, max_days_between_gamedays=90, max_remediation_age_days=30
+    )
+    assert res["total_experiments"] == 2
+    assert res["unsafe_experiment_ids"] == []
+    assert res["stale_gameday_experiment_ids"] == []
+    assert res["unmitigated_failure_experiment_ids"] == []
+    assert res["untracked_failure_experiment_ids"] == []
+    assert res["gameday_governance_status"] == "RESILIENT"
+    assert res["is_gameday_compliant"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_wiki_chaos_gameday_resilience_and_action_closure_warning():
+    """Caso 2: GameDay desactualizado (>90 días) pero seguro y con hipótesis validada -> WARNING."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_chaos_gameday_resilience_and_action_closure,
+    )
+
+    experiments = [
+        {
+            "experiment_id": "CHAOS-DB-REPLICA",
+            "steady_state_hypothesis_defined": True,
+            "abort_stop_condition_defined": True,
+            "days_since_executed": 125,
+            "hypothesis_validated": True,
+            "open_remediation_items": 0,
+            "oldest_remediation_age_days": 0,
+        }
+    ]
+    res = audit_wiki_chaos_gameday_resilience_and_action_closure(
+        experiments, max_days_between_gamedays=90, max_remediation_age_days=30
+    )
+    assert res["total_experiments"] == 1
+    assert res["unsafe_experiment_ids"] == []
+    assert res["stale_gameday_experiment_ids"] == ["CHAOS-DB-REPLICA"]
+    assert res["unmitigated_failure_experiment_ids"] == []
+    assert res["untracked_failure_experiment_ids"] == []
+    assert res["gameday_governance_status"] == "WARNING"
+    assert res["is_gameday_compliant"] is False
+    assert len(res["recommendations"]) == 1
+
+
+def test_audit_wiki_chaos_gameday_resilience_and_action_closure_critical():
+    """Caso 3: Experimento sin abort condition, fallo con remediación vencida y fallo sin remediación -> CRITICAL."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_chaos_gameday_resilience_and_action_closure,
+    )
+
+    experiments = [
+        {
+            "experiment_id": "CHAOS-UNSAFE",
+            "steady_state_hypothesis_defined": True,
+            "abort_stop_condition_defined": False,
+            "days_since_executed": 15,
+            "hypothesis_validated": False,
+            "open_remediation_items": 0,
+            "oldest_remediation_age_days": 0,
+        },
+        {
+            "experiment_id": "CHAOS-OVERDUE-FIX",
+            "steady_state_hypothesis_defined": True,
+            "abort_stop_condition_defined": True,
+            "days_since_executed": 50,
+            "hypothesis_validated": False,
+            "open_remediation_items": 3,
+            "oldest_remediation_age_days": 42,
+        },
+    ]
+    res = audit_wiki_chaos_gameday_resilience_and_action_closure(
+        experiments, max_days_between_gamedays=90, max_remediation_age_days=30
+    )
+    assert res["total_experiments"] == 2
+    assert res["unsafe_experiment_ids"] == ["CHAOS-UNSAFE"]
+    assert res["unmitigated_failure_experiment_ids"] == ["CHAOS-OVERDUE-FIX"]
+    assert res["untracked_failure_experiment_ids"] == ["CHAOS-UNSAFE"]
+    assert res["gameday_governance_status"] == "CRITICAL"
+    assert res["is_gameday_compliant"] is False
+    assert len(res["recommendations"]) >= 3
+
+
+def test_audit_wiki_chaos_gameday_resilience_and_action_closure_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en WikiPMIService + __all__."""
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_chaos_gameday_resilience_and_action_closure,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_wiki_chaos_gameday_resilience_and_action_closure(payload)  # type: ignore[arg-type]
+        assert empty["total_experiments"] == 0
+        assert empty["unsafe_experiment_ids"] == []
+        assert empty["stale_gameday_experiment_ids"] == []
+        assert empty["unmitigated_failure_experiment_ids"] == []
+        assert empty["untracked_failure_experiment_ids"] == []
+        assert empty["gameday_governance_status"] == "RESILIENT"
+        assert empty["is_gameday_compliant"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "experiment_id": "CHAOS-99",
+            "steady_state_hypothesis_defined": True,
+            "abort_stop_condition_defined": True,
+            "days_since_executed": 10,
+            "hypothesis_validated": True,
+            "open_remediation_items": 0,
+            "oldest_remediation_age_days": 0,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_chaos_gameday_resilience_and_action_closure(sample)
+        == audit_wiki_chaos_gameday_resilience_and_action_closure(sample)
+    )
+    assert (
+        "audit_wiki_chaos_gameday_resilience_and_action_closure" in mod.__all__
+    )

@@ -2519,6 +2519,7 @@ __all__ = [
     "audit_wiki_onboarding_playbook_and_knowledge_transfer_readiness",
     "audit_wiki_communication_matrix_cadence_and_escalation",
     "audit_wiki_slo_error_budget_and_runbook_linkage",
+    "audit_wiki_chaos_gameday_resilience_and_action_closure",
     "WikiPMIService",
 ]
 
@@ -5523,4 +5524,108 @@ def audit_wiki_slo_error_budget_and_runbook_linkage(
 
 WikiPMIService.audit_wiki_slo_error_budget_and_runbook_linkage = staticmethod(
     audit_wiki_slo_error_budget_and_runbook_linkage
+)
+
+
+def audit_wiki_chaos_gameday_resilience_and_action_closure(
+    experiments: list[dict[str, Any]],
+    *,
+    max_days_between_gamedays: int = 90,
+    max_remediation_age_days: int = 30,
+) -> dict[str, Any]:
+    """Audit PMI PMBOK §11.2 & §8.2 Chaos Engineering / GameDay resilience experiments and remediation action closure."""
+    unsafe_experiment_ids: list[str] = []
+    stale_gameday_experiment_ids: list[str] = []
+    unmitigated_failure_experiment_ids: list[str] = []
+    untracked_failure_experiment_ids: list[str] = []
+    recommendations: list[str] = []
+
+    valid_experiments = (
+        [
+            e
+            for e in experiments
+            if isinstance(e, dict) and str(e.get("experiment_id", "")).strip()
+        ]
+        if isinstance(experiments, list)
+        else []
+    )
+
+    for exp in valid_experiments:
+        experiment_id = str(exp.get("experiment_id", "")).strip()
+        steady_state_hypothesis_defined = bool(
+            exp.get("steady_state_hypothesis_defined", False)
+        )
+        abort_stop_condition_defined = bool(
+            exp.get("abort_stop_condition_defined", False)
+        )
+        days_since_executed = int(exp.get("days_since_executed", 0) or 0)
+        hypothesis_validated = bool(exp.get("hypothesis_validated", False))
+        open_remediation_items = int(exp.get("open_remediation_items", 0) or 0)
+        oldest_remediation_age_days = int(
+            exp.get("oldest_remediation_age_days", 0) or 0
+        )
+        remediation_completed = bool(exp.get("remediation_completed", False))
+
+        if not steady_state_hypothesis_defined or not abort_stop_condition_defined:
+            unsafe_experiment_ids.append(experiment_id)
+
+        if days_since_executed > max_days_between_gamedays:
+            stale_gameday_experiment_ids.append(experiment_id)
+
+        if (
+            not hypothesis_validated
+            and open_remediation_items > 0
+            and oldest_remediation_age_days > max_remediation_age_days
+        ):
+            unmitigated_failure_experiment_ids.append(experiment_id)
+
+        if (
+            not hypothesis_validated
+            and open_remediation_items == 0
+            and not remediation_completed
+        ):
+            untracked_failure_experiment_ids.append(experiment_id)
+
+    if unsafe_experiment_ids:
+        recommendations.append(
+            f"Define explicit steady-state hypotheses and automated abort/stop conditions for GameDay experiments: {', '.join(unsafe_experiment_ids)}."
+        )
+    if unmitigated_failure_experiment_ids:
+        recommendations.append(
+            f"Close overdue resilience remediation items (>{max_remediation_age_days}d) from failed GameDays: {', '.join(unmitigated_failure_experiment_ids)}."
+        )
+    if untracked_failure_experiment_ids:
+        recommendations.append(
+            f"Create tracked CAPA/remediation items for unvalidated GameDay hypotheses: {', '.join(untracked_failure_experiment_ids)}."
+        )
+    if stale_gameday_experiment_ids:
+        recommendations.append(
+            f"Re-run stale Chaos Engineering GameDay scenarios (>{max_days_between_gamedays}d since execution): {', '.join(stale_gameday_experiment_ids)}."
+        )
+
+    if (
+        unsafe_experiment_ids
+        or unmitigated_failure_experiment_ids
+        or untracked_failure_experiment_ids
+    ):
+        gameday_governance_status = "CRITICAL"
+    elif stale_gameday_experiment_ids:
+        gameday_governance_status = "WARNING"
+    else:
+        gameday_governance_status = "RESILIENT"
+
+    return {
+        "total_experiments": len(valid_experiments),
+        "unsafe_experiment_ids": unsafe_experiment_ids,
+        "stale_gameday_experiment_ids": stale_gameday_experiment_ids,
+        "unmitigated_failure_experiment_ids": unmitigated_failure_experiment_ids,
+        "untracked_failure_experiment_ids": untracked_failure_experiment_ids,
+        "gameday_governance_status": gameday_governance_status,
+        "is_gameday_compliant": gameday_governance_status == "RESILIENT",
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_chaos_gameday_resilience_and_action_closure = staticmethod(
+    audit_wiki_chaos_gameday_resilience_and_action_closure
 )
