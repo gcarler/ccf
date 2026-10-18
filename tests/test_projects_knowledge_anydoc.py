@@ -4059,3 +4059,91 @@ def test_audit_markdown_alert_admonition_hygiene_scope_and_proxy():
         AnyDocService.audit_markdown_alert_admonition_hygiene(sample)
         == audit_markdown_alert_admonition_hygiene(sample)
     )
+
+
+def test_audit_markdown_footnote_reference_coherence_compliant():
+    """Cumple cuando todas las notas al pie referenciadas están definidas una sola vez con contenido y sin huérfanas."""
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_footnote_reference_coherence,
+    )
+
+    md = (
+        "El estándar PMBOK[^pmbok7] exige trazabilidad documental[^trace-1].\n\n"
+        "```markdown\n"
+        "Referencia ignorada en bloque de código[^ghost_code]\n"
+        "[^dup_in_code]: Definición ignorada\n"
+        "```\n\n"
+        "[^PMBOK7]: Project Management Institute, Séptima Edición.\n"
+        "[^trace-1]: Matriz de trazabilidad de requisitos §5.2.\n"
+    )
+    res = audit_markdown_footnote_reference_coherence(md)
+    assert res == {
+        "total_definitions": 2,
+        "total_inline_references": 2,
+        "duplicate_footnote_definition_ids": [],
+        "empty_footnote_definition_ids": [],
+        "undefined_footnote_reference_ids": [],
+        "unreferenced_orphan_footnote_ids": [],
+        "is_footnote_hygiene_compliant": True,
+    }
+    assert AnyDocService.audit_markdown_footnote_reference_coherence(md) == res
+
+
+def test_audit_markdown_footnote_reference_undefined_and_orphan():
+    """Detecta referencias inline sin definición y definiciones huérfanas nunca citadas en el texto."""
+    from backend.services.anydoc_service import (
+        audit_markdown_footnote_reference_coherence,
+    )
+
+    md = (
+        "Texto con cita inexistente[^missing_ref] y otra válida[^valid_ref].\n\n"
+        "[^valid_ref]: Fuente oficial verificada.\n"
+        "[^orphan_def]: Nota al pie que nunca fue citada en ningún párrafo.\n"
+    )
+    res = audit_markdown_footnote_reference_coherence(md)
+    assert res["total_definitions"] == 2
+    assert res["total_inline_references"] == 2
+    assert res["undefined_footnote_reference_ids"] == ["missing_ref"]
+    assert res["unreferenced_orphan_footnote_ids"] == ["orphan_def"]
+    assert res["is_footnote_hygiene_compliant"] is False
+
+
+def test_audit_markdown_footnote_reference_duplicate_and_empty_definitions():
+    """Detecta definiciones duplicadas (case-insensitive) y definiciones con cuerpo vacío."""
+    from backend.services.anydoc_service import (
+        audit_markdown_footnote_reference_coherence,
+    )
+
+    md = (
+        "Cita uno[^fn1] y cita vacía[^empty_fn].\n\n"
+        "[^fn1]: Primera definición válida.\n"
+        "[^FN1]: Segunda definición duplicada.\n"
+        "[^empty_fn]:    \n"
+    )
+    res = audit_markdown_footnote_reference_coherence(md)
+    assert res["total_definitions"] == 3
+    assert res["duplicate_footnote_definition_ids"] == ["fn1"]
+    assert res["empty_footnote_definition_ids"] == ["empty_fn"]
+    assert res["is_footnote_hygiene_compliant"] is False
+
+
+def test_audit_markdown_footnote_reference_coherence_edge_cases_and_export():
+    """Verifica manejo de entradas vacías o no string y exportación en __all__."""
+    import backend.services.anydoc_service as _m
+    from backend.services.anydoc_service import (
+        audit_markdown_footnote_reference_coherence,
+    )
+
+    assert "audit_markdown_footnote_reference_coherence" in _m.__all__
+    for empty_in in ("", "   \n  ", None, 123):
+        assert audit_markdown_footnote_reference_coherence(empty_in) == {
+            "total_definitions": 0,
+            "total_inline_references": 0,
+            "duplicate_footnote_definition_ids": [],
+            "empty_footnote_definition_ids": [],
+            "undefined_footnote_reference_ids": [],
+            "unreferenced_orphan_footnote_ids": [],
+            "is_footnote_hygiene_compliant": True,
+        }
+

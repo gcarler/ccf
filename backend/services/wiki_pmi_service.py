@@ -2504,6 +2504,7 @@ __all__ = [
     "audit_wiki_vendor_sla_and_penalty_clause_governance",
     "audit_wiki_cost_of_quality_prevention_vs_failure_balance",
     "audit_wiki_communication_confidentiality_and_channel_security",
+    "audit_wiki_lessons_learned_actionable_opa_transfer",
     "WikiPMIService",
 ]
 
@@ -3825,3 +3826,89 @@ def audit_wiki_communication_confidentiality_and_channel_security(
 WikiPMIService.audit_wiki_communication_confidentiality_and_channel_security = staticmethod(
     audit_wiki_communication_confidentiality_and_channel_security
 )
+
+
+def audit_wiki_lessons_learned_actionable_opa_transfer(
+    lessons_entries: list[dict[str, object]],
+) -> dict[str, object]:
+    """PMBOK §4.4 / §12.3 — auditoría de recomendaciones accionables y transferencia a OPA de lecciones aprendidas."""
+    if not isinstance(lessons_entries, Sequence) or isinstance(
+        lessons_entries, (str, bytes)
+    ):
+        return {
+            "total_lessons": 0,
+            "captured_only_at_closure_anti_pattern": False,
+            "invalid_phase_lesson_ids": [],
+            "vague_or_incomplete_lesson_ids": [],
+            "untransferred_opa_lesson_ids": [],
+            "is_lessons_learned_governance_compliant": True,
+        }
+
+    valid_phases = {
+        "initiating",
+        "planning",
+        "executing",
+        "monitoring_controlling",
+        "closing",
+    }
+
+    total_lessons = 0
+    invalid_phase_lesson_ids: list[str] = []
+    vague_or_incomplete_lesson_ids: list[str] = []
+    untransferred_opa_lesson_ids: list[str] = []
+    valid_phase_list: list[str] = []
+
+    for item in lessons_entries:
+        if not isinstance(item, Mapping):
+            continue
+        raw_id = item.get("lesson_id")
+        if raw_id is None:
+            continue
+        lesson_id = str(raw_id).strip()
+        if not lesson_id:
+            continue
+
+        total_lessons += 1
+
+        phase = str(item.get("phase_captured") or "").strip().lower()
+        if phase not in valid_phases:
+            invalid_phase_lesson_ids.append(lesson_id)
+            continue
+
+        valid_phase_list.append(phase)
+
+        rc_context = str(item.get("root_cause_context") or "").strip()
+        recommendation = str(item.get("actionable_recommendation") or "").strip()
+        if len(rc_context) < 10 or len(recommendation) < 10:
+            vague_or_incomplete_lesson_ids.append(lesson_id)
+
+        opa_updated = bool(item.get("opa_template_updated", False))
+        raw_owner = item.get("assigned_follow_up_owner_id")
+        owner_id = str(raw_owner).strip() if raw_owner is not None else ""
+        if not opa_updated and not owner_id:
+            untransferred_opa_lesson_ids.append(lesson_id)
+
+    captured_only_at_closure_anti_pattern = (
+        len(valid_phase_list) >= 3
+        and all(p == "closing" for p in valid_phase_list)
+    )
+
+    return {
+        "total_lessons": total_lessons,
+        "captured_only_at_closure_anti_pattern": captured_only_at_closure_anti_pattern,
+        "invalid_phase_lesson_ids": invalid_phase_lesson_ids,
+        "vague_or_incomplete_lesson_ids": vague_or_incomplete_lesson_ids,
+        "untransferred_opa_lesson_ids": untransferred_opa_lesson_ids,
+        "is_lessons_learned_governance_compliant": (
+            len(invalid_phase_lesson_ids) == 0
+            and len(vague_or_incomplete_lesson_ids) == 0
+            and len(untransferred_opa_lesson_ids) == 0
+            and not captured_only_at_closure_anti_pattern
+        ),
+    }
+
+
+WikiPMIService.audit_wiki_lessons_learned_actionable_opa_transfer = staticmethod(
+    audit_wiki_lessons_learned_actionable_opa_transfer
+)
+

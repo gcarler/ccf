@@ -4833,3 +4833,134 @@ def test_audit_wiki_communication_confidentiality_invalid_and_export():
                 "is_communication_security_compliant": True,
             }
         )
+
+
+def test_audit_wiki_lessons_learned_actionable_opa_transfer_compliant():
+    """Cumple cuando las lecciones se capturan a lo largo de varias fases, tienen contexto/recomendación detallada y transferencia a OPA."""
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_lessons_learned_actionable_opa_transfer,
+    )
+
+    entries = [
+        {
+            "lesson_id": "LL-PLAN-01",
+            "phase_captured": "planning",
+            "root_cause_context": "Estimación omitió tiempos de homologación regulatoria externa.",
+            "actionable_recommendation": "Incluir hito obligatorio de revisión legal en checklist de cronograma.",
+            "opa_template_updated": True,
+            "assigned_follow_up_owner_id": None,
+        },
+        {
+            "lesson_id": "LL-EXEC-02",
+            "phase_captured": "executing",
+            "root_cause_context": "Ambientes de staging compartidos generaron bloqueos entre células.",
+            "actionable_recommendation": "Aprovisionar entornos efímeros por PR en pipeline CI/CD.",
+            "opa_template_updated": False,
+            "assigned_follow_up_owner_id": "USR-DEVOPS-01",
+        },
+        {
+            "lesson_id": "LL-CLOSE-03",
+            "phase_captured": "closing",
+            "root_cause_context": "Transferencia a soporte requirió sesiones adicionales de arquitectura.",
+            "actionable_recommendation": "Incorporar plantilla de runbook operativo desde la fase de ejecución.",
+            "opa_template_updated": True,
+            "assigned_follow_up_owner_id": "USR-PMO-02",
+        },
+    ]
+    res = audit_wiki_lessons_learned_actionable_opa_transfer(entries)
+    assert res == {
+        "total_lessons": 3,
+        "captured_only_at_closure_anti_pattern": False,
+        "invalid_phase_lesson_ids": [],
+        "vague_or_incomplete_lesson_ids": [],
+        "untransferred_opa_lesson_ids": [],
+        "is_lessons_learned_governance_compliant": True,
+    }
+    assert WikiPMIService.audit_wiki_lessons_learned_actionable_opa_transfer(entries) == res
+
+
+def test_audit_wiki_lessons_learned_actionable_captured_only_at_closure_anti_pattern():
+    """Detecta el anti-patrón PMBOK §4.4 cuando >= 3 lecciones válidas se registran únicamente al cierre."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_lessons_learned_actionable_opa_transfer,
+    )
+
+    entries = [
+        {
+            "lesson_id": f"LL-CLOSE-0{i}",
+            "phase_captured": "CLOSING",
+            "root_cause_context": "Contexto de causa raíz suficientemente descriptivo y claro.",
+            "actionable_recommendation": "Recomendación accionable concreta para futuros proyectos.",
+            "opa_template_updated": True,
+        }
+        for i in range(1, 4)
+    ]
+    res = audit_wiki_lessons_learned_actionable_opa_transfer(entries)
+    assert res["total_lessons"] == 3
+    assert res["captured_only_at_closure_anti_pattern"] is True
+    assert res["is_lessons_learned_governance_compliant"] is False
+
+
+def test_audit_wiki_lessons_learned_actionable_vague_and_untransferred():
+    """Detecta lecciones con contexto/recomendación vaga (< 10 chars) y sin actualización OPA ni responsable."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_lessons_learned_actionable_opa_transfer,
+    )
+
+    res = audit_wiki_lessons_learned_actionable_opa_transfer(
+        [
+            {
+                "lesson_id": "LL-VAGUE",
+                "phase_captured": "executing",
+                "root_cause_context": "Corto",
+                "actionable_recommendation": "Mejorar",
+                "opa_template_updated": True,
+            },
+            {
+                "lesson_id": "LL-NO-OPA",
+                "phase_captured": "monitoring_controlling",
+                "root_cause_context": "Desviación en pruebas de integración por contratos desactualizados.",
+                "actionable_recommendation": "Automatizar pruebas de contrato OpenAPI en cada merge.",
+                "opa_template_updated": False,
+                "assigned_follow_up_owner_id": "   ",
+            },
+        ]
+    )
+    assert res["vague_or_incomplete_lesson_ids"] == ["LL-VAGUE"]
+    assert res["untransferred_opa_lesson_ids"] == ["LL-NO-OPA"]
+    assert res["is_lessons_learned_governance_compliant"] is False
+
+
+def test_audit_wiki_lessons_learned_actionable_invalid_phase_and_export():
+    """Detecta fases de ciclo de vida inválidas, maneja entradas malformadas y verifica exportación en __all__."""
+    import backend.services.wiki_pmi_service as _m
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_lessons_learned_actionable_opa_transfer,
+    )
+
+    assert "audit_wiki_lessons_learned_actionable_opa_transfer" in _m.__all__
+    res = audit_wiki_lessons_learned_actionable_opa_transfer(
+        [
+            {
+                "lesson_id": "LL-BAD-PHASE",
+                "phase_captured": "post_mortem_random",
+                "root_cause_context": "Contexto suficientemente largo para prueba.",
+                "actionable_recommendation": "Recomendación suficientemente larga para prueba.",
+                "opa_template_updated": True,
+            }
+        ]
+    )
+    assert res["invalid_phase_lesson_ids"] == ["LL-BAD-PHASE"]
+    assert res["is_lessons_learned_governance_compliant"] is False
+
+    for bad in (None, "not-a-seq", b"bytes", [{"lesson_id": "  "}]):
+        assert audit_wiki_lessons_learned_actionable_opa_transfer(bad) == {
+            "total_lessons": 0,
+            "captured_only_at_closure_anti_pattern": False,
+            "invalid_phase_lesson_ids": [],
+            "vague_or_incomplete_lesson_ids": [],
+            "untransferred_opa_lesson_ids": [],
+            "is_lessons_learned_governance_compliant": True,
+        }
+

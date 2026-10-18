@@ -3010,6 +3010,7 @@ __all__ = [
     "audit_markdown_acronym_and_glossary_consistency",
     "audit_markdown_task_list_action_item_hygiene",
     "audit_markdown_mermaid_diagram_syntax_and_complexity",
+    "audit_markdown_footnote_reference_coherence",
     "AnyDocService",
     "AnydocService",
 ]
@@ -4579,3 +4580,113 @@ def audit_markdown_alert_admonition_hygiene(
 AnyDocService.audit_markdown_alert_admonition_hygiene = staticmethod(
     audit_markdown_alert_admonition_hygiene
 )
+
+
+_FOOTNOTE_DEF_LINE_RE = re.compile(r"^\s*\[\^([A-Za-z0-9_-]+)\]:\s*(.*)$")
+_FOOTNOTE_INLINE_REF_RE = re.compile(r"\[\^([A-Za-z0-9_-]+)\](?!:)")
+
+
+def audit_markdown_footnote_reference_coherence(
+    markdown_text: str,
+) -> dict[str, object]:
+    """PMBOK §4.4 / §10.2 — coherencia bidireccional de referencias y definiciones de notas al pie en Markdown."""
+    if not isinstance(markdown_text, str) or not markdown_text.strip():
+        return {
+            "total_definitions": 0,
+            "total_inline_references": 0,
+            "duplicate_footnote_definition_ids": [],
+            "empty_footnote_definition_ids": [],
+            "undefined_footnote_reference_ids": [],
+            "unreferenced_orphan_footnote_ids": [],
+            "is_footnote_hygiene_compliant": True,
+        }
+
+    fence_re = re.compile(r"^\s*(`{3,}|~{3,})")
+    in_fence = False
+    fence_marker = ""
+
+    total_definitions = 0
+    total_inline_references = 0
+
+    defined_ids_order: list[str] = []
+    defined_counts: dict[str, int] = {}
+    duplicate_footnote_definition_ids: list[str] = []
+    empty_footnote_definition_ids: list[str] = []
+
+    referenced_ids_order: list[str] = []
+    referenced_set: set[str] = set()
+
+    for raw_line in markdown_text.splitlines():
+        m_fence = fence_re.match(raw_line)
+        if m_fence:
+            marker_char = m_fence.group(1)[0]
+            if not in_fence:
+                in_fence = True
+                fence_marker = marker_char
+            elif marker_char == fence_marker:
+                in_fence = False
+                fence_marker = ""
+            continue
+
+        if in_fence:
+            continue
+
+        m_def = _FOOTNOTE_DEF_LINE_RE.match(raw_line)
+        if m_def:
+            total_definitions += 1
+            fn_id = m_def.group(1).lower()
+            body = m_def.group(2)
+
+            if fn_id not in defined_counts:
+                defined_ids_order.append(fn_id)
+                defined_counts[fn_id] = 1
+            else:
+                defined_counts[fn_id] += 1
+                if fn_id not in duplicate_footnote_definition_ids:
+                    duplicate_footnote_definition_ids.append(fn_id)
+
+            if len(body.strip()) == 0 and fn_id not in empty_footnote_definition_ids:
+                empty_footnote_definition_ids.append(fn_id)
+
+            for m_ref in _FOOTNOTE_INLINE_REF_RE.finditer(body):
+                total_inline_references += 1
+                ref_id = m_ref.group(1).lower()
+                if ref_id not in referenced_set:
+                    referenced_set.add(ref_id)
+                    referenced_ids_order.append(ref_id)
+            continue
+
+        for m_ref in _FOOTNOTE_INLINE_REF_RE.finditer(raw_line):
+            total_inline_references += 1
+            ref_id = m_ref.group(1).lower()
+            if ref_id not in referenced_set:
+                referenced_set.add(ref_id)
+                referenced_ids_order.append(ref_id)
+
+    undefined_footnote_reference_ids = [
+        ref_id for ref_id in referenced_ids_order if ref_id not in defined_counts
+    ]
+    unreferenced_orphan_footnote_ids = [
+        fn_id for fn_id in defined_ids_order if fn_id not in referenced_set
+    ]
+
+    return {
+        "total_definitions": total_definitions,
+        "total_inline_references": total_inline_references,
+        "duplicate_footnote_definition_ids": duplicate_footnote_definition_ids,
+        "empty_footnote_definition_ids": empty_footnote_definition_ids,
+        "undefined_footnote_reference_ids": undefined_footnote_reference_ids,
+        "unreferenced_orphan_footnote_ids": unreferenced_orphan_footnote_ids,
+        "is_footnote_hygiene_compliant": (
+            len(duplicate_footnote_definition_ids) == 0
+            and len(empty_footnote_definition_ids) == 0
+            and len(undefined_footnote_reference_ids) == 0
+            and len(unreferenced_orphan_footnote_ids) == 0
+        ),
+    }
+
+
+AnyDocService.audit_markdown_footnote_reference_coherence = staticmethod(
+    audit_markdown_footnote_reference_coherence
+)
+
