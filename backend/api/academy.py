@@ -5339,13 +5339,30 @@ def get_institutional_summary(
     sede_id: Optional[UUID] = Query(None),
 ):
     """Devuelve los KPIs globales de analítica institucional académica."""
+    # Axioma 3 (aislamiento multi-tenant): la sede se toma del actor autenticado.
+    # El sede_id del cliente es solo una pista y JAMÁS permite consultar otra sede.
+    actor_sede_id = get_user_sede_id(db, current_user.id)
+    if actor_sede_id is not None and sede_id is not None and sede_id != actor_sede_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No puedes consultar analítica institucional de otra sede (Axioma 3)",
+        )
+    if actor_sede_id is not None:
+        sede_id = actor_sede_id
+
+    # Axioma 3: alcance canónico por sede: la sede propia (o la solicitada por un
+    # actor global) más los registros ministeriales globales (sede_id IS NULL).
+
     # 1. total_students: personas matriculadas distintas
     enroll_query = db.query(models.AcademyStudentEnrollment).filter(
         models.AcademyStudentEnrollment.deleted_at.is_(None)
     )
     if sede_id:
         enroll_query = enroll_query.join(models.AcademyPeriodOffering).filter(
-            models.AcademyPeriodOffering.sede_id == sede_id
+            or_(
+                models.AcademyPeriodOffering.sede_id == sede_id,
+                models.AcademyPeriodOffering.sede_id.is_(None),
+            )
         )
     total_students = db.query(func.count(func.distinct(enroll_query.subquery().c.persona_id))).scalar() or 0
 
@@ -5355,7 +5372,12 @@ def get_institutional_summary(
         models.AcademyStudyGroup.deleted_at.is_(None),
     )
     if sede_id:
-        sg_query = sg_query.filter(models.AcademyStudyGroup.sede_id == sede_id)
+        sg_query = sg_query.filter(
+            or_(
+                models.AcademyStudyGroup.sede_id == sede_id,
+                models.AcademyStudyGroup.sede_id.is_(None),
+            )
+        )
     active_study_groups = sg_query.count()
 
     # 3. total_offerings:
@@ -5363,7 +5385,12 @@ def get_institutional_summary(
         models.AcademyPeriodOffering.deleted_at.is_(None)
     )
     if sede_id:
-        off_query = off_query.filter(models.AcademyPeriodOffering.sede_id == sede_id)
+        off_query = off_query.filter(
+            or_(
+                models.AcademyPeriodOffering.sede_id == sede_id,
+                models.AcademyPeriodOffering.sede_id.is_(None),
+            )
+        )
     total_offerings = off_query.count()
 
     # 4. active_mentorships:
@@ -5372,7 +5399,12 @@ def get_institutional_summary(
         models.AcademyMentorshipRequest.deleted_at.is_(None),
     )
     if sede_id:
-        ment_query = ment_query.filter(models.AcademyMentorshipRequest.sede_id == sede_id)
+        ment_query = ment_query.filter(
+            or_(
+                models.AcademyMentorshipRequest.sede_id == sede_id,
+                models.AcademyMentorshipRequest.sede_id.is_(None),
+            )
+        )
     active_mentorships = ment_query.count()
 
     # 5. total_achievements_awarded:
@@ -5380,7 +5412,12 @@ def get_institutional_summary(
         models.AcademyStudentAchievement.deleted_at.is_(None)
     )
     if sede_id:
-        ach_query = ach_query.filter(models.AcademyStudentAchievement.sede_id == sede_id)
+        ach_query = ach_query.filter(
+            or_(
+                models.AcademyStudentAchievement.sede_id == sede_id,
+                models.AcademyStudentAchievement.sede_id.is_(None),
+            )
+        )
     total_achievements = ach_query.count()
 
     # 6. socratic_pass_rate:
@@ -5401,7 +5438,10 @@ def get_institutional_summary(
     )
     if sede_id:
         unresolved_signals_query = unresolved_signals_query.filter(
-            models.AcademyWellnessSignal.sede_id == sede_id
+            or_(
+                models.AcademyWellnessSignal.sede_id == sede_id,
+                models.AcademyWellnessSignal.sede_id.is_(None),
+            )
         )
     unresolved_signals_count = unresolved_signals_query.count()
     wellness_health_index = round(max(50.0, 100.0 - (unresolved_signals_count * 3.0)), 1)

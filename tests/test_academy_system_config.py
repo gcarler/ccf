@@ -2215,19 +2215,45 @@ def test_055_institutional_summary_kpis(client, db_session):
 
 
 def test_056_institutional_summary_filter_by_sede(client, db_session):
-    """Test institutional analytics summary filtering by sede."""
-    admin, _, _ = seed_admin(db_session)
+    """Test institutional analytics summary filtered to the actor's own sede.
+
+    Axioma 3: un actor con sede asignada consulta su sede (explícita o
+    implícita); una sede ajena se rechaza con 403.
+    """
+    admin, persona, sede_test = seed_admin(db_session)
     headers = auth_headers(client, email=admin.email, password="testpass123")
 
-    sede = models.Sede(nombre=f"Sede Analitica {uuid.uuid4().hex[:4]}", ciudad="Barranquilla")
-    db_session.add(sede)
+    # 1) Sin query param: se aplica la sede del actor (Axioma 3).
+    r_own = client.get("/api/academy/analytics/institutional-summary", headers=headers)
+    assert r_own.status_code == 200, r_own.text
+    data_own = r_own.json()
+    assert data_own["sede_id"] == str(sede_test.id)
+
+    # 2) Con su propia sede explícita: permitido y normalizado a su sede.
+    r_mine = client.get(
+        f"/api/academy/analytics/institutional-summary?sede_id={sede_test.id}",
+        headers=headers,
+    )
+    assert r_mine.status_code == 200, r_mine.text
+    assert r_mine.json()["sede_id"] == str(sede_test.id)
+    assert r_mine.json()["active_study_groups"] == 0
+
+
+def test_056b_institutional_summary_blocks_cross_sede(client, db_session):
+    """Axioma 3 anti-leak: un actor NO puede pedir KPIs de otra sede (H-01)."""
+    admin, _, sede_test = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    other_sede = models.Sede(nombre=f"Sede Ajena {uuid.uuid4().hex[:4]}", ciudad="Medellin")
+    db_session.add(other_sede)
     db_session.commit()
 
-    r = client.get(f"/api/academy/analytics/institutional-summary?sede_id={sede.id}", headers=headers)
-    assert r.status_code == 200, r.text
-    data = r.json()
-    assert data["sede_id"] == str(sede.id)
-    assert data["active_study_groups"] == 0
+    r = client.get(
+        f"/api/academy/analytics/institutional-summary?sede_id={other_sede.id}",
+        headers=headers,
+    )
+    assert r.status_code == 403, r.text
+    assert "Axioma 3" in r.json()["detail"]
 
 
 def test_057_cohort_health_metrics(client, db_session):
