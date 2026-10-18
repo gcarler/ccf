@@ -1641,10 +1641,128 @@ def test_mutation_request_body_contracts_empty_or_no_request_bodies():
     }
 
 
+# ─── summarize_projects_operation_deprecation_hygiene (pure helper) ──────────
 
 
+def test_operation_deprecation_hygiene_clean_lifecycle():
+    """<= 25% deprecados con guía de migración explícita -> CLEAN_OPERATION_LIFECYCLE."""
+    openapi = {
+        "paths": {
+            "/api/projects": {
+                "get": {"summary": "List projects"},
+                "post": {"summary": "Create project"},
+            },
+            "/api/projects/{project_id}": {
+                "get": {"summary": "Get project"},
+                "patch": {"summary": "Update project"},
+            },
+            "/api/projects/{project_id}/legacy-tasks": {
+                "get": {
+                    "deprecated": True,
+                    "summary": "Legacy tasks list",
+                    "description": "Deprecated: please use /api/projects/{project_id}/tasks instead.",
+                }
+            },
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_operation_deprecation_hygiene(
+        openapi
+    )
+
+    assert res == {
+        "total_operations": 5,
+        "deprecated_operations_count": 1,
+        "undocumented_deprecated_ops": [],
+        "deprecation_rate_pct": 20.0,
+        "deprecation_posture": "CLEAN_OPERATION_LIFECYCLE",
+    }
 
 
+def test_operation_deprecation_hygiene_undocumented_deprecated():
+    """Operación deprecada sin guía de migración/reemplazo -> UNDOCUMENTED_DEPRECATED_ENDPOINTS."""
+    openapi = {
+        "paths": {
+            "/api/projects": {
+                "get": {"summary": "List projects"},
+            },
+            "/api/projects/old-export": {
+                "post": {
+                    "deprecated": True,
+                    "summary": "Old export endpoint",
+                    "description": "No longer supported.",
+                }
+            },
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_operation_deprecation_hygiene(
+        openapi
+    )
+
+    assert res == {
+        "total_operations": 2,
+        "deprecated_operations_count": 1,
+        "undocumented_deprecated_ops": ["POST /api/projects/old-export"],
+        "deprecation_rate_pct": 50.0,
+        "deprecation_posture": "UNDOCUMENTED_DEPRECATED_ENDPOINTS",
+    }
 
 
+def test_operation_deprecation_hygiene_excessive_deprecated_surface():
+    """> 25% de operaciones deprecadas pero todas documentadas con guía -> EXCESSIVE_DEPRECATED_SURFACE."""
+    openapi = {
+        "paths": {
+            "/api/projects": {
+                "get": {"summary": "List projects"},
+                "post": {
+                    "deprecated": True,
+                    "description": "Reemplazado por /api/v2/projects.",
+                },
+            },
+            "/api/projects/{project_id}": {
+                "delete": {
+                    "deprecated": True,
+                    "summary": "Sunset scheduled; migrate to archive action.",
+                }
+            },
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_operation_deprecation_hygiene(
+        openapi
+    )
+
+    assert res == {
+        "total_operations": 3,
+        "deprecated_operations_count": 2,
+        "undocumented_deprecated_ops": [],
+        "deprecation_rate_pct": 66.67,
+        "deprecation_posture": "EXCESSIVE_DEPRECATED_SURFACE",
+    }
+
+
+def test_operation_deprecation_hygiene_empty_or_no_projects_operations():
+    """Esquema vacío, None o sin operaciones bajo /projects -> NO_PROJECTS_OPERATIONS."""
+    expected = {
+        "total_operations": 0,
+        "deprecated_operations_count": 0,
+        "undocumented_deprecated_ops": [],
+        "deprecation_rate_pct": 0.0,
+        "deprecation_posture": "NO_PROJECTS_OPERATIONS",
+    }
+    assert (
+        audit_projects_api_contracts.summarize_projects_operation_deprecation_hygiene(None)
+        == expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_operation_deprecation_hygiene({})
+        == expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_operation_deprecation_hygiene(
+            {"paths": {"/api/crm/contacts": {"get": {"deprecated": True}}}}
+        )
+        == expected
+    )
 

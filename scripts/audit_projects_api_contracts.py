@@ -858,13 +858,75 @@ def summarize_projects_mutation_request_body_contracts(
     }
 
 
+DEPRECATION_MIGRATION_HINTS = (
+    "use ",
+    "replace",
+    "migrat",
+    "instead",
+    "sunset",
+    "reemplaz",
+    "usar ",
+)
 
 
+def summarize_projects_operation_deprecation_hygiene(
+    openapi_schema: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Audita la higiene de ciclo de vida y guías de migración para operaciones deprecadas de proyectos."""
+    empty_result: dict[str, Any] = {
+        "total_operations": 0,
+        "deprecated_operations_count": 0,
+        "undocumented_deprecated_ops": [],
+        "deprecation_rate_pct": 0.0,
+        "deprecation_posture": "NO_PROJECTS_OPERATIONS",
+    }
+    if not isinstance(openapi_schema, dict) or not isinstance(
+        openapi_schema.get("paths"), dict
+    ):
+        return empty_result
 
+    total_operations = 0
+    deprecated_operations_count = 0
+    undocumented_deprecated_ops: list[str] = []
 
+    for path, path_item in sorted(openapi_schema["paths"].items()):
+        if not isinstance(path, str) or "/projects" not in path:
+            continue
+        if not isinstance(path_item, dict):
+            continue
 
+        for method in ("get", "post", "put", "patch", "delete"):
+            op_spec = path_item.get(method)
+            if not isinstance(op_spec, dict):
+                continue
 
+            total_operations += 1
+            if op_spec.get("deprecated") is True:
+                deprecated_operations_count += 1
+                doc_text = f"{op_spec.get('summary') or ''} {op_spec.get('description') or ''}".lower()
+                if not any(hint in doc_text for hint in DEPRECATION_MIGRATION_HINTS):
+                    undocumented_deprecated_ops.append(f"{method.upper()} {path}")
 
+    if total_operations == 0:
+        return empty_result
+
+    deprecation_rate_pct = round(
+        (deprecated_operations_count / total_operations) * 100.0, 2
+    )
+    if len(undocumented_deprecated_ops) > 0:
+        deprecation_posture = "UNDOCUMENTED_DEPRECATED_ENDPOINTS"
+    elif deprecation_rate_pct > 25.0:
+        deprecation_posture = "EXCESSIVE_DEPRECATED_SURFACE"
+    else:
+        deprecation_posture = "CLEAN_OPERATION_LIFECYCLE"
+
+    return {
+        "total_operations": total_operations,
+        "deprecated_operations_count": deprecated_operations_count,
+        "undocumented_deprecated_ops": undocumented_deprecated_ops,
+        "deprecation_rate_pct": deprecation_rate_pct,
+        "deprecation_posture": deprecation_posture,
+    }
 
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
