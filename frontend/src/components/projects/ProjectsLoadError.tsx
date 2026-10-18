@@ -22,6 +22,12 @@ export default function ProjectsLoadError({
       )}
     >
       <p className="text-xs font-bold uppercase tracking-wide">{message}</p>
+      <div
+        data-testid="projects-load-error-pmi-continuity"
+        className="w-full text-2xs font-medium text-[hsl(var(--text-secondary))]"
+      >
+        Protocolo PMI de Continuidad: Los cambios locales y lineas base previas permanecen resguardados.
+      </div>
       {onRetry && (
         <button
           type="button"

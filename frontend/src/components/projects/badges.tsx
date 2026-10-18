@@ -115,3 +115,51 @@ export function TaskNodeBadge({ value, className, ...props }: TaskNodeBadgeProps
         </span>
     );
 }
+
+export interface PmiHealthBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
+    /** Índice de Performance de Costos (EVM). `null`/`undefined` se evalúa como 1. */
+    cpi?: number | null;
+    /** Índice de Performance del Cronograma (EVM). `null`/`undefined` se evalúa como 1. */
+    spi?: number | null;
+}
+
+type PmiHealthState =
+    | { label: 'Optimo PMI'; tone: string }
+    | { label: 'En Vigilancia PMI'; tone: string }
+    | { label: 'Critico PMI'; tone: string };
+
+/** Índice compuesto PMI a partir de CPI/SPI (EVM §7.3). */
+export function resolvePmiHealth(cpi?: number | null, spi?: number | null): PmiHealthState {
+    const cpiValue = cpi ?? 1;
+    const spiValue = spi ?? 1;
+    if (cpiValue >= 0.95 && spiValue >= 0.95) {
+        return {
+            label: 'Optimo PMI',
+            tone: 'bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]',
+        };
+    }
+    if (cpiValue < 0.85 || spiValue < 0.85) {
+        return {
+            label: 'Critico PMI',
+            tone: 'bg-[hsl(var(--destructive)/0.12)] text-[hsl(var(--destructive))]',
+        };
+    }
+    return {
+        label: 'En Vigilancia PMI',
+        tone: 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]',
+    };
+}
+
+/** Badge del índice compuesto de salud PMI (CPI/SPI) del portafolio. */
+export function PmiHealthBadge({ cpi, spi, className, ...props }: PmiHealthBadgeProps) {
+    const health = resolvePmiHealth(cpi, spi);
+    return (
+        <span
+            data-testid="pmi-health-badge"
+            className={clsx(BASE_BADGE_CLS, health.tone, className)}
+            {...props}
+        >
+            {health.label}
+        </span>
+    );
+}

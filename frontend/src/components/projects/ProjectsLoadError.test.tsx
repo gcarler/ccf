@@ -29,4 +29,15 @@ describe('ProjectsLoadError', () => {
     expect(screen.getByRole('button', { name: 'Reintentando…' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Reintentando…' })).toHaveAttribute('aria-busy', 'true');
   });
+
+  it('incluye el diagnóstico de resiliencia y continuidad operativa PMI', () => {
+    render(<ProjectsLoadError message="No se pudo cargar el backlog." />);
+
+    const continuity = screen.getByTestId('projects-load-error-pmi-continuity');
+    expect(continuity).toBeInTheDocument();
+    expect(continuity).toHaveTextContent(
+      'Protocolo PMI de Continuidad: Los cambios locales y lineas base previas permanecen resguardados.'
+    );
+    expect(continuity.className).toContain('text-[hsl(var(--text-secondary))]');
+  });
 });

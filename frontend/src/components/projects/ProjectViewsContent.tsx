@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 import {
     Calendar,
+    Layers,
     PencilRuler,
     Plus,
     Trash2,
@@ -74,6 +75,12 @@ export function ProjectViewsContent({
 }: ProjectViewsContentProps) {
     const { project, tasks, phases, activities, createTask, reloadProject, updateTask } = useProjectUpdate();
 
+    // PMI — Contexto de paquetes de trabajo activos y progreso de la vista.
+    const completedTasks = tasks.filter((t) => t.status === 'completed').length;
+    const completionPercent = tasks.length > 0
+        ? Math.round((completedTasks / tasks.length) * 100)
+        : 0;
+
     if (viewType === 'board' || viewType === 'kanban') {
         if (!project?.id) {
             return (
@@ -102,6 +109,22 @@ export function ProjectViewsContent({
 
     return (
         <main className="flex-1 overflow-y-auto p-4 space-y-3">
+            {/* Franja Compacta de Contexto de Vista PMI */}
+            <div
+                data-testid="project-views-pmi-context-bar"
+                aria-label="Contexto de vista PMI"
+                className="flex items-center gap-2 flex-wrap rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-1.5 text-2xs font-semibold text-[hsl(var(--text-secondary))]"
+            >
+                <span className="flex items-center gap-1">
+                    <Layers size={10} aria-hidden="true" />
+                    Paquetes Activos: {tasks.length}
+                </span>
+                <span className="flex items-center gap-1">
+                    <PencilRuler size={10} aria-hidden="true" />
+                    Progreso de Paquetes: {completionPercent}% ({completedTasks}/{tasks.length})
+                </span>
+            </div>
+
             {viewType === 'dashboard' && (
                 <div className="space-y-3">
                     {project && (

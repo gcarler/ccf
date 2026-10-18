@@ -221,6 +221,44 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
     const milestones = project.milestones || [];
     const dbProgress = project.progress_percent || 0;
 
+    // ── SÍNTESIS EJECUTIVA TRIPLE RESTRICCIÓN PMI (§4.5 & §7.4) ───────────
+    const isCompletedTask = (status?: string | null) => {
+        const normalized = (status || 'todo').toLowerCase().trim();
+        return normalized === 'done' || normalized === 'completed';
+    };
+
+    const pmiEarnedProgress = tasks.length > 0
+        ? Math.round(
+              tasks.reduce((acc, t) => {
+                  const normalized = (t.status || 'todo').toLowerCase().trim();
+                  if (normalized === 'done' || normalized === 'completed') return acc + 100;
+                  if (['todo', 'pending', 'backlog'].includes(normalized)) return acc + 0;
+                  const explicitProgress = typeof t.progress === 'number' && t.progress > 0 ? t.progress : 50;
+                  return acc + explicitProgress;
+              }, 0) / tasks.length
+          )
+        : 0;
+
+    const pmiBac = Number(budgetSummary?.budget_allocated ?? project.budget_allocated ?? 0);
+    const pmiAc = Number(budgetSummary?.paid_amount ?? project.budget_spent ?? 0);
+    const pmiEv = Math.round(pmiBac * (pmiEarnedProgress / 100));
+    const pmiCpi = pmiAc > 0 ? Number((pmiEv / pmiAc).toFixed(2)) : 1;
+    const isCriticalCost = pmiCpi < 0.85 || (pmiBac > 0 && pmiAc > pmiBac);
+    const isWarningCost = !isCriticalCost && pmiCpi < 1;
+
+    const todayStartMs = (() => {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        return d.getTime();
+    })();
+    const overdueTasksCount = tasks.filter(t => {
+        if (isCompletedTask(t.status) || !t.due_date) return false;
+        const dueMs = new Date(t.due_date).getTime();
+        return !Number.isNaN(dueMs) && dueMs < todayStartMs;
+    }).length;
+    const raciGapsCount = tasks.filter(t => !isCompletedTask(t.status) && !t.assignee_id).length;
+    const isScheduleAndRaciControlled = overdueTasksCount === 0 && raciGapsCount === 0;
+
     // ── HITOS ─────────────────────────────────────────────────────────────
     const milestonePatch = async (id: string, patch: Partial<ProjectMilestoneRecord>) => {
         setBusyMilestoneId(id);
@@ -460,6 +498,110 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                     </div>
                 </div>
             </header>
+
+            {/* 1b. Síntesis Ejecutiva de Triple Restricción PMI (§4.5 & §7.4) */}
+            <section
+                data-testid="master-view-pmi-triple-constraint-banner"
+                className="p-3.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-xs space-y-3"
+            >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                        <Layers size={15} className="text-[hsl(var(--primary))]" />
+                        <span className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--text-primary))]">
+                            Síntesis Ejecutiva de Triple Restricción PMI (§4.5 & §7.4)
+                        </span>
+                    </div>
+                    <span className="text-2xs font-semibold px-2 py-0.5 rounded-full border border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]">
+                        Monitoreo y Control Integrado
+                    </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {/* Alcance WBS y Regla 0/50/100 */}
+                    <div
+                        data-testid="master-view-pmi-scope"
+                        className="p-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] space-y-1.5"
+                    >
+                        <div className="flex items-center justify-between gap-2">
+                            <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                                Alcance WBS (Regla 0/50/100)
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full text-2xs font-bold border border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]">
+                                {pmiEarnedProgress}% Avance PMI (0/50/100)
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs font-semibold text-[hsl(var(--text-primary))]">
+                            <span>{tasks.length} paquetes</span>
+                            <span>•</span>
+                            <span>{milestones.filter(m => m.is_completed).length}/{milestones.length} hitos</span>
+                        </div>
+                    </div>
+
+                    {/* Desempeño de Costos EVM */}
+                    <div
+                        data-testid="master-view-pmi-cost"
+                        className="p-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] space-y-1.5"
+                    >
+                        <div className="flex items-center justify-between gap-2">
+                            <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                                Desempeño Costo EVM
+                            </span>
+                            <span
+                                className={clsx(
+                                    'px-2 py-0.5 rounded-full text-2xs font-bold border',
+                                    isCriticalCost
+                                        ? 'border-[hsl(var(--destructive)/0.35)] bg-[hsl(var(--destructive)/0.12)] text-[hsl(var(--destructive))]'
+                                        : isWarningCost
+                                        ? 'border-[hsl(var(--warning)/0.35)] bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning))]'
+                                        : 'border-[hsl(var(--success)/0.35)] bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))]'
+                                )}
+                            >
+                                {isCriticalCost
+                                    ? `Sobrecosto Crítico (CPI ${pmiCpi.toFixed(2)})`
+                                    : isWarningCost
+                                    ? `Vigilancia Costo (CPI ${pmiCpi.toFixed(2)})`
+                                    : `Bajo Presupuesto (CPI ${pmiCpi.toFixed(2)})`}
+                            </span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-[hsl(var(--text-primary))]">
+                            <span>BAC ${pmiBac.toLocaleString('es-CO')}</span>
+                            <span>•</span>
+                            <span>EV ${pmiEv.toLocaleString('es-CO')}</span>
+                            <span>•</span>
+                            <span>AC ${pmiAc.toLocaleString('es-CO')}</span>
+                        </div>
+                    </div>
+
+                    {/* Cronograma y Matriz RACI */}
+                    <div
+                        data-testid="master-view-pmi-schedule-raci"
+                        className="p-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] space-y-1.5"
+                    >
+                        <div className="flex items-center justify-between gap-2">
+                            <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                                Cronograma y RACI
+                            </span>
+                            <span
+                                className={clsx(
+                                    'px-2 py-0.5 rounded-full text-2xs font-bold border',
+                                    isScheduleAndRaciControlled
+                                        ? 'border-[hsl(var(--success)/0.35)] bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))]'
+                                        : overdueTasksCount > 0
+                                        ? 'border-[hsl(var(--destructive)/0.35)] bg-[hsl(var(--destructive)/0.12)] text-[hsl(var(--destructive))]'
+                                        : 'border-[hsl(var(--warning)/0.35)] bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning))]'
+                                )}
+                            >
+                                {isScheduleAndRaciControlled ? 'Cronograma y RACI Controlados' : 'Atención Requerida'}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs font-semibold text-[hsl(var(--text-primary))]">
+                            <span>{overdueTasksCount} vencida(s)</span>
+                            <span>•</span>
+                            <span>{raciGapsCount} sin RACI</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
             {/* 2. Analítica de Impacto */}
             <section className="grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -1395,15 +1537,32 @@ interface NodeCardProps {
 }
 
 function NodeCard({ title, icon: Icon, color, tasks, onOpenTask, onToggle, onTitleSave }: NodeCardProps) {
+    const completedCount = tasks.filter(t => ['done', 'completed'].includes((t.status || 'todo').toLowerCase().trim())).length;
+    const nodeCompletionPct = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
+    const nodeBac = tasks.reduce((acc, t) => acc + (Number(t.budget_allocated) || 0), 0);
+
     return (
         <div className="p-3 rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] shadow-sm hover:shadow-md transition-all group">
-            <div className="flex items-center gap-3 mb-3">
-                <div className={clsx("size-10 rounded-md flex items-center justify-center text-[hsl(var(--primary-foreground))] shadow-md transition-transform group-hover:scale-110", color)}>
-                    <Icon size={18} />
+            <div className="flex items-center justify-between gap-3 mb-3">
+                <div className="flex items-center gap-3">
+                    <div className={clsx("size-10 rounded-md flex items-center justify-center text-[hsl(var(--primary-foreground))] shadow-md transition-transform group-hover:scale-110", color)}>
+                        <Icon size={18} />
+                    </div>
+                    <div>
+                        <h3 className="text-base font-bold text-[hsl(var(--text-primary))] leading-tight">{title}</h3>
+                        <p className=" font-boldtext-[hsl(var(--text-secondary))] uppercase tracking-wide mt-0.5">Avance por Nodo</p>
+                    </div>
                 </div>
-                <div>
-                    <h3 className="text-base font-bold text-[hsl(var(--text-primary))] leading-tight">{title}</h3>
-                    <p className=" font-boldtext-[hsl(var(--text-secondary))] uppercase tracking-wide mt-0.5">Avance por Nodo</p>
+                <div
+                    data-testid="master-view-node-pmi-metrics"
+                    className="flex items-center gap-1.5 text-2xs font-bold"
+                >
+                    <span className="px-2 py-0.5 rounded-full border border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]">
+                        {nodeCompletionPct}% completado
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))]">
+                        BAC ${nodeBac.toLocaleString('es-CO')}
+                    </span>
                 </div>
             </div>
             <div className="space-y-2">
@@ -1448,3 +1607,4 @@ function NodeCard({ title, icon: Icon, color, tasks, onOpenTask, onToggle, onTit
         </div>
     );
 }
+
