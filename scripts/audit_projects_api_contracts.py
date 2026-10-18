@@ -4854,6 +4854,308 @@ def summarize_projects_readonly_and_writeonly_property_hygiene(
     }
 
 
+def _matches_openapi_default_type(val: Any, expected_type: str) -> bool:
+    if expected_type == "integer":
+        return isinstance(val, int) and not isinstance(val, bool)
+    if expected_type == "number":
+        return isinstance(val, (int, float)) and not isinstance(val, bool)
+    if expected_type == "boolean":
+        return isinstance(val, bool)
+    if expected_type == "string":
+        return isinstance(val, str)
+    if expected_type == "array":
+        return isinstance(val, list)
+    if expected_type == "object":
+        return isinstance(val, dict)
+    return True
+
+
+def summarize_projects_default_value_and_type_hygiene(
+    schema: Mapping[str, Any] | None = None,
+    *,
+    path_prefix: str = "/api/v1/projects",
+) -> dict[str, Any]:
+    """Audita la consistencia entre valores default y sus restricciones de tipo, enum y rango en esquemas y parámetros bajo path_prefix."""
+    if schema is None:
+        from backend.app import app
+
+        schema_dict: Mapping[str, Any] = app.openapi()
+    else:
+        schema_dict = schema
+
+    paths = schema_dict.get("paths", {}) if isinstance(schema_dict, Mapping) else {}
+    if not isinstance(paths, Mapping):
+        paths = {}
+
+    components = schema_dict.get("components", {}) if isinstance(schema_dict, Mapping) else {}
+    schemas = components.get("schemas", {}) if isinstance(components, Mapping) else {}
+    if not isinstance(schemas, Mapping):
+        schemas = {}
+
+    has_exact_prefix = any(str(p).startswith(path_prefix) for p in paths.keys())
+    if has_exact_prefix:
+        effective_prefixes: tuple[str, ...] = (path_prefix,)
+    elif path_prefix in ("/api/v1/projects", "/api/projects", "/projects"):
+        effective_prefixes = ("/api/v1/projects", "/api/projects", "/projects")
+    else:
+        effective_prefixes = (path_prefix,)
+
+    referenced_schemas: set[str] = set()
+    has_matching_paths = False
+
+    total_defaults_inspected = 0
+    valid_defaults_count = 0
+    default_type_mismatch_count = 0
+    default_not_in_enum_count = 0
+    default_out_of_bounds_count = 0
+    violations: list[dict[str, Any]] = []
+
+    def _audit_default_spec(
+        spec: Mapping[str, Any],
+        default_val: Any,
+        location: str,
+        field_name: str,
+    ) -> None:
+        nonlocal total_defaults_inspected, valid_defaults_count
+        nonlocal default_type_mismatch_count, default_not_in_enum_count, default_out_of_bounds_count
+
+        total_defaults_inspected += 1
+        branches = _collect_non_null_branch_schemas(spec, schemas)
+
+        is_nullable = (
+            spec.get("nullable") is True
+            or spec.get("type") == "null"
+            or any(
+                isinstance(b, Mapping)
+                and (b.get("type") == "null" or b.get("nullable") is True)
+                for kw in ("anyOf", "oneOf", "allOf")
+                for b in (spec.get(kw) if isinstance(spec.get(kw), list) else [])
+            )
+        )
+
+        field_has_violation = False
+
+        if default_val is None:
+            if not is_nullable:
+                default_type_mismatch_count += 1
+                field_has_violation = True
+                violations.append(
+                    {
+                        "location": location,
+                        "field_name": field_name,
+                        "reason": "default_type_mismatch",
+                    }
+                )
+        else:
+            declared_types: list[str] = []
+            for b in branches:
+                b_type = b.get("type")
+                if isinstance(b_type, str) and b_type in (
+                    "integer",
+                    "number",
+                    "boolean",
+                    "string",
+                    "array",
+                    "object",
+                ):
+                    declared_types.append(b_type)
+
+            if declared_types and not any(
+                _matches_openapi_default_type(default_val, t) for t in declared_types
+            ):
+                default_type_mismatch_count += 1
+                field_has_violation = True
+                violations.append(
+                    {
+                        "location": location,
+                        "field_name": field_name,
+                        "reason": "default_type_mismatch",
+                    }
+                )
+
+            enum_values: list[Any] = []
+            if isinstance(spec.get("enum"), list) and len(spec["enum"]) > 0:
+                enum_values.extend(spec["enum"])
+            else:
+                for b in branches:
+                    if isinstance(b.get("enum"), list) and len(b["enum"]) > 0:
+                        enum_values.extend(b["enum"])
+            if enum_values and default_val not in enum_values:
+                default_not_in_enum_count += 1
+                field_has_violation = True
+                violations.append(
+                    {
+                        "location": location,
+                        "field_name": field_name,
+                        "reason": "default_not_in_enum",
+                    }
+                )
+
+            effective_bounds: dict[str, Any] = {}
+            for b in (*branches, spec):
+                if not isinstance(b, Mapping):
+                    continue
+                for bound_key in (
+                    "minimum",
+                    "maximum",
+                    "exclusiveMinimum",
+                    "exclusiveMaximum",
+                    "minLength",
+                    "maxLength",
+                ):
+                    if bound_key in b and b[bound_key] is not None:
+                        effective_bounds[bound_key] = b[bound_key]
+
+            out_of_bounds = False
+            if isinstance(default_val, (int, float)) and not isinstance(default_val, bool):
+                min_v = effective_bounds.get("minimum")
+                max_v = effective_bounds.get("maximum")
+                ex_min = effective_bounds.get("exclusiveMinimum")
+                ex_max = effective_bounds.get("exclusiveMaximum")
+
+                if isinstance(min_v, (int, float)) and not isinstance(min_v, bool):
+                    if ex_min is True and default_val <= min_v:
+                        out_of_bounds = True
+                    elif default_val < min_v:
+                        out_of_bounds = True
+                if isinstance(max_v, (int, float)) and not isinstance(max_v, bool):
+                    if ex_max is True and default_val >= max_v:
+                        out_of_bounds = True
+                    elif default_val > max_v:
+                        out_of_bounds = True
+                if isinstance(ex_min, (int, float)) and not isinstance(ex_min, bool):
+                    if default_val <= ex_min:
+                        out_of_bounds = True
+                if isinstance(ex_max, (int, float)) and not isinstance(ex_max, bool):
+                    if default_val >= ex_max:
+                        out_of_bounds = True
+
+            if isinstance(default_val, str):
+                min_len = effective_bounds.get("minLength")
+                max_len = effective_bounds.get("maxLength")
+                if isinstance(min_len, int) and not isinstance(min_len, bool):
+                    if len(default_val) < min_len:
+                        out_of_bounds = True
+                if isinstance(max_len, int) and not isinstance(max_len, bool):
+                    if len(default_val) > max_len:
+                        out_of_bounds = True
+
+            if out_of_bounds:
+                default_out_of_bounds_count += 1
+                field_has_violation = True
+                violations.append(
+                    {
+                        "location": location,
+                        "field_name": field_name,
+                        "reason": "default_out_of_bounds",
+                    }
+                )
+
+        if not field_has_violation:
+            valid_defaults_count += 1
+
+    for path in sorted(paths.keys()):
+        path_str = str(path)
+        if not path_str.startswith(effective_prefixes):
+            continue
+        path_item = paths[path]
+        if not isinstance(path_item, Mapping):
+            continue
+        has_matching_paths = True
+
+        path_params = (
+            path_item.get("parameters")
+            if isinstance(path_item.get("parameters"), list)
+            else []
+        )
+
+        for method in ("get", "post", "put", "patch", "delete", "head", "options", "trace"):
+            op_spec = path_item.get(method)
+            if not isinstance(op_spec, Mapping):
+                continue
+
+            op_label = f"{method.upper()} {path_str}"
+            for ref in schema_refs(dict(op_spec)):
+                referenced_schemas.add(ref)
+
+            op_params = (
+                op_spec.get("parameters")
+                if isinstance(op_spec.get("parameters"), list)
+                else []
+            )
+            for param in (*path_params, *op_params):
+                if not isinstance(param, Mapping):
+                    continue
+                p_name = str(param.get("name") or "").strip()
+                if not p_name:
+                    continue
+                p_schema = param.get("schema") if isinstance(param.get("schema"), Mapping) else {}
+                for ref in schema_refs(dict(param)):
+                    referenced_schemas.add(ref)
+                if "default" in p_schema:
+                    _audit_default_spec(p_schema, p_schema["default"], op_label, p_name)
+                elif "default" in param:
+                    _audit_default_spec(p_schema, param["default"], op_label, p_name)
+
+    if referenced_schemas:
+        queue = list(referenced_schemas)
+        while queue:
+            current = queue.pop()
+            s_obj = schemas.get(current)
+            if isinstance(s_obj, Mapping):
+                for nested_ref in schema_refs(dict(s_obj)):
+                    if nested_ref not in referenced_schemas:
+                        referenced_schemas.add(nested_ref)
+                        queue.append(nested_ref)
+    elif not has_matching_paths and schemas:
+        referenced_schemas = {str(k) for k in schemas.keys()}
+
+    referenced_existing = sorted(s for s in referenced_schemas if s in schemas)
+
+    for s_name in referenced_existing:
+        s_obj = schemas.get(s_name)
+        if not isinstance(s_obj, Mapping):
+            continue
+        props = s_obj.get("properties", {})
+        if not isinstance(props, Mapping):
+            continue
+        for prop_name in sorted(props.keys()):
+            prop_schema = props[prop_name]
+            if not isinstance(prop_schema, Mapping):
+                continue
+            if "default" in prop_schema:
+                _audit_default_spec(
+                    prop_schema,
+                    prop_schema["default"],
+                    f"schema:{s_name}",
+                    str(prop_name),
+                )
+
+    hygiene_score = (
+        100.0
+        if total_defaults_inspected == 0
+        else round((valid_defaults_count / total_defaults_inspected) * 100.0, 2)
+    )
+    is_compliant = (
+        default_type_mismatch_count == 0
+        and default_not_in_enum_count == 0
+        and default_out_of_bounds_count == 0
+    )
+
+    return {
+        "path_prefix": path_prefix,
+        "referenced_schemas_count": len(referenced_existing),
+        "total_defaults_inspected": total_defaults_inspected,
+        "valid_defaults_count": valid_defaults_count,
+        "default_type_mismatch_count": default_type_mismatch_count,
+        "default_not_in_enum_count": default_not_in_enum_count,
+        "default_out_of_bounds_count": default_out_of_bounds_count,
+        "violations": violations,
+        "hygiene_score": hygiene_score,
+        "is_compliant": is_compliant,
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()

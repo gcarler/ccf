@@ -6275,3 +6275,208 @@ def test_readonly_and_writeonly_property_hygiene_real_openapi():
     assert res["is_property_directionality_hygiene_clean"] is True
 
 
+def test_default_value_and_type_hygiene_clean_schema():
+    """Verifica que valores default coherentes con su type, nullable, enum y límites pasen la auditoría."""
+    schema = {
+        "paths": {
+            "/api/v1/projects/tasks": {
+                "get": {
+                    "parameters": [
+                        {
+                            "name": "limit",
+                            "in": "query",
+                            "schema": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 100,
+                                "default": 25,
+                            },
+                        },
+                        {
+                            "name": "status",
+                            "in": "query",
+                            "schema": {
+                                "type": "string",
+                                "enum": ["OPEN", "CLOSED"],
+                                "default": "OPEN",
+                            },
+                        },
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "OK",
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/ProjectTaskFilter"}
+                                }
+                            },
+                        }
+                    },
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "ProjectTaskFilter": {
+                    "type": "object",
+                    "properties": {
+                        "include_archived": {"type": "boolean", "default": False},
+                        "weight": {"type": "number", "minimum": 0.0, "default": 1.5},
+                        "prefix": {
+                            "type": "string",
+                            "minLength": 2,
+                            "maxLength": 10,
+                            "default": "PRJ",
+                        },
+                        "tags": {"type": "array", "default": []},
+                        "meta": {"type": "object", "default": {}},
+                        "notes": {
+                            "anyOf": [{"type": "string"}, {"type": "null"}],
+                            "default": None,
+                        },
+                    },
+                }
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_default_value_and_type_hygiene(
+        schema, path_prefix="/api/v1/projects"
+    )
+    assert res["path_prefix"] == "/api/v1/projects"
+    assert res["referenced_schemas_count"] == 1
+    assert res["total_defaults_inspected"] == 8
+    assert res["valid_defaults_count"] == 8
+    assert res["default_type_mismatch_count"] == 0
+    assert res["default_not_in_enum_count"] == 0
+    assert res["default_out_of_bounds_count"] == 0
+    assert res["violations"] == []
+    assert res["hygiene_score"] == 100.0
+    assert res["is_compliant"] is True
+
+
+def test_default_value_and_type_hygiene_detects_type_mismatch():
+    """Detecta defaults con tipo Python incompatible (incluyendo bool en integer y None no-nullable)."""
+    schema = {
+        "paths": {
+            "/api/v1/projects/config": {
+                "post": {
+                    "parameters": [
+                        {
+                            "name": "page",
+                            "in": "query",
+                            "schema": {"type": "integer", "default": True},
+                        }
+                    ],
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/ProjectConfigInput"}
+                            }
+                        }
+                    },
+                    "responses": {"200": {"description": "OK"}},
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "ProjectConfigInput": {
+                    "type": "object",
+                    "properties": {
+                        "retries": {"type": "integer", "default": "3"},
+                        "title": {"type": "string", "default": None},
+                    },
+                }
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_default_value_and_type_hygiene(
+        schema, path_prefix="/api/v1/projects"
+    )
+    assert res["total_defaults_inspected"] == 3
+    assert res["valid_defaults_count"] == 0
+    assert res["default_type_mismatch_count"] == 3
+    assert res["hygiene_score"] == 0.0
+    assert res["is_compliant"] is False
+    reasons = [v["reason"] for v in res["violations"]]
+    assert reasons == [
+        "default_type_mismatch",
+        "default_type_mismatch",
+        "default_type_mismatch",
+    ]
+
+
+def test_default_value_and_type_hygiene_detects_enum_and_bounds_violations():
+    """Detecta defaults fuera de enum y defaults que violan minimum/maximum/exclusiveMinimum o minLength/maxLength."""
+    schema = {
+        "paths": {
+            "/api/v1/projects/Validate": {
+                "post": {
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/ProjectBoundsPayload"}
+                            }
+                        }
+                    },
+                    "responses": {"200": {"description": "OK"}},
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "ProjectBoundsPayload": {
+                    "type": "object",
+                    "properties": {
+                        "phase": {
+                            "type": "string",
+                            "enum": ["INITIATION", "PLANNING", "CLOSING"],
+                            "default": "ARCHIVED",
+                        },
+                        "cpi_threshold": {
+                            "type": "number",
+                            "exclusiveMinimum": 0.0,
+                            "maximum": 2.0,
+                            "default": 0.0,
+                        },
+                        "code": {
+                            "type": "string",
+                            "minLength": 4,
+                            "maxLength": 8,
+                            "default": "AB",
+                        },
+                        "ok_field": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 5,
+                        },
+                    },
+                }
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_default_value_and_type_hygiene(
+        schema, path_prefix="/api/v1/projects"
+    )
+    assert res["total_defaults_inspected"] == 4
+    assert res["valid_defaults_count"] == 1
+    assert res["default_type_mismatch_count"] == 0
+    assert res["default_not_in_enum_count"] == 1
+    assert res["default_out_of_bounds_count"] == 2
+    assert res["hygiene_score"] == 25.0
+    assert res["is_compliant"] is False
+
+
+def test_default_value_and_type_hygiene_real_openapi():
+    """Verifica que el schema OpenAPI real de FastAPI cumpla la higiene de tipos y rangos de defaults."""
+    res = audit_projects_api_contracts.summarize_projects_default_value_and_type_hygiene()
+    assert res["referenced_schemas_count"] > 0
+    assert res["total_defaults_inspected"] > 0
+    assert res["default_type_mismatch_count"] == 0
+    assert res["default_not_in_enum_count"] == 0
+    assert res["default_out_of_bounds_count"] == 0
+    assert res["violations"] == []
+    assert res["hygiene_score"] == 100.0
+    assert res["is_compliant"] is True
+
+
