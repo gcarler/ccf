@@ -906,4 +906,138 @@ def test_validate_schedule_dependency_lead_lag_empty_and_non_dicts():
         }
 
 
+# ─── validate_risk_trigger_and_fallback_plan (pure helper) ───────
+
+
+def test_validate_risk_trigger_and_fallback_plan_governed_matrix():
+    """Riesgos de alta exposición con trigger >= 6 chars, fallback >= 8 chars y residual < severity -> GOVERNED_RISK_RESPONSE_MATRIX."""
+    from backend.schemas.projects import validate_risk_trigger_and_fallback_plan
+
+    risks = [
+        {
+            "id": "RSK-01",
+            "probability": 4,
+            "impact": 4,
+            "trigger_condition": "Latencia sostenida > 250ms por 15 min",
+            "fallback_plan": "Conmutar tráfico al nodo secundario multi-región",
+            "residual_severity": 6,
+        },
+        {
+            "code": "RSK-02",
+            "severity": 15,
+            "early_warning_trigger": "Retraso aduanero > 5 días hábiles",
+            "contingency_plan": "Activar proveedor local precalificado",
+            "residual_severity": 5,
+        },
+        {
+            "id": "RSK-03",
+            "probability": 2,
+            "impact": 2,  # severidad 4 < 12 (no requiere trigger/fallback de alta exposición)
+        },
+    ]
+
+    res = validate_risk_trigger_and_fallback_plan(risks, high_severity_threshold=12)
+    assert res == {
+        "is_valid": True,
+        "total_risks": 3,
+        "high_exposure_count": 2,
+        "missing_trigger_ids": [],
+        "missing_fallback_ids": [],
+        "unreduced_residual_ids": [],
+        "risk_governance_posture": "GOVERNED_RISK_RESPONSE_MATRIX",
+    }
+
+
+def test_validate_risk_trigger_and_fallback_plan_missing_triggers():
+    """Riesgo de alta exposición con trigger < 6 chars -> MISSING_EARLY_WARNING_TRIGGERS."""
+    from backend.schemas.projects import validate_risk_trigger_and_fallback_plan
+
+    risks = [
+        {
+            "id": "RSK-10",
+            "probability": 5,
+            "impact": 3,
+            "trigger_condition": "TBD",
+            "fallback_plan": "Desplegar cuadrilla de contingencia nocturna",
+            "residual_severity": 6,
+        },
+        {
+            "id": "RSK-11",
+            "score": 16,
+            "early_warning_trigger": "Alerta de capacidad > 85%",
+            "contingency_plan": "Escalar instancias automáticamente",
+            "residual_severity": 4,
+        },
+    ]
+
+    res = validate_risk_trigger_and_fallback_plan(risks, high_severity_threshold=12)
+    assert res["is_valid"] is False
+    assert res["total_risks"] == 2
+    assert res["high_exposure_count"] == 2
+    assert res["missing_trigger_ids"] == ["RSK-10"]
+    assert res["missing_fallback_ids"] == []
+    assert res["unreduced_residual_ids"] == []
+    assert res["risk_governance_posture"] == "MISSING_EARLY_WARNING_TRIGGERS"
+
+
+def test_validate_risk_trigger_and_fallback_plan_missing_fallback_and_unreduced_residual():
+    """Sin triggers faltantes pero fallback < 8 chars -> MISSING_FALLBACK_CONTINGENCY; residual >= severity -> INEFFECTIVE_RESIDUAL_MITIGATION."""
+    from backend.schemas.projects import validate_risk_trigger_and_fallback_plan
+
+    no_fallback = validate_risk_trigger_and_fallback_plan(
+        [
+            {
+                "id": "RSK-20",
+                "probability": 4,
+                "impact": 3,
+                "trigger_condition": "Variación CPI < 0.88 en dos cortes",
+                "fallback_plan": "Corto",
+                "residual_severity": 6,
+            }
+        ],
+        high_severity_threshold=12,
+    )
+    assert no_fallback["is_valid"] is False
+    assert no_fallback["missing_trigger_ids"] == []
+    assert no_fallback["missing_fallback_ids"] == ["RSK-20"]
+    assert no_fallback["risk_governance_posture"] == "MISSING_FALLBACK_CONTINGENCY"
+
+    unreduced = validate_risk_trigger_and_fallback_plan(
+        [
+            {
+                "code": "RSK-21",
+                "probability": 4,
+                "impact": 4,
+                "trigger_condition": "Falla en enlace principal fibra",
+                "fallback_plan": "Activar enlace microondas de respaldo",
+                "residual_severity": 16,
+            }
+        ],
+        high_severity_threshold=12,
+    )
+    assert unreduced["is_valid"] is False
+    assert unreduced["missing_trigger_ids"] == []
+    assert unreduced["missing_fallback_ids"] == []
+    assert unreduced["unreduced_residual_ids"] == ["RSK-21"]
+    assert unreduced["risk_governance_posture"] == "INEFFECTIVE_RESIDUAL_MITIGATION"
+
+
+def test_validate_risk_trigger_and_fallback_plan_no_risks():
+    """None, lista vacía o entradas no-dict -> NO_RISKS_EVALUATED con is_valid True."""
+    from backend.schemas.projects import validate_risk_trigger_and_fallback_plan
+
+    for payload in (None, [], ["invalid", 42]):
+        res = validate_risk_trigger_and_fallback_plan(payload)  # type: ignore[arg-type]
+        assert res == {
+            "is_valid": True,
+            "total_risks": 0,
+            "high_exposure_count": 0,
+            "missing_trigger_ids": [],
+            "missing_fallback_ids": [],
+            "unreduced_residual_ids": [],
+            "risk_governance_posture": "NO_RISKS_EVALUATED",
+        }
+
+
+
 

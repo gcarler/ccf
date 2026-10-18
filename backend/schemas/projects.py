@@ -2863,4 +2863,104 @@ def validate_schedule_dependency_lead_lag(
     }
 
 
+def validate_risk_trigger_and_fallback_plan(
+    risks: Optional[list[dict]],
+    high_severity_threshold: int = 12,
+) -> dict[str, Any]:
+    """Valida disparadores de alerta temprana, planes de contingencia/respaldo y severidad residual en riesgos de alta exposición (PMBOK §11.5 y §11.7)."""
+    items = [item for item in (risks or []) if isinstance(item, dict)]
+    try:
+        safe_threshold = max(1, int(high_severity_threshold if high_severity_threshold is not None else 12))
+    except (TypeError, ValueError):
+        safe_threshold = 12
+
+    total_risks = len(items)
+    high_exposure_count = 0
+    missing_trigger_ids: list[str] = []
+    missing_fallback_ids: list[str] = []
+    unreduced_residual_ids: list[str] = []
+
+    for idx, item in enumerate(items, start=1):
+        raw_id = item.get("id") if item.get("id") is not None else item.get("code")
+        risk_id = (
+            str(raw_id).strip()
+            if raw_id is not None and str(raw_id).strip()
+            else f"RISK-{idx}"
+        )
+
+        try:
+            prob = int(item.get("probability") or 1)
+        except (TypeError, ValueError):
+            prob = 1
+        try:
+            imp = int(item.get("impact") or 1)
+        except (TypeError, ValueError):
+            imp = 1
+
+        raw_sev = item.get("severity") if item.get("severity") is not None else item.get("score")
+        if raw_sev is not None:
+            try:
+                severity = int(raw_sev)
+            except (TypeError, ValueError):
+                severity = prob * imp
+        else:
+            severity = prob * imp
+
+        if severity < safe_threshold:
+            continue
+
+        high_exposure_count += 1
+
+        trigger_str = str(
+            item.get("trigger_condition")
+            or item.get("early_warning_trigger")
+            or ""
+        ).strip()
+        if len(trigger_str) < 6:
+            missing_trigger_ids.append(risk_id)
+
+        fallback_str = str(
+            item.get("fallback_plan")
+            or item.get("contingency_plan")
+            or ""
+        ).strip()
+        if len(fallback_str) < 8:
+            missing_fallback_ids.append(risk_id)
+
+        try:
+            residual = int(item.get("residual_severity") or 0)
+        except (TypeError, ValueError):
+            residual = 0
+        if residual > 0 and residual >= severity:
+            unreduced_residual_ids.append(risk_id)
+
+    is_valid = bool(
+        len(missing_trigger_ids) == 0
+        and len(missing_fallback_ids) == 0
+        and len(unreduced_residual_ids) == 0
+    )
+
+    if total_risks == 0:
+        risk_governance_posture = "NO_RISKS_EVALUATED"
+    elif len(missing_trigger_ids) > 0:
+        risk_governance_posture = "MISSING_EARLY_WARNING_TRIGGERS"
+    elif len(missing_fallback_ids) > 0:
+        risk_governance_posture = "MISSING_FALLBACK_CONTINGENCY"
+    elif len(unreduced_residual_ids) > 0:
+        risk_governance_posture = "INEFFECTIVE_RESIDUAL_MITIGATION"
+    else:
+        risk_governance_posture = "GOVERNED_RISK_RESPONSE_MATRIX"
+
+    return {
+        "is_valid": is_valid,
+        "total_risks": total_risks,
+        "high_exposure_count": high_exposure_count,
+        "missing_trigger_ids": missing_trigger_ids,
+        "missing_fallback_ids": missing_fallback_ids,
+        "unreduced_residual_ids": unreduced_residual_ids,
+        "risk_governance_posture": risk_governance_posture,
+    }
+
+
+
 

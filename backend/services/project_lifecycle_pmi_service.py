@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Optional
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -969,6 +969,12 @@ class ProjectLifecyclePMIService:
             contracts=contracts, handover_items=handover_items
         )
 
+    @staticmethod
+    def audit_stakeholder_engagement_transition_gaps(
+        stakeholders: Optional[list[dict]],
+    ) -> dict:
+        return audit_stakeholder_engagement_transition_gaps(stakeholders)
+
 
 def audit_charter_measurable_objectives(
     objectives: list[dict[str, Any]] | None,
@@ -1387,6 +1393,128 @@ def audit_project_procurement_and_handover_closeout(
     }
 
 
+def audit_stakeholder_engagement_transition_gaps(
+    stakeholders: Optional[list[dict]],
+) -> dict:
+    """Audita la matriz de evaluación de engagement de interesados (PMBOK §13.2 / §13.4).
+
+    Escala SEAM: UNAWARE/DESCONOCEDOR=1, RESISTANT/RESISTENTE=2, NEUTRAL=3,
+    SUPPORTIVE/PARTIDARIO/APOYO=4, LEADING/LIDER/LÍDER=5 (defaults: current
+    NEUTRAL, desired SUPPORTIVE).
+    - `gap_count`: interesados con `current_rank` < `desired_rank`.
+    - `high_power_resistant_ids`: ids con current_rank <= 2 y alto poder
+      (`influence`/`power` en ('HIGH','ALTA','CRITICAL') o int >= 4).
+    - `unaddressed_gap_ids`: gaps sin plan de acción (`action_plan` < 8 chars).
+    - `alignment_rate_pct`: % de interesados en o sobre su nivel deseado
+      (2 decimales; 0.0 sin interesados).
+    - `seam_posture`: 'EMPTY_STAKEHOLDER_MATRIX' sin interesados;
+      'CRITICAL_HIGH_POWER_RESISTANCE' con resistencia de alto poder;
+      'UNADDRESSED_ENGAGEMENT_GAPS' con gaps sin plan; y
+      'ALIGNED_ENGAGEMENT_MATRIX' en el caso alineado.
+    - `recommendations`: acciones correctivas según el hallazgo.
+    """
+    SEAM_RANKS = {
+        "unaware": 1, "desconocedor": 1,
+        "resistant": 2, "resistente": 2,
+        "neutral": 3,
+        "supportive": 4, "partidario": 4, "apoyo": 4,
+        "leading": 5, "lider": 5, "líder": 5,
+    }
+    HIGH_POWER_TEXTS = {"high", "alta", "high_power", "critico", "crítico", "critical"}
+
+    items = [item for item in (stakeholders or []) if isinstance(item, dict)]
+    total_stakeholders = len(items)
+
+    def _rank(value: Any, fallback: int) -> int:
+        text = str(value or "").strip().lower()
+        if text in SEAM_RANKS:
+            return SEAM_RANKS[text]
+        try:
+            numeric = int(float(text))
+        except (TypeError, ValueError):
+            return fallback
+        return min(5, max(1, numeric))
+
+    gap_count = 0
+    high_power_resistant_ids: list[str] = []
+    unaddressed_gap_ids: list[str] = []
+
+    for item in items:
+        stakeholder_id = str(item.get("id") or item.get("name") or "").strip()
+        current_rank = _rank(
+            item.get("current_engagement") or item.get("current_level") or "NEUTRAL",
+            3,
+        )
+        desired_rank = _rank(
+            item.get("desired_engagement") or item.get("desired_level") or "SUPPORTIVE",
+            4,
+        )
+
+        power_raw = item.get("influence") or item.get("power") or ""
+        power_text = str(power_raw).strip().lower()
+        try:
+            power_numeric = int(float(power_text))
+        except (TypeError, ValueError):
+            power_numeric = None
+        is_high_power = power_text in HIGH_POWER_TEXTS or (
+            power_numeric is not None and power_numeric >= 4
+        )
+
+        has_gap = current_rank < desired_rank
+        if has_gap:
+            gap_count += 1
+
+        if current_rank <= 2 and is_high_power:
+            high_power_resistant_ids.append(stakeholder_id)
+
+        action_plan_text = str(item.get("action_plan") or "").strip()
+        if has_gap and len(action_plan_text) < 8:
+            unaddressed_gap_ids.append(stakeholder_id)
+
+    alignment_rate_pct = (
+        round(((total_stakeholders - gap_count) / total_stakeholders) * 100.0, 2)
+        if total_stakeholders > 0
+        else 0.0
+    )
+
+    if total_stakeholders == 0:
+        seam_posture = "EMPTY_STAKEHOLDER_MATRIX"
+    elif high_power_resistant_ids:
+        seam_posture = "CRITICAL_HIGH_POWER_RESISTANCE"
+    elif unaddressed_gap_ids:
+        seam_posture = "UNADDRESSED_ENGAGEMENT_GAPS"
+    else:
+        seam_posture = "ALIGNED_ENGAGEMENT_MATRIX"
+
+    recommendations: list[str] = []
+    if seam_posture == "CRITICAL_HIGH_POWER_RESISTANCE":
+        recommendations.append(
+            "Escalar inmediatamente la resistencia de interesados de alto poder con patrocinio ejecutivo (PMBOK §13.4)."
+        )
+    if seam_posture == "UNADDRESSED_ENGAGEMENT_GAPS":
+        recommendations.append(
+            "Elaborar planes de acción específicos para los gaps de engagement sin tratamiento."
+        )
+    if seam_posture == "ALIGNED_ENGAGEMENT_MATRIX":
+        recommendations.append(
+            "Reevaluar la matriz SEAM en cada milestone para sostener el alineamiento (PMBOK §13.2)."
+        )
+    if seam_posture == "EMPTY_STAKEHOLDER_MATRIX":
+        recommendations.append(
+            "Registrar los interesados con niveles actual y deseado para iniciar la matriz SEAM."
+        )
+
+    return {
+        "total_stakeholders": total_stakeholders,
+        "gap_count": gap_count,
+        "high_power_resistant_ids": high_power_resistant_ids,
+        "unaddressed_gap_ids": unaddressed_gap_ids,
+        "alignment_rate_pct": alignment_rate_pct,
+        "seam_posture": seam_posture,
+        "recommendations": recommendations,
+    }
+
+
 __all__ = [
     "build_pmo_portfolio_matrix",
     "build_governance_summary",
@@ -1412,6 +1540,7 @@ __all__ = [
     "evaluate_benefits_realization_posture",
     "audit_assumption_and_constraint_log",
     "audit_project_procurement_and_handover_closeout",
+    "audit_stakeholder_engagement_transition_gaps",
     "ProjectLifecyclePMIService",
 ]
 

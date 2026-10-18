@@ -1319,4 +1319,85 @@ def test_audit_procurement_and_handover_closeout_no_artifacts():
         assert len(res["recommendations"]) == 1
 
 
+# ─── audit_stakeholder_engagement_transition_gaps (pure helper) ───────
+
+
+def test_stakeholder_engagement_transition_gaps_aligned_matrix():
+    """Todos en/o sobre su nivel deseado -> ALIGNED_ENGAGEMENT_MATRIX con alignment 100/66.67."""
+    res = project_lifecycle_pmi_service.audit_stakeholder_engagement_transition_gaps(
+        [
+            # current >= desired: sin gap
+            {"id": "SH-1", "current_engagement": "supportive", "desired_engagement": "neutral"},
+            # defaults: current NEUTRAL(3), desired SUPPORTIVE(4) -> gap PERO hay plan >= 8 chars
+            {"name": "RGV Norte", "action_plan": "Presentar avances mensuales"},
+            {"id": "SH-3", "current_level": "líder", "desired_level": "5", "influence": 5},
+        ]
+    )
+
+    assert res["total_stakeholders"] == 3
+    assert res["gap_count"] == 1
+    assert res["high_power_resistant_ids"] == []
+    assert res["unaddressed_gap_ids"] == []
+    assert res["alignment_rate_pct"] == 66.67
+    assert res["seam_posture"] == "ALIGNED_ENGAGEMENT_MATRIX"
+    assert len(res["recommendations"]) == 1
+
+
+def test_stakeholder_engagement_transition_gaps_critical_high_power_resistance():
+    """Resistente con poder alto (texto o int >= 4) -> CRITICAL_HIGH_POWER_RESISTANCE precede a gaps."""
+    res = project_lifecycle_pmi_service.audit_stakeholder_engagement_transition_gaps(
+        [
+            {"id": "CEO", "current_engagement": "Resistente", "influence": "HIGH"},
+            {"id": "Ministerio", "current_level": "unaware", "power": 4},
+            {"id": "Liderador", "current_engagement": "supportive"},
+        ]
+    )
+
+    assert res["total_stakeholders"] == 3
+    assert res["gap_count"] == 2
+    assert res["high_power_resistant_ids"] == ["CEO", "Ministerio"]
+    assert res["unaddressed_gap_ids"] == ["CEO", "Ministerio"]
+    assert res["alignment_rate_pct"] == 33.33
+    assert res["seam_posture"] == "CRITICAL_HIGH_POWER_RESISTANCE"
+    assert len(res["recommendations"]) == 1  # una por postura final
+
+
+def test_stakeholder_engagement_transition_gaps_unaddressed_gaps():
+    """Gaps con poder bajo y sin plan (< 8 chars) -> UNADDRESSED_ENGAGEMENT_GAPS."""
+    res = project_lifecycle_pmi_service.audit_stakeholder_engagement_transition_gaps(
+        [
+            {"id": "Vol", "current_engagement": "neutral", "desired_engagement": "apoyo"},
+            {"id": "Vec", "current_level": "desconocedor", "desired_level": "partidario", "influence": "baja", "action_plan": "ok"},
+            {"id": "Coord", "current_engagement": "resistente", "desired_engagement": "supportive", "influence": 3, "action_plan": "Invitar a sesión de cadrte"},
+        ]
+    )
+
+    assert res["total_stakeholders"] == 3
+    assert res["gap_count"] == 3
+    assert res["high_power_resistant_ids"] == []
+    assert res["unaddressed_gap_ids"] == ["Vol", "Vec"]
+    assert res["alignment_rate_pct"] == 0.0
+    assert res["seam_posture"] == "UNADDRESSED_ENGAGEMENT_GAPS"
+    assert len(res["recommendations"]) == 1
+
+
+def test_stakeholder_engagement_transition_gaps_empty_matrix():
+    """None, lista vacía o no-dicts -> EMPTY_STAKEHOLDER_MATRIX con alignment 0.0."""
+    for stakeholders in (None, [], ["no dict", 9]):
+        res = project_lifecycle_pmi_service.audit_stakeholder_engagement_transition_gaps(
+            stakeholders  # type: ignore[arg-type]
+        )
+        assert res == {
+            "total_stakeholders": 0,
+            "gap_count": 0,
+            "high_power_resistant_ids": [],
+            "unaddressed_gap_ids": [],
+            "alignment_rate_pct": 0.0,
+            "seam_posture": "EMPTY_STAKEHOLDER_MATRIX",
+            "recommendations": [
+                "Registrar los interesados con niveles actual y deseado para iniciar la matriz SEAM."
+            ],
+        }
+
+
 
