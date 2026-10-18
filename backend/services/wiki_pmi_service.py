@@ -198,3 +198,60 @@ def seed_pmi_wiki_doctrine(
 
     logger.info("Sincronizadas %d páginas canónicas de Wiki PMI", len(seeded_pages))
     return seeded_pages
+
+
+def audit_pmi_wiki_doctrine_completeness(base_dir: Optional[Path] = None) -> Dict[str, Any]:
+    """Audita la completitud de la doctrina PMI en disco (función pura, sin E/S de DB).
+
+    Inspecciona `CANONICAL_VOLUMES_METADATA` y `get_canonical_pmi_volumes(
+    base_dir=base_dir)` y retorna:
+    - `expected_volumes`: número de volúmenes canónicos (7).
+    - `loaded_from_disk_count`: cuántos archivos físicos existen en
+      `(base_dir or DEFAULT_PMI_KB_DIR) / meta['file_name']`.
+    - `fallback_synthesized_count`: volúmenes servidos por el fallback
+      sintetizado (expected - loaded).
+    - `completeness_pct`: porcentaje de volúmenes cargados desde disco
+      (2 decimales; 100.0 si no hay volúmenes esperados).
+    - `total_words`: suma de `word_count` de todos los volúmenes
+      (incluye fallback sintetizado).
+    - `missing_files`: lista ordenada de `file_name` ausentes en disco.
+    - `status`: 'complete' si los 7 archivos están en disco, 'partial' si
+      se cargó al menos uno, 'fallback_only' si ninguno.
+    """
+    directory = base_dir or DEFAULT_PMI_KB_DIR
+    expected_volumes = len(CANONICAL_VOLUMES_METADATA)
+
+    loaded_from_disk_count = 0
+    missing_files: List[str] = []
+    for meta in CANONICAL_VOLUMES_METADATA:
+        if (directory / meta["file_name"]).is_file():
+            loaded_from_disk_count += 1
+        else:
+            missing_files.append(meta["file_name"])
+    missing_files.sort()
+
+    fallback_synthesized_count = expected_volumes - loaded_from_disk_count
+    completeness_pct = (
+        round((loaded_from_disk_count / expected_volumes) * 100.0, 2)
+        if expected_volumes > 0
+        else 100.0
+    )
+
+    total_words = sum(vol["word_count"] for vol in get_canonical_pmi_volumes(base_dir=base_dir))
+
+    if fallback_synthesized_count == 0:
+        status = "complete"
+    elif loaded_from_disk_count > 0:
+        status = "partial"
+    else:
+        status = "fallback_only"
+
+    return {
+        "expected_volumes": expected_volumes,
+        "loaded_from_disk_count": loaded_from_disk_count,
+        "fallback_synthesized_count": fallback_synthesized_count,
+        "completeness_pct": completeness_pct,
+        "total_words": total_words,
+        "missing_files": missing_files,
+        "status": status,
+    }

@@ -180,3 +180,197 @@ class TestWikiAuditTrail:
         assert row is not None
         assert row.deleted_at is not None
         assert row.title == "Audit"
+
+
+# ── Doctrine PMI: get_canonical_pmi_volumes / audit / seed ────────────────
+
+
+def _write_doctrine_files(base_dir, marker: str) -> None:
+    """Escribe los 7 volúmenes canónicos en base_dir (contenido único por marker)."""
+    from backend.services.wiki_pmi_service import CANONICAL_VOLUMES_METADATA
+
+    base_dir.mkdir(parents=True, exist_ok=True)
+    for meta in CANONICAL_VOLUMES_METADATA:
+        (base_dir / meta["file_name"]).write_text(
+            f"# {meta['title']}\n\n{marker} contenido canónico del volumen {meta['vol']}.\n"
+            "Texto de referencia metodológica PMI para la plataforma CCF.\n",
+            encoding="utf-8",
+        )
+
+
+def test_get_canonical_pmi_volumes_loads_seven_volumes_from_disk(tmp_path):
+    from backend.services.wiki_pmi_service import CANONICAL_VOLUMES_METADATA, get_canonical_pmi_volumes
+
+    _write_doctrine_files(tmp_path, "v1")
+
+    volumes = get_canonical_pmi_volumes(base_dir=tmp_path)
+
+    assert [vol["vol"] for vol in volumes] == list(range(7))
+    assert len(volumes) == len(CANONICAL_VOLUMES_METADATA) == 7
+    for vol in volumes:
+        assert vol["content"].startswith(f"# {vol['title']}")
+        assert vol["char_count"] == len(vol["content"])
+        assert vol["word_count"] == len(vol["content"].split())
+
+
+def test_get_canonical_pmi_volumes_synthesizes_fallback_content(tmp_path):
+    """Sin archivos en disco, cada volumen entrega el fallback sintetizado."""
+    from backend.services.wiki_pmi_service import get_canonical_pmi_volumes
+
+    volumes = get_canonical_pmi_volumes(base_dir=tmp_path)
+
+    assert len(volumes) == 7
+    for vol in volumes:
+        assert "Biblioteca Metodológica" in vol["content"]
+        assert vol["word_count"] > 0
+
+
+def test_audit_pmi_wiki_doctrine_completeness_complete(tmp_path):
+    """7 archivos en disco → status 'complete', 0 fallback y 100%."""
+    from backend.services.wiki_pmi_service import audit_pmi_wiki_doctrine_completeness
+
+    _write_doctrine_files(tmp_path, "v1")
+
+    audit = audit_pmi_wiki_doctrine_completeness(base_dir=tmp_path)
+
+    assert audit == {
+        "expected_volumes": 7,
+        "loaded_from_disk_count": 7,
+        "fallback_synthesized_count": 0,
+        "completeness_pct": 100.0,
+        "total_words": audit["total_words"],
+        "missing_files": [],
+        "status": "complete",
+    }
+    assert audit["total_words"] > 0
+
+
+def test_audit_pmi_wiki_doctrine_completeness_partial(tmp_path):
+    """Solo 3 archivos en disco → status 'partial', 4 missing ordenados."""
+    from backend.services.wiki_pmi_service import (
+        CANONICAL_VOLUMES_METADATA,
+        audit_pmi_wiki_doctrine_completeness,
+    )
+
+    missing_names = [meta["file_name"] for meta in CANONICAL_VOLUMES_METADATA[3:]]
+    present_names = [meta["file_name"] for meta in CANONICAL_VOLUMES_METADATA[:3]]
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    for meta in CANONICAL_VOLUMES_METADATA[:3]:
+        (tmp_path / meta["file_name"]).write_text("contenido parcial canónico aproximado", encoding="utf-8")
+
+    audit = audit_pmi_wiki_doctrine_completeness(base_dir=tmp_path)
+
+    assert audit == {
+        "expected_volumes": 7,
+        "loaded_from_disk_count": 3,
+        "fallback_synthesized_count": 4,
+        "completeness_pct": round(3 / 7 * 100.0, 2),
+        "total_words": audit["total_words"],
+        "missing_files": missing_names,
+        "status": "partial",
+    }
+    assert audit["missing_files"] == sorted(missing_names)
+    assert sorted(present_names) == sorted(
+        meta["file_name"] for meta in CANONICAL_VOLUMES_METADATA[:3]
+    )
+
+
+def test_audit_pmi_wiki_doctrine_completeness_fallback_only(tmp_path):
+    """Directorio vacío → status 'fallback_only', todos los archivos missing."""
+    from backend.services.wiki_pmi_service import (
+        CANONICAL_VOLUMES_METADATA,
+        audit_pmi_wiki_doctrine_completeness,
+    )
+    import os
+
+    tmp_path.mkdir(exist_ok=True)
+    os.environ.pop("PMI_KB_DIR", None)  # asegurar lectura del tmp_path pasado
+
+    audit = audit_pmi_wiki_doctrine_completeness(base_dir=tmp_path)
+
+    assert audit["expected_volumes"] == 7
+    assert audit["loaded_from_disk_count"] == 0
+    assert audit["fallback_synthesized_count"] == 7
+    assert audit["completeness_pct"] == 0.0
+    assert audit["missing_files"] == sorted(
+        meta["file_name"] for meta in CANONICAL_VOLUMES_METADATA
+    )
+    assert audit["status"] == "fallback_only"
+    # El fallback sintetizado también aporta palabras al total
+    assert audit["total_words"] > 0
+
+
+def test_seed_pmi_wiki_doctrine_creates_and_updates_with_history(
+    client, db_session, tmp_path
+):
+    """seed crea 7 páginas y force_update=True con contenido nuevo deja historial."""
+    from backend import models
+    from backend.services.wiki_pmi_service import CANONICAL_VOLUMES_METADATA, seed_pmi_wiki_doctrine
+
+    _, persona, sede = seed_admin(db_session)
+
+    dir_v1 = tmp_path / "v1"
+    dir_v2 = tmp_path / "v2"
+    _write_doctrine_files(dir_v1, "edicion-uno")
+    _write_doctrine_files(dir_v2, "edicion-dos")
+
+    pages = seed_pmi_wiki_doctrine(
+        db_session,
+        sede_id=sede.id,
+        author_id=persona.id,
+        force_update=False,
+        base_dir=dir_v1,
+    )
+
+    assert len(pages) == 7
+    for page in pages:
+        assert page.version == 1
+        assert page.category == "proyectos_pmi"
+        assert page.sede_id == sede.id
+        assert page.author_id == persona.id
+        assert "edicion-uno" in page.content
+
+    # ── Actualización forzada con contenido distinto → historial WikiPageVersion ──
+    updated = seed_pmi_wiki_doctrine(
+        db_session,
+        sede_id=sede.id,
+        author_id=persona.id,
+        force_update=True,
+        base_dir=dir_v2,
+    )
+
+    assert len(updated) == 7
+    for page in updated:
+        assert page.version == 2
+        assert "edicion-dos" in page.content
+
+    versions = (
+        db_session.query(models.WikiPageVersion)
+        .filter(
+            models.WikiPageVersion.wiki_page_id.in_([p.id for p in updated])
+        )
+        .all()
+    )
+    assert len(versions) == 7
+    for version in versions:
+        assert version.version_number == 1
+        assert "edicion-uno" in version.content
+
+    # ── Segundo seed sin cambios reales: no aumenta versiones ni historial ──
+    again = seed_pmi_wiki_doctrine(
+        db_session,
+        sede_id=sede.id,
+        author_id=persona.id,
+        force_update=True,
+        base_dir=dir_v2,
+    )
+    assert len(again) == 7
+    assert all(page.version == 2 for page in again)
+
+    canonical_keys = {meta["page_key"] for meta in CANONICAL_VOLUMES_METADATA}
+    stored = (
+        db_session.query(models.WikiPage)
+        .filter(models.WikiPage.page_key.in_(canonical_keys))
+        .all()
+    )
+    assert len(stored) == 7
