@@ -7235,3 +7235,137 @@ def test_audit_wiki_chaos_gameday_resilience_and_action_closure_empty_and_bindin
     assert (
         "audit_wiki_chaos_gameday_resilience_and_action_closure" in mod.__all__
     )
+
+
+def test_audit_wiki_api_deprecation_sunset_and_migration_readiness_safe_to_sunset():
+    """Caso 1: Endpoints con aviso >= 60d, guía de migración publicada y tráfico residual <= 5% -> SAFE_TO_SUNSET."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_api_deprecation_sunset_and_migration_readiness,
+    )
+
+    endpoints = [
+        {
+            "endpoint_id": "GET /v1/projects/legacy",
+            "sunset_notice_days_given": 90,
+            "days_until_removal": 7,
+            "has_migration_guide_url": True,
+            "unmigrated_consumer_count": 0,
+            "active_traffic_share_pct": 0.0,
+        },
+        {
+            "endpoint_id": "POST /v1/tasks/sync",
+            "sunset_notice_days_given": 60,
+            "days_until_removal": 30,
+            "has_migration_guide_url": True,
+            "unmigrated_consumer_count": 2,
+            "active_traffic_share_pct": 2.5,
+        },
+    ]
+    res = audit_wiki_api_deprecation_sunset_and_migration_readiness(
+        endpoints, min_sunset_notice_days=60, max_unmigrated_traffic_pct=5.0
+    )
+    assert res["total_deprecated_endpoints"] == 2
+    assert res["insufficient_notice_endpoint_ids"] == []
+    assert res["missing_migration_guide_endpoint_ids"] == []
+    assert res["imminent_breaking_removal_endpoint_ids"] == []
+    assert res["high_residual_traffic_endpoint_ids"] == []
+    assert res["deprecation_governance_status"] == "SAFE_TO_SUNSET"
+    assert res["is_sunset_compliant"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_wiki_api_deprecation_sunset_and_migration_readiness_warning():
+    """Caso 2: Ventana de aviso corta (<60d) o tráfico residual > 5% pero con >14d antes del retiro y con guía -> WARNING."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_api_deprecation_sunset_and_migration_readiness,
+    )
+
+    endpoints = [
+        {
+            "endpoint_id": "GET /v1/reports/old",
+            "sunset_notice_days_given": 45,
+            "days_until_removal": 25,
+            "has_migration_guide_url": True,
+            "unmigrated_consumer_count": 3,
+            "active_traffic_share_pct": 12.0,
+        }
+    ]
+    res = audit_wiki_api_deprecation_sunset_and_migration_readiness(
+        endpoints, min_sunset_notice_days=60, max_unmigrated_traffic_pct=5.0
+    )
+    assert res["total_deprecated_endpoints"] == 1
+    assert res["insufficient_notice_endpoint_ids"] == ["GET /v1/reports/old"]
+    assert res["missing_migration_guide_endpoint_ids"] == []
+    assert res["imminent_breaking_removal_endpoint_ids"] == []
+    assert res["high_residual_traffic_endpoint_ids"] == ["GET /v1/reports/old"]
+    assert res["deprecation_governance_status"] == "WARNING"
+    assert res["is_sunset_compliant"] is False
+    assert len(res["recommendations"]) == 2
+
+
+def test_audit_wiki_api_deprecation_sunset_and_migration_readiness_breaking_risk():
+    """Caso 3: Retiro inminente (<=14d) con consumidores no migrados o sin guía de migración -> BREAKING_RISK."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_api_deprecation_sunset_and_migration_readiness,
+    )
+
+    endpoints = [
+        {
+            "endpoint_id": "DELETE /v1/charter",
+            "sunset_notice_days_given": 30,
+            "days_until_removal": 5,
+            "has_migration_guide_url": False,
+            "unmigrated_consumer_count": 4,
+            "active_traffic_share_pct": 18.5,
+        }
+    ]
+    res = audit_wiki_api_deprecation_sunset_and_migration_readiness(
+        endpoints, min_sunset_notice_days=60, max_unmigrated_traffic_pct=5.0
+    )
+    assert res["total_deprecated_endpoints"] == 1
+    assert res["insufficient_notice_endpoint_ids"] == ["DELETE /v1/charter"]
+    assert res["missing_migration_guide_endpoint_ids"] == ["DELETE /v1/charter"]
+    assert res["imminent_breaking_removal_endpoint_ids"] == ["DELETE /v1/charter"]
+    assert res["high_residual_traffic_endpoint_ids"] == ["DELETE /v1/charter"]
+    assert res["deprecation_governance_status"] == "BREAKING_RISK"
+    assert res["is_sunset_compliant"] is False
+    assert len(res["recommendations"]) == 4
+
+
+def test_audit_wiki_api_deprecation_sunset_and_migration_readiness_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en WikiPMIService + __all__."""
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_api_deprecation_sunset_and_migration_readiness,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_wiki_api_deprecation_sunset_and_migration_readiness(payload)  # type: ignore[arg-type]
+        assert empty["total_deprecated_endpoints"] == 0
+        assert empty["insufficient_notice_endpoint_ids"] == []
+        assert empty["missing_migration_guide_endpoint_ids"] == []
+        assert empty["imminent_breaking_removal_endpoint_ids"] == []
+        assert empty["high_residual_traffic_endpoint_ids"] == []
+        assert empty["deprecation_governance_status"] == "SAFE_TO_SUNSET"
+        assert empty["is_sunset_compliant"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "endpoint_id": "GET /v1/ping",
+            "sunset_notice_days_given": 90,
+            "days_until_removal": 30,
+            "has_migration_guide_url": True,
+            "unmigrated_consumer_count": 0,
+            "active_traffic_share_pct": 0.0,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_api_deprecation_sunset_and_migration_readiness(sample)
+        == audit_wiki_api_deprecation_sunset_and_migration_readiness(sample)
+    )
+    assert (
+        "audit_wiki_api_deprecation_sunset_and_migration_readiness" in mod.__all__
+    )
+

@@ -2520,6 +2520,7 @@ __all__ = [
     "audit_wiki_communication_matrix_cadence_and_escalation",
     "audit_wiki_slo_error_budget_and_runbook_linkage",
     "audit_wiki_chaos_gameday_resilience_and_action_closure",
+    "audit_wiki_api_deprecation_sunset_and_migration_readiness",
     "WikiPMIService",
 ]
 
@@ -5629,3 +5630,95 @@ def audit_wiki_chaos_gameday_resilience_and_action_closure(
 WikiPMIService.audit_wiki_chaos_gameday_resilience_and_action_closure = staticmethod(
     audit_wiki_chaos_gameday_resilience_and_action_closure
 )
+
+
+def audit_wiki_api_deprecation_sunset_and_migration_readiness(
+    deprecated_endpoints: list[dict[str, Any]],
+    *,
+    min_sunset_notice_days: int = 60,
+    max_unmigrated_traffic_pct: float = 5.0,
+) -> dict[str, Any]:
+    """Audit PMI PMBOK §4.6 & §10.2 API/interface deprecation sunset window, migration guide linkage, and consumer cutover readiness."""
+    insufficient_notice_endpoint_ids: list[str] = []
+    missing_migration_guide_endpoint_ids: list[str] = []
+    imminent_breaking_removal_endpoint_ids: list[str] = []
+    high_residual_traffic_endpoint_ids: list[str] = []
+    recommendations: list[str] = []
+
+    valid_endpoints = (
+        [
+            ep
+            for ep in deprecated_endpoints
+            if isinstance(ep, dict) and str(ep.get("endpoint_id", "")).strip()
+        ]
+        if isinstance(deprecated_endpoints, list)
+        else []
+    )
+
+    for ep in valid_endpoints:
+        endpoint_id = str(ep.get("endpoint_id", "")).strip()
+        sunset_notice_days_given = int(ep.get("sunset_notice_days_given", 0) or 0)
+        days_until_removal = (
+            int(ep.get("days_until_removal", 0))
+            if ep.get("days_until_removal") is not None
+            else 0
+        )
+        has_migration_guide_url = bool(ep.get("has_migration_guide_url", False))
+        unmigrated_consumer_count = int(ep.get("unmigrated_consumer_count", 0) or 0)
+        active_traffic_share_pct = float(ep.get("active_traffic_share_pct", 0.0) or 0.0)
+
+        if sunset_notice_days_given < min_sunset_notice_days:
+            insufficient_notice_endpoint_ids.append(endpoint_id)
+
+        if not has_migration_guide_url:
+            missing_migration_guide_endpoint_ids.append(endpoint_id)
+
+        if days_until_removal <= 14 and (
+            unmigrated_consumer_count > 0
+            or active_traffic_share_pct > max_unmigrated_traffic_pct
+        ):
+            imminent_breaking_removal_endpoint_ids.append(endpoint_id)
+
+        if active_traffic_share_pct > max_unmigrated_traffic_pct:
+            high_residual_traffic_endpoint_ids.append(endpoint_id)
+
+    if imminent_breaking_removal_endpoint_ids:
+        recommendations.append(
+            f"Postpone imminent endpoint removal (<=14d) until active consumers and traffic are migrated: {', '.join(imminent_breaking_removal_endpoint_ids)}."
+        )
+    if missing_migration_guide_endpoint_ids:
+        recommendations.append(
+            f"Publish Wiki migration guides with payload mappings and code examples for deprecated endpoints: {', '.join(missing_migration_guide_endpoint_ids)}."
+        )
+    if insufficient_notice_endpoint_ids:
+        recommendations.append(
+            f"Extend sunset notice windows to at least {min_sunset_notice_days} days for: {', '.join(insufficient_notice_endpoint_ids)}."
+        )
+    if high_residual_traffic_endpoint_ids:
+        recommendations.append(
+            f"Accelerate consumer cutover to reduce residual traffic below {max_unmigrated_traffic_pct:.1f}% on: {', '.join(high_residual_traffic_endpoint_ids)}."
+        )
+
+    if imminent_breaking_removal_endpoint_ids or missing_migration_guide_endpoint_ids:
+        deprecation_governance_status = "BREAKING_RISK"
+    elif insufficient_notice_endpoint_ids or high_residual_traffic_endpoint_ids:
+        deprecation_governance_status = "WARNING"
+    else:
+        deprecation_governance_status = "SAFE_TO_SUNSET"
+
+    return {
+        "total_deprecated_endpoints": len(valid_endpoints),
+        "insufficient_notice_endpoint_ids": insufficient_notice_endpoint_ids,
+        "missing_migration_guide_endpoint_ids": missing_migration_guide_endpoint_ids,
+        "imminent_breaking_removal_endpoint_ids": imminent_breaking_removal_endpoint_ids,
+        "high_residual_traffic_endpoint_ids": high_residual_traffic_endpoint_ids,
+        "deprecation_governance_status": deprecation_governance_status,
+        "is_sunset_compliant": deprecation_governance_status == "SAFE_TO_SUNSET",
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_api_deprecation_sunset_and_migration_readiness = staticmethod(
+    audit_wiki_api_deprecation_sunset_and_migration_readiness
+)
+
