@@ -2830,6 +2830,8 @@ __all__ = [
     "audit_quality_copq_and_rework_scrap_threshold",
     "audit_emergency_change_ratification_and_bypass_governance",
     "audit_quality_capa_root_cause_and_recurrence",
+    "audit_configuration_baseline_integrity_and_version_drift",
+    "audit_scope_creep_and_gold_plating_effort",
     "ProjectCCBService",
 ]
 
@@ -5243,3 +5245,211 @@ ProjectCCBService.audit_quality_capa_root_cause_and_recurrence = staticmethod(
     audit_quality_capa_root_cause_and_recurrence
 )
 
+
+
+def audit_configuration_baseline_integrity_and_version_drift(
+    configuration_items: Sequence[Mapping[str, Any]] | None,
+    *,
+    require_checksum_verification: bool = True,
+    max_allowed_drift_items: int = 0,
+) -> dict[str, Any]:
+    """PMBOK 4.6 — Configuration Verification & Audit de la línea base.
+
+    Auditoría pura sobre ``configuration_items``. Entradas no-lista/None se
+    tratan como lista vacía y elementos no-dict se ignoran. Cada elemento:
+    ``ci_id``, ``approved_baseline_version``, ``deployed_version``,
+    ``approved_cr_id``, ``checksum_matches_artifact``,
+    ``is_locked_in_cm_repo``. Reglas:
+
+    1. ``unauthorized_drift_ci_ids``: ``deployed_version !=
+       approved_baseline_version`` sin ``approved_cr_id``.
+    2. ``pending_baseline_sync_ci_ids``: versiones difieren pero con CR
+       aprobado pendiente de sincronizar.
+    3. ``checksum_mismatch_ci_ids``: ``require_checksum_verification`` AND
+       ``checksum_matches_artifact`` falsy.
+    4. ``unlocked_baseline_ci_ids``: ``is_locked_in_cm_repo`` falsy.
+
+    Enumeraciones: las comparaciones de versión se realizan como cadenas
+    strip()-cadas para tolerar espacios; vacío/None cuenta como diferencia.
+    ``cm_audit_status``: COMPROMISED si ``len(unauthorized_drift) >
+    max_allowed_drift_items`` o hay checksum mismatch; DRIFT_DETECTED si no
+    es COMPROMISED pero hay al menos una lista no vacia; VERIFIED en caso
+    contrario. ``is_baseline_intact`` = status == 'VERIFIED'.
+    """
+    raw_items = configuration_items if isinstance(configuration_items, list) else []
+    items = [entry for entry in raw_items if isinstance(entry, Mapping)]
+
+    def _norm(value: Any) -> str | None:
+        if not isinstance(value, str):
+            return value if isinstance(value, str) else None
+        stripped = value.strip()
+        return stripped if stripped else None
+
+    unauthorized_drift_ci_ids: list[str] = []
+    pending_baseline_sync_ci_ids: list[str] = []
+    checksum_mismatch_ci_ids: list[str] = []
+    unlocked_baseline_ci_ids: list[str] = []
+
+    for entry in items:
+        ci_id = entry.get("ci_id")
+        approved_version = _norm(entry.get("approved_baseline_version"))
+        deployed_version = _norm(entry.get("deployed_version"))
+        approved_cr_id = _norm(entry.get("approved_cr_id"))
+        has_approved_cr = isinstance(approved_cr_id, str) and bool(approved_cr_id)
+
+        versions_differ = bool(approved_version or deployed_version) and (
+            approved_version != deployed_version
+        )
+        if versions_differ:
+            if has_approved_cr:
+                pending_baseline_sync_ci_ids.append(ci_id)
+            else:
+                unauthorized_drift_ci_ids.append(ci_id)
+
+        if require_checksum_verification and entry.get("checksum_matches_artifact") is not True:
+            checksum_mismatch_ci_ids.append(ci_id)
+
+        if entry.get("is_locked_in_cm_repo") is not True:
+            unlocked_baseline_ci_ids.append(ci_id)
+
+    compromised = (
+        len(unauthorized_drift_ci_ids) > max_allowed_drift_items
+        or len(checksum_mismatch_ci_ids) > 0
+    )
+    if compromised:
+        cm_audit_status = "COMPROMISED"
+    elif unauthorized_drift_ci_ids or pending_baseline_sync_ci_ids or unlocked_baseline_ci_ids:
+        cm_audit_status = "DRIFT_DETECTED"
+    else:
+        cm_audit_status = "VERIFIED"
+
+    return {
+        "total_configuration_items": len(items),
+        "unauthorized_drift_ci_ids": unauthorized_drift_ci_ids,
+        "pending_baseline_sync_ci_ids": pending_baseline_sync_ci_ids,
+        "checksum_mismatch_ci_ids": checksum_mismatch_ci_ids,
+        "unlocked_baseline_ci_ids": unlocked_baseline_ci_ids,
+        "cm_audit_status": cm_audit_status,
+        "is_baseline_intact": cm_audit_status == "VERIFIED",
+    }
+
+
+ProjectCCBService.audit_configuration_baseline_integrity_and_version_drift = staticmethod(
+    audit_configuration_baseline_integrity_and_version_drift
+)
+
+
+def audit_scope_creep_and_gold_plating_effort(
+    work_items: list[dict[str, Any]],
+    *,
+    max_unbaselined_effort_ratio_pct: float = 5.0,
+) -> dict[str, Any]:
+    """Audita desviaciones de alcance no autorizadas (Scope Creep) y funcionalidades extra no solicitadas (Gold-Plating) frente a la línea base WBS y órdenes de cambio CCB (PMI PMBOK §5.6)."""
+    if (
+        work_items is None
+        or isinstance(work_items, (str, bytes))
+        or not isinstance(work_items, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = work_items
+
+    try:
+        max_ratio_pct = float(max_unbaselined_effort_ratio_pct)
+    except (TypeError, ValueError):
+        max_ratio_pct = 5.0
+
+    total_work_items = 0
+    unapproved_scope_creep_ids: list[str] = []
+    gold_plating_item_ids: list[str] = []
+    unbaselined_accum = 0.0
+    total_effort_accum = 0.0
+    issues: list[str] = []
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_work_items += 1
+
+        item_id = (
+            str(raw.get("item_id") or raw.get("id") or "").strip()
+            or f"WRK-{total_work_items}"
+        )
+
+        raw_hrs = raw.get("logged_hours")
+        if raw_hrs is None or isinstance(raw_hrs, bool):
+            logged_hours = 0.0
+        else:
+            try:
+                logged_hours = max(0.0, float(raw_hrs))
+            except (TypeError, ValueError):
+                logged_hours = 0.0
+
+        in_approved_wbs_baseline = bool(raw.get("in_approved_wbs_baseline"))
+        linked_approved_cr_id = str(
+            raw.get("linked_approved_cr_id") or ""
+        ).strip()
+        is_gold_plating = bool(raw.get("is_gold_plating_extra_feature"))
+
+        total_effort_accum += logged_hours
+
+        is_creep = (
+            not in_approved_wbs_baseline
+            and not linked_approved_cr_id
+            and logged_hours > 0.0
+        )
+        is_gp = is_gold_plating and logged_hours > 0.0
+
+        if is_creep:
+            unapproved_scope_creep_ids.append(item_id)
+            issues.append(
+                f"Ítem '{item_id}' registra esfuerzo ({logged_hours:.2f}h) fuera de la línea base WBS sin solicitud de cambio (CR) aprobada."
+            )
+        if is_gp:
+            gold_plating_item_ids.append(item_id)
+            issues.append(
+                f"Ítem '{item_id}' constituye Gold-Plating no solicitado con {logged_hours:.2f}h imputadas."
+            )
+
+        if is_creep or is_gp:
+            unbaselined_accum += logged_hours
+
+    unbaselined_effort_hours = round(unbaselined_accum, 2)
+    total_effort_hours = round(total_effort_accum, 2)
+    unbaselined_effort_ratio_pct = (
+        round((unbaselined_effort_hours / total_effort_hours) * 100.0, 2)
+        if total_effort_hours > 0.0
+        else 0.0
+    )
+
+    if unbaselined_effort_ratio_pct > max_ratio_pct:
+        issues.append(
+            f"El porcentaje de esfuerzo fuera de línea base ({unbaselined_effort_ratio_pct:.2f}%) supera el umbral permitido ({max_ratio_pct:.2f}%)."
+        )
+
+    if (
+        unbaselined_effort_ratio_pct > max_ratio_pct
+        or len(gold_plating_item_ids) > 0
+    ):
+        scope_control_status = "SCOPE_BREACH"
+    elif len(unapproved_scope_creep_ids) > 0:
+        scope_control_status = "MINOR_DRIFT"
+    else:
+        scope_control_status = "DISCIPLINED"
+
+    return {
+        "total_work_items": total_work_items,
+        "unapproved_scope_creep_ids": unapproved_scope_creep_ids,
+        "gold_plating_item_ids": gold_plating_item_ids,
+        "unbaselined_effort_hours": unbaselined_effort_hours,
+        "total_effort_hours": total_effort_hours,
+        "unbaselined_effort_ratio_pct": unbaselined_effort_ratio_pct,
+        "scope_control_status": scope_control_status,
+        "is_scope_disciplined": scope_control_status == "DISCIPLINED",
+        "issues": issues,
+    }
+
+
+ProjectCCBService.audit_scope_creep_and_gold_plating_effort = staticmethod(
+    audit_scope_creep_and_gold_plating_effort
+)

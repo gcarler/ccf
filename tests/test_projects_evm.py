@@ -6098,3 +6098,327 @@ def test_evm_cv_decomposition_neutral_and_binding():
     )
     assert "evaluate_evm_cost_variance_rate_vs_efficiency_decomposition" in mod.__all__
 
+
+def test_evaluate_evm_contract_fee_and_pta_fpif_on_and_over_target():
+    """Valida contrato FPIF bajo costo objetivo ('ON_OR_UNDER_TARGET') y con sobrecosto compartido antes del PTA ('COST_OVERRUN_SHARED')."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_contract_fee_and_point_of_total_assumption,
+    )
+
+    under = evaluate_evm_contract_fee_and_point_of_total_assumption(
+        contract_type="FPIF",
+        target_cost=100000.0,
+        target_price=115000.0,
+        ceiling_price=136000.0,
+        buyer_share_ratio=0.70,
+        seller_share_ratio=0.30,
+        estimated_actual_cost_eac=90000.0,
+    )
+    assert under["target_fee"] == 15000.0
+    assert under["point_of_total_assumption_pta"] == 130000.0
+    assert under["cost_overrun_or_underrun"] == -10000.0
+    assert under["raw_fee"] == 18000.0
+    assert under["projected_seller_fee"] == 18000.0
+    assert under["projected_buyer_total_price"] == 108000.0
+    assert under["has_breached_pta"] is False
+    assert under["has_breached_ceiling"] is False
+    assert under["contract_exposure_status"] == "ON_OR_UNDER_TARGET"
+    assert under["issues"] == []
+
+    shared = evaluate_evm_contract_fee_and_point_of_total_assumption(
+        contract_type="FPIF",
+        target_cost=100000.0,
+        target_price=115000.0,
+        ceiling_price=136000.0,
+        buyer_share_ratio=0.70,
+        seller_share_ratio=0.30,
+        estimated_actual_cost_eac=110000.0,
+    )
+    assert shared["cost_overrun_or_underrun"] == 10000.0
+    assert shared["raw_fee"] == 12000.0
+    assert shared["projected_seller_fee"] == 12000.0
+    assert shared["projected_buyer_total_price"] == 122000.0
+    assert shared["has_breached_pta"] is False
+    assert shared["contract_exposure_status"] == "COST_OVERRUN_SHARED"
+
+
+def test_evaluate_evm_contract_fee_and_pta_fpif_pta_and_ceiling_breach():
+    """Detecta cruce del PTA y del precio techo en FPIF ('PTA_OR_CEILING_BREACH')."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_contract_fee_and_point_of_total_assumption,
+    )
+
+    pta_breach = evaluate_evm_contract_fee_and_point_of_total_assumption(
+        contract_type="FPIF",
+        target_cost=100000.0,
+        target_price=115000.0,
+        ceiling_price=136000.0,
+        buyer_share_ratio=0.70,
+        seller_share_ratio=0.30,
+        estimated_actual_cost_eac=130000.0,
+    )
+    assert pta_breach["point_of_total_assumption_pta"] == 130000.0
+    assert pta_breach["has_breached_pta"] is True
+    assert pta_breach["has_breached_ceiling"] is False
+    assert pta_breach["projected_buyer_total_price"] == 136000.0
+    assert pta_breach["projected_seller_fee"] == 6000.0
+    assert pta_breach["contract_exposure_status"] == "PTA_OR_CEILING_BREACH"
+    assert len(pta_breach["issues"]) == 1
+
+    ceiling_breach = evaluate_evm_contract_fee_and_point_of_total_assumption(
+        contract_type="FPIF",
+        target_cost=100000.0,
+        target_price=115000.0,
+        ceiling_price=136000.0,
+        buyer_share_ratio=0.70,
+        seller_share_ratio=0.30,
+        estimated_actual_cost_eac=140000.0,
+    )
+    assert ceiling_breach["has_breached_pta"] is True
+    assert ceiling_breach["has_breached_ceiling"] is True
+    assert ceiling_breach["projected_buyer_total_price"] == 136000.0
+    assert ceiling_breach["projected_seller_fee"] == -4000.0
+    assert ceiling_breach["contract_exposure_status"] == "PTA_OR_CEILING_BREACH"
+    assert len(ceiling_breach["issues"]) == 2
+
+
+def test_evaluate_evm_contract_fee_and_pta_cpif_min_max_fee_clamping():
+    """Valida límites min_fee y max_fee en contratos CPIF y ausencia de PTA."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_contract_fee_and_point_of_total_assumption,
+    )
+
+    capped_max = evaluate_evm_contract_fee_and_point_of_total_assumption(
+        contract_type="CPIF",
+        target_cost=100000.0,
+        target_price=110000.0,
+        buyer_share_ratio=0.60,
+        seller_share_ratio=0.40,
+        estimated_actual_cost_eac=60000.0,
+        min_fee=4000.0,
+        max_fee=18000.0,
+    )
+    assert capped_max["point_of_total_assumption_pta"] is None
+    assert capped_max["raw_fee"] == 26000.0
+    assert capped_max["projected_seller_fee"] == 18000.0
+    assert capped_max["projected_buyer_total_price"] == 78000.0
+    assert capped_max["contract_exposure_status"] == "ON_OR_UNDER_TARGET"
+
+    floored_min = evaluate_evm_contract_fee_and_point_of_total_assumption(
+        contract_type="CPIF",
+        target_cost=100000.0,
+        target_price=110000.0,
+        buyer_share_ratio=0.60,
+        seller_share_ratio=0.40,
+        estimated_actual_cost_eac=150000.0,
+        min_fee=4000.0,
+        max_fee=18000.0,
+    )
+    assert floored_min["raw_fee"] == -10000.0
+    assert floored_min["projected_seller_fee"] == 4000.0
+    assert floored_min["projected_buyer_total_price"] == 154000.0
+    assert floored_min["contract_exposure_status"] == "COST_OVERRUN_SHARED"
+
+
+def test_evaluate_evm_contract_fee_and_pta_invalid_share_ratio_and_binding():
+    """Detecta suma inválida de share ratios y verifica binding en ProjectEVMService y __all__."""
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_contract_fee_and_point_of_total_assumption,
+    )
+
+    bad_shares = evaluate_evm_contract_fee_and_point_of_total_assumption(
+        contract_type="FPIF",
+        target_cost=100000.0,
+        target_price=115000.0,
+        ceiling_price=135000.0,
+        buyer_share_ratio=0.80,
+        seller_share_ratio=0.30,
+        estimated_actual_cost_eac=100000.0,
+    )
+    assert bad_shares["share_ratio_sum_valid"] is False
+    assert bad_shares["contract_exposure_status"] == "PTA_OR_CEILING_BREACH"
+    assert len(bad_shares["issues"]) == 1
+
+    assert (
+        ProjectEVMService.evaluate_evm_contract_fee_and_point_of_total_assumption(
+            target_cost=50000.0,
+            target_price=55000.0,
+            ceiling_price=65000.0,
+            estimated_actual_cost_eac=50000.0,
+        )
+        == evaluate_evm_contract_fee_and_point_of_total_assumption(
+            target_cost=50000.0,
+            target_price=55000.0,
+            ceiling_price=65000.0,
+            estimated_actual_cost_eac=50000.0,
+        )
+    )
+    assert (
+        "evaluate_evm_contract_fee_and_point_of_total_assumption"
+        in mod.__all__
+    )
+
+
+def test_earned_schedule_eac_t_tspi_on_track_and_recoverable():
+    """Proyecto en track -> ON_OR_AHEAD; desvío reciente <= TSPI tolerable -> BEHIND_RECOVERABLE."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_earned_schedule_eac_t_and_tspi,
+    )
+
+    on_track = evaluate_evm_earned_schedule_eac_t_and_tspi(
+        earned_schedule_months=8.0,
+        actual_time_months=8.0,
+        planned_duration_months=12.0,
+        target_completion_months=0.0,
+    )
+    assert on_track["time_variance_tv_months"] == 0.0
+    assert on_track["spi_t"] == 1.0
+    assert on_track["independent_eac_t_months"] == 12.0
+    assert on_track["tspi"] == 1.0
+    assert on_track["is_schedule_recoverable"] is True
+    assert on_track["earned_schedule_status"] == "ON_OR_AHEAD_OF_TIME"
+
+    recoverable = evaluate_evm_earned_schedule_eac_t_and_tspi(
+        earned_schedule_months=5.5,
+        actual_time_months=6.0,
+        planned_duration_months=12.0,
+    )
+    assert recoverable["time_variance_tv_months"] == -0.5
+    assert recoverable["spi_t"] == round(5.5 / 6.0, 4)
+    # remaining_work=6.5, remaining_time=6 -> tspi 1.0833 <= 1.10
+    assert recoverable["tspi"] == round(6.5 / 6.0, 4)
+    assert recoverable["is_schedule_recoverable"] is True
+    assert recoverable["earned_schedule_status"] == "BEHIND_RECOVERABLE"
+
+    # spi_t >= 0.95 con descarga sobre target custom más holgado.
+    on_target = evaluate_evm_earned_schedule_eac_t_and_tspi(
+        earned_schedule_months=11.4,
+        actual_time_months=12.0,
+        planned_duration_months=12.0,
+        target_completion_months=14.0,
+    )
+    assert on_target["spi_t"] == 0.95
+    assert on_target["earned_schedule_status"] == "ON_OR_AHEAD_OF_TIME"
+
+
+def test_earned_schedule_eac_t_tspi_unrecoverable_and_limits():
+    """TSPI > max_feasible o remaining_time <= 0 -> UNRECOVERABLE_SLIP; bottleneck tspi=999."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_earned_schedule_eac_t_and_tspi,
+    )
+
+    over = evaluate_evm_earned_schedule_eac_t_and_tspi(
+        earned_schedule_months=4.0,
+        actual_time_months=6.0,
+        planned_duration_months=12.0,
+    )
+    assert over["spi_t"] == round(4.0 / 6.0, 4)
+    assert over["tspi"] == round(8.0 / 6.0, 4)          # 1.3333 > 1.10
+    assert over["is_schedule_recoverable"] is False
+    assert over["earned_schedule_status"] == "UNRECOVERABLE_SLIP"
+
+    dead = evaluate_evm_earned_schedule_eac_t_and_tspi(
+        earned_schedule_months=5.0,
+        actual_time_months=12.0,
+        planned_duration_months=12.0,
+    )
+    # remaining_time = 12 - 12 = 0 -> tspi 999.0 (bottleneck)
+    assert dead["tspi"] == 999.0
+    assert dead["is_schedule_recoverable"] is False
+
+    # max_feasible custom ensancha el umbral de recuperación.
+    custom = evaluate_evm_earned_schedule_eac_t_and_tspi(
+        earned_schedule_months=4.0,
+        actual_time_months=6.0,
+        planned_duration_months=12.0,
+        max_feasible_tspi=1.40,
+    )
+    assert custom["is_schedule_recoverable"] is True
+    assert custom["earned_schedule_status"] == "BEHIND_RECOVERABLE"
+
+    # default max 1.10: límite exacto 1.10 -> recuperable.
+    at_limit = evaluate_evm_earned_schedule_eac_t_and_tspi(
+        earned_schedule_months=6.0,
+        actual_time_months=6.1,
+        planned_duration_months=12.0,
+    )
+    # remaining_work=6, remaining_time=5.9 -> ts=1.0169 <= 1.07 (recuperable, es menor)
+    assert at_limit["is_schedule_recoverable"] is True
+    assert at_limit["tspi"] == round(6.0 / 5.9, 4)
+
+
+def test_earned_schedule_eac_t_tspi_boundary_zero_cases():
+    """AT=0 -> spi_t=1.0; ES == PD -> tspi=0.0 recuperable; EAC(t) redondeo 2 dec."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_earned_schedule_eac_t_and_tspi,
+    )
+
+    at_zero = evaluate_evm_earned_schedule_eac_t_and_tspi(
+        earned_schedule_months=5.0,
+        actual_time_months=0.0,
+        planned_duration_months=12.0,
+    )
+    assert at_zero["spi_t"] == 1.0
+    assert at_zero["independent_eac_t_months"] == 12.0
+    assert at_zero["time_variance_tv_months"] == 5.0
+    assert at_zero["earned_schedule_status"] == "ON_OR_AHEAD_OF_TIME"
+
+    completed = evaluate_evm_earned_schedule_eac_t_and_tspi(
+        earned_schedule_months=12.0,
+        actual_time_months=12.0,
+        planned_duration_months=12.0,
+    )
+    assert completed["tspi"] == 0.0
+    assert completed["is_schedule_recoverable"] is True
+    assert completed["earned_schedule_status"] == "ON_OR_AHEAD_OF_TIME"
+
+    # EAC(t) con redondeo 2 decimales: ES=7, AT=9, PD=15 -> spi=0.7778, 15/0.7778=19.29.
+    rounded = evaluate_evm_earned_schedule_eac_t_and_tspi(
+        earned_schedule_months=7.0,
+        actual_time_months=9.0,
+        planned_duration_months=15.0,
+    )
+    assert rounded["spi_t"] == round(7.0 / 9.0, 4)
+    assert rounded["independent_eac_t_months"] == round(15.0 / (7.0 / 9.0), 2)
+    assert isinstance(rounded["independent_eac_t_months"], float)
+
+    # Target custom acota remaining_time.
+    target_custom = evaluate_evm_earned_schedule_eac_t_and_tspi(
+        earned_schedule_months=6.0,
+        actual_time_months=8.0,
+        planned_duration_months=12.0,
+        target_completion_months=10.0,
+    )
+    # effective_target=10, remaining_time=2; remaining_work=6 -> tspi=3.0
+    assert target_custom["tspi"] == 3.0
+    assert target_custom["earned_schedule_status"] == "UNRECOVERABLE_SLIP"
+
+
+def test_earned_schedule_eac_t_tspi_neutral_and_binding():
+    """Default sin args: TV=0.0, spi=1.0, EAC=0.0, tspi=0.0, verificado via proxy y __all__."""
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_earned_schedule_eac_t_and_tspi,
+    )
+
+    defaults = evaluate_evm_earned_schedule_eac_t_and_tspi()
+    assert defaults["time_variance_tv_months"] == 0.0
+    assert defaults["spi_t"] == 1.0
+    assert defaults["independent_eac_t_months"] == 0.0
+    assert defaults["tspi"] == 0.0
+    assert defaults["is_schedule_recoverable"] is True
+    assert defaults["earned_schedule_status"] == "ON_OR_AHEAD_OF_TIME"
+
+    sample = {
+        "earned_schedule_months": 6.0,
+        "actual_time_months": 8.0,
+        "planned_duration_months": 12.0,
+    }
+    assert (
+        ProjectEVMService.evaluate_evm_earned_schedule_eac_t_and_tspi(**sample)
+        == evaluate_evm_earned_schedule_eac_t_and_tspi(**sample)
+    )
+    assert "evaluate_evm_earned_schedule_eac_t_and_tspi" in mod.__all__

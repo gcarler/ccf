@@ -3796,6 +3796,7 @@ __all__ = [
     "validate_wbs_100_percent_rollup_and_8_80_granularity",
     "validate_make_or_buy_breakeven_and_tco",
     "validate_risk_response_strategy_and_contingency_triggers",
+    "validate_schedule_network_pdm_lead_lag_hygiene",
 ]
 
 
@@ -6430,6 +6431,137 @@ def validate_risk_response_strategy_and_contingency_triggers(
         "missing_fallback_ids": missing_fallback_ids,
         "average_risk_reduction_pct": average_risk_reduction_pct,
         "governance_status": governance_status,
+        "issues": issues,
+    }
+
+
+def validate_schedule_network_pdm_lead_lag_hygiene(
+    dependencies: list[dict[str, Any]],
+    *,
+    max_lag_ratio_of_duration_pct: float = 50.0,
+    allow_start_to_finish: bool = False,
+    max_negative_lead_days: float = 5.0,
+) -> dict[str, Any]:
+    """Valida la higiene del Diagrama de Red por Precedencia (PDM): tipos de relación (FS/SS/FF/SF), límites de adelantos negativos (leads), retrasos positivos (lags) frente a la duración del sucesor y dominancia FS (PMI PMBOK §6.3)."""
+    if (
+        dependencies is None
+        or isinstance(dependencies, (str, bytes))
+        or not isinstance(dependencies, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = dependencies
+
+    try:
+        max_lag_ratio = float(max_lag_ratio_of_duration_pct)
+    except (TypeError, ValueError):
+        max_lag_ratio = 50.0
+
+    try:
+        max_neg_lead = float(max_negative_lead_days)
+    except (TypeError, ValueError):
+        max_neg_lead = 5.0
+
+    valid_rel_types = {"FS", "SS", "FF", "SF"}
+
+    total_dependencies = 0
+    fs_count = 0
+    invalid_relationship_ids: list[str] = []
+    excessive_negative_lead_ids: list[str] = []
+    excessive_positive_lag_ids: list[str] = []
+    issues: list[str] = []
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_dependencies += 1
+
+        dep_id = (
+            str(raw.get("dependency_id") or raw.get("id") or "").strip()
+            or f"DEP-{total_dependencies}"
+        )
+        rel_type = str(raw.get("relationship_type") or "").strip().upper()
+
+        raw_lag = raw.get("lag_days")
+        try:
+            lag_days = float(raw_lag) if raw_lag is not None else 0.0
+        except (TypeError, ValueError):
+            lag_days = 0.0
+
+        raw_dur = raw.get("successor_duration_days")
+        try:
+            successor_duration_days = (
+                float(raw_dur) if raw_dur is not None else 0.0
+            )
+        except (TypeError, ValueError):
+            successor_duration_days = 0.0
+
+        has_documented_justification = bool(
+            raw.get("has_documented_justification")
+        )
+
+        if rel_type == "FS":
+            fs_count += 1
+
+        if rel_type not in valid_rel_types or (
+            rel_type == "SF"
+            and not bool(allow_start_to_finish)
+            and not has_documented_justification
+        ):
+            invalid_relationship_ids.append(dep_id)
+            issues.append(
+                f"Dependencia '{dep_id}' utiliza relación inválida o SF no autorizada ('{rel_type}')."
+            )
+
+        if lag_days < 0.0 and (
+            abs(lag_days) > max_neg_lead or not has_documented_justification
+        ):
+            excessive_negative_lead_ids.append(dep_id)
+            issues.append(
+                f"Dependencia '{dep_id}' presenta adelanto negativo (lead={lag_days}d) excesivo o sin justificación documentada."
+            )
+
+        if (
+            lag_days > 0.0
+            and successor_duration_days > 0.0
+            and ((lag_days / successor_duration_days) * 100.0) > max_lag_ratio
+        ):
+            excessive_positive_lag_ids.append(dep_id)
+            issues.append(
+                f"Dependencia '{dep_id}' presenta espera positiva (lag={lag_days}d) que supera el {max_lag_ratio}% de la duración de la sucesora ({successor_duration_days}d)."
+            )
+
+    fs_dominant_ratio_pct = (
+        round((fs_count / total_dependencies) * 100.0, 2)
+        if total_dependencies > 0
+        else 100.0
+    )
+
+    if total_dependencies > 0 and fs_dominant_ratio_pct < 80.0:
+        issues.append(
+            f"La proporción de relaciones Finish-to-Start ({fs_dominant_ratio_pct:.2f}%) es inferior al estándar recomendado (80.0%)."
+        )
+
+    if (
+        len(invalid_relationship_ids) > 0
+        or len(excessive_negative_lead_ids) > 0
+    ):
+        pdm_hygiene_status = "NON_COMPLIANT"
+    elif len(excessive_positive_lag_ids) > 0 or (
+        total_dependencies > 0 and fs_dominant_ratio_pct < 80.0
+    ):
+        pdm_hygiene_status = "NEEDS_REFINEMENT"
+    else:
+        pdm_hygiene_status = "COMPLIANT"
+
+    return {
+        "is_valid": pdm_hygiene_status == "COMPLIANT",
+        "total_dependencies": total_dependencies,
+        "invalid_relationship_ids": invalid_relationship_ids,
+        "excessive_negative_lead_ids": excessive_negative_lead_ids,
+        "excessive_positive_lag_ids": excessive_positive_lag_ids,
+        "fs_dominant_ratio_pct": fs_dominant_ratio_pct,
+        "pdm_hygiene_status": pdm_hygiene_status,
         "issues": issues,
     }
 

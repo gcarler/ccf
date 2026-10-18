@@ -4935,6 +4935,8 @@ def test_audit_markdown_frontmatter_and_document_control_hygiene_empty_and_servi
     assert "audit_markdown_frontmatter_and_document_control_hygiene" in mod.__all__
 
 
+
+
 def test_audit_markdown_badge_and_external_tracker_hygiene_critical():
     """http://, dominios tracker y ramas main/master sin fijar -> CRITICAL."""
     from backend.services.anydoc_service import (
@@ -5172,3 +5174,138 @@ def test_audit_markdown_footnote_reference_and_definition_hygiene_empty_and_bind
         "audit_markdown_footnote_reference_and_definition_hygiene"
         in mod.__all__
     )
+
+
+def test_audit_markdown_acronym_glossary_first_use_compliant():
+    """Inline '(ACR)' / 'ACR (' y glosario '**ACR**:'/'| ACR |' -> COMPLIANT."""
+    from backend.services.anydoc_service import (
+        audit_markdown_acronym_and_glossary_first_use_hygiene,
+    )
+
+    ok = audit_markdown_acronym_and_glossary_first_use_hygiene(
+        "El servicio SLA (Service Level Agreement) se mide.\n"
+        "- **KPI**: indicador clave.\n"
+        "El KPI aplica.\n"
+        "| EVM | Earned Value Management |\n"
+    )
+    assert ok["total_distinct_acronyms"] == 3
+    assert ok["defined_acronyms"] == ["EVM", "KPI", "SLA"]
+    assert ok["undefined_acronyms"] == []
+    assert ok["first_use_line_by_undefined_acronym"] == {}
+    assert ok["acronym_hygiene_status"] == "COMPLIANT"
+    assert ok["is_compliant"] is True
+
+    # 'ACR (' en línea de primera aparición.
+    inline = audit_markdown_acronym_and_glossary_first_use_hygiene(
+        "Activamos EAC (Estimate at Completion) ahora.\n"
+    )
+    assert inline["defined_acronyms"] == ["EAC"]
+    assert inline["is_compliant"] is True
+
+
+def test_audit_markdown_acronym_glossary_first_use_gaps_and_thresholds():
+    """1-2 indefinidos -> MINOR_GAPS con línea de primera aparición; >= 3 -> GLOSSARY_REQUIRED."""
+    from backend.services.anydoc_service import (
+        audit_markdown_acronym_and_glossary_first_use_hygiene,
+    )
+
+    minor = audit_markdown_acronym_and_glossary_first_use_hygiene(
+        "El EVM (Earned Value Management) y el CCB operan juntos.\n"
+        "El CCB sigue en línea 2.\n"
+    )
+    assert minor["defined_acronyms"] == ["EVM"]
+    assert minor["undefined_acronyms"] == ["CCB"]
+    assert minor["first_use_line_by_undefined_acronym"] == {"CCB": 1}
+    assert minor["acronym_hygiene_status"] == "MINOR_GAPS"
+    assert minor["is_compliant"] is False
+
+    # 2 indefinidos siguen en MINOR_GAPS.
+    two = audit_markdown_acronym_and_glossary_first_use_hygiene(
+        "El CCB y el PMO se reúnen.\n"
+    )
+    assert sorted(two["undefined_acronyms"]) == ["CCB", "PMO"]
+    assert two["first_use_line_by_undefined_acronym"] == {"CCB": 1, "PMO": 1}
+    assert two["acronym_hygiene_status"] == "MINOR_GAPS"
+
+    # 3 indefinidos -> GLOSSARY_REQUIRED.
+    required = audit_markdown_acronym_and_glossary_first_use_hygiene(
+        "El CCB, el PMO y el RACI participan.\n"
+    )
+    assert sorted(required["undefined_acronyms"]) == ["CCB", "PMO", "RACI"]
+    assert required["acronym_hygiene_status"] == "GLOSSARY_REQUIRED"
+
+
+def test_audit_markdown_acronym_glossary_exempt_and_code_ignores():
+    """Exentos (API/HTML/etc. case-insensitive) y fences/code spans se ignoran; límites de longitud."""
+    from backend.services.anydoc_service import (
+        audit_markdown_acronym_and_glossary_first_use_hygiene,
+    )
+
+    exempt = audit_markdown_acronym_and_glossary_first_use_hygiene(
+        "La API y el https y el JSON listos.\n"
+        "BFF sin definir.\n"
+    )
+    assert "BFF" in exempt["undefined_acronyms"]
+    assert "API" not in exempt["undefined_acronyms"]
+    assert "JSON" not in exempt["undefined_acronyms"]
+
+    # Comparación invariant-case de exentos.
+    ci = audit_markdown_acronym_and_glossary_first_use_hygiene("API una vez; api no es token del patrón.\n")
+    assert "API" not in ci["defined_acronyms"] and "API" not in ci["undefined_acronyms"]
+
+    clean = audit_markdown_acronym_and_glossary_first_use_hygiene(
+        "Texto con `PMO y BFF` en code span ignorado.\n"
+        "```\n"
+        "RACI y PMO en fence ignorado\n"
+        "```\n"
+        "~~~\n"
+        "BFF también en tilde fence\n"
+        "~~~\n"
+        "Sin acrónimos activos.\n"
+    )
+    assert clean["total_distinct_acronyms"] == 0
+    assert clean["is_compliant"] is True
+
+    # min custom: 2 letras se detectan.
+    short = audit_markdown_acronym_and_glossary_first_use_hygiene(
+        "OK y QA revisan.\n",
+        min_acronym_length=2,
+    )
+    assert "OK" in short["undefined_acronyms"]
+    assert "QA" in short["undefined_acronyms"]
+
+    # 9 letras exceden el techo de 8: no detectado.
+    long_token = audit_markdown_acronym_and_glossary_first_use_hygiene(
+        "DISCIPLINA no es un acrónimo del patrón (10 letras).\n"
+    )
+    assert long_token["total_distinct_acronyms"] == 0
+
+
+def test_audit_markdown_acronym_glossary_neutral_and_binding():
+    """None/vacío/whitespace -> vacío; doble proxy estático y entrada en __all__."""
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_acronym_and_glossary_first_use_hygiene,
+    )
+    import backend.services.anydoc_service as mod
+
+    for payload in (None, "", "   \n\t"):
+        empty = audit_markdown_acronym_and_glossary_first_use_hygiene(payload)
+        assert empty["total_distinct_acronyms"] == 0
+        assert empty["defined_acronyms"] == []
+        assert empty["undefined_acronyms"] == []
+        assert empty["first_use_line_by_undefined_acronym"] == {}
+        assert empty["acronym_hygiene_status"] == "COMPLIANT"
+        assert empty["is_compliant"] is True
+
+    sample = "El EVM (Earned Value Management) sigue.\n"
+    assert (
+        AnyDocService.audit_markdown_acronym_and_glossary_first_use_hygiene(sample)
+        == audit_markdown_acronym_and_glossary_first_use_hygiene(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_acronym_and_glossary_first_use_hygiene(sample)
+        == audit_markdown_acronym_and_glossary_first_use_hygiene(sample)
+    )
+    assert "audit_markdown_acronym_and_glossary_first_use_hygiene" in mod.__all__

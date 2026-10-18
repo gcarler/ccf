@@ -6680,3 +6680,354 @@ def test_audit_quality_capa_root_cause_and_recurrence_empty_and_service_binding(
     )
     assert "audit_quality_capa_root_cause_and_recurrence" in mod.__all__
 
+
+
+def test_configuration_baseline_integrity_verified_and_compromised():
+    """CI alineado -> VERIFIED; hotfix sin CR o checksum fallido -> COMPROMISED."""
+    from backend.services.project_ccb_service import (
+        audit_configuration_baseline_integrity_and_version_drift,
+    )
+
+    verified = audit_configuration_baseline_integrity_and_version_drift(
+        [
+            {
+                "ci_id": "CI-1",
+                "approved_baseline_version": "1.0.0",
+                "deployed_version": "1.0.0",
+                "approved_cr_id": None,
+                "checksum_matches_artifact": True,
+                "is_locked_in_cm_repo": True,
+            }
+        ]
+    )
+    assert verified["total_configuration_items"] == 1
+    assert verified["unauthorized_drift_ci_ids"] == []
+    assert verified["pending_baseline_sync_ci_ids"] == []
+    assert verified["checksum_mismatch_ci_ids"] == []
+    assert verified["unlocked_baseline_ci_ids"] == []
+    assert verified["cm_audit_status"] == "VERIFIED"
+    assert verified["is_baseline_intact"] is True
+
+    compromised = audit_configuration_baseline_integrity_and_version_drift(
+        [
+            {
+                "ci_id": "CI-2",
+                "approved_baseline_version": "1.0.0",
+                "deployed_version": "9.9.9-hotfix",
+                "approved_cr_id": None,
+                "checksum_matches_artifact": False,
+                "is_locked_in_cm_repo": True,
+            }
+        ]
+    )
+    assert compromised["unauthorized_drift_ci_ids"] == ["CI-2"]
+    assert compromised["checksum_mismatch_ci_ids"] == ["CI-2"]
+    assert compromised["cm_audit_status"] == "COMPROMISED"
+    assert compromised["is_baseline_intact"] is False
+
+    # Solo checksum fallo sin drift -> COMPROMISED igualmente.
+    only_checksum = audit_configuration_baseline_integrity_and_version_drift(
+        [
+            {
+                "ci_id": "CI-3",
+                "approved_baseline_version": "2.0",
+                "deployed_version": "2.0",
+                "checksum_matches_artifact": False,
+                "is_locked_in_cm_repo": True,
+            }
+        ]
+    )
+    assert only_checksum["checksum_mismatch_ci_ids"] == ["CI-3"]
+    assert only_checksum["unauthorized_drift_ci_ids"] == []
+    assert only_checksum["cm_audit_status"] == "COMPROMISED"
+
+
+def test_configuration_baseline_integrity_pending_sync_and_unlocked():
+    """Con CR aprobado -> pending_sync; sin lock -> unlocked; ambos -> DRIFT_DETECTED."""
+    from backend.services.project_ccb_service import (
+        audit_configuration_baseline_integrity_and_version_drift,
+    )
+
+    pending = audit_configuration_baseline_integrity_and_version_drift(
+        [
+            {
+                "ci_id": "CI-4",
+                "approved_baseline_version": "1.0.0",
+                "deployed_version": "1.1.0",
+                "approved_cr_id": "CR-42",
+                "checksum_matches_artifact": True,
+                "is_locked_in_cm_repo": True,
+            }
+        ]
+    )
+    assert pending["pending_baseline_sync_ci_ids"] == ["CI-4"]
+    assert pending["unauthorized_drift_ci_ids"] == []
+    assert pending["cm_audit_status"] == "DRIFT_DETECTED"
+    assert pending["is_baseline_intact"] is False
+
+    unlocked = audit_configuration_baseline_integrity_and_version_drift(
+        [
+            {
+                "ci_id": "CI-5",
+                "approved_baseline_version": "2.0",
+                "deployed_version": "2.0",
+                "checksum_matches_artifact": True,
+                "is_locked_in_cm_repo": False,
+            }
+        ]
+    )
+    assert unlocked["unlocked_baseline_ci_ids"] == ["CI-5"]
+    assert unlocked["pending_baseline_sync_ci_ids"] == []
+    assert unlocked["cm_audit_status"] == "DRIFT_DETECTED"
+
+    # approved_cr_id vacío o whitespace -> unauthorized (no pending).
+    blank_cr = audit_configuration_baseline_integrity_and_version_drift(
+        [
+            {
+                "ci_id": "CI-6",
+                "approved_baseline_version": "1.0",
+                "deployed_version": "3.0",
+                "approved_cr_id": "   ",
+                "checksum_matches_artifact": True,
+                "is_locked_in_cm_repo": True,
+            }
+        ]
+    )
+    assert blank_cr["unauthorized_drift_ci_ids"] == ["CI-6"]
+    assert blank_cr["pending_baseline_sync_ci_ids"] == []
+
+
+def test_configuration_baseline_integrity_thresholds_and_flags():
+    """max_allowed_drift_items tolera drift; require_checksum_verification False desactiva regla 3."""
+    from backend.services.project_ccb_service import (
+        audit_configuration_baseline_integrity_and_version_drift,
+    )
+
+    drifted_item = {
+        "ci_id": "CI-7",
+        "approved_baseline_version": "1.0",
+        "deployed_version": "2.0",
+        "checksum_matches_artifact": True,
+        "is_locked_in_cm_repo": True,
+    }
+
+    tolerated = audit_configuration_baseline_integrity_and_version_drift(
+        [drifted_item], max_allowed_drift_items=2
+    )
+    assert tolerated["unauthorized_drift_ci_ids"] == ["CI-7"]
+    assert tolerated["cm_audit_status"] == "DRIFT_DETECTED"
+
+    breached = audit_configuration_baseline_integrity_and_version_drift(
+        [drifted_item], max_allowed_drift_items=0
+    )
+    assert breached["cm_audit_status"] == "COMPROMISED"
+
+    # límite exacto: max=1 con 1 drift -> tolerado (comparación estricta >).
+    at_limit = audit_configuration_baseline_integrity_and_version_drift(
+        [drifted_item], max_allowed_drift_items=1
+    )
+    assert at_limit["cm_audit_status"] == "DRIFT_DETECTED"
+
+    no_checksum_req = audit_configuration_baseline_integrity_and_version_drift(
+        [
+            {
+                "ci_id": "CI-8",
+                "approved_baseline_version": "1.0",
+                "deployed_version": "1.0",
+                "checksum_matches_artifact": False,
+                "is_locked_in_cm_repo": True,
+            }
+        ],
+        require_checksum_verification=False,
+    )
+    assert no_checksum_req["checksum_mismatch_ci_ids"] == []
+    assert no_checksum_req["cm_audit_status"] == "VERIFIED"
+    assert no_checksum_req["is_baseline_intact"] is True
+
+
+def test_configuration_baseline_integrity_neutral_and_binding():
+    """No-lista/None -> vacío VERIFIED; no-dict ignorados; proxy estático."""
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_configuration_baseline_integrity_and_version_drift,
+    )
+
+    for payload in (None, "no-list", 42):
+        empty = audit_configuration_baseline_integrity_and_version_drift(payload)
+        assert empty["total_configuration_items"] == 0
+        assert empty["unauthorized_drift_ci_ids"] == []
+        assert empty["pending_baseline_sync_ci_ids"] == []
+        assert empty["checksum_mismatch_ci_ids"] == []
+        assert empty["unlocked_baseline_ci_ids"] == []
+        assert empty["cm_audit_status"] == "VERIFIED"
+        assert empty["is_baseline_intact"] is True
+
+    mixed = audit_configuration_baseline_integrity_and_version_drift(
+        [
+            "no-dict",
+            42,
+            {
+                "ci_id": "CI-9",
+                "approved_baseline_version": "1.0",
+                "deployed_version": "1.0",
+                "checksum_matches_artifact": True,
+                "is_locked_in_cm_repo": True,
+            },
+        ]
+    )
+    assert mixed["total_configuration_items"] == 1
+    assert mixed["cm_audit_status"] == "VERIFIED"
+
+    sample = [
+        {
+            "ci_id": "CI-10",
+            "approved_baseline_version": "1.0",
+            "deployed_version": "9.0",
+            "checksum_matches_artifact": True,
+            "is_locked_in_cm_repo": True,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_configuration_baseline_integrity_and_version_drift(sample)
+        == audit_configuration_baseline_integrity_and_version_drift(sample)
+    )
+    assert "audit_configuration_baseline_integrity_and_version_drift" in mod.__all__
+
+
+def test_audit_scope_creep_and_gold_plating_effort_disciplined():
+    """Valida ítems dentro de la línea base WBS o respaldados por CR aprobado sin Gold-Plating ('DISCIPLINED')."""
+    from backend.services.project_ccb_service import (
+        audit_scope_creep_and_gold_plating_effort,
+    )
+
+    items = [
+        {
+            "item_id": "WRK-01",
+            "logged_hours": 120.0,
+            "in_approved_wbs_baseline": True,
+            "linked_approved_cr_id": None,
+            "is_gold_plating_extra_feature": False,
+        },
+        {
+            "item_id": "WRK-02",
+            "logged_hours": 40.0,
+            "in_approved_wbs_baseline": False,
+            "linked_approved_cr_id": "CR-2026-09",
+            "is_gold_plating_extra_feature": False,
+        },
+    ]
+    res = audit_scope_creep_and_gold_plating_effort(items)
+    assert res["total_work_items"] == 2
+    assert res["unapproved_scope_creep_ids"] == []
+    assert res["gold_plating_item_ids"] == []
+    assert res["unbaselined_effort_hours"] == 0.0
+    assert res["total_effort_hours"] == 160.0
+    assert res["unbaselined_effort_ratio_pct"] == 0.0
+    assert res["scope_control_status"] == "DISCIPLINED"
+    assert res["is_scope_disciplined"] is True
+    assert res["issues"] == []
+
+
+def test_audit_scope_creep_and_gold_plating_effort_scope_breach():
+    """Detecta Gold-Plating o porcentaje de esfuerzo fuera de línea base > 5.0% sin duplicar horas ('SCOPE_BREACH')."""
+    from backend.services.project_ccb_service import (
+        audit_scope_creep_and_gold_plating_effort,
+    )
+
+    items = [
+        {
+            "item_id": "WRK-10",
+            "logged_hours": 80.0,
+            "in_approved_wbs_baseline": True,
+            "linked_approved_cr_id": None,
+            "is_gold_plating_extra_feature": False,
+        },
+        {
+            "item_id": "WRK-11",
+            "logged_hours": 20.0,
+            "in_approved_wbs_baseline": False,
+            "linked_approved_cr_id": "",
+            "is_gold_plating_extra_feature": True,
+        },
+    ]
+    res = audit_scope_creep_and_gold_plating_effort(items)
+    assert res["total_work_items"] == 2
+    assert res["unapproved_scope_creep_ids"] == ["WRK-11"]
+    assert res["gold_plating_item_ids"] == ["WRK-11"]
+    assert res["unbaselined_effort_hours"] == 20.0
+    assert res["total_effort_hours"] == 100.0
+    assert res["unbaselined_effort_ratio_pct"] == 20.0
+    assert res["scope_control_status"] == "SCOPE_BREACH"
+    assert res["is_scope_disciplined"] is False
+    assert len(res["issues"]) >= 3
+
+
+def test_audit_scope_creep_and_gold_plating_effort_minor_drift():
+    """Detecta esfuerzo fuera de línea base <= 5.0% sin Gold-Plating ('MINOR_DRIFT')."""
+    from backend.services.project_ccb_service import (
+        audit_scope_creep_and_gold_plating_effort,
+    )
+
+    items = [
+        {
+            "item_id": "WRK-20",
+            "logged_hours": 96.0,
+            "in_approved_wbs_baseline": True,
+            "linked_approved_cr_id": None,
+            "is_gold_plating_extra_feature": False,
+        },
+        {
+            "item_id": "WRK-21",
+            "logged_hours": 4.0,
+            "in_approved_wbs_baseline": False,
+            "linked_approved_cr_id": None,
+            "is_gold_plating_extra_feature": False,
+        },
+    ]
+    res = audit_scope_creep_and_gold_plating_effort(items)
+    assert res["total_work_items"] == 2
+    assert res["unapproved_scope_creep_ids"] == ["WRK-21"]
+    assert res["gold_plating_item_ids"] == []
+    assert res["unbaselined_effort_hours"] == 4.0
+    assert res["total_effort_hours"] == 100.0
+    assert res["unbaselined_effort_ratio_pct"] == 4.0
+    assert res["scope_control_status"] == "MINOR_DRIFT"
+    assert res["is_scope_disciplined"] is False
+    assert len(res["issues"]) == 1
+
+
+def test_audit_scope_creep_and_gold_plating_effort_empty_and_binding():
+    """Verifica manejo defensivo de entradas vacías/no-secuencia y enlace en ProjectCCBService y __all__."""
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_scope_creep_and_gold_plating_effort,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_scope_creep_and_gold_plating_effort(payload)  # type: ignore[arg-type]
+        assert empty["total_work_items"] == 0
+        assert empty["unapproved_scope_creep_ids"] == []
+        assert empty["gold_plating_item_ids"] == []
+        assert empty["unbaselined_effort_hours"] == 0.0
+        assert empty["total_effort_hours"] == 0.0
+        assert empty["unbaselined_effort_ratio_pct"] == 0.0
+        assert empty["scope_control_status"] == "DISCIPLINED"
+        assert empty["is_scope_disciplined"] is True
+        assert empty["issues"] == []
+
+    sample = [
+        {
+            "item_id": "WRK-99",
+            "logged_hours": 10.0,
+            "in_approved_wbs_baseline": True,
+            "linked_approved_cr_id": None,
+            "is_gold_plating_extra_feature": False,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_scope_creep_and_gold_plating_effort(sample)
+        == audit_scope_creep_and_gold_plating_effort(sample)
+    )
+    assert "audit_scope_creep_and_gold_plating_effort" in mod.__all__

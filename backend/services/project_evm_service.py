@@ -5504,6 +5504,8 @@ __all__ = [
     "evaluate_evm_cost_schedule_index_compound_degradation",
     "evaluate_evm_undistributed_budget_and_planning_package_aging",
     "evaluate_evm_cost_variance_rate_vs_efficiency_decomposition",
+    "evaluate_evm_contract_fee_and_point_of_total_assumption",
+    "evaluate_evm_earned_schedule_eac_t_and_tspi",
     "ProjectEVMService",
 ]
 
@@ -7617,8 +7619,322 @@ def evaluate_evm_cost_variance_rate_vs_efficiency_decomposition(
         "violations": violations,
     }
 
+def evaluate_evm_cost_variance_rate_vs_efficiency_decomposition(
+    work_packages: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_adverse_rate_variance_pct: float = 10.0,
+    max_adverse_efficiency_variance_pct: float = 15.0,
+) -> dict[str, Any]:
+    """PMBOK 7.4 & EVM Practice Standard — descomposición de la Cost Variance.
+
+    Auditoría pura sobre ``work_packages``. Entradas no-lista/None se
+    tratan como lista vacía y elementos no-dict se ignoran. Para cada
+    paquete: ``ev = earned_hours * planned_hourly_rate``, ``ac = actual_hours
+    * actual_hourly_rate``, ``rate_variance = (planned_rate - actual_rate) *
+    actual_hours`` y ``efficiency_variance = (earned_hours - actual_hours) *
+    planned_rate``. Reglas:
+
+    1. ``adverse_rate_variance_breach``: ``planned_hourly_rate > 0`` AND
+       ``actual_hours > 0`` AND ((actual_rate - planned_rate) / planned_rate
+       * 100) > ``max_adverse_rate_variance_pct``.
+    2. ``adverse_efficiency_variance_breach``: ``earned_hours > 0`` AND
+       ``actual_hours > earned_hours`` AND ((actual - earned) / earned *
+       100) > ``max_adverse_efficiency_variance_pct``.
+    3. ``unaddressed_negative_cv``: (``ev - ac``) < 0 AND NOT
+       ``corrective_action_logged``.
+
+    Retorna total/compliant packages, los 3 conteos, totales de variación
+    (rate y efficiency, redondeados a 2 decimales), cv_decomposition_status
+    (HEALTHY/AT_RISK/CRITICAL) y violations (``wp_id`` / ``reasons``).
+    """
+    raw_items = work_packages if isinstance(work_packages, list) else []
+    items = [entry for entry in raw_items if isinstance(entry, Mapping)]
+
+    total = 0
+    rate_breach_count = 0
+    efficiency_breach_count = 0
+    negative_cv_count = 0
+    compliant_count = 0
+    total_rate_variance = 0.0
+    total_efficiency_variance = 0.0
+    violations: list[dict[str, Any]] = []
+
+    for entry in items:
+        total += 1
+
+        wp_id = entry.get("wp_id")
+        planned_rate = entry.get("planned_hourly_rate")
+        actual_rate = entry.get("actual_hourly_rate")
+        earned_hours = entry.get("earned_hours")
+        actual_hours = entry.get("actual_hours")
+        corrective_action_logged = entry.get("corrective_action_logged")
+
+        is_num = lambda value: isinstance(value, (int, float)) and not isinstance(value, bool)  # noqa: E731
+
+        ev = (
+            earned_hours * planned_rate
+            if is_num(earned_hours) and is_num(planned_rate)
+            else 0.0
+        )
+        ac = (
+            actual_hours * actual_rate
+            if is_num(actual_hours) and is_num(actual_rate)
+            else 0.0
+        )
+        rate_variance = (
+            (planned_rate - actual_rate) * actual_hours
+            if is_num(planned_rate) and is_num(actual_rate) and is_num(actual_hours)
+            else 0.0
+        )
+        efficiency_variance = (
+            (earned_hours - actual_hours) * planned_rate
+            if is_num(earned_hours) and is_num(actual_hours) and is_num(planned_rate)
+            else 0.0
+        )
+        total_rate_variance += rate_variance
+        total_efficiency_variance += efficiency_variance
+
+        reasons: list[str] = []
+
+        if (
+            is_num(planned_rate)
+            and is_num(actual_rate)
+            and is_num(actual_hours)
+            and planned_rate > 0
+            and actual_hours > 0
+            and ((actual_rate - planned_rate) / planned_rate) * 100.0
+            > max_adverse_rate_variance_pct
+        ):
+            reasons.append("adverse_rate_variance_breach")
+
+        if (
+            is_num(earned_hours)
+            and is_num(actual_hours)
+            and earned_hours > 0
+            and actual_hours > earned_hours
+            and ((actual_hours - earned_hours) / earned_hours) * 100.0
+            > max_adverse_efficiency_variance_pct
+        ):
+            reasons.append("adverse_efficiency_variance_breach")
+
+        if (ev - ac) < 0.0 and corrective_action_logged is not True:
+            reasons.append("unaddressed_negative_cv")
+
+        ordered_reasons = list(dict.fromkeys(reasons))
+        if not ordered_reasons:
+            compliant_count += 1
+            continue
+
+        if "adverse_rate_variance_breach" in ordered_reasons:
+            rate_breach_count += 1
+        if "adverse_efficiency_variance_breach" in ordered_reasons:
+            efficiency_breach_count += 1
+        if "unaddressed_negative_cv" in ordered_reasons:
+            negative_cv_count += 1
+
+        violations.append(
+            {
+                "wp_id": wp_id,
+                "reasons": ordered_reasons,
+            }
+        )
+
+    if negative_cv_count > 0 or (rate_breach_count > 0 and efficiency_breach_count > 0):
+        status = "CRITICAL"
+    elif rate_breach_count > 0 or efficiency_breach_count > 0:
+        status = "AT_RISK"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "total_packages": total,
+        "compliant_packages_count": compliant_count,
+        "adverse_rate_variance_breach_count": rate_breach_count,
+        "adverse_efficiency_variance_breach_count": efficiency_breach_count,
+        "unaddressed_negative_cv_count": negative_cv_count,
+        "total_rate_variance": round(total_rate_variance, 2),
+        "total_efficiency_variance": round(total_efficiency_variance, 2),
+        "cv_decomposition_status": status,
+        "violations": violations,
+    }
+
 
 ProjectEVMService.evaluate_evm_cost_variance_rate_vs_efficiency_decomposition = staticmethod(
     evaluate_evm_cost_variance_rate_vs_efficiency_decomposition
 )
 
+
+def evaluate_evm_contract_fee_and_point_of_total_assumption(
+    *,
+    contract_type: str = "FPIF",
+    target_cost: float = 0.0,
+    target_price: float = 0.0,
+    ceiling_price: float = 0.0,
+    buyer_share_ratio: float = 0.70,
+    seller_share_ratio: float = 0.30,
+    estimated_actual_cost_eac: float = 0.0,
+    min_fee: float = 0.0,
+    max_fee: float = 0.0,
+) -> dict[str, Any]:
+    """Evalúa la estructura de honorarios e incentivos contractuales (FPIF / CPIF), el precio techo (Ceiling Price) y el Punto de Asunción Total (Point of Total Assumption - PTA) según PMI PMBOK §7.4 y §12.1."""
+    c_type = str(contract_type or "FPIF").strip().upper()
+    t_cost = float(target_cost or 0.0)
+    t_price = float(target_price or 0.0)
+    c_price = float(ceiling_price or 0.0)
+    b_ratio = float(buyer_share_ratio if buyer_share_ratio is not None else 0.70)
+    s_ratio = float(seller_share_ratio if seller_share_ratio is not None else 0.30)
+    eac = float(estimated_actual_cost_eac or 0.0)
+    min_f = float(min_fee or 0.0)
+    max_f = float(max_fee or 0.0)
+
+    target_fee = round(t_price - t_cost, 2)
+    share_ratio_sum_valid = abs((b_ratio + s_ratio) - 1.0) <= 0.001
+
+    if c_type == "FPIF" and b_ratio > 0.0 and c_price > t_price:
+        point_of_total_assumption_pta: float | None = round(
+            t_cost + ((c_price - t_price) / b_ratio), 2
+        )
+    else:
+        point_of_total_assumption_pta = None
+
+    cost_overrun_or_underrun = round(eac - t_cost, 2)
+    raw_fee = round(target_fee - (cost_overrun_or_underrun * s_ratio), 2)
+
+    if c_type == "CPIF":
+        if max_f > 0.0:
+            projected_seller_fee = round(min(max_f, max(min_f, raw_fee)), 2)
+        else:
+            projected_seller_fee = round(max(min_f, raw_fee), 2)
+        projected_buyer_total_price = round(eac + projected_seller_fee, 2)
+    else:
+        uncapped_price = round(eac + raw_fee, 2)
+        projected_buyer_total_price = (
+            min(round(c_price, 2), uncapped_price)
+            if c_price > 0.0
+            else uncapped_price
+        )
+        projected_seller_fee = round(projected_buyer_total_price - eac, 2)
+
+    has_breached_pta = bool(
+        point_of_total_assumption_pta is not None
+        and eac >= point_of_total_assumption_pta
+    )
+    has_breached_ceiling = bool(c_price > 0.0 and eac > c_price)
+
+    issues: list[str] = []
+    if not share_ratio_sum_valid:
+        issues.append(
+            f"La suma de ratios de reparto comprador/vendedor ({b_ratio + s_ratio:.3f}) debe ser igual a 1.0."
+        )
+    if has_breached_pta:
+        issues.append(
+            f"El costo proyectado EAC ({eac:.2f}) iguala o supera el Point of Total Assumption PTA ({point_of_total_assumption_pta:.2f})."
+        )
+    if has_breached_ceiling:
+        issues.append(
+            f"El costo proyectado EAC ({eac:.2f}) supera el precio techo contractual ({c_price:.2f})."
+        )
+
+    if has_breached_pta or has_breached_ceiling or not share_ratio_sum_valid:
+        contract_exposure_status = "PTA_OR_CEILING_BREACH"
+    elif eac > t_cost:
+        contract_exposure_status = "COST_OVERRUN_SHARED"
+    else:
+        contract_exposure_status = "ON_OR_UNDER_TARGET"
+
+    return {
+        "contract_type": c_type,
+        "target_fee": target_fee,
+        "share_ratio_sum_valid": share_ratio_sum_valid,
+        "point_of_total_assumption_pta": point_of_total_assumption_pta,
+        "cost_overrun_or_underrun": cost_overrun_or_underrun,
+        "raw_fee": raw_fee,
+        "projected_seller_fee": projected_seller_fee,
+        "projected_buyer_total_price": projected_buyer_total_price,
+        "has_breached_pta": has_breached_pta,
+        "has_breached_ceiling": has_breached_ceiling,
+        "contract_exposure_status": contract_exposure_status,
+        "issues": issues,
+    }
+
+
+ProjectEVMService.evaluate_evm_contract_fee_and_point_of_total_assumption = staticmethod(
+    evaluate_evm_contract_fee_and_point_of_total_assumption
+)
+
+
+
+def evaluate_evm_earned_schedule_eac_t_and_tspi(
+    *,
+    earned_schedule_months: float = 0.0,
+    actual_time_months: float = 0.0,
+    planned_duration_months: float = 0.0,
+    target_completion_months: float = 0.0,
+    max_feasible_tspi: float = 1.10,
+) -> dict[str, Any]:
+    """Practice Standard for EVM — Earned Schedule, TV, EAC(t) y TSPI.
+
+    Cálculo puro por reglas del estándar:
+
+    1. ``time_variance_tv_months`` = round(ES - AT, 2).
+    2. ``spi_t`` = round(ES / AT, 4) si AT > 0, sino 1.0.
+    3. ``independent_eac_t_months`` = round(PD / spi_t, 2) si spi_t > 0,
+       sino round(PD, 2).
+    4. ``effective_target_months`` = target si target > 0, sino PD.
+    5. ``remaining_work_months`` = max(0.0, PD - ES); ``remaining_time_months``
+       = effective_target - AT. TSPI: 0.0 si remaining_work == 0; 999.0 si
+       remaining_time <= 0; en otro caso round(remaining_work /
+       remaining_time, 4).
+    6. ``is_schedule_recoverable`` = bool(tspi <= max_feasible_tspi AND
+       (remaining_time > 0 OR remaining_work == 0)).
+    7. ``earned_schedule_status``: UNRECOVERABLE_SLIP si no recuperable;
+       BEHIND_RECOVERABLE si recuperable y spi_t < 0.95; ON_OR_AHEAD_OF_TIME
+       en caso contrario.
+    """
+    def _num(value) -> float:
+        return float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else float(value or 0.0)
+
+    es = _num(earned_schedule_months)
+    at = _num(actual_time_months)
+    pd = _num(planned_duration_months)
+    target = _num(target_completion_months)
+    ts_max = _num(max_feasible_tspi)
+
+    time_variance_tv_months = round(es - at, 2)
+    spi_t = round(es / at, 4) if at > 0 else 1.0
+    independent_eac_t_months = round(pd / spi_t, 2) if spi_t > 0 else round(pd, 2)
+    effective_target_months = target if target > 0 else pd
+    remaining_work_months = max(0.0, pd - es)
+    remaining_time_months = effective_target_months - at
+
+    if remaining_work_months == 0:
+        tspi = 0.0
+    elif remaining_time_months <= 0:
+        tspi = 999.0
+    else:
+        tspi = round(remaining_work_months / remaining_time_months, 4)
+
+    is_schedule_recoverable = bool(
+        tspi <= ts_max and (remaining_time_months > 0 or remaining_work_months == 0)
+    )
+
+    if not is_schedule_recoverable:
+        earned_schedule_status = "UNRECOVERABLE_SLIP"
+    elif spi_t < 0.95:
+        earned_schedule_status = "BEHIND_RECOVERABLE"
+    else:
+        earned_schedule_status = "ON_OR_AHEAD_OF_TIME"
+
+    return {
+        "time_variance_tv_months": time_variance_tv_months,
+        "spi_t": spi_t,
+        "independent_eac_t_months": independent_eac_t_months,
+        "tspi": tspi,
+        "is_schedule_recoverable": is_schedule_recoverable,
+        "earned_schedule_status": earned_schedule_status,
+    }
+
+
+ProjectEVMService.evaluate_evm_earned_schedule_eac_t_and_tspi = staticmethod(
+    evaluate_evm_earned_schedule_eac_t_and_tspi
+)

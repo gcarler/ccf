@@ -2514,6 +2514,7 @@ __all__ = [
     "audit_wiki_communications_matrix_cadence_and_escalation",
     "audit_wiki_definition_of_ready_and_backlog_grooming",
     "audit_wiki_blameless_postmortem_and_systemic_prevention",
+    "audit_wiki_opa_and_eef_catalog_freshness",
     "WikiPMIService",
 ]
 
@@ -5010,4 +5011,121 @@ def audit_wiki_blameless_postmortem_and_systemic_prevention(
 WikiPMIService.audit_wiki_blameless_postmortem_and_systemic_prevention = staticmethod(
     audit_wiki_blameless_postmortem_and_systemic_prevention
 )
+
+
+def audit_wiki_opa_and_eef_catalog_freshness(
+    catalog_entries: list[dict[str, Any]],
+    *,
+    max_review_age_days: int = 180,
+    require_steward_owner: bool = True,
+) -> dict[str, Any]:
+    """Audita la vigencia del catálogo de Activos de Procesos de la Organización (OPA) y Factores Ambientales de la Empresa (EEF) en la Wiki: clasificación válida, antigüedad de revisión, responsable custodio (steward) y retiro de activos deprecados en plantillas activas (PMI PMBOK §2.2, §2.3 y §4.4)."""
+    if (
+        catalog_entries is None
+        or isinstance(catalog_entries, (str, bytes))
+        or not isinstance(catalog_entries, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = catalog_entries
+
+    try:
+        max_age_days = int(max_review_age_days)
+    except (TypeError, ValueError):
+        max_age_days = 180
+
+    total_catalog_entries = 0
+    invalid_category_asset_ids: list[str] = []
+    stale_asset_ids: list[str] = []
+    unowned_asset_ids: list[str] = []
+    deprecated_in_use_asset_ids: list[str] = []
+    issues: list[str] = []
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_catalog_entries += 1
+
+        asset_id = (
+            str(raw.get("asset_id") or raw.get("id") or "").strip()
+            or f"ASSET-{total_catalog_entries}"
+        )
+        asset_category = str(raw.get("asset_category") or "").strip().upper()
+
+        raw_days = raw.get("days_since_last_review")
+        if raw_days is None or isinstance(raw_days, bool):
+            days_since_last_review = 0
+        else:
+            try:
+                days_since_last_review = int(raw_days)
+            except (TypeError, ValueError):
+                days_since_last_review = 0
+
+        steward_owner_id = str(raw.get("steward_owner_id") or "").strip()
+        is_deprecated = bool(raw.get("is_deprecated"))
+
+        raw_refs = raw.get("active_templates_referencing_count")
+        if raw_refs is None or isinstance(raw_refs, bool):
+            active_templates_referencing_count = 0
+        else:
+            try:
+                active_templates_referencing_count = int(raw_refs)
+            except (TypeError, ValueError):
+                active_templates_referencing_count = 0
+
+        if asset_category not in {"OPA", "EEF"}:
+            invalid_category_asset_ids.append(asset_id)
+            issues.append(
+                f"Activo '{asset_id}' declara categoría inválida ('{asset_category}'); debe ser 'OPA' o 'EEF'."
+            )
+
+        if not is_deprecated and days_since_last_review > max_age_days:
+            stale_asset_ids.append(asset_id)
+            issues.append(
+                f"Activo '{asset_id}' supera la antigüedad máxima de revisión ({days_since_last_review}d > {max_age_days}d)."
+            )
+
+        if (
+            bool(require_steward_owner)
+            and not is_deprecated
+            and not steward_owner_id
+        ):
+            unowned_asset_ids.append(asset_id)
+            issues.append(
+                f"Activo vigente '{asset_id}' carece de responsable custodio (steward_owner_id)."
+            )
+
+        if is_deprecated and active_templates_referencing_count > 0:
+            deprecated_in_use_asset_ids.append(asset_id)
+            issues.append(
+                f"Activo deprecado '{asset_id}' continúa referenciado por {active_templates_referencing_count} plantilla(s) activa(s)."
+            )
+
+    if (
+        len(deprecated_in_use_asset_ids) > 0
+        or len(invalid_category_asset_ids) > 0
+    ):
+        catalog_health_status = "CRITICAL_DRIFT"
+    elif len(stale_asset_ids) > 0 or len(unowned_asset_ids) > 0:
+        catalog_health_status = "STALE_OR_UNOWNED"
+    else:
+        catalog_health_status = "GOVERNED"
+
+    return {
+        "total_catalog_entries": total_catalog_entries,
+        "invalid_category_asset_ids": invalid_category_asset_ids,
+        "stale_asset_ids": stale_asset_ids,
+        "unowned_asset_ids": unowned_asset_ids,
+        "deprecated_in_use_asset_ids": deprecated_in_use_asset_ids,
+        "catalog_health_status": catalog_health_status,
+        "is_catalog_governed": catalog_health_status == "GOVERNED",
+        "issues": issues,
+    }
+
+
+WikiPMIService.audit_wiki_opa_and_eef_catalog_freshness = staticmethod(
+    audit_wiki_opa_and_eef_catalog_freshness
+)
+
+
 

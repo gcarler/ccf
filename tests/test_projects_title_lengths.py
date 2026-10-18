@@ -5306,4 +5306,148 @@ def test_validate_risk_response_strategy_and_contingency_triggers_empty_and_expo
     )
 
 
+def test_validate_schedule_network_pdm_lead_lag_hygiene_compliant():
+    """Valida red PDM con >= 80% FS, adelantos justificados dentro de límite y lags razonables ('COMPLIANT')."""
+    from backend.schemas.projects import (
+        validate_schedule_network_pdm_lead_lag_hygiene,
+    )
+
+    deps = [
+        {
+            "dependency_id": "DEP-01",
+            "relationship_type": "FS",
+            "lag_days": 0.0,
+            "successor_duration_days": 10.0,
+            "has_documented_justification": False,
+        },
+        {
+            "dependency_id": "DEP-02",
+            "relationship_type": "FS",
+            "lag_days": -2.0,
+            "successor_duration_days": 8.0,
+            "has_documented_justification": True,
+        },
+        {
+            "dependency_id": "DEP-03",
+            "relationship_type": "FS",
+            "lag_days": 2.0,
+            "successor_duration_days": 10.0,
+            "has_documented_justification": True,
+        },
+        {
+            "dependency_id": "DEP-04",
+            "relationship_type": "FS",
+            "lag_days": 0.0,
+            "successor_duration_days": 5.0,
+            "has_documented_justification": False,
+        },
+        {
+            "dependency_id": "DEP-05",
+            "relationship_type": "SS",
+            "lag_days": 1.0,
+            "successor_duration_days": 6.0,
+            "has_documented_justification": True,
+        },
+    ]
+    res = validate_schedule_network_pdm_lead_lag_hygiene(deps)
+    assert res["is_valid"] is True
+    assert res["total_dependencies"] == 5
+    assert res["invalid_relationship_ids"] == []
+    assert res["excessive_negative_lead_ids"] == []
+    assert res["excessive_positive_lag_ids"] == []
+    assert res["fs_dominant_ratio_pct"] == 80.0
+    assert res["pdm_hygiene_status"] == "COMPLIANT"
+    assert res["issues"] == []
+
+
+def test_validate_schedule_network_pdm_lead_lag_hygiene_non_compliant():
+    """Detecta relación SF sin justificar/tipo desconocido y adelantos negativos sin justificar o excesivos ('NON_COMPLIANT')."""
+    from backend.schemas.projects import (
+        validate_schedule_network_pdm_lead_lag_hygiene,
+    )
+
+    deps = [
+        {
+            "dependency_id": "DEP-10",
+            "relationship_type": "SF",
+            "lag_days": 0.0,
+            "successor_duration_days": 10.0,
+            "has_documented_justification": False,
+        },
+        {
+            "dependency_id": "DEP-11",
+            "relationship_type": "FS",
+            "lag_days": -8.0,
+            "successor_duration_days": 12.0,
+            "has_documented_justification": True,
+        },
+        {
+            "dependency_id": "DEP-12",
+            "relationship_type": "FS",
+            "lag_days": -2.0,
+            "successor_duration_days": 10.0,
+            "has_documented_justification": False,
+        },
+    ]
+    res = validate_schedule_network_pdm_lead_lag_hygiene(deps)
+    assert res["is_valid"] is False
+    assert res["invalid_relationship_ids"] == ["DEP-10"]
+    assert res["excessive_negative_lead_ids"] == ["DEP-11", "DEP-12"]
+    assert res["pdm_hygiene_status"] == "NON_COMPLIANT"
+    assert len(res["issues"]) >= 3
+
+
+def test_validate_schedule_network_pdm_lead_lag_hygiene_needs_refinement():
+    """Detecta lag positivo excesivo (>50% duración sucesor) o baja dominancia FS (<80%) ('NEEDS_REFINEMENT')."""
+    from backend.schemas.projects import (
+        validate_schedule_network_pdm_lead_lag_hygiene,
+    )
+
+    deps = [
+        {
+            "dependency_id": "DEP-20",
+            "relationship_type": "FS",
+            "lag_days": 8.0,
+            "successor_duration_days": 10.0,
+            "has_documented_justification": True,
+        },
+        {
+            "dependency_id": "DEP-21",
+            "relationship_type": "SS",
+            "lag_days": 1.0,
+            "successor_duration_days": 10.0,
+            "has_documented_justification": True,
+        },
+    ]
+    res = validate_schedule_network_pdm_lead_lag_hygiene(deps)
+    assert res["is_valid"] is False
+    assert res["invalid_relationship_ids"] == []
+    assert res["excessive_negative_lead_ids"] == []
+    assert res["excessive_positive_lag_ids"] == ["DEP-20"]
+    assert res["fs_dominant_ratio_pct"] == 50.0
+    assert res["pdm_hygiene_status"] == "NEEDS_REFINEMENT"
+    assert len(res["issues"]) == 2
+
+
+def test_validate_schedule_network_pdm_lead_lag_hygiene_empty_and_export():
+    """Verifica manejo defensivo de entradas vacías/no-secuencia y exportación en __all__."""
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_schedule_network_pdm_lead_lag_hygiene,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = validate_schedule_network_pdm_lead_lag_hygiene(payload)  # type: ignore[arg-type]
+        assert empty["is_valid"] is True
+        assert empty["total_dependencies"] == 0
+        assert empty["invalid_relationship_ids"] == []
+        assert empty["excessive_negative_lead_ids"] == []
+        assert empty["excessive_positive_lag_ids"] == []
+        assert empty["fs_dominant_ratio_pct"] == 100.0
+        assert empty["pdm_hygiene_status"] == "COMPLIANT"
+        assert empty["issues"] == []
+
+    assert "validate_schedule_network_pdm_lead_lag_hygiene" in mod.__all__
+
+
 

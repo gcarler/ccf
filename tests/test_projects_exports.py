@@ -6896,6 +6896,7 @@ def test_audit_executive_report_key_personnel_bus_factor_and_succession_empty_an
     )
 
 
+
 def test_vendor_sla_credit_recovery_compliant_and_critical():
     """Vendor conforme -> COMPLIANT; breach crónico >= 3 meses -> CRITICAL_DEFAULT."""
     from backend.services.project_export_service import (
@@ -7111,3 +7112,137 @@ def test_vendor_sla_credit_recovery_precedence_and_binding():
         == audit_executive_report_vendor_sla_and_service_credit_recovery(sample)
     )
     assert "audit_executive_report_vendor_sla_and_service_credit_recovery" in mod.__all__
+
+
+def test_audit_executive_report_supply_chain_lead_time_and_single_source_resilient():
+    """Valida suministros en ruta crítica con >=2 proveedores calificados, lead-time dentro de tolerancia y buffer suficiente ('RESILIENT')."""
+    from backend.services.project_export_service import (
+        audit_executive_report_supply_chain_lead_time_and_single_source,
+    )
+
+    items = [
+        {
+            "item_id": "PRC-01",
+            "baseline_lead_time_days": 30.0,
+            "current_projected_lead_time_days": 33.0,
+            "qualified_suppliers_count": 2,
+            "is_on_critical_path": True,
+            "buffer_days_available": 5.0,
+        },
+        {
+            "item_id": "PRC-02",
+            "baseline_lead_time_days": 15.0,
+            "current_projected_lead_time_days": 15.0,
+            "qualified_suppliers_count": 1,
+            "is_on_critical_path": False,
+            "buffer_days_available": 0.0,
+        },
+    ]
+    res = audit_executive_report_supply_chain_lead_time_and_single_source(
+        items
+    )
+    assert res["total_procurement_items"] == 2
+    assert res["single_source_critical_ids"] == []
+    assert res["lead_time_slip_ids"] == []
+    assert res["buffer_exhausted_critical_ids"] == []
+    assert res["supply_chain_status"] == "RESILIENT"
+    assert res["is_supply_chain_resilient"] is True
+    assert res["issues"] == []
+
+
+def test_audit_executive_report_supply_chain_lead_time_and_single_source_critical():
+    """Detecta proveedor único en ruta crítica y agotamiento de buffer por retraso de entrega ('CRITICAL_BOTTLENECK')."""
+    from backend.services.project_export_service import (
+        audit_executive_report_supply_chain_lead_time_and_single_source,
+    )
+
+    items = [
+        {
+            "item_id": "PRC-10",
+            "baseline_lead_time_days": 20.0,
+            "current_projected_lead_time_days": 28.0,
+            "qualified_suppliers_count": 1,
+            "is_on_critical_path": True,
+            "buffer_days_available": 4.0,
+        }
+    ]
+    res = audit_executive_report_supply_chain_lead_time_and_single_source(
+        items
+    )
+    assert res["total_procurement_items"] == 1
+    assert res["single_source_critical_ids"] == ["PRC-10"]
+    assert res["lead_time_slip_ids"] == ["PRC-10"]
+    assert res["buffer_exhausted_critical_ids"] == ["PRC-10"]
+    assert res["supply_chain_status"] == "CRITICAL_BOTTLENECK"
+    assert res["is_supply_chain_resilient"] is False
+    assert len(res["issues"]) == 3
+
+
+def test_audit_executive_report_supply_chain_lead_time_and_single_source_at_risk():
+    """Detecta deslizamiento de lead-time (>20%) fuera de ruta crítica o con buffer suficiente y dual-source ('AT_RISK')."""
+    from backend.services.project_export_service import (
+        audit_executive_report_supply_chain_lead_time_and_single_source,
+    )
+
+    items = [
+        {
+            "item_id": "PRC-20",
+            "baseline_lead_time_days": 20.0,
+            "current_projected_lead_time_days": 26.0,
+            "qualified_suppliers_count": 2,
+            "is_on_critical_path": True,
+            "buffer_days_available": 10.0,
+        }
+    ]
+    res = audit_executive_report_supply_chain_lead_time_and_single_source(
+        items
+    )
+    assert res["total_procurement_items"] == 1
+    assert res["single_source_critical_ids"] == []
+    assert res["buffer_exhausted_critical_ids"] == []
+    assert res["lead_time_slip_ids"] == ["PRC-20"]
+    assert res["supply_chain_status"] == "AT_RISK"
+    assert res["is_supply_chain_resilient"] is False
+    assert len(res["issues"]) == 1
+
+
+def test_audit_executive_report_supply_chain_lead_time_and_single_source_empty_and_binding():
+    """Verifica manejo defensivo de entradas vacías/no-secuencia y enlace en ProjectExportService y __all__."""
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_supply_chain_lead_time_and_single_source,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_executive_report_supply_chain_lead_time_and_single_source(payload)  # type: ignore[arg-type]
+        assert empty["total_procurement_items"] == 0
+        assert empty["single_source_critical_ids"] == []
+        assert empty["lead_time_slip_ids"] == []
+        assert empty["buffer_exhausted_critical_ids"] == []
+        assert empty["supply_chain_status"] == "RESILIENT"
+        assert empty["is_supply_chain_resilient"] is True
+        assert empty["issues"] == []
+
+    sample = [
+        {
+            "item_id": "PRC-99",
+            "baseline_lead_time_days": 10.0,
+            "current_projected_lead_time_days": 10.0,
+            "qualified_suppliers_count": 2,
+            "is_on_critical_path": True,
+            "buffer_days_available": 3.0,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_supply_chain_lead_time_and_single_source(
+            sample
+        )
+        == audit_executive_report_supply_chain_lead_time_and_single_source(
+            sample
+        )
+    )
+    assert (
+        "audit_executive_report_supply_chain_lead_time_and_single_source"
+        in mod.__all__
+    )

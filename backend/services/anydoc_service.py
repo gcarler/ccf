@@ -3020,6 +3020,7 @@ __all__ = [
     "AnyDocService",
     "audit_markdown_badge_and_external_tracker_hygiene",
     "audit_markdown_footnote_reference_and_definition_hygiene",
+    "audit_markdown_acronym_and_glossary_first_use_hygiene",
     "AnydocService",
 ]
 
@@ -5831,6 +5832,7 @@ AnydocService.audit_markdown_frontmatter_and_document_control_hygiene = staticme
 )
 
 
+
 def audit_markdown_badge_and_external_tracker_hygiene(
     markdown_text: str | None,
     *,
@@ -6085,4 +6087,164 @@ AnyDocService.audit_markdown_footnote_reference_and_definition_hygiene = staticm
 )
 AnydocService.audit_markdown_footnote_reference_and_definition_hygiene = staticmethod(
     audit_markdown_footnote_reference_and_definition_hygiene
+)
+
+
+
+def audit_markdown_acronym_and_glossary_first_use_hygiene(
+    markdown_text: str | None,
+    *,
+    exempt_common_acronyms: tuple[str, ...] = (
+        "API", "URL", "HTTP", "HTTPS", "JSON", "HTML", "CSS", "SQL",
+        "PDF", "CSV", "UI", "UX", "ID", "UUID",
+    ),
+    min_acronym_length: int = 3,
+) -> dict[str, Any]:
+    """PMBOK 4.4 & 10.2 — primera definición de acrónimos y glosario.
+
+    Audita tokens en MAYÚSCULAS de longitud ``min_acronym_length`` a 8
+    (excluyendo ``exempt_common_acronyms``, case-insensitive), fuera de
+    fences (``` ```` /``~~~``, multi-línea) y code spans inline. Un acrónimo
+    ``ACR`` queda definido si: (a) su primera aparición va entre paréntesis
+    ``(... ACR ...)`` o seguido de paréntesis ``ACR (...)``, o (b) existe
+    una definición tipo glosario ``**ACR**:`` / ``- **ACR**:`` / ``| ACR |``
+    en cualquier parte del documento.
+
+    Retorna total_distinct_acronyms, defined_acronyms y undefined_acronyms
+    (listas ordenadas alfabéticamente), first_use_line_by_undefined_acronym
+    (dict -> línea 1-indexed de primera aparición) y estado
+    COMPLIANT (0 indefinidos) / MINOR_GAPS (1-2) / GLOSSARY_REQUIRED (>= 3).
+    """
+    results: dict[str, Any] = {
+        "total_distinct_acronyms": 0,
+        "defined_acronyms": [],
+        "undefined_acronyms": [],
+        "first_use_line_by_undefined_acronym": {},
+        "acronym_hygiene_status": "COMPLIANT",
+        "is_compliant": True,
+    }
+    if not isinstance(markdown_text, str) or not markdown_text.strip():
+        return results
+
+    token_pattern = re.compile(r"\b[A-Z]{%d,8}\b" % max(1, int(min_acronym_length)))
+    exempt = {acronym.upper() for acronym in exempt_common_acronyms}
+
+    fence_open_pattern = re.compile(r"^\s*(`{3,}|~{3,})")
+    code_span_pattern = re.compile(r"`+[^`]*`+")
+
+    open_fence_token: str | None = None
+    first_use: dict[str, int] = {}
+
+    def _strip_spans(line: str) -> str:
+        segments: list[str] = []
+        cursor = 0
+        for span_match in code_span_pattern.finditer(line):
+            if span_match.start() > cursor:
+                segments.append(line[cursor:span_match.start()])
+            cursor = span_match.end()
+        if cursor < len(line):
+            segments.append(line[cursor:])
+        return "\n".join(segments)
+
+    # Primera pasada: registrar cada acrónimo activo y su primera línea.
+    for line_no, raw_line in enumerate(markdown_text.splitlines(), start=1):
+        if open_fence_token is not None:
+            closing_match = fence_open_pattern.match(raw_line.strip())
+            if closing_match is not None and closing_match.group(1)[0] == open_fence_token[0]:
+                open_fence_token = None
+            continue
+
+        fence_match = fence_open_pattern.match(raw_line.strip())
+        if fence_match is not None:
+            open_fence_token = fence_match.group(1)
+            continue
+
+        for token in token_pattern.findall(_strip_spans(raw_line)):
+            if token in exempt:
+                continue
+            first_use.setdefault(token, line_no)
+
+    if not first_use:
+        return results
+
+    def _is_inline_defined(line: str, token: str) -> bool:
+        # "(... ACR )" o "(ACR)" con contenido alrededor en la misma línea.
+        if re.search(r"\([^()\n]*\b%s\b[^()\n]*\)" % re.escape(token), line):
+            return True
+        # "ACR (" seguido de paréntesis en la misma línea.
+        if re.search(r"\b%s\s*\([^()\n]+\)" % re.escape(token), line):
+            return True
+        return False
+
+    def _is_glossary_defined(line: str, token: str) -> bool:
+        esc = re.escape(token)
+        if re.match(r"^\s*[-*]?\s*\*\*%s\*\*\s*:" % esc, line):
+            return True
+        if re.match(r"^\s*\*\*%s\*\*\s*:" % esc, line):
+            return True
+        if re.match(r"^\s*\|\s*%s\s*\|" % esc, line):
+            return True
+        return False
+
+    text_lines = markdown_text.splitlines()
+    defined: list[str] = []
+    undefined: list[str] = []
+    first_use_line_by_undefined: dict[str, int] = {}
+
+    for token, first_line in sorted(first_use.items()):
+        inline_defined = False
+        glossary_defined = False
+        for idx, line in enumerate(text_lines, start=1):
+            # Dentro de fences el cuerpo no aporta definiciones (se reusa el estado).
+            if open_fence_token is not None:
+                closing_match = fence_open_pattern.match(line.strip())
+                if closing_match is not None and closing_match.group(1)[0] == open_fence_token[0]:
+                    open_fence_token = None
+                continue
+            fence_match = fence_open_pattern.match(line.strip())
+            if fence_match is not None:
+                open_fence_token = fence_match.group(1)
+                continue
+
+            stripped_body = _strip_spans(line)
+            if idx == first_line:
+                inline_defined = _is_inline_defined(stripped_body, token)
+            if _is_glossary_defined(line, token):
+                glossary_defined = True
+                if inline_defined:
+                    break
+                # un hit de glosario basta para declarar definido
+                break
+        if inline_defined or glossary_defined:
+            defined.append(token)
+        else:
+            undefined.append(token)
+            first_use_line_by_undefined[token] = first_line
+
+    defined_sorted = sorted(defined)
+    undefined_sorted = sorted(undefined)
+    first_use_line_by_undefined = dict(sorted(first_use_line_by_undefined.items()))
+
+    total = len(defined_sorted) + len(undefined_sorted)
+    if len(undefined_sorted) == 0:
+        status = "COMPLIANT"
+    elif len(undefined_sorted) <= 2:
+        status = "MINOR_GAPS"
+    else:
+        status = "GLOSSARY_REQUIRED"
+
+    results["total_distinct_acronyms"] = total
+    results["defined_acronyms"] = defined_sorted
+    results["undefined_acronyms"] = undefined_sorted
+    results["first_use_line_by_undefined_acronym"] = first_use_line_by_undefined
+    results["acronym_hygiene_status"] = status
+    results["is_compliant"] = status == "COMPLIANT"
+    return results
+
+
+AnyDocService.audit_markdown_acronym_and_glossary_first_use_hygiene = staticmethod(
+    audit_markdown_acronym_and_glossary_first_use_hygiene
+)
+AnydocService.audit_markdown_acronym_and_glossary_first_use_hygiene = staticmethod(
+    audit_markdown_acronym_and_glossary_first_use_hygiene
 )

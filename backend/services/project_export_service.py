@@ -2988,6 +2988,7 @@ __all__ = [
     "audit_executive_report_capex_opex_capitalization_compliance",
     "audit_executive_report_key_personnel_bus_factor_and_succession",
     "audit_executive_report_vendor_sla_and_service_credit_recovery",
+    "audit_executive_report_supply_chain_lead_time_and_single_source",
     "ProjectExportService",
 ]
 
@@ -5484,6 +5485,7 @@ ProjectExportService.audit_executive_report_key_personnel_bus_factor_and_success
 )
 
 
+
 def audit_executive_report_vendor_sla_and_service_credit_recovery(
     vendor_contracts: Sequence[Mapping[str, Any]] | None,
     *,
@@ -5575,4 +5577,122 @@ def audit_executive_report_vendor_sla_and_service_credit_recovery(
 
 ProjectExportService.audit_executive_report_vendor_sla_and_service_credit_recovery = staticmethod(
     audit_executive_report_vendor_sla_and_service_credit_recovery
+)
+
+
+def audit_executive_report_supply_chain_lead_time_and_single_source(
+    procurement_items: list[dict[str, Any]],
+    *,
+    max_lead_time_slip_pct: float = 20.0,
+    require_dual_source_on_critical_path: bool = True,
+) -> dict[str, Any]:
+    """Audita la volatilidad de tiempos de entrega (lead-time), cuellos de botella de proveedor único (single-source) en ruta crítica y agotamiento de buffers de suministro en el reporte ejecutivo (PMI PMBOK §11.6 y §12.3)."""
+    if (
+        procurement_items is None
+        or isinstance(procurement_items, (str, bytes))
+        or not isinstance(procurement_items, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = procurement_items
+
+    try:
+        max_slip_pct = float(max_lead_time_slip_pct)
+    except (TypeError, ValueError):
+        max_slip_pct = 20.0
+
+    total_procurement_items = 0
+    single_source_critical_ids: list[str] = []
+    lead_time_slip_ids: list[str] = []
+    buffer_exhausted_critical_ids: list[str] = []
+    issues: list[str] = []
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_procurement_items += 1
+
+        item_id = (
+            str(raw.get("item_id") or raw.get("id") or "").strip()
+            or f"PRC-{total_procurement_items}"
+        )
+
+        def _float_val(key: str) -> float:
+            val = raw.get(key)
+            if val is None or isinstance(val, bool):
+                return 0.0
+            try:
+                return float(val)
+            except (TypeError, ValueError):
+                return 0.0
+
+        def _int_val(key: str) -> int:
+            val = raw.get(key)
+            if val is None or isinstance(val, bool):
+                return 0
+            try:
+                return int(val)
+            except (TypeError, ValueError):
+                return 0
+
+        baseline_lead_time_days = _float_val("baseline_lead_time_days")
+        current_projected_lead_time_days = _float_val(
+            "current_projected_lead_time_days"
+        )
+        qualified_suppliers_count = _int_val("qualified_suppliers_count")
+        is_on_critical_path = bool(raw.get("is_on_critical_path"))
+        buffer_days_available = _float_val("buffer_days_available")
+
+        if (
+            bool(require_dual_source_on_critical_path)
+            and is_on_critical_path
+            and qualified_suppliers_count <= 1
+        ):
+            single_source_critical_ids.append(item_id)
+            issues.append(
+                f"Suministro crítico '{item_id}' depende de fuente única (qualified_suppliers_count={qualified_suppliers_count})."
+            )
+
+        lead_time_delta = (
+            current_projected_lead_time_days - baseline_lead_time_days
+        )
+        if (
+            baseline_lead_time_days > 0.0
+            and ((lead_time_delta / baseline_lead_time_days) * 100.0)
+            > max_slip_pct
+        ):
+            lead_time_slip_ids.append(item_id)
+            issues.append(
+                f"Suministro '{item_id}' presenta deslizamiento de lead-time ({current_projected_lead_time_days}d vs {baseline_lead_time_days}d) superior al {max_slip_pct}%."
+            )
+
+        if is_on_critical_path and lead_time_delta > buffer_days_available:
+            buffer_exhausted_critical_ids.append(item_id)
+            issues.append(
+                f"Suministro crítico '{item_id}' agota el buffer disponible ({lead_time_delta}d de retraso > {buffer_days_available}d de buffer)."
+            )
+
+    if (
+        len(buffer_exhausted_critical_ids) > 0
+        or len(single_source_critical_ids) > 0
+    ):
+        supply_chain_status = "CRITICAL_BOTTLENECK"
+    elif len(lead_time_slip_ids) > 0:
+        supply_chain_status = "AT_RISK"
+    else:
+        supply_chain_status = "RESILIENT"
+
+    return {
+        "total_procurement_items": total_procurement_items,
+        "single_source_critical_ids": single_source_critical_ids,
+        "lead_time_slip_ids": lead_time_slip_ids,
+        "buffer_exhausted_critical_ids": buffer_exhausted_critical_ids,
+        "supply_chain_status": supply_chain_status,
+        "is_supply_chain_resilient": supply_chain_status == "RESILIENT",
+        "issues": issues,
+    }
+
+
+ProjectExportService.audit_executive_report_supply_chain_lead_time_and_single_source = staticmethod(
+    audit_executive_report_supply_chain_lead_time_and_single_source
 )

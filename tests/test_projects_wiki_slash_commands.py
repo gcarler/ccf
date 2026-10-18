@@ -6348,3 +6348,142 @@ def test_audit_wiki_blameless_postmortem_and_systemic_prevention_empty_and_bindi
     )
 
 
+def test_audit_wiki_opa_and_eef_catalog_freshness_governed():
+    """Valida entradas OPA y EEF con custodio asignado, revisión vigente y deprecados sin uso activo ('GOVERNED')."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_opa_and_eef_catalog_freshness,
+    )
+
+    entries = [
+        {
+            "asset_id": "OPA-01",
+            "asset_category": "OPA",
+            "days_since_last_review": 45,
+            "steward_owner_id": "USR-PMO-01",
+            "is_deprecated": False,
+            "active_templates_referencing_count": 8,
+        },
+        {
+            "asset_id": "EEF-02",
+            "asset_category": "EEF",
+            "days_since_last_review": 120,
+            "steward_owner_id": "USR-LEGAL-02",
+            "is_deprecated": False,
+            "active_templates_referencing_count": 4,
+        },
+        {
+            "asset_id": "OPA-03",
+            "asset_category": "OPA",
+            "days_since_last_review": 500,
+            "steward_owner_id": None,
+            "is_deprecated": True,
+            "active_templates_referencing_count": 0,
+        },
+    ]
+    res = audit_wiki_opa_and_eef_catalog_freshness(entries)
+    assert res["total_catalog_entries"] == 3
+    assert res["invalid_category_asset_ids"] == []
+    assert res["stale_asset_ids"] == []
+    assert res["unowned_asset_ids"] == []
+    assert res["deprecated_in_use_asset_ids"] == []
+    assert res["catalog_health_status"] == "GOVERNED"
+    assert res["is_catalog_governed"] is True
+    assert res["issues"] == []
+
+
+def test_audit_wiki_opa_and_eef_catalog_freshness_critical_drift():
+    """Detecta activos deprecados aún en uso en plantillas activas o con categoría inválida ('CRITICAL_DRIFT')."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_opa_and_eef_catalog_freshness,
+    )
+
+    entries = [
+        {
+            "asset_id": "OPA-10",
+            "asset_category": "OPA",
+            "days_since_last_review": 300,
+            "steward_owner_id": "USR-01",
+            "is_deprecated": True,
+            "active_templates_referencing_count": 3,
+        },
+        {
+            "asset_id": "X-11",
+            "asset_category": "UNKNOWN_CAT",
+            "days_since_last_review": 10,
+            "steward_owner_id": "USR-02",
+            "is_deprecated": False,
+            "active_templates_referencing_count": 1,
+        },
+    ]
+    res = audit_wiki_opa_and_eef_catalog_freshness(entries)
+    assert res["total_catalog_entries"] == 2
+    assert res["deprecated_in_use_asset_ids"] == ["OPA-10"]
+    assert res["invalid_category_asset_ids"] == ["X-11"]
+    assert res["catalog_health_status"] == "CRITICAL_DRIFT"
+    assert res["is_catalog_governed"] is False
+    assert len(res["issues"]) == 2
+
+
+def test_audit_wiki_opa_and_eef_catalog_freshness_stale_or_unowned():
+    """Detecta activos vigentes sin custodio o con revisión vencida (>180 días) ('STALE_OR_UNOWNED')."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_opa_and_eef_catalog_freshness,
+    )
+
+    entries = [
+        {
+            "asset_id": "EEF-20",
+            "asset_category": "EEF",
+            "days_since_last_review": 210,
+            "steward_owner_id": "",
+            "is_deprecated": False,
+            "active_templates_referencing_count": 2,
+        }
+    ]
+    res = audit_wiki_opa_and_eef_catalog_freshness(entries)
+    assert res["total_catalog_entries"] == 1
+    assert res["stale_asset_ids"] == ["EEF-20"]
+    assert res["unowned_asset_ids"] == ["EEF-20"]
+    assert res["invalid_category_asset_ids"] == []
+    assert res["deprecated_in_use_asset_ids"] == []
+    assert res["catalog_health_status"] == "STALE_OR_UNOWNED"
+    assert res["is_catalog_governed"] is False
+    assert len(res["issues"]) == 2
+
+
+def test_audit_wiki_opa_and_eef_catalog_freshness_empty_and_binding():
+    """Verifica manejo defensivo de entradas vacías/no-secuencia y enlace en WikiPMIService y __all__."""
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_opa_and_eef_catalog_freshness,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_wiki_opa_and_eef_catalog_freshness(payload)  # type: ignore[arg-type]
+        assert empty["total_catalog_entries"] == 0
+        assert empty["invalid_category_asset_ids"] == []
+        assert empty["stale_asset_ids"] == []
+        assert empty["unowned_asset_ids"] == []
+        assert empty["deprecated_in_use_asset_ids"] == []
+        assert empty["catalog_health_status"] == "GOVERNED"
+        assert empty["is_catalog_governed"] is True
+        assert empty["issues"] == []
+
+    sample = [
+        {
+            "asset_id": "OPA-99",
+            "asset_category": "OPA",
+            "days_since_last_review": 15,
+            "steward_owner_id": "USR-99",
+            "is_deprecated": False,
+            "active_templates_referencing_count": 1,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_opa_and_eef_catalog_freshness(sample)
+        == audit_wiki_opa_and_eef_catalog_freshness(sample)
+    )
+    assert "audit_wiki_opa_and_eef_catalog_freshness" in mod.__all__
+
+
