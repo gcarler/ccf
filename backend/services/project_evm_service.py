@@ -3024,6 +3024,52 @@ def evaluate_ieac_forecast_spread(
     }
 
 
+def predict_schedule_slippage_days(
+    planned_duration_days: float,
+    spi_t: float,
+) -> Dict[str, Any]:
+    """Proyecta la duración total estimada al cierre IEAC(t) = PD / SPI(t) y el deslizamiento en días (Lipke / PMI Earned Schedule)."""
+    pd = max(0.0, _safe_float(planned_duration_days, 0.0))
+    spit = max(0.0, _safe_float(spi_t, 0.0))
+
+    if pd <= 0.0:
+        return {
+            "planned_duration_days": 0.0,
+            "ieac_t_days": 0.0,
+            "projected_slippage_days": 0.0,
+            "slippage_pct": 0.0,
+            "schedule_forecast_status": "unscheduled",
+        }
+
+    if spit <= 0.0:
+        return {
+            "planned_duration_days": round(pd, 2),
+            "ieac_t_days": None,
+            "projected_slippage_days": None,
+            "slippage_pct": None,
+            "schedule_forecast_status": "stalled",
+        }
+
+    ieac_t_days = round(pd / spit, 2)
+    projected_slippage_days = round(ieac_t_days - pd, 2)
+    slippage_pct = round(((ieac_t_days - pd) / pd) * 100.0, 2)
+
+    if projected_slippage_days <= 0.0:
+        schedule_forecast_status = "ahead_or_on_time"
+    elif slippage_pct <= 15.0:
+        schedule_forecast_status = "minor_slippage"
+    else:
+        schedule_forecast_status = "critical_slippage"
+
+    return {
+        "planned_duration_days": round(pd, 2),
+        "ieac_t_days": ieac_t_days,
+        "projected_slippage_days": projected_slippage_days,
+        "slippage_pct": slippage_pct,
+        "schedule_forecast_status": schedule_forecast_status,
+    }
+
+
 class ProjectEVMService:
     """Fachada canónica del servicio EVM y Diagnóstico Predictivo PMI (Vol. 5 y Vol. 6)."""
 
@@ -3109,6 +3155,13 @@ class ProjectEVMService:
         bac: float,
     ) -> Dict[str, Any]:
         return evaluate_ieac_forecast_spread(ieac_cpi, ieac_composite, bac)
+
+    @staticmethod
+    def predict_schedule_slippage_days(
+        planned_duration_days: float,
+        spi_t: float,
+    ) -> Dict[str, Any]:
+        return predict_schedule_slippage_days(planned_duration_days, spi_t)
 
     @staticmethod
     def build_project_execution_matrix(

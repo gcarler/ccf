@@ -26,6 +26,7 @@ from backend.services.project_evm_service import (
     analyze_s_curve_velocity,
     calculate_project_evm,
     generate_curve_s_data,
+    predict_schedule_slippage_days,
 )
 
 
@@ -854,6 +855,67 @@ def test_analyze_s_curve_velocity_trends_and_integration():
     assert integrated_res["trend_direction"] in {"accelerating", "decelerating", "steady"}
 
 
+def test_predict_schedule_slippage_days_ahead_or_on_time():
+    """Cronograma en tiempo o adelantado (PD=100, SPI(t)=1.25 -> IEAC(t)=80.0, slippage=-20.0, ahead_or_on_time)."""
+    res = predict_schedule_slippage_days(100, 1.25)
+    assert res == {
+        "planned_duration_days": 100.0,
+        "ieac_t_days": 80.0,
+        "projected_slippage_days": -20.0,
+        "slippage_pct": -20.0,
+        "schedule_forecast_status": "ahead_or_on_time",
+    }
+
+    on_time = ProjectEVMService.predict_schedule_slippage_days(100, 1.0)
+    assert on_time["projected_slippage_days"] == 0.0
+    assert on_time["schedule_forecast_status"] == "ahead_or_on_time"
+
+
+def test_predict_schedule_slippage_days_minor_slippage():
+    """Deslizamiento menor <= 15% (PD=100, SPI(t)=0.90 -> IEAC(t)=111.11, slippage=11.11, minor_slippage)."""
+    res = predict_schedule_slippage_days(100, 0.90)
+    assert res == {
+        "planned_duration_days": 100.0,
+        "ieac_t_days": 111.11,
+        "projected_slippage_days": 11.11,
+        "slippage_pct": 11.11,
+        "schedule_forecast_status": "minor_slippage",
+    }
+
+
+def test_predict_schedule_slippage_days_critical_slippage():
+    """Deslizamiento crítico > 15% (PD=100, SPI(t)=0.80 -> IEAC(t)=125.0, slippage=25.0, critical_slippage)."""
+    res = ProjectEVMService.predict_schedule_slippage_days(100, 0.80)
+    assert res == {
+        "planned_duration_days": 100.0,
+        "ieac_t_days": 125.0,
+        "projected_slippage_days": 25.0,
+        "slippage_pct": 25.0,
+        "schedule_forecast_status": "critical_slippage",
+    }
+
+
+def test_predict_schedule_slippage_days_unscheduled_and_stalled():
+    """Casos borde PD <= 0 ('unscheduled') y SPI(t) <= 0 ('stalled', ieac_t_days=None)."""
+    unsched = predict_schedule_slippage_days(0, 1.0)
+    assert unsched == {
+        "planned_duration_days": 0.0,
+        "ieac_t_days": 0.0,
+        "projected_slippage_days": 0.0,
+        "slippage_pct": 0.0,
+        "schedule_forecast_status": "unscheduled",
+    }
+
+    stalled = predict_schedule_slippage_days(120, 0.0)
+    assert stalled == {
+        "planned_duration_days": 120.0,
+        "ieac_t_days": None,
+        "projected_slippage_days": None,
+        "slippage_pct": None,
+        "schedule_forecast_status": "stalled",
+    }
+
+
 if __name__ == "__main__":
     test_evm_balanced_project()
     test_evm_cost_overrun_critical()
@@ -861,6 +923,10 @@ if __name__ == "__main__":
     test_evm_zero_cost_edge_case()
     test_curve_s_generation()
     test_analyze_s_curve_velocity_trends_and_integration()
+    test_predict_schedule_slippage_days_ahead_or_on_time()
+    test_predict_schedule_slippage_days_minor_slippage()
+    test_predict_schedule_slippage_days_critical_slippage()
+    test_predict_schedule_slippage_days_unscheduled_and_stalled()
     print("✅ All EVM tests passed successfully!")
 
 
