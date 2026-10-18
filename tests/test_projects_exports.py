@@ -629,3 +629,87 @@ def test_audit_csv_export_integrity_empty_and_none():
         "is_rfc4180_compliant": False,
     }
 
+
+def test_audit_pdf_export_binary_real_generated_pdf():
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_pdf_export_binary,
+    )
+
+    report_data = {
+        "project": {
+            "title": "Proyecto Auditoría Binaria PDF PMI",
+            "status": "active",
+            "owner_name": "Director PMO",
+        },
+        "financial_kpis": {"by_category": {"Infraestructura": 50000.0}},
+        "raid_kpis": {"risks": []},
+        "cpm_metrics": {"tasks": []},
+        "time_metrics": {"by_member": []},
+    }
+    pdf_bytes = ProjectExportService.generate_project_summary_pdf(report_data)
+    audit = audit_pdf_export_binary(pdf_bytes)
+    assert audit["is_valid_pdf_header"] is True
+    assert audit["has_eof_marker"] is True
+    assert audit["byte_size"] == len(pdf_bytes)
+    assert audit["byte_size"] >= 100
+    assert audit["estimated_page_count"] >= 1
+    assert audit["is_export_ready"] is True
+
+
+def test_audit_pdf_export_binary_multipage_synthetic():
+    from backend.services.project_export_service import ProjectExportService
+
+    synthetic_pdf = (
+        b"%PDF-1.4\n"
+        b"1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n"
+        b"2 0 obj << /Type /Pages /Kids [3 0 R 4 0 R] /Count 2 >> endobj\n"
+        b"3 0 obj << /Type /Page /Parent 2 0 R >> endobj\n"
+        b"4 0 obj << /Type /Page /Parent 2 0 R >> endobj\n"
+        b"xref\n0 5\ntrailer << /Root 1 0 R >>\nstartxref\n0\n%%EOF\n"
+    )
+    audit = ProjectExportService.audit_pdf_export_binary(bytearray(synthetic_pdf))
+    assert audit == {
+        "is_valid_pdf_header": True,
+        "has_eof_marker": True,
+        "byte_size": len(synthetic_pdf),
+        "estimated_page_count": 2,
+        "is_export_ready": True,
+    }
+
+
+def test_audit_pdf_export_binary_truncated_without_eof():
+    from backend.services.project_export_service import audit_pdf_export_binary
+
+    truncated_pdf = (
+        b"%PDF-1.4\n"
+        b"1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n"
+        b"2 0 obj << /Type /Page /Parent 1 0 R >> endobj\n"
+        b"stream truncated before footer marker..."
+    )
+    audit = audit_pdf_export_binary(truncated_pdf)
+    assert audit["is_valid_pdf_header"] is True
+    assert audit["has_eof_marker"] is False
+    assert audit["estimated_page_count"] == 1
+    assert audit["is_export_ready"] is False
+
+
+def test_audit_pdf_export_binary_empty_none_or_non_pdf():
+    from backend.services.project_export_service import audit_pdf_export_binary
+
+    for empty_val in (None, b"", bytearray(), "not-bytes"):
+        res = audit_pdf_export_binary(empty_val)  # type: ignore[arg-type]
+        assert res == {
+            "is_valid_pdf_header": False,
+            "has_eof_marker": False,
+            "byte_size": 0,
+            "estimated_page_count": 0,
+            "is_export_ready": False,
+        }
+
+    non_pdf_bytes = b"PK\x03\x04 fake zip archive with /Type /Page and %%EOF" + (b"x" * 120)
+    non_pdf_res = audit_pdf_export_binary(non_pdf_bytes)
+    assert non_pdf_res["is_valid_pdf_header"] is False
+    assert non_pdf_res["estimated_page_count"] == 0
+    assert non_pdf_res["is_export_ready"] is False
+

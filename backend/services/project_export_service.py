@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import io
+import re
 from typing import Optional
 from uuid import UUID
 
@@ -23,6 +24,7 @@ __all__ = [
     "generate_project_expenses_csv",
     "evaluate_executive_report_completeness",
     "audit_csv_export_integrity",
+    "audit_pdf_export_binary",
     "ProjectExportService",
 ]
 
@@ -137,8 +139,56 @@ def evaluate_executive_report_completeness(report_data: Optional[dict]) -> dict:
     }
 
 
+def audit_pdf_export_binary(
+    pdf_bytes: Optional[bytes | bytearray],
+) -> dict:
+    """Audita la integridad estructural binaria de un reporte PDF ejecutivo (ISO 32000-1 / PMI Formal Reporting)."""
+    if not isinstance(pdf_bytes, (bytes, bytearray)) or len(pdf_bytes) == 0:
+        return {
+            "is_valid_pdf_header": False,
+            "has_eof_marker": False,
+            "byte_size": 0,
+            "estimated_page_count": 0,
+            "is_export_ready": False,
+        }
+
+    raw = bytes(pdf_bytes)
+    byte_size = len(raw)
+    is_valid_pdf_header = bool(raw.startswith(b"%PDF-"))
+    has_eof_marker = bool(b"%%EOF" in raw[-1024:])
+    page_matches = re.findall(rb"/Type\s*/Page\b", raw)
+
+    if is_valid_pdf_header:
+        estimated_page_count = (
+            max(1, len(page_matches)) if has_eof_marker else len(page_matches)
+        )
+    else:
+        estimated_page_count = 0
+
+    is_export_ready = bool(
+        is_valid_pdf_header
+        and has_eof_marker
+        and byte_size >= 100
+        and estimated_page_count >= 1
+    )
+
+    return {
+        "is_valid_pdf_header": is_valid_pdf_header,
+        "has_eof_marker": has_eof_marker,
+        "byte_size": byte_size,
+        "estimated_page_count": estimated_page_count,
+        "is_export_ready": is_export_ready,
+    }
+
+
 class ProjectExportService:
     """Fachada canónica de informes ejecutivos con ``governance_summary`` PMI."""
+
+    @staticmethod
+    def audit_pdf_export_binary(
+        pdf_bytes: Optional[bytes | bytearray],
+    ) -> dict:
+        return audit_pdf_export_binary(pdf_bytes)
 
     @staticmethod
     def audit_csv_export_integrity(
