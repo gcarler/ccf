@@ -2816,6 +2816,7 @@ __all__ = [
     "evaluate_supplier_ncr_disposition_governance",
     "audit_scope_creep_and_gold_plating_drift",
     "audit_configuration_fca_pca_baseline_verification",
+    "audit_dod_defect_escape_and_first_time_right_rate",
     "audit_requirements_traceability_matrix_coverage",
     "audit_emergency_change_fast_track_ratification",
     "ProjectCCBService",
@@ -3712,3 +3713,125 @@ ProjectCCBService.audit_emergency_change_fast_track_ratification = staticmethod(
     audit_emergency_change_fast_track_ratification
 )
 
+
+
+def audit_dod_defect_escape_and_first_time_right_rate(
+    deliverable_inspections: list[dict[str, object]],
+    *,
+    max_defect_escape_ratio_pct: float = 10.0,
+    min_first_time_right_pct: float = 80.0,
+) -> dict[str, object]:
+    """Audita Defect Escape Ratio y First-Time-Right pass rate del Control de Calidad (DoD) según PMI PMBOK §8.3."""
+    total_deliverables = 0
+    first_time_right_count = 0
+    invalid_metric_deliverable_ids: list[str] = []
+    high_defect_escape_deliverable_ids: list[str] = []
+    unlinked_capa_escaped_deliverable_ids: list[str] = []
+    regression_gap_deliverable_ids: list[str] = []
+
+    max_escape = float(max_defect_escape_ratio_pct)
+    min_ftr = float(min_first_time_right_pct)
+    items: Sequence[Any] = (
+        deliverable_inspections
+        if isinstance(deliverable_inspections, Sequence)
+        and not isinstance(deliverable_inspections, (str, bytes, bytearray, Mapping))
+        else []
+    )
+
+    def _coerce(value: Any, default: float = 0.0) -> float:
+        try:
+            return float(value if value is not None else default)
+        except (TypeError, ValueError):
+            return default
+
+    for item in items:
+        if not isinstance(item, Mapping):
+            continue
+        deliverable_id = str(item.get("deliverable_id") or item.get("id") or "").strip()
+        if not deliverable_id:
+            continue
+
+        try:
+            pre_release_defects_found = int(item.get("pre_release_defects_found", 0) or 0)
+        except (TypeError, ValueError):
+            pre_release_defects_found = 0
+        try:
+            post_release_escaped_defects = int(
+                item.get("post_release_escaped_defects", 0) or 0
+            )
+        except (TypeError, ValueError):
+            post_release_escaped_defects = 0
+        raw_cycles = item.get("inspection_cycles_count", 1)
+        try:
+            inspection_cycles_count = int(raw_cycles)
+        except (TypeError, ValueError):
+            inspection_cycles_count = 1
+        automated_regression_coverage_pct = _coerce(
+            item.get("automated_regression_coverage_pct"), 0.0
+        )
+        root_cause_capa_linked = bool(item.get("root_cause_capa_linked", False))
+
+        if (
+            pre_release_defects_found < 0
+            or post_release_escaped_defects < 0
+            or inspection_cycles_count < 1
+        ):
+            invalid_metric_deliverable_ids.append(deliverable_id)
+            continue
+
+        total_deliverables += 1
+
+        total_defects = pre_release_defects_found + post_release_escaped_defects
+        escape_ratio_pct = (
+            round((post_release_escaped_defects / total_defects) * 100.0, 2)
+            if total_defects > 0
+            else 0.0
+        )
+        if escape_ratio_pct > max_escape:
+            high_defect_escape_deliverable_ids.append(deliverable_id)
+
+        if post_release_escaped_defects > 0 and not root_cause_capa_linked:
+            unlinked_capa_escaped_deliverable_ids.append(deliverable_id)
+
+        if (
+            post_release_escaped_defects > 0
+            and automated_regression_coverage_pct < 70.0
+        ):
+            regression_gap_deliverable_ids.append(deliverable_id)
+
+        if inspection_cycles_count == 1 and post_release_escaped_defects == 0:
+            first_time_right_count += 1
+
+    first_time_right_pct = (
+        round((first_time_right_count / total_deliverables) * 100.0, 2)
+        if total_deliverables > 0
+        else 100.0
+    )
+    below_first_time_right_threshold = bool(
+        total_deliverables > 0 and first_time_right_pct < min_ftr
+    )
+
+    is_dod_quality_gate_compliant = bool(
+        len(invalid_metric_deliverable_ids) == 0
+        and len(high_defect_escape_deliverable_ids) == 0
+        and len(unlinked_capa_escaped_deliverable_ids) == 0
+        and len(regression_gap_deliverable_ids) == 0
+        and not below_first_time_right_threshold
+    )
+
+    return {
+        "total_deliverables": total_deliverables,
+        "first_time_right_count": first_time_right_count,
+        "first_time_right_pct": first_time_right_pct,
+        "below_first_time_right_threshold": below_first_time_right_threshold,
+        "invalid_metric_deliverable_ids": invalid_metric_deliverable_ids,
+        "high_defect_escape_deliverable_ids": high_defect_escape_deliverable_ids,
+        "unlinked_capa_escaped_deliverable_ids": unlinked_capa_escaped_deliverable_ids,
+        "regression_gap_deliverable_ids": regression_gap_deliverable_ids,
+        "is_dod_quality_gate_compliant": is_dod_quality_gate_compliant,
+    }
+
+
+ProjectCCBService.audit_dod_defect_escape_and_first_time_right_rate = staticmethod(
+    audit_dod_defect_escape_and_first_time_right_rate
+)

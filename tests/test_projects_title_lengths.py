@@ -3770,3 +3770,146 @@ def test_validate_fpif_share_ratio_and_pta_breach_and_scope():
         == 0
     )
     assert "validate_fpif_share_ratio_and_point_of_total_assumption" in _m.__all__
+
+
+def test_validate_ccpm_feeding_and_project_buffer_sizing_compliant():
+    """Buffers CCPM dentro de ratio 0.20..0.60 y fuera de zona roja sin mitigación cumplen §6.5."""
+    from backend.schemas.projects import (
+        validate_ccpm_feeding_and_project_buffer_sizing,
+    )
+
+    buffers = [
+        {
+            "buffer_id": "BUF-PROJ-01",
+            "buffer_type": "project",
+            "feeding_chain_duration_days": 100.0,
+            "buffer_size_days": 35.0,
+            "buffer_consumed_days": 14.0,  # 40% consumed, progress 50% -> limit 65%
+            "chain_progress_pct": 50.0,
+            "recovery_plan_triggered": False,
+        },
+        {
+            "buffer_id": "BUF-FEED-01",
+            "buffer_type": "Feeding",
+            "feeding_chain_duration_days": 40.0,
+            "buffer_size_days": 12.0,
+            "buffer_consumed_days": 10.0,  # 83.3% > limit 72%, pero plan activado
+            "chain_progress_pct": 60.0,
+            "recovery_plan_triggered": True,
+        },
+        {
+            "buffer_id": "BUF-RES-01",
+            "buffer_type": "resource",
+            "feeding_chain_duration_days": 50.0,
+            "buffer_size_days": 5.0,  # resource buffer no aplica ratio 0.20..0.60
+            "buffer_consumed_days": 1.0,
+            "chain_progress_pct": 20.0,
+        },
+    ]
+    res = validate_ccpm_feeding_and_project_buffer_sizing(buffers)
+    assert res == {
+        "total_buffers": 3,
+        "invalid_buffer_definition_ids": [],
+        "misaligned_buffer_sizing_ids": [],
+        "unmitigated_fever_chart_red_zone_ids": [],
+        "is_ccpm_buffer_governance_valid": True,
+    }
+
+
+def test_validate_ccpm_buffer_misaligned_sizing_ratios():
+    """Detecta buffers project o feeding subdimensionados (< 0.20) o sobredimensionados (> 0.60)."""
+    from backend.schemas.projects import (
+        validate_ccpm_feeding_and_project_buffer_sizing,
+    )
+
+    buffers = [
+        {
+            "buffer_id": "BUF-TOO-SMALL",
+            "buffer_type": "project",
+            "feeding_chain_duration_days": 100.0,
+            "buffer_size_days": 15.0,  # 0.15 < 0.20
+            "buffer_consumed_days": 2.0,
+            "chain_progress_pct": 30.0,
+        },
+        {
+            "buffer_id": "BUF-TOO-LARGE",
+            "buffer_type": "feeding",
+            "feeding_chain_duration_days": 50.0,
+            "buffer_size_days": 35.0,  # 0.70 > 0.60
+            "buffer_consumed_days": 5.0,
+            "chain_progress_pct": 30.0,
+        },
+    ]
+    res = validate_ccpm_feeding_and_project_buffer_sizing(buffers)
+    assert res["total_buffers"] == 2
+    assert res["misaligned_buffer_sizing_ids"] == [
+        "BUF-TOO-SMALL",
+        "BUF-TOO-LARGE",
+    ]
+    assert res["unmitigated_fever_chart_red_zone_ids"] == []
+    assert res["is_ccpm_buffer_governance_valid"] is False
+
+
+def test_validate_ccpm_buffer_unmitigated_fever_chart_red_zone():
+    """Detecta incursión en Zona Roja del Fever Chart (consumption_pct > 30 + 0.70 * progress) sin plan de recuperación."""
+    from backend.schemas.projects import (
+        validate_ccpm_feeding_and_project_buffer_sizing,
+    )
+
+    buffers = [
+        {
+            "buffer_id": "BUF-RED-UNMITIGATED",
+            "buffer_type": "project",
+            "feeding_chain_duration_days": 80.0,
+            "buffer_size_days": 24.0,  # ratio 0.30
+            "buffer_consumed_days": 15.0,  # 62.5% > 30 + 0.70*20 = 44%
+            "chain_progress_pct": 20.0,
+            "recovery_plan_triggered": False,
+        }
+    ]
+    res = validate_ccpm_feeding_and_project_buffer_sizing(buffers)
+    assert res["misaligned_buffer_sizing_ids"] == []
+    assert res["unmitigated_fever_chart_red_zone_ids"] == [
+        "BUF-RED-UNMITIGATED"
+    ]
+    assert res["is_ccpm_buffer_governance_valid"] is False
+
+
+def test_validate_ccpm_buffer_invalid_definitions_and_export():
+    """Detecta tipos o duraciones inválidas, ignora entradas no secuencia y verifica __all__."""
+    import backend.schemas.projects as _m
+    from backend.schemas.projects import (
+        validate_ccpm_feeding_and_project_buffer_sizing,
+    )
+
+    assert "validate_ccpm_feeding_and_project_buffer_sizing" in _m.__all__
+    res = validate_ccpm_feeding_and_project_buffer_sizing(
+        [
+            {
+                "buffer_id": "BUF-BAD-TYPE",
+                "buffer_type": "contingency",
+                "feeding_chain_duration_days": 50.0,
+                "buffer_size_days": 15.0,
+            },
+            {
+                "buffer_id": "BUF-ZERO-SIZE",
+                "buffer_type": "project",
+                "feeding_chain_duration_days": 50.0,
+                "buffer_size_days": 0.0,
+            },
+        ]
+    )
+    assert res["invalid_buffer_definition_ids"] == [
+        "BUF-BAD-TYPE",
+        "BUF-ZERO-SIZE",
+    ]
+    assert res["is_ccpm_buffer_governance_valid"] is False
+
+    for bad in (None, "not-a-seq", b"bytes", [{"buffer_id": "  "}]):
+        assert validate_ccpm_feeding_and_project_buffer_sizing(bad) == {
+            "total_buffers": 0,
+            "invalid_buffer_definition_ids": [],
+            "misaligned_buffer_sizing_ids": [],
+            "unmitigated_fever_chart_red_zone_ids": [],
+            "is_ccpm_buffer_governance_valid": True,
+        }

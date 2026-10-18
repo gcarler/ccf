@@ -4889,3 +4889,157 @@ def test_audit_emergency_change_invalid_inputs_and_export():
             "is_emergency_governance_compliant": True,
         }
 
+
+
+def test_audit_dod_defect_escape_and_first_time_right_rate_compliant():
+    """Entregables limpios: sin escapes, 1 ciclo de inspeccion -> 100% FTR compliant."""
+    from backend.services.project_ccb_service import (
+        audit_dod_defect_escape_and_first_time_right_rate,
+    )
+
+    items = [
+        {"deliverable_id": "D-1", "pre_release_defects_found": 2,
+         "post_release_escaped_defects": 0, "inspection_cycles_count": 1,
+         "automated_regression_coverage_pct": 85.0},
+        {"deliverable_id": "D-2", "pre_release_defects_found": 0,
+         "post_release_escaped_defects": 0, "inspection_cycles_count": 1,
+         "automated_regression_coverage_pct": 85.0},
+        {"deliverable_id": "D-3", "pre_release_defects_found": 0,
+         "post_release_escaped_defects": 0, "inspection_cycles_count": 1,
+         "automated_regression_coverage_pct": 85.0},
+        {"deliverable_id": "D-4", "pre_release_defects_found": 0,
+         "post_release_escaped_defects": 0, "inspection_cycles_count": 1,
+         "automated_regression_coverage_pct": 85.0},
+    ]
+    res = audit_dod_defect_escape_and_first_time_right_rate(items)
+    assert res == {
+        "total_deliverables": 4,
+        "first_time_right_count": 4,
+        "first_time_right_pct": 100.0,
+        "below_first_time_right_threshold": False,
+        "invalid_metric_deliverable_ids": [],
+        "high_defect_escape_deliverable_ids": [],
+        "unlinked_capa_escaped_deliverable_ids": [],
+        "regression_gap_deliverable_ids": [],
+        "is_dod_quality_gate_compliant": True,
+    }
+
+    # Borde exacto 10.0% de escape -> sin breach (comparacion estricta >).
+    edge = audit_dod_defect_escape_and_first_time_right_rate(
+        [
+            {"deliverable_id": "E-1", "pre_release_defects_found": 9,
+             "post_release_escaped_defects": 1, "root_cause_capa_linked": True,
+             "automated_regression_coverage_pct": 90.0, "inspection_cycles_count": 2},
+        ]
+    )
+    assert edge["high_defect_escape_deliverable_ids"] == []
+    assert edge["first_time_right_pct"] == 0.0  # 2 ciclos -> no FTR.
+    assert edge["below_first_time_right_threshold"] is True
+    # Con below=True el gate DoD no es compliant aunque las 4 listas esten vacias.
+    assert edge["is_dod_quality_gate_compliant"] is False
+
+
+def test_audit_dod_defect_escape_and_first_time_right_rate_invalid_metrics():
+    """Metricas negativas o ciclos de inspeccion < 1 expulsan al entregable del analisis."""
+    from backend.services.project_ccb_service import (
+        audit_dod_defect_escape_and_first_time_right_rate,
+    )
+
+    items = [
+        {"deliverable_id": "I-1", "pre_release_defects_found": -1},
+        {"deliverable_id": "I-2", "post_release_escaped_defects": -3},
+        {"deliverable_id": "I-3", "inspection_cycles_count": 0},  # explicito -> invalido.
+        {"deliverable_id": "OK-1"},  # metricas ausentes -> defaults validos.
+    ]
+    res = audit_dod_defect_escape_and_first_time_right_rate(items)
+    assert res["total_deliverables"] == 1
+    assert res["first_time_right_count"] == 1
+    assert res["first_time_right_pct"] == 100.0
+    assert res["invalid_metric_deliverable_ids"] == ["I-1", "I-2", "I-3"]
+    assert res["is_dod_quality_gate_compliant"] is False
+
+    # Coercion a defaults: strings invalidos/None no invalidan, usan defaults.
+    coerce = audit_dod_defect_escape_and_first_time_right_rate(
+        [
+            {"deliverable_id": "B-1", "pre_release_defects_found": "oops",
+             "post_release_escaped_defects": None, "inspection_cycles_count": "x",
+             "automated_regression_coverage_pct": "oops"},
+        ]
+    )
+    assert coerce["invalid_metric_deliverable_ids"] == []
+    assert coerce["first_time_right_pct"] == 100.0
+
+
+def test_audit_dod_defect_escape_and_first_time_right_rate_gaps():
+    """Escape alto (>10%), escapes sin CAPA vinculada y gap de regresion < 70%."""
+    from backend.services.project_ccb_service import (
+        audit_dod_defect_escape_and_first_time_right_rate,
+    )
+
+    items = [
+        {"deliverable_id": "H-1", "pre_release_defects_found": 1,
+         "post_release_escaped_defects": 1, "root_cause_capa_linked": True,
+         "automated_regression_coverage_pct": 90.0},  # escape 50%.
+        {"deliverable_id": "C-1", "pre_release_defects_found": 5,
+         "post_release_escaped_defects": 2, "root_cause_capa_linked": False,
+         "automated_regression_coverage_pct": 100.0},  # escape 28.57% + sin CAPA.
+        {"deliverable_id": "R-1", "pre_release_defects_found": 5,
+         "post_release_escaped_defects": 0, "root_cause_capa_linked": True,
+         "automated_regression_coverage_pct": 30.0},  # sin escape -> sin gap.
+        {"deliverable_id": "R-2", "pre_release_defects_found": 0,
+         "post_release_escaped_defects": 1, "root_cause_capa_linked": True,
+         "automated_regression_coverage_pct": 69.99},  # escape 100% + gap.
+    ]
+    res = audit_dod_defect_escape_and_first_time_right_rate(items)
+    assert res["total_deliverables"] == 4
+    assert res["high_defect_escape_deliverable_ids"] == ["H-1", "C-1", "R-2"]
+    assert res["unlinked_capa_escaped_deliverable_ids"] == ["C-1"]
+    assert res["regression_gap_deliverable_ids"] == ["R-2"]
+    assert res["first_time_right_count"] == 1  # solo R-1.
+    assert res["first_time_right_pct"] == 25.0
+    assert res["below_first_time_right_threshold"] is True
+    assert res["is_dod_quality_gate_compliant"] is False
+
+
+def test_audit_dod_defect_escape_and_first_time_right_rate_thresholds_and_scope():
+    """below_threshold con umbral custom; entradas vacias/None + proxy estatico + __all__."""
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_dod_defect_escape_and_first_time_right_rate,
+    )
+    import backend.services.project_ccb_service as _m
+
+    res_none = audit_dod_defect_escape_and_first_time_right_rate(None)
+    assert res_none == {
+        "total_deliverables": 0,
+        "first_time_right_count": 0,
+        "first_time_right_pct": 100.0,
+        "below_first_time_right_threshold": False,
+        "invalid_metric_deliverable_ids": [],
+        "high_defect_escape_deliverable_ids": [],
+        "unlinked_capa_escaped_deliverable_ids": [],
+        "regression_gap_deliverable_ids": [],
+        "is_dod_quality_gate_compliant": True,
+    }
+    assert audit_dod_defect_escape_and_first_time_right_rate("no-seq")["total_deliverables"] == 0
+    assert (
+        audit_dod_defect_escape_and_first_time_right_rate(
+            ["no-map", {"deliverable_id": "   "}, {"other_id": "x"}]
+        )["total_deliverables"]
+        == 0
+    )
+    assert "audit_dod_defect_escape_and_first_time_right_rate" in _m.__all__
+
+    sample = [
+        {"deliverable_id": "D-1", "pre_release_defects_found": 0,
+         "post_release_escaped_defects": 0, "inspection_cycles_count": 1},
+    ]
+    strict = audit_dod_defect_escape_and_first_time_right_rate(
+        sample, min_first_time_right_pct=100.0
+    )
+    assert strict["first_time_right_pct"] == 100.0
+    assert strict["below_first_time_right_threshold"] is False  # borde == umbral no es below.
+    assert (
+        ProjectCCBService.audit_dod_defect_escape_and_first_time_right_rate(sample)
+        == audit_dod_defect_escape_and_first_time_right_rate(sample)
+    )

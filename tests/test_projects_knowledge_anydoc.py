@@ -3834,3 +3834,108 @@ def test_audit_markdown_task_list_invalid_inputs_and_export():
     }
     for bad in (None, "", "   \n  ", 123, ["-[ ] item"]):
         assert audit_markdown_task_list_action_item_hygiene(bad) == expected_empty
+
+
+def test_audit_markdown_mermaid_diagram_syntax_and_complexity_compliant():
+    """Diagramas Mermaid de tipos soportados con etiquetas entrecomilladas y sin HTML cumplen §4.4 y §10.2."""
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_mermaid_diagram_syntax_and_complexity,
+    )
+
+    doc = (
+        "# Arquitectura de Gobernanza\n"
+        "```mermaid\n"
+        "%% Diagrama de flujo principal\n"
+        "flowchart TD\n"
+        '    A["Inicio (Charter Aprobado)"] --> B["Planificación (PMB)"]\n'
+        '    B --> C["Cierre (Handover)"]\n'
+        "```\n"
+        "~~~mermaid\n"
+        "sequenceDiagram\n"
+        "    Sponsor->>PM: Autoriza línea base\n"
+        "~~~\n"
+    )
+    res = audit_markdown_mermaid_diagram_syntax_and_complexity(doc)
+    assert res == {
+        "total_mermaid_blocks": 2,
+        "unsupported_or_empty_mermaid_block_lines": [],
+        "html_tag_in_mermaid_block_lines": [],
+        "unquoted_special_char_label_block_lines": [],
+        "overly_complex_mermaid_block_lines": [],
+        "is_mermaid_hygiene_compliant": True,
+    }
+    assert (
+        AnyDocService.audit_markdown_mermaid_diagram_syntax_and_complexity(doc)
+        == res
+    )
+
+
+def test_audit_markdown_mermaid_unsupported_and_empty_blocks():
+    """Detecta bloques Mermaid vacíos o con tipos de diagrama no soportados (ej. gantt, pie)."""
+    from backend.services.anydoc_service import (
+        audit_markdown_mermaid_diagram_syntax_and_complexity,
+    )
+
+    doc = (
+        "```mermaid\n"
+        "%% Solo comentario sin sentencias\n"
+        "```\n"
+        "```mermaid\n"
+        "gantt\n"
+        "    title Cronograma no soportado\n"
+        "```\n"
+    )
+    res = audit_markdown_mermaid_diagram_syntax_and_complexity(doc)
+    assert res["total_mermaid_blocks"] == 2
+    assert res["unsupported_or_empty_mermaid_block_lines"] == [1, 4]
+    assert res["is_mermaid_hygiene_compliant"] is False
+
+
+def test_audit_markdown_mermaid_html_tags_unquoted_parens_and_complexity():
+    """Detecta tags HTML crudos, paréntesis sin comillas en etiquetas de nodos y exceso de complejidad."""
+    from backend.services.anydoc_service import (
+        audit_markdown_mermaid_diagram_syntax_and_complexity,
+    )
+
+    doc = (
+        "```mermaid\n"
+        "flowchart LR\n"
+        "    A[Nodo con (Paréntesis) sin comillas] --> B[\"Etiqueta con <br/> HTML\"]\n"
+        "    B --> C[\"Nodo 3\"]\n"
+        "    C --> D[\"Nodo 4\"]\n"
+        "    D --> E[\"Nodo 5\"]\n"
+        "```\n"
+    )
+    res = audit_markdown_mermaid_diagram_syntax_and_complexity(
+        doc, max_nodes_per_diagram=3
+    )
+    assert res["total_mermaid_blocks"] == 1
+    assert res["unsupported_or_empty_mermaid_block_lines"] == []
+    assert res["html_tag_in_mermaid_block_lines"] == [1]
+    assert res["unquoted_special_char_label_block_lines"] == [1]
+    assert res["overly_complex_mermaid_block_lines"] == [1]
+    assert res["is_mermaid_hygiene_compliant"] is False
+
+
+def test_audit_markdown_mermaid_invalid_inputs_and_export():
+    """Maneja entradas vacías o no-string, ignora otros bloques de código y verifica __all__."""
+    import backend.services.anydoc_service as _m
+    from backend.services.anydoc_service import (
+        audit_markdown_mermaid_diagram_syntax_and_complexity,
+    )
+
+    assert "audit_markdown_mermaid_diagram_syntax_and_complexity" in _m.__all__
+    expected_empty = {
+        "total_mermaid_blocks": 0,
+        "unsupported_or_empty_mermaid_block_lines": [],
+        "html_tag_in_mermaid_block_lines": [],
+        "unquoted_special_char_label_block_lines": [],
+        "overly_complex_mermaid_block_lines": [],
+        "is_mermaid_hygiene_compliant": True,
+    }
+    for bad in (None, "", "   \n  ", 99, ["```mermaid"]):
+        assert (
+            audit_markdown_mermaid_diagram_syntax_and_complexity(bad)
+            == expected_empty
+        )

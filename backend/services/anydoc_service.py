@@ -3008,6 +3008,7 @@ __all__ = [
     "audit_markdown_blockquote_depth_and_citation_hygiene",
     "audit_markdown_acronym_and_glossary_consistency",
     "audit_markdown_task_list_action_item_hygiene",
+    "audit_markdown_mermaid_diagram_syntax_and_complexity",
     "AnyDocService",
     "AnydocService",
 ]
@@ -4310,4 +4311,129 @@ def audit_markdown_task_list_action_item_hygiene(
 
 AnyDocService.audit_markdown_task_list_action_item_hygiene = staticmethod(
     audit_markdown_task_list_action_item_hygiene
+)
+
+
+def audit_markdown_mermaid_diagram_syntax_and_complexity(
+    markdown_text: str,
+    *,
+    max_nodes_per_diagram: int = 25,
+) -> dict[str, object]:
+    """Audita bloques de diagramas Mermaid en Markdown verificando tipos soportados, ausencia de HTML crudo, comillas en etiquetas con paréntesis y límite de complejidad según PMI PMBOK §4.4 y §10.2."""
+    if not isinstance(markdown_text, str) or not markdown_text.strip():
+        return {
+            "total_mermaid_blocks": 0,
+            "unsupported_or_empty_mermaid_block_lines": [],
+            "html_tag_in_mermaid_block_lines": [],
+            "unquoted_special_char_label_block_lines": [],
+            "overly_complex_mermaid_block_lines": [],
+            "is_mermaid_hygiene_compliant": True,
+        }
+
+    try:
+        max_nodes = int(max_nodes_per_diagram)
+    except (TypeError, ValueError):
+        max_nodes = 25
+
+    supported_types = (
+        "flowchart",
+        "graph",
+        "sequenceDiagram",
+        "stateDiagram-v2",
+        "stateDiagram",
+        "classDiagram",
+        "erDiagram",
+        "xychart-beta",
+    )
+    fence_open_re = re.compile(r"^(`{3,}|~{3,})\s*([^\s`~]*).*$")
+    html_tag_re = re.compile(
+        r"(?:<\s*br\s*/?\s*>|<\s*(?:b|i|div|span)\b|</\s*[a-zA-Z])",
+        re.IGNORECASE,
+    )
+    unquoted_paren_label_re = re.compile(r"\[[^\]\"\n]*[()][^\]\"\n]*\]")
+
+    total_mermaid_blocks = 0
+    unsupported_or_empty_mermaid_block_lines: list[int] = []
+    html_tag_in_mermaid_block_lines: list[int] = []
+    unquoted_special_char_label_block_lines: list[int] = []
+    overly_complex_mermaid_block_lines: list[int] = []
+
+    def _evaluate_mermaid_block(start_line: int, inner_lines: list[str]) -> None:
+        nonlocal total_mermaid_blocks
+        total_mermaid_blocks += 1
+
+        useful_lines = [
+            ln.strip()
+            for ln in inner_lines
+            if ln.strip() and not ln.strip().startswith("%%")
+        ]
+        if not useful_lines or not useful_lines[0].startswith(supported_types):
+            unsupported_or_empty_mermaid_block_lines.append(start_line)
+        else:
+            statement_count = max(0, len(useful_lines) - 1)
+            if statement_count > max_nodes:
+                overly_complex_mermaid_block_lines.append(start_line)
+
+        has_html = False
+        has_unquoted_paren = False
+        for ln in useful_lines:
+            if not has_html and html_tag_re.search(ln):
+                has_html = True
+            if not has_unquoted_paren and unquoted_paren_label_re.search(ln):
+                has_unquoted_paren = True
+
+        if has_html:
+            html_tag_in_mermaid_block_lines.append(start_line)
+        if has_unquoted_paren:
+            unquoted_special_char_label_block_lines.append(start_line)
+
+    in_fence = False
+    fence_char = ""
+    fence_is_mermaid = False
+    current_start_line = 0
+    current_lines: list[str] = []
+
+    for line_no, raw_line in enumerate(markdown_text.splitlines(), start=1):
+        stripped = raw_line.strip()
+        if not in_fence:
+            m_open = fence_open_re.match(stripped)
+            if m_open:
+                in_fence = True
+                fence_char = m_open.group(1)[0]
+                lang = (m_open.group(2) or "").strip().lower()
+                fence_is_mermaid = lang == "mermaid"
+                current_start_line = line_no
+                current_lines = []
+        else:
+            if stripped.startswith(fence_char * 3):
+                if fence_is_mermaid:
+                    _evaluate_mermaid_block(current_start_line, current_lines)
+                in_fence = False
+                fence_char = ""
+                fence_is_mermaid = False
+                current_start_line = 0
+                current_lines = []
+            elif fence_is_mermaid:
+                current_lines.append(raw_line)
+
+    if in_fence and fence_is_mermaid:
+        _evaluate_mermaid_block(current_start_line, current_lines)
+
+    return {
+        "total_mermaid_blocks": total_mermaid_blocks,
+        "unsupported_or_empty_mermaid_block_lines": unsupported_or_empty_mermaid_block_lines,
+        "html_tag_in_mermaid_block_lines": html_tag_in_mermaid_block_lines,
+        "unquoted_special_char_label_block_lines": unquoted_special_char_label_block_lines,
+        "overly_complex_mermaid_block_lines": overly_complex_mermaid_block_lines,
+        "is_mermaid_hygiene_compliant": (
+            len(unsupported_or_empty_mermaid_block_lines) == 0
+            and len(html_tag_in_mermaid_block_lines) == 0
+            and len(unquoted_special_char_label_block_lines) == 0
+            and len(overly_complex_mermaid_block_lines) == 0
+        ),
+    }
+
+
+AnyDocService.audit_markdown_mermaid_diagram_syntax_and_complexity = staticmethod(
+    audit_markdown_mermaid_diagram_syntax_and_complexity
 )

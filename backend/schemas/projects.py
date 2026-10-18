@@ -3784,6 +3784,7 @@ __all__ = [
     "validate_three_point_pert_skew_and_confidence_band",
     "validate_deliverable_acceptance_criteria_measurability",
     "validate_resource_calendar_overtime_and_blackout_bounds",
+    "validate_ccpm_feeding_and_project_buffer_sizing",
 ]
 
 
@@ -5151,4 +5152,94 @@ def validate_fpif_share_ratio_and_point_of_total_assumption(
         "pta_breached_contract_ids": pta_breached_contract_ids,
         "computed_pta_by_contract": computed_pta_by_contract,
         "is_fpif_governance_valid": is_fpif_governance_valid,
+    }
+
+
+def validate_ccpm_feeding_and_project_buffer_sizing(
+    chain_buffers: list[dict[str, object]],
+    *,
+    min_buffer_to_chain_ratio: float = 0.20,
+    max_buffer_to_chain_ratio: float = 0.60,
+) -> dict[str, object]:
+    """Valida el dimensionamiento de buffers de proyecto y de alimentación (Feeding & Project Buffers) y las incursiones en la Zona Roja del Fever Chart sin plan de recuperación según PMI PMBOK §6.3 y §6.5 (CCPM)."""
+    valid_types = {"project", "feeding", "resource"}
+
+    try:
+        min_ratio = float(min_buffer_to_chain_ratio)
+    except (TypeError, ValueError):
+        min_ratio = 0.20
+
+    try:
+        max_ratio = float(max_buffer_to_chain_ratio)
+    except (TypeError, ValueError):
+        max_ratio = 0.60
+
+    total_buffers = 0
+    invalid_buffer_definition_ids: list[str] = []
+    misaligned_buffer_sizing_ids: list[str] = []
+    unmitigated_fever_chart_red_zone_ids: list[str] = []
+
+    if isinstance(chain_buffers, Sequence) and not isinstance(
+        chain_buffers, (str, bytes, bytearray)
+    ):
+        for item in chain_buffers:
+            if not isinstance(item, Mapping):
+                continue
+            buffer_id = str(
+                item.get("buffer_id") or item.get("id") or ""
+            ).strip()
+            if not buffer_id:
+                continue
+
+            total_buffers += 1
+            buffer_type = (
+                str(item.get("buffer_type") or "").strip().lower()
+            )
+
+            def _num(key: str, default: float = -1.0) -> float:
+                raw = item.get(key)
+                if raw is None or isinstance(raw, bool):
+                    return default
+                try:
+                    return float(raw)
+                except (TypeError, ValueError):
+                    return default
+
+            chain_duration = _num("feeding_chain_duration_days", -1.0)
+            buffer_size = _num("buffer_size_days", -1.0)
+            buffer_consumed = _num("buffer_consumed_days", 0.0)
+            chain_progress_pct = _num("chain_progress_pct", 0.0)
+            recovery_triggered = bool(item.get("recovery_plan_triggered", False))
+
+            if (
+                buffer_type not in valid_types
+                or chain_duration <= 0.0
+                or buffer_size <= 0.0
+                or buffer_consumed < 0.0
+            ):
+                invalid_buffer_definition_ids.append(buffer_id)
+                continue
+
+            if buffer_type in {"project", "feeding"}:
+                sizing_ratio = buffer_size / chain_duration
+                if sizing_ratio < min_ratio or sizing_ratio > max_ratio:
+                    misaligned_buffer_sizing_ids.append(buffer_id)
+
+            consumption_pct = (buffer_consumed / buffer_size) * 100.0
+            red_zone_limit_pct = 30.0 + (
+                0.70 * max(0.0, min(100.0, chain_progress_pct))
+            )
+            if consumption_pct > red_zone_limit_pct and not recovery_triggered:
+                unmitigated_fever_chart_red_zone_ids.append(buffer_id)
+
+    return {
+        "total_buffers": total_buffers,
+        "invalid_buffer_definition_ids": invalid_buffer_definition_ids,
+        "misaligned_buffer_sizing_ids": misaligned_buffer_sizing_ids,
+        "unmitigated_fever_chart_red_zone_ids": unmitigated_fever_chart_red_zone_ids,
+        "is_ccpm_buffer_governance_valid": (
+            len(invalid_buffer_definition_ids) == 0
+            and len(misaligned_buffer_sizing_ids) == 0
+            and len(unmitigated_fever_chart_red_zone_ids) == 0
+        ),
     }
