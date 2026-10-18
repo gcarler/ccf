@@ -1412,6 +1412,110 @@ def summarize_projects_request_body_schema_hygiene(
     }
 
 
+_STRUCTURAL_RESPONSE_SCHEMA_KEYS = ("$ref", "type", "anyOf", "oneOf", "allOf")
+
+
+def summarize_projects_json_response_schema_hygiene(
+    openapi_schema: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Audita el tipado estructural y referencias ($ref) en respuestas JSON 200/201 de endpoints /api/projects (PMI §10.2)."""
+    if openapi_schema is None:
+        from backend.app import app
+
+        openapi_schema = app.openapi()
+
+    if not isinstance(openapi_schema, dict) or not isinstance(
+        openapi_schema.get("paths"), dict
+    ):
+        return {
+            "json_success_responses_count": 0,
+            "ref_backed_responses_count": 0,
+            "empty_json_response_schemas": [],
+            "untyped_json_response_schemas": [],
+            "is_json_response_hygienic": False,
+            "response_schema_posture": "NO_JSON_SUCCESS_RESPONSES",
+        }
+
+    json_success_responses_count = 0
+    ref_backed_responses_count = 0
+    empty_json_response_schemas: list[str] = []
+    untyped_json_response_schemas: list[str] = []
+
+    for path, path_item in sorted(openapi_schema["paths"].items()):
+        if not isinstance(path, str) or not path.startswith("/api/projects"):
+            continue
+        if not isinstance(path_item, dict):
+            continue
+
+        for method in ("get", "post", "put", "patch", "delete", "head", "options", "trace"):
+            op = path_item.get(method)
+            if not isinstance(op, dict):
+                continue
+
+            responses = (
+                op.get("responses")
+                if isinstance(op.get("responses"), dict)
+                else {}
+            )
+            for status_code in ("200", "201"):
+                resp = responses.get(status_code)
+                if not isinstance(resp, dict):
+                    continue
+                content = (
+                    resp.get("content")
+                    if isinstance(resp.get("content"), dict)
+                    else {}
+                )
+                if "application/json" not in content:
+                    continue
+
+                json_success_responses_count += 1
+                resp_ref = f"{method.upper()} {path}:{status_code}"
+                json_media = content.get("application/json")
+                schema = (
+                    json_media.get("schema")
+                    if isinstance(json_media, dict)
+                    else None
+                )
+
+                if not isinstance(schema, dict) or len(schema) == 0:
+                    empty_json_response_schemas.append(resp_ref)
+                    continue
+
+                if not any(
+                    bool(schema.get(k))
+                    for k in _STRUCTURAL_RESPONSE_SCHEMA_KEYS
+                ):
+                    untyped_json_response_schemas.append(resp_ref)
+
+                if bool(schema.get("$ref")):
+                    ref_backed_responses_count += 1
+
+    if json_success_responses_count == 0:
+        response_schema_posture = "NO_JSON_SUCCESS_RESPONSES"
+    elif len(empty_json_response_schemas) > 0:
+        response_schema_posture = "EMPTY_JSON_RESPONSE_SCHEMA"
+    elif len(untyped_json_response_schemas) > 0:
+        response_schema_posture = "UNTYPED_JSON_RESPONSE_SCHEMA"
+    else:
+        response_schema_posture = "HYGIENIC_JSON_RESPONSE_CONTRACTS"
+
+    is_json_response_hygienic = (
+        json_success_responses_count > 0
+        and len(empty_json_response_schemas) == 0
+        and len(untyped_json_response_schemas) == 0
+    )
+
+    return {
+        "json_success_responses_count": json_success_responses_count,
+        "ref_backed_responses_count": ref_backed_responses_count,
+        "empty_json_response_schemas": empty_json_response_schemas,
+        "untyped_json_response_schemas": untyped_json_response_schemas,
+        "is_json_response_hygienic": is_json_response_hygienic,
+        "response_schema_posture": response_schema_posture,
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()

@@ -2465,3 +2465,216 @@ def test_request_body_schema_hygiene_no_request_bodies():
         )
         == expected
     )
+
+
+def test_json_response_schema_hygiene_hygienic():
+    """Esquema sintético con respuestas 200/201 tipadas ($ref, array con items, object con properties) -> HYGIENIC_JSON_RESPONSE_CONTRACTS."""
+    schema = {
+        "paths": {
+            "/api/projects": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "array",
+                                        "items": {
+                                            "$ref": "#/components/schemas/ProjectOut"
+                                        },
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "post": {
+                    "responses": {
+                        "201": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/ProjectOut"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+            },
+            "/api/projects/summary": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "total": {"type": "integer"}
+                                        },
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/api/projects/export": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "content": {
+                                "text/csv": {"schema": {"type": "string"}}
+                            }
+                        }
+                    }
+                }
+            },
+            "/api/other": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "content": {"application/json": {"schema": {}}}
+                        }
+                    }
+                }
+            },
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_json_response_schema_hygiene(
+        schema
+    )
+    assert res == {
+        "json_success_responses_count": 3,
+        "ref_backed_responses_count": 1,
+        "empty_json_response_schemas": [],
+        "untyped_json_response_schemas": [],
+        "is_json_response_hygienic": True,
+        "response_schema_posture": "HYGIENIC_JSON_RESPONSE_CONTRACTS",
+    }
+
+    real_res = (
+        audit_projects_api_contracts.summarize_projects_json_response_schema_hygiene(
+            None
+        )
+    )
+    assert real_res["json_success_responses_count"] > 0
+    assert real_res["ref_backed_responses_count"] > 0
+    assert real_res["untyped_json_response_schemas"] == []
+
+
+def test_json_response_schema_hygiene_empty_schema():
+    """Respuesta 200 con schema vacío ({} o None) -> EMPTY_JSON_RESPONSE_SCHEMA."""
+    schema = {
+        "paths": {
+            "/api/projects/ping": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "content": {"application/json": {"schema": {}}}
+                        }
+                    }
+                },
+                "post": {
+                    "responses": {
+                        "201": {
+                            "content": {"application/json": {}}
+                        }
+                    }
+                },
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_json_response_schema_hygiene(
+        schema
+    )
+    assert res == {
+        "json_success_responses_count": 2,
+        "ref_backed_responses_count": 0,
+        "empty_json_response_schemas": [
+            "GET /api/projects/ping:200",
+            "POST /api/projects/ping:201",
+        ],
+        "untyped_json_response_schemas": [],
+        "is_json_response_hygienic": False,
+        "response_schema_posture": "EMPTY_JSON_RESPONSE_SCHEMA",
+    }
+
+
+def test_json_response_schema_hygiene_untyped_schema():
+    """Respuesta 200 con schema sin claves estructurales ($ref, type, anyOf, oneOf, allOf) -> UNTYPED_JSON_RESPONSE_SCHEMA."""
+    schema = {
+        "paths": {
+            "/api/projects/raw": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {"title": "RawPayload"}
+                                }
+                            }
+                        }
+                    }
+                },
+                "post": {
+                    "responses": {
+                        "201": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {"description": "Created payload"}
+                                }
+                            }
+                        }
+                    }
+                },
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_json_response_schema_hygiene(
+        schema
+    )
+    assert res == {
+        "json_success_responses_count": 2,
+        "ref_backed_responses_count": 0,
+        "empty_json_response_schemas": [],
+        "untyped_json_response_schemas": [
+            "GET /api/projects/raw:200",
+            "POST /api/projects/raw:201",
+        ],
+        "is_json_response_hygienic": False,
+        "response_schema_posture": "UNTYPED_JSON_RESPONSE_SCHEMA",
+    }
+
+
+def test_json_response_schema_hygiene_no_responses():
+    """Esquema sin respuestas JSON 200/201 en /api/projects -> NO_JSON_SUCCESS_RESPONSES."""
+    expected = {
+        "json_success_responses_count": 0,
+        "ref_backed_responses_count": 0,
+        "empty_json_response_schemas": [],
+        "untyped_json_response_schemas": [],
+        "is_json_response_hygienic": False,
+        "response_schema_posture": "NO_JSON_SUCCESS_RESPONSES",
+    }
+    assert (
+        audit_projects_api_contracts.summarize_projects_json_response_schema_hygiene(
+            {}
+        )
+        == expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_json_response_schema_hygiene(
+            {
+                "paths": {
+                    "/api/projects/delete": {
+                        "delete": {
+                            "responses": {"204": {"description": "No Content"}}
+                        }
+                    }
+                }
+            }
+        )
+        == expected
+    )
