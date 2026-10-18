@@ -2978,6 +2978,7 @@ __all__ = [
     "audit_executive_report_team_burnout_and_turnover_risk",
     "audit_executive_report_monte_carlo_p50_p80_confidence",
     "audit_executive_report_vendor_sla_and_liquidated_damages",
+    "audit_executive_report_stakeholder_escalation_and_briefing_cadence",
     "ProjectExportService",
 ]
 
@@ -4393,4 +4394,121 @@ def audit_executive_report_vendor_sla_and_liquidated_damages(
 ProjectExportService.audit_executive_report_vendor_sla_and_liquidated_damages = staticmethod(
     audit_executive_report_vendor_sla_and_liquidated_damages
 )
+
+
+def audit_executive_report_stakeholder_escalation_and_briefing_cadence(
+    stakeholder_escalations: list[dict[str, Any]],
+    *,
+    max_open_escalation_days: int = 7,
+    max_briefing_gap_days: int = 14,
+) -> dict[str, Any]:
+    """PMBOK §13.3 / §10.3 — auditoría de matriz de escalamiento de interesados y cadencia de briefings."""
+    if not isinstance(stakeholder_escalations, Sequence) or isinstance(
+        stakeholder_escalations, (str, bytes)
+    ):
+        return {
+            "total_stakeholders_evaluated": 0,
+            "compliant_stakeholders_count": 0,
+            "overdue_escalations_stakeholders_count": 0,
+            "unmitigated_escalations_count": 0,
+            "stale_briefing_stakeholders_count": 0,
+            "total_open_escalations": 0,
+            "escalation_governance_status": "HEALTHY",
+            "findings": [],
+        }
+
+    try:
+        max_esc_days = int(max_open_escalation_days)
+    except (TypeError, ValueError):
+        max_esc_days = 7
+
+    try:
+        max_brief_days = int(max_briefing_gap_days)
+    except (TypeError, ValueError):
+        max_brief_days = 14
+
+    total_stakeholders_evaluated = 0
+    compliant_stakeholders_count = 0
+    overdue_escalations_stakeholders_count = 0
+    unmitigated_escalations_count = 0
+    stale_briefing_stakeholders_count = 0
+    total_open_escalations = 0
+    findings: list[dict[str, Any]] = []
+
+    for item in stakeholder_escalations:
+        if not isinstance(item, Mapping):
+            continue
+        raw_id = item.get("stakeholder_id")
+        if raw_id is None:
+            continue
+        stakeholder_id = str(raw_id).strip()
+        if not stakeholder_id:
+            continue
+
+        total_stakeholders_evaluated += 1
+
+        influence_level = str(item.get("influence_level") or "").strip().upper()
+        open_count = int(item.get("open_escalations_count", 0) or 0)
+        oldest_days = int(item.get("oldest_open_escalation_days", 0) or 0)
+        briefing_days = int(
+            item.get("days_since_last_executive_briefing", 0) or 0
+        )
+        plan_documented = bool(item.get("action_plan_documented", False))
+        sponsor_notified = bool(item.get("sponsor_notified", False))
+
+        total_open_escalations += open_count
+
+        overdue_escalation = open_count > 0 and oldest_days > max_esc_days
+        unmitigated_escalation = open_count > 0 and (
+            (not plan_documented)
+            or (influence_level == "HIGH" and not sponsor_notified)
+        )
+        stale_briefing = briefing_days > max_brief_days
+
+        issues: list[str] = []
+        if overdue_escalation:
+            overdue_escalations_stakeholders_count += 1
+            issues.append("overdue_open_escalation")
+        if unmitigated_escalation:
+            unmitigated_escalations_count += 1
+            issues.append("unmitigated_or_unnotified_escalation")
+        if stale_briefing:
+            stale_briefing_stakeholders_count += 1
+            issues.append("stale_executive_briefing_cadence")
+
+        if not issues:
+            compliant_stakeholders_count += 1
+        else:
+            findings.append({"stakeholder_id": stakeholder_id, "issues": issues})
+
+    if (
+        overdue_escalations_stakeholders_count == 0
+        and unmitigated_escalations_count == 0
+        and stale_briefing_stakeholders_count == 0
+    ):
+        status = "HEALTHY"
+    elif (
+        overdue_escalations_stakeholders_count > 0
+        or unmitigated_escalations_count > 0
+    ):
+        status = "CRITICAL"
+    else:
+        status = "AT_RISK"
+
+    return {
+        "total_stakeholders_evaluated": total_stakeholders_evaluated,
+        "compliant_stakeholders_count": compliant_stakeholders_count,
+        "overdue_escalations_stakeholders_count": overdue_escalations_stakeholders_count,
+        "unmitigated_escalations_count": unmitigated_escalations_count,
+        "stale_briefing_stakeholders_count": stale_briefing_stakeholders_count,
+        "total_open_escalations": total_open_escalations,
+        "escalation_governance_status": status,
+        "findings": findings,
+    }
+
+
+ProjectExportService.audit_executive_report_stakeholder_escalation_and_briefing_cadence = staticmethod(
+    audit_executive_report_stakeholder_escalation_and_briefing_cadence
+)
+
 

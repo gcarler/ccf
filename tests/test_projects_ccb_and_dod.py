@@ -5478,3 +5478,122 @@ def test_audit_configuration_baseline_drift_and_hotfix_governance_empty_and_expo
         }
 
 
+def test_audit_quality_gate_peer_review_and_defect_density_healthy():
+    """Verifica estado HEALTHY cuando todos los entregables tienen revisión 100%, revisor independiente, defectos cerrados y baja densidad."""
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_quality_gate_peer_review_and_defect_density,
+    )
+
+    reviews = [
+        {
+            "deliverable_id": "DLV-MOD-AUTH",
+            "size_kloc_or_units": 5.0,
+            "review_coverage_pct": 100.0,
+            "independent_reviewer_assigned": True,
+            "critical_major_defects_open": 0,
+            "total_defects_found": 8,
+            "rework_verified": True,
+        },
+        {
+            "deliverable_id": "DLV-MOD-PAY",
+            "size_kloc_or_units": 2.0,
+            "review_coverage_pct": 100.0,
+            "independent_reviewer_assigned": True,
+            "critical_major_defects_open": 0,
+            "total_defects_found": 0,
+            "rework_verified": False,
+        },
+    ]
+    res = audit_quality_gate_peer_review_and_defect_density(
+        reviews, min_review_coverage_pct=100.0, max_defect_density_per_kloc=2.5
+    )
+    assert res == {
+        "total_deliverables": 2,
+        "compliant_deliverables_count": 2,
+        "insufficient_review_coverage_count": 0,
+        "open_critical_or_unverified_rework_count": 0,
+        "excessive_defect_density_count": 0,
+        "peer_review_governance_status": "HEALTHY",
+        "violations": [],
+    }
+    assert (
+        ProjectCCBService.audit_quality_gate_peer_review_and_defect_density(reviews)
+        == res
+    )
+
+
+def test_audit_quality_gate_peer_review_and_defect_density_at_risk_high_density():
+    """Verifica estado AT_RISK cuando la revisión y corrección están completas pero la densidad de defectos supera el umbral."""
+    from backend.services.project_ccb_service import (
+        audit_quality_gate_peer_review_and_defect_density,
+    )
+
+    res = audit_quality_gate_peer_review_and_defect_density(
+        [
+            {
+                "deliverable_id": "DLV-DENSE-01",
+                "size_kloc_or_units": 2.0,
+                "review_coverage_pct": 100.0,
+                "independent_reviewer_assigned": True,
+                "critical_major_defects_open": 0,
+                "total_defects_found": 9,
+                "rework_verified": True,
+            }
+        ],
+        min_review_coverage_pct=100.0,
+        max_defect_density_per_kloc=2.5,
+    )
+    assert res["excessive_defect_density_count"] == 1
+    assert res["compliant_deliverables_count"] == 0
+    assert res["peer_review_governance_status"] == "AT_RISK"
+    assert res["violations"][0]["defect_density"] == 4.5
+
+
+def test_audit_quality_gate_peer_review_and_defect_density_critical():
+    """Verifica estado CRITICAL cuando la cobertura de revisión es incompleta o existen defectos mayores abiertos."""
+    from backend.services.project_ccb_service import (
+        audit_quality_gate_peer_review_and_defect_density,
+    )
+
+    res = audit_quality_gate_peer_review_and_defect_density(
+        [
+            {
+                "deliverable_id": "DLV-UNREVIEWED-BUGGY",
+                "size_kloc_or_units": 4.0,
+                "review_coverage_pct": 80.0,
+                "independent_reviewer_assigned": False,
+                "critical_major_defects_open": 1,
+                "total_defects_found": 3,
+                "rework_verified": False,
+            }
+        ],
+        min_review_coverage_pct=100.0,
+        max_defect_density_per_kloc=2.5,
+    )
+    assert res["insufficient_review_coverage_count"] == 1
+    assert res["open_critical_or_unverified_rework_count"] == 1
+    assert res["peer_review_governance_status"] == "CRITICAL"
+
+
+def test_audit_quality_gate_peer_review_and_defect_density_empty_and_export():
+    """Verifica manejo de entradas vacías o no secuencia y exportación en __all__."""
+    import backend.services.project_ccb_service as _m
+    from backend.services.project_ccb_service import (
+        audit_quality_gate_peer_review_and_defect_density,
+    )
+
+    assert "audit_quality_gate_peer_review_and_defect_density" in _m.__all__
+    for bad in ([], None, "invalid"):
+        assert audit_quality_gate_peer_review_and_defect_density(bad) == {
+            "total_deliverables": 0,
+            "compliant_deliverables_count": 0,
+            "insufficient_review_coverage_count": 0,
+            "open_critical_or_unverified_rework_count": 0,
+            "excessive_defect_density_count": 0,
+            "peer_review_governance_status": "HEALTHY",
+            "violations": [],
+        }
+
+
+

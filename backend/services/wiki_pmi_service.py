@@ -2506,6 +2506,7 @@ __all__ = [
     "audit_wiki_communication_confidentiality_and_channel_security",
     "audit_wiki_lessons_learned_actionable_opa_transfer",
     "audit_wiki_risk_trigger_early_warning_and_fallback",
+    "audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration",
     "WikiPMIService",
 ]
 
@@ -4019,3 +4020,121 @@ WikiPMIService.audit_wiki_risk_trigger_early_warning_and_fallback = staticmethod
 )
 
 
+
+
+def audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration(
+    knowledge_domains: list[dict],
+    *,
+    min_bus_factor: int = 2,
+    max_sme_edit_share_pct: float = 80.0,
+    max_days_without_peer_review: int = 45,
+) -> dict:
+    """Audita bus factor y concentración SME del conocimiento en la wiki (PMBOK §4.4 y §9.4).
+
+    Cada dominio aporta domain_id, qualified_contributors_count,
+    primary_author_edit_share_pct, shadowing_or_cross_training_completed,
+    runbook_documented y days_since_last_peer_review:
+    - spof: contributores calificados < min_bus_factor sin shadowing.
+    - sme_silo: concentración de ediciones del autor primario > limit
+      sin shadowing.
+    - missing_runbook_or_stale_review: runbook ausente o revisión por
+      pares vencida (> max días).
+    - knowledge_resilience_pct: % de dominios sin anomalías (2 dec, 100.0
+      si vacío); bus_factor_governance_status HEALTHY/CRITICAL/AT_RISK;
+      violations con {domain_id, reasons}.
+    """
+    if not isinstance(knowledge_domains, list):
+        knowledge_domains = []
+    domains = [d for d in knowledge_domains if isinstance(d, dict)]
+
+    total_domains = len(domains)
+    resilient_domains_count = 0
+    spof_domains_count = 0
+    sme_silo_domains_count = 0
+    missing_runbook_or_stale_review_count = 0
+    violations: list[dict] = []
+
+    for idx, domain in enumerate(domains, start=1):
+        domain_id = str(domain.get("domain_id", f"DOMAIN-{idx}"))
+        reasons: list[str] = []
+        has_spof = False
+        has_sme_silo = False
+        has_missing_runbook_or_stale_review = False
+
+        shadowing = bool(domain.get("shadowing_or_cross_training_completed", False))
+        raw_contributors = domain.get("qualified_contributors_count")
+        try:
+            contributors = int(raw_contributors if raw_contributors is not None else 0)
+        except (TypeError, ValueError):
+            contributors = 0
+        raw_share = domain.get("primary_author_edit_share_pct")
+        try:
+            primary_share = float(raw_share if raw_share is not None else 0.0)
+        except (TypeError, ValueError):
+            primary_share = 0.0
+        raw_days = domain.get("days_since_last_peer_review")
+        try:
+            days_since_review = int(raw_days if raw_days is not None else 0)
+        except (TypeError, ValueError):
+            days_since_review = 0
+
+        if contributors < int(min_bus_factor) and not shadowing:
+            has_spof = True
+            reasons.append(
+                f"SPOF_BUS_FACTOR ({contributors}<{min_bus_factor}, sin shadowing)"
+            )
+        if primary_share > float(max_sme_edit_share_pct) and not shadowing:
+            has_sme_silo = True
+            reasons.append(
+                f"SME_SILO ({primary_share}>{max_sme_edit_share_pct}, sin shadowing)"
+            )
+        if (not bool(domain.get("runbook_documented", False))) or days_since_review > int(
+            max_days_without_peer_review
+        ):
+            has_missing_runbook_or_stale_review = True
+            if not domain.get("runbook_documented", False):
+                reasons.append("RUNBOOK_MISSING")
+            if days_since_review > int(max_days_without_peer_review):
+                reasons.append(
+                    f"PEER_REVIEW_STALE ({days_since_review}>{max_days_without_peer_review})"
+                )
+
+        if has_spof:
+            spof_domains_count += 1
+        if has_sme_silo:
+            sme_silo_domains_count += 1
+        if has_missing_runbook_or_stale_review:
+            missing_runbook_or_stale_review_count += 1
+        if not (has_spof or has_sme_silo or has_missing_runbook_or_stale_review):
+            resilient_domains_count += 1
+        if reasons:
+            violations.append({"domain_id": domain_id, "reasons": reasons})
+
+    knowledge_resilience_pct = (
+        round(resilient_domains_count / total_domains * 100.0, 2) if total_domains > 0 else 100.0
+    )
+    bus_factor_governance_status = (
+        "CRITICAL"
+        if spof_domains_count > 0
+        else (
+            "AT_RISK"
+            if sme_silo_domains_count > 0 or missing_runbook_or_stale_review_count > 0
+            else "HEALTHY"
+        )
+    )
+
+    return {
+        "total_domains": total_domains,
+        "resilient_domains_count": resilient_domains_count,
+        "spof_domains_count": spof_domains_count,
+        "sme_silo_domains_count": sme_silo_domains_count,
+        "missing_runbook_or_stale_review_count": missing_runbook_or_stale_review_count,
+        "knowledge_resilience_pct": knowledge_resilience_pct,
+        "bus_factor_governance_status": bus_factor_governance_status,
+        "violations": violations,
+    }
+
+
+WikiPMIService.audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration = staticmethod(
+    audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration
+)

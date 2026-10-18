@@ -4284,3 +4284,119 @@ def test_validate_parametric_estimation_model_fit_undocumented_extrapolation_and
             mean_absolute_percentage_error_pct=10.0,
         )
 
+
+
+def test_validate_schedule_compression_fast_tracking_and_crashing_valid():
+    """Compresion valida con fast-tracking documentado y crashing razonable."""
+    import pytest
+
+    from backend.schemas.projects import (
+        validate_schedule_compression_fast_tracking_and_crashing as fn,
+    )
+
+    res = fn(30.0, 27.0, 20.0, 3000.0, 50000.0, rework_risk_contingency_documented=True)
+    assert res == {
+        "duration_reduction_days": 3.0,
+        "compression_ratio_pct": 10.0,
+        "fast_tracked_overlap_pct": 20.0,
+        "crashing_cost_ratio_pct": 6.0,
+        "crash_cost_per_day_saved": 1000.0,
+        "is_valid": True,
+    }
+
+    # Sin overlap ni crashing: costo por dia guardado 0.0 y ratio crashing 0.0.
+    no_cost = fn(30.0, 25.0, 0.0, 0.0, 50000.0)
+    assert no_cost["duration_reduction_days"] == 5.0
+    assert no_cost["compression_ratio_pct"] == 16.67
+    assert no_cost["crash_cost_per_day_saved"] == 0.0
+    assert no_cost["crashing_cost_ratio_pct"] == 0.0
+    assert no_cost["is_valid"] is True
+
+
+def test_validate_schedule_compression_fast_tracking_and_crashing_overlap_rules():
+    """Contingencia exigida con overlap > 0; rango [0,100] y max_overlap_pct."""
+    import pytest
+
+    from backend.schemas.projects import (
+        validate_schedule_compression_fast_tracking_and_crashing as fn,
+    )
+
+    # Overlap > 0 sin contingencia documentada -> ValueError.
+    with pytest.raises(ValueError):
+        fn(30.0, 27.0, 20.0, 0.0, 50000.0)
+
+    # Overlap fuera de [0, 100].
+    with pytest.raises(ValueError):
+        fn(30.0, 27.0, -1.0, 0.0, 50000.0)
+    with pytest.raises(ValueError):
+        fn(30.0, 27.0, 101.0, 0.0, 50000.0)
+
+    # Overlap > max_overlap_pct default 33.3 -> ValueError.
+    with pytest.raises(ValueError):
+        fn(30.0, 27.0, 33.4, 0.0, 50000.0)
+
+    # Borde inclusive: 33.3 es valido con contingencia.
+    edge = fn(30.0, 27.0, 33.3, 0.0, 50000.0, rework_risk_contingency_documented=True)
+    assert edge["is_valid"] is True
+
+    # max_overlap_pct custom (50.0) admite 40.0 con contingencia.
+    custom = fn(30.0, 27.0, 40.0, 0.0, 50000.0, rework_risk_contingency_documented=True, max_overlap_pct=50.0)
+    assert custom["fast_tracked_overlap_pct"] == 40.0
+    assert custom["is_valid"] is True
+
+
+def test_validate_schedule_compression_fast_tracking_and_crashing_crashing_rules():
+    """Sobrecosto desproporcionado y crashing sin reduccion efectiva -> ValueError."""
+    import pytest
+
+    from backend.schemas.projects import (
+        validate_schedule_compression_fast_tracking_and_crashing as fn,
+    )
+
+    # (3000/50000)*100 = 6.0, pero con max 5.0 -> ValueError.
+    with pytest.raises(ValueError):
+        fn(30.0, 27.0, 0.0, 3000.0, 50000.0, max_crashing_cost_ratio_pct=5.0)
+
+    # Ratio 16.0 > default 15.0 -> ValueError (sobrecosto desproporcionado).
+    with pytest.raises(ValueError):
+        fn(30.0, 27.0, 0.0, 8000.0, 50000.0)
+
+    # Borde inclusive: 15.0 exacto es valido.
+    border = fn(30.0, 27.0, 0.0, 7500.0, 50000.0)
+    assert border["crashing_cost_ratio_pct"] == 15.0
+    assert border["is_valid"] is True
+
+    # Compressed == original con crashing > 0 -> ValueError (sin reduccion efectiva).
+    with pytest.raises(ValueError):
+        fn(30.0, 30.0, 0.0, 3000.0, 50000.0)
+
+
+def test_validate_schedule_compression_fast_tracking_and_crashing_domain_valueerrors():
+    """ValueErrors de dominio (duracion/compressed/cost/BAC/maxes) y export __all__."""
+    import pytest
+
+    from backend.schemas.projects import (
+        validate_schedule_compression_fast_tracking_and_crashing as fn,
+    )
+    import backend.schemas.projects as mod
+
+    invalid_cases = [
+        ((0.0, 27.0, 0.0, 0.0, 50000.0), {}),   # original <= 0
+        ((30.0, 0.0, 0.0, 0.0, 50000.0), {}),   # compressed <= 0
+        ((30.0, 31.0, 0.0, 0.0, 50000.0), {}),  # compressed > original
+        ((30.0, 27.0, 0.0, -1.0, 50000.0), {}), # crashing negativo
+        ((30.0, 27.0, 0.0, 0.0, 0.0), {}),      # BAC <= 0
+        ((30.0, 27.0, 0.0, 0.0, 50000.0), {"max_overlap_pct": 0.0}),
+        ((30.0, 27.0, 0.0, 0.0, 50000.0), {"max_overlap_pct": 101.0}),
+        ((30.0, 27.0, 0.0, 0.0, 50000.0), {"max_crashing_cost_ratio_pct": 0.0}),
+        ((30.0, 27.0, 0.0, 0.0, 50000.0), {"max_crashing_cost_ratio_pct": -2.0}),
+    ]
+    for args, kwargs in invalid_cases:
+        with pytest.raises(ValueError):
+            fn(*args, **kwargs)
+
+    # Bloque kwarg-only en rework_risk_contingency_documented.
+    with pytest.raises(TypeError):
+        fn(30.0, 27.0, 20.0, 0.0, 50000.0, True)  # type: ignore[misc]
+
+    assert "validate_schedule_compression_fast_tracking_and_crashing" in mod.__all__

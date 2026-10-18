@@ -2822,6 +2822,7 @@ __all__ = [
     "audit_contract_change_order_cumulative_escalation",
     "audit_ncr_capa_effectiveness_and_recurrence",
     "audit_configuration_baseline_drift_and_hotfix_governance",
+    "audit_quality_gate_peer_review_and_defect_density",
     "ProjectCCBService",
 ]
 
@@ -4180,5 +4181,126 @@ def audit_configuration_baseline_drift_and_hotfix_governance(
 ProjectCCBService.audit_configuration_baseline_drift_and_hotfix_governance = staticmethod(
     audit_configuration_baseline_drift_and_hotfix_governance
 )
+
+
+def audit_quality_gate_peer_review_and_defect_density(
+    deliverable_reviews: list[dict[str, Any]],
+    *,
+    min_review_coverage_pct: float = 100.0,
+    max_defect_density_per_kloc: float = 2.5,
+) -> dict[str, Any]:
+    """PMBOK §8.2 / §8.3 — auditoría de revisión por pares en compuertas de calidad y densidad de defectos."""
+    if not isinstance(deliverable_reviews, Sequence) or isinstance(
+        deliverable_reviews, (str, bytes)
+    ):
+        return {
+            "total_deliverables": 0,
+            "compliant_deliverables_count": 0,
+            "insufficient_review_coverage_count": 0,
+            "open_critical_or_unverified_rework_count": 0,
+            "excessive_defect_density_count": 0,
+            "peer_review_governance_status": "HEALTHY",
+            "violations": [],
+        }
+
+    try:
+        min_cov = float(min_review_coverage_pct)
+    except (TypeError, ValueError):
+        min_cov = 100.0
+
+    try:
+        max_density = float(max_defect_density_per_kloc)
+    except (TypeError, ValueError):
+        max_density = 2.5
+
+    total_deliverables = 0
+    compliant_deliverables_count = 0
+    insufficient_review_coverage_count = 0
+    open_critical_or_unverified_rework_count = 0
+    excessive_defect_density_count = 0
+    violations: list[dict[str, Any]] = []
+
+    for item in deliverable_reviews:
+        if not isinstance(item, Mapping):
+            continue
+        raw_id = item.get("deliverable_id")
+        if raw_id is None:
+            continue
+        deliverable_id = str(raw_id).strip()
+        if not deliverable_id:
+            continue
+
+        total_deliverables += 1
+
+        size_units = float(item.get("size_kloc_or_units", 0.0) or 0.0)
+        review_cov = float(item.get("review_coverage_pct", 0.0) or 0.0)
+        indep_reviewer = bool(item.get("independent_reviewer_assigned", False))
+        crit_major_open = int(item.get("critical_major_defects_open", 0) or 0)
+        total_defects = int(item.get("total_defects_found", 0) or 0)
+        rework_verified = bool(item.get("rework_verified", False))
+
+        insufficient_review = (review_cov < min_cov) or (not indep_reviewer)
+        open_critical_or_unverified = (crit_major_open > 0) or (
+            total_defects > 0 and not rework_verified
+        )
+
+        if size_units > 0.0:
+            defect_density = round(float(total_defects) / size_units, 2)
+        else:
+            defect_density = 0.0
+
+        excessive_defect_density = defect_density > max_density
+
+        reasons: list[str] = []
+        if insufficient_review:
+            insufficient_review_coverage_count += 1
+            reasons.append("insufficient_peer_review_or_missing_independent_reviewer")
+        if open_critical_or_unverified:
+            open_critical_or_unverified_rework_count += 1
+            reasons.append("open_critical_defects_or_unverified_rework")
+        if excessive_defect_density:
+            excessive_defect_density_count += 1
+            reasons.append("excessive_defect_density")
+
+        if not reasons:
+            compliant_deliverables_count += 1
+        else:
+            violations.append(
+                {
+                    "deliverable_id": deliverable_id,
+                    "defect_density": defect_density,
+                    "reasons": reasons,
+                }
+            )
+
+    if (
+        insufficient_review_coverage_count == 0
+        and open_critical_or_unverified_rework_count == 0
+        and excessive_defect_density_count == 0
+    ):
+        status = "HEALTHY"
+    elif (
+        open_critical_or_unverified_rework_count > 0
+        or insufficient_review_coverage_count > 0
+    ):
+        status = "CRITICAL"
+    else:
+        status = "AT_RISK"
+
+    return {
+        "total_deliverables": total_deliverables,
+        "compliant_deliverables_count": compliant_deliverables_count,
+        "insufficient_review_coverage_count": insufficient_review_coverage_count,
+        "open_critical_or_unverified_rework_count": open_critical_or_unverified_rework_count,
+        "excessive_defect_density_count": excessive_defect_density_count,
+        "peer_review_governance_status": status,
+        "violations": violations,
+    }
+
+
+ProjectCCBService.audit_quality_gate_peer_review_and_defect_density = staticmethod(
+    audit_quality_gate_peer_review_and_defect_density
+)
+
 
 

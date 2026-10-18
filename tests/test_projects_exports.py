@@ -5691,3 +5691,134 @@ def test_audit_executive_report_vendor_sla_and_liquidated_damages_empty_and_expo
             "findings": [],
         }
 
+
+def test_audit_executive_report_stakeholder_escalation_and_briefing_cadence_healthy():
+    """Verifica estado HEALTHY cuando escalamientos están en SLA con plan y notificación a sponsor y briefings al día."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_stakeholder_escalation_and_briefing_cadence,
+    )
+
+    records = [
+        {
+            "stakeholder_id": "STK-EXEC-01",
+            "influence_level": "HIGH",
+            "open_escalations_count": 1,
+            "oldest_open_escalation_days": 3,
+            "days_since_last_executive_briefing": 7,
+            "action_plan_documented": True,
+            "sponsor_notified": True,
+        },
+        {
+            "stakeholder_id": "STK-OPS-02",
+            "influence_level": "MEDIUM",
+            "open_escalations_count": 0,
+            "oldest_open_escalation_days": 0,
+            "days_since_last_executive_briefing": 10,
+            "action_plan_documented": False,
+            "sponsor_notified": False,
+        },
+    ]
+    res = audit_executive_report_stakeholder_escalation_and_briefing_cadence(
+        records, max_open_escalation_days=7, max_briefing_gap_days=14
+    )
+    assert res == {
+        "total_stakeholders_evaluated": 2,
+        "compliant_stakeholders_count": 2,
+        "overdue_escalations_stakeholders_count": 0,
+        "unmitigated_escalations_count": 0,
+        "stale_briefing_stakeholders_count": 0,
+        "total_open_escalations": 1,
+        "escalation_governance_status": "HEALTHY",
+        "findings": [],
+    }
+    assert (
+        ProjectExportService.audit_executive_report_stakeholder_escalation_and_briefing_cadence(
+            records
+        )
+        == res
+    )
+
+
+def test_audit_executive_report_stakeholder_escalation_and_briefing_cadence_at_risk():
+    """Verifica estado AT_RISK cuando no hay escalamientos vencidos ni sin plan pero sí atraso en briefing ejecutivo."""
+    from backend.services.project_export_service import (
+        audit_executive_report_stakeholder_escalation_and_briefing_cadence,
+    )
+
+    res = audit_executive_report_stakeholder_escalation_and_briefing_cadence(
+        [
+            {
+                "stakeholder_id": "STK-LATE-BRIEF",
+                "influence_level": "HIGH",
+                "open_escalations_count": 0,
+                "oldest_open_escalation_days": 0,
+                "days_since_last_executive_briefing": 21,
+                "action_plan_documented": False,
+                "sponsor_notified": False,
+            }
+        ],
+        max_open_escalation_days=7,
+        max_briefing_gap_days=14,
+    )
+    assert res["stale_briefing_stakeholders_count"] == 1
+    assert res["compliant_stakeholders_count"] == 0
+    assert res["escalation_governance_status"] == "AT_RISK"
+    assert len(res["findings"]) == 1
+    assert res["findings"][0]["stakeholder_id"] == "STK-LATE-BRIEF"
+
+
+def test_audit_executive_report_stakeholder_escalation_and_briefing_cadence_critical():
+    """Verifica estado CRITICAL cuando existen escalamientos vencidos o interesados HIGH sin sponsor notificado."""
+    from backend.services.project_export_service import (
+        audit_executive_report_stakeholder_escalation_and_briefing_cadence,
+    )
+
+    res = audit_executive_report_stakeholder_escalation_and_briefing_cadence(
+        [
+            {
+                "stakeholder_id": "STK-OVERDUE-UNMIT",
+                "influence_level": "high",
+                "open_escalations_count": 2,
+                "oldest_open_escalation_days": 12,
+                "days_since_last_executive_briefing": 5,
+                "action_plan_documented": True,
+                "sponsor_notified": False,
+            }
+        ],
+        max_open_escalation_days=7,
+        max_briefing_gap_days=14,
+    )
+    assert res["overdue_escalations_stakeholders_count"] == 1
+    assert res["unmitigated_escalations_count"] == 1
+    assert res["total_open_escalations"] == 2
+    assert res["escalation_governance_status"] == "CRITICAL"
+
+
+def test_audit_executive_report_stakeholder_escalation_and_briefing_cadence_empty_and_export():
+    """Verifica manejo de entradas vacías o no válidas y exportación en __all__."""
+    import backend.services.project_export_service as _m
+    from backend.services.project_export_service import (
+        audit_executive_report_stakeholder_escalation_and_briefing_cadence,
+    )
+
+    assert (
+        "audit_executive_report_stakeholder_escalation_and_briefing_cadence"
+        in _m.__all__
+    )
+    for bad in ([], None, "invalid"):
+        assert (
+            audit_executive_report_stakeholder_escalation_and_briefing_cadence(bad)
+            == {
+                "total_stakeholders_evaluated": 0,
+                "compliant_stakeholders_count": 0,
+                "overdue_escalations_stakeholders_count": 0,
+                "unmitigated_escalations_count": 0,
+                "stale_briefing_stakeholders_count": 0,
+                "total_open_escalations": 0,
+                "escalation_governance_status": "HEALTHY",
+                "findings": [],
+            }
+        )
+
+

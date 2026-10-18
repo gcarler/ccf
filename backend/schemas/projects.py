@@ -3765,6 +3765,7 @@ def validate_cpif_cost_sharing_and_fee_bounds(
 
 
 __all__ = [
+    "validate_schedule_compression_fast_tracking_and_crashing",
     "validate_cpm_float_and_critical_path",
     "validate_emv_decision_tree_exposure",
     "validate_pdm_dependency_leads_and_lags",
@@ -5520,3 +5521,73 @@ def validate_parametric_estimation_model_fit(
         "is_valid": True,
     }
 
+
+
+def validate_schedule_compression_fast_tracking_and_crashing(
+    original_duration_days: float,
+    compressed_duration_days: float,
+    fast_tracked_overlap_pct: float,
+    crashing_added_cost: float,
+    baseline_budget_bac: float,
+    *,
+    rework_risk_contingency_documented: bool = False,
+    max_overlap_pct: float = 33.3,
+    max_crashing_cost_ratio_pct: float = 15.0,
+) -> dict[str, float | bool]:
+    """Valida compresión de cronograma fast-tracking + crashing (PMBOK §6.5.2.6).
+
+    ValueError en: original_duration_days <= 0; compressed fuera de
+    (0, original]; fast_tracked_overlap_pct fuera de [0, 100] o por
+    encima de max_overlap_pct (superposición excesiva); crashing_added_cost
+    negativo; baseline_budget_bac <= 0; max_overlap_pct fuera de (0, 100];
+    max_crashing_cost_ratio_pct <= 0; overlap > 0 sin contingencia de
+    retrabajo documentada; crashing_cost_ratio_pct > max (sobrecosto
+    desproporcionado); costo de crashing sin reducción efectiva de
+    duración.
+    """
+    original = float(original_duration_days)
+    compressed = float(compressed_duration_days)
+    overlap_pct = float(fast_tracked_overlap_pct)
+    crashing_cost = float(crashing_added_cost)
+    bac = float(baseline_budget_bac)
+    max_overlap = float(max_overlap_pct)
+    max_crash_ratio = float(max_crashing_cost_ratio_pct)
+
+    if original <= 0:
+        raise ValueError("original_duration_days debe ser > 0")
+    if compressed <= 0 or compressed > original:
+        raise ValueError("compressed_duration_days debe estar en (0, original_duration_days]")
+    if overlap_pct < 0.0 or overlap_pct > 100.0:
+        raise ValueError("fast_tracked_overlap_pct debe estar en [0.0, 100.0]")
+    if crashing_cost < 0.0:
+        raise ValueError("crashing_added_cost debe ser >= 0.0")
+    if bac <= 0:
+        raise ValueError("baseline_budget_bac debe ser > 0")
+    if max_overlap <= 0.0 or max_overlap > 100.0:
+        raise ValueError("max_overlap_pct debe estar en (0.0, 100.0]")
+    if max_crash_ratio <= 0.0:
+        raise ValueError("max_crashing_cost_ratio_pct debe ser > 0.0")
+    if overlap_pct > max_overlap:
+        raise ValueError("fast_tracked_overlap_pct supera max_overlap_pct (superposicion excesiva de ruta critica)")
+    if overlap_pct > 0.0 and not rework_risk_contingency_documented:
+        raise ValueError("fast-tracking requiere contingencia de retrabajo documentada")
+    crashing_cost_ratio_pct = round((crashing_cost / bac) * 100.0, 2)
+    if crashing_cost_ratio_pct > max_crash_ratio:
+        raise ValueError("crashing sobrepasa max_crashing_cost_ratio_pct (sobrecosto desproporcionado)")
+    if compressed == original and crashing_cost > 0.0:
+        raise ValueError("crashing_added_cost sin reduccion efectiva de duracion")
+
+    duration_reduction_days = round(original - compressed, 2)
+    compression_ratio_pct = round((duration_reduction_days / original) * 100.0, 2)
+    crash_cost_per_day_saved = (
+        round(crashing_cost / duration_reduction_days, 2) if duration_reduction_days > 0 else 0.0
+    )
+
+    return {
+        "duration_reduction_days": duration_reduction_days,
+        "compression_ratio_pct": compression_ratio_pct,
+        "fast_tracked_overlap_pct": round(overlap_pct, 2),
+        "crashing_cost_ratio_pct": crashing_cost_ratio_pct,
+        "crash_cost_per_day_saved": crash_cost_per_day_saved,
+        "is_valid": True,
+    }

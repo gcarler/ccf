@@ -5095,3 +5095,171 @@ def test_audit_wiki_risk_trigger_early_warning_and_fallback_empty_and_export():
         }
 
 
+
+
+def test_audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration_healthy():
+    """Dominios sin SPOF, sin silo SME y con runbook/revisión al día."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration,
+    )
+
+    res = audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration(
+        [
+            {"domain_id": "D-1", "qualified_contributors_count": 2,
+             "primary_author_edit_share_pct": 60.0,
+             "shadowing_or_cross_training_completed": True, "runbook_documented": True,
+             "days_since_last_peer_review": 10},
+            {"domain_id": "D-2", "qualified_contributors_count": 3,
+             "primary_author_edit_share_pct": 50.0,
+             "shadowing_or_cross_training_completed": False, "runbook_documented": True,
+             "days_since_last_peer_review": 40},
+        ]
+    )
+    assert res == {
+        "total_domains": 2,
+        "resilient_domains_count": 2,
+        "spof_domains_count": 0,
+        "sme_silo_domains_count": 0,
+        "missing_runbook_or_stale_review_count": 0,
+        "knowledge_resilience_pct": 100.0,
+        "bus_factor_governance_status": "HEALTHY",
+        "violations": [],
+    }
+
+
+def test_audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration_spof_critical():
+    """SPOF: contributores < min sin shadowing -> CRITICAL y resiliencia 0.0."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration,
+    )
+
+    res = audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration(
+        [
+            {"domain_id": "D-S", "qualified_contributors_count": 1,
+             "primary_author_edit_share_pct": 50.0,
+             "shadowing_or_cross_training_completed": False, "runbook_documented": True,
+             "days_since_last_peer_review": 20},
+        ]
+    )
+    assert res["spof_domains_count"] == 1
+    assert res["resilient_domains_count"] == 0
+    assert res["knowledge_resilience_pct"] == 0.0
+    assert res["bus_factor_governance_status"] == "CRITICAL"
+    assert res["violations"] == [{
+        "domain_id": "D-S", "reasons": ["SPOF_BUS_FACTOR (1<2, sin shadowing)"],
+    }]
+
+    # Con shadowing completado, el mismo bus factor se mitiga.
+    mitigated = audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration(
+        [
+            {"domain_id": "D-M", "qualified_contributors_count": 1,
+             "primary_author_edit_share_pct": 50.0,
+             "shadowing_or_cross_training_completed": True, "runbook_documented": True,
+             "days_since_last_peer_review": 20},
+        ]
+    )
+    assert mitigated["spof_domains_count"] == 0
+    assert mitigated["bus_factor_governance_status"] == "HEALTHY"
+
+
+def test_audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration_silo_and_runbook():
+    """SME silo (> 80% sin shadowing) y runbook ausente / revisión vencida -> AT_RISK."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration,
+    )
+
+    silo = audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration(
+        [
+            {"domain_id": "D-SILO", "qualified_contributors_count": 2,
+             "primary_author_edit_share_pct": 90.0,
+             "shadowing_or_cross_training_completed": False, "runbook_documented": True,
+             "days_since_last_peer_review": 30},
+        ]
+    )
+    assert silo["sme_silo_domains_count"] == 1
+    assert silo["bus_factor_governance_status"] == "AT_RISK"
+    assert silo["violations"] == [{
+        "domain_id": "D-SILO", "reasons": ["SME_SILO (90.0>80.0, sin shadowing)"],
+    }]
+
+    # Shadowing mitiga el silo.
+    mitigated = audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration(
+        [
+            {"domain_id": "D-MIT", "qualified_contributors_count": 2,
+             "primary_author_edit_share_pct": 90.0,
+             "shadowing_or_cross_training_completed": True, "runbook_documented": True,
+             "days_since_last_peer_review": 30},
+        ]
+    )
+    assert mitigated["sme_silo_domains_count"] == 0
+
+    # Runbook ausente + revisión vencida en el mismo dominio.
+    runbook = audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration(
+        [
+            {"domain_id": "D-RB", "qualified_contributors_count": 3,
+             "primary_author_edit_share_pct": 20.0,
+             "shadowing_or_cross_training_completed": False, "runbook_documented": False,
+             "days_since_last_peer_review": 50},
+        ]
+    )
+    assert runbook["missing_runbook_or_stale_review_count"] == 1
+    assert runbook["bus_factor_governance_status"] == "AT_RISK"
+    assert runbook["violations"] == [{
+        "domain_id": "D-RB",
+        "reasons": ["RUNBOOK_MISSING", "PEER_REVIEW_STALE (50>45)"],
+    }]
+
+    # Borde de revisión: 45 <= 45 no es vencida even con share en el limite 80.0.
+    border = audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration(
+        [
+            {"domain_id": "D-B", "qualified_contributors_count": 2,
+             "primary_author_edit_share_pct": 80.0,
+             "shadowing_or_cross_training_completed": False, "runbook_documented": True,
+             "days_since_last_peer_review": 45},
+        ]
+    )
+    assert border["missing_runbook_or_stale_review_count"] == 0
+    assert border["sme_silo_domains_count"] == 0
+    assert border["resilient_domains_count"] == 1
+
+
+def test_audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration_custom_and_empty():
+    """Umbrales custom, entrada vacia/None y proxy estatico + __all__."""
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration,
+    )
+    import backend.services.wiki_pmi_service as mod
+
+    # min_bus_factor=3 y max_days=10 => 2 contributores es SPOF y 11 dias vencida.
+    custom = audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration(
+        [
+            {"domain_id": "D-C", "qualified_contributors_count": 2,
+             "primary_author_edit_share_pct": 10.0,
+             "shadowing_or_cross_training_completed": False, "runbook_documented": True,
+             "days_since_last_peer_review": 11},
+        ],
+        min_bus_factor=3,
+        max_days_without_peer_review=10,
+    )
+    assert custom["spof_domains_count"] == 1
+    assert custom["missing_runbook_or_stale_review_count"] == 1
+    assert custom["bus_factor_governance_status"] == "CRITICAL"
+    assert custom["knowledge_resilience_pct"] == 0.0
+
+    for payload in ([], None, 42):
+        empty = audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration(payload)
+        assert empty["total_domains"] == 0
+        assert empty["knowledge_resilience_pct"] == 100.0
+        assert empty["bus_factor_governance_status"] == "HEALTHY"
+        assert empty["violations"] == []
+
+    sample = [{"domain_id": "SM", "qualified_contributors_count": 2,
+               "primary_author_edit_share_pct": 10.0,
+               "shadowing_or_cross_training_completed": False, "runbook_documented": True,
+               "days_since_last_peer_review": 10}]
+    assert (
+        WikiPMIService.audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration(sample)
+        == audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration(sample)
+    )
+    assert "audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration" in mod.__all__
