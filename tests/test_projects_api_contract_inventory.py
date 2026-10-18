@@ -3139,3 +3139,167 @@ def test_error_response_contract_hygiene_empty_and_live_openapi():
     )
     assert live_res["evaluated_operation_count"] > 0
     assert live_res["undescribed_error_responses"] == []
+
+
+def test_mutation_idempotency_and_header_hygiene_compliant():
+    """Mutaciones con headers de idempotencia, 201, 409 y response headers tipados (is_hygienic=True)."""
+    schema = {
+        "paths": {
+            "/api/projects": {
+                "get": {
+                    "responses": {"200": {"description": "OK"}}
+                },
+                "post": {
+                    "parameters": [
+                        {
+                            "name": "Idempotency-Key",
+                            "in": "header",
+                            "schema": {"type": "string"},
+                        }
+                    ],
+                    "responses": {
+                        "201": {
+                            "description": "Created",
+                            "headers": {
+                                "X-RateLimit-Remaining": {
+                                    "schema": {"type": "integer"}
+                                },
+                                "X-Request-Id": {
+                                    "$ref": "#/components/headers/RequestId"
+                                },
+                            },
+                        },
+                        "409": {"description": "Conflict"},
+                    },
+                },
+            },
+            "/projects/{project_id}": {
+                "patch": {
+                    "parameters": [
+                        {
+                            "name": "X-Request-Id",
+                            "in": "header",
+                            "schema": {"type": "string"},
+                        }
+                    ],
+                    "responses": {
+                        "200": {"description": "Updated"},
+                        "409": {"description": "Conflict"},
+                    },
+                }
+            },
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_mutation_idempotency_and_header_hygiene(
+        schema
+    )
+    assert res == {
+        "evaluated_mutation_count": 2,
+        "post_mutation_ops": ["POST /api/projects"],
+        "post_ops_with_201_created": ["POST /api/projects"],
+        "ops_with_idempotency_header": [
+            "POST /api/projects",
+            "PATCH /projects/{project_id}",
+        ],
+        "ops_with_conflict_409_response": [
+            "POST /api/projects",
+            "PATCH /projects/{project_id}",
+        ],
+        "malformed_header_param_ops": [],
+        "untyped_response_headers": [],
+        "is_hygienic": True,
+    }
+
+
+def test_mutation_idempotency_and_header_hygiene_malformed_header_param():
+    """Detección de malformed_header_param_ops (is_hygienic=False)."""
+    schema = {
+        "paths": {
+            "/api/projects/tasks": {
+                "post": {
+                    "parameters": [
+                        {
+                            "name": "   ",
+                            "in": "header",
+                            "schema": {"type": "string"},
+                        }
+                    ],
+                    "responses": {"201": {"description": "Created"}},
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_mutation_idempotency_and_header_hygiene(
+        schema
+    )
+    assert res["evaluated_mutation_count"] == 1
+    assert res["malformed_header_param_ops"] == ["POST /api/projects/tasks"]
+    assert res["is_hygienic"] is False
+
+
+def test_mutation_idempotency_and_header_hygiene_untyped_response_headers():
+    """Detección de untyped_response_headers (is_hygienic=False)."""
+    schema = {
+        "paths": {
+            "/api/projects/tasks/{task_id}": {
+                "put": {
+                    "responses": {
+                        "200": {
+                            "description": "Updated",
+                            "headers": {
+                                "X-Retry-After": {"description": "Seconds"},
+                                "X-Invalid": "not-a-dict",
+                            },
+                        }
+                    }
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_mutation_idempotency_and_header_hygiene(
+        schema
+    )
+    assert res["untyped_response_headers"] == [
+        "PUT /api/projects/tasks/{task_id}:X-Retry-After",
+        "PUT /api/projects/tasks/{task_id}:X-Invalid",
+    ]
+    assert res["is_hygienic"] is False
+
+
+def test_mutation_idempotency_and_header_hygiene_empty_and_live_openapi():
+    """Esquema OpenAPI en vivo de la app FastAPI y manejo de schema vacío/None."""
+    empty_expected = {
+        "evaluated_mutation_count": 0,
+        "post_mutation_ops": [],
+        "post_ops_with_201_created": [],
+        "ops_with_idempotency_header": [],
+        "ops_with_conflict_409_response": [],
+        "malformed_header_param_ops": [],
+        "untyped_response_headers": [],
+        "is_hygienic": True,
+    }
+    assert (
+        audit_projects_api_contracts.summarize_projects_mutation_idempotency_and_header_hygiene(
+            None
+        )
+        == empty_expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_mutation_idempotency_and_header_hygiene(
+            {}
+        )
+        == empty_expected
+    )
+
+    from backend.app import app
+
+    live_res = (
+        audit_projects_api_contracts.summarize_projects_mutation_idempotency_and_header_hygiene(
+            app.openapi()
+        )
+    )
+    assert live_res["evaluated_mutation_count"] > 0
+    assert len(live_res["post_mutation_ops"]) > 0
+    assert live_res["malformed_header_param_ops"] == []
+    assert live_res["untyped_response_headers"] == []
+    assert live_res["is_hygienic"] is True

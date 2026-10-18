@@ -1794,6 +1794,119 @@ def summarize_projects_error_response_contract_hygiene(
     }
 
 
+def summarize_projects_mutation_idempotency_and_header_hygiene(
+    openapi_schema: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Audita encabezados de idempotencia, códigos 201/409 y tipado de headers de respuesta en mutaciones /api/projects o /projects."""
+    if not isinstance(openapi_schema, Mapping):
+        return {
+            "evaluated_mutation_count": 0,
+            "post_mutation_ops": [],
+            "post_ops_with_201_created": [],
+            "ops_with_idempotency_header": [],
+            "ops_with_conflict_409_response": [],
+            "malformed_header_param_ops": [],
+            "untyped_response_headers": [],
+            "is_hygienic": True,
+        }
+
+    evaluated_mutation_count = 0
+    post_mutation_ops: list[str] = []
+    post_ops_with_201_created: list[str] = []
+    ops_with_idempotency_header: list[str] = []
+    ops_with_conflict_409_response: list[str] = []
+    malformed_header_param_ops: list[str] = []
+    untyped_response_headers: list[str] = []
+
+    paths = openapi_schema.get("paths")
+    if isinstance(paths, Mapping):
+        for path, path_item in sorted(paths.items()):
+            if not isinstance(path, str) or not (
+                path.startswith("/api/projects") or path.startswith("/projects")
+            ):
+                continue
+            if not isinstance(path_item, Mapping):
+                continue
+
+            for method in ("post", "put", "patch", "delete"):
+                op = path_item.get(method)
+                if not isinstance(op, Mapping):
+                    continue
+
+                evaluated_mutation_count += 1
+                op_key = f"{method.upper()} {path}"
+                raw_responses = (
+                    op.get("responses")
+                    if isinstance(op.get("responses"), Mapping)
+                    else {}
+                )
+                responses = {str(k): v for k, v in raw_responses.items()}
+                params = (
+                    op.get("parameters")
+                    if isinstance(op.get("parameters"), list)
+                    else []
+                )
+
+                if method == "post":
+                    post_mutation_ops.append(op_key)
+                    if "201" in responses:
+                        post_ops_with_201_created.append(op_key)
+
+                has_malformed_header = False
+                has_idempotency_header = False
+                for param in params:
+                    if (
+                        isinstance(param, Mapping)
+                        and str(param.get("in") or "").lower() == "header"
+                    ):
+                        hname = str(param.get("name") or "").strip()
+                        if not hname:
+                            has_malformed_header = True
+                        elif hname.lower() in {
+                            "idempotency-key",
+                            "x-idempotency-key",
+                            "x-request-id",
+                        }:
+                            has_idempotency_header = True
+
+                if has_malformed_header:
+                    malformed_header_param_ops.append(op_key)
+                if has_idempotency_header:
+                    ops_with_idempotency_header.append(op_key)
+
+                if "409" in responses:
+                    ops_with_conflict_409_response.append(op_key)
+
+                for resp_obj in responses.values():
+                    if isinstance(resp_obj, Mapping):
+                        headers = resp_obj.get("headers")
+                        if isinstance(headers, Mapping):
+                            for header_name, header_obj in headers.items():
+                                if not isinstance(header_obj, Mapping) or (
+                                    "schema" not in header_obj
+                                    and "$ref" not in header_obj
+                                ):
+                                    untyped_response_headers.append(
+                                        f"{op_key}:{header_name}"
+                                    )
+
+    is_hygienic = (
+        len(malformed_header_param_ops) == 0
+        and len(untyped_response_headers) == 0
+    )
+
+    return {
+        "evaluated_mutation_count": evaluated_mutation_count,
+        "post_mutation_ops": post_mutation_ops,
+        "post_ops_with_201_created": post_ops_with_201_created,
+        "ops_with_idempotency_header": ops_with_idempotency_header,
+        "ops_with_conflict_409_response": ops_with_conflict_409_response,
+        "malformed_header_param_ops": malformed_header_param_ops,
+        "untyped_response_headers": untyped_response_headers,
+        "is_hygienic": is_hygienic,
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()
