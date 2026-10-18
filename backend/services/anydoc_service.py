@@ -3021,6 +3021,7 @@ __all__ = [
     "audit_markdown_badge_and_external_tracker_hygiene",
     "audit_markdown_footnote_reference_and_definition_hygiene",
     "audit_markdown_acronym_and_glossary_first_use_hygiene",
+    "audit_markdown_mermaid_diagram_syntax_hygiene",
     "AnydocService",
 ]
 
@@ -6248,3 +6249,157 @@ AnyDocService.audit_markdown_acronym_and_glossary_first_use_hygiene = staticmeth
 AnydocService.audit_markdown_acronym_and_glossary_first_use_hygiene = staticmethod(
     audit_markdown_acronym_and_glossary_first_use_hygiene
 )
+
+
+def audit_markdown_mermaid_diagram_syntax_hygiene(
+    markdown_text: str | None,
+    *,
+    allowed_diagram_types: tuple[str, ...] = (
+        "flowchart",
+        "graph",
+        "sequencediagram",
+        "statediagram",
+        "statediagram-v2",
+        "classdiagram",
+        "erdiagram",
+        "xychart-beta",
+        "gantt",
+        "pie",
+        "mindmap",
+    ),
+) -> dict[str, Any]:
+    """Audita sintaxis e higiene de bloques de diagrama Mermaid en Markdown (PMI PMBOK §4.4)."""
+    if not isinstance(markdown_text, str) or not markdown_text.strip():
+        return {
+            "total_mermaid_blocks": 0,
+            "empty_mermaid_block_lines": [],
+            "unsupported_diagram_type_lines": [],
+            "unbalanced_bracket_block_lines": [],
+            "raw_html_tag_block_lines": [],
+            "mermaid_hygiene_status": "CLEAN",
+            "is_compliant": True,
+            "issues": [],
+        }
+
+    allowed_lower = {
+        str(t).strip().lower() for t in (allowed_diagram_types or ()) if str(t).strip()
+    }
+    fence_open_re = re.compile(r"^\s*(`{3,}|~{3,})\s*([A-Za-z0-9_-]+)?.*$")
+    html_tag_re = re.compile(
+        r"<\s*/?\s*(?:br|b|i|div|span|p|strong|em|sub|sup)\b[^>]*>",
+        re.IGNORECASE,
+    )
+
+    lines = markdown_text.splitlines()
+    in_fence = False
+    fence_char = ""
+    fence_len = 0
+    is_mermaid_fence = False
+    block_start_line = 0
+    block_lines: list[str] = []
+
+    blocks: list[tuple[int, list[str]]] = []
+
+    for idx, raw_line in enumerate(lines, start=1):
+        stripped = raw_line.strip()
+        if not in_fence:
+            m = fence_open_re.match(raw_line)
+            if m:
+                token = m.group(1)
+                lang = (m.group(2) or "").strip().lower()
+                in_fence = True
+                fence_char = token[0]
+                fence_len = len(token)
+                is_mermaid_fence = lang == "mermaid"
+                block_start_line = idx
+                block_lines = []
+        else:
+            if (
+                stripped.startswith(fence_char * fence_len)
+                and set(stripped) == {fence_char}
+            ):
+                if is_mermaid_fence:
+                    blocks.append((block_start_line, list(block_lines)))
+                in_fence = False
+                fence_char = ""
+                fence_len = 0
+                is_mermaid_fence = False
+                block_lines = []
+            else:
+                if is_mermaid_fence:
+                    block_lines.append(raw_line)
+
+    if in_fence and is_mermaid_fence:
+        blocks.append((block_start_line, list(block_lines)))
+
+    empty_mermaid_block_lines: list[int] = []
+    unsupported_diagram_type_lines: list[int] = []
+    unbalanced_bracket_block_lines: list[int] = []
+    raw_html_tag_block_lines: list[int] = []
+    issues: list[str] = []
+
+    for start_line, content_lines in blocks:
+        useful_lines = [
+            ln.strip()
+            for ln in content_lines
+            if ln.strip() and not ln.strip().startswith("%%")
+        ]
+        if not useful_lines:
+            empty_mermaid_block_lines.append(start_line)
+            issues.append(f"Bloque Mermaid vacío en línea {start_line}.")
+            continue
+
+        first_token = re.split(r"[\s(:{\[]+", useful_lines[0], maxsplit=1)[0].lower()
+        if first_token not in allowed_lower:
+            unsupported_diagram_type_lines.append(start_line)
+            issues.append(
+                f"Tipo de diagrama Mermaid no soportado '{first_token}' en línea {start_line}."
+            )
+
+        joined_non_comment = "\n".join(useful_lines)
+        if (
+            joined_non_comment.count("(") != joined_non_comment.count(")")
+            or joined_non_comment.count("[") != joined_non_comment.count("]")
+            or joined_non_comment.count("{") != joined_non_comment.count("}")
+        ):
+            unbalanced_bracket_block_lines.append(start_line)
+            issues.append(
+                f"Paréntesis, corchetes o llaves desbalanceados en bloque Mermaid de línea {start_line}."
+            )
+
+        if html_tag_re.search(joined_non_comment):
+            raw_html_tag_block_lines.append(start_line)
+            issues.append(
+                f"Etiquetas HTML crudas detectadas en bloque Mermaid de línea {start_line}."
+            )
+
+    if (
+        empty_mermaid_block_lines
+        or unsupported_diagram_type_lines
+        or unbalanced_bracket_block_lines
+    ):
+        mermaid_hygiene_status = "SYNTAX_ERROR"
+    elif raw_html_tag_block_lines:
+        mermaid_hygiene_status = "STYLE_WARNING"
+    else:
+        mermaid_hygiene_status = "CLEAN"
+
+    return {
+        "total_mermaid_blocks": len(blocks),
+        "empty_mermaid_block_lines": sorted(empty_mermaid_block_lines),
+        "unsupported_diagram_type_lines": sorted(unsupported_diagram_type_lines),
+        "unbalanced_bracket_block_lines": sorted(unbalanced_bracket_block_lines),
+        "raw_html_tag_block_lines": sorted(raw_html_tag_block_lines),
+        "mermaid_hygiene_status": mermaid_hygiene_status,
+        "is_compliant": mermaid_hygiene_status == "CLEAN",
+        "issues": issues,
+    }
+
+
+AnyDocService.audit_markdown_mermaid_diagram_syntax_hygiene = staticmethod(
+    audit_markdown_mermaid_diagram_syntax_hygiene
+)
+AnydocService.audit_markdown_mermaid_diagram_syntax_hygiene = staticmethod(
+    audit_markdown_mermaid_diagram_syntax_hygiene
+)
+

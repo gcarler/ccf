@@ -2989,6 +2989,7 @@ __all__ = [
     "audit_executive_report_key_personnel_bus_factor_and_succession",
     "audit_executive_report_vendor_sla_and_service_credit_recovery",
     "audit_executive_report_supply_chain_lead_time_and_single_source",
+    "audit_executive_report_stakeholder_sentiment_and_nps_drift",
     "ProjectExportService",
 ]
 
@@ -5696,3 +5697,113 @@ def audit_executive_report_supply_chain_lead_time_and_single_source(
 ProjectExportService.audit_executive_report_supply_chain_lead_time_and_single_source = staticmethod(
     audit_executive_report_supply_chain_lead_time_and_single_source
 )
+
+
+def audit_executive_report_stakeholder_sentiment_and_nps_drift(
+    stakeholder_surveys: list[dict[str, Any]],
+    *,
+    min_acceptable_nps_score: float = 10.0,
+    max_key_detractor_count: int = 0,
+) -> dict[str, Any]:
+    """Audita pulso de sentimiento de interesados, NPS y resistencia escalada en el informe ejecutivo (PMI PMBOK §13.4)."""
+    if not isinstance(stakeholder_surveys, list):
+        return {
+            "total_surveyed": 0,
+            "net_promoter_score_nps": 0.0,
+            "key_detractor_stakeholder_ids": [],
+            "declining_sentiment_stakeholder_ids": [],
+            "unaddressed_detractor_ids": [],
+            "sentiment_health_status": "SUPPORTIVE",
+            "is_sentiment_healthy": True,
+            "issues": [],
+        }
+
+    min_nps = float(
+        min_acceptable_nps_score if min_acceptable_nps_score is not None else 10.0
+    )
+    max_key_detractors = int(
+        max_key_detractor_count if max_key_detractor_count is not None else 0
+    )
+
+    total_surveyed = 0
+    promoters_count = 0
+    detractors_count = 0
+    key_detractor_stakeholder_ids: list[str] = []
+    declining_sentiment_stakeholder_ids: list[str] = []
+    unaddressed_detractor_ids: list[str] = []
+    issues: list[str] = []
+
+    for idx, item in enumerate(stakeholder_surveys):
+        if not isinstance(item, dict):
+            continue
+        total_surveyed += 1
+        stakeholder_id = str(item.get("stakeholder_id") or f"STK-{idx + 1}").strip()
+        rating = float(item.get("nps_rating_0_to_10") or 0.0)
+        is_key = bool(item.get("is_high_influence_key_stakeholder", False))
+        prev_raw = item.get("previous_nps_rating_0_to_10")
+        has_concern = bool(item.get("has_unresolved_concern", False))
+
+        if rating >= 9.0:
+            promoters_count += 1
+        elif rating <= 6.0:
+            detractors_count += 1
+
+        if is_key and rating <= 6.0:
+            key_detractor_stakeholder_ids.append(stakeholder_id)
+            issues.append(
+                f"Interesado clave de alta influencia '{stakeholder_id}' en rango detractor (NPS={rating:.1f})."
+            )
+
+        if prev_raw is not None:
+            prev_rating = float(prev_raw)
+            if (prev_rating - rating) >= 2.0:
+                declining_sentiment_stakeholder_ids.append(stakeholder_id)
+                issues.append(
+                    f"Interesado '{stakeholder_id}' presenta caída de sentimiento de {prev_rating:.1f} a {rating:.1f}."
+                )
+
+        if rating <= 6.0 and has_concern:
+            unaddressed_detractor_ids.append(stakeholder_id)
+            issues.append(
+                f"Detractor '{stakeholder_id}' mantiene preocupaciones sin respuesta."
+            )
+
+    net_promoter_score_nps = (
+        round(((promoters_count - detractors_count) / total_surveyed) * 100.0, 2)
+        if total_surveyed > 0
+        else 0.0
+    )
+
+    if total_surveyed > 0 and net_promoter_score_nps < min_nps:
+        issues.append(
+            f"NPS global ({net_promoter_score_nps:.2f}) inferior al umbral mínimo aceptable ({min_nps:.2f})."
+        )
+
+    if (
+        len(key_detractor_stakeholder_ids) > max_key_detractors
+        or len(unaddressed_detractor_ids) > 0
+    ):
+        sentiment_health_status = "CRITICAL_RESISTANCE"
+    elif len(declining_sentiment_stakeholder_ids) > 0 or (
+        total_surveyed > 0 and net_promoter_score_nps < min_nps
+    ):
+        sentiment_health_status = "SENTIMENT_EROSION"
+    else:
+        sentiment_health_status = "SUPPORTIVE"
+
+    return {
+        "total_surveyed": total_surveyed,
+        "net_promoter_score_nps": net_promoter_score_nps,
+        "key_detractor_stakeholder_ids": key_detractor_stakeholder_ids,
+        "declining_sentiment_stakeholder_ids": declining_sentiment_stakeholder_ids,
+        "unaddressed_detractor_ids": unaddressed_detractor_ids,
+        "sentiment_health_status": sentiment_health_status,
+        "is_sentiment_healthy": sentiment_health_status == "SUPPORTIVE",
+        "issues": issues,
+    }
+
+
+ProjectExportService.audit_executive_report_stakeholder_sentiment_and_nps_drift = staticmethod(
+    audit_executive_report_stakeholder_sentiment_and_nps_drift
+)
+

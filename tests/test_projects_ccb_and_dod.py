@@ -7031,3 +7031,113 @@ def test_audit_scope_creep_and_gold_plating_effort_empty_and_binding():
         == audit_scope_creep_and_gold_plating_effort(sample)
     )
     assert "audit_scope_creep_and_gold_plating_effort" in mod.__all__
+
+
+def test_audit_quality_spc_control_chart_in_control():
+    """Caso 1: Muestras dentro de +-3 sigma, dentro de USL/LSL y sin corrida de 7 -> IN_STATISTICAL_CONTROL."""
+    from backend.services.project_ccb_service import (
+        audit_quality_spc_control_chart_stability,
+    )
+
+    samples = [
+        {"sample_id": "S-01", "measured_value": 10.2},
+        {"sample_id": "S-02", "measured_value": 9.8},
+        {"sample_id": "S-03", "measured_value": 10.5},
+        {"sample_id": "S-04", "measured_value": 9.6},
+        {"sample_id": "S-05", "measured_value": 10.0},
+    ]
+    res = audit_quality_spc_control_chart_stability(
+        samples,
+        center_line_mean=10.0,
+        one_sigma_std_dev=0.5,
+        upper_spec_limit_usl=12.0,
+        lower_spec_limit_lsl=8.0,
+    )
+    assert res["total_samples"] == 5
+    assert res["ucl_3sigma"] == 11.5
+    assert res["lcl_3sigma"] == 8.5
+    assert res["beyond_3sigma_sample_ids"] == []
+    assert res["beyond_spec_limit_sample_ids"] == []
+    assert res["rule_of_seven_run_detected"] is False
+    assert res["process_stability_status"] == "IN_STATISTICAL_CONTROL"
+    assert res["is_process_stable"] is True
+    assert res["issues"] == []
+
+
+def test_audit_quality_spc_control_chart_out_of_control_rule_of_seven_and_3sigma():
+    """Caso 2: Corrida de 7 puntos de un lado de la media o punto fuera de 3 sigma (dentro de USL/LSL) -> OUT_OF_CONTROL."""
+    from backend.services.project_ccb_service import (
+        audit_quality_spc_control_chart_stability,
+    )
+
+    samples = [
+        {"sample_id": f"S-{i}", "measured_value": 10.3} for i in range(1, 8)
+    ] + [{"sample_id": "S-8", "measured_value": 11.6}]
+    res = audit_quality_spc_control_chart_stability(
+        samples,
+        center_line_mean=10.0,
+        one_sigma_std_dev=0.5,
+        upper_spec_limit_usl=12.0,
+        lower_spec_limit_lsl=8.0,
+    )
+    assert res["total_samples"] == 8
+    assert res["beyond_3sigma_sample_ids"] == ["S-8"]
+    assert res["beyond_spec_limit_sample_ids"] == []
+    assert res["rule_of_seven_run_detected"] is True
+    assert res["process_stability_status"] == "OUT_OF_CONTROL"
+    assert res["is_process_stable"] is False
+    assert len(res["issues"]) >= 2
+
+
+def test_audit_quality_spc_control_chart_out_of_spec():
+    """Caso 3: Punto supera USL o cae bajo LSL -> OUT_OF_SPEC."""
+    from backend.services.project_ccb_service import (
+        audit_quality_spc_control_chart_stability,
+    )
+
+    samples = [
+        {"sample_id": "S-01", "measured_value": 10.1},
+        {"sample_id": "S-02", "measured_value": 12.4},
+        {"sample_id": "S-03", "measured_value": 7.5},
+    ]
+    res = audit_quality_spc_control_chart_stability(
+        samples,
+        center_line_mean=10.0,
+        one_sigma_std_dev=1.0,
+        upper_spec_limit_usl=12.0,
+        lower_spec_limit_lsl=8.0,
+    )
+    assert res["total_samples"] == 3
+    assert res["beyond_spec_limit_sample_ids"] == ["S-02", "S-03"]
+    assert res["process_stability_status"] == "OUT_OF_SPEC"
+    assert res["is_process_stable"] is False
+    assert len(res["issues"]) >= 1
+
+
+def test_audit_quality_spc_control_chart_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en ProjectCCBService y __all__."""
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_quality_spc_control_chart_stability,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_quality_spc_control_chart_stability(payload)  # type: ignore[arg-type]
+        assert empty["total_samples"] == 0
+        assert empty["ucl_3sigma"] == 3.0
+        assert empty["lcl_3sigma"] == -3.0
+        assert empty["beyond_3sigma_sample_ids"] == []
+        assert empty["beyond_spec_limit_sample_ids"] == []
+        assert empty["rule_of_seven_run_detected"] is False
+        assert empty["process_stability_status"] == "IN_STATISTICAL_CONTROL"
+        assert empty["is_process_stable"] is True
+        assert empty["issues"] == []
+
+    sample = [{"sample_id": "S-99", "measured_value": 0.2}]
+    assert (
+        ProjectCCBService.audit_quality_spc_control_chart_stability(sample)
+        == audit_quality_spc_control_chart_stability(sample)
+    )
+    assert "audit_quality_spc_control_chart_stability" in mod.__all__
+

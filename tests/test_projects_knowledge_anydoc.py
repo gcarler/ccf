@@ -5309,3 +5309,119 @@ def test_audit_markdown_acronym_glossary_neutral_and_binding():
         == audit_markdown_acronym_and_glossary_first_use_hygiene(sample)
     )
     assert "audit_markdown_acronym_and_glossary_first_use_hygiene" in mod.__all__
+
+
+def test_audit_markdown_mermaid_diagram_syntax_hygiene_clean():
+    """Caso 1: Bloques mermaid bien formados, tipos válidos y sin HTML crudo -> CLEAN."""
+    from backend.services.anydoc_service import (
+        audit_markdown_mermaid_diagram_syntax_hygiene,
+    )
+
+    md = (
+        "# Arquitectura\n\n"
+        "```mermaid\n"
+        "%% Comentario inicial\n"
+        "flowchart TD\n"
+        '    A["Inicio (PMO)"] --> B{"Aprobado?"}\n'
+        "```\n\n"
+        "~~~Mermaid\n"
+        "sequenceDiagram\n"
+        "    Alice->>Bob: Hola\n"
+        "~~~\n"
+    )
+    res = audit_markdown_mermaid_diagram_syntax_hygiene(md)
+    assert res["total_mermaid_blocks"] == 2
+    assert res["empty_mermaid_block_lines"] == []
+    assert res["unsupported_diagram_type_lines"] == []
+    assert res["unbalanced_bracket_block_lines"] == []
+    assert res["raw_html_tag_block_lines"] == []
+    assert res["mermaid_hygiene_status"] == "CLEAN"
+    assert res["is_compliant"] is True
+    assert res["issues"] == []
+
+
+def test_audit_markdown_mermaid_diagram_syntax_hygiene_syntax_errors():
+    """Caso 2: Bloque vacío, tipo no soportado o corchetes desbalanceados -> SYNTAX_ERROR."""
+    from backend.services.anydoc_service import (
+        audit_markdown_mermaid_diagram_syntax_hygiene,
+    )
+
+    md = (
+        "```mermaid\n"
+        "%% solo comentario\n"
+        "\n"
+        "```\n"
+        "```mermaid\n"
+        "unknownDiagram\n"
+        "    A --> B\n"
+        "```\n"
+        "```mermaid\n"
+        "flowchart LR\n"
+        "    A[Nodo sin cerrar --> B(Otro)\n"
+        "```\n"
+    )
+    res = audit_markdown_mermaid_diagram_syntax_hygiene(md)
+    assert res["total_mermaid_blocks"] == 3
+    assert res["empty_mermaid_block_lines"] == [1]
+    assert res["unsupported_diagram_type_lines"] == [5]
+    assert res["unbalanced_bracket_block_lines"] == [9]
+    assert res["mermaid_hygiene_status"] == "SYNTAX_ERROR"
+    assert res["is_compliant"] is False
+    assert len(res["issues"]) >= 3
+
+
+def test_audit_markdown_mermaid_diagram_syntax_hygiene_style_warning():
+    """Caso 3: Diagrama válido pero con etiquetas HTML crudas (<br>, <b>, etc.) -> STYLE_WARNING."""
+    from backend.services.anydoc_service import (
+        audit_markdown_mermaid_diagram_syntax_hygiene,
+    )
+
+    md = (
+        "Intro\n"
+        "```mermaid\n"
+        "flowchart TD\n"
+        '    A["Línea 1<br/>Línea 2"] --> B["<b>Título</b>"]\n'
+        "```\n"
+    )
+    res = audit_markdown_mermaid_diagram_syntax_hygiene(md)
+    assert res["total_mermaid_blocks"] == 1
+    assert res["empty_mermaid_block_lines"] == []
+    assert res["unsupported_diagram_type_lines"] == []
+    assert res["unbalanced_bracket_block_lines"] == []
+    assert res["raw_html_tag_block_lines"] == [2]
+    assert res["mermaid_hygiene_status"] == "STYLE_WARNING"
+    assert res["is_compliant"] is False
+    assert len(res["issues"]) >= 1
+
+
+def test_audit_markdown_mermaid_diagram_syntax_hygiene_empty_and_binding():
+    """Caso 4: Entradas vacías/None y exposición en AnyDocService, AnydocService y __all__."""
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_mermaid_diagram_syntax_hygiene,
+    )
+
+    for payload in (None, "", "   \n", "```python\nprint(1)\n```\n"):
+        empty = audit_markdown_mermaid_diagram_syntax_hygiene(payload)
+        assert empty["total_mermaid_blocks"] == 0
+        assert empty["empty_mermaid_block_lines"] == []
+        assert empty["unsupported_diagram_type_lines"] == []
+        assert empty["unbalanced_bracket_block_lines"] == []
+        assert empty["raw_html_tag_block_lines"] == []
+        assert empty["mermaid_hygiene_status"] == "CLEAN"
+        assert empty["is_compliant"] is True
+        assert empty["issues"] == []
+
+    sample = "```mermaid\ngraph LR\n    A --> B\n```\n"
+    assert (
+        AnyDocService.audit_markdown_mermaid_diagram_syntax_hygiene(sample)
+        == audit_markdown_mermaid_diagram_syntax_hygiene(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_mermaid_diagram_syntax_hygiene(sample)
+        == audit_markdown_mermaid_diagram_syntax_hygiene(sample)
+    )
+    assert "audit_markdown_mermaid_diagram_syntax_hygiene" in mod.__all__
+

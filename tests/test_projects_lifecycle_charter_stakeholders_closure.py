@@ -5923,6 +5923,8 @@ def test_audit_stakeholder_power_interest_and_salience_drift_empty_and_service_b
     assert "audit_stakeholder_power_interest_and_salience_drift" in mod.__all__
 
 
+
+
 def test_ocm_adkar_adoption_healthy_and_critical():
     """Unidad conforme -> compliant; champion ausente + go-live prematuro -> CRITICAL."""
     from backend.services.project_lifecycle_pmi_service import (
@@ -6303,6 +6305,7 @@ def test_audit_project_administrative_and_contract_closure_readiness_empty_and_s
         "audit_project_administrative_and_contract_closure_readiness"
         in mod.__all__
     )
+
 
 
 def test_portfolio_strategic_alignment_esg_aligned_and_misaligned():
@@ -6769,3 +6772,118 @@ def test_audit_steering_committee_quorum_and_escalation_sla_empty_and_binding():
         "audit_steering_committee_quorum_and_escalation_sla"
         in mod.__all__
     )
+
+
+def test_business_case_npv_irr_payback_viable():
+    """Caso 1: NPV > 0, IRR >= hurdle, payback en límite y BCR >= mínimo -> INVESTMENT_VIABLE."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_business_case_npv_irr_and_payback_viability,
+    )
+
+    res = audit_business_case_npv_irr_and_payback_viability(
+        net_present_value_usd=250000.0,
+        internal_rate_of_return_pct=18.5,
+        hurdle_discount_rate_pct=12.0,
+        payback_period_months=24.0,
+        max_acceptable_payback_months=36.0,
+        benefit_cost_ratio_bcr=1.45,
+        min_required_bcr=1.1,
+    )
+    assert res["npv_positive_or_zero"] is True
+    assert res["irr_exceeds_hurdle"] is True
+    assert res["irr_spread_pct"] == 6.5
+    assert res["payback_within_limit"] is True
+    assert res["bcr_viable"] is True
+    assert res["failed_criteria"] == []
+    assert res["investment_decision_status"] == "INVESTMENT_VIABLE"
+    assert res["is_financially_justified"] is True
+    assert res["issues"] == []
+
+
+def test_business_case_npv_irr_payback_marginal_watch():
+    """Caso 2: NPV >= 0 e IRR >= hurdle pero payback excedido o BCR bajo -> MARGINAL_WATCH."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_business_case_npv_irr_and_payback_viability,
+    )
+
+    res = audit_business_case_npv_irr_and_payback_viability(
+        net_present_value_usd=15000.0,
+        internal_rate_of_return_pct=12.0,
+        hurdle_discount_rate_pct=12.0,
+        payback_period_months=42.0,
+        max_acceptable_payback_months=36.0,
+        benefit_cost_ratio_bcr=1.05,
+        min_required_bcr=1.2,
+    )
+    assert res["npv_positive_or_zero"] is True
+    assert res["irr_exceeds_hurdle"] is True
+    assert res["irr_spread_pct"] == 0.0
+    assert res["payback_within_limit"] is False
+    assert res["bcr_viable"] is False
+    assert res["failed_criteria"] == ["payback_exceeded", "bcr_below_minimum"]
+    assert res["investment_decision_status"] == "MARGINAL_WATCH"
+    assert res["is_financially_justified"] is False
+    assert len(res["issues"]) >= 2
+
+
+def test_business_case_npv_irr_payback_reject_or_re_scope():
+    """Caso 3: NPV negativo o IRR < hurdle -> REJECT_OR_RE_SCOPE."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_business_case_npv_irr_and_payback_viability,
+    )
+
+    res = audit_business_case_npv_irr_and_payback_viability(
+        net_present_value_usd=-50000.0,
+        internal_rate_of_return_pct=7.25,
+        hurdle_discount_rate_pct=10.0,
+        payback_period_months=18.0,
+        max_acceptable_payback_months=36.0,
+        benefit_cost_ratio_bcr=1.3,
+        min_required_bcr=1.0,
+    )
+    assert res["npv_positive_or_zero"] is False
+    assert res["irr_exceeds_hurdle"] is False
+    assert res["irr_spread_pct"] == -2.75
+    assert res["payback_within_limit"] is True
+    assert res["bcr_viable"] is True
+    assert res["failed_criteria"] == ["npv_negative", "irr_below_hurdle"]
+    assert res["investment_decision_status"] == "REJECT_OR_RE_SCOPE"
+    assert res["is_financially_justified"] is False
+    assert len(res["issues"]) >= 2
+
+
+def test_business_case_npv_irr_payback_defaults_and_binding():
+    """Caso 4: Defaults, payback <= 0 no válido y binding en ProjectLifecyclePMIService + __all__."""
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_business_case_npv_irr_and_payback_viability,
+    )
+
+    defaults = audit_business_case_npv_irr_and_payback_viability()
+    assert defaults["npv_positive_or_zero"] is True
+    assert defaults["irr_exceeds_hurdle"] is False
+    assert defaults["irr_spread_pct"] == -10.0
+    assert defaults["payback_within_limit"] is False
+    assert defaults["bcr_viable"] is True
+    assert defaults["failed_criteria"] == ["irr_below_hurdle", "payback_exceeded"]
+    assert defaults["investment_decision_status"] == "REJECT_OR_RE_SCOPE"
+    assert defaults["is_financially_justified"] is False
+
+    kwargs = {
+        "net_present_value_usd": 100000.0,
+        "internal_rate_of_return_pct": 15.0,
+        "hurdle_discount_rate_pct": 10.0,
+        "payback_period_months": 20.0,
+        "max_acceptable_payback_months": 36.0,
+        "benefit_cost_ratio_bcr": 1.25,
+        "min_required_bcr": 1.0,
+    }
+    assert (
+        ProjectLifecyclePMIService.audit_business_case_npv_irr_and_payback_viability(
+            **kwargs
+        )
+        == audit_business_case_npv_irr_and_payback_viability(**kwargs)
+    )
+    assert "audit_business_case_npv_irr_and_payback_viability" in mod.__all__
+

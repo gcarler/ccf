@@ -2832,6 +2832,7 @@ __all__ = [
     "audit_quality_capa_root_cause_and_recurrence",
     "audit_configuration_baseline_integrity_and_version_drift",
     "audit_scope_creep_and_gold_plating_effort",
+    "audit_quality_spc_control_chart_stability",
     "ProjectCCBService",
 ]
 
@@ -5453,3 +5454,107 @@ def audit_scope_creep_and_gold_plating_effort(
 ProjectCCBService.audit_scope_creep_and_gold_plating_effort = staticmethod(
     audit_scope_creep_and_gold_plating_effort
 )
+
+
+def audit_quality_spc_control_chart_stability(
+    sample_points: list[dict[str, Any]],
+    *,
+    center_line_mean: float = 0.0,
+    one_sigma_std_dev: float = 1.0,
+    upper_spec_limit_usl: float | None = None,
+    lower_spec_limit_lsl: float | None = None,
+) -> dict[str, Any]:
+    """Audita estabilidad estadística de gráficos de control SPC y Regla de Siete (PMI PMBOK §8.3)."""
+    mean = float(center_line_mean if center_line_mean is not None else 0.0)
+    sigma = max(0.0, float(one_sigma_std_dev if one_sigma_std_dev is not None else 1.0))
+    usl = float(upper_spec_limit_usl) if upper_spec_limit_usl is not None else None
+    lsl = float(lower_spec_limit_lsl) if lower_spec_limit_lsl is not None else None
+
+    ucl_3sigma = round(mean + 3.0 * sigma, 4)
+    lcl_3sigma = round(mean - 3.0 * sigma, 4)
+
+    if not isinstance(sample_points, list):
+        return {
+            "total_samples": 0,
+            "ucl_3sigma": ucl_3sigma,
+            "lcl_3sigma": lcl_3sigma,
+            "beyond_3sigma_sample_ids": [],
+            "beyond_spec_limit_sample_ids": [],
+            "rule_of_seven_run_detected": False,
+            "process_stability_status": "IN_STATISTICAL_CONTROL",
+            "is_process_stable": True,
+            "issues": [],
+        }
+
+    total_samples = 0
+    beyond_3sigma_sample_ids: list[str] = []
+    beyond_spec_limit_sample_ids: list[str] = []
+    issues: list[str] = []
+
+    above_run = 0
+    below_run = 0
+    rule_of_seven_run_detected = False
+
+    for idx, item in enumerate(sample_points):
+        if not isinstance(item, dict):
+            continue
+        total_samples += 1
+        sample_id = str(item.get("sample_id") or f"SAMPLE-{idx + 1}").strip()
+        measured_value = float(item.get("measured_value") or 0.0)
+
+        if measured_value > ucl_3sigma or measured_value < lcl_3sigma:
+            beyond_3sigma_sample_ids.append(sample_id)
+            issues.append(
+                f"Muestra '{sample_id}' ({measured_value:.4f}) fuera de límites de control ±3σ [{lcl_3sigma:.4f}, {ucl_3sigma:.4f}]."
+            )
+
+        if (usl is not None and measured_value > usl) or (
+            lsl is not None and measured_value < lsl
+        ):
+            beyond_spec_limit_sample_ids.append(sample_id)
+            issues.append(
+                f"Muestra '{sample_id}' ({measured_value:.4f}) fuera de límites de especificación USL/LSL."
+            )
+
+        if measured_value > mean:
+            above_run += 1
+            below_run = 0
+        elif measured_value < mean:
+            below_run += 1
+            above_run = 0
+        else:
+            above_run = 0
+            below_run = 0
+
+        if above_run >= 7 or below_run >= 7:
+            rule_of_seven_run_detected = True
+
+    if rule_of_seven_run_detected:
+        issues.append(
+            "Se detectó corrida no aleatoria de >= 7 puntos consecutivos del mismo lado de la línea central (Rule of Seven)."
+        )
+
+    if len(beyond_spec_limit_sample_ids) > 0:
+        process_stability_status = "OUT_OF_SPEC"
+    elif len(beyond_3sigma_sample_ids) > 0 or rule_of_seven_run_detected:
+        process_stability_status = "OUT_OF_CONTROL"
+    else:
+        process_stability_status = "IN_STATISTICAL_CONTROL"
+
+    return {
+        "total_samples": total_samples,
+        "ucl_3sigma": ucl_3sigma,
+        "lcl_3sigma": lcl_3sigma,
+        "beyond_3sigma_sample_ids": beyond_3sigma_sample_ids,
+        "beyond_spec_limit_sample_ids": beyond_spec_limit_sample_ids,
+        "rule_of_seven_run_detected": rule_of_seven_run_detected,
+        "process_stability_status": process_stability_status,
+        "is_process_stable": process_stability_status == "IN_STATISTICAL_CONTROL",
+        "issues": issues,
+    }
+
+
+ProjectCCBService.audit_quality_spc_control_chart_stability = staticmethod(
+    audit_quality_spc_control_chart_stability
+)
+

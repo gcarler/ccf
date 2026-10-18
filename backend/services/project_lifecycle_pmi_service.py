@@ -3153,6 +3153,7 @@ __all__ = [
     "audit_project_administrative_and_contract_closure_readiness",
     "audit_portfolio_strategic_alignment_and_esg_sustainability",
     "audit_steering_committee_quorum_and_escalation_sla",
+    "audit_business_case_npv_irr_and_payback_viability",
     "ProjectLifecyclePMIService",
 ]
 
@@ -5173,6 +5174,7 @@ ProjectLifecyclePMIService.audit_stakeholder_power_interest_and_salience_drift =
 )
 
 
+
 def audit_organizational_change_management_adkar_and_adoption(
     business_units: Sequence[Mapping[str, Any]] | None,
     *,
@@ -5412,6 +5414,7 @@ ProjectLifecyclePMIService.audit_project_administrative_and_contract_closure_rea
 )
 
 
+
 def audit_portfolio_strategic_alignment_and_esg_sustainability(
     strategic_objectives: Sequence[Mapping[str, Any]] | None,
     *,
@@ -5633,3 +5636,81 @@ def audit_steering_committee_quorum_and_escalation_sla(
 ProjectLifecyclePMIService.audit_steering_committee_quorum_and_escalation_sla = staticmethod(
     audit_steering_committee_quorum_and_escalation_sla
 )
+
+
+def audit_business_case_npv_irr_and_payback_viability(
+    *,
+    net_present_value_usd: float = 0.0,
+    internal_rate_of_return_pct: float = 0.0,
+    hurdle_discount_rate_pct: float = 10.0,
+    payback_period_months: float = 0.0,
+    max_acceptable_payback_months: float = 36.0,
+    benefit_cost_ratio_bcr: float = 1.0,
+    min_required_bcr: float = 1.0,
+) -> dict[str, Any]:
+    """Audita viabilidad financiera de Business Case (NPV, IRR, Payback y BCR — PMI PMBOK §1.2.6)."""
+    npv = float(net_present_value_usd or 0.0)
+    irr = float(internal_rate_of_return_pct or 0.0)
+    hurdle = float(hurdle_discount_rate_pct if hurdle_discount_rate_pct is not None else 10.0)
+    payback = float(payback_period_months or 0.0)
+    max_payback = float(
+        max_acceptable_payback_months if max_acceptable_payback_months is not None else 36.0
+    )
+    bcr = float(benefit_cost_ratio_bcr if benefit_cost_ratio_bcr is not None else 1.0)
+    min_bcr = float(min_required_bcr if min_required_bcr is not None else 1.0)
+
+    npv_positive_or_zero = bool(npv >= 0.0)
+    irr_exceeds_hurdle = bool(irr >= hurdle)
+    irr_spread_pct = round(irr - hurdle, 2)
+    payback_within_limit = bool(0.0 < payback <= max_payback)
+    bcr_viable = bool(bcr >= min_bcr)
+
+    failed_criteria: list[str] = []
+    issues: list[str] = []
+
+    if not npv_positive_or_zero:
+        failed_criteria.append("npv_negative")
+        issues.append(f"NPV negativo ({npv:.2f} USD < 0.0)")
+    if not irr_exceeds_hurdle:
+        failed_criteria.append("irr_below_hurdle")
+        issues.append(f"IRR ({irr:.2f}%) inferior a la tasa de corte ({hurdle:.2f}%)")
+    if not payback_within_limit:
+        failed_criteria.append("payback_exceeded")
+        issues.append(
+            f"Periodo de recuperación ({payback:.1f} meses) fuera de rango permitido (0 < payback <= {max_payback:.1f})"
+        )
+    if not bcr_viable:
+        failed_criteria.append("bcr_below_minimum")
+        issues.append(f"BCR ({bcr:.2f}) inferior al mínimo requerido ({min_bcr:.2f})")
+
+    if not npv_positive_or_zero or not irr_exceeds_hurdle:
+        investment_decision_status = "REJECT_OR_RE_SCOPE"
+    elif not payback_within_limit or not bcr_viable:
+        investment_decision_status = "MARGINAL_WATCH"
+    else:
+        investment_decision_status = "INVESTMENT_VIABLE"
+
+    return {
+        "net_present_value_usd": npv,
+        "internal_rate_of_return_pct": irr,
+        "hurdle_discount_rate_pct": hurdle,
+        "payback_period_months": payback,
+        "max_acceptable_payback_months": max_payback,
+        "benefit_cost_ratio_bcr": bcr,
+        "min_required_bcr": min_bcr,
+        "npv_positive_or_zero": npv_positive_or_zero,
+        "irr_exceeds_hurdle": irr_exceeds_hurdle,
+        "irr_spread_pct": irr_spread_pct,
+        "payback_within_limit": payback_within_limit,
+        "bcr_viable": bcr_viable,
+        "failed_criteria": failed_criteria,
+        "investment_decision_status": investment_decision_status,
+        "is_financially_justified": investment_decision_status == "INVESTMENT_VIABLE",
+        "issues": issues,
+    }
+
+
+ProjectLifecyclePMIService.audit_business_case_npv_irr_and_payback_viability = staticmethod(
+    audit_business_case_npv_irr_and_payback_viability
+)
+

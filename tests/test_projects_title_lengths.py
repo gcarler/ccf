@@ -5451,3 +5451,341 @@ def test_validate_schedule_network_pdm_lead_lag_hygiene_empty_and_export():
 
 
 
+
+
+def test_rtm_bidirectional_fully_traced_and_gap():
+    """Todo trazado -> FULLY_TRACED; mandatory sin test o falta de WBS -> TRACEABILITY_GAP."""
+    from backend.schemas.projects import (
+        validate_requirements_traceability_bidirectional_coverage,
+    )
+
+    def req(rid, obj=None, wbs=None, test=None, prio="mandatory", deferred=False):
+        return {
+            "requirement_id": rid,
+            "priority_class": prio,
+            "business_objective_id": obj,
+            "wbs_deliverable_id": wbs,
+            "verification_test_case_id": test,
+            "is_deferred_or_descoped": deferred,
+        }
+
+    fully = validate_requirements_traceability_bidirectional_coverage(
+        [req("REQ-1", "OBJ-1", "WBS-1", "TC-1"), req("REQ-2", "OBJ-2", "WBS-2", "TC-2", "should")]
+    )
+    assert fully["active_requirements_count"] == 2
+    assert fully["fully_traced_count"] == 2
+    assert fully["traceability_coverage_pct"] == 100.0
+    assert fully["backward_untraced_requirement_ids"] == []
+    assert fully["forward_untraced_wbs_requirement_ids"] == []
+    assert fully["unverified_test_requirement_ids"] == []
+    assert fully["rtm_governance_status"] == "FULLY_TRACED"
+    assert fully["is_valid"] is True
+
+    gap = validate_requirements_traceability_bidirectional_coverage(
+        [
+            req("REQ-3", "OBJ-3", None, None),
+            req("REQ-4", "OBJ-4", "WBS-4", "TC-4"),
+        ]
+    )
+    assert gap["forward_untraced_wbs_requirement_ids"] == ["REQ-3"]
+    assert gap["unverified_test_requirement_ids"] == ["REQ-3"]
+    assert gap["rtm_governance_status"] == "TRACEABILITY_GAP"
+    assert gap["is_valid"] is False
+
+    # Unverified solo para mandatory: should sin test no genera hallazgo de tests.
+    should_scope = validate_requirements_traceability_bidirectional_coverage(
+        [req("REQ-5", "OBJ-5", "WBS-5", None, "should")]
+    )
+    assert should_scope["unverified_test_requirement_ids"] == []
+    assert should_scope["traceability_coverage_pct"] == 0.0
+    assert should_scope["rtm_governance_status"] == "PARTIAL_COVERAGE"
+
+    # Flag apagado: mandatory sin test tampoco genera unverified.
+    flag_off = validate_requirements_traceability_bidirectional_coverage(
+        [req("REQ-6", "OBJ-6", "WBS-6", None)],
+        require_test_case_for_mandatory=False,
+    )
+    assert flag_off["unverified_test_requirement_ids"] == []
+    assert flag_off["traceability_coverage_pct"] == 0.0
+    assert flag_off["rtm_governance_status"] == "PARTIAL_COVERAGE"
+
+
+def test_rtm_bidirectional_partial_coverage_and_deferred():
+    """Backward sin objetivo o cobertura < min -> PARTIAL_COVERAGE; deferred/descoped excluidos."""
+    from backend.schemas.projects import (
+        validate_requirements_traceability_bidirectional_coverage,
+    )
+
+    def req(rid, obj=None, wbs=None, test=None, prio="mandatory", deferred=False):
+        return {
+            "requirement_id": rid,
+            "priority_class": prio,
+            "business_objective_id": obj,
+            "wbs_deliverable_id": wbs,
+            "verification_test_case_id": test,
+            "is_deferred_or_descoped": deferred,
+        }
+
+    backward = validate_requirements_traceability_bidirectional_coverage(
+        [req("REQ-7", None, "WBS-7", "TC-7")]
+    )
+    assert backward["backward_untraced_requirement_ids"] == ["REQ-7"]
+    assert backward["forward_untraced_wbs_requirement_ids"] == []
+    assert backward["traceability_coverage_pct"] == 0.0
+    assert backward["rtm_governance_status"] == "PARTIAL_COVERAGE"
+
+    deferred = validate_requirements_traceability_bidirectional_coverage(
+        [
+            req("REQ-8", "OBJ-8", "WBS-8", "TC-8"),
+            req("REQ-9", None, None, None, deferred=True),
+        ]
+    )
+    assert deferred["active_requirements_count"] == 1
+    assert deferred["fully_traced_count"] == 1
+    assert deferred["traceability_coverage_pct"] == 100.0
+    assert deferred["rtm_governance_status"] == "FULLY_TRACED"
+
+    # Umbral custom: 75% con min 80 -> PARTIAL_COVERAGE; con min 70 -> FULLY_TRACED.
+    four = [
+        req("REQ-10", "OBJ-10", "WBS-10", "TC-10"),
+        req("REQ-11", "OBJ-11", "WBS-11", "TC-11"),
+        req("REQ-12", "OBJ-12", "WBS-12", "TC-12"),
+        req("REQ-13", "OBJ-13", "WBS-13", None, "should"),
+    ]
+    under = validate_requirements_traceability_bidirectional_coverage(
+        four, min_traceability_coverage_pct=80.0
+    )
+    assert under["traceability_coverage_pct"] == 75.0
+    assert under["rtm_governance_status"] == "PARTIAL_COVERAGE"
+
+    over = validate_requirements_traceability_bidirectional_coverage(
+        four, min_traceability_coverage_pct=70.0
+    )
+    assert over["traceability_coverage_pct"] == 75.0
+    assert over["rtm_governance_status"] == "FULLY_TRACED"
+    assert over["is_valid"] is True
+
+
+def test_rtm_bidirectional_neutral_and_edge_cases():
+    """Lista vacía -> 100.0 FULLY_TRACED; no-dict ignorados; prioridad case-insensitive."""
+    from backend.schemas.projects import (
+        validate_requirements_traceability_bidirectional_coverage,
+    )
+
+    for payload in (None, "no-list", 42):
+        empty = validate_requirements_traceability_bidirectional_coverage(payload)
+        assert empty["active_requirements_count"] == 0
+        assert empty["fully_traced_count"] == 0
+        assert empty["traceability_coverage_pct"] == 100.0
+        assert empty["rtm_governance_status"] == "FULLY_TRACED"
+        assert empty["is_valid"] is True
+
+    mixed = validate_requirements_traceability_bidirectional_coverage(
+        [
+            "no-dict",
+            42,
+            {
+                "requirement_id": "REQ-14",
+                "priority_class": "could",
+                "business_objective_id": "OBJ-14",
+                "wbs_deliverable_id": "WBS-14",
+                "verification_test_case_id": "TC-14",
+                "is_deferred_or_descoped": False,
+            },
+        ]
+    )
+    assert mixed["active_requirements_count"] == 1
+    assert mixed["fully_traced_count"] == 1
+    assert mixed["traceability_coverage_pct"] == 100.0
+    assert mixed["rtm_governance_status"] == "FULLY_TRACED"
+
+    # Prioridad con espacios y mayúsculas: ' MANDATORY ' sin test -> unverified.
+    case_insensitive = validate_requirements_traceability_bidirectional_coverage(
+        [
+            {
+                "requirement_id": "REQ-15",
+                "priority_class": "  MANDATORY ",
+                "business_objective_id": "OBJ-15",
+                "wbs_deliverable_id": "WBS-15",
+                "verification_test_case_id": None,
+                "is_deferred_or_descoped": False,
+            }
+        ]
+    )
+    assert case_insensitive["unverified_test_requirement_ids"] == ["REQ-15"]
+    assert case_insensitive["rtm_governance_status"] == "TRACEABILITY_GAP"
+
+    # IDs con whitespace cuentan como presentes (strip antes de evaluar).
+    whitespace_ok = validate_requirements_traceability_bidirectional_coverage(
+        [
+            {
+                "requirement_id": "REQ-16",
+                "priority_class": "mandatory",
+                "business_objective_id": "  OBJ-16  ",
+                "wbs_deliverable_id": "  WBS-16  ",
+                "verification_test_case_id": "  TC-16  ",
+                "is_deferred_or_descoped": False,
+            }
+        ]
+    )
+    assert whitespace_ok["fully_traced_count"] == 1
+    assert whitespace_ok["rtm_governance_status"] == "FULLY_TRACED"
+
+
+def test_rtm_bidirectional_all_pass_and_precedence():
+    """TRACEABILITY_GAP domina; status consolidation; validación directa vs __all__ del caso completo."""
+    from backend.schemas.projects import (
+        validate_requirements_traceability_bidirectional_coverage,
+    )
+    import backend.schemas.projects as mod
+
+    mixed_breaches = validate_requirements_traceability_bidirectional_coverage(
+        [
+            {
+                "requirement_id": "REQ-17",
+                "priority_class": "mandatory",
+                "business_objective_id": None,
+                "wbs_deliverable_id": None,
+                "verification_test_case_id": None,
+                "is_deferred_or_descoped": False,
+            }
+        ]
+    )
+    # Sin test (mandatory) y sin WBS -> TRACEABILITY_GAP aunque también sin objetivo.
+    assert mixed_breaches["rtm_governance_status"] == "TRACEABILITY_GAP"
+    assert mixed_breaches["backward_untraced_requirement_ids"] == ["REQ-17"]
+
+    empty_ok = validate_requirements_traceability_bidirectional_coverage([])
+    assert empty_ok["is_valid"] is True
+
+    plain_req = {
+        "requirement_id": "REQ-18",
+        "priority_class": "mandatory",
+        "business_objective_id": "OBJ",
+        "wbs_deliverable_id": "WBS",
+        "verification_test_case_id": None,
+        "is_deferred_or_descoped": False,
+    }
+    plain = validate_requirements_traceability_bidirectional_coverage([plain_req])
+    assert plain["unverified_test_requirement_ids"] == ["REQ-18"]
+    assert "validate_requirements_traceability_bidirectional_coverage" in mod.__all__
+
+
+def test_validate_three_point_pert_and_triangular_calibrated():
+    """Caso 1: Paquetes Beta y Triangular con 0 < O <= M <= P y dispersión controlada -> CALIBRATED."""
+    from backend.schemas.projects import (
+        validate_three_point_pert_and_triangular_estimates,
+    )
+
+    estimates = [
+        {
+            "work_package_id": "WP-101",
+            "optimistic_o": 6.0,
+            "most_likely_m": 9.0,
+            "pessimistic_p": 12.0,
+            "distribution": "beta",  # expected = 9.0, std = 1.0
+        },
+        {
+            "work_package_id": "WP-102",
+            "optimistic_o": 6.0,
+            "most_likely_m": 9.0,
+            "pessimistic_p": 15.0,
+            "distribution": "triangular",  # expected = 10.0, std = sqrt((36+81+225-54-90-135)/18)=sqrt(63/18)=sqrt(3.5)=1.8708
+        },
+    ]
+    res = validate_three_point_pert_and_triangular_estimates(
+        estimates,
+        max_uncertainty_ratio=3.0,
+        max_cv_coefficient_of_variation_pct=35.0,
+    )
+    assert res["is_valid"] is True
+    assert res["total_estimates"] == 2
+    assert res["inverted_ordering_wp_ids"] == []
+    assert res["excessive_spread_wp_ids"] == []
+    assert res["total_pert_expected"] == 19.0
+    assert res["portfolio_combined_std_dev"] == 2.12
+    assert res["estimation_governance_status"] == "CALIBRATED"
+    assert res["issues"] == []
+
+
+def test_validate_three_point_pert_and_triangular_high_uncertainty_cone():
+    """Caso 2: P/O > max_uncertainty_ratio o CV% > max_cv -> HIGH_UNCERTAINTY_CONE."""
+    from backend.schemas.projects import (
+        validate_three_point_pert_and_triangular_estimates,
+    )
+
+    estimates = [
+        {
+            "work_package_id": "WP-CONE",
+            "optimistic_o": 4.0,
+            "most_likely_m": 8.0,
+            "pessimistic_p": 20.0,  # P/O = 5.0 > 3.0
+            "distribution": "beta",
+        }
+    ]
+    res = validate_three_point_pert_and_triangular_estimates(
+        estimates,
+        max_uncertainty_ratio=3.0,
+        max_cv_coefficient_of_variation_pct=35.0,
+    )
+    assert res["is_valid"] is False
+    assert res["total_estimates"] == 1
+    assert res["inverted_ordering_wp_ids"] == []
+    assert res["excessive_spread_wp_ids"] == ["WP-CONE"]
+    assert res["estimation_governance_status"] == "HIGH_UNCERTAINTY_CONE"
+    assert len(res["issues"]) >= 1
+
+
+def test_validate_three_point_pert_and_triangular_invalid_bounds():
+    """Caso 3: O <= 0 o O > M o M > P -> INVALID_BOUNDS."""
+    from backend.schemas.projects import (
+        validate_three_point_pert_and_triangular_estimates,
+    )
+
+    estimates = [
+        {
+            "work_package_id": "WP-INV-1",
+            "optimistic_o": 12.0,
+            "most_likely_m": 8.0,
+            "pessimistic_p": 15.0,
+            "distribution": "beta",
+        },
+        {
+            "work_package_id": "WP-INV-2",
+            "optimistic_o": 0.0,
+            "most_likely_m": 5.0,
+            "pessimistic_p": 10.0,
+            "distribution": "triangular",
+        },
+    ]
+    res = validate_three_point_pert_and_triangular_estimates(estimates)
+    assert res["is_valid"] is False
+    assert res["total_estimates"] == 2
+    assert res["inverted_ordering_wp_ids"] == ["WP-INV-1", "WP-INV-2"]
+    assert res["excessive_spread_wp_ids"] == []
+    assert res["total_pert_expected"] == 0.0
+    assert res["portfolio_combined_std_dev"] == 0.0
+    assert res["estimation_governance_status"] == "INVALID_BOUNDS"
+    assert len(res["issues"]) >= 2
+
+
+def test_validate_three_point_pert_and_triangular_empty_and_export():
+    """Caso 4: Entradas vacías/inválidas y presencia en __all__."""
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_three_point_pert_and_triangular_estimates,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = validate_three_point_pert_and_triangular_estimates(payload)  # type: ignore[arg-type]
+        assert empty["is_valid"] is True
+        assert empty["total_estimates"] == 0
+        assert empty["inverted_ordering_wp_ids"] == []
+        assert empty["excessive_spread_wp_ids"] == []
+        assert empty["total_pert_expected"] == 0.0
+        assert empty["portfolio_combined_std_dev"] == 0.0
+        assert empty["estimation_governance_status"] == "CALIBRATED"
+        assert empty["issues"] == []
+
+    assert "validate_three_point_pert_and_triangular_estimates" in mod.__all__
+

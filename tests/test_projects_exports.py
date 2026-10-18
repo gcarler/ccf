@@ -7246,3 +7246,156 @@ def test_audit_executive_report_supply_chain_lead_time_and_single_source_empty_a
         "audit_executive_report_supply_chain_lead_time_and_single_source"
         in mod.__all__
     )
+
+
+def test_audit_executive_report_stakeholder_sentiment_supportive():
+    """Caso 1: NPS >= 10, sin detractores clave ni preocupaciones sin resolver -> SUPPORTIVE."""
+    from backend.services.project_export_service import (
+        audit_executive_report_stakeholder_sentiment_and_nps_drift,
+    )
+
+    surveys = [
+        {
+            "stakeholder_id": "STK-01",
+            "nps_rating_0_to_10": 10.0,
+            "is_high_influence_key_stakeholder": True,
+            "previous_nps_rating_0_to_10": 9.0,
+            "has_unresolved_concern": False,
+        },
+        {
+            "stakeholder_id": "STK-02",
+            "nps_rating_0_to_10": 9.0,
+            "is_high_influence_key_stakeholder": False,
+            "previous_nps_rating_0_to_10": 8.0,
+            "has_unresolved_concern": False,
+        },
+        {
+            "stakeholder_id": "STK-03",
+            "nps_rating_0_to_10": 8.0,
+            "is_high_influence_key_stakeholder": True,
+            "previous_nps_rating_0_to_10": 8.0,
+            "has_unresolved_concern": False,
+        },
+    ]
+    res = audit_executive_report_stakeholder_sentiment_and_nps_drift(
+        surveys, min_acceptable_nps_score=10.0, max_key_detractor_count=0
+    )
+    assert res["total_surveyed"] == 3
+    assert res["net_promoter_score_nps"] == 66.67
+    assert res["key_detractor_stakeholder_ids"] == []
+    assert res["declining_sentiment_stakeholder_ids"] == []
+    assert res["unaddressed_detractor_ids"] == []
+    assert res["sentiment_health_status"] == "SUPPORTIVE"
+    assert res["is_sentiment_healthy"] is True
+    assert res["issues"] == []
+
+
+def test_audit_executive_report_stakeholder_sentiment_erosion():
+    """Caso 2: Caída >= 2 puntos en NPS o NPS global < mínimo sin detractor clave -> SENTIMENT_EROSION."""
+    from backend.services.project_export_service import (
+        audit_executive_report_stakeholder_sentiment_and_nps_drift,
+    )
+
+    surveys = [
+        {
+            "stakeholder_id": "STK-10",
+            "nps_rating_0_to_10": 7.0,
+            "is_high_influence_key_stakeholder": True,
+            "previous_nps_rating_0_to_10": 9.5,  # caída 2.5 >= 2.0
+            "has_unresolved_concern": False,
+        },
+        {
+            "stakeholder_id": "STK-11",
+            "nps_rating_0_to_10": 8.0,
+            "is_high_influence_key_stakeholder": False,
+            "previous_nps_rating_0_to_10": 8.0,
+            "has_unresolved_concern": False,
+        },
+    ]
+    res = audit_executive_report_stakeholder_sentiment_and_nps_drift(
+        surveys, min_acceptable_nps_score=10.0, max_key_detractor_count=0
+    )
+    assert res["total_surveyed"] == 2
+    assert res["net_promoter_score_nps"] == 0.0
+    assert res["key_detractor_stakeholder_ids"] == []
+    assert res["declining_sentiment_stakeholder_ids"] == ["STK-10"]
+    assert res["unaddressed_detractor_ids"] == []
+    assert res["sentiment_health_status"] == "SENTIMENT_EROSION"
+    assert res["is_sentiment_healthy"] is False
+    assert len(res["issues"]) >= 2
+
+
+def test_audit_executive_report_stakeholder_sentiment_critical_resistance():
+    """Caso 3: Detractor clave o detractor con preocupación sin resolver -> CRITICAL_RESISTANCE."""
+    from backend.services.project_export_service import (
+        audit_executive_report_stakeholder_sentiment_and_nps_drift,
+    )
+
+    surveys = [
+        {
+            "stakeholder_id": "STK-KEY-DET",
+            "nps_rating_0_to_10": 5.0,
+            "is_high_influence_key_stakeholder": True,
+            "previous_nps_rating_0_to_10": 8.0,
+            "has_unresolved_concern": True,
+        },
+        {
+            "stakeholder_id": "STK-PROM",
+            "nps_rating_0_to_10": 10.0,
+            "is_high_influence_key_stakeholder": False,
+            "previous_nps_rating_0_to_10": 10.0,
+            "has_unresolved_concern": False,
+        },
+    ]
+    res = audit_executive_report_stakeholder_sentiment_and_nps_drift(
+        surveys, min_acceptable_nps_score=10.0, max_key_detractor_count=0
+    )
+    assert res["total_surveyed"] == 2
+    assert res["net_promoter_score_nps"] == 0.0
+    assert res["key_detractor_stakeholder_ids"] == ["STK-KEY-DET"]
+    assert res["declining_sentiment_stakeholder_ids"] == ["STK-KEY-DET"]
+    assert res["unaddressed_detractor_ids"] == ["STK-KEY-DET"]
+    assert res["sentiment_health_status"] == "CRITICAL_RESISTANCE"
+    assert res["is_sentiment_healthy"] is False
+    assert len(res["issues"]) >= 2
+
+
+def test_audit_executive_report_stakeholder_sentiment_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en ProjectExportService + __all__."""
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_stakeholder_sentiment_and_nps_drift,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_executive_report_stakeholder_sentiment_and_nps_drift(payload)  # type: ignore[arg-type]
+        assert empty["total_surveyed"] == 0
+        assert empty["net_promoter_score_nps"] == 0.0
+        assert empty["key_detractor_stakeholder_ids"] == []
+        assert empty["declining_sentiment_stakeholder_ids"] == []
+        assert empty["unaddressed_detractor_ids"] == []
+        assert empty["sentiment_health_status"] == "SUPPORTIVE"
+        assert empty["is_sentiment_healthy"] is True
+        assert empty["issues"] == []
+
+    sample = [
+        {
+            "stakeholder_id": "STK-99",
+            "nps_rating_0_to_10": 9.5,
+            "is_high_influence_key_stakeholder": True,
+            "previous_nps_rating_0_to_10": 9.0,
+            "has_unresolved_concern": False,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_stakeholder_sentiment_and_nps_drift(
+            sample
+        )
+        == audit_executive_report_stakeholder_sentiment_and_nps_drift(sample)
+    )
+    assert (
+        "audit_executive_report_stakeholder_sentiment_and_nps_drift"
+        in mod.__all__
+    )
+

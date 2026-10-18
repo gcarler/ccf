@@ -5866,6 +5866,12 @@ def test_evaluate_evm_undistributed_budget_and_planning_package_aging_empty_and_
     )
 
 
+
+
+
+
+
+
 def test_evm_cv_decomposition_healthy_and_rate_breach():
     """Paquete conforme -> compliany; desvío de tarifa sobre umbral -> breach (acciones log OK evita regla 3)."""
     from backend.services.project_evm_service import (
@@ -6422,3 +6428,148 @@ def test_earned_schedule_eac_t_tspi_neutral_and_binding():
         == evaluate_evm_earned_schedule_eac_t_and_tspi(**sample)
     )
     assert "evaluate_evm_earned_schedule_eac_t_and_tspi" in mod.__all__
+
+
+def test_evm_loe_contamination_clean():
+    """Caso 1: LOE dentro de límite, EV_loe == PV_loe y sin enmascaramiento -> CLEAN."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_loe_contamination_and_variance_masking,
+    )
+
+    cas = [
+        {
+            "ca_id": "CA-101",
+            "discrete_bac": 90000.0,
+            "loe_bac": 10000.0,
+            "discrete_ev": 45000.0,
+            "discrete_pv": 46000.0,
+            "loe_ev": 5000.0,
+            "loe_pv": 5000.0,
+        },
+        {
+            "ca_id": "CA-102",
+            "discrete_bac": 88000.0,
+            "loe_bac": 12000.0,
+            "discrete_ev": 44000.0,
+            "discrete_pv": 44000.0,
+            "loe_ev": 6000.0,
+            "loe_pv": 6000.0,
+        },
+    ]
+    res = evaluate_evm_loe_contamination_and_variance_masking(
+        cas, max_loe_budget_share_pct=15.0
+    )
+    assert res["total_control_accounts"] == 2
+    assert res["excessive_loe_ca_ids"] == []
+    assert res["loe_pv_mismatch_ca_ids"] == []
+    assert res["masked_schedule_delay_ca_ids"] == []
+    assert res["project_loe_share_pct"] == 11.0
+    assert res["loe_governance_status"] == "CLEAN"
+    assert res["is_loe_compliant"] is True
+    assert res["issues"] == []
+
+
+def test_evm_loe_contamination_loe_heavy():
+    """Caso 2: CA supera el porcentaje de LOE permitido sin enmascaramiento -> LOE_HEAVY."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_loe_contamination_and_variance_masking,
+    )
+
+    cas = [
+        {
+            "ca_id": "CA-201",
+            "discrete_bac": 70000.0,
+            "loe_bac": 30000.0,
+            "discrete_ev": 35000.0,
+            "discrete_pv": 35000.0,
+            "loe_ev": 15000.0,
+            "loe_pv": 15000.0,
+        }
+    ]
+    res = evaluate_evm_loe_contamination_and_variance_masking(
+        cas, max_loe_budget_share_pct=15.0
+    )
+    assert res["total_control_accounts"] == 1
+    assert res["excessive_loe_ca_ids"] == ["CA-201"]
+    assert res["loe_pv_mismatch_ca_ids"] == []
+    assert res["masked_schedule_delay_ca_ids"] == []
+    assert res["project_loe_share_pct"] == 30.0
+    assert res["loe_governance_status"] == "LOE_HEAVY"
+    assert res["is_loe_compliant"] is False
+    assert len(res["issues"]) >= 1
+
+
+def test_evm_loe_contamination_masking_and_accounting_error():
+    """Caso 3: SPI combinado >= 0.95 pero SPI discreto < 0.90 o LOE EV != PV -> MASKING_OR_ACCOUNTING_ERROR."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_loe_contamination_and_variance_masking,
+    )
+
+    cas = [
+        {
+            "ca_id": "CA-MASK",
+            "discrete_bac": 50000.0,
+            "loe_bac": 50000.0,
+            "discrete_ev": 8500.0,
+            "discrete_pv": 10000.0,  # discrete SPI = 0.85 < 0.90
+            "loe_ev": 20000.0,
+            "loe_pv": 20000.0,  # combined SPI = 28500 / 30000 = 0.95 >= 0.95
+        },
+        {
+            "ca_id": "CA-ERR",
+            "discrete_bac": 90000.0,
+            "loe_bac": 10000.0,
+            "discrete_ev": 45000.0,
+            "discrete_pv": 45000.0,
+            "loe_ev": 5200.0,
+            "loe_pv": 5000.0,  # mismatch > 0.01
+        },
+    ]
+    res = evaluate_evm_loe_contamination_and_variance_masking(
+        cas, max_loe_budget_share_pct=15.0
+    )
+    assert res["total_control_accounts"] == 2
+    assert res["excessive_loe_ca_ids"] == ["CA-MASK"]
+    assert res["loe_pv_mismatch_ca_ids"] == ["CA-ERR"]
+    assert res["masked_schedule_delay_ca_ids"] == ["CA-MASK"]
+    assert res["loe_governance_status"] == "MASKING_OR_ACCOUNTING_ERROR"
+    assert res["is_loe_compliant"] is False
+    assert len(res["issues"]) >= 2
+
+
+def test_evm_loe_contamination_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en ProjectEVMService + __all__."""
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_loe_contamination_and_variance_masking,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = evaluate_evm_loe_contamination_and_variance_masking(payload)  # type: ignore[arg-type]
+        assert empty["total_control_accounts"] == 0
+        assert empty["excessive_loe_ca_ids"] == []
+        assert empty["loe_pv_mismatch_ca_ids"] == []
+        assert empty["masked_schedule_delay_ca_ids"] == []
+        assert empty["project_loe_share_pct"] == 0.0
+        assert empty["loe_governance_status"] == "CLEAN"
+        assert empty["is_loe_compliant"] is True
+        assert empty["issues"] == []
+
+    sample = [
+        {
+            "ca_id": "CA-99",
+            "discrete_bac": 90000.0,
+            "loe_bac": 10000.0,
+            "discrete_ev": 45000.0,
+            "discrete_pv": 45000.0,
+            "loe_ev": 5000.0,
+            "loe_pv": 5000.0,
+        }
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_loe_contamination_and_variance_masking(sample)
+        == evaluate_evm_loe_contamination_and_variance_masking(sample)
+    )
+    assert "evaluate_evm_loe_contamination_and_variance_masking" in mod.__all__
+

@@ -3797,6 +3797,8 @@ __all__ = [
     "validate_make_or_buy_breakeven_and_tco",
     "validate_risk_response_strategy_and_contingency_triggers",
     "validate_schedule_network_pdm_lead_lag_hygiene",
+    "validate_requirements_traceability_bidirectional_coverage",
+    "validate_three_point_pert_and_triangular_estimates",
 ]
 
 
@@ -6566,4 +6568,197 @@ def validate_schedule_network_pdm_lead_lag_hygiene(
     }
 
 
+
+
+
+
+def validate_requirements_traceability_bidirectional_coverage(
+    requirements: list[dict[str, Any]] | None,
+    *,
+    min_traceability_coverage_pct: float = 95.0,
+    require_test_case_for_mandatory: bool = True,
+) -> dict[str, Any]:
+    """PMBOK 5.2 — Requirements Traceability Matrix (RTM) bidireccional.
+
+    Validator puro sobre ``requirements``. Entradas no-lista/None se tratan
+    como lista vacía y elementos no-dict se ignoran. Reglas evaluadas sobre
+    requisitos ACTIVOS (``is_deferred_or_descoped`` falsy):
+
+    1. ``backward_untraced_requirement_ids``: ``business_objective_id``
+       vacío/None.
+    2. ``forward_untraced_wbs_requirement_ids``: ``wbs_deliverable_id``
+       vacío/None.
+    3. ``unverified_test_requirement_ids``: ``verification_test_case_id``
+       vacío/None AND ``require_test_case_for_mandatory`` AND
+       ``str(priority_class).strip().lower() == 'mandatory'``.
+    4. ``fully_traced_count``: activos con los 3 IDs presentes.
+    5. ``traceability_coverage_pct``: round(fully_traced / active * 100, 2)
+       (100.0 si no hay activos).
+    6. ``rtm_governance_status``: TRACEABILITY_GAP si hay unverified o
+       forward-untraced; PARTIAL_COVERAGE si hay backward-untraced o
+       cobertura < mínima; FULLY_TRACED en otro caso.
+    ``is_valid`` = status == 'FULLY_TRACED'.
+    """
+    def _text(value: Any) -> str:
+        if value is None or isinstance(value, bool):
+            return ""
+        if isinstance(value, str):
+            return value.strip()
+        return ""
+
+    raw_items = requirements if isinstance(requirements, list) else []
+    items = [entry for entry in raw_items if isinstance(entry, Mapping)]
+
+    active = [entry for entry in items if entry.get("is_deferred_or_descoped") is not True]
+    active_count = len(active)
+
+    backward_untraced_requirement_ids: list[str] = []
+    forward_untraced_wbs_requirement_ids: list[str] = []
+    unverified_test_requirement_ids: list[str] = []
+    fully_traced_count = 0
+
+    for entry in active:
+        requirement_id = entry.get("requirement_id")
+        objective_id = _text(entry.get("business_objective_id"))
+        wbs_id = _text(entry.get("wbs_deliverable_id"))
+        test_case_id = _text(entry.get("verification_test_case_id"))
+        priority_class = _text(entry.get("priority_class")).lower()
+
+        missing_objective = not objective_id
+        missing_wbs = not wbs_id
+        missing_test = not test_case_id
+
+        if missing_objective:
+            backward_untraced_requirement_ids.append(requirement_id)
+        if missing_wbs:
+            forward_untraced_wbs_requirement_ids.append(requirement_id)
+        if missing_test and require_test_case_for_mandatory and priority_class == "mandatory":
+            unverified_test_requirement_ids.append(requirement_id)
+
+        if not missing_objective and not missing_wbs and not missing_test:
+            fully_traced_count += 1
+
+    traceability_coverage_pct = (
+        round((fully_traced_count / active_count) * 100.0, 2) if active_count > 0 else 100.0
+    )
+
+    if unverified_test_requirement_ids or forward_untraced_wbs_requirement_ids:
+        rtm_governance_status = "TRACEABILITY_GAP"
+    elif backward_untraced_requirement_ids or traceability_coverage_pct < min_traceability_coverage_pct:
+        rtm_governance_status = "PARTIAL_COVERAGE"
+    else:
+        rtm_governance_status = "FULLY_TRACED"
+
+    return {
+        "active_requirements_count": active_count,
+        "fully_traced_count": fully_traced_count,
+        "traceability_coverage_pct": traceability_coverage_pct,
+        "backward_untraced_requirement_ids": backward_untraced_requirement_ids,
+        "forward_untraced_wbs_requirement_ids": forward_untraced_wbs_requirement_ids,
+        "unverified_test_requirement_ids": unverified_test_requirement_ids,
+        "rtm_governance_status": rtm_governance_status,
+        "is_valid": rtm_governance_status == "FULLY_TRACED",
+    }
+
+
+def validate_three_point_pert_and_triangular_estimates(
+    estimates: list[dict[str, Any]],
+    *,
+    max_uncertainty_ratio: float = 3.0,
+    max_cv_coefficient_of_variation_pct: float = 35.0,
+) -> dict[str, Any]:
+    """Valida estimaciones por tres valores PERT (Beta) y Triangular (PMI PMBOK §6.4 / §7.2)."""
+    if not isinstance(estimates, list):
+        return {
+            "is_valid": True,
+            "total_estimates": 0,
+            "inverted_ordering_wp_ids": [],
+            "excessive_spread_wp_ids": [],
+            "total_pert_expected": 0.0,
+            "portfolio_combined_std_dev": 0.0,
+            "estimation_governance_status": "CALIBRATED",
+            "issues": [],
+        }
+
+    max_ratio = float(
+        max_uncertainty_ratio if max_uncertainty_ratio is not None else 3.0
+    )
+    max_cv_pct = float(
+        max_cv_coefficient_of_variation_pct
+        if max_cv_coefficient_of_variation_pct is not None
+        else 35.0
+    )
+
+    total_estimates = 0
+    inverted_ordering_wp_ids: list[str] = []
+    excessive_spread_wp_ids: list[str] = []
+    issues: list[str] = []
+
+    expected_sum = 0.0
+    variance_sum = 0.0
+
+    for idx, item in enumerate(estimates):
+        if not isinstance(item, dict):
+            continue
+        total_estimates += 1
+        wp_id = str(item.get("work_package_id") or f"WP-{idx + 1}").strip()
+        o_val = float(item.get("optimistic_o") or 0.0)
+        m_val = float(item.get("most_likely_m") or 0.0)
+        p_val = float(item.get("pessimistic_p") or 0.0)
+        dist = str(item.get("distribution") or "beta").strip().lower()
+
+        if not (0.0 < o_val <= m_val <= p_val):
+            inverted_ordering_wp_ids.append(wp_id)
+            issues.append(
+                f"Paquete '{wp_id}' incumple el orden 0 < O <= M <= P (O={o_val}, M={m_val}, P={p_val})."
+            )
+            continue
+
+        if dist == "triangular":
+            expected = (o_val + m_val + p_val) / 3.0
+            radicand = max(
+                0.0,
+                o_val**2
+                + m_val**2
+                + p_val**2
+                - o_val * m_val
+                - o_val * p_val
+                - m_val * p_val,
+            )
+            std_dev = (radicand / 18.0) ** 0.5
+        else:
+            expected = (o_val + 4.0 * m_val + p_val) / 6.0
+            std_dev = (p_val - o_val) / 6.0
+
+        expected_sum += expected
+        variance_sum += std_dev**2
+
+        ratio_po = p_val / o_val
+        cv_pct = (std_dev / expected) * 100.0 if expected > 0.0 else 0.0
+        if ratio_po > max_ratio or cv_pct > max_cv_pct:
+            excessive_spread_wp_ids.append(wp_id)
+            issues.append(
+                f"Paquete '{wp_id}' presenta dispersión excesiva (P/O={ratio_po:.2f}, CV={cv_pct:.2f}%)."
+            )
+
+    total_pert_expected = round(expected_sum, 2)
+    portfolio_combined_std_dev = round(variance_sum**0.5, 2)
+
+    if len(inverted_ordering_wp_ids) > 0:
+        estimation_governance_status = "INVALID_BOUNDS"
+    elif len(excessive_spread_wp_ids) > 0:
+        estimation_governance_status = "HIGH_UNCERTAINTY_CONE"
+    else:
+        estimation_governance_status = "CALIBRATED"
+
+    return {
+        "is_valid": estimation_governance_status == "CALIBRATED",
+        "total_estimates": total_estimates,
+        "inverted_ordering_wp_ids": inverted_ordering_wp_ids,
+        "excessive_spread_wp_ids": excessive_spread_wp_ids,
+        "total_pert_expected": total_pert_expected,
+        "portfolio_combined_std_dev": portfolio_combined_std_dev,
+        "estimation_governance_status": estimation_governance_status,
+        "issues": issues,
+    }
 
