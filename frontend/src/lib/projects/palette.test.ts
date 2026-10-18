@@ -8,6 +8,7 @@ import {
   getPhaseColorOption,
   getProjectColorOption,
   normalizeProjectColor,
+  getRagHealthColorOption,
   type ProjectColorOption,
 } from "./palette";
 
@@ -121,6 +122,56 @@ describe("projects/palette — normalizeProjectColor", () => {
     "falls back for non-six-digit hex value %s",
     (value) => {
       expect(normalizeProjectColor(value)).toBe(DEFAULT_PROJECT_COLOR);
+    },
+  );
+});
+
+describe("projects/palette — getRagHealthColorOption (semáforo RAG PMI)", () => {
+  it.each(["off_track", "red", "critical", " OFF_TRACK ", "Red"])(
+    "estado crítico %s → token danger (#ef4444)",
+    (status) => {
+      expect(getRagHealthColorOption(status)).toEqual({
+        value: "#ef4444",
+        label: "Rojo urgente",
+        token: "danger",
+        preview: "bg-[hsl(var(--danger))]",
+      } satisfies ProjectColorOption);
+    },
+  );
+
+  it.each(["at_risk", "amber", "yellow", " Amber "])(
+    "estado en riesgo %s → token warning (#f59e0b)",
+    (status) => {
+      expect(getRagHealthColorOption(status)).toEqual({
+        value: "#f59e0b",
+        label: "Ámbar misión",
+        token: "warning",
+        preview: "bg-[hsl(var(--warning))]",
+      } satisfies ProjectColorOption);
+    },
+  );
+
+  it.each(["on_track", "green", "completed", " GREEN "])(
+    "estado en control %s → token success (#16a34a)",
+    (status) => {
+      expect(getRagHealthColorOption(status)).toEqual({
+        value: "#16a34a",
+        label: "Verde pastoral",
+        token: "success",
+        preview: "bg-[hsl(var(--success))]",
+      } satisfies ProjectColorOption);
+    },
+  );
+
+  it.each([null, undefined, "", "desconocido", "RED_X"])(
+    "valor nulo/desconocido %s → opción por defecto (primary #2563eb)",
+    (status) => {
+      expect(getRagHealthColorOption(status)).toEqual({
+        value: "#2563eb",
+        label: "Azul ministerial",
+        token: "primary",
+        preview: "bg-[hsl(var(--primary))]",
+      } satisfies ProjectColorOption);
     },
   );
 });

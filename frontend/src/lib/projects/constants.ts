@@ -205,3 +205,39 @@ export function getValidProjectStatus(value: string | null | undefined): Project
         ? (value as ProjectStatus)
         : DEFAULT_PROJECT_STATUS;
 }
+
+// ─── PMI RAG — salud del proyecto (semaforo §4.x) ──────────────────────────────
+// Slugs canónicos alineados con `ProjectRecord.health_status`. Los valores
+// legacy 'amber'/'red'/'green' de la franja ejecutiva se normalizan aquí.
+export const PMI_HEALTH_STATUSES = ['on_track', 'at_risk', 'off_track', 'completed'] as const;
+export type PmiHealthStatus = (typeof PMI_HEALTH_STATUSES)[number];
+
+export const PMI_HEALTH_LABELS: Record<PmiHealthStatus, string> = {
+    on_track: 'En Control (RAG Verde)',
+    at_risk: 'En Riesgo (RAG Ámbar)',
+    off_track: 'Crítico (RAG Rojo)',
+    completed: 'Cerrado',
+};
+
+/** Normaliza alias legacy/de UI al enum canónico de salud PMI (default: on_track). */
+export function normalizePmiHealthStatus(value: string | null | undefined): PmiHealthStatus {
+    const normalized = (value ?? '').trim().toLowerCase();
+    if (normalized === 'green' || normalized === 'on_track') return 'on_track';
+    if (normalized === 'amber' || normalized === 'yellow' || normalized === 'at_risk') return 'at_risk';
+    if (normalized === 'red' || normalized === 'critical' || normalized === 'off_track') return 'off_track';
+    if (normalized === 'completed' || normalized === 'done') return 'completed';
+    return 'on_track';
+}
+
+// ─── PMI §3.4 — Regla Fija EVMT de avance (0/50/100) ───────────────────────────
+/**
+ * Crédito de progreso regla fija: 100 si el paquete está completado,
+ * 50 cuando está en progreso o revisión, y 0 en cualquier otro estado
+ * (incluye todos/pendientes y entradas vacías).
+ */
+export function getTaskEvmtCredit(status: string | null | undefined): 0 | 50 | 100 {
+    const normalized = normalizeTaskStatus(status);
+    if (normalized === 'completed') return 100;
+    if (normalized === 'in_progress' || normalized === 'review') return 50;
+    return 0;
+}

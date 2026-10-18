@@ -28,3 +28,5 @@ export const FULL_VIEWS: ViewType[] = ["dashboard", "table", "list", "grid", "bo
 export const OPERATIONAL_VIEWS: ViewType[] = ["table", "list", "grid", "board", "kanban"];
 export const TEMPORAL_VIEWS: ViewType[] = ["calendar", "gantt", "table", "list"];
 export const MINIMAL_VIEWS: ViewType[] = ["table", "list", "grid"];
+export const PMI_GOVERNANCE_VIEWS: ViewType[] = ["dashboard", "table", "list", "gantt", "board", "wiki"];
+

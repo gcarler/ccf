@@ -28,6 +28,10 @@ import {
   DEFAULT_PROJECT_STATUS,
   PROJECT_STATUS_LABELS,
   getValidProjectStatus,
+  PMI_HEALTH_STATUSES,
+  PMI_HEALTH_LABELS,
+  normalizePmiHealthStatus,
+  getTaskEvmtCredit,
 } from "./constants";
 import type { PhaseDef } from "@/context/ProjectUpdateContext";
 
@@ -321,5 +325,61 @@ describe("projects/constants — getValidProjectStatus (fallback DEFAULT_PROJECT
   });
   it("string vacío → 'planning'", () => {
     expect(getValidProjectStatus("")).toBe(DEFAULT_PROJECT_STATUS);
+  });
+});
+
+describe("projects/constants — PMI RAG (salud del proyecto)", () => {
+  it("PMI_HEALTH_STATUSES contiene los 4 estados canónicos en orden", () => {
+    expect([...PMI_HEALTH_STATUSES]).toEqual(["on_track", "at_risk", "off_track", "completed"]);
+  });
+
+  it("PMI_HEALTH_LABELS mapea los 4 slugs con RAG en español", () => {
+    expect(PMI_HEALTH_LABELS.on_track).toBe("En Control (RAG Verde)");
+    expect(PMI_HEALTH_LABELS.at_risk).toBe("En Riesgo (RAG Ámbar)");
+    expect(PMI_HEALTH_LABELS.off_track).toBe("Crítico (RAG Rojo)");
+    expect(PMI_HEALTH_LABELS.completed).toBe("Cerrado");
+  });
+
+  it.each([
+    ["green", "on_track"],
+    ["on_track", "on_track"],
+    ["amber", "at_risk"],
+    ["yellow", "at_risk"],
+    ["at_risk", "at_risk"],
+    ["red", "off_track"],
+    ["critical", "off_track"],
+    ["off_track", "off_track"],
+    ["completed", "completed"],
+    ["done", "completed"],
+  ])("normalizePmiHealthStatus(%s) → %s", (input, expected) => {
+    expect(normalizePmiHealthStatus(input)).toBe(expected);
+  });
+
+  it("normalizePmiHealthStatus ignora mayúsculas/espacios y cae en on_track por defecto", () => {
+    expect(normalizePmiHealthStatus("  RED ")).toBe("off_track");
+    expect(normalizePmiHealthStatus("desconocido")).toBe("on_track");
+    expect(normalizePmiHealthStatus("")).toBe("on_track");
+    expect(normalizePmiHealthStatus(null)).toBe("on_track");
+    expect(normalizePmiHealthStatus(undefined)).toBe("on_track");
+  });
+});
+
+describe("projects/constants — getTaskEvmtCredit (Regla Fija PMI §3.4, 0/50/100)", () => {
+  it.each([
+    ["completed", 100],
+    ["done", 100],
+    ["in_progress", 50],
+    ["review", 50],
+    ["todo", 0],
+    [null, 0],
+    [undefined, 0],
+    ["", 0],
+  ])("EVMT credit de '%s' → %i", (input, expected) => {
+    expect(getTaskEvmtCredit(input)).toBe(expected);
+  });
+
+  it("respeta aliases de compatibilidad vía normalizeTaskStatus", () => {
+    expect(getTaskEvmtCredit("done")).toBe(100);
+    expect(getTaskEvmtCredit("pending")).toBe(0);
   });
 });

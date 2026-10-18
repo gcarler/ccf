@@ -16,3 +16,24 @@ export const GLOBAL_PROJECT_ROUTES: ReadonlySet<string> = new Set([
     'automations',
     'welcome',
 ]);
+
+/**
+ * PMI — guarda de ruteo: true si el segmento pertenece a las sub-rutas
+ * globales del portafolio (no es un UUID de proyecto). El segmento se
+ * normaliza a minúsculas sin espacios.
+ */
+export function isGlobalProjectRoute(segment: string | null | undefined): boolean {
+    const normalized = (segment ?? '').trim().toLowerCase();
+    if (!normalized) return false;
+    return GLOBAL_PROJECT_ROUTES.has(normalized);
+}
+
+/**
+ * PMI — guarda de ruteo: true si el segmento identifica una entidad de
+ * proyecto (contenido no vacío y que no es una sub-ruta global).
+ */
+export function isProjectEntityRoute(segment: string | null | undefined): boolean {
+    const normalized = (segment ?? '').trim();
+    if (!normalized) return false;
+    return !GLOBAL_PROJECT_ROUTES.has(normalized.toLowerCase());
+}

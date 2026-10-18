@@ -68,3 +68,26 @@ export function getPhaseColorOption(value: string): ProjectColorOption {
 export function getProjectColorOption(value: string): ProjectColorOption {
   return PROJECT_COLOR_OPTIONS.find((option) => option.value === value) ?? PROJECT_COLOR_OPTIONS[0];
 }
+
+/**
+ * PMI — Resuelve el color de la paleta del proyecto a partir del estado de
+ * salud RAG del semáforo (verde/ámbar/rojo). Normaliza a minúsculas/trim y
+ * acepta tanto slugs canónicos como alias legados; valores desconocidos o
+ * vacíos caen en la opción por defecto (primary).
+ */
+export function getRagHealthColorOption(healthStatus: string | null | undefined): ProjectColorOption {
+  const normalized = (healthStatus ?? '').trim().toLowerCase();
+  const byToken = (token: string) =>
+    PROJECT_COLOR_OPTIONS.find((option) => option.token === token) ?? PROJECT_COLOR_OPTIONS[0];
+
+  if (normalized === 'off_track' || normalized === 'red' || normalized === 'critical') {
+    return byToken('danger');
+  }
+  if (normalized === 'at_risk' || normalized === 'amber' || normalized === 'yellow') {
+    return byToken('warning');
+  }
+  if (normalized === 'on_track' || normalized === 'green' || normalized === 'completed') {
+    return byToken('success');
+  }
+  return PROJECT_COLOR_OPTIONS[0];
+}

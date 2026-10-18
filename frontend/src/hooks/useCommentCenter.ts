@@ -65,5 +65,15 @@ export function useCommentCenter({ tab, typeFilter, limit = 50 }: UseCommentCent
     fetchItems();
   }, [fetchItems]);
 
-  return { items, loading, error, refresh: fetchItems };
+  const summary = {
+    total: items.length,
+    unresolved: items.filter((i) => !i.is_resolved).length,
+    resolved: items.filter((i) => i.is_resolved).length,
+    withAttachments: items.filter(
+      (i) => Array.isArray(i.attachments) && i.attachments.length > 0,
+    ).length,
+  };
+
+  return { items, loading, error, refresh: fetchItems, summary };
 }
+
