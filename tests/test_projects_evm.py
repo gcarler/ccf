@@ -5456,4 +5456,164 @@ def test_evaluate_evm_subcontractor_flowdown_and_invoice_overbilling_empty_and_e
         }
 
 
+def test_evaluate_evm_earning_rule_gaming_and_duration_split_healthy():
+    """Paquetes saludables con 0_100 (1 período), 50_50 (<=2 períodos sin estancamiento) y weighted_milestones."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_earning_rule_gaming_and_duration_split,
+    )
+
+    wps = [
+        {
+            "id": "WP-01",
+            "earning_rule": "0_100",
+            "planned_reporting_periods": 1,
+            "periods_in_progress": 1,
+            "claimed_ev_pct": 100.0,
+            "bac": 10000.0,
+        },
+        {
+            "id": "WP-02",
+            "earning_rule": "50_50",
+            "planned_reporting_periods": 2,
+            "periods_in_progress": 1,
+            "claimed_ev_pct": 50.0,
+            "bac": 20000.0,
+        },
+        {
+            "id": "WP-03",
+            "earning_rule": "weighted_milestones",
+            "planned_reporting_periods": 4,
+            "periods_in_progress": 2,
+            "claimed_ev_pct": 65.0,
+            "bac": 50000.0,
+        },
+    ]
+    res = evaluate_evm_earning_rule_gaming_and_duration_split(wps)
+    assert res["total_work_packages"] == 3
+    assert res["compliant_work_packages"] == 3
+    assert res["inappropriate_0_100_duration_ids"] == []
+    assert res["inappropriate_50_50_duration_ids"] == []
+    assert res["stalled_50_50_opening_credit_ids"] == []
+    assert res["rule_credit_violation_ids"] == []
+    assert res["premature_ev_exposure_amount"] == 0.0
+    assert res["evmt_governance_health"] == "healthy"
+    assert res["is_compliant"] is True
+    assert res["recommendations"] == []
+
+
+def test_evaluate_evm_earning_rule_gaming_and_duration_split_at_risk_duration():
+    """Detecta inappropriate_0_100_duration_ids y inappropriate_50_50_duration_ids (at_risk)."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_earning_rule_gaming_and_duration_split,
+    )
+
+    wps = [
+        {
+            "wp_id": "WP-10",
+            "earning_rule": "0_100",
+            "planned_reporting_periods": 3,
+            "periods_in_progress": 1,
+            "claimed_ev_pct": 0.0,
+            "bac": 15000.0,
+        },
+        {
+            "wp_id": "WP-11",
+            "earning_rule": "50_50",
+            "planned_reporting_periods": 4,
+            "periods_in_progress": 1,
+            "claimed_ev_pct": 50.0,
+            "bac": 30000.0,
+        },
+    ]
+    res = evaluate_evm_earning_rule_gaming_and_duration_split(wps)
+    assert res["total_work_packages"] == 2
+    assert res["compliant_work_packages"] == 0
+    assert res["inappropriate_0_100_duration_ids"] == ["WP-10"]
+    assert res["inappropriate_50_50_duration_ids"] == ["WP-11"]
+    assert res["stalled_50_50_opening_credit_ids"] == []
+    assert res["rule_credit_violation_ids"] == []
+    assert res["premature_ev_exposure_amount"] == 15000.0
+    assert res["evmt_governance_health"] == "at_risk"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_evaluate_evm_earning_rule_gaming_and_duration_split_critical_stalled_and_violation():
+    """Detecta stalled_50_50_opening_credit_ids y rule_credit_violation_ids (critical y premature_ev_exposure_amount)."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_earning_rule_gaming_and_duration_split,
+    )
+
+    wps = [
+        {
+            "wp_id": "WP-20",
+            "earning_rule": "50_50",
+            "planned_reporting_periods": 2,
+            "periods_in_progress": 3,
+            "claimed_ev_pct": 50.0,
+            "bac": 40000.0,
+        },
+        {
+            "wp_id": "WP-21",
+            "earning_rule": "0_100",
+            "planned_reporting_periods": 1,
+            "periods_in_progress": 1,
+            "claimed_ev_pct": 40.0,
+            "bac": 10000.0,
+        },
+        {
+            "wp_id": "WP-22",
+            "earning_rule": "50_50",
+            "planned_reporting_periods": 2,
+            "periods_in_progress": 1,
+            "claimed_ev_pct": 75.0,
+            "bac": 20000.0,
+        },
+    ]
+    res = evaluate_evm_earning_rule_gaming_and_duration_split(wps)
+    assert res["total_work_packages"] == 3
+    assert res["compliant_work_packages"] == 0
+    assert res["stalled_50_50_opening_credit_ids"] == ["WP-20"]
+    assert res["rule_credit_violation_ids"] == ["WP-21", "WP-22"]
+    assert res["premature_ev_exposure_amount"] == 39000.0
+    assert res["evmt_governance_health"] == "critical"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_evaluate_evm_earning_rule_gaming_and_duration_split_empty_and_service_binding():
+    """Manejo defensivo de entradas vacías/no-secuencia y exposición en ProjectEVMService y __all__."""
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_earning_rule_gaming_and_duration_split,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = evaluate_evm_earning_rule_gaming_and_duration_split(payload)  # type: ignore[arg-type]
+        assert empty["total_work_packages"] == 0
+        assert empty["compliant_work_packages"] == 0
+        assert empty["premature_ev_exposure_amount"] == 0.0
+        assert empty["evmt_governance_health"] == "healthy"
+        assert empty["is_compliant"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "id": "WP-99",
+            "earning_rule": "0_100",
+            "planned_reporting_periods": 1,
+            "periods_in_progress": 1,
+            "claimed_ev_pct": 0.0,
+            "bac": 5000.0,
+        }
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_earning_rule_gaming_and_duration_split(sample)
+        == evaluate_evm_earning_rule_gaming_and_duration_split(sample)
+    )
+    assert "evaluate_evm_earning_rule_gaming_and_duration_split" in mod.__all__
+
+
+
 

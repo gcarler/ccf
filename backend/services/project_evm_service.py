@@ -5500,6 +5500,7 @@ __all__ = [
     "evaluate_evm_loe_masking_and_discrete_variance_distortion",
     "evaluate_evm_retroactive_change_and_negative_period_anomaly",
     "evaluate_evm_subcontractor_flowdown_and_invoice_overbilling",
+    "evaluate_evm_earning_rule_gaming_and_duration_split",
     "ProjectEVMService",
 ]
 
@@ -6993,6 +6994,183 @@ def evaluate_evm_subcontractor_flowdown_and_invoice_overbilling(
 ProjectEVMService.evaluate_evm_subcontractor_flowdown_and_invoice_overbilling = staticmethod(
     evaluate_evm_subcontractor_flowdown_and_invoice_overbilling
 )
+
+
+def evaluate_evm_earning_rule_gaming_and_duration_split(
+    work_packages: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_0_100_reporting_periods: int = 1,
+    max_50_50_reporting_periods: int = 2,
+    max_50_50_stalled_periods: int = 1,
+) -> dict[str, Any]:
+    """Evalúa la adecuación de técnicas EVMT (0/100 y 50/50) frente a la duración en períodos contables y el estancamiento oportunista al 50% (PMI PMBOK §7.4)."""
+    if (
+        work_packages is None
+        or isinstance(work_packages, (str, bytes))
+        or not isinstance(work_packages, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = work_packages
+
+    try:
+        max_0_100 = int(max_0_100_reporting_periods)
+    except (TypeError, ValueError):
+        max_0_100 = 1
+
+    try:
+        max_50_50 = int(max_50_50_reporting_periods)
+    except (TypeError, ValueError):
+        max_50_50 = 2
+
+    try:
+        max_stalled = int(max_50_50_stalled_periods)
+    except (TypeError, ValueError):
+        max_stalled = 1
+
+    total_work_packages = 0
+    compliant_work_packages = 0
+    premature_ev_exposure_raw = 0.0
+
+    inappropriate_0_100_duration_ids: list[str] = []
+    inappropriate_50_50_duration_ids: list[str] = []
+    stalled_50_50_opening_credit_ids: list[str] = []
+    rule_credit_violation_ids: list[str] = []
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_work_packages += 1
+
+        wp_id = (
+            str(raw.get("id") or raw.get("wp_id") or "").strip()
+            or "WP-UNKNOWN"
+        )
+        earning_rule = str(raw.get("earning_rule") or "").strip().lower()
+
+        try:
+            planned_reporting_periods = max(
+                1, int(raw.get("planned_reporting_periods") or 1)
+            )
+        except (TypeError, ValueError):
+            planned_reporting_periods = 1
+
+        try:
+            periods_in_progress = max(
+                0, int(raw.get("periods_in_progress") or 0)
+            )
+        except (TypeError, ValueError):
+            periods_in_progress = 0
+
+        try:
+            claimed_ev_pct = max(
+                0.0, min(100.0, float(raw.get("claimed_ev_pct") or 0.0))
+            )
+        except (TypeError, ValueError):
+            claimed_ev_pct = 0.0
+
+        try:
+            bac = max(0.0, float(raw.get("bac") or 0.0))
+        except (TypeError, ValueError):
+            bac = 0.0
+
+        is_inappropriate_0_100 = (
+            earning_rule == "0_100" and planned_reporting_periods > max_0_100
+        )
+        is_inappropriate_50_50 = (
+            earning_rule == "50_50" and planned_reporting_periods > max_50_50
+        )
+        is_stalled_50_50 = (
+            earning_rule == "50_50"
+            and 49.0 <= claimed_ev_pct <= 51.0
+            and periods_in_progress > max_stalled
+        )
+        is_credit_violation = (
+            earning_rule == "0_100" and 0.0 < claimed_ev_pct < 100.0
+        ) or (
+            earning_rule == "50_50"
+            and all(abs(claimed_ev_pct - v) > 0.01 for v in (0.0, 50.0, 100.0))
+        )
+
+        if is_inappropriate_0_100:
+            inappropriate_0_100_duration_ids.append(wp_id)
+        if is_inappropriate_50_50:
+            inappropriate_50_50_duration_ids.append(wp_id)
+        if is_stalled_50_50:
+            stalled_50_50_opening_credit_ids.append(wp_id)
+        if is_credit_violation:
+            rule_credit_violation_ids.append(wp_id)
+
+        if (
+            is_stalled_50_50
+            or is_credit_violation
+            or is_inappropriate_50_50
+        ):
+            premature_ev_exposure_raw += bac * (claimed_ev_pct / 100.0)
+
+        if (
+            not is_inappropriate_0_100
+            and not is_inappropriate_50_50
+            and not is_stalled_50_50
+            and not is_credit_violation
+        ):
+            compliant_work_packages += 1
+
+    premature_ev_exposure_amount = round(premature_ev_exposure_raw, 2)
+
+    is_compliant = (
+        len(inappropriate_0_100_duration_ids) == 0
+        and len(inappropriate_50_50_duration_ids) == 0
+        and len(stalled_50_50_opening_credit_ids) == 0
+        and len(rule_credit_violation_ids) == 0
+    )
+
+    if is_compliant:
+        evmt_governance_health = "healthy"
+    elif (
+        len(stalled_50_50_opening_credit_ids) > 0
+        or len(rule_credit_violation_ids) > 0
+    ):
+        evmt_governance_health = "critical"
+    else:
+        evmt_governance_health = "at_risk"
+
+    recommendations: list[str] = []
+    if inappropriate_0_100_duration_ids:
+        recommendations.append(
+            f"Subdividir o migrar a hitos ponderados los paquetes 0/100 que exceden {max_0_100} período(s): {inappropriate_0_100_duration_ids}."
+        )
+    if inappropriate_50_50_duration_ids:
+        recommendations.append(
+            f"Migrar a weighted_milestones los paquetes 50/50 que abarcan más de {max_50_50} períodos: {inappropriate_50_50_duration_ids}."
+        )
+    if stalled_50_50_opening_credit_ids:
+        recommendations.append(
+            f"Auditar paquetes 50/50 estancados en 50% por más de {max_stalled} período(s): {stalled_50_50_opening_credit_ids}."
+        )
+    if rule_credit_violation_ids:
+        recommendations.append(
+            f"Corregir porcentajes de EV reclamados que violan las reglas discretas 0/100 o 50/50 en {rule_credit_violation_ids}."
+        )
+
+    return {
+        "total_work_packages": total_work_packages,
+        "compliant_work_packages": compliant_work_packages,
+        "inappropriate_0_100_duration_ids": inappropriate_0_100_duration_ids,
+        "inappropriate_50_50_duration_ids": inappropriate_50_50_duration_ids,
+        "stalled_50_50_opening_credit_ids": stalled_50_50_opening_credit_ids,
+        "rule_credit_violation_ids": rule_credit_violation_ids,
+        "premature_ev_exposure_amount": premature_ev_exposure_amount,
+        "evmt_governance_health": evmt_governance_health,
+        "is_compliant": is_compliant,
+        "recommendations": recommendations,
+    }
+
+
+ProjectEVMService.evaluate_evm_earning_rule_gaming_and_duration_split = staticmethod(
+    evaluate_evm_earning_rule_gaming_and_duration_split
+)
+
 
 
 

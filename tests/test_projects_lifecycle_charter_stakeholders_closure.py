@@ -5614,3 +5614,145 @@ def test_audit_post_implementation_handover_custom_and_empty():
         == audit_post_implementation_benefits_sustainment_and_handover(sample)
     )
     assert "audit_post_implementation_benefits_sustainment_and_handover" in mod.__all__
+
+
+def test_audit_project_charter_measurable_criteria_and_authority_healthy():
+    """Secciones de Charter completas con KPIs medibles, criterios de salida, autoridad del PM y firma independiente del Sponsor."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_charter_measurable_criteria_and_authority,
+    )
+
+    sections = [
+        {
+            "id": "CHR-01",
+            "measurable_kpis_count": 2,
+            "exit_criteria_defined": True,
+            "pm_authority_documented": True,
+            "sponsor_signed": True,
+            "assigned_pm_is_also_sponsor": False,
+        },
+        {
+            "id": "CHR-02",
+            "measurable_kpis_count": 3,
+            "exit_criteria_defined": True,
+            "pm_authority_documented": True,
+            "sponsor_signed": True,
+            "assigned_pm_is_also_sponsor": False,
+        },
+    ]
+    res = audit_project_charter_measurable_criteria_and_authority(sections)
+    assert res["total_sections"] == 2
+    assert res["compliant_sections"] == 2
+    assert res["unmeasurable_objective_ids"] == []
+    assert res["missing_pm_authority_ids"] == []
+    assert res["unauthorized_or_conflicted_signoff_ids"] == []
+    assert res["charter_maturity_score"] == 100.0
+    assert res["charter_governance_health"] == "healthy"
+    assert res["is_compliant"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_project_charter_measurable_criteria_and_authority_at_risk():
+    """Detecta unmeasurable_objective_ids y missing_pm_authority_ids (charter_governance_health == 'at_risk')."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_charter_measurable_criteria_and_authority,
+    )
+
+    sections = [
+        {
+            "section_id": "CHR-10",
+            "measurable_kpis_count": 0,
+            "exit_criteria_defined": False,
+            "pm_authority_documented": True,
+            "sponsor_signed": True,
+            "assigned_pm_is_also_sponsor": False,
+        },
+        {
+            "section_id": "CHR-11",
+            "measurable_kpis_count": 2,
+            "exit_criteria_defined": True,
+            "pm_authority_documented": False,
+            "sponsor_signed": True,
+            "assigned_pm_is_also_sponsor": False,
+        },
+    ]
+    res = audit_project_charter_measurable_criteria_and_authority(sections)
+    assert res["total_sections"] == 2
+    assert res["compliant_sections"] == 0
+    assert res["unmeasurable_objective_ids"] == ["CHR-10"]
+    assert res["missing_pm_authority_ids"] == ["CHR-11"]
+    assert res["unauthorized_or_conflicted_signoff_ids"] == []
+    assert res["charter_maturity_score"] == 0.0
+    assert res["charter_governance_health"] == "at_risk"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_project_charter_measurable_criteria_and_authority_critical_signoff():
+    """Detecta falta de firma del sponsor o conflicto de segregación de funciones (assigned_pm_is_also_sponsor=True -> 'critical')."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_charter_measurable_criteria_and_authority,
+    )
+
+    sections = [
+        {
+            "objective_id": "CHR-20",
+            "measurable_kpis_count": 1,
+            "exit_criteria_defined": True,
+            "pm_authority_documented": True,
+            "sponsor_signed": False,
+            "assigned_pm_is_also_sponsor": False,
+        },
+        {
+            "objective_id": "CHR-21",
+            "measurable_kpis_count": 2,
+            "exit_criteria_defined": True,
+            "pm_authority_documented": True,
+            "sponsor_signed": True,
+            "assigned_pm_is_also_sponsor": True,
+        },
+    ]
+    res = audit_project_charter_measurable_criteria_and_authority(sections)
+    assert res["total_sections"] == 2
+    assert res["compliant_sections"] == 0
+    assert res["unauthorized_or_conflicted_signoff_ids"] == ["CHR-20", "CHR-21"]
+    assert res["charter_governance_health"] == "critical"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 1
+
+
+def test_audit_project_charter_measurable_criteria_and_authority_empty_and_service_binding():
+    """Manejo defensivo de entradas vacías/no-secuencia y exposición en ProjectLifecyclePMIService y __all__."""
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_project_charter_measurable_criteria_and_authority,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_project_charter_measurable_criteria_and_authority(payload)  # type: ignore[arg-type]
+        assert empty["total_sections"] == 0
+        assert empty["compliant_sections"] == 0
+        assert empty["charter_maturity_score"] == 100.0
+        assert empty["charter_governance_health"] == "healthy"
+        assert empty["is_compliant"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "id": "CHR-99",
+            "measurable_kpis_count": 1,
+            "exit_criteria_defined": True,
+            "pm_authority_documented": True,
+            "sponsor_signed": True,
+            "assigned_pm_is_also_sponsor": False,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_project_charter_measurable_criteria_and_authority(
+            sample
+        )
+        == audit_project_charter_measurable_criteria_and_authority(sample)
+    )
+    assert "audit_project_charter_measurable_criteria_and_authority" in mod.__all__
+

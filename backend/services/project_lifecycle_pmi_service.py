@@ -3147,6 +3147,7 @@ __all__ = [
     "audit_stage_gate_conditional_go_remediation_sla",
     "audit_team_virtual_overlap_and_onboarding_readiness",
     "audit_post_implementation_benefits_sustainment_and_handover",
+    "audit_project_charter_measurable_criteria_and_authority",
     "ProjectLifecyclePMIService",
 ]
 
@@ -4872,3 +4873,137 @@ def audit_post_implementation_benefits_sustainment_and_handover(
 ProjectLifecyclePMIService.audit_post_implementation_benefits_sustainment_and_handover = staticmethod(
     audit_post_implementation_benefits_sustainment_and_handover
 )
+
+
+def audit_project_charter_measurable_criteria_and_authority(
+    charter_sections: Sequence[Mapping[str, Any]] | None,
+    *,
+    min_measurable_kpis_per_objective: int = 1,
+    require_pm_authority_level: bool = True,
+    require_sponsor_signature: bool = True,
+) -> dict[str, Any]:
+    """Audita criterios de éxito medibles, autoridad del director de proyecto y firma independiente del patrocinador en el Acta de Constitución (PMI PMBOK §4.1 y §2.4)."""
+    if (
+        charter_sections is None
+        or isinstance(charter_sections, (str, bytes))
+        or not isinstance(charter_sections, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = charter_sections
+
+    try:
+        min_kpis = int(min_measurable_kpis_per_objective)
+    except (TypeError, ValueError):
+        min_kpis = 1
+
+    total_sections = 0
+    compliant_sections = 0
+
+    unmeasurable_objective_ids: list[str] = []
+    missing_pm_authority_ids: list[str] = []
+    unauthorized_or_conflicted_signoff_ids: list[str] = []
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_sections += 1
+
+        section_id = (
+            str(
+                raw.get("id")
+                or raw.get("section_id")
+                or raw.get("objective_id")
+                or ""
+            ).strip()
+            or "CHR-UNKNOWN"
+        )
+
+        try:
+            measurable_kpis_count = max(
+                0, int(raw.get("measurable_kpis_count") or 0)
+            )
+        except (TypeError, ValueError):
+            measurable_kpis_count = 0
+
+        exit_criteria_defined = bool(raw.get("exit_criteria_defined"))
+        pm_authority_documented = bool(raw.get("pm_authority_documented"))
+        sponsor_signed = bool(raw.get("sponsor_signed"))
+        assigned_pm_is_also_sponsor = bool(
+            raw.get("assigned_pm_is_also_sponsor")
+        )
+
+        is_unmeasurable = (
+            measurable_kpis_count < min_kpis or not exit_criteria_defined
+        )
+        is_missing_pm_authority = (
+            bool(require_pm_authority_level) and not pm_authority_documented
+        )
+        is_unauthorized_or_conflicted = (
+            bool(require_sponsor_signature) and not sponsor_signed
+        ) or assigned_pm_is_also_sponsor
+
+        if is_unmeasurable:
+            unmeasurable_objective_ids.append(section_id)
+        if is_missing_pm_authority:
+            missing_pm_authority_ids.append(section_id)
+        if is_unauthorized_or_conflicted:
+            unauthorized_or_conflicted_signoff_ids.append(section_id)
+
+        if (
+            not is_unmeasurable
+            and not is_missing_pm_authority
+            and not is_unauthorized_or_conflicted
+        ):
+            compliant_sections += 1
+
+    charter_maturity_score = (
+        100.0
+        if total_sections == 0
+        else round((compliant_sections / total_sections) * 100.0, 2)
+    )
+
+    is_compliant = (
+        len(unmeasurable_objective_ids) == 0
+        and len(missing_pm_authority_ids) == 0
+        and len(unauthorized_or_conflicted_signoff_ids) == 0
+    )
+
+    if is_compliant:
+        charter_governance_health = "healthy"
+    elif len(unauthorized_or_conflicted_signoff_ids) > 0:
+        charter_governance_health = "critical"
+    else:
+        charter_governance_health = "at_risk"
+
+    recommendations: list[str] = []
+    if unmeasurable_objective_ids:
+        recommendations.append(
+            f"Definir al menos {min_kpis} KPI(s) medibles y criterios de salida explícitos (exit_criteria_defined) en {unmeasurable_objective_ids}."
+        )
+    if missing_pm_authority_ids:
+        recommendations.append(
+            f"Documentar el nivel de autoridad y límites de decisión del Director del Proyecto en {missing_pm_authority_ids}."
+        )
+    if unauthorized_or_conflicted_signoff_ids:
+        recommendations.append(
+            f"Garantizar firma formal del Patrocinador independiente del Director del Proyecto (segregación de funciones) en {unauthorized_or_conflicted_signoff_ids}."
+        )
+
+    return {
+        "total_sections": total_sections,
+        "compliant_sections": compliant_sections,
+        "unmeasurable_objective_ids": unmeasurable_objective_ids,
+        "missing_pm_authority_ids": missing_pm_authority_ids,
+        "unauthorized_or_conflicted_signoff_ids": unauthorized_or_conflicted_signoff_ids,
+        "charter_maturity_score": charter_maturity_score,
+        "charter_governance_health": charter_governance_health,
+        "is_compliant": is_compliant,
+        "recommendations": recommendations,
+    }
+
+
+ProjectLifecyclePMIService.audit_project_charter_measurable_criteria_and_authority = staticmethod(
+    audit_project_charter_measurable_criteria_and_authority
+)
+
