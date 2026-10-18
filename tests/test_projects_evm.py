@@ -2395,3 +2395,69 @@ def test_evaluate_reserve_drawdown_velocity_no_reserve_configured():
         "is_reserve_healthy": True,
         "reserve_posture": "NO_RESERVE_CONFIGURED",
     }
+
+
+def test_evaluate_tcpi_recovery_feasible_stretch():
+    """> TCPI_BAC justo en el limite 1.10 con salto 0.1125 -> STRETCH monitor closely."""
+    from backend.services.project_evm_service import evaluate_tcpi_recovery_feasibility as eval_fn
+
+    res = eval_fn(bac=900.0, ev=790.0, ac=800.0)
+    assert res["cpi"] == 0.9875
+    assert res["tcpi_bac"] == 1.1
+    assert res["tcpi_eac"] == 0.9875
+    assert res["efficiency_jump_required"] == 0.1125
+    assert res["is_bac_funds_exhausted"] is False
+    assert res["is_bac_recoverable"] is True
+    assert res["recovery_posture"] == "STRETCH_RECOVERY_MONITOR_CLOSELY"
+
+
+def test_evaluate_tcpi_recovery_feasible_bc():
+    """> TCPI_BAC <= 1.0 -> FEASIBLE_BAC_COMPLETION sin salto exigido."""
+    from backend.services.project_evm_service import evaluate_tcpi_recovery_feasibility as eval_fn
+
+    res = eval_fn(bac=1000.0, ev=900.0, ac=850.0)
+    # CPI = 1.0588; trabajo 100, fondos 150 -> TCPI_BAC = 0.6667.
+    assert res["cpi"] == 1.0588
+    assert res["tcpi_bac"] == 0.6667
+    assert res["efficiency_jump_required"] == 0.0
+    assert res["is_bac_funds_exhausted"] is False
+    assert res["is_bac_recoverable"] is True
+    assert res["recovery_posture"] == "FEASIBLE_BAC_COMPLETION"
+
+
+def test_evaluate_tcpi_recovery_unrecoverable_severe_overrun():
+    """> TCPI_BAC > 1.10 y salto gordo -> UNRECOVERABLE_BAC_ADOPT_EAC."""
+    from backend.services.project_evm_service import evaluate_tcpi_recovery_feasibility as eval_fn
+
+    res = eval_fn(bac=1000.0, ev=600.0, ac=700.0)
+    assert res["is_bac_funds_exhausted"] is False
+    assert res["is_bac_recoverable"] is False
+    assert res["cpi"] == 0.8571
+    assert res["tcpi_bac"] == 1.3333
+    # TCPI_EAC sobre eac derivado bac/cpi redondeado a 2 dec (4dp en el cociente).
+    assert res["tcpi_eac"] == 0.857
+    assert res["efficiency_jump_required"] == 0.4762
+    assert res["recovery_posture"] == "UNRECOVERABLE_BAC_ADOPT_EAC"
+
+
+def test_evaluate_tcpi_recovery_funds_exhausted_and_no_budget():
+    """> AC >= BAC con EV < BAC -> rebase; BAC=0 -> NO_BASELINE_BUDGET."""
+    from backend.services.project_evm_service import evaluate_tcpi_recovery_feasibility as eval_fn
+
+    res = eval_fn(bac=1000.0, ev=400.0, ac=1000.0)
+    assert res["is_bac_funds_exhausted"] is True
+    assert res["is_bac_recoverable"] is False
+    assert res["tcpi_bac"] == 999.0
+    assert res["efficiency_jump_required"] == 999.0
+    assert res["recovery_posture"] == "BAC_FUNDS_EXHAUSTED_REBASELINE_REQUIRED"
+
+    empty = eval_fn(bac=0.0, ev=0.0, ac=0.0)
+    assert empty == {
+        "cpi": 1.0,
+        "tcpi_bac": 1.0,
+        "tcpi_eac": 1.0,
+        "efficiency_jump_required": 0.0,
+        "is_bac_funds_exhausted": False,
+        "is_bac_recoverable": True,
+        "recovery_posture": "NO_BASELINE_BUDGET",
+    }

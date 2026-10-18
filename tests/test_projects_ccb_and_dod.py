@@ -2468,3 +2468,105 @@ def test_audit_configuration_items_baseline_integrity_empty_or_none():
             "is_configuration_compliant": True,
             "configuration_posture": "NO_CONFIGURATION_ITEMS",
         }
+
+
+def test_evaluate_spc_process_stability_in_statistical_control():
+    """Proceso estable bajo control sin violar UCL/LCL/USL/LSL ni Regla de Siete -> IN_STATISTICAL_CONTROL."""
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        evaluate_spc_process_stability,
+    )
+
+    res = evaluate_spc_process_stability(
+        [10.0, 10.2, 9.8, 10.1, 9.9, 10.3, 9.7, 10.0],
+        center_line=10.0,
+        ucl=11.0,
+        lcl=9.0,
+        usl=12.0,
+        lsl=8.0,
+    )
+    assert res["sample_size"] == 8
+    assert res["process_mean"] == 10.0
+    assert res["beyond_control_limit_indices"] == []
+    assert res["beyond_spec_limit_indices"] == []
+    assert res["max_same_side_run"] == 1
+    assert res["has_rule_of_seven_run"] is False
+    assert res["is_in_statistical_control"] is True
+    assert res["spc_posture"] == "IN_STATISTICAL_CONTROL"
+    assert (
+        ProjectCCBService.evaluate_spc_process_stability(
+            [10.0, 10.2, 9.8], center_line=10.0, ucl=11.0, lcl=9.0
+        )["spc_posture"]
+        == "IN_STATISTICAL_CONTROL"
+    )
+
+
+def test_evaluate_spc_process_stability_spec_and_control_limit_breaches():
+    """Violación de límites de especificación (USL/LSL) y control (UCL/LCL)."""
+    from backend.services.project_ccb_service import evaluate_spc_process_stability
+
+    res_spec = evaluate_spc_process_stability(
+        [10.0, 11.5, 12.5, 7.5],
+        center_line=10.0,
+        ucl=11.0,
+        lcl=9.0,
+        usl=12.0,
+        lsl=8.0,
+    )
+    assert res_spec["beyond_control_limit_indices"] == [1, 2, 3]
+    assert res_spec["beyond_spec_limit_indices"] == [2, 3]
+    assert res_spec["is_in_statistical_control"] is False
+    assert res_spec["spc_posture"] == "SPECIFICATION_LIMIT_BREACH"
+
+    res_ctrl = evaluate_spc_process_stability(
+        [10.0, 11.4, 9.9, 8.6],
+        center_line=10.0,
+        ucl=11.0,
+        lcl=9.0,
+        usl=12.0,
+        lsl=8.0,
+    )
+    assert res_ctrl["beyond_control_limit_indices"] == [1, 3]
+    assert res_ctrl["beyond_spec_limit_indices"] == []
+    assert res_ctrl["is_in_statistical_control"] is False
+    assert res_ctrl["spc_posture"] == "CONTROL_LIMIT_OUTLIER"
+
+
+def test_evaluate_spc_process_stability_rule_of_seven_run():
+    """7 puntos consecutivos del mismo lado de la media sin cruzar UCL/LCL -> RULE_OF_SEVEN_NON_RANDOM_RUN."""
+    from backend.services.project_ccb_service import evaluate_spc_process_stability
+
+    res = evaluate_spc_process_stability(
+        [9.8, 10.1, 10.2, 10.3, 10.1, 10.4, 10.2, 10.5, 9.9],
+        center_line=10.0,
+        ucl=11.0,
+        lcl=9.0,
+        usl=12.0,
+        lsl=8.0,
+    )
+    assert res["sample_size"] == 9
+    assert res["beyond_control_limit_indices"] == []
+    assert res["beyond_spec_limit_indices"] == []
+    assert res["max_same_side_run"] == 7
+    assert res["has_rule_of_seven_run"] is True
+    assert res["is_in_statistical_control"] is False
+    assert res["spc_posture"] == "RULE_OF_SEVEN_NON_RANDOM_RUN"
+
+
+def test_evaluate_spc_process_stability_empty_or_none():
+    """Lista vacía o None -> NO_MEASUREMENTS_PROVIDED e is_in_statistical_control=True."""
+    from backend.services.project_ccb_service import evaluate_spc_process_stability
+
+    for payload in (None, []):
+        res = evaluate_spc_process_stability(payload)
+        assert res == {
+            "sample_size": 0,
+            "process_mean": 0.0,
+            "beyond_control_limit_indices": [],
+            "beyond_spec_limit_indices": [],
+            "max_same_side_run": 0,
+            "has_rule_of_seven_run": False,
+            "is_in_statistical_control": True,
+            "spc_posture": "NO_MEASUREMENTS_PROVIDED",
+        }
+

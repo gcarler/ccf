@@ -2524,3 +2524,145 @@ def test_audit_executive_report_benefits_realization_empty_or_none():
             "is_benefits_on_track": True,
             "benefits_posture": "NO_BENEFITS_REPORTED",
         }
+
+
+def test_audit_executive_report_resource_spof_and_utilization_balanced():
+    """Recursos asignados, dentro de capacidad y roles críticos con respaldo -> BALANCED_RESILIENT_RESOURCE_PLAN."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_resource_spof_and_utilization,
+    )
+
+    payload = {
+        "resource_allocations": [
+            {
+                "id": "RES-ARCH",
+                "resource_name": "Carlos Méndez",
+                "utilization_pct": 85.0,
+                "is_critical_role": True,
+                "backup_resource": "Elena Vargas",
+            },
+            {
+                "resource_id": "RES-DEV",
+                "assignee": "Elena Vargas",
+                "allocation_pct": 75.0,
+                "is_critical_role": False,
+            },
+        ]
+    }
+    res = audit_executive_report_resource_spof_and_utilization(payload, max_utilization_pct=100.0)
+    assert res["total_allocations"] == 2
+    assert res["average_utilization_pct"] == 80.0
+    assert res["unassigned_role_ids"] == []
+    assert res["overallocated_resource_ids"] == []
+    assert res["unbacked_spof_resource_ids"] == []
+    assert res["is_resource_plan_healthy"] is True
+    assert res["resource_posture"] == "BALANCED_RESILIENT_RESOURCE_PLAN"
+    assert (
+        ProjectExportService.audit_executive_report_resource_spof_and_utilization(payload)[
+            "resource_posture"
+        ]
+        == "BALANCED_RESILIENT_RESOURCE_PLAN"
+    )
+
+
+def test_audit_executive_report_resource_spof_and_utilization_unbacked_spof():
+    """Rol crítico sin recurso de respaldo -> UNBACKED_KEY_PERSON_SPOF."""
+    from backend.services.project_export_service import (
+        audit_executive_report_resource_spof_and_utilization,
+    )
+
+    res = audit_executive_report_resource_spof_and_utilization(
+        {
+            "resources": [
+                {
+                    "id": "RES-DBA",
+                    "resource_name": "Mateo Ruiz",
+                    "utilization_pct": 90.0,
+                    "critical_skill": True,
+                    "backup_resource": "",
+                },
+                {
+                    "id": "RES-QA",
+                    "resource_name": "Sofía Castro",
+                    "utilization_pct": 70.0,
+                    "critical_skill": False,
+                },
+            ]
+        }
+    )
+    assert res["total_allocations"] == 2
+    assert res["average_utilization_pct"] == 80.0
+    assert res["unassigned_role_ids"] == []
+    assert res["overallocated_resource_ids"] == []
+    assert res["unbacked_spof_resource_ids"] == ["RES-DBA"]
+    assert res["is_resource_plan_healthy"] is False
+    assert res["resource_posture"] == "UNBACKED_KEY_PERSON_SPOF"
+
+
+def test_audit_executive_report_resource_spof_and_utilization_unassigned_and_overallocated():
+    """Roles sin asignar y sobreasignación -> UNASSIGNED_CRITICAL_ROLE y RESOURCE_OVERALLOCATION_ALERT."""
+    from backend.services.project_export_service import (
+        audit_executive_report_resource_spof_and_utilization,
+    )
+
+    res_unassigned = audit_executive_report_resource_spof_and_utilization(
+        {
+            "team_allocations": [
+                {
+                    "role_id": "RES-SEC",
+                    "resource_name": "",
+                    "utilization_pct": 100.0,
+                    "key_person": True,
+                    "deputy": "Respaldo",
+                },
+                {
+                    "role_id": "RES-OPS",
+                    "member": "Luis Gómez",
+                    "allocation_pct": 120.0,
+                },
+            ]
+        },
+        max_utilization_pct=100.0,
+    )
+    assert res_unassigned["unassigned_role_ids"] == ["RES-SEC"]
+    assert res_unassigned["overallocated_resource_ids"] == ["RES-OPS"]
+    assert res_unassigned["is_resource_plan_healthy"] is False
+    assert res_unassigned["resource_posture"] == "UNASSIGNED_CRITICAL_ROLE"
+
+    res_over = audit_executive_report_resource_spof_and_utilization(
+        {
+            "team_allocations": [
+                {
+                    "role_id": "RES-OPS",
+                    "member": "Luis Gómez",
+                    "allocation_pct": 115.0,
+                }
+            ]
+        },
+        max_utilization_pct=100.0,
+    )
+    assert res_over["unassigned_role_ids"] == []
+    assert res_over["overallocated_resource_ids"] == ["RES-OPS"]
+    assert res_over["is_resource_plan_healthy"] is False
+    assert res_over["resource_posture"] == "RESOURCE_OVERALLOCATION_ALERT"
+
+
+def test_audit_executive_report_resource_spof_and_utilization_empty_or_none():
+    """Payload None o sin asignaciones -> NO_RESOURCES_REPORTED e is_resource_plan_healthy=True."""
+    from backend.services.project_export_service import (
+        audit_executive_report_resource_spof_and_utilization,
+    )
+
+    for payload in (None, {}, {"resources": []}, {"resource_allocations": ["invalid", 99]}):
+        res = audit_executive_report_resource_spof_and_utilization(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_allocations": 0,
+            "average_utilization_pct": 0.0,
+            "unassigned_role_ids": [],
+            "overallocated_resource_ids": [],
+            "unbacked_spof_resource_ids": [],
+            "is_resource_plan_healthy": True,
+            "resource_posture": "NO_RESOURCES_REPORTED",
+        }
+

@@ -1750,6 +1750,96 @@ def audit_configuration_items_baseline_integrity(
     }
 
 
+def evaluate_spc_process_stability(
+    measurements: list[float] | None = None,
+    center_line: float | None = None,
+    ucl: float | None = None,
+    lcl: float | None = None,
+    usl: float | None = None,
+    lsl: float | None = None,
+) -> dict[str, Any]:
+    """Evalúa estabilidad estadística del proceso (SPC Control Chart & Rule of Seven, PMI PMBOK §8.3.2.5)."""
+    values: list[float] = []
+    if isinstance(measurements, list):
+        for raw_val in measurements:
+            if isinstance(raw_val, bool) or raw_val is None:
+                continue
+            try:
+                values.append(float(raw_val))
+            except (TypeError, ValueError):
+                continue
+
+    if len(values) == 0:
+        return {
+            "sample_size": 0,
+            "process_mean": round(float(center_line), 4) if center_line is not None else 0.0,
+            "beyond_control_limit_indices": [],
+            "beyond_spec_limit_indices": [],
+            "max_same_side_run": 0,
+            "has_rule_of_seven_run": False,
+            "is_in_statistical_control": True,
+            "spc_posture": "NO_MEASUREMENTS_PROVIDED",
+        }
+
+    mean_val = float(center_line) if center_line is not None else sum(values) / len(values)
+    beyond_control_limit_indices: list[int] = []
+    beyond_spec_limit_indices: list[int] = []
+    above_run = 0
+    below_run = 0
+    max_same_side_run = 0
+
+    for idx, val in enumerate(values):
+        if (ucl is not None and val > float(ucl) + 1e-9) or (
+            lcl is not None and val < float(lcl) - 1e-9
+        ):
+            beyond_control_limit_indices.append(idx)
+        if (usl is not None and val > float(usl) + 1e-9) or (
+            lsl is not None and val < float(lsl) - 1e-9
+        ):
+            beyond_spec_limit_indices.append(idx)
+
+        if val > mean_val + 1e-9:
+            above_run += 1
+            below_run = 0
+        elif val < mean_val - 1e-9:
+            below_run += 1
+            above_run = 0
+        else:
+            above_run = 0
+            below_run = 0
+
+        current_run = max(above_run, below_run)
+        if current_run > max_same_side_run:
+            max_same_side_run = current_run
+
+    has_rule_of_seven_run = bool(max_same_side_run >= 7)
+    is_in_statistical_control = bool(
+        len(beyond_control_limit_indices) == 0
+        and len(beyond_spec_limit_indices) == 0
+        and not has_rule_of_seven_run
+    )
+
+    if len(beyond_spec_limit_indices) > 0:
+        spc_posture = "SPECIFICATION_LIMIT_BREACH"
+    elif len(beyond_control_limit_indices) > 0:
+        spc_posture = "CONTROL_LIMIT_OUTLIER"
+    elif has_rule_of_seven_run:
+        spc_posture = "RULE_OF_SEVEN_NON_RANDOM_RUN"
+    else:
+        spc_posture = "IN_STATISTICAL_CONTROL"
+
+    return {
+        "sample_size": len(values),
+        "process_mean": round(mean_val, 4),
+        "beyond_control_limit_indices": beyond_control_limit_indices,
+        "beyond_spec_limit_indices": beyond_spec_limit_indices,
+        "max_same_side_run": max_same_side_run,
+        "has_rule_of_seven_run": has_rule_of_seven_run,
+        "is_in_statistical_control": is_in_statistical_control,
+        "spc_posture": spc_posture,
+    }
+
+
 class ProjectCCBService:
     """Fachada canónica de Control Integrado de Cambios (CCB) y Calidad DoD PMI."""
 
@@ -1948,6 +2038,24 @@ class ProjectCCBService:
         return audit_configuration_items_baseline_integrity(configuration_items)
 
     @staticmethod
+    def evaluate_spc_process_stability(
+        measurements: list[float] | None = None,
+        center_line: float | None = None,
+        ucl: float | None = None,
+        lcl: float | None = None,
+        usl: float | None = None,
+        lsl: float | None = None,
+    ) -> dict[str, Any]:
+        return evaluate_spc_process_stability(
+            measurements,
+            center_line=center_line,
+            ucl=ucl,
+            lcl=lcl,
+            usl=usl,
+            lsl=lsl,
+        )
+
+    @staticmethod
     def audit_unapproved_scope_creep_exposure(
         work_packages: Optional[list[dict[str, Any]]],
         tolerance_hours_pct: float = 10.0,
@@ -2006,7 +2114,9 @@ __all__ = [
     "evaluate_deliverable_first_time_right_yield",
     "audit_configuration_baseline_integrity",
     "audit_configuration_items_baseline_integrity",
+    "evaluate_spc_process_stability",
     "ProjectCCBService",
 ]
+
 
 

@@ -3874,6 +3874,100 @@ def evaluate_management_reserve_release_governance(
     }
 
 
+def evaluate_tcpi_recovery_feasibility(
+    bac: float = 0.0,
+    ev: float = 0.0,
+    ac: float = 0.0,
+    eac: float | None = None,
+    max_feasible_tcpi: float = 1.10,
+    max_efficiency_jump: float = 0.15,
+) -> dict[str, Any]:
+    """Evalúa la viabilidad de recuperación BAC vía TCPI (PMBOK §7.4.2.4).
+
+    Compara el TCPI sobre BAC frente al TCPI sobre EAC: si los fondos del
+    BAC se agotan (AC >= BAC con EV < BAC) o se exige un salto de eficiencia
+    fuera de los límites (max_feasible_tcpi, max_efficiency_jump), la meta
+    BAC no es recuperable y la postura manda adoptar el EAC:
+    - `tcpi_bac`: remaining_work / (bac - ac) con finanzas; 0.0 sin trabajo
+      pendiente; 999.0 con fondos BAC agotados.
+    - `tcpi_eac`: análogo sobre el EAC efectivo (eac provista o bac / cpi).
+    - `efficiency_jump_required`: tcpi_bac - cpi (999.0 con fondos agotados).
+    - `recovery_posture`: 'NO_BASELINE_BUDGET' sin BAC;
+      'BAC_FUNDS_EXHAUSTED_REBASELINE_REQUIRED'; 'UNRECOVERABLE_BAC_ADOPT_EAC';
+      'STRETCH_RECOVERY_MONITOR_CLOSELY' (TCPI_BAC > 1);
+      'FEASIBLE_BAC_COMPLETION' (TCPI_BAC <= 1).
+    """
+    safe_bac = max(0.0, float(bac or 0.0))
+    safe_ev = max(0.0, float(ev or 0.0))
+    safe_ac = max(0.0, float(ac or 0.0))
+
+    if safe_bac <= 0.0:
+        return {
+            "cpi": 1.0,
+            "tcpi_bac": 1.0,
+            "tcpi_eac": 1.0,
+            "efficiency_jump_required": 0.0,
+            "is_bac_funds_exhausted": False,
+            "is_bac_recoverable": True,
+            "recovery_posture": "NO_BASELINE_BUDGET",
+        }
+
+    cpi = round(safe_ev / safe_ac, 4) if safe_ac > 0.0 else 1.0
+    remaining_work = max(0.0, safe_bac - safe_ev)
+    remaining_funds_bac = safe_bac - safe_ac
+    is_bac_funds_exhausted = bool(remaining_funds_bac <= 1e-9 and remaining_work > 1e-9)
+
+    if remaining_work <= 1e-9:
+        tcpi_bac = 0.0
+    elif remaining_funds_bac <= 1e-9:
+        tcpi_bac = 999.0
+    else:
+        tcpi_bac = round(remaining_work / remaining_funds_bac, 4)
+
+    effective_eac = (
+        float(eac)
+        if (eac is not None and float(eac) > 0.0)
+        else (round(safe_bac / cpi, 2) if cpi > 0.0 else safe_bac)
+    )
+    remaining_funds_eac = effective_eac - safe_ac
+    if remaining_work <= 1e-9:
+        tcpi_eac = 0.0
+    elif remaining_funds_eac <= 1e-9:
+        tcpi_eac = 999.0
+    else:
+        tcpi_eac = round(remaining_work / remaining_funds_eac, 4)
+
+    if not is_bac_funds_exhausted:
+        efficiency_jump_required = round(max(0.0, tcpi_bac - cpi), 4)
+    else:
+        efficiency_jump_required = 999.0
+
+    is_bac_recoverable = bool(
+        not is_bac_funds_exhausted
+        and tcpi_bac <= float(max_feasible_tcpi) + 1e-9
+        and efficiency_jump_required <= float(max_efficiency_jump) + 1e-9
+    )
+
+    if is_bac_funds_exhausted:
+        recovery_posture = "BAC_FUNDS_EXHAUSTED_REBASELINE_REQUIRED"
+    elif not is_bac_recoverable:
+        recovery_posture = "UNRECOVERABLE_BAC_ADOPT_EAC"
+    elif tcpi_bac > 1.0 + 1e-9:
+        recovery_posture = "STRETCH_RECOVERY_MONITOR_CLOSELY"
+    else:
+        recovery_posture = "FEASIBLE_BAC_COMPLETION"
+
+    return {
+        "cpi": cpi,
+        "tcpi_bac": tcpi_bac,
+        "tcpi_eac": tcpi_eac,
+        "efficiency_jump_required": efficiency_jump_required,
+        "is_bac_funds_exhausted": is_bac_funds_exhausted,
+        "is_bac_recoverable": is_bac_recoverable,
+        "recovery_posture": recovery_posture,
+    }
+
+
 class ProjectEVMService:
     """Fachada canónica del servicio EVM y Diagnóstico Predictivo PMI (Vol. 5 y Vol. 6)."""
 
@@ -4094,6 +4188,24 @@ class ProjectEVMService:
     ) -> Dict[str, Any]:
         return evaluate_control_account_variance_masking(
             work_packages, masking_threshold_pct=masking_threshold_pct
+        )
+
+    @staticmethod
+    def evaluate_tcpi_recovery_feasibility(
+        bac: float = 0.0,
+        ev: float = 0.0,
+        ac: float = 0.0,
+        eac: float | None = None,
+        max_feasible_tcpi: float = 1.10,
+        max_efficiency_jump: float = 0.15,
+    ) -> dict[str, Any]:
+        return evaluate_tcpi_recovery_feasibility(
+            bac,
+            ev,
+            ac,
+            eac=eac,
+            max_feasible_tcpi=max_feasible_tcpi,
+            max_efficiency_jump=max_efficiency_jump,
         )
 
     @staticmethod
@@ -4644,6 +4756,7 @@ ProjectEVMService.evaluate_reserve_drawdown_velocity = staticmethod(
 
 
 __all__ = [
+    "evaluate_tcpi_recovery_feasibility",
     "evaluate_funding_limit_periods_reconciliation",
     "evaluate_earned_schedule_performance",
     "evaluate_burn_rate_runway_sustainability",

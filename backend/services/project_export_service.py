@@ -2093,11 +2093,122 @@ def audit_executive_report_change_control_log(
     }
 
 
+def audit_executive_report_resource_spof_and_utilization(
+    report_payload: dict[str, Any] | None = None,
+    max_utilization_pct: float = 100.0,
+) -> dict[str, Any]:
+    """Audita utilización de recursos y puntos únicos de falla (SPOF) de habilidades críticas según PMI PMBOK §9.3 & §9.6."""
+    raw_list: Any = None
+    if isinstance(report_payload, dict):
+        for key in ("resource_allocations", "resources", "team_allocations"):
+            candidate = report_payload.get(key)
+            if isinstance(candidate, list):
+                raw_list = candidate
+                break
+
+    items = [item for item in (raw_list or []) if isinstance(item, dict)]
+    total_allocations = len(items)
+    if total_allocations == 0:
+        return {
+            "total_allocations": 0,
+            "average_utilization_pct": 0.0,
+            "unassigned_role_ids": [],
+            "overallocated_resource_ids": [],
+            "unbacked_spof_resource_ids": [],
+            "is_resource_plan_healthy": True,
+            "resource_posture": "NO_RESOURCES_REPORTED",
+        }
+
+    try:
+        max_util = float(max_utilization_pct)
+    except (TypeError, ValueError):
+        max_util = 100.0
+
+    utilizations: list[float] = []
+    unassigned_role_ids: list[str] = []
+    overallocated_resource_ids: list[str] = []
+    unbacked_spof_resource_ids: list[str] = []
+
+    for idx, item in enumerate(items, start=1):
+        res_id = (
+            str(
+                item.get("id")
+                or item.get("resource_id")
+                or item.get("role_id")
+                or f"RES-{idx}"
+            ).strip()
+            or f"RES-{idx}"
+        )
+        assignee = str(
+            item.get("resource_name")
+            or item.get("assignee")
+            or item.get("member")
+            or ""
+        ).strip()
+        try:
+            utilization_pct = float(
+                item.get("utilization_pct")
+                or item.get("allocation_pct")
+                or 0.0
+            )
+        except (TypeError, ValueError):
+            utilization_pct = 0.0
+        utilizations.append(utilization_pct)
+
+        is_critical_role = bool(
+            item.get("is_critical_role")
+            or item.get("critical_skill")
+            or item.get("key_person")
+        )
+        backup = str(
+            item.get("backup_resource")
+            or item.get("cross_trained_backup")
+            or item.get("deputy")
+            or ""
+        ).strip()
+
+        if not assignee:
+            unassigned_role_ids.append(res_id)
+        if utilization_pct > max_util + 1e-9:
+            overallocated_resource_ids.append(res_id)
+        if is_critical_role and not backup:
+            unbacked_spof_resource_ids.append(res_id)
+
+    average_utilization_pct = round(sum(utilizations) / len(utilizations), 2)
+    is_resource_plan_healthy = bool(
+        len(unassigned_role_ids) == 0
+        and len(overallocated_resource_ids) == 0
+        and len(unbacked_spof_resource_ids) == 0
+    )
+
+    if len(unassigned_role_ids) > 0:
+        resource_posture = "UNASSIGNED_CRITICAL_ROLE"
+    elif len(unbacked_spof_resource_ids) > 0:
+        resource_posture = "UNBACKED_KEY_PERSON_SPOF"
+    elif len(overallocated_resource_ids) > 0:
+        resource_posture = "RESOURCE_OVERALLOCATION_ALERT"
+    else:
+        resource_posture = "BALANCED_RESILIENT_RESOURCE_PLAN"
+
+    return {
+        "total_allocations": total_allocations,
+        "average_utilization_pct": average_utilization_pct,
+        "unassigned_role_ids": unassigned_role_ids,
+        "overallocated_resource_ids": overallocated_resource_ids,
+        "unbacked_spof_resource_ids": unbacked_spof_resource_ids,
+        "is_resource_plan_healthy": is_resource_plan_healthy,
+        "resource_posture": resource_posture,
+    }
+
+
 ProjectExportService.audit_executive_report_risk_burndown = staticmethod(
     audit_executive_report_risk_burndown
 )
 ProjectExportService.audit_executive_report_change_control_log = staticmethod(
     audit_executive_report_change_control_log
+)
+ProjectExportService.audit_executive_report_resource_spof_and_utilization = staticmethod(
+    audit_executive_report_resource_spof_and_utilization
 )
 
 
@@ -2124,6 +2235,8 @@ __all__ = [
     "audit_executive_report_stakeholder_communications",
     "audit_executive_report_risk_burndown",
     "audit_executive_report_change_control_log",
+    "audit_executive_report_resource_spof_and_utilization",
     "ProjectExportService",
 ]
+
 
