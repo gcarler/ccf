@@ -321,6 +321,12 @@ class ProjectExportService:
     ) -> dict[str, Any]:
         return audit_executive_report_procurement_slas(report_data)
 
+    @staticmethod
+    def audit_executive_report_stakeholder_communications(
+        report_payload: Optional[dict[str, Any]],
+    ) -> dict[str, Any]:
+        return audit_executive_report_stakeholder_communications(report_payload)
+
 
 
 
@@ -1421,6 +1427,129 @@ def audit_executive_report_procurement_slas(
     }
 
 
+def audit_executive_report_stakeholder_communications(
+    report_payload: Optional[dict[str, Any]],
+) -> dict[str, Any]:
+    """Audita la transparencia de involucramiento de interesados y entregables de comunicación en informes ejecutivos según PMI PMBOK §10.2 y §13.3."""
+    if not isinstance(report_payload, dict) or not report_payload:
+        return {
+            "total_stakeholders": 0,
+            "total_communications": 0,
+            "unmitigated_resistant_stakeholder_ids": [],
+            "overdue_communication_ids": [],
+            "is_transparent": False,
+            "communication_posture": "MISSING_STAKEHOLDER_COMMUNICATIONS_DATA",
+        }
+
+    raw_stakeholders = (
+        report_payload.get("stakeholders")
+        or report_payload.get("stakeholder_summary")
+        or report_payload.get("interesados")
+        or []
+    )
+    raw_communications = (
+        report_payload.get("communications")
+        or report_payload.get("communication_log")
+        or report_payload.get("comunicaciones")
+        or []
+    )
+
+    stakeholders = (
+        [s for s in raw_stakeholders if isinstance(s, dict)]
+        if isinstance(raw_stakeholders, list)
+        else []
+    )
+    communications = (
+        [c for c in raw_communications if isinstance(c, dict)]
+        if isinstance(raw_communications, list)
+        else []
+    )
+
+    total_stakeholders = len(stakeholders)
+    total_communications = len(communications)
+
+    if total_stakeholders == 0 and total_communications == 0:
+        return {
+            "total_stakeholders": 0,
+            "total_communications": 0,
+            "unmitigated_resistant_stakeholder_ids": [],
+            "overdue_communication_ids": [],
+            "is_transparent": False,
+            "communication_posture": "MISSING_STAKEHOLDER_COMMUNICATIONS_DATA",
+        }
+
+    unmitigated_resistant_stakeholder_ids: list[str] = []
+    resistant_levels = {"resistant", "resistente", "unaware", "desconocedor"}
+
+    for idx, item in enumerate(stakeholders, start=1):
+        stk_id = (
+            str(
+                item.get("id")
+                or item.get("stakeholder_id")
+                or item.get("name")
+                or ""
+            ).strip()
+            or f"STK-{idx}"
+        )
+        level = (
+            str(
+                item.get("engagement_level")
+                or item.get("current_engagement")
+                or ""
+            )
+            .strip()
+            .lower()
+        )
+        strategy = str(
+            item.get("action_plan") or item.get("engagement_strategy") or ""
+        ).strip()
+        if level in resistant_levels and not strategy:
+            unmitigated_resistant_stakeholder_ids.append(stk_id)
+
+    overdue_communication_ids: list[str] = []
+    overdue_statuses = {"overdue", "missed", "vencida", "no_enviada"}
+
+    for idx, item in enumerate(communications, start=1):
+        comm_id = (
+            str(
+                item.get("id")
+                or item.get("comm_id")
+                or item.get("channel")
+                or ""
+            ).strip()
+            or f"COMM-{idx}"
+        )
+        status = (
+            str(item.get("status") or item.get("delivery_status") or "")
+            .strip()
+            .lower()
+        )
+        if status in overdue_statuses:
+            overdue_communication_ids.append(comm_id)
+
+    is_transparent = bool(
+        (total_stakeholders > 0 or total_communications > 0)
+        and len(unmitigated_resistant_stakeholder_ids) == 0
+        and len(overdue_communication_ids) == 0
+    )
+
+    if len(unmitigated_resistant_stakeholder_ids) > 0:
+        communication_posture = "UNMITIGATED_STAKEHOLDER_RESISTANCE"
+    elif len(overdue_communication_ids) > 0:
+        communication_posture = "OVERDUE_COMMUNICATION_DELIVERABLES"
+    else:
+        communication_posture = "TRANSPARENT_STAKEHOLDER_ENGAGEMENT"
+
+    return {
+        "total_stakeholders": total_stakeholders,
+        "total_communications": total_communications,
+        "unmitigated_resistant_stakeholder_ids": unmitigated_resistant_stakeholder_ids,
+        "overdue_communication_ids": overdue_communication_ids,
+        "is_transparent": is_transparent,
+        "communication_posture": communication_posture,
+    }
+
+
 __all__ = [
     "audit_csv_export_integrity",
     "evaluate_executive_report_completeness",
@@ -1439,5 +1568,6 @@ __all__ = [
     "audit_executive_report_quality_disclosure",
     "audit_executive_report_resource_workload",
     "audit_executive_report_procurement_slas",
+    "audit_executive_report_stakeholder_communications",
     "ProjectExportService",
 ]

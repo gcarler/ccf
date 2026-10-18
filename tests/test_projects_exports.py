@@ -1894,3 +1894,123 @@ def test_audit_executive_report_procurement_slas_no_contracts():
         assert res["average_sla_pct"] == 0.0
         assert res["procurement_posture"] == "NO_PROCUREMENT_CONTRACTS"
         assert len(res["recommendations"]) == 1
+
+
+# ── PMI PMBOK §10.2 & §13.3 Executive Report Stakeholder Communications Auditor
+
+
+def test_audit_executive_report_stakeholder_communications_transparent():
+    """Interesados comprometidos o resistentes con action_plan y comunicaciones al día -> TRANSPARENT_STAKEHOLDER_ENGAGEMENT."""
+    import backend.services.project_export_service as export_module
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_stakeholder_communications,
+    )
+
+    payload = {
+        "stakeholders": [
+            {"id": "STK-01", "engagement_level": "supportive"},
+            {
+                "stakeholder_id": "STK-02",
+                "current_engagement": "resistant",
+                "action_plan": "Sesión semanal de alineación ejecutiva",
+            },
+        ],
+        "communications": [
+            {"id": "COMM-01", "status": "sent"},
+            {"comm_id": "COMM-02", "delivery_status": "scheduled"},
+        ],
+    }
+
+    res = ProjectExportService.audit_executive_report_stakeholder_communications(
+        payload
+    )
+    assert res == {
+        "total_stakeholders": 2,
+        "total_communications": 2,
+        "unmitigated_resistant_stakeholder_ids": [],
+        "overdue_communication_ids": [],
+        "is_transparent": True,
+        "communication_posture": "TRANSPARENT_STAKEHOLDER_ENGAGEMENT",
+    }
+    assert audit_executive_report_stakeholder_communications(payload) == res
+    assert "audit_executive_report_stakeholder_communications" in export_module.__all__
+
+
+def test_audit_executive_report_stakeholder_communications_unmitigated_resistance():
+    """Interesados en resistant/unaware sin action_plan -> UNMITIGATED_STAKEHOLDER_RESISTANCE."""
+    from backend.services.project_export_service import (
+        audit_executive_report_stakeholder_communications,
+    )
+
+    payload = {
+        "stakeholder_summary": [
+            {"id": "STK-10", "engagement_level": "Resistente"},
+            {"name": "STK-11", "current_engagement": "unaware", "action_plan": "   "},
+            {
+                "id": "STK-12",
+                "engagement_level": "desconocedor",
+                "engagement_strategy": "Taller de inducción",
+            },
+        ],
+        "communication_log": [
+            {"id": "COMM-10", "status": "overdue"},
+        ],
+    }
+
+    res = audit_executive_report_stakeholder_communications(payload)
+    assert res["total_stakeholders"] == 3
+    assert res["total_communications"] == 1
+    assert res["unmitigated_resistant_stakeholder_ids"] == ["STK-10", "STK-11"]
+    assert res["overdue_communication_ids"] == ["COMM-10"]
+    assert res["is_transparent"] is False
+    assert res["communication_posture"] == "UNMITIGATED_STAKEHOLDER_RESISTANCE"
+
+
+def test_audit_executive_report_stakeholder_communications_overdue_deliverables():
+    """Sin resistencia desatendida pero con comunicaciones en overdue/missed -> OVERDUE_COMMUNICATION_DELIVERABLES."""
+    from backend.services.project_export_service import (
+        audit_executive_report_stakeholder_communications,
+    )
+
+    payload = {
+        "interesados": [
+            {"id": "STK-20", "engagement_level": "leading"},
+        ],
+        "comunicaciones": [
+            {"id": "COMM-20", "status": "overdue"},
+            {"channel": "Boletín Mensual", "delivery_status": "no_enviada"},
+            {"id": "COMM-22", "status": "delivered"},
+        ],
+    }
+
+    res = audit_executive_report_stakeholder_communications(payload)
+    assert res["total_stakeholders"] == 1
+    assert res["total_communications"] == 3
+    assert res["unmitigated_resistant_stakeholder_ids"] == []
+    assert res["overdue_communication_ids"] == ["COMM-20", "Boletín Mensual"]
+    assert res["is_transparent"] is False
+    assert res["communication_posture"] == "OVERDUE_COMMUNICATION_DELIVERABLES"
+
+
+def test_audit_executive_report_stakeholder_communications_missing_data():
+    """Payload vacío, None o sin listas de interesados/comunicaciones -> MISSING_STAKEHOLDER_COMMUNICATIONS_DATA."""
+    from backend.services.project_export_service import (
+        audit_executive_report_stakeholder_communications,
+    )
+
+    for payload in (
+        None,
+        {},
+        {"stakeholders": [], "communications": []},
+        {"stakeholders": ["invalid"]},
+    ):
+        res = audit_executive_report_stakeholder_communications(payload)
+        assert res == {
+            "total_stakeholders": 0,
+            "total_communications": 0,
+            "unmitigated_resistant_stakeholder_ids": [],
+            "overdue_communication_ids": [],
+            "is_transparent": False,
+            "communication_posture": "MISSING_STAKEHOLDER_COMMUNICATIONS_DATA",
+        }

@@ -860,6 +860,130 @@ def test_audit_wiki_operational_runbook_readiness_empty_content():
         }
 
 
+def test_wiki_postmortem_rca_compliant_blameless():
+    """Página con timeline + root cause + CAPA con responsable -> COMPLIANT_BLAMELESS_POSTMORTEM."""
+    from backend.services.wiki_pmi_service import audit_wiki_postmortem_incident_rca
+
+    res = audit_wiki_postmortem_incident_rca(
+        [
+            {
+                "id": "PM-1",
+                "content": (
+                    "## Timeline de detección\n"
+                    "La detección fue a las 10:14.\n"
+                    "## Root Cause (5 whys)\n"
+                    "La causa raiz fue un cache sin TTL.\n"
+                    "## CAPA\n"
+                    "Acción preventiva @ptorres: añadir TTL al cache."
+                ),
+            },
+            {
+                "page_id": "PM-2",
+                "markdown": (
+                    "Cronologia del incidente…\n"
+                    "Causa raiz: credencial vencida.\n"
+                    "Remediación owner: @admin."
+                ),
+            },
+        ]
+    )
+
+    assert res["total_postmortems"] == 2
+    assert res["complete_rca_count"] == 2
+    assert res["completeness_rate_pct"] == 100.0
+    assert res["missing_timeline_page_ids"] == []
+    assert res["missing_root_cause_page_ids"] == []
+    assert res["missing_capa_page_ids"] == []
+    assert res["is_compliant"] is True
+    assert res["rca_posture"] == "COMPLIANT_BLAMELESS_POSTMORTEM"
+
+
+def test_wiki_postmortem_rca_missing_root_cause_take_precedence():
+    """Sin causa raíz (aunque también falte timeline) -> MISSING_ROOT_CAUSE_ANALYSIS."""
+    from backend.services.wiki_pmi_service import audit_wiki_postmortem_incident_rca
+
+    res = audit_wiki_postmortem_incident_rca(
+        [
+            {
+                "slug": "inc-404-spikes",
+                "content": (
+                    "## Timeline\nSe detectó el pico.\n"
+                    "## CAPA\nAcción correctiva @soporte."
+                ),
+            }
+        ]
+    )
+
+    assert res["total_postmortems"] == 1
+    assert res["complete_rca_count"] == 0
+    assert res["completeness_rate_pct"] == 0.0
+    assert res["missing_root_cause_page_ids"] == ["inc-404-spikes"]
+    assert res["missing_timeline_page_ids"] == []
+    assert res["missing_capa_page_ids"] == []
+    assert res["is_compliant"] is False
+    assert res["rca_posture"] == "MISSING_ROOT_CAUSE_ANALYSIS"
+
+
+def test_wiki_postmortem_rca_missing_capa_or_timeline():
+    """CAPA sin responsable y página sin timeline -> MISSING_PREVENTIVE_CAPA / MISSING_TIMELINE."""
+    from backend.services.wiki_pmi_service import audit_wiki_postmortem_incident_rca
+
+    res_capa = audit_wiki_postmortem_incident_rca(
+        [
+            {
+                "page_id": "PM-CAPA",
+                "content": (
+                    "Timeline del incidente.\n"
+                    "Root cause identificada.\n"
+                    "Acciones correctivas pendientes de asignar."  # CAPA sin @/owner
+                ),
+            }
+        ]
+    )
+    assert res_capa["missing_capa_page_ids"] == ["PM-CAPA"]
+    assert res_capa["rca_posture"] == "MISSING_PREVENTIVE_CAPA_ACTIONS"
+
+    res_timeline = audit_wiki_postmortem_incident_rca(
+        [
+            {
+                "page_id": "PM-TIME",
+                "content": (
+                    "Root cause y 5 whys documentados.\n"
+                    "Acción preventiva @responsable que ya está resuelta."
+                ),
+            }
+        ]
+    )
+    assert res_timeline["missing_timeline_page_ids"] == ["PM-TIME"]
+    assert res_timeline["rca_posture"] == "MISSING_INCIDENT_TIMELINE"
+
+
+def test_wiki_postmortem_rca_empty_and_fallback_ids():
+    """None/vacíos/no-dicts -> NO_POSTMORTEM_PAGES; sin id usa fallback PAGE-{idx}."""
+    from backend.services.wiki_pmi_service import audit_wiki_postmortem_incident_rca
+
+    for pages in (None, [], ["no dict", 9]):
+        res = audit_wiki_postmortem_incident_rca(pages)  # type: ignore[arg-type]
+        assert res == {
+            "total_postmortems": 0,
+            "complete_rca_count": 0,
+            "completeness_rate_pct": 0.0,
+            "missing_timeline_page_ids": [],
+            "missing_root_cause_page_ids": [],
+            "missing_capa_page_ids": [],
+            "is_compliant": True,
+            "rca_posture": "NO_POSTMORTEM_PAGES",
+        }
+
+    fallback = audit_wiki_postmortem_incident_rca(
+        [{"content": "solo texto sin estructura"}]
+    )
+    assert fallback["missing_timeline_page_ids"] == ["PAGE-1"]
+    assert fallback["missing_root_cause_page_ids"] == ["PAGE-1"]
+    assert fallback["missing_capa_page_ids"] == ["PAGE-1"]
+    assert fallback["rca_posture"] == "MISSING_ROOT_CAUSE_ANALYSIS"
+
+
 def test_audit_wiki_crosslink_without_known_slugs_resolves_all():
     """known_slugs None -> todos los targets resueltos, broken [] y CONNECTED_KNOWLEDGE_GRAPH."""
     from backend.services.wiki_pmi_service import (

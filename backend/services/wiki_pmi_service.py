@@ -1154,6 +1154,107 @@ def audit_wiki_operational_runbook_readiness(
     }
 
 
+def audit_wiki_postmortem_incident_rca(
+    pages: Optional[List[Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
+    """Audita la gobernanza de páginas Post-Mortem / RCA de incidentes (PMBOK §4.4 / §8.3).
+
+    Cada página declara `id`/`page_id`/`slug` (fallbar: 'PAGE-{idx}') y
+    `content`/`body`/`markdown`, normalizado sin acentos en minúsculas:
+    - `has_timeline`: menciona timeline/cronología/línea de tiempo/impacto
+      temporal/detección.
+    - `has_root_cause`: menciona root cause/causa raiz/5 whys/factor causal.
+    - `has_capa_actions`: menciona CAPA/acciones y, además, responsable
+      ('@'/'owner'/'responsable').
+    - `missing_*_page_ids`: encontrados por pilar ausente.
+    - `complete_rca_count` / `completeness_rate_pct` (2 decimales; 0.0 sin páginas).
+    - `is_compliant`: las 3 listas de faltantes vacías.
+    - `rca_posture`: 'NO_POSTMORTEM_PAGES' sin páginas;
+      'MISSING_ROOT_CAUSE_ANALYSIS'; 'MISSING_PREVENTIVE_CAPA_ACTIONS';
+      'MISSING_INCIDENT_TIMELINE'; y 'COMPLIANT_BLAMELESS_POSTMORTEM'.
+    """
+    TIMELINE_TOKENS = (
+        "timeline", "cronologia", "linea de tiempo", "impacto temporal", "deteccion"
+    )
+    ROOT_CAUSE_TOKENS = (
+        "root cause", "causa raiz", "5 whys", "5 porques", "cinco porques", "factor causal"
+    )
+    CAPA_TOKENS = (
+        "capa", "accion correctiva", "accion preventiva", "remediacion",
+        "action item", "acciones",
+    )
+
+    valid_pages = [p for p in (pages or []) if isinstance(p, dict)]
+    total_postmortems = len(valid_pages)
+
+    missing_timeline_page_ids: List[str] = []
+    missing_root_cause_page_ids: List[str] = []
+    missing_capa_page_ids: List[str] = []
+    complete_rca_count = 0
+
+    def _norm(value: str) -> str:
+        stripped = unicodedata.normalize("NFKD", str(value))
+        return stripped.encode("ascii", "ignore").decode("ascii").strip().lower()
+
+    for idx, item in enumerate(valid_pages, start=1):
+        page_id = str(
+            item.get("id") or item.get("page_id") or item.get("slug") or ""
+        ).strip() or f"PAGE-{idx}"
+        content = str(
+            item.get("content") or item.get("body") or item.get("markdown") or ""
+        ).strip()
+        norm = _norm(content)
+
+        has_timeline = any(token in norm for token in TIMELINE_TOKENS)
+        has_root_cause = any(token in norm for token in ROOT_CAUSE_TOKENS)
+        has_capa_actions = (
+            any(token in norm for token in CAPA_TOKENS)
+            and ("@" in norm or "responsable" in norm or "owner" in norm)
+        )
+
+        if not has_timeline:
+            missing_timeline_page_ids.append(page_id)
+        if not has_root_cause:
+            missing_root_cause_page_ids.append(page_id)
+        if not has_capa_actions:
+            missing_capa_page_ids.append(page_id)
+        if has_timeline and has_root_cause and has_capa_actions:
+            complete_rca_count += 1
+
+    completeness_rate_pct = (
+        round((complete_rca_count / total_postmortems) * 100.0, 2)
+        if total_postmortems > 0
+        else 0.0
+    )
+    is_compliant = bool(
+        not missing_timeline_page_ids
+        and not missing_root_cause_page_ids
+        and not missing_capa_page_ids
+    )
+
+    if total_postmortems == 0:
+        rca_posture = "NO_POSTMORTEM_PAGES"
+    elif missing_root_cause_page_ids:
+        rca_posture = "MISSING_ROOT_CAUSE_ANALYSIS"
+    elif missing_capa_page_ids:
+        rca_posture = "MISSING_PREVENTIVE_CAPA_ACTIONS"
+    elif missing_timeline_page_ids:
+        rca_posture = "MISSING_INCIDENT_TIMELINE"
+    else:
+        rca_posture = "COMPLIANT_BLAMELESS_POSTMORTEM"
+
+    return {
+        "total_postmortems": total_postmortems,
+        "complete_rca_count": complete_rca_count,
+        "completeness_rate_pct": completeness_rate_pct,
+        "missing_timeline_page_ids": missing_timeline_page_ids,
+        "missing_root_cause_page_ids": missing_root_cause_page_ids,
+        "missing_capa_page_ids": missing_capa_page_ids,
+        "is_compliant": is_compliant,
+        "rca_posture": rca_posture,
+    }
+
+
 class WikiPMIService:
     """Fachada canónica de doctrina y gobernanza documental Wiki PMI."""
 
@@ -1258,6 +1359,12 @@ class WikiPMIService:
         markdown_text: Optional[str],
     ) -> dict[str, Any]:
         return audit_wiki_meeting_minutes_governance(markdown_text)
+
+    @staticmethod
+    def audit_wiki_postmortem_incident_rca(
+        pages: Optional[List[Dict[str, Any]]] = None,
+    ) -> Dict[str, Any]:
+        return audit_wiki_postmortem_incident_rca(pages)
 
     @staticmethod
     def audit_wiki_operational_runbook_readiness(
