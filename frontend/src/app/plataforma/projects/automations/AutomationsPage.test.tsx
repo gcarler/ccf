@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import AutomationsPage from "./page";
+import { AutomationRuleDrawer } from "./AutomationRuleDrawer";
 import * as authContext from "@/context/AuthContext";
 
 vi.mock("@/context/AuthContext", () => ({
@@ -10,6 +11,11 @@ vi.mock("@/context/AuthContext", () => ({
 
 vi.mock("@/components/projects/ProjectsShell", () => ({
   default: ({ children }: { children: React.ReactNode }) => <div data-testid="projects-shell">{children}</div>,
+}));
+
+vi.mock("@/components/ui/RightPanel", () => ({
+  RightPanel: ({ open, children }: { open: boolean; children: React.ReactNode }) =>
+    open ? <div data-testid="right-panel">{children}</div> : null,
 }));
 
 describe("AutomationsPage (Compatibility Landing)", () => {
@@ -60,5 +66,31 @@ describe("AutomationsPage (Compatibility Landing)", () => {
       screen.getByText(/La ejecución de efectos está reservada a personas con permiso de gestión/i),
     ).toBeInTheDocument();
     expect(screen.getByTestId("projects-shell")).toBeInTheDocument();
+  });
+
+  it("renderiza previsualización PMI §4.6 en AutomationRuleDrawer y aplica preset SLA", () => {
+    render(
+      <AutomationRuleDrawer
+        isOpen={true}
+        onClose={vi.fn()}
+        onSaved={vi.fn()}
+      />,
+    );
+
+    const preview = screen.getByTestId("automation-rule-pmi-preview");
+    expect(preview).toHaveTextContent("Tarea completada → Notificar al equipo");
+    expect(preview).toHaveTextContent(
+      "Ejecución y Monitoreo de Paquetes WBS (PMI §4.3 / §4.5)",
+    );
+
+    fireEvent.click(screen.getByTestId("automation-preset-sla"));
+
+    expect(
+      screen.getByPlaceholderText("ej. Al completar tarea notificar al pastor"),
+    ).toHaveValue("Alerta PMI 24h antes de vencimiento");
+    expect(preview).toHaveTextContent("Cerca del deadline → Notificar al equipo");
+    expect(preview).toHaveTextContent(
+      "Control de Cronograma y Nivelación de Recursos (PMI §6.6 / §9.6)",
+    );
   });
 });

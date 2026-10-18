@@ -712,6 +712,17 @@ export default function ProjectDetailPage() {
     ),
   } satisfies Partial<Record<ProjectHubModuleKey, () => React.ReactNode>>;
 
+  const wbsAveragePct = useMemo(() => {
+    if (tasks.length === 0) return 0;
+    const total = tasks.reduce((acc, task) => {
+      const st = (task.status || '').toLowerCase();
+      if (st === 'completed' || st === 'done') return acc + 100;
+      if (st === 'in_progress' || st === 'review') return acc + 50;
+      return acc;
+    }, 0);
+    return Math.round(total / tasks.length);
+  }, [tasks]);
+
   // ── Build context value (stable reference) ──
   const contextValue = useMemo(
     () => ({
@@ -844,11 +855,41 @@ export default function ProjectDetailPage() {
               </button>
               {/* Selector de tema (claro/oscuro/apariencia) junto al perfil */}
               <ThemeToggle variant="pill" onOpenAppearance={() => setShowAppearance(true)} />
-              <div className="w-px h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-0.5 shrink-0" />
+              <div className="w-px h-4 bg-[hsl(var(--border))] mx-0.5 shrink-0" />
               <UserMenuDropdown onOpenAppearance={() => setShowAppearance(true)} />
             </div>
           }
         />
+
+        <div
+          data-testid="project-detail-pmi-control-bar"
+          className="flex flex-wrap items-center justify-between gap-2 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-2)/0.45)] px-4 py-1.5 shrink-0"
+        >
+          <div className="flex flex-wrap items-center gap-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
+            <span className="font-bold text-[hsl(var(--foreground))]">Control PMI §4.3 &amp; §4.5</span>
+            <span>Etapa / Estado: {project?.status || 'active'}</span>
+            <span>Avance WBS (0/50/100): {wbsAveragePct}%</span>
+            <span>Paquetes WBS: {tasks.length} paquete(s)</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              data-testid="project-detail-quick-evm"
+              onClick={() => openHubModule('evm')}
+              className="rounded-md border border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.08)] px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.16)] transition-colors"
+            >
+              EVM / CPI×SPI
+            </button>
+            <button
+              type="button"
+              data-testid="project-detail-quick-governance"
+              onClick={() => openHubModule('governance')}
+              className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] transition-colors"
+            >
+              Gobernanza PMI
+            </button>
+          </div>
+        </div>
 
         {/* Apariencia: drawer de tema claro/oscuro para el detalle de Proyectos */}
         <AppearanceDrawer isOpen={showAppearance} onClose={() => setShowAppearance(false)} />

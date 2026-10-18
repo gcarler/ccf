@@ -306,4 +306,28 @@ describe('ProjectsLayoutClient', () => {
     expect(localStorage.getItem('workspace:s2:projects')).toBe('visible');
     expect(localStorage.getItem('workspace:focus:projects')).toBe('0');
   });
+
+  it('includes Gobernanza PMI section with IDP/EVM indicators and WBS links when a project is active', async () => {
+    layoutMocks.projectId = 'project-a';
+    layoutMocks.pathname = '/plataforma/projects/project-a';
+    layoutMocks.apiFetch.mockResolvedValueOnce(
+      projectRecord('project-a', 'Proyecto A', 'task-a', 'Tarea A'),
+    );
+
+    render(
+      <ProjectsLayoutClient initialProjectPage={null}>
+        <main>Contenido</main>
+      </ProjectsLayoutClient>,
+    );
+
+    expect(await screen.findByRole('heading', { name: 'Gobernanza PMI' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Indicadores IDP y EVM' })).toHaveAttribute(
+      'href',
+      '/plataforma/projects/project-a/indicators',
+    );
+    expect(screen.getByRole('link', { name: 'Estructura WBS / Lista' })).toHaveAttribute(
+      'href',
+      '/plataforma/projects/project-a?view=list',
+    );
+  });
 });

@@ -29,6 +29,11 @@ export default function ProjectsWelcomePage() {
         setCreateProjectOpen(true);
     };
 
+    const handleCreateWithTemplate = (templateTitle: string) => {
+        setProjectNameDraft(templateTitle);
+        setCreateProjectOpen(true);
+    };
+
     const submitCreate = async () => {
         const title = projectNameDraft.trim();
         if (!title) return;
@@ -71,7 +76,50 @@ export default function ProjectsWelcomePage() {
                 placeholder="Ej. Campaña de visitas"
                 submitLabel={creating ? 'Creando…' : 'Crear'}
             />
-            <main className="flex-1 overflow-y-auto p-3">
+            <main className="flex-1 overflow-y-auto p-3 space-y-3">
+                <section
+                    data-testid="projects-welcome-pmi-banner"
+                    aria-label="Iniciación Metodológica y Gobernanza PMI §4.1"
+                    className="max-w-4xl rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2)/0.45)] p-3 space-y-2.5"
+                >
+                    <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--primary))]">
+                        Iniciación Metodológica y Gobernanza PMI §4.1
+                    </p>
+                    <div className="flex flex-wrap gap-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--foreground))]">
+                        <span className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2.5 py-1">
+                            1. Acta de Constitución (Project Charter §4.1)
+                        </span>
+                        <span className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2.5 py-1">
+                            2. Estructura de Desglose del Trabajo (WBS 0/50/100 §5.4)
+                        </span>
+                        <span className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2.5 py-1">
+                            3. Control de Valor Ganado (EVM CPI×SPI §7.4)
+                        </span>
+                    </div>
+                    <div
+                        data-testid="projects-welcome-pmi-templates"
+                        className="flex flex-wrap items-center gap-2 pt-1"
+                    >
+                        <button
+                            type="button"
+                            data-testid="welcome-template-charter"
+                            onClick={() => handleCreateWithTemplate('Iniciativa Ministerial — Línea Base PMI')}
+                            disabled={creating}
+                            className="px-2.5 py-1 rounded-md border border-[hsl(var(--primary)/0.35)] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--primary)/0.2)] transition-colors disabled:opacity-60"
+                        >
+                            Iniciar con Plantilla Charter PMI
+                        </button>
+                        <button
+                            type="button"
+                            data-testid="welcome-template-wbs"
+                            onClick={() => handleCreateWithTemplate('Despliegue Operativo de Sede — WBS')}
+                            disabled={creating}
+                            className="px-2.5 py-1 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--surface-2))] transition-colors disabled:opacity-60"
+                        >
+                            Iniciar Despliegue WBS de Sede
+                        </button>
+                    </div>
+                </section>
                 {viewType === 'list' && (
                     <div className="max-w-3xl space-y-3">
                         {quickStarts.map((item) => (

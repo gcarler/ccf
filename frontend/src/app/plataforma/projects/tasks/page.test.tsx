@@ -142,4 +142,23 @@ describe('ProjectsTasksPage assigned tasks loading', () => {
 
     expect((await axe(container)).violations).toEqual([]);
   });
+
+  it('muestra el cintillo de control de paquetes WBS y cronograma PMI', async () => {
+    assignedTasksMock.mockResolvedValueOnce([
+      { id: 't-done', project_id: 'p1', title: 'Tarea completada', status: 'completed', priority: 'medium', due_date: null },
+      { id: 't-overdue', project_id: 'p1', title: 'Tarea vencida', status: 'in_progress', priority: 'medium', due_date: '2026-01-01T00:00:00Z' },
+      { id: 't-review', project_id: 'p1', title: 'Tarea en revisión', status: 'review', priority: 'medium', due_date: null },
+      { id: 't-todo', project_id: 'p1', title: 'Tarea pendiente', status: 'todo', priority: 'high', due_date: null },
+    ]);
+
+    render(<ProjectsTasksPage />);
+
+    const header = await screen.findByTestId('projects-tasks-pmi-header');
+    expect(header).toHaveTextContent('Paquetes Totales: 4');
+    // completada(100) + vencida in_progress(50) + revisión(50) + todo(0) = 50%
+    expect(header).toHaveTextContent('Avance PMI: 50%');
+    expect(header).toHaveTextContent('Vencidas: 1');
+    expect(header).toHaveTextContent('Prioridad Alta/Urgente: 1');
+    expect(header.innerHTML).toContain('text-[hsl(var(--destructive))]');
+  });
 });

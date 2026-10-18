@@ -51,6 +51,17 @@ function formatStatusFilter(value: TaskStatusFilter): string {
     return STATUS_LABELS[value as TaskStatus];
 }
 
+/** PMI §5.4/§6.6 — avance ponderado 0/50/100 del paquete WBS del portafolio. */
+function resolveTaskPortfolioProgress(tasks: readonly TaskViewItem[]): number {
+    if (tasks.length === 0) return 0;
+    const weightedTotal = tasks.reduce((sum, task) => {
+        if (task.status === 'completed') return sum + 100;
+        if (task.status === 'in_progress' || task.status === 'review') return sum + 50;
+        return sum;
+    }, 0);
+    return Math.round(weightedTotal / tasks.length);
+}
+
 export default function ProjectsTasksPage() {
     const { token, loading: authLoading } = useAuth();
     const searchParams = useSearchParams();
@@ -130,6 +141,10 @@ export default function ProjectsTasksPage() {
         });
     }, [tasks, status, search]);
 
+    const overdueCount = tasks.filter((task) => isTaskOverdue(task)).length;
+    const highPriorityCount = tasks.filter(
+        (task) => task.priority === 'high' || task.priority === 'urgent'
+    ).length;
     const groupedTasks = STATUS_FLOW.map((value) => ({
         id: value,
         label: value,
@@ -214,6 +229,27 @@ export default function ProjectsTasksPage() {
                     placeholder="Buscar tareas..."
                     className="h-10 w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/30"
                 />
+            </div>
+
+            {/* Cintillo de Control de Paquetes WBS y Cronograma PMI §5.4 & §6.6 */}
+            <div
+                data-testid="projects-tasks-pmi-header"
+                aria-label="Control de paquetes WBS y cronograma PMI"
+                className="flex flex-wrap items-center gap-3 border-b border-[hsl(var(--border))] px-3 py-2 text-2xs font-semibold text-[hsl(var(--text-secondary))]"
+            >
+                <span>Paquetes Totales: {tasks.length}</span>
+                <span>Avance PMI: {resolveTaskPortfolioProgress(tasks)}%</span>
+                <span
+                    className={clsx(
+                        'rounded-full border px-2 py-0.5',
+                        overdueCount > 0
+                            ? 'bg-[hsl(var(--destructive)/0.12)] text-[hsl(var(--destructive))] border-[hsl(var(--destructive)/0.4)]'
+                            : 'bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))] border-[hsl(var(--success)/0.4)]'
+                    )}
+                >
+                    Vencidas: {overdueCount}
+                </span>
+                <span>Prioridad Alta/Urgente: {highPriorityCount}</span>
             </div>
 
             <div className="px-3 py-3 border-b border-[hsl(var(--border))] flex flex-wrap gap-2">

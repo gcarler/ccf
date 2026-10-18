@@ -142,6 +142,24 @@ export default function ProjectsLayoutClient({ children, initialProjectPage }: P
                 ]
             },
             {
+                id: 'pmi-governance',
+                title: 'Gobernanza PMI',
+                items: [
+                    {
+                        id: 'project-indicators-link',
+                        label: 'Indicadores IDP y EVM',
+                        href: `/plataforma/projects/${projectId}/indicators`,
+                        icon: LayoutDashboard,
+                    },
+                    {
+                        id: 'project-wbs-link',
+                        label: 'Estructura WBS / Lista',
+                        href: `/plataforma/projects/${projectId}?view=list`,
+                        icon: CheckCircle2,
+                    },
+                ]
+            },
+            {
                 id: 'tasks',
                 title: 'Plan de Acción',
                 items: tasks.length > 0 ? tasks.map((t) => ({

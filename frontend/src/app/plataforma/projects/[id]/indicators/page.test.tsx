@@ -216,4 +216,33 @@ describe("ProjectIndicatorsPage loading recovery", () => {
     expect(screen.getByText("Infraestructura Digital")).toBeInTheDocument();
     expect(container.innerHTML).not.toMatch(/--(?:foreground|muted-foreground)\b/);
   });
+
+  it("renders MGA-PMI §7.4 methodological synthesis ribbon with WBS/EVM coverage, average SPI, CREMA and control verdict", async () => {
+    vi.mocked(apiFetch)
+      .mockResolvedValueOnce({ title: "Proyecto Síntesis" })
+      .mockResolvedValueOnce([
+        {
+          ...indicator("ind-1", "project-1", "Indicador Automatizado"),
+          source_type: "pro_edt_progress",
+          last_spi: 1.1,
+          crema_score: 90,
+        },
+        {
+          ...indicator("ind-2", "project-1", "Indicador Manual"),
+          source_type: "manual",
+          last_spi: 0.7,
+          crema_score: 80,
+        },
+      ]);
+
+    const { container } = render(<ProjectIndicatorsPage />);
+    expect(await screen.findByText("Indicador Automatizado")).toBeInTheDocument();
+
+    const synthesis = screen.getByTestId("project-indicators-pmi-synthesis");
+    expect(synthesis).toHaveTextContent("Cobertura Automática WBS/EVM: 1/2 automatizados");
+    expect(synthesis).toHaveTextContent("SPI Promedio IDP: 0.90");
+    expect(synthesis).toHaveTextContent("Calidad CREMA: 85/100");
+    expect(synthesis).toHaveTextContent("Requiere Acción Correctiva (1)");
+    expect(container.innerHTML).not.toMatch(/--(?:foreground|muted-foreground)\b/);
+  });
 });

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -55,5 +55,50 @@ describe('ProjectsMorePage partial data failures', () => {
     expect(await screen.findByText('Sin datos de resumen')).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(getAllProjects).toHaveBeenCalledTimes(2);
+  });
+
+  it('muestra el banner de desempeño ejecutivo de portafolio PMI', async () => {
+    vi.mocked(apiFetch).mockImplementation((path: string) => {
+      if (path === '/projects/summary') {
+        return Promise.resolve([
+          { project_status: 'planning', total_projects: 2, total_tasks: 4, completed_tasks: 1 },
+          { project_status: 'active', total_projects: 2, total_tasks: 6, completed_tasks: 2 },
+        ]);
+      }
+      if (path === '/projects/workload') {
+        return Promise.resolve([
+          { persona_id: 'p1', overdue_tasks: 2 },
+          { persona_id: 'p2', overdue_tasks: 0 },
+        ]);
+      }
+      return Promise.resolve([]);
+    });
+    vi.mocked(getAllProjects).mockResolvedValue([]);
+
+    render(<ProjectsMorePage />);
+
+    const header = await screen.findByTestId('projects-more-pmi-header');
+    // done 3 / tasks 10 → 30%
+    expect(header).toHaveTextContent('Cumplimiento WBS: 30% (3/10)');
+    expect(header).toHaveTextContent('Balance Pipeline: 2 planificación / 2 ejecución');
+    expect(header).toHaveTextContent('Requiere Nivelación PMI §9.6 (1)');
+    expect(header.innerHTML).toContain('text-[hsl(var(--warning))]');
+    cleanup();
+
+    // Sin sobrecarga → Capacidad Balanceada en --success
+    vi.mocked(apiFetch).mockImplementation((path: string) => {
+      if (path === '/projects/summary') {
+        return Promise.resolve([
+          { project_status: 'active', total_projects: 1, total_tasks: 2, completed_tasks: 1 },
+        ]);
+      }
+      return Promise.resolve([]);
+    });
+    vi.mocked(getAllProjects).mockResolvedValue([]);
+    render(<ProjectsMorePage />);
+
+    expect(await screen.findByTestId('projects-more-pmi-header')).toHaveTextContent(
+      'Capacidad Balanceada'
+    );
   });
 });

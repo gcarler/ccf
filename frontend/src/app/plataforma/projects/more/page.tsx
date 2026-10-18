@@ -14,6 +14,7 @@ import { BarChart3, Layout, MoreHorizontal } from 'lucide-react';
 import { DSSkeleton } from '@/design';
 import { toast } from 'sonner';
 import { getAllProjects } from '@/lib/projects/api';
+import clsx from 'clsx';
 
 function taskColor(task: ProjectTaskRecord, todayKey: string): 'blue' | 'emerald' | 'amber' | 'rose' | 'sky' {
     if (task.status === 'completed') return 'emerald';
@@ -151,6 +152,32 @@ export default function ProjectsMorePage() {
                         retrying={loading && loadFailed}
                         className="mb-3"
                     />
+                )}
+                {!loading && !error && (
+                    <div
+                        data-testid="projects-more-pmi-header"
+                        aria-label="Desempeño ejecutivo de portafolio PMI"
+                        className="flex flex-wrap items-center gap-3 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-1.5 text-2xs font-semibold text-[hsl(var(--text-secondary))] mb-3"
+                    >
+                        <span>
+                            Cumplimiento WBS: {metrics.tasks > 0 ? Math.round((metrics.done / metrics.tasks) * 100) : 0}% ({metrics.done}/{metrics.tasks})
+                        </span>
+                        <span>
+                            Balance Pipeline: {metrics.planning} planificación / {metrics.active} ejecución
+                        </span>
+                        <span
+                            className={clsx(
+                                'rounded-full border px-2 py-0.5',
+                                metrics.overloaded > 0
+                                    ? 'bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.4)]'
+                                    : 'bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))] border-[hsl(var(--success)/0.4)]'
+                            )}
+                        >
+                            {metrics.overloaded > 0
+                                ? `Requiere Nivelación PMI §9.6 (${metrics.overloaded})`
+                                : 'Capacidad Balanceada'}
+                        </span>
+                    </div>
                 )}
                 {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">{[1, 2, 3].map((idx) => <DSSkeleton key={idx} className="h-32 rounded-lg" />)}</div>

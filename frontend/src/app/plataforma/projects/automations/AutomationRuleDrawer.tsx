@@ -196,6 +196,15 @@ export function AutomationRuleDrawer({
     }
   };
 
+  const selectedTriggerLabel =
+    TRIGGER_OPTIONS.find((opt) => opt.id === triggerType)?.label || triggerType;
+  const selectedActionLabel =
+    ACTION_OPTIONS.find((opt) => opt.id === actionType)?.label || actionType;
+  const pmiDomainLabel =
+    triggerType === "deadline" || triggerType === "overload"
+      ? "Control de Cronograma y Nivelación de Recursos (PMI §6.6 / §9.6)"
+      : "Ejecución y Monitoreo de Paquetes WBS (PMI §4.3 / §4.5)";
+
   return (
     <RightPanel
       open={isOpen}
@@ -206,12 +215,63 @@ export function AutomationRuleDrawer({
       width="w-full sm:max-w-lg"
     >
       <form onSubmit={handleSubmit} className="space-y-5 p-4 text-[hsl(var(--foreground))]">
+        {/* Diagnóstico y Presets de Automatización PMI §4.6 */}
+        <div
+          data-testid="automation-rule-pmi-preview"
+          className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2)/0.45)] p-3 space-y-2"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--primary))]">
+              Diagnóstico y Presets PMI §4.6
+            </span>
+            <span className="text-2xs font-semibold text-[hsl(var(--foreground))]">
+              {selectedTriggerLabel} → {selectedActionLabel}
+            </span>
+          </div>
+          <p className="text-2xs text-[hsl(var(--muted-foreground))]">
+            {pmiDomainLabel}
+          </p>
+          <div
+            data-testid="automation-rule-pmi-presets"
+            className="flex flex-wrap items-center gap-2 pt-1"
+          >
+            <button
+              type="button"
+              data-testid="automation-preset-sla"
+              onClick={() => {
+                setName("Alerta PMI 24h antes de vencimiento");
+                setTriggerType("deadline");
+                setActionType("notification");
+              }}
+              className="px-2.5 py-1 rounded-md border border-[hsl(var(--primary)/0.35)] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--primary)/0.2)] transition-colors"
+            >
+              Preset SLA Vencimiento (§6.6)
+            </button>
+            <button
+              type="button"
+              data-testid="automation-preset-overload"
+              onClick={() => {
+                setName("Escalamiento PMI por saturación de responsable");
+                setTriggerType("overload");
+                setActionType("set_priority");
+              }}
+              className="px-2.5 py-1 rounded-md border border-[hsl(var(--warning)/0.35)] bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning,var(--primary)))] text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--warning)/0.2)] transition-colors"
+            >
+              Preset Sobrecarga (§9.6)
+            </button>
+          </div>
+        </div>
+
         {/* Nombre de la Regla */}
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-1.5">
+          <label
+            htmlFor="automation-rule-name-input"
+            className="block text-xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-1.5"
+          >
             Nombre de la Regla *
           </label>
           <input
+            id="automation-rule-name-input"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}

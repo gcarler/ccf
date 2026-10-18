@@ -167,6 +167,23 @@ export default function ProjectIndicatorsPage() {
     return { optimal, warning, critical, avgCrema };
   }, [indicators]);
 
+  const pmiSynthesis = useMemo(() => {
+    const automatedCount = indicators.filter((i) =>
+      Boolean(i.source_type && i.source_type !== "manual")
+    ).length;
+    const withSpi = indicators.filter(
+      (i) => i.last_spi !== null && i.last_spi !== undefined
+    );
+    const avgSpi =
+      withSpi.length > 0
+        ? (
+            withSpi.reduce((acc, row) => acc + (row.last_spi ?? 0), 0) /
+            withSpi.length
+          ).toFixed(2)
+        : "1.00";
+    return { automatedCount, avgSpi };
+  }, [indicators]);
+
   return (
     <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] overflow-y-auto">
       {/* Header Superior y Breadcrumb */}
@@ -234,6 +251,41 @@ export default function ProjectIndicatorsPage() {
       </div>
 
       <div className="p-6 space-y-6 max-w-7xl mx-auto w-full">
+        {/* Cintillo de Síntesis Metodológica MGA-PMI §7.4 */}
+        {hasLoadedIndicators && !loadError && (
+          <div
+            data-testid="project-indicators-pmi-synthesis"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-2.5 text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]"
+          >
+            <div className="flex flex-wrap items-center gap-4">
+              <span className="text-[hsl(var(--text-primary))]">
+                Síntesis MGA-PMI §7.4
+              </span>
+              <span>
+                Cobertura Automática WBS/EVM: {pmiSynthesis.automatedCount}/{indicators.length} automatizados
+              </span>
+              <span>SPI Promedio IDP: {pmiSynthesis.avgSpi}</span>
+              <span>Calidad CREMA: {spiStats.avgCrema}/100</span>
+            </div>
+            <span
+              className={clsx(
+                "rounded-full border px-2.5 py-0.5 text-2xs font-extrabold uppercase tracking-wider",
+                spiStats.critical > 0
+                  ? "border-[hsl(var(--destructive))]/30 bg-[hsl(var(--destructive))]/15 text-[hsl(var(--destructive))]"
+                  : spiStats.warning > 0
+                  ? "border-[hsl(var(--warning))]/30 bg-[hsl(var(--warning))]/15 text-[hsl(var(--warning))]"
+                  : "border-[hsl(var(--success))]/30 bg-[hsl(var(--success))]/15 text-[hsl(var(--success))]"
+              )}
+            >
+              {spiStats.critical > 0
+                ? `Requiere Acción Correctiva (${spiStats.critical})`
+                : spiStats.warning > 0
+                ? `En Vigilancia Preventiva (${spiStats.warning})`
+                : "Desempeño IDP Óptimo"}
+            </span>
+          </div>
+        )}
+
         {/* Tarjetas Analíticas del Semáforo SPI Superior */}
         {hasLoadedIndicators && !loadError && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

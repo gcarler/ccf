@@ -32,6 +32,28 @@ export default function ProjectAutomationsPage() {
             revisar sus reglas, crear una nueva o previsualizar sus condiciones.
             La ejecución de efectos está reservada a personas con permiso de gestión.
           </p>
+          <div
+            data-testid="projects-automations-pmi-banner"
+            className="mt-5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2)/0.45)] p-4"
+          >
+            <p className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--foreground))]">
+              Gobernanza de Flujos Automatizados y Control de Procesos · PMI §4.4 &amp; §8.2
+            </p>
+            <div
+              data-testid="projects-automations-pmi-pillars"
+              className="mt-2.5 flex flex-wrap gap-2"
+            >
+              <span className="rounded-md border border-[hsl(var(--primary)/0.25)] bg-[hsl(var(--primary)/0.08)] px-2.5 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">
+                Escalamiento Automático SLA (§6.6)
+              </span>
+              <span className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2.5 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--foreground))]">
+                Transición Stage-Gate Auditable (§4.3)
+              </span>
+              <span className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2.5 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--foreground))]">
+                Aislamiento Multi-Proyecto y RBAC (§4.6)
+              </span>
+            </div>
+          </div>
           <Link
             href="/plataforma/projects"
             className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-4 py-2 text-sm font-semibold text-[hsl(var(--primary-foreground))] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--surface-1))]"

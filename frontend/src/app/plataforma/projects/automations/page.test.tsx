@@ -19,4 +19,18 @@ describe("ProjectAutomationsPage compatibility landing", () => {
       screen.getByRole("link", { name: "Ir a mis proyectos" }),
     ).toHaveAttribute("href", "/plataforma/projects");
   });
+
+  it("renders PMI §4.4 & §8.2 process automation governance banner and pillars", () => {
+    render(<ProjectAutomationsPage />);
+
+    const banner = screen.getByTestId("projects-automations-pmi-banner");
+    expect(banner).toHaveTextContent(
+      "Gobernanza de Flujos Automatizados y Control de Procesos · PMI §4.4 & §8.2",
+    );
+
+    const pillars = screen.getByTestId("projects-automations-pmi-pillars");
+    expect(pillars).toHaveTextContent("Escalamiento Automático SLA (§6.6)");
+    expect(pillars).toHaveTextContent("Transición Stage-Gate Auditable (§4.3)");
+    expect(pillars).toHaveTextContent("Aislamiento Multi-Proyecto y RBAC (§4.6)");
+  });
 });
