@@ -3687,6 +3687,138 @@ def summarize_projects_nullable_and_union_branch_hygiene(
     }
 
 
+_QUERY_FILTER_SORT_EXACT_NAMES = frozenset(
+    {
+        "sort",
+        "order",
+        "status",
+        "state",
+        "filter",
+        "search",
+        "q",
+        "query",
+        "sede_id",
+    }
+)
+_QUERY_FILTER_SORT_SUFFIXES = ("_status", "_type", "_by", "_id")
+_SEARCH_QUERY_PARAM_NAMES = frozenset({"search", "q", "query"})
+_MUTATION_HTTP_METHODS = frozenset({"post", "put", "patch", "delete"})
+
+
+def summarize_projects_query_filter_and_sort_parameter_hygiene(
+    openapi_schema: Mapping[str, object] | None = None,
+) -> dict[str, object]:
+    """Audita la higiene de parámetros query de filtrado, ordenamiento, búsqueda y tenant en rutas de proyectos."""
+    if openapi_schema is None:
+        from backend.app import app
+
+        schema_dict: Mapping[str, Any] = app.openapi()
+    else:
+        schema_dict = openapi_schema
+
+    total_filter_sort_query_params = 0
+    untyped_query_params: list[str] = []
+    client_sede_id_mutation_query_params: list[str] = []
+    invalid_search_bound_query_params: list[str] = []
+
+    paths = schema_dict.get("paths", {}) if isinstance(schema_dict, Mapping) else {}
+    if isinstance(paths, Mapping):
+        for path in sorted(paths.keys()):
+            path_str = str(path)
+            if not path_str.startswith(("/api/projects", "/api/v1/projects", "/projects")):
+                continue
+            path_item = paths[path]
+            if not isinstance(path_item, Mapping):
+                continue
+
+            path_params = (
+                path_item.get("parameters")
+                if isinstance(path_item.get("parameters"), list)
+                else []
+            )
+
+            for method in ("get", "post", "put", "patch", "delete", "head", "options", "trace"):
+                op_spec = path_item.get(method)
+                if not isinstance(op_spec, Mapping):
+                    continue
+
+                op_params = (
+                    op_spec.get("parameters")
+                    if isinstance(op_spec.get("parameters"), list)
+                    else []
+                )
+
+                for param in (*path_params, *op_params):
+                    if not isinstance(param, Mapping) or param.get("in") != "query":
+                        continue
+
+                    name = str(param.get("name") or "").strip()
+                    if not name:
+                        continue
+
+                    is_filter_sort = (
+                        name in _QUERY_FILTER_SORT_EXACT_NAMES
+                        or name.endswith(_QUERY_FILTER_SORT_SUFFIXES)
+                    )
+                    if not is_filter_sort:
+                        continue
+
+                    total_filter_sort_query_params += 1
+                    param_ref = f"{method.upper()} {path_str}:{name}"
+
+                    p_schema = param.get("schema")
+                    has_type_info = (
+                        isinstance(p_schema, Mapping)
+                        and any(
+                            bool(p_schema.get(k))
+                            for k in ("type", "anyOf", "oneOf", "$ref")
+                        )
+                    )
+                    if not has_type_info:
+                        untyped_query_params.append(param_ref)
+
+                    if name == "sede_id" and method in _MUTATION_HTTP_METHODS:
+                        client_sede_id_mutation_query_params.append(param_ref)
+
+                    if name in _SEARCH_QUERY_PARAM_NAMES and isinstance(p_schema, Mapping):
+                        candidates: list[Mapping[str, Any]] = [p_schema]
+                        for union_key in ("anyOf", "oneOf"):
+                            branches = p_schema.get(union_key)
+                            if isinstance(branches, list):
+                                candidates.extend(
+                                    b for b in branches if isinstance(b, Mapping)
+                                )
+                        has_invalid_bounds = False
+                        for cand in candidates:
+                            max_len = cand.get("maxLength")
+                            min_len = cand.get("minLength")
+                            if (
+                                isinstance(max_len, (int, float))
+                                and not isinstance(max_len, bool)
+                                and max_len <= 0
+                            ) or (
+                                isinstance(min_len, (int, float))
+                                and not isinstance(min_len, bool)
+                                and min_len < 0
+                            ):
+                                has_invalid_bounds = True
+                                break
+                        if has_invalid_bounds:
+                            invalid_search_bound_query_params.append(param_ref)
+
+    return {
+        "total_filter_sort_query_params": total_filter_sort_query_params,
+        "untyped_query_params": sorted(untyped_query_params),
+        "client_sede_id_mutation_query_params": sorted(client_sede_id_mutation_query_params),
+        "invalid_search_bound_query_params": sorted(invalid_search_bound_query_params),
+        "is_query_filter_sort_hygiene_compliant": (
+            len(untyped_query_params) == 0
+            and len(client_sede_id_mutation_query_params) == 0
+            and len(invalid_search_bound_query_params) == 0
+        ),
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()
@@ -3758,6 +3890,9 @@ def main() -> int:
 
     print(expected, end="")
     return 0
+
+
+__all__ = [name for name in globals() if not name.startswith("_")]
 
 
 if __name__ == "__main__":

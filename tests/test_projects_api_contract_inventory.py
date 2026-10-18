@@ -5193,3 +5193,110 @@ def test_nullable_and_union_branch_hygiene_ignores_non_project_schemas():
     assert res["null_only_unions"] == []
     assert res["duplicate_branch_unions"] == []
     assert res["is_union_branch_hygiene_compliant"] is True
+
+
+def test_query_filter_and_sort_parameter_hygiene_live_openapi():
+    """Valida contra el esquema OpenAPI real que los parámetros query de filtrado/ordenamiento cumplan higiene."""
+    assert "summarize_projects_query_filter_and_sort_parameter_hygiene" in audit_projects_api_contracts.__all__
+    res = audit_projects_api_contracts.summarize_projects_query_filter_and_sort_parameter_hygiene()
+    assert res["total_filter_sort_query_params"] > 0
+    assert res["untyped_query_params"] == []
+    assert res["client_sede_id_mutation_query_params"] == []
+    assert res["invalid_search_bound_query_params"] == []
+    assert res["is_query_filter_sort_hygiene_compliant"] is True
+
+
+def test_query_filter_and_sort_parameter_hygiene_detects_untyped_and_mutation_sede_id():
+    """Detecta parámetros query sin tipo y sede_id en métodos mutadores (violación Axioma 3)."""
+    schema = {
+        "paths": {
+            "/api/v1/projects/tasks": {
+                "get": {
+                    "parameters": [
+                        {"name": "status", "in": "query", "schema": {}},
+                        {"name": "sort_by", "in": "query", "schema": {"type": "string"}},
+                    ]
+                },
+                "post": {
+                    "parameters": [
+                        {"name": "sede_id", "in": "query", "schema": {"type": "string", "format": "uuid"}},
+                    ]
+                },
+                "delete": {
+                    "parameters": [
+                        {"name": "sede_id", "in": "query", "schema": {"type": "string"}},
+                    ]
+                },
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_query_filter_and_sort_parameter_hygiene(
+        schema
+    )
+    assert res["total_filter_sort_query_params"] == 4
+    assert res["untyped_query_params"] == ["GET /api/v1/projects/tasks:status"]
+    assert res["client_sede_id_mutation_query_params"] == [
+        "DELETE /api/v1/projects/tasks:sede_id",
+        "POST /api/v1/projects/tasks:sede_id",
+    ]
+    assert res["invalid_search_bound_query_params"] == []
+    assert res["is_query_filter_sort_hygiene_compliant"] is False
+
+
+def test_query_filter_and_sort_parameter_hygiene_detects_invalid_search_bounds():
+    """Detecta límites inválidos (maxLength <= 0 o minLength < 0) en parámetros de búsqueda (search, q, query)."""
+    schema = {
+        "paths": {
+            "/projects/search": {
+                "get": {
+                    "parameters": [
+                        {"name": "search", "in": "query", "schema": {"type": "string", "maxLength": 0}},
+                        {"name": "q", "in": "query", "schema": {"type": "string", "minLength": -1}},
+                        {"name": "query", "in": "query", "schema": {"type": "string", "minLength": 1, "maxLength": 120}},
+                    ]
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_query_filter_and_sort_parameter_hygiene(
+        schema
+    )
+    assert res["total_filter_sort_query_params"] == 3
+    assert res["untyped_query_params"] == []
+    assert res["client_sede_id_mutation_query_params"] == []
+    assert res["invalid_search_bound_query_params"] == [
+        "GET /projects/search:q",
+        "GET /projects/search:search",
+    ]
+    assert res["is_query_filter_sort_hygiene_compliant"] is False
+
+
+def test_query_filter_and_sort_parameter_hygiene_ignores_non_project_routes_and_non_filter_params():
+    """Ignora rutas fuera del dominio de proyectos y parámetros que no son de filtro/ordenamiento."""
+    schema = {
+        "paths": {
+            "/api/v1/finance/ledger": {
+                "post": {
+                    "parameters": [
+                        {"name": "sede_id", "in": "query", "schema": {}},
+                    ]
+                }
+            },
+            "/api/projects/items": {
+                "get": {
+                    "parameters": [
+                        {"name": "page", "in": "query", "schema": {}},
+                        {"name": "project_id", "in": "path", "schema": {}},
+                    ]
+                }
+            },
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_query_filter_and_sort_parameter_hygiene(
+        schema
+    )
+    assert res["total_filter_sort_query_params"] == 0
+    assert res["untyped_query_params"] == []
+    assert res["client_sede_id_mutation_query_params"] == []
+    assert res["invalid_search_bound_query_params"] == []
+    assert res["is_query_filter_sort_hygiene_compliant"] is True
