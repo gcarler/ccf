@@ -60,3 +60,36 @@ def validate_projects_quality_target(
             "QUALITY_DATABASE_URL debe apuntar al mismo host y puerto PostgreSQL que DATABASE_URL."
         )
     return database_name
+
+
+def build_projects_quality_audit_manifest(
+    *,
+    database_url: str,
+    quality_database_url: str,
+    confirmed_database: str,
+    run_id: str,
+) -> dict:
+    """Construye el manifiesto de auditoría de aseguramiento de calidad PMI (§8.2)."""
+    database_name = validate_projects_quality_target(
+        database_url=database_url,
+        quality_database_url=quality_database_url,
+        confirmed_database=confirmed_database,
+        run_id=run_id,
+    )
+    target = make_url(database_url)
+    lower_name = database_name.lower()
+    if "e2e" in lower_name:
+        isolation_tier = "e2e"
+    elif "quality" in lower_name:
+        isolation_tier = "quality"
+    else:
+        isolation_tier = "test"
+
+    return {
+        "database_name": database_name,
+        "run_id": run_id.strip(),
+        "host": target.host or "localhost",
+        "port": int(target.port or 5432),
+        "isolation_tier": isolation_tier,
+        "is_isolated_verified": True,
+    }
