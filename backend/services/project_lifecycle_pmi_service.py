@@ -3142,6 +3142,7 @@ __all__ = [
     "audit_stakeholder_engagement_seam_gap_and_drift",
     "audit_project_governance_tailoring_and_hybrid_justification",
     "audit_administrative_closure_financial_and_resource_release",
+    "audit_steering_committee_quorum_and_decision_governance",
     "ProjectLifecyclePMIService",
 ]
 
@@ -4280,4 +4281,135 @@ def audit_administrative_closure_financial_and_resource_release(
 
 ProjectLifecyclePMIService.audit_administrative_closure_financial_and_resource_release = staticmethod(
     audit_administrative_closure_financial_and_resource_release
+)
+
+
+def audit_steering_committee_quorum_and_decision_governance(
+    meetings: list[dict],
+    *,
+    min_quorum_pct: float = 66.7,
+    max_minutes_publish_days: int = 3,
+) -> dict:
+    """Audita quórum y gobernanza de decisiones del Comité Directivo (PMBOK §2.4 y §4.3).
+
+    Cada sesión aporta voting_members_total, voting_members_present,
+    sponsor_present, decisions_count, has_dissent, dissent_documented y
+    minutes_published_days:
+    - `sub_quorum_meetings_count`: quorum_pct = present/total*100
+      por debajo de `min_quorum_pct` (solo cuando total > 0).
+    - `missing_sponsor_meetings_count`: decisiones con sponsor_present
+      != True.
+    - `undocumented_dissent_count`: has_dissent == True sin
+      dissent_documented == True.
+    - `late_minutes_count`: minutes_published_days >
+      max_minutes_publish_days.
+    - `overall_quorum_compliance_pct`: % de sesiones con quórum
+      alcanzado sobre total_meetings (100.0 si vacío), 2 dec.
+    - `governance_board_status`: 'HEALTHY' sin violaciones; 'CRITICAL'
+      con sub-quórum o patrocinador ausente; 'AT_RISK' en otro caso.
+    - `violations`: dicts {meeting_id, reasons} por sesión con hallazgos.
+    """
+    if not isinstance(meetings, list):
+        meetings = []
+    session_records = [m for m in meetings if isinstance(m, dict)]
+
+    total_meetings = len(session_records)
+    compliant_meetings_count = 0
+    sub_quorum_meetings_count = 0
+    missing_sponsor_meetings_count = 0
+    undocumented_dissent_count = 0
+    late_minutes_count = 0
+    violations: list[dict] = []
+
+    for idx, meeting in enumerate(session_records, start=1):
+        meeting_id = str(meeting.get("meeting_id", f"MEETING-{idx}"))
+        reasons: list[str] = []
+
+        total = meeting.get("voting_members_total")
+        present = meeting.get("voting_members_present")
+        try:
+            members_total = int(total if total is not None else 0)
+        except (TypeError, ValueError):
+            members_total = 0
+        try:
+            members_present = int(present if present is not None else 0)
+        except (TypeError, ValueError):
+            members_present = 0
+
+        if members_total <= 0:
+            quorum_met = False
+        else:
+            quorum_pct = members_present / members_total * 100.0
+            quorum_met = quorum_pct >= float(min_quorum_pct)
+
+        decisions_count = meeting.get("decisions_count")
+        try:
+            has_decisions = int(decisions_count if decisions_count is not None else 0) > 0
+        except (TypeError, ValueError):
+            has_decisions = False
+
+        has_dissent_raw = bool(meeting.get("has_dissent", False))
+        dissent_documented_raw = bool(meeting.get("dissent_documented", False))
+
+        minutes_days_raw = meeting.get("minutes_published_days")
+        try:
+            minutes_days = int(minutes_days_raw if minutes_days_raw is not None else 0)
+        except (TypeError, ValueError):
+            minutes_days = 0
+
+        if not quorum_met:
+            sub_quorum_meetings_count += 1
+            reasons.append(
+                "SUB_QUORUM"
+                if members_total <= 0
+                else f"QUORUM_PCT_BELOW_MIN ({members_present}/{members_total})",
+            )
+        if has_decisions and meeting.get("sponsor_present") is not True:
+            missing_sponsor_meetings_count += 1
+            reasons.append("SPONSOR_MISSING_FOR_DECISIONS")
+        if has_dissent_raw and not dissent_documented_raw:
+            undocumented_dissent_count += 1
+            reasons.append("DISSENT_NOT_DOCUMENTED")
+        if minutes_days > int(max_minutes_publish_days):
+            late_minutes_count += 1
+            reasons.append(
+                f"MINUTES_PUBLISHED_LATE ({minutes_days}>{max_minutes_publish_days})",
+            )
+
+        if quorum_met:
+            compliant_meetings_count += 1
+
+        if reasons:
+            violations.append({"meeting_id": meeting_id, "reasons": reasons})
+
+    total_with_quorum = compliant_meetings_count
+    overall_quorum_compliance_pct = (
+        round(total_with_quorum / total_meetings * 100.0, 2) if total_meetings > 0 else 100.0
+    )
+
+    governance_board_status = (
+        "CRITICAL"
+        if sub_quorum_meetings_count > 0 or missing_sponsor_meetings_count > 0
+        else (
+            "AT_RISK"
+            if undocumented_dissent_count > 0 or late_minutes_count > 0
+            else "HEALTHY"
+        )
+    )
+
+    return {
+        "total_meetings": total_meetings,
+        "compliant_meetings_count": compliant_meetings_count,
+        "sub_quorum_meetings_count": sub_quorum_meetings_count,
+        "missing_sponsor_meetings_count": missing_sponsor_meetings_count,
+        "undocumented_dissent_count": undocumented_dissent_count,
+        "late_minutes_count": late_minutes_count,
+        "overall_quorum_compliance_pct": overall_quorum_compliance_pct,
+        "governance_board_status": governance_board_status,
+        "violations": violations,
+    }
+
+
+ProjectLifecyclePMIService.audit_steering_committee_quorum_and_decision_governance = staticmethod(
+    audit_steering_committee_quorum_and_decision_governance
 )

@@ -3787,6 +3787,7 @@ __all__ = [
     "validate_ccpm_feeding_and_project_buffer_sizing",
     "validate_wbs_hundred_percent_rule_decomposition",
     "validate_emv_decision_tree_and_contingency_reserve",
+    "validate_parametric_estimation_model_fit",
 ]
 
 
@@ -5453,3 +5454,69 @@ def validate_emv_decision_tree_and_contingency_reserve(
             and not has_contingency_reserve_shortfall
         ),
     }
+
+
+def validate_parametric_estimation_model_fit(
+    r_squared: float,
+    sample_size: int,
+    independent_variables_count: int,
+    mean_absolute_percentage_error_pct: float,
+    *,
+    extrapolation_beyond_historical_range: bool = False,
+    scale_adjustment_documented: bool = False,
+    min_r_squared: float = 0.70,
+    max_mape_pct: float = 25.0,
+) -> dict[str, Any]:
+    """PMBOK §6.4 / §7.2 — valida ajuste estadístico de regresión paramétrica (R², grados de libertad y MAPE)."""
+    r2 = float(r_squared)
+    n = int(sample_size)
+    k = int(independent_variables_count)
+    mape = float(mean_absolute_percentage_error_pct)
+    min_r2 = float(min_r_squared)
+    max_mape = float(max_mape_pct)
+
+    if (
+        not (0.0 <= r2 <= 1.0)
+        or n <= 0
+        or k < 1
+        or mape < 0.0
+        or not (0.0 < min_r2 <= 1.0)
+        or max_mape <= 0.0
+    ):
+        raise ValueError(
+            "Parámetros de estimación paramétrica fuera de rango válido (R² en [0, 1], n > 0, k >= 1, MAPE >= 0)."
+        )
+
+    degrees_of_freedom = n - k - 1
+    if degrees_of_freedom < 1:
+        raise ValueError(
+            f"Regresión paramétrica rechazada por muestra histórica insuficiente: grados de libertad ({degrees_of_freedom}) < 1."
+        )
+
+    if r2 < min_r2 or mape > max_mape:
+        raise ValueError(
+            f"Modelo rechazado por ajuste estadístico insuficiente: R²={r2:.4f} (mín {min_r2:.4f}) o MAPE={mape:.2f}% (máx {max_mape:.2f}%)."
+        )
+
+    if bool(extrapolation_beyond_historical_range) and not bool(
+        scale_adjustment_documented
+    ):
+        raise ValueError(
+            "La extrapolación fuera del rango histórico exige factor de ajuste de escala documentado."
+        )
+
+    adjusted_r_squared = round(
+        1.0 - ((1.0 - r2) * (n - 1) / degrees_of_freedom), 4
+    )
+
+    return {
+        "r_squared": round(r2, 4),
+        "adjusted_r_squared": adjusted_r_squared,
+        "degrees_of_freedom": int(degrees_of_freedom),
+        "mean_absolute_percentage_error_pct": round(mape, 2),
+        "extrapolation_beyond_historical_range": bool(
+            extrapolation_beyond_historical_range
+        ),
+        "is_valid": True,
+    }
+

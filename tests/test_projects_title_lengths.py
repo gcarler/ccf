@@ -4197,3 +4197,90 @@ def test_validate_emv_decision_tree_and_contingency_reserve_empty_and_export():
     assert raised is True
 
     assert "validate_emv_decision_tree_and_contingency_reserve" in mod.__all__
+
+
+def test_validate_parametric_estimation_model_fit_valid():
+    """Acepta modelo paramétrico con R², grados de libertad y MAPE dentro de umbrales PMBOK §6.4 / §7.2."""
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import validate_parametric_estimation_model_fit
+
+    assert "validate_parametric_estimation_model_fit" in mod.__all__
+    res = validate_parametric_estimation_model_fit(
+        r_squared=0.85,
+        sample_size=22,
+        independent_variables_count=2,
+        mean_absolute_percentage_error_pct=12.5,
+        extrapolation_beyond_historical_range=True,
+        scale_adjustment_documented=True,
+    )
+    assert res == {
+        "r_squared": 0.85,
+        "adjusted_r_squared": round(1.0 - ((1.0 - 0.85) * 21 / 19), 4),
+        "degrees_of_freedom": 19,
+        "mean_absolute_percentage_error_pct": 12.5,
+        "extrapolation_beyond_historical_range": True,
+        "is_valid": True,
+    }
+
+
+def test_validate_parametric_estimation_model_fit_insufficient_degrees_of_freedom():
+    """Rechaza regresión paramétrica sin grados de libertad suficientes (sample_size < k + 2)."""
+    import pytest
+    from backend.schemas.projects import validate_parametric_estimation_model_fit
+
+    with pytest.raises(ValueError, match="muestra histórica insuficiente|grados de libertad"):
+        validate_parametric_estimation_model_fit(
+            r_squared=0.90,
+            sample_size=3,
+            independent_variables_count=2,
+            mean_absolute_percentage_error_pct=10.0,
+        )
+
+
+def test_validate_parametric_estimation_model_fit_poor_r_squared_or_high_mape():
+    """Rechaza modelos con R² inferior al mínimo o MAPE superior al máximo permitido."""
+    import pytest
+    from backend.schemas.projects import validate_parametric_estimation_model_fit
+
+    with pytest.raises(ValueError, match="ajuste estadístico insuficiente"):
+        validate_parametric_estimation_model_fit(
+            r_squared=0.55,
+            sample_size=15,
+            independent_variables_count=1,
+            mean_absolute_percentage_error_pct=15.0,
+            min_r_squared=0.70,
+        )
+
+    with pytest.raises(ValueError, match="ajuste estadístico insuficiente"):
+        validate_parametric_estimation_model_fit(
+            r_squared=0.82,
+            sample_size=15,
+            independent_variables_count=1,
+            mean_absolute_percentage_error_pct=32.0,
+            max_mape_pct=25.0,
+        )
+
+
+def test_validate_parametric_estimation_model_fit_undocumented_extrapolation_and_bounds():
+    """Rechaza extrapolación fuera del rango histórico sin ajuste de escala documentado o parámetros fuera de rango."""
+    import pytest
+    from backend.schemas.projects import validate_parametric_estimation_model_fit
+
+    with pytest.raises(ValueError, match="ajuste de escala"):
+        validate_parametric_estimation_model_fit(
+            r_squared=0.88,
+            sample_size=20,
+            independent_variables_count=2,
+            mean_absolute_percentage_error_pct=11.0,
+            extrapolation_beyond_historical_range=True,
+            scale_adjustment_documented=False,
+        )
+
+    with pytest.raises(ValueError):
+        validate_parametric_estimation_model_fit(
+            r_squared=1.2,
+            sample_size=20,
+            independent_variables_count=1,
+            mean_absolute_percentage_error_pct=10.0,
+        )
+

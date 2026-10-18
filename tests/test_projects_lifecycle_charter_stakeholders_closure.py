@@ -4940,3 +4940,132 @@ def test_audit_administrative_closure_invalid_metrics_and_export():
                 "is_administrative_closure_compliant": True,
             }
         )
+
+
+def test_audit_steering_committee_quorum_and_decision_governance_healthy():
+    """Sesiones con quorum >= 66.7, sponsor presente, sin dissent ni actas tardias."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_steering_committee_quorum_and_decision_governance,
+    )
+
+    res = audit_steering_committee_quorum_and_decision_governance(
+        [
+            {"meeting_id": "SC-01", "voting_members_total": 3, "voting_members_present": 3,
+             "sponsor_present": True, "decisions_count": 2, "has_dissent": False,
+             "dissent_documented": False, "minutes_published_days": 1},
+            {"meeting_id": "SC-02", "voting_members_total": 4, "voting_members_present": 3,
+             "sponsor_present": True, "decisions_count": 0, "has_dissent": False,
+             "dissent_documented": False, "minutes_published_days": 3},
+        ]
+    )
+    assert res == {
+        "total_meetings": 2,
+        "compliant_meetings_count": 2,
+        "sub_quorum_meetings_count": 0,
+        "missing_sponsor_meetings_count": 0,
+        "undocumented_dissent_count": 0,
+        "late_minutes_count": 0,
+        "overall_quorum_compliance_pct": 100.0,
+        "governance_board_status": "HEALTHY",
+        "violations": [],
+    }
+
+
+def test_audit_steering_committee_quorum_and_decision_governance_critical():
+    """Sub-quorum (borde literal 2/3) + sponsor ausente con decisiones -> CRITICAL."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_steering_committee_quorum_and_decision_governance,
+    )
+
+    edge = audit_steering_committee_quorum_and_decision_governance(
+        [
+            {"meeting_id": "SC-B", "voting_members_total": 3, "voting_members_present": 2,
+             "sponsor_present": True, "decisions_count": 0, "has_dissent": False,
+             "dissent_documented": False, "minutes_published_days": 2},
+        ]
+    )
+    # 2/3 * 100 = 66.666..% < 66.7 -> sub-quorum literal segun spec.
+    assert edge["sub_quorum_meetings_count"] == 1
+    assert edge["compliant_meetings_count"] == 0
+    assert edge["overall_quorum_compliance_pct"] == 0.0
+    assert edge["governance_board_status"] == "CRITICAL"
+    assert edge["violations"] == [
+        {"meeting_id": "SC-B", "reasons": ["QUORUM_PCT_BELOW_MIN (2/3)"]},
+    ]
+
+    crit = audit_steering_committee_quorum_and_decision_governance(
+        [
+            {"meeting_id": "SC-03", "voting_members_total": 3, "voting_members_present": 1,
+             "sponsor_present": False, "decisions_count": 1, "has_dissent": False,
+             "dissent_documented": False, "minutes_published_days": 2},
+        ]
+    )
+    assert crit["sub_quorum_meetings_count"] == 1
+    assert crit["missing_sponsor_meetings_count"] == 1
+    assert crit["governance_board_status"] == "CRITICAL"
+    assert crit["violations"] == [
+        {"meeting_id": "SC-03", "reasons": [
+            "QUORUM_PCT_BELOW_MIN (1/3)", "SPONSOR_MISSING_FOR_DECISIONS"]},
+    ]
+
+
+def test_audit_steering_committee_quorum_and_decision_governance_at_risk():
+    """Dissent sin documentar + acta tardia con quorum/sponsor OK -> AT_RISK."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_steering_committee_quorum_and_decision_governance,
+    )
+
+    risk = audit_steering_committee_quorum_and_decision_governance(
+        [
+            {"meeting_id": "SC-04", "voting_members_total": 4, "voting_members_present": 3,
+             "sponsor_present": True, "decisions_count": 1, "has_dissent": True,
+             "dissent_documented": False, "minutes_published_days": 5},
+        ]
+    )
+    assert risk["undocumented_dissent_count"] == 1
+    assert risk["late_minutes_count"] == 1
+    assert risk["sub_quorum_meetings_count"] == 0
+    assert risk["missing_sponsor_meetings_count"] == 0
+    assert risk["compliant_meetings_count"] == 1
+    assert risk["overall_quorum_compliance_pct"] == 100.0
+    assert risk["governance_board_status"] == "AT_RISK"
+    assert risk["violations"] == [{"meeting_id": "SC-04", "reasons": [
+        "DISSENT_NOT_DOCUMENTED", "MINUTES_PUBLISHED_LATE (5>3)"]}]
+
+
+def test_audit_steering_committee_quorum_and_decision_governance_thresholds_and_empty():
+    """Umbrales custom, entrada vacia/None y proxy estatico + __all__."""
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_steering_committee_quorum_and_decision_governance,
+    )
+    import backend.services.project_lifecycle_pmi_service as mod
+
+    # 3/4 = 75.0 >= min 75.0 -> quorum OK; acta 3 > max 2 -> tardia.
+    custom = audit_steering_committee_quorum_and_decision_governance(
+        [
+            {"meeting_id": "SC-05", "voting_members_total": 4, "voting_members_present": 3,
+             "sponsor_present": True, "decisions_count": 0, "has_dissent": False,
+             "dissent_documented": False, "minutes_published_days": 3},
+        ],
+        min_quorum_pct=75.0,
+        max_minutes_publish_days=2,
+    )
+    assert custom["sub_quorum_meetings_count"] == 0
+    assert custom["late_minutes_count"] == 1
+    assert custom["governance_board_status"] == "AT_RISK"
+
+    empty = audit_steering_committee_quorum_and_decision_governance([])
+    assert empty["total_meetings"] == 0
+    assert empty["overall_quorum_compliance_pct"] == 100.0
+    assert empty["governance_board_status"] == "HEALTHY"
+    assert audit_steering_committee_quorum_and_decision_governance(None)["total_meetings"] == 0
+
+    sample = [{"meeting_id": "SM", "voting_members_total": 2, "voting_members_present": 2,
+               "sponsor_present": True, "decisions_count": 0, "has_dissent": False,
+               "dissent_documented": False, "minutes_published_days": 1}]
+    assert (
+        ProjectLifecyclePMIService.audit_steering_committee_quorum_and_decision_governance(sample)
+        == audit_steering_committee_quorum_and_decision_governance(sample)
+    )
+    assert "audit_steering_committee_quorum_and_decision_governance" in mod.__all__

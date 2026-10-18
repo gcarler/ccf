@@ -5556,3 +5556,138 @@ def test_audit_executive_report_monte_carlo_invalid_metrics_and_export():
             "underfunded_p80_contingency_ids": [],
             "is_monte_carlo_governance_compliant": True,
         }
+
+
+def test_audit_executive_report_vendor_sla_and_liquidated_damages_healthy():
+    """Verifica estado HEALTHY cuando todos los contratos cumplen SLA, sin atrasos, sin disputas y lejos del tope LD."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_vendor_sla_and_liquidated_damages,
+    )
+
+    contracts = [
+        {
+            "contract_id": "VND-CLOUD-01",
+            "contract_value": 100000.0,
+            "sla_target_uptime_pct": 99.9,
+            "actual_uptime_pct": 99.95,
+            "late_deliverables_count": 0,
+            "accrued_liquidated_damages": 1000.0,
+            "ld_cap_pct": 10.0,
+            "disputed_claims_amount": 0.0,
+        },
+        {
+            "contract_id": "VND-DEV-02",
+            "contract_value": 50000.0,
+            "sla_target_uptime_pct": 99.5,
+            "actual_uptime_pct": 99.8,
+            "late_deliverables_count": 0,
+            "accrued_liquidated_damages": 0.0,
+            "ld_cap_pct": 10.0,
+            "disputed_claims_amount": 0.0,
+        },
+    ]
+    res = audit_executive_report_vendor_sla_and_liquidated_damages(
+        contracts, max_ld_cap_utilization_pct=80.0
+    )
+    assert res == {
+        "total_contracts": 2,
+        "compliant_contracts_count": 2,
+        "sla_breached_contracts_count": 0,
+        "late_deliverables_contracts_count": 0,
+        "near_or_at_ld_cap_count": 0,
+        "total_accrued_liquidated_damages": 1000.0,
+        "total_disputed_claims_amount": 0.0,
+        "vendor_sla_governance_status": "HEALTHY",
+        "findings": [],
+    }
+    assert (
+        ProjectExportService.audit_executive_report_vendor_sla_and_liquidated_damages(
+            contracts
+        )
+        == res
+    )
+
+
+def test_audit_executive_report_vendor_sla_and_liquidated_damages_at_risk():
+    """Verifica estado AT_RISK cuando existe un único tipo de desviación (ej. SLA incumplido o reclamo en disputa) sin saturar LD."""
+    from backend.services.project_export_service import (
+        audit_executive_report_vendor_sla_and_liquidated_damages,
+    )
+
+    res = audit_executive_report_vendor_sla_and_liquidated_damages(
+        [
+            {
+                "contract_id": "VND-SLA-MISS",
+                "contract_value": 200000.0,
+                "sla_target_uptime_pct": 99.9,
+                "actual_uptime_pct": 99.2,
+                "late_deliverables_count": 0,
+                "accrued_liquidated_damages": 5000.0,
+                "ld_cap_pct": 10.0,
+                "disputed_claims_amount": 2500.0,
+            }
+        ],
+        max_ld_cap_utilization_pct=80.0,
+    )
+    assert res["total_contracts"] == 1
+    assert res["compliant_contracts_count"] == 0
+    assert res["sla_breached_contracts_count"] == 1
+    assert res["late_deliverables_contracts_count"] == 0
+    assert res["near_or_at_ld_cap_count"] == 0
+    assert res["total_accrued_liquidated_damages"] == 5000.0
+    assert res["total_disputed_claims_amount"] == 2500.0
+    assert res["vendor_sla_governance_status"] == "AT_RISK"
+    assert len(res["findings"]) == 1
+    assert res["findings"][0]["contract_id"] == "VND-SLA-MISS"
+    assert res["findings"][0]["ld_cap_utilization_pct"] == 25.0
+
+
+def test_audit_executive_report_vendor_sla_and_liquidated_damages_critical_ld_cap():
+    """Verifica estado CRITICAL cuando el consumo del tope de daños liquidados alcanza o supera el umbral máximo."""
+    from backend.services.project_export_service import (
+        audit_executive_report_vendor_sla_and_liquidated_damages,
+    )
+
+    res = audit_executive_report_vendor_sla_and_liquidated_damages(
+        [
+            {
+                "contract_id": "VND-LD-SATURATED",
+                "contract_value": 100000.0,
+                "sla_target_uptime_pct": 99.5,
+                "actual_uptime_pct": 99.6,
+                "late_deliverables_count": 2,
+                "accrued_liquidated_damages": 8500.0,
+                "ld_cap_pct": 10.0,
+                "disputed_claims_amount": 0.0,
+            }
+        ],
+        max_ld_cap_utilization_pct=80.0,
+    )
+    assert res["near_or_at_ld_cap_count"] == 1
+    assert res["late_deliverables_contracts_count"] == 1
+    assert res["vendor_sla_governance_status"] == "CRITICAL"
+    assert res["findings"][0]["ld_cap_utilization_pct"] == 85.0
+
+
+def test_audit_executive_report_vendor_sla_and_liquidated_damages_empty_and_export():
+    """Verifica manejo de entradas vacías o no válidas y exportación en __all__."""
+    import backend.services.project_export_service as _m
+    from backend.services.project_export_service import (
+        audit_executive_report_vendor_sla_and_liquidated_damages,
+    )
+
+    assert "audit_executive_report_vendor_sla_and_liquidated_damages" in _m.__all__
+    for bad in ([], None, "invalid"):
+        assert audit_executive_report_vendor_sla_and_liquidated_damages(bad) == {
+            "total_contracts": 0,
+            "compliant_contracts_count": 0,
+            "sla_breached_contracts_count": 0,
+            "late_deliverables_contracts_count": 0,
+            "near_or_at_ld_cap_count": 0,
+            "total_accrued_liquidated_damages": 0.0,
+            "total_disputed_claims_amount": 0.0,
+            "vendor_sla_governance_status": "HEALTHY",
+            "findings": [],
+        }
+

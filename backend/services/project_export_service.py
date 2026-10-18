@@ -2977,6 +2977,7 @@ __all__ = [
     "audit_executive_report_post_implementation_handover_sla",
     "audit_executive_report_team_burnout_and_turnover_risk",
     "audit_executive_report_monte_carlo_p50_p80_confidence",
+    "audit_executive_report_vendor_sla_and_liquidated_damages",
     "ProjectExportService",
 ]
 
@@ -4263,3 +4264,133 @@ def audit_executive_report_monte_carlo_p50_p80_confidence(
 ProjectExportService.audit_executive_report_monte_carlo_p50_p80_confidence = staticmethod(
     audit_executive_report_monte_carlo_p50_p80_confidence
 )
+
+
+def audit_executive_report_vendor_sla_and_liquidated_damages(
+    vendor_contracts: list[dict[str, Any]],
+    *,
+    max_ld_cap_utilization_pct: float = 80.0,
+) -> dict[str, Any]:
+    """PMBOK §12.3 / §4.7 — auditoría de SLA de proveedores y exposición a daños liquidados (LD)."""
+    if not isinstance(vendor_contracts, Sequence) or isinstance(
+        vendor_contracts, (str, bytes)
+    ):
+        return {
+            "total_contracts": 0,
+            "compliant_contracts_count": 0,
+            "sla_breached_contracts_count": 0,
+            "late_deliverables_contracts_count": 0,
+            "near_or_at_ld_cap_count": 0,
+            "total_accrued_liquidated_damages": 0.0,
+            "total_disputed_claims_amount": 0.0,
+            "vendor_sla_governance_status": "HEALTHY",
+            "findings": [],
+        }
+
+    try:
+        max_util = float(max_ld_cap_utilization_pct)
+    except (TypeError, ValueError):
+        max_util = 80.0
+
+    total_contracts = 0
+    compliant_contracts_count = 0
+    sla_breached_contracts_count = 0
+    late_deliverables_contracts_count = 0
+    near_or_at_ld_cap_count = 0
+    total_accrued_ld = 0.0
+    total_disputed = 0.0
+    findings: list[dict[str, Any]] = []
+
+    for item in vendor_contracts:
+        if not isinstance(item, Mapping):
+            continue
+        raw_id = item.get("contract_id")
+        if raw_id is None:
+            continue
+        contract_id = str(raw_id).strip()
+        if not contract_id:
+            continue
+
+        total_contracts += 1
+
+        contract_value = float(item.get("contract_value", 0.0) or 0.0)
+        sla_target = float(item.get("sla_target_uptime_pct", 0.0) or 0.0)
+        actual_uptime = float(item.get("actual_uptime_pct", 0.0) or 0.0)
+        late_count = int(item.get("late_deliverables_count", 0) or 0)
+        accrued_ld = float(item.get("accrued_liquidated_damages", 0.0) or 0.0)
+        ld_cap_pct = float(item.get("ld_cap_pct", 0.0) or 0.0)
+        disputed_amt = float(item.get("disputed_claims_amount", 0.0) or 0.0)
+
+        total_accrued_ld += accrued_ld
+        total_disputed += disputed_amt
+
+        sla_breached = actual_uptime < sla_target
+        has_late_deliverables = late_count > 0
+        ld_cap_amount = contract_value * (ld_cap_pct / 100.0)
+        if ld_cap_amount > 0.0:
+            ld_cap_utilization_pct = round((accrued_ld / ld_cap_amount) * 100.0, 2)
+        else:
+            ld_cap_utilization_pct = 0.0
+
+        near_or_at_ld_cap = ld_cap_utilization_pct >= max_util or (
+            accrued_ld > 0.0 and ld_cap_amount <= 0.0
+        )
+
+        issues: list[str] = []
+        if sla_breached:
+            sla_breached_contracts_count += 1
+            issues.append("sla_uptime_breached")
+        if has_late_deliverables:
+            late_deliverables_contracts_count += 1
+            issues.append("late_deliverables_present")
+        if near_or_at_ld_cap:
+            near_or_at_ld_cap_count += 1
+            issues.append("near_or_at_liquidated_damages_cap")
+        if disputed_amt > 0.0:
+            issues.append("unsettled_disputed_claims")
+
+        if not issues:
+            compliant_contracts_count += 1
+        else:
+            findings.append(
+                {
+                    "contract_id": contract_id,
+                    "ld_cap_utilization_pct": ld_cap_utilization_pct,
+                    "issues": issues,
+                }
+            )
+
+    total_accrued_liquidated_damages = round(total_accrued_ld, 2)
+    total_disputed_claims_amount = round(total_disputed, 2)
+
+    if (
+        sla_breached_contracts_count == 0
+        and late_deliverables_contracts_count == 0
+        and near_or_at_ld_cap_count == 0
+        and total_disputed_claims_amount == 0.0
+    ):
+        status = "HEALTHY"
+    elif near_or_at_ld_cap_count > 0 or (
+        sla_breached_contracts_count > 0 and late_deliverables_contracts_count > 0
+    ):
+        status = "CRITICAL"
+    else:
+        status = "AT_RISK"
+
+    return {
+        "total_contracts": total_contracts,
+        "compliant_contracts_count": compliant_contracts_count,
+        "sla_breached_contracts_count": sla_breached_contracts_count,
+        "late_deliverables_contracts_count": late_deliverables_contracts_count,
+        "near_or_at_ld_cap_count": near_or_at_ld_cap_count,
+        "total_accrued_liquidated_damages": total_accrued_liquidated_damages,
+        "total_disputed_claims_amount": total_disputed_claims_amount,
+        "vendor_sla_governance_status": status,
+        "findings": findings,
+    }
+
+
+ProjectExportService.audit_executive_report_vendor_sla_and_liquidated_damages = staticmethod(
+    audit_executive_report_vendor_sla_and_liquidated_damages
+)
+
