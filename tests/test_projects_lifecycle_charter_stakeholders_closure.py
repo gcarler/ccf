@@ -843,3 +843,92 @@ def test_lessons_learned_reuse_facade_delegates():
         )
     )
 
+
+# ─── audit_charter_measurable_objectives (pure helper) ────────────────
+
+
+def test_charter_objectives_smart_governance_aligned():
+    """Objetivos SMART (meta + plazo + descripción >= 10) -> SMART_GOVERNANCE_ALIGNED."""
+    objectives = [
+        {
+            "description": "Aumentar la asistencia dominical",
+            "target_value": 1200,
+            "metric": "asistentes",
+            "deadline": "2026-12-31",
+        },
+        {
+            "title": "Reducir costo operativo mensual",
+            "metric": "reducción del 15%",
+            "due_date": "enero 2027",
+        },
+        {
+            "description": "Alcanzar meta de ofrenda con marco temporal definido",
+            "target": "$50,000 USD",
+            "timeframe": "Q1 2027",
+        },
+    ]
+
+    res = project_lifecycle_pmi_service.audit_charter_measurable_objectives(objectives)
+
+    assert res["total_objectives"] == 3
+    assert res["quantified_target_count"] == 3
+    assert res["time_bound_count"] == 3
+    assert res["smart_compliant_count"] == 3
+    assert res["smart_compliance_rate"] == 100.0
+    assert res["posture"] == "SMART_GOVERNANCE_ALIGNED"
+
+
+def test_charter_objectives_partially_measurable():
+    """Algunos objetivos cuantificados, otros vagos -> PARTIALLY_MEASURABLE (rate >= 40)."""
+    objectives = [
+        {
+            "description": "Incrementar nuevos discípulos activos",
+            "target_value": 300,
+            "deadline": "junio 2027",
+        },
+        {"description": "Sostener la comunión de las células semanalmente"},
+    ]
+
+    res = project_lifecycle_pmi_service.audit_charter_measurable_objectives(objectives)
+
+    assert res["total_objectives"] == 2
+    assert res["quantified_target_count"] == 1
+    assert res["time_bound_count"] == 1
+    assert res["smart_compliant_count"] == 1
+    assert res["smart_compliance_rate"] == 50.0
+    assert res["posture"] == "PARTIALLY_MEASURABLE"
+
+
+def test_charter_objectives_smart_requires_quantified_timebound_and_description():
+    """Falla cualquier pilar SMART (meta, plazo o descripción corta) -> no cuenta, y rate bajo -> VAGUE."""
+    objectives = [
+        {"description": "Meta sin plazo temporal alguno", "target_value": 5},
+        {"metric": "80%", "deadline": "2026-11-01"},  # sin descripción
+        {"description": "Aspiración difusa", "deadline": "2026-12-01"},  # sin meta
+    ]
+
+    res = project_lifecycle_pmi_service.audit_charter_measurable_objectives(objectives)
+
+    assert res["total_objectives"] == 3
+    assert res["quantified_target_count"] == 2
+    assert res["time_bound_count"] == 2
+    assert res["smart_compliant_count"] == 0
+    assert res["smart_compliance_rate"] == 0.0
+    assert res["posture"] == "VAGUE_UNMEASURABLE_OBJECTIVES"
+
+
+def test_charter_objectives_no_objectives_recorded():
+    """None, lista vacía o items no-dict -> NO_CHARTER_OBJECTIVES con rate 0.0."""
+    for objectives in (None, [], ["no dict", 7]):
+        res = project_lifecycle_pmi_service.audit_charter_measurable_objectives(
+            objectives
+        )
+        assert res == {
+            "total_objectives": 0,
+            "quantified_target_count": 0,
+            "time_bound_count": 0,
+            "smart_compliant_count": 0,
+            "smart_compliance_rate": 0.0,
+            "posture": "NO_CHARTER_OBJECTIVES",
+        }
+

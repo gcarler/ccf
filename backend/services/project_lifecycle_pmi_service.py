@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
@@ -857,6 +859,12 @@ class ProjectLifecyclePMIService:
         return evaluate_lessons_learned_institutional_reuse(lessons)
 
     @staticmethod
+    def audit_charter_measurable_objectives(
+        objectives: list[dict[str, Any]] | None,
+    ) -> dict[str, Any]:
+        return audit_charter_measurable_objectives(objectives)
+
+    @staticmethod
     def compute_closure_readiness_pct(
         deliverables_accepted_verified: bool,
         financial_reconciliation_completed: bool,
@@ -933,3 +941,69 @@ class ProjectLifecyclePMIService:
             pending_ccb_changes=pending_ccb_changes,
             exit_criteria_verified=exit_criteria_verified,
         )
+
+
+def audit_charter_measurable_objectives(
+    objectives: list[dict[str, Any]] | None,
+) -> dict[str, Any]:
+    """Audita objetivos medibles del Project Charter (PMBOK §4.1 — SMART).
+
+    Ignora entradas que no sean dict y calcula:
+    - `total_objectives`: objetivos válidos.
+    - `quantified_target_count`: items con `target_value` distinto de None o
+      texto de `metric`/`target` con dígito, '%' o '$'.
+    - `time_bound_count`: items con `deadline`/`due_date`/`timeframe` no vacío.
+    - `smart_compliant_count`: meta cuantificada Y plazo temporal Y
+      descripción/título con >= 10 caracteres.
+    - `smart_compliance_rate`: % SMART (2 decimales; 0.0 sin objetivos).
+    - `posture`: 'NO_CHARTER_OBJECTIVES' sin objetivos;
+      'SMART_GOVERNANCE_ALIGNED' con rate >= 80.0; 'PARTIALLY_MEASURABLE'
+      con rate >= 40.0; 'VAGUE_UNMEASURABLE_OBJECTIVES' en otro caso.
+    """
+    items = [item for item in (objectives or []) if isinstance(item, dict)]
+    total_objectives = len(items)
+
+    quantified_target_count = 0
+    time_bound_count = 0
+    smart_compliant_count = 0
+    for item in items:
+        quantitative_text = str(item.get("metric") or item.get("target") or "").strip()
+        is_quantified = item.get("target_value") is not None or re.search(
+            r"[\d%$]", quantitative_text
+        ) is not None
+        time_bound_text = str(
+            item.get("deadline") or item.get("due_date") or item.get("timeframe") or ""
+        ).strip()
+        is_time_bound = bool(time_bound_text)
+        description_text = str(item.get("description") or item.get("title") or "").strip()
+
+        if is_quantified:
+            quantified_target_count += 1
+        if is_time_bound:
+            time_bound_count += 1
+        if is_quantified and is_time_bound and len(description_text) >= 10:
+            smart_compliant_count += 1
+
+    smart_compliance_rate = (
+        round((smart_compliant_count / total_objectives) * 100.0, 2)
+        if total_objectives > 0
+        else 0.0
+    )
+
+    if total_objectives == 0:
+        posture = "NO_CHARTER_OBJECTIVES"
+    elif smart_compliance_rate >= 80.0:
+        posture = "SMART_GOVERNANCE_ALIGNED"
+    elif smart_compliance_rate >= 40.0:
+        posture = "PARTIALLY_MEASURABLE"
+    else:
+        posture = "VAGUE_UNMEASURABLE_OBJECTIVES"
+
+    return {
+        "total_objectives": total_objectives,
+        "quantified_target_count": quantified_target_count,
+        "time_bound_count": time_bound_count,
+        "smart_compliant_count": smart_compliant_count,
+        "smart_compliance_rate": smart_compliance_rate,
+        "posture": posture,
+    }

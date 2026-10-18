@@ -29,6 +29,7 @@ __all__ = [
     "audit_expenses_csv_financial_totals",
     "audit_tasks_csv_schedule_completeness",
     "audit_executive_report_milestone_coverage",
+    "audit_risks_csv_register_completeness",
     "ProjectExportService",
 ]
 
@@ -280,6 +281,12 @@ class ProjectExportService:
         html_content: str | None,
     ) -> dict[str, Any]:
         return audit_executive_report_milestone_coverage(html_content)
+
+    @staticmethod
+    def audit_risks_csv_register_completeness(
+        csv_content: str | None,
+    ) -> dict[str, Any]:
+        return audit_risks_csv_register_completeness(csv_content)
 
 
 def summarize_executive_report_risk_posture(report_data: Optional[dict]) -> dict:
@@ -635,4 +642,92 @@ def audit_executive_report_milestone_coverage(
         "coverage_score": coverage_score,
         "posture": posture,
     }
+
+
+def audit_risks_csv_register_completeness(
+    csv_content: str | None,
+) -> dict[str, Any]:
+    """Audita un archivo CSV exportado del Registro de Riesgos según PMI PMBOK §11.2 (Identify Risks)."""
+    text = (csv_content if isinstance(csv_content, str) else "").lstrip("\ufeff")
+
+    if not text.strip():
+        return {
+            "total_rows": 0,
+            "mitigation_documented_rows": 0,
+            "owner_assigned_rows": 0,
+            "scored_rows": 0,
+            "mitigation_coverage_pct": 0.0,
+            "posture": "EMPTY_RISK_EXPORT",
+        }
+
+    reader = csv.DictReader(io.StringIO(text))
+    mitigation_keys = (
+        "mitigacion",
+        "mitigación",
+        "mitigation",
+        "mitigation_plan",
+        "response_plan",
+        "plan_mitigacion",
+    )
+    owner_keys = ("responsable", "owner", "assigned_to", "propietario")
+    prob_keys = ("probabilidad", "probability")
+    impact_keys = ("impacto", "impact")
+
+    total_rows = 0
+    mitigation_documented_rows = 0
+    owner_assigned_rows = 0
+    scored_rows = 0
+
+    for raw_row in reader:
+        if not isinstance(raw_row, dict):
+            continue
+        norm_row = {
+            str(k).lstrip("\ufeff").strip().lower(): str(v or "")
+            for k, v in raw_row.items()
+            if k is not None
+        }
+        if not any(v.strip() for v in norm_row.values()):
+            continue
+
+        total_rows += 1
+
+        if any(len(norm_row.get(k, "").strip()) >= 5 for k in mitigation_keys):
+            mitigation_documented_rows += 1
+
+        if any(bool(norm_row.get(k, "").strip()) for k in owner_keys):
+            owner_assigned_rows += 1
+
+        has_prob = any(bool(norm_row.get(k, "").strip()) for k in prob_keys)
+        has_impact = any(bool(norm_row.get(k, "").strip()) for k in impact_keys)
+        if has_prob and has_impact:
+            scored_rows += 1
+
+    mitigation_coverage_pct = (
+        round((mitigation_documented_rows / total_rows) * 100.0, 2)
+        if total_rows > 0
+        else 0.0
+    )
+
+    if total_rows == 0:
+        posture = "EMPTY_RISK_EXPORT"
+    elif (
+        mitigation_coverage_pct >= 80.0
+        and owner_assigned_rows == total_rows
+        and scored_rows == total_rows
+    ):
+        posture = "AUDIT_READY_RISK_REGISTER"
+    elif mitigation_coverage_pct < 50.0:
+        posture = "UNMITIGATED_EXPOSURE_GAPS"
+    else:
+        posture = "PARTIAL_REGISTER_GOVERNANCE"
+
+    return {
+        "total_rows": total_rows,
+        "mitigation_documented_rows": mitigation_documented_rows,
+        "owner_assigned_rows": owner_assigned_rows,
+        "scored_rows": scored_rows,
+        "mitigation_coverage_pct": mitigation_coverage_pct,
+        "posture": posture,
+    }
+
 

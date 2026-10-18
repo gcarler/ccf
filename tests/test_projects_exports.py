@@ -1105,3 +1105,105 @@ def test_audit_executive_report_milestone_coverage_empty_or_none():
             "posture": "EMPTY_REPORT",
         }
 
+
+# ── audit_risks_csv_register_completeness (PMBOK §11.2, pure helper) ────────
+
+
+def test_audit_risks_csv_register_completeness_audit_ready():
+    """Mitigación >= 80% y 100% responsables y puntajes P×I -> 'AUDIT_READY_RISK_REGISTER'."""
+    import backend.services.project_export_service as export_module
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_risks_csv_register_completeness,
+    )
+
+    csv_text = (
+        "\ufeffID,Riesgo,Probabilidad,Impacto,Responsable,Mitigación\n"
+        "1,Falla eléctrica,3,4,Ana Gómez,Planta de respaldo UPS\n"
+        "2,Retraso aduana,2,3,Carlos Ruiz,Compra local anticipada\n"
+        "3,Rotación clave,2,4,Elena Paz,Documentación cruzada\n"
+        "4,Cambio alcance,1,2,Luis Mora,Control estricto CCB\n"
+        "5,Riesgo menor,1,1,Pedro Gil,N/A\n"
+    )
+    res = audit_risks_csv_register_completeness(csv_text)
+    assert res == {
+        "total_rows": 5,
+        "mitigation_documented_rows": 4,
+        "owner_assigned_rows": 5,
+        "scored_rows": 5,
+        "mitigation_coverage_pct": 80.0,
+        "posture": "AUDIT_READY_RISK_REGISTER",
+    }
+    assert ProjectExportService.audit_risks_csv_register_completeness(csv_text) == res
+    assert "audit_risks_csv_register_completeness" in export_module.__all__
+
+
+def test_audit_risks_csv_register_completeness_unmitigated_exposure_gaps():
+    """Cobertura de mitigación < 50% -> 'UNMITIGATED_EXPOSURE_GAPS'."""
+    from backend.services.project_export_service import (
+        audit_risks_csv_register_completeness,
+    )
+
+    csv_text = (
+        "ID,Probability,Impact,Owner,Mitigation_Plan\n"
+        "1,4,5,Ana,Contrato redundante activo\n"
+        "2,3,4,Luis,TBD\n"
+        "3,2,3,Pedro,\n"
+    )
+    res = audit_risks_csv_register_completeness(csv_text)
+    assert res == {
+        "total_rows": 3,
+        "mitigation_documented_rows": 1,
+        "owner_assigned_rows": 3,
+        "scored_rows": 3,
+        "mitigation_coverage_pct": 33.33,
+        "posture": "UNMITIGATED_EXPOSURE_GAPS",
+    }
+
+
+def test_audit_risks_csv_register_completeness_partial_governance():
+    """Mitigación >= 50% pero faltan responsables o puntajes (o mitigación < 80%) -> 'PARTIAL_REGISTER_GOVERNANCE'."""
+    from backend.services.project_export_service import (
+        audit_risks_csv_register_completeness,
+    )
+
+    csv_text = (
+        "ID,Probabilidad,Impacto,Propietario,Plan_Mitigacion\n"
+        "1,3,4,Ana,Plan de contingencia A\n"
+        "2,2,,   ,Plan de contingencia B\n"
+    )
+    res = audit_risks_csv_register_completeness(csv_text)
+    assert res == {
+        "total_rows": 2,
+        "mitigation_documented_rows": 2,
+        "owner_assigned_rows": 1,
+        "scored_rows": 1,
+        "mitigation_coverage_pct": 100.0,
+        "posture": "PARTIAL_REGISTER_GOVERNANCE",
+    }
+
+
+def test_audit_risks_csv_register_completeness_empty_export():
+    """None, cadena vacía o solo cabeceras sin filas de datos -> 'EMPTY_RISK_EXPORT'."""
+    from backend.services.project_export_service import (
+        audit_risks_csv_register_completeness,
+    )
+
+    for empty_val in (
+        None,
+        "",
+        "   \n ",
+        "ID,Probabilidad,Impacto,Responsable,Mitigación\n",
+        "ID,Probabilidad,Impacto,Responsable,Mitigación\n,,,,\n",
+    ):
+        res = audit_risks_csv_register_completeness(empty_val)
+        assert res == {
+            "total_rows": 0,
+            "mitigation_documented_rows": 0,
+            "owner_assigned_rows": 0,
+            "scored_rows": 0,
+            "mitigation_coverage_pct": 0.0,
+            "posture": "EMPTY_RISK_EXPORT",
+        }
+
+
