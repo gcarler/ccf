@@ -6167,3 +6167,140 @@ def test_ocm_adkar_adoption_precedence_and_binding():
     )
     assert "audit_organizational_change_management_adkar_and_adoption" in mod.__all__
 
+
+def test_audit_project_administrative_and_contract_closure_readiness_healthy():
+    """Valida expediente de cierre completo con aceptación final, 0 reclamos, cuentas cerradas, OPA archivado y liberación de equipo."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_administrative_and_contract_closure_readiness,
+    )
+
+    dossiers = [
+        {
+            "id": "CLS-01",
+            "final_product_acceptance_signed": True,
+            "open_procurement_claims_count": 0,
+            "financial_charge_codes_closed": True,
+            "lessons_archived_in_opa": True,
+            "team_resources_formally_released": True,
+        }
+    ]
+    res = audit_project_administrative_and_contract_closure_readiness(dossiers)
+    assert res["total_dossiers"] == 1
+    assert res["compliant_dossiers"] == 1
+    assert res["unaccepted_or_open_claims_ids"] == []
+    assert res["open_charge_codes_ghost_billing_ids"] == []
+    assert res["incomplete_opa_or_resource_release_ids"] == []
+    assert res["closure_governance_health"] == "healthy"
+    assert res["is_compliant"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_project_administrative_and_contract_closure_readiness_at_risk():
+    """Detecta falta de archivo en OPA o recursos de equipo no liberados sin reclamos ni cuentas abiertas ('at_risk')."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_administrative_and_contract_closure_readiness,
+    )
+
+    dossiers = [
+        {
+            "dossier_id": "CLS-10",
+            "final_product_acceptance_signed": True,
+            "open_procurement_claims_count": 0,
+            "financial_charge_codes_closed": True,
+            "lessons_archived_in_opa": False,
+            "team_resources_formally_released": True,
+        },
+        {
+            "dossier_id": "CLS-11",
+            "final_product_acceptance_signed": True,
+            "open_procurement_claims_count": 0,
+            "financial_charge_codes_closed": True,
+            "lessons_archived_in_opa": True,
+            "team_resources_formally_released": False,
+        },
+    ]
+    res = audit_project_administrative_and_contract_closure_readiness(dossiers)
+    assert res["total_dossiers"] == 2
+    assert res["compliant_dossiers"] == 0
+    assert res["incomplete_opa_or_resource_release_ids"] == ["CLS-10", "CLS-11"]
+    assert res["unaccepted_or_open_claims_ids"] == []
+    assert res["open_charge_codes_ghost_billing_ids"] == []
+    assert res["closure_governance_health"] == "at_risk"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 1
+
+
+def test_audit_project_administrative_and_contract_closure_readiness_critical():
+    """Detecta producto sin aceptación/reclamos abiertos y códigos de cargo financiero abiertos ('critical')."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_administrative_and_contract_closure_readiness,
+    )
+
+    dossiers = [
+        {
+            "dossier_id": "CLS-20",
+            "final_product_acceptance_signed": False,
+            "open_procurement_claims_count": 2,
+            "financial_charge_codes_closed": True,
+            "lessons_archived_in_opa": True,
+            "team_resources_formally_released": True,
+        },
+        {
+            "dossier_id": "CLS-21",
+            "final_product_acceptance_signed": True,
+            "open_procurement_claims_count": 0,
+            "financial_charge_codes_closed": False,
+            "lessons_archived_in_opa": True,
+            "team_resources_formally_released": True,
+        },
+    ]
+    res = audit_project_administrative_and_contract_closure_readiness(dossiers)
+    assert res["total_dossiers"] == 2
+    assert res["compliant_dossiers"] == 0
+    assert res["unaccepted_or_open_claims_ids"] == ["CLS-20"]
+    assert res["open_charge_codes_ghost_billing_ids"] == ["CLS-21"]
+    assert res["closure_governance_health"] == "critical"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_project_administrative_and_contract_closure_readiness_empty_and_service_binding():
+    """Manejo defensivo de entradas vacías/no-secuencia y exposición en ProjectLifecyclePMIService y __all__."""
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_project_administrative_and_contract_closure_readiness,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_project_administrative_and_contract_closure_readiness(payload)  # type: ignore[arg-type]
+        assert empty["total_dossiers"] == 0
+        assert empty["compliant_dossiers"] == 0
+        assert empty["unaccepted_or_open_claims_ids"] == []
+        assert empty["open_charge_codes_ghost_billing_ids"] == []
+        assert empty["incomplete_opa_or_resource_release_ids"] == []
+        assert empty["closure_governance_health"] == "healthy"
+        assert empty["is_compliant"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "id": "CLS-99",
+            "final_product_acceptance_signed": True,
+            "open_procurement_claims_count": 0,
+            "financial_charge_codes_closed": True,
+            "lessons_archived_in_opa": True,
+            "team_resources_formally_released": True,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_project_administrative_and_contract_closure_readiness(
+            sample
+        )
+        == audit_project_administrative_and_contract_closure_readiness(sample)
+    )
+    assert (
+        "audit_project_administrative_and_contract_closure_readiness"
+        in mod.__all__
+    )
+

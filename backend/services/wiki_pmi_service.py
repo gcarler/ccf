@@ -2512,6 +2512,7 @@ __all__ = [
     "audit_wiki_assumptions_and_constraints_empirical_validation",
     "audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness",
     "audit_wiki_communications_matrix_cadence_and_escalation",
+    "audit_wiki_definition_of_ready_and_backlog_grooming",
     "WikiPMIService",
 ]
 
@@ -4757,5 +4758,140 @@ def audit_wiki_communications_matrix_cadence_and_escalation(
 
 WikiPMIService.audit_wiki_communications_matrix_cadence_and_escalation = staticmethod(
     audit_wiki_communications_matrix_cadence_and_escalation
+)
+
+
+def audit_wiki_definition_of_ready_and_backlog_grooming(
+    backlog_candidates: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_story_points_for_sprint: int = 13,
+    min_acceptance_criteria_count: int = 2,
+) -> dict[str, Any]:
+    """Audita el cumplimiento de Definition of Ready (DoR) y refinamiento de backlog (criterios INVEST: tamaño/estimación en Story Points, criterios de aceptación verificables, enlace a especificación y ausencia de bloqueos al comprometer al sprint) (PMI Agile Practice Guide y PMBOK §5.3 / §6.2)."""
+    if (
+        backlog_candidates is None
+        or isinstance(backlog_candidates, (str, bytes))
+        or not isinstance(backlog_candidates, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = backlog_candidates
+
+    try:
+        max_pts = int(max_story_points_for_sprint)
+    except (TypeError, ValueError):
+        max_pts = 13
+
+    try:
+        min_ac = int(min_acceptance_criteria_count)
+    except (TypeError, ValueError):
+        min_ac = 2
+
+    total_candidates = 0
+    ready_candidates = 0
+
+    unestimated_or_oversized_epic_ids: list[str] = []
+    insufficient_acceptance_criteria_or_spec_ids: list[str] = []
+    blocked_item_committed_to_sprint_ids: list[str] = []
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_candidates += 1
+
+        item_id = (
+            str(raw.get("id") or raw.get("item_id") or "").strip()
+            or "BKL-UNKNOWN"
+        )
+        committed_to_sprint = bool(raw.get("committed_to_sprint"))
+
+        try:
+            story_points = max(0, int(raw.get("story_points") or 0))
+        except (TypeError, ValueError):
+            story_points = 0
+
+        try:
+            acceptance_criteria_count = max(
+                0, int(raw.get("acceptance_criteria_count") or 0)
+            )
+        except (TypeError, ValueError):
+            acceptance_criteria_count = 0
+
+        try:
+            blocking_dependencies_count = max(
+                0, int(raw.get("blocking_dependencies_count") or 0)
+            )
+        except (TypeError, ValueError):
+            blocking_dependencies_count = 0
+
+        ux_or_arch_spec_linked = bool(raw.get("ux_or_arch_spec_linked"))
+
+        is_unestimated_or_oversized = (
+            story_points <= 0 or story_points > max_pts
+        )
+        is_insufficient_ac_or_spec = (
+            acceptance_criteria_count < min_ac or not ux_or_arch_spec_linked
+        )
+        is_blocked_committed = committed_to_sprint and (
+            blocking_dependencies_count > 0
+            or story_points <= 0
+            or acceptance_criteria_count < min_ac
+        )
+
+        if is_unestimated_or_oversized:
+            unestimated_or_oversized_epic_ids.append(item_id)
+        if is_insufficient_ac_or_spec:
+            insufficient_acceptance_criteria_or_spec_ids.append(item_id)
+        if is_blocked_committed:
+            blocked_item_committed_to_sprint_ids.append(item_id)
+
+        if (
+            not is_unestimated_or_oversized
+            and not is_insufficient_ac_or_spec
+            and not is_blocked_committed
+        ):
+            ready_candidates += 1
+
+    is_compliant = (
+        len(unestimated_or_oversized_epic_ids) == 0
+        and len(insufficient_acceptance_criteria_or_spec_ids) == 0
+        and len(blocked_item_committed_to_sprint_ids) == 0
+    )
+
+    if is_compliant:
+        dor_readiness_health = "healthy"
+    elif len(blocked_item_committed_to_sprint_ids) > 0:
+        dor_readiness_health = "critical"
+    else:
+        dor_readiness_health = "at_risk"
+
+    recommendations: list[str] = []
+    if unestimated_or_oversized_epic_ids:
+        recommendations.append(
+            f"Estimar y descomponer épicas/historias para que tengan entre 1 y {max_pts} Story Points (INVEST Small/Estimable) en {unestimated_or_oversized_epic_ids}."
+        )
+    if insufficient_acceptance_criteria_or_spec_ids:
+        recommendations.append(
+            f"Definir al menos {min_ac} criterios de aceptación verificables y vincular especificación UX/arquitectura en {insufficient_acceptance_criteria_or_spec_ids}."
+        )
+    if blocked_item_committed_to_sprint_ids:
+        recommendations.append(
+            f"Retirar del compromiso de sprint o despejar dependencias bloqueantes, estimación y criterios de aceptación en {blocked_item_committed_to_sprint_ids}."
+        )
+
+    return {
+        "total_candidates": total_candidates,
+        "ready_candidates": ready_candidates,
+        "unestimated_or_oversized_epic_ids": unestimated_or_oversized_epic_ids,
+        "insufficient_acceptance_criteria_or_spec_ids": insufficient_acceptance_criteria_or_spec_ids,
+        "blocked_item_committed_to_sprint_ids": blocked_item_committed_to_sprint_ids,
+        "dor_readiness_health": dor_readiness_health,
+        "is_compliant": is_compliant,
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_definition_of_ready_and_backlog_grooming = staticmethod(
+    audit_wiki_definition_of_ready_and_backlog_grooming
 )
 

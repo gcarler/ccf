@@ -5866,7 +5866,235 @@ def test_evaluate_evm_undistributed_budget_and_planning_package_aging_empty_and_
     )
 
 
+def test_evm_cv_decomposition_healthy_and_rate_breach():
+    """Paquete conforme -> compliany; desvío de tarifa sobre umbral -> breach (acciones log OK evita regla 3)."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_cost_variance_rate_vs_efficiency_decomposition,
+    )
+
+    healthy = evaluate_evm_cost_variance_rate_vs_efficiency_decomposition(
+        [
+            {
+                "wp_id": "WP-1",
+                "planned_hourly_rate": 50.0,
+                "actual_hourly_rate": 52.0,
+                "earned_hours": 100.0,
+                "actual_hours": 95.0,
+                "corrective_action_logged": False,
+            }
+        ]
+    )
+    assert healthy["total_packages"] == 1
+    assert healthy["compliant_packages_count"] == 1
+    assert healthy["adverse_rate_variance_breach_count"] == 0
+    assert healthy["adverse_efficiency_variance_breach_count"] == 0
+    assert healthy["unaddressed_negative_cv_count"] == 0
+    assert healthy["total_rate_variance"] == -190.0
+    assert healthy["total_efficiency_variance"] == 250.0
+    assert healthy["cv_decomposition_status"] == "HEALTHY"
+    assert healthy["violations"] == []
+
+    # Brecha de tarifa: 20% desvío; CV negativo pero con acción logueada -> solo breach de tarifa.
+    rate = evaluate_evm_cost_variance_rate_vs_efficiency_decomposition(
+        [
+            {
+                "wp_id": "WP-2",
+                "planned_hourly_rate": 50.0,
+                "actual_hourly_rate": 60.0,
+                "earned_hours": 100.0,
+                "actual_hours": 100.0,
+                "corrective_action_logged": True,
+            }
+        ]
+    )
+    assert rate["adverse_rate_variance_breach_count"] == 1
+    assert rate["adverse_efficiency_variance_breach_count"] == 0
+    assert rate["unaddressed_negative_cv_count"] == 0  # acción logueada
+    assert rate["violations"][0]["reasons"] == ["adverse_rate_variance_breach"]
+    assert rate["total_rate_variance"] == -1000.0
+    assert rate["cv_decomposition_status"] == "AT_RISK"
+
+    # Límite exacto: 10% de desvío no es breach (comparación estricta).
+    at_limit = evaluate_evm_cost_variance_rate_vs_efficiency_decomposition(
+        [
+            {
+                "wp_id": "WP-3",
+                "planned_hourly_rate": 50.0,
+                "actual_hourly_rate": 55.0,
+                "earned_hours": 100.0,
+                "actual_hours": 100.0,
+                "corrective_action_logged": True,
+            }
+        ]
+    )
+    assert at_limit["adverse_rate_variance_breach_count"] == 0
+    assert at_limit["cv_decomposition_status"] == "HEALTHY"
 
 
+def test_evm_cv_decomposition_efficiency_and_negative_cv():
+    """Exceso de horas 30% -> breach eficiencia; CV negativo sin acción -> CRITICAL."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_cost_variance_rate_vs_efficiency_decomposition,
+    )
 
+    adverse_eff = evaluate_evm_cost_variance_rate_vs_efficiency_decomposition(
+        [
+            {
+                "wp_id": "WP-4",
+                "planned_hourly_rate": 50.0,
+                "actual_hourly_rate": 50.0,
+                "earned_hours": 100.0,
+                "actual_hours": 130.0,
+            }
+        ]
+    )
+    assert adverse_eff["adverse_efficiency_variance_breach_count"] == 1
+    assert adverse_eff["unaddressed_negative_cv_count"] == 1  # ev 5000 - ac 6500 < 0 sin acción
+    assert adverse_eff["violations"][0]["reasons"] == [
+        "adverse_efficiency_variance_breach",
+        "unaddressed_negative_cv",
+    ]
+    assert adverse_eff["total_efficiency_variance"] == -1500.0
+    assert adverse_eff["cv_decomposition_status"] == "CRITICAL"
+
+    # Exceso exacto 15% no es breach; CV negativo sin acción -> CRITICAL solo por negCV.
+    at_limit = evaluate_evm_cost_variance_rate_vs_efficiency_decomposition(
+        [
+            {
+                "wp_id": "WP-5",
+                "planned_hourly_rate": 50.0,
+                "actual_hourly_rate": 50.0,
+                "earned_hours": 100.0,
+                "actual_hours": 115.0,
+            }
+        ]
+    )
+    assert at_limit["adverse_efficiency_variance_breach_count"] == 0
+    assert at_limit["unaddressed_negative_cv_count"] == 1
+    assert at_limit["cv_decomposition_status"] == "CRITICAL"
+
+    # CV negativo con acción logueada -> sin hallazgos de negCV.
+    logged = evaluate_evm_cost_variance_rate_vs_efficiency_decomposition(
+        [
+            {
+                "wp_id": "WP-6",
+                "planned_hourly_rate": 50.0,
+                "actual_hourly_rate": 55.0,
+                "earned_hours": 100.0,
+                "actual_hours": 105.0,
+                "corrective_action_logged": True,
+            }
+        ]
+    )
+    assert logged["unaddressed_negative_cv_count"] == 0
+    assert logged["cv_decomposition_status"] == "HEALTHY"
+
+
+def test_evm_cv_decomposition_status_precedence():
+    """Doble breach -> CRITICAL; single breach -> AT_RISK; negativo importante domina."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_cost_variance_rate_vs_efficiency_decomposition,
+    )
+
+    both = evaluate_evm_cost_variance_rate_vs_efficiency_decomposition(
+        [
+            {
+                "wp_id": "WP-7",
+                "planned_hourly_rate": 50.0,
+                "actual_hourly_rate": 60.0,
+                "earned_hours": 100.0,
+                "actual_hours": 130.0,
+                "corrective_action_logged": True,
+            }
+        ]
+    )
+    assert both["adverse_rate_variance_breach_count"] == 1
+    assert both["adverse_efficiency_variance_breach_count"] == 1
+    assert both["unaddressed_negative_cv_count"] == 0
+    assert both["violations"][0]["reasons"] == [
+        "adverse_rate_variance_breach",
+        "adverse_efficiency_variance_breach",
+    ]
+    assert both["cv_decomposition_status"] == "CRITICAL"
+
+    mixed_units = evaluate_evm_cost_variance_rate_vs_efficiency_decomposition(
+        [
+            {
+                "wp_id": "WP-8",
+                "planned_hourly_rate": 50.0,
+                "actual_hourly_rate": 60.0,
+                "earned_hours": 100.0,
+                "actual_hours": 100.0,
+                "corrective_action_logged": True,
+            },
+            {
+                "wp_id": "WP-9",
+                "planned_hourly_rate": 50.0,
+                "actual_hourly_rate": 50.0,
+                "earned_hours": 100.0,
+                "actual_hours": 130.0,
+                "corrective_action_logged": True,
+            },
+        ]
+    )
+    assert mixed_units["adverse_rate_variance_breach_count"] == 1
+    assert mixed_units["adverse_efficiency_variance_breach_count"] == 1
+    # Doble breach a nivel agregado -> aunque packages distintos -> CRITICAL
+    assert mixed_units["cv_decomposition_status"] == "CRITICAL"
+    assert mixed_units["total_rate_variance"] == -1000.0
+    assert mixed_units["total_efficiency_variance"] == -1500.0
+
+
+def test_evm_cv_decomposition_neutral_and_binding():
+    """No-lista/None -> vacío; no-dict ignorados; proxy @staticmethod y __all__."""
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_cost_variance_rate_vs_efficiency_decomposition,
+    )
+
+    for payload in (None, "not-a-list", 42):
+        empty = evaluate_evm_cost_variance_rate_vs_efficiency_decomposition(payload)
+        assert empty["total_packages"] == 0
+        assert empty["compliant_packages_count"] == 0
+        assert empty["total_rate_variance"] == 0.0
+        assert empty["total_efficiency_variance"] == 0.0
+        assert empty["cv_decomposition_status"] == "HEALTHY"
+        assert empty["violations"] == []
+
+    mixed = evaluate_evm_cost_variance_rate_vs_efficiency_decomposition(
+        [
+            "no-dict",
+            42,
+            None,
+            {
+                "wp_id": "WP-10",
+                "planned_hourly_rate": 50.0,
+                "actual_hourly_rate": 50.0,
+                "earned_hours": 80.0,
+                "actual_hours": 80.0,
+                "corrective_action_logged": True,
+            },
+        ]
+    )
+    assert mixed["total_packages"] == 1
+    assert mixed["compliant_packages_count"] == 1
+    assert mixed["total_rate_variance"] == 0.0
+    assert mixed["total_efficiency_variance"] == 0.0
+    assert mixed["violations"] == []
+
+    sample = [
+        {
+            "wp_id": "WP-11",
+            "planned_hourly_rate": 50.0,
+            "actual_hourly_rate": 60.0,
+            "earned_hours": 100.0,
+            "actual_hours": 130.0,
+        }
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_cost_variance_rate_vs_efficiency_decomposition(sample)
+        == evaluate_evm_cost_variance_rate_vs_efficiency_decomposition(sample)
+    )
+    assert "evaluate_evm_cost_variance_rate_vs_efficiency_decomposition" in mod.__all__
 

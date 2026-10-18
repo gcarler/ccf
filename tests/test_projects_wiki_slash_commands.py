@@ -6068,3 +6068,147 @@ def test_audit_wiki_communications_matrix_cadence_and_escalation_empty_and_servi
         "audit_wiki_communications_matrix_cadence_and_escalation" in mod.__all__
     )
 
+
+def test_audit_wiki_definition_of_ready_and_backlog_grooming_healthy():
+    """Valida candidatos de backlog que cumplen INVEST/DoR (<=13 pts, >=2 AC, 0 bloqueos y spec vinculada)."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_definition_of_ready_and_backlog_grooming,
+    )
+
+    candidates = [
+        {
+            "id": "BKL-01",
+            "committed_to_sprint": True,
+            "story_points": 5,
+            "acceptance_criteria_count": 3,
+            "blocking_dependencies_count": 0,
+            "ux_or_arch_spec_linked": True,
+        },
+        {
+            "id": "BKL-02",
+            "committed_to_sprint": False,
+            "story_points": 8,
+            "acceptance_criteria_count": 2,
+            "blocking_dependencies_count": 1,
+            "ux_or_arch_spec_linked": True,
+        },
+    ]
+    res = audit_wiki_definition_of_ready_and_backlog_grooming(candidates)
+    assert res["total_candidates"] == 2
+    assert res["ready_candidates"] == 2
+    assert res["unestimated_or_oversized_epic_ids"] == []
+    assert res["insufficient_acceptance_criteria_or_spec_ids"] == []
+    assert res["blocked_item_committed_to_sprint_ids"] == []
+    assert res["dor_readiness_health"] == "healthy"
+    assert res["is_compliant"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_wiki_definition_of_ready_and_backlog_grooming_at_risk():
+    """Detecta épicas sin descomponer (>13 pts) o sin criterios/spec en backlog aún no comprometido ('at_risk')."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_definition_of_ready_and_backlog_grooming,
+    )
+
+    candidates = [
+        {
+            "item_id": "BKL-10",
+            "committed_to_sprint": False,
+            "story_points": 21,
+            "acceptance_criteria_count": 3,
+            "blocking_dependencies_count": 0,
+            "ux_or_arch_spec_linked": True,
+        },
+        {
+            "item_id": "BKL-11",
+            "committed_to_sprint": False,
+            "story_points": 5,
+            "acceptance_criteria_count": 1,
+            "blocking_dependencies_count": 0,
+            "ux_or_arch_spec_linked": False,
+        },
+    ]
+    res = audit_wiki_definition_of_ready_and_backlog_grooming(candidates)
+    assert res["total_candidates"] == 2
+    assert res["ready_candidates"] == 0
+    assert res["unestimated_or_oversized_epic_ids"] == ["BKL-10"]
+    assert res["insufficient_acceptance_criteria_or_spec_ids"] == ["BKL-11"]
+    assert res["blocked_item_committed_to_sprint_ids"] == []
+    assert res["dor_readiness_health"] == "at_risk"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_wiki_definition_of_ready_and_backlog_grooming_critical_committed():
+    """Detecta historias comprometidas al sprint con dependencias bloqueantes o sin estimar ('critical')."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_definition_of_ready_and_backlog_grooming,
+    )
+
+    candidates = [
+        {
+            "item_id": "BKL-20",
+            "committed_to_sprint": True,
+            "story_points": 5,
+            "acceptance_criteria_count": 3,
+            "blocking_dependencies_count": 2,
+            "ux_or_arch_spec_linked": True,
+        },
+        {
+            "item_id": "BKL-21",
+            "committed_to_sprint": True,
+            "story_points": 0,
+            "acceptance_criteria_count": 1,
+            "blocking_dependencies_count": 0,
+            "ux_or_arch_spec_linked": True,
+        },
+    ]
+    res = audit_wiki_definition_of_ready_and_backlog_grooming(candidates)
+    assert res["total_candidates"] == 2
+    assert res["ready_candidates"] == 0
+    assert res["blocked_item_committed_to_sprint_ids"] == ["BKL-20", "BKL-21"]
+    assert res["dor_readiness_health"] == "critical"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_wiki_definition_of_ready_and_backlog_grooming_empty_and_service_binding():
+    """Manejo defensivo de entradas vacías/no-secuencia y exposición en WikiPMIService y __all__."""
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_definition_of_ready_and_backlog_grooming,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_wiki_definition_of_ready_and_backlog_grooming(payload)  # type: ignore[arg-type]
+        assert empty["total_candidates"] == 0
+        assert empty["ready_candidates"] == 0
+        assert empty["unestimated_or_oversized_epic_ids"] == []
+        assert empty["insufficient_acceptance_criteria_or_spec_ids"] == []
+        assert empty["blocked_item_committed_to_sprint_ids"] == []
+        assert empty["dor_readiness_health"] == "healthy"
+        assert empty["is_compliant"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "id": "BKL-99",
+            "committed_to_sprint": True,
+            "story_points": 3,
+            "acceptance_criteria_count": 2,
+            "blocking_dependencies_count": 0,
+            "ux_or_arch_spec_linked": True,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_definition_of_ready_and_backlog_grooming(
+            sample
+        )
+        == audit_wiki_definition_of_ready_and_backlog_grooming(sample)
+    )
+    assert (
+        "audit_wiki_definition_of_ready_and_backlog_grooming" in mod.__all__
+    )
+
+

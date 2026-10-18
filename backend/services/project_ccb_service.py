@@ -2828,6 +2828,8 @@ __all__ = [
     "audit_change_request_reserve_drawdown_authorization",
     "audit_deliverable_formal_acceptance_and_waiver_expiration",
     "audit_quality_copq_and_rework_scrap_threshold",
+    "audit_emergency_change_ratification_and_bypass_governance",
+    "audit_quality_capa_root_cause_and_recurrence",
     "ProjectCCBService",
 ]
 
@@ -5010,4 +5012,234 @@ ProjectCCBService.audit_quality_copq_and_rework_scrap_threshold = staticmethod(
 
 
 
+def audit_emergency_change_ratification_and_bypass_governance(
+    change_requests: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_ratification_hours: float = 48.0,
+    max_emergency_share_pct: float = 20.0,
+) -> dict[str, Any]:
+    """PMBOK 4.6 — Perform Integrated Change Control: canal de emergencia.
+
+    Auditoría pura sobre ``change_requests``. Entradas no-lista/None se
+    tratan como lista vacía y elementos no-dict se ignoran. Reglas
+    evaluadas sobre items con ``is_emergency`` True:
+
+    1. ``unratified_overdue_or_unjustified_emergency``: ``severity_incident_linked`` falsy
+       OR (``post_facto_ratified`` falsy AND ``hours_since_execution > max_ratification_hours``).
+    2. ``emergency_without_rollback_safety``: ``rollback_tested`` falsy.
+
+    Agregados: ``emergency_share_pct`` (emergency / total * 100, 0.0 sin
+    cambios) y ``emergency_bypass_ratio_exceeded`` (total > 0 AND share >
+    max_emergency_share_pct). ``emergency_governance_status``: HEALTHY si
+    sin violaciones y ratio OK; CRITICAL si unratified > 0; AT_RISK en otro
+    caso.
+    """
+    raw_items = change_requests if isinstance(change_requests, list) else []
+    items = [entry for entry in raw_items if isinstance(entry, Mapping)]
+
+    total = len(items)
+    emergency_count = sum(1 for entry in items if entry.get("is_emergency") is True)
+
+    unratified_count = 0
+    rollback_count = 0
+    compliant_count = 0
+    violations: list[dict[str, Any]] = []
+
+    for entry in items:
+        cr_id = entry.get("cr_id")
+
+        # Las reglas solo se evalúan sobre cambios de emergencia; el resto
+        # ejecutó el control integrado normal y es trivialmente conforme.
+        if entry.get("is_emergency") is not True:
+            compliant_count += 1
+            continue
+
+        severity_incident_linked = entry.get("severity_incident_linked")
+        post_facto_ratified = entry.get("post_facto_ratified")
+        hours_since_execution = entry.get("hours_since_execution")
+        rollback_tested = entry.get("rollback_tested")
+
+        reasons: list[str] = []
+
+        unjustified = severity_incident_linked is not True
+        overdue = (
+            post_facto_ratified is not True
+            and isinstance(hours_since_execution, (int, float))
+            and hours_since_execution > max_ratification_hours
+        )
+        if unjustified or overdue:
+            reasons.append("unratified_overdue_or_unjustified_emergency")
+
+        if rollback_tested is not True:
+            reasons.append("emergency_without_rollback_safety")
+
+        ordered_reasons = list(dict.fromkeys(reasons))
+        if not ordered_reasons:
+            compliant_count += 1
+            continue
+
+        if "unratified_overdue_or_unjustified_emergency" in ordered_reasons:
+            unratified_count += 1
+        if "emergency_without_rollback_safety" in ordered_reasons:
+            rollback_count += 1
+
+        violations.append(
+            {
+                "cr_id": cr_id,
+                "reasons": ordered_reasons,
+            }
+        )
+
+    emergency_share_pct = round((emergency_count / total) * 100.0, 2) if total > 0 else 0.0
+    bypass_exceeded = total > 0 and emergency_share_pct > max_emergency_share_pct
+
+    if unratified_count > 0:
+        status = "CRITICAL"
+    elif rollback_count > 0 or bypass_exceeded:
+        status = "AT_RISK"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "total_changes": total,
+        "emergency_changes_count": emergency_count,
+        "compliant_changes_count": compliant_count,
+        "unratified_overdue_or_unjustified_emergency_count": unratified_count,
+        "emergency_without_rollback_safety_count": rollback_count,
+        "emergency_share_pct": emergency_share_pct,
+        "emergency_bypass_ratio_exceeded": bypass_exceeded,
+        "emergency_governance_status": status,
+        "violations": violations,
+    }
+
+
+ProjectCCBService.audit_emergency_change_ratification_and_bypass_governance = staticmethod(
+    audit_emergency_change_ratification_and_bypass_governance
+)
+
+
+def audit_quality_capa_root_cause_and_recurrence(
+    capa_items: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_verification_lag_days: int = 30,
+    require_rca_method: bool = True,
+) -> dict[str, Any]:
+    """Audita acciones correctivas y preventivas (CAPA): documentación de método RCA (5 Whys, Ishikawa, etc.), verificación oportuna de efectividad y ausencia de recurrencia de defectos (PMI PMBOK §8.2 y §4.6)."""
+    if (
+        capa_items is None
+        or isinstance(capa_items, (str, bytes))
+        or not isinstance(capa_items, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = capa_items
+
+    try:
+        max_lag_days = int(max_verification_lag_days)
+    except (TypeError, ValueError):
+        max_lag_days = 30
+
+    req_rca = bool(require_rca_method)
+
+    total_capas = 0
+    compliant_capas = 0
+
+    missing_rca_or_premature_closure_ids: list[str] = []
+    overdue_effectiveness_verification_ids: list[str] = []
+    recurring_failure_capa_ids: list[str] = []
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_capas += 1
+
+        capa_id = (
+            str(raw.get("id") or raw.get("capa_id") or "").strip()
+            or "CAPA-UNKNOWN"
+        )
+        status = str(raw.get("status") or "").strip().lower()
+        rca_method = str(raw.get("rca_method") or "").strip().lower()
+        effectiveness_verified = bool(raw.get("effectiveness_verified"))
+
+        try:
+            days_since_implementation = max(
+                0, int(raw.get("days_since_implementation") or 0)
+            )
+        except (TypeError, ValueError):
+            days_since_implementation = 0
+
+        try:
+            recurrence_count = max(0, int(raw.get("recurrence_count") or 0))
+        except (TypeError, ValueError):
+            recurrence_count = 0
+
+        is_missing_rca_or_premature = (req_rca and not rca_method) or (
+            status == "verified_closed" and not effectiveness_verified
+        )
+        is_overdue_verification = (
+            status == "implemented"
+            and not effectiveness_verified
+            and days_since_implementation > max_lag_days
+        )
+        is_recurring = recurrence_count > 0
+
+        if is_missing_rca_or_premature:
+            missing_rca_or_premature_closure_ids.append(capa_id)
+        if is_overdue_verification:
+            overdue_effectiveness_verification_ids.append(capa_id)
+        if is_recurring:
+            recurring_failure_capa_ids.append(capa_id)
+
+        if (
+            not is_missing_rca_or_premature
+            and not is_overdue_verification
+            and not is_recurring
+        ):
+            compliant_capas += 1
+
+    is_compliant = (
+        len(missing_rca_or_premature_closure_ids) == 0
+        and len(overdue_effectiveness_verification_ids) == 0
+        and len(recurring_failure_capa_ids) == 0
+    )
+
+    if is_compliant:
+        capa_governance_health = "healthy"
+    elif (
+        len(missing_rca_or_premature_closure_ids) > 0
+        or len(recurring_failure_capa_ids) > 0
+    ):
+        capa_governance_health = "critical"
+    else:
+        capa_governance_health = "at_risk"
+
+    recommendations: list[str] = []
+    if missing_rca_or_premature_closure_ids:
+        recommendations.append(
+            f"Documentar método formal de Análisis de Causa Raíz (RCA) y verificar efectividad antes de cerrar CAPA en {missing_rca_or_premature_closure_ids}."
+        )
+    if overdue_effectiveness_verification_ids:
+        recommendations.append(
+            f"Ejecutar verificación de efectividad post-implementación (<= {max_lag_days} días) en {overdue_effectiveness_verification_ids}."
+        )
+    if recurring_failure_capa_ids:
+        recommendations.append(
+            f"Reabrir el análisis de causa raíz por recurrencia del defecto tras la acción CAPA en {recurring_failure_capa_ids}."
+        )
+
+    return {
+        "total_capas": total_capas,
+        "compliant_capas": compliant_capas,
+        "missing_rca_or_premature_closure_ids": missing_rca_or_premature_closure_ids,
+        "overdue_effectiveness_verification_ids": overdue_effectiveness_verification_ids,
+        "recurring_failure_capa_ids": recurring_failure_capa_ids,
+        "capa_governance_health": capa_governance_health,
+        "is_compliant": is_compliant,
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.audit_quality_capa_root_cause_and_recurrence = staticmethod(
+    audit_quality_capa_root_cause_and_recurrence
+)
 

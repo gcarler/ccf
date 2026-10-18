@@ -6321,3 +6321,362 @@ def test_audit_quality_copq_and_rework_scrap_threshold_empty_and_service_binding
 
 
 
+
+
+def test_emergency_ratification_bypass_critical_and_overdue():
+    """Emergencia sin justificar y sin ratificar vencida + sin rollback -> CRITICAL y doble reason."""
+    from backend.services.project_ccb_service import (
+        audit_emergency_change_ratification_and_bypass_governance,
+    )
+
+    res = audit_emergency_change_ratification_and_bypass_governance(
+        [
+            {
+                "cr_id": "CR-1",
+                "is_emergency": True,
+                "severity_incident_linked": False,
+                "post_facto_ratified": False,
+                "hours_since_execution": 72.0,
+                "rollback_tested": False,
+            }
+        ]
+    )
+    assert res["total_changes"] == 1
+    assert res["emergency_changes_count"] == 1
+    assert res["compliant_changes_count"] == 0
+    assert res["unratified_overdue_or_unjustified_emergency_count"] == 1
+    assert res["emergency_without_rollback_safety_count"] == 1
+    assert res["violations"][0]["cr_id"] == "CR-1"
+    assert res["violations"][0]["reasons"] == [
+        "unratified_overdue_or_unjustified_emergency",
+        "emergency_without_rollback_safety",
+    ]
+    assert res["emergency_share_pct"] == 100.0
+    assert res["emergency_bypass_ratio_exceeded"] is True
+    assert res["emergency_governance_status"] == "CRITICAL"
+
+    # Vencida pero justificada y no ratificada -> regla 1 por overdue.
+    overdue = audit_emergency_change_ratification_and_bypass_governance(
+        [
+            {
+                "cr_id": "CR-2",
+                "is_emergency": True,
+                "severity_incident_linked": True,
+                "post_facto_ratified": False,
+                "hours_since_execution": 48.1,
+                "rollback_tested": True,
+            }
+        ]
+    )
+    assert overdue["violations"][0]["reasons"] == ["unratified_overdue_or_unjustified_emergency"]
+    assert overdue["unratified_overdue_or_unjustified_emergency_count"] == 1
+    assert overdue["emergency_without_rollback_safety_count"] == 0
+    assert overdue["emergency_governance_status"] == "CRITICAL"
+
+    # Ratificada a tiempo y justificada -> sin regla 1 (share 1/5 = 20%, sin bypass).
+    timely = audit_emergency_change_ratification_and_bypass_governance(
+        [
+            {
+                "cr_id": "CR-3",
+                "is_emergency": True,
+                "severity_incident_linked": True,
+                "post_facto_ratified": False,
+                "hours_since_execution": 48.0,
+                "rollback_tested": True,
+            },
+            {"cr_id": "CR-25"},
+            {"cr_id": "CR-26"},
+            {"cr_id": "CR-27"},
+            {"cr_id": "CR-28"},
+        ]
+    )
+    assert timely["violations"] == []
+    assert timely["compliant_changes_count"] == 5
+    assert timely["emergency_share_pct"] == 20.0
+    assert timely["emergency_bypass_ratio_exceeded"] is False
+    assert timely["emergency_governance_status"] == "HEALTHY"
+
+
+def test_emergency_ratification_bypass_rollback_and_share_thresholds():
+    """Sin rollback -> AT_RISK; share: limite exacto no excede, por encima si."""
+    from backend.services.project_ccb_service import (
+        audit_emergency_change_ratification_and_bypass_governance,
+    )
+
+    rollback = audit_emergency_change_ratification_and_bypass_governance(
+        [
+            {
+                "cr_id": "CR-4",
+                "is_emergency": True,
+                "severity_incident_linked": True,
+                "post_facto_ratified": True,
+                "hours_since_execution": 1.0,
+            }
+        ]
+    )
+    assert rollback["emergency_without_rollback_safety_count"] == 1
+    assert rollback["unratified_overdue_or_unjustified_emergency_count"] == 0
+    assert rollback["violations"][0]["reasons"] == ["emergency_without_rollback_safety"]
+    assert rollback["emergency_governance_status"] == "AT_RISK"
+
+    # 1 de 5 = 20.0%: no excede (comparacion estricta) -> HEALTHY.
+    at_limit = audit_emergency_change_ratification_and_bypass_governance(
+        [
+            {
+                "cr_id": "CR-5",
+                "is_emergency": True,
+                "severity_incident_linked": True,
+                "post_facto_ratified": True,
+                "hours_since_execution": 0.0,
+                "rollback_tested": True,
+            },
+            {"cr_id": "CR-6"},
+            {"cr_id": "CR-7"},
+            {"cr_id": "CR-8"},
+            {"cr_id": "CR-9"},
+        ]
+    )
+    assert at_limit["emergency_share_pct"] == 20.0
+    assert at_limit["emergency_bypass_ratio_exceeded"] is False
+    assert at_limit["emergency_governance_status"] == "HEALTHY"
+    assert at_limit["compliant_changes_count"] == 5
+
+    # 2 de 5 = 40.0%: excede -> AT_RISK.
+    over_limit = audit_emergency_change_ratification_and_bypass_governance(
+        [
+            {"cr_id": "CR-10", "is_emergency": True, "severity_incident_linked": True,
+             "post_facto_ratified": True, "hours_since_execution": 0.0, "rollback_tested": True},
+            {"cr_id": "CR-11", "is_emergency": True, "severity_incident_linked": True,
+             "post_facto_ratified": True, "hours_since_execution": 0.0, "rollback_tested": True},
+            {"cr_id": "CR-12"},
+            {"cr_id": "CR-13"},
+            {"cr_id": "CR-14"},
+        ]
+    )
+    assert over_limit["emergency_share_pct"] == 40.0
+    assert over_limit["emergency_bypass_ratio_exceeded"] is True
+    assert over_limit["unratified_overdue_or_unjustified_emergency_count"] == 0
+    assert over_limit["emergency_without_rollback_safety_count"] == 0
+    assert over_limit["emergency_governance_status"] == "AT_RISK"
+
+    # Umbral custom: max 10.0 con 1 de 5 (20%) -> excede.
+    custom = audit_emergency_change_ratification_and_bypass_governance(
+        [
+            {"cr_id": "CR-15", "is_emergency": True, "severity_incident_linked": True,
+             "post_facto_ratified": True, "hours_since_execution": 0.0, "rollback_tested": True},
+            {"cr_id": "CR-16"},
+            {"cr_id": "CR-17"},
+            {"cr_id": "CR-18"},
+            {"cr_id": "CR-19"},
+        ],
+        max_emergency_share_pct=10.0,
+    )
+    assert custom["emergency_bypass_ratio_exceeded"] is True
+    assert custom["emergency_governance_status"] == "AT_RISK"
+
+
+def test_emergency_ratification_bypass_ignores_bad_and_non_emergency():
+    """No-lista/None -> vacio; no-dict ignorados; no-emergencia son conformes y no se cuentan."""
+    from backend.services.project_ccb_service import (
+        audit_emergency_change_ratification_and_bypass_governance,
+    )
+
+    for payload in (None, "not-a-list", 42):
+        empty = audit_emergency_change_ratification_and_bypass_governance(payload)
+        assert empty["total_changes"] == 0
+        assert empty["emergency_changes_count"] == 0
+        assert empty["emergency_share_pct"] == 0.0
+        assert empty["emergency_bypass_ratio_exceeded"] is False
+        assert empty["emergency_governance_status"] == "HEALTHY"
+        assert empty["violations"] == []
+
+    mixed = audit_emergency_change_ratification_and_bypass_governance(
+        [
+            "no-dict",
+            42,
+            None,
+            {"cr_id": "CR-20", "is_emergency": False},
+            {"cr_id": "CR-21", "is_emergency": True, "severity_incident_linked": True,
+             "post_facto_ratified": True, "hours_since_execution": 0.0, "rollback_tested": True},
+        ],
+        max_emergency_share_pct=50.0,
+    )
+    assert mixed["total_changes"] == 2
+    assert mixed["emergency_changes_count"] == 1
+    assert mixed["compliant_changes_count"] == 2
+    assert mixed["emergency_share_pct"] == 50.0
+    assert mixed["emergency_bypass_ratio_exceeded"] is False
+    assert mixed["violations"] == []
+    assert mixed["emergency_governance_status"] == "HEALTHY"
+
+    # Non-owner keys irrelevantes no rompen: emergencia sin severty -> regla 1.
+    bare = audit_emergency_change_ratification_and_bypass_governance(
+        [{"cr_id": "CR-22", "is_emergency": True}]
+    )
+    assert bare["violations"][0]["reasons"] == [
+        "unratified_overdue_or_unjustified_emergency",
+        "emergency_without_rollback_safety",
+    ]
+    assert bare["emergency_governance_status"] == "CRITICAL"
+
+
+def test_emergency_ratification_bypass_precedence_and_binding():
+    """CRITICAL domina; AT_RISK solo rollback o ratio; proxy @staticmethod y __all__."""
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_emergency_change_ratification_and_bypass_governance,
+    )
+
+    # CRITICAL por regla 1 pese a exceder ratio y tener rollback pendiente.
+    dominates = audit_emergency_change_ratification_and_bypass_governance(
+        [
+            {"cr_id": "CR-23", "is_emergency": True, "severity_incident_linked": False,
+             "post_facto_ratified": True, "hours_since_execution": 1.0, "rollback_tested": False},
+        ]
+    )
+    assert dominates["unratified_overdue_or_unjustified_emergency_count"] == 1
+    assert dominates["emergency_without_rollback_safety_count"] == 1
+    assert dominates["emergency_bypass_ratio_exceeded"] is True
+    assert dominates["emergency_governance_status"] == "CRITICAL"
+
+    sample = [{"cr_id": "CR-24", "is_emergency": True, "severity_incident_linked": True,
+               "post_facto_ratified": True, "hours_since_execution": 0.0, "rollback_tested": True}]
+    assert (
+        ProjectCCBService.audit_emergency_change_ratification_and_bypass_governance(sample)
+        == audit_emergency_change_ratification_and_bypass_governance(sample)
+    )
+    assert "audit_emergency_change_ratification_and_bypass_governance" in mod.__all__
+
+
+def test_audit_quality_capa_root_cause_and_recurrence_healthy():
+    """Valida CAPAs con método RCA documentado, efectividad verificada y cero recurrencias."""
+    from backend.services.project_ccb_service import (
+        audit_quality_capa_root_cause_and_recurrence,
+    )
+
+    capas = [
+        {
+            "id": "CAPA-01",
+            "status": "verified_closed",
+            "rca_method": "5_whys",
+            "effectiveness_verified": True,
+            "days_since_implementation": 45,
+            "recurrence_count": 0,
+        },
+        {
+            "id": "CAPA-02",
+            "status": "implemented",
+            "rca_method": "ishikawa",
+            "effectiveness_verified": False,
+            "days_since_implementation": 14,
+            "recurrence_count": 0,
+        },
+    ]
+    res = audit_quality_capa_root_cause_and_recurrence(capas)
+    assert res["total_capas"] == 2
+    assert res["compliant_capas"] == 2
+    assert res["missing_rca_or_premature_closure_ids"] == []
+    assert res["overdue_effectiveness_verification_ids"] == []
+    assert res["recurring_failure_capa_ids"] == []
+    assert res["capa_governance_health"] == "healthy"
+    assert res["is_compliant"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_quality_capa_root_cause_and_recurrence_at_risk_overdue():
+    """Detecta CAPA implementada con verificación de efectividad vencida (> 30 días) sin recurrencia ('at_risk')."""
+    from backend.services.project_ccb_service import (
+        audit_quality_capa_root_cause_and_recurrence,
+    )
+
+    capas = [
+        {
+            "capa_id": "CAPA-10",
+            "status": "implemented",
+            "rca_method": "fault_tree",
+            "effectiveness_verified": False,
+            "days_since_implementation": 40,
+            "recurrence_count": 0,
+        }
+    ]
+    res = audit_quality_capa_root_cause_and_recurrence(capas)
+    assert res["total_capas"] == 1
+    assert res["compliant_capas"] == 0
+    assert res["overdue_effectiveness_verification_ids"] == ["CAPA-10"]
+    assert res["missing_rca_or_premature_closure_ids"] == []
+    assert res["recurring_failure_capa_ids"] == []
+    assert res["capa_governance_health"] == "at_risk"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 1
+
+
+def test_audit_quality_capa_root_cause_and_recurrence_critical_rca_and_recurrence():
+    """Detecta cierre prematuro sin efectividad/sin RCA y recurrencia del defecto ('critical')."""
+    from backend.services.project_ccb_service import (
+        audit_quality_capa_root_cause_and_recurrence,
+    )
+
+    capas = [
+        {
+            "capa_id": "CAPA-20",
+            "status": "verified_closed",
+            "rca_method": "",
+            "effectiveness_verified": False,
+            "days_since_implementation": 10,
+            "recurrence_count": 0,
+        },
+        {
+            "capa_id": "CAPA-21",
+            "status": "verified_closed",
+            "rca_method": "pareto",
+            "effectiveness_verified": True,
+            "days_since_implementation": 20,
+            "recurrence_count": 2,
+        },
+    ]
+    res = audit_quality_capa_root_cause_and_recurrence(capas)
+    assert res["total_capas"] == 2
+    assert res["compliant_capas"] == 0
+    assert res["missing_rca_or_premature_closure_ids"] == ["CAPA-20"]
+    assert res["recurring_failure_capa_ids"] == ["CAPA-21"]
+    assert res["capa_governance_health"] == "critical"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_quality_capa_root_cause_and_recurrence_empty_and_service_binding():
+    """Manejo defensivo de entradas vacías/no-secuencia y exposición en ProjectCCBService y __all__."""
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_quality_capa_root_cause_and_recurrence,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_quality_capa_root_cause_and_recurrence(payload)  # type: ignore[arg-type]
+        assert empty["total_capas"] == 0
+        assert empty["compliant_capas"] == 0
+        assert empty["missing_rca_or_premature_closure_ids"] == []
+        assert empty["overdue_effectiveness_verification_ids"] == []
+        assert empty["recurring_failure_capa_ids"] == []
+        assert empty["capa_governance_health"] == "healthy"
+        assert empty["is_compliant"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "id": "CAPA-99",
+            "status": "open",
+            "rca_method": "5_whys",
+            "effectiveness_verified": False,
+            "days_since_implementation": 0,
+            "recurrence_count": 0,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_quality_capa_root_cause_and_recurrence(sample)
+        == audit_quality_capa_root_cause_and_recurrence(sample)
+    )
+    assert "audit_quality_capa_root_cause_and_recurrence" in mod.__all__
+

@@ -5503,6 +5503,7 @@ __all__ = [
     "evaluate_evm_earning_rule_gaming_and_duration_split",
     "evaluate_evm_cost_schedule_index_compound_degradation",
     "evaluate_evm_undistributed_budget_and_planning_package_aging",
+    "evaluate_evm_cost_variance_rate_vs_efficiency_decomposition",
     "ProjectEVMService",
 ]
 
@@ -7477,7 +7478,147 @@ ProjectEVMService.evaluate_evm_undistributed_budget_and_planning_package_aging =
 )
 
 
+def evaluate_evm_cost_variance_rate_vs_efficiency_decomposition(
+    work_packages: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_adverse_rate_variance_pct: float = 10.0,
+    max_adverse_efficiency_variance_pct: float = 15.0,
+) -> dict[str, Any]:
+    """PMBOK 7.4 & EVM Practice Standard — descomposición de la Cost Variance.
+
+    Auditoría pura sobre ``work_packages``. Entradas no-lista/None se
+    tratan como lista vacía y elementos no-dict se ignoran. Para cada
+    paquete: ``ev = earned_hours * planned_hourly_rate``, ``ac = actual_hours
+    * actual_hourly_rate``, ``rate_variance = (planned_rate - actual_rate) *
+    actual_hours`` y ``efficiency_variance = (earned_hours - actual_hours) *
+    planned_rate``. Reglas:
+
+    1. ``adverse_rate_variance_breach``: ``planned_hourly_rate > 0`` AND
+       ``actual_hours > 0`` AND ((actual_rate - planned_rate) / planned_rate
+       * 100) > ``max_adverse_rate_variance_pct``.
+    2. ``adverse_efficiency_variance_breach``: ``earned_hours > 0`` AND
+       ``actual_hours > earned_hours`` AND ((actual - earned) / earned *
+       100) > ``max_adverse_efficiency_variance_pct``.
+    3. ``unaddressed_negative_cv``: (``ev - ac``) < 0 AND NOT
+       ``corrective_action_logged``.
+
+    Retorna total/compliant packages, los 3 conteos, totales de variación
+    (rate y efficiency, redondeados a 2 decimales), cv_decomposition_status
+    (HEALTHY/AT_RISK/CRITICAL) y violations (``wp_id`` / ``reasons``).
+    """
+    raw_items = work_packages if isinstance(work_packages, list) else []
+    items = [entry for entry in raw_items if isinstance(entry, Mapping)]
+
+    total = 0
+    rate_breach_count = 0
+    efficiency_breach_count = 0
+    negative_cv_count = 0
+    compliant_count = 0
+    total_rate_variance = 0.0
+    total_efficiency_variance = 0.0
+    violations: list[dict[str, Any]] = []
+
+    for entry in items:
+        total += 1
+
+        wp_id = entry.get("wp_id")
+        planned_rate = entry.get("planned_hourly_rate")
+        actual_rate = entry.get("actual_hourly_rate")
+        earned_hours = entry.get("earned_hours")
+        actual_hours = entry.get("actual_hours")
+        corrective_action_logged = entry.get("corrective_action_logged")
+
+        is_num = lambda value: isinstance(value, (int, float)) and not isinstance(value, bool)  # noqa: E731
+
+        ev = (
+            earned_hours * planned_rate
+            if is_num(earned_hours) and is_num(planned_rate)
+            else 0.0
+        )
+        ac = (
+            actual_hours * actual_rate
+            if is_num(actual_hours) and is_num(actual_rate)
+            else 0.0
+        )
+        rate_variance = (
+            (planned_rate - actual_rate) * actual_hours
+            if is_num(planned_rate) and is_num(actual_rate) and is_num(actual_hours)
+            else 0.0
+        )
+        efficiency_variance = (
+            (earned_hours - actual_hours) * planned_rate
+            if is_num(earned_hours) and is_num(actual_hours) and is_num(planned_rate)
+            else 0.0
+        )
+        total_rate_variance += rate_variance
+        total_efficiency_variance += efficiency_variance
+
+        reasons: list[str] = []
+
+        if (
+            is_num(planned_rate)
+            and is_num(actual_rate)
+            and is_num(actual_hours)
+            and planned_rate > 0
+            and actual_hours > 0
+            and ((actual_rate - planned_rate) / planned_rate) * 100.0
+            > max_adverse_rate_variance_pct
+        ):
+            reasons.append("adverse_rate_variance_breach")
+
+        if (
+            is_num(earned_hours)
+            and is_num(actual_hours)
+            and earned_hours > 0
+            and actual_hours > earned_hours
+            and ((actual_hours - earned_hours) / earned_hours) * 100.0
+            > max_adverse_efficiency_variance_pct
+        ):
+            reasons.append("adverse_efficiency_variance_breach")
+
+        if (ev - ac) < 0.0 and corrective_action_logged is not True:
+            reasons.append("unaddressed_negative_cv")
+
+        ordered_reasons = list(dict.fromkeys(reasons))
+        if not ordered_reasons:
+            compliant_count += 1
+            continue
+
+        if "adverse_rate_variance_breach" in ordered_reasons:
+            rate_breach_count += 1
+        if "adverse_efficiency_variance_breach" in ordered_reasons:
+            efficiency_breach_count += 1
+        if "unaddressed_negative_cv" in ordered_reasons:
+            negative_cv_count += 1
+
+        violations.append(
+            {
+                "wp_id": wp_id,
+                "reasons": ordered_reasons,
+            }
+        )
+
+    if negative_cv_count > 0 or (rate_breach_count > 0 and efficiency_breach_count > 0):
+        status = "CRITICAL"
+    elif rate_breach_count > 0 or efficiency_breach_count > 0:
+        status = "AT_RISK"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "total_packages": total,
+        "compliant_packages_count": compliant_count,
+        "adverse_rate_variance_breach_count": rate_breach_count,
+        "adverse_efficiency_variance_breach_count": efficiency_breach_count,
+        "unaddressed_negative_cv_count": negative_cv_count,
+        "total_rate_variance": round(total_rate_variance, 2),
+        "total_efficiency_variance": round(total_efficiency_variance, 2),
+        "cv_decomposition_status": status,
+        "violations": violations,
+    }
 
 
-
+ProjectEVMService.evaluate_evm_cost_variance_rate_vs_efficiency_decomposition = staticmethod(
+    evaluate_evm_cost_variance_rate_vs_efficiency_decomposition
+)
 

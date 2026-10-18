@@ -3150,6 +3150,7 @@ __all__ = [
     "audit_project_charter_measurable_criteria_and_authority",
     "audit_stakeholder_power_interest_and_salience_drift",
     "audit_organizational_change_management_adkar_and_adoption",
+    "audit_project_administrative_and_contract_closure_readiness",
     "ProjectLifecyclePMIService",
 ]
 
@@ -5284,3 +5285,127 @@ def audit_organizational_change_management_adkar_and_adoption(
 ProjectLifecyclePMIService.audit_organizational_change_management_adkar_and_adoption = staticmethod(
     audit_organizational_change_management_adkar_and_adoption
 )
+
+
+def audit_project_administrative_and_contract_closure_readiness(
+    closure_dossiers: Sequence[Mapping[str, Any]] | None,
+    *,
+    require_zero_open_claims: bool = True,
+    require_lessons_archived_in_opa: bool = True,
+) -> dict[str, Any]:
+    """Audita la preparación de cierre administrativo y contractual de proyecto o fase: aceptación formal de producto, liquidación de reclamos, cierre de códigos contables, archivo en OPA y liberación de recursos (PMI PMBOK §4.7 y §12.3)."""
+    if (
+        closure_dossiers is None
+        or isinstance(closure_dossiers, (str, bytes))
+        or not isinstance(closure_dossiers, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = closure_dossiers
+
+    req_zero_claims = bool(require_zero_open_claims)
+    req_opa = bool(require_lessons_archived_in_opa)
+
+    total_dossiers = 0
+    compliant_dossiers = 0
+
+    unaccepted_or_open_claims_ids: list[str] = []
+    open_charge_codes_ghost_billing_ids: list[str] = []
+    incomplete_opa_or_resource_release_ids: list[str] = []
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_dossiers += 1
+
+        dossier_id = (
+            str(raw.get("id") or raw.get("dossier_id") or "").strip()
+            or "CLS-UNKNOWN"
+        )
+        final_product_acceptance_signed = bool(
+            raw.get("final_product_acceptance_signed")
+        )
+
+        try:
+            open_procurement_claims_count = max(
+                0, int(raw.get("open_procurement_claims_count") or 0)
+            )
+        except (TypeError, ValueError):
+            open_procurement_claims_count = 0
+
+        financial_charge_codes_closed = bool(
+            raw.get("financial_charge_codes_closed")
+        )
+        lessons_archived_in_opa = bool(raw.get("lessons_archived_in_opa"))
+        team_resources_formally_released = bool(
+            raw.get("team_resources_formally_released")
+        )
+
+        is_unaccepted_or_claims = (not final_product_acceptance_signed) or (
+            req_zero_claims and open_procurement_claims_count > 0
+        )
+        is_open_charge_codes = not financial_charge_codes_closed
+        is_incomplete_opa_or_release = (
+            req_opa and not lessons_archived_in_opa
+        ) or (not team_resources_formally_released)
+
+        if is_unaccepted_or_claims:
+            unaccepted_or_open_claims_ids.append(dossier_id)
+        if is_open_charge_codes:
+            open_charge_codes_ghost_billing_ids.append(dossier_id)
+        if is_incomplete_opa_or_release:
+            incomplete_opa_or_resource_release_ids.append(dossier_id)
+
+        if (
+            not is_unaccepted_or_claims
+            and not is_open_charge_codes
+            and not is_incomplete_opa_or_release
+        ):
+            compliant_dossiers += 1
+
+    is_compliant = (
+        len(unaccepted_or_open_claims_ids) == 0
+        and len(open_charge_codes_ghost_billing_ids) == 0
+        and len(incomplete_opa_or_resource_release_ids) == 0
+    )
+
+    if is_compliant:
+        closure_governance_health = "healthy"
+    elif (
+        len(unaccepted_or_open_claims_ids) > 0
+        or len(open_charge_codes_ghost_billing_ids) > 0
+    ):
+        closure_governance_health = "critical"
+    else:
+        closure_governance_health = "at_risk"
+
+    recommendations: list[str] = []
+    if unaccepted_or_open_claims_ids:
+        recommendations.append(
+            f"Obtener la firma de aceptación final del producto y liquidar reclamos contractuales pendientes antes del cierre en {unaccepted_or_open_claims_ids}."
+        )
+    if open_charge_codes_ghost_billing_ids:
+        recommendations.append(
+            f"Cerrar formalmente los códigos de cargo financiero para prevenir facturación fantasma en {open_charge_codes_ghost_billing_ids}."
+        )
+    if incomplete_opa_or_resource_release_ids:
+        recommendations.append(
+            f"Archivar lecciones aprendidas en el repositorio OPA y formalizar la liberación del equipo en {incomplete_opa_or_resource_release_ids}."
+        )
+
+    return {
+        "total_dossiers": total_dossiers,
+        "compliant_dossiers": compliant_dossiers,
+        "unaccepted_or_open_claims_ids": unaccepted_or_open_claims_ids,
+        "open_charge_codes_ghost_billing_ids": open_charge_codes_ghost_billing_ids,
+        "incomplete_opa_or_resource_release_ids": incomplete_opa_or_resource_release_ids,
+        "closure_governance_health": closure_governance_health,
+        "is_compliant": is_compliant,
+        "recommendations": recommendations,
+    }
+
+
+ProjectLifecyclePMIService.audit_project_administrative_and_contract_closure_readiness = staticmethod(
+    audit_project_administrative_and_contract_closure_readiness
+)
+
