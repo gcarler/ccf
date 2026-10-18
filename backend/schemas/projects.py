@@ -3691,6 +3691,7 @@ __all__ = [
     "validate_pdm_dependency_leads_and_lags",
     "validate_schedule_compression_options",
     "validate_wbs_work_package_sizing_heuristic",
+    "validate_monte_carlo_schedule_confidence_buffer",
 ]
 
 
@@ -3896,4 +3897,73 @@ def validate_wbs_work_package_sizing_heuristic(
         "invalid_ownership_package_ids": invalid_ownership_package_ids,
         "is_wbs_sizing_compliant": is_wbs_sizing_compliant,
         "sizing_posture": sizing_posture,
+    }
+
+
+def validate_monte_carlo_schedule_confidence_buffer(
+    deterministic_duration_days: float = 0.0,
+    p50_days: float = 0.0,
+    p80_days: float = 0.0,
+    p95_days: float = 0.0,
+    allocated_buffer_days: float = 0.0,
+) -> dict[str, Any]:
+    """Valida percentiles de confianza Monte Carlo (P50/P80/P95) y suficiencia de buffer de cronograma (PMBOK §6.5.2.4 / §11.4.2.5)."""
+    try:
+        det = float(deterministic_duration_days or 0.0)
+    except (TypeError, ValueError):
+        det = 0.0
+    try:
+        p50 = float(p50_days or 0.0)
+    except (TypeError, ValueError):
+        p50 = 0.0
+    try:
+        p80 = float(p80_days or 0.0)
+    except (TypeError, ValueError):
+        p80 = 0.0
+    try:
+        p95 = float(p95_days or 0.0)
+    except (TypeError, ValueError):
+        p95 = 0.0
+    try:
+        buf = max(0.0, float(allocated_buffer_days or 0.0))
+    except (TypeError, ValueError):
+        buf = 0.0
+
+    if det <= 0.0 or p50 <= 0.0 or p80 <= 0.0 or p95 <= 0.0:
+        return {
+            "committed_duration_days": 0.0,
+            "required_p80_buffer_days": 0.0,
+            "buffer_shortfall_days": 0.0,
+            "tail_spread_p95_p50_days": 0.0,
+            "is_monotonic_distribution": False,
+            "meets_p80_confidence": False,
+            "monte_carlo_posture": "INVALID_MONTE_CARLO_INPUTS",
+        }
+
+    is_monotonic = bool((p50 <= p80 + 1e-6) and (p80 <= p95 + 1e-6))
+    committed = round(det + buf, 2)
+    req_p80_buf = round(max(0.0, p80 - det), 2)
+    shortfall = round(max(0.0, p80 - committed), 2)
+    tail_spread = round(max(0.0, p95 - p50), 2)
+    meets_p80 = bool(is_monotonic and (committed + 1e-6 >= p80))
+
+    if not is_monotonic:
+        monte_carlo_posture = "NON_MONOTONIC_PERCENTILE_CURVE"
+    elif committed + 1e-6 < p50:
+        monte_carlo_posture = "BELOW_P50_HIGH_OVERRUN_PROBABILITY"
+    elif committed + 1e-6 < p80:
+        monte_carlo_posture = "INSUFFICIENT_P80_CONFIDENCE_BUFFER"
+    elif committed + 1e-6 >= p95:
+        monte_carlo_posture = "HIGH_P95_CONFIDENCE_COVERAGE"
+    else:
+        monte_carlo_posture = "ADEQUATE_P80_SCHEDULE_CONFIDENCE"
+
+    return {
+        "committed_duration_days": committed,
+        "required_p80_buffer_days": req_p80_buf,
+        "buffer_shortfall_days": shortfall,
+        "tail_spread_p95_p50_days": tail_spread,
+        "is_monotonic_distribution": is_monotonic,
+        "meets_p80_confidence": meets_p80,
+        "monte_carlo_posture": monte_carlo_posture,
     }

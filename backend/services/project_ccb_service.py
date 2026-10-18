@@ -2322,6 +2322,16 @@ class ProjectCCBService:
             minor_sla_days=minor_sla_days,
         )
 
+    @staticmethod
+    def evaluate_pareto_vital_few_defect_causes(
+        defect_categories: list[dict[str, Any]] | None = None,
+        pareto_cutoff_pct: float = 80.0,
+    ) -> dict[str, Any]:
+        return evaluate_pareto_vital_few_defect_causes(
+            defect_categories,
+            pareto_cutoff_pct=pareto_cutoff_pct,
+        )
+
 
 def evaluate_quality_ncr_sla_compliance(
     ncrs: list[dict[str, Any]] | None = None,
@@ -2408,6 +2418,85 @@ def evaluate_quality_ncr_sla_compliance(
     }
 
 
+def evaluate_pareto_vital_few_defect_causes(
+    defect_categories: list[dict[str, Any]] | None = None,
+    pareto_cutoff_pct: float = 80.0,
+) -> dict[str, Any]:
+    """Evalúa la concentración Pareto 80/20 de causas raíz de defectos y cobertura CAPA en causas vitales (PMBOK §8.3.2.5)."""
+    valid_categories: list[dict[str, Any]] = []
+    for item in defect_categories or []:
+        if not isinstance(item, dict):
+            continue
+        category_id = str(item.get("category_id") or item.get("id") or "").strip()
+        if not category_id:
+            continue
+        try:
+            defect_count = max(0, int(item.get("defect_count") or 0))
+        except (TypeError, ValueError):
+            defect_count = 0
+        if defect_count > 0:
+            valid_categories.append(
+                {
+                    "category_id": category_id,
+                    "defect_count": defect_count,
+                    "has_capa_plan": bool(item.get("has_capa_plan", False)),
+                }
+            )
+
+    if not valid_categories:
+        return {
+            "total_defects": 0,
+            "total_categories": 0,
+            "vital_few_category_ids": [],
+            "vital_few_share_pct": 0.0,
+            "unmitigated_vital_category_ids": [],
+            "is_pareto_actionable": False,
+            "pareto_posture": "NO_DEFECT_DATA",
+        }
+
+    sorted_cats = sorted(
+        valid_categories, key=lambda c: (-c["defect_count"], c["category_id"])
+    )
+    total_defects = sum(c["defect_count"] for c in sorted_cats)
+    cutoff = float(pareto_cutoff_pct)
+
+    vital_few_category_ids: list[str] = []
+    unmitigated_vital_category_ids: list[str] = []
+    vital_defects_sum = 0
+
+    for c in sorted_cats:
+        prev_pct = (vital_defects_sum / total_defects) * 100.0
+        if prev_pct < cutoff - 1e-9 or len(vital_few_category_ids) == 0:
+            cid = c["category_id"]
+            vital_few_category_ids.append(cid)
+            vital_defects_sum += c["defect_count"]
+            if not c["has_capa_plan"]:
+                unmitigated_vital_category_ids.append(cid)
+        else:
+            break
+
+    vital_few_share_pct = round((vital_defects_sum / total_defects) * 100.0, 2)
+    concentration_ratio = len(vital_few_category_ids) / len(sorted_cats)
+    is_pareto_actionable = len(unmitigated_vital_category_ids) == 0
+
+    if len(unmitigated_vital_category_ids) > 0:
+        pareto_posture = "UNMITIGATED_VITAL_FEW_CAUSES"
+    elif concentration_ratio <= 0.5:
+        pareto_posture = "HIGH_PARETO_CONCENTRATION_GOVERNED"
+    else:
+        pareto_posture = "DISPERSED_DEFECT_DISTRIBUTION"
+
+    return {
+        "total_defects": total_defects,
+        "total_categories": len(sorted_cats),
+        "vital_few_category_ids": vital_few_category_ids,
+        "vital_few_share_pct": vital_few_share_pct,
+        "unmitigated_vital_category_ids": unmitigated_vital_category_ids,
+        "is_pareto_actionable": is_pareto_actionable,
+        "pareto_posture": pareto_posture,
+    }
+
+
 __all__ = [
     "list_change_requests",
     "row_list_adapter",
@@ -2441,10 +2530,7 @@ __all__ = [
     "evaluate_spc_process_stability",
     "evaluate_fmea_rpn_criticality",
     "evaluate_quality_ncr_sla_compliance",
+    "evaluate_pareto_vital_few_defect_causes",
     "ProjectCCBService",
 ]
-
-
-
-
 

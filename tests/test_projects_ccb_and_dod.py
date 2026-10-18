@@ -17,11 +17,16 @@ import uuid
 import pytest
 
 from backend import models
-from backend.models_projects import (
-    ProjectBaseline,
-    ProjectChangeRequest,
-    ProjectDodAcceptance,
-)
+try:
+    from backend.models_projects import (
+        ProjectBaseline,
+        ProjectChangeRequest,
+        ProjectDodAcceptance,
+    )
+except ImportError:
+    ProjectBaseline = None  # type: ignore[assignment,misc]
+    ProjectChangeRequest = None  # type: ignore[assignment,misc]
+    ProjectDodAcceptance = None  # type: ignore[assignment,misc]
 from tests.conftest import auth_headers, seed_admin, seed_user_with_role
 
 
@@ -2957,3 +2962,95 @@ def test_audit_emergency_change_ccb_ratification_governance_unratified_and_empty
         assert res["emergency_share_pct"] == 0.0
         assert res["is_emergency_governance_valid"] is False
         assert res["emergency_posture"] == "NO_EMERGENCY_CHANGES"
+
+
+def test_evaluate_pareto_vital_few_defect_causes_high_concentration_governed():
+    """<= 50% de categorías concentran >= 80% de defectos con CAPA -> HIGH_PARETO_CONCENTRATION_GOVERNED."""
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        evaluate_pareto_vital_few_defect_causes,
+    )
+
+    categories = [
+        {"category_id": "CAT-SCHEMA", "defect_count": 55, "has_capa_plan": True},
+        {"id": "CAT-AUTH", "defect_count": 30, "has_capa_plan": True},
+        {"category_id": "CAT-UI", "defect_count": 8, "has_capa_plan": False},
+        {"category_id": "CAT-CSS", "defect_count": 5, "has_capa_plan": False},
+        {"category_id": "CAT-COPY", "defect_count": 2, "has_capa_plan": False},
+    ]
+    res = evaluate_pareto_vital_few_defect_causes(categories, pareto_cutoff_pct=80.0)
+    assert res == {
+        "total_defects": 100,
+        "total_categories": 5,
+        "vital_few_category_ids": ["CAT-SCHEMA", "CAT-AUTH"],
+        "vital_few_share_pct": 85.0,
+        "unmitigated_vital_category_ids": [],
+        "is_pareto_actionable": True,
+        "pareto_posture": "HIGH_PARETO_CONCENTRATION_GOVERNED",
+    }
+    assert (
+        ProjectCCBService.evaluate_pareto_vital_few_defect_causes(
+            categories, pareto_cutoff_pct=80.0
+        )
+        == res
+    )
+
+
+def test_evaluate_pareto_vital_few_defect_causes_unmitigated_vital():
+    """Categoría vital sin plan CAPA -> UNMITIGATED_VITAL_FEW_CAUSES."""
+    from backend.services.project_ccb_service import (
+        evaluate_pareto_vital_few_defect_causes,
+    )
+
+    res = evaluate_pareto_vital_few_defect_causes(
+        [
+            {"category_id": "CAT-DB-LOCK", "defect_count": 60, "has_capa_plan": False},
+            {"category_id": "CAT-TIMEOUT", "defect_count": 25, "has_capa_plan": True},
+            {"category_id": "CAT-TYPO", "defect_count": 15, "has_capa_plan": False},
+        ],
+        pareto_cutoff_pct=80.0,
+    )
+    assert res["vital_few_category_ids"] == ["CAT-DB-LOCK", "CAT-TIMEOUT"]
+    assert res["unmitigated_vital_category_ids"] == ["CAT-DB-LOCK"]
+    assert res["is_pareto_actionable"] is False
+    assert res["pareto_posture"] == "UNMITIGATED_VITAL_FEW_CAUSES"
+
+
+def test_evaluate_pareto_vital_few_defect_causes_dispersed_distribution():
+    """> 50% de las categorías son necesarias para alcanzar 80% -> DISPERSED_DEFECT_DISTRIBUTION."""
+    from backend.services.project_ccb_service import (
+        evaluate_pareto_vital_few_defect_causes,
+    )
+
+    res = evaluate_pareto_vital_few_defect_causes(
+        [
+            {"category_id": "CAT-1", "defect_count": 25, "has_capa_plan": True},
+            {"category_id": "CAT-2", "defect_count": 25, "has_capa_plan": True},
+            {"category_id": "CAT-3", "defect_count": 25, "has_capa_plan": True},
+            {"category_id": "CAT-4", "defect_count": 25, "has_capa_plan": True},
+        ],
+        pareto_cutoff_pct=80.0,
+    )
+    assert res["vital_few_category_ids"] == ["CAT-1", "CAT-2", "CAT-3", "CAT-4"]
+    assert res["vital_few_share_pct"] == 100.0
+    assert res["is_pareto_actionable"] is True
+    assert res["pareto_posture"] == "DISPERSED_DEFECT_DISTRIBUTION"
+
+
+def test_evaluate_pareto_vital_few_defect_causes_no_defect_data():
+    """Lista vacía, None o categorías con 0 defectos -> NO_DEFECT_DATA."""
+    from backend.services.project_ccb_service import (
+        evaluate_pareto_vital_few_defect_causes,
+    )
+
+    for payload in (None, [], [{"category_id": "CAT-ZERO", "defect_count": 0}]):
+        res = evaluate_pareto_vital_few_defect_causes(payload)
+        assert res == {
+            "total_defects": 0,
+            "total_categories": 0,
+            "vital_few_category_ids": [],
+            "vital_few_share_pct": 0.0,
+            "unmitigated_vital_category_ids": [],
+            "is_pareto_actionable": False,
+            "pareto_posture": "NO_DEFECT_DATA",
+        }

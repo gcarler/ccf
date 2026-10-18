@@ -2047,3 +2047,102 @@ def test_validate_wbs_work_package_sizing_heuristic_empty_or_only_summary():
             "is_wbs_sizing_compliant": False,
             "sizing_posture": "NO_LEAF_WORK_PACKAGES",
         }
+
+
+def test_validate_monte_carlo_schedule_confidence_buffer_adequate_p80_and_p95():
+    """Buffer cubre P80 (< P95) -> ADEQUATE_P80_SCHEDULE_CONFIDENCE; cubre >= P95 -> HIGH_P95_CONFIDENCE_COVERAGE."""
+    from backend.schemas.projects import validate_monte_carlo_schedule_confidence_buffer
+
+    res_p80 = validate_monte_carlo_schedule_confidence_buffer(
+        deterministic_duration_days=100.0,
+        p50_days=108.0,
+        p80_days=120.0,
+        p95_days=135.0,
+        allocated_buffer_days=22.0,
+    )
+    assert res_p80 == {
+        "committed_duration_days": 122.0,
+        "required_p80_buffer_days": 20.0,
+        "buffer_shortfall_days": 0.0,
+        "tail_spread_p95_p50_days": 27.0,
+        "is_monotonic_distribution": True,
+        "meets_p80_confidence": True,
+        "monte_carlo_posture": "ADEQUATE_P80_SCHEDULE_CONFIDENCE",
+    }
+
+    res_p95 = validate_monte_carlo_schedule_confidence_buffer(
+        deterministic_duration_days=100.0,
+        p50_days=108.0,
+        p80_days=120.0,
+        p95_days=135.0,
+        allocated_buffer_days=36.0,
+    )
+    assert res_p95["committed_duration_days"] == 136.0
+    assert res_p95["meets_p80_confidence"] is True
+    assert res_p95["monte_carlo_posture"] == "HIGH_P95_CONFIDENCE_COVERAGE"
+
+
+def test_validate_monte_carlo_schedule_confidence_buffer_below_p50_and_insufficient_p80():
+    """Comprometido < P50 -> BELOW_P50_HIGH_OVERRUN_PROBABILITY; P50 <= comprometido < P80 -> INSUFFICIENT_P80_CONFIDENCE_BUFFER."""
+    from backend.schemas.projects import validate_monte_carlo_schedule_confidence_buffer
+
+    res_below_p50 = validate_monte_carlo_schedule_confidence_buffer(
+        deterministic_duration_days=100.0,
+        p50_days=110.0,
+        p80_days=125.0,
+        p95_days=140.0,
+        allocated_buffer_days=5.0,
+    )
+    assert res_below_p50["committed_duration_days"] == 105.0
+    assert res_below_p50["buffer_shortfall_days"] == 20.0
+    assert res_below_p50["meets_p80_confidence"] is False
+    assert res_below_p50["monte_carlo_posture"] == "BELOW_P50_HIGH_OVERRUN_PROBABILITY"
+
+    res_insuf_p80 = validate_monte_carlo_schedule_confidence_buffer(
+        deterministic_duration_days=100.0,
+        p50_days=110.0,
+        p80_days=125.0,
+        p95_days=140.0,
+        allocated_buffer_days=15.0,
+    )
+    assert res_insuf_p80["committed_duration_days"] == 115.0
+    assert res_insuf_p80["buffer_shortfall_days"] == 10.0
+    assert res_insuf_p80["meets_p80_confidence"] is False
+    assert res_insuf_p80["monte_carlo_posture"] == "INSUFFICIENT_P80_CONFIDENCE_BUFFER"
+
+
+def test_validate_monte_carlo_schedule_confidence_buffer_non_monotonic():
+    """Percentiles invertidos (P50 > P80 o P80 > P95) -> NON_MONOTONIC_PERCENTILE_CURVE."""
+    from backend.schemas.projects import validate_monte_carlo_schedule_confidence_buffer
+
+    res = validate_monte_carlo_schedule_confidence_buffer(
+        deterministic_duration_days=100.0,
+        p50_days=130.0,
+        p80_days=120.0,
+        p95_days=140.0,
+        allocated_buffer_days=25.0,
+    )
+    assert res["is_monotonic_distribution"] is False
+    assert res["meets_p80_confidence"] is False
+    assert res["monte_carlo_posture"] == "NON_MONOTONIC_PERCENTILE_CURVE"
+
+
+def test_validate_monte_carlo_schedule_confidence_buffer_invalid_inputs():
+    """Duración determinística o percentiles <= 0 -> INVALID_MONTE_CARLO_INPUTS."""
+    from backend.schemas.projects import validate_monte_carlo_schedule_confidence_buffer
+
+    for kwargs in (
+        {"deterministic_duration_days": 0.0, "p50_days": 10.0, "p80_days": 12.0, "p95_days": 15.0},
+        {"deterministic_duration_days": 10.0, "p50_days": 0.0, "p80_days": 12.0, "p95_days": 15.0},
+        {"deterministic_duration_days": 10.0, "p50_days": 10.0, "p80_days": -5.0, "p95_days": 15.0},
+    ):
+        res = validate_monte_carlo_schedule_confidence_buffer(**kwargs)
+        assert res == {
+            "committed_duration_days": 0.0,
+            "required_p80_buffer_days": 0.0,
+            "buffer_shortfall_days": 0.0,
+            "tail_spread_p95_p50_days": 0.0,
+            "is_monotonic_distribution": False,
+            "meets_p80_confidence": False,
+            "monte_carlo_posture": "INVALID_MONTE_CARLO_INPUTS",
+        }
