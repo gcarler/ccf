@@ -315,3 +315,105 @@ def test_evaluate_governance_health_lifecycle_progression(client, db_session):
         "maturity_tier": "optimized",
     }
 
+
+# ── evaluate_stakeholder_engagement_gaps (PMBOK §13.2.2.5, pure helper) ─────
+
+
+def test_stakeholder_engagement_gaps_aligned_portfolio():
+    """Interesados al nivel deseado (o superior) → 'aligned' con 100%."""
+    stakeholders = [
+        {"current_engagement": "supportive", "desired_engagement": "supportive", "power_level": "high"},
+        {"engagement_level": "leading", "target_engagement": "supportive", "power": 2},
+        {"current_engagement": "neutral", "desired_engagement": "neutral", "power_level": "low"},
+    ]
+    result = project_lifecycle_pmi_service.evaluate_stakeholder_engagement_gaps(stakeholders)
+
+    assert result == {
+        "total_stakeholders": 3,
+        "high_power_count": 1,
+        "engagement_gap_count": 0,
+        "critical_resistant_count": 0,
+        "alignment_pct": 100.0,
+        "engagement_health": "aligned",
+    }
+
+
+def test_stakeholder_engagement_gaps_critical_resistance():
+    """Alto poder en 'unaware' o 'resistant' → 'critical_resistance' (prioriza sobre aligned)."""
+    stakeholders = [
+        {"current_engagement": "unaware", "desired_engagement": "supportive", "power_level": "high"},
+        {"current_engagement": "resistant", "desired_engagement": "supportive", "power": 5},
+        {"current_engagement": "supportive", "desired_engagement": "supportive", "power_level": "low"},
+    ]
+    result = project_lifecycle_pmi_service.evaluate_stakeholder_engagement_gaps(stakeholders)
+
+    assert result["total_stakeholders"] == 3
+    assert result["high_power_count"] == 2
+    assert result["engagement_gap_count"] == 2
+    assert result["critical_resistant_count"] == 2
+    # 1 de 3 alineado → 33.33 px
+    assert result["alignment_pct"] == 33.33
+    assert result["engagement_health"] == "critical_resistance"
+
+
+def test_stakeholder_engagement_gaps_needs_outreach():
+    """Brechas moderadas sin resistencia crítica y < 80% alineado → 'needs_outreach'."""
+    stakeholders = [
+        {"current_engagement": "neutral", "desired_engagement": "supportive", "power_level": "low"},
+        {"current_engagement": "neutral", "desired_engagement": "supportive", "power_level": "low"},
+        {"current_engagement": "unaware", "desired_engagement": "supportive", "power_level": "low"},
+    ]
+    result = project_lifecycle_pmi_service.evaluate_stakeholder_engagement_gaps(stakeholders)
+
+    assert result == {
+        "total_stakeholders": 3,
+        "high_power_count": 0,
+        "engagement_gap_count": 3,
+        "critical_resistant_count": 0,
+        "alignment_pct": 0.0,
+        "engagement_health": "needs_outreach",
+    }
+    # Caso borde 80% exacto sin brechas críticas → 'aligned'
+    borderline = [
+        {"current_engagement": "supportive", "desired_engagement": "supportive", "power_level": "low"},
+        {"current_engagement": "neutral", "desired_engagement": "supportive", "power_level": "low"},
+        {"current_engagement": "supportive", "desired_engagement": "supportive", "power_level": 3},  # poder 3 < 4, no es high
+        {"current_engagement": "leading", "desired_engagement": "supportive", "power_level": "low"},
+        {"current_engagement": "supportive", "desired_engagement": "supportive", "power_level": "low"},
+    ]
+    result_80 = project_lifecycle_pmi_service.evaluate_stakeholder_engagement_gaps(borderline)
+    assert result_80["alignment_pct"] == 80.0
+    assert result_80["engagement_health"] == "aligned"
+
+
+def test_stakeholder_engagement_gaps_unmapped_status():
+    """None y [] → 'unmapped' con alignment_pct 100.0."""
+    result = project_lifecycle_pmi_service.evaluate_stakeholder_engagement_gaps(None)
+    assert result["total_stakeholders"] == 0
+    assert result["alignment_pct"] == 100.0
+    assert result["engagement_health"] == "unmapped"
+
+    result_empty = project_lifecycle_pmi_service.evaluate_stakeholder_engagement_gaps([])
+    assert result_empty["total_stakeholders"] == 0
+    assert result_empty["alignment_pct"] == 100.0
+    assert result_empty["engagement_health"] == "unmapped"
+
+
+def test_stakeholder_engagement_gaps_defaults_and_class_facade():
+    """Defaults: actual 'neutral', deseado 'supportive'; el facade expone la misma función."""
+    stakeholders = [{"power_level": "medium"}]
+    result = project_lifecycle_pmi_service.evaluate_stakeholder_engagement_gaps(stakeholders)
+    assert result == {
+        "total_stakeholders": 1,
+        "high_power_count": 0,
+        "engagement_gap_count": 1,
+        "critical_resistant_count": 0,
+        "alignment_pct": 0.0,
+        "engagement_health": "needs_outreach",
+    }
+
+    facade = project_lifecycle_pmi_service.ProjectLifecyclePMIService.evaluate_stakeholder_engagement_gaps(stakeholders)
+    assert facade == result
+    assert callable(
+        project_lifecycle_pmi_service.evaluate_stakeholder_engagement_gaps
+    )

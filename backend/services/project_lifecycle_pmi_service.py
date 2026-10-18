@@ -455,6 +455,85 @@ def evaluate_automation_governance_readiness(
     }
 
 
+ENGAGEMENT_RANKS = {
+    "unaware": 0,
+    "resistant": 1,
+    "neutral": 2,
+    "supportive": 3,
+    "leading": 4,
+}
+
+
+def evaluate_stakeholder_engagement_gaps(
+    stakeholders: list[dict[str, Any]] | None,
+) -> dict[str, Any]:
+    """Matriz de Evaluación de Involucramiento de Interesados (PMBOK §13.2.2.5).
+
+    Compara el nivel actual de engagement (current_engagement /
+    engagement_level, default 'neutral') contra el nivel deseado
+    (desired_engagement / target_engagement, default 'supportive') sobre la
+    escala unaware=0 → leading=4, y evalúa el poder del interesado
+    (power_level/influence == 'high' o power/influence_score >= 4).
+    Retorna:
+    - `total_stakeholders`: interesados evaluados.
+    - `high_power_count`: interesados de alto poder.
+    - `engagement_gap_count`: interesados con nivel deseado > actual.
+    - `critical_resistant_count`: alto poder en unaware/resistant.
+    - `alignment_pct`: % alineados (2 decimales; 100.0 si no hay interesados).
+    - `engagement_health`: 'unmapped' (sin interesados), 'critical_resistance'
+      (alto poder desinformado/resistente), 'aligned' (>= 80%) o
+      'needs_outreach'.
+    """
+    rows = list(stakeholders or [])
+    total_stakeholders = len(rows)
+
+    high_power_count = 0
+    engagement_gap_count = 0
+    critical_resistant_count = 0
+    for s in rows:
+        current = str(s.get("current_engagement") or s.get("engagement_level") or "neutral").lower().strip()
+        desired = str(s.get("desired_engagement") or s.get("target_engagement") or "supportive").lower().strip()
+        current_rank = ENGAGEMENT_RANKS.get(current, 2)
+        desired_rank = ENGAGEMENT_RANKS.get(desired, 3)
+
+        power_text = str(s.get("power_level") or s.get("influence") or "").lower()
+        try:
+            power_num = int(s.get("power") or s.get("influence_score") or 0)
+        except (TypeError, ValueError):
+            power_num = 0
+        is_high_power = power_text == "high" or power_num >= 4
+        if is_high_power:
+            high_power_count += 1
+        if desired_rank > current_rank:
+            engagement_gap_count += 1
+        if is_high_power and current_rank <= 1:
+            critical_resistant_count += 1
+
+    alignment_pct = (
+        100.0
+        if total_stakeholders == 0
+        else round(((total_stakeholders - engagement_gap_count) / total_stakeholders) * 100.0, 2)
+    )
+
+    if total_stakeholders == 0:
+        engagement_health = "unmapped"
+    elif critical_resistant_count > 0:
+        engagement_health = "critical_resistance"
+    elif alignment_pct >= 80.0:
+        engagement_health = "aligned"
+    else:
+        engagement_health = "needs_outreach"
+
+    return {
+        "total_stakeholders": total_stakeholders,
+        "high_power_count": high_power_count,
+        "engagement_gap_count": engagement_gap_count,
+        "critical_resistant_count": critical_resistant_count,
+        "alignment_pct": alignment_pct,
+        "engagement_health": engagement_health,
+    }
+
+
 class ProjectLifecyclePMIService:
     """Canonical facade for PMI project lifecycle, governance maturity, and automation readiness."""
 
@@ -495,3 +574,9 @@ class ProjectLifecyclePMIService:
         rules: list[dict[str, Any]] | None,
     ) -> dict[str, Any]:
         return evaluate_automation_governance_readiness(rules)
+
+    @staticmethod
+    def evaluate_stakeholder_engagement_gaps(
+        stakeholders: list[dict[str, Any]] | None,
+    ) -> dict[str, Any]:
+        return evaluate_stakeholder_engagement_gaps(stakeholders)
