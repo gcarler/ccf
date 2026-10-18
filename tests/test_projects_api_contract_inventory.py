@@ -512,3 +512,228 @@ def test_subresource_domains_empty_inventory():
     )
 
 
+# ─── summarize_projects_schema_reference_density (pure helper) ────────────────
+
+
+def test_schema_reference_density_strongly_typed_contracts():
+    """>= 80% de respuestas tipadas y sin mutaciones huérfanas -> STRONGLY_TYPED_CONTRACTS."""
+    openapi = {
+        "paths": {
+            "/api/projects": {
+                "get": {
+                    "operationId": "list_projects",
+                    "responses": {
+                        "200": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/ProjectList"}
+                                }
+                            }
+                        }
+                    },
+                },
+                "post": {
+                    "operationId": "create_project",
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/ProjectCreate"}
+                            }
+                        }
+                    },
+                    "responses": {
+                        "201": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/ProjectRead"}
+                                }
+                            }
+                        },
+                        "422": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/HTTPValidationError"}
+                                }
+                            }
+                        },
+                    },
+                },
+            },
+            "/api/projects/{project_id}": {
+                "patch": {
+                    "operationId": "update_project",
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/ProjectUpdate"}
+                            }
+                        }
+                    },
+                    "responses": {
+                        "200": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/ProjectRead"}
+                                }
+                            }
+                        }
+                    },
+                },
+                "delete": {
+                    "operationId": "delete_project",
+                    "responses": {"204": {"description": "No Content"}},
+                },
+                "get": {
+                    "operationId": "get_project",
+                    "responses": {
+                        "200": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/ProjectRead"}
+                                }
+                            }
+                        }
+                    },
+                },
+            },
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_schema_reference_density(openapi)
+
+    assert res == {
+        "total_operations": 5,
+        "typed_request_body_count": 2,
+        "typed_response_count": 4,
+        "untyped_mutation_routes": [],
+        "unique_schemas_referenced": [
+            "ProjectCreate",
+            "ProjectList",
+            "ProjectRead",
+            "ProjectUpdate",
+        ],
+        "response_typing_coverage_pct": 80.0,
+        "contract_posture": "STRONGLY_TYPED_CONTRACTS",
+    }
+
+
+def test_schema_reference_density_untyped_mutations_detected():
+    """POST/PUT/PATCH sin schema_refs en requestBody ni en responses -> UNTYPED_MUTATIONS_DETECTED."""
+    openapi = {
+        "paths": {
+            "/api/projects/{project_id}/archive": {
+                "post": {
+                    "operationId": "archive_project",
+                    "responses": {"200": {"description": "Archived"}},
+                },
+            },
+            "/api/projects/{project_id}": {
+                "put": {
+                    "operationId": "replace_project",
+                    "responses": {
+                        "422": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/ValidationError"}
+                                }
+                            }
+                        }
+                    },
+                },
+                "get": {
+                    "operationId": "get_project",
+                    "responses": {
+                        "200": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/ProjectRead"}
+                                }
+                            }
+                        }
+                    },
+                },
+            },
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_schema_reference_density(openapi)
+
+    assert res["total_operations"] == 3
+    assert res["typed_request_body_count"] == 0
+    assert res["typed_response_count"] == 1
+    assert res["untyped_mutation_routes"] == [
+        "POST /api/projects/{project_id}/archive",
+        "PUT /api/projects/{project_id}",
+    ]
+    assert res["unique_schemas_referenced"] == ["ProjectRead"]
+    assert res["response_typing_coverage_pct"] == 33.33
+    assert res["contract_posture"] == "UNTYPED_MUTATIONS_DETECTED"
+
+
+def test_schema_reference_density_partial_response_typing():
+    """Mutaciones tipadas por requestBody pero < 80% de respuestas tipadas -> PARTIAL_RESPONSE_TYPING."""
+    openapi = {
+        "paths": {
+            "/api/projects": {
+                "get": {
+                    "operationId": "list_projects",
+                    "responses": {
+                        "200": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/ProjectRead"}
+                                }
+                            }
+                        }
+                    },
+                },
+                "post": {
+                    "operationId": "create_project",
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/ProjectCreate"}
+                            }
+                        }
+                    },
+                    "responses": {"201": {"description": "Created"}},
+                },
+            }
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_schema_reference_density(openapi)
+
+    assert res == {
+        "total_operations": 2,
+        "typed_request_body_count": 1,
+        "typed_response_count": 1,
+        "untyped_mutation_routes": [],
+        "unique_schemas_referenced": ["ProjectCreate", "ProjectRead"],
+        "response_typing_coverage_pct": 50.0,
+        "contract_posture": "PARTIAL_RESPONSE_TYPING",
+    }
+
+
+def test_schema_reference_density_empty_openapi():
+    """OpenAPI vacío o sin rutas bajo /api/projects -> EMPTY_OPENAPI_INVENTORY."""
+    expected = {
+        "total_operations": 0,
+        "typed_request_body_count": 0,
+        "typed_response_count": 0,
+        "untyped_mutation_routes": [],
+        "unique_schemas_referenced": [],
+        "response_typing_coverage_pct": 0.0,
+        "contract_posture": "EMPTY_OPENAPI_INVENTORY",
+    }
+    assert audit_projects_api_contracts.summarize_projects_schema_reference_density({}) == expected
+    assert audit_projects_api_contracts.summarize_projects_schema_reference_density(None) == expected
+    assert (
+        audit_projects_api_contracts.summarize_projects_schema_reference_density(
+            {"paths": {"/api/crm/contacts": {"get": {"operationId": "list_crm"}}}}
+        )
+        == expected
+    )
+
+
+

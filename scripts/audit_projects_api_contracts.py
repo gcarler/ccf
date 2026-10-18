@@ -317,6 +317,63 @@ def summarize_projects_subresource_domains(
     }
 
 
+def summarize_projects_schema_reference_density(
+    openapi: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Audita la densidad de referencias de esquemas y tipado en rutas /api/projects."""
+    safe_openapi = (
+        openapi
+        if isinstance(openapi, dict) and isinstance(openapi.get("paths", {}), dict)
+        else {}
+    )
+    operations = route_inventory(safe_openapi)
+    total_operations = len(operations)
+
+    typed_request_body_count = 0
+    typed_response_count = 0
+    untyped_mutation_routes: list[str] = []
+    all_refs: set[str] = set()
+
+    for method, path, operation in operations:
+        req_refs = schema_refs(operation.get("requestBody", {}))
+        resp_refs = schema_refs(operation.get("responses", {}))
+        if req_refs:
+            typed_request_body_count += 1
+        if resp_refs:
+            typed_response_count += 1
+        if method in {"POST", "PUT", "PATCH"} and not req_refs and not resp_refs:
+            untyped_mutation_routes.append(f"{method} {path}")
+        all_refs.update(schema_refs(operation))
+
+    untyped_mutation_routes_sorted = sorted(untyped_mutation_routes)
+    unique_schemas_referenced = sorted(all_refs)
+    response_typing_coverage_pct = (
+        round((typed_response_count / total_operations) * 100.0, 2)
+        if total_operations > 0
+        else 0.0
+    )
+
+    if total_operations == 0:
+        contract_posture = "EMPTY_OPENAPI_INVENTORY"
+    elif len(untyped_mutation_routes_sorted) > 0:
+        contract_posture = "UNTYPED_MUTATIONS_DETECTED"
+    elif response_typing_coverage_pct >= 80.0:
+        contract_posture = "STRONGLY_TYPED_CONTRACTS"
+    else:
+        contract_posture = "PARTIAL_RESPONSE_TYPING"
+
+    return {
+        "total_operations": total_operations,
+        "typed_request_body_count": typed_request_body_count,
+        "typed_response_count": typed_response_count,
+        "untyped_mutation_routes": untyped_mutation_routes_sorted,
+        "unique_schemas_referenced": unique_schemas_referenced,
+        "response_typing_coverage_pct": response_typing_coverage_pct,
+        "contract_posture": contract_posture,
+    }
+
+
+
 
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
