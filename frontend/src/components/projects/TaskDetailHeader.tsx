@@ -71,6 +71,25 @@ export default function TaskDetailHeader({
     const status = getStatusMap((task.status ?? 'todo') as TaskStatus);
     const StatusIcon = status.icon;
 
+    const rawProgress = Number(
+        (task as ProjectTaskRecord & { progress?: number | null }).progress ??
+        task.progress_pct ??
+        task.physical_progress_pct ??
+        0
+    );
+    const normalizedStatus = (task.status ?? 'todo').toLowerCase();
+    const isSummaryNode = (task.subtasks?.length ?? 0) > 0;
+    const earnedRuleCredit =
+        normalizedStatus === 'completed' || normalizedStatus === 'done' || rawProgress >= 100
+            ? 100
+            : normalizedStatus === 'in_progress' || normalizedStatus === 'review'
+              ? 50
+              : 0;
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const showScheduleBadge =
+        Boolean(task.due_date) && normalizedStatus !== 'completed' && normalizedStatus !== 'done';
+    const isOverdue = showScheduleBadge && String(task.due_date).slice(0, 10) < todayKey;
+
     const handleVerRutaBtnClick = () => {
         if (onVerRutaClick) {
             onVerRutaClick();
@@ -203,7 +222,7 @@ export default function TaskDetailHeader({
                 </div>
             </div>
 
-            <div className="mb-2.5">
+            <div className="mb-2.5 flex items-center gap-2 flex-wrap">
                 <button
                     onClick={onStatusCycle}
                     title="Click para cambiar estado"
@@ -216,6 +235,46 @@ export default function TaskDetailHeader({
                         className={task.status === 'in_progress' ? 'animate-spin' : ''} />
                     {status.label}
                 </button>
+
+                <div
+                    data-testid="task-header-pmi-strip"
+                    className="inline-flex items-center gap-1.5 flex-wrap"
+                >
+                    <span
+                        data-testid="task-header-pmi-node-type"
+                        className="px-2 py-0.5 rounded-md text-2xs font-bold uppercase tracking-wider border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))]"
+                    >
+                        {isSummaryNode ? 'Nodo Resumen EDT' : 'Paquete de Trabajo (WP)'}
+                    </span>
+
+                    <span
+                        data-testid="task-header-pmi-earned-rule"
+                        className={clsx(
+                            'px-2 py-0.5 rounded-md text-2xs font-bold uppercase tracking-wider border',
+                            earnedRuleCredit === 100
+                                ? 'border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))]'
+                                : earnedRuleCredit === 50
+                                  ? 'border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))]'
+                                  : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))]'
+                        )}
+                    >
+                        Crédito EVM: {earnedRuleCredit}%
+                    </span>
+
+                    {showScheduleBadge && (
+                        <span
+                            data-testid="task-header-pmi-schedule-badge"
+                            className={clsx(
+                                'px-2 py-0.5 rounded-md text-2xs font-bold uppercase tracking-wider border',
+                                isOverdue
+                                    ? 'border-[hsl(var(--destructive)/0.3)] bg-[hsl(var(--destructive)/0.12)] text-[hsl(var(--destructive))]'
+                                    : 'border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))]'
+                            )}
+                        >
+                            {isOverdue ? 'Plazo Vencido' : 'En Plazo'}
+                        </span>
+                    )}
+                </div>
             </div>
 
             <textarea

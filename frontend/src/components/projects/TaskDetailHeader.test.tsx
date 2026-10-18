@@ -240,4 +240,101 @@ describe('TaskDetailHeader', () => {
     fireEvent.click(verRutaBtn);
     expect(onVerRutaClick).toHaveBeenCalledTimes(1);
   });
+
+  it('renders PMI executive strip badges (WP vs Nodo Resumen EDT, Rule 0/50/100 credit, and schedule status)', () => {
+    const { rerender } = render(
+      <TaskDetailHeader
+        task={{
+          ...task,
+          status: 'todo',
+          due_date: '2020-01-01',
+          subtasks: [],
+        }}
+        projectTitle="CCF App"
+        title="Tarea"
+        saving={false}
+        uploading={false}
+        starred={false}
+        error={null}
+        onClose={vi.fn()}
+        onTitleChange={vi.fn()}
+        onSave={vi.fn()}
+        onStatusCycle={vi.fn()}
+        onFileClick={vi.fn()}
+        onStarToggle={vi.fn()}
+        onExpandToggle={vi.fn()}
+        onDeleteTask={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('task-header-pmi-strip')).toBeInTheDocument();
+    expect(screen.getByTestId('task-header-pmi-node-type')).toHaveTextContent('Paquete de Trabajo (WP)');
+    expect(screen.getByTestId('task-header-pmi-earned-rule')).toHaveTextContent('Crédito EVM: 0%');
+    expect(screen.getByTestId('task-header-pmi-schedule-badge')).toHaveTextContent('Plazo Vencido');
+
+    rerender(
+      <TaskDetailHeader
+        task={{
+          ...task,
+          status: 'in_progress',
+          due_date: '2099-12-31',
+          subtasks: [
+            {
+              id: 'sub-1',
+              project_id: 'p1',
+              title: 'Subtarea',
+              status: 'todo',
+              priority: 'medium',
+            },
+          ],
+        }}
+        projectTitle="CCF App"
+        title="Tarea"
+        saving={false}
+        uploading={false}
+        starred={false}
+        error={null}
+        onClose={vi.fn()}
+        onTitleChange={vi.fn()}
+        onSave={vi.fn()}
+        onStatusCycle={vi.fn()}
+        onFileClick={vi.fn()}
+        onStarToggle={vi.fn()}
+        onExpandToggle={vi.fn()}
+        onDeleteTask={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('task-header-pmi-node-type')).toHaveTextContent('Nodo Resumen EDT');
+    expect(screen.getByTestId('task-header-pmi-earned-rule')).toHaveTextContent('Crédito EVM: 50%');
+    expect(screen.getByTestId('task-header-pmi-schedule-badge')).toHaveTextContent('En Plazo');
+
+    rerender(
+      <TaskDetailHeader
+        task={{
+          ...task,
+          status: 'completed',
+          due_date: '2020-01-01',
+          subtasks: [],
+        }}
+        projectTitle="CCF App"
+        title="Tarea"
+        saving={false}
+        uploading={false}
+        starred={false}
+        error={null}
+        onClose={vi.fn()}
+        onTitleChange={vi.fn()}
+        onSave={vi.fn()}
+        onStatusCycle={vi.fn()}
+        onFileClick={vi.fn()}
+        onStarToggle={vi.fn()}
+        onExpandToggle={vi.fn()}
+        onDeleteTask={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('task-header-pmi-earned-rule')).toHaveTextContent('Crédito EVM: 100%');
+    expect(screen.queryByTestId('task-header-pmi-schedule-badge')).not.toBeInTheDocument();
+  });
 });

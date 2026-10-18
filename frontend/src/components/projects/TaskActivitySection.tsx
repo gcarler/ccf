@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Check, ChevronDown, ChevronRight, Plus, X } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, GitBranch, ListChecks, Plus, UserX, X } from 'lucide-react';
 import clsx from 'clsx';
 
 export interface Activity {
@@ -11,6 +11,91 @@ export interface Activity {
     completed: boolean;
     assignee?: { name: string; color?: string };
     children?: Activity[];
+}
+
+type PmiActivityFilter = 'ALL' | 'PENDING' | 'COMPLETED' | 'UNASSIGNED';
+
+const PMI_ACTIVITY_FILTERS: { key: PmiActivityFilter; label: string }[] = [
+    { key: 'ALL', label: 'Todas' },
+    { key: 'PENDING', label: 'Pendientes' },
+    { key: 'COMPLETED', label: 'Completadas' },
+    { key: 'UNASSIGNED', label: 'Sin Responsable' },
+];
+
+/** Pasos canónicos del ciclo PHVA/PDCA (PMI §6.2 — Definir las Actividades). */
+const PMI_PDCA_PRESETS: { key: 'plan' | 'do' | 'check' | 'act'; label: string; text: string }[] = [
+    {
+        key: 'plan',
+        label: 'Plan',
+        text: '[Planificar] Definir alcance técnico y criterios de aceptación',
+    },
+    {
+        key: 'do',
+        label: 'Do',
+        text: '[Hacer] Construir e integrar entregable del paquete',
+    },
+    {
+        key: 'check',
+        label: 'Check',
+        text: '[Verificar] Ejecutar pruebas QA y validar evidencia DoD',
+    },
+    {
+        key: 'act',
+        label: 'Act',
+        text: '[Actuar] Documentar lecciones aprendidas y cierre',
+    },
+];
+
+export interface ActivityPmiStats {
+    totalCount: number;
+    completedCount: number;
+    completionPct: number;
+    unassignedPendingCount: number;
+    maxDepth: number;
+}
+
+/** Diagnóstico recursivo de descomposición de actividades (PMI §6.2). */
+export function computeActivityPmiStats(activities: Activity[]): ActivityPmiStats {
+    let totalCount = 0;
+    let completedCount = 0;
+    let unassignedPendingCount = 0;
+    let maxDepth = 0;
+
+    const visit = (nodes: Activity[], depth: number) => {
+        for (const node of nodes) {
+            totalCount += 1;
+            maxDepth = Math.max(maxDepth, depth);
+            if (node.completed) completedCount += 1;
+            else if (!node.assignee?.name) unassignedPendingCount += 1;
+            if (node.children?.length) visit(node.children, depth + 1);
+        }
+    };
+    visit(activities, 1);
+
+    return {
+        totalCount,
+        completedCount,
+        completionPct: totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0,
+        unassignedPendingCount,
+        maxDepth,
+    };
+}
+
+/** Filtra el árbol conservando nodos que cumplen o que tienen descendientes que cumplen. */
+export function filterActivityTree(
+    activities: Activity[],
+    predicate: (a: Activity) => boolean,
+): Activity[] {
+    const result: Activity[] = [];
+    for (const node of activities) {
+        const filteredChildren = node.children
+            ? filterActivityTree(node.children, predicate)
+            : [];
+        if (predicate(node) || filteredChildren.length > 0) {
+            result.push({ ...node, children: filteredChildren });
+        }
+    }
+    return result;
 }
 
 export function toggleActivity(activities: Activity[], id: string): Activity[] {
@@ -224,6 +309,19 @@ export default function TaskActivitySection({
     onUpdateTitle: (id: string, title: string) => void;
     onDelete: (id: string) => void;
 }) {
+    const [pmiFilter, setPmiFilter] = useState<PmiActivityFilter>('ALL');
+
+    const pmiStats = useMemo(() => computeActivityPmiStats(activities), [activities]);
+    const visibleActivities = useMemo(() => {
+        if (pmiFilter === 'ALL') return activities;
+        const predicate = (a: Activity): boolean => {
+            if (pmiFilter === 'PENDING') return !a.completed;
+            if (pmiFilter === 'COMPLETED') return a.completed;
+            return !a.completed && !a.assignee?.name;
+        };
+        return filterActivityTree(activities, predicate);
+    }, [activities, pmiFilter]);
+
     return (
         <section className="px-4 py-3 border-b border-[hsl(var(--border))]">
             <div className="flex items-center justify-between mb-3">
@@ -235,8 +333,94 @@ export default function TaskActivitySection({
                 </h3>
             </div>
 
+            {activities.length > 0 && (
+                <div
+                    data-testid="task-activities-pmi-summary"
+                    className="mb-3 space-y-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2)/0.4)] px-3 py-2"
+                >
+                    <div className="flex items-center justify-between flex-wrap gap-1 text-2xs">
+                        <span className="inline-flex items-center gap-1 font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                            <ListChecks size={11} className="text-[hsl(var(--primary))]" />
+                            Descomposición de Actividades PMI
+                        </span>
+                        <span className="text-2xs text-[hsl(var(--muted-foreground))]">
+                            Nivel de descomposición máx.:{' '}
+                            <span className="font-bold text-[hsl(var(--foreground))]">Nivel {pmiStats.maxDepth}</span>
+                        </span>
+                    </div>
+
+                    <div className="flex items-center justify-between flex-wrap gap-1 text-2xs text-[hsl(var(--muted-foreground))]">
+                        <span>
+                            Total Nodos: <span className="font-bold text-[hsl(var(--foreground))]">{pmiStats.totalCount}</span>{' '}
+                            · Completadas:{' '}
+                            <span className="font-bold text-[hsl(var(--foreground))]">{pmiStats.completedCount}</span>
+                        </span>
+                        <span
+                            title="Actividades pendientes sin responsable asignado"
+                            className={clsx(
+                                "inline-flex items-center gap-1 font-medium",
+                                pmiStats.unassignedPendingCount > 0
+                                    ? "text-[hsl(var(--warning))]"
+                                    : "text-[hsl(var(--muted-foreground))]",
+                            )}
+                        >
+                            <UserX size={11} aria-hidden="true" />
+                            Brechas sin Responsable: {pmiStats.unassignedPendingCount}
+                        </span>
+                    </div>
+
+                    <div className="space-y-1">
+                        <div className="flex items-center justify-between text-2xs">
+                            <span className="text-[hsl(var(--muted-foreground))]">Avance de Actividades:</span>
+                            <span className="font-bold text-[hsl(var(--foreground))]">{pmiStats.completionPct}%</span>
+                        </div>
+                        <div className="h-1.5 w-full rounded-full bg-[hsl(var(--surface-3))] overflow-hidden">
+                            <div
+                                className={clsx(
+                                    "h-full rounded-full transition-all duration-300",
+                                    pmiStats.completionPct >= 100
+                                        ? "bg-[hsl(var(--success))]"
+                                        : "bg-[hsl(var(--primary))]",
+                                )}
+                                style={{ width: `${Math.min(100, pmiStats.completionPct)}%` }}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Filtro jerárquico de actividades PMI */}
+            {activities.length > 0 && (
+                <div
+                    data-testid="task-activities-pmi-filter"
+                    className="mb-2 flex flex-wrap items-center gap-1"
+                    role="group"
+                    aria-label="Filtrar actividades PMI"
+                >
+                    {PMI_ACTIVITY_FILTERS.map((option) => {
+                        const isActive = pmiFilter === option.key;
+                        return (
+                            <button
+                                key={option.key}
+                                type="button"
+                                aria-pressed={isActive}
+                                onClick={() => setPmiFilter(option.key)}
+                                className={clsx(
+                                    "rounded-md border px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide transition-colors",
+                                    isActive
+                                        ? "border-[hsl(var(--primary)/0.35)] bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))]"
+                                        : "border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--muted-foreground))] opacity-70 hover:opacity-100",
+                                )}
+                            >
+                                {option.label}
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+
             <div className="space-y-0.5">
-                {activities.map(a => (
+                {visibleActivities.map(a => (
                     <ActivityItem
                         key={a.id}
                         activity={a}
@@ -246,6 +430,32 @@ export default function TaskActivitySection({
                         onUpdateTitle={onUpdateTitle}
                         onDelete={onDelete}
                     />
+                ))}
+            </div>
+            {visibleActivities.length === 0 && activities.length > 0 && (
+                <p className="mt-2 rounded-md border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-2)/0.4)] px-2.5 py-2 text-center text-2xs text-[hsl(var(--muted-foreground))]">
+                    No hay actividades del nivel PMI seleccionado.
+                </p>
+            )}
+
+            {/* Asistente 1-Clic de pasos canónicos PMI / PHVA */}
+            <div
+                data-testid="task-activities-pmi-presets"
+                className="mt-2 flex flex-wrap items-center gap-1 pl-2"
+            >
+                <GitBranch size={11} className="text-[hsl(var(--muted-foreground))] shrink-0" aria-hidden="true" />
+                <span className="text-2xs text-[hsl(var(--muted-foreground))]">Pasos PHVA:</span>
+                {PMI_PDCA_PRESETS.map((preset) => (
+                    <button
+                        key={preset.key}
+                        type="button"
+                        data-testid={`task-activity-preset-${preset.key}`}
+                        onClick={() => onNewActivityTitleChange(preset.text)}
+                        aria-label={`Prefijar actividad: ${preset.text}`}
+                        className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))] transition-colors hover:border-[hsl(var(--primary)/0.35)] hover:bg-[hsl(var(--primary)/0.12)] hover:text-[hsl(var(--primary))]"
+                    >
+                        {preset.label}
+                    </button>
                 ))}
             </div>
 
