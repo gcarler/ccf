@@ -2839,6 +2839,7 @@ __all__ = [
     "audit_canary_rollout_blast_radius_and_rollback_readiness",
     "audit_feature_flag_lifecycle_debt_and_kill_switch_hygiene",
     "audit_requirements_volatility_churn_and_scope_freeze_breaches",
+    "audit_architectural_fitness_functions_and_coupling_drift",
     "ProjectCCBService",
 ]
 
@@ -6188,4 +6189,93 @@ def audit_requirements_volatility_churn_and_scope_freeze_breaches(
 
 ProjectCCBService.audit_requirements_volatility_churn_and_scope_freeze_breaches = staticmethod(
     audit_requirements_volatility_churn_and_scope_freeze_breaches
+)
+
+
+def audit_architectural_fitness_functions_and_coupling_drift(
+    components: Any,
+    *,
+    max_instability_index: float = 0.8,
+    max_distance_from_main_sequence: float = 0.35,
+) -> Dict[str, object]:
+    """Auditoría PMBOK 8.2 y 4.6: fitness functions arquitectónicas.
+
+    Calcula por componente el índice de inestabilidad
+    (ce / (ca + ce)) y la distancia a la secuencia principal
+    (abs(abstractness + inestabilidad - 1)), detectando ciclos,
+    fitness fallidas, core inestable y zonas de dolor/inutilidad.
+    """
+    entries = components if isinstance(components, list) else []
+    rows = [item for item in entries if isinstance(item, dict)]
+
+    cyclic_dependency_component_ids: List[str] = []
+    failed_fitness_component_ids: List[str] = []
+    unstable_core_component_ids: List[str] = []
+    zone_of_pain_or_uselessness_ids: List[str] = []
+    observed_instabilities: List[float] = []
+
+    for item in rows:
+        component_id = item.get("component_id")
+        ca = item.get("afferent_coupling_ca", 0)
+        ce = item.get("efferent_coupling_ce", 0)
+        abstractness = item.get("abstractness_ratio", 0.0)
+
+        ca_val = ca if isinstance(ca, (int, float)) and ca >= 0 else 0
+        ce_val = ce if isinstance(ce, (int, float)) and ce >= 0 else 0
+        abstractness_val = (
+            abstractness if isinstance(abstractness, (int, float)) else 0.0
+        )
+
+        if ca_val + ce_val > 0:
+            instability_index = round(ce_val / (ca_val + ce_val), 2)
+        else:
+            instability_index = 0.0
+        observed_instabilities.append(instability_index)
+
+        distance_from_main_sequence = round(
+            abs(abstractness_val + instability_index - 1.0), 2
+        )
+
+        if item.get("has_cyclic_dependency", False) is True:
+            cyclic_dependency_component_ids.append(component_id)
+
+        if item.get("fitness_function_passed", True) is not True:
+            failed_fitness_component_ids.append(component_id)
+
+        if (
+            item.get("is_core_domain", False) is True
+            and instability_index > max_instability_index
+        ):
+            unstable_core_component_ids.append(component_id)
+
+        if distance_from_main_sequence > max_distance_from_main_sequence:
+            zone_of_pain_or_uselessness_ids.append(component_id)
+
+    max_instability_observed = max(observed_instabilities) if observed_instabilities else 0.0
+
+    if (
+        cyclic_dependency_component_ids
+        or failed_fitness_component_ids
+        or unstable_core_component_ids
+    ):
+        architecture_governance_status = "EROSION_BLOCKED"
+    elif zone_of_pain_or_uselessness_ids:
+        architecture_governance_status = "DRIFT_WARNING"
+    else:
+        architecture_governance_status = "FITNESS_HEALTHY"
+
+    return {
+        "total_components_evaluated": len(rows),
+        "cyclic_dependency_component_ids": cyclic_dependency_component_ids,
+        "failed_fitness_component_ids": failed_fitness_component_ids,
+        "unstable_core_component_ids": unstable_core_component_ids,
+        "zone_of_pain_or_uselessness_ids": zone_of_pain_or_uselessness_ids,
+        "max_instability_observed": max_instability_observed,
+        "architecture_governance_status": architecture_governance_status,
+        "is_architecture_compliant": architecture_governance_status == "FITNESS_HEALTHY",
+    }
+
+
+ProjectCCBService.audit_architectural_fitness_functions_and_coupling_drift = staticmethod(
+    audit_architectural_fitness_functions_and_coupling_drift
 )

@@ -3160,6 +3160,7 @@ __all__ = [
     "audit_organizational_change_adkar_adoption_readiness",
     "audit_benefits_realization_post_implementation_harvesting",
     "audit_contract_claims_dispute_adr_and_liquidated_damages",
+    "audit_stakeholder_salience_drift_and_resistance_escalation",
     "ProjectLifecyclePMIService",
 ]
 
@@ -6332,4 +6333,128 @@ def audit_contract_claims_dispute_adr_and_liquidated_damages(
 
 ProjectLifecyclePMIService.audit_contract_claims_dispute_adr_and_liquidated_damages = staticmethod(
     audit_contract_claims_dispute_adr_and_liquidated_damages
+)
+
+
+_ENGAGEMENT_RANK_MAP: dict[str, int] = {
+    "UNAWARE": 0,
+    "RESISTANT": 1,
+    "NEUTRAL": 2,
+    "SUPPORTIVE": 3,
+    "LEADING": 4,
+}
+
+
+def audit_stakeholder_salience_drift_and_resistance_escalation(
+    stakeholders: list[dict[str, Any]],
+    *,
+    max_days_without_touchpoint_high_power: int = 14,
+    max_unresolved_resistance_pct: float = 15.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §13.2 & §13.3 — Stakeholder Engagement Power-Interest Salience Drift, Resistance Escalation & Executive Sponsor Alignment Auditor."""
+    valid_stakeholders: list[dict[str, Any]] = []
+    for item in stakeholders or []:
+        if not isinstance(item, dict):
+            continue
+        sid = str(item.get("stakeholder_id") or "").strip()
+        if not sid:
+            continue
+        valid_stakeholders.append({**item, "_sid": sid})
+
+    if not valid_stakeholders:
+        return {
+            "total_stakeholders": 0,
+            "high_power_count": 0,
+            "engagement_gap_count": 0,
+            "stale_high_power_touchpoint_ids": [],
+            "unmitigated_high_power_resistance_ids": [],
+            "resistant_or_unaware_pct": 0.0,
+            "salience_health_status": "OPTIMAL",
+            "is_stakeholder_engagement_compliant": True,
+            "recommendations": [],
+        }
+
+    total_stakeholders = len(valid_stakeholders)
+    high_power_count = 0
+    engagement_gap_count = 0
+    resistant_or_unaware_count = 0
+    stale_high_power_touchpoint_ids: list[str] = []
+    unmitigated_high_power_resistance_ids: list[str] = []
+
+    for sh in valid_stakeholders:
+        sid = sh["_sid"]
+        power = str(sh.get("power_level") or "").strip().upper()
+        curr_eng = str(sh.get("current_engagement") or "NEUTRAL").strip().upper()
+        des_eng = str(sh.get("desired_engagement") or "SUPPORTIVE").strip().upper()
+        days_touch = max(0, int(sh.get("days_since_last_touchpoint", 0) or 0))
+        has_plan = bool(sh.get("has_mitigation_action_plan", False))
+
+        if power == "HIGH":
+            high_power_count += 1
+            if days_touch > max_days_without_touchpoint_high_power:
+                stale_high_power_touchpoint_ids.append(sid)
+            if curr_eng in {"UNAWARE", "RESISTANT"} and not has_plan:
+                unmitigated_high_power_resistance_ids.append(sid)
+
+        if curr_eng in {"UNAWARE", "RESISTANT"}:
+            resistant_or_unaware_count += 1
+
+        curr_rank = _ENGAGEMENT_RANK_MAP.get(curr_eng, 2)
+        des_rank = _ENGAGEMENT_RANK_MAP.get(des_eng, 3)
+        if curr_rank < des_rank:
+            engagement_gap_count += 1
+
+    resistant_or_unaware_pct = round(
+        (resistant_or_unaware_count / total_stakeholders) * 100.0, 2
+    )
+
+    recommendations: list[str] = []
+    if unmitigated_high_power_resistance_ids:
+        recommendations.append(
+            f"Establish immediate executive mitigation action plans for resistant/unaware high-power stakeholder(s): {', '.join(unmitigated_high_power_resistance_ids)}."
+        )
+    if stale_high_power_touchpoint_ids:
+        recommendations.append(
+            f"Schedule alignment touchpoints (> {max_days_without_touchpoint_high_power} days elapsed) with high-power stakeholder(s): {', '.join(stale_high_power_touchpoint_ids)}."
+        )
+    if resistant_or_unaware_pct > max_unresolved_resistance_pct:
+        recommendations.append(
+            f"Reduce portfolio resistant/unaware stakeholder share ({resistant_or_unaware_pct:.2f}%) below {max_unresolved_resistance_pct:.2f}% threshold."
+        )
+    if engagement_gap_count > 0:
+        recommendations.append(
+            f"Execute targeted engagement campaigns to close {engagement_gap_count} stakeholder engagement gap(s)."
+        )
+
+    if (
+        unmitigated_high_power_resistance_ids
+        or resistant_or_unaware_pct > max_unresolved_resistance_pct
+    ):
+        salience_health_status = "CRITICAL_RESISTANCE"
+    elif engagement_gap_count > 0 or stale_high_power_touchpoint_ids:
+        salience_health_status = "DRIFTING"
+    else:
+        salience_health_status = "OPTIMAL"
+
+    is_stakeholder_engagement_compliant = (
+        len(stale_high_power_touchpoint_ids) == 0
+        and len(unmitigated_high_power_resistance_ids) == 0
+        and resistant_or_unaware_pct <= max_unresolved_resistance_pct
+    )
+
+    return {
+        "total_stakeholders": total_stakeholders,
+        "high_power_count": high_power_count,
+        "engagement_gap_count": engagement_gap_count,
+        "stale_high_power_touchpoint_ids": stale_high_power_touchpoint_ids,
+        "unmitigated_high_power_resistance_ids": unmitigated_high_power_resistance_ids,
+        "resistant_or_unaware_pct": resistant_or_unaware_pct,
+        "salience_health_status": salience_health_status,
+        "is_stakeholder_engagement_compliant": is_stakeholder_engagement_compliant,
+        "recommendations": recommendations,
+    }
+
+
+ProjectLifecyclePMIService.audit_stakeholder_salience_drift_and_resistance_escalation = staticmethod(
+    audit_stakeholder_salience_drift_and_resistance_escalation
 )

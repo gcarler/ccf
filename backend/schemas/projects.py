@@ -3806,6 +3806,7 @@ __all__ = [
     "validate_resource_calendar_timezone_overlap_and_allocation",
     "validate_wbs_work_package_8_80_granularity_and_dictionary",
     "validate_risk_probability_impact_matrix_and_appetite_thresholds",
+    "validate_ccpm_fever_chart_and_buffer_consumption",
 ]
 
 
@@ -7466,5 +7467,118 @@ def validate_risk_probability_impact_matrix_and_appetite_thresholds(
         "unmonitored_low_risk_ids": unmonitored_low_risk_ids,
         "pi_matrix_governance_status": pi_matrix_governance_status,
         "is_pi_matrix_valid": pi_matrix_governance_status == "CALIBRATED",
+        "recommendations": recommendations,
+    }
+
+
+def validate_ccpm_fever_chart_and_buffer_consumption(
+    chains: list[dict[str, Any]],
+    *,
+    red_zone_slope_factor: float = 0.7,
+    red_zone_intercept_pct: float = 30.0,
+    yellow_zone_intercept_pct: float = 15.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §6.3 & §6.5 — Critical Chain Project Management (CCPM) Project Buffer, Feeding Buffer & Fever Chart Consumption Validator."""
+    valid_chains: list[dict[str, Any]] = []
+    if isinstance(chains, (list, tuple)):
+        for item in chains:
+            if not isinstance(item, dict):
+                continue
+            cid = str(item.get("chain_id") or "").strip()
+            if not cid:
+                continue
+            valid_chains.append({**item, "_cid": cid})
+
+    if not valid_chains:
+        return {
+            "total_chains_evaluated": 0,
+            "green_zone_count": 0,
+            "yellow_zone_count": 0,
+            "red_zone_count": 0,
+            "unmitigated_red_zone_chain_ids": [],
+            "max_buffer_burn_index": 0.0,
+            "fever_chart_status": "HEALTHY_GREEN",
+            "is_ccpm_buffer_compliant": True,
+            "recommendations": [],
+        }
+
+    green_zone_count = 0
+    yellow_zone_count = 0
+    red_zone_count = 0
+    unmitigated_red_zone_chain_ids: list[str] = []
+    max_buffer_burn_index = 0.0
+
+    for ch in valid_chains:
+        cid = ch["_cid"]
+        completion_pct = max(
+            0.0, min(100.0, float(ch.get("chain_completion_pct", 0.0) or 0.0))
+        )
+        total_days = float(ch.get("buffer_total_days", 0.0) or 0.0)
+        consumed_days = max(0.0, float(ch.get("buffer_consumed_days", 0.0) or 0.0))
+        has_recovery = bool(ch.get("has_recovery_plan", False))
+
+        if total_days > 0:
+            buffer_consumed_pct = round((consumed_days / total_days) * 100.0, 2)
+        else:
+            buffer_consumed_pct = 100.0 if consumed_days > 0 else 0.0
+
+        red_threshold_pct = round(
+            red_zone_intercept_pct + red_zone_slope_factor * completion_pct, 2
+        )
+        yellow_threshold_pct = round(
+            yellow_zone_intercept_pct + red_zone_slope_factor * completion_pct, 2
+        )
+
+        if buffer_consumed_pct <= yellow_threshold_pct:
+            green_zone_count += 1
+        elif buffer_consumed_pct <= red_threshold_pct:
+            yellow_zone_count += 1
+        else:
+            red_zone_count += 1
+            if not has_recovery:
+                unmitigated_red_zone_chain_ids.append(cid)
+
+        if completion_pct > 0:
+            burn_index = round(buffer_consumed_pct / completion_pct, 2)
+        elif buffer_consumed_pct > 0:
+            burn_index = round(buffer_consumed_pct, 2)
+        else:
+            burn_index = 0.0
+
+        if burn_index > max_buffer_burn_index:
+            max_buffer_burn_index = burn_index
+
+    recommendations: list[str] = []
+    if unmitigated_red_zone_chain_ids:
+        recommendations.append(
+            f"Activate immediate schedule recovery plan for RED-zone CCPM chain(s): {', '.join(unmitigated_red_zone_chain_ids)}."
+        )
+    elif red_zone_count > 0:
+        recommendations.append(
+            "Monitor active recovery execution on RED-zone CCPM chains until buffer burn stabilizes."
+        )
+    if yellow_zone_count > 0:
+        recommendations.append(
+            f"Prepare contingency recovery options for {yellow_zone_count} YELLOW-zone CCPM chain(s)."
+        )
+
+    if len(unmitigated_red_zone_chain_ids) > 0:
+        fever_chart_status = "FEVER_BREACH_UNMITIGATED"
+    elif red_zone_count > 0:
+        fever_chart_status = "CRITICAL_RED_MITIGATED"
+    elif yellow_zone_count > 0:
+        fever_chart_status = "WATCH_YELLOW"
+    else:
+        fever_chart_status = "HEALTHY_GREEN"
+
+    return {
+        "total_chains_evaluated": len(valid_chains),
+        "green_zone_count": green_zone_count,
+        "yellow_zone_count": yellow_zone_count,
+        "red_zone_count": red_zone_count,
+        "unmitigated_red_zone_chain_ids": unmitigated_red_zone_chain_ids,
+        "max_buffer_burn_index": max_buffer_burn_index,
+        "fever_chart_status": fever_chart_status,
+        "is_ccpm_buffer_compliant": len(unmitigated_red_zone_chain_ids) == 0,
         "recommendations": recommendations,
     }

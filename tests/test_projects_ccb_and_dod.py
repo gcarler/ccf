@@ -8000,3 +8000,169 @@ def test_audit_requirements_volatility_churn_invalid_and_binding():
     assert (
         "audit_requirements_volatility_churn_and_scope_freeze_breaches" in mod.__all__
     )
+
+
+def test_audit_architectural_fitness_functions_erosion_blocked_paths():
+    """Caso 1: ciclo, fitness fallida o core inestable -> EROSION_BLOCKED."""
+    from backend.services.project_ccb_service import (
+        audit_architectural_fitness_functions_and_coupling_drift,
+    )
+
+    res = audit_architectural_fitness_functions_and_coupling_drift(
+        [
+            {
+                "component_id": "COMP-01",
+                "afferent_coupling_ca": 2,
+                "efferent_coupling_ce": 8,
+                "abstractness_ratio": 0.2,
+                "has_cyclic_dependency": True,
+                "is_core_domain": True,
+            },
+            {
+                "component_id": "COMP-02",
+                "afferent_coupling_ca": 5,
+                "efferent_coupling_ce": 5,
+                "abstractness_ratio": 0.5,
+                "fitness_function_passed": False,
+            },
+        ]
+    )
+    assert res["total_components_evaluated"] == 2
+    assert res["cyclic_dependency_component_ids"] == ["COMP-01"]
+    assert res["failed_fitness_component_ids"] == ["COMP-02"]
+    # COMP-01: ca+ce=10, ce=8 -> inestabilidad 0.8, no > 0.8 -> core inestable NO.
+    assert res["unstable_core_component_ids"] == []
+    assert res["architecture_governance_status"] == "EROSION_BLOCKED"
+    assert res["is_architecture_compliant"] is False
+    assert res["max_instability_observed"] == 0.8
+
+    # Core inestable: ce/ca = 0.9 > 0.8.
+    res_core = audit_architectural_fitness_functions_and_coupling_drift(
+        [
+            {
+                "component_id": "COMP-03",
+                "afferent_coupling_ca": 1,
+                "efferent_coupling_ce": 9,
+                "abstractness_ratio": 0.5,
+                "is_core_domain": True,
+            },
+        ]
+    )
+    assert res_core["unstable_core_component_ids"] == ["COMP-03"]
+    assert res_core["max_instability_observed"] == 0.9
+    assert res_core["architecture_governance_status"] == "EROSION_BLOCKED"
+
+
+def test_audit_architectural_fitness_functions_drift_warning_paths():
+    """Caso 2: solo zone of pain/uselessness (distancia > max) -> DRIFT_WARNING."""
+    from backend.services.project_ccb_service import (
+        audit_architectural_fitness_functions_and_coupling_drift,
+    )
+
+    res = audit_architectural_fitness_functions_and_coupling_drift(
+        [
+            {
+                "component_id": "COMP-10",
+                "afferent_coupling_ca": 0,
+                "efferent_coupling_ce": 0,
+                "abstractness_ratio": 1.0,
+            },
+        ]
+    )
+    # inestabilidad 0.0 (sin acoplamientos), distancia = |1.0 + 0.0 - 1| = 0.0 <= 0.35.
+    assert res["zone_of_pain_or_uselessness_ids"] == []
+    assert res["architecture_governance_status"] == "FITNESS_HEALTHY"
+
+    res_pain = audit_architectural_fitness_functions_and_coupling_drift(
+        [
+            {
+                "component_id": "COMP-11",
+                "afferent_coupling_ca": 8,
+                "efferent_coupling_ce": 2,
+                "abstractness_ratio": 0.0,
+            },
+        ]
+    )
+    # inestabilidad 0.2, distancia = |0.0 + 0.2 - 1| = 0.8 > 0.35 -> zona de dolor.
+    assert res_pain["zone_of_pain_or_uselessness_ids"] == ["COMP-11"]
+    assert res_pain["architecture_governance_status"] == "DRIFT_WARNING"
+    assert res_pain["max_instability_observed"] == 0.2
+    assert res_pain["is_architecture_compliant"] is False
+
+
+def test_audit_architectural_fitness_functions_healthy_and_boundaries():
+    """Caso 3: componente en la secuencia principal -> FITNESS_HEALTHY, frontera de inestabilidad."""
+    from backend.services.project_ccb_service import (
+        audit_architectural_fitness_functions_and_coupling_drift,
+    )
+
+    res = audit_architectural_fitness_functions_and_coupling_drift(
+        [
+            {
+                "component_id": "COMP-20",
+                "afferent_coupling_ca": 5,
+                "efferent_coupling_ce": 5,
+                "abstractness_ratio": 0.5,
+                "is_core_domain": True,
+            },
+        ]
+    )
+    # inestabilidad 0.5, distancia = |0.5 + 0.5 - 1| = 0.0; core con 0.5 <= 0.8.
+    assert res["total_components_evaluated"] == 1
+    assert res["cyclic_dependency_component_ids"] == []
+    assert res["failed_fitness_component_ids"] == []
+    assert res["unstable_core_component_ids"] == []
+    assert res["zone_of_pain_or_uselessness_ids"] == []
+    assert res["max_instability_observed"] == 0.5
+    assert res["architecture_governance_status"] == "FITNESS_HEALTHY"
+    assert res["is_architecture_compliant"] is True
+
+    # Frontera: inestabilidad exactamente max (0.8) no es > max.
+    res_boundary = audit_architectural_fitness_functions_and_coupling_drift(
+        [
+            {
+                "component_id": "COMP-21",
+                "afferent_coupling_ca": 2,
+                "efferent_coupling_ce": 8,
+                "abstractness_ratio": 0.2,
+                "is_core_domain": True,
+            },
+        ],
+        max_instability_index=0.8,
+    )
+    assert res_boundary["unstable_core_component_ids"] == []
+    assert res_boundary["architecture_governance_status"] == "FITNESS_HEALTHY"
+
+
+def test_audit_architectural_fitness_functions_invalid_and_binding():
+    """Caso 4: entradas no-lista/no-dict y binding en ProjectCCBService + __all__."""
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_architectural_fitness_functions_and_coupling_drift,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_architectural_fitness_functions_and_coupling_drift(payload)  # type: ignore[arg-type]
+        assert empty["total_components_evaluated"] == 0
+        assert empty["cyclic_dependency_component_ids"] == []
+        assert empty["failed_fitness_component_ids"] == []
+        assert empty["unstable_core_component_ids"] == []
+        assert empty["zone_of_pain_or_uselessness_ids"] == []
+        assert empty["max_instability_observed"] == 0.0
+        assert empty["architecture_governance_status"] == "FITNESS_HEALTHY"
+        assert empty["is_architecture_compliant"] is True
+
+    sample = [
+        {
+            "component_id": "COMP-30",
+            "afferent_coupling_ca": 3,
+            "efferent_coupling_ce": 3,
+            "abstractness_ratio": 0.5,
+        },
+    ]
+    assert (
+        ProjectCCBService.audit_architectural_fitness_functions_and_coupling_drift(sample)
+        == audit_architectural_fitness_functions_and_coupling_drift(sample)
+    )
+    assert "audit_architectural_fitness_functions_and_coupling_drift" in mod.__all__

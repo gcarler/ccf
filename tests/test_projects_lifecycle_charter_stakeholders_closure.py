@@ -7913,3 +7913,140 @@ def test_audit_contract_claims_dispute_adr_and_liquidated_damages_empty_and_bind
     assert (
         "audit_contract_claims_dispute_adr_and_liquidated_damages" in mod.__all__
     )
+
+
+def test_audit_stakeholder_salience_drift_and_resistance_escalation_critical_resistance():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stakeholder_salience_drift_and_resistance_escalation,
+    )
+
+    res = audit_stakeholder_salience_drift_and_resistance_escalation(
+        [
+            {
+                "stakeholder_id": "SH-VP-SEC",
+                "name": "VP Security",
+                "power_level": "HIGH",
+                "interest_level": "HIGH",
+                "current_engagement": "RESISTANT",
+                "desired_engagement": "SUPPORTIVE",
+                "days_since_last_touchpoint": 20,
+                "has_mitigation_action_plan": False,
+            },
+            {
+                "stakeholder_id": "SH-PMO",
+                "name": "PMO Lead",
+                "power_level": "MEDIUM",
+                "interest_level": "HIGH",
+                "current_engagement": "SUPPORTIVE",
+                "desired_engagement": "SUPPORTIVE",
+                "days_since_last_touchpoint": 5,
+                "has_mitigation_action_plan": True,
+            },
+        ],
+        max_days_without_touchpoint_high_power=14,
+        max_unresolved_resistance_pct=15.0,
+    )
+    assert res["total_stakeholders"] == 2
+    assert res["high_power_count"] == 1
+    assert res["engagement_gap_count"] == 1
+    assert res["stale_high_power_touchpoint_ids"] == ["SH-VP-SEC"]
+    assert res["unmitigated_high_power_resistance_ids"] == ["SH-VP-SEC"]
+    assert res["resistant_or_unaware_pct"] == 50.0
+    assert res["salience_health_status"] == "CRITICAL_RESISTANCE"
+    assert res["is_stakeholder_engagement_compliant"] is False
+
+
+def test_audit_stakeholder_salience_drift_and_resistance_escalation_drifting():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stakeholder_salience_drift_and_resistance_escalation,
+    )
+
+    res = audit_stakeholder_salience_drift_and_resistance_escalation(
+        [
+            {
+                "stakeholder_id": "SH-SPONSOR",
+                "name": "Exec Sponsor",
+                "power_level": "HIGH",
+                "interest_level": "HIGH",
+                "current_engagement": "SUPPORTIVE",
+                "desired_engagement": "LEADING",
+                "days_since_last_touchpoint": 18,
+                "has_mitigation_action_plan": True,
+            }
+        ],
+        max_days_without_touchpoint_high_power=14,
+        max_unresolved_resistance_pct=15.0,
+    )
+    assert res["total_stakeholders"] == 1
+    assert res["high_power_count"] == 1
+    assert res["engagement_gap_count"] == 1
+    assert res["stale_high_power_touchpoint_ids"] == ["SH-SPONSOR"]
+    assert res["unmitigated_high_power_resistance_ids"] == []
+    assert res["resistant_or_unaware_pct"] == 0.0
+    assert res["salience_health_status"] == "DRIFTING"
+    assert res["is_stakeholder_engagement_compliant"] is False
+
+
+def test_audit_stakeholder_salience_drift_and_resistance_escalation_optimal_and_empty():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stakeholder_salience_drift_and_resistance_escalation,
+    )
+
+    empty = audit_stakeholder_salience_drift_and_resistance_escalation(
+        [{"stakeholder_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_stakeholders"] == 0
+    assert empty["high_power_count"] == 0
+    assert empty["engagement_gap_count"] == 0
+    assert empty["resistant_or_unaware_pct"] == 0.0
+    assert empty["salience_health_status"] == "OPTIMAL"
+    assert empty["is_stakeholder_engagement_compliant"] is True
+
+    optimal = audit_stakeholder_salience_drift_and_resistance_escalation(
+        [
+            {
+                "stakeholder_id": "SH-01",
+                "name": "Product Owner",
+                "power_level": "HIGH",
+                "interest_level": "HIGH",
+                "current_engagement": "LEADING",
+                "desired_engagement": "LEADING",
+                "days_since_last_touchpoint": 4,
+                "has_mitigation_action_plan": True,
+            }
+        ]
+    )
+    assert optimal["total_stakeholders"] == 1
+    assert optimal["engagement_gap_count"] == 0
+    assert optimal["stale_high_power_touchpoint_ids"] == []
+    assert optimal["unmitigated_high_power_resistance_ids"] == []
+    assert optimal["salience_health_status"] == "OPTIMAL"
+    assert optimal["is_stakeholder_engagement_compliant"] is True
+
+
+def test_audit_stakeholder_salience_drift_and_resistance_escalation_staticmethod_and_dunder_all():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_stakeholder_salience_drift_and_resistance_escalation,
+    )
+
+    sample = [
+        {
+            "stakeholder_id": "SH-99",
+            "power_level": "LOW",
+            "interest_level": "MEDIUM",
+            "current_engagement": "NEUTRAL",
+            "desired_engagement": "NEUTRAL",
+            "days_since_last_touchpoint": 5,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_stakeholder_salience_drift_and_resistance_escalation(
+            sample
+        )
+        == audit_stakeholder_salience_drift_and_resistance_escalation(sample)
+    )
+    assert (
+        "audit_stakeholder_salience_drift_and_resistance_escalation" in mod.__all__
+    )

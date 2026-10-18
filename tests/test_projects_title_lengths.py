@@ -6683,3 +6683,128 @@ def test_validate_risk_probability_impact_matrix_and_appetite_thresholds_empty_a
         "validate_risk_probability_impact_matrix_and_appetite_thresholds"
         in mod.__all__
     )
+
+
+def test_validate_ccpm_fever_chart_and_buffer_consumption_fever_breach_unmitigated():
+    from backend.schemas.projects import (
+        validate_ccpm_fever_chart_and_buffer_consumption,
+    )
+
+    res = validate_ccpm_fever_chart_and_buffer_consumption(
+        [
+            {
+                "chain_id": "CC-MAIN",
+                "buffer_type": "PROJECT_BUFFER",
+                "chain_completion_pct": 40.0,
+                "buffer_total_days": 20.0,
+                "buffer_consumed_days": 15.0,
+                "has_recovery_plan": False,
+            },
+            {
+                "chain_id": "CC-FEED-01",
+                "buffer_type": "FEEDING_BUFFER",
+                "chain_completion_pct": 50.0,
+                "buffer_total_days": 10.0,
+                "buffer_consumed_days": 4.0,
+                "has_recovery_plan": True,
+            },
+        ],
+        red_zone_slope_factor=0.7,
+        red_zone_intercept_pct=30.0,
+        yellow_zone_intercept_pct=15.0,
+    )
+    assert res["total_chains_evaluated"] == 2
+    assert res["red_zone_count"] == 1
+    assert res["green_zone_count"] == 1
+    assert res["yellow_zone_count"] == 0
+    assert res["unmitigated_red_zone_chain_ids"] == ["CC-MAIN"]
+    assert res["max_buffer_burn_index"] == 1.88
+    assert res["fever_chart_status"] == "FEVER_BREACH_UNMITIGATED"
+    assert res["is_ccpm_buffer_compliant"] is False
+
+
+def test_validate_ccpm_fever_chart_and_buffer_consumption_critical_red_mitigated_and_watch_yellow():
+    from backend.schemas.projects import (
+        validate_ccpm_fever_chart_and_buffer_consumption,
+    )
+
+    red_mit = validate_ccpm_fever_chart_and_buffer_consumption(
+        [
+            {
+                "chain_id": "CC-MIT",
+                "buffer_type": "PROJECT_BUFFER",
+                "chain_completion_pct": 20.0,
+                "buffer_total_days": 10.0,
+                "buffer_consumed_days": 6.0,
+                "has_recovery_plan": True,
+            }
+        ]
+    )
+    assert red_mit["red_zone_count"] == 1
+    assert red_mit["unmitigated_red_zone_chain_ids"] == []
+    assert red_mit["fever_chart_status"] == "CRITICAL_RED_MITIGATED"
+    assert red_mit["is_ccpm_buffer_compliant"] is True
+
+    yellow = validate_ccpm_fever_chart_and_buffer_consumption(
+        [
+            {
+                "chain_id": "CC-YEL",
+                "buffer_type": "FEEDING_BUFFER",
+                "chain_completion_pct": 40.0,
+                "buffer_total_days": 20.0,
+                "buffer_consumed_days": 10.0,
+                "has_recovery_plan": False,
+            }
+        ]
+    )
+    assert yellow["yellow_zone_count"] == 1
+    assert yellow["red_zone_count"] == 0
+    assert yellow["fever_chart_status"] == "WATCH_YELLOW"
+    assert yellow["is_ccpm_buffer_compliant"] is True
+
+
+def test_validate_ccpm_fever_chart_and_buffer_consumption_healthy_green():
+    from backend.schemas.projects import (
+        validate_ccpm_fever_chart_and_buffer_consumption,
+    )
+
+    res = validate_ccpm_fever_chart_and_buffer_consumption(
+        [
+            {
+                "chain_id": "CC-GRN",
+                "buffer_type": "PROJECT_BUFFER",
+                "chain_completion_pct": 50.0,
+                "buffer_total_days": 20.0,
+                "buffer_consumed_days": 5.0,
+                "has_recovery_plan": False,
+            }
+        ]
+    )
+    assert res["total_chains_evaluated"] == 1
+    assert res["green_zone_count"] == 1
+    assert res["yellow_zone_count"] == 0
+    assert res["red_zone_count"] == 0
+    assert res["unmitigated_red_zone_chain_ids"] == []
+    assert res["max_buffer_burn_index"] == 0.5
+    assert res["fever_chart_status"] == "HEALTHY_GREEN"
+    assert res["is_ccpm_buffer_compliant"] is True
+
+
+def test_validate_ccpm_fever_chart_and_buffer_consumption_empty_and_export():
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_ccpm_fever_chart_and_buffer_consumption,
+    )
+
+    for payload in (None, [], "invalid", [{"chain_id": "   "}]):
+        empty = validate_ccpm_fever_chart_and_buffer_consumption(payload)  # type: ignore[arg-type]
+        assert empty["total_chains_evaluated"] == 0
+        assert empty["green_zone_count"] == 0
+        assert empty["yellow_zone_count"] == 0
+        assert empty["red_zone_count"] == 0
+        assert empty["unmitigated_red_zone_chain_ids"] == []
+        assert empty["max_buffer_burn_index"] == 0.0
+        assert empty["fever_chart_status"] == "HEALTHY_GREEN"
+        assert empty["is_ccpm_buffer_compliant"] is True
+
+    assert "validate_ccpm_fever_chart_and_buffer_consumption" in mod.__all__
