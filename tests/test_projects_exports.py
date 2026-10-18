@@ -7845,3 +7845,176 @@ def test_audit_executive_report_sbom_cve_and_oss_license_empty_and_binding():
     assert (
         "audit_executive_report_sbom_cve_and_oss_license_compliance" in mod.__all__
     )
+
+
+def test_audit_executive_report_dr_rto_rpo_critical_paths():
+    """Caso 1: TIER_0 con brecha RTO, backup sin verificar y 2+ brechas -> CRITICAL."""
+    from backend.services.project_export_service import (
+        audit_executive_report_disaster_recovery_rto_rpo_readiness,
+    )
+
+    res = audit_executive_report_disaster_recovery_rto_rpo_readiness(
+        [
+            {
+                "system_id": "SYS-01",
+                "criticality_tier": "TIER_0",
+                "target_rto_minutes": 60.0,
+                "actual_drill_rto_minutes": 95.0,
+                "target_rpo_minutes": 15.0,
+                "actual_drill_rpo_minutes": 15.0,
+                "days_since_last_drill": 10,
+                "backup_restore_verified": True,
+            },
+            {
+                "system_id": "SYS-02",
+                "criticality_tier": "TIER_2",
+                "target_rto_minutes": 240.0,
+                "actual_drill_rto_minutes": 240.0,
+                "target_rpo_minutes": 60.0,
+                "actual_drill_rpo_minutes": 75.0,
+                "days_since_last_drill": 5,
+                "backup_restore_verified": True,
+            },
+            {
+                "system_id": "SYS-03",
+                "criticality_tier": "TIER_1",
+                "target_rto_minutes": 120.0,
+                "actual_drill_rto_minutes": 120.0,
+                "target_rpo_minutes": 30.0,
+                "actual_drill_rpo_minutes": 30.0,
+                "days_since_last_drill": 1,
+                "backup_restore_verified": False,
+            },
+        ]
+    )
+    assert res["total_systems"] == 3
+    assert res["rto_breached_system_ids"] == ["SYS-01"]
+    assert res["rpo_breached_system_ids"] == ["SYS-02"]
+    assert res["stale_drill_system_ids"] == []
+    assert res["unverified_backup_system_ids"] == ["SYS-03"]
+    # Brecha en TIER_0 + backup sin verificar -> CRITICAL.
+    assert res["dr_governance_status"] == "CRITICAL"
+    assert res["is_dr_compliant"] is False
+    assert len(res["recommendations"]) == 3
+
+
+def test_audit_executive_report_dr_rto_rpo_warning_paths():
+    """Caso 2: brecha RTO en TIER_2 sola, o drill vencido -> WARNING."""
+    from backend.services.project_export_service import (
+        audit_executive_report_disaster_recovery_rto_rpo_readiness,
+    )
+
+    res_tier2 = audit_executive_report_disaster_recovery_rto_rpo_readiness(
+        [
+            {
+                "system_id": "SYS-10",
+                "criticality_tier": "TIER_2",
+                "target_rto_minutes": 240.0,
+                "actual_drill_rto_minutes": 300.0,
+                "target_rpo_minutes": 60.0,
+                "actual_drill_rpo_minutes": 60.0,
+                "days_since_last_drill": 5,
+                "backup_restore_verified": True,
+            },
+        ]
+    )
+    assert res_tier2["rto_breached_system_ids"] == ["SYS-10"]
+    assert res_tier2["rpo_breached_system_ids"] == []
+    assert res_tier2["dr_governance_status"] == "WARNING"
+    assert res_tier2["is_dr_compliant"] is False
+
+    res_stale = audit_executive_report_disaster_recovery_rto_rpo_readiness(
+        [
+            {
+                "system_id": "SYS-11",
+                "criticality_tier": "TIER_1",
+                "target_rto_minutes": 60.0,
+                "actual_drill_rto_minutes": 60.0,
+                "target_rpo_minutes": 15.0,
+                "actual_drill_rpo_minutes": 15.0,
+                "days_since_last_drill": 91,
+                "backup_restore_verified": True,
+            },
+        ]
+    )
+    assert res_stale["stale_drill_system_ids"] == ["SYS-11"]
+    assert res_stale["rto_breached_system_ids"] == []
+    assert res_stale["dr_governance_status"] == "WARNING"
+
+
+def test_audit_executive_report_dr_rto_rpo_resilient_and_boundaries():
+    """Caso 3: fronteras exactas (brecha solo si > target; drill vencido solo si > max) -> RESILIENT."""
+    from backend.services.project_export_service import (
+        audit_executive_report_disaster_recovery_rto_rpo_readiness,
+    )
+
+    res = audit_executive_report_disaster_recovery_rto_rpo_readiness(
+        [
+            {
+                "system_id": "SYS-20",
+                "criticality_tier": "TIER_0",
+                "target_rto_minutes": 60.0,
+                "actual_drill_rto_minutes": 60.0,
+                "target_rpo_minutes": 15.0,
+                "actual_drill_rpo_minutes": 15.0,
+                "days_since_last_drill": 90,
+                "backup_restore_verified": True,
+            },
+            {
+                "system_id": "SYS-21",
+                "criticality_tier": "TIER_1",
+                "target_rto_minutes": 120.0,
+                "actual_drill_rto_minutes": 118.0,
+                "target_rpo_minutes": 30.0,
+                "actual_drill_rpo_minutes": 29.0,
+                "days_since_last_drill": 0,
+                "backup_restore_verified": True,
+            },
+        ]
+    )
+    assert res["total_systems"] == 2
+    assert res["rto_breached_system_ids"] == []
+    assert res["rpo_breached_system_ids"] == []
+    assert res["stale_drill_system_ids"] == []
+    assert res["unverified_backup_system_ids"] == []
+    assert res["dr_governance_status"] == "RESILIENT"
+    assert res["is_dr_compliant"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_executive_report_dr_rto_rpo_invalid_and_binding():
+    """Caso 4: entradas no-lista/no-dict y binding + __all__."""
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_disaster_recovery_rto_rpo_readiness,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_executive_report_disaster_recovery_rto_rpo_readiness(payload)  # type: ignore[arg-type]
+        assert empty["total_systems"] == 0
+        assert empty["rto_breached_system_ids"] == []
+        assert empty["rpo_breached_system_ids"] == []
+        assert empty["stale_drill_system_ids"] == []
+        assert empty["unverified_backup_system_ids"] == []
+        assert empty["dr_governance_status"] == "RESILIENT"
+        assert empty["is_dr_compliant"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "system_id": "SYS-30",
+            "criticality_tier": "TIER_1",
+            "target_rto_minutes": 60.0,
+            "actual_drill_rto_minutes": 50.0,
+            "target_rpo_minutes": 15.0,
+            "actual_drill_rpo_minutes": 10.0,
+            "days_since_last_drill": 3,
+            "backup_restore_verified": True,
+        },
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_disaster_recovery_rto_rpo_readiness(sample)
+        == audit_executive_report_disaster_recovery_rto_rpo_readiness(sample)
+    )
+    assert "audit_executive_report_disaster_recovery_rto_rpo_readiness" in mod.__all__

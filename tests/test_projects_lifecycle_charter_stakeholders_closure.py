@@ -7625,3 +7625,151 @@ def test_audit_adkar_adoption_invalid_entries_and_binding():
         == audit_organizational_change_adkar_adoption_readiness(sample)
     )
     assert "audit_organizational_change_adkar_adoption_readiness" in mod.__all__
+
+
+def test_audit_benefits_realization_post_implementation_harvesting_on_track():
+    """Caso 1: Todos los beneficios con owner, medición reciente y realización >=80% -> HARVESTING_ON_TRACK."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_benefits_realization_post_implementation_harvesting,
+    )
+
+    register = [
+        {
+            "benefit_id": "BEN-01",
+            "target_annual_value": 100000.0,
+            "realized_annualized_value": 92000.0,
+            "benefit_owner_id": "OWN-FIN-01",
+            "days_since_last_measurement": 15,
+            "is_strategic_benefit": True,
+        },
+        {
+            "benefit_id": "BEN-02",
+            "target_annual_value": 50000.0,
+            "realized_annualized_value": 45000.0,
+            "benefit_owner_id": "OWN-OPS-02",
+            "days_since_last_measurement": 20,
+            "is_strategic_benefit": False,
+        },
+    ]
+    res = audit_benefits_realization_post_implementation_harvesting(
+        register, min_realization_rate_pct=80.0, max_measurement_lag_days=45
+    )
+    assert res["total_benefits"] == 2
+    assert res["total_target_value"] == 150000.0
+    assert res["total_realized_value"] == 137000.0
+    assert res["portfolio_realization_rate_pct"] == 91.33
+    assert res["unowned_benefit_ids"] == []
+    assert res["underperforming_benefit_ids"] == []
+    assert res["stale_measurement_benefit_ids"] == []
+    assert res["missed_strategic_benefit_ids"] == []
+    assert res["brm_governance_status"] == "HARVESTING_ON_TRACK"
+    assert res["is_brm_healthy"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_benefits_realization_post_implementation_harvesting_warning():
+    """Caso 2: Beneficio no estratégico bajo 80% o medición vencida (>45d), pero portafolio global >=80% y con owners -> WARNING."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_benefits_realization_post_implementation_harvesting,
+    )
+
+    register = [
+        {
+            "benefit_id": "BEN-CORE",
+            "target_annual_value": 200000.0,
+            "realized_annualized_value": 195000.0,
+            "benefit_owner_id": "OWN-01",
+            "days_since_last_measurement": 60,
+            "is_strategic_benefit": True,
+        },
+        {
+            "benefit_id": "BEN-MINOR",
+            "target_annual_value": 20000.0,
+            "realized_annualized_value": 12000.0,
+            "benefit_owner_id": "OWN-02",
+            "days_since_last_measurement": 10,
+            "is_strategic_benefit": False,
+        },
+    ]
+    res = audit_benefits_realization_post_implementation_harvesting(
+        register, min_realization_rate_pct=80.0, max_measurement_lag_days=45
+    )
+    assert res["total_benefits"] == 2
+    assert res["portfolio_realization_rate_pct"] == 94.09
+    assert res["unowned_benefit_ids"] == []
+    assert res["underperforming_benefit_ids"] == ["BEN-MINOR"]
+    assert res["stale_measurement_benefit_ids"] == ["BEN-CORE"]
+    assert res["missed_strategic_benefit_ids"] == []
+    assert res["brm_governance_status"] == "WARNING"
+    assert res["is_brm_healthy"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_benefits_realization_post_implementation_harvesting_value_leakage():
+    """Caso 3: Beneficio sin owner y beneficio estratégico incumplido -> VALUE_LEAKAGE."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_benefits_realization_post_implementation_harvesting,
+    )
+
+    register = [
+        {
+            "benefit_id": "BEN-STRAT-FAIL",
+            "target_annual_value": 100000.0,
+            "realized_annualized_value": 45000.0,
+            "benefit_owner_id": None,
+            "days_since_last_measurement": 90,
+            "is_strategic_benefit": True,
+        }
+    ]
+    res = audit_benefits_realization_post_implementation_harvesting(register)
+    assert res["total_benefits"] == 1
+    assert res["portfolio_realization_rate_pct"] == 45.0
+    assert res["unowned_benefit_ids"] == ["BEN-STRAT-FAIL"]
+    assert res["underperforming_benefit_ids"] == ["BEN-STRAT-FAIL"]
+    assert res["missed_strategic_benefit_ids"] == ["BEN-STRAT-FAIL"]
+    assert res["brm_governance_status"] == "VALUE_LEAKAGE"
+    assert res["is_brm_healthy"] is False
+    assert len(res["recommendations"]) >= 3
+
+
+def test_audit_benefits_realization_post_implementation_harvesting_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en ProjectLifecyclePMIService + __all__."""
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_benefits_realization_post_implementation_harvesting,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_benefits_realization_post_implementation_harvesting(payload)  # type: ignore[arg-type]
+        assert empty["total_benefits"] == 0
+        assert empty["total_target_value"] == 0.0
+        assert empty["total_realized_value"] == 0.0
+        assert empty["portfolio_realization_rate_pct"] == 100.0
+        assert empty["unowned_benefit_ids"] == []
+        assert empty["underperforming_benefit_ids"] == []
+        assert empty["stale_measurement_benefit_ids"] == []
+        assert empty["missed_strategic_benefit_ids"] == []
+        assert empty["brm_governance_status"] == "HARVESTING_ON_TRACK"
+        assert empty["is_brm_healthy"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "benefit_id": "BEN-99",
+            "target_annual_value": 50000.0,
+            "realized_annualized_value": 50000.0,
+            "benefit_owner_id": "OWN-99",
+            "days_since_last_measurement": 5,
+            "is_strategic_benefit": True,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_benefits_realization_post_implementation_harvesting(
+            sample
+        )
+        == audit_benefits_realization_post_implementation_harvesting(sample)
+    )
+    assert (
+        "audit_benefits_realization_post_implementation_harvesting" in mod.__all__
+    )

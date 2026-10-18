@@ -2993,6 +2993,7 @@ __all__ = [
     "audit_executive_report_regulatory_and_data_privacy_compliance",
     "audit_executive_report_finops_cloud_cost_and_idle_capacity",
     "audit_executive_report_sbom_cve_and_oss_license_compliance",
+    "audit_executive_report_disaster_recovery_rto_rpo_readiness",
     "ProjectExportService",
 ]
 
@@ -6130,4 +6131,117 @@ def audit_executive_report_sbom_cve_and_oss_license_compliance(
 
 ProjectExportService.audit_executive_report_sbom_cve_and_oss_license_compliance = staticmethod(
     audit_executive_report_sbom_cve_and_oss_license_compliance
+)
+
+
+def audit_executive_report_disaster_recovery_rto_rpo_readiness(
+    systems: Any,
+    *,
+    max_days_since_drill: int = 90,
+) -> Dict[str, object]:
+    """Auditoría PMBOK 11.5 y 8.2: preparación DR (RTO/RPO drills).
+
+    Evalúa por sistema el cumplimiento de RTO/RPO en el drill real, la
+    antigüedad del último drill y la verificación de restore de backups,
+    determinando el estado DR (RESILIENT / WARNING / CRITICAL).
+    """
+    entries = systems if isinstance(systems, list) else []
+    rows = [item for item in entries if isinstance(item, dict)]
+
+    rto_breached_system_ids: List[str] = []
+    rpo_breached_system_ids: List[str] = []
+    stale_drill_system_ids: List[str] = []
+    unverified_backup_system_ids: List[str] = []
+    tier_zero_or_one_breach = False
+
+    for system in rows:
+        system_id = system.get("system_id")
+        tier = system.get("criticality_tier", "TIER_1")
+
+        target_rto = system.get("target_rto_minutes")
+        actual_rto = system.get("actual_drill_rto_minutes")
+        if (
+            isinstance(target_rto, (int, float))
+            and isinstance(actual_rto, (int, float))
+            and actual_rto > target_rto
+        ):
+            rto_breached_system_ids.append(system_id)
+            if tier in ("TIER_0", "TIER_1"):
+                tier_zero_or_one_breach = True
+
+        target_rpo = system.get("target_rpo_minutes")
+        actual_rpo = system.get("actual_drill_rpo_minutes")
+        if (
+            isinstance(target_rpo, (int, float))
+            and isinstance(actual_rpo, (int, float))
+            and actual_rpo > target_rpo
+        ):
+            rpo_breached_system_ids.append(system_id)
+            if tier in ("TIER_0", "TIER_1"):
+                tier_zero_or_one_breach = True
+
+        days_since_last_drill = system.get("days_since_last_drill")
+        if (
+            isinstance(days_since_last_drill, (int, float))
+            and days_since_last_drill > max_days_since_drill
+        ):
+            stale_drill_system_ids.append(system_id)
+
+        if system.get("backup_restore_verified", True) is False:
+            unverified_backup_system_ids.append(system_id)
+
+    total_systems = len(rows)
+    total_breaches = len(rto_breached_system_ids) + len(rpo_breached_system_ids)
+
+    if (
+        unverified_backup_system_ids
+        or tier_zero_or_one_breach
+        or total_breaches >= 2
+    ):
+        dr_governance_status = "CRITICAL"
+    elif (
+        rto_breached_system_ids
+        or rpo_breached_system_ids
+        or stale_drill_system_ids
+    ):
+        dr_governance_status = "WARNING"
+    else:
+        dr_governance_status = "RESILIENT"
+
+    recommendations: List[str] = []
+    if unverified_backup_system_ids:
+        recommendations.append(
+            "Verify backup restore procedures for systems: "
+            + ", ".join(str(s) for s in unverified_backup_system_ids)
+        )
+    if rto_breached_system_ids:
+        recommendations.append(
+            "Close RTO gap: drill recovery times exceeded the target for systems: "
+            + ", ".join(str(s) for s in rto_breached_system_ids)
+        )
+    if rpo_breached_system_ids:
+        recommendations.append(
+            "Close RPO gap: drill data-loss windows exceeded the target for systems: "
+            + ", ".join(str(s) for s in rpo_breached_system_ids)
+        )
+    if stale_drill_system_ids:
+        recommendations.append(
+            f"Run a fresh DR drill within {max_days_since_drill} days for systems: "
+            + ", ".join(str(s) for s in stale_drill_system_ids)
+        )
+
+    return {
+        "total_systems": total_systems,
+        "rto_breached_system_ids": rto_breached_system_ids,
+        "rpo_breached_system_ids": rpo_breached_system_ids,
+        "stale_drill_system_ids": stale_drill_system_ids,
+        "unverified_backup_system_ids": unverified_backup_system_ids,
+        "dr_governance_status": dr_governance_status,
+        "is_dr_compliant": dr_governance_status == "RESILIENT",
+        "recommendations": recommendations,
+    }
+
+
+ProjectExportService.audit_executive_report_disaster_recovery_rto_rpo_readiness = staticmethod(
+    audit_executive_report_disaster_recovery_rto_rpo_readiness
 )

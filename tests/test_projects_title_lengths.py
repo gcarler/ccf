@@ -6287,3 +6287,137 @@ def test_validate_make_or_buy_tco_and_strategic_lock_in_empty_and_export():
         assert empty["recommendations"] == []
 
     assert "validate_make_or_buy_tco_and_strategic_lock_in" in mod.__all__
+
+
+def test_validate_resource_calendar_timezone_overlap_and_allocation_aligned():
+    """Caso 1: Equipo con >=3h de traslape síncrono UTC, asignación <=100% y <=2 proyectos -> ALIGNED."""
+    from backend.schemas.projects import (
+        validate_resource_calendar_timezone_overlap_and_allocation,
+    )
+
+    members = [
+        {
+            "member_id": "DEV-BOGOTA",
+            "utc_work_start_hour": 13.0,
+            "utc_work_end_hour": 21.0,
+            "total_allocation_pct": 100.0,
+            "concurrent_projects_count": 1,
+            "unmitigated_holiday_conflict_days": 0,
+        },
+        {
+            "member_id": "DEV-MADRID",
+            "utc_work_start_hour": 8.0,
+            "utc_work_end_hour": 17.0,
+            "total_allocation_pct": 80.0,
+            "concurrent_projects_count": 2,
+            "unmitigated_holiday_conflict_days": 0,
+        },
+    ]
+    res = validate_resource_calendar_timezone_overlap_and_allocation(
+        members, min_core_overlap_hours=3.0, max_concurrent_projects_per_member=2
+    )
+    assert res["total_members"] == 2
+    assert res["team_synchronous_overlap_hours"] == 4.0
+    assert res["insufficient_timezone_overlap"] is False
+    assert res["overallocated_member_ids"] == []
+    assert res["context_switching_fragmented_member_ids"] == []
+    assert res["holiday_conflict_member_ids"] == []
+    assert res["calendar_governance_status"] == "ALIGNED"
+    assert res["is_calendar_valid"] is True
+    assert res["recommendations"] == []
+
+
+def test_validate_resource_calendar_timezone_overlap_and_allocation_warning():
+    """Caso 2: Traslape bajo (<3h pero >0h), fragmentación (>2 proyectos) y festivos sin mitigar -> WARNING."""
+    from backend.schemas.projects import (
+        validate_resource_calendar_timezone_overlap_and_allocation,
+    )
+
+    members = [
+        {
+            "member_id": "DEV-SF",
+            "utc_work_start_hour": 15.0,
+            "utc_work_end_hour": 23.0,
+            "total_allocation_pct": 100.0,
+            "concurrent_projects_count": 4,
+            "unmitigated_holiday_conflict_days": 2,
+        },
+        {
+            "member_id": "DEV-BERLIN",
+            "utc_work_start_hour": 8.0,
+            "utc_work_end_hour": 16.5,
+            "total_allocation_pct": 90.0,
+            "concurrent_projects_count": 1,
+            "unmitigated_holiday_conflict_days": 0,
+        },
+    ]
+    res = validate_resource_calendar_timezone_overlap_and_allocation(
+        members, min_core_overlap_hours=3.0, max_concurrent_projects_per_member=2
+    )
+    assert res["total_members"] == 2
+    assert res["team_synchronous_overlap_hours"] == 1.5
+    assert res["insufficient_timezone_overlap"] is True
+    assert res["overallocated_member_ids"] == []
+    assert res["context_switching_fragmented_member_ids"] == ["DEV-SF"]
+    assert res["holiday_conflict_member_ids"] == ["DEV-SF"]
+    assert res["calendar_governance_status"] == "WARNING"
+    assert res["is_calendar_valid"] is False
+    assert len(res["recommendations"]) >= 3
+
+
+def test_validate_resource_calendar_timezone_overlap_and_allocation_critical():
+    """Caso 3: Miembro sobreasignado (>100%) y cero traslape horario síncrono (0.0h) -> CRITICAL."""
+    from backend.schemas.projects import (
+        validate_resource_calendar_timezone_overlap_and_allocation,
+    )
+
+    members = [
+        {
+            "member_id": "DEV-TOKYO",
+            "utc_work_start_hour": 0.0,
+            "utc_work_end_hour": 8.0,
+            "total_allocation_pct": 135.0,
+            "concurrent_projects_count": 3,
+            "unmitigated_holiday_conflict_days": 1,
+        },
+        {
+            "member_id": "DEV-NY",
+            "utc_work_start_hour": 14.0,
+            "utc_work_end_hour": 22.0,
+            "total_allocation_pct": 100.0,
+            "concurrent_projects_count": 1,
+            "unmitigated_holiday_conflict_days": 0,
+        },
+    ]
+    res = validate_resource_calendar_timezone_overlap_and_allocation(members)
+    assert res["total_members"] == 2
+    assert res["team_synchronous_overlap_hours"] == 0.0
+    assert res["insufficient_timezone_overlap"] is True
+    assert res["overallocated_member_ids"] == ["DEV-TOKYO"]
+    assert res["calendar_governance_status"] == "CRITICAL"
+    assert res["is_calendar_valid"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_validate_resource_calendar_timezone_overlap_and_allocation_empty_and_export():
+    """Caso 4: Entradas vacías/inválidas y exportación en __all__."""
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_resource_calendar_timezone_overlap_and_allocation,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = validate_resource_calendar_timezone_overlap_and_allocation(payload)  # type: ignore[arg-type]
+        assert empty["total_members"] == 0
+        assert empty["team_synchronous_overlap_hours"] == 8.0
+        assert empty["insufficient_timezone_overlap"] is False
+        assert empty["overallocated_member_ids"] == []
+        assert empty["context_switching_fragmented_member_ids"] == []
+        assert empty["holiday_conflict_member_ids"] == []
+        assert empty["calendar_governance_status"] == "ALIGNED"
+        assert empty["is_calendar_valid"] is True
+        assert empty["recommendations"] == []
+
+    assert (
+        "validate_resource_calendar_timezone_overlap_and_allocation" in mod.__all__
+    )

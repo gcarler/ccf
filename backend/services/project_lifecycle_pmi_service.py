@@ -3158,6 +3158,7 @@ __all__ = [
     "audit_project_premortem_scenarios_and_kill_switch_criteria",
     "audit_project_closure_hypercare_and_bau_handover_readiness",
     "audit_organizational_change_adkar_adoption_readiness",
+    "audit_benefits_realization_post_implementation_harvesting",
     "ProjectLifecyclePMIService",
 ]
 
@@ -6091,4 +6092,117 @@ def audit_organizational_change_adkar_adoption_readiness(
 
 ProjectLifecyclePMIService.audit_organizational_change_adkar_adoption_readiness = staticmethod(
     audit_organizational_change_adkar_adoption_readiness
+)
+
+
+def audit_benefits_realization_post_implementation_harvesting(
+    benefits_register: list[dict[str, Any]],
+    *,
+    min_realization_rate_pct: float = 80.0,
+    max_measurement_lag_days: int = 45,
+) -> dict[str, Any]:
+    """Audit PMI PMBOK §1.2.6 & §4.7 Benefits Realization Management (BRM) post-implementation harvesting and owner sustainment."""
+    unowned_benefit_ids: list[str] = []
+    underperforming_benefit_ids: list[str] = []
+    stale_measurement_benefit_ids: list[str] = []
+    missed_strategic_benefit_ids: list[str] = []
+    recommendations: list[str] = []
+
+    valid_benefits = (
+        [
+            b
+            for b in benefits_register
+            if isinstance(b, dict) and str(b.get("benefit_id", "")).strip()
+        ]
+        if isinstance(benefits_register, list)
+        else []
+    )
+
+    total_target_value = 0.0
+    total_realized_value = 0.0
+
+    for ben in valid_benefits:
+        benefit_id = str(ben.get("benefit_id", "")).strip()
+        target_annual_value = float(ben.get("target_annual_value", 0.0) or 0.0)
+        realized_annualized_value = float(
+            ben.get("realized_annualized_value", 0.0) or 0.0
+        )
+        owner_raw = ben.get("benefit_owner_id")
+        benefit_owner_id = str(owner_raw).strip() if owner_raw is not None else ""
+        days_since_last_measurement = int(
+            ben.get("days_since_last_measurement", 0) or 0
+        )
+        is_strategic_benefit = bool(ben.get("is_strategic_benefit", False))
+
+        total_target_value += target_annual_value
+        total_realized_value += realized_annualized_value
+
+        if not benefit_owner_id:
+            unowned_benefit_ids.append(benefit_id)
+
+        if target_annual_value > 0.0:
+            benefit_rate_pct = (
+                realized_annualized_value / target_annual_value
+            ) * 100.0
+            if benefit_rate_pct < min_realization_rate_pct:
+                underperforming_benefit_ids.append(benefit_id)
+                if is_strategic_benefit:
+                    missed_strategic_benefit_ids.append(benefit_id)
+
+        if days_since_last_measurement > max_measurement_lag_days:
+            stale_measurement_benefit_ids.append(benefit_id)
+
+    total_target_value = round(total_target_value, 2)
+    total_realized_value = round(total_realized_value, 2)
+    portfolio_realization_rate_pct = (
+        round((total_realized_value / total_target_value) * 100.0, 2)
+        if total_target_value > 0.0
+        else 100.0
+    )
+
+    if unowned_benefit_ids:
+        recommendations.append(
+            f"Assign accountable BAU benefit owners to sustain post-implementation value for: {', '.join(unowned_benefit_ids)}."
+        )
+    if missed_strategic_benefit_ids:
+        recommendations.append(
+            f"Escalate value recovery plan to Steering Committee for underperforming strategic benefits: {', '.join(missed_strategic_benefit_ids)}."
+        )
+    if underperforming_benefit_ids:
+        recommendations.append(
+            f"Execute corrective adoption actions for benefits below {min_realization_rate_pct:.1f}% realization threshold: {', '.join(underperforming_benefit_ids)}."
+        )
+    if stale_measurement_benefit_ids:
+        recommendations.append(
+            f"Refresh benefit KPI telemetry exceeding {max_measurement_lag_days}d measurement lag: {', '.join(stale_measurement_benefit_ids)}."
+        )
+
+    if (
+        unowned_benefit_ids
+        or missed_strategic_benefit_ids
+        or portfolio_realization_rate_pct < min_realization_rate_pct
+    ):
+        brm_governance_status = "VALUE_LEAKAGE"
+    elif underperforming_benefit_ids or stale_measurement_benefit_ids:
+        brm_governance_status = "WARNING"
+    else:
+        brm_governance_status = "HARVESTING_ON_TRACK"
+
+    return {
+        "total_benefits": len(valid_benefits),
+        "total_target_value": total_target_value,
+        "total_realized_value": total_realized_value,
+        "portfolio_realization_rate_pct": portfolio_realization_rate_pct,
+        "unowned_benefit_ids": unowned_benefit_ids,
+        "underperforming_benefit_ids": underperforming_benefit_ids,
+        "stale_measurement_benefit_ids": stale_measurement_benefit_ids,
+        "missed_strategic_benefit_ids": missed_strategic_benefit_ids,
+        "brm_governance_status": brm_governance_status,
+        "is_brm_healthy": brm_governance_status == "HARVESTING_ON_TRACK",
+        "recommendations": recommendations,
+    }
+
+
+ProjectLifecyclePMIService.audit_benefits_realization_post_implementation_harvesting = staticmethod(
+    audit_benefits_realization_post_implementation_harvesting
 )

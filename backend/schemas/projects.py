@@ -3803,6 +3803,7 @@ __all__ = [
     "validate_raci_responsibility_assignment_matrix_hygiene",
     "validate_monte_carlo_confidence_percentiles_and_contingency",
     "validate_make_or_buy_tco_and_strategic_lock_in",
+    "validate_resource_calendar_timezone_overlap_and_allocation",
 ]
 
 
@@ -7142,5 +7143,122 @@ def validate_make_or_buy_tco_and_strategic_lock_in(
         "vendor_lock_in_risk_component_ids": vendor_lock_in_risk_component_ids,
         "make_or_buy_governance_status": make_or_buy_governance_status,
         "is_make_or_buy_valid": make_or_buy_governance_status == "SOUND",
+        "recommendations": recommendations,
+    }
+
+
+def validate_resource_calendar_timezone_overlap_and_allocation(
+    team_members: list[dict[str, Any]],
+    *,
+    min_core_overlap_hours: float = 3.0,
+    max_concurrent_projects_per_member: int = 2,
+) -> dict[str, Any]:
+    """Validate PMI PMBOK §9.2 & §6.4 multi-timezone synchronous overlap, holiday conflicts, and context-switching allocation."""
+    overallocated_member_ids: list[str] = []
+    context_switching_fragmented_member_ids: list[str] = []
+    holiday_conflict_member_ids: list[str] = []
+    recommendations: list[str] = []
+
+    valid_members = (
+        [
+            m
+            for m in team_members
+            if isinstance(m, dict) and str(m.get("member_id", "")).strip()
+        ]
+        if isinstance(team_members, list)
+        else []
+    )
+
+    if not valid_members:
+        return {
+            "total_members": 0,
+            "team_synchronous_overlap_hours": 8.0,
+            "insufficient_timezone_overlap": False,
+            "overallocated_member_ids": [],
+            "context_switching_fragmented_member_ids": [],
+            "holiday_conflict_member_ids": [],
+            "calendar_governance_status": "ALIGNED",
+            "is_calendar_valid": True,
+            "recommendations": [],
+        }
+
+    start_hours: list[float] = []
+    end_hours: list[float] = []
+
+    for member in valid_members:
+        member_id = str(member.get("member_id", "")).strip()
+        utc_start = float(member.get("utc_work_start_hour", 9.0) or 0.0)
+        utc_end = float(member.get("utc_work_end_hour", 17.0) or 0.0)
+        total_allocation_pct = float(
+            member.get("total_allocation_pct", 100.0) or 0.0
+        )
+        concurrent_projects_count = int(
+            member.get("concurrent_projects_count", 1) or 1
+        )
+        unmitigated_holiday_conflict_days = int(
+            member.get("unmitigated_holiday_conflict_days", 0) or 0
+        )
+
+        start_hours.append(utc_start)
+        end_hours.append(utc_end)
+
+        if total_allocation_pct > 100.0:
+            overallocated_member_ids.append(member_id)
+
+        if concurrent_projects_count > max_concurrent_projects_per_member:
+            context_switching_fragmented_member_ids.append(member_id)
+
+        if unmitigated_holiday_conflict_days > 0:
+            holiday_conflict_member_ids.append(member_id)
+
+    overlap_start = max(start_hours)
+    overlap_end = min(end_hours)
+    team_synchronous_overlap_hours = round(
+        max(0.0, overlap_end - overlap_start), 2
+    )
+    insufficient_timezone_overlap = bool(
+        len(valid_members) >= 2
+        and team_synchronous_overlap_hours < min_core_overlap_hours
+    )
+
+    if overallocated_member_ids:
+        recommendations.append(
+            f"Level resource calendars to eliminate >100% overallocation on members: {', '.join(overallocated_member_ids)}."
+        )
+    if insufficient_timezone_overlap:
+        recommendations.append(
+            f"Establish a minimum {min_core_overlap_hours:.1f}h synchronous UTC collaboration window (currently {team_synchronous_overlap_hours:.2f}h)."
+        )
+    if context_switching_fragmented_member_ids:
+        recommendations.append(
+            f"Reduce concurrent project assignments (<={max_concurrent_projects_per_member}) to prevent context-switching loss for: {', '.join(context_switching_fragmented_member_ids)}."
+        )
+    if holiday_conflict_member_ids:
+        recommendations.append(
+            f"Adjust sprint capacity or coverage handoffs for unmitigated regional holiday conflicts: {', '.join(holiday_conflict_member_ids)}."
+        )
+
+    if overallocated_member_ids or (
+        insufficient_timezone_overlap and team_synchronous_overlap_hours == 0.0
+    ):
+        calendar_governance_status = "CRITICAL"
+    elif (
+        insufficient_timezone_overlap
+        or context_switching_fragmented_member_ids
+        or holiday_conflict_member_ids
+    ):
+        calendar_governance_status = "WARNING"
+    else:
+        calendar_governance_status = "ALIGNED"
+
+    return {
+        "total_members": len(valid_members),
+        "team_synchronous_overlap_hours": team_synchronous_overlap_hours,
+        "insufficient_timezone_overlap": insufficient_timezone_overlap,
+        "overallocated_member_ids": overallocated_member_ids,
+        "context_switching_fragmented_member_ids": context_switching_fragmented_member_ids,
+        "holiday_conflict_member_ids": holiday_conflict_member_ids,
+        "calendar_governance_status": calendar_governance_status,
+        "is_calendar_valid": calendar_governance_status == "ALIGNED",
         "recommendations": recommendations,
     }
