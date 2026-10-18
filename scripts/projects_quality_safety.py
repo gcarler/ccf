@@ -140,3 +140,55 @@ def evaluate_quality_gate_sla(
         "is_within_time_sla": is_within_time_sla,
         "gate_verdict": gate_verdict,
     }
+
+
+def evaluate_test_suite_assertion_density(
+    total_tests: int,
+    total_assertions: int,
+    skipped_tests: int = 0,
+) -> dict:
+    """Audita la densidad de aserciones y disciplina de ejecución (PMBOK §8.3 Control Quality).
+
+    Sanitiza las entradas (tests >= 0, aserciones >= 0, skips acotados a
+    [0, tests]) y calcula el rigor de verificación de la suite:
+    - `assertions_per_executed_test`: aserciones / tests ejecutados
+      (round 2; 0.0 sin ejecuciones).
+    - `skip_rate_pct`: % de tests omitidos (round 2; 0.0 sin tests).
+    - `rigor_status` (precedencia):
+      'no_tests_executed' (executed == 0), 'excessive_skips'
+      (skip_rate > 10%), 'shallow_assertions' (< 1.5 aserciones/test),
+      'high_verification_rigor' (>= 3.0 aserciones/test y skip_rate 0)
+      o 'standard_coverage'.
+    """
+    tests_count = max(0, int(total_tests or 0))
+    assertions_count = max(0, int(total_assertions or 0))
+    skipped_count = min(tests_count, max(0, int(skipped_tests or 0)))
+    executed_tests = max(0, tests_count - skipped_count)
+
+    assertions_per_executed_test = (
+        round(assertions_count / executed_tests, 2) if executed_tests > 0 else 0.0
+    )
+    skip_rate_pct = (
+        round((skipped_count / tests_count) * 100.0, 2) if tests_count > 0 else 0.0
+    )
+
+    if executed_tests == 0:
+        rigor_status = "no_tests_executed"
+    elif skip_rate_pct > 10.0:
+        rigor_status = "excessive_skips"
+    elif assertions_per_executed_test < 1.5:
+        rigor_status = "shallow_assertions"
+    elif assertions_per_executed_test >= 3.0 and skip_rate_pct == 0.0:
+        rigor_status = "high_verification_rigor"
+    else:
+        rigor_status = "standard_coverage"
+
+    return {
+        "total_tests": tests_count,
+        "executed_tests": executed_tests,
+        "skipped_tests": skipped_count,
+        "total_assertions": assertions_count,
+        "assertions_per_executed_test": assertions_per_executed_test,
+        "skip_rate_pct": skip_rate_pct,
+        "rigor_status": rigor_status,
+    }

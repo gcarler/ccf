@@ -915,3 +915,102 @@ def test_audit_expenses_csv_financial_totals_empty_or_none():
         assert res["is_reconciled"] is False
         assert res["reconciliation_status"] == "empty_export"
 
+
+# ── audit_tasks_csv_schedule_completeness (PMBOK §6.5 / §9.3, pure helper) ──
+
+
+def test_audit_tasks_csv_schedule_completeness_fully_baselined():
+    """Todas las filas tienen Responsable y Fecha Límite válidos -> 'fully_baselined' con 100.0%."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_tasks_csv_schedule_completeness,
+    )
+
+    csv_text = (
+        "\ufeffID,Título,Responsable,Fecha Límite\n"
+        "1,Diseño WBS,Ana Gómez,2026-10-20\n"
+        "2,Aprobación Charter,Carlos Ruiz,2026-10-25\n"
+    )
+    res = audit_tasks_csv_schedule_completeness(csv_text)
+    assert res == {
+        "total_tasks": 2,
+        "dated_tasks_count": 2,
+        "assigned_tasks_count": 2,
+        "fully_scheduled_tasks_count": 2,
+        "unscheduled_tasks_count": 0,
+        "schedule_coverage_pct": 100.0,
+        "schedule_completeness_status": "fully_baselined",
+    }
+    assert (
+        ProjectExportService.audit_tasks_csv_schedule_completeness(
+            csv_text.encode("utf-8")
+        )
+        == res
+    )
+
+
+def test_audit_tasks_csv_schedule_completeness_partial_and_critical_gaps():
+    """Valida cobertura del 75% ('partial_schedule_gaps') y 25% ('critical_unscheduled_backlog')."""
+    from backend.services.project_export_service import (
+        audit_tasks_csv_schedule_completeness,
+    )
+
+    partial_csv = (
+        "ID,Título,Responsable,Fecha Límite\n"
+        "1,Tarea 1,Ana,2026-10-20\n"
+        "2,Tarea 2,Luis,2026-10-21\n"
+        "3,Tarea 3,Pedro,2026-10-22\n"
+        "4,Tarea 4,Sin asignar,N/A\n"
+    )
+    partial_res = audit_tasks_csv_schedule_completeness(partial_csv)
+    assert partial_res["total_tasks"] == 4
+    assert partial_res["fully_scheduled_tasks_count"] == 3
+    assert partial_res["unscheduled_tasks_count"] == 1
+    assert partial_res["schedule_coverage_pct"] == 75.0
+    assert partial_res["schedule_completeness_status"] == "partial_schedule_gaps"
+
+    critical_csv = (
+        "ID,Título,Responsable,Fecha Límite\n"
+        "1,Tarea 1,Ana,2026-10-20\n"
+        "2,Tarea 2,Sin asignar,2026-10-21\n"
+        "3,Tarea 3,Luis,N/A\n"
+        "4,Tarea 4,-,Sin fecha\n"
+    )
+    critical_res = audit_tasks_csv_schedule_completeness(critical_csv)
+    assert critical_res["total_tasks"] == 4
+    assert critical_res["dated_tasks_count"] == 2
+    assert critical_res["assigned_tasks_count"] == 2
+    assert critical_res["fully_scheduled_tasks_count"] == 1
+    assert critical_res["unscheduled_tasks_count"] == 3
+    assert critical_res["schedule_coverage_pct"] == 25.0
+    assert (
+        critical_res["schedule_completeness_status"] == "critical_unscheduled_backlog"
+    )
+
+
+def test_audit_tasks_csv_schedule_completeness_missing_columns():
+    """CSV sin columna de fecha o responsable -> 'missing_schedule_columns'."""
+    from backend.services.project_export_service import (
+        audit_tasks_csv_schedule_completeness,
+    )
+
+    no_due_csv = "ID,Título,Responsable\n1,Tarea A,Ana Gómez\n"
+    res = audit_tasks_csv_schedule_completeness(no_due_csv)
+    assert res["total_tasks"] == 1
+    assert res["dated_tasks_count"] == 0
+    assert res["assigned_tasks_count"] == 1
+    assert res["fully_scheduled_tasks_count"] == 0
+    assert res["schedule_completeness_status"] == "missing_schedule_columns"
+
+
+def test_audit_tasks_csv_schedule_completeness_empty_or_headers_only():
+    """None, cadena vacía o solo encabezados sin tareas -> 'empty_export' con total_tasks == 0."""
+    from backend.services.project_export_service import (
+        audit_tasks_csv_schedule_completeness,
+    )
+
+    for val in (None, "", "   \n ", "ID,Título,Responsable,Fecha Límite\n"):
+        res = audit_tasks_csv_schedule_completeness(val)
+        assert res["total_tasks"] == 0
+        assert res["schedule_coverage_pct"] == 0.0
+        assert res["schedule_completeness_status"] == "empty_export"

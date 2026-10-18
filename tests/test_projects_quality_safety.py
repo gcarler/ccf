@@ -159,3 +159,108 @@ def test_quality_gate_sla_empty_suite():
     assert weird["passed_tests"] == 0
     assert weird["duration_seconds"] == 0.0
     assert weird["gate_verdict"] == "empty_suite"
+
+
+# ── evaluate_test_suite_assertion_density (PMBOK §8.3, pure helper) ───────
+
+
+def test_assertion_density_high_verification_rigor():
+    """>= 3.0 aserciones/test y 0 skips → 'high_verification_rigor'."""
+    from scripts.projects_quality_safety import evaluate_test_suite_assertion_density
+
+    result = evaluate_test_suite_assertion_density(
+        total_tests=33, total_assertions=100, skipped_tests=0
+    )
+
+    assert result == {
+        "total_tests": 33,
+        "executed_tests": 33,
+        "skipped_tests": 0,
+        "total_assertions": 100,
+        "assertions_per_executed_test": 3.03,
+        "skip_rate_pct": 0.0,
+        "rigor_status": "high_verification_rigor",
+    }
+
+
+def test_assertion_density_standard_coverage():
+    """Aserciones en [1.5, 3.0) o skips <= 10% → 'standard_coverage'."""
+    from scripts.projects_quality_safety import evaluate_test_suite_assertion_density
+
+    standard = evaluate_test_suite_assertion_density(total_tests=10, total_assertions=20)
+    assert standard["assertions_per_executed_test"] == 2.0
+    assert standard["skip_rate_pct"] == 0.0
+    assert standard["rigor_status"] == "standard_coverage"
+
+    # borde inferior: exactamente 1.5 aserciones/test → standard (no shallow)
+    borderline = evaluate_test_suite_assertion_density(total_tests=4, total_assertions=6)
+    assert borderline["assertions_per_executed_test"] == 1.5
+    assert borderline["rigor_status"] == "standard_coverage"
+
+    # skips <= 10% no degradan a excessive_skips
+    light_skips = evaluate_test_suite_assertion_density(
+        total_tests=100, total_assertions=150, skipped_tests=10
+    )
+    assert light_skips["skip_rate_pct"] == 10.0
+    assert light_skips["assertions_per_executed_test"] == round(150 / 90, 2)
+    assert light_skips["rigor_status"] == "standard_coverage"
+
+
+def test_assertion_density_excessive_skips():
+    """skip_rate > 10% → 'excessive_skips' (precedencia sobre densidad baja)."""
+    from scripts.projects_quality_safety import evaluate_test_suite_assertion_density
+
+    result = evaluate_test_suite_assertion_density(
+        total_tests=50, total_assertions=200, skipped_tests=6
+    )
+    assert result["skipped_tests"] == 6
+    assert result["executed_tests"] == 44
+    assert result["skip_rate_pct"] == 12.0
+    # Aun con 4.55 aserciones/test, el exceso de skips manda
+    assert result["assertions_per_executed_test"] == 4.55
+    assert result["rigor_status"] == "excessive_skips"
+
+
+def test_assertion_density_shallow_and_no_tests_executed():
+    """< 1.5 aserciones/test → 'shallow_assertions'; 0 ejecutados → 'no_tests_executed'."""
+    from scripts.projects_quality_safety import evaluate_test_suite_assertion_density
+
+    result = evaluate_test_suite_assertion_density(
+        total_tests=10, total_assertions=12, skipped_tests=1
+    )
+    assert result["assertions_per_executed_test"] == round(12 / 9, 2)
+    assert result["skip_rate_pct"] == 10.0  # 10% exacto NO es excessive (<=)
+    assert result["rigor_status"] == "shallow_assertions"
+
+    # Cero aserciones con tests ejecutados → shallow
+    zero = evaluate_test_suite_assertion_density(total_tests=5, total_assertions=0)
+    assert zero["assertions_per_executed_test"] == 0.0
+    assert zero["rigor_status"] == "shallow_assertions"
+
+    # 0 tests totales → no_tests_executed con métricas en 0
+    zeros = evaluate_test_suite_assertion_density(
+        total_tests=0, total_assertions=0, skipped_tests=0
+    )
+    assert zeros == {
+        "total_tests": 0,
+        "executed_tests": 0,
+        "skipped_tests": 0,
+        "total_assertions": 0,
+        "assertions_per_executed_test": 0.0,
+        "skip_rate_pct": 0.0,
+        "rigor_status": "no_tests_executed",
+    }
+
+    # Todos skipped (8/8) o exceso de skips sanitizado (99 → 3) → sin ejecuciones
+    all_skipped = evaluate_test_suite_assertion_density(
+        total_tests=8, total_assertions=40, skipped_tests=8
+    )
+    assert all_skipped["executed_tests"] == 0
+    assert all_skipped["rigor_status"] == "no_tests_executed"
+
+    over = evaluate_test_suite_assertion_density(
+        total_tests=3, total_assertions=9, skipped_tests=99
+    )
+    assert over["skipped_tests"] == 3
+    assert over["executed_tests"] == 0
+    assert over["rigor_status"] == "no_tests_executed"

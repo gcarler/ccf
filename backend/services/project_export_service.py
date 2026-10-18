@@ -27,6 +27,7 @@ __all__ = [
     "audit_pdf_export_binary",
     "summarize_executive_report_risk_posture",
     "audit_expenses_csv_financial_totals",
+    "audit_tasks_csv_schedule_completeness",
     "ProjectExportService",
 ]
 
@@ -267,6 +268,12 @@ class ProjectExportService:
             amount_column_candidates=amount_column_candidates,
         )
 
+    @staticmethod
+    def audit_tasks_csv_schedule_completeness(
+        csv_content: str | bytes | None,
+    ) -> dict[str, Any]:
+        return audit_tasks_csv_schedule_completeness(csv_content)
+
 
 def summarize_executive_report_risk_posture(report_data: Optional[dict]) -> dict:
     """Audita la postura de riesgo ejecutivo del informe (PMBOK §11.7).
@@ -460,3 +467,110 @@ def audit_expenses_csv_financial_totals(
         "reconciliation_status": reconciliation_status,
     }
 
+
+def audit_tasks_csv_schedule_completeness(
+    csv_content: str | bytes | None,
+) -> dict[str, Any]:
+    """Audita la completitud de fechas y responsables en el CSV exportado de tareas (PMI PMBOK §6.5 / §9.3)."""
+    if isinstance(csv_content, (bytes, bytearray)):
+        text = bytes(csv_content).decode("utf-8-sig", errors="replace").lstrip("\ufeff")
+    elif isinstance(csv_content, str):
+        text = csv_content.lstrip("\ufeff")
+    else:
+        text = ""
+
+    if not text.strip():
+        return {
+            "total_tasks": 0,
+            "dated_tasks_count": 0,
+            "assigned_tasks_count": 0,
+            "fully_scheduled_tasks_count": 0,
+            "unscheduled_tasks_count": 0,
+            "schedule_coverage_pct": 0.0,
+            "schedule_completeness_status": "empty_export",
+        }
+
+    rows = [
+        r
+        for r in csv.reader(io.StringIO(text))
+        if any(str(cell).strip() for cell in r)
+    ]
+    if len(rows) == 0:
+        return {
+            "total_tasks": 0,
+            "dated_tasks_count": 0,
+            "assigned_tasks_count": 0,
+            "fully_scheduled_tasks_count": 0,
+            "unscheduled_tasks_count": 0,
+            "schedule_coverage_pct": 0.0,
+            "schedule_completeness_status": "empty_export",
+        }
+
+    headers = [str(h).strip().lower() for h in rows[0]]
+    due_candidates = {"fecha límite", "fecha limite", "due_date", "vencimiento", "fin"}
+    assignee_candidates = {"responsable", "asignado", "assignee", "owner"}
+
+    due_idx: int | None = None
+    assignee_idx: int | None = None
+    for idx, h in enumerate(headers):
+        if due_idx is None and h in due_candidates:
+            due_idx = idx
+        if assignee_idx is None and h in assignee_candidates:
+            assignee_idx = idx
+
+    data_rows = rows[1:]
+    total_tasks = len(data_rows)
+    dated_tasks_count = 0
+    assigned_tasks_count = 0
+    fully_scheduled_tasks_count = 0
+
+    empty_due_tokens = {"", "-", "n/a", "sin fecha", "none"}
+    empty_assignee_tokens = {"", "-", "n/a", "sin asignar", "unassigned", "none"}
+
+    for row in data_rows:
+        has_due = False
+        if due_idx is not None and due_idx < len(row):
+            due_val = str(row[due_idx]).strip().lstrip("'").strip()
+            if due_val.lower() not in empty_due_tokens:
+                has_due = True
+
+        has_assignee = False
+        if assignee_idx is not None and assignee_idx < len(row):
+            assignee_val = str(row[assignee_idx]).strip().lstrip("'").strip()
+            if assignee_val.lower() not in empty_assignee_tokens:
+                has_assignee = True
+
+        if has_due:
+            dated_tasks_count += 1
+        if has_assignee:
+            assigned_tasks_count += 1
+        if has_due and has_assignee:
+            fully_scheduled_tasks_count += 1
+
+    schedule_coverage_pct = (
+        round((fully_scheduled_tasks_count / total_tasks) * 100.0, 2)
+        if total_tasks > 0
+        else 0.0
+    )
+    unscheduled_tasks_count = total_tasks - fully_scheduled_tasks_count
+
+    if len(rows) == 0 or total_tasks == 0:
+        schedule_completeness_status = "empty_export"
+    elif due_idx is None or assignee_idx is None:
+        schedule_completeness_status = "missing_schedule_columns"
+    elif schedule_coverage_pct == 100.0:
+        schedule_completeness_status = "fully_baselined"
+    elif schedule_coverage_pct >= 50.0:
+        schedule_completeness_status = "partial_schedule_gaps"
+    else:
+        schedule_completeness_status = "critical_unscheduled_backlog"
+
+    return {
+        "total_tasks": total_tasks,
+        "dated_tasks_count": dated_tasks_count,
+        "assigned_tasks_count": assigned_tasks_count,
+        "fully_scheduled_tasks_count": fully_scheduled_tasks_count,
+        "unscheduled_tasks_count": unscheduled_tasks_count,
+        "schedule_coverage_pct": schedule_coverage_pct,
+        "schedule_completeness_status": schedule_completeness_status,
+    }
