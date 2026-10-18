@@ -1393,5 +1393,96 @@ def test_audit_markdown_mermaid_diagrams_no_diagrams():
         }
 
 
+def test_audit_markdown_media_accessibility_governed_accessible_media():
+    """Imágenes con alt-text descriptivo y URLs seguras/relativas válidas -> GOVERNED_ACCESSIBLE_MEDIA."""
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_media_accessibility,
+    )
+
+    md = (
+        "# Arquitectura del Proyecto\n"
+        "![Diagrama de red EDT fase 1](https://cdn.ccf.org/assets/edt-fase-1.png)\n"
+        "![Curva S de valor ganado CPI SPI](/static/evm/curva-s-q3.svg)\n"
+        "```markdown\n"
+        "![img](http://insecure.example.com/broken image.png)\n"
+        "```\n"
+    )
+    res = audit_markdown_media_accessibility(md)
+    assert res == {
+        "total_images": 2,
+        "compliant_images_count": 2,
+        "missing_alt_text_urls": [],
+        "insecure_or_broken_urls": [],
+        "accessibility_rate_pct": 100.0,
+        "media_posture": "GOVERNED_ACCESSIBLE_MEDIA",
+    }
+    assert AnyDocService.audit_markdown_media_accessibility({"markdown": md}) == res
 
 
+def test_audit_markdown_media_accessibility_insecure_or_broken_links():
+    """URLs con http://, vacías o con espacios sin codificar -> INSECURE_OR_BROKEN_MEDIA_LINKS."""
+    from backend.services.anydoc_service import audit_markdown_media_accessibility
+
+    md = (
+        "![Cronograma maestro aprobado](https://cdn.ccf.org/gantt-v2.png)\n"
+        "![Topología de red insegura](http://intranet.ccf.org/topologia.png)\n"
+        "![Matriz RACI con espacios](https://cdn.ccf.org/matriz raci 2026.png)\n"
+        "![Foto]()\n"
+    )
+    res = audit_markdown_media_accessibility(md)
+    assert res["total_images"] == 4
+    assert res["compliant_images_count"] == 1
+    assert res["missing_alt_text_urls"] == ["<empty-url>"]
+    assert res["insecure_or_broken_urls"] == [
+        "http://intranet.ccf.org/topologia.png",
+        "https://cdn.ccf.org/matriz raci 2026.png",
+        "<empty-url>",
+    ]
+    assert res["accessibility_rate_pct"] == 25.0
+    assert res["media_posture"] == "INSECURE_OR_BROKEN_MEDIA_LINKS"
+
+
+def test_audit_markdown_media_accessibility_missing_accessible_alt_text():
+    """URLs válidas pero con alt-text corto (<3) o genérico (image, screenshot, foto, etc.) -> MISSING_ACCESSIBLE_ALT_TEXT."""
+    from backend.services.anydoc_service import audit_markdown_media_accessibility
+
+    md = (
+        "![Arquitectura de microservicios CCF](https://cdn.ccf.org/arch.png)\n"
+        "![Screenshot](https://cdn.ccf.org/screen1.png)\n"
+        "![ab](https://cdn.ccf.org/short-alt.png)\n"
+        "![captura](/docs/img/cap.png)\n"
+    )
+    res = audit_markdown_media_accessibility(md)
+    assert res["total_images"] == 4
+    assert res["compliant_images_count"] == 1
+    assert res["missing_alt_text_urls"] == [
+        "https://cdn.ccf.org/screen1.png",
+        "https://cdn.ccf.org/short-alt.png",
+        "/docs/img/cap.png",
+    ]
+    assert res["insecure_or_broken_urls"] == []
+    assert res["accessibility_rate_pct"] == 25.0
+    assert res["media_posture"] == "MISSING_ACCESSIBLE_ALT_TEXT"
+
+
+def test_audit_markdown_media_accessibility_no_embedded_media():
+    """Sin imágenes fuera de bloques de código cercados o entrada vacía/None -> NO_EMBEDDED_MEDIA."""
+    from backend.services.anydoc_service import audit_markdown_media_accessibility
+
+    fenced_only = (
+        "Texto con [enlace normal](https://ccf.org) sin imágenes.\n"
+        "```md\n"
+        "![Diagrama ignorado](https://ccf.org/ignored.png)\n"
+        "```\n"
+    )
+    for payload in (None, "", fenced_only):
+        res = audit_markdown_media_accessibility(payload)
+        assert res == {
+            "total_images": 0,
+            "compliant_images_count": 0,
+            "missing_alt_text_urls": [],
+            "insecure_or_broken_urls": [],
+            "accessibility_rate_pct": 0.0,
+            "media_posture": "NO_EMBEDDED_MEDIA",
+        }

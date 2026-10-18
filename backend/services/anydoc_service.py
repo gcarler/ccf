@@ -1501,6 +1501,89 @@ def audit_markdown_mermaid_diagrams(
     }
 
 
+_MARKDOWN_IMAGE_RE = re.compile(r"!\[(?P<alt>[^\]]*)\]\((?P<url>[^)]*)\)")
+_GENERIC_ALT_LABELS = {
+    "image",
+    "img",
+    "foto",
+    "screenshot",
+    "captura",
+    "picture",
+}
+
+
+def audit_markdown_media_accessibility(
+    markdown_text: Optional[str | dict[str, Any]] = None,
+) -> dict[str, Any]:
+    """Extrae y audita imágenes incrustadas ![alt](url) en documentos Markdown según PMI PMBOK §4.4 y §10.2."""
+    if isinstance(markdown_text, dict):
+        text = str(markdown_text.get("markdown") or "")
+    elif isinstance(markdown_text, str):
+        text = markdown_text
+    else:
+        text = ""
+
+    total_images = 0
+    compliant_images_count = 0
+    missing_alt_text_urls: list[str] = []
+    insecure_or_broken_urls: list[str] = []
+
+    in_fence = False
+    for line in text.splitlines():
+        if line.strip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+
+        for match in _MARKDOWN_IMAGE_RE.finditer(line):
+            total_images += 1
+            alt_clean = match.group("alt").strip()
+            url_clean = match.group("url").strip()
+            recorded_url = url_clean if url_clean else "<empty-url>"
+
+            bad_alt = (
+                len(alt_clean) < 3
+                or alt_clean.lower() in _GENERIC_ALT_LABELS
+            )
+            bad_url = (
+                not url_clean
+                or url_clean.lower().startswith("http://")
+                or any(ch.isspace() for ch in url_clean)
+            )
+
+            if bad_alt:
+                missing_alt_text_urls.append(recorded_url)
+            if bad_url:
+                insecure_or_broken_urls.append(recorded_url)
+            if not bad_alt and not bad_url:
+                compliant_images_count += 1
+
+    accessibility_rate_pct = (
+        round((compliant_images_count / total_images) * 100.0, 2)
+        if total_images > 0
+        else 0.0
+    )
+
+    if total_images == 0:
+        media_posture = "NO_EMBEDDED_MEDIA"
+    elif len(insecure_or_broken_urls) > 0:
+        media_posture = "INSECURE_OR_BROKEN_MEDIA_LINKS"
+    elif len(missing_alt_text_urls) > 0:
+        media_posture = "MISSING_ACCESSIBLE_ALT_TEXT"
+    else:
+        media_posture = "GOVERNED_ACCESSIBLE_MEDIA"
+
+    return {
+        "total_images": total_images,
+        "compliant_images_count": compliant_images_count,
+        "missing_alt_text_urls": missing_alt_text_urls,
+        "insecure_or_broken_urls": insecure_or_broken_urls,
+        "accessibility_rate_pct": accessibility_rate_pct,
+        "media_posture": media_posture,
+    }
+
+
 class AnyDocService:
     """Fachada canónica de conversión y auditoría documental AnyDoc PMI."""
 
@@ -1603,6 +1686,12 @@ class AnyDocService:
     ) -> dict[str, Any]:
         return audit_markdown_mermaid_diagrams(markdown_text)
 
+    @staticmethod
+    def audit_markdown_media_accessibility(
+        markdown_text: Optional[str | dict[str, Any]] = None,
+    ) -> dict[str, Any]:
+        return audit_markdown_media_accessibility(markdown_text)
+
 
 __all__ = [
     "ANYDOC_AVAILABLE",
@@ -1624,8 +1713,6 @@ __all__ = [
     "extract_markdown_admonition_callouts",
     "extract_markdown_glossary_definitions",
     "audit_markdown_mermaid_diagrams",
+    "audit_markdown_media_accessibility",
     "AnyDocService",
 ]
-
-
-
