@@ -3024,3 +3024,160 @@ def test_audit_executive_report_procurement_sla_and_holdbacks_empty_or_none():
             "is_procurement_sla_governed": False,
             "procurement_sla_posture": "NO_PROCUREMENT_CONTRACTS",
         }
+
+
+def test_audit_executive_report_risk_contingency_coverage_adequate():
+    """Reserva de contingencia >= EMV activo y amenazas críticas con plan de respuesta -> ADEQUATE_RISK_CONTINGENCY_COVERAGE."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_risk_contingency_coverage,
+    )
+
+    payload = {
+        "raid_kpis": {
+            "remaining_contingency_reserve": 30000.0,
+            "risks": [
+                {
+                    "id": "RSK-01",
+                    "status": "OPEN",
+                    "probability": 0.5,
+                    "monetary_impact": 30000.0,
+                    "severity": "CRITICAL",
+                    "response_plan": "Contratar proveedor de respaldo precalificado",
+                },
+                {
+                    "risk_id": "RSK-02",
+                    "status": "MITIGATING",
+                    "probability": 0.25,
+                    "monetary_impact": 20000.0,
+                    "severity": "MEDIUM",
+                    "response_plan": "",
+                },
+                {
+                    "id": "RSK-CLOSED",
+                    "status": "CLOSED",
+                    "probability": 0.9,
+                    "monetary_impact": 90000.0,
+                    "severity": "CRITICAL",
+                    "response_plan": "",
+                },
+            ],
+        }
+    }
+    res = audit_executive_report_risk_contingency_coverage(payload, min_coverage_ratio=1.0)
+    assert res == {
+        "active_threats_count": 2,
+        "total_active_emv": 20000.0,
+        "remaining_contingency_reserve": 30000.0,
+        "reserve_shortfall": 0.0,
+        "coverage_ratio": 1.5,
+        "unplanned_critical_threat_ids": [],
+        "is_contingency_adequate": True,
+        "contingency_posture": "ADEQUATE_RISK_CONTINGENCY_COVERAGE",
+    }
+    assert (
+        ProjectExportService.audit_executive_report_risk_contingency_coverage(payload)
+        == res
+    )
+
+
+def test_audit_executive_report_risk_contingency_coverage_unplanned_critical_threat():
+    """Amenaza activa con EMV >= 10000 o severity == CRITICAL sin response_plan -> UNPLANNED_CRITICAL_THREAT_EXPOSURE."""
+    from backend.services.project_export_service import (
+        audit_executive_report_risk_contingency_coverage,
+    )
+
+    res = audit_executive_report_risk_contingency_coverage(
+        {
+            "raid_kpis": {
+                "remaining_contingency_reserve": 50000.0,
+                "risks": [
+                    {
+                        "id": "RSK-EMV-HIGH",
+                        "status": "ACTIVE",
+                        "probability": 0.5,
+                        "monetary_impact": 25000.0,
+                        "severity": "HIGH",
+                        "response_plan": "   ",
+                    },
+                    {
+                        "id": "RSK-CRIT-SEV",
+                        "status": "OPEN",
+                        "probability": 0.1,
+                        "monetary_impact": 20000.0,
+                        "severity": "CRITICAL",
+                        "response_plan": "",
+                    },
+                ],
+            }
+        }
+    )
+    assert res["active_threats_count"] == 2
+    assert res["total_active_emv"] == 14500.0
+    assert res["unplanned_critical_threat_ids"] == ["RSK-EMV-HIGH", "RSK-CRIT-SEV"]
+    assert res["is_contingency_adequate"] is False
+    assert res["contingency_posture"] == "UNPLANNED_CRITICAL_THREAT_EXPOSURE"
+
+
+def test_audit_executive_report_risk_contingency_coverage_underfunded():
+    """Planes de respuesta completos pero reserva < EMV total -> CONTINGENCY_RESERVE_UNDERFUNDED."""
+    from backend.services.project_export_service import (
+        audit_executive_report_risk_contingency_coverage,
+    )
+
+    res = audit_executive_report_risk_contingency_coverage(
+        {
+            "raid_kpis": {
+                "remaining_contingency_reserve": 8000.0,
+                "risks": [
+                    {
+                        "id": "RSK-10",
+                        "status": "OPEN",
+                        "probability": 0.4,
+                        "monetary_impact": 30000.0,
+                        "severity": "CRITICAL",
+                        "response_plan": "Activar póliza y cuadrilla alterna",
+                    }
+                ],
+            }
+        },
+        min_coverage_ratio=1.0,
+    )
+    assert res == {
+        "active_threats_count": 1,
+        "total_active_emv": 12000.0,
+        "remaining_contingency_reserve": 8000.0,
+        "reserve_shortfall": 4000.0,
+        "coverage_ratio": 0.6667,
+        "unplanned_critical_threat_ids": [],
+        "is_contingency_adequate": False,
+        "contingency_posture": "CONTINGENCY_RESERVE_UNDERFUNDED",
+    }
+
+
+def test_audit_executive_report_risk_contingency_coverage_no_active_threats():
+    """Sin riesgos activos o payload vacío -> NO_ACTIVE_THREATS_REPORTED."""
+    from backend.services.project_export_service import (
+        audit_executive_report_risk_contingency_coverage,
+    )
+
+    for payload in (
+        None,
+        {},
+        {"raid_kpis": {"remaining_contingency_reserve": 5000.0, "risks": []}},
+        {
+            "raid_kpis": {
+                "remaining_contingency_reserve": 5000.0,
+                "risks": [{"id": "RSK-C", "status": "CLOSED", "probability": 0.5, "monetary_impact": 10000.0}],
+            }
+        },
+    ):
+        res = audit_executive_report_risk_contingency_coverage(payload)
+        assert res["active_threats_count"] == 0
+        assert res["total_active_emv"] == 0.0
+        assert res["reserve_shortfall"] == 0.0
+        assert res["coverage_ratio"] == 1.0
+        assert res["unplanned_critical_threat_ids"] == []
+        assert res["is_contingency_adequate"] is False
+        assert res["contingency_posture"] == "NO_ACTIVE_THREATS_REPORTED"
+

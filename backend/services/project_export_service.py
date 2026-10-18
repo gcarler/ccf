@@ -2585,6 +2585,76 @@ def audit_executive_report_distribution_cadence(
     }
 
 
+def audit_executive_report_risk_contingency_coverage(
+    report_payload: dict[str, Any] | None = None,
+    min_coverage_ratio: float = 1.0,
+) -> dict[str, Any]:
+    """Audita la suficiencia de reserva de contingencia frente a la exposición EMV de riesgos activos en el reporte ejecutivo según PMI PMBOK §11.6 y §11.7."""
+    payload = report_payload if isinstance(report_payload, dict) else {}
+    raw_raid = payload.get("raid_kpis")
+    raid = raw_raid if isinstance(raw_raid, dict) else {}
+
+    remaining_reserve = max(0.0, float(raid.get("remaining_contingency_reserve") or 0.0))
+    risks = raid.get("risks") if isinstance(raid.get("risks"), list) else []
+
+    active_threats_count = 0
+    total_active_emv = 0.0
+    unplanned_critical_threat_ids: list[str] = []
+
+    for r in risks:
+        if not isinstance(r, dict):
+            continue
+        risk_id = str(r.get("id") or r.get("risk_id") or "").strip()
+        if not risk_id:
+            continue
+        status = str(r.get("status") or "OPEN").strip().upper()
+        if status not in {"OPEN", "ACTIVE", "MITIGATING"}:
+            continue
+
+        active_threats_count += 1
+        prob = max(0.0, min(1.0, float(r.get("probability") or 0.0)))
+        impact = max(0.0, float(r.get("monetary_impact") or 0.0))
+        emv = prob * impact
+        total_active_emv += emv
+
+        severity = str(r.get("severity") or "").strip().upper()
+        response_plan = str(r.get("response_plan") or "").strip()
+        if (emv >= 10000.0 or severity == "CRITICAL") and not response_plan:
+            unplanned_critical_threat_ids.append(risk_id)
+
+    coverage_ratio = (
+        round(remaining_reserve / total_active_emv, 4)
+        if total_active_emv > 1e-6
+        else (1.0 if remaining_reserve >= 0.0 else 0.0)
+    )
+    reserve_shortfall = round(max(0.0, total_active_emv - remaining_reserve), 2)
+    is_contingency_adequate = bool(
+        active_threats_count > 0
+        and len(unplanned_critical_threat_ids) == 0
+        and coverage_ratio + 1e-6 >= float(min_coverage_ratio)
+    )
+
+    if active_threats_count == 0:
+        contingency_posture = "NO_ACTIVE_THREATS_REPORTED"
+    elif len(unplanned_critical_threat_ids) > 0:
+        contingency_posture = "UNPLANNED_CRITICAL_THREAT_EXPOSURE"
+    elif coverage_ratio + 1e-6 < float(min_coverage_ratio):
+        contingency_posture = "CONTINGENCY_RESERVE_UNDERFUNDED"
+    else:
+        contingency_posture = "ADEQUATE_RISK_CONTINGENCY_COVERAGE"
+
+    return {
+        "active_threats_count": active_threats_count,
+        "total_active_emv": round(total_active_emv, 2),
+        "remaining_contingency_reserve": round(remaining_reserve, 2),
+        "reserve_shortfall": reserve_shortfall,
+        "coverage_ratio": coverage_ratio,
+        "unplanned_critical_threat_ids": unplanned_critical_threat_ids,
+        "is_contingency_adequate": is_contingency_adequate,
+        "contingency_posture": contingency_posture,
+    }
+
+
 ProjectExportService.audit_executive_report_risk_burndown = staticmethod(
     audit_executive_report_risk_burndown
 )
@@ -2599,6 +2669,9 @@ ProjectExportService.audit_executive_report_closure_readiness = staticmethod(
 )
 ProjectExportService.audit_executive_report_distribution_cadence = staticmethod(
     audit_executive_report_distribution_cadence
+)
+ProjectExportService.audit_executive_report_risk_contingency_coverage = staticmethod(
+    audit_executive_report_risk_contingency_coverage
 )
 
 
@@ -2629,5 +2702,7 @@ __all__ = [
     "audit_executive_report_resource_spof_and_utilization",
     "audit_executive_report_closure_readiness",
     "audit_executive_report_distribution_cadence",
+    "audit_executive_report_risk_contingency_coverage",
     "ProjectExportService",
 ]
+

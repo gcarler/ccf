@@ -1403,7 +1403,7 @@ def test_audit_wiki_raid_register_tables_no_raid_rows():
         assert res["raid_table_posture"] == "NO_RAID_TABLE_ROWS"
 
 
-def test_audit_wiki_meeting_minutes_governance_governed_minutes():
+def test_audit_wiki_meeting_minutes_markdown_governed_minutes():
     """>= 2 asistentes, agenda, decisiones y todas las acciones abiertas con @usuario -> 'GOVERNED_MEETING_MINUTES'."""
     import backend.services.wiki_pmi_service as wiki_module
     from backend.services.wiki_pmi_service import (
@@ -1440,7 +1440,7 @@ def test_audit_wiki_meeting_minutes_governance_governed_minutes():
     assert "audit_wiki_meeting_minutes_governance" in wiki_module.__all__
 
 
-def test_audit_wiki_meeting_minutes_governance_unassigned_actions():
+def test_audit_wiki_meeting_minutes_markdown_unassigned_actions():
     """Acciones abiertas (- [ ]) sin mención @usuario -> 'UNASSIGNED_ACTION_ITEMS'."""
     from backend.services.wiki_pmi_service import audit_wiki_meeting_minutes_governance
 
@@ -1466,7 +1466,7 @@ def test_audit_wiki_meeting_minutes_governance_unassigned_actions():
     assert res["minutes_posture"] == "UNASSIGNED_ACTION_ITEMS"
 
 
-def test_audit_wiki_meeting_minutes_governance_incomplete_structure():
+def test_audit_wiki_meeting_minutes_markdown_incomplete_structure():
     """Sin acciones huérfanas pero falta decisiones o quórum < 2 -> 'INCOMPLETE_MINUTES_STRUCTURE'."""
     from backend.services.wiki_pmi_service import audit_wiki_meeting_minutes_governance
 
@@ -1487,7 +1487,7 @@ def test_audit_wiki_meeting_minutes_governance_incomplete_structure():
     assert len(res["recommendations"]) >= 2
 
 
-def test_audit_wiki_meeting_minutes_governance_not_a_meeting_minute():
+def test_audit_wiki_meeting_minutes_markdown_not_a_meeting_minute():
     """Sin fechas, sin menciones @usuario y sin sección de agenda (o solo en bloque ```) -> 'NOT_A_MEETING_MINUTE'."""
     from backend.services.wiki_pmi_service import audit_wiki_meeting_minutes_governance
 
@@ -1500,7 +1500,7 @@ def test_audit_wiki_meeting_minutes_governance_not_a_meeting_minute():
         "Documento técnico descriptivo sin actas.\n"
     )
 
-    for payload in (None, "", fenced_only):
+    for payload in ("", "   ", fenced_only):
         res = audit_wiki_meeting_minutes_governance(payload)
         assert res["attendees_mentions"] == []
         assert res["detected_dates"] == []
@@ -2471,3 +2471,134 @@ def test_audit_wiki_operational_runbook_readiness_empty_or_none():
             "is_runbook_suite_ready": False,
             "runbook_posture": "NO_OPERATIONAL_RUNBOOKS",
         }
+
+
+def test_audit_wiki_meeting_minutes_governance_governed():
+    """Actas con quórum >= 75%, decisiones/summary y compromisos con owner_id y due_date -> GOVERNED_MEETING_MINUTES."""
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_meeting_minutes_governance,
+    )
+
+    meetings = [
+        {
+            "id": "MTG-01",
+            "invited_count": 8,
+            "attended_count": 6,
+            "summary": "Revisión semanal de cronograma y riesgos",
+            "decisions": ["Aprobar CR-12"],
+            "action_items": [
+                {"owner_id": "USR-1", "due_date": "2026-10-25"},
+                {"owner_id": "USR-2", "due_date": "2026-10-30"},
+            ],
+        },
+        {
+            "meeting_id": "MTG-02",
+            "invited_count": 4,
+            "attended_count": 4,
+            "summary": "",
+            "decisions": ["Congelar alcance de sprint"],
+            "action_items": [],
+        },
+    ]
+    res = audit_wiki_meeting_minutes_governance(meetings, min_attendance_rate_pct=75.0)
+    assert res == {
+        "total_meetings": 2,
+        "low_quorum_meeting_ids": [],
+        "undocumented_outcome_meeting_ids": [],
+        "unassigned_action_item_meeting_ids": [],
+        "is_meeting_governance_valid": True,
+        "meeting_posture": "GOVERNED_MEETING_MINUTES",
+    }
+    assert (
+        WikiPMIService.audit_wiki_meeting_minutes_governance(
+            meetings, min_attendance_rate_pct=75.0
+        )
+        == res
+    )
+
+
+def test_audit_wiki_meeting_minutes_governance_unassigned_action_items():
+    """Compromisos sin owner_id o sin due_date -> UNASSIGNED_MEETING_ACTION_ITEMS."""
+    from backend.services.wiki_pmi_service import audit_wiki_meeting_minutes_governance
+
+    res = audit_wiki_meeting_minutes_governance(
+        [
+            {
+                "id": "MTG-AI-1",
+                "invited_count": 5,
+                "attended_count": 5,
+                "summary": "Minuta con compromiso sin responsable",
+                "action_items": [{"owner_id": "", "due_date": "2026-11-01"}],
+            },
+            {
+                "id": "MTG-AI-2",
+                "invited_count": 4,
+                "attended_count": 4,
+                "summary": "Minuta con compromiso sin fecha",
+                "action_items": [{"owner_id": "USR-9", "due_date": "   "}],
+            },
+        ]
+    )
+    assert res["total_meetings"] == 2
+    assert res["unassigned_action_item_meeting_ids"] == ["MTG-AI-1", "MTG-AI-2"]
+    assert res["is_meeting_governance_valid"] is False
+    assert res["meeting_posture"] == "UNASSIGNED_MEETING_ACTION_ITEMS"
+
+
+def test_audit_wiki_meeting_minutes_governance_undocumented_outcome_and_low_quorum():
+    """Sin summary ni decisiones -> UNDOCUMENTED_MEETING_OUTCOMES; quórum bajo -> INSUFFICIENT_MEETING_QUORUM."""
+    from backend.services.wiki_pmi_service import audit_wiki_meeting_minutes_governance
+
+    res_undoc = audit_wiki_meeting_minutes_governance(
+        [
+            {
+                "id": "MTG-EMPTY",
+                "invited_count": 6,
+                "attended_count": 5,
+                "summary": "   ",
+                "decisions": [],
+            }
+        ]
+    )
+    assert res_undoc["undocumented_outcome_meeting_ids"] == ["MTG-EMPTY"]
+    assert res_undoc["is_meeting_governance_valid"] is False
+    assert res_undoc["meeting_posture"] == "UNDOCUMENTED_MEETING_OUTCOMES"
+
+    res_quorum = audit_wiki_meeting_minutes_governance(
+        [
+            {
+                "id": "MTG-LOW-Q",
+                "invited_count": 10,
+                "attended_count": 5,
+                "summary": "Sesión con baja asistencia",
+            },
+            {
+                "id": "MTG-ZERO-INV",
+                "invited_count": 0,
+                "attended_count": 0,
+                "summary": "Sesión sin convocados registrados",
+            },
+        ],
+        min_attendance_rate_pct=75.0,
+    )
+    assert res_quorum["low_quorum_meeting_ids"] == ["MTG-LOW-Q", "MTG-ZERO-INV"]
+    assert res_quorum["is_meeting_governance_valid"] is False
+    assert res_quorum["meeting_posture"] == "INSUFFICIENT_MEETING_QUORUM"
+
+
+def test_audit_wiki_meeting_minutes_governance_no_meetings():
+    """Lista vacía, None o registros sin id -> NO_MEETING_MINUTES."""
+    from backend.services.wiki_pmi_service import audit_wiki_meeting_minutes_governance
+
+    for payload in (None, [], [{"id": ""}]):
+        res = audit_wiki_meeting_minutes_governance(payload)
+        assert res == {
+            "total_meetings": 0,
+            "low_quorum_meeting_ids": [],
+            "undocumented_outcome_meeting_ids": [],
+            "unassigned_action_item_meeting_ids": [],
+            "is_meeting_governance_valid": False,
+            "meeting_posture": "NO_MEETING_MINUTES",
+        }
+

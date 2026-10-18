@@ -911,10 +911,10 @@ def audit_wiki_raid_register_tables(
     }
 
 
-def audit_wiki_meeting_minutes_governance(
+def _audit_wiki_meeting_minutes_markdown(
     markdown_text: Optional[str],
 ) -> dict[str, Any]:
-    """Audita actas de reunión (Meeting Minutes) y seguimiento de acciones en Wiki Markdown según PMI PMBOK §10.2 y §4.3."""
+    """Audita el contenido Markdown individual de un acta de reunión (Meeting Minutes) según PMI PMBOK §10.2 y §4.3."""
     text = markdown_text if isinstance(markdown_text, str) else ""
 
     mention_re = re.compile(r"(?<!\w)@([a-zA-Z0-9_.-]+)")
@@ -1029,6 +1029,82 @@ def audit_wiki_meeting_minutes_governance(
         "unassigned_open_actions": unassigned_open_actions,
         "minutes_posture": minutes_posture,
         "recommendations": recommendations,
+    }
+
+
+def audit_wiki_meeting_minutes_governance(
+    meetings: list[dict[str, Any]] | str | None = None,
+    min_attendance_rate_pct: float = 75.0,
+) -> dict[str, Any]:
+    """Audita la gobernanza de actas de reunión (Meeting Minutes), quórum, decisiones y compromisos según PMI PMBOK §10.2 y §4.4."""
+    if isinstance(meetings, str):
+        return _audit_wiki_meeting_minutes_markdown(meetings)
+
+    total_meetings = 0
+    low_quorum_meeting_ids: list[str] = []
+    undocumented_outcome_meeting_ids: list[str] = []
+    unassigned_action_item_meeting_ids: list[str] = []
+
+    for item in meetings or []:
+        if not isinstance(item, dict):
+            continue
+        meeting_id = str(item.get("id") or item.get("meeting_id") or "").strip()
+        if not meeting_id:
+            continue
+
+        invited = max(0, int(item.get("invited_count") or 0))
+        attended = max(0, int(item.get("attended_count") or 0))
+        summary = str(item.get("summary") or "").strip()
+        decisions = item.get("decisions") if isinstance(item.get("decisions"), list) else []
+        action_items = (
+            item.get("action_items") if isinstance(item.get("action_items"), list) else []
+        )
+
+        total_meetings += 1
+        att_rate = (attended / invited) * 100.0 if invited > 0 else 0.0
+
+        if invited <= 0 or att_rate + 1e-6 < float(min_attendance_rate_pct):
+            low_quorum_meeting_ids.append(meeting_id)
+
+        if not summary and len(decisions) == 0:
+            undocumented_outcome_meeting_ids.append(meeting_id)
+
+        has_unassigned_ai = any(
+            isinstance(ai, dict)
+            and (
+                not str(ai.get("owner_id") or "").strip()
+                or not str(ai.get("due_date") or "").strip()
+            )
+            for ai in action_items
+        )
+        if has_unassigned_ai:
+            unassigned_action_item_meeting_ids.append(meeting_id)
+
+    is_meeting_governance_valid = bool(
+        total_meetings > 0
+        and len(low_quorum_meeting_ids) == 0
+        and len(undocumented_outcome_meeting_ids) == 0
+        and len(unassigned_action_item_meeting_ids) == 0
+    )
+
+    if total_meetings == 0:
+        meeting_posture = "NO_MEETING_MINUTES"
+    elif len(unassigned_action_item_meeting_ids) > 0:
+        meeting_posture = "UNASSIGNED_MEETING_ACTION_ITEMS"
+    elif len(undocumented_outcome_meeting_ids) > 0:
+        meeting_posture = "UNDOCUMENTED_MEETING_OUTCOMES"
+    elif len(low_quorum_meeting_ids) > 0:
+        meeting_posture = "INSUFFICIENT_MEETING_QUORUM"
+    else:
+        meeting_posture = "GOVERNED_MEETING_MINUTES"
+
+    return {
+        "total_meetings": total_meetings,
+        "low_quorum_meeting_ids": low_quorum_meeting_ids,
+        "undocumented_outcome_meeting_ids": undocumented_outcome_meeting_ids,
+        "unassigned_action_item_meeting_ids": unassigned_action_item_meeting_ids,
+        "is_meeting_governance_valid": is_meeting_governance_valid,
+        "meeting_posture": meeting_posture,
     }
 
 
@@ -1894,9 +1970,12 @@ class WikiPMIService:
 
     @staticmethod
     def audit_wiki_meeting_minutes_governance(
-        markdown_text: Optional[str],
+        meetings: list[dict[str, Any]] | str | None = None,
+        min_attendance_rate_pct: float = 75.0,
     ) -> dict[str, Any]:
-        return audit_wiki_meeting_minutes_governance(markdown_text)
+        return audit_wiki_meeting_minutes_governance(
+            meetings, min_attendance_rate_pct=min_attendance_rate_pct
+        )
 
     @staticmethod
     def audit_wiki_postmortem_incident_rca(
