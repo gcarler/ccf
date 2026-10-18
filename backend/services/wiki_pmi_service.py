@@ -1255,6 +1255,98 @@ def audit_wiki_postmortem_incident_rca(
     }
 
 
+def audit_wiki_lessons_learned_taxonomy(
+    entries: Optional[List[Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
+    """Audita el registro de lecciones aprendidas y su taxonomía accionable (PMBOK §4.4).
+
+    Cada entrada declara `id`/`entry_id`/`lesson_id` (fallback 'LL-{idx}'),
+    categoría/dominio (`category`/`domain`/`knowledge_area`, normalizada sin
+    acentos), contexto (`situation`/`context`/`description`, >= 10 chars) y
+    recomendación (`recommendation`/`actionable_advice`/`leccion`, >= 10 chars):
+    - `actionable_entries_count` / `actionable_rate_pct` (2 decimales; 0.0 sin entradas).
+    - `uncategorized_entry_ids` / `shallow_context_entry_ids` /
+      `missing_recommendation_entry_ids`: entradas deficientes por pilar.
+    - `is_compliant`: las 3 listas de faltantes vacías.
+    - `lessons_posture`: 'NO_LESSONS_RECORDED' sin entradas;
+      'MISSING_ACTIONABLE_RECOMMENDATIONS'; 'UNCATEGORIZED_KNOWLEDGE_ENTRIES';
+      'SHALLOW_LESSON_CONTEXT'; 'INSTITUTIONALIZED_LESSONS_LEARNED'.
+    """
+    INVALID_CATEGORY_TOKENS = {"tbd", "n/a", "na", "unknown", "none", "sin categoria"}
+    valid_entries = [e for e in (entries or []) if isinstance(e, dict)]
+    total_entries = len(valid_entries)
+    if total_entries == 0:
+        return {
+            "total_entries": 0,
+            "actionable_entries_count": 0,
+            "actionable_rate_pct": 0.0,
+            "uncategorized_entry_ids": [],
+            "shallow_context_entry_ids": [],
+            "missing_recommendation_entry_ids": [],
+            "is_compliant": True,
+            "lessons_posture": "NO_LESSONS_RECORDED",
+        }
+
+    uncategorized_entry_ids: List[str] = []
+    shallow_context_entry_ids: List[str] = []
+    missing_recommendation_entry_ids: List[str] = []
+    actionable_entries_count = 0
+
+    for idx, item in enumerate(valid_entries, start=1):
+        entry_id = str(
+            item.get("id") or item.get("entry_id") or item.get("lesson_id") or ""
+        ).strip() or f"LL-{idx}"
+        cat = str(
+            item.get("category") or item.get("domain") or item.get("knowledge_area") or ""
+        ).strip()
+        cat_norm = unicodedata.normalize("NFKD", cat).encode("ascii", "ignore").decode("ascii").lower()
+        has_cat = bool(cat_norm and cat_norm not in INVALID_CATEGORY_TOKENS)
+        ctx = str(
+            item.get("situation") or item.get("context") or item.get("description") or ""
+        ).strip()
+        has_ctx = len(ctx) >= 10
+        rec = str(
+            item.get("recommendation") or item.get("actionable_advice") or item.get("leccion") or ""
+        ).strip()
+        has_rec = len(rec) >= 10
+
+        if not has_cat:
+            uncategorized_entry_ids.append(entry_id)
+        if not has_ctx:
+            shallow_context_entry_ids.append(entry_id)
+        if not has_rec:
+            missing_recommendation_entry_ids.append(entry_id)
+        if has_cat and has_ctx and has_rec:
+            actionable_entries_count += 1
+
+    actionable_rate_pct = round((actionable_entries_count / total_entries) * 100.0, 2)
+    is_compliant = bool(
+        not uncategorized_entry_ids
+        and not shallow_context_entry_ids
+        and not missing_recommendation_entry_ids
+    )
+
+    if missing_recommendation_entry_ids:
+        lessons_posture = "MISSING_ACTIONABLE_RECOMMENDATIONS"
+    elif uncategorized_entry_ids:
+        lessons_posture = "UNCATEGORIZED_KNOWLEDGE_ENTRIES"
+    elif shallow_context_entry_ids:
+        lessons_posture = "SHALLOW_LESSON_CONTEXT"
+    else:
+        lessons_posture = "INSTITUTIONALIZED_LESSONS_LEARNED"
+
+    return {
+        "total_entries": total_entries,
+        "actionable_entries_count": actionable_entries_count,
+        "actionable_rate_pct": actionable_rate_pct,
+        "uncategorized_entry_ids": uncategorized_entry_ids,
+        "shallow_context_entry_ids": shallow_context_entry_ids,
+        "missing_recommendation_entry_ids": missing_recommendation_entry_ids,
+        "is_compliant": is_compliant,
+        "lessons_posture": lessons_posture,
+    }
+
+
 class WikiPMIService:
     """Fachada canónica de doctrina y gobernanza documental Wiki PMI."""
 
@@ -1365,6 +1457,12 @@ class WikiPMIService:
         pages: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
         return audit_wiki_postmortem_incident_rca(pages)
+
+    @staticmethod
+    def audit_wiki_lessons_learned_taxonomy(
+        entries: Optional[List[Dict[str, Any]]] = None,
+    ) -> Dict[str, Any]:
+        return audit_wiki_lessons_learned_taxonomy(entries)
 
     @staticmethod
     def audit_wiki_operational_runbook_readiness(

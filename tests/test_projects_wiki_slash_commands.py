@@ -1514,3 +1514,123 @@ def test_audit_wiki_meeting_minutes_governance_not_a_meeting_minute():
 
 
 
+
+
+def test_audit_wiki_lessons_learned_taxonomy_institutionalized():
+    """Categoría con acento válida, entradas completas -> 100% accionable."""
+    from backend.services.wiki_pmi_service import audit_wiki_lessons_learned_taxonomy
+
+    res = audit_wiki_lessons_learned_taxonomy(
+        [
+            {
+                "id": "LL-1",
+                "category": "Comunicación",
+                "situation": "Retraso por minutas sin responsable definido",
+                "recommendation": "Designar responsable de minutas en cada reunión",
+            },
+            {
+                "entry_id": "LL-2",
+                "domain": "Riesgos",
+                "context": "Sin enlaces de respaldo ni interventores asignados",
+                "actionable_advice": "Implementar log de seguimiento nocturno periódico",
+            },
+            {
+                "lesson_id": "LL-3",
+                "knowledge_area": "Evaluación",
+                "description": "Cobertura de evangelismo insuficiente en sede",
+                "leccion": "Contratar intenarios adicionales para la sede",
+            },
+        ]
+    )
+    assert res["total_entries"] == 3
+    assert res["actionable_entries_count"] == 3
+    assert res["actionable_rate_pct"] == 100.0
+    assert res["uncategorized_entry_ids"] == []
+    assert res["shallow_context_entry_ids"] == []
+    assert res["missing_recommendation_entry_ids"] == []
+    assert res["is_compliant"] is True
+    assert res["lessons_posture"] == "INSTITUTIONALIZED_LESSONS_LEARNED"
+
+
+def test_audit_wiki_lessons_learned_taxonomy_missing_recommendation():
+    """Sin recomendación >= 10 chars -> MISSING_ACTIONABLE_RECOMMENDATIONS (precedencia)."""
+    from backend.services.wiki_pmi_service import audit_wiki_lessons_learned_taxonomy
+
+    res = audit_wiki_lessons_learned_taxonomy(
+        [
+            {
+                "id": "LL-OK",
+                "category": "Alcance",
+                "context": "Crecimiento sin CR aprobada documentado",
+                "recommendation": "Establecer CCB obligatorio antes de cambios",
+            },
+            {
+                "id": "LL-NO-REC",
+                "category": "Riesgos",
+                "context": "Riesgo sin plan de contingencia identificado",
+                "recommendation": "corto",
+            },
+        ]
+    )
+    assert res["total_entries"] == 2
+    assert res["actionable_entries_count"] == 1
+    assert res["actionable_rate_pct"] == 50.0
+    assert res["missing_recommendation_entry_ids"] == ["LL-NO-REC"]
+    assert res["is_compliant"] is False
+    assert res["lessons_posture"] == "MISSING_ACTIONABLE_RECOMMENDATIONS"
+
+
+def test_audit_wiki_lessons_learned_taxonomy_uncategorized_and_shallow():
+    """Sin categoría válida o contexto < 10 chars marca por pilar con precedencia."""
+    from backend.services.wiki_pmi_service import audit_wiki_lessons_learned_taxonomy
+
+    res = audit_wiki_lessons_learned_taxonomy(
+        [
+            {
+                "id": "LL-7",
+                "category": "TBD",
+                "description": "Flujo de aprobación ambiguo en comisiones",
+                "recommendation": "Documentar flujo y publicarlo en la Wiki",
+            },
+            {
+                "id": "LL-8",
+                "domain": "Calidad",
+                "description": "corto",
+                "recommendation": "Crear checklist DoD obligatorio por entregable",
+            },
+            {
+                "id": "LL-9",
+                "knowledge_area": "N/A",
+                "context": "Detección tardía de defectos en despliegues",
+                "leccion": "Introducir revisión pares antes del merge",
+            },
+        ]
+    )
+    assert res["total_entries"] == 3
+    assert res["actionable_entries_count"] == 0
+    assert res["actionable_rate_pct"] == 0.0
+    # LL-7 TBD y LL-9 N/A sin categoría; LL-8 con contexto < 10 chars.
+    assert res["uncategorized_entry_ids"] == ["LL-7", "LL-9"]
+    assert res["shallow_context_entry_ids"] == ["LL-8"]
+    assert res["missing_recommendation_entry_ids"] == []
+    assert res["is_compliant"] is False
+    # Precedencia: unanswered category sobre shallow context.
+    assert res["lessons_posture"] == "UNCATEGORIZED_KNOWLEDGE_ENTRIES"
+
+
+def test_audit_wiki_lessons_learned_taxonomy_empty_or_none():
+    """None, lista vacía o sin entradas dict -> NO_LESSONS_RECORDED."""
+    from backend.services.wiki_pmi_service import audit_wiki_lessons_learned_taxonomy
+
+    for payload in (None, [], ["invalid", 42, None]):
+        res = audit_wiki_lessons_learned_taxonomy(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_entries": 0,
+            "actionable_entries_count": 0,
+            "actionable_rate_pct": 0.0,
+            "uncategorized_entry_ids": [],
+            "shallow_context_entry_ids": [],
+            "missing_recommendation_entry_ids": [],
+            "is_compliant": True,
+            "lessons_posture": "NO_LESSONS_RECORDED",
+        }
