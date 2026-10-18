@@ -5493,6 +5493,7 @@ __all__ = [
     "evaluate_evm_apportioned_effort_base_coherence",
     "evaluate_evm_retroactive_adjustment_and_negative_period_anomalies",
     "evaluate_evm_contract_budget_base_and_ub_reconciliation",
+    "evaluate_evm_etc_bottom_up_vs_formulaic_divergence",
     "ProjectEVMService",
 ]
 
@@ -6308,4 +6309,96 @@ def evaluate_evm_contract_budget_base_and_ub_reconciliation(
 
 ProjectEVMService.evaluate_evm_contract_budget_base_and_ub_reconciliation = staticmethod(
     evaluate_evm_contract_budget_base_and_ub_reconciliation
+)
+
+
+def evaluate_evm_etc_bottom_up_vs_formulaic_divergence(
+    control_account_forecasts: list[dict[str, object]],
+    *,
+    max_optimistic_divergence_pct: float = 15.0,
+) -> dict[str, object]:
+    """Evalúa la divergencia entre el Estimate to Complete (ETC) bottom-up y el ETC formulado típico ((BAC - EV) / CPI), exigiendo Basis of Estimate (BOE) ante optimismo excesivo y detectando recuperaciones irrealistas con CPI < 0.85 según PMI PMBOK §7.4."""
+    try:
+        max_div_pct = float(max_optimistic_divergence_pct)
+    except (TypeError, ValueError):
+        max_div_pct = 15.0
+
+    total_control_accounts = 0
+    invalid_forecast_metric_ca_ids: list[str] = []
+    optimistic_etc_divergence_ca_ids: list[str] = []
+    unjustified_optimistic_etc_ca_ids: list[str] = []
+    unrealistic_recovery_etc_ca_ids: list[str] = []
+
+    if isinstance(control_account_forecasts, Sequence) and not isinstance(
+        control_account_forecasts, (str, bytes, bytearray)
+    ):
+        for item in control_account_forecasts:
+            if not isinstance(item, Mapping):
+                continue
+            ca_id = str(item.get("ca_id") or item.get("id") or "").strip()
+            if not ca_id:
+                continue
+
+            total_control_accounts += 1
+
+            def _metric(key: str, default: float = -1.0) -> float:
+                raw = item.get(key)
+                if raw is None or isinstance(raw, bool):
+                    return default
+                try:
+                    return float(raw)
+                except (TypeError, ValueError):
+                    return default
+
+            bac = _metric("bac", -1.0)
+            ev = _metric("ev", -1.0)
+            ac = _metric("ac", -1.0)
+            bottom_up_etc = _metric("bottom_up_etc", -1.0)
+            boe_documented = bool(item.get("basis_of_estimate_documented", False))
+
+            if (
+                bac <= 0.0
+                or ev < 0.0
+                or ac < 0.0
+                or bottom_up_etc < 0.0
+                or ev > bac
+            ):
+                invalid_forecast_metric_ca_ids.append(ca_id)
+                continue
+
+            remaining_work = bac - ev
+            if remaining_work > 0.0:
+                cpi = (ev / ac) if ac > 0.0 else 1.0
+                typical_etc = (
+                    (remaining_work / cpi) if cpi > 0.0 else remaining_work
+                )
+                if typical_etc > 0.0:
+                    optimistic_delta_pct = round(
+                        ((typical_etc - bottom_up_etc) / typical_etc) * 100.0,
+                        2,
+                    )
+                    if optimistic_delta_pct > max_div_pct:
+                        optimistic_etc_divergence_ca_ids.append(ca_id)
+                        if not boe_documented:
+                            unjustified_optimistic_etc_ca_ids.append(ca_id)
+
+                if cpi < 0.85 and bottom_up_etc < remaining_work:
+                    unrealistic_recovery_etc_ca_ids.append(ca_id)
+
+    return {
+        "total_control_accounts": total_control_accounts,
+        "invalid_forecast_metric_ca_ids": invalid_forecast_metric_ca_ids,
+        "optimistic_etc_divergence_ca_ids": optimistic_etc_divergence_ca_ids,
+        "unjustified_optimistic_etc_ca_ids": unjustified_optimistic_etc_ca_ids,
+        "unrealistic_recovery_etc_ca_ids": unrealistic_recovery_etc_ca_ids,
+        "is_etc_forecast_credible": (
+            len(invalid_forecast_metric_ca_ids) == 0
+            and len(unjustified_optimistic_etc_ca_ids) == 0
+            and len(unrealistic_recovery_etc_ca_ids) == 0
+        ),
+    }
+
+
+ProjectEVMService.evaluate_evm_etc_bottom_up_vs_formulaic_divergence = staticmethod(
+    evaluate_evm_etc_bottom_up_vs_formulaic_divergence
 )

@@ -2501,6 +2501,7 @@ __all__ = [
     "audit_wiki_opa_template_versioning_governance",
     "audit_wiki_onboarding_and_kt_handover_readiness",
     "audit_wiki_vendor_sla_and_penalty_clause_governance",
+    "audit_wiki_cost_of_quality_prevention_vs_failure_balance",
     "WikiPMIService",
 ]
 
@@ -3549,4 +3550,112 @@ def audit_wiki_assumption_and_constraint_log_governance(
 
 WikiPMIService.audit_wiki_assumption_and_constraint_log_governance = staticmethod(
     audit_wiki_assumption_and_constraint_log_governance
+)
+
+
+def audit_wiki_cost_of_quality_prevention_vs_failure_balance(
+    quality_ledger_items: list[dict[str, object]],
+    *,
+    min_conformance_share_pct: float = 65.0,
+    max_external_failure_share_pct: float = 10.0,
+) -> dict[str, object]:
+    """Audita el balance del Costo de la Calidad (CoQ: prevención y evaluación vs fallas internas y externas) y la vinculación de acciones correctivas según PMI PMBOK §8.1 y §8.2."""
+    valid_categories = {
+        "prevention",
+        "appraisal",
+        "internal_failure",
+        "external_failure",
+    }
+
+    try:
+        min_conf_pct = float(min_conformance_share_pct)
+    except (TypeError, ValueError):
+        min_conf_pct = 65.0
+
+    try:
+        max_ext_fail_pct = float(max_external_failure_share_pct)
+    except (TypeError, ValueError):
+        max_ext_fail_pct = 10.0
+
+    conformance_cost = 0.0
+    nonconformance_cost = 0.0
+    external_failure_cost = 0.0
+    invalid_category_or_amount_ids: list[str] = []
+    unlinked_failure_cost_ids: list[str] = []
+
+    if isinstance(quality_ledger_items, Sequence) and not isinstance(
+        quality_ledger_items, (str, bytes, bytearray)
+    ):
+        for item in quality_ledger_items:
+            if not isinstance(item, Mapping):
+                continue
+            item_id = str(item.get("item_id") or item.get("id") or "").strip()
+            if not item_id:
+                continue
+
+            coq_category = (
+                str(item.get("coq_category") or "").strip().lower()
+            )
+            raw_amount = item.get("amount")
+            if raw_amount is None or isinstance(raw_amount, bool):
+                amount = -1.0
+            else:
+                try:
+                    amount = float(raw_amount)
+                except (TypeError, ValueError):
+                    amount = -1.0
+
+            if coq_category not in valid_categories or amount < 0.0:
+                invalid_category_or_amount_ids.append(item_id)
+                continue
+
+            corrective_action_linked = bool(
+                item.get("corrective_action_linked", False)
+            )
+            if coq_category in {"prevention", "appraisal"}:
+                conformance_cost += amount
+            else:
+                nonconformance_cost += amount
+                if coq_category == "external_failure":
+                    external_failure_cost += amount
+                if amount > 0.0 and not corrective_action_linked:
+                    unlinked_failure_cost_ids.append(item_id)
+
+    total_coq = round(conformance_cost + nonconformance_cost, 2)
+    conformance_share_pct = (
+        round((conformance_cost / total_coq) * 100.0, 2)
+        if total_coq > 0.0
+        else 100.0
+    )
+    external_failure_share_pct = (
+        round((external_failure_cost / total_coq) * 100.0, 2)
+        if total_coq > 0.0
+        else 0.0
+    )
+    below_conformance_investment_threshold = (
+        total_coq > 0.0 and conformance_share_pct < min_conf_pct
+    )
+    exceeds_external_failure_cap = (
+        total_coq > 0.0 and external_failure_share_pct > max_ext_fail_pct
+    )
+
+    return {
+        "total_coq": total_coq,
+        "conformance_share_pct": conformance_share_pct,
+        "external_failure_share_pct": external_failure_share_pct,
+        "below_conformance_investment_threshold": below_conformance_investment_threshold,
+        "exceeds_external_failure_cap": exceeds_external_failure_cap,
+        "invalid_category_or_amount_ids": invalid_category_or_amount_ids,
+        "unlinked_failure_cost_ids": unlinked_failure_cost_ids,
+        "is_coq_balance_compliant": (
+            len(invalid_category_or_amount_ids) == 0
+            and len(unlinked_failure_cost_ids) == 0
+            and not below_conformance_investment_threshold
+            and not exceeds_external_failure_cap
+        ),
+    }
+
+
+WikiPMIService.audit_wiki_cost_of_quality_prevention_vs_failure_balance = staticmethod(
+    audit_wiki_cost_of_quality_prevention_vs_failure_balance
 )

@@ -4545,3 +4545,137 @@ def test_evaluate_evm_contract_budget_base_excessive_or_stale_ub_and_export():
     assert stale_ub["ub_ratio"] == 0.05
     assert stale_ub["has_excessive_or_stale_ub"] is True
     assert stale_ub["is_baseline_reconciliation_compliant"] is False
+
+
+def test_evaluate_evm_etc_bottom_up_vs_formulaic_divergence_credible():
+    """Pronósticos ETC bottom-up alineados o con divergencia respaldada por BOE cumplen §7.4."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_etc_bottom_up_vs_formulaic_divergence,
+    )
+
+    forecasts = [
+        {
+            "ca_id": "CA-ALIGNED",
+            "bac": 100000.0,
+            "ev": 50000.0,
+            "ac": 50000.0,
+            "bottom_up_etc": 48000.0,  # 4% menor que 50k <= 15%
+            "basis_of_estimate_documented": False,
+        },
+        {
+            "ca_id": "CA-OPT-WITH-BOE",
+            "bac": 100000.0,
+            "ev": 50000.0,
+            "ac": 55000.0,  # CPI = 0.909, typical_etc = 55000
+            "bottom_up_etc": 45000.0,  # delta 18.18% > 15%, pero con BOE y CPI >= 0.85
+            "basis_of_estimate_documented": True,
+        },
+    ]
+    res = evaluate_evm_etc_bottom_up_vs_formulaic_divergence(forecasts)
+    assert res == {
+        "total_control_accounts": 2,
+        "invalid_forecast_metric_ca_ids": [],
+        "optimistic_etc_divergence_ca_ids": ["CA-OPT-WITH-BOE"],
+        "unjustified_optimistic_etc_ca_ids": [],
+        "unrealistic_recovery_etc_ca_ids": [],
+        "is_etc_forecast_credible": True,
+    }
+    assert (
+        ProjectEVMService.evaluate_evm_etc_bottom_up_vs_formulaic_divergence(
+            forecasts
+        )
+        == res
+    )
+
+
+def test_evaluate_evm_etc_bottom_up_unjustified_optimistic_divergence():
+    """Detecta divergencia optimista > max_optimistic_divergence_pct sin Basis of Estimate (BOE)."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_etc_bottom_up_vs_formulaic_divergence,
+    )
+
+    forecasts = [
+        {
+            "ca_id": "CA-OPT-NO-BOE",
+            "bac": 200000.0,
+            "ev": 100000.0,
+            "ac": 110000.0,  # CPI = 0.9091, typical_etc = 110000
+            "bottom_up_etc": 85000.0,  # delta ~22.73% > 15% sin BOE
+            "basis_of_estimate_documented": False,
+        }
+    ]
+    res = evaluate_evm_etc_bottom_up_vs_formulaic_divergence(
+        forecasts, max_optimistic_divergence_pct=15.0
+    )
+    assert res["total_control_accounts"] == 1
+    assert res["optimistic_etc_divergence_ca_ids"] == ["CA-OPT-NO-BOE"]
+    assert res["unjustified_optimistic_etc_ca_ids"] == ["CA-OPT-NO-BOE"]
+    assert res["unrealistic_recovery_etc_ca_ids"] == []
+    assert res["is_etc_forecast_credible"] is False
+
+
+def test_evaluate_evm_etc_bottom_up_unrealistic_recovery_with_low_cpi():
+    """Detecta cuando CPI < 0.85 pero bottom_up_etc < (BAC - EV) incluso si existe BOE."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_etc_bottom_up_vs_formulaic_divergence,
+    )
+
+    forecasts = [
+        {
+            "ca_id": "CA-LOW-CPI-UNREALISTIC",
+            "bac": 100000.0,
+            "ev": 40000.0,
+            "ac": 55000.0,  # CPI = 0.727 < 0.85, remaining = 60000
+            "bottom_up_etc": 52000.0,  # < 60000
+            "basis_of_estimate_documented": True,
+        }
+    ]
+    res = evaluate_evm_etc_bottom_up_vs_formulaic_divergence(forecasts)
+    assert res["optimistic_etc_divergence_ca_ids"] == ["CA-LOW-CPI-UNREALISTIC"]
+    assert res["unjustified_optimistic_etc_ca_ids"] == []
+    assert res["unrealistic_recovery_etc_ca_ids"] == ["CA-LOW-CPI-UNREALISTIC"]
+    assert res["is_etc_forecast_credible"] is False
+
+
+def test_evaluate_evm_etc_bottom_up_invalid_metrics_and_export():
+    """Detecta métricas inválidas (BAC <= 0, EV > BAC, negativos), ignora no-secuencias y verifica __all__."""
+    import backend.services.project_evm_service as _m
+    from backend.services.project_evm_service import (
+        evaluate_evm_etc_bottom_up_vs_formulaic_divergence,
+    )
+
+    assert "evaluate_evm_etc_bottom_up_vs_formulaic_divergence" in _m.__all__
+    res = evaluate_evm_etc_bottom_up_vs_formulaic_divergence(
+        [
+            {
+                "ca_id": "CA-EV-GT-BAC",
+                "bac": 50000.0,
+                "ev": 60000.0,
+                "ac": 50000.0,
+                "bottom_up_etc": 1000.0,
+            },
+            {
+                "ca_id": "CA-NEG-ETC",
+                "bac": 50000.0,
+                "ev": 20000.0,
+                "ac": 20000.0,
+                "bottom_up_etc": -500.0,
+            },
+        ]
+    )
+    assert res["invalid_forecast_metric_ca_ids"] == [
+        "CA-EV-GT-BAC",
+        "CA-NEG-ETC",
+    ]
+    assert res["is_etc_forecast_credible"] is False
+
+    for bad in (None, "not-a-seq", b"bytes", [{"ca_id": "  "}]):
+        assert evaluate_evm_etc_bottom_up_vs_formulaic_divergence(bad) == {
+            "total_control_accounts": 0,
+            "invalid_forecast_metric_ca_ids": [],
+            "optimistic_etc_divergence_ca_ids": [],
+            "unjustified_optimistic_etc_ca_ids": [],
+            "unrealistic_recovery_etc_ca_ids": [],
+            "is_etc_forecast_credible": True,
+        }

@@ -4435,3 +4435,126 @@ def test_audit_wiki_assumption_log_governance_empty_and_service_proxy():
         WikiPMIService.audit_wiki_assumption_and_constraint_log_governance(sample)
         == audit_wiki_assumption_and_constraint_log_governance(sample)
     )
+
+
+def test_audit_wiki_cost_of_quality_prevention_vs_failure_balance_compliant():
+    """Balance CoQ con >= 65% conformidad, <= 10% fallas externas y CAPA vinculada cumple §8.1 y §8.2."""
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_cost_of_quality_prevention_vs_failure_balance,
+    )
+
+    items = [
+        {"item_id": "COQ-PREV-1", "coq_category": "prevention", "amount": 45000.0},
+        {"item_id": "COQ-APPR-1", "coq_category": "Appraisal", "amount": 30000.0},
+        {
+            "item_id": "COQ-INT-1",
+            "coq_category": "internal_failure",
+            "amount": 18000.0,
+            "corrective_action_linked": True,
+        },
+        {
+            "item_id": "COQ-EXT-1",
+            "coq_category": "external_failure",
+            "amount": 7000.0,
+            "corrective_action_linked": True,
+        },
+    ]
+    res = audit_wiki_cost_of_quality_prevention_vs_failure_balance(items)
+    assert res == {
+        "total_coq": 100000.0,
+        "conformance_share_pct": 75.0,
+        "external_failure_share_pct": 7.0,
+        "below_conformance_investment_threshold": False,
+        "exceeds_external_failure_cap": False,
+        "invalid_category_or_amount_ids": [],
+        "unlinked_failure_cost_ids": [],
+        "is_coq_balance_compliant": True,
+    }
+    assert (
+        WikiPMIService.audit_wiki_cost_of_quality_prevention_vs_failure_balance(
+            items
+        )
+        == res
+    )
+
+
+def test_audit_wiki_cost_of_quality_below_conformance_and_unlinked_failure():
+    """Detecta subinversión en conformidad (< min_conformance_share_pct) y costos de falla sin CAPA vinculada."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_cost_of_quality_prevention_vs_failure_balance,
+    )
+
+    items = [
+        {"item_id": "COQ-PREV", "coq_category": "prevention", "amount": 25000.0},
+        {"item_id": "COQ-APPR", "coq_category": "appraisal", "amount": 25000.0},
+        {
+            "item_id": "COQ-INT-UNLINKED",
+            "coq_category": "internal_failure",
+            "amount": 50000.0,
+            "corrective_action_linked": False,
+        },
+    ]
+    res = audit_wiki_cost_of_quality_prevention_vs_failure_balance(
+        items, min_conformance_share_pct=65.0
+    )
+    assert res["total_coq"] == 100000.0
+    assert res["conformance_share_pct"] == 50.0
+    assert res["below_conformance_investment_threshold"] is True
+    assert res["unlinked_failure_cost_ids"] == ["COQ-INT-UNLINKED"]
+    assert res["is_coq_balance_compliant"] is False
+
+
+def test_audit_wiki_cost_of_quality_exceeds_external_failure_cap():
+    """Detecta cuando el costo de fallas externas supera max_external_failure_share_pct."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_cost_of_quality_prevention_vs_failure_balance,
+    )
+
+    items = [
+        {"item_id": "COQ-PREV", "coq_category": "prevention", "amount": 70000.0},
+        {
+            "item_id": "COQ-EXT-HIGH",
+            "coq_category": "external_failure",
+            "amount": 30000.0,
+            "corrective_action_linked": True,
+        },
+    ]
+    res = audit_wiki_cost_of_quality_prevention_vs_failure_balance(
+        items, max_external_failure_share_pct=10.0
+    )
+    assert res["conformance_share_pct"] == 70.0
+    assert res["external_failure_share_pct"] == 30.0
+    assert res["below_conformance_investment_threshold"] is False
+    assert res["exceeds_external_failure_cap"] is True
+    assert res["is_coq_balance_compliant"] is False
+
+
+def test_audit_wiki_cost_of_quality_invalid_items_and_export():
+    """Detecta categorías o montos inválidos, maneja entradas vacías y verifica exportación en __all__."""
+    import backend.services.wiki_pmi_service as _m
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_cost_of_quality_prevention_vs_failure_balance,
+    )
+
+    assert "audit_wiki_cost_of_quality_prevention_vs_failure_balance" in _m.__all__
+    res = audit_wiki_cost_of_quality_prevention_vs_failure_balance(
+        [
+            {"item_id": "BAD-CAT", "coq_category": "overhead", "amount": 1000.0},
+            {"item_id": "BAD-AMT", "coq_category": "prevention", "amount": -50.0},
+        ]
+    )
+    assert res["invalid_category_or_amount_ids"] == ["BAD-CAT", "BAD-AMT"]
+    assert res["is_coq_balance_compliant"] is False
+
+    for bad in (None, "not-a-seq", b"bytes", [{"item_id": "  "}]):
+        assert audit_wiki_cost_of_quality_prevention_vs_failure_balance(bad) == {
+            "total_coq": 0.0,
+            "conformance_share_pct": 100.0,
+            "external_failure_share_pct": 0.0,
+            "below_conformance_investment_threshold": False,
+            "exceeds_external_failure_cap": False,
+            "invalid_category_or_amount_ids": [],
+            "unlinked_failure_cost_ids": [],
+            "is_coq_balance_compliant": True,
+        }
