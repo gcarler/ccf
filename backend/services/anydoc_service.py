@@ -2344,6 +2344,12 @@ class AnyDocService:
     ) -> dict[str, Any]:
         return audit_markdown_image_asset_hygiene(markdown_text)
 
+    @staticmethod
+    def audit_markdown_mermaid_diagram_hygiene(
+        markdown_text: str | None = None,
+    ) -> dict[str, Any]:
+        return audit_markdown_mermaid_diagram_hygiene(markdown_text)
+
 
 _CODE_FENCE_OPEN_AUDIT_RE = re.compile(r"^\s*(`{3,}|~{3,})\s*(.*)$")
 _CODE_FENCE_CLOSE_AUDIT_RE = re.compile(r"^\s*(`{3,}|~{3,})\s*$")
@@ -2539,6 +2545,121 @@ def audit_markdown_image_asset_hygiene(
     }
 
 
+_SUPPORTED_MERMAID_DIAGRAM_TYPES = {
+    "flowchart",
+    "graph",
+    "sequenceDiagram",
+    "stateDiagram",
+    "stateDiagram-v2",
+    "classDiagram",
+    "erDiagram",
+    "xychart-beta",
+    "gantt",
+    "pie",
+    "mindmap",
+}
+_MERMAID_BLOCK_OPEN_RE = re.compile(r"^[ \t]*```mermaid[ \t]*$")
+_MERMAID_BLOCK_CLOSE_RE = re.compile(r"^[ \t]*```[ \t]*$")
+
+
+def audit_markdown_mermaid_diagram_hygiene(
+    markdown_text: str | None = None,
+) -> dict[str, Any]:
+    """Audita bloques cercados ```mermaid ... ``` verificando tipo soportado, contenido no vacío y balance de delimitadores (PMBOK §4.4 / §10.2)."""
+    lines = (
+        markdown_text.splitlines()
+        if isinstance(markdown_text, str) and markdown_text
+        else []
+    )
+
+    blocks: list[list[str]] = []
+    in_mermaid = False
+    current_lines: list[str] = []
+
+    for line in lines:
+        if not in_mermaid:
+            if _MERMAID_BLOCK_OPEN_RE.match(line):
+                in_mermaid = True
+                current_lines = []
+        else:
+            if _MERMAID_BLOCK_CLOSE_RE.match(line):
+                blocks.append(current_lines)
+                in_mermaid = False
+                current_lines = []
+            else:
+                current_lines.append(line)
+
+    total_mermaid_blocks = len(blocks)
+    empty_mermaid_block_indices: list[int] = []
+    unsupported_diagram_type_indices: list[int] = []
+    unbalanced_delimiter_indices: list[int] = []
+
+    open_to_close = {"(": ")", "[": "]", "{": "}"}
+    close_to_open = {")": "(", "]": "[", "}": "{"}
+
+    def _are_delimiters_balanced(text_lines: list[str]) -> bool:
+        stack: list[str] = []
+        in_quotes = False
+        for raw_line in text_lines:
+            for ch in raw_line:
+                if ch == '"':
+                    in_quotes = not in_quotes
+                    continue
+                if in_quotes:
+                    continue
+                if ch in open_to_close:
+                    stack.append(ch)
+                elif ch in close_to_open:
+                    if not stack or stack[-1] != close_to_open[ch]:
+                        return False
+                    stack.pop()
+        return not in_quotes and len(stack) == 0
+
+    for idx, block_lines in enumerate(blocks, start=1):
+        useful_lines = [
+            ln.strip()
+            for ln in block_lines
+            if ln.strip() and not ln.strip().startswith("%%")
+        ]
+        if len(useful_lines) < 2:
+            empty_mermaid_block_indices.append(idx)
+
+        if len(useful_lines) >= 1:
+            first_token = useful_lines[0].split()[0]
+            if first_token not in _SUPPORTED_MERMAID_DIAGRAM_TYPES:
+                unsupported_diagram_type_indices.append(idx)
+
+        if not _are_delimiters_balanced(useful_lines):
+            unbalanced_delimiter_indices.append(idx)
+
+    is_mermaid_hygienic = bool(
+        total_mermaid_blocks > 0
+        and len(empty_mermaid_block_indices) == 0
+        and len(unsupported_diagram_type_indices) == 0
+        and len(unbalanced_delimiter_indices) == 0
+    )
+
+    if total_mermaid_blocks == 0:
+        mermaid_posture = "NO_MERMAID_DIAGRAMS"
+    elif len(empty_mermaid_block_indices) > 0:
+        mermaid_posture = "EMPTY_MERMAID_BLOCK"
+    elif len(unsupported_diagram_type_indices) > 0:
+        mermaid_posture = "UNSUPPORTED_MERMAID_DIAGRAM_TYPE"
+    elif len(unbalanced_delimiter_indices) > 0:
+        mermaid_posture = "UNBALANCED_MERMAID_DELIMITERS"
+    else:
+        mermaid_posture = "HYGIENIC_MERMAID_DIAGRAMS"
+
+    return {
+        "total_mermaid_blocks": total_mermaid_blocks,
+        "empty_mermaid_block_indices": empty_mermaid_block_indices,
+        "unsupported_diagram_type_indices": unsupported_diagram_type_indices,
+        "unbalanced_delimiter_indices": unbalanced_delimiter_indices,
+        "is_mermaid_hygienic": is_mermaid_hygienic,
+        "mermaid_posture": mermaid_posture,
+    }
+
+
 __all__ = [
     "ANYDOC_AVAILABLE",
     "SUPPORTED_EXTENSIONS",
@@ -2568,6 +2689,6 @@ __all__ = [
     "audit_markdown_task_checklist_governance",
     "audit_markdown_code_fence_hygiene",
     "audit_markdown_image_asset_hygiene",
+    "audit_markdown_mermaid_diagram_hygiene",
     "AnyDocService",
 ]
-

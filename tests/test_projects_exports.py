@@ -2895,3 +2895,132 @@ def test_audit_executive_report_distribution_cadence_empty_or_none():
             "is_distribution_governed": False,
             "distribution_posture": "NO_DISTRIBUTION_RECIPIENTS",
         }
+
+
+def test_audit_executive_report_procurement_sla_and_holdbacks_governed():
+    """SLA cumplido, penalizaciones coherentes y retenciones suficientes -> GOVERNED."""
+    from backend.services.project_export_service import (
+        audit_executive_report_procurement_sla_and_holdbacks as audit_fn,
+    )
+
+    res = audit_fn(
+        {
+            "procurement_governance": {
+                "contracts": [
+                    {
+                        "id": "CTR-1",
+                        "contract_value": 100000.0,
+                        "holdback_retained": 8000.0,
+                        "sla_met": True,
+                    },
+                    {
+                        "contract_id": "CTR-2",
+                        "contract_value": 50000.0,
+                        "holdback_retained": 4000.0,
+                        "sla_met": False,
+                        "penalty_applied": True,
+                    },
+                ]
+            }
+        }
+    )
+    assert res["total_contracts"] == 2
+    assert res["total_contract_value"] == 150000.0
+    assert res["total_holdback_retained"] == 12000.0
+    assert res["premature_holdback_release_ids"] == []
+    assert res["unpenalized_sla_breach_ids"] == []
+    assert res["insufficient_holdback_ids"] == []
+    assert res["is_procurement_sla_governed"] is True
+    assert res["procurement_sla_posture"] == "GOVERNED_PROCUREMENT_SLA_AND_HOLDBACKS"
+
+
+def test_audit_executive_report_procurement_sla_and_holdbacks_premature_release():
+    """Retención liberada sin entregables verificados -> PREMATURE release (precedencia)."""
+    from backend.services.project_export_service import (
+        audit_executive_report_procurement_sla_and_holdbacks as audit_fn,
+    )
+
+    res = audit_fn(
+        {
+            "procurement_governance": {
+                "contracts": [
+                    {
+                        "id": "CTR-PREM",
+                        "contract_value": 20000.0,
+                        "holdback_retained": 2000.0,
+                        "holdback_released": True,
+                        "deliverables_verified": False,
+                        "sla_met": True,
+                    }
+                ]
+            }
+        }
+    )
+    assert res["total_contracts"] == 1
+    assert res["total_contract_value"] == 20000.0
+    assert res["total_holdback_retained"] == 2000.0
+    assert res["premature_holdback_release_ids"] == ["CTR-PREM"]
+    assert res["unpenalized_sla_breach_ids"] == []
+    assert res["insufficient_holdback_ids"] == []
+    assert res["is_procurement_sla_governed"] is False
+    assert res["procurement_sla_posture"] == "PREMATURE_WARRANTY_HOLDBACK_RELEASE"
+
+
+def test_audit_executive_report_procurement_sla_and_holdbacks_breach_and_insufficient():
+    """SLA incumplido sin penalización y retención insuficiente identificados por pilar."""
+    from backend.services.project_export_service import (
+        audit_executive_report_procurement_sla_and_holdbacks as audit_fn,
+    )
+
+    res = audit_fn(
+        {
+            "procurement_governance": {
+                "contracts": [
+                    {
+                        "contract_id": "CTR-BREACH",
+                        "contract_value": 30000.0,
+                        "holdback_retained": 2000.0,
+                        "sla_met": False,
+                    },
+                    {
+                        "id": "CTR-THIN",
+                        "contract_value": 60000.0,
+                        "holdback_retained": 1500.0,
+                        "sla_met": True,
+                    },
+                ]
+            }
+        }
+    )
+    assert res["total_contracts"] == 2
+    assert res["unpenalized_sla_breach_ids"] == ["CTR-BREACH"]
+    assert res["insufficient_holdback_ids"] == ["CTR-THIN"]
+    assert res["premature_holdback_release_ids"] == []
+    assert res["is_procurement_sla_governed"] is False
+    assert res["procurement_sla_posture"] == "UNPENALIZED_VENDOR_SLA_BREACH"
+
+
+def test_audit_executive_report_procurement_sla_and_holdbacks_empty_or_none():
+    """Payload None/sin contratos/entradas no dict o sin id -> NO_PROCUREMENT_CONTRACTS."""
+    from backend.services.project_export_service import (
+        audit_executive_report_procurement_sla_and_holdbacks as audit_fn,
+    )
+
+    for payload in (
+        None,
+        {},
+        {"procurement_governance": {}},
+        {"procurement_governance": {"contracts": "not-a-list"}},
+        {"procurement_governance": {"contracts": [{"contract_value": 100.0}, "nope", 42]}},
+    ):
+        res = audit_fn(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_contracts": 0,
+            "total_contract_value": 0.0,
+            "total_holdback_retained": 0.0,
+            "premature_holdback_release_ids": [],
+            "unpenalized_sla_breach_ids": [],
+            "insufficient_holdback_ids": [],
+            "is_procurement_sla_governed": False,
+            "procurement_sla_posture": "NO_PROCUREMENT_CONTRACTS",
+        }

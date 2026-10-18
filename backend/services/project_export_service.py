@@ -334,6 +334,16 @@ class ProjectExportService:
         return audit_executive_report_resource_workload(report_data)
 
     @staticmethod
+    def audit_executive_report_procurement_sla_and_holdbacks(
+        report_payload: dict[str, Any] | None = None,
+        min_holdback_pct: float = 5.0,
+    ) -> dict[str, Any]:
+        return audit_executive_report_procurement_sla_and_holdbacks(
+            report_payload,
+            min_holdback_pct=min_holdback_pct,
+        )
+
+    @staticmethod
     def audit_executive_report_procurement_slas(
         report_data: Optional[dict],
     ) -> dict[str, Any]:
@@ -1538,6 +1548,109 @@ def audit_executive_report_resource_workload(
     }
 
 
+def audit_executive_report_procurement_sla_and_holdbacks(
+    report_payload: dict[str, Any] | None = None,
+    min_holdback_pct: float = 5.0,
+) -> dict[str, Any]:
+    """Audita SLA de adquisiciones y retenciones de garantía (PMBOK §12.3).
+
+    Contratos validos en `procurement_governance.contracts` (con
+    `id`/`contract_id` no vacío). Cada contrato declara valor
+    (`contract_value`), retención (`holdback_retained`), `sla_met`,
+    `penalty_applied`, `deliverables_verified` y `holdback_released`:
+    - `premature_holdback_release_ids`: retención liberada sin verificables.
+    - `unpenalized_sla_breach_ids`: SLA incumplido sin penalización.
+    - `insufficient_holdback_ids`: retención < min_holdback_pct del valor sin liberar.
+    - `is_procurement_sla_governed`: con contratos y las 3 listas vacías.
+    - `procurement_sla_posture`: 'NO_PROCUREMENT_CONTRACTS' vacío;
+      'PREMATURE_WARRANTY_HOLDBACK_RELEASE'; 'UNPENALIZED_VENDOR_SLA_BREACH';
+      'INSUFFICIENT_WARRANTY_HOLDBACK_RETENTION'; 'GOVERNED_PROCUREMENT_SLA_AND_HOLDBACKS'.
+    """
+    contracts_raw = ((report_payload or {}).get("procurement_governance") or {}).get("contracts")
+    contracts = (
+        [c for c in contracts_raw if isinstance(c, dict)]
+        if isinstance(contracts_raw, list)
+        else []
+    )
+    valid_contracts = [
+        c
+        for c in contracts
+        if str(c.get("id") or c.get("contract_id") or "").strip()
+    ]
+
+    total_contracts = len(valid_contracts)
+    if total_contracts == 0:
+        return {
+            "total_contracts": 0,
+            "total_contract_value": 0.0,
+            "total_holdback_retained": 0.0,
+            "premature_holdback_release_ids": [],
+            "unpenalized_sla_breach_ids": [],
+            "insufficient_holdback_ids": [],
+            "is_procurement_sla_governed": False,
+            "procurement_sla_posture": "NO_PROCUREMENT_CONTRACTS",
+        }
+
+    total_contract_value = 0.0
+    total_holdback_retained = 0.0
+    premature_holdback_release_ids: list[str] = []
+    unpenalized_sla_breach_ids: list[str] = []
+    insufficient_holdback_ids: list[str] = []
+
+    for contract in valid_contracts:
+        contract_id = str(contract.get("id") or contract.get("contract_id") or "").strip()
+        contract_value = max(0.0, float(contract.get("contract_value") or 0.0))
+        holdback_retained = max(0.0, float(contract.get("holdback_retained") or 0.0))
+        sla_met = bool(contract.get("sla_met", True))
+        penalty_applied = bool(contract.get("penalty_applied", False))
+        deliverables_verified = bool(contract.get("deliverables_verified", False))
+        holdback_released = bool(contract.get("holdback_released", False))
+
+        total_contract_value += contract_value
+        total_holdback_retained += holdback_retained
+
+        if holdback_released is True and not deliverables_verified:
+            premature_holdback_release_ids.append(contract_id)
+        if not sla_met and not penalty_applied:
+            unpenalized_sla_breach_ids.append(contract_id)
+        if (
+            not holdback_released
+            and contract_value > 0.0
+            and ((holdback_retained / contract_value) * 100.0 + 1e-6)
+            < float(min_holdback_pct)
+        ):
+            insufficient_holdback_ids.append(contract_id)
+
+    is_procurement_sla_governed = bool(
+        total_contracts > 0
+        and len(premature_holdback_release_ids) == 0
+        and len(unpenalized_sla_breach_ids) == 0
+        and len(insufficient_holdback_ids) == 0
+    )
+
+    if total_contracts == 0:
+        procurement_sla_posture = "NO_PROCUREMENT_CONTRACTS"
+    elif premature_holdback_release_ids:
+        procurement_sla_posture = "PREMATURE_WARRANTY_HOLDBACK_RELEASE"
+    elif unpenalized_sla_breach_ids:
+        procurement_sla_posture = "UNPENALIZED_VENDOR_SLA_BREACH"
+    elif insufficient_holdback_ids:
+        procurement_sla_posture = "INSUFFICIENT_WARRANTY_HOLDBACK_RETENTION"
+    else:
+        procurement_sla_posture = "GOVERNED_PROCUREMENT_SLA_AND_HOLDBACKS"
+
+    return {
+        "total_contracts": total_contracts,
+        "total_contract_value": round(total_contract_value, 2),
+        "total_holdback_retained": round(total_holdback_retained, 2),
+        "premature_holdback_release_ids": premature_holdback_release_ids,
+        "unpenalized_sla_breach_ids": unpenalized_sla_breach_ids,
+        "insufficient_holdback_ids": insufficient_holdback_ids,
+        "is_procurement_sla_governed": is_procurement_sla_governed,
+        "procurement_sla_posture": procurement_sla_posture,
+    }
+
+
 def audit_executive_report_procurement_slas(
     report_data: Optional[dict],
 ) -> dict[str, Any]:
@@ -2508,6 +2621,7 @@ __all__ = [
     "audit_executive_report_benefits_realization",
     "audit_executive_report_quality_disclosure",
     "audit_executive_report_resource_workload",
+    "audit_executive_report_procurement_sla_and_holdbacks",
     "audit_executive_report_procurement_slas",
     "audit_executive_report_stakeholder_communications",
     "audit_executive_report_risk_burndown",

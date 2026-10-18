@@ -2655,3 +2655,110 @@ def test_evaluate_earned_schedule_performance_spi_time_insufficient_baseline():
         assert res["es_posture"] == "INSUFFICIENT_PV_BASELINE_CURVE"
 
 
+def test_audit_eac_forecast_optimism_bias_conservative_and_credible():
+    """EAC gerencial >= statistical_floor -> CONSERVATIVE_COMPOSITE_ALIGNED; brecha <= max_optimism_gap_pct -> CREDIBLE_EAC_FORECAST."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        audit_eac_forecast_optimism_bias,
+    )
+
+    # BAC=100k, EV=40k, AC=50k (CPI=0.8), PV=50k (SPI=0.8) -> CPI*SPI=0.64
+    # eac_atypical = 50k + 60k = 110k
+    # eac_cpi = 100k / 0.8 = 125k
+    # eac_composite = 50k + 60k / 0.64 = 143750.0 (statistical_floor = 143750.0)
+    res_cons = audit_eac_forecast_optimism_bias(
+        bac=100000.0,
+        ev=40000.0,
+        ac=50000.0,
+        pv=50000.0,
+        manager_bottom_up_eac=145000.0,
+        max_optimism_gap_pct=10.0,
+    )
+    assert res_cons == {
+        "eac_atypical": 110000.0,
+        "eac_cpi": 125000.0,
+        "eac_composite": 143750.0,
+        "manager_eac": 145000.0,
+        "optimism_gap_pct": 0.0,
+        "is_forecast_credible": True,
+        "forecast_posture": "CONSERVATIVE_COMPOSITE_ALIGNED",
+    }
+    assert (
+        ProjectEVMService.audit_eac_forecast_optimism_bias(
+            bac=100000.0,
+            ev=40000.0,
+            ac=50000.0,
+            pv=50000.0,
+            manager_bottom_up_eac=145000.0,
+        )
+        == res_cons
+    )
+
+    res_cred = audit_eac_forecast_optimism_bias(
+        bac=100000.0,
+        ev=40000.0,
+        ac=50000.0,
+        pv=50000.0,
+        manager_bottom_up_eac=135000.0,
+        max_optimism_gap_pct=10.0,
+    )
+    assert res_cred["optimism_gap_pct"] == 6.09
+    assert res_cred["is_forecast_credible"] is True
+    assert res_cred["forecast_posture"] == "CREDIBLE_EAC_FORECAST"
+
+
+def test_audit_eac_forecast_optimism_bias_managerial_optimism_alert():
+    """Brecha de optimismo > max_optimism_gap_pct -> MANAGERIAL_OPTIMISM_BIAS_ALERT."""
+    from backend.services.project_evm_service import audit_eac_forecast_optimism_bias
+
+    res = audit_eac_forecast_optimism_bias(
+        bac=100000.0,
+        ev=40000.0,
+        ac=50000.0,
+        pv=50000.0,
+        manager_bottom_up_eac=112000.0,
+        max_optimism_gap_pct=10.0,
+    )
+    assert res["eac_composite"] == 143750.0
+    assert res["optimism_gap_pct"] == 22.09
+    assert res["is_forecast_credible"] is False
+    assert res["forecast_posture"] == "MANAGERIAL_OPTIMISM_BIAS_ALERT"
+
+
+def test_audit_eac_forecast_optimism_bias_below_actual_cost():
+    """manager_bottom_up_eac < AC -> UNREALISTIC_BELOW_ACTUAL_COST."""
+    from backend.services.project_evm_service import audit_eac_forecast_optimism_bias
+
+    res = audit_eac_forecast_optimism_bias(
+        bac=100000.0,
+        ev=50000.0,
+        ac=65000.0,
+        pv=50000.0,
+        manager_bottom_up_eac=60000.0,
+    )
+    assert res["manager_eac"] == 60000.0
+    assert res["is_forecast_credible"] is False
+    assert res["forecast_posture"] == "UNREALISTIC_BELOW_ACTUAL_COST"
+
+
+def test_audit_eac_forecast_optimism_bias_insufficient_evm_data():
+    """BAC, EV o AC <= 0 -> INSUFFICIENT_EVM_DATA."""
+    from backend.services.project_evm_service import audit_eac_forecast_optimism_bias
+
+    for b_val, ev_val, ac_val in [(0.0, 50.0, 50.0), (100.0, 0.0, 50.0), (100.0, 50.0, 0.0)]:
+        res = audit_eac_forecast_optimism_bias(
+            bac=b_val,
+            ev=ev_val,
+            ac=ac_val,
+            pv=50.0,
+            manager_bottom_up_eac=95.0,
+        )
+        assert res == {
+            "eac_atypical": 0.0,
+            "eac_cpi": 0.0,
+            "eac_composite": 0.0,
+            "manager_eac": 95.0,
+            "optimism_gap_pct": 0.0,
+            "is_forecast_credible": False,
+            "forecast_posture": "INSUFFICIENT_EVM_DATA",
+        }

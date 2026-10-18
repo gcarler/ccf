@@ -4908,6 +4908,104 @@ ProjectEVMService.audit_pmb_undistributed_budget_reconciliation = staticmethod(
 )
 
 
+def audit_eac_forecast_optimism_bias(
+    bac: float = 0.0,
+    ev: float = 0.0,
+    ac: float = 0.0,
+    pv: float = 0.0,
+    manager_bottom_up_eac: float | None = None,
+    max_optimism_gap_pct: float = 10.0,
+) -> dict[str, Any]:
+    """Audita el sesgo de optimismo gerencial y la divergencia entre pronósticos EAC independientes (PMBOK §7.4.2.2)."""
+    try:
+        bac_v = max(0.0, float(bac or 0.0))
+    except (TypeError, ValueError):
+        bac_v = 0.0
+    try:
+        ev_v = max(0.0, float(ev or 0.0))
+    except (TypeError, ValueError):
+        ev_v = 0.0
+    try:
+        ac_v = max(0.0, float(ac or 0.0))
+    except (TypeError, ValueError):
+        ac_v = 0.0
+    try:
+        pv_v = max(0.0, float(pv or 0.0))
+    except (TypeError, ValueError):
+        pv_v = 0.0
+
+    if bac_v <= 0.0 or ev_v <= 0.0 or ac_v <= 0.0:
+        try:
+            mgr_fallback = round(float(manager_bottom_up_eac or 0.0), 2)
+        except (TypeError, ValueError):
+            mgr_fallback = 0.0
+        return {
+            "eac_atypical": 0.0,
+            "eac_cpi": 0.0,
+            "eac_composite": 0.0,
+            "manager_eac": mgr_fallback,
+            "optimism_gap_pct": 0.0,
+            "is_forecast_credible": False,
+            "forecast_posture": "INSUFFICIENT_EVM_DATA",
+        }
+
+    cpi = ev_v / ac_v
+    spi = (ev_v / pv_v) if pv_v > 0.0 else 1.0
+    rem_work = max(0.0, bac_v - ev_v)
+
+    eac_atypical = round(ac_v + rem_work, 2)
+    eac_cpi = round(bac_v / cpi, 2)
+    composite_factor = cpi * spi
+    eac_composite = (
+        round(ac_v + (rem_work / composite_factor), 2)
+        if composite_factor > 1e-6
+        else eac_cpi
+    )
+
+    mgr_eac = (
+        round(float(manager_bottom_up_eac), 2)
+        if manager_bottom_up_eac is not None and float(manager_bottom_up_eac) > 0.0
+        else eac_cpi
+    )
+
+    statistical_floor = max(eac_cpi, eac_composite) if cpi < 1.0 else eac_cpi
+    optimism_gap_pct = (
+        round(((statistical_floor - mgr_eac) / statistical_floor) * 100.0, 2)
+        if statistical_floor > 0.0 and mgr_eac < statistical_floor
+        else 0.0
+    )
+
+    violates_sunk_cost_floor = bool(mgr_eac < ac_v - 1e-6)
+    has_optimism_bias = bool(optimism_gap_pct > float(max_optimism_gap_pct))
+    is_forecast_credible = bool(
+        not violates_sunk_cost_floor and not has_optimism_bias
+    )
+
+    if violates_sunk_cost_floor:
+        forecast_posture = "UNREALISTIC_BELOW_ACTUAL_COST"
+    elif has_optimism_bias:
+        forecast_posture = "MANAGERIAL_OPTIMISM_BIAS_ALERT"
+    elif mgr_eac >= statistical_floor:
+        forecast_posture = "CONSERVATIVE_COMPOSITE_ALIGNED"
+    else:
+        forecast_posture = "CREDIBLE_EAC_FORECAST"
+
+    return {
+        "eac_atypical": eac_atypical,
+        "eac_cpi": eac_cpi,
+        "eac_composite": eac_composite,
+        "manager_eac": mgr_eac,
+        "optimism_gap_pct": optimism_gap_pct,
+        "is_forecast_credible": is_forecast_credible,
+        "forecast_posture": forecast_posture,
+    }
+
+
+ProjectEVMService.audit_eac_forecast_optimism_bias = staticmethod(
+    audit_eac_forecast_optimism_bias
+)
+
+
 __all__ = [
     "evaluate_tcpi_recovery_feasibility",
     "evaluate_funding_limit_periods_reconciliation",
@@ -4916,6 +5014,6 @@ __all__ = [
     "evaluate_cpi_spi_stability_window",
     "evaluate_reserve_drawdown_velocity",
     "audit_pmb_undistributed_budget_reconciliation",
+    "audit_eac_forecast_optimism_bias",
     "ProjectEVMService",
 ]
-

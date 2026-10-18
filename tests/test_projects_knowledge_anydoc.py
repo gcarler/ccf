@@ -2227,3 +2227,97 @@ def test_audit_markdown_task_checklist_governance_empty_or_fenced():
     assert res["total_checklist_items"] == 1
     assert res["completed_items_count"] == 0
     assert res["is_checklist_governed"] is True
+
+
+def test_audit_markdown_mermaid_diagram_hygiene_hygienic():
+    """Bloques mermaid con cabecera válida, cuerpo y delimitadores balanceados (incluso con paréntesis entre comillas) -> HYGIENIC_MERMAID_DIAGRAMS."""
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_mermaid_diagram_hygiene,
+    )
+
+    md = (
+        "# Arquitectura\n"
+        "```mermaid\n"
+        "%% Comentario inicial ignorado\n"
+        "flowchart TD\n"
+        '    A["Inicio (Fase 1"] --> B{"¿Aprobado [CCB]?"}\n'
+        "    B -->|Sí| C[Despliegue]\n"
+        "```\n\n"
+        "```mermaid\n"
+        "sequenceDiagram\n"
+        "    Sponsor->>PMO: Autoriza Acta\n"
+        "```\n"
+    )
+    res = audit_markdown_mermaid_diagram_hygiene(md)
+    assert res == {
+        "total_mermaid_blocks": 2,
+        "empty_mermaid_block_indices": [],
+        "unsupported_diagram_type_indices": [],
+        "unbalanced_delimiter_indices": [],
+        "is_mermaid_hygienic": True,
+        "mermaid_posture": "HYGIENIC_MERMAID_DIAGRAMS",
+    }
+    assert AnyDocService.audit_markdown_mermaid_diagram_hygiene(md) == res
+
+
+def test_audit_markdown_mermaid_diagram_hygiene_empty_block():
+    """Bloque mermaid vacío o solo con cabecera/comentarios -> EMPTY_MERMAID_BLOCK."""
+    from backend.services.anydoc_service import audit_markdown_mermaid_diagram_hygiene
+
+    md = (
+        "```mermaid\n"
+        "%% Solo comentario\n"
+        "```\n"
+        "```mermaid\n"
+        "flowchart LR\n"
+        "```\n"
+    )
+    res = audit_markdown_mermaid_diagram_hygiene(md)
+    assert res["total_mermaid_blocks"] == 2
+    assert res["empty_mermaid_block_indices"] == [1, 2]
+    assert res["is_mermaid_hygienic"] is False
+    assert res["mermaid_posture"] == "EMPTY_MERMAID_BLOCK"
+
+
+def test_audit_markdown_mermaid_diagram_hygiene_unsupported_and_unbalanced():
+    """Tipo no soportado -> UNSUPPORTED_MERMAID_DIAGRAM_TYPE; delimitadores desbalanceados -> UNBALANCED_MERMAID_DELIMITERS."""
+    from backend.services.anydoc_service import audit_markdown_mermaid_diagram_hygiene
+
+    md_unsup = (
+        "```mermaid\n"
+        "c4Context\n"
+        "    Person(user, \"Usuario\")\n"
+        "```\n"
+    )
+    res_unsup = audit_markdown_mermaid_diagram_hygiene(md_unsup)
+    assert res_unsup["unsupported_diagram_type_indices"] == [1]
+    assert res_unsup["is_mermaid_hygienic"] is False
+    assert res_unsup["mermaid_posture"] == "UNSUPPORTED_MERMAID_DIAGRAM_TYPE"
+
+    md_unbal = (
+        "```mermaid\n"
+        "flowchart TD\n"
+        "    A[Nodo sin cerrar --> B(Destino)\n"
+        "```\n"
+    )
+    res_unbal = audit_markdown_mermaid_diagram_hygiene(md_unbal)
+    assert res_unbal["unbalanced_delimiter_indices"] == [1]
+    assert res_unbal["is_mermaid_hygienic"] is False
+    assert res_unbal["mermaid_posture"] == "UNBALANCED_MERMAID_DELIMITERS"
+
+
+def test_audit_markdown_mermaid_diagram_hygiene_no_diagrams():
+    """Texto sin bloques mermaid o None -> NO_MERMAID_DIAGRAMS."""
+    from backend.services.anydoc_service import audit_markdown_mermaid_diagram_hygiene
+
+    for payload in (None, "", "# Documento sin diagramas\n```python\nprint(1)\n```\n"):
+        res = audit_markdown_mermaid_diagram_hygiene(payload)
+        assert res == {
+            "total_mermaid_blocks": 0,
+            "empty_mermaid_block_indices": [],
+            "unsupported_diagram_type_indices": [],
+            "unbalanced_delimiter_indices": [],
+            "is_mermaid_hygienic": False,
+            "mermaid_posture": "NO_MERMAID_DIAGRAMS",
+        }
