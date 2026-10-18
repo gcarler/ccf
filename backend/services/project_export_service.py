@@ -2983,6 +2983,7 @@ __all__ = [
     "audit_executive_report_esg_sustainability_and_regulatory_compliance",
     "audit_executive_report_risk_burndown_and_residual_exposure",
     "audit_executive_report_critical_path_float_and_convergence",
+    "audit_executive_report_contract_claims_and_change_orders",
     "ProjectExportService",
 ]
 
@@ -4875,5 +4876,169 @@ def audit_executive_report_critical_path_float_and_convergence(
 ProjectExportService.audit_executive_report_critical_path_float_and_convergence = staticmethod(
     audit_executive_report_critical_path_float_and_convergence
 )
+
+
+def audit_executive_report_contract_claims_and_change_orders(
+    contract_claims: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_claim_resolution_days: int = 45,
+    max_disputed_to_contract_value_pct: float = 10.0,
+    require_adr_before_litigation: bool = True,
+) -> dict[str, Any]:
+    """Audita administración de reclamos contractuales, órdenes de cambio en disputa y escalamiento ADR previo a litigio (PMI PMBOK §12.3 y §10.2)."""
+    if (
+        contract_claims is None
+        or isinstance(contract_claims, (str, bytes))
+        or not isinstance(contract_claims, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = contract_claims
+
+    try:
+        max_days = int(max_claim_resolution_days)
+    except (TypeError, ValueError):
+        max_days = 45
+
+    try:
+        max_disputed_pct = float(max_disputed_to_contract_value_pct)
+    except (TypeError, ValueError):
+        max_disputed_pct = 10.0
+
+    total_claims = 0
+    compliant_claims = 0
+    total_disputed_raw = 0.0
+
+    unsubstantiated_claim_ids: list[str] = []
+    overdue_unresolved_claim_ids: list[str] = []
+    excessive_disputed_exposure_ids: list[str] = []
+    premature_litigation_without_adr_ids: list[str] = []
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_claims += 1
+
+        claim_id = (
+            str(raw.get("id") or raw.get("claim_id") or "").strip()
+            or "CLM-UNKNOWN"
+        )
+        status = str(raw.get("status") or "open").strip().lower()
+
+        try:
+            contract_base_value = max(
+                0.0, float(raw.get("contract_base_value") or 0.0)
+            )
+        except (TypeError, ValueError):
+            contract_base_value = 0.0
+
+        try:
+            disputed_amount = max(
+                0.0, float(raw.get("disputed_amount") or 0.0)
+            )
+        except (TypeError, ValueError):
+            disputed_amount = 0.0
+
+        try:
+            days_unresolved = max(0, int(raw.get("days_unresolved") or 0))
+        except (TypeError, ValueError):
+            days_unresolved = 0
+
+        adr_attempted = bool(raw.get("adr_attempted"))
+        contract_clause_referenced = bool(
+            raw.get("contract_clause_referenced")
+        )
+
+        if status != "settled":
+            total_disputed_raw += disputed_amount
+
+        is_unsubstantiated = not contract_clause_referenced
+        is_overdue = (
+            status in {"open", "contested", "litigation"}
+            and days_unresolved > max_days
+        )
+        is_excessive_exposure = (
+            contract_base_value > 0.0
+            and (disputed_amount / contract_base_value) * 100.0
+            > max_disputed_pct
+        )
+        is_premature_litigation = (
+            status == "litigation"
+            and bool(require_adr_before_litigation)
+            and not adr_attempted
+        )
+
+        if is_unsubstantiated:
+            unsubstantiated_claim_ids.append(claim_id)
+        if is_overdue:
+            overdue_unresolved_claim_ids.append(claim_id)
+        if is_excessive_exposure:
+            excessive_disputed_exposure_ids.append(claim_id)
+        if is_premature_litigation:
+            premature_litigation_without_adr_ids.append(claim_id)
+
+        if (
+            not is_unsubstantiated
+            and not is_overdue
+            and not is_excessive_exposure
+            and not is_premature_litigation
+        ):
+            compliant_claims += 1
+
+    total_disputed_amount = round(total_disputed_raw, 2)
+
+    is_compliant = (
+        len(unsubstantiated_claim_ids) == 0
+        and len(overdue_unresolved_claim_ids) == 0
+        and len(excessive_disputed_exposure_ids) == 0
+        and len(premature_litigation_without_adr_ids) == 0
+    )
+
+    if is_compliant:
+        claims_governance_health = "healthy"
+    elif (
+        len(excessive_disputed_exposure_ids) > 0
+        or len(premature_litigation_without_adr_ids) > 0
+    ):
+        claims_governance_health = "critical"
+    else:
+        claims_governance_health = "at_risk"
+
+    recommendations: list[str] = []
+    if unsubstantiated_claim_ids:
+        recommendations.append(
+            f"Vincular cláusula contractual o referencia SOW verificable en los reclamos {unsubstantiated_claim_ids}."
+        )
+    if overdue_unresolved_claim_ids:
+        recommendations.append(
+            f"Resolver o mediar reclamos abiertos que exceden el SLA de {max_days} días: {overdue_unresolved_claim_ids}."
+        )
+    if excessive_disputed_exposure_ids:
+        recommendations.append(
+            f"Provisionar contingencia legal para reclamos cuya disputa supera el {max_disputed_pct}% del contrato: {excessive_disputed_exposure_ids}."
+        )
+    if premature_litigation_without_adr_ids:
+        recommendations.append(
+            f"Agotar negociación directa o mecanismos ADR antes de escalar a litigio en {premature_litigation_without_adr_ids}."
+        )
+
+    return {
+        "total_claims": total_claims,
+        "compliant_claims": compliant_claims,
+        "total_disputed_amount": total_disputed_amount,
+        "unsubstantiated_claim_ids": unsubstantiated_claim_ids,
+        "overdue_unresolved_claim_ids": overdue_unresolved_claim_ids,
+        "excessive_disputed_exposure_ids": excessive_disputed_exposure_ids,
+        "premature_litigation_without_adr_ids": premature_litigation_without_adr_ids,
+        "claims_governance_health": claims_governance_health,
+        "is_compliant": is_compliant,
+        "recommendations": recommendations,
+    }
+
+
+ProjectExportService.audit_executive_report_contract_claims_and_change_orders = staticmethod(
+    audit_executive_report_contract_claims_and_change_orders
+)
+
 
 

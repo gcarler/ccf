@@ -5615,5 +5615,99 @@ def test_evaluate_evm_earning_rule_gaming_and_duration_split_empty_and_service_b
     assert "evaluate_evm_earning_rule_gaming_and_duration_split" in mod.__all__
 
 
+def test_evaluate_evm_cost_schedule_index_compound_degradation_healthy():
+    """Cuentas de control con CPI y SPI equilibrados y CSI >= 0.90 (healthy)."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_cost_schedule_index_compound_degradation,
+    )
+
+    cas = [
+        {"id": "CA-01", "cpi": 1.02, "spi": 0.98, "pct_complete": 35.0},
+        {"id": "CA-02", "cpi": 0.96, "spi": 0.95, "pct_complete": 50.0},
+    ]
+    res = evaluate_evm_cost_schedule_index_compound_degradation(cas)
+    assert res["total_accounts"] == 2
+    assert res["compliant_accounts"] == 2
+    assert res["min_csi"] == 0.912
+    assert res["tradeoff_masking_ids"] == []
+    assert res["warning_compound_degradation_ids"] == []
+    assert res["critical_compound_degradation_ids"] == []
+    assert res["post_gate_irrecoverable_ids"] == []
+    assert res["csi_governance_health"] == "healthy"
+    assert res["is_compliant"] is True
+    assert res["recommendations"] == []
+
+
+def test_evaluate_evm_cost_schedule_index_compound_degradation_at_risk_warning_and_tradeoff():
+    """Detecta warning_compound_degradation_ids (0.80 <= CSI < 0.90) y tradeoff_masking_ids (at_risk)."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_cost_schedule_index_compound_degradation,
+    )
+
+    cas = [
+        {"ca_id": "CA-10", "cpi": 0.92, "spi": 0.92, "pct_complete": 25.0},  # csi=0.8464
+        {"ca_id": "CA-11", "cpi": 0.85, "spi": 1.10, "pct_complete": 40.0},  # csi=0.935, tradeoff
+    ]
+    res = evaluate_evm_cost_schedule_index_compound_degradation(cas)
+    assert res["total_accounts"] == 2
+    assert res["compliant_accounts"] == 0
+    assert res["warning_compound_degradation_ids"] == ["CA-10"]
+    assert res["tradeoff_masking_ids"] == ["CA-11"]
+    assert res["critical_compound_degradation_ids"] == []
+    assert res["post_gate_irrecoverable_ids"] == []
+    assert res["csi_governance_health"] == "at_risk"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_evaluate_evm_cost_schedule_index_compound_degradation_critical_and_irrecoverable():
+    """Detecta critical_compound_degradation_ids y post_gate_irrecoverable_ids (CSI < 0.80 con pct_complete >= 20%)."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_cost_schedule_index_compound_degradation,
+    )
+
+    cas = [
+        {"ca_id": "CA-20", "cpi": 0.85, "spi": 0.85, "pct_complete": 10.0},  # csi=0.7225 (<20%)
+        {"ca_id": "CA-21", "cpi": 0.80, "spi": 0.85, "pct_complete": 30.0},  # csi=0.68 (>=20%)
+    ]
+    res = evaluate_evm_cost_schedule_index_compound_degradation(cas)
+    assert res["total_accounts"] == 2
+    assert res["compliant_accounts"] == 0
+    assert res["min_csi"] == 0.68
+    assert res["critical_compound_degradation_ids"] == ["CA-20", "CA-21"]
+    assert res["post_gate_irrecoverable_ids"] == ["CA-21"]
+    assert res["csi_governance_health"] == "critical"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_evaluate_evm_cost_schedule_index_compound_degradation_empty_and_service_binding():
+    """Manejo defensivo de entradas vacías/no-secuencia y exposición en ProjectEVMService y __all__."""
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_cost_schedule_index_compound_degradation,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = evaluate_evm_cost_schedule_index_compound_degradation(payload)  # type: ignore[arg-type]
+        assert empty["total_accounts"] == 0
+        assert empty["compliant_accounts"] == 0
+        assert empty["min_csi"] == 1.0
+        assert empty["csi_governance_health"] == "healthy"
+        assert empty["is_compliant"] is True
+        assert empty["recommendations"] == []
+
+    sample = [{"id": "CA-99", "cpi": 1.0, "spi": 1.0, "pct_complete": 15.0}]
+    assert (
+        ProjectEVMService.evaluate_evm_cost_schedule_index_compound_degradation(
+            sample
+        )
+        == evaluate_evm_cost_schedule_index_compound_degradation(sample)
+    )
+    assert "evaluate_evm_cost_schedule_index_compound_degradation" in mod.__all__
+
+
+
 
 

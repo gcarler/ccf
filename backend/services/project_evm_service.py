@@ -5501,6 +5501,7 @@ __all__ = [
     "evaluate_evm_retroactive_change_and_negative_period_anomaly",
     "evaluate_evm_subcontractor_flowdown_and_invoice_overbilling",
     "evaluate_evm_earning_rule_gaming_and_duration_split",
+    "evaluate_evm_cost_schedule_index_compound_degradation",
     "ProjectEVMService",
 ]
 
@@ -7170,6 +7171,155 @@ def evaluate_evm_earning_rule_gaming_and_duration_split(
 ProjectEVMService.evaluate_evm_earning_rule_gaming_and_duration_split = staticmethod(
     evaluate_evm_earning_rule_gaming_and_duration_split
 )
+
+
+def evaluate_evm_cost_schedule_index_compound_degradation(
+    control_accounts: Sequence[Mapping[str, Any]] | None,
+    *,
+    warning_csi_threshold: float = 0.90,
+    critical_csi_threshold: float = 0.80,
+    irrecoverable_pct_complete_gate: float = 20.0,
+) -> dict[str, Any]:
+    """Evalúa degradación compuesta del índice costo-cronograma (CSI = CPI * SPI), compensación enmascarada y umbral de irrecuperabilidad post-20% (PMI PMBOK §7.4)."""
+    if (
+        control_accounts is None
+        or isinstance(control_accounts, (str, bytes))
+        or not isinstance(control_accounts, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = control_accounts
+
+    try:
+        warn_thresh = float(warning_csi_threshold)
+    except (TypeError, ValueError):
+        warn_thresh = 0.90
+
+    try:
+        crit_thresh = float(critical_csi_threshold)
+    except (TypeError, ValueError):
+        crit_thresh = 0.80
+
+    try:
+        irrec_gate = float(irrecoverable_pct_complete_gate)
+    except (TypeError, ValueError):
+        irrec_gate = 20.0
+
+    total_accounts = 0
+    compliant_accounts = 0
+    csis: list[float] = []
+
+    tradeoff_masking_ids: list[str] = []
+    warning_compound_degradation_ids: list[str] = []
+    critical_compound_degradation_ids: list[str] = []
+    post_gate_irrecoverable_ids: list[str] = []
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_accounts += 1
+
+        ca_id = (
+            str(raw.get("id") or raw.get("ca_id") or "").strip()
+            or "CA-UNKNOWN"
+        )
+
+        try:
+            cpi = max(0.0, float(raw.get("cpi") or 0.0))
+        except (TypeError, ValueError):
+            cpi = 0.0
+
+        try:
+            spi = max(0.0, float(raw.get("spi") or 0.0))
+        except (TypeError, ValueError):
+            spi = 0.0
+
+        try:
+            pct_complete = max(
+                0.0, min(100.0, float(raw.get("pct_complete") or 0.0))
+            )
+        except (TypeError, ValueError):
+            pct_complete = 0.0
+
+        csi = round(cpi * spi, 4)
+        csis.append(csi)
+
+        is_tradeoff_masking = (cpi < 0.90 and spi > 1.05) or (
+            spi < 0.90 and cpi > 1.05
+        )
+        is_warning_csi = crit_thresh <= csi < warn_thresh
+        is_critical_csi = csi < crit_thresh
+        is_post_gate_irrecoverable = (
+            csi < crit_thresh and pct_complete >= irrec_gate
+        )
+
+        if is_tradeoff_masking:
+            tradeoff_masking_ids.append(ca_id)
+        if is_warning_csi:
+            warning_compound_degradation_ids.append(ca_id)
+        if is_critical_csi:
+            critical_compound_degradation_ids.append(ca_id)
+        if is_post_gate_irrecoverable:
+            post_gate_irrecoverable_ids.append(ca_id)
+
+        if (
+            not is_tradeoff_masking
+            and not is_warning_csi
+            and not is_critical_csi
+            and not is_post_gate_irrecoverable
+        ):
+            compliant_accounts += 1
+
+    min_csi = 1.0 if not csis else round(min(csis), 4)
+
+    if len(critical_compound_degradation_ids) > 0:
+        csi_governance_health = "critical"
+    elif (
+        len(warning_compound_degradation_ids) > 0
+        or len(tradeoff_masking_ids) > 0
+    ):
+        csi_governance_health = "at_risk"
+    else:
+        csi_governance_health = "healthy"
+
+    is_compliant = csi_governance_health == "healthy"
+
+    recommendations: list[str] = []
+    if tradeoff_masking_ids:
+        recommendations.append(
+            f"Auditar compensación peligrosa costo-cronograma (CPI vs SPI divergentes) en {tradeoff_masking_ids}."
+        )
+    if warning_compound_degradation_ids:
+        recommendations.append(
+            f"Aplicar acciones preventivas de recuperación en cuentas con degradación compuesta CSI en banda de alerta: {warning_compound_degradation_ids}."
+        )
+    if critical_compound_degradation_ids:
+        recommendations.append(
+            f"Intervenir cuentas con degradación compuesta crítica (CSI < {crit_thresh}): {critical_compound_degradation_ids}."
+        )
+    if post_gate_irrecoverable_ids:
+        recommendations.append(
+            f"Evaluar re-baselining formal ante CCB para cuentas con CSI < {crit_thresh} tras superar el {irrec_gate}% de avance: {post_gate_irrecoverable_ids}."
+        )
+
+    return {
+        "total_accounts": total_accounts,
+        "compliant_accounts": compliant_accounts,
+        "min_csi": min_csi,
+        "tradeoff_masking_ids": tradeoff_masking_ids,
+        "warning_compound_degradation_ids": warning_compound_degradation_ids,
+        "critical_compound_degradation_ids": critical_compound_degradation_ids,
+        "post_gate_irrecoverable_ids": post_gate_irrecoverable_ids,
+        "csi_governance_health": csi_governance_health,
+        "is_compliant": is_compliant,
+        "recommendations": recommendations,
+    }
+
+
+ProjectEVMService.evaluate_evm_cost_schedule_index_compound_degradation = staticmethod(
+    evaluate_evm_cost_schedule_index_compound_degradation
+)
+
 
 
 

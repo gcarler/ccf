@@ -6247,3 +6247,159 @@ def test_audit_executive_report_critical_path_float_and_convergence_empty_and_se
     assert "audit_executive_report_critical_path_float_and_convergence" in mod.__all__
 
 
+def test_audit_executive_report_contract_claims_and_change_orders_healthy():
+    """Reclamos cerrados o en negociación dentro de SLA con cláusula contractual y exposición controlada."""
+    from backend.services.project_export_service import (
+        audit_executive_report_contract_claims_and_change_orders,
+    )
+
+    claims = [
+        {
+            "id": "CLM-01",
+            "status": "settled",
+            "contract_base_value": 100000.0,
+            "disputed_amount": 5000.0,
+            "days_unresolved": 60,
+            "adr_attempted": True,
+            "contract_clause_referenced": True,
+        },
+        {
+            "id": "CLM-02",
+            "status": "contested",
+            "contract_base_value": 200000.0,
+            "disputed_amount": 10000.0,
+            "days_unresolved": 20,
+            "adr_attempted": True,
+            "contract_clause_referenced": True,
+        },
+    ]
+    res = audit_executive_report_contract_claims_and_change_orders(claims)
+    assert res["total_claims"] == 2
+    assert res["compliant_claims"] == 2
+    assert res["total_disputed_amount"] == 10000.0
+    assert res["unsubstantiated_claim_ids"] == []
+    assert res["overdue_unresolved_claim_ids"] == []
+    assert res["excessive_disputed_exposure_ids"] == []
+    assert res["premature_litigation_without_adr_ids"] == []
+    assert res["claims_governance_health"] == "healthy"
+    assert res["is_compliant"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_executive_report_contract_claims_and_change_orders_at_risk_unsubstantiated_and_overdue():
+    """Detecta unsubstantiated_claim_ids y overdue_unresolved_claim_ids (claims_governance_health == 'at_risk')."""
+    from backend.services.project_export_service import (
+        audit_executive_report_contract_claims_and_change_orders,
+    )
+
+    claims = [
+        {
+            "claim_id": "CLM-10",
+            "status": "open",
+            "contract_base_value": 100000.0,
+            "disputed_amount": 3000.0,
+            "days_unresolved": 15,
+            "adr_attempted": False,
+            "contract_clause_referenced": False,
+        },
+        {
+            "claim_id": "CLM-11",
+            "status": "contested",
+            "contract_base_value": 100000.0,
+            "disputed_amount": 4000.0,
+            "days_unresolved": 60,
+            "adr_attempted": True,
+            "contract_clause_referenced": True,
+        },
+    ]
+    res = audit_executive_report_contract_claims_and_change_orders(
+        claims, max_claim_resolution_days=45
+    )
+    assert res["total_claims"] == 2
+    assert res["compliant_claims"] == 0
+    assert res["total_disputed_amount"] == 7000.0
+    assert res["unsubstantiated_claim_ids"] == ["CLM-10"]
+    assert res["overdue_unresolved_claim_ids"] == ["CLM-11"]
+    assert res["excessive_disputed_exposure_ids"] == []
+    assert res["premature_litigation_without_adr_ids"] == []
+    assert res["claims_governance_health"] == "at_risk"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_executive_report_contract_claims_and_change_orders_critical_exposure_and_litigation():
+    """Detecta excessive_disputed_exposure_ids y premature_litigation_without_adr_ids (critical)."""
+    from backend.services.project_export_service import (
+        audit_executive_report_contract_claims_and_change_orders,
+    )
+
+    claims = [
+        {
+            "claim_id": "CLM-20",
+            "status": "contested",
+            "contract_base_value": 100000.0,
+            "disputed_amount": 25000.0,
+            "days_unresolved": 10,
+            "adr_attempted": True,
+            "contract_clause_referenced": True,
+        },
+        {
+            "claim_id": "CLM-21",
+            "status": "litigation",
+            "contract_base_value": 100000.0,
+            "disputed_amount": 5000.0,
+            "days_unresolved": 20,
+            "adr_attempted": False,
+            "contract_clause_referenced": True,
+        },
+    ]
+    res = audit_executive_report_contract_claims_and_change_orders(
+        claims, max_disputed_to_contract_value_pct=10.0
+    )
+    assert res["total_claims"] == 2
+    assert res["compliant_claims"] == 0
+    assert res["total_disputed_amount"] == 30000.0
+    assert res["excessive_disputed_exposure_ids"] == ["CLM-20"]
+    assert res["premature_litigation_without_adr_ids"] == ["CLM-21"]
+    assert res["claims_governance_health"] == "critical"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_executive_report_contract_claims_and_change_orders_empty_and_service_binding():
+    """Manejo defensivo de entradas vacías/no-secuencia y exposición en ProjectExportService y __all__."""
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_contract_claims_and_change_orders,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_executive_report_contract_claims_and_change_orders(payload)  # type: ignore[arg-type]
+        assert empty["total_claims"] == 0
+        assert empty["compliant_claims"] == 0
+        assert empty["total_disputed_amount"] == 0.0
+        assert empty["claims_governance_health"] == "healthy"
+        assert empty["is_compliant"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "id": "CLM-99",
+            "status": "open",
+            "contract_base_value": 50000.0,
+            "disputed_amount": 1000.0,
+            "days_unresolved": 5,
+            "contract_clause_referenced": True,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_contract_claims_and_change_orders(
+            sample
+        )
+        == audit_executive_report_contract_claims_and_change_orders(sample)
+    )
+    assert "audit_executive_report_contract_claims_and_change_orders" in mod.__all__
+
+
+
