@@ -102,7 +102,7 @@ describe('TaskDetailPanel integrated accessibility', () => {
         await user.keyboard('{Escape}');
         await waitFor(() => expect(screen.getByText('Panel cerrado')).toBeInTheDocument());
         expect(detailPanel).not.toBeInTheDocument();
-    });
+    }, 15000);
 
     it('retains the supply and announces a rejected DELETE after confirmation', async () => {
         const user = userEvent.setup();

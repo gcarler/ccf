@@ -11,6 +11,7 @@ import { RightPanel } from "@/components/ui/RightPanel";
  */
 export type ProjectHubModuleKey =
   | 'components'
+  | 'wbs'
   | 'labels'
   | 'kpis'
   | 'progress'
@@ -22,6 +23,7 @@ export type ProjectHubModuleKey =
   | 'automations'
   | 'reports'
   | 'indicators'
+  | 'ccb'
   | 'evm'
   | 'drive'
   | 'governance';

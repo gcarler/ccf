@@ -237,6 +237,8 @@ export interface ProjectWorkloadTaskItem {
   title: string;
   status: string;
   priority: string;
+  accountable_name?: string | null;
+  accountable_persona_id?: string | null;
   due_date?: string | null;
   is_overdue: boolean;
   estimated_hours?: number;
@@ -877,6 +879,45 @@ export interface ProjectGovernanceSummary {
   lessons_learned_count: number;
 }
 
+export type ProjectDevelopmentApproach = "predictive" | "agile" | "hybrid";
+export type ProjectPMOType = "supportive" | "controlling" | "directive";
+export type ProjectPortfolioQuadrant =
+  | "q1_optimal"
+  | "q2_cost_acceleration"
+  | "q3_underutilized_capacity"
+  | "q4_critical_emergency";
+
+export interface PMOPortfolioProject {
+  project_id: string;
+  title: string;
+  status: string;
+  development_approach: ProjectDevelopmentApproach;
+  pmo_type: ProjectPMOType;
+  bac: number;
+  ev: number;
+  ac: number;
+  cpi: number;
+  spi: number;
+  csi: number;
+  quadrant: ProjectPortfolioQuadrant;
+  progress_pct: number;
+  charter_status: "draft" | "authorized";
+}
+
+export interface PMOPortfolioMatrixResponse {
+  portfolio_totals: {
+    total_projects: number;
+    total_bac: number;
+    total_ev: number;
+    total_ac: number;
+    portfolio_cpi: number;
+    portfolio_spi: number;
+    portfolio_csi: number;
+  };
+  quadrants_distribution: Record<ProjectPortfolioQuadrant, number>;
+  projects_matrix: PMOPortfolioProject[];
+}
+
 export interface ProjectSubmodulesSummary {
   baseline: {
     has_active_baseline: boolean;
@@ -1492,6 +1533,7 @@ export interface WBSNode {
   id: string;
   wbs_code: string;
   title: string;
+  description?: string | null;
   type: 'project' | 'component' | 'task';
   level: number;
   status: string;

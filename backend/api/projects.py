@@ -2620,6 +2620,18 @@ def save_project_as_template_endpoint(
         raise HTTPException(status_code=400, detail=f"Error al guardar plantilla: {str(e)}")
 
 
+@router.get("/pmo-portfolio-matrix", response_model=schemas.PMOPortfolioMatrixResponse, tags=["Projects PMI Portfolio"])
+def get_pmo_portfolio_matrix(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Return the authenticated sede's aggregate EVM portfolio matrix."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    return schemas.PMOPortfolioMatrixResponse(
+        **project_lifecycle_pmi_service.build_pmo_portfolio_matrix(db, user_sede)
+    )
+
+
 @router.get("/{project_id}", response_model=schemas.Project)
 def get_project(
     project_id: str,
@@ -7046,3 +7058,65 @@ def upsert_task_dod_acceptance(
     _normalize_dates(dod)
     return dod
 
+
+@router.get(
+    "/{project_id}/tasks/{task_id}/dod-status",
+    tags=["Projects DoD"],
+)
+def get_task_dod_status(
+    project_id: str,
+    task_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("read")),
+):
+    """Estado DoD de un paquete de trabajo (PMI Vol. 6 §4).
+
+    Responde 200 con `status=not_recorded` cuando la tarea aún no tiene
+    verificación registrada, de modo que el panel siempre puede cargar su
+    estado inicial sin tratar 404 como flujo normal.
+    """
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+    task = _ensure_task_in_project(db, project_id, task_id)
+    from backend.services import project_ccb_service
+
+    dod = project_ccb_service.get_dod_acceptance(db, project, task.id)
+    if dod is None:
+        return {
+            "task_id": str(task.id),
+            "status": "not_recorded",
+            "specification_met": False,
+            "tests_no_critical_failures": False,
+            "evidence_archived": False,
+            "supervisor_sign_off": False,
+            "coq_classification": None,
+            "coq_amount": None,
+            "accepted_by": None,
+            "accepted_by_name": None,
+            "accepted_at": None,
+        }
+
+    accepted_by_name = None
+    if dod.accepted_by:
+        acceptor = (
+            db.query(models.Persona)
+            .filter(models.Persona.id == dod.accepted_by)
+            .first()
+        )
+        if acceptor is not None:
+            accepted_by_name = " ".join(
+                part for part in (acceptor.first_name, acceptor.last_name) if part
+            )
+    return {
+        "task_id": str(task.id),
+        "status": dod.status,
+        "specification_met": bool(dod.specification_met),
+        "tests_no_critical_failures": bool(dod.tests_no_critical_failures),
+        "evidence_archived": bool(dod.evidence_archived),
+        "supervisor_sign_off": bool(dod.supervisor_sign_off),
+        "coq_classification": dod.coq_classification,
+        "coq_amount": float(dod.coq_amount) if dod.coq_amount is not None else None,
+        "accepted_by": str(dod.accepted_by) if dod.accepted_by else None,
+        "accepted_by_name": accepted_by_name,
+        "accepted_at": dod.accepted_at.isoformat() if dod.accepted_at else None,
+    }

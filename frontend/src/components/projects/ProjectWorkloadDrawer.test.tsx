@@ -75,7 +75,7 @@ describe("ProjectWorkloadDrawer", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Reintentar carga de trabajo" }));
 
-    expect(await screen.findByText("Preparar materiales")).toBeInTheDocument();
+    expect((await screen.findAllByText("Preparar materiales")).length).toBeGreaterThan(0);
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(mocks.apiFetch).toHaveBeenCalledWith(
       "/projects/project-1/workload",
@@ -178,5 +178,67 @@ describe("ProjectWorkloadDrawer", () => {
     expect(await screen.findByText(/Esfuerzo EDT \(Tareas Hoja\): 18\.5h reg\. \/ 40\.0h est\./i)).toBeInTheDocument();
     expect(screen.getByText(/Utilización Horas: 46%/i)).toBeInTheDocument();
     expect(screen.getByText(/Horas: 18\.5h \/ 40\.0h/i)).toBeInTheDocument();
+  });
+
+  it("diagnoses smoothing and applies the recommended transfer to the least loaded available member", async () => {
+    mocks.apiFetch.mockResolvedValue({
+      ...summary,
+      overloaded_members_count: 1,
+      available_members_count: 1,
+      total_members: 2,
+      members: [
+        {
+          ...summary.members[0],
+          name: "Ana Sobrecargada",
+          capacity_status: "overloaded" as const,
+          workload_percent: 140,
+          hours_utilization_pct: 120,
+          tasks: [{ ...summary.members[0].tasks[0], priority: "low" }],
+        },
+        {
+          ...summary.members[0],
+          persona_id: "person-2",
+          name: "Luis Disponible",
+          capacity_status: "available" as const,
+          workload_percent: 20,
+          tasks: [],
+        },
+      ],
+    });
+
+    render(<ProjectWorkloadDrawer projectId="project-1" isOpen onClose={vi.fn()} />);
+
+    expect(await screen.findByRole("heading", { name: /Diagnóstico PMI de Optimización de Recursos/i })).toBeInTheDocument();
+    expect(screen.getByText(/Alisado de Recursos \(Resource Smoothing\)/)).toBeInTheDocument();
+    expect(screen.getByText(/Nivelación de Recursos \(Resource Leveling\)/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Aplicar Alisado" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Aplicar Alisado" }));
+
+    await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalledWith(
+      "/projects/project-1/tasks/task-1/reassign",
+      expect.objectContaining({
+        method: "PATCH",
+        body: JSON.stringify({ new_assignee_id: "person-2" }),
+      }),
+    ));
+  });
+
+  it("shows RACI gaps for unassigned deliverables and reports full-coverage criteria", async () => {
+    mocks.apiFetch.mockResolvedValue({
+      ...summary,
+      total_members: 1,
+      unassigned_tasks_count: 1,
+      members: [{ ...summary.members[0], persona_id: null, name: "Sin Asignar" }],
+    });
+
+    render(<ProjectWorkloadDrawer projectId="project-1" isOpen onClose={vi.fn()} />);
+
+    expect(await screen.findByRole("heading", { name: "Matriz RACI de Entregables (PMI Vol. 4)" })).toBeInTheDocument();
+    expect(screen.getByText("Cobertura RACI: 0% (0/1)")).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "R · Ejecutor" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "A · Aprobador" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Asignar R para Preparar materiales" })).toHaveValue("__unassigned__");
+    expect(screen.getByText("Brecha RACI: Sin R")).toBeInTheDocument();
+    expect(screen.getByText("Sin dueño/aprobador")).toBeInTheDocument();
   });
 });

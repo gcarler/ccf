@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch } from "@/lib/http";
 import type { ProjectWorkloadSummary } from "@/types/projects";
-import { Users, AlertOctagon, Scale, CheckCircle2, Clock, ChevronDown, ChevronUp, UserX, ExternalLink } from "lucide-react";
+import { Users, AlertOctagon, Scale, CheckCircle2, Clock, ChevronDown, ChevronUp, UserX, ExternalLink, ArrowRight } from "lucide-react";
 
 interface ProjectWorkloadDrawerProps {
   projectId: string;
@@ -41,6 +41,60 @@ const CAPACITY_CONFIG = {
     icon: CheckCircle2,
   },
 };
+
+type WorkloadTask = ProjectWorkloadSummary["members"][number]["tasks"][number];
+type WorkloadMember = ProjectWorkloadSummary["members"][number];
+
+interface WorkloadTaskAssignment {
+  task: WorkloadTask;
+  member: WorkloadMember;
+}
+
+interface SmoothingRecommendation {
+  task: WorkloadTask;
+  source: WorkloadMember;
+  target: WorkloadMember;
+}
+
+function flattenWorkloadTasks(summary: ProjectWorkloadSummary): WorkloadTaskAssignment[] {
+  return summary.members.flatMap((member) =>
+    member.tasks.map((task) => ({ task, member })),
+  );
+}
+
+function getSmoothingRecommendations(summary: ProjectWorkloadSummary): SmoothingRecommendation[] {
+  const availableMembers = summary.members
+    .filter((member) => member.persona_id !== null && member.persona_id !== undefined)
+    .filter((member) => member.workload_percent < 100)
+    .sort((left, right) => left.workload_percent - right.workload_percent);
+  const overloadedMembers = summary.members.filter(
+    (member) => member.capacity_status === "overloaded" || (member.hours_utilization_pct ?? 0) > 100 || member.workload_percent > 100,
+  );
+
+  return overloadedMembers.flatMap((source) => {
+    const target = availableMembers.find(
+      (member) => member.persona_id !== source.persona_id &&
+        (member.capacity_status === "available" || member.workload_percent < source.workload_percent),
+    );
+    if (!target) return [];
+
+    const task = source.tasks.find((candidate) => {
+      const status = candidate.status.toLowerCase();
+      const priority = candidate.priority.toLowerCase();
+      return status !== "completed" && status !== "cancelled" &&
+        !candidate.is_overdue && (priority === "low" || priority === "medium");
+    });
+    return task ? [{ task, source, target }] : [];
+  });
+}
+
+function getConsultedInformedRole(task: WorkloadTask): string {
+  const status = task.status.toLowerCase();
+  const priority = task.priority.toLowerCase();
+  if (task.is_overdue || priority === "urgent" || priority === "high") return "C · consultar de inmediato";
+  if (status === "review" || status === "completed") return "I · informar validación/cierre";
+  return "I · informar avance";
+}
 
 export function ProjectWorkloadDrawer({
   projectId,
@@ -234,6 +288,173 @@ export function ProjectWorkloadDrawer({
               </div>
             </div>
           </div>
+        )}
+
+        {summary && !loading && !loadError && (
+          <>
+            {(() => {
+              const recommendations = getSmoothingRecommendations(summary);
+              const assignments = flattenWorkloadTasks(summary);
+              const fullyCovered = assignments.filter(
+                ({ task, member }) => member.persona_id && task.accountable_persona_id && task.accountable_name,
+              ).length;
+              const coverage = assignments.length > 0 ? Math.round((fullyCovered / assignments.length) * 100) : 0;
+              const levelingCases = summary.members.filter((member) =>
+                member.capacity_status === "overloaded" || (member.hours_utilization_pct ?? 0) > 100 || member.workload_percent > 100,
+              ).length - recommendations.length;
+
+              return (
+                <>
+                  <section
+                    aria-labelledby="pmi-resource-optimization-title"
+                    className="rounded-xl border p-4 space-y-3"
+                    style={{ backgroundColor: "hsl(var(--surface-1))", borderColor: "hsl(var(--border))" }}
+                  >
+                    <div className="flex items-start gap-3">
+                      <Scale className="w-5 h-5 shrink-0 mt-0.5" style={{ color: "hsl(var(--primary))" }} />
+                      <div className="space-y-2 min-w-0">
+                        <h3 id="pmi-resource-optimization-title" className="text-sm font-bold text-[hsl(var(--text-primary))]">
+                          Diagnóstico PMI de Optimización de Recursos (Nivelación vs. Alisado)
+                        </h3>
+                        <p className="text-xs text-[hsl(var(--text-primary))]">
+                          <strong>Alisado de Recursos (Resource Smoothing):</strong> reasigna trabajo activo de prioridad baja o media a capacidad libre, sin desplazar la fecha fin.
+                        </p>
+                        <p className="text-xs text-[hsl(var(--text-primary))]">
+                          <strong>Nivelación de Recursos (Resource Leveling):</strong> aplica cuando la sobrecarga afecta trabajo urgente/vencido o el equipo no tiene holgura; puede impactar la línea base del cronograma.
+                        </p>
+                      </div>
+                    </div>
+
+                    {recommendations.length > 0 ? (
+                      <div className="space-y-2">
+                        {recommendations.map(({ task, source, target }) => (
+                          <div
+                            key={`smoothing-${task.id}`}
+                            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3"
+                            style={{ backgroundColor: "hsl(var(--success-muted))", borderColor: "hsl(var(--success) / 0.3)" }}
+                          >
+                            <p className="text-xs text-[hsl(var(--text-primary))]">
+                              <strong>{task.title}</strong>: {source.name} ({source.workload_percent}%) <ArrowRight className="inline w-3 h-3" aria-hidden="true" /> {target.name} ({target.workload_percent}%).
+                            </p>
+                            <button
+                              type="button"
+                              disabled={reassigningTaskId === task.id}
+                              onClick={() => handleReassign(task.id, target.persona_id ?? null)}
+                              className="rounded-lg border px-3 py-1.5 text-xs font-semibold disabled:opacity-60"
+                              style={{ backgroundColor: "hsl(var(--surface-1))", borderColor: "hsl(var(--border))", color: "hsl(var(--text-primary))" }}
+                            >
+                              {reassigningTaskId === task.id ? "Aplicando…" : "Aplicar Alisado"}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-[hsl(var(--text-primary))]">
+                        No hay una reasignación de alisado segura sugerida con los datos actuales.
+                      </p>
+                    )}
+
+                    {levelingCases > 0 && (
+                      <p className="rounded-lg border p-3 text-xs text-[hsl(var(--warning-text))]" style={{ backgroundColor: "hsl(var(--warning-muted))", borderColor: "hsl(var(--warning) / 0.3)" }}>
+                        Nivelación requerida en {levelingCases} colaborador(es): prioriza revisar tareas urgentes o vencidas y replanificar la línea base si la capacidad del equipo no alcanza.
+                      </p>
+                    )}
+                  </section>
+
+                  <section
+                    aria-labelledby="pmi-raci-title"
+                    className="rounded-xl border p-4 space-y-3"
+                    style={{ backgroundColor: "hsl(var(--surface-1))", borderColor: "hsl(var(--border))" }}
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <h3 id="pmi-raci-title" className="text-sm font-bold text-[hsl(var(--text-primary))]">
+                          Matriz RACI de Entregables (PMI Vol. 4)
+                        </h3>
+                        <p className="mt-1 text-xs text-[hsl(var(--text-primary))]">
+                          Regla PMI: cada entregable requiere exactamente un Ejecutor Responsable (R) y un Aprobador (A) de Cuenta de Control.
+                        </p>
+                      </div>
+                      <span
+                        className="rounded-full border px-2.5 py-1 text-xs font-semibold"
+                        style={{ backgroundColor: "hsl(var(--surface-2))", borderColor: "hsl(var(--border))", color: "hsl(var(--text-primary))" }}
+                      >
+                        Cobertura RACI: {coverage}% ({fullyCovered}/{assignments.length})
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-[hsl(var(--warning-text))]">
+                      El resumen de carga no incluye un aprobador de Cuenta de Control; se muestra como brecha hasta que esa asignación exista en los datos del proyecto.
+                    </p>
+
+                    {assignments.length === 0 ? (
+                      <p className="rounded-lg border p-3 text-xs text-[hsl(var(--text-primary))]" style={{ backgroundColor: "hsl(var(--surface-2))", borderColor: "hsl(var(--border))" }}>
+                        No hay entregables para evaluar la cobertura RACI.
+                      </p>
+                    ) : (
+                      <div className="overflow-x-auto rounded-lg border" style={{ borderColor: "hsl(var(--border))" }}>
+                        <table className="w-full min-w-[720px] text-left text-xs">
+                          <thead style={{ backgroundColor: "hsl(var(--surface-2))" }}>
+                            <tr className="text-[hsl(var(--text-primary))]">
+                              <th scope="col" className="p-2.5 font-semibold">Entregable / Tarea</th>
+                              <th scope="col" className="p-2.5 font-semibold">R · Ejecutor</th>
+                              <th scope="col" className="p-2.5 font-semibold">A · Aprobador</th>
+                              <th scope="col" className="p-2.5 font-semibold">C / I</th>
+                              <th scope="col" className="p-2.5 font-semibold">Estado RACI</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {assignments.map(({ task, member }) => {
+                              const hasResponsible = member.persona_id !== null && member.persona_id !== undefined;
+                              const hasAccountable = Boolean(task.accountable_persona_id && task.accountable_name);
+                              const status = !hasResponsible
+                                ? "Brecha RACI: Sin R"
+                                : !hasAccountable
+                                ? "Brecha RACI: Sin A"
+                                : "Conforme";
+
+                              return (
+                                <tr key={`raci-${task.id}`} className="border-t" style={{ borderColor: "hsl(var(--border))" }}>
+                                  <th scope="row" className="p-2.5 font-medium text-[hsl(var(--text-primary))]">{task.title}</th>
+                                  <td className="p-2.5">
+                                    <select
+                                      disabled={reassigningTaskId === task.id}
+                                      aria-label={`Asignar R para ${task.title}`}
+                                      value={member.persona_id ?? "__unassigned__"}
+                                      onChange={(event) => handleReassign(task.id, event.target.value === "__unassigned__" ? null : event.target.value)}
+                                      className="max-w-48 rounded border px-2 py-1 text-[hsl(var(--text-primary))]"
+                                      style={{ backgroundColor: "hsl(var(--surface-2))", borderColor: "hsl(var(--border))" }}
+                                    >
+                                      <option value="__unassigned__">Sin R asignado</option>
+                                      {assignableMembers.map((candidate) => (
+                                        <option key={candidate.persona_id} value={candidate.persona_id ?? ""}>{candidate.name}</option>
+                                      ))}
+                                    </select>
+                                  </td>
+                                  <td className="p-2.5 text-[hsl(var(--text-primary))]">{hasAccountable ? task.accountable_name : "Sin dueño/aprobador"}</td>
+                                  <td className="p-2.5 text-[hsl(var(--text-primary))]">{getConsultedInformedRole(task)}</td>
+                                  <td className="p-2.5">
+                                    <span
+                                      className="rounded-full border px-2 py-1 font-semibold"
+                                      style={status === "Conforme"
+                                        ? { backgroundColor: "hsl(var(--success-muted))", borderColor: "hsl(var(--success) / 0.3)", color: "hsl(var(--success-text))" }
+                                        : { backgroundColor: "hsl(var(--warning-muted))", borderColor: "hsl(var(--warning) / 0.3)", color: "hsl(var(--warning-text))" }}
+                                    >
+                                      {status}
+                                    </span>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </section>
+                </>
+              );
+            })()}
+          </>
         )}
 
         {/* LISTADO DE MIEMBROS Y MATRIZ DE SATURACIÓN */}

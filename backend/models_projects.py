@@ -133,6 +133,8 @@ class ProjectLifecycle(Base):
     key_constraints = Column(JSON, nullable=False, default=list)
     high_level_risks = Column(JSON, nullable=False, default=list)
     preliminary_budget = Column(Float, nullable=True)
+    development_approach = Column(String(20), nullable=False, default="hybrid", server_default="hybrid")
+    pmo_type = Column(String(20), nullable=False, default="controlling", server_default="controlling")
     charter_status = Column(String(20), nullable=False, default="draft")
     authorized_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
     authorized_at = Column(DateTime(timezone=True), nullable=True)
@@ -1191,6 +1193,7 @@ class ProjectDodAcceptance(Base):
     coq_classification = Column(
         String(30), nullable=True
     )  # prevention | appraisal | internal_failure | external_failure
+    coq_amount = Column(Float, nullable=True)  # Monto $ del Costo de Calidad (CoQ)
     created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="RESTRICT"), nullable=True, index=True)

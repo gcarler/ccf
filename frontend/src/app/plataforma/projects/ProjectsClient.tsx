@@ -1,6 +1,6 @@
 "use client";
 
-import { Folder, Layers, Plus, Search } from 'lucide-react';
+import { BarChart3, Folder, Layers, Plus, Search } from 'lucide-react';
 import clsx from 'clsx';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -13,6 +13,7 @@ import type { CalendarEvent } from '@/components/ui/UniversalCalendarView';
 import type { GanttItem } from '@/components/ui/UniversalGanttView';
 import ProjectsShell from '@/components/projects/ProjectsShell';
 import ProjectCreationDrawer from '@/components/projects/ProjectCreationDrawer';
+import { ProjectPMOPortfolioDrawer } from '@/components/projects/ProjectPMOPortfolioDrawer';
 import { useAuth } from '@/context/AuthContext';
 import { useRegisterCommands } from '@/context/CommandCenterContext';
 import { DSCard } from '@/design';
@@ -108,6 +109,7 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
     );
     const [isCreating, setIsCreating] = useState(false);
     const [showCreateForm, setShowCreateForm] = useState(false);
+    const [showPMOPortfolio, setShowPMOPortfolio] = useState(false);
     const { updateProject, deleteProject } = useProjects();
     const projectsListRef = useRef<HTMLDivElement | null>(null);
     const projectRequestSequence = useRef(0);
@@ -524,13 +526,22 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
             viewOptions={PROJECT_VIEWS}
                 onSearch={handleSearchChange}
             rightActions={
-                <button
-                    onClick={() => setShowCreateForm(true)}
-                    className="flex items-center gap-2 px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg text-xs font-bold uppercase tracking-wide transition-all bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg shadow-[hsl(var(--primary))]/20 hover:bg-[hsl(var(--primary))]/90 active:scale-95"
-                >
-                    <Plus size={14} />
-                    Nuevo Proyecto
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setShowPMOPortfolio(true)}
+                        className="flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-primary))] transition-colors hover:bg-[hsl(var(--surface-2))]"
+                    >
+                        <BarChart3 size={14} /> Matriz PMO (CPI×SPI)
+                    </button>
+                    <button
+                        onClick={() => setShowCreateForm(true)}
+                        className="flex items-center gap-2 px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg text-xs font-bold uppercase tracking-wide transition-all bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg shadow-[hsl(var(--primary))]/20 hover:bg-[hsl(var(--primary))]/90 active:scale-95"
+                    >
+                        <Plus size={14} />
+                        Nuevo Proyecto
+                    </button>
+                </div>
             }
         >
             <ProjectCreationDrawer
@@ -538,6 +549,7 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                 onClose={() => setShowCreateForm(false)}
                 onSubmit={handleCreateProject}
             />
+            <ProjectPMOPortfolioDrawer isOpen={showPMOPortfolio} onClose={() => setShowPMOPortfolio(false)} />
 
             <div className="flex items-center gap-2">
                 <label className="sr-only" htmlFor="projects-mobile-view">Vista de proyectos</label>

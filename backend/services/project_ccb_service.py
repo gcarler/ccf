@@ -19,6 +19,7 @@ from datetime import timedelta, timezone
 from typing import Optional, Union
 from uuid import UUID
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
@@ -185,6 +186,7 @@ def upsert_dod_acceptance(
     dod.evidence_archived = bool(payload.evidence_archived)
     dod.supervisor_sign_off = bool(payload.supervisor_sign_off)
     dod.coq_classification = payload.coq_classification
+    dod.coq_amount = float(payload.coq_amount) if payload.coq_amount is not None else None
 
     if (
         dod.specification_met
@@ -201,3 +203,85 @@ def upsert_dod_acceptance(
     db.commit()
     db.refresh(dod)
     return dod
+
+
+def get_project_ccb_and_quality_summary(db: Session, project_id: UUID) -> dict:
+    """Resumen ejecutivo del Control de Cambios (CCB, Vol. 6 §5) y de la
+    calidad de entregables (DoD / Costo de Calidad CoQ, Vol. 6 §4).
+
+    Claves de retorno (todas calculadas con agregación en SQL):
+    - total_change_requests, pending_ccb_count, approved_count, rejected_count
+    - net_approved_cost_delta (Δ$ BAC neto de CRs aprobadas)
+    - net_approved_schedule_days (Δdías neto de CRs aprobadas)
+    - tasks_dod_accepted_count (entregables DoD aceptados)
+    - total_coq_cost ($ CoQ acumulado) y coq_by_category por clasificación
+    """
+    coq_by_category = {
+        "prevention": 0.0,
+        "appraisal": 0.0,
+        "internal_failure": 0.0,
+        "external_failure": 0.0,
+    }
+
+    cr_counts = (
+        db.query(
+            models.ProjectChangeRequest.status,
+            func.count().label("cnt"),
+        )
+        .filter(models.ProjectChangeRequest.project_id == project_id)
+        .group_by(models.ProjectChangeRequest.status)
+        .all()
+    )
+    status_counts = {status: int(cnt or 0) for status, cnt in cr_counts}
+
+    approved_totals = (
+        db.query(
+            func.coalesce(func.sum(models.ProjectChangeRequest.cost_impact_delta), 0.0),
+            func.coalesce(func.sum(models.ProjectChangeRequest.schedule_impact_days), 0),
+        )
+        .filter(
+            models.ProjectChangeRequest.project_id == project_id,
+            models.ProjectChangeRequest.status == "approved",
+        )
+        .first()
+    )
+
+    tasks_dod_accepted_count = int(
+        db.query(func.count())
+        .filter(
+            models.ProjectDodAcceptance.project_id == project_id,
+            models.ProjectDodAcceptance.status == "accepted",
+        )
+        .scalar() or 0
+    )
+
+    total_coq_cost = 0.0
+    coq_rows = (
+        db.query(
+            models.ProjectDodAcceptance.coq_classification,
+            func.coalesce(func.sum(models.ProjectDodAcceptance.coq_amount), 0.0),
+        )
+        .filter(
+            models.ProjectDodAcceptance.project_id == project_id,
+            models.ProjectDodAcceptance.coq_amount.isnot(None),
+        )
+        .group_by(models.ProjectDodAcceptance.coq_classification)
+        .all()
+    )
+    for classification, amount in coq_rows:
+        value = float(amount or 0.0)
+        total_coq_cost += value
+        if classification in coq_by_category:
+            coq_by_category[classification] = value
+
+    return {
+        "total_change_requests": sum(status_counts.values()),
+        "pending_ccb_count": status_counts.get("pending_ccb", 0),
+        "approved_count": status_counts.get("approved", 0),
+        "rejected_count": status_counts.get("rejected", 0),
+        "net_approved_cost_delta": float(approved_totals[0] or 0.0),
+        "net_approved_schedule_days": int(approved_totals[1] or 0),
+        "tasks_dod_accepted_count": tasks_dod_accepted_count,
+        "total_coq_cost": total_coq_cost,
+        "coq_by_category": coq_by_category,
+    }

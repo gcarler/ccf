@@ -59,21 +59,36 @@ export function ProjectPMIKnowledgeDrawer({
         };
     }, [isOpen]);
 
-    const _filteredVolumes = useMemo(() => {
+    const filteredVolumes = useMemo(() => {
         if (!searchTerm.trim()) return volumes;
-        const q = searchTerm.toLowerCase();
+        const q = searchTerm.trim().toLocaleLowerCase();
         return volumes.filter(
             (v) =>
-                v.title.toLowerCase().includes(q) ||
-                v.summary.toLowerCase().includes(q) ||
-                v.tags.some((t) => t.toLowerCase().includes(q))
+                v.title.toLocaleLowerCase().includes(q) ||
+                v.summary.toLocaleLowerCase().includes(q) ||
+                v.tags.some((t) => t.toLocaleLowerCase().includes(q)) ||
+                (v.content ?? '').toLocaleLowerCase().includes(q)
         );
     }, [volumes, searchTerm]);
 
+    useEffect(() => {
+        if (
+            filteredVolumes.length > 0 &&
+            !filteredVolumes.some((volume) => volume.vol === selectedVolIndex)
+        ) {
+            setSelectedVolIndex(filteredVolumes[0].vol);
+        }
+    }, [filteredVolumes, selectedVolIndex]);
+
     const activeVolume = useMemo(() => {
-        if (!volumes.length) return null;
-        return volumes.find((v) => v.vol === selectedVolIndex) || volumes[0];
-    }, [volumes, selectedVolIndex]);
+        if (!filteredVolumes.length) return null;
+        return filteredVolumes.find((v) => v.vol === selectedVolIndex) || filteredVolumes[0];
+    }, [filteredVolumes, selectedVolIndex]);
+
+    const activeSections = useMemo(() => {
+        if (!activeVolume) return [];
+        return parseMarkdownSections(activeVolume.content ?? '', activeVolume.vol);
+    }, [activeVolume]);
 
     const handleSync = async () => {
         setIsSyncing(true);
@@ -150,7 +165,7 @@ export function ProjectPMIKnowledgeDrawer({
 
                 {/* Volume Selector Carousel / Chips */}
                 <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-                    {volumes.map((v) => {
+                    {filteredVolumes.map((v) => {
                         const isSelected = activeVolume?.vol === v.vol;
                         return (
                             <button
@@ -190,7 +205,7 @@ export function ProjectPMIKnowledgeDrawer({
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
                                         <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))]">
-                                            Volumen {activeVolume.vol} de 6
+                                            Volumen {activeVolume.vol} (Compendio de {volumes.length} volúmenes)
                                         </span>
                                         <span className="text-[11px] text-[hsl(var(--muted-foreground))]">
                                             {activeVolume.word_count.toLocaleString()} palabras • {activeVolume.char_count.toLocaleString()} caracteres
@@ -232,11 +247,39 @@ export function ProjectPMIKnowledgeDrawer({
                             </div>
                         </div>
 
+                        {activeSections.some((section) => section.title) && (
+                            <nav aria-label="Índice rápido de secciones" className="space-y-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4">
+                                <h4 className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-primary))]">Índice rápido de secciones</h4>
+                                <div className="flex flex-wrap gap-2">
+                                    {activeSections.filter((section) => section.title).map((section) => (
+                                        <a
+                                            key={section.id}
+                                            href={`#${section.id}`}
+                                            className="rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-2.5 py-1 text-xs text-[hsl(var(--text-primary))] transition-colors hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))]"
+                                        >
+                                            {section.title}
+                                        </a>
+                                    ))}
+                                </div>
+                            </nav>
+                        )}
+
                         {/* Markdown Content Viewer */}
                         <div className="p-6 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] min-h-[400px] max-h-[600px] overflow-y-auto leading-relaxed">
-                            <pre className="font-sans text-xs whitespace-pre-wrap text-[hsl(var(--foreground))] font-normal leading-relaxed selection:bg-[hsl(var(--primary)/0.2)]">
-                                {activeVolume.content}
-                            </pre>
+                            {activeSections.map((section) => (
+                                <section key={section.id}>
+                                    {section.title && (
+                                        <h4 id={section.id} className="mb-2 scroll-mt-4 text-sm font-bold text-[hsl(var(--foreground))]">
+                                            {section.title}
+                                        </h4>
+                                    )}
+                                    {section.content && (
+                                        <pre className="font-sans text-xs whitespace-pre-wrap text-[hsl(var(--foreground))] font-normal leading-relaxed selection:bg-[hsl(var(--primary)/0.2)]">
+                                            {section.content}
+                                        </pre>
+                                    )}
+                                </section>
+                            ))}
                         </div>
                     </div>
                 ) : (
@@ -250,4 +293,41 @@ export function ProjectPMIKnowledgeDrawer({
             </div>
         </RightPanel>
     );
+}
+
+interface PMIKnowledgeSection {
+    id: string;
+    title: string | null;
+    content: string;
+}
+
+function parseMarkdownSections(content: string, volume: number): PMIKnowledgeSection[] {
+    const sections: PMIKnowledgeSection[] = [];
+    const lines = content.split('\n');
+    let currentTitle: string | null = null;
+    let currentLines: string[] = [];
+    let sectionIndex = 0;
+
+    const pushSection = () => {
+        if (currentTitle === null && currentLines.length === 0) return;
+        sections.push({
+            id: `pmi-volume-${volume}-section-${sectionIndex}`,
+            title: currentTitle,
+            content: currentLines.join('\n').trim(),
+        });
+        sectionIndex += 1;
+    };
+
+    for (const line of lines) {
+        const heading = line.match(/^##(?!#)\s+(.+?)\s*#*\s*$/);
+        if (heading) {
+            pushSection();
+            currentTitle = heading[1].trim();
+            currentLines = [];
+        } else {
+            currentLines.push(line);
+        }
+    }
+    pushSection();
+    return sections;
 }

@@ -6,6 +6,7 @@ import { apiFetch } from "@/lib/http";
 import RightPanel from "@/components/ui/RightPanel";
 import { toast } from "sonner";
 import { Check, ClipboardCheck, Plus, Save, Trash2, Users } from "lucide-react";
+import type { ProjectDevelopmentApproach, ProjectPMOType } from "@/types/projects";
 
 type CharterStatus = "draft" | "authorized";
 type Quadrant = "manage_closely" | "keep_satisfied" | "keep_informed" | "monitor";
@@ -21,6 +22,8 @@ interface Charter {
   key_constraints: string[];
   high_level_risks: string[];
   preliminary_budget: number | null;
+  development_approach: ProjectDevelopmentApproach;
+  pmo_type: ProjectPMOType;
   charter_status: CharterStatus;
   authorized_by: string | null;
   authorized_at: string | null;
@@ -76,6 +79,8 @@ const emptyCharter: Charter = {
   key_constraints: [],
   high_level_risks: [],
   preliminary_budget: null,
+  development_approach: "hybrid",
+  pmo_type: "controlling",
   charter_status: "draft",
   authorized_by: null,
   authorized_at: null,
@@ -257,6 +262,10 @@ export function ProjectLifecycleGovernanceDrawer({
               <label className={labelClass}>Sponsor (UUID de Persona)<input className={fieldClass} value={charter.sponsor_id ?? ""} onChange={event => setCharter(current => ({ ...current, sponsor_id: event.target.value || null }))} placeholder="UUID de persona" /></label>
               <label className={labelClass}>Caso de negocio<textarea className={fieldClass} rows={3} value={charter.business_case} onChange={event => setCharter(current => ({ ...current, business_case: event.target.value }))} /></label>
               <label className={labelClass}>Justificación estratégica<textarea className={fieldClass} rows={3} value={charter.strategic_justification} onChange={event => setCharter(current => ({ ...current, strategic_justification: event.target.value }))} /></label>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className={labelClass}>Enfoque de desarrollo<select className={fieldClass} value={charter.development_approach} onChange={event => setCharter(current => ({ ...current, development_approach: event.target.value as ProjectDevelopmentApproach }))}><option value="predictive">Predictivo</option><option value="agile">Ágil</option><option value="hybrid">Híbrido</option></select></label>
+                <label className={labelClass}>Tipología PMO<select className={fieldClass} value={charter.pmo_type} onChange={event => setCharter(current => ({ ...current, pmo_type: event.target.value as ProjectPMOType }))}><option value="supportive">De apoyo</option><option value="controlling">De control</option><option value="directive">Directiva</option></select></label>
+              </div>
               {([
                 ["measurable_objectives", "Objetivos medibles"],
                 ["key_assumptions", "Supuestos clave"],

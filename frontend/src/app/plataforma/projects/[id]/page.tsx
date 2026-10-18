@@ -37,10 +37,12 @@ import {
   Kanban,
   GanttChart,
   Workflow,
+  Gavel,
   BookOpen,
   ClipboardCheck,
   MessageSquare,
   Layers,
+  ListTree,
   Tag,
   type LucideIcon,
 } from 'lucide-react';
@@ -73,6 +75,7 @@ const TOOLBAR_ICON_BUTTON_CLASS =
 // Hub unificado de gestión: metadatos de los módulos de control.
 const PROJECT_HUB_MODULE_META: ProjectHubModuleMeta[] = [
   { key: 'components', label: 'Componentes (EDT)', icon: Layers },
+  { key: 'wbs', label: 'Diccionario EDT', icon: ListTree },
   { key: 'labels', label: 'Etiquetas', icon: Tag },
   { key: 'kpis', label: 'KPIs', icon: Target },
   { key: 'progress', label: 'Avance', icon: Sliders },
@@ -84,6 +87,7 @@ const PROJECT_HUB_MODULE_META: ProjectHubModuleMeta[] = [
   { key: 'automations', label: 'Automatizaciones', icon: Zap },
   { key: 'reports', label: 'Reportes', icon: FileText },
   { key: 'indicators', label: 'Indicadores (IDP)', icon: BarChart3 },
+  { key: 'ccb', label: 'Control de Cambios (CCB)', icon: Gavel },
   { key: 'evm', label: 'Valor Ganado (EVM / CPI)', icon: TrendingUp },
   { key: 'drive', label: 'Drive', icon: FolderArchive },
   { key: 'governance', label: 'Gobernanza PMI', icon: ClipboardCheck },
@@ -214,6 +218,13 @@ const ProjectAutomationsDrawer = dynamic(
     ),
   { loading: ProjectDrawerLoading }
 );
+const ProjectChangeControlDrawer = dynamic(
+  () =>
+    import('@/components/projects/ProjectChangeControlDrawer').then(
+      module => module.ProjectChangeControlDrawer
+    ),
+  { loading: ProjectDrawerLoading }
+);
 const ProjectReportDrawer = dynamic(
   () =>
     import('@/components/projects/ProjectReportDrawer').then(
@@ -260,6 +271,13 @@ const ProjectLabelsDrawer = dynamic(
   () =>
     import('@/components/projects/ProjectLabelsDrawer').then(
       module => module.ProjectLabelsDrawer
+    ),
+  { loading: ProjectDrawerLoading }
+);
+const ProjectWBSDrawer = dynamic(
+  () =>
+    import('@/components/projects/ProjectWBSDrawer').then(
+      module => module.ProjectWBSDrawer
     ),
   { loading: ProjectDrawerLoading }
 );
@@ -440,6 +458,14 @@ export default function ProjectDetailPage() {
         action: () => openHubModule('components'),
       },
       {
+        id: 'project-detail-hub-wbs',
+        label: 'Abrir Diccionario EDT',
+        description: 'Diccionario de la EDT, codificación jerárquica y Regla del 100%',
+        icon: ListTree,
+        group: 'Hub de gestión',
+        action: () => openHubModule('wbs'),
+      },
+      {
         id: 'project-detail-hub-kpis',
         label: 'Abrir KPIs',
         description: 'Indicadores clave de desempeño del proyecto',
@@ -523,6 +549,7 @@ export default function ProjectDetailPage() {
     { key: 'whiteboard', label: 'Pizarra', icon: PencilRuler, onSelect: () => setWhiteboardOpen(true) },
     { key: 'phases', label: 'Fases', icon: Edit3, onSelect: () => setShowPhaseManager(true) },
     { key: 'components', label: 'Componentes (EDT)', icon: Layers, onSelect: () => openHubModule('components') },
+    { key: 'wbs', label: 'Diccionario EDT', icon: ListTree, onSelect: () => openHubModule('wbs') },
     { key: 'labels', label: 'Etiquetas', icon: Tag, onSelect: () => openHubModule('labels') },
     { key: 'kpis', label: 'KPIs', icon: Target, onSelect: () => openHubModule('kpis') },
     { key: 'progress', label: 'Avance', icon: Sliders, onSelect: () => openHubModule('progress') },
@@ -549,6 +576,14 @@ export default function ProjectDetailPage() {
         isOpen
         onClose={() => closeHubModule('components')}
         onUpdated={() => reloadProject()}
+      />
+    ),
+    wbs: () => (
+      <ProjectWBSDrawer
+        projectId={project?.id || id}
+        projectTitle={project?.title}
+        isOpen
+        onClose={() => closeHubModule('wbs')}
       />
     ),
     labels: () => (
@@ -668,6 +703,13 @@ export default function ProjectDetailPage() {
         onClose={() => closeHubModule('governance')}
       />
     ),
+    ccb: () => (
+      <ProjectChangeControlDrawer
+        projectId={project?.id || id}
+        isOpen
+        onClose={() => closeHubModule('ccb')}
+      />
+    ),
   } satisfies Partial<Record<ProjectHubModuleKey, () => React.ReactNode>>;
 
   // ── Build context value (stable reference) ──
@@ -778,6 +820,15 @@ export default function ProjectDetailPage() {
               >
                 <Layers size={14} aria-hidden="true" className="text-[hsl(var(--primary))]" />
                 <span className="hidden md:inline">Componentes (EDT)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => openHubModule('wbs')}
+                aria-label="Diccionario EDT"
+                className={TOOLBAR_ICON_BUTTON_CLASS}
+              >
+                <ListTree size={15} aria-hidden="true" className="text-[hsl(var(--primary))]" />
+                <span className="hidden md:inline">Diccionario EDT</span>
               </button>
               <button
                 type="button"

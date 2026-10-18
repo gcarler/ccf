@@ -25,6 +25,7 @@ import { ProjectQuadrantsMatrix } from './ProjectQuadrantsMatrix';
 import { ProjectWBSTreeView } from './ProjectWBSTreeView';
 import { ProjectAnyDocDrawer } from './ProjectAnyDocDrawer';
 import { ProjectPMIKnowledgeDrawer } from './ProjectPMIKnowledgeDrawer';
+import { ProjectEVMForecastSimulator } from './ProjectEVMForecastSimulator';
 
 interface ProjectEVMDrawerProps {
     projectId: string;
@@ -880,6 +881,8 @@ export function ProjectEVMDrawer({
                                 </div>
                             )}
                         </div>
+
+                        <ProjectEVMForecastSimulator evm={evmData} />
 
                         {/* 4b. Tiempo Ganado (ES / SPI_t) y Tributación Jerárquica EDT */}
                         {execMatrix && execMatrix.frentes && (

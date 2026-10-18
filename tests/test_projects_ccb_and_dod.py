@@ -340,3 +340,146 @@ def test_ccb_and_dod_isolation_sede_b(client, db_session):
         ProjectChangeRequest.id == cr["id"]
     ).first()
     assert cr_db.status == "pending_ccb", "Los intentos cross-sede no deben mutar la CR"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 6. Helper ejecutivo: get_project_ccb_and_quality_summary
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def test_get_project_ccb_and_quality_summary(client, db_session):
+    """El helper ejecutivo agrega CCB (Δ$ y Δdías netos de aprobadas) + DoD/CoQ."""
+    from backend.services.project_ccb_service import get_project_ccb_and_quality_summary
+
+    seed_admin(db_session, email="ccb-summary-admin@example.com")
+    headers = auth_headers(client, email="ccb-summary-admin@example.com")
+    project = _make_project(client, headers, db_session, title="Resumen CCB CoQ Pro", budget=50000.0)
+
+    # ── CRs: 2 aprobadas (20k, 15 días) + (5k, 2 días) y 1 rechazada ──
+    cr1 = _make_cr(client, headers, project, title="CR1 aprobada")
+    client.post(
+        f"/api/projects/{project.id}/change-requests/{cr1['id']}/decide",
+        json={"decision": "approved", "review_notes": "Ok"},
+        headers=headers,
+    )
+    cr2 = client.post(
+        f"/api/projects/{project.id}/change-requests",
+        json={
+            "title": "CR2 aprobada",
+            "justification": "Ajuste de cronograma",
+            "change_type": "schedule",
+            "cost_impact_delta": 5000.0,
+            "schedule_impact_days": 2,
+        },
+        headers=headers,
+    ).json()
+    client.post(
+        f"/api/projects/{project.id}/change-requests/{cr2['id']}/decide",
+        json={"decision": "approved", "review_notes": "Ok"},
+        headers=headers,
+    )
+    cr3 = client.post(
+        f"/api/projects/{project.id}/change-requests",
+        json={"title": "CR3 rechazada", "justification": "No", "change_type": "scope"},
+        headers=headers,
+    ).json()
+    client.post(
+        f"/api/projects/{project.id}/change-requests/{cr3['id']}/decide",
+        json={"decision": "rejected", "review_notes": "No aplica"},
+        headers=headers,
+    )
+
+    # ── DoD: 1 entregable aceptado (CoQ prevention $250) + 1 pendiente (CoQ falla externa $100) ──
+    task_ok = _make_task(db_session, project.id, title="Entregable Aceptado")
+    resp_ok = client.post(
+        f"/api/projects/{project.id}/tasks/{task_ok.id}/dod-acceptance",
+        json={
+            "specification_met": True,
+            "tests_no_critical_failures": True,
+            "evidence_archived": True,
+            "supervisor_sign_off": True,
+            "coq_classification": "prevention",
+            "coq_amount": 250.0,
+        },
+        headers=headers,
+    )
+    assert resp_ok.status_code == 200, resp_ok.text
+    assert resp_ok.json()["coq_amount"] == pytest.approx(250.0)
+
+    task_pending = _make_task(db_session, project.id, title="Entregable Pendiente")
+    resp_pending = client.post(
+        f"/api/projects/{project.id}/tasks/{task_pending.id}/dod-acceptance",
+        json={
+            "specification_met": True,
+            "tests_no_critical_failures": True,
+            "evidence_archived": True,
+            "supervisor_sign_off": False,
+            "coq_classification": "external_failure",
+            "coq_amount": 100.0,
+        },
+        headers=headers,
+    )
+    assert resp_pending.status_code == 200, resp_pending.text
+    assert resp_pending.json()["status"] == "pending"
+
+    # ── Resumen ejecutivo ──
+    summary = get_project_ccb_and_quality_summary(db_session, project.id)
+
+    assert summary["total_change_requests"] == 3
+    assert summary["approved_count"] == 2
+    assert summary["rejected_count"] == 1
+    assert summary["pending_ccb_count"] == 0
+    assert summary["net_approved_cost_delta"] == pytest.approx(25000.0)
+    assert summary["net_approved_schedule_days"] == 17
+    assert summary["tasks_dod_accepted_count"] == 1
+    assert summary["total_coq_cost"] == pytest.approx(350.0)
+    assert summary["coq_by_category"]["prevention"] == pytest.approx(250.0)
+    assert summary["coq_by_category"]["external_failure"] == pytest.approx(100.0)
+    assert summary["coq_by_category"]["appraisal"] == pytest.approx(0.0)
+    assert summary["coq_by_category"]["internal_failure"] == pytest.approx(0.0)
+
+    # Proyecto sin datos → resumen en cero, nunca falla
+    other = _make_project(client, headers, db_session, title="Resumen vacío")
+    empty = get_project_ccb_and_quality_summary(db_session, other.id)
+    assert empty["total_change_requests"] == 0
+    assert empty["tasks_dod_accepted_count"] == 0
+    assert empty["total_coq_cost"] == pytest.approx(0.0)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 7. Endpoint dod-status: estado inicial informativo sin registro previo
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def test_dod_status_not_recorded_and_accepted_name(client, db_session):
+    """GET dod-status responde 200 'not_recorded' sin registro y expone quién aceptó."""
+    seed_admin(db_session, email="dod-status-admin@example.com")
+    headers = auth_headers(client, email="dod-status-admin@example.com")
+    project = _make_project(client, headers, db_session, title="E2E DoD Status")
+    task = _make_task(db_session, project.id, title="Entregable Status")
+
+    r0 = client.get(f"/api/projects/{project.id}/tasks/{task.id}/dod-status", headers=headers)
+    assert r0.status_code == 200
+    assert r0.json()["status"] == "not_recorded"
+    assert r0.json()["accepted_at"] is None
+
+    client.post(
+        f"/api/projects/{project.id}/tasks/{task.id}/dod-acceptance",
+        json={
+            "specification_met": True,
+            "tests_no_critical_failures": True,
+            "evidence_archived": True,
+            "supervisor_sign_off": True,
+            "coq_classification": "appraisal",
+            "coq_amount": 300.0,
+        },
+        headers=headers,
+    )
+    r1 = client.get(f"/api/projects/{project.id}/tasks/{task.id}/dod-status", headers=headers)
+    assert r1.status_code == 200
+    body = r1.json()
+    assert body["status"] == "accepted"
+    assert body["accepted_by"] is not None
+    assert isinstance(body["accepted_by_name"], str) and body["accepted_by_name"]
+    assert body["accepted_at"] is not None
+    assert body["coq_amount"] == pytest.approx(300.0)

@@ -28,6 +28,7 @@ import type { Activity } from './TaskActivitySection';
 import { toggleActivity, addChild, updateTitle } from './TaskActivitySection';
 import TaskCommentSection from './TaskCommentSection';
 import TaskTimeTrackingSection from './TaskTimeTrackingSection';
+import TaskDodAcceptanceSection from './TaskDodAcceptanceSection';
 import TaskDimensionsSection from './TaskDimensionsSection';
 import TaskRouteTree, { type RouteNode } from './TaskRouteTree';
 
@@ -797,6 +798,9 @@ export default function TaskDetailPanel({
                         token={token}
                         onActivityCreated={onActivityCreated}
                     />
+
+                    {/* Aceptación de Entregables / DoD + CoQ (PMI Vol. 6 §4) */}
+                    <TaskDodAcceptanceSection task={task} token={token} />
 
                     <TaskActivitySection
                         activities={activities}

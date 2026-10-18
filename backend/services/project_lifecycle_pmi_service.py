@@ -6,10 +6,96 @@ from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import HTTPException
-from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy import func, or_
+from sqlalchemy.orm import Session, selectinload
 
 from backend import models
+
+
+def build_pmo_portfolio_matrix(db: Session, sede_id: UUID | None) -> dict:
+    """Aggregate active project EVM metrics within the authenticated sede scope."""
+    query = (
+        db.query(models.Project)
+        .options(selectinload(models.Project.lifecycle))
+        .filter(
+            models.Project.deleted_at.is_(None),
+            models.Project.status.in_(("planning", "active", "on_hold")),
+        )
+    )
+    if sede_id is not None:
+        query = query.filter(or_(models.Project.sede_id.is_(None), models.Project.sede_id == sede_id))
+
+    projects = query.order_by(models.Project.title, models.Project.id).all()
+    from backend.services.project_evm_service import calculate_project_evm
+
+    quadrants = {
+        "q1_optimal": 0,
+        "q2_cost_acceleration": 0,
+        "q3_underutilized_capacity": 0,
+        "q4_critical_emergency": 0,
+    }
+    projects_matrix = []
+    total_bac = 0.0
+    total_ev = 0.0
+    total_ac = 0.0
+    total_pv = 0.0
+
+    for project in projects:
+        evm = calculate_project_evm(db, project)
+        bac = float(evm.get("bac") or 0.0)
+        ev = float(evm.get("ev") or 0.0)
+        ac = float(evm.get("ac") or 0.0)
+        pv = float(evm.get("pv") or 0.0)
+        cpi = float(evm.get("cpi") or 0.0)
+        spi = float(evm.get("spi") or 0.0)
+        if cpi >= 1.0 and spi >= 1.0:
+            quadrant = "q1_optimal"
+        elif cpi < 1.0 and spi >= 1.0:
+            quadrant = "q2_cost_acceleration"
+        elif cpi >= 1.0 and spi < 1.0:
+            quadrant = "q3_underutilized_capacity"
+        else:
+            quadrant = "q4_critical_emergency"
+        quadrants[quadrant] += 1
+        total_bac += bac
+        total_ev += ev
+        total_ac += ac
+        total_pv += pv
+
+        lifecycle = project.lifecycle
+        projects_matrix.append({
+            "project_id": str(project.id),
+            "title": project.title,
+            "status": project.status,
+            "development_approach": lifecycle.development_approach if lifecycle else "hybrid",
+            "pmo_type": lifecycle.pmo_type if lifecycle else "controlling",
+            "bac": round(bac, 2),
+            "ev": round(ev, 2),
+            "ac": round(ac, 2),
+            "cpi": round(cpi, 2),
+            "spi": round(spi, 2),
+            "csi": round(cpi * spi, 2),
+            "quadrant": quadrant,
+            "progress_pct": round(float(evm.get("progress_percentage") or 0.0), 1),
+            "charter_status": lifecycle.charter_status if lifecycle else "draft",
+        })
+
+    portfolio_cpi = round(total_ev / total_ac, 2) if total_ac > 0 else (1.0 if total_ev == 0 else 2.0)
+    portfolio_spi = round(total_ev / total_pv, 2) if total_pv > 0 else (1.0 if total_ev == 0 else 2.0)
+    portfolio_totals = {
+        "total_projects": len(projects),
+        "total_bac": round(total_bac, 2),
+        "total_ev": round(total_ev, 2),
+        "total_ac": round(total_ac, 2),
+        "portfolio_cpi": portfolio_cpi,
+        "portfolio_spi": portfolio_spi,
+        "portfolio_csi": round(portfolio_cpi * portfolio_spi, 2),
+    }
+    return {
+        "portfolio_totals": portfolio_totals,
+        "quadrants_distribution": quadrants,
+        "projects_matrix": projects_matrix,
+    }
 
 
 def build_governance_summary(db: Session, project_id: UUID) -> dict:
@@ -67,6 +153,8 @@ def get_lifecycle(db: Session, project_id: UUID) -> models.ProjectLifecycle:
         key_constraints=[],
         high_level_risks=[],
         lessons_learned=[],
+        development_approach="hybrid",
+        pmo_type="controlling",
         charter_status="draft",
         closure_status="open",
         deliverables_accepted_verified=False,

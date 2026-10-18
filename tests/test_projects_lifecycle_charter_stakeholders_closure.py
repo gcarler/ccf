@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 
 from backend import models
+from backend.services import project_evm_service
 from tests.conftest import auth_headers, seed_admin
 
 
@@ -21,6 +22,8 @@ def test_charter_authorization_and_closure_finalize(client, db_session):
     initial = client.get(f"/api/projects/{project.id}/charter", headers=headers)
     assert initial.status_code == 200, initial.text
     assert initial.json()["charter_status"] == "draft"
+    assert initial.json()["development_approach"] == "hybrid"
+    assert initial.json()["pmo_type"] == "controlling"
 
     charter = client.put(
         f"/api/projects/{project.id}/charter",
@@ -34,6 +37,8 @@ def test_charter_authorization_and_closure_finalize(client, db_session):
             "key_constraints": ["Presupuesto anual"],
             "high_level_risks": ["Rotación de equipo"],
             "preliminary_budget": 1000,
+            "development_approach": "predictive",
+            "pmo_type": "directive",
             "charter_status": "authorized",
             "authorized_by": str(uuid.uuid4()),
         },
@@ -41,6 +46,8 @@ def test_charter_authorization_and_closure_finalize(client, db_session):
     assert charter.status_code == 200, charter.text
     assert charter.json()["authorized_by"] == str(persona.id)
     assert charter.json()["authorized_at"] is not None
+    assert charter.json()["development_approach"] == "predictive"
+    assert charter.json()["pmo_type"] == "directive"
 
     downgrade = client.put(
         f"/api/projects/{project.id}/charter",
@@ -127,3 +134,64 @@ def test_project_lifecycle_respects_sede_scope(client, db_session):
     for path in ("charter", "stakeholders", "closure"):
         response = client.get(f"/api/projects/{project.id}/{path}", headers=headers_b)
         assert response.status_code == 404, response.text
+
+
+def test_pmo_portfolio_matrix_classifies_quadrants_and_isolates_sede(client, db_session, monkeypatch):
+    _, _, sede_a = seed_admin(db_session, email="pmo-portfolio-a@example.com")
+    headers_a = auth_headers(client, email="pmo-portfolio-a@example.com")
+    expected_metrics = {
+        "Portfolio Optimal": {"bac": 1000, "ev": 900, "ac": 900, "pv": 900, "cpi": 1.0, "spi": 1.0, "progress_percentage": 90},
+        "Portfolio Cost Acceleration": {"bac": 2000, "ev": 800, "ac": 1000, "pv": 700, "cpi": 0.8, "spi": 1.14, "progress_percentage": 40},
+        "Portfolio Underutilized": {"bac": 3000, "ev": 1100, "ac": 1000, "pv": 1300, "cpi": 1.1, "spi": 0.85, "progress_percentage": 36},
+        "Portfolio Critical": {"bac": 4000, "ev": 800, "ac": 1000, "pv": 1100, "cpi": 0.8, "spi": 0.73, "progress_percentage": 20},
+    }
+    local_projects = []
+    for title in expected_metrics:
+        project = models.Project(id=uuid.uuid4(), title=title, sede_id=sede_a.id, status="active")
+        local_projects.append(project)
+        db_session.add(project)
+    db_session.add(models.ProjectLifecycle(
+        project_id=local_projects[0].id,
+        development_approach="agile",
+        pmo_type="supportive",
+        charter_status="authorized",
+    ))
+
+    _, _, sede_b = seed_admin(db_session, email="pmo-portfolio-b@example.com")
+    headers_b = auth_headers(client, email="pmo-portfolio-b@example.com")
+    outside_project = models.Project(
+        id=uuid.uuid4(), title="Sede B confidential project", sede_id=sede_b.id, status="active"
+    )
+    db_session.add(outside_project)
+    db_session.commit()
+
+    monkeypatch.setattr(
+        project_evm_service,
+        "calculate_project_evm",
+        lambda _db, project: expected_metrics.get(
+            project.title,
+            {"bac": 9000, "ev": 9000, "ac": 1, "pv": 1, "cpi": 9000, "spi": 9000, "progress_percentage": 100},
+        ),
+    )
+
+    response = client.get("/api/projects/pmo-portfolio-matrix", headers=headers_a)
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["portfolio_totals"]["total_projects"] == 4
+    assert payload["portfolio_totals"]["total_bac"] == 10000
+    assert payload["quadrants_distribution"] == {
+        "q1_optimal": 1,
+        "q2_cost_acceleration": 1,
+        "q3_underutilized_capacity": 1,
+        "q4_critical_emergency": 1,
+    }
+    matrix_by_title = {project["title"]: project for project in payload["projects_matrix"]}
+    assert "Sede B confidential project" not in matrix_by_title
+    assert matrix_by_title["Portfolio Optimal"]["development_approach"] == "agile"
+    assert matrix_by_title["Portfolio Optimal"]["pmo_type"] == "supportive"
+    assert matrix_by_title["Portfolio Optimal"]["charter_status"] == "authorized"
+    assert matrix_by_title["Portfolio Critical"]["quadrant"] == "q4_critical_emergency"
+
+    response_b = client.get("/api/projects/pmo-portfolio-matrix", headers=headers_b)
+    assert response_b.status_code == 200, response_b.text
+    assert [project["title"] for project in response_b.json()["projects_matrix"]] == [outside_project.title]

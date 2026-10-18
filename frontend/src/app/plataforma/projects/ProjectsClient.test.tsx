@@ -106,6 +106,12 @@ vi.mock('@/components/projects/ProjectCreationDrawer', () => ({
     : null,
 }));
 
+vi.mock('@/components/projects/ProjectPMOPortfolioDrawer', () => ({
+  ProjectPMOPortfolioDrawer: ({ isOpen }: { isOpen: boolean }) => isOpen
+    ? <div role="dialog" aria-label="Matriz PMO CPI por SPI" />
+    : null,
+}));
+
 vi.mock('./views/ProjectsGridView', () => ({
   default: ({ projects, onUpdate, onDelete }: { projects: ProjectRecord[]; onUpdate: (id: string, patch: Partial<ProjectRecord>) => void; onDelete?: (id: string) => void }) => (
     <div>
@@ -139,6 +145,12 @@ describe('ProjectsClient scroll-to-list (fix carrera 100ms vs ~300ms)', () => {
         ? Promise.resolve({ items: [], total: 0, skip: 0, limit: 50 })
         : Promise.resolve({ cards: [], workload_distribution: [], delayed_tasks_count: 0 }),
     );
+  });
+
+  it('abre la Matriz PMO CPI×SPI desde las acciones del portafolio', () => {
+    render(<ProjectsClient initialProjects={[]} initialViewType="list" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Matriz PMO (CPI×SPI)' }));
+    expect(screen.getByRole('dialog', { name: 'Matriz PMO CPI por SPI' })).toBeInTheDocument();
   });
 
   it('muestra skeleton antes de resolver la carga inicial de proyectos', async () => {

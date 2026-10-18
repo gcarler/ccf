@@ -118,6 +118,8 @@ class ProjectCharterUpdate(BaseModel):
     key_constraints: List[str] = Field(default_factory=list)
     high_level_risks: List[str] = Field(default_factory=list)
     preliminary_budget: Optional[float] = Field(default=None, ge=0)
+    development_approach: Literal["predictive", "agile", "hybrid"] = "hybrid"
+    pmo_type: Literal["supportive", "controlling", "directive"] = "controlling"
     charter_status: Optional[Literal["draft", "authorized"]] = None
 
 
@@ -126,6 +128,51 @@ class ProjectCharterRead(ProjectCharterUpdate):
     authorized_by: Optional[UUID] = None
     authorized_at: Optional[datetime] = None
     model_config = orm_config
+
+
+class PMOPortfolioProject(BaseModel):
+    project_id: UUIDStr
+    title: str
+    status: str
+    development_approach: Literal["predictive", "agile", "hybrid"]
+    pmo_type: Literal["supportive", "controlling", "directive"]
+    bac: float
+    ev: float
+    ac: float
+    cpi: float
+    spi: float
+    csi: float
+    quadrant: Literal[
+        "q1_optimal",
+        "q2_cost_acceleration",
+        "q3_underutilized_capacity",
+        "q4_critical_emergency",
+    ]
+    progress_pct: float
+    charter_status: Literal["draft", "authorized"]
+
+
+class PMOPortfolioTotals(BaseModel):
+    total_projects: int
+    total_bac: float
+    total_ev: float
+    total_ac: float
+    portfolio_cpi: float
+    portfolio_spi: float
+    portfolio_csi: float
+
+
+class PMOPortfolioQuadrantsDistribution(BaseModel):
+    q1_optimal: int
+    q2_cost_acceleration: int
+    q3_underutilized_capacity: int
+    q4_critical_emergency: int
+
+
+class PMOPortfolioMatrixResponse(BaseModel):
+    portfolio_totals: PMOPortfolioTotals
+    quadrants_distribution: PMOPortfolioQuadrantsDistribution
+    projects_matrix: List[PMOPortfolioProject] = Field(default_factory=list)
 
 
 class ProjectStakeholderCreate(BaseModel):
@@ -1972,6 +2019,7 @@ class WBSNode(BaseModel):
     id: str
     wbs_code: str
     title: str
+    description: Optional[str] = None
     type: Literal["project", "component", "task"]
     level: int
     status: str
@@ -2168,6 +2216,7 @@ class ProjectDodAcceptanceUpdate(BaseModel):
     evidence_archived: bool = False
     supervisor_sign_off: bool = False
     coq_classification: Optional[CoQClassification] = None
+    coq_amount: Optional[float] = None
 
 
 class ProjectDodAcceptance(BaseModel):
@@ -2181,4 +2230,5 @@ class ProjectDodAcceptance(BaseModel):
     accepted_by: Optional[UUIDStr] = None
     accepted_at: Optional[datetime] = None
     coq_classification: Optional[str] = None
+    coq_amount: Optional[float] = None
     model_config = orm_config

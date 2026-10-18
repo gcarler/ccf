@@ -44,6 +44,13 @@ describe("ProjectLifecycleGovernanceDrawer", () => {
     render(<ProjectLifecycleGovernanceDrawer projectId="project-1" isOpen onClose={vi.fn()} />);
     expect(await screen.findByText("Acta de Constitución")).toBeInTheDocument();
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/projects/project-1/charter"));
+    fireEvent.change(screen.getByLabelText("Enfoque de desarrollo"), { target: { value: "agile" } });
+    fireEvent.change(screen.getByLabelText("Tipología PMO"), { target: { value: "supportive" } });
+    fireEvent.click(screen.getByRole("button", { name: "Guardar borrador" }));
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/projects/project-1/charter", expect.objectContaining({
+      method: "PUT",
+      body: expect.stringContaining('"development_approach":"agile"'),
+    })));
     fireEvent.click(screen.getByRole("button", { name: "Autorizar formalmente" }));
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/projects/project-1/charter", expect.objectContaining({ method: "PUT" })));
     expect(await screen.findByText(/Autorizada/)).toBeInTheDocument();

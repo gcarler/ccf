@@ -67,7 +67,7 @@ const mockDoctrineResponse: PMIDoctrineIndexResponse = {
       tags: ["pmi", "evm", "cpi", "spi"],
       char_count: 2400,
       word_count: 480,
-      content: "# Batería EVM\n\nFórmulas canónicas de Valor Ganado volumen 4.",
+      content: "# Batería EVM\n\nFórmulas canónicas de Valor Ganado volumen 4.\n\n## Métricas EVM\n\nCPI y SPI describen el desempeño.\n\n## Pronóstico EAC\n\nEAC proyecta el costo al cierre.",
     },
   ],
 };
@@ -145,7 +145,7 @@ describe("ProjectPMIKnowledgeDrawer Component", () => {
     const searchInput = screen.getByPlaceholderText(/Buscar en la doctrina PMI/i);
     fireEvent.change(searchInput, { target: { value: "EVM" } });
 
-    expect(screen.getByText(/Batería Canónica de Indicadores/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Batería Canónica de Indicadores/i })).toBeInTheDocument();
 
     // Sincronizar
     const syncButton = screen.getByRole("button", { name: /Sincronizar a Wiki de Sede/i });
@@ -159,5 +159,56 @@ describe("ProjectPMIKnowledgeDrawer Component", () => {
         expect.stringContaining("Doctrina PMI sincronizada")
       );
     });
+  });
+
+  it("filtra por tags, busca dentro del Markdown y selecciona el primer resultado coincidente", async () => {
+    mocks.apiFetch.mockResolvedValueOnce(mockDoctrineResponse);
+
+    render(<ProjectPMIKnowledgeDrawer isOpen onClose={vi.fn()} />);
+    await screen.findByRole("heading", { name: /Compendio Maestro de Dirección de Proyectos/i });
+
+    const searchInput = screen.getByPlaceholderText(/Buscar en la doctrina PMI/i);
+    fireEvent.change(searchInput, { target: { value: "evm" } });
+
+    expect(await screen.findByRole("heading", { name: /Batería Canónica de Indicadores/i })).toBeInTheDocument();
+    expect(screen.getByText("Volumen 4 (Compendio de 2 volúmenes)")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Volumen 0/i })).not.toBeInTheDocument();
+
+    fireEvent.change(searchInput, { target: { value: "volumen 4" } });
+    expect(screen.getByRole("heading", { name: /Batería Canónica de Indicadores/i })).toBeInTheDocument();
+    expect(screen.getByText(/Fórmulas canónicas de Valor Ganado volumen 4/i)).toBeInTheDocument();
+
+    fireEvent.change(searchInput, { target: { value: "indice" } });
+    expect(await screen.findByRole("heading", { name: /Compendio Maestro de Dirección de Proyectos/i })).toBeInTheDocument();
+    expect(screen.getByText(/Índice maestro y arquitectura metodológica/i)).toBeInTheDocument();
+  });
+
+  it("muestra estado vacío cuando ningún volumen coincide con el término", async () => {
+    mocks.apiFetch.mockResolvedValueOnce(mockDoctrineResponse);
+
+    render(<ProjectPMIKnowledgeDrawer isOpen onClose={vi.fn()} />);
+    await screen.findByRole("heading", { name: /Compendio Maestro de Dirección de Proyectos/i });
+    fireEvent.change(screen.getByPlaceholderText(/Buscar en la doctrina PMI/i), {
+      target: { value: "sin-coincidencias-ccf" },
+    });
+
+    expect(screen.getByText(/No se encontraron volúmenes que coincidan con la búsqueda/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Volumen [04]/i })).not.toBeInTheDocument();
+  });
+
+  it("extrae encabezados H2 y construye enlaces al contenido del volumen activo", async () => {
+    mocks.apiFetch.mockResolvedValueOnce(mockDoctrineResponse);
+
+    render(<ProjectPMIKnowledgeDrawer isOpen onClose={vi.fn()} />);
+    await screen.findByRole("heading", { name: /Compendio Maestro de Dirección de Proyectos/i });
+    fireEvent.click(screen.getByRole("button", { name: /Volumen 4/i }));
+
+    const index = screen.getByRole("navigation", { name: "Índice rápido de secciones" });
+    const metricsLink = screen.getByRole("link", { name: "Métricas EVM" });
+    const forecastLink = screen.getByRole("link", { name: "Pronóstico EAC" });
+    expect(index).toContainElement(metricsLink);
+    expect(metricsLink).toHaveAttribute("href", "#pmi-volume-4-section-1");
+    expect(forecastLink).toHaveAttribute("href", "#pmi-volume-4-section-2");
+    expect(document.getElementById("pmi-volume-4-section-1")).toHaveTextContent("Métricas EVM");
   });
 });

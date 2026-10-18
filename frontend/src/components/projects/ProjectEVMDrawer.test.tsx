@@ -68,7 +68,7 @@ describe('ProjectEVMDrawer', () => {
     expect(await screen.findByText(/Curva S de Desempeño Acumulado/i)).toBeInTheDocument();
 
     // Debe mostrar los indicadores CPI y SPI calculados
-    expect(await screen.findByText('1.11')).toBeInTheDocument();
+    expect((await screen.findAllByText('1.11')).length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('1.04')).toBeInTheDocument();
 
     // Debe mostrar estado de salud
@@ -76,6 +76,7 @@ describe('ProjectEVMDrawer', () => {
 
     // Debe mostrar recomendaciones
     expect(screen.getByText(/El proyecto avanza dentro del presupuesto/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Simulador de Pronóstico EVM' })).toBeInTheDocument();
 
     // Debe verificar que llamó al endpoint canónico de curve-s
     await waitFor(() => {

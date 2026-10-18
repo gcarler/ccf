@@ -2,7 +2,7 @@ import React from "react";
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ClipboardCheck, FolderArchive, Target } from "lucide-react";
+import { ClipboardCheck, FolderArchive, ListTree, Target } from "lucide-react";
 import { SidebarLayerProvider } from "@/context/SidebarLayerContext";
 import {
   ProjectManagementHubDrawer,
@@ -11,6 +11,7 @@ import {
 
 const META: ProjectHubModuleMeta[] = [
   { key: "kpis", label: "KPIs", icon: Target },
+  { key: "wbs", label: "Diccionario EDT", icon: ListTree },
   { key: "drive", label: "Drive", icon: FolderArchive },
   { key: "governance", label: "Gobernanza PMI", icon: ClipboardCheck },
 ];
@@ -19,6 +20,7 @@ const RENDERERS = {
   kpis: () => <div data-testid="kpis-content">KPIs</div>,
   drive: () => <div data-testid="drive-content">Drive</div>,
   governance: () => <div data-testid="governance-content">Gobernanza PMI</div>,
+  wbs: () => <div data-testid="wbs-content">Diccionario EDT</div>,
 };
 
 function renderHub(
@@ -46,6 +48,39 @@ function renderHub(
 }
 
 describe("ProjectManagementHubDrawer", () => {
+  it("soporta la llave 'ccb' en la tira de pestañas y monta solo su contenido activo", () => {
+    const ccbMeta: ProjectHubModuleMeta[] = [
+      { key: "kpis", label: "KPIs", icon: Target },
+      { key: "ccb", label: "Control de Cambios (CCB)", icon: FolderArchive },
+    ];
+    const ccbRenderers = {
+      kpis: () => <div data-testid="kpis-content">KPIs</div>,
+      ccb: () => <div data-testid="ccb-content">CCB</div>,
+    };
+
+    // Módulo ccb activo → solo su contenido se monta (sin cascada de drawers).
+    const { unmount: unmountCcb } = renderHub({
+      openModules: ["kpis", "ccb"],
+      moduleMeta: ccbMeta,
+      activeModule: "ccb",
+      moduleRenderers: ccbRenderers,
+    });
+    expect(screen.getByTestId("ccb-content")).toBeInTheDocument();
+    expect(screen.queryByTestId("kpis-content")).not.toBeInTheDocument();
+    const ccbTab = screen.getByRole("tab", { name: /Control de Cambios \(CCB\)/ });
+    expect(ccbTab).toHaveAttribute("aria-selected", "true");
+    unmountCcb();
+
+    // Módulo kpis activo tras reabrir → ccb queda desmontado.
+    renderHub({
+      openModules: ["kpis", "ccb"],
+      moduleMeta: ccbMeta,
+      activeModule: "kpis",
+      moduleRenderers: ccbRenderers,
+    });    expect(screen.getByTestId("kpis-content")).toBeInTheDocument();
+    expect(screen.queryByTestId("ccb-content")).not.toBeInTheDocument();
+  });
+
   it("monta solo el contenido del módulo activo (sin cascada de drawers)", () => {
     renderHub();
     expect(screen.getByTestId("kpis-content")).toBeInTheDocument();
@@ -146,5 +181,19 @@ describe("ProjectManagementHubDrawer", () => {
       </SidebarLayerProvider>
     );
     expect(screen.getByTestId("governance-content")).toBeInTheDocument();
+  });
+
+  it("expone el Diccionario EDT en el Hub y monta solo su renderer activo", async () => {
+    const user = userEvent.setup();
+    const { props } = renderHub({
+      openModules: ["wbs"],
+      activeModule: "wbs",
+    });
+
+    expect(screen.getByRole("tab", { name: /Diccionario EDT/ })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByTestId("wbs-content")).toBeInTheDocument();
+    expect(screen.queryByTestId("governance-content")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: /Diccionario EDT/ }));
+    expect(props.onActivateModule).toHaveBeenCalledWith("wbs");
   });
 });
