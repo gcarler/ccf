@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 import uuid
 from datetime import datetime, timezone
-from typing import Annotated, Any, Dict, List, Literal, Optional
+from typing import Annotated, Any, Dict, List, Literal, Mapping, Optional, Sequence
 from urllib.parse import urlsplit
 from uuid import UUID
 
@@ -3694,6 +3694,7 @@ __all__ = [
     "validate_monte_carlo_schedule_confidence_buffer",
     "validate_resource_leveling_overallocation",
     "validate_schedule_buffer_fever_chart_status",
+    "validate_rolling_wave_planning_horizon",
 ]
 
 
@@ -4135,3 +4136,80 @@ def validate_schedule_buffer_fever_chart_status(
     }
 
 
+
+
+def validate_rolling_wave_planning_horizon(
+    wbs_packages: Sequence[Mapping[str, Any]] | None,
+    *,
+    near_term_horizon_days: int = 30,
+) -> dict[str, Any]:
+    """Valida la gobernanza de Planificación Gradual (Rolling Wave, PMBOK §5.4.2.2 y §6.2.2.3).
+
+    - Planning packages cerca del horizonte -> ``undecomposed_near_term_planning_ids``.
+    - Planning packages lejos del horizonte (correctos) -> ``valid_far_term_planning_ids``.
+    - Work packages cerca del horizonte sin actividades detalladas, dueño
+      asignado o esfuerzo positivo -> ``unready_near_term_work_package_ids``.
+    - ``package_type`` fuera de {'work_package', 'planning_package'} ->
+      ``invalid_package_type_ids``.
+    """
+    if not isinstance(wbs_packages, (list, tuple)):
+        wbs_packages = []
+
+    evaluated_package_count = 0
+    undecomposed_near_term_planning_ids: list[str] = []
+    unready_near_term_work_package_ids: list[str] = []
+    valid_far_term_planning_ids: list[str] = []
+    invalid_package_type_ids: list[str] = []
+
+    for item in wbs_packages:
+        if not isinstance(item, Mapping):
+            continue
+        package_id = str(item.get("package_id") or "").strip()
+        if not package_id:
+            continue
+        evaluated_package_count += 1
+
+        package_type = str(item.get("package_type") or "").strip().lower()
+        if package_type not in {"work_package", "planning_package"}:
+            invalid_package_type_ids.append(package_id)
+            continue
+
+        try:
+            days_until_start = float(item.get("days_until_start", 0))
+        except (TypeError, ValueError):
+            days_until_start = 0.0
+
+        if package_type == "planning_package":
+            if days_until_start <= float(near_term_horizon_days):
+                undecomposed_near_term_planning_ids.append(package_id)
+            else:
+                valid_far_term_planning_ids.append(package_id)
+        elif days_until_start <= float(near_term_horizon_days):
+            try:
+                estimated_effort_hours = float(item.get("estimated_effort_hours", 0.0))
+            except (TypeError, ValueError):
+                estimated_effort_hours = 0.0
+            has_detailed_activities = bool(item.get("has_detailed_activities", False))
+            has_assigned_owner = bool(item.get("has_assigned_owner", False))
+            if (
+                not has_detailed_activities
+                or not has_assigned_owner
+                or estimated_effort_hours <= 0.0
+            ):
+                unready_near_term_work_package_ids.append(package_id)
+
+    is_valid = bool(
+        evaluated_package_count > 0
+        and len(undecomposed_near_term_planning_ids) == 0
+        and len(unready_near_term_work_package_ids) == 0
+        and len(invalid_package_type_ids) == 0
+    )
+
+    return {
+        "evaluated_package_count": evaluated_package_count,
+        "undecomposed_near_term_planning_ids": undecomposed_near_term_planning_ids,
+        "unready_near_term_work_package_ids": unready_near_term_work_package_ids,
+        "valid_far_term_planning_ids": valid_far_term_planning_ids,
+        "invalid_package_type_ids": invalid_package_type_ids,
+        "is_valid": is_valid,
+    }

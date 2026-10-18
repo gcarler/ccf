@@ -3005,3 +3005,122 @@ def test_evaluate_management_reserve_ceiling_utilization_no_cost_baseline():
             "mr_posture": "NO_COST_BASELINE",
         }
 
+
+def test_evaluate_evm_funding_runway_exhaustion_healthy_runway():
+    """Runway estimado supera períodos restantes con margen >= min_safety_margin_periods -> HEALTHY_RUNWAY."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_funding_runway_exhaustion,
+    )
+
+    res = evaluate_evm_funding_runway_exhaustion(
+        total_authorized_funding=100000.0,
+        cumulative_actual_cost=40000.0,
+        periodic_ac_burn_series=[9000.0, 11000.0, 10000.0, 0.0, -500.0],
+        remaining_schedule_periods=4,
+        min_safety_margin_periods=1.0,
+    )
+    assert res == {
+        "remaining_funding": 60000.0,
+        "is_overdrawn": False,
+        "average_periodic_burn": 10000.0,
+        "peak_periodic_burn": 11000.0,
+        "estimated_runway_periods": 6.0,
+        "runway_surplus_periods": 2.0,
+        "runway_status": "HEALTHY_RUNWAY",
+        "is_runway_sufficient": True,
+    }
+    assert (
+        ProjectEVMService.evaluate_evm_funding_runway_exhaustion(
+            total_authorized_funding=100000.0,
+            cumulative_actual_cost=40000.0,
+            periodic_ac_burn_series=[9000.0, 11000.0, 10000.0],
+            remaining_schedule_periods=4,
+            min_safety_margin_periods=1.0,
+        )
+        == res
+    )
+
+
+def test_evaluate_evm_funding_runway_exhaustion_tight_and_shortfall_risk():
+    """Superávit < margen -> TIGHT_RUNWAY; runway < períodos restantes -> SHORTFALL_RISK."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_funding_runway_exhaustion,
+    )
+
+    res_tight = evaluate_evm_funding_runway_exhaustion(
+        total_authorized_funding=100000.0,
+        cumulative_actual_cost=55000.0,
+        periodic_ac_burn_series=[10000.0, 10000.0],
+        remaining_schedule_periods=4,
+        min_safety_margin_periods=1.0,
+    )
+    assert res_tight["estimated_runway_periods"] == 4.5
+    assert res_tight["runway_surplus_periods"] == 0.5
+    assert res_tight["runway_status"] == "TIGHT_RUNWAY"
+    assert res_tight["is_runway_sufficient"] is False
+
+    res_short = evaluate_evm_funding_runway_exhaustion(
+        total_authorized_funding=100000.0,
+        cumulative_actual_cost=70000.0,
+        periodic_ac_burn_series=[10000.0, 10000.0],
+        remaining_schedule_periods=4,
+        min_safety_margin_periods=1.0,
+    )
+    assert res_short["estimated_runway_periods"] == 3.0
+    assert res_short["runway_surplus_periods"] == -1.0
+    assert res_short["runway_status"] == "SHORTFALL_RISK"
+    assert res_short["is_runway_sufficient"] is False
+
+
+def test_evaluate_evm_funding_runway_exhaustion_overdrawn_or_exhausted():
+    """AC > financiamiento autorizado o fondo restante 0 con períodos > 0 -> EXHAUSTED."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_funding_runway_exhaustion,
+    )
+
+    res_over = evaluate_evm_funding_runway_exhaustion(
+        total_authorized_funding=80000.0,
+        cumulative_actual_cost=85000.0,
+        periodic_ac_burn_series=[15000.0, 20000.0],
+        remaining_schedule_periods=2,
+    )
+    assert res_over["remaining_funding"] == 0.0
+    assert res_over["is_overdrawn"] is True
+    assert res_over["runway_status"] == "EXHAUSTED"
+    assert res_over["is_runway_sufficient"] is False
+
+    res_zero = evaluate_evm_funding_runway_exhaustion(
+        total_authorized_funding=80000.0,
+        cumulative_actual_cost=80000.0,
+        periodic_ac_burn_series=[10000.0],
+        remaining_schedule_periods=1,
+    )
+    assert res_zero["is_overdrawn"] is False
+    assert res_zero["runway_status"] == "EXHAUSTED"
+    assert res_zero["is_runway_sufficient"] is False
+
+
+def test_evaluate_evm_funding_runway_exhaustion_no_burn_series():
+    """Sin quemas positivas y con fondos disponibles -> estimated_runway_periods igual a períodos restantes."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_funding_runway_exhaustion,
+    )
+
+    res = evaluate_evm_funding_runway_exhaustion(
+        total_authorized_funding=50000.0,
+        cumulative_actual_cost=0.0,
+        periodic_ac_burn_series=None,
+        remaining_schedule_periods=5,
+        min_safety_margin_periods=0.0,
+    )
+    assert res == {
+        "remaining_funding": 50000.0,
+        "is_overdrawn": False,
+        "average_periodic_burn": 0.0,
+        "peak_periodic_burn": 0.0,
+        "estimated_runway_periods": 5.0,
+        "runway_surplus_periods": 0.0,
+        "runway_status": "HEALTHY_RUNWAY",
+        "is_runway_sufficient": True,
+    }

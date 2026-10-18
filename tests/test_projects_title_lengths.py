@@ -2352,3 +2352,150 @@ def test_validate_schedule_buffer_fever_chart_status_empty_or_invalid_entries():
             "max_burn_rate_index": 0.0,
             "is_valid": False,
         }
+
+
+def test_validate_rolling_wave_planning_horizon_valid():
+    """> Planning lejos del horizonte y work packages near-term listos -> is_valid."""
+    from backend.schemas.projects import validate_rolling_wave_planning_horizon
+
+    res = validate_rolling_wave_planning_horizon(
+        [
+            {
+                "package_id": "PP-FAR",
+                "package_type": "planning_package",
+                "days_until_start": 90,
+            },
+            {
+                "package_id": "WP-NEAR",
+                "package_type": "work_package",
+                "days_until_start": 10,
+                "has_detailed_activities": True,
+                "has_assigned_owner": True,
+                "estimated_effort_hours": 40.0,
+            },
+        ]
+    )
+    assert res["evaluated_package_count"] == 2
+    assert res["undecomposed_near_term_planning_ids"] == []
+    assert res["unready_near_term_work_package_ids"] == []
+    assert res["valid_far_term_planning_ids"] == ["PP-FAR"]
+    assert res["invalid_package_type_ids"] == []
+    assert res["is_valid"] is True
+
+
+def test_validate_rolling_wave_planning_horizon_undecomposed_near_term_planning():
+    """> Planning package cerca del horizonte sin descomponer (y lejos con tope custom)."""
+    from backend.schemas.projects import validate_rolling_wave_planning_horizon
+
+    res = validate_rolling_wave_planning_horizon(
+        [
+            {
+                "package_id": "PP-NEAR",
+                "package_type": "planning_package",
+                "days_until_start": 15,
+            },
+            {
+                "package_id": "PP-EDGE",
+                "package_type": "planning_package",
+                "days_until_start": 30,
+            },
+        ]
+    )
+    assert res["evaluated_package_count"] == 2
+    assert res["undecomposed_near_term_planning_ids"] == ["PP-NEAR", "PP-EDGE"]
+    assert res["valid_far_term_planning_ids"] == []
+    assert res["invalid_package_type_ids"] == []
+    assert res["is_valid"] is False
+
+    # Con horizonte de 14 días: PP-15 pasa a ser válido lejos y PP-10 queda cerca.
+    res_relaxed = validate_rolling_wave_planning_horizon(
+        [
+            {"package_id": "PP-15", "package_type": "planning_package", "days_until_start": 15},
+            {"package_id": "PP-10", "package_type": "planning_package", "days_until_start": 10},
+        ],
+        near_term_horizon_days=14,
+    )
+    assert res_relaxed["undecomposed_near_term_planning_ids"] == ["PP-10"]
+    assert res_relaxed["valid_far_term_planning_ids"] == ["PP-15"]
+    assert res_relaxed["is_valid"] is False
+
+
+def test_validate_rolling_wave_planning_horizon_unready_near_term_work_package():
+    """> Work package near-term detallado a medias -> unready (3 variantes + lejos)."""
+    from backend.schemas.projects import validate_rolling_wave_planning_horizon
+
+    res = validate_rolling_wave_planning_horizon(
+        [
+            {
+                "package_id": "WP-NO-DETAIL",
+                "package_type": "work_package",
+                "days_until_start": 5,
+                "has_detailed_activities": False,
+                "has_assigned_owner": True,
+                "estimated_effort_hours": 20.0,
+            },
+            {
+                "package_id": "WP-NO-OWNER",
+                "package_type": "work_package",
+                "days_until_start": 5,
+                "has_detailed_activities": True,
+                "has_assigned_owner": False,
+                "estimated_effort_hours": 20.0,
+            },
+            {
+                "package_id": "WP-NO-EFFORT",
+                "package_type": "work_package",
+                "days_until_start": 5,
+                "has_detailed_activities": True,
+                "has_assigned_owner": True,
+                "estimated_effort_hours": 0.0,
+            },
+            {
+                "package_id": "WP-FAR-EXEMPT",
+                "package_type": "work_package",
+                "days_until_start": 60,
+                "has_detailed_activities": False,
+                "has_assigned_owner": False,
+                "estimated_effort_hours": 0.0,
+            },
+        ]
+    )
+    assert res["evaluated_package_count"] == 4
+    assert res["unready_near_term_work_package_ids"] == [
+        "WP-NO-DETAIL",
+        "WP-NO-OWNER",
+        "WP-NO-EFFORT",
+    ]
+    assert res["undecomposed_near_term_planning_ids"] == []
+    assert res["invalid_package_type_ids"] == []
+    assert res["is_valid"] is False
+
+
+def test_validate_rolling_wave_planning_horizon_invalid_type_and_empty():
+    """> Tipos inválidos y entradas vacías/None/basura -> invalid_package_type_ids recogidos."""
+    from backend.schemas.projects import validate_rolling_wave_planning_horizon
+
+    res = validate_rolling_wave_planning_horizon(
+        [
+            {"package_id": "WP-WEIRD", "package_type": "Milestone"},
+            {"package_id": "PP-EMPTY-TYPE", "package_type": ""},
+            {"package_id": "WP-OK", "package_type": "WORK_PACKAGE", "days_until_start": 100},
+        ]
+    )
+    assert res["evaluated_package_count"] == 3
+    assert res["invalid_package_type_ids"] == ["WP-WEIRD", "PP-EMPTY-TYPE"]
+    # WP-OK es work_package lejos del horizonte: no infringe ninguna lista.
+    assert res["undecomposed_near_term_planning_ids"] == []
+    assert res["unready_near_term_work_package_ids"] == []
+    assert res["valid_far_term_planning_ids"] == []
+    assert res["is_valid"] is False
+
+    for payload in (None, [], ["no-dict", 42]):
+        assert validate_rolling_wave_planning_horizon(payload) == {  # type: ignore[arg-type]
+            "evaluated_package_count": 0,
+            "undecomposed_near_term_planning_ids": [],
+            "unready_near_term_work_package_ids": [],
+            "valid_far_term_planning_ids": [],
+            "invalid_package_type_ids": [],
+            "is_valid": False,
+        }

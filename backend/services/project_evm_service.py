@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import datetime
 import uuid
+from collections.abc import Sequence
 from datetime import timedelta, timezone
 from typing import Any, Dict, List, Optional
 
@@ -5183,11 +5184,80 @@ def evaluate_management_reserve_ceiling_utilization(
     }
 
 
+def evaluate_evm_funding_runway_exhaustion(
+    *,
+    total_authorized_funding: float,
+    cumulative_actual_cost: float,
+    periodic_ac_burn_series: Sequence[float] | None,
+    remaining_schedule_periods: int,
+    min_safety_margin_periods: float = 1.0,
+) -> dict[str, Any]:
+    """Evalúa la tasa de consumo financiero (AC burn-rate) frente a los períodos restantes de cronograma según PMI PMBOK §7.2 y §7.4."""
+    auth_funding = float(total_authorized_funding or 0.0)
+    cum_ac = float(cumulative_actual_cost or 0.0)
+    rem_periods = int(remaining_schedule_periods or 0)
+    safety_margin = float(min_safety_margin_periods or 0.0)
+
+    remaining_funding = round(max(0.0, auth_funding - cum_ac), 2)
+    is_overdrawn = cum_ac > auth_funding
+
+    valid_burns: list[float] = []
+    for val in periodic_ac_burn_series or []:
+        if isinstance(val, (int, float)) and not isinstance(val, bool):
+            f_val = float(val)
+            if f_val > 0.0:
+                valid_burns.append(f_val)
+
+    if valid_burns:
+        average_periodic_burn = round(sum(valid_burns) / len(valid_burns), 2)
+        peak_periodic_burn = round(max(valid_burns), 2)
+    else:
+        average_periodic_burn = 0.0
+        peak_periodic_burn = 0.0
+
+    if average_periodic_burn > 0.0:
+        estimated_runway_periods = round(
+            remaining_funding / average_periodic_burn, 2
+        )
+    else:
+        estimated_runway_periods = (
+            float(rem_periods) if remaining_funding > 0.0 else 0.0
+        )
+
+    eff_rem_periods = float(max(0, rem_periods))
+    runway_surplus_periods = round(
+        estimated_runway_periods - eff_rem_periods, 2
+    )
+
+    if is_overdrawn or (remaining_funding == 0.0 and rem_periods > 0):
+        runway_status = "EXHAUSTED"
+    elif estimated_runway_periods < eff_rem_periods:
+        runway_status = "SHORTFALL_RISK"
+    elif runway_surplus_periods < safety_margin:
+        runway_status = "TIGHT_RUNWAY"
+    else:
+        runway_status = "HEALTHY_RUNWAY"
+
+    return {
+        "remaining_funding": remaining_funding,
+        "is_overdrawn": is_overdrawn,
+        "average_periodic_burn": average_periodic_burn,
+        "peak_periodic_burn": peak_periodic_burn,
+        "estimated_runway_periods": estimated_runway_periods,
+        "runway_surplus_periods": runway_surplus_periods,
+        "runway_status": runway_status,
+        "is_runway_sufficient": runway_status == "HEALTHY_RUNWAY",
+    }
+
+
 ProjectEVMService.audit_eac_forecast_optimism_bias = staticmethod(
     audit_eac_forecast_optimism_bias
 )
 ProjectEVMService.evaluate_management_reserve_ceiling_utilization = staticmethod(
     evaluate_management_reserve_ceiling_utilization
+)
+ProjectEVMService.evaluate_evm_funding_runway_exhaustion = staticmethod(
+    evaluate_evm_funding_runway_exhaustion
 )
 
 
@@ -5202,6 +5272,6 @@ __all__ = [
     "audit_pmb_undistributed_budget_reconciliation",
     "audit_eac_forecast_optimism_bias",
     "evaluate_management_reserve_ceiling_utilization",
+    "evaluate_evm_funding_runway_exhaustion",
     "ProjectEVMService",
 ]
-
