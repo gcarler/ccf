@@ -1448,6 +1448,68 @@ def calculate_earned_schedule(
     }
 
 
+def evaluate_earned_schedule_duration_posture(
+    planned_duration_days: int | float | None,
+    elapsed_days: int | float | None,
+    progress_pct: int | float | None,
+) -> dict[str, Any]:
+    """Evalúa la postura de duración con Earned Schedule (PMBOK §6.6 / §7.4 — ES, SV(t), SPI(t)).
+
+    Entradas normalizadas: duración planificada y dias transcurridos clampados
+    a >= 0 (2 decimales), progreso clampado a [0, 100].
+    - `earned_schedule_days`: ES = (progreso / 100) * duración planificada.
+    - `schedule_variance_days`: SV(t) = ES - dias transcurridos.
+    - `spi_time`: SPI(t) = ES / dias transcurridos (1.0 si transcurridos == 0).
+    - `estimated_total_duration_days`: EDAC = duración planificada / SPI(t)
+      (duración planificada si SPI(t) <= 0).
+    - `posture`: 'UNSCHEDULED_DURATION' sin duración planificada;
+      'COMPLETED_ON_OR_AHEAD' / 'COMPLETED_LATE' al 100% de progreso según
+      dias transcurridos; 'ON_TRACK_DURATION' con SPI(t) >= 0.95;
+      'AT_RISK_DURATION_SLIP' con SPI(t) >= 0.80; y
+      'CRITICAL_SCHEDULE_DELAY' con SPI(t) < 0.80.
+    """
+    safe_planned_days = max(0.0, round(float(planned_duration_days or 0.0), 2))
+    safe_elapsed_days = max(0.0, round(float(elapsed_days or 0.0), 2))
+    safe_progress = max(0.0, min(100.0, round(float(progress_pct or 0.0), 2)))
+
+    earned_schedule_days = round((safe_progress / 100.0) * safe_planned_days, 2)
+    schedule_variance_days = round(earned_schedule_days - safe_elapsed_days, 2)
+
+    if safe_elapsed_days > 0:
+        spi_time = round(earned_schedule_days / safe_elapsed_days, 4)
+    else:
+        spi_time = 1.0
+
+    if spi_time > 0:
+        estimated_total_duration_days = round(safe_planned_days / spi_time, 2)
+    else:
+        estimated_total_duration_days = safe_planned_days
+
+    if safe_planned_days == 0.0:
+        posture = "UNSCHEDULED_DURATION"
+    elif safe_progress >= 100.0 and safe_elapsed_days <= safe_planned_days:
+        posture = "COMPLETED_ON_OR_AHEAD"
+    elif safe_progress >= 100.0:
+        posture = "COMPLETED_LATE"
+    elif spi_time >= 0.95:
+        posture = "ON_TRACK_DURATION"
+    elif spi_time >= 0.80:
+        posture = "AT_RISK_DURATION_SLIP"
+    else:
+        posture = "CRITICAL_SCHEDULE_DELAY"
+
+    return {
+        "planned_duration_days": safe_planned_days,
+        "elapsed_days": safe_elapsed_days,
+        "progress_pct": safe_progress,
+        "earned_schedule_days": earned_schedule_days,
+        "schedule_variance_days": schedule_variance_days,
+        "spi_time": spi_time,
+        "estimated_total_duration_days": estimated_total_duration_days,
+        "posture": posture,
+    }
+
+
 def calculate_eac_forecasts(
     bac: float,
     ev: float,

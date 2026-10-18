@@ -775,3 +775,88 @@ def test_audit_wiki_crosslink_without_known_slugs_resolves_all():
     assert res["integrity_pct"] == 100.0
     assert res["posture"] == "CONNECTED_KNOWLEDGE_GRAPH"
 
+
+# ─── audit_wiki_stakeholder_signoffs (PMBOK §13.3 / §10.2, pure helper) ───
+
+
+def test_audit_wiki_stakeholder_signoffs_fully_signed_off():
+    """Todos los revisores aprobados/firmados -> 'FULLY_SIGNED_OFF' con 100.0%."""
+    import backend.services.wiki_pmi_service as wiki_module
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_stakeholder_signoffs,
+    )
+
+    signoffs = [
+        {"reviewer": "Sponsor", "status": "approved"},
+        {"reviewer": "PMO", "decision": "firmado"},
+        {"reviewer": "QA", "status": "signed_off"},
+        "invalid_entry_ignored",  # type: ignore[list-item]
+    ]
+    res = audit_wiki_stakeholder_signoffs(signoffs)
+    assert res == {
+        "total_reviewers": 3,
+        "approved_count": 3,
+        "rejected_or_changes_requested_count": 0,
+        "pending_count": 0,
+        "approval_rate": 100.0,
+        "posture": "FULLY_SIGNED_OFF",
+    }
+    assert WikiPMIService.audit_wiki_stakeholder_signoffs(signoffs) == res
+    assert "audit_wiki_stakeholder_signoffs" in wiki_module.__all__
+
+
+def test_audit_wiki_stakeholder_signoffs_blocked_by_rejection():
+    """Al menos un rechazo o cambio solicitado -> 'BLOCKED_BY_REJECTION'."""
+    from backend.services.wiki_pmi_service import audit_wiki_stakeholder_signoffs
+
+    signoffs = [
+        {"reviewer": "Sponsor", "status": "aprobado"},
+        {"reviewer": "Legal", "decision": "changes_requested"},
+        {"reviewer": "Finanzas", "status": "pending"},
+    ]
+    res = audit_wiki_stakeholder_signoffs(signoffs)
+    assert res == {
+        "total_reviewers": 3,
+        "approved_count": 1,
+        "rejected_or_changes_requested_count": 1,
+        "pending_count": 1,
+        "approval_rate": 33.33,
+        "posture": "BLOCKED_BY_REJECTION",
+    }
+
+
+def test_audit_wiki_stakeholder_signoffs_pending_stakeholder_signoff():
+    """Sin rechazos pero aún con revisores pendientes -> 'PENDING_STAKEHOLDER_SIGNOFF'."""
+    from backend.services.wiki_pmi_service import audit_wiki_stakeholder_signoffs
+
+    signoffs = [
+        {"reviewer": "Sponsor", "status": "accepted"},
+        {"reviewer": "Arquitectura", "status": "in_review"},
+    ]
+    res = audit_wiki_stakeholder_signoffs(signoffs)
+    assert res == {
+        "total_reviewers": 2,
+        "approved_count": 1,
+        "rejected_or_changes_requested_count": 0,
+        "pending_count": 1,
+        "approval_rate": 50.0,
+        "posture": "PENDING_STAKEHOLDER_SIGNOFF",
+    }
+
+
+def test_audit_wiki_stakeholder_signoffs_no_reviewers_assigned():
+    """None, lista vacía o sin dicts válidos -> 'NO_REVIEWERS_ASSIGNED'."""
+    from backend.services.wiki_pmi_service import audit_wiki_stakeholder_signoffs
+
+    for empty_val in (None, [], ["not-a-dict", 42]):  # type: ignore[list-item]
+        res = audit_wiki_stakeholder_signoffs(empty_val)
+        assert res == {
+            "total_reviewers": 0,
+            "approved_count": 0,
+            "rejected_or_changes_requested_count": 0,
+            "pending_count": 0,
+            "approval_rate": 0.0,
+            "posture": "NO_REVIEWERS_ASSIGNED",
+        }
+

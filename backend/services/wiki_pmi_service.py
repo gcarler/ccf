@@ -547,3 +547,151 @@ def audit_wiki_crosslink_reference_integrity(
         "posture": posture,
     }
 
+
+def audit_wiki_stakeholder_signoffs(
+    signoffs: list[dict[str, Any]] | None,
+) -> dict[str, Any]:
+    """Audita la matriz de aprobación y firmas de interesados en páginas Wiki según PMI PMBOK §13.3 y §10.2."""
+    valid_items = [item for item in (signoffs or []) if isinstance(item, dict)]
+    total_reviewers = len(valid_items)
+
+    approved_tokens = ("approved", "aprobado", "signed_off", "accepted", "firmado")
+    rejected_tokens = ("rejected", "rechazado", "changes_requested", "observado")
+
+    approved_count = 0
+    rejected_or_changes_requested_count = 0
+
+    for item in valid_items:
+        val = str(item.get("status") or item.get("decision") or "").strip().lower()
+        if val in approved_tokens:
+            approved_count += 1
+        elif val in rejected_tokens:
+            rejected_or_changes_requested_count += 1
+
+    pending_count = max(
+        0, total_reviewers - approved_count - rejected_or_changes_requested_count
+    )
+    approval_rate = (
+        round((approved_count / total_reviewers) * 100.0, 2)
+        if total_reviewers > 0
+        else 0.0
+    )
+
+    if total_reviewers == 0:
+        posture = "NO_REVIEWERS_ASSIGNED"
+    elif rejected_or_changes_requested_count > 0:
+        posture = "BLOCKED_BY_REJECTION"
+    elif approved_count == total_reviewers:
+        posture = "FULLY_SIGNED_OFF"
+    else:
+        posture = "PENDING_STAKEHOLDER_SIGNOFF"
+
+    return {
+        "total_reviewers": total_reviewers,
+        "approved_count": approved_count,
+        "rejected_or_changes_requested_count": rejected_or_changes_requested_count,
+        "pending_count": pending_count,
+        "approval_rate": approval_rate,
+        "posture": posture,
+    }
+
+
+class WikiPMIService:
+    """Fachada canónica de doctrina y gobernanza documental Wiki PMI."""
+
+    @staticmethod
+    def load_volume_markdown_content(
+        file_name: str, base_dir: Optional[Path] = None
+    ) -> str:
+        return load_volume_markdown_content(file_name, base_dir=base_dir)
+
+    @staticmethod
+    def get_canonical_pmi_volumes(
+        base_dir: Optional[Path] = None,
+    ) -> List[Dict[str, Any]]:
+        return get_canonical_pmi_volumes(base_dir=base_dir)
+
+    @staticmethod
+    def seed_pmi_wiki_doctrine(
+        db: Session,
+        sede_id: Optional[UUID] = None,
+        author_id: Optional[UUID] = None,
+        force_update: bool = False,
+        base_dir: Optional[Path] = None,
+    ) -> List[models.WikiPage]:
+        return seed_pmi_wiki_doctrine(
+            db,
+            sede_id=sede_id,
+            author_id=author_id,
+            force_update=force_update,
+            base_dir=base_dir,
+        )
+
+    @staticmethod
+    def audit_pmi_wiki_doctrine_completeness(
+        base_dir: Optional[Path] = None,
+    ) -> Dict[str, Any]:
+        return audit_pmi_wiki_doctrine_completeness(base_dir=base_dir)
+
+    @staticmethod
+    def search_canonical_pmi_volumes(
+        query: Optional[str] = None,
+        tag_filter: Optional[str] = None,
+        base_dir: Optional[Path] = None,
+    ) -> List[Dict[str, Any]]:
+        return search_canonical_pmi_volumes(
+            query=query, tag_filter=tag_filter, base_dir=base_dir
+        )
+
+    @staticmethod
+    def extract_wiki_slash_commands_inventory(
+        markdown_text: Optional[str],
+    ) -> Dict[str, Any]:
+        return extract_wiki_slash_commands_inventory(markdown_text)
+
+    @staticmethod
+    def audit_wiki_page_knowledge_hygiene(
+        title: Optional[str],
+        content: Optional[str],
+        tags: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        return audit_wiki_page_knowledge_hygiene(title, content, tags=tags)
+
+    @staticmethod
+    def summarize_wiki_revision_history_velocity(
+        revisions: Optional[List[Dict[str, Any]]] = None,
+    ) -> Dict[str, Any]:
+        return summarize_wiki_revision_history_velocity(revisions)
+
+    @staticmethod
+    def audit_wiki_crosslink_reference_integrity(
+        content: str | None,
+        known_slugs: list[str] | set[str] | None = None,
+    ) -> dict[str, Any]:
+        return audit_wiki_crosslink_reference_integrity(content, known_slugs)
+
+    @staticmethod
+    def audit_wiki_stakeholder_signoffs(
+        signoffs: list[dict[str, Any]] | None,
+    ) -> dict[str, Any]:
+        return audit_wiki_stakeholder_signoffs(signoffs)
+
+
+__all__ = [
+    "DEFAULT_PMI_KB_DIR",
+    "CANONICAL_VOLUMES_METADATA",
+    "SUPPORTED_PMI_SLASH_COMMANDS",
+    "SLASH_COMMAND_RE",
+    "load_volume_markdown_content",
+    "get_canonical_pmi_volumes",
+    "seed_pmi_wiki_doctrine",
+    "audit_pmi_wiki_doctrine_completeness",
+    "search_canonical_pmi_volumes",
+    "extract_wiki_slash_commands_inventory",
+    "audit_wiki_page_knowledge_hygiene",
+    "summarize_wiki_revision_history_velocity",
+    "audit_wiki_crosslink_reference_integrity",
+    "audit_wiki_stakeholder_signoffs",
+    "WikiPMIService",
+]
+

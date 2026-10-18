@@ -1150,6 +1150,77 @@ def test_evaluate_etc_forecasting_method_posture_atypical_remaining_budget():
     }
 
 
+# ─── evaluate_earned_schedule_duration_posture (pure helper) ──────────────
+
+
+def test_earned_schedule_duration_posture_on_track_and_at_risk():
+    """SPI(t) >= 0.95 -> ON_TRACK_DURATION; SPI(t) en [0.80, 0.95) -> AT_RISK_DURATION_SLIP."""
+    from backend.services.project_evm_service import (
+        evaluate_earned_schedule_duration_posture,
+    )
+
+    on_track = evaluate_earned_schedule_duration_posture(100, 50, 60)
+    assert on_track["earned_schedule_days"] == 60.0
+    assert on_track["schedule_variance_days"] == 10.0
+    assert on_track["spi_time"] == 1.2
+    assert on_track["estimated_total_duration_days"] == 83.33
+    assert on_track["posture"] == "ON_TRACK_DURATION"
+
+    at_risk = evaluate_earned_schedule_duration_posture(100, 50, 45)
+    assert at_risk["schedule_variance_days"] == -5.0
+    assert at_risk["spi_time"] == 0.9
+    assert at_risk["estimated_total_duration_days"] == 111.11
+    assert at_risk["posture"] == "AT_RISK_DURATION_SLIP"
+
+
+def test_earned_schedule_duration_posture_critical_delay():
+    """SPI(t) < 0.80 -> CRITICAL_SCHEDULE_DELAY con EDAC inflado."""
+    from backend.services.project_evm_service import (
+        evaluate_earned_schedule_duration_posture,
+    )
+
+    res = evaluate_earned_schedule_duration_posture(100, 50, 30)
+    assert res["earned_schedule_days"] == 30.0
+    assert res["schedule_variance_days"] == -20.0
+    assert res["spi_time"] == 0.6
+    assert res["estimated_total_duration_days"] == 166.67
+    assert res["posture"] == "CRITICAL_SCHEDULE_DELAY"
+
+
+def test_earned_schedule_duration_posture_completed_on_or_ahead_and_late():
+    """Progreso >= 100%: dentro del plazo -> COMPLETED_ON_OR_AHEAD; excedido -> COMPLETED_LATE."""
+    from backend.services.project_evm_service import (
+        evaluate_earned_schedule_duration_posture,
+    )
+
+    on_or_ahead = evaluate_earned_schedule_duration_posture(100, 80, 100)
+    assert on_or_ahead["earned_schedule_days"] == 100.0
+    assert on_or_ahead["spi_time"] == 1.25
+    assert on_or_ahead["posture"] == "COMPLETED_ON_OR_AHEAD"
+
+    late = evaluate_earned_schedule_duration_posture(100, 120, 100)
+    assert late["schedule_variance_days"] == -20.0
+    assert round(late["spi_time"], 4) == round(100 / 120, 4)
+    assert late["posture"] == "COMPLETED_LATE"
+
+
+def test_earned_schedule_duration_posture_unscheduled_duration():
+    """Sin duración planificada -> UNSCHEDULED_DURATION; sin dias transcurridos -> SPI(t) 1.0."""
+    from backend.services.project_evm_service import (
+        evaluate_earned_schedule_duration_posture,
+    )
+
+    unscheduled = evaluate_earned_schedule_duration_posture(None, 30, 50)
+    assert unscheduled["planned_duration_days"] == 0.0
+    assert unscheduled["earned_schedule_days"] == 0.0
+    assert unscheduled["posture"] == "UNSCHEDULED_DURATION"
+
+    no_elapsed = evaluate_earned_schedule_duration_posture(100, 0, 50)
+    assert no_elapsed["spi_time"] == 1.0
+    assert no_elapsed["schedule_variance_days"] == 50.0
+    assert no_elapsed["posture"] == "ON_TRACK_DURATION"
+
+
 if __name__ == "__main__":
     test_evm_balanced_project()
     test_evm_cost_overrun_critical()
