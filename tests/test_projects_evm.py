@@ -3561,3 +3561,137 @@ def test_evaluate_evm_tcpi_eac_vs_bac_divergence_invalid_inputs():
         "metrics-string",
     ):
         assert eval_fn(payload) == invalid_result  # type: ignore[arg-type]
+
+
+def test_audit_evm_accrual_method_inflation_bias_sound():
+    """Paquetes con método válido, 50/50 de corta duración y percent_complete con evidencia pasan is_accrual_governance_sound=True."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        audit_evm_accrual_method_inflation_bias,
+    )
+
+    wps = [
+        {
+            "wp_id": "WP-01",
+            "accrual_method": "50_50",
+            "duration_days": 15.0,
+            "claimed_ev": 2500.0,
+            "bac": 5000.0,
+            "objective_evidence_attached": False,
+        },
+        {
+            "wp_id": "WP-02",
+            "accrual_method": "percent_complete",
+            "duration_days": 45.0,
+            "claimed_ev": 6000.0,
+            "bac": 10000.0,
+            "objective_evidence_attached": True,
+        },
+        {
+            "wp_id": "WP-03",
+            "accrual_method": "0_100",
+            "duration_days": 10.0,
+            "claimed_ev": 3000.0,
+            "bac": 3000.0,
+            "objective_evidence_attached": True,
+        },
+    ]
+    res = audit_evm_accrual_method_inflation_bias(wps, max_50_50_duration_days=20.0)
+    assert res == {
+        "total_work_packages": 3,
+        "invalid_method_wp_ids": [],
+        "long_duration_50_50_wp_ids": [],
+        "inflated_or_unsubstantiated_wp_ids": [],
+        "is_accrual_governance_sound": True,
+    }
+    assert (
+        ProjectEVMService.audit_evm_accrual_method_inflation_bias(
+            wps, max_50_50_duration_days=20.0
+        )
+        == res
+    )
+
+
+def test_audit_evm_accrual_method_inflation_bias_invalid_method_and_long_50_50():
+    """Detecta método de devengo inválido y uso de 50_50 en paquetes que exceden max_50_50_duration_days."""
+    from backend.services.project_evm_service import (
+        audit_evm_accrual_method_inflation_bias,
+    )
+
+    res = audit_evm_accrual_method_inflation_bias(
+        [
+            {
+                "wp_id": "WP-BAD-METH",
+                "accrual_method": "subjective_guess",
+                "duration_days": 10.0,
+                "claimed_ev": 500.0,
+                "bac": 1000.0,
+            },
+            {
+                "wp_id": "WP-LONG-5050",
+                "accrual_method": "50_50",
+                "duration_days": 35.0,
+                "claimed_ev": 2000.0,
+                "bac": 4000.0,
+            },
+        ],
+        max_50_50_duration_days=20.0,
+    )
+    assert res == {
+        "total_work_packages": 2,
+        "invalid_method_wp_ids": ["WP-BAD-METH"],
+        "long_duration_50_50_wp_ids": ["WP-LONG-5050"],
+        "inflated_or_unsubstantiated_wp_ids": [],
+        "is_accrual_governance_sound": False,
+    }
+
+
+def test_audit_evm_accrual_method_inflation_bias_inflated_or_unsubstantiated():
+    """Detecta claimed_ev > bac y percent_complete con claimed_ev > 0 sin evidencia objetiva."""
+    from backend.services.project_evm_service import (
+        audit_evm_accrual_method_inflation_bias,
+    )
+
+    res = audit_evm_accrual_method_inflation_bias(
+        [
+            {
+                "wp_id": "WP-OVER-BAC",
+                "accrual_method": "weighted_milestones",
+                "duration_days": 30.0,
+                "claimed_ev": 5500.0,
+                "bac": 5000.0,
+                "objective_evidence_attached": True,
+            },
+            {
+                "wp_id": "WP-UNSUB-PCT",
+                "accrual_method": "percent_complete",
+                "duration_days": 25.0,
+                "claimed_ev": 1500.0,
+                "bac": 5000.0,
+                "objective_evidence_attached": False,
+            },
+        ]
+    )
+    assert res == {
+        "total_work_packages": 2,
+        "invalid_method_wp_ids": [],
+        "long_duration_50_50_wp_ids": [],
+        "inflated_or_unsubstantiated_wp_ids": ["WP-OVER-BAC", "WP-UNSUB-PCT"],
+        "is_accrual_governance_sound": False,
+    }
+
+
+def test_audit_evm_accrual_method_inflation_bias_empty_or_invalid():
+    """Entrada None, vacía o no secuencial retorna total_work_packages=0 e is_accrual_governance_sound=False."""
+    from backend.services.project_evm_service import (
+        audit_evm_accrual_method_inflation_bias,
+    )
+
+    for payload in (None, [], "invalid", {"wp_id": "WP-1"}, [{"wp_id": "  "}]):
+        assert audit_evm_accrual_method_inflation_bias(payload) == {  # type: ignore[arg-type]
+            "total_work_packages": 0,
+            "invalid_method_wp_ids": [],
+            "long_duration_50_50_wp_ids": [],
+            "inflated_or_unsubstantiated_wp_ids": [],
+            "is_accrual_governance_sound": False,
+        }

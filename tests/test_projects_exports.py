@@ -3986,3 +3986,131 @@ def test_audit_executive_report_procurement_claims_settlement_empty_or_invalid()
         }
 
 
+def test_audit_executive_report_stakeholder_feedback_sla_healthy():
+    """Feedback con action_owner_id, dentro de SLA y confirmado al cerrarse -> 100% e is_feedback_loop_healthy=True."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_stakeholder_feedback_sla,
+    )
+
+    report = {
+        "stakeholder_feedback": [
+            {
+                "feedback_id": "FB-01",
+                "response_days": 3.5,
+                "action_owner_id": "USR-PM",
+                "status": "resolved",
+                "stakeholder_acknowledged": True,
+            },
+            {
+                "feedback_id": "FB-02",
+                "response_days": 7.0,
+                "action_owner_id": "USR-COMMS",
+                "status": "in_progress",
+                "stakeholder_acknowledged": False,
+            },
+        ]
+    }
+    res = audit_executive_report_stakeholder_feedback_sla(report, max_sla_days=7.0)
+    assert res == {
+        "total_feedback_items": 2,
+        "unassigned_feedback_ids": [],
+        "sla_breached_feedback_ids": [],
+        "unacknowledged_closure_feedback_ids": [],
+        "sla_compliance_rate_pct": 100.0,
+        "is_feedback_loop_healthy": True,
+    }
+    assert (
+        ProjectExportService.audit_executive_report_stakeholder_feedback_sla(
+            report, max_sla_days=7.0
+        )
+        == res
+    )
+
+
+def test_audit_executive_report_stakeholder_feedback_sla_unassigned_and_sla_breach():
+    """Detecta feedback sin action_owner_id y demora mayor a max_sla_days (incluyendo fallback en governance)."""
+    from backend.services.project_export_service import (
+        audit_executive_report_stakeholder_feedback_sla,
+    )
+
+    res = audit_executive_report_stakeholder_feedback_sla(
+        {
+            "governance": {
+                "stakeholder_feedback": [
+                    {
+                        "feedback_id": "FB-UNASSIGNED",
+                        "response_days": 2.0,
+                        "action_owner_id": "   ",
+                        "status": "open",
+                    },
+                    {
+                        "feedback_id": "FB-LATE",
+                        "response_days": 10.5,
+                        "action_owner_id": "USR-1",
+                        "status": "open",
+                    },
+                ]
+            }
+        },
+        max_sla_days=7.0,
+    )
+    assert res == {
+        "total_feedback_items": 2,
+        "unassigned_feedback_ids": ["FB-UNASSIGNED"],
+        "sla_breached_feedback_ids": ["FB-LATE"],
+        "unacknowledged_closure_feedback_ids": [],
+        "sla_compliance_rate_pct": 50.0,
+        "is_feedback_loop_healthy": False,
+    }
+
+
+def test_audit_executive_report_stakeholder_feedback_sla_unacknowledged_closure():
+    """Feedback en estado closed/resolved sin stakeholder_acknowledged=True se reporta en unacknowledged_closure_feedback_ids."""
+    from backend.services.project_export_service import (
+        audit_executive_report_stakeholder_feedback_sla,
+    )
+
+    res = audit_executive_report_stakeholder_feedback_sla(
+        {
+            "stakeholder_feedback": [
+                {
+                    "feedback_id": "FB-CLOSED-NOACK",
+                    "response_days": 4.0,
+                    "action_owner_id": "USR-PM",
+                    "status": "Closed",
+                    "stakeholder_acknowledged": False,
+                }
+            ]
+        }
+    )
+    assert res == {
+        "total_feedback_items": 1,
+        "unassigned_feedback_ids": [],
+        "sla_breached_feedback_ids": [],
+        "unacknowledged_closure_feedback_ids": ["FB-CLOSED-NOACK"],
+        "sla_compliance_rate_pct": 100.0,
+        "is_feedback_loop_healthy": False,
+    }
+
+
+def test_audit_executive_report_stakeholder_feedback_sla_empty_or_invalid():
+    """Reporte vacío, None o sin items válidos devuelve total_feedback_items=0 e is_feedback_loop_healthy=False."""
+    from backend.services.project_export_service import (
+        audit_executive_report_stakeholder_feedback_sla,
+    )
+
+    for payload in (
+        None,
+        {},
+        {"stakeholder_feedback": "invalid"},
+        {"stakeholder_feedback": [{"feedback_id": "  "}]},
+    ):
+        assert audit_executive_report_stakeholder_feedback_sla(payload) == {  # type: ignore[arg-type]
+            "total_feedback_items": 0,
+            "unassigned_feedback_ids": [],
+            "sla_breached_feedback_ids": [],
+            "unacknowledged_closure_feedback_ids": [],
+            "sla_compliance_rate_pct": 0.0,
+            "is_feedback_loop_healthy": False,
+        }

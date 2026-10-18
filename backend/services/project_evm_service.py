@@ -5485,6 +5485,7 @@ __all__ = [
     "evaluate_evm_earned_schedule_tspi_feasibility",
     "evaluate_evm_vac_rebaseline_threshold",
     "evaluate_evm_tcpi_eac_vs_bac_divergence",
+    "audit_evm_accrual_method_inflation_bias",
     "ProjectEVMService",
 ]
 
@@ -5578,4 +5579,95 @@ def evaluate_evm_tcpi_eac_vs_bac_divergence(
 
 ProjectEVMService.evaluate_evm_tcpi_eac_vs_bac_divergence = staticmethod(
     evaluate_evm_tcpi_eac_vs_bac_divergence
+)
+
+
+def audit_evm_accrual_method_inflation_bias(
+    work_packages: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_50_50_duration_days: float = 20.0,
+) -> dict[str, Any]:
+    """Audita el método de devengo de valor ganado (EVMT: 0/100, 50/50, weighted_milestones, percent_complete, level_of_effort) para prevenir sesgo de inflación en paquetes largos o sin evidencia objetiva según PMI PMBOK §7.3 y §7.4."""
+    if (
+        work_packages is None
+        or isinstance(work_packages, (str, bytes, Mapping))
+        or not isinstance(work_packages, Sequence)
+    ):
+        items: Sequence[Any] = []
+    else:
+        items = work_packages
+
+    valid_methods = {
+        "0_100",
+        "50_50",
+        "weighted_milestones",
+        "percent_complete",
+        "level_of_effort",
+    }
+    total_work_packages = 0
+    invalid_method_wp_ids: list[str] = []
+    long_duration_50_50_wp_ids: list[str] = []
+    inflated_or_unsubstantiated_wp_ids: list[str] = []
+
+    for item in items:
+        if not isinstance(item, Mapping):
+            continue
+        wp_id = str(item.get("wp_id") or "").strip()
+        if not wp_id:
+            continue
+
+        total_work_packages += 1
+        accrual_method = str(item.get("accrual_method") or "").strip().lower()
+        try:
+            duration_days = max(0.0, float(item.get("duration_days", 0.0) or 0.0))
+        except (TypeError, ValueError):
+            duration_days = 0.0
+
+        try:
+            claimed_ev = max(0.0, float(item.get("claimed_ev", 0.0) or 0.0))
+        except (TypeError, ValueError):
+            claimed_ev = 0.0
+
+        try:
+            bac = max(0.0, float(item.get("bac", 0.0) or 0.0))
+        except (TypeError, ValueError):
+            bac = 0.0
+
+        objective_evidence_attached = bool(
+            item.get("objective_evidence_attached", False)
+        )
+
+        if accrual_method not in valid_methods:
+            invalid_method_wp_ids.append(wp_id)
+
+        if accrual_method == "50_50" and duration_days > float(
+            max_50_50_duration_days
+        ):
+            long_duration_50_50_wp_ids.append(wp_id)
+
+        if claimed_ev > bac or (
+            accrual_method == "percent_complete"
+            and claimed_ev > 0.0
+            and not objective_evidence_attached
+        ):
+            inflated_or_unsubstantiated_wp_ids.append(wp_id)
+
+    is_accrual_governance_sound = bool(
+        total_work_packages > 0
+        and not invalid_method_wp_ids
+        and not long_duration_50_50_wp_ids
+        and not inflated_or_unsubstantiated_wp_ids
+    )
+
+    return {
+        "total_work_packages": total_work_packages,
+        "invalid_method_wp_ids": invalid_method_wp_ids,
+        "long_duration_50_50_wp_ids": long_duration_50_50_wp_ids,
+        "inflated_or_unsubstantiated_wp_ids": inflated_or_unsubstantiated_wp_ids,
+        "is_accrual_governance_sound": is_accrual_governance_sound,
+    }
+
+
+ProjectEVMService.audit_evm_accrual_method_inflation_bias = staticmethod(
+    audit_evm_accrual_method_inflation_bias
 )

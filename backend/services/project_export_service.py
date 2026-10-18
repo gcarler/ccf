@@ -2966,6 +2966,7 @@ __all__ = [
     "audit_executive_report_lessons_learned_institutionalization",
     "audit_executive_report_risk_trigger_activation_governance",
     "audit_executive_report_procurement_claims_settlement",
+    "audit_executive_report_stakeholder_feedback_sla",
     "ProjectExportService",
 ]
 
@@ -3216,3 +3217,86 @@ ProjectExportService.audit_executive_report_procurement_claims_settlement = stat
 )
 
 
+def audit_executive_report_stakeholder_feedback_sla(
+    report: Mapping[str, Any] | None,
+    *,
+    max_sla_days: float = 7.0,
+) -> dict[str, Any]:
+    """Audita el ciclo de retroalimentación de interesados (stakeholder feedback loop), asignación de dueños de acción, cumplimiento de SLA y confirmación de cierre en el reporte ejecutivo según PMI PMBOK §10.2 y §13.3."""
+    feedback_items: Sequence[Any] = []
+    if isinstance(report, Mapping):
+        raw_root = report.get("stakeholder_feedback")
+        if isinstance(raw_root, Sequence) and not isinstance(
+            raw_root, (str, bytes, Mapping)
+        ):
+            feedback_items = raw_root
+        elif isinstance(report.get("governance"), Mapping):
+            raw_gov = report["governance"].get("stakeholder_feedback")
+            if isinstance(raw_gov, Sequence) and not isinstance(
+                raw_gov, (str, bytes, Mapping)
+            ):
+                feedback_items = raw_gov
+
+    total_feedback_items = 0
+    unassigned_feedback_ids: list[str] = []
+    sla_breached_feedback_ids: list[str] = []
+    unacknowledged_closure_feedback_ids: list[str] = []
+
+    for item in feedback_items:
+        if not isinstance(item, Mapping):
+            continue
+        feedback_id = str(item.get("feedback_id") or "").strip()
+        if not feedback_id:
+            continue
+
+        total_feedback_items += 1
+        try:
+            response_days = max(0.0, float(item.get("response_days", 0.0) or 0.0))
+        except (TypeError, ValueError):
+            response_days = 0.0
+
+        action_owner_id = str(item.get("action_owner_id") or "").strip()
+        status = str(item.get("status") or "").strip().lower()
+        stakeholder_acknowledged = bool(
+            item.get("stakeholder_acknowledged", False)
+        )
+
+        if not action_owner_id:
+            unassigned_feedback_ids.append(feedback_id)
+        if response_days > float(max_sla_days):
+            sla_breached_feedback_ids.append(feedback_id)
+        if status in {"closed", "resolved"} and not stakeholder_acknowledged:
+            unacknowledged_closure_feedback_ids.append(feedback_id)
+
+    sla_compliance_rate_pct = (
+        round(
+            (
+                (total_feedback_items - len(sla_breached_feedback_ids))
+                / total_feedback_items
+            )
+            * 100.0,
+            2,
+        )
+        if total_feedback_items > 0
+        else 0.0
+    )
+    is_feedback_loop_healthy = bool(
+        total_feedback_items > 0
+        and not unassigned_feedback_ids
+        and not sla_breached_feedback_ids
+        and not unacknowledged_closure_feedback_ids
+    )
+
+    return {
+        "total_feedback_items": total_feedback_items,
+        "unassigned_feedback_ids": unassigned_feedback_ids,
+        "sla_breached_feedback_ids": sla_breached_feedback_ids,
+        "unacknowledged_closure_feedback_ids": unacknowledged_closure_feedback_ids,
+        "sla_compliance_rate_pct": sla_compliance_rate_pct,
+        "is_feedback_loop_healthy": is_feedback_loop_healthy,
+    }
+
+
+ProjectExportService.audit_executive_report_stakeholder_feedback_sla = staticmethod(
+    audit_executive_report_stakeholder_feedback_sla
+)

@@ -2493,6 +2493,7 @@ __all__ = [
     "audit_wiki_benefits_realization_governance",
     "audit_wiki_raid_log_traceability_governance",
     "audit_wiki_definition_of_ready_gate_hygiene",
+    "audit_wiki_retrospective_action_closure_governance",
     "WikiPMIService",
 ]
 
@@ -2802,4 +2803,88 @@ def audit_wiki_definition_of_ready_gate_hygiene(
 
 WikiPMIService.audit_wiki_definition_of_ready_gate_hygiene = staticmethod(
     audit_wiki_definition_of_ready_gate_hygiene
+)
+
+
+def audit_wiki_retrospective_action_closure_governance(
+    retro_actions: Sequence[Mapping[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """PMBOK §4.4 / §8.2 — cierre de acciones de retro y verificación de impacto.
+
+    - Sin ``owner_id`` -> ``unassigned_action_ids``.
+    - Abiertas (no closed/done/verified) vencidas (current > due) ->
+      ``overdue_sprint_action_ids``.
+    - Cerradas sin ``impact_verified`` -> ``unverified_closure_action_ids``.
+    - ``closure_effectiveness_pct`` = cerradas con impacto verificado / total.
+    """
+    if not isinstance(retro_actions, (list, tuple)):
+        retro_actions = []
+
+    total_actions = 0
+    verified_closed_count = 0
+    unassigned_action_ids: list[str] = []
+    overdue_sprint_action_ids: list[str] = []
+    unverified_closure_action_ids: list[str] = []
+
+    for item in retro_actions:
+        if not isinstance(item, Mapping):
+            continue
+        action_id = str(item.get("action_id") or "").strip()
+        if not action_id:
+            continue
+
+        owner_id = str(item.get("owner_id") or "").strip()
+        try:
+            due_sprint = int(item.get("due_sprint", 0) or 0)
+        except (TypeError, ValueError):
+            due_sprint = 0
+        try:
+            current_sprint = int(item.get("current_sprint", 0) or 0)
+        except (TypeError, ValueError):
+            current_sprint = 0
+        status = str(item.get("status") or "").strip().lower()
+        impact_verified = bool(item.get("impact_verified", False))
+
+        total_actions += 1
+
+        if not owner_id:
+            unassigned_action_ids.append(action_id)
+
+        if (
+            status not in {"closed", "done", "verified"}
+            and due_sprint > 0
+            and current_sprint > due_sprint
+        ):
+            overdue_sprint_action_ids.append(action_id)
+
+        if status in {"closed", "done", "verified"} and not impact_verified:
+            unverified_closure_action_ids.append(action_id)
+
+        if owner_id and status in {"closed", "done", "verified"} and impact_verified:
+            verified_closed_count += 1
+
+    closure_effectiveness_pct = (
+        round((verified_closed_count / total_actions) * 100.0, 2)
+        if total_actions > 0
+        else 0.0
+    )
+    is_retrospective_governance_healthy = bool(
+        total_actions > 0
+        and not unassigned_action_ids
+        and not overdue_sprint_action_ids
+        and not unverified_closure_action_ids
+    )
+
+    return {
+        "total_actions": total_actions,
+        "unassigned_action_ids": unassigned_action_ids,
+        "overdue_sprint_action_ids": overdue_sprint_action_ids,
+        "unverified_closure_action_ids": unverified_closure_action_ids,
+        "closure_effectiveness_pct": closure_effectiveness_pct,
+        "is_retrospective_governance_healthy": is_retrospective_governance_healthy,
+    }
+
+
+WikiPMIService.audit_wiki_retrospective_action_closure_governance = staticmethod(
+    audit_wiki_retrospective_action_closure_governance
 )

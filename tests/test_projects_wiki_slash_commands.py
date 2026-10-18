@@ -3407,3 +3407,165 @@ def test_audit_wiki_definition_of_ready_gate_hygiene_empty_or_invalid():
             "is_sprint_ready": False,
         }
 
+
+
+def test_audit_wiki_retrospective_action_closure_governance_healthy():
+    """Cerradas con impacto verificado y abiertas en plazo -> healthy + staticmethod."""
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_retrospective_action_closure_governance,
+    )
+
+    res = audit_wiki_retrospective_action_closure_governance(
+        [
+            {
+                "action_id": "RA-1",
+                "owner_id": "u-1",
+                "status": "closed",
+                "impact_verified": True,
+            },
+            {
+                "action_id": "RA-2",
+                "owner_id": "u-2",
+                "due_sprint": 3,
+                "current_sprint": 3,
+            },
+            {
+                "action_id": "RA-3",
+                "owner_id": "u-3",
+                "status": "verified",
+                "impact_verified": True,
+                "due_sprint": 2,
+                "current_sprint": 4,
+            },
+        ]
+    )
+    assert res["total_actions"] == 3
+    assert res["unassigned_action_ids"] == []
+    assert res["overdue_sprint_action_ids"] == []
+    assert res["unverified_closure_action_ids"] == []
+    assert res["closure_effectiveness_pct"] == 66.67
+    assert res["is_retrospective_governance_healthy"] is True
+
+    static_res = WikiPMIService.audit_wiki_retrospective_action_closure_governance(
+        [
+            {
+                "action_id": "RA-1",
+                "owner_id": "u-1",
+                "status": "done",
+                "impact_verified": True,
+            },
+        ]
+    )
+    assert static_res["is_retrospective_governance_healthy"] is True
+
+
+def test_audit_wiki_retrospective_action_closure_governance_unassigned_and_overdue():
+    """> Sin owner y abiertas vencidas (current > due) -> listas separadas."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_retrospective_action_closure_governance,
+    )
+
+    res = audit_wiki_retrospective_action_closure_governance(
+        [
+            {"action_id": "RA-GHOST", "due_sprint": 3, "current_sprint": 5},
+            {
+                "action_id": "RA-LATE",
+                "owner_id": "u-2",
+                "due_sprint": 2,
+                "current_sprint": 4,
+                "status": "open",
+            },
+            {
+                "action_id": "RA-ON-TIME",
+                "owner_id": "u-3",
+                "due_sprint": 4,
+                "current_sprint": 4,
+                "status": "open",
+            },
+            {
+                "action_id": "RA-CLOSED-NO-DUE",
+                "owner_id": "u-4",
+                "status": "closed",
+                "impact_verified": True,
+            },
+        ]
+    )
+    assert res["total_actions"] == 4
+    assert res["unassigned_action_ids"] == ["RA-GHOST"]
+    assert res["overdue_sprint_action_ids"] == ["RA-GHOST", "RA-LATE"]
+    assert res["unverified_closure_action_ids"] == []
+    assert res["closure_effectiveness_pct"] == 25.0
+    assert res["is_retrospective_governance_healthy"] is False
+
+
+def test_audit_wiki_retrospective_action_closure_governance_unverified_closure():
+    """> Cerradas sin impact_verified -> unverified; exentas del overdue."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_retrospective_action_closure_governance,
+    )
+
+    res = audit_wiki_retrospective_action_closure_governance(
+        [
+            {
+                "action_id": "RA-NO-IMPACT",
+                "owner_id": "u-1",
+                "status": "CLOSED",
+                "impact_verified": False,
+                "due_sprint": 1,
+                "current_sprint": 7,
+            },
+            {
+                "action_id": "RA-IMPACT",
+                "owner_id": "u-2",
+                "status": "done",
+                "impact_verified": True,
+            },
+        ]
+    )
+    assert res["total_actions"] == 2
+    assert res["unverified_closure_action_ids"] == ["RA-NO-IMPACT"]
+    assert res["overdue_sprint_action_ids"] == []
+    assert res["unassigned_action_ids"] == []
+    assert res["closure_effectiveness_pct"] == 50.0
+    assert res["is_retrospective_governance_healthy"] is False
+
+
+def test_audit_wiki_retrospective_action_closure_governance_empty_or_none():
+    """None, no-secuencia, str, Mapping, 42 o basura -> 0 acciones."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_retrospective_action_closure_governance,
+    )
+
+    empty_result = {
+        "total_actions": 0,
+        "unassigned_action_ids": [],
+        "overdue_sprint_action_ids": [],
+        "unverified_closure_action_ids": [],
+        "closure_effectiveness_pct": 0.0,
+        "is_retrospective_governance_healthy": False,
+    }
+
+    for payload in (
+        None,
+        "retro-actions-string",
+        {"action_id": "X"},
+        42,
+        [],
+        ["no-dict", {"status": "closed"}],
+        [{"action_id": "   "}],
+    ):
+        assert audit_wiki_retrospective_action_closure_governance(payload) == empty_result  # type: ignore[arg-type]
+
+    # IDs válidos con ids numéricos basura: cuentan (2) y quedan sin owner.
+    res_bad_types = audit_wiki_retrospective_action_closure_governance(
+        [{"action_id": "RA", "due_sprint": "x"}, {"action_id": "RB", "current_sprint": None}]
+    )
+    assert res_bad_types == {
+        "total_actions": 2,
+        "unassigned_action_ids": ["RA", "RB"],
+        "overdue_sprint_action_ids": [],
+        "unverified_closure_action_ids": [],
+        "closure_effectiveness_pct": 0.0,
+        "is_retrospective_governance_healthy": False,
+    }
