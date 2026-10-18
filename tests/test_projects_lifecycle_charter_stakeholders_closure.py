@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 
 from backend import models
-from backend.services import project_evm_service
+from backend.services import project_evm_service, project_lifecycle_pmi_service
 from tests.conftest import auth_headers, seed_admin
 
 
@@ -195,3 +195,123 @@ def test_pmo_portfolio_matrix_classifies_quadrants_and_isolates_sede(client, db_
     response_b = client.get("/api/projects/pmo-portfolio-matrix", headers=headers_b)
     assert response_b.status_code == 200, response_b.text
     assert [project["title"] for project in response_b.json()["projects_matrix"]] == [outside_project.title]
+
+
+def test_compute_closure_readiness_and_governance_maturity_pure_helpers():
+    assert project_lifecycle_pmi_service.compute_closure_readiness_pct(
+        deliverables_accepted_verified=False,
+        financial_reconciliation_completed=False,
+        lessons_learned_count=0,
+        closure_status="open",
+    ) == 0.0
+    assert project_lifecycle_pmi_service.compute_closure_readiness_pct(
+        deliverables_accepted_verified=True,
+        financial_reconciliation_completed=False,
+        lessons_learned_count=0,
+        closure_status="open",
+    ) == 40.0
+    assert project_lifecycle_pmi_service.compute_closure_readiness_pct(
+        deliverables_accepted_verified=True,
+        financial_reconciliation_completed=False,
+        lessons_learned_count=2,
+        closure_status="open",
+    ) == 60.0
+    assert project_lifecycle_pmi_service.compute_closure_readiness_pct(
+        deliverables_accepted_verified=True,
+        financial_reconciliation_completed=True,
+        lessons_learned_count=0,
+        closure_status="open",
+    ) == 80.0
+    assert project_lifecycle_pmi_service.compute_closure_readiness_pct(
+        deliverables_accepted_verified=False,
+        financial_reconciliation_completed=False,
+        lessons_learned_count=0,
+        closure_status="closed",
+    ) == 100.0
+
+    assert project_lifecycle_pmi_service.compute_governance_maturity_pct(
+        charter_status="draft",
+        measurable_objectives_count=0,
+        stakeholders_total=0,
+        closure_readiness_pct=0.0,
+    ) == 0.0
+    assert project_lifecycle_pmi_service.compute_governance_maturity_pct(
+        charter_status="authorized",
+        measurable_objectives_count=2,
+        stakeholders_total=3,
+        closure_readiness_pct=100.0,
+    ) == 100.0
+
+
+def test_evaluate_governance_health_lifecycle_progression(client, db_session):
+    _, persona, sede = seed_admin(db_session, email="pmi-governance-health@example.com")
+    headers = auth_headers(client, email="pmi-governance-health@example.com")
+    project = _project(db_session, sede.id)
+
+    initial_summary = project_lifecycle_pmi_service.build_governance_summary(db_session, project.id)
+    initial_health = project_lifecycle_pmi_service.evaluate_governance_health(initial_summary)
+    assert initial_health == {
+        "closure_readiness_pct": 0.0,
+        "governance_maturity_pct": 0.0,
+        "maturity_tier": "initial",
+    }
+
+    charter_res = client.put(
+        f"/api/projects/{project.id}/charter",
+        headers=headers,
+        json={
+            "sponsor_id": str(persona.id),
+            "business_case": "Fortalecer trazabilidad ministerial",
+            "strategic_justification": "Gobernanza PMI estándar",
+            "measurable_objectives": ["Cumplir cronograma al 95%"],
+            "charter_status": "authorized",
+        },
+    )
+    assert charter_res.status_code == 200, charter_res.text
+
+    managed_summary = project_lifecycle_pmi_service.build_governance_summary(db_session, project.id)
+    managed_health = project_lifecycle_pmi_service.evaluate_governance_health(managed_summary)
+    assert managed_health["governance_maturity_pct"] == 60.0
+    assert managed_health["maturity_tier"] == "managed"
+
+    stakeholder_res = client.post(
+        f"/api/projects/{project.id}/stakeholders",
+        headers=headers,
+        json={
+            "display_name": "Coordinador General",
+            "role_title": "Sponsor",
+            "power_level": 5,
+            "interest_level": 5,
+            "engagement_level": "leading",
+        },
+    )
+    assert stakeholder_res.status_code == 201, stakeholder_res.text
+
+    closure_res = client.post(
+        f"/api/projects/{project.id}/closure/finalize",
+        headers=headers,
+        json={
+            "deliverables_accepted_verified": True,
+            "financial_reconciliation_completed": True,
+            "final_bac": 2000,
+            "final_ac": 1950,
+            "lessons_learned": [
+                {
+                    "category": "alcance",
+                    "what_worked": "Desglose WBS temprano",
+                    "what_failed": "Cambios menores sin comité",
+                    "recommendation": "Formalizar control de cambios",
+                }
+            ],
+        },
+    )
+    assert closure_res.status_code == 200, closure_res.text
+
+    final_summary = project_lifecycle_pmi_service.build_governance_summary(db_session, project.id)
+    final_health = project_lifecycle_pmi_service.evaluate_governance_health(final_summary)
+    assert final_health == {
+        "closure_readiness_pct": 100.0,
+        "governance_maturity_pct": 100.0,
+        "maturity_tier": "optimized",
+    }
+

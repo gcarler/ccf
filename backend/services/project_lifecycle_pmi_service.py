@@ -144,6 +144,73 @@ def build_governance_summary(db: Session, project_id: UUID) -> dict:
     }
 
 
+def compute_closure_readiness_pct(
+    deliverables_accepted_verified: bool,
+    financial_reconciliation_completed: bool,
+    lessons_learned_count: int,
+    closure_status: str,
+) -> float:
+    """Compute PMI §4.7 administrative closure readiness percentage (0.0 to 100.0)."""
+    if closure_status == "closed":
+        return 100.0
+    score = 0.0
+    if deliverables_accepted_verified:
+        score += 40.0
+    if financial_reconciliation_completed:
+        score += 40.0
+    if int(lessons_learned_count or 0) > 0:
+        score += 20.0
+    return round(score, 1)
+
+
+def compute_governance_maturity_pct(
+    charter_status: str,
+    measurable_objectives_count: int,
+    stakeholders_total: int,
+    closure_readiness_pct: float,
+) -> float:
+    """Compute PMI §2.4 project governance maturity percentage (0.0 to 100.0)."""
+    score = 0.0
+    if charter_status == "authorized":
+        score += 35.0
+    if int(measurable_objectives_count or 0) > 0:
+        score += 25.0
+    if int(stakeholders_total or 0) > 0:
+        score += 20.0
+    clamped_closure = max(0.0, min(100.0, float(closure_readiness_pct or 0.0)))
+    score += 20.0 * (clamped_closure / 100.0)
+    return round(score, 1)
+
+
+def evaluate_governance_health(summary: dict) -> dict:
+    """Evaluate PMI governance maturity and closure readiness from a governance summary dict."""
+    closure_readiness_pct = compute_closure_readiness_pct(
+        deliverables_accepted_verified=bool(summary.get("deliverables_accepted_verified")),
+        financial_reconciliation_completed=bool(summary.get("financial_reconciliation_completed")),
+        lessons_learned_count=int(summary.get("lessons_learned_count") or 0),
+        closure_status=str(summary.get("closure_status") or "open"),
+    )
+    governance_maturity_pct = compute_governance_maturity_pct(
+        charter_status=str(summary.get("charter_status") or "draft"),
+        measurable_objectives_count=int(summary.get("measurable_objectives_count") or 0),
+        stakeholders_total=int(summary.get("stakeholders_total") or 0),
+        closure_readiness_pct=closure_readiness_pct,
+    )
+    if governance_maturity_pct >= 85.0:
+        maturity_tier = "optimized"
+    elif governance_maturity_pct >= 60.0:
+        maturity_tier = "managed"
+    elif governance_maturity_pct >= 35.0:
+        maturity_tier = "developing"
+    else:
+        maturity_tier = "initial"
+    return {
+        "closure_readiness_pct": closure_readiness_pct,
+        "governance_maturity_pct": governance_maturity_pct,
+        "maturity_tier": maturity_tier,
+    }
+
+
 def get_lifecycle(db: Session, project_id: UUID) -> models.ProjectLifecycle:
     row = db.query(models.ProjectLifecycle).filter(models.ProjectLifecycle.project_id == project_id).first()
     return row or models.ProjectLifecycle(
