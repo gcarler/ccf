@@ -2974,6 +2974,7 @@ __all__ = [
     "audit_executive_report_contract_closeout_and_claims",
     "audit_executive_report_rag_status_and_narrative_consistency",
     "audit_executive_report_reserve_drawdown_burn_rate",
+    "audit_executive_report_post_implementation_handover_sla",
     "ProjectExportService",
 ]
 
@@ -3974,3 +3975,90 @@ ProjectExportService.audit_executive_report_reserve_drawdown_burn_rate = staticm
 )
 
 
+def audit_executive_report_post_implementation_handover_sla(
+    handover_packages: list[dict[str, object]],
+    *,
+    min_hypercare_days: int = 14,
+) -> dict[str, object]:
+    """Audita los paquetes de traspaso operativo post-implementación, ventana de soporte hypercare, runbooks SOP y defectos críticos bloqueantes según PMI PMBOK §4.7 y §10.2."""
+    try:
+        min_days = float(min_hypercare_days)
+    except (TypeError, ValueError):
+        min_days = 14.0
+
+    total_packages = 0
+    unsigned_or_unowned_handover_ids: list[str] = []
+    insufficient_runbook_or_hypercare_ids: list[str] = []
+    blocking_critical_defect_handover_ids: list[str] = []
+
+    if isinstance(handover_packages, Sequence) and not isinstance(
+        handover_packages, (str, bytes, bytearray)
+    ):
+        for item in handover_packages:
+            if not isinstance(item, Mapping):
+                continue
+            package_id = str(
+                item.get("package_id") or item.get("id") or ""
+            ).strip()
+            if not package_id:
+                continue
+
+            total_packages += 1
+            receiving_team = str(
+                item.get("receiving_operations_team") or ""
+            ).strip()
+            runbook_complete = bool(item.get("runbook_and_sop_complete", False))
+            operations_signed = bool(
+                item.get("operations_acceptance_signed", False)
+            )
+            benefits_owner_assigned = bool(
+                item.get("benefits_owner_assigned", False)
+            )
+
+            raw_hypercare = item.get("hypercare_support_days", 0)
+            if raw_hypercare is None or isinstance(raw_hypercare, bool):
+                hypercare_days = 0.0
+            else:
+                try:
+                    hypercare_days = float(raw_hypercare)
+                except (TypeError, ValueError):
+                    hypercare_days = 0.0
+
+            raw_defects = item.get("open_sev1_sev2_defects", 0)
+            if raw_defects is None or isinstance(raw_defects, bool):
+                open_defects = 0
+            else:
+                try:
+                    open_defects = int(float(raw_defects))
+                except (TypeError, ValueError):
+                    open_defects = 0
+
+            if (
+                not receiving_team
+                or not operations_signed
+                or not benefits_owner_assigned
+            ):
+                unsigned_or_unowned_handover_ids.append(package_id)
+
+            if not runbook_complete or hypercare_days < min_days:
+                insufficient_runbook_or_hypercare_ids.append(package_id)
+
+            if open_defects > 0:
+                blocking_critical_defect_handover_ids.append(package_id)
+
+    return {
+        "total_packages": total_packages,
+        "unsigned_or_unowned_handover_ids": unsigned_or_unowned_handover_ids,
+        "insufficient_runbook_or_hypercare_ids": insufficient_runbook_or_hypercare_ids,
+        "blocking_critical_defect_handover_ids": blocking_critical_defect_handover_ids,
+        "is_handover_sla_compliant": (
+            len(unsigned_or_unowned_handover_ids) == 0
+            and len(insufficient_runbook_or_hypercare_ids) == 0
+            and len(blocking_critical_defect_handover_ids) == 0
+        ),
+    }
+
+
+ProjectExportService.audit_executive_report_post_implementation_handover_sla = staticmethod(
+    audit_executive_report_post_implementation_handover_sla
+)

@@ -5150,3 +5150,150 @@ def test_audit_executive_report_reserve_drawdown_zero_progress_and_invalid_input
         }
 
 
+def test_audit_executive_report_post_implementation_handover_sla_compliant():
+    """Paquetes de traspaso firmados, con benefits owner, runbook completo, hypercare >= 14d y 0 defectos críticos cumplen §4.7."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_post_implementation_handover_sla,
+    )
+
+    packages = [
+        {
+            "package_id": "HND-CORE-01",
+            "receiving_operations_team": "SRE & Plataforma CCF",
+            "runbook_and_sop_complete": True,
+            "hypercare_support_days": 30,
+            "open_sev1_sev2_defects": 0,
+            "operations_acceptance_signed": True,
+            "benefits_owner_assigned": True,
+        },
+        {
+            "package_id": "HND-FIN-02",
+            "receiving_operations_team": "Mesa Operativa Financiera",
+            "runbook_and_sop_complete": True,
+            "hypercare_support_days": 14,
+            "open_sev1_sev2_defects": 0,
+            "operations_acceptance_signed": True,
+            "benefits_owner_assigned": True,
+        },
+    ]
+    res = audit_executive_report_post_implementation_handover_sla(packages)
+    assert res == {
+        "total_packages": 2,
+        "unsigned_or_unowned_handover_ids": [],
+        "insufficient_runbook_or_hypercare_ids": [],
+        "blocking_critical_defect_handover_ids": [],
+        "is_handover_sla_compliant": True,
+    }
+    assert (
+        ProjectExportService.audit_executive_report_post_implementation_handover_sla(
+            packages
+        )
+        == res
+    )
+
+
+def test_audit_executive_report_handover_sla_unsigned_or_unowned_packages():
+    """Detecta paquetes sin equipo receptor, sin firma de aceptación operativa o sin dueño de beneficios."""
+    from backend.services.project_export_service import (
+        audit_executive_report_post_implementation_handover_sla,
+    )
+
+    packages = [
+        {
+            "package_id": "HND-NO-TEAM",
+            "receiving_operations_team": "   ",
+            "runbook_and_sop_complete": True,
+            "hypercare_support_days": 21,
+            "open_sev1_sev2_defects": 0,
+            "operations_acceptance_signed": True,
+            "benefits_owner_assigned": True,
+        },
+        {
+            "package_id": "HND-NO-SIGN",
+            "receiving_operations_team": "Ops NOC",
+            "runbook_and_sop_complete": True,
+            "hypercare_support_days": 21,
+            "open_sev1_sev2_defects": 0,
+            "operations_acceptance_signed": False,
+            "benefits_owner_assigned": True,
+        },
+        {
+            "package_id": "HND-NO-BENEFITS-OWNER",
+            "receiving_operations_team": "Ops NOC",
+            "runbook_and_sop_complete": True,
+            "hypercare_support_days": 21,
+            "open_sev1_sev2_defects": 0,
+            "operations_acceptance_signed": True,
+            "benefits_owner_assigned": False,
+        },
+    ]
+    res = audit_executive_report_post_implementation_handover_sla(packages)
+    assert res["total_packages"] == 3
+    assert res["unsigned_or_unowned_handover_ids"] == [
+        "HND-NO-TEAM",
+        "HND-NO-SIGN",
+        "HND-NO-BENEFITS-OWNER",
+    ]
+    assert res["insufficient_runbook_or_hypercare_ids"] == []
+    assert res["blocking_critical_defect_handover_ids"] == []
+    assert res["is_handover_sla_compliant"] is False
+
+
+def test_audit_executive_report_handover_sla_insufficient_hypercare_and_defects():
+    """Detecta runbook incompleto, ventana hypercare < min_hypercare_days y defectos Sev1/Sev2 abiertos."""
+    from backend.services.project_export_service import (
+        audit_executive_report_post_implementation_handover_sla,
+    )
+
+    packages = [
+        {
+            "package_id": "HND-SHORT-HYPERCARE",
+            "receiving_operations_team": "Infraestructura",
+            "runbook_and_sop_complete": True,
+            "hypercare_support_days": 7,
+            "open_sev1_sev2_defects": 0,
+            "operations_acceptance_signed": True,
+            "benefits_owner_assigned": True,
+        },
+        {
+            "package_id": "HND-NO-RUNBOOK-AND-SEV1",
+            "receiving_operations_team": "Soporte N2",
+            "runbook_and_sop_complete": False,
+            "hypercare_support_days": 20,
+            "open_sev1_sev2_defects": 2,
+            "operations_acceptance_signed": True,
+            "benefits_owner_assigned": True,
+        },
+    ]
+    res = audit_executive_report_post_implementation_handover_sla(
+        packages, min_hypercare_days=14
+    )
+    assert res["total_packages"] == 2
+    assert res["unsigned_or_unowned_handover_ids"] == []
+    assert res["insufficient_runbook_or_hypercare_ids"] == [
+        "HND-SHORT-HYPERCARE",
+        "HND-NO-RUNBOOK-AND-SEV1",
+    ]
+    assert res["blocking_critical_defect_handover_ids"] == [
+        "HND-NO-RUNBOOK-AND-SEV1"
+    ]
+    assert res["is_handover_sla_compliant"] is False
+
+
+def test_audit_executive_report_handover_sla_invalid_inputs_and_export():
+    """Maneja entradas vacías o no secuencia y verifica exportación en __all__."""
+    import backend.services.project_export_service as _m
+    from backend.services.project_export_service import (
+        audit_executive_report_post_implementation_handover_sla,
+    )
+
+    assert "audit_executive_report_post_implementation_handover_sla" in _m.__all__
+    for bad in (None, "not-a-seq", b"bytes", [{"package_id": "  "}]):
+        assert audit_executive_report_post_implementation_handover_sla(bad) == {
+            "total_packages": 0,
+            "unsigned_or_unowned_handover_ids": [],
+            "insufficient_runbook_or_hypercare_ids": [],
+            "blocking_critical_defect_handover_ids": [],
+            "is_handover_sla_compliant": True,
+        }

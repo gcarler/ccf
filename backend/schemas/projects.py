@@ -3779,6 +3779,7 @@ __all__ = [
     "validate_fpif_point_of_total_assumption",
     "validate_cpif_cost_sharing_and_fee_bounds",
     "validate_tm_contract_not_to_exceed_and_rate_card",
+    "validate_fpif_share_ratio_and_point_of_total_assumption",
     "validate_schedule_network_lead_lag_and_float_feasibility",
     "validate_three_point_pert_skew_and_confidence_band",
     "validate_deliverable_acceptance_criteria_measurability",
@@ -5068,3 +5069,86 @@ def validate_resource_calendar_overtime_and_blackout_bounds(
         ),
     }
 
+
+
+def validate_fpif_share_ratio_and_point_of_total_assumption(
+    fpif_contracts: list[dict[str, object]],
+) -> dict[str, object]:
+    """Valida share ratio y Point of Total Assumption (PTA) en contratos Fixed-Price Incentive Fee según PMI PMBOK §12.1."""
+    total_contracts = 0
+    invalid_share_ratio_contract_ids: list[str] = []
+    invalid_ceiling_or_target_contract_ids: list[str] = []
+    degenerate_pta_contract_ids: list[str] = []
+    pta_breached_contract_ids: list[str] = []
+    computed_pta_by_contract: dict[str, float] = {}
+
+    contracts: Sequence[Any] = (
+        fpif_contracts
+        if isinstance(fpif_contracts, Sequence)
+        and not isinstance(fpif_contracts, (str, bytes, bytearray))
+        else []
+    )
+
+    def _coerce_amount(value: Any) -> float:
+        try:
+            return float(value or 0.0)
+        except (TypeError, ValueError):
+            return 0.0
+
+    for item in contracts:
+        if not isinstance(item, Mapping):
+            continue
+        contract_id = str(item.get("contract_id") or item.get("id") or "").strip()
+        if not contract_id:
+            continue
+
+        total_contracts += 1
+
+        buyer_share_pct = _coerce_amount(item.get("buyer_share_pct"))
+        seller_share_pct = _coerce_amount(item.get("seller_share_pct"))
+        target_cost = _coerce_amount(item.get("target_cost"))
+        target_fee = _coerce_amount(item.get("target_fee"))
+        ceiling_price = _coerce_amount(item.get("ceiling_price"))
+        actual_or_forecast_cost = _coerce_amount(
+            item.get("actual_or_forecast_cost", 0.0)
+        )
+
+        if (
+            abs((buyer_share_pct + seller_share_pct) - 100.0) > 0.01
+            or buyer_share_pct <= 0.0
+            or seller_share_pct <= 0.0
+        ):
+            invalid_share_ratio_contract_ids.append(contract_id)
+
+        target_price = round(target_cost + target_fee, 2)
+        if target_cost <= 0.0 or target_fee < 0.0 or ceiling_price < target_price:
+            invalid_ceiling_or_target_contract_ids.append(contract_id)
+
+        if buyer_share_pct > 0.0 and ceiling_price >= target_price and target_cost > 0.0:
+            pta = round(
+                target_cost
+                + ((ceiling_price - target_price) / (buyer_share_pct / 100.0)),
+                2,
+            )
+            computed_pta_by_contract[contract_id] = pta
+            if pta < target_cost or pta > ceiling_price:
+                degenerate_pta_contract_ids.append(contract_id)
+            if actual_or_forecast_cost > pta:
+                pta_breached_contract_ids.append(contract_id)
+
+    is_fpif_governance_valid = bool(
+        len(invalid_share_ratio_contract_ids) == 0
+        and len(invalid_ceiling_or_target_contract_ids) == 0
+        and len(degenerate_pta_contract_ids) == 0
+        and len(pta_breached_contract_ids) == 0
+    )
+
+    return {
+        "total_contracts": total_contracts,
+        "invalid_share_ratio_contract_ids": invalid_share_ratio_contract_ids,
+        "invalid_ceiling_or_target_contract_ids": invalid_ceiling_or_target_contract_ids,
+        "degenerate_pta_contract_ids": degenerate_pta_contract_ids,
+        "pta_breached_contract_ids": pta_breached_contract_ids,
+        "computed_pta_by_contract": computed_pta_by_contract,
+        "is_fpif_governance_valid": is_fpif_governance_valid,
+    }

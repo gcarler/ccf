@@ -4542,3 +4542,143 @@ def test_audit_charter_pm_authority_and_variance_tolerances_trigger_and_scope():
         ProjectLifecyclePMIService.audit_charter_pm_authority_and_variance_tolerances(sample)
         == audit_charter_pm_authority_and_variance_tolerances(sample)
     )
+
+
+def test_audit_stakeholder_engagement_seam_gap_and_drift_compliant():
+    """Matriz SEAM alineada o con brecha mitigada por plan de acción cumple §13.3 y §13.4."""
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_stakeholder_engagement_seam_gap_and_drift,
+    )
+
+    assessments = [
+        {
+            "stakeholder_id": "SH-SPONSOR",
+            "power_influence_level": "high",
+            "previous_engagement_level": "supportive",
+            "current_engagement_level": "leading",
+            "desired_engagement_level": "leading",
+            "engagement_action_plan_defined": True,
+        },
+        {
+            "stakeholder_id": "SH-OPS",
+            "power_influence_level": "medium",
+            "previous_engagement_level": "neutral",
+            "current_engagement_level": "neutral",
+            "desired_engagement_level": "supportive",
+            "engagement_action_plan_defined": True,
+        },
+    ]
+    res = audit_stakeholder_engagement_seam_gap_and_drift(assessments)
+    assert res == {
+        "total_stakeholders": 2,
+        "invalid_level_stakeholder_ids": [],
+        "high_power_resistant_or_unaware_ids": [],
+        "unmitigated_engagement_gap_ids": [],
+        "regressing_engagement_drift_ids": [],
+        "is_seam_governance_compliant": True,
+    }
+    assert (
+        ProjectLifecyclePMIService.audit_stakeholder_engagement_seam_gap_and_drift(
+            assessments
+        )
+        == res
+    )
+
+
+def test_audit_stakeholder_engagement_seam_gap_high_power_resistant_and_unaware():
+    """Detecta interesados de alto poder en estado resistant o unaware."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stakeholder_engagement_seam_gap_and_drift,
+    )
+
+    assessments = [
+        {
+            "stakeholder_id": "SH-REGULATOR",
+            "power_influence_level": "HIGH",
+            "previous_engagement_level": "resistant",
+            "current_engagement_level": "Resistant",
+            "desired_engagement_level": "supportive",
+            "engagement_action_plan_defined": True,
+        },
+        {
+            "stakeholder_id": "SH-VP-FIN",
+            "power_influence_level": "high",
+            "previous_engagement_level": None,
+            "current_engagement_level": "unaware",
+            "desired_engagement_level": "neutral",
+            "engagement_action_plan_defined": True,
+        },
+    ]
+    res = audit_stakeholder_engagement_seam_gap_and_drift(assessments)
+    assert res["total_stakeholders"] == 2
+    assert res["high_power_resistant_or_unaware_ids"] == [
+        "SH-REGULATOR",
+        "SH-VP-FIN",
+    ]
+    assert res["unmitigated_engagement_gap_ids"] == []
+    assert res["regressing_engagement_drift_ids"] == []
+    assert res["is_seam_governance_compliant"] is False
+
+
+def test_audit_stakeholder_engagement_seam_gap_unmitigated_and_regressing_drift():
+    """Detecta brechas actual < deseado sin plan de acción y regresiones respecto al nivel previo."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stakeholder_engagement_seam_gap_and_drift,
+    )
+
+    assessments = [
+        {
+            "stakeholder_id": "SH-GAP-NO-PLAN",
+            "power_influence_level": "medium",
+            "previous_engagement_level": "neutral",
+            "current_engagement_level": "neutral",
+            "desired_engagement_level": "supportive",
+            "engagement_action_plan_defined": False,
+        },
+        {
+            "stakeholder_id": "SH-DRIFT-DOWN",
+            "power_influence_level": "low",
+            "previous_engagement_level": "leading",
+            "current_engagement_level": "supportive",
+            "desired_engagement_level": "supportive",
+            "engagement_action_plan_defined": True,
+        },
+    ]
+    res = audit_stakeholder_engagement_seam_gap_and_drift(assessments)
+    assert res["total_stakeholders"] == 2
+    assert res["unmitigated_engagement_gap_ids"] == ["SH-GAP-NO-PLAN"]
+    assert res["regressing_engagement_drift_ids"] == ["SH-DRIFT-DOWN"]
+    assert res["is_seam_governance_compliant"] is False
+
+
+def test_audit_stakeholder_engagement_seam_gap_invalid_levels_and_export():
+    """Detecta niveles fuera de la escala SEAM, ignora entradas no secuencia y verifica __all__."""
+    import backend.services.project_lifecycle_pmi_service as _m
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stakeholder_engagement_seam_gap_and_drift,
+    )
+
+    assert "audit_stakeholder_engagement_seam_gap_and_drift" in _m.__all__
+    res = audit_stakeholder_engagement_seam_gap_and_drift(
+        [
+            {
+                "stakeholder_id": "SH-BAD-LEVEL",
+                "power_influence_level": "low",
+                "current_engagement_level": "champion",
+                "desired_engagement_level": "leading",
+            }
+        ]
+    )
+    assert res["invalid_level_stakeholder_ids"] == ["SH-BAD-LEVEL"]
+    assert res["is_seam_governance_compliant"] is False
+
+    for bad in (None, "not-a-seq", b"bytes", [{"stakeholder_id": "  "}]):
+        assert audit_stakeholder_engagement_seam_gap_and_drift(bad) == {
+            "total_stakeholders": 0,
+            "invalid_level_stakeholder_ids": [],
+            "high_power_resistant_or_unaware_ids": [],
+            "unmitigated_engagement_gap_ids": [],
+            "regressing_engagement_drift_ids": [],
+            "is_seam_governance_compliant": True,
+        }

@@ -3139,6 +3139,7 @@ __all__ = [
     "audit_risk_response_secondary_and_fallback_readiness",
     "audit_steering_committee_quorum_and_escalation_governance",
     "audit_charter_pm_authority_and_variance_tolerances",
+    "audit_stakeholder_engagement_seam_gap_and_drift",
     "ProjectLifecyclePMIService",
 ]
 
@@ -4017,4 +4018,90 @@ def audit_charter_pm_authority_and_variance_tolerances(
 
 ProjectLifecyclePMIService.audit_charter_pm_authority_and_variance_tolerances = staticmethod(
     audit_charter_pm_authority_and_variance_tolerances
+)
+
+
+def audit_stakeholder_engagement_seam_gap_and_drift(
+    stakeholder_assessments: list[dict[str, object]],
+) -> dict[str, object]:
+    """Audita brechas de compromiso sin plan de acción, resistencia en interesados de alto poder y regresiones en la Matriz de Evaluación de Involucramiento (SEAM) según PMI PMBOK §13.3 y §13.4."""
+    seam_rank = {
+        "unaware": 1,
+        "resistant": 2,
+        "neutral": 3,
+        "supportive": 4,
+        "leading": 5,
+    }
+
+    total_stakeholders = 0
+    invalid_level_stakeholder_ids: list[str] = []
+    high_power_resistant_or_unaware_ids: list[str] = []
+    unmitigated_engagement_gap_ids: list[str] = []
+    regressing_engagement_drift_ids: list[str] = []
+
+    if isinstance(stakeholder_assessments, Sequence) and not isinstance(
+        stakeholder_assessments, (str, bytes, bytearray)
+    ):
+        for item in stakeholder_assessments:
+            if not isinstance(item, Mapping):
+                continue
+            stakeholder_id = str(
+                item.get("stakeholder_id") or item.get("id") or ""
+            ).strip()
+            if not stakeholder_id:
+                continue
+
+            total_stakeholders += 1
+            power_level = (
+                str(item.get("power_influence_level") or "").strip().lower()
+            )
+            prev_level = (
+                str(item.get("previous_engagement_level") or "").strip().lower()
+            )
+            curr_level = (
+                str(item.get("current_engagement_level") or "").strip().lower()
+            )
+            desired_level = (
+                str(item.get("desired_engagement_level") or "").strip().lower()
+            )
+            action_plan_defined = bool(
+                item.get("engagement_action_plan_defined", False)
+            )
+
+            if curr_level not in seam_rank or desired_level not in seam_rank:
+                invalid_level_stakeholder_ids.append(stakeholder_id)
+                continue
+
+            if power_level == "high" and curr_level in {"unaware", "resistant"}:
+                high_power_resistant_or_unaware_ids.append(stakeholder_id)
+
+            if (
+                seam_rank[curr_level] < seam_rank[desired_level]
+                and not action_plan_defined
+            ):
+                unmitigated_engagement_gap_ids.append(stakeholder_id)
+
+            if (
+                prev_level in seam_rank
+                and seam_rank[curr_level] < seam_rank[prev_level]
+            ):
+                regressing_engagement_drift_ids.append(stakeholder_id)
+
+    return {
+        "total_stakeholders": total_stakeholders,
+        "invalid_level_stakeholder_ids": invalid_level_stakeholder_ids,
+        "high_power_resistant_or_unaware_ids": high_power_resistant_or_unaware_ids,
+        "unmitigated_engagement_gap_ids": unmitigated_engagement_gap_ids,
+        "regressing_engagement_drift_ids": regressing_engagement_drift_ids,
+        "is_seam_governance_compliant": (
+            len(invalid_level_stakeholder_ids) == 0
+            and len(high_power_resistant_or_unaware_ids) == 0
+            and len(unmitigated_engagement_gap_ids) == 0
+            and len(regressing_engagement_drift_ids) == 0
+        ),
+    }
+
+
+ProjectLifecyclePMIService.audit_stakeholder_engagement_seam_gap_and_drift = staticmethod(
+    audit_stakeholder_engagement_seam_gap_and_drift
 )

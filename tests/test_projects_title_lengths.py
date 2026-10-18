@@ -3654,3 +3654,119 @@ def test_validate_resource_calendar_invalid_inputs_and_export():
             "is_resource_calendar_compliant": True,
         }
 
+
+
+def test_validate_fpif_share_ratio_and_pta_compliant():
+    """FPIF con share ratio 80/20, ceiling >= target_price y PTA calculado."""
+    from backend.schemas.projects import validate_fpif_share_ratio_and_point_of_total_assumption
+
+    contracts = [
+        {
+            "contract_id": "F-1",
+            "target_cost": 1000.0,
+            "target_fee": 100.0,
+            "ceiling_price": 1200.0,
+            "buyer_share_pct": 80.0,
+            "seller_share_pct": 20.0,
+            "actual_or_forecast_cost": 1100.0,
+        }
+    ]
+    res = validate_fpif_share_ratio_and_point_of_total_assumption(contracts)
+    assert res == {
+        "total_contracts": 1,
+        "invalid_share_ratio_contract_ids": [],
+        "invalid_ceiling_or_target_contract_ids": [],
+        "degenerate_pta_contract_ids": [],
+        "pta_breached_contract_ids": [],
+        # PTA = target_cost + (ceiling - target_price)/buyer_share_ratio = 1000 + 100/0.8.
+        "computed_pta_by_contract": {"F-1": 1125.0},
+        "is_fpif_governance_valid": True,
+    }
+
+
+def test_validate_fpif_share_ratio_and_pta_invalid_share_ratios():
+    """Share ratios que no suman 100% o con una parte <= 0 quedan marcados."""
+    from backend.schemas.projects import validate_fpif_share_ratio_and_point_of_total_assumption
+
+    contracts = [
+        {"contract_id": "S-1", "target_cost": 1000.0, "target_fee": 100.0,
+         "ceiling_price": 1200.0, "buyer_share_pct": 70.0, "seller_share_pct": 20.0},
+        {"contract_id": "S-2", "target_cost": 1000.0, "target_fee": 100.0,
+         "ceiling_price": 1200.0, "buyer_share_pct": 100.0, "seller_share_pct": 0.0},
+        # Suma 99.995 -> dentro de la tolerancia 0.01 -> ratio valido.
+        {"contract_id": "S-3", "target_cost": 1000.0, "target_fee": 100.0,
+         "ceiling_price": 1200.0, "buyer_share_pct": 79.995, "seller_share_pct": 20.0},
+    ]
+    res = validate_fpif_share_ratio_and_point_of_total_assumption(contracts)
+    assert res["total_contracts"] == 3
+    assert res["invalid_share_ratio_contract_ids"] == ["S-1", "S-2"]
+    assert res["invalid_ceiling_or_target_contract_ids"] == []
+    assert res["is_fpif_governance_valid"] is False
+
+
+def test_validate_fpif_share_ratio_and_pta_invalid_ceiling_and_degenerate():
+    """target_cost <= 0, target_fee < 0, ceiling < target_price y PTA degenerado."""
+    from backend.schemas.projects import validate_fpif_share_ratio_and_point_of_total_assumption
+
+    contracts = [
+        {"contract_id": "C-1", "target_cost": 0.0, "target_fee": 100.0,
+         "ceiling_price": 1100.0, "buyer_share_pct": 80.0, "seller_share_pct": 20.0},
+        {"contract_id": "C-2", "target_cost": 1000.0, "target_fee": -50.0,
+         "ceiling_price": 1200.0, "buyer_share_pct": 80.0, "seller_share_pct": 20.0},
+        {"contract_id": "C-3", "target_cost": 1000.0, "target_fee": 100.0,
+         "ceiling_price": 1090.0, "buyer_share_pct": 80.0, "seller_share_pct": 20.0},
+        # PTA degenerado: buyer 200%: pta = 1000 + 100/2.0 = 1050 < ceiling 1200 y > target_cost.
+        # Para degenerate usar buyer que empuje pta fuera de [target_cost, ceiling]:
+        {"contract_id": "C-4", "target_cost": 1000.0, "target_fee": 0.0,
+         "ceiling_price": 1000.0, "buyer_share_pct": 400.0, "seller_share_pct": -300.0},
+    ]
+    res = validate_fpif_share_ratio_and_point_of_total_assumption(contracts)
+    assert res["invalid_ceiling_or_target_contract_ids"] == ["C-1", "C-2", "C-3"]
+    # C-4: ratio invalido tambien (seller negativo); pta = 1000 + (1000-1000)/4 = 1000.
+    assert res["invalid_share_ratio_contract_ids"] == ["C-4"]
+    # C-4: pta == 1000 == target_cost -> no degenerado por pta < target_cost (no estricto)
+    # pero actual 0 no breach.
+    assert res["computed_pta_by_contract"]["C-4"] == 1000.0
+    assert res["is_fpif_governance_valid"] is False
+
+
+def test_validate_fpif_share_ratio_and_pta_breach_and_scope():
+    """Breach del PTA: costo real sobre el PTA; montos invalidos y entradas vacias."""
+    from backend.schemas.projects import validate_fpif_share_ratio_and_point_of_total_assumption
+    import backend.schemas.projects as _m
+
+    contracts = [
+        {"contract_id": "F-1", "target_cost": 1000.0, "target_fee": 100.0,
+         "ceiling_price": 1200.0, "buyer_share_pct": 80.0, "seller_share_pct": 20.0,
+         "actual_or_forecast_cost": 1125.0},  # == PTA -> sin breach (comparacion estricta).
+        {"contract_id": "F-2", "target_cost": 1000.0, "target_fee": 100.0,
+         "ceiling_price": 1200.0, "buyer_share_pct": 80.0, "seller_share_pct": 20.0,
+         "actual_or_forecast_cost": 1125.01},  # > PTA -> breach.
+        {"contract_id": "B-1", "target_cost": "oops", "target_fee": None,
+         "ceiling_price": "x", "buyer_share_pct": "y", "seller_share_pct": "z"},
+    ]
+    res = validate_fpif_share_ratio_and_point_of_total_assumption(contracts)
+    assert res["total_contracts"] == 3
+    assert res["pta_breached_contract_ids"] == ["F-2"]
+    assert res["computed_pta_by_contract"] == {"F-1": 1125.0, "F-2": 1125.0}
+    assert res["invalid_ceiling_or_target_contract_ids"] == ["B-1"]
+    assert res["is_fpif_governance_valid"] is False
+
+    empty = validate_fpif_share_ratio_and_point_of_total_assumption(None)
+    assert empty == {
+        "total_contracts": 0,
+        "invalid_share_ratio_contract_ids": [],
+        "invalid_ceiling_or_target_contract_ids": [],
+        "degenerate_pta_contract_ids": [],
+        "pta_breached_contract_ids": [],
+        "computed_pta_by_contract": {},
+        "is_fpif_governance_valid": True,
+    }
+    assert validate_fpif_share_ratio_and_point_of_total_assumption("no-seq")["total_contracts"] == 0
+    assert (
+        validate_fpif_share_ratio_and_point_of_total_assumption(
+            ["no-map", {"contract_id": "   "}, 42]
+        )["total_contracts"]
+        == 0
+    )
+    assert "validate_fpif_share_ratio_and_point_of_total_assumption" in _m.__all__
