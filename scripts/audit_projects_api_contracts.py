@@ -2592,6 +2592,249 @@ def summarize_projects_numeric_bounds_and_currency_hygiene(
     }
 
 
+_CATEGORICAL_FIELD_TOKENS = (
+    "status",
+    "estado",
+    "priority",
+    "prioridad",
+    "severity",
+    "severidad",
+    "health_status",
+    "rag_status",
+    "salience_class",
+    "resolution_mode",
+    "decision_status",
+)
+
+
+def _is_valid_enum_list(enum_val: Any) -> bool:
+    if not isinstance(enum_val, list) or len(enum_val) == 0:
+        return False
+    seen: list[tuple[type, Any]] = []
+    for item in enum_val:
+        if isinstance(item, str) and not item.strip():
+            return False
+        key = (type(item), item)
+        if key in seen:
+            return False
+        seen.append(key)
+    return True
+
+
+def _has_invalid_enum_in_node(node: Mapping[str, Any]) -> bool:
+    if "enum" in node and not _is_valid_enum_list(node.get("enum")):
+        return True
+    for comp_key in ("anyOf", "oneOf", "allOf"):
+        comp = node.get(comp_key)
+        if isinstance(comp, list):
+            for branch in comp:
+                if (
+                    isinstance(branch, Mapping)
+                    and "enum" in branch
+                    and not _is_valid_enum_list(branch.get("enum"))
+                ):
+                    return True
+    return False
+
+
+def _resolve_ref_schema(
+    branch: Mapping[str, Any], schemas: Mapping[str, Any]
+) -> Mapping[str, Any] | None:
+    ref = branch.get("$ref")
+    if isinstance(ref, str) and ref.startswith("#/components/schemas/"):
+        ref_name = ref.split("/")[-1]
+        target = schemas.get(ref_name)
+        if isinstance(target, Mapping):
+            return target
+    return None
+
+
+def _branch_has_valid_enum(
+    branch: Mapping[str, Any], schemas: Mapping[str, Any]
+) -> bool:
+    if "enum" in branch and _is_valid_enum_list(branch.get("enum")):
+        return True
+    resolved = _resolve_ref_schema(branch, schemas)
+    if resolved is not None:
+        if "enum" in resolved and _is_valid_enum_list(resolved.get("enum")):
+            return True
+        for comp_key in ("anyOf", "oneOf", "allOf"):
+            comp = resolved.get(comp_key)
+            if isinstance(comp, list):
+                for sub in comp:
+                    if (
+                        isinstance(sub, Mapping)
+                        and "enum" in sub
+                        and _is_valid_enum_list(sub.get("enum"))
+                    ):
+                        return True
+    return False
+
+
+def _branch_is_string(
+    branch: Mapping[str, Any], schemas: Mapping[str, Any]
+) -> tuple[bool, bool]:
+    """Retorna (has_string_type, has_string_constraint)."""
+    targets: list[Mapping[str, Any]] = [branch]
+    resolved = _resolve_ref_schema(branch, schemas)
+    if resolved is not None:
+        targets.append(resolved)
+    has_str = False
+    has_constraint = False
+    for t in targets:
+        if t.get("type") == "string":
+            has_str = True
+            if any(
+                t.get(k) is not None
+                for k in ("maxLength", "minLength", "pattern")
+            ):
+                has_constraint = True
+    return has_str, has_constraint
+
+
+def summarize_projects_enum_and_status_field_hygiene(
+    openapi: Mapping[str, Any] | None = None,
+    *,
+    strict_enum: bool = False,
+) -> dict[str, Any]:
+    """Audita campos categóricos (status, priority, severity, etc.) y definiciones enum en components.schemas."""
+    if not isinstance(openapi, Mapping):
+        return {
+            "total_categorical_fields": 0,
+            "enum_backed_fields_count": 0,
+            "constrained_string_fields_count": 0,
+            "unconstrained_categorical_fields": [],
+            "invalid_enum_definitions": [],
+            "is_hygienic": True,
+        }
+
+    components = openapi.get("components")
+    schemas = (
+        components.get("schemas")
+        if isinstance(components, Mapping)
+        and isinstance(components.get("schemas"), Mapping)
+        else {}
+    )
+
+    referenced_schemas: set[str] = set()
+    paths = openapi.get("paths")
+    has_paths = isinstance(paths, Mapping) and len(paths) > 0
+    if has_paths:
+        for path, path_item in paths.items():
+            if isinstance(path, str) and (
+                path.startswith("/api/projects") or path.startswith("/projects")
+            ):
+                referenced_schemas.update(schema_refs(path_item))
+
+    total_categorical_fields = 0
+    enum_backed_fields_count = 0
+    constrained_string_fields_count = 0
+    unconstrained_categorical_fields: list[str] = []
+    invalid_enum_definitions: list[str] = []
+
+    for schema_name, schema_obj in sorted(schemas.items()):
+        s_name = str(schema_name)
+        if not isinstance(schema_obj, Mapping):
+            continue
+        if (
+            has_paths
+            and "project" not in s_name.lower()
+            and s_name not in referenced_schemas
+        ):
+            continue
+
+        if _has_invalid_enum_in_node(schema_obj):
+            invalid_enum_definitions.append(s_name)
+
+        props = schema_obj.get("properties")
+        if not isinstance(props, Mapping):
+            continue
+
+        for prop_name, prop_schema in sorted(props.items()):
+            p_name = str(prop_name)
+            if not isinstance(prop_schema, Mapping):
+                continue
+
+            field_ref = f"{s_name}.{p_name}"
+            if _has_invalid_enum_in_node(prop_schema):
+                invalid_enum_definitions.append(field_ref)
+
+            p_lower = p_name.lower()
+            if p_lower.startswith("by_") and prop_schema.get("type") == "object":
+                continue
+            is_categorical = p_lower in _CATEGORICAL_FIELD_TOKENS or any(
+                p_lower.endswith(tok) for tok in _CATEGORICAL_FIELD_TOKENS
+            )
+            if not is_categorical:
+                continue
+
+            total_categorical_fields += 1
+
+            composite = (
+                prop_schema.get("anyOf")
+                or prop_schema.get("oneOf")
+                or prop_schema.get("allOf")
+            )
+            if isinstance(composite, list):
+                non_null_branches = [
+                    b
+                    for b in composite
+                    if isinstance(b, Mapping) and b.get("type") != "null"
+                ]
+            else:
+                non_null_branches = [prop_schema]
+
+            if not non_null_branches:
+                unconstrained_categorical_fields.append(field_ref)
+                continue
+
+            is_enum_backed = any(
+                _branch_has_valid_enum(b, schemas) for b in non_null_branches
+            )
+            if is_enum_backed:
+                enum_backed_fields_count += 1
+                continue
+
+            branch_str_flags = [
+                _branch_is_string(b, schemas) for b in non_null_branches
+            ]
+            is_ordinal_int = p_lower in {
+                "severity",
+                "severidad",
+                "priority",
+                "prioridad",
+            } and all(b.get("type") == "integer" for b in non_null_branches)
+            has_string_type = (
+                any(f[0] for f in branch_str_flags)
+                and all(
+                    b.get("type")
+                    not in {"integer", "number", "boolean", "array", "object"}
+                    for b in non_null_branches
+                )
+            ) or (not strict_enum and is_ordinal_int)
+            has_string_constraint = any(f[1] for f in branch_str_flags)
+
+            if has_string_constraint or (not strict_enum and has_string_type):
+                constrained_string_fields_count += 1
+
+            if strict_enum or not has_string_type:
+                unconstrained_categorical_fields.append(field_ref)
+
+    is_hygienic = bool(
+        len(unconstrained_categorical_fields) == 0
+        and len(invalid_enum_definitions) == 0
+    )
+
+    return {
+        "total_categorical_fields": total_categorical_fields,
+        "enum_backed_fields_count": enum_backed_fields_count,
+        "constrained_string_fields_count": constrained_string_fields_count,
+        "unconstrained_categorical_fields": unconstrained_categorical_fields,
+        "invalid_enum_definitions": invalid_enum_definitions,
+        "is_hygienic": is_hygienic,
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()

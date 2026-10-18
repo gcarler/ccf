@@ -4145,3 +4145,188 @@ def test_numeric_bounds_and_currency_hygiene_empty_and_live_openapi():
     assert isinstance(live_res["negative_allowed_monetary_fields"], list)
     assert isinstance(live_res["non_integer_or_negative_count_fields"], list)
 
+
+def test_enum_and_status_field_hygiene_clean_and_live_schema():
+    """Esquema sintético con enums válidos (directos y vía $ref) + esquema real de FastAPI con strict_enum=False."""
+    schema = {
+        "components": {
+            "schemas": {
+                "RagStatusEnum": {
+                    "type": "string",
+                    "enum": ["GREEN", "AMBER", "RED"],
+                },
+                "ProjectSummaryOut": {
+                    "type": "object",
+                    "properties": {
+                        "status": {
+                            "type": "string",
+                            "enum": ["DRAFT", "ACTIVE", "CLOSED"],
+                        },
+                        "rag_status": {
+                            "$ref": "#/components/schemas/RagStatusEnum"
+                        },
+                        "priority": {
+                            "type": "string",
+                            "maxLength": 32,
+                        },
+                    },
+                },
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_enum_and_status_field_hygiene(
+        schema, strict_enum=False
+    )
+    assert res == {
+        "total_categorical_fields": 3,
+        "enum_backed_fields_count": 2,
+        "constrained_string_fields_count": 1,
+        "unconstrained_categorical_fields": [],
+        "invalid_enum_definitions": [],
+        "is_hygienic": True,
+    }
+
+    from backend.app import app
+
+    live_res = (
+        audit_projects_api_contracts.summarize_projects_enum_and_status_field_hygiene(
+            app.openapi(), strict_enum=False
+        )
+    )
+    assert live_res["total_categorical_fields"] > 0
+    assert live_res["unconstrained_categorical_fields"] == []
+    assert live_res["invalid_enum_definitions"] == []
+    assert live_res["is_hygienic"] is True
+
+
+def test_enum_and_status_field_hygiene_strict_vs_non_strict_unconstrained():
+    """Detecta campos categóricos sin enum cuando strict_enum=True o sin tipo válido cuando strict_enum=False."""
+    schema = {
+        "components": {
+            "schemas": {
+                "ProjectIssueInput": {
+                    "type": "object",
+                    "properties": {
+                        "severity": {
+                            "type": "string",
+                            "enum": ["LOW", "HIGH"],
+                        },
+                        "priority": {"type": "string", "maxLength": 20},
+                        "resolution_mode": {"type": "string"},
+                        "health_status": {},
+                        "decision_status": {"type": "integer"},
+                    },
+                }
+            }
+        }
+    }
+    res_relaxed = audit_projects_api_contracts.summarize_projects_enum_and_status_field_hygiene(
+        schema, strict_enum=False
+    )
+    assert res_relaxed["total_categorical_fields"] == 5
+    assert res_relaxed["enum_backed_fields_count"] == 1
+    assert res_relaxed["constrained_string_fields_count"] == 2
+    assert res_relaxed["unconstrained_categorical_fields"] == [
+        "ProjectIssueInput.decision_status",
+        "ProjectIssueInput.health_status",
+    ]
+    assert res_relaxed["is_hygienic"] is False
+
+    res_strict = audit_projects_api_contracts.summarize_projects_enum_and_status_field_hygiene(
+        schema, strict_enum=True
+    )
+    assert res_strict["total_categorical_fields"] == 5
+    assert res_strict["enum_backed_fields_count"] == 1
+    assert res_strict["constrained_string_fields_count"] == 1
+    assert res_strict["unconstrained_categorical_fields"] == [
+        "ProjectIssueInput.decision_status",
+        "ProjectIssueInput.health_status",
+        "ProjectIssueInput.priority",
+        "ProjectIssueInput.resolution_mode",
+    ]
+    assert res_strict["is_hygienic"] is False
+
+
+def test_enum_and_status_field_hygiene_invalid_enum_definitions():
+    """Detecta definiciones enum inválidas (lista vacía, valores duplicados, string en blanco '   ')."""
+    schema = {
+        "components": {
+            "schemas": {
+                "EmptyLifecycleEnum": {
+                    "type": "string",
+                    "enum": [],
+                },
+                "ProjectRiskItem": {
+                    "type": "object",
+                    "properties": {
+                        "status": {
+                            "type": "string",
+                            "enum": ["OPEN", "OPEN"],
+                        },
+                        "severidad": {
+                            "type": "string",
+                            "enum": ["HIGH", "   "],
+                        },
+                    },
+                },
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_enum_and_status_field_hygiene(
+        schema, strict_enum=False
+    )
+    assert res["invalid_enum_definitions"] == [
+        "EmptyLifecycleEnum",
+        "ProjectRiskItem.severidad",
+        "ProjectRiskItem.status",
+    ]
+    assert res["is_hygienic"] is False
+
+
+def test_enum_and_status_field_hygiene_nullable_anyof_oneof_support():
+    """Soporta propiedades nullable con anyOf/oneOf que referencian un enum válido."""
+    schema = {
+        "components": {
+            "schemas": {
+                "SalienceClassEnum": {
+                    "type": "string",
+                    "enum": ["DEFINITIVE", "DOMINANT", "DORMANT"],
+                },
+                "ProjectStakeholderOut": {
+                    "type": "object",
+                    "properties": {
+                        "salience_class": {
+                            "anyOf": [
+                                {
+                                    "$ref": "#/components/schemas/SalienceClassEnum"
+                                },
+                                {"type": "null"},
+                            ]
+                        },
+                        "estado": {
+                            "oneOf": [
+                                {
+                                    "type": "string",
+                                    "enum": ["ACTIVO", "INACTIVO"],
+                                },
+                                {"type": "null"},
+                            ]
+                        },
+                    },
+                },
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_enum_and_status_field_hygiene(
+        schema, strict_enum=True
+    )
+    assert res == {
+        "total_categorical_fields": 2,
+        "enum_backed_fields_count": 2,
+        "constrained_string_fields_count": 0,
+        "unconstrained_categorical_fields": [],
+        "invalid_enum_definitions": [],
+        "is_hygienic": True,
+    }
+
+
