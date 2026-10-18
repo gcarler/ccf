@@ -2976,6 +2976,7 @@ __all__ = [
     "audit_executive_report_reserve_drawdown_burn_rate",
     "audit_executive_report_post_implementation_handover_sla",
     "audit_executive_report_team_burnout_and_turnover_risk",
+    "audit_executive_report_monte_carlo_p50_p80_confidence",
     "ProjectExportService",
 ]
 
@@ -4161,4 +4162,104 @@ def audit_executive_report_team_burnout_and_turnover_risk(
 
 ProjectExportService.audit_executive_report_team_burnout_and_turnover_risk = staticmethod(
     audit_executive_report_team_burnout_and_turnover_risk
+)
+
+
+def audit_executive_report_monte_carlo_p50_p80_confidence(
+    simulation_summaries: list[dict[str, object]],
+    *,
+    min_iterations: int = 1000,
+) -> dict[str, object]:
+    """Audita simulaciones cuantitativas Monte Carlo de riesgo de costos verificando iteraciones mínimas, matriz de correlación, monotonía de cuantiles P50 <= P80 <= P90 y suficiencia de reserva de contingencia frente a P80 según PMI PMBOK §11.4."""
+    try:
+        min_iter = int(min_iterations)
+    except (TypeError, ValueError):
+        min_iter = 1000
+
+    total_simulations = 0
+    invalid_simulation_metric_ids: list[str] = []
+    under_sampled_or_uncorrelated_ids: list[str] = []
+    non_monotonic_percentile_ids: list[str] = []
+    underfunded_p80_contingency_ids: list[str] = []
+
+    if isinstance(simulation_summaries, Sequence) and not isinstance(
+        simulation_summaries, (str, bytes, bytearray)
+    ):
+        for item in simulation_summaries:
+            if not isinstance(item, Mapping):
+                continue
+            simulation_id = str(
+                item.get("simulation_id") or item.get("id") or ""
+            ).strip()
+            if not simulation_id:
+                continue
+
+            total_simulations += 1
+
+            def _float_val(key: str, default: float = -1.0) -> float:
+                raw = item.get(key)
+                if raw is None:
+                    return default
+                if isinstance(raw, bool):
+                    return -1.0
+                try:
+                    return float(raw)
+                except (TypeError, ValueError):
+                    return -1.0
+
+            base_cost = _float_val("deterministic_base_cost", -1.0)
+            p50 = _float_val("p50_cost", -1.0)
+            p80 = _float_val("p80_cost", -1.0)
+            p90 = _float_val("p90_cost", -1.0)
+            contingency = _float_val("allocated_contingency_reserve", 0.0)
+
+            raw_iter = item.get("iterations_count", 0)
+            if raw_iter is None or isinstance(raw_iter, bool):
+                iterations = 0
+            else:
+                try:
+                    iterations = int(float(raw_iter))
+                except (TypeError, ValueError):
+                    iterations = 0
+
+            correlation_applied = bool(
+                item.get("correlation_matrix_applied", False)
+            )
+
+            if (
+                base_cost <= 0.0
+                or p50 <= 0.0
+                or p80 <= 0.0
+                or p90 <= 0.0
+                or contingency < 0.0
+            ):
+                invalid_simulation_metric_ids.append(simulation_id)
+                continue
+
+            if iterations < min_iter or not correlation_applied:
+                under_sampled_or_uncorrelated_ids.append(simulation_id)
+
+            if not (p50 <= p80 <= p90):
+                non_monotonic_percentile_ids.append(simulation_id)
+
+            if (base_cost + contingency) + 0.01 < p80:
+                underfunded_p80_contingency_ids.append(simulation_id)
+
+    return {
+        "total_simulations": total_simulations,
+        "invalid_simulation_metric_ids": invalid_simulation_metric_ids,
+        "under_sampled_or_uncorrelated_ids": under_sampled_or_uncorrelated_ids,
+        "non_monotonic_percentile_ids": non_monotonic_percentile_ids,
+        "underfunded_p80_contingency_ids": underfunded_p80_contingency_ids,
+        "is_monte_carlo_governance_compliant": (
+            len(invalid_simulation_metric_ids) == 0
+            and len(under_sampled_or_uncorrelated_ids) == 0
+            and len(non_monotonic_percentile_ids) == 0
+            and len(underfunded_p80_contingency_ids) == 0
+        ),
+    }
+
+
+ProjectExportService.audit_executive_report_monte_carlo_p50_p80_confidence = staticmethod(
+    audit_executive_report_monte_carlo_p50_p80_confidence
 )

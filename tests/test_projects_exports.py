@@ -5426,3 +5426,133 @@ def test_audit_executive_report_team_burnout_and_turnover_invalid_and_export():
             "unmitigated_key_person_spof_team_ids": [],
             "is_team_sustainability_compliant": True,
         }
+
+
+def test_audit_executive_report_monte_carlo_p50_p80_confidence_compliant():
+    """Simulación Monte Carlo con >= 1000 iteraciones, matriz de correlación, P50<=P80<=P90 y cobertura P80 cumple §11.4."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_monte_carlo_p50_p80_confidence,
+    )
+
+    sims = [
+        {
+            "simulation_id": "SIM-MC-01",
+            "iterations_count": 5000,
+            "deterministic_base_cost": 400000.0,
+            "p50_cost": 420000.0,
+            "p80_cost": 455000.0,
+            "p90_cost": 480000.0,
+            "allocated_contingency_reserve": 60000.0,  # 400k + 60k = 460k >= 455k
+            "correlation_matrix_applied": True,
+        }
+    ]
+    res = audit_executive_report_monte_carlo_p50_p80_confidence(sims)
+    assert res == {
+        "total_simulations": 1,
+        "invalid_simulation_metric_ids": [],
+        "under_sampled_or_uncorrelated_ids": [],
+        "non_monotonic_percentile_ids": [],
+        "underfunded_p80_contingency_ids": [],
+        "is_monte_carlo_governance_compliant": True,
+    }
+    assert (
+        ProjectExportService.audit_executive_report_monte_carlo_p50_p80_confidence(
+            sims
+        )
+        == res
+    )
+
+
+def test_audit_executive_report_monte_carlo_under_sampled_and_underfunded_p80():
+    """Detecta simulaciones con < min_iterations, sin correlación o con reserva insuficiente para P80."""
+    from backend.services.project_export_service import (
+        audit_executive_report_monte_carlo_p50_p80_confidence,
+    )
+
+    sims = [
+        {
+            "simulation_id": "SIM-LOW-ITER",
+            "iterations_count": 500,
+            "deterministic_base_cost": 200000.0,
+            "p50_cost": 210000.0,
+            "p80_cost": 230000.0,
+            "p90_cost": 250000.0,
+            "allocated_contingency_reserve": 35000.0,
+            "correlation_matrix_applied": True,
+        },
+        {
+            "simulation_id": "SIM-UNDERFUNDED-P80",
+            "iterations_count": 2000,
+            "deterministic_base_cost": 200000.0,
+            "p50_cost": 215000.0,
+            "p80_cost": 240000.0,
+            "p90_cost": 260000.0,
+            "allocated_contingency_reserve": 20000.0,  # 220k < 240k
+            "correlation_matrix_applied": True,
+        },
+    ]
+    res = audit_executive_report_monte_carlo_p50_p80_confidence(
+        sims, min_iterations=1000
+    )
+    assert res["under_sampled_or_uncorrelated_ids"] == ["SIM-LOW-ITER"]
+    assert res["underfunded_p80_contingency_ids"] == ["SIM-UNDERFUNDED-P80"]
+    assert res["is_monte_carlo_governance_compliant"] is False
+
+
+def test_audit_executive_report_monte_carlo_non_monotonic_percentiles():
+    """Detecta inversión de cuantiles cuando P50 > P80 o P80 > P90."""
+    from backend.services.project_export_service import (
+        audit_executive_report_monte_carlo_p50_p80_confidence,
+    )
+
+    sims = [
+        {
+            "simulation_id": "SIM-INVERTED-QUANTILES",
+            "iterations_count": 2500,
+            "deterministic_base_cost": 100000.0,
+            "p50_cost": 130000.0,
+            "p80_cost": 120000.0,
+            "p90_cost": 140000.0,
+            "allocated_contingency_reserve": 30000.0,
+            "correlation_matrix_applied": True,
+        }
+    ]
+    res = audit_executive_report_monte_carlo_p50_p80_confidence(sims)
+    assert res["non_monotonic_percentile_ids"] == ["SIM-INVERTED-QUANTILES"]
+    assert res["is_monte_carlo_governance_compliant"] is False
+
+
+def test_audit_executive_report_monte_carlo_invalid_metrics_and_export():
+    """Detecta costos <= 0, ignora entradas no secuencia y verifica exportación en __all__."""
+    import backend.services.project_export_service as _m
+    from backend.services.project_export_service import (
+        audit_executive_report_monte_carlo_p50_p80_confidence,
+    )
+
+    assert (
+        "audit_executive_report_monte_carlo_p50_p80_confidence" in _m.__all__
+    )
+    res = audit_executive_report_monte_carlo_p50_p80_confidence(
+        [
+            {
+                "simulation_id": "SIM-ZERO-BASE",
+                "deterministic_base_cost": 0.0,
+                "p50_cost": 100.0,
+                "p80_cost": 120.0,
+                "p90_cost": 140.0,
+            }
+        ]
+    )
+    assert res["invalid_simulation_metric_ids"] == ["SIM-ZERO-BASE"]
+    assert res["is_monte_carlo_governance_compliant"] is False
+
+    for bad in (None, "not-a-seq", b"bytes", [{"simulation_id": "  "}]):
+        assert audit_executive_report_monte_carlo_p50_p80_confidence(bad) == {
+            "total_simulations": 0,
+            "invalid_simulation_metric_ids": [],
+            "under_sampled_or_uncorrelated_ids": [],
+            "non_monotonic_percentile_ids": [],
+            "underfunded_p80_contingency_ids": [],
+            "is_monte_carlo_governance_compliant": True,
+        }

@@ -3005,6 +3005,7 @@ __all__ = [
     "audit_markdown_frontmatter_metadata_hygiene",
     "audit_markdown_image_alt_text_and_asset_hygiene",
     "audit_markdown_code_fence_language_and_secret_hygiene",
+    "audit_markdown_alert_admonition_hygiene",
     "audit_markdown_blockquote_depth_and_citation_hygiene",
     "audit_markdown_acronym_and_glossary_consistency",
     "audit_markdown_task_list_action_item_hygiene",
@@ -4436,4 +4437,145 @@ def audit_markdown_mermaid_diagram_syntax_and_complexity(
 
 AnyDocService.audit_markdown_mermaid_diagram_syntax_and_complexity = staticmethod(
     audit_markdown_mermaid_diagram_syntax_and_complexity
+)
+
+
+def audit_markdown_alert_admonition_hygiene(
+    markdown_text: str,
+) -> dict[str, object]:
+    """Audita sintaxis, anidamiento y adyacencia de alertas GitHub en blockquotes de Markdown (AnyDoc) según PMI PMBOK §4.4 y §10.2."""
+    total_alerts = 0
+    invalid_alert_type_lines: list[int] = []
+    nested_alert_block_lines: list[int] = []
+    empty_alert_body_lines: list[int] = []
+    consecutive_adjacent_alert_lines: list[int] = []
+
+    if not isinstance(markdown_text, str):
+        return {
+            "total_alerts": 0,
+            "invalid_alert_type_lines": [],
+            "nested_alert_block_lines": [],
+            "empty_alert_body_lines": [],
+            "consecutive_adjacent_alert_lines": [],
+            "is_alert_admonition_hygiene_compliant": True,
+        }
+
+    valid_types = {"NOTE", "TIP", "IMPORTANT", "WARNING", "CAUTION"}
+    alert_pattern = re.compile(r"^\s*(>+)\s*\[!([A-Za-z0-9_-]+)\](.*)$")
+    fence_pattern = re.compile(r"^\s*(```|~~~)")
+
+    lines = markdown_text.splitlines()
+    in_code_block = False
+    fence_marker = ""
+
+    alerts_meta: list[dict[str, object]] = []
+    for idx, raw_line in enumerate(lines, start=1):
+        match = fence_pattern.match(raw_line)
+        if match:
+            marker = match.group(1)
+            if not in_code_block:
+                in_code_block = True
+                fence_marker = marker
+            elif marker == fence_marker:
+                in_code_block = False
+                fence_marker = ""
+            continue
+
+        if in_code_block:
+            continue
+
+        alert_match = alert_pattern.match(raw_line)
+        if not alert_match:
+            continue
+
+        total_alerts += 1
+        prefix = alert_match.group(1)
+        alert_type = alert_match.group(2)
+        inline_body = alert_match.group(3).strip()
+
+        if alert_type not in valid_types:
+            invalid_alert_type_lines.append(idx)
+        if len(prefix) > 1:
+            nested_alert_block_lines.append(idx)
+
+        alerts_meta.append(
+            {
+                "line": idx,
+                "inline_body": inline_body,
+                "prefix": prefix,
+            }
+        )
+
+    # Cuerpo vacío y adyacencia consecutiva.
+    blockquote_pattern = re.compile(r"^\s*>")
+    for pos, info in enumerate(alerts_meta):
+        idx = int(info["line"])
+        inline_body = str(info["inline_body"])
+
+        has_body = bool(inline_body)
+        if not has_body:
+            # Buscar cuerpo en las lineas '>' siguientes antes de fin de
+            # blockquote o otra alerta [!].
+            scan = idx  # 1-indexed; scan apunta a la linea siguiente.
+            while scan < len(lines):
+                nxt = lines[scan]  # lineas[scan] es la linea scan+1.
+                if alert_pattern.match(nxt):
+                    break
+                if blockquote_pattern.match(nxt):
+                    if nxt.replace(">", "").strip():
+                        has_body = True
+                        break
+                    scan += 1
+                    continue
+                break
+        if not has_body:
+            empty_alert_body_lines.append(idx)
+
+        if pos > 0:
+            prev_line = int(alerts_meta[pos - 1]["line"])
+            prev_last_body_line = prev_line
+            # Determinar la ultima linea del blockquote de la alerta previa.
+            scan = prev_line  # linea siguiente a la alerta previa.
+            while scan < len(lines):
+                nxt = lines[scan]
+                if alert_pattern.match(nxt):
+                    break
+                if blockquote_pattern.match(nxt):
+                    prev_last_body_line = scan + 1
+                    scan += 1
+                    continue
+                break
+            # Adyacente si la alerta actual esta pegada a la previa: misma
+            # area de blockquote o dentro del blockquote previo, o en la
+            # linea inmediatamente siguiente sin separador normal.
+            gap_start = prev_last_body_line + 1
+            adjacent = idx <= prev_last_body_line or (
+                idx == gap_start
+                and all(
+                    not lines[g - 1].strip() or blockquote_pattern.match(lines[g - 1])
+                    for g in range(prev_last_body_line + 1, gap_start + 1)
+                )
+            )
+            if adjacent:
+                consecutive_adjacent_alert_lines.append(idx)
+
+    is_alert_admonition_hygiene_compliant = bool(
+        len(invalid_alert_type_lines) == 0
+        and len(nested_alert_block_lines) == 0
+        and len(empty_alert_body_lines) == 0
+        and len(consecutive_adjacent_alert_lines) == 0
+    )
+
+    return {
+        "total_alerts": total_alerts,
+        "invalid_alert_type_lines": invalid_alert_type_lines,
+        "nested_alert_block_lines": nested_alert_block_lines,
+        "empty_alert_body_lines": empty_alert_body_lines,
+        "consecutive_adjacent_alert_lines": consecutive_adjacent_alert_lines,
+        "is_alert_admonition_hygiene_compliant": is_alert_admonition_hygiene_compliant,
+    }
+
+
+AnyDocService.audit_markdown_alert_admonition_hygiene = staticmethod(
+    audit_markdown_alert_admonition_hygiene
 )

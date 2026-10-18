@@ -4813,3 +4813,130 @@ def test_audit_project_governance_tailoring_invalid_inputs_and_export():
                 "is_tailoring_governance_compliant": True,
             }
         )
+
+
+def test_audit_administrative_closure_financial_and_resource_release_compliant():
+    """Dossier de cierre sin POs ni devengos abiertos, códigos cerrados, recursos liberados y OPA/Sponsor firmados cumple §4.7."""
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_administrative_closure_financial_and_resource_release,
+    )
+
+    dossiers = [
+        {
+            "project_id": "PRJ-CLOSED-01",
+            "open_purchase_orders_count": 0,
+            "unreconciled_accruals_amount": 0.0,
+            "charge_codes_closed": True,
+            "allocated_team_members_remaining": 0,
+            "lessons_learned_archived_in_opa": True,
+            "final_sponsor_signoff_obtained": True,
+        }
+    ]
+    res = audit_administrative_closure_financial_and_resource_release(dossiers)
+    assert res == {
+        "total_projects": 1,
+        "invalid_closure_metric_project_ids": [],
+        "unclosed_financial_ledger_project_ids": [],
+        "unreleased_resource_allocation_project_ids": [],
+        "incomplete_opa_or_signoff_project_ids": [],
+        "is_administrative_closure_compliant": True,
+    }
+    assert (
+        ProjectLifecyclePMIService.audit_administrative_closure_financial_and_resource_release(
+            dossiers
+        )
+        == res
+    )
+
+
+def test_audit_administrative_closure_unclosed_financial_ledger():
+    """Detecta POs abiertas, devengos sin conciliar o códigos de cargo abiertos."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_administrative_closure_financial_and_resource_release,
+    )
+
+    dossiers = [
+        {
+            "project_id": "PRJ-OPEN-PO",
+            "open_purchase_orders_count": 2,
+            "unreconciled_accruals_amount": 0.0,
+            "charge_codes_closed": True,
+            "allocated_team_members_remaining": 0,
+            "lessons_learned_archived_in_opa": True,
+            "final_sponsor_signoff_obtained": True,
+        },
+        {
+            "project_id": "PRJ-OPEN-CHARGE-CODE",
+            "open_purchase_orders_count": 0,
+            "unreconciled_accruals_amount": 0.0,
+            "charge_codes_closed": False,
+            "allocated_team_members_remaining": 0,
+            "lessons_learned_archived_in_opa": True,
+            "final_sponsor_signoff_obtained": True,
+        },
+    ]
+    res = audit_administrative_closure_financial_and_resource_release(dossiers)
+    assert res["unclosed_financial_ledger_project_ids"] == [
+        "PRJ-OPEN-PO",
+        "PRJ-OPEN-CHARGE-CODE",
+    ]
+    assert res["is_administrative_closure_compliant"] is False
+
+
+def test_audit_administrative_closure_unreleased_resources_and_incomplete_opa():
+    """Detecta miembros del equipo aún asignados y falta de archivo OPA o firma de sponsor."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_administrative_closure_financial_and_resource_release,
+    )
+
+    dossiers = [
+        {
+            "project_id": "PRJ-HELD-RESOURCES",
+            "open_purchase_orders_count": 0,
+            "unreconciled_accruals_amount": 0.0,
+            "charge_codes_closed": True,
+            "allocated_team_members_remaining": 3,
+            "lessons_learned_archived_in_opa": False,
+            "final_sponsor_signoff_obtained": True,
+        }
+    ]
+    res = audit_administrative_closure_financial_and_resource_release(dossiers)
+    assert res["unreleased_resource_allocation_project_ids"] == [
+        "PRJ-HELD-RESOURCES"
+    ]
+    assert res["incomplete_opa_or_signoff_project_ids"] == [
+        "PRJ-HELD-RESOURCES"
+    ]
+    assert res["is_administrative_closure_compliant"] is False
+
+
+def test_audit_administrative_closure_invalid_metrics_and_export():
+    """Detecta métricas negativas, maneja entradas vacías y verifica exportación en __all__."""
+    import backend.services.project_lifecycle_pmi_service as _m
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_administrative_closure_financial_and_resource_release,
+    )
+
+    assert (
+        "audit_administrative_closure_financial_and_resource_release"
+        in _m.__all__
+    )
+    res = audit_administrative_closure_financial_and_resource_release(
+        [{"project_id": "PRJ-NEG-PO", "open_purchase_orders_count": -1}]
+    )
+    assert res["invalid_closure_metric_project_ids"] == ["PRJ-NEG-PO"]
+    assert res["is_administrative_closure_compliant"] is False
+
+    for bad in (None, "not-a-seq", b"bytes", [{"project_id": "  "}]):
+        assert (
+            audit_administrative_closure_financial_and_resource_release(bad)
+            == {
+                "total_projects": 0,
+                "invalid_closure_metric_project_ids": [],
+                "unclosed_financial_ledger_project_ids": [],
+                "unreleased_resource_allocation_project_ids": [],
+                "incomplete_opa_or_signoff_project_ids": [],
+                "is_administrative_closure_compliant": True,
+            }
+        )

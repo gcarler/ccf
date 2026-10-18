@@ -3939,3 +3939,123 @@ def test_audit_markdown_mermaid_invalid_inputs_and_export():
             audit_markdown_mermaid_diagram_syntax_and_complexity(bad)
             == expected_empty
         )
+
+
+def test_audit_markdown_alert_admonition_hygiene_compliant():
+    """Alertas tipadas correctamente, con cuerpo y separadas por parrafo."""
+    from backend.services.anydoc_service import (
+        audit_markdown_alert_admonition_hygiene,
+    )
+
+    doc = (
+        "Intro.\n"
+        "\n"
+        "> [!NOTE]\n"
+        "> Cuerpo de la nota.\n"
+        "\n"
+        "Texto separador normal.\n"
+        "\n"
+        "> [!CAUTION] cuerpo inline\n"
+        "\n"
+        "Fin.\n"
+    )
+    res = audit_markdown_alert_admonition_hygiene(doc)
+    assert res == {
+        "total_alerts": 2,
+        "invalid_alert_type_lines": [],
+        "nested_alert_block_lines": [],
+        "empty_alert_body_lines": [],
+        "consecutive_adjacent_alert_lines": [],
+        "is_alert_admonition_hygiene_compliant": True,
+    }
+
+
+def test_audit_markdown_alert_admonition_hygiene_invalid_and_nested():
+    """Tipos fuera del catalogo (case-sensitive en MAYUSCULAS) y prefijos anidados."""
+    from backend.services.anydoc_service import (
+        audit_markdown_alert_admonition_hygiene,
+    )
+
+    doc = (
+        "> [!FOO]\n"
+        "> cuerpo.\n"
+        "\n"
+        ">> [!NOTE]\n"
+        "> anidado.\n"
+        "\n"
+        ">> [!TIP] anidado pegado sin espacio\n"
+        "> cuerpo.\n"
+        "\n"
+        "> [!note] minusculas invalidas\n"
+        "> cuerpo.\n"
+    )
+    res = audit_markdown_alert_admonition_hygiene(doc)
+    assert res["total_alerts"] == 4
+    assert res["invalid_alert_type_lines"] == [1, 10]
+    assert res["nested_alert_block_lines"] == [4, 7]
+    assert res["is_alert_admonition_hygiene_compliant"] is False
+
+
+def test_audit_markdown_alert_admonition_hygiene_empty_and_adjacent():
+    """Alertas sin cuerpo y alertas pegadas consecutivamente sin separador."""
+    from backend.services.anydoc_service import (
+        audit_markdown_alert_admonition_hygiene,
+    )
+
+    doc = (
+        "> [!WARNING]\n"          # sin cuerpo: blockquote termina aca.
+        "\n"
+        "> [!NOTE]\n"
+        "> cuerpo A.\n"
+        "> [!TIP]\n"              # pegada dentro del mismo blockquote.
+        "> cuerpo B.\n"
+    )
+    res = audit_markdown_alert_admonition_hygiene(doc)
+    assert res["total_alerts"] == 3
+    assert res["empty_alert_body_lines"] == [1]
+    assert res["consecutive_adjacent_alert_lines"] == [5]
+    assert res["is_alert_admonition_hygiene_compliant"] is False
+
+    # El cuerpo en las lineas '>' siguientes del blockquote evita empty.
+    ok = audit_markdown_alert_admonition_hygiene(
+        "> [!NOTE]\n> cuerpo en la siguiente linea.\n"
+    )
+    assert ok["empty_alert_body_lines"] == []
+    assert ok["is_alert_admonition_hygiene_compliant"] is True
+
+    # Code fences ignoran alertas; vacio/None/no-str retornan dict neutral.
+    fenced = audit_markdown_alert_admonition_hygiene(
+        "```\n> [!FOO] dentro de fence\n```\n\n> [!NOTE] fuera con cuerpo\n"
+    )
+    assert fenced["total_alerts"] == 1
+    assert fenced["invalid_alert_type_lines"] == []
+
+    import backend.services.anydoc_service as _m
+    assert "audit_markdown_alert_admonition_hygiene" in _m.__all__
+
+
+def test_audit_markdown_alert_admonition_hygiene_scope_and_proxy():
+    """Entradas vacias/None/invalidas + llamada via AnyDocService (staticmethod + __all__)."""
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_alert_admonition_hygiene,
+    )
+
+    empty = {
+        "total_alerts": 0,
+        "invalid_alert_type_lines": [],
+        "nested_alert_block_lines": [],
+        "empty_alert_body_lines": [],
+        "consecutive_adjacent_alert_lines": [],
+        "is_alert_admonition_hygiene_compliant": True,
+    }
+    for payload in (None, "", "   \n  ", 42, ["x"]):
+        assert audit_markdown_alert_admonition_hygiene(payload) == empty
+
+    sample = (
+        "> [!TIP]\n> consejo.\n"
+    )
+    assert (
+        AnyDocService.audit_markdown_alert_admonition_hygiene(sample)
+        == audit_markdown_alert_admonition_hygiene(sample)
+    )

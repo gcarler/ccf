@@ -3141,6 +3141,7 @@ __all__ = [
     "audit_charter_pm_authority_and_variance_tolerances",
     "audit_stakeholder_engagement_seam_gap_and_drift",
     "audit_project_governance_tailoring_and_hybrid_justification",
+    "audit_administrative_closure_financial_and_resource_release",
     "ProjectLifecyclePMIService",
 ]
 
@@ -4185,4 +4186,98 @@ def audit_project_governance_tailoring_and_hybrid_justification(
 
 ProjectLifecyclePMIService.audit_project_governance_tailoring_and_hybrid_justification = staticmethod(
     audit_project_governance_tailoring_and_hybrid_justification
+)
+
+
+def audit_administrative_closure_financial_and_resource_release(
+    closure_dossiers: list[dict[str, object]],
+) -> dict[str, object]:
+    """Audita el cierre administrativo financiero (órdenes de compra cerradas, devengos reconciliados, bloqueo de códigos de cargo), liberación de recursos asignados y archivo OPA con firma final del sponsor según PMI PMBOK §4.7 y §12.3."""
+    total_projects = 0
+    invalid_closure_metric_project_ids: list[str] = []
+    unclosed_financial_ledger_project_ids: list[str] = []
+    unreleased_resource_allocation_project_ids: list[str] = []
+    incomplete_opa_or_signoff_project_ids: list[str] = []
+
+    if isinstance(closure_dossiers, Sequence) and not isinstance(
+        closure_dossiers, (str, bytes, bytearray)
+    ):
+        for item in closure_dossiers:
+            if not isinstance(item, Mapping):
+                continue
+            project_id = str(
+                item.get("project_id") or item.get("id") or ""
+            ).strip()
+            if not project_id:
+                continue
+
+            total_projects += 1
+
+            def _int_val(key: str, default: int = 0) -> int:
+                raw = item.get(key, default)
+                if raw is None or isinstance(raw, bool):
+                    return default
+                try:
+                    return int(float(raw))
+                except (TypeError, ValueError):
+                    return -1
+
+            def _float_val(key: str, default: float = 0.0) -> float:
+                raw = item.get(key, default)
+                if raw is None or isinstance(raw, bool):
+                    return default
+                try:
+                    return float(raw)
+                except (TypeError, ValueError):
+                    return -1.0
+
+            open_pos = _int_val("open_purchase_orders_count", 0)
+            unreconciled_accruals = _float_val(
+                "unreconciled_accruals_amount", 0.0
+            )
+            remaining_members = _int_val("allocated_team_members_remaining", 0)
+            charge_codes_closed = bool(item.get("charge_codes_closed", False))
+            opa_archived = bool(item.get("lessons_learned_archived_in_opa", False))
+            sponsor_signoff = bool(
+                item.get("final_sponsor_signoff_obtained", False)
+            )
+
+            if (
+                open_pos < 0
+                or unreconciled_accruals < 0.0
+                or remaining_members < 0
+            ):
+                invalid_closure_metric_project_ids.append(project_id)
+                continue
+
+            if (
+                open_pos > 0
+                or unreconciled_accruals > 0.0
+                or not charge_codes_closed
+            ):
+                unclosed_financial_ledger_project_ids.append(project_id)
+
+            if remaining_members > 0:
+                unreleased_resource_allocation_project_ids.append(project_id)
+
+            if not opa_archived or not sponsor_signoff:
+                incomplete_opa_or_signoff_project_ids.append(project_id)
+
+    return {
+        "total_projects": total_projects,
+        "invalid_closure_metric_project_ids": invalid_closure_metric_project_ids,
+        "unclosed_financial_ledger_project_ids": unclosed_financial_ledger_project_ids,
+        "unreleased_resource_allocation_project_ids": unreleased_resource_allocation_project_ids,
+        "incomplete_opa_or_signoff_project_ids": incomplete_opa_or_signoff_project_ids,
+        "is_administrative_closure_compliant": (
+            len(invalid_closure_metric_project_ids) == 0
+            and len(unclosed_financial_ledger_project_ids) == 0
+            and len(unreleased_resource_allocation_project_ids) == 0
+            and len(incomplete_opa_or_signoff_project_ids) == 0
+        ),
+    }
+
+
+ProjectLifecyclePMIService.audit_administrative_closure_financial_and_resource_release = staticmethod(
+    audit_administrative_closure_financial_and_resource_release
 )
