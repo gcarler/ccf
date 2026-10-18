@@ -994,6 +994,12 @@ class ProjectLifecyclePMIService:
             benefits, min_realization_ratio_pct=min_realization_ratio_pct
         )
 
+    @staticmethod
+    def audit_team_charter_and_tuckman_governance(
+        team_charter: Optional[dict[str, Any]],
+    ) -> dict[str, Any]:
+        return audit_team_charter_and_tuckman_governance(team_charter)
+
 
 def audit_charter_measurable_objectives(
     objectives: list[dict[str, Any]] | None,
@@ -1725,6 +1731,87 @@ def audit_benefits_realization_sustainability(
     }
 
 
+def audit_team_charter_and_tuckman_governance(
+    team_charter: Optional[dict[str, Any]],
+) -> dict[str, Any]:
+    """Audita el Acta de Constitución del Equipo (Team Charter) y madurez de Tuckman según PMI PMBOK §9.1.3.2 y §9.4."""
+    canonical_pillars = [
+        ("core_values", ("core_values", "valores")),
+        ("communication_guidelines", ("communication_guidelines", "pautas_comunicacion")),
+        ("decision_making_criteria", ("decision_making_criteria", "criterios_decision")),
+        ("conflict_resolution_process", ("conflict_resolution_process", "resolucion_conflictos")),
+    ]
+
+    if not isinstance(team_charter, dict) or len(team_charter) == 0:
+        return {
+            "charter_completeness_pct": 0.0,
+            "missing_charter_pillars": [p[0] for p in canonical_pillars],
+            "tuckman_stage": "UNSPECIFIED",
+            "unresolved_conflicts_count": 0,
+            "is_healthy": False,
+            "team_posture": "MISSING_TEAM_CHARTER",
+        }
+
+    def _has_pillar_content(val: Any) -> bool:
+        if val is None or isinstance(val, bool):
+            return False
+        if isinstance(val, str):
+            return len(val.strip()) > 0
+        if isinstance(val, (list, tuple, set, dict)):
+            return len(val) > 0
+        return len(str(val).strip()) > 0
+
+    missing_charter_pillars: list[str] = []
+    for pillar_name, keys in canonical_pillars:
+        if not any(_has_pillar_content(team_charter.get(k)) for k in keys):
+            missing_charter_pillars.append(pillar_name)
+
+    present_count = 4 - len(missing_charter_pillars)
+    charter_completeness_pct = round((present_count / 4.0) * 100.0, 2)
+
+    raw_stage = str(
+        team_charter.get("tuckman_stage") or team_charter.get("maturity_stage") or ""
+    ).strip().lower()
+    valid_stages = {"forming", "storming", "norming", "performing", "adjourning"}
+    tuckman_stage = raw_stage.upper() if raw_stage in valid_stages else "UNSPECIFIED"
+
+    raw_conflicts = (
+        team_charter.get("unresolved_conflicts_count")
+        if team_charter.get("unresolved_conflicts_count") is not None
+        else (team_charter.get("open_conflicts") or 0)
+    )
+    try:
+        unresolved_conflicts_count = max(0, int(raw_conflicts))
+    except (TypeError, ValueError):
+        unresolved_conflicts_count = 0
+
+    is_healthy = bool(
+        len(missing_charter_pillars) == 0
+        and tuckman_stage in {"NORMING", "PERFORMING", "ADJOURNING"}
+        and unresolved_conflicts_count == 0
+    )
+
+    if present_count == 0:
+        team_posture = "MISSING_TEAM_CHARTER"
+    elif len(missing_charter_pillars) > 0:
+        team_posture = "INCOMPLETE_TEAM_CHARTER_AGREEMENTS"
+    elif tuckman_stage == "STORMING" or unresolved_conflicts_count > 0:
+        team_posture = "STORMING_OR_CONFLICT_FRICTION"
+    elif tuckman_stage in {"FORMING", "UNSPECIFIED"}:
+        team_posture = "EARLY_FORMING_ALIGNMENT"
+    else:
+        team_posture = "HIGH_PERFORMING_TEAM_GOVERNANCE"
+
+    return {
+        "charter_completeness_pct": charter_completeness_pct,
+        "missing_charter_pillars": missing_charter_pillars,
+        "tuckman_stage": tuckman_stage,
+        "unresolved_conflicts_count": unresolved_conflicts_count,
+        "is_healthy": is_healthy,
+        "team_posture": team_posture,
+    }
+
+
 __all__ = [
     "build_pmo_portfolio_matrix",
     "build_governance_summary",
@@ -1753,5 +1840,7 @@ __all__ = [
     "audit_stakeholder_engagement_transition_gaps",
     "audit_project_tailoring_and_opa_compliance",
     "audit_benefits_realization_sustainability",
+    "audit_team_charter_and_tuckman_governance",
     "ProjectLifecyclePMIService",
 ]
+

@@ -1682,6 +1682,117 @@ def audit_markdown_toc_anchor_alignment(
     }
 
 
+_CHECKLIST_PROGRESS_RE = re.compile(r"^\s*(?:[-*+]|\d+\.)\s+\[([ xX])\]\s+(.+?)\s*$")
+_CHECKLIST_PROGRESS_OWNER_RE = re.compile(r"@[A-Za-z0-9_.-]+")
+_CHECKLIST_PROGRESS_BLOCKER_MARKERS = (
+    "[blocker]",
+    "[bloqueante]",
+    "[critical]",
+    "[critico]",
+    "[crítico]",
+    "blocker:",
+    "bloqueante:",
+)
+
+
+def extract_markdown_checklist_progress(
+    markdown_text: Optional[str],
+) -> Dict[str, Any]:
+    """Extrae listas de verificación Markdown (PMBOK §4.4 y §8.3), calculando avance porcentual, bloqueantes abiertos e ítems pendientes sin responsable."""
+    if not markdown_text or not isinstance(markdown_text, str) or not markdown_text.strip():
+        return {
+            "total_items": 0,
+            "completed_items": 0,
+            "pending_items": 0,
+            "completion_rate_pct": 0.0,
+            "open_blocker_items": [],
+            "unassigned_pending_items": [],
+            "is_complete": True,
+            "checklist_posture": "NO_CHECKLIST_ITEMS",
+        }
+
+    non_fenced_lines: List[str] = []
+    in_fence = False
+    fence_marker = ""
+    for line in markdown_text.splitlines():
+        stripped = line.strip()
+        if not in_fence:
+            if stripped.startswith("```") or stripped.startswith("~~~"):
+                in_fence = True
+                fence_marker = stripped[:3]
+                continue
+            non_fenced_lines.append(line)
+        else:
+            if stripped.startswith(fence_marker):
+                in_fence = False
+                fence_marker = ""
+            continue
+
+    total_items = 0
+    completed_items = 0
+    pending_items = 0
+    open_blocker_items: List[str] = []
+    unassigned_pending_items: List[str] = []
+
+    for line in non_fenced_lines:
+        match = _CHECKLIST_PROGRESS_RE.match(line)
+        if not match:
+            continue
+        state, text = match.group(1), match.group(2)
+        is_checked = state.lower() == "x"
+        item_text = text.strip()
+        total_items += 1
+        if is_checked:
+            completed_items += 1
+        else:
+            pending_items += 1
+            lowered = item_text.lower()
+            if any(marker in lowered for marker in _CHECKLIST_PROGRESS_BLOCKER_MARKERS):
+                open_blocker_items.append(item_text)
+            has_owner = (
+                bool(_CHECKLIST_PROGRESS_OWNER_RE.search(item_text))
+                or "responsable:" in lowered
+                or "owner:" in lowered
+            )
+            if not has_owner:
+                unassigned_pending_items.append(item_text)
+
+    if total_items == 0:
+        return {
+            "total_items": 0,
+            "completed_items": 0,
+            "pending_items": 0,
+            "completion_rate_pct": 0.0,
+            "open_blocker_items": [],
+            "unassigned_pending_items": [],
+            "is_complete": True,
+            "checklist_posture": "NO_CHECKLIST_ITEMS",
+        }
+
+    completion_rate_pct = round((completed_items / total_items) * 100.0, 2)
+    is_complete = bool(total_items > 0 and pending_items == 0)
+
+    if len(open_blocker_items) > 0:
+        checklist_posture = "BLOCKED_CHECKLIST_ITEMS"
+    elif len(unassigned_pending_items) > 0:
+        checklist_posture = "UNASSIGNED_PENDING_ITEMS"
+    elif pending_items > 0:
+        checklist_posture = "CHECKLIST_IN_PROGRESS"
+    else:
+        checklist_posture = "CHECKLIST_FULLY_COMPLETED"
+
+    return {
+        "total_items": total_items,
+        "completed_items": completed_items,
+        "pending_items": pending_items,
+        "completion_rate_pct": completion_rate_pct,
+        "open_blocker_items": open_blocker_items,
+        "unassigned_pending_items": unassigned_pending_items,
+        "is_complete": is_complete,
+        "checklist_posture": checklist_posture,
+    }
+
+
 class AnyDocService:
     """Fachada canónica de conversión y auditoría documental AnyDoc PMI."""
 
@@ -1796,6 +1907,12 @@ class AnyDocService:
     ) -> Dict[str, Any]:
         return audit_markdown_toc_anchor_alignment(markdown_text)
 
+    @staticmethod
+    def extract_markdown_checklist_progress(
+        markdown_text: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        return extract_markdown_checklist_progress(markdown_text)
+
 
 __all__ = [
     "ANYDOC_AVAILABLE",
@@ -1819,5 +1936,6 @@ __all__ = [
     "audit_markdown_mermaid_diagrams",
     "audit_markdown_media_accessibility",
     "audit_markdown_toc_anchor_alignment",
+    "extract_markdown_checklist_progress",
     "AnyDocService",
 ]

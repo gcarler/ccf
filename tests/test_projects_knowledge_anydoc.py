@@ -1574,3 +1574,117 @@ def test_audit_markdown_toc_anchor_alignment_no_headings_found():
         assert res["skipped_level_headings"] == []
         assert res["is_aligned"] is True
         assert res["toc_posture"] == "NO_HEADINGS_FOUND"
+
+
+def test_extract_markdown_checklist_progress_fully_completed():
+    """Checklist 100% completada ignorando bloques cercados -> CHECKLIST_FULLY_COMPLETED."""
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        extract_markdown_checklist_progress,
+    )
+
+    md = (
+        "# Checklist de Calidad PMBOK §8.3\n"
+        "- [x] Validar firma de Acta de Constitución @pm\n"
+        "* [X] Aprobar línea base de alcance WBS\n"
+        "1. [x] Registrar lecciones aprendidas de fase\n"
+        "```markdown\n"
+        "- [ ] [BLOCKER] Ítem pendiente dentro de bloque de código\n"
+        "```\n"
+        "~~~md\n"
+        "* [ ] Otro pendiente ignorado en tilde\n"
+        "~~~\n"
+    )
+    res = extract_markdown_checklist_progress(md)
+    assert res == {
+        "total_items": 3,
+        "completed_items": 3,
+        "pending_items": 0,
+        "completion_rate_pct": 100.0,
+        "open_blocker_items": [],
+        "unassigned_pending_items": [],
+        "is_complete": True,
+        "checklist_posture": "CHECKLIST_FULLY_COMPLETED",
+    }
+    assert AnyDocService.extract_markdown_checklist_progress(md) == res
+
+
+def test_extract_markdown_checklist_progress_blocked_items():
+    """Ítems pendientes con marcador [BLOQUEANTE] / [BLOCKER] -> BLOCKED_CHECKLIST_ITEMS."""
+    from backend.services.anydoc_service import extract_markdown_checklist_progress
+
+    md = (
+        "- [x] Diseño aprobado @arquitecto\n"
+        "- [ ] [BLOQUEANTE] Liberar credenciales de pasarela @devops\n"
+        "+ [ ] [BLOCKER] Certificación de seguridad pendiente\n"
+    )
+    res = extract_markdown_checklist_progress(md)
+    assert res["total_items"] == 3
+    assert res["completed_items"] == 1
+    assert res["pending_items"] == 2
+    assert res["completion_rate_pct"] == 33.33
+    assert res["open_blocker_items"] == [
+        "[BLOQUEANTE] Liberar credenciales de pasarela @devops",
+        "[BLOCKER] Certificación de seguridad pendiente",
+    ]
+    assert res["unassigned_pending_items"] == [
+        "[BLOCKER] Certificación de seguridad pendiente",
+    ]
+    assert res["is_complete"] is False
+    assert res["checklist_posture"] == "BLOCKED_CHECKLIST_ITEMS"
+
+
+def test_extract_markdown_checklist_progress_unassigned_and_in_progress():
+    """Ítems pendientes sin bloqueantes: UNASSIGNED_PENDING_ITEMS vs CHECKLIST_IN_PROGRESS."""
+    from backend.services.anydoc_service import extract_markdown_checklist_progress
+
+    md_unassigned = (
+        "- [x] Entregable 1 completado @ana\n"
+        "- [ ] Revisar matriz de trazabilidad sin responsable\n"
+    )
+    res_unassigned = extract_markdown_checklist_progress(md_unassigned)
+    assert res_unassigned["total_items"] == 2
+    assert res_unassigned["completed_items"] == 1
+    assert res_unassigned["pending_items"] == 1
+    assert res_unassigned["completion_rate_pct"] == 50.0
+    assert res_unassigned["open_blocker_items"] == []
+    assert res_unassigned["unassigned_pending_items"] == [
+        "Revisar matriz de trazabilidad sin responsable"
+    ]
+    assert res_unassigned["is_complete"] is False
+    assert res_unassigned["checklist_posture"] == "UNASSIGNED_PENDING_ITEMS"
+
+    md_assigned = (
+        "- [x] Entregable 1 completado @ana\n"
+        "- [ ] Ejecutar pruebas de regresión @qa.lead\n"
+        "2. [ ] Validar criterios DoD Responsable: Carlos\n"
+    )
+    res_assigned = extract_markdown_checklist_progress(md_assigned)
+    assert res_assigned["total_items"] == 3
+    assert res_assigned["completed_items"] == 1
+    assert res_assigned["pending_items"] == 2
+    assert res_assigned["completion_rate_pct"] == 33.33
+    assert res_assigned["open_blocker_items"] == []
+    assert res_assigned["unassigned_pending_items"] == []
+    assert res_assigned["is_complete"] is False
+    assert res_assigned["checklist_posture"] == "CHECKLIST_IN_PROGRESS"
+
+
+def test_extract_markdown_checklist_progress_no_checklist_items():
+    """Texto vacío, None o sin casillas de verificación -> NO_CHECKLIST_ITEMS."""
+    from backend.services.anydoc_service import extract_markdown_checklist_progress
+
+    prose_only = "# Acta de Reunión\n- Punto normal sin casilla\n```\n- [ ] En código\n```\n"
+    for payload in (None, "", "   ", prose_only):
+        res = extract_markdown_checklist_progress(payload)
+        assert res == {
+            "total_items": 0,
+            "completed_items": 0,
+            "pending_items": 0,
+            "completion_rate_pct": 0.0,
+            "open_blocker_items": [],
+            "unassigned_pending_items": [],
+            "is_complete": True,
+            "checklist_posture": "NO_CHECKLIST_ITEMS",
+        }
+

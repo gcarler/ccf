@@ -1652,3 +1652,101 @@ def test_audit_benefits_realization_sustainability_no_benefits_registered():
             "is_sustainable": False,
             "benefits_posture": "NO_BENEFITS_REGISTERED",
         }
+
+
+def test_audit_team_charter_and_tuckman_governance_high_performing():
+    """4 pilares completos, etapa performing/norming y 0 conflictos -> HIGH_PERFORMING_TEAM_GOVERNANCE."""
+    charter = {
+        "core_values": ["Transparencia", "Excelencia técnica", "Servicio"],
+        "communication_guidelines": "Daily standup 9:00 AM y canal asíncrono oficial.",
+        "decision_making_criteria": "Consenso técnico con desempate por arquitecto líder.",
+        "conflict_resolution_process": "Mediación directa -> Facilitación PM -> Comité PMO.",
+        "tuckman_stage": "performing",
+        "unresolved_conflicts_count": 0,
+    }
+    res = project_lifecycle_pmi_service.audit_team_charter_and_tuckman_governance(
+        charter
+    )
+    assert res == {
+        "charter_completeness_pct": 100.0,
+        "missing_charter_pillars": [],
+        "tuckman_stage": "PERFORMING",
+        "unresolved_conflicts_count": 0,
+        "is_healthy": True,
+        "team_posture": "HIGH_PERFORMING_TEAM_GOVERNANCE",
+    }
+    assert (
+        project_lifecycle_pmi_service.ProjectLifecyclePMIService.audit_team_charter_and_tuckman_governance(
+            charter
+        )
+        == res
+    )
+
+
+def test_audit_team_charter_and_tuckman_governance_incomplete_agreements():
+    """Faltan 1 o más pilares del Team Charter -> INCOMPLETE_TEAM_CHARTER_AGREEMENTS."""
+    charter = {
+        "valores": "Respeto mutuo y responsabilidad",
+        "pautas_comunicacion": "Reuniones semanales de sincronización",
+        "criterios_decision": "   ",
+        "resolucion_conflictos": [],
+        "maturity_stage": "norming",
+    }
+    res = project_lifecycle_pmi_service.audit_team_charter_and_tuckman_governance(
+        charter
+    )
+    assert res["charter_completeness_pct"] == 50.0
+    assert res["missing_charter_pillars"] == [
+        "decision_making_criteria",
+        "conflict_resolution_process",
+    ]
+    assert res["tuckman_stage"] == "NORMING"
+    assert res["unresolved_conflicts_count"] == 0
+    assert res["is_healthy"] is False
+    assert res["team_posture"] == "INCOMPLETE_TEAM_CHARTER_AGREEMENTS"
+
+
+def test_audit_team_charter_and_tuckman_governance_storming_and_forming():
+    """4 pilares en storming o con conflictos -> STORMING_OR_CONFLICT_FRICTION; en forming -> EARLY_FORMING_ALIGNMENT."""
+    base_pillars = {
+        "core_values": "Colaboración",
+        "communication_guidelines": "Canal de proyecto",
+        "decision_making_criteria": "Votación ponderada",
+        "conflict_resolution_process": "Escalamiento al PM",
+    }
+    res_storming = project_lifecycle_pmi_service.audit_team_charter_and_tuckman_governance(
+        {**base_pillars, "tuckman_stage": "storming", "open_conflicts": 2}
+    )
+    assert res_storming["charter_completeness_pct"] == 100.0
+    assert res_storming["missing_charter_pillars"] == []
+    assert res_storming["tuckman_stage"] == "STORMING"
+    assert res_storming["unresolved_conflicts_count"] == 2
+    assert res_storming["is_healthy"] is False
+    assert res_storming["team_posture"] == "STORMING_OR_CONFLICT_FRICTION"
+
+    res_forming = project_lifecycle_pmi_service.audit_team_charter_and_tuckman_governance(
+        {**base_pillars, "tuckman_stage": "Forming", "unresolved_conflicts_count": 0}
+    )
+    assert res_forming["charter_completeness_pct"] == 100.0
+    assert res_forming["tuckman_stage"] == "FORMING"
+    assert res_forming["unresolved_conflicts_count"] == 0
+    assert res_forming["is_healthy"] is False
+    assert res_forming["team_posture"] == "EARLY_FORMING_ALIGNMENT"
+
+
+def test_audit_team_charter_and_tuckman_governance_missing_team_charter():
+    """None, dict vacío o 0 pilares -> MISSING_TEAM_CHARTER."""
+    for payload in (None, {}, {"tuckman_stage": "performing"}):
+        res = project_lifecycle_pmi_service.audit_team_charter_and_tuckman_governance(
+            payload
+        )
+        assert res["charter_completeness_pct"] == 0.0
+        assert res["missing_charter_pillars"] == [
+            "core_values",
+            "communication_guidelines",
+            "decision_making_criteria",
+            "conflict_resolution_process",
+        ]
+        assert res["is_healthy"] is False
+        assert res["team_posture"] == "MISSING_TEAM_CHARTER"
+
