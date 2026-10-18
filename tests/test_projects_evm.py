@@ -7455,3 +7455,133 @@ def test_evaluate_evm_capex_opex_classification_and_amortization_empty_and_bindi
     assert (
         "evaluate_evm_capex_opex_classification_and_amortization" in mod.__all__
     )
+
+
+def test_evaluate_evm_learning_curve_cost_improvement_and_productivity_on_curve():
+    """Caso 1: Lotes que cumplen la curva de aprendizaje de Wright al 85% dentro de tolerancia (<=10%) -> ON_CURVE."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_learning_curve_cost_improvement_and_productivity,
+    )
+
+    batches = [
+        {
+            "batch_id": "BATCH-1",
+            "doubling_step_index": 1,
+            "first_batch_unit_hours": 100.0,
+            "actual_unit_hours": 100.0,
+        },
+        {
+            "batch_id": "BATCH-2",
+            "doubling_step_index": 2,
+            "first_batch_unit_hours": 100.0,
+            "actual_unit_hours": 85.0,
+        },
+        {
+            "batch_id": "BATCH-4",
+            "doubling_step_index": 3,
+            "first_batch_unit_hours": 100.0,
+            "actual_unit_hours": 72.0,
+        },
+    ]
+    res = evaluate_evm_learning_curve_cost_improvement_and_productivity(
+        batches, target_learning_rate_pct=85.0, max_productivity_stall_pct=10.0
+    )
+    assert res["total_batches"] == 3
+    assert res["stalled_learning_batch_ids"] == []
+    assert res["regressed_batch_ids"] == []
+    assert res["learning_governance_status"] == "ON_CURVE"
+    assert res["is_on_learning_curve"] is True
+    assert res["recommendations"] == []
+
+
+def test_evaluate_evm_learning_curve_cost_improvement_and_productivity_warning():
+    """Caso 2: 1 lote con estancamiento de aprendizaje (>10% sobre lo esperado) pero menor al primer lote -> WARNING."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_learning_curve_cost_improvement_and_productivity,
+    )
+
+    batches = [
+        {
+            "batch_id": "BATCH-1",
+            "doubling_step_index": 1,
+            "first_batch_unit_hours": 100.0,
+            "actual_unit_hours": 100.0,
+        },
+        {
+            "batch_id": "BATCH-2-STALL",
+            "doubling_step_index": 2,
+            "first_batch_unit_hours": 100.0,
+            "actual_unit_hours": 96.0,  # expected 85.0 -> +12.94% > 10%
+        },
+    ]
+    res = evaluate_evm_learning_curve_cost_improvement_and_productivity(
+        batches, target_learning_rate_pct=85.0, max_productivity_stall_pct=10.0
+    )
+    assert res["total_batches"] == 2
+    assert res["stalled_learning_batch_ids"] == ["BATCH-2-STALL"]
+    assert res["regressed_batch_ids"] == []
+    assert res["learning_governance_status"] == "WARNING"
+    assert res["is_on_learning_curve"] is False
+    assert len(res["recommendations"]) == 1
+
+
+def test_evaluate_evm_learning_curve_cost_improvement_and_productivity_regressed():
+    """Caso 3: Lote posterior supera las horas unitarias iniciales o >= 2 lotes estancados -> REGRESSED."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_learning_curve_cost_improvement_and_productivity,
+    )
+
+    batches = [
+        {
+            "batch_id": "BATCH-2-REG",
+            "doubling_step_index": 2,
+            "first_batch_unit_hours": 100.0,
+            "actual_unit_hours": 115.0,
+        }
+    ]
+    res = evaluate_evm_learning_curve_cost_improvement_and_productivity(
+        batches, target_learning_rate_pct=85.0, max_productivity_stall_pct=10.0
+    )
+    assert res["total_batches"] == 1
+    assert res["stalled_learning_batch_ids"] == ["BATCH-2-REG"]
+    assert res["regressed_batch_ids"] == ["BATCH-2-REG"]
+    assert res["learning_governance_status"] == "REGRESSED"
+    assert res["is_on_learning_curve"] is False
+    assert len(res["recommendations"]) == 2
+
+
+def test_evaluate_evm_learning_curve_cost_improvement_and_productivity_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en ProjectEVMService + __all__."""
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_learning_curve_cost_improvement_and_productivity,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = evaluate_evm_learning_curve_cost_improvement_and_productivity(payload)  # type: ignore[arg-type]
+        assert empty["total_batches"] == 0
+        assert empty["stalled_learning_batch_ids"] == []
+        assert empty["regressed_batch_ids"] == []
+        assert empty["learning_governance_status"] == "ON_CURVE"
+        assert empty["is_on_learning_curve"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "batch_id": "BATCH-99",
+            "doubling_step_index": 2,
+            "first_batch_unit_hours": 100.0,
+            "actual_unit_hours": 85.0,
+        }
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_learning_curve_cost_improvement_and_productivity(
+            sample
+        )
+        == evaluate_evm_learning_curve_cost_improvement_and_productivity(sample)
+    )
+    assert (
+        "evaluate_evm_learning_curve_cost_improvement_and_productivity" in mod.__all__
+    )
+

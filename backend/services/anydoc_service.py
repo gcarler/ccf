@@ -3025,6 +3025,7 @@ __all__ = [
     "audit_markdown_code_fence_and_secret_leak_hygiene",
     "audit_markdown_admonition_callout_and_actionability_hygiene",
     "audit_markdown_heading_anchor_slug_and_fragment_hygiene",
+    "audit_markdown_table_column_parity_and_empty_cell_hygiene",
     "AnydocService",
 ]
 
@@ -6996,4 +6997,152 @@ AnyDocService.audit_markdown_heading_anchor_slug_and_fragment_hygiene = staticme
 )
 AnydocService.audit_markdown_heading_anchor_slug_and_fragment_hygiene = staticmethod(
     audit_markdown_heading_anchor_slug_and_fragment_hygiene
+)
+
+
+def audit_markdown_table_column_parity_and_empty_cell_hygiene(
+    markdown_text: str | None = None,
+    *,
+    max_empty_cell_ratio_pct: float = 20.0,
+    max_columns_per_table: int = 10,
+) -> dict[str, Any]:
+    """PMBOK §4.4 — paridad de columnas, separador de encabezado y ratio de celdas vacías.
+
+    Parsea tablas pipe GFM fuera de bloques fenced (backticks o tildes).
+    Reporta líneas con desbalance de columnas, bloques sin separador
+    ``|---|`` válido, encabezados demasiado anchos y el porcentaje de
+    celdas de datos vacías o placeholder ('-', 'N/A', 'TBD').
+    """
+    lines = (
+        markdown_text.splitlines()
+        if isinstance(markdown_text, str) and markdown_text
+        else []
+    )
+
+    def _is_table_line(raw_line: str) -> bool:
+        stripped = raw_line.strip()
+        return stripped.startswith("|") and stripped.endswith("|") and stripped.count("|") >= 2
+
+    def _row_cells(raw_line: str) -> list[str]:
+        stripped = raw_line.strip()
+        return [cell.strip() for cell in stripped[1:-1].split("|")]
+
+    small_placeholder_tokens = {"-", "n/a", "tbd", ""}
+
+    mismatched_column_row_lines: list[int] = []
+    missing_separator_table_lines: list[int] = []
+    wide_table_header_lines: list[int] = []
+    empty_data_cells = 0
+    total_data_cells = 0
+    total_tables = 0
+
+    in_backtick_fence = False
+    in_tilde_fence = False
+    block: list[tuple[int, str]] = []
+
+    def _evaluate_block(block_lines: list[tuple[int, str]]) -> None:
+        nonlocal empty_data_cells, total_data_cells, total_tables
+        if not block_lines:
+            return
+        total_tables += 1
+
+        (header_line_no, header_line) = block_lines[0]
+        header_cells = _row_cells(header_line)
+        expected_cols = len(header_cells)
+
+        if expected_cols > max_columns_per_table:
+            wide_table_header_lines.append(header_line_no)
+
+        def _is_valid_separator(raw_line: str) -> bool:
+            cells = _row_cells(raw_line)
+            return len(cells) == expected_cols and all(
+                _GFM_DELIMITER_CELL_RE.match(cell) for cell in cells
+            )
+
+        has_valid_separator = (
+            len(block_lines) >= 2 and _is_valid_separator(block_lines[1][1])
+        )
+        if not has_valid_separator:
+            missing_separator_table_lines.append(header_line_no)
+            return
+
+        for row_line_no, row_line in block_lines[2:]:
+            cells = _row_cells(row_line)
+            if len(cells) != expected_cols:
+                mismatched_column_row_lines.append(row_line_no)
+                continue
+            total_data_cells += len(cells)
+            empty_data_cells += sum(
+                1 for cell in cells if cell.lower() in small_placeholder_tokens
+            )
+
+    for line_no, line in enumerate(lines, 1):
+        stripped = line.strip()
+        if not in_tilde_fence and not in_backtick_fence and stripped.startswith("```"):
+            in_backtick_fence = not in_backtick_fence
+            continue
+        if not in_backtick_fence and not in_tilde_fence and stripped.startswith("~~~"):
+            in_tilde_fence = not in_tilde_fence
+            continue
+        if in_backtick_fence or in_tilde_fence:
+            continue
+
+        if _is_table_line(line):
+            block.append((line_no, line))
+        else:
+            _evaluate_block(block)
+            block = []
+    _evaluate_block(block)
+
+    empty_cell_ratio_pct = (
+        round((empty_data_cells / total_data_cells) * 100.0, 2)
+        if total_data_cells > 0
+        else 0.0
+    )
+
+    if mismatched_column_row_lines or missing_separator_table_lines:
+        table_hygiene_status = "CRITICAL"
+    elif wide_table_header_lines or empty_cell_ratio_pct > max_empty_cell_ratio_pct:
+        table_hygiene_status = "WARNING"
+    else:
+        table_hygiene_status = "CLEAN"
+
+    recommendations: list[str] = []
+    if missing_separator_table_lines:
+        recommendations.append(
+            "Add a GFM separator row like |---|---| under the table header at lines: "
+            + ", ".join(str(l) for l in missing_separator_table_lines)
+        )
+    if mismatched_column_row_lines:
+        recommendations.append(
+            "Fix column count mismatch at table row lines: "
+            + ", ".join(str(l) for l in mismatched_column_row_lines)
+        )
+    if wide_table_header_lines:
+        recommendations.append(
+            f"Reduce tables wider than {max_columns_per_table} columns; wide headers at lines: "
+            + ", ".join(str(l) for l in wide_table_header_lines)
+        )
+    if empty_cell_ratio_pct > max_empty_cell_ratio_pct:
+        recommendations.append(
+            f"Fill placeholder cells: empty-cell ratio {empty_cell_ratio_pct}% exceeds max {max_empty_cell_ratio_pct}%"
+        )
+
+    return {
+        "total_tables": total_tables,
+        "mismatched_column_row_lines": mismatched_column_row_lines,
+        "missing_separator_table_lines": missing_separator_table_lines,
+        "wide_table_header_lines": wide_table_header_lines,
+        "empty_cell_ratio_pct": empty_cell_ratio_pct,
+        "table_hygiene_status": table_hygiene_status,
+        "is_table_hygiene_clean": table_hygiene_status == "CLEAN",
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_markdown_table_column_parity_and_empty_cell_hygiene = staticmethod(
+    audit_markdown_table_column_parity_and_empty_cell_hygiene
+)
+AnydocService.audit_markdown_table_column_parity_and_empty_cell_hygiene = staticmethod(
+    audit_markdown_table_column_parity_and_empty_cell_hygiene
 )

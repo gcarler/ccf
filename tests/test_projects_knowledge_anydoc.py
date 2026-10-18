@@ -5869,3 +5869,137 @@ def test_audit_markdown_heading_anchor_slug_and_fragment_hygiene_empty_and_bindi
     assert (
         "audit_markdown_heading_anchor_slug_and_fragment_hygiene" in mod.__all__
     )
+
+
+def test_audit_markdown_table_parity_critical_paths():
+    """Caso 1: filas desbalanceadas y bloque sin separador -> CRITICAL con números de línea."""
+    from backend.services.anydoc_service import (
+        audit_markdown_table_column_parity_and_empty_cell_hygiene,
+    )
+
+    md = "\n".join(
+        [
+            "| A | B | C |",      # 1
+            "|---|---|---|",      # 2
+            "| 1 | 2 | 3 |",      # 3
+            "| 4 | 5 |",          # 4  (desbalanceada)
+            "",                   # 5
+            "| X | Y |",          # 6 (sin separador)
+        ]
+    )
+    res = audit_markdown_table_column_parity_and_empty_cell_hygiene(md)
+    assert res["total_tables"] == 2
+    assert res["mismatched_column_row_lines"] == [4]
+    assert res["missing_separator_table_lines"] == [6]
+    assert res["wide_table_header_lines"] == []
+    assert res["empty_cell_ratio_pct"] == 0.0
+    assert res["table_hygiene_status"] == "CRITICAL"
+    assert res["is_table_hygiene_clean"] is False
+    assert len(res["recommendations"]) == 2
+
+
+def test_audit_markdown_table_parity_warning_paths():
+    """Caso 2: tabla ancha o ratio de celdas vacías/placeholder -> WARNING."""
+    from backend.services.anydoc_service import (
+        audit_markdown_table_column_parity_and_empty_cell_hygiene,
+    )
+
+    wide_header_cells = [f"C{i}" for i in range(1, 12)]
+    md_wide = (
+        "| " + " | ".join(wide_header_cells) + " |\n"
+        "| " + " | ".join("-" * 3 for _ in range(11)) + " |\n"
+        "| " + " | ".join("d" for _ in range(11)) + " |"
+    )
+    res_wide = audit_markdown_table_column_parity_and_empty_cell_hygiene(md_wide)
+    assert res_wide["wide_table_header_lines"] == [1]
+    assert res_wide["empty_cell_ratio_pct"] == 0.0
+    assert res_wide["table_hygiene_status"] == "WARNING"
+    assert res_wide["is_table_hygiene_clean"] is False
+
+    md_empty = "\n".join(
+        [
+            "| A | B | C | D |",
+            "|---|---|---|---|",
+            "| 1 |   | - | 4 |",
+            "| 5 | n/a | 7 | TBD |",
+        ]
+    )
+    res_empty = audit_markdown_table_column_parity_and_empty_cell_hygiene(md_empty)
+    assert res_empty["total_tables"] == 1
+    assert res_empty["empty_cell_ratio_pct"] == 50.0
+    assert res_empty["table_hygiene_status"] == "WARNING"
+    assert len(res_empty["recommendations"]) == 1
+
+
+def test_audit_markdown_table_parity_clean_and_boundaries():
+    """Caso 3: tabla bien formada con ratio en la frontera -> CLEAN."""
+    from backend.services.anydoc_service import (
+        audit_markdown_table_column_parity_and_empty_cell_hygiene,
+    )
+
+    md = "\n".join(
+        [
+            "| A | B | C |",     # header 3 cols
+            "|---|---|---|",     # separador válido
+            "| 1 | 2 | 3 |",
+            "|   | x | y |",     # 1 vacía de 7 celdas de datos -> 14.29% <= 20
+            "",
+            "texto normal fuera de tabla",
+        ]
+    )
+    res = audit_markdown_table_column_parity_and_empty_cell_hygiene(md)
+    assert res["total_tables"] == 1
+    assert res["mismatched_column_row_lines"] == []
+    assert res["missing_separator_table_lines"] == []
+    assert res["wide_table_header_lines"] == []
+    assert res["empty_cell_ratio_pct"] == round(1 / 6 * 100, 2)
+    assert res["table_hygiene_status"] == "CLEAN"
+    assert res["is_table_hygiene_clean"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_markdown_table_parity_fences_and_invalid_and_binding():
+    """Caso 4: tablas dentro de fenced se ignoran, entradas no-str y binding + __all__."""
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_table_column_parity_and_empty_cell_hygiene,
+    )
+
+    md = "\n".join(
+        [
+            "```",
+            "| R | T |",
+            "|---|---|",
+            "| 1 | 2 |",
+            "```",
+            "~~~",
+            "| R | T | s |",
+            "~~~",
+        ]
+    )
+    res = audit_markdown_table_column_parity_and_empty_cell_hygiene(md)
+    assert res["total_tables"] == 0
+    assert res["missing_separator_table_lines"] == []
+    assert res["mismatched_column_row_lines"] == []
+    assert res["table_hygiene_status"] == "CLEAN"
+
+    for payload in (None, "", 123, ["lista"]):
+        empty = audit_markdown_table_column_parity_and_empty_cell_hygiene(payload)  # type: ignore[arg-type]
+        assert empty["total_tables"] == 0
+        assert empty["empty_cell_ratio_pct"] == 0.0
+        assert empty["table_hygiene_status"] == "CLEAN"
+        assert empty["is_table_hygiene_clean"] is True
+        assert empty["recommendations"] == []
+
+    valid = "| A | B |\n|---|---|\n| 1 | 2 |"
+    assert (
+        AnyDocService.audit_markdown_table_column_parity_and_empty_cell_hygiene(valid)
+        == audit_markdown_table_column_parity_and_empty_cell_hygiene(valid)
+    )
+    assert (
+        AnydocService.audit_markdown_table_column_parity_and_empty_cell_hygiene(valid)
+        == audit_markdown_table_column_parity_and_empty_cell_hygiene(valid)
+    )
+    assert "audit_markdown_table_column_parity_and_empty_cell_hygiene" in mod.__all__

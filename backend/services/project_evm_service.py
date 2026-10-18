@@ -5513,6 +5513,7 @@ __all__ = [
     "evaluate_evm_time_and_materials_nte_and_rate_blend",
     "evaluate_evm_economic_price_adjustment_and_inflation_erosion",
     "evaluate_evm_capex_opex_classification_and_amortization",
+    "evaluate_evm_learning_curve_cost_improvement_and_productivity",
     "ProjectEVMService",
 ]
 
@@ -8627,4 +8628,78 @@ ProjectEVMService.evaluate_evm_capex_opex_classification_and_amortization = stat
 )
 
 
+def evaluate_evm_learning_curve_cost_improvement_and_productivity(
+    batches: list[dict[str, Any]],
+    *,
+    target_learning_rate_pct: float = 85.0,
+    max_productivity_stall_pct: float = 10.0,
+) -> dict[str, Any]:
+    """Evaluate PMI PMBOK §7.2.2 & §7.4 Wright/Crawford learning curve cost/productivity improvement across doubling batches."""
+    stalled_learning_batch_ids: list[str] = []
+    regressed_batch_ids: list[str] = []
+    recommendations: list[str] = []
 
+    valid_batches = (
+        [
+            b
+            for b in batches
+            if isinstance(b, dict) and str(b.get("batch_id", "")).strip()
+        ]
+        if isinstance(batches, list)
+        else []
+    )
+
+    learning_ratio = float(target_learning_rate_pct) / 100.0
+
+    for batch in valid_batches:
+        batch_id = str(batch.get("batch_id", "")).strip()
+        doubling_step_index = max(1, int(batch.get("doubling_step_index", 1) or 1))
+        first_batch_unit_hours = float(batch.get("first_batch_unit_hours", 0.0) or 0.0)
+        actual_unit_hours = float(batch.get("actual_unit_hours", 0.0) or 0.0)
+
+        expected_unit_hours = (
+            first_batch_unit_hours * (learning_ratio ** (doubling_step_index - 1))
+            if first_batch_unit_hours > 0.0
+            else 0.0
+        )
+        stall_variance_pct = (
+            ((actual_unit_hours - expected_unit_hours) / expected_unit_hours) * 100.0
+            if expected_unit_hours > 0.0
+            else 0.0
+        )
+
+        if stall_variance_pct > max_productivity_stall_pct:
+            stalled_learning_batch_ids.append(batch_id)
+
+        if doubling_step_index > 1 and actual_unit_hours > first_batch_unit_hours:
+            regressed_batch_ids.append(batch_id)
+
+    if regressed_batch_ids:
+        recommendations.append(
+            f"Investigate productivity regression where subsequent batches exceed initial unit hours: {', '.join(regressed_batch_ids)}."
+        )
+    if stalled_learning_batch_ids:
+        recommendations.append(
+            f"Remove tooling/process bottlenecks or update ETC estimates for batches stalling above learning curve target ({target_learning_rate_pct:.1f}%): {', '.join(stalled_learning_batch_ids)}."
+        )
+
+    if regressed_batch_ids or len(stalled_learning_batch_ids) >= 2:
+        learning_governance_status = "REGRESSED"
+    elif stalled_learning_batch_ids:
+        learning_governance_status = "WARNING"
+    else:
+        learning_governance_status = "ON_CURVE"
+
+    return {
+        "total_batches": len(valid_batches),
+        "stalled_learning_batch_ids": stalled_learning_batch_ids,
+        "regressed_batch_ids": regressed_batch_ids,
+        "learning_governance_status": learning_governance_status,
+        "is_on_learning_curve": learning_governance_status == "ON_CURVE",
+        "recommendations": recommendations,
+    }
+
+
+ProjectEVMService.evaluate_evm_learning_curve_cost_improvement_and_productivity = staticmethod(
+    evaluate_evm_learning_curve_cost_improvement_and_productivity
+)
