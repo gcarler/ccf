@@ -5734,3 +5734,141 @@ def test_audit_retrospective_action_item_closure_and_process_improvement_custom_
         == audit_retrospective_action_item_closure_and_process_improvement(sample)
     )
     assert "audit_retrospective_action_item_closure_and_process_improvement" in mod.__all__
+
+
+def test_audit_procurement_warranty_claims_and_holdback_release_healthy():
+    """Contratos con retencion liberada solo sin defectos latentes, con lien waiver y fianza activa -> HEALTHY."""
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_procurement_warranty_claims_and_holdback_release,
+    )
+
+    contracts = [
+        {
+            "contract_id": "CNT-W-01",
+            "open_latent_defects_count": 0,
+            "max_claim_response_days": 0,
+            "holdback_released": True,
+            "warranty_bond_active": True,
+            "final_lien_waiver_signed": True,
+        },
+        {
+            "contract_id": "CNT-W-02",
+            "open_latent_defects_count": 2,
+            "max_claim_response_days": 4,
+            "holdback_released": False,
+            "warranty_bond_active": False,
+            "final_lien_waiver_signed": False,
+        },
+    ]
+    res = audit_procurement_warranty_claims_and_holdback_release(
+        contracts, max_warranty_response_days=5
+    )
+    assert res == {
+        "total_contracts_evaluated": 2,
+        "compliant_contracts_count": 2,
+        "premature_holdback_releases_count": 0,
+        "warranty_sla_breached_contracts_count": 0,
+        "unsecured_warranty_contracts_count": 0,
+        "warranty_governance_status": "HEALTHY",
+        "violations": [],
+    }
+    assert (
+        ProjectCCBService.audit_procurement_warranty_claims_and_holdback_release(
+            contracts, max_warranty_response_days=5
+        )
+        == res
+    )
+
+
+def test_audit_procurement_warranty_claims_and_holdback_release_premature_and_unsecured():
+    """Detecta liberacion prematura de retencion (con defectos, sin lien waiver o sin fianza) como CRITICAL."""
+    from backend.services.project_ccb_service import (
+        audit_procurement_warranty_claims_and_holdback_release,
+    )
+
+    res = audit_procurement_warranty_claims_and_holdback_release(
+        [
+            {
+                "contract_id": "CNT-PREMATURE-DEFECT",
+                "open_latent_defects_count": 1,
+                "max_claim_response_days": 2,
+                "holdback_released": True,
+                "warranty_bond_active": True,
+                "final_lien_waiver_signed": True,
+            },
+            {
+                "contract_id": "CNT-UNSECURED",
+                "open_latent_defects_count": 0,
+                "max_claim_response_days": 0,
+                "holdback_released": True,
+                "warranty_bond_active": False,
+                "final_lien_waiver_signed": True,
+            },
+        ],
+        max_warranty_response_days=5,
+    )
+    assert res["total_contracts_evaluated"] == 2
+    assert res["compliant_contracts_count"] == 0
+    assert res["premature_holdback_releases_count"] == 2
+    assert res["unsecured_warranty_contracts_count"] == 1
+    assert res["warranty_sla_breached_contracts_count"] == 0
+    assert res["warranty_governance_status"] == "CRITICAL"
+    assert len(res["violations"]) == 2
+    assert "premature_holdback_release" in res["violations"][0]["reasons"]
+    assert "unsecured_warranty_period" in res["violations"][1]["reasons"]
+
+
+def test_audit_procurement_warranty_claims_and_holdback_release_sla_breach():
+    """Detecta incumplimiento de SLA de respuesta de garantia (> max_warranty_response_days) como CRITICAL."""
+    from backend.services.project_ccb_service import (
+        audit_procurement_warranty_claims_and_holdback_release,
+    )
+
+    res = audit_procurement_warranty_claims_and_holdback_release(
+        [
+            {
+                "contract_id": "CNT-SLA-BREACH",
+                "open_latent_defects_count": 3,
+                "max_claim_response_days": 9,
+                "holdback_released": False,
+                "warranty_bond_active": True,
+                "final_lien_waiver_signed": False,
+            }
+        ],
+        max_warranty_response_days=5,
+    )
+    assert res["total_contracts_evaluated"] == 1
+    assert res["compliant_contracts_count"] == 0
+    assert res["premature_holdback_releases_count"] == 0
+    assert res["warranty_sla_breached_contracts_count"] == 1
+    assert res["unsecured_warranty_contracts_count"] == 0
+    assert res["warranty_governance_status"] == "CRITICAL"
+    assert res["violations"] == [
+        {
+            "contract_id": "CNT-SLA-BREACH",
+            "reasons": ["warranty_claim_sla_breach"],
+        }
+    ]
+
+
+def test_audit_procurement_warranty_claims_and_holdback_release_empty_and_export():
+    """Maneja entradas vacias o invalidas devolviendo HEALTHY y verifica exportacion en __all__."""
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        audit_procurement_warranty_claims_and_holdback_release,
+    )
+
+    assert "audit_procurement_warranty_claims_and_holdback_release" in mod.__all__
+    for payload in ([], None, "invalid"):
+        empty = audit_procurement_warranty_claims_and_holdback_release(payload)  # type: ignore[arg-type]
+        assert empty == {
+            "total_contracts_evaluated": 0,
+            "compliant_contracts_count": 0,
+            "premature_holdback_releases_count": 0,
+            "warranty_sla_breached_contracts_count": 0,
+            "unsecured_warranty_contracts_count": 0,
+            "warranty_governance_status": "HEALTHY",
+            "violations": [],
+        }
+

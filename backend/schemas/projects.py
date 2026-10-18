@@ -3790,6 +3790,7 @@ __all__ = [
     "validate_emv_decision_tree_and_contingency_reserve",
     "validate_parametric_estimation_model_fit",
     "validate_funding_limit_reconciliation_and_cash_flow_cliff",
+    "validate_business_case_npv_irr_and_payback_hurdle",
 ]
 
 
@@ -5666,4 +5667,51 @@ def validate_funding_limit_reconciliation_and_cash_flow_cliff(
         "funding_breach_periods": funding_breach_periods,
         "is_valid": True,
     }
+
+
+def validate_business_case_npv_irr_and_payback_hurdle(
+    net_present_value_npv: float,
+    internal_rate_of_return_irr_pct: float,
+    discount_rate_wacc_pct: float,
+    payback_period_months: float,
+    max_allowed_payback_months: float,
+    benefit_cost_ratio_bcr: float,
+    *,
+    is_mandatory_regulatory_compliance: bool = False,
+) -> dict[str, Any]:
+    """Valida indicadores financieros del Caso de Negocio (NPV, IRR vs WACC, BCR y Payback) segun PMI PMBOK §1.2 y §7.2."""
+    npv = float(net_present_value_npv)
+    irr = float(internal_rate_of_return_irr_pct)
+    wacc = float(discount_rate_wacc_pct)
+    payback = float(payback_period_months)
+    max_payback = float(max_allowed_payback_months)
+    bcr = float(benefit_cost_ratio_bcr)
+    is_mandatory = bool(is_mandatory_regulatory_compliance)
+
+    if wacc <= 0.0:
+        raise ValueError("discount_rate_wacc_pct debe ser > 0.0")
+    if payback <= 0.0:
+        raise ValueError("payback_period_months debe ser > 0.0")
+    if max_payback <= 0.0:
+        raise ValueError("max_allowed_payback_months debe ser > 0.0")
+    if bcr < 0.0:
+        raise ValueError("benefit_cost_ratio_bcr debe ser >= 0.0")
+
+    irr_spread_over_wacc_pct = round(irr - wacc, 2)
+
+    if not is_mandatory:
+        if npv < 0.0 or irr < wacc or bcr < 1.0 or payback > max_payback:
+            raise ValueError(
+                "El Caso de Negocio no supera la tasa de corte (hurdle rate) financiera PMI (NPV >= 0, IRR >= WACC, BCR >= 1.0 y payback <= max)"
+            )
+
+    return {
+        "net_present_value_npv": round(npv, 2),
+        "irr_spread_over_wacc_pct": irr_spread_over_wacc_pct,
+        "benefit_cost_ratio_bcr": round(bcr, 4),
+        "payback_period_months": round(payback, 2),
+        "is_mandatory_regulatory_compliance": is_mandatory,
+        "is_valid": True,
+    }
+
 

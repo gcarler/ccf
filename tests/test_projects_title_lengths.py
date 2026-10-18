@@ -4506,3 +4506,106 @@ def test_validate_funding_limit_reconciliation_and_cash_flow_cliff_domain_errors
 
     assert "validate_funding_limit_reconciliation_and_cash_flow_cliff" in mod.__all__
 
+
+def test_validate_business_case_npv_irr_and_payback_hurdle_healthy():
+    """Caso de negocio con NPV >= 0, IRR >= WACC, BCR >= 1.0 y payback en rango (PMBOK §1.2, §7.2)."""
+    from backend.schemas.projects import (
+        validate_business_case_npv_irr_and_payback_hurdle as fn,
+    )
+
+    res = fn(
+        net_present_value_npv=125000.456,
+        internal_rate_of_return_irr_pct=16.5,
+        discount_rate_wacc_pct=10.0,
+        payback_period_months=18.0,
+        max_allowed_payback_months=24.0,
+        benefit_cost_ratio_bcr=1.3525,
+    )
+    assert res == {
+        "net_present_value_npv": 125000.46,
+        "irr_spread_over_wacc_pct": 6.5,
+        "benefit_cost_ratio_bcr": 1.3525,
+        "payback_period_months": 18.0,
+        "is_mandatory_regulatory_compliance": False,
+        "is_valid": True,
+    }
+
+
+def test_validate_business_case_npv_irr_and_payback_hurdle_rejection_and_regulatory_waiver():
+    """Rechaza caso discrecional bajo hurdle rate pero permite exencion por cumplimiento regulatorio obligatorio."""
+    import pytest
+
+    from backend.schemas.projects import (
+        validate_business_case_npv_irr_and_payback_hurdle as fn,
+    )
+
+    # NPV negativo
+    with pytest.raises(ValueError, match="hurdle rate"):
+        fn(-5000.0, 12.0, 10.0, 18.0, 24.0, 1.1)
+
+    # IRR < WACC
+    with pytest.raises(ValueError, match="hurdle rate"):
+        fn(5000.0, 8.5, 10.0, 18.0, 24.0, 1.1)
+
+    # BCR < 1.0
+    with pytest.raises(ValueError, match="hurdle rate"):
+        fn(5000.0, 12.0, 10.0, 18.0, 24.0, 0.92)
+
+    # Payback > max_allowed_payback_months
+    with pytest.raises(ValueError, match="hurdle rate"):
+        fn(5000.0, 12.0, 10.0, 30.0, 24.0, 1.15)
+
+    # Exencion regulatoria obligatoria (is_mandatory_regulatory_compliance=True)
+    reg = fn(
+        -25000.0,
+        4.0,
+        10.0,
+        36.0,
+        24.0,
+        0.65,
+        is_mandatory_regulatory_compliance=True,
+    )
+    assert reg == {
+        "net_present_value_npv": -25000.0,
+        "irr_spread_over_wacc_pct": -6.0,
+        "benefit_cost_ratio_bcr": 0.65,
+        "payback_period_months": 36.0,
+        "is_mandatory_regulatory_compliance": True,
+        "is_valid": True,
+    }
+
+
+def test_validate_business_case_npv_irr_and_payback_hurdle_exact_boundaries():
+    """Acepta valores exactos en la frontera: NPV == 0, IRR == WACC, BCR == 1.0 y payback == max."""
+    from backend.schemas.projects import (
+        validate_business_case_npv_irr_and_payback_hurdle as fn,
+    )
+
+    res = fn(0.0, 10.0, 10.0, 24.0, 24.0, 1.0)
+    assert res["irr_spread_over_wacc_pct"] == 0.0
+    assert res["is_valid"] is True
+
+
+def test_validate_business_case_npv_irr_and_payback_hurdle_domain_errors_and_export():
+    """Valida errores de dominio (WACC <= 0, payback <= 0, max_payback <= 0, BCR < 0) y exportacion en __all__."""
+    import pytest
+
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_business_case_npv_irr_and_payback_hurdle as fn,
+    )
+
+    invalid_cases = [
+        (10000.0, 12.0, 0.0, 12.0, 24.0, 1.2),   # discount_rate_wacc_pct <= 0
+        (10000.0, 12.0, -5.0, 12.0, 24.0, 1.2),  # discount_rate_wacc_pct < 0
+        (10000.0, 12.0, 10.0, 0.0, 24.0, 1.2),   # payback_period_months <= 0
+        (10000.0, 12.0, 10.0, 12.0, 0.0, 1.2),   # max_allowed_payback_months <= 0
+        (10000.0, 12.0, 10.0, 12.0, 24.0, -0.1), # benefit_cost_ratio_bcr < 0
+    ]
+    for args in invalid_cases:
+        with pytest.raises(ValueError):
+            fn(*args)
+
+    assert "validate_business_case_npv_irr_and_payback_hurdle" in mod.__all__
+
+

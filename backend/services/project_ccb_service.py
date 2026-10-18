@@ -2824,6 +2824,7 @@ __all__ = [
     "audit_configuration_baseline_drift_and_hotfix_governance",
     "audit_quality_gate_peer_review_and_defect_density",
     "audit_retrospective_action_item_closure_and_process_improvement",
+    "audit_procurement_warranty_claims_and_holdback_release",
     "ProjectCCBService",
 ]
 
@@ -4416,3 +4417,96 @@ def audit_retrospective_action_item_closure_and_process_improvement(
 ProjectCCBService.audit_retrospective_action_item_closure_and_process_improvement = staticmethod(
     audit_retrospective_action_item_closure_and_process_improvement
 )
+
+
+def audit_procurement_warranty_claims_and_holdback_release(
+    contracts_warranty: list[dict[str, Any]],
+    *,
+    max_warranty_response_days: int = 5,
+) -> dict[str, Any]:
+    """Audita SLA de atencion de reclamos de garantia y liberacion de retenciones (holdback) segun PMI PMBOK §12.3 y §4.7."""
+    if not isinstance(contracts_warranty, list):
+        contracts_warranty = []
+
+    max_resp_days = int(max_warranty_response_days)
+    total_contracts_evaluated = 0
+    compliant_contracts_count = 0
+    premature_holdback_releases_count = 0
+    warranty_sla_breached_contracts_count = 0
+    unsecured_warranty_contracts_count = 0
+    violations: list[dict[str, Any]] = []
+
+    for raw in contracts_warranty:
+        if not isinstance(raw, dict):
+            continue
+        total_contracts_evaluated += 1
+        contract_id = (
+            str(raw.get("contract_id") or "").strip()
+            or f"CNT-{total_contracts_evaluated}"
+        )
+        open_latent_defects_count = int(raw.get("open_latent_defects_count", 0) or 0)
+        max_claim_response_days = int(raw.get("max_claim_response_days", 0) or 0)
+        holdback_released = bool(raw.get("holdback_released", False))
+        warranty_bond_active = bool(raw.get("warranty_bond_active", False))
+        final_lien_waiver_signed = bool(raw.get("final_lien_waiver_signed", False))
+
+        premature_holdback_release = holdback_released and (
+            open_latent_defects_count > 0
+            or (not final_lien_waiver_signed)
+            or (not warranty_bond_active)
+        )
+        warranty_sla_breach = (
+            open_latent_defects_count > 0 and max_claim_response_days > max_resp_days
+        )
+        unsecured_warranty = (not warranty_bond_active) and holdback_released
+
+        reasons: list[str] = []
+        if premature_holdback_release:
+            premature_holdback_releases_count += 1
+            reasons.append("premature_holdback_release")
+        if warranty_sla_breach:
+            warranty_sla_breached_contracts_count += 1
+            reasons.append("warranty_claim_sla_breach")
+        if unsecured_warranty:
+            unsecured_warranty_contracts_count += 1
+            reasons.append("unsecured_warranty_period")
+
+        if not reasons:
+            compliant_contracts_count += 1
+        else:
+            violations.append(
+                {
+                    "contract_id": contract_id,
+                    "reasons": reasons,
+                }
+            )
+
+    if (
+        premature_holdback_releases_count == 0
+        and warranty_sla_breached_contracts_count == 0
+        and unsecured_warranty_contracts_count == 0
+    ):
+        status = "HEALTHY"
+    elif (
+        premature_holdback_releases_count > 0
+        or warranty_sla_breached_contracts_count > 0
+    ):
+        status = "CRITICAL"
+    else:
+        status = "AT_RISK"
+
+    return {
+        "total_contracts_evaluated": total_contracts_evaluated,
+        "compliant_contracts_count": compliant_contracts_count,
+        "premature_holdback_releases_count": premature_holdback_releases_count,
+        "warranty_sla_breached_contracts_count": warranty_sla_breached_contracts_count,
+        "unsecured_warranty_contracts_count": unsecured_warranty_contracts_count,
+        "warranty_governance_status": status,
+        "violations": violations,
+    }
+
+
+ProjectCCBService.audit_procurement_warranty_claims_and_holdback_release = staticmethod(
+    audit_procurement_warranty_claims_and_holdback_release
+)
+

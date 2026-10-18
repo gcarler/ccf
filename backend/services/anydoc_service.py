@@ -3012,6 +3012,7 @@ __all__ = [
     "audit_markdown_mermaid_diagram_syntax_and_complexity",
     "audit_markdown_footnote_reference_coherence",
     "audit_markdown_definition_list_and_spec_hygiene",
+    "audit_markdown_horizontal_rule_and_section_break_hygiene",
     "AnyDocService",
     "AnydocService",
 ]
@@ -4958,3 +4959,161 @@ AnyDocService.audit_markdown_image_alt_text_and_asset_hygiene = staticmethod(
 
 
 
+
+
+def audit_markdown_horizontal_rule_and_section_break_hygiene(
+    markdown_text: str | None,
+    *,
+    max_consecutive_blank_lines: int = 2,
+) -> dict[str, object]:
+    """Audita separadores horizontales, ambigüedad Setext y líneas vacías (PMBOK §4.4).
+
+    Ignora bloques cercados (```/~~~) y el front-matter YAML inicial
+    (entre --- en la línea 1 y su cierre --- con al menos una línea YAML):
+    - total_horizontal_rules_count: líneas ^\\s*(-{3,}|\\*{3,}|_{3,})\\s*$.
+    - mixed_hr_styles_detected: mezcla de estilos '-'/'*'/'_'.
+    - consecutive_horizontal_rules_count: HRs sin contenido no vacío entre
+      ellas (adyacentes o separadas solo por líneas en blanco).
+    - ambiguous_setext_hr_lines: regla de guiones pegada bajo un párrafo
+      normal (no encabezado/lista/cita/tabla ni otra HR sin blanco entre).
+    - excessive_blank_line_runs_count: corridas de blancos que exceden
+      max_consecutive_blank_lines (cada corrida cuenta 1).
+    - is_section_break_hygiene_clean: sin mezcla, sin consecutivos, sin
+      corridas excesivas y sin ambigüedad Setext.
+    """
+    if not isinstance(markdown_text, str):
+        return {
+            "total_horizontal_rules_count": 0,
+            "mixed_hr_styles_detected": False,
+            "consecutive_horizontal_rules_count": 0,
+            "excessive_blank_line_runs_count": 0,
+            "ambiguous_setext_hr_lines": [],
+            "is_section_break_hygiene_clean": True,
+        }
+
+    hr_pattern = re.compile(r"^\s*(-{3,}|\*{3,}|_{3,})\s*$")
+    fence_pattern = re.compile(r"^\s*(```|~~~)")
+    heading_pattern = re.compile(r"^\s*#{1,6}\s")
+    list_pattern = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s")
+    quote_pattern = re.compile(r"^\s*>")
+    table_pattern = re.compile(r"^\s*\|")
+
+    lines = markdown_text.splitlines()
+
+    # Front-matter YAML inicial: --- en linea 1 y cierre --- con al menos
+    # una linea YAML no vacia en medio (degenerados tipo ---/--- o gap
+    # vacio no son front-matter).
+    front_matter_end_line = 0
+    if (
+        lines
+        and lines[0].strip() == "---"
+        and len(lines) > 2
+        and lines[1].strip()
+    ):
+        for i in range(1, len(lines)):
+            if lines[i].strip() == "---":
+                if i >= 2:
+                    front_matter_end_line = i + 1  # 1-based del cierre
+                break
+
+    total_horizontal_rules_count = 0
+    hr_styles: set[str] = set()
+    consecutive_horizontal_rules_count = 0
+    ambiguous_setext_hr_lines: list[int] = []
+    excessive_blank_line_runs_count = 0
+
+    in_code = False
+    fence_marker = ""
+    blank_run = 0
+    last_hr_line = 0
+    gap_has_content = False
+    last_line_is_normal_text = False
+
+    for line_no, raw in enumerate(lines, start=1):
+        stripped = raw.strip()
+
+        if line_no <= front_matter_end_line:
+            continue
+
+        match = fence_pattern.match(raw)
+        if match:
+            marker = match.group(1)
+            if not in_code:
+                in_code = True
+                fence_marker = marker
+                blank_run = 0
+                last_line_is_normal_text = False
+                if last_hr_line:
+                    # El fence es contenido: corta cualquier gap entre HRs.
+                    gap_has_content = True
+            elif marker == fence_marker:
+                in_code = False
+                fence_marker = ""
+            continue
+
+        if in_code:
+            continue
+
+        if not stripped:
+            blank_run += 1
+            last_line_is_normal_text = False
+            continue
+
+        if blank_run > int(max_consecutive_blank_lines):
+            excessive_blank_line_runs_count += 1
+        blank_run = 0
+
+        hr_match = hr_pattern.match(raw)
+        if hr_match:
+            total_horizontal_rules_count += 1
+            hr_styles.add(hr_match.group(1)[0])
+            if last_hr_line and not gap_has_content:
+                consecutive_horizontal_rules_count += 1
+            prev_is_normal_text = last_line_is_normal_text
+            last_hr_line = line_no
+            gap_has_content = False
+            last_line_is_normal_text = False
+
+            # Ambiguedad Setext: guiones pegados bajo parrafo normal.
+            if hr_match.group(1)[0] == "-" and line_no > 1 and prev_is_normal_text:
+                prev_raw = lines[line_no - 2]
+                if (
+                    prev_raw.strip()
+                    and not heading_pattern.match(prev_raw)
+                    and not list_pattern.match(prev_raw)
+                    and not quote_pattern.match(prev_raw)
+                    and not table_pattern.match(prev_raw)
+                    and not hr_pattern.match(prev_raw)
+                ):
+                    ambiguous_setext_hr_lines.append(line_no)
+            continue
+
+        last_line_is_normal_text = True
+        if last_hr_line:
+            gap_has_content = True
+
+    if blank_run > int(max_consecutive_blank_lines):
+        excessive_blank_line_runs_count += 1
+
+    mixed_hr_styles_detected = len(hr_styles) > 1
+
+    is_section_break_hygiene_clean = bool(
+        not mixed_hr_styles_detected
+        and consecutive_horizontal_rules_count == 0
+        and excessive_blank_line_runs_count == 0
+        and len(ambiguous_setext_hr_lines) == 0
+    )
+
+    return {
+        "total_horizontal_rules_count": total_horizontal_rules_count,
+        "mixed_hr_styles_detected": mixed_hr_styles_detected,
+        "consecutive_horizontal_rules_count": consecutive_horizontal_rules_count,
+        "excessive_blank_line_runs_count": excessive_blank_line_runs_count,
+        "ambiguous_setext_hr_lines": ambiguous_setext_hr_lines,
+        "is_section_break_hygiene_clean": is_section_break_hygiene_clean,
+    }
+
+
+AnyDocService.audit_markdown_horizontal_rule_and_section_break_hygiene = staticmethod(
+    audit_markdown_horizontal_rule_and_section_break_hygiene
+)

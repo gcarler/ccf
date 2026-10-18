@@ -4324,3 +4324,152 @@ def test_audit_markdown_image_alt_text_edge_cases_and_export_v2():
 
 
 
+
+
+def test_audit_markdown_horizontal_rule_and_section_break_hygiene_clean():
+    """Documento limpio: front-matter ignorado y HR unica bien separada."""
+    from backend.services.anydoc_service import (
+        audit_markdown_horizontal_rule_and_section_break_hygiene,
+    )
+
+    res = audit_markdown_horizontal_rule_and_section_break_hygiene(
+        "---\ntitle: Ok\n---\n\n## Seccion\n\nParrafo 1.\n\n---\n\nParrafo 2.\n"
+    )
+    assert res == {
+        "total_horizontal_rules_count": 1,
+        "mixed_hr_styles_detected": False,
+        "consecutive_horizontal_rules_count": 0,
+        "excessive_blank_line_runs_count": 0,
+        "ambiguous_setext_hr_lines": [],
+        "is_section_break_hygiene_clean": True,
+    }
+
+
+def test_audit_markdown_horizontal_rule_and_section_break_hygiene_hr_findings():
+    """Mezcla de estilos, HRs consecutivas (incl. separadas solo por blancos) y fences."""
+    from backend.services.anydoc_service import (
+        audit_markdown_horizontal_rule_and_section_break_hygiene,
+    )
+
+    mixed = audit_markdown_horizontal_rule_and_section_break_hygiene(
+        "## Titulo\n\n---\n***\n___\n\nTexto.\n"
+    )
+    assert mixed["total_horizontal_rules_count"] == 3
+    assert mixed["mixed_hr_styles_detected"] is True
+    assert mixed["consecutive_horizontal_rules_count"] == 2
+    assert mixed["is_section_break_hygiene_clean"] is False
+
+    cons = audit_markdown_horizontal_rule_and_section_break_hygiene(
+        "---\n---\n---\n\nTexto.\n"
+    )
+    assert cons["total_horizontal_rules_count"] == 3
+    assert cons["consecutive_horizontal_rules_count"] == 2
+    assert cons["mixed_hr_styles_detected"] is False
+    assert cons["is_section_break_hygiene_clean"] is False
+
+    # Blancos intermedios no separan: siguen siendo consecutivas (sin contenido entre ellas).
+    gapped = audit_markdown_horizontal_rule_and_section_break_hygiene(
+        "---\n\n---\n\nTexto.\n"
+    )
+    assert gapped["consecutive_horizontal_rules_count"] == 1
+
+    # HRs dentro de fences no cuentan.
+    fenced = audit_markdown_horizontal_rule_and_section_break_hygiene(
+        "```\n---\n***\n```\n\nTexto.\n"
+    )
+    assert fenced["total_horizontal_rules_count"] == 0
+    assert fenced["mixed_hr_styles_detected"] is False
+    assert fenced["is_section_break_hygiene_clean"] is True
+
+
+def test_audit_markdown_horizontal_rule_and_section_break_hygiene_setext_and_blanks():
+    """Ambiguedad Setext (parrafo+guiones pegados) y corridas de blancos excesivas."""
+    from backend.services.anydoc_service import (
+        audit_markdown_horizontal_rule_and_section_break_hygiene,
+    )
+
+    ambiguous = audit_markdown_horizontal_rule_and_section_break_hygiene(
+        "Parrafo normal.\n---\n\nTexto.\n"
+    )
+    assert ambiguous["ambiguous_setext_hr_lines"] == [2]
+    assert ambiguous["total_horizontal_rules_count"] == 1
+    assert ambiguous["is_section_break_hygiene_clean"] is False
+
+    # Precedentes seguros: encabezado, lista, cita, tabla o linea en blanco.
+    assert (
+        audit_markdown_horizontal_rule_and_section_break_hygiene("# Titulo\n---\n\nTexto.\n")[
+            "ambiguous_setext_hr_lines"
+        ]
+        == []
+    )
+    assert (
+        audit_markdown_horizontal_rule_and_section_break_hygiene("- item\n---\n\nTexto.\n")[
+            "ambiguous_setext_hr_lines"
+        ]
+        == []
+    )
+    assert (
+        audit_markdown_horizontal_rule_and_section_break_hygiene("> cita\n---\n\nTexto.\n")[
+            "ambiguous_setext_hr_lines"
+        ]
+        == []
+    )
+    assert (
+        audit_markdown_horizontal_rule_and_section_break_hygiene("| a |\n---\n\nTexto.\n")[
+            "ambiguous_setext_hr_lines"
+        ]
+        == []
+    )
+    assert (
+        audit_markdown_horizontal_rule_and_section_break_hygiene("Parrafo.\n\n---\n\nTexto.\n")[
+            "ambiguous_setext_hr_lines"
+        ]
+        == []
+    )
+
+    # Corridas de blancos: cada corrida que excede max cuenta 1 (borde: max permitido OK).
+    runs = audit_markdown_horizontal_rule_and_section_break_hygiene("A.\n\n\n\nB.\n\n\n\n\nC.\n")
+    assert runs["excessive_blank_line_runs_count"] == 2
+    assert runs["is_section_break_hygiene_clean"] is False
+    allowed = audit_markdown_horizontal_rule_and_section_break_hygiene("A.\n\n\nB.\n")
+    assert allowed["excessive_blank_line_runs_count"] == 0
+    single_run = audit_markdown_horizontal_rule_and_section_break_hygiene("A.\n\n\n\n\n\n\nB.\n")
+    assert single_run["excessive_blank_line_runs_count"] == 1
+    # Umbral custom: con max 4, la corrida de 6 ya no es excesiva... 6 > 4 si lo es.
+    custom = audit_markdown_horizontal_rule_and_section_break_hygiene(
+        "A.\n\n\n\n\n\n\nB.\n", max_consecutive_blank_lines=4
+    )
+    assert custom["excessive_blank_line_runs_count"] == 1
+
+
+def test_audit_markdown_horizontal_rule_and_section_break_hygiene_frontmatter_and_empty():
+    """Front-matter valido ignorado; degenerado (sin YAML) tratado como HRs; vacio/None + __all__."""
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_horizontal_rule_and_section_break_hygiene,
+    )
+    import backend.services.anydoc_service as mod
+
+    fm = audit_markdown_horizontal_rule_and_section_break_hygiene(
+        "---\ny: 1\nz: 2\n---\n\nTexto.\n\n***\n"
+    )
+    assert fm["total_horizontal_rules_count"] == 1
+    assert fm["ambiguous_setext_hr_lines"] == []
+
+    # Front-matter degenerado (---/--- sin YAML) no se come los guiones: son HRs.
+    degen = audit_markdown_horizontal_rule_and_section_break_hygiene("---\n---\n\nTexto.\n")
+    assert degen["total_horizontal_rules_count"] == 2
+    assert degen["consecutive_horizontal_rules_count"] == 1
+    assert degen["is_section_break_hygiene_clean"] is False
+
+    for payload in (None, "", 42):
+        empty = audit_markdown_horizontal_rule_and_section_break_hygiene(payload)
+        assert empty["total_horizontal_rules_count"] == 0
+        assert empty["is_section_break_hygiene_clean"] is True
+
+    sample = "Texto.\n\n---\n"
+    assert (
+        AnyDocService.audit_markdown_horizontal_rule_and_section_break_hygiene(sample)
+        == audit_markdown_horizontal_rule_and_section_break_hygiene(sample)
+    )
+    assert "audit_markdown_horizontal_rule_and_section_break_hygiene" in mod.__all__
