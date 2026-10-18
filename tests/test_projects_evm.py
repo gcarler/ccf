@@ -7018,5 +7018,143 @@ def test_evm_fx_currency_volatility_and_hedging_coverage_empty_and_binding():
     )
 
 
+def test_evaluate_evm_time_and_materials_nte_and_rate_blend_within_nte():
+    """Caso 1: Contratos T&M con tarifa controlada y proyección EAC dentro de NTE -> WITHIN_NTE."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_time_and_materials_nte_and_rate_blend,
+    )
+
+    contracts = [
+        {
+            "contract_id": "TM-01",
+            "nte_ceiling_amount": 100000.0,
+            "actual_hours_logged": 400.0,
+            "actual_billed_amount": 40000.0,
+            "baseline_blended_hourly_rate": 100.0,
+            "pct_scope_completed": 50.0,
+        },
+        {
+            "contract_id": "TM-02",
+            "nte_ceiling_amount": 50000.0,
+            "actual_hours_logged": 200.0,
+            "actual_billed_amount": 20400.0,
+            "baseline_blended_hourly_rate": 100.0,
+            "pct_scope_completed": 45.0,
+        },
+    ]
+    res = evaluate_evm_time_and_materials_nte_and_rate_blend(
+        contracts, nte_warning_threshold_pct=85.0, max_rate_drift_pct=10.0
+    )
+    assert res["total_contracts"] == 2
+    assert res["total_nte_ceiling"] == 150000.0
+    assert res["total_actual_billed"] == 60400.0
+    assert res["nte_breach_contract_ids"] == []
+    assert res["nte_threshold_warning_contract_ids"] == []
+    assert res["seniority_mix_rate_drift_contract_ids"] == []
+    assert res["tm_governance_status"] == "WITHIN_NTE"
+    assert res["recommendations"] == []
 
 
+def test_evaluate_evm_time_and_materials_nte_and_rate_blend_warning():
+    """Caso 2: Burn cercano al techo NTE (>=85%) o deriva de tarifa horaria (>10%) sin exceder NTE -> WARNING."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_time_and_materials_nte_and_rate_blend,
+    )
+
+    contracts = [
+        {
+            "contract_id": "TM-10",
+            "nte_ceiling_amount": 100000.0,
+            "actual_hours_logged": 880.0,
+            "actual_billed_amount": 88000.0,
+            "baseline_blended_hourly_rate": 100.0,
+            "pct_scope_completed": 90.0,
+        },
+        {
+            "contract_id": "TM-11",
+            "nte_ceiling_amount": 80000.0,
+            "actual_hours_logged": 200.0,
+            "actual_billed_amount": 25000.0,
+            "baseline_blended_hourly_rate": 100.0,
+            "pct_scope_completed": 40.0,
+        },
+    ]
+    res = evaluate_evm_time_and_materials_nte_and_rate_blend(
+        contracts, nte_warning_threshold_pct=85.0, max_rate_drift_pct=10.0
+    )
+    assert res["total_contracts"] == 2
+    assert res["nte_breach_contract_ids"] == []
+    assert res["nte_threshold_warning_contract_ids"] == ["TM-10"]
+    assert res["seniority_mix_rate_drift_contract_ids"] == ["TM-11"]
+    assert res["tm_governance_status"] == "WARNING"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_evaluate_evm_time_and_materials_nte_and_rate_blend_critical():
+    """Caso 3: Facturación real o proyección EAC excede el techo NTE -> CRITICAL."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_time_and_materials_nte_and_rate_blend,
+    )
+
+    contracts = [
+        {
+            "contract_id": "TM-20",
+            "nte_ceiling_amount": 100000.0,
+            "actual_hours_logged": 600.0,
+            "actual_billed_amount": 75000.0,
+            "baseline_blended_hourly_rate": 100.0,
+            "pct_scope_completed": 50.0,
+        },
+        {
+            "contract_id": "TM-21",
+            "nte_ceiling_amount": 50000.0,
+            "actual_hours_logged": 520.0,
+            "actual_billed_amount": 55000.0,
+            "baseline_blended_hourly_rate": 100.0,
+            "pct_scope_completed": 95.0,
+        },
+    ]
+    res = evaluate_evm_time_and_materials_nte_and_rate_blend(contracts)
+    assert res["total_contracts"] == 2
+    assert res["nte_breach_contract_ids"] == ["TM-20", "TM-21"]
+    assert res["seniority_mix_rate_drift_contract_ids"] == ["TM-20"]
+    assert res["tm_governance_status"] == "CRITICAL"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_evaluate_evm_time_and_materials_nte_and_rate_blend_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en ProjectEVMService + __all__."""
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_time_and_materials_nte_and_rate_blend,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = evaluate_evm_time_and_materials_nte_and_rate_blend(payload)  # type: ignore[arg-type]
+        assert empty["total_contracts"] == 0
+        assert empty["total_nte_ceiling"] == 0.0
+        assert empty["total_actual_billed"] == 0.0
+        assert empty["nte_breach_contract_ids"] == []
+        assert empty["nte_threshold_warning_contract_ids"] == []
+        assert empty["seniority_mix_rate_drift_contract_ids"] == []
+        assert empty["tm_governance_status"] == "WITHIN_NTE"
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "contract_id": "TM-99",
+            "nte_ceiling_amount": 50000.0,
+            "actual_hours_logged": 100.0,
+            "actual_billed_amount": 10000.0,
+            "baseline_blended_hourly_rate": 100.0,
+            "pct_scope_completed": 25.0,
+        }
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_time_and_materials_nte_and_rate_blend(sample)
+        == evaluate_evm_time_and_materials_nte_and_rate_blend(sample)
+    )
+    assert (
+        "evaluate_evm_time_and_materials_nte_and_rate_blend" in mod.__all__
+    )

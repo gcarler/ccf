@@ -5510,6 +5510,7 @@ __all__ = [
     "evaluate_evm_funding_limit_reconciliation_and_liquidity",
     "evaluate_evm_subcontractor_retainage_and_progress_billing",
     "evaluate_evm_fx_currency_volatility_and_hedging_coverage",
+    "evaluate_evm_time_and_materials_nte_and_rate_blend",
     "ProjectEVMService",
 ]
 
@@ -8257,6 +8258,130 @@ def evaluate_evm_fx_currency_volatility_and_hedging_coverage(
 
 ProjectEVMService.evaluate_evm_fx_currency_volatility_and_hedging_coverage = staticmethod(
     evaluate_evm_fx_currency_volatility_and_hedging_coverage
+)
+
+
+def evaluate_evm_time_and_materials_nte_and_rate_blend(
+    contracts: list[dict[str, Any]],
+    *,
+    nte_warning_threshold_pct: float = 85.0,
+    max_rate_drift_pct: float = 10.0,
+) -> dict[str, Any]:
+    """Evaluate PMI PMBOK §7.4 & §12.1 Time & Materials (T&M) NTE ceiling burn and blended hourly rate drift."""
+    nte_breach_contract_ids: list[str] = []
+    nte_threshold_warning_contract_ids: list[str] = []
+    seniority_mix_rate_drift_contract_ids: list[str] = []
+    recommendations: list[str] = []
+
+    valid_contracts = (
+        [
+            c
+            for c in contracts
+            if isinstance(c, dict) and str(c.get("contract_id", "")).strip()
+        ]
+        if isinstance(contracts, list)
+        else []
+    )
+
+    total_nte_ceiling = 0.0
+    total_actual_billed = 0.0
+
+    for contract in valid_contracts:
+        contract_id = str(contract.get("contract_id", "")).strip()
+        nte_ceiling_amount = float(contract.get("nte_ceiling_amount", 0.0) or 0.0)
+        actual_hours_logged = float(contract.get("actual_hours_logged", 0.0) or 0.0)
+        actual_billed_amount = float(contract.get("actual_billed_amount", 0.0) or 0.0)
+        baseline_blended_hourly_rate = float(
+            contract.get("baseline_blended_hourly_rate", 0.0) or 0.0
+        )
+        pct_scope_completed = float(contract.get("pct_scope_completed", 0.0) or 0.0)
+
+        total_nte_ceiling += nte_ceiling_amount
+        total_actual_billed += actual_billed_amount
+
+        actual_blended_rate = (
+            round(actual_billed_amount / actual_hours_logged, 2)
+            if actual_hours_logged > 0.0
+            else 0.0
+        )
+        rate_drift_pct = (
+            round(
+                ((actual_blended_rate - baseline_blended_hourly_rate) / baseline_blended_hourly_rate)
+                * 100.0,
+                2,
+            )
+            if actual_hours_logged > 0.0 and baseline_blended_hourly_rate > 0.0
+            else 0.0
+        )
+        nte_burn_pct = (
+            round((actual_billed_amount / nte_ceiling_amount) * 100.0, 2)
+            if nte_ceiling_amount > 0.0
+            else 0.0
+        )
+
+        if pct_scope_completed > 0.0:
+            projected_eac_tm = round(
+                actual_billed_amount / (pct_scope_completed / 100.0), 2
+            )
+        else:
+            projected_eac_tm = (
+                actual_billed_amount
+                if actual_billed_amount == 0.0
+                else round(nte_ceiling_amount * 2.0, 2)
+            )
+
+        if (
+            actual_billed_amount > nte_ceiling_amount
+            or projected_eac_tm > nte_ceiling_amount
+        ):
+            nte_breach_contract_ids.append(contract_id)
+
+        if (
+            nte_burn_pct >= nte_warning_threshold_pct
+            and actual_billed_amount <= nte_ceiling_amount
+        ):
+            nte_threshold_warning_contract_ids.append(contract_id)
+
+        if rate_drift_pct > max_rate_drift_pct:
+            seniority_mix_rate_drift_contract_ids.append(contract_id)
+
+    total_nte_ceiling = round(total_nte_ceiling, 2)
+    total_actual_billed = round(total_actual_billed, 2)
+
+    if nte_breach_contract_ids:
+        recommendations.append(
+            f"Initiate formal contract change orders or stop-work directives for T&M contracts breaching NTE ceilings: {', '.join(nte_breach_contract_ids)}."
+        )
+    if nte_threshold_warning_contract_ids:
+        recommendations.append(
+            f"Enforce pre-approval of remaining T&M hours on contracts approaching NTE ceiling (>={nte_warning_threshold_pct:.1f}%): {', '.join(nte_threshold_warning_contract_ids)}."
+        )
+    if seniority_mix_rate_drift_contract_ids:
+        recommendations.append(
+            f"Rebalance vendor staffing seniority pyramid to correct blended hourly rate drift (>{max_rate_drift_pct:.1f}%) on: {', '.join(seniority_mix_rate_drift_contract_ids)}."
+        )
+
+    if nte_breach_contract_ids:
+        tm_governance_status = "CRITICAL"
+    elif nte_threshold_warning_contract_ids or seniority_mix_rate_drift_contract_ids:
+        tm_governance_status = "WARNING"
+    else:
+        tm_governance_status = "WITHIN_NTE"
+
+    return {
+        "total_contracts": len(valid_contracts),
+        "total_nte_ceiling": total_nte_ceiling,
+        "total_actual_billed": total_actual_billed,
+        "nte_breach_contract_ids": nte_breach_contract_ids,
+        "nte_threshold_warning_contract_ids": nte_threshold_warning_contract_ids,
+        "seniority_mix_rate_drift_contract_ids": seniority_mix_rate_drift_contract_ids,
+        "tm_governance_status": tm_governance_status,
+        "recommendations": recommendations,
+    }
+
+
+ProjectEVMService.evaluate_evm_time_and_materials_nte_and_rate_blend = staticmethod(
+    evaluate_evm_time_and_materials_nte_and_rate_blend
 )
 
 

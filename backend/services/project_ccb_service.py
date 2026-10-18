@@ -2835,6 +2835,7 @@ __all__ = [
     "audit_quality_spc_control_chart_stability",
     "audit_defect_removal_efficiency_and_uat_readiness",
     "audit_cost_of_quality_conformance_and_failure_ratio",
+    "audit_technical_debt_interest_and_remediation_quota",
     "ProjectCCBService",
 ]
 
@@ -5772,6 +5773,113 @@ def audit_cost_of_quality_conformance_and_failure_ratio(
 
 ProjectCCBService.audit_cost_of_quality_conformance_and_failure_ratio = staticmethod(
     audit_cost_of_quality_conformance_and_failure_ratio
+)
+
+
+def audit_technical_debt_interest_and_remediation_quota(
+    debt_items: Any,
+    *,
+    total_iteration_capacity_hours: float,
+    allocated_remediation_hours: float,
+    min_remediation_quota_pct: float = 15.0,
+    max_debt_drag_pct: float = 20.0,
+) -> Dict[str, object]:
+    """Auditoría PMBOK 8.2 y Agile Practice Guide: deuda técnica.
+
+    Calcula el principal acumulado y el interés compuesto por iteración
+    (debt_drag_pct), compar los quotas de remediación presupuestados y
+    detecta deuda HIGH sin ticket de remediación y deuda con insolvencia
+    por compound (interest * age > principal).
+    """
+    entries = debt_items if isinstance(debt_items, list) else []
+    rows = [item for item in entries if isinstance(item, dict)]
+
+    total_principal_hours: float = 0.0
+    total_interest_hours_per_iteration: float = 0.0
+    untracked_high_debt_ids: List[str] = []
+    compounding_insolvency_ids: List[str] = []
+
+    for item in rows:
+        principal = item.get("principal_remediation_hours")
+        interest = item.get("recurring_interest_hours_per_iteration")
+        age = item.get("age_iterations")
+        principal_val = principal if isinstance(principal, (int, float)) else 0.0
+        interest_val = interest if isinstance(interest, (int, float)) else 0.0
+        age_val = age if isinstance(age, (int, float)) else 0
+
+        total_principal_hours += max(0.0, float(principal_val))
+        total_interest_hours_per_iteration += max(0.0, float(interest_val))
+
+        if item.get("severity") == "HIGH" and item.get("has_remediation_ticket", True) is False:
+            untracked_high_debt_ids.append(item.get("debt_id"))
+
+        if (
+            principal_val > 0
+            and interest_val * age_val > principal_val
+        ):
+            compounding_insolvency_ids.append(item.get("debt_id"))
+
+    total_principal_hours = round(total_principal_hours, 2)
+    total_interest_hours_per_iteration = round(total_interest_hours_per_iteration, 2)
+
+    if total_iteration_capacity_hours > 0:
+        debt_drag_pct = round(
+            (total_interest_hours_per_iteration / total_iteration_capacity_hours) * 100.0,
+            2,
+        )
+        actual_remediation_quota_pct = round(
+            (allocated_remediation_hours / total_iteration_capacity_hours) * 100.0,
+            2,
+        )
+    else:
+        debt_drag_pct = 0.0
+        actual_remediation_quota_pct = 0.0
+
+    if debt_drag_pct > max_debt_drag_pct or untracked_high_debt_ids:
+        debt_governance_status = "BANKRUPTCY_RISK"
+    elif (
+        total_principal_hours > 0 and actual_remediation_quota_pct < min_remediation_quota_pct
+    ) or compounding_insolvency_ids:
+        debt_governance_status = "WARNING"
+    else:
+        debt_governance_status = "SUSTAINABLE"
+
+    recommendations: List[str] = []
+    if debt_drag_pct > max_debt_drag_pct:
+        recommendations.append(
+            f"Reduce per-iteration debt drag: {debt_drag_pct}% exceeds max {max_debt_drag_pct}%"
+        )
+    if untracked_high_debt_ids:
+        recommendations.append(
+            "Create remediation tickets for untracked HIGH severity debts: "
+            + ", ".join(str(d) for d in untracked_high_debt_ids)
+        )
+    if total_principal_hours > 0 and actual_remediation_quota_pct < min_remediation_quota_pct:
+        recommendations.append(
+            f"Increase remediation quota: {actual_remediation_quota_pct}% is below min {min_remediation_quota_pct}%"
+        )
+    if compounding_insolvency_ids:
+        recommendations.append(
+            "Pay down debts whose compounded interest exceeds principal (interest * age > principal): "
+            + ", ".join(str(d) for d in compounding_insolvency_ids)
+        )
+
+    return {
+        "total_debt_items": len(rows),
+        "total_principal_hours": total_principal_hours,
+        "total_interest_hours_per_iteration": total_interest_hours_per_iteration,
+        "debt_drag_pct": debt_drag_pct,
+        "actual_remediation_quota_pct": actual_remediation_quota_pct,
+        "untracked_high_debt_ids": untracked_high_debt_ids,
+        "compounding_insolvency_ids": compounding_insolvency_ids,
+        "debt_governance_status": debt_governance_status,
+        "is_debt_sustainable": debt_governance_status == "SUSTAINABLE",
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.audit_technical_debt_interest_and_remediation_quota = staticmethod(
+    audit_technical_debt_interest_and_remediation_quota
 )
 
 

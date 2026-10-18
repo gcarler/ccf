@@ -6950,3 +6950,142 @@ def test_audit_wiki_communication_matrix_cadence_and_escalation_empty_and_bindin
     )
 
 
+def test_audit_wiki_slo_error_budget_and_runbook_linkage_healthy():
+    """Caso 1: Servicios cumpliendo SLO, burn rate controlado y runbooks vinculados -> HEALTHY."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_slo_error_budget_and_runbook_linkage,
+    )
+
+    catalog = [
+        {
+            "service_id": "SVC-AUTH",
+            "target_slo_pct": 99.9,
+            "current_sli_pct": 99.95,
+            "remaining_error_budget_pct": 65.0,
+            "burn_rate_24h": 0.8,
+            "has_linked_runbook": True,
+            "feature_freeze_enforced": False,
+        },
+        {
+            "service_id": "SVC-BILLING",
+            "target_slo_pct": 99.95,
+            "current_sli_pct": 99.98,
+            "remaining_error_budget_pct": 80.0,
+            "burn_rate_24h": 0.5,
+            "has_linked_runbook": True,
+            "feature_freeze_enforced": False,
+        },
+    ]
+    res = audit_wiki_slo_error_budget_and_runbook_linkage(
+        catalog, max_burn_rate_threshold=1.5, min_remaining_error_budget_pct=20.0
+    )
+    assert res["total_services"] == 2
+    assert res["slo_breached_service_ids"] == []
+    assert res["unfrozen_exhausted_budget_service_ids"] == []
+    assert res["high_burn_rate_service_ids"] == []
+    assert res["missing_runbook_service_ids"] == []
+    assert res["slo_governance_status"] == "HEALTHY"
+    assert res["recommendations"] == []
+
+
+def test_audit_wiki_slo_error_budget_and_runbook_linkage_warning():
+    """Caso 2: Burn rate elevado (>1.5x) o falta de runbook sin violar el SLO -> WARNING."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_slo_error_budget_and_runbook_linkage,
+    )
+
+    catalog = [
+        {
+            "service_id": "SVC-SEARCH",
+            "target_slo_pct": 99.5,
+            "current_sli_pct": 99.6,
+            "remaining_error_budget_pct": 15.0,
+            "burn_rate_24h": 2.4,
+            "has_linked_runbook": True,
+            "feature_freeze_enforced": False,
+        },
+        {
+            "service_id": "SVC-EXPORT",
+            "target_slo_pct": 99.0,
+            "current_sli_pct": 99.4,
+            "remaining_error_budget_pct": 55.0,
+            "burn_rate_24h": 1.0,
+            "has_linked_runbook": False,
+            "feature_freeze_enforced": False,
+        },
+    ]
+    res = audit_wiki_slo_error_budget_and_runbook_linkage(
+        catalog, max_burn_rate_threshold=1.5, min_remaining_error_budget_pct=20.0
+    )
+    assert res["total_services"] == 2
+    assert res["slo_breached_service_ids"] == []
+    assert res["unfrozen_exhausted_budget_service_ids"] == []
+    assert res["high_burn_rate_service_ids"] == ["SVC-SEARCH"]
+    assert res["missing_runbook_service_ids"] == ["SVC-EXPORT"]
+    assert res["slo_governance_status"] == "WARNING"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_wiki_slo_error_budget_and_runbook_linkage_critical():
+    """Caso 3: SLI por debajo de SLO y presupuesto agotado (<=0%) sin feature freeze -> CRITICAL."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_slo_error_budget_and_runbook_linkage,
+    )
+
+    catalog = [
+        {
+            "service_id": "SVC-PAYMENTS",
+            "target_slo_pct": 99.99,
+            "current_sli_pct": 99.85,
+            "remaining_error_budget_pct": 0.0,
+            "burn_rate_24h": 4.2,
+            "has_linked_runbook": False,
+            "feature_freeze_enforced": False,
+        }
+    ]
+    res = audit_wiki_slo_error_budget_and_runbook_linkage(catalog)
+    assert res["total_services"] == 1
+    assert res["slo_breached_service_ids"] == ["SVC-PAYMENTS"]
+    assert res["unfrozen_exhausted_budget_service_ids"] == ["SVC-PAYMENTS"]
+    assert res["high_burn_rate_service_ids"] == ["SVC-PAYMENTS"]
+    assert res["missing_runbook_service_ids"] == ["SVC-PAYMENTS"]
+    assert res["slo_governance_status"] == "CRITICAL"
+    assert len(res["recommendations"]) >= 3
+
+
+def test_audit_wiki_slo_error_budget_and_runbook_linkage_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en WikiPMIService + __all__."""
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_slo_error_budget_and_runbook_linkage,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_wiki_slo_error_budget_and_runbook_linkage(payload)  # type: ignore[arg-type]
+        assert empty["total_services"] == 0
+        assert empty["slo_breached_service_ids"] == []
+        assert empty["unfrozen_exhausted_budget_service_ids"] == []
+        assert empty["high_burn_rate_service_ids"] == []
+        assert empty["missing_runbook_service_ids"] == []
+        assert empty["slo_governance_status"] == "HEALTHY"
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "service_id": "SVC-99",
+            "target_slo_pct": 99.9,
+            "current_sli_pct": 99.95,
+            "remaining_error_budget_pct": 75.0,
+            "burn_rate_24h": 0.5,
+            "has_linked_runbook": True,
+            "feature_freeze_enforced": False,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_slo_error_budget_and_runbook_linkage(sample)
+        == audit_wiki_slo_error_budget_and_runbook_linkage(sample)
+    )
+    assert (
+        "audit_wiki_slo_error_budget_and_runbook_linkage" in mod.__all__
+    )

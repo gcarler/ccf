@@ -2518,6 +2518,7 @@ __all__ = [
     "audit_wiki_adr_superseded_chain_and_consequences_hygiene",
     "audit_wiki_onboarding_playbook_and_knowledge_transfer_readiness",
     "audit_wiki_communication_matrix_cadence_and_escalation",
+    "audit_wiki_slo_error_budget_and_runbook_linkage",
     "WikiPMIService",
 ]
 
@@ -5424,4 +5425,102 @@ def audit_wiki_communication_matrix_cadence_and_escalation(
 
 WikiPMIService.audit_wiki_communication_matrix_cadence_and_escalation = staticmethod(
     audit_wiki_communication_matrix_cadence_and_escalation
+)
+
+
+def audit_wiki_slo_error_budget_and_runbook_linkage(
+    services_catalog: list[dict[str, Any]],
+    *,
+    max_burn_rate_threshold: float = 1.5,
+    min_remaining_error_budget_pct: float = 20.0,
+) -> dict[str, Any]:
+    """Audit PMI PMBOK §8.2 & §4.4 Service Level Objectives (SLO), error budget burn rate, and runbook linkage."""
+    slo_breached_service_ids: list[str] = []
+    unfrozen_exhausted_budget_service_ids: list[str] = []
+    high_burn_rate_service_ids: list[str] = []
+    missing_runbook_service_ids: list[str] = []
+    recommendations: list[str] = []
+
+    valid_services = (
+        [
+            s
+            for s in services_catalog
+            if isinstance(s, dict) and str(s.get("service_id", "")).strip()
+        ]
+        if isinstance(services_catalog, list)
+        else []
+    )
+
+    for svc in valid_services:
+        service_id = str(svc.get("service_id", "")).strip()
+        target_slo_pct = float(svc.get("target_slo_pct", 99.9) or 99.9)
+        current_sli_pct = float(
+            svc.get("current_sli_pct", target_slo_pct)
+            if svc.get("current_sli_pct") is not None
+            else target_slo_pct
+        )
+        remaining_error_budget_pct = float(
+            svc.get("remaining_error_budget_pct", 100.0)
+            if svc.get("remaining_error_budget_pct") is not None
+            else 100.0
+        )
+        burn_rate_24h = float(svc.get("burn_rate_24h", 0.0) or 0.0)
+        has_linked_runbook = (
+            bool(svc.get("has_linked_runbook", True))
+            if svc.get("has_linked_runbook") is not None
+            else True
+        )
+        feature_freeze_enforced = bool(svc.get("feature_freeze_enforced", False))
+
+        if current_sli_pct < target_slo_pct or remaining_error_budget_pct <= 0.0:
+            slo_breached_service_ids.append(service_id)
+
+        if remaining_error_budget_pct <= 0.0 and not feature_freeze_enforced:
+            unfrozen_exhausted_budget_service_ids.append(service_id)
+
+        if burn_rate_24h > max_burn_rate_threshold or (
+            0.0 < remaining_error_budget_pct < min_remaining_error_budget_pct
+        ):
+            high_burn_rate_service_ids.append(service_id)
+
+        if not has_linked_runbook:
+            missing_runbook_service_ids.append(service_id)
+
+    if slo_breached_service_ids:
+        recommendations.append(
+            f"Prioritize reliability remediation for services breaching SLO or error budget: {', '.join(slo_breached_service_ids)}."
+        )
+    if unfrozen_exhausted_budget_service_ids:
+        recommendations.append(
+            f"Enforce immediate feature freeze on services with exhausted error budgets: {', '.join(unfrozen_exhausted_budget_service_ids)}."
+        )
+    if high_burn_rate_service_ids:
+        recommendations.append(
+            f"Investigate elevated 24h error budget burn rate or low remaining budget on: {', '.join(high_burn_rate_service_ids)}."
+        )
+    if missing_runbook_service_ids:
+        recommendations.append(
+            f"Link verified incident response runbooks in the Wiki for services: {', '.join(missing_runbook_service_ids)}."
+        )
+
+    if slo_breached_service_ids or unfrozen_exhausted_budget_service_ids:
+        slo_governance_status = "CRITICAL"
+    elif high_burn_rate_service_ids or missing_runbook_service_ids:
+        slo_governance_status = "WARNING"
+    else:
+        slo_governance_status = "HEALTHY"
+
+    return {
+        "total_services": len(valid_services),
+        "slo_breached_service_ids": slo_breached_service_ids,
+        "unfrozen_exhausted_budget_service_ids": unfrozen_exhausted_budget_service_ids,
+        "high_burn_rate_service_ids": high_burn_rate_service_ids,
+        "missing_runbook_service_ids": missing_runbook_service_ids,
+        "slo_governance_status": slo_governance_status,
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_slo_error_budget_and_runbook_linkage = staticmethod(
+    audit_wiki_slo_error_budget_and_runbook_linkage
 )

@@ -7375,3 +7375,180 @@ def test_audit_cost_of_quality_conformance_and_failure_ratio_empty_and_binding()
     )
     assert "audit_cost_of_quality_conformance_and_failure_ratio" in mod.__all__
 
+
+
+def test_audit_technical_debt_interest_and_remediation_quota_bankruptcy_paths():
+    """Caso 1: drag sobre umbral y deuda HIGH sin ticket -> BANKRUPTCY_RISK."""
+    from backend.services.project_ccb_service import (
+        audit_technical_debt_interest_and_remediation_quota,
+    )
+
+    res = audit_technical_debt_interest_and_remediation_quota(
+        [
+            {
+                "debt_id": "TD-01",
+                "principal_remediation_hours": 40.0,
+                "recurring_interest_hours_per_iteration": 8.0,
+                "age_iterations": 2,
+                "has_remediation_ticket": False,
+                "severity": "HIGH",
+            },
+            {
+                "debt_id": "TD-02",
+                "principal_remediation_hours": 3.0,
+                "recurring_interest_hours_per_iteration": 4.0,
+                "age_iterations": 1,
+                "has_remediation_ticket": True,
+                "severity": "MEDIUM",
+            },
+        ],
+        total_iteration_capacity_hours=40.0,
+        allocated_remediation_hours=20.0,
+    )
+    assert res["total_debt_items"] == 2
+    assert res["total_principal_hours"] == 43.0
+    assert res["total_interest_hours_per_iteration"] == 12.0
+    assert res["debt_drag_pct"] == 30.0
+    assert res["actual_remediation_quota_pct"] == 50.0
+    assert res["untracked_high_debt_ids"] == ["TD-01"]
+    # TD-01: 8.0 * 2 = 16.0 <= 40.0 principal, no insolvente.
+    # TD-02: 4.0 * 1 = 4.0 > 3.0 principal, insolvente.
+    assert res["compounding_insolvency_ids"] == ["TD-02"]
+    assert res["debt_governance_status"] == "BANKRUPTCY_RISK"
+    assert res["is_debt_sustainable"] is False
+    # Drag 30% > max 20%, TD-01 HIGH sin ticket y TD-02 insolvente.
+    assert len(res["recommendations"]) == 3
+
+
+def test_audit_technical_debt_interest_and_remediation_quota_warning_paths():
+    """Caso 2: cuota de remediación baja con principal > 0 y/o insolvencia compuesta -> WARNING."""
+    from backend.services.project_ccb_service import (
+        audit_technical_debt_interest_and_remediation_quota,
+    )
+
+    res_quota = audit_technical_debt_interest_and_remediation_quota(
+        [
+            {
+                "debt_id": "TD-10",
+                "principal_remediation_hours": 100.0,
+                "recurring_interest_hours_per_iteration": 2.0,
+                "age_iterations": 0,
+                "severity": "LOW",
+            },
+        ],
+        total_iteration_capacity_hours=100.0,
+        allocated_remediation_hours=10.0,
+    )
+    assert res_quota["debt_drag_pct"] == 2.0
+    assert res_quota["actual_remediation_quota_pct"] == 10.0
+    # 10% < min 15% con principal > 0 -> WARNING.
+    assert res_quota["debt_governance_status"] == "WARNING"
+    assert res_quota["compounding_insolvency_ids"] == []
+
+    res_insolvency = audit_technical_debt_interest_and_remediation_quota(
+        [
+            {
+                "debt_id": "TD-11",
+                "principal_remediation_hours": 20.0,
+                "recurring_interest_hours_per_iteration": 3.0,
+                "age_iterations": 8,
+                "severity": "MEDIUM",
+            },
+        ],
+        total_iteration_capacity_hours=100.0,
+        allocated_remediation_hours=20.0,
+    )
+    # 3.0 * 8 = 24.0 > 20.0 principal; cuota 20% >= 15%.
+    assert res_insolvency["compounding_insolvency_ids"] == ["TD-11"]
+    assert res_insolvency["debt_governance_status"] == "WARNING"
+    assert res_insolvency["is_debt_sustainable"] is False
+
+
+def test_audit_technical_debt_interest_and_remediation_quota_sustainable_and_zero_capacity():
+    """Caso 3: sin deuda, drag 0 y cuota suficiente -> SUSTAINABLE; capacidad 0 no explota."""
+    from backend.services.project_ccb_service import (
+        audit_technical_debt_interest_and_remediation_quota,
+    )
+
+    res = audit_technical_debt_interest_and_remediation_quota(
+        [
+            {
+                "debt_id": "TD-20",
+                "principal_remediation_hours": 5.0,
+                "recurring_interest_hours_per_iteration": 0.5,
+                "age_iterations": 1,
+                "severity": "LOW",
+            },
+        ],
+        total_iteration_capacity_hours=100.0,
+        allocated_remediation_hours=20.0,
+    )
+    assert res["total_debt_items"] == 1
+    assert res["total_principal_hours"] == 5.0
+    assert res["total_interest_hours_per_iteration"] == 0.5
+    assert res["debt_drag_pct"] == 0.5
+    assert res["actual_remediation_quota_pct"] == 20.0
+    assert res["debt_governance_status"] == "SUSTAINABLE"
+    assert res["is_debt_sustainable"] is True
+    assert res["recommendations"] == []
+
+    empty_capacity = audit_technical_debt_interest_and_remediation_quota(
+        [],
+        total_iteration_capacity_hours=0.0,
+        allocated_remediation_hours=0.0,
+    )
+    assert empty_capacity["total_debt_items"] == 0
+    assert empty_capacity["debt_drag_pct"] == 0.0
+    assert empty_capacity["actual_remediation_quota_pct"] == 0.0
+    # Sin principal ni drag: SUSTAINABLE pese a cuota 0/0.
+    assert empty_capacity["debt_governance_status"] == "SUSTAINABLE"
+
+
+def test_audit_technical_debt_interest_and_remediation_quota_invalid_and_binding():
+    """Caso 4: entradas no-lista/no-dict y binding en ProjectCCBService + __all__."""
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_technical_debt_interest_and_remediation_quota,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_technical_debt_interest_and_remediation_quota(
+            payload,  # type: ignore[arg-type]
+            total_iteration_capacity_hours=100.0,
+            allocated_remediation_hours=20.0,
+        )
+        assert empty["total_debt_items"] == 0
+        assert empty["total_principal_hours"] == 0.0
+        assert empty["total_interest_hours_per_iteration"] == 0.0
+        assert empty["debt_drag_pct"] == 0.0
+        assert empty["actual_remediation_quota_pct"] == 20.0
+        assert empty["untracked_high_debt_ids"] == []
+        assert empty["compounding_insolvency_ids"] == []
+        # Cuota 20% >= min 15% y sin deuda -> SUSTAINABLE.
+        assert empty["debt_governance_status"] == "SUSTAINABLE"
+        assert empty["is_debt_sustainable"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "debt_id": "TD-30",
+            "principal_remediation_hours": 1.0,
+            "recurring_interest_hours_per_iteration": 0.0,
+            "age_iterations": 0,
+            "severity": "LOW",
+        },
+    ]
+    assert (
+        ProjectCCBService.audit_technical_debt_interest_and_remediation_quota(
+            sample,
+            total_iteration_capacity_hours=10.0,
+            allocated_remediation_hours=2.0,
+        )
+        == audit_technical_debt_interest_and_remediation_quota(
+            sample,
+            total_iteration_capacity_hours=10.0,
+            allocated_remediation_hours=2.0,
+        )
+    )
+    assert "audit_technical_debt_interest_and_remediation_quota" in mod.__all__
