@@ -975,6 +975,16 @@ class ProjectLifecyclePMIService:
     ) -> dict:
         return audit_stakeholder_engagement_transition_gaps(stakeholders)
 
+    @staticmethod
+    def audit_project_tailoring_and_opa_compliance(
+        tailoring_decisions: Optional[list[dict]],
+        mandatory_opa_templates: Optional[list[str]] = None,
+    ) -> dict:
+        return audit_project_tailoring_and_opa_compliance(
+            tailoring_decisions,
+            mandatory_opa_templates=mandatory_opa_templates,
+        )
+
 
 def audit_charter_measurable_objectives(
     objectives: list[dict[str, Any]] | None,
@@ -1515,6 +1525,94 @@ def audit_stakeholder_engagement_transition_gaps(
     }
 
 
+def audit_project_tailoring_and_opa_compliance(
+    tailoring_decisions: Optional[list[dict]],
+    mandatory_opa_templates: Optional[list[str]] = None,
+) -> dict:
+    """Audita las decisiones de adaptación metodológica (Tailoring) y adopción de OPAs según PMI PMBOK §2.2 / §4.1."""
+    items = [item for item in (tailoring_decisions or []) if isinstance(item, dict)]
+    total_tailoring_decisions = len(items)
+
+    unjustified_or_unapproved_areas: list[str] = []
+    adopted_opas_lower: set[str] = set()
+
+    for idx, item in enumerate(items, start=1):
+        raw_area = (
+            item.get("process_area")
+            if item.get("process_area") is not None
+            else item.get("knowledge_area")
+        )
+        area_name = (
+            str(raw_area).strip()
+            if raw_area is not None and str(raw_area).strip()
+            else f"AREA-{idx}"
+        )
+
+        justification_clean = str(item.get("justification") or "").strip()
+        pmo_approved = bool(item.get("pmo_approved", False))
+
+        if not pmo_approved or len(justification_clean) < 10:
+            unjustified_or_unapproved_areas.append(area_name)
+
+        opa_ref = str(item.get("opa_template_ref") or "").strip()
+        if opa_ref:
+            adopted_opas_lower.add(opa_ref.lower())
+
+    missing_mandatory_opas: list[str] = []
+    for raw_tpl in mandatory_opa_templates or []:
+        if not isinstance(raw_tpl, str):
+            continue
+        tpl_clean = raw_tpl.strip()
+        if not tpl_clean:
+            continue
+        if tpl_clean.lower() not in adopted_opas_lower:
+            missing_mandatory_opas.append(tpl_clean)
+
+    compliance_rate_pct = (
+        round(
+            (
+                (total_tailoring_decisions - len(unjustified_or_unapproved_areas))
+                / total_tailoring_decisions
+            )
+            * 100.0,
+            2,
+        )
+        if total_tailoring_decisions > 0
+        else 0.0
+    )
+
+    recommendations: list[str] = []
+    if total_tailoring_decisions == 0 and len(missing_mandatory_opas) == 0:
+        tailoring_posture = "NO_TAILORING_RECORDED"
+        recommendations.append(
+            "Documentar las decisiones de adaptación metodológica (Tailoring) y plantillas OPA requeridas según el ciclo de vida del proyecto (PMBOK §2.2 / §4.1)."
+        )
+    elif len(missing_mandatory_opas) > 0:
+        tailoring_posture = "MISSING_MANDATORY_OPA_TEMPLATES"
+        recommendations.append(
+            f"Vincular e incorporar las plantillas OPA obligatorias faltantes ({', '.join(missing_mandatory_opas)}) en el plan de dirección del proyecto (PMBOK §2.2)."
+        )
+    elif len(unjustified_or_unapproved_areas) > 0:
+        tailoring_posture = "UNAPPROVED_TAILORING_DEVIATIONS"
+        recommendations.append(
+            f"Formalizar la justificación técnica (>=10 caracteres) y obtener aprobación de la PMO para las áreas adaptadas ({', '.join(unjustified_or_unapproved_areas)}) conforme a PMBOK §4.1."
+        )
+    else:
+        tailoring_posture = "GOVERNED_METHODOLOGY_TAILORING"
+        recommendations.append(
+            "Adaptación metodológica gobernada y alineada con los Activos de los Procesos de la Organización (OPAs) y directrices PMO (PMBOK §2.2 / §4.1)."
+        )
+
+    return {
+        "total_tailoring_decisions": total_tailoring_decisions,
+        "unjustified_or_unapproved_areas": unjustified_or_unapproved_areas,
+        "missing_mandatory_opas": missing_mandatory_opas,
+        "compliance_rate_pct": compliance_rate_pct,
+        "tailoring_posture": tailoring_posture,
+        "recommendations": recommendations,
+    }
+
+
 __all__ = [
     "build_pmo_portfolio_matrix",
     "build_governance_summary",
@@ -1541,7 +1639,6 @@ __all__ = [
     "audit_assumption_and_constraint_log",
     "audit_project_procurement_and_handover_closeout",
     "audit_stakeholder_engagement_transition_gaps",
+    "audit_project_tailoring_and_opa_compliance",
     "ProjectLifecyclePMIService",
 ]
-
-

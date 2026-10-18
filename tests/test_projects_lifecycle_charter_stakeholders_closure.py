@@ -1400,4 +1400,114 @@ def test_stakeholder_engagement_transition_gaps_empty_matrix():
         }
 
 
+def test_audit_project_tailoring_and_opa_compliance_governed():
+    """Decisiones aprobadas con justificación >= 10 chars y OPAs obligatorias cubiertas -> GOVERNED_METHODOLOGY_TAILORING."""
+    decisions = [
+        {
+            "process_area": "Scope & WBS",
+            "approach": "HYBRID",
+            "justification": "Iteraciones quincenales para UI con línea base fija de infraestructura.",
+            "pmo_approved": True,
+            "opa_template_ref": "OPA-TPL-CHARTER-V3",
+        },
+        {
+            "knowledge_area": "Schedule Management",
+            "approach": "agile",
+            "justification": "Tablero Kanban acoplado a hitos trimestrales del comité directivo.",
+            "pmo_approved": True,
+            "opa_template_ref": "opa-tpl-raid-v2",
+        },
+    ]
+    mandatory = ["OPA-TPL-CHARTER-V3", "OPA-TPL-RAID-V2"]
 
+    res = project_lifecycle_pmi_service.audit_project_tailoring_and_opa_compliance(
+        decisions, mandatory_opa_templates=mandatory
+    )
+    assert res["total_tailoring_decisions"] == 2
+    assert res["unjustified_or_unapproved_areas"] == []
+    assert res["missing_mandatory_opas"] == []
+    assert res["compliance_rate_pct"] == 100.0
+    assert res["tailoring_posture"] == "GOVERNED_METHODOLOGY_TAILORING"
+    assert len(res["recommendations"]) == 1
+    assert (
+        project_lifecycle_pmi_service.ProjectLifecyclePMIService.audit_project_tailoring_and_opa_compliance(
+            decisions, mandatory_opa_templates=mandatory
+        )
+        == res
+    )
+
+
+def test_audit_project_tailoring_and_opa_compliance_missing_mandatory_opas():
+    """Plantillas OPA obligatorias no referenciadas -> MISSING_MANDATORY_OPA_TEMPLATES."""
+    decisions = [
+        {
+            "process_area": "Cost & EVM",
+            "approach": "PREDICTIVE",
+            "justification": "Control mensual de valor ganado exigido por patrocinador financiero.",
+            "pmo_approved": True,
+            "opa_template_ref": "OPA-TPL-EVM-01",
+        },
+    ]
+    mandatory = ["OPA-TPL-EVM-01", "OPA-TPL-CLOSURE-04"]
+
+    res = project_lifecycle_pmi_service.audit_project_tailoring_and_opa_compliance(
+        decisions, mandatory_opa_templates=mandatory
+    )
+    assert res["total_tailoring_decisions"] == 1
+    assert res["unjustified_or_unapproved_areas"] == []
+    assert res["missing_mandatory_opas"] == ["OPA-TPL-CLOSURE-04"]
+    assert res["compliance_rate_pct"] == 100.0
+    assert res["tailoring_posture"] == "MISSING_MANDATORY_OPA_TEMPLATES"
+    assert any("OPA-TPL-CLOSURE-04" in r for r in res["recommendations"])
+
+
+def test_audit_project_tailoring_and_opa_compliance_unapproved_deviations():
+    """Áreas sin aprobación PMO o con justificación < 10 chars -> UNAPPROVED_TAILORING_DEVIATIONS."""
+    decisions = [
+        {
+            "process_area": "Quality Assurance",
+            "approach": "HYBRID",
+            "justification": "Revisiones cruzadas automatizadas en CI/CD y auditoría DoD por sprint.",
+            "pmo_approved": True,
+            "opa_template_ref": "OPA-QA-01",
+        },
+        {
+            "process_area": "Risk Management",
+            "approach": "AGILE",
+            "justification": "Corto",
+            "pmo_approved": True,
+            "opa_template_ref": "OPA-RISK-02",
+        },
+        {
+            "knowledge_area": "Procurement",
+            "approach": "PREDICTIVE",
+            "justification": "Licitación directa abreviada por proveedor único homologado.",
+            "pmo_approved": False,
+        },
+    ]
+
+    res = project_lifecycle_pmi_service.audit_project_tailoring_and_opa_compliance(
+        decisions, mandatory_opa_templates=["OPA-QA-01"]
+    )
+    assert res["total_tailoring_decisions"] == 3
+    assert res["unjustified_or_unapproved_areas"] == ["Risk Management", "Procurement"]
+    assert res["missing_mandatory_opas"] == []
+    assert res["compliance_rate_pct"] == 33.33
+    assert res["tailoring_posture"] == "UNAPPROVED_TAILORING_DEVIATIONS"
+    assert any(
+        "Risk Management" in r and "Procurement" in r for r in res["recommendations"]
+    )
+
+
+def test_audit_project_tailoring_and_opa_compliance_no_tailoring_recorded():
+    """Sin decisiones ni OPAs obligatorias pendientes -> NO_TAILORING_RECORDED."""
+    for payload in (None, [], ["invalid", 42]):
+        res = project_lifecycle_pmi_service.audit_project_tailoring_and_opa_compliance(
+            payload, mandatory_opa_templates=None  # type: ignore[arg-type]
+        )
+        assert res["total_tailoring_decisions"] == 0
+        assert res["unjustified_or_unapproved_areas"] == []
+        assert res["missing_mandatory_opas"] == []
+        assert res["compliance_rate_pct"] == 0.0
+        assert res["tailoring_posture"] == "NO_TAILORING_RECORDED"
+        assert len(res["recommendations"]) == 1
