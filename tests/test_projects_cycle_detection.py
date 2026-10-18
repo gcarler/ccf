@@ -303,3 +303,105 @@ def test_update_task_validates_phase_bounds(db_session, test_project):
             task.id,
             ProjectTaskUpdate(due_date=phase_end + timedelta(days=5)),
         )
+
+
+# ── PDM Network Topology Analyzer (PMI 6.3) ───────────────────────────────────
+
+
+def test_pdm_topology_empty_graph():
+    """Grafo vacío: sin nodos ni aristas, clasificación 'linear_or_empty'."""
+    from backend.crud.projects import analyze_pdm_network_topology
+
+    result = analyze_pdm_network_topology([])
+    assert result == {
+        "total_nodes": 0,
+        "total_edges": 0,
+        "has_cycle": False,
+        "max_in_degree": 0,
+        "max_out_degree": 0,
+        "merge_nodes_count": 0,
+        "burst_nodes_count": 0,
+        "network_complexity_level": "linear_or_empty",
+    }
+    assert result["merge_nodes_count"] == 0
+    assert result["burst_nodes_count"] == 0
+
+
+def test_pdm_topology_linear_chain():
+    """Cadena lineal A -> B -> C: sin convergencia ni divergencia."""
+    from backend.crud.projects import analyze_pdm_network_topology
+
+    result = analyze_pdm_network_topology([("A", "B"), ("B", "C")])
+    assert result["total_nodes"] == 3
+    assert result["total_edges"] == 2
+    assert result["has_cycle"] is False
+    assert result["max_in_degree"] == 1
+    assert result["max_out_degree"] == 1
+    assert result["merge_nodes_count"] == 0
+    assert result["burst_nodes_count"] == 0
+    assert result["network_complexity_level"] == "linear_or_empty"
+
+
+def test_pdm_topology_diamond_dag_moderate():
+    """Diamante DAG: 1 punto de convergencia (D) y 1 de divergencia (A) → 'moderate'."""
+    from backend.crud.projects import analyze_pdm_network_topology
+
+    result = analyze_pdm_network_topology([("A", "B"), ("A", "C"), ("B", "D"), ("C", "D")])
+    assert result["total_nodes"] == 4
+    assert result["total_edges"] == 4
+    assert result["has_cycle"] is False
+    assert result["max_in_degree"] == 2
+    assert result["max_out_degree"] == 2
+    assert result["merge_nodes_count"] == 1
+    assert result["burst_nodes_count"] == 1
+    assert result["network_complexity_level"] == "moderate"
+
+
+def test_pdm_topology_high_convergence():
+    """Convergencia alta: 3 predecesores hacia D → max_in_degree 3, 'high_convergence'."""
+    from backend.crud.projects import analyze_pdm_network_topology
+
+    result = analyze_pdm_network_topology([("A", "D"), ("B", "D"), ("C", "D")])
+    assert result["total_nodes"] == 4
+    assert result["total_edges"] == 3
+    assert result["has_cycle"] is False
+    assert result["max_in_degree"] == 3
+    assert result["max_out_degree"] == 1
+    assert result["merge_nodes_count"] == 1
+    assert result["network_complexity_level"] == "high_convergence"
+
+
+def test_pdm_topology_cyclic_graph_invalid():
+    """Ciclo A -> B -> A: clasificación 'cyclic_invalid' con has_cycle True."""
+    from backend.crud.projects import analyze_pdm_network_topology
+
+    result = analyze_pdm_network_topology([("A", "B"), ("B", "A")])
+    assert result["has_cycle"] is True
+    assert result["network_complexity_level"] == "cyclic_invalid"
+    assert result["total_nodes"] == 2
+    assert result["total_edges"] == 2
+
+
+def test_pdm_topology_normalizes_uuid_like_nodes():
+    """Nodos no string (UUIDs) se normalizan a str; aristas duplicadas suman grado."""
+    import uuid as _uuid
+
+    from backend.crud.projects import analyze_pdm_network_topology
+
+    a, b = _uuid.uuid4(), _uuid.uuid4()
+    result = analyze_pdm_network_topology([(a, b), (a, b)])
+    assert result["total_nodes"] == 2
+    # Duplicada: b recibe 2 entradas → 1 punto de convergencia → 'moderate'
+    assert result["max_in_degree"] == 2
+    assert result["max_out_degree"] == 2
+    assert result["merge_nodes_count"] == 1
+    assert result["burst_nodes_count"] == 1
+    assert result["total_edges"] == 2
+    assert result["network_complexity_level"] == "moderate"
+
+    # Sin duplicar, la misma topología con UUID es lineal
+    a2, b2 = _uuid.uuid4(), _uuid.uuid4()
+    result_linear = analyze_pdm_network_topology([(a2, b2)])
+    assert result_linear["total_nodes"] == 2
+    assert result_linear["max_in_degree"] == 1
+    assert result_linear["network_complexity_level"] == "linear_or_empty"

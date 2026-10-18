@@ -1516,6 +1516,58 @@ def detect_cycle_in_dependencies(
     return False, []
 
 
+def analyze_pdm_network_topology(edges: list[tuple[Any, Any]]) -> dict:
+    """Analiza la topología de red PDM (Precedence Diagramming Method, PMI 6.3).
+
+    Calcula grados de entrada/salida, puntos de convergencia de rutas
+    (merge, in_degree >= 2) y de divergencia (burst, out_degree >= 2), y
+    clasifica la complejidad de la red:
+    - 'cyclic_invalid': la dependencia tiene ciclo (grafo inválido).
+    - 'high_convergence': max_in_degree >= 3 o ≥ 2 puntos de convergencia.
+    - 'moderate': un punto de convergencia o ≥ 1 punto de divergencia.
+    - 'linear_or_empty': cadena lineal o grafo vacío.
+    """
+    from collections import Counter
+
+    normalized = [(str(p), str(s)) for p, s in edges]
+    nodes: set[str] = set()
+    for predecessor, successor in normalized:
+        nodes.add(predecessor)
+        nodes.add(successor)
+
+    total_nodes = len(nodes)
+    total_edges = len(edges)  # longitud original de la lista (puede traer duplicados)
+    has_cycle, _ = detect_cycle_in_dependencies(edges)
+
+    in_degree: Counter[str] = Counter(successor for _, successor in normalized)
+    out_degree: Counter[str] = Counter(predecessor for predecessor, _ in normalized)
+
+    max_in_degree = max(in_degree.values(), default=0)
+    max_out_degree = max(out_degree.values(), default=0)
+    merge_nodes_count = sum(1 for deg in in_degree.values() if deg >= 2)  # PMI Path Convergence
+    burst_nodes_count = sum(1 for deg in out_degree.values() if deg >= 2)  # PMI Path Divergence
+
+    if has_cycle:
+        network_complexity_level = "cyclic_invalid"
+    elif max_in_degree >= 3 or merge_nodes_count >= 2:
+        network_complexity_level = "high_convergence"
+    elif merge_nodes_count == 1 or burst_nodes_count >= 1:
+        network_complexity_level = "moderate"
+    else:
+        network_complexity_level = "linear_or_empty"
+
+    return {
+        "total_nodes": total_nodes,
+        "total_edges": total_edges,
+        "has_cycle": has_cycle,
+        "max_in_degree": max_in_degree,
+        "max_out_degree": max_out_degree,
+        "merge_nodes_count": merge_nodes_count,
+        "burst_nodes_count": burst_nodes_count,
+        "network_complexity_level": network_complexity_level,
+    }
+
+
 def get_task_dependencies(db: Session, project_id: UUID | str) -> list[models.ProjectTaskDependency]:
     return (
         db.query(models.ProjectTaskDependency)
