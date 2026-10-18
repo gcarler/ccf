@@ -7697,4 +7697,151 @@ def test_audit_executive_report_finops_cloud_cost_empty_and_binding():
     )
 
 
+def test_audit_executive_report_sbom_cve_and_oss_license_compliance_compliant():
+    """Caso 1: SBOM con licencias permisivas y sin CVEs fuera de SLA -> COMPLIANT."""
+    from backend.services.project_export_service import (
+        audit_executive_report_sbom_cve_and_oss_license_compliance,
+    )
 
+    deps = [
+        {
+            "package_id": "fastapi@0.115.0",
+            "spdx_license": "MIT",
+            "cvss_severity": "NONE",
+            "days_open": 0,
+            "has_patch_available": True,
+            "is_direct_dependency": True,
+        },
+        {
+            "package_id": "sqlalchemy@2.0.35",
+            "spdx_license": "Apache-2.0",
+            "cvss_severity": "CRITICAL",
+            "days_open": 3,
+            "has_patch_available": True,
+            "is_direct_dependency": True,
+        },
+    ]
+    res = audit_executive_report_sbom_cve_and_oss_license_compliance(
+        deps, critical_cve_sla_days=7, high_cve_sla_days=30
+    )
+    assert res["total_dependencies"] == 2
+    assert res["copyleft_violation_package_ids"] == []
+    assert res["breached_critical_cve_package_ids"] == []
+    assert res["breached_high_cve_package_ids"] == []
+    assert res["unpatched_zero_day_package_ids"] == []
+    assert res["sbom_governance_status"] == "COMPLIANT"
+    assert res["is_sbom_compliant"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_executive_report_sbom_cve_and_oss_license_compliance_warning():
+    """Caso 2: CVE HIGH fuera de SLA o zero-day sin parche pero sin copyleft ni CRITICAL vencido -> WARNING."""
+    from backend.services.project_export_service import (
+        audit_executive_report_sbom_cve_and_oss_license_compliance,
+    )
+
+    deps = [
+        {
+            "package_id": "urllib3@2.1.0",
+            "spdx_license": "MIT",
+            "cvss_severity": "HIGH",
+            "days_open": 45,
+            "has_patch_available": True,
+            "is_direct_dependency": False,
+        },
+        {
+            "package_id": "cryptography@42.0.0",
+            "spdx_license": "BSD-3-Clause",
+            "cvss_severity": "HIGH",
+            "days_open": 5,
+            "has_patch_available": False,
+            "is_direct_dependency": True,
+        },
+    ]
+    res = audit_executive_report_sbom_cve_and_oss_license_compliance(
+        deps, critical_cve_sla_days=7, high_cve_sla_days=30
+    )
+    assert res["total_dependencies"] == 2
+    assert res["copyleft_violation_package_ids"] == []
+    assert res["breached_critical_cve_package_ids"] == []
+    assert res["breached_high_cve_package_ids"] == ["urllib3@2.1.0"]
+    assert res["unpatched_zero_day_package_ids"] == ["cryptography@42.0.0"]
+    assert res["sbom_governance_status"] == "WARNING"
+    assert res["is_sbom_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_executive_report_sbom_cve_and_oss_license_compliance_critical():
+    """Caso 3: Licencia copyleft prohibida (AGPL-3.0) y CVE CRITICAL fuera de SLA -> CRITICAL."""
+    from backend.services.project_export_service import (
+        audit_executive_report_sbom_cve_and_oss_license_compliance,
+    )
+
+    deps = [
+        {
+            "package_id": "copyleft-lib@1.0.0",
+            "spdx_license": "AGPL-3.0",
+            "cvss_severity": "NONE",
+            "days_open": 0,
+            "has_patch_available": True,
+        },
+        {
+            "package_id": "xml-parser@0.9.1",
+            "spdx_license": "UNKNOWN",
+            "cvss_severity": "CRITICAL",
+            "days_open": 14,
+            "has_patch_available": False,
+        },
+    ]
+    res = audit_executive_report_sbom_cve_and_oss_license_compliance(
+        deps, critical_cve_sla_days=7, high_cve_sla_days=30
+    )
+    assert res["total_dependencies"] == 2
+    assert res["copyleft_violation_package_ids"] == [
+        "copyleft-lib@1.0.0",
+        "xml-parser@0.9.1",
+    ]
+    assert res["breached_critical_cve_package_ids"] == ["xml-parser@0.9.1"]
+    assert res["unpatched_zero_day_package_ids"] == ["xml-parser@0.9.1"]
+    assert res["sbom_governance_status"] == "CRITICAL"
+    assert res["is_sbom_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_executive_report_sbom_cve_and_oss_license_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en ProjectExportService + __all__."""
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_sbom_cve_and_oss_license_compliance,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_executive_report_sbom_cve_and_oss_license_compliance(payload)  # type: ignore[arg-type]
+        assert empty["total_dependencies"] == 0
+        assert empty["copyleft_violation_package_ids"] == []
+        assert empty["breached_critical_cve_package_ids"] == []
+        assert empty["breached_high_cve_package_ids"] == []
+        assert empty["unpatched_zero_day_package_ids"] == []
+        assert empty["sbom_governance_status"] == "COMPLIANT"
+        assert empty["is_sbom_compliant"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "package_id": "pydantic@2.9.0",
+            "spdx_license": "MIT",
+            "cvss_severity": "NONE",
+            "days_open": 0,
+            "has_patch_available": True,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_sbom_cve_and_oss_license_compliance(
+            sample
+        )
+        == audit_executive_report_sbom_cve_and_oss_license_compliance(sample)
+    )
+    assert (
+        "audit_executive_report_sbom_cve_and_oss_license_compliance" in mod.__all__
+    )

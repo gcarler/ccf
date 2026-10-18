@@ -2992,6 +2992,7 @@ __all__ = [
     "audit_executive_report_stakeholder_sentiment_and_nps_drift",
     "audit_executive_report_regulatory_and_data_privacy_compliance",
     "audit_executive_report_finops_cloud_cost_and_idle_capacity",
+    "audit_executive_report_sbom_cve_and_oss_license_compliance",
     "ProjectExportService",
 ]
 
@@ -6035,4 +6036,98 @@ ProjectExportService.audit_executive_report_finops_cloud_cost_and_idle_capacity 
 )
 
 
+def audit_executive_report_sbom_cve_and_oss_license_compliance(
+    dependencies: list[dict[str, Any]],
+    *,
+    critical_cve_sla_days: int = 7,
+    high_cve_sla_days: int = 30,
+    forbidden_licenses: tuple[str, ...] = ("GPL-3.0", "AGPL-3.0", "SSPL-1.0"),
+) -> dict[str, Any]:
+    """Audit PMI PMBOK §12.3 & §11.6 SBOM CVE remediation SLAs and OSS copyleft license compliance."""
+    copyleft_violation_package_ids: list[str] = []
+    breached_critical_cve_package_ids: list[str] = []
+    breached_high_cve_package_ids: list[str] = []
+    unpatched_zero_day_package_ids: list[str] = []
+    recommendations: list[str] = []
 
+    valid_deps = (
+        [
+            d
+            for d in dependencies
+            if isinstance(d, dict) and str(d.get("package_id", "")).strip()
+        ]
+        if isinstance(dependencies, list)
+        else []
+    )
+    forbidden_set = {str(lic).strip().upper() for lic in (forbidden_licenses or ())}
+
+    for dep in valid_deps:
+        package_id = str(dep.get("package_id", "")).strip()
+        spdx_license = str(dep.get("spdx_license") or "").strip().upper()
+        cvss_severity = str(dep.get("cvss_severity") or "NONE").strip().upper()
+        days_open = int(dep.get("days_open", 0) or 0)
+        has_patch_available = (
+            bool(dep.get("has_patch_available", True))
+            if dep.get("has_patch_available") is not None
+            else True
+        )
+
+        if spdx_license in forbidden_set or spdx_license in {
+            "",
+            "UNKNOWN",
+            "UNLICENSED",
+            "NONE",
+        }:
+            copyleft_violation_package_ids.append(package_id)
+
+        if cvss_severity == "CRITICAL" and days_open > critical_cve_sla_days:
+            breached_critical_cve_package_ids.append(package_id)
+        elif cvss_severity == "HIGH" and days_open > high_cve_sla_days:
+            breached_high_cve_package_ids.append(package_id)
+
+        if cvss_severity in ("CRITICAL", "HIGH") and not has_patch_available:
+            unpatched_zero_day_package_ids.append(package_id)
+
+    if copyleft_violation_package_ids:
+        recommendations.append(
+            f"Replace or obtain commercial licensing for packages with forbidden/unverified OSS licenses: {', '.join(copyleft_violation_package_ids)}."
+        )
+    if breached_critical_cve_package_ids:
+        recommendations.append(
+            f"Expedite emergency patching for CRITICAL CVEs exceeding {critical_cve_sla_days}d SLA: {', '.join(breached_critical_cve_package_ids)}."
+        )
+    if breached_high_cve_package_ids:
+        recommendations.append(
+            f"Remediate HIGH severity CVEs exceeding {high_cve_sla_days}d SLA: {', '.join(breached_high_cve_package_ids)}."
+        )
+    if unpatched_zero_day_package_ids:
+        recommendations.append(
+            f"Apply compensating WAF/runtime controls or isolate unpatched zero-day packages: {', '.join(unpatched_zero_day_package_ids)}."
+        )
+
+    if copyleft_violation_package_ids or breached_critical_cve_package_ids:
+        sbom_governance_status = "CRITICAL"
+    elif breached_high_cve_package_ids or unpatched_zero_day_package_ids:
+        sbom_governance_status = "WARNING"
+    else:
+        sbom_governance_status = "COMPLIANT"
+
+    is_sbom_compliant = sbom_governance_status == "COMPLIANT"
+
+    return {
+        "total_dependencies": len(valid_deps),
+        "copyleft_violation_package_ids": copyleft_violation_package_ids,
+        "breached_critical_cve_package_ids": breached_critical_cve_package_ids,
+        "breached_high_cve_package_ids": breached_high_cve_package_ids,
+        "unpatched_zero_day_package_ids": unpatched_zero_day_package_ids,
+        "sbom_governance_status": sbom_governance_status,
+        "is_sbom_compliant": is_sbom_compliant,
+        "is_release_cleared": is_sbom_compliant,
+        "is_release_Cleared": is_sbom_compliant,
+        "recommendations": recommendations,
+    }
+
+
+ProjectExportService.audit_executive_report_sbom_cve_and_oss_license_compliance = staticmethod(
+    audit_executive_report_sbom_cve_and_oss_license_compliance
+)

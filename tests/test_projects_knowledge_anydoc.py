@@ -5645,4 +5645,112 @@ def test_audit_markdown_code_fence_and_secret_leak_hygiene_empty_and_binding():
     assert "audit_markdown_code_fence_and_secret_leak_hygiene" in mod.__all__
 
 
+def test_audit_markdown_admonition_callout_and_actionability_hygiene_clean():
+    """Caso 1: Callouts GitHub-style bien espaciados, tipos canónicos y baja densidad -> CLEAN."""
+    from backend.services.anydoc_service import (
+        audit_markdown_admonition_callout_and_actionability_hygiene,
+    )
 
+    md = (
+        "# Guía Operativa de Despliegue\n\n"
+        "Antes de iniciar la ventana de mantenimiento verifique los backups.\n"
+        "Asegúrese de contar con la firma del CAB.\n"
+        "Valide las métricas base de latencia p95.\n\n"
+        "> [!NOTE]\n"
+        "> El mantenimiento estándar dura 30 minutos.\n\n"
+        "Durante la ejecución monitoree los paneles de observabilidad.\n"
+        "Si la tasa de error supera el 1%, ejecute el plan de rollback.\n"
+        "Registre la evidencia en el acta de cierre.\n"
+        "Notifique al canal de operaciones al finalizar.\n"
+    )
+    res = audit_markdown_admonition_callout_and_actionability_hygiene(
+        md, max_alert_density_pct=30.0
+    )
+    assert res["valid_callouts_count"] == 1
+    assert res["invalid_callout_type_lines"] == []
+    assert res["empty_callout_body_lines"] == []
+    assert res["consecutive_callout_lines"] == []
+    assert res["alert_line_share_pct"] == 20.0
+    assert res["callout_hygiene_status"] == "CLEAN"
+    assert res["recommendations"] == []
+
+
+def test_audit_markdown_admonition_callout_and_actionability_hygiene_warning():
+    """Caso 2: Callouts consecutivos sin párrafo intermedio y densidad alta -> WARNING."""
+    from backend.services.anydoc_service import (
+        audit_markdown_admonition_callout_and_actionability_hygiene,
+    )
+
+    md = (
+        "# Runbook\n\n"
+        "> [!TIP]\n"
+        "> Use conexiones persistentes.\n\n"
+        "> [!WARNING]\n"
+        "> No reinicie el nodo primario en horario pico.\n"
+    )
+    res = audit_markdown_admonition_callout_and_actionability_hygiene(
+        md, max_alert_density_pct=30.0
+    )
+    assert res["valid_callouts_count"] == 2
+    assert res["invalid_callout_type_lines"] == []
+    assert res["empty_callout_body_lines"] == []
+    assert res["consecutive_callout_lines"] == [6]
+    assert res["alert_line_share_pct"] == 80.0
+    assert res["callout_hygiene_status"] == "WARNING"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_markdown_admonition_callout_and_actionability_hygiene_critical():
+    """Caso 3: Tipo de callout no canónico (> [!DANGER]) y callout válido vacío -> CRITICAL."""
+    from backend.services.anydoc_service import (
+        audit_markdown_admonition_callout_and_actionability_hygiene,
+    )
+
+    md = (
+        "# Manual de Seguridad\n\n"
+        "Introducción general.\n\n"
+        "> [!DANGER]\n"
+        "> Esta sintaxis no es válida en GitHub Flavored Markdown.\n\n"
+        "Párrafo intermedio explicativo.\n\n"
+        "> [!IMPORTANT]\n\n"
+        "Cierre del documento.\n"
+    )
+    res = audit_markdown_admonition_callout_and_actionability_hygiene(md)
+    assert res["valid_callouts_count"] == 1
+    assert res["invalid_callout_type_lines"] == [5]
+    assert res["empty_callout_body_lines"] == [10]
+    assert res["callout_hygiene_status"] == "CRITICAL"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_markdown_admonition_callout_and_actionability_hygiene_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en AnyDocService, AnydocService y __all__."""
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_admonition_callout_and_actionability_hygiene,
+    )
+
+    for payload in (None, "", "   \n"):
+        empty = audit_markdown_admonition_callout_and_actionability_hygiene(payload)  # type: ignore[arg-type]
+        assert empty["valid_callouts_count"] == 0
+        assert empty["invalid_callout_type_lines"] == []
+        assert empty["empty_callout_body_lines"] == []
+        assert empty["consecutive_callout_lines"] == []
+        assert empty["alert_line_share_pct"] == 0.0
+        assert empty["callout_hygiene_status"] == "CLEAN"
+        assert empty["recommendations"] == []
+
+    sample = "# Doc\n\nPárrafo 1\nPárrafo 2\nPárrafo 3\nPárrafo 4\n\n> [!CAUTION]\n> Revisar credenciales.\n"
+    assert (
+        AnyDocService.audit_markdown_admonition_callout_and_actionability_hygiene(sample)
+        == audit_markdown_admonition_callout_and_actionability_hygiene(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_admonition_callout_and_actionability_hygiene(sample)
+        == audit_markdown_admonition_callout_and_actionability_hygiene(sample)
+    )
+    assert (
+        "audit_markdown_admonition_callout_and_actionability_hygiene" in mod.__all__
+    )

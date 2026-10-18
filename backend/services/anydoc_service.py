@@ -3023,6 +3023,7 @@ __all__ = [
     "audit_markdown_acronym_and_glossary_first_use_hygiene",
     "audit_markdown_mermaid_diagram_syntax_hygiene",
     "audit_markdown_code_fence_and_secret_leak_hygiene",
+    "audit_markdown_admonition_callout_and_actionability_hygiene",
     "AnydocService",
 ]
 
@@ -6741,5 +6742,148 @@ AnydocService.audit_markdown_code_fence_and_secret_leak_hygiene = staticmethod(
 )
 
 
+def audit_markdown_admonition_callout_and_actionability_hygiene(
+    markdown_text: str,
+    *,
+    max_alert_density_pct: float = 30.0,
+) -> dict[str, Any]:
+    """Audit PMI PMBOK §4.4 GitHub-style admonition/alert callout syntax, severity saturation, and actionability hygiene."""
+    if not isinstance(markdown_text, str) or not markdown_text.strip():
+        return {
+            "valid_callouts_count": 0,
+            "invalid_callout_type_lines": [],
+            "empty_callout_body_lines": [],
+            "consecutive_callout_lines": [],
+            "alert_line_share_pct": 0.0,
+            "callout_hygiene_status": "CLEAN",
+            "recommendations": [],
+        }
+
+    canonical_types = {"NOTE", "TIP", "IMPORTANT", "WARNING", "CAUTION"}
+    callout_header_re = re.compile(r"^\s*>\s*\[!([A-Za-z0-9_-]+)\](.*)$")
+    blockquote_re = re.compile(r"^\s*>(.*)$")
+
+    lines = markdown_text.splitlines()
+    total_non_empty_lines = sum(1 for ln in lines if ln.strip())
+
+    valid_callouts_count = 0
+    invalid_callout_type_lines: list[int] = []
+    empty_callout_body_lines: list[int] = []
+    consecutive_callout_lines: list[int] = []
+    alert_lines_count = 0
+
+    in_alert_block = False
+    current_alert_start_line: int | None = None
+    current_alert_is_valid = False
+    current_alert_has_body = False
+    saw_normal_paragraph_since_last_alert = True
+
+    for line_no, line in enumerate(lines, start=1):
+        header_match = callout_header_re.match(line)
+        if header_match:
+            if in_alert_block:
+                if (
+                    current_alert_is_valid
+                    and not current_alert_has_body
+                    and current_alert_start_line is not None
+                ):
+                    empty_callout_body_lines.append(current_alert_start_line)
+
+            if not saw_normal_paragraph_since_last_alert:
+                consecutive_callout_lines.append(line_no)
+
+            alert_lines_count += 1
+            callout_type = header_match.group(1).strip().upper()
+            trailing_text = header_match.group(2).strip()
+
+            if callout_type in canonical_types:
+                valid_callouts_count += 1
+                current_alert_is_valid = True
+            else:
+                invalid_callout_type_lines.append(line_no)
+                current_alert_is_valid = False
+
+            current_alert_has_body = bool(trailing_text)
+            current_alert_start_line = line_no
+            in_alert_block = True
+            saw_normal_paragraph_since_last_alert = False
+            continue
+
+        if in_alert_block:
+            bq_match = blockquote_re.match(line)
+            if bq_match:
+                if line.strip():
+                    alert_lines_count += 1
+                if bq_match.group(1).strip():
+                    current_alert_has_body = True
+            else:
+                if (
+                    current_alert_is_valid
+                    and not current_alert_has_body
+                    and current_alert_start_line is not None
+                ):
+                    empty_callout_body_lines.append(current_alert_start_line)
+                in_alert_block = False
+                current_alert_start_line = None
+                if line.strip():
+                    saw_normal_paragraph_since_last_alert = True
+        else:
+            if line.strip() and not line.lstrip().startswith(">"):
+                saw_normal_paragraph_since_last_alert = True
+
+    if in_alert_block:
+        if (
+            current_alert_is_valid
+            and not current_alert_has_body
+            and current_alert_start_line is not None
+        ):
+            empty_callout_body_lines.append(current_alert_start_line)
+
+    alert_line_share_pct = (
+        round((alert_lines_count / total_non_empty_lines) * 100.0, 2)
+        if total_non_empty_lines > 0
+        else 0.0
+    )
+
+    recommendations: list[str] = []
+    if invalid_callout_type_lines:
+        recommendations.append(
+            f"Replace non-standard callout types with canonical GitHub alerts (NOTE, TIP, IMPORTANT, WARNING, CAUTION) on lines: {invalid_callout_type_lines}."
+        )
+    if empty_callout_body_lines:
+        recommendations.append(
+            f"Populate actionable guidance inside empty alert callout blocks on lines: {empty_callout_body_lines}."
+        )
+    if consecutive_callout_lines:
+        recommendations.append(
+            f"Separate back-to-back alert blocks with explanatory prose to prevent alert fatigue on lines: {consecutive_callout_lines}."
+        )
+    if alert_line_share_pct > max_alert_density_pct:
+        recommendations.append(
+            f"Reduce alert callout density ({alert_line_share_pct:.2f}% > {max_alert_density_pct:.2f}%) by converting routine notes into standard paragraphs."
+        )
+
+    if invalid_callout_type_lines or empty_callout_body_lines:
+        callout_hygiene_status = "CRITICAL"
+    elif consecutive_callout_lines or alert_line_share_pct > max_alert_density_pct:
+        callout_hygiene_status = "WARNING"
+    else:
+        callout_hygiene_status = "CLEAN"
+
+    return {
+        "valid_callouts_count": valid_callouts_count,
+        "invalid_callout_type_lines": invalid_callout_type_lines,
+        "empty_callout_body_lines": empty_callout_body_lines,
+        "consecutive_callout_lines": consecutive_callout_lines,
+        "alert_line_share_pct": alert_line_share_pct,
+        "callout_hygiene_status": callout_hygiene_status,
+        "recommendations": recommendations,
+    }
 
 
+AnyDocService.audit_markdown_admonition_callout_and_actionability_hygiene = staticmethod(
+    audit_markdown_admonition_callout_and_actionability_hygiene
+)
+AnydocService.audit_markdown_admonition_callout_and_actionability_hygiene = staticmethod(
+    audit_markdown_admonition_callout_and_actionability_hygiene
+)
