@@ -6867,4 +6867,156 @@ def test_evm_subcontractor_retainage_and_progress_billing_empty_and_binding():
     )
 
 
+def test_evm_fx_currency_volatility_and_hedging_coverage_hedged():
+    """Caso 1: Tramos con cobertura suficiente y variación FX dentro de tolerancia ('HEDGED')."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_fx_currency_volatility_and_hedging_coverage,
+    )
+
+    tranches = [
+        {
+            "tranche_id": "FX-01",
+            "currency_code": "EUR",
+            "baseline_amount_local": 100000.0,
+            "baseline_fx_rate_to_base": 1.10,
+            "spot_fx_rate_to_base": 1.12,
+            "hedged_ratio_pct": 85.0,
+        },
+        {
+            "tranche_id": "FX-02",
+            "currency_code": "CAD",
+            "baseline_amount_local": 50000.0,
+            "baseline_fx_rate_to_base": 0.75,
+            "spot_fx_rate_to_base": 0.74,
+            "hedged_ratio_pct": 50.0,
+        },
+    ]
+    res = evaluate_evm_fx_currency_volatility_and_hedging_coverage(
+        tranches,
+        fx_management_reserve=5000.0,
+    )
+    assert res["total_tranches"] == 2
+    assert res["total_baseline_base_cost"] == 147500.0
+    assert res["total_unhedged_base_exposure"] == 35250.0
+    assert res["unhedged_exposure_share_pct"] == 23.9
+    assert res["total_fx_loss_base"] == 300.0
+    assert res["fx_reserve_coverage_ratio"] == 16.67
+    assert res["volatile_tranche_ids"] == []
+    assert res["underhedged_tranche_ids"] == []
+    assert res["fx_governance_status"] == "HEDGED"
+    assert res["recommendations"] == []
+
+
+def test_evm_fx_currency_volatility_and_hedging_coverage_warning():
+    """Caso 2: Un tramo sub-cubierto o con volatilidad > 5% cubierto por reserva ('WARNING')."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_fx_currency_volatility_and_hedging_coverage,
+    )
+
+    tranches = [
+        {
+            "tranche_id": "FX-10",
+            "currency_code": "GBP",
+            "baseline_amount_local": 100000.0,
+            "baseline_fx_rate_to_base": 1.25,
+            "spot_fx_rate_to_base": 1.35,  # +8% drift > 5%
+            "hedged_ratio_pct": 60.0,  # 40% unhedged > 20%
+        },
+    ]
+    res = evaluate_evm_fx_currency_volatility_and_hedging_coverage(
+        tranches,
+        fx_management_reserve=10000.0,
+    )
+    assert res["total_tranches"] == 1
+    assert res["total_baseline_base_cost"] == 125000.0
+    assert res["total_unhedged_base_exposure"] == 50000.0
+    assert res["unhedged_exposure_share_pct"] == 40.0
+    assert res["total_fx_loss_base"] == 4000.0
+    assert res["fx_reserve_coverage_ratio"] == 2.5
+    assert res["volatile_tranche_ids"] == ["FX-10"]
+    assert res["underhedged_tranche_ids"] == ["FX-10"]
+    assert res["fx_governance_status"] == "WARNING"
+    assert len(res["recommendations"]) >= 1
+
+
+def test_evm_fx_currency_volatility_and_hedging_coverage_critical():
+    """Caso 3: Pérdida FX supera la reserva o >=2 tramos volátiles ('CRITICAL')."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_fx_currency_volatility_and_hedging_coverage,
+    )
+
+    tranches = [
+        {
+            "tranche_id": "FX-20",
+            "currency_code": "BRL",
+            "baseline_amount_local": 200000.0,
+            "baseline_fx_rate_to_base": 0.20,
+            "spot_fx_rate_to_base": 0.22,  # +10% drift
+            "hedged_ratio_pct": 10.0,
+        },
+        {
+            "tranche_id": "FX-21",
+            "currency_code": "MXN",
+            "baseline_amount_local": 500000.0,
+            "baseline_fx_rate_to_base": 0.05,
+            "spot_fx_rate_to_base": 0.055,  # +10% drift
+            "hedged_ratio_pct": 0.0,
+        },
+    ]
+    res = evaluate_evm_fx_currency_volatility_and_hedging_coverage(
+        tranches,
+        fx_management_reserve=2000.0,
+    )
+    assert res["total_tranches"] == 2
+    assert res["volatile_tranche_ids"] == ["FX-20", "FX-21"]
+    assert res["underhedged_tranche_ids"] == ["FX-20", "FX-21"]
+    assert res["total_fx_loss_base"] == 6100.0
+    assert res["fx_reserve_coverage_ratio"] == 0.33
+    assert res["fx_governance_status"] == "CRITICAL"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_evm_fx_currency_volatility_and_hedging_coverage_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en ProjectEVMService + __all__."""
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_fx_currency_volatility_and_hedging_coverage,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = evaluate_evm_fx_currency_volatility_and_hedging_coverage(payload)  # type: ignore[arg-type]
+        assert empty["total_tranches"] == 0
+        assert empty["total_baseline_base_cost"] == 0.0
+        assert empty["total_unhedged_base_exposure"] == 0.0
+        assert empty["unhedged_exposure_share_pct"] == 0.0
+        assert empty["total_fx_loss_base"] == 0.0
+        assert empty["fx_reserve_coverage_ratio"] == 1.0
+        assert empty["volatile_tranche_ids"] == []
+        assert empty["underhedged_tranche_ids"] == []
+        assert empty["fx_governance_status"] == "HEDGED"
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "tranche_id": "FX-99",
+            "currency_code": "EUR",
+            "baseline_amount_local": 10000.0,
+            "baseline_fx_rate_to_base": 1.10,
+            "spot_fx_rate_to_base": 1.10,
+            "hedged_ratio_pct": 100.0,
+        }
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_fx_currency_volatility_and_hedging_coverage(
+            sample
+        )
+        == evaluate_evm_fx_currency_volatility_and_hedging_coverage(sample)
+    )
+    assert (
+        "evaluate_evm_fx_currency_volatility_and_hedging_coverage" in mod.__all__
+    )
+
+
+
 

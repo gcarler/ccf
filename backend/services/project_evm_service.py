@@ -5509,6 +5509,7 @@ __all__ = [
     "evaluate_evm_loe_contamination_and_variance_masking",
     "evaluate_evm_funding_limit_reconciliation_and_liquidity",
     "evaluate_evm_subcontractor_retainage_and_progress_billing",
+    "evaluate_evm_fx_currency_volatility_and_hedging_coverage",
     "ProjectEVMService",
 ]
 
@@ -8129,6 +8130,133 @@ def evaluate_evm_subcontractor_retainage_and_progress_billing(
 
 ProjectEVMService.evaluate_evm_subcontractor_retainage_and_progress_billing = staticmethod(
     evaluate_evm_subcontractor_retainage_and_progress_billing
+)
+
+
+def evaluate_evm_fx_currency_volatility_and_hedging_coverage(
+    currency_tranches: Sequence[Mapping[str, Any]] | None,
+    *,
+    fx_management_reserve: float = 0.0,
+    max_unhedged_exposure_pct: float = 20.0,
+    max_fx_variance_pct: float = 5.0,
+) -> dict[str, Any]:
+    """PMBOK §7.3 & §11.5 — volatilidad cambiaria (FX), exposición no cubierta y erosión de reserva."""
+    if (
+        currency_tranches is None
+        or isinstance(currency_tranches, (str, bytes))
+        or not isinstance(currency_tranches, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = currency_tranches
+
+    reserve = max(0.0, float(fx_management_reserve or 0.0))
+    max_unhedged_pct = max(0.0, float(max_unhedged_exposure_pct or 0.0))
+    max_var_pct = max(0.0, float(max_fx_variance_pct or 0.0))
+
+    total_tranches = 0
+    sum_baseline_base_cost = 0.0
+    sum_unhedged_base_exposure = 0.0
+    sum_fx_loss_base = 0.0
+    volatile_tranche_ids: list[str] = []
+    underhedged_tranche_ids: list[str] = []
+    recommendations: list[str] = []
+
+    for idx, item in enumerate(items, start=1):
+        if not isinstance(item, Mapping):
+            continue
+        total_tranches += 1
+        tranche_id = (
+            str(item.get("tranche_id") or item.get("id") or f"FX-{idx}").strip()
+            or f"FX-{idx}"
+        )
+        currency_code = str(item.get("currency_code") or "FX").strip().upper() or "FX"
+        baseline_amount_local = max(0.0, float(item.get("baseline_amount_local") or 0.0))
+        baseline_fx_rate = float(item.get("baseline_fx_rate_to_base") or 0.0)
+        spot_fx_rate = float(item.get("spot_fx_rate_to_base") or 0.0)
+        raw_hedged = item.get("hedged_ratio_pct")
+        hedged_ratio_pct = min(
+            100.0,
+            max(0.0, float(raw_hedged if raw_hedged is not None else 0.0)),
+        )
+
+        baseline_base_cost = (
+            baseline_amount_local * baseline_fx_rate if baseline_fx_rate > 0.0 else 0.0
+        )
+        unhedged_ratio = max(0.0, min(1.0, 1.0 - (hedged_ratio_pct / 100.0)))
+        unhedged_base_exposure = baseline_base_cost * unhedged_ratio
+        fx_loss_base = (
+            max(
+                0.0,
+                baseline_amount_local
+                * (spot_fx_rate - baseline_fx_rate)
+                * unhedged_ratio,
+            )
+            if baseline_fx_rate > 0.0 and spot_fx_rate > 0.0
+            else 0.0
+        )
+        fx_rate_drift_pct = (
+            ((spot_fx_rate - baseline_fx_rate) / baseline_fx_rate) * 100.0
+            if baseline_fx_rate > 0.0
+            else 0.0
+        )
+
+        sum_baseline_base_cost += baseline_base_cost
+        sum_unhedged_base_exposure += unhedged_base_exposure
+        sum_fx_loss_base += fx_loss_base
+
+        if fx_rate_drift_pct > max_var_pct:
+            volatile_tranche_ids.append(tranche_id)
+            recommendations.append(
+                f"Tramo '{tranche_id}' ({currency_code}) presenta apreciación adversa del {fx_rate_drift_pct:.2f}% (> {max_var_pct:.2f}%); activar cobertura o cláusula de ajuste cambiario."
+            )
+
+        if (unhedged_ratio * 100.0) > max_unhedged_pct and fx_rate_drift_pct > 0.0:
+            underhedged_tranche_ids.append(tranche_id)
+            recommendations.append(
+                f"Incrementar cobertura forward/swap en tramo '{tranche_id}' ({currency_code}): exposición descubierta del {unhedged_ratio * 100.0:.1f}% supera el máximo de {max_unhedged_pct:.1f}%."
+            )
+
+    total_baseline_base_cost = round(sum_baseline_base_cost, 2)
+    total_unhedged_base_exposure = round(sum_unhedged_base_exposure, 2)
+    unhedged_exposure_share_pct = (
+        round((sum_unhedged_base_exposure / sum_baseline_base_cost) * 100.0, 2)
+        if sum_baseline_base_cost > 0.0
+        else 0.0
+    )
+    total_fx_loss_base = round(sum_fx_loss_base, 2)
+    fx_reserve_coverage_ratio = (
+        round(reserve / total_fx_loss_base, 2) if total_fx_loss_base > 0.0 else 1.0
+    )
+
+    if total_fx_loss_base > reserve:
+        recommendations.append(
+            f"La pérdida cambiaria acumulada ({total_fx_loss_base:.2f}) excede la reserva de gestión FX ({reserve:.2f}); gestionar solicitud de fondos suplementarios."
+        )
+
+    if total_fx_loss_base > reserve or len(volatile_tranche_ids) >= 2:
+        fx_governance_status = "CRITICAL"
+    elif volatile_tranche_ids or underhedged_tranche_ids:
+        fx_governance_status = "WARNING"
+    else:
+        fx_governance_status = "HEDGED"
+
+    return {
+        "total_tranches": total_tranches,
+        "total_baseline_base_cost": total_baseline_base_cost,
+        "total_unhedged_base_exposure": total_unhedged_base_exposure,
+        "unhedged_exposure_share_pct": unhedged_exposure_share_pct,
+        "total_fx_loss_base": total_fx_loss_base,
+        "fx_reserve_coverage_ratio": fx_reserve_coverage_ratio,
+        "volatile_tranche_ids": volatile_tranche_ids,
+        "underhedged_tranche_ids": underhedged_tranche_ids,
+        "fx_governance_status": fx_governance_status,
+        "recommendations": recommendations,
+    }
+
+
+ProjectEVMService.evaluate_evm_fx_currency_volatility_and_hedging_coverage = staticmethod(
+    evaluate_evm_fx_currency_volatility_and_hedging_coverage
 )
 
 
