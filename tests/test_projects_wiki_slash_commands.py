@@ -967,3 +967,112 @@ def test_audit_wiki_stakeholder_signoffs_no_reviewers_assigned():
             "posture": "NO_REVIEWERS_ASSIGNED",
         }
 
+
+def test_audit_wiki_decision_log_entries_audit_ready():
+    """traceability_rate >= 80.0 -> 'AUDIT_READY_DECISION_LOG'."""
+    import backend.services.wiki_pmi_service as wiki_module
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_decision_log_entries,
+    )
+
+    decisions = [
+        {
+            "rationale": "Migrar a arquitectura multi-tenant aislada por sede",
+            "decided_by": "Comité Técnico",
+            "decision_date": "2026-10-01",
+        },
+        {
+            "justificacion": "Adoptar firma digital en actas de cierre",
+            "aprobador": "Sponsor Ejecutivo",
+            "fecha": "2026-10-05",
+        },
+        {
+            "reason": "Congelar alcance de fase 2 para proteger ruta crítica",
+            "owner": "PMO Director",
+            "date": "2026-10-10",
+        },
+        {
+            "rationale": "Ajuste menor de formato",
+            "decided_by": "PM",
+            "decision_date": "2026-10-12",
+        },
+        {
+            "rationale": "Sin fecha registrada pero con justificación válida",
+            "decided_by": "PM",
+            "decision_date": "",
+        },
+    ]
+    res = WikiPMIService.audit_wiki_decision_log_entries(decisions)
+    assert res == {
+        "total_decisions": 5,
+        "rationale_documented_count": 5,
+        "decider_assigned_count": 5,
+        "date_recorded_count": 4,
+        "fully_traceable_count": 4,
+        "traceability_rate": 80.0,
+        "posture": "AUDIT_READY_DECISION_LOG",
+    }
+    assert audit_wiki_decision_log_entries(decisions) == res
+    assert "audit_wiki_decision_log_entries" in wiki_module.__all__
+
+
+def test_audit_wiki_decision_log_entries_partial_traceability():
+    """40.0 <= traceability_rate < 80.0 -> 'PARTIAL_DECISION_TRACEABILITY'."""
+    from backend.services.wiki_pmi_service import audit_wiki_decision_log_entries
+
+    decisions = [
+        {
+            "rationale": "Aprobar presupuesto de contingencia adicional",
+            "decided_by": "CCB",
+            "decision_date": "2026-10-15",
+        },
+        {
+            "rationale": "Corto",
+            "decided_by": "CCB",
+            "decision_date": "2026-10-16",
+        },
+    ]
+    res = audit_wiki_decision_log_entries(decisions)
+    assert res["total_decisions"] == 2
+    assert res["rationale_documented_count"] == 1
+    assert res["decider_assigned_count"] == 2
+    assert res["date_recorded_count"] == 2
+    assert res["fully_traceable_count"] == 1
+    assert res["traceability_rate"] == 50.0
+    assert res["posture"] == "PARTIAL_DECISION_TRACEABILITY"
+
+
+def test_audit_wiki_decision_log_entries_opaque_untraceable():
+    """traceability_rate < 40.0 con decisiones registradas -> 'OPAQUE_UNTRACEABLE_DECISIONS'."""
+    from backend.services.wiki_pmi_service import audit_wiki_decision_log_entries
+
+    decisions = [
+        {"rationale": "Sin aprobador ni fecha", "decided_by": "", "decision_date": ""},
+        {"rationale": "ok", "decided_by": "PM", "decision_date": "2026-10-18"},
+        {"rationale": "Cambio de proveedor sin fecha", "decided_by": "Compras"},
+    ]
+    res = audit_wiki_decision_log_entries(decisions)
+    assert res["total_decisions"] == 3
+    assert res["fully_traceable_count"] == 0
+    assert res["traceability_rate"] == 0.0
+    assert res["posture"] == "OPAQUE_UNTRACEABLE_DECISIONS"
+
+
+def test_audit_wiki_decision_log_entries_no_decisions_logged():
+    """Lista vacía, None o entradas no-dict -> 'NO_DECISIONS_LOGGED'."""
+    from backend.services.wiki_pmi_service import audit_wiki_decision_log_entries
+
+    for empty_input in (None, [], ["invalid", 123]):  # type: ignore[list-item]
+        res = audit_wiki_decision_log_entries(empty_input)
+        assert res == {
+            "total_decisions": 0,
+            "rationale_documented_count": 0,
+            "decider_assigned_count": 0,
+            "date_recorded_count": 0,
+            "fully_traceable_count": 0,
+            "traceability_rate": 0.0,
+            "posture": "NO_DECISIONS_LOGGED",
+        }
+
+

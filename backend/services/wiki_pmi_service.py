@@ -679,6 +679,77 @@ def audit_wiki_template_section_compliance(
     }
 
 
+def audit_wiki_decision_log_entries(
+    decisions: list[dict[str, Any]] | None,
+) -> dict[str, Any]:
+    """Audita la trazabilidad de registros de decisiones (Decision Log / RAID) en la Wiki según PMI PMBOK §10.2 y §4.4."""
+    items = [item for item in (decisions or []) if isinstance(item, dict)]
+    total_decisions = len(items)
+
+    rationale_documented_count = 0
+    decider_assigned_count = 0
+    date_recorded_count = 0
+    fully_traceable_count = 0
+
+    for item in items:
+        rationale_str = str(
+            item.get("rationale")
+            or item.get("justificacion")
+            or item.get("reason")
+            or ""
+        ).strip()
+        decider_str = str(
+            item.get("decided_by")
+            or item.get("owner")
+            or item.get("aprobador")
+            or ""
+        ).strip()
+        date_str = str(
+            item.get("decision_date")
+            or item.get("date")
+            or item.get("fecha")
+            or ""
+        ).strip()
+
+        has_rationale = len(rationale_str) >= 10
+        has_decider = bool(decider_str)
+        has_date = bool(date_str)
+
+        if has_rationale:
+            rationale_documented_count += 1
+        if has_decider:
+            decider_assigned_count += 1
+        if has_date:
+            date_recorded_count += 1
+        if has_rationale and has_decider and has_date:
+            fully_traceable_count += 1
+
+    traceability_rate = (
+        round((fully_traceable_count / total_decisions) * 100.0, 2)
+        if total_decisions > 0
+        else 0.0
+    )
+
+    if total_decisions == 0:
+        posture = "NO_DECISIONS_LOGGED"
+    elif traceability_rate >= 80.0:
+        posture = "AUDIT_READY_DECISION_LOG"
+    elif traceability_rate >= 40.0:
+        posture = "PARTIAL_DECISION_TRACEABILITY"
+    else:
+        posture = "OPAQUE_UNTRACEABLE_DECISIONS"
+
+    return {
+        "total_decisions": total_decisions,
+        "rationale_documented_count": rationale_documented_count,
+        "decider_assigned_count": decider_assigned_count,
+        "date_recorded_count": date_recorded_count,
+        "fully_traceable_count": fully_traceable_count,
+        "traceability_rate": traceability_rate,
+        "posture": posture,
+    }
+
+
 class WikiPMIService:
     """Fachada canónica de doctrina y gobernanza documental Wiki PMI."""
 
@@ -766,6 +837,12 @@ class WikiPMIService:
     ) -> dict[str, Any]:
         return audit_wiki_template_section_compliance(content, required_sections)
 
+    @staticmethod
+    def audit_wiki_decision_log_entries(
+        decisions: list[dict[str, Any]] | None,
+    ) -> dict[str, Any]:
+        return audit_wiki_decision_log_entries(decisions)
+
 
 __all__ = [
     "DEFAULT_PMI_KB_DIR",
@@ -783,6 +860,8 @@ __all__ = [
     "audit_wiki_crosslink_reference_integrity",
     "audit_wiki_stakeholder_signoffs",
     "audit_wiki_template_section_compliance",
+    "audit_wiki_decision_log_entries",
     "WikiPMIService",
 ]
+
 
