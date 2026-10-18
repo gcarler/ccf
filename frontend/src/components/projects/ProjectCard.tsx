@@ -2,6 +2,7 @@
 
 import { CSSProperties } from 'react';
 import { ArrowUpRight, Trash2 } from 'lucide-react';
+import clsx from 'clsx';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import type { ProjectRecord } from '@/types/projects';
@@ -31,6 +32,102 @@ interface ProjectCardProps {
   index: number;
   onUpdate?: (projectId: string, patch: Partial<ProjectRecord>) => void;
   onDelete?: (projectId: string) => void;
+}
+
+type RagHealth = 'on_track' | 'at_risk' | 'off_track';
+
+const RAG_HEALTH_META: Record<RagHealth, { label: string; className: string }> = {
+  on_track: {
+    label: 'Salud: En Camino',
+    className:
+      'bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))] border-[hsl(var(--success)/0.3)]',
+  },
+  at_risk: {
+    label: 'Salud: En Riesgo',
+    className:
+      'bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.4)]',
+  },
+  off_track: {
+    label: 'Salud: Crítico',
+    className:
+      'bg-[hsl(var(--destructive)/0.12)] text-[hsl(var(--destructive))] border-[hsl(var(--destructive)/0.3)]',
+  },
+};
+
+/** Deriva el Semáforo RAG PMI: override/status explícito o tareas vencidas pendientes. */
+function deriveRagHealth(project: ProjectRecord, tasks: ProjectRecord['tasks']): RagHealth {
+  const override = project.health_override;
+  const base = override ?? project.health_status;
+  if (base === 'on_track' || base === 'at_risk' || base === 'off_track') return base;
+
+  const now = Date.now();
+  const overdueCount = (tasks ?? []).filter((task) => {
+    const isDone = ['completed', 'done'].includes((task.status || '').toLowerCase());
+    return (
+      !isDone &&
+      Boolean(task.due_date) &&
+      new Date(task.due_date as string).getTime() < now
+    );
+  }).length;
+  if (overdueCount > 2) return 'off_track';
+  if (overdueCount >= 1) return 'at_risk';
+  return 'on_track';
+}
+
+/** Franja Ejecutiva de Gobernanza de Portafolio: RAG + BAC/CPI + PM RACI. */
+function PortfolioPmiStrip({ project, tasks }: { project: ProjectRecord; tasks: ProjectRecord['tasks'] }) {
+  const rag = deriveRagHealth(project, tasks);
+  const bac = Number(project.budget_allocated ?? project.budget_summary?.total_budget ?? 0);
+  const cpi = project.budget_summary?.cpi;
+  const hasPm = Boolean(project.owner_id);
+
+  return (
+    <div
+      data-testid="project-card-pmi-strip"
+      className="flex flex-wrap items-center gap-1.5 text-2xs"
+    >
+      <span
+        data-testid="project-card-pmi-health"
+        title="Semaforo de Salud RAG PMI"
+        className={clsx(
+          'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-semibold',
+          RAG_HEALTH_META[rag].className,
+        )}
+      >
+        {RAG_HEALTH_META[rag].label}
+      </span>
+
+      <span
+        data-testid="project-card-pmi-budget"
+        title="Linea Base de Costos BAC & CPI"
+        className={clsx(
+          'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-semibold tabular-nums',
+          bac <= 0
+            ? 'border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))]'
+            : typeof cpi === 'number' && cpi < 1
+              ? 'border-[hsl(var(--destructive)/0.3)] bg-[hsl(var(--destructive)/0.12)] text-[hsl(var(--destructive))]'
+              : 'border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))]',
+        )}
+      >
+        {bac > 0
+          ? `BAC $${bac.toLocaleString('es-CO')}${typeof cpi === 'number' ? ` · CPI ${cpi.toFixed(2)}` : ''}`
+          : 'Sin Línea Base BAC'}
+      </span>
+
+      <span
+        data-testid="project-card-pmi-sponsor"
+        title="Gobernanza de Responsable / Project Manager (RACI)"
+        className={clsx(
+          'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-semibold',
+          hasPm
+            ? 'border-[hsl(var(--success)/0.3)] bg-[hsl(var(--surface-2))] text-[hsl(var(--success))]'
+            : 'border-[hsl(var(--warning)/0.4)] bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning))]',
+        )}
+      >
+        {hasPm ? 'PM Asignado' : 'Sin PM (RACI)'}
+      </span>
+    </div>
+  );
 }
 
 export default function ProjectCard({
@@ -92,6 +189,9 @@ export default function ProjectCard({
               size="sm"
             />
           </div>
+
+          {/* Franja Ejecutiva de Gobernanza de Portafolio PMI */}
+          <PortfolioPmiStrip project={project} tasks={tasks} />
 
           {/* Title + description */}
           <div>

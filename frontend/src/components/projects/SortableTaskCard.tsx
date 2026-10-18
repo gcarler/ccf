@@ -50,6 +50,26 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
     const dueDateStr = task.due_date || undefined;
     const commentCount = task.comments_count ?? 0;
 
+    const normalizedStatus = (task.status ?? 'todo').toLowerCase();
+    const isCompleted = normalizedStatus === 'completed' || normalizedStatus === 'done';
+    const rawTaskProgress = Number(
+        (task as ProjectTaskRecord & { progress?: number | null }).progress ??
+        task.progress_pct ??
+        task.physical_progress_pct ??
+        0
+    );
+    const effectiveProgressPct = isCompleted
+        ? 100
+        : Number.isFinite(rawTaskProgress) && rawTaskProgress > 0
+          ? Math.min(100, Math.round(rawTaskProgress))
+          : normalizedStatus === 'in_progress' || normalizedStatus === 'review'
+            ? 50
+            : 0;
+    const taskBac = Number(task.budget_allocated ?? 0);
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const isTaskOverdue =
+        Boolean(task.due_date) && !isCompleted && String(task.due_date).slice(0, 10) < todayKey;
+
     const handleDelete = () => {
         setMenuOpen(false);
         const label = task.title || 'esta tarea';
@@ -108,6 +128,44 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
                             inputClassName="text-base"
                         />
                     </div>
+                </div>
+
+                {/* Diagnóstico PMI del Paquete */}
+                <div
+                    data-testid={`task-card-pmi-row-${task.id}`}
+                    className="flex items-center gap-1.5 flex-wrap text-3xs font-bold uppercase tracking-wider"
+                >
+                    <span
+                        data-testid={`task-card-pmi-progress-${task.id}`}
+                        className={clsx(
+                            'px-1.5 py-0.5 rounded border',
+                            effectiveProgressPct >= 100
+                                ? 'border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))]'
+                                : effectiveProgressPct > 0
+                                  ? 'border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))]'
+                                  : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))]'
+                        )}
+                    >
+                        {effectiveProgressPct}%
+                    </span>
+
+                    {Number.isFinite(taskBac) && taskBac > 0 && (
+                        <span
+                            data-testid={`task-card-pmi-bac-${task.id}`}
+                            className="px-1.5 py-0.5 rounded border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))]"
+                        >
+                            BAC ${taskBac.toLocaleString('es-CO')}
+                        </span>
+                    )}
+
+                    {isTaskOverdue && (
+                        <span
+                            data-testid={`task-card-pmi-overdue-${task.id}`}
+                            className="px-1.5 py-0.5 rounded border border-[hsl(var(--destructive)/0.35)] bg-[hsl(var(--destructive)/0.14)] text-[hsl(var(--destructive))]"
+                        >
+                            Vencida
+                        </span>
+                    )}
                 </div>
 
                 {/* Metadata row */}

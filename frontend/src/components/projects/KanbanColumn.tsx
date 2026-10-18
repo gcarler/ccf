@@ -33,6 +33,22 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
     const completedCount = tasks.filter(t => (t.status || 'todo').toLowerCase() === 'completed').length;
     const progress = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
 
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const totalBac = tasks.reduce((acc, t) => {
+        const val = Number(t.budget_allocated ?? 0);
+        return acc + (Number.isFinite(val) ? val : 0);
+    }, 0);
+    const isActiveWipPhase = !['todo', 'pending', 'backlog', 'completed', 'done'].includes(id.toLowerCase());
+    const isWipExceeded = isActiveWipPhase && tasks.length > 5;
+    const nonCompletedTasks = tasks.filter(t => {
+        const st = (t.status || 'todo').toLowerCase();
+        return st !== 'completed' && st !== 'done';
+    });
+    const overdueCount = nonCompletedTasks.filter(
+        t => Boolean(t.due_date) && String(t.due_date).slice(0, 10) < todayKey
+    ).length;
+    const unassignedCount = nonCompletedTasks.filter(t => !t.assignee_id).length;
+
     const handleStartAdd = () => {
         setIsAdding(true);
         setTimeout(() => inputRef.current?.focus(), 60);
@@ -96,14 +112,45 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
                 </button>
             </div>
 
-            {/* Progress bar */}
+            {/* Progress bar & PMI Column Diagnostic Strip */}
             {tasks.length > 0 && (
-                <div className="px-1">
+                <div className="px-1 space-y-1.5">
                     <div className="h-1 w-full rounded-full bg-[hsl(var(--surface-2))] overflow-hidden">
                         <div
                             className="h-full rounded-full transition-all duration-500"
                             style={{ width: `${progress}%`, backgroundColor: color }}
                         />
+                    </div>
+                    <div
+                        data-testid={`kanban-column-pmi-strip-${id}`}
+                        className="flex items-center gap-1.5 flex-wrap text-3xs font-bold uppercase tracking-wider"
+                    >
+                        {totalBac > 0 && (
+                            <span className="px-1.5 py-0.5 rounded border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))]">
+                                BAC ${totalBac.toLocaleString('es-CO')}
+                            </span>
+                        )}
+                        {isWipExceeded && (
+                            <span
+                                data-testid={`kanban-column-wip-alert-${id}`}
+                                className="px-1.5 py-0.5 rounded border border-[hsl(var(--warning)/0.35)] bg-[hsl(var(--warning)/0.14)] text-[hsl(var(--warning))]"
+                            >
+                                WIP Excedido ({tasks.length}/5)
+                            </span>
+                        )}
+                        {overdueCount > 0 && (
+                            <span
+                                data-testid={`kanban-column-overdue-${id}`}
+                                className="px-1.5 py-0.5 rounded border border-[hsl(var(--destructive)/0.35)] bg-[hsl(var(--destructive)/0.14)] text-[hsl(var(--destructive))]"
+                            >
+                                {overdueCount} vencida(s)
+                            </span>
+                        )}
+                        {unassignedCount > 0 && (
+                            <span className="px-1.5 py-0.5 rounded border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))]">
+                                {unassignedCount} sin resp.
+                            </span>
+                        )}
                     </div>
                 </div>
             )}

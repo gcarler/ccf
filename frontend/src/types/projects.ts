@@ -154,6 +154,8 @@ export interface ProjectBudgetSummary {
   budget_spent: number;
   remaining_budget: number;
   burn_rate_percent: number;
+  total_budget?: number;
+  cpi?: number;
   total_expenses_count: number;
   planned_amount: number;
   committed_amount: number;
