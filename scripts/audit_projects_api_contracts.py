@@ -3819,6 +3819,75 @@ def summarize_projects_query_filter_and_sort_parameter_hygiene(
     }
 
 
+_AUDITED_HTTP_STATUS_METHODS = ("get", "post", "put", "patch", "delete")
+
+
+def summarize_projects_http_status_and_success_code_hygiene(
+    openapi_schema: Mapping[str, object] | None = None,
+) -> dict[str, object]:
+    """Audita la semántica de códigos HTTP 2xx y respuestas 204/201 en operaciones de proyectos."""
+    if openapi_schema is None:
+        from backend.app import app
+
+        schema_dict: Mapping[str, Any] = app.openapi()
+    else:
+        schema_dict = openapi_schema
+
+    total_project_operations = 0
+    missing_2xx_response_operations: list[str] = []
+    body_on_204_no_content_operations: list[str] = []
+    get_with_201_created_operations: list[str] = []
+
+    paths = schema_dict.get("paths", {}) if isinstance(schema_dict, Mapping) else {}
+    if isinstance(paths, Mapping):
+        for path in sorted(paths.keys()):
+            path_str = str(path)
+            if not path_str.startswith(("/api/projects", "/api/v1/projects", "/projects")):
+                continue
+            path_item = paths[path]
+            if not isinstance(path_item, Mapping):
+                continue
+
+            for method in _AUDITED_HTTP_STATUS_METHODS:
+                op_spec = path_item.get(method)
+                if not isinstance(op_spec, Mapping):
+                    continue
+
+                total_project_operations += 1
+                op_ref = f"{method.upper()} {path_str}"
+                responses = op_spec.get("responses")
+                resp_map = responses if isinstance(responses, Mapping) else {}
+
+                status_keys = {str(k) for k in resp_map.keys()}
+                has_2xx = any(
+                    len(code) == 3 and code.startswith("2") and code.isdigit()
+                    for code in status_keys
+                )
+                if not has_2xx:
+                    missing_2xx_response_operations.append(op_ref)
+
+                resp_204 = resp_map.get("204") or resp_map.get(204)
+                if isinstance(resp_204, Mapping):
+                    content_204 = resp_204.get("content")
+                    if isinstance(content_204, Mapping) and len(content_204) > 0:
+                        body_on_204_no_content_operations.append(op_ref)
+
+                if method == "get" and "201" in status_keys:
+                    get_with_201_created_operations.append(op_ref)
+
+    return {
+        "total_project_operations": total_project_operations,
+        "missing_2xx_response_operations": sorted(missing_2xx_response_operations),
+        "body_on_204_no_content_operations": sorted(body_on_204_no_content_operations),
+        "get_with_201_created_operations": sorted(get_with_201_created_operations),
+        "is_http_status_hygiene_compliant": (
+            len(missing_2xx_response_operations) == 0
+            and len(body_on_204_no_content_operations) == 0
+            and len(get_with_201_created_operations) == 0
+        ),
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()

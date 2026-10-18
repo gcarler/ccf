@@ -5300,3 +5300,102 @@ def test_query_filter_and_sort_parameter_hygiene_ignores_non_project_routes_and_
     assert res["client_sede_id_mutation_query_params"] == []
     assert res["invalid_search_bound_query_params"] == []
     assert res["is_query_filter_sort_hygiene_compliant"] is True
+
+
+def test_http_status_and_success_code_hygiene_live_openapi():
+    """Valida contra el esquema OpenAPI real que todas las operaciones de proyectos tengan higiene 2xx."""
+    assert "summarize_projects_http_status_and_success_code_hygiene" in audit_projects_api_contracts.__all__
+    res = audit_projects_api_contracts.summarize_projects_http_status_and_success_code_hygiene()
+    assert res["total_project_operations"] > 0
+    assert res["missing_2xx_response_operations"] == []
+    assert res["body_on_204_no_content_operations"] == []
+    assert res["get_with_201_created_operations"] == []
+    assert res["is_http_status_hygiene_compliant"] is True
+
+
+def test_http_status_and_success_code_hygiene_detects_missing_2xx_and_get_201():
+    """Detecta operaciones sin código 2xx y operaciones GET que declaran 201 Created."""
+    schema = {
+        "paths": {
+            "/api/v1/projects/charter": {
+                "get": {
+                    "responses": {
+                        "201": {"description": "Created on GET"},
+                    }
+                },
+                "post": {
+                    "responses": {
+                        "400": {"description": "Bad Request"},
+                        "500": {"description": "Server Error"},
+                    }
+                },
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_http_status_and_success_code_hygiene(
+        schema
+    )
+    assert res["total_project_operations"] == 2
+    assert res["missing_2xx_response_operations"] == ["POST /api/v1/projects/charter"]
+    assert res["body_on_204_no_content_operations"] == []
+    assert res["get_with_201_created_operations"] == ["GET /api/v1/projects/charter"]
+    assert res["is_http_status_hygiene_compliant"] is False
+
+
+def test_http_status_and_success_code_hygiene_detects_body_on_204_no_content():
+    """Detecta respuestas 204 No Content que declaran un diccionario content no vacío (RFC 9110 §15.3.5)."""
+    schema = {
+        "paths": {
+            "/projects/{project_id}/tasks/{task_id}": {
+                "delete": {
+                    "responses": {
+                        "204": {
+                            "description": "No Content with body",
+                            "content": {"application/json": {"schema": {"type": "object"}}},
+                        }
+                    }
+                },
+                "patch": {
+                    "responses": {
+                        "204": {
+                            "description": "Clean No Content",
+                        }
+                    }
+                },
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_http_status_and_success_code_hygiene(
+        schema
+    )
+    assert res["total_project_operations"] == 2
+    assert res["missing_2xx_response_operations"] == []
+    assert res["body_on_204_no_content_operations"] == [
+        "DELETE /projects/{project_id}/tasks/{task_id}"
+    ]
+    assert res["get_with_201_created_operations"] == []
+    assert res["is_http_status_hygiene_compliant"] is False
+
+
+def test_http_status_and_success_code_hygiene_ignores_non_project_routes():
+    """Ignora rutas fuera del dominio de proyectos y retorna cumplimiento limpio."""
+    schema = {
+        "paths": {
+            "/api/v1/auth/session": {
+                "get": {"responses": {"201": {"description": "Created"}}},
+                "delete": {
+                    "responses": {
+                        "204": {"content": {"application/json": {"schema": {"type": "string"}}}}
+                    }
+                },
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_http_status_and_success_code_hygiene(
+        schema
+    )
+    assert res["total_project_operations"] == 0
+    assert res["missing_2xx_response_operations"] == []
+    assert res["body_on_204_no_content_operations"] == []
+    assert res["get_with_201_created_operations"] == []
+    assert res["is_http_status_hygiene_compliant"] is True
