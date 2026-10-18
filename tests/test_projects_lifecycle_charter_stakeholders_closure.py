@@ -1171,3 +1171,152 @@ def test_assumption_log_empty_and_non_dict_entries():
         }
 
 
+# ─── audit_project_procurement_and_handover_closeout (pure helper) ───
+
+
+def test_audit_procurement_and_handover_closeout_ready():
+    """Contratos cerrados/liquidados con factura final pagada y traspaso operativo completo -> ADMINISTRATIVE_CLOSURE_READY."""
+    contracts = [
+        {
+            "id": "CTR-101",
+            "status": "CLOSED",
+            "open_claims": 0,
+            "final_invoice_paid": True,
+        },
+        {
+            "contract_id": "CTR-102",
+            "status": "settled",
+            "open_claims": False,
+            "final_invoice_paid": True,
+        },
+    ]
+    handover_items = [
+        {
+            "id": "DEL-01",
+            "transferred_to_operations": True,
+            "operations_owner": "Dirección de Infraestructura",
+        },
+        {
+            "deliverable_id": "DEL-02",
+            "transferred_to_operations": True,
+            "operations_owner": "Soporte Ministerial TI",
+        },
+    ]
+
+    res = project_lifecycle_pmi_service.ProjectLifecyclePMIService.audit_project_procurement_and_handover_closeout(
+        contracts=contracts, handover_items=handover_items
+    )
+    assert res["total_contracts"] == 2
+    assert res["open_contract_ids"] == []
+    assert res["disputed_contract_ids"] == []
+    assert res["total_handover_items"] == 2
+    assert res["pending_handover_ids"] == []
+    assert res["ready_for_administrative_closure"] is True
+    assert res["closeout_posture"] == "ADMINISTRATIVE_CLOSURE_READY"
+    assert len(res["recommendations"]) >= 1
+    assert (
+        "audit_project_procurement_and_handover_closeout"
+        in project_lifecycle_pmi_service.__all__
+    )
+
+
+def test_audit_procurement_and_handover_closeout_claims_blocked():
+    """Contratos en disputa o con reclamos abiertos -> PROCUREMENT_CLAIMS_BLOCKED."""
+    contracts = [
+        {
+            "id": "CTR-201",
+            "status": "DISPUTED",
+            "open_claims": 2,
+            "final_invoice_paid": False,
+        },
+        {
+            "contract_id": "CTR-202",
+            "status": "CLOSED",
+            "open_claims": True,
+            "final_invoice_paid": True,
+        },
+    ]
+    handover_items = [
+        {
+            "id": "DEL-10",
+            "transferred_to_operations": True,
+            "operations_owner": "Equipo Operaciones",
+        }
+    ]
+
+    res = project_lifecycle_pmi_service.audit_project_procurement_and_handover_closeout(
+        contracts=contracts, handover_items=handover_items
+    )
+    assert res["total_contracts"] == 2
+    assert res["open_contract_ids"] == ["CTR-201"]
+    assert res["disputed_contract_ids"] == ["CTR-201", "CTR-202"]
+    assert res["pending_handover_ids"] == []
+    assert res["ready_for_administrative_closure"] is False
+    assert res["closeout_posture"] == "PROCUREMENT_CLAIMS_BLOCKED"
+    assert any("CTR-201" in rec for rec in res["recommendations"])
+
+
+def test_audit_procurement_and_handover_closeout_pending_contract_or_handover():
+    """Sin disputas pero con factura pendiente o traspaso operativo incompleto -> PENDING_CONTRACT_OR_HANDOVER_CLOSEOUT."""
+    contracts = [
+        {
+            "id": "CTR-301",
+            "status": "CLOSED",
+            "open_claims": 0,
+            "final_invoice_paid": False,
+        },
+        {
+            "id": "CTR-302",
+            "status": "OPEN",
+            "open_claims": 0,
+            "final_invoice_paid": True,
+        },
+    ]
+    handover_items = [
+        {
+            "id": "DEL-20",
+            "transferred_to_operations": False,
+            "operations_owner": "Operaciones Sede Norte",
+        },
+        {
+            "deliverable_id": "DEL-21",
+            "transferred_to_operations": True,
+            "operations_owner": "TBD",
+        },
+        {
+            "id": "DEL-22",
+            "transferred_to_operations": True,
+            "operations_owner": "SIN ASIGNAR",
+        },
+    ]
+
+    res = project_lifecycle_pmi_service.audit_project_procurement_and_handover_closeout(
+        contracts=contracts, handover_items=handover_items
+    )
+    assert res["total_contracts"] == 2
+    assert res["open_contract_ids"] == ["CTR-301", "CTR-302"]
+    assert res["disputed_contract_ids"] == []
+    assert res["total_handover_items"] == 3
+    assert res["pending_handover_ids"] == ["DEL-20", "DEL-21", "DEL-22"]
+    assert res["ready_for_administrative_closure"] is False
+    assert res["closeout_posture"] == "PENDING_CONTRACT_OR_HANDOVER_CLOSEOUT"
+    assert len(res["recommendations"]) == 2
+
+
+def test_audit_procurement_and_handover_closeout_no_artifacts():
+    """Sin contratos ni entregables de traspaso -> NO_CLOSEOUT_ARTIFACTS."""
+    for c_in, h_in in ((None, None), ([], []), (["bad"], [123])):
+        res = project_lifecycle_pmi_service.audit_project_procurement_and_handover_closeout(
+            contracts=c_in, handover_items=h_in  # type: ignore[arg-type]
+        )
+        assert res["total_contracts"] == 0
+        assert res["open_contract_ids"] == []
+        assert res["disputed_contract_ids"] == []
+        assert res["total_handover_items"] == 0
+        assert res["pending_handover_ids"] == []
+        assert res["ready_for_administrative_closure"] is False
+        assert res["closeout_posture"] == "NO_CLOSEOUT_ARTIFACTS"
+        assert len(res["recommendations"]) == 1
+
+
+

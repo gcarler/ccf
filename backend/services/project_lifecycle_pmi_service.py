@@ -948,6 +948,27 @@ class ProjectLifecyclePMIService:
     ) -> dict[str, Any]:
         return evaluate_benefits_realization_posture(benefits)
 
+    @staticmethod
+    def audit_stakeholder_communication_cadence(
+        stakeholders: list[dict[str, Any]] | None,
+    ) -> dict[str, Any]:
+        return audit_stakeholder_communication_cadence(stakeholders)
+
+    @staticmethod
+    def audit_assumption_and_constraint_log(
+        entries: list[dict[str, Any]] | None,
+    ) -> dict[str, Any]:
+        return audit_assumption_and_constraint_log(entries)
+
+    @staticmethod
+    def audit_project_procurement_and_handover_closeout(
+        contracts: list[dict[str, Any]] | None = None,
+        handover_items: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        return audit_project_procurement_and_handover_closeout(
+            contracts=contracts, handover_items=handover_items
+        )
+
 
 def audit_charter_measurable_objectives(
     objectives: list[dict[str, Any]] | None,
@@ -1245,4 +1266,153 @@ def audit_assumption_and_constraint_log(
         "governance_coverage_rate": governance_coverage_rate,
         "posture": posture,
     }
+
+
+def audit_project_procurement_and_handover_closeout(
+    contracts: list[dict[str, Any]] | None = None,
+    handover_items: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Audita el cierre administrativo, liquidación de adquisiciones y traspaso a operaciones (PMBOK §4.7 y §12.3)."""
+    contract_items = [item for item in (contracts or []) if isinstance(item, dict)]
+    handover_list = [item for item in (handover_items or []) if isinstance(item, dict)]
+
+    total_contracts = len(contract_items)
+    open_contract_ids: list[str] = []
+    disputed_contract_ids: list[str] = []
+
+    for idx, item in enumerate(contract_items, start=1):
+        raw_id = item.get("id") if item.get("id") is not None else item.get("contract_id")
+        contract_id = (
+            str(raw_id).strip()
+            if raw_id is not None and str(raw_id).strip()
+            else f"CTR-{idx}"
+        )
+
+        status_upper = str(item.get("status") or "").strip().upper()
+        raw_claims = item.get("open_claims", 0)
+        if isinstance(raw_claims, bool):
+            has_open_claims = raw_claims
+        elif isinstance(raw_claims, (int, float)):
+            has_open_claims = raw_claims > 0
+        else:
+            has_open_claims = str(raw_claims or "").strip().lower() not in (
+                "",
+                "0",
+                "false",
+                "no",
+                "none",
+            )
+
+        final_invoice_paid = item.get("final_invoice_paid") is True
+
+        if status_upper not in ("CLOSED", "SETTLED") or not final_invoice_paid:
+            open_contract_ids.append(contract_id)
+
+        if status_upper == "DISPUTED" or has_open_claims:
+            disputed_contract_ids.append(contract_id)
+
+    total_handover_items = len(handover_list)
+    pending_handover_ids: list[str] = []
+    invalid_owner_tokens = {"TBD", "N/A", "SIN ASIGNAR", "NONE", "NULL", "-"}
+
+    for idx, item in enumerate(handover_list, start=1):
+        raw_id = (
+            item.get("id")
+            if item.get("id") is not None
+            else item.get("deliverable_id")
+        )
+        item_id = (
+            str(raw_id).strip()
+            if raw_id is not None and str(raw_id).strip()
+            else f"HND-{idx}"
+        )
+
+        transferred = item.get("transferred_to_operations") is True
+        owner_str = str(item.get("operations_owner") or "").strip()
+        has_valid_owner = (
+            bool(owner_str)
+            and owner_str.upper().rstrip(".") not in invalid_owner_tokens
+        )
+
+        if not transferred or not has_valid_owner:
+            pending_handover_ids.append(item_id)
+
+    ready_for_administrative_closure = bool(
+        (total_contracts + total_handover_items) > 0
+        and len(open_contract_ids) == 0
+        and len(disputed_contract_ids) == 0
+        and len(pending_handover_ids) == 0
+    )
+
+    recommendations: list[str] = []
+    if total_contracts == 0 and total_handover_items == 0:
+        closeout_posture = "NO_CLOSEOUT_ARTIFACTS"
+        recommendations.append(
+            "Registrar el inventario de contratos de adquisición (PMBOK §12.3) y entregables de transferencia a operaciones (§4.7) antes de iniciar el cierre."
+        )
+    elif len(disputed_contract_ids) > 0:
+        closeout_posture = "PROCUREMENT_CLAIMS_BLOCKED"
+        recommendations.append(
+            f"Resolver reclamos o disputas contractuales abiertas en {', '.join(disputed_contract_ids)} mediante negociación directa o ADR (PMBOK §12.3) antes del cierre administrativo."
+        )
+        if pending_handover_ids:
+            recommendations.append(
+                f"Completar transferencia formal a operaciones y asignación de dueño en {', '.join(pending_handover_ids)} (PMBOK §4.7)."
+            )
+    elif len(open_contract_ids) > 0 or len(pending_handover_ids) > 0:
+        closeout_posture = "PENDING_CONTRACT_OR_HANDOVER_CLOSEOUT"
+        if open_contract_ids:
+            recommendations.append(
+                f"Liquidar facturas finales y emitir finiquito formal en contratos abiertos: {', '.join(open_contract_ids)} (PMBOK §12.3)."
+            )
+        if pending_handover_ids:
+            recommendations.append(
+                f"Formalizar acta de recepción operativa y responsable de sostenimiento para: {', '.join(pending_handover_ids)} (PMBOK §4.7)."
+            )
+    else:
+        closeout_posture = "ADMINISTRATIVE_CLOSURE_READY"
+        recommendations.append(
+            "Todos los contratos están liquidados sin reclamos y los entregables fueron transferidos a operaciones. Proceder con el cierre administrativo final (PMBOK §4.7)."
+        )
+
+    return {
+        "total_contracts": total_contracts,
+        "open_contract_ids": open_contract_ids,
+        "disputed_contract_ids": disputed_contract_ids,
+        "total_handover_items": total_handover_items,
+        "pending_handover_ids": pending_handover_ids,
+        "ready_for_administrative_closure": ready_for_administrative_closure,
+        "closeout_posture": closeout_posture,
+        "recommendations": recommendations,
+    }
+
+
+__all__ = [
+    "build_pmo_portfolio_matrix",
+    "build_governance_summary",
+    "compute_closure_readiness_pct",
+    "compute_governance_maturity_pct",
+    "evaluate_governance_health",
+    "get_lifecycle",
+    "save_charter",
+    "list_stakeholders",
+    "create_stakeholder",
+    "update_stakeholder",
+    "soft_delete_stakeholder",
+    "finalize_closure",
+    "evaluate_automation_governance_readiness",
+    "evaluate_stakeholder_engagement_gaps",
+    "evaluate_charter_authorization_readiness",
+    "evaluate_administrative_closure_audit",
+    "evaluate_pmo_portfolio_health_balance",
+    "evaluate_phase_gate_transition_readiness",
+    "evaluate_lessons_learned_institutional_reuse",
+    "audit_charter_measurable_objectives",
+    "audit_stakeholder_communication_cadence",
+    "evaluate_benefits_realization_posture",
+    "audit_assumption_and_constraint_log",
+    "audit_project_procurement_and_handover_closeout",
+    "ProjectLifecyclePMIService",
+]
+
 
