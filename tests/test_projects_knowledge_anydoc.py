@@ -837,3 +837,93 @@ def test_summarize_markdown_code_blocks_prose_only_or_none():
             "technical_spec_status": "prose_only",
         }
 
+
+# ── extract_markdown_action_checklists (PMBOK §10.2 / §4.4, pure helper) ───
+
+
+def test_extract_markdown_action_checklists_all_actions_completed():
+    """Todos los ítems en [x]/[X] fuera de bloques de código -> 'ALL_ACTIONS_COMPLETED' (100.0%)."""
+    import backend.services.anydoc_service as anydoc_module
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        extract_markdown_action_checklists,
+    )
+
+    md = (
+        "# Acta de Cierre\n"
+        "- [x] Aprobar acta con @sponsor\n"
+        "* [X] Publicar línea base (Responsable: PMO)\n"
+        "```markdown\n"
+        "- [ ] Este ítem dentro de código debe ignorarse\n"
+        "```\n"
+    )
+    res = extract_markdown_action_checklists(md)
+    assert res == {
+        "total_items": 2,
+        "completed_items": 2,
+        "pending_items": 0,
+        "assigned_pending_items": 0,
+        "completion_rate": 100.0,
+        "posture": "ALL_ACTIONS_COMPLETED",
+    }
+    assert AnyDocService.extract_markdown_action_checklists({"markdown": md}) == res
+    assert "extract_markdown_action_checklists" in anydoc_module.__all__
+
+
+def test_extract_markdown_action_checklists_accountable_pending_actions():
+    """Ítems pendientes con mención @usuario o Owner:/Responsable: -> 'ACCOUNTABLE_PENDING_ACTIONS'."""
+    from backend.services.anydoc_service import extract_markdown_action_checklists
+
+    md = (
+        "- [x] Hito 1 cerrado\n"
+        "- [ ] Revisar presupuesto con @carlos.ruiz\n"
+        "+ [ ] Actualizar matriz RACI (Responsable: Ana Gómez)\n"
+        "* [ ] Validar entregable (Owner: qa-team)\n"
+    )
+    res = extract_markdown_action_checklists(md)
+    assert res == {
+        "total_items": 4,
+        "completed_items": 1,
+        "pending_items": 3,
+        "assigned_pending_items": 3,
+        "completion_rate": 25.0,
+        "posture": "ACCOUNTABLE_PENDING_ACTIONS",
+    }
+
+
+def test_extract_markdown_action_checklists_unassigned_pending_actions():
+    """Al menos un ítem pendiente sin responsable asignado -> 'UNASSIGNED_PENDING_ACTIONS'."""
+    from backend.services.anydoc_service import extract_markdown_action_checklists
+
+    md = (
+        "- [x] Definir alcance\n"
+        "- [ ] Ajustar cronograma con @pmo_lead\n"
+        "- [ ] Tarea huérfana sin propietario\n"
+    )
+    res = extract_markdown_action_checklists({"markdown": md})
+    assert res == {
+        "total_items": 3,
+        "completed_items": 1,
+        "pending_items": 2,
+        "assigned_pending_items": 1,
+        "completion_rate": 33.33,
+        "posture": "UNASSIGNED_PENDING_ACTIONS",
+    }
+
+
+def test_extract_markdown_action_checklists_no_checklist_items():
+    """None, texto sin checkboxes o solo checkboxes dentro de bloques ``` -> 'NO_CHECKLIST_ITEMS'."""
+    from backend.services.anydoc_service import extract_markdown_action_checklists
+
+    fenced_only = "```md\n- [ ] Falso positivo en bloque\n- [x] Otro en bloque\n```\n"
+    for val in (None, "", "Texto normal\n- Viñeta simple sin checkbox", {}, fenced_only):
+        res = extract_markdown_action_checklists(val)
+        assert res == {
+            "total_items": 0,
+            "completed_items": 0,
+            "pending_items": 0,
+            "assigned_pending_items": 0,
+            "completion_rate": 0.0,
+            "posture": "NO_CHECKLIST_ITEMS",
+        }
+

@@ -1008,3 +1008,162 @@ def summarize_markdown_code_blocks(
         "technical_spec_status": technical_spec_status,
     }
 
+
+_CHECKLIST_ITEM_RE = re.compile(r"^\s*[-*+]\s+\[(?P<state>[ xX])\]\s+(?P<text>.+)$")
+_ASSIGNEE_MENTION_RE = re.compile(r"(?:@[\w.-]+|(?i:(?:owner|responsable))\s*:)")
+
+
+def extract_markdown_action_checklists(
+    markdown_or_result: str | dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Extrae e inspecciona listas de tareas Markdown (- [ ] / - [x]) fuera de bloques de código según PMI PMBOK §10.2 / §4.4."""
+    if isinstance(markdown_or_result, dict):
+        text = str(markdown_or_result.get("markdown") or "")
+    elif isinstance(markdown_or_result, str):
+        text = markdown_or_result
+    else:
+        text = ""
+
+    total_items = 0
+    completed_items = 0
+    pending_items = 0
+    assigned_pending_items = 0
+
+    in_code_block = False
+    for line in text.splitlines():
+        if line.strip().startswith("```"):
+            in_code_block = not in_code_block
+            continue
+        if in_code_block:
+            continue
+
+        match = _CHECKLIST_ITEM_RE.match(line)
+        if not match:
+            continue
+
+        total_items += 1
+        state = match.group("state")
+        item_text = match.group("text").strip()
+        if state.lower() == "x":
+            completed_items += 1
+        else:
+            pending_items += 1
+            if _ASSIGNEE_MENTION_RE.search(item_text):
+                assigned_pending_items += 1
+
+    completion_rate = (
+        round((completed_items / total_items) * 100.0, 2)
+        if total_items > 0
+        else 0.0
+    )
+
+    if total_items == 0:
+        posture = "NO_CHECKLIST_ITEMS"
+    elif pending_items == 0:
+        posture = "ALL_ACTIONS_COMPLETED"
+    elif assigned_pending_items == pending_items:
+        posture = "ACCOUNTABLE_PENDING_ACTIONS"
+    else:
+        posture = "UNASSIGNED_PENDING_ACTIONS"
+
+    return {
+        "total_items": total_items,
+        "completed_items": completed_items,
+        "pending_items": pending_items,
+        "assigned_pending_items": assigned_pending_items,
+        "completion_rate": completion_rate,
+        "posture": posture,
+    }
+
+
+class AnyDocService:
+    """Fachada canónica de conversión y auditoría documental AnyDoc PMI."""
+
+    @staticmethod
+    def is_anydoc_available() -> bool:
+        return is_anydoc_available()
+
+    @staticmethod
+    def detect_document_format(
+        filename: Optional[str] = None,
+        data: Optional[bytes] = None,
+        format_hint: Optional[str] = None,
+    ) -> str:
+        return detect_document_format(
+            filename=filename, data=data, format_hint=format_hint
+        )
+
+    @staticmethod
+    def convert_bytes_to_markdown(
+        data: bytes,
+        filename: str = "document",
+        format_hint: Optional[str] = None,
+        ocr: str = "reject",
+    ) -> Dict[str, Any]:
+        return convert_bytes_to_markdown(
+            data=data, filename=filename, format_hint=format_hint, ocr=ocr
+        )
+
+    @staticmethod
+    def convert_file_to_markdown(
+        file_path: str | Path,
+        ocr: str = "reject",
+    ) -> Dict[str, Any]:
+        return convert_file_to_markdown(file_path=file_path, ocr=ocr)
+
+    @staticmethod
+    def audit_converted_markdown_structure(conversion_result: dict | None) -> dict:
+        return audit_converted_markdown_structure(conversion_result)
+
+    @staticmethod
+    def estimate_document_reading_metrics(
+        markdown_or_result: str | dict[str, Any] | None,
+        words_per_minute: int = 200,
+    ) -> dict[str, Any]:
+        return estimate_document_reading_metrics(
+            markdown_or_result, words_per_minute=words_per_minute
+        )
+
+    @staticmethod
+    def extract_markdown_governance_markers(
+        markdown_or_result: str | dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        return extract_markdown_governance_markers(markdown_or_result)
+
+    @staticmethod
+    def summarize_markdown_tables_schema(
+        markdown_or_result: str | dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        return summarize_markdown_tables_schema(markdown_or_result)
+
+    @staticmethod
+    def summarize_markdown_code_blocks(
+        markdown_or_result: str | dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        return summarize_markdown_code_blocks(markdown_or_result)
+
+    @staticmethod
+    def extract_markdown_action_checklists(
+        markdown_or_result: str | dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        return extract_markdown_action_checklists(markdown_or_result)
+
+
+__all__ = [
+    "ANYDOC_AVAILABLE",
+    "SUPPORTED_EXTENSIONS",
+    "FORMAT_ALIASES",
+    "AnyDocConversionError",
+    "is_anydoc_available",
+    "detect_document_format",
+    "convert_bytes_to_markdown",
+    "convert_file_to_markdown",
+    "audit_converted_markdown_structure",
+    "estimate_document_reading_metrics",
+    "extract_markdown_governance_markers",
+    "summarize_markdown_tables_schema",
+    "summarize_markdown_code_blocks",
+    "extract_markdown_action_checklists",
+    "AnyDocService",
+]
+
