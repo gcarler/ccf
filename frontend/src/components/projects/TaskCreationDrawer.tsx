@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { CheckSquare, Type, AlignLeft, Flag, Loader2, User, Layers, Plus } from 'lucide-react';
+import { CheckSquare, Type, AlignLeft, Flag, Loader2, User, Layers, Plus, ShieldCheck, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import PersonaSelect from '@/components/ui/PersonaSelect';
 import clsx from 'clsx';
@@ -45,6 +45,35 @@ const PRIORITIES = [
     { value: 'low', label: PRIORITY_LABELS.low, color: 'bg-[hsl(var(--surface-2))]', iconColor: 'text-[hsl(var(--text-secondary))]' }
 ];
 
+const PMI_DESCRIPTION_TEMPLATES: Array<{
+    id: string;
+    testId: string;
+    label: string;
+    content: string;
+}> = [
+    {
+        id: 'wbs',
+        testId: 'task-template-wbs',
+        label: '[Diccionario EDT] Entregable y Criterio',
+        content:
+            'Entregable Verificable: Documentación y artefacto operativo validado.\nSupuestos y Restricciones: Cumplimiento de línea base técnica.\nCriterio de Aceptación PMI: Aprobado por responsable del paquete.',
+    },
+    {
+        id: 'dod',
+        testId: 'task-template-dod',
+        label: '[Checklist DoD] Verificación de Calidad',
+        content:
+            'Checklist Definition of Done (DoD):\n- [ ] Revisión técnica de pares completada\n- [ ] Evidencia adjunta en el paquete WBS\n- [ ] Validado sin defectos críticos abiertos',
+    },
+    {
+        id: 'milestone',
+        testId: 'task-template-milestone',
+        label: '[Hito de Control] Evidencia de Salida',
+        content:
+            'Criterio de Salida Stage-Gate:\n- [ ] Acta o evidencia formal cargada\n- [ ] Indicadores de desempeño dentro de umbral\n- [ ] Autorización de transición a siguiente fase',
+    },
+];
+
 export default function TaskCreationDrawer({
     isOpen,
     projectId,
@@ -74,6 +103,25 @@ export default function TaskCreationDrawer({
 
     const priority = watch('priority');
     const assigneeId = watch('assignee_id');
+    const watchedTitle = watch('title');
+    const watchedDescription = watch('description');
+    const watchedComponentId = watch('component_id');
+    const watchedNode = watch('node');
+
+    const wbsCriteria = [
+        { key: 'title', label: 'Nombre del Paquete', ok: (watchedTitle || '').trim().length > 0 },
+        { key: 'dod', label: 'Criterio de Aceptación (DoD)', ok: (watchedDescription || '').trim().length >= 15 },
+        { key: 'raci', label: 'Responsable RACI', ok: Boolean(assigneeId) },
+        { key: 'edt', label: 'Anclaje EDT / Componente', ok: Boolean(watchedComponentId || watchedNode) },
+    ];
+    const wbsReadyCount = wbsCriteria.filter((c) => c.ok).length;
+    const isWbsReady = wbsReadyCount === wbsCriteria.length;
+
+    const handleApplyTemplate = (templateContent: string) => {
+        const current = (watchedDescription || '').trim();
+        const nextValue = current ? `${current}\n\n${templateContent}` : templateContent;
+        setValue('description', nextValue, { shouldDirty: true, shouldValidate: true });
+    };
 
     useEffect(() => {
         if (!isOpen || !projectId || !token) {
@@ -186,6 +234,53 @@ export default function TaskCreationDrawer({
             }
         >
             <form onSubmit={handleSubmit(onFormSubmit)} className="mt-3 space-y-4">
+                {/* Tarjeta de Alistamiento de Paquete de Trabajo PMI §5.4 */}
+                <div
+                    data-testid="task-creation-pmi-readiness"
+                    className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 space-y-2"
+                >
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center gap-1.5">
+                            <ShieldCheck size={13} className="text-[hsl(var(--primary))]" />
+                            Alistamiento de Paquete de Trabajo (PMI §5.4)
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                            <span
+                                data-testid="task-creation-pmi-score"
+                                className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))]"
+                            >
+                                {wbsReadyCount}/4 Criterios WBS
+                            </span>
+                            <span
+                                className={clsx(
+                                    'px-2 py-0.5 rounded text-2xs font-bold uppercase tracking-wider',
+                                    isWbsReady
+                                        ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]'
+                                        : 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))]'
+                                )}
+                            >
+                                {isWbsReady ? 'Paquete Listo' : 'Definición Parcial'}
+                            </span>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+                        {wbsCriteria.map((criterion) => (
+                            <div
+                                key={criterion.key}
+                                className={clsx(
+                                    'text-2xs font-medium px-2 py-1 rounded border flex items-center justify-between',
+                                    criterion.ok
+                                        ? 'border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success)/0.08)] text-[hsl(var(--success))]'
+                                        : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))]'
+                                )}
+                            >
+                                <span className="truncate">{criterion.label}</span>
+                                <span className="font-bold ml-1">{criterion.ok ? 'OK' : 'Pend.'}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
                 <div className="space-y-1.5">
                     <label htmlFor="task-title" className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                         <Type size={12} /> Título de la actividad
@@ -204,6 +299,26 @@ export default function TaskCreationDrawer({
                     <label htmlFor="task-description" className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                         <AlignLeft size={12} /> Descripción (Opcional)
                     </label>
+                    <div
+                        data-testid="task-creation-pmi-templates"
+                        className="flex items-center gap-1.5 flex-wrap pb-1"
+                    >
+                        <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] inline-flex items-center gap-1 mr-1">
+                            <Sparkles size={10} className="text-[hsl(var(--primary))]" />
+                            Plantillas PMI:
+                        </span>
+                        {PMI_DESCRIPTION_TEMPLATES.map((tpl) => (
+                            <button
+                                key={tpl.id}
+                                type="button"
+                                data-testid={tpl.testId}
+                                onClick={() => handleApplyTemplate(tpl.content)}
+                                className="px-2 py-0.5 rounded border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:border-[hsl(var(--primary)/0.5)] hover:text-[hsl(var(--primary))] text-2xs font-semibold text-[hsl(var(--muted-foreground))] transition-colors"
+                            >
+                                {tpl.label}
+                            </button>
+                        ))}
+                    </div>
                     <textarea
                         id="task-description"
                         {...register('description')}

@@ -120,4 +120,72 @@ describe('ProjectSettingsDrawer accessibility', () => {
       offsetParentSpy.mockRestore();
     }
   });
+
+  it('evaluates PMI §4.3 baseline governance score from project fields', () => {
+    const { rerender } = renderWithProvider(
+      <ProjectSettingsDrawer
+        project={project}
+        isOpen
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+      />
+    );
+
+    expect(
+      screen.getByTestId('project-settings-pmi-governance-card')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('project-settings-pmi-score')
+    ).toHaveTextContent('3/4 Criterios PMI');
+    expect(
+      screen.getByTestId('project-settings-pmi-score')
+    ).toHaveTextContent('Gobernanza Incompleta');
+
+    rerender(
+      <SidebarLayerProvider>
+        <ProjectSettingsDrawer
+          project={{ ...project, owner_id: 'pm-uuid-1' }}
+          isOpen
+          onClose={vi.fn()}
+          onSave={vi.fn()}
+        />
+      </SidebarLayerProvider>
+    );
+
+    expect(
+      screen.getByTestId('project-settings-pmi-score')
+    ).toHaveTextContent('4/4 Criterios PMI');
+    expect(
+      screen.getByTestId('project-settings-pmi-score')
+    ).toHaveTextContent('Gobernanza Completa');
+  });
+
+  it('displays PMI §4.6 CCB notice dynamically when lifecycle status changes', async () => {
+    renderWithProvider(
+      <ProjectSettingsDrawer
+        project={project}
+        isOpen
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+      />
+    );
+
+    expect(
+      screen.queryByTestId('project-settings-pmi-ccb-notice')
+    ).not.toBeInTheDocument();
+
+    const user = userEvent.setup();
+    await user.click(
+      screen.getByRole('button', { name: 'Cambiar estado del proyecto' })
+    );
+    await user.click(screen.getByText('En Marcha'));
+
+    expect(
+      screen.getByTestId('project-settings-pmi-ccb-notice')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('project-settings-pmi-ccb-notice')
+    ).toHaveTextContent('Comité de Control de Cambios (CCB)');
+  });
 });
+

@@ -22,10 +22,56 @@ import {
   Sparkles,
   Clock,
   Loader2,
+  GitBranch,
 } from "lucide-react";
 import { toast } from "sonner";
 import clsx from "clsx";
 import { getSafeProjectLink } from "@/lib/projects/safeProjectLink";
+
+// PMI §10.2 & §5.5 — Control de Configuración Documental y Trazabilidad.
+const PMI_BASELINE_ROLE_PATTERN =
+  /acta|charter|baseline|linea.?base|plan|cronograma|presupuesto|edt|wbs/i;
+const PMI_QA_ROLE_PATTERN =
+  /qa|test|prueba|evidencia|aceptacion|reporte|informe|checklist|dod/i;
+const DOCUMENT_VERSION_PATTERN = /v\d+(\.\d+)?|rev\s*\d+|final|aprobad[oa]/i;
+
+export type PmiArtifactRole = "baseline" | "qa" | "operational";
+
+export function classifyPmiArtifactRole(
+  fileName: string,
+  category: string
+): PmiArtifactRole {
+  const haystack = `${fileName} ${category}`;
+  if (PMI_BASELINE_ROLE_PATTERN.test(haystack)) return "baseline";
+  if (PMI_QA_ROLE_PATTERN.test(haystack)) return "qa";
+  return "operational";
+}
+
+export function hasExplicitDocumentVersion(fileName: string): boolean {
+  return DOCUMENT_VERSION_PATTERN.test(fileName);
+}
+
+export function hasWbsTraceability(file: Pick<ProjectFileRecord, "task_id" | "task_title">): boolean {
+  return Boolean(file.task_id || file.task_title);
+}
+
+const PMI_ROLE_CONFIG: Record<
+  PmiArtifactRole,
+  { label: string; tone: string }
+> = {
+  baseline: {
+    label: "Línea Base / Gobernanza",
+    tone: "text-[hsl(var(--primary))] border-[hsl(var(--primary)/0.4)] bg-[hsl(var(--primary)/0.12)]",
+  },
+  qa: {
+    label: "Evidencia QA / DoD",
+    tone: "text-[hsl(var(--info))] border-[hsl(var(--info)/0.4)] bg-[hsl(var(--info)/0.12)]",
+  },
+  operational: {
+    label: "Entregable Operativo",
+    tone: "text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]",
+  },
+};
 
 function formatInlineText(text: string): React.ReactNode {
   const parts: React.ReactNode[] = [];
@@ -731,6 +777,60 @@ export function ProjectFileViewerDrawer({
               </span>
             )}
           </div>
+
+          {/* Franja de Trazabilidad y Control de Configuración Documental PMI §10.2 & §5.5 */}
+          {(() => {
+            const pmiRole = classifyPmiArtifactRole(file.name, file.category);
+            const roleConfig = PMI_ROLE_CONFIG[pmiRole];
+            const versionControlled = hasExplicitDocumentVersion(file.name);
+            const wbsLinked = hasWbsTraceability(file);
+            return (
+              <div
+                data-testid="file-viewer-pmi-traceability-strip"
+                aria-label="Trazabilidad PMI del artefacto"
+                className="flex items-center gap-1.5 flex-wrap text-2xs font-semibold pt-0.5"
+              >
+                <span
+                  data-testid="file-viewer-pmi-role"
+                  className={clsx(
+                    "flex items-center gap-1 px-2 py-0.5 rounded-full border",
+                    roleConfig.tone
+                  )}
+                >
+                  {pmiRole === "operational" ? <Layers size={10} /> : <Check size={10} />}
+                  {roleConfig.label}
+                </span>
+                <span
+                  data-testid="file-viewer-pmi-version"
+                  className={clsx(
+                    "flex items-center gap-1 px-2 py-0.5 rounded-full border",
+                    versionControlled
+                      ? "text-[hsl(var(--success))] border-[hsl(var(--success)/0.4)] bg-[hsl(var(--success)/0.12)]"
+                      : "text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.4)] bg-[hsl(var(--warning)/0.12)]"
+                  )}
+                >
+                  {versionControlled ? <Check size={10} /> : <Clock size={10} />}
+                  {versionControlled ?
+                    "Version Controlada"
+                    : "Sin version explicita"}
+                </span>
+                <span
+                  data-testid="file-viewer-pmi-wbs-link"
+                  className={clsx(
+                    "flex items-center gap-1 px-2 py-0.5 rounded-full border",
+                    wbsLinked
+                      ? "text-[hsl(var(--success))] border-[hsl(var(--success)/0.4)] bg-[hsl(var(--success)/0.12)]"
+                      : "text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]"
+                  )}
+                >
+                  <GitBranch size={10} />
+                  {wbsLinked ?
+                    "Vinculado a Paquete WBS"
+                    : "Artefacto General de Proyecto"}
+                </span>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Contenido Visual del Visor */}

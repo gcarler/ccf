@@ -97,4 +97,42 @@ describe('TaskLabelManager', () => {
 
     expect(onLabelsChange).toHaveBeenCalledWith(['Infraestructura']);
   });
+
+  it('displays PMI taxonomy coverage badge based on governance tags', () => {
+    const { rerender } = render(
+      <TaskLabelManager task={task} labels={['Urgente']} onLabelsChange={vi.fn()} token="test-token" />
+    );
+
+    expect(screen.getByTestId('task-label-pmi-coverage')).toHaveTextContent('Sin etiqueta PMI');
+
+    rerender(
+      <TaskLabelManager
+        task={task}
+        labels={['Ruta Crítica', 'Control de Calidad QA', 'Urgente']}
+        onLabelsChange={vi.fn()}
+        token="test-token"
+      />
+    );
+
+    expect(screen.getByTestId('task-label-pmi-coverage')).toHaveTextContent('Gobernanza PMI (2)');
+  });
+
+  it('assigns PMI governance tag in 1-click from quick tags section', () => {
+    const onLabelsChange = vi.fn();
+    render(
+      <TaskLabelManager
+        task={task}
+        labels={[]}
+        onLabelsChange={onLabelsChange}
+        token="test-token"
+      />
+    );
+
+    fireEvent.click(screen.getByText('Añadir etiqueta'));
+    expect(screen.getByTestId('task-label-pmi-quick-tags')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('task-label-pmi-tag-Ruta Crítica'));
+    expect(onLabelsChange).toHaveBeenCalledWith(['Ruta Crítica']);
+  });
 });
+

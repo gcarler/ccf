@@ -16,7 +16,7 @@ import {
     SortableContext,
     horizontalListSortingStrategy
 } from '@dnd-kit/sortable';
-import { Star } from 'lucide-react';
+import { Star, Activity, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
@@ -32,11 +32,33 @@ interface Props {
     onAddTask: () => void;
 }
 
+type KanbanFlowFilter = 'all' | 'critical' | 'unassigned';
+
+function isTaskCompleted(status?: string | null): boolean {
+    const normalized = (status || 'todo').toLowerCase().trim();
+    return normalized === 'done' || normalized === 'completed';
+}
+
+function isTaskActiveWip(status?: string | null): boolean {
+    const normalized = (status || 'todo').toLowerCase().trim();
+    return !['todo', 'pending', 'backlog', 'done', 'completed'].includes(normalized);
+}
+
+function isTaskOverdue(task: ProjectTaskRecord): boolean {
+    if (isTaskCompleted(task.status) || !task.due_date) return false;
+    const dueTime = new Date(task.due_date).getTime();
+    if (Number.isNaN(dueTime)) return false;
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    return dueTime < todayStart.getTime();
+}
+
 export function ProjectKanbanBoard({ project, tasks, phases, onOpenTask, onAddTask }: Props) {
     const { updateTask, deleteTask, createTask } = useProjectUpdate();
     const { token } = useAuth();
     const [activeTask, setActiveTask] = useState<ProjectTaskRecord | null>(null);
     const [onlyFavorites, setOnlyFavorites] = useState(false);
+    const [flowFilter, setFlowFilter] = useState<KanbanFlowFilter>('all');
     const [favoriteTaskIds, setFavoriteTaskIds] = useState<Set<string>>(new Set());
 
     useEffect(() => {
@@ -52,10 +74,30 @@ export function ProjectKanbanBoard({ project, tasks, phases, onOpenTask, onAddTa
         return () => { active = false; };
     }, [project?.id, token]);
 
+    const flowMetrics = useMemo(() => {
+        const activeWipCount = tasks.filter(t => isTaskActiveWip(t.status)).length;
+        const completedCount = tasks.filter(t => isTaskCompleted(t.status)).length;
+        const completionPct = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
+        const criticalOrOverdueCount = tasks.filter(
+            t => !isTaskCompleted(t.status) && (t.priority === 'urgent' || isTaskOverdue(t))
+        ).length;
+        return { activeWipCount, completionPct, criticalOrOverdueCount };
+    }, [tasks]);
+
     const displayedTasks = useMemo(() => {
-        if (!onlyFavorites) return tasks;
-        return tasks.filter(t => favoriteTaskIds.has(t.id));
-    }, [tasks, onlyFavorites, favoriteTaskIds]);
+        return tasks.filter(t => {
+            if (onlyFavorites && !favoriteTaskIds.has(t.id)) return false;
+            if (flowFilter === 'critical') {
+                if (isTaskCompleted(t.status)) return false;
+                return t.priority === 'urgent' || t.priority === 'high' || isTaskOverdue(t);
+            }
+            if (flowFilter === 'unassigned') {
+                if (isTaskCompleted(t.status)) return false;
+                return !t.assignee_id;
+            }
+            return true;
+        });
+    }, [tasks, onlyFavorites, favoriteTaskIds, flowFilter]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -108,34 +150,117 @@ export function ProjectKanbanBoard({ project, tasks, phases, onOpenTask, onAddTa
 
     return (
         <div className="flex flex-col h-full bg-[hsl(var(--surface-1))]">
-            <div className="shrink-0 flex items-center justify-between px-3 py-1.5 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
-                <button
-                    type="button"
-                    onClick={() => setOnlyFavorites(prev => !prev)}
-                    className={clsx(
-                        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all border',
-                        onlyFavorites
-                            ? 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.3)] shadow-xs'
-                            : 'text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--foreground))]'
-                    )}
-                    title="Filtrar por tareas favoritas"
-                >
-                    <Star size={13} className={clsx(onlyFavorites ? 'fill-current text-[hsl(var(--warning))]' : '')} />
-                    <span>Solo Mis Favoritas</span>
-                    {favoriteTaskIds.size > 0 && (
-                        <span className={clsx(
-                            'px-1.5 py-0.5 rounded-full text-2xs font-bold',
+            <div className="shrink-0 flex flex-wrap items-center justify-between gap-2 px-3 py-1.5 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
+                <div className="flex flex-wrap items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setOnlyFavorites(prev => !prev)}
+                        className={clsx(
+                            'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all border',
                             onlyFavorites
-                                ? 'bg-[hsl(var(--warning))] text-[hsl(var(--background))]'
-                                : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))]'
-                        )}>
-                            {favoriteTaskIds.size}
+                                ? 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.3)] shadow-xs'
+                                : 'text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--foreground))]'
+                        )}
+                        title="Filtrar por tareas favoritas"
+                    >
+                        <Star size={13} className={clsx(onlyFavorites ? 'fill-current text-[hsl(var(--warning))]' : '')} />
+                        <span>Solo Mis Favoritas</span>
+                        {favoriteTaskIds.size > 0 && (
+                            <span className={clsx(
+                                'px-1.5 py-0.5 rounded-full text-2xs font-bold',
+                                onlyFavorites
+                                    ? 'bg-[hsl(var(--warning))] text-[hsl(var(--background))]'
+                                    : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))]'
+                            )}>
+                                {favoriteTaskIds.size}
+                            </span>
+                        )}
+                    </button>
+
+                    {/* Resumen de Flujo y WIP PMI */}
+                    <div
+                        data-testid="kanban-board-pmi-flow-bar"
+                        className="inline-flex flex-wrap items-center gap-1.5"
+                    >
+                        <span
+                            data-testid="kanban-board-pmi-wip"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-bold border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))]"
+                        >
+                            <Activity size={11} className="text-[hsl(var(--primary))]" />
+                            WIP Activo: {flowMetrics.activeWipCount}
                         </span>
-                    )}
-                </button>
-                <span className="text-2xs text-[hsl(var(--muted-foreground))]">
-                    {displayedTasks.length} de {tasks.length} tareas
-                </span>
+                        <span
+                            data-testid="kanban-board-pmi-completion"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-bold border border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]"
+                        >
+                            <CheckCircle2 size={11} />
+                            Avance de Flujo: {flowMetrics.completionPct}%
+                        </span>
+                        <span
+                            data-testid="kanban-board-pmi-critical-count"
+                            className={clsx(
+                                'inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-bold border',
+                                flowMetrics.criticalOrOverdueCount > 0
+                                    ? 'border-[hsl(var(--destructive)/0.3)] bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))]'
+                                    : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))]'
+                            )}
+                        >
+                            <AlertTriangle size={11} />
+                            Críticas / Vencidas: {flowMetrics.criticalOrOverdueCount}
+                        </span>
+                    </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                    <div
+                        data-testid="kanban-board-pmi-filters"
+                        className="inline-flex items-center gap-1 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-0.5"
+                    >
+                        <button
+                            type="button"
+                            data-testid="kanban-filter-all"
+                            onClick={() => setFlowFilter('all')}
+                            className={clsx(
+                                'px-2 py-0.5 rounded-md text-2xs font-bold transition-colors',
+                                flowFilter === 'all'
+                                    ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
+                                    : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
+                            )}
+                        >
+                            Todas
+                        </button>
+                        <button
+                            type="button"
+                            data-testid="kanban-filter-critical"
+                            onClick={() => setFlowFilter('critical')}
+                            className={clsx(
+                                'px-2 py-0.5 rounded-md text-2xs font-bold transition-colors',
+                                flowFilter === 'critical'
+                                    ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
+                                    : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
+                            )}
+                        >
+                            Críticas / Vencidas
+                        </button>
+                        <button
+                            type="button"
+                            data-testid="kanban-filter-unassigned"
+                            onClick={() => setFlowFilter('unassigned')}
+                            className={clsx(
+                                'px-2 py-0.5 rounded-md text-2xs font-bold transition-colors',
+                                flowFilter === 'unassigned'
+                                    ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
+                                    : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
+                            )}
+                        >
+                            Sin RACI
+                        </button>
+                    </div>
+
+                    <span className="text-2xs text-[hsl(var(--muted-foreground))]">
+                        {displayedTasks.length} de {tasks.length} tareas
+                    </span>
+                </div>
             </div>
 
             <div className="flex-1 min-h-0">

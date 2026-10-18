@@ -94,4 +94,71 @@ describe('ProjectKanbanBoard', () => {
 
         expect(onOpenTask).not.toHaveBeenCalled();
     });
+
+    it('renders PMI flow and WIP summary metrics accurately', () => {
+        const pmiTasks = [
+            createMockTask({ id: 't1', project_id: 'proj-1', title: 'Pendiente normal', status: 'todo', priority: 'medium' }),
+            createMockTask({ id: 't2', project_id: 'proj-1', title: 'En curso urgente', status: 'in_progress', priority: 'urgent' }),
+            createMockTask({ id: 't3', project_id: 'proj-1', title: 'En curso vencida', status: 'in_progress', priority: 'low', due_date: '2020-01-01' }),
+            createMockTask({ id: 't4', project_id: 'proj-1', title: 'Entregada', status: 'completed', priority: 'urgent' }),
+        ];
+
+        render(<ProjectKanbanBoard project={mockProject} tasks={pmiTasks} phases={mockPhases} onOpenTask={vi.fn()} onAddTask={vi.fn()} />);
+
+        expect(screen.getByTestId('kanban-board-pmi-flow-bar')).toBeInTheDocument();
+        expect(screen.getByTestId('kanban-board-pmi-wip')).toHaveTextContent('WIP Activo: 2');
+        expect(screen.getByTestId('kanban-board-pmi-completion')).toHaveTextContent('Avance de Flujo: 25%');
+        expect(screen.getByTestId('kanban-board-pmi-critical-count')).toHaveTextContent('Críticas / Vencidas: 2');
+    });
+
+    it('filters board tasks using PMI critical and unassigned RACI filters', async () => {
+        const filterTasks = [
+            createMockTask({
+                id: 't-normal',
+                project_id: 'proj-1',
+                title: 'Tarea Normal Asignada',
+                status: 'todo',
+                priority: 'medium',
+                assignee_id: 'user-1',
+            }),
+            createMockTask({
+                id: 't-crit',
+                project_id: 'proj-1',
+                title: 'Tarea Crítica Asignada',
+                status: 'in_progress',
+                priority: 'urgent',
+                assignee_id: 'user-1',
+            }),
+            createMockTask({
+                id: 't-no-raci',
+                project_id: 'proj-1',
+                title: 'Tarea Sin Responsable',
+                status: 'todo',
+                priority: 'low',
+                assignee_id: null,
+            }),
+        ];
+
+        render(<ProjectKanbanBoard project={mockProject} tasks={filterTasks} phases={mockPhases} onOpenTask={vi.fn()} onAddTask={vi.fn()} />);
+
+        expect(screen.getByText('Tarea Normal Asignada')).toBeInTheDocument();
+        expect(screen.getByText('Tarea Crítica Asignada')).toBeInTheDocument();
+        expect(screen.getByText('Tarea Sin Responsable')).toBeInTheDocument();
+
+        await userEvent.click(screen.getByTestId('kanban-filter-critical'));
+        expect(screen.queryByText('Tarea Normal Asignada')).not.toBeInTheDocument();
+        expect(screen.getByText('Tarea Crítica Asignada')).toBeInTheDocument();
+        expect(screen.queryByText('Tarea Sin Responsable')).not.toBeInTheDocument();
+
+        await userEvent.click(screen.getByTestId('kanban-filter-unassigned'));
+        expect(screen.queryByText('Tarea Normal Asignada')).not.toBeInTheDocument();
+        expect(screen.queryByText('Tarea Crítica Asignada')).not.toBeInTheDocument();
+        expect(screen.getByText('Tarea Sin Responsable')).toBeInTheDocument();
+
+        await userEvent.click(screen.getByTestId('kanban-filter-all'));
+        expect(screen.getByText('Tarea Normal Asignada')).toBeInTheDocument();
+        expect(screen.getByText('Tarea Crítica Asignada')).toBeInTheDocument();
+        expect(screen.getByText('Tarea Sin Responsable')).toBeInTheDocument();
+    });
 });
+

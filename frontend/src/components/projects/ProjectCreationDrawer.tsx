@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import {
+    BadgeCheck,
     CheckSquare,
+    Circle,
+    CircleCheck,
     Type,
     AlignLeft,
     Loader2,
@@ -38,6 +41,33 @@ interface FormValues {
     color: string;
 }
 
+const MIN_DESCRIPTION_LENGTH = 20;
+
+/** PMI §4.1 — Plantillas de Objetivo / Caso de Negocio (1-clic, anexadas a description). */
+interface PmiObjectiveTemplate {
+    readonly testId: string;
+    readonly label: string;
+    readonly snippet: string;
+}
+
+const PMI_OBJECTIVE_TEMPLATES: readonly PmiObjectiveTemplate[] = [
+    {
+        testId: 'project-template-predictive',
+        label: '[Predictivo PMI] Objetivo, Alcance Inicial y Criterio de Exito',
+        snippet: '[Predictivo PMI]\nObjetivo: \nAlcance Inicial: \nCriterio de Exito: ',
+    },
+    {
+        testId: 'project-template-hybrid',
+        label: '[Hibrido Stage-Gate] Valor Incremental e Hitos de Control',
+        snippet: '[Hibrido Stage-Gate]\nValor Incremental: \nHito de Control 1: \nHito de Control 2: ',
+    },
+    {
+        testId: 'project-template-agile',
+        label: '[Adaptativo / Agil] Vision de Producto y Entregables Iterativos',
+        snippet: '[Adaptativo / Agil]\nVision de Producto: \nEntregables Iterativos: ',
+    },
+];
+
 const STATUS_OPTIONS = [
     { value: 'planning', label: 'Planificación', dot: 'bg-[hsl(var(--warning))]' },
     { value: 'active', label: 'En Marcha', dot: 'bg-[hsl(var(--success))]' },
@@ -56,9 +86,43 @@ export default function ProjectCreationDrawer({ isOpen, onClose, onSubmit, defau
             },
         });
 
+    const title = watch('title');
+    const description = watch('description');
     const status = watch('status');
     const ownerId = watch('owner_id');
     const color = watch('color');
+
+    // PMI §4.1 Project Initiation — criterios de gobernanza evaluados reactivamente.
+    const pmiCriteria = useMemo(() => ([
+        {
+            id: 'title',
+            label: 'Nombre del Proyecto definido',
+            met: title.trim().length > 0,
+        },
+        {
+            id: 'description',
+            label: 'Justificación / Caso de Negocio / Objetivo documentado',
+            met: description.trim().length >= MIN_DESCRIPTION_LENGTH,
+        },
+        {
+            id: 'status',
+            label: 'Estado Inicial de Ciclo de Vida definido',
+            met: status.trim().length > 0,
+        },
+        {
+            id: 'owner',
+            label: 'Patrocinador / Director de Proyecto asignado',
+            met: Boolean(ownerId),
+        },
+    ]), [description, ownerId, status, title]);
+    const pmiScore = pmiCriteria.filter((c) => c.met).length;
+    const pmiComplete = pmiScore === pmiCriteria.length;
+
+    const handleApplyPmiTemplate = (snippet: string) => {
+        const current = description.trim();
+        const next = current ? `${current}\n\n${snippet}` : snippet;
+        setValue('description', next, { shouldDirty: true });
+    };
 
     useEffect(() => {
         if (isOpen) {
@@ -109,6 +173,60 @@ export default function ProjectCreationDrawer({ isOpen, onClose, onSubmit, defau
             }
         >
             <form onSubmit={handleSubmit(handleFormSubmit)} className="mt-3 space-y-4">
+                {/* Tarjeta Ejecutiva de Alistamiento PMI §4.1 */}
+                <section
+                    data-testid="project-creation-pmi-readiness"
+                    aria-label="Alistamiento PMI"
+                    className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 space-y-2"
+                >
+                    <div className="flex items-center justify-between gap-2">
+                        <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-1.5">
+                            <BadgeCheck size={12} /> Alistamiento Gobernanza PMI §4.1
+                        </h3>
+                        <span
+                            data-testid="project-creation-pmi-score"
+                            aria-live="polite"
+                            className={clsx(
+                                'shrink-0 px-2 py-0.5 rounded-full text-2xs font-bold uppercase tracking-wide border',
+                                pmiComplete
+                                    ? 'bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))] border-[hsl(var(--success)/0.4)]'
+                                    : 'bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.4)]'
+                            )}
+                        >
+                            {pmiScore}/{pmiCriteria.length} Criterios PMI ·{' '}
+                            {pmiComplete ? 'Alistamiento Completo' : 'Gobernanza Parcial'}
+                        </span>
+                    </div>
+                    <ul className="grid grid-cols-1 gap-1">
+                        {pmiCriteria.map((criterion) => (
+                            <li key={criterion.id} className="flex items-center gap-1.5 text-2xs font-medium">
+                                {criterion.met ? (
+                                    <CircleCheck
+                                        size={12}
+                                        className="shrink-0 text-[hsl(var(--success))]"
+                                        aria-hidden="true"
+                                    />
+                                ) : (
+                                    <Circle
+                                        size={12}
+                                        className="shrink-0 text-[hsl(var(--muted-foreground))]"
+                                        aria-hidden="true"
+                                    />
+                                )}
+                                <span
+                                    className={clsx(
+                                        criterion.met
+                                            ? 'text-[hsl(var(--success))]'
+                                            : 'text-[hsl(var(--muted-foreground))]'
+                                    )}
+                                >
+                                    {criterion.label}
+                                </span>
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+
                 {/* Título */}
                 <div className="space-y-1.5">
                     <label htmlFor="project-title" className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
@@ -122,6 +240,31 @@ export default function ProjectCreationDrawer({ isOpen, onClose, onSubmit, defau
                         placeholder="Ej: Escuela de Liderazgo 2026"
                         className="w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))]"
                     />
+                </div>
+
+                {/* Selector rapido de Plantillas de Objetivo / Caso de Negocio PMI */}
+                <div
+                    data-testid="project-creation-pmi-templates"
+                    role="group"
+                    aria-label="Plantillas de Objetivo PMI"
+                    className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-2.5 space-y-2"
+                >
+                    <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-1.5">
+                        <AlignLeft size={12} /> Plantillas de Objetivo / Caso de Negocio
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                        {PMI_OBJECTIVE_TEMPLATES.map((template) => (
+                            <button
+                                key={template.testId}
+                                type="button"
+                                data-testid={template.testId}
+                                onClick={() => handleApplyPmiTemplate(template.snippet)}
+                                className="px-2 py-1 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-2xs font-semibold text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:border-[hsl(var(--primary))] transition-colors"
+                            >
+                                {template.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Descripción */}

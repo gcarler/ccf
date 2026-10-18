@@ -297,5 +297,85 @@ describe("ProjectFileViewerDrawer", () => {
     expect(screen.getByText("520")).toBeInTheDocument();
     expect(screen.getByText("CSV")).toBeInTheDocument();
   });
+
+  describe("PMI §10.2 & §5.5 — Franja de Trazabilidad y Control de Configuración", () => {
+    it("clasifica el rol de artefacto PMI y el control de version documental", () => {
+      // Línea Base / Gobernanza con versión explícita
+      const { unmount: unmountBaseline } = renderViewer({
+        ...imageFile,
+        id: "file-pmi-baseline",
+        name: "Acta de Constitución del Proyecto v2.pdf",
+        file_type: "application/pdf",
+      });
+      expect(
+        screen.getByTestId("file-viewer-pmi-traceability-strip")
+      ).toBeInTheDocument();
+      expect(screen.getByTestId("file-viewer-pmi-role")).toHaveTextContent(
+        "Línea Base / Gobernanza"
+      );
+      expect(screen.getByTestId("file-viewer-pmi-version")).toHaveTextContent(
+        "Version Controlada"
+      );
+      unmountBaseline();
+
+      // Evidencia QA / DoD sin versión explícita
+      const { unmount: unmountQa } = renderViewer({
+        ...imageFile,
+        id: "file-pmi-qa",
+        name: "Reporte de Pruebas QA.csv",
+        category: "general",
+        file_type: "text/csv",
+      });
+      expect(screen.getByTestId("file-viewer-pmi-role")).toHaveTextContent(
+        "Evidencia QA / DoD"
+      );
+      expect(screen.getByTestId("file-viewer-pmi-version")).toHaveTextContent(
+        "Sin version explicita"
+      );
+      unmountQa();
+
+      // Entregable Operativo (fallback)
+      const { unmount: unmountOperational } = renderViewer({
+        ...imageFile,
+        id: "file-pmi-operational",
+        name: "Registro Fotográfico de Obra.jpg",
+        file_type: "image/jpeg",
+      });
+      expect(screen.getByTestId("file-viewer-pmi-role")).toHaveTextContent(
+        "Entregable Operativo"
+      );
+      unmountOperational();
+    });
+
+    it("refleja el vínculo WBS (trazabilidad a paquete de trabajo) en la franja", () => {
+      // Vinculado a tarea → Paquete WBS
+      const { unmount: unmountLinked } = renderViewer({
+        ...imageFile,
+        id: "file-wbs-linked",
+        name: "Acta_Comite_final.docx",
+        task_id: "task-9",
+        task_title: "Hito de Aprobación",
+        file_type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      });
+      expect(screen.getByTestId("file-viewer-pmi-wbs-link")).toHaveTextContent(
+        "Vinculado a Paquete WBS"
+      );
+      unmountLinked();
+
+      // Sin tarea vinculada → Artefacto General de Proyecto
+      const { unmount: unmountUnlinked } = renderViewer({
+        ...imageFile,
+        id: "file-wbs-unlinked",
+        name: "Registro Fotográfico de Obra.jpg",
+        task_id: null,
+        task_title: null,
+        file_type: "image/jpeg",
+      });
+      expect(screen.getByTestId("file-viewer-pmi-wbs-link")).toHaveTextContent(
+        "Artefacto General de Proyecto"
+      );
+      unmountUnlinked();
+    });
+  });
 });
 

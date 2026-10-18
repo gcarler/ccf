@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Save } from 'lucide-react';
+import { Save, ShieldCheck, AlertTriangle, CheckCircle2, Circle } from 'lucide-react';
+import clsx from 'clsx';
 import RightPanel from '@/components/ui/RightPanel';
 import { InlineTextInput } from '@/components/ui/inline-editors/InlineTextInput';
 import { InlineTextArea } from '@/components/ui/inline-editors/InlineTextArea';
@@ -45,6 +46,37 @@ export default function ProjectSettingsDrawer({
 
   const displayColor = normalizeProjectColor(draft.color);
 
+  const pmiCriteria = [
+    {
+      key: 'title',
+      label: 'Título Oficial',
+      met: (draft.title || '').trim().length >= 3,
+    },
+    {
+      key: 'scope',
+      label: 'Alcance / Caso de Negocio',
+      met: (draft.description || '').trim().length >= 15,
+    },
+    {
+      key: 'status',
+      label: 'Estado de Ciclo de Vida',
+      met: Boolean(draft.status),
+    },
+    {
+      key: 'owner',
+      label: 'Director / Patrocinador (PM)',
+      met: Boolean(draft.owner_id),
+    },
+  ];
+  const pmiScore = pmiCriteria.filter(c => c.met).length;
+  const isGovernanceComplete = pmiScore === 4;
+
+  const hasCcbRelevantChange = Boolean(
+    project &&
+      ((draft.status && draft.status !== project.status) ||
+        (draft.owner_id ?? null) !== (project.owner_id ?? null))
+  );
+
   return (
     <RightPanel
       open={isOpen}
@@ -54,6 +86,73 @@ export default function ProjectSettingsDrawer({
       contentClassName="p-4"
     >
       <div className="space-y-5">
+        {/* Tarjeta de Integridad de Gobernanza y Línea Base PMI §4.3 */}
+        <div
+          data-testid="project-settings-pmi-governance-card"
+          className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2)/0.5)] p-3 space-y-2.5"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <ShieldCheck size={14} className="text-[hsl(var(--primary))]" />
+              <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))]">
+                Integridad de Línea Base PMI §4.3
+              </span>
+            </div>
+            <span
+              data-testid="project-settings-pmi-score"
+              className={clsx(
+                'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-2xs font-bold border',
+                isGovernanceComplete
+                  ? 'border-[hsl(var(--success)/0.35)] bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))]'
+                  : 'border-[hsl(var(--warning)/0.35)] bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning))]'
+              )}
+            >
+              <span>{pmiScore}/4 Criterios PMI</span>
+              <span>·</span>
+              <span>{isGovernanceComplete ? 'Gobernanza Completa' : 'Gobernanza Incompleta'}</span>
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-1.5">
+            {pmiCriteria.map(criterion => (
+              <div
+                key={criterion.key}
+                className={clsx(
+                  'flex items-center gap-1.5 rounded-lg border px-2 py-1 text-2xs font-medium',
+                  criterion.met
+                    ? 'border-[hsl(var(--success)/0.25)] bg-[hsl(var(--success)/0.08)] text-[hsl(var(--foreground))]'
+                    : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--muted-foreground))]'
+                )}
+              >
+                {criterion.met ? (
+                  <CheckCircle2 size={11} className="shrink-0 text-[hsl(var(--success))]" />
+                ) : (
+                  <Circle size={11} className="shrink-0 text-[hsl(var(--muted-foreground))]" />
+                )}
+                <span className="truncate">{criterion.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Aviso de Control Integrado de Cambios PMI §4.6 */}
+        {hasCcbRelevantChange && (
+          <div
+            data-testid="project-settings-pmi-ccb-notice"
+            className="flex items-start gap-2 rounded-xl border border-[hsl(var(--warning)/0.4)] bg-[hsl(var(--warning)/0.1)] p-3 text-xs text-[hsl(var(--foreground))]"
+          >
+            <AlertTriangle size={15} className="mt-0.5 shrink-0 text-[hsl(var(--warning))]" />
+            <div className="space-y-0.5">
+              <p className="font-bold text-[hsl(var(--warning))]">
+                Control Integrado de Cambios PMI §4.6 (CCB)
+              </p>
+              <p className="text-2xs text-[hsl(var(--muted-foreground))] leading-relaxed">
+                El cambio de Estado de Ciclo de Vida o Director de Proyecto impacta el Acta de Constitución y debe registrarse en el Comité de Control de Cambios (CCB).
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="space-y-1">
           <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
             Título

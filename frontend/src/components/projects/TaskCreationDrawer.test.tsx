@@ -130,4 +130,51 @@ describe('TaskCreationDrawer accessibility', () => {
 
         expect(results.violations).toEqual([]);
     });
+
+    it('updates PMI WBS readiness score reactively as fields are populated', async () => {
+        render(
+            <TaskCreationDrawer
+                isOpen
+                projectId="proj-1"
+                onClose={vi.fn()}
+                onSubmit={vi.fn()}
+            />
+        );
+
+        await waitFor(() => {
+            expect(screen.getByText('EDT-1.0 · Arquitectura')).toBeInTheDocument();
+        });
+
+        expect(screen.getByTestId('task-creation-pmi-readiness')).toHaveTextContent('Definición Parcial');
+        expect(screen.getByTestId('task-creation-pmi-score')).toHaveTextContent('0/4 Criterios WBS');
+
+        fireEvent.change(screen.getByRole('textbox', { name: 'Título de la actividad' }), {
+            target: { value: 'Configurar Red Redundante' },
+        });
+        expect(screen.getByTestId('task-creation-pmi-score')).toHaveTextContent('1/4 Criterios WBS');
+
+        fireEvent.change(screen.getByRole('textbox', { name: 'Descripción (Opcional)' }), {
+            target: { value: 'Criterio de aceptación verificable de más de quince caracteres.' },
+        });
+        expect(screen.getByTestId('task-creation-pmi-score')).toHaveTextContent('2/4 Criterios WBS');
+
+        fireEvent.change(screen.getByRole('combobox', { name: 'Componente (EDT)' }), {
+            target: { value: 'comp-1' },
+        });
+        expect(screen.getByTestId('task-creation-pmi-score')).toHaveTextContent('3/4 Criterios WBS');
+    });
+
+    it('inserts structured PMI WBS / DoD templates into description on 1-click', () => {
+        render(<TaskCreationDrawer isOpen onClose={vi.fn()} onSubmit={vi.fn()} />);
+
+        const descField = screen.getByRole('textbox', { name: 'Descripción (Opcional)' }) as HTMLTextAreaElement;
+        expect(descField.value).toBe('');
+
+        fireEvent.click(screen.getByTestId('task-template-wbs'));
+        expect(descField.value).toContain('Entregable Verificable');
+        expect(descField.value.length).toBeGreaterThanOrEqual(40);
+
+        fireEvent.click(screen.getByTestId('task-template-dod'));
+        expect(descField.value).toContain('Checklist Definition of Done (DoD)');
+    });
 });

@@ -28,6 +28,15 @@ export function getLabelColor(label: string) {
 
 const DEFAULT_SUGGESTIONS = ['Alabanza', 'Urgente', 'Reunión', 'Pastoral', 'Admin', 'Diseño'];
 
+const PMI_GOVERNANCE_TAGS = [
+    'Ruta Crítica',
+    'Entregable Verificable',
+    'Control de Calidad QA',
+    'Riesgo Alto',
+    'Bloqueo Externo',
+    'Cambio CCB',
+];
+
 export default function TaskLabelManager({
     task,
     labels,
@@ -47,6 +56,19 @@ export default function TaskLabelManager({
     const labelInputRef = useRef<HTMLInputElement>(null);
 
     const projectUpdateContext = useOptionalProjectUpdate();
+
+    const pmiGovernanceNormalized = useMemo(
+        () => new Set(PMI_GOVERNANCE_TAGS.map((t) => t.toLowerCase())),
+        []
+    );
+    const matchedPmiCount = useMemo(
+        () => labels.filter((l) => pmiGovernanceNormalized.has((l ?? '').trim().toLowerCase())).length,
+        [labels, pmiGovernanceNormalized]
+    );
+    const availablePmiQuickTags = useMemo(() => {
+        const lowerCurrent = new Set(labels.map((l) => (l ?? '').trim().toLowerCase()));
+        return PMI_GOVERNANCE_TAGS.filter((tag) => !lowerCurrent.has(tag.toLowerCase()));
+    }, [labels]);
 
     // Dynamically calculate suggestions from context tasks + localStorage catalog + default suggestions
     const suggestedLabels = useMemo(() => {
@@ -135,6 +157,18 @@ export default function TaskLabelManager({
 
     return (
         <div className="flex flex-wrap items-center gap-1.5 relative">
+            <span
+                data-testid="task-label-pmi-coverage"
+                className={clsx(
+                    'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-2xs font-bold border',
+                    matchedPmiCount > 0
+                        ? 'bg-[hsl(var(--success)/0.14)] text-[hsl(var(--success))] border-[hsl(var(--success)/0.3)]'
+                        : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))]'
+                )}
+            >
+                {matchedPmiCount > 0 ? `Gobernanza PMI (${matchedPmiCount})` : 'Sin etiqueta PMI'}
+            </span>
+
             {labels.map(label => {
                 const c = getLabelColor(label);
                 return (
@@ -208,6 +242,31 @@ export default function TaskLabelManager({
                                     <Check size={11} strokeWidth={3} />
                                 </button>
                             </div>
+
+                            {/* Etiquetas Rápidas de Gobernanza PMI */}
+                            {availablePmiQuickTags.length > 0 && (
+                                <div
+                                    data-testid="task-label-pmi-quick-tags"
+                                    className="space-y-1 pt-1 border-t border-[hsl(var(--border))]"
+                                >
+                                    <p className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--primary))]">
+                                        Taxonomía de Gobernanza PMI
+                                    </p>
+                                    <div className="flex flex-wrap gap-1">
+                                        {availablePmiQuickTags.map((tag) => (
+                                            <button
+                                                key={tag}
+                                                type="button"
+                                                data-testid={`task-label-pmi-tag-${tag}`}
+                                                onClick={() => handleSelectSuggestion(tag)}
+                                                className="px-2 py-0.5 rounded-full text-2xs font-bold border border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.2)] transition-all"
+                                            >
+                                                {tag}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Suggestions */}
                             {suggestedLabels.length > 0 && (
