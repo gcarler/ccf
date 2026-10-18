@@ -255,3 +255,44 @@ def audit_pmi_wiki_doctrine_completeness(base_dir: Optional[Path] = None) -> Dic
         "missing_files": missing_files,
         "status": status,
     }
+
+
+def search_canonical_pmi_volumes(
+    query: Optional[str] = None,
+    tag_filter: Optional[str] = None,
+    base_dir: Optional[Path] = None,
+) -> List[Dict[str, Any]]:
+    """Consulta y clasifica por relevancia los 7 volúmenes canónicos de doctrina PMI (PMBOK §4.4 Manage Project Knowledge)."""
+    volumes = get_canonical_pmi_volumes(base_dir=base_dir)
+    q_norm = (query or "").strip().lower()
+    tag_norm = (tag_filter or "").strip().lower()
+
+    matched: List[Dict[str, Any]] = []
+    for vol in volumes:
+        tags_normalized = [str(t).strip().lower() for t in vol.get("tags", [])]
+        if tag_norm and tag_norm not in tags_normalized:
+            continue
+
+        if not q_norm:
+            score = 1
+        else:
+            score = 0
+            title_low = str(vol.get("title", "")).lower()
+            key_low = str(vol.get("page_key", "")).lower()
+            if q_norm in title_low or q_norm in key_low:
+                score += 3
+            if any(q_norm in str(t).lower() for t in vol.get("tags", [])):
+                score += 2
+            if q_norm in str(vol.get("summary", "")).lower():
+                score += 2
+            if q_norm in str(vol.get("content", "")).lower():
+                score += 1
+            if score == 0:
+                continue
+
+        vol_copy = dict(vol)
+        vol_copy["match_score"] = score
+        matched.append(vol_copy)
+
+    matched.sort(key=lambda item: (-int(item["match_score"]), int(item["vol"])))
+    return matched

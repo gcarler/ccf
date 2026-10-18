@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from typing import Any
 
 from sqlalchemy.engine import make_url
 
@@ -92,4 +93,50 @@ def build_projects_quality_audit_manifest(
         "port": int(target.port or 5432),
         "isolation_tier": isolation_tier,
         "is_isolated_verified": True,
+    }
+
+
+def evaluate_quality_gate_sla(
+    total_tests: int,
+    passed_tests: int,
+    duration_seconds: float,
+    max_duration_sla_seconds: float = 120.0,
+) -> dict[str, Any]:
+    """Evalúa el cumplimiento del Quality Gate PMI (función pura).
+
+    Retorna:
+    - `total_tests`: total saneado (>= 0).
+    - `passed_tests`: aprobados saneados, acotados a [0, total].
+    - `failed_or_skipped`: fallidos + omitidos (total - passed).
+    - `pass_rate_pct`: % aprobados (2 decimales; 0.0 si total == 0).
+    - `duration_seconds`: duración redondeada (>= 0).
+    - `is_within_time_sla`: True si duration <= sla (sla >= 0.1).
+    - `gate_verdict`: 'empty_suite' (0 tests), 'failed_tests' (failures >
+      0), 'sla_breach' (excede SLA) o 'green_certified'.
+    """
+    total = max(0, int(total_tests or 0))
+    passed = min(total, max(0, int(passed_tests or 0)))
+    failed_or_skipped = total - passed
+    pass_rate_pct = round((passed / total) * 100.0, 2) if total > 0 else 0.0
+    duration = round(max(0.0, float(duration_seconds or 0.0)), 2)
+    sla = max(0.1, float(max_duration_sla_seconds or 120.0))
+    is_within_time_sla = bool(duration <= sla)
+
+    if total == 0:
+        gate_verdict = "empty_suite"
+    elif failed_or_skipped > 0:
+        gate_verdict = "failed_tests"
+    elif not is_within_time_sla:
+        gate_verdict = "sla_breach"
+    else:
+        gate_verdict = "green_certified"
+
+    return {
+        "total_tests": total,
+        "passed_tests": passed,
+        "failed_or_skipped": failed_or_skipped,
+        "pass_rate_pct": pass_rate_pct,
+        "duration_seconds": duration,
+        "is_within_time_sla": is_within_time_sla,
+        "gate_verdict": gate_verdict,
     }

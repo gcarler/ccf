@@ -374,3 +374,54 @@ def test_seed_pmi_wiki_doctrine_creates_and_updates_with_history(
         .all()
     )
     assert len(stored) == 7
+
+
+def test_search_canonical_pmi_volumes_unfiltered(tmp_path):
+    """Sin filtros retorna los 7 volúmenes en orden 0..6 con match_score == 1."""
+    from backend.services.wiki_pmi_service import search_canonical_pmi_volumes
+
+    _write_doctrine_files(tmp_path, "v-search")
+    results = search_canonical_pmi_volumes(query=None, tag_filter=None, base_dir=tmp_path)
+    assert len(results) == 7
+    assert [r["vol"] for r in results] == [0, 1, 2, 3, 4, 5, 6]
+    assert all(r["match_score"] == 1 for r in results)
+
+
+def test_search_canonical_pmi_volumes_by_query_relevance(tmp_path):
+    """Búsqueda por término específico clasifica por (-match_score, vol) con match_score > 1."""
+    from backend.services.wiki_pmi_service import search_canonical_pmi_volumes
+
+    _write_doctrine_files(tmp_path, "v-search")
+    evm_results = search_canonical_pmi_volumes(query="evm", base_dir=tmp_path)
+    assert len(evm_results) >= 1
+    assert evm_results[0]["page_key"] == "wiki_pmi_04_metricas_evm"
+    assert evm_results[0]["match_score"] > 1
+    assert evm_results == sorted(
+        evm_results, key=lambda item: (-int(item["match_score"]), int(item["vol"]))
+    )
+
+    curva_results = search_canonical_pmi_volumes(query="curva s", base_dir=tmp_path)
+    assert len(curva_results) >= 1
+    assert curva_results[0]["page_key"] == "wiki_pmi_05_matriz_cuadrantes"
+    assert curva_results[0]["match_score"] > 1
+
+
+def test_search_canonical_pmi_volumes_strict_tag_filter(tmp_path):
+    """Filtro estricto por etiqueta tag_filter='edt' retorna únicamente el Volumen 3."""
+    from backend.services.wiki_pmi_service import search_canonical_pmi_volumes
+
+    _write_doctrine_files(tmp_path, "v-search")
+    edt_results = search_canonical_pmi_volumes(tag_filter="EDT", base_dir=tmp_path)
+    assert len(edt_results) == 1
+    assert edt_results[0]["vol"] == 3
+    assert edt_results[0]["page_key"] == "wiki_pmi_03_edt_wbs"
+    assert edt_results[0]["match_score"] == 1
+
+
+def test_search_canonical_pmi_volumes_no_matches(tmp_path):
+    """Búsqueda sin coincidencias por query o tag_filter retorna lista vacía."""
+    from backend.services.wiki_pmi_service import search_canonical_pmi_volumes
+
+    _write_doctrine_files(tmp_path, "v-search")
+    assert search_canonical_pmi_volumes(query="termino_inexistente_xyz", base_dir=tmp_path) == []
+    assert search_canonical_pmi_volumes(tag_filter="tag_inexistente", base_dir=tmp_path) == []
