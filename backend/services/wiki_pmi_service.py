@@ -1032,6 +1032,128 @@ def audit_wiki_meeting_minutes_governance(
     }
 
 
+def audit_wiki_operational_runbook_readiness(
+    markdown_text: Optional[str],
+) -> dict:
+    """Audita la preparación de un Runbook / SOP operativo en la Wiki (PMBOK §4.4 / §8.2).
+
+    Analiza encabezados y pasos numerados ignorando bloques de código cercados
+    (triple backtick) y calcula:
+    - `has_prerequisites_section`: encabezado con prerrequisitos/prerequisites/
+      pre-condiciones/precondiciones (sin tildes, case-insensitive).
+    - `has_rollback_section`: encabezado con rollback/reversion/reversión/
+      contingencia/recovery.
+    - `has_verification_section`: encabezado con verificacion/verification/
+      validacion/validación/smoke test.
+    - `numbered_steps_count`: pasos 'N. ' fuera de bloques cercados.
+    - `code_blocks_count`: cantidad de bloques cercados.
+    - `readiness_score_pct`: promedio de los 4 pilares (prerrequisitos,
+      >= 2 pasos numerados, rollback, verificación) en % (2 decimales;
+      0.0 sin contenido).
+    - `runbook_posture`: 'EMPTY_RUNBOOK_CONTENT' sin contenido;
+      'MISSING_ROLLBACK_PROCEDURE' sin rollback;
+      'INCOMPLETE_SOP_STRUCTURE' con rollback pero score < 100.0; y
+      'PRODUCTION_READY_RUNBOOK' con score == 100.0.
+    - `recommendations`: acciones por pilar faltante o feedback positivo.
+    """
+    text = str(markdown_text or "").strip()
+
+    def _norm(value: str) -> str:
+        stripped = unicodedata.normalize("NFKD", str(value))
+        return stripped.encode("ascii", "ignore").decode("ascii").lower()
+
+    PREREQ_TOKENS = ("prerrequisitos", "prerequisites", "pre-condiciones", "precondiciones")
+    ROLLBACK_TOKENS = ("rollback", "reversion", "reversión", "contingencia", "recovery")
+    VERIFICATION_TOKENS = ("verificacion", "verification", "validacion", "validación", "smoke test")
+
+    headings_norm: list[str] = []
+    numbered_steps_count = 0
+    code_blocks_count = 0
+    in_fenced_block = False
+    for line in text.splitlines():
+        if line.strip().startswith("```"):
+            if not in_fenced_block:
+                code_blocks_count += 1
+            in_fenced_block = not in_fenced_block
+            continue
+        if in_fenced_block:
+            continue
+        heading_match = re.match(r"^\s*#{1,6}\s+(.+?)\s*$", line)
+        if heading_match:
+            headings_norm.append(_norm(heading_match.group(1)))
+        if re.match(r"^\s*\d+\.\s", line):
+            numbered_steps_count += 1
+
+    def _has_section(tokens: tuple[str, ...]) -> bool:
+        return any(
+            any(token in heading for token in tokens)
+            for heading in headings_norm
+        )
+
+    has_prerequisites_section = _has_section(PREREQ_TOKENS)
+    has_rollback_section = _has_section(ROLLBACK_TOKENS)
+    has_verification_section = _has_section(VERIFICATION_TOKENS)
+
+    pillars = [
+        has_prerequisites_section,
+        numbered_steps_count >= 2,
+        has_rollback_section,
+        has_verification_section,
+    ]
+    readiness_score_pct = (
+        round((sum(pillars) / len(pillars)) * 100.0, 2)
+        if text
+        else 0.0
+    )
+
+    if not text:
+        runbook_posture = "EMPTY_RUNBOOK_CONTENT"
+    elif not has_rollback_section:
+        runbook_posture = "MISSING_ROLLBACK_PROCEDURE"
+    elif readiness_score_pct < 100.0:
+        runbook_posture = "INCOMPLETE_SOP_STRUCTURE"
+    else:
+        runbook_posture = "PRODUCTION_READY_RUNBOOK"
+
+    recommendations: list[str] = []
+    if not text:
+        recommendations.append(
+            "Redactar el runbook con prerrequisitos, pasos numerados, rollback y verificación."
+        )
+    else:
+        if not has_prerequisites_section:
+            recommendations.append(
+                "Añadir la sección de Prerrequisitos con accesos, credenciales y ambiente destino."
+            )
+        if numbered_steps_count < 2:
+            recommendations.append(
+                "Numerar los pasos del procedimiento (mínimo 2 pasos 'N.' fuera de código)."
+            )
+        if not has_rollback_section:
+            recommendations.append(
+                "Documentar el procedimiento de rollback/contingencia antes de autorizar el SOP en producción."
+            )
+        if not has_verification_section:
+            recommendations.append(
+                "Incluir la verificación post-ejecución (verificación/validación o smoke test)."
+            )
+        if not recommendations:
+            recommendations.append(
+                "Runbook listo para producción: validar el rollback y la verificación en el último drill."
+            )
+
+    return {
+        "has_prerequisites_section": has_prerequisites_section,
+        "has_rollback_section": has_rollback_section,
+        "has_verification_section": has_verification_section,
+        "numbered_steps_count": numbered_steps_count,
+        "code_blocks_count": code_blocks_count,
+        "readiness_score_pct": readiness_score_pct,
+        "runbook_posture": runbook_posture,
+        "recommendations": recommendations,
+    }
+
+
 class WikiPMIService:
     """Fachada canónica de doctrina y gobernanza documental Wiki PMI."""
 
@@ -1137,6 +1259,12 @@ class WikiPMIService:
     ) -> dict[str, Any]:
         return audit_wiki_meeting_minutes_governance(markdown_text)
 
+    @staticmethod
+    def audit_wiki_operational_runbook_readiness(
+        markdown_text: Optional[str],
+    ) -> dict:
+        return audit_wiki_operational_runbook_readiness(markdown_text)
+
 
 __all__ = [
     "DEFAULT_PMI_KB_DIR",
@@ -1157,6 +1285,7 @@ __all__ = [
     "audit_wiki_decision_log_entries",
     "audit_wiki_raid_register_tables",
     "audit_wiki_meeting_minutes_governance",
+    "audit_wiki_operational_runbook_readiness",
     "WikiPMIService",
 ]
 

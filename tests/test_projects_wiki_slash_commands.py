@@ -757,6 +757,109 @@ def test_audit_wiki_crosslink_isolated_no_crosslinks():
         }
 
 
+def test_audit_wiki_operational_runbook_readiness_production_ready():
+    """Runbook completo (prerrequisitos + pasos + rollback + verificación) -> PRODUCTION_READY_RUNBOOK."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_operational_runbook_readiness,
+    )
+
+    markdown = (
+        "# Runbook Despliegue Vespertino\n"
+        "## Prerrequisitos\n"
+        "Acceso al servidor y credenciales.\n"
+        "## Procedimiento\n"
+        "1. Activar el modo mantenimiento.\n"
+        "2. Copiar el respaldo_previo.\n"
+        "```bash\n"
+        "3. Este paso dentro de código no debe contar.\n"
+        "## Rollback fake dentro de código\n"
+        "```\n"
+        "## Rollback y Contingencia\n"
+        "## Verificación post-ejecución\n"
+    )
+
+    res = audit_wiki_operational_runbook_readiness(markdown)
+
+    assert res["has_prerequisites_section"] is True
+    assert res["has_rollback_section"] is True
+    assert res["has_verification_section"] is True
+    assert res["numbered_steps_count"] == 2
+    assert res["code_blocks_count"] == 1
+    assert res["readiness_score_pct"] == 100.0
+    assert res["runbook_posture"] == "PRODUCTION_READY_RUNBOOK"
+    assert len(res["recommendations"]) == 1
+
+
+def test_audit_wiki_operational_runbook_readiness_missing_rollback():
+    """Sin sección de rollback -> MISSING_ROLLBACK_PROCEDURE aunque haya prerrequisitos y pasos."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_operational_runbook_readiness,
+    )
+
+    markdown = (
+        "# SOP Backup Diario\n"
+        "## Precondiciones\n"
+        "## Verificación\n"
+        "1. Detener el servicio de respaldo.\n"
+        "2. Ejecutar el dump incremental.\n"
+    )
+
+    res = audit_wiki_operational_runbook_readiness(markdown)
+
+    assert res["has_prerequisites_section"] is True
+    assert res["has_rollback_section"] is False
+    assert res["has_verification_section"] is True
+    assert res["numbered_steps_count"] == 2
+    assert res["readiness_score_pct"] == 75.0
+    assert res["runbook_posture"] == "MISSING_ROLLBACK_PROCEDURE"
+    assert any("rollback" in rec.lower() for rec in res["recommendations"])
+
+
+def test_audit_wiki_operational_runbook_readiness_incomplete_structure():
+    """Con rollback pero faltando prerrequisitos y pasos -> INCOMPLETE_SOP_STRUCTURE (50.0)."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_operational_runbook_readiness,
+    )
+
+    markdown = (
+        "# Procedure\n"
+        "## Rollback\n"
+        "## Validación del servicio\n"
+        "1. Reiniciar el worker principal.\n"
+    )
+
+    res = audit_wiki_operational_runbook_readiness(markdown)
+
+    assert res["has_prerequisites_section"] is False
+    assert res["has_rollback_section"] is True
+    assert res["has_verification_section"] is True
+    assert res["numbered_steps_count"] == 1
+    assert res["readiness_score_pct"] == 50.0
+    assert res["runbook_posture"] == "INCOMPLETE_SOP_STRUCTURE"
+
+
+def test_audit_wiki_operational_runbook_readiness_empty_content():
+    """None o texto vacío -> EMPTY_RUNBOOK_CONTENT con score 0.0."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_operational_runbook_readiness,
+    )
+
+    for empty_val in (None, "", "   "):
+        res = audit_wiki_operational_runbook_readiness(empty_val)
+        assert res == {
+            "has_prerequisites_section": False,
+            "has_rollback_section": False,
+            "has_verification_section": False,
+            "numbered_steps_count": 0,
+            "code_blocks_count": 0,
+            "readiness_score_pct": 0.0,
+            "runbook_posture": "EMPTY_RUNBOOK_CONTENT",
+            "recommendations": [
+                "Redactar el runbook con prerrequisitos, pasos numerados, rollback y verificación."
+            ],
+        }
+
+
 def test_audit_wiki_crosslink_without_known_slugs_resolves_all():
     """known_slugs None -> todos los targets resueltos, broken [] y CONNECTED_KNOWLEDGE_GRAPH."""
     from backend.services.wiki_pmi_service import (
