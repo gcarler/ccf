@@ -1391,6 +1391,99 @@ def test_evaluate_cpi_trend_degradation_insufficient_history():
     assert empty["posture"] == "INSUFFICIENT_TREND_HISTORY"
 
 
+def test_evaluate_rebaselining_otb_threshold_over_target_baseline_required():
+    """AC >= adjusted_bac con trabajo pendiente (ev < adjusted_bac) -> 'OVER_TARGET_BASELINE_REQUIRED'."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_rebaselining_otb_threshold,
+    )
+
+    res = ProjectEVMService.evaluate_rebaselining_otb_threshold(
+        bac=100000.0,
+        ac=115000.0,
+        ev=85000.0,
+        approved_change_delta=10000.0,
+        tcpi_bac_ceiling=1.20,
+    )
+    assert res["adjusted_bac"] == 110000.0
+    assert res["cpi"] == round(85000.0 / 115000.0, 4)
+    assert res["tcpi_bac"] == 999.0
+    assert res["budget_exhausted"] is True
+    assert res["requires_otb_formal_review"] is True
+    assert res["baseline_posture"] == "OVER_TARGET_BASELINE_REQUIRED"
+    assert isinstance(res["recommendations"], list) and len(res["recommendations"]) >= 1
+    assert (
+        evaluate_rebaselining_otb_threshold(
+            100000.0, 115000.0, 85000.0, approved_change_delta=10000.0
+        )
+        == res
+    )
+
+
+def test_evaluate_rebaselining_otb_threshold_rebaselining_recommended():
+    """Presupuesto no agotado pero tcpi_bac > tcpi_bac_ceiling -> 'REBASELINING_EVALUATION_RECOMMENDED'."""
+    from backend.services.project_evm_service import evaluate_rebaselining_otb_threshold
+
+    res = evaluate_rebaselining_otb_threshold(
+        bac=100000.0,
+        ac=70000.0,
+        ev=55000.0,
+        approved_change_delta=0.0,
+        tcpi_bac_ceiling=1.20,
+    )
+    assert res["adjusted_bac"] == 100000.0
+    assert res["cpi"] == round(55000.0 / 70000.0, 4)
+    assert res["tcpi_bac"] == 1.5
+    assert res["budget_exhausted"] is False
+    assert res["requires_otb_formal_review"] is True
+    assert res["baseline_posture"] == "REBASELINING_EVALUATION_RECOMMENDED"
+
+
+def test_evaluate_rebaselining_otb_threshold_recoverable():
+    """1.0 < tcpi_bac <= tcpi_bac_ceiling -> 'BASELINE_RECOVERABLE'."""
+    from backend.services.project_evm_service import evaluate_rebaselining_otb_threshold
+
+    res = evaluate_rebaselining_otb_threshold(
+        bac=100000.0,
+        ac=52000.0,
+        ev=48000.0,
+        approved_change_delta=0.0,
+        tcpi_bac_ceiling=1.20,
+    )
+    assert res["adjusted_bac"] == 100000.0
+    assert res["tcpi_bac"] == round(52000.0 / 48000.0, 4)
+    assert res["budget_exhausted"] is False
+    assert res["requires_otb_formal_review"] is False
+    assert res["baseline_posture"] == "BASELINE_RECOVERABLE"
+
+
+def test_evaluate_rebaselining_otb_threshold_within_tolerance_and_no_baseline():
+    """tcpi_bac <= 1.0 -> 'BASELINE_WITHIN_TOLERANCE'; adjusted_bac <= 0 -> 'NO_ACTIVE_BASELINE'."""
+    from backend.services.project_evm_service import evaluate_rebaselining_otb_threshold
+
+    within = evaluate_rebaselining_otb_threshold(
+        bac=80000.0,
+        ac=45000.0,
+        ev=50000.0,
+        approved_change_delta=20000.0,
+    )
+    assert within["adjusted_bac"] == 100000.0
+    assert within["tcpi_bac"] == round(50000.0 / 55000.0, 4)
+    assert within["budget_exhausted"] is False
+    assert within["requires_otb_formal_review"] is False
+    assert within["baseline_posture"] == "BASELINE_WITHIN_TOLERANCE"
+
+    no_base = evaluate_rebaselining_otb_threshold(
+        bac=0.0, ac=0.0, ev=0.0, approved_change_delta=-500.0
+    )
+    assert no_base["adjusted_bac"] == 0.0
+    assert no_base["cpi"] == 0.0
+    assert no_base["tcpi_bac"] == 0.0
+    assert no_base["budget_exhausted"] is False
+    assert no_base["requires_otb_formal_review"] is False
+    assert no_base["baseline_posture"] == "NO_ACTIVE_BASELINE"
+
+
 if __name__ == "__main__":
     test_evm_balanced_project()
     test_evm_cost_overrun_critical()
@@ -1422,7 +1515,12 @@ if __name__ == "__main__":
     test_evaluate_cpi_trend_degradation_early_warning()
     test_evaluate_cpi_trend_degradation_improving_or_stable()
     test_evaluate_cpi_trend_degradation_insufficient_history()
+    test_evaluate_rebaselining_otb_threshold_over_target_baseline_required()
+    test_evaluate_rebaselining_otb_threshold_rebaselining_recommended()
+    test_evaluate_rebaselining_otb_threshold_recoverable()
+    test_evaluate_rebaselining_otb_threshold_within_tolerance_and_no_baseline()
     print("✅ All EVM tests passed successfully!")
+
 
 
 

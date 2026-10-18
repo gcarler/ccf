@@ -3506,6 +3506,76 @@ def evaluate_cpi_trend_degradation(
     }
 
 
+def evaluate_rebaselining_otb_threshold(
+    bac: float,
+    ac: float,
+    ev: float,
+    approved_change_delta: float = 0.0,
+    tcpi_bac_ceiling: float = 1.20,
+) -> Dict[str, Any]:
+    """Evalúa cuándo una línea base de costos requiere Over-Target Baseline (OTB) o Rebaselining formal según PMI PMBOK §7.4."""
+    ev_val = float(ev or 0.0)
+    ac_val = float(ac or 0.0)
+    ceiling_val = float(tcpi_bac_ceiling if tcpi_bac_ceiling is not None else 1.20)
+
+    adjusted_bac = round(
+        max(0.0, float(bac or 0.0) + float(approved_change_delta or 0.0)), 2
+    )
+    cpi = (
+        round(ev_val / ac_val, 4)
+        if ac_val > 0
+        else (1.0 if ev_val > 0 else 0.0)
+    )
+    tcpi_bac = (
+        round(max(0.0, adjusted_bac - ev_val) / (adjusted_bac - ac_val), 4)
+        if (adjusted_bac - ac_val) > 0
+        else (999.0 if ev_val < adjusted_bac else 0.0)
+    )
+    budget_exhausted = bool(
+        adjusted_bac > 0 and ac_val >= adjusted_bac and ev_val < adjusted_bac
+    )
+    requires_otb_formal_review = bool(
+        adjusted_bac > 0 and (budget_exhausted or tcpi_bac > ceiling_val)
+    )
+
+    recommendations: List[str] = []
+    if adjusted_bac <= 0:
+        baseline_posture = "NO_ACTIVE_BASELINE"
+        recommendations.append(
+            "Establecer y aprobar formalmente la línea base de costos (BAC) antes de evaluar umbrales OTB (PMI §7.3)."
+        )
+    elif budget_exhausted:
+        baseline_posture = "OVER_TARGET_BASELINE_REQUIRED"
+        recommendations.append(
+            "Presupuesto agotado con trabajo pendiente: someter solicitud formal de Over-Target Baseline (OTB) al CCB; prohibido rebaselining unilateral (PMI §7.4)."
+        )
+    elif tcpi_bac > ceiling_val:
+        baseline_posture = "REBASELINING_EVALUATION_RECOMMENDED"
+        recommendations.append(
+            "TCPI_BAC supera el umbral de recuperabilidad: evaluar rebaselining u OTB mediante control integrado de cambios (CCB) y recalcular EAC."
+        )
+    elif tcpi_bac > 1.0:
+        baseline_posture = "BASELINE_RECOVERABLE"
+        recommendations.append(
+            "Línea base exigible pero recuperable: aplicar acciones correctivas de eficiencia de costos sin modificar la línea base."
+        )
+    else:
+        baseline_posture = "BASELINE_WITHIN_TOLERANCE"
+        recommendations.append(
+            "Desempeño de costos dentro de la tolerancia de la línea base autorizada."
+        )
+
+    return {
+        "adjusted_bac": adjusted_bac,
+        "cpi": cpi,
+        "tcpi_bac": tcpi_bac,
+        "budget_exhausted": budget_exhausted,
+        "requires_otb_formal_review": requires_otb_formal_review,
+        "baseline_posture": baseline_posture,
+        "recommendations": recommendations,
+    }
+
+
 class ProjectEVMService:
     """Fachada canónica del servicio EVM y Diagnóstico Predictivo PMI (Vol. 5 y Vol. 6)."""
 
@@ -3672,10 +3742,27 @@ class ProjectEVMService:
         return evaluate_cpi_trend_degradation(cpi_series)
 
     @staticmethod
+    def evaluate_rebaselining_otb_threshold(
+        bac: float,
+        ac: float,
+        ev: float,
+        approved_change_delta: float = 0.0,
+        tcpi_bac_ceiling: float = 1.20,
+    ) -> Dict[str, Any]:
+        return evaluate_rebaselining_otb_threshold(
+            bac,
+            ac,
+            ev,
+            approved_change_delta=approved_change_delta,
+            tcpi_bac_ceiling=tcpi_bac_ceiling,
+        )
+
+    @staticmethod
     def build_project_execution_matrix(
         db: Session, project: Project, now: Optional[datetime.datetime] = None
     ) -> Dict[str, Any]:
         return build_project_execution_matrix(db, project, now=now)
+
 
 
 
