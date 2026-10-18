@@ -1107,6 +1107,98 @@ def summarize_projects_mutation_success_status_hygiene(
     }
 
 
+def summarize_projects_operation_metadata_hygiene(
+    openapi_schema: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Audita la unicidad de operationId y la higiene de summary/description y tags en endpoints de proyectos (PMI §10.2)."""
+    empty_result: dict[str, Any] = {
+        "total_operations": 0,
+        "missing_operation_id_ops": [],
+        "duplicate_operation_ids": [],
+        "missing_summary_ops": [],
+        "untagged_ops": [],
+        "is_metadata_hygiene_compliant": True,
+        "metadata_hygiene_posture": "NO_PROJECTS_OPERATIONS",
+    }
+    if not isinstance(openapi_schema, dict) or not isinstance(
+        openapi_schema.get("paths"), dict
+    ):
+        return empty_result
+
+    total_operations = 0
+    missing_operation_id_ops: list[str] = []
+    op_id_counts: dict[str, int] = {}
+    missing_summary_ops: list[str] = []
+    untagged_ops: list[str] = []
+
+    for path_str, path_item in sorted(openapi_schema["paths"].items()):
+        if not isinstance(path_str, str) or "/projects" not in path_str:
+            continue
+        if not isinstance(path_item, dict):
+            continue
+
+        for method in ("get", "post", "put", "patch", "delete"):
+            op_obj = path_item.get(method)
+            if not isinstance(op_obj, dict):
+                continue
+
+            total_operations += 1
+            op_key = f"{method.upper()} {path_str}"
+            op_id = str(op_obj.get("operationId") or "").strip()
+            summary = str(
+                op_obj.get("summary") or op_obj.get("description") or ""
+            ).strip()
+            tags = op_obj.get("tags")
+
+            if not op_id:
+                missing_operation_id_ops.append(op_key)
+            else:
+                op_id_counts[op_id] = op_id_counts.get(op_id, 0) + 1
+
+            if len(summary) < 5:
+                missing_summary_ops.append(op_key)
+
+            if (
+                not isinstance(tags, list)
+                or len([t for t in tags if str(t or "").strip()]) == 0
+            ):
+                untagged_ops.append(op_key)
+
+    if total_operations == 0:
+        return empty_result
+
+    missing_op_id_sorted = sorted(missing_operation_id_ops)
+    duplicate_operation_ids = sorted(
+        [oid for oid, count in op_id_counts.items() if count > 1]
+    )
+    missing_summary_sorted = sorted(missing_summary_ops)
+    untagged_sorted = sorted(untagged_ops)
+
+    is_metadata_hygiene_compliant = (
+        len(missing_op_id_sorted) == 0
+        and len(duplicate_operation_ids) == 0
+        and len(missing_summary_sorted) == 0
+        and len(untagged_sorted) == 0
+    )
+
+    if len(missing_op_id_sorted) > 0 or len(duplicate_operation_ids) > 0:
+        metadata_hygiene_posture = "DUPLICATE_OR_MISSING_OPERATION_ID"
+    elif len(missing_summary_sorted) > 0 or len(untagged_sorted) > 0:
+        metadata_hygiene_posture = "MISSING_SUMMARY_OR_TAGS"
+    else:
+        metadata_hygiene_posture = "CLEAN_OPERATION_METADATA"
+
+    return {
+        "total_operations": total_operations,
+        "missing_operation_id_ops": missing_op_id_sorted,
+        "duplicate_operation_ids": duplicate_operation_ids,
+        "missing_summary_ops": missing_summary_sorted,
+        "untagged_ops": untagged_sorted,
+        "is_metadata_hygiene_compliant": is_metadata_hygiene_compliant,
+        "metadata_hygiene_posture": metadata_hygiene_posture,
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()

@@ -2006,3 +2006,140 @@ def test_mutation_success_status_hygiene_empty_or_no_mutations():
         )
         == expected
     )
+
+
+# ─── summarize_projects_operation_metadata_hygiene (pure helper) ─────────────
+
+
+def test_operation_metadata_hygiene_clean_metadata():
+    """Operaciones con operationId único, summary >= 5 chars y tags -> CLEAN_OPERATION_METADATA."""
+    openapi = {
+        "paths": {
+            "/api/v1/projects": {
+                "get": {
+                    "operationId": "list_projects",
+                    "summary": "List all projects",
+                    "tags": ["Projects"],
+                },
+                "post": {
+                    "operationId": "create_project",
+                    "description": "Create a new project record",
+                    "tags": ["Projects"],
+                },
+            }
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_operation_metadata_hygiene(
+        openapi
+    )
+
+    assert res == {
+        "total_operations": 2,
+        "missing_operation_id_ops": [],
+        "duplicate_operation_ids": [],
+        "missing_summary_ops": [],
+        "untagged_ops": [],
+        "is_metadata_hygiene_compliant": True,
+        "metadata_hygiene_posture": "CLEAN_OPERATION_METADATA",
+    }
+
+
+def test_operation_metadata_hygiene_duplicate_or_missing_operation_id():
+    """Operación sin operationId y dos con el mismo operationId -> DUPLICATE_OR_MISSING_OPERATION_ID."""
+    openapi = {
+        "paths": {
+            "/api/v1/projects": {
+                "get": {
+                    "operationId": "dup_op",
+                    "summary": "List projects",
+                    "tags": ["Projects"],
+                },
+                "post": {
+                    "operationId": "dup_op",
+                    "summary": "Create project",
+                    "tags": ["Projects"],
+                },
+            },
+            "/api/v1/projects/{project_id}": {
+                "delete": {
+                    "summary": "Delete project",
+                    "tags": ["Projects"],
+                }
+            },
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_operation_metadata_hygiene(
+        openapi
+    )
+
+    assert res == {
+        "total_operations": 3,
+        "missing_operation_id_ops": ["DELETE /api/v1/projects/{project_id}"],
+        "duplicate_operation_ids": ["dup_op"],
+        "missing_summary_ops": [],
+        "untagged_ops": [],
+        "is_metadata_hygiene_compliant": False,
+        "metadata_hygiene_posture": "DUPLICATE_OR_MISSING_OPERATION_ID",
+    }
+
+
+def test_operation_metadata_hygiene_missing_summary_or_tags():
+    """Operación con operationId único pero sin summary o sin tags -> MISSING_SUMMARY_OR_TAGS."""
+    openapi = {
+        "paths": {
+            "/api/v1/projects": {
+                "get": {
+                    "operationId": "list_projects",
+                    "summary": " get ",
+                    "tags": [],
+                },
+                "post": {
+                    "operationId": "create_project",
+                    "summary": "Valid summary",
+                },
+            }
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_operation_metadata_hygiene(
+        openapi
+    )
+
+    assert res == {
+        "total_operations": 2,
+        "missing_operation_id_ops": [],
+        "duplicate_operation_ids": [],
+        "missing_summary_ops": ["GET /api/v1/projects"],
+        "untagged_ops": ["GET /api/v1/projects", "POST /api/v1/projects"],
+        "is_metadata_hygiene_compliant": False,
+        "metadata_hygiene_posture": "MISSING_SUMMARY_OR_TAGS",
+    }
+
+
+def test_operation_metadata_hygiene_empty_or_none():
+    """Esquema vacío o None -> NO_PROJECTS_OPERATIONS."""
+    expected = {
+        "total_operations": 0,
+        "missing_operation_id_ops": [],
+        "duplicate_operation_ids": [],
+        "missing_summary_ops": [],
+        "untagged_ops": [],
+        "is_metadata_hygiene_compliant": True,
+        "metadata_hygiene_posture": "NO_PROJECTS_OPERATIONS",
+    }
+    assert (
+        audit_projects_api_contracts.summarize_projects_operation_metadata_hygiene(None)
+        == expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_operation_metadata_hygiene({})
+        == expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_operation_metadata_hygiene(
+            {"paths": {"/api/crm/contacts": {"get": {"operationId": "list_crm"}}}}
+        )
+        == expected
+    )
