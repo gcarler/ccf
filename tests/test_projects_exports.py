@@ -1641,6 +1641,112 @@ def test_audit_executive_report_quality_disclosure_no_metrics_disclosed():
         assert len(res["recommendations"]) == 1
 
 
+# ── PMI PMBOK §9.6 & §10.2 Executive Report Resource Workload Auditor ────────
+
+
+def test_audit_executive_report_resource_workload_balanced_capacity():
+    """Todos los miembros con utilization_pct <= 100.0 -> 'BALANCED_TEAM_CAPACITY'."""
+    import backend.services.project_export_service as export_module
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_resource_workload,
+    )
+
+    report_data = {
+        "resource_allocations": [
+            {"id": "MEM-01", "utilization_pct": 85.0, "overdue_tasks": 0},
+            {
+                "member_id": "MEM-02",
+                "allocated_hours": 32.0,
+                "capacity_hours": 40.0,
+                "overdue_tasks": 1,
+            },
+            {"name": "MEM-03", "utilization_pct": 25.0, "overdue_tasks": 0},
+        ]
+    }
+
+    res = ProjectExportService.audit_executive_report_resource_workload(report_data)
+    assert res["total_members"] == 3
+    assert res["overallocated_member_ids"] == []
+    assert res["underutilized_member_ids"] == ["MEM-03"]
+    assert res["bottleneck_member_ids"] == []
+    assert res["average_utilization_pct"] == 63.33
+    assert res["workload_posture"] == "BALANCED_TEAM_CAPACITY"
+    assert len(res["recommendations"]) >= 1
+    assert audit_executive_report_resource_workload(report_data) == res
+    assert "audit_executive_report_resource_workload" in export_module.__all__
+
+
+def test_audit_executive_report_resource_workload_critical_bottleneck_overload():
+    """Al menos un miembro con utilization_pct > 100.0 y overdue_tasks > 0 -> 'CRITICAL_BOTTLENECK_OVERLOAD'."""
+    from backend.services.project_export_service import (
+        audit_executive_report_resource_workload,
+    )
+
+    report_data = {
+        "team_workload": [
+            {"id": "MEM-10", "utilization_pct": 125.0, "overdue_tasks": 3},
+            {"id": "MEM-11", "utilization_pct": 110.0, "overdue_tasks": 0},
+            {"id": "MEM-12", "utilization_pct": 20.0, "overdue_tasks": 0},
+        ]
+    }
+
+    res = audit_executive_report_resource_workload(report_data)
+    assert res["total_members"] == 3
+    assert res["overallocated_member_ids"] == ["MEM-10", "MEM-11"]
+    assert res["underutilized_member_ids"] == ["MEM-12"]
+    assert res["bottleneck_member_ids"] == ["MEM-10"]
+    assert res["average_utilization_pct"] == 85.0
+    assert res["workload_posture"] == "CRITICAL_BOTTLENECK_OVERLOAD"
+    assert any("MEM-10" in rec for rec in res["recommendations"])
+
+
+def test_audit_executive_report_resource_workload_overallocation_risk():
+    """Miembros con utilization_pct > 100.0 pero sin overdue_tasks -> 'RESOURCE_OVERALLOCATION_RISK'."""
+    from backend.services.project_export_service import (
+        audit_executive_report_resource_workload,
+    )
+
+    report_data = {
+        "resource_allocations": [
+            {
+                "id": "MEM-20",
+                "allocated_hours": 48.0,
+                "capacity_hours": 40.0,
+                "overdue_tasks": 0,
+            },
+            {"id": "MEM-21", "utilization_pct": 75.0, "overdue_tasks": 0},
+        ]
+    }
+
+    res = audit_executive_report_resource_workload(report_data)
+    assert res["total_members"] == 2
+    assert res["overallocated_member_ids"] == ["MEM-20"]
+    assert res["underutilized_member_ids"] == []
+    assert res["bottleneck_member_ids"] == []
+    assert res["average_utilization_pct"] == 97.5
+    assert res["workload_posture"] == "RESOURCE_OVERALLOCATION_RISK"
+    assert len(res["recommendations"]) >= 1
+
+
+def test_audit_executive_report_resource_workload_no_data():
+    """Sin miembros asignados o payload None/vacío -> 'NO_RESOURCE_WORKLOAD_DATA'."""
+    from backend.services.project_export_service import (
+        audit_executive_report_resource_workload,
+    )
+
+    for payload in (None, {}, {"resource_allocations": []}):
+        res = audit_executive_report_resource_workload(payload)
+        assert res["total_members"] == 0
+        assert res["overallocated_member_ids"] == []
+        assert res["underutilized_member_ids"] == []
+        assert res["bottleneck_member_ids"] == []
+        assert res["average_utilization_pct"] == 0.0
+        assert res["workload_posture"] == "NO_RESOURCE_WORKLOAD_DATA"
+        assert len(res["recommendations"]) == 1
+
+
+
 
 
 

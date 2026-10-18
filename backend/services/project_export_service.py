@@ -309,6 +309,13 @@ class ProjectExportService:
     ) -> dict[str, Any]:
         return audit_executive_report_quality_disclosure(report_data)
 
+    @staticmethod
+    def audit_executive_report_resource_workload(
+        report_data: Optional[dict],
+    ) -> dict[str, Any]:
+        return audit_executive_report_resource_workload(report_data)
+
+
 
 
 def summarize_executive_report_risk_posture(report_data: Optional[dict]) -> dict:
@@ -1170,6 +1177,116 @@ def audit_executive_report_quality_disclosure(
     }
 
 
+def audit_executive_report_resource_workload(
+    report_data: Optional[dict],
+) -> dict[str, Any]:
+    """Audita la distribución de carga de trabajo y cuellos de botella del equipo en el reporte ejecutivo según PMI PMBOK §9.6 y §10.2."""
+    data = report_data if isinstance(report_data, dict) else {}
+
+    raw_members = (
+        data.get("resource_allocations")
+        if isinstance(data.get("resource_allocations"), list)
+        else data.get("team_workload")
+        if isinstance(data.get("team_workload"), list)
+        else []
+    )
+    members = [m for m in raw_members if isinstance(m, dict)]
+
+    total_members = len(members)
+    overallocated_member_ids: list[str] = []
+    underutilized_member_ids: list[str] = []
+    bottleneck_member_ids: list[str] = []
+    utilization_sum = 0.0
+
+    for idx, member in enumerate(members, start=1):
+        raw_id = (
+            member.get("id")
+            if member.get("id") is not None
+            else member.get("member_id")
+            if member.get("member_id") is not None
+            else member.get("name")
+        )
+        member_id = (
+            str(raw_id).strip()
+            if raw_id is not None and str(raw_id).strip()
+            else f"RES-{idx}"
+        )
+
+        if member.get("utilization_pct") is not None:
+            try:
+                utilization_pct = max(0.0, float(member.get("utilization_pct") or 0.0))
+            except (TypeError, ValueError):
+                utilization_pct = 0.0
+        else:
+            try:
+                allocated_hours = max(0.0, float(member.get("allocated_hours") or 0.0))
+            except (TypeError, ValueError):
+                allocated_hours = 0.0
+            try:
+                capacity_hours = max(0.0, float(member.get("capacity_hours") or 0.0))
+            except (TypeError, ValueError):
+                capacity_hours = 0.0
+            utilization_pct = (
+                (allocated_hours / capacity_hours) * 100.0
+                if capacity_hours > 0.0
+                else 0.0
+            )
+
+        try:
+            overdue_tasks = max(0, int(member.get("overdue_tasks") or 0))
+        except (TypeError, ValueError):
+            overdue_tasks = 0
+
+        utilization_sum += utilization_pct
+
+        if utilization_pct > 100.0:
+            overallocated_member_ids.append(member_id)
+            if overdue_tasks > 0:
+                bottleneck_member_ids.append(member_id)
+        elif utilization_pct < 30.0:
+            underutilized_member_ids.append(member_id)
+
+    average_utilization_pct = (
+        round(utilization_sum / total_members, 2) if total_members > 0 else 0.0
+    )
+
+    recommendations: list[str] = []
+    if total_members == 0:
+        workload_posture = "NO_RESOURCE_WORKLOAD_DATA"
+        recommendations.append(
+            "Incluir matriz de asignación y capacidad del equipo en el reporte ejecutivo para controlar recursos (PMBOK §9.6 / §10.2)."
+        )
+    elif len(bottleneck_member_ids) > 0:
+        workload_posture = "CRITICAL_BOTTLENECK_OVERLOAD"
+        recommendations.append(
+            f"Aplicar nivelación de recursos (resource leveling) inmediata sobre miembros sobrecargados con tareas vencidas ({', '.join(bottleneck_member_ids)}) conforme a PMBOK §9.6."
+        )
+        if underutilized_member_ids:
+            recommendations.append(
+                f"Reasignar carga operativa hacia miembros con capacidad disponible ({', '.join(underutilized_member_ids)})."
+            )
+    elif len(overallocated_member_ids) > 0:
+        workload_posture = "RESOURCE_OVERALLOCATION_RISK"
+        recommendations.append(
+            f"Ejecutar estabilización de recursos (resource smoothing) para reducir sobreasignación (>100%) en {', '.join(overallocated_member_ids)} antes de generar atrasos en ruta crítica (PMBOK §9.6)."
+        )
+    else:
+        workload_posture = "BALANCED_TEAM_CAPACITY"
+        recommendations.append(
+            "Capacidad del equipo equilibrada sin sobreasignación crítica. Mantener monitoreo periódico de utilización (PMBOK §9.6)."
+        )
+
+    return {
+        "total_members": total_members,
+        "overallocated_member_ids": overallocated_member_ids,
+        "underutilized_member_ids": underutilized_member_ids,
+        "bottleneck_member_ids": bottleneck_member_ids,
+        "average_utilization_pct": average_utilization_pct,
+        "workload_posture": workload_posture,
+        "recommendations": recommendations,
+    }
+
+
 __all__ = [
     "audit_csv_export_integrity",
     "evaluate_executive_report_completeness",
@@ -1186,8 +1303,10 @@ __all__ = [
     "audit_expenses_vendor_concentration",
     "audit_executive_report_change_governance",
     "audit_executive_report_quality_disclosure",
+    "audit_executive_report_resource_workload",
     "ProjectExportService",
 ]
+
 
 
 
