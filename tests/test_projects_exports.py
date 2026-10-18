@@ -3300,3 +3300,128 @@ def test_audit_executive_report_scope_creep_governance_no_packages():
         }
 
 
+def test_audit_executive_report_stakeholder_engagement_drift_healthy_and_mitigated():
+    """Interesados de alta influencia con brecha mitigada (action_plan_defined=True) y sin resistentes críticos -> is_engagement_healthy True."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_stakeholder_engagement_drift,
+    )
+
+    assessments = [
+        {
+            "stakeholder_id": "STK-1",
+            "influence_level": "critical",
+            "previous_engagement": "neutral",
+            "current_engagement": "supportive",
+            "desired_engagement": "leading",
+            "action_plan_defined": True,
+        },
+        {
+            "stakeholder_id": "STK-2",
+            "influence_level": "medium",
+            "previous_engagement": "unaware",
+            "current_engagement": "supportive",
+            "desired_engagement": "supportive",
+            "action_plan_defined": False,
+        },
+    ]
+    res = audit_executive_report_stakeholder_engagement_drift(assessments)
+    assert res == {
+        "evaluated_stakeholder_count": 2,
+        "engagement_gap_ids": ["STK-1"],
+        "regressing_stakeholder_ids": [],
+        "high_influence_resistant_ids": [],
+        "unmitigated_high_influence_gap_ids": [],
+        "invalid_assessment_ids": [],
+        "is_engagement_healthy": True,
+    }
+    assert (
+        ProjectExportService.audit_executive_report_stakeholder_engagement_drift(
+            assessments
+        )
+        == res
+    )
+
+
+def test_audit_executive_report_stakeholder_engagement_drift_regression_and_unmitigated_gap():
+    """Regresión de nivel y brecha de alta influencia sin plan de acción -> regressing_stakeholder_ids, unmitigated_high_influence_gap_ids, is_engagement_healthy False."""
+    from backend.services.project_export_service import (
+        audit_executive_report_stakeholder_engagement_drift,
+    )
+
+    res = audit_executive_report_stakeholder_engagement_drift(
+        [
+            {
+                "stakeholder_id": "STK-REG",
+                "influence_level": "high",
+                "previous_engagement": "supportive",
+                "current_engagement": "neutral",
+                "desired_engagement": "supportive",
+                "action_plan_defined": False,
+            },
+            {
+                "stakeholder_id": "STK-RES",
+                "influence_level": "critical",
+                "previous_engagement": "neutral",
+                "current_engagement": "resistant",
+                "desired_engagement": "supportive",
+                "action_plan_defined": True,
+            },
+        ]
+    )
+    assert res == {
+        "evaluated_stakeholder_count": 2,
+        "engagement_gap_ids": ["STK-REG", "STK-RES"],
+        "regressing_stakeholder_ids": ["STK-REG", "STK-RES"],
+        "high_influence_resistant_ids": ["STK-RES"],
+        "unmitigated_high_influence_gap_ids": ["STK-REG"],
+        "invalid_assessment_ids": [],
+        "is_engagement_healthy": False,
+    }
+
+
+def test_audit_executive_report_stakeholder_engagement_drift_invalid_levels():
+    """Niveles de involucramiento desconocidos -> invalid_assessment_ids poblado, is_engagement_healthy False."""
+    from backend.services.project_export_service import (
+        audit_executive_report_stakeholder_engagement_drift,
+    )
+
+    res = audit_executive_report_stakeholder_engagement_drift(
+        [
+            {
+                "stakeholder_id": "STK-BAD-CUR",
+                "influence_level": "low",
+                "current_engagement": "hostile",
+                "desired_engagement": "supportive",
+            },
+            {
+                "stakeholder_id": "STK-BAD-PREV",
+                "influence_level": "low",
+                "previous_engagement": "unknown_state",
+                "current_engagement": "supportive",
+                "desired_engagement": "supportive",
+            },
+        ]
+    )
+    assert res["evaluated_stakeholder_count"] == 2
+    assert res["invalid_assessment_ids"] == ["STK-BAD-CUR", "STK-BAD-PREV"]
+    assert res["is_engagement_healthy"] is False
+
+
+def test_audit_executive_report_stakeholder_engagement_drift_empty_or_none():
+    """Lista vacía, None o entradas sin stakeholder_id -> evaluated_stakeholder_count 0, is_engagement_healthy False."""
+    from backend.services.project_export_service import (
+        audit_executive_report_stakeholder_engagement_drift,
+    )
+
+    for payload in (None, [], [{"stakeholder_id": "   "}], ["invalid"]):
+        res = audit_executive_report_stakeholder_engagement_drift(payload)  # type: ignore[arg-type]
+        assert res == {
+            "evaluated_stakeholder_count": 0,
+            "engagement_gap_ids": [],
+            "regressing_stakeholder_ids": [],
+            "high_influence_resistant_ids": [],
+            "unmitigated_high_influence_gap_ids": [],
+            "invalid_assessment_ids": [],
+            "is_engagement_healthy": False,
+        }

@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import io
 import re
+from collections.abc import Mapping, Sequence
 from typing import Any, Optional
 from uuid import UUID
 
@@ -2753,6 +2754,99 @@ ProjectExportService.audit_executive_report_scope_creep_governance = staticmetho
 )
 
 
+def audit_executive_report_stakeholder_engagement_drift(
+    stakeholder_assessments: Sequence[Mapping[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Evalúa deriva y resistencia en la Matriz de Evaluación del Involucramiento de los Interesados según PMI PMBOK §13.1.3.2 & §13.3.2."""
+    level_ranks = {
+        "unaware": 1,
+        "resistant": 2,
+        "neutral": 3,
+        "supportive": 4,
+        "leading": 5,
+    }
+    high_influence_levels = {"high", "critical"}
+
+    evaluated_stakeholder_count = 0
+    engagement_gap_ids: list[str] = []
+    regressing_stakeholder_ids: list[str] = []
+    high_influence_resistant_ids: list[str] = []
+    unmitigated_high_influence_gap_ids: list[str] = []
+    invalid_assessment_ids: list[str] = []
+
+    for item in stakeholder_assessments or []:
+        if not isinstance(item, Mapping):
+            continue
+        stakeholder_id = str(item.get("stakeholder_id") or "").strip()
+        if not stakeholder_id:
+            continue
+
+        evaluated_stakeholder_count += 1
+        influence_level = (
+            str(item.get("influence_level") or "medium").strip().lower()
+        )
+        previous_engagement = (
+            str(item.get("previous_engagement") or "").strip().lower()
+        )
+        current_engagement = (
+            str(item.get("current_engagement") or "").strip().lower()
+        )
+        desired_engagement = (
+            str(item.get("desired_engagement") or "").strip().lower()
+        )
+        action_plan_defined = bool(item.get("action_plan_defined", False))
+
+        if (
+            current_engagement not in level_ranks
+            or desired_engagement not in level_ranks
+            or (previous_engagement and previous_engagement not in level_ranks)
+        ):
+            invalid_assessment_ids.append(stakeholder_id)
+            continue
+
+        current_rank = level_ranks[current_engagement]
+        desired_rank = level_ranks[desired_engagement]
+
+        if current_rank < desired_rank:
+            engagement_gap_ids.append(stakeholder_id)
+            if (
+                influence_level in high_influence_levels
+                and not action_plan_defined
+            ):
+                unmitigated_high_influence_gap_ids.append(stakeholder_id)
+
+        if previous_engagement and current_rank < level_ranks[previous_engagement]:
+            regressing_stakeholder_ids.append(stakeholder_id)
+
+        if (
+            current_engagement == "resistant"
+            and influence_level in high_influence_levels
+        ):
+            high_influence_resistant_ids.append(stakeholder_id)
+
+    is_engagement_healthy = bool(
+        evaluated_stakeholder_count > 0
+        and len(invalid_assessment_ids) == 0
+        and len(unmitigated_high_influence_gap_ids) == 0
+        and len(high_influence_resistant_ids) == 0
+    )
+
+    return {
+        "evaluated_stakeholder_count": evaluated_stakeholder_count,
+        "engagement_gap_ids": engagement_gap_ids,
+        "regressing_stakeholder_ids": regressing_stakeholder_ids,
+        "high_influence_resistant_ids": high_influence_resistant_ids,
+        "unmitigated_high_influence_gap_ids": unmitigated_high_influence_gap_ids,
+        "invalid_assessment_ids": invalid_assessment_ids,
+        "is_engagement_healthy": is_engagement_healthy,
+    }
+
+
+ProjectExportService.audit_executive_report_stakeholder_engagement_drift = staticmethod(
+    audit_executive_report_stakeholder_engagement_drift
+)
+
+
 __all__ = [
     "audit_csv_export_integrity",
     "evaluate_executive_report_completeness",
@@ -2782,7 +2876,7 @@ __all__ = [
     "audit_executive_report_distribution_cadence",
     "audit_executive_report_risk_contingency_coverage",
     "audit_executive_report_scope_creep_governance",
+    "audit_executive_report_stakeholder_engagement_drift",
     "ProjectExportService",
 ]
-
 

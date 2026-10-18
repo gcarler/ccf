@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any, Mapping, Optional, Sequence
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -2758,6 +2758,101 @@ ProjectLifecyclePMIService.audit_team_tuckman_and_skill_redundancy = staticmetho
 )
 
 
+def audit_stakeholder_escalation_matrix_readiness(
+    escalation_tiers: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_tier1_response_hours: float = 4.0,
+) -> dict[str, Any]:
+    """PMI PMBOK 10.1.3.1 / 13.2.3.1 — preparación de la matriz de escalamiento de comunicaciones e interesados.
+
+    Evalúa dueño primario, backup (no SPOF), SLA máximo de respuesta
+    (con tope específico para Tier 1) y canales de notificación por tier.
+    """
+    missing_primary_owner_tiers: list[int] = []
+    single_point_of_failure_tiers: list[int] = []
+    invalid_sla_tiers: list[int] = []
+    unconfigured_channel_tiers: list[int] = []
+    evaluated_tier_levels: list[int] = []
+
+    for item in escalation_tiers or []:
+        if not isinstance(item, Mapping):
+            continue
+        try:
+            tier_level = int(item.get("tier_level"))
+        except (TypeError, ValueError):
+            continue
+        if tier_level < 1:
+            continue
+        evaluated_tier_levels.append(tier_level)
+
+        primary_owner_id = str(item.get("primary_owner_id") or "").strip()
+        backup_owner_id = str(item.get("backup_owner_id") or "").strip()
+        try:
+            max_response_hours = float(item.get("max_response_hours", 0.0))
+        except (TypeError, ValueError):
+            max_response_hours = 0.0
+        notification_channels = item.get("notification_channels")
+        clean_channels = [
+            str(channel).strip()
+            for channel in (notification_channels or [])
+            if channel is not None and str(channel).strip()
+        ]
+
+        if not primary_owner_id:
+            missing_primary_owner_tiers.append(tier_level)
+
+        if not backup_owner_id or (primary_owner_id and backup_owner_id == primary_owner_id):
+            single_point_of_failure_tiers.append(tier_level)
+
+        if max_response_hours <= 0 or (
+            tier_level == 1 and max_response_hours > max_tier1_response_hours
+        ):
+            invalid_sla_tiers.append(tier_level)
+
+        if not clean_channels:
+            unconfigured_channel_tiers.append(tier_level)
+
+    evaluated_tier_count = len(evaluated_tier_levels)
+    problem_lists = (
+        missing_primary_owner_tiers,
+        single_point_of_failure_tiers,
+        invalid_sla_tiers,
+        unconfigured_channel_tiers,
+    )
+    compliant_tier_count = sum(
+        1
+        for tier_level in evaluated_tier_levels
+        if all(tier_level not in problems for problems in problem_lists)
+    )
+    readiness_score_pct = (
+        round((compliant_tier_count / evaluated_tier_count) * 100.0, 2)
+        if evaluated_tier_count > 0
+        else 0.0
+    )
+    has_tier_1 = 1 in evaluated_tier_levels
+    is_ready = bool(
+        evaluated_tier_count > 0
+        and has_tier_1
+        and all(len(problems) == 0 for problems in problem_lists)
+    )
+
+    return {
+        "evaluated_tier_count": evaluated_tier_count,
+        "has_tier_1": has_tier_1,
+        "missing_primary_owner_tiers": missing_primary_owner_tiers,
+        "single_point_of_failure_tiers": single_point_of_failure_tiers,
+        "invalid_sla_tiers": invalid_sla_tiers,
+        "unconfigured_channel_tiers": unconfigured_channel_tiers,
+        "readiness_score_pct": readiness_score_pct,
+        "is_ready": is_ready,
+    }
+
+
+ProjectLifecyclePMIService.audit_stakeholder_escalation_matrix_readiness = staticmethod(
+    audit_stakeholder_escalation_matrix_readiness
+)
+
+
 __all__ = [
     "build_pmo_portfolio_matrix",
     "build_governance_summary",
@@ -2796,6 +2891,7 @@ __all__ = [
     "audit_risk_residual_exposure_and_triggers",
     "audit_charter_funding_limit_reconciliation",
     "audit_team_tuckman_and_skill_redundancy",
+    "audit_stakeholder_escalation_matrix_readiness",
     "ProjectLifecyclePMIService",
 ]
 

@@ -2801,3 +2801,173 @@ def test_audit_team_tuckman_and_skill_redundancy_no_skills():
             "team_posture": "NO_CRITICAL_SKILLS_MAPPED",
         }
 
+
+
+def test_audit_stakeholder_escalation_matrix_readiness_ready():
+    """> Matriz completa con Tier 1, dueños/SPOF, SLA y canales correctos -> is_ready."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stakeholder_escalation_matrix_readiness as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "tier_level": 1,
+                "primary_owner_id": "u-lead",
+                "backup_owner_id": "u-backup",
+                "max_response_hours": 4.0,
+                "notification_channels": ["correo", "sms"],
+            },
+            {
+                "tier_level": 2,
+                "primary_owner_id": "u-mgr",
+                "backup_owner_id": "u-lead",
+                "max_response_hours": 24,
+                "notification_channels": ["correo"],
+            },
+        ]
+    )
+    assert res["evaluated_tier_count"] == 2
+    assert res["has_tier_1"] is True
+    assert res["missing_primary_owner_tiers"] == []
+    assert res["single_point_of_failure_tiers"] == []
+    assert res["invalid_sla_tiers"] == []
+    assert res["unconfigured_channel_tiers"] == []
+    assert res["readiness_score_pct"] == 100.0
+    assert res["is_ready"] is True
+
+
+def test_audit_stakeholder_escalation_matrix_readiness_missing_owner_and_spof():
+    """> Dueño primario ausente y backup vacío/igual al primario -> SPOF."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stakeholder_escalation_matrix_readiness as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "tier_level": 1,
+                "primary_owner_id": "  ",
+                "backup_owner_id": "u-backup",
+                "max_response_hours": 2.0,
+                "notification_channels": ["correo"],
+            },
+            {
+                "tier_level": 2,
+                "primary_owner_id": "u-mgr",
+                "backup_owner_id": "",
+                "max_response_hours": 24.0,
+                "notification_channels": ["correo"],
+            },
+            {
+                "tier_level": 3,
+                "primary_owner_id": "u-dir",
+                "backup_owner_id": "u-dir",
+                "max_response_hours": 48.0,
+                "notification_channels": ["correo"],
+            },
+        ]
+    )
+    assert res["evaluated_tier_count"] == 3
+    assert res["missing_primary_owner_tiers"] == [1]
+    assert res["single_point_of_failure_tiers"] == [2, 3]
+    assert res["invalid_sla_tiers"] == []
+    assert res["unconfigured_channel_tiers"] == []
+    assert res["readiness_score_pct"] == 0.0
+    assert res["is_ready"] is False
+
+
+def test_audit_stakeholder_escalation_matrix_readiness_tier1_sla_violation():
+    """> Tier 1 con SLA arriba del tope configurable (default 4.0h) -> invalid_sla."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stakeholder_escalation_matrix_readiness as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "tier_level": 1,
+                "primary_owner_id": "u-lead",
+                "backup_owner_id": "u-backup",
+                "max_response_hours": 6.0,
+                "notification_channels": ["correo"],
+            },
+            {
+                "tier_level": 2,
+                "primary_owner_id": "u-mgr",
+                "backup_owner_id": "u-lead",
+                "max_response_hours": 0.0,
+                "notification_channels": ["correo"],
+            },
+        ]
+    )
+    assert res["evaluated_tier_count"] == 2
+    assert res["invalid_sla_tiers"] == [1, 2]
+    assert res["is_ready"] is False
+
+    # Con tope ampliado, el mismo Tier 1 queda conforme pero Tier 2 sigue roto.
+    res_relaxed = audit_fn(
+        [
+            {
+                "tier_level": 1,
+                "primary_owner_id": "u-lead",
+                "backup_owner_id": "u-backup",
+                "max_response_hours": 6.0,
+                "notification_channels": ["correo"],
+            },
+        ],
+        max_tier1_response_hours=6.0,
+    )
+    assert res_relaxed["invalid_sla_tiers"] == []
+    assert res_relaxed["readiness_score_pct"] == 100.0
+    assert res_relaxed["is_ready"] is True
+
+
+def test_audit_stakeholder_escalation_matrix_readiness_channels_or_missing_tier1():
+    """> Sin canales configurados o sin Tier 1 en la matriz -> is_ready False."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stakeholder_escalation_matrix_readiness as audit_fn,
+    )
+
+    res_no_channels = audit_fn(
+        [
+            {
+                "tier_level": 1,
+                "primary_owner_id": "u-lead",
+                "backup_owner_id": "u-backup",
+                "max_response_hours": 4.0,
+                "notification_channels": ["  ", None],
+            },
+        ]
+    )
+    assert res_no_channels["unconfigured_channel_tiers"] == [1]
+    assert res_no_channels["is_ready"] is False
+
+    res_no_tier1 = audit_fn(
+        [
+            {
+                "tier_level": 2,
+                "primary_owner_id": "u-mgr",
+                "backup_owner_id": "u-lead",
+                "max_response_hours": 24.0,
+                "notification_channels": ["correo"],
+            },
+            "invalid-entry",
+            {"tier_level": 0},
+        ]
+    )
+    assert res_no_tier1["evaluated_tier_count"] == 1
+    assert res_no_tier1["has_tier_1"] is False
+    assert res_no_tier1["is_ready"] is False
+
+    for payload in (None, [], [None, 42]):
+        assert audit_fn(payload) == {  # type: ignore[arg-type]
+            "evaluated_tier_count": 0,
+            "has_tier_1": False,
+            "missing_primary_owner_tiers": [],
+            "single_point_of_failure_tiers": [],
+            "invalid_sla_tiers": [],
+            "unconfigured_channel_tiers": [],
+            "readiness_score_pct": 0.0,
+            "is_ready": False,
+        }

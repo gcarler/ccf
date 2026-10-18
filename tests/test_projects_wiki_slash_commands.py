@@ -2733,3 +2733,127 @@ def test_audit_wiki_postmortem_root_cause_governance_empty_or_none():
             "is_postmortem_governance_valid": False,
             "postmortem_posture": "NO_POSTMORTEMS_RECORDED",
         }
+
+
+def test_audit_wiki_benefits_realization_governance_governed():
+    """Beneficios con dueño, baseline/target cuantificados, cadencia válida y alineación estratégica -> is_governed True."""
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_benefits_realization_governance,
+    )
+
+    records = [
+        {
+            "benefit_id": "BEN-01",
+            "benefit_owner": "Dir. Pastoral",
+            "baseline_value": 100.0,
+            "target_value": 200.0,
+            "realized_value": 150.0,
+            "measurement_cadence": "Quarterly",
+            "strategic_alignment_linked": True,
+        },
+        {
+            "benefit_id": "BEN-02",
+            "benefit_owner": "Dir. Operaciones",
+            "baseline_value": 50.0,
+            "target_value": 10.0,
+            "realized_value": 10.0,
+            "measurement_cadence": "monthly",
+            "strategic_alignment_linked": True,
+        },
+    ]
+    res = audit_wiki_benefits_realization_governance(records)
+    assert res == {
+        "evaluated_benefit_count": 2,
+        "unowned_benefit_ids": [],
+        "unquantified_target_ids": [],
+        "missing_cadence_ids": [],
+        "unaligned_benefit_ids": [],
+        "average_attainment_pct": 75.0,
+        "is_governed": True,
+    }
+    assert WikiPMIService.audit_wiki_benefits_realization_governance(records) == res
+
+
+def test_audit_wiki_benefits_realization_governance_unowned_and_unquantified():
+    """Sin benefit_owner o target == baseline / None -> unowned_benefit_ids y unquantified_target_ids poblados."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_benefits_realization_governance,
+    )
+
+    res = audit_wiki_benefits_realization_governance(
+        [
+            {
+                "benefit_id": "BEN-NO-OWNER",
+                "benefit_owner": "   ",
+                "baseline_value": 10.0,
+                "target_value": 10.0,
+                "realized_value": 10.0,
+                "measurement_cadence": "annual",
+                "strategic_alignment_linked": True,
+            },
+            {
+                "benefit_id": "BEN-NO-TARGET",
+                "benefit_owner": "Coordinador",
+                "baseline_value": 20.0,
+                "target_value": None,
+                "realized_value": 25.0,
+                "measurement_cadence": "milestone",
+                "strategic_alignment_linked": True,
+            },
+        ]
+    )
+    assert res["evaluated_benefit_count"] == 2
+    assert res["unowned_benefit_ids"] == ["BEN-NO-OWNER"]
+    assert res["unquantified_target_ids"] == ["BEN-NO-OWNER", "BEN-NO-TARGET"]
+    assert res["average_attainment_pct"] == 0.0
+    assert res["is_governed"] is False
+
+
+def test_audit_wiki_benefits_realization_governance_missing_cadence_and_unaligned():
+    """Cadencia inválida y sin vínculo estratégico -> missing_cadence_ids y unaligned_benefit_ids poblados."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_benefits_realization_governance,
+    )
+
+    res = audit_wiki_benefits_realization_governance(
+        [
+            {
+                "benefit_id": "BEN-BAD-CAD",
+                "benefit_owner": "PMO",
+                "baseline_value": 0.0,
+                "target_value": 100.0,
+                "realized_value": 120.0,
+                "measurement_cadence": "ad_hoc",
+                "strategic_alignment_linked": False,
+            }
+        ]
+    )
+    assert res == {
+        "evaluated_benefit_count": 1,
+        "unowned_benefit_ids": [],
+        "unquantified_target_ids": [],
+        "missing_cadence_ids": ["BEN-BAD-CAD"],
+        "unaligned_benefit_ids": ["BEN-BAD-CAD"],
+        "average_attainment_pct": 100.0,
+        "is_governed": False,
+    }
+
+
+def test_audit_wiki_benefits_realization_governance_empty_or_invalid():
+    """Lista vacía, None o entradas sin benefit_id -> evaluated_benefit_count 0, is_governed False."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_benefits_realization_governance,
+    )
+
+    for payload in (None, [], [{"benefit_id": "  "}], ["invalid"]):
+        res = audit_wiki_benefits_realization_governance(payload)  # type: ignore[arg-type]
+        assert res == {
+            "evaluated_benefit_count": 0,
+            "unowned_benefit_ids": [],
+            "unquantified_target_ids": [],
+            "missing_cadence_ids": [],
+            "unaligned_benefit_ids": [],
+            "average_attainment_pct": 0.0,
+            "is_governed": False,
+        }

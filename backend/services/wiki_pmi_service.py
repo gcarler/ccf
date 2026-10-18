@@ -10,6 +10,7 @@ import logging
 import os
 import re
 import unicodedata
+from collections.abc import Mapping, Sequence
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -2322,6 +2323,128 @@ WikiPMIService.audit_wiki_postmortem_root_cause_governance = staticmethod(
 )
 
 
+def audit_wiki_benefits_realization_governance(
+    benefit_records: Sequence[Mapping[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Audita registros del Plan de Gestión de Beneficios (PMI Benefits Management Plan §1.2.6 & §4.4)."""
+    valid_cadences = {
+        "monthly",
+        "quarterly",
+        "semi_annual",
+        "annual",
+        "milestone",
+    }
+    evaluated_benefit_count = 0
+    unowned_benefit_ids: list[str] = []
+    unquantified_target_ids: list[str] = []
+    missing_cadence_ids: list[str] = []
+    unaligned_benefit_ids: list[str] = []
+    attainments: list[float] = []
+
+    for item in benefit_records or []:
+        if not isinstance(item, Mapping):
+            continue
+        benefit_id = str(item.get("benefit_id") or "").strip()
+        if not benefit_id:
+            continue
+
+        evaluated_benefit_count += 1
+        benefit_owner = str(item.get("benefit_owner") or "").strip()
+        if not benefit_owner:
+            unowned_benefit_ids.append(benefit_id)
+
+        raw_baseline = item.get("baseline_value")
+        raw_target = item.get("target_value")
+        raw_realized = item.get("realized_value")
+
+        baseline_val: float | None = None
+        target_val: float | None = None
+        realized_val: float | None = None
+
+        if raw_baseline is not None and not isinstance(raw_baseline, bool):
+            try:
+                baseline_val = float(raw_baseline)
+            except (TypeError, ValueError):
+                baseline_val = None
+        if raw_target is not None and not isinstance(raw_target, bool):
+            try:
+                target_val = float(raw_target)
+            except (TypeError, ValueError):
+                target_val = None
+        if raw_realized is not None and not isinstance(raw_realized, bool):
+            try:
+                realized_val = float(raw_realized)
+            except (TypeError, ValueError):
+                realized_val = None
+
+        if (
+            baseline_val is None
+            or target_val is None
+            or target_val == baseline_val
+        ):
+            unquantified_target_ids.append(benefit_id)
+            delta_target = 0.0
+        else:
+            delta_target = target_val - baseline_val
+
+        measurement_cadence = (
+            str(item.get("measurement_cadence") or "").strip().lower()
+        )
+        if measurement_cadence not in valid_cadences:
+            missing_cadence_ids.append(benefit_id)
+
+        strategic_alignment_linked = bool(
+            item.get("strategic_alignment_linked", False)
+        )
+        if not strategic_alignment_linked:
+            unaligned_benefit_ids.append(benefit_id)
+
+        if (
+            baseline_val is not None
+            and target_val is not None
+            and delta_target != 0.0
+            and realized_val is not None
+        ):
+            attainment_pct = max(
+                0.0,
+                min(
+                    100.0,
+                    ((realized_val - baseline_val) / delta_target) * 100.0,
+                ),
+            )
+        else:
+            attainment_pct = 0.0
+        attainments.append(attainment_pct)
+
+    average_attainment_pct = (
+        round(sum(attainments) / evaluated_benefit_count, 2)
+        if evaluated_benefit_count > 0
+        else 0.0
+    )
+    is_governed = bool(
+        evaluated_benefit_count > 0
+        and len(unowned_benefit_ids) == 0
+        and len(unquantified_target_ids) == 0
+        and len(missing_cadence_ids) == 0
+        and len(unaligned_benefit_ids) == 0
+    )
+
+    return {
+        "evaluated_benefit_count": evaluated_benefit_count,
+        "unowned_benefit_ids": unowned_benefit_ids,
+        "unquantified_target_ids": unquantified_target_ids,
+        "missing_cadence_ids": missing_cadence_ids,
+        "unaligned_benefit_ids": unaligned_benefit_ids,
+        "average_attainment_pct": average_attainment_pct,
+        "is_governed": is_governed,
+    }
+
+
+WikiPMIService.audit_wiki_benefits_realization_governance = staticmethod(
+    audit_wiki_benefits_realization_governance
+)
+
+
 __all__ = [
     "DEFAULT_PMI_KB_DIR",
     "CANONICAL_VOLUMES_METADATA",
@@ -2351,7 +2474,7 @@ __all__ = [
     "audit_wiki_raci_matrix_governance",
     "audit_wiki_adr_governance_hygiene",
     "audit_wiki_postmortem_root_cause_governance",
+    "audit_wiki_benefits_realization_governance",
     "WikiPMIService",
 ]
-
 
