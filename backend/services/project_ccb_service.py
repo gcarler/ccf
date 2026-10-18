@@ -1840,6 +1840,110 @@ def evaluate_spc_process_stability(
     }
 
 
+def _parse_fmea_rating(raw_val: Any) -> int:
+    if raw_val is None or isinstance(raw_val, bool):
+        return 1
+    try:
+        return max(1, min(10, int(float(raw_val))))
+    except (TypeError, ValueError):
+        return 1
+
+
+def evaluate_fmea_rpn_criticality(
+    failure_modes: list[dict[str, Any]] | None = None,
+    rpn_threshold: int = 125,
+    high_severity_threshold: int = 9,
+) -> dict[str, Any]:
+    """Evalúa modos y efectos de falla (FMEA RPN = S x O x D) y cobertura CAPA según PMI PMBOK §8.1.2.3 & §11.2."""
+    items = [item for item in (failure_modes or []) if isinstance(item, dict)]
+    total_failure_modes = len(items)
+    if total_failure_modes == 0:
+        return {
+            "total_failure_modes": 0,
+            "max_rpn": 0,
+            "critical_modes_count": 0,
+            "unmitigated_critical_mode_ids": [],
+            "is_fmea_controlled": True,
+            "fmea_posture": "NO_FAILURE_MODES_EVALUATED",
+        }
+
+    try:
+        rpn_limit = int(rpn_threshold)
+    except (TypeError, ValueError):
+        rpn_limit = 125
+    try:
+        sev_limit = int(high_severity_threshold)
+    except (TypeError, ValueError):
+        sev_limit = 9
+
+    max_rpn = 0
+    critical_modes_count = 0
+    unmitigated_critical_mode_ids: list[str] = []
+
+    for idx, item in enumerate(items, start=1):
+        fm_id = (
+            str(
+                item.get("id")
+                or item.get("failure_mode_id")
+                or item.get("code")
+                or f"FM-{idx}"
+            ).strip()
+            or f"FM-{idx}"
+        )
+        severity = _parse_fmea_rating(
+            item.get("severity") if item.get("severity") is not None else item.get("s")
+        )
+        occurrence = _parse_fmea_rating(
+            item.get("occurrence")
+            if item.get("occurrence") is not None
+            else item.get("o")
+        )
+        detection = _parse_fmea_rating(
+            item.get("detection")
+            if item.get("detection") is not None
+            else item.get("d")
+        )
+        rpn = severity * occurrence * detection
+        if rpn > max_rpn:
+            max_rpn = rpn
+
+        action = str(
+            item.get("recommended_action")
+            or item.get("mitigation_action")
+            or item.get("capa_action")
+            or ""
+        ).strip()
+        owner = str(
+            item.get("action_owner")
+            or item.get("owner")
+            or item.get("responsable")
+            or ""
+        ).strip()
+
+        is_critical = (rpn >= rpn_limit) or (severity >= sev_limit)
+        if is_critical:
+            critical_modes_count += 1
+            if len(action) < 5 or not owner:
+                unmitigated_critical_mode_ids.append(fm_id)
+
+    is_fmea_controlled = bool(len(unmitigated_critical_mode_ids) == 0)
+    if len(unmitigated_critical_mode_ids) > 0:
+        fmea_posture = "UNMITIGATED_CRITICAL_FAILURE_MODE"
+    elif critical_modes_count > 0:
+        fmea_posture = "MITIGATED_HIGH_RPN_EXPOSURE"
+    else:
+        fmea_posture = "LOW_RPN_BASELINE_RISK"
+
+    return {
+        "total_failure_modes": total_failure_modes,
+        "max_rpn": max_rpn,
+        "critical_modes_count": critical_modes_count,
+        "unmitigated_critical_mode_ids": unmitigated_critical_mode_ids,
+        "is_fmea_controlled": is_fmea_controlled,
+        "fmea_posture": fmea_posture,
+    }
+
+
 class ProjectCCBService:
     """Fachada canónica de Control Integrado de Cambios (CCB) y Calidad DoD PMI."""
 
@@ -2056,6 +2160,18 @@ class ProjectCCBService:
         )
 
     @staticmethod
+    def evaluate_fmea_rpn_criticality(
+        failure_modes: list[dict[str, Any]] | None = None,
+        rpn_threshold: int = 125,
+        high_severity_threshold: int = 9,
+    ) -> dict[str, Any]:
+        return evaluate_fmea_rpn_criticality(
+            failure_modes,
+            rpn_threshold=rpn_threshold,
+            high_severity_threshold=high_severity_threshold,
+        )
+
+    @staticmethod
     def audit_unapproved_scope_creep_exposure(
         work_packages: Optional[list[dict[str, Any]]],
         tolerance_hours_pct: float = 10.0,
@@ -2115,8 +2231,10 @@ __all__ = [
     "audit_configuration_baseline_integrity",
     "audit_configuration_items_baseline_integrity",
     "evaluate_spc_process_stability",
+    "evaluate_fmea_rpn_criticality",
     "ProjectCCBService",
 ]
+
 
 
 

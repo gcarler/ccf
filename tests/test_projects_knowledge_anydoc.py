@@ -2031,3 +2031,89 @@ def test_audit_markdown_code_fence_hygiene_no_code_blocks():
             "is_fence_hygiene_valid": True,
             "fence_posture": "NO_CODE_BLOCKS_FOUND",
         }
+
+
+def test_audit_markdown_image_asset_hygiene_compliant():
+    """Imágenes con alt-text descriptivo y rutas HTTPS/relativas (ignorando cercados) -> COMPLIANT_IMAGE_ASSET_HYGIENE."""
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_image_asset_hygiene,
+    )
+
+    md = (
+        "# Arquitectura de Proyecto\n"
+        "![Diagrama de red lógica PDM](https://cdn.ccf.org/assets/pdm.png \"PDM\")\n"
+        "![Curva S de valor ganado EVM](/assets/charts/evm-s-curve.svg)\n"
+        "```markdown\n"
+        "![](http://insecure-inside-fence.local/img.png)\n"
+        "```\n"
+    )
+    res = audit_markdown_image_asset_hygiene(md)
+    assert res == {
+        "total_images": 2,
+        "compliant_images_count": 2,
+        "missing_alt_text_refs": [],
+        "invalid_asset_url_refs": [],
+        "is_image_hygiene_valid": True,
+        "image_hygiene_posture": "COMPLIANT_IMAGE_ASSET_HYGIENE",
+    }
+    assert AnyDocService.audit_markdown_image_asset_hygiene(md) == res
+
+
+def test_audit_markdown_image_asset_hygiene_invalid_or_insecure_url():
+    """Imagen con URL vacía, http:// o /tmp/ -> INVALID_OR_INSECURE_ASSET_URL."""
+    from backend.services.anydoc_service import audit_markdown_image_asset_hygiene
+
+    md = (
+        "![Diagrama inseguro HTTP](http://legacy.ccf.org/chart.png)\n"
+        "![Archivo temporal local](/tmp/captura_temp.png)\n"
+        "![Sin destino]()\n"
+    )
+    res = audit_markdown_image_asset_hygiene(md)
+    assert res["total_images"] == 3
+    assert res["compliant_images_count"] == 0
+    assert res["invalid_asset_url_refs"] == [
+        "L1:http://legacy.ccf.org/chart.png",
+        "L2:/tmp/captura_temp.png",
+        "L3:EMPTY_URL",
+    ]
+    assert res["is_image_hygiene_valid"] is False
+    assert res["image_hygiene_posture"] == "INVALID_OR_INSECURE_ASSET_URL"
+
+
+def test_audit_markdown_image_asset_hygiene_missing_or_generic_alt_text():
+    """Imagen sin alt-text o con alt-text genérico ('image', 'screenshot') -> MISSING_ACCESSIBLE_ALT_TEXT."""
+    from backend.services.anydoc_service import audit_markdown_image_asset_hygiene
+
+    md = (
+        "![](https://cdn.ccf.org/assets/wbs.png)\n"
+        "![screenshot](https://cdn.ccf.org/assets/dashboard.png)\n"
+        "![Matriz RACI aprobada](https://cdn.ccf.org/assets/raci.png)\n"
+    )
+    res = audit_markdown_image_asset_hygiene(md)
+    assert res["total_images"] == 3
+    assert res["compliant_images_count"] == 1
+    assert res["missing_alt_text_refs"] == [
+        "L1:https://cdn.ccf.org/assets/wbs.png",
+        "L2:https://cdn.ccf.org/assets/dashboard.png",
+    ]
+    assert res["invalid_asset_url_refs"] == []
+    assert res["is_image_hygiene_valid"] is False
+    assert res["image_hygiene_posture"] == "MISSING_ACCESSIBLE_ALT_TEXT"
+
+
+def test_audit_markdown_image_asset_hygiene_no_images():
+    """Documento sin imágenes o None -> NO_IMAGES_FOUND."""
+    from backend.services.anydoc_service import audit_markdown_image_asset_hygiene
+
+    for payload in (None, "", "   ", "# Acta sin imágenes\n[Enlace normal](https://ccf.org)\n"):
+        res = audit_markdown_image_asset_hygiene(payload)
+        assert res == {
+            "total_images": 0,
+            "compliant_images_count": 0,
+            "missing_alt_text_refs": [],
+            "invalid_asset_url_refs": [],
+            "is_image_hygiene_valid": True,
+            "image_hygiene_posture": "NO_IMAGES_FOUND",
+        }
+

@@ -2570,3 +2570,135 @@ def test_evaluate_spc_process_stability_empty_or_none():
             "spc_posture": "NO_MEASUREMENTS_PROVIDED",
         }
 
+
+def test_evaluate_fmea_rpn_criticality_low_rpn_and_mitigated_high_rpn():
+    """RPN bajo -> LOW_RPN_BASELINE_RISK; RPN alto con CAPA y dueño -> MITIGATED_HIGH_RPN_EXPOSURE."""
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        evaluate_fmea_rpn_criticality,
+    )
+
+    res_low = evaluate_fmea_rpn_criticality(
+        [
+            {"id": "FM-1", "severity": 4, "occurrence": 3, "detection": 2},
+            {"id": "FM-2", "s": 5, "o": 2, "d": 3},
+        ]
+    )
+    assert res_low == {
+        "total_failure_modes": 2,
+        "max_rpn": 30,
+        "critical_modes_count": 0,
+        "unmitigated_critical_mode_ids": [],
+        "is_fmea_controlled": True,
+        "fmea_posture": "LOW_RPN_BASELINE_RISK",
+    }
+
+    res_mit = evaluate_fmea_rpn_criticality(
+        [
+            {
+                "id": "FM-CRIT",
+                "severity": 8,
+                "occurrence": 5,
+                "detection": 4,
+                "recommended_action": "Implementar circuit breaker y failover automático",
+                "action_owner": "Líder SRE",
+            }
+        ],
+        rpn_threshold=125,
+    )
+    assert res_mit["total_failure_modes"] == 1
+    assert res_mit["max_rpn"] == 160
+    assert res_mit["critical_modes_count"] == 1
+    assert res_mit["unmitigated_critical_mode_ids"] == []
+    assert res_mit["is_fmea_controlled"] is True
+    assert res_mit["fmea_posture"] == "MITIGATED_HIGH_RPN_EXPOSURE"
+    assert (
+        ProjectCCBService.evaluate_fmea_rpn_criticality(
+            [
+                {
+                    "id": "FM-CRIT",
+                    "severity": 8,
+                    "occurrence": 5,
+                    "detection": 4,
+                    "recommended_action": "Implementar circuit breaker y failover automático",
+                    "action_owner": "Líder SRE",
+                }
+            ]
+        )["fmea_posture"]
+        == "MITIGATED_HIGH_RPN_EXPOSURE"
+    )
+
+
+def test_evaluate_fmea_rpn_criticality_unmitigated_high_rpn():
+    """RPN >= 125 sin acción recomendada o sin dueño -> UNMITIGATED_CRITICAL_FAILURE_MODE."""
+    from backend.services.project_ccb_service import evaluate_fmea_rpn_criticality
+
+    res = evaluate_fmea_rpn_criticality(
+        [
+            {
+                "id": "FM-NOACT",
+                "severity": 7,
+                "occurrence": 5,
+                "detection": 4,
+                "recommended_action": "",
+                "action_owner": "Arquitecto",
+            },
+            {
+                "id": "FM-NOOWNER",
+                "severity": 6,
+                "occurrence": 5,
+                "detection": 5,
+                "mitigation_action": "Redundancia activa en base de datos",
+                "owner": "",
+            },
+        ],
+        rpn_threshold=125,
+    )
+    assert res["total_failure_modes"] == 2
+    assert res["max_rpn"] == 150
+    assert res["critical_modes_count"] == 2
+    assert res["unmitigated_critical_mode_ids"] == ["FM-NOACT", "FM-NOOWNER"]
+    assert res["is_fmea_controlled"] is False
+    assert res["fmea_posture"] == "UNMITIGATED_CRITICAL_FAILURE_MODE"
+
+
+def test_evaluate_fmea_rpn_criticality_high_severity_below_rpn_threshold():
+    """RPN < 125 pero severity >= 9 sin acción CAPA -> UNMITIGATED_CRITICAL_FAILURE_MODE."""
+    from backend.services.project_ccb_service import evaluate_fmea_rpn_criticality
+
+    res = evaluate_fmea_rpn_criticality(
+        [
+            {
+                "id": "FM-SEV9",
+                "severity": 9,
+                "occurrence": 2,
+                "detection": 2,
+                "recommended_action": "",
+            }
+        ],
+        rpn_threshold=125,
+        high_severity_threshold=9,
+    )
+    assert res["max_rpn"] == 36
+    assert res["critical_modes_count"] == 1
+    assert res["unmitigated_critical_mode_ids"] == ["FM-SEV9"]
+    assert res["is_fmea_controlled"] is False
+    assert res["fmea_posture"] == "UNMITIGATED_CRITICAL_FAILURE_MODE"
+
+
+def test_evaluate_fmea_rpn_criticality_empty_or_none():
+    """Lista vacía o None -> NO_FAILURE_MODES_EVALUATED e is_fmea_controlled=True."""
+    from backend.services.project_ccb_service import evaluate_fmea_rpn_criticality
+
+    for payload in (None, [], ["invalid", 42]):
+        res = evaluate_fmea_rpn_criticality(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_failure_modes": 0,
+            "max_rpn": 0,
+            "critical_modes_count": 0,
+            "unmitigated_critical_mode_ids": [],
+            "is_fmea_controlled": True,
+            "fmea_posture": "NO_FAILURE_MODES_EVALUATED",
+        }
+
+

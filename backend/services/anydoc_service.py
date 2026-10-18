@@ -2249,9 +2249,26 @@ class AnyDocService:
     ) -> dict[str, Any]:
         return audit_markdown_code_fence_hygiene(markdown_text)
 
+    @staticmethod
+    def audit_markdown_image_asset_hygiene(
+        markdown_text: str | None = None,
+    ) -> dict[str, Any]:
+        return audit_markdown_image_asset_hygiene(markdown_text)
+
 
 _CODE_FENCE_OPEN_AUDIT_RE = re.compile(r"^\s*(`{3,}|~{3,})\s*(.*)$")
 _CODE_FENCE_CLOSE_AUDIT_RE = re.compile(r"^\s*(`{3,}|~{3,})\s*$")
+_MARKDOWN_IMAGE_ASSET_AUDIT_RE = re.compile(r"!\[([^\]]*)\]\(([^)]*)\)")
+_GENERIC_IMAGE_ALT_TEXTS = {
+    "image",
+    "img",
+    "photo",
+    "screenshot",
+    "picture",
+    "imagen",
+    "foto",
+    "captura",
+}
 
 
 def audit_markdown_code_fence_hygiene(
@@ -2343,6 +2360,96 @@ def audit_markdown_code_fence_hygiene(
     }
 
 
+def audit_markdown_image_asset_hygiene(
+    markdown_text: str | None = None,
+) -> dict[str, Any]:
+    """Audita imágenes embebidas Markdown verificando alt-text accesible y URL/ruta segura según PMI PMBOK §4.4 y §10.2."""
+    if not markdown_text or not isinstance(markdown_text, str):
+        lines: list[str] = []
+    else:
+        lines = markdown_text.splitlines()
+
+    total_images = 0
+    compliant_images_count = 0
+    missing_alt_text_refs: list[str] = []
+    invalid_asset_url_refs: list[str] = []
+
+    in_fence = False
+    fence_char = ""
+    fence_len = 0
+
+    for line_no, line in enumerate(lines, start=1):
+        if not in_fence:
+            m_open = _CODE_FENCE_OPEN_AUDIT_RE.match(line)
+            if m_open:
+                marker = m_open.group(1)
+                in_fence = True
+                fence_char = marker[0]
+                fence_len = len(marker)
+                continue
+        else:
+            m_close = _CODE_FENCE_CLOSE_AUDIT_RE.match(line)
+            if (
+                m_close
+                and m_close.group(1)[0] == fence_char
+                and len(m_close.group(1)) >= fence_len
+            ):
+                in_fence = False
+                fence_char = ""
+                fence_len = 0
+            continue
+
+        for m_img in _MARKDOWN_IMAGE_ASSET_AUDIT_RE.finditer(line):
+            total_images += 1
+            alt_raw, raw_target = m_img.group(1), m_img.group(2)
+            alt_clean = alt_raw.strip()
+            url_part = (
+                raw_target.strip().split()[0] if raw_target.strip() else ""
+            )
+            ref_id = f"L{line_no}:{url_part or 'EMPTY_URL'}"
+
+            has_missing_alt = (
+                len(alt_clean) < 3
+                or alt_clean.lower() in _GENERIC_IMAGE_ALT_TEXTS
+            )
+            url_lower = url_part.lower()
+            has_invalid_url = (
+                not url_part
+                or url_lower.startswith("http://")
+                or url_lower.startswith("javascript:")
+                or url_part.startswith("/tmp/")
+            )
+
+            if has_missing_alt:
+                missing_alt_text_refs.append(ref_id)
+            if has_invalid_url:
+                invalid_asset_url_refs.append(ref_id)
+            if not has_missing_alt and not has_invalid_url:
+                compliant_images_count += 1
+
+    is_image_hygiene_valid = bool(
+        len(missing_alt_text_refs) == 0 and len(invalid_asset_url_refs) == 0
+    )
+
+    if total_images == 0:
+        image_hygiene_posture = "NO_IMAGES_FOUND"
+    elif len(invalid_asset_url_refs) > 0:
+        image_hygiene_posture = "INVALID_OR_INSECURE_ASSET_URL"
+    elif len(missing_alt_text_refs) > 0:
+        image_hygiene_posture = "MISSING_ACCESSIBLE_ALT_TEXT"
+    else:
+        image_hygiene_posture = "COMPLIANT_IMAGE_ASSET_HYGIENE"
+
+    return {
+        "total_images": total_images,
+        "compliant_images_count": compliant_images_count,
+        "missing_alt_text_refs": missing_alt_text_refs,
+        "invalid_asset_url_refs": invalid_asset_url_refs,
+        "is_image_hygiene_valid": is_image_hygiene_valid,
+        "image_hygiene_posture": image_hygiene_posture,
+    }
+
+
 __all__ = [
     "ANYDOC_AVAILABLE",
     "SUPPORTED_EXTENSIONS",
@@ -2370,5 +2477,7 @@ __all__ = [
     "audit_markdown_frontmatter_governance",
     "audit_markdown_admonition_callouts",
     "audit_markdown_code_fence_hygiene",
+    "audit_markdown_image_asset_hygiene",
     "AnyDocService",
 ]
+

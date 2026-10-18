@@ -1543,6 +1543,200 @@ def audit_wiki_communication_matrix_governance(
     }
 
 
+def audit_wiki_project_glossary_governance(
+    glossary_entries: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Audita el glosario de proyecto, sigas ambiguas y dominio (PMBOK §4.4 y §10.1).
+
+    Cada entrada declara `term`/`acronym`/`name` (fallback 'TERM-{idx}'),
+    definición (`definition`/`description`/`meaning`, >= 10 chars) y dominio
+    (`domain`/`category`/`knowledge_area`):
+    - `duplicate_terms`: términos repetidos (clave case-insensitive).
+    - `incomplete_definition_terms`: definición < 10 chars.
+    - `circular_definition_terms`: definición que solo repite el término o
+      arranca con '<term> is/es <term>'.
+    - `uncategorized_terms`: sin dominio.
+    - `is_glossary_compliant`: las 4 listas vacías.
+    - `glossary_posture`: 'EMPTY_PROJECT_GLOSSARY' sin entradas;
+      'DUPLICATE_AMBIGUOUS_ACRONYM'; 'INCOMPLETE_OR_CIRCULAR_DEFINITION';
+      'UNCATEGORIZED_DOMAIN_TERMS'; 'GOVERNED_PROJECT_GLOSSARY'.
+    """
+    records = [g for g in (glossary_entries or []) if isinstance(g, dict)]
+    if not records:
+        return {
+            "total_entries": 0,
+            "duplicate_terms": [],
+            "incomplete_definition_terms": [],
+            "circular_definition_terms": [],
+            "uncategorized_terms": [],
+            "is_glossary_compliant": True,
+            "glossary_posture": "EMPTY_PROJECT_GLOSSARY",
+        }
+
+    total_entries = len(records)
+    duplicate_terms: list[str] = []
+    incomplete_definition_terms: list[str] = []
+    circular_definition_terms: list[str] = []
+    uncategorized_terms: list[str] = []
+    seen_term_keys: set[str] = set()
+
+    def _strip_punct(value: str) -> str:
+        return value.strip(" .:")
+
+    for idx, item in enumerate(records, start=1):
+        term = str(item.get("term") or item.get("acronym") or item.get("name") or f"TERM-{idx}").strip()
+        term_key = term.lower()
+        definition = str(item.get("definition") or item.get("description") or item.get("meaning") or "").strip()
+        domain = str(item.get("domain") or item.get("category") or item.get("knowledge_area") or "").strip()
+
+        if term_key in seen_term_keys and term not in duplicate_terms:
+            duplicate_terms.append(term)
+        seen_term_keys.add(term_key)
+
+        if len(definition) < 10:
+            incomplete_definition_terms.append(term)
+        normalized_definition = _strip_punct(definition.lower())
+        if len(definition) >= 10 and (
+            normalized_definition == term_key
+            or definition.lower().startswith(f"{term_key} is {term_key}")
+            or definition.lower().startswith(f"{term_key} es {term_key}")
+        ):
+            circular_definition_terms.append(term)
+        if not domain:
+            uncategorized_terms.append(term)
+
+    is_glossary_compliant = bool(
+        len(duplicate_terms) == 0
+        and len(incomplete_definition_terms) == 0
+        and len(circular_definition_terms) == 0
+        and len(uncategorized_terms) == 0
+    )
+
+    if total_entries == 0:
+        glossary_posture = "EMPTY_PROJECT_GLOSSARY"
+    elif duplicate_terms:
+        glossary_posture = "DUPLICATE_AMBIGUOUS_ACRONYM"
+    elif incomplete_definition_terms or circular_definition_terms:
+        glossary_posture = "INCOMPLETE_OR_CIRCULAR_DEFINITION"
+    elif uncategorized_terms:
+        glossary_posture = "UNCATEGORIZED_DOMAIN_TERMS"
+    else:
+        glossary_posture = "GOVERNED_PROJECT_GLOSSARY"
+
+    return {
+        "total_entries": total_entries,
+        "duplicate_terms": duplicate_terms,
+        "incomplete_definition_terms": incomplete_definition_terms,
+        "circular_definition_terms": circular_definition_terms,
+        "uncategorized_terms": uncategorized_terms,
+        "is_glossary_compliant": is_glossary_compliant,
+        "glossary_posture": glossary_posture,
+    }
+
+
+def audit_wiki_knowledge_bus_factor_and_freshness(
+    articles: list[dict[str, Any]] | None = None,
+    max_stale_days: int = 90,
+) -> dict[str, Any]:
+    """Audita retención de conocimiento, bus-factor y frescura de revisiones (PMBOK §4.4).
+
+    Cada artículo declara `id`/`article_id`/`slug` (fallback 'ART-{idx}'),
+    contribuidores (`contributors`/`authors`/`editors`, lista/tuple/set o
+    string con comas; alternativa `author`/`created_by` individual), flag de
+    tema crítico (`is_critical`/`critical_knowledge`/`core_architecture`),
+    antigüedad de revisión (`days_since_review`/`age_days`/`stale_days`) y
+    peer review (`peer_reviewed`/`reviewed_by`/`sme_approved`):
+    - `orphaned_article_ids`: sin contribuidores únicos no vacíos.
+    - `bus_factor_risk_article_ids`: tema crítico con un único autor y sin peer review.
+    - `stale_article_ids`: review > max_stale_days.
+    - `is_knowledge_resilient`: las 3 listas vacías.
+    - `knowledge_resilience_posture`: 'NO_ARTICLES_EVALUATED' sin artículos;
+      'ORPHANED_KNOWLEDGE_ASSET'; 'CRITICAL_BUS_FACTOR_EXPOSURE';
+      'STALE_KNOWLEDGE_REVIEW_OVERDUE'; 'RESILIENT_KNOWLEDGE_REPOSITORY'.
+    """
+    records = [a for a in (articles or []) if isinstance(a, dict)]
+    if not records:
+        return {
+            "total_articles": 0,
+            "bus_factor_risk_article_ids": [],
+            "stale_article_ids": [],
+            "orphaned_article_ids": [],
+            "is_knowledge_resilient": True,
+            "knowledge_resilience_posture": "NO_ARTICLES_EVALUATED",
+        }
+
+    total_articles = len(records)
+    bus_factor_risk_article_ids: list[str] = []
+    stale_article_ids: list[str] = []
+    orphaned_article_ids: list[str] = []
+
+    for idx, item in enumerate(records, start=1):
+        art_id = str(item.get("id") or item.get("article_id") or item.get("slug") or f"ART-{idx}").strip()
+
+        raw_contributors = (
+            item.get("contributors")
+            if item.get("contributors") is not None
+            else (item.get("authors") if item.get("authors") is not None else item.get("editors"))
+        )
+        contributors: list[str]
+        if isinstance(raw_contributors, (list, tuple, set)):
+            contributors = [str(c).strip() for c in raw_contributors if str(c).strip()]
+        elif isinstance(raw_contributors, str) and raw_contributors.strip():
+            contributors = [part.strip() for part in raw_contributors.split(",") if part.strip()]
+        else:
+            single_author = str(item.get("author") or item.get("created_by") or "").strip()
+            contributors = [single_author] if single_author else []
+        contributors_count = len(set(contributors))
+
+        is_critical_topic = bool(
+            item.get("is_critical") or item.get("critical_knowledge") or item.get("core_architecture")
+        )
+        try:
+            days_since_review = float(
+                item.get("days_since_review")
+                if item.get("days_since_review") is not None
+                else (item.get("age_days") if item.get("age_days") is not None else (item.get("stale_days") or 0.0))
+            )
+        except (TypeError, ValueError):
+            days_since_review = 0.0
+        peer_reviewed = bool(
+            item.get("peer_reviewed") or item.get("reviewed_by") or item.get("sme_approved")
+        )
+
+        if contributors_count == 0:
+            orphaned_article_ids.append(art_id)
+        if is_critical_topic and contributors_count == 1 and not peer_reviewed:
+            bus_factor_risk_article_ids.append(art_id)
+        if days_since_review > float(max_stale_days) + 1e-9:
+            stale_article_ids.append(art_id)
+
+    is_knowledge_resilient = bool(
+        len(bus_factor_risk_article_ids) == 0
+        and len(stale_article_ids) == 0
+        and len(orphaned_article_ids) == 0
+    )
+
+    if total_articles == 0:
+        knowledge_resilience_posture = "NO_ARTICLES_EVALUATED"
+    elif orphaned_article_ids:
+        knowledge_resilience_posture = "ORPHANED_KNOWLEDGE_ASSET"
+    elif bus_factor_risk_article_ids:
+        knowledge_resilience_posture = "CRITICAL_BUS_FACTOR_EXPOSURE"
+    elif stale_article_ids:
+        knowledge_resilience_posture = "STALE_KNOWLEDGE_REVIEW_OVERDUE"
+    else:
+        knowledge_resilience_posture = "RESILIENT_KNOWLEDGE_REPOSITORY"
+
+    return {
+        "total_articles": total_articles,
+        "bus_factor_risk_article_ids": bus_factor_risk_article_ids,
+        "stale_article_ids": stale_article_ids,
+        "orphaned_article_ids": orphaned_article_ids,
+        "is_knowledge_resilient": is_knowledge_resilient,
+        "knowledge_resilience_posture": knowledge_resilience_posture,
+    }
+
+
 class WikiPMIService:
     """Fachada canónica de doctrina y gobernanza documental Wiki PMI."""
 
@@ -1665,6 +1859,21 @@ class WikiPMIService:
         channels: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
         return audit_wiki_communication_matrix_governance(channels)
+
+    @staticmethod
+    def audit_wiki_project_glossary_governance(
+        glossary_entries: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        return audit_wiki_project_glossary_governance(glossary_entries)
+
+    @staticmethod
+    def audit_wiki_knowledge_bus_factor_and_freshness(
+        articles: list[dict[str, Any]] | None = None,
+        max_stale_days: int = 90,
+    ) -> dict[str, Any]:
+        return audit_wiki_knowledge_bus_factor_and_freshness(
+            articles, max_stale_days=max_stale_days
+        )
 
     @staticmethod
     def audit_wiki_operational_runbook_readiness(
@@ -1822,6 +2031,8 @@ __all__ = [
     "audit_wiki_postmortem_incident_rca",
     "audit_wiki_lessons_learned_taxonomy",
     "audit_wiki_communication_matrix_governance",
+    "audit_wiki_project_glossary_governance",
+    "audit_wiki_knowledge_bus_factor_and_freshness",
     "audit_wiki_operational_runbook_readiness",
     "audit_wiki_adr_lifecycle_traceability",
     "audit_wiki_raci_matrix_governance",

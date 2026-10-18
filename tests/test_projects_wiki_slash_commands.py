@@ -1989,3 +1989,234 @@ def test_audit_wiki_raci_matrix_governance_empty_or_none():
             "is_raci_compliant": True,
             "raci_posture": "NO_RACI_ROWS_EVALUATED",
         }
+
+
+def test_audit_wiki_project_glossary_governance_governed():
+    """> Acronimos únicos, definición >= 10 chars y dominio -> GOVERNED glossary."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_project_glossary_governance as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "term": "CCB",
+                "definition": "Change Control Board del proyecto",
+                "domain": "Gestión de Cambios",
+            },
+            {
+                "term": "TCPI",
+                "definition": "Indice de desempeño hasta el final para cumplir BAC",
+                "category": "Gestión de Costos",
+            },
+            {
+                "term": "DoD",
+                "description": "Definition of Done de cada entregable h",
+                "knowledge_area": "Calidad",
+            },
+        ]
+    )
+    assert res["is_glossary_compliant"] is True
+    assert res["total_entries"] == 3
+    assert res["duplicate_terms"] == []
+    assert res["incomplete_definition_terms"] == []
+    assert res["circular_definition_terms"] == []
+    assert res["uncategorized_terms"] == []
+    assert res["glossary_posture"] == "GOVERNED_PROJECT_GLOSSARY"
+
+
+def test_audit_wiki_project_glossary_governance_duplicate_acronym():
+    """> Acronimo duplicado (case-insensitive) -> DUPLICATE_AMBIGUOUS_ACRONYM."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_project_glossary_governance as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "term": "KPI",
+                "definition": "Indicador clave de desempeño",
+                "domain": "Gestión",
+            },
+            {
+                "term": "KPI",
+                "definition": "Key Performance Indicator principal",
+                "domain": "Gestión",
+            },
+            {
+                "term": "kpi",
+                "definition": "Variante en minusculas del mismo acronimo",
+                "domain": "Gestión",
+            },
+        ]
+    )
+    assert res["is_glossary_compliant"] is False
+    assert res["total_entries"] == 3
+    assert res["duplicate_terms"] == ["KPI", "kpi"]
+    assert res["incomplete_definition_terms"] == []
+    assert res["circular_definition_terms"] == []
+    assert res["uncategorized_terms"] == []
+    assert res["glossary_posture"] == "DUPLICATE_AMBIGUOUS_ACRONYM"
+
+
+def test_audit_wiki_project_glossary_governance_incomplete_circular_uncategorized():
+    """> Definicion corta, circular y sin dominio identificados por pilar."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_project_glossary_governance as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "term": "SIGLA-VA",
+                "definition": "cortita",
+                "domain": "Operaciones",
+            },
+            {
+                "term": "PM",
+                "definition": "PM is PM en el repositorio",
+                "domain": "Gestión",
+            },
+            {
+                "term": "SAC",
+                "definition": "Sistema de Atención al Cliente",
+            },
+        ]
+    )
+    assert res["is_glossary_compliant"] is False
+    assert res["total_entries"] == 3
+    assert res["incomplete_definition_terms"] == ["SIGLA-VA"]
+    assert res["circular_definition_terms"] == ["PM"]
+    assert res["uncategorized_terms"] == ["SAC"]
+    assert res["duplicate_terms"] == []
+    # Precedencia: duplicates > incomplete/circular > uncategorized.
+    assert res["glossary_posture"] == "INCOMPLETE_OR_CIRCULAR_DEFINITION"
+
+
+def test_audit_wiki_project_glossary_governance_empty_or_none():
+    """None, lista vacía o entradas no-dict -> EMPTY_PROJECT_GLOSSARY."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_project_glossary_governance as audit_fn,
+    )
+
+    for payload in (None, [], ["invalid", 42, None]):
+        res = audit_fn(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_entries": 0,
+            "duplicate_terms": [],
+            "incomplete_definition_terms": [],
+            "circular_definition_terms": [],
+            "uncategorized_terms": [],
+            "is_glossary_compliant": True,
+            "glossary_posture": "EMPTY_PROJECT_GLOSSARY",
+        }
+
+
+def test_audit_wiki_knowledge_bus_factor_and_freshness_resilient():
+    """> Multi-autor, crítico con peer review y frescos <= 90 días -> RESILIENT repo."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_knowledge_bus_factor_and_freshness as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "id": "ART-1",
+                "contributors": ["Ana", "Luis", "Ana"],
+                "days_since_review": 30,
+            },
+            {
+                "article_id": "ART-2",
+                "authors": ["Sofía"],
+                "is_critical": True,
+                "sme_approved": True,
+                "age_days": 60,
+            },
+            {
+                "slug": "ART-3",
+                "editors": ["Pedro", "Lucía"],
+                "days_since_review": 88.5,
+            },
+        ]
+    )
+    assert res["is_knowledge_resilient"] is True
+    assert res["total_articles"] == 3
+    assert res["orphaned_article_ids"] == []
+    assert res["bus_factor_risk_article_ids"] == []
+    assert res["stale_article_ids"] == []
+    assert res["knowledge_resilience_posture"] == "RESILIENT_KNOWLEDGE_REPOSITORY"
+
+
+def test_audit_wiki_knowledge_bus_factor_and_freshness_critical_bus_factor():
+    """> Crítico, un solo autor y sin peer review -> CRITICAL_BUS_FACTOR_EXPOSURE."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_knowledge_bus_factor_and_freshness as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "id": "ART-SAFE",
+                "contributors": "Autor A, Autor B",
+                "is_critical": True,
+                "days_since_review": 10,
+            },
+            {
+                "id": "ART-SOLO",
+                "created_by": "Solo Josué",
+                "core_architecture": True,
+                "days_since_review": 20,
+            },
+        ]
+    )
+    assert res["is_knowledge_resilient"] is False
+    assert res["total_articles"] == 2
+    assert res["orphaned_article_ids"] == []
+    assert res["bus_factor_risk_article_ids"] == ["ART-SOLO"]
+    assert res["stale_article_ids"] == []
+    assert res["knowledge_resilience_posture"] == "CRITICAL_BUS_FACTOR_EXPOSURE"
+
+
+def test_audit_wiki_knowledge_bus_factor_and_freshness_orphaned_and_stale():
+    """> Sin autores (precedencia posture) y review > 90 días como pilar separado."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_knowledge_bus_factor_and_freshness as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "id": "ART-GHOST",
+                "days_since_review": 5,
+            },
+            {
+                "id": "ART-OLD",
+                "authors": ["Marta"],
+                "days_since_review": 120,
+            },
+        ]
+    )
+    assert res["is_knowledge_resilient"] is False
+    assert res["total_articles"] == 2
+    assert res["orphaned_article_ids"] == ["ART-GHOST"]
+    assert res["stale_article_ids"] == ["ART-OLD"]
+    assert res["bus_factor_risk_article_ids"] == []
+    assert res["knowledge_resilience_posture"] == "ORPHANED_KNOWLEDGE_ASSET"
+
+
+def test_audit_wiki_knowledge_bus_factor_and_freshness_empty_or_none():
+    """None, lista vacía o entradas no-dict -> NO_ARTICLES_EVALUATED."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_knowledge_bus_factor_and_freshness as audit_fn,
+    )
+
+    for payload in (None, [], ["invalid", 42, None]):
+        res = audit_fn(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_articles": 0,
+            "bus_factor_risk_article_ids": [],
+            "stale_article_ids": [],
+            "orphaned_article_ids": [],
+            "is_knowledge_resilient": True,
+            "knowledge_resilience_posture": "NO_ARTICLES_EVALUATED",
+        }
