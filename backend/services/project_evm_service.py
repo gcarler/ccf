@@ -3149,6 +3149,59 @@ def calculate_pert_three_point_estimate(
     }
 
 
+def evaluate_contingency_reserve_burn_alignment(
+    contingency_allocated: float,
+    contingency_consumed: float,
+    percent_complete: float,
+) -> Dict[str, Any]:
+    """Audita la tasa de consumo de la reserva de contingencia frente al avance físico (PMI PMBOK §7.4.2.6 / §11.7)."""
+    allocated = round(max(0.0, float(contingency_allocated or 0.0)), 2)
+    consumed = round(max(0.0, float(contingency_consumed or 0.0)), 2)
+    pct_complete = round(min(100.0, max(0.0, float(percent_complete or 0.0))), 2)
+
+    remaining_reserve = round(max(0.0, allocated - consumed), 2)
+    reserve_burn_pct = (
+        round((consumed / allocated) * 100.0, 2)
+        if allocated > 0
+        else (100.0 if consumed > 0 else 0.0)
+    )
+
+    if allocated <= 0:
+        burn_to_progress_ratio = 0.0
+    elif pct_complete > 0:
+        burn_to_progress_ratio = round(reserve_burn_pct / pct_complete, 2)
+    elif reserve_burn_pct > 0:
+        burn_to_progress_ratio = round(reserve_burn_pct, 2)
+    else:
+        burn_to_progress_ratio = 0.0
+
+    burn_variance_pct = round(reserve_burn_pct - pct_complete, 2)
+
+    if allocated == 0.0:
+        reserve_alignment_status = "no_contingency_allocated"
+    elif consumed >= allocated and pct_complete < 100.0:
+        reserve_alignment_status = "reserve_exhausted"
+    elif consumed >= allocated and pct_complete == 100.0:
+        reserve_alignment_status = "proportional_burn"
+    elif burn_variance_pct >= 20.0:
+        reserve_alignment_status = "premature_depletion"
+    elif burn_variance_pct >= -15.0:
+        reserve_alignment_status = "proportional_burn"
+    else:
+        reserve_alignment_status = "conservative_preservation"
+
+    return {
+        "contingency_allocated": allocated,
+        "contingency_consumed": consumed,
+        "remaining_reserve": remaining_reserve,
+        "percent_complete": pct_complete,
+        "reserve_burn_pct": reserve_burn_pct,
+        "burn_to_progress_ratio": burn_to_progress_ratio,
+        "burn_variance_pct": burn_variance_pct,
+        "reserve_alignment_status": reserve_alignment_status,
+    }
+
+
 class ProjectEVMService:
     """Fachada canónica del servicio EVM y Diagnóstico Predictivo PMI (Vol. 5 y Vol. 6)."""
 
@@ -3257,6 +3310,16 @@ class ProjectEVMService:
         pessimistic: float,
     ) -> Dict[str, Any]:
         return calculate_pert_three_point_estimate(optimistic, most_likely, pessimistic)
+
+    @staticmethod
+    def evaluate_contingency_reserve_burn_alignment(
+        contingency_allocated: float,
+        contingency_consumed: float,
+        percent_complete: float,
+    ) -> Dict[str, Any]:
+        return evaluate_contingency_reserve_burn_alignment(
+            contingency_allocated, contingency_consumed, percent_complete
+        )
 
     @staticmethod
     def build_project_execution_matrix(

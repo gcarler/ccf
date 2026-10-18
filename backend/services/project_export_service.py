@@ -5,7 +5,7 @@ from __future__ import annotations
 import csv
 import io
 import re
-from typing import Optional
+from typing import Any, Optional
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -26,6 +26,7 @@ __all__ = [
     "audit_csv_export_integrity",
     "audit_pdf_export_binary",
     "summarize_executive_report_risk_posture",
+    "audit_expenses_csv_financial_totals",
     "ProjectExportService",
 ]
 
@@ -248,6 +249,24 @@ class ProjectExportService:
     def summarize_executive_report_risk_posture(report_data: Optional[dict]) -> dict:
         return summarize_executive_report_risk_posture(report_data)
 
+    @staticmethod
+    def audit_expenses_csv_financial_totals(
+        csv_content: str | bytes | None,
+        expected_ac_total: float | None = None,
+        amount_column_candidates: tuple[str, ...] = (
+            "monto",
+            "amount",
+            "valor",
+            "costo",
+            "cost",
+        ),
+    ) -> dict[str, Any]:
+        return audit_expenses_csv_financial_totals(
+            csv_content,
+            expected_ac_total=expected_ac_total,
+            amount_column_candidates=amount_column_candidates,
+        )
+
 
 def summarize_executive_report_risk_posture(report_data: Optional[dict]) -> dict:
     """Audita la postura de riesgo ejecutivo del informe (PMBOK §11.7).
@@ -312,5 +331,132 @@ def summarize_executive_report_risk_posture(report_data: Optional[dict]) -> dict
         "pending_ccb_changes": pending_ccb_changes,
         "requires_sponsor_escalation": requires_sponsor_escalation,
         "risk_posture_status": risk_posture_status,
+    }
+
+
+def audit_expenses_csv_financial_totals(
+    csv_content: str | bytes | None,
+    expected_ac_total: float | None = None,
+    amount_column_candidates: tuple[str, ...] = (
+        "monto",
+        "amount",
+        "valor",
+        "costo",
+        "cost",
+    ),
+) -> dict[str, Any]:
+    """Reconcilia la suma de importes de un CSV de gastos exportado frente al Costo Real AC (PMBOK §7.4)."""
+    if isinstance(csv_content, (bytes, bytearray)):
+        text = bytes(csv_content).decode("utf-8-sig", errors="replace").lstrip("\ufeff")
+    elif isinstance(csv_content, str):
+        text = csv_content.lstrip("\ufeff")
+    else:
+        text = ""
+
+    expected_total = (
+        round(float(expected_ac_total), 2) if expected_ac_total is not None else None
+    )
+
+    if not text.strip():
+        return {
+            "amount_column_name": None,
+            "valid_amount_rows": 0,
+            "invalid_amount_rows": 0,
+            "csv_sum_amount": 0.0,
+            "expected_ac_total": expected_total,
+            "reconciliation_delta": (
+                round(0.0 - expected_total, 2) if expected_total is not None else 0.0
+            ),
+            "is_reconciled": False,
+            "reconciliation_status": "empty_export",
+        }
+
+    rows = [
+        r
+        for r in csv.reader(io.StringIO(text))
+        if any(str(cell).strip() for cell in r)
+    ]
+    if not rows:
+        return {
+            "amount_column_name": None,
+            "valid_amount_rows": 0,
+            "invalid_amount_rows": 0,
+            "csv_sum_amount": 0.0,
+            "expected_ac_total": expected_total,
+            "reconciliation_delta": (
+                round(0.0 - expected_total, 2) if expected_total is not None else 0.0
+            ),
+            "is_reconciled": False,
+            "reconciliation_status": "empty_export",
+        }
+
+    headers = [str(h).strip() for h in rows[0]]
+    candidates_lower = {str(c).strip().lower() for c in amount_column_candidates}
+    col_idx: int | None = None
+    amount_column_name: str | None = None
+
+    for idx, header in enumerate(headers):
+        if header.lower() in candidates_lower:
+            col_idx = idx
+            amount_column_name = header
+            break
+
+    valid_amount_rows = 0
+    invalid_amount_rows = 0
+    csv_sum_amount = 0.0
+
+    if col_idx is not None:
+        for row in rows[1:]:
+            raw_cell = str(row[col_idx]) if col_idx < len(row) else ""
+            cleaned = (
+                raw_cell.strip()
+                .lstrip("'")
+                .replace("$", "")
+                .replace(",", "")
+                .strip()
+            )
+            if not cleaned:
+                invalid_amount_rows += 1
+            else:
+                try:
+                    val = float(cleaned)
+                    csv_sum_amount += val
+                    valid_amount_rows += 1
+                except (ValueError, TypeError):
+                    invalid_amount_rows += 1
+
+    csv_sum_amount = round(csv_sum_amount, 2)
+
+    if expected_total is not None:
+        reconciliation_delta = round(csv_sum_amount - expected_total, 2)
+        is_reconciled = bool(
+            abs(reconciliation_delta) <= 0.01
+            and invalid_amount_rows == 0
+            and amount_column_name is not None
+        )
+    else:
+        reconciliation_delta = 0.0
+        is_reconciled = bool(
+            invalid_amount_rows == 0 and amount_column_name is not None
+        )
+
+    if amount_column_name is None:
+        reconciliation_status = "missing_amount_column"
+    elif invalid_amount_rows > 0:
+        reconciliation_status = "parse_errors_detected"
+    elif is_reconciled:
+        reconciliation_status = "reconciled"
+    else:
+        reconciliation_status = "discrepancy_detected"
+
+    return {
+        "amount_column_name": amount_column_name,
+        "valid_amount_rows": valid_amount_rows,
+        "invalid_amount_rows": invalid_amount_rows,
+        "csv_sum_amount": csv_sum_amount,
+        "expected_ac_total": expected_total,
+        "reconciliation_delta": reconciliation_delta,
+        "is_reconciled": is_reconciled,
+        "reconciliation_status": reconciliation_status,
     }
 

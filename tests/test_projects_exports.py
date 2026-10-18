@@ -842,3 +842,76 @@ def test_risk_posture_sponsor_escalation_by_pending_ccb():
     # total_risks == 0 pero pending > 0 → no 'unassessed'
     assert result["risk_posture_status"] == "sponsor_escalation"
 
+
+# ── audit_expenses_csv_financial_totals (PMBOK §7.4, pure helper) ───────────
+
+
+def test_audit_expenses_csv_financial_totals_reconciled():
+    """CSV con BOM UTF-8 y columna Monto reconciliado contra AC esperado -> 'reconciled'."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_expenses_csv_financial_totals,
+    )
+
+    csv_text = "\ufeffID,Categoría,Monto,Estado\n1,Equipos,1250.50,paid\n2,Servicios,'$749.50,paid\n"
+    res = audit_expenses_csv_financial_totals(csv_text, expected_ac_total=2000.0)
+    assert res == {
+        "amount_column_name": "Monto",
+        "valid_amount_rows": 2,
+        "invalid_amount_rows": 0,
+        "csv_sum_amount": 2000.0,
+        "expected_ac_total": 2000.0,
+        "reconciliation_delta": 0.0,
+        "is_reconciled": True,
+        "reconciliation_status": "reconciled",
+    }
+    assert (
+        ProjectExportService.audit_expenses_csv_financial_totals(
+            csv_text.encode("utf-8"), expected_ac_total=2000.0
+        )
+        == res
+    )
+
+
+def test_audit_expenses_csv_financial_totals_discrepancy_detected():
+    """Suma CSV distinta del AC esperado fuera de tolerancia -> 'discrepancy_detected'."""
+    from backend.services.project_export_service import audit_expenses_csv_financial_totals
+
+    csv_text = "ID,Amount\n1,1000.00\n2,500.00\n"
+    res = audit_expenses_csv_financial_totals(csv_text, expected_ac_total=1800.0)
+    assert res["csv_sum_amount"] == 1500.0
+    assert res["expected_ac_total"] == 1800.0
+    assert res["reconciliation_delta"] == -300.0
+    assert res["is_reconciled"] is False
+    assert res["reconciliation_status"] == "discrepancy_detected"
+
+
+def test_audit_expenses_csv_financial_totals_parse_errors_and_missing_column():
+    """Fila con importe inválido ('N/A') -> 'parse_errors_detected', y sin columna de importe -> 'missing_amount_column'."""
+    from backend.services.project_export_service import audit_expenses_csv_financial_totals
+
+    bad_row_csv = "ID,Monto\n1,500.00\n2,N/A\n"
+    bad_res = audit_expenses_csv_financial_totals(bad_row_csv, expected_ac_total=500.0)
+    assert bad_res["valid_amount_rows"] == 1
+    assert bad_res["invalid_amount_rows"] == 1
+    assert bad_res["is_reconciled"] is False
+    assert bad_res["reconciliation_status"] == "parse_errors_detected"
+
+    no_col_csv = "ID,Título,Estado\n1,Gasto A,paid\n"
+    no_col_res = audit_expenses_csv_financial_totals(no_col_csv, expected_ac_total=0.0)
+    assert no_col_res["amount_column_name"] is None
+    assert no_col_res["is_reconciled"] is False
+    assert no_col_res["reconciliation_status"] == "missing_amount_column"
+
+
+def test_audit_expenses_csv_financial_totals_empty_or_none():
+    """None o cadena vacía -> 'empty_export' e is_reconciled=False."""
+    from backend.services.project_export_service import audit_expenses_csv_financial_totals
+
+    for empty_val in (None, "", "   \n  ", b""):
+        res = audit_expenses_csv_financial_totals(empty_val, expected_ac_total=100.0)
+        assert res["amount_column_name"] is None
+        assert res["csv_sum_amount"] == 0.0
+        assert res["is_reconciled"] is False
+        assert res["reconciliation_status"] == "empty_export"
+

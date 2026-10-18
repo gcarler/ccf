@@ -25,6 +25,7 @@ from backend.services.project_evm_service import (
     ProjectEVMService,
     analyze_s_curve_velocity,
     calculate_project_evm,
+    evaluate_contingency_reserve_burn_alignment,
     generate_curve_s_data,
     predict_schedule_slippage_days,
 )
@@ -916,6 +917,88 @@ def test_predict_schedule_slippage_days_unscheduled_and_stalled():
     }
 
 
+def test_evaluate_contingency_reserve_burn_alignment_proportional_and_conservative():
+    """Valida consumo proporcional (-15% <= burn_variance_pct < 20%) y preservación conservadora (< -15%)."""
+    prop = evaluate_contingency_reserve_burn_alignment(
+        contingency_allocated=10000.0,
+        contingency_consumed=4500.0,
+        percent_complete=50.0,
+    )
+    assert prop == {
+        "contingency_allocated": 10000.0,
+        "contingency_consumed": 4500.0,
+        "remaining_reserve": 5500.0,
+        "percent_complete": 50.0,
+        "reserve_burn_pct": 45.0,
+        "burn_to_progress_ratio": 0.9,
+        "burn_variance_pct": -5.0,
+        "reserve_alignment_status": "proportional_burn",
+    }
+    assert (
+        ProjectEVMService.evaluate_contingency_reserve_burn_alignment(10000.0, 4500.0, 50.0)
+        == prop
+    )
+
+    cons = evaluate_contingency_reserve_burn_alignment(
+        contingency_allocated=10000.0,
+        contingency_consumed=1000.0,
+        percent_complete=60.0,
+    )
+    assert cons["reserve_burn_pct"] == 10.0
+    assert cons["burn_variance_pct"] == -50.0
+    assert cons["reserve_alignment_status"] == "conservative_preservation"
+
+
+def test_evaluate_contingency_reserve_burn_alignment_premature_depletion():
+    """Valida agotamiento prematuro cuando burn_variance_pct >= 20% sin agotar el 100% de la reserva."""
+    res = evaluate_contingency_reserve_burn_alignment(
+        contingency_allocated=10000.0,
+        contingency_consumed=7000.0,
+        percent_complete=35.0,
+    )
+    assert res == {
+        "contingency_allocated": 10000.0,
+        "contingency_consumed": 7000.0,
+        "remaining_reserve": 3000.0,
+        "percent_complete": 35.0,
+        "reserve_burn_pct": 70.0,
+        "burn_to_progress_ratio": 2.0,
+        "burn_variance_pct": 35.0,
+        "reserve_alignment_status": "premature_depletion",
+    }
+
+
+def test_evaluate_contingency_reserve_burn_alignment_reserve_exhausted():
+    """Valida reserva agotada cuando consumed >= allocated antes de llegar al 100% de avance."""
+    res = evaluate_contingency_reserve_burn_alignment(
+        contingency_allocated=10000.0,
+        contingency_consumed=10500.0,
+        percent_complete=60.0,
+    )
+    assert res["remaining_reserve"] == 0.0
+    assert res["reserve_burn_pct"] == 105.0
+    assert res["reserve_alignment_status"] == "reserve_exhausted"
+
+
+def test_evaluate_contingency_reserve_burn_alignment_no_contingency_allocated():
+    """Valida estado no_contingency_allocated cuando la reserva asignada es 0."""
+    res = evaluate_contingency_reserve_burn_alignment(
+        contingency_allocated=0.0,
+        contingency_consumed=0.0,
+        percent_complete=40.0,
+    )
+    assert res == {
+        "contingency_allocated": 0.0,
+        "contingency_consumed": 0.0,
+        "remaining_reserve": 0.0,
+        "percent_complete": 40.0,
+        "reserve_burn_pct": 0.0,
+        "burn_to_progress_ratio": 0.0,
+        "burn_variance_pct": -40.0,
+        "reserve_alignment_status": "no_contingency_allocated",
+    }
+
+
 if __name__ == "__main__":
     test_evm_balanced_project()
     test_evm_cost_overrun_critical()
@@ -927,6 +1010,10 @@ if __name__ == "__main__":
     test_predict_schedule_slippage_days_minor_slippage()
     test_predict_schedule_slippage_days_critical_slippage()
     test_predict_schedule_slippage_days_unscheduled_and_stalled()
+    test_evaluate_contingency_reserve_burn_alignment_proportional_and_conservative()
+    test_evaluate_contingency_reserve_burn_alignment_premature_depletion()
+    test_evaluate_contingency_reserve_burn_alignment_reserve_exhausted()
+    test_evaluate_contingency_reserve_burn_alignment_no_contingency_allocated()
     print("✅ All EVM tests passed successfully!")
 
 
