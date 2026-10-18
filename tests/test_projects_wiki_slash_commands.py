@@ -3282,3 +3282,128 @@ def test_audit_wiki_raid_log_traceability_governance_empty_or_none():
 
     for payload in (None, "raid-string", {"entry_id": "R1"}, 42, [], ["no-dict", {"category": "risk"}]):
         assert audit_wiki_raid_log_traceability_governance(payload) == empty_result  # type: ignore[arg-type]
+
+
+def test_audit_wiki_definition_of_ready_gate_hygiene_sprint_ready():
+    """Items con criterios de aceptación, puntos estimados, dependencias despejadas y spec vinculada pasan is_sprint_ready=True."""
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_definition_of_ready_gate_hygiene,
+    )
+
+    items = [
+        {
+            "item_id": "US-101",
+            "acceptance_criteria_count": 3,
+            "story_points_estimated": True,
+            "dependencies_cleared": True,
+            "ux_or_tech_spec_linked": True,
+        },
+        {
+            "item_id": "US-102",
+            "acceptance_criteria_count": 2,
+            "story_points_estimated": True,
+            "dependencies_cleared": True,
+            "ux_or_tech_spec_linked": True,
+        },
+    ]
+    res = audit_wiki_definition_of_ready_gate_hygiene(items)
+    assert res == {
+        "total_items": 2,
+        "missing_acceptance_criteria_item_ids": [],
+        "unestimated_item_ids": [],
+        "blocked_dependency_item_ids": [],
+        "missing_spec_link_item_ids": [],
+        "dor_pass_rate_pct": 100.0,
+        "is_sprint_ready": True,
+    }
+    assert WikiPMIService.audit_wiki_definition_of_ready_gate_hygiene(items) == res
+
+
+def test_audit_wiki_definition_of_ready_gate_hygiene_missing_ac_and_unestimated():
+    """Detecta historias sin criterios de aceptación (<1) o sin estimación de story points."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_definition_of_ready_gate_hygiene,
+    )
+
+    res = audit_wiki_definition_of_ready_gate_hygiene(
+        [
+            {
+                "item_id": "US-NO-AC",
+                "acceptance_criteria_count": 0,
+                "story_points_estimated": True,
+                "dependencies_cleared": True,
+                "ux_or_tech_spec_linked": True,
+            },
+            {
+                "item_id": "US-NO-EST",
+                "acceptance_criteria_count": 2,
+                "story_points_estimated": False,
+                "dependencies_cleared": True,
+                "ux_or_tech_spec_linked": True,
+            },
+        ]
+    )
+    assert res == {
+        "total_items": 2,
+        "missing_acceptance_criteria_item_ids": ["US-NO-AC"],
+        "unestimated_item_ids": ["US-NO-EST"],
+        "blocked_dependency_item_ids": [],
+        "missing_spec_link_item_ids": [],
+        "dor_pass_rate_pct": 0.0,
+        "is_sprint_ready": False,
+    }
+
+
+def test_audit_wiki_definition_of_ready_gate_hygiene_blocked_and_missing_spec():
+    """Detecta dependencias bloqueadas y ausencia de vínculo UX/Tech Spec."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_definition_of_ready_gate_hygiene,
+    )
+
+    res = audit_wiki_definition_of_ready_gate_hygiene(
+        [
+            {
+                "item_id": "US-READY",
+                "acceptance_criteria_count": 4,
+                "story_points_estimated": True,
+                "dependencies_cleared": True,
+                "ux_or_tech_spec_linked": True,
+            },
+            {
+                "item_id": "US-BLK-SPEC",
+                "acceptance_criteria_count": 2,
+                "story_points_estimated": True,
+                "dependencies_cleared": False,
+                "ux_or_tech_spec_linked": False,
+            },
+        ]
+    )
+    assert res == {
+        "total_items": 2,
+        "missing_acceptance_criteria_item_ids": [],
+        "unestimated_item_ids": [],
+        "blocked_dependency_item_ids": ["US-BLK-SPEC"],
+        "missing_spec_link_item_ids": ["US-BLK-SPEC"],
+        "dor_pass_rate_pct": 50.0,
+        "is_sprint_ready": False,
+    }
+
+
+def test_audit_wiki_definition_of_ready_gate_hygiene_empty_or_invalid():
+    """Entradas vacías, None o no-secuencia devuelven total_items=0 e is_sprint_ready=False."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_definition_of_ready_gate_hygiene,
+    )
+
+    for payload in (None, [], "invalid", {"item_id": "U1"}, [{"item_id": "   "}]):
+        assert audit_wiki_definition_of_ready_gate_hygiene(payload) == {  # type: ignore[arg-type]
+            "total_items": 0,
+            "missing_acceptance_criteria_item_ids": [],
+            "unestimated_item_ids": [],
+            "blocked_dependency_item_ids": [],
+            "missing_spec_link_item_ids": [],
+            "dor_pass_rate_pct": 0.0,
+            "is_sprint_ready": False,
+        }
+

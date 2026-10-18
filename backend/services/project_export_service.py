@@ -2965,6 +2965,7 @@ __all__ = [
     "audit_executive_report_contract_type_risk_allocation",
     "audit_executive_report_lessons_learned_institutionalization",
     "audit_executive_report_risk_trigger_activation_governance",
+    "audit_executive_report_procurement_claims_settlement",
     "ProjectExportService",
 ]
 
@@ -3136,4 +3137,82 @@ def audit_executive_report_risk_trigger_activation_governance(
 ProjectExportService.audit_executive_report_risk_trigger_activation_governance = staticmethod(
     audit_executive_report_risk_trigger_activation_governance
 )
+
+
+def audit_executive_report_procurement_claims_settlement(
+    report: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Audita reclamos de adquisiciones (procurement claims), métodos ADR (negociación, mediación, arbitraje, litigio) y documentación de acuerdos en el reporte ejecutivo según PMI PMBOK §12.3 y §7.3."""
+    claims: Sequence[Any] = []
+    if isinstance(report, Mapping):
+        raw_root = report.get("procurement_claims")
+        if isinstance(raw_root, Sequence) and not isinstance(
+            raw_root, (str, bytes, Mapping)
+        ):
+            claims = raw_root
+        elif isinstance(report.get("governance"), Mapping):
+            raw_gov = report["governance"].get("procurement_claims")
+            if isinstance(raw_gov, Sequence) and not isinstance(
+                raw_gov, (str, bytes, Mapping)
+            ):
+                claims = raw_gov
+
+    valid_adr_methods = {"negotiation", "mediation", "arbitration", "litigation"}
+    total_claims = 0
+    total_disputed_amount = 0.0
+    invalid_adr_method_claim_ids: list[str] = []
+    escalated_litigation_claim_ids: list[str] = []
+    undocumented_settlement_claim_ids: list[str] = []
+
+    for item in claims:
+        if not isinstance(item, Mapping):
+            continue
+        claim_id = str(item.get("claim_id") or "").strip()
+        if not claim_id:
+            continue
+
+        total_claims += 1
+        try:
+            disputed_amount = max(
+                0.0, float(item.get("disputed_amount", 0.0) or 0.0)
+            )
+        except (TypeError, ValueError):
+            disputed_amount = 0.0
+        total_disputed_amount += disputed_amount
+
+        resolution_method = (
+            str(item.get("resolution_method") or "").strip().lower()
+        )
+        status = str(item.get("status") or "").strip().lower()
+        settlement_documented = bool(item.get("settlement_documented", False))
+
+        if resolution_method not in valid_adr_methods:
+            invalid_adr_method_claim_ids.append(claim_id)
+        if resolution_method == "litigation":
+            escalated_litigation_claim_ids.append(claim_id)
+        if status in {"settled", "closed"} and not settlement_documented:
+            undocumented_settlement_claim_ids.append(claim_id)
+
+    total_disputed_amount = round(total_disputed_amount, 2)
+    is_claims_governance_clean = bool(
+        total_claims > 0
+        and not invalid_adr_method_claim_ids
+        and not escalated_litigation_claim_ids
+        and not undocumented_settlement_claim_ids
+    )
+
+    return {
+        "total_claims": total_claims,
+        "total_disputed_amount": total_disputed_amount,
+        "invalid_adr_method_claim_ids": invalid_adr_method_claim_ids,
+        "escalated_litigation_claim_ids": escalated_litigation_claim_ids,
+        "undocumented_settlement_claim_ids": undocumented_settlement_claim_ids,
+        "is_claims_governance_clean": is_claims_governance_clean,
+    }
+
+
+ProjectExportService.audit_executive_report_procurement_claims_settlement = staticmethod(
+    audit_executive_report_procurement_claims_settlement
+)
+
 

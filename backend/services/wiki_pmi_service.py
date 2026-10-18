@@ -2492,6 +2492,7 @@ __all__ = [
     "audit_wiki_postmortem_root_cause_governance",
     "audit_wiki_benefits_realization_governance",
     "audit_wiki_raid_log_traceability_governance",
+    "audit_wiki_definition_of_ready_gate_hygiene",
     "WikiPMIService",
 ]
 
@@ -2719,3 +2720,86 @@ WikiPMIService.audit_wiki_raid_log_traceability_governance = staticmethod(
     audit_wiki_raid_log_traceability_governance
 )
 
+
+def audit_wiki_definition_of_ready_gate_hygiene(
+    backlog_items: Sequence[Mapping[str, Any]] | None,
+) -> dict[str, Any]:
+    """Audit wiki backlog items for PMI PMBOK §8.1 & §4.4 Definition of Ready (DoR) gate hygiene."""
+    if (
+        not backlog_items
+        or not isinstance(backlog_items, Sequence)
+        or isinstance(backlog_items, (str, bytes, Mapping))
+    ):
+        return {
+            "total_items": 0,
+            "missing_acceptance_criteria_item_ids": [],
+            "unestimated_item_ids": [],
+            "blocked_dependency_item_ids": [],
+            "missing_spec_link_item_ids": [],
+            "dor_pass_rate_pct": 0.0,
+            "is_sprint_ready": False,
+        }
+
+    total_items = 0
+    ready_count = 0
+    missing_acceptance_criteria_item_ids: list[str] = []
+    unestimated_item_ids: list[str] = []
+    blocked_dependency_item_ids: list[str] = []
+    missing_spec_link_item_ids: list[str] = []
+
+    for item in backlog_items:
+        if not isinstance(item, Mapping):
+            continue
+        item_id = str(item.get("item_id") or "").strip()
+        if not item_id:
+            continue
+
+        total_items += 1
+        try:
+            acceptance_criteria_count = max(
+                0, int(item.get("acceptance_criteria_count", 0) or 0)
+            )
+        except (TypeError, ValueError):
+            acceptance_criteria_count = 0
+
+        story_points_estimated = bool(item.get("story_points_estimated", False))
+        dependencies_cleared = bool(item.get("dependencies_cleared", False))
+        ux_or_tech_spec_linked = bool(item.get("ux_or_tech_spec_linked", False))
+
+        has_ac = acceptance_criteria_count >= 1
+        if not has_ac:
+            missing_acceptance_criteria_item_ids.append(item_id)
+        if not story_points_estimated:
+            unestimated_item_ids.append(item_id)
+        if not dependencies_cleared:
+            blocked_dependency_item_ids.append(item_id)
+        if not ux_or_tech_spec_linked:
+            missing_spec_link_item_ids.append(item_id)
+
+        if (
+            has_ac
+            and story_points_estimated
+            and dependencies_cleared
+            and ux_or_tech_spec_linked
+        ):
+            ready_count += 1
+
+    dor_pass_rate_pct = (
+        round((ready_count / total_items) * 100.0, 2) if total_items > 0 else 0.0
+    )
+    is_sprint_ready = bool(total_items > 0 and ready_count == total_items)
+
+    return {
+        "total_items": total_items,
+        "missing_acceptance_criteria_item_ids": missing_acceptance_criteria_item_ids,
+        "unestimated_item_ids": unestimated_item_ids,
+        "blocked_dependency_item_ids": blocked_dependency_item_ids,
+        "missing_spec_link_item_ids": missing_spec_link_item_ids,
+        "dor_pass_rate_pct": dor_pass_rate_pct,
+        "is_sprint_ready": is_sprint_ready,
+    }
+
+
+WikiPMIService.audit_wiki_definition_of_ready_gate_hygiene = staticmethod(
+    audit_wiki_definition_of_ready_gate_hygiene
+)

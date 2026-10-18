@@ -3130,7 +3130,73 @@ __all__ = [
     "audit_team_calendar_burnout_contention",
     "audit_charter_assumption_log_validity",
     "audit_project_closure_handover_and_release_readiness",
+    "audit_stakeholder_salience_mitchell_classification",
     "ProjectLifecyclePMIService",
 ]
 
 
+def audit_stakeholder_salience_mitchell_classification(
+    stakeholders: Sequence[Mapping[str, Any]] | None,
+) -> dict[str, Any]:
+    """PMBOK §13.1.2.4 — clasificación de prominencia de interesados (modelo Mitchell).
+
+    Atributos binarios: poder, urgencia, legitimidad.
+    - 3/3 -> ``definitive_stakeholder_ids``; poder+urgencia sin legitimidad ->
+      ``dangerous_stakeholder_ids``; 0 atributos -> ``non_stakeholder_ids``;
+    - >= 2 atributos sin ``engagement_plan`` -> ``unmanaged_high_salience_ids``.
+    """
+    if not isinstance(stakeholders, (list, tuple)):
+        stakeholders = []
+
+    total_stakeholders = 0
+    definitive_stakeholder_ids: list[str] = []
+    dangerous_stakeholder_ids: list[str] = []
+    non_stakeholder_ids: list[str] = []
+    unmanaged_high_salience_ids: list[str] = []
+
+    for item in stakeholders:
+        if not isinstance(item, Mapping):
+            continue
+        stakeholder_id = str(item.get("stakeholder_id") or "").strip()
+        if not stakeholder_id:
+            continue
+
+        has_power = bool(item.get("has_power", False))
+        has_urgency = bool(item.get("has_urgency", False))
+        has_legitimacy = bool(item.get("has_legitimacy", False))
+        engagement_plan = str(item.get("engagement_plan") or "").strip()
+        attrs_count = int(has_power) + int(has_urgency) + int(has_legitimacy)
+
+        total_stakeholders += 1
+
+        if attrs_count == 3:
+            definitive_stakeholder_ids.append(stakeholder_id)
+
+        if has_power and has_urgency and not has_legitimacy:
+            dangerous_stakeholder_ids.append(stakeholder_id)
+
+        if attrs_count == 0:
+            non_stakeholder_ids.append(stakeholder_id)
+
+        if attrs_count >= 2 and not engagement_plan:
+            unmanaged_high_salience_ids.append(stakeholder_id)
+
+    is_salience_governance_ready = bool(
+        total_stakeholders > 0
+        and not unmanaged_high_salience_ids
+        and not non_stakeholder_ids
+    )
+
+    return {
+        "total_stakeholders": total_stakeholders,
+        "definitive_stakeholder_ids": definitive_stakeholder_ids,
+        "dangerous_stakeholder_ids": dangerous_stakeholder_ids,
+        "non_stakeholder_ids": non_stakeholder_ids,
+        "unmanaged_high_salience_ids": unmanaged_high_salience_ids,
+        "is_salience_governance_ready": is_salience_governance_ready,
+    }
+
+
+ProjectLifecyclePMIService.audit_stakeholder_salience_mitchell_classification = staticmethod(
+    audit_stakeholder_salience_mitchell_classification
+)

@@ -3856,3 +3856,133 @@ def test_audit_executive_report_risk_trigger_activation_governance_empty_or_inva
             "is_trigger_governance_compliant": False,
         }
 
+
+def test_audit_executive_report_procurement_claims_settlement_clean():
+    """Reclamos resueltos por negociación/mediación/arbitraje y documentados al cerrarse pasan is_claims_governance_clean=True."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_procurement_claims_settlement,
+    )
+
+    report = {
+        "procurement_claims": [
+            {
+                "claim_id": "CLM-01",
+                "disputed_amount": 8500.5,
+                "resolution_method": "Negotiation",
+                "status": "settled",
+                "settlement_documented": True,
+            },
+            {
+                "claim_id": "CLM-02",
+                "disputed_amount": 3200.0,
+                "resolution_method": "mediation",
+                "status": "open",
+                "settlement_documented": False,
+            },
+        ]
+    }
+    res = audit_executive_report_procurement_claims_settlement(report)
+    assert res == {
+        "total_claims": 2,
+        "total_disputed_amount": 11700.5,
+        "invalid_adr_method_claim_ids": [],
+        "escalated_litigation_claim_ids": [],
+        "undocumented_settlement_claim_ids": [],
+        "is_claims_governance_clean": True,
+    }
+    assert (
+        ProjectExportService.audit_executive_report_procurement_claims_settlement(
+            report
+        )
+        == res
+    )
+
+
+def test_audit_executive_report_procurement_claims_settlement_invalid_and_litigation():
+    """Detecta métodos fuera del catálogo ADR y reclamos escalados a litigio."""
+    from backend.services.project_export_service import (
+        audit_executive_report_procurement_claims_settlement,
+    )
+
+    res = audit_executive_report_procurement_claims_settlement(
+        {
+            "governance": {
+                "procurement_claims": [
+                    {
+                        "claim_id": "CLM-BAD-ADR",
+                        "disputed_amount": 1000.0,
+                        "resolution_method": "verbal_handshake",
+                        "status": "open",
+                    },
+                    {
+                        "claim_id": "CLM-LIT",
+                        "disputed_amount": 25000.0,
+                        "resolution_method": "Litigation",
+                        "status": "open",
+                    },
+                ]
+            }
+        }
+    )
+    assert res == {
+        "total_claims": 2,
+        "total_disputed_amount": 26000.0,
+        "invalid_adr_method_claim_ids": ["CLM-BAD-ADR"],
+        "escalated_litigation_claim_ids": ["CLM-LIT"],
+        "undocumented_settlement_claim_ids": [],
+        "is_claims_governance_clean": False,
+    }
+
+
+def test_audit_executive_report_procurement_claims_settlement_undocumented_closure():
+    """Detecta reclamos en estado settled/closed sin settlement_documented=True."""
+    from backend.services.project_export_service import (
+        audit_executive_report_procurement_claims_settlement,
+    )
+
+    res = audit_executive_report_procurement_claims_settlement(
+        {
+            "procurement_claims": [
+                {
+                    "claim_id": "CLM-UNDOC-1",
+                    "disputed_amount": 4000.0,
+                    "resolution_method": "arbitration",
+                    "status": "Closed",
+                    "settlement_documented": False,
+                }
+            ]
+        }
+    )
+    assert res == {
+        "total_claims": 1,
+        "total_disputed_amount": 4000.0,
+        "invalid_adr_method_claim_ids": [],
+        "escalated_litigation_claim_ids": [],
+        "undocumented_settlement_claim_ids": ["CLM-UNDOC-1"],
+        "is_claims_governance_clean": False,
+    }
+
+
+def test_audit_executive_report_procurement_claims_settlement_empty_or_invalid():
+    """Reporte vacío, None o sin reclamos válidos devuelve total_claims=0 e is_claims_governance_clean=False."""
+    from backend.services.project_export_service import (
+        audit_executive_report_procurement_claims_settlement,
+    )
+
+    for payload in (
+        None,
+        {},
+        {"procurement_claims": "invalid"},
+        {"procurement_claims": [{"claim_id": "  "}]},
+    ):
+        assert audit_executive_report_procurement_claims_settlement(payload) == {  # type: ignore[arg-type]
+            "total_claims": 0,
+            "total_disputed_amount": 0.0,
+            "invalid_adr_method_claim_ids": [],
+            "escalated_litigation_claim_ids": [],
+            "undocumented_settlement_claim_ids": [],
+            "is_claims_governance_clean": False,
+        }
+
+

@@ -3327,3 +3327,144 @@ def test_audit_project_closure_handover_and_release_readiness_empty_or_none():
         }
 
 
+
+
+def test_audit_stakeholder_salience_mitchell_classification_ready():
+    """> Definitivos (3/3) y expectantes (1 atributo) con plan -> ready + staticmethod."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stakeholder_salience_mitchell_classification,
+        ProjectLifecyclePMIService,
+    )
+
+    res = audit_stakeholder_salience_mitchell_classification(
+        [
+            {
+                "stakeholder_id": "STK-DEF",
+                "has_power": True,
+                "has_urgency": True,
+                "has_legitimacy": True,
+                "engagement_plan": "gobernanza conjunto con el sponsor",
+            },
+            {
+                "stakeholder_id": "STK-DEMAND",
+                "has_urgency": True,
+                "engagement_plan": "seguimiento semanal",
+            },
+            {
+                "stakeholder_id": "STK-DORMANT",
+                "has_power": True,
+                "engagement_plan": "informe trimestral",
+            },
+        ]
+    )
+    assert res["total_stakeholders"] == 3
+    assert res["definitive_stakeholder_ids"] == ["STK-DEF"]
+    assert res["dangerous_stakeholder_ids"] == []
+    assert res["non_stakeholder_ids"] == []
+    assert res["unmanaged_high_salience_ids"] == []
+    assert res["is_salience_governance_ready"] is True
+
+    static_res = ProjectLifecyclePMIService.audit_stakeholder_salience_mitchell_classification(
+        [
+            {
+                "stakeholder_id": "STK-DEF",
+                "has_power": True,
+                "has_urgency": True,
+                "has_legitimacy": True,
+                "engagement_plan": "plan",
+            },
+        ]
+    )
+    assert static_res["is_salience_governance_ready"] is True
+
+
+def test_audit_stakeholder_salience_mitchell_classification_dangerous_and_unmanaged():
+    """> Peligrosos (poder+urgencia sin legitimidad) y >=2 atributos sin plan."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stakeholder_salience_mitchell_classification,
+    )
+
+    res = audit_stakeholder_salience_mitchell_classification(
+        [
+            {
+                "stakeholder_id": "STK-DANGEROUS",
+                "has_power": True,
+                "has_urgency": True,
+            },
+            {
+                "stakeholder_id": "STK-DEF-Noplan",
+                "has_power": True,
+                "has_urgency": True,
+                "has_legitimacy": True,
+            },
+            {
+                "stakeholder_id": "STK-DEPENDABLE-PLAN",
+                "has_power": True,
+                "has_urgency": True,
+                "engagement_plan": "  ",
+            },
+        ]
+    )
+    assert res["total_stakeholders"] == 3
+    # Ambas sin legitimidad y con plan en blanco son peligrosas (literal del spec).
+    assert res["dangerous_stakeholder_ids"] == ["STK-DANGEROUS", "STK-DEPENDABLE-PLAN"]
+    assert res["definitive_stakeholder_ids"] == ["STK-DEF-Noplan"]
+    assert res["unmanaged_high_salience_ids"] == [
+        "STK-DANGEROUS",
+        "STK-DEF-Noplan",
+        "STK-DEPENDABLE-PLAN",
+    ]
+    assert res["is_salience_governance_ready"] is False
+
+
+def test_audit_stakeholder_salience_mitchell_classification_non_stakeholders():
+    """> 0 atributos -> non_stakeholder (ready False); 1 atributo no es non-stakeholder."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stakeholder_salience_mitchell_classification,
+    )
+
+    res = audit_stakeholder_salience_mitchell_classification(
+        [
+            {"stakeholder_id": "STK-GHOST"},
+            {
+                "stakeholder_id": "STK-ONLY-LEGIT",
+                "has_legitimacy": True,
+                "engagement_plan": "bajo perfil",
+            },
+            {
+                "stakeholder_id": "STK-NONE-PLAN",
+                "engagement_plan": "doc sin atributos",
+            },
+        ]
+    )
+    assert res["total_stakeholders"] == 3
+    assert res["non_stakeholder_ids"] == ["STK-GHOST", "STK-NONE-PLAN"]
+    assert res["unmanaged_high_salience_ids"] == []
+    assert res["is_salience_governance_ready"] is False
+
+
+def test_audit_stakeholder_salience_mitchell_classification_empty_or_none():
+    """None, no-secuencia, str, Mapping, 42 o basura -> 0 interesados."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stakeholder_salience_mitchell_classification,
+    )
+
+    empty_result = {
+        "total_stakeholders": 0,
+        "definitive_stakeholder_ids": [],
+        "dangerous_stakeholder_ids": [],
+        "non_stakeholder_ids": [],
+        "unmanaged_high_salience_ids": [],
+        "is_salience_governance_ready": False,
+    }
+
+    for payload in (
+        None,
+        "stakeholders-string",
+        {"stakeholder_id": "X"},
+        42,
+        [],
+        ["no-dict", {"has_power": True}],
+        [{"stakeholder_id": "   "}],
+    ):
+        assert audit_stakeholder_salience_mitchell_classification(payload) == empty_result  # type: ignore[arg-type]
