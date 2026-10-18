@@ -2602,3 +2602,134 @@ def test_audit_wiki_meeting_minutes_governance_no_meetings():
             "meeting_posture": "NO_MEETING_MINUTES",
         }
 
+
+
+def test_audit_wiki_postmortem_root_cause_governance_governed():
+    """> Cadena de whys suficiente, línea de tiempo y CAPA accionable -> GOVERNED."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_postmortem_root_cause_governance as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "id": "PM-1",
+                "whys_chain": ["W1", "W2", "W3"],
+                "incident_timeline": "2026-10-01 caída del servicio",
+                "capa_items": [
+                    {"owner_id": "u-1", "due_date": "2026-10-20"},
+                ],
+            },
+            {
+                "postmortem_id": "PM-2",
+                "whys_chain": ["W1", "W2", "W3", "W4"],
+                "incident_timeline": "segunda caída",
+                "capa_items": [
+                    {"owner_id": "u-2", "due_date": "2026-10-25"},
+                    {"owner_id": "u-3", "due_date": "2026-10-27"},
+                ],
+            },
+        ],
+        min_whys_depth=3,
+    )
+    assert res["total_postmortems"] == 2
+    assert res["shallow_rca_postmortem_ids"] == []
+    assert res["missing_timeline_postmortem_ids"] == []
+    assert res["unactionable_capa_postmortem_ids"] == []
+    assert res["is_postmortem_governance_valid"] is True
+    assert res["postmortem_posture"] == "GOVERNED_BLAMELESS_POSTMORTEMS"
+
+
+def test_audit_wiki_postmortem_root_cause_governance_shallow_and_missing_timeline():
+    """> Whys insuficientes y línea de tiempo ausente; precedencia CAPA primero."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_postmortem_root_cause_governance as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "id": "PM-SHALLOW",
+                "whys_chain": ["W1"],
+                "incident_timeline": "ok",
+                "capa_items": [{"owner_id": "u-1", "due_date": "2026-10-20"}],
+            },
+            {
+                "id": "PM-NO-TL",
+                "whys_chain": ["W1", "W2", "W3"],
+                "incident_timeline": "",
+                "capa_items": [{"owner_id": "u-1", "due_date": "2026-10-20"}],
+            },
+            {
+                "id": "PM-OK",
+                "whys_chain": ["W1", "W2", "W3"],
+                "incident_timeline": "ok",
+                "capa_items": [{"owner_id": "u-1", "due_date": "2026-10-20"}],
+            },
+        ],
+        min_whys_depth=3,
+    )
+    assert res["total_postmortems"] == 3
+    assert res["shallow_rca_postmortem_ids"] == ["PM-SHALLOW"]
+    assert res["missing_timeline_postmortem_ids"] == ["PM-NO-TL"]
+    assert res["unactionable_capa_postmortem_ids"] == []
+    assert res["is_postmortem_governance_valid"] is False
+    assert res["postmortem_posture"] == "SHALLOW_ROOT_CAUSE_ANALYSIS"
+
+
+def test_audit_wiki_postmortem_root_cause_governance_unactionable_capa():
+    """> CAPA vacía o sin dueño/fecha domina la postura (precedencia 1)."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_postmortem_root_cause_governance as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "id": "PM-EMPTY",
+                "whys_chain": ["W1", "W2", "W3"],
+                "incident_timeline": "ok",
+                "capa_items": [],
+            },
+            {
+                "id": "PM-BLANK",
+                "whys_chain": ["W1", "W2", "W3"],
+                "incident_timeline": "ok",
+                "capa_items": [
+                    {"owner_id": "u-1", "due_date": "2026-10-20"},
+                    {"owner_id": "", "due_date": "2026-10-22"},
+                    {"owner_id": "u-2", "due_date": None},
+                ],
+            },
+            {
+                "id": "PM-SHALLOW-TOO",
+                "whys_chain": ["W1"],
+                "incident_timeline": "",
+                "capa_items": [{"owner_id": "u-1", "due_date": "x"}],
+            },
+        ]
+    )
+    assert res["total_postmortems"] == 3
+    assert res["unactionable_capa_postmortem_ids"] == ["PM-EMPTY", "PM-BLANK"]
+    assert res["shallow_rca_postmortem_ids"] == ["PM-SHALLOW-TOO"]
+    assert res["missing_timeline_postmortem_ids"] == ["PM-SHALLOW-TOO"]
+    assert res["is_postmortem_governance_valid"] is False
+    assert res["postmortem_posture"] == "UNACTIONABLE_POSTMORTEM_CAPA"
+
+
+def test_audit_wiki_postmortem_root_cause_governance_empty_or_none():
+    """None, lista vacía, entradas no-dict o sin id -> NO_POSTMORTEMS_RECORDED."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_postmortem_root_cause_governance as audit_fn,
+    )
+
+    for payload in (None, [], ["invalid", 42, {"whys_chain": ["W1"]}]):
+        res = audit_fn(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_postmortems": 0,
+            "shallow_rca_postmortem_ids": [],
+            "missing_timeline_postmortem_ids": [],
+            "unactionable_capa_postmortem_ids": [],
+            "is_postmortem_governance_valid": False,
+            "postmortem_posture": "NO_POSTMORTEMS_RECORDED",
+        }

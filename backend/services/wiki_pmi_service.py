@@ -2239,6 +2239,89 @@ WikiPMIService.audit_wiki_adr_governance_hygiene = staticmethod(
 )
 
 
+def audit_wiki_postmortem_root_cause_governance(
+    postmortems: List[Dict[str, Any]] | None = None,
+    min_whys_depth: int = 3,
+) -> Dict[str, Any]:
+    """PMI PMBOK 4.4 / 8.2 — gobernanza de post-mortems de incidentes en Wiki.
+
+    Evalúa profundidad 5-Whys (mínimo ``min_whys_depth``), línea de tiempo
+    del incidente y accionabilidad CAPA (cada acción con dueño y fecha).
+    """
+    if not isinstance(postmortems, list):
+        postmortems = []
+
+    total_postmortems = 0
+    shallow_rca_postmortem_ids: List[str] = []
+    missing_timeline_postmortem_ids: List[str] = []
+    unactionable_capa_postmortem_ids: List[str] = []
+
+    try:
+        depth_floor = max(1, int(min_whys_depth))
+    except (TypeError, ValueError):
+        depth_floor = 3
+
+    for item in postmortems:
+        if not isinstance(item, dict):
+            continue
+        pm_id = str(item.get("id") or item.get("postmortem_id") or "").strip()
+        if not pm_id:
+            continue
+        total_postmortems += 1
+
+        whys_chain = [str(w).strip() for w in (item.get("whys_chain") or []) if str(w).strip()]
+        has_timeline = bool(str(item.get("incident_timeline") or "").strip())
+        raw_capa = item.get("capa_items")
+        capa_items = raw_capa if isinstance(raw_capa, list) else []
+
+        if len(whys_chain) < depth_floor:
+            shallow_rca_postmortem_ids.append(pm_id)
+
+        if not has_timeline:
+            missing_timeline_postmortem_ids.append(pm_id)
+
+        capa_unactionable = len(capa_items) == 0 or any(
+            (not isinstance(capa_item, dict))
+            or (not str(capa_item.get("owner_id") or "").strip())
+            or (not str(capa_item.get("due_date") or "").strip())
+            for capa_item in capa_items
+        )
+        if capa_unactionable:
+            unactionable_capa_postmortem_ids.append(pm_id)
+
+    is_postmortem_governance_valid = (
+        total_postmortems > 0
+        and not shallow_rca_postmortem_ids
+        and not missing_timeline_postmortem_ids
+        and not unactionable_capa_postmortem_ids
+    )
+
+    if total_postmortems == 0:
+        postmortem_posture = "NO_POSTMORTEMS_RECORDED"
+    elif unactionable_capa_postmortem_ids:
+        postmortem_posture = "UNACTIONABLE_POSTMORTEM_CAPA"
+    elif shallow_rca_postmortem_ids:
+        postmortem_posture = "SHALLOW_ROOT_CAUSE_ANALYSIS"
+    elif missing_timeline_postmortem_ids:
+        postmortem_posture = "MISSING_INCIDENT_TIMELINE"
+    else:
+        postmortem_posture = "GOVERNED_BLAMELESS_POSTMORTEMS"
+
+    return {
+        "total_postmortems": total_postmortems,
+        "shallow_rca_postmortem_ids": shallow_rca_postmortem_ids,
+        "missing_timeline_postmortem_ids": missing_timeline_postmortem_ids,
+        "unactionable_capa_postmortem_ids": unactionable_capa_postmortem_ids,
+        "is_postmortem_governance_valid": is_postmortem_governance_valid,
+        "postmortem_posture": postmortem_posture,
+    }
+
+
+WikiPMIService.audit_wiki_postmortem_root_cause_governance = staticmethod(
+    audit_wiki_postmortem_root_cause_governance
+)
+
+
 __all__ = [
     "DEFAULT_PMI_KB_DIR",
     "CANONICAL_VOLUMES_METADATA",
@@ -2267,6 +2350,7 @@ __all__ = [
     "audit_wiki_adr_lifecycle_traceability",
     "audit_wiki_raci_matrix_governance",
     "audit_wiki_adr_governance_hygiene",
+    "audit_wiki_postmortem_root_cause_governance",
     "WikiPMIService",
 ]
 

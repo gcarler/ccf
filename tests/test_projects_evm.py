@@ -2894,3 +2894,114 @@ def test_audit_work_package_evmt_governance_empty_or_none():
             "is_evmt_governed": False,
             "evmt_posture": "NO_WORK_PACKAGES",
         }
+
+
+def test_evaluate_management_reserve_ceiling_utilization_governed_and_high_depletion():
+    """Retiros aprobados por Sponsor y EAC dentro del techo -> GOVERNED_MANAGEMENT_RESERVE_POSTURE o HIGH_MANAGEMENT_RESERVE_DEPLETION."""
+    import backend.services.project_evm_service as evm_module
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_management_reserve_ceiling_utilization,
+    )
+
+    drawdowns = [
+        {"id": "DD-01", "amount": 5000.0, "sponsor_approved": True},
+        {"drawdown_id": "DD-02", "amount": 3000.0, "sponsor_approved": True},
+    ]
+    res = evaluate_management_reserve_ceiling_utilization(
+        original_bac=100000.0,
+        initial_management_reserve=20000.0,
+        mr_drawdowns=drawdowns,
+        current_eac=110000.0,
+    )
+    assert res == {
+        "total_project_budget": 120000.0,
+        "current_bac": 108000.0,
+        "remaining_management_reserve": 12000.0,
+        "mr_utilization_pct": 40.0,
+        "unauthorized_drawdown_ids": [],
+        "exceeds_project_budget_ceiling": False,
+        "is_mr_governance_sound": True,
+        "mr_posture": "GOVERNED_MANAGEMENT_RESERVE_POSTURE",
+    }
+    assert (
+        ProjectEVMService.evaluate_management_reserve_ceiling_utilization(
+            original_bac=100000.0,
+            initial_management_reserve=20000.0,
+            mr_drawdowns=drawdowns,
+            current_eac=110000.0,
+        )
+        == res
+    )
+    assert "evaluate_management_reserve_ceiling_utilization" in evm_module.__all__
+
+    res_high = evaluate_management_reserve_ceiling_utilization(
+        original_bac=100000.0,
+        initial_management_reserve=20000.0,
+        mr_drawdowns=[{"id": "DD-BIG", "amount": 16000.0, "sponsor_approved": True}],
+        current_eac=118000.0,
+    )
+    assert res_high["mr_utilization_pct"] == 80.0
+    assert res_high["is_mr_governance_sound"] is True
+    assert res_high["mr_posture"] == "HIGH_MANAGEMENT_RESERVE_DEPLETION"
+
+
+def test_evaluate_management_reserve_ceiling_utilization_unauthorized_drawdown():
+    """Retiro de MR sin sponsor_approved -> UNAUTHORIZED_MANAGEMENT_RESERVE_DRAWDOWN."""
+    from backend.services.project_evm_service import (
+        evaluate_management_reserve_ceiling_utilization,
+    )
+
+    res = evaluate_management_reserve_ceiling_utilization(
+        original_bac=100000.0,
+        initial_management_reserve=15000.0,
+        mr_drawdowns=[
+            {"id": "DD-UNAUTH", "amount": 4000.0, "sponsor_approved": False},
+        ],
+        current_eac=105000.0,
+    )
+    assert res["unauthorized_drawdown_ids"] == ["DD-UNAUTH"]
+    assert res["is_mr_governance_sound"] is False
+    assert res["mr_posture"] == "UNAUTHORIZED_MANAGEMENT_RESERVE_DRAWDOWN"
+
+
+def test_evaluate_management_reserve_ceiling_utilization_ceiling_breached():
+    """Retiros > MR inicial o EAC > presupuesto total -> PROJECT_BUDGET_CEILING_BREACHED."""
+    from backend.services.project_evm_service import (
+        evaluate_management_reserve_ceiling_utilization,
+    )
+
+    res = evaluate_management_reserve_ceiling_utilization(
+        original_bac=100000.0,
+        initial_management_reserve=10000.0,
+        mr_drawdowns=[{"id": "DD-1", "amount": 5000.0, "sponsor_approved": True}],
+        current_eac=115000.0,
+    )
+    assert res["total_project_budget"] == 110000.0
+    assert res["exceeds_project_budget_ceiling"] is True
+    assert res["is_mr_governance_sound"] is False
+    assert res["mr_posture"] == "PROJECT_BUDGET_CEILING_BREACHED"
+
+
+def test_evaluate_management_reserve_ceiling_utilization_no_cost_baseline():
+    """original_bac <= 0 -> NO_COST_BASELINE."""
+    from backend.services.project_evm_service import (
+        evaluate_management_reserve_ceiling_utilization,
+    )
+
+    for bac_val in (0.0, -5000.0):
+        res = evaluate_management_reserve_ceiling_utilization(
+            original_bac=bac_val,
+            initial_management_reserve=10000.0,
+        )
+        assert res == {
+            "total_project_budget": 0.0,
+            "current_bac": 0.0,
+            "remaining_management_reserve": 0.0,
+            "mr_utilization_pct": 0.0,
+            "unauthorized_drawdown_ids": [],
+            "exceeds_project_budget_ceiling": False,
+            "is_mr_governance_sound": False,
+            "mr_posture": "NO_COST_BASELINE",
+        }
+

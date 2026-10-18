@@ -2655,6 +2655,81 @@ def audit_executive_report_risk_contingency_coverage(
     }
 
 
+def audit_executive_report_scope_creep_governance(
+    report_payload: dict[str, Any] | None = None,
+    max_unbaselined_scope_pct: float = 5.0,
+) -> dict[str, Any]:
+    """Audita corrupción de alcance (Scope Creep) y paquetes no autorizados (Gold Plating) en el reporte ejecutivo según PMI PMBOK §5.6 y §4.6."""
+    payload = report_payload if isinstance(report_payload, dict) else {}
+    raw_scope = payload.get("scope_governance")
+    scope_gov = raw_scope if isinstance(raw_scope, dict) else {}
+
+    packages = (
+        scope_gov.get("work_packages")
+        if isinstance(scope_gov.get("work_packages"), list)
+        else []
+    )
+
+    total_work_packages = 0
+    total_effort_hours = 0.0
+    unapproved_effort_hours = 0.0
+    unapproved_scope_creep_ids: list[str] = []
+    gold_plating_package_ids: list[str] = []
+
+    for p in packages:
+        if not isinstance(p, dict):
+            continue
+        wp_id = str(p.get("id") or p.get("wp_id") or "").strip()
+        if not wp_id:
+            continue
+
+        total_work_packages += 1
+        effort = max(0.0, float(p.get("effort_hours") or 0.0))
+        total_effort_hours += effort
+
+        added_post = bool(p.get("added_post_baseline", False))
+        approved_cr = str(p.get("approved_cr_id") or "").strip()
+        gold_plating = bool(p.get("is_gold_plating", False))
+
+        if gold_plating:
+            gold_plating_package_ids.append(wp_id)
+        if added_post and not approved_cr:
+            unapproved_scope_creep_ids.append(wp_id)
+            unapproved_effort_hours += effort
+
+    scope_creep_effort_pct = (
+        round((unapproved_effort_hours / total_effort_hours) * 100.0, 2)
+        if total_effort_hours > 1e-6
+        else 0.0
+    )
+    is_scope_baseline_protected = bool(
+        total_work_packages > 0
+        and len(unapproved_scope_creep_ids) == 0
+        and len(gold_plating_package_ids) == 0
+        and scope_creep_effort_pct <= float(max_unbaselined_scope_pct)
+    )
+
+    if total_work_packages == 0:
+        scope_creep_posture = "NO_SCOPE_PACKAGES_REPORTED"
+    elif len(unapproved_scope_creep_ids) > 0:
+        scope_creep_posture = "UNAPPROVED_SCOPE_CREEP_DETECTED"
+    elif len(gold_plating_package_ids) > 0:
+        scope_creep_posture = "UNAUTHORIZED_GOLD_PLATING_DETECTED"
+    else:
+        scope_creep_posture = "PROTECTED_SCOPE_BASELINE"
+
+    return {
+        "total_work_packages": total_work_packages,
+        "total_effort_hours": round(total_effort_hours, 2),
+        "unapproved_effort_hours": round(unapproved_effort_hours, 2),
+        "scope_creep_effort_pct": scope_creep_effort_pct,
+        "unapproved_scope_creep_ids": unapproved_scope_creep_ids,
+        "gold_plating_package_ids": gold_plating_package_ids,
+        "is_scope_baseline_protected": is_scope_baseline_protected,
+        "scope_creep_posture": scope_creep_posture,
+    }
+
+
 ProjectExportService.audit_executive_report_risk_burndown = staticmethod(
     audit_executive_report_risk_burndown
 )
@@ -2672,6 +2747,9 @@ ProjectExportService.audit_executive_report_distribution_cadence = staticmethod(
 )
 ProjectExportService.audit_executive_report_risk_contingency_coverage = staticmethod(
     audit_executive_report_risk_contingency_coverage
+)
+ProjectExportService.audit_executive_report_scope_creep_governance = staticmethod(
+    audit_executive_report_scope_creep_governance
 )
 
 
@@ -2703,6 +2781,8 @@ __all__ = [
     "audit_executive_report_closure_readiness",
     "audit_executive_report_distribution_cadence",
     "audit_executive_report_risk_contingency_coverage",
+    "audit_executive_report_scope_creep_governance",
     "ProjectExportService",
 ]
+
 

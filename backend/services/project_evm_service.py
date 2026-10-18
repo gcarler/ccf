@@ -5097,8 +5097,97 @@ def audit_eac_forecast_optimism_bias(
     }
 
 
+def evaluate_management_reserve_ceiling_utilization(
+    original_bac: float = 0.0,
+    initial_management_reserve: float = 0.0,
+    mr_drawdowns: list[dict[str, Any]] | None = None,
+    current_eac: float = 0.0,
+) -> dict[str, Any]:
+    """Evalúa utilización de Reserva de Gestión (Management Reserve), ajuste de BAC y cumplimiento del techo presupuestal del proyecto según PMI PMBOK §7.3 y §7.4."""
+    try:
+        orig_bac = max(0.0, float(original_bac or 0.0))
+    except (TypeError, ValueError):
+        orig_bac = 0.0
+    try:
+        init_mr = max(0.0, float(initial_management_reserve or 0.0))
+    except (TypeError, ValueError):
+        init_mr = 0.0
+    try:
+        eac = max(0.0, float(current_eac or 0.0))
+    except (TypeError, ValueError):
+        eac = 0.0
+
+    if orig_bac <= 0.0:
+        return {
+            "total_project_budget": 0.0,
+            "current_bac": 0.0,
+            "remaining_management_reserve": 0.0,
+            "mr_utilization_pct": 0.0,
+            "unauthorized_drawdown_ids": [],
+            "exceeds_project_budget_ceiling": False,
+            "is_mr_governance_sound": False,
+            "mr_posture": "NO_COST_BASELINE",
+        }
+
+    total_drawn = 0.0
+    unauthorized_drawdown_ids: list[str] = []
+
+    for d in mr_drawdowns or []:
+        if not isinstance(d, dict):
+            continue
+        dd_id = str(d.get("id") or d.get("drawdown_id") or "").strip()
+        if not dd_id:
+            continue
+        try:
+            amount = max(0.0, float(d.get("amount") or 0.0))
+        except (TypeError, ValueError):
+            amount = 0.0
+        sponsor_approved = bool(d.get("sponsor_approved", False))
+        total_drawn += amount
+        if not sponsor_approved:
+            unauthorized_drawdown_ids.append(dd_id)
+
+    total_project_budget = round(orig_bac + init_mr, 2)
+    current_bac = round(orig_bac + total_drawn, 2)
+    remaining_mr = round(init_mr - total_drawn, 2)
+    mr_utilization_pct = (
+        round((total_drawn / init_mr) * 100.0, 2)
+        if init_mr > 1e-6
+        else (100.0 if total_drawn > 0 else 0.0)
+    )
+    exceeds_ceiling = bool(
+        (total_drawn > init_mr + 1e-6) or (eac > total_project_budget + 1e-6)
+    )
+    is_mr_governance_sound = bool(
+        len(unauthorized_drawdown_ids) == 0 and not exceeds_ceiling
+    )
+
+    if len(unauthorized_drawdown_ids) > 0:
+        mr_posture = "UNAUTHORIZED_MANAGEMENT_RESERVE_DRAWDOWN"
+    elif exceeds_ceiling:
+        mr_posture = "PROJECT_BUDGET_CEILING_BREACHED"
+    elif mr_utilization_pct > 75.0:
+        mr_posture = "HIGH_MANAGEMENT_RESERVE_DEPLETION"
+    else:
+        mr_posture = "GOVERNED_MANAGEMENT_RESERVE_POSTURE"
+
+    return {
+        "total_project_budget": total_project_budget,
+        "current_bac": current_bac,
+        "remaining_management_reserve": remaining_mr,
+        "mr_utilization_pct": mr_utilization_pct,
+        "unauthorized_drawdown_ids": unauthorized_drawdown_ids,
+        "exceeds_project_budget_ceiling": exceeds_ceiling,
+        "is_mr_governance_sound": is_mr_governance_sound,
+        "mr_posture": mr_posture,
+    }
+
+
 ProjectEVMService.audit_eac_forecast_optimism_bias = staticmethod(
     audit_eac_forecast_optimism_bias
+)
+ProjectEVMService.evaluate_management_reserve_ceiling_utilization = staticmethod(
+    evaluate_management_reserve_ceiling_utilization
 )
 
 
@@ -5112,5 +5201,7 @@ __all__ = [
     "evaluate_reserve_drawdown_velocity",
     "audit_pmb_undistributed_budget_reconciliation",
     "audit_eac_forecast_optimism_bias",
+    "evaluate_management_reserve_ceiling_utilization",
     "ProjectEVMService",
 ]
+

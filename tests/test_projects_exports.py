@@ -3181,3 +3181,122 @@ def test_audit_executive_report_risk_contingency_coverage_no_active_threats():
         assert res["is_contingency_adequate"] is False
         assert res["contingency_posture"] == "NO_ACTIVE_THREATS_REPORTED"
 
+
+def test_audit_executive_report_scope_creep_governance_protected_baseline():
+    """Paquetes de trabajo dentro de línea base o con CR aprobada y sin gold plating -> PROTECTED_SCOPE_BASELINE."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_scope_creep_governance,
+    )
+
+    payload = {
+        "scope_governance": {
+            "work_packages": [
+                {"id": "WP-1", "effort_hours": 120.0, "added_post_baseline": False},
+                {
+                    "wp_id": "WP-2",
+                    "effort_hours": 80.0,
+                    "added_post_baseline": True,
+                    "approved_cr_id": "CR-2026-04",
+                    "is_gold_plating": False,
+                },
+            ]
+        }
+    }
+    res = audit_executive_report_scope_creep_governance(
+        payload, max_unbaselined_scope_pct=5.0
+    )
+    assert res == {
+        "total_work_packages": 2,
+        "total_effort_hours": 200.0,
+        "unapproved_effort_hours": 0.0,
+        "scope_creep_effort_pct": 0.0,
+        "unapproved_scope_creep_ids": [],
+        "gold_plating_package_ids": [],
+        "is_scope_baseline_protected": True,
+        "scope_creep_posture": "PROTECTED_SCOPE_BASELINE",
+    }
+    assert (
+        ProjectExportService.audit_executive_report_scope_creep_governance(payload)
+        == res
+    )
+
+
+def test_audit_executive_report_scope_creep_governance_unapproved_scope_creep():
+    """Paquete añadido post-baseline sin approved_cr_id -> UNAPPROVED_SCOPE_CREEP_DETECTED."""
+    from backend.services.project_export_service import (
+        audit_executive_report_scope_creep_governance,
+    )
+
+    res = audit_executive_report_scope_creep_governance(
+        {
+            "scope_governance": {
+                "work_packages": [
+                    {"id": "WP-BASE", "effort_hours": 80.0, "added_post_baseline": False},
+                    {
+                        "id": "WP-CREEP",
+                        "effort_hours": 20.0,
+                        "added_post_baseline": True,
+                        "approved_cr_id": "   ",
+                    },
+                ]
+            }
+        }
+    )
+    assert res == {
+        "total_work_packages": 2,
+        "total_effort_hours": 100.0,
+        "unapproved_effort_hours": 20.0,
+        "scope_creep_effort_pct": 20.0,
+        "unapproved_scope_creep_ids": ["WP-CREEP"],
+        "gold_plating_package_ids": [],
+        "is_scope_baseline_protected": False,
+        "scope_creep_posture": "UNAPPROVED_SCOPE_CREEP_DETECTED",
+    }
+
+
+def test_audit_executive_report_scope_creep_governance_gold_plating():
+    """Paquete con is_gold_plating=True -> UNAUTHORIZED_GOLD_PLATING_DETECTED."""
+    from backend.services.project_export_service import (
+        audit_executive_report_scope_creep_governance,
+    )
+
+    res = audit_executive_report_scope_creep_governance(
+        {
+            "scope_governance": {
+                "work_packages": [
+                    {
+                        "id": "WP-GOLD",
+                        "effort_hours": 50.0,
+                        "added_post_baseline": False,
+                        "is_gold_plating": True,
+                    }
+                ]
+            }
+        }
+    )
+    assert res["gold_plating_package_ids"] == ["WP-GOLD"]
+    assert res["is_scope_baseline_protected"] is False
+    assert res["scope_creep_posture"] == "UNAUTHORIZED_GOLD_PLATING_DETECTED"
+
+
+def test_audit_executive_report_scope_creep_governance_no_packages():
+    """Payload vacío o sin paquetes -> NO_SCOPE_PACKAGES_REPORTED."""
+    from backend.services.project_export_service import (
+        audit_executive_report_scope_creep_governance,
+    )
+
+    for payload in (None, {}, {"scope_governance": {"work_packages": []}}):
+        res = audit_executive_report_scope_creep_governance(payload)
+        assert res == {
+            "total_work_packages": 0,
+            "total_effort_hours": 0.0,
+            "unapproved_effort_hours": 0.0,
+            "scope_creep_effort_pct": 0.0,
+            "unapproved_scope_creep_ids": [],
+            "gold_plating_package_ids": [],
+            "is_scope_baseline_protected": False,
+            "scope_creep_posture": "NO_SCOPE_PACKAGES_REPORTED",
+        }
+
+
