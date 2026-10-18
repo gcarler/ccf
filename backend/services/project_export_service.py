@@ -303,6 +303,13 @@ class ProjectExportService:
     ) -> dict[str, Any]:
         return audit_executive_report_change_governance(report_data)
 
+    @staticmethod
+    def audit_executive_report_quality_disclosure(
+        report_data: Optional[dict],
+    ) -> dict[str, Any]:
+        return audit_executive_report_quality_disclosure(report_data)
+
+
 
 def summarize_executive_report_risk_posture(report_data: Optional[dict]) -> dict:
     """Audita la postura de riesgo ejecutivo del informe (PMBOK §11.7).
@@ -1042,6 +1049,146 @@ def audit_executive_report_change_governance(
         "governance_posture": governance_posture,
         "recommendations": recommendations,
     }
+
+
+def audit_executive_report_quality_disclosure(
+    report_data: Optional[dict],
+) -> dict[str, Any]:
+    """Audita la divulgación de Costo de la Calidad (CoQ) y aceptación DoD en el reporte ejecutivo (PMBOK §8.2 y §10.2)."""
+    data = report_data if isinstance(report_data, dict) else {}
+
+    summary_block: dict[str, Any] = {}
+    for key in ("ccb_quality_summary", "quality_kpis", "ccb_and_quality_summary"):
+        candidate = data.get(key)
+        if isinstance(candidate, dict):
+            summary_block = candidate
+            break
+    if not summary_block:
+        summary_block = data
+
+    coq_block = (
+        summary_block.get("coq_by_category")
+        if isinstance(summary_block.get("coq_by_category"), dict)
+        else data.get("coq_by_category")
+        if isinstance(data.get("coq_by_category"), dict)
+        else {}
+    )
+
+    def _safe_float(source_a: dict[str, Any], source_b: dict[str, Any], *keys: str) -> float:
+        for k in keys:
+            val = source_a.get(k)
+            if val is None:
+                val = source_b.get(k)
+            if val is not None:
+                try:
+                    return max(0.0, float(val))
+                except (TypeError, ValueError):
+                    return 0.0
+        return 0.0
+
+    def _safe_int(source_a: dict[str, Any], source_b: dict[str, Any], *keys: str) -> int:
+        for k in keys:
+            val = source_a.get(k)
+            if val is None:
+                val = source_b.get(k)
+            if val is not None:
+                try:
+                    return max(0, int(val))
+                except (TypeError, ValueError):
+                    return 0
+        return 0
+
+    prevention = _safe_float(coq_block, summary_block, "prevention", "prevention_cost")
+    appraisal = _safe_float(coq_block, summary_block, "appraisal", "appraisal_cost")
+    internal_failure = _safe_float(
+        coq_block, summary_block, "internal_failure", "internal_failure_cost"
+    )
+    external_failure = _safe_float(
+        coq_block, summary_block, "external_failure", "external_failure_cost"
+    )
+
+    tasks_dod_accepted_count = _safe_int(
+        summary_block, data, "tasks_dod_accepted_count", "dod_accepted_count"
+    )
+    total_completed_tasks = _safe_int(
+        summary_block, data, "total_completed_tasks", "completed_tasks_count"
+    )
+
+    conformance_cost = round(prevention + appraisal, 2)
+    nonconformance_cost = round(internal_failure + external_failure, 2)
+    total_coq_cost = round(conformance_cost + nonconformance_cost, 2)
+
+    conformance_ratio_pct = (
+        round((conformance_cost / total_coq_cost) * 100.0, 2)
+        if total_coq_cost > 0
+        else 0.0
+    )
+
+    if total_completed_tasks > 0:
+        dod_acceptance_coverage_pct = round(
+            min(100.0, (tasks_dod_accepted_count / total_completed_tasks) * 100.0), 2
+        )
+    elif tasks_dod_accepted_count > 0:
+        dod_acceptance_coverage_pct = 100.0
+    else:
+        dod_acceptance_coverage_pct = 0.0
+
+    recommendations: list[str] = []
+    if (
+        total_coq_cost <= 0
+        and tasks_dod_accepted_count <= 0
+        and total_completed_tasks <= 0
+    ):
+        quality_disclosure_posture = "NO_QUALITY_METRICS_DISCLOSED"
+        recommendations.append(
+            "Incluir desglose de Costo de la Calidad (CoQ) y cobertura de aceptación DoD en el reporte ejecutivo (PMBOK §8.2 / §10.2)."
+        )
+    elif total_coq_cost > 0 and nonconformance_cost > conformance_cost:
+        quality_disclosure_posture = "FAILURE_COST_DOMINATED"
+        recommendations.append(
+            f"Los costos de no conformidad ({nonconformance_cost}) superan la inversión en conformidad ({conformance_cost}). Rebalancear presupuesto hacia prevención e inspección temprana (PMBOK §8.2)."
+        )
+    elif total_completed_tasks > 0 and dod_acceptance_coverage_pct < 80.0:
+        quality_disclosure_posture = "UNVERIFIED_COMPLETED_DELIVERABLES"
+        recommendations.append(
+            f"Cobertura de aceptación DoD ({dod_acceptance_coverage_pct}%) inferior al 80% sobre tareas completadas ({tasks_dod_accepted_count}/{total_completed_tasks}). Exigir verificación formal antes de cerrar entregables (PMBOK §8.3)."
+        )
+    else:
+        quality_disclosure_posture = "PROACTIVE_QUALITY_GOVERNANCE"
+        recommendations.append(
+            "Gobernanza de calidad proactiva con inversión predominante en conformidad y alta cobertura de aceptación DoD verificada (PMBOK §8.2)."
+        )
+
+    return {
+        "conformance_cost": conformance_cost,
+        "nonconformance_cost": nonconformance_cost,
+        "total_coq_cost": total_coq_cost,
+        "conformance_ratio_pct": conformance_ratio_pct,
+        "dod_acceptance_coverage_pct": dod_acceptance_coverage_pct,
+        "quality_disclosure_posture": quality_disclosure_posture,
+        "recommendations": recommendations,
+    }
+
+
+__all__ = [
+    "audit_csv_export_integrity",
+    "evaluate_executive_report_completeness",
+    "get_project_executive_report_data",
+    "generate_project_summary_pdf",
+    "generate_project_tasks_csv",
+    "generate_project_expenses_csv",
+    "summarize_executive_report_risk_posture",
+    "audit_expenses_csv_financial_totals",
+    "audit_tasks_csv_schedule_completeness",
+    "audit_executive_report_milestone_coverage",
+    "audit_risks_csv_register_completeness",
+    "audit_stakeholders_csv_engagement_gaps",
+    "audit_expenses_vendor_concentration",
+    "audit_executive_report_change_governance",
+    "audit_executive_report_quality_disclosure",
+    "ProjectExportService",
+]
+
 
 
 

@@ -1534,5 +1534,113 @@ def test_audit_executive_report_change_governance_no_change_activity():
         assert isinstance(res["recommendations"], list)
 
 
+# ── PMI PMBOK §8.2 & §10.2 Executive Report Quality Disclosure Auditor ───────
+
+
+def test_audit_executive_report_quality_disclosure_proactive_governance():
+    """Conformidad >= no conformidad y cobertura DoD >= 80% -> 'PROACTIVE_QUALITY_GOVERNANCE'."""
+    import backend.services.project_export_service as export_module
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_quality_disclosure,
+    )
+
+    report_data = {
+        "ccb_quality_summary": {
+            "coq_by_category": {
+                "prevention": 3500.0,
+                "appraisal": 1500.0,
+                "internal_failure": 800.0,
+                "external_failure": 200.0,
+            },
+            "tasks_dod_accepted_count": 9,
+            "total_completed_tasks": 10,
+        }
+    }
+
+    res = ProjectExportService.audit_executive_report_quality_disclosure(report_data)
+    assert res["conformance_cost"] == 5000.0
+    assert res["nonconformance_cost"] == 1000.0
+    assert res["total_coq_cost"] == 6000.0
+    assert res["conformance_ratio_pct"] == 83.33
+    assert res["dod_acceptance_coverage_pct"] == 90.0
+    assert res["quality_disclosure_posture"] == "PROACTIVE_QUALITY_GOVERNANCE"
+    assert len(res["recommendations"]) >= 1
+    assert audit_executive_report_quality_disclosure(report_data) == res
+    assert "audit_executive_report_quality_disclosure" in export_module.__all__
+
+
+def test_audit_executive_report_quality_disclosure_failure_cost_dominated():
+    """nonconformance_cost > conformance_cost -> 'FAILURE_COST_DOMINATED'."""
+    from backend.services.project_export_service import (
+        audit_executive_report_quality_disclosure,
+    )
+
+    report_data = {
+        "quality_kpis": {
+            "prevention": 600.0,
+            "appraisal": 400.0,
+            "internal_failure": 1800.0,
+            "external_failure": 1200.0,
+            "tasks_dod_accepted_count": 8,
+            "total_completed_tasks": 8,
+        }
+    }
+
+    res = audit_executive_report_quality_disclosure(report_data)
+    assert res["conformance_cost"] == 1000.0
+    assert res["nonconformance_cost"] == 3000.0
+    assert res["total_coq_cost"] == 4000.0
+    assert res["conformance_ratio_pct"] == 25.0
+    assert res["dod_acceptance_coverage_pct"] == 100.0
+    assert res["quality_disclosure_posture"] == "FAILURE_COST_DOMINATED"
+    assert len(res["recommendations"]) >= 1
+
+
+def test_audit_executive_report_quality_disclosure_unverified_completed_deliverables():
+    """CoQ balanceado pero cobertura DoD < 80% -> 'UNVERIFIED_COMPLETED_DELIVERABLES'."""
+    from backend.services.project_export_service import (
+        audit_executive_report_quality_disclosure,
+    )
+
+    report_data = {
+        "coq_by_category": {
+            "prevention": 2000.0,
+            "appraisal": 1000.0,
+            "internal_failure": 500.0,
+            "external_failure": 0.0,
+        },
+        "tasks_dod_accepted_count": 3,
+        "total_completed_tasks": 5,
+    }
+
+    res = audit_executive_report_quality_disclosure(report_data)
+    assert res["conformance_cost"] == 3000.0
+    assert res["nonconformance_cost"] == 500.0
+    assert res["total_coq_cost"] == 3500.0
+    assert res["conformance_ratio_pct"] == 85.71
+    assert res["dod_acceptance_coverage_pct"] == 60.0
+    assert res["quality_disclosure_posture"] == "UNVERIFIED_COMPLETED_DELIVERABLES"
+    assert len(res["recommendations"]) >= 1
+
+
+def test_audit_executive_report_quality_disclosure_no_metrics_disclosed():
+    """Sin costos CoQ ni tareas completadas/aceptadas -> 'NO_QUALITY_METRICS_DISCLOSED'."""
+    from backend.services.project_export_service import (
+        audit_executive_report_quality_disclosure,
+    )
+
+    for payload in (None, {}, {"ccb_quality_summary": {}}):
+        res = audit_executive_report_quality_disclosure(payload)
+        assert res["conformance_cost"] == 0.0
+        assert res["nonconformance_cost"] == 0.0
+        assert res["total_coq_cost"] == 0.0
+        assert res["conformance_ratio_pct"] == 0.0
+        assert res["dod_acceptance_coverage_pct"] == 0.0
+        assert res["quality_disclosure_posture"] == "NO_QUALITY_METRICS_DISCLOSED"
+        assert len(res["recommendations"]) == 1
+
+
+
 
 
