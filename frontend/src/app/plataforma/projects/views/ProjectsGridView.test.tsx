@@ -58,4 +58,40 @@ describe('ProjectsGridView', () => {
         fireEvent.click(buttons[0]);
         expect(onDelete).toHaveBeenCalledWith('p1');
     });
+
+    it('renders PMI executive governance header and filters attention-required projects', () => {
+        const gridProjects = [
+            createMockProject({
+                id: 'p-ok',
+                title: 'Proyecto Saludable Con PM',
+                status: 'active',
+                owner_id: 'u1',
+                health_status: 'on_track',
+            }),
+            createMockProject({
+                id: 'p-risk',
+                title: 'Proyecto En Riesgo Sin PM',
+                status: 'active',
+                owner_id: null,
+                health_status: 'at_risk',
+            }),
+        ];
+
+        render(<ProjectsGridView projects={gridProjects} onUpdate={vi.fn()} />);
+
+        const header = screen.getByTestId('projects-grid-pmi-header');
+        expect(header).toHaveTextContent('Capacidad Portafolio: 2 proyecto(s)');
+        expect(header).toHaveTextContent('En Ruta: 1');
+        expect(header).toHaveTextContent('En Riesgo / Críticos: 1');
+        expect(header).toHaveTextContent('1/2 con PM');
+
+        fireEvent.click(screen.getByTestId('projects-grid-filter-attention'));
+        expect(screen.queryByText('Proyecto Saludable Con PM')).not.toBeInTheDocument();
+        expect(screen.getByText('Proyecto En Riesgo Sin PM')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByTestId('projects-grid-filter-attention'));
+        expect(screen.getByText('Proyecto Saludable Con PM')).toBeInTheDocument();
+        expect(screen.getByText('Proyecto En Riesgo Sin PM')).toBeInTheDocument();
+    });
 });
+

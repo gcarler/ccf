@@ -69,4 +69,90 @@ describe('ProjectsTableView', () => {
         const pickers = screen.getAllByRole('button', { name: 'Selector de persona asignada' });
         expect(pickers.length).toBe(projects.length);
     });
+
+    it('renders PMI §6 portfolio governance banner and RAG health column per project', () => {
+        const pmiProjects = [
+            createMockProject({
+                id: 'p-healthy',
+                title: 'Proyecto En Ruta',
+                status: 'active',
+                owner_id: 'u1',
+                progress_percent: 60,
+                task_count: 5,
+                health_status: 'on_track',
+            }),
+            createMockProject({
+                id: 'p-risk',
+                title: 'Proyecto En Riesgo',
+                status: 'active',
+                owner_id: null,
+                progress_percent: 20,
+                task_count: 7,
+                health_status: 'at_risk',
+            }),
+        ];
+
+        render(<ProjectsTableView projects={pmiProjects} onUpdate={vi.fn()} />);
+
+        const banner = screen.getByTestId('projects-table-pmi-portfolio-banner');
+        expect(banner).toBeInTheDocument();
+        expect(banner).toHaveTextContent('2 proyecto(s)');
+        expect(banner).toHaveTextContent('Avance PMI (0/50/100): 40%');
+        expect(banner).toHaveTextContent('En Ruta: 1');
+        expect(banner).toHaveTextContent('En Riesgo / Críticos: 1');
+        expect(banner).toHaveTextContent('Capacidad WBS: 12 tareas');
+
+        expect(screen.getByTestId('project-table-health-p-healthy')).toHaveTextContent('En Ruta');
+        expect(screen.getByTestId('project-table-health-p-healthy')).toHaveTextContent('60%');
+        expect(screen.getByTestId('project-table-health-p-risk')).toHaveTextContent('En Riesgo');
+        expect(screen.getByTestId('project-table-health-p-risk')).toHaveTextContent('20%');
+    });
+
+    it('filters portfolio rows by at-risk/critical health and missing sponsor/PM', () => {
+        const filterProjects = [
+            createMockProject({
+                id: 'p-ok',
+                title: 'Proyecto Saludable Con PM',
+                status: 'active',
+                owner_id: 'u1',
+                health_status: 'on_track',
+            }),
+            createMockProject({
+                id: 'p-crit',
+                title: 'Proyecto Crítico Con PM',
+                status: 'active',
+                owner_id: 'u2',
+                health_status: 'off_track',
+            }),
+            createMockProject({
+                id: 'p-orphan',
+                title: 'Proyecto Sin Sponsor',
+                status: 'planning',
+                owner_id: null,
+                health_status: 'on_track',
+            }),
+        ];
+
+        render(<ProjectsTableView projects={filterProjects} onUpdate={vi.fn()} />);
+
+        expect(screen.getByText('Proyecto Saludable Con PM')).toBeInTheDocument();
+        expect(screen.getByText('Proyecto Crítico Con PM')).toBeInTheDocument();
+        expect(screen.getByText('Proyecto Sin Sponsor')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByTestId('projects-table-filter-at-risk'));
+        expect(screen.queryByText('Proyecto Saludable Con PM')).not.toBeInTheDocument();
+        expect(screen.getByText('Proyecto Crítico Con PM')).toBeInTheDocument();
+        expect(screen.queryByText('Proyecto Sin Sponsor')).not.toBeInTheDocument();
+
+        fireEvent.click(screen.getByTestId('projects-table-filter-no-owner'));
+        expect(screen.queryByText('Proyecto Saludable Con PM')).not.toBeInTheDocument();
+        expect(screen.queryByText('Proyecto Crítico Con PM')).not.toBeInTheDocument();
+        expect(screen.getByText('Proyecto Sin Sponsor')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByTestId('projects-table-filter-all'));
+        expect(screen.getByText('Proyecto Saludable Con PM')).toBeInTheDocument();
+        expect(screen.getByText('Proyecto Crítico Con PM')).toBeInTheDocument();
+        expect(screen.getByText('Proyecto Sin Sponsor')).toBeInTheDocument();
+    });
 });
+

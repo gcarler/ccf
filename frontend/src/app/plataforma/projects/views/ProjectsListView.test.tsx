@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import ProjectsListView from './ProjectsListView';
 import { createMockProject } from '@/test-utils/factories';
@@ -69,5 +69,27 @@ describe('ProjectsListView', () => {
         render(<ProjectsListView projects={projects} onUpdate={vi.fn()} />);
         const pickers = screen.getAllByRole('button', { name: 'Selector de persona asignada' });
         expect(pickers.length).toBe(projects.length);
+    });
+
+    it('muestra el encabezado de gobernanza de portafolio PMI y la franja PMI por proyecto', () => {
+        render(<ProjectsListView projects={projects} onUpdate={vi.fn()} />);
+
+        const header = screen.getByTestId('projects-list-pmi-header');
+        expect(header).toHaveTextContent('Total Portafolio: 2');
+        expect(header).toHaveTextContent('En Ejecucion Activa: 1');
+        expect(header).toHaveTextContent('Sin Sponsor/PM: 0');
+
+        const pmiStrip = screen.getByTestId('project-list-item-pmi-p1');
+        expect(pmiStrip).toHaveTextContent('Avance PMI: 0%');
+        expect(pmiStrip).toHaveTextContent('Paquetes WBS: 0 paquetes WBS');
+        expect(pmiStrip).toHaveTextContent('Gobernanza Activa');
+        cleanup();
+
+        // Proyecto sin sponsor → badge warning + header refleja el hueco
+        const orphan = [{ ...projects[1], id: 'p3', owner_id: null, status: 'planning' as const }];
+        const { unmount } = render(<ProjectsListView projects={orphan} onUpdate={vi.fn()} />);
+        expect(screen.getByTestId('project-list-item-pmi-p3')).toHaveTextContent('Sin Sponsor PMI');
+        expect(screen.getByTestId('projects-list-pmi-header')).toHaveTextContent('Sin Sponsor/PM: 1');
+        unmount();
     });
 });

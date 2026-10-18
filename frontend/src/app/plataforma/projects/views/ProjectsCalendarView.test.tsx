@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, cleanup } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import ProjectsCalendarView from './ProjectsCalendarView';
 import { createMockProject } from '@/test-utils/factories';
@@ -73,5 +73,24 @@ describe('ProjectsCalendarView', () => {
         render(<ProjectsCalendarView projects={projects} onEventClick={onEventClick} />);
         screen.getByText('Campamento Juventud · Entrega').click();
         expect(onEventClick).toHaveBeenCalledWith(expect.objectContaining({ id: 'p1', title: 'Campamento Juventud · Entrega' }));
+    });
+
+    it('muestra el cintillo de linea base de cronograma maestro PMI', () => {
+        render(<ProjectsCalendarView projects={projects} />);
+
+        const header = screen.getByTestId('projects-calendar-pmi-header');
+        expect(header).toHaveTextContent('Hitos en Cronograma: 2');
+        // 3 proyectos - 2 hitos = 1 sin línea base (warning)
+        expect(header).toHaveTextContent('Sin Linea Base: 1');
+        expect(header).toHaveTextContent('En Pausa CCB: 0');
+        cleanup();
+
+        // Estado 0 pendientes → badge success; proyecto en pausa → conteo CCB
+        const onHoldProjects = [
+            { ...projects[0], id: 'p-hold', status: 'on_hold' as const, target_date: '2025-09-01T00:00:00Z' },
+        ];
+        const { unmount } = render(<ProjectsCalendarView projects={onHoldProjects} />);
+        expect(screen.getByTestId('projects-calendar-pmi-header')).toHaveTextContent('En Pausa CCB: 1');
+        unmount();
     });
 });
