@@ -381,6 +381,17 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
 
     const showsStatusFilter = ['dashboard', 'grid', 'table', 'list', 'board', 'kanban'].includes(viewType);
 
+    // PMI §6 — Centro Ejecutivo de Comando de Portafolio.
+    // La franja RAG usa la semántica amber/red del encargo; el modelo canónico
+    // tipa health_status con slugs on_track/off_track, por lo que se compara
+    // vía texto (misma semántica sin ampliar el tipo).
+    const pmiActiveRunningCount = projects.filter((p) => (p.status || 'active') === 'active').length;
+    const pmiRagAtRiskCount = projects.filter((p) => {
+        const rawHealth = String(p.health_status ?? '').toLowerCase();
+        return rawHealth === 'amber' || rawHealth === 'red' || rawHealth === 'off_track';
+    }).length;
+    const pmiSponsorCoveredCount = projects.filter((p) => Boolean(p.owner_id)).length;
+
     const handleCreateProject = async (data: {
         title: string;
         description: string;
@@ -679,6 +690,27 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                 </div>
             </div>}
             </>}
+
+            {/* Franja Ejecutiva de Centro de Comando de Portafolio PMI §6 */}
+            <div
+                data-testid="projects-client-pmi-command-strip"
+                aria-label="Centro de comando de portafolio PMI"
+                className="flex flex-wrap items-center gap-3 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-1.5 text-2xs font-semibold text-[hsl(var(--text-secondary))] mb-3"
+            >
+                <span>Portafolio Activo: {projects.length} proyecto(s)</span>
+                <span>En Ejecucion (§4.3): {pmiActiveRunningCount}</span>
+                <span
+                    className={clsx(
+                        'rounded-full border px-2 py-0.5',
+                        pmiRagAtRiskCount > 0
+                            ? 'bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.4)]'
+                            : 'bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))] border-[hsl(var(--success)/0.4)]'
+                    )}
+                >
+                    Salud RAG: {pmiRagAtRiskCount > 0 ? `${pmiRagAtRiskCount} en riesgo` : '0 en riesgo'}
+                </span>
+                <span>Cobertura Sponsor/PM: {pmiSponsorCoveredCount}/{projects.length} con PM</span>
+            </div>
 
             {/* Status filters belong to project-oriented views, not calendar/wiki navigation. */}
             {showsStatusFilter && <div className="flex items-center gap-2 flex-wrap">

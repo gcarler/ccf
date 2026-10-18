@@ -4,7 +4,12 @@ const shimmer = 'bg-gradient-to-r from-transparent via-[hsl(var(--foreground)/0.
 
 export default function ProjectsLoading() {
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--background))] overflow-hidden font-display">
+        <div
+            data-testid="projects-portfolio-loading-skeleton"
+            role="status"
+            aria-label="Cargando portafolio de proyectos PMI"
+            className="flex flex-col h-full bg-[hsl(var(--background))] overflow-hidden font-display"
+        >
             <div className="h-8 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]" />
             <main className="flex-1 overflow-y-auto scrollbar-none p-3 lg:p-4 space-y-3">
                 <header className="space-y-3">

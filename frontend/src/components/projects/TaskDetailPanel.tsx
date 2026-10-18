@@ -18,6 +18,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import clsx from 'clsx';
 
 import TaskDetailHeader from './TaskDetailHeader';
 import TaskMetaFields from './TaskMetaFields';
@@ -642,6 +643,20 @@ export default function TaskDetailPanel({
     if (authLoading) return null;
 
     const priority = getPriorityMap((task.priority ?? 'medium') as TaskPriority);
+    const evmtCreditLabel =
+        task.status === 'done' || task.status === 'completed'
+            ? '100% EV (Aceptado)'
+            : task.status === 'in_progress'
+              ? '50% EV (En Curso)'
+              : '0% EV (No Iniciado)';
+    const completedActivitiesCount = activities.filter((a) => a.completed).length;
+    const isWbsDefinitionComplete =
+        description.trim().length > 0 &&
+        Boolean(task.due_date) &&
+        Boolean(task.assignee_id);
+    const appendDescriptionTemplate = (snippet: string) => {
+        setDesc((prev) => (prev.trim().length > 0 ? `${prev.trim()}\n${snippet}` : snippet));
+    };
 
     return (
         <AnimatePresence>
@@ -735,6 +750,34 @@ export default function TaskDetailPanel({
                         )}
                     </AnimatePresence>
 
+                    {/* Cintillo de Diccionario WBS del Paquete de Trabajo PMI §5.3.2 */}
+                    <div
+                        data-testid="task-detail-pmi-wp-dictionary"
+                        className="px-4 py-2.5 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-2)/0.45)] flex flex-wrap items-center justify-between gap-2"
+                    >
+                        <div className="flex flex-wrap items-center gap-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
+                            <span className="font-bold text-[hsl(var(--foreground))]">Diccionario WBS PMI §5.3.2</span>
+                            <span>{evmtCreditLabel}</span>
+                            <span>
+                                {activities.length} sub-actividad(es) ({completedActivitiesCount} completada(s))
+                            </span>
+                            <span>
+                                {supplies.length} insumo(s) · {(task.attachments ?? []).length} adjunto(s)
+                            </span>
+                        </div>
+                        <span
+                            data-testid="task-detail-pmi-wp-readiness"
+                            className={clsx(
+                                'px-2 py-0.5 rounded-full text-2xs font-bold uppercase tracking-wide border',
+                                isWbsDefinitionComplete
+                                    ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success,var(--primary)))] border-[hsl(var(--success)/0.3)]'
+                                    : 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning,var(--primary)))] border-[hsl(var(--warning)/0.3)]'
+                            )}
+                        >
+                            {isWbsDefinitionComplete ? 'Definición Completa' : 'Definición Incompleta'}
+                        </span>
+                    </div>
+
                     <TaskMetaFields
                         task={task}
                         labels={labels}
@@ -760,9 +803,46 @@ export default function TaskDetailPanel({
 
                     {/* Description */}
                     <section className="px-4 py-3 border-b border-[hsl(var(--border))]">
-                        <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-2 flex items-center gap-1.5">
-                            <AlignLeft size={11} /> Descripción
-                        </p>
+                        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                            <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center gap-1.5">
+                                <AlignLeft size={11} /> Descripción
+                            </p>
+                            <div
+                                data-testid="task-detail-pmi-desc-templates"
+                                className="flex flex-wrap items-center gap-1.5"
+                            >
+                                <button
+                                    type="button"
+                                    data-testid="task-desc-tpl-deliverable"
+                                    onClick={() =>
+                                        appendDescriptionTemplate('[Entregable]:  | [Criterio de Aceptación]: ')
+                                    }
+                                    className="px-2 py-0.5 rounded border border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.08)] text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--primary)/0.16)] transition-colors"
+                                >
+                                    + Entregable y Criterio
+                                </button>
+                                <button
+                                    type="button"
+                                    data-testid="task-desc-tpl-assumptions"
+                                    onClick={() =>
+                                        appendDescriptionTemplate('[Supuestos]:  | [Restricciones]: ')
+                                    }
+                                    className="px-2 py-0.5 rounded border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] transition-colors"
+                                >
+                                    + Supuestos y Restricciones
+                                </button>
+                                <button
+                                    type="button"
+                                    data-testid="task-desc-tpl-dependencies"
+                                    onClick={() =>
+                                        appendDescriptionTemplate('[Predecesora]:  | [Sucesora]: ')
+                                    }
+                                    className="px-2 py-0.5 rounded border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] transition-colors"
+                                >
+                                    + Dependencias WBS
+                                </button>
+                            </div>
+                        </div>
                         <textarea
                             value={description}
                             onChange={e => setDesc(e.target.value)}

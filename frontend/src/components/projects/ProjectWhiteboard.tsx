@@ -28,6 +28,7 @@ export default function ProjectWhiteboard({
 
     const whiteboard = (
         <div
+            data-testid="project-whiteboard-portal"
             className="fixed inset-0 z-[9999] flex flex-col bg-[hsl(var(--surface-1))]"
             role="application"
             aria-label="Pizarra del proyecto"

@@ -12,6 +12,13 @@ export interface UpdateProjectPayload {
   owner_id?: string | null;
   color?: string | null;
   icon?: string | null;
+  /** PMI §4.x — Gobernanza del ciclo de vida del proyecto. */
+  health_status?: string | null;
+  progress_mode?: string;
+  due_date?: string | null;
+  start_date?: string | null;
+  budget_allocated?: number | null;
+  budget_executed?: number | null;
 }
 
 export function useProjects() {
@@ -71,9 +78,23 @@ export function useProjects() {
     [token]
   );
 
+  /** PMI §4.7 — Cierre del proyecto: estado 'completed'. */
+  const completeProject = useCallback(
+    (projectId: string) => updateProject(projectId, { status: 'completed' }),
+    [updateProject]
+  );
+
+  /** PMI §4.7 — Archivado del proyecto: estado 'archived' (soft, no hard delete). */
+  const archiveProject = useCallback(
+    (projectId: string) => updateProject(projectId, { status: 'archived' }),
+    [updateProject]
+  );
+
   return {
     updateProject,
     deleteProject,
+    completeProject,
+    archiveProject,
     loading,
     error,
   };

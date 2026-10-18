@@ -15,6 +15,10 @@ export interface CreateTaskPayload {
   due_date?: string | null;
   parent_id?: string | null;
   labels?: string[];
+  /** PMI §5.4 — Campos WBS / desglose del paquete de trabajo. */
+  phase?: string | null;
+  component_id?: string | null;
+  estimated_hours?: number | null;
 }
 
 export interface UpdateTaskPayload {
@@ -26,6 +30,19 @@ export interface UpdateTaskPayload {
   start_date?: string | null;
   due_date?: string | null;
   labels?: string[];
+  /** PMI §5.4 — Campos WBS / desglose del paquete de trabajo. */
+  phase?: string | null;
+  component_id?: string | null;
+  estimated_hours?: number | null;
+}
+
+/** Los null del patch no pueden sobrescribir campos opcionales no-null del modelo. */
+function compactPatch(patch: UpdateTaskPayload): Record<string, unknown> {
+    const compacted: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(patch)) {
+        if (value !== null) compacted[key] = value;
+    }
+    return compacted;
 }
 
 interface UseProjectTasksOptions {
@@ -125,8 +142,9 @@ export function useProjectTasks(options: UseProjectTasksOptions = {}): UseProjec
       const previousTask = taskIndex >= 0 ? tasks[taskIndex] : null;
 
       if (optimistic && previousTask) {
+        const compacted = compactPatch(payload);
         setTasks((prev) =>
-          prev.map((t) => (t.id === taskId ? { ...t, ...payload } : t))
+          prev.map((t) => (t.id === taskId ? { ...t, ...compacted } : t))
         );
       }
 

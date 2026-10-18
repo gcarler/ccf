@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, act, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import ProjectsClient, { resolveProjectViewParam } from './ProjectsClient';
 import { createMockProject } from '@/test-utils/factories';
@@ -585,6 +585,56 @@ describe('ProjectsClient view URL conflict & synchronization', () => {
       expect.stringContaining('status=active'),
       expect.objectContaining({ scroll: false }),
     );
+  });
+});
+
+describe('ProjectsClient PMI §6 — Franja Ejecutiva de Centro de Comando de Portafolio', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSearchParamsState.current = new URLSearchParams();
+    routerPushMock.mockReset();
+    routerReplaceMock.mockReset();
+  });
+
+  it('calcula los 4 indicadores del portafolio sobre projects', async () => {
+    const portfolioProjects = [
+      createMockProject({ id: 'p1', title: 'Alpha', status: 'active', owner_id: 'u1' }),
+      createMockProject({ id: 'p2', title: 'Beta', status: 'planning', owner_id: null }),
+      // 'off_track' es el slug canónico de salud en riesgo; la franja RAG
+      // también cubre las variantes amber/red del encargo vía comparación textual.
+      createMockProject({ id: 'p3', title: 'Gamma', status: 'active', owner_id: null, health_status: 'off_track' }),
+    ];
+    apiFetchMock.mockImplementation((path: string) =>
+      path === '/projects/summary-page'
+        ? Promise.resolve({ items: portfolioProjects, total: portfolioProjects.length, skip: 0, limit: 50 })
+        : Promise.resolve({ cards: [], workload_distribution: [], delayed_tasks_count: 0 }),
+    );
+
+    render(<ProjectsClient initialProjects={portfolioProjects} />);
+
+    const strip = await screen.findByTestId('projects-client-pmi-command-strip');
+    expect(strip).toHaveTextContent('Portafolio Activo: 3 proyecto(s)');
+    expect(strip).toHaveTextContent('En Ejecucion (§4.3): 2');
+    expect(strip).toHaveTextContent('Salud RAG: 1 en riesgo');
+    expect(strip.innerHTML).toContain('text-[hsl(var(--warning))]');
+    expect(strip).toHaveTextContent('Cobertura Sponsor/PM: 1/3 con PM');
+
+    // Portafolio sin riesgos → badge success y cobertura completa
+    const cleanProjects = [
+      createMockProject({ id: 'p-ok', title: 'Delta', status: 'active', owner_id: 'u2' }),
+    ];
+    apiFetchMock.mockImplementation((path: string) =>
+      path === '/projects/summary-page'
+        ? Promise.resolve({ items: cleanProjects, total: 1, skip: 0, limit: 50 })
+        : Promise.resolve({ cards: [], workload_distribution: [], delayed_tasks_count: 0 }),
+    );
+    // Render limpio aparte para el caso sin riesgos:
+    cleanup();
+    render(<ProjectsClient initialProjects={cleanProjects} />);
+    const cleanStrip = await screen.findByTestId('projects-client-pmi-command-strip');
+    expect(cleanStrip).toHaveTextContent('Salud RAG: 0 en riesgo');
+    expect(cleanStrip).toHaveTextContent('Cobertura Sponsor/PM: 1/1 con PM');
+    expect(cleanStrip.innerHTML).toContain('text-[hsl(var(--success))]');
   });
 });
 

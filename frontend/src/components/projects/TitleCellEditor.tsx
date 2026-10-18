@@ -36,6 +36,7 @@ const TitleCellEditor = forwardRef<TitleCellEditorRef, ICellEditorParams>((props
     return (
         <input
             ref={inputRef}
+            data-testid="title-cell-editor-input"
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={handleKeyDown}
