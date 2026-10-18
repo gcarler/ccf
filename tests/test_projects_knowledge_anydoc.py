@@ -519,3 +519,69 @@ def test_audit_rejects_inline_hashtag_as_heading():
     assert audit["is_non_empty"] is True
     assert audit["heading_count"] == 0
     assert audit["structural_density_status"] == "plain_prose"
+
+
+def test_estimate_document_reading_metrics_empty_or_none():
+    """Entrada vacía o None retorna word_count=0, 'empty' y estimated_reading_minutes=0.0."""
+    from backend.services.anydoc_service import estimate_document_reading_metrics
+
+    for empty_val in (None, "", "   \n  ", {}, {"markdown": ""}):
+        res = estimate_document_reading_metrics(empty_val)
+        assert res["word_count"] == 0
+        assert res["estimated_reading_minutes"] == 0.0
+        assert res["artifact_depth_tier"] == "empty"
+        assert res["words_per_minute"] == 200
+
+
+def test_estimate_document_reading_metrics_brief_note():
+    """Nota breve (< 150 palabras) soporta tanto str como dict de convert_bytes_to_markdown."""
+    from backend.services.anydoc_service import (
+        convert_bytes_to_markdown,
+        estimate_document_reading_metrics,
+    )
+
+    text_note = " ".join(["entregable"] * 50)
+    res_str = estimate_document_reading_metrics(text_note, words_per_minute=200)
+    assert res_str == {
+        "word_count": 50,
+        "char_count": len(text_note),
+        "words_per_minute": 200,
+        "estimated_reading_minutes": 0.25,
+        "artifact_depth_tier": "brief_note",
+    }
+
+    conv_result = convert_bytes_to_markdown(b"# Acta Breve\n\nReunion de seguimiento PMI con 10 palabras clave.", "acta.md")
+    res_dict = estimate_document_reading_metrics(conv_result)
+    assert 1 <= res_dict["word_count"] < 150
+    assert res_dict["artifact_depth_tier"] == "brief_note"
+    assert res_dict["estimated_reading_minutes"] > 0.0
+
+
+def test_estimate_document_reading_metrics_standard_artifact():
+    """Artefacto estándar (150..999 palabras) clasifica como 'standard_artifact'."""
+    from backend.services.anydoc_service import estimate_document_reading_metrics
+
+    standard_text = " ".join(["alcance"] * 300)
+    res = estimate_document_reading_metrics(standard_text, words_per_minute=200)
+    assert res == {
+        "word_count": 300,
+        "char_count": len(standard_text),
+        "words_per_minute": 200,
+        "estimated_reading_minutes": 1.5,
+        "artifact_depth_tier": "standard_artifact",
+    }
+
+
+def test_estimate_document_reading_metrics_comprehensive_manual_and_wpm_floor():
+    """Manual comprehensivo (>= 1000 palabras) y piso de seguridad wpm >= 50."""
+    from backend.services.anydoc_service import estimate_document_reading_metrics
+
+    manual_text = " ".join(["gobernanza"] * 1200)
+    res = estimate_document_reading_metrics({"markdown": manual_text}, words_per_minute=10)
+    assert res == {
+        "word_count": 1200,
+        "char_count": len(manual_text),
+        "words_per_minute": 50,
+        "estimated_reading_minutes": 24.0,
+        "artifact_depth_tier": "comprehensive_manual",
+    }

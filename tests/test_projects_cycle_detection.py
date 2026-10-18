@@ -405,3 +405,118 @@ def test_pdm_topology_normalizes_uuid_like_nodes():
     assert result_linear["total_nodes"] == 2
     assert result_linear["max_in_degree"] == 1
     assert result_linear["network_complexity_level"] == "linear_or_empty"
+
+
+# ── classify_cpm_float_risk_profile (PMBOK §6.5.2.2, pure helper) ─────────
+
+
+def _cpm_rows(idx: int):
+    """Genera filas CPM: mayoría críticas + near-critical + con buffer."""
+    rows = [
+        {"is_critical": True, "total_float": 0},
+        {"is_critical": False, "total_float": 0},   # float 0 → crítica por float
+        {"is_critical": True, "total_float": 5},    # is_critical manda
+        {"is_critical": False, "total_float": 1},   # near-critical (<= 2)
+        {"is_critical": False, "total_float": 2},   # near-critical (== threshold)
+        {"is_critical": False, "total_float": 9},   # con holgura (buffered)
+        {"is_critical": False, "total_float": 15},  # con holgura (buffered)
+    ]
+    return rows[:idx]
+
+
+def test_cpm_float_risk_empty_schedule():
+    """None, {} y tasks vacío → 'empty_schedule' con densidad 0.0."""
+    from backend.crud.projects import classify_cpm_float_risk_profile
+
+    for metrics in (None, {}, {"tasks": []}, {"tasks": {}}):
+        result = classify_cpm_float_risk_profile(metrics)
+        assert result == {
+            "total_scheduled_tasks": 0,
+            "critical_tasks_count": 0,
+            "near_critical_tasks_count": 0,
+            "buffered_tasks_count": 0,
+            "critical_density_pct": 0.0,
+            "schedule_rigidity_status": "empty_schedule",
+        }
+
+
+def test_cpm_float_risk_hyper_rigid_dict_nodes():
+    """≥ 75% críticas+near sobre dict {task_id: task} → 'hyper_rigid'."""
+    from backend.crud.projects import classify_cpm_float_risk_profile
+
+    rows = [
+        {"is_critical": True, "total_float": 0},
+        {"is_critical": False, "total_float": 0},   # float 0 → crítica
+        {"is_critical": True, "total_float": 5},    # is_critical manda sobre float
+        {"is_critical": False, "total_float": 1},   # near-critical
+        {"is_critical": False, "total_float": 2},   # near-critical (== threshold)
+        {"is_critical": False, "total_float": 2},   # near-critical (== threshold)
+        {"is_critical": False, "total_float": 7},   # buffered
+        {"is_critical": False, "total_float": 9},   # buffered
+    ]
+    # 3 críticas + 3 near = 6/8 = 0.75 >= 0.75
+    metrics = {"tasks": {f"t{i}": row for i, row in enumerate(rows)}}
+    result = classify_cpm_float_risk_profile(metrics)
+
+    assert result["total_scheduled_tasks"] == 8
+    assert result["critical_tasks_count"] == 3
+    assert result["near_critical_tasks_count"] == 3
+    assert result["buffered_tasks_count"] == 2
+    assert result["critical_density_pct"] == 37.5
+    assert result["schedule_rigidity_status"] == "hyper_rigid"
+
+
+def test_cpm_float_risk_moderate_float_list_tasks():
+    """Densidad crítica <= 50% sin ser hyper_rigid → 'moderate_float' (lista)."""
+    from backend.crud.projects import classify_cpm_float_risk_profile
+
+    rows = [
+        {"is_critical": True, "total_float": 0},
+        {"is_critical": False, "total_float": 1},   # near-critical
+        {"is_critical": False, "total_float": 7},   # buffered
+        {"is_critical": False, "total_float": 8},   # buffered
+        {"is_critical": False, "total_float": 9},   # buffered
+        {"is_critical": False, "total_float": None},  # float nulo → crítica
+    ]
+    result = classify_cpm_float_risk_profile({"tasks": rows})
+
+    assert result["total_scheduled_tasks"] == 6
+    # float None cuenta como 0 → crítica (2 críticas = 33.33% <= 50)
+    assert result["critical_tasks_count"] == 2
+    assert result["near_critical_tasks_count"] == 1
+    assert result["buffered_tasks_count"] == 3
+    assert result["critical_density_pct"] == 33.33
+    assert result["schedule_rigidity_status"] == "moderate_float"
+
+
+def test_cpm_float_risk_tight_schedule():
+    """Densidad crítica > 50% (pero < 75% de críticas+near) → 'tight_schedule'."""
+    from backend.crud.projects import classify_cpm_float_risk_profile
+
+    rows = [
+        {"is_critical": True, "total_float": 0},
+        {"is_critical": True, "total_float": 3},    # 2/4 críticas = 50%... usar 5 filas
+        {"is_critical": True, "total_float": 0},
+        {"is_critical": False, "total_float": 4},   # holgura > threshold
+        {"is_critical": False, "total_float": 2},   # near-critical
+    ]
+    # 3 críticas de 5 = 60% > 50; críticas+near = 4/5 = 0.8 → hyper_rigid. Ajustar:
+    rows[2] = {"is_critical": False, "total_float": 6}  # ahora 2 críticas de 5 = 40%
+    # críticas+near = 3/5 = 0.6 < 0.75; densidad 40% <= 50 → moderate_float
+    result_half = classify_cpm_float_risk_profile({"tasks": rows})
+    assert result_half["schedule_rigidity_status"] == "moderate_float"
+
+    # Para 'tight_schedule': densidad 60% con críticas+near = 3/5 (60%) < 75%
+    tight_rows = [
+        {"is_critical": True, "total_float": 0},
+        {"is_critical": True, "total_float": 1},
+        {"is_critical": True, "total_float": 2},    # 3 críticas de 5 = 60%
+        {"is_critical": False, "total_float": 7},   # buffered
+        {"is_critical": False, "total_float": 9},   # buffered
+    ]
+    result = classify_cpm_float_risk_profile({"tasks": tight_rows}, near_critical_threshold_days=4)
+    assert result["critical_tasks_count"] == 3
+    assert result["near_critical_tasks_count"] == 0  # floats 7 y 9 > threshold 4
+    assert result["buffered_tasks_count"] == 2
+    assert result["critical_density_pct"] == 60.0
+    assert result["schedule_rigidity_status"] == "tight_schedule"

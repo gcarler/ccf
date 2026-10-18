@@ -6600,3 +6600,73 @@ def summarize_whiteboard_canvas_elements(
         "text_bearing_count": text_bearing_count,
         "canvas_complexity": canvas_complexity,
     }
+
+
+def classify_cpm_float_risk_profile(
+    cpm_metrics: dict[str, Any] | None,
+    near_critical_threshold_days: int = 2,
+) -> dict[str, Any]:
+    """Evalúa la rigidez de holgura del cronograma CPM (PMBOK §6.5.2.2).
+
+    Extrae `tasks` de `cpm_metrics` (acepta `dict {task_id: task}` vía
+    .values() o `list[dict]`) y retorna:
+    - `total_scheduled_tasks`: nº de tareas del grafo CPM.
+    - `critical_tasks_count`: is_critical True o total_float <= 0.
+    - `near_critical_tasks_count`: no críticas con 0 < total_float <=
+      threshold (threshold = max(1, near_critical_threshold_days or 2)).
+    - `buffered_tasks_count`: total - críticas - near_critical.
+    - `critical_density_pct`: % de críticas (2 decimales; 0.0 sin tareas).
+    - `schedule_rigidity_status`: 'empty_schedule' (sin tareas),
+      'hyper_rigid' ((críticas + near) / total >= 0.75), 'moderate_float'
+      (critical_density_pct <= 50 y no hyper_rigid) o 'tight_schedule'.
+    """
+    raw_tasks = (cpm_metrics or {}).get("tasks")
+    if isinstance(raw_tasks, dict):
+        task_rows = list(raw_tasks.values())
+    elif isinstance(raw_tasks, list):
+        task_rows = list(raw_tasks)
+    else:
+        task_rows = []
+
+    total = len(task_rows)
+    threshold = max(1, int(near_critical_threshold_days or 2))
+
+    critical_tasks_count = 0
+    near_critical_tasks_count = 0
+    for row in task_rows:
+        if not isinstance(row, dict):
+            continue
+        try:
+            total_float = int(row.get("total_float", 0) or 0)
+        except (TypeError, ValueError):
+            total_float = 0
+        is_critical = bool(row.get("is_critical")) or total_float <= 0
+        if is_critical:
+            critical_tasks_count += 1
+        elif 0 < total_float <= threshold:
+            near_critical_tasks_count += 1
+
+    buffered_tasks_count = max(
+        0, total - critical_tasks_count - near_critical_tasks_count
+    )
+    critical_density_pct = (
+        round((critical_tasks_count / total) * 100.0, 2) if total > 0 else 0.0
+    )
+
+    if total == 0:
+        schedule_rigidity_status = "empty_schedule"
+    elif ((critical_tasks_count + near_critical_tasks_count) / total) >= 0.75:
+        schedule_rigidity_status = "hyper_rigid"
+    elif critical_density_pct <= 50.0:
+        schedule_rigidity_status = "moderate_float"
+    else:
+        schedule_rigidity_status = "tight_schedule"
+
+    return {
+        "total_scheduled_tasks": total,
+        "critical_tasks_count": critical_tasks_count,
+        "near_critical_tasks_count": near_critical_tasks_count,
+        "buffered_tasks_count": buffered_tasks_count,
+        "critical_density_pct": critical_density_pct,
+        "schedule_rigidity_status": schedule_rigidity_status,
+    }

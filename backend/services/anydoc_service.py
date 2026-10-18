@@ -764,3 +764,38 @@ def audit_converted_markdown_structure(conversion_result: dict | None) -> dict:
         "bullet_item_count": bullet_item_count,
         "structural_density_status": structural_density_status,
     }
+
+
+def estimate_document_reading_metrics(
+    markdown_or_result: str | dict[str, Any] | None,
+    words_per_minute: int = 200,
+) -> dict[str, Any]:
+    """Estima la carga cognitiva, tiempo de lectura y nivel de profundidad de un artefacto documental (PMBOK §4.4)."""
+    if isinstance(markdown_or_result, dict):
+        text = str(markdown_or_result.get("markdown") or "")
+    elif isinstance(markdown_or_result, str):
+        text = markdown_or_result
+    else:
+        text = ""
+
+    word_count = len(text.split())
+    char_count = len(text)
+    wpm = max(50, int(words_per_minute or 200))
+    estimated_reading_minutes = round(word_count / wpm, 2) if word_count > 0 else 0.0
+
+    if word_count == 0:
+        artifact_depth_tier = "empty"
+    elif word_count < 150:
+        artifact_depth_tier = "brief_note"
+    elif word_count < 1000:
+        artifact_depth_tier = "standard_artifact"
+    else:
+        artifact_depth_tier = "comprehensive_manual"
+
+    return {
+        "word_count": word_count,
+        "char_count": char_count,
+        "words_per_minute": wpm,
+        "estimated_reading_minutes": estimated_reading_minutes,
+        "artifact_depth_tier": artifact_depth_tier,
+    }
