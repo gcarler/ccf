@@ -7158,3 +7158,147 @@ def test_evaluate_evm_time_and_materials_nte_and_rate_blend_empty_and_binding():
     assert (
         "evaluate_evm_time_and_materials_nte_and_rate_blend" in mod.__all__
     )
+
+
+def test_evaluate_evm_epa_inflation_erosion_stable():
+    """Caso 1: Inflación dentro del umbral de activación EPA ('STABLE')."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_economic_price_adjustment_and_inflation_erosion,
+    )
+
+    wps = [
+        {
+            "wp_id": "WP-01",
+            "remaining_bac": 100000.0,
+            "baseline_cpi_index": 100.0,
+            "current_cpi_index": 103.5,  # +3.5% <= 4.0%
+            "has_epa_clause": True,
+        },
+        {
+            "wp_id": "WP-02",
+            "remaining_bac": 50000.0,
+            "baseline_cpi_index": 100.0,
+            "current_cpi_index": 102.0,
+            "has_epa_clause": False,
+        },
+    ]
+    res = evaluate_evm_economic_price_adjustment_and_inflation_erosion(
+        wps,
+        epa_escalation_reserve=5000.0,
+    )
+    assert res["total_work_packages"] == 2
+    assert res["total_remaining_bac"] == 150000.0
+    assert res["total_inflation_cost_impact"] == 0.0
+    assert res["reserve_shortfall"] == 0.0
+    assert res["epa_triggered_wp_ids"] == []
+    assert res["epa_cap_breached_wp_ids"] == []
+    assert res["unindexed_exposure_wp_ids"] == []
+    assert res["epa_governance_status"] == "STABLE"
+    assert res["recommendations"] == []
+
+
+def test_evaluate_evm_epa_inflation_erosion_warning():
+    """Caso 2: EPA activada (>4% y <=12%) con cláusula EPA y reserva suficiente ('WARNING')."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_economic_price_adjustment_and_inflation_erosion,
+    )
+
+    wps = [
+        {
+            "wp_id": "WP-10",
+            "remaining_bac": 200000.0,
+            "baseline_cpi_index": 100.0,
+            "current_cpi_index": 108.0,  # +8.0% > 4.0% -> impact 16000
+            "has_epa_clause": True,
+        }
+    ]
+    res = evaluate_evm_economic_price_adjustment_and_inflation_erosion(
+        wps,
+        epa_escalation_reserve=20000.0,
+    )
+    assert res["total_work_packages"] == 1
+    assert res["total_remaining_bac"] == 200000.0
+    assert res["total_inflation_cost_impact"] == 16000.0
+    assert res["reserve_shortfall"] == 0.0
+    assert res["epa_triggered_wp_ids"] == ["WP-10"]
+    assert res["epa_cap_breached_wp_ids"] == []
+    assert res["unindexed_exposure_wp_ids"] == []
+    assert res["epa_governance_status"] == "WARNING"
+    assert len(res["recommendations"]) >= 1
+
+
+def test_evaluate_evm_epa_inflation_erosion_critical():
+    """Caso 3: Ruptura de tope EPA (>12%), exposición sin cláusula EPA o déficit de reserva ('CRITICAL')."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_economic_price_adjustment_and_inflation_erosion,
+    )
+
+    wps = [
+        {
+            "wp_id": "WP-20",
+            "remaining_bac": 100000.0,
+            "baseline_cpi_index": 100.0,
+            "current_cpi_index": 115.0,  # +15% > 12% cap -> impact 15000
+            "has_epa_clause": True,
+        },
+        {
+            "wp_id": "WP-21",
+            "remaining_bac": 100000.0,
+            "baseline_cpi_index": 100.0,
+            "current_cpi_index": 106.0,  # +6% > 4%, no EPA clause -> impact 6000
+            "has_epa_clause": False,
+        },
+    ]
+    res = evaluate_evm_economic_price_adjustment_and_inflation_erosion(
+        wps,
+        epa_escalation_reserve=10000.0,
+    )
+    assert res["total_work_packages"] == 2
+    assert res["total_remaining_bac"] == 200000.0
+    assert res["total_inflation_cost_impact"] == 21000.0
+    assert res["reserve_shortfall"] == 11000.0
+    assert res["epa_triggered_wp_ids"] == ["WP-20", "WP-21"]
+    assert res["epa_cap_breached_wp_ids"] == ["WP-20"]
+    assert res["unindexed_exposure_wp_ids"] == ["WP-21"]
+    assert res["epa_governance_status"] == "CRITICAL"
+    assert len(res["recommendations"]) >= 3
+
+
+def test_evaluate_evm_epa_inflation_erosion_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en ProjectEVMService + __all__."""
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_economic_price_adjustment_and_inflation_erosion,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = evaluate_evm_economic_price_adjustment_and_inflation_erosion(payload)  # type: ignore[arg-type]
+        assert empty["total_work_packages"] == 0
+        assert empty["total_remaining_bac"] == 0.0
+        assert empty["total_inflation_cost_impact"] == 0.0
+        assert empty["reserve_shortfall"] == 0.0
+        assert empty["epa_triggered_wp_ids"] == []
+        assert empty["epa_cap_breached_wp_ids"] == []
+        assert empty["unindexed_exposure_wp_ids"] == []
+        assert empty["epa_governance_status"] == "STABLE"
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "wp_id": "WP-99",
+            "remaining_bac": 50000.0,
+            "baseline_cpi_index": 100.0,
+            "current_cpi_index": 101.0,
+            "has_epa_clause": True,
+        }
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_economic_price_adjustment_and_inflation_erosion(
+            sample
+        )
+        == evaluate_evm_economic_price_adjustment_and_inflation_erosion(sample)
+    )
+    assert (
+        "evaluate_evm_economic_price_adjustment_and_inflation_erosion" in mod.__all__
+    )

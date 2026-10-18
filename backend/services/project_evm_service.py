@@ -5511,6 +5511,7 @@ __all__ = [
     "evaluate_evm_subcontractor_retainage_and_progress_billing",
     "evaluate_evm_fx_currency_volatility_and_hedging_coverage",
     "evaluate_evm_time_and_materials_nte_and_rate_blend",
+    "evaluate_evm_economic_price_adjustment_and_inflation_erosion",
     "ProjectEVMService",
 ]
 
@@ -8382,6 +8383,123 @@ def evaluate_evm_time_and_materials_nte_and_rate_blend(
 
 ProjectEVMService.evaluate_evm_time_and_materials_nte_and_rate_blend = staticmethod(
     evaluate_evm_time_and_materials_nte_and_rate_blend
+)
+
+
+def evaluate_evm_economic_price_adjustment_and_inflation_erosion(
+    work_packages: Sequence[Mapping[str, Any]] | None,
+    *,
+    epa_escalation_reserve: float = 0.0,
+    epa_trigger_threshold_pct: float = 4.0,
+    epa_cap_pct: float = 12.0,
+) -> dict[str, Any]:
+    """PMBOK §7.3 & §12.1.1.6 — contratos FP-EPA: ajuste económico de precios y erosión inflacionaria."""
+    if (
+        work_packages is None
+        or isinstance(work_packages, (str, bytes))
+        or not isinstance(work_packages, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = work_packages
+
+    reserve = max(0.0, float(epa_escalation_reserve or 0.0))
+    trigger_pct = max(0.0, float(epa_trigger_threshold_pct or 0.0))
+    cap_pct = max(0.0, float(epa_cap_pct or 0.0))
+
+    total_work_packages = 0
+    sum_remaining_bac = 0.0
+    sum_inflation_cost_impact = 0.0
+    epa_triggered_wp_ids: list[str] = []
+    epa_cap_breached_wp_ids: list[str] = []
+    unindexed_exposure_wp_ids: list[str] = []
+    recommendations: list[str] = []
+
+    for idx, item in enumerate(items, start=1):
+        if not isinstance(item, Mapping):
+            continue
+        total_work_packages += 1
+        wp_id = (
+            str(item.get("wp_id") or item.get("id") or f"WP-{idx}").strip()
+            or f"WP-{idx}"
+        )
+        remaining_bac = max(0.0, float(item.get("remaining_bac") or 0.0))
+        baseline_cpi = float(item.get("baseline_cpi_index") or 0.0)
+        current_cpi = float(item.get("current_cpi_index") or 0.0)
+        has_epa_clause = bool(item.get("has_epa_clause", True))
+
+        index_escalation_pct = (
+            ((current_cpi - baseline_cpi) / baseline_cpi) * 100.0
+            if baseline_cpi > 0.0
+            else 0.0
+        )
+        _effective_escalation_pct = (
+            max(0.0, index_escalation_pct - trigger_pct)
+            if index_escalation_pct > trigger_pct
+            else 0.0
+        )
+        inflation_cost_impact = (
+            remaining_bac * (index_escalation_pct / 100.0)
+            if index_escalation_pct > trigger_pct
+            else 0.0
+        )
+
+        sum_remaining_bac += remaining_bac
+        sum_inflation_cost_impact += inflation_cost_impact
+
+        if index_escalation_pct > trigger_pct:
+            epa_triggered_wp_ids.append(wp_id)
+            recommendations.append(
+                f"Paquete '{wp_id}' supera el umbral de activación EPA ({index_escalation_pct:.2f}% > {trigger_pct:.2f}%); aplicar ajuste de precios sobre saldo BAC."
+            )
+
+        if index_escalation_pct > cap_pct:
+            epa_cap_breached_wp_ids.append(wp_id)
+            recommendations.append(
+                f"Paquete '{wp_id}' excede el tope contractual EPA ({index_escalation_pct:.2f}% > {cap_pct:.2f}%); renegociar términos o activar reserva de gestión."
+            )
+
+        if index_escalation_pct > trigger_pct and not has_epa_clause:
+            unindexed_exposure_wp_ids.append(wp_id)
+            recommendations.append(
+                f"Paquete '{wp_id}' carece de cláusula EPA frente a escalada inflacionaria del {index_escalation_pct:.2f}%; evaluar riesgo de incumplimiento del proveedor."
+            )
+
+    total_remaining_bac = round(sum_remaining_bac, 2)
+    total_inflation_cost_impact = round(sum_inflation_cost_impact, 2)
+    reserve_shortfall = round(max(0.0, total_inflation_cost_impact - reserve), 2)
+
+    if reserve_shortfall > 0.0:
+        recommendations.append(
+            f"El impacto inflacionario total ({total_inflation_cost_impact:.2f}) excede la reserva EPA ({reserve:.2f}) con un déficit de {reserve_shortfall:.2f}."
+        )
+
+    if (
+        reserve_shortfall > 0.0
+        or epa_cap_breached_wp_ids
+        or unindexed_exposure_wp_ids
+    ):
+        epa_governance_status = "CRITICAL"
+    elif epa_triggered_wp_ids:
+        epa_governance_status = "WARNING"
+    else:
+        epa_governance_status = "STABLE"
+
+    return {
+        "total_work_packages": total_work_packages,
+        "total_remaining_bac": total_remaining_bac,
+        "total_inflation_cost_impact": total_inflation_cost_impact,
+        "reserve_shortfall": reserve_shortfall,
+        "epa_triggered_wp_ids": epa_triggered_wp_ids,
+        "epa_cap_breached_wp_ids": epa_cap_breached_wp_ids,
+        "unindexed_exposure_wp_ids": unindexed_exposure_wp_ids,
+        "epa_governance_status": epa_governance_status,
+        "recommendations": recommendations,
+    }
+
+
+ProjectEVMService.evaluate_evm_economic_price_adjustment_and_inflation_erosion = staticmethod(
+    evaluate_evm_economic_price_adjustment_and_inflation_erosion
 )
 
 
