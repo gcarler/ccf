@@ -498,3 +498,78 @@ class TestWhiteboardCanvasTopologyAnalyzer:
                 "text_bearing_count": 0,
                 "canvas_complexity": "invalid",
             }
+
+
+def test_analyze_whiteboard_collaboration_density_connected_mindmap():
+    """Valida >=2 nodos con texto + >=1 conector + múltiples autores e ignora isDeleted=True."""
+    from backend.crud.projects import analyze_whiteboard_collaboration_density
+
+    canvas = {
+        "elements": [
+            {"type": "rectangle", "text": "Alcance Fase 1", "author_id": "user-1"},
+            {"type": "sticky", "label": "Entregable clave WBS", "created_by": "user-2"},
+            {"type": "arrow", "updated_by": "user-1"},
+            {"type": "rectangle", "text": "Borrado", "isDeleted": True, "author_id": "user-3"},
+        ]
+    }
+    res = analyze_whiteboard_collaboration_density(canvas)
+    assert res == {
+        "active_elements_count": 3,
+        "text_bearing_elements_count": 2,
+        "connector_elements_count": 1,
+        "total_words_count": 6,
+        "unique_authors_count": 2,
+        "connector_ratio": 0.33,
+        "collaboration_maturity_status": "connected_mindmap",
+    }
+
+
+def test_analyze_whiteboard_collaboration_density_brainstorming_notes():
+    """Notas con texto pero sin conectores -> 'brainstorming_notes'."""
+    from backend.crud.projects import analyze_whiteboard_collaboration_density
+
+    res = analyze_whiteboard_collaboration_density(
+        [
+            {"type": "sticky", "text": "Idea pastoral uno", "author_id": "u1"},
+            {"type": "sticky", "content": "Idea pastoral dos", "author_id": "u1"},
+        ]
+    )
+    assert res["active_elements_count"] == 2
+    assert res["text_bearing_elements_count"] == 2
+    assert res["connector_elements_count"] == 0
+    assert res["total_words_count"] == 6
+    assert res["unique_authors_count"] == 1
+    assert res["collaboration_maturity_status"] == "brainstorming_notes"
+
+
+def test_analyze_whiteboard_collaboration_density_unannotated_shapes():
+    """Figuras sin texto -> 'unannotated_shapes' con text_bearing_elements_count == 0."""
+    from backend.crud.projects import analyze_whiteboard_collaboration_density
+
+    res = analyze_whiteboard_collaboration_density(
+        [
+            {"type": "rectangle", "text": "   "},
+            {"type": "ellipse"},
+        ]
+    )
+    assert res["active_elements_count"] == 2
+    assert res["text_bearing_elements_count"] == 0
+    assert res["total_words_count"] == 0
+    assert res["collaboration_maturity_status"] == "unannotated_shapes"
+
+
+def test_analyze_whiteboard_collaboration_density_empty_or_all_deleted():
+    """None, dict vacío o todos los elementos con isDeleted=True -> 'empty_canvas'."""
+    from backend.crud.projects import analyze_whiteboard_collaboration_density
+
+    for payload in (
+        None,
+        {},
+        [],
+        [{"type": "sticky", "text": "eliminado", "isDeleted": True}],
+    ):
+        res = analyze_whiteboard_collaboration_density(payload)
+        assert res["active_elements_count"] == 0
+        assert res["text_bearing_elements_count"] == 0
+        assert res["connector_elements_count"] == 0
+        assert res["collaboration_maturity_status"] == "empty_canvas"

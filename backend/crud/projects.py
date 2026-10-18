@@ -6743,3 +6743,82 @@ def evaluate_dependency_network_bottlenecks(
         "bottleneck_nodes": bottleneck_nodes,
         "network_complexity_status": network_complexity_status,
     }
+
+
+def analyze_whiteboard_collaboration_density(
+    canvas_data: dict[str, Any] | list[Any] | None,
+) -> dict[str, Any]:
+    """Evalúa la densidad de colaboración visual en un lienzo de pizarra según PMI PMBOK §5.2.2.6 / §10.2."""
+    if isinstance(canvas_data, dict):
+        raw_elements = (
+            canvas_data.get("elements")
+            if canvas_data.get("elements") is not None
+            else (canvas_data.get("nodes") or [])
+        )
+    elif isinstance(canvas_data, list):
+        raw_elements = canvas_data
+    else:
+        raw_elements = []
+
+    if not isinstance(raw_elements, list):
+        raw_elements = []
+
+    active_elements = [
+        el
+        for el in raw_elements
+        if isinstance(el, dict) and not bool(el.get("isDeleted"))
+    ]
+
+    text_bearing_elements_count = 0
+    connector_elements_count = 0
+    total_words_count = 0
+    unique_authors_set: set[str] = set()
+    connector_types = {"arrow", "line", "connector", "edge"}
+
+    for el in active_elements:
+        el_type = str(el.get("type") or "").strip().lower()
+        text_val = str(
+            el.get("text") or el.get("label") or el.get("content") or ""
+        ).strip()
+        author_id = str(
+            el.get("author_id")
+            or el.get("created_by")
+            or el.get("updated_by")
+            or ""
+        ).strip()
+
+        if text_val:
+            text_bearing_elements_count += 1
+            total_words_count += len(text_val.split())
+        if el_type in connector_types:
+            connector_elements_count += 1
+        if author_id:
+            unique_authors_set.add(author_id)
+
+    active_elements_count = len(active_elements)
+    unique_authors_count = len(unique_authors_set)
+    connector_ratio = (
+        round(connector_elements_count / active_elements_count, 2)
+        if active_elements_count > 0
+        else 0.0
+    )
+
+    if active_elements_count == 0:
+        collaboration_maturity_status = "empty_canvas"
+    elif text_bearing_elements_count == 0:
+        collaboration_maturity_status = "unannotated_shapes"
+    elif text_bearing_elements_count >= 2 and connector_elements_count >= 1:
+        collaboration_maturity_status = "connected_mindmap"
+    else:
+        collaboration_maturity_status = "brainstorming_notes"
+
+    return {
+        "active_elements_count": active_elements_count,
+        "text_bearing_elements_count": text_bearing_elements_count,
+        "connector_elements_count": connector_elements_count,
+        "total_words_count": total_words_count,
+        "unique_authors_count": unique_authors_count,
+        "connector_ratio": connector_ratio,
+        "collaboration_maturity_status": collaboration_maturity_status,
+    }
+
