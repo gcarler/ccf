@@ -3425,3 +3425,132 @@ def test_audit_executive_report_stakeholder_engagement_drift_empty_or_none():
             "invalid_assessment_ids": [],
             "is_engagement_healthy": False,
         }
+
+
+def test_audit_executive_report_contract_type_risk_allocation_aligned():
+    """Contratos FFP con alcance bien definido, T&M con techo y cláusula de auditoría, todos con SOW -> is_risk_aligned True."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_contract_type_risk_allocation,
+    )
+
+    contracts = [
+        {
+            "contract_id": "CTR-FFP-1",
+            "contract_type": "FFP",
+            "scope_definition_maturity": "well_defined",
+            "has_statement_of_work": True,
+        },
+        {
+            "contract_id": "CTR-TM-2",
+            "contract_type": "tm",
+            "scope_definition_maturity": "evolving",
+            "has_ceiling_price": True,
+            "has_statement_of_work": True,
+            "buyer_audit_rights_clause": True,
+        },
+    ]
+    res = audit_executive_report_contract_type_risk_allocation(contracts)
+    assert res == {
+        "evaluated_contract_count": 2,
+        "missing_sow_contract_ids": [],
+        "mismatched_fixed_price_uncertainty_ids": [],
+        "uncapped_time_and_materials_ids": [],
+        "missing_buyer_audit_clause_ids": [],
+        "invalid_contract_ids": [],
+        "is_risk_aligned": True,
+    }
+    assert (
+        ProjectExportService.audit_executive_report_contract_type_risk_allocation(
+            contracts
+        )
+        == res
+    )
+
+
+def test_audit_executive_report_contract_type_risk_allocation_mismatched_and_uncapped():
+    """FFP con alcance incierto, T&M sin techo ni cláusula de auditoría, CPFF sin SOW -> violaciones detectadas."""
+    from backend.services.project_export_service import (
+        audit_executive_report_contract_type_risk_allocation,
+    )
+
+    res = audit_executive_report_contract_type_risk_allocation(
+        [
+            {
+                "contract_id": "CTR-FFP-UNC",
+                "contract_type": "ffp",
+                "scope_definition_maturity": "uncertain",
+                "has_statement_of_work": True,
+            },
+            {
+                "contract_id": "CTR-TM-OPEN",
+                "contract_type": "tm",
+                "scope_definition_maturity": "evolving",
+                "has_ceiling_price": False,
+                "has_statement_of_work": True,
+                "buyer_audit_rights_clause": False,
+            },
+            {
+                "contract_id": "CTR-CPFF-NOSOW",
+                "contract_type": "cpff",
+                "scope_definition_maturity": "uncertain",
+                "has_statement_of_work": False,
+                "buyer_audit_rights_clause": True,
+            },
+        ]
+    )
+    assert res == {
+        "evaluated_contract_count": 3,
+        "missing_sow_contract_ids": ["CTR-CPFF-NOSOW"],
+        "mismatched_fixed_price_uncertainty_ids": ["CTR-FFP-UNC"],
+        "uncapped_time_and_materials_ids": ["CTR-TM-OPEN"],
+        "missing_buyer_audit_clause_ids": ["CTR-TM-OPEN"],
+        "invalid_contract_ids": [],
+        "is_risk_aligned": False,
+    }
+
+
+def test_audit_executive_report_contract_type_risk_allocation_invalid_contract():
+    """Tipo de contrato o madurez de alcance desconocido -> invalid_contract_ids poblado."""
+    from backend.services.project_export_service import (
+        audit_executive_report_contract_type_risk_allocation,
+    )
+
+    res = audit_executive_report_contract_type_risk_allocation(
+        [
+            {
+                "contract_id": "CTR-BAD-TYPE",
+                "contract_type": "cost_plus_percentage",
+                "scope_definition_maturity": "well_defined",
+                "has_statement_of_work": True,
+            },
+            {
+                "contract_id": "CTR-BAD-MAT",
+                "contract_type": "ffp",
+                "scope_definition_maturity": "unknown_maturity",
+                "has_statement_of_work": True,
+            },
+        ]
+    )
+    assert res["evaluated_contract_count"] == 2
+    assert res["invalid_contract_ids"] == ["CTR-BAD-TYPE", "CTR-BAD-MAT"]
+    assert res["is_risk_aligned"] is False
+
+
+def test_audit_executive_report_contract_type_risk_allocation_empty_or_none():
+    """Lista vacía, None o entradas sin contract_id -> evaluated_contract_count 0, is_risk_aligned False."""
+    from backend.services.project_export_service import (
+        audit_executive_report_contract_type_risk_allocation,
+    )
+
+    for payload in (None, [], [{"contract_id": "  "}], ["invalid"]):
+        res = audit_executive_report_contract_type_risk_allocation(payload)  # type: ignore[arg-type]
+        assert res == {
+            "evaluated_contract_count": 0,
+            "missing_sow_contract_ids": [],
+            "mismatched_fixed_price_uncertainty_ids": [],
+            "uncapped_time_and_materials_ids": [],
+            "missing_buyer_audit_clause_ids": [],
+            "invalid_contract_ids": [],
+            "is_risk_aligned": False,
+        }

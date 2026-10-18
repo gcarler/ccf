@@ -5250,6 +5250,49 @@ def evaluate_evm_funding_runway_exhaustion(
     }
 
 
+def evaluate_evm_joint_cost_schedule_index(
+    *,
+    cpi: float,
+    spi: float,
+    percent_complete: float,
+    tcpi_bac: float = 1.0,
+) -> dict[str, Any]:
+    """Evalúa el Índice Compuesto Costo-Cronograma (CSI = CPI * SPI) y la factibilidad estadística de recuperación según PMI PMBOK §7.4.2.2."""
+    f_cpi = float(cpi)
+    f_spi = float(spi)
+    f_pct = float(percent_complete)
+    f_tcpi = float(tcpi_bac)
+
+    csi = round(f_cpi * f_spi, 4)
+    tradeoff_imbalance = round(abs(f_cpi - f_spi), 4)
+
+    if csi >= 0.9:
+        csi_zone = "GREEN"
+    elif csi >= 0.8:
+        csi_zone = "YELLOW"
+    else:
+        csi_zone = "RED"
+
+    is_past_early_stabilization_point = f_pct >= 20.0
+    requires_formal_rebaseline = bool(
+        csi < 0.8
+        or f_tcpi > 1.10
+        or (is_past_early_stabilization_point and csi < 0.85)
+    )
+    is_jointly_healthy = bool(
+        csi_zone == "GREEN" and not requires_formal_rebaseline
+    )
+
+    return {
+        "csi": csi,
+        "tradeoff_imbalance": tradeoff_imbalance,
+        "csi_zone": csi_zone,
+        "is_past_early_stabilization_point": is_past_early_stabilization_point,
+        "requires_formal_rebaseline": requires_formal_rebaseline,
+        "is_jointly_healthy": is_jointly_healthy,
+    }
+
+
 ProjectEVMService.audit_eac_forecast_optimism_bias = staticmethod(
     audit_eac_forecast_optimism_bias
 )
@@ -5258,6 +5301,9 @@ ProjectEVMService.evaluate_management_reserve_ceiling_utilization = staticmethod
 )
 ProjectEVMService.evaluate_evm_funding_runway_exhaustion = staticmethod(
     evaluate_evm_funding_runway_exhaustion
+)
+ProjectEVMService.evaluate_evm_joint_cost_schedule_index = staticmethod(
+    evaluate_evm_joint_cost_schedule_index
 )
 
 
@@ -5273,5 +5319,6 @@ __all__ = [
     "audit_eac_forecast_optimism_bias",
     "evaluate_management_reserve_ceiling_utilization",
     "evaluate_evm_funding_runway_exhaustion",
+    "evaluate_evm_joint_cost_schedule_index",
     "ProjectEVMService",
 ]

@@ -3124,3 +3124,107 @@ def test_evaluate_evm_funding_runway_exhaustion_no_burn_series():
         "runway_status": "HEALTHY_RUNWAY",
         "is_runway_sufficient": True,
     }
+
+
+def test_evaluate_evm_joint_cost_schedule_index_green_and_healthy():
+    """CSI >= 0.90 y TCPI <= 1.10 -> csi_zone GREEN, requires_formal_rebaseline False, is_jointly_healthy True."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_joint_cost_schedule_index,
+    )
+
+    res = evaluate_evm_joint_cost_schedule_index(
+        cpi=0.98,
+        spi=0.95,
+        percent_complete=35.0,
+        tcpi_bac=1.02,
+    )
+    assert res == {
+        "csi": 0.931,
+        "tradeoff_imbalance": 0.03,
+        "csi_zone": "GREEN",
+        "is_past_early_stabilization_point": True,
+        "requires_formal_rebaseline": False,
+        "is_jointly_healthy": True,
+    }
+    assert (
+        ProjectEVMService.evaluate_evm_joint_cost_schedule_index(
+            cpi=0.98,
+            spi=0.95,
+            percent_complete=35.0,
+            tcpi_bac=1.02,
+        )
+        == res
+    )
+
+
+def test_evaluate_evm_joint_cost_schedule_index_yellow_early_vs_post_stabilization():
+    """CSI entre 0.80 y 0.85: antes de 20% de avance no exige rebaseline; después de 20% exige rebaseline."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_joint_cost_schedule_index,
+    )
+
+    res_early = evaluate_evm_joint_cost_schedule_index(
+        cpi=0.90,
+        spi=0.92,
+        percent_complete=15.0,
+        tcpi_bac=1.05,
+    )
+    assert res_early["csi"] == 0.828
+    assert res_early["csi_zone"] == "YELLOW"
+    assert res_early["is_past_early_stabilization_point"] is False
+    assert res_early["requires_formal_rebaseline"] is False
+    assert res_early["is_jointly_healthy"] is False
+
+    res_late = evaluate_evm_joint_cost_schedule_index(
+        cpi=0.90,
+        spi=0.92,
+        percent_complete=25.0,
+        tcpi_bac=1.05,
+    )
+    assert res_late["csi"] == 0.828
+    assert res_late["csi_zone"] == "YELLOW"
+    assert res_late["is_past_early_stabilization_point"] is True
+    assert res_late["requires_formal_rebaseline"] is True
+    assert res_late["is_jointly_healthy"] is False
+
+
+def test_evaluate_evm_joint_cost_schedule_index_red_zone():
+    """CSI < 0.80 -> csi_zone RED, requires_formal_rebaseline True."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_joint_cost_schedule_index,
+    )
+
+    res = evaluate_evm_joint_cost_schedule_index(
+        cpi=0.80,
+        spi=0.90,
+        percent_complete=10.0,
+        tcpi_bac=1.08,
+    )
+    assert res == {
+        "csi": 0.72,
+        "tradeoff_imbalance": 0.1,
+        "csi_zone": "RED",
+        "is_past_early_stabilization_point": False,
+        "requires_formal_rebaseline": True,
+        "is_jointly_healthy": False,
+    }
+
+
+def test_evaluate_evm_joint_cost_schedule_index_high_tcpi_triggers_rebaseline():
+    """Incluso con CSI >= 0.90, si tcpi_bac > 1.10 -> requires_formal_rebaseline True e is_jointly_healthy False."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_joint_cost_schedule_index,
+    )
+
+    res = evaluate_evm_joint_cost_schedule_index(
+        cpi=0.85,
+        spi=1.10,
+        percent_complete=60.0,
+        tcpi_bac=1.18,
+    )
+    assert res["csi"] == 0.935
+    assert res["csi_zone"] == "GREEN"
+    assert res["tradeoff_imbalance"] == 0.25
+    assert res["requires_formal_rebaseline"] is True
+    assert res["is_jointly_healthy"] is False

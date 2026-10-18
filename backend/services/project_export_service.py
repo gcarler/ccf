@@ -2847,6 +2847,91 @@ ProjectExportService.audit_executive_report_stakeholder_engagement_drift = stati
 )
 
 
+def audit_executive_report_contract_type_risk_allocation(
+    contracts: Sequence[Mapping[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Audita la coherencia entre el tipo de contrato de adquisición y la madurez del alcance según PMI PMBOK §12.1.1.6 & §12.3."""
+    valid_contract_types = {"ffp", "fp_epa", "fpif", "cpff", "cpif", "tm"}
+    fixed_price_types = {"ffp", "fp_epa", "fpif"}
+    reimbursable_or_tm_types = {"cpff", "cpif", "tm"}
+    valid_maturities = {"well_defined", "evolving", "uncertain"}
+
+    evaluated_contract_count = 0
+    missing_sow_contract_ids: list[str] = []
+    mismatched_fixed_price_uncertainty_ids: list[str] = []
+    uncapped_time_and_materials_ids: list[str] = []
+    missing_buyer_audit_clause_ids: list[str] = []
+    invalid_contract_ids: list[str] = []
+
+    for item in contracts or []:
+        if not isinstance(item, Mapping):
+            continue
+        contract_id = str(item.get("contract_id") or "").strip()
+        if not contract_id:
+            continue
+
+        evaluated_contract_count += 1
+        contract_type = str(item.get("contract_type") or "").strip().lower()
+        scope_definition_maturity = (
+            str(item.get("scope_definition_maturity") or "").strip().lower()
+        )
+
+        if (
+            contract_type not in valid_contract_types
+            or scope_definition_maturity not in valid_maturities
+        ):
+            invalid_contract_ids.append(contract_id)
+            continue
+
+        has_statement_of_work = bool(item.get("has_statement_of_work", False))
+        has_ceiling_price = bool(item.get("has_ceiling_price", False))
+        buyer_audit_rights_clause = bool(
+            item.get("buyer_audit_rights_clause", False)
+        )
+
+        if not has_statement_of_work:
+            missing_sow_contract_ids.append(contract_id)
+
+        if (
+            contract_type in fixed_price_types
+            and scope_definition_maturity == "uncertain"
+        ):
+            mismatched_fixed_price_uncertainty_ids.append(contract_id)
+
+        if contract_type == "tm" and not has_ceiling_price:
+            uncapped_time_and_materials_ids.append(contract_id)
+
+        if (
+            contract_type in reimbursable_or_tm_types
+            and not buyer_audit_rights_clause
+        ):
+            missing_buyer_audit_clause_ids.append(contract_id)
+
+    is_risk_aligned = bool(
+        evaluated_contract_count > 0
+        and len(missing_sow_contract_ids) == 0
+        and len(mismatched_fixed_price_uncertainty_ids) == 0
+        and len(uncapped_time_and_materials_ids) == 0
+        and len(missing_buyer_audit_clause_ids) == 0
+        and len(invalid_contract_ids) == 0
+    )
+
+    return {
+        "evaluated_contract_count": evaluated_contract_count,
+        "missing_sow_contract_ids": missing_sow_contract_ids,
+        "mismatched_fixed_price_uncertainty_ids": mismatched_fixed_price_uncertainty_ids,
+        "uncapped_time_and_materials_ids": uncapped_time_and_materials_ids,
+        "missing_buyer_audit_clause_ids": missing_buyer_audit_clause_ids,
+        "invalid_contract_ids": invalid_contract_ids,
+        "is_risk_aligned": is_risk_aligned,
+    }
+
+
+ProjectExportService.audit_executive_report_contract_type_risk_allocation = staticmethod(
+    audit_executive_report_contract_type_risk_allocation
+)
+
+
 __all__ = [
     "audit_csv_export_integrity",
     "evaluate_executive_report_completeness",
@@ -2877,6 +2962,7 @@ __all__ = [
     "audit_executive_report_risk_contingency_coverage",
     "audit_executive_report_scope_creep_governance",
     "audit_executive_report_stakeholder_engagement_drift",
+    "audit_executive_report_contract_type_risk_allocation",
     "ProjectExportService",
 ]
 

@@ -2114,8 +2114,9 @@ def test_audit_wiki_project_glossary_governance_empty_or_none():
 
 def test_audit_wiki_knowledge_bus_factor_and_freshness_resilient():
     """> Multi-autor, crítico con peer review y frescos <= 90 días -> RESILIENT repo."""
+    # Contrato v1 (compatibilidad): implementación original preservada.
     from backend.services.wiki_pmi_service import (
-        audit_wiki_knowledge_bus_factor_and_freshness as audit_fn,
+        audit_wiki_knowledge_bus_factor_and_freshness_v1 as audit_fn,
     )
 
     res = audit_fn(
@@ -2149,8 +2150,9 @@ def test_audit_wiki_knowledge_bus_factor_and_freshness_resilient():
 
 def test_audit_wiki_knowledge_bus_factor_and_freshness_critical_bus_factor():
     """> Crítico, un solo autor y sin peer review -> CRITICAL_BUS_FACTOR_EXPOSURE."""
+    # Contrato v1 (compatibilidad): implementación original preservada.
     from backend.services.wiki_pmi_service import (
-        audit_wiki_knowledge_bus_factor_and_freshness as audit_fn,
+        audit_wiki_knowledge_bus_factor_and_freshness_v1 as audit_fn,
     )
 
     res = audit_fn(
@@ -2179,8 +2181,9 @@ def test_audit_wiki_knowledge_bus_factor_and_freshness_critical_bus_factor():
 
 def test_audit_wiki_knowledge_bus_factor_and_freshness_orphaned_and_stale():
     """> Sin autores (precedencia posture) y review > 90 días como pilar separado."""
+    # Contrato v1 (compatibilidad): implementación original preservada.
     from backend.services.wiki_pmi_service import (
-        audit_wiki_knowledge_bus_factor_and_freshness as audit_fn,
+        audit_wiki_knowledge_bus_factor_and_freshness_v1 as audit_fn,
     )
 
     res = audit_fn(
@@ -2206,8 +2209,9 @@ def test_audit_wiki_knowledge_bus_factor_and_freshness_orphaned_and_stale():
 
 def test_audit_wiki_knowledge_bus_factor_and_freshness_empty_or_none():
     """None, lista vacía o entradas no-dict -> NO_ARTICLES_EVALUATED."""
+    # Contrato v1 (compatibilidad): implementación original preservada.
     from backend.services.wiki_pmi_service import (
-        audit_wiki_knowledge_bus_factor_and_freshness as audit_fn,
+        audit_wiki_knowledge_bus_factor_and_freshness_v1 as audit_fn,
     )
 
     for payload in (None, [], ["invalid", 42, None]):
@@ -2856,4 +2860,170 @@ def test_audit_wiki_benefits_realization_governance_empty_or_invalid():
             "unaligned_benefit_ids": [],
             "average_attainment_pct": 0.0,
             "is_governed": False,
+        }
+
+
+def test_audit_wiki_knowledge_bus_factor_and_freshness_v2_resilient():
+    """> Críticos multi-autor con peer review y frescos -> is_resilient True."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_knowledge_bus_factor_and_freshness,
+    )
+
+    res = audit_wiki_knowledge_bus_factor_and_freshness(
+        [
+            {
+                "article_id": "KB-ARCH",
+                "domain_criticality": "critical",
+                "contributor_ids": ["ana", "luis", "ana"],
+                "days_since_last_review": 30,
+                "peer_reviewed": True,
+            },
+            {
+                "article_id": "KB-HIGH",
+                "domain_criticality": "High",
+                "contributor_ids": ["sofia", "pedro"],
+                "days_since_last_review": 90,  # == tope, no stale
+                "peer_reviewed": True,
+            },
+        ],
+        max_stale_days=90,
+    )
+    assert res["evaluated_article_count"] == 2
+    assert res["unauthored_article_ids"] == []
+    assert res["single_author_critical_article_ids"] == []
+    assert res["unreviewed_critical_article_ids"] == []
+    assert res["stale_article_ids"] == []
+    assert res["is_resilient"] is True
+
+    from backend.services.wiki_pmi_service import WikiPMIService
+
+    static_res = WikiPMIService.audit_wiki_knowledge_bus_factor_and_freshness(
+        [
+            {
+                "article_id": "KB-ARCH",
+                "domain_criticality": "critical",
+                "contributor_ids": ["ana", "luis"],
+                "days_since_last_review": 30,
+                "peer_reviewed": True,
+            },
+        ]
+    )
+    assert static_res["is_resilient"] is True
+
+
+def test_audit_wiki_knowledge_bus_factor_and_freshness_v2_unauthored_and_bus_factor():
+    """> Sin autores (ignora None) y crítico con<=1 contribuyente -> bus-factor."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_knowledge_bus_factor_and_freshness,
+    )
+
+    res = audit_wiki_knowledge_bus_factor_and_freshness(
+        [
+            {
+                "article_id": "KB-GHOST",
+                "domain_criticality": "high",
+                "contributor_ids": [None, "  ", ""],
+                "days_since_last_review": 5,
+                "peer_reviewed": True,
+            },
+            {
+                "article_id": "KB-SOLO",
+                "domain_criticality": "critical",
+                "contributor_ids": ["josue"],
+                "days_since_last_review": 10,
+                "peer_reviewed": True,
+            },
+            {
+                "article_id": "KB-STANDARD-SOLO",
+                "domain_criticality": "standard",
+                "contributor_ids": ["marta"],
+                "days_since_last_review": 20,
+                "peer_reviewed": False,
+            },
+        ]
+    )
+    assert res["evaluated_article_count"] == 3
+    assert res["unauthored_article_ids"] == ["KB-GHOST"]
+    # Spec literal: crítico con <= 1 contribuyente, incluido el caso de 0 autores.
+    assert res["single_author_critical_article_ids"] == ["KB-GHOST", "KB-SOLO"]
+    assert res["unreviewed_critical_article_ids"] == []
+    assert res["stale_article_ids"] == []
+    assert res["is_resilient"] is False
+
+
+def test_audit_wiki_knowledge_bus_factor_and_freshness_v2_unreviewed_critical():
+    """> Crítico multi-autor sin peer review -> unreviewed_critical (precedencia posture n/a)."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_knowledge_bus_factor_and_freshness,
+    )
+
+    res = audit_wiki_knowledge_bus_factor_and_freshness(
+        [
+            {
+                "article_id": "KB-NOREV",
+                "domain_criticality": "CRITICAL",
+                "contributor_ids": ["ana", "luis"],
+                "days_since_last_review": 15,
+                "peer_reviewed": False,
+            },
+            {
+                "article_id": "KB-OK",
+                "domain_criticality": "standard",
+                "contributor_ids": ["rita"],
+                "days_since_last_review": 15,
+            },
+        ]
+    )
+    assert res["evaluated_article_count"] == 2
+    assert res["unreviewed_critical_article_ids"] == ["KB-NOREV"]
+    assert res["single_author_critical_article_ids"] == []
+    assert res["unauthored_article_ids"] == []
+    assert res["stale_article_ids"] == []
+    assert res["is_resilient"] is False
+
+
+def test_audit_wiki_knowledge_bus_factor_and_freshness_v2_stale_and_empty():
+    """> Review > max_stale_days configurable; None/vacío/basura -> is_resilient False."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_knowledge_bus_factor_and_freshness,
+    )
+
+    res_stale = audit_wiki_knowledge_bus_factor_and_freshness(
+        [
+            {
+                "article_id": "KB-OLD",
+                "days_since_last_review": 91,
+                "peer_reviewed": True,
+            },
+            {
+                "article_id": "KB-EDGE",
+                "days_since_last_review": 90,  # == tope, no stale
+            },
+        ],
+        max_stale_days=90,
+    )
+    assert res_stale["stale_article_ids"] == ["KB-OLD"]
+    assert res_stale["is_resilient"] is False
+
+    res_relaxed = audit_wiki_knowledge_bus_factor_and_freshness(
+        [
+            {
+                "article_id": "KB-EDGE",
+                "contributor_ids": ["rita"],
+                "days_since_last_review": 91.5,
+            },
+        ],
+        max_stale_days=120,
+    )
+    assert res_relaxed["stale_article_ids"] == []
+    assert res_relaxed["is_resilient"] is True
+
+    for payload in (None, [], ["no-dict", 42, {"domain_criticality": "high"}]):
+        assert audit_wiki_knowledge_bus_factor_and_freshness(payload) == {  # type: ignore[arg-type]
+            "evaluated_article_count": 0,
+            "unauthored_article_ids": [],
+            "single_author_critical_article_ids": [],
+            "unreviewed_critical_article_ids": [],
+            "stale_article_ids": [],
+            "is_resilient": False,
         }

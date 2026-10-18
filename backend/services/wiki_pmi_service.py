@@ -13,7 +13,7 @@ import unicodedata
 from collections.abc import Mapping, Sequence
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -1767,11 +1767,15 @@ def audit_wiki_project_glossary_governance(
     }
 
 
-def audit_wiki_knowledge_bus_factor_and_freshness(
+def audit_wiki_knowledge_bus_factor_and_freshness_v1(
     articles: list[dict[str, Any]] | None = None,
     max_stale_days: int = 90,
 ) -> dict[str, Any]:
     """Audita retención de conocimiento, bus-factor y frescura de revisiones (PMBOK §4.4).
+
+    Contrato v1 conservado para compatibilidad; la variante canónica vigente
+    es ``audit_wiki_knowledge_bus_factor_and_freshness`` (dominio por
+    ``domain_criticality`` y separación de single-author / unreviewed).
 
     Cada artículo declara `id`/`article_id`/`slug` (fallback 'ART-{idx}'),
     contribuidores (`contributors`/`authors`/`editors`, lista/tuple/set o
@@ -2004,11 +2008,12 @@ class WikiPMIService:
 
     @staticmethod
     def audit_wiki_knowledge_bus_factor_and_freshness(
-        articles: list[dict[str, Any]] | None = None,
+        article_records: Sequence[Mapping[str, Any]] | None = None,
+        *,
         max_stale_days: int = 90,
     ) -> dict[str, Any]:
         return audit_wiki_knowledge_bus_factor_and_freshness(
-            articles, max_stale_days=max_stale_days
+            article_records, max_stale_days=max_stale_days
         )
 
     @staticmethod
@@ -2478,3 +2483,83 @@ __all__ = [
     "WikiPMIService",
 ]
 
+
+
+def audit_wiki_knowledge_bus_factor_and_freshness(
+    article_records: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_stale_days: int = 90,
+) -> dict[str, Any]:
+    """PMI PMBOK 4.4.3.1 — resiliencia de conocimiento organizacional (bus-factor y vigencia OPA).
+
+    Para cada artículo con ``article_id`` válido:
+    - contribuyentes únicos limpios (ignorando ``None``); sin autores ->
+      ``unauthored_article_ids``.
+    - ``domain_criticality`` en {'high', 'critical'} con <= 1 contribuyente ->
+      ``single_author_critical_article_ids``.
+    - crítico sin ``peer_reviewed`` -> ``unreviewed_critical_article_ids``.
+    - ``days_since_last_review`` > ``max_stale_days`` -> ``stale_article_ids``.
+    """
+    if not isinstance(article_records, (list, tuple)):
+        article_records = []
+
+    evaluated_article_count = 0
+    unauthored_article_ids: list[str] = []
+    single_author_critical_article_ids: list[str] = []
+    unreviewed_critical_article_ids: list[str] = []
+    stale_article_ids: list[str] = []
+
+    for item in article_records:
+        if not isinstance(item, Mapping):
+            continue
+        article_id = str(item.get("article_id") or "").strip()
+        if not article_id:
+            continue
+        evaluated_article_count += 1
+
+        raw_contributors = item.get("contributor_ids")
+        if not isinstance(raw_contributors, (list, tuple, set)):
+            raw_contributors = []
+        contributors: set[str] = {
+            str(contributor).strip()
+            for contributor in raw_contributors
+            if contributor is not None and str(contributor).strip()
+        }
+
+        domain_criticality = str(item.get("domain_criticality") or "standard").strip().lower()
+        is_domain_critical = domain_criticality in {"high", "critical"}
+
+        try:
+            days_since_last_review = float(item.get("days_since_last_review", 0))
+        except (TypeError, ValueError):
+            days_since_last_review = 0.0
+        peer_reviewed = bool(item.get("peer_reviewed", False))
+
+        if len(contributors) == 0:
+            unauthored_article_ids.append(article_id)
+
+        if is_domain_critical and len(contributors) <= 1:
+            single_author_critical_article_ids.append(article_id)
+
+        if is_domain_critical and not peer_reviewed:
+            unreviewed_critical_article_ids.append(article_id)
+
+        if days_since_last_review > float(max_stale_days):
+            stale_article_ids.append(article_id)
+
+    is_resilient = bool(
+        evaluated_article_count > 0
+        and len(unauthored_article_ids) == 0
+        and len(single_author_critical_article_ids) == 0
+        and len(unreviewed_critical_article_ids) == 0
+        and len(stale_article_ids) == 0
+    )
+
+    return {
+        "evaluated_article_count": evaluated_article_count,
+        "unauthored_article_ids": unauthored_article_ids,
+        "single_author_critical_article_ids": single_author_critical_article_ids,
+        "unreviewed_critical_article_ids": unreviewed_critical_article_ids,
+        "stale_article_ids": stale_article_ids,
+        "is_resilient": is_resilient,
+    }
