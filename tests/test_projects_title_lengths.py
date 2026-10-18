@@ -3132,3 +3132,94 @@ def test_validate_schedule_network_lead_lag_and_float_feasibility_invalid_inputs
         validate_schedule_network_lead_lag_and_float_feasibility(
             5.0, 5.0, max_lead_ratio_pct=0.0
         )
+
+
+def test_validate_cpif_cost_sharing_and_fee_bounds_within_range():
+    """> Underrun y overrun moderado dentro de la banda -> is_within_incentive_range."""
+    from backend.schemas.projects import validate_cpif_cost_sharing_and_fee_bounds
+
+    # seller=20%: fee crudo = 100 + (1000 - actual) * 0.2.
+    res_underrun = validate_cpif_cost_sharing_and_fee_bounds(
+        1000.0, 100.0, 60.0, 150.0, 80.0, 20.0, 950.0
+    )
+    assert res_underrun["cost_variance"] == 50.0
+    assert res_underrun["raw_calculated_fee"] == 110.0
+    assert res_underrun["final_fee"] == 110.0
+    assert res_underrun["total_reimbursed_price"] == 1060.0
+    assert res_underrun["is_capped_at_max_fee"] is False
+    assert res_underrun["is_floored_at_min_fee"] is False
+    assert res_underrun["optimistic_range_cost"] == 750.0
+    assert res_underrun["pessimistic_range_cost"] == 1200.0
+    assert res_underrun["is_within_incentive_range"] is True
+
+    res_overrun = validate_cpif_cost_sharing_and_fee_bounds(
+        1000.0, 100.0, 60.0, 150.0, 80.0, 20.0, 1050.0
+    )
+    assert res_overrun["cost_variance"] == -50.0
+    assert res_overrun["raw_calculated_fee"] == 90.0
+    assert res_overrun["total_reimbursed_price"] == 1140.0
+    assert res_overrun["is_within_incentive_range"] is True
+
+
+def test_validate_cpif_cost_sharing_and_fee_bounds_capped_at_max_fee():
+    """> Ahorro fuerte: fee crudo supera maximum_fee -> capped y final == max."""
+    from backend.schemas.projects import validate_cpif_cost_sharing_and_fee_bounds
+
+    res = validate_cpif_cost_sharing_and_fee_bounds(
+        1000.0, 100.0, 60.0, 150.0, 50.0, 50.0, 700.0
+    )
+    assert res["cost_variance"] == 300.0
+    assert res["raw_calculated_fee"] == 250.0
+    assert res["final_fee"] == 150.0
+    assert res["is_capped_at_max_fee"] is True
+    assert res["is_floored_at_min_fee"] is False
+    assert res["total_reimbursed_price"] == 850.0
+    assert res["is_within_incentive_range"] is False
+
+    # Un ahorro algo menor pero aún sobre el borde (raw > max) también queda capped.
+    edge = validate_cpif_cost_sharing_and_fee_bounds(
+        1000.0, 100.0, 60.0, 150.0, 50.0, 50.0, 700.5
+    )
+    assert edge["raw_calculated_fee"] == 249.75
+    assert edge["is_capped_at_max_fee"] is True
+
+
+def test_validate_cpif_cost_sharing_and_fee_bounds_floored_at_min_fee():
+    """> Sobrecosto severo: fee crudo cae bajo minimum_fee -> floored y final == min."""
+    from backend.schemas.projects import validate_cpif_cost_sharing_and_fee_bounds
+
+    res = validate_cpif_cost_sharing_and_fee_bounds(
+        1000.0, 100.0, 60.0, 150.0, 50.0, 50.0, 2200.0
+    )
+    assert res["cost_variance"] == -1200.0
+    assert res["raw_calculated_fee"] == -500.0
+    assert res["final_fee"] == 60.0
+    assert res["is_floored_at_min_fee"] is True
+    assert res["is_capped_at_max_fee"] is False
+    assert res["total_reimbursed_price"] == 2260.0
+    assert res["pessimistic_range_cost"] == 1080.0
+    assert res["is_within_incentive_range"] is False
+
+
+def test_validate_cpif_cost_sharing_and_fee_bounds_value_errors():
+    """ValueError: reparto != 100%, banda desordenada, costos <= 0, bool/NaN."""
+    from backend.schemas.projects import validate_cpif_cost_sharing_and_fee_bounds
+
+    bad_calls = (
+        (1000.0, 100.0, 60.0, 150.0, 60.0, 20.0, 950.0),   # suma 80 != 100
+        (1000.0, 100.0, 60.0, 150.0, 90.0, 20.0, 950.0),   # suma 110 != 100
+        (1000.0, 100.0, 120.0, 150.0, 50.0, 50.0, 950.0),  # minimum > target fee
+        (1000.0, 100.0, 60.0, 90.0, 50.0, 50.0, 950.0),    # target > maximum fee
+        (1000.0, 100.0, -1.0, 150.0, 50.0, 50.0, 950.0),   # minimum < 0
+        (0.0, 100.0, 60.0, 150.0, 50.0, 50.0, 950.0),      # target_cost <= 0
+        (1000.0, 100.0, 60.0, 150.0, 50.0, 50.0, 0.0),     # actual_cost <= 0
+        (1000.0, 100.0, 60.0, 150.0, 0.0, 100.0, 950.0),   # buyer share <= 0
+        (1000.0, 100.0, 60.0, 150.0, 100.0, 0.0, 950.0),   # seller share <= 0
+        (True, 100.0, 60.0, 150.0, 50.0, 50.0, 950.0),     # bool
+        (1000.0, True, 60.0, 150.0, 50.0, 50.0, 950.0),
+        (float("nan"), 100.0, 60.0, 150.0, 50.0, 50.0, 950.0),
+        (float("inf"), 100.0, 60.0, 150.0, 50.0, 50.0, 950.0),
+    )
+    for args in bad_calls:
+        with pytest.raises(ValueError):
+            validate_cpif_cost_sharing_and_fee_bounds(*args)

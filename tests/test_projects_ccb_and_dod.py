@@ -4246,3 +4246,137 @@ def test_audit_ccb_change_request_sla_and_aging_backlog_empty_or_none():
         "deferred_backlog_excess": False,
         "is_ccb_sla_compliant": False,
     }
+
+
+def test_evaluate_supplier_ncr_disposition_governance_healthy():
+    """Verifica lote NCR conforme con cuarentena activa, recupero de costos y concesión menor autorizada bajo umbral."""
+    from backend.services.project_ccb_service import (
+        evaluate_supplier_ncr_disposition_governance,
+    )
+
+    ncr_items = [
+        {"ncr_id": "NCR-01", "disposition": "pending", "severity": "major", "quarantine_isolated": True},
+        {"ncr_id": "NCR-02", "disposition": "rework", "severity": "major"},
+        {"ncr_id": "NCR-03", "disposition": "scrap", "severity": "critical", "cost_recovery_claimed": True},
+        {"ncr_id": "NCR-04", "disposition": "return_to_vendor", "severity": "major", "cost_recovery_claimed": True},
+        {"ncr_id": "NCR-05", "disposition": "rework", "severity": "minor"},
+        {"ncr_id": "NCR-06", "disposition": "rework", "severity": "minor"},
+        {"ncr_id": "NCR-07", "disposition": "rework", "severity": "minor"},
+        {
+            "ncr_id": "NCR-08",
+            "disposition": "concession",
+            "severity": "minor",
+            "engineering_authority_approved": True,
+        },
+    ]
+    res = evaluate_supplier_ncr_disposition_governance(ncr_items, max_concession_ratio_pct=15.0)
+    assert res == {
+        "total_evaluated": 8,
+        "concession_count": 1,
+        "concession_ratio_pct": 12.5,
+        "unquarantined_open_ncr_ids": [],
+        "unauthorized_concession_ncr_ids": [],
+        "unclaimed_vendor_recovery_ncr_ids": [],
+        "excessive_concession_rate": False,
+        "is_ncr_governance_compliant": True,
+        "status": "healthy",
+        "recommendations": [],
+    }
+
+
+def test_evaluate_supplier_ncr_disposition_governance_critical_quarantine_and_concession():
+    """Detecta NCR abierta sin aislamiento en cuarentena o concesión sobre severidad crítica / sin firma de ingeniería (critical)."""
+    from backend.services.project_ccb_service import (
+        evaluate_supplier_ncr_disposition_governance,
+    )
+
+    ncr_items = [
+        {"ncr_id": "NCR-10", "disposition": "pending", "severity": "major", "quarantine_isolated": False},
+        {
+            "ncr_id": "NCR-11",
+            "disposition": "use_as_is",
+            "severity": "critical",
+            "engineering_authority_approved": True,
+        },
+        {
+            "ncr_id": "NCR-12",
+            "disposition": "concession",
+            "severity": "minor",
+            "engineering_authority_approved": False,
+        },
+    ]
+    res = evaluate_supplier_ncr_disposition_governance(ncr_items, max_concession_ratio_pct=80.0)
+    assert res["total_evaluated"] == 3
+    assert res["concession_count"] == 2
+    assert res["unquarantined_open_ncr_ids"] == ["NCR-10"]
+    assert res["unauthorized_concession_ncr_ids"] == ["NCR-11", "NCR-12"]
+    assert res["is_ncr_governance_compliant"] is False
+    assert res["status"] == "critical"
+    assert len(res["recommendations"]) == 2
+
+
+def test_evaluate_supplier_ncr_disposition_governance_warning_excess_concession_and_unclaimed_scrap():
+    """Detecta exceso de tasa de concesión (> max_concession_ratio_pct) o desecho/devolución sin reclamo al proveedor (warning)."""
+    from backend.services.project_ccb_service import (
+        evaluate_supplier_ncr_disposition_governance,
+    )
+
+    ncr_items = [
+        {
+            "ncr_id": "NCR-20",
+            "disposition": "concession",
+            "severity": "minor",
+            "engineering_authority_approved": True,
+        },
+        {
+            "ncr_id": "NCR-21",
+            "disposition": "scrap",
+            "severity": "major",
+            "cost_recovery_claimed": False,
+        },
+        {"ncr_id": "NCR-22", "disposition": "rework", "severity": "minor"},
+    ]
+    res = evaluate_supplier_ncr_disposition_governance(ncr_items, max_concession_ratio_pct=15.0)
+    assert res["total_evaluated"] == 3
+    assert res["concession_count"] == 1
+    assert res["concession_ratio_pct"] == 33.33
+    assert res["unquarantined_open_ncr_ids"] == []
+    assert res["unauthorized_concession_ncr_ids"] == []
+    assert res["unclaimed_vendor_recovery_ncr_ids"] == ["NCR-21"]
+    assert res["excessive_concession_rate"] is True
+    assert res["is_ncr_governance_compliant"] is False
+    assert res["status"] == "warning"
+    assert len(res["recommendations"]) == 2
+
+
+def test_evaluate_supplier_ncr_disposition_governance_empty_and_service_staticmethod():
+    """Verifica entradas vacías/None e invocación mediante ProjectCCBService.evaluate_supplier_ncr_disposition_governance."""
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        evaluate_supplier_ncr_disposition_governance,
+    )
+
+    empty_res = evaluate_supplier_ncr_disposition_governance(None)
+    assert empty_res == {
+        "total_evaluated": 0,
+        "concession_count": 0,
+        "concession_ratio_pct": 0.0,
+        "unquarantined_open_ncr_ids": [],
+        "unauthorized_concession_ncr_ids": [],
+        "unclaimed_vendor_recovery_ncr_ids": [],
+        "excessive_concession_rate": False,
+        "is_ncr_governance_compliant": True,
+        "status": "healthy",
+        "recommendations": [],
+    }
+
+    sample = [
+        {"id": "NCR-99", "disposition": "pending", "quarantine_isolated": True},
+        "invalid",
+        {"id": "   "},
+    ]
+    assert (
+        ProjectCCBService.evaluate_supplier_ncr_disposition_governance(sample)
+        == evaluate_supplier_ncr_disposition_governance(sample)
+    )
+

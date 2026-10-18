@@ -3002,6 +3002,7 @@ __all__ = [
     "audit_markdown_heading_hierarchy_and_duplicates",
     "audit_markdown_external_url_scheme_hygiene",
     "audit_markdown_admonition_callout_hygiene",
+    "audit_markdown_frontmatter_metadata_hygiene",
     "AnyDocService",
     "AnydocService",
 ]
@@ -3541,5 +3542,168 @@ AnyDocService.audit_markdown_admonition_callout_hygiene = staticmethod(
     audit_markdown_admonition_callout_hygiene
 )
 
+
+_FRONTMATTER_PLACEHOLDER_VALUES = {
+    "tbd",
+    "todo",
+    "n/a",
+    "null",
+    "~",
+    "pending_owner",
+}
+_FRONTMATTER_LIFECYCLE_STATUSES = {
+    "draft",
+    "in_review",
+    "approved",
+    "baselined",
+    "archived",
+    "deprecated",
+}
+
+
+def audit_markdown_frontmatter_metadata_hygiene(
+    markdown_text: str,
+    required_keys: Sequence[str] = ("title", "owner", "version", "status"),
+) -> dict[str, Any]:
+    """Audita el bloque YAML frontmatter e higiene de metadatos de gobernanza documental según PMI PMBOK §4.4 y §10.2."""
+    req_keys = [
+        str(k).strip().lower()
+        for k in (required_keys or ())
+        if str(k).strip()
+    ]
+    lines = (
+        markdown_text.splitlines()
+        if isinstance(markdown_text, str) and markdown_text
+        else []
+    )
+
+    first_non_empty_idx: int | None = None
+    for idx, line in enumerate(lines):
+        if line.strip():
+            first_non_empty_idx = idx
+            break
+
+    closing_idx: int | None = None
+    if first_non_empty_idx is not None and lines[first_non_empty_idx].strip() == "---":
+        for idx in range(first_non_empty_idx + 1, len(lines)):
+            if lines[idx].strip() in {"---", "..."}:
+                closing_idx = idx
+                break
+
+    has_valid_frontmatter = bool(
+        first_non_empty_idx is not None
+        and closing_idx is not None
+        and closing_idx > first_non_empty_idx
+    )
+
+    parsed_keys_count = 0
+    missing_required_keys: list[str] = []
+    duplicate_keys: list[str] = []
+    invalid_lifecycle_status = False
+
+    if not has_valid_frontmatter:
+        missing_required_keys = list(req_keys)
+    else:
+        assert first_non_empty_idx is not None and closing_idx is not None
+        seen_keys: set[str] = set()
+        parsed_map: dict[str, str] = {}
+
+        for raw_line in lines[first_non_empty_idx + 1 : closing_idx]:
+            stripped = raw_line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            if ":" not in stripped:
+                continue
+            raw_key, raw_val = stripped.split(":", 1)
+            norm_key = raw_key.strip().lower()
+            if not norm_key:
+                continue
+
+            parsed_keys_count += 1
+            clean_val = raw_val.strip()
+            if len(clean_val) >= 2 and (
+                (clean_val[0] == '"' and clean_val[-1] == '"')
+                or (clean_val[0] == "'" and clean_val[-1] == "'")
+            ):
+                clean_val = clean_val[1:-1].strip()
+
+            if norm_key in seen_keys:
+                if norm_key not in duplicate_keys:
+                    duplicate_keys.append(norm_key)
+            else:
+                seen_keys.add(norm_key)
+
+            parsed_map[norm_key] = clean_val
+
+        for req_key in req_keys:
+            val = parsed_map.get(req_key, "")
+            if (
+                req_key not in parsed_map
+                or not val
+                or val.lower() in _FRONTMATTER_PLACEHOLDER_VALUES
+            ):
+                missing_required_keys.append(req_key)
+
+        status_val = parsed_map.get("status", "")
+        if (
+            status_val
+            and status_val.lower() not in _FRONTMATTER_PLACEHOLDER_VALUES
+            and status_val.lower() not in _FRONTMATTER_LIFECYCLE_STATUSES
+        ):
+            invalid_lifecycle_status = True
+
+    is_compliant = bool(
+        has_valid_frontmatter
+        and len(missing_required_keys) == 0
+        and len(duplicate_keys) == 0
+        and not invalid_lifecycle_status
+    )
+
+    recommendations: list[str] = []
+    if not has_valid_frontmatter:
+        recommendations.append(
+            "Incluir un bloque YAML frontmatter delimitado por '---' al inicio del documento."
+        )
+    if missing_required_keys:
+        recommendations.append(
+            "Completar los metadatos obligatorios sin valores vacíos ni placeholders: "
+            + ", ".join(missing_required_keys)
+            + "."
+        )
+    if duplicate_keys:
+        recommendations.append(
+            "Eliminar claves duplicadas en el bloque frontmatter: "
+            + ", ".join(duplicate_keys)
+            + "."
+        )
+    if invalid_lifecycle_status:
+        recommendations.append(
+            "Asignar un estado de ciclo de vida documental válido (draft, in_review, approved, baselined, archived, deprecated)."
+        )
+
+    if is_compliant:
+        status = "healthy"
+    elif not has_valid_frontmatter or len(missing_required_keys) > 0:
+        status = "critical"
+    else:
+        status = "warning"
+
+    return {
+        "has_valid_frontmatter": has_valid_frontmatter,
+        "parsed_keys_count": parsed_keys_count,
+        "missing_required_keys": missing_required_keys,
+        "duplicate_keys": duplicate_keys,
+        "invalid_lifecycle_status": invalid_lifecycle_status,
+        "is_compliant": is_compliant,
+        "status": status,
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_markdown_frontmatter_metadata_hygiene = staticmethod(
+    audit_markdown_frontmatter_metadata_hygiene
+)
+
 AnydocService = AnyDocService
+
 

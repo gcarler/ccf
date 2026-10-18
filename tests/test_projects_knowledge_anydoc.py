@@ -3212,3 +3212,116 @@ def test_audit_markdown_admonition_callout_hygiene_via_service_staticmethod():
         == audit_markdown_admonition_callout_hygiene(md)
     )
 
+
+def test_audit_markdown_frontmatter_metadata_hygiene_healthy():
+    """Verifica frontmatter YAML completo y válido según PMI PMBOK §4.4 y §10.2."""
+    from backend.services.anydoc_service import (
+        audit_markdown_frontmatter_metadata_hygiene,
+    )
+
+    md = (
+        "---\n"
+        "# Cabecera de gobernanza documental\n"
+        'title: "Plan de Gestión del Alcance"\n'
+        "owner: pmo.lead@ccf.org\n"
+        "version: '2.1.0'\n"
+        "status: approved\n"
+        "---\n\n"
+        "# Introducción\n"
+        "Contenido del documento.\n"
+    )
+    res = audit_markdown_frontmatter_metadata_hygiene(md)
+    assert res == {
+        "has_valid_frontmatter": True,
+        "parsed_keys_count": 4,
+        "missing_required_keys": [],
+        "duplicate_keys": [],
+        "invalid_lifecycle_status": False,
+        "is_compliant": True,
+        "status": "healthy",
+        "recommendations": [],
+    }
+
+
+def test_audit_markdown_frontmatter_metadata_hygiene_critical_missing_or_placeholder():
+    """Detecta ausencia de frontmatter o campos obligatorios vacíos/placeholder (critical)."""
+    from backend.services.anydoc_service import (
+        audit_markdown_frontmatter_metadata_hygiene,
+    )
+
+    res_no_fm = audit_markdown_frontmatter_metadata_hygiene("# Documento sin frontmatter\nTexto.")
+    assert res_no_fm["has_valid_frontmatter"] is False
+    assert res_no_fm["parsed_keys_count"] == 0
+    assert res_no_fm["missing_required_keys"] == ["title", "owner", "version", "status"]
+    assert res_no_fm["is_compliant"] is False
+    assert res_no_fm["status"] == "critical"
+    assert len(res_no_fm["recommendations"]) >= 1
+
+    md_placeholders = (
+        "---\n"
+        "title: Acta de Constitución\n"
+        "owner: TBD\n"
+        "version: \n"
+        "status: in_review\n"
+        "...\n"
+        "Cuerpo.\n"
+    )
+    res_ph = audit_markdown_frontmatter_metadata_hygiene(md_placeholders)
+    assert res_ph["has_valid_frontmatter"] is True
+    assert res_ph["parsed_keys_count"] == 4
+    assert res_ph["missing_required_keys"] == ["owner", "version"]
+    assert res_ph["duplicate_keys"] == []
+    assert res_ph["invalid_lifecycle_status"] is False
+    assert res_ph["is_compliant"] is False
+    assert res_ph["status"] == "critical"
+    assert len(res_ph["recommendations"]) == 1
+
+
+def test_audit_markdown_frontmatter_metadata_hygiene_warning_duplicates_and_lifecycle():
+    """Detecta claves duplicadas en frontmatter o status fuera del ciclo de vida permitido (warning)."""
+    from backend.services.anydoc_service import (
+        audit_markdown_frontmatter_metadata_hygiene,
+    )
+
+    md = (
+        "\n"
+        "---\n"
+        "title: Matriz RACI\n"
+        "owner: dir.proyectos@ccf.org\n"
+        "owner: coord.calidad@ccf.org\n"
+        "version: 1.0\n"
+        "status: experimental_beta\n"
+        "---\n"
+        "# RACI\n"
+    )
+    res = audit_markdown_frontmatter_metadata_hygiene(md)
+    assert res["has_valid_frontmatter"] is True
+    assert res["parsed_keys_count"] == 5
+    assert res["missing_required_keys"] == []
+    assert res["duplicate_keys"] == ["owner"]
+    assert res["invalid_lifecycle_status"] is True
+    assert res["is_compliant"] is False
+    assert res["status"] == "warning"
+    assert len(res["recommendations"]) == 2
+
+
+def test_audit_markdown_frontmatter_metadata_hygiene_via_service_staticmethod():
+    """Verifica invocación desde AnydocService.audit_markdown_frontmatter_metadata_hygiene."""
+    from backend.services.anydoc_service import (
+        AnydocService,
+        audit_markdown_frontmatter_metadata_hygiene,
+    )
+
+    md = (
+        "---\n"
+        "title: Plan de Calidad\n"
+        "owner: qa@ccf.org\n"
+        "version: 1.0.0\n"
+        "status: baselined\n"
+        "---\n"
+    )
+    assert (
+        AnydocService.audit_markdown_frontmatter_metadata_hygiene(md)
+        == audit_markdown_frontmatter_metadata_hygiene(md)
+    )
+

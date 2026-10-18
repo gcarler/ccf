@@ -2813,6 +2813,7 @@ __all__ = [
     "evaluate_quality_aql_lot_sampling_acceptance",
     "evaluate_copq_rework_and_scrap_ratio",
     "audit_ccb_change_request_sla_and_aging_backlog",
+    "evaluate_supplier_ncr_disposition_governance",
     "ProjectCCBService",
 ]
 
@@ -3275,3 +3276,117 @@ def audit_ccb_change_request_sla_and_aging_backlog(
 ProjectCCBService.audit_ccb_change_request_sla_and_aging_backlog = staticmethod(
     audit_ccb_change_request_sla_and_aging_backlog
 )
+
+
+def evaluate_supplier_ncr_disposition_governance(
+    ncr_items: Sequence[Mapping[str, Any]] | None,
+    max_concession_ratio_pct: float = 15.0,
+) -> dict[str, Any]:
+    """Evalúa reportes de no conformidad de proveedores (Supplier NCR), cuarentena y disposición técnica según PMI PMBOK §8.3 y §12.3."""
+    if (
+        ncr_items is None
+        or isinstance(ncr_items, (str, bytes, Mapping))
+        or not isinstance(ncr_items, Sequence)
+    ):
+        items: Sequence[Any] = []
+    else:
+        items = ncr_items
+
+    total_evaluated = 0
+    concession_count = 0
+    unquarantined_open_ncr_ids: list[str] = []
+    unauthorized_concession_ncr_ids: list[str] = []
+    unclaimed_vendor_recovery_ncr_ids: list[str] = []
+
+    for item in items:
+        if not isinstance(item, Mapping):
+            continue
+        ncr_id = str(item.get("ncr_id") or item.get("id") or "").strip()
+        if not ncr_id:
+            continue
+
+        total_evaluated += 1
+        disposition = str(item.get("disposition") or "pending").strip().lower()
+        severity = str(item.get("severity") or "minor").strip().lower()
+
+        if disposition == "pending" and item.get("quarantine_isolated") is not True:
+            unquarantined_open_ncr_ids.append(ncr_id)
+
+        if disposition in {"use_as_is", "concession"}:
+            concession_count += 1
+            if (
+                severity == "critical"
+                or item.get("engineering_authority_approved") is not True
+            ):
+                unauthorized_concession_ncr_ids.append(ncr_id)
+
+        if (
+            disposition in {"scrap", "return_to_vendor"}
+            and item.get("cost_recovery_claimed") is not True
+        ):
+            unclaimed_vendor_recovery_ncr_ids.append(ncr_id)
+
+    concession_ratio_pct = (
+        round((concession_count / total_evaluated) * 100.0, 2)
+        if total_evaluated > 0
+        else 0.0
+    )
+    excessive_concession_rate = bool(
+        concession_ratio_pct > float(max_concession_ratio_pct)
+    )
+    is_ncr_governance_compliant = bool(
+        len(unquarantined_open_ncr_ids) == 0
+        and len(unauthorized_concession_ncr_ids) == 0
+        and len(unclaimed_vendor_recovery_ncr_ids) == 0
+        and not excessive_concession_rate
+    )
+
+    recommendations: list[str] = []
+    if unquarantined_open_ncr_ids:
+        recommendations.append(
+            "Aislar inmediatamente en cuarentena los lotes con NCR abiertas: "
+            + ", ".join(unquarantined_open_ncr_ids)
+            + "."
+        )
+    if unauthorized_concession_ncr_ids:
+        recommendations.append(
+            "Rechazar concesiones sobre NCR críticas o sin aprobación de autoridad de ingeniería: "
+            + ", ".join(unauthorized_concession_ncr_ids)
+            + "."
+        )
+    if unclaimed_vendor_recovery_ncr_ids:
+        recommendations.append(
+            "Gestionar el reclamo de recuperación de costos o nota de crédito ante el proveedor: "
+            + ", ".join(unclaimed_vendor_recovery_ncr_ids)
+            + "."
+        )
+    if excessive_concession_rate:
+        recommendations.append(
+            f"Reducir la tasa de aceptación por concesión ({concession_ratio_pct}%) por debajo del umbral permitido ({max_concession_ratio_pct}%)."
+        )
+
+    if unquarantined_open_ncr_ids or unauthorized_concession_ncr_ids:
+        status = "critical"
+    elif unclaimed_vendor_recovery_ncr_ids or excessive_concession_rate:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_evaluated": total_evaluated,
+        "concession_count": concession_count,
+        "concession_ratio_pct": concession_ratio_pct,
+        "unquarantined_open_ncr_ids": unquarantined_open_ncr_ids,
+        "unauthorized_concession_ncr_ids": unauthorized_concession_ncr_ids,
+        "unclaimed_vendor_recovery_ncr_ids": unclaimed_vendor_recovery_ncr_ids,
+        "excessive_concession_rate": excessive_concession_rate,
+        "is_ncr_governance_compliant": is_ncr_governance_compliant,
+        "status": status,
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.evaluate_supplier_ncr_disposition_governance = staticmethod(
+    evaluate_supplier_ncr_disposition_governance
+)
+

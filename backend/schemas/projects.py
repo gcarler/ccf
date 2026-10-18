@@ -3685,6 +3685,85 @@ def validate_pdm_dependency_leads_and_lags(
     }
 
 
+def validate_cpif_cost_sharing_and_fee_bounds(
+    target_cost: float,
+    target_fee: float,
+    minimum_fee: float,
+    maximum_fee: float,
+    buyer_share_ratio_pct: float,
+    seller_share_ratio_pct: float,
+    actual_cost: float,
+) -> dict[str, Any]:
+    """PMBOK §12.1 — Cost-Plus-Incentive-Fee (CPIF): bandas min/max y reparto de costos.
+
+    Fórmula canónica PMI: el honorario crudo ajusta ``target_fee`` por la
+    variación de costo según el porcentaje de reparto del vendedor, acotado a
+    la banda [minimum_fee, maximum_fee]; el comprador reembolsa costo real +
+    honorario final. Rangos de kantor: costo mínimo que logra el honorario
+    máximo y costo máximo que deja el honorario en el mínimo.
+    """
+    floats = {
+        "target_cost": target_cost,
+        "target_fee": target_fee,
+        "minimum_fee": minimum_fee,
+        "maximum_fee": maximum_fee,
+        "buyer_share_ratio_pct": buyer_share_ratio_pct,
+        "seller_share_ratio_pct": seller_share_ratio_pct,
+        "actual_cost": actual_cost,
+    }
+    for name, value in floats.items():
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or value != value:
+            raise ValueError(f"CPIF: {name} debe ser numérico real, no bool/NaN")
+        if value != value or value in (float("inf"), float("-inf")):
+            raise ValueError(f"CPIF: {name} debe ser finito")
+
+    if target_cost <= 0:
+        raise ValueError("CPIF: target_cost debe ser > 0")
+    if actual_cost <= 0:
+        raise ValueError("CPIF: actual_cost debe ser > 0")
+
+    buyer = float(buyer_share_ratio_pct)
+    seller = float(seller_share_ratio_pct)
+    if buyer <= 0 or seller <= 0:
+        raise ValueError("CPIF: los porcentajes de reparto deben ser > 0")
+    if abs((buyer + seller) - 100.0) > 0.01:
+        raise ValueError("CPIF: buyer_share_ratio_pct + seller_share_ratio_pct debe sumar 100.0")
+
+    if not (0 <= float(minimum_fee) <= float(target_fee) <= float(maximum_fee)):
+        raise ValueError(
+            "CPIF: se requiere 0 <= minimum_fee <= target_fee <= maximum_fee"
+        )
+
+    tc = float(target_cost)
+    tf = float(target_fee)
+    ac = float(actual_cost)
+    min_fee = float(minimum_fee)
+    max_fee = float(maximum_fee)
+
+    cost_variance = round(tc - ac, 2)
+    raw_calculated_fee = round(tf + cost_variance * (seller / 100.0), 2)
+    final_fee = round(min(max_fee, max(min_fee, raw_calculated_fee)), 2)
+    total_reimbursed_price = round(ac + final_fee, 2)
+    is_capped_at_max_fee = bool(raw_calculated_fee > max_fee)
+    is_floored_at_min_fee = bool(raw_calculated_fee < min_fee)
+    optimistic_range_cost = round(tc - ((max_fee - tf) / (seller / 100.0)), 2)
+    pessimistic_range_cost = round(tc + ((tf - min_fee) / (seller / 100.0)), 2)
+
+    is_within_incentive_range = bool(not is_capped_at_max_fee and not is_floored_at_min_fee)
+
+    return {
+        "cost_variance": cost_variance,
+        "raw_calculated_fee": raw_calculated_fee,
+        "final_fee": final_fee,
+        "total_reimbursed_price": total_reimbursed_price,
+        "is_capped_at_max_fee": is_capped_at_max_fee,
+        "is_floored_at_min_fee": is_floored_at_min_fee,
+        "optimistic_range_cost": optimistic_range_cost,
+        "pessimistic_range_cost": pessimistic_range_cost,
+        "is_within_incentive_range": is_within_incentive_range,
+    }
+
+
 __all__ = [
     "validate_cpm_float_and_critical_path",
     "validate_emv_decision_tree_exposure",
@@ -3697,7 +3776,8 @@ __all__ = [
     "validate_rolling_wave_planning_horizon",
     "validate_resource_smoothing_float_boundaries",
     "validate_sprint_velocity_commitment_stability",
-    "validate_fpif_point_of_total_assumption",
+    "validate_fpif_point_of_total_assumption",    "validate_cpif_cost_sharing_and_fee_bounds",
+
 ]
 
 
