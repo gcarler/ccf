@@ -3087,3 +3087,129 @@ def test_audit_team_calendar_burnout_contention_empty_or_none():
             "average_utilization_pct": 0.0,
             "is_sustainable": False,
         }
+
+
+def test_audit_charter_assumption_log_validity_compliant():
+    """Supuestos y restricciones con dueño, validados/en plazo o invalidados convertidos en riesgo -> is_valid True."""
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_charter_assumption_log_validity,
+    )
+
+    entries = [
+        {
+            "entry_id": "ASM-01",
+            "entry_type": "Assumption",
+            "owner_id": "USR-PM",
+            "validation_status": "unvalidated",
+            "days_until_validation_due": 10,
+        },
+        {
+            "entry_id": "ASM-02",
+            "entry_type": "assumption",
+            "owner_id": "USR-ARCH",
+            "validation_status": "Invalidated",
+            "days_until_validation_due": -5,
+            "converted_risk_id": "RSK-104",
+        },
+        {
+            "entry_id": "CON-01",
+            "entry_type": "CONSTRAINT",
+            "owner_id": "USR-FIN",
+            "validation_status": "validated",
+        },
+    ]
+    res = audit_charter_assumption_log_validity(entries)
+    assert res == {
+        "evaluated_entry_count": 3,
+        "unowned_entry_ids": [],
+        "overdue_unvalidated_assumption_ids": [],
+        "unconverted_invalidated_assumption_ids": [],
+        "invalid_entry_ids": [],
+        "is_valid": True,
+    }
+    assert ProjectLifecyclePMIService.audit_charter_assumption_log_validity(entries) == res
+
+
+def test_audit_charter_assumption_log_validity_unowned_overdue_and_unconverted():
+    """Detecta registros sin owner_id, supuestos no validados vencidos e invalidados sin riesgo vinculado."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_charter_assumption_log_validity,
+    )
+
+    res = audit_charter_assumption_log_validity(
+        [
+            {
+                "entry_id": "ASM-UNOWNED-OVERDUE",
+                "entry_type": "assumption",
+                "owner_id": "   ",
+                "validation_status": "unvalidated",
+                "days_until_validation_due": -3,
+            },
+            {
+                "entry_id": "ASM-INVALIDATED-NO-RISK",
+                "entry_type": "assumption",
+                "owner_id": "USR-1",
+                "validation_status": "invalidated",
+                "converted_risk_id": "",
+            },
+        ]
+    )
+    assert res == {
+        "evaluated_entry_count": 2,
+        "unowned_entry_ids": ["ASM-UNOWNED-OVERDUE"],
+        "overdue_unvalidated_assumption_ids": ["ASM-UNOWNED-OVERDUE"],
+        "unconverted_invalidated_assumption_ids": ["ASM-INVALIDATED-NO-RISK"],
+        "invalid_entry_ids": [],
+        "is_valid": False,
+    }
+
+
+def test_audit_charter_assumption_log_validity_invalid_type_or_status():
+    """Tipos o estados fuera del catálogo se reportan en invalid_entry_ids."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_charter_assumption_log_validity,
+    )
+
+    res = audit_charter_assumption_log_validity(
+        [
+            {
+                "entry_id": "ENT-BAD-TYPE",
+                "entry_type": "dependency",
+                "owner_id": "USR-1",
+                "validation_status": "validated",
+            },
+            {
+                "entry_id": "ENT-BAD-STATUS",
+                "entry_type": "constraint",
+                "owner_id": "USR-1",
+                "validation_status": "pending_review",
+            },
+        ]
+    )
+    assert res == {
+        "evaluated_entry_count": 2,
+        "unowned_entry_ids": [],
+        "overdue_unvalidated_assumption_ids": [],
+        "unconverted_invalidated_assumption_ids": [],
+        "invalid_entry_ids": ["ENT-BAD-TYPE", "ENT-BAD-STATUS"],
+        "is_valid": False,
+    }
+
+
+def test_audit_charter_assumption_log_validity_empty_or_none():
+    """Lista vacía, None o entradas sin entry_id -> evaluated_entry_count 0, is_valid False."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_charter_assumption_log_validity,
+    )
+
+    for payload in (None, [], [{"entry_id": "  "}], ["invalid"]):
+        assert audit_charter_assumption_log_validity(payload) == {  # type: ignore[arg-type]
+            "evaluated_entry_count": 0,
+            "unowned_entry_ids": [],
+            "overdue_unvalidated_assumption_ids": [],
+            "unconverted_invalidated_assumption_ids": [],
+            "invalid_entry_ids": [],
+            "is_valid": False,
+        }
+

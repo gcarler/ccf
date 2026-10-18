@@ -1886,7 +1886,7 @@ def test_audit_wiki_raci_matrix_governance_compliant():
     """Matriz RACI válida con 1 A, >=1 R y C <= max_consulted_per_row -> COMPLIANT_RACI_GOVERNANCE."""
     from backend.services.wiki_pmi_service import (
         WikiPMIService,
-        audit_wiki_raci_matrix_governance,
+        audit_wiki_raci_matrix_governance_v1 as audit_wiki_raci_matrix_governance,
     )
 
     rows = [
@@ -1916,12 +1916,14 @@ def test_audit_wiki_raci_matrix_governance_compliant():
         "is_raci_compliant": True,
         "raci_posture": "COMPLIANT_RACI_GOVERNANCE",
     }
-    assert WikiPMIService.audit_wiki_raci_matrix_governance(rows, max_consulted_per_row=5) == res
+    assert WikiPMIService.audit_wiki_raci_matrix_governance_v1(rows, max_consulted_per_row=5) == res
 
 
 def test_audit_wiki_raci_matrix_governance_multiple_accountable_conflict():
     """Fila con múltiples Accountable (A > 1) -> MULTIPLE_ACCOUNTABLE_CONFLICT."""
-    from backend.services.wiki_pmi_service import audit_wiki_raci_matrix_governance
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_raci_matrix_governance_v1 as audit_wiki_raci_matrix_governance,
+    )
 
     res = audit_wiki_raci_matrix_governance(
         [
@@ -1941,7 +1943,9 @@ def test_audit_wiki_raci_matrix_governance_multiple_accountable_conflict():
 
 def test_audit_wiki_raci_matrix_governance_missing_a_missing_r_and_over_consulted():
     """Casos de fila sin A, fila sin R y fila con sobrecarga de C."""
-    from backend.services.wiki_pmi_service import audit_wiki_raci_matrix_governance
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_raci_matrix_governance_v1 as audit_wiki_raci_matrix_governance,
+    )
 
     no_a_res = audit_wiki_raci_matrix_governance(
         [{"id": "RACI-NO-A", "accountable": [], "responsible": ["Dev"]}]
@@ -1975,7 +1979,9 @@ def test_audit_wiki_raci_matrix_governance_missing_a_missing_r_and_over_consulte
 
 def test_audit_wiki_raci_matrix_governance_empty_or_none():
     """Lista vacía o None -> NO_RACI_ROWS_EVALUATED."""
-    from backend.services.wiki_pmi_service import audit_wiki_raci_matrix_governance
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_raci_matrix_governance_v1 as audit_wiki_raci_matrix_governance,
+    )
 
     for payload in (None, [], ["invalid", 42]):
         res = audit_wiki_raci_matrix_governance(payload)  # type: ignore[arg-type]
@@ -3027,3 +3033,114 @@ def test_audit_wiki_knowledge_bus_factor_and_freshness_v2_stale_and_empty():
             "stale_article_ids": [],
             "is_resilient": False,
         }
+
+
+def test_audit_wiki_raci_matrix_governance_deliverables_compliant():
+    """Entregables con exactamente 1 Accountable único, >=1 Responsible y Consulted dentro del límite pasan is_raci_compliant=True."""
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_raci_matrix_governance,
+    )
+
+    assignments = [
+        {
+            "deliverable_id": "DEL-01",
+            "responsible_ids": ["dev-1", "dev-2", "dev-1"],
+            "accountable_ids": ["pm-1", "  ", None],
+            "consulted_ids": ["sec-1", "ops-1"],
+            "informed_ids": ["sponsor-1"],
+        },
+        {
+            "deliverable_id": "DEL-02",
+            "responsible_ids": ["qa-1"],
+            "accountable_ids": ["pm-1"],
+            "consulted_ids": [],
+            "informed_ids": [],
+        },
+    ]
+    res = audit_wiki_raci_matrix_governance(
+        assignments, max_consulted_per_deliverable=5
+    )
+    assert res == {
+        "evaluated_deliverable_count": 2,
+        "missing_accountable_deliverable_ids": [],
+        "multiple_accountable_deliverable_ids": [],
+        "missing_responsible_deliverable_ids": [],
+        "excessive_consulted_deliverable_ids": [],
+        "is_raci_compliant": True,
+    }
+    assert (
+        WikiPMIService.audit_wiki_raci_matrix_governance(
+            assignments, max_consulted_per_deliverable=5
+        )
+        == res
+    )
+
+
+def test_audit_wiki_raci_matrix_governance_missing_and_multiple_accountable():
+    """Detecta entregables sin Accountable o con múltiples Accountables únicos."""
+    from backend.services.wiki_pmi_service import audit_wiki_raci_matrix_governance
+
+    res = audit_wiki_raci_matrix_governance(
+        [
+            {
+                "deliverable_id": "DEL-NO-A",
+                "responsible_ids": ["dev-1"],
+                "accountable_ids": ["", None],
+            },
+            {
+                "deliverable_id": "DEL-MULTI-A",
+                "responsible_ids": ["dev-1"],
+                "accountable_ids": ["dir-1", "dir-2"],
+            },
+        ]
+    )
+    assert res == {
+        "evaluated_deliverable_count": 2,
+        "missing_accountable_deliverable_ids": ["DEL-NO-A"],
+        "multiple_accountable_deliverable_ids": ["DEL-MULTI-A"],
+        "missing_responsible_deliverable_ids": [],
+        "excessive_consulted_deliverable_ids": [],
+        "is_raci_compliant": False,
+    }
+
+
+def test_audit_wiki_raci_matrix_governance_missing_responsible_and_excessive_consulted():
+    """Detecta entregables sin Responsible y con exceso de Consulted (> max_consulted_per_deliverable)."""
+    from backend.services.wiki_pmi_service import audit_wiki_raci_matrix_governance
+
+    res = audit_wiki_raci_matrix_governance(
+        [
+            {
+                "deliverable_id": "DEL-NO-R-OVER-C",
+                "responsible_ids": [],
+                "accountable_ids": ["pm-1"],
+                "consulted_ids": ["c1", "c2", "c3", "c4"],
+            }
+        ],
+        max_consulted_per_deliverable=3,
+    )
+    assert res == {
+        "evaluated_deliverable_count": 1,
+        "missing_accountable_deliverable_ids": [],
+        "multiple_accountable_deliverable_ids": [],
+        "missing_responsible_deliverable_ids": ["DEL-NO-R-OVER-C"],
+        "excessive_consulted_deliverable_ids": ["DEL-NO-R-OVER-C"],
+        "is_raci_compliant": False,
+    }
+
+
+def test_audit_wiki_raci_matrix_governance_deliverables_empty_or_invalid():
+    """Lista vacía, None o entradas sin deliverable_id -> evaluated_deliverable_count 0, is_raci_compliant False."""
+    from backend.services.wiki_pmi_service import audit_wiki_raci_matrix_governance
+
+    for payload in (None, [], [{"deliverable_id": "   "}], ["invalid"]):
+        assert audit_wiki_raci_matrix_governance(payload) == {  # type: ignore[arg-type]
+            "evaluated_deliverable_count": 0,
+            "missing_accountable_deliverable_ids": [],
+            "multiple_accountable_deliverable_ids": [],
+            "missing_responsible_deliverable_ids": [],
+            "excessive_consulted_deliverable_ids": [],
+            "is_raci_compliant": False,
+        }
+

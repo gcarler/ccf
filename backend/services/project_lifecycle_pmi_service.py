@@ -2938,6 +2938,81 @@ ProjectLifecyclePMIService.audit_team_calendar_burnout_contention = staticmethod
 )
 
 
+def audit_charter_assumption_log_validity(
+    assumption_entries: Sequence[Mapping[str, Any]] | None,
+) -> dict[str, Any]:
+    """Audita el Registro de Supuestos y Restricciones (Assumption Log PMI PMBOK §4.1.3.2 y §11.2)."""
+    if not isinstance(assumption_entries, (list, tuple)):
+        assumption_entries = []
+
+    evaluated_entry_count = 0
+    unowned_entry_ids: list[str] = []
+    overdue_unvalidated_assumption_ids: list[str] = []
+    unconverted_invalidated_assumption_ids: list[str] = []
+    invalid_entry_ids: list[str] = []
+
+    for item in assumption_entries:
+        if not isinstance(item, Mapping):
+            continue
+        entry_id = str(item.get("entry_id") or "").strip()
+        if not entry_id:
+            continue
+        evaluated_entry_count += 1
+
+        entry_type = str(item.get("entry_type") or "").strip().lower()
+        validation_status = str(item.get("validation_status") or "").strip().lower()
+        if (
+            entry_type not in {"assumption", "constraint"}
+            or validation_status not in {"unvalidated", "validated", "invalidated"}
+        ):
+            invalid_entry_ids.append(entry_id)
+            continue
+
+        owner_id = str(item.get("owner_id") or "").strip()
+        if not owner_id:
+            unowned_entry_ids.append(entry_id)
+
+        try:
+            days_until_validation_due = float(
+                item.get("days_until_validation_due", 0) or 0.0
+            )
+        except (TypeError, ValueError):
+            days_until_validation_due = 0.0
+
+        if (
+            entry_type == "assumption"
+            and validation_status == "unvalidated"
+            and days_until_validation_due < 0.0
+        ):
+            overdue_unvalidated_assumption_ids.append(entry_id)
+
+        converted_risk_id = str(item.get("converted_risk_id") or "").strip()
+        if validation_status == "invalidated" and not converted_risk_id:
+            unconverted_invalidated_assumption_ids.append(entry_id)
+
+    is_valid = bool(
+        evaluated_entry_count > 0
+        and len(unowned_entry_ids) == 0
+        and len(overdue_unvalidated_assumption_ids) == 0
+        and len(unconverted_invalidated_assumption_ids) == 0
+        and len(invalid_entry_ids) == 0
+    )
+
+    return {
+        "evaluated_entry_count": evaluated_entry_count,
+        "unowned_entry_ids": unowned_entry_ids,
+        "overdue_unvalidated_assumption_ids": overdue_unvalidated_assumption_ids,
+        "unconverted_invalidated_assumption_ids": unconverted_invalidated_assumption_ids,
+        "invalid_entry_ids": invalid_entry_ids,
+        "is_valid": is_valid,
+    }
+
+
+ProjectLifecyclePMIService.audit_charter_assumption_log_validity = staticmethod(
+    audit_charter_assumption_log_validity
+)
+
+
 __all__ = [
     "build_pmo_portfolio_matrix",
     "build_governance_summary",
@@ -2978,5 +3053,7 @@ __all__ = [
     "audit_team_tuckman_and_skill_redundancy",
     "audit_stakeholder_escalation_matrix_readiness",
     "audit_team_calendar_burnout_contention",
+    "audit_charter_assumption_log_validity",
     "ProjectLifecyclePMIService",
 ]
+

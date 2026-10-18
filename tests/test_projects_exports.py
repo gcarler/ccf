@@ -3554,3 +3554,163 @@ def test_audit_executive_report_contract_type_risk_allocation_empty_or_none():
             "invalid_contract_ids": [],
             "is_risk_aligned": False,
         }
+
+
+def test_audit_executive_report_lessons_learned_institutionalization_ready():
+    """Lecciones completas (causa raíz + acción + ref OPA) -> is_opa_ready 100%."""
+    from backend.services.project_export_service import (
+        audit_executive_report_lessons_learned_institutionalization,
+        ProjectExportService,
+    )
+
+    res = audit_executive_report_lessons_learned_institutionalization(
+        {
+            "lessons_learned": [
+                {
+                    "lesson_id": "LL-1",
+                    "root_cause_documented": True,
+                    "preventive_action": "Checklist de despliegue obligatorio",
+                    "opa_repository_ref": "OPA/LL/2026/001",
+                },
+                {
+                    "lesson_id": "LL-2",
+                    "root_cause_documented": True,
+                    "preventive_action": "Doble aprobación de scope",
+                    "opa_repository_ref": "OPA/LL/2026/002",
+                },
+            ]
+        }
+    )
+    assert res["total_lessons"] == 2
+    assert res["missing_root_cause_lesson_ids"] == []
+    assert res["missing_action_plan_lesson_ids"] == []
+    assert res["unlinked_opa_lesson_ids"] == []
+    assert res["institutionalization_rate_pct"] == 100.0
+    assert res["is_opa_ready"] is True
+
+    static_res = ProjectExportService.audit_executive_report_lessons_learned_institutionalization(
+        {
+            "lessons_learned": [
+                {
+                    "lesson_id": "LL-1",
+                    "root_cause_documented": True,
+                    "preventive_action": "Checklist",
+                    "opa_repository_ref": "OPA/LL/1",
+                },
+            ]
+        }
+    )
+    assert static_res["is_opa_ready"] is True
+
+
+def test_audit_executive_report_lessons_learned_institutionalization_root_cause_and_action_gaps():
+    """Faltan causa raíz y/o acción preventiva -> listas de brechas + tasa parcial."""
+    from backend.services.project_export_service import (
+        audit_executive_report_lessons_learned_institutionalization,
+    )
+
+    res = audit_executive_report_lessons_learned_institutionalization(
+        {
+            "lessons_learned": [
+                {
+                    "lesson_id": "LL-NO-RC",
+                    "preventive_action": "acción ok",
+                    "opa_repository_ref": "OPA/LL/1",
+                },
+                {
+                    "lesson_id": "LL-NO-ACTION",
+                    "root_cause_documented": True,
+                    "preventive_action": "   ",
+                    "opa_repository_ref": "OPA/LL/2",
+                },
+                {
+                    "lesson_id": "LL-OK",
+                    "root_cause_documented": True,
+                    "preventive_action": "acción",
+                    "opa_repository_ref": "OPA/LL/3",
+                },
+            ]
+        }
+    )
+    assert res["total_lessons"] == 3
+    assert res["missing_root_cause_lesson_ids"] == ["LL-NO-RC"]
+    assert res["missing_action_plan_lesson_ids"] == ["LL-NO-ACTION"]
+    assert res["unlinked_opa_lesson_ids"] == []
+    assert res["institutionalization_rate_pct"] == 33.33
+    assert res["is_opa_ready"] is False
+
+
+def test_audit_executive_report_lessons_learned_institutionalization_unlinked_opa_and_governance_fallback():
+    """Cerradas/institucionalizadas sin ref OPA -> unlinked; secuencia anidada en governance."""
+    from backend.services.project_export_service import (
+        audit_executive_report_lessons_learned_institutionalization,
+    )
+
+    res_nested = audit_executive_report_lessons_learned_institutionalization(
+        {
+            "governance": {
+                "lessons_learned": [
+                    {
+                        "lesson_id": "LL-CLOSED",
+                        "root_cause_documented": True,
+                        "preventive_action": "acción",
+                        "status": "CLOSED",
+                    },
+                    {
+                        "lesson_id": "LL-INST",
+                        "root_cause_documented": True,
+                        "preventive_action": "acción",
+                        "status": "archived_to_opa",
+                        "opa_repository_ref": "OPA/LL/9",
+                    },
+                ]
+            }
+        }
+    )
+    assert res_nested["total_lessons"] == 2
+    assert res_nested["unlinked_opa_lesson_ids"] == ["LL-CLOSED"]
+    assert res_nested["is_opa_ready"] is False
+
+    # Root-level con secuencia válida: prioridad sobre governance.
+    res_root = audit_executive_report_lessons_learned_institutionalization(
+        {
+            "lessons_learned": [
+                {
+                    "lesson_id": "LL-OK",
+                    "root_cause_documented": True,
+                    "preventive_action": "acción",
+                    "opa_repository_ref": "OPA/LL/5",
+                },
+            ],
+            "governance": {"lessons_learned": [{"lesson_id": "LL-IGNORED"}]},
+        }
+    )
+    assert res_root["total_lessons"] == 1
+    assert res_root["is_opa_ready"] is True
+
+
+def test_audit_executive_report_lessons_learned_institutionalization_empty_or_none():
+    """None, sin secuencia, entradas malformadas o sin lesson_id -> totales 0 y 0.0%."""
+    from backend.services.project_export_service import (
+        audit_executive_report_lessons_learned_institutionalization,
+    )
+
+    empty_result = {
+        "total_lessons": 0,
+        "missing_root_cause_lesson_ids": [],
+        "missing_action_plan_lesson_ids": [],
+        "unlinked_opa_lesson_ids": [],
+        "institutionalization_rate_pct": 0.0,
+        "is_opa_ready": False,
+    }
+
+    for payload in (None, {}, {"lessons_learned": None}, "not-a-mapping-arg-discarded"):
+        assert audit_executive_report_lessons_learned_institutionalization(payload) == empty_result  # type: ignore[arg-type]
+
+    malformed_seqs = (
+        {"lessons_learned": "string-no-sequence"},
+        {"lessons_learned": {"dict": "no"}},
+        {"lessons_learned": [None, 42, "not-mapping", {"other": "x"}, {"lesson_id": "   "}]},
+    )
+    for payload in malformed_seqs:
+        assert audit_executive_report_lessons_learned_institutionalization(payload) == empty_result

@@ -2963,6 +2963,93 @@ __all__ = [
     "audit_executive_report_scope_creep_governance",
     "audit_executive_report_stakeholder_engagement_drift",
     "audit_executive_report_contract_type_risk_allocation",
+    "audit_executive_report_lessons_learned_institutionalization",
     "ProjectExportService",
 ]
 
+
+
+def audit_executive_report_lessons_learned_institutionalization(
+    report: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """PMBOK §4.4 / §10.2 — accionabilidad de lecciones aprendidas e institucionalización OPA del informe ejecutivo.
+
+    - Secuencia desde ``report['lessons_learned']`` (fallback
+      ``report['governance']['lessons_learned']``); strings/bytes/mappings se
+      descartan como secuencia.
+    - Sin causa raíz documentada -> ``missing_root_cause_lesson_ids``.
+    - Sin acción preventiva -> ``missing_action_plan_lesson_ids``.
+    - Estado institucionalizado/archivado/cerrado sin referencia OPA ->
+      ``unlinked_opa_lesson_ids``.
+    - Institucionalizada: causa raíz + acción preventiva + referencia OPA.
+    """
+    missing_root_cause_lesson_ids: list[str] = []
+    missing_action_plan_lesson_ids: list[str] = []
+    unlinked_opa_lesson_ids: list[str] = []
+
+    lessons: Any
+    if isinstance(report, Mapping):
+        raw_lessons = report.get("lessons_learned")
+        if isinstance(raw_lessons, (list, tuple)):
+            lessons = raw_lessons
+        elif isinstance(report.get("governance"), Mapping):
+            governance_lessons = report["governance"].get("lessons_learned")
+            lessons = governance_lessons if isinstance(governance_lessons, (list, tuple)) else []
+        else:
+            lessons = []
+    else:
+        lessons = []
+
+    total_lessons = 0
+    institutionalized_count = 0
+
+    for item in lessons:
+        if not isinstance(item, Mapping):
+            continue
+        lesson_id = str(item.get("lesson_id") or "").strip()
+        if not lesson_id:
+            continue
+        total_lessons += 1
+
+        root_cause_documented = bool(item.get("root_cause_documented", False))
+        preventive_action = str(item.get("preventive_action") or "").strip()
+        opa_repository_ref = str(item.get("opa_repository_ref") or "").strip()
+        status = str(item.get("status") or "").strip().lower()
+
+        if not root_cause_documented:
+            missing_root_cause_lesson_ids.append(lesson_id)
+
+        if not preventive_action:
+            missing_action_plan_lesson_ids.append(lesson_id)
+
+        if status in {"institutionalized", "archived_to_opa", "closed"} and not opa_repository_ref:
+            unlinked_opa_lesson_ids.append(lesson_id)
+
+        if root_cause_documented and preventive_action and opa_repository_ref:
+            institutionalized_count += 1
+
+    institutionalization_rate_pct = (
+        round((institutionalized_count / total_lessons) * 100.0, 2)
+        if total_lessons > 0
+        else 0.0
+    )
+    is_opa_ready = bool(
+        total_lessons > 0
+        and not missing_root_cause_lesson_ids
+        and not missing_action_plan_lesson_ids
+        and not unlinked_opa_lesson_ids
+    )
+
+    return {
+        "total_lessons": total_lessons,
+        "missing_root_cause_lesson_ids": missing_root_cause_lesson_ids,
+        "missing_action_plan_lesson_ids": missing_action_plan_lesson_ids,
+        "unlinked_opa_lesson_ids": unlinked_opa_lesson_ids,
+        "institutionalization_rate_pct": institutionalization_rate_pct,
+        "is_opa_ready": is_opa_ready,
+    }
+
+
+ProjectExportService.audit_executive_report_lessons_learned_institutionalization = staticmethod(
+    audit_executive_report_lessons_learned_institutionalization
+)

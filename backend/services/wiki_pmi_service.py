@@ -2033,19 +2033,30 @@ class WikiPMIService:
 
     @staticmethod
     def audit_wiki_raci_matrix_governance(
+        deliverable_assignments: Sequence[Mapping[str, Any]] | None = None,
+        *,
+        max_consulted_per_deliverable: int = 5,
+    ) -> dict[str, Any]:
+        return audit_wiki_raci_matrix_governance(
+            deliverable_assignments,
+            max_consulted_per_deliverable=max_consulted_per_deliverable,
+        )
+
+    @staticmethod
+    def audit_wiki_raci_matrix_governance_v1(
         raci_rows: list[dict[str, Any]] | None = None,
         max_consulted_per_row: int = 5,
     ) -> dict[str, Any]:
-        return audit_wiki_raci_matrix_governance(
+        return audit_wiki_raci_matrix_governance_v1(
             raci_rows, max_consulted_per_row=max_consulted_per_row
         )
 
 
-def audit_wiki_raci_matrix_governance(
+def audit_wiki_raci_matrix_governance_v1(
     raci_rows: list[dict[str, Any]] | None = None,
     max_consulted_per_row: int = 5,
 ) -> dict[str, Any]:
-    """Audita la Matriz RACI de la Wiki verificando responsabilidad única (Single Accountable) y claridad de roles según PMI PMBOK §9.1.2.2."""
+    """Audita la Matriz RACI de la Wiki verificando responsabilidad única (Single Accountable) y claridad de roles según PMI PMBOK §9.1.2.2 (contrato v1)."""
     valid_rows = [item for item in (raci_rows or []) if isinstance(item, dict)]
     total_rows = len(valid_rows)
     if total_rows == 0:
@@ -2563,3 +2574,73 @@ def audit_wiki_knowledge_bus_factor_and_freshness(
         "stale_article_ids": stale_article_ids,
         "is_resilient": is_resilient,
     }
+
+
+def audit_wiki_raci_matrix_governance(
+    deliverable_assignments: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_consulted_per_deliverable: int = 5,
+) -> dict[str, Any]:
+    """Audita la Matriz de Asignación de Responsabilidades RACI en la Wiki (RAM / RACI Chart PMI PMBOK §9.1.2.2 y §4.4)."""
+    if not isinstance(deliverable_assignments, (list, tuple)):
+        deliverable_assignments = []
+
+    def _clean_unique_ids(raw_seq: Any) -> list[str]:
+        if not isinstance(raw_seq, (list, tuple, set)):
+            return []
+        unique: list[str] = []
+        for entry in raw_seq:
+            if entry is None or isinstance(entry, bool):
+                continue
+            cleaned = str(entry).strip()
+            if cleaned and cleaned not in unique:
+                unique.append(cleaned)
+        return unique
+
+    evaluated_deliverable_count = 0
+    missing_accountable_deliverable_ids: list[str] = []
+    multiple_accountable_deliverable_ids: list[str] = []
+    missing_responsible_deliverable_ids: list[str] = []
+    excessive_consulted_deliverable_ids: list[str] = []
+
+    for item in deliverable_assignments:
+        if not isinstance(item, Mapping):
+            continue
+        deliverable_id = str(item.get("deliverable_id") or "").strip()
+        if not deliverable_id:
+            continue
+        evaluated_deliverable_count += 1
+
+        responsibles = _clean_unique_ids(item.get("responsible_ids"))
+        accountables = _clean_unique_ids(item.get("accountable_ids"))
+        consulteds = _clean_unique_ids(item.get("consulted_ids"))
+        _clean_unique_ids(item.get("informed_ids"))
+
+        if len(accountables) == 0:
+            missing_accountable_deliverable_ids.append(deliverable_id)
+        elif len(accountables) > 1:
+            multiple_accountable_deliverable_ids.append(deliverable_id)
+
+        if len(responsibles) == 0:
+            missing_responsible_deliverable_ids.append(deliverable_id)
+
+        if len(consulteds) > int(max_consulted_per_deliverable):
+            excessive_consulted_deliverable_ids.append(deliverable_id)
+
+    is_raci_compliant = bool(
+        evaluated_deliverable_count > 0
+        and len(missing_accountable_deliverable_ids) == 0
+        and len(multiple_accountable_deliverable_ids) == 0
+        and len(missing_responsible_deliverable_ids) == 0
+        and len(excessive_consulted_deliverable_ids) == 0
+    )
+
+    return {
+        "evaluated_deliverable_count": evaluated_deliverable_count,
+        "missing_accountable_deliverable_ids": missing_accountable_deliverable_ids,
+        "multiple_accountable_deliverable_ids": multiple_accountable_deliverable_ids,
+        "missing_responsible_deliverable_ids": missing_responsible_deliverable_ids,
+        "excessive_consulted_deliverable_ids": excessive_consulted_deliverable_ids,
+        "is_raci_compliant": is_raci_compliant,
+    }
+
