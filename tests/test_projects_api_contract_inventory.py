@@ -6794,3 +6794,158 @@ def test_header_parameter_and_response_header_hygiene_real_openapi():
     assert res["is_compliant"] is True
 
 
+def test_multipart_and_form_media_type_hygiene_clean_schema():
+    """Verifica que multipart/form-data con objeto y encoding válido, y x-www-form-urlencoded sin binarios pasen la auditoría."""
+    schema = {
+        "paths": {
+            "/api/v1/projects/upload": {
+                "post": {
+                    "requestBody": {
+                        "content": {
+                            "multipart/form-data": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BodyUploadProjectDocument"
+                                },
+                                "encoding": {
+                                    "file": {"contentType": "application/pdf"}
+                                },
+                            },
+                            "application/x-www-form-urlencoded": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "title": {"type": "string"},
+                                        "category": {"type": "string"},
+                                    },
+                                }
+                            },
+                        }
+                    },
+                    "responses": {"200": {"description": "OK"}},
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "BodyUploadProjectDocument": {
+                    "type": "object",
+                    "properties": {
+                        "file": {"type": "string", "format": "binary"},
+                        "category": {"type": "string"},
+                    },
+                }
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_multipart_and_form_media_type_hygiene(
+        schema, path_prefix="/api/v1/projects"
+    )
+    assert res["path_prefix"] == "/api/v1/projects"
+    assert res["total_form_media_types_inspected"] == 2
+    assert res["compliant_form_media_types_count"] == 2
+    assert res["non_object_form_schema_count"] == 0
+    assert res["undefined_encoding_property_count"] == 0
+    assert res["binary_field_in_urlencoded_count"] == 0
+    assert res["violations"] == []
+    assert res["hygiene_score"] == 100.0
+    assert res["is_compliant"] is True
+
+
+def test_multipart_and_form_media_type_hygiene_detects_non_object_form_schema():
+    """Detecta formularios cuyo schema no es un objeto con propiedades."""
+    schema = {
+        "paths": {
+            "/api/v1/projects/raw-form": {
+                "post": {
+                    "requestBody": {
+                        "content": {
+                            "multipart/form-data": {
+                                "schema": {"type": "string", "format": "binary"}
+                            }
+                        }
+                    },
+                    "responses": {"200": {"description": "OK"}},
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_multipart_and_form_media_type_hygiene(
+        schema, path_prefix="/api/v1/projects"
+    )
+    assert res["total_form_media_types_inspected"] == 1
+    assert res["compliant_form_media_types_count"] == 0
+    assert res["non_object_form_schema_count"] == 1
+    assert res["hygiene_score"] == 0.0
+    assert res["is_compliant"] is False
+    assert res["violations"] == [
+        {
+            "operation": "POST /api/v1/projects/raw-form",
+            "media_type": "multipart/form-data",
+            "reason": "non_object_form_schema",
+        }
+    ]
+
+
+def test_multipart_and_form_media_type_hygiene_detects_undefined_encoding_and_binary_urlencoded():
+    """Detecta claves encoding inexistentes en properties y campos binarios en x-www-form-urlencoded."""
+    schema = {
+        "paths": {
+            "/api/v1/projects/attachment": {
+                "post": {
+                    "requestBody": {
+                        "content": {
+                            "multipart/form-data": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "document": {
+                                            "type": "string",
+                                            "format": "binary",
+                                        }
+                                    },
+                                },
+                                "encoding": {
+                                    "ghost_field": {"contentType": "image/png"}
+                                },
+                            },
+                            "application/x-www-form-urlencoded": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "payload": {
+                                            "type": "string",
+                                            "format": "binary",
+                                        }
+                                    },
+                                }
+                            },
+                        }
+                    },
+                    "responses": {"200": {"description": "OK"}},
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_multipart_and_form_media_type_hygiene(
+        schema, path_prefix="/api/v1/projects"
+    )
+    assert res["total_form_media_types_inspected"] == 2
+    assert res["compliant_form_media_types_count"] == 0
+    assert res["undefined_encoding_property_count"] == 1
+    assert res["binary_field_in_urlencoded_count"] == 1
+    assert res["hygiene_score"] == 0.0
+    assert res["is_compliant"] is False
+
+
+def test_multipart_and_form_media_type_hygiene_real_openapi():
+    """Verifica que el schema OpenAPI real de FastAPI cumpla la higiene de multipart/form-data."""
+    res = audit_projects_api_contracts.summarize_projects_multipart_and_form_media_type_hygiene()
+    assert res["total_form_media_types_inspected"] > 0
+    assert res["non_object_form_schema_count"] == 0
+    assert res["undefined_encoding_property_count"] == 0
+    assert res["binary_field_in_urlencoded_count"] == 0
+    assert res["violations"] == []
+    assert res["hygiene_score"] == 100.0
+    assert res["is_compliant"] is True
+
+

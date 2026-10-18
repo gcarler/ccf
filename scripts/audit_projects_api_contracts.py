@@ -5485,6 +5485,191 @@ def summarize_projects_header_parameter_and_response_header_hygiene(
     }
 
 
+_FORM_MEDIA_TYPES = ("multipart/form-data", "application/x-www-form-urlencoded")
+
+
+def summarize_projects_multipart_and_form_media_type_hygiene(
+    schema: Mapping[str, Any] | None = None,
+    *,
+    path_prefix: str = "/api/v1/projects",
+) -> dict[str, Any]:
+    """Audita la higiene de requestBody con media types multipart/form-data y application/x-www-form-urlencoded bajo path_prefix."""
+    if schema is None:
+        from backend.app import app
+
+        schema_dict: Mapping[str, Any] = app.openapi()
+    else:
+        schema_dict = schema
+
+    paths = schema_dict.get("paths", {}) if isinstance(schema_dict, Mapping) else {}
+    if not isinstance(paths, Mapping):
+        paths = {}
+
+    components = schema_dict.get("components", {}) if isinstance(schema_dict, Mapping) else {}
+    schemas = components.get("schemas", {}) if isinstance(components, Mapping) else {}
+    if not isinstance(schemas, Mapping):
+        schemas = {}
+
+    has_exact_prefix = any(str(p).startswith(path_prefix) for p in paths.keys())
+    if has_exact_prefix:
+        effective_prefixes: tuple[str, ...] = (path_prefix,)
+    elif path_prefix in ("/api/v1/projects", "/api/projects", "/projects"):
+        effective_prefixes = ("/api/v1/projects", "/api/projects", "/projects")
+    else:
+        effective_prefixes = (path_prefix,)
+
+    total_form_media_types_inspected = 0
+    compliant_form_media_types_count = 0
+    non_object_form_schema_count = 0
+    undefined_encoding_property_count = 0
+    binary_field_in_urlencoded_count = 0
+    violations: list[dict[str, Any]] = []
+
+    def _resolve_form_schema(raw_schema: Any) -> Mapping[str, Any] | None:
+        current = raw_schema
+        visited: set[str] = set()
+        while isinstance(current, Mapping) and isinstance(current.get("$ref"), str):
+            ref_str = current["$ref"]
+            if not ref_str.startswith("#/components/schemas/"):
+                return None
+            ref_name = ref_str[len("#/components/schemas/") :]
+            if ref_name in visited:
+                return None
+            visited.add(ref_name)
+            current = schemas.get(ref_name)
+        return current if isinstance(current, Mapping) else None
+
+    for path in sorted(paths.keys()):
+        path_str = str(path)
+        if not path_str.startswith(effective_prefixes):
+            continue
+        path_item = paths[path]
+        if not isinstance(path_item, Mapping):
+            continue
+
+        for method in ("get", "post", "put", "patch", "delete", "head", "options", "trace"):
+            op_spec = path_item.get(method)
+            if not isinstance(op_spec, Mapping):
+                continue
+
+            req_body = op_spec.get("requestBody")
+            if not isinstance(req_body, Mapping):
+                continue
+            content = req_body.get("content")
+            if not isinstance(content, Mapping):
+                continue
+
+            op_label = f"{method.upper()} {path_str}"
+            for media_type in sorted(content.keys()):
+                if media_type not in _FORM_MEDIA_TYPES:
+                    continue
+                media_obj = content[media_type]
+                if not isinstance(media_obj, Mapping):
+                    media_obj = {}
+
+                total_form_media_types_inspected += 1
+                has_violation = False
+
+                resolved = _resolve_form_schema(media_obj.get("schema"))
+                props = (
+                    resolved.get("properties")
+                    if isinstance(resolved, Mapping)
+                    and isinstance(resolved.get("properties"), Mapping)
+                    else {}
+                )
+                has_non_empty_props = isinstance(props, Mapping) and len(props) > 0
+                is_object_type = (
+                    isinstance(resolved, Mapping)
+                    and (resolved.get("type") == "object" or has_non_empty_props)
+                )
+
+                if not is_object_type:
+                    non_object_form_schema_count += 1
+                    has_violation = True
+                    violations.append(
+                        {
+                            "operation": op_label,
+                            "media_type": media_type,
+                            "reason": "non_object_form_schema",
+                        }
+                    )
+
+                encoding = media_obj.get("encoding")
+                if isinstance(encoding, Mapping) and len(encoding) > 0:
+                    if any(str(enc_key) not in props for enc_key in encoding.keys()):
+                        undefined_encoding_property_count += 1
+                        has_violation = True
+                        violations.append(
+                            {
+                                "operation": op_label,
+                                "media_type": media_type,
+                                "reason": "undefined_encoding_property",
+                            }
+                        )
+
+                if media_type == "application/x-www-form-urlencoded" and isinstance(
+                    props, Mapping
+                ):
+                    has_binary = False
+                    for prop_spec in props.values():
+                        if not isinstance(prop_spec, Mapping):
+                            continue
+                        branches = _collect_non_null_branch_schemas(prop_spec, schemas)
+                        for b in (*branches, prop_spec):
+                            if not isinstance(b, Mapping):
+                                continue
+                            if b.get("format") in ("binary", "base64"):
+                                has_binary = True
+                                break
+                            items_spec = b.get("items")
+                            if isinstance(items_spec, Mapping) and items_spec.get(
+                                "format"
+                            ) in ("binary", "base64"):
+                                has_binary = True
+                                break
+                        if has_binary:
+                            break
+                    if has_binary:
+                        binary_field_in_urlencoded_count += 1
+                        has_violation = True
+                        violations.append(
+                            {
+                                "operation": op_label,
+                                "media_type": media_type,
+                                "reason": "binary_field_in_urlencoded",
+                            }
+                        )
+
+                if not has_violation:
+                    compliant_form_media_types_count += 1
+
+    hygiene_score = (
+        100.0
+        if total_form_media_types_inspected == 0
+        else round(
+            (compliant_form_media_types_count / total_form_media_types_inspected) * 100.0,
+            2,
+        )
+    )
+    is_compliant = (
+        non_object_form_schema_count == 0
+        and undefined_encoding_property_count == 0
+        and binary_field_in_urlencoded_count == 0
+    )
+
+    return {
+        "path_prefix": path_prefix,
+        "total_form_media_types_inspected": total_form_media_types_inspected,
+        "compliant_form_media_types_count": compliant_form_media_types_count,
+        "non_object_form_schema_count": non_object_form_schema_count,
+        "undefined_encoding_property_count": undefined_encoding_property_count,
+        "binary_field_in_urlencoded_count": binary_field_in_urlencoded_count,
+        "violations": violations,
+        "hygiene_score": hygiene_score,
+        "is_compliant": is_compliant,
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()
