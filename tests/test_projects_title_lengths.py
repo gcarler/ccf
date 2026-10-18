@@ -21,6 +21,7 @@ from backend.schemas.projects import (
     ProjectUpdate,
     ProjectWhiteboardUpdate,
     TemplateTaskItem,
+    validate_milestone_weights_distribution,
     validate_pmi_severity_matrix_bounds,
 )
 
@@ -103,3 +104,60 @@ def test_validate_pmi_severity_matrix_clamps_out_of_range():
     assert validate_pmi_severity_matrix_bounds(99, 99)["severity_score"] == 25
     # Inputs convertibles a int (floats enteros) se aceptan
     assert validate_pmi_severity_matrix_bounds(2.0, 5.0)["severity_score"] == 10
+
+
+# ── Helpers PMI: distribución de pesos de hitos (Weighted Milestones EVMT) ──
+
+
+def test_validate_milestone_weights_distribution_balanced():
+    """Distribución equilibrada de múltiples hitos ([20, 30, 50]) e hito único ([100])."""
+    res = validate_milestone_weights_distribution([20, 30, 50])
+    assert res == {
+        "total_milestones": 3,
+        "positive_weight_count": 3,
+        "zero_or_negative_count": 0,
+        "total_weight": 100.0,
+        "normalized_shares_pct": [20.0, 30.0, 50.0],
+        "max_share_pct": 50.0,
+        "is_balanced": True,
+    }
+
+    single_res = validate_milestone_weights_distribution([100])
+    assert single_res["total_milestones"] == 1
+    assert single_res["max_share_pct"] == 100.0
+    assert single_res["is_balanced"] is True
+
+
+def test_validate_milestone_weights_distribution_excessive_concentration():
+    """Concentración > 80% en un hito cuando hay múltiples hitos se marca como desbalanceada."""
+    res = validate_milestone_weights_distribution([90, 5, 5])
+    assert res["total_milestones"] == 3
+    assert res["normalized_shares_pct"] == [90.0, 5.0, 5.0]
+    assert res["max_share_pct"] == 90.0
+    assert res["is_balanced"] is False
+
+
+def test_validate_milestone_weights_distribution_zero_or_negative_weights():
+    """Presencia de pesos cero o negativos incrementa zero_or_negative_count e invalida el balance."""
+    res = validate_milestone_weights_distribution([50, 0, -10])
+    assert res["total_milestones"] == 3
+    assert res["positive_weight_count"] == 1
+    assert res["zero_or_negative_count"] == 2
+    assert res["total_weight"] == 50.0
+    assert res["normalized_shares_pct"] == [100.0, 0.0, 0.0]
+    assert res["is_balanced"] is False
+
+
+def test_validate_milestone_weights_distribution_empty_or_none():
+    """Lista vacía o None retorna total_milestones=0, normalized_shares_pct=[] e is_balanced=False."""
+    for empty_input in ([], None, [None, True, False]):
+        res = validate_milestone_weights_distribution(empty_input)  # type: ignore[arg-type]
+        assert res == {
+            "total_milestones": 0,
+            "positive_weight_count": 0,
+            "zero_or_negative_count": 0,
+            "total_weight": 0.0,
+            "normalized_shares_pct": [],
+            "max_share_pct": 0.0,
+            "is_balanced": False,
+        }

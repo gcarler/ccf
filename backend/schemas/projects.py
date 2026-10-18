@@ -2298,3 +2298,50 @@ def validate_pmi_severity_matrix_bounds(probability: int, impact: int) -> dict:
         "severity_score": score,
         "severity_band": severity_band,
     }
+
+
+def validate_milestone_weights_distribution(
+    weights: Optional[List[float | int]] = None,
+) -> dict:
+    """Audita la ponderación de hitos bajo la técnica PMI EVMT Weighted Milestones (§3.4)."""
+    valid_weights: List[float] = []
+    for w in weights or []:
+        if w is None or isinstance(w, bool):
+            continue
+        if isinstance(w, (int, float)):
+            valid_weights.append(float(w))
+
+    total_milestones = len(valid_weights)
+    positive_weight_count = sum(1 for w in valid_weights if w > 0.0)
+    zero_or_negative_count = sum(1 for w in valid_weights if w <= 0.0)
+    total_weight = round(sum(max(0.0, w) for w in valid_weights), 2)
+
+    normalized_shares_pct = [
+        round((max(0.0, w) / total_weight) * 100.0, 2) if total_weight > 0.0 else 0.0
+        for w in valid_weights
+    ]
+    max_share_pct = max(normalized_shares_pct) if normalized_shares_pct else 0.0
+
+    is_balanced = bool(
+        (
+            total_milestones > 0
+            and zero_or_negative_count == 0
+            and total_weight > 0.0
+            and max_share_pct <= 80.0
+        )
+        or (
+            total_milestones == 1
+            and zero_or_negative_count == 0
+            and total_weight > 0.0
+        )
+    )
+
+    return {
+        "total_milestones": total_milestones,
+        "positive_weight_count": positive_weight_count,
+        "zero_or_negative_count": zero_or_negative_count,
+        "total_weight": total_weight,
+        "normalized_shares_pct": normalized_shares_pct,
+        "max_share_pct": max_share_pct,
+        "is_balanced": is_balanced,
+    }
