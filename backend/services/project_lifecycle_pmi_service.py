@@ -3131,6 +3131,7 @@ __all__ = [
     "audit_charter_assumption_log_validity",
     "audit_project_closure_handover_and_release_readiness",
     "audit_stakeholder_salience_mitchell_classification",
+    "audit_business_case_financial_viability_governance",
     "ProjectLifecyclePMIService",
 ]
 
@@ -3199,4 +3200,80 @@ def audit_stakeholder_salience_mitchell_classification(
 
 ProjectLifecyclePMIService.audit_stakeholder_salience_mitchell_classification = staticmethod(
     audit_stakeholder_salience_mitchell_classification
+)
+
+
+def audit_business_case_financial_viability_governance(
+    business_case: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Audita la viabilidad financiera del Caso de Negocio (NPV, IRR vs Hurdle Rate, BCR y Payback) según PMI PMBOK §1.2.6 y §4.1."""
+    bc: Mapping[str, Any] = (
+        business_case if isinstance(business_case, Mapping) else {}
+    )
+
+    try:
+        npv = round(float(bc.get("npv", 0.0) or 0.0), 2)
+    except (TypeError, ValueError):
+        npv = 0.0
+
+    try:
+        irr_pct = round(float(bc.get("irr_pct", 0.0) or 0.0), 2)
+    except (TypeError, ValueError):
+        irr_pct = 0.0
+
+    try:
+        hurdle_rate_pct = round(
+            max(0.0, float(bc.get("hurdle_rate_pct", 0.0) or 0.0)), 2
+        )
+    except (TypeError, ValueError):
+        hurdle_rate_pct = 0.0
+
+    try:
+        bcr = round(max(0.0, float(bc.get("bcr", 0.0) or 0.0)), 2)
+    except (TypeError, ValueError):
+        bcr = 0.0
+
+    try:
+        payback_months = round(
+            max(0.0, float(bc.get("payback_months", 0.0) or 0.0)), 2
+        )
+    except (TypeError, ValueError):
+        payback_months = 0.0
+
+    try:
+        max_payback_months = round(
+            max(0.0, float(bc.get("max_payback_months", 0.0) or 0.0)), 2
+        )
+    except (TypeError, ValueError):
+        max_payback_months = 0.0
+
+    viability_breaches: list[str] = []
+    if npv <= 0.0:
+        viability_breaches.append("non_positive_npv")
+    if hurdle_rate_pct <= 0.0 or irr_pct < hurdle_rate_pct:
+        viability_breaches.append("irr_below_hurdle_rate")
+    if bcr < 1.0:
+        viability_breaches.append("benefit_cost_ratio_below_unity")
+    if (
+        max_payback_months <= 0.0
+        or payback_months <= 0.0
+        or payback_months > max_payback_months
+    ):
+        viability_breaches.append("payback_exceeds_horizon")
+
+    is_financially_viable = bool(len(viability_breaches) == 0)
+
+    return {
+        "npv": npv,
+        "irr_pct": irr_pct,
+        "hurdle_rate_pct": hurdle_rate_pct,
+        "bcr": bcr,
+        "payback_months": payback_months,
+        "viability_breaches": viability_breaches,
+        "is_financially_viable": is_financially_viable,
+    }
+
+
+ProjectLifecyclePMIService.audit_business_case_financial_viability_governance = staticmethod(
+    audit_business_case_financial_viability_governance
 )

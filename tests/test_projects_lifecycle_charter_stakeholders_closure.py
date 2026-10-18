@@ -3468,3 +3468,119 @@ def test_audit_stakeholder_salience_mitchell_classification_empty_or_none():
         [{"stakeholder_id": "   "}],
     ):
         assert audit_stakeholder_salience_mitchell_classification(payload) == empty_result  # type: ignore[arg-type]
+
+
+def test_audit_business_case_financial_viability_governance_viable():
+    """NPV > 0, IRR >= hurdle_rate > 0, BCR >= 1.0 y 0 < payback <= max_payback -> viable."""
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_business_case_financial_viability_governance,
+    )
+
+    bc = {
+        "npv": 150000.0,
+        "irr_pct": 18.5,
+        "hurdle_rate_pct": 12.0,
+        "bcr": 1.45,
+        "payback_months": 18.0,
+        "max_payback_months": 24.0,
+    }
+    res = audit_business_case_financial_viability_governance(bc)
+    assert res == {
+        "npv": 150000.0,
+        "irr_pct": 18.5,
+        "hurdle_rate_pct": 12.0,
+        "bcr": 1.45,
+        "payback_months": 18.0,
+        "viability_breaches": [],
+        "is_financially_viable": True,
+    }
+    assert (
+        ProjectLifecyclePMIService.audit_business_case_financial_viability_governance(
+            bc
+        )
+        == res
+    )
+
+
+def test_audit_business_case_financial_viability_governance_npv_and_irr_breaches():
+    """NPV <= 0 e IRR < hurdle_rate_pct se reportan en orden canónico."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_business_case_financial_viability_governance,
+    )
+
+    res = audit_business_case_financial_viability_governance(
+        {
+            "npv": -5000.0,
+            "irr_pct": 8.0,
+            "hurdle_rate_pct": 12.0,
+            "bcr": 1.2,
+            "payback_months": 12.0,
+            "max_payback_months": 24.0,
+        }
+    )
+    assert res == {
+        "npv": -5000.0,
+        "irr_pct": 8.0,
+        "hurdle_rate_pct": 12.0,
+        "bcr": 1.2,
+        "payback_months": 12.0,
+        "viability_breaches": [
+            "non_positive_npv",
+            "irr_below_hurdle_rate",
+        ],
+        "is_financially_viable": False,
+    }
+
+
+def test_audit_business_case_financial_viability_governance_bcr_and_payback_breaches():
+    """BCR < 1.0 y payback_months > max_payback_months se reportan en viability_breaches."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_business_case_financial_viability_governance,
+    )
+
+    res = audit_business_case_financial_viability_governance(
+        {
+            "npv": 10000.0,
+            "irr_pct": 15.0,
+            "hurdle_rate_pct": 10.0,
+            "bcr": 0.85,
+            "payback_months": 36.0,
+            "max_payback_months": 24.0,
+        }
+    )
+    assert res == {
+        "npv": 10000.0,
+        "irr_pct": 15.0,
+        "hurdle_rate_pct": 10.0,
+        "bcr": 0.85,
+        "payback_months": 36.0,
+        "viability_breaches": [
+            "benefit_cost_ratio_below_unity",
+            "payback_exceeds_horizon",
+        ],
+        "is_financially_viable": False,
+    }
+
+
+def test_audit_business_case_financial_viability_governance_empty_or_non_mapping():
+    """Entrada None, vacía o no Mapping activa las 4 brechas canónicas."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_business_case_financial_viability_governance,
+    )
+
+    for payload in (None, {}, "invalid", []):
+        assert audit_business_case_financial_viability_governance(payload) == {  # type: ignore[arg-type]
+            "npv": 0.0,
+            "irr_pct": 0.0,
+            "hurdle_rate_pct": 0.0,
+            "bcr": 0.0,
+            "payback_months": 0.0,
+            "viability_breaches": [
+                "non_positive_npv",
+                "irr_below_hurdle_rate",
+                "benefit_cost_ratio_below_unity",
+                "payback_exceeds_horizon",
+            ],
+            "is_financially_viable": False,
+        }

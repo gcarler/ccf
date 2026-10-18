@@ -2810,6 +2810,7 @@ __all__ = [
     "evaluate_spc_control_chart_stability",
     "evaluate_quality_capa_root_cause_effectiveness",
     "evaluate_ccb_emergency_change_retrospective_compliance",
+    "evaluate_quality_aql_lot_sampling_acceptance",
     "ProjectCCBService",
 ]
 
@@ -3028,3 +3029,81 @@ ProjectCCBService.evaluate_ccb_emergency_change_retrospective_compliance = stati
 )
 
 
+def evaluate_quality_aql_lot_sampling_acceptance(
+    inspection_lots: Sequence[Mapping[str, Any]] | None,
+) -> dict[str, Any]:
+    """Evalúa lotes de muestreo estadístico de calidad (AQL Lot Acceptance Inspection) según PMI PMBOK §8.3 y §5.5."""
+    if (
+        inspection_lots is None
+        or isinstance(inspection_lots, (str, bytes, Mapping))
+        or not isinstance(inspection_lots, Sequence)
+    ):
+        items: Sequence[Any] = []
+    else:
+        items = inspection_lots
+
+    total_lots = 0
+    accepted_lot_ids: list[str] = []
+    rejected_lot_ids: list[str] = []
+    invalid_sample_size_lot_ids: list[str] = []
+
+    for item in items:
+        if not isinstance(item, Mapping):
+            continue
+        lot_id = str(item.get("lot_id") or "").strip()
+        if not lot_id:
+            continue
+
+        total_lots += 1
+        try:
+            lot_size = int(item.get("lot_size", 0) or 0)
+        except (TypeError, ValueError):
+            lot_size = 0
+
+        try:
+            sample_size = int(item.get("sample_size", 0) or 0)
+        except (TypeError, ValueError):
+            sample_size = 0
+
+        try:
+            defects_found = max(0, int(item.get("defects_found", 0) or 0))
+        except (TypeError, ValueError):
+            defects_found = 0
+
+        try:
+            acceptance_number = max(0, int(item.get("acceptance_number", 0) or 0))
+        except (TypeError, ValueError):
+            acceptance_number = 0
+
+        if lot_size <= 0 or sample_size <= 0 or sample_size > lot_size:
+            invalid_sample_size_lot_ids.append(lot_id)
+        else:
+            if defects_found > acceptance_number:
+                rejected_lot_ids.append(lot_id)
+            else:
+                accepted_lot_ids.append(lot_id)
+
+    lot_acceptance_rate_pct = (
+        round((len(accepted_lot_ids) / total_lots) * 100.0, 2)
+        if total_lots > 0
+        else 0.0
+    )
+    is_sampling_quality_compliant = bool(
+        total_lots > 0
+        and not invalid_sample_size_lot_ids
+        and not rejected_lot_ids
+    )
+
+    return {
+        "total_lots": total_lots,
+        "accepted_lot_ids": accepted_lot_ids,
+        "rejected_lot_ids": rejected_lot_ids,
+        "invalid_sample_size_lot_ids": invalid_sample_size_lot_ids,
+        "lot_acceptance_rate_pct": lot_acceptance_rate_pct,
+        "is_sampling_quality_compliant": is_sampling_quality_compliant,
+    }
+
+
+ProjectCCBService.evaluate_quality_aql_lot_sampling_acceptance = staticmethod(
+    evaluate_quality_aql_lot_sampling_acceptance
+)

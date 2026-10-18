@@ -3796,3 +3796,114 @@ def test_evaluate_ccb_emergency_change_retrospective_compliance_empty_or_no_emer
         }
 
 
+def test_evaluate_quality_aql_lot_sampling_acceptance_all_accepted():
+    """Lotes con muestra válida y defectos <= acceptance_number -> 100% aceptados y compliant True."""
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        evaluate_quality_aql_lot_sampling_acceptance,
+    )
+
+    lots = [
+        {
+            "lot_id": "LOT-01",
+            "lot_size": 500,
+            "sample_size": 50,
+            "defects_found": 1,
+            "acceptance_number": 2,
+        },
+        {
+            "lot_id": "LOT-02",
+            "lot_size": 200,
+            "sample_size": 32,
+            "defects_found": 0,
+            "acceptance_number": 0,
+        },
+    ]
+    res = evaluate_quality_aql_lot_sampling_acceptance(lots)
+    assert res == {
+        "total_lots": 2,
+        "accepted_lot_ids": ["LOT-01", "LOT-02"],
+        "rejected_lot_ids": [],
+        "invalid_sample_size_lot_ids": [],
+        "lot_acceptance_rate_pct": 100.0,
+        "is_sampling_quality_compliant": True,
+    }
+    assert ProjectCCBService.evaluate_quality_aql_lot_sampling_acceptance(lots) == res
+
+
+def test_evaluate_quality_aql_lot_sampling_acceptance_rejected_lots():
+    """Lotes con defects_found > acceptance_number se reportan en rejected_lot_ids."""
+    from backend.services.project_ccb_service import (
+        evaluate_quality_aql_lot_sampling_acceptance,
+    )
+
+    res = evaluate_quality_aql_lot_sampling_acceptance(
+        [
+            {
+                "lot_id": "LOT-PASS",
+                "lot_size": 100,
+                "sample_size": 20,
+                "defects_found": 1,
+                "acceptance_number": 1,
+            },
+            {
+                "lot_id": "LOT-FAIL",
+                "lot_size": 100,
+                "sample_size": 20,
+                "defects_found": 3,
+                "acceptance_number": 1,
+            },
+        ]
+    )
+    assert res == {
+        "total_lots": 2,
+        "accepted_lot_ids": ["LOT-PASS"],
+        "rejected_lot_ids": ["LOT-FAIL"],
+        "invalid_sample_size_lot_ids": [],
+        "lot_acceptance_rate_pct": 50.0,
+        "is_sampling_quality_compliant": False,
+    }
+
+
+def test_evaluate_quality_aql_lot_sampling_acceptance_invalid_sample_sizes():
+    """lot_size <= 0, sample_size <= 0 o sample_size > lot_size -> invalid_sample_size_lot_ids."""
+    from backend.services.project_ccb_service import (
+        evaluate_quality_aql_lot_sampling_acceptance,
+    )
+
+    res = evaluate_quality_aql_lot_sampling_acceptance(
+        [
+            {"lot_id": "LOT-ZERO-LOT", "lot_size": 0, "sample_size": 10},
+            {"lot_id": "LOT-ZERO-SMP", "lot_size": 100, "sample_size": 0},
+            {"lot_id": "LOT-OVERSMP", "lot_size": 50, "sample_size": 60},
+        ]
+    )
+    assert res == {
+        "total_lots": 3,
+        "accepted_lot_ids": [],
+        "rejected_lot_ids": [],
+        "invalid_sample_size_lot_ids": [
+            "LOT-ZERO-LOT",
+            "LOT-ZERO-SMP",
+            "LOT-OVERSMP",
+        ],
+        "lot_acceptance_rate_pct": 0.0,
+        "is_sampling_quality_compliant": False,
+    }
+
+
+def test_evaluate_quality_aql_lot_sampling_acceptance_empty_or_invalid():
+    """Entrada None, vacía o no secuencial retorna contadores en 0 e is_sampling_quality_compliant=False."""
+    from backend.services.project_ccb_service import (
+        evaluate_quality_aql_lot_sampling_acceptance,
+    )
+
+    for payload in (None, [], "invalid", {"lot_id": "LOT-1"}, [{"lot_id": "  "}]):
+        assert evaluate_quality_aql_lot_sampling_acceptance(payload) == {  # type: ignore[arg-type]
+            "total_lots": 0,
+            "accepted_lot_ids": [],
+            "rejected_lot_ids": [],
+            "invalid_sample_size_lot_ids": [],
+            "lot_acceptance_rate_pct": 0.0,
+            "is_sampling_quality_compliant": False,
+        }
