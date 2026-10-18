@@ -6573,3 +6573,141 @@ def test_evm_loe_contamination_empty_and_binding():
     )
     assert "evaluate_evm_loe_contamination_and_variance_masking" in mod.__all__
 
+
+def test_evm_funding_limit_reconciliation_reconciled():
+    """Caso 1: Todos los periodos dentro del límite de financiamiento y con headroom >= 5% -> RECONCILED."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_funding_limit_reconciliation_and_liquidity,
+    )
+
+    periods = [
+        {
+            "period_id": "2026-Q1",
+            "cumulative_funding_limit_usd": 100000.0,
+            "cumulative_planned_outflow_pv_usd": 85000.0,
+            "cumulative_actual_commitments_ac_usd": 82000.0,
+            "management_reserve_earmarked_usd": 5000.0,  # peak=90000, headroom=10%
+        },
+        {
+            "period_id": "2026-Q2",
+            "cumulative_funding_limit_usd": 200000.0,
+            "cumulative_planned_outflow_pv_usd": 170000.0,
+            "cumulative_actual_commitments_ac_usd": 175000.0,
+            "management_reserve_earmarked_usd": 5000.0,  # peak=175000, headroom=12.5%
+        },
+    ]
+    res = evaluate_evm_funding_limit_reconciliation_and_liquidity(
+        periods, min_liquidity_headroom_pct=5.0
+    )
+    assert res["total_periods"] == 2
+    assert res["planned_breach_period_ids"] == []
+    assert res["actual_commitment_breach_period_ids"] == []
+    assert res["tight_headroom_period_ids"] == []
+    assert res["max_funding_deficit_usd"] == 0.0
+    assert res["funding_reconciliation_status"] == "RECONCILED"
+    assert res["is_funding_reconciled"] is True
+    assert res["issues"] == []
+
+
+def test_evm_funding_limit_reconciliation_headroom_constrained():
+    """Caso 2: Sin exceso de techo pero headroom < min_liquidity_headroom_pct -> HEADROOM_CONSTRAINED."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_funding_limit_reconciliation_and_liquidity,
+    )
+
+    periods = [
+        {
+            "period_id": "2026-Q3",
+            "cumulative_funding_limit_usd": 100000.0,
+            "cumulative_planned_outflow_pv_usd": 94000.0,
+            "cumulative_actual_commitments_ac_usd": 92000.0,
+            "management_reserve_earmarked_usd": 3000.0,  # required=97000, headroom=3% < 5%
+        }
+    ]
+    res = evaluate_evm_funding_limit_reconciliation_and_liquidity(
+        periods, min_liquidity_headroom_pct=5.0
+    )
+    assert res["total_periods"] == 1
+    assert res["planned_breach_period_ids"] == []
+    assert res["actual_commitment_breach_period_ids"] == []
+    assert res["tight_headroom_period_ids"] == ["2026-Q3"]
+    assert res["max_funding_deficit_usd"] == 0.0
+    assert res["funding_reconciliation_status"] == "HEADROOM_CONSTRAINED"
+    assert res["is_funding_reconciled"] is False
+    assert len(res["issues"]) >= 1
+
+
+def test_evm_funding_limit_reconciliation_cap_breached():
+    """Caso 3: PV + reserva o AC superan el límite de financiamiento -> FUNDING_CAP_BREACHED."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_funding_limit_reconciliation_and_liquidity,
+    )
+
+    periods = [
+        {
+            "period_id": "2026-Q1",
+            "cumulative_funding_limit_usd": 100000.0,
+            "cumulative_planned_outflow_pv_usd": 95000.0,
+            "cumulative_actual_commitments_ac_usd": 90000.0,
+            "management_reserve_earmarked_usd": 10000.0,  # required=105000 > 100000 (deficit 5000)
+        },
+        {
+            "period_id": "2026-Q2",
+            "cumulative_funding_limit_usd": 200000.0,
+            "cumulative_planned_outflow_pv_usd": 180000.0,
+            "cumulative_actual_commitments_ac_usd": 212500.0,  # AC > 200000 (deficit 12500)
+            "management_reserve_earmarked_usd": 0.0,
+        },
+    ]
+    res = evaluate_evm_funding_limit_reconciliation_and_liquidity(
+        periods, min_liquidity_headroom_pct=5.0
+    )
+    assert res["total_periods"] == 2
+    assert res["planned_breach_period_ids"] == ["2026-Q1"]
+    assert res["actual_commitment_breach_period_ids"] == ["2026-Q2"]
+    assert res["tight_headroom_period_ids"] == []
+    assert res["max_funding_deficit_usd"] == 12500.0
+    assert res["funding_reconciliation_status"] == "FUNDING_CAP_BREACHED"
+    assert res["is_funding_reconciled"] is False
+    assert len(res["issues"]) >= 2
+
+
+def test_evm_funding_limit_reconciliation_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en ProjectEVMService + __all__."""
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_funding_limit_reconciliation_and_liquidity,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = evaluate_evm_funding_limit_reconciliation_and_liquidity(payload)  # type: ignore[arg-type]
+        assert empty["total_periods"] == 0
+        assert empty["planned_breach_period_ids"] == []
+        assert empty["actual_commitment_breach_period_ids"] == []
+        assert empty["tight_headroom_period_ids"] == []
+        assert empty["max_funding_deficit_usd"] == 0.0
+        assert empty["funding_reconciliation_status"] == "RECONCILED"
+        assert empty["is_funding_reconciled"] is True
+        assert empty["issues"] == []
+
+    sample = [
+        {
+            "period_id": "2026-Q4",
+            "cumulative_funding_limit_usd": 100000.0,
+            "cumulative_planned_outflow_pv_usd": 80000.0,
+            "cumulative_actual_commitments_ac_usd": 80000.0,
+            "management_reserve_earmarked_usd": 0.0,
+        }
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_funding_limit_reconciliation_and_liquidity(
+            sample
+        )
+        == evaluate_evm_funding_limit_reconciliation_and_liquidity(sample)
+    )
+    assert (
+        "evaluate_evm_funding_limit_reconciliation_and_liquidity" in mod.__all__
+    )
+
+

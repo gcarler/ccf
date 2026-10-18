@@ -3154,6 +3154,7 @@ __all__ = [
     "audit_portfolio_strategic_alignment_and_esg_sustainability",
     "audit_steering_committee_quorum_and_escalation_sla",
     "audit_business_case_npv_irr_and_payback_viability",
+    "audit_team_tuckman_maturity_and_psychological_safety",
     "ProjectLifecyclePMIService",
 ]
 
@@ -5713,4 +5714,103 @@ def audit_business_case_npv_irr_and_payback_viability(
 ProjectLifecyclePMIService.audit_business_case_npv_irr_and_payback_viability = staticmethod(
     audit_business_case_npv_irr_and_payback_viability
 )
+
+
+def audit_team_tuckman_maturity_and_psychological_safety(
+    team_metrics: list[dict[str, Any]],
+    *,
+    min_safety_score_1_to_5: float = 3.8,
+    max_velocity_volatility_cv_pct: float = 25.0,
+) -> dict[str, Any]:
+    """Audita madurez de etapa Tuckman, seguridad psicológica y estabilidad de velocidad de equipos (PMI PMBOK §9.4)."""
+    if not isinstance(team_metrics, list):
+        return {
+            "total_squads": 0,
+            "invalid_stage_squad_ids": [],
+            "low_safety_squad_ids": [],
+            "storming_conflict_squad_ids": [],
+            "unstable_velocity_squad_ids": [],
+            "team_health_status": "HIGH_PERFORMING",
+            "is_team_healthy": True,
+            "issues": [],
+        }
+
+    min_safety = float(
+        min_safety_score_1_to_5 if min_safety_score_1_to_5 is not None else 3.8
+    )
+    max_cv = float(
+        max_velocity_volatility_cv_pct
+        if max_velocity_volatility_cv_pct is not None
+        else 25.0
+    )
+    valid_stages = {"forming", "storming", "norming", "performing", "adjourning"}
+
+    total_squads = 0
+    invalid_stage_squad_ids: list[str] = []
+    low_safety_squad_ids: list[str] = []
+    storming_conflict_squad_ids: list[str] = []
+    unstable_velocity_squad_ids: list[str] = []
+    issues: list[str] = []
+
+    for idx, item in enumerate(team_metrics):
+        if not isinstance(item, dict):
+            continue
+        total_squads += 1
+        squad_id = str(item.get("squad_id") or f"SQUAD-{idx + 1}").strip()
+        stage = str(item.get("tuckman_stage") or "").strip().lower()
+        safety_score = float(item.get("psychological_safety_score") or 0.0)
+        velocity_cv = float(item.get("velocity_cv_pct") or 0.0)
+        conflicts = int(item.get("unresolved_interpersonal_conflicts") or 0)
+
+        if stage not in valid_stages:
+            invalid_stage_squad_ids.append(squad_id)
+            issues.append(
+                f"Equipo '{squad_id}' reporta etapa Tuckman no válida ('{stage}')."
+            )
+
+        if safety_score < min_safety:
+            low_safety_squad_ids.append(squad_id)
+            issues.append(
+                f"Equipo '{squad_id}' presenta seguridad psicológica baja ({safety_score:.2f} < {min_safety:.2f})."
+            )
+
+        if conflicts > 0 or (stage == "storming" and velocity_cv > max_cv):
+            storming_conflict_squad_ids.append(squad_id)
+            issues.append(
+                f"Equipo '{squad_id}' presenta fricción interpersonal no resuelta (conflictos={conflicts}, stage={stage})."
+            )
+
+        if velocity_cv > max_cv:
+            unstable_velocity_squad_ids.append(squad_id)
+            issues.append(
+                f"Equipo '{squad_id}' excede la volatilidad máxima de velocidad (CV={velocity_cv:.2f}% > {max_cv:.2f}%)."
+            )
+
+    if (
+        len(invalid_stage_squad_ids) > 0
+        or len(low_safety_squad_ids) > 0
+        or len(storming_conflict_squad_ids) > 0
+    ):
+        team_health_status = "DYSFUNCTIONAL_RISK"
+    elif len(unstable_velocity_squad_ids) > 0:
+        team_health_status = "VOLATILE_CADENCE"
+    else:
+        team_health_status = "HIGH_PERFORMING"
+
+    return {
+        "total_squads": total_squads,
+        "invalid_stage_squad_ids": invalid_stage_squad_ids,
+        "low_safety_squad_ids": low_safety_squad_ids,
+        "storming_conflict_squad_ids": storming_conflict_squad_ids,
+        "unstable_velocity_squad_ids": unstable_velocity_squad_ids,
+        "team_health_status": team_health_status,
+        "is_team_healthy": team_health_status == "HIGH_PERFORMING",
+        "issues": issues,
+    }
+
+
+ProjectLifecyclePMIService.audit_team_tuckman_maturity_and_psychological_safety = staticmethod(
+    audit_team_tuckman_maturity_and_psychological_safety
+)
+
 

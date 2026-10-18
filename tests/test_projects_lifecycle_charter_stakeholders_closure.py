@@ -6887,3 +6887,141 @@ def test_business_case_npv_irr_payback_defaults_and_binding():
     )
     assert "audit_business_case_npv_irr_and_payback_viability" in mod.__all__
 
+
+def test_audit_team_tuckman_maturity_high_performing():
+    """Caso 1: Equipos en etapas válidas, seguridad >= 3.8, sin conflictos y CV <= 25% -> HIGH_PERFORMING."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_team_tuckman_maturity_and_psychological_safety,
+    )
+
+    squads = [
+        {
+            "squad_id": "SQ-ALPHA",
+            "tuckman_stage": "performing",
+            "psychological_safety_score": 4.5,
+            "velocity_cv_pct": 12.0,
+            "unresolved_interpersonal_conflicts": 0,
+        },
+        {
+            "squad_id": "SQ-BETA",
+            "tuckman_stage": "norming",
+            "psychological_safety_score": 4.0,
+            "velocity_cv_pct": 18.5,
+            "unresolved_interpersonal_conflicts": 0,
+        },
+    ]
+    res = audit_team_tuckman_maturity_and_psychological_safety(
+        squads, min_safety_score_1_to_5=3.8, max_velocity_volatility_cv_pct=25.0
+    )
+    assert res["total_squads"] == 2
+    assert res["invalid_stage_squad_ids"] == []
+    assert res["low_safety_squad_ids"] == []
+    assert res["storming_conflict_squad_ids"] == []
+    assert res["unstable_velocity_squad_ids"] == []
+    assert res["team_health_status"] == "HIGH_PERFORMING"
+    assert res["is_team_healthy"] is True
+    assert res["issues"] == []
+
+
+def test_audit_team_tuckman_maturity_volatile_cadence():
+    """Caso 2: Seguridad saludable y etapa norming/forming sin conflictos pero CV > 25% -> VOLATILE_CADENCE."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_team_tuckman_maturity_and_psychological_safety,
+    )
+
+    squads = [
+        {
+            "squad_id": "SQ-GAMMA",
+            "tuckman_stage": "forming",
+            "psychological_safety_score": 4.1,
+            "velocity_cv_pct": 32.0,
+            "unresolved_interpersonal_conflicts": 0,
+        }
+    ]
+    res = audit_team_tuckman_maturity_and_psychological_safety(
+        squads, min_safety_score_1_to_5=3.8, max_velocity_volatility_cv_pct=25.0
+    )
+    assert res["total_squads"] == 1
+    assert res["invalid_stage_squad_ids"] == []
+    assert res["low_safety_squad_ids"] == []
+    assert res["storming_conflict_squad_ids"] == []
+    assert res["unstable_velocity_squad_ids"] == ["SQ-GAMMA"]
+    assert res["team_health_status"] == "VOLATILE_CADENCE"
+    assert res["is_team_healthy"] is False
+    assert len(res["issues"]) >= 1
+
+
+def test_audit_team_tuckman_maturity_dysfunctional_risk():
+    """Caso 3: Etapa inválida, baja seguridad psicológica o conflicto storming -> DYSFUNCTIONAL_RISK."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_team_tuckman_maturity_and_psychological_safety,
+    )
+
+    squads = [
+        {
+            "squad_id": "SQ-BAD-STAGE",
+            "tuckman_stage": "chaotic",
+            "psychological_safety_score": 4.2,
+            "velocity_cv_pct": 10.0,
+            "unresolved_interpersonal_conflicts": 0,
+        },
+        {
+            "squad_id": "SQ-LOW-SAFE",
+            "tuckman_stage": "storming",
+            "psychological_safety_score": 2.9,
+            "velocity_cv_pct": 30.0,
+            "unresolved_interpersonal_conflicts": 2,
+        },
+    ]
+    res = audit_team_tuckman_maturity_and_psychological_safety(
+        squads, min_safety_score_1_to_5=3.8, max_velocity_volatility_cv_pct=25.0
+    )
+    assert res["total_squads"] == 2
+    assert res["invalid_stage_squad_ids"] == ["SQ-BAD-STAGE"]
+    assert res["low_safety_squad_ids"] == ["SQ-LOW-SAFE"]
+    assert res["storming_conflict_squad_ids"] == ["SQ-LOW-SAFE"]
+    assert res["unstable_velocity_squad_ids"] == ["SQ-LOW-SAFE"]
+    assert res["team_health_status"] == "DYSFUNCTIONAL_RISK"
+    assert res["is_team_healthy"] is False
+    assert len(res["issues"]) >= 3
+
+
+def test_audit_team_tuckman_maturity_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en ProjectLifecyclePMIService + __all__."""
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_team_tuckman_maturity_and_psychological_safety,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_team_tuckman_maturity_and_psychological_safety(payload)  # type: ignore[arg-type]
+        assert empty["total_squads"] == 0
+        assert empty["invalid_stage_squad_ids"] == []
+        assert empty["low_safety_squad_ids"] == []
+        assert empty["storming_conflict_squad_ids"] == []
+        assert empty["unstable_velocity_squad_ids"] == []
+        assert empty["team_health_status"] == "HIGH_PERFORMING"
+        assert empty["is_team_healthy"] is True
+        assert empty["issues"] == []
+
+    sample = [
+        {
+            "squad_id": "SQ-99",
+            "tuckman_stage": "adjourning",
+            "psychological_safety_score": 4.4,
+            "velocity_cv_pct": 10.0,
+            "unresolved_interpersonal_conflicts": 0,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_team_tuckman_maturity_and_psychological_safety(
+            sample
+        )
+        == audit_team_tuckman_maturity_and_psychological_safety(sample)
+    )
+    assert (
+        "audit_team_tuckman_maturity_and_psychological_safety" in mod.__all__
+    )
+
+

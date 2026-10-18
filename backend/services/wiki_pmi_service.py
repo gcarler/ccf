@@ -2515,6 +2515,7 @@ __all__ = [
     "audit_wiki_definition_of_ready_and_backlog_grooming",
     "audit_wiki_blameless_postmortem_and_systemic_prevention",
     "audit_wiki_opa_and_eef_catalog_freshness",
+    "audit_wiki_adr_superseded_chain_and_consequences_hygiene",
     "WikiPMIService",
 ]
 
@@ -5129,3 +5130,115 @@ WikiPMIService.audit_wiki_opa_and_eef_catalog_freshness = staticmethod(
 
 
 
+def audit_wiki_adr_superseded_chain_and_consequences_hygiene(
+    adr_records: Sequence[Mapping[str, Any]] | None,
+) -> dict[str, Any]:
+    """PMBOK 4.4 & 5.3 — cadenas ADR superseded y completitud de secciones.
+
+    Auditoría pura sobre ``adr_records``. Entradas no-lista/None se tratan
+    como lista vacía y elementos no-dict se ignoran. Cada elemento:
+    ``adr_id``, ``status`` (proposed/accepted/superseded/deprecated/
+    rejected), ``superseded_by_adr_id``, y flags de secciones
+    (``has_context_section``, ``has_decision_section``,
+    ``has_consequences_section``). Reglas:
+
+    1. ``invalid_status_adr_ids``: status fuera del catálogo aceptado (case-
+       insensitive con strip()).
+    2. ``incomplete_sections_adr_ids``: faltante de context/decision/
+       consequences.
+    3. ``broken_superseded_link_adr_ids``: status 'superseded' con destino
+       vacío, auto-referencial, inexistente o destino no 'accepted'.
+    4. ``contradictory_superseded_adr_ids``: status distinto de 'superseded'
+       con ``superseded_by_adr_id`` presente.
+
+    ``adr_governance_status``: CHAIN_OR_STATUS_BROKEN si (1), (3) o (4);
+    INCOMPLETE_DOCUMENTATION si solo (2); COMPLIANT en caso contrario.
+    ``is_adr_log_healthy`` = status == 'COMPLIANT'.
+    """
+    valid_statuses = {"proposed", "accepted", "superseded", "deprecated", "rejected"}
+
+    def _status(entry: Mapping[str, Any]) -> str:
+        raw = entry.get("status")
+        return str(raw).strip().lower() if raw is not None else ""
+
+    raw_items = adr_records if isinstance(adr_records, list) else []
+    items = [entry for entry in raw_items if isinstance(entry, Mapping)]
+
+    adr_entry_by_lower: dict[str, Mapping[str, Any]] = {}
+    for entry in items:
+        adr_id_raw = entry.get("adr_id")
+        if isinstance(adr_id_raw, str) and adr_id_raw.strip():
+            adr_entry_by_lower[adr_id_raw.strip().lower()] = entry
+
+    invalid_status_adr_ids: list[str] = []
+    incomplete_sections_adr_ids: list[str] = []
+    broken_superseded_link_adr_ids: list[str] = []
+    contradictory_superseded_adr_ids: list[str] = []
+
+    for entry in items:
+        adr_id = entry.get("adr_id")
+        status = _status(entry)
+        superseded_by = entry.get("superseded_by_adr_id")
+        superseded_by_clean = (
+            str(superseded_by).strip()
+            if isinstance(superseded_by, str)
+            else ("" if superseded_by is None else None)
+        )
+        has_target = bool(superseded_by_clean)
+
+        if status not in valid_statuses:
+            invalid_status_adr_ids.append(adr_id)
+
+        if (
+            entry.get("has_context_section") is not True
+            or entry.get("has_decision_section") is not True
+            or entry.get("has_consequences_section") is not True
+        ):
+            incomplete_sections_adr_ids.append(adr_id)
+
+        if status == "superseded":
+            target_lookup = (
+                superseded_by_clean.strip().lower()
+                if isinstance(superseded_by_clean, str)
+                else None
+            )
+            target_status = (
+                _status(adr_entry_by_lower[target_lookup])
+                if target_lookup in adr_entry_by_lower
+                else None
+            )
+            broken = (
+                (not has_target)
+                or (
+                    target_lookup is not None
+                    and str(entry.get("adr_id")).strip().lower() == target_lookup
+                )
+                or (target_lookup is None or target_lookup not in adr_entry_by_lower)
+                or (target_status != "accepted")
+            )
+            if broken:
+                broken_superseded_link_adr_ids.append(adr_id)
+        elif has_target:
+            contradictory_superseded_adr_ids.append(adr_id)
+
+    if invalid_status_adr_ids or broken_superseded_link_adr_ids or contradictory_superseded_adr_ids:
+        adr_governance_status = "CHAIN_OR_STATUS_BROKEN"
+    elif incomplete_sections_adr_ids:
+        adr_governance_status = "INCOMPLETE_DOCUMENTATION"
+    else:
+        adr_governance_status = "COMPLIANT"
+
+    return {
+        "total_adr_records": len(items),
+        "invalid_status_adr_ids": invalid_status_adr_ids,
+        "incomplete_sections_adr_ids": incomplete_sections_adr_ids,
+        "broken_superseded_link_adr_ids": broken_superseded_link_adr_ids,
+        "contradictory_superseded_adr_ids": contradictory_superseded_adr_ids,
+        "adr_governance_status": adr_governance_status,
+        "is_adr_log_healthy": adr_governance_status == "COMPLIANT",
+    }
+
+
+WikiPMIService.audit_wiki_adr_superseded_chain_and_consequences_hygiene = staticmethod(
+    audit_wiki_adr_superseded_chain_and_consequences_hygiene
+)

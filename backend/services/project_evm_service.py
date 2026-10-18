@@ -5507,6 +5507,7 @@ __all__ = [
     "evaluate_evm_contract_fee_and_point_of_total_assumption",
     "evaluate_evm_earned_schedule_eac_t_and_tspi",
     "evaluate_evm_loe_contamination_and_variance_masking",
+    "evaluate_evm_funding_limit_reconciliation_and_liquidity",
     "ProjectEVMService",
 ]
 
@@ -7901,4 +7902,102 @@ def evaluate_evm_loe_contamination_and_variance_masking(
 ProjectEVMService.evaluate_evm_loe_contamination_and_variance_masking = staticmethod(
     evaluate_evm_loe_contamination_and_variance_masking
 )
+
+
+def evaluate_evm_funding_limit_reconciliation_and_liquidity(
+    fiscal_periods: list[dict[str, Any]],
+    *,
+    min_liquidity_headroom_pct: float = 5.0,
+) -> dict[str, Any]:
+    """Evalúa conciliación con límites de financiamiento y liquidez de flujo de caja (PMI PMBOK §7.3 / §7.4)."""
+    if not isinstance(fiscal_periods, list):
+        return {
+            "total_periods": 0,
+            "planned_breach_period_ids": [],
+            "actual_commitment_breach_period_ids": [],
+            "tight_headroom_period_ids": [],
+            "max_funding_deficit_usd": 0.0,
+            "funding_reconciliation_status": "RECONCILED",
+            "is_funding_reconciled": True,
+            "issues": [],
+        }
+
+    min_headroom_pct = float(
+        min_liquidity_headroom_pct if min_liquidity_headroom_pct is not None else 5.0
+    )
+
+    total_periods = 0
+    planned_breach_period_ids: list[str] = []
+    actual_commitment_breach_period_ids: list[str] = []
+    tight_headroom_period_ids: list[str] = []
+    issues: list[str] = []
+    max_deficit = 0.0
+
+    for idx, item in enumerate(fiscal_periods):
+        if not isinstance(item, dict):
+            continue
+        total_periods += 1
+        period_id = str(item.get("period_id") or f"PERIOD-{idx + 1}").strip()
+        funding_limit = float(item.get("cumulative_funding_limit_usd") or 0.0)
+        planned_pv = float(item.get("cumulative_planned_outflow_pv_usd") or 0.0)
+        actual_ac = float(item.get("cumulative_actual_commitments_ac_usd") or 0.0)
+        mr_earmarked = max(
+            0.0, float(item.get("management_reserve_earmarked_usd") or 0.0)
+        )
+
+        required_planned_usd = planned_pv + mr_earmarked
+        peak_demand_usd = max(required_planned_usd, actual_ac)
+
+        if required_planned_usd > funding_limit:
+            planned_breach_period_ids.append(period_id)
+            issues.append(
+                f"Periodo '{period_id}' excede el límite de financiamiento en demanda planificada ({required_planned_usd:.2f} > {funding_limit:.2f} USD)."
+            )
+
+        if actual_ac > funding_limit:
+            actual_commitment_breach_period_ids.append(period_id)
+            issues.append(
+                f"Periodo '{period_id}' excede el límite de financiamiento en compromisos reales AC ({actual_ac:.2f} > {funding_limit:.2f} USD)."
+            )
+
+        if peak_demand_usd > funding_limit:
+            deficit = peak_demand_usd - funding_limit
+            if deficit > max_deficit:
+                max_deficit = deficit
+        elif funding_limit > 0.0:
+            headroom_pct = ((funding_limit - peak_demand_usd) / funding_limit) * 100.0
+            if headroom_pct < min_headroom_pct:
+                tight_headroom_period_ids.append(period_id)
+                issues.append(
+                    f"Periodo '{period_id}' presenta margen de liquidez estrecho ({headroom_pct:.2f}% < {min_headroom_pct:.2f}%)."
+                )
+
+    max_funding_deficit_usd = round(max_deficit, 2)
+
+    if (
+        len(planned_breach_period_ids) > 0
+        or len(actual_commitment_breach_period_ids) > 0
+    ):
+        funding_reconciliation_status = "FUNDING_CAP_BREACHED"
+    elif len(tight_headroom_period_ids) > 0:
+        funding_reconciliation_status = "HEADROOM_CONSTRAINED"
+    else:
+        funding_reconciliation_status = "RECONCILED"
+
+    return {
+        "total_periods": total_periods,
+        "planned_breach_period_ids": planned_breach_period_ids,
+        "actual_commitment_breach_period_ids": actual_commitment_breach_period_ids,
+        "tight_headroom_period_ids": tight_headroom_period_ids,
+        "max_funding_deficit_usd": max_funding_deficit_usd,
+        "funding_reconciliation_status": funding_reconciliation_status,
+        "is_funding_reconciled": funding_reconciliation_status == "RECONCILED",
+        "issues": issues,
+    }
+
+
+ProjectEVMService.evaluate_evm_funding_limit_reconciliation_and_liquidity = staticmethod(
+    evaluate_evm_funding_limit_reconciliation_and_liquidity
+)
+
 

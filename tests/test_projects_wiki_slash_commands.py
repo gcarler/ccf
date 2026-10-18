@@ -6487,3 +6487,183 @@ def test_audit_wiki_opa_and_eef_catalog_freshness_empty_and_binding():
     assert "audit_wiki_opa_and_eef_catalog_freshness" in mod.__all__
 
 
+
+
+def test_wiki_adr_chain_compliant_and_status_broken():
+    """Cadena íntegra -> COMPLIANT; status inválido o destino no accepted -> CHAIN_OR_STATUS_BROKEN."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_adr_superseded_chain_and_consequences_hygiene,
+    )
+
+    def adr(aid, status="accepted", sup=None, ctx=True, dec=True, con=True):
+        return {
+            "adr_id": aid,
+            "status": status,
+            "superseded_by_adr_id": sup,
+            "has_context_section": ctx,
+            "has_decision_section": dec,
+            "has_consequences_section": con,
+        }
+
+    compliant = audit_wiki_adr_superseded_chain_and_consequences_hygiene(
+        [
+            adr("ADR-1"),
+            adr("ADR-2", "superseded", "ADR-1"),
+            adr("ADR-3", "deprecated"),
+            adr("ADR-4", "rejected"),
+            adr("ADR-5", "proposed"),
+        ]
+    )
+    assert compliant["total_adr_records"] == 5
+    assert compliant["invalid_status_adr_ids"] == []
+    assert compliant["incomplete_sections_adr_ids"] == []
+    assert compliant["broken_superseded_link_adr_ids"] == []
+    assert compliant["contradictory_superseded_adr_ids"] == []
+    assert compliant["adr_governance_status"] == "COMPLIANT"
+    assert compliant["is_adr_log_healthy"] is True
+
+    invalid = audit_wiki_adr_superseded_chain_and_consequences_hygiene(
+        [adr("ADR-9", "APPROVED")]
+    )
+    assert invalid["invalid_status_adr_ids"] == ["ADR-9"]
+    assert invalid["adr_governance_status"] == "CHAIN_OR_STATUS_BROKEN"
+    assert invalid["is_adr_log_healthy"] is False
+
+    # Super con destino no accepted -> broken.
+    dest_not_accepted = audit_wiki_adr_superseded_chain_and_consequences_hygiene(
+        [adr("ADR-1", "superseded", "ADR-2"), adr("ADR-2", "proposed")]
+    )
+    assert dest_not_accepted["broken_superseded_link_adr_ids"] == ["ADR-1"]
+    assert dest_not_accepted["adr_governance_status"] == "CHAIN_OR_STATUS_BROKEN"
+
+    # Status con espacios y mezcla de mayúsculas sigue siendo válido (strip+lower).
+    case_insensitive = audit_wiki_adr_superseded_chain_and_consequences_hygiene(
+        [adr("ADR-10", "  Superseded  ", "ADR-10b"), adr("ADR-10b")]
+    )
+    assert case_insensitive["invalid_status_adr_ids"] == []
+    assert case_insensitive["adr_governance_status"] == "COMPLIANT"
+
+
+def test_wiki_adr_chain_broken_links_variants():
+    """Superseded sin destino, auto-referencial o a fantasma -> broken."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_adr_superseded_chain_and_consequences_hygiene,
+    )
+
+    def adr(aid, status="accepted", sup=None):
+        return {
+            "adr_id": aid,
+            "status": status,
+            "superseded_by_adr_id": sup,
+            "has_context_section": True,
+            "has_decision_section": True,
+            "has_consequences_section": True,
+        }
+
+    no_target = audit_wiki_adr_superseded_chain_and_consequences_hygiene(
+        [adr("ADR-2", "superseded", None)]
+    )
+    assert no_target["broken_superseded_link_adr_ids"] == ["ADR-2"]
+
+    self_ref = audit_wiki_adr_superseded_chain_and_consequences_hygiene(
+        [adr("ADR-X", "superseded", "ADR-X")]
+    )
+    assert self_ref["broken_superseded_link_adr_ids"] == ["ADR-X"]
+
+    ghost = audit_wiki_adr_superseded_chain_and_consequences_hygiene(
+        [adr("ADR-Y", "superseded", "NO-EXISTE")]
+    )
+    assert ghost["broken_superseded_link_adr_ids"] == ["ADR-Y"]
+
+    # Contradicción: status != superseded con destino presente.
+    contradictory = audit_wiki_adr_superseded_chain_and_consequences_hygiene(
+        [adr("ADR-C", "accepted", "ADR-1")]
+    )
+    assert contradictory["contradictory_superseded_adr_ids"] == ["ADR-C"]
+    assert contradictory["adr_governance_status"] == "CHAIN_OR_STATUS_BROKEN"
+
+
+def test_wiki_adr_chain_incomplete_and_precedence():
+    """Faltante de secciones -> INCOMPLETE_DOCUMENTATION; CHAIN domina sobre incomplete."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_adr_superseded_chain_and_consequences_hygiene,
+    )
+
+    def adr(aid, status="accepted", sup=None, ctx=True, dec=True, con=True):
+        return {
+            "adr_id": aid,
+            "status": status,
+            "superseded_by_adr_id": sup,
+            "has_context_section": ctx,
+            "has_decision_section": dec,
+            "has_consequences_section": con,
+        }
+
+    incomplete = audit_wiki_adr_superseded_chain_and_consequences_hygiene(
+        [adr("ADR-D", "accepted", None, ctx=True, con=False)]
+    )
+    assert incomplete["incomplete_sections_adr_ids"] == ["ADR-D"]
+    assert incomplete["adr_governance_status"] == "INCOMPLETE_DOCUMENTATION"
+    assert incomplete["is_adr_log_healthy"] is False
+
+    missing_ctx = audit_wiki_adr_superseded_chain_and_consequences_hygiene(
+        [adr("ADR-G", ctx=False)]
+    )
+    assert missing_ctx["incomplete_sections_adr_ids"] == ["ADR-G"]
+
+    chain_dominates = audit_wiki_adr_superseded_chain_and_consequences_hygiene(
+        [adr("ADR-E", "superseded", "GHOST"), adr("ADR-F", ctx=False)]
+    )
+    assert chain_dominates["broken_superseded_link_adr_ids"] == ["ADR-E"]
+    assert chain_dominates["incomplete_sections_adr_ids"] == ["ADR-F"]
+    assert chain_dominates["adr_governance_status"] == "CHAIN_OR_STATUS_BROKEN"
+
+    # Con status != superseded, el destino fantasma genera contradictory (no broken).
+    contradictory_case = audit_wiki_adr_superseded_chain_and_consequences_hygiene(
+        [adr("ADR-H", "accepted", "GHOST")]
+    )
+    assert contradictory_case["contradictory_superseded_adr_ids"] == ["ADR-H"]
+    assert contradictory_case["broken_superseded_link_adr_ids"] == []
+
+
+def test_wiki_adr_chain_neutral_and_binding():
+    """None/vacío -> vacío COMPLIANT; no-dict ignorados; proxy estático y __all__."""
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_adr_superseded_chain_and_consequences_hygiene,
+    )
+
+    for payload in (None, "no-list", 42):
+        empty = audit_wiki_adr_superseded_chain_and_consequences_hygiene(payload)
+        assert empty["total_adr_records"] == 0
+        assert empty["invalid_status_adr_ids"] == []
+        assert empty["incomplete_sections_adr_ids"] == []
+        assert empty["broken_superseded_link_adr_ids"] == []
+        assert empty["contradictory_superseded_adr_ids"] == []
+        assert empty["adr_governance_status"] == "COMPLIANT"
+        assert empty["is_adr_log_healthy"] is True
+
+    mixed = audit_wiki_adr_superseded_chain_and_consequences_hygiene(
+        [
+            "no-dict",
+            42,
+            {
+                "adr_id": "ADR-OK",
+                "status": "accepted",
+                "superseded_by_adr_id": None,
+                "has_context_section": True,
+                "has_decision_section": True,
+                "has_consequences_section": True,
+            },
+        ]
+    )
+    assert mixed["total_adr_records"] == 1
+    assert mixed["adr_governance_status"] == "COMPLIANT"
+
+    sample = [{"adr_id": "ADR-PROBE", "status": "accepted"}]
+    assert (
+        WikiPMIService.audit_wiki_adr_superseded_chain_and_consequences_hygiene(sample)
+        == audit_wiki_adr_superseded_chain_and_consequences_hygiene(sample)
+    )
+    assert "audit_wiki_adr_superseded_chain_and_consequences_hygiene" in mod.__all__
