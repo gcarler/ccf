@@ -3805,6 +3805,7 @@ __all__ = [
     "validate_make_or_buy_tco_and_strategic_lock_in",
     "validate_resource_calendar_timezone_overlap_and_allocation",
     "validate_wbs_work_package_8_80_granularity_and_dictionary",
+    "validate_risk_probability_impact_matrix_and_appetite_thresholds",
 ]
 
 
@@ -7364,5 +7365,106 @@ def validate_wbs_work_package_8_80_granularity_and_dictionary(
         "incomplete_dictionary_wp_ids": incomplete_dictionary_wp_ids,
         "wbs_governance_status": wbs_governance_status,
         "is_wbs_valid": wbs_governance_status == "WELL_DECOMPOSED",
+        "recommendations": recommendations,
+    }
+
+
+def validate_risk_probability_impact_matrix_and_appetite_thresholds(
+    risks: list[dict[str, Any]],
+    *,
+    high_risk_score_threshold: float = 0.18,
+    urgency_days_threshold: int = 14,
+) -> dict[str, Any]:
+    """PMI PMBOK §11.3.2.3 — Qualitative Risk Analysis Probability-Impact (P-I) Matrix Scoring, Risk Appetite Threshold & Watchlist Escalation Validator."""
+    valid_risks: list[dict[str, Any]] = []
+    if isinstance(risks, (list, tuple)):
+        for item in risks:
+            if not isinstance(item, dict):
+                continue
+            rid = str(item.get("risk_id") or "").strip()
+            if not rid:
+                continue
+            valid_risks.append({**item, "_rid": rid})
+
+    if not valid_risks:
+        return {
+            "total_risks": 0,
+            "invalid_scale_risk_ids": [],
+            "undertiered_high_risk_ids": [],
+            "unmitigated_high_or_urgent_risk_ids": [],
+            "unmonitored_low_risk_ids": [],
+            "pi_matrix_governance_status": "CALIBRATED",
+            "is_pi_matrix_valid": True,
+            "recommendations": [],
+        }
+
+    invalid_scale_risk_ids: list[str] = []
+    undertiered_high_risk_ids: list[str] = []
+    unmitigated_high_or_urgent_risk_ids: list[str] = []
+    unmonitored_low_risk_ids: list[str] = []
+
+    for rsk in valid_risks:
+        rid = rsk["_rid"]
+        prob = float(rsk.get("probability", 0.0) or 0.0)
+        imp = float(rsk.get("impact_weight", 0.0) or 0.0)
+        proximity = max(0, int(rsk.get("days_to_impact_proximity", 30) or 0))
+        tier = str(rsk.get("assigned_tier") or "").strip().upper()
+        has_mitigation = bool(rsk.get("has_active_mitigation_plan", True))
+        on_watchlist = bool(rsk.get("on_watchlist", True))
+
+        pi_score = round(prob * imp, 4)
+
+        if not (0.0 < prob <= 1.0) or not (0.0 < imp <= 1.0):
+            invalid_scale_risk_ids.append(rid)
+
+        if pi_score >= high_risk_score_threshold and tier != "HIGH":
+            undertiered_high_risk_ids.append(rid)
+
+        is_high_or_urgent = pi_score >= high_risk_score_threshold or (
+            tier == "MODERATE" and proximity <= urgency_days_threshold
+        )
+        if is_high_or_urgent and not has_mitigation:
+            unmitigated_high_or_urgent_risk_ids.append(rid)
+
+        if tier == "LOW" and not on_watchlist and not has_mitigation:
+            unmonitored_low_risk_ids.append(rid)
+
+    recommendations: list[str] = []
+    if invalid_scale_risk_ids:
+        recommendations.append(
+            f"Normalize probability and impact weights within (0.0, 1.0] for risk(s): {', '.join(invalid_scale_risk_ids)}."
+        )
+    if undertiered_high_risk_ids:
+        recommendations.append(
+            f"Escalate assigned_tier to 'HIGH' for risk(s) meeting/exceeding P-I threshold ({high_risk_score_threshold}): {', '.join(undertiered_high_risk_ids)}."
+        )
+    if unmitigated_high_or_urgent_risk_ids:
+        recommendations.append(
+            f"Define active mitigation plan for high-score or urgent moderate risk(s): {', '.join(unmitigated_high_or_urgent_risk_ids)}."
+        )
+    if unmonitored_low_risk_ids:
+        recommendations.append(
+            f"Add low-tier risk(s) to the risk watchlist for periodic monitoring: {', '.join(unmonitored_low_risk_ids)}."
+        )
+
+    if (
+        invalid_scale_risk_ids
+        or undertiered_high_risk_ids
+        or unmitigated_high_or_urgent_risk_ids
+    ):
+        pi_matrix_governance_status = "MISCALIBRATED"
+    elif unmonitored_low_risk_ids:
+        pi_matrix_governance_status = "WARNING"
+    else:
+        pi_matrix_governance_status = "CALIBRATED"
+
+    return {
+        "total_risks": len(valid_risks),
+        "invalid_scale_risk_ids": invalid_scale_risk_ids,
+        "undertiered_high_risk_ids": undertiered_high_risk_ids,
+        "unmitigated_high_or_urgent_risk_ids": unmitigated_high_or_urgent_risk_ids,
+        "unmonitored_low_risk_ids": unmonitored_low_risk_ids,
+        "pi_matrix_governance_status": pi_matrix_governance_status,
+        "is_pi_matrix_valid": pi_matrix_governance_status == "CALIBRATED",
         "recommendations": recommendations,
     }

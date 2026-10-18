@@ -6548,3 +6548,138 @@ def test_validate_wbs_work_package_8_80_granularity_and_dictionary_empty_and_exp
     assert (
         "validate_wbs_work_package_8_80_granularity_and_dictionary" in mod.__all__
     )
+
+
+def test_validate_risk_probability_impact_matrix_and_appetite_thresholds_miscalibrated():
+    from backend.schemas.projects import (
+        validate_risk_probability_impact_matrix_and_appetite_thresholds,
+    )
+
+    res = validate_risk_probability_impact_matrix_and_appetite_thresholds(
+        [
+            {
+                "risk_id": "RSK-SCALE",
+                "probability": 1.2,
+                "impact_weight": 0.5,
+                "days_to_impact_proximity": 30,
+                "assigned_tier": "HIGH",
+                "has_active_mitigation_plan": True,
+                "on_watchlist": True,
+            },
+            {
+                "risk_id": "RSK-UNDERTIER",
+                "probability": 0.5,
+                "impact_weight": 0.5,
+                "days_to_impact_proximity": 25,
+                "assigned_tier": "MODERATE",
+                "has_active_mitigation_plan": True,
+                "on_watchlist": True,
+            },
+            {
+                "risk_id": "RSK-URGENT-UNMIT",
+                "probability": 0.2,
+                "impact_weight": 0.4,
+                "days_to_impact_proximity": 10,
+                "assigned_tier": "MODERATE",
+                "has_active_mitigation_plan": False,
+                "on_watchlist": True,
+            },
+        ],
+        high_risk_score_threshold=0.18,
+        urgency_days_threshold=14,
+    )
+    assert res["total_risks"] == 3
+    assert res["invalid_scale_risk_ids"] == ["RSK-SCALE"]
+    assert res["undertiered_high_risk_ids"] == ["RSK-UNDERTIER"]
+    assert res["unmitigated_high_or_urgent_risk_ids"] == ["RSK-URGENT-UNMIT"]
+    assert res["pi_matrix_governance_status"] == "MISCALIBRATED"
+    assert res["is_pi_matrix_valid"] is False
+    assert len(res["recommendations"]) >= 3
+
+
+def test_validate_risk_probability_impact_matrix_and_appetite_thresholds_warning():
+    from backend.schemas.projects import (
+        validate_risk_probability_impact_matrix_and_appetite_thresholds,
+    )
+
+    res = validate_risk_probability_impact_matrix_and_appetite_thresholds(
+        [
+            {
+                "risk_id": "RSK-LOW-ORPHAN",
+                "probability": 0.1,
+                "impact_weight": 0.2,
+                "days_to_impact_proximity": 45,
+                "assigned_tier": "LOW",
+                "has_active_mitigation_plan": False,
+                "on_watchlist": False,
+            }
+        ],
+        high_risk_score_threshold=0.18,
+        urgency_days_threshold=14,
+    )
+    assert res["invalid_scale_risk_ids"] == []
+    assert res["undertiered_high_risk_ids"] == []
+    assert res["unmitigated_high_or_urgent_risk_ids"] == []
+    assert res["unmonitored_low_risk_ids"] == ["RSK-LOW-ORPHAN"]
+    assert res["pi_matrix_governance_status"] == "WARNING"
+    assert res["is_pi_matrix_valid"] is False
+
+
+def test_validate_risk_probability_impact_matrix_and_appetite_thresholds_calibrated():
+    from backend.schemas.projects import (
+        validate_risk_probability_impact_matrix_and_appetite_thresholds,
+    )
+
+    res = validate_risk_probability_impact_matrix_and_appetite_thresholds(
+        [
+            {
+                "risk_id": "RSK-HIGH-OK",
+                "probability": 0.6,
+                "impact_weight": 0.4,
+                "days_to_impact_proximity": 7,
+                "assigned_tier": "HIGH",
+                "has_active_mitigation_plan": True,
+                "on_watchlist": True,
+            },
+            {
+                "risk_id": "RSK-LOW-WATCHED",
+                "probability": 0.1,
+                "impact_weight": 0.2,
+                "days_to_impact_proximity": 60,
+                "assigned_tier": "LOW",
+                "has_active_mitigation_plan": False,
+                "on_watchlist": True,
+            },
+        ]
+    )
+    assert res["total_risks"] == 2
+    assert res["invalid_scale_risk_ids"] == []
+    assert res["undertiered_high_risk_ids"] == []
+    assert res["unmitigated_high_or_urgent_risk_ids"] == []
+    assert res["unmonitored_low_risk_ids"] == []
+    assert res["pi_matrix_governance_status"] == "CALIBRATED"
+    assert res["is_pi_matrix_valid"] is True
+    assert res["recommendations"] == []
+
+
+def test_validate_risk_probability_impact_matrix_and_appetite_thresholds_empty_and_export():
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_risk_probability_impact_matrix_and_appetite_thresholds,
+    )
+
+    for payload in (None, [], "invalid", [{"risk_id": "   "}]):
+        empty = validate_risk_probability_impact_matrix_and_appetite_thresholds(payload)  # type: ignore[arg-type]
+        assert empty["total_risks"] == 0
+        assert empty["invalid_scale_risk_ids"] == []
+        assert empty["undertiered_high_risk_ids"] == []
+        assert empty["unmitigated_high_or_urgent_risk_ids"] == []
+        assert empty["unmonitored_low_risk_ids"] == []
+        assert empty["pi_matrix_governance_status"] == "CALIBRATED"
+        assert empty["is_pi_matrix_valid"] is True
+        assert empty["recommendations"] == []
+
+    assert (
+        "validate_risk_probability_impact_matrix_and_appetite_thresholds"
+        in mod.__all__
+    )

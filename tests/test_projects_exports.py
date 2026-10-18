@@ -8151,3 +8151,154 @@ def test_audit_executive_report_software_license_true_up_empty_and_binding():
         "audit_executive_report_software_license_true_up_and_shelfware"
         in mod.__all__
     )
+
+
+def test_audit_executive_report_pentest_remediation_sla_and_zero_trust_breach_exposure():
+    from backend.services.project_export_service import (
+        audit_executive_report_pentest_remediation_sla_and_zero_trust,
+    )
+
+    res = audit_executive_report_pentest_remediation_sla_and_zero_trust(
+        [
+            {
+                "finding_id": "PT-001",
+                "severity": "CRITICAL",
+                "days_open": 12,
+                "is_remediated_and_retested": False,
+                "exploitable_externally": True,
+                "compensating_waf_control_active": True,
+            },
+            {
+                "finding_id": "PT-002",
+                "severity": "HIGH",
+                "days_open": 5,
+                "is_remediated_and_retested": False,
+                "exploitable_externally": True,
+                "compensating_waf_control_active": False,
+            },
+            {
+                "finding_id": "PT-003",
+                "severity": "CRITICAL",
+                "days_open": 45,
+                "is_remediated_and_retested": True,
+                "exploitable_externally": True,
+                "compensating_waf_control_active": False,
+            },
+        ],
+        critical_sla_days=7,
+        high_sla_days=30,
+        days_since_last_pentest=30,
+        max_pentest_age_days=180,
+    )
+    assert res["total_findings"] == 3
+    assert res["open_findings_count"] == 2
+    assert res["stale_pentest_assessment"] is False
+    assert res["breached_critical_finding_ids"] == ["PT-001"]
+    assert res["breached_high_finding_ids"] == []
+    assert res["unmitigated_external_exploit_ids"] == ["PT-002"]
+    assert res["pentest_governance_status"] == "BREACH_EXPOSURE"
+    assert res["is_security_posture_ready"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_executive_report_pentest_remediation_sla_and_zero_trust_warning():
+    from backend.services.project_export_service import (
+        audit_executive_report_pentest_remediation_sla_and_zero_trust,
+    )
+
+    res = audit_executive_report_pentest_remediation_sla_and_zero_trust(
+        [
+            {
+                "finding_id": "PT-010",
+                "severity": "HIGH",
+                "days_open": 40,
+                "is_remediated_and_retested": False,
+                "exploitable_externally": False,
+                "compensating_waf_control_active": False,
+            }
+        ],
+        critical_sla_days=7,
+        high_sla_days=30,
+        days_since_last_pentest=200,
+        max_pentest_age_days=180,
+    )
+    assert res["open_findings_count"] == 1
+    assert res["stale_pentest_assessment"] is True
+    assert res["breached_critical_finding_ids"] == []
+    assert res["breached_high_finding_ids"] == ["PT-010"]
+    assert res["unmitigated_external_exploit_ids"] == []
+    assert res["pentest_governance_status"] == "WARNING"
+    assert res["is_security_posture_ready"] is False
+
+
+def test_audit_executive_report_pentest_remediation_sla_and_zero_trust_hardened_and_empty():
+    from backend.services.project_export_service import (
+        audit_executive_report_pentest_remediation_sla_and_zero_trust,
+    )
+
+    empty = audit_executive_report_pentest_remediation_sla_and_zero_trust(
+        [{"finding_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_findings"] == 0
+    assert empty["open_findings_count"] == 0
+    assert empty["stale_pentest_assessment"] is False
+    assert empty["pentest_governance_status"] == "HARDENED"
+    assert empty["is_security_posture_ready"] is True
+    assert empty["recommendations"] == []
+
+    hardened = audit_executive_report_pentest_remediation_sla_and_zero_trust(
+        [
+            {
+                "finding_id": "PT-020",
+                "severity": "CRITICAL",
+                "days_open": 3,
+                "is_remediated_and_retested": False,
+                "exploitable_externally": True,
+                "compensating_waf_control_active": True,
+            },
+            {
+                "finding_id": "PT-021",
+                "severity": "LOW",
+                "days_open": 60,
+                "is_remediated_and_retested": False,
+                "exploitable_externally": False,
+                "compensating_waf_control_active": False,
+            },
+        ],
+        critical_sla_days=7,
+        high_sla_days=30,
+        days_since_last_pentest=45,
+        max_pentest_age_days=180,
+    )
+    assert hardened["total_findings"] == 2
+    assert hardened["open_findings_count"] == 2
+    assert hardened["pentest_governance_status"] == "HARDENED"
+    assert hardened["is_security_posture_ready"] is True
+    assert hardened["recommendations"] == []
+
+
+def test_audit_executive_report_pentest_remediation_sla_and_zero_trust_staticmethod_and_dunder_all():
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_pentest_remediation_sla_and_zero_trust,
+    )
+
+    sample = [
+        {
+            "finding_id": "PT-99",
+            "severity": "MEDIUM",
+            "days_open": 10,
+            "is_remediated_and_retested": True,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_pentest_remediation_sla_and_zero_trust(
+            sample
+        )
+        == audit_executive_report_pentest_remediation_sla_and_zero_trust(sample)
+    )
+    assert (
+        "audit_executive_report_pentest_remediation_sla_and_zero_trust"
+        in mod.__all__
+    )

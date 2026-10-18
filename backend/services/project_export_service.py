@@ -2995,6 +2995,7 @@ __all__ = [
     "audit_executive_report_sbom_cve_and_oss_license_compliance",
     "audit_executive_report_disaster_recovery_rto_rpo_readiness",
     "audit_executive_report_software_license_true_up_and_shelfware",
+    "audit_executive_report_pentest_remediation_sla_and_zero_trust",
     "ProjectExportService",
 ]
 
@@ -6356,4 +6357,114 @@ def audit_executive_report_software_license_true_up_and_shelfware(
 
 ProjectExportService.audit_executive_report_software_license_true_up_and_shelfware = staticmethod(
     audit_executive_report_software_license_true_up_and_shelfware
+)
+
+
+def audit_executive_report_pentest_remediation_sla_and_zero_trust(
+    security_findings: list[dict[str, Any]],
+    *,
+    critical_sla_days: int = 7,
+    high_sla_days: int = 30,
+    days_since_last_pentest: int = 30,
+    max_pentest_age_days: int = 180,
+) -> dict[str, Any]:
+    """PMI PMBOK §11.6 & §10.2 — Executive Report Penetration Test Finding Remediation SLA, Attack Surface Drift & Zero-Trust Readiness Auditor."""
+    valid_findings: list[dict[str, Any]] = []
+    for item in security_findings or []:
+        if not isinstance(item, dict):
+            continue
+        fid = str(item.get("finding_id") or "").strip()
+        if not fid:
+            continue
+        valid_findings.append({**item, "_fid": fid})
+
+    stale_pentest_assessment = int(days_since_last_pentest or 0) > int(
+        max_pentest_age_days or 180
+    )
+
+    if not valid_findings:
+        recommendations: list[str] = []
+        if stale_pentest_assessment:
+            recommendations.append(
+                f"Schedule updated penetration test / Red Team assessment (> {max_pentest_age_days} days elapsed)."
+            )
+            pentest_governance_status = "WARNING"
+        else:
+            pentest_governance_status = "HARDENED"
+        return {
+            "total_findings": 0,
+            "open_findings_count": 0,
+            "stale_pentest_assessment": stale_pentest_assessment,
+            "breached_critical_finding_ids": [],
+            "breached_high_finding_ids": [],
+            "unmitigated_external_exploit_ids": [],
+            "pentest_governance_status": pentest_governance_status,
+            "is_security_posture_ready": pentest_governance_status == "HARDENED",
+            "recommendations": recommendations,
+        }
+
+    open_findings_count = 0
+    breached_critical_finding_ids: list[str] = []
+    breached_high_finding_ids: list[str] = []
+    unmitigated_external_exploit_ids: list[str] = []
+
+    for fnd in valid_findings:
+        fid = fnd["_fid"]
+        is_remediated = bool(fnd.get("is_remediated_and_retested", False))
+        if is_remediated:
+            continue
+
+        open_findings_count += 1
+        severity = str(fnd.get("severity") or "").strip().upper()
+        days_open = max(0, int(fnd.get("days_open", 0) or 0))
+        ext_exploit = bool(fnd.get("exploitable_externally", False))
+        waf_active = bool(fnd.get("compensating_waf_control_active", False))
+
+        if severity == "CRITICAL" and days_open > critical_sla_days:
+            breached_critical_finding_ids.append(fid)
+        if severity == "HIGH" and days_open > high_sla_days:
+            breached_high_finding_ids.append(fid)
+        if severity in ("CRITICAL", "HIGH") and ext_exploit and not waf_active:
+            unmitigated_external_exploit_ids.append(fid)
+
+    recommendations = []
+    if breached_critical_finding_ids:
+        recommendations.append(
+            f"Remediate and retest CRITICAL pentest finding(s) breaching {critical_sla_days}-day SLA: {', '.join(breached_critical_finding_ids)}."
+        )
+    if unmitigated_external_exploit_ids:
+        recommendations.append(
+            f"Deploy immediate WAF/Zero-Trust compensating controls for externally exploitable finding(s): {', '.join(unmitigated_external_exploit_ids)}."
+        )
+    if breached_high_finding_ids:
+        recommendations.append(
+            f"Remediate HIGH pentest finding(s) breaching {high_sla_days}-day SLA: {', '.join(breached_high_finding_ids)}."
+        )
+    if stale_pentest_assessment:
+        recommendations.append(
+            f"Schedule updated penetration test / Red Team assessment (> {max_pentest_age_days} days elapsed)."
+        )
+
+    if breached_critical_finding_ids or unmitigated_external_exploit_ids:
+        pentest_governance_status = "BREACH_EXPOSURE"
+    elif breached_high_finding_ids or stale_pentest_assessment:
+        pentest_governance_status = "WARNING"
+    else:
+        pentest_governance_status = "HARDENED"
+
+    return {
+        "total_findings": len(valid_findings),
+        "open_findings_count": open_findings_count,
+        "stale_pentest_assessment": stale_pentest_assessment,
+        "breached_critical_finding_ids": breached_critical_finding_ids,
+        "breached_high_finding_ids": breached_high_finding_ids,
+        "unmitigated_external_exploit_ids": unmitigated_external_exploit_ids,
+        "pentest_governance_status": pentest_governance_status,
+        "is_security_posture_ready": pentest_governance_status == "HARDENED",
+        "recommendations": recommendations,
+    }
+
+
+ProjectExportService.audit_executive_report_pentest_remediation_sla_and_zero_trust = staticmethod(
+    audit_executive_report_pentest_remediation_sla_and_zero_trust
 )
