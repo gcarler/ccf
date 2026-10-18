@@ -5194,3 +5194,157 @@ def test_audit_contract_change_order_cumulative_invalid_base_and_export():
             "unratified_threshold_breach_contract_ids": [],
             "is_change_order_escalation_compliant": True,
         }
+
+
+def test_audit_ncr_capa_effectiveness_and_recurrence_compliant():
+    """Cumple cuando NCRs mayores tienen RCA, verificación en SLA, QA independiente y cero recurrencia."""
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_ncr_capa_effectiveness_and_recurrence,
+    )
+
+    records = [
+        {
+            "ncr_id": "NCR-CRIT-01",
+            "severity": "critical",
+            "status": "verified_closed",
+            "root_cause_method_documented": True,
+            "days_in_pending_verification": 5.0,
+            "recurrence_count_after_closure": 0,
+            "independent_qa_verifier_id": "QA-VER-09",
+        },
+        {
+            "ncr_id": "NCR-MAJ-02",
+            "severity": "major",
+            "status": "pending_verification",
+            "root_cause_method_documented": True,
+            "days_in_pending_verification": 10.0,
+            "recurrence_count_after_closure": 0,
+            "independent_qa_verifier_id": None,
+        },
+        {
+            "ncr_id": "NCR-MIN-03",
+            "severity": "minor",
+            "status": "capa_in_progress",
+            "root_cause_method_documented": False,
+            "days_in_pending_verification": 0.0,
+            "recurrence_count_after_closure": 0,
+        },
+    ]
+    res = audit_ncr_capa_effectiveness_and_recurrence(records, max_verification_lag_days=14)
+    assert res == {
+        "total_ncrs": 3,
+        "invalid_ncr_metadata_ids": [],
+        "missing_rca_major_ncr_ids": [],
+        "overdue_capa_verification_ncr_ids": [],
+        "unverified_closure_ncr_ids": [],
+        "ineffective_capa_recurrent_ncr_ids": [],
+        "is_ncr_capa_governance_compliant": True,
+    }
+    assert (
+        ProjectCCBService.audit_ncr_capa_effectiveness_and_recurrence(
+            records, max_verification_lag_days=14
+        )
+        == res
+    )
+
+
+def test_audit_ncr_capa_missing_rca_and_overdue_verification():
+    """Detecta NCR mayor/crítica en progreso sin RCA documentado y verificación pendiente fuera de SLA."""
+    from backend.services.project_ccb_service import (
+        audit_ncr_capa_effectiveness_and_recurrence,
+    )
+
+    res = audit_ncr_capa_effectiveness_and_recurrence(
+        [
+            {
+                "ncr_id": "NCR-NO-RCA",
+                "severity": "major",
+                "status": "capa_in_progress",
+                "root_cause_method_documented": False,
+                "days_in_pending_verification": 0.0,
+            },
+            {
+                "ncr_id": "NCR-LATE-VER",
+                "severity": "minor",
+                "status": "pending_verification",
+                "root_cause_method_documented": True,
+                "days_in_pending_verification": 21.0,
+            },
+        ],
+        max_verification_lag_days=14,
+    )
+    assert res["missing_rca_major_ncr_ids"] == ["NCR-NO-RCA"]
+    assert res["overdue_capa_verification_ncr_ids"] == ["NCR-LATE-VER"]
+    assert res["is_ncr_capa_governance_compliant"] is False
+
+
+def test_audit_ncr_capa_unverified_closure_and_recurrence():
+    """Detecta cierre sin verificador QA independiente y reincidencia posterior al cierre."""
+    from backend.services.project_ccb_service import (
+        audit_ncr_capa_effectiveness_and_recurrence,
+    )
+
+    res = audit_ncr_capa_effectiveness_and_recurrence(
+        [
+            {
+                "ncr_id": "NCR-UNVERIFIED-CLOSE",
+                "severity": "critical",
+                "status": "verified_closed",
+                "root_cause_method_documented": True,
+                "independent_qa_verifier_id": "   ",
+                "recurrence_count_after_closure": 0,
+            },
+            {
+                "ncr_id": "NCR-RECURRENT",
+                "severity": "major",
+                "status": "verified_closed",
+                "root_cause_method_documented": True,
+                "independent_qa_verifier_id": "QA-01",
+                "recurrence_count_after_closure": 2,
+            },
+        ]
+    )
+    assert res["unverified_closure_ncr_ids"] == ["NCR-UNVERIFIED-CLOSE"]
+    assert res["ineffective_capa_recurrent_ncr_ids"] == ["NCR-RECURRENT"]
+    assert res["is_ncr_capa_governance_compliant"] is False
+
+
+def test_audit_ncr_capa_invalid_metadata_and_export():
+    """Detecta severidad/estado inválido o conteos negativos, maneja entradas no secuencia y verifica __all__."""
+    import backend.services.project_ccb_service as _m
+    from backend.services.project_ccb_service import (
+        audit_ncr_capa_effectiveness_and_recurrence,
+    )
+
+    assert "audit_ncr_capa_effectiveness_and_recurrence" in _m.__all__
+    res = audit_ncr_capa_effectiveness_and_recurrence(
+        [
+            {
+                "ncr_id": "NCR-BAD-SEV",
+                "severity": "catastrophic",
+                "status": "open",
+            },
+            {
+                "ncr_id": "NCR-NEG-RECURRENCE",
+                "severity": "minor",
+                "status": "verified_closed",
+                "independent_qa_verifier_id": "QA-1",
+                "recurrence_count_after_closure": -1,
+            },
+        ]
+    )
+    assert res["invalid_ncr_metadata_ids"] == ["NCR-BAD-SEV", "NCR-NEG-RECURRENCE"]
+    assert res["is_ncr_capa_governance_compliant"] is False
+
+    for bad in (None, "not-a-seq", b"bytes", [{"ncr_id": "  "}]):
+        assert audit_ncr_capa_effectiveness_and_recurrence(bad) == {
+            "total_ncrs": 0,
+            "invalid_ncr_metadata_ids": [],
+            "missing_rca_major_ncr_ids": [],
+            "overdue_capa_verification_ncr_ids": [],
+            "unverified_closure_ncr_ids": [],
+            "ineffective_capa_recurrent_ncr_ids": [],
+            "is_ncr_capa_governance_compliant": True,
+        }
+

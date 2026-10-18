@@ -3786,6 +3786,7 @@ __all__ = [
     "validate_resource_calendar_overtime_and_blackout_bounds",
     "validate_ccpm_feeding_and_project_buffer_sizing",
     "validate_wbs_hundred_percent_rule_decomposition",
+    "validate_emv_decision_tree_and_contingency_reserve",
 ]
 
 
@@ -5354,5 +5355,101 @@ def validate_wbs_hundred_percent_rule_decomposition(
             and len(single_child_redundant_decomposition_codes) == 0
             and len(hundred_percent_rule_violation_codes) == 0
             and len(overlapping_child_scope_codes) == 0
+        ),
+    }
+
+
+def validate_emv_decision_tree_and_contingency_reserve(
+    decision_nodes: list[dict[str, object]],
+    *,
+    allocated_contingency_reserve: float = 0.0,
+) -> dict[str, object]:
+    """Valida árbol de decisión EMV y suficiencia de reserva de contingencia (PMBOK §11.4).
+
+    Cada nodo declarado aporta `node_id` y `branches` (cada rama con
+    `branch_id`, `probability` y `monetary_impact`):
+    - `empty_branch_node_ids`: nodos sin lista de ramas vacía/inexistente.
+    - `invalid_probability_range_node_ids`: ramas con probabilidad fuera de [0.0, 1.0].
+    - `unnormalized_probability_sum_node_ids`: suma de probabilidades desviada
+      de 1.0 por más de 0.001 en nodos con ramas.
+    - Los nodos sin hallazgos (1-3) reciben `emv_by_node[node_id]` =
+      round(Σ prob * impacto, 2); `total_positive_threat_emv` suma solo los
+      EMV positivos (2 dec); `reserve_shortfall` = round(max(0, EMV
+      positivo total - reserva asignada), 2) y
+      `has_contingency_reserve_shortfall` cuando excede 0.01.
+    - `is_emv_tree_valid`: las 3 listas vacías y sin shortfall.
+    """
+    empty_branch_node_ids: list[str] = []
+    invalid_probability_range_node_ids: list[str] = []
+    unnormalized_probability_sum_node_ids: list[str] = []
+    emv_by_node: dict[str, float] = {}
+
+    nodes = [n for n in (decision_nodes or []) if isinstance(n, dict)]
+    total_nodes = len(nodes)
+
+    for node in nodes:
+        node_id = str(node.get("node_id", "")).strip()
+        branches = node.get("branches")
+
+        if not isinstance(branches, list) or len(branches) == 0:
+            empty_branch_node_ids.append(node_id)
+            continue
+
+        has_invalid_probability = False
+        prob_sum = 0.0
+        for branch in branches:
+            if not isinstance(branch, dict):
+                has_invalid_probability = True
+                continue
+            try:
+                probability = float(
+                    branch.get("probability", 0.0) if branch.get("probability", 0.0) is not None else 0.0
+                )
+            except (TypeError, ValueError):
+                has_invalid_probability = True
+                probability = 0.0
+            if probability < 0.0 or probability > 1.0:
+                has_invalid_probability = True
+            prob_sum += probability
+
+        if has_invalid_probability:
+            invalid_probability_range_node_ids.append(node_id)
+        if abs(prob_sum - 1.0) > 0.001:
+            unnormalized_probability_sum_node_ids.append(node_id)
+
+        if has_invalid_probability or abs(prob_sum - 1.0) > 0.001:
+            continue
+
+        node_emv = round(
+            sum(
+                float(b.get("probability", 0.0) or 0.0)
+                * float(b.get("monetary_impact", 0.0) or 0.0)
+                for b in branches
+                if isinstance(b, dict)
+            ),
+            2,
+        )
+        emv_by_node[node_id] = node_emv
+
+    total_positive_threat_emv = round(sum(max(0.0, v) for v in emv_by_node.values()), 2)
+    reserve_shortfall = round(
+        max(0.0, total_positive_threat_emv - float(allocated_contingency_reserve)), 2
+    )
+    has_contingency_reserve_shortfall = reserve_shortfall > 0.01
+
+    return {
+        "total_nodes": total_nodes,
+        "emv_by_node": emv_by_node,
+        "total_positive_threat_emv": total_positive_threat_emv,
+        "reserve_shortfall": reserve_shortfall,
+        "has_contingency_reserve_shortfall": has_contingency_reserve_shortfall,
+        "empty_branch_node_ids": empty_branch_node_ids,
+        "invalid_probability_range_node_ids": invalid_probability_range_node_ids,
+        "unnormalized_probability_sum_node_ids": unnormalized_probability_sum_node_ids,
+        "is_emv_tree_valid": (
+            len(empty_branch_node_ids) == 0
+            and len(invalid_probability_range_node_ids) == 0
+            and len(unnormalized_probability_sum_node_ids) == 0
+            and not has_contingency_reserve_shortfall
         ),
     }

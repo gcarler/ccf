@@ -2820,6 +2820,7 @@ __all__ = [
     "audit_requirements_traceability_matrix_coverage",
     "audit_emergency_change_fast_track_ratification",
     "audit_contract_change_order_cumulative_escalation",
+    "audit_ncr_capa_effectiveness_and_recurrence",
     "ProjectCCBService",
 ]
 
@@ -3951,3 +3952,110 @@ def audit_contract_change_order_cumulative_escalation(
 ProjectCCBService.audit_contract_change_order_cumulative_escalation = staticmethod(
     audit_contract_change_order_cumulative_escalation
 )
+
+
+def audit_ncr_capa_effectiveness_and_recurrence(
+    ncr_records: list[dict[str, object]],
+    *,
+    max_verification_lag_days: int = 14,
+) -> dict[str, object]:
+    """PMBOK §8.2 / §8.3 — auditoría de efectividad CAPA, verificación QA y recurrencia en NCRs."""
+    if not isinstance(ncr_records, Sequence) or isinstance(ncr_records, (str, bytes)):
+        return {
+            "total_ncrs": 0,
+            "invalid_ncr_metadata_ids": [],
+            "missing_rca_major_ncr_ids": [],
+            "overdue_capa_verification_ncr_ids": [],
+            "unverified_closure_ncr_ids": [],
+            "ineffective_capa_recurrent_ncr_ids": [],
+            "is_ncr_capa_governance_compliant": True,
+        }
+
+    try:
+        max_lag = float(max_verification_lag_days)
+    except (TypeError, ValueError):
+        max_lag = 14.0
+
+    valid_severities = {"critical", "major", "minor"}
+    valid_statuses = {
+        "open",
+        "capa_in_progress",
+        "pending_verification",
+        "verified_closed",
+    }
+
+    total_ncrs = 0
+    invalid_ncr_metadata_ids: list[str] = []
+    missing_rca_major_ncr_ids: list[str] = []
+    overdue_capa_verification_ncr_ids: list[str] = []
+    unverified_closure_ncr_ids: list[str] = []
+    ineffective_capa_recurrent_ncr_ids: list[str] = []
+
+    for item in ncr_records:
+        if not isinstance(item, Mapping):
+            continue
+        raw_id = item.get("ncr_id")
+        if raw_id is None:
+            continue
+        ncr_id = str(raw_id).strip()
+        if not ncr_id:
+            continue
+
+        total_ncrs += 1
+
+        sev = str(item.get("severity") or "").strip().lower()
+        status = str(item.get("status") or "").strip().lower()
+
+        try:
+            days_pending = float(item.get("days_in_pending_verification", 0.0))
+            recurrence = int(item.get("recurrence_count_after_closure", 0))
+        except (TypeError, ValueError):
+            invalid_ncr_metadata_ids.append(ncr_id)
+            continue
+
+        if (
+            sev not in valid_severities
+            or status not in valid_statuses
+            or days_pending < 0.0
+            or recurrence < 0
+        ):
+            invalid_ncr_metadata_ids.append(ncr_id)
+            continue
+
+        rca_documented = bool(item.get("root_cause_method_documented", False))
+        raw_verifier = item.get("independent_qa_verifier_id")
+        verifier_id = str(raw_verifier).strip() if raw_verifier is not None else ""
+
+        if sev in {"critical", "major"} and status != "open" and not rca_documented:
+            missing_rca_major_ncr_ids.append(ncr_id)
+
+        if status == "pending_verification" and days_pending > max_lag:
+            overdue_capa_verification_ncr_ids.append(ncr_id)
+
+        if status == "verified_closed" and not verifier_id:
+            unverified_closure_ncr_ids.append(ncr_id)
+
+        if recurrence > 0:
+            ineffective_capa_recurrent_ncr_ids.append(ncr_id)
+
+    return {
+        "total_ncrs": total_ncrs,
+        "invalid_ncr_metadata_ids": invalid_ncr_metadata_ids,
+        "missing_rca_major_ncr_ids": missing_rca_major_ncr_ids,
+        "overdue_capa_verification_ncr_ids": overdue_capa_verification_ncr_ids,
+        "unverified_closure_ncr_ids": unverified_closure_ncr_ids,
+        "ineffective_capa_recurrent_ncr_ids": ineffective_capa_recurrent_ncr_ids,
+        "is_ncr_capa_governance_compliant": (
+            len(invalid_ncr_metadata_ids) == 0
+            and len(missing_rca_major_ncr_ids) == 0
+            and len(overdue_capa_verification_ncr_ids) == 0
+            and len(unverified_closure_ncr_ids) == 0
+            and len(ineffective_capa_recurrent_ncr_ids) == 0
+        ),
+    }
+
+
+ProjectCCBService.audit_ncr_capa_effectiveness_and_recurrence = staticmethod(
+    audit_ncr_capa_effectiveness_and_recurrence
+)
+

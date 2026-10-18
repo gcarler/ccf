@@ -4063,3 +4063,137 @@ def test_validate_wbs_hundred_percent_rule_invalid_parents_and_export():
             "overlapping_child_scope_codes": [],
             "is_wbs_hundred_percent_rule_valid": True,
         }
+
+
+def test_validate_emv_decision_tree_and_contingency_reserve_compliant():
+    """Nodo valido con EMV mixto negativo y reserva suficiente."""
+    from backend.schemas.projects import (
+        validate_emv_decision_tree_and_contingency_reserve,
+    )
+
+    res = validate_emv_decision_tree_and_contingency_reserve(
+        [
+            {
+                "node_id": "ND-TREE",
+                "branches": [
+                    {"branch_id": "B1", "probability": 0.4, "monetary_impact": -25000.0},
+                    {"branch_id": "B2", "probability": 0.6, "monetary_impact": 15000.0},
+                ],
+            },
+        ],
+        allocated_contingency_reserve=15000.0,
+    )
+    assert res == {
+        "total_nodes": 1,
+        "emv_by_node": {"ND-TREE": -1000.0},
+        "total_positive_threat_emv": 0.0,
+        "reserve_shortfall": 0.0,
+        "has_contingency_reserve_shortfall": False,
+        "empty_branch_node_ids": [],
+        "invalid_probability_range_node_ids": [],
+        "unnormalized_probability_sum_node_ids": [],
+        "is_emv_tree_valid": True,
+    }
+
+
+def test_validate_emv_decision_tree_and_contingency_reserve_findings():
+    """Nodos con ramas vacias, probabilidad fuera de rango y suma no normalizada."""
+    from backend.schemas.projects import (
+        validate_emv_decision_tree_and_contingency_reserve,
+    )
+
+    res = validate_emv_decision_tree_and_contingency_reserve(
+        [
+            {"node_id": "ND-EMPTY", "branches": []},
+            {
+                "node_id": "ND-RANGE",
+                "branches": [
+                    {"branch_id": "B1", "probability": 1.5, "monetary_impact": 100.0},
+                ],
+            },
+            {
+                "node_id": "ND-SUM",
+                "branches": [
+                    {"branch_id": "B1", "probability": 0.5, "monetary_impact": 100.0},
+                    {"branch_id": "B2", "probability": 0.2, "monetary_impact": 50.0},
+                ],
+            },
+            {
+                "node_id": "ND-POS",
+                "branches": [
+                    {"branch_id": "B1", "probability": 0.5, "monetary_impact": 40000.0},
+                    {"branch_id": "B2", "probability": 0.5, "monetary_impact": -5000.0},
+                ],
+            },
+        ],
+        allocated_contingency_reserve=10000.0,
+    )
+    assert res["total_nodes"] == 4
+    assert res["empty_branch_node_ids"] == ["ND-EMPTY"]
+    assert res["invalid_probability_range_node_ids"] == ["ND-RANGE"]
+    # La regla de suma normalizada aplica a todo nodo con ramas (tambien ND-RANGE).
+    assert res["unnormalized_probability_sum_node_ids"] == ["ND-RANGE", "ND-SUM"]
+    assert res["emv_by_node"] == {"ND-POS": 17500.0}
+    assert res["total_positive_threat_emv"] == 17500.0
+    assert res["reserve_shortfall"] == 7500.0
+    assert res["has_contingency_reserve_shortfall"] is True
+    assert res["is_emv_tree_valid"] is False
+
+
+def test_validate_emv_decision_tree_and_contingency_reserve_shortfall_boundary():
+    """Borde del shortfall: reserva justo en el limite (0.01) y impactos positivos puros."""
+    from backend.schemas.projects import (
+        validate_emv_decision_tree_and_contingency_reserve as fn,
+    )
+
+    node = {
+        "node_id": "ND-TRE",
+        "branches": [
+            {"branch_id": "B1", "probability": 0.5, "monetary_impact": 40000.02},
+            {"branch_id": "B2", "probability": 0.5, "monetary_impact": 0.0},
+        ],
+    }
+    # EMV = 20000.01, shortfall = 0.01 -> NO es shortfall (> 0.01, no >=).
+    at_limit = fn([dict(node)], allocated_contingency_reserve=20000.0)
+    assert at_limit["reserve_shortfall"] == 0.01
+    assert at_limit["has_contingency_reserve_shortfall"] is False
+    assert at_limit["is_emv_tree_valid"] is True
+
+    beyond = fn([dict(node)], allocated_contingency_reserve=20000.0)
+    assert beyond["total_positive_threat_emv"] == 20000.01
+
+    shortfall = fn([dict(node)], allocated_contingency_reserve=20000.0)
+    # Con reserva 0.00 el shortfall rebasa el umbral.
+    no_reserve = fn(
+        [{**node, "branches": [{"branch_id": "B1", "probability": 0.5, "monetary_impact": 40000.02},
+                               {"branch_id": "B2", "probability": 0.5, "monetary_impact": 0.0}]}],
+        allocated_contingency_reserve=0.0,
+    )
+    assert no_reserve["reserve_shortfall"] == 20000.01
+    assert no_reserve["has_contingency_reserve_shortfall"] is True
+    assert no_reserve["is_emv_tree_valid"] is False
+
+
+def test_validate_emv_decision_tree_and_contingency_reserve_empty_and_export():
+    """Entrada vacia/None + entrada en __all__ y firma con kwarg obligatorio."""
+    from backend.schemas.projects import (
+        validate_emv_decision_tree_and_contingency_reserve as fn,
+    )
+    import backend.schemas.projects as mod
+
+    empty = fn([])
+    assert empty["total_nodes"] == 0
+    assert empty["emv_by_node"] == {}
+    assert empty["is_emv_tree_valid"] is True
+
+    assert fn(None)["is_emv_tree_valid"] is True
+
+    # allocated_contingency_reserve es kwarg-only.
+    try:
+        fn([], 100.0)  # type: ignore[misc]
+        raised = False
+    except TypeError:
+        raised = True
+    assert raised is True
+
+    assert "validate_emv_decision_tree_and_contingency_reserve" in mod.__all__

@@ -4812,3 +4812,145 @@ def test_evaluate_evm_critical_path_drag_invalid_metrics_and_export():
             "high_drag_lagging_critical_wp_ids": [],
             "is_earned_schedule_critical_path_coherent": True,
         }
+
+
+def test_evaluate_evm_rolling_wave_planning_package_freeze_horizon_compliant():
+    """Cumple cuando paquetes en horizonte próximo están descompuestos, sin EV prematuro y bajo tope de participación."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_rolling_wave_planning_package_freeze_horizon,
+    )
+
+    packages = [
+        {
+            "pp_id": "PP-WAVE-1",
+            "budget_bac": 65000.0,
+            "days_until_scheduled_start": 10,
+            "decomposed_into_work_packages": True,
+            "earned_value_claimed": 15000.0,
+        },
+        {
+            "pp_id": "PP-WAVE-2",
+            "budget_bac": 35000.0,
+            "days_until_scheduled_start": 60,
+            "decomposed_into_work_packages": False,
+            "earned_value_claimed": 0.0,
+        },
+    ]
+    res = evaluate_evm_rolling_wave_planning_package_freeze_horizon(
+        packages,
+        freeze_horizon_days=30,
+        max_planning_package_share_pct=40.0,
+        total_control_account_bac=100000.0,
+    )
+    assert res["total_planning_packages"] == 2
+    assert res["undecomposed_share_pct"] == 35.0
+    assert res["exceeds_undecomposed_share_cap"] is False
+    assert res["invalid_planning_package_ids"] == []
+    assert res["premature_ev_on_undecomposed_pp_ids"] == []
+    assert res["unfrozen_imminent_planning_package_ids"] == []
+    assert res["is_rolling_wave_horizon_compliant"] is True
+    assert (
+        ProjectEVMService.evaluate_evm_rolling_wave_planning_package_freeze_horizon(
+            packages, total_control_account_bac=100000.0
+        )
+        == res
+    )
+
+
+def test_evaluate_evm_rolling_wave_premature_ev_and_imminent_unfrozen():
+    """Detecta EV reclamado en Planning Package sin descomponer y falta de descomposición dentro del horizonte de congelación."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_rolling_wave_planning_package_freeze_horizon,
+    )
+
+    res = evaluate_evm_rolling_wave_planning_package_freeze_horizon(
+        [
+            {
+                "pp_id": "PP-PREMATURE-EV",
+                "budget_bac": 20000.0,
+                "days_until_scheduled_start": 45,
+                "decomposed_into_work_packages": False,
+                "earned_value_claimed": 5000.0,
+            },
+            {
+                "pp_id": "PP-IMMINENT-UNFROZEN",
+                "budget_bac": 15000.0,
+                "days_until_scheduled_start": 15,
+                "decomposed_into_work_packages": False,
+                "earned_value_claimed": 0.0,
+            },
+        ],
+        freeze_horizon_days=30,
+        max_planning_package_share_pct=40.0,
+        total_control_account_bac=100000.0,
+    )
+    assert res["premature_ev_on_undecomposed_pp_ids"] == ["PP-PREMATURE-EV"]
+    assert res["unfrozen_imminent_planning_package_ids"] == ["PP-IMMINENT-UNFROZEN"]
+    assert res["is_rolling_wave_horizon_compliant"] is False
+
+
+def test_evaluate_evm_rolling_wave_exceeds_share_cap():
+    """Detecta cuando la proporción de BAC en Planning Packages no descompuestos supera el tope permitido."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_rolling_wave_planning_package_freeze_horizon,
+    )
+
+    res = evaluate_evm_rolling_wave_planning_package_freeze_horizon(
+        [
+            {
+                "pp_id": "PP-DECOMPOSED",
+                "budget_bac": 40000.0,
+                "days_until_scheduled_start": 5,
+                "decomposed_into_work_packages": True,
+                "earned_value_claimed": 10000.0,
+            },
+            {
+                "pp_id": "PP-DISTANT-HEAVY",
+                "budget_bac": 60000.0,
+                "days_until_scheduled_start": 90,
+                "decomposed_into_work_packages": False,
+                "earned_value_claimed": 0.0,
+            },
+        ],
+        freeze_horizon_days=30,
+        max_planning_package_share_pct=40.0,
+    )
+    assert res["undecomposed_share_pct"] == 60.0
+    assert res["exceeds_undecomposed_share_cap"] is True
+    assert res["is_rolling_wave_horizon_compliant"] is False
+
+
+def test_evaluate_evm_rolling_wave_invalid_package_and_export():
+    """Detecta BAC <= 0 o EV negativo, maneja entradas malformadas y verifica exportación en __all__."""
+    import backend.services.project_evm_service as _m
+    from backend.services.project_evm_service import (
+        evaluate_evm_rolling_wave_planning_package_freeze_horizon,
+    )
+
+    assert "evaluate_evm_rolling_wave_planning_package_freeze_horizon" in _m.__all__
+    res = evaluate_evm_rolling_wave_planning_package_freeze_horizon(
+        [
+            {"pp_id": "PP-ZERO-BAC", "budget_bac": 0.0},
+            {
+                "pp_id": "PP-NEG-EV",
+                "budget_bac": 10000.0,
+                "decomposed_into_work_packages": True,
+                "earned_value_claimed": -100.0,
+            },
+        ]
+    )
+    assert res["invalid_planning_package_ids"] == ["PP-ZERO-BAC", "PP-NEG-EV"]
+    assert res["is_rolling_wave_horizon_compliant"] is False
+
+    for bad in (None, "not-a-seq", b"bytes", [{"pp_id": "  "}]):
+        assert evaluate_evm_rolling_wave_planning_package_freeze_horizon(bad) == {
+            "total_planning_packages": 0,
+            "undecomposed_share_pct": 0.0,
+            "exceeds_undecomposed_share_cap": False,
+            "invalid_planning_package_ids": [],
+            "premature_ev_on_undecomposed_pp_ids": [],
+            "unfrozen_imminent_planning_package_ids": [],
+            "is_rolling_wave_horizon_compliant": True,
+        }
+

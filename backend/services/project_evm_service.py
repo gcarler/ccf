@@ -5495,6 +5495,7 @@ __all__ = [
     "evaluate_evm_contract_budget_base_and_ub_reconciliation",
     "evaluate_evm_etc_bottom_up_vs_formulaic_divergence",
     "evaluate_evm_critical_path_drag_and_float_masking",
+    "evaluate_evm_rolling_wave_planning_package_freeze_horizon",
     "ProjectEVMService",
 ]
 
@@ -6505,3 +6506,111 @@ def evaluate_evm_critical_path_drag_and_float_masking(
 ProjectEVMService.evaluate_evm_critical_path_drag_and_float_masking = staticmethod(
     evaluate_evm_critical_path_drag_and_float_masking
 )
+
+
+def evaluate_evm_rolling_wave_planning_package_freeze_horizon(
+    planning_packages: list[dict[str, object]],
+    *,
+    freeze_horizon_days: int = 30,
+    max_planning_package_share_pct: float = 40.0,
+    total_control_account_bac: float = 0.0,
+) -> dict[str, object]:
+    """PMBOK §6.2 / §7.4 — horizonte de congelación Rolling Wave y EV prematuro en Planning Packages."""
+    if not isinstance(planning_packages, Sequence) or isinstance(
+        planning_packages, (str, bytes)
+    ):
+        return {
+            "total_planning_packages": 0,
+            "undecomposed_share_pct": 0.0,
+            "exceeds_undecomposed_share_cap": False,
+            "invalid_planning_package_ids": [],
+            "premature_ev_on_undecomposed_pp_ids": [],
+            "unfrozen_imminent_planning_package_ids": [],
+            "is_rolling_wave_horizon_compliant": True,
+        }
+
+    try:
+        horizon_val = float(freeze_horizon_days)
+    except (TypeError, ValueError):
+        horizon_val = 30.0
+
+    try:
+        cap_pct = float(max_planning_package_share_pct)
+    except (TypeError, ValueError):
+        cap_pct = 40.0
+
+    try:
+        ca_bac = float(total_control_account_bac)
+    except (TypeError, ValueError):
+        ca_bac = 0.0
+
+    total_planning_packages = 0
+    invalid_planning_package_ids: list[str] = []
+    premature_ev_on_undecomposed_pp_ids: list[str] = []
+    unfrozen_imminent_planning_package_ids: list[str] = []
+
+    valid_bac_sum = 0.0
+    undecomposed_pp_bac = 0.0
+
+    for item in planning_packages:
+        if not isinstance(item, Mapping):
+            continue
+        raw_id = item.get("pp_id")
+        if raw_id is None:
+            continue
+        pp_id = str(raw_id).strip()
+        if not pp_id:
+            continue
+
+        total_planning_packages += 1
+
+        try:
+            bac = float(item.get("budget_bac", 0.0))
+            ev_claimed = float(item.get("earned_value_claimed", 0.0))
+            days_until = float(item.get("days_until_scheduled_start", 0.0))
+        except (TypeError, ValueError):
+            invalid_planning_package_ids.append(pp_id)
+            continue
+
+        if bac <= 0.0 or ev_claimed < 0.0:
+            invalid_planning_package_ids.append(pp_id)
+            continue
+
+        decomposed = bool(item.get("decomposed_into_work_packages", False))
+        valid_bac_sum += bac
+
+        if not decomposed:
+            undecomposed_pp_bac += bac
+            if ev_claimed > 0.0:
+                premature_ev_on_undecomposed_pp_ids.append(pp_id)
+            if days_until <= horizon_val:
+                unfrozen_imminent_planning_package_ids.append(pp_id)
+
+    denom = max(ca_bac, valid_bac_sum)
+    if denom > 0.0:
+        undecomposed_share_pct = round((undecomposed_pp_bac / denom) * 100.0, 2)
+    else:
+        undecomposed_share_pct = 0.0
+
+    exceeds_undecomposed_share_cap = undecomposed_share_pct > cap_pct
+
+    return {
+        "total_planning_packages": total_planning_packages,
+        "undecomposed_share_pct": undecomposed_share_pct,
+        "exceeds_undecomposed_share_cap": exceeds_undecomposed_share_cap,
+        "invalid_planning_package_ids": invalid_planning_package_ids,
+        "premature_ev_on_undecomposed_pp_ids": premature_ev_on_undecomposed_pp_ids,
+        "unfrozen_imminent_planning_package_ids": unfrozen_imminent_planning_package_ids,
+        "is_rolling_wave_horizon_compliant": (
+            len(invalid_planning_package_ids) == 0
+            and len(premature_ev_on_undecomposed_pp_ids) == 0
+            and len(unfrozen_imminent_planning_package_ids) == 0
+            and not exceeds_undecomposed_share_cap
+        ),
+    }
+
+
+ProjectEVMService.evaluate_evm_rolling_wave_planning_package_freeze_horizon = staticmethod(
+    evaluate_evm_rolling_wave_planning_package_freeze_horizon
+)
+
