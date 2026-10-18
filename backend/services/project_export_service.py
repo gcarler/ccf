@@ -2972,6 +2972,7 @@ __all__ = [
     "audit_executive_report_change_readiness_and_adoption",
     "audit_executive_report_strategic_alignment_and_esg",
     "audit_executive_report_contract_closeout_and_claims",
+    "audit_executive_report_rag_status_and_narrative_consistency",
     "ProjectExportService",
 ]
 
@@ -3751,3 +3752,95 @@ def audit_executive_report_strategic_alignment_and_esg(
 ProjectExportService.audit_executive_report_strategic_alignment_and_esg = staticmethod(
     audit_executive_report_strategic_alignment_and_esg
 )
+
+
+def audit_executive_report_rag_status_and_narrative_consistency(
+    kpi_cards: object,
+) -> dict[str, object]:
+    """Audita coherencia de semáforos RAG frente a umbrales cuantitativos (prevención de 'Watermelon Projects') y presencia de narrativa de acción correctiva según PMI PMBOK §10.2 y §10.3."""
+    total_evaluated = 0
+    invalid_rag_label_kpi_ids: list[str] = []
+    watermelon_masked_status_kpi_ids: list[str] = []
+    missing_corrective_narrative_kpi_ids: list[str] = []
+
+    valid_raw_labels = {"green", "amber", "yellow", "red"}
+    severity_rank = {"green": 0, "amber": 1, "red": 2}
+
+    if isinstance(kpi_cards, Sequence) and not isinstance(
+        kpi_cards, (str, bytes, bytearray)
+    ):
+        for item in kpi_cards:
+            if not isinstance(item, Mapping):
+                continue
+            kpi_id = str(item.get("kpi_id") or item.get("id") or "").strip()
+            if not kpi_id:
+                continue
+
+            total_evaluated += 1
+            reported_rag = str(item.get("reported_rag") or "").strip().lower()
+
+            try:
+                variance_pct = float(item.get("variance_pct", 0.0) or 0.0)
+            except (TypeError, ValueError):
+                variance_pct = 0.0
+
+            raw_amber = item.get("amber_threshold_pct", -5.0)
+            try:
+                amber_threshold_pct = (
+                    float(raw_amber) if raw_amber is not None else -5.0
+                )
+            except (TypeError, ValueError):
+                amber_threshold_pct = -5.0
+
+            raw_red = item.get("red_threshold_pct", -10.0)
+            try:
+                red_threshold_pct = (
+                    float(raw_red) if raw_red is not None else -10.0
+                )
+            except (TypeError, ValueError):
+                red_threshold_pct = -10.0
+
+            corrective_action_narrative = str(
+                item.get("corrective_action_narrative") or ""
+            ).strip()
+
+            if variance_pct <= red_threshold_pct:
+                target_status = "red"
+            elif variance_pct <= amber_threshold_pct:
+                target_status = "amber"
+            else:
+                target_status = "green"
+
+            if reported_rag not in valid_raw_labels:
+                invalid_rag_label_kpi_ids.append(kpi_id)
+                norm_reported = ""
+            else:
+                norm_reported = (
+                    "amber" if reported_rag == "yellow" else reported_rag
+                )
+                if severity_rank[norm_reported] < severity_rank[target_status]:
+                    watermelon_masked_status_kpi_ids.append(kpi_id)
+
+            if (
+                target_status in {"red", "amber"}
+                or norm_reported in {"red", "amber"}
+            ) and len(corrective_action_narrative) < 15:
+                missing_corrective_narrative_kpi_ids.append(kpi_id)
+
+    return {
+        "total_evaluated": total_evaluated,
+        "invalid_rag_label_kpi_ids": invalid_rag_label_kpi_ids,
+        "watermelon_masked_status_kpi_ids": watermelon_masked_status_kpi_ids,
+        "missing_corrective_narrative_kpi_ids": missing_corrective_narrative_kpi_ids,
+        "is_rag_reporting_transparent": (
+            len(invalid_rag_label_kpi_ids) == 0
+            and len(watermelon_masked_status_kpi_ids) == 0
+            and len(missing_corrective_narrative_kpi_ids) == 0
+        ),
+    }
+
+
+ProjectExportService.audit_executive_report_rag_status_and_narrative_consistency = staticmethod(
+    audit_executive_report_rag_status_and_narrative_consistency
+)
+

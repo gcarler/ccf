@@ -3778,6 +3778,7 @@ __all__ = [
     "validate_sprint_velocity_commitment_stability",
     "validate_fpif_point_of_total_assumption",
     "validate_cpif_cost_sharing_and_fee_bounds",
+    "validate_tm_contract_not_to_exceed_and_rate_card",
     "validate_schedule_network_lead_lag_and_float_feasibility",
     "validate_three_point_pert_skew_and_confidence_band",
 ]
@@ -4911,3 +4912,78 @@ def validate_deliverable_acceptance_criteria_measurability(
         ),
     }
 
+
+def validate_tm_contract_not_to_exceed_and_rate_card(
+    tm_contracts: object,
+    *,
+    burn_warning_threshold_pct: float = 85.0,
+) -> dict[str, object]:
+    """Valida techo Not-To-Exceed (NTE) y gobernanza de rate card en contratos Time & Materials según PMI PMBOK §12.1 y §12.2."""
+    total_evaluated = 0
+    missing_nte_ceiling_contract_ids: list[str] = []
+    uncontrolled_rate_or_timesheet_contract_ids: list[str] = []
+    nte_threshold_breach_contract_ids: list[str] = []
+
+    threshold_pct = float(burn_warning_threshold_pct)
+    contracts: Sequence[Any] = (
+        tm_contracts
+        if isinstance(tm_contracts, Sequence)
+        and not isinstance(tm_contracts, (str, bytes, bytearray))
+        else []
+    )
+
+    for item in contracts:
+        if not isinstance(item, Mapping):
+            continue
+        contract_id = str(item.get("contract_id") or item.get("id") or "").strip()
+        if not contract_id:
+            continue
+
+        total_evaluated += 1
+
+        try:
+            not_to_exceed_ceiling = float(
+                item.get("not_to_exceed_ceiling", 0.0) or 0.0
+            )
+        except (TypeError, ValueError):
+            not_to_exceed_ceiling = 0.0
+        try:
+            cumulative_billed_amount = float(
+                item.get("cumulative_billed_amount", 0.0) or 0.0
+            )
+        except (TypeError, ValueError):
+            cumulative_billed_amount = 0.0
+        has_approved_rate_card = bool(item.get("has_approved_rate_card", False))
+        timesheet_supervisor_signoff_required = bool(
+            item.get("timesheet_supervisor_signoff_required", False)
+        )
+
+        if not_to_exceed_ceiling <= 0.0:
+            missing_nte_ceiling_contract_ids.append(contract_id)
+
+        if (
+            not has_approved_rate_card
+            or not timesheet_supervisor_signoff_required
+        ):
+            uncontrolled_rate_or_timesheet_contract_ids.append(contract_id)
+
+        if not_to_exceed_ceiling > 0.0:
+            burn_pct = (
+                cumulative_billed_amount / not_to_exceed_ceiling
+            ) * 100.0
+            if burn_pct >= threshold_pct:
+                nte_threshold_breach_contract_ids.append(contract_id)
+
+    is_tm_contract_governance_valid = bool(
+        len(missing_nte_ceiling_contract_ids) == 0
+        and len(uncontrolled_rate_or_timesheet_contract_ids) == 0
+        and len(nte_threshold_breach_contract_ids) == 0
+    )
+
+    return {
+        "total_evaluated": total_evaluated,
+        "missing_nte_ceiling_contract_ids": missing_nte_ceiling_contract_ids,
+        "uncontrolled_rate_or_timesheet_contract_ids": uncontrolled_rate_or_timesheet_contract_ids,
+        "nte_threshold_breach_contract_ids": nte_threshold_breach_contract_ids,
+        "is_tm_contract_governance_valid": is_tm_contract_governance_valid,
+    }

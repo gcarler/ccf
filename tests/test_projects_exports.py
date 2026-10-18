@@ -4865,3 +4865,143 @@ def test_audit_executive_report_strategic_alignment_and_esg_empty_and_service_pr
         ProjectExportService.audit_executive_report_strategic_alignment_and_esg(sample)
         == audit_executive_report_strategic_alignment_and_esg(sample)
     )
+
+
+def test_audit_executive_report_rag_status_and_narrative_consistency_transparent():
+    """Valida KPIs con semáforo coherente (incluyendo yellow->amber) y narrativa correctiva suficiente."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_rag_status_and_narrative_consistency,
+    )
+
+    kpis = [
+        {
+            "kpi_id": "KPI-COST-01",
+            "reported_rag": "green",
+            "variance_pct": -2.0,
+            "amber_threshold_pct": -5.0,
+            "red_threshold_pct": -10.0,
+            "corrective_action_narrative": "",
+        },
+        {
+            "id": "KPI-SCHED-02",
+            "reported_rag": "YELLOW",
+            "variance_pct": -6.5,
+            "amber_threshold_pct": -5.0,
+            "red_threshold_pct": -10.0,
+            "corrective_action_narrative": "Fast-tracking en paquetes críticos aprobado.",
+        },
+        {
+            "kpi_id": "KPI-QUAL-03",
+            "reported_rag": "red",
+            "variance_pct": -12.0,
+            "amber_threshold_pct": -5.0,
+            "red_threshold_pct": -10.0,
+            "corrective_action_narrative": "Se activó contingencia de pruebas automatizadas.",
+        },
+    ]
+    res = audit_executive_report_rag_status_and_narrative_consistency(kpis)
+    assert res == {
+        "total_evaluated": 3,
+        "invalid_rag_label_kpi_ids": [],
+        "watermelon_masked_status_kpi_ids": [],
+        "missing_corrective_narrative_kpi_ids": [],
+        "is_rag_reporting_transparent": True,
+    }
+    assert (
+        ProjectExportService.audit_executive_report_rag_status_and_narrative_consistency(
+            kpis
+        )
+        == res
+    )
+
+
+def test_audit_executive_report_rag_watermelon_masking_and_invalid_labels():
+    """Detecta proyectos sandía (watermelon masking: red->amber/green, amber->green) y etiquetas RAG inválidas."""
+    from backend.services.project_export_service import (
+        audit_executive_report_rag_status_and_narrative_consistency,
+    )
+
+    kpis = [
+        {
+            "kpi_id": "KPI-WM-RED-AS-GREEN",
+            "reported_rag": "green",
+            "variance_pct": -14.0,
+            "corrective_action_narrative": "Plan de recuperación en curso con PMO.",
+        },
+        {
+            "kpi_id": "KPI-WM-AMBER-AS-GREEN",
+            "reported_rag": "green",
+            "variance_pct": -7.0,
+            "corrective_action_narrative": "Ajuste de turnos para recuperar atraso menor.",
+        },
+        {
+            "kpi_id": "KPI-BAD-LABEL",
+            "reported_rag": "blue",
+            "variance_pct": 1.0,
+        },
+    ]
+    res = audit_executive_report_rag_status_and_narrative_consistency(kpis)
+    assert res["total_evaluated"] == 3
+    assert res["invalid_rag_label_kpi_ids"] == ["KPI-BAD-LABEL"]
+    assert res["watermelon_masked_status_kpi_ids"] == [
+        "KPI-WM-RED-AS-GREEN",
+        "KPI-WM-AMBER-AS-GREEN",
+    ]
+    assert res["missing_corrective_narrative_kpi_ids"] == []
+    assert res["is_rag_reporting_transparent"] is False
+
+
+def test_audit_executive_report_rag_missing_corrective_narrative():
+    """Exige narrativa >= 15 caracteres cuando el estado objetivo o reportado es amber o red."""
+    from backend.services.project_export_service import (
+        audit_executive_report_rag_status_and_narrative_consistency,
+    )
+
+    kpis = [
+        {
+            "kpi_id": "KPI-SHORT-NARR",
+            "reported_rag": "amber",
+            "variance_pct": -6.0,
+            "corrective_action_narrative": "En revisión",
+        },
+        {
+            "kpi_id": "KPI-REPORTED-RED-NO-NARR",
+            "reported_rag": "red",
+            "variance_pct": 0.0,
+            "corrective_action_narrative": "   ",
+        },
+    ]
+    res = audit_executive_report_rag_status_and_narrative_consistency(kpis)
+    assert res["total_evaluated"] == 2
+    assert res["invalid_rag_label_kpi_ids"] == []
+    assert res["watermelon_masked_status_kpi_ids"] == []
+    assert res["missing_corrective_narrative_kpi_ids"] == [
+        "KPI-SHORT-NARR",
+        "KPI-REPORTED-RED-NO-NARR",
+    ]
+    assert res["is_rag_reporting_transparent"] is False
+
+
+def test_audit_executive_report_rag_invalid_inputs_and_export():
+    """Ignora entradas no secuencia o ítems sin kpi_id y verifica exportación en __all__."""
+    import backend.services.project_export_service as _m
+    from backend.services.project_export_service import (
+        audit_executive_report_rag_status_and_narrative_consistency,
+    )
+
+    assert (
+        "audit_executive_report_rag_status_and_narrative_consistency"
+        in _m.__all__
+    )
+    for bad in (None, "not-a-seq", b"bytes", bytearray(b"xyz"), [{"kpi_id": "  "}, 99]):
+        assert audit_executive_report_rag_status_and_narrative_consistency(
+            bad
+        ) == {
+            "total_evaluated": 0,
+            "invalid_rag_label_kpi_ids": [],
+            "watermelon_masked_status_kpi_ids": [],
+            "missing_corrective_narrative_kpi_ids": [],
+            "is_rag_reporting_transparent": True,
+        }
+

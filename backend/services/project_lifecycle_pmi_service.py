@@ -3137,6 +3137,7 @@ __all__ = [
     "audit_stakeholder_engagement_seam_drift",
     "audit_communications_management_plan_matrix",
     "audit_risk_response_secondary_and_fallback_readiness",
+    "audit_steering_committee_quorum_and_escalation_governance",
     "ProjectLifecyclePMIService",
 ]
 
@@ -3827,3 +3828,110 @@ def audit_risk_response_secondary_and_fallback_readiness(
 ProjectLifecyclePMIService.audit_risk_response_secondary_and_fallback_readiness = staticmethod(
     audit_risk_response_secondary_and_fallback_readiness
 )
+
+
+def audit_steering_committee_quorum_and_escalation_governance(
+    governance_sessions: object,
+    *,
+    min_quorum_pct: float = 75.0,
+) -> dict[str, object]:
+    """Audita quórum del Comité Directivo (Steering Committee), presencia del patrocinador en ratificación de decisiones, publicación de actas y resolución de bloqueadores escalados según PMI PMBOK §1.2 y §3.3."""
+    total_evaluated = 0
+    quorum_breach_session_ids: list[str] = []
+    unrecorded_decision_session_ids: list[str] = []
+    unresolved_escalation_session_ids: list[str] = []
+
+    if isinstance(governance_sessions, Sequence) and not isinstance(
+        governance_sessions, (str, bytes, bytearray)
+    ):
+        for item in governance_sessions:
+            if not isinstance(item, Mapping):
+                continue
+            session_id = str(
+                item.get("session_id") or item.get("id") or ""
+            ).strip()
+            if not session_id:
+                continue
+
+            total_evaluated += 1
+            try:
+                voting_members_invited = int(
+                    item.get("voting_members_invited", 0) or 0
+                )
+            except (TypeError, ValueError):
+                voting_members_invited = 0
+
+            try:
+                voting_members_present = int(
+                    item.get("voting_members_present", 0) or 0
+                )
+            except (TypeError, ValueError):
+                voting_members_present = 0
+
+            sponsor_present = bool(item.get("sponsor_present", False))
+
+            try:
+                decisions_ratified_count = int(
+                    item.get("decisions_ratified_count", 0) or 0
+                )
+            except (TypeError, ValueError):
+                decisions_ratified_count = 0
+
+            minutes_signed_and_published = bool(
+                item.get("minutes_signed_and_published", False)
+            )
+
+            try:
+                escalated_blockers_count = int(
+                    item.get("escalated_blockers_count", 0) or 0
+                )
+            except (TypeError, ValueError):
+                escalated_blockers_count = 0
+
+            try:
+                escalated_blockers_assigned_resolution = int(
+                    item.get("escalated_blockers_assigned_resolution", 0) or 0
+                )
+            except (TypeError, ValueError):
+                escalated_blockers_assigned_resolution = 0
+
+            if (
+                voting_members_invited <= 0
+                or (
+                    (voting_members_present / voting_members_invited) * 100.0
+                )
+                < float(min_quorum_pct)
+                or (decisions_ratified_count > 0 and not sponsor_present)
+            ):
+                quorum_breach_session_ids.append(session_id)
+
+            if (
+                decisions_ratified_count > 0
+                and not minutes_signed_and_published
+            ):
+                unrecorded_decision_session_ids.append(session_id)
+
+            if (
+                escalated_blockers_count > 0
+                and escalated_blockers_assigned_resolution
+                < escalated_blockers_count
+            ):
+                unresolved_escalation_session_ids.append(session_id)
+
+    return {
+        "total_evaluated": total_evaluated,
+        "quorum_breach_session_ids": quorum_breach_session_ids,
+        "unrecorded_decision_session_ids": unrecorded_decision_session_ids,
+        "unresolved_escalation_session_ids": unresolved_escalation_session_ids,
+        "is_steering_governance_compliant": (
+            len(quorum_breach_session_ids) == 0
+            and len(unrecorded_decision_session_ids) == 0
+            and len(unresolved_escalation_session_ids) == 0
+        ),
+    }
+
+
+ProjectLifecyclePMIService.audit_steering_committee_quorum_and_escalation_governance = staticmethod(
+    audit_steering_committee_quorum_and_escalation_governance
+)
+

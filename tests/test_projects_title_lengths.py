@@ -3427,3 +3427,115 @@ def test_validate_deliverable_acceptance_criteria_measurability_invalid_inputs()
             "ambiguous_subjective_deliverable_ids": [],
             "is_acceptance_criteria_measurable": True,
         }
+
+
+def test_validate_tm_contract_nte_and_rate_card_valid():
+    """Contratos T&M con techo NTE, rate card aprobada y signoff -> gobernanza valida."""
+    from backend.schemas.projects import validate_tm_contract_not_to_exceed_and_rate_card
+
+    contracts = [
+        {
+            "contract_id": "TM-1",
+            "not_to_exceed_ceiling": 10000.0,
+            "cumulative_billed_amount": 5000.0,
+            "has_approved_rate_card": True,
+            "timesheet_supervisor_signoff_required": True,
+        },
+        {
+            "id": "TM-2",
+            "not_to_exceed_ceiling": 2000.0,
+            "cumulative_billed_amount": 1699.0,  # burn 84.95% < 85% -> sin breach.
+            "has_approved_rate_card": True,
+            "timesheet_supervisor_signoff_required": True,
+        },
+    ]
+    res = validate_tm_contract_not_to_exceed_and_rate_card(contracts)
+    assert res == {
+        "total_evaluated": 2,
+        "missing_nte_ceiling_contract_ids": [],
+        "uncontrolled_rate_or_timesheet_contract_ids": [],
+        "nte_threshold_breach_contract_ids": [],
+        "is_tm_contract_governance_valid": True,
+    }
+
+
+def test_validate_tm_contract_nte_missing_and_uncontrolled():
+    """Detecta contratos sin techo NTE (<= 0) y sin rate card aprobada o sin signoff."""
+    from backend.schemas.projects import validate_tm_contract_not_to_exceed_and_rate_card
+
+    contracts = [
+        {"contract_id": "B-1", "not_to_exceed_ceiling": 0.0,
+         "has_approved_rate_card": True, "timesheet_supervisor_signoff_required": True},
+        {"contract_id": "B-2", "not_to_exceed_ceiling": -500.0,
+         "has_approved_rate_card": True, "timesheet_supervisor_signoff_required": True},
+        {"contract_id": "B-3", "not_to_exceed_ceiling": 1000.0,
+         "cumulative_billed_amount": 100.0,
+         "has_approved_rate_card": False, "timesheet_supervisor_signoff_required": True},
+        {"contract_id": "B-4", "not_to_exceed_ceiling": 1000.0,
+         "cumulative_billed_amount": 100.0,
+         "has_approved_rate_card": True, "timesheet_supervisor_signoff_required": False},
+        {"contract_id": "B-5", "not_to_exceed_ceiling": 1000.0,
+         "cumulative_billed_amount": 100.0,  # ambos controles ausentes (defaults).
+        },
+    ]
+    res = validate_tm_contract_not_to_exceed_and_rate_card(contracts)
+    assert res["total_evaluated"] == 5
+    assert res["missing_nte_ceiling_contract_ids"] == ["B-1", "B-2"]
+    assert res["uncontrolled_rate_or_timesheet_contract_ids"] == ["B-3", "B-4", "B-5"]
+    assert res["nte_threshold_breach_contract_ids"] == []
+    assert res["is_tm_contract_governance_valid"] is False
+
+
+def test_validate_tm_contract_nte_threshold_breach_edges():
+    """Burn >= umbral (por defecto 85%) marca breach; bajo el umbral no; coercion segura."""
+    from backend.schemas.projects import validate_tm_contract_not_to_exceed_and_rate_card
+
+    contracts = [
+        # burn exacto 85.0% -> breach (>=).
+        {"contract_id": "E-1", "not_to_exceed_ceiling": 1000.0,
+         "cumulative_billed_amount": 850.0,
+         "has_approved_rate_card": True, "timesheet_supervisor_signoff_required": True},
+        # burn 84.9% -> sin breach.
+        {"contract_id": "E-2", "not_to_exceed_ceiling": 1000.0,
+         "cumulative_billed_amount": 849.0,
+         "has_approved_rate_card": True, "timesheet_supervisor_signoff_required": True},
+        # burn 89.9% -> breach; ademas coercion de montos invalidos.
+        {"contract_id": "E-3", "not_to_exceed_ceiling": "oops",
+         "cumulative_billed_amount": "oops",
+         "has_approved_rate_card": True, "timesheet_supervisor_signoff_required": True},
+    ]
+    res = validate_tm_contract_not_to_exceed_and_rate_card(contracts)
+    assert res["nte_threshold_breach_contract_ids"] == ["E-1"]
+    assert res["missing_nte_ceiling_contract_ids"] == ["E-3"]  # coercion a 0.
+    assert res["is_tm_contract_governance_valid"] is False
+
+    # Umbral personalizado mas estricto.
+    strict = validate_tm_contract_not_to_exceed_and_rate_card(
+        contracts[:2], burn_warning_threshold_pct=50.0
+    )
+    assert strict["nte_threshold_breach_contract_ids"] == ["E-1", "E-2"]
+
+
+def test_validate_tm_contract_nte_empty_and_exports():
+    """Entradas vacias/None/invalidas + exportacion en __all__."""
+    from backend.schemas.projects import (
+        validate_tm_contract_not_to_exceed_and_rate_card,
+    )
+    import backend.schemas.projects as _m
+
+    res_none = validate_tm_contract_not_to_exceed_and_rate_card(None)
+    assert res_none == {
+        "total_evaluated": 0,
+        "missing_nte_ceiling_contract_ids": [],
+        "uncontrolled_rate_or_timesheet_contract_ids": [],
+        "nte_threshold_breach_contract_ids": [],
+        "is_tm_contract_governance_valid": True,
+    }
+    assert validate_tm_contract_not_to_exceed_and_rate_card("no-seq")["total_evaluated"] == 0
+    assert (
+        validate_tm_contract_not_to_exceed_and_rate_card(
+            ["no-map", {"contract_id": "   "}, {"other_id": "x"}]
+        )["total_evaluated"]
+        == 0
+    )
+    assert "validate_tm_contract_not_to_exceed_and_rate_card" in _m.__all__

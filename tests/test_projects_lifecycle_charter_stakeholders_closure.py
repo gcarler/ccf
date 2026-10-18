@@ -4259,3 +4259,140 @@ def test_audit_risk_response_secondary_and_fallback_readiness_invalid_inputs_and
             "unassigned_active_response_risk_ids": [],
             "is_risk_response_execution_ready": True,
         }
+
+
+def test_audit_steering_committee_quorum_and_escalation_governance_compliant():
+    """Sesiones con quórum >= min_quorum_pct, patrocinador presente, actas firmadas y bloqueadores resueltos."""
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_steering_committee_quorum_and_escalation_governance,
+    )
+
+    sessions = [
+        {
+            "session_id": "SC-2026-Q1",
+            "voting_members_invited": 8,
+            "voting_members_present": 7,
+            "sponsor_present": True,
+            "decisions_ratified_count": 3,
+            "minutes_signed_and_published": True,
+            "escalated_blockers_count": 2,
+            "escalated_blockers_assigned_resolution": 2,
+        },
+        {
+            "id": "SC-2026-Q2",
+            "voting_members_invited": 4,
+            "voting_members_present": 3,
+            "sponsor_present": False,
+            "decisions_ratified_count": 0,
+            "minutes_signed_and_published": False,
+            "escalated_blockers_count": 0,
+            "escalated_blockers_assigned_resolution": 0,
+        },
+    ]
+    res = audit_steering_committee_quorum_and_escalation_governance(
+        sessions, min_quorum_pct=75.0
+    )
+    assert res == {
+        "total_evaluated": 2,
+        "quorum_breach_session_ids": [],
+        "unrecorded_decision_session_ids": [],
+        "unresolved_escalation_session_ids": [],
+        "is_steering_governance_compliant": True,
+    }
+    assert (
+        ProjectLifecyclePMIService.audit_steering_committee_quorum_and_escalation_governance(
+            sessions
+        )
+        == res
+    )
+
+
+def test_audit_steering_committee_quorum_and_sponsor_breaches():
+    """Detecta falta de quórum (< min_quorum_pct, invitados <= 0) o decisiones ratificadas sin patrocinador."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_steering_committee_quorum_and_escalation_governance,
+    )
+
+    sessions = [
+        {
+            "session_id": "SC-LOW-QUORUM",
+            "voting_members_invited": 10,
+            "voting_members_present": 6,
+            "sponsor_present": True,
+            "decisions_ratified_count": 1,
+            "minutes_signed_and_published": True,
+        },
+        {
+            "session_id": "SC-NO-SPONSOR",
+            "voting_members_invited": 4,
+            "voting_members_present": 4,
+            "sponsor_present": False,
+            "decisions_ratified_count": 2,
+            "minutes_signed_and_published": True,
+        },
+        {
+            "session_id": "SC-ZERO-INVITED",
+            "voting_members_invited": 0,
+            "voting_members_present": 0,
+        },
+    ]
+    res = audit_steering_committee_quorum_and_escalation_governance(
+        sessions, min_quorum_pct=75.0
+    )
+    assert res["total_evaluated"] == 3
+    assert res["quorum_breach_session_ids"] == [
+        "SC-LOW-QUORUM",
+        "SC-NO-SPONSOR",
+        "SC-ZERO-INVITED",
+    ]
+    assert res["unrecorded_decision_session_ids"] == []
+    assert res["unresolved_escalation_session_ids"] == []
+    assert res["is_steering_governance_compliant"] is False
+
+
+def test_audit_steering_committee_unrecorded_decisions_and_unresolved_escalations():
+    """Detecta decisiones ratificadas sin acta publicada y bloqueadores escalados sin resolución asignada."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_steering_committee_quorum_and_escalation_governance,
+    )
+
+    sessions = [
+        {
+            "session_id": "SC-UNSIGNED-MINUTES",
+            "voting_members_invited": 6,
+            "voting_members_present": 6,
+            "sponsor_present": True,
+            "decisions_ratified_count": 4,
+            "minutes_signed_and_published": False,
+            "escalated_blockers_count": 3,
+            "escalated_blockers_assigned_resolution": 1,
+        }
+    ]
+    res = audit_steering_committee_quorum_and_escalation_governance(sessions)
+    assert res["total_evaluated"] == 1
+    assert res["quorum_breach_session_ids"] == []
+    assert res["unrecorded_decision_session_ids"] == ["SC-UNSIGNED-MINUTES"]
+    assert res["unresolved_escalation_session_ids"] == ["SC-UNSIGNED-MINUTES"]
+    assert res["is_steering_governance_compliant"] is False
+
+
+def test_audit_steering_committee_invalid_inputs_and_export():
+    """Ignora entradas no secuencia o sin session_id válido y verifica exportación en __all__."""
+    import backend.services.project_lifecycle_pmi_service as _m
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_steering_committee_quorum_and_escalation_governance,
+    )
+
+    assert (
+        "audit_steering_committee_quorum_and_escalation_governance" in _m.__all__
+    )
+    for bad in (None, "not-a-seq", b"bytes", bytearray(b"123"), [{"session_id": "  "}, 42]):
+        assert audit_steering_committee_quorum_and_escalation_governance(bad) == {
+            "total_evaluated": 0,
+            "quorum_breach_session_ids": [],
+            "unrecorded_decision_session_ids": [],
+            "unresolved_escalation_session_ids": [],
+            "is_steering_governance_compliant": True,
+        }
+
