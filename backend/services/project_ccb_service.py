@@ -1635,6 +1635,121 @@ def evaluate_defect_containment_and_escape_rate(
     }
 
 
+def audit_configuration_items_baseline_integrity(
+    configuration_items: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Verifica la integridad de la linea base de IC y las auditorías PCA/FCA (PMBOK §4.6).
+
+    Cada IC declara `id`/`ci_id`/`code` (fallback 'CI-{idx}'), version de
+    base (`baseline_version`/`approved_version`), version desplegada
+    (`deployed_version`/`actual_version`/`current_version`), CR aprobado
+    (`approved_cr_id`/`change_request_id`) y estado de verificacion
+    (`verification_status`/`pca_fca_status`):
+    - `unbaselined_ci_ids`: sin version base o sin version desplegada.
+    - `unauthorized_drift_ci_ids`: despliegue distinto a la base sin CR aprobado.
+    - `unverified_audit_ci_ids`: verificacion fuera del set
+      {verified, verificado, passed, approved, aprobado, compliant}.
+    - `integrity_rate_pct` (2 decimales; 100.0 sin IC).
+    - `is_configuration_compliant`: sin hallazgos en las 3 listas.
+    - `configuration_posture`: 'NO_CONFIGURATION_ITEMS' vacío;
+      'UNAUTHORIZED_CONFIGURATION_DRIFT'; 'UNBASELINED_CONFIGURATION_ITEM';
+      'PENDING_PCA_FCA_VERIFICATION'; 'VERIFIED_CONFIGURATION_BASELINE'.
+    """
+    items = [ci for ci in (configuration_items or []) if isinstance(ci, dict)]
+    if not items:
+        return {
+            "total_items": 0,
+            "verified_items_count": 0,
+            "unauthorized_drift_ci_ids": [],
+            "unbaselined_ci_ids": [],
+            "unverified_audit_ci_ids": [],
+            "integrity_rate_pct": 100.0,
+            "is_configuration_compliant": True,
+            "configuration_posture": "NO_CONFIGURATION_ITEMS",
+        }
+
+    VERIFIED_STATUSES = {
+        "verified", "verificado", "passed", "approved", "aprobado", "compliant",
+    }
+
+    total_items = len(items)
+    verified_items_count = 0
+    unauthorized_drift_ci_ids: list[str] = []
+    unbaselined_ci_ids: list[str] = []
+    unverified_audit_ci_ids: list[str] = []
+
+    for idx, item in enumerate(items, start=1):
+        ci_id = str(
+            item.get("id") or item.get("ci_id") or item.get("code") or f"CI-{idx}"
+        ).strip()
+        baseline_version = str(
+            item.get("baseline_version") or item.get("approved_version") or ""
+        ).strip()
+        deployed_version = str(
+            item.get("deployed_version")
+            or item.get("actual_version")
+            or item.get("current_version")
+            or ""
+        ).strip()
+        approved_cr_id = str(
+            item.get("approved_cr_id") or item.get("change_request_id") or ""
+        ).strip()
+        verification_status = str(
+            item.get("verification_status") or item.get("pca_fca_status") or ""
+        ).strip().lower()
+
+        is_unbaselined = not baseline_version or not deployed_version
+        is_unauthorized_drift = bool(
+            baseline_version
+            and deployed_version
+            and baseline_version != deployed_version
+            and not approved_cr_id
+        )
+        is_unverified_audit = verification_status not in VERIFIED_STATUSES
+
+        if is_unbaselined:
+            unbaselined_ci_ids.append(ci_id)
+        if is_unauthorized_drift:
+            unauthorized_drift_ci_ids.append(ci_id)
+        if is_unverified_audit:
+            unverified_audit_ci_ids.append(ci_id)
+        if not (is_unbaselined or is_unauthorized_drift or is_unverified_audit):
+            verified_items_count += 1
+
+    integrity_rate_pct = (
+        round((verified_items_count / total_items) * 100.0, 2)
+        if total_items > 0
+        else 100.0
+    )
+    is_configuration_compliant = bool(
+        len(unauthorized_drift_ci_ids) == 0
+        and len(unbaselined_ci_ids) == 0
+        and len(unverified_audit_ci_ids) == 0
+    )
+
+    if total_items == 0:
+        configuration_posture = "NO_CONFIGURATION_ITEMS"
+    elif len(unauthorized_drift_ci_ids) > 0:
+        configuration_posture = "UNAUTHORIZED_CONFIGURATION_DRIFT"
+    elif len(unbaselined_ci_ids) > 0:
+        configuration_posture = "UNBASELINED_CONFIGURATION_ITEM"
+    elif len(unverified_audit_ci_ids) > 0:
+        configuration_posture = "PENDING_PCA_FCA_VERIFICATION"
+    else:
+        configuration_posture = "VERIFIED_CONFIGURATION_BASELINE"
+
+    return {
+        "total_items": total_items,
+        "verified_items_count": verified_items_count,
+        "unauthorized_drift_ci_ids": unauthorized_drift_ci_ids,
+        "unbaselined_ci_ids": unbaselined_ci_ids,
+        "unverified_audit_ci_ids": unverified_audit_ci_ids,
+        "integrity_rate_pct": integrity_rate_pct,
+        "is_configuration_compliant": is_configuration_compliant,
+        "configuration_posture": configuration_posture,
+    }
+
+
 class ProjectCCBService:
     """Fachada canónica de Control Integrado de Cambios (CCB) y Calidad DoD PMI."""
 
@@ -1827,6 +1942,12 @@ class ProjectCCBService:
         return audit_configuration_baseline_integrity(configuration_items)
 
     @staticmethod
+    def audit_configuration_items_baseline_integrity(
+        configuration_items: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        return audit_configuration_items_baseline_integrity(configuration_items)
+
+    @staticmethod
     def audit_unapproved_scope_creep_exposure(
         work_packages: Optional[list[dict[str, Any]]],
         tolerance_hours_pct: float = 10.0,
@@ -1884,6 +2005,7 @@ __all__ = [
     "evaluate_defect_containment_and_escape_rate",
     "evaluate_deliverable_first_time_right_yield",
     "audit_configuration_baseline_integrity",
+    "audit_configuration_items_baseline_integrity",
     "ProjectCCBService",
 ]
 

@@ -2351,3 +2351,120 @@ def test_evaluate_defect_containment_and_escape_rate_empty_or_none():
             "is_contained": True,
             "containment_posture": "NO_DEFECTS_EVALUATED",
         }
+
+
+def test_audit_configuration_items_baseline_integrity_verified():
+    """IC alineados a su base (o con CR aprobado y audit OK) -> VERIFIED baseline 100%."""
+    from backend.services.project_ccb_service import (
+        audit_configuration_items_baseline_integrity as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "id": "CI-1",
+                "baseline_version": "v1.2.0",
+                "deployed_version": "v1.2.0",
+                "verification_status": "verificado",
+            },
+            {
+                "ci_id": "CI-2",
+                "approved_version": "v1.1.0",
+                "current_version": "v1.1.3",
+                "change_request_id": "CR-42",
+                "pca_fca_status": "APPROVED",
+            },
+        ]
+    )
+    assert res["is_configuration_compliant"] is True
+    assert res["total_items"] == 2
+    assert res["verified_items_count"] == 2
+    assert res["unauthorized_drift_ci_ids"] == []
+    assert res["unbaselined_ci_ids"] == []
+    assert res["unverified_audit_ci_ids"] == []
+    assert res["integrity_rate_pct"] == 100.0
+    assert res["configuration_posture"] == "VERIFIED_CONFIGURATION_BASELINE"
+
+
+def test_audit_configuration_items_baseline_integrity_unauthorized_drift():
+    """Versión desplegada distinta de la base sin CR -> UNAUTHORIZED_CONFIGURATION_DRIFT."""
+    from backend.services.project_ccb_service import (
+        audit_configuration_items_baseline_integrity as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "id": "CI-OK",
+                "baseline_version": "v2.0.0",
+                "deployed_version": "v2.0.0",
+                "verification_status": "passed",
+            },
+            {
+                "id": "CI-DRIFT",
+                "baseline_version": "v2.0.0",
+                "deployed_version": "v2.1.0",
+                "verification_status": "verified",
+            },
+        ]
+    )
+    assert res["is_configuration_compliant"] is False
+    assert res["total_items"] == 2
+    assert res["verified_items_count"] == 1
+    assert res["unauthorized_drift_ci_ids"] == ["CI-DRIFT"]
+    assert res["unbaselined_ci_ids"] == []
+    assert res["unverified_audit_ci_ids"] == []
+    assert res["integrity_rate_pct"] == 50.0
+    assert res["configuration_posture"] == "UNAUTHORIZED_CONFIGURATION_DRIFT"
+
+
+def test_audit_configuration_items_baseline_integrity_unbaselined_and_pending():
+    """Sin versiones y con PCA/FCA pendiente: ambos no verificados (d excluye a/b/c)."""
+    from backend.services.project_ccb_service import (
+        audit_configuration_items_baseline_integrity as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "code": "CI-X",
+                "verification_status": "verified",
+            },
+            {
+                "id": "CI-PENDING",
+                "baseline_version": "v1.0.0",
+                "deployed_version": "v1.0.0",
+                "verification_status": "pending_audit",
+            },
+        ]
+    )
+    assert res["is_configuration_compliant"] is False
+    assert res["total_items"] == 2
+    # CI-X cae en (a) aun con status verified; CI-PENDING cae en (c): ninguno cuenta.
+    assert res["verified_items_count"] == 0
+    assert res["unbaselined_ci_ids"] == ["CI-X"]
+    assert res["unverified_audit_ci_ids"] == ["CI-PENDING"]
+    assert res["unauthorized_drift_ci_ids"] == []
+    assert res["integrity_rate_pct"] == 0.0
+    # Precedencia: drift > unbaselined > pending PCA/FCA.
+    assert res["configuration_posture"] == "UNBASELINED_CONFIGURATION_ITEM"
+
+
+def test_audit_configuration_items_baseline_integrity_empty_or_none():
+    """None, lista vacía o entradas no-dict -> NO_CONFIGURATION_ITEMS."""
+    from backend.services.project_ccb_service import (
+        audit_configuration_items_baseline_integrity as audit_fn,
+    )
+
+    for payload in (None, [], ["invalid", 42, None]):
+        res = audit_fn(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_items": 0,
+            "verified_items_count": 0,
+            "unauthorized_drift_ci_ids": [],
+            "unbaselined_ci_ids": [],
+            "unverified_audit_ci_ids": [],
+            "integrity_rate_pct": 100.0,
+            "is_configuration_compliant": True,
+            "configuration_posture": "NO_CONFIGURATION_ITEMS",
+        }
