@@ -2787,6 +2787,7 @@ def validate_resource_allocation_utilization(
     }
 
 
+
 def validate_schedule_dependency_lead_lag(
     dependencies: Optional[list[dict]],
     max_lag_days: int = 30,
@@ -2962,5 +2963,87 @@ def validate_risk_trigger_and_fallback_plan(
     }
 
 
+def validate_procurement_contract_fee_structure(
+    contracts: Optional[list[dict]],
+    max_award_fee_pct: float = 20.0,
+) -> dict:
+    """Valida el tipo de contrato y la estructura de fee de incentivo (PMBOK §12.1).
 
+    Tipos válidos: FFP, FPIF, FP-EPA, CPFF, CPIF, CPAF, TM (case-insensitive).
+    Cada contrato declara `id`/`contract_id`, `contract_type`, `target_cost`/
+    `base_amount`, `fee_amount`/`fixed_fee`, `ceiling_price`/
+    `not_to_exceed_limit` y buy/seller share ratios opcionales:
+    - `invalid_type_ids`: tipos fuera de la gramática (plural, no repetidos).
+    - `unbounded_tm_ids`: Time & Materials sin techo (`ceiling_price` <= 0).
+    - `excessive_fee_ids`: fee/target * 100 > max_award_fee_pct (target > 0).
+    - `imbalanced_share_ratio_ids`: FPIF/CPIF con ratios provistos cuya suma
+      difiere de 1.0 en más de 0.01.
+    - `is_valid`: las 4 listas vacías.
+    - `contract_governance_posture`: 'NO_CONTRACTS_DEFINED' sin contratos;
+      'INVALID_CONTRACT_TYPE' con tipos inválidos;
+      'UNBOUNDED_TM_EXPOSURE' sin techo TM;
+      'IMBALANCED_INCENTIVE_OR_EXCESSIVE_FEE' con fee excesivo o ratios
+      desbalanceados; y 'SOUND_PROCUREMENT_STRUCTURE' en el caso sano.
+    """
+    VALID_TYPES = {"ffp", "fpif", "fp-epa", "cpff", "cpif", "cpaf", "tm"}
+    PPIF_TYPES = {"fpif", "cpif"}
+    items = [item for item in (contracts or []) if isinstance(item, dict)]
+    safe_max_fee_pct = float(max_award_fee_pct if max_award_fee_pct is not None else 20.0)
 
+    invalid_type_ids: list[str] = []
+    unbounded_tm_ids: list[str] = []
+    excessive_fee_ids: list[str] = []
+    imbalanced_share_ratio_ids: list[str] = []
+
+    for item in items:
+        contract_id = str(item.get("id") or item.get("contract_id") or "").strip()
+        contract_type = str(item.get("contract_type") or "").strip().lower()
+        target_cost = float(item.get("target_cost") or item.get("base_amount") or 0.0)
+        fee_amount = float(item.get("fee_amount") or item.get("fixed_fee") or 0.0)
+        ceiling_price = float(
+            item.get("ceiling_price") or item.get("not_to_exceed_limit") or 0.0
+        )
+
+        if contract_type not in VALID_TYPES:
+            invalid_type_ids.append(contract_id)
+        if contract_type == "tm" and ceiling_price <= 0:
+            unbounded_tm_ids.append(contract_id)
+        if target_cost > 0 and (fee_amount / target_cost) * 100.0 > safe_max_fee_pct:
+            excessive_fee_ids.append(contract_id)
+        if contract_type in PPIF_TYPES:
+            has_buyer = item.get("buyer_share_ratio") is not None
+            has_seller = item.get("seller_share_ratio") is not None
+            if has_buyer or has_seller:
+                buyer_ratio = float(item.get("buyer_share_ratio") or 0.0)
+                seller_ratio = float(item.get("seller_share_ratio") or 0.0)
+                if abs((buyer_ratio + seller_ratio) - 1.0) > 0.01:
+                    imbalanced_share_ratio_ids.append(contract_id)
+
+    total_contracts = len(items)
+    is_valid = bool(
+        not invalid_type_ids
+        and not unbounded_tm_ids
+        and not excessive_fee_ids
+        and not imbalanced_share_ratio_ids
+    )
+
+    if total_contracts == 0:
+        contract_governance_posture = "NO_CONTRACTS_DEFINED"
+    elif invalid_type_ids:
+        contract_governance_posture = "INVALID_CONTRACT_TYPE"
+    elif unbounded_tm_ids:
+        contract_governance_posture = "UNBOUNDED_TM_EXPOSURE"
+    elif excessive_fee_ids or imbalanced_share_ratio_ids:
+        contract_governance_posture = "IMBALANCED_INCENTIVE_OR_EXCESSIVE_FEE"
+    else:
+        contract_governance_posture = "SOUND_PROCUREMENT_STRUCTURE"
+
+    return {
+        "total_contracts": total_contracts,
+        "invalid_type_ids": invalid_type_ids,
+        "unbounded_tm_ids": unbounded_tm_ids,
+        "excessive_fee_ids": excessive_fee_ids,
+        "imbalanced_share_ratio_ids": imbalanced_share_ratio_ids,
+        "is_valid": is_valid,
+        "contract_governance_posture": contract_governance_posture,
+    }

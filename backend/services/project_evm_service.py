@@ -3975,12 +3975,116 @@ class ProjectEVMService:
         )
 
     @staticmethod
+    def evaluate_control_account_variance_masking(
+        work_packages: Optional[List[Dict[str, Any]]],
+        masking_threshold_pct: float = 15.0,
+    ) -> Dict[str, Any]:
+        return evaluate_control_account_variance_masking(
+            work_packages, masking_threshold_pct=masking_threshold_pct
+        )
+
+    @staticmethod
     def build_project_execution_matrix(
         db: Session, project: Project, now: Optional[datetime.datetime] = None
     ) -> Dict[str, Any]:
         return build_project_execution_matrix(db, project, now=now)
 
 
+def evaluate_control_account_variance_masking(
+    work_packages: Optional[List[Dict[str, Any]]],
+    masking_threshold_pct: float = 15.0,
+) -> Dict[str, Any]:
+    """Detecta el fenómeno de enmascaramiento de variaciones (Variance Masking) en Cuentas de Control según PMI PMBOK §7.4."""
+    packages = [wp for wp in (work_packages or []) if isinstance(wp, dict)]
+    total_packages = len(packages)
 
+    try:
+        threshold_pct = max(0.0, float(masking_threshold_pct or 15.0))
+    except (TypeError, ValueError):
+        threshold_pct = 15.0
 
+    net_cv_raw = 0.0
+    gross_negative_raw = 0.0
+    gross_positive_raw = 0.0
+    severely_overrun_package_ids: List[str] = []
 
+    for idx, wp in enumerate(packages, start=1):
+        raw_id = wp.get("id") if wp.get("id") is not None else wp.get("code")
+        wp_id = (
+            str(raw_id).strip()
+            if raw_id is not None and str(raw_id).strip()
+            else f"WP-{idx}"
+        )
+
+        try:
+            ev = float(wp.get("ev") or 0.0)
+        except (TypeError, ValueError):
+            ev = 0.0
+        try:
+            ac = float(wp.get("ac") or 0.0)
+        except (TypeError, ValueError):
+            ac = 0.0
+
+        raw_bac = wp.get("bac")
+        raw_pv = wp.get("pv")
+        try:
+            ref_budget = float(raw_bac if raw_bac is not None else (raw_pv or 0.0))
+        except (TypeError, ValueError):
+            ref_budget = 0.0
+
+        cv = ev - ac
+        if ref_budget > 0.0:
+            cv_pct = (cv / ref_budget) * 100.0
+        else:
+            cv_pct = -100.0 if cv < 0.0 else 0.0
+
+        net_cv_raw += cv
+        if cv < 0.0:
+            gross_negative_raw += abs(cv)
+            if abs(cv_pct) >= threshold_pct:
+                severely_overrun_package_ids.append(wp_id)
+        elif cv > 0.0:
+            gross_positive_raw += cv
+
+    net_control_account_cv = round(net_cv_raw, 2)
+    gross_negative_cv = round(gross_negative_raw, 2)
+    gross_positive_cv = round(gross_positive_raw, 2)
+
+    is_variance_masked = bool(
+        len(severely_overrun_package_ids) > 0
+        and gross_positive_cv > 0.0
+        and abs(net_control_account_cv) < gross_negative_cv * 0.5
+    )
+
+    recommendations: List[str] = []
+    if total_packages == 0:
+        masking_posture = "NO_WORK_PACKAGES"
+        recommendations.append(
+            "Desglosar la Cuenta de Control en paquetes de trabajo con métricas BAC/PV, EV y AC para auditar variaciones (PMBOK §7.4)."
+        )
+    elif is_variance_masked:
+        masking_posture = "HIDDEN_VARIANCE_MASKING_DETECTED"
+        recommendations.append(
+            f"Las variaciones positivas (${gross_positive_cv:,.2f}) están ocultando sobrecostos severos (${gross_negative_cv:,.2f}) en los paquetes {', '.join(severely_overrun_package_ids)}. Prohibir compensación cruzada sin solicitud de cambio CCB y auditar paquetes deficitarios individualmente (PMBOK §7.4)."
+        )
+    elif len(severely_overrun_package_ids) > 0:
+        masking_posture = "UNMASKED_PACKAGE_OVERRUN"
+        recommendations.append(
+            f"Ejecutar análisis de causa raíz y plan de acción correctiva sobre los paquetes con sobrecosto severo ({', '.join(severely_overrun_package_ids)}) conforme a PMBOK §7.4."
+        )
+    else:
+        masking_posture = "UNIFORM_CONTROL_ACCOUNT_HEALTH"
+        recommendations.append(
+            "Cuenta de Control sin sobrecostos severos ni compensaciones ocultas entre paquetes de trabajo (PMBOK §7.4)."
+        )
+
+    return {
+        "total_packages": total_packages,
+        "net_control_account_cv": net_control_account_cv,
+        "gross_negative_cv": gross_negative_cv,
+        "gross_positive_cv": gross_positive_cv,
+        "severely_overrun_package_ids": severely_overrun_package_ids,
+        "is_variance_masked": is_variance_masked,
+        "masking_posture": masking_posture,
+        "recommendations": recommendations,
+    }

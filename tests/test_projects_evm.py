@@ -1721,6 +1721,100 @@ def test_remaining_investment_viability_marginal_and_no_baseline():
     assert completed["viability_posture"] == "VIABLE_BUSINESS_CASE"
 
 
+# ─── evaluate_control_account_variance_masking (pure helper) ──────────────
+
+
+def test_evaluate_control_account_variance_masking_hidden_masking_detected():
+    """Variación positiva compensa sobrecosto severo (<50% del negativo bruto en neto) -> HIDDEN_VARIANCE_MASKING_DETECTED."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_control_account_variance_masking,
+    )
+
+    packages = [
+        {"id": "WP-101", "bac": 50000.0, "ev": 30000.0, "ac": 42000.0},  # CV = -12000 (-24%)
+        {"code": "WP-102", "pv": 50000.0, "ev": 35000.0, "ac": 25000.0},  # CV = +10000 (+20%)
+    ]
+
+    res = evaluate_control_account_variance_masking(packages, masking_threshold_pct=15.0)
+    assert res["total_packages"] == 2
+    assert res["net_control_account_cv"] == -2000.0
+    assert res["gross_negative_cv"] == 12000.0
+    assert res["gross_positive_cv"] == 10000.0
+    assert res["severely_overrun_package_ids"] == ["WP-101"]
+    assert res["is_variance_masked"] is True
+    assert res["masking_posture"] == "HIDDEN_VARIANCE_MASKING_DETECTED"
+    assert any("WP-101" in r for r in res["recommendations"])
+    assert (
+        ProjectEVMService.evaluate_control_account_variance_masking(
+            packages, masking_threshold_pct=15.0
+        )
+        == res
+    )
+
+
+def test_evaluate_control_account_variance_masking_unmasked_overrun():
+    """Sobrecosto severo sin compensación suficiente -> UNMASKED_PACKAGE_OVERRUN."""
+    from backend.services.project_evm_service import (
+        evaluate_control_account_variance_masking,
+    )
+
+    packages = [
+        {"id": "WP-201", "bac": 40000.0, "ev": 20000.0, "ac": 30000.0},  # CV = -10000 (-25%)
+        {"id": "WP-202", "bac": 20000.0, "ev": 12000.0, "ac": 10000.0},  # CV = +2000 (+10%)
+    ]
+
+    res = evaluate_control_account_variance_masking(packages, masking_threshold_pct=15.0)
+    assert res["total_packages"] == 2
+    assert res["net_control_account_cv"] == -8000.0
+    assert res["gross_negative_cv"] == 10000.0
+    assert res["gross_positive_cv"] == 2000.0
+    assert res["severely_overrun_package_ids"] == ["WP-201"]
+    assert res["is_variance_masked"] is False
+    assert res["masking_posture"] == "UNMASKED_PACKAGE_OVERRUN"
+    assert any("WP-201" in r for r in res["recommendations"])
+
+
+def test_evaluate_control_account_variance_masking_uniform_health():
+    """Variaciones negativas leves (< umbral) o positivas -> UNIFORM_CONTROL_ACCOUNT_HEALTH."""
+    from backend.services.project_evm_service import (
+        evaluate_control_account_variance_masking,
+    )
+
+    packages = [
+        {"id": "WP-301", "bac": 50000.0, "ev": 24000.0, "ac": 26000.0},  # CV = -2000 (-4%)
+        {"id": "WP-302", "bac": 50000.0, "ev": 30000.0, "ac": 27000.0},  # CV = +3000 (+6%)
+    ]
+
+    res = evaluate_control_account_variance_masking(packages, masking_threshold_pct=15.0)
+    assert res["total_packages"] == 2
+    assert res["net_control_account_cv"] == 1000.0
+    assert res["gross_negative_cv"] == 2000.0
+    assert res["gross_positive_cv"] == 3000.0
+    assert res["severely_overrun_package_ids"] == []
+    assert res["is_variance_masked"] is False
+    assert res["masking_posture"] == "UNIFORM_CONTROL_ACCOUNT_HEALTH"
+    assert len(res["recommendations"]) == 1
+
+
+def test_evaluate_control_account_variance_masking_no_work_packages():
+    """Lista vacía, None o entradas no-dict -> NO_WORK_PACKAGES."""
+    from backend.services.project_evm_service import (
+        evaluate_control_account_variance_masking,
+    )
+
+    for payload in (None, [], ["invalid", 42]):
+        res = evaluate_control_account_variance_masking(payload)  # type: ignore[arg-type]
+        assert res["total_packages"] == 0
+        assert res["net_control_account_cv"] == 0.0
+        assert res["gross_negative_cv"] == 0.0
+        assert res["gross_positive_cv"] == 0.0
+        assert res["severely_overrun_package_ids"] == []
+        assert res["is_variance_masked"] is False
+        assert res["masking_posture"] == "NO_WORK_PACKAGES"
+        assert len(res["recommendations"]) == 1
+
+
 if __name__ == "__main__":
     test_evm_balanced_project()
     test_evm_cost_overrun_critical()
@@ -1760,9 +1854,8 @@ if __name__ == "__main__":
     test_evaluate_management_reserve_release_governance_unauthorized_drawdown()
     test_evaluate_management_reserve_release_governance_overrun()
     test_evaluate_management_reserve_release_governance_no_reserve()
+    test_evaluate_control_account_variance_masking_hidden_masking_detected()
+    test_evaluate_control_account_variance_masking_unmasked_overrun()
+    test_evaluate_control_account_variance_masking_uniform_health()
+    test_evaluate_control_account_variance_masking_no_work_packages()
     print("✅ All EVM tests passed successfully!")
-
-
-
-
-

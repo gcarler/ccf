@@ -889,6 +889,131 @@ def test_validate_schedule_dependency_lead_lag_invalid_and_excessive_lag():
     assert only_lag["network_posture"] == "EXCESSIVE_LAG_DISTORTION"
 
 
+def test_validate_procurement_contract_sound_structure():
+    """Contratos FFP/CPIF sanos con share balanceado -> SOUND_PROCUREMENT_STRUCTURE."""
+    from backend.schemas.projects import validate_procurement_contract_fee_structure
+
+    res = validate_procurement_contract_fee_structure(
+        [
+            {"contract_id": "C-1", "contract_type": "FFP", "base_amount": 50000.0, "fixed_fee": 5000.0},
+            {
+                "contract_id": "C-2",
+                "contract_type": "CPIF",
+                "target_cost": 80000.0,
+                "fee_amount": 12000.0,
+                "buyer_share_ratio": 0.60,
+                "seller_share_ratio": 0.40,
+            },
+        ],
+        max_award_fee_pct=20.0,
+    )
+
+    assert res["total_contracts"] == 2
+    assert res["invalid_type_ids"] == []
+    assert res["unbounded_tm_ids"] == []
+    assert res["excessive_fee_ids"] == []
+    assert res["imbalanced_share_ratio_ids"] == []
+    assert res["is_valid"] is True
+    assert res["contract_governance_posture"] == "SOUND_PROCUREMENT_STRUCTURE"
+
+
+def test_validate_procurement_contract_invalid_types_take_precedence():
+    """Tipos fuera de gramática -> INVALID_CONTRACT_TYPE precede a TM sin techo y fees."""
+    from backend.schemas.projects import validate_procurement_contract_fee_structure
+
+    res = validate_procurement_contract_fee_structure(
+        [
+            {"contract_id": "C-1", "contract_type": "XYZ"},
+            {"contract_id": "C-2", "contract_type": "TM"},  # sin techo
+            {
+                "contract_id": "C-3",
+                "contract_type": "CPFF",
+                "target_cost": 1000.0,
+                "fee_amount": 500.0,  # 50% > 20%
+            },
+        ]
+    )
+
+    assert res["invalid_type_ids"] == ["C-1"]
+    assert res["unbounded_tm_ids"] == ["C-2"]
+    assert res["excessive_fee_ids"] == ["C-3"]
+    assert res["is_valid"] is False
+    assert res["contract_governance_posture"] == "INVALID_CONTRACT_TYPE"
+
+
+def test_validate_procurement_contract_unbounded_tm_and_excessive_fee():
+    """Sin tipos inválidos: TM sin techo -> UNBOUNDED_TM_EXPOSURE; solo fee excesivo -> IMBALANCED_OR_EXCESSIVE."""
+    from backend.schemas.projects import validate_procurement_contract_fee_structure
+
+    unbounded = validate_procurement_contract_fee_structure(
+        [
+            {"contract_id": "C-1", "contract_type": "TM"},
+            {
+                "contract_id": "C-2",
+                "contract_type": "TM",
+                "ceiling_price": 120000.0,
+            },
+        ]
+    )
+    assert unbounded["unbounded_tm_ids"] == ["C-1"]
+    assert unbounded["contract_governance_posture"] == "UNBOUNDED_TM_EXPOSURE"
+
+    excessive = validate_procurement_contract_fee_structure(
+        [
+            {
+                "contract_id": "C-1",
+                "contract_type": "CPFF",
+                "target_cost": 10000.0,
+                "fee_amount": 2501.0,  # 25.01% > 20%
+            },
+        ],
+        max_award_fee_pct=20.0,
+    )
+    assert excessive["excessive_fee_ids"] == ["C-1"]
+    assert excessive["contract_governance_posture"] == "IMBALANCED_INCENTIVE_OR_EXCESSIVE_FEE"
+
+
+def test_validate_procurement_contract_imbalanced_share_and_empty():
+    """FPIF/CPIF con share no-somatorio -> IMBALANCED; sin contratos/no dicts -> NO_CONTRACTS_DEFINED."""
+    from backend.schemas.projects import validate_procurement_contract_fee_structure
+
+    imbalanced = validate_procurement_contract_fee_structure(
+        [
+            {
+                "contract_id": "C-1",
+                "contract_type": "FPIF",
+                "target_cost": 90000.0,
+                "fee_amount": 9000.0,
+                "buyer_share_ratio": 0.65,
+                "seller_share_ratio": 0.20,  # 0.85 != 1.0
+            },
+            {
+                "contract_id": "C-2",
+                "contract_type": "CPIF",
+                "target_cost": 40000.0,
+                "fee_amount": 8000.0,  # 20% == límite, no excesivo
+                "buyer_share_ratio": 0.80,
+                "seller_share_ratio": 0.20,  # balanceado
+            },
+        ]
+    )
+    assert imbalanced["imbalanced_share_ratio_ids"] == ["C-1"]
+    assert imbalanced["excessive_fee_ids"] == []
+    assert imbalanced["contract_governance_posture"] == "IMBALANCED_INCENTIVE_OR_EXCESSIVE_FEE"
+
+    for payload in (None, [], ["no dict", 3]):
+        res = validate_procurement_contract_fee_structure(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_contracts": 0,
+            "invalid_type_ids": [],
+            "unbounded_tm_ids": [],
+            "excessive_fee_ids": [],
+            "imbalanced_share_ratio_ids": [],
+            "is_valid": True,
+            "contract_governance_posture": "NO_CONTRACTS_DEFINED",
+        }
+
+
 def test_validate_schedule_dependency_lead_lag_empty_and_non_dicts():
     """None, lista vacía o items no-dict -> NO_DEPENDENCIES_DEFINED con is_valid True."""
     from backend.schemas.projects import validate_schedule_dependency_lead_lag
