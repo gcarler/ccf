@@ -985,6 +985,15 @@ class ProjectLifecyclePMIService:
             mandatory_opa_templates=mandatory_opa_templates,
         )
 
+    @staticmethod
+    def audit_benefits_realization_sustainability(
+        benefits: Optional[list[dict[str, Any]]],
+        min_realization_ratio_pct: float = 80.0,
+    ) -> dict[str, Any]:
+        return audit_benefits_realization_sustainability(
+            benefits, min_realization_ratio_pct=min_realization_ratio_pct
+        )
+
 
 def audit_charter_measurable_objectives(
     objectives: list[dict[str, Any]] | None,
@@ -1613,6 +1622,109 @@ def audit_project_tailoring_and_opa_compliance(
     }
 
 
+def audit_benefits_realization_sustainability(
+    benefits: Optional[list[dict[str, Any]]],
+    min_realization_ratio_pct: float = 80.0,
+) -> dict[str, Any]:
+    """Audita la realización y sostenibilidad post-implementación de beneficios del proyecto según PMI PMBOK §1.2.6.4."""
+    items = [item for item in (benefits or []) if isinstance(item, dict)]
+    total_benefits = len(items)
+
+    if total_benefits == 0:
+        return {
+            "total_benefits": 0,
+            "overall_realization_pct": 0.0,
+            "unowned_or_unscheduled_benefit_ids": [],
+            "unquantified_benefit_ids": [],
+            "underperforming_benefit_ids": [],
+            "is_sustainable": False,
+            "benefits_posture": "NO_BENEFITS_REGISTERED",
+        }
+
+    unowned_or_unscheduled_benefit_ids: list[str] = []
+    unquantified_benefit_ids: list[str] = []
+    underperforming_benefit_ids: list[str] = []
+    sum_target = 0.0
+    sum_realized = 0.0
+
+    try:
+        min_ratio = float(min_realization_ratio_pct)
+    except (TypeError, ValueError):
+        min_ratio = 80.0
+
+    for idx, item in enumerate(items, start=1):
+        benefit_id = (
+            str(item.get("id") or item.get("benefit_id") or "").strip()
+            or f"BEN-{idx}"
+        )
+        owner = str(item.get("benefit_owner") or item.get("owner") or "").strip()
+        cadence = str(
+            item.get("measurement_cadence") or item.get("review_horizon") or ""
+        ).strip()
+
+        raw_target = (
+            item.get("target_value")
+            if item.get("target_value") is not None
+            else item.get("target")
+        )
+        try:
+            target_value = max(0.0, float(raw_target or 0.0))
+        except (TypeError, ValueError):
+            target_value = 0.0
+
+        raw_realized = (
+            item.get("realized_value")
+            if item.get("realized_value") is not None
+            else item.get("actual_value")
+        )
+        try:
+            realized_value = max(0.0, float(raw_realized or 0.0))
+        except (TypeError, ValueError):
+            realized_value = 0.0
+
+        if not owner or not cadence:
+            unowned_or_unscheduled_benefit_ids.append(benefit_id)
+
+        if target_value <= 0.0:
+            unquantified_benefit_ids.append(benefit_id)
+        else:
+            sum_target += target_value
+            sum_realized += realized_value
+            ratio_pct = (realized_value / target_value) * 100.0
+            if ratio_pct < min_ratio:
+                underperforming_benefit_ids.append(benefit_id)
+
+    overall_realization_pct = (
+        round((sum_realized / sum_target) * 100.0, 2) if sum_target > 0.0 else 0.0
+    )
+
+    is_sustainable = bool(
+        total_benefits > 0
+        and len(unowned_or_unscheduled_benefit_ids) == 0
+        and len(unquantified_benefit_ids) == 0
+        and len(underperforming_benefit_ids) == 0
+    )
+
+    if len(unowned_or_unscheduled_benefit_ids) > 0:
+        benefits_posture = "MISSING_BENEFIT_OWNERSHIP_OR_CADENCE"
+    elif len(unquantified_benefit_ids) > 0:
+        benefits_posture = "UNQUANTIFIED_BENEFIT_TARGETS"
+    elif len(underperforming_benefit_ids) > 0:
+        benefits_posture = "BENEFITS_REALIZATION_SHORTFALL"
+    else:
+        benefits_posture = "SUSTAINABLE_BENEFITS_REALIZATION"
+
+    return {
+        "total_benefits": total_benefits,
+        "overall_realization_pct": overall_realization_pct,
+        "unowned_or_unscheduled_benefit_ids": unowned_or_unscheduled_benefit_ids,
+        "unquantified_benefit_ids": unquantified_benefit_ids,
+        "underperforming_benefit_ids": underperforming_benefit_ids,
+        "is_sustainable": is_sustainable,
+        "benefits_posture": benefits_posture,
+    }
+
+
 __all__ = [
     "build_pmo_portfolio_matrix",
     "build_governance_summary",
@@ -1640,5 +1752,6 @@ __all__ = [
     "audit_project_procurement_and_handover_closeout",
     "audit_stakeholder_engagement_transition_gaps",
     "audit_project_tailoring_and_opa_compliance",
+    "audit_benefits_realization_sustainability",
     "ProjectLifecyclePMIService",
 ]

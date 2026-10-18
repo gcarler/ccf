@@ -1511,3 +1511,144 @@ def test_audit_project_tailoring_and_opa_compliance_no_tailoring_recorded():
         assert res["compliance_rate_pct"] == 0.0
         assert res["tailoring_posture"] == "NO_TAILORING_RECORDED"
         assert len(res["recommendations"]) == 1
+
+
+def test_audit_benefits_realization_sustainability_sustainable():
+    """Beneficios con dueño, cadencia, metas > 0 y realización >= umbral -> SUSTAINABLE_BENEFITS_REALIZATION."""
+    benefits = [
+        {
+            "id": "BEN-101",
+            "benefit_owner": "Dirección Operativa",
+            "measurement_cadence": "QUARTERLY",
+            "target_value": 100.0,
+            "realized_value": 90.0,
+        },
+        {
+            "benefit_id": "BEN-102",
+            "owner": "PMO Pastoral",
+            "review_horizon": "6M_POST_GO_LIVE",
+            "target": 200.0,
+            "actual_value": 180.0,
+        },
+    ]
+
+    res = project_lifecycle_pmi_service.audit_benefits_realization_sustainability(
+        benefits, min_realization_ratio_pct=80.0
+    )
+    assert res == {
+        "total_benefits": 2,
+        "overall_realization_pct": 90.0,
+        "unowned_or_unscheduled_benefit_ids": [],
+        "unquantified_benefit_ids": [],
+        "underperforming_benefit_ids": [],
+        "is_sustainable": True,
+        "benefits_posture": "SUSTAINABLE_BENEFITS_REALIZATION",
+    }
+    assert (
+        project_lifecycle_pmi_service.ProjectLifecyclePMIService.audit_benefits_realization_sustainability(
+            benefits, min_realization_ratio_pct=80.0
+        )
+        == res
+    )
+
+
+def test_audit_benefits_realization_sustainability_missing_ownership_or_cadence():
+    """Beneficios sin dueño o sin cadencia de revisión -> MISSING_BENEFIT_OWNERSHIP_OR_CADENCE."""
+    benefits = [
+        {
+            "id": "BEN-201",
+            "benefit_owner": "",
+            "measurement_cadence": "MONTHLY",
+            "target_value": 100.0,
+            "realized_value": 95.0,
+        },
+        {
+            "id": "BEN-202",
+            "owner": "Coordinación General",
+            "review_horizon": "   ",
+            "target_value": 100.0,
+            "realized_value": 85.0,
+        },
+    ]
+
+    res = project_lifecycle_pmi_service.audit_benefits_realization_sustainability(
+        benefits
+    )
+    assert res["total_benefits"] == 2
+    assert res["overall_realization_pct"] == 90.0
+    assert res["unowned_or_unscheduled_benefit_ids"] == ["BEN-201", "BEN-202"]
+    assert res["unquantified_benefit_ids"] == []
+    assert res["underperforming_benefit_ids"] == []
+    assert res["is_sustainable"] is False
+    assert res["benefits_posture"] == "MISSING_BENEFIT_OWNERSHIP_OR_CADENCE"
+
+
+def test_audit_benefits_realization_sustainability_unquantified_and_shortfall():
+    """Meta <= 0 -> UNQUANTIFIED_BENEFIT_TARGETS; realización < umbral -> BENEFITS_REALIZATION_SHORTFALL."""
+    unquantified = [
+        {
+            "id": "BEN-301",
+            "owner": "Líder de Área",
+            "measurement_cadence": "QUARTERLY",
+            "target_value": 0.0,
+            "realized_value": 10.0,
+        },
+        {
+            "id": "BEN-302",
+            "owner": "Líder de Área",
+            "measurement_cadence": "QUARTERLY",
+            "target_value": 100.0,
+            "realized_value": 50.0,
+        },
+    ]
+    res_unq = project_lifecycle_pmi_service.audit_benefits_realization_sustainability(
+        unquantified, min_realization_ratio_pct=80.0
+    )
+    assert res_unq["unquantified_benefit_ids"] == ["BEN-301"]
+    assert res_unq["underperforming_benefit_ids"] == ["BEN-302"]
+    assert res_unq["is_sustainable"] is False
+    assert res_unq["benefits_posture"] == "UNQUANTIFIED_BENEFIT_TARGETS"
+
+    shortfall = [
+        {
+            "id": "BEN-303",
+            "owner": "Finanzas",
+            "measurement_cadence": "ANNUAL",
+            "target_value": 100.0,
+            "realized_value": 90.0,
+        },
+        {
+            "id": "BEN-304",
+            "owner": "Operaciones",
+            "measurement_cadence": "QUARTERLY",
+            "target_value": 100.0,
+            "realized_value": 60.0,
+        },
+    ]
+    res_short = project_lifecycle_pmi_service.audit_benefits_realization_sustainability(
+        shortfall, min_realization_ratio_pct=80.0
+    )
+    assert res_short["total_benefits"] == 2
+    assert res_short["overall_realization_pct"] == 75.0
+    assert res_short["unowned_or_unscheduled_benefit_ids"] == []
+    assert res_short["unquantified_benefit_ids"] == []
+    assert res_short["underperforming_benefit_ids"] == ["BEN-304"]
+    assert res_short["is_sustainable"] is False
+    assert res_short["benefits_posture"] == "BENEFITS_REALIZATION_SHORTFALL"
+
+
+def test_audit_benefits_realization_sustainability_no_benefits_registered():
+    """Lista vacía, None o entradas no-dict -> NO_BENEFITS_REGISTERED."""
+    for payload in (None, [], ["invalid", 99]):
+        res = project_lifecycle_pmi_service.audit_benefits_realization_sustainability(
+            payload  # type: ignore[arg-type]
+        )
+        assert res == {
+            "total_benefits": 0,
+            "overall_realization_pct": 0.0,
+            "unowned_or_unscheduled_benefit_ids": [],
+            "unquantified_benefit_ids": [],
+            "underperforming_benefit_ids": [],
+            "is_sustainable": False,
+            "benefits_posture": "NO_BENEFITS_REGISTERED",
+        }
