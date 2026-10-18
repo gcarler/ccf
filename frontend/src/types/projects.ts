@@ -84,6 +84,8 @@ export interface ProjectExpense {
   date: string;
   receipt_url?: string | null;
   status: 'planned' | 'committed' | 'paid';
+  is_auto_generated?: boolean;
+  source_supply_id?: string | null;
   created_by?: string | null;
   creator_name?: string | null;
   created_at: string;
@@ -171,6 +173,8 @@ export interface ProjectWorkloadTaskItem {
   priority: string;
   due_date?: string | null;
   is_overdue: boolean;
+  estimated_hours?: number;
+  actual_hours?: number;
 }
 
 export interface ProjectMemberWorkload {
@@ -186,6 +190,9 @@ export interface ProjectMemberWorkload {
   high_tasks: number;
   medium_tasks: number;
   low_tasks: number;
+  estimated_hours_total?: number;
+  actual_hours_logged?: number;
+  hours_utilization_pct?: number;
   capacity_status: 'available' | 'balanced' | 'overloaded';
   workload_percent: number;
   tasks: ProjectWorkloadTaskItem[];
@@ -197,6 +204,8 @@ export interface ProjectWorkloadSummary {
   total_active_tasks: number;
   total_completed_tasks: number;
   total_overdue_tasks: number;
+  total_estimated_hours?: number;
+  total_actual_hours?: number;
   overloaded_members_count: number;
   balanced_members_count: number;
   available_members_count: number;
@@ -286,6 +295,7 @@ export interface ProjectTaskRecord {
   node?: string | null;
   physical_progress_pct?: number;
   estimated_hours?: number;
+  actual_hours?: number;
   actual_cost?: number;
   labels?: string[];
   order_index?: number;
@@ -302,6 +312,11 @@ export interface TaskSupplyRecord {
   item_name: string;
   quantity: number;
   status: string;
+  unit_cost?: number;
+  total_cost?: number;
+  expense_id?: string | null;
+  linked_expense_id?: string | null;
+  auto_create_expense?: boolean;
 }
 
 export interface ProjectInboxItem {
@@ -410,6 +425,7 @@ export interface TaskCriticalPathItem {
   late_start: number;
   late_finish: number;
   slack_days: number;
+  lag_days?: number;
   is_critical: boolean;
   early_start_date?: string | null;
   early_finish_date?: string | null;
@@ -422,6 +438,8 @@ export interface ProjectCriticalPathSummary {
   total_duration_days: number;
   critical_tasks_count: number;
   critical_path_task_ids: string[];
+  excluded_parent_tasks_count?: number;
+  total_lag_days?: number;
   tasks: TaskCriticalPathItem[];
   has_cycles: boolean;
 }
@@ -450,6 +468,11 @@ export interface ProjectBaseline {
   snapshot_data?: {
     total_tasks?: number;
     project_title?: string;
+    bac?: number;
+    budget_allocated?: number;
+    budget_spent?: number;
+    progress_percentage?: number;
+    evm?: Record<string, unknown>;
     tasks?: Array<{
       id: string;
       title: string;
@@ -587,7 +610,9 @@ export type TriggerEventType =
   | "task_created"
   | "status_changed"
   | "priority_changed"
-  | "due_date_approaching";
+  | "due_date_approaching"
+  | "milestone_completed"
+  | "expense_approved";
 
 export type ActionTypeValue =
   | "notify_assignee"
@@ -607,6 +632,7 @@ export interface ProjectAutomationRule {
   action_data: Record<string, unknown>;
   is_active: boolean;
   execution_count: number;
+  trigger_count?: number;
   last_triggered_at?: string | null;
   created_by?: string | null;
   creator_name?: string | null;
@@ -1058,6 +1084,13 @@ export interface ProjectEVMMetrics {
   cr: number;
   eac: number;
   vac: number;
+  has_baseline?: boolean;
+  baseline_id?: string | null;
+  baseline_name?: string | null;
+  baseline_bac?: number | null;
+  baseline_progress_pct?: number | null;
+  baseline_variance_cost?: number | null;
+  baseline_variance_schedule?: number | null;
   health_status: string;
   health_color: 'success' | 'warning' | 'destructive';
   recommendations: string[];
@@ -1067,6 +1100,7 @@ export interface ProjectCurveSPoint {
   date: string;
   label: string;
   pv: number;
+  baseline_pv?: number | null;
   ev: number | null;
   ac: number | null;
   cpi: number | null;

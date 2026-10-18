@@ -79,4 +79,40 @@ describe('ProjectBaselineDrawer read states', () => {
     expect(screen.getByLabelText('Nombre de la Línea Base')).toBeInTheDocument();
     expect(screen.getByLabelText('Descripción / Motivo del Congelamiento (Opcional)')).toBeInTheDocument();
   });
+
+  it('indicates the active EVM baseline snapshot and compares baseline BAC against currentBac', async () => {
+    const activeSnapshot = {
+      id: 'bl-active-1',
+      project_id: 'project-1',
+      name: 'Línea Base Inicial Q1',
+      description: 'Foto aprobada por comité',
+      created_at: '2026-09-01T00:00:00Z',
+      is_active: true,
+      snapshot_data: {
+        bac: 80000,
+        progress_percentage: 25,
+        total_tasks: 12,
+        completed_tasks: 3,
+      },
+    };
+    mocks.apiFetch.mockImplementation((path: string) => {
+      if (path.endsWith('/baseline')) return Promise.resolve(activeSnapshot);
+      if (path.endsWith('/baselines')) return Promise.resolve([activeSnapshot]);
+      return Promise.resolve(null);
+    });
+
+    render(
+      <ProjectBaselineDrawer
+        projectId="project-1"
+        isOpen
+        onClose={vi.fn()}
+        currentBac={95000}
+      />,
+    );
+
+    expect(await screen.findByText('Activa en Motor EVM')).toBeInTheDocument();
+    expect(screen.getByText('BAC Línea Base (Congelado):')).toBeInTheDocument();
+    expect(screen.getByText('BAC Actual vs Línea Base:')).toBeInTheDocument();
+    expect(screen.getByText('EVM Activa')).toBeInTheDocument();
+  });
 });

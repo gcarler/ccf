@@ -26,13 +26,13 @@ const TRIGGER_OPTIONS = [
   {
     id: "task_completed",
     label: "Tarea completada",
-    description: "Se dispara cuando cualquier tarea pasa a estado completado.",
+    description: "Se dispara cuando cualquier tarea o subtarea pasa a estado completado.",
     icon: CheckCircle2,
   },
   {
     id: "task_created",
     label: "Tarea creada",
-    description: "Se dispara inmediatamente al registrarse una nueva tarea.",
+    description: "Se dispara inmediatamente al registrarse una nueva tarea o subtarea.",
     icon: Plus,
   },
   {
@@ -46,6 +46,18 @@ const TRIGGER_OPTIONS = [
     label: "Cambio de prioridad",
     description: "Se dispara cuando se escala la prioridad de una tarea.",
     icon: AlertCircle,
+  },
+  {
+    id: "milestone_completed",
+    label: "Hito completado",
+    description: "Se dispara automáticamente cuando una tarea marcada como hito se completa.",
+    icon: Check,
+  },
+  {
+    id: "expense_approved",
+    label: "Gasto aprobado",
+    description: "Se dispara al registrarse o aprobarse un gasto real del proyecto.",
+    icon: Activity,
   },
 ];
 
@@ -353,11 +365,11 @@ export function ProjectAutomationsDrawer({
 
         <div
           role="status"
-          className="flex items-start gap-2 rounded-md border border-[hsl(var(--warning))]/40 bg-[hsl(var(--warning))]/10 p-3 text-xs text-[hsl(var(--text-primary))]"
+          className="flex items-start gap-2 rounded-md border border-[hsl(var(--success))]/40 bg-[hsl(var(--success))]/10 p-3 text-xs text-[hsl(var(--text-primary))]"
         >
-          <AlertCircle size={16} className="mt-0.5 shrink-0 text-[hsl(var(--warning))]" aria-hidden="true" />
+          <Zap size={16} className="mt-0.5 shrink-0 text-[hsl(var(--success))]" aria-hidden="true" />
           <p>
-            Las reglas se guardan, pero los cambios de tareas todavía no disparan su ejecución automática.
+            Motor conectado en tiempo real: las reglas activas se ejecutan automáticamente ante mutaciones de tareas, subtareas, hitos y gastos del proyecto.
             La pestaña «Vista previa» solo simula resultados y no aplica acciones.
           </p>
         </div>
@@ -417,6 +429,7 @@ export function ProjectAutomationsDrawer({
                 const actionObj = ACTION_OPTIONS.find((a) => a.id === rule.action_type);
                 const TriggerIcon = triggerObj ? triggerObj.icon : Zap;
                 const ActionIcon = actionObj ? actionObj.icon : ArrowRightCircle;
+                const execCount = rule.trigger_count ?? rule.execution_count ?? 0;
 
                 return (
                   <div
@@ -520,9 +533,9 @@ export function ProjectAutomationsDrawer({
                     {/* Metadata & Ejecuciones */}
                     <div className="flex items-center justify-between text-2xs text-[hsl(var(--text-secondary))] pt-1 border-t border-[hsl(var(--border))]/60">
                       <div className="flex items-center gap-3">
-                        <span className="flex items-center gap-1">
-                          <Activity size={10} />
-                          {rule.execution_count} ejecuciones
+                        <span className="flex items-center gap-1 font-semibold text-[hsl(var(--text-primary))]">
+                          <Activity size={10} className="text-[hsl(var(--primary))]" />
+                          {execCount} ejecuciones
                         </span>
                         {rule.last_triggered_at && (
                           <span className="flex items-center gap-1">

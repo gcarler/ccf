@@ -150,4 +150,33 @@ describe("ProjectWorkloadDrawer", () => {
     expect(await screen.findByText("No hay miembros ni tareas en este proyecto")).toBeInTheDocument();
     await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalledTimes(1));
   });
+
+  it("displays leaf-weighted hours metrics at project, member and task levels", async () => {
+    mocks.apiFetch.mockResolvedValue({
+      ...summary,
+      total_estimated_hours: 40,
+      total_actual_hours: 18.5,
+      members: [
+        {
+          ...summary.members[0],
+          estimated_hours_total: 40,
+          actual_hours_logged: 18.5,
+          hours_utilization_pct: 46.25,
+          tasks: [
+            {
+              ...summary.members[0].tasks[0],
+              estimated_hours: 40,
+              actual_hours: 18.5,
+            },
+          ],
+        },
+      ],
+    });
+
+    render(<ProjectWorkloadDrawer projectId="project-1" isOpen onClose={vi.fn()} />);
+
+    expect(await screen.findByText(/Esfuerzo EDT \(Tareas Hoja\): 18\.5h reg\. \/ 40\.0h est\./i)).toBeInTheDocument();
+    expect(screen.getByText(/Utilización Horas: 46%/i)).toBeInTheDocument();
+    expect(screen.getByText(/Horas: 18\.5h \/ 40\.0h/i)).toBeInTheDocument();
+  });
 });

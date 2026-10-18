@@ -113,13 +113,19 @@ export default function TaskTimeTrackingSection({
   };
 
   const totalHours = logs.reduce((acc, l) => acc + (l.hours || 0), 0);
+  const effectiveActualHours = totalHours > 0 ? totalHours : (task.actual_hours ?? 0);
+  const estimatedHours = task.estimated_hours ?? 0;
+  const physicalProgressImpact =
+    estimatedHours > 0
+      ? Math.min(100, Math.round((effectiveActualHours / estimatedHours) * 100))
+      : Math.round(task.physical_progress_pct ?? 0);
 
   return (
     <section aria-labelledby="task-time-tracking-heading" className="px-4 py-3 border-b border-[hsl(var(--border))]">
       <div className="flex items-center justify-between mb-2">
         <h3 id="task-time-tracking-heading" className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center gap-1.5">
           <Clock size={11} /> Tiempo Dedicado
-          {totalHours > 0 && (
+          {effectiveActualHours > 0 && (
             <span
               className="ml-1 px-1.5 py-0.5 rounded font-bold font-mono text-2xs"
               style={{
@@ -127,7 +133,7 @@ export default function TaskTimeTrackingSection({
                 color: "hsl(var(--primary))",
               }}
             >
-              {totalHours.toFixed(2)}h
+              {effectiveActualHours.toFixed(2)}h
             </span>
           )}
         </h3>
@@ -151,6 +157,44 @@ export default function TaskTimeTrackingSection({
             </>
           )}
         </button>
+      </div>
+
+      {/* Sincronización automática con actual_hours vs estimated_hours e impacto en avance físico */}
+      <div
+        className="mb-2.5 rounded-lg border px-2.5 py-2 text-2xs space-y-1.5"
+        style={{
+          backgroundColor: "hsl(var(--surface-2))",
+          borderColor: "hsl(var(--border))",
+        }}
+      >
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <span className="text-[hsl(var(--muted-foreground))]">
+            Sincronización EDT: <strong className="text-[hsl(var(--foreground))]">{effectiveActualHours.toFixed(2)}h reales</strong> / {estimatedHours.toFixed(2)}h estimadas
+          </span>
+          <span
+            className="font-bold px-1.5 py-0.5 rounded"
+            style={{
+              backgroundColor: "hsl(var(--surface-1))",
+              color: "hsl(var(--primary))",
+            }}
+          >
+            Avance Físico: {physicalProgressImpact}%
+          </span>
+        </div>
+        {estimatedHours > 0 && (
+          <div
+            className="w-full h-1.5 rounded-full overflow-hidden"
+            style={{ backgroundColor: "hsl(var(--surface-1))" }}
+          >
+            <div
+              className="h-full rounded-full transition-all duration-300"
+              style={{
+                width: `${Math.min(100, Math.max(0, physicalProgressImpact))}%`,
+                backgroundColor: "hsl(var(--primary))",
+              }}
+            />
+          </div>
+        )}
       </div>
 
       {error && !showAddForm && (

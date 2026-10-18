@@ -91,10 +91,11 @@ export function ProjectEVMDrawer({
         const plotW = width - paddingLeft - paddingRight;
         const plotH = height - paddingTop - paddingBottom;
 
-        // Hallar valor máximo de Y (BAC o max de AC/EV/PV)
+        // Hallar valor máximo de Y (BAC o max de AC/EV/PV/baseline_pv)
         const maxVal = Math.max(
             evmData?.bac || 1,
-            ...curveData.map(p => Math.max(p.pv || 0, p.ev || 0, p.ac || 0))
+            evmData?.baseline_bac || 0,
+            ...curveData.map(p => Math.max(p.pv || 0, p.baseline_pv || 0, p.ev || 0, p.ac || 0))
         );
 
         const safeMax = maxVal > 0 ? maxVal * 1.1 : 100;
@@ -108,6 +109,11 @@ export function ProjectEVMDrawer({
         // Generar paths SVG
         const pvPoints = curveData.map((p, i) => `${getX(i)},${getY(p.pv)}`);
         const pvPath = `M ${pvPoints.join(' L ')}`;
+
+        const baselinePvPoints = curveData
+            .map((p, i) => (p.baseline_pv !== null && p.baseline_pv !== undefined ? `${getX(i)},${getY(p.baseline_pv)}` : null))
+            .filter(Boolean);
+        const baselinePvPath = baselinePvPoints.length > 0 ? `M ${baselinePvPoints.join(' L ')}` : '';
 
         const evPoints = curveData
             .map((p, i) => (p.ev !== null ? `${getX(i)},${getY(p.ev)}` : null))
@@ -130,10 +136,11 @@ export function ProjectEVMDrawer({
             getX,
             getY,
             pvPath,
+            baselinePvPath,
             evPath,
             acPath,
         };
-    }, [curveData, evmData?.bac]);
+    }, [curveData, evmData?.bac, evmData?.baseline_bac]);
 
     // Badges de CPI y SPI
     const getPerformanceBadge = (indexVal: number, type: 'cpi' | 'spi') => {
@@ -460,11 +467,17 @@ export function ProjectEVMDrawer({
                                 </div>
 
                                 {/* Leyenda interactiva */}
-                                <div className="flex items-center gap-3 text-2xs font-semibold">
+                                <div className="flex items-center gap-3 text-2xs font-semibold flex-wrap">
                                     <div className="flex items-center gap-1.5">
                                         <span className="w-3.5 h-0.5 border-t-2 border-dashed border-[hsl(var(--muted-foreground))]" />
                                         <span className="text-[hsl(var(--muted-foreground))]">PV (Planificado)</span>
                                     </div>
+                                    {chartConfig?.baselinePvPath && (
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="w-3.5 h-0.5 border-t-2 border-dotted border-[hsl(var(--warning))]" />
+                                            <span className="text-[hsl(var(--warning))]">PV Línea Base</span>
+                                        </div>
+                                    )}
                                     <div className="flex items-center gap-1.5">
                                         <span className="w-3.5 h-1 rounded bg-[hsl(var(--primary))]" />
                                         <span className="text-[hsl(var(--foreground))]">EV (Ganado)</span>
@@ -520,6 +533,17 @@ export function ProjectEVMDrawer({
                                             strokeWidth={1.75}
                                             strokeDasharray="4 4"
                                         />
+
+                                        {/* Línea PV de Línea Base (baseline_pv) */}
+                                        {chartConfig.baselinePvPath && (
+                                            <path
+                                                d={chartConfig.baselinePvPath}
+                                                fill="none"
+                                                stroke="hsl(var(--warning))"
+                                                strokeWidth={1.75}
+                                                strokeDasharray="2 3"
+                                            />
+                                        )}
 
                                         {/* Línea EV (Valor Ganado Físico) */}
                                         {chartConfig.evPath && (
@@ -590,10 +614,15 @@ export function ProjectEVMDrawer({
                                     <span className="font-bold text-[hsl(var(--foreground))]">
                                         Fecha: {hoveredPoint.date} ({hoveredPoint.label})
                                     </span>
-                                    <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-4 flex-wrap">
                                         <span className="text-[hsl(var(--muted-foreground))]">
                                             PV: <strong>${(hoveredPoint.pv || 0).toLocaleString('es-CO')}</strong>
                                         </span>
+                                        {hoveredPoint.baseline_pv !== null && hoveredPoint.baseline_pv !== undefined && (
+                                            <span className="text-[hsl(var(--warning))] font-semibold">
+                                                PV Base: <strong>${hoveredPoint.baseline_pv.toLocaleString('es-CO')}</strong>
+                                            </span>
+                                        )}
                                         {hoveredPoint.ev !== null && (
                                             <span className="text-[hsl(var(--primary))] font-semibold">
                                                 EV: <strong>${(hoveredPoint.ev).toLocaleString('es-CO')}</strong>
@@ -613,6 +642,84 @@ export function ProjectEVMDrawer({
                                 </div>
                             )}
                         </div>
+
+                        {/* 3b. Comparativa contra Línea Base Activa (EVM) */}
+                        {(evmData.has_baseline || Boolean(evmData.baseline_id || evmData.baseline_name || evmData.baseline_bac !== undefined && evmData.baseline_bac !== null)) && (
+                            <div className="p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] space-y-3">
+                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                    <h4 className="text-xs font-medium uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
+                                        <Activity size={14} className="text-[hsl(var(--primary))]" />
+                                        Comparativa contra Línea Base Activa: {evmData.baseline_name || 'Línea Base Congelada'}
+                                    </h4>
+                                    {evmData.baseline_id && (
+                                        <span className="px-2 py-0.5 rounded-full text-2xs font-bold border border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]">
+                                            ID: {evmData.baseline_id}
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                                    <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                                        <span className="text-2xs uppercase text-[hsl(var(--muted-foreground))] font-semibold">
+                                            BAC Línea Base
+                                        </span>
+                                        <div className="text-base font-extrabold text-[hsl(var(--foreground))] mt-0.5">
+                                            ${(evmData.baseline_bac ?? evmData.bac).toLocaleString('es-CO')}
+                                        </div>
+                                        <span className="text-2xs text-[hsl(var(--muted-foreground))]">
+                                            BAC Actual: ${evmData.bac.toLocaleString('es-CO')}
+                                        </span>
+                                    </div>
+
+                                    <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                                        <span className="text-2xs uppercase text-[hsl(var(--muted-foreground))] font-semibold">
+                                            Varianza Costo vs Base
+                                        </span>
+                                        <div className={clsx(
+                                            "text-base font-extrabold mt-0.5",
+                                            (evmData.baseline_variance_cost ?? 0) >= 0
+                                                ? "text-[hsl(var(--success))]"
+                                                : "text-[hsl(var(--destructive))]"
+                                        )}>
+                                            {(evmData.baseline_variance_cost ?? 0) >= 0
+                                                ? `+$${(evmData.baseline_variance_cost ?? 0).toLocaleString('es-CO')}`
+                                                : `-$${Math.abs(evmData.baseline_variance_cost ?? 0).toLocaleString('es-CO')}`}
+                                        </div>
+                                        <span className="text-2xs text-[hsl(var(--muted-foreground))]">
+                                            BAC Base - AC Real
+                                        </span>
+                                    </div>
+
+                                    <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                                        <span className="text-2xs uppercase text-[hsl(var(--muted-foreground))] font-semibold">
+                                            Varianza Cronograma vs Base
+                                        </span>
+                                        <div className={clsx(
+                                            "text-base font-extrabold mt-0.5",
+                                            (evmData.baseline_variance_schedule ?? 0) >= 0
+                                                ? "text-[hsl(var(--primary))]"
+                                                : "text-[hsl(var(--warning))]"
+                                        )}>
+                                            {(evmData.baseline_variance_schedule ?? 0) >= 0
+                                                ? `+$${(evmData.baseline_variance_schedule ?? 0).toLocaleString('es-CO')}`
+                                                : `-$${Math.abs(evmData.baseline_variance_schedule ?? 0).toLocaleString('es-CO')}`}
+                                        </div>
+                                        <span className="text-2xs text-[hsl(var(--muted-foreground))]">
+                                            EV Real - PV Línea Base
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {curveData.some(pt => pt.baseline_pv !== null && pt.baseline_pv !== undefined) && (
+                                    <div className="pt-2 border-t border-[hsl(var(--border))] flex items-center justify-between text-2xs text-[hsl(var(--muted-foreground))] flex-wrap gap-2">
+                                        <span>Serie PV Línea Base en Curva S ({curveData.filter(pt => pt.baseline_pv != null).length} cortes):</span>
+                                        <span className="font-bold text-[hsl(var(--foreground))]">
+                                            Cierre PV Base: ${(curveData[curveData.length - 1]?.baseline_pv ?? 0).toLocaleString('es-CO')}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* 4. Proyecciones al Cierre (EAC y VAC) */}
                         <div className="p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] space-y-3">

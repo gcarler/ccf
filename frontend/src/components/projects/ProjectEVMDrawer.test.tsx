@@ -192,5 +192,37 @@ describe('ProjectEVMDrawer', () => {
     expect(screen.getByText(/SPI\(t\): 1\.08/i)).toBeInTheDocument();
     expect(screen.getByText(/\[EDT-01\] Cimentación Norte/i)).toBeInTheDocument();
   });
+
+  it('renders active baseline comparison and baseline_pv series in Curva S when baseline data is present', async () => {
+    mocks.apiFetch.mockResolvedValueOnce({
+      ...mockCurveSResponse,
+      summary: {
+        ...mockCurveSResponse.summary,
+        baseline_id: 'bl-001',
+        baseline_name: 'Línea Base Comité Octubre',
+        baseline_bac: 90000,
+        baseline_variance_cost: 10000,
+        baseline_variance_schedule: 4000,
+      },
+      points: [
+        { date: '2026-09-01', label: '01 Sep', pv: 0, baseline_pv: 0, ev: 0, ac: 0, cpi: 1.0, spi: 1.0 },
+        { date: '2026-10-01', label: '01 Oct', pv: 48000, baseline_pv: 44000, ev: 50000, ac: 45000, cpi: 1.11, spi: 1.04 },
+      ],
+    });
+
+    render(
+      <ProjectEVMDrawer
+        projectId="proj-123"
+        projectTitle="Construcción Templo Sede Norte"
+        isOpen={true}
+        onClose={vi.fn()}
+      />
+    );
+
+    expect(await screen.findByText(/Comparativa contra Línea Base Activa: Línea Base Comité Octubre/i)).toBeInTheDocument();
+    expect(screen.getByText('ID: bl-001')).toBeInTheDocument();
+    expect(screen.getAllByText(/PV Línea Base/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/Serie PV Línea Base en Curva S \(2 cortes\):/i)).toBeInTheDocument();
+  });
 });
 

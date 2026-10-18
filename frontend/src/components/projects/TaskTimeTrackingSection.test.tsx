@@ -92,4 +92,24 @@ describe('TaskTimeTrackingSection accessibility and feedback', () => {
     ));
     expect(screen.getByRole('complementary', { name: 'Eliminar registro de tiempo' })).toBeInTheDocument();
   });
+
+  it('displays EDT actual vs estimated hours synchronization and physical progress impact', async () => {
+    vi.mocked(apiFetch).mockResolvedValueOnce([]);
+    render(
+      <TaskTimeTrackingSection
+        task={{
+          ...task,
+          estimated_hours: 10,
+          actual_hours: 4.5,
+          physical_progress_pct: 45,
+        }}
+        token="test-token"
+      />,
+    );
+
+    expect(await screen.findByText(/Sincronización EDT:/i)).toBeInTheDocument();
+    expect(screen.getByText('4.50h reales')).toBeInTheDocument();
+    expect(screen.getByText(/10\.00h estimadas/i)).toBeInTheDocument();
+    expect(screen.getByText('Avance Físico: 45%')).toBeInTheDocument();
+  });
 });

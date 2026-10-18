@@ -17,7 +17,13 @@ interface ProjectTimeTrackingDrawerProps {
   projectId: string;
   isOpen: boolean;
   onClose: () => void;
-  tasks?: Array<{ id: string; title: string }>;
+  tasks?: Array<{
+    id: string;
+    title: string;
+    estimated_hours?: number;
+    actual_hours?: number;
+    physical_progress_pct?: number;
+  }>;
   onTimeLogged?: () => void;
 }
 
@@ -295,7 +301,7 @@ export function ProjectTimeTrackingDrawer({
           </div>
 
           {/* Barra de proporción facturable */}
-          <div className="mt-4">
+          <div className="mt-4 space-y-2">
             <div
               className="w-full h-2 rounded-full overflow-hidden"
               style={{ backgroundColor: "hsl(var(--surface-2))" }}
@@ -307,6 +313,17 @@ export function ProjectTimeTrackingDrawer({
                   backgroundColor: "hsl(var(--success))",
                 }}
               />
+            </div>
+            <div className="flex items-center justify-between text-2xs pt-1 flex-wrap gap-2" style={{ color: "hsl(var(--text-secondary))" }}>
+              <span className="inline-flex items-center gap-1 font-medium">
+                <CheckCircle2 className="w-3.5 h-3.5" style={{ color: "hsl(var(--primary))" }} />
+                Sincronización automática con horas reales (actual_hours) y avance físico EDT
+              </span>
+              {tasks.length > 0 && (
+                <span>
+                  Estimado en tareas: <strong>{tasks.reduce((acc, t) => acc + (t.estimated_hours ?? 0), 0).toFixed(1)}h</strong>
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -666,48 +683,93 @@ export function ProjectTimeTrackingDrawer({
             {/* DESGLOSE POR MIEMBROS Y TAREAS */}
             {summary && (summary.by_member.length > 0 || summary.by_task.length > 0) && (
               <div
-                className="p-4 rounded-xl border space-y-3"
+                className="p-4 rounded-xl border space-y-4"
                 style={{
                   backgroundColor: "hsl(var(--surface-1))",
                   borderColor: "hsl(var(--border))",
                 }}
               >
-                <span className="text-xs font-bold uppercase tracking-wider block" style={{ color: "hsl(var(--text-secondary))" }}>
-                  Distribución de Horas por Colaborador
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {summary.by_member.map((m) => (
-                    <div
-                      key={m.persona_id}
-                      className="p-2.5 rounded-lg border text-xs space-y-1.5"
-                      style={{
-                        backgroundColor: "hsl(var(--surface-2))",
-                        borderColor: "hsl(var(--border))",
-                      }}
-                    >
-                      <div className="flex items-center justify-between font-bold">
-                        <span className="truncate max-w-[140px]">{m.persona_name}</span>
-                        <span style={{ color: "hsl(var(--primary))" }}>{m.total_hours.toFixed(2)}h</span>
-                      </div>
-                      <div
-                        className="h-1.5 w-full rounded-full overflow-hidden"
-                        style={{ backgroundColor: "hsl(var(--surface-1))" }}
-                      >
+                {summary.by_member.length > 0 && (
+                  <div className="space-y-2.5">
+                    <span className="text-xs font-bold uppercase tracking-wider block" style={{ color: "hsl(var(--text-secondary))" }}>
+                      Distribución de Horas por Colaborador
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {summary.by_member.map((m) => (
                         <div
-                          className="h-full rounded-full"
+                          key={m.persona_id}
+                          className="p-2.5 rounded-lg border text-xs space-y-1.5"
                           style={{
-                            width: `${Math.min(100, (m.total_hours / (summary.total_hours || 1)) * 100)}%`,
-                            backgroundColor: "hsl(var(--primary))",
+                            backgroundColor: "hsl(var(--surface-2))",
+                            borderColor: "hsl(var(--border))",
                           }}
-                        />
-                      </div>
-                      <div className="flex justify-between text-2xs" style={{ color: "hsl(var(--text-secondary))" }}>
-                        <span>{m.logs_count} registro(s)</span>
-                        <span style={{ color: "hsl(var(--success))" }}>{m.billable_hours.toFixed(2)}h fact.</span>
-                      </div>
+                        >
+                          <div className="flex items-center justify-between font-bold">
+                            <span className="truncate max-w-[140px]">{m.persona_name}</span>
+                            <span style={{ color: "hsl(var(--primary))" }}>{m.total_hours.toFixed(2)}h</span>
+                          </div>
+                          <div
+                            className="h-1.5 w-full rounded-full overflow-hidden"
+                            style={{ backgroundColor: "hsl(var(--surface-1))" }}
+                          >
+                            <div
+                              className="h-full rounded-full"
+                              style={{
+                                width: `${Math.min(100, (m.total_hours / (summary.total_hours || 1)) * 100)}%`,
+                                backgroundColor: "hsl(var(--primary))",
+                              }}
+                            />
+                          </div>
+                          <div className="flex justify-between text-2xs" style={{ color: "hsl(var(--text-secondary))" }}>
+                            <span>{m.logs_count} registro(s)</span>
+                            <span style={{ color: "hsl(var(--success))" }}>{m.billable_hours.toFixed(2)}h fact.</span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
+
+                {summary.by_task.length > 0 && (
+                  <div className="space-y-2.5 pt-2 border-t" style={{ borderColor: "hsl(var(--border))" }}>
+                    <span className="text-xs font-bold uppercase tracking-wider block" style={{ color: "hsl(var(--text-secondary))" }}>
+                      Sincronización por Tarea (actual_hours vs Estimado y Avance Físico)
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {summary.by_task.map((t) => {
+                        const matchedTask = tasks.find((item) => item.id === t.task_id);
+                        const estHours = matchedTask?.estimated_hours ?? 0;
+                        const progressPct =
+                          estHours > 0
+                            ? Math.min(100, Math.round((t.total_hours / estHours) * 100))
+                            : Math.round(matchedTask?.physical_progress_pct ?? 0);
+                        return (
+                          <div
+                            key={t.task_id}
+                            className="p-2.5 rounded-lg border text-xs space-y-1.5"
+                            style={{
+                              backgroundColor: "hsl(var(--surface-2))",
+                              borderColor: "hsl(var(--border))",
+                            }}
+                          >
+                            <div className="flex items-center justify-between font-bold gap-2">
+                              <span className="truncate">{t.task_title}</span>
+                              <span style={{ color: "hsl(var(--primary))" }}>
+                                {t.total_hours.toFixed(2)}h{estHours > 0 ? ` / ${estHours.toFixed(2)}h` : ""}
+                              </span>
+                            </div>
+                            <div className="flex justify-between text-2xs" style={{ color: "hsl(var(--text-secondary))" }}>
+                              <span>{t.logs_count} registro(s)</span>
+                              <span style={{ color: "hsl(var(--primary))" }} className="font-semibold">
+                                Avance Físico: {progressPct}%
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

@@ -124,4 +124,68 @@ describe('TaskSupplySection', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo actualizar el insumo.');
     expect(screen.getByRole('textbox', { name: 'Nombre del insumo Cable HDMI' })).toHaveValue('Cable HDMI');
   });
+
+  it('displays unit_cost, total_cost, linked AC expense badge and sends cost fields on creation', async () => {
+    const costSupplies: TaskSupplyRecord[] = [
+      {
+        id: 's1',
+        task_id: 't1',
+        item_name: 'Micrófono Inalámbrico',
+        quantity: 2,
+        unit_cost: 150,
+        total_cost: 300,
+        auto_create_expense: true,
+        linked_expense_id: 'exp-99',
+        status: 'purchased',
+      },
+    ];
+    const createdSupply: TaskSupplyRecord = {
+      id: 's2',
+      task_id: 't1',
+      item_name: 'Consola Audio',
+      quantity: 1,
+      unit_cost: 500,
+      total_cost: 500,
+      auto_create_expense: true,
+      linked_expense_id: 'exp-100',
+      status: 'pending',
+    };
+    vi.mocked(apiFetch).mockResolvedValueOnce(createdSupply);
+
+    render(
+      <TaskSupplySection
+        task={task}
+        supplies={costSupplies}
+        onSuppliesChange={vi.fn()}
+        token="test-token"
+      />,
+    );
+
+    expect(screen.getByText(/Costo Total Insumos: \$300/i)).toBeInTheDocument();
+    expect(screen.getByText('Gasto sincronizado (exp-99)')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Nombre del nuevo insumo' }), {
+      target: { value: 'Consola Audio' },
+    });
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Costo unitario del nuevo insumo' }), {
+      target: { value: '500' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Agregar/ }));
+
+    await waitFor(() => {
+      expect(apiFetch).toHaveBeenCalledWith(
+        '/projects/p1/tasks/t1/supplies',
+        expect.objectContaining({
+          method: 'POST',
+          body: expect.objectContaining({
+            item_name: 'Consola Audio',
+            quantity: 1,
+            unit_cost: 500,
+            total_cost: 500,
+            auto_create_expense: true,
+          }),
+        }),
+      );
+    });
+  });
 });

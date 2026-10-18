@@ -98,4 +98,32 @@ describe("ProjectTimeTrackingDrawer delete confirmation", () => {
     expect(screen.getByText("Preparación de materiales")).toBeInTheDocument();
     expect(mocks.addToast).toHaveBeenCalledWith("Error al eliminar el registro", "error");
   });
+
+  it("displays EDT synchronization notice and task hours breakdown in summary view", async () => {
+    mocks.apiFetch.mockImplementation((path: string) =>
+      path.endsWith("/time-tracking-summary")
+        ? Promise.resolve({
+            ...summary,
+            by_task: [
+              {
+                task_id: "task-1",
+                task_title: "Montaje de sonido",
+                total_hours: 6.5,
+                logs_count: 3,
+              },
+            ],
+          })
+        : Promise.resolve([log]),
+    );
+
+    render(<ProjectTimeTrackingDrawer projectId="project-1" isOpen onClose={vi.fn()} />);
+
+    expect(
+      await screen.findByText(/Sincronización automática con horas reales \(actual_hours\) y avance físico EDT/i),
+    ).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole("button", { name: "Historial (1)" }));
+    expect(await screen.findByText(/Sincronización por Tarea \(actual_hours vs Estimado y Avance Físico\)/i)).toBeInTheDocument();
+    expect(screen.getByText("Montaje de sonido")).toBeInTheDocument();
+    expect(screen.getByText("6.50h")).toBeInTheDocument();
+  });
 });

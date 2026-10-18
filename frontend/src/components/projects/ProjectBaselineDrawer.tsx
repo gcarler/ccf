@@ -14,6 +14,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   onBaselineUpdated?: () => void;
+  currentBac?: number | null;
 }
 
 export function ProjectBaselineDrawer({
@@ -21,6 +22,7 @@ export function ProjectBaselineDrawer({
   isOpen,
   onClose,
   onBaselineUpdated,
+  currentBac,
 }: Props) {
   const { token } = useAuth();
   const { addToast } = useToast();
@@ -118,6 +120,14 @@ export function ProjectBaselineDrawer({
 
   const totalVariance = latestBaseline?.total_variance_days ?? 0;
   const comparisons = latestBaseline?.comparisons || [];
+  const baselineBac =
+    latestBaseline?.snapshot_data?.bac ??
+    latestBaseline?.snapshot_data?.budget_allocated ??
+    null;
+  const bacDelta =
+    baselineBac !== null && currentBac !== undefined && currentBac !== null
+      ? currentBac - baselineBac
+      : null;
 
   return (
     <RightPanel
@@ -169,11 +179,16 @@ export function ProjectBaselineDrawer({
         {/* Resumen de Varianza General */}
         {latestBaseline ? (
           <div className="p-4 rounded-xl bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] shadow-xs space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
               <div>
-                <span className="text-2xs uppercase font-extrabold tracking-widest text-[hsl(var(--muted-foreground))]">
-                  Línea Base Activa
-                </span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-2xs uppercase font-extrabold tracking-widest text-[hsl(var(--muted-foreground))]">
+                    Línea Base Activa
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-2xs font-extrabold uppercase border bg-[hsl(var(--primary))]/10 border-[hsl(var(--primary))]/30 text-[hsl(var(--primary))]">
+                    Activa en Motor EVM
+                  </span>
+                </div>
                 <h3 className="text-sm font-extrabold text-[hsl(var(--foreground))] mt-0.5">
                   {latestBaseline.name}
                 </h3>
@@ -210,6 +225,43 @@ export function ProjectBaselineDrawer({
                 </span>
               </div>
             </div>
+
+            {(baselineBac !== null || (currentBac !== undefined && currentBac !== null)) && (
+              <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-[hsl(var(--border))]/50 text-2xs">
+                <div className="p-2.5 rounded-lg bg-[hsl(var(--surface-2))]">
+                  <span className="text-2xs text-[hsl(var(--muted-foreground))] block font-medium">
+                    BAC Línea Base (Congelado):
+                  </span>
+                  <span className="font-bold text-[hsl(var(--foreground))]">
+                    ${(baselineBac ?? 0).toLocaleString("es-CO")}
+                  </span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-[hsl(var(--surface-2))]">
+                  <span className="text-2xs text-[hsl(var(--muted-foreground))] block font-medium">
+                    {currentBac !== undefined && currentBac !== null ? "BAC Actual vs Línea Base:" : "Avance al Congelar:"}
+                  </span>
+                  {currentBac !== undefined && currentBac !== null ? (
+                    <span
+                      className={clsx(
+                        "font-bold",
+                        bacDelta && bacDelta > 0
+                          ? "text-[hsl(var(--warning))]"
+                          : "text-[hsl(var(--success))]"
+                      )}
+                    >
+                      ${currentBac.toLocaleString("es-CO")}
+                      {bacDelta !== null && bacDelta !== 0
+                        ? ` (${bacDelta > 0 ? "+" : "-"}$${Math.abs(bacDelta).toLocaleString("es-CO")})`
+                        : " (Sin cambio)"}
+                    </span>
+                  ) : (
+                    <span className="font-bold text-[hsl(var(--foreground))]">
+                      {latestBaseline.snapshot_data?.progress_percentage ?? 0}%
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         ) : loading ? (
           <div
@@ -367,27 +419,48 @@ export function ProjectBaselineDrawer({
           </p>
         )}
 
-        {baselinesHistory.length > 1 && (
+        {baselinesHistory.length > 0 && (
           <div className="pt-3 border-t border-[hsl(var(--border))] space-y-2.5">
             <h4 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center gap-1.5">
               <History size={14} /> Historial de Instantáneas ({baselinesHistory.length})
             </h4>
             <div className="space-y-1.5">
-              {baselinesHistory.map((b) => (
-                <div
-                  key={b.id}
-                  className="px-3 py-2 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex items-center justify-between text-2xs"
-                >
-                  <span className="font-bold text-[hsl(var(--foreground))]">{b.name}</span>
-                  <span className="text-2xs text-[hsl(var(--muted-foreground))]">
-                    {new Date(b.created_at).toLocaleDateString("es-ES", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </span>
-                </div>
-              ))}
+              {baselinesHistory.map((b, idx) => {
+                const isActiveInEvm = latestBaseline ? b.id === latestBaseline.id : idx === 0;
+                const snapBac = b.snapshot_data?.bac ?? b.snapshot_data?.budget_allocated;
+                return (
+                  <div
+                    key={b.id}
+                    className={clsx(
+                      "px-3 py-2 rounded-lg border flex items-center justify-between gap-2 text-2xs",
+                      isActiveInEvm
+                        ? "bg-[hsl(var(--primary))]/5 border-[hsl(var(--primary))]/30"
+                        : "bg-[hsl(var(--surface-2))] border-[hsl(var(--border))]"
+                    )}
+                  >
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-[hsl(var(--foreground))]">{b.name}</span>
+                      {isActiveInEvm && (
+                        <span className="px-1.5 py-0.5 rounded text-2xs font-extrabold uppercase bg-[hsl(var(--primary))]/15 text-[hsl(var(--primary))]">
+                          EVM Activa
+                        </span>
+                      )}
+                      {snapBac !== undefined && snapBac !== null && (
+                        <span className="text-2xs text-[hsl(var(--muted-foreground))]">
+                          BAC: ${snapBac.toLocaleString("es-CO")}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-2xs text-[hsl(var(--muted-foreground))]">
+                      {new Date(b.created_at).toLocaleDateString("es-ES", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

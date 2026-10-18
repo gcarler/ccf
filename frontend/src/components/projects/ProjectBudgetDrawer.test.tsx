@@ -194,4 +194,22 @@ describe("ProjectBudgetDrawer", () => {
     expect(screen.getByText("Factura de pintura")).toBeInTheDocument();
     expect(mocks.addToast).toHaveBeenCalledWith("Error al eliminar la partida", "error");
   });
+
+  it("renders a semantic badge for expenses auto-generated from task supplies", async () => {
+    mocks.apiFetch.mockImplementation((path: string) => {
+      if (path.endsWith("/budget-summary")) return Promise.resolve(summary);
+      return Promise.resolve([
+        {
+          ...expense,
+          id: "expense-auto-1",
+          description: "Insumo de tarea: Cable HDMI [supply_id:s1]",
+          is_auto_generated: true,
+          source_supply_id: "s1",
+        },
+      ]);
+    });
+
+    render(<ProjectBudgetDrawer projectId="project-1" isOpen onClose={vi.fn()} />);
+    expect(await screen.findByText(/Auto-generado por Insumo \(s1\)/i)).toBeInTheDocument();
+  });
 });

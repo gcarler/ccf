@@ -238,9 +238,22 @@ export function ProjectWorkloadDrawer({
 
         {/* LISTADO DE MIEMBROS Y MATRIZ DE SATURACIÓN */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between text-xs font-medium text-[hsl(var(--text-primary))]">
+          <div className="flex items-center justify-between text-xs font-medium text-[hsl(var(--text-primary))] flex-wrap gap-2">
             <span>Distribución de Carga por Responsable ({summary ? summary.members.length : "—"})</span>
-            <span>Escala estándar: 5 tareas activas = 100% de carga</span>
+            <div className="flex items-center gap-3 flex-wrap">
+              {summary && (summary.total_estimated_hours !== undefined || summary.total_actual_hours !== undefined) && (
+                <span
+                  className="px-2 py-0.5 rounded-md border font-semibold text-[11px]"
+                  style={{
+                    backgroundColor: "hsl(var(--surface-2))",
+                    borderColor: "hsl(var(--border))",
+                  }}
+                >
+                  Esfuerzo EDT (Tareas Hoja): {(summary.total_actual_hours ?? 0).toFixed(1)}h reg. / {(summary.total_estimated_hours ?? 0).toFixed(1)}h est.
+                </span>
+              )}
+              <span>Escala estándar: 5 tareas activas = 100% de carga</span>
+            </div>
           </div>
 
           {loading ? (
@@ -404,7 +417,7 @@ export function ProjectWorkloadDrawer({
 
                     {/* BARRA DE SATURACIÓN / CAPACIDAD */}
                     {!isUnassigned && (
-                      <div className="space-y-1">
+                      <div className="space-y-1.5">
                         <div className="flex items-center justify-between text-[11px]">
                           <span className="text-[hsl(var(--text-primary))] font-medium">Nivel de Carga</span>
                           <span className="font-bold" style={{ color: capCfg.color }}>
@@ -428,6 +441,19 @@ export function ProjectWorkloadDrawer({
                             }}
                           />
                         </div>
+                        {(member.estimated_hours_total !== undefined ||
+                          member.actual_hours_logged !== undefined ||
+                          member.hours_utilization_pct !== undefined) && (
+                          <div className="flex items-center justify-between text-[11px] text-[hsl(var(--text-primary))] pt-0.5 flex-wrap gap-2">
+                            <span>
+                              Horas Hoja: <strong>{(member.actual_hours_logged ?? 0).toFixed(1)}h</strong> reg. /{" "}
+                              <strong>{(member.estimated_hours_total ?? 0).toFixed(1)}h</strong> est.
+                            </span>
+                            <span className="font-semibold">
+                              Utilización Horas: {(member.hours_utilization_pct ?? 0).toFixed(0)}%
+                            </span>
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -534,10 +560,18 @@ export function ProjectWorkloadDrawer({
                                   </span>
                                 )}
                               </div>
-                              <div className="text-[10px] text-[hsl(var(--text-primary))] flex items-center gap-2">
+                              <div className="text-[10px] text-[hsl(var(--text-primary))] flex items-center gap-2 flex-wrap">
                                 <span>Estado: {task.status}</span>
                                 <span>•</span>
                                 <span>Prioridad: {task.priority}</span>
+                                {(task.estimated_hours !== undefined || task.actual_hours !== undefined) && (
+                                  <>
+                                    <span>•</span>
+                                    <span>
+                                      Horas: {(task.actual_hours ?? 0).toFixed(1)}h / {(task.estimated_hours ?? 0).toFixed(1)}h
+                                    </span>
+                                  </>
+                                )}
                               </div>
                             </div>
 

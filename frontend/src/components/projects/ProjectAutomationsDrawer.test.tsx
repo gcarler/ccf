@@ -64,16 +64,23 @@ describe("ProjectAutomationsDrawer", () => {
     expect(builder?.innerHTML).toContain("--warning-text");
   });
 
-  it("discloses that saved rules are not automatically dispatched yet", async () => {
-    vi.mocked(apiFetch).mockResolvedValueOnce([]);
+  it("announces that active rules execute automatically in real time on project mutations", async () => {
+    vi.mocked(apiFetch).mockResolvedValueOnce([
+      {
+        ...rule,
+        trigger_count: 7,
+        last_triggered_at: "2026-10-15T12:00:00Z",
+      },
+    ]);
     renderDrawer();
 
     expect(await screen.findByRole("status")).toHaveTextContent(
-      "los cambios de tareas todavía no disparan su ejecución automática",
+      "Motor conectado en tiempo real: las reglas activas se ejecutan automáticamente ante mutaciones de tareas, subtareas, hitos y gastos del proyecto.",
     );
     expect(screen.getByRole("status")).toHaveTextContent(
       "La pestaña «Vista previa» solo simula resultados y no aplica acciones.",
     );
+    expect(await screen.findByText("7 ejecuciones")).toBeInTheDocument();
   });
 
   it("creates a follow-up rule with the backend contract payload", async () => {
