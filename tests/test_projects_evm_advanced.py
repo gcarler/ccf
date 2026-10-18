@@ -21,6 +21,7 @@ from backend.services.project_evm_service import (
     calculate_project_evm_advanced,
     calculate_reserve_burn_index,
     calculate_tcpi,
+    evaluate_ieac_forecast_spread,
 )
 
 
@@ -593,5 +594,58 @@ def test_calculate_reserve_burn_index_all_states_and_edge_cases():
 
     service_res = ProjectEVMService.calculate_reserve_burn_index(contingency_reserve=10000.0, cv=-7500.0)
     assert service_res == warning
+
+
+def test_evaluate_ieac_forecast_spread_convergent():
+    """Divergencia <= 10% del BAC clasifica como convergent."""
+    res = evaluate_ieac_forecast_spread(ieac_cpi=105000.0, ieac_composite=112000.0, bac=100000.0)
+    assert res == {
+        "spread_amount": 7000.0,
+        "spread_pct_of_bac": 7.0,
+        "overrun_vs_bac_pct": 12.0,
+        "forecast_reliability": "convergent",
+    }
+    assert ProjectEVMService.evaluate_ieac_forecast_spread(105000.0, 112000.0, 100000.0) == res
+
+
+def test_evaluate_ieac_forecast_spread_moderate_divergence():
+    """Divergencia entre > 10% y <= 25% del BAC clasifica como moderate_divergence."""
+    res = evaluate_ieac_forecast_spread(ieac_cpi=110000.0, ieac_composite=128000.0, bac=100000.0)
+    assert res == {
+        "spread_amount": 18000.0,
+        "spread_pct_of_bac": 18.0,
+        "overrun_vs_bac_pct": 28.0,
+        "forecast_reliability": "moderate_divergence",
+    }
+
+
+def test_evaluate_ieac_forecast_spread_high_divergence():
+    """Divergencia > 25% del BAC clasifica como high_divergence."""
+    res = evaluate_ieac_forecast_spread(ieac_cpi=115000.0, ieac_composite=150000.0, bac=100000.0)
+    assert res == {
+        "spread_amount": 35000.0,
+        "spread_pct_of_bac": 35.0,
+        "overrun_vs_bac_pct": 50.0,
+        "forecast_reliability": "high_divergence",
+    }
+
+
+def test_evaluate_ieac_forecast_spread_unanchored_and_negative_clamping():
+    """Cuando bac <= 0 clasifica como unanchored con porcentajes 0.0 y clampa negativos a 0.0."""
+    zero_bac = evaluate_ieac_forecast_spread(ieac_cpi=50000.0, ieac_composite=60000.0, bac=0.0)
+    assert zero_bac == {
+        "spread_amount": 10000.0,
+        "spread_pct_of_bac": 0.0,
+        "overrun_vs_bac_pct": 0.0,
+        "forecast_reliability": "unanchored",
+    }
+
+    neg_bac = evaluate_ieac_forecast_spread(ieac_cpi=-100.0, ieac_composite=200.0, bac=-5000.0)
+    assert neg_bac == {
+        "spread_amount": 200.0,
+        "spread_pct_of_bac": 0.0,
+        "overrun_vs_bac_pct": 0.0,
+        "forecast_reliability": "unanchored",
+    }
 
 

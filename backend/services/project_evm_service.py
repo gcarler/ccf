@@ -2987,6 +2987,43 @@ def analyze_s_curve_velocity(points: List[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
 
+def evaluate_ieac_forecast_spread(
+    ieac_cpi: float,
+    ieac_composite: float,
+    bac: float,
+) -> Dict[str, Any]:
+    """Evalúa la divergencia entre IEAC(CPI) e IEAC(CPI×SPI) según PMI EVM §4.4."""
+    cpi_val = max(0.0, _safe_float(ieac_cpi, 0.0))
+    comp_val = max(0.0, _safe_float(ieac_composite, 0.0))
+    bac_val = _safe_float(bac, 0.0)
+
+    spread_amount = round(comp_val - cpi_val, 2)
+    if bac_val > 0.0:
+        spread_pct_of_bac = round((abs(spread_amount) / bac_val) * 100.0, 2)
+        overrun_vs_bac_pct = round(
+            ((max(cpi_val, comp_val) - bac_val) / bac_val) * 100.0, 2
+        )
+    else:
+        spread_pct_of_bac = 0.0
+        overrun_vs_bac_pct = 0.0
+
+    if bac_val <= 0.0:
+        forecast_reliability = "unanchored"
+    elif spread_pct_of_bac <= 10.0:
+        forecast_reliability = "convergent"
+    elif spread_pct_of_bac <= 25.0:
+        forecast_reliability = "moderate_divergence"
+    else:
+        forecast_reliability = "high_divergence"
+
+    return {
+        "spread_amount": spread_amount,
+        "spread_pct_of_bac": spread_pct_of_bac,
+        "overrun_vs_bac_pct": overrun_vs_bac_pct,
+        "forecast_reliability": forecast_reliability,
+    }
+
+
 class ProjectEVMService:
     """Fachada canónica del servicio EVM y Diagnóstico Predictivo PMI (Vol. 5 y Vol. 6)."""
 
@@ -3064,6 +3101,14 @@ class ProjectEVMService:
     @staticmethod
     def analyze_s_curve_velocity(points: List[Dict[str, Any]]) -> Dict[str, Any]:
         return analyze_s_curve_velocity(points)
+
+    @staticmethod
+    def evaluate_ieac_forecast_spread(
+        ieac_cpi: float,
+        ieac_composite: float,
+        bac: float,
+    ) -> Dict[str, Any]:
+        return evaluate_ieac_forecast_spread(ieac_cpi, ieac_composite, bac)
 
     @staticmethod
     def build_project_execution_matrix(
