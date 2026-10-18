@@ -21,8 +21,10 @@ from unittest.mock import MagicMock, patch
 
 from backend import models, schemas
 from backend.services.project_evm_service import (
+    ProjectEVMService,
     calculate_project_tasks_rollup,
     calculate_task_rollup,
+    evaluate_work_package_efficiency,
     sync_parent_task_rollup,
 )
 
@@ -534,3 +536,77 @@ def test_calculate_project_tasks_rollup_summary():
     assert summary["total_estimated_hours"] == 40.0
     assert summary["overall_physical_progress_pct"] == 75.0
     assert summary["tasks_with_expenses_count"] == 3
+
+
+def test_evaluate_work_package_efficiency_states_and_edge_cases():
+    """Valida el diagnóstico de eficiencia de esfuerzo y sobrecosto de paquete de trabajo WBS Nivel 3 (PMI §5.3 / §7.4)."""
+    optimal = evaluate_work_package_efficiency(
+        estimated_hours=20.0,
+        actual_hours=10.0,
+        planned_cost=1000.0,
+        actual_cost=500.0,
+        physical_progress_pct=50.0,
+    )
+    assert optimal == {
+        "earned_hours": 10.0,
+        "hours_efficiency_ratio": 1.0,
+        "cost_burn_pct": 50.0,
+        "is_effort_overrun": False,
+        "is_cost_overrun": False,
+        "efficiency_status": "optimal",
+    }
+
+    warning_drift = evaluate_work_package_efficiency(
+        estimated_hours=10.0,
+        actual_hours=15.0,
+        planned_cost=1000.0,
+        actual_cost=800.0,
+        physical_progress_pct=60.0,
+    )
+    assert warning_drift == {
+        "earned_hours": 6.0,
+        "hours_efficiency_ratio": 0.4,
+        "cost_burn_pct": 80.0,
+        "is_effort_overrun": True,
+        "is_cost_overrun": False,
+        "efficiency_status": "warning_drift",
+    }
+
+    critical_overrun = evaluate_work_package_efficiency(
+        estimated_hours=10.0,
+        actual_hours=12.0,
+        planned_cost=1000.0,
+        actual_cost=1250.0,
+        physical_progress_pct=80.0,
+    )
+    assert critical_overrun == {
+        "earned_hours": 8.0,
+        "hours_efficiency_ratio": 0.67,
+        "cost_burn_pct": 125.0,
+        "is_effort_overrun": True,
+        "is_cost_overrun": True,
+        "efficiency_status": "critical_overrun",
+    }
+
+    zero_edge = evaluate_work_package_efficiency(
+        estimated_hours=0.0,
+        actual_hours=0.0,
+        planned_cost=0.0,
+        actual_cost=0.0,
+        physical_progress_pct=0.0,
+    )
+    assert zero_edge["hours_efficiency_ratio"] == 1.0
+    assert zero_edge["cost_burn_pct"] == 0.0
+    assert zero_edge["efficiency_status"] == "optimal"
+
+    assert (
+        ProjectEVMService.evaluate_work_package_efficiency(
+            estimated_hours=10.0,
+            actual_hours=12.0,
+            planned_cost=1000.0,
+            actual_cost=1250.0,
+            physical_progress_pct=80.0,
+        )
+        == critical_overrun
+    )
+

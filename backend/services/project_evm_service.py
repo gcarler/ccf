@@ -2870,6 +2870,47 @@ def evaluate_control_accounts_concentration(
     }
 
 
+def evaluate_work_package_efficiency(
+    estimated_hours: float,
+    actual_hours: float,
+    planned_cost: float,
+    actual_cost: float,
+    physical_progress_pct: float,
+) -> Dict[str, Any]:
+    """Evalúa la eficiencia de esfuerzo y sobrecosto de un paquete de trabajo WBS Nivel 3 (PMI §5.3 / §7.4)."""
+    est_h = max(0.0, _safe_float(estimated_hours, 0.0))
+    act_h = max(0.0, _safe_float(actual_hours, 0.0))
+    plan_c = max(0.0, _safe_float(planned_cost, 0.0))
+    act_c = max(0.0, _safe_float(actual_cost, 0.0))
+    prog = max(0.0, min(100.0, _safe_float(physical_progress_pct, 0.0)))
+
+    earned_hours = round(est_h * (prog / 100.0), 2)
+    hours_efficiency_ratio = round(earned_hours / act_h, 2) if act_h > 0 else 1.0
+    if plan_c > 0:
+        cost_burn_pct = round((act_c / plan_c) * 100.0, 1)
+    else:
+        cost_burn_pct = 100.0 if act_c > 0 else 0.0
+
+    is_effort_overrun = bool(est_h > 0 and act_h > est_h)
+    is_cost_overrun = bool(plan_c > 0 and act_c > plan_c)
+
+    if is_effort_overrun and is_cost_overrun:
+        efficiency_status = "critical_overrun"
+    elif is_effort_overrun or is_cost_overrun:
+        efficiency_status = "warning_drift"
+    else:
+        efficiency_status = "optimal"
+
+    return {
+        "earned_hours": earned_hours,
+        "hours_efficiency_ratio": hours_efficiency_ratio,
+        "cost_burn_pct": cost_burn_pct,
+        "is_effort_overrun": is_effort_overrun,
+        "is_cost_overrun": is_cost_overrun,
+        "efficiency_status": efficiency_status,
+    }
+
+
 class ProjectEVMService:
     """Fachada canónica del servicio EVM y Diagnóstico Predictivo PMI (Vol. 5 y Vol. 6)."""
 
@@ -2927,6 +2968,18 @@ class ProjectEVMService:
         return evaluate_control_accounts_concentration(components_metrics)
 
     @staticmethod
+    def evaluate_work_package_efficiency(
+        estimated_hours: float,
+        actual_hours: float,
+        planned_cost: float,
+        actual_cost: float,
+        physical_progress_pct: float,
+    ) -> Dict[str, Any]:
+        return evaluate_work_package_efficiency(
+            estimated_hours, actual_hours, planned_cost, actual_cost, physical_progress_pct
+        )
+
+    @staticmethod
     def generate_curve_s_data(
         db: Session, project: Project, points_count: int = 8
     ) -> List[Dict[str, Any]]:
@@ -2937,5 +2990,6 @@ class ProjectEVMService:
         db: Session, project: Project, now: Optional[datetime.datetime] = None
     ) -> Dict[str, Any]:
         return build_project_execution_matrix(db, project, now=now)
+
 
 
