@@ -3106,6 +3106,49 @@ def evaluate_wbs_scope_coverage(
     }
 
 
+def calculate_pert_three_point_estimate(
+    optimistic: float,
+    most_likely: float,
+    pessimistic: float,
+) -> Dict[str, Any]:
+    """Calcula la estimación PERT por Tres Valores Beta y Triangular (PMI PMBOK §6.4.2.4)."""
+    o = round(max(0.0, float(optimistic or 0.0)), 2)
+    m = round(max(0.0, float(most_likely or 0.0)), 2)
+    p = round(max(0.0, float(pessimistic or 0.0)), 2)
+
+    is_monotonic_order = bool(o <= m <= p)
+    expected_estimate = round((o + 4.0 * m + p) / 6.0, 2)
+    triangular_estimate = round((o + m + p) / 3.0, 2)
+    std_deviation = round(max(0.0, p - o) / 6.0, 2)
+    variance = round(std_deviation ** 2, 4)
+    confidence_68_range = (
+        round(max(0.0, expected_estimate - std_deviation), 2),
+        round(expected_estimate + std_deviation, 2),
+    )
+
+    if not is_monotonic_order:
+        uncertainty_status = "invalid_bounds"
+    elif std_deviation == 0.0:
+        uncertainty_status = "deterministic"
+    elif expected_estimate > 0 and (std_deviation / expected_estimate) <= 0.15:
+        uncertainty_status = "low_uncertainty"
+    else:
+        uncertainty_status = "high_uncertainty"
+
+    return {
+        "optimistic": o,
+        "most_likely": m,
+        "pessimistic": p,
+        "is_monotonic_order": is_monotonic_order,
+        "expected_estimate": expected_estimate,
+        "triangular_estimate": triangular_estimate,
+        "std_deviation": std_deviation,
+        "variance": variance,
+        "confidence_68_range": confidence_68_range,
+        "uncertainty_status": uncertainty_status,
+    }
+
+
 class ProjectEVMService:
     """Fachada canónica del servicio EVM y Diagnóstico Predictivo PMI (Vol. 5 y Vol. 6)."""
 
@@ -3206,6 +3249,14 @@ class ProjectEVMService:
         components_count: int,
     ) -> Dict[str, Any]:
         return evaluate_wbs_scope_coverage(total_tasks, unassigned_tasks, components_count)
+
+    @staticmethod
+    def calculate_pert_three_point_estimate(
+        optimistic: float,
+        most_likely: float,
+        pessimistic: float,
+    ) -> Dict[str, Any]:
+        return calculate_pert_three_point_estimate(optimistic, most_likely, pessimistic)
 
     @staticmethod
     def build_project_execution_matrix(

@@ -22,6 +22,7 @@ from unittest.mock import MagicMock, patch
 from backend import models, schemas
 from backend.services.project_evm_service import (
     ProjectEVMService,
+    calculate_pert_three_point_estimate,
     calculate_project_tasks_rollup,
     calculate_task_rollup,
     evaluate_work_package_efficiency,
@@ -609,4 +610,60 @@ def test_evaluate_work_package_efficiency_states_and_edge_cases():
         )
         == critical_overrun
     )
+
+
+def test_calculate_pert_three_point_estimate_low_uncertainty():
+    """Valida estimación PERT de baja incertidumbre (std_deviation / expected_estimate <= 0.15)."""
+    res = calculate_pert_three_point_estimate(optimistic=10.0, most_likely=12.0, pessimistic=14.0)
+    assert res == {
+        "optimistic": 10.0,
+        "most_likely": 12.0,
+        "pessimistic": 14.0,
+        "is_monotonic_order": True,
+        "expected_estimate": 12.0,
+        "triangular_estimate": 12.0,
+        "std_deviation": 0.67,
+        "variance": 0.4489,
+        "confidence_68_range": (11.33, 12.67),
+        "uncertainty_status": "low_uncertainty",
+    }
+    assert ProjectEVMService.calculate_pert_three_point_estimate(10.0, 12.0, 14.0) == res
+
+
+def test_calculate_pert_three_point_estimate_high_uncertainty():
+    """Valida estimación PERT de alta incertidumbre con distribución asimétrica."""
+    res = calculate_pert_three_point_estimate(optimistic=4.0, most_likely=10.0, pessimistic=28.0)
+    assert res == {
+        "optimistic": 4.0,
+        "most_likely": 10.0,
+        "pessimistic": 28.0,
+        "is_monotonic_order": True,
+        "expected_estimate": 12.0,
+        "triangular_estimate": 14.0,
+        "std_deviation": 4.0,
+        "variance": 16.0,
+        "confidence_68_range": (8.0, 16.0),
+        "uncertainty_status": "high_uncertainty",
+    }
+    assert ProjectEVMService.calculate_pert_three_point_estimate(4.0, 10.0, 28.0) == res
+
+
+def test_calculate_pert_three_point_estimate_deterministic():
+    """Valida caso determinístico cuando O == M == P (std_deviation == 0.0)."""
+    res = calculate_pert_three_point_estimate(optimistic=8.0, most_likely=8.0, pessimistic=8.0)
+    assert res["expected_estimate"] == 8.0
+    assert res["triangular_estimate"] == 8.0
+    assert res["std_deviation"] == 0.0
+    assert res["variance"] == 0.0
+    assert res["confidence_68_range"] == (8.0, 8.0)
+    assert res["uncertainty_status"] == "deterministic"
+    assert ProjectEVMService.calculate_pert_three_point_estimate(8.0, 8.0, 8.0) == res
+
+
+def test_calculate_pert_three_point_estimate_invalid_bounds():
+    """Valida detección de cotas invertidas (not o <= m <= p -> invalid_bounds)."""
+    res = calculate_pert_three_point_estimate(optimistic=20.0, most_likely=10.0, pessimistic=15.0)
+    assert res["is_monotonic_order"] is False
+    assert res["uncertainty_status"] == "invalid_bounds"
+    assert ProjectEVMService.calculate_pert_three_point_estimate(20.0, 10.0, 15.0) == res
 
