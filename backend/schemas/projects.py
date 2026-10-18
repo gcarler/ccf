@@ -2345,3 +2345,70 @@ def validate_milestone_weights_distribution(
         "max_share_pct": max_share_pct,
         "is_balanced": is_balanced,
     }
+
+
+def validate_raci_assignment_matrix(
+    assignments: Optional[List[dict]] = None,
+) -> dict:
+    """Audita una matriz de asignación de responsabilidades RACI según PMI PMBOK §9.1.2.2."""
+    role_map = {
+        "R": "R",
+        "RESPONSIBLE": "R",
+        "A": "A",
+        "ACCOUNTABLE": "A",
+        "C": "C",
+        "CONSULTED": "C",
+        "I": "I",
+        "INFORMED": "I",
+    }
+
+    responsible_count = 0
+    accountable_count = 0
+    consulted_count = 0
+    informed_count = 0
+    invalid_role_count = 0
+
+    for item in assignments or []:
+        if not isinstance(item, dict):
+            continue
+        raw_role = str(item.get("raci_role") or item.get("role") or "").strip().upper()
+        normalized = role_map.get(raw_role)
+        if normalized == "R":
+            responsible_count += 1
+        elif normalized == "A":
+            accountable_count += 1
+        elif normalized == "C":
+            consulted_count += 1
+        elif normalized == "I":
+            informed_count += 1
+        else:
+            invalid_role_count += 1
+
+    has_single_accountable = bool(accountable_count == 1)
+    has_at_least_one_responsible = bool(responsible_count >= 1)
+    is_raci_compliant = bool(
+        has_single_accountable and has_at_least_one_responsible and invalid_role_count == 0
+    )
+
+    if is_raci_compliant:
+        raci_violation_reason = "none"
+    elif accountable_count == 0:
+        raci_violation_reason = "missing_accountable"
+    elif accountable_count > 1:
+        raci_violation_reason = "multiple_accountable"
+    elif responsible_count == 0:
+        raci_violation_reason = "missing_responsible"
+    else:
+        raci_violation_reason = "invalid_role"
+
+    return {
+        "responsible_count": responsible_count,
+        "accountable_count": accountable_count,
+        "consulted_count": consulted_count,
+        "informed_count": informed_count,
+        "invalid_role_count": invalid_role_count,
+        "has_single_accountable": has_single_accountable,
+        "has_at_least_one_responsible": has_at_least_one_responsible,
+        "is_raci_compliant": is_raci_compliant,
+        "raci_violation_reason": raci_violation_reason,
+    }

@@ -23,6 +23,7 @@ from backend.schemas.projects import (
     TemplateTaskItem,
     validate_milestone_weights_distribution,
     validate_pmi_severity_matrix_bounds,
+    validate_raci_assignment_matrix,
 )
 
 
@@ -161,3 +162,70 @@ def test_validate_milestone_weights_distribution_empty_or_none():
             "max_share_pct": 0.0,
             "is_balanced": False,
         }
+
+
+# ── Helpers PMI: matriz de asignación de responsabilidades RACI (§9.1.2.2) ──
+
+
+def test_validate_raci_assignment_matrix_valid_compliant():
+    """Matriz RACI con exactamente 1 Accountable y al menos 1 Responsible cumple la regla PMI."""
+    res = validate_raci_assignment_matrix(
+        [
+            {"role": "Accountable"},
+            {"role": "R"},
+            {"raci_role": "C"},
+            {"raci_role": "informed"},
+        ]
+    )
+    assert res == {
+        "responsible_count": 1,
+        "accountable_count": 1,
+        "consulted_count": 1,
+        "informed_count": 1,
+        "invalid_role_count": 0,
+        "has_single_accountable": True,
+        "has_at_least_one_responsible": True,
+        "is_raci_compliant": True,
+        "raci_violation_reason": "none",
+    }
+
+
+def test_validate_raci_assignment_matrix_missing_accountable():
+    """Falta de Accountable (accountable_count == 0) reporta missing_accountable."""
+    res = validate_raci_assignment_matrix([{"role": "Responsible"}, {"raci_role": "Consulted"}])
+    assert res["accountable_count"] == 0
+    assert res["responsible_count"] == 1
+    assert res["has_single_accountable"] is False
+    assert res["is_raci_compliant"] is False
+    assert res["raci_violation_reason"] == "missing_accountable"
+
+
+def test_validate_raci_assignment_matrix_multiple_accountable():
+    """Múltiples Accountable (accountable_count > 1) reporta multiple_accountable."""
+    res = validate_raci_assignment_matrix(
+        [{"role": "A"}, {"raci_role": "ACCOUNTABLE"}, {"role": "R"}]
+    )
+    assert res["accountable_count"] == 2
+    assert res["responsible_count"] == 1
+    assert res["has_single_accountable"] is False
+    assert res["is_raci_compliant"] is False
+    assert res["raci_violation_reason"] == "multiple_accountable"
+
+
+def test_validate_raci_assignment_matrix_missing_responsible_and_invalid_role():
+    """Valida falta de Responsible (missing_responsible) y presencia de rol inválido (invalid_role)."""
+    no_resp = validate_raci_assignment_matrix([{"role": "A"}, {"raci_role": "C"}])
+    assert no_resp["accountable_count"] == 1
+    assert no_resp["responsible_count"] == 0
+    assert no_resp["has_at_least_one_responsible"] is False
+    assert no_resp["is_raci_compliant"] is False
+    assert no_resp["raci_violation_reason"] == "missing_responsible"
+
+    invalid_role = validate_raci_assignment_matrix(
+        [{"role": "A"}, {"role": "R"}, {"raci_role": "OWNER"}]
+    )
+    assert invalid_role["accountable_count"] == 1
+    assert invalid_role["responsible_count"] == 1
+    assert invalid_role["invalid_role_count"] == 1
+    assert invalid_role["is_raci_compliant"] is False
+    assert invalid_role["raci_violation_reason"] == "invalid_role"
