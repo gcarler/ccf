@@ -4689,3 +4689,165 @@ def test_array_property_hygiene_nullable_anyof_oneof_support():
     }
 
 
+def test_schema_required_and_default_hygiene_clean_and_live_schema():
+    """Esquema sintético íntegro + esquema real de FastAPI (is_hygienic=True)."""
+    schema = {
+        "components": {
+            "schemas": {
+                "ProjectCreate": {
+                    "type": "object",
+                    "required": ["title", "code"],
+                    "properties": {
+                        "title": {"type": "string"},
+                        "code": {"type": "string"},
+                        "status": {
+                            "type": "string",
+                            "enum": ["DRAFT", "ACTIVE"],
+                            "default": "DRAFT",
+                        },
+                        "is_active": {
+                            "type": "boolean",
+                            "default": True,
+                        },
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_schema_required_and_default_hygiene(
+        schema
+    )
+    assert res == {
+        "evaluated_schemas_count": 1,
+        "total_required_declarations": 2,
+        "malformed_required_lists": [],
+        "dangling_required_properties": [],
+        "contradictory_required_null_defaults": [],
+        "type_mismatched_defaults": [],
+        "is_hygienic": True,
+    }
+
+    from backend.app import app
+
+    live_res = (
+        audit_projects_api_contracts.summarize_projects_schema_required_and_default_hygiene(
+            app.openapi()
+        )
+    )
+    assert live_res["evaluated_schemas_count"] > 0
+    assert live_res["total_required_declarations"] > 0
+    assert live_res["malformed_required_lists"] == []
+    assert live_res["dangling_required_properties"] == []
+    assert live_res["contradictory_required_null_defaults"] == []
+    assert live_res["type_mismatched_defaults"] == []
+    assert live_res["is_hygienic"] is True
+
+
+def test_schema_required_and_default_hygiene_malformed_and_dangling_required():
+    """Detecta required malformado (lista vacía, duplicados) y propiedades en required que no existen en properties."""
+    schema = {
+        "components": {
+            "schemas": {
+                "EmptyRequiredSchema": {
+                    "type": "object",
+                    "required": [],
+                    "properties": {"name": {"type": "string"}},
+                },
+                "DuplicateAndDanglingSchema": {
+                    "type": "object",
+                    "required": ["title", "title", "ghost_field"],
+                    "properties": {"title": {"type": "string"}},
+                },
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_schema_required_and_default_hygiene(
+        schema
+    )
+    assert res["evaluated_schemas_count"] == 2
+    assert res["malformed_required_lists"] == [
+        "DuplicateAndDanglingSchema",
+        "EmptyRequiredSchema",
+    ]
+    assert res["dangling_required_properties"] == [
+        "DuplicateAndDanglingSchema.ghost_field"
+    ]
+    assert res["is_hygienic"] is False
+
+
+def test_schema_required_and_default_hygiene_contradictory_required_null_defaults():
+    """Detecta contradicción entre campo obligatorio en required y default: None explícito."""
+    schema = {
+        "components": {
+            "schemas": {
+                "ProjectBaselineCreate": {
+                    "type": "object",
+                    "required": ["project_id", "reason"],
+                    "properties": {
+                        "project_id": {"type": "string", "format": "uuid"},
+                        "reason": {"type": "string", "default": None},
+                        "notes": {"type": "string", "default": None},
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_schema_required_and_default_hygiene(
+        schema
+    )
+    assert res["contradictory_required_null_defaults"] == [
+        "ProjectBaselineCreate.reason"
+    ]
+    assert res["is_hygienic"] is False
+
+
+def test_schema_required_and_default_hygiene_type_mismatched_defaults_and_anyof():
+    """Detecta defaults incompatibles con type o fuera de enum y soporta anyOf/oneOf."""
+    schema = {
+        "components": {
+            "schemas": {
+                "ProjectConfigPayload": {
+                    "type": "object",
+                    "properties": {
+                        "bad_enum": {
+                            "type": "string",
+                            "enum": ["LOW", "HIGH"],
+                            "default": "MEDIUM",
+                        },
+                        "bad_int_bool": {
+                            "type": "integer",
+                            "default": True,
+                        },
+                        "bad_str": {
+                            "type": "string",
+                            "default": 42,
+                        },
+                        "bad_array": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "default": "not-a-list",
+                        },
+                        "valid_nullable": {
+                            "anyOf": [
+                                {"type": "integer"},
+                                {"type": "null"},
+                            ],
+                            "default": 10,
+                        },
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_schema_required_and_default_hygiene(
+        schema
+    )
+    assert res["type_mismatched_defaults"] == [
+        "ProjectConfigPayload.bad_array",
+        "ProjectConfigPayload.bad_enum",
+        "ProjectConfigPayload.bad_int_bool",
+        "ProjectConfigPayload.bad_str",
+    ]
+    assert res["is_hygienic"] is False
+
+

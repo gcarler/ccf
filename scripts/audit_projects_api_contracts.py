@@ -3205,6 +3205,169 @@ def summarize_projects_array_property_hygiene(
     }
 
 
+def _is_branch_compatible_with_default(
+    branch: Mapping[str, Any],
+    default_val: Any,
+    schemas: Mapping[str, Any],
+) -> bool:
+    resolved = _resolve_ref_schema(branch, schemas)
+    if resolved is not None:
+        return _is_schema_node_compatible_with_default(
+            resolved, default_val, schemas
+        )
+
+    if isinstance(branch.get("enum"), list):
+        if default_val not in branch["enum"]:
+            return False
+
+    if "const" in branch and default_val != branch.get("const"):
+        return False
+
+    b_type = branch.get("type")
+    if b_type == "string":
+        return isinstance(default_val, str)
+    if b_type == "boolean":
+        return isinstance(default_val, bool)
+    if b_type == "integer":
+        return isinstance(default_val, int) and not isinstance(default_val, bool)
+    if b_type == "number":
+        return isinstance(default_val, (int, float)) and not isinstance(
+            default_val, bool
+        )
+    if b_type == "array":
+        return isinstance(default_val, list)
+    if b_type == "object":
+        return isinstance(default_val, Mapping)
+    return True
+
+
+def _is_schema_node_compatible_with_default(
+    node: Mapping[str, Any],
+    default_val: Any,
+    schemas: Mapping[str, Any],
+) -> bool:
+    composite = node.get("anyOf") or node.get("oneOf") or node.get("allOf")
+    if isinstance(composite, list):
+        non_null_branches = [
+            b
+            for b in composite
+            if isinstance(b, Mapping) and b.get("type") != "null"
+        ]
+    else:
+        non_null_branches = [node]
+
+    if not non_null_branches:
+        return False
+    return any(
+        _is_branch_compatible_with_default(b, default_val, schemas)
+        for b in non_null_branches
+    )
+
+
+def summarize_projects_schema_required_and_default_hygiene(
+    openapi: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Audita coherencia entre listas required, properties y valores default en components.schemas."""
+    if not isinstance(openapi, Mapping):
+        return {
+            "evaluated_schemas_count": 0,
+            "total_required_declarations": 0,
+            "malformed_required_lists": [],
+            "dangling_required_properties": [],
+            "contradictory_required_null_defaults": [],
+            "type_mismatched_defaults": [],
+            "is_hygienic": True,
+        }
+
+    components = openapi.get("components")
+    schemas = (
+        components.get("schemas")
+        if isinstance(components, Mapping)
+        and isinstance(components.get("schemas"), Mapping)
+        else {}
+    )
+
+    evaluated_schemas_count = 0
+    total_required_declarations = 0
+    malformed_required_lists: list[str] = []
+    dangling_required_properties: list[str] = []
+    contradictory_required_null_defaults: list[str] = []
+    type_mismatched_defaults: list[str] = []
+
+    for schema_name, schema_obj in sorted(schemas.items()):
+        s_name = str(schema_name)
+        if not isinstance(schema_obj, Mapping):
+            continue
+
+        props_raw = schema_obj.get("properties")
+        has_props = isinstance(props_raw, Mapping)
+        if not (has_props or schema_obj.get("type") == "object"):
+            continue
+
+        evaluated_schemas_count += 1
+        props: Mapping[str, Any] = props_raw if has_props else {}
+
+        if "required" in schema_obj:
+            req_val = schema_obj.get("required")
+            if not isinstance(req_val, list) or len(req_val) == 0:
+                malformed_required_lists.append(s_name)
+            else:
+                seen_reqs: set[str] = set()
+                is_malformed = False
+                for item in req_val:
+                    if not isinstance(item, str) or not item.strip():
+                        is_malformed = True
+                        continue
+                    if item in seen_reqs:
+                        is_malformed = True
+                        continue
+                    seen_reqs.add(item)
+                    total_required_declarations += 1
+                    req_ref = f"{s_name}.{item}"
+                    if item not in props:
+                        dangling_required_properties.append(req_ref)
+                    else:
+                        prop_def = props.get(item)
+                        if (
+                            isinstance(prop_def, Mapping)
+                            and "default" in prop_def
+                            and prop_def.get("default") is None
+                        ):
+                            contradictory_required_null_defaults.append(req_ref)
+                if is_malformed:
+                    malformed_required_lists.append(s_name)
+
+        for prop_name, prop_schema in sorted(props.items()):
+            p_name = str(prop_name)
+            if not isinstance(prop_schema, Mapping):
+                continue
+            if "default" not in prop_schema or prop_schema.get("default") is None:
+                continue
+
+            default_val = prop_schema.get("default")
+            if not _is_schema_node_compatible_with_default(
+                prop_schema, default_val, schemas
+            ):
+                type_mismatched_defaults.append(f"{s_name}.{p_name}")
+
+    is_hygienic = bool(
+        len(malformed_required_lists) == 0
+        and len(dangling_required_properties) == 0
+        and len(contradictory_required_null_defaults) == 0
+        and len(type_mismatched_defaults) == 0
+    )
+
+    return {
+        "evaluated_schemas_count": evaluated_schemas_count,
+        "total_required_declarations": total_required_declarations,
+        "malformed_required_lists": malformed_required_lists,
+        "dangling_required_properties": dangling_required_properties,
+        "contradictory_required_null_defaults": contradictory_required_null_defaults,
+        "type_mismatched_defaults": type_mismatched_defaults,
+        "is_hygienic": is_hygienic,
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()
