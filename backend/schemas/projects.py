@@ -2745,3 +2745,46 @@ def validate_wbs_code_hierarchy(
     }
 
 
+def validate_resource_allocation_utilization(
+    assigned_hours: float | int | None,
+    capacity_hours: float | int | None = 40.0,
+    max_utilization_pct: float | int | None = 100.0,
+) -> dict[str, Any]:
+    """Valida la carga y sobreasignación de recursos según PMI PMBOK §9.2 (Estimate Activity Resources) y §9.6 (Control Resources)."""
+    safe_assigned = max(0.0, round(float(assigned_hours or 0.0), 2))
+    safe_capacity = max(0.0, round(float(capacity_hours or 0.0), 2))
+    safe_max_pct = max(10.0, round(float(max_utilization_pct or 100.0), 2))
+
+    utilization_pct = (
+        round((safe_assigned / safe_capacity) * 100.0, 2)
+        if safe_capacity > 0
+        else (100.0 if safe_assigned > 0 else 0.0)
+    )
+    overallocated_hours = round(
+        max(0.0, safe_assigned - (safe_capacity * (safe_max_pct / 100.0))), 2
+    )
+    is_overallocated = bool(safe_capacity == 0.0 and safe_assigned > 0.0) or bool(
+        utilization_pct > safe_max_pct
+    )
+
+    if safe_capacity == 0.0:
+        posture = "ZERO_CAPACITY_UNAVAILABLE"
+    elif utilization_pct > safe_max_pct:
+        posture = "RESOURCE_OVERALLOCATED"
+    elif not is_overallocated and utilization_pct >= 70.0:
+        posture = "OPTIMAL_RESOURCE_LOAD"
+    else:
+        posture = "UNDERUTILIZED_CAPACITY"
+
+    return {
+        "safe_assigned": safe_assigned,
+        "safe_capacity": safe_capacity,
+        "safe_max_pct": safe_max_pct,
+        "utilization_pct": utilization_pct,
+        "overallocated_hours": overallocated_hours,
+        "is_overallocated": is_overallocated,
+        "posture": posture,
+    }
+
+
+

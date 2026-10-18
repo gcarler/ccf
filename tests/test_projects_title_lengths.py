@@ -750,3 +750,71 @@ def test_validate_wbs_code_hierarchy_malformed_code():
         assert res["posture"] == "MALFORMED_WBS_CODE"
 
 
+def test_validate_resource_allocation_utilization_optimal_load():
+    """Utilización entre 70% y safe_max_pct -> 'OPTIMAL_RESOURCE_LOAD'."""
+    from backend.schemas.projects import validate_resource_allocation_utilization
+
+    res = validate_resource_allocation_utilization(
+        assigned_hours=34.0, capacity_hours=40.0, max_utilization_pct=100.0
+    )
+    assert res == {
+        "safe_assigned": 34.0,
+        "safe_capacity": 40.0,
+        "safe_max_pct": 100.0,
+        "utilization_pct": 85.0,
+        "overallocated_hours": 0.0,
+        "is_overallocated": False,
+        "posture": "OPTIMAL_RESOURCE_LOAD",
+    }
+
+
+def test_validate_resource_allocation_utilization_overallocated():
+    """Utilización supera safe_max_pct -> 'RESOURCE_OVERALLOCATED'."""
+    from backend.schemas.projects import validate_resource_allocation_utilization
+
+    res = validate_resource_allocation_utilization(
+        assigned_hours=48.0, capacity_hours=40.0, max_utilization_pct=100.0
+    )
+    assert res["utilization_pct"] == 120.0
+    assert res["overallocated_hours"] == 8.0
+    assert res["is_overallocated"] is True
+    assert res["posture"] == "RESOURCE_OVERALLOCATED"
+
+
+def test_validate_resource_allocation_utilization_underutilized():
+    """Capacidad > 0 pero utilización < 70% y no sobreasignado -> 'UNDERUTILIZED_CAPACITY'."""
+    from backend.schemas.projects import validate_resource_allocation_utilization
+
+    res = validate_resource_allocation_utilization(
+        assigned_hours=16.0, capacity_hours=40.0, max_utilization_pct=100.0
+    )
+    assert res["utilization_pct"] == 40.0
+    assert res["overallocated_hours"] == 0.0
+    assert res["is_overallocated"] is False
+    assert res["posture"] == "UNDERUTILIZED_CAPACITY"
+
+
+def test_validate_resource_allocation_utilization_zero_capacity():
+    """Capacidad 0 o negativa -> 'ZERO_CAPACITY_UNAVAILABLE'."""
+    from backend.schemas.projects import validate_resource_allocation_utilization
+
+    with_hours = validate_resource_allocation_utilization(
+        assigned_hours=12.0, capacity_hours=0.0, max_utilization_pct=100.0
+    )
+    assert with_hours["safe_capacity"] == 0.0
+    assert with_hours["utilization_pct"] == 100.0
+    assert with_hours["overallocated_hours"] == 12.0
+    assert with_hours["is_overallocated"] is True
+    assert with_hours["posture"] == "ZERO_CAPACITY_UNAVAILABLE"
+
+    no_hours = validate_resource_allocation_utilization(
+        assigned_hours=0.0, capacity_hours=-5.0, max_utilization_pct=5.0
+    )
+    assert no_hours["safe_capacity"] == 0.0
+    assert no_hours["safe_max_pct"] == 10.0
+    assert no_hours["utilization_pct"] == 0.0
+    assert no_hours["is_overallocated"] is False
+    assert no_hours["posture"] == "ZERO_CAPACITY_UNAVAILABLE"
+
+
+
