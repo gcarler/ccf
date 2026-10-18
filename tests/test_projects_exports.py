@@ -475,3 +475,69 @@ def test_executive_report_and_pdf_include_360_submodules_summary(client, db_sess
     assert payload["cpi_stability_rule"] == fin["cpi_stability_rule"]
     assert payload["early_warning_sentinel"] == fin["early_warning_sentinel"]
 
+
+def test_evaluate_executive_report_completeness_audit_readiness(client, db_session):
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        evaluate_executive_report_completeness,
+    )
+
+    none_result = evaluate_executive_report_completeness(None)
+    assert none_result == {
+        "has_project_header": False,
+        "has_evm_financials": False,
+        "has_raid_risks": False,
+        "has_cpm_schedule": False,
+        "has_pmi_governance": False,
+        "has_ccb_quality": False,
+        "sections_present_count": 0,
+        "completeness_pct": 0.0,
+        "is_audit_ready": False,
+    }
+
+    empty_result = ProjectExportService.evaluate_executive_report_completeness({})
+    assert empty_result["sections_present_count"] == 0
+    assert empty_result["completeness_pct"] == 0.0
+    assert empty_result["is_audit_ready"] is False
+
+    partial_result = ProjectExportService.evaluate_executive_report_completeness(
+        {
+            "project": {"title": "Proyecto Parcial PMI"},
+            "financial_kpis": {"bac": 5000.0},
+            "raid_kpis": {"risks": []},
+        }
+    )
+    assert partial_result["has_project_header"] is True
+    assert partial_result["has_evm_financials"] is True
+    assert partial_result["has_raid_risks"] is True
+    assert partial_result["has_cpm_schedule"] is False
+    assert partial_result["has_pmi_governance"] is False
+    assert partial_result["has_ccb_quality"] is False
+    assert partial_result["sections_present_count"] == 3
+    assert partial_result["completeness_pct"] == 50.0
+    assert partial_result["is_audit_ready"] is False
+
+    _, _, sede = seed_admin(db_session)
+    project = create_project_factory(
+        db_session,
+        sede_id=sede.id,
+        title="Proyecto Auditoría PMI 360",
+    )
+    full_report = ProjectExportService.get_project_executive_report_data(
+        db_session,
+        project.id,
+        user_sede_id=sede.id,
+    )
+    full_result = ProjectExportService.evaluate_executive_report_completeness(
+        full_report
+    )
+    assert full_result["has_project_header"] is True
+    assert full_result["has_evm_financials"] is True
+    assert full_result["has_raid_risks"] is True
+    assert full_result["has_cpm_schedule"] is True
+    assert full_result["has_pmi_governance"] is True
+    assert full_result["has_ccb_quality"] is True
+    assert full_result["sections_present_count"] == 6
+    assert full_result["completeness_pct"] == 100.0
+    assert full_result["is_audit_ready"] is True
+
