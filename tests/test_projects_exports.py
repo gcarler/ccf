@@ -1,3 +1,4 @@
+import pytest
 import csv
 import io
 
@@ -194,6 +195,72 @@ def test_executive_report_and_pdf_include_pmi_governance_summary(client, db_sess
     assert pdf.startswith(b"%PDF-")
     assert b"GOBERNANZA DEL CICLO DE VIDA PMI" in pdf
     assert b"Gestionar de cerca" in pdf
+
+
+def test_executive_report_and_pdf_include_ccb_and_quality_summary(client, db_session):
+    """El informe ejecutivo y el PDF incluyen el bloque ccb_and_quality_summary (CCB + DoD / CoQ)."""
+    _, _, sede = seed_admin(db_session)
+    project = create_project_factory(db_session, sede_id=sede.id, title="Reporte CCB CoQ", budget_allocated=100000.0)
+    create_task_factory(db_session, project.id, title="Entregable DoD Reporte")
+
+    # ── CCB: 1 CR aprobada (Δ$20000, Δ15d) + 1 pendiente del Comité ──
+    headers = auth_headers(client)
+    cr1 = client.post(
+        f"/api/projects/{project.id}/change-requests",
+        json={"title": "CR Reporte", "justification": "Ampliación", "change_type": "budget",
+              "cost_impact_delta": 20000.0, "schedule_impact_days": 15},
+        headers=headers,
+    )
+    assert cr1.status_code == 201, cr1.text
+    decided = client.post(
+        f"/api/projects/{project.id}/change-requests/{cr1.json()['id']}/decide",
+        json={"decision": "approved", "review_notes": "Ok"}, headers=headers,
+    )
+    assert decided.status_code == 200, decided.text
+    client.post(
+        f"/api/projects/{project.id}/change-requests",
+        json={"title": "CR pendiente", "justification": "Pendiente", "change_type": "scope"},
+        headers=headers,
+    )
+
+    # ── DoD: entregable aceptado con CoQ prevención $250 ──
+    task_do_d = create_task_factory(db_session, project.id, title="DoD Reporte CoQ")
+    dod = client.post(
+        f"/api/projects/{project.id}/tasks/{task_do_d.id}/dod-acceptance",
+        json={"specification_met": True, "tests_no_critical_failures": True,
+              "evidence_archived": True, "supervisor_sign_off": True,
+              "coq_classification": "prevention", "coq_amount": 250.0},
+        headers=headers,
+    )
+    assert dod.status_code == 200, dod.text
+
+    endpoint = client.get(
+        f"/api/projects/{project.id}/export/executive-data",
+        headers=headers,
+    )
+    assert endpoint.status_code == 200, endpoint.text
+    payload = endpoint.json()
+    ccb_block = payload["ccb_and_quality_summary"]
+    assert ccb_block["total_change_requests"] == 2
+    assert ccb_block["approved_count"] == 1
+    assert ccb_block["pending_ccb_count"] == 1
+    assert ccb_block["net_approved_cost_delta"] == pytest.approx(20000.0)
+    assert ccb_block["net_approved_schedule_days"] == 15
+    assert ccb_block["tasks_dod_accepted_count"] == 1
+    assert ccb_block["total_coq_cost"] == pytest.approx(250.0)
+    assert ccb_block["coq_by_category"]["prevention"] == pytest.approx(250.0)
+
+    # ── PDF: se genera sin error con la sección CCB/DoD/CoQ incluida ──
+    pdf_endpoint = client.get(
+        f"/api/projects/{project.id}/export/summary-pdf",
+        headers=headers,
+    )
+    assert pdf_endpoint.status_code == 200, pdf_endpoint.text
+    assert pdf_endpoint.headers["content-type"].startswith("application/pdf")
+    assert pdf_endpoint.content.startswith(b"%PDF-")
+
+    pdf_bytes = generate_project_summary_pdf(payload)
+    assert pdf_bytes.startswith(b"%PDF-")
 
 
 def test_tasks_csv_neutralizes_spreadsheet_formulas_in_text_fields(db_session):

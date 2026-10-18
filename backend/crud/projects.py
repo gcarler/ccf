@@ -4347,6 +4347,10 @@ def get_project_executive_report_data(
 
     governance_summary = build_governance_summary(db, project.id)
 
+    from backend.services.project_ccb_service import get_project_ccb_and_quality_summary
+
+    ccb_quality_summary = get_project_ccb_and_quality_summary(db, project.id)
+
     return {
         "project": {
             "id": str(project.id),
@@ -4385,6 +4389,7 @@ def get_project_executive_report_data(
         "governance_summary": governance_summary,
         "kpis": kpis_list,
         "indicators": indicators_list,
+        "ccb_and_quality_summary": ccb_quality_summary,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "organization": "Comunidad Cristiana El Faro - Dirección de Proyectos",
     }
@@ -4695,6 +4700,24 @@ def generate_project_summary_pdf(
             ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
         ]))
         story.append(fam_table)
+        story.append(Spacer(1, 6))
+
+    # 3c. Control Integrado de Cambios (CCB), Aceptación DoD y Costo de Calidad (CoQ) — PMI Vol. 6 §4-§5
+    ccb = report_data.get("ccb_and_quality_summary") or {}
+    if ccb:
+        story.append(Paragraph("CONTROL INTEGRADO DE CAMBIOS (CCB), ACEPTACIÓN DO D Y COSTO DE CALIDAD (COQ)", section_title_style))
+        cr_by_cat = ccb.get("coq_by_category") or {}
+        ccb_text = (
+            f"<b>Solicitudes de Cambio:</b> {ccb.get('total_change_requests', 0)} totales — "
+            f"Pendientes CCB: {ccb.get('pending_ccb_count', 0)} | Aprobadas: {ccb.get('approved_count', 0)} | Rechazadas: {ccb.get('rejected_count', 0)}<br/>"
+            f"<b>Impacto Neto Aprobado:</b> ${ccb.get('net_approved_cost_delta', 0.0):,.2f} (BAC) y "
+            f"{ccb.get('net_approved_schedule_days', 0)} días (cronograma) — Re-baseline automático con acta del Comité.<br/>"
+            f"<b>Entregables Aceptados (DoD 4/4):</b> {ccb.get('tasks_dod_accepted_count', 0)}<br/>"
+            f"<b>Costo de Calidad (CoQ) Total:</b> ${ccb.get('total_coq_cost', 0.0):,.2f} — "
+            f"Prevención: ${cr_by_cat.get('prevention', 0.0):,.2f} | Evaluación: ${cr_by_cat.get('appraisal', 0.0):,.2f} | "
+            f"Falla Interna: ${cr_by_cat.get('internal_failure', 0.0):,.2f} | Falla Externa: ${cr_by_cat.get('external_failure', 0.0):,.2f}"
+        )
+        story.append(Paragraph(ccb_text, body_style))
         story.append(Spacer(1, 6))
 
     # 4. Control Presupuestario y Estructura Canónica de Reservas (EMV / PMI Vol. 5 y 6)

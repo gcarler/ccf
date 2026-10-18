@@ -83,6 +83,55 @@ describe("ProjectAutomationsDrawer", () => {
     expect(await screen.findByText("7 ejecuciones")).toBeInTheDocument();
   });
 
+  it("renders the PMI governance catalog and installs a template with one click", async () => {
+    const user = userEvent.setup();
+    vi.mocked(apiFetch)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce({ id: "pmi-rule-1", name: "PMI-GOV-01: Auditoría de Aceptación Formal DoD y CoQ al completar Hito" })
+      .mockResolvedValueOnce([{
+        ...rule,
+        id: "pmi-rule-1",
+        name: "PMI-GOV-01: Auditoría de Aceptación Formal DoD y CoQ al completar Hito",
+        trigger_event: "milestone_completed",
+        action_type: "create_followup_task",
+      }]);
+    renderDrawer();
+
+    expect(await screen.findByRole("heading", {
+      name: "Catálogo de Plantillas de Gobernanza Automatizada PMI (Vol. 5 & 6)",
+    })).toBeInTheDocument();
+    expect(screen.getByText("PMI-GOV-01 · Auditoría DoD 4/4 en Hito")).toBeInTheDocument();
+    expect(screen.getByText("PMI-GOV-02 · Centinela de Costo Real AC / EVM")).toBeInTheDocument();
+    expect(screen.getByText("PMI-GOV-03 · Escalamiento a Ruta Crítica CPM y CCB")).toBeInTheDocument();
+    expect(screen.getByText("PMI-GOV-04 · Cierre Documental y Lecciones Aprendidas")).toBeInTheDocument();
+
+    await user.click(screen.getAllByRole("button", { name: "Instalar Regla PMI" })[0]);
+    await waitFor(() => expect(apiFetch).toHaveBeenNthCalledWith(
+      2,
+      "/projects/project-1/automations",
+      expect.objectContaining({
+        token: "test-token",
+        method: "POST",
+        body: JSON.stringify({
+          project_id: "project-1",
+          name: "PMI-GOV-01: Auditoría de Aceptación Formal DoD y CoQ al completar Hito",
+          description: "Solicita validar aceptación formal y costo de calidad al completar un hito.",
+          trigger_event: "milestone_completed",
+          condition_data: {},
+          action_type: "create_followup_task",
+          action_data: {
+            task_title: "Auditoría DoD 4/4 y Costo de Calidad (CoQ) del Hito",
+            title: "Auditoría DoD 4/4 y Costo de Calidad (CoQ) del Hito",
+            priority: "high",
+          },
+          is_active: true,
+        }),
+      }),
+    ));
+    expect(await screen.findByRole("button", { name: "Regla PMI activa" })).toBeDisabled();
+    expect(mocks.addToast).toHaveBeenCalledWith(expect.objectContaining({ title: "Regla PMI instalada", type: "success" }));
+  });
+
   it("creates a follow-up rule with the backend contract payload", async () => {
     const user = userEvent.setup();
     vi.mocked(apiFetch).mockResolvedValueOnce([]).mockResolvedValueOnce({ ...rule, name: "Seguimiento" });

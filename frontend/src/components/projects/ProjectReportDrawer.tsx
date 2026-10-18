@@ -4,8 +4,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch, apiFetchBlob } from "@/lib/http";
-import type { ProjectExecutiveReportData } from "@/types/projects";
-import { FileText, Download, Printer, FileSpreadsheet, AlertTriangle, Clock, DollarSign, TrendingUp, ShieldAlert, Activity, Check, RefreshCw, Sliders, ClipboardCheck } from "lucide-react";
+import type { CcbAndQualitySummary, ProjectExecutiveReportData } from "@/types/projects";
+import { FileText, Download, Printer, FileSpreadsheet, AlertTriangle, Clock, DollarSign, Gavel, TrendingUp, ShieldAlert, Activity, Check, RefreshCw, Sliders, ClipboardCheck } from "lucide-react";
 import clsx from "clsx";
 
 interface ProjectReportDrawerProps {
@@ -16,6 +16,13 @@ interface ProjectReportDrawerProps {
 }
 
 type TabType = "preview" | "export" | "settings";
+
+const COQ_CATEGORY_META: { key: keyof CcbAndQualitySummary["coq_by_category"]; label: string }[] = [
+  { key: "prevention", label: "Prevención" },
+  { key: "appraisal", label: "Evaluación" },
+  { key: "internal_failure", label: "Falla Interna" },
+  { key: "external_failure", label: "Falla Externa" },
+];
 
 const REPORT_SECTIONS = {
   generalInfo: true,
@@ -125,6 +132,7 @@ export function ProjectReportDrawer({
   const kpisList = data?.kpis ?? [];
   const indicatorsList = data?.indicators ?? [];
   const governanceSummary = data?.governance_summary;
+  const ccbSummary = data?.ccb_and_quality_summary;
 
   return (
     <>
@@ -767,6 +775,84 @@ export function ProjectReportDrawer({
                         No hay riesgos registrados en el proyecto.
                       </p>
                     )}
+                  </div>
+                )}
+
+                {/* Sección: Control Integrado de Cambios (CCB), Aceptación DoD y Costo de Calidad (CoQ) — PMI Vol. 6 §4-§5 */}
+                {ccbSummary && (
+                  <div
+                    className="p-4 rounded-xl border space-y-3"
+                    style={{
+                      backgroundColor: "hsl(var(--surface-1))",
+                      borderColor: "hsl(var(--border))",
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Gavel className="w-4 h-4 text-[hsl(var(--primary))]" />
+                        <h3 className="text-sm font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
+                          Control de Cambios (CCB) · Aceptación DoD · Costo de Calidad
+                        </h3>
+                      </div>
+                      <span className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
+                        {ccbSummary.total_change_requests} solicitudes de cambio
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      {[
+                        { label: "Pendientes CCB", value: ccbSummary.pending_ccb_count, tone: "warning-text" },
+                        { label: "Aprobadas", value: ccbSummary.approved_count, tone: "success" },
+                        { label: "Rechazadas", value: ccbSummary.rejected_count, tone: "destructive" },
+                      ].map((chip) => (
+                        <div
+                          key={chip.label}
+                          className="rounded-lg border p-2 text-center"
+                          style={{ borderColor: "hsl(var(--border))", backgroundColor: "hsl(var(--surface-2))" }}
+                        >
+                          <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "hsl(var(--text-secondary))" }}>
+                            {chip.label}
+                          </p>
+                          <p className="text-base font-bold" style={{ color: `hsl(var(--${chip.tone}))` }}>
+                            {chip.value}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <p className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
+                      Impacto neto aprobado con Re-baseline automático:{" "}
+                      <span className="font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
+                        ${ccbSummary.net_approved_cost_delta.toLocaleString()} y {ccbSummary.net_approved_schedule_days} días
+                      </span>{" "}
+                      · Entregables aceptados (DoD 4/4):{" "}
+                      <span className="font-semibold" style={{ color: "hsl(var(--success))" }}>
+                        {ccbSummary.tasks_dod_accepted_count}
+                      </span>
+                    </p>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                      {COQ_CATEGORY_META.map((cat) => (
+                        <div
+                          key={cat.key}
+                          className="rounded-lg border p-2"
+                          style={{ borderColor: "hsl(var(--border))", backgroundColor: "hsl(var(--surface-2))" }}
+                        >
+                          <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "hsl(var(--text-secondary))" }}>
+                            {cat.label}
+                          </p>
+                          <p className="font-bold" style={{ color: "hsl(var(--text-primary))" }}>
+                            ${ccbSummary.coq_by_category[cat.key].toLocaleString()}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[11px]" style={{ color: "hsl(var(--text-secondary))" }}>
+                      Costo de Calidad (CoQ) acumulado:{" "}
+                      <span className="font-bold" style={{ color: "hsl(var(--text-primary))" }}>
+                        ${ccbSummary.total_coq_cost.toLocaleString()}
+                      </span>
+                    </p>
                   </div>
                 )}
 

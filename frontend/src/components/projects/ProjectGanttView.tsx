@@ -15,7 +15,7 @@ import type {
 import { RightPanel } from "@/components/ui/RightPanel";
 import { ProjectBaselineDrawer } from "@/components/projects/ProjectBaselineDrawer";
 import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/ConfirmActionDrawer";
-import { Calendar, ChevronLeft, ChevronRight, ChevronDown, Layers, Link2, Plus, Milestone, Clock, Zap, Sliders } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, ChevronDown, Layers, Link2, Plus, Milestone, Clock, Zap, Sliders, Gauge, GitBranch, ArrowRight } from "lucide-react";
 import clsx from "clsx";
 
 interface Props {
@@ -92,6 +92,7 @@ export default function ProjectGanttView({
 
   const projectId = propProjectId || ctx.project?.id || "";
   const dependencyFormId = useId();
+  const cpmInspectorContentId = `${dependencyFormId}-cpm-inspector-content`;
   const tasks = useMemo(() => propTasks || ctx.tasks || [], [propTasks, ctx.tasks]);
   const phases = useMemo(() => propPhases || ctx.phases || [], [propPhases, ctx.phases]);
   const milestones: ProjectMilestoneRecord[] = ctx.project?.milestones || [];
@@ -118,6 +119,7 @@ export default function ProjectGanttView({
 
   // Critical Path & Baseline (Super-PRO Fase 4)
   const [showCriticalPath, setShowCriticalPath] = useState(false);
+  const [showCPMInspector, setShowCPMInspector] = useState(true);
   const [criticalPathData, setCriticalPathData] = useState<ProjectCriticalPathSummary | null>(null);
   const [loadingCriticalPath, setLoadingCriticalPath] = useState(false);
   const [criticalPathError, setCriticalPathError] = useState(false);
@@ -205,6 +207,39 @@ export default function ProjectGanttView({
   const criticalPathTaskIds = useMemo(() => {
     return new Set(criticalPathData?.critical_path_task_ids || []);
   }, [criticalPathData]);
+
+  const cpmMetrics = useMemo(() => {
+    const items = criticalPathData?.tasks ?? [];
+    const totalFloats = items.map((item) => Math.max(0, item.slack_days ?? item.late_start - item.early_start));
+    const nonCriticalCount = totalFloats.filter((floatDays) => floatDays > 0).length;
+    const maximumFloat = totalFloats.length > 0 ? Math.max(...totalFloats) : 0;
+    const averageFloat = totalFloats.length > 0
+      ? totalFloats.reduce((total, floatDays) => total + floatDays, 0) / totalFloats.length
+      : 0;
+    const openCriticalTasks = items
+      .filter((item) => (item.slack_days ?? item.late_start - item.early_start) <= 0)
+      .map((item) => ({ item, task: tasks.find((candidate) => candidate.id === item.task_id) }))
+      .filter((candidate): candidate is { item: typeof items[number]; task: ProjectTaskRecord } =>
+        Boolean(candidate.task && candidate.task.status !== "completed" && candidate.task.status !== "cancelled"),
+      );
+    const fastTrackingLinks = criticalPathData?.has_cycles
+      ? []
+      : dependencies.filter((dependency) =>
+          dependency.dependency_type === "FS" &&
+          criticalPathTaskIds.has(dependency.predecessor_id) &&
+          criticalPathTaskIds.has(dependency.successor_id) &&
+          tasks.some((task) => task.id === dependency.predecessor_id && task.status !== "completed" && task.status !== "cancelled") &&
+          tasks.some((task) => task.id === dependency.successor_id && task.status !== "completed" && task.status !== "cancelled"),
+        );
+
+    return {
+      nonCriticalCount,
+      maximumFloat,
+      averageFloat,
+      openCriticalTasks,
+      fastTrackingLinks,
+    };
+  }, [criticalPathData, criticalPathTaskIds, dependencies, tasks]);
 
   const baselineMap = useMemo(() => {
     const map = new Map<string, { baseline_start?: string | null; baseline_due?: string | null; variance_days?: number }>();
@@ -628,6 +663,180 @@ export default function ProjectGanttView({
           </button>
         </div>
       </div>
+
+      {showCriticalPath && criticalPathData && !loadingCriticalPath && !criticalPathError && (
+        <section
+          aria-labelledby="cpm-inspector-title"
+          className="shrink-0 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]"
+        >
+          <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+            <h3 id="cpm-inspector-title" className="flex items-center gap-2 text-sm font-bold text-[hsl(var(--text-primary))]">
+              <Gauge size={16} className="text-[hsl(var(--primary))]" />
+              Inspector de Red Lógica CPM y Compresión (PMI Vol. 4)
+            </h3>
+            <button
+              type="button"
+              aria-expanded={showCPMInspector}
+              aria-controls={cpmInspectorContentId}
+              aria-label={`${showCPMInspector ? "Ocultar" : "Mostrar"} inspector CPM`}
+              onClick={() => setShowCPMInspector((visible) => !visible)}
+              className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-1.5 text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-3))]"
+            >
+              <ChevronDown size={16} className={clsx("transition-transform", !showCPMInspector && "-rotate-90")} />
+            </button>
+          </div>
+
+          {showCPMInspector && (
+            <div id={cpmInspectorContentId} className="max-h-[24rem] space-y-4 overflow-auto px-4 pb-4">
+              <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+                {[
+                  { label: "Duración total de red", value: `${criticalPathData.total_duration_days} días` },
+                  { label: "Actividades críticas · TF = 0", value: String(criticalPathData.critical_tasks_count) },
+                  { label: "No críticas · TF > 0", value: String(cpmMetrics.nonCriticalCount) },
+                  { label: "Holgura total máx. / prom.", value: `${cpmMetrics.maximumFloat} / ${cpmMetrics.averageFloat.toFixed(1)} días` },
+                ].map((metric) => (
+                  <div
+                    key={metric.label}
+                    className="rounded-lg border p-2.5"
+                    style={{ backgroundColor: "hsl(var(--surface-2))", borderColor: "hsl(var(--border))" }}
+                  >
+                    <p className="text-[10px] font-medium text-[hsl(var(--text-secondary))]">{metric.label}</p>
+                    <p className="mt-1 text-sm font-bold text-[hsl(var(--text-primary))]">{metric.value}</p>
+                  </div>
+                ))}
+              </div>
+
+              {criticalPathData.has_cycles && (
+                <p role="alert" className="rounded-lg border p-2.5 text-xs text-[hsl(var(--warning-text))]" style={{ backgroundColor: "hsl(var(--warning-muted))", borderColor: "hsl(var(--warning) / 0.3)" }}>
+                  La red tiene ciclos; revisa las dependencias antes de aplicar compresión al cronograma.
+                </p>
+              )}
+
+              <div className="overflow-x-auto rounded-lg border" style={{ borderColor: "hsl(var(--border))" }}>
+                <table className="w-full min-w-[860px] text-left text-xs">
+                  <caption className="px-3 py-2 text-left font-semibold text-[hsl(var(--text-primary))]">
+                    Pasada hacia adelante (ES/EF), hacia atrás (LS/LF) y Holgura Total (TF)
+                  </caption>
+                  <thead style={{ backgroundColor: "hsl(var(--surface-2))" }}>
+                    <tr className="text-[hsl(var(--text-primary))]">
+                      <th scope="col" className="p-2">Actividad</th>
+                      <th scope="col" className="p-2">Duración</th>
+                      <th scope="col" className="p-2">ES · Inicio temprano (Early Start)</th>
+                      <th scope="col" className="p-2">EF · Fin temprano (Early Finish)</th>
+                      <th scope="col" className="p-2">LS · Inicio tardío (Late Start)</th>
+                      <th scope="col" className="p-2">LF · Fin tardío (Late Finish)</th>
+                      <th scope="col" className="p-2">TF · Holgura Total (Total Float)</th>
+                      <th scope="col" className="p-2">Clasificación</th>
+                      <th scope="col" className="p-2">Abrir</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {criticalPathData.tasks.map((item) => {
+                      const totalFloat = Math.max(0, item.slack_days ?? item.late_start - item.early_start);
+                      const taskRecord = tasks.find((task) => task.id === item.task_id);
+                      const isCritical = totalFloat === 0;
+                      return (
+                        <tr key={item.task_id} className="border-t text-[hsl(var(--text-primary))]" style={{ borderColor: "hsl(var(--border))" }}>
+                          <th scope="row" className="p-2 font-medium">{item.title}</th>
+                          <td className="p-2">{item.duration_days} d</td>
+                          <td className="p-2">{item.early_start}</td>
+                          <td className="p-2">{item.early_finish}</td>
+                          <td className="p-2">{item.late_start}</td>
+                          <td className="p-2">{item.late_finish}</td>
+                          <td className="p-2">{totalFloat} d</td>
+                          <td className="p-2">
+                            <span
+                              className="inline-flex rounded-full border px-2 py-1 font-semibold"
+                              style={isCritical
+                                ? { backgroundColor: "hsl(var(--danger-muted))", borderColor: "hsl(var(--destructive) / 0.3)", color: "hsl(var(--danger-text))" }
+                                : { backgroundColor: "hsl(var(--success-muted))", borderColor: "hsl(var(--success) / 0.3)", color: "hsl(var(--success-text))" }}
+                            >
+                              {isCritical ? "Crítica (TF=0)" : `Holgura: ${totalFloat}d`}
+                            </span>
+                          </td>
+                          <td className="p-2">
+                            {taskRecord ? (
+                              <button
+                                type="button"
+                                onClick={() => onOpenTask(taskRecord)}
+                                aria-label={`Abrir tarea ${item.title} desde inspector CPM`}
+                                className="rounded border px-2 py-1 font-semibold text-[hsl(var(--primary))] hover:bg-[hsl(var(--surface-2))]"
+                                style={{ borderColor: "hsl(var(--border))" }}
+                              >
+                                Abrir
+                              </button>
+                            ) : <span className="text-[hsl(var(--text-secondary))]">No disponible</span>}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {criticalPathData.tasks.length === 0 && (
+                      <tr>
+                        <td colSpan={9} className="p-4 text-center text-[hsl(var(--text-secondary))]">No hay actividades para inspeccionar.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <section aria-labelledby="schedule-compression-title" className="space-y-2">
+                <h4 id="schedule-compression-title" className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-primary))]">
+                  Diagnóstico de Compresión del Cronograma (PMI Vol. 4 §6)
+                </h4>
+                <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                  <div className="rounded-lg border p-3 space-y-2" style={{ backgroundColor: "hsl(var(--surface-2))", borderColor: "hsl(var(--border))" }}>
+                    <h5 className="flex items-center gap-2 text-xs font-bold text-[hsl(var(--text-primary))]">
+                      <Gauge size={14} className="text-[hsl(var(--warning-text))]" /> Intensificación (Crashing)
+                    </h5>
+                    <p className="text-xs text-[hsl(var(--text-secondary))]">
+                      Añadir recursos a actividades críticas abiertas puede reducir duración, con posible aumento del costo real (AC).
+                    </p>
+                    {cpmMetrics.openCriticalTasks.length > 0 ? (
+                      <ul className="space-y-1">
+                        {cpmMetrics.openCriticalTasks.map(({ item, task }) => (
+                          <li key={`crash-${item.task_id}`} className="flex items-center justify-between gap-2 text-xs text-[hsl(var(--text-primary))]">
+                            <span>{task.title} · {item.duration_days} días</span>
+                            <button type="button" onClick={() => onOpenTask(task)} aria-label={`Revisar crashing para ${task.title}`} className="shrink-0 rounded border px-2 py-1 font-semibold" style={{ backgroundColor: "hsl(var(--surface-1))", borderColor: "hsl(var(--border))", color: "hsl(var(--primary))" }}>
+                              Revisar
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : <p className="text-xs text-[hsl(var(--text-secondary))]">Sin actividades críticas abiertas candidatas.</p>}
+                  </div>
+
+                  <div className="rounded-lg border p-3 space-y-2" style={{ backgroundColor: "hsl(var(--surface-2))", borderColor: "hsl(var(--border))" }}>
+                    <h5 className="flex items-center gap-2 text-xs font-bold text-[hsl(var(--text-primary))]">
+                      <GitBranch size={14} className="text-[hsl(var(--primary))]" /> Ejecución Rápida (Fast-Tracking)
+                    </h5>
+                    <p className="text-xs text-[hsl(var(--text-secondary))]">
+                      Solapar actividades críticas secuenciales reduciendo la relación Fin-Inicio (FS) o usando un adelanto (Lead); aumenta el riesgo de retrabajo.
+                    </p>
+                    {criticalPathData.has_cycles ? (
+                      <p className="text-xs text-[hsl(var(--warning-text))]">Resuelve primero los ciclos de la red lógica.</p>
+                    ) : cpmMetrics.fastTrackingLinks.length > 0 ? (
+                      <ul className="space-y-1">
+                        {cpmMetrics.fastTrackingLinks.map((dependency) => {
+                          const predecessor = tasks.find((task) => task.id === dependency.predecessor_id);
+                          const successor = tasks.find((task) => task.id === dependency.successor_id);
+                          if (!predecessor || !successor) return null;
+                          return (
+                            <li key={`fast-track-${dependency.id}`} className="flex items-center gap-1.5 text-xs text-[hsl(var(--text-primary))]">
+                              <span>{predecessor.title}</span><ArrowRight size={12} aria-hidden="true" />
+                              <span>{successor.title}</span>
+                              <span className="text-[hsl(var(--text-secondary))]">FS</span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    ) : <p className="text-xs text-[hsl(var(--text-secondary))]">No hay enlaces FS entre actividades críticas abiertas para evaluar.</p>}
+                  </div>
+                </div>
+              </section>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* 2. Main Gantt Area: Split into Left Tasks Column & Right Timeline */}
       <div className="flex-1 flex min-h-0 overflow-hidden">

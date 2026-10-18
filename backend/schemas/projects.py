@@ -939,6 +939,7 @@ class ProjectExecutiveReportData(BaseModel):
     governance_summary: Optional[ProjectGovernanceSummary] = None
     kpis: List[ProjectKPI] = Field(default_factory=list)
     indicators: List[ProjectIndicator] = Field(default_factory=list)
+    ccb_and_quality_summary: Optional[dict] = None
     generated_at: datetime
     organization: str
     model_config = orm_config

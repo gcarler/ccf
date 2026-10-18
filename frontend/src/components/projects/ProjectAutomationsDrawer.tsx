@@ -88,6 +88,67 @@ const ACTION_OPTIONS = [
   },
 ];
 
+interface PmiGovernanceTemplate {
+  id: string;
+  title: string;
+  summary: string;
+  triggerEvent: string;
+  actionType: string;
+  name: string;
+  actionData: Record<string, unknown>;
+}
+
+const PMI_GOVERNANCE_TEMPLATES: PmiGovernanceTemplate[] = [
+  {
+    id: "PMI-GOV-01",
+    title: "Auditoría DoD 4/4 en Hito",
+    summary: "Solicita validar aceptación formal y costo de calidad al completar un hito.",
+    triggerEvent: "milestone_completed",
+    actionType: "create_followup_task",
+    name: "PMI-GOV-01: Auditoría de Aceptación Formal DoD y CoQ al completar Hito",
+    actionData: {
+      task_title: "Auditoría DoD 4/4 y Costo de Calidad (CoQ) del Hito",
+      title: "Auditoría DoD 4/4 y Costo de Calidad (CoQ) del Hito",
+      priority: "high",
+    },
+  },
+  {
+    id: "PMI-GOV-02",
+    title: "Centinela de Costo Real AC / EVM",
+    summary: "Registra una alerta para auditar CPI y reserva EMV tras aprobar un gasto.",
+    triggerEvent: "expense_approved",
+    actionType: "notify_assignee",
+    name: "PMI-GOV-02: Centinela de Gasto Aprobado vs Reserva de Contingencia EMV",
+    actionData: {
+      message: "Gasto real aprobado: auditar impacto en CPI y Reserva de Contingencia EMV.",
+    },
+  },
+  {
+    id: "PMI-GOV-03",
+    title: "Escalamiento a Ruta Crítica CPM y CCB",
+    summary: "Crea una evaluación de holgura CPM y posible solicitud de cambio al escalar prioridad.",
+    triggerEvent: "priority_changed",
+    actionType: "create_followup_task",
+    name: "PMI-GOV-03: Evaluación de Impacto en Ruta Crítica CPM y CCB por Escalamiento",
+    actionData: {
+      task_title: "Evaluar impacto en holgura CPM y posible Solicitud de Cambio CCB",
+      title: "Evaluar impacto en holgura CPM y posible Solicitud de Cambio CCB",
+      priority: "urgent",
+    },
+  },
+  {
+    id: "PMI-GOV-04",
+    title: "Cierre Documental y Lecciones Aprendidas",
+    summary: "Notifica verificar evidencia DoD y registrar la lección aprendida al completar una tarea.",
+    triggerEvent: "task_completed",
+    actionType: "notify_assignee",
+    name: "PMI-GOV-04: Verificación de Evidencia DoD y Lecciones Aprendidas al Cierre",
+    actionData: {
+      message: "Entregable completado: verificar firma DoD y registrar lección aprendida.",
+    },
+  },
+];
+
 export function ProjectAutomationsDrawer({
   projectId,
   isOpen,
@@ -101,6 +162,7 @@ export function ProjectAutomationsDrawer({
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [installingTemplateId, setInstallingTemplateId] = useState<string | null>(null);
   const [rules, setRules] = useState<ProjectAutomationRule[]>([]);
   const [testingRuleId, setTestingRuleId] = useState<string | null>(null);
   const [lastTestResults, setLastTestResults] = useState<AutomationExecutionResult[]>([]);
@@ -173,6 +235,52 @@ export function ProjectAutomationsDrawer({
         message: "No se pudo cambiar el estado de la automatización.",
         type: "error",
       });
+    }
+  };
+
+  const handleInstallTemplate = async (template: PmiGovernanceTemplate) => {
+    if (!token || installingTemplateId) return;
+    const existingRule = rules.find((rule) => rule.name.startsWith(`${template.id}:`));
+    if (existingRule?.is_active) return;
+
+    setInstallingTemplateId(template.id);
+    try {
+      if (existingRule) {
+        await apiFetch<ProjectAutomationRule>(
+          `/projects/${projectId}/automations/${existingRule.id}`,
+          { token, method: "PATCH", body: JSON.stringify({ is_active: true }) },
+        );
+      } else {
+        const payload: ProjectAutomationRuleCreate = {
+          project_id: projectId,
+          name: template.name,
+          description: template.summary,
+          trigger_event: template.triggerEvent,
+          condition_data: {},
+          action_type: template.actionType,
+          action_data: template.actionData,
+          is_active: true,
+        };
+        await apiFetch<ProjectAutomationRule>(`/projects/${projectId}/automations`, {
+          token,
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+      }
+      await loadRules();
+      addToast({
+        title: existingRule ? "Regla PMI activada" : "Regla PMI instalada",
+        message: `${template.id} quedó activa en este proyecto.`,
+        type: "success",
+      });
+    } catch {
+      addToast({
+        title: "No se pudo instalar la regla PMI",
+        message: `No se pudo activar ${template.id}. Inténtalo de nuevo.`,
+        type: "error",
+      });
+    } finally {
+      setInstallingTemplateId(null);
     }
   };
 
@@ -377,6 +485,43 @@ export function ProjectAutomationsDrawer({
         {/* Tab 1: Rules List */}
         {activeTab === "rules" && (
           <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+            <section aria-labelledby="pmi-governance-catalog-title" className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 space-y-3">
+              <div>
+                <h3 id="pmi-governance-catalog-title" className="text-sm font-bold text-[hsl(var(--text-primary))]">
+                  Catálogo de Plantillas de Gobernanza Automatizada PMI (Vol. 5 &amp; 6)
+                </h3>
+                <p className="mt-1 text-xs text-[hsl(var(--text-secondary))]">
+                  Instala controles de costo, cronograma, aceptación y cierre documental en este proyecto.
+                </p>
+              </div>
+              <div className="grid gap-2">
+                {PMI_GOVERNANCE_TEMPLATES.map((template) => {
+                  const existingRule = rules.find((rule) => rule.name.startsWith(`${template.id}:`));
+                  const isActive = existingRule?.is_active === true;
+                  const isInstalling = installingTemplateId === template.id;
+                  return (
+                    <article key={template.id} className="flex flex-col gap-2 rounded-md border border-[hsl(var(--border))] p-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-bold text-[hsl(var(--text-primary))]">{template.id} · {template.title}</h4>
+                        <p className="mt-1 text-xs text-[hsl(var(--text-secondary))]">{template.summary}</p>
+                        <p className="mt-1 text-2xs font-semibold text-[hsl(var(--text-secondary))]">
+                          {isActive ? "Activa" : existingRule ? "Instalada · inactiva" : "No instalada"}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={isActive || isInstalling || installingTemplateId !== null || loading}
+                        onClick={() => void handleInstallTemplate(template)}
+                        className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md bg-[hsl(var(--primary))] px-3 py-1.5 text-xs font-bold text-[hsl(var(--primary-foreground))] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {isInstalling ? <RotateCw size={14} className="animate-spin" /> : <Plus size={14} />}
+                        {isActive ? "Regla PMI activa" : existingRule ? "Activar Regla PMI" : "Instalar Regla PMI"}
+                      </button>
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
             {loading ? (
               <div className="p-8 text-center space-y-2">
                 <RotateCw className="animate-spin mx-auto text-[hsl(var(--primary))]" size={24} />

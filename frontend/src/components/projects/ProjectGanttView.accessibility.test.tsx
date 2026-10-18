@@ -198,6 +198,72 @@ describe('ProjectGanttView dependency form accessibility', () => {
     expect(criticalPathToggle).toHaveAttribute('aria-pressed', 'true');
   });
 
+  it('shows the CPM network inspector and compression advice when critical path is enabled', async () => {
+    const onOpenTask = vi.fn();
+    const criticalPath = {
+      project_id: 'project-1',
+      total_duration_days: 7,
+      critical_tasks_count: 2,
+      critical_path_task_ids: ['task-critical-1', 'task-critical-2'],
+      tasks: [
+        { task_id: 'task-critical-1', title: 'Diseño', duration_days: 3, early_start: 0, early_finish: 3, late_start: 0, late_finish: 3, slack_days: 0, is_critical: true },
+        { task_id: 'task-critical-2', title: 'Construcción', duration_days: 4, early_start: 3, early_finish: 7, late_start: 3, late_finish: 7, slack_days: 0, is_critical: true },
+        { task_id: 'task-buffer', title: 'Documentación', duration_days: 2, early_start: 0, early_finish: 2, late_start: 2, late_finish: 4, slack_days: 2, is_critical: false },
+      ],
+      has_cycles: false,
+    };
+    mocks.apiFetch.mockImplementation((path: string) => {
+      if (path.endsWith('/critical-path')) return Promise.resolve(criticalPath);
+      if (path.endsWith('/dependencies')) return Promise.resolve([{
+        id: 'dependency-fs',
+        project_id: 'project-1',
+        predecessor_id: 'task-critical-1',
+        successor_id: 'task-critical-2',
+        dependency_type: 'FS',
+        lag_days: 0,
+      }]);
+      return Promise.resolve([]);
+    });
+
+    render(
+      <ProjectGanttView
+        projectId="project-1"
+        tasks={[
+          { id: 'task-critical-1', project_id: 'project-1', title: 'Diseño', status: 'todo', priority: 'high' },
+          { id: 'task-critical-2', project_id: 'project-1', title: 'Construcción', status: 'in_progress', priority: 'high' },
+          { id: 'task-buffer', project_id: 'project-1', title: 'Documentación', status: 'todo', priority: 'medium' },
+        ]}
+        phases={[]}
+        onOpenTask={onOpenTask}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Alternar ruta crítica' }));
+
+    expect(await screen.findByRole('heading', { name: 'Inspector de Red Lógica CPM y Compresión (PMI Vol. 4)' })).toBeInTheDocument();
+    expect(screen.getByText('Duración total de red')).toBeInTheDocument();
+    expect(screen.getByText('7 días')).toBeInTheDocument();
+    expect(screen.getByText('No críticas · TF > 0')).toBeInTheDocument();
+    expect(screen.getByText('2 / 0.7 días')).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /ES · Inicio temprano/ })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /EF · Fin temprano/ })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /LS · Inicio tardío/ })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /LF · Fin tardío/ })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /TF · Holgura Total/ })).toBeInTheDocument();
+    expect(screen.getAllByText('Crítica (TF=0)')).toHaveLength(2);
+    expect(screen.getByText('Holgura: 2d')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Intensificación (Crashing)' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Ejecución Rápida (Fast-Tracking)' })).toBeInTheDocument();
+    const inspectorToggle = screen.getByRole('button', { name: 'Ocultar inspector CPM' });
+    expect(inspectorToggle).toHaveAttribute('aria-expanded', 'true');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir tarea Diseño desde inspector CPM' }));
+    expect(onOpenTask).toHaveBeenCalledWith(expect.objectContaining({ id: 'task-critical-1' }));
+    expect(screen.getAllByText(/Construcción/).length).toBeGreaterThan(0);
+    fireEvent.click(inspectorToggle);
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+  });
+
   it('loads the baseline only on request and distinguishes an empty result from a failed query', async () => {
     let baselineAttempts = 0;
     mocks.apiFetch.mockImplementation((path: string) => {

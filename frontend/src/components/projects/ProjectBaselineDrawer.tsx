@@ -6,7 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch } from "@/lib/http";
 import type { ProjectBaseline } from "@/types/projects";
-import { Layers, Clock, Plus, History, Sparkles } from "lucide-react";
+import { Layers, Clock, Plus, History, Sparkles, AlertTriangle, Send } from "lucide-react";
 import clsx from "clsx";
 
 interface Props {
@@ -37,6 +37,8 @@ export function ProjectBaselineDrawer({
   const [baselineName, setBaselineName] = useState("");
   const [baselineDescription, setBaselineDescription] = useState("");
   const [saving, setSaving] = useState(false);
+  const [submittingCCB, setSubmittingCCB] = useState(false);
+  const [ccbRequestSubmitted, setCcbRequestSubmitted] = useState(false);
 
   const fetchBaselineData = useCallback(async () => {
     if (!projectId || !token) return;
@@ -76,6 +78,7 @@ export function ProjectBaselineDrawer({
       setShowCreateForm(false);
       setBaselineName("");
       setBaselineDescription("");
+      setCcbRequestSubmitted(false);
     }
   }, [isOpen, fetchBaselineData]);
 
@@ -128,6 +131,63 @@ export function ProjectBaselineDrawer({
     baselineBac !== null && currentBac !== undefined && currentBac !== null
       ? currentBac - baselineBac
       : null;
+  const frozenScopeCount = latestBaseline?.snapshot_data?.tasks_count ?? comparisons.length;
+  const scopeDelta = comparisons.length - frozenScopeCount;
+  const delayedTasksCount = comparisons.filter((comparison) => comparison.variance_days > 0).length;
+  const onTimeOrAheadTasksCount = comparisons.length - delayedTasksCount;
+  const scopeDeviation = scopeDelta !== 0;
+  const scheduleDeviation = totalVariance > 0;
+  const costDeviation = bacDelta !== null && bacDelta !== 0;
+  const hasPMBDeviation = Boolean(latestBaseline && (scopeDeviation || scheduleDeviation || costDeviation));
+
+  const handleRequestRebaseline = async () => {
+    if (!token || !projectId || !latestBaseline || !hasPMBDeviation || submittingCCB) return;
+
+    const scopeImpact = scopeDelta === 0
+      ? `Sin diferencia: ${frozenScopeCount} paquetes congelados y ${comparisons.length} tareas auditadas.`
+      : `${scopeDelta > 0 ? "Adición" : "Eliminación"} de ${Math.abs(scopeDelta)} entregable(s): ${frozenScopeCount} paquetes congelados frente a ${comparisons.length} tareas auditadas.`;
+    const costDeltaDescription = bacDelta === null
+      ? "BAC delta no disponible."
+      : `delta BAC ${bacDelta > 0 ? "+" : ""}$${bacDelta.toLocaleString("es-CO")}.`;
+    const description = [
+      `Desvío acumulado del cronograma: ${totalVariance} días (${delayedTasksCount} tareas con atraso; ${onTimeOrAheadTasksCount} en fecha o adelantadas).`,
+      `Impacto en alcance: ${scopeImpact}`,
+      `BAC congelado: ${baselineBac === null ? "no disponible" : `$${baselineBac.toLocaleString("es-CO")}`}; BAC actual: ${currentBac === undefined || currentBac === null ? "no disponible" : `$${currentBac.toLocaleString("es-CO")}`}; ${costDeltaDescription}`,
+    ].join(" ");
+
+    try {
+      setSubmittingCCB(true);
+      await apiFetch(`/projects/${projectId}/change-requests`, {
+        method: "POST",
+        token,
+        body: {
+          title: "Solicitud de Re-baseline PMB por desviación detectada",
+          description,
+          justification: "Alineación formal de la PMB bajo Control Integrado de Cambios PMI",
+          change_type: "integrated",
+          cost_impact_delta: Math.max(0, bacDelta ?? 0),
+          scope_impact_summary: scopeImpact,
+          scope_impact: scopeImpact,
+          schedule_impact_days: Math.max(0, totalVariance),
+          cost_impact: Math.max(0, bacDelta ?? 0),
+        },
+      });
+
+      addToast({
+        title: "Solicitud radicada ante el CCB",
+        description: "La PMB aprobada permanece vigente hasta que el Comité de Control de Cambios apruebe la solicitud.",
+      });
+      setCcbRequestSubmitted(true);
+    } catch (error: unknown) {
+      addToast({
+        title: "No se pudo radicar la solicitud",
+        description: error instanceof Error ? error.message : "Intenta nuevamente más tarde.",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmittingCCB(false);
+    }
+  };
 
   return (
     <RightPanel
@@ -262,6 +322,79 @@ export function ProjectBaselineDrawer({
                 </div>
               </div>
             )}
+
+            <section
+              aria-labelledby="pmb-integrity-title"
+              className="rounded-xl border p-3.5 space-y-3"
+              style={{ backgroundColor: "hsl(var(--surface-2))", borderColor: "hsl(var(--border))" }}
+            >
+              <div className="flex items-start gap-2.5">
+                <Layers size={17} className="mt-0.5 shrink-0 text-[hsl(var(--primary))]" />
+                <div>
+                  <h4 id="pmb-integrity-title" className="text-xs font-extrabold text-[hsl(var(--foreground))]">
+                    Diagnóstico de Integridad PMB (Alcance × Cronograma × Costo — PMI Vol. 3 & 6)
+                  </h4>
+                  <p className="mt-1 text-2xs text-[hsl(var(--muted-foreground))]">
+                    Una línea base aprobada solo puede cambiarse mediante control integrado de cambios.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <div className="rounded-lg border p-2.5" style={{ backgroundColor: "hsl(var(--surface-1))", borderColor: "hsl(var(--border))" }}>
+                  <p className="text-2xs font-bold uppercase text-[hsl(var(--muted-foreground))]">Alcance · Scope</p>
+                  <p className="mt-1 text-xs font-semibold text-[hsl(var(--foreground))]">{frozenScopeCount} congelados · {comparisons.length} auditados</p>
+                  <p className={clsx("mt-1 text-2xs font-bold", scopeDeviation ? "text-[hsl(var(--warning))]" : "text-[hsl(var(--success))]")}>
+                    {scopeDeviation ? `${scopeDelta > 0 ? "+" : ""}${scopeDelta} entregable(s) · Scope Creep` : "Sin variación de alcance"}
+                  </p>
+                </div>
+                <div className="rounded-lg border p-2.5" style={{ backgroundColor: "hsl(var(--surface-1))", borderColor: "hsl(var(--border))" }}>
+                  <p className="text-2xs font-bold uppercase text-[hsl(var(--muted-foreground))]">Cronograma · Schedule</p>
+                  <p className="mt-1 text-xs font-semibold text-[hsl(var(--foreground))]">Desvío acumulado: {totalVariance} días</p>
+                  <p className="mt-1 text-2xs text-[hsl(var(--muted-foreground))]">{delayedTasksCount} con atraso · {onTimeOrAheadTasksCount} en fecha o adelantadas</p>
+                </div>
+                <div className="rounded-lg border p-2.5" style={{ backgroundColor: "hsl(var(--surface-1))", borderColor: "hsl(var(--border))" }}>
+                  <p className="text-2xs font-bold uppercase text-[hsl(var(--muted-foreground))]">Costo · BAC</p>
+                  <p className="mt-1 text-xs font-semibold text-[hsl(var(--foreground))]">Base: {baselineBac === null ? "—" : `$${baselineBac.toLocaleString("es-CO")}`}</p>
+                  <p className="mt-1 text-2xs text-[hsl(var(--muted-foreground))]">Actual: {currentBac === undefined || currentBac === null ? "—" : `$${currentBac.toLocaleString("es-CO")}`}</p>
+                  <p className={clsx("mt-1 text-2xs font-bold", costDeviation ? "text-[hsl(var(--warning))]" : "text-[hsl(var(--success))]")}>
+                    Delta: {bacDelta === null ? "No disponible" : `${bacDelta > 0 ? "+" : ""}$${bacDelta.toLocaleString("es-CO")}`}
+                  </p>
+                </div>
+              </div>
+
+              {hasPMBDeviation && (
+                <div
+                  role="alert"
+                  className="space-y-2 rounded-lg border p-3"
+                  style={{ backgroundColor: "hsl(var(--warning-muted))", borderColor: "hsl(var(--warning) / 0.35)" }}
+                >
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle size={16} className="mt-0.5 shrink-0 text-[hsl(var(--warning))]" />
+                    <div>
+                      <p className="text-xs font-extrabold text-[hsl(var(--warning-text))]">Desviación sobre la PMB Detectada — Requiere Control Integrado de Cambios (CCB)</p>
+                      <p className="mt-1 text-2xs text-[hsl(var(--text-primary))]">
+                        Ninguna línea base aprobada debe alterarse sin una Solicitud de Cambio (CR) aprobada por el CCB.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void handleRequestRebaseline()}
+                    disabled={submittingCCB || ccbRequestSubmitted}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                    style={{ backgroundColor: "hsl(var(--surface-1))", borderColor: "hsl(var(--warning) / 0.45)", color: "hsl(var(--text-primary))" }}
+                  >
+                    <Send size={14} />
+                    {submittingCCB
+                      ? "Radicando solicitud..."
+                      : ccbRequestSubmitted
+                      ? "Solicitud radicada ante el CCB"
+                      : "Radicar Solicitud de Re-baseline al CCB"}
+                  </button>
+                </div>
+              )}
+            </section>
           </div>
         ) : loading ? (
           <div

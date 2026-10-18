@@ -115,4 +115,68 @@ describe('ProjectBaselineDrawer read states', () => {
     expect(screen.getByText('BAC Actual vs Línea Base:')).toBeInTheDocument();
     expect(screen.getByText('EVM Activa')).toBeInTheDocument();
   });
+
+  it('diagnoses PMB scope, schedule and cost deviations and submits a re-baseline request to the CCB', async () => {
+    const activeSnapshot = {
+      id: 'bl-active-2',
+      project_id: 'project-1',
+      name: 'PMB aprobada',
+      created_at: '2026-09-01T00:00:00Z',
+      snapshot_data: { tasks_count: 2, bac: 80000 },
+      total_variance_days: 4,
+      comparisons: [
+        { task_id: 'task-1', title: 'Diseño', baseline_duration: 4, current_duration: 9, variance_days: 5, status: 'in_progress' },
+        { task_id: 'task-2', title: 'Compra', baseline_duration: 3, current_duration: 1, variance_days: -2, status: 'completed' },
+        { task_id: 'task-3', title: 'Instalación', baseline_duration: 2, current_duration: 3, variance_days: 1, status: 'todo' },
+      ],
+    };
+    mocks.apiFetch.mockImplementation((path: string, options?: { method?: string }) => {
+      if (path.endsWith('/change-requests') && options?.method === 'POST') return Promise.resolve({ id: 'cr-1' });
+      if (path.endsWith('/baseline')) return Promise.resolve(activeSnapshot);
+      if (path.endsWith('/baselines')) return Promise.resolve([activeSnapshot]);
+      return Promise.resolve(null);
+    });
+
+    render(
+      <ProjectBaselineDrawer
+        projectId="project-1"
+        isOpen
+        onClose={vi.fn()}
+        currentBac={95000}
+      />,
+    );
+
+    expect(await screen.findByRole('heading', { name: /Diagnóstico de Integridad PMB/ })).toBeInTheDocument();
+    expect(screen.getByText('2 congelados · 3 auditados')).toBeInTheDocument();
+    expect(screen.getByText('+1 entregable(s) · Scope Creep')).toBeInTheDocument();
+    expect(screen.getByText('Desvío acumulado: 4 días')).toBeInTheDocument();
+    expect(screen.getByText('2 con atraso · 1 en fecha o adelantadas')).toBeInTheDocument();
+    expect(screen.getByText('Delta: +$15.000')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Desviación sobre la PMB Detectada');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Radicar Solicitud de Re-baseline al CCB' }));
+
+    await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalledWith(
+      '/projects/project-1/change-requests',
+      expect.objectContaining({
+        method: 'POST',
+        token: 'test-token',
+        body: {
+          title: 'Solicitud de Re-baseline PMB por desviación detectada',
+          description: expect.stringContaining('Desvío acumulado del cronograma: 4 días'),
+          justification: 'Alineación formal de la PMB bajo Control Integrado de Cambios PMI',
+          change_type: 'integrated',
+          cost_impact_delta: 15000,
+          scope_impact_summary: 'Adición de 1 entregable(s): 2 paquetes congelados frente a 3 tareas auditadas.',
+          scope_impact: 'Adición de 1 entregable(s): 2 paquetes congelados frente a 3 tareas auditadas.',
+          schedule_impact_days: 4,
+          cost_impact: 15000,
+        },
+      }),
+    ));
+    expect(mocks.addToast).toHaveBeenCalledWith(expect.objectContaining({
+      title: 'Solicitud radicada ante el CCB',
+    }));
+    expect(screen.getByRole('button', { name: 'Solicitud radicada ante el CCB' })).toBeDisabled();
+  });
 });

@@ -544,6 +544,7 @@ export interface ProjectBaseline {
   created_by?: string | null;
   created_at: string;
   snapshot_data?: {
+    tasks_count?: number;
     total_tasks?: number;
     project_title?: string;
     bac?: number;
@@ -749,6 +750,23 @@ export interface AutomationExecutionResult {
   details?: string | null;
 }
 
+export interface CcbAndQualitySummary {
+  total_change_requests: number;
+  pending_ccb_count: number;
+  approved_count: number;
+  rejected_count: number;
+  net_approved_cost_delta: number;
+  net_approved_schedule_days: number;
+  tasks_dod_accepted_count: number;
+  total_coq_cost: number;
+  coq_by_category: {
+    prevention: number;
+    appraisal: number;
+    internal_failure: number;
+    external_failure: number;
+  };
+}
+
 export interface ProjectExecutiveReportData {
   project: {
     id: string;
@@ -857,6 +875,7 @@ export interface ProjectExecutiveReportData {
   governance_summary?: ProjectGovernanceSummary | null;
   kpis?: ProjectKPI[];
   indicators?: ProjectIndicator[];
+  ccb_and_quality_summary?: CcbAndQualitySummary | null;
   generated_at: string;
   organization: string;
 }

@@ -73,6 +73,44 @@ describe("ProjectReportDrawer", () => {
     expect(reportBody?.innerHTML).not.toMatch(/--(?:card|foreground|muted-foreground)\b/);
   });
 
+  it("renderiza la tarjeta ejecutiva CCB, Aceptación DoD y CoQ por categoría", async () => {
+    const reportWithCcb = {
+      ...reportData,
+      ccb_and_quality_summary: {
+        total_change_requests: 3,
+        pending_ccb_count: 1,
+        approved_count: 2,
+        rejected_count: 0,
+        net_approved_cost_delta: 20000,
+        net_approved_schedule_days: 15,
+        tasks_dod_accepted_count: 4,
+        total_coq_cost: 350,
+        coq_by_category: {
+          prevention: 250,
+          appraisal: 100,
+          internal_failure: 0,
+          external_failure: 0,
+        },
+      },
+    } satisfies ProjectExecutiveReportData;
+    vi.mocked(apiFetch).mockResolvedValueOnce(reportWithCcb);
+
+    const { container } = renderDrawer();
+
+    expect(
+      await screen.findByText(/Control de Cambios \(CCB\) · Aceptación DoD · Costo de Calidad/),
+    ).toBeInTheDocument();
+    expect(screen.getByText("3 solicitudes de cambio")).toBeInTheDocument();
+    expect(screen.getAllByText("Pendientes CCB").length).toBeGreaterThan(0);
+    expect(screen.getByText(/\$20,000 y 15 días/)).toBeInTheDocument();
+    expect(screen.getByText(/Entregables aceptados \(DoD 4\/4\):/)).toBeInTheDocument();
+    for (const categoryLabel of ["Prevención", "Evaluación", "Falla Interna", "Falla Externa"]) {
+      expect(screen.getByText(categoryLabel)).toBeInTheDocument();
+    }
+    expect(screen.getByText(/\$350/)).toBeInTheDocument();
+    expect((await axe(container)).violations).toEqual([]);
+  });
+
   it("shows loading state and renders executive data when it arrives", async () => {
     let resolveReport: ((value: ProjectExecutiveReportData) => void) | undefined;
     vi.mocked(apiFetch).mockImplementation(() => new Promise((resolve) => {
