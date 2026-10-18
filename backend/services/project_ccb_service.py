@@ -919,6 +919,121 @@ def audit_ccb_decision_sla_breaches(
     }
 
 
+def evaluate_deliverable_first_time_right_yield(
+    deliverables: Optional[list[dict[str, Any]]],
+    target_ftr_pct: float = 85.0,
+) -> dict[str, Any]:
+    """Evalúa el rendimiento First-Time-Right (FTR Yield) y retrabajo de entregables (PMBOK §8.3 / §5.5).
+
+    Analiza entregables sometidos a Control de Calidad (§8.3) y Validación del
+    Alcance (§5.5):
+    - `total_inspected`: entregables válidos analizados.
+    - `first_time_right_count`: entregables con `accepted is True` y `rejection_cycles == 0`.
+    - `reworked_deliverable_ids`: IDs de entregables con `rejection_cycles > 0`.
+    - `chronic_rework_ids`: IDs de entregables con `rejection_cycles >= 2`.
+    - `total_rework_hours`: suma de horas de retrabajo redondeada a 2 decimales.
+    - `ftr_yield_pct`: porcentaje FTR (`0.0` a `100.0`, o `0.0` si `total_inspected == 0`).
+    - `quality_yield_posture`:
+      - `'NO_DELIVERABLES_INSPECTED'` si `total_inspected == 0`
+      - `'CHRONIC_REWORK_BOTTLENECK'` si `len(chronic_rework_ids) > 0`
+      - `'HIGH_FIRST_TIME_RIGHT_YIELD'` si `ftr_yield_pct >= target_ftr_pct` y `len(chronic_rework_ids) == 0`
+      - `'BELOW_TARGET_FTR_YIELD'` en cualquier otro caso (`ftr_yield_pct < target_ftr_pct`)
+    - `recommendations`: recomendaciones accionables PMI PMBOK §8.3 / §5.5.
+    """
+    items = [item for item in (deliverables or []) if isinstance(item, dict)]
+    try:
+        raw_target = float(85.0 if target_ftr_pct is None else target_ftr_pct)
+    except (TypeError, ValueError):
+        raw_target = 85.0
+    safe_target_ftr_pct = max(0.0, min(100.0, round(raw_target, 2)))
+
+    total_inspected = len(items)
+    first_time_right_count = 0
+    reworked_deliverable_ids: list[str] = []
+    chronic_rework_ids: list[str] = []
+    total_rework_hours = 0.0
+
+    for idx, item in enumerate(items, start=1):
+        raw_id = item.get("id") if item.get("id") is not None else item.get("task_id")
+        deliverable_id = str(raw_id).strip() if raw_id is not None and str(raw_id).strip() else f"DELIV-{idx}"
+
+        accepted = bool(item.get("accepted", False))
+
+        raw_cycles = (
+            item.get("rejection_cycles")
+            if item.get("rejection_cycles") is not None
+            else item.get("rework_count", 0)
+        )
+        try:
+            rejection_cycles = max(0, int(raw_cycles or 0))
+        except (TypeError, ValueError):
+            rejection_cycles = 0
+
+        raw_hours = item.get("rework_hours", 0.0)
+        try:
+            rework_hours = max(0.0, float(raw_hours or 0.0))
+        except (TypeError, ValueError):
+            rework_hours = 0.0
+
+        total_rework_hours += rework_hours
+
+        if accepted and rejection_cycles == 0:
+            first_time_right_count += 1
+
+        if rejection_cycles > 0:
+            reworked_deliverable_ids.append(deliverable_id)
+
+        if rejection_cycles >= 2:
+            chronic_rework_ids.append(deliverable_id)
+
+    rounded_rework_hours = round(total_rework_hours, 2)
+    ftr_yield_pct = (
+        round((first_time_right_count / total_inspected) * 100.0, 2)
+        if total_inspected > 0
+        else 0.0
+    )
+
+    recommendations: list[str] = []
+    if total_inspected == 0:
+        quality_yield_posture = "NO_DELIVERABLES_INSPECTED"
+        recommendations.append(
+            "Registrar inspecciones de Control de Calidad (PMBOK §8.3) y actas DoD antes de ejecutar la Validación del Alcance (§5.5)."
+        )
+    elif len(chronic_rework_ids) > 0:
+        quality_yield_posture = "CHRONIC_REWORK_BOTTLENECK"
+        recommendations.append(
+            f"Ejecutar análisis de causa raíz (Ishikawa/5-Porqués) sobre entregables con retrabajo crónico ({', '.join(chronic_rework_ids)}) que acumulan {rounded_rework_hours}h de retrabajo (PMBOK §8.3)."
+        )
+        recommendations.append(
+            "Reforzar listas de verificación DoD previas a la inspección para eliminar ciclos repetitivos de rechazo en Validación del Alcance (§5.5)."
+        )
+    elif ftr_yield_pct >= safe_target_ftr_pct:
+        quality_yield_posture = "HIGH_FIRST_TIME_RIGHT_YIELD"
+        recommendations.append(
+            f"Rendimiento First-Time-Right ({ftr_yield_pct}%) cumple la meta de calidad ({safe_target_ftr_pct}%). Mantener prevención e inspección temprana PMBOK §8.3."
+        )
+    else:
+        quality_yield_posture = "BELOW_TARGET_FTR_YIELD"
+        recommendations.append(
+            f"Rendimiento First-Time-Right ({ftr_yield_pct}%) inferior al umbral objetivo ({safe_target_ftr_pct}%). Fortalecer revisiones de pares y criterios de aceptación DoD antes de entregar a validación (§5.5)."
+        )
+        if reworked_deliverable_ids:
+            recommendations.append(
+                f"Revisar defectos detectados en {', '.join(reworked_deliverable_ids)} ({rounded_rework_hours}h de retrabajo) para contener costos de falla interna (PMBOK §8.3)."
+            )
+
+    return {
+        "total_inspected": total_inspected,
+        "first_time_right_count": first_time_right_count,
+        "reworked_deliverable_ids": reworked_deliverable_ids,
+        "chronic_rework_ids": chronic_rework_ids,
+        "total_rework_hours": rounded_rework_hours,
+        "ftr_yield_pct": ftr_yield_pct,
+        "quality_yield_posture": quality_yield_posture,
+        "recommendations": recommendations,
+    }
+
+
 class ProjectCCBService:
     """Fachada canónica de Control Integrado de Cambios (CCB) y Calidad DoD PMI."""
 
@@ -1074,6 +1189,15 @@ class ProjectCCBService:
     ) -> dict[str, Any]:
         return audit_ccb_decision_sla_breaches(requests, sla_hours=sla_hours)
 
+    @staticmethod
+    def evaluate_deliverable_first_time_right_yield(
+        deliverables: Optional[list[dict[str, Any]]],
+        target_ftr_pct: float = 85.0,
+    ) -> dict[str, Any]:
+        return evaluate_deliverable_first_time_right_yield(
+            deliverables, target_ftr_pct=target_ftr_pct
+        )
+
 
 __all__ = [
     "list_change_requests",
@@ -1096,6 +1220,7 @@ __all__ = [
     "evaluate_scope_creep_baseline_drift",
     "evaluate_ccb_voting_consensus",
     "audit_ccb_decision_sla_breaches",
+    "evaluate_deliverable_first_time_right_yield",
     "ProjectCCBService",
 ]
 

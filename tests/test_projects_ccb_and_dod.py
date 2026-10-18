@@ -1631,3 +1631,106 @@ def test_audit_ccb_decision_sla_no_requests():
             "posture": "NO_CCB_REQUESTS",
         }
 
+
+# ─── evaluate_deliverable_first_time_right_yield (pure helper) ───────────────
+
+
+def test_evaluate_deliverable_first_time_right_yield_high_ftr():
+    """FTR >= target_ftr_pct y sin retrabajo crónico -> HIGH_FIRST_TIME_RIGHT_YIELD."""
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        evaluate_deliverable_first_time_right_yield,
+    )
+
+    deliverables = [
+        {"id": "DEL-01", "accepted": True, "rejection_cycles": 0, "rework_hours": 0.0},
+        {"id": "DEL-02", "accepted": True, "rejection_cycles": 0, "rework_hours": 0.0},
+        {"task_id": "DEL-03", "accepted": True, "rework_count": 0, "rework_hours": 0.0},
+        {"id": "DEL-04", "accepted": True, "rejection_cycles": 0, "rework_hours": 0.0},
+        {"id": "DEL-05", "accepted": True, "rejection_cycles": 0, "rework_hours": 0.0},
+        {"id": "DEL-06", "accepted": True, "rejection_cycles": 0, "rework_hours": 0.0},
+        {"id": "DEL-07", "accepted": True, "rejection_cycles": 1, "rework_hours": 2.5},
+    ]
+
+    res = evaluate_deliverable_first_time_right_yield(deliverables, target_ftr_pct=85.0)
+    assert res["total_inspected"] == 7
+    assert res["first_time_right_count"] == 6
+    assert res["reworked_deliverable_ids"] == ["DEL-07"]
+    assert res["chronic_rework_ids"] == []
+    assert res["total_rework_hours"] == 2.5
+    assert res["ftr_yield_pct"] == 85.71
+    assert res["quality_yield_posture"] == "HIGH_FIRST_TIME_RIGHT_YIELD"
+    assert len(res["recommendations"]) >= 1
+
+    via_service = ProjectCCBService.evaluate_deliverable_first_time_right_yield(
+        deliverables, target_ftr_pct=85.0
+    )
+    assert via_service == res
+
+
+def test_evaluate_deliverable_first_time_right_yield_chronic_rework_bottleneck():
+    """Al menos un entregable con rejection_cycles >= 2 -> CHRONIC_REWORK_BOTTLENECK."""
+    from backend.services.project_ccb_service import (
+        evaluate_deliverable_first_time_right_yield,
+    )
+
+    deliverables = [
+        {"id": "DEL-10", "accepted": True, "rejection_cycles": 0, "rework_hours": 0.0},
+        {"id": "DEL-11", "accepted": True, "rejection_cycles": 0, "rework_hours": 0.0},
+        {"task_id": "DEL-12", "accepted": False, "rework_count": 3, "rework_hours": 14.25},
+        {"id": "DEL-13", "accepted": True, "rejection_cycles": 2, "rework_hours": 6.5},
+    ]
+
+    res = evaluate_deliverable_first_time_right_yield(deliverables, target_ftr_pct=80.0)
+    assert res["total_inspected"] == 4
+    assert res["first_time_right_count"] == 2
+    assert res["reworked_deliverable_ids"] == ["DEL-12", "DEL-13"]
+    assert res["chronic_rework_ids"] == ["DEL-12", "DEL-13"]
+    assert res["total_rework_hours"] == 20.75
+    assert res["ftr_yield_pct"] == 50.0
+    assert res["quality_yield_posture"] == "CHRONIC_REWORK_BOTTLENECK"
+    assert any("DEL-12" in rec for rec in res["recommendations"])
+
+
+def test_evaluate_deliverable_first_time_right_yield_below_target():
+    """Sin retrabajo crónico pero ftr_yield_pct < target_ftr_pct -> BELOW_TARGET_FTR_YIELD."""
+    from backend.services.project_ccb_service import (
+        evaluate_deliverable_first_time_right_yield,
+    )
+
+    deliverables = [
+        {"id": "DEL-20", "accepted": True, "rejection_cycles": 0, "rework_hours": 0.0},
+        {"id": "DEL-21", "accepted": True, "rejection_cycles": 1, "rework_hours": 3.2},
+        {"id": "DEL-22", "accepted": False, "rejection_cycles": 1, "rework_hours": 4.8},
+        {"id": "DEL-23", "accepted": True, "rejection_cycles": 0, "rework_hours": 0.0},
+    ]
+
+    res = evaluate_deliverable_first_time_right_yield(deliverables, target_ftr_pct=85.0)
+    assert res["total_inspected"] == 4
+    assert res["first_time_right_count"] == 2
+    assert res["reworked_deliverable_ids"] == ["DEL-21", "DEL-22"]
+    assert res["chronic_rework_ids"] == []
+    assert res["total_rework_hours"] == 8.0
+    assert res["ftr_yield_pct"] == 50.0
+    assert res["quality_yield_posture"] == "BELOW_TARGET_FTR_YIELD"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_evaluate_deliverable_first_time_right_yield_no_deliverables_inspected():
+    """None, lista vacía o entradas no-dict -> NO_DELIVERABLES_INSPECTED."""
+    from backend.services.project_ccb_service import (
+        evaluate_deliverable_first_time_right_yield,
+    )
+
+    for payload in (None, [], ["invalid", 99]):
+        res = evaluate_deliverable_first_time_right_yield(payload)  # type: ignore[arg-type]
+        assert res["total_inspected"] == 0
+        assert res["first_time_right_count"] == 0
+        assert res["reworked_deliverable_ids"] == []
+        assert res["chronic_rework_ids"] == []
+        assert res["total_rework_hours"] == 0.0
+        assert res["ftr_yield_pct"] == 0.0
+        assert res["quality_yield_posture"] == "NO_DELIVERABLES_INSPECTED"
+        assert len(res["recommendations"]) == 1
+
+
