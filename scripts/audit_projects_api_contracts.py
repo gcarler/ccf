@@ -5670,6 +5670,158 @@ def summarize_projects_multipart_and_form_media_type_hygiene(
     }
 
 
+_COMPONENT_IDENTIFIER_RE = re.compile(r"^[A-Z][A-Za-z0-9_.-]*$")
+
+
+def summarize_projects_component_schema_naming_and_title_hygiene(
+    schema: Mapping[str, Any] | None = None,
+    *,
+    path_prefix: str = "/api/v1/projects",
+) -> dict[str, Any]:
+    """Audita las convenciones de nombres y metadatos title de los esquemas en components/schemas referenciados bajo path_prefix."""
+    if schema is None:
+        from backend.app import app
+
+        schema_dict: Mapping[str, Any] = app.openapi()
+    else:
+        schema_dict = schema
+
+    paths = schema_dict.get("paths", {}) if isinstance(schema_dict, Mapping) else {}
+    if not isinstance(paths, Mapping):
+        paths = {}
+
+    components = schema_dict.get("components", {}) if isinstance(schema_dict, Mapping) else {}
+    schemas = components.get("schemas", {}) if isinstance(components, Mapping) else {}
+    if not isinstance(schemas, Mapping):
+        schemas = {}
+
+    has_exact_prefix = any(str(p).startswith(path_prefix) for p in paths.keys())
+    if has_exact_prefix:
+        effective_prefixes: tuple[str, ...] = (path_prefix,)
+    elif path_prefix in ("/api/v1/projects", "/api/projects", "/projects"):
+        effective_prefixes = ("/api/v1/projects", "/api/projects", "/projects")
+    else:
+        effective_prefixes = (path_prefix,)
+
+    referenced_schemas: set[str] = set()
+    has_matching_paths = False
+
+    for path in sorted(paths.keys()):
+        path_str = str(path)
+        if not path_str.startswith(effective_prefixes):
+            continue
+        path_item = paths[path]
+        if not isinstance(path_item, Mapping):
+            continue
+        has_matching_paths = True
+
+        for ref in schema_refs(dict(path_item)):
+            referenced_schemas.add(ref)
+
+    if referenced_schemas:
+        queue = list(referenced_schemas)
+        while queue:
+            current = queue.pop()
+            s_obj = schemas.get(current)
+            if isinstance(s_obj, Mapping):
+                for nested_ref in schema_refs(dict(s_obj)):
+                    if nested_ref not in referenced_schemas:
+                        referenced_schemas.add(nested_ref)
+                        queue.append(nested_ref)
+    elif not has_matching_paths and schemas:
+        referenced_schemas = {str(k) for k in schemas.keys()}
+
+    referenced_existing = sorted(s for s in referenced_schemas if s in schemas)
+
+    title_to_schemas: dict[str, list[str]] = {}
+    for s_name in referenced_existing:
+        s_obj = schemas.get(s_name)
+        if not isinstance(s_obj, Mapping):
+            continue
+        raw_title = s_obj.get("title")
+        norm_title = str(raw_title).strip().lower() if raw_title is not None else ""
+        if norm_title:
+            title_to_schemas.setdefault(norm_title, []).append(s_name)
+
+    duplicate_title_schemas = {
+        s_name
+        for names in title_to_schemas.values()
+        if len(names) > 1
+        for s_name in names
+    }
+
+    compliant_schemas_count = 0
+    invalid_component_identifier_count = 0
+    missing_or_blank_title_count = 0
+    duplicate_normalized_title_count = 0
+    violations: list[dict[str, Any]] = []
+
+    for s_name in referenced_existing:
+        s_obj = schemas.get(s_name)
+        if not isinstance(s_obj, Mapping):
+            continue
+
+        has_violation = False
+
+        if not s_name or not _COMPONENT_IDENTIFIER_RE.match(s_name):
+            invalid_component_identifier_count += 1
+            has_violation = True
+            violations.append(
+                {
+                    "schema_name": s_name,
+                    "reason": "invalid_component_identifier",
+                }
+            )
+
+        raw_title = s_obj.get("title")
+        title_str = str(raw_title).strip() if raw_title is not None else ""
+        if not title_str:
+            missing_or_blank_title_count += 1
+            has_violation = True
+            violations.append(
+                {
+                    "schema_name": s_name,
+                    "reason": "missing_or_blank_title",
+                }
+            )
+        elif s_name in duplicate_title_schemas:
+            duplicate_normalized_title_count += 1
+            has_violation = True
+            violations.append(
+                {
+                    "schema_name": s_name,
+                    "reason": "duplicate_normalized_title",
+                }
+            )
+
+        if not has_violation:
+            compliant_schemas_count += 1
+
+    referenced_schemas_count = len(referenced_existing)
+    hygiene_score = (
+        100.0
+        if referenced_schemas_count == 0
+        else round((compliant_schemas_count / referenced_schemas_count) * 100.0, 2)
+    )
+    is_compliant = (
+        invalid_component_identifier_count == 0
+        and missing_or_blank_title_count == 0
+        and duplicate_normalized_title_count == 0
+    )
+
+    return {
+        "path_prefix": path_prefix,
+        "referenced_schemas_count": referenced_schemas_count,
+        "compliant_schemas_count": compliant_schemas_count,
+        "invalid_component_identifier_count": invalid_component_identifier_count,
+        "missing_or_blank_title_count": missing_or_blank_title_count,
+        "duplicate_normalized_title_count": duplicate_normalized_title_count,
+        "violations": violations,
+        "hygiene_score": hygiene_score,
+        "is_compliant": is_compliant,
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()

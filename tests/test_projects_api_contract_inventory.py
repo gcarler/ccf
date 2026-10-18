@@ -6949,3 +6949,196 @@ def test_multipart_and_form_media_type_hygiene_real_openapi():
     assert res["is_compliant"] is True
 
 
+def test_component_schema_naming_and_title_hygiene_clean_schema():
+    """Verifica que esquemas referenciados con nombres PascalCase y títulos únicos pasen la auditoría."""
+    schema = {
+        "paths": {
+            "/api/v1/projects/charter": {
+                "post": {
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProjectCharterCreate"
+                                }
+                            }
+                        }
+                    },
+                    "responses": {
+                        "201": {
+                            "description": "Created",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/ProjectCharterRead"
+                                    }
+                                }
+                            },
+                        }
+                    },
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "ProjectCharterCreate": {
+                    "title": "ProjectCharterCreate",
+                    "type": "object",
+                    "properties": {"name": {"type": "string"}},
+                },
+                "ProjectCharterRead": {
+                    "title": "ProjectCharterRead",
+                    "type": "object",
+                    "properties": {"id": {"type": "string"}},
+                },
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_component_schema_naming_and_title_hygiene(
+        schema, path_prefix="/api/v1/projects"
+    )
+    assert res["path_prefix"] == "/api/v1/projects"
+    assert res["referenced_schemas_count"] == 2
+    assert res["compliant_schemas_count"] == 2
+    assert res["invalid_component_identifier_count"] == 0
+    assert res["missing_or_blank_title_count"] == 0
+    assert res["duplicate_normalized_title_count"] == 0
+    assert res["violations"] == []
+    assert res["hygiene_score"] == 100.0
+    assert res["is_compliant"] is True
+
+
+def test_component_schema_naming_and_title_hygiene_detects_invalid_identifier_and_missing_title():
+    """Detecta nombres de componente no PascalCase o con espacios y esquemas sin title."""
+    schema = {
+        "paths": {
+            "/api/v1/projects/items": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "description": "OK",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/project_lowercase"
+                                    }
+                                }
+                            },
+                        },
+                        "400": {
+                            "description": "Bad",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/ProjectUntitled"
+                                    }
+                                }
+                            },
+                        },
+                    }
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "project_lowercase": {
+                    "title": "ProjectLowercase",
+                    "type": "object",
+                },
+                "ProjectUntitled": {
+                    "title": "   ",
+                    "type": "object",
+                },
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_component_schema_naming_and_title_hygiene(
+        schema, path_prefix="/api/v1/projects"
+    )
+    assert res["referenced_schemas_count"] == 2
+    assert res["compliant_schemas_count"] == 0
+    assert res["invalid_component_identifier_count"] == 1
+    assert res["missing_or_blank_title_count"] == 1
+    assert res["hygiene_score"] == 0.0
+    assert res["is_compliant"] is False
+    assert res["violations"] == [
+        {
+            "schema_name": "ProjectUntitled",
+            "reason": "missing_or_blank_title",
+        },
+        {
+            "schema_name": "project_lowercase",
+            "reason": "invalid_component_identifier",
+        },
+    ]
+
+
+def test_component_schema_naming_and_title_hygiene_detects_duplicate_normalized_titles():
+    """Detecta colisiones de title normalizado entre esquemas distintos."""
+    schema = {
+        "paths": {
+            "/api/v1/projects/summary": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "description": "OK",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "oneOf": [
+                                            {"$ref": "#/components/schemas/ProjectSummaryV1"},
+                                            {"$ref": "#/components/schemas/ProjectSummaryV2"},
+                                        ]
+                                    }
+                                }
+                            },
+                        }
+                    }
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "ProjectSummaryV1": {
+                    "title": "ProjectSummary",
+                    "type": "object",
+                },
+                "ProjectSummaryV2": {
+                    "title": "  projectsummary  ",
+                    "type": "object",
+                },
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_component_schema_naming_and_title_hygiene(
+        schema, path_prefix="/api/v1/projects"
+    )
+    assert res["referenced_schemas_count"] == 2
+    assert res["compliant_schemas_count"] == 0
+    assert res["duplicate_normalized_title_count"] == 2
+    assert res["hygiene_score"] == 0.0
+    assert res["is_compliant"] is False
+    assert res["violations"] == [
+        {
+            "schema_name": "ProjectSummaryV1",
+            "reason": "duplicate_normalized_title",
+        },
+        {
+            "schema_name": "ProjectSummaryV2",
+            "reason": "duplicate_normalized_title",
+        },
+    ]
+
+
+def test_component_schema_naming_and_title_hygiene_real_openapi():
+    """Verifica que el schema OpenAPI real de FastAPI cumpla la higiene de nombres y títulos de esquemas."""
+    res = audit_projects_api_contracts.summarize_projects_component_schema_naming_and_title_hygiene()
+    assert res["referenced_schemas_count"] > 0
+    assert res["invalid_component_identifier_count"] == 0
+    assert res["missing_or_blank_title_count"] == 0
+    assert res["duplicate_normalized_title_count"] == 0
+    assert res["violations"] == []
+    assert res["hygiene_score"] == 100.0
+    assert res["is_compliant"] is True
+
+
