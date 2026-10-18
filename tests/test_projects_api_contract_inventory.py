@@ -4497,3 +4497,195 @@ def test_request_string_bounds_hygiene_nullable_and_excluded_formats():
     }
 
 
+def test_array_property_hygiene_clean_and_live_schema():
+    """Esquema sintético con arrays acotados (maxItems, uniqueItems, items con $ref) + esquema real de FastAPI con strict_request_max_items=False."""
+    schema = {
+        "components": {
+            "schemas": {
+                "TaskBatchUpdate": {
+                    "type": "object",
+                    "properties": {
+                        "task_ids": {
+                            "type": "array",
+                            "items": {"type": "string", "format": "uuid"},
+                            "minItems": 1,
+                            "maxItems": 100,
+                            "uniqueItems": True,
+                        },
+                        "items": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/components/schemas/TaskPatchItem"
+                            },
+                            "maxItems": 50,
+                        },
+                    },
+                },
+                "ProjectSummaryOut": {
+                    "type": "object",
+                    "properties": {
+                        "tags": {"type": "array", "items": {}},
+                    },
+                },
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_array_property_hygiene(
+        schema, strict_request_max_items=True
+    )
+    assert res == {
+        "evaluated_schemas_count": 1,
+        "total_array_fields": 2,
+        "bounded_or_unique_arrays_count": 2,
+        "missing_items_schema_fields": [],
+        "invalid_array_bounds": [],
+        "unbounded_request_array_fields": [],
+        "is_hygienic": True,
+    }
+
+    from backend.app import app
+
+    live_res = (
+        audit_projects_api_contracts.summarize_projects_array_property_hygiene(
+            app.openapi(), strict_request_max_items=False
+        )
+    )
+    assert live_res["evaluated_schemas_count"] > 0
+    assert live_res["total_array_fields"] > 0
+    assert live_res["missing_items_schema_fields"] == []
+    assert live_res["invalid_array_bounds"] == []
+    assert live_res["unbounded_request_array_fields"] == []
+    assert live_res["is_hygienic"] is True
+
+
+def test_array_property_hygiene_strict_unbounded_request_arrays():
+    """Detecta arrays sin maxItems cuando strict_request_max_items=True."""
+    schema = {
+        "components": {
+            "schemas": {
+                "ProjectBulkCreate": {
+                    "type": "object",
+                    "properties": {
+                        "tags": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "uniqueItems": True,
+                        },
+                        "deliverables": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "maxItems": 25,
+                        },
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_array_property_hygiene(
+        schema, strict_request_max_items=True
+    )
+    assert res["total_array_fields"] == 2
+    assert res["bounded_or_unique_arrays_count"] == 2
+    assert res["unbounded_request_array_fields"] == [
+        "ProjectBulkCreate.tags"
+    ]
+    assert res["is_hygienic"] is False
+
+
+def test_array_property_hygiene_missing_items_and_invalid_bounds():
+    """Detecta items faltante/vacío y cotas inválidas (maxItems=0, minItems=-1, minItems > maxItems)."""
+    schema = {
+        "components": {
+            "schemas": {
+                "ProjectWbsInput": {
+                    "type": "object",
+                    "properties": {
+                        "raw_list": {"type": "array", "items": {}},
+                        "no_items_key": {"type": "array"},
+                        "zero_max": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "maxItems": 0,
+                        },
+                        "neg_min": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "minItems": -1,
+                        },
+                        "inverted": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "minItems": 10,
+                            "maxItems": 5,
+                        },
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_array_property_hygiene(
+        schema, strict_request_max_items=False
+    )
+    assert res["total_array_fields"] == 5
+    assert res["missing_items_schema_fields"] == [
+        "ProjectWbsInput.no_items_key",
+        "ProjectWbsInput.raw_list",
+    ]
+    assert res["invalid_array_bounds"] == [
+        "ProjectWbsInput.inverted",
+        "ProjectWbsInput.neg_min",
+        "ProjectWbsInput.zero_max",
+    ]
+    assert res["is_hygienic"] is False
+
+
+def test_array_property_hygiene_nullable_anyof_oneof_support():
+    """Soporta propiedades array nullable con anyOf/oneOf."""
+    schema = {
+        "components": {
+            "schemas": {
+                "ProjectFilterRequest": {
+                    "type": "object",
+                    "properties": {
+                        "assignee_ids": {
+                            "anyOf": [
+                                {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                    },
+                                    "maxItems": 20,
+                                },
+                                {"type": "null"},
+                            ]
+                        },
+                        "labels": {
+                            "oneOf": [
+                                {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                    "maxItems": 10,
+                                },
+                                {"type": "null"},
+                            ]
+                        },
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_array_property_hygiene(
+        schema, strict_request_max_items=True
+    )
+    assert res == {
+        "evaluated_schemas_count": 1,
+        "total_array_fields": 2,
+        "bounded_or_unique_arrays_count": 2,
+        "missing_items_schema_fields": [],
+        "invalid_array_bounds": [],
+        "unbounded_request_array_fields": [],
+        "is_hygienic": True,
+    }
+
+

@@ -3018,6 +3018,193 @@ def summarize_projects_request_string_bounds_hygiene(
     }
 
 
+_ARRAY_MUTATION_SCHEMA_SUFFIXES = (
+    "create",
+    "update",
+    "upsert",
+    "patch",
+    "request",
+    "input",
+    "payload",
+    "bulk",
+    "batch",
+)
+_VALID_ITEMS_KEYS = ("type", "$ref", "anyOf", "oneOf", "allOf")
+
+
+def summarize_projects_array_property_hygiene(
+    openapi: Mapping[str, Any] | None = None,
+    *,
+    strict_request_max_items: bool = False,
+    include_all_schemas: bool = False,
+) -> dict[str, Any]:
+    """Audita propiedades de tipo array (items, minItems, maxItems, uniqueItems) en esquemas OpenAPI."""
+    if not isinstance(openapi, Mapping):
+        return {
+            "evaluated_schemas_count": 0,
+            "total_array_fields": 0,
+            "bounded_or_unique_arrays_count": 0,
+            "missing_items_schema_fields": [],
+            "invalid_array_bounds": [],
+            "unbounded_request_array_fields": [],
+            "is_hygienic": True,
+        }
+
+    components = openapi.get("components")
+    schemas = (
+        components.get("schemas")
+        if isinstance(components, Mapping)
+        and isinstance(components.get("schemas"), Mapping)
+        else {}
+    )
+
+    referenced_schemas: set[str] = set()
+    paths = openapi.get("paths")
+    has_paths = isinstance(paths, Mapping) and len(paths) > 0
+    if has_paths:
+        for path, path_item in paths.items():
+            if isinstance(path, str) and (
+                path.startswith("/api/projects") or path.startswith("/projects")
+            ):
+                referenced_schemas.update(schema_refs(path_item))
+
+    evaluated_schemas_count = 0
+    total_array_fields = 0
+    bounded_or_unique_arrays_count = 0
+    missing_items_schema_fields: list[str] = []
+    invalid_array_bounds: list[str] = []
+    unbounded_request_array_fields: list[str] = []
+
+    for schema_name, schema_obj in sorted(schemas.items()):
+        s_name = str(schema_name)
+        if not isinstance(schema_obj, Mapping):
+            continue
+        if (
+            has_paths
+            and not include_all_schemas
+            and "project" not in s_name.lower()
+            and s_name not in referenced_schemas
+        ):
+            continue
+        if not include_all_schemas and not s_name.lower().endswith(
+            _ARRAY_MUTATION_SCHEMA_SUFFIXES
+        ):
+            continue
+
+        evaluated_schemas_count += 1
+        props = schema_obj.get("properties")
+        if not isinstance(props, Mapping):
+            continue
+
+        for prop_name, prop_schema in sorted(props.items()):
+            p_name = str(prop_name)
+            if not isinstance(prop_schema, Mapping):
+                continue
+
+            composite = (
+                prop_schema.get("anyOf")
+                or prop_schema.get("oneOf")
+                or prop_schema.get("allOf")
+            )
+            if isinstance(composite, list):
+                non_null_branches = [
+                    b
+                    for b in composite
+                    if isinstance(b, Mapping) and b.get("type") != "null"
+                ]
+            else:
+                non_null_branches = [prop_schema]
+
+            array_branches = [
+                b for b in non_null_branches if b.get("type") == "array"
+            ]
+            if not array_branches:
+                continue
+
+            total_array_fields += 1
+            field_ref = f"{s_name}.{p_name}"
+
+            has_missing_items = False
+            has_invalid_bounds = False
+            has_valid_max_items = False
+            has_unique_items = False
+
+            for b in array_branches:
+                items_obj = b.get("items")
+                items_valid = (
+                    isinstance(items_obj, Mapping)
+                    and len(items_obj) > 0
+                    and any(
+                        items_obj.get(k) is not None for k in _VALID_ITEMS_KEYS
+                    )
+                )
+                if not items_valid:
+                    has_missing_items = True
+
+                has_max = "maxItems" in b and b.get("maxItems") is not None
+                has_min = "minItems" in b and b.get("minItems") is not None
+                max_val = b.get("maxItems")
+                min_val = b.get("minItems")
+
+                max_ok = (
+                    isinstance(max_val, (int, float))
+                    and not isinstance(max_val, bool)
+                    and max_val > 0
+                )
+                min_ok = (
+                    isinstance(min_val, (int, float))
+                    and not isinstance(min_val, bool)
+                    and min_val >= 0
+                )
+
+                branch_invalid = False
+                if has_max and not max_ok:
+                    branch_invalid = True
+                if has_min and not min_ok:
+                    branch_invalid = True
+                if (
+                    has_max
+                    and has_min
+                    and max_ok
+                    and min_ok
+                    and min_val > max_val
+                ):
+                    branch_invalid = True
+
+                if branch_invalid:
+                    has_invalid_bounds = True
+
+                if has_max and max_ok and not branch_invalid:
+                    has_valid_max_items = True
+                if b.get("uniqueItems") is True:
+                    has_unique_items = True
+
+            if has_missing_items:
+                missing_items_schema_fields.append(field_ref)
+            if has_invalid_bounds:
+                invalid_array_bounds.append(field_ref)
+            if has_valid_max_items or has_unique_items:
+                bounded_or_unique_arrays_count += 1
+            if strict_request_max_items and not has_valid_max_items:
+                unbounded_request_array_fields.append(field_ref)
+
+    is_hygienic = bool(
+        len(missing_items_schema_fields) == 0
+        and len(invalid_array_bounds) == 0
+        and len(unbounded_request_array_fields) == 0
+    )
+
+    return {
+        "evaluated_schemas_count": evaluated_schemas_count,
+        "total_array_fields": total_array_fields,
+        "bounded_or_unique_arrays_count": bounded_or_unique_arrays_count,
+        "missing_items_schema_fields": missing_items_schema_fields,
+        "invalid_array_bounds": invalid_array_bounds,
+        "unbounded_request_array_fields": unbounded_request_array_fields,
+        "is_hygienic": is_hygienic,
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()
