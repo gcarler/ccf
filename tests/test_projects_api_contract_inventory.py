@@ -1179,6 +1179,177 @@ def test_collection_pagination_coverage_empty_or_no_collections():
     )
 
 
+# ─── summarize_projects_path_parameter_uuid_typing (pure helper) ─────────────
+
+
+def test_path_parameter_uuid_typing_strict_including_anyof_and_override():
+    """100% de parámetros path id/*_id con format=='uuid' (directo, anyOf o override de op_spec) -> STRICT_UUID_PATH_CONTRACTS."""
+    openapi = {
+        "paths": {
+            "/api/projects/{project_id}/tasks/{id}": {
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "project_id",
+                        "schema": {"type": "string"},  # overridden in op_spec
+                    }
+                ],
+                "get": {
+                    "parameters": [
+                        {
+                            "in": "path",
+                            "name": "project_id",
+                            "schema": {"type": "string", "format": "uuid"},
+                        },
+                        {
+                            "in": "path",
+                            "name": "id",
+                            "schema": {
+                                "anyOf": [
+                                    {"type": "string", "format": "uuid"},
+                                    {"type": "null"},
+                                ]
+                            },
+                        },
+                        {
+                            "in": "query",
+                            "name": "phase_id",
+                            "schema": {"type": "string"},  # query param ignored
+                        },
+                    ]
+                },
+            }
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_path_parameter_uuid_typing(
+        openapi
+    )
+
+    assert res == {
+        "id_path_param_count": 2,
+        "uuid_typed_count": 2,
+        "untyped_id_params": [],
+        "uuid_typing_rate_pct": 100.0,
+        "uuid_posture": "STRICT_UUID_PATH_CONTRACTS",
+    }
+
+
+def test_path_parameter_uuid_typing_partial():
+    """>= 50% de parámetros id/*_id con format uuid pero >= 1 sin tipar -> PARTIAL_UUID_PATH_TYPING."""
+    openapi = {
+        "paths": {
+            "/api/projects/{project_id}": {
+                "get": {
+                    "parameters": [
+                        {
+                            "in": "path",
+                            "name": "project_id",
+                            "schema": {"type": "string", "format": "uuid"},
+                        }
+                    ]
+                },
+                "delete": {
+                    "parameters": [
+                        {
+                            "in": "path",
+                            "name": "project_id",
+                            "schema": {"type": "string"},
+                        }
+                    ]
+                },
+            }
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_path_parameter_uuid_typing(
+        openapi
+    )
+
+    assert res == {
+        "id_path_param_count": 2,
+        "uuid_typed_count": 1,
+        "untyped_id_params": ["DELETE /api/projects/{project_id}:project_id"],
+        "uuid_typing_rate_pct": 50.0,
+        "uuid_posture": "PARTIAL_UUID_PATH_TYPING",
+    }
+
+
+def test_path_parameter_uuid_typing_weak():
+    """< 50% de parámetros id/*_id con format uuid -> WEAK_PATH_ID_TYPING."""
+    openapi = {
+        "paths": {
+            "/api/projects/{project_id}/risks/{risk_id}": {
+                "patch": {
+                    "parameters": [
+                        {
+                            "in": "path",
+                            "name": "project_id",
+                            "schema": {"type": "string"},
+                        },
+                        {
+                            "in": "path",
+                            "name": "risk_id",
+                            "schema": {"type": "integer"},
+                        },
+                    ]
+                }
+            }
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_path_parameter_uuid_typing(
+        openapi
+    )
+
+    assert res == {
+        "id_path_param_count": 2,
+        "uuid_typed_count": 0,
+        "untyped_id_params": [
+            "PATCH /api/projects/{project_id}/risks/{risk_id}:project_id",
+            "PATCH /api/projects/{project_id}/risks/{risk_id}:risk_id",
+        ],
+        "uuid_typing_rate_pct": 0.0,
+        "uuid_posture": "WEAK_PATH_ID_TYPING",
+    }
+
+
+def test_path_parameter_uuid_typing_empty_or_no_id_params():
+    """Esquema vacío, None o parámetros path que no son id/*_id -> NO_ID_PATH_PARAMETERS."""
+    expected = {
+        "id_path_param_count": 0,
+        "uuid_typed_count": 0,
+        "untyped_id_params": [],
+        "uuid_typing_rate_pct": 0.0,
+        "uuid_posture": "NO_ID_PATH_PARAMETERS",
+    }
+    assert (
+        audit_projects_api_contracts.summarize_projects_path_parameter_uuid_typing(None)
+        == expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_path_parameter_uuid_typing({})
+        == expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_path_parameter_uuid_typing(
+            {
+                "paths": {
+                    "/api/projects/{slug}": {
+                        "get": {
+                            "parameters": [
+                                {"in": "path", "name": "slug", "schema": {"type": "string"}}
+                            ]
+                        }
+                    }
+                }
+            }
+        )
+        == expected
+    )
+
+
+
 
 
 

@@ -589,6 +589,102 @@ def summarize_projects_collection_pagination_coverage(
     }
 
 
+def summarize_projects_path_parameter_uuid_typing(
+    openapi_schema: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Audita el tipado UUIDv4 de los parámetros de ruta id/*_id en operaciones de proyectos."""
+    empty_result: dict[str, Any] = {
+        "id_path_param_count": 0,
+        "uuid_typed_count": 0,
+        "untyped_id_params": [],
+        "uuid_typing_rate_pct": 0.0,
+        "uuid_posture": "NO_ID_PATH_PARAMETERS",
+    }
+    if not isinstance(openapi_schema, dict) or not isinstance(
+        openapi_schema.get("paths"), dict
+    ):
+        return empty_result
+
+    id_path_param_count = 0
+    uuid_typed_count = 0
+    untyped_id_params: list[str] = []
+
+    for path, path_item in sorted(openapi_schema["paths"].items()):
+        if not isinstance(path, str) or "/projects" not in path:
+            continue
+        if not isinstance(path_item, dict):
+            continue
+
+        for method in ("get", "post", "put", "patch", "delete"):
+            op_spec = path_item.get(method)
+            if not isinstance(op_spec, dict):
+                continue
+
+            merged_params: dict[tuple[str, str], dict[str, Any]] = {}
+            for src in (path_item.get("parameters"), op_spec.get("parameters")):
+                if not isinstance(src, list):
+                    continue
+                for param in src:
+                    if not isinstance(param, dict):
+                        continue
+                    p_in = str(param.get("in") or "").strip().lower()
+                    p_name = str(param.get("name") or "").strip()
+                    merged_params[(p_in, p_name)] = param
+
+            for (p_in, p_name), param in merged_params.items():
+                if p_in != "path":
+                    continue
+                name_lower = p_name.lower()
+                if not (name_lower == "id" or name_lower.endswith("_id")):
+                    continue
+
+                id_path_param_count += 1
+                schema = (
+                    param.get("schema")
+                    if isinstance(param.get("schema"), dict)
+                    else {}
+                )
+                direct_uuid = str(schema.get("format") or "").strip().lower() == "uuid"
+                any_of_list = (
+                    schema.get("anyOf") if isinstance(schema.get("anyOf"), list) else []
+                )
+                one_of_list = (
+                    schema.get("oneOf") if isinstance(schema.get("oneOf"), list) else []
+                )
+                composite_uuid = any(
+                    isinstance(sub, dict)
+                    and str(sub.get("format") or "").strip().lower() == "uuid"
+                    for sub in (*any_of_list, *one_of_list)
+                )
+
+                if direct_uuid or composite_uuid:
+                    uuid_typed_count += 1
+                else:
+                    untyped_id_params.append(f"{method.upper()} {path}:{p_name}")
+
+    if id_path_param_count == 0:
+        return empty_result
+
+    uuid_typing_rate_pct = round(
+        (uuid_typed_count / id_path_param_count) * 100.0, 2
+    )
+    if len(untyped_id_params) == 0:
+        uuid_posture = "STRICT_UUID_PATH_CONTRACTS"
+    elif uuid_typing_rate_pct >= 50.0:
+        uuid_posture = "PARTIAL_UUID_PATH_TYPING"
+    else:
+        uuid_posture = "WEAK_PATH_ID_TYPING"
+
+    return {
+        "id_path_param_count": id_path_param_count,
+        "uuid_typed_count": uuid_typed_count,
+        "untyped_id_params": untyped_id_params,
+        "uuid_typing_rate_pct": uuid_typing_rate_pct,
+        "uuid_posture": uuid_posture,
+    }
+
+
+
 
 
 
