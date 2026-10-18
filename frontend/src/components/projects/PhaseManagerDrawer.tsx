@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import { PHASE_COLOR_OPTIONS, DEFAULT_PHASE_COLOR } from '@/lib/projects/palette';
-import { Plus, Save, Trash2 } from 'lucide-react';
+import { Plus, Save, ShieldCheck, Layers, Sparkles, Trash2, AlertTriangle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useProjectUpdate, type PhaseDef } from '@/context/ProjectUpdateContext';
 import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/ConfirmActionDrawer';
@@ -16,6 +16,52 @@ interface Props {
 }
 
 const COLOR_PRESETS = PHASE_COLOR_OPTIONS.map((option) => option.value);
+
+const PMI_LIFECYCLE_PRESETS: Array<{
+    id: 'predictive' | 'hybrid' | 'agile';
+    testId: string;
+    label: string;
+    subtitle: string;
+    phases: string[];
+}> = [
+    {
+        id: 'predictive',
+        testId: 'phase-preset-predictive',
+        label: 'Predictivo PMI (5 Fases)',
+        subtitle: 'Cascada secuencial Stage-Gate',
+        phases: ['Inicio', 'Planificación', 'Ejecución', 'Monitoreo y Control', 'Cierre'],
+    },
+    {
+        id: 'hybrid',
+        testId: 'phase-preset-hybrid',
+        label: 'Híbrido Stage-Gate',
+        subtitle: 'Gobernanza por hitos + entregas iterativas',
+        phases: ['Descubrimiento', 'Diseño y Línea Base', 'Construcción Iterativa', 'Validación QA', 'Despliegue'],
+    },
+    {
+        id: 'agile',
+        testId: 'phase-preset-agile',
+        label: 'Flujo Adaptativo',
+        subtitle: 'Kanban continuo con Definition of Done',
+        phases: ['Backlog', 'En Análisis', 'En Progreso', 'En Revisión DoD', 'Completado'],
+    },
+];
+
+function buildUniqueSlug(name: string, existingSlugs: Set<string>): string {
+    const base = name
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'phase';
+    let candidate = base;
+    let suffix = 2;
+    while (existingSlugs.has(candidate.toLowerCase())) {
+        candidate = `${base}-${suffix}`;
+        suffix += 1;
+    }
+    return candidate;
+}
 
 /**
  * Drawer para gestionar fases de un proyecto. Self-sufficient desde 2026-07-16
@@ -121,6 +167,33 @@ export function PhaseManagerDrawer({ projectId, onClose }: Props) {
         }]);
     };
 
+    const handleApplyPreset = (presetPhases: string[]) => {
+        setItems((current) => {
+            const existingNames = new Set(
+                current.map((item) => item.name.trim().toLowerCase()),
+            );
+            const existingSlugs = new Set(
+                current.map((item) => item.slug.toLowerCase()),
+            );
+            const next = [...current];
+            for (const phaseName of presetPhases) {
+                const normalizedName = phaseName.trim().toLowerCase();
+                if (existingNames.has(normalizedName)) continue;
+                const slug = buildUniqueSlug(phaseName, existingSlugs);
+                existingNames.add(normalizedName);
+                existingSlugs.add(slug.toLowerCase());
+                const index = next.length;
+                next.push({
+                    slug,
+                    name: phaseName,
+                    color: COLOR_PRESETS[index % COLOR_PRESETS.length] ?? DEFAULT_PHASE_COLOR,
+                    order_index: index,
+                });
+            }
+            return next;
+        });
+    };
+
     const handleRemove = (index: number) => {
         if (items.length <= 1) {
             addToast('Debe haber al menos una fase', 'error');
@@ -151,6 +224,31 @@ export function PhaseManagerDrawer({ projectId, onClose }: Props) {
         });
     };
 
+    const allTasks = ctxTasks ?? [];
+    const validSlugsSet = new Set(items.map((item) => item.slug.toLowerCase()));
+    const orphanTasks = allTasks.filter(
+        (t) => !validSlugsSet.has((t.status ?? 'todo').toLowerCase()),
+    );
+    const orphanTasksCount = orphanTasks.length;
+
+    const phaseCounts = items.map((phase) => ({
+        phase,
+        count: allTasks.filter(
+            (task) => (task.status ?? '').toLowerCase() === phase.slug.toLowerCase(),
+        ).length,
+    }));
+
+    const bottleneckEntry = phaseCounts.reduce<{ name: string; count: number } | null>(
+        (acc, curr) => {
+            if (curr.count === 0) return acc;
+            if (!acc || curr.count > acc.count) {
+                return { name: curr.phase.name, count: curr.count };
+            }
+            return acc;
+        },
+        null,
+    );
+
     /**
      * Validación previa al PUT. Devuelve `null` si todo OK; si no, setea el
      * mensaje de error visible y devuelve el mensaje para el toast (opcional).
@@ -172,10 +270,6 @@ export function PhaseManagerDrawer({ projectId, onClose }: Props) {
         }
 
         // Pre-flight: ninguna tarea existente debe quedar con status fuera del nuevo set.
-        const validSlugs = new Set(items.map(i => i.slug));
-        const orphanTasks = (ctxTasks ?? []).filter(
-            (t) => !validSlugs.has((t.status ?? 'todo').toLowerCase()),
-        );
         if (orphanTasks.length > 0) {
             const sampleTitles = orphanTasks
                 .slice(0, 3)
@@ -255,8 +349,104 @@ export function PhaseManagerDrawer({ projectId, onClose }: Props) {
                 )}
                 {/* Body */}
                 <div className="flex-1 overflow-y-auto scrollbar-thin p-3 space-y-3">
+                    {/* Banner Ejecutivo de Gobernanza Stage-Gate PMI §2.4 */}
+                    <div
+                        data-testid="phase-manager-pmi-summary"
+                        className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 space-y-2.5"
+                    >
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <div className="flex items-center gap-2">
+                                <span className="p-1.5 rounded-md bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))]">
+                                    <ShieldCheck size={15} />
+                                </span>
+                                <div>
+                                    <p className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))]">
+                                        Gobernanza de Ciclo de Vida & Stage-Gates (PMI §2.4)
+                                    </p>
+                                    <p className="text-2xs text-[hsl(var(--muted-foreground))]">
+                                        Control de integridad de fases, carga de paquetes WBS y prevención de estados huérfanos.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                            <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-2.5 py-2">
+                                <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                                    Fases Configuradas
+                                </p>
+                                <p className="text-sm font-bold text-[hsl(var(--foreground))] mt-0.5">
+                                    {items.length}
+                                </p>
+                            </div>
+                            <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-2.5 py-2">
+                                <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                                    Paquetes WBS
+                                </p>
+                                <p className="text-sm font-bold text-[hsl(var(--foreground))] mt-0.5">
+                                    {allTasks.length}
+                                </p>
+                            </div>
+                            <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-2.5 py-2">
+                                <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                                    Fase Cuello de Botella
+                                </p>
+                                <p className="text-xs font-bold text-[hsl(var(--foreground))] mt-0.5 truncate">
+                                    {bottleneckEntry ? `${bottleneckEntry.name} (${bottleneckEntry.count})` : 'Sin carga'}
+                                </p>
+                            </div>
+                            <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-2.5 py-2">
+                                <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                                    Riesgo de Huérfanos
+                                </p>
+                                {orphanTasksCount === 0 ? (
+                                    <p className="text-xs font-bold text-[hsl(var(--success))] mt-0.5">
+                                        0 huérfanos
+                                    </p>
+                                ) : (
+                                    <p className="text-xs font-bold text-[hsl(var(--warning))] mt-0.5 flex items-center gap-1">
+                                        <AlertTriangle size={12} />
+                                        {orphanTasksCount} huérfano(s)
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Selector Rápido de Presets de Ciclo de Vida PMI */}
+                    <div
+                        data-testid="phase-manager-pmi-presets"
+                        className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 space-y-2"
+                    >
+                        <div className="flex items-center gap-1.5 text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                            <Sparkles size={13} className="text-[hsl(var(--primary))]" />
+                            <span>Plantillas de Ciclo de Vida PMI (Adición Segura 1-Clic)</span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            {PMI_LIFECYCLE_PRESETS.map((preset) => (
+                                <button
+                                    key={preset.id}
+                                    type="button"
+                                    data-testid={preset.testId}
+                                    onClick={() => handleApplyPreset(preset.phases)}
+                                    className="flex flex-col items-start text-left rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] hover:border-[hsl(var(--primary)/0.5)] hover:bg-[hsl(var(--primary)/0.05)] p-2.5 transition-all"
+                                >
+                                    <span className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center gap-1.5">
+                                        <Layers size={12} className="text-[hsl(var(--primary))]" />
+                                        {preset.label}
+                                    </span>
+                                    <span className="text-2xs text-[hsl(var(--muted-foreground))] mt-0.5">
+                                        {preset.subtitle}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 content-start">
-                    {items.map((phase, i) => (
+                    {items.map((phase, i) => {
+                        const linkedCount = phaseCounts[i]?.count ?? 0;
+                        return (
                         <div
                             key={phase.slug}
                             className="flex items-center gap-3 p-3 bg-[hsl(var(--surface-1))] rounded-md border border-[hsl(var(--border))] group"
@@ -286,14 +476,33 @@ export function PhaseManagerDrawer({ projectId, onClose }: Props) {
                                 </select>
                             </div>
 
-                            {/* Name input */}
-                            <input
-                                type="text"
-                                value={phase.name}
-                                onChange={e => handleRename(i, e.target.value)}
-                                aria-label={`Nombre de fase ${phase.name}`}
-                                className="flex-1 text-base font-bold bg-transparent outline-none text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] border-b border-transparent focus:border-[hsl(var(--primary))] transition-all"
-                            />
+                            {/* Name input + Metrics */}
+                            <div className="flex-1 min-w-0">
+                                <input
+                                    type="text"
+                                    value={phase.name}
+                                    onChange={e => handleRename(i, e.target.value)}
+                                    aria-label={`Nombre de fase ${phase.name}`}
+                                    className="w-full text-base font-bold bg-transparent outline-none text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] border-b border-transparent focus:border-[hsl(var(--primary))] transition-all"
+                                />
+                                <div
+                                    data-testid={`phase-card-metrics-${phase.slug}`}
+                                    className="flex items-center gap-1.5 mt-1 text-2xs"
+                                >
+                                    <span className="font-medium text-[hsl(var(--muted-foreground))]">
+                                        {linkedCount} paquete(s)
+                                    </span>
+                                    <span
+                                        className={
+                                            linkedCount > 0
+                                                ? 'px-1.5 py-0.5 rounded font-bold uppercase tracking-wider bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))]'
+                                                : 'px-1.5 py-0.5 rounded font-bold uppercase tracking-wider bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))]'
+                                        }
+                                    >
+                                        {linkedCount > 0 ? 'En uso' : 'Libre'}
+                                    </span>
+                                </div>
+                            </div>
 
                             {/* Slug (read-only, derived) */}
                             <code className="hidden md:inline text-2xs font-mono text-[hsl(var(--muted-foreground))] opacity-60 truncate max-w-[120px]" title={phase.slug}>
@@ -310,11 +519,13 @@ export function PhaseManagerDrawer({ projectId, onClose }: Props) {
                                 <Trash2 size={12} />
                             </button>
                         </div>
-                    ))}
+                        );
+                    })}
                     </div>
 
                     {/* Add phase */}
                     <button
+                        type="button"
                         onClick={handleAdd}
                         className="w-full flex items-center justify-center gap-2 py-3 rounded-md border-2 border-dashed border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:border-[hsl(var(--primary)/0.3)] transition-all text-xs font-semibold uppercase tracking-wide"
                     >

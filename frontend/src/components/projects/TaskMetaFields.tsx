@@ -6,7 +6,7 @@ import MetaRow from '@/components/ui/MetaRow';
 import TaskLabelManager from './TaskLabelManager';
 import { InlineDatePicker } from '@/components/ui/inline-editors/InlineDatePicker';
 import type { ProjectTaskRecord } from '@/types/projects';
-import { CalendarDays, Flag, Tag, UserRound, Layers, Plus, Loader2 } from 'lucide-react';
+import { CalendarDays, Flag, Tag, UserRound, Layers, Plus, Loader2, ShieldCheck } from 'lucide-react';
 import clsx from 'clsx';
 import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
@@ -64,6 +64,16 @@ export default function TaskMetaFields({
 
     const projectId = task.project_id;
 
+    const pmiPillars = [
+        { key: 'raci', label: 'Responsable RACI', done: Boolean(task.assignee_id) },
+        { key: 'schedule', label: 'Línea Base Temporal', done: Boolean(task.due_date) },
+        { key: 'edt', label: 'Cuenta de Control / EDT', done: Boolean(task.component_id) },
+        { key: 'taxonomy', label: 'Taxonomía', done: labels.length > 0 },
+    ];
+    const completedPillarsCount = pmiPillars.filter((p) => p.done).length;
+    const missingPillars = pmiPillars.filter((p) => !p.done).map((p) => p.label);
+    const isPmiComplete = completedPillarsCount === pmiPillars.length;
+
     const handleOpenNewComponent = () => {
         setNewComponentCode(`EDT-${localComponents.length + 1}.0`);
         setNewComponentName('');
@@ -113,6 +123,37 @@ export default function TaskMetaFields({
 
     return (
         <section className="px-4 py-3 border-b border-[hsl(var(--border))] space-y-2">
+            <div
+                data-testid="task-meta-pmi-readiness"
+                className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-2.5 space-y-1.5"
+            >
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center gap-1.5">
+                        <ShieldCheck size={12} className="text-[hsl(var(--primary))]" />
+                        Auditoría WBS & RACI del Paquete
+                    </span>
+                    <span
+                        className={clsx(
+                            'px-2 py-0.5 rounded text-2xs font-bold uppercase tracking-wider',
+                            isPmiComplete
+                                ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]'
+                                : 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))]'
+                        )}
+                    >
+                        {completedPillarsCount}/4 pilares PMI
+                    </span>
+                </div>
+                <p
+                    className={clsx(
+                        'text-2xs font-medium',
+                        isPmiComplete ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--muted-foreground))]'
+                    )}
+                >
+                    {isPmiComplete
+                        ? 'Metadatos PMI completos para ejecución'
+                        : `Pendiente: ${missingPillars.join(', ')}`}
+                </p>
+            </div>
             <MetaRow icon={<UserRound size={13} className="text-[hsl(var(--muted-foreground))]" />} label="Persona asignada">
                 <PersonaSelect
                     value={task.assignee_id ?? null}

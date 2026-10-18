@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   AlertOctagon,
   Sparkles,
+  ShieldCheck,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -26,6 +27,35 @@ interface ProgressSettingsDrawerProps {
   currentHealthOverride?: string | null;
   onSaved?: () => void;
 }
+
+const PMI_EVMT_DETAILS: Record<
+  "auto_tasks" | "milestones" | "manual",
+  {
+    technique: string;
+    objectivity: string;
+    objectivityTone: string;
+    rationale: string;
+  }
+> = {
+  auto_tasks: {
+    technique: "Unidades Completadas / Fórmula Fija (0/50/100)",
+    objectivity: "Alta",
+    objectivityTone: "bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))]",
+    rationale: "Ideal para paquetes de trabajo discretos y divisibles.",
+  },
+  milestones: {
+    technique: "Hitos Ponderados (Weighted Milestones)",
+    objectivity: "Alta",
+    objectivityTone: "bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))]",
+    rationale: "Ideal para Cuentas de Control y entregables de largo plazo con criterios de salida.",
+  },
+  manual: {
+    technique: "Porcentaje Estimado / Juicio de Experto",
+    objectivity: "Media-Baja",
+    objectivityTone: "bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))]",
+    rationale: "Requiere respaldo de evidencia objetiva en revisiones de gobernanza.",
+  },
+};
 
 export function ProgressSettingsDrawer({
   projectId,
@@ -146,6 +176,9 @@ export function ProgressSettingsDrawer({
     },
   ];
 
+  const activeEvmt = PMI_EVMT_DETAILS[mode];
+  const hasManualGovernanceOverride = mode === "manual" || healthOverride !== null;
+
   return (
     <>
       <form onSubmit={handleSave} className="flex flex-col h-full space-y-4 p-4 text-[hsl(var(--foreground))]">
@@ -213,6 +246,35 @@ export function ProgressSettingsDrawer({
           </div>
         </div>
 
+        {/* Diagnóstico Técnico PMI EVMT (§3.4 Earned Value Measurement Techniques) */}
+        <div
+          data-testid="progress-settings-pmi-evmt-card"
+          className="p-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] space-y-1.5"
+        >
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <ShieldCheck size={14} className="text-[hsl(var(--primary))]" />
+              <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                Diagnóstico Técnico PMI EVMT (§3.4)
+              </span>
+            </div>
+            <span
+              className={clsx(
+                "text-2xs font-bold uppercase tracking-wider px-2 py-0.5 rounded",
+                activeEvmt.objectivityTone
+              )}
+            >
+              Nivel de Objetividad: {activeEvmt.objectivity}
+            </span>
+          </div>
+          <p className="text-xs font-bold text-[hsl(var(--foreground))]">
+            Técnica PMI: {activeEvmt.technique}
+          </p>
+          <p className="text-2xs text-[hsl(var(--muted-foreground))] leading-relaxed">
+            {activeEvmt.rationale}
+          </p>
+        </div>
+
         {/* Manual Progress Slider (only when manual is selected) */}
         {mode === "manual" && (
           <div className="p-3.5 rounded-xl border border-[hsl(var(--primary))]/30 bg-[hsl(var(--surface-2))] space-y-2.5 animate-in fade-in duration-200">
@@ -274,6 +336,24 @@ export function ProgressSettingsDrawer({
             })}
           </div>
         </div>
+
+        {/* Alerta de Gobernanza PMI cuando hay override manual */}
+        {hasManualGovernanceOverride && (
+          <div
+            data-testid="progress-settings-pmi-override-warning"
+            className="p-3 rounded-xl border border-[hsl(var(--warning)/0.4)] bg-[hsl(var(--warning)/0.1)] flex items-start gap-2.5 text-[hsl(var(--warning))]"
+          >
+            <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+            <div className="space-y-0.5">
+              <p className="text-xs font-bold uppercase tracking-wider">
+                Alerta de Gobernanza PMI — Sobreescritura Manual Activa
+              </p>
+              <p className="text-2xs leading-relaxed text-[hsl(var(--foreground))]">
+                La sobreescritura manual de avance o semáforo omite el cálculo automático de umbrales EVM (CPI / SPI) y queda sujeta a auditoría del Comité de Control de Cambios.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Footer Actions */}
         <div className="mt-auto pt-3 border-t border-[hsl(var(--border))] flex items-center justify-end gap-2">

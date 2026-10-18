@@ -1,10 +1,10 @@
 import React from 'react';
-import { render as rtlRender, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render as rtlRender, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { axe } from 'jest-axe';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SidebarLayerProvider } from '@/context/SidebarLayerContext';
-import TaskAttachmentSection from './TaskAttachmentSection';
-import type { ProjectTaskRecord } from '@/types/projects';
+import TaskAttachmentSection, { classifyAttachmentPmi } from './TaskAttachmentSection';
+import type { ProjectAttachment, ProjectTaskRecord } from '@/types/projects';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/http';
 
@@ -396,5 +396,212 @@ describe('TaskAttachmentSection', () => {
     expect(
       await screen.findByRole('dialog', { name: 'Visor Universal Embebido' })
     ).toBeInTheDocument();
+  });
+});
+
+// ─── Control de Entregables PMI (§5.5 Validar el Alcance & §8.3 Controlar la Calidad) ───
+
+function pmiAttachment(
+  id: string,
+  filename: string,
+  opts: Partial<ProjectAttachment> = {},
+): ProjectAttachment {
+  return {
+    id,
+    task_id: 'task-201',
+    filename,
+    file_url: `https://files.ccf.example.org/${encodeURIComponent(filename)}`,
+    file_size: 512 * 1024 + 123,
+    file_type: 'application/octet-stream',
+    created_at: '2026-10-12T10:00:00Z',
+    ...opts,
+  };
+}
+
+const pmiBaseTask: ProjectTaskRecord = {
+  id: 'task-201',
+  project_id: 'proj-9',
+  title: 'Integración Pasarela',
+  status: 'in_progress',
+  priority: 'high',
+  physical_progress_pct: 40,
+  subtasks: [],
+};
+
+const pmiFiles: ProjectAttachment[] = [
+  pmiAttachment('att-1', 'Acta Comité de Obra.pdf', { file_type: 'application/pdf' }),
+  pmiAttachment('att-2', 'Evidencia Prueba QA.png'),
+  pmiAttachment('att-3', 'Reporte Sistema v2.pdf', { file_type: 'application/pdf' }),
+  pmiAttachment('att-4', 'Archivo General.zip'),
+];
+
+describe('TaskAttachmentSection — Control de Entregables PMI (§5.5 & §8.3)', () => {
+  beforeEach(() => {
+    vi.mocked(apiFetch).mockReset();
+    vi.mocked(apiFetch).mockResolvedValue({});
+  });
+
+  it('classifies attachments into FORMAL_DOC, QA_EVIDENCE and VERSIONED', () => {
+    expect(classifyAttachmentPmi(pmiAttachment('x1', 'Acta de Entrega.pdf'))).toEqual([
+      'FORMAL_DOC',
+    ]);
+    expect(classifyAttachmentPmi(pmiAttachment('x2', 'Evidencia Prueba QA.png'))).toEqual([
+      'QA_EVIDENCE',
+    ]);
+    expect(classifyAttachmentPmi(pmiAttachment('x3', 'Informe Sistema v2.docx'))).toEqual([
+      'FORMAL_DOC',
+      'VERSIONED',
+    ]);
+    expect(classifyAttachmentPmi(pmiAttachment('x4', 'Registro Diverso.zip'))).toEqual([]);
+  });
+
+  it('shows the §5.5 missing-evidence alert for a completed package without attachments', () => {
+    const { rerender } = render(
+      <TaskAttachmentSection
+        task={{ ...pmiBaseTask, status: 'done' }}
+        uploading={false}
+        deletingAttachmentId={null}
+        onUpload={vi.fn()}
+        onDelete={vi.fn()}
+        onUploadingChange={vi.fn()}
+      />
+    );
+
+    const alert = screen.getByTestId('task-attachments-pmi-missing-evidence-alert');
+    expect(alert).toHaveTextContent('Alerta PMI §5.5 (Validar el Alcance):');
+    expect(alert).toHaveTextContent(
+      'Paquete completado sin evidencia documental o entregable verificado adjunto.'
+    );
+
+    // Sin alerta cuando el paquete sigue en progreso (independiente del status)
+    rerender(
+      <TaskAttachmentSection
+        task={{ ...pmiBaseTask, physical_progress_pct: 100 }}
+        uploading={false}
+        deletingAttachmentId={null}
+        onUpload={vi.fn()}
+        onDelete={vi.fn()}
+        onUploadingChange={vi.fn()}
+      />
+    );
+    expect(
+      screen.getByTestId('task-attachments-pmi-missing-evidence-alert')
+    ).toBeInTheDocument();
+
+    // Y desaparece al adjuntar evidencia (progreso 100 con 1 adjunto)
+    rerender(
+      <TaskAttachmentSection
+        task={{ ...pmiBaseTask, physical_progress_pct: 100, attachments: pmiFiles }}
+        uploading={false}
+        deletingAttachmentId={null}
+        onUpload={vi.fn()}
+        onDelete={vi.fn()}
+        onUploadingChange={vi.fn()}
+      />
+    );
+    expect(
+      screen.queryByTestId('task-attachments-pmi-missing-evidence-alert')
+    ).not.toBeInTheDocument();
+  });
+
+  it('audits the configuration: weight and counts of formal deliverables, QA evidence and versioned items', () => {
+    render(
+      <TaskAttachmentSection
+        task={{ ...pmiBaseTask, attachments: pmiFiles }}
+        uploading={false}
+        deletingAttachmentId={null}
+        onUpload={vi.fn()}
+        onDelete={vi.fn()}
+        onUploadingChange={vi.fn()}
+      />
+    );
+
+    const audit = screen.getByTestId('task-attachments-pmi-audit');
+    // Suma de pesos: 4 x ~512 KB ≈ 2.0 MB
+    expect(audit).toHaveTextContent(/2,0 MB|2\.0 MB/);
+    expect(
+      within(audit).getByTestId('task-attachments-pmi-count-FORMAL_DOC')
+    ).toHaveTextContent('2');
+    expect(
+      within(audit).getByTestId('task-attachments-pmi-count-QA_EVIDENCE')
+    ).toHaveTextContent('1');
+    expect(
+      within(audit).getByTestId('task-attachments-pmi-count-VERSIONED')
+    ).toHaveTextContent('1');
+
+    // Badges semánticos por adjunto
+    expect(screen.getByTestId('task-attachment-pmi-badge-att-1')).toHaveTextContent(
+      'Entregable Formal'
+    );
+    expect(screen.getByTestId('task-attachment-pmi-badge-att-2')).toHaveTextContent(
+      'Evidencia QA'
+    );
+    const badge3 = screen.getByTestId('task-attachment-pmi-badge-att-3');
+    expect(badge3).toHaveTextContent('Entregable Formal');
+    expect(badge3).toHaveTextContent('Versionado');
+    expect(screen.getByTestId('task-attachment-pmi-badge-att-4')).toHaveTextContent(
+      'Adjunto General'
+    );
+  });
+
+  it('filters the list interactively by PMI category pills', () => {
+    render(
+      <TaskAttachmentSection
+        task={{ ...pmiBaseTask, attachments: pmiFiles }}
+        uploading={false}
+        deletingAttachmentId={null}
+        onUpload={vi.fn()}
+        onDelete={vi.fn()}
+        onUploadingChange={vi.fn()}
+      />
+    );
+
+    const filter = screen.getByTestId('task-attachments-pmi-filter');
+
+    // "Entregables Formales": acta y reporte (att-1 y att-3)
+    fireEvent.click(within(filter).getByRole('button', { name: 'Entregables Formales' }));
+    expect(screen.getByText('Acta Comité de Obra.pdf')).toBeInTheDocument();
+    expect(screen.getByText('Reporte Sistema v2.pdf')).toBeInTheDocument();
+    expect(screen.queryByText('Archivo General.zip')).not.toBeInTheDocument();
+
+    // "Evidencia QA": solo la imagen de evidencia
+    fireEvent.click(within(filter).getByRole('button', { name: 'Evidencia QA' }));
+    expect(screen.getByText('Evidencia Prueba QA.png')).toBeInTheDocument();
+    expect(screen.queryByText('Acta Comité de Obra.pdf')).not.toBeInTheDocument();
+
+    // "Todos": catálogo completo
+    fireEvent.click(within(filter).getByRole('button', { name: 'Todos' }));
+    expect(screen.getByText('Acta Comité de Obra.pdf')).toBeInTheDocument();
+    expect(screen.getByText('Evidencia Prueba QA.png')).toBeInTheDocument();
+    expect(screen.getByText('Reporte Sistema v2.pdf')).toBeInTheDocument();
+    expect(screen.getByText('Archivo General.zip')).toBeInTheDocument();
+  });
+
+  it('previews via the in-app viewer and deletes existing attachments', async () => {
+    const onDelete = vi.fn();
+    render(
+      <TaskAttachmentSection
+        task={{ ...pmiBaseTask, attachments: pmiFiles }}
+        uploading={false}
+        deletingAttachmentId={null}
+        onUpload={vi.fn()}
+        onDelete={onDelete}
+        onUploadingChange={vi.fn()}
+      />
+    );
+
+    // Previsualización abre el Visor Universal Embebido con el acta
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Previsualizar archivo Acta Comité de Obra.pdf' })
+    );
+    expect(
+      await screen.findByRole('dialog', { name: 'Visor Universal Embebido' })
+    ).toBeInTheDocument();
+
+    // Eliminación delega en onDelete con el id del adjunto
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Eliminar archivo Acta Comité de Obra.pdf' })
+    );
+    expect(onDelete).toHaveBeenCalledWith('att-1');
   });
 });

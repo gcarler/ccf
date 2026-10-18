@@ -1,12 +1,80 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { apiFetch } from '@/lib/http';
 import type { ProjectAttachment, ProjectFileRecord, ProjectTaskRecord } from '@/types/projects';
-import { Eye, Loader2, Paperclip, Trash2, Upload } from 'lucide-react';
+import { AlertTriangle, ClipboardCheck, Eye, Loader2, Paperclip, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
+import clsx from 'clsx';
 import { getSafeProjectLink } from '@/lib/projects/safeProjectLink';
 import { ProjectFileViewerDrawer } from './ProjectFileViewerDrawer';
+
+type PmiAttachmentCategory = 'QA_EVIDENCE' | 'FORMAL_DOC' | 'VERSIONED';
+
+const PMI_CATEGORY_META: Record<PmiAttachmentCategory, { label: string; pillClass: string }> = {
+  FORMAL_DOC: {
+    label: 'Entregable Formal',
+    pillClass:
+      'bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))] border-[hsl(var(--primary)/0.3)]',
+  },
+  QA_EVIDENCE: {
+    label: 'Evidencia QA',
+    pillClass:
+      'bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))] border-[hsl(var(--success)/0.3)]',
+  },
+  VERSIONED: {
+    label: 'Versionado',
+    pillClass:
+      'bg-[hsl(var(--info-muted))] text-[hsl(var(--info-text))] border-[hsl(var(--info-muted))]'
+  },
+};
+
+const PMI_FILTER_OPTIONS: { key: PmiAttachmentCategory | 'ALL'; label: string }[] = [
+  { key: 'ALL', label: 'Todos' },
+  { key: 'FORMAL_DOC', label: 'Entregables Formales' },
+  { key: 'QA_EVIDENCE', label: 'Evidencia QA' },
+  { key: 'VERSIONED', label: 'Versionados' },
+];
+
+const QA_EVIDENCE_IMAGE_PATTERN = /(?:^|[.])\.(png|jpe?g|webp|gif)$/i;
+const QA_EVIDENCE_FILENAME_PATTERN = /(evidencia|test|qa|prueba|captura|verificaci)/i;
+const FORMAL_DOC_EXT_PATTERN = /(?:^|[.])\.(pdf|docx?|xlsx?|pptx?)$/i;
+const FORMAL_DOC_FILENAME_PATTERN = /(acta|informe|reporte|manual|especificaci|entregable|certificado)/i;
+const VERSIONED_FILENAME_PATTERN = /(?:^|[\s_-])(?:v\d+(?:\.\d+)?|rev\s*\d+|final)(?:$|[\s_.-])/i;
+
+/** Clasificador PMI §5.5 & §8.3: categoria(s) de control de configuración de un adjunto. */
+export function classifyAttachmentPmi(
+  attachment: Pick<ProjectAttachment, 'filename' | 'file_type' | 'content_type'>,
+): PmiAttachmentCategory[] {
+  const filename = attachment?.filename ?? '';
+  const mime = `${attachment?.file_type ?? ''} ${attachment?.content_type ?? ''}`;
+  const categories: PmiAttachmentCategory[] = [];
+
+  if (
+    QA_EVIDENCE_IMAGE_PATTERN.test(filename) ||
+    /image\//i.test(mime) ||
+    QA_EVIDENCE_FILENAME_PATTERN.test(filename)
+  ) {
+    categories.push('QA_EVIDENCE');
+  }
+  if (
+    FORMAL_DOC_EXT_PATTERN.test(filename) ||
+    FORMAL_DOC_FILENAME_PATTERN.test(filename)
+  ) {
+    categories.push('FORMAL_DOC');
+  }
+  if (VERSIONED_FILENAME_PATTERN.test(filename)) {
+    categories.push('VERSIONED');
+  }
+  return categories;
+}
+
+const formatAttachmentWeight = (bytes?: number | null) => {
+  const total = Number(bytes ?? 0);
+  if (total <= 0) return '0 KB';
+  if (total < 1024 * 1024) return `${Math.max(1, Math.round(total / 1024))} KB`;
+  return `${(total / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 export default function TaskAttachmentSection({
   task,
@@ -28,8 +96,33 @@ export default function TaskAttachmentSection({
 }) {
   const internalInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = externalInputRef ?? internalInputRef;
-  const attachments = task.attachments ?? [];
+  // Estabiliza la referencia de adjuntos para memo deps (react-hooks/exhaustive-deps)
+  const attachments = useMemo(() => task.attachments ?? [], [task.attachments]);
   const [viewingFile, setViewingFile] = useState<ProjectFileRecord | null>(null);
+  const [pmiCategoryFilter, setPmiCategoryFilter] = useState<PmiAttachmentCategory | 'ALL'>('ALL');
+
+  // Auditoría de Configuración del Paquete (PMBOK §5.5 & §8.3)
+  const pmiAudit = useMemo(() => {
+    const counts = { FORMAL_DOC: 0, QA_EVIDENCE: 0, VERSIONED: 0 } as Record<PmiAttachmentCategory, number>;
+    let totalBytes = 0;
+    for (const attachment of attachments) {
+      totalBytes += Number(attachment.file_size ?? 0);
+      for (const category of classifyAttachmentPmi(attachment)) {
+        counts[category] += 1;
+      }
+    }
+    return { totalBytes, counts };
+  }, [attachments]);
+
+  const visibleAttachments = useMemo(() => {
+    if (pmiCategoryFilter === 'ALL') return attachments;
+    return attachments.filter((a) => classifyAttachmentPmi(a).includes(pmiCategoryFilter));
+  }, [attachments, pmiCategoryFilter]);
+
+  // §5.5 Validar el Alcance: paquete completado sin evidencia adjunta
+  const isDeliverableComplete =
+    task.status === 'done' || Number(task.physical_progress_pct ?? 0) >= 100;
+  const missingEvidenceAlert = isDeliverableComplete && attachments.length === 0;
 
   const handlePreviewAttachment = (attachment: ProjectAttachment) => {
     setViewingFile({
@@ -130,14 +223,102 @@ export default function TaskAttachmentSection({
         </button>
       </div>
 
+      {missingEvidenceAlert && (
+        <div
+          data-testid="task-attachments-pmi-missing-evidence-alert"
+          role="alert"
+          className="mb-2 flex items-start gap-2 rounded-md border border-[hsl(var(--warning)/0.4)] bg-[hsl(var(--warning)/0.1)] px-2.5 py-2 text-2xs text-[hsl(var(--foreground))]"
+        >
+          <AlertTriangle size={13} className="mt-0.5 shrink-0 text-[hsl(var(--warning))]" />
+          <p>
+            <span className="font-bold text-[hsl(var(--warning))]">
+              Alerta PMI §5.5 (Validar el Alcance):
+            </span>{' '}
+            Paquete completado sin evidencia documental o entregable verificado adjunto.
+          </p>
+        </div>
+      )}
+
+      {attachments.length > 0 && (
+        <div
+          data-testid="task-attachments-pmi-audit"
+          className="mb-2 space-y-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2)/0.4)] px-2.5 py-2"
+        >
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <span className="inline-flex items-center gap-1 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+              <ClipboardCheck size={11} className="text-[hsl(var(--primary))]" />
+              Auditoría de Configuración del Paquete
+            </span>
+            <span className="text-2xs text-[hsl(var(--muted-foreground))] tabular-nums">
+              {formatAttachmentWeight(pmiAudit.totalBytes)}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-1.5 text-2xs">
+            {(['FORMAL_DOC', 'QA_EVIDENCE', 'VERSIONED'] as PmiAttachmentCategory[]).map((category) => (
+              <div
+                key={category}
+                data-testid={`task-attachments-pmi-count-${category}`}
+                className="rounded border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-1.5 py-1 text-center"
+              >
+                <span className="block text-[hsl(var(--muted-foreground))]">
+                  {PMI_CATEGORY_META[category].label}
+                </span>
+                <span
+                  className={clsx(
+                    'font-bold',
+                    pmiAudit.counts[category] > 0 ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted-foreground))]',
+                  )}
+                >
+                  {pmiAudit.counts[category]}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Filtro por categoría PMI (§8.3 ítems de configuración) */}
+          <div
+            data-testid="task-attachments-pmi-filter"
+            className="flex flex-wrap items-center gap-1"
+            role="group"
+            aria-label="Filtrar adjuntos por categoría PMI"
+          >
+            {PMI_FILTER_OPTIONS.map((option) => {
+              const isActive = pmiCategoryFilter === option.key;
+              return (
+                <button
+                  key={option.key}
+                  type="button"
+                  aria-pressed={isActive}
+                  onClick={() => setPmiCategoryFilter(option.key)}
+                  className={clsx(
+                    'rounded-md border px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide transition-colors',
+                    isActive
+                      ? 'border-[hsl(var(--primary)/0.35)] bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))]'
+                      : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--muted-foreground))] opacity-70 hover:opacity-100',
+                  )}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {attachments.length === 0 ? (
         <p className="text-xs italic text-[hsl(var(--muted-foreground))]">
           Sin archivos adjuntos aun.
         </p>
+      ) : visibleAttachments.length === 0 ? (
+        <p className="rounded-md border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-2)/0.4)] px-2.5 py-2 text-center text-2xs text-[hsl(var(--muted-foreground))]">
+          No hay adjuntos de la categoría PMI seleccionada.
+        </p>
       ) : (
         <div className="space-y-2">
-          {attachments.map(attachment => {
+          {visibleAttachments.map(attachment => {
             const fileUrl = getSafeProjectLink(attachment.file_url);
+            const pmiCategories = classifyAttachmentPmi(attachment);
             return (
               <div
                 key={attachment.id}
@@ -163,6 +344,28 @@ export default function TaskAttachmentSection({
                       ? `${Math.max(1, Math.round(attachment.file_size / 1024))} KB`
                       : 'Archivo adjunto'}
                   </p>
+                  <span
+                    data-testid={`task-attachment-pmi-badge-${attachment.id}`}
+                    className="mt-0.5 flex flex-wrap gap-1"
+                  >
+                    {pmiCategories.length > 0 ? (
+                      pmiCategories.map((category) => (
+                        <span
+                          key={category}
+                          className={clsx(
+                            'rounded border px-1.5 py-0.5 text-2xs font-semibold',
+                            PMI_CATEGORY_META[category].pillClass,
+                          )}
+                        >
+                          {PMI_CATEGORY_META[category].label}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="rounded border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-1.5 py-0.5 text-2xs text-[hsl(var(--muted-foreground))]">
+                        Adjunto General
+                      </span>
+                    )}
+                  </span>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   {fileUrl ? (

@@ -225,4 +225,46 @@ describe('TaskMetaFields', () => {
       );
     });
   });
+
+  it('evaluates PMI package readiness across the 4 WBS & RACI pillars (incomplete vs 4/4 complete)', () => {
+    const { rerender } = render(
+      <TaskMetaFields
+        task={{ ...mockTask, assignee_id: null, component_id: null }}
+        labels={[]}
+        onLabelsChange={vi.fn()}
+        onAssigneeChange={vi.fn()}
+        onPriorityCycle={vi.fn()}
+        priority={defaultPriority}
+        token="test-token"
+      />
+    );
+
+    const readinessBanner = screen.getByTestId('task-meta-pmi-readiness');
+    expect(readinessBanner).toHaveTextContent('1/4 pilares PMI');
+    expect(readinessBanner).toHaveTextContent(
+      'Pendiente: Responsable RACI, Cuenta de Control / EDT, Taxonomía'
+    );
+
+    rerender(
+      <TaskMetaFields
+        task={{
+          ...mockTask,
+          assignee_id: 'persona-1',
+          due_date: '2026-10-22T00:00:00Z',
+          component_id: 'comp-1',
+        }}
+        labels={['Infraestructura']}
+        onLabelsChange={vi.fn()}
+        onAssigneeChange={vi.fn()}
+        onPriorityCycle={vi.fn()}
+        priority={defaultPriority}
+        token="test-token"
+      />
+    );
+
+    expect(screen.getByTestId('task-meta-pmi-readiness')).toHaveTextContent('4/4 pilares PMI');
+    expect(screen.getByTestId('task-meta-pmi-readiness')).toHaveTextContent(
+      'Metadatos PMI completos para ejecución'
+    );
+  });
 });
