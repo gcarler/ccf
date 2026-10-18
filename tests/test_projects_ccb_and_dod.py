@@ -982,3 +982,100 @@ def test_ccb_baseline_creep_zero_denominators():
         baseline_stability_status="stable",
     )
 
+
+# ─── 10. Analizador de Costo de la Calidad (CoQ — PMI PMBOK §8.1.2.3) ───
+
+
+def test_evaluate_cost_of_quality_balance_proactive_conformance():
+    """Prevención >= Evaluación y Conformidad >= No Conformidad -> 'proactive_conformance'."""
+    from backend.services.project_ccb_service import evaluate_cost_of_quality_balance
+
+    res = evaluate_cost_of_quality_balance(
+        prevention_cost=5000.0,
+        appraisal_cost=3000.0,
+        internal_failure_cost=1000.0,
+        external_failure_cost=0.0,
+    )
+    assert res == {
+        "prevention_cost": 5000.0,
+        "appraisal_cost": 3000.0,
+        "internal_failure_cost": 1000.0,
+        "external_failure_cost": 0.0,
+        "cost_of_conformance": 8000.0,
+        "cost_of_nonconformance": 1000.0,
+        "total_coq": 9000.0,
+        "conformance_ratio_pct": 88.89,
+        "nonconformance_ratio_pct": 11.11,
+        "coq_maturity_status": "proactive_conformance",
+    }
+
+
+def test_evaluate_cost_of_quality_balance_inspection_dependent():
+    """Conformidad >= No Conformidad pero Evaluación > Prevención -> 'inspection_dependent'."""
+    from backend.services.project_ccb_service import evaluate_cost_of_quality_balance
+
+    res = evaluate_cost_of_quality_balance(
+        prevention_cost=2000.0,
+        appraisal_cost=6000.0,
+        internal_failure_cost=1500.0,
+        external_failure_cost=0.0,
+    )
+    assert res["cost_of_conformance"] == 8000.0
+    assert res["cost_of_nonconformance"] == 1500.0
+    assert res["total_coq"] == 9500.0
+    assert res["coq_maturity_status"] == "inspection_dependent"
+
+
+def test_evaluate_cost_of_quality_balance_reactive_rework_heavy():
+    """No Conformidad > Conformidad sin superar umbral de falla externa >= 25% -> 'reactive_rework_heavy'."""
+    from backend.services.project_ccb_service import evaluate_cost_of_quality_balance
+
+    res = evaluate_cost_of_quality_balance(
+        prevention_cost=1000.0,
+        appraisal_cost=1000.0,
+        internal_failure_cost=4000.0,
+        external_failure_cost=500.0,
+    )
+    assert res["cost_of_conformance"] == 2000.0
+    assert res["cost_of_nonconformance"] == 4500.0
+    assert res["total_coq"] == 6500.0
+    assert res["coq_maturity_status"] == "reactive_rework_heavy"
+
+
+def test_evaluate_cost_of_quality_balance_external_failure_critical():
+    """Fallas externas >= 25% del CoQ total -> 'external_failure_critical'."""
+    from backend.services.project_ccb_service import evaluate_cost_of_quality_balance
+
+    res = evaluate_cost_of_quality_balance(
+        prevention_cost=1000.0,
+        appraisal_cost=1000.0,
+        internal_failure_cost=1000.0,
+        external_failure_cost=2000.0,
+    )
+    assert res["total_coq"] == 5000.0
+    assert res["conformance_ratio_pct"] == 40.0
+    assert res["nonconformance_ratio_pct"] == 60.0
+    assert res["coq_maturity_status"] == "external_failure_critical"
+
+
+def test_evaluate_cost_of_quality_balance_untracked_or_negative():
+    """Ceros o valores negativos se sanitizan a 0.0 y reportan 'untracked'."""
+    from backend.services.project_ccb_service import evaluate_cost_of_quality_balance
+
+    for res in (
+        evaluate_cost_of_quality_balance(),
+        evaluate_cost_of_quality_balance(-100.0, -50.0, -20.0, -10.0),
+    ):
+        assert res == {
+            "prevention_cost": 0.0,
+            "appraisal_cost": 0.0,
+            "internal_failure_cost": 0.0,
+            "external_failure_cost": 0.0,
+            "cost_of_conformance": 0.0,
+            "cost_of_nonconformance": 0.0,
+            "total_coq": 0.0,
+            "conformance_ratio_pct": 0.0,
+            "nonconformance_ratio_pct": 0.0,
+            "coq_maturity_status": "untracked",
+        }
+

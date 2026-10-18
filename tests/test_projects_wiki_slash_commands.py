@@ -425,3 +425,105 @@ def test_search_canonical_pmi_volumes_no_matches(tmp_path):
     _write_doctrine_files(tmp_path, "v-search")
     assert search_canonical_pmi_volumes(query="termino_inexistente_xyz", base_dir=tmp_path) == []
     assert search_canonical_pmi_volumes(tag_filter="tag_inexistente", base_dir=tmp_path) == []
+
+
+# ── extract_wiki_slash_commands_inventory (PMBOK §4.4, pure helper) ───────
+
+
+def test_slash_inventory_multiple_supported_commands():
+    """Comandos PMI soportados con repetición → válidos con conteos ordenados."""
+    from backend.services.wiki_pmi_service import extract_wiki_slash_commands_inventory
+
+    markdown = (
+        "# Planificación\n\n"
+        "/evm resumen del proyecto\n"
+        "- ./wbs no debe contarse (href pegado)\n"
+        "/ccb doble revisión\n"
+        "/evm otra vez\n"
+        "/dod criterios de aceptación\n"
+    )
+    result = extract_wiki_slash_commands_inventory(markdown)
+
+    # /evm, /ccb, /evm, /dod cuentan; ./wbs está pegado a '.' y se ignora
+    assert result["total_invocations"] == 4
+    assert result["unique_commands"] == ["ccb", "dod", "evm"]
+    assert result["supported_commands"] == ["ccb", "dod", "evm"]
+    assert result["unsupported_commands"] == []
+    assert result["command_counts"] == {"ccb": 1, "dod": 1, "evm": 2}
+    assert result["syntax_status"] == "valid_pmi_commands"
+
+
+def test_slash_inventory_mixes_unsupported():
+    """Comandos fuera del conjunto canónico → 'contains_unsupported'."""
+    from backend.services.wiki_pmi_service import (
+        SUPPORTED_PMI_SLASH_COMMANDS,
+        extract_wiki_slash_commands_inventory,
+    )
+
+    markdown = "/charter sponsor asignado\n/evm\n/wbs\n/autohack comando falso\n/imports aliases\n"
+    result = extract_wiki_slash_commands_inventory(markdown)
+
+    # 5 invocaciones: charter, evm, wbs soportadas; autohack, imports fuera
+    assert result["total_invocations"] == 5
+    assert result["unique_commands"] == [
+        "autohack",
+        "charter",
+        "evm",
+        "imports",
+        "wbs",
+    ]
+    assert result["supported_commands"] == ["charter", "evm", "wbs"]
+    assert result["unsupported_commands"] == ["autohack", "imports"]
+    assert result["command_counts"] == {
+        "autohack": 1,
+        "charter": 1,
+        "evm": 1,
+        "imports": 1,
+        "wbs": 1,
+    }
+    assert result["syntax_status"] == "contains_unsupported"
+    assert "evm" in SUPPORTED_PMI_SLASH_COMMANDS
+
+
+def test_slash_inventory_ignores_fences_and_urls():
+    """Bloques cercados y URLs https:// o rutas /root/... no cuentan."""
+    from backend.services.wiki_pmi_service import extract_wiki_slash_commands_inventory
+
+    markdown = (
+        "## Instrucciones\n\n"
+        "/evm resumen\n\n"
+        "```bash\n"
+        "/wbs dentro_de_fence\n"
+        "/raci tambien_dentro\n"
+        "```\n\n"
+        "Visita https://plataforma.ccf/evm/guia para más\n"
+        "Y lee /root/documentos/ccb/acta.md y /srv/dod/reporte.md\n"
+        "~~~\n"
+        "/pert dentro de fence con tildes\n"
+        "~~~\n"
+        "Fin.\n"
+    )
+    result = extract_wiki_slash_commands_inventory(markdown)
+
+    # Solo /evm del cuerpo real cuenta; URLs, rutas y bloques cercados quedan fuera
+    assert result["total_invocations"] == 1
+    assert result["unique_commands"] == ["evm"]
+    assert result["unsupported_commands"] == []
+    assert result["syntax_status"] == "valid_pmi_commands"
+
+
+def test_slash_inventory_empty_and_none():
+    """None, '' y solo espacios → conteos en 0 con status 'empty'."""
+    from backend.services.wiki_pmi_service import extract_wiki_slash_commands_inventory
+
+    for text in (None, "", "   \n   ", "Texto sin comandos slash pero con /y pegado"):
+        result = extract_wiki_slash_commands_inventory(text)
+        assert result == {
+            "total_invocations": 0,
+            "unique_commands": [],
+            "supported_commands": [],
+            "unsupported_commands": [],
+            "command_counts": {},
+            "syntax_status": "empty",
+        }
+

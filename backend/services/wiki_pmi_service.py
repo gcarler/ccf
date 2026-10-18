@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -296,3 +297,95 @@ def search_canonical_pmi_volumes(
 
     matched.sort(key=lambda item: (-int(item["match_score"]), int(item["vol"])))
     return matched
+
+
+SUPPORTED_PMI_SLASH_COMMANDS = {
+    "evm",
+    "wbs",
+    "charter",
+    "raid",
+    "raci",
+    "ccb",
+    "dod",
+    "pert",
+    "cpm",
+    "lessons",
+}
+
+SLASH_COMMAND_RE = re.compile(r"/([a-z][a-z0-9_-]{1,31})\b")
+
+
+def extract_wiki_slash_commands_inventory(markdown_text: Optional[str]) -> Dict[str, Any]:
+    """Inventario de invocaciones de comandos slash PMI (PMBOK §4.4).
+
+    Escanea `markdown_text` (None o vacío → conteos en 0) detectando tokens
+    `/comando` con formato `/([a-z][a-z0-9_-]{1,31})` que aparezcan al inicio
+    de línea o inmediatamente después de un espacio. Se ignoran:
+    - bloques de código cercados (``` y ~~~);
+    - URLs (http://…, https://…) y rutas de sistema (/root/…, /srv/…):
+      cualquier token cuyo interior contenga otro '/' además del slash
+      inicial (o que no empiece por '/') no es una invocación de comando.
+    Los comandos se normalizan a minúsculas y se separan en soportados
+    (SUPPORTED_PMI_SLASH_COMMANDS) y no soportados:
+    - 'empty' si total_invocations == 0;
+    - 'valid_pmi_commands' si len(unsupported_commands) == 0;
+    - 'contains_unsupported' si len(unsupported_commands) > 0.
+    """
+    text = str(markdown_text or "")
+    total_invocations = 0
+    detected_in_order: List[str] = []
+
+    inside_fence = False
+    fence_marker: Optional[str] = None
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not inside_fence:
+            fence_open = re.match(r"^(`{3,}|~{3,})\S*\s*$", stripped)
+            if fence_open:
+                inside_fence = True
+                fence_marker = fence_open.group(1)[:3]
+                continue
+            for token in re.split(r"\s+", line):
+                if not token.startswith("/"):
+                    continue
+                name_match = re.match(r"/([a-z][a-z0-9_-]{1,31})\b", token)
+                if not name_match:
+                    continue
+                if token.count("/") != 1:
+                    continue  # URL (https://…) o ruta de sistema (/root/…)
+                detected_in_order.append(name_match.group(1).lower())
+                total_invocations += 1
+        else:
+            fence_close = re.match(r"^(`{3,}|~{3,})\s*$", stripped)
+            if fence_close and fence_close.group(1)[:3] == fence_marker:
+                inside_fence = False
+            fence_marker = fence_marker
+
+    unique_commands = sorted(set(detected_in_order))
+    supported_commands = sorted(
+        {cmd for cmd in unique_commands if cmd in SUPPORTED_PMI_SLASH_COMMANDS}
+    )
+    unsupported_commands = sorted(
+        {cmd for cmd in unique_commands if cmd not in SUPPORTED_PMI_SLASH_COMMANDS}
+    )
+    command_counts: Dict[str, int] = {}
+    for cmd in detected_in_order:
+        command_counts[cmd] = command_counts.get(cmd, 0) + 1
+    command_counts = {cmd: count for cmd, count in sorted(command_counts.items())}
+
+    if total_invocations == 0:
+        syntax_status = "empty"
+    elif not unsupported_commands:
+        syntax_status = "valid_pmi_commands"
+    else:
+        syntax_status = "contains_unsupported"
+
+    return {
+        "total_invocations": total_invocations,
+        "unique_commands": unique_commands,
+        "supported_commands": supported_commands,
+        "unsupported_commands": unsupported_commands,
+        "command_counts": command_counts,
+        "syntax_status": syntax_status,
+    }
+

@@ -525,3 +525,53 @@ def evaluate_ccb_baseline_creep_impact(
         "baseline_stability_status": baseline_stability_status,
     }
 
+
+def evaluate_cost_of_quality_balance(
+    prevention_cost: float = 0.0,
+    appraisal_cost: float = 0.0,
+    internal_failure_cost: float = 0.0,
+    external_failure_cost: float = 0.0,
+) -> dict:
+    """Evalúa el equilibrio de Costo de la Calidad (CoQ: Conformidad vs No Conformidad) según PMI PMBOK §8.1.2.3."""
+    prevention = round(max(0.0, float(prevention_cost or 0.0)), 2)
+    appraisal = round(max(0.0, float(appraisal_cost or 0.0)), 2)
+    internal_failure = round(max(0.0, float(internal_failure_cost or 0.0)), 2)
+    external_failure = round(max(0.0, float(external_failure_cost or 0.0)), 2)
+
+    cost_of_conformance = round(prevention + appraisal, 2)
+    cost_of_nonconformance = round(internal_failure + external_failure, 2)
+    total_coq = round(cost_of_conformance + cost_of_nonconformance, 2)
+
+    conformance_ratio_pct = (
+        round((cost_of_conformance / total_coq) * 100.0, 2) if total_coq > 0 else 0.0
+    )
+    nonconformance_ratio_pct = (
+        round((cost_of_nonconformance / total_coq) * 100.0, 2)
+        if total_coq > 0
+        else 0.0
+    )
+
+    if total_coq == 0.0:
+        coq_maturity_status = "untracked"
+    elif external_failure > 0.0 and (external_failure / total_coq) >= 0.25:
+        coq_maturity_status = "external_failure_critical"
+    elif cost_of_nonconformance > cost_of_conformance:
+        coq_maturity_status = "reactive_rework_heavy"
+    elif prevention >= appraisal:
+        coq_maturity_status = "proactive_conformance"
+    else:
+        coq_maturity_status = "inspection_dependent"
+
+    return {
+        "prevention_cost": prevention,
+        "appraisal_cost": appraisal,
+        "internal_failure_cost": internal_failure,
+        "external_failure_cost": external_failure,
+        "cost_of_conformance": cost_of_conformance,
+        "cost_of_nonconformance": cost_of_nonconformance,
+        "total_coq": total_coq,
+        "conformance_ratio_pct": conformance_ratio_pct,
+        "nonconformance_ratio_pct": nonconformance_ratio_pct,
+        "coq_maturity_status": coq_maturity_status,
+    }
+
