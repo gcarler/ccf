@@ -2509,6 +2509,7 @@ __all__ = [
     "audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration",
     "audit_wiki_requirements_bidirectional_traceability_and_gold_plating",
     "audit_wiki_decision_log_daci_accountability_and_reversal",
+    "audit_wiki_assumptions_and_constraints_empirical_validation",
     "WikiPMIService",
 ]
 
@@ -4341,3 +4342,170 @@ def audit_wiki_decision_log_daci_accountability_and_reversal(
 WikiPMIService.audit_wiki_decision_log_daci_accountability_and_reversal = staticmethod(
     audit_wiki_decision_log_daci_accountability_and_reversal
 )
+
+
+def audit_wiki_assumptions_and_constraints_empirical_validation(
+    assumption_entries: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_unvalidated_days: int = 21,
+    require_validation_method: bool = True,
+    require_risk_or_cr_on_false: bool = True,
+) -> dict[str, Any]:
+    """Audita validación empírica de supuestos y conversión de supuestos invalidados a riesgos/CR según PMI PMBOK §11.2 y §5.3."""
+    if (
+        assumption_entries is None
+        or isinstance(assumption_entries, (str, bytes))
+        or not isinstance(assumption_entries, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = assumption_entries
+
+    try:
+        max_days = int(max_unvalidated_days)
+    except (TypeError, ValueError):
+        max_days = 21
+
+    total_entries = 0
+    compliant_entries = 0
+    validated_or_intact_count = 0
+
+    unowned_or_missing_method_ids: list[str] = []
+    stale_unvalidated_assumption_ids: list[str] = []
+    unconverted_invalidated_assumption_ids: list[str] = []
+    breached_constraint_ids: list[str] = []
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_entries += 1
+
+        assumption_id = (
+            str(raw.get("id") or raw.get("assumption_id") or "").strip()
+            or "ASM-UNKNOWN"
+        )
+        entry_type = (
+            str(raw.get("entry_type") or "assumption").strip().lower()
+            or "assumption"
+        )
+        validation_status = (
+            str(raw.get("validation_status") or "unvalidated").strip().lower()
+        )
+
+        try:
+            days_open = max(0, int(raw.get("days_open") or 0))
+        except (TypeError, ValueError):
+            days_open = 0
+
+        owner = str(raw.get("owner") or "").strip()
+        validation_method = str(raw.get("validation_method") or "").strip()
+        linked_risk_or_cr_id = str(raw.get("linked_risk_or_cr_id") or "").strip()
+
+        raw_buf = raw.get("constraint_buffer_pct")
+        try:
+            constraint_buffer_pct = (
+                float(raw_buf) if raw_buf is not None else 10.0
+            )
+        except (TypeError, ValueError):
+            constraint_buffer_pct = 10.0
+
+        is_unowned_or_missing_method = (not owner) or (
+            bool(require_validation_method)
+            and entry_type == "assumption"
+            and not validation_method
+        )
+        is_stale_unvalidated = (
+            entry_type == "assumption"
+            and validation_status == "unvalidated"
+            and days_open > max_days
+        )
+        is_unconverted_invalidated = (
+            validation_status == "invalidated_false"
+            and bool(require_risk_or_cr_on_false)
+            and not linked_risk_or_cr_id
+        )
+        is_breached_constraint = (
+            entry_type == "constraint" and constraint_buffer_pct < 0.0
+        )
+
+        if is_unowned_or_missing_method:
+            unowned_or_missing_method_ids.append(assumption_id)
+        if is_stale_unvalidated:
+            stale_unvalidated_assumption_ids.append(assumption_id)
+        if is_unconverted_invalidated:
+            unconverted_invalidated_assumption_ids.append(assumption_id)
+        if is_breached_constraint:
+            breached_constraint_ids.append(assumption_id)
+
+        if (
+            not is_unowned_or_missing_method
+            and not is_stale_unvalidated
+            and not is_unconverted_invalidated
+            and not is_breached_constraint
+        ):
+            compliant_entries += 1
+
+        if validation_status in {"validated_true", "invalidated_false"} or (
+            entry_type == "constraint" and constraint_buffer_pct >= 0.0
+        ):
+            validated_or_intact_count += 1
+
+    validation_rate_pct = (
+        100.0
+        if total_entries == 0
+        else round((validated_or_intact_count / total_entries) * 100.0, 2)
+    )
+
+    is_compliant = (
+        len(unowned_or_missing_method_ids) == 0
+        and len(stale_unvalidated_assumption_ids) == 0
+        and len(unconverted_invalidated_assumption_ids) == 0
+        and len(breached_constraint_ids) == 0
+    )
+
+    if is_compliant:
+        governance_health = "healthy"
+    elif (
+        len(unconverted_invalidated_assumption_ids) > 0
+        or len(breached_constraint_ids) > 0
+    ):
+        governance_health = "critical"
+    else:
+        governance_health = "at_risk"
+
+    recommendations: list[str] = []
+    if unowned_or_missing_method_ids:
+        recommendations.append(
+            f"Asignar propietario (owner) y método de validación empírica (validation_method) en {unowned_or_missing_method_ids}."
+        )
+    if stale_unvalidated_assumption_ids:
+        recommendations.append(
+            f"Ejecutar validación empírica de supuestos abiertos por más de {max_days} días en {stale_unvalidated_assumption_ids}."
+        )
+    if unconverted_invalidated_assumption_ids:
+        recommendations.append(
+            f"Convertir supuestos demostrados falsos {unconverted_invalidated_assumption_ids} en riesgos activos o solicitudes de cambio CCB (linked_risk_or_cr_id)."
+        )
+    if breached_constraint_ids:
+        recommendations.append(
+            f"Escalar violación de restricciones duras (constraint_buffer_pct < 0) en {breached_constraint_ids} al comité de control de cambios."
+        )
+
+    return {
+        "total_entries": total_entries,
+        "compliant_entries": compliant_entries,
+        "unowned_or_missing_method_ids": unowned_or_missing_method_ids,
+        "stale_unvalidated_assumption_ids": stale_unvalidated_assumption_ids,
+        "unconverted_invalidated_assumption_ids": unconverted_invalidated_assumption_ids,
+        "breached_constraint_ids": breached_constraint_ids,
+        "validation_rate_pct": validation_rate_pct,
+        "governance_health": governance_health,
+        "is_compliant": is_compliant,
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_assumptions_and_constraints_empirical_validation = staticmethod(
+    audit_wiki_assumptions_and_constraints_empirical_validation
+)
+

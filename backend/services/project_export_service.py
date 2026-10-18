@@ -2982,6 +2982,7 @@ __all__ = [
     "audit_executive_report_stakeholder_escalation_and_briefing_cadence",
     "audit_executive_report_esg_sustainability_and_regulatory_compliance",
     "audit_executive_report_risk_burndown_and_residual_exposure",
+    "audit_executive_report_critical_path_float_and_convergence",
     "ProjectExportService",
 ]
 
@@ -4716,4 +4717,163 @@ def audit_executive_report_risk_burndown_and_residual_exposure(
 ProjectExportService.audit_executive_report_risk_burndown_and_residual_exposure = staticmethod(
     audit_executive_report_risk_burndown_and_residual_exposure
 )
+
+
+def audit_executive_report_critical_path_float_and_convergence(
+    network_paths: Sequence[Mapping[str, Any]] | None,
+    *,
+    near_critical_float_days: float = 5.0,
+    max_float_burn_rate_pct: float = 80.0,
+    max_merge_point_predecessors: int = 3,
+) -> dict[str, Any]:
+    """Audita consumo de holgura total, holgura negativa y sesgo de convergencia en puntos de unión de la ruta crítica (PMI PMBOK §6.6 y §10.2)."""
+    if (
+        network_paths is None
+        or isinstance(network_paths, (str, bytes))
+        or not isinstance(network_paths, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = network_paths
+
+    try:
+        near_crit_days = float(near_critical_float_days)
+    except (TypeError, ValueError):
+        near_crit_days = 5.0
+
+    try:
+        max_burn_pct = float(max_float_burn_rate_pct)
+    except (TypeError, ValueError):
+        max_burn_pct = 80.0
+
+    try:
+        max_merge_preds = int(max_merge_point_predecessors)
+    except (TypeError, ValueError):
+        max_merge_preds = 3
+
+    total_paths = 0
+    compliant_paths = 0
+    remaining_floats: list[float] = []
+
+    negative_float_without_recovery_ids: list[str] = []
+    near_critical_paths_ids: list[str] = []
+    excessive_float_burn_ids: list[str] = []
+    high_convergence_merge_bias_ids: list[str] = []
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_paths += 1
+
+        path_id = (
+            str(raw.get("id") or raw.get("path_id") or "").strip()
+            or "PATH-UNKNOWN"
+        )
+
+        try:
+            baseline_float_days = float(raw.get("baseline_float_days") or 0.0)
+        except (TypeError, ValueError):
+            baseline_float_days = 0.0
+
+        try:
+            remaining_float_days = float(raw.get("remaining_float_days") or 0.0)
+        except (TypeError, ValueError):
+            remaining_float_days = 0.0
+
+        try:
+            merge_predecessors_count = max(
+                0, int(raw.get("merge_predecessors_count") or 0)
+            )
+        except (TypeError, ValueError):
+            merge_predecessors_count = 0
+
+        recovery_plan_documented = bool(raw.get("recovery_plan_documented"))
+        remaining_floats.append(remaining_float_days)
+
+        is_neg_without_recovery = (
+            remaining_float_days < 0.0 and not recovery_plan_documented
+        )
+        is_near_critical = 0.0 < remaining_float_days <= near_crit_days
+        is_excessive_burn = (
+            baseline_float_days > 0.0
+            and (
+                (baseline_float_days - remaining_float_days)
+                / baseline_float_days
+            )
+            * 100.0
+            > max_burn_pct
+        )
+        is_high_convergence = (
+            merge_predecessors_count > max_merge_preds
+            and remaining_float_days <= near_crit_days
+        )
+
+        if is_neg_without_recovery:
+            negative_float_without_recovery_ids.append(path_id)
+        if is_near_critical:
+            near_critical_paths_ids.append(path_id)
+        if is_excessive_burn:
+            excessive_float_burn_ids.append(path_id)
+        if is_high_convergence:
+            high_convergence_merge_bias_ids.append(path_id)
+
+        if (
+            not is_neg_without_recovery
+            and not is_excessive_burn
+            and not is_high_convergence
+        ):
+            compliant_paths += 1
+
+    min_remaining_float_days = (
+        0.0 if not remaining_floats else round(min(remaining_floats), 2)
+    )
+
+    if len(negative_float_without_recovery_ids) > 0:
+        schedule_network_health = "critical"
+    elif (
+        len(excessive_float_burn_ids) > 0
+        or len(high_convergence_merge_bias_ids) > 0
+    ):
+        schedule_network_health = "at_risk"
+    else:
+        schedule_network_health = "healthy"
+
+    is_compliant = schedule_network_health == "healthy"
+
+    recommendations: list[str] = []
+    if negative_float_without_recovery_ids:
+        recommendations.append(
+            f"Documentar plan de compresión (crashing/fast-tracking) para caminos con holgura negativa sin plan de recuperación: {negative_float_without_recovery_ids}."
+        )
+    if excessive_float_burn_ids:
+        recommendations.append(
+            f"Contener tasa de consumo de holgura total (> {max_burn_pct}%) en caminos {excessive_float_burn_ids}."
+        )
+    if high_convergence_merge_bias_ids:
+        recommendations.append(
+            f"Mitigar sesgo de convergencia en hitos de unión (> {max_merge_preds} predecesores con holgura <= {near_crit_days}d) en {high_convergence_merge_bias_ids}."
+        )
+    if near_critical_paths_ids:
+        recommendations.append(
+            f"Monitorear preventivamente los caminos cuasi-críticos (0 < holgura <= {near_crit_days}d): {near_critical_paths_ids}."
+        )
+
+    return {
+        "total_paths": total_paths,
+        "compliant_paths": compliant_paths,
+        "negative_float_without_recovery_ids": negative_float_without_recovery_ids,
+        "near_critical_paths_ids": near_critical_paths_ids,
+        "excessive_float_burn_ids": excessive_float_burn_ids,
+        "high_convergence_merge_bias_ids": high_convergence_merge_bias_ids,
+        "min_remaining_float_days": min_remaining_float_days,
+        "schedule_network_health": schedule_network_health,
+        "is_compliant": is_compliant,
+        "recommendations": recommendations,
+    }
+
+
+ProjectExportService.audit_executive_report_critical_path_float_and_convergence = staticmethod(
+    audit_executive_report_critical_path_float_and_convergence
+)
+
 

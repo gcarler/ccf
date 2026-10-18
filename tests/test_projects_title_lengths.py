@@ -4609,3 +4609,145 @@ def test_validate_business_case_npv_irr_and_payback_hurdle_domain_errors_and_exp
     assert "validate_business_case_npv_irr_and_payback_hurdle" in mod.__all__
 
 
+
+
+def test_validate_monte_carlo_confidence_band_and_reserve_adequacy_healthy():
+    """Banda monotónica bien muestreada con reserva que cubre P80."""
+    import pytest
+
+    from backend.schemas.projects import (
+        validate_monte_carlo_confidence_band_and_reserve_adequacy,
+    )
+
+    res = validate_monte_carlo_confidence_band_and_reserve_adequacy(
+        [
+            {"simulation_id": "MC-1", "iterations": 1000, "deterministic_base": 100.0,
+             "p50_estimate": 105.0, "p80_estimate": 120.0, "p90_estimate": 130.0,
+             "allocated_contingency_reserve": 25.0},
+        ]
+    )
+    assert res == {
+        "total_simulations": 1,
+        "compliant_simulations_count": 1,
+        "non_monotonic_or_under_sampled_count": 0,
+        "reserve_shortfall_at_p80_count": 0,
+        "excessive_tail_uncertainty_spread_count": 0,
+        "simulation_governance_status": "HEALTHY",
+        "violations": [],
+    }
+
+
+def test_validate_monte_carlo_confidence_band_and_reserve_adequacy_critical():
+    """Shortfall en P80 (CRITICAL) + under-sampled/non-monotónica (CRITICAL)."""
+    import pytest
+
+    from backend.schemas.projects import (
+        validate_monte_carlo_confidence_band_and_reserve_adequacy,
+    )
+
+    res = validate_monte_carlo_confidence_band_and_reserve_adequacy(
+        [
+            # MC-2: base+reserva 130 < P80 140 -> shortfall; spread 140/105 OK.
+            {"simulation_id": "MC-2", "iterations": 1000, "deterministic_base": 100.0,
+             "p50_estimate": 105.0, "p80_estimate": 140.0, "p90_estimate": 140.0,
+             "allocated_contingency_reserve": 30.0},
+            # MC-3: iterations 999 < 1000 y banda P50=90 < base=100, P80<P50.
+            {"simulation_id": "MC-3", "iterations": 999, "deterministic_base": 100.0,
+             "p50_estimate": 90.0, "p80_estimate": 85.0, "p90_estimate": 88.0,
+             "allocated_contingency_reserve": 10.0},
+        ]
+    )
+    assert res["total_simulations"] == 2
+    assert res["reserve_shortfall_at_p80_count"] == 1
+    assert res["non_monotonic_or_under_sampled_count"] == 1
+    assert res["compliant_simulations_count"] == 0
+    assert res["simulation_governance_status"] == "CRITICAL"
+    assert res["violations"][0]["reasons"] == ["RESERVE_SHORTFALL_AT_P80 (130.0<140.0)"]
+    assert res["violations"][1]["reasons"] == [
+        "UNDER_SAMPLED (999<1000)",
+        "NON_MONOTONIC_BAND (debe cumplir 0 < base <= P50 <= P80 <= P90)",
+    ]
+
+    # base <= 0 no cumple la monotonicidad 0 < base.
+    zero = validate_monte_carlo_confidence_band_and_reserve_adequacy(
+        [
+            {"simulation_id": "MC-6", "iterations": 1000, "deterministic_base": 0.0,
+             "p50_estimate": 1.0, "p80_estimate": 2.0, "p90_estimate": 3.0,
+             "allocated_contingency_reserve": 5.0},
+        ]
+    )
+    assert zero["non_monotonic_or_under_sampled_count"] == 1
+    assert zero["simulation_governance_status"] == "CRITICAL"
+
+
+def test_validate_monte_carlo_confidence_band_and_reserve_adequacy_at_risk_and_borders():
+    """Spread excesivo P90/P50 > ratio -> AT_RISK; bordes inclusivos de todas las reglas."""
+    import pytest
+
+    from backend.schemas.projects import (
+        validate_monte_carlo_confidence_band_and_reserve_adequacy,
+    )
+
+    risk = validate_monte_carlo_confidence_band_and_reserve_adequacy(
+        [
+            {"simulation_id": "MC-4", "iterations": 1000, "deterministic_base": 100.0,
+             "p50_estimate": 100.0, "p80_estimate": 120.0, "p90_estimate": 141.0,
+             "allocated_contingency_reserve": 30.0},
+        ]
+    )
+    assert risk["excessive_tail_uncertainty_spread_count"] == 1
+    assert risk["compliant_simulations_count"] == 0
+    assert risk["simulation_governance_status"] == "AT_RISK"
+    assert risk["violations"][0]["reasons"] == ["EXCESSIVE_TAIL_SPREAD (P90/P50=1.41>1.35)"]
+
+    # Bordes: base+reserva == P80 (125 == 125) OK; spread == ratio (141/105 <= custom) OK.
+    border = validate_monte_carlo_confidence_band_and_reserve_adequacy(
+        [
+            {"simulation_id": "MC-5", "iterations": 1000, "deterministic_base": 100.0,
+             "p50_estimate": 105.0, "p80_estimate": 125.0, "p90_estimate": 141.0,
+             "allocated_contingency_reserve": 25.0},
+        ],
+        max_p90_to_p50_spread_ratio=1.3428572,
+    )
+    assert border["simulation_governance_status"] == "HEALTHY"
+    assert border["compliant_simulations_count"] == 1
+
+    # Spread no se evalua cuando P50 == 0.
+    z50 = validate_monte_carlo_confidence_band_and_reserve_adequacy(
+        [
+            {"simulation_id": "MC-7", "iterations": 1000, "deterministic_base": 0.0,
+             "p50_estimate": 0.0, "p80_estimate": 0.0, "p90_estimate": 0.0,
+             "allocated_contingency_reserve": 0.0},
+        ]
+    )
+    assert z50["excessive_tail_uncertainty_spread_count"] == 0
+
+
+def test_validate_monte_carlo_confidence_band_and_reserve_adequacy_custom_and_empty():
+    """Umbrales custom, entrada vacia/None y export en __all__."""
+    import pytest
+
+    from backend.schemas.projects import (
+        validate_monte_carlo_confidence_band_and_reserve_adequacy as fn,
+    )
+    import backend.schemas.projects as mod
+
+    custom = fn(
+        [
+            {"simulation_id": "MC-8", "iterations": 500, "deterministic_base": 50.0,
+             "p50_estimate": 55.0, "p80_estimate": 65.0, "p90_estimate": 70.0,
+             "allocated_contingency_reserve": 16.0},
+        ],
+        min_iterations=500,
+        max_p90_to_p50_spread_ratio=1.30,
+    )
+    assert custom["simulation_governance_status"] == "HEALTHY"
+    assert custom["compliant_simulations_count"] == 1
+
+    for payload in ([], None, 42, ["x"]):
+        empty = fn(payload)
+        assert empty["total_simulations"] == 0
+        assert empty["simulation_governance_status"] == "HEALTHY"
+        assert empty["violations"] == []
+
+    assert "validate_monte_carlo_confidence_band_and_reserve_adequacy" in mod.__all__

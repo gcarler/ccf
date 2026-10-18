@@ -5562,3 +5562,157 @@ def test_audit_wiki_decision_log_daci_accountability_and_reversal_custom_and_emp
         == audit_wiki_decision_log_daci_accountability_and_reversal(sample)
     )
     assert "audit_wiki_decision_log_daci_accountability_and_reversal" in mod.__all__
+
+
+def test_audit_wiki_assumptions_and_constraints_empirical_validation_healthy():
+    """Supuestos validados o dentro de ventana con dueño/método, falsos convertidos a riesgo/CR y restricciones con margen."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_assumptions_and_constraints_empirical_validation,
+    )
+
+    entries = [
+        {
+            "id": "ASM-01",
+            "entry_type": "assumption",
+            "validation_status": "validated_true",
+            "days_open": 14,
+            "owner": "Lead Architect",
+            "validation_method": "Prueba de carga en staging",
+        },
+        {
+            "id": "ASM-02",
+            "entry_type": "assumption",
+            "validation_status": "invalidated_false",
+            "days_open": 10,
+            "owner": "Security Lead",
+            "validation_method": "Pentest externo",
+            "linked_risk_or_cr_id": "RISK-404",
+        },
+        {
+            "id": "CON-01",
+            "entry_type": "constraint",
+            "owner": "PMO Director",
+            "constraint_buffer_pct": 12.5,
+        },
+    ]
+    res = audit_wiki_assumptions_and_constraints_empirical_validation(
+        entries, max_unvalidated_days=21
+    )
+    assert res["total_entries"] == 3
+    assert res["compliant_entries"] == 3
+    assert res["unowned_or_missing_method_ids"] == []
+    assert res["stale_unvalidated_assumption_ids"] == []
+    assert res["unconverted_invalidated_assumption_ids"] == []
+    assert res["breached_constraint_ids"] == []
+    assert res["validation_rate_pct"] == 100.0
+    assert res["governance_health"] == "healthy"
+    assert res["is_compliant"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_wiki_assumptions_and_constraints_empirical_validation_at_risk_stale_and_unowned():
+    """Detecta supuestos sin dueño/método de validación y supuestos sin validar estancados (at_risk)."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_assumptions_and_constraints_empirical_validation,
+    )
+
+    entries = [
+        {
+            "assumption_id": "ASM-10",
+            "entry_type": "assumption",
+            "validation_status": "unvalidated",
+            "days_open": 5,
+            "owner": "",
+            "validation_method": "",
+        },
+        {
+            "assumption_id": "ASM-11",
+            "entry_type": "assumption",
+            "validation_status": "unvalidated",
+            "days_open": 30,
+            "owner": "Infra Lead",
+            "validation_method": "PoC de latencia WAN",
+        },
+    ]
+    res = audit_wiki_assumptions_and_constraints_empirical_validation(
+        entries, max_unvalidated_days=21
+    )
+    assert res["total_entries"] == 2
+    assert res["compliant_entries"] == 0
+    assert res["unowned_or_missing_method_ids"] == ["ASM-10"]
+    assert res["stale_unvalidated_assumption_ids"] == ["ASM-11"]
+    assert res["unconverted_invalidated_assumption_ids"] == []
+    assert res["breached_constraint_ids"] == []
+    assert res["validation_rate_pct"] == 0.0
+    assert res["governance_health"] == "at_risk"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_wiki_assumptions_and_constraints_empirical_validation_critical_unconverted_and_breached():
+    """Detecta supuestos invalidados sin conversión a riesgo/CR y restricciones violadas (critical)."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_assumptions_and_constraints_empirical_validation,
+    )
+
+    entries = [
+        {
+            "id": "ASM-20",
+            "entry_type": "assumption",
+            "validation_status": "invalidated_false",
+            "days_open": 12,
+            "owner": "Data Lead",
+            "validation_method": "Muestreo de calidad de datos",
+            "linked_risk_or_cr_id": "",
+        },
+        {
+            "id": "CON-20",
+            "entry_type": "constraint",
+            "owner": "Sponsor",
+            "constraint_buffer_pct": -4.5,
+        },
+    ]
+    res = audit_wiki_assumptions_and_constraints_empirical_validation(entries)
+    assert res["total_entries"] == 2
+    assert res["compliant_entries"] == 0
+    assert res["unconverted_invalidated_assumption_ids"] == ["ASM-20"]
+    assert res["breached_constraint_ids"] == ["CON-20"]
+    assert res["validation_rate_pct"] == 50.0
+    assert res["governance_health"] == "critical"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_wiki_assumptions_and_constraints_empirical_validation_empty_and_service_binding():
+    """Manejo defensivo de entradas vacías/no-secuencia y exposición en WikiPMIService y __all__."""
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_assumptions_and_constraints_empirical_validation,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-mapping"]):
+        empty = audit_wiki_assumptions_and_constraints_empirical_validation(payload)  # type: ignore[arg-type]
+        assert empty["total_entries"] == 0
+        assert empty["compliant_entries"] == 0
+        assert empty["validation_rate_pct"] == 100.0
+        assert empty["governance_health"] == "healthy"
+        assert empty["is_compliant"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "id": "ASM-99",
+            "entry_type": "assumption",
+            "validation_status": "validated_true",
+            "days_open": 3,
+            "owner": "QA Lead",
+            "validation_method": "Test automatizado",
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_assumptions_and_constraints_empirical_validation(sample)
+        == audit_wiki_assumptions_and_constraints_empirical_validation(sample)
+    )
+    assert "audit_wiki_assumptions_and_constraints_empirical_validation" in mod.__all__
+

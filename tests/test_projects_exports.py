@@ -6113,3 +6113,137 @@ def test_audit_executive_report_risk_burndown_and_residual_exposure_empty_and_ex
             "findings": [],
         }
 
+
+def test_audit_executive_report_critical_path_float_and_convergence_healthy():
+    """Red de caminos saludable con holgura positiva o negativa con plan de recuperación documentado."""
+    from backend.services.project_export_service import (
+        audit_executive_report_critical_path_float_and_convergence,
+    )
+
+    paths = [
+        {
+            "id": "CP-01",
+            "baseline_float_days": 0.0,
+            "remaining_float_days": 0.0,
+            "merge_predecessors_count": 2,
+            "recovery_plan_documented": True,
+        },
+        {
+            "id": "PATH-02",
+            "baseline_float_days": 20.0,
+            "remaining_float_days": 12.0,
+            "merge_predecessors_count": 2,
+            "recovery_plan_documented": False,
+        },
+        {
+            "id": "PATH-03",
+            "baseline_float_days": 0.0,
+            "remaining_float_days": -2.0,
+            "merge_predecessors_count": 1,
+            "recovery_plan_documented": True,
+        },
+    ]
+    res = audit_executive_report_critical_path_float_and_convergence(paths)
+    assert res["total_paths"] == 3
+    assert res["compliant_paths"] == 3
+    assert res["negative_float_without_recovery_ids"] == []
+    assert res["near_critical_paths_ids"] == []
+    assert res["excessive_float_burn_ids"] == []
+    assert res["high_convergence_merge_bias_ids"] == []
+    assert res["min_remaining_float_days"] == -2.0
+    assert res["schedule_network_health"] == "healthy"
+    assert res["is_compliant"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_executive_report_critical_path_float_and_convergence_critical_negative_float():
+    """Detecta holgura negativa sin plan de recuperación documentado (schedule_network_health == 'critical')."""
+    from backend.services.project_export_service import (
+        audit_executive_report_critical_path_float_and_convergence,
+    )
+
+    paths = [
+        {
+            "path_id": "CP-NEG",
+            "baseline_float_days": 0.0,
+            "remaining_float_days": -4.5,
+            "merge_predecessors_count": 2,
+            "recovery_plan_documented": False,
+        }
+    ]
+    res = audit_executive_report_critical_path_float_and_convergence(paths)
+    assert res["total_paths"] == 1
+    assert res["compliant_paths"] == 0
+    assert res["negative_float_without_recovery_ids"] == ["CP-NEG"]
+    assert res["min_remaining_float_days"] == -4.5
+    assert res["schedule_network_health"] == "critical"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 1
+
+
+def test_audit_executive_report_critical_path_float_and_convergence_at_risk_burn_and_merge_bias():
+    """Detecta consumo excesivo de holgura, caminos cuasi-críticos y sesgo de convergencia en hitos de unión (at_risk)."""
+    from backend.services.project_export_service import (
+        audit_executive_report_critical_path_float_and_convergence,
+    )
+
+    paths = [
+        {
+            "path_id": "PATH-NEAR-MERGE",
+            "baseline_float_days": 20.0,
+            "remaining_float_days": 2.0,
+            "merge_predecessors_count": 5,
+            "recovery_plan_documented": False,
+        }
+    ]
+    res = audit_executive_report_critical_path_float_and_convergence(
+        paths,
+        near_critical_float_days=5.0,
+        max_float_burn_rate_pct=80.0,
+        max_merge_point_predecessors=3,
+    )
+    assert res["total_paths"] == 1
+    assert res["compliant_paths"] == 0
+    assert res["near_critical_paths_ids"] == ["PATH-NEAR-MERGE"]
+    assert res["excessive_float_burn_ids"] == ["PATH-NEAR-MERGE"]
+    assert res["high_convergence_merge_bias_ids"] == ["PATH-NEAR-MERGE"]
+    assert res["negative_float_without_recovery_ids"] == []
+    assert res["schedule_network_health"] == "at_risk"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 3
+
+
+def test_audit_executive_report_critical_path_float_and_convergence_empty_and_service_binding():
+    """Manejo defensivo de entradas vacías/no-secuencia y exposición en ProjectExportService y __all__."""
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_critical_path_float_and_convergence,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_executive_report_critical_path_float_and_convergence(payload)  # type: ignore[arg-type]
+        assert empty["total_paths"] == 0
+        assert empty["compliant_paths"] == 0
+        assert empty["min_remaining_float_days"] == 0.0
+        assert empty["schedule_network_health"] == "healthy"
+        assert empty["is_compliant"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "id": "P-100",
+            "baseline_float_days": 10.0,
+            "remaining_float_days": 8.0,
+            "merge_predecessors_count": 1,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_critical_path_float_and_convergence(
+            sample
+        )
+        == audit_executive_report_critical_path_float_and_convergence(sample)
+    )
+    assert "audit_executive_report_critical_path_float_and_convergence" in mod.__all__
+
+

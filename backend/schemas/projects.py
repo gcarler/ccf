@@ -3791,6 +3791,7 @@ __all__ = [
     "validate_parametric_estimation_model_fit",
     "validate_funding_limit_reconciliation_and_cash_flow_cliff",
     "validate_business_case_npv_irr_and_payback_hurdle",
+    "validate_monte_carlo_confidence_band_and_reserve_adequacy",
 ]
 
 
@@ -5715,3 +5716,125 @@ def validate_business_case_npv_irr_and_payback_hurdle(
     }
 
 
+
+
+def validate_monte_carlo_confidence_band_and_reserve_adequacy(
+    simulations: list[dict],
+    *,
+    min_iterations: int = 1000,
+    max_p90_to_p50_spread_ratio: float = 1.35,
+) -> dict[str, object]:
+    """Valida bandas de confianza Monte Carlo (P50/P80/P90) y reserva (PMBOK §11.4).
+
+    Cada simulación aporta simulation_id, iterations, deterministic_base,
+    p50_estimate, p80_estimate, p90_estimate y
+    allocated_contingency_reserve:
+    - non_monotonic_or_under_sampled: iterations < min_iterations o la
+      banda no es monotónica 0 < base <= P50 <= P80 <= P90.
+    - reserve_shortfall_at_p80: base determinista + reserva de
+      contingencia no cubre el P80 oficial.
+    - excessive_tail_uncertainty_spread: P90/P50 excede el ratio máximo
+      (cuando P50 > 0).
+    - simulation_governance_status: 'HEALTHY' sin hallazgos; 'CRITICAL'
+      con muestreo/monotonicidad inválida o shortfall de reserva;
+      'AT_RISK' en otro caso; violations con {simulation_id, reasons}.
+    """
+    if not isinstance(simulations, list):
+        simulations = []
+    rows = [s for s in simulations if isinstance(s, dict)]
+
+    total_simulations = len(rows)
+    compliant_simulations_count = 0
+    non_monotonic_or_under_sampled_count = 0
+    reserve_shortfall_at_p80_count = 0
+    excessive_tail_uncertainty_spread_count = 0
+    violations: list[dict] = []
+
+    for idx, row in enumerate(rows, start=1):
+        simulation_id = str(row.get("simulation_id", f"SIM-{idx}"))
+        reasons: list[str] = []
+        has_invalid_band = False
+        has_shortfall = False
+        has_wide_spread = False
+
+        raw_iterations = row.get("iterations")
+        try:
+            iterations = int(raw_iterations if raw_iterations is not None else 0)
+        except (TypeError, ValueError):
+            iterations = 0
+        raw_base = row.get("deterministic_base")
+        try:
+            base = float(raw_base if raw_base is not None else 0.0)
+        except (TypeError, ValueError):
+            base = 0.0
+
+        def _safe_pct(key: str) -> float:
+            raw = row.get(key)
+            try:
+                return float(raw if raw is not None else 0.0)
+            except (TypeError, ValueError):
+                return 0.0
+
+        p50 = _safe_pct("p50_estimate")
+        p80 = _safe_pct("p80_estimate")
+        p90 = _safe_pct("p90_estimate")
+        raw_reserve = row.get("allocated_contingency_reserve")
+        try:
+            reserve = float(raw_reserve if raw_reserve is not None else 0.0)
+        except (TypeError, ValueError):
+            reserve = 0.0
+
+        is_monotonic = 0.0 < base <= p50 <= p80 <= p90
+        if iterations < int(min_iterations) or not is_monotonic:
+            has_invalid_band = True
+            if iterations < int(min_iterations):
+                reasons.append(
+                    f"UNDER_SAMPLED ({iterations}<{min_iterations})",
+                )
+            if not is_monotonic:
+                reasons.append(
+                    "NON_MONOTONIC_BAND (debe cumplir 0 < base <= P50 <= P80 <= P90)",
+                )
+
+        if (base + reserve) < p80:
+            has_shortfall = True
+            reasons.append(
+                f"RESERVE_SHORTFALL_AT_P80 ({base + reserve}<{p80})",
+            )
+
+        if p50 > 0 and (p90 / p50) > float(max_p90_to_p50_spread_ratio):
+            has_wide_spread = True
+            reasons.append(
+                f"EXCESSIVE_TAIL_SPREAD (P90/P50={p90 / p50}>{max_p90_to_p50_spread_ratio})",
+            )
+
+        if has_invalid_band:
+            non_monotonic_or_under_sampled_count += 1
+        if has_shortfall:
+            reserve_shortfall_at_p80_count += 1
+        if has_wide_spread:
+            excessive_tail_uncertainty_spread_count += 1
+        if not (has_invalid_band or has_shortfall or has_wide_spread):
+            compliant_simulations_count += 1
+        if reasons:
+            violations.append({"simulation_id": simulation_id, "reasons": reasons})
+
+    simulation_governance_status = (
+        "CRITICAL"
+        if non_monotonic_or_under_sampled_count > 0 or reserve_shortfall_at_p80_count > 0
+        else (
+            "AT_RISK"
+            if excessive_tail_uncertainty_spread_count > 0
+            else "HEALTHY"
+        )
+    )
+
+    return {
+        "total_simulations": total_simulations,
+        "compliant_simulations_count": compliant_simulations_count,
+        "non_monotonic_or_under_sampled_count": non_monotonic_or_under_sampled_count,
+        "reserve_shortfall_at_p80_count": reserve_shortfall_at_p80_count,
+        "excessive_tail_uncertainty_spread_count": excessive_tail_uncertainty_spread_count,
+        "simulation_governance_status": simulation_governance_status,
+        "violations": violations,
+    }
