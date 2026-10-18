@@ -420,3 +420,80 @@ def test_classify_stakeholder_quadrant_custom_threshold():
     assert custom["is_clamped"] is False
     assert custom["quadrant_code"] == "monitor"
 
+
+def test_validate_risk_emv_exposure_threat_high_and_moderate():
+    """Valida amenaza con exposición alta (-20000.0) y moderada (-2500.0)."""
+    from backend.schemas.projects import validate_risk_emv_exposure
+
+    high = validate_risk_emv_exposure(40.0, 50000.0, "threat")
+    assert high == {
+        "risk_type": "threat",
+        "is_valid_risk_type": True,
+        "probability_pct": 40.0,
+        "probability_decimal": 0.4,
+        "is_prob_clamped": False,
+        "impact_magnitude": 50000.0,
+        "emv_magnitude": 20000.0,
+        "signed_emv": -20000.0,
+        "emv_exposure_tier": "high_financial_exposure",
+    }
+
+    mod = validate_risk_emv_exposure(25.0, 10000.0, "threat")
+    assert mod["emv_magnitude"] == 2500.0
+    assert mod["signed_emv"] == -2500.0
+    assert mod["emv_exposure_tier"] == "moderate_financial_exposure"
+
+
+def test_validate_risk_emv_exposure_opportunity_positive_sign():
+    """Valida oportunidad con signo positivo y exposición menor (< 1000.0)."""
+    from backend.schemas.projects import validate_risk_emv_exposure
+
+    opp = validate_risk_emv_exposure(50.0, 1000.0, "opportunity")
+    assert opp == {
+        "risk_type": "opportunity",
+        "is_valid_risk_type": True,
+        "probability_pct": 50.0,
+        "probability_decimal": 0.5,
+        "is_prob_clamped": False,
+        "impact_magnitude": 1000.0,
+        "emv_magnitude": 500.0,
+        "signed_emv": 500.0,
+        "emv_exposure_tier": "minor_financial_exposure",
+    }
+
+
+def test_validate_risk_emv_exposure_clamps_probability_bounds():
+    """Valida acotación de probabilidad en [0.0, 100.0] y estado zero_exposure."""
+    from backend.schemas.projects import validate_risk_emv_exposure
+
+    over = validate_risk_emv_exposure(150.0, 2000.0, "threat")
+    assert over["probability_pct"] == 100.0
+    assert over["probability_decimal"] == 1.0
+    assert over["is_prob_clamped"] is True
+    assert over["emv_magnitude"] == 2000.0
+    assert over["signed_emv"] == -2000.0
+    assert over["emv_exposure_tier"] == "moderate_financial_exposure"
+
+    under = validate_risk_emv_exposure(-10.0, 2000.0, "threat")
+    assert under["probability_pct"] == 0.0
+    assert under["is_prob_clamped"] is True
+    assert under["emv_magnitude"] == 0.0
+    assert under["signed_emv"] == 0.0
+    assert under["emv_exposure_tier"] == "zero_exposure"
+
+
+def test_validate_risk_emv_exposure_invalid_type_and_none():
+    """Valida tipo de riesgo desconocido ('invalid_risk_type') y entradas None ('zero_exposure')."""
+    from backend.schemas.projects import validate_risk_emv_exposure
+
+    invalid = validate_risk_emv_exposure(30.0, 5000.0, "unknown")
+    assert invalid["risk_type"] == "unknown"
+    assert invalid["is_valid_risk_type"] is False
+    assert invalid["emv_exposure_tier"] == "invalid_risk_type"
+
+    nones = validate_risk_emv_exposure(None, None)
+    assert nones["is_valid_risk_type"] is True
+    assert nones["is_prob_clamped"] is True
+    assert nones["emv_magnitude"] == 0.0
+    assert nones["emv_exposure_tier"] == "zero_exposure"
+

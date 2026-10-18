@@ -2540,3 +2540,54 @@ def classify_stakeholder_power_interest_quadrant(
         "recommended_strategy": recommended_strategy,
     }
 
+
+def validate_risk_emv_exposure(
+    probability_pct: float | None,
+    financial_impact: float | None,
+    risk_type: str | None = "threat",
+) -> dict[str, Any]:
+    """Calcula y valida el Valor Monetario Esperado (EMV = P * I) según PMI PMBOK §11.4.2.5."""
+    risk_type_norm = (risk_type or "threat").strip().lower() or "threat"
+    is_valid_risk_type = risk_type_norm in {"threat", "opportunity"}
+
+    if probability_pct is None:
+        raw_prob = 0.0
+        is_prob_clamped = True
+    else:
+        raw_prob = float(probability_pct)
+        is_prob_clamped = raw_prob < 0.0 or raw_prob > 100.0
+
+    prob_pct = round(min(100.0, max(0.0, raw_prob)), 2)
+    prob_decimal = round(prob_pct / 100.0, 4)
+
+    abs_impact = round(abs(float(financial_impact or 0.0)), 2)
+    emv_magnitude = round(prob_decimal * abs_impact, 2)
+    signed_emv = (
+        -emv_magnitude
+        if (risk_type_norm == "threat" and emv_magnitude > 0)
+        else (emv_magnitude if risk_type_norm == "opportunity" else 0.0)
+    )
+
+    if not is_valid_risk_type:
+        emv_exposure_tier = "invalid_risk_type"
+    elif emv_magnitude == 0.0:
+        emv_exposure_tier = "zero_exposure"
+    elif emv_magnitude >= 10000.0:
+        emv_exposure_tier = "high_financial_exposure"
+    elif emv_magnitude >= 1000.0:
+        emv_exposure_tier = "moderate_financial_exposure"
+    else:
+        emv_exposure_tier = "minor_financial_exposure"
+
+    return {
+        "risk_type": risk_type_norm,
+        "is_valid_risk_type": is_valid_risk_type,
+        "probability_pct": prob_pct,
+        "probability_decimal": prob_decimal,
+        "is_prob_clamped": is_prob_clamped,
+        "impact_magnitude": abs_impact,
+        "emv_magnitude": emv_magnitude,
+        "signed_emv": signed_emv,
+        "emv_exposure_tier": emv_exposure_tier,
+    }
+
