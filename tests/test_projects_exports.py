@@ -1746,7 +1746,151 @@ def test_audit_executive_report_resource_workload_no_data():
         assert len(res["recommendations"]) == 1
 
 
+# ── PMI PMBOK §12.3 & §10.2 Executive Report Procurement & Vendor SLA Auditor ─
 
 
+def test_audit_executive_report_procurement_slas_governed_portfolio():
+    """Contratos con SLA cumplido, topes respetados y TM acotado -> 'GOVERNED_PROCUREMENT_PORTFOLIO'."""
+    import backend.services.project_export_service as export_module
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_procurement_slas,
+    )
+
+    report_data = {
+        "vendor_contracts": [
+            {
+                "id": "CTR-101",
+                "contract_type": "FFP",
+                "sla_met_pct": 99.0,
+                "sla_target_pct": 95.0,
+                "budget_ceiling": 50000.0,
+                "invoiced_amount": 42000.0,
+            },
+            {
+                "contract_id": "CTR-102",
+                "contract_type": "tm",
+                "delivery_score_pct": 96.5,
+                "sla_target_pct": 95.0,
+                "not_to_exceed_limit": 25000.0,
+                "invoiced_amount": 18000.0,
+            },
+        ]
+    }
+
+    res = ProjectExportService.audit_executive_report_procurement_slas(report_data)
+    assert res["total_contracts"] == 2
+    assert res["sla_breach_contract_ids"] == []
+    assert res["ceiling_exceeded_contract_ids"] == []
+    assert res["unbounded_tm_contract_ids"] == []
+    assert res["average_sla_pct"] == 97.75
+    assert res["procurement_posture"] == "GOVERNED_PROCUREMENT_PORTFOLIO"
+    assert len(res["recommendations"]) == 1
+    assert audit_executive_report_procurement_slas(report_data) == res
+    assert "audit_executive_report_procurement_slas" in export_module.__all__
 
 
+def test_audit_executive_report_procurement_slas_ceiling_overrun():
+    """Contrato con invoiced_amount > budget_ceiling (>0) -> 'CONTRACT_CEILING_OVERRUN' (prioridad máxima)."""
+    from backend.services.project_export_service import (
+        audit_executive_report_procurement_slas,
+    )
+
+    report_data = {
+        "procurement_kpis": [
+            {
+                "vendor": "CloudOps SAS",
+                "contract_type": "CPFF",
+                "sla_met_pct": 90.0,
+                "sla_target_pct": 95.0,
+                "budget_ceiling": 30000.0,
+                "invoiced_amount": 34500.0,
+            },
+            {
+                "id": "CTR-202",
+                "contract_type": "TM",
+                "sla_met_pct": 98.0,
+                "budget_ceiling": 0.0,
+                "invoiced_amount": 5000.0,
+            },
+        ]
+    }
+
+    res = audit_executive_report_procurement_slas(report_data)
+    assert res["total_contracts"] == 2
+    assert res["sla_breach_contract_ids"] == ["CloudOps SAS"]
+    assert res["ceiling_exceeded_contract_ids"] == ["CloudOps SAS"]
+    assert res["unbounded_tm_contract_ids"] == ["CTR-202"]
+    assert res["average_sla_pct"] == 94.0
+    assert res["procurement_posture"] == "CONTRACT_CEILING_OVERRUN"
+    assert any("CloudOps SAS" in r for r in res["recommendations"])
+
+
+def test_audit_executive_report_procurement_slas_unbounded_tm_and_sla_breach():
+    """Contrato TM sin tope -> 'UNBOUNDED_TIME_AND_MATERIALS_RISK'; si solo hay SLA breach -> 'VENDOR_SLA_BREACH_DETECTED'."""
+    from backend.services.project_export_service import (
+        audit_executive_report_procurement_slas,
+    )
+
+    unbounded_payload = {
+        "vendor_contracts": [
+            {
+                "id": "CTR-301",
+                "contract_type": "TM",
+                "sla_met_pct": 92.0,
+                "sla_target_pct": 95.0,
+                "budget_ceiling": 0.0,
+                "invoiced_amount": 12000.0,
+            }
+        ]
+    }
+    res_tm = audit_executive_report_procurement_slas(unbounded_payload)
+    assert res_tm["unbounded_tm_contract_ids"] == ["CTR-301"]
+    assert res_tm["sla_breach_contract_ids"] == ["CTR-301"]
+    assert res_tm["procurement_posture"] == "UNBOUNDED_TIME_AND_MATERIALS_RISK"
+
+    sla_breach_payload = {
+        "vendor_contracts": [
+            {
+                "id": "CTR-302",
+                "contract_type": "FFP",
+                "sla_met_pct": 88.5,
+                "sla_target_pct": 95.0,
+                "budget_ceiling": 40000.0,
+                "invoiced_amount": 35000.0,
+            },
+            {
+                "id": "CTR-303",
+                "contract_type": "CPIF",
+                "sla_met_pct": 97.5,
+                "sla_target_pct": 95.0,
+                "budget_ceiling": 20000.0,
+                "invoiced_amount": 19000.0,
+            },
+        ]
+    }
+    res_sla = audit_executive_report_procurement_slas(sla_breach_payload)
+    assert res_sla["total_contracts"] == 2
+    assert res_sla["sla_breach_contract_ids"] == ["CTR-302"]
+    assert res_sla["ceiling_exceeded_contract_ids"] == []
+    assert res_sla["unbounded_tm_contract_ids"] == []
+    assert res_sla["average_sla_pct"] == 93.0
+    assert res_sla["procurement_posture"] == "VENDOR_SLA_BREACH_DETECTED"
+    assert any("CTR-302" in r for r in res_sla["recommendations"])
+
+
+def test_audit_executive_report_procurement_slas_no_contracts():
+    """Sin contratos o payload None/vacío -> 'NO_PROCUREMENT_CONTRACTS'."""
+    from backend.services.project_export_service import (
+        audit_executive_report_procurement_slas,
+    )
+
+    for payload in (None, {}, {"vendor_contracts": []}, {"procurement_kpis": ["bad"]}):
+        res = audit_executive_report_procurement_slas(payload)
+        assert res["total_contracts"] == 0
+        assert res["sla_breach_contract_ids"] == []
+        assert res["ceiling_exceeded_contract_ids"] == []
+        assert res["unbounded_tm_contract_ids"] == []
+        assert res["average_sla_pct"] == 0.0
+        assert res["procurement_posture"] == "NO_PROCUREMENT_CONTRACTS"
+        assert len(res["recommendations"]) == 1

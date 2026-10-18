@@ -315,6 +315,12 @@ class ProjectExportService:
     ) -> dict[str, Any]:
         return audit_executive_report_resource_workload(report_data)
 
+    @staticmethod
+    def audit_executive_report_procurement_slas(
+        report_data: Optional[dict],
+    ) -> dict[str, Any]:
+        return audit_executive_report_procurement_slas(report_data)
+
 
 
 
@@ -1287,6 +1293,134 @@ def audit_executive_report_resource_workload(
     }
 
 
+def audit_executive_report_procurement_slas(
+    report_data: Optional[dict],
+) -> dict[str, Any]:
+    """Audita el desempeño de contratos y SLAs de proveedores en el reporte ejecutivo según PMI PMBOK §12.3 y §10.2."""
+    data = report_data if isinstance(report_data, dict) else {}
+
+    raw_contracts = (
+        data.get("vendor_contracts")
+        if isinstance(data.get("vendor_contracts"), list)
+        else data.get("procurement_kpis")
+        if isinstance(data.get("procurement_kpis"), list)
+        else []
+    )
+    contracts = [c for c in raw_contracts if isinstance(c, dict)]
+
+    total_contracts = len(contracts)
+    sla_breach_contract_ids: list[str] = []
+    ceiling_exceeded_contract_ids: list[str] = []
+    unbounded_tm_contract_ids: list[str] = []
+    sla_sum = 0.0
+
+    for idx, contract in enumerate(contracts, start=1):
+        raw_id = (
+            contract.get("id")
+            if contract.get("id") is not None
+            else contract.get("contract_id")
+            if contract.get("contract_id") is not None
+            else contract.get("vendor")
+        )
+        contract_id = (
+            str(raw_id).strip()
+            if raw_id is not None and str(raw_id).strip()
+            else f"CTR-{idx}"
+        )
+
+        raw_sla_met = (
+            contract.get("sla_met_pct")
+            if contract.get("sla_met_pct") is not None
+            else contract.get("delivery_score_pct")
+        )
+        try:
+            sla_met_pct = (
+                float(raw_sla_met) if raw_sla_met is not None else 100.0
+            )
+        except (TypeError, ValueError):
+            sla_met_pct = 100.0
+
+        raw_sla_target = contract.get("sla_target_pct")
+        try:
+            sla_target_pct = (
+                float(raw_sla_target) if raw_sla_target is not None else 95.0
+            )
+        except (TypeError, ValueError):
+            sla_target_pct = 95.0
+
+        contract_type = (
+            str(contract.get("contract_type") or "FFP").strip().upper()
+            or "FFP"
+        )
+
+        raw_ceiling = (
+            contract.get("budget_ceiling")
+            if contract.get("budget_ceiling") is not None
+            else contract.get("not_to_exceed_limit")
+        )
+        try:
+            budget_ceiling = float(raw_ceiling or 0.0)
+        except (TypeError, ValueError):
+            budget_ceiling = 0.0
+
+        try:
+            invoiced_amount = float(contract.get("invoiced_amount") or 0.0)
+        except (TypeError, ValueError):
+            invoiced_amount = 0.0
+
+        sla_sum += sla_met_pct
+
+        if sla_met_pct < sla_target_pct:
+            sla_breach_contract_ids.append(contract_id)
+
+        if budget_ceiling > 0.0 and invoiced_amount > budget_ceiling:
+            ceiling_exceeded_contract_ids.append(contract_id)
+
+        if contract_type == "TM" and budget_ceiling <= 0.0:
+            unbounded_tm_contract_ids.append(contract_id)
+
+    average_sla_pct = (
+        round(sla_sum / total_contracts, 2) if total_contracts > 0 else 0.0
+    )
+
+    recommendations: list[str] = []
+    if total_contracts == 0:
+        procurement_posture = "NO_PROCUREMENT_CONTRACTS"
+        recommendations.append(
+            "Incluir inventario de contratos y métricas SLA de proveedores en el reporte ejecutivo para auditar adquisiciones (PMBOK §12.3 / §10.2)."
+        )
+    elif len(ceiling_exceeded_contract_ids) > 0:
+        procurement_posture = "CONTRACT_CEILING_OVERRUN"
+        recommendations.append(
+            f"Suspender pagos adicionales o tramitar adenda aprobada por el CCB para contratos que exceden el tope presupuestario ({', '.join(ceiling_exceeded_contract_ids)}) conforme a PMBOK §12.3."
+        )
+    elif len(unbounded_tm_contract_ids) > 0:
+        procurement_posture = "UNBOUNDED_TIME_AND_MATERIALS_RISK"
+        recommendations.append(
+            f"Establecer cláusula de límite máximo (Not-To-Exceed / NTE) en contratos Time & Materials sin tope ({', '.join(unbounded_tm_contract_ids)}) según PMBOK §12.1 / §12.3."
+        )
+    elif len(sla_breach_contract_ids) > 0:
+        procurement_posture = "VENDOR_SLA_BREACH_DETECTED"
+        recommendations.append(
+            f"Ejecutar revisión de desempeño y plan de acción correctivo con proveedores bajo el SLA objetivo ({', '.join(sla_breach_contract_ids)}) conforme a PMBOK §12.3."
+        )
+    else:
+        procurement_posture = "GOVERNED_PROCUREMENT_PORTFOLIO"
+        recommendations.append(
+            "Portafolio de adquisiciones gobernado con SLAs cumplidos y límites contractuales controlados (PMBOK §12.3)."
+        )
+
+    return {
+        "total_contracts": total_contracts,
+        "sla_breach_contract_ids": sla_breach_contract_ids,
+        "ceiling_exceeded_contract_ids": ceiling_exceeded_contract_ids,
+        "unbounded_tm_contract_ids": unbounded_tm_contract_ids,
+        "average_sla_pct": average_sla_pct,
+        "procurement_posture": procurement_posture,
+        "recommendations": recommendations,
+    }
+
+
 __all__ = [
     "audit_csv_export_integrity",
     "evaluate_executive_report_completeness",
@@ -1304,11 +1438,6 @@ __all__ = [
     "audit_executive_report_change_governance",
     "audit_executive_report_quality_disclosure",
     "audit_executive_report_resource_workload",
+    "audit_executive_report_procurement_slas",
     "ProjectExportService",
 ]
-
-
-
-
-
-
