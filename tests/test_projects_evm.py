@@ -2559,3 +2559,99 @@ def test_audit_pmb_undistributed_budget_reconciliation_no_pmb_configured():
         "pmb_posture": "NO_PMB_CONFIGURED",
     }
 
+
+def test_evaluate_earned_schedule_performance_spi_time_on_time_and_ahead():
+    """SPI(t) en [0.95, 1.05] -> ON_TIME_EARNED_SCHEDULE; SPI(t) > 1.05 -> AHEAD_OF_PLANNED_SCHEDULE."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_earned_schedule_performance,
+    )
+
+    curve = [100.0, 200.0, 300.0, 400.0, 500.0]
+    res_on = evaluate_earned_schedule_performance(
+        earned_value=300.0,
+        actual_time_periods=3.0,
+        cumulative_pv_curve=curve,
+    )
+    assert res_on == {
+        "earned_schedule": 3.0,
+        "actual_time_periods": 3.0,
+        "sv_time": 0.0,
+        "spi_time": 1.0,
+        "planned_duration": 5,
+        "estimated_duration_at_completion": 5.0,
+        "is_on_time_trajectory": True,
+        "es_posture": "ON_TIME_EARNED_SCHEDULE",
+    }
+
+    res_ahead = ProjectEVMService.evaluate_earned_schedule_performance(
+        earned_value=350.0,
+        actual_time_periods=3.0,
+        cumulative_pv_curve=curve,
+    )
+    assert res_ahead["earned_schedule"] == 3.5
+    assert res_ahead["sv_time"] == 0.5
+    assert res_ahead["spi_time"] == 1.1667
+    assert res_ahead["is_on_time_trajectory"] is True
+    assert res_ahead["es_posture"] == "AHEAD_OF_PLANNED_SCHEDULE"
+
+
+def test_evaluate_earned_schedule_performance_spi_time_moderate_delay():
+    """0.85 <= SPI(t) < 0.95 -> MODERATE_SCHEDULE_DELAY."""
+    from backend.services.project_evm_service import (
+        evaluate_earned_schedule_performance,
+    )
+
+    res = evaluate_earned_schedule_performance(
+        earned_value=360.0,
+        actual_time_periods=4.0,
+        cumulative_pv_curve=[100.0, 200.0, 300.0, 400.0, 500.0],
+    )
+    assert res["earned_schedule"] == 3.6
+    assert res["sv_time"] == -0.4
+    assert res["spi_time"] == 0.9
+    assert res["planned_duration"] == 5
+    assert res["estimated_duration_at_completion"] == 5.56
+    assert res["is_on_time_trajectory"] is False
+    assert res["es_posture"] == "MODERATE_SCHEDULE_DELAY"
+
+
+def test_evaluate_earned_schedule_performance_spi_time_late_project_slippage():
+    """Proyecto vencido donde EV == BAC pero AT > PD -> SPI(t) < 0.85 CRITICAL_SCHEDULE_SLIPPAGE."""
+    from backend.services.project_evm_service import (
+        evaluate_earned_schedule_performance,
+    )
+
+    res = evaluate_earned_schedule_performance(
+        earned_value=500.0,
+        actual_time_periods=7.0,
+        cumulative_pv_curve=[100.0, 200.0, 300.0, 400.0, 500.0],
+    )
+    assert res["earned_schedule"] == 5.0
+    assert res["sv_time"] == -2.0
+    assert res["spi_time"] == 0.7143
+    assert res["estimated_duration_at_completion"] == 7.0
+    assert res["is_on_time_trajectory"] is False
+    assert res["es_posture"] == "CRITICAL_SCHEDULE_SLIPPAGE"
+
+
+def test_evaluate_earned_schedule_performance_spi_time_insufficient_baseline():
+    """Curva vacía o actual_time_periods <= 0 -> INSUFFICIENT_PV_BASELINE_CURVE."""
+    from backend.services.project_evm_service import (
+        evaluate_earned_schedule_performance,
+    )
+
+    for ev, at, curve in [(100.0, 2.0, None), (100.0, 2.0, []), (100.0, 0.0, [100.0, 200.0])]:
+        res = evaluate_earned_schedule_performance(
+            earned_value=ev,
+            actual_time_periods=at,
+            cumulative_pv_curve=curve,
+        )
+        assert res["earned_schedule"] == 0.0
+        assert res["sv_time"] == 0.0
+        assert res["spi_time"] == 0.0
+        assert res["estimated_duration_at_completion"] == 0.0
+        assert res["is_on_time_trajectory"] is False
+        assert res["es_posture"] == "INSUFFICIENT_PV_BASELINE_CURVE"
+
+

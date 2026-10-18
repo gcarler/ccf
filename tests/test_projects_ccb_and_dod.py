@@ -2702,3 +2702,118 @@ def test_evaluate_fmea_rpn_criticality_empty_or_none():
         }
 
 
+def test_evaluate_quality_ncr_sla_compliance_compliant():
+    """NCRs dentro de SLA con RCA para mayores/críticos y evidencia en cerrados -> COMPLIANT_NCR_GOVERNANCE."""
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        evaluate_quality_ncr_sla_compliance,
+    )
+
+    ncrs = [
+        {
+            "id": "NCR-1",
+            "severity": "MAJOR",
+            "status": "OPEN",
+            "age_days": 5,
+            "root_cause": "Falta de validación de esquema en ingesta",
+        },
+        {
+            "ncr_id": "NCR-2",
+            "severity": "MINOR",
+            "status": "CLOSED",
+            "age_days": 10,
+            "verification_evidence": "PR-412 aprobado y suite QA en verde",
+        },
+    ]
+    res = evaluate_quality_ncr_sla_compliance(ncrs, major_sla_days=7, minor_sla_days=14)
+    assert res == {
+        "total_ncrs": 2,
+        "open_ncrs_count": 1,
+        "sla_breached_ncr_ids": [],
+        "missing_rca_ncr_ids": [],
+        "unverified_closed_ncr_ids": [],
+        "is_ncr_governance_compliant": True,
+        "ncr_posture": "COMPLIANT_NCR_GOVERNANCE",
+    }
+    assert (
+        ProjectCCBService.evaluate_quality_ncr_sla_compliance(
+            ncrs, major_sla_days=7, minor_sla_days=14
+        )
+        == res
+    )
+
+
+def test_evaluate_quality_ncr_sla_compliance_unverified_closure():
+    """NCR cerrado sin evidencia de verificación -> UNVERIFIED_NCR_CLOSURE."""
+    from backend.services.project_ccb_service import evaluate_quality_ncr_sla_compliance
+
+    res = evaluate_quality_ncr_sla_compliance(
+        [
+            {
+                "id": "NCR-CLOSED-NOEV",
+                "severity": "MAJOR",
+                "status": "CLOSED",
+                "verification_evidence": "",
+            }
+        ]
+    )
+    assert res["unverified_closed_ncr_ids"] == ["NCR-CLOSED-NOEV"]
+    assert res["is_ncr_governance_compliant"] is False
+    assert res["ncr_posture"] == "UNVERIFIED_NCR_CLOSURE"
+
+
+def test_evaluate_quality_ncr_sla_compliance_sla_breach_and_missing_rca():
+    """NCR abierto fuera de SLA -> NCR_SLA_BREACH; severidad MAJOR sin RCA -> MISSING_MAJOR_NCR_ROOT_CAUSE."""
+    from backend.services.project_ccb_service import evaluate_quality_ncr_sla_compliance
+
+    res_sla = evaluate_quality_ncr_sla_compliance(
+        [
+            {
+                "id": "NCR-LATE",
+                "severity": "MAJOR",
+                "status": "OPEN",
+                "age_days": 10,
+                "root_cause": "Defecto de integración",
+            }
+        ],
+        major_sla_days=7,
+    )
+    assert res_sla["sla_breached_ncr_ids"] == ["NCR-LATE"]
+    assert res_sla["is_ncr_governance_compliant"] is False
+    assert res_sla["ncr_posture"] == "NCR_SLA_BREACH"
+
+    res_rca = evaluate_quality_ncr_sla_compliance(
+        [
+            {
+                "id": "NCR-NORCA",
+                "severity": "CRITICAL",
+                "status": "IN_PROGRESS",
+                "age_days": 1,
+                "root_cause": "",
+            }
+        ],
+        major_sla_days=7,
+    )
+    assert res_rca["missing_rca_ncr_ids"] == ["NCR-NORCA"]
+    assert res_rca["is_ncr_governance_compliant"] is False
+    assert res_rca["ncr_posture"] == "MISSING_MAJOR_NCR_ROOT_CAUSE"
+
+
+def test_evaluate_quality_ncr_sla_compliance_no_ncrs():
+    """Lista vacía o None -> NO_NCRS_RECORDED."""
+    from backend.services.project_ccb_service import evaluate_quality_ncr_sla_compliance
+
+    for payload in (None, [], [{"id": ""}]):
+        res = evaluate_quality_ncr_sla_compliance(payload)
+        assert res == {
+            "total_ncrs": 0,
+            "open_ncrs_count": 0,
+            "sla_breached_ncr_ids": [],
+            "missing_rca_ncr_ids": [],
+            "unverified_closed_ncr_ids": [],
+            "is_ncr_governance_compliant": False,
+            "ncr_posture": "NO_NCRS_RECORDED",
+        }
+
+
+

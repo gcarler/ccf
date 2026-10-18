@@ -2200,6 +2200,103 @@ class ProjectCCBService:
             min_containment_effectiveness_pct=min_containment_effectiveness_pct,
         )
 
+    @staticmethod
+    def evaluate_quality_ncr_sla_compliance(
+        ncrs: list[dict[str, Any]] | None = None,
+        major_sla_days: int = 7,
+        minor_sla_days: int = 14,
+    ) -> dict[str, Any]:
+        return evaluate_quality_ncr_sla_compliance(
+            ncrs,
+            major_sla_days=major_sla_days,
+            minor_sla_days=minor_sla_days,
+        )
+
+
+def evaluate_quality_ncr_sla_compliance(
+    ncrs: list[dict[str, Any]] | None = None,
+    major_sla_days: int = 7,
+    minor_sla_days: int = 14,
+) -> dict[str, Any]:
+    """Evalúa reportes de No Conformidad de Calidad (NCR), cumplimiento de SLA por severidad, RCA y evidencia de cierre según PMI PMBOK §8.2 y §8.3."""
+    items = [item for item in (ncrs or []) if isinstance(item, dict)]
+    try:
+        major_limit = max(1, int(major_sla_days))
+    except (TypeError, ValueError):
+        major_limit = 7
+    try:
+        minor_limit = max(1, int(minor_sla_days))
+    except (TypeError, ValueError):
+        minor_limit = 14
+    critical_limit = max(1, major_limit // 2)
+
+    total_ncrs = 0
+    open_ncrs_count = 0
+    sla_breached_ncr_ids: list[str] = []
+    missing_rca_ncr_ids: list[str] = []
+    unverified_closed_ncr_ids: list[str] = []
+
+    for item in items:
+        ncr_id = str(item.get("id") or item.get("ncr_id") or "").strip()
+        if not ncr_id:
+            continue
+        total_ncrs += 1
+        severity = str(item.get("severity") or "MINOR").strip().upper()
+        status = str(item.get("status") or "OPEN").strip().upper()
+        try:
+            age_days = max(0, int(item.get("age_days") or 0))
+        except (TypeError, ValueError):
+            age_days = 0
+        root_cause = str(item.get("root_cause") or "").strip()
+        verification_evidence = str(
+            item.get("verification_evidence") or ""
+        ).strip()
+
+        if status != "CLOSED":
+            open_ncrs_count += 1
+            if severity == "CRITICAL":
+                sla_limit = critical_limit
+            elif severity == "MAJOR":
+                sla_limit = major_limit
+            else:
+                sla_limit = minor_limit
+
+            if age_days > sla_limit:
+                sla_breached_ncr_ids.append(ncr_id)
+            if severity in {"CRITICAL", "MAJOR"} and not root_cause:
+                missing_rca_ncr_ids.append(ncr_id)
+        else:
+            if not verification_evidence:
+                unverified_closed_ncr_ids.append(ncr_id)
+
+    is_ncr_governance_compliant = bool(
+        total_ncrs > 0
+        and len(sla_breached_ncr_ids) == 0
+        and len(missing_rca_ncr_ids) == 0
+        and len(unverified_closed_ncr_ids) == 0
+    )
+
+    if total_ncrs == 0:
+        ncr_posture = "NO_NCRS_RECORDED"
+    elif len(unverified_closed_ncr_ids) > 0:
+        ncr_posture = "UNVERIFIED_NCR_CLOSURE"
+    elif len(sla_breached_ncr_ids) > 0:
+        ncr_posture = "NCR_SLA_BREACH"
+    elif len(missing_rca_ncr_ids) > 0:
+        ncr_posture = "MISSING_MAJOR_NCR_ROOT_CAUSE"
+    else:
+        ncr_posture = "COMPLIANT_NCR_GOVERNANCE"
+
+    return {
+        "total_ncrs": total_ncrs,
+        "open_ncrs_count": open_ncrs_count,
+        "sla_breached_ncr_ids": sla_breached_ncr_ids,
+        "missing_rca_ncr_ids": missing_rca_ncr_ids,
+        "unverified_closed_ncr_ids": unverified_closed_ncr_ids,
+        "is_ncr_governance_compliant": is_ncr_governance_compliant,
+        "ncr_posture": ncr_posture,
+    }
+
 
 __all__ = [
     "list_change_requests",
@@ -2232,8 +2329,10 @@ __all__ = [
     "audit_configuration_items_baseline_integrity",
     "evaluate_spc_process_stability",
     "evaluate_fmea_rpn_criticality",
+    "evaluate_quality_ncr_sla_compliance",
     "ProjectCCBService",
 ]
+
 
 
 
