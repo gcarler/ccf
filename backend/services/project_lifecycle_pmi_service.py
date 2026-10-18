@@ -949,6 +949,12 @@ class ProjectLifecyclePMIService:
         return evaluate_benefits_realization_posture(benefits)
 
     @staticmethod
+    def audit_assumption_and_constraint_log_governance(
+        entries: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        return audit_assumption_and_constraint_log_governance(entries)
+
+    @staticmethod
     def audit_stakeholder_communication_cadence(
         stakeholders: list[dict[str, Any]] | None,
     ) -> dict[str, Any]:
@@ -1224,6 +1230,105 @@ def evaluate_benefits_realization_posture(
         "at_risk_count": at_risk_count,
         "realization_rate": realization_rate,
         "posture": posture,
+    }
+
+
+def audit_assumption_and_constraint_log_governance(
+    entries: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Audita el Registro de Supuestos y Restricciones (PMBOK §4.1.3.2).
+
+    Cada entrada declara `id`/`entry_id`/`code` (fallback 'ASM-{idx}'),
+    responsable (`owner`/`validation_owner`/`responsable`), criterio de
+    validacion (`validation_method`/`verification_criteria`/
+    `next_review_date`), estado (`status`/`state`) y el vínculo a riesgo/CR
+    (`linked_risk_id`/`linked_cr_id`/`impact_reference`):
+    - `unowned_entry_ids`: sin responsable.
+    - `unverifiable_entry_ids`: sin criterio o fecha de validacion.
+    - `unlinked_invalidated_ids`: entradas invalidadas
+      ({invalidated, invalid, false, broken, violated, invalido, incumplido})
+      sin vinculo a riesgo o CR.
+    - `is_assumption_log_governed`: las 3 listas vacias.
+    - `assumption_log_posture`: 'NO_ASSUMPTIONS_LOGGED' vacio;
+      'UNLINKED_INVALIDATED_ASSUMPTION'; 'UNOWNED_ASSUMPTION_ENTRY';
+      'MISSING_VALIDATION_CRITERIA'; 'GOVERNED_ASSUMPTION_LOG'.
+    """
+    INVALIDATED_STATUSES = {
+        "invalidated", "invalid", "false", "broken", "violated", "invalido", "incumplido",
+    }
+    records = [e for e in (entries or []) if isinstance(e, dict)]
+    if not records:
+        return {
+            "total_entries": 0,
+            "invalidated_count": 0,
+            "unowned_entry_ids": [],
+            "unverifiable_entry_ids": [],
+            "unlinked_invalidated_ids": [],
+            "is_assumption_log_governed": True,
+            "assumption_log_posture": "NO_ASSUMPTIONS_LOGGED",
+        }
+
+    total_entries = len(records)
+    invalidated_count = 0
+    unowned_entry_ids: list[str] = []
+    unverifiable_entry_ids: list[str] = []
+    unlinked_invalidated_ids: list[str] = []
+
+    for idx, item in enumerate(records, start=1):
+        entry_id = str(
+            item.get("id") or item.get("entry_id") or item.get("code") or f"ASM-{idx}"
+        ).strip()
+        owner = str(
+            item.get("owner") or item.get("validation_owner") or item.get("responsable") or ""
+        ).strip()
+        validation_method = str(
+            item.get("validation_method")
+            or item.get("verification_criteria")
+            or item.get("next_review_date")
+            or ""
+        ).strip()
+        status = str(item.get("status") or item.get("state") or "valid").strip().lower()
+        linked_ref = str(
+            item.get("linked_risk_id")
+            or item.get("linked_cr_id")
+            or item.get("impact_reference")
+            or ""
+        ).strip()
+
+        if not owner:
+            unowned_entry_ids.append(entry_id)
+        if not validation_method:
+            unverifiable_entry_ids.append(entry_id)
+        if status in INVALIDATED_STATUSES:
+            invalidated_count += 1
+            if not linked_ref:
+                unlinked_invalidated_ids.append(entry_id)
+
+    is_assumption_log_governed = bool(
+        len(unowned_entry_ids) == 0
+        and len(unverifiable_entry_ids) == 0
+        and len(unlinked_invalidated_ids) == 0
+    )
+
+    if total_entries == 0:
+        assumption_log_posture = "NO_ASSUMPTIONS_LOGGED"
+    elif len(unlinked_invalidated_ids) > 0:
+        assumption_log_posture = "UNLINKED_INVALIDATED_ASSUMPTION"
+    elif len(unowned_entry_ids) > 0:
+        assumption_log_posture = "UNOWNED_ASSUMPTION_ENTRY"
+    elif len(unverifiable_entry_ids) > 0:
+        assumption_log_posture = "MISSING_VALIDATION_CRITERIA"
+    else:
+        assumption_log_posture = "GOVERNED_ASSUMPTION_LOG"
+
+    return {
+        "total_entries": total_entries,
+        "invalidated_count": invalidated_count,
+        "unowned_entry_ids": unowned_entry_ids,
+        "unverifiable_entry_ids": unverifiable_entry_ids,
+        "unlinked_invalidated_ids": unlinked_invalidated_ids,
+        "is_assumption_log_governed": is_assumption_log_governed,
+        "assumption_log_posture": assumption_log_posture,
     }
 
 
@@ -2224,6 +2329,7 @@ __all__ = [
     "audit_stakeholder_communication_cadence",
     "evaluate_benefits_realization_posture",
     "audit_assumption_and_constraint_log",
+    "audit_assumption_and_constraint_log_governance",
     "audit_project_procurement_and_handover_closeout",
     "audit_stakeholder_engagement_transition_gaps",
     "audit_project_tailoring_and_opa_compliance",

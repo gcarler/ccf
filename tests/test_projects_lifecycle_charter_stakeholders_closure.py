@@ -2101,3 +2101,113 @@ def test_audit_risk_appetite_and_threshold_governance_empty_or_none():
             "is_threshold_governed": True,
             "threshold_posture": "NO_RISKS_EVALUATED",
         }
+
+
+def test_audit_assumption_and_constraint_log_governance_governed():
+    """> 0 entradas con dueño, criterios e invalidado vinculado -> GOVERNED log."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_assumption_and_constraint_log_governance as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "id": "ASM-1",
+                "owner": "Oficina de Proyectos",
+                "validation_method": "Verificación semanal contra métricas",
+            },
+            {
+                "entry_id": "ASM-2",
+                "validation_owner": "Coordinación Técnica",
+                "verification_criteria": "Log de rendimiento < 2s por consulta",
+                "state": "invalidated",
+                "linked_risk_id": "RSK-7",
+            },
+        ]
+    )
+    assert res["total_entries"] == 2
+    assert res["invalidated_count"] == 1
+    assert res["unowned_entry_ids"] == []
+    assert res["unverifiable_entry_ids"] == []
+    assert res["unlinked_invalidated_ids"] == []
+    assert res["is_assumption_log_governed"] is True
+    assert res["assumption_log_posture"] == "GOVERNED_ASSUMPTION_LOG"
+
+
+def test_audit_assumption_and_constraint_log_governance_unlinked_invalidated():
+    """> Invalidado/roto sin vínculo a riesgo ni CR -> UNLINKED_INVALIDATED_ASSUMPTION."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_assumption_and_constraint_log_governance as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "id": "ASM-OK",
+                "owner": "Oficina de Proyectos",
+                "validation_method": "Revisión mensual",
+            },
+            {
+                "id": "ASM-BROKEN",
+                "owner": "Coordinación Médica",
+                "verification_criteria": "Cobertura mínima 90%",
+                "status": "broken",
+            },
+        ]
+    )
+    assert res["total_entries"] == 2
+    assert res["invalidated_count"] == 1
+    assert res["unlinked_invalidated_ids"] == ["ASM-BROKEN"]
+    assert res["unowned_entry_ids"] == []
+    assert res["unverifiable_entry_ids"] == []
+    assert res["is_assumption_log_governed"] is False
+    assert res["assumption_log_posture"] == "UNLINKED_INVALIDATED_ASSUMPTION"
+
+
+def test_audit_assumption_and_constraint_log_governance_unowned_and_unverifiable():
+    """> Sin dueño (precedencia) y sin criterio/fecha de validación por pilar."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_assumption_and_constraint_log_governance as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "id": "ASM-NOOWNER",
+                "validation_method": "Auditoría trimestral",
+            },
+            {
+                "id": "ASM-NOCRIT",
+                "owner": "Consejo Pastoral",
+                "status": "violated",
+                "linked_cr_id": "CR-88",
+            },
+        ]
+    )
+    assert res["total_entries"] == 2
+    assert res["invalidated_count"] == 1
+    assert res["unowned_entry_ids"] == ["ASM-NOOWNER"]
+    assert res["unverifiable_entry_ids"] == ["ASM-NOCRIT"]
+    assert res["unlinked_invalidated_ids"] == []
+    assert res["is_assumption_log_governed"] is False
+    # Precedencia: unlinked invalidated > unowned > unverifiable.
+    assert res["assumption_log_posture"] == "UNOWNED_ASSUMPTION_ENTRY"
+
+
+def test_audit_assumption_and_constraint_log_governance_empty_or_none():
+    """None, lista vacía o entradas no-dict -> NO_ASSUMPTIONS_LOGGED."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_assumption_and_constraint_log_governance as audit_fn,
+    )
+
+    for payload in (None, [], ["invalid", 42, None]):
+        res = audit_fn(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_entries": 0,
+            "invalidated_count": 0,
+            "unowned_entry_ids": [],
+            "unverifiable_entry_ids": [],
+            "unlinked_invalidated_ids": [],
+            "is_assumption_log_governed": True,
+            "assumption_log_posture": "NO_ASSUMPTIONS_LOGGED",
+        }
