@@ -5632,3 +5632,149 @@ def test_numeric_bounds_and_range_hygiene_ignores_non_project_schemas():
     assert res["non_positive_multiple_of_properties"] == []
     assert res["negative_floor_on_percentage_or_count_properties"] == []
     assert res["is_numeric_bounds_hygiene_compliant"] is True
+
+
+def test_string_format_and_pattern_hygiene_live_openapi():
+    """Valida contra el esquema OpenAPI real de FastAPI que todos los campos string de proyectos sean válidos."""
+    assert "summarize_projects_string_format_and_pattern_hygiene" in audit_projects_api_contracts.__all__
+    res = audit_projects_api_contracts.summarize_projects_string_format_and_pattern_hygiene()
+    assert res["total_string_fields_inspected"] > 0
+    assert res["formatted_string_fields_count"] > 0
+    assert res["invalid_regex_pattern_fields"] == []
+    assert res["inverted_string_length_bounds_fields"] == []
+    assert res["is_string_format_hygiene_clean"] is True
+
+
+def test_string_format_and_pattern_hygiene_clean_synthetic_schema():
+    """Contabiliza correctamente formatos, patrones válidos y límites de longitud coherentes."""
+    schema = {
+        "paths": {
+            "/api/projects/{project_id}": {
+                "get": {
+                    "parameters": [
+                        {
+                            "name": "project_id",
+                            "in": "path",
+                            "schema": {"type": "string", "format": "uuid"},
+                        },
+                        {
+                            "name": "code_filter",
+                            "in": "query",
+                            "schema": {
+                                "type": "string",
+                                "pattern": "^[A-Z]{3}-[0-9]{4}$",
+                                "minLength": 8,
+                                "maxLength": 8,
+                            },
+                        },
+                    ],
+                    "responses": {"200": {"description": "OK"}},
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "ProjectSummaryRead": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string", "minLength": 1, "maxLength": 160},
+                        "slug": {
+                            "anyOf": [
+                                {"type": "string", "pattern": "^[a-z0-9-]+$"},
+                                {"type": "null"},
+                            ]
+                        },
+                    },
+                }
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_string_format_and_pattern_hygiene(
+        schema
+    )
+    assert res["total_string_fields_inspected"] == 4
+    assert res["formatted_string_fields_count"] == 1
+    assert res["regex_pattern_fields_count"] == 2
+    assert res["invalid_regex_pattern_fields"] == []
+    assert res["inverted_string_length_bounds_fields"] == []
+    assert res["is_string_format_hygiene_clean"] is True
+
+
+def test_string_format_and_pattern_hygiene_detects_invalid_regex_pattern():
+    """Detecta expresiones regulares malformadas que no compilan con re.compile."""
+    schema = {
+        "components": {
+            "schemas": {
+                "ProjectCodeInput": {
+                    "type": "object",
+                    "properties": {
+                        "broken_code": {
+                            "type": "string",
+                            "pattern": "[unclosed-group-(",
+                        },
+                        "valid_code": {
+                            "type": "string",
+                            "pattern": "^[A-Z0-9_]+$",
+                        },
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_string_format_and_pattern_hygiene(
+        schema
+    )
+    assert res["total_string_fields_inspected"] == 2
+    assert res["regex_pattern_fields_count"] == 2
+    assert res["invalid_regex_pattern_fields"] == ["ProjectCodeInput.broken_code"]
+    assert res["inverted_string_length_bounds_fields"] == []
+    assert res["is_string_format_hygiene_clean"] is False
+
+
+def test_string_format_and_pattern_hygiene_detects_inverted_or_non_positive_lengths():
+    """Detecta minLength > maxLength, minLength < 0 o maxLength <= 0 en campos y parámetros string."""
+    schema = {
+        "paths": {
+            "/projects/search": {
+                "get": {
+                    "parameters": [
+                        {
+                            "name": "q",
+                            "in": "query",
+                            "schema": {"type": "string", "maxLength": 0},
+                        }
+                    ],
+                    "responses": {"200": {"description": "OK"}},
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "WbsItemCreate": {
+                    "type": "object",
+                    "properties": {
+                        "inverted_title": {
+                            "type": "string",
+                            "minLength": 50,
+                            "maxLength": 10,
+                        },
+                        "negative_min": {
+                            "type": "string",
+                            "minLength": -2,
+                        },
+                    },
+                }
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_string_format_and_pattern_hygiene(
+        schema
+    )
+    assert res["total_string_fields_inspected"] == 3
+    assert res["invalid_regex_pattern_fields"] == []
+    assert res["inverted_string_length_bounds_fields"] == [
+        "GET /projects/search:q",
+        "WbsItemCreate.inverted_title",
+        "WbsItemCreate.negative_min",
+    ]
+    assert res["is_string_format_hygiene_clean"] is False

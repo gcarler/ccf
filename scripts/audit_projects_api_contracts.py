@@ -4129,6 +4129,185 @@ def summarize_projects_numeric_bounds_and_range_hygiene(
     }
 
 
+def _extract_string_schema_nodes(field_schema: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    nodes: list[Mapping[str, Any]] = []
+    if field_schema.get("type") == "string":
+        nodes.append(field_schema)
+    for union_key in ("anyOf", "oneOf"):
+        branches = field_schema.get(union_key)
+        if isinstance(branches, list):
+            for b in branches:
+                if isinstance(b, Mapping) and b.get("type") == "string":
+                    nodes.append({**field_schema, **b})
+    return nodes
+
+
+def summarize_projects_string_format_and_pattern_hygiene(
+    openapi_schema: Mapping[str, object] | None = None,
+) -> dict[str, object]:
+    """Audita formatos, patrones regex y cotas minLength/maxLength en campos y parámetros string de proyectos."""
+    if openapi_schema is None:
+        from backend.app import app
+
+        schema_dict: Mapping[str, Any] = app.openapi()
+    else:
+        schema_dict = openapi_schema
+
+    total_string_fields_inspected = 0
+    formatted_string_fields_count = 0
+    regex_pattern_fields_count = 0
+    invalid_regex_pattern_fields: list[str] = []
+    inverted_string_length_bounds_fields: list[str] = []
+
+    def _inspect_string_nodes(label: str, nodes: list[Mapping[str, Any]]) -> None:
+        nonlocal total_string_fields_inspected, formatted_string_fields_count, regex_pattern_fields_count
+        total_string_fields_inspected += 1
+
+        has_format = any(
+            isinstance(n.get("format"), str) and bool(str(n.get("format")).strip())
+            for n in nodes
+        )
+        if has_format:
+            formatted_string_fields_count += 1
+
+        has_pattern = any("pattern" in n and n.get("pattern") is not None for n in nodes)
+        if has_pattern:
+            regex_pattern_fields_count += 1
+
+        bad_regex = False
+        bad_bounds = False
+
+        for n in nodes:
+            if "pattern" in n and n.get("pattern") is not None:
+                pat = n.get("pattern")
+                if not isinstance(pat, str):
+                    bad_regex = True
+                else:
+                    try:
+                        re.compile(pat)
+                    except re.error:
+                        bad_regex = True
+
+            min_len = n.get("minLength")
+            max_len = n.get("maxLength")
+            has_min = "minLength" in n and min_len is not None
+            has_max = "maxLength" in n and max_len is not None
+
+            if has_min:
+                if not _is_numeric_value(min_len) or float(min_len) < 0:  # type: ignore[arg-type]
+                    bad_bounds = True
+            if has_max:
+                if not _is_numeric_value(max_len) or float(max_len) <= 0:  # type: ignore[arg-type]
+                    bad_bounds = True
+            if (
+                has_min
+                and has_max
+                and _is_numeric_value(min_len)
+                and _is_numeric_value(max_len)
+                and float(min_len) > float(max_len)  # type: ignore[arg-type]
+            ):
+                bad_bounds = True
+
+        if bad_regex:
+            invalid_regex_pattern_fields.append(label)
+        if bad_bounds:
+            inverted_string_length_bounds_fields.append(label)
+
+    referenced_schemas: set[str] = set()
+    paths = schema_dict.get("paths", {}) if isinstance(schema_dict, Mapping) else {}
+    if isinstance(paths, Mapping):
+        for path in sorted(paths.keys()):
+            path_str = str(path)
+            if not path_str.startswith(("/api/projects", "/api/v1/projects", "/projects")):
+                continue
+            path_item = paths[path]
+            if not isinstance(path_item, Mapping):
+                continue
+
+            path_params = (
+                path_item.get("parameters")
+                if isinstance(path_item.get("parameters"), list)
+                else []
+            )
+
+            for method in ("get", "post", "put", "patch", "delete", "head", "options", "trace"):
+                op_spec = path_item.get(method)
+                if not isinstance(op_spec, Mapping):
+                    continue
+
+                for ref in schema_refs(dict(op_spec)):
+                    referenced_schemas.add(ref)
+
+                op_params = (
+                    op_spec.get("parameters")
+                    if isinstance(op_spec.get("parameters"), list)
+                    else []
+                )
+                for param in (*path_params, *op_params):
+                    if not isinstance(param, Mapping):
+                        continue
+                    p_name = str(param.get("name") or "").strip()
+                    p_schema = param.get("schema")
+                    if not p_name or not isinstance(p_schema, Mapping):
+                        continue
+                    str_nodes = _extract_string_schema_nodes(p_schema)
+                    if str_nodes:
+                        _inspect_string_nodes(
+                            f"{method.upper()} {path_str}:{p_name}", str_nodes
+                        )
+
+    components = schema_dict.get("components", {}) if isinstance(schema_dict, Mapping) else {}
+    schemas = components.get("schemas", {}) if isinstance(components, Mapping) else {}
+
+    if isinstance(schemas, Mapping) and referenced_schemas:
+        queue = list(referenced_schemas)
+        while queue:
+            current = queue.pop()
+            s_obj = schemas.get(current)
+            if isinstance(s_obj, Mapping):
+                for nested_ref in schema_refs(dict(s_obj)):
+                    if nested_ref not in referenced_schemas:
+                        referenced_schemas.add(nested_ref)
+                        queue.append(nested_ref)
+
+    if isinstance(schemas, Mapping):
+        for s_name in sorted(schemas.keys()):
+            s_obj = schemas[s_name]
+            if not isinstance(s_obj, Mapping):
+                continue
+            is_proj = (
+                "project" in s_name.lower()
+                or s_name.startswith(_PROJECT_DOMAIN_SCHEMA_PREFIXES)
+                or s_name in referenced_schemas
+            )
+            if not is_proj:
+                continue
+
+            props = s_obj.get("properties", {})
+            if not isinstance(props, Mapping):
+                continue
+
+            for prop_name in sorted(props.keys()):
+                prop_schema = props[prop_name]
+                if not isinstance(prop_schema, Mapping):
+                    continue
+                str_nodes = _extract_string_schema_nodes(prop_schema)
+                if str_nodes:
+                    _inspect_string_nodes(f"{s_name}.{prop_name}", str_nodes)
+
+    return {
+        "total_string_fields_inspected": total_string_fields_inspected,
+        "formatted_string_fields_count": formatted_string_fields_count,
+        "regex_pattern_fields_count": regex_pattern_fields_count,
+        "invalid_regex_pattern_fields": sorted(invalid_regex_pattern_fields),
+        "inverted_string_length_bounds_fields": sorted(inverted_string_length_bounds_fields),
+        "is_string_format_hygiene_clean": (
+            len(invalid_regex_pattern_fields) == 0
+            and len(inverted_string_length_bounds_fields) == 0
+        ),
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()
