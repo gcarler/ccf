@@ -4761,3 +4761,131 @@ def test_audit_configuration_fca_pca_baseline_verification_empty_and_service_pro
         ProjectCCBService.audit_configuration_fca_pca_baseline_verification(sample)
         == audit_configuration_fca_pca_baseline_verification(sample)
     )
+
+
+def test_audit_emergency_change_fast_track_ratification_compliant():
+    """Cambios de emergencia Sev1/Sev2 bajo el ratio máximo, con aprobador, rollback y ratificación en SLA."""
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_emergency_change_fast_track_ratification,
+    )
+
+    crs = [
+        {
+            "cr_id": "CR-EMG-01",
+            "is_emergency": True,
+            "incident_severity": "SEV1",
+            "delegated_approver_id": "CTO-01",
+            "rollback_plan_documented": True,
+            "hours_since_execution": 72.0,
+            "post_facto_ccb_ratified": True,
+        }
+    ] + [{"cr_id": f"CR-STD-{i}", "is_emergency": False} for i in range(2, 11)]
+
+    res = audit_emergency_change_fast_track_ratification(
+        crs, max_emergency_ratio_pct=15.0, ratification_sla_hours=48.0
+    )
+    assert res == {
+        "total_change_requests": 10,
+        "emergency_change_count": 1,
+        "emergency_ratio_pct": 10.0,
+        "exceeds_emergency_ratio_cap": False,
+        "unjustified_emergency_severity_cr_ids": [],
+        "missing_safeguard_or_approver_cr_ids": [],
+        "overdue_post_facto_ratification_cr_ids": [],
+        "is_emergency_governance_compliant": True,
+    }
+    assert (
+        ProjectCCBService.audit_emergency_change_fast_track_ratification(crs)
+        == res
+    )
+
+
+def test_audit_emergency_change_unjustified_severity_and_ratio_cap():
+    """Detecta abuso de vía de emergencia con Sev3/Sev4 y exceso del ratio máximo permitido."""
+    from backend.services.project_ccb_service import (
+        audit_emergency_change_fast_track_ratification,
+    )
+
+    crs = [
+        {
+            "cr_id": "CR-EMG-SEV3",
+            "is_emergency": True,
+            "incident_severity": "sev3",
+            "delegated_approver_id": "VP-01",
+            "rollback_plan_documented": True,
+            "hours_since_execution": 12.0,
+            "post_facto_ccb_ratified": True,
+        },
+        {
+            "cr_id": "CR-EMG-SEV2",
+            "is_emergency": True,
+            "incident_severity": "sev2",
+            "delegated_approver_id": "VP-01",
+            "rollback_plan_documented": True,
+            "hours_since_execution": 10.0,
+            "post_facto_ccb_ratified": True,
+        },
+        {"cr_id": "CR-STD-01", "is_emergency": False},
+    ]
+    res = audit_emergency_change_fast_track_ratification(
+        crs, max_emergency_ratio_pct=15.0
+    )
+    assert res["total_change_requests"] == 3
+    assert res["emergency_change_count"] == 2
+    assert res["emergency_ratio_pct"] == 66.67
+    assert res["exceeds_emergency_ratio_cap"] is True
+    assert res["unjustified_emergency_severity_cr_ids"] == ["CR-EMG-SEV3"]
+    assert res["is_emergency_governance_compliant"] is False
+
+
+def test_audit_emergency_change_missing_safeguard_and_overdue_ratification():
+    """Detecta falta de aprobador delegado/rollback y vencimiento del SLA de ratificación post-facto."""
+    from backend.services.project_ccb_service import (
+        audit_emergency_change_fast_track_ratification,
+    )
+
+    crs = [
+        {
+            "cr_id": "CR-EMG-NO-ROLLBACK",
+            "is_emergency": True,
+            "incident_severity": "sev1",
+            "delegated_approver_id": "   ",
+            "rollback_plan_documented": False,
+            "hours_since_execution": 60.0,
+            "post_facto_ccb_ratified": False,
+        }
+    ] + [{"cr_id": f"CR-N-{i}", "is_emergency": False} for i in range(1, 10)]
+
+    res = audit_emergency_change_fast_track_ratification(
+        crs, max_emergency_ratio_pct=15.0, ratification_sla_hours=48.0
+    )
+    assert res["missing_safeguard_or_approver_cr_ids"] == [
+        "CR-EMG-NO-ROLLBACK"
+    ]
+    assert res["overdue_post_facto_ratification_cr_ids"] == [
+        "CR-EMG-NO-ROLLBACK"
+    ]
+    assert res["is_emergency_governance_compliant"] is False
+
+
+def test_audit_emergency_change_invalid_inputs_and_export():
+    """Ignora entradas no secuencia o sin cr_id válido y verifica exportación en __all__."""
+    import backend.services.project_ccb_service as _m
+    from backend.services.project_ccb_service import (
+        audit_emergency_change_fast_track_ratification,
+    )
+
+    assert "audit_emergency_change_fast_track_ratification" in _m.__all__
+    for bad in (None, "not-a-seq", b"bytes", [{"cr_id": "  "}, 42]):
+        assert audit_emergency_change_fast_track_ratification(bad) == {
+            "total_change_requests": 0,
+            "emergency_change_count": 0,
+            "emergency_ratio_pct": 0.0,
+            "exceeds_emergency_ratio_cap": False,
+            "unjustified_emergency_severity_cr_ids": [],
+            "missing_safeguard_or_approver_cr_ids": [],
+            "overdue_post_facto_ratification_cr_ids": [],
+            "is_emergency_governance_compliant": True,
+        }
+

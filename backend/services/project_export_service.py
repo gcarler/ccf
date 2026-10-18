@@ -2973,6 +2973,7 @@ __all__ = [
     "audit_executive_report_strategic_alignment_and_esg",
     "audit_executive_report_contract_closeout_and_claims",
     "audit_executive_report_rag_status_and_narrative_consistency",
+    "audit_executive_report_reserve_drawdown_burn_rate",
     "ProjectExportService",
 ]
 
@@ -3843,4 +3844,133 @@ def audit_executive_report_rag_status_and_narrative_consistency(
 ProjectExportService.audit_executive_report_rag_status_and_narrative_consistency = staticmethod(
     audit_executive_report_rag_status_and_narrative_consistency
 )
+
+
+def audit_executive_report_reserve_drawdown_burn_rate(
+    reserve_tranches: object,
+    *,
+    project_percent_complete: float = 0.0,
+    max_burn_to_progress_ratio: float = 1.25,
+) -> dict[str, object]:
+    """Audita tasa de consumo (drawdown burn rate) de reservas de contingencia y de gestión frente al avance del proyecto y autorizaciones del patrocinador/CCB según PMI PMBOK §10.2 y §11.2."""
+    try:
+        pct_complete = (
+            max(0.0, min(100.0, float(project_percent_complete or 0.0))) / 100.0
+        )
+    except (TypeError, ValueError):
+        pct_complete = 0.0
+
+    max_ratio = float(max_burn_to_progress_ratio)
+
+    total_tranches = 0
+    total_initial_raw = 0.0
+    total_consumed_raw = 0.0
+    invalid_reserve_type_tranche_ids: list[str] = []
+    overdrawn_or_negative_tranche_ids: list[str] = []
+    unlinked_drawdown_tranche_ids: list[str] = []
+    unapproved_management_reserve_tranche_ids: list[str] = []
+    accelerated_burn_tranche_ids: list[str] = []
+
+    if isinstance(reserve_tranches, Sequence) and not isinstance(
+        reserve_tranches, (str, bytes, bytearray)
+    ):
+        for item in reserve_tranches:
+            if not isinstance(item, Mapping):
+                continue
+            tranche_id = str(
+                item.get("tranche_id") or item.get("id") or ""
+            ).strip()
+            if not tranche_id:
+                continue
+
+            total_tranches += 1
+            reserve_type = str(item.get("reserve_type") or "").strip().lower()
+
+            try:
+                initial_amount = float(item.get("initial_amount", 0.0) or 0.0)
+            except (TypeError, ValueError):
+                initial_amount = 0.0
+
+            try:
+                consumed_amount = float(item.get("consumed_amount", 0.0) or 0.0)
+            except (TypeError, ValueError):
+                consumed_amount = 0.0
+
+            total_initial_raw += max(0.0, initial_amount)
+            total_consumed_raw += max(0.0, consumed_amount)
+
+            raw_links = item.get("linked_risk_or_change_ids")
+            if isinstance(raw_links, Sequence) and not isinstance(
+                raw_links, (str, bytes, bytearray)
+            ):
+                has_linked_id = any(
+                    str(ref or "").strip() for ref in raw_links
+                )
+            else:
+                has_linked_id = False
+
+            executive_sponsor_approved = bool(
+                item.get("executive_sponsor_approved", False)
+            )
+
+            if reserve_type not in {"contingency", "management"}:
+                invalid_reserve_type_tranche_ids.append(tranche_id)
+
+            if (
+                consumed_amount < 0.0
+                or initial_amount < 0.0
+                or consumed_amount > initial_amount
+            ):
+                overdrawn_or_negative_tranche_ids.append(tranche_id)
+
+            if consumed_amount > 0.0 and not has_linked_id:
+                unlinked_drawdown_tranche_ids.append(tranche_id)
+
+            if (
+                reserve_type == "management"
+                and consumed_amount > 0.0
+                and not executive_sponsor_approved
+            ):
+                unapproved_management_reserve_tranche_ids.append(tranche_id)
+
+            if initial_amount > 0.0 and consumed_amount >= 0.0:
+                drawdown_ratio = consumed_amount / initial_amount
+                if (
+                    pct_complete > 0.0
+                    and (drawdown_ratio / pct_complete) > max_ratio
+                ) or (pct_complete == 0.0 and drawdown_ratio > 0.15):
+                    accelerated_burn_tranche_ids.append(tranche_id)
+
+    total_initial_reserve = round(total_initial_raw, 2)
+    total_consumed_reserve = round(total_consumed_raw, 2)
+    overall_drawdown_pct = (
+        round((total_consumed_reserve / total_initial_reserve) * 100.0, 2)
+        if total_initial_reserve > 0.0
+        else 0.0
+    )
+
+    return {
+        "total_tranches": total_tranches,
+        "total_initial_reserve": total_initial_reserve,
+        "total_consumed_reserve": total_consumed_reserve,
+        "overall_drawdown_pct": overall_drawdown_pct,
+        "invalid_reserve_type_tranche_ids": invalid_reserve_type_tranche_ids,
+        "overdrawn_or_negative_tranche_ids": overdrawn_or_negative_tranche_ids,
+        "unlinked_drawdown_tranche_ids": unlinked_drawdown_tranche_ids,
+        "unapproved_management_reserve_tranche_ids": unapproved_management_reserve_tranche_ids,
+        "accelerated_burn_tranche_ids": accelerated_burn_tranche_ids,
+        "is_reserve_drawdown_compliant": (
+            len(invalid_reserve_type_tranche_ids) == 0
+            and len(overdrawn_or_negative_tranche_ids) == 0
+            and len(unlinked_drawdown_tranche_ids) == 0
+            and len(unapproved_management_reserve_tranche_ids) == 0
+            and len(accelerated_burn_tranche_ids) == 0
+        ),
+    }
+
+
+ProjectExportService.audit_executive_report_reserve_drawdown_burn_rate = staticmethod(
+    audit_executive_report_reserve_drawdown_burn_rate
+)
+
 

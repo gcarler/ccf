@@ -3138,6 +3138,7 @@ __all__ = [
     "audit_communications_management_plan_matrix",
     "audit_risk_response_secondary_and_fallback_readiness",
     "audit_steering_committee_quorum_and_escalation_governance",
+    "audit_charter_pm_authority_and_variance_tolerances",
     "ProjectLifecyclePMIService",
 ]
 
@@ -3935,3 +3936,85 @@ ProjectLifecyclePMIService.audit_steering_committee_quorum_and_escalation_govern
     audit_steering_committee_quorum_and_escalation_governance
 )
 
+
+
+def audit_charter_pm_authority_and_variance_tolerances(
+    charter_records: object,
+) -> dict[str, object]:
+    """Audita autoridad de gasto del Director de Proyecto y umbrales de tolerancia de varianza en actas de constitución según PMI PMBOK §4.1."""
+    total_evaluated = 0
+    unassigned_or_zero_authority_charter_ids: list[str] = []
+    invalid_tolerance_bounds_charter_ids: list[str] = []
+    missing_escalation_trigger_charter_ids: list[str] = []
+
+    records: Sequence[Any] = (
+        charter_records
+        if isinstance(charter_records, Sequence)
+        and not isinstance(charter_records, (str, bytes, bytearray))
+        else []
+    )
+
+    for item in records:
+        if not isinstance(item, Mapping):
+            continue
+        charter_id = str(item.get("charter_id") or item.get("id") or "").strip()
+        if not charter_id:
+            continue
+
+        total_evaluated += 1
+
+        pm_assigned_id = str(item.get("pm_assigned_id") or "").strip()
+        try:
+            pm_budget_signoff_limit = float(
+                item.get("pm_budget_signoff_limit", 0.0) or 0.0
+            )
+        except (TypeError, ValueError):
+            pm_budget_signoff_limit = 0.0
+        try:
+            cost_variance_tolerance_pct = float(
+                item.get("cost_variance_tolerance_pct", 0.0) or 0.0
+            )
+        except (TypeError, ValueError):
+            cost_variance_tolerance_pct = 0.0
+        try:
+            schedule_variance_tolerance_pct = float(
+                item.get("schedule_variance_tolerance_pct", 0.0) or 0.0
+            )
+        except (TypeError, ValueError):
+            schedule_variance_tolerance_pct = 0.0
+        sponsor_escalation_trigger_documented = bool(
+            item.get("sponsor_escalation_trigger_documented", False)
+        )
+
+        if not pm_assigned_id or pm_budget_signoff_limit <= 0.0:
+            unassigned_or_zero_authority_charter_ids.append(charter_id)
+
+        if (
+            cost_variance_tolerance_pct <= 0.0
+            or cost_variance_tolerance_pct > 25.0
+            or schedule_variance_tolerance_pct <= 0.0
+            or schedule_variance_tolerance_pct > 25.0
+        ):
+            invalid_tolerance_bounds_charter_ids.append(charter_id)
+
+        if not sponsor_escalation_trigger_documented:
+            missing_escalation_trigger_charter_ids.append(charter_id)
+
+    is_charter_authority_governance_valid = bool(
+        len(unassigned_or_zero_authority_charter_ids) == 0
+        and len(invalid_tolerance_bounds_charter_ids) == 0
+        and len(missing_escalation_trigger_charter_ids) == 0
+    )
+
+    return {
+        "total_evaluated": total_evaluated,
+        "unassigned_or_zero_authority_charter_ids": unassigned_or_zero_authority_charter_ids,
+        "invalid_tolerance_bounds_charter_ids": invalid_tolerance_bounds_charter_ids,
+        "missing_escalation_trigger_charter_ids": missing_escalation_trigger_charter_ids,
+        "is_charter_authority_governance_valid": is_charter_authority_governance_valid,
+    }
+
+
+ProjectLifecyclePMIService.audit_charter_pm_authority_and_variance_tolerances = staticmethod(
+    audit_charter_pm_authority_and_variance_tolerances
+)

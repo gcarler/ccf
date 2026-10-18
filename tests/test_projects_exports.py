@@ -5005,3 +5005,148 @@ def test_audit_executive_report_rag_invalid_inputs_and_export():
             "is_rag_reporting_transparent": True,
         }
 
+
+def test_audit_executive_report_reserve_drawdown_burn_rate_compliant():
+    """Reservas de contingencia y gestión alineadas al avance, vinculadas y aprobadas."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_reserve_drawdown_burn_rate,
+    )
+
+    tranches = [
+        {
+            "tranche_id": "TR-CONT-01",
+            "reserve_type": "contingency",
+            "initial_amount": 50000.0,
+            "consumed_amount": 20000.0,
+            "linked_risk_or_change_ids": ["RSK-101"],
+            "executive_sponsor_approved": False,
+        },
+        {
+            "tranche_id": "TR-MGMT-02",
+            "reserve_type": "MANAGEMENT",
+            "initial_amount": 30000.0,
+            "consumed_amount": 10000.0,
+            "linked_risk_or_change_ids": ["CR-202"],
+            "executive_sponsor_approved": True,
+        },
+    ]
+    res = audit_executive_report_reserve_drawdown_burn_rate(
+        tranches, project_percent_complete=50.0, max_burn_to_progress_ratio=1.25
+    )
+    assert res == {
+        "total_tranches": 2,
+        "total_initial_reserve": 80000.0,
+        "total_consumed_reserve": 30000.0,
+        "overall_drawdown_pct": 37.5,
+        "invalid_reserve_type_tranche_ids": [],
+        "overdrawn_or_negative_tranche_ids": [],
+        "unlinked_drawdown_tranche_ids": [],
+        "unapproved_management_reserve_tranche_ids": [],
+        "accelerated_burn_tranche_ids": [],
+        "is_reserve_drawdown_compliant": True,
+    }
+    assert (
+        ProjectExportService.audit_executive_report_reserve_drawdown_burn_rate(
+            tranches, project_percent_complete=50.0
+        )
+        == res
+    )
+
+
+def test_audit_executive_report_reserve_drawdown_overdrawn_and_unlinked():
+    """Detecta sobregiro (consumed > initial), tipo inválido y consumo sin riesgo/cambio vinculado."""
+    from backend.services.project_export_service import (
+        audit_executive_report_reserve_drawdown_burn_rate,
+    )
+
+    tranches = [
+        {
+            "tranche_id": "TR-OVERDRAWN",
+            "reserve_type": "contingency",
+            "initial_amount": 10000.0,
+            "consumed_amount": 12500.0,
+            "linked_risk_or_change_ids": ["RSK-1"],
+        },
+        {
+            "tranche_id": "TR-UNLINKED",
+            "reserve_type": "slush_fund",
+            "initial_amount": 20000.0,
+            "consumed_amount": 5000.0,
+            "linked_risk_or_change_ids": ["   "],
+        },
+    ]
+    res = audit_executive_report_reserve_drawdown_burn_rate(
+        tranches, project_percent_complete=80.0
+    )
+    assert res["total_tranches"] == 2
+    assert res["invalid_reserve_type_tranche_ids"] == ["TR-UNLINKED"]
+    assert res["overdrawn_or_negative_tranche_ids"] == ["TR-OVERDRAWN"]
+    assert res["unlinked_drawdown_tranche_ids"] == ["TR-UNLINKED"]
+    assert res["is_reserve_drawdown_compliant"] is False
+
+
+def test_audit_executive_report_reserve_drawdown_unapproved_mgmt_and_accelerated_burn():
+    """Detecta uso de reserva de gestión sin sponsor y quema acelerada frente al avance del proyecto."""
+    from backend.services.project_export_service import (
+        audit_executive_report_reserve_drawdown_burn_rate,
+    )
+
+    tranches = [
+        {
+            "tranche_id": "TR-MGMT-NO-SPONSOR",
+            "reserve_type": "management",
+            "initial_amount": 40000.0,
+            "consumed_amount": 32000.0,
+            "linked_risk_or_change_ids": ["CR-99"],
+            "executive_sponsor_approved": False,
+        }
+    ]
+    res = audit_executive_report_reserve_drawdown_burn_rate(
+        tranches, project_percent_complete=20.0, max_burn_to_progress_ratio=1.25
+    )
+    assert res["unapproved_management_reserve_tranche_ids"] == [
+        "TR-MGMT-NO-SPONSOR"
+    ]
+    assert res["accelerated_burn_tranche_ids"] == ["TR-MGMT-NO-SPONSOR"]
+    assert res["is_reserve_drawdown_compliant"] is False
+
+
+def test_audit_executive_report_reserve_drawdown_zero_progress_and_invalid_inputs():
+    """Valida quema > 15% con avance 0%, entradas inválidas y exportación en __all__."""
+    import backend.services.project_export_service as _m
+    from backend.services.project_export_service import (
+        audit_executive_report_reserve_drawdown_burn_rate,
+    )
+
+    assert "audit_executive_report_reserve_drawdown_burn_rate" in _m.__all__
+    res_zero_pct = audit_executive_report_reserve_drawdown_burn_rate(
+        [
+            {
+                "tranche_id": "TR-EARLY-BURN",
+                "reserve_type": "contingency",
+                "initial_amount": 10000.0,
+                "consumed_amount": 2000.0,
+                "linked_risk_or_change_ids": ["RSK-01"],
+            }
+        ],
+        project_percent_complete=0.0,
+    )
+    assert res_zero_pct["accelerated_burn_tranche_ids"] == ["TR-EARLY-BURN"]
+    assert res_zero_pct["is_reserve_drawdown_compliant"] is False
+
+    for bad in (None, "not-a-seq", b"bytes", [{"tranche_id": "  "}]):
+        assert audit_executive_report_reserve_drawdown_burn_rate(bad) == {
+            "total_tranches": 0,
+            "total_initial_reserve": 0.0,
+            "total_consumed_reserve": 0.0,
+            "overall_drawdown_pct": 0.0,
+            "invalid_reserve_type_tranche_ids": [],
+            "overdrawn_or_negative_tranche_ids": [],
+            "unlinked_drawdown_tranche_ids": [],
+            "unapproved_management_reserve_tranche_ids": [],
+            "accelerated_burn_tranche_ids": [],
+            "is_reserve_drawdown_compliant": True,
+        }
+
+

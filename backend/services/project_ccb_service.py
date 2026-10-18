@@ -2817,6 +2817,7 @@ __all__ = [
     "audit_scope_creep_and_gold_plating_drift",
     "audit_configuration_fca_pca_baseline_verification",
     "audit_requirements_traceability_matrix_coverage",
+    "audit_emergency_change_fast_track_ratification",
     "ProjectCCBService",
 ]
 
@@ -3618,3 +3619,96 @@ def audit_configuration_fca_pca_baseline_verification(
 ProjectCCBService.audit_configuration_fca_pca_baseline_verification = staticmethod(
     audit_configuration_fca_pca_baseline_verification
 )
+
+
+def audit_emergency_change_fast_track_ratification(
+    change_requests: object,
+    *,
+    max_emergency_ratio_pct: float = 15.0,
+    ratification_sla_hours: float = 48.0,
+) -> dict[str, object]:
+    """Audita solicitudes de cambio de emergencia (Fast-Track), severidad de incidente (Sev1/Sev2), aprobador delegado, plan de rollback y SLA de ratificación post-facto CCB según PMI PMBOK §4.6 y §8.3."""
+    total_change_requests = 0
+    emergency_change_count = 0
+    unjustified_emergency_severity_cr_ids: list[str] = []
+    missing_safeguard_or_approver_cr_ids: list[str] = []
+    overdue_post_facto_ratification_cr_ids: list[str] = []
+
+    sla_hours = float(ratification_sla_hours)
+
+    if isinstance(change_requests, Sequence) and not isinstance(
+        change_requests, (str, bytes, bytearray)
+    ):
+        for item in change_requests:
+            if not isinstance(item, Mapping):
+                continue
+            cr_id = str(item.get("cr_id") or item.get("id") or "").strip()
+            if not cr_id:
+                continue
+
+            total_change_requests += 1
+            if not bool(item.get("is_emergency", False)):
+                continue
+
+            emergency_change_count += 1
+            incident_severity = (
+                str(item.get("incident_severity") or "").strip().lower()
+            )
+            delegated_approver_id = str(
+                item.get("delegated_approver_id") or ""
+            ).strip()
+            rollback_plan_documented = bool(
+                item.get("rollback_plan_documented", False)
+            )
+            try:
+                hours_since_execution = float(
+                    item.get("hours_since_execution", 0.0) or 0.0
+                )
+            except (TypeError, ValueError):
+                hours_since_execution = 0.0
+            post_facto_ccb_ratified = bool(
+                item.get("post_facto_ccb_ratified", False)
+            )
+
+            if incident_severity not in {"sev1", "sev2"}:
+                unjustified_emergency_severity_cr_ids.append(cr_id)
+
+            if not delegated_approver_id or not rollback_plan_documented:
+                missing_safeguard_or_approver_cr_ids.append(cr_id)
+
+            if (
+                not post_facto_ccb_ratified
+                and hours_since_execution > sla_hours
+            ):
+                overdue_post_facto_ratification_cr_ids.append(cr_id)
+
+    emergency_ratio_pct = (
+        round((emergency_change_count / total_change_requests) * 100.0, 2)
+        if total_change_requests > 0
+        else 0.0
+    )
+    exceeds_emergency_ratio_cap = bool(
+        emergency_ratio_pct > float(max_emergency_ratio_pct)
+    )
+
+    return {
+        "total_change_requests": total_change_requests,
+        "emergency_change_count": emergency_change_count,
+        "emergency_ratio_pct": emergency_ratio_pct,
+        "exceeds_emergency_ratio_cap": exceeds_emergency_ratio_cap,
+        "unjustified_emergency_severity_cr_ids": unjustified_emergency_severity_cr_ids,
+        "missing_safeguard_or_approver_cr_ids": missing_safeguard_or_approver_cr_ids,
+        "overdue_post_facto_ratification_cr_ids": overdue_post_facto_ratification_cr_ids,
+        "is_emergency_governance_compliant": (
+            len(unjustified_emergency_severity_cr_ids) == 0
+            and len(missing_safeguard_or_approver_cr_ids) == 0
+            and len(overdue_post_facto_ratification_cr_ids) == 0
+            and not exceeds_emergency_ratio_cap
+        ),
+    }
+
+
+ProjectCCBService.audit_emergency_change_fast_track_ratification = staticmethod(
+    audit_emergency_change_fast_track_ratification
+)
+

@@ -4396,3 +4396,149 @@ def test_audit_steering_committee_invalid_inputs_and_export():
             "is_steering_governance_compliant": True,
         }
 
+
+
+def test_audit_charter_pm_authority_and_variance_tolerances_compliant():
+    """Actas con PM asignado, limite de gasto > 0, tolerancias en (0, 25] y trigger documentado."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_charter_pm_authority_and_variance_tolerances,
+    )
+
+    charters = [
+        {
+            "charter_id": "CH-1",
+            "pm_assigned_id": "PM-1",
+            "pm_budget_signoff_limit": 50000.0,
+            "cost_variance_tolerance_pct": 10.0,
+            "schedule_variance_tolerance_pct": 8.0,
+            "sponsor_escalation_trigger_documented": True,
+        },
+        {
+            "id": "CH-2",
+            "pm_assigned_id": "PM-2",
+            "pm_budget_signoff_limit": 20000.0,
+            "cost_variance_tolerance_pct": 25.0,  # borde superior inclusive.
+            "schedule_variance_tolerance_pct": 25.0,
+            "sponsor_escalation_trigger_documented": True,
+        },
+    ]
+    res = audit_charter_pm_authority_and_variance_tolerances(charters)
+    assert res == {
+        "total_evaluated": 2,
+        "unassigned_or_zero_authority_charter_ids": [],
+        "invalid_tolerance_bounds_charter_ids": [],
+        "missing_escalation_trigger_charter_ids": [],
+        "is_charter_authority_governance_valid": True,
+    }
+
+
+def test_audit_charter_pm_authority_and_variance_tolerances_authority_gaps():
+    """Detecta PM no asignado (id vacio tras strip) o limite de firma <= 0."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_charter_pm_authority_and_variance_tolerances,
+    )
+
+    charters = [
+        {"charter_id": "A-1", "pm_assigned_id": "   ",
+         "pm_budget_signoff_limit": 10000.0,
+         "cost_variance_tolerance_pct": 10.0, "schedule_variance_tolerance_pct": 10.0,
+         "sponsor_escalation_trigger_documented": True},
+        {"charter_id": "A-2", "pm_assigned_id": "PM-3",
+         "pm_budget_signoff_limit": 0.0,
+         "cost_variance_tolerance_pct": 10.0, "schedule_variance_tolerance_pct": 10.0,
+         "sponsor_escalation_trigger_documented": True},
+        {"charter_id": "A-3", "pm_assigned_id": "PM-4",
+         "pm_budget_signoff_limit": "oops",  # coercion a 0 -> autoridad cero.
+         "cost_variance_tolerance_pct": 10.0, "schedule_variance_tolerance_pct": 10.0,
+         "sponsor_escalation_trigger_documented": True},
+    ]
+    res = audit_charter_pm_authority_and_variance_tolerances(charters)
+    assert res["total_evaluated"] == 3
+    assert res["unassigned_or_zero_authority_charter_ids"] == ["A-1", "A-2", "A-3"]
+    assert res["invalid_tolerance_bounds_charter_ids"] == []
+    assert res["missing_escalation_trigger_charter_ids"] == []
+    assert res["is_charter_authority_governance_valid"] is False
+
+
+def test_audit_charter_pm_authority_and_variance_tolerances_invalid_bounds():
+    """Tolerancias fuera de (0, 25]: <= 0, > 25 o coercion invalida a 0."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_charter_pm_authority_and_variance_tolerances,
+    )
+
+    charters = [
+        {"charter_id": "T-1", "pm_assigned_id": "PM-1", "pm_budget_signoff_limit": 10000.0,
+         "cost_variance_tolerance_pct": 0.0, "schedule_variance_tolerance_pct": 10.0,
+         "sponsor_escalation_trigger_documented": True},
+        {"charter_id": "T-2", "pm_assigned_id": "PM-2", "pm_budget_signoff_limit": 10000.0,
+         "cost_variance_tolerance_pct": 25.01, "schedule_variance_tolerance_pct": 10.0,
+         "sponsor_escalation_trigger_documented": True},
+        {"charter_id": "T-3",
+         "pm_assigned_id": "PM-3", "pm_budget_signoff_limit": 10000.0,
+         "cost_variance_tolerance_pct": 10.0, "schedule_variance_tolerance_pct": -2.0,
+         "sponsor_escalation_trigger_documented": True},
+        {"charter_id": "T-4", "pm_assigned_id": "PM-4",
+         "pm_budget_signoff_limit": 10000.0,
+         "cost_variance_tolerance_pct": None,
+         "schedule_variance_tolerance_pct": 10.0,
+         "sponsor_escalation_trigger_documented": True},  # None -> 0 -> invalido.
+        {"charter_id": "T-5", "pm_assigned_id": "PM-5", "pm_budget_signoff_limit": 10000.0,
+         "cost_variance_tolerance_pct": 25.0, "schedule_variance_tolerance_pct": 25.0,
+         "sponsor_escalation_trigger_documented": True},  # borde -> valido.
+    ]
+    res = audit_charter_pm_authority_and_variance_tolerances(charters)
+    assert res["total_evaluated"] == 5
+    assert res["invalid_tolerance_bounds_charter_ids"] == ["T-1", "T-2", "T-3", "T-4"]
+    assert res["unassigned_or_zero_authority_charter_ids"] == []
+    assert res["missing_escalation_trigger_charter_ids"] == []
+    assert res["is_charter_authority_governance_valid"] is False
+
+
+def test_audit_charter_pm_authority_and_variance_tolerances_trigger_and_scope():
+    """Trigger de escalamiento ausente; entradas vacias/None + proxy estatico + __all__."""
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_charter_pm_authority_and_variance_tolerances,
+    )
+    import backend.services.project_lifecycle_pmi_service as _m
+
+    res = audit_charter_pm_authority_and_variance_tolerances(
+        [
+            {"charter_id": "E-1", "pm_assigned_id": "PM-1",
+             "pm_budget_signoff_limit": 10000.0,
+             "cost_variance_tolerance_pct": 10.0,
+             "schedule_variance_tolerance_pct": 10.0},  # trigger default False.
+        ]
+    )
+    assert res["missing_escalation_trigger_charter_ids"] == ["E-1"]
+    assert res["unassigned_or_zero_authority_charter_ids"] == []
+    assert res["invalid_tolerance_bounds_charter_ids"] == []
+    assert res["is_charter_authority_governance_valid"] is False
+
+    res_none = audit_charter_pm_authority_and_variance_tolerances(None)
+    assert res_none == {
+        "total_evaluated": 0,
+        "unassigned_or_zero_authority_charter_ids": [],
+        "invalid_tolerance_bounds_charter_ids": [],
+        "missing_escalation_trigger_charter_ids": [],
+        "is_charter_authority_governance_valid": True,
+    }
+    assert audit_charter_pm_authority_and_variance_tolerances("no-seq")["total_evaluated"] == 0
+    assert (
+        audit_charter_pm_authority_and_variance_tolerances(
+            ["no-map", {"charter_id": "   "}, {"other_id": "x"}]
+        )["total_evaluated"]
+        == 0
+    )
+    assert "audit_charter_pm_authority_and_variance_tolerances" in _m.__all__
+
+    sample = [
+        {"charter_id": "CH-1", "pm_assigned_id": "PM-1",
+         "pm_budget_signoff_limit": 40000.0,
+         "cost_variance_tolerance_pct": 12.0, "schedule_variance_tolerance_pct": 9.0,
+         "sponsor_escalation_trigger_documented": True},
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_charter_pm_authority_and_variance_tolerances(sample)
+        == audit_charter_pm_authority_and_variance_tolerances(sample)
+    )
