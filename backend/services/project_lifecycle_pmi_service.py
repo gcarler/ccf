@@ -3146,6 +3146,7 @@ __all__ = [
     "audit_portfolio_strategic_alignment_and_benefits_drift",
     "audit_stage_gate_conditional_go_remediation_sla",
     "audit_team_virtual_overlap_and_onboarding_readiness",
+    "audit_post_implementation_benefits_sustainment_and_handover",
     "ProjectLifecyclePMIService",
 ]
 
@@ -4747,3 +4748,127 @@ ProjectLifecyclePMIService.audit_team_virtual_overlap_and_onboarding_readiness =
     audit_team_virtual_overlap_and_onboarding_readiness
 )
 
+
+
+def audit_post_implementation_benefits_sustainment_and_handover(
+    transition_items: list[dict],
+    *,
+    min_runbook_coverage_pct: float = 90.0,
+    max_hypercare_days: int = 60,
+    min_benefit_realization_pct: float = 80.0,
+) -> dict:
+    """Audita sostenimiento post-implementación de beneficios y handover a BAU (PMBOK §4.7).
+
+    Cada item aporta item_id, bau_owner_assigned, runbook_coverage_pct,
+    hypercare_days, hypercare_exit_signed, pir_completed y
+    realized_benefit_pct:
+    - unowned_or_undocumented_handover: sin owner BAU o cobertura de
+      runbook por debajo del mínimo.
+    - hypercare_or_pir_gap: hypercare más largo que el máximo, sin
+      firma de salida del hypercare o sin PIR completada.
+    - benefits_sustainment_shortfall: beneficio realizado por debajo
+      del mínimo.
+    - sustainment_governance_status: 'HEALTHY' sin hallazgos; 'CRITICAL'
+      con handover no owner/undocumentado o shortfall de beneficios;
+      'AT_RISK' en otro caso; violations con {item_id, reasons}.
+    """
+    if not isinstance(transition_items, list):
+        transition_items = []
+    rows = [i for i in transition_items if isinstance(i, dict)]
+
+    total_items = len(rows)
+    compliant_items_count = 0
+    unowned_or_undocumented_handover_count = 0
+    hypercare_or_pir_gap_count = 0
+    benefits_sustainment_shortfall_count = 0
+    violations: list[dict] = []
+
+    for idx, row in enumerate(rows, start=1):
+        item_id = str(row.get("item_id", f"ITEM-{idx}"))
+        reasons: list[str] = []
+        has_unowned = False
+        has_hypercare_gap = False
+        has_shortfall = False
+
+        bau_owner_assigned = bool(row.get("bau_owner_assigned", False))
+        raw_coverage = row.get("runbook_coverage_pct")
+        try:
+            coverage = float(raw_coverage if raw_coverage is not None else 0.0)
+        except (TypeError, ValueError):
+            coverage = 0.0
+        raw_days = row.get("hypercare_days")
+        try:
+            hypercare_days = int(raw_days if raw_days is not None else 0)
+        except (TypeError, ValueError):
+            hypercare_days = 0
+        hypercare_exit_signed = bool(row.get("hypercare_exit_signed", False))
+        pir_completed = bool(row.get("pir_completed", False))
+        raw_benefit = row.get("realized_benefit_pct")
+        try:
+            realized = float(raw_benefit if raw_benefit is not None else 0.0)
+        except (TypeError, ValueError):
+            realized = 0.0
+
+        if (not bau_owner_assigned) or coverage < float(min_runbook_coverage_pct):
+            has_unowned = True
+            if not bau_owner_assigned:
+                reasons.append("BAU_OWNER_UNASSIGNED")
+            if coverage < float(min_runbook_coverage_pct):
+                reasons.append(
+                    f"RUNBOOK_COVERAGE_UNDER_MIN ({coverage}<{min_runbook_coverage_pct})",
+                )
+
+        if (
+            hypercare_days > int(max_hypercare_days)
+            or not hypercare_exit_signed
+            or not pir_completed
+        ):
+            has_hypercare_gap = True
+            if hypercare_days > int(max_hypercare_days):
+                reasons.append(f"HYPERCARE_OVER_MAX ({hypercare_days}>{max_hypercare_days})")
+            if not hypercare_exit_signed:
+                reasons.append("HYPERCARE_EXIT_UNSIGNED")
+            if not pir_completed:
+                reasons.append("PIR_NOT_COMPLETED")
+
+        if realized < float(min_benefit_realization_pct):
+            has_shortfall = True
+            reasons.append(
+                f"BENEFIT_REALIZATION_SHORTFALL ({realized}<{min_benefit_realization_pct})",
+            )
+
+        if has_unowned:
+            unowned_or_undocumented_handover_count += 1
+        if has_hypercare_gap:
+            hypercare_or_pir_gap_count += 1
+        if has_shortfall:
+            benefits_sustainment_shortfall_count += 1
+        if not (has_unowned or has_hypercare_gap or has_shortfall):
+            compliant_items_count += 1
+        if reasons:
+            violations.append({"item_id": item_id, "reasons": reasons})
+
+    sustainment_governance_status = (
+        "CRITICAL"
+        if unowned_or_undocumented_handover_count > 0 or benefits_sustainment_shortfall_count > 0
+        else (
+            "AT_RISK"
+            if hypercare_or_pir_gap_count > 0
+            else "HEALTHY"
+        )
+    )
+
+    return {
+        "total_items": total_items,
+        "compliant_items_count": compliant_items_count,
+        "unowned_or_undocumented_handover_count": unowned_or_undocumented_handover_count,
+        "hypercare_or_pir_gap_count": hypercare_or_pir_gap_count,
+        "benefits_sustainment_shortfall_count": benefits_sustainment_shortfall_count,
+        "sustainment_governance_status": sustainment_governance_status,
+        "violations": violations,
+    }
+
+
+ProjectLifecyclePMIService.audit_post_implementation_benefits_sustainment_and_handover = staticmethod(
+    audit_post_implementation_benefits_sustainment_and_handover
+)

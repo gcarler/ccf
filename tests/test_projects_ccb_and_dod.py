@@ -5872,3 +5872,172 @@ def test_audit_procurement_warranty_claims_and_holdback_release_empty_and_export
             "violations": [],
         }
 
+
+def test_audit_change_request_reserve_drawdown_authorization_healthy():
+    """Disposiciones válidas de contingencia (known_unknown con risk_id) y gestión (unknown_unknown con sponsor y baseline)."""
+    from backend.services.project_ccb_service import (
+        audit_change_request_reserve_drawdown_authorization,
+    )
+
+    requests = [
+        {
+            "id": "CR-101",
+            "uncertainty_type": "known_unknown",
+            "reserve_pool": "contingency",
+            "amount": 12000.0,
+            "linked_risk_id": "RISK-07",
+            "approved_by_role": "project_manager",
+            "baseline_updated": False,
+        },
+        {
+            "id": "CR-102",
+            "uncertainty_type": "unknown_unknown",
+            "reserve_pool": "management",
+            "amount": 25000.0,
+            "linked_risk_id": "",
+            "approved_by_role": "sponsor",
+            "baseline_updated": True,
+        },
+    ]
+    res = audit_change_request_reserve_drawdown_authorization(
+        requests,
+        contingency_reserve_available=20000.0,
+        management_reserve_available=30000.0,
+    )
+    assert res["total_requests"] == 2
+    assert res["compliant_requests"] == 2
+    assert res["total_contingency_requested"] == 12000.0
+    assert res["total_management_requested"] == 25000.0
+    assert res["contingency_overrun_amount"] == 0.0
+    assert res["management_overrun_amount"] == 0.0
+    assert res["pool_mismatch_ids"] == []
+    assert res["missing_risk_traceability_ids"] == []
+    assert res["unauthorized_management_drawdown_ids"] == []
+    assert res["governance_health"] == "healthy"
+    assert res["is_compliant"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_change_request_reserve_drawdown_authorization_mismatch_and_unauthorized():
+    """Detecta pool_mismatch y uso de reserva de gestión sin Sponsor o sin baseline_updated."""
+    from backend.services.project_ccb_service import (
+        audit_change_request_reserve_drawdown_authorization,
+    )
+
+    requests = [
+        {
+            "request_id": "CR-201",
+            "uncertainty_type": "unknown_unknown",
+            "reserve_pool": "contingency",
+            "amount": 5000.0,
+            "linked_risk_id": "RISK-11",
+            "approved_by_role": "project_manager",
+            "baseline_updated": False,
+        },
+        {
+            "request_id": "CR-202",
+            "uncertainty_type": "unknown_unknown",
+            "reserve_pool": "management",
+            "amount": 15000.0,
+            "approved_by_role": "project_manager",
+            "baseline_updated": False,
+        },
+    ]
+    res = audit_change_request_reserve_drawdown_authorization(
+        requests,
+        contingency_reserve_available=10000.0,
+        management_reserve_available=20000.0,
+    )
+    assert res["total_requests"] == 2
+    assert res["compliant_requests"] == 0
+    assert res["pool_mismatch_ids"] == ["CR-201"]
+    assert res["unauthorized_management_drawdown_ids"] == ["CR-202"]
+    assert res["governance_health"] == "critical"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_change_request_reserve_drawdown_authorization_overruns_and_missing_risk():
+    """Detecta falta de trazabilidad de riesgo (at_risk) y sobrecosto sobre reservas disponibles (critical)."""
+    from backend.services.project_ccb_service import (
+        audit_change_request_reserve_drawdown_authorization,
+    )
+
+    at_risk_res = audit_change_request_reserve_drawdown_authorization(
+        [
+            {
+                "cr_id": "CR-301",
+                "uncertainty_type": "known_unknown",
+                "reserve_pool": "contingency",
+                "amount": 4000.0,
+                "linked_risk_id": "",
+            }
+        ],
+        contingency_reserve_available=10000.0,
+        management_reserve_available=10000.0,
+    )
+    assert at_risk_res["missing_risk_traceability_ids"] == ["CR-301"]
+    assert at_risk_res["governance_health"] == "at_risk"
+    assert at_risk_res["is_compliant"] is False
+
+    overrun_res = audit_change_request_reserve_drawdown_authorization(
+        [
+            {
+                "cr_id": "CR-302",
+                "uncertainty_type": "known_unknown",
+                "reserve_pool": "contingency",
+                "amount": 14500.0,
+                "linked_risk_id": "RISK-99",
+            },
+            {
+                "cr_id": "CR-303",
+                "uncertainty_type": "unknown_unknown",
+                "reserve_pool": "management",
+                "amount": 18000.0,
+                "approved_by_role": "ccb_chair",
+                "baseline_updated": True,
+            },
+        ],
+        contingency_reserve_available=10000.0,
+        management_reserve_available=15000.0,
+    )
+    assert overrun_res["contingency_overrun_amount"] == 4500.0
+    assert overrun_res["management_overrun_amount"] == 3000.0
+    assert overrun_res["governance_health"] == "critical"
+    assert overrun_res["is_compliant"] is False
+    assert len(overrun_res["recommendations"]) >= 2
+
+
+def test_audit_change_request_reserve_drawdown_authorization_empty_and_service_binding():
+    """Maneja entradas vacías o no válidas y expone el método en ProjectCCBService y __all__."""
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_change_request_reserve_drawdown_authorization,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        res = audit_change_request_reserve_drawdown_authorization(payload)  # type: ignore[arg-type]
+        assert res["total_requests"] == 0
+        assert res["compliant_requests"] == 0
+        assert res["governance_health"] == "healthy"
+        assert res["is_compliant"] is True
+        assert res["recommendations"] == []
+
+    sample = [
+        {
+            "id": "CR-401",
+            "uncertainty_type": "known_unknown",
+            "reserve_pool": "contingency",
+            "amount": 1000.0,
+            "linked_risk_id": "R-1",
+        }
+    ]
+    assert ProjectCCBService.audit_change_request_reserve_drawdown_authorization(
+        sample, contingency_reserve_available=5000.0
+    ) == audit_change_request_reserve_drawdown_authorization(
+        sample, contingency_reserve_available=5000.0
+    )
+    assert "audit_change_request_reserve_drawdown_authorization" in mod.__all__
+
+

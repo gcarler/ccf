@@ -5478,3 +5478,139 @@ def test_audit_team_virtual_overlap_and_onboarding_readiness_empty_and_export():
             "violations": [],
         }
 
+
+
+def test_audit_post_implementation_handover_healthy():
+    """Items con owner BAU, runbook al minimo, hypercare firmado, PIR y beneficio alcanzado."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_post_implementation_benefits_sustainment_and_handover,
+    )
+
+    res = audit_post_implementation_benefits_sustainment_and_handover(
+        [
+            {"item_id": "T-1", "bau_owner_assigned": True, "runbook_coverage_pct": 95.0,
+             "hypercare_days": 30, "hypercare_exit_signed": True, "pir_completed": True,
+             "realized_benefit_pct": 85.0},
+            {"item_id": "T-2", "bau_owner_assigned": True, "runbook_coverage_pct": 90.0,
+             "hypercare_days": 60, "hypercare_exit_signed": True, "pir_completed": True,
+             "realized_benefit_pct": 80.0},
+        ]
+    )
+    assert res == {
+        "total_items": 2,
+        "compliant_items_count": 2,
+        "unowned_or_undocumented_handover_count": 0,
+        "hypercare_or_pir_gap_count": 0,
+        "benefits_sustainment_shortfall_count": 0,
+        "sustainment_governance_status": "HEALTHY",
+        "violations": [],
+    }
+
+
+def test_audit_post_implementation_handover_critical():
+    """Owner ausente + runbook bajo minimo + shortfall de beneficios -> CRITICAL."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_post_implementation_benefits_sustainment_and_handover,
+    )
+
+    crit = audit_post_implementation_benefits_sustainment_and_handover(
+        [
+            {"item_id": "T-3", "bau_owner_assigned": False, "runbook_coverage_pct": 70.0,
+             "hypercare_days": 30, "hypercare_exit_signed": True, "pir_completed": True,
+             "realized_benefit_pct": 60.0},
+        ]
+    )
+    assert crit["unowned_or_undocumented_handover_count"] == 1
+    assert crit["benefits_sustainment_shortfall_count"] == 1
+    assert crit["hypercare_or_pir_gap_count"] == 0
+    assert crit["compliant_items_count"] == 0
+    assert crit["sustainment_governance_status"] == "CRITICAL"
+    assert crit["violations"][0]["reasons"] == [
+        "BAU_OWNER_UNASSIGNED",
+        "RUNBOOK_COVERAGE_UNDER_MIN (70.0<90.0)",
+        "BENEFIT_REALIZATION_SHORTFALL (60.0<80.0)",
+    ]
+
+
+def test_audit_post_implementation_handover_at_risk_and_borders():
+    """Hypercare vencido / exit sin firmar / PIR incompleta -> AT_RISK; bordes inclusivos."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_post_implementation_benefits_sustainment_and_handover,
+    )
+
+    risk = audit_post_implementation_benefits_sustainment_and_handover(
+        [
+            {"item_id": "T-4", "bau_owner_assigned": True, "runbook_coverage_pct": 95.0,
+             "hypercare_days": 61, "hypercare_exit_signed": False, "pir_completed": False,
+             "realized_benefit_pct": 85.0},
+        ]
+    )
+    assert risk["hypercare_or_pir_gap_count"] == 1
+    assert risk["compliant_items_count"] == 0
+    assert risk["sustainment_governance_status"] == "AT_RISK"
+    assert risk["violations"][0]["reasons"] == [
+        "HYPERCARE_OVER_MAX (61>60)", "HYPERCARE_EXIT_UNSIGNED", "PIR_NOT_COMPLETED",
+    ]
+
+    # Bordes inclusivos: hypercare == max, coverage == min, benefit == min -> HEALTHY.
+    border = audit_post_implementation_benefits_sustainment_and_handover(
+        [
+            {"item_id": "T-5", "bau_owner_assigned": True, "runbook_coverage_pct": 90.0,
+             "hypercare_days": 60, "hypercare_exit_signed": True, "pir_completed": True,
+             "realized_benefit_pct": 80.0},
+        ]
+    )
+    assert border["sustainment_governance_status"] == "HEALTHY"
+
+    # Umbral custom: hypercare 11 > max 10 -> gap -> AT_RISK.
+    custom = audit_post_implementation_benefits_sustainment_and_handover(
+        [
+            {"item_id": "T-6", "bau_owner_assigned": True, "runbook_coverage_pct": 100.0,
+             "hypercare_days": 11, "hypercare_exit_signed": True, "pir_completed": True,
+             "realized_benefit_pct": 95.0},
+        ],
+        min_runbook_coverage_pct=100.0,
+        max_hypercare_days=10,
+        min_benefit_realization_pct=90.0,
+    )
+    assert custom["hypercare_or_pir_gap_count"] == 1
+    assert custom["sustainment_governance_status"] == "AT_RISK"
+
+    # Coverage 99.5 < min 100 -> unowned -> CRITICAL (per spec el unowned gl cae en CRITICAL).
+    few = audit_post_implementation_benefits_sustainment_and_handover(
+        [
+            {"item_id": "T-7", "bau_owner_assigned": True, "runbook_coverage_pct": 99.5,
+             "hypercare_days": 5, "hypercare_exit_signed": True, "pir_completed": True,
+             "realized_benefit_pct": 90.0},
+        ],
+        min_runbook_coverage_pct=100.0,
+        max_hypercare_days=10,
+        min_benefit_realization_pct=90.0,
+    )
+    assert few["unowned_or_undocumented_handover_count"] == 1
+    assert few["sustainment_governance_status"] == "CRITICAL"
+    assert few["violations"][0]["reasons"] == ["RUNBOOK_COVERAGE_UNDER_MIN (99.5<100.0)"]
+
+
+def test_audit_post_implementation_handover_custom_and_empty():
+    """Entrada vacia/None/no-lista y proxy estatico + __all__."""
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_post_implementation_benefits_sustainment_and_handover,
+    )
+    import backend.services.project_lifecycle_pmi_service as mod
+
+    for payload in ([], None, 42, ["x"]):
+        empty = audit_post_implementation_benefits_sustainment_and_handover(payload)
+        assert empty["total_items"] == 0
+        assert empty["sustainment_governance_status"] == "HEALTHY"
+        assert empty["violations"] == []
+
+    sample = [{"item_id": "SM", "bau_owner_assigned": True, "runbook_coverage_pct": 95.0,
+               "hypercare_days": 10, "hypercare_exit_signed": True, "pir_completed": True,
+               "realized_benefit_pct": 85.0}]
+    assert (
+        ProjectLifecyclePMIService.audit_post_implementation_benefits_sustainment_and_handover(sample)
+        == audit_post_implementation_benefits_sustainment_and_handover(sample)
+    )
+    assert "audit_post_implementation_benefits_sustainment_and_handover" in mod.__all__

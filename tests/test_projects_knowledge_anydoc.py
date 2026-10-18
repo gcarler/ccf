@@ -4473,3 +4473,111 @@ def test_audit_markdown_horizontal_rule_and_section_break_hygiene_frontmatter_an
         == audit_markdown_horizontal_rule_and_section_break_hygiene(sample)
     )
     assert "audit_markdown_horizontal_rule_and_section_break_hygiene" in mod.__all__
+
+
+def test_audit_markdown_admonition_and_callout_hygiene_compliant_and_fences_ignored():
+    """Callouts canónicos con cuerpo suficiente separados por prosa y código cercado ignorado."""
+    from backend.services.anydoc_service import (
+        audit_markdown_admonition_and_callout_hygiene,
+    )
+
+    md = (
+        "# Manual Operativo PMO\n\n"
+        "> [!NOTE]\n"
+        "> Esta nota documenta el contexto de línea base del cronograma.\n\n"
+        "Párrafo intermedio de transición entre alertas operativas.\n\n"
+        "> [!WARNING] Precaución crítica en liberación de cambios\n"
+        "> Validar firmas de comité antes de desplegar.\n\n"
+        "```markdown\n"
+        "> [!DANGER]\n"
+        ">> [!NOTE]\n"
+        "```\n"
+    )
+    res = audit_markdown_admonition_and_callout_hygiene(md)
+    assert res["total_callouts"] == 2
+    assert res["valid_callouts"] == 2
+    assert res["type_distribution"] == {"NOTE": 1, "WARNING": 1}
+    assert res["unsupported_type_lines"] == []
+    assert res["empty_or_short_callout_lines"] == []
+    assert res["nested_callout_lines"] == []
+    assert res["consecutive_callout_lines"] == []
+    assert res["hygiene_score"] == 100.0
+    assert res["is_compliant"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_markdown_admonition_and_callout_hygiene_unsupported_and_short_body():
+    """Detecta tipos no soportados ([!DANGER]) y cuerpos vacíos o menores a min_body_words."""
+    from backend.services.anydoc_service import (
+        audit_markdown_admonition_and_callout_hygiene,
+    )
+
+    md = (
+        "> [!DANGER]\n"
+        "> Este bloque usa un identificador fuera del estándar GitHub.\n\n"
+        "Texto separador normal.\n\n"
+        "> [!TIP]\n"
+        "> Corto\n"
+    )
+    res = audit_markdown_admonition_and_callout_hygiene(md, min_body_words=3)
+    assert res["total_callouts"] == 2
+    assert res["valid_callouts"] == 0
+    assert res["unsupported_type_lines"] == [1]
+    assert res["empty_or_short_callout_lines"] == [6]
+    assert res["hygiene_score"] == 0.0
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_markdown_admonition_and_callout_hygiene_nested_and_consecutive():
+    """Detecta callouts anidados (>> [!...] o dentro de blockquote) y callouts consecutivos sin prosa."""
+    from backend.services.anydoc_service import (
+        audit_markdown_admonition_and_callout_hygiene,
+    )
+
+    md = (
+        "> [!IMPORTANT]\n"
+        "> Primer bloque válido con suficientes palabras de detalle.\n\n"
+        "> [!CAUTION]\n"
+        "> Segundo bloque consecutivo sin párrafo intermedio de separación.\n\n"
+        "Párrafo explicativo que separa secciones.\n\n"
+        ">> [!NOTE] Bloque anidado con doble nivel de cita\n"
+    )
+    res = audit_markdown_admonition_and_callout_hygiene(md, max_consecutive_callouts=1)
+    assert res["total_callouts"] == 3
+    assert res["valid_callouts"] == 1
+    assert res["consecutive_callout_lines"] == [4]
+    assert res["nested_callout_lines"] == [9]
+    assert res["hygiene_score"] == 33.33
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_markdown_admonition_and_callout_hygiene_empty_and_service_binding():
+    """Entradas vacías/None retornan 100% cumplimiento y el método está expuesto en AnyDocService y __all__."""
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_admonition_and_callout_hygiene,
+    )
+
+    for empty_val in (None, "", "   \n  "):
+        res = audit_markdown_admonition_and_callout_hygiene(empty_val)
+        assert res["total_callouts"] == 0
+        assert res["valid_callouts"] == 0
+        assert res["hygiene_score"] == 100.0
+        assert res["is_compliant"] is True
+        assert res["recommendations"] == []
+
+    sample = "> [!TIP] Recomendación operativa con suficientes palabras.\n"
+    assert (
+        AnyDocService.audit_markdown_admonition_and_callout_hygiene(sample)
+        == audit_markdown_admonition_and_callout_hygiene(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_admonition_and_callout_hygiene(sample)
+        == audit_markdown_admonition_and_callout_hygiene(sample)
+    )
+    assert "audit_markdown_admonition_and_callout_hygiene" in mod.__all__
+

@@ -2825,6 +2825,7 @@ __all__ = [
     "audit_quality_gate_peer_review_and_defect_density",
     "audit_retrospective_action_item_closure_and_process_improvement",
     "audit_procurement_warranty_claims_and_holdback_release",
+    "audit_change_request_reserve_drawdown_authorization",
     "ProjectCCBService",
 ]
 
@@ -4509,4 +4510,191 @@ def audit_procurement_warranty_claims_and_holdback_release(
 ProjectCCBService.audit_procurement_warranty_claims_and_holdback_release = staticmethod(
     audit_procurement_warranty_claims_and_holdback_release
 )
+
+
+def audit_change_request_reserve_drawdown_authorization(
+    drawdown_requests: Sequence[Mapping[str, Any]] | None,
+    *,
+    contingency_reserve_available: float = 0.0,
+    management_reserve_available: float = 0.0,
+    require_sponsor_for_management_reserve: bool = True,
+    require_risk_id_for_contingency: bool = True,
+) -> dict[str, Any]:
+    """Audita autorización de disposiciones de reserva de contingencia vs. reserva de gestión (PMI PMBOK §11.6 y §4.6).
+
+    Verifica que riesgos conocidos-desconocidos consuman reserva de contingencia con
+    trazabilidad al registro de riesgos, y que riesgos desconocidos-desconocidos
+    consuman reserva de gestión con autorización ejecutiva/sponsor y actualización
+    formal de línea base de costos, sin exceder los techos disponibles.
+    """
+    if (
+        drawdown_requests is None
+        or isinstance(drawdown_requests, (str, bytes))
+        or not isinstance(drawdown_requests, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = drawdown_requests
+
+    try:
+        contingency_cap = max(0.0, float(contingency_reserve_available or 0.0))
+    except (TypeError, ValueError):
+        contingency_cap = 0.0
+
+    try:
+        management_cap = max(0.0, float(management_reserve_available or 0.0))
+    except (TypeError, ValueError):
+        management_cap = 0.0
+
+    allowed_exec_roles = {
+        "sponsor",
+        "ccb_chair",
+        "steering_committee",
+        "executive_sponsor",
+    }
+
+    total_requests = 0
+    compliant_requests = 0
+    total_contingency_requested = 0.0
+    total_management_requested = 0.0
+
+    pool_mismatch_ids: list[str] = []
+    missing_risk_traceability_ids: list[str] = []
+    unauthorized_management_drawdown_ids: list[str] = []
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_requests += 1
+
+        req_id = (
+            str(
+                raw.get("id")
+                or raw.get("request_id")
+                or raw.get("cr_id")
+                or ""
+            ).strip()
+            or "CR-UNKNOWN"
+        )
+        uncertainty_type = str(raw.get("uncertainty_type") or "").strip().lower()
+        reserve_pool = str(raw.get("reserve_pool") or "").strip().lower()
+
+        try:
+            amount = max(0.0, float(raw.get("amount") or 0.0))
+        except (TypeError, ValueError):
+            amount = 0.0
+
+        linked_risk_id = str(raw.get("linked_risk_id") or "").strip()
+        approved_by_role = str(raw.get("approved_by_role") or "").strip().lower()
+        baseline_updated = bool(raw.get("baseline_updated"))
+
+        if reserve_pool == "contingency":
+            total_contingency_requested += amount
+        elif reserve_pool == "management":
+            total_management_requested += amount
+
+        pool_mismatch = (
+            reserve_pool not in {"contingency", "management"}
+            or uncertainty_type not in {"known_unknown", "unknown_unknown"}
+            or (uncertainty_type == "known_unknown" and reserve_pool != "contingency")
+            or (uncertainty_type == "unknown_unknown" and reserve_pool != "management")
+        )
+        missing_risk_traceability = (
+            reserve_pool == "contingency"
+            and bool(require_risk_id_for_contingency)
+            and not linked_risk_id
+        )
+        unauthorized_management_drawdown = reserve_pool == "management" and (
+            (
+                bool(require_sponsor_for_management_reserve)
+                and approved_by_role not in allowed_exec_roles
+            )
+            or (not baseline_updated)
+        )
+
+        if pool_mismatch:
+            pool_mismatch_ids.append(req_id)
+        if missing_risk_traceability:
+            missing_risk_traceability_ids.append(req_id)
+        if unauthorized_management_drawdown:
+            unauthorized_management_drawdown_ids.append(req_id)
+
+        if (
+            not pool_mismatch
+            and not missing_risk_traceability
+            and not unauthorized_management_drawdown
+        ):
+            compliant_requests += 1
+
+    contingency_overrun_amount = round(
+        max(0.0, total_contingency_requested - contingency_cap), 2
+    )
+    management_overrun_amount = round(
+        max(0.0, total_management_requested - management_cap), 2
+    )
+    total_contingency_requested = round(total_contingency_requested, 2)
+    total_management_requested = round(total_management_requested, 2)
+
+    is_compliant = (
+        len(pool_mismatch_ids) == 0
+        and len(missing_risk_traceability_ids) == 0
+        and len(unauthorized_management_drawdown_ids) == 0
+        and contingency_overrun_amount == 0.0
+        and management_overrun_amount == 0.0
+    )
+
+    if is_compliant:
+        governance_health = "healthy"
+    elif (
+        contingency_overrun_amount > 0.0
+        or management_overrun_amount > 0.0
+        or len(unauthorized_management_drawdown_ids) > 0
+        or len(pool_mismatch_ids) > 0
+    ):
+        governance_health = "critical"
+    else:
+        governance_health = "at_risk"
+
+    recommendations: list[str] = []
+    if pool_mismatch_ids:
+        recommendations.append(
+            f"Reclasificar solicitudes {pool_mismatch_ids}: 'known_unknown' debe usar 'contingency' y 'unknown_unknown' debe usar 'management'."
+        )
+    if missing_risk_traceability_ids:
+        recommendations.append(
+            f"Vincular un identificador de riesgo activo (linked_risk_id) para disposiciones de contingencia en {missing_risk_traceability_ids}."
+        )
+    if unauthorized_management_drawdown_ids:
+        recommendations.append(
+            f"Exigir aprobación de Sponsor/CCB Chair y actualización formal de línea base (baseline_updated=True) para reserva de gestión en {unauthorized_management_drawdown_ids}."
+        )
+    if contingency_overrun_amount > 0.0:
+        recommendations.append(
+            f"El consumo de reserva de contingencia excede el techo disponible en {contingency_overrun_amount}; tramitar solicitud de cambio al presupuesto base."
+        )
+    if management_overrun_amount > 0.0:
+        recommendations.append(
+            f"El consumo de reserva de gestión excede el techo disponible en {management_overrun_amount}; escalar al patrocinador ejecutivo."
+        )
+
+    return {
+        "total_requests": total_requests,
+        "compliant_requests": compliant_requests,
+        "total_contingency_requested": total_contingency_requested,
+        "total_management_requested": total_management_requested,
+        "contingency_overrun_amount": contingency_overrun_amount,
+        "management_overrun_amount": management_overrun_amount,
+        "pool_mismatch_ids": pool_mismatch_ids,
+        "missing_risk_traceability_ids": missing_risk_traceability_ids,
+        "unauthorized_management_drawdown_ids": unauthorized_management_drawdown_ids,
+        "governance_health": governance_health,
+        "is_compliant": is_compliant,
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.audit_change_request_reserve_drawdown_authorization = staticmethod(
+    audit_change_request_reserve_drawdown_authorization
+)
+
 

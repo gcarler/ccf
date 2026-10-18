@@ -3013,6 +3013,7 @@ __all__ = [
     "audit_markdown_footnote_reference_coherence",
     "audit_markdown_definition_list_and_spec_hygiene",
     "audit_markdown_horizontal_rule_and_section_break_hygiene",
+    "audit_markdown_admonition_and_callout_hygiene",
     "AnyDocService",
     "AnydocService",
 ]
@@ -5117,3 +5118,214 @@ def audit_markdown_horizontal_rule_and_section_break_hygiene(
 AnyDocService.audit_markdown_horizontal_rule_and_section_break_hygiene = staticmethod(
     audit_markdown_horizontal_rule_and_section_break_hygiene
 )
+
+
+def audit_markdown_admonition_and_callout_hygiene(
+    markdown_text: str | None,
+    *,
+    allowed_types: tuple[str, ...] = ("NOTE", "TIP", "IMPORTANT", "WARNING", "CAUTION"),
+    max_consecutive_callouts: int = 1,
+    min_body_words: int = 3,
+) -> dict[str, Any]:
+    """Audita bloques de aviso/admonición estilo GitHub (> [!TYPE]) según PMI PMBOK §4.4 y §10.2.
+
+    Evalúa tipos soportados, longitud mínima de cuerpo en palabras, anidamiento
+    de bloques (`>> [!TYPE]` o callout dentro de un blockquote activo) y bloques
+    consecutivos sin texto separador intermedio fuera de bloques de código cercados.
+    """
+    if not isinstance(markdown_text, str) or not markdown_text.strip():
+        return {
+            "total_callouts": 0,
+            "valid_callouts": 0,
+            "type_distribution": {},
+            "unsupported_type_lines": [],
+            "empty_or_short_callout_lines": [],
+            "nested_callout_lines": [],
+            "consecutive_callout_lines": [],
+            "hygiene_score": 100.0,
+            "is_compliant": True,
+            "recommendations": [],
+        }
+
+    normalized_allowed = {
+        str(t).strip().upper()
+        for t in (allowed_types or ())
+        if str(t).strip()
+    }
+    try:
+        max_consec = max(1, int(max_consecutive_callouts))
+    except (TypeError, ValueError):
+        max_consec = 1
+    try:
+        min_words = max(0, int(min_body_words))
+    except (TypeError, ValueError):
+        min_words = 3
+
+    fence_re = re.compile(r"^\s*(`{3,}|~{3,})")
+    callout_header_re = re.compile(r"^\s*((?:>\s*)+)\[!([^\]]*)\](.*)$")
+    blockquote_line_re = re.compile(r"^\s*((?:>\s*)+)(.*)$")
+    inline_marker_re = re.compile(r"\[![^\]]*\]")
+
+    in_fence = False
+    fence_char = ""
+    in_callout_block = False
+    consecutive_run = 0
+
+    callouts: list[dict[str, Any]] = []
+    current_callout: dict[str, Any] | None = None
+
+    for line_no, raw_line in enumerate(markdown_text.splitlines(), start=1):
+        m_fence = fence_re.match(raw_line)
+        if m_fence:
+            marker_char = m_fence.group(1)[0]
+            if not in_fence:
+                in_fence = True
+                fence_char = marker_char
+                in_callout_block = False
+                current_callout = None
+            elif marker_char == fence_char:
+                in_fence = False
+                fence_char = ""
+            continue
+
+        if in_fence:
+            continue
+
+        stripped = raw_line.strip()
+        if not stripped:
+            in_callout_block = False
+            current_callout = None
+            continue
+
+        m_callout = callout_header_re.match(raw_line)
+        if m_callout:
+            gt_prefix = m_callout.group(1)
+            gt_count = gt_prefix.count(">")
+            raw_type = m_callout.group(2).strip()
+            normalized_type = raw_type.upper()
+            inline_tail = m_callout.group(3).strip()
+
+            cleaned_tail = inline_marker_re.sub(" ", inline_tail)
+            title_words = len(re.findall(r"\S+", cleaned_tail))
+
+            is_nested = (gt_count > 1) or in_callout_block or bool(
+                inline_marker_re.search(inline_tail)
+            )
+            is_consecutive = False
+            if not is_nested:
+                consecutive_run += 1
+                if consecutive_run > max_consec:
+                    is_consecutive = True
+            else:
+                if consecutive_run == 0:
+                    consecutive_run = 1
+
+            entry: dict[str, Any] = {
+                "line_number": line_no,
+                "raw_type": raw_type,
+                "normalized_type": normalized_type,
+                "body_word_count": title_words,
+                "is_nested": is_nested,
+                "is_consecutive": is_consecutive,
+            }
+            callouts.append(entry)
+            current_callout = entry
+            in_callout_block = True
+            continue
+
+        m_bq = blockquote_line_re.match(raw_line)
+        if m_bq:
+            if in_callout_block and current_callout is not None:
+                bq_body = m_bq.group(2).strip()
+                if inline_marker_re.search(bq_body):
+                    current_callout["is_nested"] = True
+                cleaned_body = inline_marker_re.sub(" ", bq_body)
+                current_callout["body_word_count"] += len(
+                    re.findall(r"\S+", cleaned_body)
+                )
+            continue
+
+        # Non-empty, non-blockquote prose/heading/list line separates callouts
+        in_callout_block = False
+        current_callout = None
+        consecutive_run = 0
+
+    total_callouts = len(callouts)
+    type_distribution: dict[str, int] = {}
+    unsupported_type_lines: list[int] = []
+    empty_or_short_callout_lines: list[int] = []
+    nested_callout_lines: list[int] = []
+    consecutive_callout_lines: list[int] = []
+    valid_callouts = 0
+
+    for item in callouts:
+        line_no = int(item["line_number"])
+        norm_type = str(item["normalized_type"])
+        if norm_type:
+            type_distribution[norm_type] = type_distribution.get(norm_type, 0) + 1
+
+        has_anomaly = False
+        if norm_type not in normalized_allowed:
+            unsupported_type_lines.append(line_no)
+            has_anomaly = True
+        if int(item["body_word_count"]) < min_words:
+            empty_or_short_callout_lines.append(line_no)
+            has_anomaly = True
+        if bool(item["is_nested"]):
+            nested_callout_lines.append(line_no)
+            has_anomaly = True
+        if bool(item["is_consecutive"]):
+            consecutive_callout_lines.append(line_no)
+            has_anomaly = True
+
+        if not has_anomaly:
+            valid_callouts += 1
+
+    hygiene_score = (
+        100.0
+        if total_callouts == 0
+        else round((valid_callouts / total_callouts) * 100.0, 2)
+    )
+    is_compliant = (
+        len(unsupported_type_lines) == 0
+        and len(empty_or_short_callout_lines) == 0
+        and len(nested_callout_lines) == 0
+        and len(consecutive_callout_lines) == 0
+    )
+
+    recommendations: list[str] = []
+    if unsupported_type_lines:
+        recommendations.append(
+            f"Reemplazar tipos de callout no canónicos en líneas {unsupported_type_lines} por {sorted(normalized_allowed)}."
+        )
+    if empty_or_short_callout_lines:
+        recommendations.append(
+            f"Ampliar el contenido explicativo de los callouts en líneas {empty_or_short_callout_lines} (mínimo {min_words} palabras)."
+        )
+    if nested_callout_lines:
+        recommendations.append(
+            f"Desanidar bloques de alerta en líneas {nested_callout_lines}; usar un único nivel de cita '>'."
+        )
+    if consecutive_callout_lines:
+        recommendations.append(
+            f"Intercalar párrafos o encabezados explicativos entre callouts consecutivos en líneas {consecutive_callout_lines}."
+        )
+
+    return {
+        "total_callouts": total_callouts,
+        "valid_callouts": valid_callouts,
+        "type_distribution": type_distribution,
+        "unsupported_type_lines": unsupported_type_lines,
+        "empty_or_short_callout_lines": empty_or_short_callout_lines,
+        "nested_callout_lines": nested_callout_lines,
+        "consecutive_callout_lines": consecutive_callout_lines,
+        "hygiene_score": hygiene_score,
+        "is_compliant": is_compliant,
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_markdown_admonition_and_callout_hygiene = staticmethod(
+    audit_markdown_admonition_and_callout_hygiene
+)
+
