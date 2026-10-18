@@ -1367,6 +1367,83 @@ def audit_pareto_defect_root_causes(
     }
 
 
+def audit_unapproved_scope_creep_exposure(
+    work_packages: Optional[List[Dict[str, Any]]] = None,
+    tolerance_hours_pct: float = 10.0,
+) -> Dict[str, Any]:
+    """Audita trabajo fuera de line base y gold-plating sin CR (PMBOK §5.6 y §4.6).
+
+    Cada paquete compara `actual_hours` frente a `baseline_hours` y su CR
+    aprobada (`approved_cr_id`/`change_request_id` o `has_approved_cr`):
+    - Trabajo con esfuerzo real sin line base y sin CR -> 'unbaselined_package_ids'
+      aportando sus horas a `unapproved_effort_hours`.
+    - Paquete con line base sin CR cuyo overrun_pct supera la tolerancia ->
+      'scope_creep_package_ids' aportando el exceso a `unapproved_effort_hours`.
+    - `scope_posture`: 'NO_WORK_PACKAGES_EVALUATED' vacío;
+      'UNAUTHORIZED_UNBASELINED_WORK' con trabajo sin linea base;
+      'UNAPPROVED_SCOPE_CREEP_DETECTED' con creep > tolerancia;
+      'CONTROLLED_SCOPE_BASELINE' en caso contrario.
+    """
+    packages = [item for item in (work_packages or []) if isinstance(item, dict)]
+    if not packages:
+        return {
+            "total_packages": 0,
+            "unbaselined_package_ids": [],
+            "scope_creep_package_ids": [],
+            "unapproved_effort_hours": 0.0,
+            "is_scope_controlled": True,
+            "scope_posture": "NO_WORK_PACKAGES_EVALUATED",
+        }
+
+    unbaselined_package_ids: List[str] = []
+    scope_creep_package_ids: List[str] = []
+    unapproved_effort = 0.0
+    for idx, item in enumerate(packages, start=1):
+        pkg_id = (
+            str(item.get("id") or item.get("package_id") or item.get("wbs_code") or "").strip()
+            or f"WP-{idx}"
+        )
+        try:
+            base_h = max(0.0, float(item.get("baseline_hours") if item.get("baseline_hours") is not None else (item.get("planned_hours") or 0.0)))
+        except (TypeError, ValueError):
+            base_h = 0.0
+        try:
+            act_h = max(0.0, float(item.get("actual_hours") if item.get("actual_hours") is not None else (item.get("effort_hours") or 0.0)))
+        except (TypeError, ValueError):
+            act_h = 0.0
+        cr_ref = str(item.get("approved_cr_id") or item.get("change_request_id") or "").strip()
+        has_cr = bool(cr_ref or item.get("has_approved_cr") is True)
+
+        if base_h <= 0.0 and act_h > 0.0 and not has_cr:
+            unbaselined_package_ids.append(pkg_id)
+            unapproved_effort += act_h
+        elif base_h > 0.0 and not has_cr:
+            overrun_pct = ((act_h - base_h) / base_h) * 100.0
+            if overrun_pct > float(tolerance_hours_pct) + 1e-9:
+                scope_creep_package_ids.append(pkg_id)
+                unapproved_effort += act_h - base_h
+
+    total_packages = len(packages)
+    is_scope_controlled = bool(len(unbaselined_package_ids) == 0 and len(scope_creep_package_ids) == 0)
+    if total_packages == 0:
+        scope_posture = "NO_WORK_PACKAGES_EVALUATED"
+    elif unbaselined_package_ids:
+        scope_posture = "UNAUTHORIZED_UNBASELINED_WORK"
+    elif scope_creep_package_ids:
+        scope_posture = "UNAPPROVED_SCOPE_CREEP_DETECTED"
+    else:
+        scope_posture = "CONTROLLED_SCOPE_BASELINE"
+
+    return {
+        "total_packages": total_packages,
+        "unbaselined_package_ids": unbaselined_package_ids,
+        "scope_creep_package_ids": scope_creep_package_ids,
+        "unapproved_effort_hours": round(unapproved_effort, 2),
+        "is_scope_controlled": is_scope_controlled,
+        "scope_posture": scope_posture,
+    }
+
+
 class ProjectCCBService:
     """Fachada canónica de Control Integrado de Cambios (CCB) y Calidad DoD PMI."""
 
@@ -1558,6 +1635,15 @@ class ProjectCCBService:
     ) -> dict[str, Any]:
         return audit_configuration_baseline_integrity(configuration_items)
 
+    @staticmethod
+    def audit_unapproved_scope_creep_exposure(
+        work_packages: Optional[list[dict[str, Any]]],
+        tolerance_hours_pct: float = 10.0,
+    ) -> dict[str, Any]:
+        return audit_unapproved_scope_creep_exposure(
+            work_packages, tolerance_hours_pct=tolerance_hours_pct
+        )
+
 
 __all__ = [
     "list_change_requests",
@@ -1582,6 +1668,7 @@ __all__ = [
     "audit_ccb_decision_sla_breaches",
     "audit_emergency_change_retroactive_ratification",
     "audit_pareto_defect_root_causes",
+    "audit_unapproved_scope_creep_exposure",
     "evaluate_deliverable_first_time_right_yield",
     "audit_configuration_baseline_integrity",
     "ProjectCCBService",

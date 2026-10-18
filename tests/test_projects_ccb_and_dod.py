@@ -2062,3 +2062,114 @@ def test_audit_pareto_defect_root_causes_empty_and_degenerate_counts():
     assert clamped["top_cause_share_pct"] == 100.0
     assert clamped["vital_few_causes"] == ["FLIP"]
     assert clamped["pareto_posture"] == "CONCENTRATED_PARETO_BOTTLENECK"
+
+
+def test_audit_unapproved_scope_creep_exposure_controlled_baseline():
+    """Paquetes con CR aprobada o dentro de la tolerancia -> CONTROLLED_SCOPE_BASELINE."""
+    from backend.services.project_ccb_service import (
+        audit_unapproved_scope_creep_exposure as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "id": "WP-1",
+                "baseline_hours": 100.0,
+                "actual_hours": 105.0,
+            },
+            {
+                "id": "WP-2",
+                "baseline_hours": 50.0,
+                "actual_hours": 60.0,
+                "approved_cr_id": "CR-9",
+            },
+            {
+                "id": "WP-3",
+                "planned_hours": 20.0,
+                "effort_hours": 0.0,
+            },
+        ],
+        tolerance_hours_pct=10.0,
+    )
+    assert res["is_scope_controlled"] is True
+    assert res["total_packages"] == 3
+    assert res["unbaselined_package_ids"] == []
+    assert res["scope_creep_package_ids"] == []
+    assert res["unapproved_effort_hours"] == 0.0
+    assert res["scope_posture"] == "CONTROLLED_SCOPE_BASELINE"
+
+
+def test_audit_unapproved_scope_creep_exposure_unbaselined_work():
+    """Esfuerzo real sin linea base y sin CR aprobada -> UNAUTHORIZED_UNBASELINED_WORK."""
+    from backend.services.project_ccb_service import (
+        audit_unapproved_scope_creep_exposure as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "id": "WP-4",
+                "actual_hours": 12.5,
+            },
+            {
+                "package_id": "WP-5",
+                "baseline_hours": 8.0,
+                "actual_hours": 8.0,
+                "has_approved_cr": True,
+            },
+        ]
+    )
+    assert res["is_scope_controlled"] is False
+    assert res["total_packages"] == 2
+    assert res["unbaselined_package_ids"] == ["WP-4"]
+    assert res["scope_creep_package_ids"] == []
+    assert res["unapproved_effort_hours"] == 12.5
+    assert res["scope_posture"] == "UNAUTHORIZED_UNBASELINED_WORK"
+
+
+def test_audit_unapproved_scope_creep_exposure_creep_over_tolerance():
+    """Overrun sin CR por encima de la tolerancia -> UNAPPROVED_SCOPE_CREEP_DETECTED."""
+    from backend.services.project_ccb_service import (
+        audit_unapproved_scope_creep_exposure as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "wbs_code": "1.2",
+                "baseline_hours": 40.0,
+                "actual_hours": 48.0,
+            },
+            {
+                "id": "WP-OK",
+                "baseline_hours": 30.0,
+                "actual_hours": 32.0,
+            },
+        ],
+        tolerance_hours_pct=10.0,
+    )
+    assert res["is_scope_controlled"] is False
+    assert res["total_packages"] == 2
+    assert res["unbaselined_package_ids"] == []
+    # 1.2: (48-40)/40 = 20.0% > 10% -> creep; WP-OK: 6.67% dentro de tolerancia.
+    assert res["scope_creep_package_ids"] == ["1.2"]
+    assert res["unapproved_effort_hours"] == 8.0
+    assert res["scope_posture"] == "UNAPPROVED_SCOPE_CREEP_DETECTED"
+
+
+def test_audit_unapproved_scope_creep_exposure_empty_or_none():
+    """None, lista vacia o entradas no-dict -> NO_WORK_PACKAGES_EVALUATED."""
+    from backend.services.project_ccb_service import (
+        audit_unapproved_scope_creep_exposure as audit_fn,
+    )
+
+    for payload in (None, [], ["invalid", 42, None]):
+        res = audit_fn(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_packages": 0,
+            "unbaselined_package_ids": [],
+            "scope_creep_package_ids": [],
+            "unapproved_effort_hours": 0.0,
+            "is_scope_controlled": True,
+            "scope_posture": "NO_WORK_PACKAGES_EVALUATED",
+        }
