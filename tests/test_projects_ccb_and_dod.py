@@ -1079,3 +1079,76 @@ def test_evaluate_cost_of_quality_balance_untracked_or_negative():
             "coq_maturity_status": "untracked",
         }
 
+
+# ─── 11. Analizador de Velocidad de Decisión y SLA del CCB (PMI PMBOK §4.6) ───
+
+
+def test_evaluate_ccb_backlog_velocity_responsive_governance():
+    """Mayoría de CRs decididas y pendientes dentro de SLA (<= 7.0 días) -> 'responsive_governance'."""
+    from backend.services.project_ccb_service import evaluate_ccb_backlog_velocity
+
+    crs = [
+        {"status": "approved", "resolution_days": 3.0},
+        {"status": "rejected", "resolution_days": 5.0},
+        {"status": "pending", "age_days": 4.0},
+    ]
+    res = evaluate_ccb_backlog_velocity(crs, sla_days=7.0)
+    assert res == {
+        "total_requests": 3,
+        "decided_count": 2,
+        "pending_count": 1,
+        "overdue_pending_count": 0,
+        "avg_resolution_days": 4.0,
+        "max_pending_age_days": 4.0,
+        "backlog_pressure_pct": 33.33,
+        "ccb_velocity_status": "responsive_governance",
+    }
+
+
+def test_evaluate_ccb_backlog_velocity_sla_breach_bottleneck():
+    """Al menos 1 CR pendiente con age_days > sla_days -> 'sla_breach_bottleneck'."""
+    from backend.services.project_ccb_service import evaluate_ccb_backlog_velocity
+
+    crs = [
+        {"status": "approved", "resolution_days": 2.0},
+        {"status": "under_review", "age_days": 12.5},
+    ]
+    res = evaluate_ccb_backlog_velocity(crs, sla_days=7.0)
+    assert res["overdue_pending_count"] == 1
+    assert res["max_pending_age_days"] == 12.5
+    assert res["ccb_velocity_status"] == "sla_breach_bottleneck"
+
+
+def test_evaluate_ccb_backlog_velocity_backlog_accumulating():
+    """Más CRs pendientes que decididas pero todas dentro del SLA -> 'backlog_accumulating'."""
+    from backend.services.project_ccb_service import evaluate_ccb_backlog_velocity
+
+    crs = [
+        {"status": "approved", "resolution_days": 2.0},
+        {"status": "pending", "age_days": 3.0},
+        {"status": "pending", "age_days": 5.0},
+    ]
+    res = evaluate_ccb_backlog_velocity(crs, sla_days=7.0)
+    assert res["decided_count"] == 1
+    assert res["pending_count"] == 2
+    assert res["overdue_pending_count"] == 0
+    assert res["ccb_velocity_status"] == "backlog_accumulating"
+
+
+def test_evaluate_ccb_backlog_velocity_no_requests():
+    """None o [] -> 'no_requests' y total_requests=0."""
+    from backend.services.project_ccb_service import evaluate_ccb_backlog_velocity
+
+    for empty_val in (None, []):
+        res = evaluate_ccb_backlog_velocity(empty_val)
+        assert res == {
+            "total_requests": 0,
+            "decided_count": 0,
+            "pending_count": 0,
+            "overdue_pending_count": 0,
+            "avg_resolution_days": 0.0,
+            "max_pending_age_days": 0.0,
+            "backlog_pressure_pct": 0.0,
+            "ccb_velocity_status": "no_requests",
+        }
+

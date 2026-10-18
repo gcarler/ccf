@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import uuid as _uuid
 from datetime import timedelta, timezone
-from typing import Optional, Union
+from typing import Any, Optional, Union
 from uuid import UUID
 
 from sqlalchemy import func
@@ -573,5 +573,76 @@ def evaluate_cost_of_quality_balance(
         "conformance_ratio_pct": conformance_ratio_pct,
         "nonconformance_ratio_pct": nonconformance_ratio_pct,
         "coq_maturity_status": coq_maturity_status,
+    }
+
+
+def evaluate_ccb_backlog_velocity(
+    change_requests: list[dict[str, Any]] | None,
+    sla_days: float = 7.0,
+) -> dict[str, Any]:
+    """Audita la velocidad de decisión del Comité de Control de Cambios (CCB) y el envejecimiento del backlog de CRs (PMI PMBOK §4.6)."""
+    valid_crs = [cr for cr in (change_requests or []) if isinstance(cr, dict)]
+    sla_threshold = max(1.0, float(sla_days or 7.0))
+
+    decided_count = 0
+    pending_count = 0
+    overdue_pending_count = 0
+    sum_decided_days = 0.0
+    max_pending_age_days = 0.0
+
+    decided_statuses = {
+        "approved",
+        "rejected",
+        "aprobado",
+        "rechazado",
+        "closed",
+        "decided",
+    }
+
+    for cr in valid_crs:
+        status_norm = (
+            str(cr.get("status") or cr.get("estado") or "pending").strip().lower()
+        )
+        age_days = max(
+            0.0, float(cr.get("age_days") or cr.get("resolution_days") or 0.0)
+        )
+        if status_norm in decided_statuses:
+            decided_count += 1
+            sum_decided_days += age_days
+        else:
+            pending_count += 1
+            max_pending_age_days = max(max_pending_age_days, age_days)
+            if age_days > sla_threshold:
+                overdue_pending_count += 1
+
+    total_requests = decided_count + pending_count
+    avg_resolution_days = (
+        round(sum_decided_days / decided_count, 2) if decided_count > 0 else 0.0
+    )
+    max_pending_age_days = round(max_pending_age_days, 2)
+    backlog_pressure_pct = (
+        round((pending_count / total_requests) * 100.0, 2)
+        if total_requests > 0
+        else 0.0
+    )
+
+    if total_requests == 0:
+        ccb_velocity_status = "no_requests"
+    elif overdue_pending_count >= 1:
+        ccb_velocity_status = "sla_breach_bottleneck"
+    elif pending_count > decided_count:
+        ccb_velocity_status = "backlog_accumulating"
+    else:
+        ccb_velocity_status = "responsive_governance"
+
+    return {
+        "total_requests": total_requests,
+        "decided_count": decided_count,
+        "pending_count": pending_count,
+        "overdue_pending_count": overdue_pending_count,
+        "avg_resolution_days": avg_resolution_days,
+        "max_pending_age_days": max_pending_age_days,
+        "backlog_pressure_pct": backlog_pressure_pct,
+        "ccb_velocity_status": ccb_velocity_status,
     }
 
