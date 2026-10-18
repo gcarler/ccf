@@ -5348,3 +5348,133 @@ def test_audit_ncr_capa_invalid_metadata_and_export():
             "is_ncr_capa_governance_compliant": True,
         }
 
+
+def test_audit_configuration_baseline_drift_and_hotfix_governance_healthy():
+    """Verifica estado HEALTHY cuando todos los CIs coinciden con baseline o tienen CR autorizado y auditorías FCA/PCA vigentes."""
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_configuration_baseline_drift_and_hotfix_governance,
+    )
+
+    items = [
+        {
+            "ci_id": "CI-API-GW",
+            "baseline_version": "2.1.0",
+            "deployed_version": "2.1.0",
+            "authorized_change_request_id": None,
+            "is_production_hotfix": False,
+            "physical_configuration_audit_passed": True,
+            "functional_configuration_audit_passed": True,
+            "days_since_last_configuration_audit": 10,
+        },
+        {
+            "ci_id": "CI-AUTH-SVC",
+            "baseline_version": "1.4.0",
+            "deployed_version": "1.4.1",
+            "authorized_change_request_id": "CR-2026-109",
+            "is_production_hotfix": True,
+            "physical_configuration_audit_passed": True,
+            "functional_configuration_audit_passed": True,
+            "days_since_last_configuration_audit": 5,
+        },
+    ]
+    res = audit_configuration_baseline_drift_and_hotfix_governance(
+        items, max_unverified_audit_age_days=30
+    )
+    assert res == {
+        "total_configuration_items": 2,
+        "compliant_ci_count": 2,
+        "unauthorized_version_drift_count": 0,
+        "unauthorized_hotfix_count": 0,
+        "failed_fca_pca_count": 0,
+        "stale_audit_ci_count": 0,
+        "configuration_integrity_pct": 100.0,
+        "configuration_governance_status": "HEALTHY",
+        "discrepancies": [],
+    }
+    assert (
+        ProjectCCBService.audit_configuration_baseline_drift_and_hotfix_governance(
+            items, max_unverified_audit_age_days=30
+        )
+        == res
+    )
+
+
+def test_audit_configuration_baseline_drift_and_hotfix_governance_at_risk_stale_audit():
+    """Verifica estado AT_RISK cuando la única anomalía es antigüedad excesiva desde la última auditoría de configuración."""
+    from backend.services.project_ccb_service import (
+        audit_configuration_baseline_drift_and_hotfix_governance,
+    )
+
+    res = audit_configuration_baseline_drift_and_hotfix_governance(
+        [
+            {
+                "ci_id": "CI-DB-SCHEMA",
+                "baseline_version": "3.0.0",
+                "deployed_version": "3.0.0",
+                "authorized_change_request_id": "",
+                "is_production_hotfix": False,
+                "physical_configuration_audit_passed": True,
+                "functional_configuration_audit_passed": True,
+                "days_since_last_configuration_audit": 45,
+            }
+        ],
+        max_unverified_audit_age_days=30,
+    )
+    assert res["stale_audit_ci_count"] == 1
+    assert res["compliant_ci_count"] == 0
+    assert res["configuration_integrity_pct"] == 0.0
+    assert res["configuration_governance_status"] == "AT_RISK"
+    assert len(res["discrepancies"]) == 1
+    assert res["discrepancies"][0]["ci_id"] == "CI-DB-SCHEMA"
+
+
+def test_audit_configuration_baseline_drift_and_hotfix_governance_critical():
+    """Verifica estado CRITICAL ante deriva de versión sin CR, hotfix no autorizado o fallo FCA/PCA."""
+    from backend.services.project_ccb_service import (
+        audit_configuration_baseline_drift_and_hotfix_governance,
+    )
+
+    res = audit_configuration_baseline_drift_and_hotfix_governance(
+        [
+            {
+                "ci_id": "CI-ROGUE-HOTFIX",
+                "baseline_version": "1.0.0",
+                "deployed_version": "1.0.1-hotfix",
+                "authorized_change_request_id": "   ",
+                "is_production_hotfix": True,
+                "physical_configuration_audit_passed": True,
+                "functional_configuration_audit_passed": False,
+                "days_since_last_configuration_audit": 12,
+            }
+        ],
+        max_unverified_audit_age_days=30,
+    )
+    assert res["unauthorized_version_drift_count"] == 1
+    assert res["unauthorized_hotfix_count"] == 1
+    assert res["failed_fca_pca_count"] == 1
+    assert res["configuration_governance_status"] == "CRITICAL"
+
+
+def test_audit_configuration_baseline_drift_and_hotfix_governance_empty_and_export():
+    """Verifica manejo de entradas vacías o no secuencia y exportación en __all__."""
+    import backend.services.project_ccb_service as _m
+    from backend.services.project_ccb_service import (
+        audit_configuration_baseline_drift_and_hotfix_governance,
+    )
+
+    assert "audit_configuration_baseline_drift_and_hotfix_governance" in _m.__all__
+    for bad in ([], None, "invalid"):
+        assert audit_configuration_baseline_drift_and_hotfix_governance(bad) == {
+            "total_configuration_items": 0,
+            "compliant_ci_count": 0,
+            "unauthorized_version_drift_count": 0,
+            "unauthorized_hotfix_count": 0,
+            "failed_fca_pca_count": 0,
+            "stale_audit_ci_count": 0,
+            "configuration_integrity_pct": 100.0,
+            "configuration_governance_status": "HEALTHY",
+            "discrepancies": [],
+        }
+
+

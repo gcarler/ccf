@@ -4964,3 +4964,134 @@ def test_audit_wiki_lessons_learned_actionable_invalid_phase_and_export():
             "is_lessons_learned_governance_compliant": True,
         }
 
+
+def test_audit_wiki_risk_trigger_early_warning_and_fallback_healthy():
+    """Verifica estado HEALTHY cuando todos los riesgos tienen EWI, dueño, respuesta efectiva o fallback activado."""
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_risk_trigger_early_warning_and_fallback,
+    )
+
+    triggers = [
+        {
+            "risk_id": "RSK-LATENCY-01",
+            "trigger_condition_defined": True,
+            "risk_owner_assigned": True,
+            "trigger_breached": False,
+            "primary_response_activated": False,
+            "primary_response_effective": False,
+            "fallback_plan_documented": True,
+            "fallback_plan_activated": False,
+        },
+        {
+            "risk_id": "RSK-FAILOVER-02",
+            "trigger_condition_defined": True,
+            "risk_owner_assigned": True,
+            "trigger_breached": True,
+            "primary_response_activated": True,
+            "primary_response_effective": False,
+            "fallback_plan_documented": True,
+            "fallback_plan_activated": True,
+        },
+    ]
+    res = audit_wiki_risk_trigger_early_warning_and_fallback(triggers)
+    assert res == {
+        "total_monitored_risks": 2,
+        "compliant_risks_count": 2,
+        "missing_trigger_or_owner_count": 0,
+        "breached_triggers_count": 1,
+        "unactivated_breached_trigger_count": 0,
+        "failed_primary_without_fallback_count": 0,
+        "ewi_governance_status": "HEALTHY",
+        "violations": [],
+    }
+    assert (
+        WikiPMIService.audit_wiki_risk_trigger_early_warning_and_fallback(triggers)
+        == res
+    )
+
+
+def test_audit_wiki_risk_trigger_early_warning_and_fallback_at_risk():
+    """Verifica estado AT_RISK cuando falta condición de disparo o propietario pero ningún trigger ha sido vulnerado."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_risk_trigger_early_warning_and_fallback,
+    )
+
+    res = audit_wiki_risk_trigger_early_warning_and_fallback(
+        [
+            {
+                "risk_id": "RSK-NO-OWNER",
+                "trigger_condition_defined": True,
+                "risk_owner_assigned": False,
+                "trigger_breached": False,
+                "primary_response_activated": False,
+                "primary_response_effective": False,
+                "fallback_plan_documented": False,
+                "fallback_plan_activated": False,
+            }
+        ]
+    )
+    assert res["missing_trigger_or_owner_count"] == 1
+    assert res["compliant_risks_count"] == 0
+    assert res["ewi_governance_status"] == "AT_RISK"
+    assert len(res["violations"]) == 1
+    assert res["violations"][0]["risk_id"] == "RSK-NO-OWNER"
+
+
+def test_audit_wiki_risk_trigger_early_warning_and_fallback_critical():
+    """Verifica estado CRITICAL cuando un trigger se activa sin respuesta primaria o falla sin plan de fallback activado."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_risk_trigger_early_warning_and_fallback,
+    )
+
+    res = audit_wiki_risk_trigger_early_warning_and_fallback(
+        [
+            {
+                "risk_id": "RSK-UNACTIVATED",
+                "trigger_condition_defined": True,
+                "risk_owner_assigned": True,
+                "trigger_breached": True,
+                "primary_response_activated": False,
+                "primary_response_effective": False,
+                "fallback_plan_documented": True,
+                "fallback_plan_activated": False,
+            },
+            {
+                "risk_id": "RSK-NO-FALLBACK",
+                "trigger_condition_defined": True,
+                "risk_owner_assigned": True,
+                "trigger_breached": True,
+                "primary_response_activated": True,
+                "primary_response_effective": False,
+                "fallback_plan_documented": True,
+                "fallback_plan_activated": False,
+            },
+        ]
+    )
+    assert res["breached_triggers_count"] == 2
+    assert res["unactivated_breached_trigger_count"] == 1
+    assert res["failed_primary_without_fallback_count"] == 1
+    assert res["ewi_governance_status"] == "CRITICAL"
+
+
+def test_audit_wiki_risk_trigger_early_warning_and_fallback_empty_and_export():
+    """Verifica manejo de entradas vacías o no secuencia y exportación en __all__."""
+    import backend.services.wiki_pmi_service as _m
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_risk_trigger_early_warning_and_fallback,
+    )
+
+    assert "audit_wiki_risk_trigger_early_warning_and_fallback" in _m.__all__
+    for bad in ([], None, "invalid"):
+        assert audit_wiki_risk_trigger_early_warning_and_fallback(bad) == {
+            "total_monitored_risks": 0,
+            "compliant_risks_count": 0,
+            "missing_trigger_or_owner_count": 0,
+            "breached_triggers_count": 0,
+            "unactivated_breached_trigger_count": 0,
+            "failed_primary_without_fallback_count": 0,
+            "ewi_governance_status": "HEALTHY",
+            "violations": [],
+        }
+
+

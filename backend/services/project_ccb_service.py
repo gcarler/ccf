@@ -2821,6 +2821,7 @@ __all__ = [
     "audit_emergency_change_fast_track_ratification",
     "audit_contract_change_order_cumulative_escalation",
     "audit_ncr_capa_effectiveness_and_recurrence",
+    "audit_configuration_baseline_drift_and_hotfix_governance",
     "ProjectCCBService",
 ]
 
@@ -4058,4 +4059,126 @@ def audit_ncr_capa_effectiveness_and_recurrence(
 ProjectCCBService.audit_ncr_capa_effectiveness_and_recurrence = staticmethod(
     audit_ncr_capa_effectiveness_and_recurrence
 )
+
+
+def audit_configuration_baseline_drift_and_hotfix_governance(
+    configuration_items: list[dict[str, Any]],
+    *,
+    max_unverified_audit_age_days: int = 30,
+) -> dict[str, Any]:
+    """PMBOK §4.6 / §5.6 — auditoría de deriva de línea base de configuración y hotfixes no autorizados."""
+    if not isinstance(configuration_items, Sequence) or isinstance(
+        configuration_items, (str, bytes)
+    ):
+        return {
+            "total_configuration_items": 0,
+            "compliant_ci_count": 0,
+            "unauthorized_version_drift_count": 0,
+            "unauthorized_hotfix_count": 0,
+            "failed_fca_pca_count": 0,
+            "stale_audit_ci_count": 0,
+            "configuration_integrity_pct": 100.0,
+            "configuration_governance_status": "HEALTHY",
+            "discrepancies": [],
+        }
+
+    try:
+        max_age = int(max_unverified_audit_age_days)
+    except (TypeError, ValueError):
+        max_age = 30
+
+    total_configuration_items = 0
+    compliant_ci_count = 0
+    unauthorized_version_drift_count = 0
+    unauthorized_hotfix_count = 0
+    failed_fca_pca_count = 0
+    stale_audit_ci_count = 0
+    discrepancies: list[dict[str, Any]] = []
+
+    for item in configuration_items:
+        if not isinstance(item, Mapping):
+            continue
+        raw_id = item.get("ci_id")
+        if raw_id is None:
+            continue
+        ci_id = str(raw_id).strip()
+        if not ci_id:
+            continue
+
+        total_configuration_items += 1
+
+        baseline_ver = str(item.get("baseline_version") or "").strip()
+        deployed_ver = str(item.get("deployed_version") or "").strip()
+        auth_cr = str(item.get("authorized_change_request_id") or "").strip()
+        is_hotfix = bool(item.get("is_production_hotfix", False))
+        pca_passed = bool(item.get("physical_configuration_audit_passed", False))
+        fca_passed = bool(item.get("functional_configuration_audit_passed", False))
+        days_since_audit = int(
+            item.get("days_since_last_configuration_audit", 0) or 0
+        )
+
+        unauthorized_version_drift = (baseline_ver != deployed_ver) and not auth_cr
+        unauthorized_hotfix = is_hotfix and not auth_cr
+        failed_fca_pca = (not pca_passed) or (not fca_passed)
+        stale_audit = days_since_audit > max_age
+
+        issues: list[str] = []
+        if unauthorized_version_drift:
+            unauthorized_version_drift_count += 1
+            issues.append("unauthorized_version_drift")
+        if unauthorized_hotfix:
+            unauthorized_hotfix_count += 1
+            issues.append("unauthorized_production_hotfix")
+        if failed_fca_pca:
+            failed_fca_pca_count += 1
+            issues.append("failed_fca_or_pca_audit")
+        if stale_audit:
+            stale_audit_ci_count += 1
+            issues.append("stale_configuration_audit")
+
+        if not issues:
+            compliant_ci_count += 1
+        else:
+            discrepancies.append({"ci_id": ci_id, "issues": issues})
+
+    if total_configuration_items == 0:
+        configuration_integrity_pct = 100.0
+    else:
+        configuration_integrity_pct = round(
+            (compliant_ci_count / total_configuration_items) * 100.0, 2
+        )
+
+    if (
+        unauthorized_version_drift_count == 0
+        and unauthorized_hotfix_count == 0
+        and failed_fca_pca_count == 0
+        and stale_audit_ci_count == 0
+    ):
+        status = "HEALTHY"
+    elif (
+        unauthorized_version_drift_count > 0
+        or unauthorized_hotfix_count > 0
+        or failed_fca_pca_count > 0
+    ):
+        status = "CRITICAL"
+    else:
+        status = "AT_RISK"
+
+    return {
+        "total_configuration_items": total_configuration_items,
+        "compliant_ci_count": compliant_ci_count,
+        "unauthorized_version_drift_count": unauthorized_version_drift_count,
+        "unauthorized_hotfix_count": unauthorized_hotfix_count,
+        "failed_fca_pca_count": failed_fca_pca_count,
+        "stale_audit_ci_count": stale_audit_ci_count,
+        "configuration_integrity_pct": configuration_integrity_pct,
+        "configuration_governance_status": status,
+        "discrepancies": discrepancies,
+    }
+
+
+ProjectCCBService.audit_configuration_baseline_drift_and_hotfix_governance = staticmethod(
+    audit_configuration_baseline_drift_and_hotfix_governance
+)
+
 

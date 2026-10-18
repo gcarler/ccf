@@ -2505,6 +2505,7 @@ __all__ = [
     "audit_wiki_cost_of_quality_prevention_vs_failure_balance",
     "audit_wiki_communication_confidentiality_and_channel_security",
     "audit_wiki_lessons_learned_actionable_opa_transfer",
+    "audit_wiki_risk_trigger_early_warning_and_fallback",
     "WikiPMIService",
 ]
 
@@ -3911,4 +3912,110 @@ def audit_wiki_lessons_learned_actionable_opa_transfer(
 WikiPMIService.audit_wiki_lessons_learned_actionable_opa_transfer = staticmethod(
     audit_wiki_lessons_learned_actionable_opa_transfer
 )
+
+
+def audit_wiki_risk_trigger_early_warning_and_fallback(
+    risk_triggers: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """PMBOK §11.7 / §11.2 — auditoría de indicadores de alerta temprana (EWI) y activación de fallback."""
+    if not isinstance(risk_triggers, Sequence) or isinstance(
+        risk_triggers, (str, bytes)
+    ):
+        return {
+            "total_monitored_risks": 0,
+            "compliant_risks_count": 0,
+            "missing_trigger_or_owner_count": 0,
+            "breached_triggers_count": 0,
+            "unactivated_breached_trigger_count": 0,
+            "failed_primary_without_fallback_count": 0,
+            "ewi_governance_status": "HEALTHY",
+            "violations": [],
+        }
+
+    total_monitored_risks = 0
+    compliant_risks_count = 0
+    missing_trigger_or_owner_count = 0
+    breached_triggers_count = 0
+    unactivated_breached_trigger_count = 0
+    failed_primary_without_fallback_count = 0
+    violations: list[dict[str, Any]] = []
+
+    for item in risk_triggers:
+        if not isinstance(item, Mapping):
+            continue
+        raw_id = item.get("risk_id")
+        if raw_id is None:
+            continue
+        risk_id = str(raw_id).strip()
+        if not risk_id:
+            continue
+
+        total_monitored_risks += 1
+
+        trigger_defined = bool(item.get("trigger_condition_defined", False))
+        owner_assigned = bool(item.get("risk_owner_assigned", False))
+        breached = bool(item.get("trigger_breached", False))
+        primary_activated = bool(item.get("primary_response_activated", False))
+        primary_effective = bool(item.get("primary_response_effective", False))
+        fallback_documented = bool(item.get("fallback_plan_documented", False))
+        fallback_activated = bool(item.get("fallback_plan_activated", False))
+
+        if breached:
+            breached_triggers_count += 1
+
+        missing_trigger_or_owner = (not trigger_defined) or (not owner_assigned)
+        unactivated_breached_trigger = breached and (not primary_activated)
+        failed_primary_without_fallback = (
+            breached
+            and primary_activated
+            and (not primary_effective)
+            and ((not fallback_documented) or (not fallback_activated))
+        )
+
+        reasons: list[str] = []
+        if missing_trigger_or_owner:
+            missing_trigger_or_owner_count += 1
+            reasons.append("missing_trigger_or_owner")
+        if unactivated_breached_trigger:
+            unactivated_breached_trigger_count += 1
+            reasons.append("unactivated_breached_trigger")
+        if failed_primary_without_fallback:
+            failed_primary_without_fallback_count += 1
+            reasons.append("failed_primary_without_fallback")
+
+        if not reasons:
+            compliant_risks_count += 1
+        else:
+            violations.append({"risk_id": risk_id, "reasons": reasons})
+
+    if (
+        missing_trigger_or_owner_count == 0
+        and unactivated_breached_trigger_count == 0
+        and failed_primary_without_fallback_count == 0
+    ):
+        status = "HEALTHY"
+    elif (
+        unactivated_breached_trigger_count > 0
+        or failed_primary_without_fallback_count > 0
+    ):
+        status = "CRITICAL"
+    else:
+        status = "AT_RISK"
+
+    return {
+        "total_monitored_risks": total_monitored_risks,
+        "compliant_risks_count": compliant_risks_count,
+        "missing_trigger_or_owner_count": missing_trigger_or_owner_count,
+        "breached_triggers_count": breached_triggers_count,
+        "unactivated_breached_trigger_count": unactivated_breached_trigger_count,
+        "failed_primary_without_fallback_count": failed_primary_without_fallback_count,
+        "ewi_governance_status": status,
+        "violations": violations,
+    }
+
+
+WikiPMIService.audit_wiki_risk_trigger_early_warning_and_fallback = staticmethod(
+    audit_wiki_risk_trigger_early_warning_and_fallback
+)
+
 
