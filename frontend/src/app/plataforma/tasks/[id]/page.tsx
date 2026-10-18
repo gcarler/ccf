@@ -22,12 +22,22 @@ import { toast } from 'sonner';
 import clsx from 'clsx';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 
+interface TaskDetailRecord {
+    id: string;
+    title: string;
+    description?: string;
+    status: string;
+    priority: string;
+    due_date: string;
+    assignee?: string;
+}
+
 export default function TaskDetailPage() {
     const params = useParams();
     const id = params?.id as string;
     const { token } = useAuth();
 
-    const [task, setTask] = useState<any>(null);
+    const [task, setTask] = useState<TaskDetailRecord | null>(null);
     const [loading, setLoading] = useState(true);
     const [isTimerRunning, setIsTimerRunning] = useState(false);
 
@@ -36,7 +46,7 @@ export default function TaskDetailPage() {
         const loadTask = async () => {
             try {
                 setLoading(true);
-                const data = await apiFetch<any>(`/projects/tasks/${id}`, { token }).catch(() => null);
+                const data = await apiFetch<TaskDetailRecord>(`/projects/tasks/${id}`, { token }).catch(() => null);
                 setTask(data || {
                     id,
                     title: 'Tarea del Sistema',
@@ -46,7 +56,7 @@ export default function TaskDetailPage() {
                     due_date: '2026-05-15',
                     assignee: 'Juan Perez'
                 });
-            } catch (err) {
+            } catch {
                 toast.error('Error al cargar la tarea');
             } finally {
                 setLoading(false);
@@ -55,7 +65,7 @@ export default function TaskDetailPage() {
         loadTask();
     }, [id, token]);
 
-    if (loading) return <div className="p-4 text-center animate-pulse font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sincronizando con el servidor...</div>;
+    if (loading || !task) return <div className="p-4 text-center animate-pulse font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sincronizando con el servidor...</div>;
 
     const sidebarSections = [
         {

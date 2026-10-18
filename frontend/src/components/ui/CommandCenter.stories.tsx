@@ -2,6 +2,13 @@ import type { Meta, StoryObj } from '@storybook/react-webpack5';
 import { CommandCenter } from './CommandCenter';
 
 
+interface CommandCenterStoryWindow extends Window {
+  useCommandCenter?: () => { commands: never[] };
+  useCreation?: () => { openModal: () => void };
+  useAuth?: () => { token: string };
+  useRouter?: () => { push: (path: string) => void };
+}
+
 const meta: Meta<typeof CommandCenter> = {
   tags: ['autodocs'],
   title: 'UI/CommandCenter',
@@ -12,16 +19,17 @@ const meta: Meta<typeof CommandCenter> = {
   decorators: [
     (Story) => {
       if (typeof window !== 'undefined') {
-        (window as any).useCommandCenter = () => ({
+        const storyWindow = window as CommandCenterStoryWindow;
+        storyWindow.useCommandCenter = () => ({
           commands: [],
         });
-        (window as any).useCreation = () => ({
+        storyWindow.useCreation = () => ({
           openModal: () => {},
         });
-        (window as any).useAuth = () => ({
+        storyWindow.useAuth = () => ({
           token: 'fake-token',
         });
-        (window as any).useRouter = () => ({
+        storyWindow.useRouter = () => ({
           push: (path: string) => console.log('Navigate:', path),
         });
       }

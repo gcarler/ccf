@@ -63,8 +63,16 @@ export function CommandCenter() {
         { id: "shortcuts", label: "Atajos de Teclado", icon: Zap, group: "Soporte y Ajustes", action: () => setShowShortcuts(true) },
     ]), [openModal, router]);
 
+    interface SearchResultItem {
+        id: string;
+        type: string;
+        title: string;
+        detail?: string;
+        href: string;
+    }
+
     const [search, setSearch] = useState("");
-    const [results, setResults] = useState<any[]>([]);
+    const [results, setResults] = useState<SearchResultItem[]>([]);
     const [isSearching, setIsSearching] = useState(false);
 
     // Búsqueda dinámica real
@@ -76,7 +84,7 @@ export function CommandCenter() {
             }
             setIsSearching(true);
             try {
-                const data = await apiFetch<any>(`/system/search?q=${encodeURIComponent(search)}`, { token });
+                const data = await apiFetch<{ items?: SearchResultItem[] }>(`/system/search?q=${encodeURIComponent(search)}`, { token });
                 setResults(data.items || []);
             } catch (err) {
                 console.error(err);
@@ -187,7 +195,7 @@ export function CommandCenter() {
     );
 }
 
-function Item({ icon: Icon, label, shortcut, description, onSelect }: { icon?: React.ComponentType<any>, label: string, shortcut?: string, description?: string, onSelect: () => void }) {
+function Item({ icon: Icon, label, shortcut, description, onSelect }: { icon?: React.ComponentType<{ className?: string }>, label: string, shortcut?: string, description?: string, onSelect: () => void }) {
     return (
         <Command.Item
             onSelect={onSelect}

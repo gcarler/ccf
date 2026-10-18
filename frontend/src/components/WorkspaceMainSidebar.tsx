@@ -15,7 +15,7 @@ import { DSTooltip } from '@/design';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 
 export interface NavItem {
-    id: string;
+    id?: string;
     label: string;
     href: string;
     icon?: React.ElementType;
@@ -386,7 +386,7 @@ export default function WorkspaceMainSidebar({
                                         {group.items.map(item => {
                                             const isActive = item.href === activeHref;
                                             return (
-                                                <NavRow key={item.id} item={item} isActive={isActive} isMini={isMini} />
+                                                <NavRow key={item.id ?? item.label} item={item} isActive={isActive} isMini={isMini} />
                                             );
                                         })}
                                     </SidebarSection>

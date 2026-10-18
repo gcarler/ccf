@@ -9,6 +9,7 @@ import {
     Table2, Columns, List, ChevronRight, Users,
     Minus
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
 import { useCreation } from '@/context/CreationContext';
@@ -47,14 +48,14 @@ const STATUS_COLORS: Record<string, string> = {
     'COMPLETADO':  'bg-[hsl(var(--success-muted))] text-[hsl(var(--success-text))]',
 };
 
-const DocAddBtn = ({ icon: Icon, label }: { icon: any; label: string }) => (
+const DocAddBtn = ({ icon: Icon, label }: { icon: LucideIcon; label: string }) => (
     <button className="flex items-center gap-2 w-full px-2 py-1.5 rounded hover:bg-[hsl(var(--surface-1))] dark:hover:bg-[hsl(var(--surface-2))] text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] transition-colors">
         <Icon size={13} className="text-[hsl(var(--text-secondary))]" />
         {label}
     </button>
 );
 
-const ReminderChip = ({ icon: Icon, label, avatar }: { icon?: any; label: string; avatar?: boolean }) => (
+const ReminderChip = ({ icon: Icon, label, avatar }: { icon?: LucideIcon; label: string; avatar?: boolean }) => (
     <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[hsl(var(--border))] dark:border-[hsl(var(--border))] text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-[hsl(var(--surface-2))] transition-colors">
         {avatar ? (
             <div className="size-3.5 rounded-full bg-[hsl(var(--surface-3))] dark:bg-[hsl(var(--surface-3))] flex items-center justify-center text-2xs font-bold">U</div>
@@ -313,9 +314,9 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
             } else {
                 onClose();
             }
-        } catch (e: any) {
+        } catch (e: unknown) {
             console.error(e);
-            toast.error('Error al crear: ' + (e.message || 'Intente de nuevo más tarde'));
+            toast.error('Error al crear: ' + (e instanceof Error && e.message ? e.message : 'Intente de nuevo más tarde'));
         }
         finally { setLoading(false); }
     };

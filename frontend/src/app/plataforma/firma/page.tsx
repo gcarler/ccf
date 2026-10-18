@@ -32,10 +32,31 @@ const SECTIONS = [
   },
 ];
 
+interface SignerRecord {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string;
+  status: string;
+  signing_order?: number;
+}
+
+interface SignRequestRecord {
+  id: string;
+  title: string;
+  description?: string | null;
+  document_url?: string;
+  expiry_date?: string | null;
+  country_code?: string;
+  legal_framework?: string;
+  status: string;
+  signers?: SignerRecord[];
+}
+
 export default function FirmaPage() {
   const { token } = useAuth();
   const router = useRouter();
-  const [requests, setRequests] = useState<any[]>([]);
+  const [requests, setRequests] = useState<SignRequestRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({
@@ -52,7 +73,7 @@ export default function FirmaPage() {
     if (!token) { setLoading(false); return; }
     setLoading(true);
     try {
-      const r = await apiFetch<any[]>("/finance-suite/sign-requests?limit=50", { token, cache: "no-store" });
+      const r = await apiFetch<SignRequestRecord[]>("/finance-suite/sign-requests?limit=50", { token, cache: "no-store" });
       if (Array.isArray(r)) setRequests(r);
     } catch (e) { console.error(e); }
     setLoading(false);
@@ -197,7 +218,7 @@ export default function FirmaPage() {
                     <a href={req.document_url} target="_blank" rel="noopener noreferrer" className="text-2xs font-bold text-[hsl(var(--primary))] hover:underline mb-3 block">Ver documento →</a>
 
                     <div className="space-y-2">
-                      {req.signers?.map((signer: any) => (
+                      {req.signers?.map((signer: SignerRecord) => (
                         <div key={signer.id} className="flex items-center justify-between py-2 border-t border-[hsl(var(--border))]">
                           <div className="flex items-center gap-2">
                             <User size={14} className="text-[hsl(var(--text-secondary))]" />

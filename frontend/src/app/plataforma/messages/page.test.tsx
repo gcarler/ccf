@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, act, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -10,6 +9,12 @@ import { useChatThread } from './_hooks/useChatThread';
 import { useUserSearch } from './_hooks/useUserSearch';
 import { apiFetch } from '@/lib/http';
 import type { ConversationRead, DirectMessageItem } from '@/types/directMessages';
+
+type AuthReturn = ReturnType<typeof useAuth>;
+type ToastReturn = ReturnType<typeof useToast>;
+type ConversationsReturn = ReturnType<typeof useConversations>;
+type UserSearchReturn = ReturnType<typeof useUserSearch>;
+type ChatThreadReturn = ReturnType<typeof useChatThread>;
 
 vi.mock('@/components/WorkspaceLayout', () => ({
     default: ({ children, customSidebar }: { children: React.ReactNode; customSidebar: React.ReactNode }) => (
@@ -158,8 +163,8 @@ const defaultUserSearchReturn = {
 };
 
 function setupDefaultMocks() {
-    vi.mocked(useAuth).mockReturnValue({ token: 'fake-token', user: { id: 'me' } } as any);
-    vi.mocked(useToast).mockReturnValue({ addToast: mockAddToast, removeToast: mockRemoveToast } as any);
+    vi.mocked(useAuth).mockReturnValue({ token: 'fake-token', user: { id: 'me' } } as unknown as AuthReturn);
+    vi.mocked(useToast).mockReturnValue({ addToast: mockAddToast, removeToast: mockRemoveToast } as unknown as ToastReturn);
 
     vi.mocked(useConversations).mockReturnValue({
         conversations: [sampleConversation],
@@ -171,10 +176,10 @@ function setupDefaultMocks() {
         updateConversationFromMessage: mockUpdateConversationFromMessage,
         getOtherParticipant: vi.fn().mockReturnValue({ username: 'ana' }),
         totalUnread: 0,
-    } as any);
+    } as unknown as ConversationsReturn);
 
-    vi.mocked(useUserSearch).mockReturnValue(defaultUserSearchReturn as any);
-    vi.mocked(useChatThread).mockReturnValue(defaultChatThreadReturn as any);
+    vi.mocked(useUserSearch).mockReturnValue(defaultUserSearchReturn as unknown as UserSearchReturn);
+    vi.mocked(useChatThread).mockReturnValue(defaultChatThreadReturn as unknown as ChatThreadReturn);
 }
 
 describe('MessagesPage', () => {
@@ -194,7 +199,7 @@ describe('MessagesPage', () => {
             updateConversationFromMessage: mockUpdateConversationFromMessage,
             getOtherParticipant: vi.fn().mockReturnValue({ username: 'ana' }),
             totalUnread: 0,
-        } as any);
+        } as unknown as ConversationsReturn);
 
         renderPage();
 
@@ -213,7 +218,7 @@ describe('MessagesPage', () => {
             updateConversationFromMessage: mockUpdateConversationFromMessage,
             getOtherParticipant: vi.fn().mockReturnValue({ username: 'ana' }),
             totalUnread: 0,
-        } as any);
+        } as unknown as ConversationsReturn);
 
         renderPage();
 
@@ -256,7 +261,7 @@ describe('MessagesPage', () => {
     });
 
     it('does not create a conversation when the user token is missing', async () => {
-        vi.mocked(useAuth).mockReturnValue({ token: null, user: { id: 'me' } } as any);
+        vi.mocked(useAuth).mockReturnValue({ token: null, user: { id: 'me' } } as unknown as AuthReturn);
 
         renderPage();
 
@@ -291,7 +296,7 @@ describe('MessagesPage', () => {
     });
 
     it('renders the error status in the thread header when the socket is in error', async () => {
-        vi.mocked(useChatThread).mockReturnValue({ ...defaultChatThreadReturn, wsStatus: 'error' } as any);
+        vi.mocked(useChatThread).mockReturnValue({ ...defaultChatThreadReturn, wsStatus: 'error' } as unknown as ChatThreadReturn);
 
         renderPage();
 
@@ -301,7 +306,7 @@ describe('MessagesPage', () => {
     });
 
     it('renders the connecting status in the thread header when the socket is connecting', async () => {
-        vi.mocked(useChatThread).mockReturnValue({ ...defaultChatThreadReturn, wsStatus: 'connecting' } as any);
+        vi.mocked(useChatThread).mockReturnValue({ ...defaultChatThreadReturn, wsStatus: 'connecting' } as unknown as ChatThreadReturn);
 
         renderPage();
 
@@ -315,7 +320,7 @@ describe('MessagesPage', () => {
 
         vi.mocked(useChatThread).mockImplementation((options) => {
             capturedOnMessage = options.onMessage;
-            return defaultChatThreadReturn as any;
+            return defaultChatThreadReturn as unknown as ChatThreadReturn;
         });
 
         renderPage();
@@ -400,7 +405,7 @@ describe('MessagesPage', () => {
 
         vi.mocked(useChatThread).mockImplementation((options) => {
             capturedOnMessage = options.onMessage;
-            return defaultChatThreadReturn as any;
+            return defaultChatThreadReturn as unknown as ChatThreadReturn;
         });
 
         renderPage();

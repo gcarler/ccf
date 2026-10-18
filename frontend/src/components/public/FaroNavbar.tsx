@@ -11,6 +11,19 @@ import { useEffect,useState } from "react";
 import { useFaroTheme } from "./FaroThemeProvider";
 import { useSiteBranding } from "@/lib/site-branding";
 
+interface NavChildItem {
+    id?: string;
+    href: string;
+    label: string;
+}
+
+interface NavMenuItem {
+    id?: string;
+    href: string;
+    label: string;
+    children?: NavChildItem[];
+}
+
 export default function FaroNavbar() {
     const { toggle, themeTokens } = useFaroTheme();
     const { logoUrl, logoName } = useSiteBranding({ logoName: SITE_NAME });
@@ -18,7 +31,7 @@ export default function FaroNavbar() {
     const pathname = usePathname();
     const [scrolled, setScrolled] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
-    const [menuItemsV2, setMenuItemsV2] = useState<Array<{ id?: string; href: string; label: string; children?: Array<{ id?: string; href: string; label: string }> }>>([]);
+    const [menuItemsV2, setMenuItemsV2] = useState<NavMenuItem[]>([]);
 
     const locationTitle = themeTokens["--site-header-location-title"] || "Nuestras Sedes";
     const themeToggleTitle = themeTokens["--site-header-theme-title"] || "Cambiar tema";
@@ -111,8 +124,8 @@ export default function FaroNavbar() {
 
                     {/* Desktop Nav */}
                     <div className="hidden lg:flex items-center gap-1.5 flex-1 justify-center">
-                        {navLinks.map(({ href, label, children }: any) => {
-                            const active = pathname === href || (href !== "/" && pathname?.startsWith(href)) || (children || []).some((child: any) => pathname === child.href || pathname?.startsWith(child.href));
+                        {navLinks.map(({ href, label, children }: NavMenuItem) => {
+                            const active = pathname === href || (href !== "/" && pathname?.startsWith(href)) || (children || []).some((child: NavChildItem) => pathname === child.href || pathname?.startsWith(child.href));
                             return (
                                 <div key={href} className="relative group">
                                 <Link
@@ -142,7 +155,7 @@ export default function FaroNavbar() {
                                             background: "var(--site-dropdown-bg)",
                                             border: "1px solid var(--site-dropdown-border)",
                                         }}>
-                                        {(children || []).map((child: any) => (
+                                        {(children || []).map((child: NavChildItem) => (
                                             <Link
                                                 key={`${href}-${child.href}`}
                                                 href={child.href}
@@ -207,7 +220,7 @@ export default function FaroNavbar() {
                     }}
                 >
                     <div className="flex flex-col items-center justify-center flex-1 gap-3 p-4">
-                        {navLinks.map(({ href, label, children }: any) => (
+                        {navLinks.map(({ href, label, children }: NavMenuItem) => (
                             <div key={href} className="text-center space-y-2">
                                 <Link
                                     href={href}
@@ -219,7 +232,7 @@ export default function FaroNavbar() {
                                 </Link>
                                 {(children || []).length > 0 && (
                                     <div className="space-y-2">
-                                        {(children || []).map((child: any) => (
+                                        {(children || []).map((child: NavChildItem) => (
                                             <Link
                                                 key={`${href}-${child.href}`}
                                                 href={child.href}

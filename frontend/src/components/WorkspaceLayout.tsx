@@ -28,9 +28,36 @@ import React,{ useCallback,useEffect,useMemo,useRef,useState } from 'react';
 import { MODULE_CONFIGS } from '@/components/workspace/moduleConfigs';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+type WorkspaceToolbarForwardedProps = Partial<React.ComponentProps<typeof WorkspaceToolbar>>;
+
+export interface WorkspaceLayoutProps extends WorkspaceToolbarForwardedProps {
+    children: React.ReactNode;
+    sidebarTitle?: string;
+    sidebarSections?: NavSection[];
+    allowedRoles?: string[];
+    allowedPermissions?: string[];
+    hideWorkspaceHeader?: boolean;
+    depth?: number;
+    onBack?: () => void;
+    customSidebar?: React.ReactNode;
+    [key: string]: unknown;
+}
+
+interface WorkspaceLayoutInnerProps extends WorkspaceToolbarForwardedProps {
+    children: React.ReactNode;
+    manualTitle?: string;
+    manualSections?: NavSection[];
+    allowedRoles?: string[];
+    allowedPermissions?: string[];
+    hideWorkspaceHeader?: boolean;
+    depth?: number;
+    onBack?: () => void;
+    customSidebar?: React.ReactNode;
+}
+
+// ─────────────────────────────────────────────────────────────────
 // PUBLIC API: WorkspaceLayout wraps children with the layer provider
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────
 export default function WorkspaceLayout({
     children,
     sidebarTitle: manualTitle,
@@ -42,7 +69,7 @@ export default function WorkspaceLayout({
     onBack,
     customSidebar,
     ...toolbarProps
-}: any) {
+}: WorkspaceLayoutProps) {
     return (
         <WorkspaceLayoutInner
             manualTitle={manualTitle}
@@ -60,16 +87,16 @@ export default function WorkspaceLayout({
     );
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// INNER LAYOUT â€” has access to SidebarLayerContext
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────
+// INNER LAYOUT — has access to SidebarLayerContext
+// ─────────────────────────────────────────────────────────────────
 function WorkspaceLayoutInner({
     children, manualTitle, manualSections,
-    allowedRoles, allowedPermissions, hideWorkspaceHeader, depth, onBack, customSidebar,
+    allowedRoles, allowedPermissions, hideWorkspaceHeader = false, depth = 1, onBack, customSidebar,
     // Toolbar props
     breadcrumbs, viewType, setViewType, availableViews,
     rightActions, leftActions, onSearch, onFilter, onColumns, onGroup, onMore, onAdd, onAddOption, onAppearance
-}: any) {
+}: WorkspaceLayoutInnerProps) {
     const { user, hasModuleAccess, hasPermission, logout } = useAuth();
     const pathname = usePathname();
     const moduleKey = pathname?.split('/')[2] || 'default';

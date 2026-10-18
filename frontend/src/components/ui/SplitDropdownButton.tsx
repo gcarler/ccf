@@ -2,12 +2,13 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Plus, FileText, Bell, LayoutDashboard, Layout } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface DropdownOption {
     id: string;
     label: string;
-    icon?: any;
+    icon?: LucideIcon;
     onClick?: () => void;
 }
 
@@ -15,7 +16,7 @@ interface SplitDropdownButtonProps {
     onMainClick: () => void;
     onOptionClick?: (id: string) => void;
     mainLabel?: string;
-    icon?: any;
+    icon?: LucideIcon;
     options?: DropdownOption[];
 }
 
@@ -108,7 +109,14 @@ export default function SplitDropdownButton({ onMainClick, onOptionClick, mainLa
     );
 }
 
-function DropdownItem({ icon: Icon, label, selected, onClick }: any) {
+interface DropdownItemProps {
+    icon?: LucideIcon;
+    label: string;
+    selected: boolean;
+    onClick: () => void;
+}
+
+function DropdownItem({ icon: Icon, label, selected, onClick }: DropdownItemProps) {
     return (
         <button
             onClick={onClick}

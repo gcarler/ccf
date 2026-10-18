@@ -173,25 +173,31 @@ export default function KnowledgeGraphPage() {
               ) : (
                 <ForceGraph2D
                   graphData={graphData}
-                  nodeLabel={(node: any) => `${node.label} (${node.type})`}
+                  nodeLabel={(node: object) => {
+                    const n = node as GraphNode;
+                    return `${n.label} (${n.type})`;
+                  }}
                   linkWidth={0.6}
                   linkColor={() => "rgba(148,163,184,0.45)"}
                   cooldownTicks={100}
-                  onNodeClick={(node: any) => setSelectedNode(node as GraphNode)}
-                  nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
-                    const label = node.label as string;
-                    const color = palette[node.type] || "hsl(var(--text-secondary))";
+                  onNodeClick={(node: object) => setSelectedNode(node as GraphNode)}
+                  nodeCanvasObject={(node: object, ctx: CanvasRenderingContext2D, globalScale: number) => {
+                    const n = node as GraphNode & { x?: number; y?: number };
+                    const label = n.label;
+                    const color = palette[n.type] || "hsl(var(--text-secondary))";
                     const fontSize = Math.max(10, 14 / globalScale);
+                    const x = n.x ?? 0;
+                    const y = n.y ?? 0;
 
                     ctx.beginPath();
                     ctx.fillStyle = color;
-                    ctx.arc(node.x, node.y, 4.8, 0, 2 * Math.PI, false);
+                    ctx.arc(x, y, 4.8, 0, 2 * Math.PI, false);
                     ctx.fill();
 
                     if (globalScale < 1.8) return;
                     ctx.font = `${fontSize}px sans-serif`;
                     ctx.fillStyle = "hsl(var(--bg-primary))";
-                    ctx.fillText(label, node.x + 7, node.y + 3);
+                    ctx.fillText(label, x + 7, y + 3);
                   }}
                 />
               )}

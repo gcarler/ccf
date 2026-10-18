@@ -9,17 +9,32 @@ import {
     ChevronDown, ChevronRight, Layout, Folder, ChevronLeft,
     BrainCircuit
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { useSiteBranding } from '@/lib/site-branding';
 import { PROJECTS_LIST_ROUTE } from '@/app/plataforma/projects/projectsLinks';
+
+interface SidebarItem {
+    id: string;
+    label: string;
+    href?: string;
+    icon?: LucideIcon;
+}
+
+interface SidebarSection {
+    id?: string;
+    label?: string;
+    title?: string;
+    items?: SidebarItem[];
+}
 
 export default function UnifiedSidebar({
     title,
     sections = []
 }: {
     title?: string,
-    sections?: any[]
+    sections?: SidebarSection[]
 }) {
     const pathname = usePathname();
     const [isMini, setIsMini] = useState(false);
@@ -65,8 +80,8 @@ export default function UnifiedSidebar({
         { id: 'settings', label: 'Ajustes', href: '/plataforma/settings', icon: Settings },
     ];
 
-    const renderItem = (item: any, depth = 0, hasChildren = false, isExpanded = false, onToggle?: (e: React.MouseEvent) => void) => {
-        const isActive = (pathname || '') === item.href || (item.href !== '/' && (pathname || '').startsWith(item.href));
+    const renderItem = (item: SidebarItem, depth = 0, hasChildren = false, isExpanded = false, onToggle?: (e: React.MouseEvent) => void) => {
+        const isActive = (pathname || '') === item.href || (Boolean(item.href) && item.href !== '/' && (pathname || '').startsWith(item.href!));
 
         return (
             <div key={item.id} className="relative w-full">
@@ -208,7 +223,7 @@ export default function UnifiedSidebar({
                                         exit={{ height: 0, opacity: 0 }}
                                         className="overflow-hidden relative pl-4 ml-6 border-l border-[hsl(var(--border))] dark:border-white/10 mt-1 space-y-0.5"
                                     >
-                                        {sections.flatMap((section: any) => section.items || []).map((item: any) => (
+                                        {sections.flatMap((section: SidebarSection) => section.items || []).map((item: SidebarItem) => (
                                             <Link key={item.id} href={item.href || '/'} prefetch={false} className="flex items-center px-2 py-1.5 text-sm text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white rounded-md transition-colors w-full group">
                                                 <span className="truncate">{item.label}</span>
                                             </Link>

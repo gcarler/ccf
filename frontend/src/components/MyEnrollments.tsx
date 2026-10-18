@@ -46,13 +46,19 @@ import CertificateDrawer from "./CertificateDrawer";
 import AssessmentDrawer from "./academy/AssessmentDrawer";
 import EmptyState from "@/components/ui/EmptyState";
 
+interface LessonResource {
+  id: string;
+  title: string;
+  file_url?: string | null;
+}
+
 interface Lesson {
   id: string;
   title: string;
   content: string;
   order_index: number;
   duration_minutes: number;
-  resources?: any[];
+  resources?: LessonResource[];
 }
 
 export default function MyEnrollments({ userId, token, initialEnrollments }: MyEnrollmentsProps) {
@@ -170,7 +176,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
       if (normalized.length > 0) {
         setSelectedLesson(normalized[0]);
       }
-    } catch (err) {
+    } catch {
       addToast("Error al cargar lecciones", "error");
     } finally {
       setLoadingLessons(false);
@@ -257,7 +263,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
                         <h4 className="text-sm font-bold text-white flex items-center gap-2"><Paperclip size={18} className="text-primary" /> Material de Estudio</h4>
                         <div className="space-y-2">
                             {selectedLesson.resources && selectedLesson.resources.length > 0 ? (
-                              selectedLesson.resources.map((res: any) => (
+                              selectedLesson.resources.map((res: LessonResource) => (
                                 <a key={res.id} href={res.file_url?.startsWith('http') ? res.file_url : apiUrl(res.file_url || '')} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-4 bg-[hsl(var(--bg-muted))] border border-white/5 rounded-lg hover:border-primary/50 transition-all group">
                                 <div className="flex items-center gap-3">
                                   <div className="p-2 bg-primary/10 rounded-lg text-primary"><File size={16} /></div>
