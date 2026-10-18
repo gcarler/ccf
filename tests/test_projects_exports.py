@@ -3714,3 +3714,145 @@ def test_audit_executive_report_lessons_learned_institutionalization_empty_or_no
     )
     for payload in malformed_seqs:
         assert audit_executive_report_lessons_learned_institutionalization(payload) == empty_result
+
+
+def test_audit_executive_report_risk_trigger_activation_governance_compliant():
+    """Riesgos con condición definida, contingencia ejecutada al activarse y reserva autorizada pasan is_trigger_governance_compliant=True."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_risk_trigger_activation_governance,
+    )
+
+    report = {
+        "risk_triggers": [
+            {
+                "risk_id": "RSK-10",
+                "trigger_condition": "Latencia p99 > 500ms durante 15m",
+                "trigger_activated": True,
+                "contingency_plan_executed": True,
+                "reserve_drawdown_authorized": True,
+                "reserve_drawn_amount": 4500.0,
+            },
+            {
+                "risk_id": "RSK-20",
+                "trigger_condition": "Retraso de aduana > 5 días",
+                "trigger_activated": False,
+                "contingency_plan_executed": False,
+                "reserve_drawdown_authorized": False,
+                "reserve_drawn_amount": 0.0,
+            },
+        ]
+    }
+    res = audit_executive_report_risk_trigger_activation_governance(report)
+    assert res == {
+        "total_monitored_risks": 2,
+        "activated_triggers_count": 1,
+        "missing_trigger_condition_risk_ids": [],
+        "unexecuted_contingency_risk_ids": [],
+        "unauthorized_drawdown_risk_ids": [],
+        "is_trigger_governance_compliant": True,
+    }
+    assert (
+        ProjectExportService.audit_executive_report_risk_trigger_activation_governance(
+            report
+        )
+        == res
+    )
+
+
+def test_audit_executive_report_risk_trigger_activation_governance_missing_cond_and_unexecuted():
+    """Detecta riesgos sin trigger_condition y triggers activados sin plan de contingencia ejecutado."""
+    from backend.services.project_export_service import (
+        audit_executive_report_risk_trigger_activation_governance,
+    )
+
+    res = audit_executive_report_risk_trigger_activation_governance(
+        {
+            "governance": {
+                "risk_triggers": [
+                    {
+                        "risk_id": "RSK-NO-COND",
+                        "trigger_condition": "   ",
+                        "trigger_activated": False,
+                    },
+                    {
+                        "risk_id": "RSK-NO-EXEC",
+                        "trigger_condition": "SPI < 0.85",
+                        "trigger_activated": True,
+                        "contingency_plan_executed": False,
+                    },
+                ]
+            }
+        }
+    )
+    assert res == {
+        "total_monitored_risks": 2,
+        "activated_triggers_count": 1,
+        "missing_trigger_condition_risk_ids": ["RSK-NO-COND"],
+        "unexecuted_contingency_risk_ids": ["RSK-NO-EXEC"],
+        "unauthorized_drawdown_risk_ids": [],
+        "is_trigger_governance_compliant": False,
+    }
+
+
+def test_audit_executive_report_risk_trigger_activation_governance_unauthorized_drawdown():
+    """Detecta consumo de reserva sin trigger activado o sin autorización formal."""
+    from backend.services.project_export_service import (
+        audit_executive_report_risk_trigger_activation_governance,
+    )
+
+    res = audit_executive_report_risk_trigger_activation_governance(
+        {
+            "risk_triggers": [
+                {
+                    "risk_id": "RSK-DRAW-INACTIVE",
+                    "trigger_condition": "Falla de enlace primario",
+                    "trigger_activated": False,
+                    "reserve_drawdown_authorized": True,
+                    "reserve_drawn_amount": 1200.0,
+                },
+                {
+                    "risk_id": "RSK-DRAW-UNAUTH",
+                    "trigger_condition": "Incremento de tarifa > 12%",
+                    "trigger_activated": True,
+                    "contingency_plan_executed": True,
+                    "reserve_drawdown_authorized": False,
+                    "reserve_drawn_amount": 3000.0,
+                },
+            ]
+        }
+    )
+    assert res == {
+        "total_monitored_risks": 2,
+        "activated_triggers_count": 1,
+        "missing_trigger_condition_risk_ids": [],
+        "unexecuted_contingency_risk_ids": [],
+        "unauthorized_drawdown_risk_ids": [
+            "RSK-DRAW-INACTIVE",
+            "RSK-DRAW-UNAUTH",
+        ],
+        "is_trigger_governance_compliant": False,
+    }
+
+
+def test_audit_executive_report_risk_trigger_activation_governance_empty_or_invalid():
+    """Reporte vacío, None o secuencia malformada devuelve total_monitored_risks=0 e is_trigger_governance_compliant=False."""
+    from backend.services.project_export_service import (
+        audit_executive_report_risk_trigger_activation_governance,
+    )
+
+    for payload in (
+        None,
+        {},
+        {"risk_triggers": "not-seq"},
+        {"risk_triggers": [{"risk_id": "  "}]},
+    ):
+        assert audit_executive_report_risk_trigger_activation_governance(payload) == {  # type: ignore[arg-type]
+            "total_monitored_risks": 0,
+            "activated_triggers_count": 0,
+            "missing_trigger_condition_risk_ids": [],
+            "unexecuted_contingency_risk_ids": [],
+            "unauthorized_drawdown_risk_ids": [],
+            "is_trigger_governance_compliant": False,
+        }
+

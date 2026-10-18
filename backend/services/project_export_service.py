@@ -2964,6 +2964,7 @@ __all__ = [
     "audit_executive_report_stakeholder_engagement_drift",
     "audit_executive_report_contract_type_risk_allocation",
     "audit_executive_report_lessons_learned_institutionalization",
+    "audit_executive_report_risk_trigger_activation_governance",
     "ProjectExportService",
 ]
 
@@ -3053,3 +3054,86 @@ def audit_executive_report_lessons_learned_institutionalization(
 ProjectExportService.audit_executive_report_lessons_learned_institutionalization = staticmethod(
     audit_executive_report_lessons_learned_institutionalization
 )
+
+
+def audit_executive_report_risk_trigger_activation_governance(
+    report: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Audita la activación de disparadores de riesgo (risk triggers), ejecución de planes de contingencia y autorización de uso de reservas en el reporte ejecutivo según PMI PMBOK §11.7 y §10.2."""
+    triggers: Sequence[Any] = []
+    if isinstance(report, Mapping):
+        raw_root = report.get("risk_triggers")
+        if isinstance(raw_root, Sequence) and not isinstance(
+            raw_root, (str, bytes, Mapping)
+        ):
+            triggers = raw_root
+        elif isinstance(report.get("governance"), Mapping):
+            raw_gov = report["governance"].get("risk_triggers")
+            if isinstance(raw_gov, Sequence) and not isinstance(
+                raw_gov, (str, bytes, Mapping)
+            ):
+                triggers = raw_gov
+
+    total_monitored_risks = 0
+    activated_triggers_count = 0
+    missing_trigger_condition_risk_ids: list[str] = []
+    unexecuted_contingency_risk_ids: list[str] = []
+    unauthorized_drawdown_risk_ids: list[str] = []
+
+    for item in triggers:
+        if not isinstance(item, Mapping):
+            continue
+        risk_id = str(item.get("risk_id") or "").strip()
+        if not risk_id:
+            continue
+
+        total_monitored_risks += 1
+        trigger_condition = str(item.get("trigger_condition") or "").strip()
+        trigger_activated = bool(item.get("trigger_activated", False))
+        contingency_plan_executed = bool(
+            item.get("contingency_plan_executed", False)
+        )
+        reserve_drawdown_authorized = bool(
+            item.get("reserve_drawdown_authorized", False)
+        )
+        try:
+            reserve_drawn_amount = max(
+                0.0, float(item.get("reserve_drawn_amount", 0.0) or 0.0)
+            )
+        except (TypeError, ValueError):
+            reserve_drawn_amount = 0.0
+
+        if not trigger_condition:
+            missing_trigger_condition_risk_ids.append(risk_id)
+
+        if trigger_activated:
+            activated_triggers_count += 1
+            if not contingency_plan_executed:
+                unexecuted_contingency_risk_ids.append(risk_id)
+
+        if reserve_drawn_amount > 0.0 and (
+            not trigger_activated or not reserve_drawdown_authorized
+        ):
+            unauthorized_drawdown_risk_ids.append(risk_id)
+
+    is_trigger_governance_compliant = bool(
+        total_monitored_risks > 0
+        and not missing_trigger_condition_risk_ids
+        and not unexecuted_contingency_risk_ids
+        and not unauthorized_drawdown_risk_ids
+    )
+
+    return {
+        "total_monitored_risks": total_monitored_risks,
+        "activated_triggers_count": activated_triggers_count,
+        "missing_trigger_condition_risk_ids": missing_trigger_condition_risk_ids,
+        "unexecuted_contingency_risk_ids": unexecuted_contingency_risk_ids,
+        "unauthorized_drawdown_risk_ids": unauthorized_drawdown_risk_ids,
+        "is_trigger_governance_compliant": is_trigger_governance_compliant,
+    }
+
+
+ProjectExportService.audit_executive_report_risk_trigger_activation_governance = staticmethod(
+    audit_executive_report_risk_trigger_activation_governance
+)
+

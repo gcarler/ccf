@@ -3144,3 +3144,141 @@ def test_audit_wiki_raci_matrix_governance_deliverables_empty_or_invalid():
             "is_raci_compliant": False,
         }
 
+
+
+def test_audit_wiki_raid_log_traceability_governance_compliant():
+    """Entradas RAID trazables y en regla -> 100% y compliant (incl. staticmethod)."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_raid_log_traceability_governance,
+        WikiPMIService,
+    )
+
+    res = audit_wiki_raid_log_traceability_governance(
+        [
+            {
+                "entry_id": "R-1",
+                "category": "Risk",
+                "owner_id": "u-1",
+                "linked_wbs_code": "1.2.3",
+                "resolution_plan": "mitigación contratista",
+                "is_overdue": False,
+                "status": "open",
+            },
+            {
+                "entry_id": "D-1",
+                "category": "DEPENDENCY",
+                "owner_id": "u-2",
+                "linked_wbs_code": "2.1",
+                "resolution_plan": "coordinar proveedor",
+                "status": "Closed",
+            },
+        ]
+    )
+    assert res["total_entries"] == 2
+    assert res["invalid_category_entry_ids"] == []
+    assert res["untraceable_entry_ids"] == []
+    assert res["at_risk_open_entry_ids"] == []
+    assert res["traceability_rate_pct"] == 100.0
+    assert res["is_raid_governance_compliant"] is True
+
+    static_res = WikiPMIService.audit_wiki_raid_log_traceability_governance(
+        [
+            {
+                "entry_id": "R-1",
+                "category": "risk",
+                "owner_id": "u-1",
+                "linked_wbs_code": "1.2.3",
+                "resolution_plan": "mitigar",
+            },
+        ]
+    )
+    assert static_res["is_raid_governance_compliant"] is True
+
+
+def test_audit_wiki_raid_log_traceability_governance_invalid_category_and_untraceable():
+    """> Categorías inválidas y entradas sin owner o sin WBS -> listas separadas."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_raid_log_traceability_governance,
+    )
+
+    res = audit_wiki_raid_log_traceability_governance(
+        [
+            {"entry_id": "R-BAD", "category": "milestone", "owner_id": "u-1", "linked_wbs_code": "1.1"},
+            {"entry_id": "A-NO-OWNER", "category": "assumption", "linked_wbs_code": "1.2"},
+            {"entry_id": "I-NO-WBS", "category": "issue", "owner_id": "u-3", "resolution_plan": "corregir"},
+            {"entry_id": "R-OK", "category": "risk", "owner_id": "u-4", "linked_wbs_code": "3.4"},
+        ]
+    )
+    assert res["total_entries"] == 4
+    assert res["invalid_category_entry_ids"] == ["R-BAD"]
+    assert res["untraceable_entry_ids"] == ["A-NO-OWNER", "I-NO-WBS"]
+    # I-NO-WBS tiene plan ("corregir"); las otras 3 abiertas sin plan -> at_risk.
+    assert res["at_risk_open_entry_ids"] == ["R-BAD", "A-NO-OWNER", "R-OK"]
+    assert res["traceability_rate_pct"] == 50.0
+    assert res["is_raid_governance_compliant"] is False
+
+
+def test_audit_wiki_raid_log_traceability_governance_overdue_open_vs_closed():
+    """> Abiertas vencidas o sin plan -> at_risk; cerradas/resueltas/retiradas exentas."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_raid_log_traceability_governance,
+    )
+
+    res = audit_wiki_raid_log_traceability_governance(
+        [
+            {
+                "entry_id": "R-OVERDUE",
+                "category": "risk",
+                "owner_id": "u-1",
+                "linked_wbs_code": "1.1",
+                "resolution_plan": "plan",
+                "is_overdue": True,
+            },
+            {
+                "entry_id": "I-NO-PLAN",
+                "category": "issue",
+                "owner_id": "u-2",
+                "linked_wbs_code": "1.2",
+                "is_overdue": False,
+            },
+            {
+                "entry_id": "A-RETIRED-NO-PLAN",
+                "category": "assumption",
+                "owner_id": "u-3",
+                "linked_wbs_code": "1.3",
+                "status": "retired",
+            },
+            {
+                "entry_id": "D-OVERDUE-CLOSED",
+                "category": "dependency",
+                "owner_id": "u-4",
+                "linked_wbs_code": "1.4",
+                "is_overdue": True,
+                "status": "resolved",
+            },
+        ]
+    )
+    assert res["total_entries"] == 4
+    assert res["at_risk_open_entry_ids"] == ["R-OVERDUE", "I-NO-PLAN"]
+    assert res["untraceable_entry_ids"] == []
+    assert res["invalid_category_entry_ids"] == []
+    assert res["is_raid_governance_compliant"] is False
+
+
+def test_audit_wiki_raid_log_traceability_governance_empty_or_none():
+    """None, no-secuencia, str, Mapping o entradas malformadas -> 0 entradas."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_raid_log_traceability_governance,
+    )
+
+    empty_result = {
+        "total_entries": 0,
+        "invalid_category_entry_ids": [],
+        "untraceable_entry_ids": [],
+        "at_risk_open_entry_ids": [],
+        "traceability_rate_pct": 0.0,
+        "is_raid_governance_compliant": False,
+    }
+
+    for payload in (None, "raid-string", {"entry_id": "R1"}, 42, [], ["no-dict", {"category": "risk"}]):
+        assert audit_wiki_raid_log_traceability_governance(payload) == empty_result  # type: ignore[arg-type]

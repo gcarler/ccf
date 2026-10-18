@@ -2491,6 +2491,7 @@ __all__ = [
     "audit_wiki_adr_governance_hygiene",
     "audit_wiki_postmortem_root_cause_governance",
     "audit_wiki_benefits_realization_governance",
+    "audit_wiki_raid_log_traceability_governance",
     "WikiPMIService",
 ]
 
@@ -2643,4 +2644,78 @@ def audit_wiki_raci_matrix_governance(
         "excessive_consulted_deliverable_ids": excessive_consulted_deliverable_ids,
         "is_raci_compliant": is_raci_compliant,
     }
+
+
+def audit_wiki_raid_log_traceability_governance(
+    raid_entries: Sequence[Mapping[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """PMBOK §4.4 / §11.2 — trazabilidad WBS y gobernanza de acciones del RAID log.
+
+    - Categoría fuera de {'risk','assumption','issue','dependency'} ->
+      ``invalid_category_entry_ids``.
+    - Sin ``owner_id`` o sin ``linked_wbs_code`` -> ``untraceable_entry_ids``.
+    - Entradas abiertas (no closed/resolved/retired) vencidas o sin plan de
+      resolución -> ``at_risk_open_entry_ids``.
+    """
+    if not isinstance(raid_entries, (list, tuple)):
+        raid_entries = []
+
+    total_entries = 0
+    invalid_category_entry_ids: list[str] = []
+    untraceable_entry_ids: list[str] = []
+    at_risk_open_entry_ids: list[str] = []
+
+    for item in raid_entries:
+        if not isinstance(item, Mapping):
+            continue
+        entry_id = str(item.get("entry_id") or "").strip()
+        if not entry_id:
+            continue
+        total_entries += 1
+
+        category = str(item.get("category") or "").strip().lower()
+        owner_id = str(item.get("owner_id") or "").strip()
+        linked_wbs_code = str(item.get("linked_wbs_code") or "").strip()
+        resolution_plan = str(item.get("resolution_plan") or "").strip()
+        is_overdue = bool(item.get("is_overdue", False))
+        status = str(item.get("status") or "").strip().lower()
+
+        if category not in {"risk", "assumption", "issue", "dependency"}:
+            invalid_category_entry_ids.append(entry_id)
+
+        if not owner_id or not linked_wbs_code:
+            untraceable_entry_ids.append(entry_id)
+
+        if (
+            status not in {"closed", "resolved", "retired"}
+            and (is_overdue or not resolution_plan)
+        ):
+            at_risk_open_entry_ids.append(entry_id)
+
+    traceable_count = total_entries - len(untraceable_entry_ids)
+    traceability_rate_pct = (
+        round((traceable_count / total_entries) * 100.0, 2)
+        if total_entries > 0
+        else 0.0
+    )
+    is_raid_governance_compliant = bool(
+        total_entries > 0
+        and not invalid_category_entry_ids
+        and not untraceable_entry_ids
+        and not at_risk_open_entry_ids
+    )
+
+    return {
+        "total_entries": total_entries,
+        "invalid_category_entry_ids": invalid_category_entry_ids,
+        "untraceable_entry_ids": untraceable_entry_ids,
+        "at_risk_open_entry_ids": at_risk_open_entry_ids,
+        "traceability_rate_pct": traceability_rate_pct,
+        "is_raid_governance_compliant": is_raid_governance_compliant,
+    }
+
+
+WikiPMIService.audit_wiki_raid_log_traceability_governance = staticmethod(
+    audit_wiki_raid_log_traceability_governance
+)
 

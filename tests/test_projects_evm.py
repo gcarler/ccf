@@ -3351,3 +3351,114 @@ def test_evaluate_evm_earned_schedule_tspi_feasibility_invalid_inputs():
             "is_recovery_feasible": False,
         }
 
+
+def test_evaluate_evm_vac_rebaseline_threshold_within_tolerance():
+    """VAC dentro del umbral y TCPI <= 1.10 retorna within_tolerance y requires_ccb_rebaseline=False."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_vac_rebaseline_threshold,
+    )
+
+    metrics = {
+        "bac": 100000.0,
+        "ev": 50000.0,
+        "ac": 52000.0,
+        "eac": 104000.0,
+        "tolerance_threshold_pct": 10.0,
+    }
+    res = evaluate_evm_vac_rebaseline_threshold(metrics)
+    assert res == {
+        "bac": 100000.0,
+        "eac": 104000.0,
+        "vac": -4000.0,
+        "vac_pct": -4.0,
+        "tcpi_bac": 1.0417,
+        "rebaseline_status": "within_tolerance",
+        "requires_ccb_rebaseline": False,
+    }
+    assert ProjectEVMService.evaluate_evm_vac_rebaseline_threshold(metrics) == res
+
+
+def test_evaluate_evm_vac_rebaseline_threshold_watch_threshold():
+    """Overrun <= tolerancia pero 1.10 < TCPI <= 1.20 retorna watch_threshold."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_vac_rebaseline_threshold,
+    )
+
+    res = evaluate_evm_vac_rebaseline_threshold(
+        {
+            "bac": 1000.0,
+            "ev": 500.0,
+            "ac": 560.0,
+            "eac": 1080.0,
+            "tolerance_threshold_pct": 10.0,
+        }
+    )
+    assert res == {
+        "bac": 1000.0,
+        "eac": 1080.0,
+        "vac": -80.0,
+        "vac_pct": -8.0,
+        "tcpi_bac": 1.1364,
+        "rebaseline_status": "watch_threshold",
+        "requires_ccb_rebaseline": False,
+    }
+
+
+def test_evaluate_evm_vac_rebaseline_threshold_ccb_rebaseline_required():
+    """Sobrecosto > tolerancia o TCPI > 1.20 dispara ccb_rebaseline_required y requires_ccb_rebaseline=True."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_vac_rebaseline_threshold,
+    )
+
+    res_overrun = evaluate_evm_vac_rebaseline_threshold(
+        {
+            "bac": 1000.0,
+            "ev": 400.0,
+            "ac": 450.0,
+            "eac": 1150.0,
+            "tolerance_threshold_pct": 10.0,
+        }
+    )
+    assert res_overrun["vac"] == -150.0
+    assert res_overrun["vac_pct"] == -15.0
+    assert res_overrun["rebaseline_status"] == "ccb_rebaseline_required"
+    assert res_overrun["requires_ccb_rebaseline"] is True
+
+    res_tcpi = evaluate_evm_vac_rebaseline_threshold(
+        {
+            "bac": 1000.0,
+            "ev": 400.0,
+            "ac": 550.0,
+            "eac": 1050.0,
+            "tolerance_threshold_pct": 10.0,
+        }
+    )
+    assert res_tcpi["tcpi_bac"] == 1.3333
+    assert res_tcpi["rebaseline_status"] == "ccb_rebaseline_required"
+    assert res_tcpi["requires_ccb_rebaseline"] is True
+
+
+def test_evaluate_evm_vac_rebaseline_threshold_invalid_inputs():
+    """Entradas no-Mapping o con BAC/EAC <= 0 devuelven rebaseline_status=invalid_inputs."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_vac_rebaseline_threshold,
+    )
+
+    for bad in (
+        None,
+        {},
+        {"bac": 0.0, "ev": 10.0, "ac": 10.0, "eac": 100.0},
+        {"bac": 100.0, "ev": 10.0, "ac": 10.0, "eac": 0.0},
+    ):
+        assert evaluate_evm_vac_rebaseline_threshold(bad) == {  # type: ignore[arg-type]
+            "bac": 0.0,
+            "eac": 0.0,
+            "vac": 0.0,
+            "vac_pct": 0.0,
+            "tcpi_bac": 0.0,
+            "rebaseline_status": "invalid_inputs",
+            "requires_ccb_rebaseline": False,
+        }
+
+

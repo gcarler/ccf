@@ -5385,6 +5385,70 @@ def evaluate_evm_earned_schedule_tspi_feasibility(
     }
 
 
+def evaluate_evm_vac_rebaseline_threshold(
+    metrics: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Evalúa la Variación a la Conclusión (VAC = BAC - EAC), el porcentaje de sobrecosto proyectado y el umbral de re-baseline ante el CCB según PMI PMBOK §7.4."""
+    invalid_result: dict[str, Any] = {
+        "bac": 0.0,
+        "eac": 0.0,
+        "vac": 0.0,
+        "vac_pct": 0.0,
+        "tcpi_bac": 0.0,
+        "rebaseline_status": "invalid_inputs",
+        "requires_ccb_rebaseline": False,
+    }
+    if not isinstance(metrics, Mapping):
+        return invalid_result
+
+    try:
+        bac = float(metrics.get("bac", 0.0) or 0.0)
+        ev = float(metrics.get("ev", 0.0) or 0.0)
+        ac = float(metrics.get("ac", 0.0) or 0.0)
+        eac = float(metrics.get("eac", 0.0) or 0.0)
+        raw_tol = metrics.get("tolerance_threshold_pct", 10.0)
+        tolerance_threshold_pct = max(
+            0.0, float(10.0 if raw_tol is None else raw_tol)
+        )
+    except (TypeError, ValueError):
+        return invalid_result
+
+    if bac <= 0.0 or ev < 0.0 or ac < 0.0 or eac <= 0.0:
+        return invalid_result
+
+    vac = round(bac - eac, 2)
+    vac_pct = round((vac / bac) * 100.0, 2)
+    remaining_work = max(0.0, bac - ev)
+    remaining_funds_bac = bac - ac
+
+    if remaining_funds_bac > 0.0:
+        tcpi_bac = round(remaining_work / remaining_funds_bac, 4)
+    else:
+        tcpi_bac = 0.0 if remaining_work == 0.0 else 999.0
+
+    overrun_pct = max(0.0, -vac_pct)
+    if overrun_pct > tolerance_threshold_pct or tcpi_bac > 1.20:
+        rebaseline_status = "ccb_rebaseline_required"
+    elif overrun_pct <= tolerance_threshold_pct and tcpi_bac > 1.10:
+        rebaseline_status = "watch_threshold"
+    else:
+        rebaseline_status = "within_tolerance"
+
+    requires_ccb_rebaseline = bool(
+        rebaseline_status == "ccb_rebaseline_required"
+    )
+
+    return {
+        "bac": round(bac, 2),
+        "eac": round(eac, 2),
+        "vac": vac,
+        "vac_pct": vac_pct,
+        "tcpi_bac": tcpi_bac,
+        "rebaseline_status": rebaseline_status,
+        "requires_ccb_rebaseline": requires_ccb_rebaseline,
+    }
+
+
 ProjectEVMService.audit_eac_forecast_optimism_bias = staticmethod(
     audit_eac_forecast_optimism_bias
 )
@@ -5399,6 +5463,9 @@ ProjectEVMService.evaluate_evm_joint_cost_schedule_index = staticmethod(
 )
 ProjectEVMService.evaluate_evm_earned_schedule_tspi_feasibility = staticmethod(
     evaluate_evm_earned_schedule_tspi_feasibility
+)
+ProjectEVMService.evaluate_evm_vac_rebaseline_threshold = staticmethod(
+    evaluate_evm_vac_rebaseline_threshold
 )
 
 
@@ -5416,6 +5483,8 @@ __all__ = [
     "evaluate_evm_funding_runway_exhaustion",
     "evaluate_evm_joint_cost_schedule_index",
     "evaluate_evm_earned_schedule_tspi_feasibility",
+    "evaluate_evm_vac_rebaseline_threshold",
     "ProjectEVMService",
 ]
+
 
