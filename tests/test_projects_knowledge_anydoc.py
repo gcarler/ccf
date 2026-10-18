@@ -1199,3 +1199,95 @@ def test_extract_markdown_admonition_callouts_none_and_fenced_ignored():
         }
 
 
+def test_extract_markdown_glossary_definitions_governed_domain_glossary():
+    """Definiciones completas y sin duplicados -> 'GOVERNED_DOMAIN_GLOSSARY'."""
+    import backend.services.anydoc_service as anydoc_module
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        extract_markdown_glossary_definitions,
+    )
+
+    md = (
+        "# Glosario del Proyecto\n\n"
+        "- **EVM**: Earned Value Management para control integrado de alcance, cronograma y costos.\n"
+        "* **CCB** — Comité de Control de Cambios responsable de aprobar o rechazar solicitudes.\n"
+        "**WBS**: Work Breakdown Structure jerárquica orientada a entregables verificables.\n"
+        "- **Línea Base de Costos** - Presupuesto autorizado distribuido en el tiempo (BAC).\n"
+    )
+    res = AnyDocService.extract_markdown_glossary_definitions(md)
+    assert res["total_definitions"] == 4
+    assert res["acronym_count"] == 3
+    assert [e["term"] for e in res["entries"]] == [
+        "EVM",
+        "CCB",
+        "WBS",
+        "Línea Base de Costos",
+    ]
+    assert [e["is_acronym"] for e in res["entries"]] == [True, True, True, False]
+    assert res["duplicate_terms"] == []
+    assert res["shallow_definitions"] == []
+    assert res["glossary_posture"] == "GOVERNED_DOMAIN_GLOSSARY"
+    assert extract_markdown_glossary_definitions({"markdown": md}) == res
+    assert "extract_markdown_glossary_definitions" in anydoc_module.__all__
+
+
+def test_extract_markdown_glossary_definitions_duplicate_term_conflicts():
+    """Términos repetidos (case-insensitive) -> 'DUPLICATE_TERM_CONFLICTS'."""
+    from backend.services.anydoc_service import extract_markdown_glossary_definitions
+
+    md = (
+        "- **EVM**: Earned Value Management estándar PMBOK sección 7.4.\n"
+        "- **evm**: Gestión del Valor Ganado redefinida en sección secundaria.\n"
+        "- **CCB**: Change Control Board del proyecto.\n"
+    )
+    res = extract_markdown_glossary_definitions(md)
+    assert res["total_definitions"] == 3
+    assert res["acronym_count"] == 2
+    assert res["duplicate_terms"] == ["EVM"]
+    assert res["shallow_definitions"] == []
+    assert res["glossary_posture"] == "DUPLICATE_TERM_CONFLICTS"
+
+
+def test_extract_markdown_glossary_definitions_shallow_definitions():
+    """Definiciones cortas (<10 chars) o marcadores TBD/TODO/N/A/PENDIENTE -> 'SHALLOW_GLOSSARY_DEFINITIONS'."""
+    from backend.services.anydoc_service import extract_markdown_glossary_definitions
+
+    md = (
+        "- **BAC**: Budget at Completion total autorizado del proyecto.\n"
+        "- **EAC**: TBD\n"
+        "- **VAC**: Corto\n"
+        "- **TCPI**: PENDIENTE\n"
+    )
+    res = extract_markdown_glossary_definitions(md)
+    assert res["total_definitions"] == 4
+    assert res["acronym_count"] == 4
+    assert res["duplicate_terms"] == []
+    assert res["shallow_definitions"] == ["EAC", "TCPI", "VAC"]
+    assert res["glossary_posture"] == "SHALLOW_GLOSSARY_DEFINITIONS"
+
+
+def test_extract_markdown_glossary_definitions_no_entries_and_fenced_ignored():
+    """Sin definiciones o solo dentro de bloques ``` -> 'NO_GLOSSARY_ENTRIES'."""
+    from backend.services.anydoc_service import extract_markdown_glossary_definitions
+
+    md_fenced = (
+        "# Documento Técnico\n"
+        "```markdown\n"
+        "- **EVM**: Earned Value Management dentro de bloque de código ignorado.\n"
+        "**CCB**: Comité de Control de Cambios en ejemplo.\n"
+        "```\n"
+        "Texto normal sin definiciones de glosario.\n"
+    )
+    for payload in (None, "", md_fenced):
+        res = extract_markdown_glossary_definitions(payload)
+        assert res == {
+            "total_definitions": 0,
+            "acronym_count": 0,
+            "entries": [],
+            "duplicate_terms": [],
+            "shallow_definitions": [],
+            "glossary_posture": "NO_GLOSSARY_ENTRIES",
+        }
+
+
+

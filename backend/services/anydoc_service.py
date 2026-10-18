@@ -1309,6 +1309,93 @@ def extract_markdown_admonition_callouts(
     }
 
 
+def extract_markdown_glossary_definitions(
+    markdown_text: Optional[str | dict[str, Any]] = None,
+) -> dict[str, Any]:
+    """Extrae y audita definiciones de glosario y siglas técnicas en Markdown (PMBOK §4.4 y §10.2).
+
+    Ignora bloques de código cercados con ``` y detecta líneas de definición con
+    término en negrita seguido de `:`, `—`, `–` o `-`.
+    """
+    if isinstance(markdown_text, dict):
+        text = str(markdown_text.get("markdown") or "")
+    elif isinstance(markdown_text, str):
+        text = markdown_text
+    else:
+        text = ""
+
+    definition_re = re.compile(
+        r"^\s*(?:[-*+]\s+)?\*\*(?P<term>[^*:]+?)(?::\*\*\s*|\*\*\s*(?::|—|–|-)\s*)(?P<definition>.*)$"
+    )
+    placeholder_tokens = {"TBD", "TODO", "N/A", "PENDIENTE"}
+
+    entries: list[dict[str, Any]] = []
+    term_counts: dict[str, int] = {}
+    shallow_set: set[str] = set()
+    in_fence = False
+
+    for line in text.splitlines():
+        if line.strip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+
+        match = definition_re.match(line)
+        if not match:
+            continue
+
+        term = match.group("term").strip()
+        if not term:
+            continue
+        definition = match.group("definition").strip()
+
+        compact_term = re.sub(r"\s+", "", term)
+        is_acronym = (
+            2 <= len(compact_term) <= 10
+            and compact_term.isalpha()
+            and compact_term == compact_term.upper()
+        )
+
+        entries.append(
+            {
+                "term": term,
+                "definition": definition,
+                "is_acronym": is_acronym,
+            }
+        )
+
+        norm_term = term.upper()
+        term_counts[norm_term] = term_counts.get(norm_term, 0) + 1
+
+        clean_def_upper = definition.upper().rstrip(".")
+        if len(definition) < 10 or clean_def_upper in placeholder_tokens:
+            shallow_set.add(term)
+
+    total_definitions = len(entries)
+    acronym_count = sum(1 for entry in entries if entry["is_acronym"])
+    duplicate_terms = sorted(t for t, count in term_counts.items() if count > 1)
+    shallow_definitions = sorted(shallow_set)
+
+    if total_definitions == 0:
+        glossary_posture = "NO_GLOSSARY_ENTRIES"
+    elif len(duplicate_terms) > 0:
+        glossary_posture = "DUPLICATE_TERM_CONFLICTS"
+    elif len(shallow_definitions) > 0:
+        glossary_posture = "SHALLOW_GLOSSARY_DEFINITIONS"
+    else:
+        glossary_posture = "GOVERNED_DOMAIN_GLOSSARY"
+
+    return {
+        "total_definitions": total_definitions,
+        "acronym_count": acronym_count,
+        "entries": entries,
+        "duplicate_terms": duplicate_terms,
+        "shallow_definitions": shallow_definitions,
+        "glossary_posture": glossary_posture,
+    }
+
+
 class AnyDocService:
     """Fachada canónica de conversión y auditoría documental AnyDoc PMI."""
 
@@ -1399,6 +1486,12 @@ class AnyDocService:
     ) -> dict[str, Any]:
         return extract_markdown_admonition_callouts(markdown_or_result)
 
+    @staticmethod
+    def extract_markdown_glossary_definitions(
+        markdown_text: Optional[str | dict[str, Any]] = None,
+    ) -> dict[str, Any]:
+        return extract_markdown_glossary_definitions(markdown_text)
+
 
 __all__ = [
     "ANYDOC_AVAILABLE",
@@ -1418,6 +1511,7 @@ __all__ = [
     "audit_markdown_reference_citations",
     "audit_markdown_frontmatter_metadata",
     "extract_markdown_admonition_callouts",
+    "extract_markdown_glossary_definitions",
     "AnyDocService",
 ]
 
