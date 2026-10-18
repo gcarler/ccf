@@ -924,6 +924,27 @@ class ProjectGovernanceSummary(BaseModel):
     lessons_learned_count: int = 0
 
 
+class CcbAndQualitySummary(BaseModel):
+    """Resumen ejecutivo de Control de Cambios (CCB) y Calidad (DoD / CoQ) — PMI Vol. 6 §4-§5."""
+
+    total_change_requests: int = 0
+    pending_ccb_count: int = 0
+    approved_count: int = 0
+    rejected_count: int = 0
+    net_approved_cost_delta: float = 0.0
+    net_approved_schedule_days: int = 0
+    tasks_dod_accepted_count: int = 0
+    total_coq_cost: float = 0.0
+    coq_by_category: dict = Field(default_factory=dict)
+    total_leaf_tasks: int = 0
+    dod_signed_off_count: int = 0
+    dod_all_four_met_count: int = 0
+    dod_completion_rate_pct: float = 0.0
+    total_cost_of_conformance: float = 0.0
+    coq_conformance_ratio_pct: float = 0.0
+    total_cost_of_non_conformance: float = 0.0
+
+
 class ProjectExecutiveReportData(BaseModel):
     project: ProjectExecutiveReportProject
     tasks_metrics: ProjectExecutiveTasksMetrics

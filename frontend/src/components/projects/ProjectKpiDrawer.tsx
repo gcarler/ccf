@@ -181,6 +181,23 @@ const FRENTE_BADGES: Record<string, { label: string; classes: string }> = {
   },
 };
 
+type ToleranceFilter = "all" | "critical" | "warning" | "green";
+type MeasurementFront = "tiempo" | "financiero" | "cruce_evm" | "manual";
+
+const MEASUREMENT_FRONTS: Array<{ id: MeasurementFront; label: string }> = [
+  { id: "tiempo", label: "Tiempo" },
+  { id: "financiero", label: "Financiero" },
+  { id: "cruce_evm", label: "Cruce EVM" },
+  { id: "manual", label: "Manual" },
+];
+
+const TOLERANCE_FILTERS: Array<{ id: ToleranceFilter; label: string }> = [
+  { id: "all", label: "Todos" },
+  { id: "critical", label: "Fuera de Tolerancia <40%" },
+  { id: "warning", label: "En Alerta 40-69%" },
+  { id: "green", label: "En Tolerancia >=70%" },
+];
+
 export function ProjectKpiDrawer({
   projectId,
   isOpen,
@@ -196,6 +213,7 @@ export function ProjectKpiDrawer({
   const [saving, setSaving] = useState(false);
   const [syncingPro, setSyncingPro] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [toleranceFilter, setToleranceFilter] = useState<ToleranceFilter>("all");
   const [, setEditingId] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
@@ -430,7 +448,7 @@ export function ProjectKpiDrawer({
   };
 
   const getStatusBadge = (current: number, target: number) => {
-    const pct = target > 0 ? (current / target) * 100 : 0;
+    const pct = target > 0 ? Math.max(0, Math.min(100, (current / target) * 100)) : 0;
     if (pct >= 100) {
       return {
         label: "Completado",
@@ -466,6 +484,33 @@ export function ProjectKpiDrawer({
       barColor: "bg-[hsl(var(--destructive))]",
     };
   };
+
+  const kpiMetrics = kpis.map((kpi) => {
+    const percentage = kpi.target_value > 0
+      ? Math.max(0, Math.min(100, (kpi.current_value / kpi.target_value) * 100))
+      : 0;
+    const sourceFront = kpi.frente
+      || KPI_EXECUTION_SOURCES.find((source) => source.id === kpi.source_type)?.frente
+      || "manual";
+    const measurementFront = MEASUREMENT_FRONTS.find((front) => front.id === sourceFront)?.id ?? "manual";
+    return { kpi, percentage, measurementFront };
+  });
+  const globalBenefitsIndex = kpiMetrics.length > 0
+    ? kpiMetrics.reduce((total, item) => total + item.percentage, 0) / kpiMetrics.length
+    : 0;
+  const greenKpiCount = kpiMetrics.filter((item) => item.percentage >= 70).length;
+  const amberKpiCount = kpiMetrics.filter((item) => item.percentage >= 40 && item.percentage < 70).length;
+  const redKpiCount = kpiMetrics.filter((item) => item.percentage < 40).length;
+  const frontCoverage = MEASUREMENT_FRONTS.map((front) => ({
+    ...front,
+    count: kpiMetrics.filter((item) => item.measurementFront === front.id).length,
+  }));
+  const filteredKpiMetrics = kpiMetrics.filter(({ percentage }) => {
+    if (toleranceFilter === "critical") return percentage < 40;
+    if (toleranceFilter === "warning") return percentage >= 40 && percentage < 70;
+    if (toleranceFilter === "green") return percentage >= 70;
+    return true;
+  });
 
   return (
     <>
@@ -506,6 +551,83 @@ export function ProjectKpiDrawer({
             </div>
           )}
         </div>
+
+        {kpis.length > 0 && (
+          <section
+            aria-labelledby="pmi-benefits-dashboard-title"
+            className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 space-y-4"
+          >
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h3 id="pmi-benefits-dashboard-title" className="text-sm font-bold text-[hsl(var(--text-primary))]">
+                  Tablero PMI de Realización de Beneficios y Tolerancia RAG (Vol. 1 &amp; 5)
+                </h3>
+                <p className="mt-1 text-xs text-[hsl(var(--text-secondary))]">
+                  Avance promedio de beneficios y alertas de desempeño por frente de medición.
+                </p>
+              </div>
+              <div className="rounded-md bg-[hsl(var(--surface-2))] px-3 py-2">
+                <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))]">Índice Global de Realización de Beneficios</p>
+                <p className="text-lg font-extrabold text-[hsl(var(--text-primary))]">{globalBenefitsIndex.toFixed(1)}%</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <div className="rounded-md border border-[hsl(var(--success))]/30 bg-[hsl(var(--success))]/10 p-3 text-[hsl(var(--success))]">
+                <p className="text-xs font-bold">Verde · En Tolerancia / Óptimo (≥70%)</p>
+                <p className="mt-1 text-xl font-extrabold">{greenKpiCount}</p>
+                <p className="text-2xs">Completados o En Camino</p>
+              </div>
+              <div className="rounded-md border border-[hsl(var(--warning))]/30 bg-[hsl(var(--warning))]/10 p-3 text-[hsl(var(--warning-text))]">
+                <p className="text-xs font-bold">Ámbar · Umbral de Alerta (40-69%)</p>
+                <p className="mt-1 text-xl font-extrabold">{amberKpiCount}</p>
+                <p className="text-2xs">En Riesgo</p>
+              </div>
+              <div className="rounded-md border border-[hsl(var(--destructive))]/30 bg-[hsl(var(--destructive))]/10 p-3 text-[hsl(var(--destructive))]">
+                <p className="text-xs font-bold">Rojo · Fuera de Tolerancia (&lt;40%)</p>
+                <p className="mt-1 text-xl font-extrabold">{redKpiCount}</p>
+                <p className="text-2xs">Críticos</p>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-xs font-bold text-[hsl(var(--text-primary))]">Cobertura por Frente de Medición PMI</h4>
+              <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {frontCoverage.map((front) => (
+                  <div key={front.id} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-2">
+                    <p className="text-2xs text-[hsl(var(--text-secondary))]">{front.label}</p>
+                    <p className="text-sm font-bold text-[hsl(var(--text-primary))]">{front.count} KPI{front.count === 1 ? "" : "s"}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div role="group" aria-label="Filtro de tolerancia PMI" className="flex flex-wrap gap-2">
+              {TOLERANCE_FILTERS.map((filter) => (
+                <button
+                  key={filter.id}
+                  type="button"
+                  aria-pressed={toleranceFilter === filter.id}
+                  onClick={() => setToleranceFilter(filter.id)}
+                  className={clsx(
+                    "rounded-md border px-2.5 py-1.5 text-2xs font-bold transition-colors",
+                    toleranceFilter === filter.id
+                      ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))]"
+                      : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]",
+                  )}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+
+            {redKpiCount > 0 && (
+              <div role="alert" className="rounded-md border border-[hsl(var(--destructive))]/30 bg-[hsl(var(--destructive))]/10 p-3 text-xs text-[hsl(var(--destructive))]">
+                <strong>Acción correctiva PMI requerida:</strong> {redKpiCount} KPI{redKpiCount === 1 ? " crítico está" : " críticos están"} fuera de tolerancia. Revisar causa raíz, responsable y plan de recuperación.
+              </div>
+            )}
+          </section>
+        )}
 
         {/* Create KPI Form */}
         {isCreating && (
@@ -691,8 +813,13 @@ export function ProjectKpiDrawer({
               </p>
             </div>
           ) : (
+            filteredKpiMetrics.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]/50 p-6 text-center text-xs text-[hsl(var(--text-secondary))]">
+                Ningún KPI coincide con el umbral de tolerancia seleccionado.
+              </div>
+            ) : (
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 content-start">
-              {kpis.map((kpi) => {
+              {filteredKpiMetrics.map(({ kpi }) => {
                 const status = getStatusBadge(kpi.current_value, kpi.target_value);
                 const StatusIcon = status.icon;
                 const pct =
@@ -841,7 +968,7 @@ export function ProjectKpiDrawer({
                 );
               })}
             </div>
-          )}
+            ))}
         </div>
       </div>
       <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />

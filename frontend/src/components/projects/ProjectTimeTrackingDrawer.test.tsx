@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ProjectTimeTrackingDrawer } from "./ProjectTimeTrackingDrawer";
@@ -125,5 +125,47 @@ describe("ProjectTimeTrackingDrawer delete confirmation", () => {
     expect(await screen.findByText(/Sincronización por Tarea \(actual_hours vs Estimado y Avance Físico\)/i)).toBeInTheDocument();
     expect(screen.getByText("Montaje de sonido")).toBeInTheDocument();
     expect(screen.getByText("6.50h")).toBeInTheDocument();
+  });
+
+  it("calculates earned effort, LEI and typical and atypical EAC forecasts with task variances", async () => {
+    const effortSummary = {
+      ...summary,
+      total_hours: 16,
+      estimated_hours_total: 30,
+      physical_progress_pct: 50,
+    };
+    mocks.apiFetch.mockImplementation((path: string) =>
+      path.endsWith("/time-tracking-summary") ? Promise.resolve(effortSummary) : Promise.resolve([log]),
+    );
+
+    render(
+      <ProjectTimeTrackingDrawer
+        projectId="project-1"
+        isOpen
+        onClose={vi.fn()}
+        tasks={[
+          { id: "task-1", title: "Diseño", estimated_hours: 20, actual_hours: 16, physical_progress_pct: 50 },
+          { id: "task-2", title: "Instalación", estimated_hours: 10, actual_hours: 8, physical_progress_pct: 50 },
+        ]}
+      />,
+    );
+
+    expect(await screen.findByRole("heading", {
+      name: "Diagnóstico PMI de Esfuerzo Devengado (Earned Effort & Burn Rate — Vol. 4 & 5)",
+    })).toBeInTheDocument();
+    const diagnosis = screen.getByRole("region", {
+      name: "Diagnóstico PMI de Esfuerzo Devengado (Earned Effort & Burn Rate — Vol. 4 & 5)",
+    });
+    expect(within(diagnosis).getByText("30.00h")).toBeInTheDocument();
+    expect(within(diagnosis).getByText("15.00h")).toBeInTheDocument();
+    expect(within(diagnosis).getByText("16.00h")).toBeInTheDocument();
+    expect(within(diagnosis).getByText("0.94")).toBeInTheDocument();
+    expect(within(diagnosis).getByText("-1.00h")).toBeInTheDocument();
+    expect(within(diagnosis).getByText("32.00h")).toBeInTheDocument();
+    expect(within(diagnosis).getByText("31.00h")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Alerta de sobrecosto de esfuerzo / baja productividad horaria");
+    expect(within(diagnosis).getByText("Diseño")).toBeInTheDocument();
+    expect(within(diagnosis).getByText(/Desvío -4.00h/)).toBeInTheDocument();
+    expect(within(diagnosis).getByText("Instalación")).toBeInTheDocument();
   });
 });

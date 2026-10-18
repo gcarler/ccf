@@ -544,6 +544,7 @@ from backend.schemas.projects import (  # noqa: F401
     ProjectExecutionSyncResponse,
     ProjectExecutivePhaseItem,
     ProjectExecutiveReportData,
+    CcbAndQualitySummary,
     ProjectExecutiveReportProject,
     ProjectExecutiveRiskItem,
     ProjectExecutiveRiskKpis,

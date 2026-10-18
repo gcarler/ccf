@@ -374,6 +374,7 @@ export interface ProjectTaskRecord {
   physical_progress_pct?: number;
   estimated_hours?: number;
   actual_hours?: number;
+  budget_allocated?: number | null;
   actual_cost?: number;
   labels?: string[];
   order_index?: number;
@@ -610,6 +611,8 @@ export interface MemberTimeSummaryItem {
 export interface ProjectTimeTrackingSummary {
   project_id: string;
   total_hours: number;
+  estimated_hours_total?: number;
+  physical_progress_pct?: number;
   billable_hours: number;
   non_billable_hours: number;
   total_logs: number;
@@ -765,6 +768,13 @@ export interface CcbAndQualitySummary {
     internal_failure: number;
     external_failure: number;
   };
+  total_leaf_tasks: number;
+  dod_signed_off_count: number;
+  dod_all_four_met_count: number;
+  dod_completion_rate_pct: number;
+  total_cost_of_conformance: number;
+  coq_conformance_ratio_pct: number;
+  total_cost_of_non_conformance: number;
 }
 
 export interface ProjectExecutiveReportData {

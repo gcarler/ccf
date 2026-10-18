@@ -7120,3 +7120,22 @@ def get_task_dod_status(
         "accepted_by_name": accepted_by_name,
         "accepted_at": dod.accepted_at.isoformat() if dod.accepted_at else None,
     }
+
+@router.get(
+    "/{project_id}/quality-summary",
+    response_model=schemas.CcbAndQualitySummary,
+    tags=["Projects DoD"],
+)
+def get_project_quality_summary_endpoint(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("read")),
+):
+    """Resumen ejecutivo de Calidad (PMI Vol. 6 §5): DoD 4/4 y Costo de la Calidad (CoQ 1:10:100)."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+
+    from backend.services.project_ccb_service import get_project_ccb_and_quality_summary
+
+    return get_project_ccb_and_quality_summary(db, project.id)
+

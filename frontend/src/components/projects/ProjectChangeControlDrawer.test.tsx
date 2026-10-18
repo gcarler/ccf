@@ -68,6 +68,35 @@ function renderDrawer() {
   );
 }
 
+const qualitySummaryBase = {
+  total_change_requests: 2,
+  pending_ccb_count: 1,
+  approved_count: 1,
+  rejected_count: 0,
+  net_approved_cost_delta: 1500,
+  net_approved_schedule_days: 5,
+  tasks_dod_accepted_count: 1,
+  total_coq_cost: 350,
+  coq_by_category: { prevention: 250, appraisal: 100, internal_failure: 0, external_failure: 0 },
+  total_leaf_tasks: 4,
+  dod_signed_off_count: 2,
+  dod_all_four_met_count: 2,
+  dod_completion_rate_pct: 50,
+  total_cost_of_conformance: 350,
+  coq_conformance_ratio_pct: 100,
+  total_cost_of_non_conformance: 0,
+};
+
+function mockListAndQuality(list: ChangeRequestListResponse, quality?: unknown) {
+  vi.mocked(apiFetch).mockImplementation((url: unknown) =>
+    url === "/projects/project-1/change-requests"
+      ? Promise.resolve(list as never)
+      : quality === undefined
+        ? Promise.reject(new Error("quality-summary unavailable"))
+        : Promise.resolve(quality as never),
+  );
+}
+
 describe("ProjectChangeControlDrawer", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -82,6 +111,66 @@ describe("ProjectChangeControlDrawer", () => {
       await screen.findByText(/Sin solicitudes de cambio registradas/)
     ).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
+  });
+
+  it("renderiza el panel de Auditoría de Calidad DoD 4/4 y CoQ con diagnóstico óptimo", async () => {
+    mockListAndQuality({
+      ...emptyResponse,
+      items: [pendingCr],
+      summary: {
+        pending_ccb: 1, approved: 1, rejected: 0,
+        approved_cost_impact_total: 1500, approved_schedule_impact_days_total: 5,
+        pending_cost_impact_total: 0, pending_schedule_impact_days_total: 0,
+      },
+    }, qualitySummaryBase);
+    renderDrawer();
+
+    const panel = await screen.findByTestId("quality-audit-panel");
+    expect(panel).toHaveTextContent(/Auditoría de Calidad PMI/);
+    expect(panel).toHaveTextContent("2/4 firmados (50%)");
+    expect(panel).toHaveTextContent("2 con 4/4");
+    // formatMoney usa Intl es-CO: los montos se imprimen como “US$ 350”.
+    expect(panel).toHaveTextContent("US$ 350");
+    expect(panel).toHaveTextContent("100% del CoQ");
+    expect(panel).toHaveTextContent("US$ 0");
+    const diagnosis = screen.getByTestId("coq-diagnosis");
+    expect(diagnosis).toHaveTextContent("Óptimo CoQ: Inversión preventiva saludable");
+  });
+
+  it("dispara la alerta doctrinal cuando la no conformidad supera la inversión preventiva", async () => {
+    mockListAndQuality(emptyResponse, {
+      ...qualitySummaryBase,
+      coq_by_category: { prevention: 50, appraisal: 0, internal_failure: 600, external_failure: 0 },
+      total_coq_cost: 650,
+      total_cost_of_conformance: 50,
+      coq_conformance_ratio_pct: 7.7,
+      total_cost_of_non_conformance: 600,
+    });
+    const { container } = renderDrawer();
+
+    const diagnosis = await screen.findByTestId("coq-diagnosis");
+    expect(diagnosis).toHaveTextContent(
+      "Alerta CoQ: El costo de retrabajo/fallas supera la inversión en prevención y evaluación",
+    );
+    expect(diagnosis).toHaveAttribute("role", "alert");
+    expect((await axe(container)).violations).toEqual([]);
+  });
+
+  it("tolera el fallo de quality-summary sin romper el listado de solicitudes", async () => {
+    mockListAndQuality({
+      ...emptyResponse,
+      items: [pendingCr],
+      summary: {
+        pending_ccb: 1, approved: 0, rejected: 0,
+        approved_cost_impact_total: 0, approved_schedule_impact_days_total: 0,
+        pending_cost_impact_total: 0, pending_schedule_impact_days_total: 0,
+      },
+    });
+    renderDrawer();
+
+    expect(await screen.findByTestId("cr-card-cr-1")).toBeInTheDocument();
+    expect(screen.queryByTestId("quality-audit-panel")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("usa exclusivamente tokens semánticos en las tarjetas del Comité", async () => {
@@ -110,7 +199,7 @@ describe("ProjectChangeControlDrawer", () => {
 
   it("crea una Solicitud de Cambio Formal con el contrato del backend", async () => {
     const user = userEvent.setup();
-    vi.mocked(apiFetch).mockResolvedValueOnce(emptyResponse).mockResolvedValueOnce(emptyResponse);
+    mockListAndQuality(emptyResponse, undefined);
     renderDrawer();
 
     await user.click(await screen.findByRole("button", { name: /Nueva Solicitud de Cambio/ }));
@@ -146,9 +235,16 @@ describe("ProjectChangeControlDrawer", () => {
 
   it("registra el dictamen con acta y notifica el Re-baseline automático", async () => {
     const user = userEvent.setup();
-    vi.mocked(apiFetch)
-      .mockResolvedValueOnce({ ...emptyResponse, items: [pendingCr] })
-      .mockResolvedValueOnce({ ...emptyResponse, items: [approvedCr] });
+    vi.mocked(apiFetch).mockImplementation((url: unknown) => {
+      const u = String(url);
+      if (u.endsWith("/change-requests/cr-1/decide")) {
+        return Promise.resolve(approvedCr as never);
+      }
+      if (u === "/projects/project-1/change-requests") {
+        return Promise.resolve({ ...emptyResponse, items: [pendingCr] } as never);
+      }
+      return Promise.reject(new Error("quality-summary unavailable"));
+    });
     renderDrawer();
 
     await screen.findByTestId("cr-card-cr-1");
@@ -185,7 +281,11 @@ describe("ProjectChangeControlDrawer", () => {
     expect(mocks.addToast).toHaveBeenCalledWith(
       expect.objectContaining({ title: "Acta requerida", type: "warning" }),
     );
-    expect(apiFetch).toHaveBeenCalledTimes(1);
+    // Sin acta no hay dictamen: ninguna llamada alcanza el endpoint /decide (el conteo
+    // total incluye la consulta paralela a quality-summary).
+    expect(
+      vi.mocked(apiFetch).mock.calls.every(([url]) => !String(url).includes("/decide")),
+    ).toBe(true);
   });
 
   it("mueve la propuesta aprobada a la lista con su Re-baseline vinculado", async () => {

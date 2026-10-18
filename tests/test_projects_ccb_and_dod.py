@@ -451,6 +451,78 @@ def test_get_project_ccb_and_quality_summary(client, db_session):
 # ─────────────────────────────────────────────────────────────────────────────
 
 
+def test_quality_summary_endpoint_and_tenant_isolation(client, db_session):
+    """GET /projects/{id}/quality-summary agrega DoD/CoQ y aísla por sede (Axioma 3)."""
+    seed_admin(db_session, email="quality-summary-admin@example.com")
+    headers = auth_headers(client, email="quality-summary-admin@example.com")
+    project = _make_project(client, headers, db_session, title="E2E Quality Summary", budget=80000.0)
+
+    # ── Datos: 1 CR aprobada (Δ$10k, Δ5d) + 2 tareas hoja (1 firmada DoD con CoQ conformidad) ──
+    cr = _make_cr(client, headers, project, title="CR para quality summary")
+    client.post(
+        f"/api/projects/{project.id}/change-requests/{cr['id']}/decide",
+        json={"decision": "approved", "review_notes": "Ok"},
+        headers=headers,
+    )
+    task_signed = _make_task(db_session, project.id, title="Paquete firmado")
+    task_unsigned = _make_task(db_session, project.id, title="Paquete sin firma")
+    resp = client.post(
+        f"/api/projects/{project.id}/tasks/{task_signed.id}/dod-acceptance",
+        json={
+            "specification_met": True,
+            "tests_no_critical_failures": True,
+            "evidence_archived": True,
+            "supervisor_sign_off": True,
+            "coq_classification": "prevention",
+            "coq_amount": 400.0,
+        },
+        headers=headers,
+    )
+    assert resp.status_code == 200, resp.text
+
+    # POST DoD con solo evidencia (deja registro con 1 criterio) en el otro paquete
+    resp_partial = client.post(
+        f"/api/projects/{project.id}/tasks/{task_unsigned.id}/dod-acceptance",
+        json={
+            "specification_met": False,
+            "tests_no_critical_failures": False,
+            "evidence_archived": True,
+            "supervisor_sign_off": False,
+            "coq_classification": "internal_failure",
+            "coq_amount": 90.0,
+        },
+        headers=headers,
+    )
+    assert resp_partial.status_code == 200, resp_partial.text
+
+    # ── Sede B no puede leer el quality-summary de la Sede A (Axioma 3) ──
+    _seed_sede_b_user(db_session, email="quality-intruso@example.com")
+    headers_b = auth_headers(client, email="quality-intruso@example.com")
+    r_b = client.get(f"/api/projects/{project.id}/quality-summary", headers=headers_b)
+    assert r_b.status_code in (403, 404), f"quality-summary cross-sede: {r_b.status_code} {r_b.text}"
+
+    # ── Lectura canónica desde el actor de la Sede A ──
+    r = client.get(f"/api/projects/{project.id}/quality-summary", headers=headers)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["total_change_requests"] == 1
+    assert body["approved_count"] == 1
+    # _make_cr usa por defecto Δ$20000 y Δ15 días
+    assert body["net_approved_cost_delta"] == pytest.approx(20000.0)
+    assert body["net_approved_schedule_days"] == 15
+    # 2 tareas hoja del proyecto: solo 1 firmada (50% de cobertura)
+    assert body["total_leaf_tasks"] == 2
+    assert body["dod_signed_off_count"] == 1
+    assert body["dod_all_four_met_count"] == 1
+    assert body["dod_completion_rate_pct"] == pytest.approx(50.0)
+    # CoQ: conformidad = prevención 400; no conformidad = falla interna 90; ratio 400/490*100 ≈ 81.6
+    assert body["total_cost_of_conformance"] == pytest.approx(400.0)
+    assert body["total_cost_of_non_conformance"] == pytest.approx(90.0)
+    assert body["coq_conformance_ratio_pct"] == pytest.approx(81.6)
+    assert body["tasks_dod_accepted_count"] == 1
+    assert body["total_coq_cost"] == pytest.approx(490.0)
+
+
 def test_dod_status_not_recorded_and_accepted_name(client, db_session):
     """GET dod-status responde 200 'not_recorded' sin registro y expone quién aceptó."""
     seed_admin(db_session, email="dod-status-admin@example.com")

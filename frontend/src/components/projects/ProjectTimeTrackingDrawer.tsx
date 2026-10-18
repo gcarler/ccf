@@ -244,6 +244,41 @@ export function ProjectTimeTrackingDrawer({
     summary && summary.total_hours > 0
       ? Math.round((summary.billable_hours / summary.total_hours) * 100)
       : 0;
+  const estimatedHoursFromTasks = tasks.reduce(
+    (total, task) => total + Math.max(0, task.estimated_hours ?? 0),
+    0,
+  );
+  const plannedEffortHours = Math.max(0, summary?.estimated_hours_total ?? estimatedHoursFromTasks);
+  const projectProgressPct = summary?.physical_progress_pct;
+  const earnedHoursFromTasks = tasks.reduce((total, task) => {
+    const estimatedHours = Math.max(0, task.estimated_hours ?? 0);
+    const progressPct = Math.min(100, Math.max(0, task.physical_progress_pct ?? projectProgressPct ?? 0));
+    return total + estimatedHours * (progressPct / 100);
+  }, 0);
+  const earnedEffortHours = estimatedHoursFromTasks > 0
+    ? earnedHoursFromTasks
+    : plannedEffortHours * (Math.min(100, Math.max(0, projectProgressPct ?? 0)) / 100);
+  const actualEffortHours = Math.max(0, summary?.total_hours ?? tasks.reduce(
+    (total, task) => total + Math.max(0, task.actual_hours ?? 0),
+    0,
+  ));
+  const laborEfficiencyIndex = actualEffortHours > 0 ? earnedEffortHours / actualEffortHours : null;
+  const effortVarianceHours = earnedEffortHours - actualEffortHours;
+  const typicalEacHours = laborEfficiencyIndex !== null && laborEfficiencyIndex > 0
+    ? plannedEffortHours / laborEfficiencyIndex
+    : null;
+  const atypicalEacHours = actualEffortHours + Math.max(0, plannedEffortHours - earnedEffortHours);
+  const isEffortEfficient = laborEfficiencyIndex !== null && laborEfficiencyIndex >= 1;
+  const hasEffortOverrun = actualEffortHours > plannedEffortHours
+    || (laborEfficiencyIndex !== null && laborEfficiencyIndex < 1);
+  const taskHourVariances = tasks
+    .filter((task) => task.estimated_hours !== undefined || task.actual_hours !== undefined)
+    .map((task) => ({
+      ...task,
+      estimatedHours: Math.max(0, task.estimated_hours ?? 0),
+      actualHours: Math.max(0, task.actual_hours ?? 0),
+    }))
+    .filter((task) => task.actualHours !== task.estimatedHours);
 
   return (
     <>
@@ -327,6 +362,102 @@ export function ProjectTimeTrackingDrawer({
             </div>
           </div>
         </div>
+
+        <section
+          aria-labelledby="earned-effort-diagnosis-title"
+          className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-5 space-y-4"
+        >
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 id="earned-effort-diagnosis-title" className="text-sm font-bold text-[hsl(var(--text-primary))]">
+                Diagnóstico PMI de Esfuerzo Devengado (Earned Effort &amp; Burn Rate — Vol. 4 &amp; 5)
+              </h2>
+              <p className="mt-1 text-xs text-[hsl(var(--text-secondary))]">
+                Contrasta esfuerzo planificado, horas devengadas por avance físico y consumo real.
+              </p>
+            </div>
+            <span
+              role="status"
+              className={clsx(
+                "w-fit rounded-full px-2.5 py-1 text-xs font-bold",
+                isEffortEfficient
+                  ? "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]"
+                  : hasEffortOverrun
+                    ? "bg-[hsl(var(--warning))]/10 text-[hsl(var(--warning-text))]"
+                    : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]",
+              )}
+            >
+              {isEffortEfficient
+                ? "Régimen eficiente de esfuerzo"
+                : hasEffortOverrun
+                  ? "Alerta de sobrecosto de esfuerzo / baja productividad horaria"
+                  : "Sin consumo real para calcular LEI"}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+            <div className="rounded-md bg-[hsl(var(--surface-2))] p-3">
+              <p className="text-xs text-[hsl(var(--text-secondary))]">Horas Planificadas (PE)</p>
+              <p className="mt-1 text-lg font-bold text-[hsl(var(--text-primary))]">{plannedEffortHours.toFixed(2)}h</p>
+            </div>
+            <div className="rounded-md bg-[hsl(var(--surface-2))] p-3">
+              <p className="text-xs text-[hsl(var(--text-secondary))]">Horas Devengadas (EH)</p>
+              <p className="mt-1 text-lg font-bold text-[hsl(var(--primary))]">{earnedEffortHours.toFixed(2)}h</p>
+            </div>
+            <div className="rounded-md bg-[hsl(var(--surface-2))] p-3">
+              <p className="text-xs text-[hsl(var(--text-secondary))]">Horas Reales Consumidas (AH)</p>
+              <p className="mt-1 text-lg font-bold text-[hsl(var(--text-primary))]">{actualEffortHours.toFixed(2)}h</p>
+            </div>
+            <div className="rounded-md bg-[hsl(var(--surface-2))] p-3">
+              <p className="text-xs text-[hsl(var(--text-secondary))]">Eficiencia (LEI = EH / AH)</p>
+              <p className="mt-1 text-lg font-bold text-[hsl(var(--text-primary))]">
+                {laborEfficiencyIndex === null ? "—" : laborEfficiencyIndex.toFixed(2)}
+              </p>
+            </div>
+            <div className="rounded-md bg-[hsl(var(--surface-2))] p-3">
+              <p className="text-xs text-[hsl(var(--text-secondary))]">Varianza de Esfuerzo (EV_h = EH − AH)</p>
+              <p className="mt-1 text-lg font-bold text-[hsl(var(--text-primary))]">
+                {effortVarianceHours > 0 ? "+" : ""}{effortVarianceHours.toFixed(2)}h
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-md border border-[hsl(var(--border))] p-3">
+              <p className="text-xs font-semibold text-[hsl(var(--text-secondary))]">EAC de Horas típico (PE / LEI)</p>
+              <p className="mt-1 text-base font-bold text-[hsl(var(--text-primary))]">
+                {typicalEacHours === null ? "No disponible sin LEI positivo" : `${typicalEacHours.toFixed(2)}h`}
+              </p>
+            </div>
+            <div className="rounded-md border border-[hsl(var(--border))] p-3">
+              <p className="text-xs font-semibold text-[hsl(var(--text-secondary))]">EAC de Horas atípico (AH + max(0, PE − EH))</p>
+              <p className="mt-1 text-base font-bold text-[hsl(var(--text-primary))]">{atypicalEacHours.toFixed(2)}h</p>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-xs font-bold text-[hsl(var(--text-primary))]">Paquetes con desvío de horas</h3>
+            {taskHourVariances.length === 0 ? (
+              <p className="mt-2 text-xs text-[hsl(var(--text-secondary))]">
+                {tasks.length === 0 ? "Asocia tareas para comparar horas estimadas y reales." : "No hay desvíos de horas entre tareas."}
+              </p>
+            ) : (
+              <ul className="mt-2 divide-y divide-[hsl(var(--border))] rounded-md border border-[hsl(var(--border))]">
+                {taskHourVariances.map((task) => {
+                  const variance = task.actualHours - task.estimatedHours;
+                  return (
+                    <li key={task.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-xs">
+                      <span className="font-semibold text-[hsl(var(--text-primary))]">{task.title}</span>
+                      <span className="text-[hsl(var(--text-secondary))]">
+                        Estimado {task.estimatedHours.toFixed(2)}h · Real {task.actualHours.toFixed(2)}h · Desvío {variance > 0 ? "+" : ""}{variance.toFixed(2)}h
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </section>
 
         {/* NAVEGACIÓN POR PESTAÑAS */}
         <div

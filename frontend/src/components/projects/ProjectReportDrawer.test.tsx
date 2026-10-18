@@ -91,6 +91,13 @@ describe("ProjectReportDrawer", () => {
           internal_failure: 0,
           external_failure: 0,
         },
+        total_leaf_tasks: 2,
+        dod_signed_off_count: 1,
+        dod_all_four_met_count: 1,
+        dod_completion_rate_pct: 50,
+        total_cost_of_conformance: 350,
+        coq_conformance_ratio_pct: 100,
+        total_cost_of_non_conformance: 0,
       },
     } satisfies ProjectExecutiveReportData;
     vi.mocked(apiFetch).mockResolvedValueOnce(reportWithCcb);

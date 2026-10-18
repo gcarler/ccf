@@ -5,6 +5,7 @@ import { RightPanel } from "@/components/ui/RightPanel";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch } from "@/lib/http";
+import type { CcbAndQualitySummary } from "@/types/projects";
 import {
   CheckCircle2,
   Clock,
@@ -92,6 +93,7 @@ export function ProjectChangeControlDrawer({ projectId, isOpen, onClose }: Proje
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [data, setData] = useState<ChangeRequestListResponse | null>(null);
+  const [qualitySummary, setQualitySummary] = useState<CcbAndQualitySummary | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [decidingId, setDecidingId] = useState<string | null>(null);
 
@@ -110,13 +112,20 @@ export function ProjectChangeControlDrawer({ projectId, isOpen, onClose }: Proje
     if (!token) return;
     setLoading(true);
     setLoadError(null);
-    try {
-      const result = await apiFetch<ChangeRequestListResponse>(`/projects/${projectId}/change-requests`, {
+    // Carga en paralelo: el fallo del resumen de calidad NO debe romper el listado de CRs.
+    const [changeRequestsResult, qualityResult] = await Promise.allSettled([
+      apiFetch<ChangeRequestListResponse>(`/projects/${projectId}/change-requests`, {
         token,
-      });
-      setData(result);
-    } catch {
-      setLoadError("No se pudo cargar el Control de Cambios del proyecto.");
+      }),
+      apiFetch<CcbAndQualitySummary>(`/projects/${projectId}/quality-summary`, { token }),
+    ]);
+    try {
+      if (changeRequestsResult.status === "fulfilled") {
+        setData(changeRequestsResult.value);
+      } else {
+        setLoadError("No se pudo cargar el Control de Cambios del proyecto.");
+      }
+      setQualitySummary(qualityResult.status === "fulfilled" ? qualityResult.value : null);
     } finally {
       setLoading(false);
     }
@@ -275,6 +284,68 @@ export function ProjectChangeControlDrawer({ projectId, isOpen, onClose }: Proje
             </div>
           ))}
         </div>
+
+        {/* Auditoría de Calidad PMI — DoD 4/4 y Costo de Calidad (CoQ, Regla 1:10:100) */}
+        {qualitySummary && (
+          <div
+            data-testid="quality-audit-panel"
+            className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3 space-y-2"
+          >
+            <p className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+              Auditoría de Calidad PMI: Definition of Done (DoD 4/4) y Costo de Calidad (CoQ — Regla 1:10:100)
+            </p>
+
+            <div className="flex flex-wrap items-center justify-between gap-1 text-xs">
+              <span className="text-[hsl(var(--text-secondary))]">Cobertura DoD de paquetes de trabajo</span>
+              <span className="font-bold text-[hsl(var(--text-primary))]">
+                {qualitySummary.dod_signed_off_count}/{qualitySummary.total_leaf_tasks} firmados ({qualitySummary.dod_completion_rate_pct}%) · {qualitySummary.dod_all_four_met_count} con 4/4
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-lg border border-[hsl(var(--success))]/40 bg-[hsl(var(--success))]/10 p-2">
+                <p className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--success))]">
+                  Costo de Conformidad
+                </p>
+                <p className="text-xs font-black text-[hsl(var(--text-primary))]">
+                  {formatMoney(qualitySummary.total_cost_of_conformance)}
+                </p>
+                <p className="text-2xs text-[hsl(var(--text-secondary))]">
+                  {qualitySummary.coq_conformance_ratio_pct}% del CoQ · Prevención + Evaluación
+                </p>
+              </div>
+              <div className="rounded-lg border border-[hsl(var(--warning))]/40 bg-[hsl(var(--warning))]/10 p-2">
+                <p className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--warning-text))]">
+                  Costo de No Conformidad
+                </p>
+                <p className="text-xs font-black text-[hsl(var(--text-primary))]">
+                  {formatMoney(qualitySummary.total_cost_of_non_conformance)}
+                </p>
+                <p className="text-2xs text-[hsl(var(--text-secondary))]">
+                  Fallas internas (retrabajo) + fallas externas
+                </p>
+              </div>
+            </div>
+
+            {qualitySummary.total_cost_of_non_conformance > qualitySummary.total_cost_of_conformance ? (
+              <p
+                role="alert"
+                data-testid="coq-diagnosis"
+                className="rounded-lg bg-[hsl(var(--destructive))]/10 px-2 py-1.5 text-2xs font-bold text-[hsl(var(--destructive))]"
+              >
+                Alerta CoQ: El costo de retrabajo/fallas supera la inversión en prevención y evaluación
+              </p>
+            ) : (
+              <p
+                role="status"
+                data-testid="coq-diagnosis"
+                className="rounded-lg bg-[hsl(var(--success))]/10 px-2 py-1.5 text-2xs font-bold text-[hsl(var(--success))]"
+              >
+                Óptimo CoQ: Inversión preventiva saludable
+              </p>
+            )}
+          </div>
+        )}
 
         <button
           onClick={() => setShowForm((prev) => !prev)}

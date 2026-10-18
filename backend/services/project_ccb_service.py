@@ -20,7 +20,7 @@ from typing import Optional, Union
 from uuid import UUID
 
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
 from backend import models, schemas
 
@@ -274,6 +274,58 @@ def get_project_ccb_and_quality_summary(db: Session, project_id: UUID) -> dict:
         if classification in coq_by_category:
             coq_by_category[classification] = value
 
+    # ── Auditoría de Calidad: paquetes de trabajo (tareas hoja) y DoD ──
+    # Tarea hoja = paquete de trabajo activo (sin subtareas hijas no eliminadas).
+    task_child = aliased(models.ProjectTask)
+    child_count_subquery = (
+        db.query(func.count(task_child.id))
+        .filter(
+            task_child.parent_id == models.ProjectTask.id,
+            task_child.deleted_at.is_(None),
+        )
+        .correlate(models.ProjectTask)
+        .scalar_subquery()
+    )
+    total_leaf_tasks = int(
+        db.query(func.count())
+        .filter(
+            models.ProjectTask.project_id == project_id,
+            models.ProjectTask.deleted_at.is_(None),
+            child_count_subquery == 0,
+        )
+        .scalar() or 0
+    )
+
+    dod_rows = (
+        db.query(
+            func.count().filter(models.ProjectDodAcceptance.supervisor_sign_off.is_(True)),
+            func.count().filter(
+                models.ProjectDodAcceptance.specification_met.is_(True),
+                models.ProjectDodAcceptance.tests_no_critical_failures.is_(True),
+                models.ProjectDodAcceptance.evidence_archived.is_(True),
+                models.ProjectDodAcceptance.supervisor_sign_off.is_(True),
+            ),
+        )
+        .filter(models.ProjectDodAcceptance.project_id == project_id)
+        .first()
+    )
+    dod_signed_off_count = int(dod_rows[0] or 0)
+    dod_all_four_met_count = int(dod_rows[1] or 0)
+    dod_completion_rate_pct = (
+        round((dod_signed_off_count / total_leaf_tasks * 100), 1) if total_leaf_tasks > 0 else 0.0
+    )
+
+    # ── Conformidad (Prevención + Evaluación) vs No Conformidad (Fallas) ──
+    total_cost_of_conformance = (
+        float(coq_by_category["prevention"]) + float(coq_by_category["appraisal"])
+    )
+    total_cost_of_non_conformance = (
+        float(coq_by_category["internal_failure"]) + float(coq_by_category["external_failure"])
+    )
+    coq_conformance_ratio_pct = (
+        round((total_cost_of_conformance / total_coq_cost * 100), 1) if total_coq_cost > 0 else 0.0
+    )
+
     return {
         "total_change_requests": sum(status_counts.values()),
         "pending_ccb_count": status_counts.get("pending_ccb", 0),
@@ -284,4 +336,11 @@ def get_project_ccb_and_quality_summary(db: Session, project_id: UUID) -> dict:
         "tasks_dod_accepted_count": tasks_dod_accepted_count,
         "total_coq_cost": total_coq_cost,
         "coq_by_category": coq_by_category,
+        "total_leaf_tasks": total_leaf_tasks,
+        "dod_signed_off_count": dod_signed_off_count,
+        "dod_all_four_met_count": dod_all_four_met_count,
+        "dod_completion_rate_pct": dod_completion_rate_pct,
+        "total_cost_of_conformance": total_cost_of_conformance,
+        "coq_conformance_ratio_pct": coq_conformance_ratio_pct,
+        "total_cost_of_non_conformance": total_cost_of_non_conformance,
     }

@@ -40,6 +40,37 @@ export default function TaskSupplySection({
     };
 
     const totalSuppliesCost = supplies.reduce((acc, s) => acc + computeSupplyTotal(s), 0);
+    const pendingPlannedCost = supplies
+        .filter(supply => supply.status === 'pending')
+        .reduce((total, supply) => total + computeSupplyTotal(supply), 0);
+    const orderedCommittedCost = supplies
+        .filter(supply => supply.status === 'ordered')
+        .reduce((total, supply) => total + computeSupplyTotal(supply), 0);
+    const physicalReceivedCost = supplies
+        .filter(supply => supply.status === 'received')
+        .reduce((total, supply) => total + computeSupplyTotal(supply), 0);
+    const financiallyImputedCost = supplies
+        .filter(supply => Boolean(supply.linked_expense_id || supply.expense_id))
+        .reduce((total, supply) => total + computeSupplyTotal(supply), 0);
+    const receivedOrImputedCost = supplies
+        .filter(supply => supply.status === 'received' || supply.linked_expense_id || supply.expense_id)
+        .reduce((total, supply) => total + computeSupplyTotal(supply), 0);
+    const packageBudget = task.budget_allocated;
+    const hasPackageBudget = typeof packageBudget === 'number' && packageBudget > 0;
+    const showPmiProcurementControl = supplies.length > 0 || packageBudget !== undefined && packageBudget !== null;
+    const isOverPackageBudget = hasPackageBudget && totalSuppliesCost > packageBudget;
+    const physicalReceiptPercent = totalSuppliesCost > 0
+        ? Math.min(100, (physicalReceivedCost / totalSuppliesCost) * 100)
+        : 0;
+    const financialImputationPercent = totalSuppliesCost > 0
+        ? Math.min(100, (financiallyImputedCost / totalSuppliesCost) * 100)
+        : 0;
+    const receivedOrImputedPercent = totalSuppliesCost > 0
+        ? Math.min(100, (receivedOrImputedCost / totalSuppliesCost) * 100)
+        : 0;
+    const budgetCoveragePercent = hasPackageBudget
+        ? (totalSuppliesCost / packageBudget) * 100
+        : null;
 
     const handleAddSupply = async () => {
         if (!token || !newSupplyName.trim()) return;
@@ -122,6 +153,63 @@ export default function TaskSupplySection({
                 </span>
             </div>
 
+            {showPmiProcurementControl && (
+                <section
+                    aria-labelledby="pmi-procurement-control-heading"
+                    className="mb-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 space-y-3"
+                >
+                    <div>
+                        <h4 id="pmi-procurement-control-heading" className="text-xs font-bold text-[hsl(var(--foreground))]">
+                            Control PMI de Recursos Físicos y Adquisiciones (Planificado → Comprometido → Imputado en AC)
+                        </h4>
+                        <p className="mt-1 text-2xs text-[hsl(var(--muted-foreground))]">
+                            Seguimiento financiero y de recepción de insumos frente al presupuesto del paquete.
+                        </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+                        <div className="rounded-md bg-[hsl(var(--surface-2))] p-2">
+                            <p className="text-2xs text-[hsl(var(--muted-foreground))]">Pendiente / Planificado</p>
+                            <p className="mt-1 text-sm font-bold text-[hsl(var(--foreground))]">${pendingPlannedCost.toLocaleString('es-CO')}</p>
+                        </div>
+                        <div className="rounded-md bg-[hsl(var(--surface-2))] p-2">
+                            <p className="text-2xs text-[hsl(var(--muted-foreground))]">Comprometido en Orden</p>
+                            <p className="mt-1 text-sm font-bold text-[hsl(var(--foreground))]">${orderedCommittedCost.toLocaleString('es-CO')}</p>
+                        </div>
+                        <div className="rounded-md bg-[hsl(var(--surface-2))] p-2">
+                            <p className="text-2xs text-[hsl(var(--muted-foreground))]">Recibido / imputado a AC</p>
+                            <p className="mt-1 text-sm font-bold text-[hsl(var(--foreground))]">${receivedOrImputedCost.toLocaleString('es-CO')}</p>
+                            <p className="mt-1 text-2xs text-[hsl(var(--muted-foreground))]">
+                                {receivedOrImputedPercent.toFixed(1)}% del total
+                            </p>
+                        </div>
+                        <div className="rounded-md bg-[hsl(var(--surface-2))] p-2">
+                            <p className="text-2xs text-[hsl(var(--muted-foreground))]">Presupuesto del Paquete</p>
+                            {hasPackageBudget ? (
+                                <>
+                                    <p className="mt-1 text-sm font-bold text-[hsl(var(--foreground))]">
+                                        ${totalSuppliesCost.toLocaleString('es-CO')} / ${packageBudget.toLocaleString('es-CO')}
+                                    </p>
+                                    <p className="mt-1 text-2xs text-[hsl(var(--muted-foreground))]">
+                                        {budgetCoveragePercent?.toFixed(1)}% del presupuesto
+                                    </p>
+                                </>
+                            ) : (
+                                <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">Sin presupuesto positivo configurado</p>
+                            )}
+                        </div>
+                    </div>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-2xs text-[hsl(var(--muted-foreground))]">
+                        <span>Recepción física: <strong className="text-[hsl(var(--foreground))]">${physicalReceivedCost.toLocaleString('es-CO')} · {physicalReceiptPercent.toFixed(1)}%</strong></span>
+                        <span>Imputado en AC por gasto vinculado: <strong className="text-[hsl(var(--foreground))]">${financiallyImputedCost.toLocaleString('es-CO')} · {financialImputationPercent.toFixed(1)}%</strong></span>
+                    </div>
+                    {isOverPackageBudget && (
+                        <div role="alert" className="rounded-md border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-2 text-xs font-bold text-[hsl(var(--warning-text))]">
+                            Exceso sobre Presupuesto del Paquete: los insumos superan el presupuesto en ${(totalSuppliesCost - packageBudget).toLocaleString('es-CO')}.
+                        </div>
+                    )}
+                </section>
+            )}
+
             <div className="space-y-2">
                 {supplies.length === 0 && (
                     <p className="text-xs italic text-[hsl(var(--muted-foreground))]">
@@ -198,6 +286,7 @@ export default function TaskSupplySection({
                                     <option value="pending">Pendiente</option>
                                     <option value="ready">Listo</option>
                                     <option value="approved">Aprobado</option>
+                                    <option value="ordered">Ordenado</option>
                                     <option value="purchased">Comprado</option>
                                     <option value="received">Recibido</option>
                                     <option value="paid">Pagado</option>

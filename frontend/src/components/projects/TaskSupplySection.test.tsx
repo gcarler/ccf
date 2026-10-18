@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { axe } from 'jest-axe';
 import { describe, it, expect, vi } from 'vitest';
 import TaskSupplySection from './TaskSupplySection';
@@ -187,5 +187,58 @@ describe('TaskSupplySection', () => {
         }),
       );
     });
+  });
+
+  it('shows PMI procurement stages, physical and AC percentages, and package budget overrun', async () => {
+    const procurementSupplies: TaskSupplyRecord[] = [
+      { id: 's-pending', task_id: 't1', item_name: 'Pendiente', quantity: 1, unit_cost: 100, total_cost: 100, status: 'pending' },
+      { id: 's-ordered', task_id: 't1', item_name: 'Ordenado', quantity: 1, unit_cost: 300, total_cost: 300, status: 'ordered' },
+      { id: 's-received', task_id: 't1', item_name: 'Recibido', quantity: 1, unit_cost: 400, total_cost: 400, status: 'received' },
+      { id: 's-imputed', task_id: 't1', item_name: 'Imputado', quantity: 1, unit_cost: 200, total_cost: 200, status: 'purchased', linked_expense_id: 'exp-200' },
+    ];
+    const overBudgetTask = { ...task, budget_allocated: 800 };
+    const { container } = render(
+      <TaskSupplySection
+        task={overBudgetTask}
+        supplies={procurementSupplies}
+        onSuppliesChange={vi.fn()}
+        token="test-token"
+      />,
+    );
+
+    expect(screen.getByRole('heading', {
+      name: 'Control PMI de Recursos Físicos y Adquisiciones (Planificado → Comprometido → Imputado en AC)',
+    })).toBeInTheDocument();
+    const procurementControl = screen.getByRole('region', {
+      name: 'Control PMI de Recursos Físicos y Adquisiciones (Planificado → Comprometido → Imputado en AC)',
+    });
+    expect(within(procurementControl).getByText('$100')).toBeInTheDocument();
+    expect(within(procurementControl).getByText('$300')).toBeInTheDocument();
+    expect(within(procurementControl).getByText('$600')).toBeInTheDocument();
+    expect(within(procurementControl).getByText('60.0% del total')).toBeInTheDocument();
+    expect(within(procurementControl).getByText(/Recepción física:/)).toHaveTextContent('$400 · 40.0%');
+    expect(within(procurementControl).getByText(/Imputado en AC por gasto vinculado:/)).toHaveTextContent('$200 · 20.0%');
+    expect(procurementControl).toHaveTextContent('$1.000 / $800');
+    expect(within(procurementControl).getByText('125.0% del presupuesto')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Exceso sobre Presupuesto del Paquete');
+    expect((await axe(container)).violations).toEqual([]);
+  });
+
+  it('shows the package budget control even when no supplies have been added', () => {
+    render(
+      <TaskSupplySection
+        task={{ ...task, budget_allocated: 1000 }}
+        supplies={[]}
+        onSuppliesChange={vi.fn()}
+        token="test-token"
+      />,
+    );
+
+    expect(screen.getByRole('heading', {
+      name: 'Control PMI de Recursos Físicos y Adquisiciones (Planificado → Comprometido → Imputado en AC)',
+    })).toBeInTheDocument();
+    expect(screen.getByRole('region', {
+      name: 'Control PMI de Recursos Físicos y Adquisiciones (Planificado → Comprometido → Imputado en AC)',
+    })).toHaveTextContent('$0 / $1.000');
   });
 });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProjectKpiDrawer } from './ProjectKpiDrawer';
 
@@ -80,5 +80,48 @@ describe('ProjectKpiDrawer deletion', () => {
     })));
     expect(screen.getByText('Asistencia objetivo')).toBeInTheDocument();
     expect(screen.getByRole('complementary', { name: 'Eliminar indicador' })).toBeInTheDocument();
+  });
+
+  it('renders benefits realization, RAG counts and filters KPIs by tolerance threshold', async () => {
+    const portfolioKpis = [
+      { ...kpi, id: 'kpi-green-1', title: 'KPI en camino', current_value: 75, source_type: 'pro_edt_progress' },
+      { ...kpi, id: 'kpi-green-2', title: 'KPI completado', current_value: 100, source_type: 'manual' },
+      { ...kpi, id: 'kpi-amber', title: 'KPI en riesgo', current_value: 55, source_type: 'pro_cost_efficiency' },
+      { ...kpi, id: 'kpi-red', title: 'KPI crítico', current_value: 30, source_type: 'evm_cr' },
+    ];
+    mocks.apiFetch.mockImplementation((path: string) =>
+      path.endsWith('/kpis') ? Promise.resolve(portfolioKpis) : Promise.resolve([]),
+    );
+
+    render(<ProjectKpiDrawer projectId="project-1" isOpen onClose={vi.fn()} />);
+
+    expect(await screen.findByRole('heading', {
+      name: 'Tablero PMI de Realización de Beneficios y Tolerancia RAG (Vol. 1 & 5)',
+    })).toBeInTheDocument();
+    const benefitsDashboard = screen.getByRole('region', {
+      name: 'Tablero PMI de Realización de Beneficios y Tolerancia RAG (Vol. 1 & 5)',
+    });
+    expect(screen.getByText('65.0%')).toBeInTheDocument();
+    expect(within(benefitsDashboard).getByText('Completados o En Camino').parentElement).toHaveTextContent('2');
+    expect(within(benefitsDashboard).getByText('En Riesgo').parentElement).toHaveTextContent('1');
+    expect(within(benefitsDashboard).getByText('Críticos').parentElement).toHaveTextContent('1');
+    expect(screen.getByText('Tiempo')).toBeInTheDocument();
+    expect(screen.getByText('Financiero')).toBeInTheDocument();
+    expect(screen.getByText('Cruce EVM')).toBeInTheDocument();
+    expect(screen.getByText('Manual')).toBeInTheDocument();
+    expect(within(benefitsDashboard).getByRole('alert')).toHaveTextContent('Acción correctiva PMI requerida');
+    expect(screen.getByText('KPI en camino')).toBeInTheDocument();
+    expect(screen.getByText('KPI en riesgo')).toBeInTheDocument();
+    expect(screen.getByText('KPI crítico')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Fuera de Tolerancia <40%' }));
+    expect(screen.getByText('KPI crítico')).toBeInTheDocument();
+    expect(screen.queryByText('KPI en camino')).not.toBeInTheDocument();
+    expect(screen.queryByText('KPI en riesgo')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Fuera de Tolerancia <40%' })).toHaveAttribute('aria-pressed', 'true');
+
+    fireEvent.click(screen.getByRole('button', { name: 'En Alerta 40-69%' }));
+    expect(screen.getByText('KPI en riesgo')).toBeInTheDocument();
+    expect(screen.queryByText('KPI crítico')).not.toBeInTheDocument();
   });
 });
