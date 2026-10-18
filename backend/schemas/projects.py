@@ -3785,6 +3785,7 @@ __all__ = [
     "validate_deliverable_acceptance_criteria_measurability",
     "validate_resource_calendar_overtime_and_blackout_bounds",
     "validate_ccpm_feeding_and_project_buffer_sizing",
+    "validate_wbs_hundred_percent_rule_decomposition",
 ]
 
 
@@ -5241,5 +5242,117 @@ def validate_ccpm_feeding_and_project_buffer_sizing(
             len(invalid_buffer_definition_ids) == 0
             and len(misaligned_buffer_sizing_ids) == 0
             and len(unmitigated_fever_chart_red_zone_ids) == 0
+        ),
+    }
+
+
+def validate_wbs_hundred_percent_rule_decomposition(
+    parent_wbs_nodes: list[dict[str, object]],
+    *,
+    tolerance_pct: float = 0.01,
+) -> dict[str, object]:
+    """Valida la Regla del 100% en la descomposición jerárquica de la EDT/WBS (esfuerzo y presupuesto de hijos igual al 100% del padre), ausencia de hijos únicos redundantes y exclusividad mutua de entregables según PMI PMBOK §5.4 y §6.2."""
+    try:
+        tol_pct = float(tolerance_pct)
+    except (TypeError, ValueError):
+        tol_pct = 0.01
+
+    total_parent_nodes = 0
+    invalid_or_undecomposed_parent_codes: list[str] = []
+    single_child_redundant_decomposition_codes: list[str] = []
+    hundred_percent_rule_violation_codes: list[str] = []
+    overlapping_child_scope_codes: list[str] = []
+
+    if isinstance(parent_wbs_nodes, Sequence) and not isinstance(
+        parent_wbs_nodes, (str, bytes, bytearray)
+    ):
+        for item in parent_wbs_nodes:
+            if not isinstance(item, Mapping):
+                continue
+            parent_code = str(
+                item.get("parent_code") or item.get("code") or ""
+            ).strip()
+            if not parent_code:
+                continue
+
+            total_parent_nodes += 1
+
+            def _num(mapping: Mapping[str, Any], key: str, default: float = -1.0) -> float:
+                raw = mapping.get(key)
+                if raw is None or isinstance(raw, bool):
+                    return default
+                try:
+                    return float(raw)
+                except (TypeError, ValueError):
+                    return default
+
+            parent_effort = _num(item, "parent_planned_effort_hours", -1.0)
+            parent_budget = _num(item, "parent_planned_budget", -1.0)
+
+            raw_children = item.get("children")
+            children = (
+                [c for c in raw_children if isinstance(c, Mapping)]
+                if isinstance(raw_children, Sequence)
+                and not isinstance(raw_children, (str, bytes, bytearray))
+                else []
+            )
+
+            if parent_effort <= 0.0 or parent_budget <= 0.0 or not children:
+                invalid_or_undecomposed_parent_codes.append(parent_code)
+                continue
+
+            if len(children) == 1:
+                single_child_redundant_decomposition_codes.append(parent_code)
+
+            children_effort = 0.0
+            children_budget = 0.0
+            has_invalid_child_value = False
+            seen_keys: set[str] = set()
+            has_overlapping_scope = False
+
+            for child in children:
+                c_effort = _num(child, "effort_hours", 0.0)
+                c_budget = _num(child, "budget", 0.0)
+                if c_effort <= 0.0 or c_budget < 0.0:
+                    has_invalid_child_value = True
+                children_effort += c_effort
+                children_budget += c_budget
+
+                scope_key = (
+                    str(child.get("scope_deliverable_key") or "").strip().lower()
+                )
+                if scope_key:
+                    if scope_key in seen_keys:
+                        has_overlapping_scope = True
+                    seen_keys.add(scope_key)
+
+            effort_diff_pct = (
+                abs(children_effort - parent_effort) / parent_effort * 100.0
+            )
+            budget_diff_pct = (
+                abs(children_budget - parent_budget) / parent_budget * 100.0
+            )
+
+            if (
+                effort_diff_pct > tol_pct
+                or budget_diff_pct > tol_pct
+                or has_invalid_child_value
+            ):
+                hundred_percent_rule_violation_codes.append(parent_code)
+
+            if has_overlapping_scope:
+                overlapping_child_scope_codes.append(parent_code)
+
+    return {
+        "total_parent_nodes": total_parent_nodes,
+        "invalid_or_undecomposed_parent_codes": invalid_or_undecomposed_parent_codes,
+        "single_child_redundant_decomposition_codes": single_child_redundant_decomposition_codes,
+        "hundred_percent_rule_violation_codes": hundred_percent_rule_violation_codes,
+        "overlapping_child_scope_codes": overlapping_child_scope_codes,
+        "is_wbs_hundred_percent_rule_valid": (
+            len(invalid_or_undecomposed_parent_codes) == 0
+            and len(single_child_redundant_decomposition_codes) == 0
+            and len(hundred_percent_rule_violation_codes) == 0
+            and len(overlapping_child_scope_codes) == 0
         ),
     }

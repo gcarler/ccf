@@ -3913,3 +3913,153 @@ def test_validate_ccpm_buffer_invalid_definitions_and_export():
             "unmitigated_fever_chart_red_zone_ids": [],
             "is_ccpm_buffer_governance_valid": True,
         }
+
+
+def test_validate_wbs_hundred_percent_rule_decomposition_compliant():
+    """Descomposición WBS 100% exacta, con >= 2 hijos y entregables mutuamente excluyentes cumple §5.4."""
+    from backend.schemas.projects import (
+        validate_wbs_hundred_percent_rule_decomposition,
+    )
+
+    nodes = [
+        {
+            "parent_code": "1.0",
+            "parent_planned_effort_hours": 200.0,
+            "parent_planned_budget": 50000.0,
+            "children": [
+                {
+                    "child_code": "1.1",
+                    "effort_hours": 120.0,
+                    "budget": 30000.0,
+                    "scope_deliverable_key": "DLV-API-BACKEND",
+                },
+                {
+                    "child_code": "1.2",
+                    "effort_hours": 80.0,
+                    "budget": 20000.0,
+                    "scope_deliverable_key": "DLV-UI-PORTAL",
+                },
+            ],
+        }
+    ]
+    res = validate_wbs_hundred_percent_rule_decomposition(nodes)
+    assert res == {
+        "total_parent_nodes": 1,
+        "invalid_or_undecomposed_parent_codes": [],
+        "single_child_redundant_decomposition_codes": [],
+        "hundred_percent_rule_violation_codes": [],
+        "overlapping_child_scope_codes": [],
+        "is_wbs_hundred_percent_rule_valid": True,
+    }
+
+
+def test_validate_wbs_hundred_percent_rule_sum_mismatch_and_single_child():
+    """Detecta suma de hijos distinta al 100% del padre y descomposición redundante de hijo único."""
+    from backend.schemas.projects import (
+        validate_wbs_hundred_percent_rule_decomposition,
+    )
+
+    nodes = [
+        {
+            "parent_code": "2.0",
+            "parent_planned_effort_hours": 100.0,
+            "parent_planned_budget": 25000.0,
+            "children": [
+                {
+                    "child_code": "2.1",
+                    "effort_hours": 50.0,
+                    "budget": 12000.0,
+                    "scope_deliverable_key": "DLV-A",
+                },
+                {
+                    "child_code": "2.2",
+                    "effort_hours": 40.0,  # Suma 90 != 100
+                    "budget": 13000.0,
+                    "scope_deliverable_key": "DLV-B",
+                },
+            ],
+        },
+        {
+            "parent_code": "3.0",
+            "parent_planned_effort_hours": 60.0,
+            "parent_planned_budget": 15000.0,
+            "children": [
+                {
+                    "child_code": "3.1",
+                    "effort_hours": 60.0,
+                    "budget": 15000.0,
+                    "scope_deliverable_key": "DLV-SINGLE",
+                }
+            ],
+        },
+    ]
+    res = validate_wbs_hundred_percent_rule_decomposition(nodes)
+    assert res["total_parent_nodes"] == 2
+    assert res["hundred_percent_rule_violation_codes"] == ["2.0"]
+    assert res["single_child_redundant_decomposition_codes"] == ["3.0"]
+    assert res["is_wbs_hundred_percent_rule_valid"] is False
+
+
+def test_validate_wbs_hundred_percent_rule_overlapping_child_scope():
+    """Detecta solapamiento de entregables (scope_deliverable_key duplicado entre hermanos)."""
+    from backend.schemas.projects import (
+        validate_wbs_hundred_percent_rule_decomposition,
+    )
+
+    nodes = [
+        {
+            "parent_code": "4.0",
+            "parent_planned_effort_hours": 100.0,
+            "parent_planned_budget": 10000.0,
+            "children": [
+                {
+                    "child_code": "4.1",
+                    "effort_hours": 50.0,
+                    "budget": 5000.0,
+                    "scope_deliverable_key": "DLV-SHARED-MODULE",
+                },
+                {
+                    "child_code": "4.2",
+                    "effort_hours": 50.0,
+                    "budget": 5000.0,
+                    "scope_deliverable_key": "dlv-shared-module",
+                },
+            ],
+        }
+    ]
+    res = validate_wbs_hundred_percent_rule_decomposition(nodes)
+    assert res["overlapping_child_scope_codes"] == ["4.0"]
+    assert res["hundred_percent_rule_violation_codes"] == []
+    assert res["is_wbs_hundred_percent_rule_valid"] is False
+
+
+def test_validate_wbs_hundred_percent_rule_invalid_parents_and_export():
+    """Detecta nodos padre sin hijos o con presupuesto/esfuerzo <= 0 y verifica exportación en __all__."""
+    import backend.schemas.projects as _m
+    from backend.schemas.projects import (
+        validate_wbs_hundred_percent_rule_decomposition,
+    )
+
+    assert "validate_wbs_hundred_percent_rule_decomposition" in _m.__all__
+    res = validate_wbs_hundred_percent_rule_decomposition(
+        [
+            {
+                "parent_code": "5.0-EMPTY",
+                "parent_planned_effort_hours": 80.0,
+                "parent_planned_budget": 8000.0,
+                "children": [],
+            }
+        ]
+    )
+    assert res["invalid_or_undecomposed_parent_codes"] == ["5.0-EMPTY"]
+    assert res["is_wbs_hundred_percent_rule_valid"] is False
+
+    for bad in (None, "not-a-seq", b"bytes", [{"parent_code": "  "}]):
+        assert validate_wbs_hundred_percent_rule_decomposition(bad) == {
+            "total_parent_nodes": 0,
+            "invalid_or_undecomposed_parent_codes": [],
+            "single_child_redundant_decomposition_codes": [],
+            "hundred_percent_rule_violation_codes": [],
+            "overlapping_child_scope_codes": [],
+            "is_wbs_hundred_percent_rule_valid": True,
+        }

@@ -2503,6 +2503,7 @@ __all__ = [
     "audit_wiki_onboarding_and_kt_handover_readiness",
     "audit_wiki_vendor_sla_and_penalty_clause_governance",
     "audit_wiki_cost_of_quality_prevention_vs_failure_balance",
+    "audit_wiki_communication_confidentiality_and_channel_security",
     "WikiPMIService",
 ]
 
@@ -3751,4 +3752,76 @@ def audit_wiki_issue_log_escalation_and_aging_sla(
 
 WikiPMIService.audit_wiki_issue_log_escalation_and_aging_sla = staticmethod(
     audit_wiki_issue_log_escalation_and_aging_sla
+)
+
+
+def audit_wiki_communication_confidentiality_and_channel_security(
+    communication_channels: list[dict[str, object]],
+) -> dict[str, object]:
+    """Audita la clasificación de confidencialidad, controles de cifrado/DLP, políticas de retención y exposición externa en los canales del Plan de Gestión de las Comunicaciones según PMI PMBOK §10.1 y §10.3."""
+    valid_levels = {"public", "internal", "confidential", "restricted"}
+
+    total_channels = 0
+    invalid_classification_or_retention_ids: list[str] = []
+    unprotected_sensitive_channel_ids: list[str] = []
+    external_exposure_restricted_channel_ids: list[str] = []
+
+    if isinstance(communication_channels, Sequence) and not isinstance(
+        communication_channels, (str, bytes, bytearray)
+    ):
+        for item in communication_channels:
+            if not isinstance(item, Mapping):
+                continue
+            channel_id = str(
+                item.get("channel_id") or item.get("id") or ""
+            ).strip()
+            if not channel_id:
+                continue
+
+            total_channels += 1
+            level = (
+                str(item.get("confidentiality_level") or "").strip().lower()
+            )
+            raw_retention = item.get("retention_policy_days", 0)
+            if raw_retention is None or isinstance(raw_retention, bool):
+                retention_days = 0.0
+            else:
+                try:
+                    retention_days = float(raw_retention)
+                except (TypeError, ValueError):
+                    retention_days = 0.0
+
+            if level not in valid_levels or retention_days <= 0.0:
+                invalid_classification_or_retention_ids.append(channel_id)
+                continue
+
+            encrypted = bool(item.get("encryption_at_rest_and_transit", False))
+            guest_access = bool(
+                item.get("external_guest_access_enabled", False)
+            )
+            dlp_enabled = bool(item.get("dlp_and_audit_logging_enabled", False))
+
+            if level in {"confidential", "restricted"} and (
+                not encrypted or not dlp_enabled
+            ):
+                unprotected_sensitive_channel_ids.append(channel_id)
+
+            if level == "restricted" and guest_access:
+                external_exposure_restricted_channel_ids.append(channel_id)
+
+    return {
+        "total_channels": total_channels,
+        "invalid_classification_or_retention_ids": invalid_classification_or_retention_ids,
+        "unprotected_sensitive_channel_ids": unprotected_sensitive_channel_ids,
+        "external_exposure_restricted_channel_ids": external_exposure_restricted_channel_ids,
+        "is_communication_security_compliant": (
+            len(invalid_classification_or_retention_ids) == 0
+            and len(unprotected_sensitive_channel_ids) == 0
+            and len(external_exposure_restricted_channel_ids) == 0
+        ),
+    }
+
+
+WikiPMIService.audit_wiki_communication_confidentiality_and_channel_security = staticmethod(
+    audit_wiki_communication_confidentiality_and_channel_security
 )

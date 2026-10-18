@@ -4687,3 +4687,149 @@ def test_audit_wiki_issue_log_escalation_and_aging_sla_empty_and_service_proxy()
         WikiPMIService.audit_wiki_issue_log_escalation_and_aging_sla(sample)
         == audit_wiki_issue_log_escalation_and_aging_sla(sample)
     )
+
+
+def test_audit_wiki_communication_confidentiality_and_channel_security_compliant():
+    """Canales clasificados con retención > 0, cifrado+DLP en confidencial/restringido y sin invitados en restringido cumplen §10.1 y §10.3."""
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_communication_confidentiality_and_channel_security,
+    )
+
+    channels = [
+        {
+            "channel_id": "CH-PUB-NEWS",
+            "confidentiality_level": "public",
+            "encryption_at_rest_and_transit": False,
+            "external_guest_access_enabled": True,
+            "dlp_and_audit_logging_enabled": False,
+            "retention_policy_days": 365,
+        },
+        {
+            "channel_id": "CH-CONF-PMO",
+            "confidentiality_level": "Confidential",
+            "encryption_at_rest_and_transit": True,
+            "external_guest_access_enabled": True,
+            "dlp_and_audit_logging_enabled": True,
+            "retention_policy_days": 730,
+        },
+        {
+            "channel_id": "CH-REST-BOARD",
+            "confidentiality_level": "restricted",
+            "encryption_at_rest_and_transit": True,
+            "external_guest_access_enabled": False,
+            "dlp_and_audit_logging_enabled": True,
+            "retention_policy_days": 1825,
+        },
+    ]
+    res = audit_wiki_communication_confidentiality_and_channel_security(channels)
+    assert res == {
+        "total_channels": 3,
+        "invalid_classification_or_retention_ids": [],
+        "unprotected_sensitive_channel_ids": [],
+        "external_exposure_restricted_channel_ids": [],
+        "is_communication_security_compliant": True,
+    }
+    assert (
+        WikiPMIService.audit_wiki_communication_confidentiality_and_channel_security(
+            channels
+        )
+        == res
+    )
+
+
+def test_audit_wiki_communication_confidentiality_unprotected_sensitive_channels():
+    """Detecta canales confidential o restricted sin cifrado o sin DLP/audit logging."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_communication_confidentiality_and_channel_security,
+    )
+
+    channels = [
+        {
+            "channel_id": "CH-CONF-NO-ENC",
+            "confidentiality_level": "confidential",
+            "encryption_at_rest_and_transit": False,
+            "dlp_and_audit_logging_enabled": True,
+            "retention_policy_days": 365,
+        },
+        {
+            "channel_id": "CH-REST-NO-DLP",
+            "confidentiality_level": "restricted",
+            "encryption_at_rest_and_transit": True,
+            "dlp_and_audit_logging_enabled": False,
+            "external_guest_access_enabled": False,
+            "retention_policy_days": 365,
+        },
+    ]
+    res = audit_wiki_communication_confidentiality_and_channel_security(channels)
+    assert res["total_channels"] == 2
+    assert res["unprotected_sensitive_channel_ids"] == [
+        "CH-CONF-NO-ENC",
+        "CH-REST-NO-DLP",
+    ]
+    assert res["is_communication_security_compliant"] is False
+
+
+def test_audit_wiki_communication_confidentiality_restricted_external_exposure():
+    """Detecta canales restricted con acceso de invitados externos habilitado."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_communication_confidentiality_and_channel_security,
+    )
+
+    channels = [
+        {
+            "channel_id": "CH-REST-GUEST",
+            "confidentiality_level": "restricted",
+            "encryption_at_rest_and_transit": True,
+            "dlp_and_audit_logging_enabled": True,
+            "external_guest_access_enabled": True,
+            "retention_policy_days": 365,
+        }
+    ]
+    res = audit_wiki_communication_confidentiality_and_channel_security(channels)
+    assert res["external_exposure_restricted_channel_ids"] == ["CH-REST-GUEST"]
+    assert res["is_communication_security_compliant"] is False
+
+
+def test_audit_wiki_communication_confidentiality_invalid_and_export():
+    """Detecta clasificación o retención inválida, ignora entradas no secuencia y verifica __all__."""
+    import backend.services.wiki_pmi_service as _m
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_communication_confidentiality_and_channel_security,
+    )
+
+    assert (
+        "audit_wiki_communication_confidentiality_and_channel_security"
+        in _m.__all__
+    )
+    res = audit_wiki_communication_confidentiality_and_channel_security(
+        [
+            {
+                "channel_id": "CH-BAD-LEVEL",
+                "confidentiality_level": "top_secret",
+                "retention_policy_days": 90,
+            },
+            {
+                "channel_id": "CH-ZERO-RET",
+                "confidentiality_level": "internal",
+                "retention_policy_days": 0,
+            },
+        ]
+    )
+    assert res["invalid_classification_or_retention_ids"] == [
+        "CH-BAD-LEVEL",
+        "CH-ZERO-RET",
+    ]
+    assert res["is_communication_security_compliant"] is False
+
+    for bad in (None, "not-a-seq", b"bytes", [{"channel_id": "  "}]):
+        assert (
+            audit_wiki_communication_confidentiality_and_channel_security(bad)
+            == {
+                "total_channels": 0,
+                "invalid_classification_or_retention_ids": [],
+                "unprotected_sensitive_channel_ids": [],
+                "external_exposure_restricted_channel_ids": [],
+                "is_communication_security_compliant": True,
+            }
+        )
