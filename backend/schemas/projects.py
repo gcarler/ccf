@@ -3128,3 +3128,95 @@ def validate_resource_histogram_overallocation(
         "is_valid": is_valid,
         "allocation_posture": allocation_posture,
     }
+
+
+def validate_pert_three_point_estimates(
+    estimates: Optional[List[Dict[str, Any]]] = None,
+    max_coefficient_of_variation_pct: float = 35.0,
+) -> Dict[str, Any]:
+    """Valida estimaciones de tres puntos PERT Beta (O, M, P) de actividades o paquetes de trabajo según PMI PMBOK §6.4.2.4 y §7.2.2.5."""
+    import math
+
+    items = [item for item in (estimates or []) if isinstance(item, dict)]
+    total_items = len(items)
+    if total_items == 0:
+        return {
+            "total_items": 0,
+            "total_expected_estimate": 0.0,
+            "combined_standard_deviation": 0.0,
+            "inverted_or_nonpositive_ids": [],
+            "excessive_uncertainty_ids": [],
+            "is_valid": True,
+            "pert_posture": "NO_PERT_ESTIMATES_PROVIDED",
+        }
+
+    def _parse_val(item: Dict[str, Any], primary_key: str, alt_key: str) -> float:
+        raw = item.get(primary_key) if item.get(primary_key) is not None else item.get(alt_key)
+        if raw is None or isinstance(raw, bool):
+            return -1.0
+        try:
+            return float(raw)
+        except (TypeError, ValueError):
+            return -1.0
+
+    try:
+        max_cv_pct = float(max_coefficient_of_variation_pct)
+    except (TypeError, ValueError):
+        max_cv_pct = 35.0
+
+    inverted_or_nonpositive_ids: List[str] = []
+    excessive_uncertainty_ids: List[str] = []
+    sum_expected = 0.0
+    sum_variance = 0.0
+
+    for idx, item in enumerate(items, start=1):
+        item_id = (
+            str(
+                item.get("id")
+                or item.get("activity_id")
+                or item.get("task_id")
+                or ""
+            ).strip()
+            or f"PERT-{idx}"
+        )
+        opt = _parse_val(item, "optimistic", "o")
+        ml = _parse_val(item, "most_likely", "m")
+        pes = _parse_val(item, "pessimistic", "p")
+
+        if opt <= 0.0 or ml <= 0.0 or pes <= 0.0 or opt > ml or ml > pes:
+            inverted_or_nonpositive_ids.append(item_id)
+            continue
+
+        expected = (opt + 4.0 * ml + pes) / 6.0
+        sigma = (pes - opt) / 6.0
+        variance = sigma * sigma
+        sum_expected += expected
+        sum_variance += variance
+
+        cv_pct = (sigma / expected) * 100.0 if expected > 0.0 else 0.0
+        if cv_pct > max_cv_pct + 1e-9:
+            excessive_uncertainty_ids.append(item_id)
+
+    total_expected_estimate = round(sum_expected, 2)
+    combined_standard_deviation = round(math.sqrt(sum_variance), 2)
+    is_valid = bool(
+        len(inverted_or_nonpositive_ids) == 0 and len(excessive_uncertainty_ids) == 0
+    )
+
+    if len(inverted_or_nonpositive_ids) > 0:
+        pert_posture = "INVERTED_OR_NONPOSITIVE_PERT_BOUNDS"
+    elif len(excessive_uncertainty_ids) > 0:
+        pert_posture = "EXCESSIVE_ESTIMATE_UNCERTAINTY_SPREAD"
+    else:
+        pert_posture = "SOUND_PERT_THREE_POINT_MODEL"
+
+    return {
+        "total_items": total_items,
+        "total_expected_estimate": total_expected_estimate,
+        "combined_standard_deviation": combined_standard_deviation,
+        "inverted_or_nonpositive_ids": inverted_or_nonpositive_ids,
+        "excessive_uncertainty_ids": excessive_uncertainty_ids,
+        "is_valid": is_valid,
+        "pert_posture": pert_posture,
+    }
+

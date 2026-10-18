@@ -327,6 +327,16 @@ class ProjectExportService:
     ) -> dict[str, Any]:
         return audit_executive_report_stakeholder_communications(report_payload)
 
+    @staticmethod
+    def audit_executive_report_risk_burndown(
+        report_payload: Optional[dict[str, Any]],
+        max_residual_to_initial_ratio_pct: float = 60.0,
+    ) -> dict[str, Any]:
+        return audit_executive_report_risk_burndown(
+            report_payload,
+            max_residual_to_initial_ratio_pct=max_residual_to_initial_ratio_pct,
+        )
+
 
 
 
@@ -1550,6 +1560,144 @@ def audit_executive_report_stakeholder_communications(
     }
 
 
+def audit_executive_report_risk_burndown(
+    report_payload: Optional[dict[str, Any]],
+    max_residual_to_initial_ratio_pct: float = 60.0,
+) -> dict[str, Any]:
+    """Audita la efectividad de mitigación y exposición residual de riesgos en el informe ejecutivo según PMI PMBOK §11.6."""
+    if not isinstance(report_payload, dict) or not report_payload:
+        return {
+            "total_risks": 0,
+            "active_risks_count": 0,
+            "residual_ratio_pct": 0.0,
+            "unowned_active_risk_ids": [],
+            "unassessed_residual_risk_ids": [],
+            "stagnant_mitigation_risk_ids": [],
+            "is_effective": False,
+            "risk_burndown_posture": "NO_RISKS_DISCLOSED",
+        }
+
+    raid_kpis = report_payload.get("raid_kpis")
+    raw_risks = (
+        report_payload.get("risks")
+        if isinstance(report_payload.get("risks"), list)
+        else report_payload.get("risk_register")
+        if isinstance(report_payload.get("risk_register"), list)
+        else (raid_kpis.get("risks") if isinstance(raid_kpis, dict) else None)
+    )
+    risks = (
+        [r for r in raw_risks if isinstance(r, dict)]
+        if isinstance(raw_risks, list)
+        else []
+    )
+    total_risks = len(risks)
+
+    if total_risks == 0:
+        return {
+            "total_risks": 0,
+            "active_risks_count": 0,
+            "residual_ratio_pct": 0.0,
+            "unowned_active_risk_ids": [],
+            "unassessed_residual_risk_ids": [],
+            "stagnant_mitigation_risk_ids": [],
+            "is_effective": False,
+            "risk_burndown_posture": "NO_RISKS_DISCLOSED",
+        }
+
+    active_risks_count = 0
+    unowned_active_risk_ids: list[str] = []
+    unassessed_residual_risk_ids: list[str] = []
+    stagnant_mitigation_risk_ids: list[str] = []
+    sum_initial = 0.0
+    sum_residual = 0.0
+    closed_statuses = {"closed", "retired", "cerrado", "retirado"}
+
+    for idx, item in enumerate(risks, start=1):
+        risk_id = (
+            str(
+                item.get("id")
+                or item.get("risk_id")
+                or item.get("code")
+                or ""
+            ).strip()
+            or f"RISK-{idx}"
+        )
+        status = str(item.get("status") or "").strip().lower()
+        is_active = status not in closed_statuses
+        if not is_active:
+            continue
+
+        active_risks_count += 1
+        owner = str(item.get("owner") or item.get("risk_owner") or "").strip()
+        if not owner:
+            unowned_active_risk_ids.append(risk_id)
+
+        raw_init = (
+            item.get("initial_score")
+            if item.get("initial_score") is not None
+            else (item.get("inherent_score") or 0.0)
+        )
+        try:
+            init_score = max(0.0, float(raw_init))
+        except (TypeError, ValueError):
+            init_score = 0.0
+
+        res_raw = item.get("residual_score")
+        res_score: Optional[float] = None
+        if res_raw is not None and not isinstance(res_raw, bool):
+            try:
+                res_score = max(0.0, float(res_raw))
+            except (TypeError, ValueError):
+                res_score = None
+
+        if res_score is None or init_score <= 0.0:
+            unassessed_residual_risk_ids.append(risk_id)
+        else:
+            sum_initial += init_score
+            sum_residual += res_score
+            if res_score >= init_score:
+                stagnant_mitigation_risk_ids.append(risk_id)
+
+    residual_ratio_pct = (
+        round((sum_residual / sum_initial) * 100.0, 2)
+        if sum_initial > 0.0
+        else 0.0
+    )
+
+    try:
+        max_ratio = float(max_residual_to_initial_ratio_pct)
+    except (TypeError, ValueError):
+        max_ratio = 60.0
+
+    is_effective = bool(
+        total_risks > 0
+        and len(unowned_active_risk_ids) == 0
+        and len(unassessed_residual_risk_ids) == 0
+        and len(stagnant_mitigation_risk_ids) == 0
+        and (sum_initial == 0.0 or residual_ratio_pct <= max_ratio)
+    )
+
+    if len(unowned_active_risk_ids) > 0 or len(unassessed_residual_risk_ids) > 0:
+        risk_burndown_posture = "UNOWNED_OR_UNASSESSED_ACTIVE_RISKS"
+    elif len(stagnant_mitigation_risk_ids) > 0 or (
+        sum_initial > 0.0 and residual_ratio_pct > max_ratio
+    ):
+        risk_burndown_posture = "INEFFECTIVE_RISK_MITIGATION_BURNDOWN"
+    else:
+        risk_burndown_posture = "EFFECTIVE_RESIDUAL_RISK_BURNDOWN"
+
+    return {
+        "total_risks": total_risks,
+        "active_risks_count": active_risks_count,
+        "residual_ratio_pct": residual_ratio_pct,
+        "unowned_active_risk_ids": unowned_active_risk_ids,
+        "unassessed_residual_risk_ids": unassessed_residual_risk_ids,
+        "stagnant_mitigation_risk_ids": stagnant_mitigation_risk_ids,
+        "is_effective": is_effective,
+        "risk_burndown_posture": risk_burndown_posture,
+    }
+
+
 __all__ = [
     "audit_csv_export_integrity",
     "evaluate_executive_report_completeness",
@@ -1569,5 +1717,7 @@ __all__ = [
     "audit_executive_report_resource_workload",
     "audit_executive_report_procurement_slas",
     "audit_executive_report_stakeholder_communications",
+    "audit_executive_report_risk_burndown",
     "ProjectExportService",
 ]
+

@@ -3562,6 +3562,109 @@ def evaluate_funding_limit_reconciliation(
     }
 
 
+def evaluate_funding_limit_periods_reconciliation(
+    periods: Optional[List[Dict[str, Any]]] = None,
+    max_utilization_buffer_pct: float = 95.0,
+) -> Dict[str, Any]:
+    """Concilia desembolsos planificados frente a límites de financiamiento por período (PMBOK §7.3.2.3).
+
+    Cada período declara `period`/`id`/`quarter` (fallback 'P-{idx}'),
+    desembolso planificado (`planned_expenditure`/`planned_cost`) y límite
+    autorizado (`funding_limit`/`authorized_funds`):
+    - `breached_periods`: límite agotado o superado (sin límite con gasto, o
+      planned > limit + 1e-9); aporta (planned - limit) a `total_funding_shortfall`.
+    - `tight_buffer_periods`: utilization > `max_utilization_buffer_pct` sin brecha.
+    - `peak_funding_utilization_pct` (2 decimales; 0.0 sin períodos con límite).
+    - `is_reconciled`: sin períodos en breach.
+    - `funding_posture`: 'NO_FUNDING_PERIODS_DEFINED' sin períodos;
+      'FUNDING_LIMIT_BREACH'; 'TIGHT_FUNDING_BUFFER_WARNING';
+      'RECONCILED_WITHIN_FUNDING_LIMITS'.
+    """
+    valid_periods = [p for p in (periods or []) if isinstance(p, dict)]
+    evaluated_periods_count = len(valid_periods)
+    if evaluated_periods_count == 0:
+        return {
+            "evaluated_periods_count": 0,
+            "breached_periods": [],
+            "tight_buffer_periods": [],
+            "peak_funding_utilization_pct": 0.0,
+            "total_funding_shortfall": 0.0,
+            "is_reconciled": True,
+            "funding_posture": "NO_FUNDING_PERIODS_DEFINED",
+        }
+
+    breached_periods: List[str] = []
+    tight_buffer_periods: List[str] = []
+    peak_funding_utilization_pct = 0.0
+    total_funding_shortfall = 0.0
+
+    for idx, item in enumerate(valid_periods, start=1):
+        period_id = str(
+            item.get("period") or item.get("id") or item.get("quarter") or ""
+        ).strip() or f"P-{idx}"
+        try:
+            planned = max(
+                0.0,
+                float(
+                    item.get("planned_expenditure")
+                    if item.get("planned_expenditure") is not None
+                    else (item.get("planned_cost") or 0.0)
+                ),
+            )
+        except (TypeError, ValueError):
+            planned = 0.0
+        try:
+            limit = max(
+                0.0,
+                float(
+                    item.get("funding_limit")
+                    if item.get("funding_limit") is not None
+                    else (item.get("authorized_funds") or 0.0)
+                ),
+            )
+        except (TypeError, ValueError):
+            limit = 0.0
+
+        if limit > 0.0:
+            util_pct = (planned / limit) * 100.0
+            peak_funding_utilization_pct = max(peak_funding_utilization_pct, util_pct)
+
+        if (limit <= 0.0 and planned > 0.0) or (
+            limit > 0.0 and planned > limit + 1e-9
+        ):
+            breached_periods.append(period_id)
+            total_funding_shortfall += planned - limit
+        elif (
+            limit > 0.0
+            and ((planned / limit) * 100.0)
+            > float(max_utilization_buffer_pct) + 1e-9
+        ):
+            tight_buffer_periods.append(period_id)
+
+    peak_funding_utilization_pct = round(peak_funding_utilization_pct, 2)
+    total_funding_shortfall = round(total_funding_shortfall, 2)
+    is_reconciled = bool(len(breached_periods) == 0)
+
+    if evaluated_periods_count == 0:
+        funding_posture = "NO_FUNDING_PERIODS_DEFINED"
+    elif breached_periods:
+        funding_posture = "FUNDING_LIMIT_BREACH"
+    elif tight_buffer_periods:
+        funding_posture = "TIGHT_FUNDING_BUFFER_WARNING"
+    else:
+        funding_posture = "RECONCILED_WITHIN_FUNDING_LIMITS"
+
+    return {
+        "evaluated_periods_count": evaluated_periods_count,
+        "breached_periods": breached_periods,
+        "tight_buffer_periods": tight_buffer_periods,
+        "peak_funding_utilization_pct": peak_funding_utilization_pct,
+        "total_funding_shortfall": total_funding_shortfall,
+        "is_reconciled": is_reconciled,
+        "funding_posture": funding_posture,
+    }
+
+
 def evaluate_cpi_trend_degradation(
     cpi_series: list[float | int] | None,
 ) -> dict[str, Any]:
@@ -3943,6 +4046,16 @@ class ProjectEVMService:
         )
 
     @staticmethod
+    def evaluate_funding_limit_periods_reconciliation(
+        periods: Optional[List[Dict[str, Any]]] = None,
+        max_utilization_buffer_pct: float = 95.0,
+    ) -> Dict[str, Any]:
+        return evaluate_funding_limit_periods_reconciliation(
+            periods,
+            max_utilization_buffer_pct=max_utilization_buffer_pct,
+        )
+
+    @staticmethod
     def evaluate_cpi_trend_degradation(
         cpi_series: list[float | int] | None,
     ) -> dict[str, Any]:
@@ -4195,3 +4308,9 @@ def evaluate_earned_schedule_performance(
         "is_on_schedule": is_on_schedule,
         "schedule_posture": schedule_posture,
     }
+
+
+__all__ = [
+    "evaluate_funding_limit_periods_reconciliation",
+    "ProjectEVMService",
+]

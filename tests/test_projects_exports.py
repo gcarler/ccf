@@ -2014,3 +2014,144 @@ def test_audit_executive_report_stakeholder_communications_missing_data():
             "is_transparent": False,
             "communication_posture": "MISSING_STAKEHOLDER_COMMUNICATIONS_DATA",
         }
+
+
+def test_audit_executive_report_risk_burndown_effective():
+    """Riesgos activos con dueño, reducción <= 60% y cerrados ignorados -> EFFECTIVE_RESIDUAL_RISK_BURNDOWN."""
+    import backend.services.project_export_service as export_module
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_risk_burndown,
+    )
+
+    payload = {
+        "risks": [
+            {
+                "id": "RSK-01",
+                "status": "active",
+                "owner": "Líder Infraestructura",
+                "initial_score": 20.0,
+                "residual_score": 8.0,
+            },
+            {
+                "risk_id": "RSK-02",
+                "status": "open",
+                "risk_owner": "Arquitecto Seguridad",
+                "inherent_score": 15.0,
+                "residual_score": 6.0,
+            },
+            {
+                "code": "RSK-03",
+                "status": "closed",
+                "owner": "",
+                "initial_score": 25.0,
+                "residual_score": None,
+            },
+        ]
+    }
+    res = ProjectExportService.audit_executive_report_risk_burndown(
+        payload, max_residual_to_initial_ratio_pct=60.0
+    )
+    assert res == {
+        "total_risks": 3,
+        "active_risks_count": 2,
+        "residual_ratio_pct": 40.0,
+        "unowned_active_risk_ids": [],
+        "unassessed_residual_risk_ids": [],
+        "stagnant_mitigation_risk_ids": [],
+        "is_effective": True,
+        "risk_burndown_posture": "EFFECTIVE_RESIDUAL_RISK_BURNDOWN",
+    }
+    assert audit_executive_report_risk_burndown(payload) == res
+    assert "audit_executive_report_risk_burndown" in export_module.__all__
+
+
+def test_audit_executive_report_risk_burndown_unowned_or_unassessed():
+    """Riesgos activos sin dueño o sin residual_score -> UNOWNED_OR_UNASSESSED_ACTIVE_RISKS."""
+    from backend.services.project_export_service import (
+        audit_executive_report_risk_burndown,
+    )
+
+    payload = {
+        "risk_register": [
+            {
+                "id": "RSK-10",
+                "status": "open",
+                "owner": "   ",
+                "initial_score": 16.0,
+                "residual_score": 4.0,
+            },
+            {
+                "id": "RSK-11",
+                "status": "active",
+                "owner": "PMO",
+                "initial_score": 12.0,
+                "residual_score": None,
+            },
+        ]
+    }
+    res = audit_executive_report_risk_burndown(payload)
+    assert res["total_risks"] == 2
+    assert res["active_risks_count"] == 2
+    assert res["unowned_active_risk_ids"] == ["RSK-10"]
+    assert res["unassessed_residual_risk_ids"] == ["RSK-11"]
+    assert res["is_effective"] is False
+    assert res["risk_burndown_posture"] == "UNOWNED_OR_UNASSESSED_ACTIVE_RISKS"
+
+
+def test_audit_executive_report_risk_burndown_ineffective_mitigation():
+    """Mitigación estancada (residual >= initial) o ratio > umbral -> INEFFECTIVE_RISK_MITIGATION_BURNDOWN."""
+    from backend.services.project_export_service import (
+        audit_executive_report_risk_burndown,
+    )
+
+    payload = {
+        "raid_kpis": {
+            "risks": [
+                {
+                    "id": "RSK-20",
+                    "status": "open",
+                    "owner": "Coordinador Técnico",
+                    "initial_score": 15.0,
+                    "residual_score": 15.0,
+                },
+                {
+                    "id": "RSK-21",
+                    "status": "active",
+                    "owner": "Analista Financiero",
+                    "initial_score": 10.0,
+                    "residual_score": 5.0,
+                },
+            ]
+        }
+    }
+    res = audit_executive_report_risk_burndown(
+        payload, max_residual_to_initial_ratio_pct=60.0
+    )
+    assert res["total_risks"] == 2
+    assert res["active_risks_count"] == 2
+    assert res["residual_ratio_pct"] == 80.0
+    assert res["stagnant_mitigation_risk_ids"] == ["RSK-20"]
+    assert res["is_effective"] is False
+    assert res["risk_burndown_posture"] == "INEFFECTIVE_RISK_MITIGATION_BURNDOWN"
+
+
+def test_audit_executive_report_risk_burndown_no_risks_disclosed():
+    """Payload vacío, None o sin riesgos -> NO_RISKS_DISCLOSED."""
+    from backend.services.project_export_service import (
+        audit_executive_report_risk_burndown,
+    )
+
+    for payload in (None, {}, {"risks": []}, {"raid_kpis": {"risks": ["invalid"]}}):
+        res = audit_executive_report_risk_burndown(payload)
+        assert res == {
+            "total_risks": 0,
+            "active_risks_count": 0,
+            "residual_ratio_pct": 0.0,
+            "unowned_active_risk_ids": [],
+            "unassessed_residual_risk_ids": [],
+            "stagnant_mitigation_risk_ids": [],
+            "is_effective": False,
+            "risk_burndown_posture": "NO_RISKS_DISCLOSED",
+        }
+

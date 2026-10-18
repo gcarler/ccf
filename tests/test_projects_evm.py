@@ -1964,3 +1964,109 @@ if __name__ == "__main__":
     test_evaluate_earned_schedule_performance_insufficient_curve()
     print("✅ All EVM tests passed successfully!")
 
+
+
+def test_evaluate_funding_limit_periods_reconciliation_reconciled_within_limits():
+    """>= 2 periodos dentro del buffer 95% -> RECONCILED_WITHIN_FUNDING_LIMITS."""
+    from backend.services.project_evm_service import (
+        evaluate_funding_limit_periods_reconciliation as eval_fn,
+    )
+
+    res = eval_fn(
+        [
+            {
+                "period": "2026-Q3",
+                "planned_expenditure": 40000.0,
+                "funding_limit": 50000.0,
+            },
+            {
+                "id": "2026-Q4",
+                "planned_cost": 30000.0,
+                "authorized_funds": 40000.0,
+            },
+        ]
+    )
+    assert res["is_reconciled"] is True
+    assert res["evaluated_periods_count"] == 2
+    assert res["breached_periods"] == []
+    assert res["tight_buffer_periods"] == []
+    assert res["peak_funding_utilization_pct"] == 80.0
+    assert res["total_funding_shortfall"] == 0.0
+    assert res["funding_posture"] == "RECONCILED_WITHIN_FUNDING_LIMITS"
+
+
+def test_evaluate_funding_limit_periods_reconciliation_tight_buffer():
+    """Utilización > 95% sin superar el límite -> TIGHT_FUNDING_BUFFER_WARNING."""
+    from backend.services.project_evm_service import (
+        evaluate_funding_limit_periods_reconciliation as eval_fn,
+    )
+
+    res = eval_fn(
+        [
+            {
+                "period": "2027-Q1",
+                "planned_expenditure": 4800.0,
+                "funding_limit": 5000.0,
+            }
+        ]
+    )
+    assert res["is_reconciled"] is True
+    assert res["evaluated_periods_count"] == 1
+    assert res["breached_periods"] == []
+    assert res["tight_buffer_periods"] == ["2027-Q1"]
+    assert res["peak_funding_utilization_pct"] == 96.0
+    assert res["total_funding_shortfall"] == 0.0
+    assert res["funding_posture"] == "TIGHT_FUNDING_BUFFER_WARNING"
+
+
+def test_evaluate_funding_limit_periods_reconciliation_breach_with_shortfall():
+    """Superar el límite o gasto sin límite -> FUNDING_LIMIT_BREACH con shortfall exacto."""
+    from backend.services.project_evm_service import (
+        evaluate_funding_limit_periods_reconciliation as eval_fn,
+    )
+
+    res = eval_fn(
+        [
+            {
+                "period": "2027-Q2",
+                "planned_expenditure": 10500.0,
+                "funding_limit": 10000.0,
+            },
+            {
+                "quarter": "2027-Q3",
+                "planned_expenditure": 2500.0,
+            },
+            {
+                "period": "2027-Q4",
+                "planned_expenditure": 1500.0,
+                "funding_limit": 2000.0,
+            },
+        ]
+    )
+    assert res["is_reconciled"] is False
+    assert res["evaluated_periods_count"] == 3
+    # 2027-Q2: 105% > límite -> brecha de 500.0; 2027-Q3: sin límite con gasto -> brecha de 2500.0.
+    assert res["breached_periods"] == ["2027-Q2", "2027-Q3"]
+    assert res["tight_buffer_periods"] == []
+    assert res["peak_funding_utilization_pct"] == 105.0
+    assert res["total_funding_shortfall"] == 3000.0
+    assert res["funding_posture"] == "FUNDING_LIMIT_BREACH"
+
+
+def test_evaluate_funding_limit_periods_reconciliation_empty_or_none():
+    """None, lista vacía o entradas no-dict -> NO_FUNDING_PERIODS_DEFINED."""
+    from backend.services.project_evm_service import (
+        evaluate_funding_limit_periods_reconciliation as eval_fn,
+    )
+
+    for payload in (None, [], ["invalid", 42, None]):
+        res = eval_fn(payload)  # type: ignore[arg-type]
+        assert res == {
+            "evaluated_periods_count": 0,
+            "breached_periods": [],
+            "tight_buffer_periods": [],
+            "peak_funding_utilization_pct": 0.0,
+            "total_funding_shortfall": 0.0,
+            "is_reconciled": True,
+            "funding_posture": "NO_FUNDING_PERIODS_DEFINED",
+        }

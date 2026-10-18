@@ -1285,5 +1285,89 @@ def test_validate_resource_histogram_overallocation_empty_or_none():
         }
 
 
+def test_validate_pert_three_point_estimates_sound_model():
+    """Estimaciones PERT válidas con E=(O+4M+P)/6 y sigma combinada sqrt(sum(sigma^2)) -> SOUND_PERT_THREE_POINT_MODEL."""
+    from backend.schemas.projects import validate_pert_three_point_estimates
+
+    # Act 1: O=4, M=10, P=22 -> E=(4+40+22)/6=11.0, sigma=(22-4)/6=3.0, V=9.0
+    # Act 2: O=6, M=12, P=30 -> E=(6+48+30)/6=14.0, sigma=(30-6)/6=4.0, V=16.0
+    # Total E = 25.0, Combined sigma = sqrt(9+16) = 5.0
+    res = validate_pert_three_point_estimates(
+        [
+            {"id": "ACT-1", "optimistic": 4.0, "most_likely": 10.0, "pessimistic": 22.0},
+            {"activity_id": "ACT-2", "o": 6.0, "m": 12.0, "p": 30.0},
+        ],
+        max_coefficient_of_variation_pct=35.0,
+    )
+    assert res == {
+        "total_items": 2,
+        "total_expected_estimate": 25.0,
+        "combined_standard_deviation": 5.0,
+        "inverted_or_nonpositive_ids": [],
+        "excessive_uncertainty_ids": [],
+        "is_valid": True,
+        "pert_posture": "SOUND_PERT_THREE_POINT_MODEL",
+    }
+
+
+def test_validate_pert_three_point_estimates_inverted_or_nonpositive():
+    """Cotas invertidas (O > M o M > P) o valores <= 0 -> INVERTED_OR_NONPOSITIVE_PERT_BOUNDS."""
+    from backend.schemas.projects import validate_pert_three_point_estimates
+
+    res = validate_pert_three_point_estimates(
+        [
+            {"id": "ACT-INV-1", "optimistic": 15.0, "most_likely": 10.0, "pessimistic": 20.0},
+            {"task_id": "ACT-INV-2", "optimistic": 5.0, "most_likely": 12.0, "pessimistic": 8.0},
+            {"id": "ACT-ZERO", "optimistic": 0.0, "most_likely": 5.0, "pessimistic": 10.0},
+            {"id": "ACT-OK", "optimistic": 6.0, "most_likely": 12.0, "pessimistic": 18.0},
+        ]
+    )
+    assert res["total_items"] == 4
+    assert res["total_expected_estimate"] == 12.0
+    assert res["combined_standard_deviation"] == 2.0
+    assert res["inverted_or_nonpositive_ids"] == ["ACT-INV-1", "ACT-INV-2", "ACT-ZERO"]
+    assert res["excessive_uncertainty_ids"] == []
+    assert res["is_valid"] is False
+    assert res["pert_posture"] == "INVERTED_OR_NONPOSITIVE_PERT_BOUNDS"
+
+
+def test_validate_pert_three_point_estimates_excessive_uncertainty():
+    """Dispersión extrema (sigma/E * 100 > max_coefficient_of_variation_pct) -> EXCESSIVE_ESTIMATE_UNCERTAINTY_SPREAD."""
+    from backend.schemas.projects import validate_pert_three_point_estimates
+
+    # O=2, M=4, P=38 -> E=(2+16+38)/6=9.3333, sigma=(38-2)/6=6.0 -> CV = 64.29% > 35%
+    res = validate_pert_three_point_estimates(
+        [
+            {"id": "ACT-SPREAD", "optimistic": 2.0, "most_likely": 4.0, "pessimistic": 38.0},
+        ],
+        max_coefficient_of_variation_pct=35.0,
+    )
+    assert res["total_items"] == 1
+    assert res["total_expected_estimate"] == 9.33
+    assert res["combined_standard_deviation"] == 6.0
+    assert res["inverted_or_nonpositive_ids"] == []
+    assert res["excessive_uncertainty_ids"] == ["ACT-SPREAD"]
+    assert res["is_valid"] is False
+    assert res["pert_posture"] == "EXCESSIVE_ESTIMATE_UNCERTAINTY_SPREAD"
+
+
+def test_validate_pert_three_point_estimates_empty_or_none():
+    """Lista vacía, None o entradas no-dict -> NO_PERT_ESTIMATES_PROVIDED."""
+    from backend.schemas.projects import validate_pert_three_point_estimates
+
+    for payload in (None, [], ["invalid", 99]):
+        res = validate_pert_three_point_estimates(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_items": 0,
+            "total_expected_estimate": 0.0,
+            "combined_standard_deviation": 0.0,
+            "inverted_or_nonpositive_ids": [],
+            "excessive_uncertainty_ids": [],
+            "is_valid": True,
+            "pert_posture": "NO_PERT_ESTIMATES_PROVIDED",
+        }
+
+
+
 
 
