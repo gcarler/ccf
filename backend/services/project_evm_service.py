@@ -4557,10 +4557,97 @@ ProjectEVMService.evaluate_cpi_spi_stability_window = staticmethod(
 )
 
 
+def evaluate_reserve_drawdown_velocity(
+    initial_contingency_reserve: float = 0.0,
+    contingency_reserve_consumed: float = 0.0,
+    percent_complete_pct: float = 0.0,
+    management_reserve_used: float = 0.0,
+    approved_mr_change_requests_count: int = 0,
+    max_burn_velocity_ratio: float = 1.25,
+) -> dict[str, Any]:
+    """Evalúa la velocidad de consumo (Drawdown Velocity) de reservas de contingencia y gestión según PMI PMBOK §7.4.2.3."""
+
+    def _nonneg_float(val: Any) -> float:
+        if val is None or isinstance(val, bool):
+            return 0.0
+        try:
+            return max(0.0, float(val))
+        except (TypeError, ValueError):
+            return 0.0
+
+    init_cont = _nonneg_float(initial_contingency_reserve)
+    used_cont = _nonneg_float(contingency_reserve_consumed)
+    pct_comp = _nonneg_float(percent_complete_pct)
+    mr_used = _nonneg_float(management_reserve_used)
+    try:
+        mr_cr_count = int(approved_mr_change_requests_count or 0)
+    except (TypeError, ValueError):
+        mr_cr_count = 0
+    try:
+        max_ratio = float(max_burn_velocity_ratio)
+    except (TypeError, ValueError):
+        max_ratio = 1.25
+
+    if init_cont > 0.0:
+        contingency_consumed_pct = round((used_cont / init_cont) * 100.0, 2)
+    else:
+        contingency_consumed_pct = 100.0 if used_cont > 0.0 else 0.0
+
+    remaining_contingency_reserve = round(max(0.0, init_cont - used_cont), 2)
+
+    if init_cont <= 0.0 and used_cont <= 0.0:
+        burn_velocity_ratio = 0.0
+    elif pct_comp <= 0.0:
+        burn_velocity_ratio = (
+            round(contingency_consumed_pct, 4)
+            if contingency_consumed_pct > 0.0
+            else 0.0
+        )
+    else:
+        burn_velocity_ratio = round(contingency_consumed_pct / pct_comp, 4)
+
+    has_unapproved_mr_drawdown = bool(mr_used > 1e-9 and mr_cr_count <= 0)
+    is_contingency_overburned = bool(
+        used_cont > init_cont + 1e-9 or burn_velocity_ratio > max_ratio + 1e-9
+    )
+    is_reserve_healthy = bool(
+        not has_unapproved_mr_drawdown and not is_contingency_overburned
+    )
+
+    if init_cont <= 0.0 and used_cont <= 0.0 and mr_used <= 0.0:
+        reserve_posture = "NO_RESERVE_CONFIGURED"
+    elif has_unapproved_mr_drawdown:
+        reserve_posture = "UNAPPROVED_MANAGEMENT_RESERVE_DRAWDOWN"
+    elif (
+        init_cont > 0.0 and used_cont >= init_cont - 1e-9
+    ) or used_cont > init_cont:
+        reserve_posture = "CONTINGENCY_RESERVE_EXHAUSTED"
+    elif is_contingency_overburned:
+        reserve_posture = "ACCELERATED_RESERVE_BURN_WARNING"
+    else:
+        reserve_posture = "PROPORTIONAL_RESERVE_DRAWDOWN"
+
+    return {
+        "contingency_consumed_pct": contingency_consumed_pct,
+        "remaining_contingency_reserve": remaining_contingency_reserve,
+        "burn_velocity_ratio": burn_velocity_ratio,
+        "has_unapproved_mr_drawdown": has_unapproved_mr_drawdown,
+        "is_contingency_overburned": is_contingency_overburned,
+        "is_reserve_healthy": is_reserve_healthy,
+        "reserve_posture": reserve_posture,
+    }
+
+
+ProjectEVMService.evaluate_reserve_drawdown_velocity = staticmethod(
+    evaluate_reserve_drawdown_velocity
+)
+
+
 __all__ = [
     "evaluate_funding_limit_periods_reconciliation",
     "evaluate_earned_schedule_performance",
     "evaluate_burn_rate_runway_sustainability",
     "evaluate_cpi_spi_stability_window",
+    "evaluate_reserve_drawdown_velocity",
     "ProjectEVMService",
 ]

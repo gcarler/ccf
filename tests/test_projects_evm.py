@@ -2288,3 +2288,110 @@ def test_evaluate_cpi_spi_stability_window_empty_or_none():
             "is_index_stable": True,
             "stability_posture": "NO_SNAPSHOTS_EVALUATED",
         }
+
+
+def test_evaluate_reserve_drawdown_velocity_proportional():
+    """Consumo proporcional de contingencia y MR con CR aprobada -> PROPORTIONAL_RESERVE_DRAWDOWN."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_reserve_drawdown_velocity,
+    )
+
+    res = evaluate_reserve_drawdown_velocity(
+        initial_contingency_reserve=20000.0,
+        contingency_reserve_consumed=8000.0,
+        percent_complete_pct=50.0,
+        management_reserve_used=5000.0,
+        approved_mr_change_requests_count=1,
+        max_burn_velocity_ratio=1.25,
+    )
+    assert res == {
+        "contingency_consumed_pct": 40.0,
+        "remaining_contingency_reserve": 12000.0,
+        "burn_velocity_ratio": 0.8,
+        "has_unapproved_mr_drawdown": False,
+        "is_contingency_overburned": False,
+        "is_reserve_healthy": True,
+        "reserve_posture": "PROPORTIONAL_RESERVE_DRAWDOWN",
+    }
+    assert (
+        ProjectEVMService.evaluate_reserve_drawdown_velocity(
+            initial_contingency_reserve=20000.0,
+            contingency_reserve_consumed=8000.0,
+            percent_complete_pct=50.0,
+            management_reserve_used=5000.0,
+            approved_mr_change_requests_count=1,
+            max_burn_velocity_ratio=1.25,
+        )
+        == res
+    )
+
+
+def test_evaluate_reserve_drawdown_velocity_unapproved_mr_drawdown():
+    """Uso de Reserva de Gestión sin CR aprobada -> UNAPPROVED_MANAGEMENT_RESERVE_DRAWDOWN."""
+    from backend.services.project_evm_service import (
+        evaluate_reserve_drawdown_velocity,
+    )
+
+    res = evaluate_reserve_drawdown_velocity(
+        initial_contingency_reserve=10000.0,
+        contingency_reserve_consumed=2000.0,
+        percent_complete_pct=30.0,
+        management_reserve_used=3500.0,
+        approved_mr_change_requests_count=0,
+    )
+    assert res["has_unapproved_mr_drawdown"] is True
+    assert res["is_reserve_healthy"] is False
+    assert res["reserve_posture"] == "UNAPPROVED_MANAGEMENT_RESERVE_DRAWDOWN"
+
+
+def test_evaluate_reserve_drawdown_velocity_accelerated_and_exhausted():
+    """Quema acelerada (> 1.25) -> ACCELERATED_RESERVE_BURN_WARNING y agotamiento -> CONTINGENCY_RESERVE_EXHAUSTED."""
+    from backend.services.project_evm_service import (
+        evaluate_reserve_drawdown_velocity,
+    )
+
+    accel_res = evaluate_reserve_drawdown_velocity(
+        initial_contingency_reserve=10000.0,
+        contingency_reserve_consumed=7000.0,
+        percent_complete_pct=40.0,
+        max_burn_velocity_ratio=1.25,
+    )
+    assert accel_res["contingency_consumed_pct"] == 70.0
+    assert accel_res["burn_velocity_ratio"] == 1.75
+    assert accel_res["is_contingency_overburned"] is True
+    assert accel_res["is_reserve_healthy"] is False
+    assert accel_res["reserve_posture"] == "ACCELERATED_RESERVE_BURN_WARNING"
+
+    exhausted_res = evaluate_reserve_drawdown_velocity(
+        initial_contingency_reserve=10000.0,
+        contingency_reserve_consumed=10000.0,
+        percent_complete_pct=60.0,
+    )
+    assert exhausted_res["remaining_contingency_reserve"] == 0.0
+    assert exhausted_res["is_contingency_overburned"] is True
+    assert exhausted_res["is_reserve_healthy"] is False
+    assert exhausted_res["reserve_posture"] == "CONTINGENCY_RESERVE_EXHAUSTED"
+
+
+def test_evaluate_reserve_drawdown_velocity_no_reserve_configured():
+    """Sin reservas configuradas -> NO_RESERVE_CONFIGURED."""
+    from backend.services.project_evm_service import (
+        evaluate_reserve_drawdown_velocity,
+    )
+
+    res = evaluate_reserve_drawdown_velocity(
+        initial_contingency_reserve=0.0,
+        contingency_reserve_consumed=0.0,
+        percent_complete_pct=25.0,
+        management_reserve_used=0.0,
+    )
+    assert res == {
+        "contingency_consumed_pct": 0.0,
+        "remaining_contingency_reserve": 0.0,
+        "burn_velocity_ratio": 0.0,
+        "has_unapproved_mr_drawdown": False,
+        "is_contingency_overburned": False,
+        "is_reserve_healthy": True,
+        "reserve_posture": "NO_RESERVE_CONFIGURED",
+    }

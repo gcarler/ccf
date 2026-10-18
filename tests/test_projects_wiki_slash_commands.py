@@ -1880,3 +1880,112 @@ def test_audit_wiki_communication_matrix_governance_empty_or_none():
             "is_compliant": True,
             "matrix_posture": "NO_COMMUNICATION_CHANNELS",
         }
+
+
+def test_audit_wiki_raci_matrix_governance_compliant():
+    """Matriz RACI válida con 1 A, >=1 R y C <= max_consulted_per_row -> COMPLIANT_RACI_GOVERNANCE."""
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_raci_matrix_governance,
+    )
+
+    rows = [
+        {
+            "id": "RACI-01",
+            "accountable": ["Director PMO"],
+            "responsible": ["Arquitecto", "Dev Lead"],
+            "consulted": ["Seguridad", "Infraestructura"],
+            "informed": ["Patrocinador"],
+        },
+        {
+            "deliverable": "RACI-02",
+            "A": "Sponsor",
+            "R": "PM",
+            "C": "Legal, Finanzas",
+            "I": "Comité",
+        },
+    ]
+    res = audit_wiki_raci_matrix_governance(rows, max_consulted_per_row=5)
+    assert res == {
+        "total_rows": 2,
+        "valid_rows_count": 2,
+        "missing_accountable_row_ids": [],
+        "multiple_accountable_row_ids": [],
+        "missing_responsible_row_ids": [],
+        "over_consulted_row_ids": [],
+        "is_raci_compliant": True,
+        "raci_posture": "COMPLIANT_RACI_GOVERNANCE",
+    }
+    assert WikiPMIService.audit_wiki_raci_matrix_governance(rows, max_consulted_per_row=5) == res
+
+
+def test_audit_wiki_raci_matrix_governance_multiple_accountable_conflict():
+    """Fila con múltiples Accountable (A > 1) -> MULTIPLE_ACCOUNTABLE_CONFLICT."""
+    from backend.services.wiki_pmi_service import audit_wiki_raci_matrix_governance
+
+    res = audit_wiki_raci_matrix_governance(
+        [
+            {
+                "id": "RACI-DUP-A",
+                "accountable": ["Director TI", "Director Operaciones"],
+                "responsible": ["Equipo Backend"],
+            }
+        ]
+    )
+    assert res["total_rows"] == 1
+    assert res["valid_rows_count"] == 0
+    assert res["multiple_accountable_row_ids"] == ["RACI-DUP-A"]
+    assert res["is_raci_compliant"] is False
+    assert res["raci_posture"] == "MULTIPLE_ACCOUNTABLE_CONFLICT"
+
+
+def test_audit_wiki_raci_matrix_governance_missing_a_missing_r_and_over_consulted():
+    """Casos de fila sin A, fila sin R y fila con sobrecarga de C."""
+    from backend.services.wiki_pmi_service import audit_wiki_raci_matrix_governance
+
+    no_a_res = audit_wiki_raci_matrix_governance(
+        [{"id": "RACI-NO-A", "accountable": [], "responsible": ["Dev"]}]
+    )
+    assert no_a_res["missing_accountable_row_ids"] == ["RACI-NO-A"]
+    assert no_a_res["is_raci_compliant"] is False
+    assert no_a_res["raci_posture"] == "MISSING_ACCOUNTABLE_OWNER"
+
+    no_r_res = audit_wiki_raci_matrix_governance(
+        [{"id": "RACI-NO-R", "accountable": ["PM"], "responsible": ""}]
+    )
+    assert no_r_res["missing_responsible_row_ids"] == ["RACI-NO-R"]
+    assert no_r_res["is_raci_compliant"] is False
+    assert no_r_res["raci_posture"] == "MISSING_RESPONSIBLE_EXECUTOR"
+
+    over_c_res = audit_wiki_raci_matrix_governance(
+        [
+            {
+                "id": "RACI-OVER-C",
+                "accountable": ["PM"],
+                "responsible": ["Dev"],
+                "consulted": ["C1", "C2", "C3", "C4"],
+            }
+        ],
+        max_consulted_per_row=3,
+    )
+    assert over_c_res["over_consulted_row_ids"] == ["RACI-OVER-C"]
+    assert over_c_res["is_raci_compliant"] is False
+    assert over_c_res["raci_posture"] == "CONSULTED_BOTTLENECK_WARNING"
+
+
+def test_audit_wiki_raci_matrix_governance_empty_or_none():
+    """Lista vacía o None -> NO_RACI_ROWS_EVALUATED."""
+    from backend.services.wiki_pmi_service import audit_wiki_raci_matrix_governance
+
+    for payload in (None, [], ["invalid", 42]):
+        res = audit_wiki_raci_matrix_governance(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_rows": 0,
+            "valid_rows_count": 0,
+            "missing_accountable_row_ids": [],
+            "multiple_accountable_row_ids": [],
+            "missing_responsible_row_ids": [],
+            "over_consulted_row_ids": [],
+            "is_raci_compliant": True,
+            "raci_posture": "NO_RACI_ROWS_EVALUATED",
+        }

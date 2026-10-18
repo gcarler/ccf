@@ -1678,6 +1678,127 @@ class WikiPMIService:
     ) -> Dict[str, Any]:
         return audit_wiki_adr_lifecycle_traceability(adrs)
 
+    @staticmethod
+    def audit_wiki_raci_matrix_governance(
+        raci_rows: list[dict[str, Any]] | None = None,
+        max_consulted_per_row: int = 5,
+    ) -> dict[str, Any]:
+        return audit_wiki_raci_matrix_governance(
+            raci_rows, max_consulted_per_row=max_consulted_per_row
+        )
+
+
+def audit_wiki_raci_matrix_governance(
+    raci_rows: list[dict[str, Any]] | None = None,
+    max_consulted_per_row: int = 5,
+) -> dict[str, Any]:
+    """Audita la Matriz RACI de la Wiki verificando responsabilidad única (Single Accountable) y claridad de roles según PMI PMBOK §9.1.2.2."""
+    valid_rows = [item for item in (raci_rows or []) if isinstance(item, dict)]
+    total_rows = len(valid_rows)
+    if total_rows == 0:
+        return {
+            "total_rows": 0,
+            "valid_rows_count": 0,
+            "missing_accountable_row_ids": [],
+            "multiple_accountable_row_ids": [],
+            "missing_responsible_row_ids": [],
+            "over_consulted_row_ids": [],
+            "is_raci_compliant": True,
+            "raci_posture": "NO_RACI_ROWS_EVALUATED",
+        }
+
+    def _normalize_role_list(
+        item: dict[str, Any], keys: tuple[str, ...]
+    ) -> list[str]:
+        val: Any = None
+        for k in keys:
+            if item.get(k) is not None:
+                val = item.get(k)
+                break
+        if val is None or isinstance(val, bool):
+            return []
+        if isinstance(val, (list, tuple, set)):
+            return [str(x).strip() for x in val if str(x or "").strip()]
+        if isinstance(val, str):
+            return [s.strip() for s in val.split(",") if s.strip()]
+        text = str(val).strip()
+        return [text] if text else []
+
+    try:
+        max_c = int(max_consulted_per_row)
+    except (TypeError, ValueError):
+        max_c = 5
+
+    valid_rows_count = 0
+    missing_accountable_row_ids: list[str] = []
+    multiple_accountable_row_ids: list[str] = []
+    missing_responsible_row_ids: list[str] = []
+    over_consulted_row_ids: list[str] = []
+
+    for idx, item in enumerate(valid_rows, start=1):
+        row_id = (
+            str(
+                item.get("id")
+                or item.get("activity_id")
+                or item.get("deliverable")
+                or item.get("task")
+                or f"RACI-{idx}"
+            ).strip()
+            or f"RACI-{idx}"
+        )
+        accountable_list = _normalize_role_list(item, ("accountable", "A", "a"))
+        responsible_list = _normalize_role_list(item, ("responsible", "R", "r"))
+        consulted_list = _normalize_role_list(item, ("consulted", "C", "c"))
+        _normalize_role_list(item, ("informed", "I", "i"))
+
+        has_issue = False
+        if len(accountable_list) == 0:
+            missing_accountable_row_ids.append(row_id)
+            has_issue = True
+        elif len(accountable_list) > 1:
+            multiple_accountable_row_ids.append(row_id)
+            has_issue = True
+
+        if len(responsible_list) == 0:
+            missing_responsible_row_ids.append(row_id)
+            has_issue = True
+
+        if len(consulted_list) > max_c:
+            over_consulted_row_ids.append(row_id)
+            has_issue = True
+
+        if not has_issue:
+            valid_rows_count += 1
+
+    is_raci_compliant = bool(
+        len(missing_accountable_row_ids) == 0
+        and len(multiple_accountable_row_ids) == 0
+        and len(missing_responsible_row_ids) == 0
+        and len(over_consulted_row_ids) == 0
+    )
+
+    if len(multiple_accountable_row_ids) > 0:
+        raci_posture = "MULTIPLE_ACCOUNTABLE_CONFLICT"
+    elif len(missing_accountable_row_ids) > 0:
+        raci_posture = "MISSING_ACCOUNTABLE_OWNER"
+    elif len(missing_responsible_row_ids) > 0:
+        raci_posture = "MISSING_RESPONSIBLE_EXECUTOR"
+    elif len(over_consulted_row_ids) > 0:
+        raci_posture = "CONSULTED_BOTTLENECK_WARNING"
+    else:
+        raci_posture = "COMPLIANT_RACI_GOVERNANCE"
+
+    return {
+        "total_rows": total_rows,
+        "valid_rows_count": valid_rows_count,
+        "missing_accountable_row_ids": missing_accountable_row_ids,
+        "multiple_accountable_row_ids": multiple_accountable_row_ids,
+        "missing_responsible_row_ids": missing_responsible_row_ids,
+        "over_consulted_row_ids": over_consulted_row_ids,
+        "is_raci_compliant": is_raci_compliant,
+        "raci_posture": raci_posture,
+    }
+
 
 __all__ = [
     "DEFAULT_PMI_KB_DIR",
@@ -1703,6 +1824,7 @@ __all__ = [
     "audit_wiki_communication_matrix_governance",
     "audit_wiki_operational_runbook_readiness",
     "audit_wiki_adr_lifecycle_traceability",
+    "audit_wiki_raci_matrix_governance",
     "WikiPMIService",
 ]
 

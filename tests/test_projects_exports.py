@@ -2403,3 +2403,124 @@ def test_audit_executive_report_change_control_log_empty_or_none():
             "is_ccb_log_compliant": True,
             "ccb_log_posture": "NO_CHANGE_REQUESTS_LOGGED",
         }
+
+
+def test_audit_executive_report_benefits_realization_on_track():
+    """Beneficios con dueño, meta medible y realización >= 80% -> STRATEGIC on track."""
+    from backend.services.project_export_service import (
+        audit_executive_report_benefits_realization as audit_fn,
+    )
+
+    res = audit_fn(
+        {
+            "benefits": [
+                {
+                    "id": "BEN-1",
+                    "benefit_owner": "Secretaría General",
+                    "target_value": 1000.0,
+                    "actual_value": 850.0,
+                },
+                {
+                    "benefit_id": "BEN-2",
+                    "owner": "Coordinación Discipulado",
+                    "target": 500.0,
+                    "realized_value": 600.0,
+                },
+            ]
+        }
+    )
+    assert res["is_benefits_on_track"] is True
+    assert res["total_benefits"] == 2
+    assert res["average_realization_pct"] == 92.5
+    assert res["unowned_benefit_ids"] == []
+    assert res["unmeasurable_benefit_ids"] == []
+    assert res["underperforming_benefit_ids"] == []
+    assert res["benefits_posture"] == "STRATEGIC_BENEFITS_ON_TRACK"
+
+
+def test_audit_executive_report_benefits_realization_unowned_or_unmeasurable():
+    """Sin dueño o meta <= 0/None -> UNOWNED_OR_UNMEASURABLE (precedencia posture)."""
+    from backend.services.project_export_service import (
+        audit_executive_report_benefits_realization as audit_fn,
+    )
+
+    res = audit_fn(
+        {
+            "benefits_register": [
+                {
+                    "id": "BEN-NOOWNER",
+                    "target_value": 100.0,
+                    "actual_value": 95.0,
+                },
+                {
+                    "id": "BEN-NOTARGET",
+                    "benefit_owner": "Dirección",
+                },
+                {
+                    "id": "BEN-ZERO",
+                    "benefit_owner": "Dirección",
+                    "target_value": 0.0,
+                    "actual_value": 50.0,
+                },
+            ]
+        }
+    )
+    assert res["is_benefits_on_track"] is False
+    assert res["total_benefits"] == 3
+    assert res["unowned_benefit_ids"] == ["BEN-NOOWNER"]
+    assert res["unmeasurable_benefit_ids"] == ["BEN-NOTARGET", "BEN-ZERO"]
+    assert res["underperforming_benefit_ids"] == []
+    assert res["benefits_posture"] == "UNOWNED_OR_UNMEASURABLE_BENEFIT"
+
+
+def test_audit_executive_report_benefits_realization_shortfall():
+    """Medibles y con dueño pero bajo el umbral -> BENEFITS_REALIZATION_SHORTFALL."""
+    from backend.services.project_export_service import (
+        audit_executive_report_benefits_realization as audit_fn,
+    )
+
+    res = audit_fn(
+        {
+            "strategic_kpis": [
+                {
+                    "id": "BEN-LOW",
+                    "benefit_owner": "Encargado de Proyectos",
+                    "target_value": 1000.0,
+                    "actual_value": 400.0,
+                },
+                {
+                    "id": "BEN-OK",
+                    "benefit_owner": "Encargado de Proyectos",
+                    "target_value": 100.0,
+                    "actual_value": 80.0,
+                },
+            ]
+        }
+    )
+    assert res["is_benefits_on_track"] is False
+    assert res["total_benefits"] == 2
+    assert res["unowned_benefit_ids"] == []
+    assert res["unmeasurable_benefit_ids"] == []
+    assert res["underperforming_benefit_ids"] == ["BEN-LOW"]
+    # BEN-LOW ratio 40.0; BEN-OK ratio 80.0 -> promedio 60.0.
+    assert res["average_realization_pct"] == 60.0
+    assert res["benefits_posture"] == "BENEFITS_REALIZATION_SHORTFALL"
+
+
+def test_audit_executive_report_benefits_realization_empty_or_none():
+    """Payload None, sin beneficios o lista vacía -> NO_BENEFITS_REPORTED."""
+    from backend.services.project_export_service import (
+        audit_executive_report_benefits_realization as audit_fn,
+    )
+
+    for payload in (None, {}, {"benefits": []}, {"benefits": ["nope", 42]}):
+        res = audit_fn(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_benefits": 0,
+            "average_realization_pct": 0.0,
+            "unowned_benefit_ids": [],
+            "unmeasurable_benefit_ids": [],
+            "underperforming_benefit_ids": [],
+            "is_benefits_on_track": True,
+            "benefits_posture": "NO_BENEFITS_REPORTED",
+        }

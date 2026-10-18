@@ -34,6 +34,7 @@ __all__ = [
     "audit_stakeholders_csv_engagement_gaps",
     "audit_expenses_vendor_concentration",
     "audit_executive_report_change_governance",
+    "audit_executive_report_benefits_realization",
     "ProjectExportService",
 ]
 
@@ -309,6 +310,16 @@ class ProjectExportService:
         report_data: Optional[dict],
     ) -> dict[str, Any]:
         return audit_executive_report_change_governance(report_data)
+
+    @staticmethod
+    def audit_executive_report_benefits_realization(
+        report_payload: dict[str, Any] | None = None,
+        min_realization_pct: float = 80.0,
+    ) -> dict[str, Any]:
+        return audit_executive_report_benefits_realization(
+            report_payload,
+            min_realization_pct=min_realization_pct,
+        )
 
     @staticmethod
     def audit_executive_report_quality_disclosure(
@@ -699,6 +710,121 @@ def audit_executive_report_milestone_coverage(
         "financial_kpi_mentions": financial_kpi_mentions,
         "coverage_score": coverage_score,
         "posture": posture,
+    }
+
+
+def audit_executive_report_benefits_realization(
+    report_payload: dict[str, Any] | None = None,
+    min_realization_pct: float = 80.0,
+) -> dict[str, Any]:
+    """Audita la realización de beneficios y KPIs estratégicos del informe (PMBOK §1.2.6.2).
+
+    Extrae los beneficios desde `benefits`, `benefits_register` o
+    `strategic_kpis` (primera fuente con dicts). Cada beneficio declara
+    `id`/`benefit_id`/`code` (fallback 'BEN-{idx}'), responsable
+    (`benefit_owner`/`owner`/`responsable`), meta (`target_value`/`target`/
+    `planned_value`) y valor actual (`actual_value`/`realized_value`/
+    `current_value`, default 0.0):
+    - `unowned_benefit_ids`: sin responsable;
+    - `unmeasurable_benefit_ids`: meta ausente o <= 0;
+    - `underperforming_benefit_ids`: ratio < min_realization_pct.
+    - `average_realization_pct`: promedio de ratios clamp [0, 100] (2 dec; 0.0 vacío).
+    - `is_benefits_on_track`: las 3 listas de faltantes vacías.
+    - `benefits_posture`: 'NO_BENEFITS_REPORTED' sin beneficios;
+      'UNOWNED_OR_UNMEASURABLE_BENEFIT'; 'BENEFITS_REALIZATION_SHORTFALL';
+      'STRATEGIC_BENEFITS_ON_TRACK'.
+    """
+    benefits: list[dict[str, Any]] = []
+    if isinstance(report_payload, dict):
+        for source_key in ("benefits", "benefits_register", "strategic_kpis"):
+            candidate = report_payload.get(source_key)
+            if isinstance(candidate, list):
+                benefits = [b for b in candidate if isinstance(b, dict)]
+                if benefits:
+                    break
+    total_benefits = len(benefits)
+    if total_benefits == 0:
+        return {
+            "total_benefits": 0,
+            "average_realization_pct": 0.0,
+            "unowned_benefit_ids": [],
+            "unmeasurable_benefit_ids": [],
+            "underperforming_benefit_ids": [],
+            "is_benefits_on_track": True,
+            "benefits_posture": "NO_BENEFITS_REPORTED",
+        }
+
+    unowned_benefit_ids: list[str] = []
+    unmeasurable_benefit_ids: list[str] = []
+    underperforming_benefit_ids: list[str] = []
+    realization_scores: list[float] = []
+
+    for idx, item in enumerate(benefits, start=1):
+        benefit_id = str(
+            item.get("id") or item.get("benefit_id") or item.get("code") or f"BEN-{idx}"
+        ).strip()
+        benefit_owner = str(
+            item.get("benefit_owner") or item.get("owner") or item.get("responsable") or ""
+        ).strip()
+        target_raw = (
+            item.get("target_value")
+            if item.get("target_value") is not None
+            else (item.get("target") if item.get("target") is not None else item.get("planned_value"))
+        )
+        actual_raw = (
+            item.get("actual_value")
+            if item.get("actual_value") is not None
+            else (item.get("realized_value") if item.get("realized_value") is not None else (item.get("current_value") or 0.0))
+        )
+        try:
+            actual_value = float(actual_raw)
+        except (TypeError, ValueError):
+            actual_value = 0.0
+
+        target_value: float | None
+        try:
+            target_value = float(target_raw) if target_raw is not None else None
+        except (TypeError, ValueError):
+            target_value = None
+
+        if not benefit_owner:
+            unowned_benefit_ids.append(benefit_id)
+        if target_value is None or target_value <= 0.0:
+            unmeasurable_benefit_ids.append(benefit_id)
+        if target_value is not None and target_value > 0.0:
+            ratio = min(100.0, max(0.0, (actual_value / target_value) * 100.0))
+            realization_scores.append(ratio)
+            if ratio + 1e-9 < float(min_realization_pct):
+                underperforming_benefit_ids.append(benefit_id)
+
+    average_realization_pct = (
+        round(sum(realization_scores) / len(realization_scores), 2)
+        if realization_scores
+        else 0.0
+    )
+    is_benefits_on_track = bool(
+        len(unowned_benefit_ids) == 0
+        and len(unmeasurable_benefit_ids) == 0
+        and len(underperforming_benefit_ids) == 0
+    )
+
+    if total_benefits == 0:
+        benefits_posture = "NO_BENEFITS_REPORTED"
+    elif unowned_benefit_ids or unmeasurable_benefit_ids:
+        benefits_posture = "UNOWNED_OR_UNMEASURABLE_BENEFIT"
+    elif underperforming_benefit_ids:
+        benefits_posture = "BENEFITS_REALIZATION_SHORTFALL"
+    else:
+        benefits_posture = "STRATEGIC_BENEFITS_ON_TRACK"
+
+    return {
+        "total_benefits": total_benefits,
+        "average_realization_pct": average_realization_pct,
+        "unowned_benefit_ids": unowned_benefit_ids,
+        "unmeasurable_benefit_ids": unmeasurable_benefit_ids,
+        "underperforming_benefit_ids": underperforming_benefit_ids,
+        "is_benefits_on_track": is_benefits_on_track,
+        "benefits_posture": benefits_posture,
     }
 
 
@@ -1991,6 +2117,7 @@ __all__ = [
     "audit_stakeholders_csv_engagement_gaps",
     "audit_expenses_vendor_concentration",
     "audit_executive_report_change_governance",
+    "audit_executive_report_benefits_realization",
     "audit_executive_report_quality_disclosure",
     "audit_executive_report_resource_workload",
     "audit_executive_report_procurement_slas",
