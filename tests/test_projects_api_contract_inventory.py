@@ -5085,3 +5085,111 @@ def test_uuid_and_identifier_format_hygiene_ignores_non_project_schemas():
     assert res["plain_string_identifier_properties"] == []
     assert res["non_string_identifier_properties"] == []
     assert res["is_identifier_type_hygiene_compliant"] is True
+
+
+def test_nullable_and_union_branch_hygiene_live_openapi():
+    """Valida contra el esquema OpenAPI real que todas las uniones anyOf/oneOf sean coherentes."""
+    res = audit_projects_api_contracts.summarize_projects_nullable_and_union_branch_hygiene()
+    assert res["total_properties_inspected"] > 0
+    assert res["total_union_properties"] > 0
+    assert res["degenerate_single_branch_unions"] == []
+    assert res["null_only_unions"] == []
+    assert res["duplicate_branch_unions"] == []
+    assert res["is_union_branch_hygiene_compliant"] is True
+
+
+def test_nullable_and_union_branch_hygiene_detects_degenerate_and_null_only_unions():
+    """Detecta uniones con menos de 2 ramas o compuestas únicamente por ramas null."""
+    schema = {
+        "components": {
+            "schemas": {
+                "ProjectRiskUpdate": {
+                    "type": "object",
+                    "properties": {
+                        "single_branch_field": {
+                            "anyOf": [{"type": "string"}],
+                        },
+                        "only_null_field": {
+                            "oneOf": [{"type": "null"}, {"type": "null"}],
+                        },
+                        "valid_nullable_field": {
+                            "anyOf": [{"type": "string"}, {"type": "null"}],
+                        },
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_nullable_and_union_branch_hygiene(
+        schema
+    )
+    assert res["total_properties_inspected"] == 3
+    assert res["total_union_properties"] == 3
+    assert res["degenerate_single_branch_unions"] == [
+        "ProjectRiskUpdate.single_branch_field"
+    ]
+    assert res["null_only_unions"] == ["ProjectRiskUpdate.only_null_field"]
+    assert res["duplicate_branch_unions"] == ["ProjectRiskUpdate.only_null_field"]
+    assert res["is_union_branch_hygiene_compliant"] is False
+
+
+def test_nullable_and_union_branch_hygiene_detects_duplicate_branches():
+    """Detecta ramas duplicadas idénticas dentro de anyOf o oneOf."""
+    schema = {
+        "components": {
+            "schemas": {
+                "WbsNodePatch": {
+                    "type": "object",
+                    "properties": {
+                        "duplicated_string_union": {
+                            "anyOf": [
+                                {"type": "string", "maxLength": 100},
+                                {"maxLength": 100, "type": "string"},
+                                {"type": "null"},
+                            ]
+                        },
+                        "clean_polymorphic_union": {
+                            "oneOf": [
+                                {"$ref": "#/components/schemas/ProjectTaskRead"},
+                                {"$ref": "#/components/schemas/MilestoneScheduleInput"},
+                            ]
+                        },
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_nullable_and_union_branch_hygiene(
+        schema
+    )
+    assert res["total_properties_inspected"] == 2
+    assert res["total_union_properties"] == 2
+    assert res["degenerate_single_branch_unions"] == []
+    assert res["null_only_unions"] == []
+    assert res["duplicate_branch_unions"] == ["WbsNodePatch.duplicated_string_union"]
+    assert res["is_union_branch_hygiene_compliant"] is False
+
+
+def test_nullable_and_union_branch_hygiene_ignores_non_project_schemas():
+    """Ignora esquemas ajenos al dominio de proyectos y retorna cumplimiento limpio."""
+    schema = {
+        "components": {
+            "schemas": {
+                "ExternalAuthPayload": {
+                    "type": "object",
+                    "properties": {
+                        "broken_union": {"anyOf": [{"type": "null"}]},
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_nullable_and_union_branch_hygiene(
+        schema
+    )
+    assert res["total_properties_inspected"] == 0
+    assert res["total_union_properties"] == 0
+    assert res["degenerate_single_branch_unions"] == []
+    assert res["null_only_unions"] == []
+    assert res["duplicate_branch_unions"] == []
+    assert res["is_union_branch_hygiene_compliant"] is True

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import difflib
+import json
 import re
 import sys
 from collections.abc import Mapping
@@ -3570,6 +3571,119 @@ def summarize_projects_uuid_and_identifier_field_hygiene(
         "plain_string_identifier_properties": sorted(plain_string_identifier_properties),
         "non_string_identifier_properties": sorted(non_string_identifier_properties),
         "is_identifier_type_hygiene_compliant": len(non_string_identifier_properties) == 0,
+    }
+
+
+def summarize_projects_nullable_and_union_branch_hygiene(
+    openapi_schema: Mapping[str, object] | None = None,
+) -> dict[str, object]:
+    """Audita la coherencia de ramas en uniones anyOf/oneOf de propiedades de esquemas OpenAPI de proyectos."""
+    if openapi_schema is None:
+        from backend.app import app
+
+        schema_dict: Mapping[str, Any] = app.openapi()
+    else:
+        schema_dict = openapi_schema
+
+    referenced_schemas: set[str] = set()
+    paths = schema_dict.get("paths", {})
+    if isinstance(paths, Mapping):
+        for path, methods in paths.items():
+            if not str(path).startswith(PROJECT_PREFIX) or not isinstance(methods, Mapping):
+                continue
+            for method, operation in methods.items():
+                if str(method).lower() not in HTTP_METHODS or not isinstance(operation, Mapping):
+                    continue
+                for ref in schema_refs(operation):
+                    referenced_schemas.add(ref)
+
+    components = schema_dict.get("components", {})
+    schemas = components.get("schemas", {}) if isinstance(components, Mapping) else {}
+
+    if isinstance(schemas, Mapping) and referenced_schemas:
+        queue = list(referenced_schemas)
+        while queue:
+            current = queue.pop()
+            s_obj = schemas.get(current)
+            if isinstance(s_obj, Mapping):
+                for nested_ref in schema_refs(dict(s_obj)):
+                    if nested_ref not in referenced_schemas:
+                        referenced_schemas.add(nested_ref)
+                        queue.append(nested_ref)
+
+    total_properties_inspected = 0
+    total_union_properties = 0
+    degenerate_single_branch_unions: list[str] = []
+    null_only_unions: list[str] = []
+    duplicate_branch_unions: list[str] = []
+
+    if isinstance(schemas, Mapping):
+        for s_name in sorted(schemas.keys()):
+            s_obj = schemas[s_name]
+            if not isinstance(s_obj, Mapping):
+                continue
+            is_proj = (
+                "project" in s_name.lower()
+                or s_name.startswith(_PROJECT_DOMAIN_SCHEMA_PREFIXES)
+                or s_name in referenced_schemas
+            )
+            if not is_proj:
+                continue
+
+            props = s_obj.get("properties", {})
+            if not isinstance(props, Mapping):
+                continue
+
+            for prop_name in sorted(props.keys()):
+                prop_schema = props[prop_name]
+                if not isinstance(prop_schema, Mapping):
+                    continue
+
+                total_properties_inspected += 1
+                branches = prop_schema.get("anyOf")
+                if not isinstance(branches, list):
+                    branches = prop_schema.get("oneOf")
+                if not isinstance(branches, list):
+                    continue
+
+                total_union_properties += 1
+                qualified = f"{s_name}.{prop_name}"
+
+                if len(branches) < 2:
+                    degenerate_single_branch_unions.append(qualified)
+
+                non_null_count = sum(
+                    1
+                    for b in branches
+                    if isinstance(b, Mapping) and b.get("type") != "null"
+                )
+                if non_null_count == 0:
+                    null_only_unions.append(qualified)
+
+                seen_serialized: set[str] = set()
+                has_duplicate = False
+                for b in branches:
+                    if not isinstance(b, Mapping):
+                        continue
+                    serialized = json.dumps(dict(b), sort_keys=True)
+                    if serialized in seen_serialized:
+                        has_duplicate = True
+                        break
+                    seen_serialized.add(serialized)
+                if has_duplicate:
+                    duplicate_branch_unions.append(qualified)
+
+    return {
+        "total_properties_inspected": total_properties_inspected,
+        "total_union_properties": total_union_properties,
+        "degenerate_single_branch_unions": sorted(degenerate_single_branch_unions),
+        "null_only_unions": sorted(null_only_unions),
+        "duplicate_branch_unions": sorted(duplicate_branch_unions),
+        "is_union_branch_hygiene_compliant": (
+            len(degenerate_single_branch_unions) == 0
+            and len(null_only_unions) == 0
+            and len(duplicate_branch_unions) == 0
+        ),
     }
 
 
