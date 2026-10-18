@@ -2981,6 +2981,7 @@ __all__ = [
     "audit_executive_report_vendor_sla_and_liquidated_damages",
     "audit_executive_report_stakeholder_escalation_and_briefing_cadence",
     "audit_executive_report_esg_sustainability_and_regulatory_compliance",
+    "audit_executive_report_risk_burndown_and_residual_exposure",
     "ProjectExportService",
 ]
 
@@ -4627,3 +4628,92 @@ def audit_executive_report_esg_sustainability_and_regulatory_compliance(
 ProjectExportService.audit_executive_report_esg_sustainability_and_regulatory_compliance = staticmethod(
     audit_executive_report_esg_sustainability_and_regulatory_compliance
 )
+
+
+def audit_executive_report_risk_burndown_and_residual_exposure(
+    risk_burndown_snapshots: list[dict[str, Any]],
+    *,
+    current_contingency_reserve: float = 0.0,
+    max_residual_to_reserve_ratio: float = 1.0,
+) -> dict[str, Any]:
+    """Audita velocidad de reduccion de riesgos (risk burndown) y cobertura de reserva frente a exposicion residual EMV (PMBOK §11.6, §4.5)."""
+    if not isinstance(risk_burndown_snapshots, list):
+        risk_burndown_snapshots = []
+
+    total_periods = 0
+    compliant_periods_count = 0
+    expanding_risk_periods_count = 0
+    overdue_mitigation_periods_count = 0
+    latest_residual_emv = 0.0
+    findings: list[dict[str, Any]] = []
+
+    for raw in risk_burndown_snapshots:
+        if not isinstance(raw, dict):
+            continue
+        total_periods += 1
+        period_id = str(raw.get("period_id") or "").strip() or f"PERIOD-{total_periods}"
+        initial_emv = float(raw.get("initial_emv_exposure", 0.0) or 0.0)
+        closed_emv = float(raw.get("closed_or_mitigated_emv", 0.0) or 0.0)
+        new_emv = float(raw.get("newly_identified_emv", 0.0) or 0.0)
+        overdue_actions = int(raw.get("overdue_mitigation_actions_count", 0) or 0)
+
+        net_emv_reduction = round(closed_emv - new_emv, 2)
+        ending_residual_emv = round(max(0.0, initial_emv - net_emv_reduction), 2)
+        latest_residual_emv = ending_residual_emv
+
+        expanding_risk = net_emv_reduction < 0.0
+        has_overdue_mitigations = overdue_actions > 0
+
+        issues: list[str] = []
+        if expanding_risk:
+            expanding_risk_periods_count += 1
+            issues.append("net_risk_exposure_expansion")
+        if has_overdue_mitigations:
+            overdue_mitigation_periods_count += 1
+            issues.append("overdue_mitigation_actions")
+
+        if not issues:
+            compliant_periods_count += 1
+        else:
+            findings.append(
+                {
+                    "period_id": period_id,
+                    "ending_residual_emv": ending_residual_emv,
+                    "issues": issues,
+                }
+            )
+
+    reserve_cap = float(current_contingency_reserve) * float(max_residual_to_reserve_ratio)
+    reserve_coverage_shortfall = round(max(0.0, latest_residual_emv - reserve_cap), 2)
+    is_reserve_underfunded = bool(reserve_coverage_shortfall > 0.0)
+
+    if (
+        expanding_risk_periods_count == 0
+        and overdue_mitigation_periods_count == 0
+        and not is_reserve_underfunded
+    ):
+        status = "HEALTHY"
+    elif is_reserve_underfunded or (
+        expanding_risk_periods_count > 0 and overdue_mitigation_periods_count > 0
+    ):
+        status = "CRITICAL"
+    else:
+        status = "AT_RISK"
+
+    return {
+        "total_periods": total_periods,
+        "compliant_periods_count": compliant_periods_count,
+        "expanding_risk_periods_count": expanding_risk_periods_count,
+        "overdue_mitigation_periods_count": overdue_mitigation_periods_count,
+        "latest_residual_emv": latest_residual_emv,
+        "reserve_coverage_shortfall": reserve_coverage_shortfall,
+        "is_reserve_underfunded": is_reserve_underfunded,
+        "risk_burndown_governance_status": status,
+        "findings": findings,
+    }
+
+
+ProjectExportService.audit_executive_report_risk_burndown_and_residual_exposure = staticmethod(
+    audit_executive_report_risk_burndown_and_residual_exposure
+)
+

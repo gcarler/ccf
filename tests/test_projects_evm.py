@@ -5329,3 +5329,131 @@ def test_evaluate_evm_retroactive_change_and_negative_period_anomaly_empty_and_e
         }
 
 
+def test_evaluate_evm_subcontractor_flowdown_and_invoice_overbilling_healthy():
+    """Subcontratos con EV reclamado alineado al avance fisico y facturacion dentro de margen o respaldada por retencion -> HEALTHY."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_subcontractor_flowdown_and_invoice_overbilling,
+    )
+
+    subs = [
+        {
+            "subcontract_id": "SUB-01",
+            "subcontract_bac": 100000.0,
+            "claimed_ev": 50000.0,
+            "physical_progress_verified_pct": 50.0,
+            "billed_ac": 52000.0,
+            "retention_withheld_amount": 0.0,
+        },
+        {
+            "subcontract_id": "SUB-02",
+            "subcontract_bac": 80000.0,
+            "claimed_ev": 40000.0,
+            "physical_progress_verified_pct": 50.0,
+            "billed_ac": 48000.0,  # spread 10% > 5%, pero retencion 8000 cubre el exceso
+            "retention_withheld_amount": 8000.0,
+        },
+    ]
+    res = evaluate_evm_subcontractor_flowdown_and_invoice_overbilling(
+        subs, max_advance_billing_spread_pct=5.0
+    )
+    assert res == {
+        "total_subcontracts": 2,
+        "compliant_subcontracts_count": 2,
+        "ev_overstated_subcontracts_count": 0,
+        "unbacked_overbilling_subcontracts_count": 0,
+        "total_ev_overstatement_amount": 0.0,
+        "subcontractor_evm_status": "HEALTHY",
+        "discrepancies": [],
+    }
+    assert (
+        ProjectEVMService.evaluate_evm_subcontractor_flowdown_and_invoice_overbilling(
+            subs, max_advance_billing_spread_pct=5.0
+        )
+        == res
+    )
+
+
+def test_evaluate_evm_subcontractor_flowdown_and_invoice_overbilling_at_risk_ev_overstated():
+    """Detecta sobredeclaracion de EV frente al avance fisico verificado sin sobrefacturacion AC como AT_RISK."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_subcontractor_flowdown_and_invoice_overbilling,
+    )
+
+    res = evaluate_evm_subcontractor_flowdown_and_invoice_overbilling(
+        [
+            {
+                "subcontract_id": "SUB-EV-INFLATED",
+                "subcontract_bac": 100000.0,
+                "claimed_ev": 65000.0,
+                "physical_progress_verified_pct": 50.0,
+                "billed_ac": 50000.0,
+                "retention_withheld_amount": 5000.0,
+            }
+        ],
+        max_advance_billing_spread_pct=5.0,
+    )
+    assert res["total_subcontracts"] == 1
+    assert res["compliant_subcontracts_count"] == 0
+    assert res["ev_overstated_subcontracts_count"] == 1
+    assert res["unbacked_overbilling_subcontracts_count"] == 0
+    assert res["total_ev_overstatement_amount"] == 15000.0
+    assert res["subcontractor_evm_status"] == "AT_RISK"
+    assert res["discrepancies"] == [
+        {
+            "subcontract_id": "SUB-EV-INFLATED",
+            "verified_ev": 50000.0,
+            "ev_overstatement_amount": 15000.0,
+            "reasons": ["claimed_ev_exceeds_verified_physical_progress"],
+        }
+    ]
+
+
+def test_evaluate_evm_subcontractor_flowdown_and_invoice_overbilling_critical_overbilling():
+    """Detecta sobrefacturacion AC por encima del avance fisico sin retencion suficiente como CRITICAL."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_subcontractor_flowdown_and_invoice_overbilling,
+    )
+
+    res = evaluate_evm_subcontractor_flowdown_and_invoice_overbilling(
+        [
+            {
+                "subcontract_id": "SUB-OVERBILLED",
+                "subcontract_bac": 100000.0,
+                "claimed_ev": 40000.0,
+                "physical_progress_verified_pct": 40.0,
+                "billed_ac": 55000.0,  # spread 15% > 5%, exceso 15000 > retencion 5000
+                "retention_withheld_amount": 5000.0,
+            }
+        ],
+        max_advance_billing_spread_pct=5.0,
+    )
+    assert res["total_subcontracts"] == 1
+    assert res["compliant_subcontracts_count"] == 0
+    assert res["ev_overstated_subcontracts_count"] == 0
+    assert res["unbacked_overbilling_subcontracts_count"] == 1
+    assert res["subcontractor_evm_status"] == "CRITICAL"
+    assert "unbacked_invoice_overbilling" in res["discrepancies"][0]["reasons"]
+
+
+def test_evaluate_evm_subcontractor_flowdown_and_invoice_overbilling_empty_and_export():
+    """Maneja entradas vacias o invalidas devolviendo HEALTHY y verifica exportacion en __all__."""
+    import backend.services.project_evm_service as _m
+    from backend.services.project_evm_service import (
+        evaluate_evm_subcontractor_flowdown_and_invoice_overbilling,
+    )
+
+    assert "evaluate_evm_subcontractor_flowdown_and_invoice_overbilling" in _m.__all__
+    for bad in ([], None, "invalid"):
+        assert evaluate_evm_subcontractor_flowdown_and_invoice_overbilling(bad) == {
+            "total_subcontracts": 0,
+            "compliant_subcontracts_count": 0,
+            "ev_overstated_subcontracts_count": 0,
+            "unbacked_overbilling_subcontracts_count": 0,
+            "total_ev_overstatement_amount": 0.0,
+            "subcontractor_evm_status": "HEALTHY",
+            "discrepancies": [],
+        }
+
+
+

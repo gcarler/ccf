@@ -5984,3 +5984,132 @@ def test_audit_esg_compliance_fine_exposure_and_empty():
         == audit_executive_report_esg_sustainability_and_regulatory_compliance(sample)
     )
     assert "audit_executive_report_esg_sustainability_and_regulatory_compliance" in mod.__all__
+
+
+def test_audit_executive_report_risk_burndown_and_residual_exposure_healthy():
+    """Trayectoria de riesgo con reduccion neta positiva, cero acciones vencidas y reserva suficiente -> HEALTHY."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_risk_burndown_and_residual_exposure,
+    )
+
+    snapshots = [
+        {
+            "period_id": "P-01",
+            "initial_emv_exposure": 40000.0,
+            "closed_or_mitigated_emv": 15000.0,
+            "newly_identified_emv": 5000.0,
+            "overdue_mitigation_actions_count": 0,
+        },
+        {
+            "period_id": "P-02",
+            "initial_emv_exposure": 30000.0,
+            "closed_or_mitigated_emv": 12000.0,
+            "newly_identified_emv": 2000.0,
+            "overdue_mitigation_actions_count": 0,
+        },
+    ]
+    res = audit_executive_report_risk_burndown_and_residual_exposure(
+        snapshots,
+        current_contingency_reserve=25000.0,
+        max_residual_to_reserve_ratio=1.0,
+    )
+    assert res == {
+        "total_periods": 2,
+        "compliant_periods_count": 2,
+        "expanding_risk_periods_count": 0,
+        "overdue_mitigation_periods_count": 0,
+        "latest_residual_emv": 20000.0,
+        "reserve_coverage_shortfall": 0.0,
+        "is_reserve_underfunded": False,
+        "risk_burndown_governance_status": "HEALTHY",
+        "findings": [],
+    }
+    assert (
+        ProjectExportService.audit_executive_report_risk_burndown_and_residual_exposure(
+            snapshots, current_contingency_reserve=25000.0
+        )
+        == res
+    )
+
+
+def test_audit_executive_report_risk_burndown_and_residual_exposure_at_risk():
+    """Detecta expansion neta de riesgo sin acciones vencidas y con reserva suficiente como AT_RISK."""
+    from backend.services.project_export_service import (
+        audit_executive_report_risk_burndown_and_residual_exposure,
+    )
+
+    res = audit_executive_report_risk_burndown_and_residual_exposure(
+        [
+            {
+                "period_id": "P-EXPAND",
+                "initial_emv_exposure": 20000.0,
+                "closed_or_mitigated_emv": 3000.0,
+                "newly_identified_emv": 8000.0,
+                "overdue_mitigation_actions_count": 0,
+            }
+        ],
+        current_contingency_reserve=30000.0,
+        max_residual_to_reserve_ratio=1.0,
+    )
+    assert res["total_periods"] == 1
+    assert res["compliant_periods_count"] == 0
+    assert res["expanding_risk_periods_count"] == 1
+    assert res["overdue_mitigation_periods_count"] == 0
+    assert res["latest_residual_emv"] == 25000.0
+    assert res["is_reserve_underfunded"] is False
+    assert res["risk_burndown_governance_status"] == "AT_RISK"
+    assert len(res["findings"]) == 1
+    assert res["findings"][0]["period_id"] == "P-EXPAND"
+    assert res["findings"][0]["ending_residual_emv"] == 25000.0
+
+
+def test_audit_executive_report_risk_burndown_and_residual_exposure_critical():
+    """Detecta reserva insuficiente frente a exposicion residual o combinacion de expansion + vencimiento como CRITICAL."""
+    from backend.services.project_export_service import (
+        audit_executive_report_risk_burndown_and_residual_exposure,
+    )
+
+    res = audit_executive_report_risk_burndown_and_residual_exposure(
+        [
+            {
+                "period_id": "P-CRIT",
+                "initial_emv_exposure": 50000.0,
+                "closed_or_mitigated_emv": 5000.0,
+                "newly_identified_emv": 10000.0,
+                "overdue_mitigation_actions_count": 2,
+            }
+        ],
+        current_contingency_reserve=40000.0,
+        max_residual_to_reserve_ratio=1.0,
+    )
+    assert res["latest_residual_emv"] == 55000.0
+    assert res["reserve_coverage_shortfall"] == 15000.0
+    assert res["is_reserve_underfunded"] is True
+    assert res["expanding_risk_periods_count"] == 1
+    assert res["overdue_mitigation_periods_count"] == 1
+    assert res["risk_burndown_governance_status"] == "CRITICAL"
+
+
+def test_audit_executive_report_risk_burndown_and_residual_exposure_empty_and_export():
+    """Maneja entradas vacias o invalidas devolviendo HEALTHY y verifica exportacion en __all__."""
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        audit_executive_report_risk_burndown_and_residual_exposure,
+    )
+
+    assert "audit_executive_report_risk_burndown_and_residual_exposure" in mod.__all__
+    for payload in ([], None, "invalid"):
+        empty = audit_executive_report_risk_burndown_and_residual_exposure(payload)  # type: ignore[arg-type]
+        assert empty == {
+            "total_periods": 0,
+            "compliant_periods_count": 0,
+            "expanding_risk_periods_count": 0,
+            "overdue_mitigation_periods_count": 0,
+            "latest_residual_emv": 0.0,
+            "reserve_coverage_shortfall": 0.0,
+            "is_reserve_underfunded": False,
+            "risk_burndown_governance_status": "HEALTHY",
+            "findings": [],
+        }
+

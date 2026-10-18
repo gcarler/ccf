@@ -5413,3 +5413,152 @@ def test_audit_wiki_requirements_bidirectional_traceability_and_gold_plating_emp
     )
     assert "audit_wiki_requirements_bidirectional_traceability_and_gold_plating" in mod.__all__
 
+
+
+def test_audit_wiki_decision_log_daci_accountability_and_reversal_healthy():
+    """Decisiones sin ambiguedad DACI, con alternativas y SLA al dia."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_decision_log_daci_accountability_and_reversal,
+    )
+
+    res = audit_wiki_decision_log_daci_accountability_and_reversal(
+        [
+            {"decision_id": "D-1", "status": "approved", "approvers_count": 1,
+             "driver_assigned": True, "alternatives_documented_count": 3,
+             "days_pending": 0, "was_reversed": False,
+             "reversal_impact_documented": False},
+            {"decision_id": "D-2", "status": "PENDING", "approvers_count": 1,
+             "driver_assigned": True, "alternatives_documented_count": 2,
+             "days_pending": 10, "was_reversed": False,
+             "reversal_impact_documented": False},
+        ]
+    )
+    assert res == {
+        "total_decisions": 2,
+        "compliant_decisions_count": 2,
+        "ambiguous_accountability_count": 0,
+        "stalled_or_unjustified_decisions_count": 0,
+        "undocumented_reversals_count": 0,
+        "decision_governance_status": "HEALTHY",
+        "violations": [],
+    }
+
+
+def test_audit_wiki_decision_log_daci_accountability_and_reversal_critical():
+    """Ambiguedad DACI (approvers != 1 / sin driver) y reversion sin impacto -> CRITICAL."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_decision_log_daci_accountability_and_reversal,
+    )
+
+    crit = audit_wiki_decision_log_daci_accountability_and_reversal(
+        [
+            {"decision_id": "D-3", "status": "DECIDED", "approvers_count": 2,
+             "driver_assigned": False, "alternatives_documented_count": 3,
+             "days_pending": 0, "was_reversed": False,
+             "reversal_impact_documented": False},
+            {"decision_id": "D-4", "status": "approved", "approvers_count": 1,
+             "driver_assigned": True, "alternatives_documented_count": 3,
+             "days_pending": 0, "was_reversed": True,
+             "reversal_impact_documented": False},
+        ]
+    )
+    assert crit["ambiguous_accountability_count"] == 1
+    assert crit["undocumented_reversals_count"] == 1
+    assert crit["compliant_decisions_count"] == 0
+    assert crit["decision_governance_status"] == "CRITICAL"
+    assert crit["violations"][0]["reasons"] == [
+        "DACI_APPROVERS_COUNT_AMBIGUOUS (2 != 1)", "DACI_DRIVER_NO_ASSIGNED",
+    ]
+    assert crit["violations"][1]["reasons"] == ["REVERSAL_IMPACT_UNDOCUMENTED"]
+
+    # Reversion con impacto documentado -> sin hallazgo de reversion.
+    rev_ok = audit_wiki_decision_log_daci_accountability_and_reversal(
+        [
+            {"decision_id": "D-8", "status": "approved", "approvers_count": 1,
+             "driver_assigned": True, "alternatives_documented_count": 2,
+             "days_pending": 0, "was_reversed": True,
+             "reversal_impact_documented": True},
+        ]
+    )
+    assert rev_ok["undocumented_reversals_count"] == 0
+    assert rev_ok["decision_governance_status"] == "HEALTHY"
+
+
+def test_audit_wiki_decision_log_daci_accountability_and_reversal_at_risk():
+    """PENDING vencida (borde 10 == SLA no vence) o < 2 alternativas -> AT_RISK."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_decision_log_daci_accountability_and_reversal,
+    )
+
+    risk = audit_wiki_decision_log_daci_accountability_and_reversal(
+        [
+            {"decision_id": "D-5", "status": "pending", "approvers_count": 1,
+             "driver_assigned": True, "alternatives_documented_count": 2,
+             "days_pending": 11, "was_reversed": False,
+             "reversal_impact_documented": False},
+        ]
+    )
+    assert risk["stalled_or_unjustified_decisions_count"] == 1
+    assert risk["compliant_decisions_count"] == 0
+    assert risk["decision_governance_status"] == "AT_RISK"
+    assert risk["violations"][0]["reasons"] == ["PENDING_STALLED (11>10)"]
+
+    alt = audit_wiki_decision_log_daci_accountability_and_reversal(
+        [
+            {"decision_id": "D-6", "status": "DECIDED", "approvers_count": 1,
+             "driver_assigned": True, "alternatives_documented_count": 1,
+             "days_pending": 0, "was_reversed": False,
+             "reversal_impact_documented": False},
+        ]
+    )
+    assert alt["stalled_or_unjustified_decisions_count"] == 1
+    assert alt["violations"][0]["reasons"] == ["ALTERNATIVES_UNDERDOCUMENTED (1<2)"]
+
+    # Borde: PENDING con days_pending == 10 (== SLA) no vence.
+    border = audit_wiki_decision_log_daci_accountability_and_reversal(
+        [
+            {"decision_id": "D-9", "status": "PENDING", "approvers_count": 1,
+             "driver_assigned": True, "alternatives_documented_count": 2,
+             "days_pending": 10, "was_reversed": False,
+             "reversal_impact_documented": False},
+        ]
+    )
+    assert border["stalled_or_unjustified_decisions_count"] == 0
+    assert border["decision_governance_status"] == "HEALTHY"
+
+
+def test_audit_wiki_decision_log_daci_accountability_and_reversal_custom_and_empty():
+    """Umbrales custom, case-insensitive, entrada vacia/None y proxy + __all__."""
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_decision_log_daci_accountability_and_reversal,
+    )
+    import backend.services.wiki_pmi_service as mod
+
+    custom = audit_wiki_decision_log_daci_accountability_and_reversal(
+        [
+            {"decision_id": "D-7", "status": "pEnDiNg", "approvers_count": 1,
+             "driver_assigned": True, "alternatives_documented_count": 2,
+             "days_pending": 4, "was_reversed": False,
+             "reversal_impact_documented": False},
+        ],
+        max_pending_decision_days=3,
+    )
+    assert custom["stalled_or_unjustified_decisions_count"] == 1
+    assert custom["decision_governance_status"] == "AT_RISK"
+
+    for payload in ([], None, 42, ["x"]):
+        empty = audit_wiki_decision_log_daci_accountability_and_reversal(payload)
+        assert empty["total_decisions"] == 0
+        assert empty["decision_governance_status"] == "HEALTHY"
+        assert empty["violations"] == []
+
+    sample = [{"decision_id": "SM", "status": "approved", "approvers_count": 1,
+               "driver_assigned": True, "alternatives_documented_count": 2,
+               "days_pending": 0, "was_reversed": False,
+               "reversal_impact_documented": False}]
+    assert (
+        WikiPMIService.audit_wiki_decision_log_daci_accountability_and_reversal(sample)
+        == audit_wiki_decision_log_daci_accountability_and_reversal(sample)
+    )
+    assert "audit_wiki_decision_log_daci_accountability_and_reversal" in mod.__all__

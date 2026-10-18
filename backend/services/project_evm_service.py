@@ -5499,6 +5499,7 @@ __all__ = [
     "evaluate_evm_rolling_wave_planning_package_freeze_horizon",
     "evaluate_evm_loe_masking_and_discrete_variance_distortion",
     "evaluate_evm_retroactive_change_and_negative_period_anomaly",
+    "evaluate_evm_subcontractor_flowdown_and_invoice_overbilling",
     "ProjectEVMService",
 ]
 
@@ -6902,5 +6903,96 @@ def evaluate_evm_retroactive_change_and_negative_period_anomaly(
 ProjectEVMService.evaluate_evm_retroactive_change_and_negative_period_anomaly = staticmethod(
     evaluate_evm_retroactive_change_and_negative_period_anomaly
 )
+
+
+def evaluate_evm_subcontractor_flowdown_and_invoice_overbilling(
+    subcontracts: list[dict[str, Any]],
+    *,
+    max_advance_billing_spread_pct: float = 5.0,
+) -> dict[str, Any]:
+    """Evalua flow-down de Valor Ganado de subcontratistas y conciliacion contra sobrefacturacion AC (PMBOK §7.4, EVM Practice Standard)."""
+    if not isinstance(subcontracts, list):
+        subcontracts = []
+
+    max_spread_pct = float(max_advance_billing_spread_pct)
+    total_subcontracts = 0
+    compliant_subcontracts_count = 0
+    ev_overstated_subcontracts_count = 0
+    unbacked_overbilling_subcontracts_count = 0
+    total_ev_overstatement_raw = 0.0
+    discrepancies: list[dict[str, Any]] = []
+
+    for raw in subcontracts:
+        if not isinstance(raw, dict):
+            continue
+        total_subcontracts += 1
+        subcontract_id = (
+            str(raw.get("subcontract_id") or "").strip()
+            or f"SUB-{total_subcontracts}"
+        )
+        bac = float(raw.get("subcontract_bac", 0.0) or 0.0)
+        claimed_ev = float(raw.get("claimed_ev", 0.0) or 0.0)
+        phys_pct = float(raw.get("physical_progress_verified_pct", 0.0) or 0.0)
+        billed_ac = float(raw.get("billed_ac", 0.0) or 0.0)
+        retention_withheld = float(raw.get("retention_withheld_amount", 0.0) or 0.0)
+
+        verified_ev = round(bac * (phys_pct / 100.0), 2)
+        ev_overstatement_amount = round(max(0.0, claimed_ev - verified_ev), 2)
+        total_ev_overstatement_raw += ev_overstatement_amount
+        ev_overstated = ev_overstatement_amount > 0.01
+
+        billing_spread_pct = (
+            round(((billed_ac - verified_ev) / bac) * 100.0, 2) if bac > 0.0 else 0.0
+        )
+        unbacked_overbilling = (billing_spread_pct > max_spread_pct) and (
+            retention_withheld + 1e-6 < (billed_ac - verified_ev)
+        )
+
+        reasons: list[str] = []
+        if ev_overstated:
+            ev_overstated_subcontracts_count += 1
+            reasons.append("claimed_ev_exceeds_verified_physical_progress")
+        if unbacked_overbilling:
+            unbacked_overbilling_subcontracts_count += 1
+            reasons.append("unbacked_invoice_overbilling")
+
+        if not reasons:
+            compliant_subcontracts_count += 1
+        else:
+            discrepancies.append(
+                {
+                    "subcontract_id": subcontract_id,
+                    "verified_ev": verified_ev,
+                    "ev_overstatement_amount": ev_overstatement_amount,
+                    "reasons": reasons,
+                }
+            )
+
+    total_ev_overstatement_amount = round(total_ev_overstatement_raw, 2)
+    if (
+        ev_overstated_subcontracts_count == 0
+        and unbacked_overbilling_subcontracts_count == 0
+    ):
+        status = "HEALTHY"
+    elif unbacked_overbilling_subcontracts_count > 0:
+        status = "CRITICAL"
+    else:
+        status = "AT_RISK"
+
+    return {
+        "total_subcontracts": total_subcontracts,
+        "compliant_subcontracts_count": compliant_subcontracts_count,
+        "ev_overstated_subcontracts_count": ev_overstated_subcontracts_count,
+        "unbacked_overbilling_subcontracts_count": unbacked_overbilling_subcontracts_count,
+        "total_ev_overstatement_amount": total_ev_overstatement_amount,
+        "subcontractor_evm_status": status,
+        "discrepancies": discrepancies,
+    }
+
+
+ProjectEVMService.evaluate_evm_subcontractor_flowdown_and_invoice_overbilling = staticmethod(
+    evaluate_evm_subcontractor_flowdown_and_invoice_overbilling
+)
+
 
 

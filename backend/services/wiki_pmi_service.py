@@ -2508,6 +2508,7 @@ __all__ = [
     "audit_wiki_risk_trigger_early_warning_and_fallback",
     "audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration",
     "audit_wiki_requirements_bidirectional_traceability_and_gold_plating",
+    "audit_wiki_decision_log_daci_accountability_and_reversal",
     "WikiPMIService",
 ]
 
@@ -4227,3 +4228,116 @@ WikiPMIService.audit_wiki_requirements_bidirectional_traceability_and_gold_plati
     audit_wiki_requirements_bidirectional_traceability_and_gold_plating
 )
 
+
+
+def audit_wiki_decision_log_daci_accountability_and_reversal(
+    decisions: list[dict],
+    *,
+    max_pending_decision_days: int = 10,
+) -> dict:
+    """Audita gobernanza DACI/RACI y reversiones en la bitácora de decisiones (PMBOK §4.4 y §9.1).
+
+    Cada decisión aporta decision_id, status, approvers_count,
+    driver_assigned, alternatives_documented_count, days_pending,
+    was_reversed y reversal_impact_documented:
+    - ambiguous_accountability: approvers_count != 1 o sin driver.
+    - stalled_or_unjustified: PENDING con días > SLA o menos de 2
+      alternativas documentadas.
+    - undocumented_reversal: decisión revertida sin impacto documentado.
+    - decision_governance_status: 'HEALTHY' sin hallazgos; 'CRITICAL'
+      con ambigüedad de responsabilidad o reversiones sin documentar;
+      'AT_RISK' en otro caso; violations con {decision_id, reasons}.
+    """
+    if not isinstance(decisions, list):
+        decisions = []
+    rows = [d for d in decisions if isinstance(d, dict)]
+
+    total_decisions = len(rows)
+    compliant_decisions_count = 0
+    ambiguous_accountability_count = 0
+    stalled_or_unjustified_decisions_count = 0
+    undocumented_reversals_count = 0
+    violations: list[dict] = []
+
+    for idx, row in enumerate(rows, start=1):
+        decision_id = str(row.get("decision_id", f"DECISION-{idx}"))
+        reasons: list[str] = []
+        has_ambiguous = False
+        has_stalled = False
+        has_unreversed_doc = False
+
+        status = str(row.get("status") or "").strip().upper()
+        raw_approvers = row.get("approvers_count")
+        try:
+            approvers = int(raw_approvers if raw_approvers is not None else 0)
+        except (TypeError, ValueError):
+            approvers = 0
+        raw_alternatives = row.get("alternatives_documented_count")
+        try:
+            alternatives = int(raw_alternatives if raw_alternatives is not None else 0)
+        except (TypeError, ValueError):
+            alternatives = 0
+        raw_days = row.get("days_pending")
+        try:
+            days_pending = int(raw_days if raw_days is not None else 0)
+        except (TypeError, ValueError):
+            days_pending = 0
+        driver_assigned = bool(row.get("driver_assigned", False))
+        was_reversed = bool(row.get("was_reversed", False))
+        reversal_documented = bool(row.get("reversal_impact_documented", False))
+
+        if approvers != 1 or not driver_assigned:
+            has_ambiguous = True
+            if approvers != 1:
+                reasons.append(f"DACI_APPROVERS_COUNT_AMBIGUOUS ({approvers} != 1)")
+            if not driver_assigned:
+                reasons.append("DACI_DRIVER_NO_ASSIGNED")
+
+        if (status == "PENDING" and days_pending > int(max_pending_decision_days)) or alternatives < 2:
+            has_stalled = True
+            if status == "PENDING" and days_pending > int(max_pending_decision_days):
+                reasons.append(
+                    f"PENDING_STALLED ({days_pending}>{max_pending_decision_days})",
+                )
+            if alternatives < 2:
+                reasons.append(f"ALTERNATIVES_UNDERDOCUMENTED ({alternatives}<2)")
+
+        if was_reversed and not reversal_documented:
+            has_unreversed_doc = True
+            reasons.append("REVERSAL_IMPACT_UNDOCUMENTED")
+
+        if has_ambiguous:
+            ambiguous_accountability_count += 1
+        if has_stalled:
+            stalled_or_unjustified_decisions_count += 1
+        if has_unreversed_doc:
+            undocumented_reversals_count += 1
+        if not (has_ambiguous or has_stalled or has_unreversed_doc):
+            compliant_decisions_count += 1
+        if reasons:
+            violations.append({"decision_id": decision_id, "reasons": reasons})
+
+    decision_governance_status = (
+        "CRITICAL"
+        if ambiguous_accountability_count > 0 or undocumented_reversals_count > 0
+        else (
+            "AT_RISK"
+            if stalled_or_unjustified_decisions_count > 0
+            else "HEALTHY"
+        )
+    )
+
+    return {
+        "total_decisions": total_decisions,
+        "compliant_decisions_count": compliant_decisions_count,
+        "ambiguous_accountability_count": ambiguous_accountability_count,
+        "stalled_or_unjustified_decisions_count": stalled_or_unjustified_decisions_count,
+        "undocumented_reversals_count": undocumented_reversals_count,
+        "decision_governance_status": decision_governance_status,
+        "violations": violations,
+    }
+
+
+WikiPMIService.audit_wiki_decision_log_daci_accountability_and_reversal = staticmethod(
+    audit_wiki_decision_log_daci_accountability_and_reversal
+)
