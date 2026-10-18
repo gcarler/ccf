@@ -3569,3 +3569,105 @@ def test_audit_wiki_retrospective_action_closure_governance_empty_or_none():
         "closure_effectiveness_pct": 0.0,
         "is_retrospective_governance_healthy": False,
     }
+
+
+def test_audit_wiki_monte_carlo_contingency_governance_valid():
+    """Iteraciones >= 1000, curva monotónica y contingencia >= P80 - base -> valid True."""
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_monte_carlo_contingency_governance,
+    )
+
+    sim = {
+        "iterations": 5000,
+        "base_estimate": 100000.0,
+        "p50_cost": 105000.0,
+        "p80_cost": 115000.0,
+        "p90_cost": 122000.0,
+        "allocated_contingency": 16000.0,
+    }
+    res = audit_wiki_monte_carlo_contingency_governance(sim)
+    assert res == {
+        "iterations": 5000,
+        "required_p80_contingency": 15000.0,
+        "allocated_contingency": 16000.0,
+        "contingency_shortfall": 0.0,
+        "governance_gaps": [],
+        "is_simulation_governance_valid": True,
+    }
+    assert WikiPMIService.audit_wiki_monte_carlo_contingency_governance(sim) == res
+
+
+def test_audit_wiki_monte_carlo_contingency_governance_insufficient_iterations_and_shortfall():
+    """Iteraciones < 1000 y contingencia < requerida en P80 reportan brechas en orden canónico."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_monte_carlo_contingency_governance,
+    )
+
+    res = audit_wiki_monte_carlo_contingency_governance(
+        {
+            "iterations": 500,
+            "base_estimate": 100000.0,
+            "p50_cost": 108000.0,
+            "p80_cost": 120000.0,
+            "p90_cost": 130000.0,
+            "allocated_contingency": 12000.0,
+        }
+    )
+    assert res == {
+        "iterations": 500,
+        "required_p80_contingency": 20000.0,
+        "allocated_contingency": 12000.0,
+        "contingency_shortfall": 8000.0,
+        "governance_gaps": [
+            "insufficient_simulation_iterations",
+            "contingency_below_p80_threshold",
+        ],
+        "is_simulation_governance_valid": False,
+    }
+
+
+def test_audit_wiki_monte_carlo_contingency_governance_non_monotonic_curve():
+    """Percentiles invertidos (ej. p80 < p50) -> non_monotonic_percentile_curve."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_monte_carlo_contingency_governance,
+    )
+
+    res = audit_wiki_monte_carlo_contingency_governance(
+        {
+            "iterations": 2000,
+            "base_estimate": 100000.0,
+            "p50_cost": 125000.0,
+            "p80_cost": 115000.0,
+            "p90_cost": 130000.0,
+            "allocated_contingency": 20000.0,
+        }
+    )
+    assert res == {
+        "iterations": 2000,
+        "required_p80_contingency": 15000.0,
+        "allocated_contingency": 20000.0,
+        "contingency_shortfall": 0.0,
+        "governance_gaps": ["non_monotonic_percentile_curve"],
+        "is_simulation_governance_valid": False,
+    }
+
+
+def test_audit_wiki_monte_carlo_contingency_governance_empty_or_non_mapping():
+    """Entrada None, vacía o no Mapping activa insufficient_simulation_iterations y non_monotonic_percentile_curve."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_monte_carlo_contingency_governance,
+    )
+
+    for payload in (None, {}, "invalid", []):
+        assert audit_wiki_monte_carlo_contingency_governance(payload) == {  # type: ignore[arg-type]
+            "iterations": 0,
+            "required_p80_contingency": 0.0,
+            "allocated_contingency": 0.0,
+            "contingency_shortfall": 0.0,
+            "governance_gaps": [
+                "insufficient_simulation_iterations",
+                "non_monotonic_percentile_curve",
+            ],
+            "is_simulation_governance_valid": False,
+        }

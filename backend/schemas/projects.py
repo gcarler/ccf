@@ -3697,6 +3697,7 @@ __all__ = [
     "validate_rolling_wave_planning_horizon",
     "validate_resource_smoothing_float_boundaries",
     "validate_sprint_velocity_commitment_stability",
+    "validate_fpif_point_of_total_assumption",
 ]
 
 
@@ -4520,4 +4521,78 @@ def validate_sprint_velocity_commitment_stability(
         "commitment_to_mean_ratio": commitment_to_mean_ratio,
         "stability_posture": stability_posture,
         "is_commitment_sustainable": is_commitment_sustainable,
+    }
+
+
+def validate_fpif_point_of_total_assumption(
+    contract: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """PMBOK §12.1.1.6 — Point of Total Assumption (PTA) para contratos FPIF.
+
+    - Fórmula PTA: ``target_cost + (ceiling_price - target_price) / buyer_share_ratio``.
+    - Posturas: ``ceiling_breached`` (EAC > techo), ``above_pta_seller_absorbs``
+      (PTA < EAC <= techo), ``cost_overrun_shared`` (target < EAC <= PTA) y
+      ``on_or_under_target`` (EAC <= target_cost).
+    """
+    if not isinstance(contract, Mapping):
+        return {
+            "target_price": 0.0,
+            "pta": 0.0,
+            "estimated_actual_cost": 0.0,
+            "pta_buffer_remaining": 0.0,
+            "contract_posture": "invalid_inputs",
+            "is_within_pta": False,
+        }
+
+    def _float(value: Any) -> float:
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return 0.0
+
+    target_cost = _float(contract.get("target_cost", 0.0) or 0.0)
+    target_fee = _float(contract.get("target_fee", 0.0) or 0.0)
+    ceiling_price = _float(contract.get("ceiling_price", 0.0) or 0.0)
+    buyer_share_ratio = _float(contract.get("buyer_share_ratio", 0.0) or 0.0)
+    estimated_actual_cost = _float(contract.get("estimated_actual_cost", 0.0) or 0.0)
+
+    if (
+        target_cost <= 0
+        or target_fee < 0
+        or ceiling_price < (target_cost + target_fee)
+        or not (0.0 < buyer_share_ratio < 1.0)
+        or estimated_actual_cost <= 0
+    ):
+        return {
+            "target_price": 0.0,
+            "pta": 0.0,
+            "estimated_actual_cost": 0.0,
+            "pta_buffer_remaining": 0.0,
+            "contract_posture": "invalid_inputs",
+            "is_within_pta": False,
+        }
+
+    target_price = round(target_cost + target_fee, 2)
+    pta = round(target_cost + ((ceiling_price - target_price) / buyer_share_ratio), 2)
+    estimated_actual_cost = round(estimated_actual_cost, 2)
+    pta_buffer_remaining = round(pta - estimated_actual_cost, 2)
+
+    if estimated_actual_cost > ceiling_price:
+        contract_posture = "ceiling_breached"
+    elif estimated_actual_cost > pta:
+        contract_posture = "above_pta_seller_absorbs"
+    elif estimated_actual_cost > target_cost:
+        contract_posture = "cost_overrun_shared"
+    else:
+        contract_posture = "on_or_under_target"
+
+    is_within_pta = bool(contract_posture in {"cost_overrun_shared", "on_or_under_target"})
+
+    return {
+        "target_price": target_price,
+        "pta": pta,
+        "estimated_actual_cost": estimated_actual_cost,
+        "pta_buffer_remaining": pta_buffer_remaining,
+        "contract_posture": contract_posture,
+        "is_within_pta": is_within_pta,
     }

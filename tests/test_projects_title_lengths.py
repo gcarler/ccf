@@ -2910,3 +2910,111 @@ def test_validate_sprint_velocity_commitment_stability_insufficient_history_or_i
         assert res["commitment_to_mean_ratio"] == 0.0
         assert res["stability_posture"] == "insufficient_history"
         assert res["is_commitment_sustainable"] is False
+
+
+def test_validate_fpif_point_of_total_assumption_within_pta():
+    """> on_or_under_target y cost_overrun_shared con buffer PTA -> is_within_pta True."""
+    from backend.schemas.projects import validate_fpif_point_of_total_assumption
+
+    contract = {
+        "target_cost": 1000.0,
+        "target_fee": 100.0,
+        "ceiling_price": 1400.0,
+        "buyer_share_ratio": 0.5,
+    }
+
+    res_on = validate_fpif_point_of_total_assumption(
+        {**contract, "estimated_actual_cost": 1000.0}
+    )
+    assert res_on["target_price"] == 1100.0
+    assert res_on["pta"] == 1600.0
+    assert res_on["estimated_actual_cost"] == 1000.0
+    assert res_on["pta_buffer_remaining"] == 600.0
+    assert res_on["contract_posture"] == "on_or_under_target"
+    assert res_on["is_within_pta"] is True
+
+    res_shared = validate_fpif_point_of_total_assumption(
+        {**contract, "estimated_actual_cost": 1300.0}
+    )
+    assert res_shared["estimated_actual_cost"] == 1300.0
+    assert res_shared["pta_buffer_remaining"] == 300.0
+    assert res_shared["contract_posture"] == "cost_overrun_shared"
+    assert res_shared["is_within_pta"] is True
+
+
+def test_validate_fpif_point_of_total_assumption_above_pta_seller_absorbs():
+    """> PTA < EAC <= techo -> above_pta_seller_absorbs (is_within_pta False)."""
+    from backend.schemas.projects import validate_fpif_point_of_total_assumption
+
+    # share=0.8 -> PTA = 1000 + 300/0.8 = 1375; techo = 1400.
+    res = validate_fpif_point_of_total_assumption(
+        {
+            "target_cost": 1000.0,
+            "target_fee": 100.0,
+            "ceiling_price": 1400.0,
+            "buyer_share_ratio": 0.8,
+            "estimated_actual_cost": 1400.0,
+        }
+    )
+    assert res["target_price"] == 1100.0
+    assert res["pta"] == 1375.0
+    assert res["estimated_actual_cost"] == 1400.0
+    assert res["pta_buffer_remaining"] == -25.0
+    assert res["contract_posture"] == "above_pta_seller_absorbs"
+    assert res["is_within_pta"] is False
+
+
+def test_validate_fpif_point_of_total_assumption_ceiling_breached():
+    """> EAC > techo -> ceiling_breached tiene precedencia sobre above_pta."""
+    from backend.schemas.projects import validate_fpif_point_of_total_assumption
+
+    res = validate_fpif_point_of_total_assumption(
+        {
+            "target_cost": 1000.0,
+            "target_fee": 100.0,
+            "ceiling_price": 1400.0,
+            "buyer_share_ratio": 0.8,
+            "estimated_actual_cost": 1450.0,
+        }
+    )
+    assert res["estimated_actual_cost"] == 1450.0
+    assert res["pta_buffer_remaining"] == -75.0
+    assert res["contract_posture"] == "ceiling_breached"
+    assert res["is_within_pta"] is False
+
+
+def test_validate_fpif_point_of_total_assumption_invalid_inputs():
+    """None, vacío, techo < target_price, share fuera de (0,1), EAC<=0 -> invalid."""
+    from backend.schemas.projects import validate_fpif_point_of_total_assumption
+
+    invalid_result = {
+        "target_price": 0.0,
+        "pta": 0.0,
+        "estimated_actual_cost": 0.0,
+        "pta_buffer_remaining": 0.0,
+        "contract_posture": "invalid_inputs",
+        "is_within_pta": False,
+    }
+
+    base = {
+        "target_cost": 1000.0,
+        "target_fee": 100.0,
+        "ceiling_price": 1400.0,
+        "buyer_share_ratio": 0.5,
+        "estimated_actual_cost": 1200.0,
+    }
+
+    bad_contracts = (
+        None,
+        {},
+        "contract-string",
+        42,
+        {**base, "target_cost": 0.0},
+        {**base, "target_fee": -1.0},
+        {**base, "ceiling_price": 1050.0},  # techo < target_price (1100)
+        {**base, "buyer_share_ratio": 0.0},
+        {**base, "buyer_share_ratio": 1.0},
+        {**base, "estimated_actual_cost": 0.0},
+    )
+    for payload in bad_contracts:
+        assert validate_fpif_point_of_total_assumption(payload) == invalid_result  # type: ignore[arg-type]

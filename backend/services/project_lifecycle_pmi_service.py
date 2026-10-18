@@ -3132,6 +3132,7 @@ __all__ = [
     "audit_project_closure_handover_and_release_readiness",
     "audit_stakeholder_salience_mitchell_classification",
     "audit_business_case_financial_viability_governance",
+    "audit_team_conflict_resolution_governance",
     "ProjectLifecyclePMIService",
 ]
 
@@ -3276,4 +3277,95 @@ def audit_business_case_financial_viability_governance(
 
 ProjectLifecyclePMIService.audit_business_case_financial_viability_governance = staticmethod(
     audit_business_case_financial_viability_governance
+)
+
+
+def audit_team_conflict_resolution_governance(
+    conflicts: Sequence[Mapping[str, Any]] | None,
+) -> dict[str, Any]:
+    """Audita los modos de resolución de conflictos del equipo (modelo Thomas-Kilmann PMI PMBOK §9.4/§9.5 y §13.3)."""
+    if (
+        not conflicts
+        or not isinstance(conflicts, Sequence)
+        or isinstance(conflicts, (str, bytes, Mapping))
+    ):
+        conflicts = []
+
+    valid_modes = {
+        "collaborate",
+        "problem_solve",
+        "compromise",
+        "smooth",
+        "force",
+        "direct",
+        "withdraw",
+        "avoid",
+    }
+    destructive_modes = {"force", "direct", "withdraw", "avoid"}
+
+    total_conflicts = 0
+    collaborative_count = 0
+    invalid_mode_conflict_ids: list[str] = []
+    destructive_high_severity_conflict_ids: list[str] = []
+    stalled_or_undocumented_conflict_ids: list[str] = []
+
+    for item in conflicts:
+        if not isinstance(item, Mapping):
+            continue
+        conflict_id = str(item.get("conflict_id") or "").strip()
+        if not conflict_id:
+            continue
+
+        total_conflicts += 1
+        resolution_mode = str(item.get("resolution_mode") or "").strip().lower()
+        severity = str(item.get("severity") or "").strip().lower()
+        agreement_documented = bool(item.get("agreement_documented", False))
+        try:
+            escalated_unresolved_days = max(
+                0.0, float(item.get("escalated_unresolved_days", 0.0) or 0.0)
+            )
+        except (TypeError, ValueError):
+            escalated_unresolved_days = 0.0
+
+        if resolution_mode not in valid_modes:
+            invalid_mode_conflict_ids.append(conflict_id)
+
+        if resolution_mode in destructive_modes and severity in {"high", "critical"}:
+            destructive_high_severity_conflict_ids.append(conflict_id)
+
+        if escalated_unresolved_days > 5.0 or (
+            severity in {"high", "critical"} and not agreement_documented
+        ):
+            stalled_or_undocumented_conflict_ids.append(conflict_id)
+
+        if (
+            resolution_mode in {"collaborate", "problem_solve"}
+            and agreement_documented
+        ):
+            collaborative_count += 1
+
+    collaborative_resolution_rate_pct = (
+        round((collaborative_count / total_conflicts) * 100.0, 2)
+        if total_conflicts > 0
+        else 0.0
+    )
+    is_conflict_governance_healthy = bool(
+        total_conflicts > 0
+        and not invalid_mode_conflict_ids
+        and not destructive_high_severity_conflict_ids
+        and not stalled_or_undocumented_conflict_ids
+    )
+
+    return {
+        "total_conflicts": total_conflicts,
+        "invalid_mode_conflict_ids": invalid_mode_conflict_ids,
+        "destructive_high_severity_conflict_ids": destructive_high_severity_conflict_ids,
+        "stalled_or_undocumented_conflict_ids": stalled_or_undocumented_conflict_ids,
+        "collaborative_resolution_rate_pct": collaborative_resolution_rate_pct,
+        "is_conflict_governance_healthy": is_conflict_governance_healthy,
+    }
+
+
+ProjectLifecyclePMIService.audit_team_conflict_resolution_governance = staticmethod(
+    audit_team_conflict_resolution_governance
 )

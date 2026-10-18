@@ -3584,3 +3584,129 @@ def test_audit_business_case_financial_viability_governance_empty_or_non_mapping
             ],
             "is_financially_viable": False,
         }
+
+
+def test_audit_team_conflict_resolution_governance_healthy():
+    """Conflictos resueltos con modos constructivos, acuerdos documentados y <= 5 días pasan is_conflict_governance_healthy=True."""
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_team_conflict_resolution_governance,
+    )
+
+    conflicts = [
+        {
+            "conflict_id": "CNF-01",
+            "resolution_mode": "Collaborate",
+            "severity": "critical",
+            "agreement_documented": True,
+            "escalated_unresolved_days": 2.0,
+        },
+        {
+            "conflict_id": "CNF-02",
+            "resolution_mode": "compromise",
+            "severity": "medium",
+            "agreement_documented": False,
+            "escalated_unresolved_days": 3.5,
+        },
+    ]
+    res = audit_team_conflict_resolution_governance(conflicts)
+    assert res == {
+        "total_conflicts": 2,
+        "invalid_mode_conflict_ids": [],
+        "destructive_high_severity_conflict_ids": [],
+        "stalled_or_undocumented_conflict_ids": [],
+        "collaborative_resolution_rate_pct": 50.0,
+        "is_conflict_governance_healthy": True,
+    }
+    assert (
+        ProjectLifecyclePMIService.audit_team_conflict_resolution_governance(
+            conflicts
+        )
+        == res
+    )
+
+
+def test_audit_team_conflict_resolution_governance_invalid_and_destructive():
+    """Detecta modo inválido y uso de force/withdraw en conflictos de alta severidad."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_team_conflict_resolution_governance,
+    )
+
+    res = audit_team_conflict_resolution_governance(
+        [
+            {
+                "conflict_id": "CNF-BAD-MODE",
+                "resolution_mode": "ignore_and_hope",
+                "severity": "low",
+                "agreement_documented": True,
+            },
+            {
+                "conflict_id": "CNF-FORCE-CRIT",
+                "resolution_mode": "force",
+                "severity": "critical",
+                "agreement_documented": True,
+            },
+        ]
+    )
+    assert res == {
+        "total_conflicts": 2,
+        "invalid_mode_conflict_ids": ["CNF-BAD-MODE"],
+        "destructive_high_severity_conflict_ids": ["CNF-FORCE-CRIT"],
+        "stalled_or_undocumented_conflict_ids": [],
+        "collaborative_resolution_rate_pct": 0.0,
+        "is_conflict_governance_healthy": False,
+    }
+
+
+def test_audit_team_conflict_resolution_governance_stalled_and_undocumented():
+    """Detecta conflictos con escalated_unresolved_days > 5.0 o alta severidad sin acuerdo documentado."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_team_conflict_resolution_governance,
+    )
+
+    res = audit_team_conflict_resolution_governance(
+        [
+            {
+                "conflict_id": "CNF-STALLED",
+                "resolution_mode": "problem_solve",
+                "severity": "medium",
+                "agreement_documented": True,
+                "escalated_unresolved_days": 8.0,
+            },
+            {
+                "conflict_id": "CNF-HIGH-UNDOC",
+                "resolution_mode": "collaborate",
+                "severity": "high",
+                "agreement_documented": False,
+                "escalated_unresolved_days": 1.0,
+            },
+        ]
+    )
+    assert res == {
+        "total_conflicts": 2,
+        "invalid_mode_conflict_ids": [],
+        "destructive_high_severity_conflict_ids": [],
+        "stalled_or_undocumented_conflict_ids": [
+            "CNF-STALLED",
+            "CNF-HIGH-UNDOC",
+        ],
+        "collaborative_resolution_rate_pct": 50.0,
+        "is_conflict_governance_healthy": False,
+    }
+
+
+def test_audit_team_conflict_resolution_governance_empty_or_invalid():
+    """Entrada None, vacía o no secuencial retorna total_conflicts=0 e is_conflict_governance_healthy=False."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_team_conflict_resolution_governance,
+    )
+
+    for payload in (None, [], "invalid", {"conflict_id": "C-1"}, [{"conflict_id": "  "}]):
+        assert audit_team_conflict_resolution_governance(payload) == {  # type: ignore[arg-type]
+            "total_conflicts": 0,
+            "invalid_mode_conflict_ids": [],
+            "destructive_high_severity_conflict_ids": [],
+            "stalled_or_undocumented_conflict_ids": [],
+            "collaborative_resolution_rate_pct": 0.0,
+            "is_conflict_governance_healthy": False,
+        }

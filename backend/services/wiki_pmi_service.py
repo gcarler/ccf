@@ -2494,6 +2494,7 @@ __all__ = [
     "audit_wiki_raid_log_traceability_governance",
     "audit_wiki_definition_of_ready_gate_hygiene",
     "audit_wiki_retrospective_action_closure_governance",
+    "audit_wiki_monte_carlo_contingency_governance",
     "WikiPMIService",
 ]
 
@@ -2887,4 +2888,78 @@ def audit_wiki_retrospective_action_closure_governance(
 
 WikiPMIService.audit_wiki_retrospective_action_closure_governance = staticmethod(
     audit_wiki_retrospective_action_closure_governance
+)
+
+
+def audit_wiki_monte_carlo_contingency_governance(
+    simulation: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Audita la simulación Monte Carlo y cobertura de reserva de contingencia en P80 documentada en la Wiki (PMI PMBOK §11.4 y §4.4)."""
+    sim: Mapping[str, Any] = (
+        simulation if isinstance(simulation, Mapping) else {}
+    )
+
+    try:
+        iterations = max(0, int(sim.get("iterations", 0) or 0))
+    except (TypeError, ValueError):
+        iterations = 0
+
+    try:
+        p50_cost = round(max(0.0, float(sim.get("p50_cost", 0.0) or 0.0)), 2)
+    except (TypeError, ValueError):
+        p50_cost = 0.0
+
+    try:
+        p80_cost = round(max(0.0, float(sim.get("p80_cost", 0.0) or 0.0)), 2)
+    except (TypeError, ValueError):
+        p80_cost = 0.0
+
+    try:
+        p90_cost = round(max(0.0, float(sim.get("p90_cost", 0.0) or 0.0)), 2)
+    except (TypeError, ValueError):
+        p90_cost = 0.0
+
+    try:
+        allocated_contingency = round(
+            max(0.0, float(sim.get("allocated_contingency", 0.0) or 0.0)), 2
+        )
+    except (TypeError, ValueError):
+        allocated_contingency = 0.0
+
+    try:
+        base_estimate = round(
+            max(0.0, float(sim.get("base_estimate", 0.0) or 0.0)), 2
+        )
+    except (TypeError, ValueError):
+        base_estimate = 0.0
+
+    required_p80_contingency = round(max(0.0, p80_cost - base_estimate), 2)
+    contingency_shortfall = round(
+        max(0.0, required_p80_contingency - allocated_contingency), 2
+    )
+
+    governance_gaps: list[str] = []
+    if iterations < 1000:
+        governance_gaps.append("insufficient_simulation_iterations")
+    if base_estimate <= 0.0 or not (
+        base_estimate <= p50_cost <= p80_cost <= p90_cost
+    ):
+        governance_gaps.append("non_monotonic_percentile_curve")
+    if allocated_contingency < required_p80_contingency:
+        governance_gaps.append("contingency_below_p80_threshold")
+
+    is_simulation_governance_valid = bool(len(governance_gaps) == 0)
+
+    return {
+        "iterations": iterations,
+        "required_p80_contingency": required_p80_contingency,
+        "allocated_contingency": allocated_contingency,
+        "contingency_shortfall": contingency_shortfall,
+        "governance_gaps": governance_gaps,
+        "is_simulation_governance_valid": is_simulation_governance_valid,
+    }
+
+
+WikiPMIService.audit_wiki_monte_carlo_contingency_governance = staticmethod(
+    audit_wiki_monte_carlo_contingency_governance
 )
