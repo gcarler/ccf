@@ -2482,3 +2482,102 @@ def test_audit_risk_residual_exposure_and_triggers_no_active_risks():
         }
 
 
+def test_audit_charter_funding_limit_reconciliation_reconciled():
+    """Periodos dentro de su límite y suma <= presupuesto del Acta -> RECONCILED_FUNDING_SCHEDULE."""
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_charter_funding_limit_reconciliation,
+    )
+
+    periods = [
+        {"period_id": "2026-Q1", "planned_outlay": 30000.0, "funding_limit": 35000.0},
+        {"id": "2026-Q2", "planned_outlay": 45000.0, "funding_limit": 50000.0},
+        {"period_id": "2026-Q3", "planned_outlay": 20000.0, "funding_limit": 25000.0},
+    ]
+    res = audit_charter_funding_limit_reconciliation(
+        periods, charter_authorized_budget=100000.0
+    )
+    assert res == {
+        "total_periods": 3,
+        "total_planned_outlay": 95000.0,
+        "charter_authorized_budget": 100000.0,
+        "unallocated_charter_margin": 5000.0,
+        "period_cap_breach_ids": [],
+        "exceeds_charter_budget": False,
+        "is_funding_reconciled": True,
+        "funding_posture": "RECONCILED_FUNDING_SCHEDULE",
+    }
+    assert (
+        ProjectLifecyclePMIService.audit_charter_funding_limit_reconciliation(
+            periods, charter_authorized_budget=100000.0
+        )
+        == res
+    )
+
+
+def test_audit_charter_funding_limit_reconciliation_charter_ceiling_exceeded():
+    """Suma planificada supera presupuesto autorizado del Acta -> CHARTER_BUDGET_CEILING_EXCEEDED."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_charter_funding_limit_reconciliation,
+    )
+
+    res = audit_charter_funding_limit_reconciliation(
+        [
+            {"period_id": "2026-Q1", "planned_outlay": 60000.0, "funding_limit": 70000.0},
+            {"period_id": "2026-Q2", "planned_outlay": 55000.0, "funding_limit": 60000.0},
+        ],
+        charter_authorized_budget=100000.0,
+    )
+    assert res["total_periods"] == 2
+    assert res["total_planned_outlay"] == 115000.0
+    assert res["unallocated_charter_margin"] == -15000.0
+    assert res["exceeds_charter_budget"] is True
+    assert res["is_funding_reconciled"] is False
+    assert res["funding_posture"] == "CHARTER_BUDGET_CEILING_EXCEEDED"
+
+
+def test_audit_charter_funding_limit_reconciliation_period_cap_breach():
+    """Desembolso trimestral supera límite del periodo pero total <= presupuesto Acta -> PERIOD_FUNDING_LIMIT_BREACH."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_charter_funding_limit_reconciliation,
+    )
+
+    res = audit_charter_funding_limit_reconciliation(
+        [
+            {"period_id": "2026-Q1", "planned_outlay": 42000.0, "funding_limit": 35000.0},
+            {"period_id": "2026-Q2", "planned_outlay": 30000.0, "funding_limit": 40000.0},
+        ],
+        charter_authorized_budget=100000.0,
+    )
+    assert res["period_cap_breach_ids"] == ["2026-Q1"]
+    assert res["exceeds_charter_budget"] is False
+    assert res["is_funding_reconciled"] is False
+    assert res["funding_posture"] == "PERIOD_FUNDING_LIMIT_BREACH"
+
+
+def test_audit_charter_funding_limit_reconciliation_no_schedule_or_zero_budget():
+    """Sin periodos o presupuesto autorizado <= 0 -> NO_FUNDING_SCHEDULE_DEFINED."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_charter_funding_limit_reconciliation,
+    )
+
+    res_empty = audit_charter_funding_limit_reconciliation(
+        None, charter_authorized_budget=50000.0
+    )
+    assert res_empty == {
+        "total_periods": 0,
+        "total_planned_outlay": 0.0,
+        "charter_authorized_budget": 50000.0,
+        "unallocated_charter_margin": 50000.0,
+        "period_cap_breach_ids": [],
+        "exceeds_charter_budget": False,
+        "is_funding_reconciled": False,
+        "funding_posture": "NO_FUNDING_SCHEDULE_DEFINED",
+    }
+
+    res_zero_budget = audit_charter_funding_limit_reconciliation(
+        [{"period_id": "2026-Q1", "planned_outlay": 10000.0, "funding_limit": 15000.0}],
+        charter_authorized_budget=0.0,
+    )
+    assert res_zero_budget["is_funding_reconciled"] is False
+    assert res_zero_budget["funding_posture"] == "NO_FUNDING_SCHEDULE_DEFINED"

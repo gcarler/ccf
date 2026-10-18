@@ -757,7 +757,7 @@ def test_audit_wiki_crosslink_isolated_no_crosslinks():
         }
 
 
-def test_audit_wiki_operational_runbook_readiness_production_ready():
+def test_audit_wiki_operational_runbook_markdown_production_ready():
     """Runbook completo (prerrequisitos + pasos + rollback + verificación) -> PRODUCTION_READY_RUNBOOK."""
     from backend.services.wiki_pmi_service import (
         audit_wiki_operational_runbook_readiness,
@@ -790,7 +790,7 @@ def test_audit_wiki_operational_runbook_readiness_production_ready():
     assert len(res["recommendations"]) == 1
 
 
-def test_audit_wiki_operational_runbook_readiness_missing_rollback():
+def test_audit_wiki_operational_runbook_markdown_missing_rollback():
     """Sin sección de rollback -> MISSING_ROLLBACK_PROCEDURE aunque haya prerrequisitos y pasos."""
     from backend.services.wiki_pmi_service import (
         audit_wiki_operational_runbook_readiness,
@@ -815,7 +815,7 @@ def test_audit_wiki_operational_runbook_readiness_missing_rollback():
     assert any("rollback" in rec.lower() for rec in res["recommendations"])
 
 
-def test_audit_wiki_operational_runbook_readiness_incomplete_structure():
+def test_audit_wiki_operational_runbook_markdown_incomplete_structure():
     """Con rollback pero faltando prerrequisitos y pasos -> INCOMPLETE_SOP_STRUCTURE (50.0)."""
     from backend.services.wiki_pmi_service import (
         audit_wiki_operational_runbook_readiness,
@@ -838,13 +838,13 @@ def test_audit_wiki_operational_runbook_readiness_incomplete_structure():
     assert res["runbook_posture"] == "INCOMPLETE_SOP_STRUCTURE"
 
 
-def test_audit_wiki_operational_runbook_readiness_empty_content():
-    """None o texto vacío -> EMPTY_RUNBOOK_CONTENT con score 0.0."""
+def test_audit_wiki_operational_runbook_markdown_empty_content():
+    """Texto vacío -> EMPTY_RUNBOOK_CONTENT con score 0.0."""
     from backend.services.wiki_pmi_service import (
         audit_wiki_operational_runbook_readiness,
     )
 
-    for empty_val in (None, "", "   "):
+    for empty_val in ("", "   ", "\n"):
         res = audit_wiki_operational_runbook_readiness(empty_val)
         assert res == {
             "has_prerequisites_section": False,
@@ -2339,3 +2339,135 @@ def test_audit_wiki_adr_governance_hygiene_empty_catalog():
             "adr_posture": "EMPTY_ADR_CATALOG",
         }
 
+
+def test_audit_wiki_operational_runbook_readiness_operations_ready():
+    """Suite de runbooks con rollback, verificación, contacto de guardia y drill <= 90 días -> OPERATIONS_READY_RUNBOOK_SUITE."""
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_operational_runbook_readiness,
+    )
+
+    runbooks = [
+        {
+            "id": "RB-01",
+            "rollback_procedure": "Revertir migración Alembic downgrade -1 y restaurar snapshot RDS",
+            "verification_steps": "Ejecutar healthcheck /api/health y verificar latencia p95 < 150ms",
+            "oncall_contact": "@sre-oncall-primary",
+            "days_since_last_drill": 30,
+        },
+        {
+            "runbook_id": "RB-02",
+            "rollback_procedure": "Conmutar tráfico DNS a región secundaria",
+            "verification_steps": "Confirmar 0 errores 5xx durante 15 minutos",
+            "oncall_contact": "pagerduty://infra-escalation",
+            "days_since_last_drill": 90,
+        },
+    ]
+    res = audit_wiki_operational_runbook_readiness(runbooks, max_drill_age_days=90)
+    assert res == {
+        "total_runbooks": 2,
+        "missing_rollback_or_verification_ids": [],
+        "missing_oncall_contact_ids": [],
+        "stale_drill_runbook_ids": [],
+        "is_runbook_suite_ready": True,
+        "runbook_posture": "OPERATIONS_READY_RUNBOOK_SUITE",
+    }
+    assert (
+        WikiPMIService.audit_wiki_operational_runbook_readiness(
+            runbooks, max_drill_age_days=90
+        )
+        == res
+    )
+
+
+def test_audit_wiki_operational_runbook_readiness_missing_rollback_or_verification():
+    """Runbook sin procedimiento de reversión o sin pasos de verificación -> MISSING_ROLLBACK_OR_VERIFICATION_STEPS."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_operational_runbook_readiness,
+    )
+
+    res = audit_wiki_operational_runbook_readiness(
+        [
+            {
+                "id": "RB-NO-ROLL",
+                "rollback_procedure": "",
+                "verification_steps": "Verificar logs",
+                "oncall_contact": "@oncall",
+                "days_since_last_drill": 15,
+            },
+            {
+                "id": "RB-NO-VERIF",
+                "rollback_procedure": "Restaurar backup",
+                "verification_steps": "   ",
+                "oncall_contact": "@oncall",
+                "days_since_last_drill": 20,
+            },
+        ]
+    )
+    assert res["total_runbooks"] == 2
+    assert res["missing_rollback_or_verification_ids"] == ["RB-NO-ROLL", "RB-NO-VERIF"]
+    assert res["is_runbook_suite_ready"] is False
+    assert res["runbook_posture"] == "MISSING_ROLLBACK_OR_VERIFICATION_STEPS"
+
+
+def test_audit_wiki_operational_runbook_readiness_missing_oncall_and_stale_drill():
+    """Falta contacto on-call -> MISSING_ONCALL_ESCALATION_CONTACT; drill vencido -> STALE_RUNBOOK_DRILL_VALIDATION."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_operational_runbook_readiness,
+    )
+
+    res_oncall = audit_wiki_operational_runbook_readiness(
+        [
+            {
+                "id": "RB-NO-ONCALL",
+                "rollback_procedure": "Rollback imagen previa",
+                "verification_steps": "Smoke test",
+                "oncall_contact": "",
+                "days_since_last_drill": 10,
+            }
+        ]
+    )
+    assert res_oncall["missing_oncall_contact_ids"] == ["RB-NO-ONCALL"]
+    assert res_oncall["is_runbook_suite_ready"] is False
+    assert res_oncall["runbook_posture"] == "MISSING_ONCALL_ESCALATION_CONTACT"
+
+    res_stale = audit_wiki_operational_runbook_readiness(
+        [
+            {
+                "id": "RB-STALE",
+                "rollback_procedure": "Rollback imagen previa",
+                "verification_steps": "Smoke test",
+                "oncall_contact": "@sre",
+                "days_since_last_drill": 120,
+            },
+            {
+                "id": "RB-NEVER",
+                "rollback_procedure": "Rollback imagen previa",
+                "verification_steps": "Smoke test",
+                "oncall_contact": "@sre",
+                "days_since_last_drill": None,
+            },
+        ],
+        max_drill_age_days=90,
+    )
+    assert res_stale["stale_drill_runbook_ids"] == ["RB-STALE", "RB-NEVER"]
+    assert res_stale["is_runbook_suite_ready"] is False
+    assert res_stale["runbook_posture"] == "STALE_RUNBOOK_DRILL_VALIDATION"
+
+
+def test_audit_wiki_operational_runbook_readiness_empty_or_none():
+    """Lista vacía o None -> NO_OPERATIONAL_RUNBOOKS."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_operational_runbook_readiness,
+    )
+
+    for payload in (None, [], [{"id": ""}]):
+        res = audit_wiki_operational_runbook_readiness(payload)
+        assert res == {
+            "total_runbooks": 0,
+            "missing_rollback_or_verification_ids": [],
+            "missing_oncall_contact_ids": [],
+            "stale_drill_runbook_ids": [],
+            "is_runbook_suite_ready": False,
+            "runbook_posture": "NO_OPERATIONAL_RUNBOOKS",
+        }

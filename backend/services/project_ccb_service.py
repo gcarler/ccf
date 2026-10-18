@@ -1944,6 +1944,104 @@ def evaluate_fmea_rpn_criticality(
     }
 
 
+def audit_emergency_change_ccb_ratification_governance(
+    change_requests: list[dict[str, Any]] | None = None,
+    max_ratification_days: int = 5,
+    max_emergency_share_pct: float = 20.0,
+) -> dict[str, Any]:
+    """Audita ratificación retroactiva CCB de cambios de emergencia (PMBOK §4.6).
+
+    Evalúa CRs válidos (con `id`/`cr_id` no vacío). Para cada CR de
+    emergencia (`is_emergency` True) exige referencia de incidente y
+    justificación, ratificación CCB tempestiva o confirmación con responsable
+    al cerrar, y un ratio de emergencias dentro del límite:
+    - `unjustified_emergency_cr_ids`: sin `incident_reference` o `justification`.
+    - `overdue_ratification_cr_ids`: status fuera de {RATIFIED, CCB_APPROVED,
+      CLOSED} con days_since_implementation > max(1, max_ratification_days).
+    - `unratified_closed_emergency_cr_ids`: status ratificado/cerrado sin `ratified_by`.
+    - `emergency_share_pct` (2 decimales; 0.0 sin CRs).
+    - `is_emergency_governance_valid`: con emergencias, 3 listas vacías y share <= límite.
+    - `emergency_posture`: 'NO_EMERGENCY_CHANGES' sin emergencias;
+      'UNRATIFIED_EMERGENCY_CLOSURE'; 'OVERDUE_RETROACTIVE_CCB_RATIFICATION';
+      'UNJUSTIFIED_EMERGENCY_BYPASS'; 'EXCESSIVE_EMERGENCY_CHANGE_RATIO';
+      'GOVERNED_EMERGENCY_CHANGE_PROTOCOL'.
+    """
+    RATIFIED_STATUSES = {"RATIFIED", "CCB_APPROVED", "CLOSED"}
+    valid_crs = [
+        cr
+        for cr in (change_requests or [])
+        if isinstance(cr, dict) and str(cr.get("id") or cr.get("cr_id") or "").strip()
+    ]
+    total_change_requests = len(valid_crs)
+
+    emergency_changes_count = 0
+    unjustified_emergency_cr_ids: list[str] = []
+    overdue_ratification_cr_ids: list[str] = []
+    unratified_closed_emergency_cr_ids: list[str] = []
+
+    for cr in valid_crs:
+        cr_id = str(cr.get("id") or cr.get("cr_id") or "").strip()
+        if not bool(cr.get("is_emergency", False)):
+            continue
+        emergency_changes_count += 1
+
+        incident_reference = str(cr.get("incident_reference") or "").strip()
+        justification = str(cr.get("justification") or "").strip()
+        status = str(cr.get("status") or "IMPLEMENTED").strip().upper()
+        try:
+            days_since_implementation = int(cr.get("days_since_implementation") or 0)
+        except (TypeError, ValueError):
+            days_since_implementation = 0
+        ratified_by = str(cr.get("ratified_by") or "").strip()
+
+        if not incident_reference or not justification:
+            unjustified_emergency_cr_ids.append(cr_id)
+        if (
+            status not in RATIFIED_STATUSES
+            and days_since_implementation > max(1, int(max_ratification_days))
+        ):
+            overdue_ratification_cr_ids.append(cr_id)
+        if status in RATIFIED_STATUSES and not ratified_by:
+            unratified_closed_emergency_cr_ids.append(cr_id)
+
+    emergency_share_pct = (
+        round((emergency_changes_count / total_change_requests) * 100.0, 2)
+        if total_change_requests > 0
+        else 0.0
+    )
+    is_emergency_governance_valid = bool(
+        emergency_changes_count > 0
+        and len(unjustified_emergency_cr_ids) == 0
+        and len(overdue_ratification_cr_ids) == 0
+        and len(unratified_closed_emergency_cr_ids) == 0
+        and emergency_share_pct <= float(max_emergency_share_pct)
+    )
+
+    if emergency_changes_count == 0:
+        emergency_posture = "NO_EMERGENCY_CHANGES"
+    elif len(unratified_closed_emergency_cr_ids) > 0:
+        emergency_posture = "UNRATIFIED_EMERGENCY_CLOSURE"
+    elif len(overdue_ratification_cr_ids) > 0:
+        emergency_posture = "OVERDUE_RETROACTIVE_CCB_RATIFICATION"
+    elif len(unjustified_emergency_cr_ids) > 0:
+        emergency_posture = "UNJUSTIFIED_EMERGENCY_BYPASS"
+    elif emergency_share_pct > float(max_emergency_share_pct):
+        emergency_posture = "EXCESSIVE_EMERGENCY_CHANGE_RATIO"
+    else:
+        emergency_posture = "GOVERNED_EMERGENCY_CHANGE_PROTOCOL"
+
+    return {
+        "total_change_requests": total_change_requests,
+        "emergency_changes_count": emergency_changes_count,
+        "emergency_share_pct": emergency_share_pct,
+        "unjustified_emergency_cr_ids": unjustified_emergency_cr_ids,
+        "overdue_ratification_cr_ids": overdue_ratification_cr_ids,
+        "unratified_closed_emergency_cr_ids": unratified_closed_emergency_cr_ids,
+        "is_emergency_governance_valid": is_emergency_governance_valid,
+        "emergency_posture": emergency_posture,
+    }
+
+
 class ProjectCCBService:
     """Fachada canónica de Control Integrado de Cambios (CCB) y Calidad DoD PMI."""
 
@@ -2108,6 +2206,18 @@ class ProjectCCBService:
         return audit_emergency_change_retroactive_ratification(
             change_requests,
             total_requests_window=total_requests_window,
+            max_emergency_share_pct=max_emergency_share_pct,
+        )
+
+    @staticmethod
+    def audit_emergency_change_ccb_ratification_governance(
+        change_requests: list[dict[str, Any]] | None = None,
+        max_ratification_days: int = 5,
+        max_emergency_share_pct: float = 20.0,
+    ) -> dict[str, Any]:
+        return audit_emergency_change_ccb_ratification_governance(
+            change_requests,
+            max_ratification_days=max_ratification_days,
             max_emergency_share_pct=max_emergency_share_pct,
         )
 
@@ -2320,6 +2430,7 @@ __all__ = [
     "evaluate_ccb_voting_consensus",
     "audit_ccb_decision_sla_breaches",
     "audit_emergency_change_retroactive_ratification",
+    "audit_emergency_change_ccb_ratification_governance",
     "audit_pareto_defect_root_causes",
     "audit_unapproved_scope_creep_exposure",
     "evaluate_cost_of_quality_prevention_balance",

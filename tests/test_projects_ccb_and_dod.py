@@ -2817,3 +2817,143 @@ def test_evaluate_quality_ncr_sla_compliance_no_ncrs():
 
 
 
+
+
+def test_audit_emergency_change_ccb_ratification_governance_governed():
+    """> Emergencias justificadas y ratificadas dentro del límite -> GOVERNED protocol."""
+    from backend.services.project_ccb_service import (
+        audit_emergency_change_ccb_ratification_governance as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "id": "CR-PLAN-1",
+                "status": "CCB_APPROVED",
+            },
+            {
+                "id": "CR-EMG-1",
+                "is_emergency": True,
+                "incident_reference": "INC-2026-441",
+                "justification": "Caída del medidor de red en sede central",
+                "status": "RATIFIED",
+                "days_since_implementation": 2,
+                "ratified_by": "@ccb-secretaria",
+            },
+            {
+                "id": "CR-EMG-NO-PLANO",
+                "status": "IMPLEMENTED",
+            },
+        ] + [{"id": f"CR-FILLER-{i}", "status": "APPROVED"} for i in range(8)],
+        max_ratification_days=5,
+        max_emergency_share_pct=20.0,
+    )
+    assert res["total_change_requests"] == 11
+    assert res["emergency_changes_count"] == 1
+    assert res["emergency_share_pct"] == 9.09
+    assert res["unjustified_emergency_cr_ids"] == []
+    assert res["overdue_ratification_cr_ids"] == []
+    assert res["unratified_closed_emergency_cr_ids"] == []
+    assert res["is_emergency_governance_valid"] is True
+    assert res["emergency_posture"] == "GOVERNED_EMERGENCY_CHANGE_PROTOCOL"
+
+
+def test_audit_emergency_change_ccb_ratification_governance_unjustified():
+    """> Emergencia sin incident_reference o justification -> UNJUSTIFIED bypass."""
+    from backend.services.project_ccb_service import (
+        audit_emergency_change_ccb_ratification_governance as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "id": "CR-EMG-2",
+                "is_emergency": True,
+                "incident_reference": "INC-2026-442",
+                "justification": "Minuta de ataques de red en mediación",
+                "status": "RATIFIED",
+                "days_since_implementation": 1,
+                "ratified_by": "@ccb",
+            },
+            {
+                "id": "CR-EMG-3",
+                "is_emergency": True,
+                "justification": "Solo justificación sin referencia de incidente",
+                "status": "RATIFIED",
+                "days_since_implementation": 1,
+                "ratified_by": "@ccb",
+            },
+        ]
+    )
+    assert res["is_emergency_governance_valid"] is False
+    assert res["total_change_requests"] == 2
+    assert res["emergency_changes_count"] == 2
+    assert res["emergency_share_pct"] == 100.0
+    assert res["unjustified_emergency_cr_ids"] == ["CR-EMG-3"]
+    assert res["overdue_ratification_cr_ids"] == []
+    assert res["unratified_closed_emergency_cr_ids"] == []
+    assert res["emergency_posture"] == "UNJUSTIFIED_EMERGENCY_BYPASS"
+
+
+def test_audit_emergency_change_ccb_ratification_governance_overdue():
+    """> Ratificación tardía (8 > 5 días) sin status ratificado -> OVERDUE ratification."""
+    from backend.services.project_ccb_service import (
+        audit_emergency_change_ccb_ratification_governance as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "id": "CR-EMG-LATE",
+                "is_emergency": True,
+                "incident_reference": "INC-2026-500",
+                "justification": "Falla critica en producción",
+                "status": "IMPLEMENTED",
+                "days_since_implementation": 8,
+                "ratified_by": "@ccb",
+            }
+        ],
+        max_ratification_days=5,
+    )
+    assert res["is_emergency_governance_valid"] is False
+    assert res["total_change_requests"] == 1
+    assert res["emergency_changes_count"] == 1
+    assert res["unjustified_emergency_cr_ids"] == []
+    assert res["overdue_ratification_cr_ids"] == ["CR-EMG-LATE"]
+    assert res["unratified_closed_emergency_cr_ids"] == []
+    assert res["emergency_posture"] == "OVERDUE_RETROACTIVE_CCB_RATIFICATION"
+
+
+def test_audit_emergency_change_ccb_ratification_governance_unratified_and_empty():
+    """> Cierre sin ratified_by -> UNRATIFIED closure; sin emergencias -> NO_EMERGENCY."""
+    from backend.services.project_ccb_service import (
+        audit_emergency_change_ccb_ratification_governance as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "id": "CR-EMG-CLOSED",
+                "is_emergency": True,
+                "incident_reference": "INC-2026-600",
+                "justification": "Riesgo de datos en despliegue",
+                "status": "CLOSED",
+                "days_since_implementation": 1,
+            }
+        ]
+    )
+    assert res["is_emergency_governance_valid"] is False
+    assert res["total_change_requests"] == 1
+    assert res["emergency_changes_count"] == 1
+    assert res["unratified_closed_emergency_cr_ids"] == ["CR-EMG-CLOSED"]
+    assert res["unjustified_emergency_cr_ids"] == []
+    assert res["overdue_ratification_cr_ids"] == []
+    assert res["emergency_posture"] == "UNRATIFIED_EMERGENCY_CLOSURE"
+
+    for payload in (None, [], [{"status": "APPROVED"}, {"cr_id": ""}], ["invalid", 42]):
+        res = audit_fn(payload)  # type: ignore[arg-type]
+        assert res["total_change_requests"] == 0
+        assert res["emergency_changes_count"] == 0
+        assert res["emergency_share_pct"] == 0.0
+        assert res["is_emergency_governance_valid"] is False
+        assert res["emergency_posture"] == "NO_EMERGENCY_CHANGES"

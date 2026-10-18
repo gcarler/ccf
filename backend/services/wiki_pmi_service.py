@@ -1032,30 +1032,10 @@ def audit_wiki_meeting_minutes_governance(
     }
 
 
-def audit_wiki_operational_runbook_readiness(
+def _audit_wiki_operational_runbook_markdown(
     markdown_text: Optional[str],
-) -> dict:
-    """Audita la preparación de un Runbook / SOP operativo en la Wiki (PMBOK §4.4 / §8.2).
-
-    Analiza encabezados y pasos numerados ignorando bloques de código cercados
-    (triple backtick) y calcula:
-    - `has_prerequisites_section`: encabezado con prerrequisitos/prerequisites/
-      pre-condiciones/precondiciones (sin tildes, case-insensitive).
-    - `has_rollback_section`: encabezado con rollback/reversion/reversión/
-      contingencia/recovery.
-    - `has_verification_section`: encabezado con verificacion/verification/
-      validacion/validación/smoke test.
-    - `numbered_steps_count`: pasos 'N. ' fuera de bloques cercados.
-    - `code_blocks_count`: cantidad de bloques cercados.
-    - `readiness_score_pct`: promedio de los 4 pilares (prerrequisitos,
-      >= 2 pasos numerados, rollback, verificación) en % (2 decimales;
-      0.0 sin contenido).
-    - `runbook_posture`: 'EMPTY_RUNBOOK_CONTENT' sin contenido;
-      'MISSING_ROLLBACK_PROCEDURE' sin rollback;
-      'INCOMPLETE_SOP_STRUCTURE' con rollback pero score < 100.0; y
-      'PRODUCTION_READY_RUNBOOK' con score == 100.0.
-    - `recommendations`: acciones por pilar faltante o feedback positivo.
-    """
+) -> dict[str, Any]:
+    """Audita el contenido Markdown de un Runbook / SOP individual."""
     text = str(markdown_text or "").strip()
 
     def _norm(value: str) -> str:
@@ -1151,6 +1131,82 @@ def audit_wiki_operational_runbook_readiness(
         "readiness_score_pct": readiness_score_pct,
         "runbook_posture": runbook_posture,
         "recommendations": recommendations,
+    }
+
+
+def audit_wiki_operational_runbook_readiness(
+    runbooks: list[dict[str, Any]] | str | None = None,
+    max_drill_age_days: int = 90,
+) -> dict[str, Any]:
+    """Audita la preparación de Runbooks operativos y SOPs en la Wiki (PMBOK §4.4 / §8.2 / §4.7).
+
+    Para cada registro (dict) en `runbooks or []`:
+    - `runbook_id`: `str(item.get("id") or item.get("runbook_id") or "").strip()` (ignorar si vacío).
+    - `rollback_procedure`: `str(item.get("rollback_procedure") or "").strip()`
+    - `verification_steps`: `str(item.get("verification_steps") or "").strip()`
+    - `oncall_contact`: `str(item.get("oncall_contact") or "").strip()`
+    - `days_since_last_drill`: `int(item.get("days_since_last_drill") if item.get("days_since_last_drill") is not None else -1)`
+    """
+    if isinstance(runbooks, str):
+        return _audit_wiki_operational_runbook_markdown(runbooks)
+
+    total_runbooks = 0
+    missing_rollback_or_verification_ids: list[str] = []
+    missing_oncall_contact_ids: list[str] = []
+    stale_drill_runbook_ids: list[str] = []
+    max_age = max(1, int(max_drill_age_days))
+
+    for item in runbooks or []:
+        if not isinstance(item, dict):
+            continue
+        runbook_id = str(item.get("id") or item.get("runbook_id") or "").strip()
+        if not runbook_id:
+            continue
+
+        total_runbooks += 1
+        rollback_procedure = str(item.get("rollback_procedure") or "").strip()
+        verification_steps = str(item.get("verification_steps") or "").strip()
+        oncall_contact = str(item.get("oncall_contact") or "").strip()
+        raw_drill_days = item.get("days_since_last_drill")
+        try:
+            days_since_last_drill = (
+                int(raw_drill_days) if raw_drill_days is not None else -1
+            )
+        except (TypeError, ValueError):
+            days_since_last_drill = -1
+
+        if not rollback_procedure or not verification_steps:
+            missing_rollback_or_verification_ids.append(runbook_id)
+        if not oncall_contact:
+            missing_oncall_contact_ids.append(runbook_id)
+        if days_since_last_drill < 0 or days_since_last_drill > max_age:
+            stale_drill_runbook_ids.append(runbook_id)
+
+    is_runbook_suite_ready = bool(
+        total_runbooks > 0
+        and len(missing_rollback_or_verification_ids) == 0
+        and len(missing_oncall_contact_ids) == 0
+        and len(stale_drill_runbook_ids) == 0
+    )
+
+    if total_runbooks == 0:
+        runbook_posture = "NO_OPERATIONAL_RUNBOOKS"
+    elif len(missing_rollback_or_verification_ids) > 0:
+        runbook_posture = "MISSING_ROLLBACK_OR_VERIFICATION_STEPS"
+    elif len(missing_oncall_contact_ids) > 0:
+        runbook_posture = "MISSING_ONCALL_ESCALATION_CONTACT"
+    elif len(stale_drill_runbook_ids) > 0:
+        runbook_posture = "STALE_RUNBOOK_DRILL_VALIDATION"
+    else:
+        runbook_posture = "OPERATIONS_READY_RUNBOOK_SUITE"
+
+    return {
+        "total_runbooks": total_runbooks,
+        "missing_rollback_or_verification_ids": missing_rollback_or_verification_ids,
+        "missing_oncall_contact_ids": missing_oncall_contact_ids,
+        "stale_drill_runbook_ids": stale_drill_runbook_ids,
+        "is_runbook_suite_ready": is_runbook_suite_ready,
+        "runbook_posture": runbook_posture,
     }
 
 
@@ -1877,9 +1933,12 @@ class WikiPMIService:
 
     @staticmethod
     def audit_wiki_operational_runbook_readiness(
-        markdown_text: Optional[str],
-    ) -> dict:
-        return audit_wiki_operational_runbook_readiness(markdown_text)
+        runbooks: list[dict[str, Any]] | str | None = None,
+        max_drill_age_days: int = 90,
+    ) -> dict[str, Any]:
+        return audit_wiki_operational_runbook_readiness(
+            runbooks, max_drill_age_days=max_drill_age_days
+        )
 
     @staticmethod
     def audit_wiki_adr_lifecycle_traceability(

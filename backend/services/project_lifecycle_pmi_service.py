@@ -2517,6 +2517,74 @@ def audit_risk_residual_exposure_and_triggers(
     }
 
 
+def audit_charter_funding_limit_reconciliation(
+    periods: list[dict[str, Any]] | None = None,
+    charter_authorized_budget: float = 0.0,
+) -> dict[str, Any]:
+    """Audita la reconciliación de límites de financiamiento por periodo frente al presupuesto autorizado en el Acta (PMBOK §4.1 / §7.3.2.5)."""
+    total_periods = 0
+    cumulative_planned = 0.0
+    period_cap_breach_ids: list[str] = []
+
+    for item in periods or []:
+        if not isinstance(item, dict):
+            continue
+        period_id = str(item.get("period_id") or item.get("id") or "").strip()
+        if not period_id:
+            continue
+        try:
+            planned_outlay = max(0.0, float(item.get("planned_outlay") or 0.0))
+        except (TypeError, ValueError):
+            planned_outlay = 0.0
+        try:
+            funding_limit = max(0.0, float(item.get("funding_limit") or 0.0))
+        except (TypeError, ValueError):
+            funding_limit = 0.0
+
+        total_periods += 1
+        cumulative_planned += planned_outlay
+        if planned_outlay > funding_limit + 1e-6:
+            period_cap_breach_ids.append(period_id)
+
+    try:
+        auth_budget = max(0.0, float(charter_authorized_budget or 0.0))
+    except (TypeError, ValueError):
+        auth_budget = 0.0
+
+    exceeds_charter_budget = bool(
+        auth_budget > 0.0 and (cumulative_planned > auth_budget + 1e-6)
+    )
+    unallocated_charter_margin = (
+        round(auth_budget - cumulative_planned, 2) if auth_budget > 0.0 else 0.0
+    )
+    is_funding_reconciled = bool(
+        total_periods > 0
+        and auth_budget > 0.0
+        and len(period_cap_breach_ids) == 0
+        and not exceeds_charter_budget
+    )
+
+    if total_periods == 0 or auth_budget <= 0.0:
+        funding_posture = "NO_FUNDING_SCHEDULE_DEFINED"
+    elif exceeds_charter_budget:
+        funding_posture = "CHARTER_BUDGET_CEILING_EXCEEDED"
+    elif len(period_cap_breach_ids) > 0:
+        funding_posture = "PERIOD_FUNDING_LIMIT_BREACH"
+    else:
+        funding_posture = "RECONCILED_FUNDING_SCHEDULE"
+
+    return {
+        "total_periods": total_periods,
+        "total_planned_outlay": round(cumulative_planned, 2),
+        "charter_authorized_budget": round(auth_budget, 2),
+        "unallocated_charter_margin": unallocated_charter_margin,
+        "period_cap_breach_ids": period_cap_breach_ids,
+        "exceeds_charter_budget": exceeds_charter_budget,
+        "is_funding_reconciled": is_funding_reconciled,
+        "funding_posture": funding_posture,
+    }
+
+
 ProjectLifecyclePMIService.audit_risk_appetite_and_threshold_governance = staticmethod(
     audit_risk_appetite_and_threshold_governance
 )
@@ -2525,6 +2593,9 @@ ProjectLifecyclePMIService.audit_stakeholder_engagement_assessment_matrix = stat
 )
 ProjectLifecyclePMIService.audit_risk_residual_exposure_and_triggers = staticmethod(
     audit_risk_residual_exposure_and_triggers
+)
+ProjectLifecyclePMIService.audit_charter_funding_limit_reconciliation = staticmethod(
+    audit_charter_funding_limit_reconciliation
 )
 
 
@@ -2563,8 +2634,6 @@ __all__ = [
     "audit_risk_appetite_and_threshold_governance",
     "audit_stakeholder_engagement_assessment_matrix",
     "audit_risk_residual_exposure_and_triggers",
+    "audit_charter_funding_limit_reconciliation",
     "ProjectLifecyclePMIService",
 ]
-
-
-
