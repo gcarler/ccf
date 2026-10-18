@@ -2031,6 +2031,123 @@ def summarize_projects_export_and_binary_response_hygiene(
     }
 
 
+_PATH_PLACEHOLDER_RE = re.compile(r"\{([^{}]+)\}")
+
+
+def _is_valid_id_schema_node(node: Any) -> bool:
+    if not isinstance(node, Mapping):
+        return False
+    enum_val = node.get("enum")
+    has_enum = isinstance(enum_val, list) and len(enum_val) > 0
+    return node.get("type") == "string" and (
+        node.get("format") == "uuid"
+        or bool(node.get("pattern"))
+        or has_enum
+    )
+
+
+def _has_uuid_or_constrained_id_schema(schema: Any) -> bool:
+    if not isinstance(schema, Mapping):
+        return False
+    if _is_valid_id_schema_node(schema):
+        return True
+    for composite_key in ("anyOf", "oneOf"):
+        members = schema.get(composite_key)
+        if isinstance(members, list) and any(
+            _is_valid_id_schema_node(m) for m in members
+        ):
+            return True
+    return False
+
+
+def summarize_projects_path_parameter_uuid_hygiene(
+    openapi: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Audita la declaración obligatoria y el esquema UUID/restringido de parámetros de ruta {param} en endpoints /api/projects o /projects."""
+    if not isinstance(openapi, Mapping):
+        return {
+            "total_parameterized_operations": 0,
+            "total_path_parameters": 0,
+            "undeclared_or_optional_path_params": [],
+            "untyped_id_path_params": [],
+            "is_path_param_hygiene_clean": False,
+        }
+
+    total_parameterized_operations = 0
+    total_path_parameters = 0
+    undeclared_or_optional_path_params: list[str] = []
+    untyped_id_path_params: list[str] = []
+
+    paths = openapi.get("paths")
+    if isinstance(paths, Mapping):
+        for path, path_item in sorted(paths.items()):
+            if not isinstance(path, str) or not (
+                path.startswith("/api/projects") or path.startswith("/projects")
+            ):
+                continue
+            if not isinstance(path_item, Mapping):
+                continue
+
+            placeholders = _PATH_PLACEHOLDER_RE.findall(path)
+            if not placeholders:
+                continue
+
+            path_params = (
+                path_item.get("parameters")
+                if isinstance(path_item.get("parameters"), list)
+                else []
+            )
+
+            for method in ("get", "post", "put", "patch", "delete"):
+                op = path_item.get(method)
+                if not isinstance(op, Mapping):
+                    continue
+
+                total_parameterized_operations += 1
+                op_params = (
+                    op.get("parameters")
+                    if isinstance(op.get("parameters"), list)
+                    else []
+                )
+                merged_params: dict[tuple[str, str], Mapping[str, Any]] = {}
+                for p in (*path_params, *op_params):
+                    if isinstance(p, Mapping):
+                        p_name = str(p.get("name") or "")
+                        p_in = str(p.get("in") or "")
+                        if p_name and p_in:
+                            merged_params[(p_name, p_in)] = p
+
+                for placeholder in placeholders:
+                    total_path_parameters += 1
+                    param_ref = f"{method.upper()} {path}:{placeholder}"
+                    param = merged_params.get((placeholder, "path"))
+
+                    if param is None or param.get("required") is not True:
+                        undeclared_or_optional_path_params.append(param_ref)
+
+                    if param is not None and (
+                        placeholder == "id" or placeholder.endswith("_id")
+                    ):
+                        if not _has_uuid_or_constrained_id_schema(
+                            param.get("schema")
+                        ):
+                            untyped_id_path_params.append(param_ref)
+
+    is_path_param_hygiene_clean = bool(
+        total_parameterized_operations > 0
+        and not undeclared_or_optional_path_params
+        and not untyped_id_path_params
+    )
+
+    return {
+        "total_parameterized_operations": total_parameterized_operations,
+        "total_path_parameters": total_path_parameters,
+        "undeclared_or_optional_path_params": undeclared_or_optional_path_params,
+        "untyped_id_path_params": untyped_id_path_params,
+        "is_path_param_hygiene_clean": is_path_param_hygiene_clean,
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()

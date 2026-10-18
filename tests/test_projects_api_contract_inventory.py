@@ -3450,3 +3450,166 @@ def test_export_and_binary_response_hygiene_empty_and_live_openapi():
     assert live_res["export_ops_missing_content_type"] == []
     assert live_res["mismatched_export_media_type_ops"] == []
     assert live_res["is_hygienic"] is True
+
+
+def test_path_parameter_uuid_hygiene_clean():
+    """Parámetros de ruta declarados como required=True y con esquema UUID/pattern/enum válido -> is_path_param_hygiene_clean=True."""
+    schema = {
+        "paths": {
+            "/api/projects/{project_id}/tasks/{id}": {
+                "parameters": [
+                    {
+                        "name": "project_id",
+                        "in": "path",
+                        "required": True,
+                        "schema": {"type": "string", "format": "uuid"},
+                    }
+                ],
+                "get": {
+                    "parameters": [
+                        {
+                            "name": "id",
+                            "in": "path",
+                            "required": True,
+                            "schema": {
+                                "anyOf": [
+                                    {
+                                        "type": "string",
+                                        "pattern": "^[0-9a-f-]{36}$",
+                                    }
+                                ]
+                            },
+                        }
+                    ],
+                    "responses": {"200": {"description": "OK"}},
+                },
+            },
+            "/projects/{slug}": {
+                "get": {
+                    "parameters": [
+                        {
+                            "name": "slug",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string"},
+                        }
+                    ],
+                    "responses": {"200": {"description": "OK"}},
+                }
+            },
+            "/api/projects": {
+                "get": {"responses": {"200": {"description": "List"}}}
+            },
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_path_parameter_uuid_hygiene(
+        schema
+    )
+    assert res == {
+        "total_parameterized_operations": 2,
+        "total_path_parameters": 3,
+        "undeclared_or_optional_path_params": [],
+        "untyped_id_path_params": [],
+        "is_path_param_hygiene_clean": True,
+    }
+
+
+def test_path_parameter_uuid_hygiene_undeclared_or_optional():
+    """Detecta placeholders de ruta no declarados o con required != True."""
+    schema = {
+        "paths": {
+            "/api/projects/{project_id}/items/{item_id}": {
+                "get": {
+                    "parameters": [
+                        {
+                            "name": "project_id",
+                            "in": "path",
+                            "required": False,
+                            "schema": {"type": "string", "format": "uuid"},
+                        }
+                    ],
+                    "responses": {"200": {"description": "OK"}},
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_path_parameter_uuid_hygiene(
+        schema
+    )
+    assert res["total_parameterized_operations"] == 1
+    assert res["total_path_parameters"] == 2
+    assert res["undeclared_or_optional_path_params"] == [
+        "GET /api/projects/{project_id}/items/{item_id}:project_id",
+        "GET /api/projects/{project_id}/items/{item_id}:item_id",
+    ]
+    assert res["is_path_param_hygiene_clean"] is False
+
+
+def test_path_parameter_uuid_hygiene_untyped_id_params():
+    """Detecta parámetros *_id o id sin format=uuid, pattern ni enum sobre string."""
+    schema = {
+        "paths": {
+            "/api/projects/{project_id}/tasks/{id}": {
+                "delete": {
+                    "parameters": [
+                        {
+                            "name": "project_id",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string"},
+                        },
+                        {
+                            "name": "id",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "integer"},
+                        },
+                    ],
+                    "responses": {"204": {"description": "Deleted"}},
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_path_parameter_uuid_hygiene(
+        schema
+    )
+    assert res["undeclared_or_optional_path_params"] == []
+    assert res["untyped_id_path_params"] == [
+        "DELETE /api/projects/{project_id}/tasks/{id}:project_id",
+        "DELETE /api/projects/{project_id}/tasks/{id}:id",
+    ]
+    assert res["is_path_param_hygiene_clean"] is False
+
+
+def test_path_parameter_uuid_hygiene_empty_and_live_openapi():
+    """Manejo de schema vacío/None y auditoría sobre el esquema OpenAPI real de la aplicación."""
+    empty_expected = {
+        "total_parameterized_operations": 0,
+        "total_path_parameters": 0,
+        "undeclared_or_optional_path_params": [],
+        "untyped_id_path_params": [],
+        "is_path_param_hygiene_clean": False,
+    }
+    assert (
+        audit_projects_api_contracts.summarize_projects_path_parameter_uuid_hygiene(
+            None
+        )
+        == empty_expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_path_parameter_uuid_hygiene(
+            {}
+        )
+        == empty_expected
+    )
+
+    from backend.app import app
+
+    live_res = (
+        audit_projects_api_contracts.summarize_projects_path_parameter_uuid_hygiene(
+            app.openapi()
+        )
+    )
+    assert live_res["total_parameterized_operations"] > 0
+    assert live_res["total_path_parameters"] > 0
+    assert live_res["undeclared_or_optional_path_params"] == []
