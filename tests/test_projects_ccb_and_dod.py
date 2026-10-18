@@ -6186,4 +6186,138 @@ def test_audit_deliverable_formal_acceptance_and_waiver_expiration_empty_and_ser
     assert "audit_deliverable_formal_acceptance_and_waiver_expiration" in mod.__all__
 
 
+def test_audit_quality_copq_and_rework_scrap_threshold_healthy():
+    """Valida registros CoQ con inversión mayoritaria en conformidad, baja fuga externa y COPQ <= 10% BAC."""
+    from backend.services.project_ccb_service import (
+        audit_quality_copq_and_rework_scrap_threshold,
+    )
+
+    records = [
+        {
+            "id": "COQ-01",
+            "prevention_cost": 4000.0,
+            "appraisal_cost": 3000.0,
+            "internal_failure_cost": 2000.0,
+            "external_failure_cost": 500.0,
+            "bac": 50000.0,
+        },
+        {
+            "id": "COQ-02",
+            "prevention_cost": 3500.0,
+            "appraisal_cost": 2500.0,
+            "internal_failure_cost": 1500.0,
+            "external_failure_cost": 500.0,
+            "bac": 40000.0,
+        },
+    ]
+    res = audit_quality_copq_and_rework_scrap_threshold(records)
+    assert res["total_records"] == 2
+    assert res["compliant_records"] == 2
+    assert res["total_conformance_cost"] == 13000.0
+    assert res["total_copq"] == 4500.0
+    assert res["underinvested_conformance_ids"] == []
+    assert res["excessive_external_failure_leakage_ids"] == []
+    assert res["copq_budget_erosion_ids"] == []
+    assert res["coq_governance_health"] == "healthy"
+    assert res["is_compliant"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_quality_copq_and_rework_scrap_threshold_at_risk_underinvested():
+    """Detecta subinversión en prevención/evaluación (< 50% CoQ total) sin fuga externa ni erosión BAC ('at_risk')."""
+    from backend.services.project_ccb_service import (
+        audit_quality_copq_and_rework_scrap_threshold,
+    )
+
+    records = [
+        {
+            "record_id": "COQ-10",
+            "prevention_cost": 1000.0,
+            "appraisal_cost": 1000.0,
+            "internal_failure_cost": 3000.0,
+            "external_failure_cost": 500.0,
+            "bac": 60000.0,
+        }
+    ]
+    res = audit_quality_copq_and_rework_scrap_threshold(records)
+    assert res["total_records"] == 1
+    assert res["compliant_records"] == 0
+    assert res["underinvested_conformance_ids"] == ["COQ-10"]
+    assert res["excessive_external_failure_leakage_ids"] == []
+    assert res["copq_budget_erosion_ids"] == []
+    assert res["coq_governance_health"] == "at_risk"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 1
+
+
+def test_audit_quality_copq_and_rework_scrap_threshold_critical_leakage_and_erosion():
+    """Detecta fuga excesiva de fallos externos (> 35% COPQ) y erosión presupuestaria (> 10% BAC) ('critical')."""
+    from backend.services.project_ccb_service import (
+        audit_quality_copq_and_rework_scrap_threshold,
+    )
+
+    records = [
+        {
+            "record_id": "COQ-20",
+            "prevention_cost": 5000.0,
+            "appraisal_cost": 4000.0,
+            "internal_failure_cost": 1000.0,
+            "external_failure_cost": 2000.0,
+            "bac": 50000.0,
+        },
+        {
+            "record_id": "COQ-21",
+            "prevention_cost": 8000.0,
+            "appraisal_cost": 6000.0,
+            "internal_failure_cost": 9000.0,
+            "external_failure_cost": 2000.0,
+            "bac": 80000.0,
+        },
+    ]
+    res = audit_quality_copq_and_rework_scrap_threshold(records)
+    assert res["total_records"] == 2
+    assert res["compliant_records"] == 0
+    assert res["excessive_external_failure_leakage_ids"] == ["COQ-20"]
+    assert res["copq_budget_erosion_ids"] == ["COQ-21"]
+    assert res["coq_governance_health"] == "critical"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_quality_copq_and_rework_scrap_threshold_empty_and_service_binding():
+    """Manejo defensivo de entradas vacías/no-secuencia y exposición en ProjectCCBService y __all__."""
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_quality_copq_and_rework_scrap_threshold,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_quality_copq_and_rework_scrap_threshold(payload)  # type: ignore[arg-type]
+        assert empty["total_records"] == 0
+        assert empty["compliant_records"] == 0
+        assert empty["total_conformance_cost"] == 0.0
+        assert empty["total_copq"] == 0.0
+        assert empty["coq_governance_health"] == "healthy"
+        assert empty["is_compliant"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "id": "COQ-99",
+            "prevention_cost": 2000.0,
+            "appraisal_cost": 2000.0,
+            "internal_failure_cost": 500.0,
+            "external_failure_cost": 100.0,
+            "bac": 20000.0,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_quality_copq_and_rework_scrap_threshold(sample)
+        == audit_quality_copq_and_rework_scrap_threshold(sample)
+    )
+    assert "audit_quality_copq_and_rework_scrap_threshold" in mod.__all__
+
+
+
 

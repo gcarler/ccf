@@ -6403,3 +6403,175 @@ def test_audit_executive_report_contract_claims_and_change_orders_empty_and_serv
 
 
 
+
+
+def test_executive_report_cybersecurity_sla_healthy_and_critical():
+    """OPEN sin brecha -> compliant; exploit en la naturaleza o CVSS crítico vencido -> CRITICAL."""
+    from backend.services.project_export_service import (
+        audit_executive_report_cybersecurity_vulnerability_and_patch_sla,
+    )
+
+    healthy = audit_executive_report_cybersecurity_vulnerability_and_patch_sla(
+        [
+            {
+                "vuln_id": "V-1",
+                "cvss_score": 5.5,
+                "status": "OPEN",
+                "days_open": 10,
+            }
+        ]
+    )
+    assert healthy["total_vulnerabilities"] == 1
+    assert healthy["compliant_vulnerabilities_count"] == 1
+    assert healthy["critical_sla_breach_or_active_exploit_count"] == 0
+    assert healthy["high_severity_sla_breach_count"] == 0
+    assert healthy["unmitigated_accepted_risk_count"] == 0
+    assert healthy["security_posture_status"] == "HEALTHY"
+    assert healthy["violations"] == []
+
+    critical = audit_executive_report_cybersecurity_vulnerability_and_patch_sla(
+        [
+            {
+                "vuln_id": "V-2",
+                "cvss_score": 9.5,
+                "status": "open",
+                "days_open": 8,
+            },
+            {
+                "vuln_id": "V-3",
+                "cvss_score": 4.0,
+                "status": "OPEN",
+                "days_open": 200,
+                "exploited_in_wild": True,
+            },
+        ]
+    )
+    assert critical["critical_sla_breach_or_active_exploit_count"] == 2
+    assert critical["security_posture_status"] == "CRITICAL"
+    assert [v["vuln_id"] for v in critical["violations"]] == ["V-2", "V-3"]
+
+    # Vencido crítico permite ambos caminos de la regla 1: explotado con CVSS alto -> un solo reason.
+    overlap = audit_executive_report_cybersecurity_vulnerability_and_patch_sla(
+        [
+            {
+                "vuln_id": "V-4",
+                "cvss_score": 10.0,
+                "status": "OPEN",
+                "days_open": 20,
+                "exploited_in_wild": True,
+            }
+        ]
+    )
+    assert overlap["violations"][0]["reasons"] == ["critical_sla_breach_or_active_exploit"]
+
+
+def test_executive_report_cybersecurity_sla_high_breach_and_thresholds():
+    """High CVSS vencido -> AT_RISK; umbrales custom desplazan la clasificación."""
+    from backend.services.project_export_service import (
+        audit_executive_report_cybersecurity_vulnerability_and_patch_sla,
+    )
+
+    at_risk = audit_executive_report_cybersecurity_vulnerability_and_patch_sla(
+        [{"vuln_id": "V-5", "cvss_score": 8.0, "status": "OPEN", "days_open": 31}]
+    )
+    assert at_risk["high_severity_sla_breach_count"] == 1
+    assert at_risk["security_posture_status"] == "AT_RISK"
+    assert at_risk["violations"][0]["reasons"] == ["high_severity_sla_breach"]
+
+    # Cuando el CVSS llega al umbral crítico en vez de high -> regla 1.
+    climbs = audit_executive_report_cybersecurity_vulnerability_and_patch_sla(
+        [{"vuln_id": "V-6", "cvss_score": 9.0, "status": "OPEN", "days_open": 31}]
+    )
+    assert climbs["high_severity_sla_breach_count"] == 0
+    assert climbs["critical_sla_breach_or_active_exploit_count"] == 1
+    assert climbs["security_posture_status"] == "CRITICAL"
+
+    # High pero dentro del SLA alto -> sin hallazgos.
+    within = audit_executive_report_cybersecurity_vulnerability_and_patch_sla(
+        [{"vuln_id": "V-7", "cvss_score": 7.0, "status": "OPEN", "days_open": 30}]
+    )
+    assert within["security_posture_status"] == "HEALTHY"
+    assert within["compliant_vulnerabilities_count"] == 1
+
+    # Umbrales custom: high=5 y critical=9 con CVSS 6 y 40 días -> AT_RISK.
+    custom = audit_executive_report_cybersecurity_vulnerability_and_patch_sla(
+        [{"vuln_id": "V-8", "cvss_score": 6.0, "status": "OPEN", "days_open": 40}],
+        high_cvss_threshold=5.0,
+        max_high_open_days=30,
+    )
+    assert custom["high_severity_sla_breach_count"] == 1
+    assert custom["security_posture_status"] == "AT_RISK"
+
+
+def test_executive_report_cybersecurity_sla_accepted_risk_and_settled():
+    """accepted_risk sin control compensatorio o CVSS crítico -> CRITICAL; patched/mitigated no hallazgos."""
+    from backend.services.project_export_service import (
+        audit_executive_report_cybersecurity_vulnerability_and_patch_sla,
+    )
+
+    bad_accept = audit_executive_report_cybersecurity_vulnerability_and_patch_sla(
+        [
+            {"vuln_id": "V-9", "status": "ACCEPTED_RISK"},
+            {
+                "vuln_id": "V-10",
+                "cvss_score": 9.9,
+                "status": "accepted_risk",
+                "compensating_control_documented": True,
+            },
+        ]
+    )
+    assert bad_accept["unmitigated_accepted_risk_count"] == 2
+    assert bad_accept["security_posture_status"] == "CRITICAL"
+    assert [v["vuln_id"] for v in bad_accept["violations"]] == ["V-9", "V-10"]
+
+    ok_accept = audit_executive_report_cybersecurity_vulnerability_and_patch_sla(
+        [
+            {
+                "vuln_id": "V-11",
+                "cvss_score": 8.0,
+                "status": "ACCEPTED_RISK",
+                "compensating_control_documented": True,
+            }
+        ]
+    )
+    assert ok_accept["security_posture_status"] == "HEALTHY"
+    assert ok_accept["compliant_vulnerabilities_count"] == 1
+
+    settled = audit_executive_report_cybersecurity_vulnerability_and_patch_sla(
+        [
+            {"vuln_id": "V-12", "cvss_score": 9.9, "status": "PATCHED", "days_open": 999},
+            {"vuln_id": "V-13", "status": "Mitigated", "exploited_in_wild": True},
+        ]
+    )
+    assert settled["security_posture_status"] == "HEALTHY"
+    assert settled["compliant_vulnerabilities_count"] == 2
+    assert settled["violations"] == []
+
+
+def test_executive_report_cybersecurity_sla_neutral_and_binding():
+    """No-lista/None -> vacío; no-dict ignorados; proxy estático y __all__."""
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_cybersecurity_vulnerability_and_patch_sla,
+    )
+
+    for payload in (None, "not-a-list", 42):
+        empty = audit_executive_report_cybersecurity_vulnerability_and_patch_sla(payload)
+        assert empty["total_vulnerabilities"] == 0
+        assert empty["compliant_vulnerabilities_count"] == 0
+        assert empty["security_posture_status"] == "HEALTHY"
+        assert empty["violations"] == []
+
+    mixed = audit_executive_report_cybersecurity_vulnerability_and_patch_sla(
+        ["no-dict", 42, {"vuln_id": "V-14", "cvss_score": 2.0, "status": "OPEN"}]
+    )
+    assert mixed["total_vulnerabilities"] == 1
+    assert mixed["compliant_vulnerabilities_count"] == 1
+
+    sample = [{"vuln_id": "V-15", "cvss_score": 9.0, "status": "OPEN", "days_open": 8}]
+    assert (
+        ProjectExportService.audit_executive_report_cybersecurity_vulnerability_and_patch_sla(sample)
+        == audit_executive_report_cybersecurity_vulnerability_and_patch_sla(sample)
+    )
+    assert "audit_executive_report_cybersecurity_vulnerability_and_patch_sla" in mod.__all__

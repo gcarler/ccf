@@ -4885,3 +4885,125 @@ def test_validate_resource_leveling_and_smoothing_constraints_empty_and_export()
 
     assert "validate_resource_leveling_and_smoothing_constraints" in mod.__all__
 
+
+def test_validate_wbs_100_percent_rollup_and_8_80_granularity_healthy():
+    """Valida nodos padres con rollup al 100% y paquetes hoja dentro de [8.0, 80.0]h con responsable único."""
+    from backend.schemas.projects import (
+        validate_wbs_100_percent_rollup_and_8_80_granularity,
+    )
+
+    nodes = [
+        {
+            "wbs_code": "1.0",
+            "is_leaf": False,
+            "planned_effort_hours": 100.0,
+            "children_effort_sum_hours": 100.0,
+            "children_scope_weight_sum_pct": 100.0,
+        },
+        {
+            "wbs_code": "1.1",
+            "is_leaf": True,
+            "planned_effort_hours": 40.0,
+            "single_owner_assigned": True,
+        },
+        {
+            "wbs_code": "1.2",
+            "is_leaf": True,
+            "planned_effort_hours": 60.0,
+            "single_owner_assigned": True,
+        },
+    ]
+    res = validate_wbs_100_percent_rollup_and_8_80_granularity(nodes)
+    assert res["total_nodes"] == 3
+    assert res["compliant_nodes"] == 3
+    assert res["parent_100_pct_rollup_violation_ids"] == []
+    assert res["leaf_granularity_out_of_8_80_bounds_ids"] == []
+    assert res["unowned_work_package_ids"] == []
+    assert res["wbs_governance_status"] == "HEALTHY"
+    assert res["is_valid"] is True
+    assert res["recommendations"] == []
+
+
+def test_validate_wbs_100_percent_rollup_and_8_80_granularity_critical():
+    """Detecta violación de Regla del 100% en padre y paquete de trabajo hoja sin dueño único ('CRITICAL')."""
+    from backend.schemas.projects import (
+        validate_wbs_100_percent_rollup_and_8_80_granularity,
+    )
+
+    nodes = [
+        {
+            "node_id": "WBS-1.0",
+            "is_leaf": False,
+            "planned_effort_hours": 120.0,
+            "children_effort_sum_hours": 90.0,
+            "children_scope_weight_sum_pct": 85.0,
+        },
+        {
+            "node_id": "WBS-1.1",
+            "is_leaf": True,
+            "planned_effort_hours": 24.0,
+            "single_owner_assigned": False,
+        },
+    ]
+    res = validate_wbs_100_percent_rollup_and_8_80_granularity(nodes)
+    assert res["total_nodes"] == 2
+    assert res["compliant_nodes"] == 0
+    assert res["parent_100_pct_rollup_violation_ids"] == ["WBS-1.0"]
+    assert res["unowned_work_package_ids"] == ["WBS-1.1"]
+    assert res["wbs_governance_status"] == "CRITICAL"
+    assert res["is_valid"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_validate_wbs_100_percent_rollup_and_8_80_granularity_at_risk_bounds():
+    """Detecta paquetes hoja fuera de límites de 8/80 horas (< 8h o > 80h -> 'AT_RISK')."""
+    from backend.schemas.projects import (
+        validate_wbs_100_percent_rollup_and_8_80_granularity,
+    )
+
+    nodes = [
+        {
+            "id": "WBS-2.1",
+            "is_leaf": True,
+            "planned_effort_hours": 4.0,
+            "single_owner_assigned": True,
+        },
+        {
+            "id": "WBS-2.2",
+            "is_leaf": True,
+            "planned_effort_hours": 120.0,
+            "single_owner_assigned": True,
+        },
+    ]
+    res = validate_wbs_100_percent_rollup_and_8_80_granularity(nodes)
+    assert res["total_nodes"] == 2
+    assert res["compliant_nodes"] == 0
+    assert res["leaf_granularity_out_of_8_80_bounds_ids"] == ["WBS-2.1", "WBS-2.2"]
+    assert res["parent_100_pct_rollup_violation_ids"] == []
+    assert res["unowned_work_package_ids"] == []
+    assert res["wbs_governance_status"] == "AT_RISK"
+    assert res["is_valid"] is False
+    assert len(res["recommendations"]) >= 1
+
+
+def test_validate_wbs_100_percent_rollup_and_8_80_granularity_empty_and_export():
+    """Manejo defensivo de entradas vacías/no-secuencia y exportación en __all__."""
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_wbs_100_percent_rollup_and_8_80_granularity,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = validate_wbs_100_percent_rollup_and_8_80_granularity(payload)  # type: ignore[arg-type]
+        assert empty["total_nodes"] == 0
+        assert empty["compliant_nodes"] == 0
+        assert empty["parent_100_pct_rollup_violation_ids"] == []
+        assert empty["leaf_granularity_out_of_8_80_bounds_ids"] == []
+        assert empty["unowned_work_package_ids"] == []
+        assert empty["wbs_governance_status"] == "HEALTHY"
+        assert empty["is_valid"] is True
+        assert empty["recommendations"] == []
+
+    assert "validate_wbs_100_percent_rollup_and_8_80_granularity" in mod.__all__
+
+

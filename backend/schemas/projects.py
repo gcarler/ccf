@@ -3793,6 +3793,7 @@ __all__ = [
     "validate_business_case_npv_irr_and_payback_hurdle",
     "validate_monte_carlo_confidence_band_and_reserve_adequacy",
     "validate_resource_leveling_and_smoothing_constraints",
+    "validate_wbs_100_percent_rollup_and_8_80_granularity",
 ]
 
 
@@ -5989,4 +5990,155 @@ def validate_resource_leveling_and_smoothing_constraints(
         "is_valid": is_valid,
         "recommendations": recommendations,
     }
+
+
+def validate_wbs_100_percent_rollup_and_8_80_granularity(
+    wbs_nodes: Sequence[Mapping[str, Any]] | None,
+    *,
+    min_leaf_effort_hours: float = 8.0,
+    max_leaf_effort_hours: float = 80.0,
+    rollup_tolerance_pct: float = 0.5,
+) -> dict[str, Any]:
+    """Valida la Regla del 100% de descomposición en nodos padre de la EDT/WBS, la heurística de granularidad de 8/80 horas en paquetes de trabajo hoja y la asignación de responsable único (PMI PMBOK §5.4 y §6.2)."""
+    if (
+        wbs_nodes is None
+        or isinstance(wbs_nodes, (str, bytes))
+        or not isinstance(wbs_nodes, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = wbs_nodes
+
+    try:
+        min_leaf_hrs = float(min_leaf_effort_hours)
+    except (TypeError, ValueError):
+        min_leaf_hrs = 8.0
+
+    try:
+        max_leaf_hrs = float(max_leaf_effort_hours)
+    except (TypeError, ValueError):
+        max_leaf_hrs = 80.0
+
+    try:
+        tol_pct = float(rollup_tolerance_pct)
+    except (TypeError, ValueError):
+        tol_pct = 0.5
+
+    def _pos_float(val: Any) -> float:
+        try:
+            return max(0.0, float(val or 0.0))
+        except (TypeError, ValueError):
+            return 0.0
+
+    total_nodes = 0
+    compliant_nodes = 0
+
+    parent_100_pct_rollup_violation_ids: list[str] = []
+    leaf_granularity_out_of_8_80_bounds_ids: list[str] = []
+    unowned_work_package_ids: list[str] = []
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_nodes += 1
+
+        node_id = (
+            str(
+                raw.get("id")
+                or raw.get("node_id")
+                or raw.get("wbs_code")
+                or ""
+            ).strip()
+            or "WBS-UNKNOWN"
+        )
+        is_leaf = bool(raw.get("is_leaf"))
+        planned_effort_hours = _pos_float(raw.get("planned_effort_hours"))
+        children_effort_sum_hours = _pos_float(
+            raw.get("children_effort_sum_hours")
+        )
+
+        raw_weight = raw.get("children_scope_weight_sum_pct")
+        if raw_weight is None:
+            children_scope_weight_sum_pct = 100.0
+        else:
+            try:
+                children_scope_weight_sum_pct = float(raw_weight)
+            except (TypeError, ValueError):
+                children_scope_weight_sum_pct = 100.0
+
+        single_owner_assigned = bool(raw.get("single_owner_assigned"))
+
+        is_parent_violation = (not is_leaf) and (
+            abs(children_scope_weight_sum_pct - 100.0) > tol_pct
+            or (
+                planned_effort_hours > 0.0
+                and (
+                    abs(planned_effort_hours - children_effort_sum_hours)
+                    / planned_effort_hours
+                )
+                * 100.0
+                > tol_pct
+            )
+        )
+        is_granularity_violation = is_leaf and (
+            planned_effort_hours < min_leaf_hrs
+            or planned_effort_hours > max_leaf_hrs
+        )
+        is_unowned_violation = is_leaf and (not single_owner_assigned)
+
+        if is_parent_violation:
+            parent_100_pct_rollup_violation_ids.append(node_id)
+        if is_granularity_violation:
+            leaf_granularity_out_of_8_80_bounds_ids.append(node_id)
+        if is_unowned_violation:
+            unowned_work_package_ids.append(node_id)
+
+        if (
+            not is_parent_violation
+            and not is_granularity_violation
+            and not is_unowned_violation
+        ):
+            compliant_nodes += 1
+
+    is_valid = (
+        len(parent_100_pct_rollup_violation_ids) == 0
+        and len(leaf_granularity_out_of_8_80_bounds_ids) == 0
+        and len(unowned_work_package_ids) == 0
+    )
+
+    if is_valid:
+        wbs_governance_status = "HEALTHY"
+    elif (
+        len(parent_100_pct_rollup_violation_ids) > 0
+        or len(unowned_work_package_ids) > 0
+    ):
+        wbs_governance_status = "CRITICAL"
+    else:
+        wbs_governance_status = "AT_RISK"
+
+    recommendations: list[str] = []
+    if parent_100_pct_rollup_violation_ids:
+        recommendations.append(
+            f"Alinear el rollup de esfuerzo y pesos de los nodos hijos al 100% (tolerancia <= {tol_pct}%) en {parent_100_pct_rollup_violation_ids}."
+        )
+    if unowned_work_package_ids:
+        recommendations.append(
+            f"Asignar un único responsable (single_owner_assigned=True) a los paquetes de trabajo hoja en {unowned_work_package_ids}."
+        )
+    if leaf_granularity_out_of_8_80_bounds_ids:
+        recommendations.append(
+            f"Subdividir o consolidar paquetes de trabajo hoja para mantenerse dentro de la regla de [{min_leaf_hrs}, {max_leaf_hrs}] horas en {leaf_granularity_out_of_8_80_bounds_ids}."
+        )
+
+    return {
+        "total_nodes": total_nodes,
+        "compliant_nodes": compliant_nodes,
+        "parent_100_pct_rollup_violation_ids": parent_100_pct_rollup_violation_ids,
+        "leaf_granularity_out_of_8_80_bounds_ids": leaf_granularity_out_of_8_80_bounds_ids,
+        "unowned_work_package_ids": unowned_work_package_ids,
+        "wbs_governance_status": wbs_governance_status,
+        "is_valid": is_valid,
+        "recommendations": recommendations,
+    }
+
 

@@ -2827,6 +2827,7 @@ __all__ = [
     "audit_procurement_warranty_claims_and_holdback_release",
     "audit_change_request_reserve_drawdown_authorization",
     "audit_deliverable_formal_acceptance_and_waiver_expiration",
+    "audit_quality_copq_and_rework_scrap_threshold",
     "ProjectCCBService",
 ]
 
@@ -4860,6 +4861,153 @@ def audit_deliverable_formal_acceptance_and_waiver_expiration(
 ProjectCCBService.audit_deliverable_formal_acceptance_and_waiver_expiration = staticmethod(
     audit_deliverable_formal_acceptance_and_waiver_expiration
 )
+
+
+def audit_quality_copq_and_rework_scrap_threshold(
+    quality_cost_records: Sequence[Mapping[str, Any]] | None,
+    *,
+    min_conformance_investment_pct: float = 50.0,
+    max_external_failure_to_copq_pct: float = 35.0,
+    max_copq_to_bac_pct: float = 10.0,
+) -> dict[str, Any]:
+    """Audita el Costo de la Calidad (CoQ): equilibrio entre inversión de conformidad (prevención/evaluación) y costo de mala calidad (COPQ, retrabajo interno y fallos externos frente al BAC) (PMI PMBOK §8.1.2.3 y §8.3)."""
+    if (
+        quality_cost_records is None
+        or isinstance(quality_cost_records, (str, bytes))
+        or not isinstance(quality_cost_records, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = quality_cost_records
+
+    try:
+        min_conf_pct = float(min_conformance_investment_pct)
+    except (TypeError, ValueError):
+        min_conf_pct = 50.0
+
+    try:
+        max_ext_pct = float(max_external_failure_to_copq_pct)
+    except (TypeError, ValueError):
+        max_ext_pct = 35.0
+
+    try:
+        max_copq_bac_pct = float(max_copq_to_bac_pct)
+    except (TypeError, ValueError):
+        max_copq_bac_pct = 10.0
+
+    def _pos_float(val: Any) -> float:
+        try:
+            return max(0.0, float(val or 0.0))
+        except (TypeError, ValueError):
+            return 0.0
+
+    total_records = 0
+    compliant_records = 0
+    total_conformance_cost_accum = 0.0
+    total_copq_accum = 0.0
+
+    underinvested_conformance_ids: list[str] = []
+    excessive_external_failure_leakage_ids: list[str] = []
+    copq_budget_erosion_ids: list[str] = []
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_records += 1
+
+        record_id = (
+            str(raw.get("id") or raw.get("record_id") or "").strip()
+            or "COQ-UNKNOWN"
+        )
+
+        prevention_cost = _pos_float(raw.get("prevention_cost"))
+        appraisal_cost = _pos_float(raw.get("appraisal_cost"))
+        internal_failure_cost = _pos_float(raw.get("internal_failure_cost"))
+        external_failure_cost = _pos_float(raw.get("external_failure_cost"))
+        bac = _pos_float(raw.get("bac"))
+
+        conformance_cost = prevention_cost + appraisal_cost
+        copq = internal_failure_cost + external_failure_cost
+        total_coq = conformance_cost + copq
+
+        total_conformance_cost_accum += conformance_cost
+        total_copq_accum += copq
+
+        is_underinvested = (
+            total_coq > 0.0
+            and (conformance_cost / total_coq) * 100.0 < min_conf_pct
+        )
+        is_excessive_ext = (
+            copq > 0.0
+            and (external_failure_cost / copq) * 100.0 > max_ext_pct
+        )
+        is_budget_erosion = (
+            bac > 0.0
+            and (copq / bac) * 100.0 > max_copq_bac_pct
+        )
+
+        if is_underinvested:
+            underinvested_conformance_ids.append(record_id)
+        if is_excessive_ext:
+            excessive_external_failure_leakage_ids.append(record_id)
+        if is_budget_erosion:
+            copq_budget_erosion_ids.append(record_id)
+
+        if (
+            not is_underinvested
+            and not is_excessive_ext
+            and not is_budget_erosion
+        ):
+            compliant_records += 1
+
+    is_compliant = (
+        len(underinvested_conformance_ids) == 0
+        and len(excessive_external_failure_leakage_ids) == 0
+        and len(copq_budget_erosion_ids) == 0
+    )
+
+    if is_compliant:
+        coq_governance_health = "healthy"
+    elif (
+        len(excessive_external_failure_leakage_ids) > 0
+        or len(copq_budget_erosion_ids) > 0
+    ):
+        coq_governance_health = "critical"
+    else:
+        coq_governance_health = "at_risk"
+
+    recommendations: list[str] = []
+    if underinvested_conformance_ids:
+        recommendations.append(
+            f"Incrementar la inversión en prevención y evaluación (>= {min_conf_pct}% del CoQ total) en {underinvested_conformance_ids}."
+        )
+    if excessive_external_failure_leakage_ids:
+        recommendations.append(
+            f"Reforzar el control de calidad interno (QC) para contener fugas de fallos externos (> {max_ext_pct}% del COPQ) en {excessive_external_failure_leakage_ids}."
+        )
+    if copq_budget_erosion_ids:
+        recommendations.append(
+            f"Ejecutar análisis de causa raíz (CAPA) para reducir la erosión presupuestaria por COPQ (> {max_copq_bac_pct}% del BAC) en {copq_budget_erosion_ids}."
+        )
+
+    return {
+        "total_records": total_records,
+        "compliant_records": compliant_records,
+        "total_conformance_cost": round(total_conformance_cost_accum, 2),
+        "total_copq": round(total_copq_accum, 2),
+        "underinvested_conformance_ids": underinvested_conformance_ids,
+        "excessive_external_failure_leakage_ids": excessive_external_failure_leakage_ids,
+        "copq_budget_erosion_ids": copq_budget_erosion_ids,
+        "coq_governance_health": coq_governance_health,
+        "is_compliant": is_compliant,
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.audit_quality_copq_and_rework_scrap_threshold = staticmethod(
+    audit_quality_copq_and_rework_scrap_threshold
+)
+
 
 
 

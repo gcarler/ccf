@@ -2984,6 +2984,7 @@ __all__ = [
     "audit_executive_report_risk_burndown_and_residual_exposure",
     "audit_executive_report_critical_path_float_and_convergence",
     "audit_executive_report_contract_claims_and_change_orders",
+    "audit_executive_report_cybersecurity_vulnerability_and_patch_sla",
     "ProjectExportService",
 ]
 
@@ -5041,4 +5042,123 @@ ProjectExportService.audit_executive_report_contract_claims_and_change_orders = 
 )
 
 
+def audit_executive_report_cybersecurity_vulnerability_and_patch_sla(
+    vulnerabilities: Sequence[Mapping[str, Any]] | None,
+    *,
+    critical_cvss_threshold: float = 9.0,
+    high_cvss_threshold: float = 7.0,
+    max_critical_open_days: int = 7,
+    max_high_open_days: int = 30,
+) -> dict[str, Any]:
+    """PMI PMBOK 11.6 & 8.3 — exposición de vulnerabilidades y SLA de parcheo.
 
+    Auditoría pura sobre ``vulnerabilities``. Entradas no-lista/None se
+    tratan como lista vacía y elementos no-dict se ignoran. Reglas aplicadas
+    solo a estados case-insensitive ``open``/``accepted_risk``; los estados
+    ``patched``/``mitigated`` no generan hallazgos:
+
+    1. ``critical_sla_breach_or_active_exploit``: status ``open`` AND
+       (``exploited_in_wild`` OR (``cvss_score >= critical_cvss_threshold``
+       AND ``days_open > max_critical_open_days``)).
+    2. ``high_severity_sla_breach``: status ``open`` AND
+       (``high_cvss_threshold <= cvss_score < critical_cvss_threshold``) AND
+       ``days_open > max_high_open_days``.
+    3. ``unmitigated_accepted_risk``: status ``accepted_risk`` AND
+       (``not compensating_control_documented`` OR ``cvss_score >=
+       critical_cvss_threshold``).
+
+    Returns dict con total_vulnerabilities, compliant_vulnerabilities_count,
+    los 3 conteos de violación, security_posture_status
+    (HEALTHY/AT_RISK/CRITICAL) y violations (dicts con ``vuln_id`` /
+    ``reasons``).
+    """
+    raw_items = vulnerabilities if isinstance(vulnerabilities, list) else []
+    items = [entry for entry in raw_items if isinstance(entry, Mapping)]
+
+    total = 0
+    critical_breach_count = 0
+    high_breach_count = 0
+    accepted_risk_count = 0
+    compliant_count = 0
+    violations: list[dict[str, Any]] = []
+
+    for entry in items:
+        total += 1
+
+        vuln_id = entry.get("vuln_id")
+        status_raw = entry.get("status")
+        status = str(status_raw).strip().lower() if status_raw is not None else ""
+        cvss_score = entry.get("cvss_score")
+        days_open = entry.get("days_open")
+        exploited_in_wild = entry.get("exploited_in_wild")
+        compensating_control_documented = entry.get("compensating_control_documented")
+
+        reasons: list[str] = []
+
+        if status == "open":
+            second_clause = (
+                isinstance(cvss_score, (int, float))
+                and cvss_score >= critical_cvss_threshold
+                and isinstance(days_open, (int, float))
+                and days_open > max_critical_open_days
+            )
+            if exploited_in_wild is True or second_clause:
+                reasons.append("critical_sla_breach_or_active_exploit")
+
+            if (
+                isinstance(cvss_score, (int, float))
+                and high_cvss_threshold <= cvss_score < critical_cvss_threshold
+                and isinstance(days_open, (int, float))
+                and days_open > max_high_open_days
+            ):
+                reasons.append("high_severity_sla_breach")
+
+        elif status == "accepted_risk":
+            third_clause = isinstance(cvss_score, (int, float)) and (
+                cvss_score >= critical_cvss_threshold
+            )
+            if not compensating_control_documented or third_clause:
+                reasons.append("unmitigated_accepted_risk")
+
+        # patched / mitigated y estados desconocidos: sin hallazgos.
+
+        ordered_reasons = list(dict.fromkeys(reasons))
+        if not ordered_reasons:
+            compliant_count += 1
+            continue
+
+        if "critical_sla_breach_or_active_exploit" in ordered_reasons:
+            critical_breach_count += 1
+        if "high_severity_sla_breach" in ordered_reasons:
+            high_breach_count += 1
+        if "unmitigated_accepted_risk" in ordered_reasons:
+            accepted_risk_count += 1
+
+        violations.append(
+            {
+                "vuln_id": vuln_id,
+                "reasons": ordered_reasons,
+            }
+        )
+
+    if critical_breach_count > 0 or accepted_risk_count > 0:
+        posture_status = "CRITICAL"
+    elif high_breach_count > 0:
+        posture_status = "AT_RISK"
+    else:
+        posture_status = "HEALTHY"
+
+    return {
+        "total_vulnerabilities": total,
+        "compliant_vulnerabilities_count": compliant_count,
+        "critical_sla_breach_or_active_exploit_count": critical_breach_count,
+        "high_severity_sla_breach_count": high_breach_count,
+        "unmitigated_accepted_risk_count": accepted_risk_count,
+        "security_posture_status": posture_status,
+        "violations": violations,
+    }
+
+
+ProjectExportService.audit_executive_report_cybersecurity_vulnerability_and_patch_sla = staticmethod(
+    audit_executive_report_cybersecurity_vulnerability_and_patch_sla
+)
