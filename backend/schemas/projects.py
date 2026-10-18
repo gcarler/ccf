@@ -2697,3 +2697,51 @@ def validate_milestone_deliverable_gate(
         "posture": posture,
     }
 
+
+def validate_wbs_code_hierarchy(
+    wbs_code: str | None,
+    parent_wbs_code: str | None = None,
+    max_depth: int | None = 5,
+) -> dict[str, Any]:
+    """Valida la jerarquía y nivel de descomposición de un código WBS según PMI PMBOK §5.4 (Create WBS)."""
+    clean_code = (wbs_code or "").strip()
+    clean_parent = (parent_wbs_code or "").strip()
+    safe_max_depth = max(1, int(max_depth or 5))
+    is_valid_format = bool(re.fullmatch(r"[1-9]\d*(\.[1-9]\d*)*", clean_code))
+    segments = clean_code.split(".") if is_valid_format else []
+    depth = len(segments)
+    parent_aligned = (
+        True
+        if not clean_parent
+        else bool(
+            is_valid_format and depth >= 2 and ".".join(segments[:-1]) == clean_parent
+        )
+    )
+    exceeds_max_depth = bool(is_valid_format and depth > safe_max_depth)
+    is_valid = bool(is_valid_format and parent_aligned and not exceeds_max_depth)
+
+    if not is_valid_format:
+        posture = "MALFORMED_WBS_CODE"
+    elif not parent_aligned:
+        posture = "ORPHAN_PARENT_MISMATCH"
+    elif exceeds_max_depth:
+        posture = "EXCESSIVE_WBS_DECOMPOSITION"
+    elif depth == 1:
+        posture = "ROOT_CONTROL_ACCOUNT"
+    else:
+        posture = "VALID_WORK_PACKAGE_WBS"
+
+    return {
+        "clean_code": clean_code,
+        "clean_parent": clean_parent,
+        "safe_max_depth": safe_max_depth,
+        "is_valid_format": is_valid_format,
+        "segments": segments,
+        "depth": depth,
+        "parent_aligned": parent_aligned,
+        "exceeds_max_depth": exceeds_max_depth,
+        "is_valid": is_valid,
+        "posture": posture,
+    }
+
+

@@ -684,3 +684,69 @@ def test_validate_milestone_deliverable_gate_invalid_spec():
     assert no_date["is_gate_ready"] is False
     assert no_date["posture"] == "INVALID_MILESTONE_SPEC"
 
+
+def test_validate_wbs_code_hierarchy_root_and_work_package():
+    """WBS nivel 1 -> 'ROOT_CONTROL_ACCOUNT' y subnivel alineado -> 'VALID_WORK_PACKAGE_WBS'."""
+    from backend.schemas.projects import validate_wbs_code_hierarchy
+
+    root_res = validate_wbs_code_hierarchy(" 1 ", parent_wbs_code=None, max_depth=5)
+    assert root_res == {
+        "clean_code": "1",
+        "clean_parent": "",
+        "safe_max_depth": 5,
+        "is_valid_format": True,
+        "segments": ["1"],
+        "depth": 1,
+        "parent_aligned": True,
+        "exceeds_max_depth": False,
+        "is_valid": True,
+        "posture": "ROOT_CONTROL_ACCOUNT",
+    }
+
+    wp_res = validate_wbs_code_hierarchy("1.2.3", parent_wbs_code="1.2", max_depth=5)
+    assert wp_res["is_valid"] is True
+    assert wp_res["depth"] == 3
+    assert wp_res["parent_aligned"] is True
+    assert wp_res["posture"] == "VALID_WORK_PACKAGE_WBS"
+
+
+def test_validate_wbs_code_hierarchy_orphan_parent_mismatch():
+    """WBS bien formado pero cuyo prefijo no coincide con parent_wbs_code -> 'ORPHAN_PARENT_MISMATCH'."""
+    from backend.schemas.projects import validate_wbs_code_hierarchy
+
+    res = validate_wbs_code_hierarchy("1.3.2", parent_wbs_code="1.2", max_depth=5)
+    assert res["is_valid_format"] is True
+    assert res["parent_aligned"] is False
+    assert res["is_valid"] is False
+    assert res["posture"] == "ORPHAN_PARENT_MISMATCH"
+
+
+def test_validate_wbs_code_hierarchy_excessive_decomposition():
+    """WBS bien formado y alineado pero con depth > safe_max_depth -> 'EXCESSIVE_WBS_DECOMPOSITION'."""
+    from backend.schemas.projects import validate_wbs_code_hierarchy
+
+    res = validate_wbs_code_hierarchy(
+        "1.2.1.4.2", parent_wbs_code="1.2.1.4", max_depth=4
+    )
+    assert res["is_valid_format"] is True
+    assert res["parent_aligned"] is True
+    assert res["depth"] == 5
+    assert res["safe_max_depth"] == 4
+    assert res["exceeds_max_depth"] is True
+    assert res["is_valid"] is False
+    assert res["posture"] == "EXCESSIVE_WBS_DECOMPOSITION"
+
+
+def test_validate_wbs_code_hierarchy_malformed_code():
+    """Código vacío, con ceros iniciales o formato inválido -> 'MALFORMED_WBS_CODE'."""
+    from backend.schemas.projects import validate_wbs_code_hierarchy
+
+    for bad_code in ["", "0.1", "1.02.3", "1..2", "WBS-1.1", None]:
+        res = validate_wbs_code_hierarchy(bad_code, parent_wbs_code="1")
+        assert res["is_valid_format"] is False
+        assert res["segments"] == []
+        assert res["depth"] == 0
+        assert res["is_valid"] is False
+        assert res["posture"] == "MALFORMED_WBS_CODE"
+
+

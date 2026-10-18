@@ -1207,3 +1207,99 @@ def test_audit_risks_csv_register_completeness_empty_export():
         }
 
 
+# ─── audit_stakeholders_csv_engagement_gaps (pure helper) ─────────
+
+
+def test_stakeholders_csv_engagement_strong_coalition():
+    """Mayoría supportive/líder (>= 75%) sin resistentes -> STRONG_STAKEHOLDER_COALITION."""
+    from backend.services.project_export_service import (
+        audit_stakeholders_csv_engagement_gaps,
+    )
+
+    csv_content = (
+        "Nombre,Poder,Engagement\n"
+        "Pastor,High,Leading\n"
+        "CEO,Alta,Apoyo\n"
+        "Tesorero,critical,Líder\n"
+        "Voluntario,low,Neutral\n"
+    )
+
+    res = audit_stakeholders_csv_engagement_gaps(csv_content)
+
+    assert res["total_rows"] == 4
+    # 'influencia' puede también barajearse vía alias: 3 de 4 en high/alta/critical.
+    assert res["high_power_rows"] == 3
+    assert res["supportive_or_leading_rows"] == 3
+    assert res["resistant_or_unaware_rows"] == 0
+    assert res["alignment_rate"] == 75.0
+    assert res["posture"] == "STRONG_STAKEHOLDER_COALITION"
+
+
+def test_stakeholders_csv_engagement_critical_resistance():
+    """Filas resistant/unaware -> CRITICAL_ENGAGEMENT_RESISTANCE aunque haya mayoría positiva."""
+    from backend.services.project_export_service import (
+        audit_stakeholders_csv_engagement_gaps,
+    )
+
+    csv_content = (
+        "Nombre,Influencia,Compromiso\n"
+        "Ministro,5,Resistente\n"
+        "Encargado,4,Desconocedor\n"
+        "Lider,high,Apoyo\n"
+    )
+
+    res = audit_stakeholders_csv_engagement_gaps(csv_content)
+
+    assert res["total_rows"] == 3
+    assert res["high_power_rows"] == 3
+    assert res["resistant_or_unaware_rows"] == 2
+    assert res["supportive_or_leading_rows"] == 1
+    assert res["alignment_rate"] == 33.33
+    assert res["posture"] == "CRITICAL_ENGAGEMENT_RESISTANCE"
+
+
+def test_stakeholders_csv_engagement_neutral_single_and_aliases():
+    """Sin resistentes y < 75% alignment -> NEUTRAL_ENGAGEMENT_POSTURE; aliases españoles soportados."""
+    from backend.services.project_export_service import (
+        audit_stakeholders_csv_engagement_gaps,
+    )
+
+    csv_content = (
+        "Nombre,Poder,Postura\n"
+        "Anciano,low,apoyo\n"
+        "Vecino,low,neutral\n"
+    )
+
+    res = audit_stakeholders_csv_engagement_gaps(csv_content)
+
+    assert res["total_rows"] == 2
+    assert res["high_power_rows"] == 0
+    assert res["supportive_or_leading_rows"] == 1
+    assert res["alignment_rate"] == 50.0
+    assert res["posture"] == "NEUTRAL_ENGAGEMENT_POSTURE"
+
+
+def test_stakeholders_csv_engagement_empty_export():
+    """None, cadena vacía, BOM o solo cabeceras/filas vacías -> EMPTY_STAKEHOLDER_EXPORT."""
+    from backend.services.project_export_service import (
+        audit_stakeholders_csv_engagement_gaps,
+    )
+
+    for empty_val in (
+        None,
+        "",
+        "   \n ",
+        "\ufeffNombre,Poder,Engagement\n",
+        "Nombre,Poder,Engagement\n,,\n",
+    ):
+        res = audit_stakeholders_csv_engagement_gaps(empty_val)
+        assert res == {
+            "total_rows": 0,
+            "high_power_rows": 0,
+            "resistant_or_unaware_rows": 0,
+            "supportive_or_leading_rows": 0,
+            "alignment_rate": 0.0,
+            "posture": "EMPTY_STAKEHOLDER_EXPORT",
+        }
+
+

@@ -731,3 +731,109 @@ def audit_risks_csv_register_completeness(
     }
 
 
+def audit_stakeholders_csv_engagement_gaps(
+    csv_content: str | None,
+) -> dict[str, Any]:
+    """Audita un CSV del registro de interesados según PMI PMBOK §13.1 / §13.4.
+
+    Parse con csv.DictReader normalizando claves (strip+lower) e ignorando
+    filas vacías, y calcula:
+    - `total_rows`: filas de datos válidas.
+    - `high_power_rows`: poder/alto impacto según la columna
+      'poder'/'power'/'influence'/'influencia' en
+      ('high','alto','alta','critical','critico','crítico','4','5').
+    - `resistant_or_unaware_rows`: engagement 'unaware'/'desconocedor' o
+      'resistant'/'resistente' en 'engagement'/'compromiso'/'current_engagement'/'postura'.
+    - `supportive_or_leading_rows`: engagement 'supportive'/'apoyo' o
+      'leading'/'lider'/'líder'.
+    - `alignment_rate`: % de filas en engagement positivo (2 decimales;
+      0.0 sin filas).
+    - `posture`: 'EMPTY_STAKEHOLDER_EXPORT' sin filas;
+      'CRITICAL_ENGAGEMENT_RESISTANCE' con resistencia;
+      'STRONG_STAKEHOLDER_COALITION' con alignment >= 75.0; y
+      'NEUTRAL_ENGAGEMENT_POSTURE' en otro caso.
+    """
+    text = (csv_content if isinstance(csv_content, str) else "").lstrip("\ufeff")
+
+    if not text.strip():
+        return {
+            "total_rows": 0,
+            "high_power_rows": 0,
+            "resistant_or_unaware_rows": 0,
+            "supportive_or_leading_rows": 0,
+            "alignment_rate": 0.0,
+            "posture": "EMPTY_STAKEHOLDER_EXPORT",
+        }
+
+    reader = csv.DictReader(io.StringIO(text))
+    power_keys = ("poder", "power", "influence", "influencia")
+    engagement_keys = ("engagement", "compromiso", "current_engagement", "postura")
+    high_power_values = {
+        "high", "alto", "alta", "critical", "critico", "crítico", "4", "5"
+    }
+    resistant_values = {"unaware", "desconocedor", "resistant", "resistente"}
+    supportive_values = {"supportive", "apoyo", "leading", "lider", "líder"}
+
+    total_rows = 0
+    high_power_rows = 0
+    resistant_or_unaware_rows = 0
+    supportive_or_leading_rows = 0
+
+    for raw_row in reader:
+        if not isinstance(raw_row, dict):
+            continue
+        norm_row = {
+            str(k).lstrip("\ufeff").strip().lower(): str(v or "")
+            for k, v in raw_row.items()
+            if k is not None
+        }
+        if not any(v.strip() for v in norm_row.values()):
+            continue
+
+        total_rows += 1
+
+        power_text = next(
+            (norm_row.get(k, "") for k in power_keys if norm_row.get(k, "").strip()),
+            "",
+        ).strip().lower()
+        engagement_text = next(
+            (
+                norm_row.get(k, "")
+                for k in engagement_keys
+                if norm_row.get(k, "").strip()
+            ),
+            "",
+        ).strip().lower()
+
+        if power_text in high_power_values:
+            high_power_rows += 1
+        if engagement_text in resistant_values:
+            resistant_or_unaware_rows += 1
+        elif engagement_text in supportive_values:
+            supportive_or_leading_rows += 1
+
+    alignment_rate = (
+        round((supportive_or_leading_rows / total_rows) * 100.0, 2)
+        if total_rows > 0
+        else 0.0
+    )
+
+    if total_rows == 0:
+        posture = "EMPTY_STAKEHOLDER_EXPORT"
+    elif resistant_or_unaware_rows > 0:
+        posture = "CRITICAL_ENGAGEMENT_RESISTANCE"
+    elif alignment_rate >= 75.0:
+        posture = "STRONG_STAKEHOLDER_COALITION"
+    else:
+        posture = "NEUTRAL_ENGAGEMENT_POSTURE"
+
+    return {
+        "total_rows": total_rows,
+        "high_power_rows": high_power_rows,
+        "resistant_or_unaware_rows": resistant_or_unaware_rows,
+        "supportive_or_leading_rows": supportive_or_leading_rows,
+        "alignment_rate": alignment_rate,
+        "posture": posture,
+    }
+
+
