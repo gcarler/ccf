@@ -3303,3 +3303,150 @@ def test_mutation_idempotency_and_header_hygiene_empty_and_live_openapi():
     assert live_res["malformed_header_param_ops"] == []
     assert live_res["untyped_response_headers"] == []
     assert live_res["is_hygienic"] is True
+
+
+def test_export_and_binary_response_hygiene_compliant():
+    """Operaciones de exportación con binary/json media types y header Content-Disposition (is_hygienic=True)."""
+    schema = {
+        "paths": {
+            "/api/projects/{project_id}/export.pdf": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "description": "PDF Export",
+                            "headers": {
+                                "Content-Disposition": {
+                                    "schema": {"type": "string"}
+                                }
+                            },
+                            "content": {"application/pdf": {}},
+                        }
+                    }
+                }
+            },
+            "/projects/{project_id}/report": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "description": "Executive Report JSON",
+                            "content": {"application/json": {}},
+                        }
+                    }
+                }
+            },
+            "/api/projects": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "description": "List",
+                            "content": {"application/json": {}},
+                        }
+                    }
+                }
+            },
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_export_and_binary_response_hygiene(
+        schema
+    )
+    assert res == {
+        "evaluated_export_op_count": 2,
+        "export_report_ops": [
+            "GET /api/projects/{project_id}/export.pdf",
+            "GET /projects/{project_id}/report",
+        ],
+        "binary_stream_export_ops": [
+            "GET /api/projects/{project_id}/export.pdf"
+        ],
+        "json_export_ops": ["GET /projects/{project_id}/report"],
+        "ops_with_content_disposition_header": [
+            "GET /api/projects/{project_id}/export.pdf"
+        ],
+        "export_ops_missing_content_type": [],
+        "mismatched_export_media_type_ops": [],
+        "is_hygienic": True,
+    }
+
+
+def test_export_and_binary_response_hygiene_missing_content_type():
+    """Operación de exportación sin media types en respuestas 2xx -> export_ops_missing_content_type (is_hygienic=False)."""
+    schema = {
+        "paths": {
+            "/api/projects/download": {
+                "get": {
+                    "responses": {"200": {"description": "File stream"}}
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_export_and_binary_response_hygiene(
+        schema
+    )
+    assert res["evaluated_export_op_count"] == 1
+    assert res["export_ops_missing_content_type"] == [
+        "GET /api/projects/download"
+    ]
+    assert res["is_hygienic"] is False
+
+
+def test_export_and_binary_response_hygiene_mismatched_pdf_media_type():
+    """Operación con 'pdf' en el path pero media type incompatible (ej. text/csv) -> mismatched_export_media_type_ops (is_hygienic=False)."""
+    schema = {
+        "paths": {
+            "/api/projects/report/pdf": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "description": "Wrong media type for PDF route",
+                            "content": {"text/csv": {}},
+                        }
+                    }
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_export_and_binary_response_hygiene(
+        schema
+    )
+    assert res["mismatched_export_media_type_ops"] == [
+        "GET /api/projects/report/pdf"
+    ]
+    assert res["is_hygienic"] is False
+
+
+def test_export_and_binary_response_hygiene_empty_and_live_openapi():
+    """Manejo de schema vacío/None y auditoría del esquema OpenAPI en vivo de la app FastAPI."""
+    empty_expected = {
+        "evaluated_export_op_count": 0,
+        "export_report_ops": [],
+        "binary_stream_export_ops": [],
+        "json_export_ops": [],
+        "ops_with_content_disposition_header": [],
+        "export_ops_missing_content_type": [],
+        "mismatched_export_media_type_ops": [],
+        "is_hygienic": True,
+    }
+    assert (
+        audit_projects_api_contracts.summarize_projects_export_and_binary_response_hygiene(
+            None
+        )
+        == empty_expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_export_and_binary_response_hygiene(
+            {}
+        )
+        == empty_expected
+    )
+
+    from backend.app import app
+
+    live_res = (
+        audit_projects_api_contracts.summarize_projects_export_and_binary_response_hygiene(
+            app.openapi()
+        )
+    )
+    assert live_res["evaluated_export_op_count"] > 0
+    assert live_res["export_ops_missing_content_type"] == []
+    assert live_res["mismatched_export_media_type_ops"] == []
+    assert live_res["is_hygienic"] is True

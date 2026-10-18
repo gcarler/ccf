@@ -1907,6 +1907,130 @@ def summarize_projects_mutation_idempotency_and_header_hygiene(
     }
 
 
+_CANONICAL_BINARY_EXPORT_TYPES = {
+    "application/pdf",
+    "text/csv",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/octet-stream",
+}
+_EXPORT_PATH_KEYWORDS = ("export", "pdf", "csv", "xlsx", "download", "report")
+
+
+def summarize_projects_export_and_binary_response_hygiene(
+    openapi_schema: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Audita las operaciones de exportación/reporte/descarga bajo /api/projects o /projects verificando media types y content-disposition."""
+    if not isinstance(openapi_schema, Mapping):
+        return {
+            "evaluated_export_op_count": 0,
+            "export_report_ops": [],
+            "binary_stream_export_ops": [],
+            "json_export_ops": [],
+            "ops_with_content_disposition_header": [],
+            "export_ops_missing_content_type": [],
+            "mismatched_export_media_type_ops": [],
+            "is_hygienic": True,
+        }
+
+    export_report_ops: list[str] = []
+    binary_stream_export_ops: list[str] = []
+    json_export_ops: list[str] = []
+    ops_with_content_disposition_header: list[str] = []
+    export_ops_missing_content_type: list[str] = []
+    mismatched_export_media_type_ops: list[str] = []
+
+    paths = openapi_schema.get("paths")
+    if isinstance(paths, Mapping):
+        for path, path_item in sorted(paths.items()):
+            if not isinstance(path, str) or not (
+                path.startswith("/api/projects") or path.startswith("/projects")
+            ):
+                continue
+            if not isinstance(path_item, Mapping):
+                continue
+
+            path_lower = path.lower()
+            has_export_keyword = any(
+                kw in path_lower for kw in _EXPORT_PATH_KEYWORDS
+            )
+
+            for method in ("get", "post", "put", "patch", "delete"):
+                op = path_item.get(method)
+                if not isinstance(op, Mapping):
+                    continue
+
+                op_key = f"{method.upper()} {path}"
+                raw_responses = (
+                    op.get("responses")
+                    if isinstance(op.get("responses"), Mapping)
+                    else {}
+                )
+                media_types: set[str] = set()
+                has_content_disposition = False
+
+                for code, resp_obj in raw_responses.items():
+                    if not str(code).startswith("2") or not isinstance(
+                        resp_obj, Mapping
+                    ):
+                        continue
+                    content = resp_obj.get("content")
+                    if isinstance(content, Mapping):
+                        for mtype in content.keys():
+                            media_types.add(str(mtype))
+                    headers = resp_obj.get("headers")
+                    if isinstance(headers, Mapping):
+                        if any(
+                            str(h).strip().lower() == "content-disposition"
+                            for h in headers.keys()
+                        ):
+                            has_content_disposition = True
+
+                has_binary_type = bool(
+                    media_types & _CANONICAL_BINARY_EXPORT_TYPES
+                )
+                if not (has_export_keyword or has_binary_type):
+                    continue
+
+                export_report_ops.append(op_key)
+                if len(media_types) == 0:
+                    export_ops_missing_content_type.append(op_key)
+                if has_binary_type:
+                    binary_stream_export_ops.append(op_key)
+                if "application/json" in media_types:
+                    json_export_ops.append(op_key)
+                if has_content_disposition:
+                    ops_with_content_disposition_header.append(op_key)
+                if (
+                    "pdf" in path_lower
+                    and len(media_types) > 0
+                    and not (
+                        {
+                            "application/pdf",
+                            "application/octet-stream",
+                            "application/json",
+                        }
+                        & media_types
+                    )
+                ):
+                    mismatched_export_media_type_ops.append(op_key)
+
+    is_hygienic = (
+        len(export_ops_missing_content_type) == 0
+        and len(mismatched_export_media_type_ops) == 0
+    )
+
+    return {
+        "evaluated_export_op_count": len(export_report_ops),
+        "export_report_ops": export_report_ops,
+        "binary_stream_export_ops": binary_stream_export_ops,
+        "json_export_ops": json_export_ops,
+        "ops_with_content_disposition_header": ops_with_content_disposition_header,
+        "export_ops_missing_content_type": export_ops_missing_content_type,
+        "mismatched_export_media_type_ops": mismatched_export_media_type_ops,
+        "is_hygienic": is_hygienic,
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()
