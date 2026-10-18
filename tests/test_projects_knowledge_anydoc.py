@@ -1486,3 +1486,91 @@ def test_audit_markdown_media_accessibility_no_embedded_media():
             "accessibility_rate_pct": 0.0,
             "media_posture": "NO_EMBEDDED_MEDIA",
         }
+
+
+def test_audit_markdown_toc_anchor_alignment_aligned_structure():
+    """ToC con anclas válidas y jerarquía secuencial H1->H2->H3 -> ALIGNED_DOCUMENT_STRUCTURE."""
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_toc_anchor_alignment,
+    )
+
+    md = (
+        "# Alcance del Proyecto\n"
+        "- [Alcance](#alcance-del-proyecto)\n"
+        "- [Entregables](#entregables-clave)\n\n"
+        "## Entregables Clave\n"
+        "Detalle de paquetes de trabajo.\n\n"
+        "### Criterios de Aceptacion\n"
+        "Lista de verificación DoD.\n"
+    )
+    res = audit_markdown_toc_anchor_alignment(md)
+    assert res == {
+        "heading_count": 3,
+        "internal_anchor_count": 2,
+        "broken_toc_anchors": [],
+        "skipped_level_headings": [],
+        "is_aligned": True,
+        "toc_posture": "ALIGNED_DOCUMENT_STRUCTURE",
+    }
+    assert AnyDocService.audit_markdown_toc_anchor_alignment(md) == res
+
+
+def test_audit_markdown_toc_anchor_alignment_broken_toc_anchors():
+    """Enlaces de ToC hacia secciones inexistentes (ignorando bloques cercados) -> BROKEN_TOC_ANCHORS."""
+    from backend.services.anydoc_service import audit_markdown_toc_anchor_alignment
+
+    md = (
+        "# Gobernanza PMI\n"
+        "- [Gobernanza](#gobernanza-pmi)\n"
+        "- [Riesgos](#seccion-inexistente)\n"
+        "- [Riesgos Duplicado](#seccion-inexistente)\n"
+        "```markdown\n"
+        "[Ignorado en bloque](#ancla-fantasma)\n"
+        "# Encabezado en codigo\n"
+        "```\n"
+        "~~~md\n"
+        "[Ignorado en tilde](#otra-fantasma)\n"
+        "~~~\n"
+        "## Control de Cambios\n"
+    )
+    res = audit_markdown_toc_anchor_alignment(md)
+    assert res["heading_count"] == 2
+    assert res["internal_anchor_count"] == 3
+    assert res["broken_toc_anchors"] == ["#seccion-inexistente"]
+    assert res["skipped_level_headings"] == []
+    assert res["is_aligned"] is False
+    assert res["toc_posture"] == "BROKEN_TOC_ANCHORS"
+
+
+def test_audit_markdown_toc_anchor_alignment_heading_hierarchy_skip():
+    """Salto de jerarquía (# Nivel 1 -> ### Nivel 3 Saltado) sin anclas rotas -> HEADING_HIERARCHY_SKIP."""
+    from backend.services.anydoc_service import audit_markdown_toc_anchor_alignment
+
+    md = (
+        "# Nivel 1\n"
+        "[Ir a Nivel 1](#nivel-1)\n\n"
+        "### Nivel 3 Saltado\n"
+        "Contenido bajo H3 directo.\n"
+    )
+    res = audit_markdown_toc_anchor_alignment(md)
+    assert res["heading_count"] == 2
+    assert res["internal_anchor_count"] == 1
+    assert res["broken_toc_anchors"] == []
+    assert res["skipped_level_headings"] == ["Nivel 3 Saltado"]
+    assert res["is_aligned"] is False
+    assert res["toc_posture"] == "HEADING_HIERARCHY_SKIP"
+
+
+def test_audit_markdown_toc_anchor_alignment_no_headings_found():
+    """Texto vacío, None o prosa sin encabezados ATX -> NO_HEADINGS_FOUND."""
+    from backend.services.anydoc_service import audit_markdown_toc_anchor_alignment
+
+    prose_only = "Documento de notas rápidas sin encabezados ATX.\n```\n# No cuenta\n```\n"
+    for payload in (None, "", "   ", prose_only):
+        res = audit_markdown_toc_anchor_alignment(payload)
+        assert res["heading_count"] == 0
+        assert res["broken_toc_anchors"] == []
+        assert res["skipped_level_headings"] == []
+        assert res["is_aligned"] is True
+        assert res["toc_posture"] == "NO_HEADINGS_FOUND"

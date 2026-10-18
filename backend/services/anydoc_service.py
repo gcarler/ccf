@@ -1584,6 +1584,104 @@ def audit_markdown_media_accessibility(
     }
 
 
+_ATX_HEADING_RE = re.compile(r"^\s*(#{1,6})\s+(.+?)\s*#*$")
+_INTERNAL_ANCHOR_LINK_RE = re.compile(r"(?<!!)\[([^\]]+)\]\(#([A-Za-z0-9_-]+)\)")
+
+
+def audit_markdown_toc_anchor_alignment(
+    markdown_text: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Audita enlaces internos de ancla (#slug) en Tablas de Contenido (ToC) y jerarquía de encabezados ATX según PMI PMBOK §4.4."""
+    if not markdown_text or not isinstance(markdown_text, str) or not markdown_text.strip():
+        return {
+            "heading_count": 0,
+            "internal_anchor_count": 0,
+            "broken_toc_anchors": [],
+            "skipped_level_headings": [],
+            "is_aligned": True,
+            "toc_posture": "NO_HEADINGS_FOUND",
+        }
+
+    non_fenced_lines: List[str] = []
+    in_fence = False
+    fence_marker = ""
+
+    for line in markdown_text.splitlines():
+        stripped = line.strip()
+        if not in_fence:
+            if stripped.startswith("```") or stripped.startswith("~~~"):
+                in_fence = True
+                fence_marker = stripped[:3]
+                continue
+            non_fenced_lines.append(line)
+        else:
+            if stripped.startswith(fence_marker):
+                in_fence = False
+                fence_marker = ""
+            continue
+
+    heading_count = 0
+    heading_slugs: set[str] = set()
+    skipped_level_headings: List[str] = []
+    prev_level: Optional[int] = None
+
+    for line in non_fenced_lines:
+        match = _ATX_HEADING_RE.match(line)
+        if not match:
+            continue
+        hashes, title = match.group(1), match.group(2)
+        level = len(hashes)
+        raw_title = title.strip()
+        if not raw_title:
+            continue
+
+        heading_count += 1
+        slug = re.sub(r"[^\w\s-]", "", raw_title.lower())
+        slug = re.sub(r"\s+", "-", slug).strip("-")
+        if slug:
+            heading_slugs.add(slug)
+
+        if prev_level is not None and level > prev_level + 1:
+            if raw_title not in skipped_level_headings:
+                skipped_level_headings.append(raw_title)
+        prev_level = level
+
+    internal_anchor_count = 0
+    broken_toc_anchors: List[str] = []
+
+    for line in non_fenced_lines:
+        for match in _INTERNAL_ANCHOR_LINK_RE.finditer(line):
+            internal_anchor_count += 1
+            anchor = match.group(2)
+            if anchor.lower() not in heading_slugs:
+                formatted_anchor = f"#{anchor}"
+                if formatted_anchor not in broken_toc_anchors:
+                    broken_toc_anchors.append(formatted_anchor)
+
+    is_aligned = bool(
+        heading_count == 0
+        or (len(broken_toc_anchors) == 0 and len(skipped_level_headings) == 0)
+    )
+
+    if heading_count == 0:
+        toc_posture = "NO_HEADINGS_FOUND"
+    elif len(broken_toc_anchors) > 0:
+        toc_posture = "BROKEN_TOC_ANCHORS"
+    elif len(skipped_level_headings) > 0:
+        toc_posture = "HEADING_HIERARCHY_SKIP"
+    else:
+        toc_posture = "ALIGNED_DOCUMENT_STRUCTURE"
+
+    return {
+        "heading_count": heading_count,
+        "internal_anchor_count": internal_anchor_count,
+        "broken_toc_anchors": broken_toc_anchors,
+        "skipped_level_headings": skipped_level_headings,
+        "is_aligned": is_aligned,
+        "toc_posture": toc_posture,
+    }
+
+
 class AnyDocService:
     """Fachada canónica de conversión y auditoría documental AnyDoc PMI."""
 
@@ -1692,6 +1790,12 @@ class AnyDocService:
     ) -> dict[str, Any]:
         return audit_markdown_media_accessibility(markdown_text)
 
+    @staticmethod
+    def audit_markdown_toc_anchor_alignment(
+        markdown_text: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        return audit_markdown_toc_anchor_alignment(markdown_text)
+
 
 __all__ = [
     "ANYDOC_AVAILABLE",
@@ -1714,5 +1818,6 @@ __all__ = [
     "extract_markdown_glossary_definitions",
     "audit_markdown_mermaid_diagrams",
     "audit_markdown_media_accessibility",
+    "audit_markdown_toc_anchor_alignment",
     "AnyDocService",
 ]
