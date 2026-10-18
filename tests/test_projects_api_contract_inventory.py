@@ -5778,3 +5778,160 @@ def test_string_format_and_pattern_hygiene_detects_inverted_or_non_positive_leng
         "WbsItemCreate.negative_min",
     ]
     assert res["is_string_format_hygiene_clean"] is False
+
+
+def test_deprecated_and_version_lifecycle_hygiene_live_openapi():
+    """Valida contra el esquema OpenAPI real de FastAPI que la gobernanza de deprecaciones esté limpia."""
+    assert "summarize_projects_deprecated_and_version_lifecycle_hygiene" in audit_projects_api_contracts.__all__
+    res = audit_projects_api_contracts.summarize_projects_deprecated_and_version_lifecycle_hygiene()
+    assert res["total_operations_inspected"] > 0
+    assert res["undocumented_deprecated_items"] == []
+    assert res["implicit_unflagged_deprecations"] == []
+    assert res["is_deprecation_hygiene_clean"] is True
+
+
+def test_deprecated_and_version_lifecycle_hygiene_clean_with_documented_migration():
+    """Acepta operaciones, parámetros y propiedades deprecados cuando incluyen guía de migración."""
+    schema = {
+        "paths": {
+            "/api/projects/legacy-export": {
+                "get": {
+                    "deprecated": True,
+                    "description": "Replaced by /api/projects/v2/export; sunset in 2027-01.",
+                    "parameters": [
+                        {
+                            "name": "old_filter",
+                            "in": "query",
+                            "deprecated": True,
+                            "description": "Please use status_filter instead.",
+                            "schema": {"type": "string"},
+                        }
+                    ],
+                    "responses": {"200": {"description": "OK"}},
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "ProjectLegacyPayload": {
+                    "type": "object",
+                    "properties": {
+                        "old_code": {
+                            "type": "string",
+                            "deprecated": True,
+                            "description": "Reemplazado por canonical_code.",
+                        }
+                    },
+                }
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_deprecated_and_version_lifecycle_hygiene(
+        schema
+    )
+    assert res["total_operations_inspected"] == 1
+    assert res["deprecated_operations_count"] == 1
+    assert res["deprecated_parameters_count"] == 1
+    assert res["deprecated_properties_count"] == 1
+    assert res["undocumented_deprecated_items"] == []
+    assert res["implicit_unflagged_deprecations"] == []
+    assert res["is_deprecation_hygiene_clean"] is True
+
+
+def test_deprecated_and_version_lifecycle_hygiene_detects_undocumented_deprecations():
+    """Detecta elementos con deprecated=True que carecen de guía de migración en su descripción."""
+    schema = {
+        "paths": {
+            "/projects/old-tasks": {
+                "post": {
+                    "deprecated": True,
+                    "description": "Legacy endpoint.",
+                    "parameters": [
+                        {
+                            "name": "legacy_flag",
+                            "in": "query",
+                            "deprecated": True,
+                            "description": "No longer supported.",
+                            "schema": {"type": "boolean"},
+                        }
+                    ],
+                    "responses": {"200": {"description": "OK"}},
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "WbsOldNode": {
+                    "type": "object",
+                    "properties": {
+                        "legacy_code": {
+                            "type": "string",
+                            "deprecated": True,
+                            "description": "Old field.",
+                        }
+                    },
+                }
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_deprecated_and_version_lifecycle_hygiene(
+        schema
+    )
+    assert res["deprecated_operations_count"] == 1
+    assert res["deprecated_parameters_count"] == 1
+    assert res["deprecated_properties_count"] == 1
+    assert res["undocumented_deprecated_items"] == [
+        "POST /projects/old-tasks",
+        "POST /projects/old-tasks:legacy_flag",
+        "WbsOldNode.legacy_code",
+    ]
+    assert res["implicit_unflagged_deprecations"] == []
+    assert res["is_deprecation_hygiene_clean"] is False
+
+
+def test_deprecated_and_version_lifecycle_hygiene_detects_implicit_unflagged_deprecations():
+    """Detecta menciones implícitas a 'deprecated' u 'obsoleto' sin marcar deprecated=True."""
+    schema = {
+        "paths": {
+            "/api/v1/projects/metrics": {
+                "get": {
+                    "summary": "Deprecated endpoint for metrics",
+                    "parameters": [
+                        {
+                            "name": "mode",
+                            "in": "query",
+                            "description": "Parámetro obsoleto en esta versión.",
+                            "schema": {"type": "string"},
+                        }
+                    ],
+                    "responses": {"200": {"description": "OK"}},
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "ProjectMetricRead": {
+                    "type": "object",
+                    "properties": {
+                        "raw_value": {
+                            "type": "number",
+                            "description": "This field is deprecated.",
+                        }
+                    },
+                }
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_deprecated_and_version_lifecycle_hygiene(
+        schema
+    )
+    assert res["deprecated_operations_count"] == 0
+    assert res["deprecated_parameters_count"] == 0
+    assert res["deprecated_properties_count"] == 0
+    assert res["undocumented_deprecated_items"] == []
+    assert res["implicit_unflagged_deprecations"] == [
+        "GET /api/v1/projects/metrics",
+        "GET /api/v1/projects/metrics:mode",
+        "ProjectMetricRead.raw_value",
+    ]
+    assert res["is_deprecation_hygiene_clean"] is False

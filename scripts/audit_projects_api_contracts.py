@@ -4308,6 +4308,176 @@ def summarize_projects_string_format_and_pattern_hygiene(
     }
 
 
+_DEPRECATION_MIGRATION_TOKENS = (
+    "use ",
+    "replaced by",
+    "migrate",
+    "sunset",
+    "alternativa",
+    "reemplazado",
+)
+_IMPLICIT_DEPRECATION_TOKENS = ("deprecated", "obsoleto")
+
+
+def _has_migration_guidance(text: str) -> bool:
+    lowered = text.lower()
+    return any(tok in lowered for tok in _DEPRECATION_MIGRATION_TOKENS)
+
+
+def _mentions_implicit_deprecation(text: str) -> bool:
+    lowered = text.lower()
+    return any(tok in lowered for tok in _IMPLICIT_DEPRECATION_TOKENS)
+
+
+def summarize_projects_deprecated_and_version_lifecycle_hygiene(
+    openapi_schema: Mapping[str, object] | None = None,
+) -> dict[str, object]:
+    """Audita la higiene de deprecación y guías de migración/sunset en operaciones, parámetros y propiedades de proyectos."""
+    if openapi_schema is None:
+        from backend.app import app
+
+        schema_dict: Mapping[str, Any] = app.openapi()
+    else:
+        schema_dict = openapi_schema
+
+    total_operations_inspected = 0
+    deprecated_operations_count = 0
+    deprecated_parameters_count = 0
+    deprecated_properties_count = 0
+    undocumented_deprecated_items: list[str] = []
+    implicit_unflagged_deprecations: list[str] = []
+
+    referenced_schemas: set[str] = set()
+    paths = schema_dict.get("paths", {}) if isinstance(schema_dict, Mapping) else {}
+    if isinstance(paths, Mapping):
+        for path in sorted(paths.keys()):
+            path_str = str(path)
+            if not path_str.startswith(("/api/projects", "/api/v1/projects", "/projects")):
+                continue
+            path_item = paths[path]
+            if not isinstance(path_item, Mapping):
+                continue
+
+            path_params = (
+                path_item.get("parameters")
+                if isinstance(path_item.get("parameters"), list)
+                else []
+            )
+
+            for method in ("get", "post", "put", "patch", "delete", "head", "options", "trace"):
+                op_spec = path_item.get(method)
+                if not isinstance(op_spec, Mapping):
+                    continue
+
+                total_operations_inspected += 1
+                op_label = f"{method.upper()} {path_str}"
+
+                for ref in schema_refs(dict(op_spec)):
+                    referenced_schemas.add(ref)
+
+                op_deprecated = op_spec.get("deprecated") is True
+                op_desc = str(op_spec.get("description") or "")
+                op_summary = str(op_spec.get("summary") or "")
+                op_combined_text = f"{op_summary} {op_desc}".strip()
+
+                if op_deprecated:
+                    deprecated_operations_count += 1
+                    if not _has_migration_guidance(op_desc):
+                        undocumented_deprecated_items.append(op_label)
+                elif _mentions_implicit_deprecation(op_combined_text):
+                    implicit_unflagged_deprecations.append(op_label)
+
+                op_params = (
+                    op_spec.get("parameters")
+                    if isinstance(op_spec.get("parameters"), list)
+                    else []
+                )
+                for param in (*path_params, *op_params):
+                    if not isinstance(param, Mapping):
+                        continue
+                    p_name = str(param.get("name") or "").strip()
+                    if not p_name:
+                        continue
+                    p_schema = param.get("schema") if isinstance(param.get("schema"), Mapping) else {}
+                    param_label = f"{op_label}:{p_name}"
+
+                    p_deprecated = (
+                        param.get("deprecated") is True
+                        or p_schema.get("deprecated") is True
+                    )
+                    p_desc = f"{param.get('description') or ''} {p_schema.get('description') or ''}".strip()
+                    p_summary = f"{param.get('summary') or ''} {p_schema.get('title') or ''}".strip()
+                    p_combined = f"{p_summary} {p_desc}".strip()
+
+                    if p_deprecated:
+                        deprecated_parameters_count += 1
+                        if not _has_migration_guidance(p_desc):
+                            undocumented_deprecated_items.append(param_label)
+                    elif _mentions_implicit_deprecation(p_combined):
+                        implicit_unflagged_deprecations.append(param_label)
+
+    components = schema_dict.get("components", {}) if isinstance(schema_dict, Mapping) else {}
+    schemas = components.get("schemas", {}) if isinstance(components, Mapping) else {}
+
+    if isinstance(schemas, Mapping) and referenced_schemas:
+        queue = list(referenced_schemas)
+        while queue:
+            current = queue.pop()
+            s_obj = schemas.get(current)
+            if isinstance(s_obj, Mapping):
+                for nested_ref in schema_refs(dict(s_obj)):
+                    if nested_ref not in referenced_schemas:
+                        referenced_schemas.add(nested_ref)
+                        queue.append(nested_ref)
+
+    if isinstance(schemas, Mapping):
+        for s_name in sorted(schemas.keys()):
+            s_obj = schemas[s_name]
+            if not isinstance(s_obj, Mapping):
+                continue
+            is_proj = (
+                "project" in s_name.lower()
+                or s_name.startswith(_PROJECT_DOMAIN_SCHEMA_PREFIXES)
+                or s_name in referenced_schemas
+            )
+            if not is_proj:
+                continue
+
+            props = s_obj.get("properties", {})
+            if not isinstance(props, Mapping):
+                continue
+
+            for prop_name in sorted(props.keys()):
+                prop_schema = props[prop_name]
+                if not isinstance(prop_schema, Mapping):
+                    continue
+                prop_label = f"{s_name}.{prop_name}"
+                prop_deprecated = prop_schema.get("deprecated") is True
+                prop_desc = str(prop_schema.get("description") or "")
+                prop_summary = str(prop_schema.get("title") or prop_schema.get("summary") or "")
+                prop_combined = f"{prop_summary} {prop_desc}".strip()
+
+                if prop_deprecated:
+                    deprecated_properties_count += 1
+                    if not _has_migration_guidance(prop_desc):
+                        undocumented_deprecated_items.append(prop_label)
+                elif _mentions_implicit_deprecation(prop_combined):
+                    implicit_unflagged_deprecations.append(prop_label)
+
+    return {
+        "total_operations_inspected": total_operations_inspected,
+        "deprecated_operations_count": deprecated_operations_count,
+        "deprecated_parameters_count": deprecated_parameters_count,
+        "deprecated_properties_count": deprecated_properties_count,
+        "undocumented_deprecated_items": sorted(undocumented_deprecated_items),
+        "implicit_unflagged_deprecations": sorted(implicit_unflagged_deprecations),
+        "is_deprecation_hygiene_clean": (
+            len(undocumented_deprecated_items) == 0
+            and len(implicit_unflagged_deprecations) == 0
+        ),
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()
