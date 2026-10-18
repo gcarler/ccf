@@ -2987,6 +2987,7 @@ __all__ = [
     "audit_executive_report_cybersecurity_vulnerability_and_patch_sla",
     "audit_executive_report_capex_opex_capitalization_compliance",
     "audit_executive_report_key_personnel_bus_factor_and_succession",
+    "audit_executive_report_vendor_sla_and_service_credit_recovery",
     "ProjectExportService",
 ]
 
@@ -5482,3 +5483,96 @@ ProjectExportService.audit_executive_report_key_personnel_bus_factor_and_success
     audit_executive_report_key_personnel_bus_factor_and_succession
 )
 
+
+def audit_executive_report_vendor_sla_and_service_credit_recovery(
+    vendor_contracts: Sequence[Mapping[str, Any]] | None,
+    *,
+    min_uptime_or_delivery_sla_pct: float = 99.0,
+    max_unrecovered_credit_ratio_pct: float = 10.0,
+) -> dict[str, Any]:
+    """PMBOK 12.3 — Control Procurements: SLA de vendors y créditos de servicio.
+
+    Auditoría pura sobre ``vendor_contracts``. Entradas no-lista/None se
+    tratan como lista vacía y elementos no-dict se ignoran. Cada elemento:
+    ``vendor_id``, ``measured_sla_pct``, ``target_sla_pct`` (opcional, por
+    defecto ``min_uptime_or_delivery_sla_pct``), ``accrued_service_credits_usd``,
+    ``recovered_service_credits_usd``, ``chronic_consecutive_breach_months``.
+
+    Reglas:
+    1. ``sla_breach_vendor_ids``: ``measured_sla_pct < target_sla_pct``
+       (target explícito o default). Comparación estricta; bools excluidos
+       de la aritmética.
+    2. ``chronic_breach_vendor_ids``:
+       ``chronic_consecutive_breach_months >= 3``.
+    3. ``unrecovered_credit_vendor_ids``: ``accrued > 0`` AND ratio no
+       recuperado ((accrued - recovered) / accrued * 100) >
+       ``max_unrecovered_credit_ratio_pct``.
+    4. ``total_unrecovered_credits_usd``: suma de ``max(0.0, accrued -
+       recovered)`` redondeada a 2 decimales.
+
+    ``vendor_governance_status``: CRITICAL_DEFAULT con breaches crónicos;
+    CREDITS_OR_SLA_AT_RISK con otros breach; COMPLIANT en caso contrario.
+    ``is_vendor_sla_healthy`` = status == 'COMPLIANT'.
+    """
+    def _num(value: Any) -> float | None:
+        # Helper boolean/str-safe para valores numéricos opcionales.
+        if isinstance(value, bool):
+            return None
+        if isinstance(value, (int, float)):
+            return float(value)
+        return None
+
+    raw_items = vendor_contracts if isinstance(vendor_contracts, list) else []
+    items = [entry for entry in raw_items if isinstance(entry, Mapping)]
+
+    sla_breach_vendor_ids: list[str] = []
+    chronic_breach_vendor_ids: list[str] = []
+    unrecovered_credit_vendor_ids: list[str] = []
+    total_unrecovered = 0.0
+
+    for entry in items:
+        vendor_id = entry.get("vendor_id")
+        measured = _num(entry.get("measured_sla_pct"))
+        accrued = _num(entry.get("accrued_service_credits_usd"))
+        recovered = _num(entry.get("recovered_service_credits_usd"))
+        chronic_months = entry.get("chronic_consecutive_breach_months")
+        target = _num(entry.get("target_sla_pct"))
+        effective_target = target if target is not None else min_uptime_or_delivery_sla_pct
+
+        if measured is not None and measured < effective_target:
+            sla_breach_vendor_ids.append(vendor_id)
+
+        if (
+            isinstance(chronic_months, (int, float))
+            and not isinstance(chronic_months, bool)
+            and chronic_months >= 3
+        ):
+            chronic_breach_vendor_ids.append(vendor_id)
+
+        if accrued is not None and accrued > 0.0:
+            unrecovered = max(0.0, accrued - (recovered if recovered is not None else 0.0))
+            total_unrecovered += unrecovered
+            if (unrecovered / accrued) * 100.0 > max_unrecovered_credit_ratio_pct:
+                unrecovered_credit_vendor_ids.append(vendor_id)
+
+    if chronic_breach_vendor_ids:
+        vendor_governance_status = "CRITICAL_DEFAULT"
+    elif sla_breach_vendor_ids or unrecovered_credit_vendor_ids:
+        vendor_governance_status = "CREDITS_OR_SLA_AT_RISK"
+    else:
+        vendor_governance_status = "COMPLIANT"
+
+    return {
+        "total_vendor_contracts": len(items),
+        "sla_breach_vendor_ids": sla_breach_vendor_ids,
+        "chronic_breach_vendor_ids": chronic_breach_vendor_ids,
+        "unrecovered_credit_vendor_ids": unrecovered_credit_vendor_ids,
+        "total_unrecovered_credits_usd": round(total_unrecovered, 2),
+        "vendor_governance_status": vendor_governance_status,
+        "is_vendor_sla_healthy": vendor_governance_status == "COMPLIANT",
+    }
+
+
+ProjectExportService.audit_executive_report_vendor_sla_and_service_credit_recovery = staticmethod(
+    audit_executive_report_vendor_sla_and_service_credit_recovery
+)

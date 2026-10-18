@@ -5067,3 +5067,108 @@ def test_audit_markdown_badge_and_external_tracker_hygiene_neutral_and_binding()
     )
     assert "audit_markdown_badge_and_external_tracker_hygiene" in mod.__all__
 
+
+def test_audit_markdown_footnote_reference_and_definition_hygiene_clean():
+    """Valida simetría limpia entre referencias [^id] y definiciones [^id]: texto, ignorando fences y code spans ('CLEAN')."""
+    from backend.services.anydoc_service import (
+        audit_markdown_footnote_reference_and_definition_hygiene,
+    )
+
+    md = (
+        "El Acta de Constitución[^charter] y la línea base[^baseline] están aprobadas.\n"
+        "En código inline `[^ignored_inline]` no cuenta.\n"
+        "```markdown\n"
+        "Referencia en bloque [^ignored_fence]\n"
+        "[^ignored_def]: Definición dentro de fence\n"
+        "```\n\n"
+        "[^charter]: Aprobado por el Comité Ejecutivo en enero.\n"
+        "[^baseline]: Consolidada según PMBOK §4.2.\n"
+    )
+    res = audit_markdown_footnote_reference_and_definition_hygiene(md)
+    assert res["total_references"] == 2
+    assert res["total_definitions"] == 2
+    assert res["unresolved_reference_ids"] == []
+    assert res["unused_definition_ids"] == []
+    assert res["duplicate_definition_ids"] == []
+    assert res["empty_definition_ids"] == []
+    assert res["footnote_hygiene_status"] == "CLEAN"
+    assert res["is_compliant"] is True
+    assert res["issues"] == []
+
+
+def test_audit_markdown_footnote_reference_and_definition_hygiene_broken():
+    """Detecta referencias sin definición, definiciones duplicadas y definiciones vacías ('BROKEN_REFERENCES')."""
+    from backend.services.anydoc_service import (
+        audit_markdown_footnote_reference_and_definition_hygiene,
+    )
+
+    md = (
+        "Texto con referencia huérfana[^missing], duplicada[^dup] y vacía[^empty].\n\n"
+        "[^dup]: Primera definición.\n"
+        "[^dup]: Segunda definición repetida.\n"
+        "[^empty]:    \n"
+    )
+    res = audit_markdown_footnote_reference_and_definition_hygiene(md)
+    assert res["unresolved_reference_ids"] == ["missing"]
+    assert res["duplicate_definition_ids"] == ["dup"]
+    assert res["empty_definition_ids"] == ["empty"]
+    assert res["footnote_hygiene_status"] == "BROKEN_REFERENCES"
+    assert res["is_compliant"] is False
+    assert len(res["issues"]) >= 3
+
+
+def test_audit_markdown_footnote_reference_and_definition_hygiene_unused():
+    """Detecta definiciones de notas al pie que nunca son referenciadas en el texto ('UNUSED_DEFINITIONS')."""
+    from backend.services.anydoc_service import (
+        audit_markdown_footnote_reference_and_definition_hygiene,
+    )
+
+    md = (
+        "Documento con cita activa[^active].\n\n"
+        "[^active]: Referencia utilizada correctamente.\n"
+        "[^orphan]: Nota al pie definida pero nunca citada.\n"
+    )
+    res = audit_markdown_footnote_reference_and_definition_hygiene(md)
+    assert res["unresolved_reference_ids"] == []
+    assert res["duplicate_definition_ids"] == []
+    assert res["empty_definition_ids"] == []
+    assert res["unused_definition_ids"] == ["orphan"]
+    assert res["footnote_hygiene_status"] == "UNUSED_DEFINITIONS"
+    assert res["is_compliant"] is False
+    assert len(res["issues"]) == 1
+
+
+def test_audit_markdown_footnote_reference_and_definition_hygiene_empty_and_binding():
+    """Verifica manejo defensivo de entradas vacías/None y exposición en AnyDocService, AnydocService y __all__."""
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_footnote_reference_and_definition_hygiene,
+    )
+
+    for payload in (None, "", "   \n\t"):
+        empty = audit_markdown_footnote_reference_and_definition_hygiene(payload)
+        assert empty["total_references"] == 0
+        assert empty["total_definitions"] == 0
+        assert empty["footnote_hygiene_status"] == "CLEAN"
+        assert empty["is_compliant"] is True
+        assert empty["issues"] == []
+
+    sample = "Cita[^1].\n\n[^1]: Fuente oficial."
+    assert (
+        AnyDocService.audit_markdown_footnote_reference_and_definition_hygiene(
+            sample
+        )
+        == audit_markdown_footnote_reference_and_definition_hygiene(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_footnote_reference_and_definition_hygiene(
+            sample
+        )
+        == audit_markdown_footnote_reference_and_definition_hygiene(sample)
+    )
+    assert (
+        "audit_markdown_footnote_reference_and_definition_hygiene"
+        in mod.__all__
+    )

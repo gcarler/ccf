@@ -3152,6 +3152,7 @@ __all__ = [
     "audit_organizational_change_management_adkar_and_adoption",
     "audit_project_administrative_and_contract_closure_readiness",
     "audit_portfolio_strategic_alignment_and_esg_sustainability",
+    "audit_steering_committee_quorum_and_escalation_sla",
     "ProjectLifecyclePMIService",
 ]
 
@@ -5515,3 +5516,120 @@ ProjectLifecyclePMIService.audit_portfolio_strategic_alignment_and_esg_sustainab
     audit_portfolio_strategic_alignment_and_esg_sustainability
 )
 
+
+def audit_steering_committee_quorum_and_escalation_sla(
+    board_sessions: list[dict[str, Any]],
+    *,
+    min_voting_quorum_pct: float = 66.7,
+    max_escalation_resolution_days: int = 7,
+) -> dict[str, Any]:
+    """Audita el quórum de votación del Comité Directivo (Steering Committee), publicación de actas y el SLA de resolución de escalamientos (PMI PMBOK §2.4 y §1.2)."""
+    if (
+        board_sessions is None
+        or isinstance(board_sessions, (str, bytes))
+        or not isinstance(board_sessions, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = board_sessions
+
+    try:
+        min_quorum_pct = float(min_voting_quorum_pct)
+    except (TypeError, ValueError):
+        min_quorum_pct = 66.7
+
+    try:
+        max_esc_days = int(max_escalation_resolution_days)
+    except (TypeError, ValueError):
+        max_esc_days = 7
+
+    total_sessions = 0
+    quorum_breach_session_ids: list[str] = []
+    missing_minutes_session_ids: list[str] = []
+    sla_breach_session_ids: list[str] = []
+    unresolved_escalations_total = 0
+    issues: list[str] = []
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_sessions += 1
+
+        session_id = (
+            str(raw.get("session_id") or raw.get("id") or "").strip()
+            or f"SES-{total_sessions}"
+        )
+
+        def _int_val(key: str) -> int:
+            val = raw.get(key)
+            if val is None or isinstance(val, bool):
+                return 0
+            try:
+                return int(val)
+            except (TypeError, ValueError):
+                return 0
+
+        voting_members_total = _int_val("voting_members_total")
+        voting_members_present = _int_val("voting_members_present")
+        minutes_published = bool(raw.get("minutes_published"))
+        escalations_submitted = _int_val("escalations_submitted")
+        escalations_resolved = _int_val("escalations_resolved")
+        max_escalation_age_days = _int_val("max_escalation_age_days")
+
+        if (
+            voting_members_total <= 0
+            or ((voting_members_present / voting_members_total) * 100.0)
+            < min_quorum_pct
+        ):
+            quorum_breach_session_ids.append(session_id)
+            issues.append(
+                f"Sesión '{session_id}' no alcanzó el quórum mínimo de votación ({voting_members_present}/{voting_members_total} < {min_quorum_pct}%)."
+            )
+
+        if not minutes_published:
+            missing_minutes_session_ids.append(session_id)
+            issues.append(
+                f"Sesión '{session_id}' carece de acta de decisiones publicada (minutes_published=False)."
+            )
+
+        if max_escalation_age_days > max_esc_days:
+            sla_breach_session_ids.append(session_id)
+            issues.append(
+                f"Sesión '{session_id}' registra escalamiento fuera de SLA ({max_escalation_age_days}d > {max_esc_days}d)."
+            )
+
+        unresolved = max(0, escalations_submitted - escalations_resolved)
+        unresolved_escalations_total += unresolved
+        if unresolved > 0:
+            issues.append(
+                f"Sesión '{session_id}' mantiene {unresolved} escalamiento(s) sin resolver."
+            )
+
+    if (
+        len(quorum_breach_session_ids) > 0
+        or len(sla_breach_session_ids) > 0
+    ):
+        governance_cadence_status = "NON_COMPLIANT"
+    elif (
+        len(missing_minutes_session_ids) > 0
+        or unresolved_escalations_total > 0
+    ):
+        governance_cadence_status = "DEGRADED"
+    else:
+        governance_cadence_status = "EFFECTIVE"
+
+    return {
+        "total_sessions": total_sessions,
+        "quorum_breach_session_ids": quorum_breach_session_ids,
+        "missing_minutes_session_ids": missing_minutes_session_ids,
+        "sla_breach_session_ids": sla_breach_session_ids,
+        "unresolved_escalations_total": unresolved_escalations_total,
+        "governance_cadence_status": governance_cadence_status,
+        "is_governance_healthy": governance_cadence_status == "EFFECTIVE",
+        "issues": issues,
+    }
+
+
+ProjectLifecyclePMIService.audit_steering_committee_quorum_and_escalation_sla = staticmethod(
+    audit_steering_committee_quorum_and_escalation_sla
+)

@@ -6627,3 +6627,145 @@ def test_portfolio_strategic_alignment_esg_precedence_and_binding():
     )
     assert "audit_portfolio_strategic_alignment_and_esg_sustainability" in mod.__all__
 
+
+def test_audit_steering_committee_quorum_and_escalation_sla_effective():
+    """Valida sesiones con quórum >= 66.7%, actas publicadas, escalamientos resueltos y SLA cumplido ('EFFECTIVE')."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_steering_committee_quorum_and_escalation_sla,
+    )
+
+    sessions = [
+        {
+            "session_id": "SES-01",
+            "voting_members_total": 6,
+            "voting_members_present": 5,
+            "minutes_published": True,
+            "escalations_submitted": 2,
+            "escalations_resolved": 2,
+            "max_escalation_age_days": 4,
+        },
+        {
+            "session_id": "SES-02",
+            "voting_members_total": 3,
+            "voting_members_present": 3,
+            "minutes_published": True,
+            "escalations_submitted": 0,
+            "escalations_resolved": 0,
+            "max_escalation_age_days": 0,
+        },
+    ]
+    res = audit_steering_committee_quorum_and_escalation_sla(sessions)
+    assert res["total_sessions"] == 2
+    assert res["quorum_breach_session_ids"] == []
+    assert res["missing_minutes_session_ids"] == []
+    assert res["sla_breach_session_ids"] == []
+    assert res["unresolved_escalations_total"] == 0
+    assert res["governance_cadence_status"] == "EFFECTIVE"
+    assert res["is_governance_healthy"] is True
+    assert res["issues"] == []
+
+
+def test_audit_steering_committee_quorum_and_escalation_sla_non_compliant():
+    """Detecta falta de quórum y violación del SLA de resolución de escalamientos ('NON_COMPLIANT')."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_steering_committee_quorum_and_escalation_sla,
+    )
+
+    sessions = [
+        {
+            "session_id": "SES-10",
+            "voting_members_total": 6,
+            "voting_members_present": 3,
+            "minutes_published": True,
+            "escalations_submitted": 1,
+            "escalations_resolved": 1,
+            "max_escalation_age_days": 3,
+        },
+        {
+            "session_id": "SES-11",
+            "voting_members_total": 5,
+            "voting_members_present": 4,
+            "minutes_published": True,
+            "escalations_submitted": 2,
+            "escalations_resolved": 1,
+            "max_escalation_age_days": 10,
+        },
+    ]
+    res = audit_steering_committee_quorum_and_escalation_sla(sessions)
+    assert res["total_sessions"] == 2
+    assert res["quorum_breach_session_ids"] == ["SES-10"]
+    assert res["sla_breach_session_ids"] == ["SES-11"]
+    assert res["unresolved_escalations_total"] == 1
+    assert res["governance_cadence_status"] == "NON_COMPLIANT"
+    assert res["is_governance_healthy"] is False
+    assert len(res["issues"]) >= 3
+
+
+def test_audit_steering_committee_quorum_and_escalation_sla_degraded():
+    """Detecta falta de actas publicadas o escalamientos sin resolver dentro de SLA ('DEGRADED')."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_steering_committee_quorum_and_escalation_sla,
+    )
+
+    sessions = [
+        {
+            "session_id": "SES-20",
+            "voting_members_total": 4,
+            "voting_members_present": 3,
+            "minutes_published": False,
+            "escalations_submitted": 3,
+            "escalations_resolved": 1,
+            "max_escalation_age_days": 5,
+        }
+    ]
+    res = audit_steering_committee_quorum_and_escalation_sla(sessions)
+    assert res["total_sessions"] == 1
+    assert res["quorum_breach_session_ids"] == []
+    assert res["sla_breach_session_ids"] == []
+    assert res["missing_minutes_session_ids"] == ["SES-20"]
+    assert res["unresolved_escalations_total"] == 2
+    assert res["governance_cadence_status"] == "DEGRADED"
+    assert res["is_governance_healthy"] is False
+    assert len(res["issues"]) == 2
+
+
+def test_audit_steering_committee_quorum_and_escalation_sla_empty_and_binding():
+    """Verifica manejo defensivo de entradas vacías/no-secuencia y enlace en ProjectLifecyclePMIService y __all__."""
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_steering_committee_quorum_and_escalation_sla,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_steering_committee_quorum_and_escalation_sla(payload)  # type: ignore[arg-type]
+        assert empty["total_sessions"] == 0
+        assert empty["quorum_breach_session_ids"] == []
+        assert empty["missing_minutes_session_ids"] == []
+        assert empty["sla_breach_session_ids"] == []
+        assert empty["unresolved_escalations_total"] == 0
+        assert empty["governance_cadence_status"] == "EFFECTIVE"
+        assert empty["is_governance_healthy"] is True
+        assert empty["issues"] == []
+
+    sample = [
+        {
+            "session_id": "SES-99",
+            "voting_members_total": 5,
+            "voting_members_present": 4,
+            "minutes_published": True,
+            "escalations_submitted": 1,
+            "escalations_resolved": 1,
+            "max_escalation_age_days": 2,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_steering_committee_quorum_and_escalation_sla(
+            sample
+        )
+        == audit_steering_committee_quorum_and_escalation_sla(sample)
+    )
+    assert (
+        "audit_steering_committee_quorum_and_escalation_sla"
+        in mod.__all__
+    )

@@ -2513,6 +2513,7 @@ __all__ = [
     "audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness",
     "audit_wiki_communications_matrix_cadence_and_escalation",
     "audit_wiki_definition_of_ready_and_backlog_grooming",
+    "audit_wiki_blameless_postmortem_and_systemic_prevention",
     "WikiPMIService",
 ]
 
@@ -4893,5 +4894,120 @@ def audit_wiki_definition_of_ready_and_backlog_grooming(
 
 WikiPMIService.audit_wiki_definition_of_ready_and_backlog_grooming = staticmethod(
     audit_wiki_definition_of_ready_and_backlog_grooming
+)
+
+
+def audit_wiki_blameless_postmortem_and_systemic_prevention(
+    postmortem_records: list[dict[str, Any]],
+    *,
+    require_five_whys_depth: int = 3,
+    require_systemic_preventive_action: bool = True,
+    max_days_to_publish: int = 5,
+) -> dict[str, Any]:
+    """Audita post-mortems sin culpa (Blameless Post-Mortem) en la Wiki: profundidad de análisis 5-Whys, ausencia de lenguaje punitivo, acciones preventivas sistémicas con responsable y SLA de publicación (PMI PMBOK §11.1 y §8.1)."""
+    if (
+        postmortem_records is None
+        or isinstance(postmortem_records, (str, bytes))
+        or not isinstance(postmortem_records, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = postmortem_records
+
+    try:
+        min_whys = int(require_five_whys_depth)
+    except (TypeError, ValueError):
+        min_whys = 3
+
+    try:
+        max_pub_days = int(max_days_to_publish)
+    except (TypeError, ValueError):
+        max_pub_days = 5
+
+    total_postmortems = 0
+    shallow_root_cause_ids: list[str] = []
+    blame_violation_ids: list[str] = []
+    missing_preventive_action_ids: list[str] = []
+    late_publication_ids: list[str] = []
+    issues: list[str] = []
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_postmortems += 1
+
+        incident_id = (
+            str(raw.get("incident_id") or raw.get("id") or "").strip()
+            or f"INC-{total_postmortems}"
+        )
+
+        raw_depth = raw.get("whys_chain_depth")
+        try:
+            whys_chain_depth = int(raw_depth) if raw_depth is not None else 0
+        except (TypeError, ValueError):
+            whys_chain_depth = 0
+
+        has_blameless_language_violation = bool(
+            raw.get("has_blameless_language_violation")
+        )
+        has_systemic_preventive_action = bool(
+            raw.get("has_systemic_preventive_action")
+        )
+        action_owner_assigned = bool(raw.get("action_owner_assigned"))
+
+        raw_days = raw.get("days_to_publish")
+        try:
+            days_to_publish = int(raw_days) if raw_days is not None else 0
+        except (TypeError, ValueError):
+            days_to_publish = 0
+
+        if whys_chain_depth < min_whys:
+            shallow_root_cause_ids.append(incident_id)
+            issues.append(
+                f"Post-mortem '{incident_id}' presenta profundidad 5-Whys insuficiente ({whys_chain_depth} < {min_whys})."
+            )
+
+        if has_blameless_language_violation:
+            blame_violation_ids.append(incident_id)
+            issues.append(
+                f"Post-mortem '{incident_id}' infringe la política Blameless al incluir lenguaje de culpabilización individual."
+            )
+
+        if (
+            bool(require_systemic_preventive_action)
+            and not has_systemic_preventive_action
+        ) or not action_owner_assigned:
+            missing_preventive_action_ids.append(incident_id)
+            issues.append(
+                f"Post-mortem '{incident_id}' carece de acción preventiva sistémica o de propietario asignado."
+            )
+
+        if days_to_publish > max_pub_days:
+            late_publication_ids.append(incident_id)
+            issues.append(
+                f"Post-mortem '{incident_id}' fue publicado fuera de SLA ({days_to_publish}d > {max_pub_days}d)."
+            )
+
+    if len(blame_violation_ids) > 0 or len(missing_preventive_action_ids) > 0:
+        learning_culture_status = "NON_COMPLIANT"
+    elif len(shallow_root_cause_ids) > 0 or len(late_publication_ids) > 0:
+        learning_culture_status = "NEEDS_COACHING"
+    else:
+        learning_culture_status = "EXEMPLARY"
+
+    return {
+        "total_postmortems": total_postmortems,
+        "shallow_root_cause_ids": shallow_root_cause_ids,
+        "blame_violation_ids": blame_violation_ids,
+        "missing_preventive_action_ids": missing_preventive_action_ids,
+        "late_publication_ids": late_publication_ids,
+        "learning_culture_status": learning_culture_status,
+        "is_compliant": learning_culture_status == "EXEMPLARY",
+        "issues": issues,
+    }
+
+
+WikiPMIService.audit_wiki_blameless_postmortem_and_systemic_prevention = staticmethod(
+    audit_wiki_blameless_postmortem_and_systemic_prevention
 )
 

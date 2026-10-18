@@ -6895,3 +6895,219 @@ def test_audit_executive_report_key_personnel_bus_factor_and_succession_empty_an
         in mod.__all__
     )
 
+
+def test_vendor_sla_credit_recovery_compliant_and_critical():
+    """Vendor conforme -> COMPLIANT; breach crónico >= 3 meses -> CRITICAL_DEFAULT."""
+    from backend.services.project_export_service import (
+        audit_executive_report_vendor_sla_and_service_credit_recovery,
+    )
+
+    compliant = audit_executive_report_vendor_sla_and_service_credit_recovery(
+        [
+            {
+                "vendor_id": "V-1",
+                "measured_sla_pct": 99.5,
+                "accrued_service_credits_usd": 100.0,
+                "recovered_service_credits_usd": 95.0,
+            }
+        ]
+    )
+    assert compliant["total_vendor_contracts"] == 1
+    assert compliant["sla_breach_vendor_ids"] == []
+    assert compliant["chronic_breach_vendor_ids"] == []
+    assert compliant["unrecovered_credit_vendor_ids"] == []
+    assert compliant["total_unrecovered_credits_usd"] == 5.0
+    assert compliant["vendor_governance_status"] == "COMPLIANT"
+    assert compliant["is_vendor_sla_healthy"] is True
+
+    chronic = audit_executive_report_vendor_sla_and_service_credit_recovery(
+        [
+            {
+                "vendor_id": "V-2",
+                "measured_sla_pct": 99.9,
+                "chronic_consecutive_breach_months": 3,
+            }
+        ]
+    )
+    assert chronic["chronic_breach_vendor_ids"] == ["V-2"]
+    assert chronic["vendor_governance_status"] == "CRITICAL_DEFAULT"
+    assert chronic["is_vendor_sla_healthy"] is False
+
+    # Límite exacto: 2 meses no es crónico.
+    at_limit = audit_executive_report_vendor_sla_and_service_credit_recovery(
+        [
+            {
+                "vendor_id": "V-3",
+                "measured_sla_pct": 99.9,
+                "chronic_consecutive_breach_months": 2,
+            }
+        ]
+    )
+    assert at_limit["chronic_breach_vendor_ids"] == []
+    assert at_limit["vendor_governance_status"] == "COMPLIANT"
+
+
+def test_vendor_sla_credit_recovery_breach_and_thresholds():
+    """SLA bajo default/custom target -> breach; ratio de crédito > 10% -> unrecovered."""
+    from backend.services.project_export_service import (
+        audit_executive_report_vendor_sla_and_service_credit_recovery,
+    )
+
+    default_breach = audit_executive_report_vendor_sla_and_service_credit_recovery(
+        [{"vendor_id": "V-4", "measured_sla_pct": 98.0}]
+    )
+    assert default_breach["sla_breach_vendor_ids"] == ["V-4"]
+    assert default_breach["vendor_governance_status"] == "CREDITS_OR_SLA_AT_RISK"
+    assert default_breach["is_vendor_sla_healthy"] is False
+
+    custom_target = audit_executive_report_vendor_sla_and_service_credit_recovery(
+        [{"vendor_id": "V-5", "measured_sla_pct": 99.5, "target_sla_pct": 99.9}]
+    )
+    assert custom_target["sla_breach_vendor_ids"] == ["V-5"]
+
+    # Límite exacto: measured == target no es breach.
+    at_limit = audit_executive_report_vendor_sla_and_service_credit_recovery(
+        [{"vendor_id": "V-6", "measured_sla_pct": 99.0}]
+    )
+    assert at_limit["sla_breach_vendor_ids"] == []
+    assert at_limit["vendor_governance_status"] == "COMPLIANT"
+
+    credit = audit_executive_report_vendor_sla_and_service_credit_recovery(
+        [
+            {
+                "vendor_id": "V-7",
+                "measured_sla_pct": 99.9,
+                "accrued_service_credits_usd": 1000.0,
+                "recovered_service_credits_usd": 890.0,
+            }
+        ]
+    )
+    assert credit["unrecovered_credit_vendor_ids"] == ["V-7"]
+    assert credit["total_unrecovered_credits_usd"] == 110.0
+    assert credit["vendor_governance_status"] == "CREDITS_OR_SLA_AT_RISK"
+
+    # Límite exacto: ratio 10% no excede.
+    ratio_at_limit = audit_executive_report_vendor_sla_and_service_credit_recovery(
+        [
+            {
+                "vendor_id": "V-8",
+                "measured_sla_pct": 99.9,
+                "accrued_service_credits_usd": 100.0,
+                "recovered_service_credits_usd": 90.0,
+            }
+        ]
+    )
+    assert ratio_at_limit["unrecovered_credit_vendor_ids"] == []
+    assert ratio_at_limit["vendor_governance_status"] == "COMPLIANT"
+
+    # Umbral custom: ratio 10% con max 5% -> excede.
+    strict = audit_executive_report_vendor_sla_and_service_credit_recovery(
+        [
+            {
+                "vendor_id": "V-9",
+                "measured_sla_pct": 99.9,
+                "accrued_service_credits_usd": 100.0,
+                "recovered_service_credits_usd": 90.0,
+            }
+        ],
+        max_unrecovered_credit_ratio_pct=5.0,
+    )
+    assert strict["unrecovered_credit_vendor_ids"] == ["V-9"]
+    assert strict["vendor_governance_status"] == "CREDITS_OR_SLA_AT_RISK"
+
+
+def test_vendor_sla_credit_recovery_totals_and_neutral():
+    """Suma max(0.0, accrued - recovered) con clamps; no-lista/None -> vacío COMPLIANT."""
+    from backend.services.project_export_service import (
+        audit_executive_report_vendor_sla_and_service_credit_recovery,
+    )
+
+    mixed = audit_executive_report_vendor_sla_and_service_credit_recovery(
+        [
+            {
+                "vendor_id": "V-10",
+                "measured_sla_pct": 99.9,
+                "accrued_service_credits_usd": 50.0,
+                "recovered_service_credits_usd": 80.0,
+            },
+            {
+                "vendor_id": "V-11",
+                "measured_sla_pct": 99.9,
+                "accrued_service_credits_usd": 200.0,
+                "recovered_service_credits_usd": 0.0,
+            },
+        ],
+        max_unrecovered_credit_ratio_pct=100.0,
+    )
+    assert mixed["total_unrecovered_credits_usd"] == 200.0
+    assert mixed["total_vendor_contracts"] == 2
+    assert mixed["vendor_governance_status"] == "COMPLIANT"
+
+    # Redondeo a 2 decimales.
+    rounded = audit_executive_report_vendor_sla_and_service_credit_recovery(
+        [
+            {
+                "vendor_id": "V-12",
+                "measured_sla_pct": 99.9,
+                "accrued_service_credits_usd": 100.0,
+                "recovered_service_credits_usd": 33.333,
+            }
+        ],
+        max_unrecovered_credit_ratio_pct=100.0,
+    )
+    assert rounded["total_unrecovered_credits_usd"] == 66.67
+
+    for payload in (None, "not-a-list", 42):
+        empty = audit_executive_report_vendor_sla_and_service_credit_recovery(payload)
+        assert empty["total_vendor_contracts"] == 0
+        assert empty["sla_breach_vendor_ids"] == []
+        assert empty["chronic_breach_vendor_ids"] == []
+        assert empty["unrecovered_credit_vendor_ids"] == []
+        assert empty["total_unrecovered_credits_usd"] == 0.0
+        assert empty["vendor_governance_status"] == "COMPLIANT"
+        assert empty["is_vendor_sla_healthy"] is True
+
+    mixed_entries = audit_executive_report_vendor_sla_and_service_credit_recovery(
+        [
+            "no-dict",
+            42,
+            {
+                "vendor_id": "V-13",
+                "measured_sla_pct": 99.9,
+            },
+        ]
+    )
+    assert mixed_entries["total_vendor_contracts"] == 1
+    assert mixed_entries["vendor_governance_status"] == "COMPLIANT"
+
+
+def test_vendor_sla_credit_recovery_precedence_and_binding():
+    """CRITICAL_DEFAULT domina; proxy @staticmethod de ProjectExportService."""
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_vendor_sla_and_service_credit_recovery,
+    )
+
+    dominates = audit_executive_report_vendor_sla_and_service_credit_recovery(
+        [
+            {
+                "vendor_id": "V-14",
+                "measured_sla_pct": 90.0,
+                "chronic_consecutive_breach_months": 5,
+                "accrued_service_credits_usd": 500.0,
+                "recovered_service_credits_usd": 0.0,
+            }
+        ]
+    )
+    assert dominates["sla_breach_vendor_ids"] == ["V-14"]
+    assert dominates["chronic_breach_vendor_ids"] == ["V-14"]
+    assert dominates["unrecovered_credit_vendor_ids"] == ["V-14"]
+    assert dominates["vendor_governance_status"] == "CRITICAL_DEFAULT"
+
+    sample = [{"vendor_id": "V-15", "measured_sla_pct": 90.0}]
+    assert (
+        ProjectExportService.audit_executive_report_vendor_sla_and_service_credit_recovery(sample)
+        == audit_executive_report_vendor_sla_and_service_credit_recovery(sample)
+    )
+    assert "audit_executive_report_vendor_sla_and_service_credit_recovery" in mod.__all__

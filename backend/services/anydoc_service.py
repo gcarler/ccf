@@ -3019,6 +3019,7 @@ __all__ = [
     "audit_markdown_frontmatter_and_document_control_hygiene",
     "AnyDocService",
     "audit_markdown_badge_and_external_tracker_hygiene",
+    "audit_markdown_footnote_reference_and_definition_hygiene",
     "AnydocService",
 ]
 
@@ -5962,3 +5963,126 @@ AnydocService.audit_markdown_badge_and_external_tracker_hygiene = staticmethod(
     audit_markdown_badge_and_external_tracker_hygiene
 )
 
+
+def audit_markdown_footnote_reference_and_definition_hygiene(
+    markdown_text: str | None,
+) -> dict[str, Any]:
+    """Audita la simetría entre referencias inline de notas al pie [^id] y sus definiciones [^id]: texto en documentos Markdown (PMI PMBOK §4.4)."""
+    if not isinstance(markdown_text, str) or not markdown_text.strip():
+        return {
+            "total_references": 0,
+            "total_definitions": 0,
+            "unresolved_reference_ids": [],
+            "unused_definition_ids": [],
+            "duplicate_definition_ids": [],
+            "empty_definition_ids": [],
+            "footnote_hygiene_status": "CLEAN",
+            "is_compliant": True,
+            "issues": [],
+        }
+
+    fence_re = re.compile(r"^\s*(`{3,}|~{3,})")
+    code_span_re = re.compile(r"`+[^`]*`+")
+    def_re = re.compile(r"^\s*\[\^([^\]]+)\]:(.*)$")
+    ref_re = re.compile(r"\[\^([^\]]+)\](?!:)")
+
+    open_fence_char: str | None = None
+    total_references = 0
+    total_definitions = 0
+
+    referenced_ids: set[str] = set()
+    defined_counts: dict[str, int] = {}
+    empty_def_set: set[str] = set()
+
+    for raw_line in markdown_text.splitlines():
+        m_fence = fence_re.match(raw_line)
+        if m_fence:
+            f_char = m_fence.group(1)[0]
+            if open_fence_char is None:
+                open_fence_char = f_char
+            elif f_char == open_fence_char:
+                open_fence_char = None
+            continue
+
+        if open_fence_char is not None:
+            continue
+
+        cleaned_line = code_span_re.sub("", raw_line)
+        if not cleaned_line.strip():
+            continue
+
+        m_def = def_re.match(cleaned_line)
+        if m_def:
+            def_id = m_def.group(1).strip()
+            def_body = m_def.group(2).strip()
+            if def_id:
+                total_definitions += 1
+                defined_counts[def_id] = defined_counts.get(def_id, 0) + 1
+                if not def_body:
+                    empty_def_set.add(def_id)
+            search_segment = m_def.group(2)
+        else:
+            search_segment = cleaned_line
+
+        for m_ref in ref_re.finditer(search_segment):
+            ref_id = m_ref.group(1).strip()
+            if ref_id:
+                total_references += 1
+                referenced_ids.add(ref_id)
+
+    defined_ids = set(defined_counts.keys())
+    unresolved_reference_ids = sorted(referenced_ids - defined_ids)
+    unused_definition_ids = sorted(defined_ids - referenced_ids)
+    duplicate_definition_ids = sorted(
+        k for k, cnt in defined_counts.items() if cnt > 1
+    )
+    empty_definition_ids = sorted(empty_def_set)
+
+    issues: list[str] = []
+    if unresolved_reference_ids:
+        issues.append(
+            f"Referencias de nota al pie sin definición correspondiente: {unresolved_reference_ids}."
+        )
+    if duplicate_definition_ids:
+        issues.append(
+            f"Definiciones de nota al pie duplicadas: {duplicate_definition_ids}."
+        )
+    if empty_definition_ids:
+        issues.append(
+            f"Definiciones de nota al pie vacías: {empty_definition_ids}."
+        )
+    if unused_definition_ids:
+        issues.append(
+            f"Definiciones de nota al pie huérfanas (no referenciadas): {unused_definition_ids}."
+        )
+
+    if (
+        unresolved_reference_ids
+        or duplicate_definition_ids
+        or empty_definition_ids
+    ):
+        footnote_hygiene_status = "BROKEN_REFERENCES"
+    elif unused_definition_ids:
+        footnote_hygiene_status = "UNUSED_DEFINITIONS"
+    else:
+        footnote_hygiene_status = "CLEAN"
+
+    return {
+        "total_references": total_references,
+        "total_definitions": total_definitions,
+        "unresolved_reference_ids": unresolved_reference_ids,
+        "unused_definition_ids": unused_definition_ids,
+        "duplicate_definition_ids": duplicate_definition_ids,
+        "empty_definition_ids": empty_definition_ids,
+        "footnote_hygiene_status": footnote_hygiene_status,
+        "is_compliant": footnote_hygiene_status == "CLEAN",
+        "issues": issues,
+    }
+
+
+AnyDocService.audit_markdown_footnote_reference_and_definition_hygiene = staticmethod(
+    audit_markdown_footnote_reference_and_definition_hygiene
+)
+AnydocService.audit_markdown_footnote_reference_and_definition_hygiene = staticmethod(
+    audit_markdown_footnote_reference_and_definition_hygiene
+)

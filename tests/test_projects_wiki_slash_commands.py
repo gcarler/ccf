@@ -6212,3 +6212,139 @@ def test_audit_wiki_definition_of_ready_and_backlog_grooming_empty_and_service_b
     )
 
 
+def test_audit_wiki_blameless_postmortem_and_systemic_prevention_exemplary():
+    """Valida post-mortems con 5-Whys >= 3, sin culpabilización, acción preventiva sistémica con responsable y publicados a tiempo ('EXEMPLARY')."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_blameless_postmortem_and_systemic_prevention,
+    )
+
+    records = [
+        {
+            "incident_id": "INC-01",
+            "whys_chain_depth": 5,
+            "has_blameless_language_violation": False,
+            "has_systemic_preventive_action": True,
+            "action_owner_assigned": True,
+            "days_to_publish": 2,
+        },
+        {
+            "incident_id": "INC-02",
+            "whys_chain_depth": 3,
+            "has_blameless_language_violation": False,
+            "has_systemic_preventive_action": True,
+            "action_owner_assigned": True,
+            "days_to_publish": 5,
+        },
+    ]
+    res = audit_wiki_blameless_postmortem_and_systemic_prevention(records)
+    assert res["total_postmortems"] == 2
+    assert res["shallow_root_cause_ids"] == []
+    assert res["blame_violation_ids"] == []
+    assert res["missing_preventive_action_ids"] == []
+    assert res["late_publication_ids"] == []
+    assert res["learning_culture_status"] == "EXEMPLARY"
+    assert res["is_compliant"] is True
+    assert res["issues"] == []
+
+
+def test_audit_wiki_blameless_postmortem_and_systemic_prevention_non_compliant():
+    """Detecta violación de lenguaje Blameless y falta de acción preventiva sistémica o propietario ('NON_COMPLIANT')."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_blameless_postmortem_and_systemic_prevention,
+    )
+
+    records = [
+        {
+            "incident_id": "INC-10",
+            "whys_chain_depth": 4,
+            "has_blameless_language_violation": True,
+            "has_systemic_preventive_action": True,
+            "action_owner_assigned": True,
+            "days_to_publish": 3,
+        },
+        {
+            "incident_id": "INC-11",
+            "whys_chain_depth": 5,
+            "has_blameless_language_violation": False,
+            "has_systemic_preventive_action": False,
+            "action_owner_assigned": False,
+            "days_to_publish": 2,
+        },
+    ]
+    res = audit_wiki_blameless_postmortem_and_systemic_prevention(records)
+    assert res["total_postmortems"] == 2
+    assert res["blame_violation_ids"] == ["INC-10"]
+    assert res["missing_preventive_action_ids"] == ["INC-11"]
+    assert res["learning_culture_status"] == "NON_COMPLIANT"
+    assert res["is_compliant"] is False
+    assert len(res["issues"]) == 2
+
+
+def test_audit_wiki_blameless_postmortem_and_systemic_prevention_needs_coaching():
+    """Detecta profundidad 5-Whys superficial o publicación tardía sin violación punitiva ('NEEDS_COACHING')."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_blameless_postmortem_and_systemic_prevention,
+    )
+
+    records = [
+        {
+            "incident_id": "INC-20",
+            "whys_chain_depth": 2,
+            "has_blameless_language_violation": False,
+            "has_systemic_preventive_action": True,
+            "action_owner_assigned": True,
+            "days_to_publish": 8,
+        }
+    ]
+    res = audit_wiki_blameless_postmortem_and_systemic_prevention(records)
+    assert res["total_postmortems"] == 1
+    assert res["shallow_root_cause_ids"] == ["INC-20"]
+    assert res["late_publication_ids"] == ["INC-20"]
+    assert res["blame_violation_ids"] == []
+    assert res["missing_preventive_action_ids"] == []
+    assert res["learning_culture_status"] == "NEEDS_COACHING"
+    assert res["is_compliant"] is False
+    assert len(res["issues"]) == 2
+
+
+def test_audit_wiki_blameless_postmortem_and_systemic_prevention_empty_and_binding():
+    """Verifica manejo defensivo de entradas vacías/no-secuencia y enlace en WikiPMIService y __all__."""
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_blameless_postmortem_and_systemic_prevention,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_wiki_blameless_postmortem_and_systemic_prevention(payload)  # type: ignore[arg-type]
+        assert empty["total_postmortems"] == 0
+        assert empty["shallow_root_cause_ids"] == []
+        assert empty["blame_violation_ids"] == []
+        assert empty["missing_preventive_action_ids"] == []
+        assert empty["late_publication_ids"] == []
+        assert empty["learning_culture_status"] == "EXEMPLARY"
+        assert empty["is_compliant"] is True
+        assert empty["issues"] == []
+
+    sample = [
+        {
+            "incident_id": "INC-99",
+            "whys_chain_depth": 4,
+            "has_blameless_language_violation": False,
+            "has_systemic_preventive_action": True,
+            "action_owner_assigned": True,
+            "days_to_publish": 1,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_blameless_postmortem_and_systemic_prevention(
+            sample
+        )
+        == audit_wiki_blameless_postmortem_and_systemic_prevention(sample)
+    )
+    assert (
+        "audit_wiki_blameless_postmortem_and_systemic_prevention"
+        in mod.__all__
+    )
+
+
