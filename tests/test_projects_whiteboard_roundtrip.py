@@ -422,3 +422,79 @@ class TestWhiteboardAuth:
             json={"title": "Anon", "elements_json": "[]"},
         )
         assert resp.status_code in (401, 403), resp.status_code
+
+
+class TestWhiteboardCanvasTopologyAnalyzer:
+    """PMI visual artifact topology analyzer for collaborative project whiteboards."""
+
+    def test_summarize_whiteboard_canvas_elements_empty(self):
+        from backend.crud.projects import summarize_whiteboard_canvas_elements
+
+        for raw in ("[]", None, []):
+            res = summarize_whiteboard_canvas_elements(raw)
+            assert res == {
+                "is_valid_canvas": True,
+                "element_count": 0,
+                "type_distribution": {},
+                "connector_count": 0,
+                "text_bearing_count": 0,
+                "canvas_complexity": "empty",
+            }
+
+    def test_summarize_whiteboard_canvas_elements_rich_diagram(self):
+        from backend.crud.projects import summarize_whiteboard_canvas_elements
+
+        payload = _json.dumps(
+            [
+                {"type": "Rectangle", "text": "Inicio Fase 1"},
+                {"type": "arrow", "points": [0, 0, 100, 100]},
+                {"type": "rectangle", "text": "Gate CCB"},
+                {"type": "line", "points": [100, 100, 200, 100]},
+                {"type": "i-text", "text": "Entregable Aceptado"},
+                {"type": "sticky", "text": ""},
+            ]
+        )
+        res = summarize_whiteboard_canvas_elements(payload)
+        assert res["is_valid_canvas"] is True
+        assert res["element_count"] == 6
+        assert list(res["type_distribution"].keys()) == ["arrow", "i-text", "line", "rectangle", "sticky"]
+        assert res["type_distribution"] == {
+            "arrow": 1,
+            "i-text": 1,
+            "line": 1,
+            "rectangle": 2,
+            "sticky": 1,
+        }
+        assert res["connector_count"] == 2
+        assert res["text_bearing_count"] == 4
+        assert res["canvas_complexity"] == "rich_diagram"
+
+    def test_summarize_whiteboard_canvas_elements_basic_board(self):
+        from backend.crud.projects import summarize_whiteboard_canvas_elements
+
+        res = summarize_whiteboard_canvas_elements(
+            [
+                {"type": "rectangle", "left": 10, "top": 20},
+                {"type": "circle", "radius": 30},
+                {"type": "textbox", "text": "Nota rápida"},
+            ]
+        )
+        assert res["is_valid_canvas"] is True
+        assert res["element_count"] == 3
+        assert res["connector_count"] == 0
+        assert res["text_bearing_count"] == 1
+        assert res["canvas_complexity"] == "basic_board"
+
+    def test_summarize_whiteboard_canvas_elements_invalid_inputs(self):
+        from backend.crud.projects import summarize_whiteboard_canvas_elements
+
+        for invalid_payload in ("{bad", "42", '"scalar"', '[{"type":"rect"}, 42]', {"not": "a_list"}):
+            res = summarize_whiteboard_canvas_elements(invalid_payload)  # type: ignore[arg-type]
+            assert res == {
+                "is_valid_canvas": False,
+                "element_count": 0,
+                "type_distribution": {},
+                "connector_count": 0,
+                "text_bearing_count": 0,
+                "canvas_complexity": "invalid",
+            }

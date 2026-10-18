@@ -713,3 +713,54 @@ def convert_file_to_markdown(
         data = f.read()
 
     return convert_bytes_to_markdown(data=data, filename=path.name, ocr=ocr)
+
+
+def audit_converted_markdown_structure(conversion_result: dict | None) -> dict:
+    """Audita la densidad estructural del Markdown generado por AnyDoc (función pura).
+
+    Inspecciona el diccionario de conversión (`conversion_result['markdown']`)
+    y retorna:
+    - `is_non_empty`: True si el markdown tiene contenido tras strip().
+    - `heading_count`: líneas ATX (#..######): primer carácter '#' seguido
+      de otro '#' o de un espacio.
+    - `table_row_count`: líneas cuyo strip() empieza y termina con '|'.
+    - `bullet_item_count`: líneas cuyo lstrip() empieza con '- ' o '* '.
+    - `structural_density_status`: 'empty' (sin contenido), 'structured'
+      (≥ 1 encabezado/fila/viñeta) o 'plain_prose' (solo texto).
+    """
+    markdown = str(((conversion_result or {}).get("markdown")) or "")
+    is_non_empty = bool(markdown.strip())
+    if not is_non_empty:
+        return {
+            "is_non_empty": False,
+            "heading_count": 0,
+            "table_row_count": 0,
+            "bullet_item_count": 0,
+            "structural_density_status": "empty",
+        }
+
+    heading_count = 0
+    table_row_count = 0
+    bullet_item_count = 0
+    for line in markdown.splitlines():
+        stripped = line.lstrip()
+        if re.match(r"^#(?:#|\s)", stripped):
+            heading_count += 1
+        cell = line.strip()
+        if cell.startswith("|") and cell.endswith("|"):
+            table_row_count += 1
+        if stripped.startswith("- ") or stripped.startswith("* "):
+            bullet_item_count += 1
+
+    if heading_count + table_row_count + bullet_item_count > 0:
+        structural_density_status = "structured"
+    else:
+        structural_density_status = "plain_prose"
+
+    return {
+        "is_non_empty": True,
+        "heading_count": heading_count,
+        "table_row_count": table_row_count,
+        "bullet_item_count": bullet_item_count,
+        "structural_density_status": structural_density_status,
+    }

@@ -415,3 +415,107 @@ async def test_api_convert_and_publish_project_wiki():
         assert "| Entregable | Responsable |" in res.conversion.markdown
         assert db.add.called
         assert db.commit.called
+
+
+# ────────────────────────────────────────────────────────────
+# 6. AUDITOR DE DENSIDAD ESTRUCTURAL DEL MARKDOWN
+# ────────────────────────────────────────────────────────────
+
+
+def test_audit_converted_markdown_structure_structured_document():
+    """Encabezados ATX, filas de tabla y viñetas → 'structured' con conteos exactos."""
+    from backend.services.anydoc_service import audit_converted_markdown_structure
+
+    conversion = {
+        "markdown": (
+            "# Plan EVM\n"
+            "## Batería de Indicadores\n"
+            "#### Detalle CPI\n"
+            "\n"
+            "| Fase | Presupuesto |\n"
+            "| Iniciacion | 25000 |\n"
+            "\n"
+            "- Entregable EDT\n"
+            "* Curva S\n"
+            "  - Viñeta con indentación\n"
+        )
+    }
+
+    audit = audit_converted_markdown_structure(conversion)
+
+    assert audit == {
+        "is_non_empty": True,
+        "heading_count": 3,
+        "table_row_count": 2,
+        "bullet_item_count": 3,
+        "structural_density_status": "structured",
+    }
+
+
+def test_audit_converted_markdown_structure_with_csv_table_conversion():
+    """Integración: una tabla CSV convertida por convert_bytes_to_markdown es 'structured'."""
+    from backend.services.anydoc_service import audit_converted_markdown_structure
+
+    csv_bytes = b"Fase,Presupuesto,Responsable\nIniciacion,25000,Pastor General\nPlanificacion,45000,Director\n"
+    conversion = convert_bytes_to_markdown(data=csv_bytes, filename="presupuesto.csv")
+
+    # Prechequeo del contrato de conversión ya cubierto arriba
+    assert conversion["success"] is True
+
+    audit = audit_converted_markdown_structure(conversion)
+
+    assert audit["is_non_empty"] is True
+    # Header + separador GFM (|---|---|---|) + 2 filas de datos = 4 líneas con tuberías
+    assert audit["table_row_count"] == 4
+    assert audit["heading_count"] == 0
+    assert audit["bullet_item_count"] == 0
+    assert audit["structural_density_status"] == "structured"
+
+
+def test_audit_converted_markdown_structure_plain_prose():
+    """Texto corrido sin encabezados/tablas/viñetas → 'plain_prose'."""
+    from backend.services.anydoc_service import audit_converted_markdown_structure
+
+    conversion = {
+        "markdown": (
+            "El proyecto avanza según lo planificado.\n"
+            "La próxima hito revisa la curva S.\n"
+            "No hay desviaciones relevantes.\n"
+        )
+    }
+
+    audit = audit_converted_markdown_structure(conversion)
+
+    assert audit == {
+        "is_non_empty": True,
+        "heading_count": 0,
+        "table_row_count": 0,
+        "bullet_item_count": 0,
+        "structural_density_status": "plain_prose",
+    }
+
+
+def test_audit_converted_markdown_structure_empty_and_none():
+    """None, {} y markdown vacío/whitespace → 'empty' sin estructuras."""
+    from backend.services.anydoc_service import audit_converted_markdown_structure
+
+    for result in (None, {}, {"markdown": ""}, {"markdown": "   \n  "}):
+        audit = audit_converted_markdown_structure(result)
+        assert audit == {
+            "is_non_empty": False,
+            "heading_count": 0,
+            "table_row_count": 0,
+            "bullet_item_count": 0,
+            "structural_density_status": "empty",
+        }
+
+
+def test_audit_rejects_inline_hashtag_as_heading():
+    """'#tag' sin espacio ni doble numeral no es un encabezado ATX."""
+    from backend.services.anydoc_service import audit_converted_markdown_structure
+
+    audit = audit_converted_markdown_structure({"markdown": "#tag de proyecto\nMás texto corrido.\n"})
+
+    assert audit["is_non_empty"] is True
+    assert audit["heading_count"] == 0
+    assert audit["structural_density_status"] == "plain_prose"

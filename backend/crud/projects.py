@@ -6529,3 +6529,74 @@ def get_project_files_summary(
         "by_category": by_category,
         "files": files,
     }
+
+
+def summarize_whiteboard_canvas_elements(
+    elements_json: str | list[Any] | None,
+) -> dict[str, Any]:
+    """Audita la composición de artefactos visuales de una pizarra colaborativa de planificación PMI."""
+    import json as _json
+
+    invalid_result: dict[str, Any] = {
+        "is_valid_canvas": False,
+        "element_count": 0,
+        "type_distribution": {},
+        "connector_count": 0,
+        "text_bearing_count": 0,
+        "canvas_complexity": "invalid",
+    }
+
+    if elements_json is None:
+        elements: list[Any] = []
+    elif isinstance(elements_json, str):
+        try:
+            parsed = _json.loads(elements_json)
+        except Exception:
+            return invalid_result
+        if not isinstance(parsed, list):
+            return invalid_result
+        elements = parsed
+    elif isinstance(elements_json, list):
+        elements = elements_json
+    else:
+        return invalid_result
+
+    if any(not isinstance(el, dict) for el in elements):
+        return invalid_result
+
+    connector_types = {"line", "arrow", "connector", "path"}
+    text_types = {"text", "i-text", "textbox", "sticky", "note"}
+
+    raw_counts: dict[str, int] = {}
+    connector_count = 0
+    text_bearing_count = 0
+
+    for el in elements:
+        norm_type = str(el.get("type") or "unknown").strip().lower() or "unknown"
+        raw_counts[norm_type] = raw_counts.get(norm_type, 0) + 1
+        if norm_type in connector_types:
+            connector_count += 1
+        has_non_empty_text = (
+            isinstance(el.get("text"), str) and el.get("text").strip() != ""
+        )
+        if norm_type in text_types or has_non_empty_text:
+            text_bearing_count += 1
+
+    element_count = len(elements)
+    type_distribution = {k: raw_counts[k] for k in sorted(raw_counts.keys())}
+
+    if element_count == 0:
+        canvas_complexity = "empty"
+    elif element_count >= 5 and connector_count >= 1 and text_bearing_count >= 1:
+        canvas_complexity = "rich_diagram"
+    else:
+        canvas_complexity = "basic_board"
+
+    return {
+        "is_valid_canvas": True,
+        "element_count": element_count,
+        "type_distribution": type_distribution,
+        "connector_count": connector_count,
+        "text_bearing_count": text_bearing_count,
+        "canvas_complexity": canvas_complexity,
+    }
