@@ -13,6 +13,13 @@ const messages = [
     is_read: false,
   },
 ];
+const pmiMessages = [
+  { ...messages[0], id: 'decision-1', content: '[DECISIÓN PMI] Se aprueba el alcance de fase.' },
+  { ...messages[0], id: 'issue-1', content: '[INCIDENTE / BLOQUEO] bloqueo: falta el acceso de pruebas.' },
+  { ...messages[0], id: 'action-1', content: '[ACCIÓN / COMPROMISO] preparar cronograma revisado.' },
+  { ...messages[0], id: 'milestone-1', content: '[AVANCE / HITO] Entregable validado.' },
+  { ...messages[0], id: 'unclassified-1', content: 'Actualización sin etiqueta PMI.' },
+];
 
 vi.mock('@/context/AuthContext', () => ({
   useAuth: () => ({ token: 'token', user: { id: 'user-1' }, loading: false }),
@@ -176,6 +183,51 @@ describe('ProjectChatPanel action access', () => {
     await waitFor(() => {
       expect(screen.queryByRole('listbox', { name: 'Sugerencias de mención' })).not.toBeInTheDocument();
     });
+  });
+
+  it('counts PMI communication categories, displays semantic badges, and filters visible messages', async () => {
+    mocks.apiFetch.mockImplementation((path: string) => {
+      if (path.endsWith('/messages')) return Promise.resolve(pmiMessages);
+      return Promise.resolve([]);
+    });
+
+    render(<ProjectChatPanel projectId="project-1" />);
+
+    expect(await screen.findByTestId('chat-pmi-comms-summary')).toHaveTextContent('5 mensajes');
+    expect(screen.getByTestId('chat-pmi-count-decision')).toHaveTextContent('1');
+    expect(screen.getByTestId('chat-pmi-count-issue')).toHaveTextContent('1');
+    expect(screen.getByTestId('chat-pmi-count-action')).toHaveTextContent('1');
+    expect(screen.getByTestId('chat-pmi-count-milestone')).toHaveTextContent('1');
+    expect(screen.getByTestId('chat-pmi-message-badge-decision-1')).toHaveTextContent('Decisión PMI');
+    expect(screen.getByTestId('chat-pmi-message-badge-issue-1')).toHaveTextContent('Incidente / Bloqueo');
+    expect(screen.getByTestId('chat-pmi-message-badge-action-1')).toHaveTextContent('Acción / Compromiso');
+    expect(screen.getByTestId('chat-pmi-message-badge-milestone-1')).toHaveTextContent('Avance / Hito');
+
+    fireEvent.click(screen.getByTestId('chat-pmi-filter-issue'));
+    expect(screen.getByText('[INCIDENTE / BLOQUEO] bloqueo: falta el acceso de pruebas.')).toBeInTheDocument();
+    expect(screen.queryByText('[DECISIÓN PMI] Se aprueba el alcance de fase.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Actualización sin etiqueta PMI.')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('chat-pmi-filter-all'));
+    expect(screen.getByText('[DECISIÓN PMI] Se aprueba el alcance de fase.')).toBeInTheDocument();
+    expect(screen.getByText('Actualización sin etiqueta PMI.')).toBeInTheDocument();
+  });
+
+  it('inserts, replaces, and toggles PMI prefixes without losing the message draft', async () => {
+    render(<ProjectChatPanel projectId="project-1" />);
+    const input = await screen.findByRole('textbox', { name: 'Escribir mensaje en el chat del proyecto' });
+    fireEvent.change(input, { target: { value: 'Revisar el entregable' } });
+
+    fireEvent.click(screen.getByTestId('chat-pmi-tag-decision'));
+    expect(input).toHaveValue('[DECISIÓN PMI] Revisar el entregable');
+    fireEvent.click(screen.getByTestId('chat-pmi-tag-issue'));
+    expect(input).toHaveValue('[INCIDENTE / BLOQUEO] Revisar el entregable');
+    fireEvent.click(screen.getByTestId('chat-pmi-tag-action'));
+    expect(input).toHaveValue('[ACCIÓN / COMPROMISO] Revisar el entregable');
+    fireEvent.click(screen.getByTestId('chat-pmi-tag-milestone'));
+    expect(input).toHaveValue('[AVANCE / HITO] Revisar el entregable');
+    fireEvent.click(screen.getByTestId('chat-pmi-tag-milestone'));
+    expect(input).toHaveValue('Revisar el entregable');
   });
 });
 

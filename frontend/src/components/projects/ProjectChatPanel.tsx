@@ -12,6 +12,41 @@ import { toast } from "sonner";
 import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/ConfirmActionDrawer";
 import { sortMentionCandidates } from "./utils";
 
+type PmiMessageCategory = "DECISION" | "ISSUE" | "ACTION" | "MILESTONE";
+type PmiMessageFilter = "ALL" | PmiMessageCategory;
+
+const PMI_MESSAGE_CATEGORIES: Array<{
+  category: PmiMessageCategory;
+  label: string;
+  badgeClass: string;
+}> = [
+  { category: "DECISION", label: "Decisión PMI", badgeClass: "border-[hsl(var(--primary)/0.35)] bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))]" },
+  { category: "ISSUE", label: "Incidente / Bloqueo", badgeClass: "border-[hsl(var(--destructive)/0.35)] bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))]" },
+  { category: "ACTION", label: "Acción / Compromiso", badgeClass: "border-[hsl(var(--success)/0.35)] bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]" },
+  { category: "MILESTONE", label: "Avance / Hito", badgeClass: "border-[hsl(var(--info)/0.35)] bg-[hsl(var(--info)/0.1)] text-[hsl(var(--info))]" },
+];
+
+const PMI_MESSAGE_TAGS: Array<{
+  category: PmiMessageCategory;
+  label: string;
+  prefix: string;
+  testId: string;
+}> = [
+  { category: "DECISION", label: "Decisión", prefix: "[DECISIÓN PMI] ", testId: "chat-pmi-tag-decision" },
+  { category: "ISSUE", label: "Incidente / Bloqueo", prefix: "[INCIDENTE / BLOQUEO] ", testId: "chat-pmi-tag-issue" },
+  { category: "ACTION", label: "Acción / Compromiso", prefix: "[ACCIÓN / COMPROMISO] ", testId: "chat-pmi-tag-action" },
+  { category: "MILESTONE", label: "Avance / Hito", prefix: "[AVANCE / HITO] ", testId: "chat-pmi-tag-milestone" },
+];
+
+function getPmiMessageCategory(content: string): PmiMessageCategory | null {
+  const normalized = content.toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (normalized.includes("[decision") || normalized.includes("decision:")) return "DECISION";
+  if (normalized.includes("[incidente") || normalized.includes("bloqueo:")) return "ISSUE";
+  if (normalized.includes("[accion") || normalized.includes("compromiso:")) return "ACTION";
+  if (normalized.includes("[avance") || normalized.includes("hito:")) return "MILESTONE";
+  return null;
+}
+
 interface ChatMessage {
   id: string;
   sender_id: string;
@@ -42,6 +77,7 @@ function formatMessageTime(dateStr: string): string {
 export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
   const { token, user, loading: authLoading } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [pmiFilter, setPmiFilter] = useState<PmiMessageFilter>("ALL");
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [isNearBottom, setIsNearBottom] = useState(true);
@@ -50,6 +86,24 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const userId = user?.id;
   const shouldAutoScroll = useRef(true);
+
+  const pmiCounts = useMemo(() => {
+    const counts: Record<PmiMessageCategory, number> = {
+      DECISION: 0,
+      ISSUE: 0,
+      ACTION: 0,
+      MILESTONE: 0,
+    };
+    for (const message of messages) {
+      const category = getPmiMessageCategory(message.content);
+      if (category) counts[category] += 1;
+    }
+    return counts;
+  }, [messages]);
+
+  const filteredMessages = useMemo(() => pmiFilter === "ALL"
+    ? messages
+    : messages.filter(message => getPmiMessageCategory(message.content) === pmiFilter), [messages, pmiFilter]);
 
   // Track if user is near bottom to auto-scroll on new messages
   const handleScroll = useCallback(() => {
@@ -217,6 +271,19 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
     setMentionState(null);
   };
 
+  const togglePmiTag = (category: PmiMessageCategory) => {
+    const selectedTag = PMI_MESSAGE_TAGS.find(tag => tag.category === category);
+    if (!selectedTag) return;
+    const currentTag = PMI_MESSAGE_TAGS.find(tag => input.startsWith(tag.prefix));
+    const messageBody = currentTag ? input.slice(currentTag.prefix.length) : input;
+    const nextInput = currentTag?.category === category
+      ? messageBody
+      : `${selectedTag.prefix}${messageBody}`;
+    setInput(nextInput);
+    setMentionState(null);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
+
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (mentionState && filteredCandidates.length > 0) {
       if (e.key === "ArrowDown") {
@@ -329,6 +396,64 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
           <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
         </div>
       )}
+      <section
+        data-testid="chat-pmi-comms-summary"
+        aria-label="Resumen PMI de comunicaciones del proyecto"
+        className="mx-4 mt-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3"
+      >
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <h3 className="text-xs font-bold text-[hsl(var(--foreground))]">Bitácora de Comunicaciones PMI</h3>
+          <span className="text-2xs text-[hsl(var(--muted-foreground))]">{messages.length} mensajes</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
+          {PMI_MESSAGE_CATEGORIES.map(category => (
+            <div key={category.category} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 py-1.5">
+              <p className="text-2xs text-[hsl(var(--muted-foreground))]">{category.label}</p>
+              <p data-testid={`chat-pmi-count-${category.category.toLowerCase()}`} className="text-sm font-bold text-[hsl(var(--foreground))]">
+                {pmiCounts[category.category]}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+      <div
+        data-testid="chat-pmi-filter-bar"
+        role="group"
+        aria-label="Filtrar mensajes por categoría PMI"
+        className="mx-4 mt-2 flex flex-wrap gap-1.5"
+      >
+        <button
+          type="button"
+          data-testid="chat-pmi-filter-all"
+          aria-pressed={pmiFilter === "ALL"}
+          onClick={() => setPmiFilter("ALL")}
+          className={clsx(
+            "rounded-full border px-2.5 py-1 text-2xs font-semibold transition-colors",
+            pmiFilter === "ALL"
+              ? "border-[hsl(var(--primary)/0.4)] bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))]"
+              : "border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))]"
+          )}
+        >
+          Todos ({messages.length})
+        </button>
+        {PMI_MESSAGE_CATEGORIES.map(category => (
+          <button
+            key={category.category}
+            type="button"
+            data-testid={`chat-pmi-filter-${category.category.toLowerCase()}`}
+            aria-pressed={pmiFilter === category.category}
+            onClick={() => setPmiFilter(category.category)}
+            className={clsx(
+              "rounded-full border px-2.5 py-1 text-2xs font-semibold transition-colors",
+              pmiFilter === category.category
+                ? category.badgeClass
+                : "border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))]"
+            )}
+          >
+            {category.label} ({pmiCounts[category.category]})
+          </button>
+        ))}
+      </div>
       {messages.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center text-[hsl(var(--muted-foreground))] gap-3">
           <div className="size-16 rounded-2xl bg-[hsl(var(--surface-2))] flex items-center justify-center">
@@ -355,9 +480,13 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
             onScroll={handleScroll}
             className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin"
           >
-            {messages.map((msg, idx) => {
+            {filteredMessages.length === 0 ? (
+              <p className="py-6 text-center text-xs text-[hsl(var(--muted-foreground))]">No hay mensajes para esta categoría.</p>
+            ) : filteredMessages.map((msg, idx) => {
               const isOwn = String(msg.sender_id) === String(userId ?? "");
-              const showSender = idx === 0 || messages[idx - 1]?.sender_id !== msg.sender_id;
+              const showSender = idx === 0 || filteredMessages[idx - 1]?.sender_id !== msg.sender_id;
+              const pmiCategory = getPmiMessageCategory(msg.content);
+              const categoryMeta = PMI_MESSAGE_CATEGORIES.find(category => category.category === pmiCategory);
               return (
                 <div
                   key={msg.id}
@@ -374,6 +503,19 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
                       <p className="text-xs font-bold mb-1 opacity-70">
                         {msg.sender_name}
                       </p>
+                    )}
+                    {categoryMeta && (
+                      <span
+                        data-testid={`chat-pmi-message-badge-${msg.id}`}
+                        className={clsx(
+                          "mb-1 inline-flex rounded-full border px-2 py-0.5 text-2xs font-bold",
+                          isOwn
+                            ? "border-[hsl(var(--primary-foreground)/0.45)] bg-[hsl(var(--primary-foreground)/0.12)] text-[hsl(var(--primary-foreground))]"
+                            : categoryMeta.badgeClass
+                        )}
+                      >
+                        {categoryMeta.label}
+                      </span>
                     )}
                     <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">{msg.content}</p>
                     <div className="flex items-center justify-end gap-1.5 mt-1">
@@ -404,6 +546,31 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
         </>
       )}
       <div className="border-t border-[hsl(var(--border))] p-3 relative">
+        <div
+          data-testid="chat-pmi-tag-selector"
+          role="group"
+          aria-label="Etiquetas PMI para el mensaje"
+          className="mb-2 flex flex-wrap items-center gap-1.5"
+        >
+          <span className="mr-1 text-2xs font-semibold text-[hsl(var(--muted-foreground))]">Etiquetas PMI</span>
+          {PMI_MESSAGE_TAGS.map(tag => (
+            <button
+              key={tag.category}
+              type="button"
+              data-testid={tag.testId}
+              aria-pressed={input.startsWith(tag.prefix)}
+              onClick={() => togglePmiTag(tag.category)}
+              className={clsx(
+                "rounded-full border px-2 py-1 text-2xs font-semibold transition-colors",
+                input.startsWith(tag.prefix)
+                  ? PMI_MESSAGE_CATEGORIES.find(category => category.category === tag.category)?.badgeClass
+                  : "border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))]"
+              )}
+            >
+              {tag.label}
+            </button>
+          ))}
+        </div>
         {mentionState && filteredCandidates.length > 0 && (
           <div
             role="listbox"

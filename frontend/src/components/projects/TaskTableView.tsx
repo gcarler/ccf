@@ -21,6 +21,7 @@ import AgGridTable, {
 import clsx from 'clsx';
 import { AnimatePresence,motion } from 'framer-motion';
 import {
+AlertTriangle,
 Check,
 Circle,
 Eye,EyeOff,Filter,
@@ -126,6 +127,39 @@ type ActiveFilter = { field: 'status' | 'priority'; value: string; label: string
 type GroupRow = { __isGroup: boolean; __groupKey: string; __groupCount: number; id: string };
 type FlatRow = ProjectTaskRecord | GroupRow;
 
+const isCompletedTask = (task: ProjectTaskRecord) => task.status === 'done' || task.status === 'completed';
+const isActiveTask = (task: ProjectTaskRecord) => !isCompletedTask(task) && !task.deleted_at;
+
+function getLocalDateKey(date: Date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function isTaskOverdue(task: ProjectTaskRecord, todayKey: string) {
+    if (!task.due_date) return false;
+    const dueDateKey = task.due_date.slice(0, 10);
+    return /^\d{4}-\d{2}-\d{2}$/.test(dueDateKey)
+        && !Number.isNaN(Date.parse(`${dueDateKey}T00:00:00`))
+        && dueDateKey < todayKey;
+}
+
+function getPmiEarnedPercent(task: ProjectTaskRecord) {
+    if (isCompletedTask(task)) return 100;
+    if (task.status !== 'in_progress') return 0;
+    const progress = task.physical_progress_pct;
+    return typeof progress === 'number' && Number.isFinite(progress)
+        ? Math.min(100, Math.max(0, progress))
+        : 50;
+}
+
+const formatTaskBudget = (amount: number) => new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    maximumFractionDigits: 0,
+}).format(amount);
+
 // ─── Main Component ────────────────────────────────────────────────────────────
 export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask, onTaskUpdated }: Props) {
     const { token } = useAuth();
@@ -135,6 +169,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
     const [groupBy, setGroupBy]     = useState<GroupKey>('status');
     const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
     const [onlyFavorites, setOnlyFavorites] = useState(false);
+    const [onlyPmiRisk, setOnlyPmiRisk] = useState(false);
     const [favoriteTaskIds, setFavoriteTaskIds] = useState<Set<string>>(new Set());
     const [visibleCols, setVisibleCols] = useState<Set<ColumnId>>(new Set<ColumnId>(['title','status','priority','assignee','due_date']));
     const [cfgOpen, setCfgOpen]     = useState(false);
@@ -217,8 +252,41 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
         for (const f of activeFilters) {
             list = list.filter(t => f.field === 'status' ? t.status === f.value : t.priority === f.value);
         }
+        if (onlyPmiRisk) {
+            const todayKey = getLocalDateKey(new Date());
+            list = list.filter(task => isActiveTask(task)
+                && (isTaskOverdue(task, todayKey)
+                    || task.status === 'blocked'
+                    || task.priority === 'urgent'
+                    || !task.assignee_id));
+        }
         return list;
-    }, [tasks, onlyFavorites, favoriteTaskIds, activeFilters, resolveTask]);
+    }, [tasks, onlyFavorites, favoriteTaskIds, activeFilters, resolveTask, onlyPmiRisk]);
+
+    const pmiSummary = useMemo(() => {
+        const todayKey = getLocalDateKey(new Date());
+        const totalBudget = processed.reduce((sum, task) => {
+            const budget = task.budget_allocated;
+            return sum + (typeof budget === 'number' && Number.isFinite(budget) ? budget : 0);
+        }, 0);
+        const earnedAmount = processed.reduce((sum, task) => {
+            const budget = task.budget_allocated;
+            const weight = typeof budget === 'number' && Number.isFinite(budget) ? budget : 0;
+            return sum + weight * getPmiEarnedPercent(task) / 100;
+        }, 0);
+        const progressPercent = totalBudget > 0
+            ? earnedAmount / totalBudget * 100
+            : processed.length > 0
+                ? processed.reduce((sum, task) => sum + getPmiEarnedPercent(task), 0) / processed.length
+                : 0;
+        const activeTasks = processed.filter(isActiveTask);
+        return {
+            progressPercent: Math.round(progressPercent),
+            totalBudget,
+            raciGaps: activeTasks.filter(task => !task.assignee_id).length,
+            overdueTasks: activeTasks.filter(task => isTaskOverdue(task, todayKey)).length,
+        };
+    }, [processed]);
 
     // Flatten with group headers
     const rowData = useMemo(() => {
@@ -407,6 +475,22 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                     )}
                 </button>
 
+                <button
+                    type="button"
+                    data-testid="task-table-pmi-risk-filter"
+                    aria-pressed={onlyPmiRisk}
+                    onClick={() => setOnlyPmiRisk(prev => !prev)}
+                    className={clsx(
+                        'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all border',
+                        onlyPmiRisk
+                            ? 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning-text))] border-[hsl(var(--warning)/0.3)]'
+                            : 'text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--text-primary))]'
+                    )}
+                >
+                    <AlertTriangle size={12} aria-hidden="true" />
+                    <span>En Riesgo / Sin RACI</span>
+                </button>
+
                 <div className="ml-0 sm:ml-auto flex min-w-0 items-center gap-1.5 overflow-x-auto">
                     {activeFilters.length > 0 && (
                         <div className="flex min-w-0 gap-1">
@@ -418,6 +502,29 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                     </button>
                 </div>
             </div>
+
+            <section
+                data-testid="task-table-pmi-summary"
+                aria-label="Resumen PMI de paquetes de trabajo"
+                className="shrink-0 grid grid-cols-2 gap-2 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-2 sm:grid-cols-4"
+            >
+                <div className="min-w-0 rounded-md bg-[hsl(var(--surface-2))] px-3 py-2">
+                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Avance PMI 0/50/100</p>
+                    <p data-testid="task-table-pmi-progress" className="mt-0.5 text-sm font-bold tabular-nums text-[hsl(var(--text-primary))]">{pmiSummary.progressPercent}%</p>
+                </div>
+                <div className="min-w-0 rounded-md bg-[hsl(var(--surface-2))] px-3 py-2">
+                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Presupuesto en Paquetes</p>
+                    <p data-testid="task-table-pmi-budget" className="mt-0.5 truncate text-sm font-bold tabular-nums text-[hsl(var(--text-primary))]">{formatTaskBudget(pmiSummary.totalBudget)}</p>
+                </div>
+                <div className="min-w-0 rounded-md bg-[hsl(var(--surface-2))] px-3 py-2">
+                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Brecha RACI</p>
+                    <p data-testid="task-table-pmi-raci-gaps" className="mt-0.5 text-sm font-bold tabular-nums text-[hsl(var(--text-primary))]">{pmiSummary.raciGaps} paquetes sin responsable</p>
+                </div>
+                <div className="min-w-0 rounded-md bg-[hsl(var(--surface-2))] px-3 py-2">
+                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Paquetes Vencidos</p>
+                    <p data-testid="task-table-pmi-overdue" className="mt-0.5 text-sm font-bold tabular-nums text-[hsl(var(--text-primary))]">{pmiSummary.overdueTasks}</p>
+                </div>
+            </section>
 
             {/* Quick add row */}
             <AnimatePresence>

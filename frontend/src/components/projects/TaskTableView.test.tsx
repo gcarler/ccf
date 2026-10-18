@@ -146,4 +146,67 @@ describe('TaskTableView', () => {
     fireEvent.click(screen.getByText('+ Nueva actividad'));
     expect(handleAddTask).toHaveBeenCalledTimes(1);
   });
+
+  it('shows the PMI summary using budget-weighted physical progress and active governance gaps', () => {
+    const summaryTasks = [
+      createMockTask({ id: 'done', title: 'Completado', status: 'done', priority: 'low', assignee_id: 'u1', budget_allocated: 100, due_date: '2020-01-01' }),
+      createMockTask({ id: 'progress', title: 'En curso', status: 'in_progress', priority: 'medium', assignee_id: null, budget_allocated: 300, physical_progress_pct: 20, due_date: '2020-01-02' }),
+      createMockTask({ id: 'todo', title: 'Pendiente', status: 'todo', priority: 'low', assignee_id: undefined, budget_allocated: 100, due_date: '2099-01-01' }),
+      createMockTask({ id: 'completed', title: 'Cerrado', status: 'completed', priority: 'low', assignee_id: null, budget_allocated: 0, due_date: '2020-01-03' }),
+    ];
+
+    render(
+      <TaskTableView projectId="p1" tasks={summaryTasks} onOpenTask={() => {}} onAddTask={() => {}} />,
+    );
+
+    expect(screen.getByTestId('task-table-pmi-summary')).toBeInTheDocument();
+    expect(screen.getByTestId('task-table-pmi-progress')).toHaveTextContent('32%');
+    expect(screen.getByTestId('task-table-pmi-budget')).toHaveTextContent('500');
+    expect(screen.getByTestId('task-table-pmi-raci-gaps')).toHaveTextContent('2 paquetes sin responsable');
+    expect(screen.getByTestId('task-table-pmi-overdue')).toHaveTextContent('1');
+  });
+
+  it('uses a simple average and the 50 percent in-progress default when no package has budget', () => {
+    const zeroBudgetTasks = [
+      createMockTask({ id: 'done', title: 'Hecho', status: 'completed', budget_allocated: 0 }),
+      createMockTask({ id: 'progress', title: 'En curso', status: 'in_progress', budget_allocated: 0 }),
+      createMockTask({ id: 'todo', title: 'Pendiente', status: 'todo', budget_allocated: 0 }),
+    ];
+
+    render(
+      <TaskTableView projectId="p1" tasks={zeroBudgetTasks} onOpenTask={() => {}} onAddTask={() => {}} />,
+    );
+
+    expect(screen.getByTestId('task-table-pmi-progress')).toHaveTextContent('50%');
+  });
+
+  it('filters visible rows to active overdue, blocked, urgent, or unassigned packages and toggles off', () => {
+    const riskTasks = [
+      createMockTask({ id: 'overdue', title: 'Vencido', status: 'todo', priority: 'low', assignee_id: 'u1', due_date: '2020-01-01' }),
+      createMockTask({ id: 'blocked', title: 'Bloqueado', status: 'blocked', priority: 'low', assignee_id: 'u1', due_date: '2099-01-01' }),
+      createMockTask({ id: 'urgent', title: 'Urgente', status: 'todo', priority: 'urgent', assignee_id: 'u1', due_date: '2099-01-01' }),
+      createMockTask({ id: 'unassigned', title: 'Sin responsable', status: 'todo', priority: 'low', assignee_id: null, due_date: '2099-01-01' }),
+      createMockTask({ id: 'safe', title: 'En curso normal', status: 'in_progress', priority: 'medium', assignee_id: 'u1', due_date: '2099-01-01' }),
+      createMockTask({ id: 'completed', title: 'Cerrado', status: 'completed', priority: 'urgent', assignee_id: null, due_date: '2020-01-01' }),
+    ];
+
+    render(
+      <TaskTableView projectId="p1" tasks={riskTasks} onOpenTask={() => {}} onAddTask={() => {}} />,
+    );
+
+    const riskFilter = screen.getByTestId('task-table-pmi-risk-filter');
+    fireEvent.click(riskFilter);
+    expect(riskFilter).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('Vencido')).toBeInTheDocument();
+    expect(screen.getByText('Bloqueado')).toBeInTheDocument();
+    expect(screen.getByText('Urgente')).toBeInTheDocument();
+    expect(screen.getByText('Sin responsable')).toBeInTheDocument();
+    expect(screen.queryByText('En curso normal')).not.toBeInTheDocument();
+    expect(screen.queryByText('Cerrado')).not.toBeInTheDocument();
+
+    fireEvent.click(riskFilter);
+    expect(riskFilter).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByText('En curso normal')).toBeInTheDocument();
+    expect(screen.getByText('Cerrado')).toBeInTheDocument();
+  });
 });

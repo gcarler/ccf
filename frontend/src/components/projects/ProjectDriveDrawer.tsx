@@ -5,7 +5,7 @@ import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/Confi
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import type { ProjectFileRecord, ProjectFilesSummary } from "@/types/projects";
-import { FolderArchive, Upload, Link2, Search, FileText, FileSpreadsheet, FileCode, Image as ImageIcon, Music, Video, HardDrive, Trash2, Eye, ExternalLink, Download, RefreshCw, Globe, CheckSquare } from "lucide-react";
+import { FolderArchive, Upload, Link2, Search, FileText, FileSpreadsheet, FileCode, Image as ImageIcon, Music, Video, HardDrive, Trash2, Eye, ExternalLink, Download, RefreshCw, Globe, CheckSquare, GitBranch, AlertTriangle, Settings2 } from "lucide-react";
 import clsx from "clsx";
 import { toast } from "sonner";
 import { ProjectFileViewerDrawer } from "./ProjectFileViewerDrawer";
@@ -37,6 +37,29 @@ const SOURCES: { id: string; label: string }[] = [
   { id: "onedrive", label: "OneDrive" },
 ];
 
+type WbsTraceabilityFilter = "ALL" | "LINKED" | "ORPHAN";
+
+const WBS_TRACEABILITY_FILTERS: { key: WbsTraceabilityFilter; label: string }[] = [
+  { key: "ALL", label: "Todos" },
+  { key: "LINKED", label: "Vinculados a EDT" },
+  { key: "ORPHAN", label: "Huérfanos sin EDT" },
+];
+
+/** Los 4 pilares documentales del PMBOK 7ma Ed. — Artifact & Configuration Management. */
+const PMI_DOC_PILLARS: { key: string; label: string; matches: (category: string) => boolean }[] = [
+  { key: "gobernanza", label: "Gobernanza / Actas", matches: (c) => c === "actas" },
+  { key: "linea-base", label: "Línea Base Técnica", matches: (c) => c === "disenos" },
+  { key: "finanzas", label: "Finanzas / Adquisiciones", matches: (c) => c === "finanzas" || c === "contratos" },
+  { key: "informes", label: "Informes / Aceptación", matches: (c) => c === "informes" },
+];
+
+interface ProjectDriveDrawerProps {
+  projectId: string;
+  isOpen: boolean;
+  onClose: () => void;
+  onFileUpdated?: () => void;
+}
+
 export function ProjectDriveDrawer({
   projectId,
   isOpen,
@@ -55,6 +78,7 @@ export function ProjectDriveDrawer({
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [selectedSource, setSelectedSource] = useState("ALL");
   const [selectedTaskId, setSelectedTaskId] = useState("ALL");
+  const [traceabilityFilter, setTraceabilityFilter] = useState<WbsTraceabilityFilter>("ALL");
   const [projectTasks, setProjectTasks] = useState<Array<{ id: string; title: string }>>([]);
 
   // Estado de visor embebido
@@ -155,9 +179,39 @@ export function ProjectDriveDrawer({
       if (selectedTaskId !== "ALL" && file.task_id !== selectedTaskId) {
         return false;
       }
+      if (traceabilityFilter === "LINKED" && !file.task_id) {
+        return false;
+      }
+      if (traceabilityFilter === "ORPHAN" && file.task_id) {
+        return false;
+      }
       return true;
     });
-  }, [files, selectedTaskId]);
+  }, [files, selectedTaskId, traceabilityFilter]);
+
+  /** Gestión de la Configuración y Trazabilidad EDT de Artefactos PMI (PMBOK 7ma Ed.). */
+  const pmiConfigAudit = useMemo(() => {
+    const total = files.length;
+    const linked = files.filter((f) => Boolean(f.task_id)).length;
+    const orphans = total - linked;
+    const traceabilityPct = total > 0 ? Math.round((linked / total) * 100) : 0;
+    const unlinkedDeliverables = files.filter(
+      (f) => !f.task_id && (f.category === "informes" || f.category === "disenos"),
+    );
+    const pillars = PMI_DOC_PILLARS.map((pillar) => ({
+      ...pillar,
+      covered: files.some((f) => pillar.matches(f.category ?? "")),
+    }));
+    return {
+      total,
+      linked,
+      orphans,
+      traceabilityPct,
+      unlinkedDeliverables,
+      pillars,
+      pillarsCovered: pillars.filter((p) => p.covered).length,
+    };
+  }, [files]);
 
   useEffect(() => {
     if (isOpen) {
@@ -495,6 +549,125 @@ export function ProjectDriveDrawer({
                   </div>
                 </div>
 
+                {/* Diagnóstico de Gestión de la Configuración y Trazabilidad EDT de Artefactos PMI */}
+                <div
+                  data-testid="drive-pmi-config-audit"
+                  className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]/40 p-3.5 space-y-3"
+                >
+                  <div className="flex items-center gap-2">
+                    <Settings2 size={14} className="text-[hsl(var(--primary))]" />
+                    <p className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-primary))]">
+                      Gestión de la Configuración y Trazabilidad EDT (PMBOK 7)
+                    </p>
+                  </div>
+
+                  {/* (a) Trazabilidad EDT (WBS Traceability) */}
+                  <div className="flex flex-wrap items-center gap-2 text-2xs">
+                    <span className="font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                      Trazabilidad EDT:
+                    </span>
+                    <span
+                      className="px-2 py-0.5 rounded-full font-extrabold border"
+                      style={{
+                        color: pmiConfigAudit.traceabilityPct >= 80 ? "hsl(var(--success))" : "hsl(var(--warning-text))",
+                        borderColor: pmiConfigAudit.traceabilityPct >= 80 ? "hsl(var(--success) / 0.35)" : "hsl(var(--warning) / 0.4)",
+                      }}
+                    >
+                      {pmiConfigAudit.traceabilityPct}%
+                    </span>
+                    <span className="text-[hsl(var(--text-secondary))]">
+                      <span className="font-bold text-[hsl(var(--text-primary))]">{pmiConfigAudit.linked}</span> vinculados
+                      ·{" "}
+                      <span className="font-bold text-[hsl(var(--text-primary))]">{pmiConfigAudit.orphans}</span> huérfanos
+                      sin paquete de trabajo
+                    </span>
+                    <GitBranch size={12} className="text-[hsl(var(--text-secondary))]" aria-hidden />
+                  </div>
+
+                  {pmiConfigAudit.unlinkedDeliverables.length > 0 && (
+                    <div
+                      className="flex items-start gap-2 rounded-lg border p-2.5"
+                      style={{
+                        borderColor: "hsl(var(--destructive) / 0.35)",
+                        backgroundColor: "hsl(var(--destructive) / 0.08)",
+                      }}
+                    >
+                      <AlertTriangle size={13} className="text-[hsl(var(--destructive))] mt-0.5 shrink-0" />
+                      <p className="text-2xs leading-relaxed text-[hsl(var(--text-primary))]">
+                        <span className="font-bold text-[hsl(var(--destructive))]">Entregables sin vínculo EDT:</span>{" "}
+                        {pmiConfigAudit.unlinkedDeliverables.length} archivo(s) de informes o diseños no están vinculados a
+                        un paquete de trabajo. Vinculalos para mantener la trazabilidad binaria EDT-entregable.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* (b) Cobertura de los 4 Pilares Documentales PMI */}
+                  <div className="space-y-1.5">
+                    <p className="text-2xs">
+                      <span className="font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                        Cobertura Documental PMI:{" "}
+                      </span>
+                      <span
+                        className="font-extrabold"
+                        style={{
+                          color: pmiConfigAudit.pillarsCovered === 4 ? "hsl(var(--success))" : "hsl(var(--warning-text))",
+                        }}
+                      >
+                        {pmiConfigAudit.pillarsCovered}/4 pilares
+                      </span>
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {pmiConfigAudit.pillars.map((pillar) => (
+                        <span
+                          key={pillar.key}
+                          title={
+                            pillar.covered
+                              ? `${pillar.label}: cubierta por documentos en Drive`
+                              : `${pillar.label}: sin documentos aún`
+                          }
+                          className="px-2 py-0.5 rounded-full text-2xs font-semibold border"
+                          style={{
+                            color: pillar.covered ? "hsl(var(--success))" : "hsl(var(--text-secondary))",
+                            borderColor: pillar.covered ? "hsl(var(--success) / 0.35)" : "hsl(var(--border))",
+                            backgroundColor: pillar.covered ? "hsl(var(--success) / 0.08)" : "hsl(var(--surface-1))",
+                          }}
+                        >
+                          {pillar.covered ? "✓ " : "· "}{pillar.label}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Filtro rápido de trazabilidad EDT */}
+                <div
+                  data-testid="drive-wbs-traceability-filter"
+                  className="flex items-center gap-1.5 flex-wrap"
+                >
+                  {WBS_TRACEABILITY_FILTERS.map((f) => {
+                    const isActive = traceabilityFilter === f.key;
+                    return (
+                      <button
+                        key={f.key}
+                        type="button"
+                        aria-pressed={isActive}
+                        onClick={() => setTraceabilityFilter(f.key)}
+                        className={clsx(
+                          "px-2.5 py-1 rounded-lg text-2xs font-semibold uppercase tracking-wider border transition-all",
+                          isActive ? "font-bold" : "opacity-70 hover:opacity-100",
+                        )}
+                        style={{
+                          backgroundColor: isActive ? "hsl(var(--primary) / 0.12)" : "hsl(var(--surface-1))",
+                          borderColor: isActive ? "hsl(var(--primary) / 0.35)" : "hsl(var(--border))",
+                          color: isActive ? "hsl(var(--primary))" : "hsl(var(--text-secondary))",
+                        }}
+                      >
+                        {f.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
                 {/* Lista de Archivos */}
                 {loading && displayedFiles.length === 0 ? (
                   <div className="py-12 flex flex-col items-center justify-center gap-2 text-[hsl(var(--text-secondary))]">
@@ -506,7 +679,11 @@ export function ProjectDriveDrawer({
                     <FolderArchive size={36} className="text-[hsl(var(--text-secondary))]" />
                     <div className="space-y-1">
                       <p className="text-xs font-bold text-[hsl(var(--text-primary))]">
-                        {selectedTaskId !== "ALL" ? "No hay archivos vinculados a esta actividad" : "No hay archivos en Drive"}
+                        {traceabilityFilter !== "ALL"
+                          ? "No hay archivos con este nivel de trazabilidad EDT"
+                          : selectedTaskId !== "ALL"
+                            ? "No hay archivos vinculados a esta actividad"
+                            : "No hay archivos en Drive"}
                       </p>
                       <p className="text-2xs text-[hsl(var(--text-secondary))] max-w-sm">
                         Sube planos, especificaciones o vincula carpetas y documentos de Google Drive para mantener todo centralizado en el proyecto.

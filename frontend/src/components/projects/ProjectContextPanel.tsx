@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Activity, Bell, CheckCircle2, ChevronLeft, ExternalLink, Inbox, Maximize2, MessageSquare, Minimize2, Minus, Users, Wrench, X } from "lucide-react";
 import clsx from "clsx";
 import { useProjectUpdate } from "@/context/ProjectUpdateContext";
@@ -110,6 +110,7 @@ export default function ProjectContextPanel({
   });
   const [dragTab, setDragTab] = useState<ContextTab | null>(null);
   const [dragOverTab, setDragOverTab] = useState<ContextTab | null>(null);
+  const [toolsSearch, setToolsSearch] = useState("");
   const [internalMaximized, setInternalMaximized] = useState(false);
   const [internalMinimized, setInternalMinimized] = useState(false);
   const [width, setWidth] = useState<number>(() => {
@@ -265,8 +266,34 @@ export default function ProjectContextPanel({
     }
   };
 
-  const openTasks = tasks.filter((task) => task.status !== "completed").length;
+  const isTaskCompleted = (task: ProjectTaskRecord) => task.status === "completed" || task.status === "done";
+  const openTasks = tasks.filter((task) => !isTaskCompleted(task)).length;
   const completedTasks = tasks.length - openTasks;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const overdueTasks = tasks.filter((task) => {
+    if (isTaskCompleted(task) || !task.due_date) return false;
+    const dueDate = new Date(`${task.due_date.slice(0, 10)}T00:00:00`);
+    return !Number.isNaN(dueDate.getTime()) && dueDate.getTime() < today.getTime();
+  }).length;
+  const blockedOrUrgentTasks = tasks.filter((task) =>
+    !isTaskCompleted(task) && (task.status === "blocked" || task.priority === "urgent")
+  ).length;
+  const scopeCompletion = tasks.length === 0 ? 0 : Math.round((completedTasks / tasks.length) * 100);
+  const distributedTaskBudget = tasks.reduce((total, task) => total + (task.budget_allocated ?? 0), 0);
+  const projectBudget = project?.budget_allocated;
+  const budgetVariance = projectBudget == null ? null : projectBudget - distributedTaskBudget;
+  const budgetStatus = budgetVariance == null
+    ? "BAC no definido"
+    : budgetVariance < -0.01
+      ? "Exceso sobre BAC"
+      : budgetVariance > 0.01
+        ? "Reserva por Distribuir"
+        : "Presupuesto Cuadrado";
+  const filteredTools = useMemo(() => {
+    const query = toolsSearch.trim().toLocaleLowerCase();
+    return (tools ?? []).filter((tool) => tool.label.toLocaleLowerCase().includes(query));
+  }, [tools, toolsSearch]);
 
   if (isMinimized) {
     return (
@@ -498,8 +525,24 @@ export default function ProjectContextPanel({
 
         {activeTab === "tools" && tools?.length ? (
           <div className="h-full overflow-y-auto p-3">
+            <label className="mb-3 block">
+              <span className="mb-1 block text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Buscar herramientas</span>
+              <input
+                data-testid="context-tools-search"
+                type="search"
+                value={toolsSearch}
+                onChange={(event) => setToolsSearch(event.currentTarget.value)}
+                placeholder="Filtrar por nombre…"
+                aria-label="Buscar herramienta por etiqueta"
+                className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-2 text-xs text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--muted-foreground))] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]"
+              />
+            </label>
             <div className="grid grid-cols-1 gap-2">
-              {tools.map((tool) => {
+              {filteredTools.length === 0 ? (
+                <p className="rounded-md border border-dashed border-[hsl(var(--border))] p-3 text-center text-xs text-[hsl(var(--muted-foreground))]">
+                  No hay herramientas con esa etiqueta.
+                </p>
+              ) : filteredTools.map((tool) => {
                 const ToolIcon = tool.icon;
                 const variantClass =
                   tool.variant === "destructive"
@@ -532,6 +575,63 @@ export default function ProjectContextPanel({
 
         {activeTab === "details" ? (
           <div className="h-full overflow-y-auto p-4">
+            <section
+              data-testid="context-pmi-triple-constraint"
+              aria-label="Diagnóstico de Triple Restricción PMI"
+              className="mb-4 space-y-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3"
+            >
+              <div>
+                <h3 className="text-xs font-bold text-[hsl(var(--text-primary))]">Diagnóstico PMI · Triple Restricción</h3>
+                <p className="mt-0.5 text-2xs text-[hsl(var(--text-secondary))]">Alcance, cronograma y presupuesto BAC</p>
+              </div>
+              <div className="grid gap-2">
+                <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Alcance</span>
+                    <span className="text-xs font-bold text-[hsl(var(--text-primary))]">{scopeCompletion}% completado</span>
+                  </div>
+                  <p className="mt-1 text-2xs text-[hsl(var(--text-secondary))]">
+                    {completedTasks} de {tasks.length} paquetes completados · {blockedOrUrgentTasks} bloqueados o urgentes abiertos
+                  </p>
+                </div>
+                <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Cronograma</span>
+                    <span className={clsx(
+                      "rounded-full border px-2 py-0.5 text-2xs font-bold",
+                      overdueTasks > 0
+                        ? "border-[hsl(var(--destructive)/0.35)] bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))]"
+                        : "border-[hsl(var(--success)/0.35)] bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]"
+                    )}>
+                      {overdueTasks > 0 ? "Alerta de Atraso" : "Cronograma en Regla"}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-2xs text-[hsl(var(--text-secondary))]">
+                    {overdueTasks} {overdueTasks === 1 ? "actividad vencida abierta" : "actividades vencidas abiertas"}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Costo · BAC vs distribuido EDT</span>
+                    <span className={clsx(
+                      "rounded-full border px-2 py-0.5 text-2xs font-bold",
+                      budgetStatus === "Exceso sobre BAC"
+                        ? "border-[hsl(var(--destructive)/0.35)] bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))]"
+                        : budgetStatus === "Presupuesto Cuadrado"
+                          ? "border-[hsl(var(--success)/0.35)] bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]"
+                          : budgetStatus === "Reserva por Distribuir"
+                            ? "border-[hsl(var(--warning)/0.35)] bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))]"
+                            : "border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))]"
+                    )}>
+                      {budgetStatus}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-2xs text-[hsl(var(--text-secondary))]">
+                    Distribuido: {formatBudgetAmount(distributedTaskBudget)} · BAC: {projectBudget == null ? "No definido" : formatBudgetAmount(projectBudget)}
+                  </p>
+                </div>
+              </div>
+            </section>
             <div className="grid grid-cols-2 gap-2">
               <Metric label="Total" value={tasks.length} />
               <Metric label="Completadas" value={completedTasks} />
@@ -730,6 +830,10 @@ function DetailRow({ label, value }: { label: string; value: string }) {
       <span className="truncate text-right text-xs font-semibold text-[hsl(var(--text-primary))]">{value}</span>
     </div>
   );
+}
+
+function formatBudgetAmount(value: number): string {
+  return `$${value.toLocaleString("es-CO", { maximumFractionDigits: 0 })}`;
 }
 
 function formatStatus(status?: string | null) {

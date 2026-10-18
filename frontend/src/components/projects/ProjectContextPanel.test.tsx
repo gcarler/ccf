@@ -164,6 +164,50 @@ describe("ProjectContextPanel", () => {
     expect(screen.getByText("Descripción del proyecto")).toHaveClass("text-[hsl(var(--text-primary))]");
   });
 
+  it("shows PMI scope, schedule, and BAC diagnostics in Details", async () => {
+    const user = userEvent.setup();
+    renderPanel({
+      project: createMockProject({ id: "project-1", title: "Proyecto CCF", budget_allocated: 1000 }),
+      tasks: [
+        createMockTask({ id: "task-done", status: "done", priority: "medium", due_date: "2020-01-01", budget_allocated: 200 }),
+        createMockTask({ id: "task-blocked", status: "blocked", priority: "high", due_date: "2020-01-01", budget_allocated: 300 }),
+        createMockTask({ id: "task-urgent", status: "todo", priority: "urgent", due_date: "2999-01-01", budget_allocated: 100 }),
+        createMockTask({ id: "task-active", status: "in_progress", priority: "medium", due_date: "2999-01-01", budget_allocated: 200 }),
+      ],
+    });
+
+    await user.click(screen.getByRole("tab", { name: "Detalles" }));
+    const diagnosis = screen.getByTestId("context-pmi-triple-constraint");
+    expect(diagnosis).toHaveTextContent("25% completado");
+    expect(diagnosis).toHaveTextContent("1 de 4 paquetes completados");
+    expect(diagnosis).toHaveTextContent("2 bloqueados o urgentes abiertos");
+    expect(diagnosis).toHaveTextContent("1 actividad vencida abierta");
+    expect(diagnosis).toHaveTextContent("Alerta de Atraso");
+    expect(diagnosis).toHaveTextContent("Reserva por Distribuir");
+    expect(diagnosis).toHaveTextContent("Distribuido: $800");
+    expect(diagnosis).toHaveTextContent("BAC: $1.000");
+  });
+
+  it("distinguishes a balanced EDT budget from allocation that exceeds BAC", async () => {
+    const user = userEvent.setup();
+    const task = createMockTask({ id: "budgeted", status: "todo", budget_allocated: 1000 });
+    const firstRender = renderPanel({
+      project: createMockProject({ id: "project-1", budget_allocated: 1000 }),
+      tasks: [task],
+    });
+    await user.click(screen.getByRole("tab", { name: "Detalles" }));
+    expect(screen.getByTestId("context-pmi-triple-constraint")).toHaveTextContent("Cronograma en Regla");
+    expect(screen.getByTestId("context-pmi-triple-constraint")).toHaveTextContent("Presupuesto Cuadrado");
+
+    firstRender.unmount();
+    renderPanel({
+      project: createMockProject({ id: "project-1", budget_allocated: 900 }),
+      tasks: [task],
+    });
+    await user.click(screen.getByRole("tab", { name: "Detalles" }));
+    expect(screen.getByTestId("context-pmi-triple-constraint")).toHaveTextContent("Exceso sobre BAC");
+  });
+
   it("renders project inbox items, marks them read, and opens the related task", async () => {
     const user = userEvent.setup();
     const onOpenTask = vi.fn();
@@ -317,6 +361,15 @@ describe("ProjectContextPanel", () => {
     const driveBtn = screen.getByRole("button", { name: "Drive" });
     await user.click(driveBtn);
     expect(onSelectDrive).toHaveBeenCalledTimes(1);
+
+    const search = screen.getByTestId("context-tools-search");
+    await user.type(search, "kpi");
+    expect(screen.getByRole("button", { name: "KPIs" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Drive" })).not.toBeInTheDocument();
+
+    await user.clear(search);
+    await user.type(search, "sin coincidencias");
+    expect(screen.getByText("No hay herramientas con esa etiqueta.")).toBeInTheDocument();
   });
 
   it("reorders tabs by drag & drop (Historia al primer lugar) and persists the custom order", () => {
