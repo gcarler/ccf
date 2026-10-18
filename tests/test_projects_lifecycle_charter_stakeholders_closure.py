@@ -7364,3 +7364,264 @@ def test_audit_project_closure_hypercare_and_bau_handover_empty_and_binding():
         "audit_project_closure_hypercare_and_bau_handover_readiness" in mod.__all__
     )
 
+
+
+def test_audit_adkar_adoption_resistance_blocked_paths():
+    """Caso 1: 2+ cohortes barrera o barrera + sin entrenar -> RESISTANCE_BLOCKED."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_organizational_change_adkar_adoption_readiness,
+    )
+
+    res = audit_organizational_change_adkar_adoption_readiness(
+        [
+            {
+                "cohort_id": "C-01",
+                "headcount": 12,
+                "awareness_score": 2.0,
+                "desire_score": 1.5,
+                "knowledge_score": 3.0,
+                "ability_score": 3.0,
+                "reinforcement_score": 3.0,
+                "training_completion_pct": 100.0,
+                "has_change_champion": True,
+            },
+            {
+                "cohort_id": "C-02",
+                "headcount": 8,
+                "awareness_score": 3.0,
+                "desire_score": 3.0,
+                "knowledge_score": 3.0,
+                "ability_score": 2.5,
+                "reinforcement_score": 3.0,
+                "training_completion_pct": 100.0,
+                "has_change_champion": True,
+            },
+        ]
+    )
+    assert res["total_cohorts"] == 2
+    assert res["total_impacted_users"] == 20
+    assert res["champion_coverage_pct"] == 100.0
+    assert res["barrier_point_cohort_ids"] == ["C-01", "C-02"]
+    assert res["untrained_cohort_ids"] == []
+    assert res["unchampioned_cohort_ids"] == []
+    assert res["ocm_governance_status"] == "RESISTANCE_BLOCKED"
+    assert res["is_adoption_ready"] is False
+
+    # Barrera + sin entrenar con una sola cohorte también bloquea.
+    res_mixed = audit_organizational_change_adkar_adoption_readiness(
+        [
+            {
+                "cohort_id": "C-10",
+                "headcount": 5,
+                "awareness_score": 4.0,
+                "desire_score": 3.0,
+                "knowledge_score": 4.0,
+                "ability_score": 4.0,
+                "reinforcement_score": 4.0,
+                "training_completion_pct": 40.0,
+                "has_change_champion": True,
+            },
+        ]
+    )
+    assert res_mixed["barrier_point_cohort_ids"] == ["C-10"]
+    assert res_mixed["untrained_cohort_ids"] == ["C-10"]
+    assert res_mixed["ocm_governance_status"] == "RESISTANCE_BLOCKED"
+
+
+def test_audit_adkar_adoption_at_risk_paths():
+    """Caso 2: una barrera, sin entrenar o cobertura de champions baja -> AT_RISK."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_organizational_change_adkar_adoption_readiness,
+    )
+
+    res_barrier = audit_organizational_change_adkar_adoption_readiness(
+        [
+            {
+                "cohort_id": "C-20",
+                "headcount": 10,
+                "awareness_score": 4.8,
+                "desire_score": 4.5,
+                "knowledge_score": 3.2,
+                "ability_score": 4.0,
+                "reinforcement_score": 4.0,
+                "training_completion_pct": 100.0,
+                "has_change_champion": True,
+            },
+        ]
+    )
+    assert res_barrier["barrier_point_cohort_ids"] == ["C-20"]
+    assert res_barrier["untrained_cohort_ids"] == []
+    assert res_barrier["ocm_governance_status"] == "AT_RISK"
+
+    res_untrained = audit_organizational_change_adkar_adoption_readiness(
+        [
+            {
+                "cohort_id": "C-21",
+                "headcount": 6,
+                "awareness_score": 4.0,
+                "desire_score": 4.0,
+                "knowledge_score": 4.0,
+                "ability_score": 4.0,
+                "reinforcement_score": 4.0,
+                "training_completion_pct": 70.0,
+                "has_change_champion": True,
+            },
+        ]
+    )
+    assert res_untrained["untrained_cohort_ids"] == ["C-21"]
+    assert res_untrained["ocm_governance_status"] == "AT_RISK"
+
+    res_no_champion = audit_organizational_change_adkar_adoption_readiness(
+        [
+            {
+                "cohort_id": "C-22",
+                "headcount": 4,
+                "awareness_score": 4.0,
+                "desire_score": 4.0,
+                "knowledge_score": 4.0,
+                "ability_score": 4.0,
+                "reinforcement_score": 4.0,
+                "training_completion_pct": 100.0,
+                "has_change_champion": False,
+            },
+        ]
+    )
+    assert res_no_champion["unchampioned_cohort_ids"] == ["C-22"]
+    assert res_no_champion["champion_coverage_pct"] == 0.0
+    assert res_no_champion["ocm_governance_status"] == "AT_RISK"
+    assert res_no_champion["is_adoption_ready"] is False
+
+
+def test_audit_adkar_adoption_ready_and_champion_coverage():
+    """Caso 3: cohortes completas con cobertura de champions >= umbral -> ADOPTION_READY."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_organizational_change_adkar_adoption_readiness,
+    )
+
+    res = audit_organizational_change_adkar_adoption_readiness(
+        [
+            {
+                "cohort_id": "C-30",
+                "headcount": 15,
+                "awareness_score": 4.0,
+                "desire_score": 3.5,
+                "knowledge_score": 3.5,
+                "ability_score": 3.6,
+                "reinforcement_score": 4.0,
+                "training_completion_pct": 85.0,
+                "has_change_champion": True,
+            },
+            {
+                "cohort_id": "C-31",
+                "headcount": 9,
+                "awareness_score": 3.6,
+                "desire_score": 3.8,
+                "knowledge_score": 3.5,
+                "ability_score": 3.5,
+                "reinforcement_score": 3.5,
+                "training_completion_pct": 90.0,
+                "has_change_champion": True,
+            },
+            {
+                "cohort_id": "C-32",
+                "headcount": 6,
+                "awareness_score": 3.5,
+                "desire_score": 3.5,
+                "knowledge_score": 3.5,
+                "ability_score": 3.5,
+                "reinforcement_score": 3.5,
+                "training_completion_pct": 85.0,
+                "has_change_champion": True,
+            },
+        ],
+        min_champion_coverage_pct=75.0,
+    )
+    assert res["total_cohorts"] == 3
+    assert res["total_impacted_users"] == 30
+    assert res["champion_coverage_pct"] == 100.0
+    assert res["barrier_point_cohort_ids"] == []
+    assert res["untrained_cohort_ids"] == []
+    assert res["unchampioned_cohort_ids"] == []
+    assert res["ocm_governance_status"] == "ADOPTION_READY"
+    assert res["is_adoption_ready"] is True
+    assert res["recommendations"] == []
+    # 2 de 3 cohortes con champion: 66.67% < 75% -> AT_RISK a pesar de scores completos.
+    res_partial = audit_organizational_change_adkar_adoption_readiness(
+        [
+            {**res_item, "has_change_champion": True} if i == 0 else {**res_item, "has_change_champion": False}
+            for i, res_item in enumerate([
+                {
+                    "cohort_id": "C-30",
+                    "headcount": 15,
+                    "awareness_score": 4.0,
+                    "desire_score": 3.5,
+                    "knowledge_score": 3.5,
+                    "ability_score": 3.6,
+                    "reinforcement_score": 4.0,
+                    "training_completion_pct": 85.0,
+                },
+                {
+                    "cohort_id": "C-31",
+                    "headcount": 9,
+                    "awareness_score": 3.7,
+                    "desire_score": 3.8,
+                    "knowledge_score": 3.6,
+                    "ability_score": 3.5,
+                    "reinforcement_score": 3.6,
+                    "training_completion_pct": 90.0,
+                },
+                {
+                    "cohort_id": "C-32",
+                    "headcount": 6,
+                    "awareness_score": 3.5,
+                    "desire_score": 3.5,
+                    "knowledge_score": 3.5,
+                    "ability_score": 3.5,
+                    "reinforcement_score": 3.5,
+                    "training_completion_pct": 85.0,
+                },
+            ])
+        ],
+    )
+    assert res_partial["champion_coverage_pct"] == round(1 / 3 * 100, 2)
+    assert res_partial["ocm_governance_status"] == "AT_RISK"
+
+
+def test_audit_adkar_adoption_invalid_entries_and_binding():
+    """Caso 4: entradas no-lista/no-dict y binding + __all__."""
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_organizational_change_adkar_adoption_readiness,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_organizational_change_adkar_adoption_readiness(payload)  # type: ignore[arg-type]
+        assert empty["total_cohorts"] == 0
+        assert empty["total_impacted_users"] == 0
+        assert empty["champion_coverage_pct"] == 100.0
+        assert empty["barrier_point_cohort_ids"] == []
+        assert empty["untrained_cohort_ids"] == []
+        assert empty["unchampioned_cohort_ids"] == []
+        assert empty["ocm_governance_status"] == "ADOPTION_READY"
+        assert empty["is_adoption_ready"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "cohort_id": "C-40",
+            "headcount": 3,
+            "awareness_score": 4.0,
+            "desire_score": 4.0,
+            "knowledge_score": 4.0,
+            "ability_score": 4.0,
+            "reinforcement_score": 4.0,
+            "training_completion_pct": 100.0,
+            "has_change_champion": True,
+        },
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_organizational_change_adkar_adoption_readiness(sample)
+        == audit_organizational_change_adkar_adoption_readiness(sample)
+    )
+    assert "audit_organizational_change_adkar_adoption_readiness" in mod.__all__

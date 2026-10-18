@@ -2836,6 +2836,7 @@ __all__ = [
     "audit_defect_removal_efficiency_and_uat_readiness",
     "audit_cost_of_quality_conformance_and_failure_ratio",
     "audit_technical_debt_interest_and_remediation_quota",
+    "audit_canary_rollout_blast_radius_and_rollback_readiness",
     "ProjectCCBService",
 ]
 
@@ -5883,3 +5884,95 @@ ProjectCCBService.audit_technical_debt_interest_and_remediation_quota = staticme
 )
 
 
+def audit_canary_rollout_blast_radius_and_rollback_readiness(
+    releases: list[dict[str, Any]],
+    *,
+    max_initial_canary_traffic_pct: float = 10.0,
+    min_bake_time_minutes: int = 60,
+) -> dict[str, Any]:
+    """Audit PMI PMBOK §8.3 & §4.6 CCB canary rollout blast-radius, bake time, and automated rollback readiness."""
+    excessive_blast_radius_release_ids: list[str] = []
+    insufficient_bake_time_release_ids: list[str] = []
+    unverified_rollback_release_ids: list[str] = []
+    breaking_db_migration_release_ids: list[str] = []
+    recommendations: list[str] = []
+
+    valid_releases = (
+        [
+            r
+            for r in releases
+            if isinstance(r, dict) and str(r.get("release_id", "")).strip()
+        ]
+        if isinstance(releases, list)
+        else []
+    )
+
+    for rel in valid_releases:
+        release_id = str(rel.get("release_id", "")).strip()
+        initial_canary_traffic_pct = float(
+            rel.get("initial_canary_traffic_pct", 0.0) or 0.0
+        )
+        bake_time_minutes = int(rel.get("bake_time_minutes", 0) or 0)
+        has_automated_rollback_trigger = bool(
+            rel.get("has_automated_rollback_trigger", False)
+        )
+        rollback_tested_in_staging = bool(
+            rel.get("rollback_tested_in_staging", False)
+        )
+        has_backward_compatible_db_migration = (
+            bool(rel.get("has_backward_compatible_db_migration", True))
+            if rel.get("has_backward_compatible_db_migration") is not None
+            else True
+        )
+
+        if initial_canary_traffic_pct > max_initial_canary_traffic_pct:
+            excessive_blast_radius_release_ids.append(release_id)
+
+        if bake_time_minutes < min_bake_time_minutes:
+            insufficient_bake_time_release_ids.append(release_id)
+
+        if not has_automated_rollback_trigger or not rollback_tested_in_staging:
+            unverified_rollback_release_ids.append(release_id)
+
+        if not has_backward_compatible_db_migration:
+            breaking_db_migration_release_ids.append(release_id)
+
+    if unverified_rollback_release_ids:
+        recommendations.append(
+            f"Configure automated rollback triggers and verify staging rollback before deploying: {', '.join(unverified_rollback_release_ids)}."
+        )
+    if breaking_db_migration_release_ids:
+        recommendations.append(
+            f"Refactor breaking schema changes into expand-contract backward-compatible migrations for: {', '.join(breaking_db_migration_release_ids)}."
+        )
+    if excessive_blast_radius_release_ids:
+        recommendations.append(
+            f"Cap initial canary traffic exposure at <={max_initial_canary_traffic_pct:.1f}% for releases: {', '.join(excessive_blast_radius_release_ids)}."
+        )
+    if insufficient_bake_time_release_ids:
+        recommendations.append(
+            f"Enforce a minimum canary bake window of {min_bake_time_minutes} minutes for releases: {', '.join(insufficient_bake_time_release_ids)}."
+        )
+
+    if unverified_rollback_release_ids or breaking_db_migration_release_ids:
+        rollout_governance_status = "BLOCKED"
+    elif excessive_blast_radius_release_ids or insufficient_bake_time_release_ids:
+        rollout_governance_status = "WARNING"
+    else:
+        rollout_governance_status = "SAFE_TO_DEPLOY"
+
+    return {
+        "total_releases": len(valid_releases),
+        "excessive_blast_radius_release_ids": excessive_blast_radius_release_ids,
+        "insufficient_bake_time_release_ids": insufficient_bake_time_release_ids,
+        "unverified_rollback_release_ids": unverified_rollback_release_ids,
+        "breaking_db_migration_release_ids": breaking_db_migration_release_ids,
+        "rollout_governance_status": rollout_governance_status,
+        "is_rollout_ready": rollout_governance_status == "SAFE_TO_DEPLOY",
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.audit_canary_rollout_blast_radius_and_rollback_readiness = staticmethod(
+    audit_canary_rollout_blast_radius_and_rollback_readiness
+)

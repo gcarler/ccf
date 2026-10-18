@@ -7552,3 +7552,142 @@ def test_audit_technical_debt_interest_and_remediation_quota_invalid_and_binding
         )
     )
     assert "audit_technical_debt_interest_and_remediation_quota" in mod.__all__
+
+
+def test_audit_canary_rollout_blast_radius_and_rollback_readiness_safe():
+    """Caso 1: Releases con tráfico canary <=10%, bake time >=60m, rollback automatizado y DB compatible -> SAFE_TO_DEPLOY."""
+    from backend.services.project_ccb_service import (
+        audit_canary_rollout_blast_radius_and_rollback_readiness,
+    )
+
+    releases = [
+        {
+            "release_id": "REL-2026-01",
+            "initial_canary_traffic_pct": 5.0,
+            "bake_time_minutes": 90,
+            "has_automated_rollback_trigger": True,
+            "rollback_tested_in_staging": True,
+            "has_backward_compatible_db_migration": True,
+        },
+        {
+            "release_id": "REL-2026-02",
+            "initial_canary_traffic_pct": 10.0,
+            "bake_time_minutes": 60,
+            "has_automated_rollback_trigger": True,
+            "rollback_tested_in_staging": True,
+            "has_backward_compatible_db_migration": True,
+        },
+    ]
+    res = audit_canary_rollout_blast_radius_and_rollback_readiness(
+        releases, max_initial_canary_traffic_pct=10.0, min_bake_time_minutes=60
+    )
+    assert res["total_releases"] == 2
+    assert res["excessive_blast_radius_release_ids"] == []
+    assert res["insufficient_bake_time_release_ids"] == []
+    assert res["unverified_rollback_release_ids"] == []
+    assert res["breaking_db_migration_release_ids"] == []
+    assert res["rollout_governance_status"] == "SAFE_TO_DEPLOY"
+    assert res["is_rollout_ready"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_canary_rollout_blast_radius_and_rollback_readiness_warning():
+    """Caso 2: Tráfico inicial excesivo (>10%) o bake time insuficiente (<60m) con rollback verificado -> WARNING."""
+    from backend.services.project_ccb_service import (
+        audit_canary_rollout_blast_radius_and_rollback_readiness,
+    )
+
+    releases = [
+        {
+            "release_id": "REL-FAST",
+            "initial_canary_traffic_pct": 25.0,
+            "bake_time_minutes": 30,
+            "has_automated_rollback_trigger": True,
+            "rollback_tested_in_staging": True,
+            "has_backward_compatible_db_migration": True,
+        }
+    ]
+    res = audit_canary_rollout_blast_radius_and_rollback_readiness(
+        releases, max_initial_canary_traffic_pct=10.0, min_bake_time_minutes=60
+    )
+    assert res["total_releases"] == 1
+    assert res["excessive_blast_radius_release_ids"] == ["REL-FAST"]
+    assert res["insufficient_bake_time_release_ids"] == ["REL-FAST"]
+    assert res["unverified_rollback_release_ids"] == []
+    assert res["breaking_db_migration_release_ids"] == []
+    assert res["rollout_governance_status"] == "WARNING"
+    assert res["is_rollout_ready"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_canary_rollout_blast_radius_and_rollback_readiness_blocked():
+    """Caso 3: Sin rollback automatizado/probado o migración DB incompatible -> BLOCKED."""
+    from backend.services.project_ccb_service import (
+        audit_canary_rollout_blast_radius_and_rollback_readiness,
+    )
+
+    releases = [
+        {
+            "release_id": "REL-RISKY-01",
+            "initial_canary_traffic_pct": 5.0,
+            "bake_time_minutes": 120,
+            "has_automated_rollback_trigger": False,
+            "rollback_tested_in_staging": True,
+            "has_backward_compatible_db_migration": True,
+        },
+        {
+            "release_id": "REL-RISKY-02",
+            "initial_canary_traffic_pct": 5.0,
+            "bake_time_minutes": 120,
+            "has_automated_rollback_trigger": True,
+            "rollback_tested_in_staging": True,
+            "has_backward_compatible_db_migration": False,
+        },
+    ]
+    res = audit_canary_rollout_blast_radius_and_rollback_readiness(releases)
+    assert res["total_releases"] == 2
+    assert res["unverified_rollback_release_ids"] == ["REL-RISKY-01"]
+    assert res["breaking_db_migration_release_ids"] == ["REL-RISKY-02"]
+    assert res["rollout_governance_status"] == "BLOCKED"
+    assert res["is_rollout_ready"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_canary_rollout_blast_radius_and_rollback_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en ProjectCCBService + __all__."""
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_canary_rollout_blast_radius_and_rollback_readiness,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_canary_rollout_blast_radius_and_rollback_readiness(payload)  # type: ignore[arg-type]
+        assert empty["total_releases"] == 0
+        assert empty["excessive_blast_radius_release_ids"] == []
+        assert empty["insufficient_bake_time_release_ids"] == []
+        assert empty["unverified_rollback_release_ids"] == []
+        assert empty["breaking_db_migration_release_ids"] == []
+        assert empty["rollout_governance_status"] == "SAFE_TO_DEPLOY"
+        assert empty["is_rollout_ready"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "release_id": "REL-99",
+            "initial_canary_traffic_pct": 5.0,
+            "bake_time_minutes": 60,
+            "has_automated_rollback_trigger": True,
+            "rollback_tested_in_staging": True,
+            "has_backward_compatible_db_migration": True,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_canary_rollout_blast_radius_and_rollback_readiness(
+            sample
+        )
+        == audit_canary_rollout_blast_radius_and_rollback_readiness(sample)
+    )
+    assert (
+        "audit_canary_rollout_blast_radius_and_rollback_readiness" in mod.__all__
+    )

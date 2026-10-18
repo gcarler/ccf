@@ -3157,6 +3157,7 @@ __all__ = [
     "audit_team_tuckman_maturity_and_psychological_safety",
     "audit_project_premortem_scenarios_and_kill_switch_criteria",
     "audit_project_closure_hypercare_and_bau_handover_readiness",
+    "audit_organizational_change_adkar_adoption_readiness",
     "ProjectLifecyclePMIService",
 ]
 
@@ -5978,4 +5979,116 @@ def audit_project_closure_hypercare_and_bau_handover_readiness(
 
 ProjectLifecyclePMIService.audit_project_closure_hypercare_and_bau_handover_readiness = staticmethod(
     audit_project_closure_hypercare_and_bau_handover_readiness
+)
+
+
+def audit_organizational_change_adkar_adoption_readiness(
+    user_cohorts: Any,
+    *,
+    min_adkar_stage_score: float = 3.5,
+    min_training_completion_pct: float = 85.0,
+    min_champion_coverage_pct: float = 75.0,
+) -> Dict[str, object]:
+    """Auditoría PMBOK 13.3 y Managing Change in Organizations: ADKAR.
+
+    Evalúa por cohorta los cinco estadios ADKAR (barrera = puntaje menor
+    al umbral en cualquiera), el porcentaje de entrenamiento completado y
+    la cobertura de change champions, para determinar el estado de
+    adopción (ADOPTION_READY / AT_RISK / RESISTANCE_BLOCKED).
+    """
+    entries = user_cohorts if isinstance(user_cohorts, list) else []
+    cohorts = [item for item in entries if isinstance(item, dict)]
+
+    barrier_point_cohort_ids: List[str] = []
+    untrained_cohort_ids: List[str] = []
+    unchampioned_cohort_ids: List[str] = []
+    championed_count = 0
+    total_impacted_users = 0
+
+    adkar_stages = (
+        "awareness_score",
+        "desire_score",
+        "knowledge_score",
+        "ability_score",
+        "reinforcement_score",
+    )
+
+    for cohort in cohorts:
+        cohort_id = cohort.get("cohort_id")
+        headcount = cohort.get("headcount")
+        total_impacted_users += headcount if isinstance(headcount, (int, float)) else 0
+
+        scores = [cohort.get(stage) for stage in adkar_stages]
+        numeric_scores = [s for s in scores if isinstance(s, (int, float))]
+        if len(numeric_scores) < len(scores) or (
+            numeric_scores and min(numeric_scores) < min_adkar_stage_score
+        ):
+            barrier_point_cohort_ids.append(cohort_id)
+
+        training_completion_pct = cohort.get("training_completion_pct")
+        if not isinstance(training_completion_pct, (int, float)) or (
+            training_completion_pct < min_training_completion_pct
+        ):
+            untrained_cohort_ids.append(cohort_id)
+
+        if cohort.get("has_change_champion", True) is True:
+            championed_count += 1
+        else:
+            unchampioned_cohort_ids.append(cohort_id)
+
+    total_cohorts = len(cohorts)
+    if total_cohorts > 0:
+        champion_coverage_pct = round((championed_count / total_cohorts) * 100.0, 2)
+    else:
+        champion_coverage_pct = 100.0
+
+    if len(barrier_point_cohort_ids) >= 2 or (
+        barrier_point_cohort_ids and untrained_cohort_ids
+    ):
+        ocm_governance_status = "RESISTANCE_BLOCKED"
+    elif (
+        barrier_point_cohort_ids
+        or untrained_cohort_ids
+        or champion_coverage_pct < min_champion_coverage_pct
+    ):
+        ocm_governance_status = "AT_RISK"
+    else:
+        ocm_governance_status = "ADOPTION_READY"
+
+    recommendations: List[str] = []
+    if barrier_point_cohort_ids:
+        recommendations.append(
+            "Address ADKAR barrier points below the stage threshold: "
+            + ", ".join(str(c) for c in barrier_point_cohort_ids)
+        )
+    if untrained_cohort_ids:
+        recommendations.append(
+            f"Complete training to reach {min_training_completion_pct}% completion: "
+            + ", ".join(str(c) for c in untrained_cohort_ids)
+        )
+    if unchampioned_cohort_ids:
+        recommendations.append(
+            "Assign change champions to cohorts: "
+            + ", ".join(str(c) for c in unchampioned_cohort_ids)
+        )
+    if champion_coverage_pct < min_champion_coverage_pct:
+        recommendations.append(
+            f"Raise champion coverage: {champion_coverage_pct}% is below min {min_champion_coverage_pct}%"
+        )
+
+    return {
+        "total_cohorts": total_cohorts,
+        "total_impacted_users": total_impacted_users,
+        "champion_coverage_pct": champion_coverage_pct,
+        "barrier_point_cohort_ids": barrier_point_cohort_ids,
+        "untrained_cohort_ids": untrained_cohort_ids,
+        "unchampioned_cohort_ids": unchampioned_cohort_ids,
+        "ocm_governance_status": ocm_governance_status,
+        "is_adoption_ready": ocm_governance_status == "ADOPTION_READY",
+        "recommendations": recommendations,
+    }
+
+
+ProjectLifecyclePMIService.audit_organizational_change_adkar_adoption_readiness = staticmethod(
+    audit_organizational_change_adkar_adoption_readiness
 )

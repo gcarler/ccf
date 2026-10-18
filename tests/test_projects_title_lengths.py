@@ -6165,3 +6165,125 @@ def test_validate_monte_carlo_confidence_percentiles_and_contingency_empty_and_e
     assert (
         "validate_monte_carlo_confidence_percentiles_and_contingency" in mod.__all__
     )
+
+
+def test_validate_make_or_buy_tco_and_strategic_lock_in_sound():
+    """Caso 1: Decisiones Make/Buy económicamente óptimas, core IP interna y bajo lock-in -> SOUND."""
+    from backend.schemas.projects import validate_make_or_buy_tco_and_strategic_lock_in
+
+    options = [
+        {
+            "component_id": "CMP-CORE-ENGINE",
+            "selected_decision": "MAKE",
+            "make_upfront_cost": 40000.0,
+            "make_monthly_opex": 1000.0,
+            "buy_upfront_cost": 20000.0,
+            "buy_monthly_license_cost": 2500.0,
+            "buy_switching_exit_cost": 15000.0,
+            "is_core_intellectual_property": True,
+        },
+        {
+            "component_id": "CMP-AUTH-SAAS",
+            "selected_decision": "BUY",
+            "make_upfront_cost": 50000.0,
+            "make_monthly_opex": 1500.0,
+            "buy_upfront_cost": 5000.0,
+            "buy_monthly_license_cost": 1000.0,
+            "buy_switching_exit_cost": 8000.0,
+            "is_core_intellectual_property": False,
+        },
+    ]
+    res = validate_make_or_buy_tco_and_strategic_lock_in(
+        options, evaluation_horizon_months=36, max_switching_cost_ratio_pct=35.0
+    )
+    assert res["total_components"] == 2
+    assert res["total_selected_tco"] == 117000.0
+    assert res["core_ip_outsourced_component_ids"] == []
+    assert res["uneconomic_decision_component_ids"] == []
+    assert res["vendor_lock_in_risk_component_ids"] == []
+    assert res["make_or_buy_governance_status"] == "SOUND"
+    assert res["is_make_or_buy_valid"] is True
+    assert res["recommendations"] == []
+
+
+def test_validate_make_or_buy_tco_and_strategic_lock_in_warning():
+    """Caso 2: Una decisión antieconómica o alto costo de salida (>35%) sin externalizar core IP -> WARNING."""
+    from backend.schemas.projects import validate_make_or_buy_tco_and_strategic_lock_in
+
+    options = [
+        {
+            "component_id": "CMP-LOGGING",
+            "selected_decision": "MAKE",
+            "make_upfront_cost": 60000.0,
+            "make_monthly_opex": 2000.0,
+            "buy_upfront_cost": 4000.0,
+            "buy_monthly_license_cost": 1000.0,
+            "buy_switching_exit_cost": 2000.0,
+            "is_core_intellectual_property": False,
+        },
+        {
+            "component_id": "CMP-CRM",
+            "selected_decision": "BUY",
+            "make_upfront_cost": 80000.0,
+            "make_monthly_opex": 2000.0,
+            "buy_upfront_cost": 14000.0,
+            "buy_monthly_license_cost": 1000.0,
+            "buy_switching_exit_cost": 25000.0,
+            "is_core_intellectual_property": False,
+        },
+    ]
+    res = validate_make_or_buy_tco_and_strategic_lock_in(
+        options, evaluation_horizon_months=36, max_switching_cost_ratio_pct=35.0
+    )
+    assert res["total_components"] == 2
+    assert res["core_ip_outsourced_component_ids"] == []
+    assert res["uneconomic_decision_component_ids"] == ["CMP-LOGGING"]
+    assert res["vendor_lock_in_risk_component_ids"] == ["CMP-CRM"]
+    assert res["make_or_buy_governance_status"] == "WARNING"
+    assert res["is_make_or_buy_valid"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_validate_make_or_buy_tco_and_strategic_lock_in_critical():
+    """Caso 3: Propiedad intelectual core externalizada (BUY) -> CRITICAL."""
+    from backend.schemas.projects import validate_make_or_buy_tco_and_strategic_lock_in
+
+    options = [
+        {
+            "component_id": "CMP-ALGO-PROPRIETARY",
+            "selected_decision": "BUY",
+            "make_upfront_cost": 50000.0,
+            "make_monthly_opex": 1000.0,
+            "buy_upfront_cost": 30000.0,
+            "buy_monthly_license_cost": 3000.0,
+            "buy_switching_exit_cost": 70000.0,
+            "is_core_intellectual_property": True,
+        }
+    ]
+    res = validate_make_or_buy_tco_and_strategic_lock_in(options)
+    assert res["total_components"] == 1
+    assert res["core_ip_outsourced_component_ids"] == ["CMP-ALGO-PROPRIETARY"]
+    assert res["uneconomic_decision_component_ids"] == ["CMP-ALGO-PROPRIETARY"]
+    assert res["vendor_lock_in_risk_component_ids"] == ["CMP-ALGO-PROPRIETARY"]
+    assert res["make_or_buy_governance_status"] == "CRITICAL"
+    assert res["is_make_or_buy_valid"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_validate_make_or_buy_tco_and_strategic_lock_in_empty_and_export():
+    """Caso 4: Entradas vacías/inválidas y exportación en __all__."""
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import validate_make_or_buy_tco_and_strategic_lock_in
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = validate_make_or_buy_tco_and_strategic_lock_in(payload)  # type: ignore[arg-type]
+        assert empty["total_components"] == 0
+        assert empty["total_selected_tco"] == 0.0
+        assert empty["core_ip_outsourced_component_ids"] == []
+        assert empty["uneconomic_decision_component_ids"] == []
+        assert empty["vendor_lock_in_risk_component_ids"] == []
+        assert empty["make_or_buy_governance_status"] == "SOUND"
+        assert empty["is_make_or_buy_valid"] is True
+        assert empty["recommendations"] == []
+
+    assert "validate_make_or_buy_tco_and_strategic_lock_in" in mod.__all__

@@ -3802,6 +3802,7 @@ __all__ = [
     "validate_ccpm_critical_chain_buffer_fever_chart",
     "validate_raci_responsibility_assignment_matrix_hygiene",
     "validate_monte_carlo_confidence_percentiles_and_contingency",
+    "validate_make_or_buy_tco_and_strategic_lock_in",
 ]
 
 
@@ -7033,5 +7034,113 @@ def validate_monte_carlo_confidence_percentiles_and_contingency(
         "underfunded_contingency_ids": underfunded_contingency_ids,
         "monte_carlo_governance_status": monte_carlo_governance_status,
         "is_monte_carlo_valid": monte_carlo_governance_status == "VALID",
+        "recommendations": recommendations,
+    }
+
+
+def validate_make_or_buy_tco_and_strategic_lock_in(
+    options: list[dict[str, Any]],
+    *,
+    evaluation_horizon_months: int = 36,
+    max_switching_cost_ratio_pct: float = 35.0,
+) -> dict[str, Any]:
+    """Validate PMI PMBOK §12.1.2.3 Make-or-Buy Total Cost of Ownership (TCO), break-even horizon, and vendor lock-in."""
+    core_ip_outsourced_component_ids: list[str] = []
+    uneconomic_decision_component_ids: list[str] = []
+    vendor_lock_in_risk_component_ids: list[str] = []
+    recommendations: list[str] = []
+
+    valid_options = (
+        [
+            o
+            for o in options
+            if isinstance(o, dict) and str(o.get("component_id", "")).strip()
+        ]
+        if isinstance(options, list)
+        else []
+    )
+
+    total_selected_tco = 0.0
+
+    for opt in valid_options:
+        component_id = str(opt.get("component_id", "")).strip()
+        selected_decision = str(opt.get("selected_decision", "MAKE")).strip().upper()
+        make_upfront_cost = float(opt.get("make_upfront_cost", 0.0) or 0.0)
+        make_monthly_opex = float(opt.get("make_monthly_opex", 0.0) or 0.0)
+        buy_upfront_cost = float(opt.get("buy_upfront_cost", 0.0) or 0.0)
+        buy_monthly_license_cost = float(
+            opt.get("buy_monthly_license_cost", 0.0) or 0.0
+        )
+        buy_switching_exit_cost = float(
+            opt.get("buy_switching_exit_cost", 0.0) or 0.0
+        )
+        is_core_ip = bool(opt.get("is_core_intellectual_property", False))
+
+        make_tco = round(
+            make_upfront_cost + make_monthly_opex * evaluation_horizon_months, 2
+        )
+        buy_tco = round(
+            buy_upfront_cost + buy_monthly_license_cost * evaluation_horizon_months, 2
+        )
+        switching_cost_ratio_pct = (
+            round((buy_switching_exit_cost / buy_tco) * 100.0, 2)
+            if buy_tco > 0.0
+            else 0.0
+        )
+
+        if selected_decision == "BUY":
+            total_selected_tco += buy_tco
+        else:
+            total_selected_tco += make_tco
+
+        if selected_decision == "BUY" and is_core_ip:
+            core_ip_outsourced_component_ids.append(component_id)
+
+        if (selected_decision == "BUY" and buy_tco > make_tco * 1.15) or (
+            selected_decision == "MAKE"
+            and make_tco > buy_tco * 1.15
+            and not is_core_ip
+        ):
+            uneconomic_decision_component_ids.append(component_id)
+
+        if (
+            selected_decision == "BUY"
+            and switching_cost_ratio_pct > max_switching_cost_ratio_pct
+        ):
+            vendor_lock_in_risk_component_ids.append(component_id)
+
+    total_selected_tco = round(total_selected_tco, 2)
+
+    if core_ip_outsourced_component_ids:
+        recommendations.append(
+            f"Retain in-house development (MAKE) for core intellectual property components: {', '.join(core_ip_outsourced_component_ids)}."
+        )
+    if uneconomic_decision_component_ids:
+        recommendations.append(
+            f"Re-evaluate Make-or-Buy decision exceeding >15% TCO parity over {evaluation_horizon_months}m horizon for: {', '.join(uneconomic_decision_component_ids)}."
+        )
+    if vendor_lock_in_risk_component_ids:
+        recommendations.append(
+            f"Mitigate vendor lock-in via open standards or exit escrow on components with switching cost >{max_switching_cost_ratio_pct:.1f}%: {', '.join(vendor_lock_in_risk_component_ids)}."
+        )
+
+    if (
+        core_ip_outsourced_component_ids
+        or len(uneconomic_decision_component_ids) >= 2
+    ):
+        make_or_buy_governance_status = "CRITICAL"
+    elif uneconomic_decision_component_ids or vendor_lock_in_risk_component_ids:
+        make_or_buy_governance_status = "WARNING"
+    else:
+        make_or_buy_governance_status = "SOUND"
+
+    return {
+        "total_components": len(valid_options),
+        "total_selected_tco": total_selected_tco,
+        "core_ip_outsourced_component_ids": core_ip_outsourced_component_ids,
+        "uneconomic_decision_component_ids": uneconomic_decision_component_ids,
+        "vendor_lock_in_risk_component_ids": vendor_lock_in_risk_component_ids,
+        "make_or_buy_governance_status": make_or_buy_governance_status,
+        "is_make_or_buy_valid": make_or_buy_governance_status == "SOUND",
         "recommendations": recommendations,
     }
