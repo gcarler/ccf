@@ -4114,3 +4114,306 @@ def test_audit_executive_report_stakeholder_feedback_sla_empty_or_invalid():
             "sla_compliance_rate_pct": 0.0,
             "is_feedback_loop_healthy": False,
         }
+
+
+def test_audit_executive_report_benefits_handover_kpis_ready():
+    """Beneficios cuantificados, con dueño, cadencia válida y custodio -> ready."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_benefits_handover_kpis,
+    )
+
+    res = audit_executive_report_benefits_handover_kpis(
+        {
+            "benefits_kpis": [
+                {
+                    "benefit_id": "HF-B1",
+                    "baseline_value": 120,
+                    "target_value": 200.5,
+                    "benefit_owner_id": "u-1",
+                    "measurement_cadence": "monthly",
+                    "operational_custodian_accepted": True,
+                },
+                {
+                    "benefit_id": "HF-B2",
+                    "baseline_value": 5,
+                    "target_value": 9,
+                    "benefit_owner_id": "u-2",
+                    "measurement_cadence": "ANNUAL",
+                    "operational_custodian_accepted": True,
+                },
+            ]
+        }
+    )
+    assert res["total_benefits"] == 2
+    assert res["unquantified_benefit_ids"] == []
+    assert res["ungoverned_cadence_benefit_ids"] == []
+    assert res["unaccepted_handover_benefit_ids"] == []
+    assert res["is_benefits_handover_ready"] is True
+
+    static_res = ProjectExportService.audit_executive_report_benefits_handover_kpis(
+        {
+            "benefits_kpis": [
+                {
+                    "benefit_id": "HF-B1",
+                    "baseline_value": 1,
+                    "target_value": 2,
+                    "benefit_owner_id": "u-1",
+                    "measurement_cadence": "weekly",
+                    "operational_custodian_accepted": True,
+                },
+            ]
+        }
+    )
+    assert static_res["is_benefits_handover_ready"] is True
+
+
+def test_audit_executive_report_benefits_handover_kpis_unquantified():
+    """> Sin baseline/target numéricos; bool explícitamente rechazado."""
+    from backend.services.project_export_service import (
+        audit_executive_report_benefits_handover_kpis,
+    )
+
+    res = audit_executive_report_benefits_handover_kpis(
+        {
+            "benefits_kpis": [
+                {
+                    "benefit_id": "HF-NO-BASE",
+                    "target_value": 30,
+                    "benefit_owner_id": "u-1",
+                    "measurement_cadence": "monthly",
+                    "operational_custodian_accepted": True,
+                },
+                {
+                    "benefit_id": "HF-BOOL",
+                    "baseline_value": True,
+                    "target_value": 30,
+                    "benefit_owner_id": "u-1",
+                    "measurement_cadence": "monthly",
+                    "operational_custodian_accepted": True,
+                },
+                {
+                    "benefit_id": "HF-STR",
+                    "baseline_value": "alta",
+                    "target_value": 30,
+                    "benefit_owner_id": "u-1",
+                    "measurement_cadence": "monthly",
+                    "operational_custodian_accepted": True,
+                },
+            ]
+        }
+    )
+    assert res["total_benefits"] == 3
+    assert res["unquantified_benefit_ids"] == ["HF-NO-BASE", "HF-BOOL", "HF-STR"]
+    assert res["ungoverned_cadence_benefit_ids"] == []
+    assert res["unaccepted_handover_benefit_ids"] == []
+    assert res["is_benefits_handover_ready"] is False
+
+
+def test_audit_executive_report_benefits_handover_kpis_governance_and_fallback():
+    """> Cadencia inválida o dueño ausente; custodio sin aceptar; fallback governance."""
+    from backend.services.project_export_service import (
+        audit_executive_report_benefits_handover_kpis,
+    )
+
+    res_nested = audit_executive_report_benefits_handover_kpis(
+        {
+            "governance": {
+                "benefits_kpis": [
+                    {
+                        "benefit_id": "HF-NO-OWNER",
+                        "baseline_value": 1,
+                        "target_value": 2,
+                        "measurement_cadence": "monthly",
+                        "operational_custodian_accepted": True,
+                    },
+                    {
+                        "benefit_id": "HF-BAD-CADENCE",
+                        "baseline_value": 1,
+                        "target_value": 2,
+                        "benefit_owner_id": "u-2",
+                        "measurement_cadence": "diaria",
+                        "operational_custodian_accepted": False,
+                    },
+                ]
+            }
+        }
+    )
+    assert res_nested["total_benefits"] == 2
+    assert res_nested["ungoverned_cadence_benefit_ids"] == ["HF-NO-OWNER", "HF-BAD-CADENCE"]
+    assert res_nested["unaccepted_handover_benefit_ids"] == ["HF-BAD-CADENCE"]
+    assert res_nested["is_benefits_handover_ready"] is False
+
+    res_root_priority = audit_executive_report_benefits_handover_kpis(
+        {
+            "benefits_kpis": [
+                {
+                    "benefit_id": "HF-OK",
+                    "baseline_value": 1,
+                    "target_value": 2,
+                    "benefit_owner_id": "u-1",
+                    "measurement_cadence": "quarterly",
+                    "operational_custodian_accepted": True,
+                },
+            ],
+            "governance": {"benefits_kpis": [{"benefit_id": "HF-IGNORED"}]},
+        }
+    )
+    assert res_root_priority["total_benefits"] == 1
+    assert res_root_priority["is_benefits_handover_ready"] is True
+
+
+def test_audit_executive_report_benefits_handover_kpis_empty_or_none():
+    """None, vacío, secuencia malformada o sin benefit_id -> 0 beneficios."""
+    from backend.services.project_export_service import (
+        audit_executive_report_benefits_handover_kpis,
+    )
+
+    empty_result = {
+        "total_benefits": 0,
+        "unquantified_benefit_ids": [],
+        "ungoverned_cadence_benefit_ids": [],
+        "unaccepted_handover_benefit_ids": [],
+        "is_benefits_handover_ready": False,
+    }
+
+    for payload in (
+        None,
+        {},
+        {"benefits_kpis": None},
+        {"benefits_kpis": "string-no-sequence"},
+        {"benefits_kpis": {"dict": "no"}},
+        42,
+        [],
+        ["no-dict", {"benefits_kpis": []}],
+        [{"benefit_id": "   "}, {"other": "x"}],
+    ):
+        assert audit_executive_report_benefits_handover_kpis(payload) == empty_result  # type: ignore[arg-type]
+
+
+def test_audit_executive_report_resource_spof_and_overallocation_healthy():
+    """Recursos balanceados con respaldo asignado para habilidades críticas -> healthy."""
+    from backend.services.project_export_service import (
+        audit_executive_report_resource_spof_and_overallocation,
+    )
+
+    report = {
+        "resource_allocations": [
+            {
+                "resource_id": "RES-ARCH-01",
+                "allocation_pct": 90.0,
+                "overtime_pct": 5.0,
+                "is_critical_skill": True,
+                "assigned_critical_tasks_count": 3,
+                "backup_resource_id": "RES-ARCH-02",
+            },
+            {
+                "id": "RES-DEV-02",
+                "allocation_pct": 80.0,
+                "overtime_pct": 0.0,
+                "is_critical_skill": False,
+                "assigned_critical_tasks_count": 0,
+            },
+        ]
+    }
+    res = audit_executive_report_resource_spof_and_overallocation(report)
+    assert res == {
+        "total_resources": 2,
+        "overallocated_resource_ids": [],
+        "burnout_risk_resource_ids": [],
+        "spof_unbacked_resource_ids": [],
+        "is_resource_governance_healthy": True,
+        "status": "healthy",
+        "recommendations": [],
+    }
+
+
+def test_audit_executive_report_resource_spof_and_overallocation_spof_and_overallocated_critical():
+    """Detecta SPOF sin backup_resource_id y sobreasignación > 100% -> critical."""
+    from backend.services.project_export_service import (
+        audit_executive_report_resource_spof_and_overallocation,
+    )
+
+    res = audit_executive_report_resource_spof_and_overallocation(
+        {
+            "resource_allocations": [
+                {
+                    "resource_id": "RES-SPOF",
+                    "allocation_pct": 125.0,
+                    "overtime_pct": 10.0,
+                    "is_critical_skill": True,
+                    "backup_resource_id": "   ",
+                },
+                {
+                    "resource_id": "RES-CP-TASK",
+                    "allocation_pct": 95.0,
+                    "overtime_pct": 0.0,
+                    "is_critical_skill": False,
+                    "assigned_critical_tasks_count": 2,
+                    "backup_resource_id": "",
+                },
+            ]
+        }
+    )
+    assert res["overallocated_resource_ids"] == ["RES-SPOF"]
+    assert res["spof_unbacked_resource_ids"] == ["RES-SPOF", "RES-CP-TASK"]
+    assert res["is_resource_governance_healthy"] is False
+    assert res["status"] == "critical"
+    assert len(res["recommendations"]) == 2
+
+
+def test_audit_executive_report_resource_spof_and_overallocation_burnout_warning_and_fallback():
+    """Detecta exceso de horas extra (overtime_pct > 15%) y fallback a report['governance']['resource_allocations'] -> warning."""
+    from backend.services.project_export_service import (
+        audit_executive_report_resource_spof_and_overallocation,
+    )
+
+    res = audit_executive_report_resource_spof_and_overallocation(
+        {
+            "governance": {
+                "resource_allocations": [
+                    {
+                        "resource_id": "RES-OT",
+                        "allocation_pct": 100.0,
+                        "overtime_pct": 22.5,
+                        "is_critical_skill": False,
+                    }
+                ]
+            }
+        },
+        max_allocation_pct=100.0,
+        max_overtime_pct=15.0,
+    )
+    assert res["total_resources"] == 1
+    assert res["burnout_risk_resource_ids"] == ["RES-OT"]
+    assert res["overallocated_resource_ids"] == []
+    assert res["spof_unbacked_resource_ids"] == []
+    assert res["is_resource_governance_healthy"] is False
+    assert res["status"] == "warning"
+    assert len(res["recommendations"]) == 1
+
+
+def test_audit_executive_report_resource_spof_and_overallocation_empty_and_service_staticmethod():
+    """Entradas vacías/None e invocación vía ProjectExportService.audit_executive_report_resource_spof_and_overallocation."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_resource_spof_and_overallocation,
+    )
+
+    for payload in (None, {}, {"resource_allocations": "invalid"}):
+        res = audit_executive_report_resource_spof_and_overallocation(payload)  # type: ignore[arg-type]
+        assert res["total_resources"] == 0
+        assert res["is_resource_governance_healthy"] is True
+        assert res["status"] == "healthy"
+
+    sample = {
+        "resource_allocations": [
+            {"resource_id": "R-1", "allocation_pct": 85.0, "overtime_pct": 5.0}
+        ]
+    }
+    assert (
+        ProjectExportService.audit_executive_report_resource_spof_and_overallocation(
+            sample
+        )
+        == audit_executive_report_resource_spof_and_overallocation(sample)
+    )

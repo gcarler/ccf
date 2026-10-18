@@ -5487,6 +5487,7 @@ __all__ = [
     "evaluate_evm_tcpi_eac_vs_bac_divergence",
     "audit_evm_accrual_method_inflation_bias",
     "evaluate_evm_critical_path_drag_decoupling",
+    "evaluate_evm_undistributed_budget_and_planning_packages",
     "ProjectEVMService",
 ]
 
@@ -5760,4 +5761,87 @@ def evaluate_evm_critical_path_drag_decoupling(
 
 ProjectEVMService.evaluate_evm_critical_path_drag_decoupling = staticmethod(
     evaluate_evm_critical_path_drag_decoupling
+)
+
+
+def evaluate_evm_undistributed_budget_and_planning_packages(
+    bac: float,
+    distributed_work_packages_budget: float,
+    planning_packages_budget: float = 0.0,
+    undistributed_budget: float = 0.0,
+    ub_holding_days: float = 0.0,
+    max_ub_share_pct: float = 10.0,
+    max_ub_holding_days: float = 30.0,
+) -> dict[str, Any]:
+    """PMBOK §7.3 & ANSI/EIA-748 — reconciliación PMB, Presupuesto No Distribuido (UB) y paquetes de planificación.
+
+    - ``calculated_pmb`` = distribuidos + planificación + UB; reconciliado con
+      BAC si la discrepancia <= 0.01.
+    - ``ub_share_pct`` contra ``max_ub_share_pct``; retención de UB con fondos
+      pendientes contra ``max_ub_holding_days``.
+    """
+    numeric_inputs = {
+        "bac": bac,
+        "distributed_work_packages_budget": distributed_work_packages_budget,
+        "planning_packages_budget": planning_packages_budget,
+        "undistributed_budget": undistributed_budget,
+        "ub_holding_days": ub_holding_days,
+        "max_ub_share_pct": max_ub_share_pct,
+        "max_ub_holding_days": max_ub_holding_days,
+    }
+    for name, value in numeric_inputs.items():
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not (value == value):
+            raise ValueError(f"EVM PMB: {name} debe ser numérico real, no bool/NaN")
+    if bac <= 0:
+        raise ValueError("EVM PMB: bac debe ser > 0")
+    for name in (
+        "distributed_work_packages_budget",
+        "planning_packages_budget",
+        "undistributed_budget",
+        "ub_holding_days",
+        "max_ub_share_pct",
+        "max_ub_holding_days",
+    ):
+        if numeric_inputs[name] < 0:
+            raise ValueError(f"EVM PMB: {name} debe ser >= 0")
+
+    calculated_pmb = round(
+        float(distributed_work_packages_budget)
+        + float(planning_packages_budget)
+        + float(undistributed_budget),
+        2,
+    )
+    pmb_bac_discrepancy_amount = round(calculated_pmb - float(bac), 2)
+    pmb_reconciled_with_bac = bool(abs(pmb_bac_discrepancy_amount) <= 0.01)
+    ub_share_pct = round((float(undistributed_budget) / float(bac)) * 100.0, 2)
+    planning_package_share_pct = round(
+        (float(planning_packages_budget) / float(bac)) * 100.0,
+        2,
+    )
+    ub_share_exceeded = bool(ub_share_pct > max_ub_share_pct)
+    ub_holding_sla_breached = bool(
+        float(undistributed_budget) > 0.0
+        and float(ub_holding_days) > max_ub_holding_days
+    )
+    is_pmb_baseline_healthy = bool(
+        pmb_reconciled_with_bac
+        and not ub_share_exceeded
+        and not ub_holding_sla_breached
+    )
+
+    return {
+        "bac": round(float(bac), 2),
+        "calculated_pmb": calculated_pmb,
+        "pmb_bac_discrepancy_amount": pmb_bac_discrepancy_amount,
+        "pmb_reconciled_with_bac": pmb_reconciled_with_bac,
+        "ub_share_pct": ub_share_pct,
+        "planning_package_share_pct": planning_package_share_pct,
+        "ub_share_exceeded": ub_share_exceeded,
+        "ub_holding_sla_breached": ub_holding_sla_breached,
+        "is_pmb_baseline_healthy": is_pmb_baseline_healthy,
+    }
+
+
+ProjectEVMService.evaluate_evm_undistributed_budget_and_planning_packages = staticmethod(
+    evaluate_evm_undistributed_budget_and_planning_packages
 )

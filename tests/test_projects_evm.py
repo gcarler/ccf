@@ -3791,3 +3791,125 @@ def test_evaluate_evm_critical_path_drag_decoupling_via_service_staticmethod():
     assert via_service == direct
     assert via_service["status"] == "critical"
     assert via_service["cp_ev_dilution_detected"] is True
+
+
+def test_evaluate_evm_undistributed_budget_and_planning_packages_healthy():
+    """> PMB reconciliado, UB dentro de umbral y retención dentro de SLA -> healthy."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_undistributed_budget_and_planning_packages,
+    )
+
+    res = evaluate_evm_undistributed_budget_and_planning_packages(
+        bac=1000.0,
+        distributed_work_packages_budget=700.0,
+        planning_packages_budget=200.0,
+        undistributed_budget=100.0,
+        ub_holding_days=30.0,
+    )
+    assert res["bac"] == 1000.0
+    assert res["calculated_pmb"] == 1000.0
+    assert res["pmb_bac_discrepancy_amount"] == 0.0
+    assert res["pmb_reconciled_with_bac"] is True
+    assert res["ub_share_pct"] == 10.0
+    assert res["planning_package_share_pct"] == 20.0
+    assert res["ub_share_exceeded"] is False
+    assert res["ub_holding_sla_breached"] is False
+    assert res["is_pmb_baseline_healthy"] is True
+
+    static_res = ProjectEVMService.evaluate_evm_undistributed_budget_and_planning_packages(
+        1000.0,
+        700.0,
+        200.0,
+        100.0,
+        30.0,
+    )
+    assert static_res == res
+
+
+def test_evaluate_evm_undistributed_budget_and_planning_packages_pmb_bac_discrepancy():
+    """> PMB calculado != BAC (tolerancia 0.01) -> no reconciliado."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_undistributed_budget_and_planning_packages,
+    )
+
+    res = evaluate_evm_undistributed_budget_and_planning_packages(
+        bac=1000.0,
+        distributed_work_packages_budget=710.0,
+        planning_packages_budget=200.0,
+        undistributed_budget=100.0,
+    )
+    assert res["calculated_pmb"] == 1010.0
+    assert res["pmb_bac_discrepancy_amount"] == 10.0
+    assert res["pmb_reconciled_with_bac"] is False
+    assert res["is_pmb_baseline_healthy"] is False
+
+    res_tol = evaluate_evm_undistributed_budget_and_planning_packages(
+        bac=1000.0,
+        distributed_work_packages_budget=700.0,
+        planning_packages_budget=200.0,
+        undistributed_budget=100.005,
+    )
+    assert res_tol["calculated_pmb"] == 1000.0
+    assert res_tol["pmb_bac_discrepancy_amount"] == 0.0
+    assert res_tol["pmb_reconciled_with_bac"] is True
+
+
+def test_evaluate_evm_undistributed_budget_and_planning_packages_ub_share_and_sla_breach():
+    """> UB share > umbral y retención > max_ub_holding_days con fondos pendientes."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_undistributed_budget_and_planning_packages,
+    )
+
+    res = evaluate_evm_undistributed_budget_and_planning_packages(
+        bac=1000.0,
+        distributed_work_packages_budget=650.0,
+        planning_packages_budget=200.0,
+        undistributed_budget=150.0,
+        ub_holding_days=40.0,
+    )
+    assert res["calculated_pmb"] == 1000.0
+    assert res["pmb_reconciled_with_bac"] is True
+    assert res["ub_share_pct"] == 15.0
+    assert res["ub_share_exceeded"] is True
+    assert res["ub_holding_sla_breached"] is True
+    assert res["is_pmb_baseline_healthy"] is False
+
+    # UB en cero: la retención no viola SLA aunque los días pasen el tope.
+    res_no_ub = evaluate_evm_undistributed_budget_and_planning_packages(
+        bac=1000.0,
+        distributed_work_packages_budget=800.0,
+        planning_packages_budget=200.0,
+        undistributed_budget=0.0,
+        ub_holding_days=99.0,
+    )
+    assert res_no_ub["ub_holding_sla_breached"] is False
+    assert res_no_ub["is_pmb_baseline_healthy"] is True
+
+
+def test_evaluate_evm_undistributed_budget_and_planning_packages_value_errors():
+    """> ValueError ante bac<=0, montos negativos, bool o NaN; staticmethod vía clase."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_undistributed_budget_and_planning_packages,
+    )
+
+    bad_calls = (
+        (0.0, 700.0),
+        (-1000.0, 700.0),
+        (1000.0, -1.0),
+        (1000.0, 700.0, -1.0),
+        (1000.0, 700.0, 200.0, -0.5),
+        (1000.0, 700.0, 200.0, 100.0, -5.0),
+        (True, 700.0),
+        (1000.0, True),
+        (1000.0, 700.0, 200.0, True),
+        (float("nan"), 700.0),
+        (1000.0, 700.0, 200.0, float("nan")),
+    )
+    for args in bad_calls:
+        with pytest.raises(ValueError):
+            evaluate_evm_undistributed_budget_and_planning_packages(*args)
+
+    assert ProjectEVMService.evaluate_evm_undistributed_budget_and_planning_packages(
+        100.0, 100.0
+    )["is_pmb_baseline_healthy"] is True

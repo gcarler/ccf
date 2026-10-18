@@ -2967,6 +2967,8 @@ __all__ = [
     "audit_executive_report_risk_trigger_activation_governance",
     "audit_executive_report_procurement_claims_settlement",
     "audit_executive_report_stakeholder_feedback_sla",
+    "audit_executive_report_benefits_handover_kpis",
+    "audit_executive_report_resource_spof_and_overallocation",
     "ProjectExportService",
 ]
 
@@ -3299,4 +3301,201 @@ def audit_executive_report_stakeholder_feedback_sla(
 
 ProjectExportService.audit_executive_report_stakeholder_feedback_sla = staticmethod(
     audit_executive_report_stakeholder_feedback_sla
+)
+
+
+def audit_executive_report_benefits_handover_kpis(
+    report: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """PMBOK §1.2.6 / §4.7 — handover de beneficios y cadencia de KPIs del informe ejecutivo.
+
+    - Secuencia desde ``report['benefits_kpis']`` con fallback a
+      ``report['governance']['benefits_kpis']`` (root-level con prioridad;
+      str/bytes/Mapping descartados como secuencia).
+    - Sin baseline/target numéricos (bool excluido) -> ``unquantified_benefit_ids``.
+    - Sin ``benefit_owner_id`` o cadencia fuera de
+      {weekly, monthly, quarterly, annual} -> ``ungoverned_cadence_benefit_ids``.
+    - ``operational_custodian_accepted`` falso -> ``unaccepted_handover_benefit_ids``.
+    """
+    unquantified_benefit_ids: list[str] = []
+    ungoverned_cadence_benefit_ids: list[str] = []
+    unaccepted_handover_benefit_ids: list[str] = []
+
+    if isinstance(report, Mapping):
+        raw_kpis = report.get("benefits_kpis")
+        if isinstance(raw_kpis, (list, tuple)):
+            kpis = raw_kpis
+        elif isinstance(report.get("governance"), Mapping):
+            gov_kpis = report["governance"].get("benefits_kpis")
+            kpis = gov_kpis if isinstance(gov_kpis, (list, tuple)) else []
+        else:
+            kpis = []
+    else:
+        kpis = []
+
+    total_benefits = 0
+
+    for item in kpis:
+        if not isinstance(item, Mapping):
+            continue
+        benefit_id = str(item.get("benefit_id") or "").strip()
+        if not benefit_id:
+            continue
+        total_benefits += 1
+
+        b_val = item.get("baseline_value")
+        t_val = item.get("target_value")
+        has_quant = (
+            isinstance(b_val, (int, float))
+            and not isinstance(b_val, bool)
+            and isinstance(t_val, (int, float))
+            and not isinstance(t_val, bool)
+        )
+        benefit_owner_id = str(item.get("benefit_owner_id") or "").strip()
+        measurement_cadence = str(item.get("measurement_cadence") or "").strip().lower()
+        operational_custodian_accepted = bool(item.get("operational_custodian_accepted", False))
+
+        if not has_quant:
+            unquantified_benefit_ids.append(benefit_id)
+
+        if not benefit_owner_id or measurement_cadence not in {
+            "weekly",
+            "monthly",
+            "quarterly",
+            "annual",
+        }:
+            ungoverned_cadence_benefit_ids.append(benefit_id)
+
+        if not operational_custodian_accepted:
+            unaccepted_handover_benefit_ids.append(benefit_id)
+
+    is_benefits_handover_ready = bool(
+        total_benefits > 0
+        and not unquantified_benefit_ids
+        and not ungoverned_cadence_benefit_ids
+        and not unaccepted_handover_benefit_ids
+    )
+
+    return {
+        "total_benefits": total_benefits,
+        "unquantified_benefit_ids": unquantified_benefit_ids,
+        "ungoverned_cadence_benefit_ids": ungoverned_cadence_benefit_ids,
+        "unaccepted_handover_benefit_ids": unaccepted_handover_benefit_ids,
+        "is_benefits_handover_ready": is_benefits_handover_ready,
+    }
+
+
+ProjectExportService.audit_executive_report_benefits_handover_kpis = staticmethod(
+    audit_executive_report_benefits_handover_kpis
+)
+
+
+def audit_executive_report_resource_spof_and_overallocation(
+    report: Mapping[str, Any] | None,
+    max_allocation_pct: float = 100.0,
+    max_overtime_pct: float = 15.0,
+) -> dict[str, Any]:
+    """Audita sobreasignación de recursos, agotamiento por horas extra (burnout) y puntos únicos de fallo (SPOF / Bus Factor = 1) en reportes ejecutivos según PMI PMBOK §9.3 y §9.4."""
+    allocations: Sequence[Any] = []
+    if isinstance(report, Mapping):
+        raw_root = report.get("resource_allocations")
+        if isinstance(raw_root, Sequence) and not isinstance(
+            raw_root, (str, bytes, Mapping)
+        ):
+            allocations = raw_root
+        elif isinstance(report.get("governance"), Mapping):
+            raw_gov = report["governance"].get("resource_allocations")
+            if isinstance(raw_gov, Sequence) and not isinstance(
+                raw_gov, (str, bytes, Mapping)
+            ):
+                allocations = raw_gov
+
+    total_resources = 0
+    overallocated_resource_ids: list[str] = []
+    burnout_risk_resource_ids: list[str] = []
+    spof_unbacked_resource_ids: list[str] = []
+
+    max_alloc = float(max_allocation_pct)
+    max_ot = float(max_overtime_pct)
+
+    for item in allocations:
+        if not isinstance(item, Mapping):
+            continue
+        resource_id = str(
+            item.get("resource_id") or item.get("id") or ""
+        ).strip()
+        if not resource_id:
+            continue
+
+        total_resources += 1
+        try:
+            allocation_pct = float(item.get("allocation_pct") or 0.0)
+        except (TypeError, ValueError):
+            allocation_pct = 0.0
+
+        try:
+            overtime_pct = float(item.get("overtime_pct") or 0.0)
+        except (TypeError, ValueError):
+            overtime_pct = 0.0
+
+        is_critical_skill = bool(item.get("is_critical_skill") is True)
+        try:
+            assigned_critical_tasks_count = int(
+                item.get("assigned_critical_tasks_count") or 0
+            )
+        except (TypeError, ValueError):
+            assigned_critical_tasks_count = 0
+        backup_resource_id = str(item.get("backup_resource_id") or "").strip()
+
+        if allocation_pct > max_alloc:
+            overallocated_resource_ids.append(resource_id)
+
+        if overtime_pct > max_ot:
+            burnout_risk_resource_ids.append(resource_id)
+
+        if (
+            is_critical_skill or assigned_critical_tasks_count > 0
+        ) and not backup_resource_id:
+            spof_unbacked_resource_ids.append(resource_id)
+
+    is_resource_governance_healthy = bool(
+        len(overallocated_resource_ids) == 0
+        and len(burnout_risk_resource_ids) == 0
+        and len(spof_unbacked_resource_ids) == 0
+    )
+
+    recommendations: list[str] = []
+    if spof_unbacked_resource_ids:
+        recommendations.append(
+            "Asignar recurso de respaldo (backup_resource_id) y plan de cross-training para eliminar puntos únicos de fallo (SPOF) en habilidades o tareas críticas."
+        )
+    if overallocated_resource_ids:
+        recommendations.append(
+            "Aplicar nivelación o suavizado de recursos (Resource Leveling/Smoothing) para reducir asignaciones superiores al límite de capacidad."
+        )
+    if burnout_risk_resource_ids:
+        recommendations.append(
+            "Redistribuir carga operativa para contener el exceso de horas extra y prevenir el agotamiento del equipo."
+        )
+
+    if len(spof_unbacked_resource_ids) > 0 or len(overallocated_resource_ids) > 0:
+        status = "critical"
+    elif len(burnout_risk_resource_ids) > 0:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_resources": total_resources,
+        "overallocated_resource_ids": overallocated_resource_ids,
+        "burnout_risk_resource_ids": burnout_risk_resource_ids,
+        "spof_unbacked_resource_ids": spof_unbacked_resource_ids,
+        "is_resource_governance_healthy": is_resource_governance_healthy,
+        "status": status,
+        "recommendations": recommendations,
+    }
+
+
+ProjectExportService.audit_executive_report_resource_spof_and_overallocation = staticmethod(
+    audit_executive_report_resource_spof_and_overallocation
 )

@@ -3671,3 +3671,130 @@ def test_audit_wiki_monte_carlo_contingency_governance_empty_or_non_mapping():
             ],
             "is_simulation_governance_valid": False,
         }
+
+
+def test_audit_wiki_make_or_buy_and_source_selection_governance_healthy():
+    """Decisiones make y buy íntegras con TCO cuantificado, pesos 100%, protección IP y estimación independiente -> healthy."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_make_or_buy_and_source_selection_governance,
+    )
+
+    decisions = [
+        {
+            "item_id": "MOB-CORE-AUTH",
+            "decision": "make",
+            "internal_cost_estimate": 45000.0,
+            "strategic_core_competency": True,
+        },
+        {
+            "id": "MOB-CLOUD-CDN",
+            "decision": "buy",
+            "internal_cost_estimate": 90000.0,
+            "external_cost_estimate": 38000.0,
+            "strategic_core_competency": False,
+            "evaluation_criteria_weights": {
+                "technical_capability": 40.0,
+                "tco_price": 35.0,
+                "sla_references": 25.0,
+            },
+            "independent_estimate_prepared": True,
+        },
+    ]
+    res = audit_wiki_make_or_buy_and_source_selection_governance(decisions)
+    assert res == {
+        "total_evaluated": 2,
+        "buy_or_lease_count": 1,
+        "unquantified_tco_item_ids": [],
+        "core_competency_outsourced_without_mitigation_ids": [],
+        "unbalanced_criteria_weight_item_ids": [],
+        "missing_independent_estimate_item_ids": [],
+        "is_procurement_governance_compliant": True,
+        "status": "healthy",
+        "recommendations": [],
+    }
+
+
+def test_audit_wiki_make_or_buy_and_source_selection_governance_unquantified_and_core_critical():
+    """Ítems sin TCO cuantificado o externalización de competencia núcleo sin ip_protection_strategy -> critical."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_make_or_buy_and_source_selection_governance,
+    )
+
+    res = audit_wiki_make_or_buy_and_source_selection_governance(
+        [
+            {
+                "item_id": "MOB-NO-TCO",
+                "decision": "buy",
+                "internal_cost_estimate": 50000.0,
+                "external_cost_estimate": 0.0,
+                "evaluation_criteria_weights": [{"weight_pct": 100.0}],
+                "independent_estimate_prepared": True,
+            },
+            {
+                "item_id": "MOB-CORE-LEAK",
+                "decision": "lease",
+                "internal_cost_estimate": 60000.0,
+                "external_cost_estimate": 40000.0,
+                "strategic_core_competency": True,
+                "ip_protection_strategy": "   ",
+                "evaluation_criteria_weights": [{"weight": 100.0}],
+                "independent_estimate_prepared": True,
+            },
+        ]
+    )
+    assert res["unquantified_tco_item_ids"] == ["MOB-NO-TCO"]
+    assert res["core_competency_outsourced_without_mitigation_ids"] == [
+        "MOB-CORE-LEAK"
+    ]
+    assert res["is_procurement_governance_compliant"] is False
+    assert res["status"] == "critical"
+    assert len(res["recommendations"]) == 2
+
+
+def test_audit_wiki_make_or_buy_and_source_selection_governance_unbalanced_weights_and_missing_ice_warning():
+    """Matriz de criterios cuyos pesos no suman 100% o falta de independent_estimate_prepared -> warning."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_make_or_buy_and_source_selection_governance,
+    )
+
+    res = audit_wiki_make_or_buy_and_source_selection_governance(
+        [
+            {
+                "item_id": "MOB-BAD-WEIGHTS",
+                "decision": "hybrid",
+                "internal_cost_estimate": 30000.0,
+                "external_cost_estimate": 25000.0,
+                "evaluation_criteria_weights": {"cost": 50.0, "quality": 30.0},
+                "independent_estimate_prepared": False,
+            }
+        ]
+    )
+    assert res["buy_or_lease_count"] == 1
+    assert res["unbalanced_criteria_weight_item_ids"] == ["MOB-BAD-WEIGHTS"]
+    assert res["missing_independent_estimate_item_ids"] == ["MOB-BAD-WEIGHTS"]
+    assert res["is_procurement_governance_compliant"] is False
+    assert res["status"] == "warning"
+    assert len(res["recommendations"]) == 2
+
+
+def test_audit_wiki_make_or_buy_and_source_selection_governance_empty_and_service_staticmethod():
+    """Entradas vacías/None e invocación vía WikiPMIService.audit_wiki_make_or_buy_and_source_selection_governance."""
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_make_or_buy_and_source_selection_governance,
+    )
+
+    for payload in (None, [], "invalid", [{"item_id": "  "}]):
+        res = audit_wiki_make_or_buy_and_source_selection_governance(payload)  # type: ignore[arg-type]
+        assert res["total_evaluated"] == 0
+        assert res["buy_or_lease_count"] == 0
+        assert res["is_procurement_governance_compliant"] is True
+        assert res["status"] == "healthy"
+
+    sample = [{"item_id": "M-1", "decision": "make", "internal_cost_estimate": 1000.0}]
+    assert (
+        WikiPMIService.audit_wiki_make_or_buy_and_source_selection_governance(
+            sample
+        )
+        == audit_wiki_make_or_buy_and_source_selection_governance(sample)
+    )

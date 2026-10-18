@@ -2495,6 +2495,7 @@ __all__ = [
     "audit_wiki_definition_of_ready_gate_hygiene",
     "audit_wiki_retrospective_action_closure_governance",
     "audit_wiki_monte_carlo_contingency_governance",
+    "audit_wiki_make_or_buy_and_source_selection_governance",
     "WikiPMIService",
 ]
 
@@ -2962,4 +2963,141 @@ def audit_wiki_monte_carlo_contingency_governance(
 
 WikiPMIService.audit_wiki_monte_carlo_contingency_governance = staticmethod(
     audit_wiki_monte_carlo_contingency_governance
+)
+
+
+def audit_wiki_make_or_buy_and_source_selection_governance(
+    decisions: Sequence[Mapping[str, Any]] | None,
+    weight_tolerance_pct: float = 0.5,
+) -> dict[str, Any]:
+    """Audita decisiones Make-or-Buy y matrices de criterios de selección de proveedores en la Wiki según PMI PMBOK §12.1 y §4.4."""
+    if (
+        not decisions
+        or not isinstance(decisions, Sequence)
+        or isinstance(decisions, (str, bytes, Mapping))
+    ):
+        items: Sequence[Any] = []
+    else:
+        items = decisions
+
+    def _is_positive_cost(val: Any) -> bool:
+        if isinstance(val, bool) or not isinstance(val, (int, float)):
+            return False
+        return float(val) > 0.0
+
+    def _extract_positive_weights(raw_weights: Any) -> list[float]:
+        weights: list[float] = []
+        if isinstance(raw_weights, Mapping):
+            for val in raw_weights.values():
+                if not isinstance(val, bool) and isinstance(val, (int, float)) and float(val) > 0.0:
+                    weights.append(float(val))
+        elif isinstance(raw_weights, Sequence) and not isinstance(
+            raw_weights, (str, bytes, Mapping)
+        ):
+            for entry in raw_weights:
+                if not isinstance(entry, Mapping):
+                    continue
+                w_val = entry.get(
+                    "weight_pct", entry.get("weight")
+                )
+                if not isinstance(w_val, bool) and isinstance(w_val, (int, float)) and float(w_val) > 0.0:
+                    weights.append(float(w_val))
+        return weights
+
+    total_evaluated = 0
+    buy_or_lease_count = 0
+    unquantified_tco_item_ids: list[str] = []
+    core_competency_outsourced_without_mitigation_ids: list[str] = []
+    unbalanced_criteria_weight_item_ids: list[str] = []
+    missing_independent_estimate_item_ids: list[str] = []
+
+    external_decisions = {"buy", "lease", "hybrid"}
+    tol = float(weight_tolerance_pct)
+
+    for item in items:
+        if not isinstance(item, Mapping):
+            continue
+        item_id = str(item.get("item_id") or item.get("id") or "").strip()
+        if not item_id:
+            continue
+
+        total_evaluated += 1
+        decision = str(item.get("decision") or "make").strip().lower()
+
+        has_internal = _is_positive_cost(item.get("internal_cost_estimate"))
+        has_external = _is_positive_cost(item.get("external_cost_estimate"))
+        if not has_internal or (decision in external_decisions and not has_external):
+            unquantified_tco_item_ids.append(item_id)
+
+        if (
+            bool(item.get("strategic_core_competency") is True)
+            and decision in {"buy", "lease"}
+            and not str(item.get("ip_protection_strategy") or "").strip()
+        ):
+            core_competency_outsourced_without_mitigation_ids.append(item_id)
+
+        if decision in external_decisions:
+            buy_or_lease_count += 1
+            weights = _extract_positive_weights(
+                item.get("evaluation_criteria_weights")
+            )
+            if not weights or abs(sum(weights) - 100.0) > tol:
+                unbalanced_criteria_weight_item_ids.append(item_id)
+
+            if not bool(item.get("independent_estimate_prepared") is True):
+                missing_independent_estimate_item_ids.append(item_id)
+
+    is_procurement_governance_compliant = bool(
+        len(unquantified_tco_item_ids) == 0
+        and len(core_competency_outsourced_without_mitigation_ids) == 0
+        and len(unbalanced_criteria_weight_item_ids) == 0
+        and len(missing_independent_estimate_item_ids) == 0
+    )
+
+    recommendations: list[str] = []
+    if unquantified_tco_item_ids:
+        recommendations.append(
+            "Cuantificar el Costo Total de Propiedad (TCO) interno y externo antes de formalizar decisiones Make-or-Buy."
+        )
+    if core_competency_outsourced_without_mitigation_ids:
+        recommendations.append(
+            "Definir estrategia de protección de propiedad intelectual (NDA, escrow o retención de núcleo) antes de externalizar competencias estratégicas."
+        )
+    if unbalanced_criteria_weight_item_ids:
+        recommendations.append(
+            "Normalizar los pesos de la matriz de criterios de selección de proveedores para que sumen exactamente 100%."
+        )
+    if missing_independent_estimate_item_ids:
+        recommendations.append(
+            "Elaborar una estimación independiente de costos (Should-Cost / Independent Cost Estimate) para contrastar las propuestas de proveedores."
+        )
+
+    if (
+        len(unquantified_tco_item_ids) > 0
+        or len(core_competency_outsourced_without_mitigation_ids) > 0
+    ):
+        status = "critical"
+    elif (
+        len(unbalanced_criteria_weight_item_ids) > 0
+        or len(missing_independent_estimate_item_ids) > 0
+    ):
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_evaluated": total_evaluated,
+        "buy_or_lease_count": buy_or_lease_count,
+        "unquantified_tco_item_ids": unquantified_tco_item_ids,
+        "core_competency_outsourced_without_mitigation_ids": core_competency_outsourced_without_mitigation_ids,
+        "unbalanced_criteria_weight_item_ids": unbalanced_criteria_weight_item_ids,
+        "missing_independent_estimate_item_ids": missing_independent_estimate_item_ids,
+        "is_procurement_governance_compliant": is_procurement_governance_compliant,
+        "status": status,
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_make_or_buy_and_source_selection_governance = staticmethod(
+    audit_wiki_make_or_buy_and_source_selection_governance
 )
