@@ -17,7 +17,7 @@ import {
     List, ListOrdered, CheckSquare, Quote, Undo, Redo,
     Cloud, Loader2, Minus, Save,
     Pilcrow, Underline as UnderlineIcon, Code,
-    Image as ImageIcon, X,
+    Image as ImageIcon, X, BookOpenCheck, ClipboardList,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -33,12 +33,34 @@ interface Props {
     initialContent?: string;
 }
 
+const PMI_WIKI_TEMPLATES = [
+    {
+        id: 'lessons',
+        label: 'Registro de Lecciones Aprendidas',
+        heading: 'Lecciones Aprendidas',
+        html: '<h2>Lecciones Aprendidas</h2><ul><li><p>Situación o evento:</p></li><li><p>Causa raíz:</p></li><li><p>Impacto en el proyecto:</p></li><li><p>Lección y acción recomendada:</p></li><li><p>Responsable y fecha de seguimiento:</p></li></ul>',
+    },
+    {
+        id: 'decisions',
+        label: 'Bitácora de Decisiones y Supuestos',
+        heading: 'Bitácora de Decisiones y Supuestos',
+        html: '<h2>Bitácora de Decisiones y Supuestos</h2><ul><li><p>Fecha y contexto:</p></li><li><p>Decisión tomada y alternativas consideradas:</p></li><li><p>Responsable y participantes:</p></li><li><p>Supuestos asociados y evidencia:</p></li><li><p>Impacto, riesgos y fecha de revisión:</p></li></ul>',
+    },
+    {
+        id: 'retro',
+        label: 'Acta de Revisión de Fase / Retrospectiva',
+        heading: 'Revisión de Fase / Retrospectiva',
+        html: '<h2>Revisión de Fase / Retrospectiva</h2><ul><li><p>Fase y fecha de revisión:</p></li><li><p>Resultados y entregables logrados:</p></li><li><p>Qué funcionó bien:</p></li><li><p>Qué debe mejorar y causas:</p></li><li><p>Acciones, responsables y acuerdos de continuidad:</p></li></ul>',
+    },
+] as const;
+
 export default function ProjectWikiEditor({ project_id, initialContent = '' }: Props) {
     const { token, loading: authLoading } = useAuth();
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const [content, setContent] = useState(initialContent);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [imagePanelOpen, setImagePanelOpen] = useState(false);
+    const [templatesPanelOpen, setTemplatesPanelOpen] = useState(false);
     const [imageUrl, setImageUrl] = useState('');
     const [imageBusy, setImageBusy] = useState(false);
     const contentRef = useRef(initialContent);
@@ -283,6 +305,36 @@ export default function ProjectWikiEditor({ project_id, initialContent = '' }: P
 
     if (!editor) return null;
 
+    const normalizedWikiText = content
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/&nbsp;|&#160;/gi, ' ')
+        .replace(/&amp;/gi, '&')
+        .toLocaleLowerCase();
+    const knowledgeArtifacts = [
+        {
+            label: 'Lecciones Aprendidas',
+            documented: /lecciones aprendidas|causa ra[ií]z/.test(normalizedWikiText),
+        },
+        {
+            label: 'Bitácora de Decisiones y Supuestos',
+            documented: /decisiones|supuestos/.test(normalizedWikiText),
+        },
+        {
+            label: 'Revisión de Fase / Retrospectiva',
+            documented: /revisi[oó]n de fase|retrospectiva/.test(normalizedWikiText),
+        },
+    ];
+    const documentedArtifactCount = knowledgeArtifacts.filter(artifact => artifact.documented).length;
+
+    const insertPmiTemplate = (html: string, heading: string) => {
+        editor.chain().focus().insertContent(html).run();
+        const nextContent = editor.getHTML();
+        contentRef.current = nextContent;
+        setContent(nextContent);
+        setTemplatesPanelOpen(false);
+        toast.success(`${heading} insertada en la wiki`);
+    };
+
     const closeImagePanel = () => {
         setImagePanelOpen(false);
         setImageUrl('');
@@ -310,6 +362,23 @@ export default function ProjectWikiEditor({ project_id, initialContent = '' }: P
                 <MenuButton label="Cita" onClick={() => editor.chain().focus().toggleBlockquote().run()} isActive={editor.isActive('blockquote')} icon={Quote} />
                 <MenuButton label="Separador horizontal" onClick={() => editor.chain().focus().setHorizontalRule().run()} isActive={editor.isActive('horizontalRule')} icon={Minus} />
                 <MenuButton label="Insertar imagen" onClick={openImagePanel} isActive={imagePanelOpen} icon={ImageIcon} />
+                <DSButton
+                    type="button"
+                    data-testid="wiki-pmi-templates-toggle"
+                    aria-expanded={templatesPanelOpen}
+                    aria-controls="wiki-pmi-templates-panel"
+                    variant="ghost"
+                    onClick={() => setTemplatesPanelOpen(open => !open)}
+                    className={clsx(
+                        'inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-semibold',
+                        templatesPanelOpen
+                            ? 'bg-[hsl(var(--surface-2))] text-[hsl(var(--primary))]'
+                            : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--text-primary))]'
+                    )}
+                >
+                    <BookOpenCheck size={15} aria-hidden="true" />
+                    Plantillas PMI
+                </DSButton>
                 <div className="ml-auto flex items-center gap-3 px-2">
                     <div className="flex items-center gap-1.5">
                         {saveStatus === 'saving' && <><Loader2 size={12} className="animate-spin text-[hsl(var(--primary))]"/> <span className="text-2xs font-bold uppercase text-[hsl(var(--primary))]">Guardando</span></>}
@@ -334,6 +403,56 @@ export default function ProjectWikiEditor({ project_id, initialContent = '' }: P
                     </div>
                 </div>
             </div>
+            {templatesPanelOpen && (
+                <section
+                    id="wiki-pmi-templates-panel"
+                    data-testid="wiki-pmi-templates-panel"
+                    aria-label="Plantillas PMI de gestión del conocimiento"
+                    className="mx-4 mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3"
+                >
+                    <ClipboardList size={16} className="text-[hsl(var(--primary))]" aria-hidden="true" />
+                    {PMI_WIKI_TEMPLATES.map(template => (
+                        <DSButton
+                            key={template.id}
+                            type="button"
+                            variant="secondary"
+                            data-testid={`wiki-pmi-tpl-${template.id}`}
+                            onClick={() => insertPmiTemplate(template.html, template.heading)}
+                        >
+                            {template.label}
+                        </DSButton>
+                    ))}
+                </section>
+            )}
+            <section
+                data-testid="wiki-pmi-knowledge-banner"
+                aria-label="Diagnóstico de Conocimiento Explícito PMI"
+                className="mx-4 mt-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3"
+            >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                        <h2 className="text-xs font-bold text-[hsl(var(--text-primary))]">Conocimiento Explícito PMI</h2>
+                        <p className="text-2xs text-[hsl(var(--text-secondary))]">Artefactos canónicos documentados</p>
+                    </div>
+                    <span className="rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2.5 py-1 text-xs font-bold text-[hsl(var(--primary))]">
+                        {documentedArtifactCount}/3
+                    </span>
+                </div>
+                <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                    {knowledgeArtifacts.map(artifact => (
+                        <li key={artifact.label} className="inline-flex items-center gap-1.5 text-2xs text-[hsl(var(--text-secondary))]">
+                            <span
+                                aria-label={artifact.documented ? 'Documentado' : 'Pendiente'}
+                                className={clsx(
+                                    'size-1.5 rounded-full',
+                                    artifact.documented ? 'bg-[hsl(var(--success))]' : 'bg-[hsl(var(--muted-foreground))]'
+                                )}
+                            />
+                            {artifact.label}
+                        </li>
+                    ))}
+                </ul>
+            </section>
             {imagePanelOpen && (
                 <div
                     data-testid="wiki-image-panel"

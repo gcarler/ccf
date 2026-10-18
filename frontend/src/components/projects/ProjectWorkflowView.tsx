@@ -11,6 +11,9 @@ import {
     Workflow as WorkflowIcon,
     GitFork,
     DollarSign,
+    AlertTriangle,
+    CheckCircle2,
+    Gauge,
 } from 'lucide-react';
 import clsx from 'clsx';
 import type { ProjectRecord, ProjectTaskRecord, ProjectComponent, ProjectComponentDetail, ProjectComponentsBreakdown } from '@/types/projects';
@@ -108,6 +111,7 @@ export default function ProjectWorkflowView({
     const [fetchedComponents, setFetchedComponents] = useState<ProjectComponentDetail[]>([]);
     const [isComponentDrawerOpen, setIsComponentDrawerOpen] = useState(false);
     const [assigneeMap, setAssigneeMap] = useState<Record<string, string>>({});
+    const [criticalFlowFilterEnabled, setCriticalFlowFilterEnabled] = useState(false);
 
     useEffect(() => {
         let active = true;
@@ -165,7 +169,7 @@ export default function ProjectWorkflowView({
     }, [propComponents, fetchedComponents]);
 
     // Build hierarchical layout with arbitrary depth recursion
-    const { nodes, connections, bounds } = useMemo(() => {
+    const { nodes, connections, bounds, bottleneck } = useMemo(() => {
         const nodeList: LayoutNode[] = [];
         const connList: LayoutConnection[] = [];
 
@@ -436,12 +440,58 @@ export default function ProjectWorkflowView({
         const maxX = Math.max(...nodeList.map(n => n.x + n.width), 1200) + 120;
         const maxY = Math.max(...nodeList.map(n => n.y + n.height), 800) + 120;
 
+        const countFlowTasks = (nodeId: string): number => {
+            const node = nodeMap.get(nodeId);
+            if (!node) return 0;
+            const isFlowTask = node.task?.status === 'in_progress' || node.task?.status === 'blocked';
+            return Number(isFlowTask) + node.childrenIds.reduce(
+                (total, childId) => total + countFlowTasks(childId),
+                0
+            );
+        };
+        const bottleneck = nodeList
+            .filter(node => node.level === 2)
+            .map(node => ({
+                node,
+                activeCount: node.childrenIds.reduce(
+                    (total, childId) => total + countFlowTasks(childId),
+                    0
+                ),
+            }))
+            .filter(item => item.activeCount > 0)
+            .sort((first, second) => second.activeCount - first.activeCount)[0];
+
         return {
             nodes: nodeList,
             connections: connList,
             bounds: { width: maxX, height: maxY },
+            bottleneck: bottleneck
+                ? { name: bottleneck.node.title, activeCount: bottleneck.activeCount }
+                : null,
         };
     }, [project, tasks, effectiveComponents, assigneeMap]);
+
+    const flowMetrics = useMemo(() => {
+        const activeTasks = tasks.filter(task => task.status === 'in_progress');
+        const activeAssigneeIds = new Set(
+            activeTasks.map(task => task.assignee_id).filter((assigneeId): assigneeId is string => Boolean(assigneeId))
+        );
+        const wipLimit = Math.max(3, activeAssigneeIds.size * 2);
+        const blockedOrCriticalCount = tasks.filter(task =>
+            task.status === 'blocked' ||
+            (task.status !== 'done' && (task.priority === 'urgent' || task.priority === 'high'))
+        ).length;
+        const completedCount = tasks.filter(task => task.status === 'done').length;
+
+        return {
+            activeCount: activeTasks.length,
+            activeAssigneeCount: activeAssigneeIds.size,
+            wipLimit,
+            blockedOrCriticalCount,
+            completedRate: tasks.length === 0 ? 0 : Math.round((completedCount / tasks.length) * 100),
+            exceedsWipLimit: activeTasks.length > wipLimit,
+        };
+    }, [tasks]);
 
     // Pan & Drag handlers
     const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -497,10 +547,79 @@ export default function ProjectWorkflowView({
     };
 
     return (
+        <div className="relative flex h-full min-h-0 w-full flex-col gap-2">
+            <section
+                data-testid="workflow-pmi-flow-hud"
+                aria-label="Gobernanza PMI de Flujo de Valor"
+                className="grid shrink-0 gap-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 sm:grid-cols-2 xl:grid-cols-5"
+            >
+                <div className="flex items-center gap-2 rounded-md bg-[hsl(var(--surface-2))] p-2">
+                    <Gauge size={16} className="text-[hsl(var(--primary))]" />
+                    <div>
+                        <p className="text-[10px] text-[hsl(var(--text-secondary))]">WIP activo</p>
+                        <p className="text-sm font-bold text-[hsl(var(--text-primary))]">{flowMetrics.activeCount} tareas</p>
+                    </div>
+                </div>
+                <div className="rounded-md bg-[hsl(var(--surface-2))] p-2">
+                    <p className="text-[10px] text-[hsl(var(--text-secondary))]">Límite WIP recomendado</p>
+                    <p className="text-sm font-bold text-[hsl(var(--text-primary))]">
+                        {flowMetrics.wipLimit} · {flowMetrics.activeAssigneeCount} responsables × 2 (mín. 3)
+                    </p>
+                </div>
+                <div className={clsx(
+                    'rounded-md border p-2',
+                    flowMetrics.exceedsWipLimit
+                        ? 'border-[hsl(var(--destructive)/0.35)] bg-[hsl(var(--destructive)/0.08)]'
+                        : 'border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success)/0.06)]'
+                )}>
+                    <p className="text-[10px] text-[hsl(var(--text-secondary))]">Ley de Little</p>
+                    <p className={clsx(
+                        'inline-flex items-center gap-1 text-xs font-bold',
+                        flowMetrics.exceedsWipLimit ? 'text-[hsl(var(--destructive))]' : 'text-[hsl(var(--success))]'
+                    )}>
+                        {flowMetrics.exceedsWipLimit
+                            ? <><AlertTriangle size={13} /> Exceso WIP (Ley de Little)</>
+                            : <><CheckCircle2 size={13} /> Dentro del límite WIP</>}
+                    </p>
+                </div>
+                <div className="rounded-md bg-[hsl(var(--surface-2))] p-2">
+                    <p className="text-[10px] text-[hsl(var(--text-secondary))]">Bloqueadas / Críticas</p>
+                    <p className="text-sm font-bold text-[hsl(var(--text-primary))]">{flowMetrics.blockedOrCriticalCount} tareas</p>
+                </div>
+                <div className="rounded-md bg-[hsl(var(--surface-2))] p-2">
+                    <p className="text-[10px] text-[hsl(var(--text-secondary))]">Tasa de flujo completado</p>
+                    <p className="text-sm font-bold text-[hsl(var(--text-primary))]">{flowMetrics.completedRate}% done</p>
+                </div>
+                <div className="flex items-center justify-between gap-2 rounded-md border border-[hsl(var(--border))] p-2 sm:col-span-2 xl:col-span-5">
+                    <p className="text-xs text-[hsl(var(--text-secondary))]">
+                        Cuello de botella EDT:{' '}
+                        <span className="font-semibold text-[hsl(var(--text-primary))]">
+                            {bottleneck
+                                ? `${bottleneck.name} (${bottleneck.activeCount} activas/bloqueadas)`
+                                : 'Sin tareas activas o bloqueadas'}
+                        </span>
+                    </p>
+                    <button
+                        type="button"
+                        data-testid="workflow-filter-critical-btn"
+                        aria-pressed={criticalFlowFilterEnabled}
+                        onClick={() => setCriticalFlowFilterEnabled(enabled => !enabled)}
+                        className={clsx(
+                            'shrink-0 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))]',
+                            criticalFlowFilterEnabled
+                                ? 'border-[hsl(var(--primary)/0.45)] bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))]'
+                                : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]'
+                        )}
+                    >
+                        Solo Flujo Activo / Crítico
+                    </button>
+                </div>
+            </section>
+
         <div
             data-testid="project-workflow-canvas-container"
             ref={containerRef}
-            className="relative w-full h-full overflow-hidden select-none bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg shadow-sm"
+            className="relative min-h-[480px] w-full flex-1 overflow-hidden select-none bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg shadow-sm"
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -692,7 +811,8 @@ export default function ProjectWorkflowView({
                                     "absolute p-3 rounded-lg border transition-all cursor-pointer shadow-sm flex flex-col justify-between",
                                     "bg-[hsl(var(--surface-1))] hover:border-[hsl(var(--primary))] hover:shadow-md active:scale-[0.99]",
                                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2",
-                                    isSubtask ? "border-[hsl(var(--border)/0.8)] opacity-95" : "border-[hsl(var(--border))]"
+                                    isSubtask ? "border-[hsl(var(--border)/0.8)] opacity-95" : "border-[hsl(var(--border))]",
+                                    criticalFlowFilterEnabled && node.status === 'done' && 'opacity-35'
                                 )}
                                 style={{
                                     left: node.x,
@@ -805,6 +925,8 @@ export default function ProjectWorkflowView({
                 >
                     <Maximize2 size={14} />
                 </button>
+            </div>
+
             </div>
 
             {project?.id && isComponentDrawerOpen && (

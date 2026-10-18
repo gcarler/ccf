@@ -16,14 +16,15 @@ vi.mock('@tiptap/react', async (importOriginal) => {
         if (harness.active.has(key)) harness.active.delete(key);
         else harness.active.add(key);
     };
-    const emitUpdate = () => {
+    const emitUpdate = (nextHtml?: string) => {
         harness.revision += 1;
-        harness.html = `<p>toolbar-${harness.revision}</p>`;
+        harness.html = nextHtml ?? `<p>toolbar-${harness.revision}</p>`;
         harness.options?.onUpdate?.({ editor: { getHTML: () => harness.html } });
     };
     const chain = new Proxy({}, {
         get: (_target, property: string) => (...args: unknown[]) => {
             if (property === 'run') return true;
+            if (property === 'focus') return chain;
             if (property === 'toggleHeading') toggle('heading', `heading-${(args[0] as { level: number }).level}`);
             if (property === 'toggleBulletList') toggle('bulletList');
             if (property === 'toggleOrderedList') toggle('orderedList');
@@ -39,11 +40,16 @@ vi.mock('@tiptap/react', async (importOriginal) => {
                 toggle('image');
                 harness.images.push((args as unknown as [{ src?: string; alt?: string }])[0] ?? {});
             }
-            emitUpdate();
+            if (property === 'insertContent') {
+                emitUpdate(`${harness.html}${String(args[0] ?? '')}`);
+            } else {
+                emitUpdate();
+            }
             return chain;
         },
     });
     const editor = {
+        getHTML: () => harness.html,
         chain: () => chain,
         isActive: (name: string, attributes?: { level?: number }) =>
             harness.active.has(name === 'heading' ? `heading-${attributes?.level}` : name),
@@ -194,5 +200,46 @@ describe('ProjectWikiEditor', () => {
         expect(apiFetchMock).toHaveBeenLastCalledWith('/projects/project-1/wiki', {
             method: 'POST', token: 'test-token', body: { content: '<p>Auto</p>' },
         });
+    });
+
+    it('diagnostica los tres artefactos PMI desde el contenido actual de la wiki', async () => {
+        apiFetchMock.mockResolvedValueOnce({
+            content: '<h2>Lecciones Aprendidas</h2><p>Causa raíz documentada.</p><p>Decisiones y supuestos registrados.</p>',
+        } as never);
+
+        render(<ProjectWikiEditor project_id="project-1" />);
+
+        const banner = await screen.findByTestId('wiki-pmi-knowledge-banner');
+        await waitFor(() => expect(banner).toHaveTextContent('2/3'));
+        expect(banner).toHaveTextContent('Lecciones Aprendidas');
+        expect(banner).toHaveTextContent('Bitácora de Decisiones y Supuestos');
+        expect(banner).toHaveTextContent('Revisión de Fase / Retrospectiva');
+    });
+
+    it('inserta las tres plantillas estructuradas y sincroniza el HTML para autoguardado', async () => {
+        render(<ProjectWikiEditor project_id="project-1" />);
+        await screen.findByText('Inicial');
+
+        const openTemplates = () => fireEvent.click(screen.getByTestId('wiki-pmi-templates-toggle'));
+        openTemplates();
+        expect(screen.getByTestId('wiki-pmi-templates-panel')).toBeInTheDocument();
+        fireEvent.click(screen.getByTestId('wiki-pmi-tpl-lessons'));
+        expect(harness.html).toContain('<h2>Lecciones Aprendidas</h2><ul>');
+        await waitFor(() => expect(screen.getByTestId('wiki-pmi-knowledge-banner')).toHaveTextContent('1/3'));
+
+        openTemplates();
+        fireEvent.click(screen.getByTestId('wiki-pmi-tpl-decisions'));
+        expect(harness.html).toContain('<h2>Bitácora de Decisiones y Supuestos</h2><ul>');
+        await waitFor(() => expect(screen.getByTestId('wiki-pmi-knowledge-banner')).toHaveTextContent('2/3'));
+
+        openTemplates();
+        fireEvent.click(screen.getByTestId('wiki-pmi-tpl-retro'));
+        expect(harness.html).toContain('<h2>Revisión de Fase / Retrospectiva</h2><ul>');
+        expect(harness.html.match(/<li><p>/g)).toHaveLength(15);
+        await waitFor(() => expect(screen.getByTestId('wiki-pmi-knowledge-banner')).toHaveTextContent('3/3'));
+
+        await waitFor(() => expect(apiFetchMock).toHaveBeenCalledWith('/projects/project-1/wiki', {
+            method: 'POST', token: 'test-token', body: { content: harness.html },
+        }), { timeout: 3000 });
     });
 });

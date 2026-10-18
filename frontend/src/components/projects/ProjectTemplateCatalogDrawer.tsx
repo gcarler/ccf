@@ -11,6 +11,46 @@ import clsx from "clsx";
 import { PROJECT_TITLE_MAX_LENGTH } from "@/lib/projects/constants";
 import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/ConfirmActionDrawer";
 
+type PmiTailoringApproach = "predictive" | "hybrid" | "adaptive";
+
+const PMI_TAILORING_META: Record<PmiTailoringApproach, { label: string; color: string }> = {
+  predictive: { label: "Predictivo (Cascada / Fase-Compuerta)", color: "hsl(var(--primary))" },
+  hybrid: { label: "Híbrido (Iterativo por Fases)", color: "hsl(var(--warning-text))" },
+  adaptive: { label: "Adaptativo (Ágil / Flujo Continuo)", color: "hsl(var(--success))" },
+};
+
+const PMI_TAILORING_FILTERS: { key: PmiTailoringApproach | "all"; label: string }[] = [
+  { key: "all", label: "Todos" },
+  { key: "predictive", label: "Predictivo" },
+  { key: "hybrid", label: "Híbrido" },
+  { key: "adaptive", label: "Adaptativo" },
+];
+
+/** Enfoque de Desarrollo PMI según la estructura de la plantilla (PMBOK 7ma Ed. §3). */
+function classifyPmiTailoring(tpl: ProjectTemplate): PmiTailoringApproach {
+  const phases = tpl.structure?.phases ?? [];
+  const tasks = tpl.structure?.tasks ?? [];
+  const staggered = tasks.some((t) => (t.day_offset ?? 0) > 0);
+  if (phases.length >= 3 && staggered) return "predictive";
+  if (phases.length >= 2) return "hybrid";
+  return "adaptive";
+}
+
+/** Madurez OPA (3 pilares: Fases EDT, Paquetes de Trabajo, BAC) y duración del ciclo en días. */
+function pmiOpaReadiness(tpl: ProjectTemplate): { pillarsMet: number; ready: boolean; cycleDays: number } {
+  const phases = tpl.structure?.phases ?? [];
+  const tasks = tpl.structure?.tasks ?? [];
+  const pillars = [
+    phases.length > 0,
+    tasks.length > 0,
+    (tpl.default_budget || 0) > 0,
+  ];
+  const pillarsMet = pillars.filter(Boolean).length;
+  const endOffsets = tasks.map((t) => (t.day_offset ?? 0) + (t.duration_days ?? 0));
+  const cycleDays = endOffsets.length > 0 ? Math.max(...endOffsets) : 0;
+  return { pillarsMet, ready: pillarsMet === 3, cycleDays };
+}
+
 interface ProjectTemplateCatalogDrawerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -49,6 +89,7 @@ export function ProjectTemplateCatalogDrawer({
   // Filtros
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [tailoringFilter, setTailoringFilter] = useState<PmiTailoringApproach | "all">("all");
 
   // Formulario Instanciación
   const [instantiateTitle, setInstantiateTitle] = useState<string>("");
@@ -206,6 +247,10 @@ export function ProjectTemplateCatalogDrawer({
     });
   };
 
+  const visibleTemplates = templates.filter(
+    (tpl) => tailoringFilter === "all" || classifyPmiTailoring(tpl) === tailoringFilter,
+  );
+
   return (
     <>
       <div className="flex flex-col gap-5 p-6 text-sm" style={{ color: "hsl(var(--text-primary))" }}>
@@ -327,11 +372,37 @@ export function ProjectTemplateCatalogDrawer({
             </div>
 
             {/* Listado de Plantillas */}
+            {/* Filtro rápido por enfoque de desarrollo PMI (Tailoring — PMBOK 7ma Ed.) */}
+            <div
+              data-testid="template-tailoring-filter"
+              className="flex items-center gap-1.5 flex-wrap pb-1"
+            >
+              {PMI_TAILORING_FILTERS.map((f) => {
+                const isActive = tailoringFilter === f.key;
+                return (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => setTailoringFilter(f.key)}
+                    aria-pressed={isActive}
+                    className="px-2.5 py-1 rounded-lg text-2xs font-semibold uppercase tracking-wider border transition-all"
+                    style={{
+                      backgroundColor: isActive ? "hsl(var(--primary) / 0.12)" : "hsl(var(--surface-1))",
+                      borderColor: isActive ? "hsl(var(--primary) / 0.35)" : "hsl(var(--border))",
+                      color: isActive ? "hsl(var(--primary))" : "hsl(var(--text-secondary))",
+                    }}
+                  >
+                    {f.label}
+                  </button>
+                );
+              })}
+            </div>
+
             {loading ? (
               <div className="py-12 text-center text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
                 Cargando plantillas ministeriales...
               </div>
-            ) : templates.length === 0 ? (
+            ) : visibleTemplates.length === 0 ? (
               <div
                 className="py-12 text-center rounded-xl border text-xs space-y-2 p-6"
                 style={{
@@ -349,7 +420,7 @@ export function ProjectTemplateCatalogDrawer({
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                {templates.map((tpl) => {
+                {visibleTemplates.map((tpl) => {
                   const phases = tpl.structure?.phases || [];
                   const tasks = tpl.structure?.tasks || [];
                   const isExpanded = expandedPreviewId === tpl.id;
@@ -357,6 +428,7 @@ export function ProjectTemplateCatalogDrawer({
                   return (
                     <div
                       key={tpl.id}
+                      data-testid={`template-pmi-tailoring-${tpl.id}`}
                       className="rounded-xl border p-4 transition-all hover:shadow-sm space-y-3"
                       style={{
                         backgroundColor: "hsl(var(--surface-1))",
@@ -411,6 +483,43 @@ export function ProjectTemplateCatalogDrawer({
                           </button>
                         </div>
                       </div>
+
+                      {/* Diagnóstico OPA + Tailoring PMI (PMBOK 7ma Ed.) */}
+                      {(() => {
+                        const approach = classifyPmiTailoring(tpl);
+                        const readiness = pmiOpaReadiness(tpl);
+                        return (
+                          <div className="flex items-center gap-2 flex-wrap text-2xs">
+                            <span
+                              className="px-2 py-0.5 rounded font-semibold uppercase tracking-wider border"
+                              style={{
+                                color: PMI_TAILORING_META[approach].color,
+                                borderColor: PMI_TAILORING_META[approach].color + "44",
+                                backgroundColor: "hsl(var(--surface-2))",
+                              }}
+                            >
+                              {PMI_TAILORING_META[approach].label}
+                            </span>
+                            <span
+                              className="px-2 py-0.5 rounded font-semibold border"
+                              style={{
+                                color: readiness.ready ? "hsl(var(--success))" : "hsl(var(--warning-text))",
+                                borderColor: readiness.ready ? "hsl(var(--success) / 0.35)" : "hsl(var(--warning) / 0.4)",
+                                backgroundColor: "hsl(var(--surface-2))",
+                              }}
+                            >
+                              {readiness.ready
+                                ? `OPA 3/3 · Listo para PMB`
+                                : `OPA Incompleto · Requiere Calibración (${readiness.pillarsMet}/3)`}
+                            </span>
+                            <span style={{ color: "hsl(var(--text-secondary))" }}>
+                              Ciclo estimado: <span className="font-bold" style={{ color: "hsl(var(--text-primary))" }}>
+                                {readiness.cycleDays} días
+                              </span>
+                            </span>
+                          </div>
+                        );
+                      })()}
 
                       {/* Métricas y Datos Rápidos */}
                       <div

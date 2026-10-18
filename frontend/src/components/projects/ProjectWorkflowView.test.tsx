@@ -214,6 +214,75 @@ describe('ProjectWorkflowView', () => {
         expect(onOpenTask).toHaveBeenCalledWith(taskLevel5);
     });
 
+    it('renders PMI flow metrics and identifies the component with the highest active load', () => {
+        render(
+            <ProjectWorkflowView
+                project={project}
+                tasks={[task1, taskLevel4, taskLevel5, taskLevel6, task2]}
+                components={components}
+                onOpenTask={vi.fn()}
+            />
+        );
+
+        const hud = screen.getByTestId('workflow-pmi-flow-hud');
+        expect(hud).toHaveTextContent('WIP activo');
+        expect(hud).toHaveTextContent('3 tareas');
+        expect(hud).toHaveTextContent('Límite WIP recomendado');
+        expect(hud).toHaveTextContent('3 · 0 responsables × 2 (mín. 3)');
+        expect(hud).toHaveTextContent('Dentro del límite WIP');
+        expect(hud).toHaveTextContent('3 tareas');
+        expect(hud).toHaveTextContent('20% done');
+        expect(hud).toHaveTextContent('Infraestructura & Datos (2 activas/bloqueadas)');
+    });
+
+    it('shows the Little’s Law WIP alert when active work exceeds the recommended limit', () => {
+        const activeTasks = Array.from({ length: 4 }, (_, index) => createMockTask({
+            id: `active-${index}`,
+            project_id: 'proj-1',
+            component_id: 'comp-1',
+            title: `Trabajo activo ${index + 1}`,
+            status: 'in_progress',
+            assignee_id: 'usr-active',
+            priority: 'medium',
+        }));
+
+        render(
+            <ProjectWorkflowView
+                project={project}
+                tasks={activeTasks}
+                components={components}
+                onOpenTask={vi.fn()}
+            />
+        );
+
+        const hud = screen.getByTestId('workflow-pmi-flow-hud');
+        expect(hud).toHaveTextContent('4 tareas');
+        expect(hud).toHaveTextContent('3 · 1 responsables × 2 (mín. 3)');
+        expect(hud).toHaveTextContent('Exceso WIP (Ley de Little)');
+    });
+
+    it('attenuates completed task nodes when the critical flow toggle is enabled', async () => {
+        const user = userEvent.setup();
+        render(
+            <ProjectWorkflowView
+                project={project}
+                tasks={[task1, taskLevel4, taskLevel5, taskLevel6]}
+                components={components}
+                onOpenTask={vi.fn()}
+            />
+        );
+
+        const completedNode = screen.getByTestId('workflow-node-node-task-t-lvl6');
+        const filterButton = screen.getByTestId('workflow-filter-critical-btn');
+        expect(filterButton).toHaveAttribute('aria-pressed', 'false');
+        expect(completedNode).not.toHaveClass('opacity-35');
+
+        await user.click(filterButton);
+
+        expect(filterButton).toHaveAttribute('aria-pressed', 'true');
+        expect(completedNode).toHaveClass('opacity-35');
+    });
+
     it('renders empty state notice when project has no tasks', () => {
         render(
             <ProjectWorkflowView
