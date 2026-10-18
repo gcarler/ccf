@@ -9,6 +9,7 @@ import ProjectSettingsDrawer from './ProjectSettingsDrawer';
 
 vi.mock('@/context/AuthContext', () => ({
   useAuth: () => ({ token: null }),
+  useOptionalAuth: () => ({ token: null }),
 }));
 
 const project: ProjectRecord = {

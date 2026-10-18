@@ -9,6 +9,7 @@ import type { PhaseDef } from '@/context/ProjectUpdateContext';
 // Mock contexts
 vi.mock('@/context/AuthContext', () => ({
     useAuth: () => ({ token: 'mock-token', loading: false, user: null, isAuthenticated: true, login: vi.fn(), logout: vi.fn(), refreshUser: vi.fn() }),
+    useOptionalAuth: () => ({ token: 'mock-token', loading: false, user: null, isAuthenticated: true, login: vi.fn(), logout: vi.fn(), refreshUser: vi.fn() }),
 }));
 
 vi.mock('@/lib/http', () => ({ apiFetch: vi.fn().mockResolvedValue([]) }));

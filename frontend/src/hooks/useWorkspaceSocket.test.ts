@@ -23,8 +23,7 @@ class MockWebSocket {
 
     constructor(url: string) {
         this.url = url;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (MockWebSocket as any).lastInstance = this;
+        MockWebSocket.lastInstance = this;
         MockWebSocket.instances.push(this);
     }
 
@@ -63,10 +62,8 @@ import { buildWsUrl } from '@/lib/websocket';
 describe('useWorkspaceSocket', () => {
     beforeEach(() => {
         vi.useFakeTimers();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (globalThis as any).WebSocket = MockWebSocket;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (MockWebSocket as any).lastInstance = null;
+        (globalThis as unknown as { WebSocket: typeof MockWebSocket }).WebSocket = MockWebSocket;
+        MockWebSocket.lastInstance = null;
         MockWebSocket.instances = [];
     });
 

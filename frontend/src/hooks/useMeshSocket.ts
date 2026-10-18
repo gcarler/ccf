@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 
 type MeshEvent = {
     event: string;
-    [key: string]: any;
+    [key: string]: unknown;
 };
 
 export const useMeshSocket = (clientId: string, token?: string) => {

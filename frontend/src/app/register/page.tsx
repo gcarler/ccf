@@ -32,8 +32,9 @@ export default function RegisterPage() {
                 },
             });
             setSuccess(true);
-        } catch (err: any) {
-            const detail = err?.detail?.detail || err?.detail?.message;
+        } catch (err: unknown) {
+            const errObj = err as { detail?: { detail?: string; message?: string } };
+            const detail = errObj?.detail?.detail || errObj?.detail?.message;
             setError(detail || 'Error de conexión con el servidor');
         } finally {
             setLoading(false);

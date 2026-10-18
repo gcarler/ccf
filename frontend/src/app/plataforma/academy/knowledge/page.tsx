@@ -95,8 +95,10 @@ export default function KnowledgeGraphPage() {
   const isEditor = Boolean(
     user?.role === 'admin' ||
     user?.role === 'superadmin' ||
-    (user as { permissions?: string[] })?.permissions?.includes('academy:edit') ||
-    (user as { permissions?: string[] })?.permissions?.includes('academy:manage')
+    (Array.isArray(user?.permissions) &&
+      ((user.permissions as string[]).includes('academy:edit') ||
+        (user.permissions as string[]).includes('academy:manage'))) ||
+    Boolean(user?.permissions && typeof user.permissions === 'object' && ('academy:edit' in user.permissions || 'academy:manage' in user.permissions))
   );
 
   const loadCommissions = useCallback(async (signal?: AbortSignal) => {

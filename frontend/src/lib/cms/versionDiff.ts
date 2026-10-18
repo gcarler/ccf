@@ -498,7 +498,7 @@ export function diffArray(before: unknown[], after: unknown[]): FieldDiff {
     };
   }
 
-  // Positional fallback: any length or value mismatch is a single
+  // Positional fallback — length or value mismatch is a single
   // "changed" marker. Per-index granularity would require surfacing
   // a perIndex map through the FieldDiff type, which the UI doesn't
   // consume today. Keep the shape flat.

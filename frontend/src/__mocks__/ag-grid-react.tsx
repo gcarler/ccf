@@ -5,8 +5,8 @@ interface ColDef {
   headerName?: string;
   name?: string;
   id?: string;
-  cellRenderer?: React.ComponentType<any>;
-  [key: string]: any;
+  cellRenderer?: React.ComponentType<{ value?: unknown; data?: Record<string, unknown>; colDef?: ColDef; context?: unknown }>;
+  [key: string]: unknown;
 }
 
 interface AgGridReactProps {
@@ -15,8 +15,7 @@ interface AgGridReactProps {
   onRowClicked?: (event: { data: Record<string, unknown> }) => void;
   onRowDoubleClicked?: (event: { data: Record<string, unknown> }) => void;
   getRowId?: (params: { data: Record<string, unknown> }) => string;
-  context?: any;
-  [key: string]: any;
+  context?: unknown;
 }
 
 const MockAgGridReact = React.forwardRef<HTMLTableElement, AgGridReactProps>(

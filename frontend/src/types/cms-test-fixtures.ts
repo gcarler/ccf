@@ -2,7 +2,7 @@
  * Fixtures tipadas para los tests del módulo CMS.
  *
  * Reutilizan los contratos de `@/types/cms-v2` y `@/types/cms-builder`
- * para sustituir los usos de `any`/`as any` en mocks de vitest por
+ * para sustituir los usos de tipos laxos en mocks de vitest por
  * fixtures dentro del sistema de tipos (vi.mocked + mocks completos).
  */
 import type { ReactElement } from "react";

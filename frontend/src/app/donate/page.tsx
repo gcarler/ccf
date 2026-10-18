@@ -149,8 +149,9 @@ export default function DonatePage() {
             } else {
                 addToast(toastMpError, 'error');
             }
-        } catch (error: any) {
-            const detail = error?.detail?.detail || error?.message;
+        } catch (error: unknown) {
+            const errObj = error as { detail?: { detail?: string }; message?: string };
+            const detail = errObj?.detail?.detail || errObj?.message;
             addToast(detail || toastMpError, 'error');
         } finally {
             setMpLoading(false);
@@ -329,7 +330,7 @@ export default function DonatePage() {
     );
 }
 
-function BenefitCard({ icon: Icon, title, desc }: any) {
+function BenefitCard({ icon: Icon, title, desc }: { icon: React.ComponentType<{ size?: number | string }>; title: string; desc: string }) {
     return (
         <div className="flex items-start gap-4 group">
             <div className="size-10 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/30 flex items-center justify-center text-[hsl(var(--primary))] shrink-0 group-hover:scale-110 transition-transform shadow-sm">
@@ -343,7 +344,7 @@ function BenefitCard({ icon: Icon, title, desc }: any) {
     );
 }
 
-function TypeOption({ active, onClick, icon: Icon, label }: any) {
+function TypeOption({ active, onClick, icon: Icon, label }: { active: boolean; onClick: () => void; icon: React.ComponentType<{ size?: number | string }>; label: string }) {
     return (
         <button
             onClick={onClick}

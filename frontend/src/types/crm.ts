@@ -407,7 +407,22 @@ export interface CrmAnalyticsSummary {
   total_cases: number;
 }
 
-export function normalizePersonas(payload: any[]): CrmPersona[] {
+export interface RawPersonaPayload {
+  id: string;
+  nombre_completo?: string;
+  email: string;
+  group?: string;
+  grupo_id?: string | number;
+  spiritual_status?: string;
+  status?: string;
+  telefono?: string;
+  phone?: string;
+  created_at?: string;
+  church_role?: string;
+  family_id?: string;
+}
+
+export function normalizePersonas(payload: RawPersonaPayload[]): CrmPersona[] {
   if (!Array.isArray(payload)) return [];
   return payload.map((m) => ({
     id: m.id,

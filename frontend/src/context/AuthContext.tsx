@@ -4,8 +4,38 @@ import { apiFetch } from '@/lib/http';
 import { useRouter } from 'next/navigation';
 import React,{ createContext,useCallback,useContext,useEffect,useMemo,useState } from 'react';
 
+interface V3MeResponse {
+    auth_user_id?: string;
+    username?: string;
+    email?: string;
+    platform_role?: string;
+    is_verified?: boolean;
+    permissions?: Record<string, string>;
+    status?: number;
+}
+
+interface V3RefreshResponse {
+    access_token?: string;
+    refresh_token?: string;
+}
+
+export interface AuthUser {
+    id: string | undefined;
+    username: string | undefined;
+    email: string | undefined;
+    name?: string;
+    full_name?: string;
+    nombre?: string;
+    role: string;
+    is_active: boolean;
+    is_email_verified: boolean;
+    xp: number;
+    created_at: string;
+    permissions: Record<string, string>;
+}
+
 export interface AuthContextType {
-    user: any;
+    user: AuthUser | null;
     token: string | null;
     login: (accessToken?: string, refreshToken?: string) => Promise<void>;
     logout: () => void;
@@ -20,7 +50,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [token, setToken] = useState<string | null>(null);
-    const [user, setUser] = useState<any>(null);
+    const [user, setUser] = useState<AuthUser | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
@@ -45,8 +75,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const timer = setTimeout(() => { console.warn('[AUTH] timeout'); setLoading(false); }, 6000);
         try {
-            const v3Data = await apiFetch<any>('/v3/auth/me', { cache: 'no-store', token: t });
-            const data = {
+            const v3Data = await apiFetch<V3MeResponse>('/v3/auth/me', { cache: 'no-store', token: t });
+            const data: AuthUser = {
                 id: v3Data.auth_user_id,
                 username: v3Data.username || v3Data.email?.split('@')[0],
                 email: v3Data.email,
@@ -61,8 +91,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setToken(t);
             if (tokenValue && typeof window !== 'undefined') sessionStorage.setItem('ccf_token', tokenValue);
             return data;
-        } catch (err: any) {
-            if (err?.status === 401) {
+        } catch (err) {
+            if ((err as { status?: number }).status === 401) {
                 if (typeof window !== 'undefined') {
                     sessionStorage.removeItem('ccf_token');
                     sessionStorage.removeItem('ccf_refresh_token');
@@ -77,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const bootstrapRefreshFromCookie = useCallback(async () => {
         try {
-            const data = await apiFetch<any>('/v3/auth/refresh', {
+            const data = await apiFetch<V3RefreshResponse>('/v3/auth/refresh', {
                 method: 'POST',
                 silent: true,
             });

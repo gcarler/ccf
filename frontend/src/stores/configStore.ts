@@ -11,8 +11,8 @@ interface WorkspaceConfig {
         users_deny?: string[];
         rollout_percent?: number;
     }>;
-    ui_theme_config: Record<string, any>;
-    navigation_schema: any[];
+    ui_theme_config: Record<string, unknown>;
+    navigation_schema: Record<string, unknown>[];
     requested_by?: string;
 }
 

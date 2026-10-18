@@ -14,6 +14,7 @@ vi.mock('next/navigation', () => ({
 // Mock AuthContext to avoid real auth calls
 vi.mock('@/context/AuthContext', () => ({
     useAuth: () => ({ token: 'mock-token', loading: false, user: null, isAuthenticated: true, login: vi.fn(), logout: vi.fn(), refreshUser: vi.fn() }),
+    useOptionalAuth: () => ({ token: 'mock-token', loading: false, user: null, isAuthenticated: true, login: vi.fn(), logout: vi.fn(), refreshUser: vi.fn() }),
 }));
 
 // Mock SidebarLayerContext (RightPanel lo consume internamente)

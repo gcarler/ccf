@@ -38,11 +38,13 @@ export async function downloadBinaryFile(
         // Free memory once the browser has had a chance to start the download.
         setTimeout(() => URL.revokeObjectURL(objectUrl), 2000);
         if (showSuccessToast) toast.success("Descarga iniciada");
-    } catch (e: any) {
+    } catch (e: unknown) {
         const msg =
             e instanceof ApiError
                 ? String((e.detail as { detail?: string })?.detail || e.message || "Error al descargar")
-                : e?.message || "Error al descargar";
+                : e instanceof Error
+                ? e.message || "Error al descargar"
+                : "Error al descargar";
         if (showErrorToast) toast.error(msg);
         throw e;
     }

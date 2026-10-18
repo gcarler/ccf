@@ -464,8 +464,8 @@ export interface FeedProps {
   library_description?: string;
   empty_books_message?: string;
   featured_fallback_image_url?: string;
-  course_cards?: Array<any>;
-  books?: Array<any>;
+  course_cards?: Array<Record<string, unknown>>;
+  books?: Array<Record<string, unknown>>;
   cta_title?: string;
   cta_description?: string;
   cta_placeholder?: string;

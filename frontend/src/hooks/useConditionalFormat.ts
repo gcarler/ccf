@@ -3,14 +3,14 @@
 export type ConditionalFormatRule = {
   columnId: string;
   operator: "eq" | "neq" | "gt" | "lt" | "gte" | "lte" | "contains" | "isEmpty" | "isNotEmpty";
-  value: any;
+  value: unknown;
   backgroundColor?: string;
   textColor?: string;
   icon?: string;
 };
 
 export function applyConditionalFormat(
-  row: Record<string, any>,
+  row: Record<string, unknown>,
   columnId: string,
   rules: ConditionalFormatRule[]
 ): { backgroundColor?: string; textColor?: string; icon?: string } | null {

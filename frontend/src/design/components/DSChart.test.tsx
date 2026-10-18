@@ -46,28 +46,28 @@ vi.mock('recharts', () => ({
     ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
         <div data-testid="responsive-container">{children}</div>
     ),
-    LineChart: ({ children, data }: any) => (
+    LineChart: ({ children, data }: { children?: React.ReactNode; data?: unknown[] }) => (
         <div data-chart="line" data-points={data?.length ?? 0}>
             {children}
         </div>
     ),
-    AreaChart: ({ children, data }: any) => (
+    AreaChart: ({ children, data }: { children?: React.ReactNode; data?: unknown[] }) => (
         <div data-chart="area" data-points={data?.length ?? 0}>
             {children}
         </div>
     ),
-    BarChart: ({ children, data }: any) => (
+    BarChart: ({ children, data }: { children?: React.ReactNode; data?: unknown[] }) => (
         <div data-chart="bar" data-points={data?.length ?? 0}>
             {children}
         </div>
     ),
-    Line: ({ stroke }: any) => (
+    Line: ({ stroke }: { stroke?: string }) => (
         <span className="recharts-line" data-stroke={stroke} />
     ),
-    Area: ({ stroke, fill }: any) => (
+    Area: ({ stroke, fill }: { stroke?: string; fill?: string }) => (
         <span className="recharts-area" data-stroke={stroke} data-fill={fill} />
     ),
-    Bar: ({ fill }: any) => <span className="recharts-bar" data-fill={fill} />,
+    Bar: ({ fill }: { fill?: string }) => <span className="recharts-bar" data-fill={fill} />,
     CartesianGrid: () => <span data-testid="grid" />,
     XAxis: () => <span data-testid="xaxis" />,
     YAxis: () => <span data-testid="yaxis" />,

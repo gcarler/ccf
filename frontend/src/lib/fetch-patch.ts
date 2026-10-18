@@ -10,7 +10,13 @@ declare global {
 
 type RequestLike = Request | URL | string;
 
-const globalScope: any = typeof globalThis !== "undefined" ? globalThis : global;
+interface PatchableGlobal {
+  fetch?: typeof fetch;
+  __ccfFetchPatched?: boolean;
+  __ccfOriginalFetch?: typeof fetch;
+}
+
+const globalScope: PatchableGlobal = (typeof globalThis !== "undefined" ? globalThis : global) as PatchableGlobal;
 
 if (!globalScope.__ccfFetchPatched && typeof globalScope.fetch === "function") {
   const originalFetch = globalScope.fetch.bind(globalScope);

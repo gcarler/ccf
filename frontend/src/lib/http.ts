@@ -29,7 +29,7 @@ async function _refreshSession(): Promise<string | null> {
 
     try {
       const nativeFetch: typeof fetch =
-        (typeof globalThis !== "undefined" && (globalThis as any).__ccfOriginalFetch) || fetch;
+        (typeof globalThis !== "undefined" && (globalThis as { __ccfOriginalFetch?: typeof fetch }).__ccfOriginalFetch) || fetch;
 
       // If we have a refresh token in sessionStorage, send it in the body.
       // If not, still try the request — the httpOnly cookie will be sent
@@ -164,21 +164,22 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}, _
   }
 
   const nativeFetch: typeof fetch =
-    (typeof globalThis !== "undefined" && (globalThis as any).__ccfOriginalFetch) || fetch;
+    (typeof globalThis !== "undefined" && (globalThis as { __ccfOriginalFetch?: typeof fetch }).__ccfOriginalFetch) || fetch;
 
   let response: Response;
   try {
     response = await nativeFetch(url, { ...init, signal: controller.signal });
-  } catch (err: any) {
+  } catch (err: unknown) {
     clearTimeout(timeoutId);
-    if (err.name === 'AbortError') {
+    const errObj = err instanceof Error ? err : new Error(String(err));
+    if (errObj.name === 'AbortError') {
       // Silently treat timeouts as a network error, not a crash.
       throw new ApiError('Request timed out', 0, err);
     }
     if (!silent) {
-      console.error(`[API_NETWORK_ERROR] ${method} ${path}:`, err.message);
+      console.error(`[API_NETWORK_ERROR] ${method} ${path}:`, errObj.message);
     }
-    throw new ApiError(err.message || 'Network error', 0, err);
+    throw new ApiError(errObj.message || 'Network error', 0, err);
   } finally {
     clearTimeout(timeoutId);
     cleanupExternalSignal?.();
@@ -232,7 +233,7 @@ export async function apiFetchBlob(path: string, options: ApiFetchOptions = {}):
   }
 
   const nativeFetch: typeof fetch =
-    (typeof globalThis !== "undefined" && (globalThis as any).__ccfOriginalFetch) || fetch;
+    (typeof globalThis !== "undefined" && (globalThis as { __ccfOriginalFetch?: typeof fetch }).__ccfOriginalFetch) || fetch;
   const response = await nativeFetch(url, {
     method,
     headers: finalHeaders,

@@ -48,8 +48,9 @@ function ResetPasswordContent() {
             setTimeout(() => {
                 router.push('/login');
             }, 2000);
-        } catch (err: any) {
-            setError(err?.detail?.message || 'No pudimos actualizar tu contraseña.');
+        } catch (err: unknown) {
+            const errObj = err as { detail?: { message?: string } };
+            setError(errObj?.detail?.message || 'No pudimos actualizar tu contraseña.');
         } finally {
             setLoading(false);
         }

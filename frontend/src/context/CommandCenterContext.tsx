@@ -8,7 +8,7 @@ export type CommandItem = {
     description?: string;
     shortcut?: string;
     group?: string;
-    icon?: React.ComponentType<any>;
+    icon?: React.ComponentType<{ size?: number | string; className?: string }>;
     action: () => void;
 };
 

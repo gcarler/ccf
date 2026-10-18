@@ -29,9 +29,9 @@ function VerifyEmailContent() {
         setStatus("success");
         setMessage("¡Tu correo fue verificado correctamente!");
       })
-      .catch((err: any) => {
+      .catch((err: unknown) => {
         setStatus("error");
-        setMessage(err?.message || "No pudimos verificar tu correo. El enlace podría haber expirado.");
+        setMessage(err instanceof Error && err.message ? err.message : "No pudimos verificar tu correo. El enlace podría haber expirado.");
       });
   }, [token]);
 

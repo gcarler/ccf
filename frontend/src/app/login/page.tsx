@@ -35,7 +35,12 @@ export default function LoginPage() {
         setLoading(true);
         setError('');
         try {
-            const res = await apiFetch<any>(`/v3/auth/check-email?email=${encodeURIComponent(email)}`);
+            const res = await apiFetch<{
+                is_gmail?: boolean;
+                google_oauth_enabled?: boolean;
+                has_password?: boolean;
+                needs_password_init?: boolean;
+            }>(`/v3/auth/check-email?email=${encodeURIComponent(email)}`);
             if (res.is_gmail) {
                 if (res.google_oauth_enabled) {
                     // Google SSO — go direct
@@ -69,7 +74,7 @@ export default function LoginPage() {
         setLoading(true);
         setError('');
         try {
-            const response = await apiFetch<any>('/v3/auth/login', {
+            const response = await apiFetch<{ access_token?: string; refresh_token?: string }>('/v3/auth/login', {
                 method: 'POST',
                 body: { email, password },
             });
@@ -79,9 +84,10 @@ export default function LoginPage() {
             } else {
                 setError('No se recibió el token de acceso.');
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('[LOGIN ERROR]', err);
-            if (err?.detail === 'CONTRASENA_NO_INICIALIZADA') {
+            const errObj = err as { detail?: string };
+            if (errObj?.detail === 'CONTRASENA_NO_INICIALIZADA') {
                 setError('Revisa tu correo electrónico para configurar tu contraseña por primera vez.');
             } else {
                 setError('Credenciales incorrectas o problema de conexión.');

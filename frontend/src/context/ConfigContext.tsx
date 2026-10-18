@@ -3,8 +3,14 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 
+/** Shape mínimo que consume el provider; el resto se accede con optional chaining. */
+interface WorkspaceConfig {
+    features_enabled?: Record<string, boolean>;
+    [key: string]: unknown;
+}
+
 interface ConfigContextType {
-    config: any | null;
+    config: WorkspaceConfig | null;
     isFeatureEnabled: (featureId: string) => boolean;
     refreshConfig: () => Promise<void>;
     loading: boolean;
@@ -14,7 +20,7 @@ const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
 
 export function ConfigProvider({ children }: { children: React.ReactNode }) {
     const { token } = useAuth();
-    const [config, setConfig] = useState<any>(null);
+    const [config, setConfig] = useState<WorkspaceConfig | null>(null);
     const [loading, setLoading] = useState(true);
 
     const refreshConfig = useCallback(async () => {
@@ -22,7 +28,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
         try {
             const { apiFetch } = await import('@/lib/http');
             // Tolerate slow cold-starts / heavy merges on first load.
-            const data = await apiFetch('/workspace/config', { token, timeout: 30_000 });
+            const data = await apiFetch<WorkspaceConfig>('/workspace/config', { token, timeout: 30_000 });
             setConfig(data);
         } catch (err) {
             console.error("Config load failed", err);

@@ -27,9 +27,10 @@ function VerifyEmailContent() {
                 setStatus('success');
                 setMessage('¡Tu correo fue verificado correctamente!');
             })
-            .catch((err: any) => {
+            .catch((err: unknown) => {
+                const errObj = err as { detail?: { message?: string } };
                 setStatus('error');
-                setMessage(err?.detail?.message || 'No pudimos verificar tu correo.');
+                setMessage(errObj?.detail?.message || 'No pudimos verificar tu correo.');
             });
     }, [token]);
 

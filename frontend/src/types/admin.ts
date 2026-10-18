@@ -580,7 +580,7 @@ export interface NormalizeAssetFn {
 
 // ── Historical / transitional types ───────────────────────────────────────
 
-/** CSS custom properties for aura/glow effects — use instead of `as any` */
+/** CSS custom properties for aura/glow effects — use instead of untyped casts */
 export type CSSAuraProperties = React.CSSProperties & {
   '--aura-color'?: string;
 };

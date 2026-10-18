@@ -60,8 +60,8 @@ export function getAnchorPoint(
   let l = obj.left || 0;
   let t = obj.top || 0;
 
-  const ox = (obj as any).originX || 'left';
-  const oy = (obj as any).originY || 'top';
+  const ox = (obj as { originX?: string }).originX || 'left';
+  const oy = (obj as { originY?: string }).originY || 'top';
 
   if (ox === 'center') l -= w / 2;
   else if (ox === 'right') l -= w;
@@ -263,7 +263,7 @@ export function renderConnectors(
     const p2 = toScreen(line.x2, line.y2, vpt);
 
     // Control points (object space) are cached per connector and reused
-    // across idle/pan/zoom renders. The cache is self-invalidating: any
+    // across idle/pan/zoom renders. The cache is self-invalidating — every
     // change to the line coordinates or anchors recomputes the geometry.
     let geometry = _connectorGeometryCache.get(obj);
     if (

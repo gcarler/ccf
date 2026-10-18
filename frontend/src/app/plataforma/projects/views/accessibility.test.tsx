@@ -5,6 +5,7 @@ import { axe } from 'jest-axe';
 
 vi.mock('@/context/AuthContext', () => ({
     useAuth: () => ({ user: { id: 'u1', role: 'admin' }, hasPermission: () => true, loading: false }),
+    useOptionalAuth: () => ({ user: { id: 'u1', role: 'admin' }, hasPermission: () => true, loading: false }),
 }));
 vi.mock('@/lib/http', () => ({ apiFetch: vi.fn().mockResolvedValue([]) }));
 vi.mock('next/navigation', () => ({

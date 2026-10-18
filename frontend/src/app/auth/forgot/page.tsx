@@ -22,7 +22,7 @@ export default function ForgotPasswordPage() {
                 body: { email },
             });
             setSent(true);
-        } catch (err: any) {
+        } catch {
             setError('No encontramos una cuenta con ese correo o hubo un problema. Intenta de nuevo.');
         } finally {
             setLoading(false);

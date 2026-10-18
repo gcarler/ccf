@@ -7,8 +7,8 @@ import { apiFetch } from "@/lib/http";
 export interface TableHistoryEntry {
   rowId: string;
   colId: string;
-  oldValue: any;
-  newValue: any;
+  oldValue: unknown;
+  newValue: unknown;
 }
 
 export interface UseTableViewOptions {
@@ -22,9 +22,9 @@ export function useTableView(options: UseTableViewOptions = {}) {
 
   const [history, setHistory] = useState<TableHistoryEntry[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
-  const optimisticCache = useRef<Map<string, Record<string, any>>>(new Map());
+  const optimisticCache = useRef<Map<string, Record<string, unknown>>>(new Map());
 
-  const recordChange = useCallback((rowId: string, colId: string, oldValue: any, newValue: any) => {
+  const recordChange = useCallback((rowId: string, colId: string, oldValue: unknown, newValue: unknown) => {
     setHistory(prev => [...prev.slice(0, historyIndex + 1), { rowId, colId, oldValue, newValue }]);
     setHistoryIndex(prev => prev + 1);
   }, [historyIndex]);
@@ -43,7 +43,7 @@ export function useTableView(options: UseTableViewOptions = {}) {
     return { rowId: entry.rowId, colId: entry.colId, value: entry.newValue };
   }, [history, historyIndex]);
 
-  const handleChange = useCallback(async (rowId: string, colId: string, newValue: any) => {
+  const handleChange = useCallback(async (rowId: string, colId: string, newValue: unknown) => {
     const oldValue = optimisticCache.current.get(rowId)?.[colId];
     recordChange(rowId, colId, oldValue ?? null, newValue);
 

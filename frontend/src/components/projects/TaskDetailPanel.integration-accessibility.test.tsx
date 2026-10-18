@@ -9,6 +9,7 @@ import TaskDetailPanel from './TaskDetailPanel';
 
 vi.mock('@/context/AuthContext', () => ({
     useAuth: () => ({ token: 'test-token', loading: false }),
+    useOptionalAuth: () => ({ token: 'test-token', loading: false }),
 }));
 
 vi.mock('@/lib/http', () => ({ apiFetch: vi.fn().mockResolvedValue([]) }));

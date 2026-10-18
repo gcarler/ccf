@@ -19,7 +19,7 @@ const meta: Meta<typeof DSModal> = {
 export default meta;
 type Story = StoryObj<typeof DSModal>;
 
-const ModalWithState = (props: any) => {
+const ModalWithState = (props: Omit<React.ComponentProps<typeof DSModal>, 'open' | 'onClose'>) => {
     const [open, setOpen] = useState(false);
     return (
         <>

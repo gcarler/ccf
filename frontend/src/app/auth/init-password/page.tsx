@@ -33,7 +33,7 @@ function InitPasswordContent() {
 
         setLoading(true);
         try {
-            const res = await apiFetch<any>('/v3/auth/initialize-password', {
+            const res = await apiFetch<{ status?: string }>('/v3/auth/initialize-password', {
                 method: 'POST',
                 body: { token, password, password_confirm: confirm },
             });
@@ -43,8 +43,9 @@ function InitPasswordContent() {
             } else {
                 setError('Error al configurar la contraseña');
             }
-        } catch (err: any) {
-            setError(err?.detail || 'Error al configurar la contraseña. El token puede haber expirado.');
+        } catch (err: unknown) {
+            const errObj = err as { detail?: string };
+            setError(errObj?.detail || 'Error al configurar la contraseña. El token puede haber expirado.');
         } finally {
             setLoading(false);
         }

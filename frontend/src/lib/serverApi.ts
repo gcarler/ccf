@@ -26,8 +26,8 @@ export async function serverApiFetch<T>(path: string, init: RequestInit = {}): P
 
   const body = await parseResponse(response);
   if (!response.ok) {
-    const error = new Error('Server API request failed');
-    (error as any).detail = body;
+    const error: Error & { detail?: unknown } = new Error('Server API request failed');
+    error.detail = body;
     throw error;
   }
   return body as T;

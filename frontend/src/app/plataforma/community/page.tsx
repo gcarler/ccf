@@ -207,7 +207,7 @@ export default function CommunityHubPage() {
         ) : cards.length > 0 ? (
           <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {cards.map((card) => (
-              <DSCard key={card.id} className="min-w-0 p-4">
+              <DSCard key={card.id} className="min-w-0 p-[calc(1rem+var(--density-pad-y-delta,0px))]">
                 <article aria-labelledby={`community-card-${card.id}`}>
                   <h3 id={`community-card-${card.id}`} className="break-words text-base font-semibold text-[hsl(var(--text-primary))]">
                     {card.title}
@@ -233,7 +233,7 @@ export default function CommunityHubPage() {
         <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {COMMUNITY_MODULES.map(({ title: moduleTitle, description, icon: Icon, href }) => (
             <Link key={moduleTitle} href={href} className="group min-w-0 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]">
-              <DSCard className="flex h-full min-w-0 items-start gap-3 p-4 transition-colors group-hover:border-[hsl(var(--primary)/0.4)] group-hover:bg-[hsl(var(--surface-2))]">
+              <DSCard className="flex h-full min-w-0 items-start gap-3 p-[calc(1rem+var(--density-pad-y-delta,0px))] transition-colors group-hover:border-[hsl(var(--primary)/0.4)] group-hover:bg-[hsl(var(--surface-2))]">
                 <span className="flex size-9 shrink-0 items-center justify-center rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--primary))]">
                   <Icon size={17} aria-hidden="true" />
                 </span>

@@ -185,8 +185,8 @@ export default function TaskDetailHeader({
 
                     <button
                         onClick={onDeleteTask}
-                        title="Eliminar actividad"
-                        aria-label="Eliminar actividad"
+                        title="Eliminar tarea"
+                        aria-label="Eliminar tarea"
                         className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] transition-all"
                     >
                         <Trash2 size={14} />

@@ -80,7 +80,15 @@ export function useWhiteboardCollab({ projectId, token, canvasRef, userName, can
       };
 
       socket.onmessage = (event) => {
-        let data: any;
+        let data: {
+          type?: string;
+          sender_id?: string;
+          x?: number;
+          y?: number;
+          name?: string;
+          objData?: Record<string, unknown> & { id?: string };
+          objId?: string;
+        };
         try {
           data = JSON.parse(event.data);
         } catch {
@@ -88,30 +96,33 @@ export function useWhiteboardCollab({ projectId, token, canvasRef, userName, can
         }
 
         if (data.type === "cursor") {
-          if (isSelf(data.sender_id)) return;
+          if (!data.sender_id || isSelf(data.sender_id)) return;
+          const senderId = data.sender_id;
           setCursors((prev) => ({
             ...prev,
-            [data.sender_id]: {
-              x: data.x,
-              y: data.y,
-              userId: data.sender_id,
-              userName: data.name,
+            [senderId]: {
+              x: data.x ?? 0,
+              y: data.y ?? 0,
+              userId: senderId,
+              userName: data.name ?? "",
             },
           }));
         } else if (data.type === "object_modified" || data.type === "object_added") {
           if (!data.objData || !data.objData.id) return;
-          if (ignoreNextUpdateIds.current.has(data.objData.id)) {
-            ignoreNextUpdateIds.current.delete(data.objData.id);
+          const objData = data.objData;
+          const objId = data.objData.id;
+          if (ignoreNextUpdateIds.current.has(objId)) {
+            ignoreNextUpdateIds.current.delete(objId);
             return;
           }
-          const existingObj = canvas.getObjects().find((o) => (o as any).id === data.objData.id);
+          const existingObj = canvas.getObjects().find((o) => (o as { id?: string }).id === objId);
           if (existingObj) {
-            existingObj.set(data.objData);
+            existingObj.set(objData);
             existingObj.setCoords();
           } else if (data.type === "object_added") {
             import("fabric").then(({ util }) => {
-              util.enlivenObjects([data.objData]).then((enlivened: any[]) => {
-                const newObj = enlivened[0];
+              util.enlivenObjects([objData]).then((enlivened: unknown[]) => {
+                const newObj = enlivened[0] as Parameters<typeof canvas.add>[0] | undefined;
                 if (newObj) canvas.add(newObj);
               });
             });
@@ -119,7 +130,7 @@ export function useWhiteboardCollab({ projectId, token, canvasRef, userName, can
           canvas.renderAll();
         } else if (data.type === "object_removed") {
           if (!data.objId) return;
-          const existingObj = canvas.getObjects().find((o) => (o as any).id === data.objId);
+          const existingObj = canvas.getObjects().find((o) => (o as { id?: string }).id === data.objId);
           if (existingObj) {
             canvas.remove(existingObj);
             canvas.renderAll();
@@ -178,18 +189,26 @@ export function useWhiteboardCollab({ projectId, token, canvasRef, userName, can
     }, CURSOR_THROTTLE_MS);
   }, [userName]);
 
-  const broadcastObjectUpdate = useCallback((type: "object_modified" | "object_added" | "object_removed", obj: any) => {
-    if (ws.current?.readyState === WebSocket.OPEN) {
-      if (type === "object_removed") {
-        ws.current.send(JSON.stringify({ type, objId: obj.id }));
-      } else {
-        const objData = obj.toJSON ? obj.toJSON() : obj;
-        objData.id = obj.id;
-        ignoreNextUpdateIds.current.add(obj.id);
-        ws.current.send(JSON.stringify({ type, objData }));
+  const broadcastObjectUpdate = useCallback(
+    (
+      type: "object_modified" | "object_added" | "object_removed",
+      obj: { id?: string; toJSON?: () => Record<string, unknown> }
+    ) => {
+      if (ws.current?.readyState === WebSocket.OPEN) {
+        if (type === "object_removed") {
+          ws.current.send(JSON.stringify({ type, objId: obj.id }));
+        } else {
+          const objData: Record<string, unknown> = obj.toJSON
+            ? obj.toJSON()
+            : { ...(obj as unknown as Record<string, unknown>) };
+          objData.id = obj.id;
+          if (obj.id) ignoreNextUpdateIds.current.add(obj.id);
+          ws.current.send(JSON.stringify({ type, objData }));
+        }
       }
-    }
-  }, []);
+    },
+    []
+  );
 
   return {
     cursors,

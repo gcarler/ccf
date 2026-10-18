@@ -2,22 +2,31 @@
 
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 
+export type CreationType = 'task' | 'event' | 'project' | 'doc' | 'reminder' | 'whiteboard' | 'panel';
+
+/** Datos iniciales libres que cada modal interpreta según su tipo. */
+export interface CreationInitialData {
+    initialDate?: string;
+    preset?: string;
+    [key: string]: unknown;
+}
+
 interface CreationContextType {
     isModalOpen: boolean;
-    openModal: (type?: 'task' | 'event' | 'project' | 'doc' | 'reminder' | 'whiteboard' | 'panel', initialData?: any) => void;
+    openModal: (type?: CreationType, initialData?: CreationInitialData) => void;
     closeModal: () => void;
-    defaultType: 'task' | 'event' | 'project' | 'doc' | 'reminder' | 'whiteboard' | 'panel';
-    initialData?: any;
+    defaultType: CreationType;
+    initialData?: CreationInitialData;
 }
 
 const CreationContext = createContext<CreationContextType | undefined>(undefined);
 
 export function CreationProvider({ children }: { children: React.ReactNode }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [defaultType, setDefaultType] = useState<'task' | 'event' | 'project' | 'doc' | 'reminder' | 'whiteboard' | 'panel'>('task');
-    const [initialData, setInitialData] = useState<any>(undefined);
+    const [defaultType, setDefaultType] = useState<CreationType>('task');
+    const [initialData, setInitialData] = useState<CreationInitialData | undefined>(undefined);
 
-    const openModal = useCallback((type: 'task' | 'event' | 'project' | 'doc' | 'reminder' | 'whiteboard' | 'panel' = 'task', data?: any) => {
+    const openModal = useCallback((type: CreationType = 'task', data?: CreationInitialData) => {
         setDefaultType(type);
         setInitialData(data);
         setIsModalOpen(true);

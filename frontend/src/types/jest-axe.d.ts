@@ -2,9 +2,9 @@ declare module 'jest-axe' {
   import { AxeResults } from 'axe-core';
 
   export interface JestAxeConfiguration {
-    globalOptions?: any;
+    globalOptions?: Record<string, unknown>;
     impactLevels?: string[];
-    rules?: any[];
+    rules?: Record<string, unknown>[];
   }
 
   export function axe(

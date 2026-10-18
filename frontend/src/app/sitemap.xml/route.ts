@@ -17,10 +17,10 @@ async function fetchPublishedPages(): Promise<SitemapEntry[]> {
     });
     if (!res.ok) return [];
     const data = await res.json();
-    const items = Array.isArray(data) ? data : data?.items || [];
+    const items: Array<{ status?: string; slug?: string; updated_at?: string }> = Array.isArray(data) ? data : data?.items || [];
     return items
-      .filter((p: any) => p.status === "published" && p.slug)
-      .map((p: any) => ({
+      .filter((p) => p.status === "published" && p.slug)
+      .map((p) => ({
         loc: `${SITE_URL}/${p.slug}`,
         lastmod: p.updated_at ? new Date(p.updated_at).toISOString() : undefined,
         changefreq: "weekly",

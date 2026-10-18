@@ -14,7 +14,7 @@ export interface UseKeyboardNavOptions {
   onCellEdit: (pos: CellPosition) => void;
   onCopy?: (cells: CellPosition[]) => void;
   onPaste?: (pos: CellPosition, data: string[][]) => void;
-  onBulkEdit?: (colId: number, value: any) => void;
+  onBulkEdit?: (colId: number, value: unknown) => void;
 }
 
 export function useKeyboardNav({

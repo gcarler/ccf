@@ -11,7 +11,7 @@ interface User {
     status: 'active' | 'inactive';
 }
 
-const columns: ColumnDef<User, any>[] = [
+const columns: ColumnDef<User, unknown>[] = [
     { accessorKey: 'name', header: 'Nombre' },
     { accessorKey: 'email', header: 'Email' },
     { accessorKey: 'role', header: 'Rol' },
@@ -37,9 +37,11 @@ const sampleData: User[] = [
     { id: '4', name: 'Ana Martínez', email: 'ana@ejemplo.com', role: 'Usuario', status: 'active' },
 ];
 
-const meta: Meta<typeof DSTable> = {
+const UserTable = DSTable<User>;
+
+const meta: Meta<typeof UserTable> = {
     title: 'Design/Table',
-    component: DSTable,
+    component: UserTable,
     parameters: { layout: 'centered' },
     argTypes: {
         sortable: { control: 'boolean' },
@@ -48,19 +50,19 @@ const meta: Meta<typeof DSTable> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof DSTable>;
+type Story = StoryObj<typeof UserTable>;
 
 export const Default: Story = {
     args: {
         data: sampleData,
-        columns: columns as any,
+        columns,
     },
 };
 
 export const WithoutSorting: Story = {
     args: {
         data: sampleData,
-        columns: columns as any,
+        columns,
         sortable: false,
     },
 };
@@ -68,7 +70,7 @@ export const WithoutSorting: Story = {
 export const Compact: Story = {
     args: {
         data: sampleData,
-        columns: columns as any,
+        columns,
         compact: true,
     },
 };
@@ -76,7 +78,7 @@ export const Compact: Story = {
 export const Empty: Story = {
     args: {
         data: [],
-        columns: columns as any,
+        columns,
         emptyMessage: 'No hay usuarios registrados',
     },
 };
@@ -84,8 +86,8 @@ export const Empty: Story = {
 export const WithRowClick: Story = {
     args: {
         data: sampleData,
-        columns: columns as any,
-        onRowClick: (row: any) => console.log('Row clicked:', row),
+        columns,
+        onRowClick: (row: User) => console.log('Row clicked:', row),
     },
 };
 
@@ -98,6 +100,6 @@ export const ManyRows: Story = {
             role: i % 3 === 0 ? 'Admin' : i % 3 === 1 ? 'Usuario' : 'Visor',
             status: i % 2 === 0 ? ('active' as const) : ('inactive' as const),
         })),
-        columns: columns as any,
+        columns,
     },
 };
