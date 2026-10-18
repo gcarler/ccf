@@ -21,7 +21,12 @@ try:
 except ImportError:
     pytest = None
 
-from backend.services.project_evm_service import calculate_project_evm, generate_curve_s_data
+from backend.services.project_evm_service import (
+    ProjectEVMService,
+    analyze_s_curve_velocity,
+    calculate_project_evm,
+    generate_curve_s_data,
+)
 
 
 def _mock_project(
@@ -795,12 +800,67 @@ def test_pmi_vol5_vol6_emv_reserves_cpi_stability_and_sentinel(client, db_sessio
     assert rule_mature["is_irrecoverable_without_rebaseline"] is True
 
 
+def test_analyze_s_curve_velocity_trends_and_integration():
+    """Verifica el analizador de velocidad marginal, punto de inflexión y tendencia de la Curva S (PMBOK §7.4.2.3)."""
+    empty_res = analyze_s_curve_velocity([])
+    assert empty_res == {
+        "points_count": 0,
+        "peak_ev_delta": 0.0,
+        "peak_ac_delta": 0.0,
+        "peak_period_label": None,
+        "final_sv": 0.0,
+        "final_cv": 0.0,
+        "trend_direction": "flat",
+    }
+
+    accel_points = [
+        {"label": "P1", "pv": 0.0, "ev": 0.0, "ac": 0.0},
+        {"label": "P2", "pv": 15000.0, "ev": 10000.0, "ac": 12000.0},
+        {"label": "P3", "pv": 40000.0, "ev": 35000.0, "ac": 36000.0},
+        {"label": "P4", "pv": 75000.0, "ev": 80000.0, "ac": 78000.0},
+    ]
+    accel_res = analyze_s_curve_velocity(accel_points)
+    assert accel_res["points_count"] == 4
+    assert accel_res["trend_direction"] == "accelerating"
+    assert accel_res["peak_ev_delta"] == 45000.0
+    assert accel_res["peak_ac_delta"] == 42000.0
+    assert accel_res["peak_period_label"] == "P4"
+    assert accel_res["final_sv"] == 5000.0
+    assert accel_res["final_cv"] == 2000.0
+
+    decel_points = [
+        {"label": "P1", "pv": 0.0, "ev": 0.0, "ac": 0.0},
+        {"label": "P2", "pv": 45000.0, "ev": 50000.0, "ac": 48000.0},
+        {"label": "P3", "pv": 70000.0, "ev": 70000.0, "ac": 72000.0},
+        {"label": "P4", "pv": 85000.0, "ev": 75000.0, "ac": 80000.0},
+    ]
+    decel_res = analyze_s_curve_velocity(decel_points)
+    assert decel_res["points_count"] == 4
+    assert decel_res["trend_direction"] == "decelerating"
+    assert decel_res["peak_ev_delta"] == 50000.0
+    assert decel_res["peak_period_label"] == "P2"
+    assert decel_res["final_sv"] == -10000.0
+    assert decel_res["final_cv"] == -5000.0
+
+    db = MagicMock()
+    db.query().filter().all.return_value = []
+    db.query().filter().order_by().all.return_value = []
+    proj = _mock_project(budget_allocated=100000.0, budget_spent=40000.0, manual_progress=40.0)
+    generated_points = generate_curve_s_data(db, proj, points_count=8)
+    integrated_res = ProjectEVMService.analyze_s_curve_velocity(generated_points)
+    assert integrated_res["points_count"] >= 1
+    assert integrated_res["peak_ev_delta"] > 0.0
+    assert integrated_res["peak_period_label"] is not None
+    assert integrated_res["trend_direction"] in {"accelerating", "decelerating", "steady"}
+
+
 if __name__ == "__main__":
     test_evm_balanced_project()
     test_evm_cost_overrun_critical()
     test_evm_cost_efficient()
     test_evm_zero_cost_edge_case()
     test_curve_s_generation()
+    test_analyze_s_curve_velocity_trends_and_integration()
     print("✅ All EVM tests passed successfully!")
 
 

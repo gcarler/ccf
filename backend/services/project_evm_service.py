@@ -2911,6 +2911,82 @@ def evaluate_work_package_efficiency(
     }
 
 
+def analyze_s_curve_velocity(points: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Analiza la velocidad marginal, el punto de inflexión y la dirección de tendencia de la Curva S (PMBOK §7.4.2.3)."""
+    if not points:
+        return {
+            "points_count": 0,
+            "peak_ev_delta": 0.0,
+            "peak_ac_delta": 0.0,
+            "peak_period_label": None,
+            "final_sv": 0.0,
+            "final_cv": 0.0,
+            "trend_direction": "flat",
+        }
+
+    valid_points = [
+        pt for pt in points if pt.get("ev") is not None and pt.get("ac") is not None
+    ]
+    if not valid_points:
+        valid_points = points
+
+    ev_deltas: List[float] = []
+    ac_deltas: List[float] = []
+    for i, pt in enumerate(valid_points):
+        curr_ev = _safe_float(pt.get("ev"), 0.0)
+        curr_ac = _safe_float(pt.get("ac"), 0.0)
+        if i == 0:
+            ev_deltas.append(max(0.0, curr_ev))
+            ac_deltas.append(max(0.0, curr_ac))
+        else:
+            prev_ev = _safe_float(valid_points[i - 1].get("ev"), 0.0)
+            prev_ac = _safe_float(valid_points[i - 1].get("ac"), 0.0)
+            ev_deltas.append(max(0.0, curr_ev - prev_ev))
+            ac_deltas.append(max(0.0, curr_ac - prev_ac))
+
+    raw_max_ev = max(ev_deltas, default=0.0)
+    peak_ev_delta = round(raw_max_ev, 2)
+    peak_ac_delta = round(max(ac_deltas, default=0.0), 2)
+
+    peak_period_label: Optional[str] = None
+    if peak_ev_delta > 0.0:
+        for idx, delta in enumerate(ev_deltas):
+            if abs(delta - raw_max_ev) < 1e-9:
+                peak_period_label = str(valid_points[idx].get("label"))
+                break
+
+    last_pt = valid_points[-1]
+    last_pv = _safe_float(last_pt.get("pv"), 0.0)
+    last_ev = _safe_float(last_pt.get("ev"), 0.0)
+    last_ac = _safe_float(last_pt.get("ac"), 0.0)
+    final_sv = round(last_ev - last_pv, 2)
+    final_cv = round(last_ev - last_ac, 2)
+
+    if last_ev <= 0.0 or peak_ev_delta == 0.0:
+        trend_direction = "flat"
+    elif len(ev_deltas) >= 2:
+        avg_delta = sum(ev_deltas) / len(ev_deltas)
+        last_delta = ev_deltas[-1]
+        if last_delta > avg_delta + 1e-6:
+            trend_direction = "accelerating"
+        elif last_delta < avg_delta - 1e-6:
+            trend_direction = "decelerating"
+        else:
+            trend_direction = "steady"
+    else:
+        trend_direction = "steady"
+
+    return {
+        "points_count": len(valid_points),
+        "peak_ev_delta": peak_ev_delta,
+        "peak_ac_delta": peak_ac_delta,
+        "peak_period_label": peak_period_label,
+        "final_sv": final_sv,
+        "final_cv": final_cv,
+        "trend_direction": trend_direction,
+    }
+
+
 class ProjectEVMService:
     """Fachada canónica del servicio EVM y Diagnóstico Predictivo PMI (Vol. 5 y Vol. 6)."""
 
@@ -2986,10 +3062,11 @@ class ProjectEVMService:
         return generate_curve_s_data(db, project, points_count=points_count)
 
     @staticmethod
+    def analyze_s_curve_velocity(points: List[Dict[str, Any]]) -> Dict[str, Any]:
+        return analyze_s_curve_velocity(points)
+
+    @staticmethod
     def build_project_execution_matrix(
         db: Session, project: Project, now: Optional[datetime.datetime] = None
     ) -> Dict[str, Any]:
         return build_project_execution_matrix(db, project, now=now)
-
-
-

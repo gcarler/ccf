@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import uuid
 from datetime import datetime, timezone
 from typing import Annotated, Any, Dict, List, Literal, Optional
@@ -2254,3 +2255,46 @@ class ProjectDodAcceptance(BaseModel):
     coq_classification: Optional[str] = None
     coq_amount: Optional[float] = None
     model_config = orm_config
+
+
+# ============================================================================
+# Helpers PMI: WBS (Vol. 6 §5.3) y Matriz de Riesgos 5x5 (Vol. 6 §11.3)
+# ============================================================================
+
+
+def normalize_wbs_component_code(code: Optional[str]) -> Optional[str]:
+    """Normaliza el código de componente WBS (PMI): `edt 1.1` → `EDT-1.1`.
+
+    - `None` → `None`; espacios internos → `-`; mayúsculas; vacío → `None`.
+    - Los guiones bajos del código se conservan (`cmp_02` → `CMP_02`).
+    """
+    if code is None:
+        return None
+    stripped = re.sub(r"\s+", "-", str(code).strip()).upper()
+    return stripped if stripped else None
+
+
+def validate_pmi_severity_matrix_bounds(probability: int, impact: int) -> dict:
+    """Clampa y puntúa un riesgo en la matriz 5x5 de PMI (probabilidad × impact).
+
+    Ambas entradas se reclaman al rango 1..5 (default 1 al ser inválidas/0).
+    Banda de severidad: 'critical' (score ≥ 15), 'high' (≥ 10),
+    'moderate' (≥ 5) y 'low' en el resto.
+    """
+    p = max(1, min(5, int(probability or 1)))
+    i = max(1, min(5, int(impact or 1)))
+    score = p * i
+    if score >= 15:
+        severity_band = "critical"
+    elif score >= 10:
+        severity_band = "high"
+    elif score >= 5:
+        severity_band = "moderate"
+    else:
+        severity_band = "low"
+    return {
+        "probability": p,
+        "impact": i,
+        "severity_score": score,
+        "severity_band": severity_band,
+    }
