@@ -1694,6 +1694,106 @@ def summarize_projects_deprecation_and_sunset_hygiene(
     }
 
 
+def summarize_projects_error_response_contract_hygiene(
+    openapi_schema: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Audita la documentación de respuestas de error (4xx/5xx/default) en endpoints /api/projects o /projects."""
+    if not isinstance(openapi_schema, Mapping):
+        return {
+            "evaluated_operation_count": 0,
+            "ops_with_error_responses": [],
+            "ops_missing_all_error_responses": [],
+            "parameterized_ops_missing_404": [],
+            "input_ops_missing_validation_error": [],
+            "undescribed_error_responses": [],
+            "is_hygienic": True,
+        }
+
+    evaluated_operation_count = 0
+    ops_with_error_responses: list[str] = []
+    ops_missing_all_error_responses: list[str] = []
+    parameterized_ops_missing_404: list[str] = []
+    input_ops_missing_validation_error: list[str] = []
+    undescribed_error_responses: list[str] = []
+
+    paths = openapi_schema.get("paths")
+    if isinstance(paths, Mapping):
+        for path, path_item in sorted(paths.items()):
+            if not isinstance(path, str) or not (
+                path.startswith("/api/projects") or path.startswith("/projects")
+            ):
+                continue
+            if not isinstance(path_item, Mapping):
+                continue
+
+            for method in ("get", "post", "put", "patch", "delete"):
+                op = path_item.get(method)
+                if not isinstance(op, Mapping):
+                    continue
+
+                evaluated_operation_count += 1
+                op_key = f"{method.upper()} {path}"
+                raw_responses = (
+                    op.get("responses")
+                    if isinstance(op.get("responses"), Mapping)
+                    else {}
+                )
+                responses = {str(k): v for k, v in raw_responses.items()}
+
+                has_error = any(
+                    code.startswith(("4", "5")) or code == "default"
+                    for code in responses.keys()
+                )
+                if has_error:
+                    ops_with_error_responses.append(op_key)
+                else:
+                    ops_missing_all_error_responses.append(op_key)
+
+                if (
+                    "{" in path
+                    and "}" in path
+                    and "404" not in responses
+                    and "default" not in responses
+                ):
+                    parameterized_ops_missing_404.append(op_key)
+
+                if (
+                    (
+                        isinstance(op.get("requestBody"), Mapping)
+                        or bool(op.get("parameters"))
+                    )
+                    and "422" not in responses
+                    and "400" not in responses
+                    and "default" not in responses
+                ):
+                    input_ops_missing_validation_error.append(op_key)
+
+                for code, resp_obj in responses.items():
+                    if str(code).startswith(("4", "5")):
+                        if (
+                            isinstance(resp_obj, Mapping)
+                            and not str(resp_obj.get("description") or "").strip()
+                        ):
+                            undescribed_error_responses.append(
+                                f"{op_key}:{code}"
+                            )
+
+    is_hygienic = (
+        len(ops_missing_all_error_responses) == 0
+        and len(undescribed_error_responses) == 0
+    )
+
+    return {
+        "evaluated_operation_count": evaluated_operation_count,
+        "ops_with_error_responses": ops_with_error_responses,
+        "ops_missing_all_error_responses": ops_missing_all_error_responses,
+        "parameterized_ops_missing_404": parameterized_ops_missing_404,
+        "input_ops_missing_validation_error": input_ops_missing_validation_error,
+        "undescribed_error_responses": undescribed_error_responses,
+        "is_hygienic": is_hygienic,
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()

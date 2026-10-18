@@ -3000,3 +3000,142 @@ def test_deprecation_and_sunset_hygiene_empty_and_live_openapi():
     assert live_res["deprecated_missing_migration_guide_ops"] == []
     assert live_res["inconsistent_sunset_on_active_ops"] == []
     assert live_res["is_hygienic"] is True
+
+
+def test_error_response_contract_hygiene_compliant():
+    """Endpoints con errores 404/422 descritos (is_hygienic=True)."""
+    schema = {
+        "paths": {
+            "/api/projects": {
+                "post": {
+                    "requestBody": {"content": {"application/json": {}}},
+                    "responses": {
+                        "201": {"description": "Created"},
+                        "422": {"description": "Validation Error"},
+                    },
+                }
+            },
+            "/projects/{project_id}": {
+                "get": {
+                    "parameters": [{"name": "project_id", "in": "path"}],
+                    "responses": {
+                        "200": {"description": "OK"},
+                        "404": {"description": "Not Found"},
+                        "422": {"description": "Validation Error"},
+                    },
+                }
+            },
+            "/api/other": {
+                "get": {
+                    "responses": {"200": {"description": "OK"}}
+                }
+            },
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_error_response_contract_hygiene(
+        schema
+    )
+    assert res == {
+        "evaluated_operation_count": 2,
+        "ops_with_error_responses": [
+            "POST /api/projects",
+            "GET /projects/{project_id}",
+        ],
+        "ops_missing_all_error_responses": [],
+        "parameterized_ops_missing_404": [],
+        "input_ops_missing_validation_error": [],
+        "undescribed_error_responses": [],
+        "is_hygienic": True,
+    }
+
+
+def test_error_response_contract_hygiene_missing_all_error_responses():
+    """Endpoints sin ninguna respuesta de error (ops_missing_all_error_responses, is_hygienic=False)."""
+    schema = {
+        "paths": {
+            "/api/projects/health": {
+                "get": {
+                    "responses": {"200": {"description": "Healthy"}}
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_error_response_contract_hygiene(
+        schema
+    )
+    assert res["evaluated_operation_count"] == 1
+    assert res["ops_with_error_responses"] == []
+    assert res["ops_missing_all_error_responses"] == [
+        "GET /api/projects/health"
+    ]
+    assert res["is_hygienic"] is False
+
+
+def test_error_response_contract_hygiene_missing_404_validation_and_undescribed():
+    """Detección de parameterized_ops_missing_404, input_ops_missing_validation_error y undescribed_error_responses (is_hygienic=False)."""
+    schema = {
+        "paths": {
+            "/api/projects/{project_id}": {
+                "patch": {
+                    "parameters": [{"name": "project_id", "in": "path"}],
+                    "requestBody": {"content": {"application/json": {}}},
+                    "responses": {
+                        "200": {"description": "Updated"},
+                        "403": {"description": "   "},
+                        "500": {"description": "Internal Server Error"},
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_error_response_contract_hygiene(
+        schema
+    )
+    assert res["ops_with_error_responses"] == [
+        "PATCH /api/projects/{project_id}"
+    ]
+    assert res["parameterized_ops_missing_404"] == [
+        "PATCH /api/projects/{project_id}"
+    ]
+    assert res["input_ops_missing_validation_error"] == [
+        "PATCH /api/projects/{project_id}"
+    ]
+    assert res["undescribed_error_responses"] == [
+        "PATCH /api/projects/{project_id}:403"
+    ]
+    assert res["is_hygienic"] is False
+
+
+def test_error_response_contract_hygiene_empty_and_live_openapi():
+    """Esquema OpenAPI en vivo de la app FastAPI y manejo de schema vacío/None."""
+    empty_expected = {
+        "evaluated_operation_count": 0,
+        "ops_with_error_responses": [],
+        "ops_missing_all_error_responses": [],
+        "parameterized_ops_missing_404": [],
+        "input_ops_missing_validation_error": [],
+        "undescribed_error_responses": [],
+        "is_hygienic": True,
+    }
+    assert (
+        audit_projects_api_contracts.summarize_projects_error_response_contract_hygiene(
+            None
+        )
+        == empty_expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_error_response_contract_hygiene(
+            {}
+        )
+        == empty_expected
+    )
+
+    from backend.app import app
+
+    live_res = (
+        audit_projects_api_contracts.summarize_projects_error_response_contract_hygiene(
+            app.openapi()
+        )
+    )
+    assert live_res["evaluated_operation_count"] > 0
+    assert live_res["undescribed_error_responses"] == []
