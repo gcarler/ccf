@@ -7546,3 +7546,155 @@ def test_audit_executive_report_regulatory_and_data_privacy_empty_and_binding():
     )
 
 
+def test_audit_executive_report_finops_cloud_cost_optimal():
+    """Caso 1: Workloads dentro de costo unitario, buena utilización (>= 40%), cobertura RI >= 60% y gasto sin etiqueta <= 5% -> OPTIMAL."""
+    from backend.services.project_export_service import (
+        audit_executive_report_finops_cloud_cost_and_idle_capacity,
+    )
+
+    workloads = [
+        {
+            "workload_id": "WKL-API",
+            "monthly_baseline_cost": 5000.0,
+            "monthly_actual_cost": 5200.0,
+            "baseline_unit_cost": 0.10,
+            "actual_unit_cost": 0.11,  # +10% <= 15%
+            "avg_utilization_pct": 65.0,
+            "commitment_coverage_pct": 75.0,
+            "untagged_spend_amount": 100.0,
+        },
+        {
+            "workload_id": "WKL-DB",
+            "monthly_baseline_cost": 3000.0,
+            "monthly_actual_cost": 2800.0,
+            "baseline_unit_cost": 0.50,
+            "actual_unit_cost": 0.48,
+            "avg_utilization_pct": 55.0,
+            "commitment_coverage_pct": 80.0,
+            "untagged_spend_amount": 60.0,  # total untagged = 160 / 8000 = 2.0%
+        },
+    ]
+    res = audit_executive_report_finops_cloud_cost_and_idle_capacity(workloads)
+    assert res["total_workloads"] == 2
+    assert res["total_baseline_cost"] == 8000.0
+    assert res["total_actual_cost"] == 8000.0
+    assert res["total_untagged_spend"] == 160.0
+    assert res["untagged_spend_share_pct"] == 2.0
+    assert res["estimated_monthly_waste"] == 160.0
+    assert res["unit_cost_drift_workload_ids"] == []
+    assert res["idle_capacity_workload_ids"] == []
+    assert res["low_commitment_workload_ids"] == []
+    assert res["finops_governance_status"] == "OPTIMAL"
+    assert res["recommendations"] == []
+
+
+def test_audit_executive_report_finops_cloud_cost_warning():
+    """Caso 2: Capacidad ociosa (< 40%) o baja cobertura RI (< 60%) sin sobrepaso crítico -> WARNING."""
+    from backend.services.project_export_service import (
+        audit_executive_report_finops_cloud_cost_and_idle_capacity,
+    )
+
+    workloads = [
+        {
+            "workload_id": "WKL-DEV",
+            "monthly_baseline_cost": 2000.0,
+            "monthly_actual_cost": 2000.0,
+            "baseline_unit_cost": 1.0,
+            "actual_unit_cost": 1.05,
+            "avg_utilization_pct": 15.0,  # < 40% -> waste = 2000 * (40-15)/100 = 500
+            "commitment_coverage_pct": 30.0,  # < 60%
+            "untagged_spend_amount": 50.0,
+        }
+    ]
+    res = audit_executive_report_finops_cloud_cost_and_idle_capacity(workloads)
+    assert res["total_workloads"] == 1
+    assert res["idle_capacity_workload_ids"] == ["WKL-DEV"]
+    assert res["low_commitment_workload_ids"] == ["WKL-DEV"]
+    assert res["estimated_monthly_waste"] == 550.0
+    assert res["finops_governance_status"] == "WARNING"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_executive_report_finops_cloud_cost_critical():
+    """Caso 3: Costo total > 1.2x baseline, gasto sin etiqueta > 15% o >= 2 workloads con deriva de costo unitario -> CRITICAL."""
+    from backend.services.project_export_service import (
+        audit_executive_report_finops_cloud_cost_and_idle_capacity,
+    )
+
+    workloads = [
+        {
+            "workload_id": "WKL-ML-1",
+            "monthly_baseline_cost": 4000.0,
+            "monthly_actual_cost": 5500.0,
+            "baseline_unit_cost": 1.0,
+            "actual_unit_cost": 1.30,  # +30% > 15%
+            "avg_utilization_pct": 50.0,
+            "commitment_coverage_pct": 70.0,
+            "untagged_spend_amount": 1200.0,
+        },
+        {
+            "workload_id": "WKL-ML-2",
+            "monthly_baseline_cost": 2000.0,
+            "monthly_actual_cost": 2500.0,
+            "baseline_unit_cost": 2.0,
+            "actual_unit_cost": 2.60,  # +30% > 15%
+            "avg_utilization_pct": 45.0,
+            "commitment_coverage_pct": 65.0,
+            "untagged_spend_amount": 400.0,  # 1600 / 8000 = 20% > 15%
+        },
+    ]
+    res = audit_executive_report_finops_cloud_cost_and_idle_capacity(workloads)
+    assert res["total_workloads"] == 2
+    assert res["unit_cost_drift_workload_ids"] == ["WKL-ML-1", "WKL-ML-2"]
+    assert res["untagged_spend_share_pct"] == 20.0
+    assert res["finops_governance_status"] == "CRITICAL"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_executive_report_finops_cloud_cost_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en ProjectExportService + __all__."""
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_finops_cloud_cost_and_idle_capacity,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_executive_report_finops_cloud_cost_and_idle_capacity(payload)  # type: ignore[arg-type]
+        assert empty["total_workloads"] == 0
+        assert empty["total_baseline_cost"] == 0.0
+        assert empty["total_actual_cost"] == 0.0
+        assert empty["total_untagged_spend"] == 0.0
+        assert empty["untagged_spend_share_pct"] == 0.0
+        assert empty["estimated_monthly_waste"] == 0.0
+        assert empty["unit_cost_drift_workload_ids"] == []
+        assert empty["idle_capacity_workload_ids"] == []
+        assert empty["low_commitment_workload_ids"] == []
+        assert empty["finops_governance_status"] == "OPTIMAL"
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "workload_id": "WKL-99",
+            "monthly_baseline_cost": 1000.0,
+            "monthly_actual_cost": 1000.0,
+            "baseline_unit_cost": 1.0,
+            "actual_unit_cost": 1.0,
+            "avg_utilization_pct": 80.0,
+            "commitment_coverage_pct": 90.0,
+            "untagged_spend_amount": 0.0,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_finops_cloud_cost_and_idle_capacity(
+            sample
+        )
+        == audit_executive_report_finops_cloud_cost_and_idle_capacity(sample)
+    )
+    assert (
+        "audit_executive_report_finops_cloud_cost_and_idle_capacity"
+        in mod.__all__
+    )
+
+
+

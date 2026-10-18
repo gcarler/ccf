@@ -3022,6 +3022,7 @@ __all__ = [
     "audit_markdown_footnote_reference_and_definition_hygiene",
     "audit_markdown_acronym_and_glossary_first_use_hygiene",
     "audit_markdown_mermaid_diagram_syntax_hygiene",
+    "audit_markdown_code_fence_and_secret_leak_hygiene",
     "AnydocService",
 ]
 
@@ -6587,6 +6588,158 @@ AnyDocService.audit_markdown_task_list_action_item_hygiene = staticmethod(
 AnydocService.audit_markdown_task_list_action_item_hygiene = staticmethod(
     audit_markdown_task_list_action_item_hygiene
 )
+
+
+def audit_markdown_code_fence_and_secret_leak_hygiene(
+    markdown_text: str | None,
+    *,
+    max_code_block_lines: int = 120,
+) -> dict[str, Any]:
+    """Audita bloques de código cercados (etiqueta de lenguaje, cierre, longitud) y fugas de secretos en Markdown (PMI PMBOK §4.4 / §10.2)."""
+    if not isinstance(markdown_text, str) or not markdown_text.strip():
+        return {
+            "total_code_blocks": 0,
+            "tagged_code_blocks": 0,
+            "untagged_code_block_lines": [],
+            "unclosed_code_block_line": None,
+            "oversized_code_block_lines": [],
+            "potential_secret_leak_lines": [],
+            "code_hygiene_status": "CLEAN",
+            "recommendations": [],
+        }
+
+    max_lines = int(max_code_block_lines if max_code_block_lines is not None else 120)
+    fence_open_re = re.compile(r"^\s*(`{3,}|~{3,})\s*([A-Za-z0-9_+-]+)?.*$")
+    direct_secret_re = re.compile(
+        r"(?:BEGIN\s+(?:RSA|OPENSSH|DSA|EC|PRIVATE)\s+PRIVATE\s+KEY|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9]{20,})"
+    )
+    assign_secret_re = re.compile(
+        r"""\b(?:password|api_key|secret_key|access_token)\s*=\s*["']([^"'<>{}$]{8,})["']""",
+        re.IGNORECASE,
+    )
+    placeholder_tokens = {
+        "your_api_key",
+        "changeme",
+        "example",
+        "placeholder",
+        "dummy",
+        "redacted",
+        "none",
+        "null",
+    }
+
+    lines = markdown_text.splitlines()
+    in_fence = False
+    fence_char = ""
+    fence_len = 0
+    block_start_line = 0
+    block_content_count = 0
+
+    total_code_blocks = 0
+    tagged_code_blocks = 0
+    untagged_code_block_lines: list[int] = []
+    oversized_code_block_lines: list[int] = []
+    potential_secret_leak_lines: list[int] = []
+    recommendations: list[str] = []
+
+    for idx, raw_line in enumerate(lines, start=1):
+        stripped = raw_line.strip()
+
+        leaked = False
+        if direct_secret_re.search(raw_line):
+            leaked = True
+        else:
+            for m_sec in assign_secret_re.finditer(raw_line):
+                val = m_sec.group(1).strip()
+                val_lower = val.lower()
+                if (
+                    not set(val) <= {"*"}
+                    and not any(tok in val_lower for tok in placeholder_tokens)
+                ):
+                    leaked = True
+                    break
+        if leaked:
+            potential_secret_leak_lines.append(idx)
+
+        if not in_fence:
+            m = fence_open_re.match(raw_line)
+            if m:
+                token = m.group(1)
+                lang = (m.group(2) or "").strip()
+                in_fence = True
+                fence_char = token[0]
+                fence_len = len(token)
+                block_start_line = idx
+                block_content_count = 0
+                total_code_blocks += 1
+                if lang:
+                    tagged_code_blocks += 1
+                else:
+                    untagged_code_block_lines.append(idx)
+        else:
+            if (
+                stripped.startswith(fence_char * fence_len)
+                and set(stripped) == {fence_char}
+            ):
+                if block_content_count > max_lines:
+                    oversized_code_block_lines.append(block_start_line)
+                in_fence = False
+                fence_char = ""
+                fence_len = 0
+                block_start_line = 0
+                block_content_count = 0
+            else:
+                block_content_count += 1
+
+    unclosed_code_block_line: int | None = None
+    if in_fence:
+        unclosed_code_block_line = block_start_line
+        if block_content_count > max_lines:
+            oversized_code_block_lines.append(block_start_line)
+
+    if potential_secret_leak_lines:
+        recommendations.append(
+            f"Revocar y reemplazar secretos expuestos en líneas {potential_secret_leak_lines} por variables de entorno o placeholders."
+        )
+    if unclosed_code_block_line is not None:
+        recommendations.append(
+            f"Cerrar el bloque de código iniciado en la línea {unclosed_code_block_line}."
+        )
+    if untagged_code_block_lines:
+        recommendations.append(
+            f"Añadir identificador de lenguaje a los bloques cercados en líneas {untagged_code_block_lines}."
+        )
+    if oversized_code_block_lines:
+        recommendations.append(
+            f"Modularizar o resumir bloques de código que superan {max_lines} líneas en {oversized_code_block_lines}."
+        )
+
+    if potential_secret_leak_lines or unclosed_code_block_line is not None:
+        code_hygiene_status = "CRITICAL"
+    elif untagged_code_block_lines or oversized_code_block_lines:
+        code_hygiene_status = "WARNING"
+    else:
+        code_hygiene_status = "CLEAN"
+
+    return {
+        "total_code_blocks": total_code_blocks,
+        "tagged_code_blocks": tagged_code_blocks,
+        "untagged_code_block_lines": untagged_code_block_lines,
+        "unclosed_code_block_line": unclosed_code_block_line,
+        "oversized_code_block_lines": oversized_code_block_lines,
+        "potential_secret_leak_lines": potential_secret_leak_lines,
+        "code_hygiene_status": code_hygiene_status,
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_markdown_code_fence_and_secret_leak_hygiene = staticmethod(
+    audit_markdown_code_fence_and_secret_leak_hygiene
+)
+AnydocService.audit_markdown_code_fence_and_secret_leak_hygiene = staticmethod(
+    audit_markdown_code_fence_and_secret_leak_hygiene
+)
+
 
 
 

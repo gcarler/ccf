@@ -7025,3 +7025,196 @@ def test_audit_team_tuckman_maturity_empty_and_binding():
     )
 
 
+
+
+def test_audit_project_premortem_early_warning_triggered_precedence():
+    """Caso 1: señal disparada domina sobre kill-switch ausente -> EARLY_WARNING_TRIGGERED."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_premortem_scenarios_and_kill_switch_criteria,
+    )
+
+    res = audit_project_premortem_scenarios_and_kill_switch_criteria(
+        [
+            {
+                "scenario_id": "SC-01",
+                "failure_mode_description": "Baja retención y abandono masivo de estudiantes en cohorte inicial",
+                "early_warning_signal": "Asistencia semanal < 60%",
+                "preventive_countermeasure": "Plan de re-engagement con líderes de célula",
+                "signal_currently_triggered": True,
+                "owner_id": "U-100",
+            },
+            {
+                "scenario_id": "SC-02",
+                "failure_mode_description": "Corte de presupuesto del ministerio",
+                "early_warning_signal": None,
+                "preventive_countermeasure": "Fondo de contingencia",
+                "signal_currently_triggered": False,
+                "owner_id": "U-200",
+            },
+        ],
+        has_explicit_project_kill_switch_criteria=False,
+    )
+    assert res["total_scenarios"] == 2
+    assert res["missing_signal_or_countermeasure_ids"] == ["SC-02"]
+    assert res["triggered_early_warning_ids"] == ["SC-01"]
+    assert res["insufficient_scenario_depth"] is True
+    assert res["premortem_governance_status"] == "EARLY_WARNING_TRIGGERED"
+    assert res["is_premortem_ready"] is False
+
+
+def test_audit_project_premortem_incomplete_negative_precedences():
+    """Caso 2: sin señales disparadas, kill-switch ausente / profundidad insuficiente / gaps -> INCOMPLETE_PREMORTEM."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_premortem_scenarios_and_kill_switch_criteria,
+    )
+
+    res_no_killswitch = audit_project_premortem_scenarios_and_kill_switch_criteria(
+        [],
+        has_explicit_project_kill_switch_criteria=False,
+        min_required_scenarios=3,
+    )
+    assert res_no_killswitch["total_scenarios"] == 0
+    assert res_no_killswitch["insufficient_scenario_depth"] is True
+    assert res_no_killswitch["premortem_governance_status"] == "INCOMPLETE_PREMORTEM"
+    assert res_no_killswitch["is_premortem_ready"] is False
+
+    res_depth = audit_project_premortem_scenarios_and_kill_switch_criteria(
+        [
+            {
+                "scenario_id": "SC-01",
+                "failure_mode_description": "Voluntarios clave abandonan",
+                "early_warning_signal": "Turnos sin cubrir",
+                "preventive_countermeasure": "Bench de voluntarios",
+                "signal_currently_triggered": False,
+                "owner_id": "U-300",
+            },
+            {
+                "scenario_id": "SC-02",
+                "failure_mode_description": "Ciberataque bloquea la plataforma",
+                "early_warning_signal": "Alertas SOC",
+                "preventive_countermeasure": "Plan DR",
+                "signal_currently_triggered": False,
+                "owner_id": "U-400",
+            },
+        ],
+        min_required_scenarios=3,
+    )
+    assert res_depth["total_scenarios"] == 2
+    assert res_depth["insufficient_scenario_depth"] is True
+    assert res_depth["missing_signal_or_countermeasure_ids"] == []
+    assert res_depth["premortem_governance_status"] == "INCOMPLETE_PREMORTEM"
+
+    res_gaps = audit_project_premortem_scenarios_and_kill_switch_criteria(
+        [
+            {
+                "scenario_id": "SC-01",
+                "failure_mode_description": "Escenario sin contramedida",
+                "early_warning_signal": "Signal",
+                "preventive_countermeasure": None,
+                "signal_currently_triggered": False,
+                "owner_id": "U-500",
+            }
+        ],
+        min_required_scenarios=1,
+    )
+    assert res_gaps["missing_signal_or_countermeasure_ids"] == ["SC-01"]
+    assert res_gaps["premortem_governance_status"] == "INCOMPLETE_PREMORTEM"
+
+
+def test_audit_project_premortem_prepared_full_compliance():
+    """Caso 3: escenarios completos sin señales disparadas con kill-switch -> PREPARED."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_premortem_scenarios_and_kill_switch_criteria,
+    )
+
+    res = audit_project_premortem_scenarios_and_kill_switch_criteria(
+        [
+            {
+                "scenario_id": "SC-01",
+                "failure_mode_description": "Voluntarios clave abandonan",
+                "early_warning_signal": "Turnos sin cubrir",
+                "preventive_countermeasure": "Bench de voluntarios",
+                "signal_currently_triggered": False,
+                "owner_id": "U-300",
+            },
+            {
+                "scenario_id": "SC-02",
+                "failure_mode_description": "Ciberataque bloquea la plataforma",
+                "early_warning_signal": "Alertas SOC",
+                "preventive_countermeasure": "Plan DR",
+                "signal_currently_triggered": False,
+                "owner_id": "U-400",
+            },
+            {
+                "scenario_id": "SC-03",
+                "failure_mode_description": "Sede bloquea plazos de entrega",
+                "early_warning_signal": "SLA sin respuesta",
+                "preventive_countermeasure": "Plan A de migración estable",
+                "signal_currently_triggered": False,
+                "owner_id": "U-500",
+            },
+        ],
+        has_explicit_project_kill_switch_criteria=True,
+        min_required_scenarios=3,
+    )
+    assert res["total_scenarios"] == 3
+    assert res["missing_signal_or_countermeasure_ids"] == []
+    assert res["triggered_early_warning_ids"] == []
+    assert res["insufficient_scenario_depth"] is False
+    assert res["premortem_governance_status"] == "PREPARED"
+    assert res["is_premortem_ready"] is True
+
+
+def test_audit_project_premortem_invalid_entries_and_binding():
+    """Caso 4: entradas no-lista/no-dict y binding + __all__."""
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_project_premortem_scenarios_and_kill_switch_criteria,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_project_premortem_scenarios_and_kill_switch_criteria(
+            payload,  # type: ignore[arg-type]
+            min_required_scenarios=3,
+        )
+        assert empty["total_scenarios"] == 0
+        assert empty["missing_signal_or_countermeasure_ids"] == []
+        assert empty["triggered_early_warning_ids"] == []
+        assert empty["insufficient_scenario_depth"] is True
+        assert empty["premortem_governance_status"] == "INCOMPLETE_PREMORTEM"
+        assert empty["is_premortem_ready"] is False
+
+    sample = [
+        {
+            "scenario_id": "SC-01",
+            "failure_mode_description": "x",
+            "early_warning_signal": "s",
+            "preventive_countermeasure": "c",
+            "signal_currently_triggered": False,
+            "owner_id": "U-1",
+        },
+        {
+            "scenario_id": "SC-02",
+            "failure_mode_description": "x",
+            "early_warning_signal": "s",
+            "preventive_countermeasure": "c",
+            "signal_currently_triggered": False,
+            "owner_id": "U-2",
+        },
+        {
+            "scenario_id": "SC-03",
+            "failure_mode_description": "x",
+            "early_warning_signal": "s",
+            "preventive_countermeasure": "c",
+            "signal_currently_triggered": False,
+            "owner_id": "U-3",
+        },
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_project_premortem_scenarios_and_kill_switch_criteria(
+            sample
+        )
+        == audit_project_premortem_scenarios_and_kill_switch_criteria(sample)
+    )
+    assert "audit_project_premortem_scenarios_and_kill_switch_criteria" in mod.__all__

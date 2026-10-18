@@ -3155,6 +3155,7 @@ __all__ = [
     "audit_steering_committee_quorum_and_escalation_sla",
     "audit_business_case_npv_irr_and_payback_viability",
     "audit_team_tuckman_maturity_and_psychological_safety",
+    "audit_project_premortem_scenarios_and_kill_switch_criteria",
     "ProjectLifecyclePMIService",
 ]
 
@@ -5811,6 +5812,75 @@ def audit_team_tuckman_maturity_and_psychological_safety(
 
 ProjectLifecyclePMIService.audit_team_tuckman_maturity_and_psychological_safety = staticmethod(
     audit_team_tuckman_maturity_and_psychological_safety
+)
+
+
+def audit_project_premortem_scenarios_and_kill_switch_criteria(
+    premortem_scenarios: Any,
+    *,
+    has_explicit_project_kill_switch_criteria: bool = True,
+    min_required_scenarios: int = 3,
+) -> Dict[str, object]:
+    """Auditoría PMBOK 11.2 (Identify Risks) y 4.1: pre-mortem.
+
+    Evalúa cada escenario de fallo pre-mortem: señales tempranas /
+    contramedidas / owner completos, señales actualmente disparadas y
+    profundidad mínima de escenarios, ediciones el estado de gobernanza
+    (PREPARED / INCOMPLETE_PREMORTEM / EARLY_WARNING_TRIGGERED) y la
+    activación del kill-switch (is_premortem_ready).
+    """
+    entries = premortem_scenarios if isinstance(premortem_scenarios, list) else []
+    scenarios = [item for item in entries if isinstance(item, dict)]
+
+    missing_signal_or_countermeasure_ids: List[str] = []
+    triggered_early_warning_ids: List[str] = []
+    for scenario in scenarios:
+        scenario_id = scenario.get("scenario_id")
+        early_warning_signal = scenario.get("early_warning_signal")
+        preventive_countermeasure = scenario.get("preventive_countermeasure")
+        owner_id = scenario.get("owner_id")
+
+        if (
+            early_warning_signal is None
+            or str(early_warning_signal).strip() == ""
+            or preventive_countermeasure is None
+            or str(preventive_countermeasure).strip() == ""
+            or owner_id is None
+            or str(owner_id).strip() == ""
+        ):
+            missing_signal_or_countermeasure_ids.append(scenario_id)
+
+        if scenario.get("signal_currently_triggered") is True:
+            triggered_early_warning_ids.append(scenario_id)
+
+    total_scenarios = len(scenarios)
+    insufficient_scenario_depth = bool(total_scenarios < min_required_scenarios)
+
+    if len(triggered_early_warning_ids) > 0:
+        premortem_governance_status = "EARLY_WARNING_TRIGGERED"
+    elif (
+        not has_explicit_project_kill_switch_criteria
+        or insufficient_scenario_depth
+        or len(missing_signal_or_countermeasure_ids) > 0
+    ):
+        premortem_governance_status = "INCOMPLETE_PREMORTEM"
+    else:
+        premortem_governance_status = "PREPARED"
+
+    is_premortem_ready = premortem_governance_status == "PREPARED"
+
+    return {
+        "total_scenarios": total_scenarios,
+        "missing_signal_or_countermeasure_ids": missing_signal_or_countermeasure_ids,
+        "triggered_early_warning_ids": triggered_early_warning_ids,
+        "insufficient_scenario_depth": insufficient_scenario_depth,
+        "premortem_governance_status": premortem_governance_status,
+        "is_premortem_ready": is_premortem_ready,
+    }
+
+
+ProjectLifecyclePMIService.audit_project_premortem_scenarios_and_kill_switch_criteria = staticmethod(
+    audit_project_premortem_scenarios_and_kill_switch_criteria
 )
 
 

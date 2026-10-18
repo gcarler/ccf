@@ -2991,6 +2991,7 @@ __all__ = [
     "audit_executive_report_supply_chain_lead_time_and_single_source",
     "audit_executive_report_stakeholder_sentiment_and_nps_drift",
     "audit_executive_report_regulatory_and_data_privacy_compliance",
+    "audit_executive_report_finops_cloud_cost_and_idle_capacity",
     "ProjectExportService",
 ]
 
@@ -5893,5 +5894,145 @@ def audit_executive_report_regulatory_and_data_privacy_compliance(
 ProjectExportService.audit_executive_report_regulatory_and_data_privacy_compliance = staticmethod(
     audit_executive_report_regulatory_and_data_privacy_compliance
 )
+
+
+def audit_executive_report_finops_cloud_cost_and_idle_capacity(
+    workloads: list[dict[str, Any]],
+    *,
+    max_unit_cost_drift_pct: float = 15.0,
+    min_utilization_pct: float = 40.0,
+    min_commitment_coverage_pct: float = 60.0,
+) -> dict[str, Any]:
+    """Audita deriva de costo unitario FinOps, capacidad ociosa y cobertura de instancias reservadas (PMI PMBOK §7.4 / §9.6)."""
+    if not isinstance(workloads, list):
+        return {
+            "total_workloads": 0,
+            "total_baseline_cost": 0.0,
+            "total_actual_cost": 0.0,
+            "total_untagged_spend": 0.0,
+            "untagged_spend_share_pct": 0.0,
+            "estimated_monthly_waste": 0.0,
+            "unit_cost_drift_workload_ids": [],
+            "idle_capacity_workload_ids": [],
+            "low_commitment_workload_ids": [],
+            "finops_governance_status": "OPTIMAL",
+            "recommendations": [],
+        }
+
+    max_drift_pct = float(
+        max_unit_cost_drift_pct if max_unit_cost_drift_pct is not None else 15.0
+    )
+    min_util_pct = float(
+        min_utilization_pct if min_utilization_pct is not None else 40.0
+    )
+    min_commit_pct = float(
+        min_commitment_coverage_pct
+        if min_commitment_coverage_pct is not None
+        else 60.0
+    )
+
+    total_workloads = 0
+    sum_baseline = 0.0
+    sum_actual = 0.0
+    sum_untagged = 0.0
+    idle_waste_sum = 0.0
+
+    unit_cost_drift_workload_ids: list[str] = []
+    idle_capacity_workload_ids: list[str] = []
+    low_commitment_workload_ids: list[str] = []
+    recommendations: list[str] = []
+
+    for idx, item in enumerate(workloads):
+        if not isinstance(item, dict):
+            continue
+        total_workloads += 1
+        workload_id = str(item.get("workload_id") or f"WKL-{idx + 1}").strip()
+        baseline_cost = max(0.0, float(item.get("monthly_baseline_cost") or 0.0))
+        actual_cost = max(0.0, float(item.get("monthly_actual_cost") or 0.0))
+        base_unit = max(0.0, float(item.get("baseline_unit_cost") or 0.0))
+        actual_unit = max(0.0, float(item.get("actual_unit_cost") or 0.0))
+        avg_util = float(item.get("avg_utilization_pct") or 0.0)
+        commit_cov = float(
+            item.get("commitment_coverage_pct")
+            if item.get("commitment_coverage_pct") is not None
+            else 100.0
+        )
+        untagged = max(0.0, float(item.get("untagged_spend_amount") or 0.0))
+
+        sum_baseline += baseline_cost
+        sum_actual += actual_cost
+        sum_untagged += untagged
+
+        if base_unit > 0.0:
+            unit_drift_pct = ((actual_unit - base_unit) / base_unit) * 100.0
+            if unit_drift_pct > max_drift_pct:
+                unit_cost_drift_workload_ids.append(workload_id)
+                recommendations.append(
+                    f"Optimizar costo unitario en workload '{workload_id}' (deriva={unit_drift_pct:.2f}% > {max_drift_pct:.2f}%)."
+                )
+
+        if actual_cost > 0.0 and avg_util < min_util_pct:
+            idle_capacity_workload_ids.append(workload_id)
+            idle_waste_sum += actual_cost * ((min_util_pct - avg_util) / 100.0)
+            recommendations.append(
+                f"Redimensionar (rightsize) workload '{workload_id}' por baja utilización ({avg_util:.1f}% < {min_util_pct:.1f}%)."
+            )
+
+        if actual_cost > 0.0 and commit_cov < min_commit_pct:
+            low_commitment_workload_ids.append(workload_id)
+            recommendations.append(
+                f"Incrementar cobertura de instancias reservadas/savings plans en workload '{workload_id}' ({commit_cov:.1f}% < {min_commit_pct:.1f}%)."
+            )
+
+    total_baseline_cost = round(sum_baseline, 2)
+    total_actual_cost = round(sum_actual, 2)
+    total_untagged_spend = round(sum_untagged, 2)
+    untagged_spend_share_pct = (
+        round((total_untagged_spend / total_actual_cost) * 100.0, 2)
+        if total_actual_cost > 0.0
+        else 0.0
+    )
+    estimated_monthly_waste = round(idle_waste_sum + total_untagged_spend, 2)
+
+    if untagged_spend_share_pct > 5.0:
+        recommendations.append(
+            f"Etiquetar gasto FinOps huérfano ({untagged_spend_share_pct:.2f}% del gasto total)."
+        )
+
+    if (
+        total_actual_cost > total_baseline_cost * 1.2
+        or untagged_spend_share_pct > 15.0
+        or len(unit_cost_drift_workload_ids) >= 2
+    ):
+        finops_governance_status = "CRITICAL"
+    elif (
+        len(unit_cost_drift_workload_ids) > 0
+        or len(idle_capacity_workload_ids) > 0
+        or len(low_commitment_workload_ids) > 0
+        or untagged_spend_share_pct > 5.0
+    ):
+        finops_governance_status = "WARNING"
+    else:
+        finops_governance_status = "OPTIMAL"
+
+    return {
+        "total_workloads": total_workloads,
+        "total_baseline_cost": total_baseline_cost,
+        "total_actual_cost": total_actual_cost,
+        "total_untagged_spend": total_untagged_spend,
+        "untagged_spend_share_pct": untagged_spend_share_pct,
+        "estimated_monthly_waste": estimated_monthly_waste,
+        "unit_cost_drift_workload_ids": unit_cost_drift_workload_ids,
+        "idle_capacity_workload_ids": idle_capacity_workload_ids,
+        "low_commitment_workload_ids": low_commitment_workload_ids,
+        "finops_governance_status": finops_governance_status,
+        "recommendations": recommendations,
+    }
+
+
+ProjectExportService.audit_executive_report_finops_cloud_cost_and_idle_capacity = staticmethod(
+    audit_executive_report_finops_cloud_cost_and_idle_capacity
+)
+
 
 

@@ -5532,3 +5532,117 @@ def test_audit_markdown_task_list_action_item_hygiene_empty_and_binding():
     assert "audit_markdown_task_list_action_item_hygiene" in mod.__all__
 
 
+def test_audit_markdown_code_fence_and_secret_leak_hygiene_clean():
+    """Caso 1: Bloques cercados etiquetados, cerrados, cortos y con placeholders seguros -> CLEAN."""
+    from backend.services.anydoc_service import (
+        audit_markdown_code_fence_and_secret_leak_hygiene,
+    )
+
+    md = (
+        "# Guía de Configuración\n\n"
+        "```python\n"
+        'api_key = "YOUR_API_KEY"\n'
+        'password = "<token>"\n'
+        "```\n\n"
+        "~~~bash\n"
+        "echo 'ok'\n"
+        "~~~\n"
+    )
+    res = audit_markdown_code_fence_and_secret_leak_hygiene(
+        md, max_code_block_lines=120
+    )
+    assert res["total_code_blocks"] == 2
+    assert res["tagged_code_blocks"] == 2
+    assert res["untagged_code_block_lines"] == []
+    assert res["unclosed_code_block_line"] is None
+    assert res["oversized_code_block_lines"] == []
+    assert res["potential_secret_leak_lines"] == []
+    assert res["code_hygiene_status"] == "CLEAN"
+    assert res["recommendations"] == []
+
+
+def test_audit_markdown_code_fence_and_secret_leak_hygiene_warning():
+    """Caso 2: Bloque sin lenguaje o bloque demasiado largo sin fugas ni bloque sin cerrar -> WARNING."""
+    from backend.services.anydoc_service import (
+        audit_markdown_code_fence_and_secret_leak_hygiene,
+    )
+
+    md = (
+        "```\n"
+        "linea 1\n"
+        "```\n"
+        "```python\n"
+        "l1\n"
+        "l2\n"
+        "l3\n"
+        "l4\n"
+        "```\n"
+    )
+    res = audit_markdown_code_fence_and_secret_leak_hygiene(
+        md, max_code_block_lines=3
+    )
+    assert res["total_code_blocks"] == 2
+    assert res["tagged_code_blocks"] == 1
+    assert res["untagged_code_block_lines"] == [1]
+    assert res["unclosed_code_block_line"] is None
+    assert res["oversized_code_block_lines"] == [4]
+    assert res["potential_secret_leak_lines"] == []
+    assert res["code_hygiene_status"] == "WARNING"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_markdown_code_fence_and_secret_leak_hygiene_critical():
+    """Caso 3: Fuga de secretos (AKIA, ghp_, PRIVATE KEY o password real) o bloque no cerrado -> CRITICAL."""
+    from backend.services.anydoc_service import (
+        audit_markdown_code_fence_and_secret_leak_hygiene,
+    )
+
+    md = (
+        "```env\n"
+        "AWS_KEY=AKIA1234567890ABCDEF\n"
+        'password = "SuperSecretProd9988"\n'
+        "```\n"
+        "```bash\n"
+        "curl -H 'Authorization: Bearer ghp_1234567890abcdefghijklmnop'\n"
+    )
+    res = audit_markdown_code_fence_and_secret_leak_hygiene(md)
+    assert res["total_code_blocks"] == 2
+    assert res["unclosed_code_block_line"] == 5
+    assert res["potential_secret_leak_lines"] == [2, 3, 6]
+    assert res["code_hygiene_status"] == "CRITICAL"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_markdown_code_fence_and_secret_leak_hygiene_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en AnyDocService, AnydocService y __all__."""
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_code_fence_and_secret_leak_hygiene,
+    )
+
+    for payload in (None, "", "   \n"):
+        empty = audit_markdown_code_fence_and_secret_leak_hygiene(payload)  # type: ignore[arg-type]
+        assert empty["total_code_blocks"] == 0
+        assert empty["tagged_code_blocks"] == 0
+        assert empty["untagged_code_block_lines"] == []
+        assert empty["unclosed_code_block_line"] is None
+        assert empty["oversized_code_block_lines"] == []
+        assert empty["potential_secret_leak_lines"] == []
+        assert empty["code_hygiene_status"] == "CLEAN"
+        assert empty["recommendations"] == []
+
+    sample = "```json\n{\"ok\": true}\n```\n"
+    assert (
+        AnyDocService.audit_markdown_code_fence_and_secret_leak_hygiene(sample)
+        == audit_markdown_code_fence_and_secret_leak_hygiene(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_code_fence_and_secret_leak_hygiene(sample)
+        == audit_markdown_code_fence_and_secret_leak_hygiene(sample)
+    )
+    assert "audit_markdown_code_fence_and_secret_leak_hygiene" in mod.__all__
+
+
+
