@@ -729,6 +729,59 @@ def evaluate_pmo_portfolio_health_balance(
     }
 
 
+def evaluate_phase_gate_transition_readiness(
+    phase_tasks_total: int,
+    phase_tasks_completed: int,
+    open_critical_risks: int = 0,
+    pending_ccb_changes: int = 0,
+    exit_criteria_verified: bool = False,
+) -> dict[str, Any]:
+    """Audita la decisión de revisión de puerta de fase (Stage-Gate / Phase Gate Review — PMBOK §2.4.2.3)."""
+    total = max(0, int(phase_tasks_total or 0))
+    completed = min(total, max(0, int(phase_tasks_completed or 0)))
+    crit_risks = max(0, int(open_critical_risks or 0))
+    ccb_pending = max(0, int(pending_ccb_changes or 0))
+    verified = bool(exit_criteria_verified)
+
+    completion_pct = round((completed / total) * 100.0, 2) if total > 0 else 0.0
+
+    gate_blockers: list[str] = []
+    if total == 0:
+        gate_blockers.append("empty_phase_scope")
+    if total > 0 and completion_pct < 100.0:
+        gate_blockers.append("incomplete_work_packages")
+    if crit_risks > 0:
+        gate_blockers.append("open_critical_risks")
+    if ccb_pending > 0:
+        gate_blockers.append("pending_ccb_decisions")
+    if not verified:
+        gate_blockers.append("unverified_exit_criteria")
+
+    if len(gate_blockers) == 0:
+        gate_decision = "proceed_to_next_phase"
+    elif (
+        total > 0
+        and completion_pct >= 90.0
+        and crit_risks == 0
+        and ccb_pending <= 1
+    ):
+        gate_decision = "conditional_proceed_with_action_plan"
+    else:
+        gate_decision = "hold_at_current_phase"
+
+    return {
+        "phase_tasks_total": total,
+        "phase_tasks_completed": completed,
+        "completion_pct": completion_pct,
+        "open_critical_risks": crit_risks,
+        "pending_ccb_changes": ccb_pending,
+        "exit_criteria_verified": verified,
+        "gate_blockers": gate_blockers,
+        "can_transition_cleanly": len(gate_blockers) == 0,
+        "gate_decision": gate_decision,
+    }
+
+
 class ProjectLifecyclePMIService:
     """Canonical facade for PMI project lifecycle, governance maturity, and automation readiness."""
 
@@ -793,3 +846,19 @@ class ProjectLifecyclePMIService:
         projects: list[dict[str, Any]] | None,
     ) -> dict[str, Any]:
         return evaluate_pmo_portfolio_health_balance(projects)
+
+    @staticmethod
+    def evaluate_phase_gate_transition_readiness(
+        phase_tasks_total: int,
+        phase_tasks_completed: int,
+        open_critical_risks: int = 0,
+        pending_ccb_changes: int = 0,
+        exit_criteria_verified: bool = False,
+    ) -> dict[str, Any]:
+        return evaluate_phase_gate_transition_readiness(
+            phase_tasks_total=phase_tasks_total,
+            phase_tasks_completed=phase_tasks_completed,
+            open_critical_risks=open_critical_risks,
+            pending_ccb_changes=pending_ccb_changes,
+            exit_criteria_verified=exit_criteria_verified,
+        )

@@ -648,3 +648,93 @@ def test_evaluate_pmo_portfolio_health_balance_empty_or_none():
             "budget_at_risk_pct": 0.0,
             "portfolio_status": "empty_portfolio",
         }
+
+
+def test_evaluate_phase_gate_transition_readiness_proceed():
+    """Fase con 100% de paquetes completados, 0 riesgos críticos, 0 CCB y criterios verificados -> proceed_to_next_phase."""
+    res = project_lifecycle_pmi_service.evaluate_phase_gate_transition_readiness(
+        phase_tasks_total=10,
+        phase_tasks_completed=10,
+        open_critical_risks=0,
+        pending_ccb_changes=0,
+        exit_criteria_verified=True,
+    )
+    assert res == {
+        "phase_tasks_total": 10,
+        "phase_tasks_completed": 10,
+        "completion_pct": 100.0,
+        "open_critical_risks": 0,
+        "pending_ccb_changes": 0,
+        "exit_criteria_verified": True,
+        "gate_blockers": [],
+        "can_transition_cleanly": True,
+        "gate_decision": "proceed_to_next_phase",
+    }
+    assert (
+        project_lifecycle_pmi_service.ProjectLifecyclePMIService.evaluate_phase_gate_transition_readiness(
+            10, 10, 0, 0, True
+        )
+        == res
+    )
+
+
+def test_evaluate_phase_gate_transition_readiness_conditional_proceed():
+    """Fase con >= 90% de avance, 0 riesgos críticos y <= 1 CCB pendiente -> conditional_proceed_with_action_plan."""
+    res = project_lifecycle_pmi_service.evaluate_phase_gate_transition_readiness(
+        phase_tasks_total=20,
+        phase_tasks_completed=19,
+        open_critical_risks=0,
+        pending_ccb_changes=1,
+        exit_criteria_verified=False,
+    )
+    assert res["completion_pct"] == 95.0
+    assert res["can_transition_cleanly"] is False
+    assert res["gate_blockers"] == [
+        "incomplete_work_packages",
+        "pending_ccb_decisions",
+        "unverified_exit_criteria",
+    ]
+    assert res["gate_decision"] == "conditional_proceed_with_action_plan"
+
+
+def test_evaluate_phase_gate_transition_readiness_hold_by_critical_risk_or_low_completion():
+    """Bloqueo por riesgo crítico abierto o baja completitud (< 90%) -> hold_at_current_phase."""
+    by_risk = project_lifecycle_pmi_service.evaluate_phase_gate_transition_readiness(
+        phase_tasks_total=10,
+        phase_tasks_completed=10,
+        open_critical_risks=1,
+        pending_ccb_changes=0,
+        exit_criteria_verified=True,
+    )
+    assert "open_critical_risks" in by_risk["gate_blockers"]
+    assert by_risk["can_transition_cleanly"] is False
+    assert by_risk["gate_decision"] == "hold_at_current_phase"
+
+    by_low_completion = (
+        project_lifecycle_pmi_service.evaluate_phase_gate_transition_readiness(
+            phase_tasks_total=10,
+            phase_tasks_completed=6,
+            open_critical_risks=0,
+            pending_ccb_changes=0,
+            exit_criteria_verified=True,
+        )
+    )
+    assert by_low_completion["completion_pct"] == 60.0
+    assert "incomplete_work_packages" in by_low_completion["gate_blockers"]
+    assert by_low_completion["gate_decision"] == "hold_at_current_phase"
+
+
+def test_evaluate_phase_gate_transition_readiness_empty_phase():
+    """Fase sin alcance (total=0) -> empty_phase_scope y hold_at_current_phase."""
+    res = project_lifecycle_pmi_service.evaluate_phase_gate_transition_readiness(
+        phase_tasks_total=0,
+        phase_tasks_completed=0,
+        open_critical_risks=0,
+        pending_ccb_changes=0,
+        exit_criteria_verified=True,
+    )
+    assert res["phase_tasks_total"] == 0
+    assert res["completion_pct"] == 0.0
+    assert "empty_phase_scope" in res["gate_blockers"]
+    assert res["can_transition_cleanly"] is False
+    assert res["gate_decision"] == "hold_at_current_phase"
