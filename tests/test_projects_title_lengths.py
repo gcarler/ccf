@@ -6039,3 +6039,129 @@ def test_validate_raci_responsibility_assignment_matrix_hygiene_invalid_entries_
         assert empty["recommendations"] == []
 
     assert "validate_raci_responsibility_assignment_matrix_hygiene" in mod.__all__
+
+
+def test_validate_monte_carlo_confidence_percentiles_and_contingency_valid():
+    """Caso 1: Simulaciones con >=1000 iteraciones, percentiles monótonos y reserva suficiente ('VALID')."""
+    from backend.schemas.projects import (
+        validate_monte_carlo_confidence_percentiles_and_contingency,
+    )
+
+    sims = [
+        {
+            "simulation_id": "MC-01",
+            "iterations_count": 5000,
+            "deterministic_baseline": 100000.0,
+            "p50_estimate": 100000.0,
+            "p80_estimate": 115000.0,
+            "p90_estimate": 125000.0,
+            "allocated_contingency_reserve": 15000.0,
+        },
+        {
+            "simulation_id": "MC-02",
+            "iterations_count": 2000,
+            "deterministic_baseline": 50000.0,
+            "p50_estimate": 49000.0,
+            "p80_estimate": 54000.0,
+            "p90_estimate": 58000.0,
+            "allocated_contingency_reserve": 3900.0,  # 2.5% shortfall <= 5%
+        },
+    ]
+    res = validate_monte_carlo_confidence_percentiles_and_contingency(sims)
+    assert res["total_simulations"] == 2
+    assert res["insufficient_iterations_ids"] == []
+    assert res["non_monotonic_percentile_ids"] == []
+    assert res["optimistic_bias_ids"] == []
+    assert res["underfunded_contingency_ids"] == []
+    assert res["monte_carlo_governance_status"] == "VALID"
+    assert res["is_monte_carlo_valid"] is True
+    assert res["recommendations"] == []
+
+
+def test_validate_monte_carlo_confidence_percentiles_and_contingency_warning():
+    """Caso 2: Pocas iteraciones o sesgo optimista con reserva suficiente ('WARNING')."""
+    from backend.schemas.projects import (
+        validate_monte_carlo_confidence_percentiles_and_contingency,
+    )
+
+    sims = [
+        {
+            "simulation_id": "MC-10",
+            "iterations_count": 500,  # < 1000
+            "deterministic_baseline": 100000.0,
+            "p50_estimate": 105000.0,  # baseline < p50 -> optimistic bias
+            "p80_estimate": 115000.0,
+            "p90_estimate": 122000.0,
+            "allocated_contingency_reserve": 15000.0,
+        }
+    ]
+    res = validate_monte_carlo_confidence_percentiles_and_contingency(sims)
+    assert res["total_simulations"] == 1
+    assert res["insufficient_iterations_ids"] == ["MC-10"]
+    assert res["optimistic_bias_ids"] == ["MC-10"]
+    assert res["non_monotonic_percentile_ids"] == []
+    assert res["underfunded_contingency_ids"] == []
+    assert res["monte_carlo_governance_status"] == "WARNING"
+    assert res["is_monte_carlo_valid"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_validate_monte_carlo_confidence_percentiles_and_contingency_invalid():
+    """Caso 3: Percentiles no monótonos o reserva de contingencia subfinanciada ('INVALID')."""
+    from backend.schemas.projects import (
+        validate_monte_carlo_confidence_percentiles_and_contingency,
+    )
+
+    sims = [
+        {
+            "simulation_id": "MC-20",
+            "iterations_count": 2000,
+            "deterministic_baseline": 100000.0,
+            "p50_estimate": 110000.0,
+            "p80_estimate": 108000.0,  # non-monotonic
+            "p90_estimate": 120000.0,
+            "allocated_contingency_reserve": 20000.0,
+        },
+        {
+            "simulation_id": "MC-21",
+            "iterations_count": 3000,
+            "deterministic_baseline": 100000.0,
+            "p50_estimate": 100000.0,
+            "p80_estimate": 115000.0,
+            "p90_estimate": 130000.0,
+            "allocated_contingency_reserve": 15000.0,  # P90 requires 30000 -> 50% shortfall
+        },
+    ]
+    res = validate_monte_carlo_confidence_percentiles_and_contingency(
+        sims,
+        target_confidence_level="P90",
+    )
+    assert res["total_simulations"] == 2
+    assert res["non_monotonic_percentile_ids"] == ["MC-20"]
+    assert res["underfunded_contingency_ids"] == ["MC-21"]
+    assert res["monte_carlo_governance_status"] == "INVALID"
+    assert res["is_monte_carlo_valid"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_validate_monte_carlo_confidence_percentiles_and_contingency_empty_and_export():
+    """Caso 4: Entradas vacías/inválidas y exportación en __all__."""
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_monte_carlo_confidence_percentiles_and_contingency,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = validate_monte_carlo_confidence_percentiles_and_contingency(payload)  # type: ignore[arg-type]
+        assert empty["total_simulations"] == 0
+        assert empty["insufficient_iterations_ids"] == []
+        assert empty["non_monotonic_percentile_ids"] == []
+        assert empty["optimistic_bias_ids"] == []
+        assert empty["underfunded_contingency_ids"] == []
+        assert empty["monte_carlo_governance_status"] == "VALID"
+        assert empty["is_monte_carlo_valid"] is True
+        assert empty["recommendations"] == []
+
+    assert (
+        "validate_monte_carlo_confidence_percentiles_and_contingency" in mod.__all__
+    )

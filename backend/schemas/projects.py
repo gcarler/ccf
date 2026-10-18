@@ -3801,6 +3801,7 @@ __all__ = [
     "validate_three_point_pert_and_triangular_estimates",
     "validate_ccpm_critical_chain_buffer_fever_chart",
     "validate_raci_responsibility_assignment_matrix_hygiene",
+    "validate_monte_carlo_confidence_percentiles_and_contingency",
 ]
 
 
@@ -6942,5 +6943,95 @@ def validate_raci_responsibility_assignment_matrix_hygiene(
         "consultation_bottleneck_deliverable_ids": consultation_bottleneck_deliverable_ids,
         "raci_governance_status": raci_governance_status,
         "is_raci_valid": raci_governance_status == "COMPLIANT",
+        "recommendations": recommendations,
+    }
+
+
+def validate_monte_carlo_confidence_percentiles_and_contingency(
+    simulations: Any,
+    *,
+    min_iterations: int = 1000,
+    target_confidence_level: str = "P80",
+    max_reserve_shortfall_pct: float = 5.0,
+) -> Dict[str, object]:
+    """PMBOK 11.4.2.2 — análisis cuantitativo Monte Carlo: percentiles P50/P80/P90 y contingencia."""
+    entries = simulations if isinstance(simulations, list) else []
+    rows = [item for item in entries if isinstance(item, dict)]
+
+    min_iter = max(1, int(min_iterations or 1000))
+    target_level = str(target_confidence_level or "P80").strip().upper()
+    max_shortfall = max(0.0, float(max_reserve_shortfall_pct or 0.0))
+
+    insufficient_iterations_ids: List[str] = []
+    non_monotonic_percentile_ids: List[str] = []
+    optimistic_bias_ids: List[str] = []
+    underfunded_contingency_ids: List[str] = []
+    recommendations: List[str] = []
+
+    for idx, row in enumerate(rows, start=1):
+        sim_id = (
+            str(row.get("simulation_id") or row.get("id") or f"MC-{idx}").strip()
+            or f"MC-{idx}"
+        )
+        iterations_count = int(row.get("iterations_count") or 0)
+        baseline = float(row.get("deterministic_baseline") or 0.0)
+        p50 = float(row.get("p50_estimate") or 0.0)
+        p80 = float(row.get("p80_estimate") or 0.0)
+        p90 = float(row.get("p90_estimate") or 0.0)
+        allocated_reserve = max(
+            0.0, float(row.get("allocated_contingency_reserve") or 0.0)
+        )
+
+        if iterations_count < min_iter:
+            insufficient_iterations_ids.append(sim_id)
+            recommendations.append(
+                f"Incrementar iteraciones de simulación '{sim_id}' ({iterations_count} < {min_iter}) para estabilizar la convergencia de percentiles."
+            )
+
+        if not (0.0 < p50 <= p80 <= p90):
+            non_monotonic_percentile_ids.append(sim_id)
+            recommendations.append(
+                f"Corregir percentiles no monótonos en simulación '{sim_id}' (P50={p50:.2f}, P80={p80:.2f}, P90={p90:.2f})."
+            )
+
+        if baseline < p50:
+            optimistic_bias_ids.append(sim_id)
+            recommendations.append(
+                f"Revisar sesgo optimista en línea base determinista de '{sim_id}' ({baseline:.2f} < P50={p50:.2f})."
+            )
+
+        if target_level == "P90":
+            target_p_estimate = p90
+        elif target_level == "P50":
+            target_p_estimate = p50
+        else:
+            target_p_estimate = p80
+
+        required_contingency = max(0.0, target_p_estimate - baseline)
+        if required_contingency > 0.0:
+            shortfall_pct = (
+                (required_contingency - allocated_reserve) / required_contingency
+            ) * 100.0
+            if shortfall_pct > max_shortfall:
+                underfunded_contingency_ids.append(sim_id)
+                recommendations.append(
+                    f"Incrementar reserva de contingencia en '{sim_id}' para cubrir nivel {target_level} (déficit del {shortfall_pct:.2f}% > {max_shortfall:.2f}%)."
+                )
+
+    if non_monotonic_percentile_ids or underfunded_contingency_ids:
+        monte_carlo_governance_status = "INVALID"
+    elif insufficient_iterations_ids or optimistic_bias_ids:
+        monte_carlo_governance_status = "WARNING"
+    else:
+        monte_carlo_governance_status = "VALID"
+
+    return {
+        "total_simulations": len(rows),
+        "insufficient_iterations_ids": insufficient_iterations_ids,
+        "non_monotonic_percentile_ids": non_monotonic_percentile_ids,
+        "optimistic_bias_ids": optimistic_bias_ids,
+        "underfunded_contingency_ids": underfunded_contingency_ids,
+        "monte_carlo_governance_status": monte_carlo_governance_status,
+        "is_monte_carlo_valid": monte_carlo_governance_status == "VALID",
         "recommendations": recommendations,
     }
