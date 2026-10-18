@@ -4411,3 +4411,137 @@ def test_evaluate_evm_retroactive_invalid_inputs_and_export():
         }
 
 
+def test_evaluate_evm_contract_budget_base_and_ub_reconciliation_compliant():
+    """Jerarquía reconciliada (DB + UB = PMB, PMB + MR = CBB = TAB) con UB dentro de umbrales cumple §7.4."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_contract_budget_base_and_ub_reconciliation,
+    )
+
+    ledger = {
+        "distributed_budgets_sum": 460000.0,
+        "undistributed_budget_ub": 40000.0,
+        "performance_measurement_baseline_pmb": 500000.0,
+        "management_reserve_mr": 50000.0,
+        "contract_budget_base_cbb": 550000.0,
+        "total_allocated_budget_tab": 550000.0,
+        "over_target_baseline_authorized": False,
+        "ub_oldest_unallocated_days": 14,
+    }
+    res = evaluate_evm_contract_budget_base_and_ub_reconciliation(ledger)
+    assert res == {
+        "expected_pmb": 500000.0,
+        "pmb_reconciliation_delta": 0.0,
+        "has_pmb_imbalance": False,
+        "expected_cbb": 550000.0,
+        "cbb_reconciliation_delta": 0.0,
+        "has_cbb_imbalance": False,
+        "has_unauthorized_over_target_baseline": False,
+        "ub_ratio": 0.08,
+        "has_excessive_or_stale_ub": False,
+        "is_baseline_reconciliation_compliant": True,
+    }
+    assert (
+        ProjectEVMService.evaluate_evm_contract_budget_base_and_ub_reconciliation(
+            ledger
+        )
+        == res
+    )
+
+
+def test_evaluate_evm_contract_budget_base_pmb_and_cbb_imbalances():
+    """Detecta desbalances contables cuando PMB != DB + UB o CBB != PMB + MR."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_contract_budget_base_and_ub_reconciliation,
+    )
+
+    ledger = {
+        "distributed_budgets_sum": 450000.0,
+        "undistributed_budget_ub": 20000.0,
+        "performance_measurement_baseline_pmb": 480000.0,  # +10000 vs 470000
+        "management_reserve_mr": 40000.0,
+        "contract_budget_base_cbb": 515000.0,  # -5000 vs 520000
+        "total_allocated_budget_tab": 515000.0,
+        "over_target_baseline_authorized": False,
+        "ub_oldest_unallocated_days": 10,
+    }
+    res = evaluate_evm_contract_budget_base_and_ub_reconciliation(ledger)
+    assert res["expected_pmb"] == 470000.0
+    assert res["pmb_reconciliation_delta"] == 10000.0
+    assert res["has_pmb_imbalance"] is True
+    assert res["expected_cbb"] == 520000.0
+    assert res["cbb_reconciliation_delta"] == -5000.0
+    assert res["has_cbb_imbalance"] is True
+    assert res["has_unauthorized_over_target_baseline"] is False
+    assert res["is_baseline_reconciliation_compliant"] is False
+
+
+def test_evaluate_evm_contract_budget_base_unauthorized_vs_authorized_otb():
+    """Detecta Over-Target Baseline (TAB > CBB) sin autorización formal y permite OTB autorizado."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_contract_budget_base_and_ub_reconciliation,
+    )
+
+    base_ledger = {
+        "distributed_budgets_sum": 300000.0,
+        "undistributed_budget_ub": 0.0,
+        "performance_measurement_baseline_pmb": 300000.0,
+        "management_reserve_mr": 30000.0,
+        "contract_budget_base_cbb": 330000.0,
+        "total_allocated_budget_tab": 360000.0,
+        "over_target_baseline_authorized": False,
+        "ub_oldest_unallocated_days": 0,
+    }
+    unauth = evaluate_evm_contract_budget_base_and_ub_reconciliation(base_ledger)
+    assert unauth["has_unauthorized_over_target_baseline"] is True
+    assert unauth["is_baseline_reconciliation_compliant"] is False
+
+    auth = evaluate_evm_contract_budget_base_and_ub_reconciliation(
+        {**base_ledger, "over_target_baseline_authorized": True}
+    )
+    assert auth["has_unauthorized_over_target_baseline"] is False
+    assert auth["is_baseline_reconciliation_compliant"] is True
+
+
+def test_evaluate_evm_contract_budget_base_excessive_or_stale_ub_and_export():
+    """Detecta UB excesivo en proporción al PMB, UB estancado (> max_ub_holding_days) y verifica exportación en __all__."""
+    import backend.services.project_evm_service as _m
+    from backend.services.project_evm_service import (
+        evaluate_evm_contract_budget_base_and_ub_reconciliation,
+    )
+
+    assert "evaluate_evm_contract_budget_base_and_ub_reconciliation" in _m.__all__
+
+    # UB ratio 0.15 > 0.10
+    high_ratio = evaluate_evm_contract_budget_base_and_ub_reconciliation(
+        {
+            "distributed_budgets_sum": 170000.0,
+            "undistributed_budget_ub": 30000.0,
+            "performance_measurement_baseline_pmb": 200000.0,
+            "management_reserve_mr": 20000.0,
+            "contract_budget_base_cbb": 220000.0,
+            "total_allocated_budget_tab": 220000.0,
+            "ub_oldest_unallocated_days": 12,
+        },
+        max_ub_to_pm_baseline_ratio=0.10,
+    )
+    assert high_ratio["ub_ratio"] == 0.15
+    assert high_ratio["has_excessive_or_stale_ub"] is True
+    assert high_ratio["is_baseline_reconciliation_compliant"] is False
+
+    # UB ratio 0.05 <= 0.10 pero estancado 45 días > 30
+    stale_ub = evaluate_evm_contract_budget_base_and_ub_reconciliation(
+        {
+            "distributed_budgets_sum": 190000.0,
+            "undistributed_budget_ub": 10000.0,
+            "performance_measurement_baseline_pmb": 200000.0,
+            "management_reserve_mr": 20000.0,
+            "contract_budget_base_cbb": 220000.0,
+            "total_allocated_budget_tab": 220000.0,
+            "ub_oldest_unallocated_days": 45,
+        },
+        max_ub_holding_days=30,
+    )
+    assert stale_ub["ub_ratio"] == 0.05
+    assert stale_ub["has_excessive_or_stale_ub"] is True
+    assert stale_ub["is_baseline_reconciliation_compliant"] is False

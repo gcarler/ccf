@@ -2490,6 +2490,7 @@ __all__ = [
     "audit_wiki_raci_matrix_governance",
     "audit_wiki_adr_governance_hygiene",
     "audit_wiki_risk_breakdown_structure_coverage",
+    "audit_wiki_assumption_and_constraint_log_governance",
     "audit_wiki_postmortem_root_cause_governance",
     "audit_wiki_benefits_realization_governance",
     "audit_wiki_raid_log_traceability_governance",
@@ -3461,3 +3462,91 @@ WikiPMIService.audit_wiki_vendor_sla_and_penalty_clause_governance = staticmetho
     audit_wiki_vendor_sla_and_penalty_clause_governance
 )
 
+
+
+def audit_wiki_assumption_and_constraint_log_governance(
+    log_entries: list[dict[str, object]],
+    *,
+    max_validation_cycle_days: int = 30,
+) -> dict[str, object]:
+    """Audita validación y vigencia (staleness) del registro de supuestos y restricciones en wikis según PMI PMBOK §4.1 y §11.2."""
+    total_entries = 0
+    assumption_count = 0
+    constraint_count = 0
+    invalid_type_entry_ids: list[str] = []
+    unassigned_or_unscoped_entry_ids: list[str] = []
+    unconverted_false_assumption_ids: list[str] = []
+    stale_unreviewed_entry_ids: list[str] = []
+
+    max_days = float(max_validation_cycle_days)
+    entries: Sequence[Any] = (
+        log_entries
+        if isinstance(log_entries, Sequence)
+        and not isinstance(log_entries, (str, bytes, bytearray, Mapping))
+        else []
+    )
+
+    for item in entries:
+        if not isinstance(item, Mapping):
+            continue
+        entry_id = str(item.get("entry_id") or "").strip()
+        if not entry_id:
+            continue
+
+        total_entries += 1
+
+        entry_type = str(item.get("entry_type") or "").strip().lower()
+        if entry_type == "assumption":
+            assumption_count += 1
+        elif entry_type == "constraint":
+            constraint_count += 1
+        else:
+            invalid_type_entry_ids.append(entry_id)
+
+        owner_id = str(item.get("owner_id") or "").strip()
+        impact_domain = str(item.get("impact_domain") or "").strip()
+        if not owner_id or not impact_domain:
+            unassigned_or_unscoped_entry_ids.append(entry_id)
+
+        validation_status = str(item.get("validation_status") or "").strip().lower()
+        converted_risk_id = str(item.get("converted_risk_id") or "").strip()
+
+        if (
+            entry_type == "assumption"
+            and validation_status == "invalidated_false"
+            and not converted_risk_id
+        ):
+            unconverted_false_assumption_ids.append(entry_id)
+
+        try:
+            days_since_last_review = float(item.get("days_since_last_review", 0) or 0)
+        except (TypeError, ValueError):
+            days_since_last_review = 0.0
+        if (
+            validation_status != "retired"
+            and days_since_last_review > max_days
+        ):
+            stale_unreviewed_entry_ids.append(entry_id)
+
+    is_assumption_log_compliant = bool(
+        len(invalid_type_entry_ids) == 0
+        and len(unassigned_or_unscoped_entry_ids) == 0
+        and len(unconverted_false_assumption_ids) == 0
+        and len(stale_unreviewed_entry_ids) == 0
+    )
+
+    return {
+        "total_entries": total_entries,
+        "assumption_count": assumption_count,
+        "constraint_count": constraint_count,
+        "invalid_type_entry_ids": invalid_type_entry_ids,
+        "unassigned_or_unscoped_entry_ids": unassigned_or_unscoped_entry_ids,
+        "unconverted_false_assumption_ids": unconverted_false_assumption_ids,
+        "stale_unreviewed_entry_ids": stale_unreviewed_entry_ids,
+        "is_assumption_log_compliant": is_assumption_log_compliant,
+    }
+
+
+WikiPMIService.audit_wiki_assumption_and_constraint_log_governance = staticmethod(
+    audit_wiki_assumption_and_constraint_log_governance
+)

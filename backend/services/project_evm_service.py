@@ -5492,6 +5492,7 @@ __all__ = [
     "evaluate_evm_loe_masking_and_variance_distortion",
     "evaluate_evm_apportioned_effort_base_coherence",
     "evaluate_evm_retroactive_adjustment_and_negative_period_anomalies",
+    "evaluate_evm_contract_budget_base_and_ub_reconciliation",
     "ProjectEVMService",
 ]
 
@@ -6199,3 +6200,112 @@ ProjectEVMService.evaluate_evm_retroactive_adjustment_and_negative_period_anomal
 )
 
 
+def evaluate_evm_contract_budget_base_and_ub_reconciliation(
+    baseline_ledger: dict[str, object],
+    *,
+    max_ub_holding_days: int = 30,
+    max_ub_to_pm_baseline_ratio: float = 0.10,
+) -> dict[str, object]:
+    """Evalúa la reconciliación jerárquica de líneas base EVM (DB + UB = PMB, PMB + MR = CBB, CBB vs TAB/OTB) y la gobernanza del Undistributed Budget según PMI PMBOK §7.4 y ANSI/EIA-748."""
+    ledger = baseline_ledger if isinstance(baseline_ledger, Mapping) else {}
+
+    def _num(key: str, default: float = 0.0) -> float:
+        raw = ledger.get(key, default)
+        if raw is None or isinstance(raw, bool):
+            return default
+        try:
+            return float(raw)
+        except (TypeError, ValueError):
+            return default
+
+    distributed_budgets_sum = _num("distributed_budgets_sum", 0.0)
+    undistributed_budget_ub = _num("undistributed_budget_ub", 0.0)
+    performance_measurement_baseline_pmb = _num(
+        "performance_measurement_baseline_pmb", 0.0
+    )
+    management_reserve_mr = _num("management_reserve_mr", 0.0)
+    contract_budget_base_cbb = _num("contract_budget_base_cbb", 0.0)
+    total_allocated_budget_tab = _num("total_allocated_budget_tab", 0.0)
+    over_target_baseline_authorized = bool(
+        ledger.get("over_target_baseline_authorized", False)
+    )
+    ub_oldest_unallocated_days = _num("ub_oldest_unallocated_days", 0.0)
+
+    try:
+        holding_cap_days = float(max_ub_holding_days)
+    except (TypeError, ValueError):
+        holding_cap_days = 30.0
+
+    try:
+        ub_ratio_cap = float(max_ub_to_pm_baseline_ratio)
+    except (TypeError, ValueError):
+        ub_ratio_cap = 0.10
+
+    expected_pmb = round(
+        float(distributed_budgets_sum) + float(undistributed_budget_ub), 2
+    )
+    pmb_reconciliation_delta = round(
+        float(performance_measurement_baseline_pmb) - expected_pmb, 2
+    )
+    has_pmb_imbalance = abs(pmb_reconciliation_delta) > 0.01
+
+    expected_cbb = round(
+        float(performance_measurement_baseline_pmb)
+        + float(management_reserve_mr),
+        2,
+    )
+    cbb_reconciliation_delta = round(
+        float(contract_budget_base_cbb) - expected_cbb, 2
+    )
+    has_cbb_imbalance = abs(cbb_reconciliation_delta) > 0.01
+
+    tab_exceeds_cbb = (
+        float(total_allocated_budget_tab) - float(contract_budget_base_cbb)
+    ) > 0.01
+    has_unauthorized_over_target_baseline = (
+        tab_exceeds_cbb and not bool(over_target_baseline_authorized)
+    )
+
+    if float(performance_measurement_baseline_pmb) > 0:
+        ub_ratio = round(
+            float(undistributed_budget_ub)
+            / float(performance_measurement_baseline_pmb),
+            4,
+        )
+    else:
+        ub_ratio = 1.0 if float(undistributed_budget_ub) > 0 else 0.0
+
+    has_excessive_or_stale_ub = (
+        (float(undistributed_budget_ub) < 0)
+        or (ub_ratio > float(ub_ratio_cap))
+        or (
+            float(undistributed_budget_ub) > 0
+            and float(ub_oldest_unallocated_days) > float(holding_cap_days)
+        )
+    )
+
+    is_baseline_reconciliation_compliant = not (
+        has_pmb_imbalance
+        or has_cbb_imbalance
+        or has_unauthorized_over_target_baseline
+        or has_excessive_or_stale_ub
+        or float(management_reserve_mr) < 0
+    )
+
+    return {
+        "expected_pmb": expected_pmb,
+        "pmb_reconciliation_delta": pmb_reconciliation_delta,
+        "has_pmb_imbalance": has_pmb_imbalance,
+        "expected_cbb": expected_cbb,
+        "cbb_reconciliation_delta": cbb_reconciliation_delta,
+        "has_cbb_imbalance": has_cbb_imbalance,
+        "has_unauthorized_over_target_baseline": has_unauthorized_over_target_baseline,
+        "ub_ratio": ub_ratio,
+        "has_excessive_or_stale_ub": has_excessive_or_stale_ub,
+        "is_baseline_reconciliation_compliant": is_baseline_reconciliation_compliant,
+    }
+
+
+ProjectEVMService.evaluate_evm_contract_budget_base_and_ub_reconciliation = staticmethod(
+    evaluate_evm_contract_budget_base_and_ub_reconciliation
+)

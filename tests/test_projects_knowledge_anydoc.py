@@ -3730,3 +3730,107 @@ def test_audit_markdown_acronym_invalid_inputs_and_export():
         )
 
 
+def test_audit_markdown_task_list_action_item_hygiene_compliant():
+    """Listas de acción con @owner o owner: y fecha ISO en ítems abiertos cumplen PMBOK §4.4 y §10.2."""
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_task_list_action_item_hygiene,
+    )
+
+    doc = (
+        "# Plan de Acción del Comité\n"
+        "- [x] Publicar acta de inicio de fase\n"
+        "- [ ] Emitir matriz RACI actualizada @pm.lead 2026-11-15\n"
+        "* [ ] Validar reserva de contingencia owner: finanzas_ccf (vencimiento 2026-11-20)\n"
+        "+ [X] Archivar línea base preliminar\n"
+    )
+    res = audit_markdown_task_list_action_item_hygiene(doc)
+    assert res == {
+        "total_task_items": 4,
+        "open_task_items": 2,
+        "completed_task_items": 2,
+        "empty_task_item_lines": [],
+        "unassigned_open_task_lines": [],
+        "undated_open_task_lines": [],
+        "is_task_list_hygiene_compliant": True,
+    }
+    assert AnyDocService.audit_markdown_task_list_action_item_hygiene(doc) == res
+
+
+def test_audit_markdown_task_list_unassigned_and_undated_open_items():
+    """Detecta tareas abiertas sin responsable (@owner/owner:) o sin fecha compromiso ISO YYYY-MM-DD."""
+    from backend.services.anydoc_service import (
+        audit_markdown_task_list_action_item_hygiene,
+    )
+
+    doc = (
+        "## Seguimiento de Compromisos\n"
+        "- [ ] Revisar presupuesto con proveedor antes del 2026-12-01\n"
+        "- [ ] Actualizar cronograma maestro @scheduler_pmo\n"
+        "- [ ] Pendiente definir alcance de entregable\n"
+    )
+    res = audit_markdown_task_list_action_item_hygiene(doc)
+    assert res["total_task_items"] == 3
+    assert res["open_task_items"] == 3
+    assert res["completed_task_items"] == 0
+    assert res["empty_task_item_lines"] == []
+    assert res["unassigned_open_task_lines"] == [2, 4]
+    assert res["undated_open_task_lines"] == [3, 4]
+    assert res["is_task_list_hygiene_compliant"] is False
+
+    # Cuando require_owner_and_due_date_on_open=False no exige responsable ni fecha
+    relaxed = audit_markdown_task_list_action_item_hygiene(
+        doc, require_owner_and_due_date_on_open=False
+    )
+    assert relaxed["unassigned_open_task_lines"] == []
+    assert relaxed["undated_open_task_lines"] == []
+    assert relaxed["is_task_list_hygiene_compliant"] is True
+
+
+def test_audit_markdown_task_list_empty_items_and_fenced_code_exclusion():
+    """Detecta checkboxes vacíos (< 3 caracteres) e ignora checkboxes dentro de bloques de código cercados."""
+    from backend.services.anydoc_service import (
+        audit_markdown_task_list_action_item_hygiene,
+    )
+
+    doc = (
+        "- [x]   \n"
+        "- [ ] ok\n"
+        "```markdown\n"
+        "- [ ] Tarea ficticia en ejemplo sin dueño ni fecha\n"
+        "- [x] \n"
+        "```\n"
+        "~~~\n"
+        "* [ ] Otra tarea dentro de bloque tilde\n"
+        "~~~\n"
+        "- [ ] Entregar informe final @qa.lead 2026-12-10\n"
+    )
+    res = audit_markdown_task_list_action_item_hygiene(doc)
+    assert res["total_task_items"] == 3
+    assert res["open_task_items"] == 2
+    assert res["completed_task_items"] == 1
+    assert res["empty_task_item_lines"] == [1, 2]
+    assert res["unassigned_open_task_lines"] == [2]
+    assert res["undated_open_task_lines"] == [2]
+    assert res["is_task_list_hygiene_compliant"] is False
+
+
+def test_audit_markdown_task_list_invalid_inputs_and_export():
+    """Retorna estructura limpia ante entradas vacías o no-string y verifica exportación en __all__."""
+    import backend.services.anydoc_service as _m
+    from backend.services.anydoc_service import (
+        audit_markdown_task_list_action_item_hygiene,
+    )
+
+    assert "audit_markdown_task_list_action_item_hygiene" in _m.__all__
+    expected_empty = {
+        "total_task_items": 0,
+        "open_task_items": 0,
+        "completed_task_items": 0,
+        "empty_task_item_lines": [],
+        "unassigned_open_task_lines": [],
+        "undated_open_task_lines": [],
+        "is_task_list_hygiene_compliant": True,
+    }
+    for bad in (None, "", "   \n  ", 123, ["-[ ] item"]):
+        assert audit_markdown_task_list_action_item_hygiene(bad) == expected_empty

@@ -3007,6 +3007,7 @@ __all__ = [
     "audit_markdown_code_fence_language_and_secret_hygiene",
     "audit_markdown_blockquote_depth_and_citation_hygiene",
     "audit_markdown_acronym_and_glossary_consistency",
+    "audit_markdown_task_list_action_item_hygiene",
     "AnyDocService",
     "AnydocService",
 ]
@@ -4228,3 +4229,85 @@ AnyDocService.audit_markdown_acronym_and_glossary_consistency = staticmethod(
 )
 
 
+def audit_markdown_task_list_action_item_hygiene(
+    markdown_text: str,
+    *,
+    require_owner_and_due_date_on_open: bool = True,
+) -> dict[str, object]:
+    """Audita la higiene y trazabilidad de listas de tareas e ítems de acción en Markdown (responsable @owner y fecha compromiso ISO en ítems abiertos) según PMI PMBOK §4.4 y §10.2."""
+    if not isinstance(markdown_text, str) or not markdown_text.strip():
+        return {
+            "total_task_items": 0,
+            "open_task_items": 0,
+            "completed_task_items": 0,
+            "empty_task_item_lines": [],
+            "unassigned_open_task_lines": [],
+            "undated_open_task_lines": [],
+            "is_task_list_hygiene_compliant": True,
+        }
+
+    task_item_re = re.compile(r"^\s*[-*+]\s+\[([ xX~-])\]\s*(.*)$")
+    owner_re = re.compile(r"(?:@[A-Za-z0-9_.-]+|owner:\s*\S+)", re.IGNORECASE)
+    iso_date_re = re.compile(r"\b\d{4}-\d{2}-\d{2}\b")
+
+    total_task_items = 0
+    open_task_items = 0
+    completed_task_items = 0
+    empty_task_item_lines: list[int] = []
+    unassigned_open_task_lines: list[int] = []
+    undated_open_task_lines: list[int] = []
+
+    in_backtick_fence = False
+    in_tilde_fence = False
+
+    for line_no, raw_line in enumerate(markdown_text.splitlines(), start=1):
+        stripped = raw_line.strip()
+        if not in_tilde_fence and stripped.startswith("```"):
+            in_backtick_fence = not in_backtick_fence
+            continue
+        if not in_backtick_fence and stripped.startswith("~~~"):
+            in_tilde_fence = not in_tilde_fence
+            continue
+        if in_backtick_fence or in_tilde_fence:
+            continue
+
+        m = task_item_re.match(raw_line)
+        if not m:
+            continue
+
+        total_task_items += 1
+        marker = m.group(1)
+        body = (m.group(2) or "").strip()
+
+        if marker == " ":
+            open_task_items += 1
+        elif marker.lower() == "x":
+            completed_task_items += 1
+
+        if len(body) < 3:
+            empty_task_item_lines.append(line_no)
+
+        if marker == " " and bool(require_owner_and_due_date_on_open):
+            if not owner_re.search(body):
+                unassigned_open_task_lines.append(line_no)
+            if not iso_date_re.search(body):
+                undated_open_task_lines.append(line_no)
+
+    return {
+        "total_task_items": total_task_items,
+        "open_task_items": open_task_items,
+        "completed_task_items": completed_task_items,
+        "empty_task_item_lines": empty_task_item_lines,
+        "unassigned_open_task_lines": unassigned_open_task_lines,
+        "undated_open_task_lines": undated_open_task_lines,
+        "is_task_list_hygiene_compliant": (
+            len(empty_task_item_lines) == 0
+            and len(unassigned_open_task_lines) == 0
+            and len(undated_open_task_lines) == 0
+        ),
+    }
+
+
+AnyDocService.audit_markdown_task_list_action_item_hygiene = staticmethod(
+    audit_markdown_task_list_action_item_hygiene
+)

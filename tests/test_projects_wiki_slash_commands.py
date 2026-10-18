@@ -4304,3 +4304,134 @@ def test_audit_wiki_vendor_sla_invalid_inputs_and_export():
             "is_vendor_sla_governance_sound": True,
         }
 
+
+
+def test_audit_wiki_assumption_log_governance_compliant():
+    """Supuestos y restricciones con owner, dominio, vigencia y conversion correcta."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_assumption_and_constraint_log_governance,
+    )
+
+    entries = [
+        {
+            "entry_id": "AS-1",
+            "entry_type": "Assumption",
+            "owner_id": "PM-1",
+            "impact_domain": "cost",
+            "validation_status": "valid",
+            "days_since_last_review": 5.0,
+        },
+        {
+            "entry_id": "CO-1",
+            "entry_type": "CONSTRAINT",
+            "owner_id": "PM-2",
+            "impact_domain": "schedule",
+            "validation_status": "active",
+            "days_since_last_review": 30.0,  # borde == umbral -> no stale.
+        },
+    ]
+    res = audit_wiki_assumption_and_constraint_log_governance(entries)
+    assert res == {
+        "total_entries": 2,
+        "assumption_count": 1,
+        "constraint_count": 1,
+        "invalid_type_entry_ids": [],
+        "unassigned_or_unscoped_entry_ids": [],
+        "unconverted_false_assumption_ids": [],
+        "stale_unreviewed_entry_ids": [],
+        "is_assumption_log_compliant": True,
+    }
+
+
+def test_audit_wiki_assumption_log_governance_invalid_type_and_unscoped():
+    """Tipos fuera de assumption/constraint y entradas sin owner o impact_domain."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_assumption_and_constraint_log_governance,
+    )
+
+    entries = [
+        {"entry_id": "X-1", "entry_type": "risk", "owner_id": "PM-1",
+         "impact_domain": "quality", "validation_status": "active",
+         "days_since_last_review": 1.0},
+        {"entry_id": "X-2", "entry_type": "assumption",
+         "validation_status": "valid", "days_since_last_review": 1.0},  # sin owner ni dominio.
+        {"entry_id": "X-3", "entry_type": "constraint", "owner_id": "PM-2",
+         "validation_status": "active", "days_since_last_review": 1.0},  # sin dominio.
+    ]
+    res = audit_wiki_assumption_and_constraint_log_governance(entries)
+    assert res["total_entries"] == 3
+    assert res["assumption_count"] == 1
+    assert res["constraint_count"] == 1
+    assert res["invalid_type_entry_ids"] == ["X-1"]
+    assert res["unassigned_or_unscoped_entry_ids"] == ["X-2", "X-3"]
+    assert res["is_assumption_log_compliant"] is False
+
+
+def test_audit_wiki_assumption_log_governance_false_assumptions_and_stale():
+    """Supuesto invalidado-falso sin conversion a riesgo y entradas stale (> umbral)."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_assumption_and_constraint_log_governance,
+    )
+
+    entries = [
+        {"entry_id": "U-1", "entry_type": "assumption", "owner_id": "PM-1",
+         "impact_domain": "scope", "validation_status": "invalidated_false",
+         "days_since_last_review": 1.0},  # sin converted_risk_id.
+        {"entry_id": "U-2", "entry_type": "assumption", "owner_id": "PM-1",
+         "impact_domain": "scope", "validation_status": "invalidated_false",
+         "converted_risk_id": "RISK-7", "days_since_last_review": 1.0},  # convertido OK.
+        {"entry_id": "U-3", "entry_type": "constraint", "owner_id": "PM-2",
+         "impact_domain": "cost", "validation_status": "unvalidated",
+         "days_since_last_review": 40.0},  # stale > 30.
+        {"entry_id": "U-4", "entry_type": "constraint", "owner_id": "PM-2",
+         "impact_domain": "cost", "validation_status": "retired",
+         "days_since_last_review": 400.0},  # retired exento.
+    ]
+    res = audit_wiki_assumption_and_constraint_log_governance(entries)
+    assert res["unconverted_false_assumption_ids"] == ["U-1"]
+    assert res["stale_unreviewed_entry_ids"] == ["U-3"]
+    assert res["is_assumption_log_compliant"] is False
+
+    strict = audit_wiki_assumption_and_constraint_log_governance(
+        entries, max_validation_cycle_days=10
+    )
+    assert strict["stale_unreviewed_entry_ids"] == ["U-3"]
+
+
+def test_audit_wiki_assumption_log_governance_empty_and_service_proxy():
+    """Entradas vacias/None/invalidas + llamada via WikiPMIService (staticmethod + __all__)."""
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_assumption_and_constraint_log_governance,
+    )
+    import backend.services.wiki_pmi_service as _m
+
+    res_none = audit_wiki_assumption_and_constraint_log_governance(None)
+    assert res_none == {
+        "total_entries": 0,
+        "assumption_count": 0,
+        "constraint_count": 0,
+        "invalid_type_entry_ids": [],
+        "unassigned_or_unscoped_entry_ids": [],
+        "unconverted_false_assumption_ids": [],
+        "stale_unreviewed_entry_ids": [],
+        "is_assumption_log_compliant": True,
+    }
+    assert audit_wiki_assumption_and_constraint_log_governance("no-seq")["total_entries"] == 0
+    assert (
+        audit_wiki_assumption_and_constraint_log_governance(
+            ["no-map", {"entry_id": "   "}, {"other_id": "x"}]
+        )["total_entries"]
+        == 0
+    )
+    assert "audit_wiki_assumption_and_constraint_log_governance" in _m.__all__
+
+    sample = [
+        {"entry_id": "AS-1", "entry_type": "assumption", "owner_id": "PM-1",
+         "impact_domain": "cost", "validation_status": "valid",
+         "days_since_last_review": 3.0},
+    ]
+    assert (
+        WikiPMIService.audit_wiki_assumption_and_constraint_log_governance(sample)
+        == audit_wiki_assumption_and_constraint_log_governance(sample)
+    )
