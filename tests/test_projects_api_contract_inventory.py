@@ -166,3 +166,146 @@ def test_guard_summary_orders_guard_distribution_alphabetically(monkeypatch):
     ]
     assert summary["coverage_pct"] == 100.0
     assert summary["is_fully_guarded"] is True
+
+
+# ── summarize_projects_http_method_footprint (pure helper) ────────────────────
+
+
+def test_http_method_footprint_mixed_read_and_mutation_with_schema_refs():
+    """Audita mezcla de lectura/mutación, orden alfabético de métodos y conteo de esquemas únicos."""
+    openapi = {
+        "paths": {
+            "/api/projects": {
+                "get": {
+                    "operationId": "list_projects",
+                    "responses": {
+                        "200": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/ProjectRead"}
+                                }
+                            }
+                        }
+                    },
+                },
+                "post": {
+                    "operationId": "create_project",
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/ProjectCreate"}
+                            }
+                        }
+                    },
+                    "responses": {
+                        "201": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/ProjectRead"}
+                                }
+                            }
+                        },
+                        "422": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/HTTPValidationError"}
+                                }
+                            }
+                        },
+                    },
+                },
+            },
+            "/api/projects/{project_id}": {
+                "patch": {
+                    "operationId": "update_project",
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/ProjectUpdate"}
+                            }
+                        }
+                    },
+                    "responses": {
+                        "200": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/ProjectRead"}
+                                }
+                            }
+                        }
+                    },
+                },
+                "delete": {
+                    "operationId": "delete_project",
+                    "responses": {
+                        "422": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/ValidationError"}
+                                }
+                            }
+                        }
+                    },
+                },
+            },
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_http_method_footprint(openapi)
+    assert res == {
+        "total_operations": 4,
+        "read_only_operations": 1,
+        "mutation_operations": 3,
+        "method_counts": {"DELETE": 1, "GET": 1, "PATCH": 1, "POST": 1},
+        "unique_schema_refs_count": 3,
+        "mutation_ratio_pct": 75.0,
+    }
+    assert list(res["method_counts"].keys()) == ["DELETE", "GET", "PATCH", "POST"]
+
+
+def test_http_method_footprint_read_only_operations():
+    """Solo operaciones de lectura (GET/HEAD/OPTIONS) -> mutation_operations=0, mutation_ratio_pct=0.0."""
+    openapi = {
+        "paths": {
+            "/api/projects": {
+                "get": {"operationId": "list"},
+                "head": {"operationId": "head_list"},
+                "options": {"operationId": "options_list"},
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_http_method_footprint(openapi)
+    assert res["total_operations"] == 3
+    assert res["read_only_operations"] == 3
+    assert res["mutation_operations"] == 0
+    assert res["method_counts"] == {"GET": 1, "HEAD": 1, "OPTIONS": 1}
+    assert res["mutation_ratio_pct"] == 0.0
+
+
+def test_http_method_footprint_ignores_routes_outside_projects_prefix():
+    """Rutas fuera de /api/projects no se contabilizan en la huella."""
+    openapi = {
+        "paths": {
+            "/api/crm/contacts": {"get": {"operationId": "crm_list"}, "post": {"operationId": "crm_create"}},
+            "/api/projects/tasks": {"get": {"operationId": "tasks_list"}},
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_http_method_footprint(openapi)
+    assert res["total_operations"] == 1
+    assert res["read_only_operations"] == 1
+    assert res["mutation_operations"] == 0
+    assert res["method_counts"] == {"GET": 1}
+
+
+def test_http_method_footprint_empty_openapi():
+    """OpenAPI vacío retorna todos los conteos en 0 y method_counts={}."""
+    res = audit_projects_api_contracts.summarize_projects_http_method_footprint({})
+    assert res == {
+        "total_operations": 0,
+        "read_only_operations": 0,
+        "mutation_operations": 0,
+        "method_counts": {},
+        "unique_schema_refs_count": 0,
+        "mutation_ratio_pct": 0.0,
+    }
+

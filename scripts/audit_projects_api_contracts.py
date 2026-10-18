@@ -161,6 +161,44 @@ def summarize_projects_guard_coverage(openapi: dict[str, Any]) -> dict[str, Any]
     }
 
 
+def summarize_projects_http_method_footprint(openapi: dict[str, Any]) -> dict[str, Any]:
+    """Audita la superficie de lectura vs mutación y referencias de esquemas en las rutas /api/projects."""
+    operations = route_inventory(openapi if isinstance(openapi, dict) else {})
+    total_operations = len(operations)
+
+    read_only_operations = 0
+    mutation_operations = 0
+    raw_method_counts: dict[str, int] = {}
+    all_refs: set[str] = set()
+
+    for method, _path, operation in operations:
+        raw_method_counts[method] = raw_method_counts.get(method, 0) + 1
+        if method in {"GET", "HEAD", "OPTIONS"}:
+            read_only_operations += 1
+        elif method in {"POST", "PUT", "PATCH", "DELETE"}:
+            mutation_operations += 1
+        all_refs.update(schema_refs(operation))
+
+    method_counts = {
+        method: count for method, count in sorted(raw_method_counts.items())
+    }
+    unique_schema_refs_count = len(all_refs)
+    mutation_ratio_pct = (
+        round((mutation_operations / total_operations) * 100.0, 2)
+        if total_operations > 0
+        else 0.0
+    )
+
+    return {
+        "total_operations": total_operations,
+        "read_only_operations": read_only_operations,
+        "mutation_operations": mutation_operations,
+        "method_counts": method_counts,
+        "unique_schema_refs_count": unique_schema_refs_count,
+        "mutation_ratio_pct": mutation_ratio_pct,
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()
