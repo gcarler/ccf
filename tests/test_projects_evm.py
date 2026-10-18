@@ -1221,6 +1221,105 @@ def test_earned_schedule_duration_posture_unscheduled_duration():
     assert no_elapsed["posture"] == "ON_TRACK_DURATION"
 
 
+def test_evaluate_funding_limit_reconciliation_within_limits_and_reschedule():
+    """Dentro de límite -> 'RECONCILED_WITHIN_LIMITS'; planificado > cap -> 'RESCHEDULE_REQUIRED_FOR_CAP'."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_funding_limit_reconciliation,
+    )
+
+    within = evaluate_funding_limit_reconciliation(
+        planned_cumulative_spend=80000.0,
+        actual_cumulative_spend=75000.0,
+        periodic_funding_cap=100000.0,
+        management_reserve=15000.0,
+    )
+    assert within == {
+        "safe_planned": 80000.0,
+        "safe_actual": 75000.0,
+        "safe_cap": 100000.0,
+        "safe_reserve": 15000.0,
+        "total_authorized_ceiling": 115000.0,
+        "cap_utilization_pct": 75.0,
+        "funding_headroom": 25000.0,
+        "planned_exceeds_cap": False,
+        "actual_exceeds_cap": False,
+        "posture": "RECONCILED_WITHIN_LIMITS",
+    }
+
+    reschedule = ProjectEVMService.evaluate_funding_limit_reconciliation(
+        planned_cumulative_spend=110000.0,
+        actual_cumulative_spend=90000.0,
+        periodic_funding_cap=100000.0,
+        management_reserve=10000.0,
+    )
+    assert reschedule["planned_exceeds_cap"] is True
+    assert reschedule["actual_exceeds_cap"] is False
+    assert reschedule["funding_headroom"] == 10000.0
+    assert reschedule["posture"] == "RESCHEDULE_REQUIRED_FOR_CAP"
+
+
+def test_evaluate_funding_limit_reconciliation_reserve_drawdown_required():
+    """Gasto real supera cap pero cubierto por reserva de gestión -> 'RESERVE_DRAWDOWN_REQUIRED'."""
+    from backend.services.project_evm_service import (
+        evaluate_funding_limit_reconciliation,
+    )
+
+    res = evaluate_funding_limit_reconciliation(
+        planned_cumulative_spend=95000.0,
+        actual_cumulative_spend=108000.0,
+        periodic_funding_cap=100000.0,
+        management_reserve=10000.0,
+    )
+    assert res["actual_exceeds_cap"] is True
+    assert res["total_authorized_ceiling"] == 110000.0
+    assert res["funding_headroom"] == -8000.0
+    assert res["cap_utilization_pct"] == 108.0
+    assert res["posture"] == "RESERVE_DRAWDOWN_REQUIRED"
+
+
+def test_evaluate_funding_limit_reconciliation_ceiling_breach_critical():
+    """Gasto real supera cap + reserva de gestión -> 'CEILING_BREACH_CRITICAL'."""
+    from backend.services.project_evm_service import (
+        evaluate_funding_limit_reconciliation,
+    )
+
+    res = evaluate_funding_limit_reconciliation(
+        planned_cumulative_spend=100000.0,
+        actual_cumulative_spend=125000.0,
+        periodic_funding_cap=100000.0,
+        management_reserve=15000.0,
+    )
+    assert res["actual_exceeds_cap"] is True
+    assert res["total_authorized_ceiling"] == 115000.0
+    assert res["funding_headroom"] == -25000.0
+    assert res["cap_utilization_pct"] == 125.0
+    assert res["posture"] == "CEILING_BREACH_CRITICAL"
+
+
+def test_evaluate_funding_limit_reconciliation_unconfigured_cap():
+    """Sin límite de financiamiento periódico (0 o None) -> 'UNCONFIGURED_FUNDING_CAP'."""
+    from backend.services.project_evm_service import (
+        evaluate_funding_limit_reconciliation,
+    )
+
+    zero_cap_with_spend = evaluate_funding_limit_reconciliation(
+        planned_cumulative_spend=50000.0,
+        actual_cumulative_spend=20000.0,
+        periodic_funding_cap=0.0,
+        management_reserve=5000.0,
+    )
+    assert zero_cap_with_spend["safe_cap"] == 0.0
+    assert zero_cap_with_spend["cap_utilization_pct"] == 100.0
+    assert zero_cap_with_spend["planned_exceeds_cap"] is False
+    assert zero_cap_with_spend["actual_exceeds_cap"] is False
+    assert zero_cap_with_spend["posture"] == "UNCONFIGURED_FUNDING_CAP"
+
+    none_all = evaluate_funding_limit_reconciliation(None, None, None, None)
+    assert none_all["cap_utilization_pct"] == 0.0
+    assert none_all["posture"] == "UNCONFIGURED_FUNDING_CAP"
+
+
 if __name__ == "__main__":
     test_evm_balanced_project()
     test_evm_cost_overrun_critical()
@@ -1244,5 +1343,10 @@ if __name__ == "__main__":
     test_evaluate_etc_forecasting_method_posture_composite_cpi_spi()
     test_evaluate_etc_forecasting_method_posture_typical_cpi()
     test_evaluate_etc_forecasting_method_posture_atypical_remaining_budget()
+    test_evaluate_funding_limit_reconciliation_within_limits_and_reschedule()
+    test_evaluate_funding_limit_reconciliation_reserve_drawdown_required()
+    test_evaluate_funding_limit_reconciliation_ceiling_breach_critical()
+    test_evaluate_funding_limit_reconciliation_unconfigured_cap()
     print("✅ All EVM tests passed successfully!")
+
 

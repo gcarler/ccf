@@ -3413,6 +3413,53 @@ def evaluate_etc_forecasting_method_posture(
     }
 
 
+def evaluate_funding_limit_reconciliation(
+    planned_cumulative_spend: float | int | None,
+    actual_cumulative_spend: float | int | None,
+    periodic_funding_cap: float | int | None,
+    management_reserve: float | int | None = 0.0,
+) -> dict[str, Any]:
+    """Evalúa la Conciliación del Límite de Financiamiento según PMI PMBOK §7.3 (Determine Budget) y §7.4 (Control Costs)."""
+    safe_planned = max(0.0, round(float(planned_cumulative_spend or 0.0), 2))
+    safe_actual = max(0.0, round(float(actual_cumulative_spend or 0.0), 2))
+    safe_cap = max(0.0, round(float(periodic_funding_cap or 0.0), 2))
+    safe_reserve = max(0.0, round(float(management_reserve or 0.0), 2))
+
+    total_authorized_ceiling = round(safe_cap + safe_reserve, 2)
+    cap_utilization_pct = (
+        round((safe_actual / safe_cap) * 100.0, 2)
+        if safe_cap > 0
+        else (100.0 if safe_actual > 0 else 0.0)
+    )
+    funding_headroom = round(safe_cap - safe_actual, 2)
+    planned_exceeds_cap = bool(safe_cap > 0 and safe_planned > safe_cap)
+    actual_exceeds_cap = bool(safe_cap > 0 and safe_actual > safe_cap)
+
+    if safe_cap == 0.0:
+        posture = "UNCONFIGURED_FUNDING_CAP"
+    elif safe_actual > total_authorized_ceiling:
+        posture = "CEILING_BREACH_CRITICAL"
+    elif actual_exceeds_cap and safe_actual <= total_authorized_ceiling:
+        posture = "RESERVE_DRAWDOWN_REQUIRED"
+    elif not actual_exceeds_cap and planned_exceeds_cap:
+        posture = "RESCHEDULE_REQUIRED_FOR_CAP"
+    else:
+        posture = "RECONCILED_WITHIN_LIMITS"
+
+    return {
+        "safe_planned": safe_planned,
+        "safe_actual": safe_actual,
+        "safe_cap": safe_cap,
+        "safe_reserve": safe_reserve,
+        "total_authorized_ceiling": total_authorized_ceiling,
+        "cap_utilization_pct": cap_utilization_pct,
+        "funding_headroom": funding_headroom,
+        "planned_exceeds_cap": planned_exceeds_cap,
+        "actual_exceeds_cap": actual_exceeds_cap,
+        "posture": posture,
+    }
+
+
 class ProjectEVMService:
     """Fachada canónica del servicio EVM y Diagnóstico Predictivo PMI (Vol. 5 y Vol. 6)."""
 
@@ -3559,8 +3606,23 @@ class ProjectEVMService:
         return evaluate_etc_forecasting_method_posture(bac, ev, ac, cpi=cpi, spi=spi)
 
     @staticmethod
+    def evaluate_funding_limit_reconciliation(
+        planned_cumulative_spend: float | int | None,
+        actual_cumulative_spend: float | int | None,
+        periodic_funding_cap: float | int | None,
+        management_reserve: float | int | None = 0.0,
+    ) -> dict[str, Any]:
+        return evaluate_funding_limit_reconciliation(
+            planned_cumulative_spend,
+            actual_cumulative_spend,
+            periodic_funding_cap,
+            management_reserve=management_reserve,
+        )
+
+    @staticmethod
     def build_project_execution_matrix(
         db: Session, project: Project, now: Optional[datetime.datetime] = None
     ) -> Dict[str, Any]:
         return build_project_execution_matrix(db, project, now=now)
+
 

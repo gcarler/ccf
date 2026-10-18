@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -596,6 +597,88 @@ def audit_wiki_stakeholder_signoffs(
     }
 
 
+def audit_wiki_template_section_compliance(
+    content: str | None,
+    required_sections: list[str] | None = None,
+) -> dict[str, Any]:
+    """Audita secciones obligatorias de plantillas PMO en una página Wiki (PMBOK §4.4 / §10.2).
+
+    Extrae encabezados Markdown (#..######) fuera de bloques de código cercados y,
+    normalizando sin tildes (NFKD/ascii) y en minúsculas, verifica si cada sección
+    requerida aparece como subcadena de algún encabezado:
+    - `total_required`: secciones exigidas (default PMBOK: Objetivo, Alcance,
+      Riesgos, Criterios de Aceptacion).
+    - `present_sections` / `missing_sections`: hallazgo por sección, orden
+      según required_sections.
+    - `compliance_pct`: % de secciones presentes (2 decimales; 100.0 sin exigidas).
+    - `posture`: 'EMPTY_WIKI_CONTENT' con contenido vacío;
+      'PMO_TEMPLATE_COMPLIANT' con compliance == 100.0;
+      'PARTIAL_TEMPLATE_COMPLIANCE' con compliance >= 50.0; y
+      'NON_COMPLIANT_STRUCTURE' en otro caso.
+    """
+    text = (content or "").strip()
+    required = list(required_sections) if required_sections is not None else [
+        "Objetivo",
+        "Alcance",
+        "Riesgos",
+        "Criterios de Aceptacion",
+    ]
+    total_required = len(required)
+
+    def _normalize(value: str) -> str:
+        stripped = unicodedata.normalize("NFKD", str(value))
+        return stripped.encode("ascii", "ignore").decode("ascii").strip().lower()
+
+    headings: list[str] = []
+    in_fenced_block = False
+    for line in text.splitlines():
+        if re.match(r"^\s*```", line):
+            in_fenced_block = not in_fenced_block
+            continue
+        if in_fenced_block:
+            continue
+        heading_match = re.match(r"^\s*#{1,6}\s+(.+?)\s*$", line)
+        if heading_match:
+            headings.append(heading_match.group(1))
+
+    normalized_headings = {_normalize(h) for h in headings}
+
+    present_sections: list[str] = []
+    missing_sections: list[str] = []
+    for section in required:
+        normalized_section = _normalize(section)
+        if normalized_section in normalized_headings or any(
+            normalized_section in normalized_heading
+            for normalized_heading in normalized_headings
+        ):
+            present_sections.append(section)
+        else:
+            missing_sections.append(section)
+
+    compliance_pct = (
+        round((len(present_sections) / total_required) * 100.0, 2)
+        if total_required > 0
+        else 100.0
+    )
+
+    if not text:
+        posture = "EMPTY_WIKI_CONTENT"
+    elif compliance_pct == 100.0:
+        posture = "PMO_TEMPLATE_COMPLIANT"
+    elif compliance_pct >= 50.0:
+        posture = "PARTIAL_TEMPLATE_COMPLIANCE"
+    else:
+        posture = "NON_COMPLIANT_STRUCTURE"
+
+    return {
+        "total_required": total_required,
+        "present_sections": present_sections,
+        "missing_sections": missing_sections,
+        "compliance_pct": compliance_pct,
+        "posture": posture,
+    }
+
+
 class WikiPMIService:
     """Fachada canónica de doctrina y gobernanza documental Wiki PMI."""
 
@@ -676,6 +759,13 @@ class WikiPMIService:
     ) -> dict[str, Any]:
         return audit_wiki_stakeholder_signoffs(signoffs)
 
+    @staticmethod
+    def audit_wiki_template_section_compliance(
+        content: str | None,
+        required_sections: list[str] | None = None,
+    ) -> dict[str, Any]:
+        return audit_wiki_template_section_compliance(content, required_sections)
+
 
 __all__ = [
     "DEFAULT_PMI_KB_DIR",
@@ -692,6 +782,7 @@ __all__ = [
     "summarize_wiki_revision_history_velocity",
     "audit_wiki_crosslink_reference_integrity",
     "audit_wiki_stakeholder_signoffs",
+    "audit_wiki_template_section_compliance",
     "WikiPMIService",
 ]
 

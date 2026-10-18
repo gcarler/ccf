@@ -776,6 +776,113 @@ def test_audit_wiki_crosslink_without_known_slugs_resolves_all():
     assert res["posture"] == "CONNECTED_KNOWLEDGE_GRAPH"
 
 
+# ─── audit_wiki_template_section_compliance (pure helper) ─────────
+
+
+def test_wiki_template_compliance_default_sections_fully_compliant():
+    """Encabezados con tildes y variantes case-insensitivas -> PMO_TEMPLATE_COMPLIANT (100%)."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_template_section_compliance,
+    )
+
+    content = (
+        "# Propuesta de Proyecto Grupos de Vida\n"
+        "## Objetivo del proyecto\n"
+        "texto descriptivo…\n"
+        "### Alcance y límites\n"
+        " ```\ncodigo con ## Objetivo falso dentro\n```\n"
+        "#### Riesgos y Mitigaciones\n"
+        "## Criterios de Aceptación\n"
+    )
+
+    res = audit_wiki_template_section_compliance(content)
+
+    assert res["total_required"] == 4
+    assert res["present_sections"] == [
+        "Objetivo",
+        "Alcance",
+        "Riesgos",
+        "Criterios de Aceptacion",
+    ]
+    assert res["missing_sections"] == []
+    assert res["compliance_pct"] == 100.0
+    assert res["posture"] == "PMO_TEMPLATE_COMPLIANT"
+
+
+def test_wiki_template_compliance_partial_with_missing_sections():
+    """2 de 4 secciones presentes -> PARTIAL_TEMPLATE_COMPLIANCE (50.0)."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_template_section_compliance,
+    )
+
+    content = "# Plan de Comunicaciones\n## Objetivo\n## Alcance\n"
+
+    res = audit_wiki_template_section_compliance(content)
+
+    assert res["total_required"] == 4
+    assert res["present_sections"] == ["Objetivo", "Alcance"]
+    assert res["missing_sections"] == ["Riesgos", "Criterios de Aceptacion"]
+    assert res["compliance_pct"] == 50.0
+    assert res["posture"] == "PARTIAL_TEMPLATE_COMPLIANCE"
+
+
+def test_wiki_template_compliance_ignores_code_fenced_fake_headings():
+    """Encabezados falsos dentro de código cercado no cuentan -> NON_COMPLIANT_STRUCTURE."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_template_section_compliance,
+    )
+
+    content = (
+        "# Reporte Financiero\n"
+        "````\n## Objetivo\n## Alcance\n## Riesgos\n## Criterios\n````"
+    )
+
+    res = audit_wiki_template_section_compliance(content)
+
+    assert res["present_sections"] == []
+    assert res["missing_sections"] == [
+        "Objetivo",
+        "Alcance",
+        "Riesgos",
+        "Criterios de Aceptacion",
+    ]
+    assert res["compliance_pct"] == 0.0
+    assert res["posture"] == "NON_COMPLIANT_STRUCTURE"
+
+
+def test_wiki_template_compliance_custom_sections_and_empty_content():
+    """Secciones custom subcadenas; contenido vacío/None -> EMPTY_WIKI_CONTENT con 100.0."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_template_section_compliance,
+    )
+
+    res_custom = audit_wiki_template_section_compliance(
+        "## Cronograma Maestro\n## Presupuesto Aprobado\n",
+        ["Cronograma", "Presupuesto", "Lecciones"],
+    )
+    assert res_custom["total_required"] == 3
+    assert res_custom["present_sections"] == ["Cronograma", "Presupuesto"]
+    assert res_custom["missing_sections"] == ["Lecciones"]
+    assert res_custom["compliance_pct"] == 66.67
+    assert res_custom["posture"] == "PARTIAL_TEMPLATE_COMPLIANCE"
+
+    for empty_content in (None, "", "   "):
+        res = audit_wiki_template_section_compliance(empty_content)
+        assert res == {
+            "total_required": 4,
+            "present_sections": [],
+            "missing_sections": [
+                "Objetivo",
+                "Alcance",
+                "Riesgos",
+                "Criterios de Aceptacion",
+            ],
+            # The spec only assigns 100.0 when total_required==0; with 4 required, and 0 present, it is 0.0.
+            "compliance_pct": 0.0,
+            "posture": "EMPTY_WIKI_CONTENT",
+        }
+
+
 # ─── audit_wiki_stakeholder_signoffs (PMBOK §13.3 / §10.2, pure helper) ───
 
 
