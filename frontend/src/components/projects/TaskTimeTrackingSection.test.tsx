@@ -112,4 +112,61 @@ describe('TaskTimeTrackingSection accessibility and feedback', () => {
     expect(screen.getByText(/10\.00h estimadas/i)).toBeInTheDocument();
     expect(screen.getByText('Avance Físico: 45%')).toBeInTheDocument();
   });
+
+  it('calculates earned effort, labor efficiency, remaining effort, forecast and billable breakdown', async () => {
+    vi.mocked(apiFetch).mockResolvedValueOnce([
+      { ...log, id: 'billable', hours: 3, is_billable: true },
+      { ...log, id: 'non-billable', hours: 2, is_billable: false },
+    ]);
+    render(
+      <TaskTimeTrackingSection
+        task={{
+          ...task,
+          estimated_hours: 8,
+          actual_hours: 1,
+          physical_progress_pct: 50,
+          progress_pct: 90,
+        }}
+        token="test-token"
+      />,
+    );
+
+    expect(await screen.findByTestId('task-time-pmi-effort-diagnosis')).toBeInTheDocument();
+    expect(screen.getByTestId('task-time-pmi-ev-hours')).toHaveTextContent('4.00h');
+    expect(screen.getByTestId('task-time-pmi-lei')).toHaveTextContent('0.80');
+    expect(screen.getByTestId('task-time-pmi-etc-hours')).toHaveTextContent('4.00h');
+    expect(screen.getByTestId('task-time-pmi-eac-hours')).toHaveTextContent('9.00h');
+    expect(screen.getByTestId('task-time-pmi-billable-hours')).toHaveTextContent('3.00h');
+    expect(screen.getByTestId('task-time-pmi-non-billable-hours')).toHaveTextContent('2.00h');
+    expect(screen.queryByTestId('task-time-pmi-over-effort-alert')).not.toBeInTheDocument();
+  });
+
+  it('uses completed status as the progress fallback and alerts when actual effort exceeds estimate', async () => {
+    vi.mocked(apiFetch).mockResolvedValueOnce([]);
+    render(
+      <TaskTimeTrackingSection
+        task={{ ...task, status: 'completed', estimated_hours: 4, actual_hours: 5 }}
+        token="test-token"
+      />,
+    );
+
+    expect(await screen.findByTestId('task-time-pmi-effort-diagnosis')).toBeInTheDocument();
+    expect(screen.getByTestId('task-time-pmi-ev-hours')).toHaveTextContent('4.00h');
+    expect(screen.getByTestId('task-time-pmi-lei')).toHaveTextContent('0.80');
+    expect(screen.getByTestId('task-time-pmi-etc-hours')).toHaveTextContent('0.00h');
+    expect(screen.getByTestId('task-time-pmi-eac-hours')).toHaveTextContent('5.00h');
+    expect(screen.getByTestId('task-time-pmi-over-effort-alert')).toHaveTextContent('Exceso de Esfuerzo EDT');
+  });
+
+  it('shows the effort diagnosis with an unavailable LEI when only actual hours are known', async () => {
+    vi.mocked(apiFetch).mockResolvedValueOnce([]);
+    render(
+      <TaskTimeTrackingSection task={{ ...task, actual_hours: 2 }} token="test-token" />,
+    );
+
+    expect(await screen.findByTestId('task-time-pmi-effort-diagnosis')).toBeInTheDocument();
+    expect(screen.getByTestId('task-time-pmi-lei')).toHaveTextContent('—');
+    expect(screen.getByTestId('task-time-pmi-ev-hours')).toHaveTextContent('0.00h');
+    expect(screen.getByTestId('task-time-pmi-eac-hours')).toHaveTextContent('2.00h');
+  });
 });

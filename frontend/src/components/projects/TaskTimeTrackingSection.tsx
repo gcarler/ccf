@@ -119,6 +119,21 @@ export default function TaskTimeTrackingSection({
     estimatedHours > 0
       ? Math.min(100, Math.round((effectiveActualHours / estimatedHours) * 100))
       : Math.round(task.physical_progress_pct ?? 0);
+  const reportedPhysicalProgress = task.physical_progress_pct
+    ?? task.progress_pct
+    ?? (task.status === "done" || task.status === "completed" ? 100 : physicalProgressImpact);
+  const earnedEffortProgress = Number.isFinite(reportedPhysicalProgress)
+    ? Math.min(100, Math.max(0, reportedPhysicalProgress))
+    : 0;
+  const earnedHours = estimatedHours * earnedEffortProgress / 100;
+  const laborEfficiencyIndex = effectiveActualHours > 0 && estimatedHours > 0
+    ? earnedHours / effectiveActualHours
+    : null;
+  const estimateToCompleteHours = Math.max(0, estimatedHours - earnedHours);
+  const estimateAtCompletionHours = effectiveActualHours + estimateToCompleteHours;
+  const billableHours = logs.reduce((sum, log) => sum + (log.is_billable ? log.hours : 0), 0);
+  const nonBillableHours = logs.reduce((sum, log) => sum + (log.is_billable ? 0 : log.hours), 0);
+  const isOverEffort = effectiveActualHours > estimatedHours && estimatedHours > 0;
 
   return (
     <section aria-labelledby="task-time-tracking-heading" className="px-4 py-3 border-b border-[hsl(var(--border))]">
@@ -196,6 +211,53 @@ export default function TaskTimeTrackingSection({
           </div>
         )}
       </div>
+
+      {(estimatedHours > 0 || effectiveActualHours > 0) && (
+        <section
+          data-testid="task-time-pmi-effort-diagnosis"
+          aria-label="Diagnóstico PMI de esfuerzo ganado"
+          className="mb-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-2.5"
+        >
+          <h4 className="mb-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+            Diagnóstico PMI de Esfuerzo Ganado
+          </h4>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <div className="rounded-md bg-[hsl(var(--surface-2))] px-2 py-1.5">
+              <p className="text-2xs text-[hsl(var(--text-secondary))]">Horas Ganadas (EV_h)</p>
+              <p data-testid="task-time-pmi-ev-hours" className="text-xs font-bold tabular-nums text-[hsl(var(--text-primary))]">{earnedHours.toFixed(2)}h</p>
+            </div>
+            <div className="rounded-md bg-[hsl(var(--surface-2))] px-2 py-1.5">
+              <p className="text-2xs text-[hsl(var(--text-secondary))]">Eficiencia Laboral (LEI)</p>
+              <p data-testid="task-time-pmi-lei" className="text-xs font-bold tabular-nums text-[hsl(var(--text-primary))]">{laborEfficiencyIndex === null ? "—" : laborEfficiencyIndex.toFixed(2)}</p>
+            </div>
+            <div className="rounded-md bg-[hsl(var(--surface-2))] px-2 py-1.5">
+              <p className="text-2xs text-[hsl(var(--text-secondary))]">Esfuerzo Restante (ETC_h)</p>
+              <p data-testid="task-time-pmi-etc-hours" className="text-xs font-bold tabular-nums text-[hsl(var(--text-primary))]">{estimateToCompleteHours.toFixed(2)}h</p>
+            </div>
+            <div className="rounded-md bg-[hsl(var(--surface-2))] px-2 py-1.5">
+              <p className="text-2xs text-[hsl(var(--text-secondary))]">Pronóstico a la Conclusión (EAC_h)</p>
+              <p data-testid="task-time-pmi-eac-hours" className="text-xs font-bold tabular-nums text-[hsl(var(--text-primary))]">{estimateAtCompletionHours.toFixed(2)}h</p>
+            </div>
+            <div className="rounded-md bg-[hsl(var(--surface-2))] px-2 py-1.5">
+              <p className="text-2xs text-[hsl(var(--text-secondary))]">Horas Facturables (logs)</p>
+              <p data-testid="task-time-pmi-billable-hours" className="text-xs font-bold tabular-nums text-[hsl(var(--text-primary))]">{billableHours.toFixed(2)}h</p>
+            </div>
+            <div className="rounded-md bg-[hsl(var(--surface-2))] px-2 py-1.5">
+              <p className="text-2xs text-[hsl(var(--text-secondary))]">Horas No Facturables (logs)</p>
+              <p data-testid="task-time-pmi-non-billable-hours" className="text-xs font-bold tabular-nums text-[hsl(var(--text-primary))]">{nonBillableHours.toFixed(2)}h</p>
+            </div>
+          </div>
+          {isOverEffort && (
+            <p
+              role="alert"
+              data-testid="task-time-pmi-over-effort-alert"
+              className="mt-2 rounded-md border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning-muted))] px-2.5 py-2 text-2xs font-semibold text-[hsl(var(--warning-text))]"
+            >
+              Exceso de Esfuerzo EDT: las horas reales superan las estimadas.
+            </p>
+          )}
+        </section>
+      )}
 
       {error && !showAddForm && (
         <p role="alert" className="mb-2 text-2xs" style={{ color: "hsl(var(--destructive))" }}>

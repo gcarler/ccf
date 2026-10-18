@@ -24,6 +24,44 @@ interface Comment {
     pinner_name?: string | null;
 }
 
+type PmiCommentCategory = 'BLOCKER' | 'DECISION' | 'EVIDENCE' | 'PINNED';
+type PmiCommentFilter = 'ALL' | PmiCommentCategory;
+
+const PMI_COMMENT_TAGS = [
+    { category: 'BLOCKER', prefix: '[BLOQUEO EDT] ', label: 'Bloqueo EDT' },
+    { category: 'DECISION', prefix: '[DECISIÓN TÉCNICA] ', label: 'Decisión técnica' },
+    { category: 'EVIDENCE', prefix: '[EVIDENCIA DOD] ', label: 'Evidencia DoD' },
+] as const;
+
+const classifyPmiComment = (comment: Pick<Comment, 'text' | 'attachments' | 'is_pinned'>): PmiCommentCategory[] => {
+    const text = comment.text.toLocaleLowerCase('es');
+    const categories: PmiCommentCategory[] = [];
+    if (text.includes('[bloqueo') || text.includes('bloqueo:') || text.includes('[incidente')) categories.push('BLOCKER');
+    if (text.includes('[decisión') || text.includes('decisión:')) categories.push('DECISION');
+    if (text.includes('[evidencia') || text.includes('evidencia:') || (comment.attachments?.length ?? 0) > 0) categories.push('EVIDENCE');
+    if (comment.is_pinned) categories.push('PINNED');
+    return categories;
+};
+
+const PMI_CATEGORY_LABELS: Record<PmiCommentCategory, string> = {
+    BLOCKER: 'Bloqueo / Impedimento',
+    DECISION: 'Decisión Técnica',
+    EVIDENCE: 'Evidencia DoD',
+    PINNED: 'Fijado',
+};
+
+const PMI_FILTER_LABELS: Record<PmiCommentFilter, string> = {
+    ALL: 'Todos',
+    ...PMI_CATEGORY_LABELS,
+};
+
+const PMI_CATEGORY_STYLES: Record<PmiCommentCategory, string> = {
+    BLOCKER: 'border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning-text))]',
+    DECISION: 'border-[hsl(var(--primary)/0.25)] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]',
+    EVIDENCE: 'border-[hsl(var(--success)/0.25)] bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]',
+    PINNED: 'border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning-text))]',
+};
+
 const sortComments = (items: Comment[]): Comment[] => {
     return [...items].sort((a, b) => {
         if (Boolean(a.is_pinned) !== Boolean(b.is_pinned)) {
@@ -46,6 +84,7 @@ export default function TaskCommentSection({
 }) {
     const [comments, setComments] = useState<Comment[]>([]);
     const [commentInput, setCommentInput] = useState('');
+    const [pmiFilter, setPmiFilter] = useState<PmiCommentFilter>('ALL');
     const [sendingComment, setSendingComment] = useState(false);
     const [loadingComments, setLoadingComments] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -72,6 +111,31 @@ export default function TaskCommentSection({
     const [selectedMentions, setSelectedMentions] = useState<Array<{ id: string; name: string }>>([]);
     const [activeMentionIndex, setActiveMentionIndex] = useState(0);
     const inputRef = useRef<HTMLInputElement>(null);
+
+    const pmiCommentCounts = useMemo(() => comments.reduce<Record<PmiCommentFilter, number>>((counts, comment) => {
+        for (const category of classifyPmiComment(comment)) counts[category] += 1;
+        counts.ALL += 1;
+        return counts;
+    }, { ALL: 0, BLOCKER: 0, DECISION: 0, EVIDENCE: 0, PINNED: 0 }), [comments]);
+
+    const visibleComments = useMemo(() => pmiFilter === 'ALL'
+        ? comments
+        : comments.filter(comment => classifyPmiComment(comment).includes(pmiFilter)), [comments, pmiFilter]);
+
+    const handlePmiTagToggle = (prefix: typeof PMI_COMMENT_TAGS[number]['prefix']) => {
+        const existingPrefix = PMI_COMMENT_TAGS.find(tag => commentInput.startsWith(tag.prefix))?.prefix;
+        const nextInput = existingPrefix === prefix
+            ? commentInput.slice(prefix.length)
+            : existingPrefix
+                ? `${prefix}${commentInput.slice(existingPrefix.length)}`
+                : `${prefix}${commentInput}`;
+        setCommentInput(nextInput);
+        setMentionState(null);
+        window.requestAnimationFrame(() => {
+            inputRef.current?.focus();
+            inputRef.current?.setSelectionRange(prefix.length, prefix.length);
+        });
+    };
 
     const mentionQuery = mentionState?.query;
     useEffect(() => {
@@ -289,6 +353,41 @@ export default function TaskCommentSection({
                 <MessageSquare size={11} /> Actividad
             </p>
 
+            <section
+                data-testid="task-comments-pmi-summary"
+                aria-label="Resumen PMI de comentarios del paquete"
+                className="mb-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-2"
+            >
+                <p className="mb-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Bitácora PMI del Paquete</p>
+                <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+                    {(['BLOCKER', 'DECISION', 'EVIDENCE', 'PINNED'] as const).map(category => (
+                        <div key={category} className="rounded-md bg-[hsl(var(--surface-2))] px-2 py-1.5">
+                            <p className="text-2xs text-[hsl(var(--text-secondary))]">{PMI_CATEGORY_LABELS[category]}</p>
+                            <p data-testid={`task-comments-pmi-count-${category.toLowerCase()}`} className="text-xs font-bold tabular-nums text-[hsl(var(--text-primary))]">{pmiCommentCounts[category]}</p>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            <div data-testid="task-comments-pmi-filter" aria-label="Filtrar comentarios PMI" className="mb-3 flex flex-wrap gap-1.5">
+                {(['ALL', 'BLOCKER', 'DECISION', 'EVIDENCE', 'PINNED'] as const).map(filter => (
+                    <button
+                        key={filter}
+                        type="button"
+                        aria-pressed={pmiFilter === filter}
+                        onClick={() => setPmiFilter(filter)}
+                        className={clsx(
+                            'rounded-full border px-2 py-1 text-2xs font-semibold transition-colors',
+                            pmiFilter === filter
+                                ? 'border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]'
+                                : 'border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--text-primary))]'
+                        )}
+                    >
+                        {PMI_FILTER_LABELS[filter]} ({pmiCommentCounts[filter]})
+                    </button>
+                ))}
+            </div>
+
             <div className="space-y-3 mb-4">
                 {loadingComments && (
                     <p className="text-xs text-[hsl(var(--muted-foreground))] italic text-center py-2">
@@ -300,7 +399,12 @@ export default function TaskCommentSection({
                         Sin comentarios aún. Menciona a alguien con @
                     </p>
                 )}
-                {comments.map(c => (
+                {!loadingComments && comments.length > 0 && visibleComments.length === 0 && (
+                    <p className="text-xs text-[hsl(var(--text-secondary))] italic text-center py-2">
+                        No hay comentarios en esta categoría.
+                    </p>
+                )}
+                {visibleComments.map(c => (
                     <div
                         key={c.id}
                         className={clsx(
@@ -330,6 +434,15 @@ export default function TaskCommentSection({
                                         <Pin size={9} className="rotate-45 fill-current" /> Fijado
                                     </span>
                                 )}
+                                {classifyPmiComment(c).filter(category => category !== 'PINNED').map(category => (
+                                    <span
+                                        key={`${c.id}-pmi-${category}`}
+                                        data-testid={`task-comment-pmi-badge-${category.toLowerCase()}`}
+                                        className={clsx('inline-flex items-center rounded border px-1.5 py-0.5 text-2xs font-bold', PMI_CATEGORY_STYLES[category])}
+                                    >
+                                        {PMI_CATEGORY_LABELS[category]}
+                                    </span>
+                                ))}
                                 <div className="ml-auto flex items-center gap-1">
                                     <button
                                         type="button"
@@ -418,6 +531,27 @@ export default function TaskCommentSection({
                 ))}
             </div>
 
+
+            <div data-testid="task-comments-pmi-tags" aria-label="Marcadores rápidos PMI" className="mb-1.5 flex flex-wrap items-center gap-1.5">
+                <span className="mr-0.5 text-2xs font-semibold text-[hsl(var(--text-secondary))]">Marcadores PMI:</span>
+                {PMI_COMMENT_TAGS.map(tag => (
+                    <button
+                        key={tag.category}
+                        type="button"
+                        data-testid={`task-comment-tag-${tag.category.toLowerCase()}`}
+                        aria-pressed={commentInput.startsWith(tag.prefix)}
+                        onClick={() => handlePmiTagToggle(tag.prefix)}
+                        className={clsx(
+                            'rounded-full border px-2 py-1 text-2xs font-semibold transition-colors',
+                            commentInput.startsWith(tag.prefix)
+                                ? PMI_CATEGORY_STYLES[tag.category]
+                                : 'border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--text-primary))]'
+                        )}
+                    >
+                        {tag.label}
+                    </button>
+                ))}
+            </div>
 
             <div className="relative">
                 {mentionState && filteredCandidates.length > 0 && (

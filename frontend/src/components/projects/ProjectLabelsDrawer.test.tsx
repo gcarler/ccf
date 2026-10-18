@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ProjectLabelsDrawer } from "./ProjectLabelsDrawer";
 import { apiFetch } from "@/lib/http";
@@ -209,5 +209,104 @@ describe("ProjectLabelsDrawer", () => {
         })
       );
     });
+  });
+});
+
+describe("ProjectLabelsDrawer — Gobernanza de Taxonomía PMI", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+  });
+
+  it("presenta el diagnóstico de taxonomía PMI con conteos de uso y las 4 dimensiones", async () => {
+    vi.mocked(apiFetch).mockResolvedValue([
+      { name: "Riesgo Sala", task_count: 1 },
+      { name: "Revisión DoD", task_count: 0 },
+      { name: "Hito Contabilidad", task_count: 2 },
+      { name: "Urgente", task_count: 4 },
+    ]);
+
+    renderDrawer(
+      <ProjectLabelsDrawer projectId="p-1" isOpen={true} onClose={vi.fn()} />
+    );
+
+    const summary = await screen.findByTestId("labels-pmi-taxonomy-summary");
+    const text = () => summary.textContent ?? "";
+
+    // Clasificación por Dimensión PMI (riesgo > calidad > hito > operativa);
+    // contexto agrega Diseño y Urgente (2 operativas)
+    expect(text()).toMatch(/Riesgo\s*\/\s*Bloqueo:\s*1/);
+    expect(text()).toMatch(/Calidad\s*\/\s*DoD:\s*1/);
+    expect(text()).toMatch(/Hito\s*\/\s*Entregable:\s*1/);
+    expect(text()).toMatch(/Operativa:\s*2/);
+
+    // Con uso: Riesgo(1), Hito(2), Urgente(4) y Diseño(1); sin uso: Revisión DoD → 1 huérfana
+    expect(text()).toMatch(/4\s+en uso/);
+    expect(text()).toMatch(/1\s+sin uso\s*\/\s*huérfanas/);
+  });
+
+  it("siembra las 4 etiquetas canónicas PMI en 1 clic vía labels-pmi-seed-btn", async () => {
+    vi.mocked(apiFetch).mockResolvedValue([
+      { name: "Urgente", task_count: 2 },
+    ]);
+
+    renderDrawer(
+      <ProjectLabelsDrawer projectId="p-1" isOpen={true} onClose={vi.fn()} />
+    );
+
+    await screen.findByText("Urgente");
+    const seedBtn = screen.getByTestId("labels-pmi-seed-btn");
+    expect(screen.queryByText("PMI: Hito Crítico")).not.toBeInTheDocument();
+
+    fireEvent.click(seedBtn);
+
+    // Las 4 canónicas aparecen en el catálogo local persistido y en la lista
+    await waitFor(() => {
+      expect(screen.getByText("PMI: Hito Crítico")).toBeInTheDocument();
+    });
+    expect(screen.getByText("PMI: Control Calidad DoD")).toBeInTheDocument();
+    expect(screen.getByText("PMI: Riesgo / Bloqueo")).toBeInTheDocument();
+    expect(screen.getByText("PMI: Entregable Principal")).toBeInTheDocument();
+
+    const stored = JSON.parse(localStorage.getItem("projectLabelsCatalog:p-1") ?? "[]");
+    for (const canonical of [
+      "PMI: Hito Crítico",
+      "PMI: Control Calidad DoD",
+      "PMI: Riesgo / Bloqueo",
+      "PMI: Entregable Principal",
+    ]) {
+      expect(stored).toContain(canonical);
+    }
+  });
+
+  it("filtra las etiquetas por uso con labels-usage-filter", async () => {
+    vi.mocked(apiFetch).mockResolvedValue([
+      { name: "Arcaico", task_count: 0 },
+      { name: "Backend", task_count: 3 },
+    ]);
+
+    renderDrawer(
+      <ProjectLabelsDrawer projectId="p-1" isOpen={true} onClose={vi.fn()} />
+    );
+
+    const filter = await screen.findByTestId("labels-usage-filter");
+    // Contexto: Arcaico(0), Backend(3), Diseño(1), Urgente(1) → todos visibles con "Todas"
+    expect(screen.getByText("Arcaico")).toBeInTheDocument();
+    expect(screen.getByText("Backend")).toBeInTheDocument();
+
+    // "Sin Uso": solo la huérfana Arcaico
+    fireEvent.click(within(filter).getByRole("button", { name: "Sin Uso" }));
+    expect(screen.getByText("Arcaico")).toBeInTheDocument();
+    expect(screen.queryByText("Backend")).not.toBeInTheDocument();
+
+    // "En Uso": solo etiquetas con actividad asociada
+    fireEvent.click(within(filter).getByRole("button", { name: "En Uso" }));
+    expect(screen.getByText("Backend")).toBeInTheDocument();
+    expect(screen.queryByText("Arcaico")).not.toBeInTheDocument();
+
+    // Retorno a "Todas": catálogo completo
+    fireEvent.click(within(filter).getByRole("button", { name: "Todas" }));
+    expect(screen.getByText("Arcaico")).toBeInTheDocument();
+    expect(screen.getByText("Backend")).toBeInTheDocument();
   });
 });

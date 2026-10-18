@@ -218,5 +218,107 @@ describe('TaskCommentSection', () => {
     const iframe = screen.getByTitle('entregable.pdf');
     expect(iframe).toHaveAttribute('src', 'https://example.com/entregable.pdf#toolbar=1&navpanes=0');
   });
+
+  it('summarizes PMI work package comment counts, renders semantic badges, and filters by category', async () => {
+    mockApiFetch.mockResolvedValueOnce([
+      {
+        id: 'c-blocker',
+        project_id: 'p1',
+        author_id: 'u1',
+        author_name: 'Elena',
+        content: '[BLOQUEO EDT] Dependencia externa pendiente de proveedor',
+        created_at: '2026-01-01T10:00:00Z',
+        updated_at: '2026-01-01T10:00:00Z',
+        is_resolved: false,
+        is_pinned: true,
+      },
+      {
+        id: 'c-decision',
+        project_id: 'p1',
+        author_id: 'u2',
+        author_name: 'Marco',
+        content: '[DECISIÓN TÉCNICA] Se aprueba migración incremental por lote',
+        created_at: '2026-01-01T11:00:00Z',
+        updated_at: '2026-01-01T11:00:00Z',
+        is_resolved: false,
+        is_pinned: false,
+      },
+      {
+        id: 'c-evidence',
+        project_id: 'p1',
+        author_id: 'u3',
+        author_name: 'Lucia',
+        content: '[EVIDENCIA DOD] Acta de validación firmada por sponsor',
+        created_at: '2026-01-01T12:00:00Z',
+        updated_at: '2026-01-01T12:00:00Z',
+        is_resolved: false,
+        is_pinned: false,
+      },
+    ] as ProjectCommentItem[]);
+
+    render(<TaskCommentSection task={task} token="test-token" onDeleteComment={vi.fn()} />);
+
+    await screen.findByText('Elena');
+    expect(screen.getByTestId('task-comments-pmi-summary')).toBeInTheDocument();
+    expect(screen.getByTestId('task-comments-pmi-count-blocker')).toHaveTextContent('1');
+    expect(screen.getByTestId('task-comments-pmi-count-decision')).toHaveTextContent('1');
+    expect(screen.getByTestId('task-comments-pmi-count-evidence')).toHaveTextContent('1');
+    expect(screen.getByTestId('task-comments-pmi-count-pinned')).toHaveTextContent('1');
+
+    expect(screen.getByTestId('task-comment-pmi-badge-blocker')).toHaveTextContent('Bloqueo / Impedimento');
+    expect(screen.getByTestId('task-comment-pmi-badge-decision')).toHaveTextContent('Decisión Técnica');
+    expect(screen.getByTestId('task-comment-pmi-badge-evidence')).toHaveTextContent('Evidencia DoD');
+
+    const filterGroup = screen.getByTestId('task-comments-pmi-filter');
+    fireEvent.click(screen.getByRole('button', { name: /Bloqueo \/ Impedimento \(1\)/i }));
+    expect(screen.getByText(/Dependencia externa pendiente/)).toBeInTheDocument();
+    expect(screen.queryByText(/Se aprueba migración incremental/)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Decisión Técnica \(1\)/i }));
+    expect(screen.getByText(/Se aprueba migración incremental/)).toBeInTheDocument();
+    expect(screen.queryByText(/Dependencia externa pendiente/)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Evidencia DoD \(1\)/i }));
+    expect(screen.getByText(/Acta de validación firmada/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Fijado \(1\)/i }));
+    expect(screen.getByText(/Dependencia externa pendiente/)).toBeInTheDocument();
+    expect(screen.queryByText(/Acta de validación firmada/)).not.toBeInTheDocument();
+
+    expect(filterGroup).toBeInTheDocument();
+  });
+
+  it('inserts and switches 1-click PMI prefixes in the composer without duplicating prefixes', async () => {
+    mockApiFetch.mockResolvedValueOnce([]);
+    render(<TaskCommentSection task={task} token="test-token" onDeleteComment={vi.fn()} />);
+    await screen.findByText(/Sin comentarios aún/);
+
+    const input = screen.getByRole('textbox', { name: 'Escribe un comentario' });
+    fireEvent.change(input, { target: { value: 'Revisión de entregable' } });
+
+    const blockerTag = screen.getByTestId('task-comment-tag-blocker');
+    const decisionTag = screen.getByTestId('task-comment-tag-decision');
+    const evidenceTag = screen.getByTestId('task-comment-tag-evidence');
+
+    fireEvent.click(blockerTag);
+    expect(input).toHaveValue('[BLOQUEO EDT] Revisión de entregable');
+    expect(blockerTag).toHaveAttribute('aria-pressed', 'true');
+
+    // Switching to another tag replaces the prefix instead of duplicating it
+    fireEvent.click(decisionTag);
+    expect(input).toHaveValue('[DECISIÓN TÉCNICA] Revisión de entregable');
+    expect(decisionTag).toHaveAttribute('aria-pressed', 'true');
+    expect(blockerTag).toHaveAttribute('aria-pressed', 'false');
+
+    fireEvent.click(evidenceTag);
+    expect(input).toHaveValue('[EVIDENCIA DOD] Revisión de entregable');
+    expect(evidenceTag).toHaveAttribute('aria-pressed', 'true');
+
+    // Clicking the active tag again removes the prefix cleanly
+    fireEvent.click(evidenceTag);
+    expect(input).toHaveValue('Revisión de entregable');
+    expect(evidenceTag).toHaveAttribute('aria-pressed', 'false');
+  });
 });
+
 

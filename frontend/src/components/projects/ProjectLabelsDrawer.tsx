@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Tag, Plus, Edit2, Trash2, Check, X, Search, RefreshCw, AlertCircle } from "lucide-react";
+import { Tag, Plus, Edit2, Trash2, Check, X, Search, RefreshCw, AlertCircle, Sparkles } from "lucide-react";
 import clsx from "clsx";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/http";
@@ -40,6 +40,58 @@ export function getLabelColor(label: string) {
   return LABEL_COLORS[Math.abs(hash) % LABEL_COLORS.length];
 }
 
+type PmiLabelDimension = "riesgo" | "calidad" | "hito" | "operativa";
+type LabelUsageFilter = "ALL" | "USED" | "UNUSED";
+
+/** Etiquetas canónicas de la taxonomía de gobernanza PMI (PMBOK 7ma Ed.). */
+const PMI_CANONICAL_SEED_LABELS = [
+  "PMI: Hito Crítico",
+  "PMI: Control Calidad DoD",
+  "PMI: Riesgo / Bloqueo",
+  "PMI: Entregable Principal",
+];
+
+const PMI_USAGE_FILTERS: { key: LabelUsageFilter; label: string }[] = [
+  { key: "ALL", label: "Todas" },
+  { key: "USED", label: "En Uso" },
+  { key: "UNUSED", label: "Sin Uso" },
+];
+
+/** Clasifica una etiqueta por su Dimensión PMI (normalizando acentos). */
+export function classifyPmiDimension(name: string): PmiLabelDimension {
+  const normalized = name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  if (/(riesgo|bloqueo|critico|incidente)/.test(normalized)) return "riesgo";
+  if (/(calidad|dod|revision|auditoria)/.test(normalized)) return "calidad";
+  if (/(hito|entregable|fase|cierre)/.test(normalized)) return "hito";
+  return "operativa";
+}
+
+const PMI_DIMENSION_META: Record<PmiLabelDimension, { label: string; chipClass: string }> = {
+  riesgo: {
+    label: "Riesgo / Bloqueo",
+    chipClass:
+      "text-[hsl(var(--destructive))] border-[hsl(var(--destructive)/0.3)] bg-[hsl(var(--destructive)/0.1)]",
+  },
+  calidad: {
+    label: "Calidad / DoD",
+    chipClass:
+      "text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)]",
+  },
+  hito: {
+    label: "Hito / Entregable",
+    chipClass:
+      "text-[hsl(var(--primary))] border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.1)]",
+  },
+  operativa: {
+    label: "Operativa",
+    chipClass:
+      "text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]",
+  },
+};
+
 export function ProjectLabelsDrawer({
   projectId,
   isOpen,
@@ -54,6 +106,9 @@ export function ProjectLabelsDrawer({
   const [apiLabels, setApiLabels] = useState<ProjectLabelItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [usageFilter, setUsageFilter] = useState<LabelUsageFilter>("ALL");
+  // Espejo en estado del catálogo local (localStorage) para invalidar mergedLabels
+  const [localCatalogNames, setLocalCatalogNames] = useState<string[]>([]);
 
   // Create state
   const [newLabelName, setNewLabelName] = useState("");
@@ -95,6 +150,20 @@ export function ProjectLabelsDrawer({
     },
     [localCatalogKey]
   );
+
+  // Persiste y refleja el catálogo local en el estado del componente
+  const persistLocalCatalog = useCallback(
+    (labelsList: string[]) => {
+      saveLocalCatalog(labelsList);
+      setLocalCatalogNames(labelsList);
+    },
+    [saveLocalCatalog]
+  );
+
+  // Sincroniza el espejo del catálogo local al montar / cambiar de proyecto
+  useEffect(() => {
+    setLocalCatalogNames(getLocalCatalog());
+  }, [getLocalCatalog]);
 
   // Fetch labels from API
   const fetchLabels = useCallback(async () => {
@@ -149,7 +218,7 @@ export function ProjectLabelsDrawer({
     }
 
     // Merge local catalog (task_count = 0 if not present)
-    const local = getLocalCatalog();
+    const local = localCatalogNames;
     for (const name of local) {
       const trimmed = name?.trim();
       if (trimmed && !countsMap.has(trimmed)) {
@@ -164,13 +233,43 @@ export function ProjectLabelsDrawer({
 
     result.sort((a, b) => a.name.localeCompare(b.name, "es", { sensitivity: "base" }));
     return result;
-  }, [apiLabels, projectUpdateContext?.tasks, getLocalCatalog]);
+  }, [apiLabels, projectUpdateContext?.tasks, localCatalogNames]);
 
   const filteredLabels = useMemo(() => {
-    if (!searchQuery.trim()) return mergedLabels;
     const query = searchQuery.trim().toLowerCase();
-    return mergedLabels.filter((l) => l.name.toLowerCase().includes(query));
-  }, [mergedLabels, searchQuery]);
+    return mergedLabels.filter((l) => {
+      if (usageFilter === "USED" && l.task_count === 0) return false;
+      if (usageFilter === "UNUSED" && l.task_count > 0) return false;
+      if (query && !l.name.toLowerCase().includes(query)) return false;
+      return true;
+    });
+  }, [mergedLabels, searchQuery, usageFilter]);
+
+  /** Diagnóstico de Gobernanza de Taxonomía PMI sobre mergedLabels (PMBOK 7ma Ed.). */
+  const pmiTaxonomy = useMemo(() => {
+    const inUse = mergedLabels.filter((l) => l.task_count > 0).length;
+    const counts: Record<PmiLabelDimension, number> = { riesgo: 0, calidad: 0, hito: 0, operativa: 0 };
+    for (const l of mergedLabels) {
+      counts[classifyPmiDimension(l.name)] += 1;
+    }
+    return { total: mergedLabels.length, inUse, orphan: mergedLabels.length - inUse, counts };
+  }, [mergedLabels]);
+
+  /** Sembrador 1-Click: agrega al catálogo local las etiquetas canónicas PMI ausentes. */
+  const handleSeedPmiTaxonomy = () => {
+    const currentLocal = getLocalCatalog();
+    const missing = PMI_CANONICAL_SEED_LABELS.filter(
+      (name) =>
+        !mergedLabels.some((l) => l.name.toLowerCase() === name.toLowerCase()) &&
+        !currentLocal.some((l) => l.toLowerCase() === name.toLowerCase()),
+    );
+    if (missing.length === 0) {
+      toast.info("La taxonomía PMI ya está completa en el catálogo");
+      return;
+    }
+    persistLocalCatalog([...currentLocal, ...missing]);
+    toast.success(`Taxonomía PMI sembrada: ${missing.length} etiqueta(s) añadida(s)`);
+  };
 
   // Create a new label
   const handleCreateLabel = async (e?: React.FormEvent) => {
@@ -188,7 +287,7 @@ export function ProjectLabelsDrawer({
       const currentLocal = getLocalCatalog();
       if (!currentLocal.includes(trimmed)) {
         const nextLocal = [...currentLocal, trimmed];
-        saveLocalCatalog(nextLocal);
+        persistLocalCatalog(nextLocal);
       }
       setNewLabelName("");
       toast.success(`Etiqueta "${trimmed}" creada`);
@@ -239,7 +338,7 @@ export function ProjectLabelsDrawer({
       const currentLocal = getLocalCatalog();
       const nextLocal = currentLocal.map((l) => (l === oldName ? trimmedNew : l));
       if (!nextLocal.includes(trimmedNew)) nextLocal.push(trimmedNew);
-      saveLocalCatalog(nextLocal);
+      persistLocalCatalog(nextLocal);
 
       toast.success(`Etiqueta renombrada a "${trimmedNew}"`);
       setEditingLabel(null);
@@ -277,7 +376,7 @@ export function ProjectLabelsDrawer({
       // Remove from local catalog
       const currentLocal = getLocalCatalog();
       const nextLocal = currentLocal.filter((l) => l !== name);
-      saveLocalCatalog(nextLocal);
+      persistLocalCatalog(nextLocal);
 
       toast.success(`Etiqueta "${name}" eliminada`);
       setDeletingLabel(null);
@@ -372,6 +471,80 @@ export function ProjectLabelsDrawer({
         </div>
       )}
 
+      {/* Diagnóstico de Taxonomía de Gobernanza PMI (PMBOK 7ma Ed.) */}
+      <div
+        data-testid="labels-pmi-taxonomy-summary"
+        className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2)/0.4)] p-3 space-y-2.5"
+      >
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <p className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))]">
+            Diagnóstico de Taxonomía PMI
+          </p>
+          <button
+            type="button"
+            data-testid="labels-pmi-seed-btn"
+            onClick={handleSeedPmiTaxonomy}
+            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-[hsl(var(--primary)/0.35)] bg-[hsl(var(--primary)/0.12)] px-2.5 py-1 text-2xs font-bold uppercase tracking-wider text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.2)] transition-colors"
+          >
+            <Sparkles size={12} />
+            Sembrar Taxonomía PMI
+          </button>
+        </div>
+
+        <div className="flex items-center gap-3 text-2xs text-[hsl(var(--muted-foreground))] flex-wrap">
+          <span>
+            <span className="font-bold text-[hsl(var(--success))]">{pmiTaxonomy.inUse}</span> en uso
+          </span>
+          <span
+            className={clsx(
+              "font-medium",
+              pmiTaxonomy.orphan > 0 ? "text-[hsl(var(--warning))]" : "text-[hsl(var(--muted-foreground))]",
+            )}
+          >
+            {pmiTaxonomy.orphan} sin uso / huérfanas
+          </span>
+          <span>· {pmiTaxonomy.total} en catálogo</span>
+        </div>
+
+        <div className="flex flex-wrap gap-1.5">
+          {(Object.keys(PMI_DIMENSION_META) as PmiLabelDimension[]).map((dim) => (
+            <span
+              key={dim}
+              title={`Etiquetas clasificadas como Dimensión PMI "${PMI_DIMENSION_META[dim].label}"`}
+              className={clsx(
+                "rounded-full border px-2 py-0.5 text-2xs font-semibold",
+                PMI_DIMENSION_META[dim].chipClass,
+              )}
+            >
+              {PMI_DIMENSION_META[dim].label}: {pmiTaxonomy.counts[dim]}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Filtro rápido de uso de etiquetas */}
+      <div data-testid="labels-usage-filter" className="flex items-center gap-1.5 flex-wrap">
+        {PMI_USAGE_FILTERS.map((f) => {
+          const isActive = usageFilter === f.key;
+          return (
+            <button
+              key={f.key}
+              type="button"
+              aria-pressed={isActive}
+              onClick={() => setUsageFilter(f.key)}
+              className={clsx(
+                "rounded-lg border px-2.5 py-1 text-2xs font-semibold uppercase tracking-wider transition-colors",
+                isActive
+                  ? "border-[hsl(var(--primary)/0.35)] bg-[hsl(var(--primary)/0.12)] font-bold text-[hsl(var(--primary))]"
+                  : "border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))] opacity-70 hover:opacity-100",
+              )}
+            >
+              {f.label}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Labels List */}
       <div className="flex-1 min-h-0 overflow-y-auto space-y-2 pr-1">
         <div className="flex items-center justify-between text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))] px-1">
@@ -390,7 +563,11 @@ export function ProjectLabelsDrawer({
               <Tag size={18} />
             </div>
             <p className="text-xs font-medium text-[hsl(var(--foreground))]">
-              {searchQuery ? "Sin resultados de búsqueda" : "Aún no hay etiquetas"}
+              {usageFilter !== "ALL"
+                ? "No hay etiquetas con este nivel de uso"
+                : searchQuery
+                  ? "Sin resultados de búsqueda"
+                  : "Aún no hay etiquetas"}
             </p>
             <p className="text-2xs text-[hsl(var(--muted-foreground))] max-w-xs">
               {searchQuery
