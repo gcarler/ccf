@@ -3576,6 +3576,99 @@ def evaluate_rebaselining_otb_threshold(
     }
 
 
+def evaluate_management_reserve_release_governance(
+    bac: float,
+    management_reserve_initial: float,
+    mr_releases: Optional[List[Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
+    """Audita la gobernanza de liberaciones de Reserva de Gestión (Management Reserve — MR) según PMI PMBOK §7.4 y §11.6."""
+    valid_releases = [
+        item for item in (mr_releases or []) if isinstance(item, dict)
+    ]
+
+    try:
+        safe_bac = max(0.0, float(bac or 0.0))
+    except (TypeError, ValueError):
+        safe_bac = 0.0
+
+    try:
+        initial_mr = round(max(0.0, float(management_reserve_initial or 0.0)), 2)
+    except (TypeError, ValueError):
+        initial_mr = 0.0
+
+    authorized_sum = 0.0
+    unauthorized_sum = 0.0
+    unauthorized_release_ids: List[str] = []
+
+    for idx, r in enumerate(valid_releases, start=1):
+        raw_id = r.get("id") if r.get("id") is not None else r.get("release_id")
+        rel_id = (
+            str(raw_id).strip()
+            if raw_id is not None and str(raw_id).strip()
+            else f"MR-{idx}"
+        )
+
+        try:
+            amount = max(0.0, float(r.get("amount") or 0.0))
+        except (TypeError, ValueError):
+            amount = 0.0
+
+        sponsor_approved = bool(r.get("sponsor_approved", False))
+        justification = str(r.get("justification") or "").strip()
+        is_authorized = sponsor_approved and len(justification) >= 10
+
+        if is_authorized:
+            authorized_sum += amount
+        else:
+            unauthorized_sum += amount
+            unauthorized_release_ids.append(rel_id)
+
+    authorized_mr_released = round(authorized_sum, 2)
+    unauthorized_mr_amount = round(unauthorized_sum, 2)
+    total_released = authorized_mr_released + unauthorized_mr_amount
+    remaining_mr = round(initial_mr - total_released, 2)
+    updated_project_budget_total = round(safe_bac + initial_mr, 2)
+    mr_burn_pct = (
+        round((total_released / initial_mr) * 100.0, 2)
+        if initial_mr > 0
+        else 0.0
+    )
+
+    recommendations: List[str] = []
+    if initial_mr <= 0 and len(valid_releases) == 0:
+        mr_governance_posture = "NO_MANAGEMENT_RESERVE"
+        recommendations.append(
+            "Definir Reserva de Gestión (Management Reserve) en el presupuesto del proyecto para cubrir riesgos imprevistos 'unknown-unknowns' (PMBOK §7.3 / §7.4)."
+        )
+    elif remaining_mr < 0:
+        mr_governance_posture = "MANAGEMENT_RESERVE_OVERRUN"
+        recommendations.append(
+            f"Las liberaciones acumuladas superan la Reserva de Gestión inicial (saldo {remaining_mr}). Escalar al Patrocinador y CCB para ampliación presupuestaria u OTB (PMBOK §7.4)."
+        )
+    elif len(unauthorized_release_ids) > 0:
+        mr_governance_posture = "UNAUTHORIZED_MR_DRAWDOWN"
+        recommendations.append(
+            f"Regularizar liberaciones de Reserva de Gestión sin aprobación formal del patrocinador o sin justificación suficiente ({', '.join(unauthorized_release_ids)}) mediante Control Integrado de Cambios (PMBOK §7.4 / §11.6)."
+        )
+    else:
+        mr_governance_posture = "GOVERNED_MR_UTILIZATION"
+        recommendations.append(
+            "Uso de Reserva de Gestión gobernado conforme a PMI PMBOK §7.4 con aprobación del patrocinador y trazabilidad hacia la línea base BAC."
+        )
+
+    return {
+        "initial_mr": initial_mr,
+        "authorized_mr_released": authorized_mr_released,
+        "unauthorized_mr_amount": unauthorized_mr_amount,
+        "unauthorized_release_ids": unauthorized_release_ids,
+        "remaining_mr": remaining_mr,
+        "updated_project_budget_total": updated_project_budget_total,
+        "mr_burn_pct": mr_burn_pct,
+        "mr_governance_posture": mr_governance_posture,
+        "recommendations": recommendations,
+    }
+
+
 class ProjectEVMService:
     """Fachada canónica del servicio EVM y Diagnóstico Predictivo PMI (Vol. 5 y Vol. 6)."""
 
@@ -3758,10 +3851,21 @@ class ProjectEVMService:
         )
 
     @staticmethod
+    def evaluate_management_reserve_release_governance(
+        bac: float,
+        management_reserve_initial: float,
+        mr_releases: Optional[List[Dict[str, Any]]] = None,
+    ) -> Dict[str, Any]:
+        return evaluate_management_reserve_release_governance(
+            bac, management_reserve_initial, mr_releases=mr_releases
+        )
+
+    @staticmethod
     def build_project_execution_matrix(
         db: Session, project: Project, now: Optional[datetime.datetime] = None
     ) -> Dict[str, Any]:
         return build_project_execution_matrix(db, project, now=now)
+
 
 
 

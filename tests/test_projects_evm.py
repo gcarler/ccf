@@ -1484,6 +1484,152 @@ def test_evaluate_rebaselining_otb_threshold_within_tolerance_and_no_baseline():
     assert no_base["baseline_posture"] == "NO_ACTIVE_BASELINE"
 
 
+def test_evaluate_management_reserve_release_governance_governed_utilization():
+    """Liberaciones con sponsor_approved=True y justificación >= 10 chars dentro de MR -> 'GOVERNED_MR_UTILIZATION'."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_management_reserve_release_governance,
+    )
+
+    releases = [
+        {
+            "id": "MR-101",
+            "amount": 6000.0,
+            "sponsor_approved": True,
+            "justification": "Mitigación regulatoria imprevista aprobada por el patrocinador.",
+        },
+        {
+            "release_id": "MR-102",
+            "amount": 4000.0,
+            "sponsor_approved": True,
+            "justification": "Refuerzo estructural de emergencia en sede central.",
+        },
+    ]
+
+    res = ProjectEVMService.evaluate_management_reserve_release_governance(
+        bac=100000.0,
+        management_reserve_initial=20000.0,
+        mr_releases=releases,
+    )
+    assert res["initial_mr"] == 20000.0
+    assert res["authorized_mr_released"] == 10000.0
+    assert res["unauthorized_mr_amount"] == 0.0
+    assert res["unauthorized_release_ids"] == []
+    assert res["remaining_mr"] == 10000.0
+    assert res["updated_project_budget_total"] == 120000.0
+    assert res["mr_burn_pct"] == 50.0
+    assert res["mr_governance_posture"] == "GOVERNED_MR_UTILIZATION"
+    assert len(res["recommendations"]) >= 1
+    assert (
+        evaluate_management_reserve_release_governance(
+            100000.0, 20000.0, mr_releases=releases
+        )
+        == res
+    )
+
+
+def test_evaluate_management_reserve_release_governance_unauthorized_drawdown():
+    """Liberaciones sin sponsor_approved o con justificación < 10 chars -> 'UNAUTHORIZED_MR_DRAWDOWN'."""
+    from backend.services.project_evm_service import (
+        evaluate_management_reserve_release_governance,
+    )
+
+    releases = [
+        {
+            "id": "MR-201",
+            "amount": 5000.0,
+            "sponsor_approved": True,
+            "justification": "Cambio regulatorio externo documentado.",
+        },
+        {
+            "id": "MR-202",
+            "amount": 3000.0,
+            "sponsor_approved": False,
+            "justification": "Uso directo sin firma del patrocinador.",
+        },
+        {
+            "release_id": "MR-203",
+            "amount": 2000.0,
+            "sponsor_approved": True,
+            "justification": "Urgente",
+        },
+    ]
+
+    res = evaluate_management_reserve_release_governance(
+        bac=80000.0,
+        management_reserve_initial=15000.0,
+        mr_releases=releases,
+    )
+    assert res["initial_mr"] == 15000.0
+    assert res["authorized_mr_released"] == 5000.0
+    assert res["unauthorized_mr_amount"] == 5000.0
+    assert res["unauthorized_release_ids"] == ["MR-202", "MR-203"]
+    assert res["remaining_mr"] == 5000.0
+    assert res["updated_project_budget_total"] == 95000.0
+    assert res["mr_burn_pct"] == 66.67
+    assert res["mr_governance_posture"] == "UNAUTHORIZED_MR_DRAWDOWN"
+    assert any("MR-202" in rec for rec in res["recommendations"])
+
+
+def test_evaluate_management_reserve_release_governance_overrun():
+    """Liberaciones acumuladas > initial_mr (remaining_mr < 0) -> 'MANAGEMENT_RESERVE_OVERRUN'."""
+    from backend.services.project_evm_service import (
+        evaluate_management_reserve_release_governance,
+    )
+
+    releases = [
+        {
+            "id": "MR-301",
+            "amount": 9000.0,
+            "sponsor_approved": True,
+            "justification": "Contingencia desconocida fase 1 autorizada.",
+        },
+        {
+            "id": "MR-302",
+            "amount": 4500.0,
+            "sponsor_approved": True,
+            "justification": "Contingencia desconocida fase 2 autorizada.",
+        },
+    ]
+
+    res = evaluate_management_reserve_release_governance(
+        bac=50000.0,
+        management_reserve_initial=10000.0,
+        mr_releases=releases,
+    )
+    assert res["initial_mr"] == 10000.0
+    assert res["authorized_mr_released"] == 13500.0
+    assert res["unauthorized_mr_amount"] == 0.0
+    assert res["remaining_mr"] == -3500.0
+    assert res["updated_project_budget_total"] == 60000.0
+    assert res["mr_burn_pct"] == 135.0
+    assert res["mr_governance_posture"] == "MANAGEMENT_RESERVE_OVERRUN"
+    assert len(res["recommendations"]) >= 1
+
+
+def test_evaluate_management_reserve_release_governance_no_reserve():
+    """initial_mr <= 0 y sin liberaciones -> 'NO_MANAGEMENT_RESERVE'."""
+    from backend.services.project_evm_service import (
+        evaluate_management_reserve_release_governance,
+    )
+
+    for releases in (None, [], ["invalid"]):
+        res = evaluate_management_reserve_release_governance(
+            bac=60000.0,
+            management_reserve_initial=0.0,
+            mr_releases=releases,  # type: ignore[arg-type]
+        )
+        assert res["initial_mr"] == 0.0
+        assert res["authorized_mr_released"] == 0.0
+        assert res["unauthorized_mr_amount"] == 0.0
+        assert res["unauthorized_release_ids"] == []
+        assert res["remaining_mr"] == 0.0
+        assert res["updated_project_budget_total"] == 60000.0
+        assert res["mr_burn_pct"] == 0.0
+        assert res["mr_governance_posture"] == "NO_MANAGEMENT_RESERVE"
+        assert len(res["recommendations"]) == 1
+
+
 if __name__ == "__main__":
     test_evm_balanced_project()
     test_evm_cost_overrun_critical()
@@ -1519,7 +1665,12 @@ if __name__ == "__main__":
     test_evaluate_rebaselining_otb_threshold_rebaselining_recommended()
     test_evaluate_rebaselining_otb_threshold_recoverable()
     test_evaluate_rebaselining_otb_threshold_within_tolerance_and_no_baseline()
+    test_evaluate_management_reserve_release_governance_governed_utilization()
+    test_evaluate_management_reserve_release_governance_unauthorized_drawdown()
+    test_evaluate_management_reserve_release_governance_overrun()
+    test_evaluate_management_reserve_release_governance_no_reserve()
     print("✅ All EVM tests passed successfully!")
+
 
 
 
