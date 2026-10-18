@@ -3047,3 +3047,84 @@ def validate_procurement_contract_fee_structure(
         "is_valid": is_valid,
         "contract_governance_posture": contract_governance_posture,
     }
+
+
+def validate_resource_histogram_overallocation(
+    allocations: Optional[List[Dict[str, Any]]] = None,
+    max_daily_hours: float = 8.0,
+) -> Dict[str, Any]:
+    """Valida el histograma de asignación de recursos por período (PMI 6.5.2.3 y 9.2).
+
+    Detecta sobreasignaciones (horas acumuladas del mismo recurso en el mismo
+    período por encima de su capacidad) y horas inválidas (<= 0.0), devolviendo
+    la postura de gobernanza del histograma de recursos.
+    """
+    records = [item for item in (allocations or []) if isinstance(item, dict)]
+    result: Dict[str, Any] = {
+        "total_records": 0,
+        "unique_resources_count": 0,
+        "peak_utilization_pct": 0.0,
+        "invalid_allocation_ids": [],
+        "overallocated_resource_periods": [],
+        "is_valid": True,
+        "allocation_posture": "NO_ALLOCATIONS_DEFINED",
+    }
+    if not records:
+        return result
+
+    invalid_allocation_ids: List[str] = []
+    bucket_hours: Dict[tuple, float] = {}
+    bucket_capacity: Dict[tuple, float] = {}
+    unique_resources: set = set()
+
+    for idx, item in enumerate(records, start=1):
+        alloc_id = str(item.get("id") or item.get("allocation_id") or "").strip() or f"ALLOC-{idx}"
+        res_id = str(item.get("resource_id") or item.get("assignee_id") or item.get("user_id") or "").strip() or "UNASSIGNED"
+        period = str(item.get("period") or item.get("date") or item.get("week") or "").strip() or "DEFAULT"
+        try:
+            hours = float(item["allocated_hours"] if item.get("allocated_hours") is not None else (item.get("hours") or 0.0))
+        except (TypeError, ValueError):
+            hours = 0.0
+        try:
+            cap_raw = float(item["capacity_hours"] if item.get("capacity_hours") is not None else (item.get("max_hours") or 0.0))
+        except (TypeError, ValueError):
+            cap_raw = 0.0
+        bucket_cap = cap_raw if cap_raw > 0.0 else max(0.01, float(max_daily_hours))
+
+        unique_resources.add(res_id)
+        if hours <= 0.0:
+            invalid_allocation_ids.append(alloc_id)
+        else:
+            bucket_hours[(res_id, period)] = bucket_hours.get((res_id, period), 0.0) + hours
+            bucket_capacity[(res_id, period)] = max(bucket_capacity.get((res_id, period), 0.0), bucket_cap)
+
+    peak_utilization_pct = 0.0
+    overallocated_resource_periods: List[str] = []
+    for key in sorted(bucket_hours.keys()):
+        tot_h = bucket_hours[key]
+        cap_h = bucket_capacity[key]
+        util_pct = (tot_h / cap_h) * 100.0
+        peak_utilization_pct = max(peak_utilization_pct, util_pct)
+        if tot_h > cap_h + 1e-9:
+            res_id, period = key
+            overallocated_resource_periods.append(f"{res_id}@{period}")
+
+    peak_utilization_pct = round(peak_utilization_pct, 2)
+    is_valid = bool(len(invalid_allocation_ids) == 0 and len(overallocated_resource_periods) == 0)
+
+    if len(invalid_allocation_ids) > 0:
+        allocation_posture = "INVALID_ALLOCATION_HOURS"
+    elif len(overallocated_resource_periods) > 0:
+        allocation_posture = "RESOURCE_HISTOGRAM_OVERALLOCATION"
+    else:
+        allocation_posture = "BALANCED_RESOURCE_HISTOGRAM"
+
+    return {
+        "total_records": len(records),
+        "unique_resources_count": len(unique_resources),
+        "peak_utilization_pct": peak_utilization_pct,
+        "invalid_allocation_ids": invalid_allocation_ids,
+        "overallocated_resource_periods": overallocated_resource_periods,
+        "is_valid": is_valid,
+        "allocation_posture": allocation_posture,
+    }

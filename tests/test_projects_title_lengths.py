@@ -1164,5 +1164,126 @@ def test_validate_risk_trigger_and_fallback_plan_no_risks():
         }
 
 
+def test_validate_resource_histogram_overallocation_balanced():
+    """Asignaciones válidas dentro de la capacidad -> histograma balanceado."""
+    from backend.schemas.projects import validate_resource_histogram_overallocation
+
+    res = validate_resource_histogram_overallocation(
+        [
+            {
+                "id": "ALLOC-1",
+                "resource_id": "RES-1",
+                "period": "2026-10-18",
+                "allocated_hours": 6.0,
+                "capacity_hours": 8.0,
+            },
+            {
+                "id": "ALLOC-2",
+                "resource_id": "RES-2",
+                "date": "2026-10-18",
+                "hours": 4.0,
+                "max_hours": 8.0,
+            },
+        ]
+    )
+    assert res["is_valid"] is True
+    assert res["total_records"] == 2
+    assert res["unique_resources_count"] == 2
+    assert res["invalid_allocation_ids"] == []
+    assert res["overallocated_resource_periods"] == []
+    assert res["peak_utilization_pct"] == 75.0
+    assert res["allocation_posture"] == "BALANCED_RESOURCE_HISTOGRAM"
+
+
+def test_validate_resource_histogram_overallocation_invalid_hours():
+    """Horas <= 0.0 se marcan como inválidas con precedencia de posture."""
+    from backend.schemas.projects import validate_resource_histogram_overallocation
+
+    res = validate_resource_histogram_overallocation(
+        [
+            {
+                "id": "ALLOC-OK",
+                "resource_id": "RES-1",
+                "period": "W43",
+                "allocated_hours": 2.0,
+                "capacity_hours": 4.0,
+            },
+            {
+                "id": "ALLOC-ZERO",
+                "resource_id": "RES-2",
+                "period": "W43",
+                "allocated_hours": 0.0,
+            },
+            {
+                "id": "ALLOC-NEG",
+                "resource_id": "RES-3",
+                "week": "W43",
+                "allocated_hours": -3.5,
+            },
+        ]
+    )
+    assert res["is_valid"] is False
+    assert res["total_records"] == 3
+    assert res["unique_resources_count"] == 3
+    assert res["invalid_allocation_ids"] == ["ALLOC-ZERO", "ALLOC-NEG"]
+    assert res["overallocated_resource_periods"] == []
+    assert res["peak_utilization_pct"] == 50.0
+    assert res["allocation_posture"] == "INVALID_ALLOCATION_HOURS"
+
+
+def test_validate_resource_histogram_overallocation_resource_period_accumulation():
+    """Varias tareas del mismo recurso en la misma fecha suman horas para la sobreasignación."""
+    from backend.schemas.projects import validate_resource_histogram_overallocation
+
+    res = validate_resource_histogram_overallocation(
+        [
+            {
+                "resource_id": "RES-1",
+                "period": "2026-10-18",
+                "allocated_hours": 5.0,
+                "capacity_hours": 8.0,
+            },
+            {
+                "resource_id": "RES-1",
+                "period": "2026-10-18",
+                "allocated_hours": 4.0,
+                "capacity_hours": 4.0,
+            },
+            {
+                "resource_id": "RES-2",
+                "period": "2026-10-18",
+                "allocated_hours": 9.0,
+            },
+        ],
+        max_daily_hours=8.0,
+    )
+    # La capacidad del bucket es el máximo de los caps (8.0); 9.0 > 8.0 + 1e-9 -> sobreasignado.
+    assert res["is_valid"] is False
+    assert res["total_records"] == 3
+    assert res["unique_resources_count"] == 2
+    assert res["invalid_allocation_ids"] == []
+    assert res["overallocated_resource_periods"] == ["RES-1@2026-10-18", "RES-2@2026-10-18"]
+    # RES-2 usa el fallback max(0.01, max_daily_hours) = 8.0 -> 112.5%.
+    assert res["peak_utilization_pct"] == 112.5
+    assert res["allocation_posture"] == "RESOURCE_HISTOGRAM_OVERALLOCATION"
+
+
+def test_validate_resource_histogram_overallocation_empty_or_none():
+    """None, lista vacía o sin entradas dict -> NO_ALLOCATIONS_DEFINED."""
+    from backend.schemas.projects import validate_resource_histogram_overallocation
+
+    for payload in (None, [], ["invalid", 42, None]):
+        res = validate_resource_histogram_overallocation(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_records": 0,
+            "unique_resources_count": 0,
+            "peak_utilization_pct": 0.0,
+            "invalid_allocation_ids": [],
+            "overallocated_resource_periods": [],
+            "is_valid": True,
+            "allocation_posture": "NO_ALLOCATIONS_DEFINED",
+        }
+
+
 
 
