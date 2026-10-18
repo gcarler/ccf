@@ -2811,6 +2811,7 @@ __all__ = [
     "evaluate_quality_capa_root_cause_effectiveness",
     "evaluate_ccb_emergency_change_retrospective_compliance",
     "evaluate_quality_aql_lot_sampling_acceptance",
+    "evaluate_copq_rework_and_scrap_ratio",
     "ProjectCCBService",
 ]
 
@@ -3106,4 +3107,73 @@ def evaluate_quality_aql_lot_sampling_acceptance(
 
 ProjectCCBService.evaluate_quality_aql_lot_sampling_acceptance = staticmethod(
     evaluate_quality_aql_lot_sampling_acceptance
+)
+
+
+def evaluate_copq_rework_and_scrap_ratio(
+    metrics: Mapping[str, Any] | None,
+    *,
+    max_copq_pct_of_actual: float = 10.0,
+) -> dict[str, Any]:
+    """Evalúa el Costo de la Mala Calidad (COPQ: retrabajo, desecho, garantías y penalizaciones SLA) frente al costo real del proyecto según PMI PMBOK §8.2 y §8.3."""
+    invalid_result: dict[str, Any] = {
+        "internal_failure_cost": 0.0,
+        "external_failure_cost": 0.0,
+        "total_copq": 0.0,
+        "copq_pct_of_actual_cost": 0.0,
+        "external_failure_share_pct": 0.0,
+        "copq_posture": "invalid_inputs",
+        "is_copq_controlled": False,
+    }
+    if not isinstance(metrics, Mapping):
+        return invalid_result
+
+    try:
+        rework_cost = max(0.0, float(metrics.get("rework_cost", 0.0) or 0.0))
+        scrap_cost = max(0.0, float(metrics.get("scrap_cost", 0.0) or 0.0))
+        warranty_cost = max(0.0, float(metrics.get("warranty_cost", 0.0) or 0.0))
+        sla_penalty_cost = max(
+            0.0, float(metrics.get("sla_penalty_cost", 0.0) or 0.0)
+        )
+        actual_project_cost = float(
+            metrics.get("actual_project_cost", 0.0) or 0.0
+        )
+    except (TypeError, ValueError):
+        return invalid_result
+
+    if actual_project_cost <= 0.0:
+        return invalid_result
+
+    internal_failure_cost = round(rework_cost + scrap_cost, 2)
+    external_failure_cost = round(warranty_cost + sla_penalty_cost, 2)
+    total_copq = round(internal_failure_cost + external_failure_cost, 2)
+    copq_pct_of_actual_cost = round((total_copq / actual_project_cost) * 100.0, 2)
+    external_failure_share_pct = (
+        round((external_failure_cost / total_copq) * 100.0, 2)
+        if total_copq > 0.0
+        else 0.0
+    )
+
+    if copq_pct_of_actual_cost > float(max_copq_pct_of_actual):
+        copq_posture = "excessive_copq_bleed"
+    elif total_copq > 0.0 and external_failure_share_pct > 40.0:
+        copq_posture = "external_escape_dominant"
+    else:
+        copq_posture = "controlled"
+
+    is_copq_controlled = bool(copq_posture == "controlled")
+
+    return {
+        "internal_failure_cost": internal_failure_cost,
+        "external_failure_cost": external_failure_cost,
+        "total_copq": total_copq,
+        "copq_pct_of_actual_cost": copq_pct_of_actual_cost,
+        "external_failure_share_pct": external_failure_share_pct,
+        "copq_posture": copq_posture,
+        "is_copq_controlled": is_copq_controlled,
+    }
+
+
+ProjectCCBService.evaluate_copq_rework_and_scrap_ratio = staticmethod(
+    evaluate_copq_rework_and_scrap_ratio
 )

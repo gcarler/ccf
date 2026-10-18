@@ -3020,3 +3020,97 @@ def test_audit_markdown_heading_hierarchy_and_duplicates_empty_or_non_string():
             "is_heading_hierarchy_clean": True,
         }
 
+
+def test_audit_markdown_external_url_scheme_hygiene_clean():
+    """Enlaces HTTPS, localhost, rutas relativas e imágenes ignoradas pasan is_url_hygiene_clean=True."""
+    from backend.services.anydoc_service import (
+        AnydocService,
+        audit_markdown_external_url_scheme_hygiene,
+    )
+
+    md = (
+        "# Referencias del Proyecto\n"
+        "- [Portal PMI](https://www.pmi.org/pmbok-guide-standards)\n"
+        "- [Entorno Local](http://localhost:8000/docs)\n"
+        "- [Loopback](http://127.0.0.1:3000/plataforma)\n"
+        "- [Guía Interna](/plataforma/proyectos/wiki)\n"
+        "![Diagrama](http://inseguro-pero-imagen.org/logo.png)\n"
+        "```markdown\n"
+        "[Ignorado en código](javascript:alert(1))\n"
+        "[HTTP en código](http://sitio-inseguro.org)\n"
+        "```\n"
+    )
+    res = audit_markdown_external_url_scheme_hygiene(md)
+    assert res == {
+        "total_links": 4,
+        "insecure_http_lines": [],
+        "dangerous_scheme_lines": [],
+        "empty_label_lines": [],
+        "placeholder_url_lines": [],
+        "is_url_hygiene_clean": True,
+    }
+    assert AnydocService.audit_markdown_external_url_scheme_hygiene(md) == res
+
+
+def test_audit_markdown_external_url_scheme_hygiene_insecure_and_dangerous():
+    """Detecta enlaces http:// externos y esquemas peligrosos (javascript:, vbscript:, data:)."""
+    from backend.services.anydoc_service import (
+        audit_markdown_external_url_scheme_hygiene,
+    )
+
+    md = (
+        "[Proveedor Legacy](http://proveedor-externo.org/api)\n"
+        "[Exploit XSS](javascript:alert('xss'))\n"
+        "[Payload Data](data:text/html;base64,PHNjcmlwdD4=)\n"
+    )
+    res = audit_markdown_external_url_scheme_hygiene(md)
+    assert res == {
+        "total_links": 3,
+        "insecure_http_lines": [1],
+        "dangerous_scheme_lines": [2, 3],
+        "empty_label_lines": [],
+        "placeholder_url_lines": [],
+        "is_url_hygiene_clean": False,
+    }
+
+
+def test_audit_markdown_external_url_scheme_hygiene_empty_label_and_placeholders():
+    """Detecta etiquetas vacías y URLs placeholder (#, todo, tbd, example.com o vacías)."""
+    from backend.services.anydoc_service import (
+        audit_markdown_external_url_scheme_hygiene,
+    )
+
+    md = (
+        "[   ](https://ccf.org/doc)\n"
+        "[Pendiente Ancla](#)\n"
+        "[Por definir](TBD)\n"
+        "[Dominio Demo](https://api.example.com/v1)\n"
+        "[Sin Destino](   )\n"
+    )
+    res = audit_markdown_external_url_scheme_hygiene(md)
+    assert res == {
+        "total_links": 5,
+        "insecure_http_lines": [],
+        "dangerous_scheme_lines": [],
+        "empty_label_lines": [1],
+        "placeholder_url_lines": [2, 3, 4, 5],
+        "is_url_hygiene_clean": False,
+    }
+
+
+def test_audit_markdown_external_url_scheme_hygiene_empty_or_non_string():
+    """Entrada None, vacía o no string retorna total_links=0 e is_url_hygiene_clean=True."""
+    from backend.services.anydoc_service import (
+        audit_markdown_external_url_scheme_hygiene,
+    )
+
+    for payload in (None, "", 42, ["[link](http://bad.com)"]):
+        assert audit_markdown_external_url_scheme_hygiene(payload) == {  # type: ignore[arg-type]
+            "total_links": 0,
+            "insecure_http_lines": [],
+            "dangerous_scheme_lines": [],
+            "empty_label_lines": [],
+            "placeholder_url_lines": [],
+            "is_url_hygiene_clean": True,
+        }
+

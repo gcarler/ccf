@@ -3000,6 +3000,7 @@ __all__ = [
     "audit_markdown_table_column_alignment_hygiene",
     "audit_markdown_task_list_checklist_hygiene",
     "audit_markdown_heading_hierarchy_and_duplicates",
+    "audit_markdown_external_url_scheme_hygiene",
     "AnyDocService",
     "AnydocService",
 ]
@@ -3278,6 +3279,92 @@ def audit_markdown_heading_hierarchy_and_duplicates(
         "is_heading_hierarchy_clean": is_heading_hierarchy_clean,
     }
 
+
+_INLINE_EXTERNAL_URL_LINK_RE = re.compile(
+    r"(?<!!)\[(?P<label>[^\]]*)\]\((?P<target>[^)]*)\)"
+)
+
+
+def audit_markdown_external_url_scheme_hygiene(
+    markdown_text: str | None = None,
+) -> dict[str, Any]:
+    """Audita enlaces externos e inline en Markdown verificando esquemas seguros (HTTPS), ausencia de esquemas peligrosos (javascript/vbscript/data), etiquetas no vacías y URLs no placeholder según PMI PMBOK §4.4 y §10.2."""
+    if not isinstance(markdown_text, str) or not markdown_text:
+        return {
+            "total_links": 0,
+            "insecure_http_lines": [],
+            "dangerous_scheme_lines": [],
+            "empty_label_lines": [],
+            "placeholder_url_lines": [],
+            "is_url_hygiene_clean": True,
+        }
+
+    lines = markdown_text.splitlines()
+    total_links = 0
+    insecure_http_lines: list[int] = []
+    dangerous_scheme_lines: list[int] = []
+    empty_label_lines: list[int] = []
+    placeholder_url_lines: list[int] = []
+
+    in_backtick_fence = False
+    in_tilde_fence = False
+
+    for line_num, line in enumerate(lines, start=1):
+        stripped = line.strip()
+        if not in_tilde_fence and stripped.startswith("```"):
+            in_backtick_fence = not in_backtick_fence
+            continue
+        if not in_backtick_fence and stripped.startswith("~~~"):
+            in_tilde_fence = not in_tilde_fence
+            continue
+        if in_backtick_fence or in_tilde_fence:
+            continue
+
+        for match in _INLINE_EXTERNAL_URL_LINK_RE.finditer(line):
+            total_links += 1
+            label = match.group("label").strip()
+            raw_target = match.group("target").strip()
+            target = raw_target.split()[0] if raw_target else ""
+            low = target.lower()
+
+            if not label:
+                empty_label_lines.append(line_num)
+
+            if low.startswith(("javascript:", "vbscript:", "data:")):
+                dangerous_scheme_lines.append(line_num)
+
+            if low.startswith("http://") and not low.startswith(
+                ("http://localhost", "http://127.0.0.1")
+            ):
+                insecure_http_lines.append(line_num)
+
+            if (
+                not target
+                or low in {"#", "todo", "tbd", "http://", "https://"}
+                or "example.com" in low
+            ):
+                placeholder_url_lines.append(line_num)
+
+    is_url_hygiene_clean = bool(
+        not insecure_http_lines
+        and not dangerous_scheme_lines
+        and not empty_label_lines
+        and not placeholder_url_lines
+    )
+
+    return {
+        "total_links": total_links,
+        "insecure_http_lines": insecure_http_lines,
+        "dangerous_scheme_lines": dangerous_scheme_lines,
+        "empty_label_lines": empty_label_lines,
+        "placeholder_url_lines": placeholder_url_lines,
+        "is_url_hygiene_clean": is_url_hygiene_clean,
+    }
+
+
+AnyDocService.audit_markdown_external_url_scheme_hygiene = staticmethod(
+    audit_markdown_external_url_scheme_hygiene
+)
 
 AnydocService = AnyDocService
 

@@ -3907,3 +3907,113 @@ def test_evaluate_quality_aql_lot_sampling_acceptance_empty_or_invalid():
             "lot_acceptance_rate_pct": 0.0,
             "is_sampling_quality_compliant": False,
         }
+
+
+def test_evaluate_copq_rework_and_scrap_ratio_controlled():
+    """COPQ <= max_copq_pct_of_actual y fallas externas <= 40% del COPQ -> controlled."""
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        evaluate_copq_rework_and_scrap_ratio,
+    )
+
+    metrics = {
+        "rework_cost": 3000.0,
+        "scrap_cost": 2000.0,
+        "warranty_cost": 1500.0,
+        "sla_penalty_cost": 500.0,
+        "actual_project_cost": 100000.0,
+    }
+    res = evaluate_copq_rework_and_scrap_ratio(metrics, max_copq_pct_of_actual=10.0)
+    assert res == {
+        "internal_failure_cost": 5000.0,
+        "external_failure_cost": 2000.0,
+        "total_copq": 7000.0,
+        "copq_pct_of_actual_cost": 7.0,
+        "external_failure_share_pct": 28.57,
+        "copq_posture": "controlled",
+        "is_copq_controlled": True,
+    }
+    assert (
+        ProjectCCBService.evaluate_copq_rework_and_scrap_ratio(
+            metrics, max_copq_pct_of_actual=10.0
+        )
+        == res
+    )
+
+
+def test_evaluate_copq_rework_and_scrap_ratio_excessive_bleed():
+    """COPQ > max_copq_pct_of_actual -> excessive_copq_bleed."""
+    from backend.services.project_ccb_service import (
+        evaluate_copq_rework_and_scrap_ratio,
+    )
+
+    res = evaluate_copq_rework_and_scrap_ratio(
+        {
+            "rework_cost": 9000.0,
+            "scrap_cost": 4000.0,
+            "warranty_cost": 1000.0,
+            "sla_penalty_cost": 0.0,
+            "actual_project_cost": 100000.0,
+        },
+        max_copq_pct_of_actual=10.0,
+    )
+    assert res == {
+        "internal_failure_cost": 13000.0,
+        "external_failure_cost": 1000.0,
+        "total_copq": 14000.0,
+        "copq_pct_of_actual_cost": 14.0,
+        "external_failure_share_pct": 7.14,
+        "copq_posture": "excessive_copq_bleed",
+        "is_copq_controlled": False,
+    }
+
+
+def test_evaluate_copq_rework_and_scrap_ratio_external_escape_dominant():
+    """COPQ <= umbral pero fallas externas > 40% del total_copq -> external_escape_dominant."""
+    from backend.services.project_ccb_service import (
+        evaluate_copq_rework_and_scrap_ratio,
+    )
+
+    res = evaluate_copq_rework_and_scrap_ratio(
+        {
+            "rework_cost": 2000.0,
+            "scrap_cost": 1000.0,
+            "warranty_cost": 2500.0,
+            "sla_penalty_cost": 1500.0,
+            "actual_project_cost": 100000.0,
+        },
+        max_copq_pct_of_actual=10.0,
+    )
+    assert res == {
+        "internal_failure_cost": 3000.0,
+        "external_failure_cost": 4000.0,
+        "total_copq": 7000.0,
+        "copq_pct_of_actual_cost": 7.0,
+        "external_failure_share_pct": 57.14,
+        "copq_posture": "external_escape_dominant",
+        "is_copq_controlled": False,
+    }
+
+
+def test_evaluate_copq_rework_and_scrap_ratio_invalid_inputs():
+    """Entrada no Mapping o actual_project_cost <= 0 -> invalid_inputs."""
+    from backend.services.project_ccb_service import (
+        evaluate_copq_rework_and_scrap_ratio,
+    )
+
+    for payload in (
+        None,
+        {},
+        "invalid",
+        {"actual_project_cost": 0.0, "rework_cost": 500.0},
+        {"actual_project_cost": -1000.0, "rework_cost": 500.0},
+    ):
+        assert evaluate_copq_rework_and_scrap_ratio(payload) == {  # type: ignore[arg-type]
+            "internal_failure_cost": 0.0,
+            "external_failure_cost": 0.0,
+            "total_copq": 0.0,
+            "copq_pct_of_actual_cost": 0.0,
+            "external_failure_share_pct": 0.0,
+            "copq_posture": "invalid_inputs",
+            "is_copq_controlled": False,
+        }
