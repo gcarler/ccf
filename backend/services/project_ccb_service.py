@@ -2332,6 +2332,12 @@ class ProjectCCBService:
             pareto_cutoff_pct=pareto_cutoff_pct,
         )
 
+    @staticmethod
+    def evaluate_deliverable_acceptance_traceability(
+        deliverables: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        return evaluate_deliverable_acceptance_traceability(deliverables)
+
 
 def evaluate_quality_ncr_sla_compliance(
     ncrs: list[dict[str, Any]] | None = None,
@@ -2497,6 +2503,73 @@ def evaluate_pareto_vital_few_defect_causes(
     }
 
 
+def evaluate_deliverable_acceptance_traceability(
+    deliverables: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Evalúa trazabilidad de verificación QC (Control Quality) previa a aceptación formal de entregables (Validate Scope) según PMI PMBOK §8.3 y §5.5."""
+    total_deliverables = 0
+    accepted_deliverables_count = 0
+    accepted_without_qc_ids: list[str] = []
+    missing_signoff_deliverable_ids: list[str] = []
+    unlinked_requirement_deliverable_ids: list[str] = []
+
+    for item in deliverables or []:
+        if not isinstance(item, dict):
+            continue
+        deliv_id = str(item.get("id") or item.get("deliverable_id") or "").strip()
+        if not deliv_id:
+            continue
+
+        qc_verified = bool(item.get("qc_verified", False))
+        scope_accepted = bool(item.get("scope_accepted", False))
+        try:
+            open_critical_defects = max(
+                0, int(item.get("open_critical_defects") or 0)
+            )
+        except (TypeError, ValueError):
+            open_critical_defects = 0
+        acceptance_signoff_by = str(item.get("acceptance_signoff_by") or "").strip()
+        requirement_id = str(item.get("requirement_id") or "").strip()
+
+        total_deliverables += 1
+        if scope_accepted:
+            accepted_deliverables_count += 1
+            if not qc_verified or open_critical_defects > 0:
+                accepted_without_qc_ids.append(deliv_id)
+            if not acceptance_signoff_by:
+                missing_signoff_deliverable_ids.append(deliv_id)
+        if not requirement_id:
+            unlinked_requirement_deliverable_ids.append(deliv_id)
+
+    is_acceptance_chain_valid = bool(
+        total_deliverables > 0
+        and len(accepted_without_qc_ids) == 0
+        and len(missing_signoff_deliverable_ids) == 0
+        and len(unlinked_requirement_deliverable_ids) == 0
+    )
+
+    if total_deliverables == 0:
+        acceptance_posture = "NO_DELIVERABLES_REGISTERED"
+    elif len(accepted_without_qc_ids) > 0:
+        acceptance_posture = "SCOPE_ACCEPTED_WITHOUT_QC_VERIFICATION"
+    elif len(missing_signoff_deliverable_ids) > 0:
+        acceptance_posture = "MISSING_FORMAL_ACCEPTANCE_SIGNOFF"
+    elif len(unlinked_requirement_deliverable_ids) > 0:
+        acceptance_posture = "UNLINKED_REQUIREMENT_TRACEABILITY"
+    else:
+        acceptance_posture = "VERIFIED_AND_VALIDATED_DELIVERABLES"
+
+    return {
+        "total_deliverables": total_deliverables,
+        "accepted_deliverables_count": accepted_deliverables_count,
+        "accepted_without_qc_ids": accepted_without_qc_ids,
+        "missing_signoff_deliverable_ids": missing_signoff_deliverable_ids,
+        "unlinked_requirement_deliverable_ids": unlinked_requirement_deliverable_ids,
+        "is_acceptance_chain_valid": is_acceptance_chain_valid,
+        "acceptance_posture": acceptance_posture,
+    }
+
+
 __all__ = [
     "list_change_requests",
     "row_list_adapter",
@@ -2531,6 +2604,8 @@ __all__ = [
     "evaluate_fmea_rpn_criticality",
     "evaluate_quality_ncr_sla_compliance",
     "evaluate_pareto_vital_few_defect_causes",
+    "evaluate_deliverable_acceptance_traceability",
     "ProjectCCBService",
 ]
+
 

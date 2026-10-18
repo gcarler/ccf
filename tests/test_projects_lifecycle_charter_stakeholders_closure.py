@@ -2699,3 +2699,105 @@ def test_audit_lessons_learned_actionable_followup_empty_or_none():
             "is_lessons_followup_governed": False,
             "lessons_followup_posture": "NO_LESSONS_RECORDED",
         }
+
+
+def test_audit_team_tuckman_and_skill_redundancy_resilient():
+    """Habilidades críticas con >= 2 integrantes capacitados, etapa válida y 0 conflictos -> RESILIENT_CROSS_TRAINED_TEAM."""
+    import backend.services.project_lifecycle_pmi_service as lifecycle_module
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_team_tuckman_and_skill_redundancy,
+    )
+
+    skills = [
+        {"skill_id": "SKL-POSTGRES", "qualified_members_count": 3},
+        {"id": "SKL-NEXTJS", "qualified_member_ids": ["USR-1", "USR-2"]},
+    ]
+    res = audit_team_tuckman_and_skill_redundancy(
+        skills,
+        tuckman_stage="performing",
+        unresolved_team_conflicts=0,
+        min_qualified_members=2,
+    )
+    assert res == {
+        "total_critical_skills": 2,
+        "tuckman_stage": "PERFORMING",
+        "unresolved_team_conflicts": 0,
+        "spof_skill_ids": [],
+        "is_team_resilient": True,
+        "team_posture": "RESILIENT_CROSS_TRAINED_TEAM",
+    }
+    assert (
+        ProjectLifecyclePMIService.audit_team_tuckman_and_skill_redundancy(
+            skills,
+            tuckman_stage="performing",
+            unresolved_team_conflicts=0,
+            min_qualified_members=2,
+        )
+        == res
+    )
+    assert "audit_team_tuckman_and_skill_redundancy" in lifecycle_module.__all__
+
+
+def test_audit_team_tuckman_and_skill_redundancy_spof_and_conflicts():
+    """Competencia con 1 solo miembro -> SINGLE_POINT_OF_FAILURE_SKILL_GAP; conflictos abiertos -> UNRESOLVED_TEAM_CONFLICT_ESCALATION."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_team_tuckman_and_skill_redundancy,
+    )
+
+    res_spof = audit_team_tuckman_and_skill_redundancy(
+        [
+            {"skill_id": "SKL-K8S", "qualified_members_count": 1},
+            {"skill_id": "SKL-FASTAPI", "qualified_members_count": 2},
+        ],
+        tuckman_stage="NORMING",
+        unresolved_team_conflicts=2,
+    )
+    assert res_spof["spof_skill_ids"] == ["SKL-K8S"]
+    assert res_spof["is_team_resilient"] is False
+    assert res_spof["team_posture"] == "SINGLE_POINT_OF_FAILURE_SKILL_GAP"
+
+    res_conflict = audit_team_tuckman_and_skill_redundancy(
+        [{"skill_id": "SKL-FASTAPI", "qualified_members_count": 2}],
+        tuckman_stage="STORMING",
+        unresolved_team_conflicts=3,
+    )
+    assert res_conflict["spof_skill_ids"] == []
+    assert res_conflict["unresolved_team_conflicts"] == 3
+    assert res_conflict["is_team_resilient"] is False
+    assert res_conflict["team_posture"] == "UNRESOLVED_TEAM_CONFLICT_ESCALATION"
+
+
+def test_audit_team_tuckman_and_skill_redundancy_invalid_stage():
+    """Etapa fuera del modelo de Tuckman -> INVALID_TUCKMAN_STAGE."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_team_tuckman_and_skill_redundancy,
+    )
+
+    res = audit_team_tuckman_and_skill_redundancy(
+        [{"skill_id": "SKL-DB", "qualified_members_count": 3}],
+        tuckman_stage="CHAOTIC_STAGE",
+        unresolved_team_conflicts=0,
+    )
+    assert res["tuckman_stage"] == "CHAOTIC_STAGE"
+    assert res["is_team_resilient"] is False
+    assert res["team_posture"] == "INVALID_TUCKMAN_STAGE"
+
+
+def test_audit_team_tuckman_and_skill_redundancy_no_skills():
+    """Sin habilidades críticas mapeadas -> NO_CRITICAL_SKILLS_MAPPED."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_team_tuckman_and_skill_redundancy,
+    )
+
+    for payload in (None, [], [{"skill_id": ""}]):
+        res = audit_team_tuckman_and_skill_redundancy(payload)
+        assert res == {
+            "total_critical_skills": 0,
+            "tuckman_stage": "FORMING",
+            "unresolved_team_conflicts": 0,
+            "spof_skill_ids": [],
+            "is_team_resilient": False,
+            "team_posture": "NO_CRITICAL_SKILLS_MAPPED",
+        }
+

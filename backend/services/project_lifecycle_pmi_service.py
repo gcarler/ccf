@@ -2670,6 +2670,77 @@ def audit_charter_funding_limit_reconciliation(
     }
 
 
+def audit_team_tuckman_and_skill_redundancy(
+    critical_skills: list[dict[str, Any]] | None = None,
+    tuckman_stage: str = "FORMING",
+    unresolved_team_conflicts: int = 0,
+    min_qualified_members: int = 2,
+) -> dict[str, Any]:
+    """Audita redundancia de habilidades críticas (Cross-Training) y etapa de madurez de Tuckman del equipo según PMI PMBOK §9.4 y §9.5."""
+    stage = str(tuckman_stage or "").strip().upper()
+    valid_stages = {"FORMING", "STORMING", "NORMING", "PERFORMING", "ADJOURNING"}
+    is_valid_stage = stage in valid_stages
+    try:
+        conflicts = max(0, int(unresolved_team_conflicts or 0))
+    except (TypeError, ValueError):
+        conflicts = 0
+    try:
+        min_qual = max(1, int(min_qualified_members))
+    except (TypeError, ValueError):
+        min_qual = 2
+
+    total_critical_skills = 0
+    spof_skill_ids: list[str] = []
+
+    for item in critical_skills or []:
+        if not isinstance(item, dict):
+            continue
+        skill_id = str(item.get("skill_id") or item.get("id") or "").strip()
+        if not skill_id:
+            continue
+
+        raw_q = item.get("qualified_members_count")
+        if raw_q is not None:
+            try:
+                qualified_count = max(0, int(raw_q))
+            except (TypeError, ValueError):
+                qualified_count = 0
+        else:
+            raw_ids = item.get("qualified_member_ids")
+            qualified_count = len(raw_ids) if isinstance(raw_ids, list) else 0
+
+        total_critical_skills += 1
+        if qualified_count < min_qual:
+            spof_skill_ids.append(skill_id)
+
+    is_team_resilient = bool(
+        total_critical_skills > 0
+        and is_valid_stage
+        and len(spof_skill_ids) == 0
+        and conflicts == 0
+    )
+
+    if total_critical_skills == 0:
+        team_posture = "NO_CRITICAL_SKILLS_MAPPED"
+    elif not is_valid_stage:
+        team_posture = "INVALID_TUCKMAN_STAGE"
+    elif len(spof_skill_ids) > 0:
+        team_posture = "SINGLE_POINT_OF_FAILURE_SKILL_GAP"
+    elif conflicts > 0:
+        team_posture = "UNRESOLVED_TEAM_CONFLICT_ESCALATION"
+    else:
+        team_posture = "RESILIENT_CROSS_TRAINED_TEAM"
+
+    return {
+        "total_critical_skills": total_critical_skills,
+        "tuckman_stage": stage,
+        "unresolved_team_conflicts": conflicts,
+        "spof_skill_ids": spof_skill_ids,
+        "is_team_resilient": is_team_resilient,
+        "team_posture": team_posture,
+    }
+
+
 ProjectLifecyclePMIService.audit_risk_appetite_and_threshold_governance = staticmethod(
     audit_risk_appetite_and_threshold_governance
 )
@@ -2681,6 +2752,9 @@ ProjectLifecyclePMIService.audit_risk_residual_exposure_and_triggers = staticmet
 )
 ProjectLifecyclePMIService.audit_charter_funding_limit_reconciliation = staticmethod(
     audit_charter_funding_limit_reconciliation
+)
+ProjectLifecyclePMIService.audit_team_tuckman_and_skill_redundancy = staticmethod(
+    audit_team_tuckman_and_skill_redundancy
 )
 
 
@@ -2721,5 +2795,7 @@ __all__ = [
     "audit_stakeholder_engagement_assessment_matrix",
     "audit_risk_residual_exposure_and_triggers",
     "audit_charter_funding_limit_reconciliation",
+    "audit_team_tuckman_and_skill_redundancy",
     "ProjectLifecyclePMIService",
 ]
+

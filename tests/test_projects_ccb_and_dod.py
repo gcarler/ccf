@@ -3054,3 +3054,135 @@ def test_evaluate_pareto_vital_few_defect_causes_no_defect_data():
             "is_pareto_actionable": False,
             "pareto_posture": "NO_DEFECT_DATA",
         }
+
+
+def test_evaluate_deliverable_acceptance_traceability_verified_and_validated():
+    """Entregables aceptados tras QC sin defectos críticos, con signoff y requirement_id -> VERIFIED_AND_VALIDATED_DELIVERABLES."""
+    import backend.services.project_ccb_service as ccb_module
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        evaluate_deliverable_acceptance_traceability,
+    )
+
+    deliverables = [
+        {
+            "id": "DEL-01",
+            "qc_verified": True,
+            "scope_accepted": True,
+            "open_critical_defects": 0,
+            "acceptance_signoff_by": "Sponsor General",
+            "requirement_id": "REQ-WBS-1.1",
+        },
+        {
+            "deliverable_id": "DEL-02",
+            "qc_verified": True,
+            "scope_accepted": False,
+            "open_critical_defects": 0,
+            "acceptance_signoff_by": "",
+            "requirement_id": "REQ-WBS-1.2",
+        },
+    ]
+    res = evaluate_deliverable_acceptance_traceability(deliverables)
+    assert res == {
+        "total_deliverables": 2,
+        "accepted_deliverables_count": 1,
+        "accepted_without_qc_ids": [],
+        "missing_signoff_deliverable_ids": [],
+        "unlinked_requirement_deliverable_ids": [],
+        "is_acceptance_chain_valid": True,
+        "acceptance_posture": "VERIFIED_AND_VALIDATED_DELIVERABLES",
+    }
+    assert ProjectCCBService.evaluate_deliverable_acceptance_traceability(deliverables) == res
+    assert "evaluate_deliverable_acceptance_traceability" in ccb_module.__all__
+
+
+def test_evaluate_deliverable_acceptance_traceability_accepted_without_qc():
+    """Entregable aceptado sin qc_verified o con defectos críticos abiertos -> SCOPE_ACCEPTED_WITHOUT_QC_VERIFICATION."""
+    from backend.services.project_ccb_service import (
+        evaluate_deliverable_acceptance_traceability,
+    )
+
+    res = evaluate_deliverable_acceptance_traceability(
+        [
+            {
+                "id": "DEL-NO-QC",
+                "qc_verified": False,
+                "scope_accepted": True,
+                "open_critical_defects": 0,
+                "acceptance_signoff_by": "Sponsor",
+                "requirement_id": "REQ-1",
+            },
+            {
+                "id": "DEL-CRIT-DEF",
+                "qc_verified": True,
+                "scope_accepted": True,
+                "open_critical_defects": 2,
+                "acceptance_signoff_by": "Sponsor",
+                "requirement_id": "REQ-2",
+            },
+        ]
+    )
+    assert res["total_deliverables"] == 2
+    assert res["accepted_deliverables_count"] == 2
+    assert res["accepted_without_qc_ids"] == ["DEL-NO-QC", "DEL-CRIT-DEF"]
+    assert res["is_acceptance_chain_valid"] is False
+    assert res["acceptance_posture"] == "SCOPE_ACCEPTED_WITHOUT_QC_VERIFICATION"
+
+
+def test_evaluate_deliverable_acceptance_traceability_missing_signoff_and_unlinked_req():
+    """Aceptado sin firma -> MISSING_FORMAL_ACCEPTANCE_SIGNOFF; sin requirement_id -> UNLINKED_REQUIREMENT_TRACEABILITY."""
+    from backend.services.project_ccb_service import (
+        evaluate_deliverable_acceptance_traceability,
+    )
+
+    res_signoff = evaluate_deliverable_acceptance_traceability(
+        [
+            {
+                "id": "DEL-UNSIGNED",
+                "qc_verified": True,
+                "scope_accepted": True,
+                "open_critical_defects": 0,
+                "acceptance_signoff_by": "   ",
+                "requirement_id": "REQ-10",
+            }
+        ]
+    )
+    assert res_signoff["missing_signoff_deliverable_ids"] == ["DEL-UNSIGNED"]
+    assert res_signoff["is_acceptance_chain_valid"] is False
+    assert res_signoff["acceptance_posture"] == "MISSING_FORMAL_ACCEPTANCE_SIGNOFF"
+
+    res_unlinked = evaluate_deliverable_acceptance_traceability(
+        [
+            {
+                "id": "DEL-ORPHAN",
+                "qc_verified": True,
+                "scope_accepted": True,
+                "open_critical_defects": 0,
+                "acceptance_signoff_by": "Cliente",
+                "requirement_id": "",
+            }
+        ]
+    )
+    assert res_unlinked["unlinked_requirement_deliverable_ids"] == ["DEL-ORPHAN"]
+    assert res_unlinked["is_acceptance_chain_valid"] is False
+    assert res_unlinked["acceptance_posture"] == "UNLINKED_REQUIREMENT_TRACEABILITY"
+
+
+def test_evaluate_deliverable_acceptance_traceability_no_deliverables():
+    """Lista vacía, None o entradas sin id -> NO_DELIVERABLES_REGISTERED."""
+    from backend.services.project_ccb_service import (
+        evaluate_deliverable_acceptance_traceability,
+    )
+
+    for payload in (None, [], [{"id": ""}]):
+        res = evaluate_deliverable_acceptance_traceability(payload)
+        assert res == {
+            "total_deliverables": 0,
+            "accepted_deliverables_count": 0,
+            "accepted_without_qc_ids": [],
+            "missing_signoff_deliverable_ids": [],
+            "unlinked_requirement_deliverable_ids": [],
+            "is_acceptance_chain_valid": False,
+            "acceptance_posture": "NO_DELIVERABLES_REGISTERED",
+        }
+
