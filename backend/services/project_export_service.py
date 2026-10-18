@@ -2201,6 +2201,174 @@ def audit_executive_report_resource_spof_and_utilization(
     }
 
 
+_CLOSURE_ACCEPTED_DELIVERABLE_STATUSES = {
+    "accepted",
+    "aceptado",
+    "aceptada",
+    "signed_off",
+    "approved",
+    "aprobado",
+    "completed",
+    "completado",
+}
+_CLOSURE_SETTLED_CONTRACT_STATUSES = {
+    "closed",
+    "cerrado",
+    "settled",
+    "liquidado",
+    "completed",
+    "completado",
+}
+
+
+def audit_executive_report_closure_readiness(
+    report_payload: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Audita alistamiento de cierre administrativo y contractual en el informe ejecutivo según PMI PMBOK §4.7 y §12.3."""
+    if not isinstance(report_payload, dict) or not report_payload:
+        return {
+            "total_deliverables": 0,
+            "total_contracts": 0,
+            "unaccepted_deliverable_ids": [],
+            "unsettled_contract_ids": [],
+            "has_administrative_signoff": True,
+            "is_ready_for_closure": True,
+            "closure_posture": "NO_CLOSURE_DATA_REPORTED",
+        }
+
+    raw_deliverables = (
+        report_payload.get("deliverables")
+        if isinstance(report_payload.get("deliverables"), list)
+        else (
+            report_payload.get("final_deliverables")
+            if isinstance(report_payload.get("final_deliverables"), list)
+            else []
+        )
+    )
+    deliverables = [
+        item for item in (raw_deliverables or []) if isinstance(item, dict)
+    ]
+
+    raw_contracts = (
+        report_payload.get("contracts")
+        if isinstance(report_payload.get("contracts"), list)
+        else (
+            report_payload.get("procurements")
+            if isinstance(report_payload.get("procurements"), list)
+            else []
+        )
+    )
+    contracts = [
+        item for item in (raw_contracts or []) if isinstance(item, dict)
+    ]
+
+    raw_closure_summary = report_payload.get("closure_summary")
+    closure_src = (
+        raw_closure_summary if isinstance(raw_closure_summary, dict) else {}
+    )
+
+    if (
+        len(deliverables) == 0
+        and len(contracts) == 0
+        and "lessons_learned_archived" not in report_payload
+        and "sponsor_signoff" not in report_payload
+        and "closure_summary" not in report_payload
+    ):
+        return {
+            "total_deliverables": 0,
+            "total_contracts": 0,
+            "unaccepted_deliverable_ids": [],
+            "unsettled_contract_ids": [],
+            "has_administrative_signoff": True,
+            "is_ready_for_closure": True,
+            "closure_posture": "NO_CLOSURE_DATA_REPORTED",
+        }
+
+    lessons_learned_archived = bool(
+        closure_src.get(
+            "lessons_learned_archived",
+            report_payload.get("lessons_learned_archived", True),
+        )
+    )
+    sponsor_signoff = bool(
+        closure_src.get(
+            "sponsor_signoff",
+            report_payload.get("sponsor_signoff", True),
+        )
+    )
+
+    unaccepted_deliverable_ids: list[str] = []
+    for idx, item in enumerate(deliverables, start=1):
+        deliv_id = (
+            str(
+                item.get("id")
+                or item.get("deliverable_id")
+                or item.get("code")
+                or f"DEL-{idx}"
+            ).strip()
+            or f"DEL-{idx}"
+        )
+        acc_status = (
+            str(item.get("acceptance_status") or item.get("status") or "")
+            .strip()
+            .lower()
+        )
+        if acc_status not in _CLOSURE_ACCEPTED_DELIVERABLE_STATUSES:
+            unaccepted_deliverable_ids.append(deliv_id)
+
+    unsettled_contract_ids: list[str] = []
+    for idx, item in enumerate(contracts, start=1):
+        cnt_id = (
+            str(
+                item.get("id")
+                or item.get("contract_id")
+                or item.get("code")
+                or f"CNT-{idx}"
+            ).strip()
+            or f"CNT-{idx}"
+        )
+        cnt_status = (
+            str(item.get("status") or item.get("closeout_status") or "")
+            .strip()
+            .lower()
+        )
+        has_open_claims = bool(
+            item.get("has_open_claims") or item.get("open_disputes")
+        )
+        if has_open_claims or (
+            cnt_status not in _CLOSURE_SETTLED_CONTRACT_STATUSES
+        ):
+            unsettled_contract_ids.append(cnt_id)
+
+    has_administrative_signoff = bool(
+        lessons_learned_archived and sponsor_signoff
+    )
+    is_ready_for_closure = bool(
+        len(unaccepted_deliverable_ids) == 0
+        and len(unsettled_contract_ids) == 0
+        and has_administrative_signoff
+    )
+
+    if len(unaccepted_deliverable_ids) > 0:
+        closure_posture = "UNACCEPTED_FINAL_DELIVERABLES"
+    elif len(unsettled_contract_ids) > 0:
+        closure_posture = "OPEN_PROCUREMENT_CLAIMS_OR_CONTRACTS"
+    elif not has_administrative_signoff:
+        closure_posture = "PENDING_ADMINISTRATIVE_SIGNOFF"
+    else:
+        closure_posture = "READY_FOR_ADMINISTRATIVE_CLOSURE"
+
+    return {
+        "total_deliverables": len(deliverables),
+        "total_contracts": len(contracts),
+        "unaccepted_deliverable_ids": unaccepted_deliverable_ids,
+        "unsettled_contract_ids": unsettled_contract_ids,
+        "has_administrative_signoff": has_administrative_signoff,
+        "is_ready_for_closure": is_ready_for_closure,
+        "closure_posture": closure_posture,
+    }
+
+
 ProjectExportService.audit_executive_report_risk_burndown = staticmethod(
     audit_executive_report_risk_burndown
 )
@@ -2209,6 +2377,9 @@ ProjectExportService.audit_executive_report_change_control_log = staticmethod(
 )
 ProjectExportService.audit_executive_report_resource_spof_and_utilization = staticmethod(
     audit_executive_report_resource_spof_and_utilization
+)
+ProjectExportService.audit_executive_report_closure_readiness = staticmethod(
+    audit_executive_report_closure_readiness
 )
 
 
@@ -2236,7 +2407,9 @@ __all__ = [
     "audit_executive_report_risk_burndown",
     "audit_executive_report_change_control_log",
     "audit_executive_report_resource_spof_and_utilization",
+    "audit_executive_report_closure_readiness",
     "ProjectExportService",
 ]
+
 
 

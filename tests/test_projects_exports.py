@@ -2666,3 +2666,112 @@ def test_audit_executive_report_resource_spof_and_utilization_empty_or_none():
             "resource_posture": "NO_RESOURCES_REPORTED",
         }
 
+
+def test_audit_executive_report_closure_readiness_ready():
+    """Entregables aceptados, contratos liquidados y signoff administrativo completo -> READY_FOR_ADMINISTRATIVE_CLOSURE."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_closure_readiness,
+    )
+
+    payload = {
+        "deliverables": [
+            {"id": "DEL-1", "acceptance_status": "accepted"},
+            {"deliverable_id": "DEL-2", "status": "signed_off"},
+        ],
+        "contracts": [
+            {"id": "CNT-1", "status": "closed", "has_open_claims": False},
+            {"contract_id": "CNT-2", "closeout_status": "settled"},
+        ],
+        "closure_summary": {
+            "lessons_learned_archived": True,
+            "sponsor_signoff": True,
+        },
+    }
+    res = audit_executive_report_closure_readiness(payload)
+    assert res == {
+        "total_deliverables": 2,
+        "total_contracts": 2,
+        "unaccepted_deliverable_ids": [],
+        "unsettled_contract_ids": [],
+        "has_administrative_signoff": True,
+        "is_ready_for_closure": True,
+        "closure_posture": "READY_FOR_ADMINISTRATIVE_CLOSURE",
+    }
+    assert ProjectExportService.audit_executive_report_closure_readiness(payload) == res
+
+
+def test_audit_executive_report_closure_readiness_unaccepted_deliverables():
+    """Entregables pendientes de aceptación formal -> UNACCEPTED_FINAL_DELIVERABLES."""
+    from backend.services.project_export_service import (
+        audit_executive_report_closure_readiness,
+    )
+
+    res = audit_executive_report_closure_readiness(
+        {
+            "final_deliverables": [
+                {"id": "DEL-OK", "acceptance_status": "accepted"},
+                {"id": "DEL-PEND", "acceptance_status": "in_review"},
+            ],
+            "contracts": [{"id": "CNT-1", "status": "closed"}],
+        }
+    )
+    assert res["total_deliverables"] == 2
+    assert res["unaccepted_deliverable_ids"] == ["DEL-PEND"]
+    assert res["unsettled_contract_ids"] == []
+    assert res["is_ready_for_closure"] is False
+    assert res["closure_posture"] == "UNACCEPTED_FINAL_DELIVERABLES"
+
+
+def test_audit_executive_report_closure_readiness_open_contracts_and_pending_signoff():
+    """Contratos con reclamos o sin liquidar -> OPEN_PROCUREMENT_CLAIMS_OR_CONTRACTS; falta de signoff -> PENDING_ADMINISTRATIVE_SIGNOFF."""
+    from backend.services.project_export_service import (
+        audit_executive_report_closure_readiness,
+    )
+
+    res_cnt = audit_executive_report_closure_readiness(
+        {
+            "deliverables": [{"id": "DEL-1", "status": "approved"}],
+            "procurements": [
+                {"id": "CNT-CLAIM", "status": "closed", "has_open_claims": True},
+                {"id": "CNT-OPEN", "status": "active"},
+            ],
+        }
+    )
+    assert res_cnt["unaccepted_deliverable_ids"] == []
+    assert res_cnt["unsettled_contract_ids"] == ["CNT-CLAIM", "CNT-OPEN"]
+    assert res_cnt["is_ready_for_closure"] is False
+    assert res_cnt["closure_posture"] == "OPEN_PROCUREMENT_CLAIMS_OR_CONTRACTS"
+
+    res_signoff = audit_executive_report_closure_readiness(
+        {
+            "deliverables": [{"id": "DEL-1", "status": "accepted"}],
+            "contracts": [{"id": "CNT-1", "status": "settled"}],
+            "lessons_learned_archived": False,
+            "sponsor_signoff": True,
+        }
+    )
+    assert res_signoff["has_administrative_signoff"] is False
+    assert res_signoff["is_ready_for_closure"] is False
+    assert res_signoff["closure_posture"] == "PENDING_ADMINISTRATIVE_SIGNOFF"
+
+
+def test_audit_executive_report_closure_readiness_empty_or_none():
+    """Payload vacío o None -> NO_CLOSURE_DATA_REPORTED e is_ready_for_closure=True."""
+    from backend.services.project_export_service import (
+        audit_executive_report_closure_readiness,
+    )
+
+    for payload in (None, {}, {"deliverables": [], "contracts": []}):
+        res = audit_executive_report_closure_readiness(payload)
+        assert res == {
+            "total_deliverables": 0,
+            "total_contracts": 0,
+            "unaccepted_deliverable_ids": [],
+            "unsettled_contract_ids": [],
+            "has_administrative_signoff": True,
+            "is_ready_for_closure": True,
+            "closure_posture": "NO_CLOSURE_DATA_REPORTED",
+        }
+
+

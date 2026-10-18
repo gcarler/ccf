@@ -4755,6 +4755,83 @@ ProjectEVMService.evaluate_reserve_drawdown_velocity = staticmethod(
 )
 
 
+def audit_pmb_undistributed_budget_reconciliation(
+    bac: float = 0.0,
+    control_accounts_total: float = 0.0,
+    undistributed_budget: float = 0.0,
+    max_ub_share_pct: float = 10.0,
+    tolerance: float = 1.0,
+) -> dict[str, Any]:
+    """Audita la reconciliación de la Línea Base de Medición del Desempeño (PMB = Control Accounts + UB) según PMI PMBOK §7.3 y §7.4."""
+
+    def _to_float(val: Any, default: float = 0.0) -> float:
+        if val is None or isinstance(val, bool):
+            return default
+        try:
+            return float(val)
+        except (TypeError, ValueError):
+            return default
+
+    bac_val = _to_float(bac, 0.0)
+    ca_val = _to_float(control_accounts_total, 0.0)
+    ub_val = _to_float(undistributed_budget, 0.0)
+    max_ub_pct = _to_float(max_ub_share_pct, 10.0)
+    tol_val = _to_float(tolerance, 1.0)
+
+    if abs(bac_val) <= 1e-9 and abs(ca_val) <= 1e-9 and abs(ub_val) <= 1e-9:
+        return {
+            "allocated_pmb_total": 0.0,
+            "reconciliation_discrepancy": 0.0,
+            "ub_share_pct": 0.0,
+            "has_negative_bucket": False,
+            "is_pmb_reconciled": True,
+            "pmb_posture": "NO_PMB_CONFIGURED",
+        }
+
+    allocated_pmb_total = round(ca_val + ub_val, 2)
+    reconciliation_discrepancy = round(bac_val - allocated_pmb_total, 2)
+    if bac_val > 0.0:
+        ub_share_pct = round((max(0.0, ub_val) / bac_val) * 100.0, 2)
+    else:
+        ub_share_pct = 100.0 if ub_val > 0.0 else 0.0
+
+    has_negative_bucket = bool(
+        bac_val < -1e-9 or ca_val < -1e-9 or ub_val < -1e-9
+    )
+    is_discrepancy_within_tolerance = bool(
+        abs(reconciliation_discrepancy) <= tol_val + 1e-9
+    )
+    is_ub_within_threshold = bool(ub_share_pct <= max_ub_pct + 1e-9)
+    is_pmb_reconciled = bool(
+        not has_negative_bucket
+        and is_discrepancy_within_tolerance
+        and is_ub_within_threshold
+    )
+
+    if has_negative_bucket:
+        pmb_posture = "NEGATIVE_BUDGET_BUCKET_ERROR"
+    elif not is_discrepancy_within_tolerance:
+        pmb_posture = "PMB_BAC_RECONCILIATION_MISMATCH"
+    elif not is_ub_within_threshold:
+        pmb_posture = "EXCESSIVE_UNDISTRIBUTED_BUDGET_HOLDING"
+    else:
+        pmb_posture = "RECONCILED_PMB_BASELINE"
+
+    return {
+        "allocated_pmb_total": allocated_pmb_total,
+        "reconciliation_discrepancy": reconciliation_discrepancy,
+        "ub_share_pct": ub_share_pct,
+        "has_negative_bucket": has_negative_bucket,
+        "is_pmb_reconciled": is_pmb_reconciled,
+        "pmb_posture": pmb_posture,
+    }
+
+
+ProjectEVMService.audit_pmb_undistributed_budget_reconciliation = staticmethod(
+    audit_pmb_undistributed_budget_reconciliation
+)
+
+
 __all__ = [
     "evaluate_tcpi_recovery_feasibility",
     "evaluate_funding_limit_periods_reconciliation",
@@ -4762,5 +4839,7 @@ __all__ = [
     "evaluate_burn_rate_runway_sustainability",
     "evaluate_cpi_spi_stability_window",
     "evaluate_reserve_drawdown_velocity",
+    "audit_pmb_undistributed_budget_reconciliation",
     "ProjectEVMService",
 ]
+

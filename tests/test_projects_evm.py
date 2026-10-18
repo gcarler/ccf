@@ -2461,3 +2461,101 @@ def test_evaluate_tcpi_recovery_funds_exhausted_and_no_budget():
         "is_bac_recoverable": True,
         "recovery_posture": "NO_BASELINE_BUDGET",
     }
+
+
+def test_audit_pmb_undistributed_budget_reconciliation_reconciled():
+    """PMB reconciliado con CA + UB == BAC y UB <= 10% -> RECONCILED_PMB_BASELINE."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        audit_pmb_undistributed_budget_reconciliation,
+    )
+
+    res = audit_pmb_undistributed_budget_reconciliation(
+        bac=100000.0,
+        control_accounts_total=94000.0,
+        undistributed_budget=6000.0,
+        max_ub_share_pct=10.0,
+        tolerance=1.0,
+    )
+    assert res == {
+        "allocated_pmb_total": 100000.0,
+        "reconciliation_discrepancy": 0.0,
+        "ub_share_pct": 6.0,
+        "has_negative_bucket": False,
+        "is_pmb_reconciled": True,
+        "pmb_posture": "RECONCILED_PMB_BASELINE",
+    }
+    assert (
+        ProjectEVMService.audit_pmb_undistributed_budget_reconciliation(
+            bac=100000.0,
+            control_accounts_total=94000.0,
+            undistributed_budget=6000.0,
+        )["pmb_posture"]
+        == "RECONCILED_PMB_BASELINE"
+    )
+
+
+def test_audit_pmb_undistributed_budget_reconciliation_mismatch():
+    """Descuadre entre BAC y CA + UB mayor a tolerance -> PMB_BAC_RECONCILIATION_MISMATCH."""
+    from backend.services.project_evm_service import (
+        audit_pmb_undistributed_budget_reconciliation,
+    )
+
+    res = audit_pmb_undistributed_budget_reconciliation(
+        bac=100000.0,
+        control_accounts_total=85000.0,
+        undistributed_budget=5000.0,
+        tolerance=1.0,
+    )
+    assert res["allocated_pmb_total"] == 90000.0
+    assert res["reconciliation_discrepancy"] == 10000.0
+    assert res["ub_share_pct"] == 5.0
+    assert res["is_pmb_reconciled"] is False
+    assert res["pmb_posture"] == "PMB_BAC_RECONCILIATION_MISMATCH"
+
+
+def test_audit_pmb_undistributed_budget_reconciliation_excessive_ub_and_negative_bucket():
+    """UB > 10% -> EXCESSIVE_UNDISTRIBUTED_BUDGET_HOLDING; bucket negativo -> NEGATIVE_BUDGET_BUCKET_ERROR."""
+    from backend.services.project_evm_service import (
+        audit_pmb_undistributed_budget_reconciliation,
+    )
+
+    res_ub = audit_pmb_undistributed_budget_reconciliation(
+        bac=100000.0,
+        control_accounts_total=80000.0,
+        undistributed_budget=20000.0,
+        max_ub_share_pct=10.0,
+    )
+    assert res_ub["reconciliation_discrepancy"] == 0.0
+    assert res_ub["ub_share_pct"] == 20.0
+    assert res_ub["is_pmb_reconciled"] is False
+    assert res_ub["pmb_posture"] == "EXCESSIVE_UNDISTRIBUTED_BUDGET_HOLDING"
+
+    res_neg = audit_pmb_undistributed_budget_reconciliation(
+        bac=100000.0,
+        control_accounts_total=105000.0,
+        undistributed_budget=-5000.0,
+    )
+    assert res_neg["has_negative_bucket"] is True
+    assert res_neg["is_pmb_reconciled"] is False
+    assert res_neg["pmb_posture"] == "NEGATIVE_BUDGET_BUCKET_ERROR"
+
+
+def test_audit_pmb_undistributed_budget_reconciliation_no_pmb_configured():
+    """Sin PMB configurado (0, 0, 0) -> NO_PMB_CONFIGURED e is_pmb_reconciled=True."""
+    from backend.services.project_evm_service import (
+        audit_pmb_undistributed_budget_reconciliation,
+    )
+
+    res = audit_pmb_undistributed_budget_reconciliation(
+        bac=0.0, control_accounts_total=0.0, undistributed_budget=0.0
+    )
+    assert res == {
+        "allocated_pmb_total": 0.0,
+        "reconciliation_discrepancy": 0.0,
+        "ub_share_pct": 0.0,
+        "has_negative_bucket": False,
+        "is_pmb_reconciled": True,
+        "pmb_posture": "NO_PMB_CONFIGURED",
+    }
+
