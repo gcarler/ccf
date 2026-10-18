@@ -3006,6 +3006,7 @@ __all__ = [
     "audit_markdown_image_alt_text_and_asset_hygiene",
     "audit_markdown_code_fence_language_and_secret_hygiene",
     "audit_markdown_blockquote_depth_and_citation_hygiene",
+    "audit_markdown_acronym_and_glossary_consistency",
     "AnyDocService",
     "AnydocService",
 ]
@@ -4099,4 +4100,131 @@ def audit_markdown_blockquote_depth_and_citation_hygiene(
 AnyDocService.audit_markdown_blockquote_depth_and_citation_hygiene = staticmethod(
     audit_markdown_blockquote_depth_and_citation_hygiene
 )
+
+
+def audit_markdown_acronym_and_glossary_consistency(
+    markdown_text: object,
+    *,
+    min_occurrences_for_definition: int = 2,
+) -> dict[str, object]:
+    """Audita consistencia de acrónimos frecuentes, definiciones inline y entradas de glosario en artefactos Markdown según PMI PMBOK §4.4 y §10.2."""
+    if not isinstance(markdown_text, str) or not markdown_text.strip():
+        return {
+            "total_acronyms_detected": 0,
+            "undefined_frequent_acronyms": [],
+            "duplicate_glossary_acronyms": [],
+            "empty_definition_acronyms": [],
+            "is_acronym_glossary_consistent": True,
+        }
+
+    min_occ = max(1, int(min_occurrences_for_definition))
+    ignored_tokens = {
+        "PARA",
+        "COMO",
+        "ESTE",
+        "ESTA",
+        "TODO",
+        "TODA",
+        "PERO",
+        "SINO",
+        "NOTA",
+        "WARNING",
+        "NOTE",
+        "IMPORTANT",
+        "TIP",
+        "CAUTION",
+        "HTTP",
+        "HTTPS",
+        "JSON",
+        "HTML",
+        "UUID",
+        "UTF",
+        "NULL",
+        "TRUE",
+        "FALSE",
+        "TBD",
+    }
+
+    bullet_glossary_re = re.compile(
+        r"^\s*[-*+]\s+\*\*([A-Z]{2,10})\*\*\s*[:\-–—]?\s*(.*)$"
+    )
+    table_glossary_re = re.compile(
+        r"^\s*\|\s*(?:\*\*)?([A-Z]{2,10})(?:\*\*)?\s*\|\s*([^|]*)\|?\s*$"
+    )
+    inline_paren_acr_re = re.compile(r"\(([A-Z]{2,10})\)")
+    inline_acr_paren_re = re.compile(r"\b([A-Z]{2,10})\s*\([^)\n]{3,}\)")
+    token_re = re.compile(r"\b([A-Z]{3,8})\b")
+
+    glossary_defined: set[str] = set()
+    duplicate_glossary: set[str] = set()
+    empty_definitions: set[str] = set()
+    inline_defined: set[str] = set()
+    token_counts: dict[str, int] = {}
+
+    in_backtick_fence = False
+    in_tilde_fence = False
+
+    for raw_line in markdown_text.splitlines():
+        stripped = raw_line.strip()
+        if not in_tilde_fence and stripped.startswith("```"):
+            in_backtick_fence = not in_backtick_fence
+            continue
+        if not in_backtick_fence and stripped.startswith("~~~"):
+            in_tilde_fence = not in_tilde_fence
+            continue
+        if in_backtick_fence or in_tilde_fence:
+            continue
+
+        m_bullet = bullet_glossary_re.match(raw_line)
+        m_table = None if m_bullet else table_glossary_re.match(raw_line)
+        m_gloss = m_bullet or m_table
+        if m_gloss:
+            acr = m_gloss.group(1).strip()
+            raw_def = re.sub(
+                r"^[:\-–—|\s]+|[:\-–—|\s]+$", "", m_gloss.group(2) or ""
+            ).strip()
+            if acr in glossary_defined:
+                duplicate_glossary.add(acr)
+            glossary_defined.add(acr)
+            if not raw_def or raw_def.lower() in {"tbd", "todo", "pendiente"}:
+                empty_definitions.add(acr)
+
+        for m_in in inline_paren_acr_re.finditer(raw_line):
+            inline_defined.add(m_in.group(1))
+        for m_in2 in inline_acr_paren_re.finditer(raw_line):
+            inline_defined.add(m_in2.group(1))
+
+        for m_tok in token_re.finditer(raw_line):
+            tok = m_tok.group(1)
+            if tok in ignored_tokens:
+                continue
+            token_counts[tok] = token_counts.get(tok, 0) + 1
+
+    all_acronyms = set(token_counts.keys()) | glossary_defined
+    undefined_frequent: set[str] = set()
+    for acr, count in token_counts.items():
+        if (
+            count >= min_occ
+            and acr not in glossary_defined
+            and acr not in inline_defined
+        ):
+            undefined_frequent.add(acr)
+
+    return {
+        "total_acronyms_detected": len(all_acronyms),
+        "undefined_frequent_acronyms": sorted(undefined_frequent),
+        "duplicate_glossary_acronyms": sorted(duplicate_glossary),
+        "empty_definition_acronyms": sorted(empty_definitions),
+        "is_acronym_glossary_consistent": (
+            len(undefined_frequent) == 0
+            and len(duplicate_glossary) == 0
+            and len(empty_definitions) == 0
+        ),
+    }
+
+
+AnyDocService.audit_markdown_acronym_and_glossary_consistency = staticmethod(
+    audit_markdown_acronym_and_glossary_consistency
+)
+
 

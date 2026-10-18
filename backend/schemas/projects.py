@@ -3781,6 +3781,8 @@ __all__ = [
     "validate_tm_contract_not_to_exceed_and_rate_card",
     "validate_schedule_network_lead_lag_and_float_feasibility",
     "validate_three_point_pert_skew_and_confidence_band",
+    "validate_deliverable_acceptance_criteria_measurability",
+    "validate_resource_calendar_overtime_and_blackout_bounds",
 ]
 
 
@@ -4987,3 +4989,82 @@ def validate_tm_contract_not_to_exceed_and_rate_card(
         "nte_threshold_breach_contract_ids": nte_threshold_breach_contract_ids,
         "is_tm_contract_governance_valid": is_tm_contract_governance_valid,
     }
+
+
+def validate_resource_calendar_overtime_and_blackout_bounds(
+    calendar_allocations: object,
+    *,
+    max_weekly_overtime_hours: float = 10.0,
+) -> dict[str, object]:
+    """Valida calendarios de recursos, autorización y tope de horas extra semanales, y restricciones de ventanas de congelamiento/festivos según PMI PMBOK §6.5 y §9.3."""
+    total_evaluated = 0
+    unauthorized_overtime_allocation_ids: list[str] = []
+    excessive_overtime_cap_allocation_ids: list[str] = []
+    blackout_violation_allocation_ids: list[str] = []
+
+    if isinstance(calendar_allocations, Sequence) and not isinstance(
+        calendar_allocations, (str, bytes, bytearray)
+    ):
+        for item in calendar_allocations:
+            if not isinstance(item, Mapping):
+                continue
+            alloc_id = str(
+                item.get("allocation_id") or item.get("id") or ""
+            ).strip()
+            if not alloc_id:
+                continue
+
+            total_evaluated += 1
+            try:
+                standard_weekly_hours = float(
+                    item.get("standard_weekly_hours", 40.0) or 40.0
+                )
+            except (TypeError, ValueError):
+                standard_weekly_hours = 40.0
+
+            try:
+                scheduled_weekly_hours = float(
+                    item.get("scheduled_weekly_hours", 0.0) or 0.0
+                )
+            except (TypeError, ValueError):
+                scheduled_weekly_hours = 0.0
+
+            overtime_authorized = bool(item.get("overtime_authorized", False))
+            scheduled_during_blackout_or_holiday = bool(
+                item.get("scheduled_during_blackout_or_holiday", False)
+            )
+            change_freeze_exception_approved = bool(
+                item.get("change_freeze_exception_approved", False)
+            )
+
+            overtime_hours = max(
+                0.0, scheduled_weekly_hours - standard_weekly_hours
+            )
+
+            if overtime_hours > 0.0 and not overtime_authorized:
+                unauthorized_overtime_allocation_ids.append(alloc_id)
+
+            if (
+                overtime_hours > float(max_weekly_overtime_hours)
+                or scheduled_weekly_hours <= 0.0
+            ):
+                excessive_overtime_cap_allocation_ids.append(alloc_id)
+
+            if (
+                scheduled_during_blackout_or_holiday is True
+                and not change_freeze_exception_approved
+            ):
+                blackout_violation_allocation_ids.append(alloc_id)
+
+    return {
+        "total_evaluated": total_evaluated,
+        "unauthorized_overtime_allocation_ids": unauthorized_overtime_allocation_ids,
+        "excessive_overtime_cap_allocation_ids": excessive_overtime_cap_allocation_ids,
+        "blackout_violation_allocation_ids": blackout_violation_allocation_ids,
+        "is_resource_calendar_compliant": (
+            len(unauthorized_overtime_allocation_ids) == 0
+            and len(excessive_overtime_cap_allocation_ids) == 0
+            and len(blackout_violation_allocation_ids) == 0
+        ),
+    }
+

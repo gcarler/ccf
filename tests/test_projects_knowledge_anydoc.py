@@ -3632,3 +3632,101 @@ def test_audit_markdown_blockquote_invalid_inputs_and_export():
             == expected_empty
         )
 
+
+def test_audit_markdown_acronym_and_glossary_consistency_compliant():
+    """Valida documento con acrónimos definidos en glosario o inline e ignora code fences."""
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_acronym_and_glossary_consistency,
+    )
+
+    doc = (
+        "# Plan de Gestión del Valor Ganado (EVM)\n\n"
+        "El sistema EVM monitorea el BAC durante todo el ciclo.\n\n"
+        "## Glosario\n"
+        "- **BAC**: Budget at Completion aprobado en la línea base.\n"
+        "| CPI | Cost Performance Index acumulado |\n\n"
+        "```python\n"
+        "# UNDEF aparece 3 veces aquí: UNDEF UNDEF\n"
+        "```\n"
+    )
+    res = audit_markdown_acronym_and_glossary_consistency(
+        doc, min_occurrences_for_definition=2
+    )
+    assert res == {
+        "total_acronyms_detected": 3,
+        "undefined_frequent_acronyms": [],
+        "duplicate_glossary_acronyms": [],
+        "empty_definition_acronyms": [],
+        "is_acronym_glossary_consistent": True,
+    }
+    assert (
+        AnyDocService.audit_markdown_acronym_and_glossary_consistency(doc)
+        == res
+    )
+
+
+def test_audit_markdown_acronym_undefined_frequent_acronyms():
+    """Detecta acrónimos con ocurrencias >= min_occurrences_for_definition sin definición en glosario ni inline."""
+    from backend.services.anydoc_service import (
+        audit_markdown_acronym_and_glossary_consistency,
+    )
+
+    doc = (
+        "El comité CCB revisa cada cambio remitido al CCB.\n"
+        "Además el índice TCPI se recalcula cuando TCPI supera 1.10.\n"
+        "Una mención única de RACI no exige glosario cuando el umbral es 2.\n"
+    )
+    res = audit_markdown_acronym_and_glossary_consistency(
+        doc, min_occurrences_for_definition=2
+    )
+    assert res["total_acronyms_detected"] == 3
+    assert res["undefined_frequent_acronyms"] == ["CCB", "TCPI"]
+    assert res["duplicate_glossary_acronyms"] == []
+    assert res["empty_definition_acronyms"] == []
+    assert res["is_acronym_glossary_consistent"] is False
+
+
+def test_audit_markdown_acronym_duplicate_and_empty_glossary_entries():
+    """Detecta entradas duplicadas en el glosario y definiciones vacías o placeholders (TBD/TODO/pendiente)."""
+    from backend.services.anydoc_service import (
+        audit_markdown_acronym_and_glossary_consistency,
+    )
+
+    doc = (
+        "## Glosario del Proyecto\n"
+        "- **WBS**: Work Breakdown Structure jerárquica.\n"
+        "* **WBS** - Estructura de Desglose del Trabajo duplicada.\n"
+        "- **OBS**: TBD\n"
+        "| RAM |   |\n"
+    )
+    res = audit_markdown_acronym_and_glossary_consistency(doc)
+    assert res["total_acronyms_detected"] == 3
+    assert res["undefined_frequent_acronyms"] == []
+    assert res["duplicate_glossary_acronyms"] == ["WBS"]
+    assert res["empty_definition_acronyms"] == ["OBS", "RAM"]
+    assert res["is_acronym_glossary_consistent"] is False
+
+
+def test_audit_markdown_acronym_invalid_inputs_and_export():
+    """Retorna estructura limpia ante entradas vacías o no-string y verifica exportación en __all__."""
+    import backend.services.anydoc_service as _m
+    from backend.services.anydoc_service import (
+        audit_markdown_acronym_and_glossary_consistency,
+    )
+
+    assert "audit_markdown_acronym_and_glossary_consistency" in _m.__all__
+    expected_empty = {
+        "total_acronyms_detected": 0,
+        "undefined_frequent_acronyms": [],
+        "duplicate_glossary_acronyms": [],
+        "empty_definition_acronyms": [],
+        "is_acronym_glossary_consistent": True,
+    }
+    for bad in (None, "", "   \n  ", 42, ["WBS"]):
+        assert (
+            audit_markdown_acronym_and_glossary_consistency(bad)
+            == expected_empty
+        )
+
+

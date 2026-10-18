@@ -3539,3 +3539,118 @@ def test_validate_tm_contract_nte_empty_and_exports():
         == 0
     )
     assert "validate_tm_contract_not_to_exceed_and_rate_card" in _m.__all__
+
+
+def test_validate_resource_calendar_overtime_and_blackout_bounds_compliant():
+    """Valida asignaciones sin sobretiempo o con sobretiempo autorizado dentro del tope y excepción de blackout aprobada."""
+    from backend.schemas.projects import (
+        validate_resource_calendar_overtime_and_blackout_bounds,
+    )
+
+    allocations = [
+        {
+            "allocation_id": "CAL-DEV-01",
+            "standard_weekly_hours": 40.0,
+            "scheduled_weekly_hours": 40.0,
+            "overtime_authorized": False,
+            "scheduled_during_blackout_or_holiday": False,
+        },
+        {
+            "id": "CAL-SRE-02",
+            "standard_weekly_hours": 40.0,
+            "scheduled_weekly_hours": 48.0,
+            "overtime_authorized": True,
+            "scheduled_during_blackout_or_holiday": True,
+            "change_freeze_exception_approved": True,
+        },
+    ]
+    res = validate_resource_calendar_overtime_and_blackout_bounds(
+        allocations, max_weekly_overtime_hours=10.0
+    )
+    assert res == {
+        "total_evaluated": 2,
+        "unauthorized_overtime_allocation_ids": [],
+        "excessive_overtime_cap_allocation_ids": [],
+        "blackout_violation_allocation_ids": [],
+        "is_resource_calendar_compliant": True,
+    }
+
+
+def test_validate_resource_calendar_unauthorized_and_excessive_overtime():
+    """Detecta sobretiempo sin autorización y horas que superan el tope semanal o son <= 0."""
+    from backend.schemas.projects import (
+        validate_resource_calendar_overtime_and_blackout_bounds,
+    )
+
+    allocations = [
+        {
+            "allocation_id": "CAL-UNAUTH-OT",
+            "standard_weekly_hours": 40.0,
+            "scheduled_weekly_hours": 45.0,
+            "overtime_authorized": False,
+        },
+        {
+            "allocation_id": "CAL-EXCESS-OT",
+            "standard_weekly_hours": 40.0,
+            "scheduled_weekly_hours": 56.0,
+            "overtime_authorized": True,
+        },
+        {
+            "allocation_id": "CAL-ZERO-HRS",
+            "standard_weekly_hours": 40.0,
+            "scheduled_weekly_hours": 0.0,
+        },
+    ]
+    res = validate_resource_calendar_overtime_and_blackout_bounds(
+        allocations, max_weekly_overtime_hours=10.0
+    )
+    assert res["total_evaluated"] == 3
+    assert res["unauthorized_overtime_allocation_ids"] == ["CAL-UNAUTH-OT"]
+    assert res["excessive_overtime_cap_allocation_ids"] == [
+        "CAL-EXCESS-OT",
+        "CAL-ZERO-HRS",
+    ]
+    assert res["blackout_violation_allocation_ids"] == []
+    assert res["is_resource_calendar_compliant"] is False
+
+
+def test_validate_resource_calendar_blackout_violation():
+    """Detecta trabajo programado en ventana de blackout o festivo sin excepción aprobada."""
+    from backend.schemas.projects import (
+        validate_resource_calendar_overtime_and_blackout_bounds,
+    )
+
+    allocations = [
+        {
+            "allocation_id": "CAL-BLACKOUT-BREACH",
+            "standard_weekly_hours": 40.0,
+            "scheduled_weekly_hours": 32.0,
+            "scheduled_during_blackout_or_holiday": True,
+            "change_freeze_exception_approved": False,
+        }
+    ]
+    res = validate_resource_calendar_overtime_and_blackout_bounds(allocations)
+    assert res["total_evaluated"] == 1
+    assert res["unauthorized_overtime_allocation_ids"] == []
+    assert res["excessive_overtime_cap_allocation_ids"] == []
+    assert res["blackout_violation_allocation_ids"] == ["CAL-BLACKOUT-BREACH"]
+    assert res["is_resource_calendar_compliant"] is False
+
+
+def test_validate_resource_calendar_invalid_inputs_and_export():
+    """Ignora entradas no secuencia o sin allocation_id válido y verifica exportación en __all__."""
+    import backend.schemas.projects as _m
+    from backend.schemas.projects import (
+        validate_resource_calendar_overtime_and_blackout_bounds,
+    )
+
+    assert "validate_resource_calendar_overtime_and_blackout_bounds" in _m.__all__
+    for bad in (None, "not-a-seq", b"bytes", bytearray(b"123"), [{"allocation_id": "  "}, 42]):
+        assert validate_resource_calendar_overtime_and_blackout_bounds(bad) == {
+            "total_evaluated": 0,
+            "unauthorized_overtime_allocation_ids": [],
+            "excessive_overtime_cap_allocation_ids": [],
+            "blackout_violation_allocation_ids": [],
+            "is_resource_calendar_compliant": True,
+        }
+
