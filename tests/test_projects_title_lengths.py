@@ -497,3 +497,107 @@ def test_validate_risk_emv_exposure_invalid_type_and_none():
     assert nones["emv_magnitude"] == 0.0
     assert nones["emv_exposure_tier"] == "zero_exposure"
 
+
+# ─── validate_ccb_change_request_justification (pure helper) ──────────────
+
+
+def test_validate_ccb_change_request_high_baseline_impact_goes_to_board():
+    """Impacto en baseline alto (costo >= 5000) con justificacion >= 20 -> CCB_FORMAL_BOARD_REVIEW."""
+    from backend.schemas.projects import validate_ccb_change_request_justification
+
+    by_cost = validate_ccb_change_request_justification(
+        title="Ampliar presupuesto del Proyecto F",
+        justification="Se requiere activo adicional aprobado por el comité de obras",
+        cost_impact=5000.0,
+        schedule_days_impact=0,
+    )
+    assert by_cost["has_baseline_impact"] is True
+    assert by_cost["is_valid"] is True
+    assert by_cost["impact_tier"] == "HIGH_BASELINE_IMPACT"
+    assert by_cost["posture"] == "CCB_FORMAL_BOARD_REVIEW"
+
+    by_schedule = validate_ccb_change_request_justification(
+        title="Reprogramar fase 2",
+        justification="El proveedor complico la ventana de instalacion21",
+        cost_impact=0.0,
+        schedule_days_impact=10,
+    )
+    assert by_schedule["schedule_delta_days"] == 10.0
+    assert by_schedule["impact_tier"] == "HIGH_BASELINE_IMPACT"
+    assert by_schedule["posture"] == "CCB_FORMAL_BOARD_REVIEW"
+
+
+def test_validate_ccb_change_request_moderate_and_pm_delegated():
+    """Impacto en baseline moderado (costo o dias != 0, < umbrales) -> PM_DELEGATED_APPROVAL_ELIGIBLE."""
+    from backend.schemas.projects import validate_ccb_change_request_justification
+
+    res = validate_ccb_change_request_justification(
+        title="Ajustar cronograma",
+        justification="El coro requiere desplazar el estreno una semana",
+        cost_impact=0.0,
+        schedule_days_impact=3,
+    )
+    assert res["schedule_delta_days"] == 3.0
+    assert res["has_baseline_impact"] is True
+    assert res["is_valid"] is True
+    assert res["impact_tier"] == "MODERATE_BASELINE_IMPACT"
+    assert res["posture"] == "PM_DELEGATED_APPROVAL_ELIGIBLE"
+
+
+def test_validate_ccb_change_request_rejects_insufficient_justification():
+    """Justificación corta según impacto (>= 20 con baseline, >= 10 admin) -> REJECTED_INSUFFICIENT_JUSTIFICATION."""
+    from backend.schemas.projects import validate_ccb_change_request_justification
+
+    with_baseline = validate_ccb_change_request_justification(
+        title="Cambiar costos",
+        justification="Solo 15 chars",
+        cost_impact=250.0,
+    )
+    assert with_baseline["is_valid"] is False
+    assert with_baseline["posture"] == "REJECTED_INSUFFICIENT_JUSTIFICATION"
+
+    short_title = validate_ccb_change_request_justification(
+        title="ab",
+        justification="Justificacion administrativa larga suficiente",
+        cost_impact=0.0,
+    )
+    assert short_title["is_valid"] is False
+    assert short_title["posture"] == "REJECTED_INSUFFICIENT_JUSTIFICATION"
+
+    # Justificación >= 10 sin impacto en baseline -> FAST_TRACK_ADMINISTRATIVE
+    admin_ok = validate_ccb_change_request_justification(
+        title="Renombrar plantilla",
+        justification="Renombrado interno sin efecto en baseline",
+        cost_impact=0.0,
+        schedule_days_impact=0,
+    )
+    assert admin_ok["has_baseline_impact"] is False
+    assert admin_ok["is_valid"] is True
+    assert admin_ok["impact_tier"] == "ADMINISTRATIVE_NO_BASELINE_SHIFT"
+    assert admin_ok["posture"] == "FAST_TRACK_ADMINISTRATIVE"
+
+
+def test_validate_ccb_change_request_defaults_and_normalization():
+    """Defaults 0/None -> esquina administrativa; espacios y floats se normalizan."""
+    from backend.schemas.projects import validate_ccb_change_request_justification
+
+    res = validate_ccb_change_request_justification(None, None, None, None)
+    assert res["clean_title"] == ""
+    assert res["clean_justification"] == ""
+    assert res["cost_delta"] == 0.0
+    assert res["schedule_delta_days"] == 0.0
+    assert res["has_baseline_impact"] is False
+    assert res["is_valid"] is False
+    assert res["impact_tier"] == "ADMINISTRATIVE_NO_BASELINE_SHIFT"
+    assert res["posture"] == "REJECTED_INSUFFICIENT_JUSTIFICATION"
+
+    stripped = validate_ccb_change_request_justification(
+        "  Ok titulo  ",
+        "  ok  ",
+        cost_impact=0.0,
+        schedule_days_impact=0,
+    )
+    assert stripped["clean_title"] == "Ok titulo"
+    assert stripped["clean_justification"] == "ok"  # 2 chars -> invalid
+    assert stripped["is_valid"] is False
+

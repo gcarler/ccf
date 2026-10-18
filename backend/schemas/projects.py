@@ -2591,3 +2591,68 @@ def validate_risk_emv_exposure(
         "emv_exposure_tier": emv_exposure_tier,
     }
 
+
+def validate_ccb_change_request_justification(
+    title: str | None,
+    justification: str | None,
+    cost_impact: float | int | None = 0.0,
+    schedule_days_impact: int | float | None = 0,
+) -> dict[str, Any]:
+    """Valida la justificación de una solicitud de cambio (Change Request — PMI PMBOK §4.6).
+
+    Evalúa título, justificación, y el impacto contra el baseline (costo/duracion):
+    - `has_baseline_impact`: True si el costo o la duración cambian (delta != 0).
+    - `is_valid`: título >= 5 chars y justificación >= 20 chars con impacto en
+      baseline (>= 10 chars administrativa sin impacto).
+    - `impact_tier`: 'HIGH_BASELINE_IMPACT' si |costo| >= 5000.0 o |dias| >= 10.0;
+      'MODERATE_BASELINE_IMPACT' con impacto distinto de cero; y
+      'ADMINISTRATIVE_NO_BASELINE_SHIFT' sin impacto en baseline.
+    - `posture`: 'REJECTED_INSUFFICIENT_JUSTIFICATION' si is_valid es False;
+      'CCB_FORMAL_BOARD_REVIEW' para impacto alto;
+      'PM_DELEGATED_APPROVAL_ELIGIBLE' para impacto moderado; y
+      'FAST_TRACK_ADMINISTRATIVE' sin impacto en baseline.
+    """
+    clean_title = (title or "").strip()
+    clean_justification = (justification or "").strip()
+    cost_delta = round(float(cost_impact or 0.0), 2)
+    schedule_delta_days = round(float(schedule_days_impact or 0), 2)
+
+    has_baseline_impact = bool(
+        abs(cost_delta) > 0.0 or abs(schedule_delta_days) > 0.0
+    )
+    is_valid = bool(
+        len(clean_title) >= 5
+        and (
+            len(clean_justification) >= 20
+            if has_baseline_impact
+            else len(clean_justification) >= 10
+        )
+    )
+
+    if abs(cost_delta) >= 5000.0 or abs(schedule_delta_days) >= 10.0:
+        impact_tier = "HIGH_BASELINE_IMPACT"
+    elif has_baseline_impact:
+        impact_tier = "MODERATE_BASELINE_IMPACT"
+    else:
+        impact_tier = "ADMINISTRATIVE_NO_BASELINE_SHIFT"
+
+    if not is_valid:
+        posture = "REJECTED_INSUFFICIENT_JUSTIFICATION"
+    elif impact_tier == "HIGH_BASELINE_IMPACT":
+        posture = "CCB_FORMAL_BOARD_REVIEW"
+    elif impact_tier == "MODERATE_BASELINE_IMPACT":
+        posture = "PM_DELEGATED_APPROVAL_ELIGIBLE"
+    else:
+        posture = "FAST_TRACK_ADMINISTRATIVE"
+
+    return {
+        "clean_title": clean_title,
+        "clean_justification": clean_justification,
+        "cost_delta": cost_delta,
+        "schedule_delta_days": schedule_delta_days,
+        "has_baseline_impact": has_baseline_impact,
+        "is_valid": is_valid,
+        "impact_tier": impact_tier,
+        "posture": posture,
+    }
+

@@ -1227,3 +1227,94 @@ def test_evaluate_defect_containment_efficiency_zero_defects():
         "rework_verification_pct": 100.0,
         "quality_containment_status": "zero_defects_recorded",
     }
+
+
+# ─── 13. Evaluador de Profundidad de Verificación DoD (PMI PMBOK §8.2) ───
+
+
+def test_evaluate_dod_checklist_verification_depth_audit_ready():
+    """100% completado y >= 80% con evidencia verificable -> 'AUDIT_READY_DOD'."""
+    from backend.services.project_ccb_service import (
+        evaluate_dod_checklist_verification_depth,
+    )
+
+    items = [
+        {"title": "Tests unitarios", "completed": True, "evidence": "pytest 100% green"},
+        {"title": "Revisión de código", "checked": True, "verified_by": "qa-lead"},
+        {"title": "Manual técnico", "done": True, "artifact_url": "https://docs/manual"},
+        {"title": "Aprobación sponsor", "completed": True, "evidence": "Acta #12"},
+        {"title": "Checklist menor", "completed": True, "evidence": "   "},
+        "invalid_entry_ignored",  # type: ignore[list-item]
+    ]
+    res = evaluate_dod_checklist_verification_depth(items)
+    assert res == {
+        "total_items": 5,
+        "completed_items": 5,
+        "verified_with_evidence_items": 4,
+        "completion_pct": 100.0,
+        "evidence_coverage_pct": 80.0,
+        "posture": "AUDIT_READY_DOD",
+    }
+
+
+def test_evaluate_dod_checklist_verification_depth_completed_without_evidence():
+    """100% completado pero < 80% con evidencia -> 'COMPLETED_WITHOUT_EVIDENCE'."""
+    from backend.services.project_ccb_service import (
+        evaluate_dod_checklist_verification_depth,
+    )
+
+    items = [
+        {"title": "Criterio 1", "completed": True, "evidence": "PR #45"},
+        {"title": "Criterio 2", "completed": True},
+        {"title": "Criterio 3", "checked": True, "verified_by": ""},
+        {"title": "Criterio 4", "done": True},
+    ]
+    res = evaluate_dod_checklist_verification_depth(items)
+    assert res == {
+        "total_items": 4,
+        "completed_items": 4,
+        "verified_with_evidence_items": 1,
+        "completion_pct": 100.0,
+        "evidence_coverage_pct": 25.0,
+        "posture": "COMPLETED_WITHOUT_EVIDENCE",
+    }
+
+
+def test_evaluate_dod_checklist_verification_depth_incomplete():
+    """Menos del 100% de ítems completados -> 'INCOMPLETE_DOD'."""
+    from backend.services.project_ccb_service import (
+        evaluate_dod_checklist_verification_depth,
+    )
+
+    items = [
+        {"title": "Criterio 1", "completed": True, "evidence": "Evidencia A"},
+        {"title": "Criterio 2", "completed": False, "evidence": "Borrador"},
+    ]
+    res = evaluate_dod_checklist_verification_depth(items)
+    assert res == {
+        "total_items": 2,
+        "completed_items": 1,
+        "verified_with_evidence_items": 1,
+        "completion_pct": 50.0,
+        "evidence_coverage_pct": 100.0,
+        "posture": "INCOMPLETE_DOD",
+    }
+
+
+def test_evaluate_dod_checklist_verification_depth_no_dod_checklist():
+    """None, lista vacía o sin dicts válidos -> 'NO_DOD_CHECKLIST'."""
+    from backend.services.project_ccb_service import (
+        evaluate_dod_checklist_verification_depth,
+    )
+
+    for empty_val in (None, [], ["not-a-dict", 123]):  # type: ignore[list-item]
+        res = evaluate_dod_checklist_verification_depth(empty_val)
+        assert res == {
+            "total_items": 0,
+            "completed_items": 0,
+            "verified_with_evidence_items": 0,
+            "completion_pct": 0.0,
+            "evidence_coverage_pct": 0.0,
+            "posture": "NO_DOD_CHECKLIST",
+        }
+

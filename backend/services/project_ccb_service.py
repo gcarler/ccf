@@ -697,3 +697,60 @@ def evaluate_defect_containment_efficiency(
         "rework_verification_pct": rework_verification_pct,
         "quality_containment_status": quality_containment_status,
     }
+
+
+def evaluate_dod_checklist_verification_depth(
+    checklist_items: list[dict[str, Any]] | None,
+) -> dict[str, Any]:
+    """Evalúa la profundidad de verificación y evidencia de una lista de criterios DoD según PMI PMBOK §8.2 (Manage Quality)."""
+    valid_items = [
+        item for item in (checklist_items or []) if isinstance(item, dict)
+    ]
+    total_items = len(valid_items)
+    completed_items = 0
+    verified_with_evidence_items = 0
+
+    for item in valid_items:
+        is_completed = bool(
+            item.get("completed") or item.get("checked") or item.get("done")
+        )
+        if is_completed:
+            completed_items += 1
+            evidence_val = str(
+                item.get("evidence")
+                or item.get("verified_by")
+                or item.get("artifact_url")
+                or ""
+            ).strip()
+            if evidence_val:
+                verified_with_evidence_items += 1
+
+    completion_pct = (
+        round((completed_items / total_items) * 100.0, 2)
+        if total_items > 0
+        else 0.0
+    )
+    evidence_coverage_pct = (
+        round((verified_with_evidence_items / completed_items) * 100.0, 2)
+        if completed_items > 0
+        else 0.0
+    )
+
+    if total_items == 0:
+        posture = "NO_DOD_CHECKLIST"
+    elif completion_pct == 100.0 and evidence_coverage_pct >= 80.0:
+        posture = "AUDIT_READY_DOD"
+    elif completion_pct == 100.0 and evidence_coverage_pct < 80.0:
+        posture = "COMPLETED_WITHOUT_EVIDENCE"
+    else:
+        posture = "INCOMPLETE_DOD"
+
+    return {
+        "total_items": total_items,
+        "completed_items": completed_items,
+        "verified_with_evidence_items": verified_with_evidence_items,
+        "completion_pct": completion_pct,
+        "evidence_coverage_pct": evidence_coverage_pct,
+        "posture": posture,
+    }
+
