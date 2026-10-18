@@ -3997,3 +3997,144 @@ def test_audit_stakeholder_engagement_seam_drift_empty_and_service_staticmethod(
         == audit_stakeholder_engagement_seam_drift(sample)
     )
 
+
+def test_audit_communications_management_plan_matrix_healthy():
+    """Matriz de comunicaciones completa con métodos PMI (interactive, push, pull), protección confidencial y SLA -> healthy."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_communications_management_plan_matrix,
+    )
+
+    channels = [
+        {
+            "channel_id": "COMM-STEERING",
+            "target_audience": "Comité Directivo y Patrocinador",
+            "sender_owner": "Director de Proyecto",
+            "frequency": "biweekly",
+            "communication_method": "interactive",
+            "is_confidential_or_executive": True,
+            "encryption_or_access_control_enabled": True,
+            "escalation_time_frame_hours": 24,
+        },
+        {
+            "channel_id": "COMM-EVM-REPORT",
+            "target_audience": "PMO y Líderes de Cuenta de Control",
+            "sender_owner": "Analista EVM",
+            "frequency": "weekly",
+            "communication_method": "push",
+            "is_confidential_or_executive": False,
+            "escalation_time_frame_hours": 48.0,
+        },
+        {
+            "channel_id": "COMM-WIKI-PORTAL",
+            "target_audience": "Equipo de Proyecto Ampliado",
+            "sender_owner": "PMO Steward",
+            "frequency": "real_time",
+            "communication_method": "pull",
+            "is_confidential_or_executive": False,
+            "escalation_time_frame_hours": 72,
+        },
+    ]
+    res = audit_communications_management_plan_matrix(channels)
+    assert res == {
+        "total_channels": 3,
+        "missing_owner_or_audience_channel_ids": [],
+        "invalid_frequency_or_method_channel_ids": [],
+        "unsecured_confidential_channel_ids": [],
+        "missing_escalation_sla_channel_ids": [],
+        "is_communications_plan_compliant": True,
+        "status": "healthy",
+        "recommendations": [],
+    }
+
+
+def test_audit_communications_management_plan_matrix_critical_unsecured_or_unowned():
+    """Canal confidencial sin cifrado/control de acceso o canal sin dueño/audiencia -> critical."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_communications_management_plan_matrix,
+    )
+
+    channels = [
+        {
+            "channel_id": "COMM-EXEC-LEAK",
+            "target_audience": "Junta Directiva",
+            "sender_owner": "Sponsor",
+            "frequency": "monthly",
+            "communication_method": "push",
+            "is_confidential_or_executive": True,
+            "encryption_or_access_control_enabled": False,
+            "escalation_time_frame_hours": 12,
+        },
+        {
+            "channel_id": "COMM-NO-OWNER",
+            "target_audience": "   ",
+            "sender_owner": "",
+            "frequency": "weekly",
+            "communication_method": "interactive",
+            "escalation_time_frame_hours": 24,
+        },
+    ]
+    res = audit_communications_management_plan_matrix(channels)
+    assert res["total_channels"] == 2
+    assert res["unsecured_confidential_channel_ids"] == ["COMM-EXEC-LEAK"]
+    assert res["missing_owner_or_audience_channel_ids"] == ["COMM-NO-OWNER"]
+    assert res["is_communications_plan_compliant"] is False
+    assert res["status"] == "critical"
+    assert len(res["recommendations"]) == 2
+
+
+def test_audit_communications_management_plan_matrix_warning_invalid_method_or_missing_sla():
+    """Frecuencia/método fuera de catálogo PMI o falta de escalation_time_frame_hours -> warning."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_communications_management_plan_matrix,
+    )
+
+    channels = [
+        {
+            "channel_id": "COMM-BAD-METHOD",
+            "target_audience": "Proveedores",
+            "sender_owner": "Líder de Adquisiciones",
+            "frequency": "whenever_possible",
+            "communication_method": "telepathy",
+            "escalation_time_frame_hours": 0,
+        }
+    ]
+    res = audit_communications_management_plan_matrix(channels)
+    assert res["total_channels"] == 1
+    assert res["missing_owner_or_audience_channel_ids"] == []
+    assert res["unsecured_confidential_channel_ids"] == []
+    assert res["invalid_frequency_or_method_channel_ids"] == ["COMM-BAD-METHOD"]
+    assert res["missing_escalation_sla_channel_ids"] == ["COMM-BAD-METHOD"]
+    assert res["is_communications_plan_compliant"] is False
+    assert res["status"] == "warning"
+    assert len(res["recommendations"]) == 2
+
+
+def test_audit_communications_management_plan_matrix_empty_and_service_staticmethod():
+    """Entradas vacías/None e invocación vía ProjectLifecyclePMIService.audit_communications_management_plan_matrix."""
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_communications_management_plan_matrix,
+    )
+
+    for payload in (None, [], "invalid", [{"id": "  "}]):
+        res = audit_communications_management_plan_matrix(payload)  # type: ignore[arg-type]
+        assert res["total_channels"] == 0
+        assert res["is_communications_plan_compliant"] is True
+        assert res["status"] == "healthy"
+
+    sample = [
+        {
+            "id": "COMM-1",
+            "target_audience": "Stakeholders",
+            "sender_owner": "PM",
+            "frequency": "daily",
+            "communication_method": "interactive",
+            "escalation_time_frame_hours": 8,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_communications_management_plan_matrix(sample)
+        == audit_communications_management_plan_matrix(sample)
+    )
+
+

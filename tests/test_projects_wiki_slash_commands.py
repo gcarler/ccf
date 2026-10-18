@@ -3928,3 +3928,127 @@ def test_audit_wiki_opa_template_versioning_governance_empty_and_service_staticm
         == audit_wiki_opa_template_versioning_governance(sample)
     )
 
+
+
+def test_audit_wiki_rbs_coverage_complete():
+    """Categorias con riesgos, owner y triggers documentados -> coverage completa."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_risk_breakdown_structure_coverage,
+    )
+
+    categories = [
+        {
+            "category_code": "RBS-EXT",
+            "risks_identified_count": 4,
+            "has_assigned_risk_owner": True,
+            "has_trigger_conditions_documented": True,
+        },
+        {
+            "id": "RBS-TEC",
+            "risks_identified_count": 7,
+            "has_assigned_risk_owner": True,
+            "has_trigger_conditions_documented": True,
+        },
+        {
+            "category_code": "RBS-QTY",
+            "risks_identified_count": 2,
+            "has_assigned_risk_owner": True,
+            "has_trigger_conditions_documented": True,
+        },
+    ]
+    res = audit_wiki_risk_breakdown_structure_coverage(categories)
+    assert res == {
+        "total_evaluated": 3,
+        "blind_spot_category_ids": [],
+        "unowned_risk_category_ids": [],
+        "missing_trigger_category_ids": [],
+        "is_rbs_coverage_complete": True,
+    }
+
+
+def test_audit_wiki_rbs_coverage_blind_spots_and_unowned():
+    """Blind spot (riesgos < minimo) y categorias sin owner asignado."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_risk_breakdown_structure_coverage,
+    )
+
+    categories = [
+        {"category_code": "RBS-1"},  # 0 riesgos < 1 -> blind spot.
+        {"category_code": "RBS-2", "risks_identified_count": 2},  # sin owner.
+        {
+            "category_code": "RBS-3",
+            "risks_identified_count": 2,
+            "has_assigned_risk_owner": True,
+        },  # sin trigger.
+    ]
+    res = audit_wiki_risk_breakdown_structure_coverage(categories)
+    assert res["total_evaluated"] == 3
+    assert res["blind_spot_category_ids"] == ["RBS-1"]
+    assert res["unowned_risk_category_ids"] == ["RBS-2"]
+    assert res["missing_trigger_category_ids"] == ["RBS-2", "RBS-3"]
+    assert res["is_rbs_coverage_complete"] is False
+
+    # Umbral personalizado eleva el minimo de riesgos por categoria.
+    strict = audit_wiki_risk_breakdown_structure_coverage(categories, min_risks_per_category=4)
+    assert strict["blind_spot_category_ids"] == ["RBS-1", "RBS-2", "RBS-3"]
+
+
+def test_audit_wiki_rbs_coverage_not_applicable_excluded():
+    """is_applicable excluye de las 3 listas; coerción segura de contadores."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_risk_breakdown_structure_coverage,
+    )
+
+    categories = [
+        {"category_code": "RBS-NA", "is_applicable": False},
+        {"category_code": "RBS-OK", "risks_identified_count": 2,
+         "has_assigned_risk_owner": True, "has_trigger_conditions_documented": True},
+        # Coercion segura ante errores/None: tratado como 0 riesgos.
+        {"category_code": "RBS-BAD", "risks_identified_count": None},
+        {"category_code": "RBS-WOW", "risks_identified_count": "oops"},
+    ]
+    res = audit_wiki_risk_breakdown_structure_coverage(categories)
+    assert res["total_evaluated"] == 4
+    assert res["blind_spot_category_ids"] == ["RBS-BAD", "RBS-WOW"]
+    assert res["unowned_risk_category_ids"] == []
+    assert res["missing_trigger_category_ids"] == []
+    assert res["is_rbs_coverage_complete"] is False
+
+
+def test_audit_wiki_rbs_coverage_empty_and_service_proxy():
+    """Entradas vacias/None/invalidas + llamada via WikiPMIService (staticmethod + __all__)."""
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_risk_breakdown_structure_coverage,
+    )
+    import backend.services.wiki_pmi_service as _m
+
+    res_none = audit_wiki_risk_breakdown_structure_coverage(None)
+    assert res_none == {
+        "total_evaluated": 0,
+        "blind_spot_category_ids": [],
+        "unowned_risk_category_ids": [],
+        "missing_trigger_category_ids": [],
+        "is_rbs_coverage_complete": True,
+    }
+    assert audit_wiki_risk_breakdown_structure_coverage("not-a-sequence")["total_evaluated"] == 0
+    assert (
+        audit_wiki_risk_breakdown_structure_coverage(
+            ["not-a-mapping", {"category_code": "   "}, {"other_id": "x"}]
+        )["total_evaluated"]
+        == 0
+    )
+    assert "audit_wiki_risk_breakdown_structure_coverage" in _m.__all__
+
+    sample = [
+        {
+            "category_code": "RBS-1",
+            "risks_identified_count": 2,
+            "has_assigned_risk_owner": True,
+            "has_trigger_conditions_documented": True,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_risk_breakdown_structure_coverage(sample)
+        == audit_wiki_risk_breakdown_structure_coverage(sample)
+    )

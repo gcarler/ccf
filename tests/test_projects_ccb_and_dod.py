@@ -4380,3 +4380,157 @@ def test_evaluate_supplier_ncr_disposition_governance_empty_and_service_staticme
         == evaluate_supplier_ncr_disposition_governance(sample)
     )
 
+
+
+def test_audit_scope_creep_and_gold_plating_drift_controlled():
+    """Paquetes en baseline o con approved_cr_id válido -> is_scope_baseline_controlled."""
+    from backend.services.project_ccb_service import (
+        audit_scope_creep_and_gold_plating_drift,
+    )
+
+    packages = [
+        # En baseline aprobado, sin expansión de esfuerzo.
+        {
+            "wp_id": "W-1",
+            "in_approved_wbs_baseline": True,
+            "baseline_hours": 100.0,
+            "actual_or_forecast_hours": 100.0,
+        },
+        # Fuera de WBS pero respaldado por CR aprobado.
+        {
+            "wp_id": "W-2",
+            "in_approved_wbs_baseline": False,
+            "approved_cr_id": "CR-7",
+            "baseline_hours": 100.0,
+            "actual_or_forecast_hours": 200.0,
+        },
+        # Gold-plating respaldado por CR aprobado.
+        {
+            "wp_id": "W-3",
+            "in_approved_wbs_baseline": False,
+            "approved_cr_id": "CR-8",
+            "extra_features_added_count": 3,
+        },
+    ]
+    res = audit_scope_creep_and_gold_plating_drift(packages)
+    assert res == {
+        "total_evaluated": 3,
+        "unapproved_scope_addition_wp_ids": [],
+        "gold_plating_wp_ids": [],
+        "silent_effort_expansion_wp_ids": [],
+        "is_scope_baseline_controlled": True,
+    }
+
+
+def test_audit_scope_creep_and_gold_plating_drift_unapproved_additions():
+    """Adición fuera de WBS sin CR y gold-plating con features extra sin CR."""
+    from backend.services.project_ccb_service import (
+        audit_scope_creep_and_gold_plating_drift,
+    )
+
+    packages = [
+        {"wp_id": "A-1", "in_approved_wbs_baseline": False},
+        {"wp_id": "A-2", "in_approved_wbs_baseline": True, "extra_features_added_count": 2},
+        {"wp_id": "A-3", "in_approved_wbs_baseline": False, "extra_features_added_count": 1},
+    ]
+    res = audit_scope_creep_and_gold_plating_drift(packages)
+    assert res["total_evaluated"] == 3
+    assert res["unapproved_scope_addition_wp_ids"] == ["A-1", "A-3"]
+    assert res["gold_plating_wp_ids"] == ["A-2", "A-3"]
+    assert res["silent_effort_expansion_wp_ids"] == []
+    assert res["is_scope_baseline_controlled"] is False
+
+    # El mismo patrón con approved_cr_id en blanco tras strip sigue sin respaldo.
+    blank_cr = audit_scope_creep_and_gold_plating_drift(
+        [
+            {
+                "wp_id": "A-4",
+                "in_approved_wbs_baseline": False,
+                "approved_cr_id": "   ",
+                "extra_features_added_count": 2,
+            }
+        ]
+    )
+    assert blank_cr["unapproved_scope_addition_wp_ids"] == ["A-4"]
+    assert blank_cr["gold_plating_wp_ids"] == ["A-4"]
+
+
+def test_audit_scope_creep_and_gold_plating_drift_effort_expansion():
+    """Expansión silenciosa de esfuerzo sobre el umbral sin CR vs expansion respaldada."""
+    from backend.services.project_ccb_service import (
+        audit_scope_creep_and_gold_plating_drift,
+    )
+
+    packages = [
+        # drift 6.0% > 5.0 sin CR -> detectado.
+        {
+            "wp_id": "E-1",
+            "in_approved_wbs_baseline": True,
+            "baseline_hours": 100.0,
+            "actual_or_forecast_hours": 106.0,
+        },
+        # drift 5.0% == umbral -> no excede (comparación estricta).
+        {
+            "wp_id": "E-2",
+            "in_approved_wbs_baseline": True,
+            "baseline_hours": 100.0,
+            "actual_or_forecast_hours": 105.0,
+        },
+        # sobrecosto severo pero respaldado por CR aprobado -> no detectado.
+        {
+            "wp_id": "E-3",
+            "in_approved_wbs_baseline": True,
+            "baseline_hours": 100.0,
+            "actual_or_forecast_hours": 150.0,
+            "approved_cr_id": "CR-9",
+        },
+        # baseline 0 horas -> no evaluable -> no detectado.
+        {"wp_id": "E-4", "in_approved_wbs_baseline": True, "baseline_hours": 0.0},
+    ]
+    res = audit_scope_creep_and_gold_plating_drift(packages)
+    assert res["total_evaluated"] == 4
+    assert res["silent_effort_expansion_wp_ids"] == ["E-1"]
+    assert res["is_scope_baseline_controlled"] is False
+
+    # Umbral personalizado más estricto.
+    strict = audit_scope_creep_and_gold_plating_drift(packages, max_unapproved_effort_drift_pct=3.0)
+    assert strict["silent_effort_expansion_wp_ids"] == ["E-1", "E-2"]
+
+
+def test_audit_scope_creep_and_gold_plating_drift_empty_and_service_proxy():
+    """Entradas vacías/None + llamada vía ProjectCCBService.audit_scope_creep_and_gold_plating_drift."""
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_scope_creep_and_gold_plating_drift,
+    )
+    import backend.services.project_ccb_service as _m
+
+    res_none = audit_scope_creep_and_gold_plating_drift(None)
+    assert res_none == {
+        "total_evaluated": 0,
+        "unapproved_scope_addition_wp_ids": [],
+        "gold_plating_wp_ids": [],
+        "silent_effort_expansion_wp_ids": [],
+        "is_scope_baseline_controlled": True,
+    }
+    assert audit_scope_creep_and_gold_plating_drift([])["total_evaluated"] == 0
+    assert (
+        audit_scope_creep_and_gold_plating_drift(
+            ["not-a-mapping", {"wp_id": "   "}, {"other_id": "x"}]
+        )["total_evaluated"]
+        == 0
+    )
+    assert "audit_scope_creep_and_gold_plating_drift" in _m.__all__
+
+    sample = [
+        {
+            "wp_id": "W-1",
+            "in_approved_wbs_baseline": True,
+            "baseline_hours": 100.0,
+            "actual_or_forecast_hours": 100.0,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_scope_creep_and_gold_plating_drift(sample)
+        == audit_scope_creep_and_gold_plating_drift(sample)
+    )

@@ -2489,6 +2489,7 @@ __all__ = [
     "audit_wiki_adr_lifecycle_traceability",
     "audit_wiki_raci_matrix_governance",
     "audit_wiki_adr_governance_hygiene",
+    "audit_wiki_risk_breakdown_structure_coverage",
     "audit_wiki_postmortem_root_cause_governance",
     "audit_wiki_benefits_realization_governance",
     "audit_wiki_raid_log_traceability_governance",
@@ -3224,3 +3225,78 @@ WikiPMIService.audit_wiki_opa_template_versioning_governance = staticmethod(
     audit_wiki_opa_template_versioning_governance
 )
 
+
+
+def audit_wiki_risk_breakdown_structure_coverage(
+    rbs_categories: object,
+    *,
+    min_risks_per_category: int = 1,
+) -> dict[str, object]:
+    """Audita cobertura de categorías de la Risk Breakdown Structure (RBS), dueños de riesgo y condiciones disparadoras documentadas en wikis según PMI PMBOK §11.1 y §11.2."""
+    total_evaluated = 0
+    blind_spot_category_ids: list[str] = []
+    unowned_risk_category_ids: list[str] = []
+    missing_trigger_category_ids: list[str] = []
+
+    min_risks = int(min_risks_per_category)
+    categories: Sequence[Any] = (
+        rbs_categories
+        if isinstance(rbs_categories, Sequence)
+        and not isinstance(rbs_categories, (str, bytes, bytearray, Mapping))
+        else []
+    )
+
+    for item in categories:
+        if not isinstance(item, Mapping):
+            continue
+        cat_id = str(item.get("category_code") or item.get("id") or "").strip()
+        if not cat_id:
+            continue
+
+        total_evaluated += 1
+
+        is_applicable = bool(item.get("is_applicable", True))
+        try:
+            risks_identified_count = int(item.get("risks_identified_count", 0) or 0)
+        except (TypeError, ValueError):
+            risks_identified_count = 0
+        has_assigned_risk_owner = bool(item.get("has_assigned_risk_owner", False))
+        has_trigger_conditions_documented = bool(
+            item.get("has_trigger_conditions_documented", False)
+        )
+
+        if is_applicable and risks_identified_count < min_risks:
+            blind_spot_category_ids.append(cat_id)
+
+        if (
+            is_applicable
+            and risks_identified_count > 0
+            and not has_assigned_risk_owner
+        ):
+            unowned_risk_category_ids.append(cat_id)
+
+        if (
+            is_applicable
+            and risks_identified_count > 0
+            and not has_trigger_conditions_documented
+        ):
+            missing_trigger_category_ids.append(cat_id)
+
+    is_rbs_coverage_complete = bool(
+        len(blind_spot_category_ids) == 0
+        and len(unowned_risk_category_ids) == 0
+        and len(missing_trigger_category_ids) == 0
+    )
+
+    return {
+        "total_evaluated": total_evaluated,
+        "blind_spot_category_ids": blind_spot_category_ids,
+        "unowned_risk_category_ids": unowned_risk_category_ids,
+        "missing_trigger_category_ids": missing_trigger_category_ids,
+        "is_rbs_coverage_complete": is_rbs_coverage_complete,
+    }
+
+
+WikiPMIService.audit_wiki_risk_breakdown_structure_coverage = staticmethod(
+    audit_wiki_risk_breakdown_structure_coverage
+)

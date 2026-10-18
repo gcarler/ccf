@@ -5489,6 +5489,7 @@ __all__ = [
     "evaluate_evm_critical_path_drag_decoupling",
     "evaluate_evm_undistributed_budget_and_planning_packages",
     "evaluate_evm_reserve_burn_vs_risk_exposure",
+    "evaluate_evm_loe_masking_and_variance_distortion",
     "ProjectEVMService",
 ]
 
@@ -5951,3 +5952,85 @@ ProjectEVMService.evaluate_evm_reserve_burn_vs_risk_exposure = staticmethod(
     evaluate_evm_reserve_burn_vs_risk_exposure
 )
 
+
+def evaluate_evm_loe_masking_and_variance_distortion(
+    control_accounts: object,
+    *,
+    max_loe_share_pct: float = 15.0,
+) -> dict[str, object]:
+    """Evalúa distorsión de varianzas y enmascaramiento de atrasos por Nivel de Esfuerzo (Level-of-Effort - LOE) en Cuentas de Control según PMI PMBOK §7.4 y ANSI/EIA-748."""
+    total_evaluated = 0
+    excessive_loe_share_ca_ids: list[str] = []
+    loe_schedule_variance_violation_ca_ids: list[str] = []
+    loe_masked_delay_ca_ids: list[str] = []
+
+    if isinstance(control_accounts, Sequence) and not isinstance(
+        control_accounts, (str, bytes, bytearray)
+    ):
+        for item in control_accounts:
+            if not isinstance(item, Mapping):
+                continue
+            ca_id = str(item.get("ca_id") or item.get("id") or "").strip()
+            if not ca_id:
+                continue
+
+            total_evaluated += 1
+            try:
+                total_bac = float(item.get("total_bac", 0.0) or 0.0)
+            except (TypeError, ValueError):
+                total_bac = 0.0
+
+            try:
+                loe_bac = float(item.get("loe_bac", 0.0) or 0.0)
+            except (TypeError, ValueError):
+                loe_bac = 0.0
+
+            try:
+                loe_ev = float(item.get("loe_ev", 0.0) or 0.0)
+            except (TypeError, ValueError):
+                loe_ev = 0.0
+
+            try:
+                loe_pv = float(item.get("loe_pv", 0.0) or 0.0)
+            except (TypeError, ValueError):
+                loe_pv = 0.0
+
+            try:
+                discrete_sv = float(item.get("discrete_sv", 0.0) or 0.0)
+            except (TypeError, ValueError):
+                discrete_sv = 0.0
+
+            try:
+                reported_total_sv = float(
+                    item.get("reported_total_sv", 0.0) or 0.0
+                )
+            except (TypeError, ValueError):
+                reported_total_sv = 0.0
+
+            if total_bac > 0.0 and ((loe_bac / total_bac) * 100.0) > float(
+                max_loe_share_pct
+            ):
+                excessive_loe_share_ca_ids.append(ca_id)
+
+            if abs(loe_ev - loe_pv) > 0.01:
+                loe_schedule_variance_violation_ca_ids.append(ca_id)
+
+            if discrete_sv < 0.0 and reported_total_sv >= 0.0:
+                loe_masked_delay_ca_ids.append(ca_id)
+
+    return {
+        "total_evaluated": total_evaluated,
+        "excessive_loe_share_ca_ids": excessive_loe_share_ca_ids,
+        "loe_schedule_variance_violation_ca_ids": loe_schedule_variance_violation_ca_ids,
+        "loe_masked_delay_ca_ids": loe_masked_delay_ca_ids,
+        "is_loe_accounting_compliant": (
+            len(excessive_loe_share_ca_ids) == 0
+            and len(loe_schedule_variance_violation_ca_ids) == 0
+            and len(loe_masked_delay_ca_ids) == 0
+        ),
+    }
+
+
+ProjectEVMService.evaluate_evm_loe_masking_and_variance_distortion = staticmethod(
+    evaluate_evm_loe_masking_and_variance_distortion
+)

@@ -4034,3 +4034,125 @@ def test_evaluate_evm_reserve_burn_vs_risk_exposure_value_errors_and_staticmetho
         == evaluate_evm_reserve_burn_vs_risk_exposure(10000.0, 10000.0, 0.0, 10.0)
     )
 
+
+def test_evaluate_evm_loe_masking_and_variance_distortion_compliant():
+    """Cuentas de control con proporción LOE <= 15%, EV_LOE == PV_LOE y sin enmascaramiento -> compliant True."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_loe_masking_and_variance_distortion,
+    )
+
+    accounts = [
+        {
+            "ca_id": "CA-01",
+            "total_bac": 100000.0,
+            "loe_bac": 10000.0,
+            "loe_ev": 5000.0,
+            "loe_pv": 5000.0,
+            "discrete_sv": -2000.0,
+            "reported_total_sv": -2000.0,
+        },
+        {
+            "id": "CA-02",
+            "total_bac": 50000.0,
+            "loe_bac": 5000.0,
+            "loe_ev": 2500.0,
+            "loe_pv": 2500.0,
+            "discrete_sv": 1000.0,
+            "reported_total_sv": 1000.0,
+        },
+    ]
+    res = evaluate_evm_loe_masking_and_variance_distortion(accounts)
+    assert res == {
+        "total_evaluated": 2,
+        "excessive_loe_share_ca_ids": [],
+        "loe_schedule_variance_violation_ca_ids": [],
+        "loe_masked_delay_ca_ids": [],
+        "is_loe_accounting_compliant": True,
+    }
+    assert (
+        ProjectEVMService.evaluate_evm_loe_masking_and_variance_distortion(
+            accounts
+        )
+        == res
+    )
+
+
+def test_evaluate_evm_loe_masking_and_variance_distortion_excessive_share_and_sv_violation():
+    """Detecta exceso de proporción LOE (> max_loe_share_pct) y violación contable EV_LOE != PV_LOE."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_loe_masking_and_variance_distortion,
+    )
+
+    accounts = [
+        {
+            "ca_id": "CA-HIGH-LOE",
+            "total_bac": 100000.0,
+            "loe_bac": 25000.0,
+            "loe_ev": 10000.0,
+            "loe_pv": 10000.0,
+            "discrete_sv": 0.0,
+            "reported_total_sv": 0.0,
+        },
+        {
+            "ca_id": "CA-BAD-SV",
+            "total_bac": 100000.0,
+            "loe_bac": 10000.0,
+            "loe_ev": 6500.0,
+            "loe_pv": 5000.0,
+            "discrete_sv": 0.0,
+            "reported_total_sv": 1500.0,
+        },
+    ]
+    res = evaluate_evm_loe_masking_and_variance_distortion(
+        accounts, max_loe_share_pct=15.0
+    )
+    assert res["total_evaluated"] == 2
+    assert res["excessive_loe_share_ca_ids"] == ["CA-HIGH-LOE"]
+    assert res["loe_schedule_variance_violation_ca_ids"] == ["CA-BAD-SV"]
+    assert res["loe_masked_delay_ca_ids"] == []
+    assert res["is_loe_accounting_compliant"] is False
+
+
+def test_evaluate_evm_loe_masking_and_variance_distortion_masked_delay():
+    """Detecta atraso en trabajo discreto (discrete_sv < 0) ocultado por reported_total_sv >= 0."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_loe_masking_and_variance_distortion,
+    )
+
+    accounts = [
+        {
+            "ca_id": "CA-MASKED",
+            "total_bac": 100000.0,
+            "loe_bac": 12000.0,
+            "loe_ev": 6000.0,
+            "loe_pv": 6000.0,
+            "discrete_sv": -3500.0,
+            "reported_total_sv": 200.0,
+        }
+    ]
+    res = evaluate_evm_loe_masking_and_variance_distortion(accounts)
+    assert res["total_evaluated"] == 1
+    assert res["excessive_loe_share_ca_ids"] == []
+    assert res["loe_schedule_variance_violation_ca_ids"] == []
+    assert res["loe_masked_delay_ca_ids"] == ["CA-MASKED"]
+    assert res["is_loe_accounting_compliant"] is False
+
+
+def test_evaluate_evm_loe_masking_and_variance_distortion_invalid_inputs_and_export():
+    """Ignora entradas no secuencia o sin ca_id válido y verifica exportación en __all__."""
+    import backend.services.project_evm_service as _m
+    from backend.services.project_evm_service import (
+        evaluate_evm_loe_masking_and_variance_distortion,
+    )
+
+    assert "evaluate_evm_loe_masking_and_variance_distortion" in _m.__all__
+    for bad in (None, "not-a-seq", b"bytes", bytearray(b"xyz"), [{"ca_id": "  "}, 42]):
+        res = evaluate_evm_loe_masking_and_variance_distortion(bad)
+        assert res == {
+            "total_evaluated": 0,
+            "excessive_loe_share_ca_ids": [],
+            "loe_schedule_variance_violation_ca_ids": [],
+            "loe_masked_delay_ca_ids": [],
+            "is_loe_accounting_compliant": True,
+        }

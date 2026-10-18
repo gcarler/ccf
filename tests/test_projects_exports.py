@@ -4605,3 +4605,131 @@ def test_audit_executive_report_change_readiness_and_adoption_empty_and_service_
     import backend.services.project_export_service as _m
 
     assert "audit_executive_report_change_readiness_and_adoption" in _m.__all__
+
+
+def test_audit_executive_report_contract_closeout_and_claims_compliant():
+    """Contratos cerrados con entregables aceptados, paz y salvo firmado, sin reclamos y garantía con SLA -> compliant True."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_contract_closeout_and_claims,
+    )
+
+    contracts = [
+        {
+            "contract_id": "CNT-101",
+            "status": "closed",
+            "open_claims_or_disputes_count": 0,
+            "final_deliverables_accepted": True,
+            "lien_waiver_or_release_signed": True,
+            "warranty_period_months": 12,
+            "warranty_sla_documented": True,
+        },
+        {
+            "id": "CNT-102",
+            "status": "active",
+            "open_claims_or_disputes_count": 0,
+            "final_deliverables_accepted": False,
+            "lien_waiver_or_release_signed": False,
+            "warranty_period_months": 0,
+            "warranty_sla_documented": False,
+        },
+    ]
+    res = audit_executive_report_contract_closeout_and_claims(contracts)
+    assert res == {
+        "total_evaluated": 2,
+        "unresolved_claim_contract_ids": [],
+        "premature_closeout_contract_ids": [],
+        "missing_warranty_sla_contract_ids": [],
+        "is_contract_closeout_compliant": True,
+    }
+    assert (
+        ProjectExportService.audit_executive_report_contract_closeout_and_claims(
+            contracts
+        )
+        == res
+    )
+
+
+def test_audit_executive_report_contract_closeout_and_claims_unresolved_and_premature():
+    """Detecta reclamos abiertos y cierre prematuro sin aceptación de entregables o paz y salvo."""
+    from backend.services.project_export_service import (
+        audit_executive_report_contract_closeout_and_claims,
+    )
+
+    contracts = [
+        {
+            "contract_id": "CNT-CLAIM-CLOSED",
+            "status": "completed",
+            "open_claims_or_disputes_count": 2,
+            "final_deliverables_accepted": True,
+            "lien_waiver_or_release_signed": True,
+        },
+        {
+            "contract_id": "CNT-NO-WAIVER",
+            "status": "closed",
+            "open_claims_or_disputes_count": 0,
+            "final_deliverables_accepted": True,
+            "lien_waiver_or_release_signed": False,
+        },
+        {
+            "contract_id": "CNT-NO-DELIV",
+            "status": "terminated",
+            "open_claims_or_disputes_count": 0,
+            "final_deliverables_accepted": False,
+            "lien_waiver_or_release_signed": True,
+        },
+    ]
+    res = audit_executive_report_contract_closeout_and_claims(contracts)
+    assert res["total_evaluated"] == 3
+    assert res["unresolved_claim_contract_ids"] == ["CNT-CLAIM-CLOSED"]
+    assert res["premature_closeout_contract_ids"] == [
+        "CNT-CLAIM-CLOSED",
+        "CNT-NO-WAIVER",
+        "CNT-NO-DELIV",
+    ]
+    assert res["missing_warranty_sla_contract_ids"] == []
+    assert res["is_contract_closeout_compliant"] is False
+
+
+def test_audit_executive_report_contract_closeout_and_claims_missing_warranty_sla():
+    """Garantía > 0 meses sin SLA documentado agrega a missing_warranty_sla_contract_ids."""
+    from backend.services.project_export_service import (
+        audit_executive_report_contract_closeout_and_claims,
+    )
+
+    contracts = [
+        {
+            "contract_id": "CNT-WARR-NO-SLA",
+            "status": "closed",
+            "open_claims_or_disputes_count": 0,
+            "final_deliverables_accepted": True,
+            "lien_waiver_or_release_signed": True,
+            "warranty_period_months": 24,
+            "warranty_sla_documented": False,
+        }
+    ]
+    res = audit_executive_report_contract_closeout_and_claims(contracts)
+    assert res["total_evaluated"] == 1
+    assert res["unresolved_claim_contract_ids"] == []
+    assert res["premature_closeout_contract_ids"] == []
+    assert res["missing_warranty_sla_contract_ids"] == ["CNT-WARR-NO-SLA"]
+    assert res["is_contract_closeout_compliant"] is False
+
+
+def test_audit_executive_report_contract_closeout_and_claims_invalid_inputs_and_export():
+    """Ignora entradas no válidas (None, str, bytes, dict sin id) y verifica exportación en __all__."""
+    import backend.services.project_export_service as _m
+    from backend.services.project_export_service import (
+        audit_executive_report_contract_closeout_and_claims,
+    )
+
+    assert "audit_executive_report_contract_closeout_and_claims" in _m.__all__
+    for bad in (None, "not-a-seq", b"bytes", bytearray(b"abc"), [{"contract_id": "   "}, 123]):
+        res = audit_executive_report_contract_closeout_and_claims(bad)
+        assert res == {
+            "total_evaluated": 0,
+            "unresolved_claim_contract_ids": [],
+            "premature_closeout_contract_ids": [],
+            "missing_warranty_sla_contract_ids": [],
+            "is_contract_closeout_compliant": True,
+        }

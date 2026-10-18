@@ -3223,3 +3223,94 @@ def test_validate_cpif_cost_sharing_and_fee_bounds_value_errors():
     for args in bad_calls:
         with pytest.raises(ValueError):
             validate_cpif_cost_sharing_and_fee_bounds(*args)
+
+
+def test_validate_three_point_pert_skew_and_confidence_band_reliable():
+    """Estimación de tres valores balanceada con bajo coeficiente de variación -> is_estimate_reliable=True."""
+    from backend.schemas.projects import (
+        validate_three_point_pert_skew_and_confidence_band,
+    )
+
+    res = validate_three_point_pert_skew_and_confidence_band(
+        optimistic=8.0,
+        most_likely=10.0,
+        pessimistic=14.0,
+        max_cv_pct=25.0,
+    )
+    assert res == {
+        "pert_expected": 10.33,
+        "triangular_expected": 10.67,
+        "standard_deviation": 1.0,
+        "variance": 1.0,
+        "coefficient_of_variation_pct": 9.68,
+        "confidence_68_band": (9.33, 11.33),
+        "confidence_95_band": (8.33, 12.33),
+        "excessive_uncertainty_detected": False,
+        "severe_right_skew_detected": False,
+        "is_estimate_reliable": True,
+    }
+
+
+def test_validate_three_point_pert_skew_and_confidence_band_excessive_uncertainty():
+    """Coeficiente de variación superior a max_cv_pct dispara excessive_uncertainty_detected=True."""
+    from backend.schemas.projects import (
+        validate_three_point_pert_skew_and_confidence_band,
+    )
+
+    res = validate_three_point_pert_skew_and_confidence_band(
+        optimistic=10.0,
+        most_likely=40.0,
+        pessimistic=70.0,
+        max_cv_pct=20.0,
+    )
+    assert res["pert_expected"] == 40.0
+    assert res["triangular_expected"] == 40.0
+    assert res["standard_deviation"] == 10.0
+    assert res["variance"] == 100.0
+    assert res["coefficient_of_variation_pct"] == 25.0
+    assert res["excessive_uncertainty_detected"] is True
+    assert res["severe_right_skew_detected"] is False
+    assert res["is_estimate_reliable"] is False
+
+
+def test_validate_three_point_pert_skew_and_confidence_band_severe_right_skew():
+    """Cola derecha desproporcionada (> 2.5x del margen izquierdo) dispara severe_right_skew_detected=True."""
+    from backend.schemas.projects import (
+        validate_three_point_pert_skew_and_confidence_band,
+    )
+
+    res = validate_three_point_pert_skew_and_confidence_band(
+        optimistic=18.0,
+        most_likely=20.0,
+        pessimistic=30.0,
+        max_cv_pct=25.0,
+    )
+    assert res["pert_expected"] == 21.33
+    assert res["standard_deviation"] == 2.0
+    assert res["coefficient_of_variation_pct"] == 9.38
+    assert res["excessive_uncertainty_detected"] is False
+    assert res["severe_right_skew_detected"] is True
+    assert res["is_estimate_reliable"] is False
+
+
+def test_validate_three_point_pert_skew_and_confidence_band_value_errors():
+    """Rechaza orden inválido (O > M o M > P), valores <= 0, bool o NaN con ValueError."""
+    from backend.schemas.projects import (
+        validate_three_point_pert_skew_and_confidence_band,
+    )
+
+    bad_calls = [
+        (0.0, 5.0, 10.0),
+        (-2.0, 5.0, 10.0),
+        (12.0, 10.0, 15.0),
+        (8.0, 16.0, 14.0),
+        (8.0, 10.0, 12.0, 0.0),
+        (8.0, 10.0, 12.0, -5.0),
+        (True, 10.0, 12.0),
+        (8.0, float("nan"), 12.0),
+        (8.0, 10.0, float("inf")),
+    ]
+    for args in bad_calls:
+        with pytest.raises(ValueError):
+            validate_three_point_pert_skew_and_confidence_band(*args)  # type: ignore[arg-type]
+

@@ -2970,6 +2970,7 @@ __all__ = [
     "audit_executive_report_benefits_handover_kpis",
     "audit_executive_report_resource_spof_and_overallocation",
     "audit_executive_report_change_readiness_and_adoption",
+    "audit_executive_report_contract_closeout_and_claims",
     "ProjectExportService",
 ]
 
@@ -3595,4 +3596,82 @@ def audit_executive_report_change_readiness_and_adoption(
 
 ProjectExportService.audit_executive_report_change_readiness_and_adoption = staticmethod(
     audit_executive_report_change_readiness_and_adoption
+)
+
+
+def audit_executive_report_contract_closeout_and_claims(
+    contracts: object,
+) -> dict[str, object]:
+    """Audita cierre administrativo de contratos, liquidación de reclamos/disputas y SLA de garantías según PMI PMBOK §12.3 y §4.7."""
+    total_evaluated = 0
+    unresolved_claim_contract_ids: list[str] = []
+    premature_closeout_contract_ids: list[str] = []
+    missing_warranty_sla_contract_ids: list[str] = []
+
+    if isinstance(contracts, Sequence) and not isinstance(
+        contracts, (str, bytes, bytearray)
+    ):
+        for item in contracts:
+            if not isinstance(item, Mapping):
+                continue
+            contract_id = str(
+                item.get("contract_id") or item.get("id") or ""
+            ).strip()
+            if not contract_id:
+                continue
+
+            total_evaluated += 1
+            status = str(item.get("status") or "").strip().lower()
+            try:
+                open_claims_or_disputes_count = int(
+                    item.get("open_claims_or_disputes_count", 0) or 0
+                )
+            except (TypeError, ValueError):
+                open_claims_or_disputes_count = 0
+
+            final_deliverables_accepted = bool(
+                item.get("final_deliverables_accepted", False)
+            )
+            lien_waiver_or_release_signed = bool(
+                item.get("lien_waiver_or_release_signed", False)
+            )
+            try:
+                warranty_period_months = int(
+                    item.get("warranty_period_months", 0) or 0
+                )
+            except (TypeError, ValueError):
+                warranty_period_months = 0
+
+            warranty_sla_documented = bool(
+                item.get("warranty_sla_documented", False)
+            )
+
+            if open_claims_or_disputes_count > 0:
+                unresolved_claim_contract_ids.append(contract_id)
+
+            if status in {"closed", "completed", "terminated"} and (
+                not final_deliverables_accepted
+                or not lien_waiver_or_release_signed
+                or open_claims_or_disputes_count > 0
+            ):
+                premature_closeout_contract_ids.append(contract_id)
+
+            if warranty_period_months > 0 and not warranty_sla_documented:
+                missing_warranty_sla_contract_ids.append(contract_id)
+
+    return {
+        "total_evaluated": total_evaluated,
+        "unresolved_claim_contract_ids": unresolved_claim_contract_ids,
+        "premature_closeout_contract_ids": premature_closeout_contract_ids,
+        "missing_warranty_sla_contract_ids": missing_warranty_sla_contract_ids,
+        "is_contract_closeout_compliant": (
+            len(unresolved_claim_contract_ids) == 0
+            and len(premature_closeout_contract_ids) == 0
+            and len(missing_warranty_sla_contract_ids) == 0
+        ),
+    }
+
+
+ProjectExportService.audit_executive_report_contract_closeout_and_claims = staticmethod(
+    audit_executive_report_contract_closeout_and_claims
 )

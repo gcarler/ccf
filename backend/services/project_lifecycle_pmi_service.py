@@ -3135,6 +3135,7 @@ __all__ = [
     "audit_team_conflict_resolution_governance",
     "audit_stage_gate_phase_transition_governance",
     "audit_stakeholder_engagement_seam_drift",
+    "audit_communications_management_plan_matrix",
     "ProjectLifecyclePMIService",
 ]
 
@@ -3616,3 +3617,124 @@ ProjectLifecyclePMIService.audit_stakeholder_engagement_seam_drift = staticmetho
     audit_stakeholder_engagement_seam_drift
 )
 
+
+def audit_communications_management_plan_matrix(
+    channels: Sequence[Mapping[str, Any]] | None,
+) -> dict[str, Any]:
+    """Audit PMI PMBOK §10.1 & §10.2 Project Communications Management Plan matrix."""
+    total_channels = 0
+    missing_owner_or_audience_channel_ids: list[str] = []
+    invalid_frequency_or_method_channel_ids: list[str] = []
+    unsecured_confidential_channel_ids: list[str] = []
+    missing_escalation_sla_channel_ids: list[str] = []
+    recommendations: list[str] = []
+
+    valid_frequencies = {
+        "daily",
+        "weekly",
+        "biweekly",
+        "monthly",
+        "milestone",
+        "ad_hoc",
+        "real_time",
+    }
+    valid_methods = {"interactive", "push", "pull"}
+
+    for item in channels or ():
+        if not isinstance(item, Mapping):
+            continue
+        raw_id = item.get("channel_id")
+        if raw_id is None or (isinstance(raw_id, str) and not raw_id.strip()):
+            raw_id = item.get("id")
+        if raw_id is None:
+            continue
+        channel_id = str(raw_id).strip()
+        if not channel_id:
+            continue
+
+        total_channels += 1
+
+        raw_audience = item.get("target_audience")
+        raw_owner = item.get("sender_owner")
+        has_valid_audience = isinstance(raw_audience, str) and bool(raw_audience.strip())
+        has_valid_owner = isinstance(raw_owner, str) and bool(raw_owner.strip())
+        if not has_valid_audience or not has_valid_owner:
+            missing_owner_or_audience_channel_ids.append(channel_id)
+
+        frequency = str(item.get("frequency") or "").strip().lower()
+        communication_method = str(item.get("communication_method") or "").strip().lower()
+        if frequency not in valid_frequencies or communication_method not in valid_methods:
+            invalid_frequency_or_method_channel_ids.append(channel_id)
+
+        is_confidential = bool(item.get("is_confidential_or_executive") is True)
+        is_secured = bool(item.get("encryption_or_access_control_enabled") is True)
+        if is_confidential and not is_secured:
+            unsecured_confidential_channel_ids.append(channel_id)
+
+        raw_sla = item.get("escalation_time_frame_hours")
+        is_valid_sla = (
+            isinstance(raw_sla, (int, float))
+            and not isinstance(raw_sla, bool)
+            and raw_sla == raw_sla
+            and abs(float(raw_sla)) != float("inf")
+            and float(raw_sla) > 0.0
+        )
+        if not is_valid_sla:
+            missing_escalation_sla_channel_ids.append(channel_id)
+
+    if unsecured_confidential_channel_ids:
+        recommendations.append(
+            "Habilitar cifrado o control de acceso estricto (PMBOK §10.1) en canales confidenciales/ejecutivos: "
+            + ", ".join(unsecured_confidential_channel_ids)
+        )
+    if missing_owner_or_audience_channel_ids:
+        recommendations.append(
+            "Asignar responsable emisor (sender_owner) y audiencia objetivo (target_audience) en canales: "
+            + ", ".join(missing_owner_or_audience_channel_ids)
+        )
+    if invalid_frequency_or_method_channel_ids:
+        recommendations.append(
+            "Normalizar frecuencia y método de comunicación (interactive/push/pull) en canales: "
+            + ", ".join(invalid_frequency_or_method_channel_ids)
+        )
+    if missing_escalation_sla_channel_ids:
+        recommendations.append(
+            "Definir SLA de escalamiento (escalation_time_frame_hours > 0) en canales: "
+            + ", ".join(missing_escalation_sla_channel_ids)
+        )
+
+    is_communications_plan_compliant = bool(
+        len(missing_owner_or_audience_channel_ids) == 0
+        and len(invalid_frequency_or_method_channel_ids) == 0
+        and len(unsecured_confidential_channel_ids) == 0
+        and len(missing_escalation_sla_channel_ids) == 0
+    )
+
+    if (
+        len(unsecured_confidential_channel_ids) > 0
+        or len(missing_owner_or_audience_channel_ids) > 0
+    ):
+        status = "critical"
+    elif (
+        len(invalid_frequency_or_method_channel_ids) > 0
+        or len(missing_escalation_sla_channel_ids) > 0
+    ):
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_channels": total_channels,
+        "missing_owner_or_audience_channel_ids": missing_owner_or_audience_channel_ids,
+        "invalid_frequency_or_method_channel_ids": invalid_frequency_or_method_channel_ids,
+        "unsecured_confidential_channel_ids": unsecured_confidential_channel_ids,
+        "missing_escalation_sla_channel_ids": missing_escalation_sla_channel_ids,
+        "is_communications_plan_compliant": is_communications_plan_compliant,
+        "status": status,
+        "recommendations": recommendations,
+    }
+
+
+ProjectLifecyclePMIService.audit_communications_management_plan_matrix = staticmethod(
+    audit_communications_management_plan_matrix
+)

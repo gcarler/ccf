@@ -3776,8 +3776,10 @@ __all__ = [
     "validate_rolling_wave_planning_horizon",
     "validate_resource_smoothing_float_boundaries",
     "validate_sprint_velocity_commitment_stability",
-    "validate_fpif_point_of_total_assumption",    "validate_cpif_cost_sharing_and_fee_bounds",
-
+    "validate_fpif_point_of_total_assumption",
+    "validate_cpif_cost_sharing_and_fee_bounds",
+    "validate_schedule_network_lead_lag_and_float_feasibility",
+    "validate_three_point_pert_skew_and_confidence_band",
 ]
 
 
@@ -4758,3 +4760,73 @@ def validate_schedule_network_lead_lag_and_float_feasibility(
         "status": status,
         "recommendations": recommendations,
     }
+
+
+def validate_three_point_pert_skew_and_confidence_band(
+    optimistic: float,
+    most_likely: float,
+    pessimistic: float,
+    max_cv_pct: float = 25.0,
+) -> dict[str, Any]:
+    """Valida estimaciones de Tres Valores (Beta PERT y Triangular), bandas de confianza y asimetría de cola según PMI PMBOK §6.4.2.4 y §7.2.2.4."""
+    numeric_inputs = {
+        "optimistic": optimistic,
+        "most_likely": most_likely,
+        "pessimistic": pessimistic,
+        "max_cv_pct": max_cv_pct,
+    }
+    for name, value in numeric_inputs.items():
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not (value == value)
+            or abs(float(value)) == float("inf")
+        ):
+            raise ValueError(f"PERT 3-Point: {name} debe ser numérico real, no bool/NaN/Inf")
+
+    opt = float(optimistic)
+    ml = float(most_likely)
+    pess = float(pessimistic)
+    max_cv = float(max_cv_pct)
+
+    if opt <= 0.0:
+        raise ValueError("PERT 3-Point: optimistic debe ser > 0")
+    if not (opt <= ml <= pess):
+        raise ValueError("PERT 3-Point: debe cumplirse optimistic <= most_likely <= pessimistic")
+    if max_cv <= 0.0:
+        raise ValueError("PERT 3-Point: max_cv_pct debe ser > 0")
+
+    pert_expected = round((opt + 4.0 * ml + pess) / 6.0, 2)
+    triangular_expected = round((opt + ml + pess) / 3.0, 2)
+    standard_deviation = round((pess - opt) / 6.0, 4)
+    variance = round(standard_deviation ** 2, 4)
+    coefficient_of_variation_pct = round((standard_deviation / pert_expected) * 100.0, 2)
+    confidence_68_band = (
+        round(pert_expected - standard_deviation, 2),
+        round(pert_expected + standard_deviation, 2),
+    )
+    confidence_95_band = (
+        round(pert_expected - 2.0 * standard_deviation, 2),
+        round(pert_expected + 2.0 * standard_deviation, 2),
+    )
+    excessive_uncertainty_detected = bool(coefficient_of_variation_pct > max_cv)
+    severe_right_skew_detected = bool(
+        (pess - ml) > 2.5 * max(0.01, ml - opt) and pess > ml
+    )
+    is_estimate_reliable = bool(
+        not excessive_uncertainty_detected and not severe_right_skew_detected
+    )
+
+    return {
+        "pert_expected": pert_expected,
+        "triangular_expected": triangular_expected,
+        "standard_deviation": standard_deviation,
+        "variance": variance,
+        "coefficient_of_variation_pct": coefficient_of_variation_pct,
+        "confidence_68_band": confidence_68_band,
+        "confidence_95_band": confidence_95_band,
+        "excessive_uncertainty_detected": excessive_uncertainty_detected,
+        "severe_right_skew_detected": severe_right_skew_detected,
+        "is_estimate_reliable": is_estimate_reliable,
+    }
+

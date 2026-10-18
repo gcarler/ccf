@@ -2814,6 +2814,7 @@ __all__ = [
     "evaluate_copq_rework_and_scrap_ratio",
     "audit_ccb_change_request_sla_and_aging_backlog",
     "evaluate_supplier_ncr_disposition_governance",
+    "audit_scope_creep_and_gold_plating_drift",
     "ProjectCCBService",
 ]
 
@@ -3390,3 +3391,77 @@ ProjectCCBService.evaluate_supplier_ncr_disposition_governance = staticmethod(
     evaluate_supplier_ncr_disposition_governance
 )
 
+
+
+def audit_scope_creep_and_gold_plating_drift(
+    work_packages: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_unapproved_effort_drift_pct: float = 5.0,
+) -> dict[str, Any]:
+    """Audita corrupción del alcance (Scope Creep), adición no autorizada de funcionalidades (Gold-Plating) y expansión silenciosa de esfuerzo sin CR en paquetes de trabajo WBS según PMI PMBOK §5.6 y §4.6."""
+    total_evaluated = 0
+    unapproved_scope_addition_wp_ids: list[str] = []
+    gold_plating_wp_ids: list[str] = []
+    silent_effort_expansion_wp_ids: list[str] = []
+
+    max_drift = float(max_unapproved_effort_drift_pct)
+    packages: Sequence[Any] = work_packages or []
+    if not isinstance(packages, Sequence) or isinstance(
+        packages, (str, bytes, Mapping)
+    ):
+        packages = []
+
+    for item in packages:
+        if not isinstance(item, Mapping):
+            continue
+        wp_id = str(item.get("wp_id") or item.get("id") or "").strip()
+        if not wp_id:
+            continue
+
+        total_evaluated += 1
+        has_approved_cr = bool(str(item.get("approved_cr_id") or "").strip())
+        in_approved_baseline = bool(item.get("in_approved_wbs_baseline") is True)
+        extra_features_count = int(item.get("extra_features_added_count") or 0)
+
+        if not in_approved_baseline and not has_approved_cr:
+            unapproved_scope_addition_wp_ids.append(wp_id)
+
+        if extra_features_count > 0 and not has_approved_cr:
+            gold_plating_wp_ids.append(wp_id)
+
+        if not has_approved_cr:
+            try:
+                baseline_hours = float(item.get("baseline_hours") or 0.0)
+            except (TypeError, ValueError):
+                baseline_hours = 0.0
+            if baseline_hours > 0.0:
+                try:
+                    actual_or_forecast = float(
+                        item.get("actual_or_forecast_hours") or 0.0
+                    )
+                except (TypeError, ValueError):
+                    actual_or_forecast = 0.0
+                drift_pct = (
+                    (actual_or_forecast - baseline_hours) / baseline_hours
+                ) * 100.0
+                if drift_pct > max_drift:
+                    silent_effort_expansion_wp_ids.append(wp_id)
+
+    is_scope_baseline_controlled = bool(
+        len(unapproved_scope_addition_wp_ids) == 0
+        and len(gold_plating_wp_ids) == 0
+        and len(silent_effort_expansion_wp_ids) == 0
+    )
+
+    return {
+        "total_evaluated": total_evaluated,
+        "unapproved_scope_addition_wp_ids": unapproved_scope_addition_wp_ids,
+        "gold_plating_wp_ids": gold_plating_wp_ids,
+        "silent_effort_expansion_wp_ids": silent_effort_expansion_wp_ids,
+        "is_scope_baseline_controlled": is_scope_baseline_controlled,
+    }
+
+
+ProjectCCBService.audit_scope_creep_and_gold_plating_drift = staticmethod(
+    audit_scope_creep_and_gold_plating_drift
+)
