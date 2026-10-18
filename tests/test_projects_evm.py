@@ -1815,6 +1815,106 @@ def test_evaluate_control_account_variance_masking_no_work_packages():
         assert len(res["recommendations"]) == 1
 
 
+def test_evaluate_earned_schedule_performance_on_or_ahead():
+    """SPI(t) >= 0.95 -> ON_OR_AHEAD_OF_SCHEDULE."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_earned_schedule_performance,
+    )
+
+    pv_curve = [100.0, 250.0, 450.0, 700.0, 1000.0]
+    res = evaluate_earned_schedule_performance(
+        planned_value_curve=pv_curve,
+        earned_value=500.0,
+        actual_time_periods=3.0,
+        planned_duration_periods=5.0,
+    )
+    # C = 3 (PV_3 = 450, PV_4 = 700), I = (500 - 450) / (700 - 450) = 0.2 -> ES = 3.2
+    assert res["earned_schedule"] == 3.2
+    assert res["actual_time_periods"] == 3.0
+    assert res["sv_t"] == 0.2
+    assert res["spi_t"] == 1.07
+    assert res["eac_t"] == 4.69
+    assert res["is_on_schedule"] is True
+    assert res["schedule_posture"] == "ON_OR_AHEAD_OF_SCHEDULE"
+    assert (
+        ProjectEVMService.evaluate_earned_schedule_performance(
+            planned_value_curve=pv_curve,
+            earned_value=500.0,
+            actual_time_periods=3.0,
+            planned_duration_periods=5.0,
+        )
+        == res
+    )
+
+
+def test_evaluate_earned_schedule_performance_moderate_delay():
+    """0.85 <= SPI(t) < 0.95 -> MODERATE_SCHEDULE_DELAY."""
+    from backend.services.project_evm_service import (
+        evaluate_earned_schedule_performance,
+    )
+
+    pv_curve = [100.0, 200.0, 300.0, 400.0, 500.0]
+    res = evaluate_earned_schedule_performance(
+        planned_value_curve=pv_curve,
+        earned_value=360.0,
+        actual_time_periods=4.0,
+        planned_duration_periods=5.0,
+    )
+    # C = 3 (PV_3 = 300, PV_4 = 400), I = (360 - 300) / 100 = 0.6 -> ES = 3.6
+    # SPI(t) = 3.6 / 4.0 = 0.90, SV(t) = -0.4, EAC(t) = 5.0 / 0.9 = 5.56
+    assert res["earned_schedule"] == 3.6
+    assert res["actual_time_periods"] == 4.0
+    assert res["sv_t"] == -0.4
+    assert res["spi_t"] == 0.9
+    assert res["eac_t"] == 5.56
+    assert res["is_on_schedule"] is False
+    assert res["schedule_posture"] == "MODERATE_SCHEDULE_DELAY"
+
+
+def test_evaluate_earned_schedule_performance_critical_slippage():
+    """SPI(t) < 0.85 con interpolación en primer periodo -> CRITICAL_SCHEDULE_SLIPPAGE."""
+    from backend.services.project_evm_service import (
+        evaluate_earned_schedule_performance,
+    )
+
+    pv_curve = [200.0, 400.0, 600.0, 800.0]
+    res = evaluate_earned_schedule_performance(
+        planned_value_curve=pv_curve,
+        earned_value=150.0,
+        actual_time_periods=2.0,
+    )
+    # EV < PV_1 -> C = 0, I = 150 / 200 = 0.75 -> ES = 0.75
+    # SPI(t) = 0.75 / 2.0 = 0.375 -> 0.38, PD = 4.0 -> EAC(t) = 4.0 / 0.375 = 10.67
+    assert res["earned_schedule"] == 0.75
+    assert res["actual_time_periods"] == 2.0
+    assert res["sv_t"] == -1.25
+    assert res["spi_t"] == 0.38
+    assert res["eac_t"] == 10.67
+    assert res["is_on_schedule"] is False
+    assert res["schedule_posture"] == "CRITICAL_SCHEDULE_SLIPPAGE"
+
+
+def test_evaluate_earned_schedule_performance_insufficient_curve():
+    """Curva vacía, None, curve[-1] <= 0 o AT <= 0 -> INSUFFICIENT_SCHEDULE_CURVE."""
+    from backend.services.project_evm_service import (
+        evaluate_earned_schedule_performance,
+    )
+
+    for curve, at in [(None, 3.0), ([], 2.0), ([100.0, 200.0], 0.0), ([0.0, 0.0], 2.0)]:
+        res = evaluate_earned_schedule_performance(
+            planned_value_curve=curve,
+            earned_value=50.0,
+            actual_time_periods=at,
+        )
+        assert res["earned_schedule"] == 0.0
+        assert res["sv_t"] == 0.0
+        assert res["spi_t"] == 1.0
+        assert res["eac_t"] == 0.0
+        assert res["is_on_schedule"] is True
+        assert res["schedule_posture"] == "INSUFFICIENT_SCHEDULE_CURVE"
+
+
 if __name__ == "__main__":
     test_evm_balanced_project()
     test_evm_cost_overrun_critical()
@@ -1858,4 +1958,9 @@ if __name__ == "__main__":
     test_evaluate_control_account_variance_masking_unmasked_overrun()
     test_evaluate_control_account_variance_masking_uniform_health()
     test_evaluate_control_account_variance_masking_no_work_packages()
+    test_evaluate_earned_schedule_performance_on_or_ahead()
+    test_evaluate_earned_schedule_performance_moderate_delay()
+    test_evaluate_earned_schedule_performance_critical_slippage()
+    test_evaluate_earned_schedule_performance_insufficient_curve()
     print("✅ All EVM tests passed successfully!")
+

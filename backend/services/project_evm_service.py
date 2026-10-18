@@ -3984,6 +3984,20 @@ class ProjectEVMService:
         )
 
     @staticmethod
+    def evaluate_earned_schedule_performance(
+        planned_value_curve: Optional[List[float]],
+        earned_value: float,
+        actual_time_periods: float,
+        planned_duration_periods: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        return evaluate_earned_schedule_performance(
+            planned_value_curve,
+            earned_value,
+            actual_time_periods,
+            planned_duration_periods=planned_duration_periods,
+        )
+
+    @staticmethod
     def build_project_execution_matrix(
         db: Session, project: Project, now: Optional[datetime.datetime] = None
     ) -> Dict[str, Any]:
@@ -4087,4 +4101,97 @@ def evaluate_control_account_variance_masking(
         "is_variance_masked": is_variance_masked,
         "masking_posture": masking_posture,
         "recommendations": recommendations,
+    }
+
+
+def evaluate_earned_schedule_performance(
+    planned_value_curve: Optional[List[float]],
+    earned_value: float,
+    actual_time_periods: float,
+    planned_duration_periods: Optional[float] = None,
+) -> Dict[str, Any]:
+    """Evalúa el Cronograma Ganado (Earned Schedule - ES) e índice SPI(t) proyectando EV sobre la curva acumulada de PV según PMI Practice Standard for EVM y PMBOK §7.4."""
+    curve: List[float] = []
+    if isinstance(planned_value_curve, list):
+        for val in planned_value_curve:
+            if isinstance(val, bool) or val is None:
+                continue
+            try:
+                num = float(val)
+            except (TypeError, ValueError):
+                continue
+            if num >= 0.0:
+                curve.append(num)
+
+    try:
+        at = float(actual_time_periods or 0.0)
+    except (TypeError, ValueError):
+        at = 0.0
+
+    if not curve or curve[-1] <= 0.0 or at <= 0.0:
+        return {
+            "earned_schedule": 0.0,
+            "actual_time_periods": max(0.0, round(at, 2)),
+            "sv_t": 0.0,
+            "spi_t": 1.0,
+            "eac_t": 0.0,
+            "is_on_schedule": True,
+            "schedule_posture": "INSUFFICIENT_SCHEDULE_CURVE",
+        }
+
+    try:
+        pd = (
+            float(planned_duration_periods)
+            if (planned_duration_periods is not None and float(planned_duration_periods) > 0.0)
+            else float(len(curve))
+        )
+    except (TypeError, ValueError):
+        pd = float(len(curve))
+
+    try:
+        raw_ev = float(earned_value or 0.0)
+    except (TypeError, ValueError):
+        raw_ev = 0.0
+    ev = max(0.0, min(raw_ev, curve[-1]))
+
+    pv_points = [0.0] + curve
+    if ev >= pv_points[-1]:
+        es = float(len(curve))
+    elif ev <= 0.0:
+        es = 0.0
+    else:
+        c_idx = 0
+        for idx in range(len(curve)):
+            if pv_points[idx] <= ev < pv_points[idx + 1]:
+                c_idx = idx
+        delta_pv = pv_points[c_idx + 1] - pv_points[c_idx]
+        fraction = ((ev - pv_points[c_idx]) / delta_pv) if delta_pv > 0.0 else 0.0
+        es = float(c_idx) + fraction
+
+    sv_t = es - at
+    spi_t = (es / at) if at > 0.0 else 1.0
+    eac_t = (pd / spi_t) if spi_t > 0.0 else pd
+
+    es_round = round(es, 2)
+    at_round = round(at, 2)
+    sv_t_round = round(sv_t, 2)
+    spi_t_round = round(spi_t, 2)
+    eac_t_round = round(eac_t, 2)
+
+    is_on_schedule = bool(spi_t_round >= 0.95)
+    if spi_t_round < 0.85:
+        schedule_posture = "CRITICAL_SCHEDULE_SLIPPAGE"
+    elif spi_t_round < 0.95:
+        schedule_posture = "MODERATE_SCHEDULE_DELAY"
+    else:
+        schedule_posture = "ON_OR_AHEAD_OF_SCHEDULE"
+
+    return {
+        "earned_schedule": es_round,
+        "actual_time_periods": at_round,
+        "sv_t": sv_t_round,
+        "spi_t": spi_t_round,
+        "eac_t": eac_t_round,
+        "is_on_schedule": is_on_schedule,
+        "schedule_posture": schedule_posture,
     }
