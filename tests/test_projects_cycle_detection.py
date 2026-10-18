@@ -520,3 +520,103 @@ def test_cpm_float_risk_tight_schedule():
     assert result["buffered_tasks_count"] == 2
     assert result["critical_density_pct"] == 60.0
     assert result["schedule_rigidity_status"] == "tight_schedule"
+
+
+# ── evaluate_dependency_network_bottlenecks (PMBOK §6.3, pure helper) ────
+
+
+def test_dependency_bottlenecks_linear_chain():
+    """Cadena lineal A->B->C con threshold=3 → 'linear_chain' sin hubs."""
+    from backend.crud.projects import evaluate_dependency_network_bottlenecks
+
+    result = evaluate_dependency_network_bottlenecks(
+        [("A", "B"), ("B", "C")], high_degree_threshold=3
+    )
+
+    assert result == {
+        "total_nodes": 3,
+        "total_unique_edges": 2,
+        "max_in_degree": 1,
+        "max_out_degree": 1,
+        "merge_point_nodes": [],
+        "burst_point_nodes": [],
+        "bottleneck_nodes": [],
+        "network_complexity_status": "linear_chain",
+    }
+
+
+def test_dependency_bottlenecks_merge_and_burst_nodes():
+    """Diamante A->B, A->C, B->D, C->D: merge en D y burst en A → 'convergent_divergent'."""
+    from backend.crud.projects import evaluate_dependency_network_bottlenecks
+
+    result = evaluate_dependency_network_bottlenecks(
+        [("A", "B"), ("A", "C"), ("B", "D"), ("C", "D")]
+    )
+
+    assert result["total_nodes"] == 4
+    assert result["total_unique_edges"] == 4
+    assert result["max_in_degree"] == 2
+    assert result["max_out_degree"] == 2
+    assert result["merge_point_nodes"] == ["D"]
+    assert result["burst_point_nodes"] == ["A"]
+    # Con threshold 3 (default), in+out de A (2) y D (2) no alcanzan → sin hubs
+    assert result["bottleneck_nodes"] == []
+    assert result["network_complexity_status"] == "convergent_divergent"
+
+    # Con threshold 2, los 4 nodos (B y C: in 1 + out 1 = 2) son hubs
+    tight = evaluate_dependency_network_bottlenecks(
+        [("A", "B"), ("A", "C"), ("B", "D"), ("C", "D")], high_degree_threshold=2
+    )
+    assert tight["bottleneck_nodes"] == ["A", "B", "C", "D"]
+    assert tight["network_complexity_status"] == "high_congestion_hubs"
+
+
+def test_dependency_bottlenecks_dedup_and_selfloops():
+    """Aristas duplicadas se colapsan, self-loops y extremos vacíos se ignoran."""
+    from backend.crud.projects import evaluate_dependency_network_bottlenecks
+
+    edges = [
+        ("A", "B"),   # válida
+        (" A ", "B"),   # duplicada tras strip (colapsa)
+        ("A", "B "),   # duplicada (colapsa)
+        ("A", "A"),   # self-loop ignorado
+        ("", "B"),    # u vacío ignorado
+        ("A", ""),    # v vacío ignorado
+        ("A", "C"),   # segunda válida → A acumula out=2
+        ("X", "C"),   # X otra entrada a C → merge
+        ("Y", "  "),  # v vacío tras strip ignorado
+    ]
+    result = evaluate_dependency_network_bottlenecks(edges, high_degree_threshold=3)
+
+    assert result["total_nodes"] == 4  # A, B, C, X
+    assert result["total_unique_edges"] == 3  # (A,B), (A,C), (X,C)
+    assert result["max_in_degree"] == 2  # C recibe de A y X
+    assert result["max_out_degree"] == 2  # A emite a B y C
+    assert result["merge_point_nodes"] == ["C"]
+    assert result["burst_point_nodes"] == ["A"]
+    # A: in 0 + out 2 = 2 < 3; C: in 2 + out 0 = 2 < 3 → sin hubs
+    assert result["bottleneck_nodes"] == []
+    assert result["network_complexity_status"] == "convergent_divergent"
+
+    # Threshold 2: A y C superan in+out >= 2 → hubs
+    tight = evaluate_dependency_network_bottlenecks(edges, high_degree_threshold=2)
+    assert tight["bottleneck_nodes"] == ["A", "C"]
+    assert tight["network_complexity_status"] == "high_congestion_hubs"
+
+
+def test_dependency_bottlenecks_none_and_empty_graph():
+    """None, [] y solo aristas inválidas → 'disconnected' con vacíos en 0."""
+    from backend.crud.projects import evaluate_dependency_network_bottlenecks
+
+    for edges_arg in (None, [], [("A", "A")], [("", "")]):
+        result = evaluate_dependency_network_bottlenecks(edges_arg)
+        assert result == {
+            "total_nodes": 0,
+            "total_unique_edges": 0,
+            "max_in_degree": 0,
+            "max_out_degree": 0,
+            "merge_point_nodes": [],
+            "burst_point_nodes": [],
+            "bottleneck_nodes": [],
+            "network_complexity_status": "disconnected",
+        }

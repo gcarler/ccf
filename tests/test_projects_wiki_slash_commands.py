@@ -527,3 +527,89 @@ def test_slash_inventory_empty_and_none():
             "syntax_status": "empty",
         }
 
+
+def test_audit_wiki_page_knowledge_hygiene_exemplary_reference():
+    """Página con título válido, >=25 palabras, encabezado, enlaces cruzados y tags → exemplary_reference."""
+    from backend.services.wiki_pmi_service import audit_wiki_page_knowledge_hygiene
+
+    content = (
+        "# Scope\n\n"
+        "Esta página documenta la línea base del alcance del proyecto siguiendo las buenas "
+        "prácticas metodológicas del estándar PMI PMBOK para garantizar trazabilidad entre "
+        "el [Charter](/plataforma/projects/1) y la estructura [[WBS]] aprobada por el comité."
+    )
+    res = audit_wiki_page_knowledge_hygiene(
+        title="Gestión del Alcance",
+        content=content,
+        tags=["PMI", "Scope", "pmi"],
+    )
+    assert res["has_valid_title"] is True
+    assert res["word_count"] >= 25
+    assert res["section_headings_count"] == 1
+    assert res["cross_links_count"] == 2
+    assert res["normalized_tags"] == ["pmi", "scope"]
+    assert res["hygiene_gaps"] == []
+    assert res["hygiene_score_pct"] == 100.0
+    assert res["knowledge_hygiene_status"] == "exemplary_reference"
+
+
+def test_audit_wiki_page_knowledge_hygiene_compliant_without_links():
+    """Cumple los 4 pilares pero sin enlaces cruzados → compliant_article con 100.0%."""
+    from backend.services.wiki_pmi_service import audit_wiki_page_knowledge_hygiene
+
+    content = (
+        "## Gobernanza del Proyecto\n\n"
+        "El equipo de dirección del proyecto mantiene actualizados todos los artefactos "
+        "de planificación y seguimiento semanal para asegurar el cumplimiento riguroso "
+        "de los objetivos pastorales y financieros definidos en la sede."
+    )
+    res = audit_wiki_page_knowledge_hygiene(
+        title="Gobernanza Ministerial",
+        content=content,
+        tags=["gobernanza"],
+    )
+    assert res["has_valid_title"] is True
+    assert res["word_count"] >= 25
+    assert res["section_headings_count"] == 1
+    assert res["cross_links_count"] == 0
+    assert res["hygiene_gaps"] == []
+    assert res["hygiene_score_pct"] == 100.0
+    assert res["knowledge_hygiene_status"] == "compliant_article"
+
+
+def test_audit_wiki_page_knowledge_hygiene_needs_enrichment():
+    """Faltan 2 pilares (sin encabezados y sin tags, pero con título y >=25 palabras) → needs_enrichment (50%)."""
+    from backend.services.wiki_pmi_service import audit_wiki_page_knowledge_hygiene
+
+    content = (
+        "Este documento contiene suficientes palabras para superar el umbral mínimo "
+        "de veinticinco términos requeridos por el auditor de higiene documental "
+        "pero carece de encabezados Markdown y etiquetas taxonómicas asignadas."
+    )
+    res = audit_wiki_page_knowledge_hygiene(
+        title="Nota Operativa",
+        content=content,
+        tags=[],
+    )
+    assert res["has_valid_title"] is True
+    assert res["word_count"] >= 25
+    assert res["section_headings_count"] == 0
+    assert res["hygiene_gaps"] == ["unstructured_sections", "untagged_page"]
+    assert res["hygiene_score_pct"] == 50.0
+    assert res["knowledge_hygiene_status"] == "needs_enrichment"
+
+
+def test_audit_wiki_page_knowledge_hygiene_stub_or_incomplete():
+    """Entradas vacías o None → stub_or_incomplete con 4 brechas y 0.0%."""
+    from backend.services.wiki_pmi_service import audit_wiki_page_knowledge_hygiene
+
+    res = audit_wiki_page_knowledge_hygiene(title=None, content=None, tags=None)
+    assert res["has_valid_title"] is False
+    assert res["word_count"] == 0
+    assert res["section_headings_count"] == 0
+    assert res["cross_links_count"] == 0
+    assert res["normalized_tags"] == []
+    assert len(res["hygiene_gaps"]) == 4
+    assert res["hygiene_score_pct"] == 0.0
+    assert res["knowledge_hygiene_status"] == "stub_or_incomplete"
+

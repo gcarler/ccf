@@ -389,3 +389,53 @@ def extract_wiki_slash_commands_inventory(markdown_text: Optional[str]) -> Dict[
         "syntax_status": syntax_status,
     }
 
+
+def audit_wiki_page_knowledge_hygiene(
+    title: Optional[str],
+    content: Optional[str],
+    tags: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """Evalúa la higiene estructural, etiquetado taxonómico y referencias cruzadas de una página Wiki según PMI PMBOK §4.4."""
+    title_norm = (title or "").strip()
+    content_norm = (content or "").strip()
+    normalized_tags = sorted(
+        {str(t).strip().lower() for t in (tags or []) if str(t).strip()}
+    )
+    word_count = len(content_norm.split())
+    cross_links_count = len(
+        re.findall(r"\[[^\]]+\]\([^)]+\)|\[\[[^\]]+\]\]", content_norm)
+    )
+    section_headings_count = len(re.findall(r"(?m)^#{1,6}\s+\S+", content_norm))
+
+    hygiene_gaps: List[str] = []
+    if len(title_norm) < 3:
+        hygiene_gaps.append("missing_title")
+    if word_count < 25:
+        hygiene_gaps.append("thin_content")
+    if section_headings_count < 1:
+        hygiene_gaps.append("unstructured_sections")
+    if len(normalized_tags) < 1:
+        hygiene_gaps.append("untagged_page")
+
+    hygiene_score_pct = round(((4 - len(hygiene_gaps)) / 4) * 100.0, 2)
+
+    if len(hygiene_gaps) == 0 and cross_links_count >= 1:
+        knowledge_hygiene_status = "exemplary_reference"
+    elif len(hygiene_gaps) == 0 and cross_links_count == 0:
+        knowledge_hygiene_status = "compliant_article"
+    elif 1 <= len(hygiene_gaps) <= 2:
+        knowledge_hygiene_status = "needs_enrichment"
+    else:
+        knowledge_hygiene_status = "stub_or_incomplete"
+
+    return {
+        "has_valid_title": len(title_norm) >= 3,
+        "word_count": word_count,
+        "section_headings_count": section_headings_count,
+        "cross_links_count": cross_links_count,
+        "normalized_tags": normalized_tags,
+        "hygiene_gaps": hygiene_gaps,
+        "hygiene_score_pct": hygiene_score_pct,
+        "knowledge_hygiene_status": knowledge_hygiene_status,
+    }
+

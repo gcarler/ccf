@@ -6670,3 +6670,76 @@ def classify_cpm_float_risk_profile(
         "critical_density_pct": critical_density_pct,
         "schedule_rigidity_status": schedule_rigidity_status,
     }
+
+
+def evaluate_dependency_network_bottlenecks(
+    edges: Optional[list[tuple[Any, Any]]] = None,
+    high_degree_threshold: int = 3,
+) -> dict:
+    """Analiza la topología de dependencias de actividades (PMBOK §6.3 Sequence Activities).
+
+    Detección de cuellos de botella Merge/Burst sobre las aristas de
+    dependencia (predecesora → sucesora), normalizando cada par a strings
+    stripped, ignorando pares con extremos vacíos, self-loops
+    (u == v) y duplicados. `threshold = max(2, high_degree_threshold or 3)`
+    define cuándo un nodo es hub de congestión (in + out >= threshold):
+    - `total_nodes` / `total_unique_edges`: población única del grafo.
+    - `max_in_degree` / `max_out_degree`: grados extremos.
+    - `merge_point_nodes`: convergencia (in_degree >= 2), ordenados.
+    - `burst_point_nodes`: divergencia (out_degree >= 2), ordenados.
+    - `bottleneck_nodes`: hubs de alta congestión (in+out >= threshold).
+    - `network_complexity_status`: 'disconnected' (0 aristas únicas),
+      'high_congestion_hubs' (≥ 1 bottleneck), 'convergent_divergent'
+      (merge o burst) o 'linear_chain'.
+    """
+    from collections import defaultdict
+
+    unique_edges: set[tuple[str, str]] = set()
+    if edges:
+        for u, v in edges:
+            u_str = str(u).strip()
+            v_str = str(v).strip()
+            if not u_str or not v_str or u_str == v_str:
+                continue
+            unique_edges.add((u_str, v_str))
+
+    nodes: set[str] = set()
+    in_degree: dict[str, int] = defaultdict(int)
+    out_degree: dict[str, int] = defaultdict(int)
+    for u_str, v_str in unique_edges:
+        nodes.add(u_str)
+        nodes.add(v_str)
+        in_degree[v_str] += 1
+        out_degree[u_str] += 1
+
+    total_nodes = len(nodes)
+    total_unique_edges = len(unique_edges)
+    max_in_degree = max(in_degree.values(), default=0)
+    max_out_degree = max(out_degree.values(), default=0)
+    merge_point_nodes = sorted([n for n in nodes if in_degree[n] >= 2])
+    burst_point_nodes = sorted([n for n in nodes if out_degree[n] >= 2])
+
+    threshold = max(2, int(high_degree_threshold or 3))
+    bottleneck_nodes = sorted(
+        [n for n in nodes if (in_degree[n] + out_degree[n]) >= threshold]
+    )
+
+    if total_unique_edges == 0:
+        network_complexity_status = "disconnected"
+    elif len(bottleneck_nodes) > 0:
+        network_complexity_status = "high_congestion_hubs"
+    elif len(merge_point_nodes) > 0 or len(burst_point_nodes) > 0:
+        network_complexity_status = "convergent_divergent"
+    else:
+        network_complexity_status = "linear_chain"
+
+    return {
+        "total_nodes": total_nodes,
+        "total_unique_edges": total_unique_edges,
+        "max_in_degree": max_in_degree,
+        "max_out_degree": max_out_degree,
+        "merge_point_nodes": merge_point_nodes,
+        "burst_point_nodes": burst_point_nodes,
+        "bottleneck_nodes": bottleneck_nodes,
+        "network_complexity_status": network_complexity_status,
+    }
