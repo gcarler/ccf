@@ -3018,6 +3018,7 @@ __all__ = [
     "audit_markdown_code_fence_balance_and_language_hygiene",
     "audit_markdown_frontmatter_and_document_control_hygiene",
     "AnyDocService",
+    "audit_markdown_badge_and_external_tracker_hygiene",
     "AnydocService",
 ]
 
@@ -5828,4 +5829,136 @@ AnydocService.audit_markdown_frontmatter_and_document_control_hygiene = staticme
     audit_markdown_frontmatter_and_document_control_hygiene
 )
 
+
+def audit_markdown_badge_and_external_tracker_hygiene(
+    markdown_text: str | None,
+    *,
+    max_badges_per_line: int = 4,
+    blocked_tracker_domains: tuple[str, ...] = (
+        "google-analytics.com",
+        "doubleclick.net",
+        "facebook.com/tr",
+        "pixel.wp.com",
+    ),
+) -> dict[str, Any]:
+    """PMBOK 4.4 — higiene de badges, assets externos sin fijar y píxeles de tracking.
+
+    Audita imágenes y badges ``![alt](url)`` o ``[![alt](img)](link)`` en
+    Markdown, ignorando fences (```` ``` ````/``~~~``, con soporte de
+    apertura/cierre multi-línea) y code spans inline (backticks con
+    backtick-escape ``\\````). Reglas por línea (1-indexed):
+
+    1. ``insecure_http_image_lines``: URL de imagen inicia con ``http://``.
+    2. ``external_tracker_or_unpinned_branch_lines``: URL contiene un
+       elemento de ``blocked_tracker_domains`` (case-insensitive) o apunta a
+       ramas mutables sin fijar commit/tag (``/raw/main/``, ``/raw/master/``,
+       ``/blob/main/``, ``/blob/master/``, ``?branch=main``,
+       ``?branch=master``, case-insensitive).
+    3. ``badge_clutter_lines``: imágenes/badges en la misma línea >
+       ``max_badges_per_line``.
+
+    Retorna total, las 3 listas de líneas 1-indexed sin duplicados y con
+    orden de primera aparición, badge_hygiene_status y is_compliant.
+    """
+    results: dict[str, Any] = {
+        "total_images_or_badges": 0,
+        "insecure_http_image_lines": [],
+        "external_tracker_or_unpinned_branch_lines": [],
+        "badge_clutter_lines": [],
+        "badge_hygiene_status": "HEALTHY",
+        "is_compliant": True,
+    }
+    if not isinstance(markdown_text, str) or not markdown_text.strip():
+        return results
+
+    image_pattern = re.compile(r"!\[[^\]\n]*\]\(([^()\n]+)\)")
+    fence_open_pattern = re.compile(r"^\s*(`{3,}|~{3,})")
+    unpinned_patterns = (
+        "/raw/main/",
+        "/raw/master/",
+        "/blob/main/",
+        "/blob/master/",
+        "?branch=main",
+        "?branch=master",
+    )
+    lower_domains = tuple(domain.lower() for domain in blocked_tracker_domains)
+
+    open_fence_token: str | None = None
+    insecure_lines: list[int] = []
+    tracker_lines: list[int] = []
+    clutter_lines: list[int] = []
+    total_images = 0
+
+    for line_no, raw_line in enumerate(markdown_text.splitlines(), start=1):
+        # Gestión de fences multilinea: dentro de un fence abierto solo
+        # importa detectar el cierre.
+        if open_fence_token is not None:
+            closing_match = fence_open_pattern.match(raw_line.strip())
+            if closing_match is not None and closing_match.group(1)[0] == open_fence_token[0]:
+                open_fence_token = None
+            continue
+
+        fence_match = fence_open_pattern.match(raw_line.strip())
+        if fence_match is not None:
+            token = fence_match.group(1)
+            open_fence_token = token
+            continue
+
+        # Segmentos fuera de code spans inline (backtick...backtick).
+        code_span_pattern = re.compile(r"`+[^`]*`+")
+        segments: list[str] = []
+        cursor = 0
+        for span_match in code_span_pattern.finditer(raw_line):
+            if span_match.start() > cursor:
+                segments.append(raw_line[cursor:span_match.start()])
+            cursor = span_match.end()
+        if cursor < len(raw_line):
+            segments.append(raw_line[cursor:])
+
+        working_text = "\n".join(segments)
+        matches = list(image_pattern.finditer(working_text))
+        if not matches:
+            continue
+        total_images += len(matches)
+
+        insecure = False
+        tracker_or_unpinned = False
+        for match in matches:
+            url = match.group(1).strip().lower()
+            if url.startswith("http://"):
+                insecure = True
+            if any(domain in url for domain in lower_domains):
+                tracker_or_unpinned = True
+            elif any(pattern in url for pattern in unpinned_patterns):
+                tracker_or_unpinned = True
+
+        if insecure:
+            insecure_lines.append(line_no)
+        if tracker_or_unpinned:
+            tracker_lines.append(line_no)
+        if len(matches) > int(max_badges_per_line):
+            clutter_lines.append(line_no)
+
+    results["total_images_or_badges"] = total_images
+    results["insecure_http_image_lines"] = sorted(set(insecure_lines))
+    results["external_tracker_or_unpinned_branch_lines"] = sorted(set(tracker_lines))
+    results["badge_clutter_lines"] = sorted(set(clutter_lines))
+
+    if insecure_lines or tracker_lines:
+        status = "CRITICAL"
+    elif clutter_lines:
+        status = "AT_RISK"
+    else:
+        status = "HEALTHY"
+    results["badge_hygiene_status"] = status
+    results["is_compliant"] = status == "HEALTHY"
+    return results
+
+
+AnyDocService.audit_markdown_badge_and_external_tracker_hygiene = staticmethod(
+    audit_markdown_badge_and_external_tracker_hygiene
+)
+AnydocService.audit_markdown_badge_and_external_tracker_hygiene = staticmethod(
+    audit_markdown_badge_and_external_tracker_hygiene
+)
 

@@ -3795,6 +3795,7 @@ __all__ = [
     "validate_resource_leveling_and_smoothing_constraints",
     "validate_wbs_100_percent_rollup_and_8_80_granularity",
     "validate_make_or_buy_breakeven_and_tco",
+    "validate_risk_response_strategy_and_contingency_triggers",
 ]
 
 
@@ -6285,6 +6286,151 @@ def validate_make_or_buy_breakeven_and_tco(
         "mob_governance_status": mob_governance_status,
         "is_valid": is_valid,
         "recommendations": recommendations,
+    }
+
+
+def validate_risk_response_strategy_and_contingency_triggers(
+    risk_responses: list[dict[str, Any]],
+    *,
+    require_fallback_for_high_residual: bool = True,
+    high_residual_score_threshold: float = 12.0,
+    require_early_warning_trigger: bool = True,
+) -> dict[str, Any]:
+    """Valida la alineación de estrategias de respuesta a riesgos (amenazas vs oportunidades), efectividad de reducción de riesgo residual y disparadores/planes de respaldo (PMI PMBOK §11.5)."""
+    if (
+        risk_responses is None
+        or isinstance(risk_responses, (str, bytes))
+        or not isinstance(risk_responses, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = risk_responses
+
+    try:
+        residual_threshold = float(high_residual_score_threshold)
+    except (TypeError, ValueError):
+        residual_threshold = 12.0
+
+    threat_strategies = {"avoid", "transfer", "mitigate", "accept", "escalate"}
+    opportunity_strategies = {
+        "exploit",
+        "share",
+        "enhance",
+        "accept",
+        "escalate",
+    }
+
+    total_responses_evaluated = 0
+    invalid_strategy_alignment_ids: list[str] = []
+    ineffective_mitigation_ids: list[str] = []
+    missing_trigger_ids: list[str] = []
+    missing_fallback_ids: list[str] = []
+    threat_reductions: list[float] = []
+    issues: list[str] = []
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_responses_evaluated += 1
+
+        risk_id = (
+            str(raw.get("risk_id") or raw.get("id") or "").strip()
+            or f"RSK-{total_responses_evaluated}"
+        )
+        risk_type = str(raw.get("risk_type") or "threat").strip().lower()
+        strategy = str(raw.get("strategy") or "").strip().lower()
+
+        raw_pre = raw.get("pre_response_score")
+        try:
+            pre_response_score = float(raw_pre) if raw_pre is not None else 0.0
+        except (TypeError, ValueError):
+            pre_response_score = 0.0
+
+        raw_res = raw.get("residual_score")
+        try:
+            residual_score = float(raw_res) if raw_res is not None else 0.0
+        except (TypeError, ValueError):
+            residual_score = 0.0
+
+        early_warning_trigger = str(
+            raw.get("early_warning_trigger") or ""
+        ).strip()
+        fallback_plan = str(raw.get("fallback_plan") or "").strip()
+        action_owner_id = str(raw.get("action_owner_id") or "").strip()
+
+        valid_for_type = (
+            risk_type == "threat" and strategy in threat_strategies
+        ) or (
+            risk_type == "opportunity" and strategy in opportunity_strategies
+        )
+
+        if not valid_for_type or not action_owner_id:
+            invalid_strategy_alignment_ids.append(risk_id)
+            issues.append(
+                f"Riesgo '{risk_id}' presenta estrategia inválida ('{strategy}' para '{risk_type}') o carece de action_owner_id."
+            )
+
+        if risk_type == "threat":
+            if pre_response_score > 0.0:
+                threat_reductions.append(
+                    ((pre_response_score - residual_score) / pre_response_score)
+                    * 100.0
+                )
+            if (
+                strategy in {"avoid", "mitigate"}
+                and residual_score >= pre_response_score
+            ) or (strategy == "avoid" and residual_score > 0.0):
+                ineffective_mitigation_ids.append(risk_id)
+                issues.append(
+                    f"Amenaza '{risk_id}' con estrategia '{strategy}' no reduce efectivamente el puntaje residual ({residual_score} vs {pre_response_score})."
+                )
+
+        if (
+            bool(require_early_warning_trigger)
+            and strategy != "accept"
+            and not early_warning_trigger
+        ):
+            missing_trigger_ids.append(risk_id)
+            issues.append(
+                f"Riesgo '{risk_id}' con estrategia activa ('{strategy}') carece de disparador de alerta temprana (early_warning_trigger)."
+            )
+
+        if (
+            bool(require_fallback_for_high_residual)
+            and residual_score >= residual_threshold
+            and not fallback_plan
+        ):
+            missing_fallback_ids.append(risk_id)
+            issues.append(
+                f"Riesgo '{risk_id}' con puntaje residual alto ({residual_score} >= {residual_threshold}) carece de plan de respaldo (fallback_plan)."
+            )
+
+    average_risk_reduction_pct = (
+        round(sum(threat_reductions) / len(threat_reductions), 2)
+        if threat_reductions
+        else 0.0
+    )
+
+    if (
+        len(invalid_strategy_alignment_ids) > 0
+        or len(ineffective_mitigation_ids) > 0
+    ):
+        governance_status = "non_compliant"
+    elif len(missing_trigger_ids) > 0 or len(missing_fallback_ids) > 0:
+        governance_status = "needs_refinement"
+    else:
+        governance_status = "compliant"
+
+    return {
+        "is_valid": governance_status == "compliant",
+        "total_responses_evaluated": total_responses_evaluated,
+        "invalid_strategy_alignment_ids": invalid_strategy_alignment_ids,
+        "ineffective_mitigation_ids": ineffective_mitigation_ids,
+        "missing_trigger_ids": missing_trigger_ids,
+        "missing_fallback_ids": missing_fallback_ids,
+        "average_risk_reduction_pct": average_risk_reduction_pct,
+        "governance_status": governance_status,
+        "issues": issues,
     }
 
 

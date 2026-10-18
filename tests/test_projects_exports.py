@@ -6729,3 +6729,169 @@ def test_audit_executive_report_capex_opex_capitalization_compliance_empty_and_s
         in mod.__all__
     )
 
+
+def test_audit_executive_report_key_personnel_bus_factor_and_succession_resilient():
+    """Valida roles críticos con bus factor >= 2, sucesión documentada, cross-training >= 80% y rotación baja ('resilient')."""
+    from backend.services.project_export_service import (
+        audit_executive_report_key_personnel_bus_factor_and_succession,
+    )
+
+    roles = [
+        {
+            "role_id": "ROLE-01",
+            "role_name": "Arquitecto Cloud Principal",
+            "qualified_holders_count": 2,
+            "has_documented_succession_plan": True,
+            "cross_training_completion_pct": 90.0,
+            "attrition_flight_risk": "low",
+        },
+        {
+            "role_id": "ROLE-02",
+            "role_name": "Líder DBA PostgreSQL",
+            "qualified_holders_count": 3,
+            "has_documented_succession_plan": True,
+            "cross_training_completion_pct": 85.0,
+            "attrition_flight_risk": "medium",
+        },
+    ]
+    res = audit_executive_report_key_personnel_bus_factor_and_succession(
+        roles,
+        total_team_headcount=20,
+        departures_last_12m=2,
+    )
+    assert res["total_critical_roles"] == 2
+    assert res["spof_roles_count"] == 0
+    assert res["spof_role_ids"] == []
+    assert res["spof_without_succession_ids"] == []
+    assert res["high_flight_risk_spof_ids"] == []
+    assert res["under_trained_role_ids"] == []
+    assert res["annualized_turnover_pct"] == 10.0
+    assert res["turnover_breach"] is False
+    assert res["continuity_status"] == "resilient"
+    assert res["is_continuity_ready"] is True
+    assert res["issues"] == []
+
+
+def test_audit_executive_report_key_personnel_bus_factor_and_succession_critical():
+    """Detecta SPOF sin sucesión o con riesgo de fuga alto y combinación de SPOF + brecha de rotación ('critical_bus_factor')."""
+    from backend.services.project_export_service import (
+        audit_executive_report_key_personnel_bus_factor_and_succession,
+    )
+
+    roles = [
+        {
+            "role_id": "ROLE-10",
+            "role_name": "Especialista Seguridad Criptográfica",
+            "qualified_holders_count": 1,
+            "has_documented_succession_plan": False,
+            "cross_training_completion_pct": 50.0,
+            "attrition_flight_risk": "high",
+        },
+        {
+            "role_id": "ROLE-11",
+            "role_name": "Ingeniero DevOps Senior",
+            "qualified_holders_count": 1,
+            "has_documented_succession_plan": True,
+            "cross_training_completion_pct": 90.0,
+            "attrition_flight_risk": "low",
+        },
+    ]
+    res = audit_executive_report_key_personnel_bus_factor_and_succession(
+        roles,
+        total_team_headcount=10,
+        departures_last_12m=3,
+    )
+    assert res["total_critical_roles"] == 2
+    assert res["spof_roles_count"] == 2
+    assert res["spof_role_ids"] == ["ROLE-10", "ROLE-11"]
+    assert res["spof_without_succession_ids"] == ["ROLE-10"]
+    assert res["high_flight_risk_spof_ids"] == ["ROLE-10"]
+    assert res["under_trained_role_ids"] == ["ROLE-10"]
+    assert res["annualized_turnover_pct"] == 30.0
+    assert res["turnover_breach"] is True
+    assert res["continuity_status"] == "critical_bus_factor"
+    assert res["is_continuity_ready"] is False
+    assert len(res["issues"]) >= 4
+
+
+def test_audit_executive_report_key_personnel_bus_factor_and_succession_at_risk():
+    """Detecta roles con bajo cross-training o SPOF con plan de sucesión y bajo riesgo de fuga ('at_risk')."""
+    from backend.services.project_export_service import (
+        audit_executive_report_key_personnel_bus_factor_and_succession,
+    )
+
+    roles = [
+        {
+            "role_id": "ROLE-20",
+            "role_name": "Analista Integración ERP",
+            "qualified_holders_count": 1,
+            "has_documented_succession_plan": True,
+            "cross_training_completion_pct": 65.0,
+            "attrition_flight_risk": "low",
+        }
+    ]
+    res = audit_executive_report_key_personnel_bus_factor_and_succession(
+        roles,
+        max_single_point_of_failure_roles=0,
+        total_team_headcount=10,
+        departures_last_12m=1,
+    )
+    assert res["total_critical_roles"] == 1
+    assert res["spof_roles_count"] == 1
+    assert res["spof_role_ids"] == ["ROLE-20"]
+    assert res["spof_without_succession_ids"] == []
+    assert res["high_flight_risk_spof_ids"] == []
+    assert res["under_trained_role_ids"] == ["ROLE-20"]
+    assert res["turnover_breach"] is False
+    assert res["continuity_status"] == "at_risk"
+    assert res["is_continuity_ready"] is False
+    assert len(res["issues"]) >= 2
+
+
+def test_audit_executive_report_key_personnel_bus_factor_and_succession_empty_and_binding():
+    """Verifica manejo de entradas vacías, brecha de rotación aislada y enlace en ProjectExportService y __all__."""
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_key_personnel_bus_factor_and_succession,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_executive_report_key_personnel_bus_factor_and_succession(payload)  # type: ignore[arg-type]
+        assert empty["total_critical_roles"] == 0
+        assert empty["spof_roles_count"] == 0
+        assert empty["continuity_status"] == "resilient"
+        assert empty["is_continuity_ready"] is True
+        assert empty["issues"] == []
+
+    turnover_only = audit_executive_report_key_personnel_bus_factor_and_succession(
+        [],
+        total_team_headcount=10,
+        departures_last_12m=4,
+    )
+    assert turnover_only["annualized_turnover_pct"] == 40.0
+    assert turnover_only["turnover_breach"] is True
+    assert turnover_only["continuity_status"] == "at_risk"
+    assert turnover_only["is_continuity_ready"] is False
+
+    sample = [
+        {
+            "role_id": "ROLE-99",
+            "role_name": "Product Owner",
+            "qualified_holders_count": 2,
+            "has_documented_succession_plan": True,
+            "cross_training_completion_pct": 95.0,
+            "attrition_flight_risk": "low",
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_key_personnel_bus_factor_and_succession(
+            sample
+        )
+        == audit_executive_report_key_personnel_bus_factor_and_succession(sample)
+    )
+    assert (
+        "audit_executive_report_key_personnel_bus_factor_and_succession"
+        in mod.__all__
+    )
+

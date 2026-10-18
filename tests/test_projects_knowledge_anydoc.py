@@ -4935,3 +4935,135 @@ def test_audit_markdown_frontmatter_and_document_control_hygiene_empty_and_servi
     assert "audit_markdown_frontmatter_and_document_control_hygiene" in mod.__all__
 
 
+def test_audit_markdown_badge_and_external_tracker_hygiene_critical():
+    """http://, dominios tracker y ramas main/master sin fijar -> CRITICAL."""
+    from backend.services.anydoc_service import (
+        audit_markdown_badge_and_external_tracker_hygiene,
+    )
+
+    res = audit_markdown_badge_and_external_tracker_hygiene(
+        "![a](http://example.com/x.svg)\n"
+        "![t](https://www.google-analytics.com/collect)\n"
+        "![u](https://github.com/org/repo/raw/main/img.png)\n"
+        "![b](https://github.com/org/repo/blob/master/y.png)\n"
+        "![d](https://node.example.com/pixel?q=1)\n"
+    )
+    assert res["badge_hygiene_status"] == "CRITICAL"
+    assert res["is_compliant"] is False
+    assert res["insecure_http_image_lines"] == [1]
+    assert res["external_tracker_or_unpinned_branch_lines"] == [2, 3, 4]
+    assert res["badge_clutter_lines"] == []
+    assert res["total_images_or_badges"] == 5
+
+    # Dominios del bloque case-insensitive y query param branch.
+    ci = audit_markdown_badge_and_external_tracker_hygiene(
+        "![t](https://WWW.GOOGLE-ANALYTICS.com/x)\n"
+        "![b](https://ci.company.io/img.svg?branch=main)\n"
+    )
+    assert ci["external_tracker_or_unpinned_branch_lines"] == [1, 2]
+
+    # Badge compuesto [![i](img)](link): la URL imagen es la evaluada.
+    nested = audit_markdown_badge_and_external_tracker_hygiene(
+        "[![build](http://b.io/s.svg)](https://log.io/x)\n"
+    )
+    assert nested["insecure_http_image_lines"] == [1]
+    assert nested["total_images_or_badges"] == 1
+
+
+def test_audit_markdown_badge_and_external_tracker_hygiene_clutter():
+    """Exceso de badges en una linea -> AT_RISK; max custom y limite exacto."""
+    from backend.services.anydoc_service import (
+        audit_markdown_badge_and_external_tracker_hygiene,
+    )
+
+    many = " ".join("![b](https://e.io/b%02d.svg)" % idx for idx in range(6))
+    at_risk = audit_markdown_badge_and_external_tracker_hygiene(many + "\n")
+    assert at_risk["badge_clutter_lines"] == [1]
+    assert at_risk["insecure_http_image_lines"] == []
+    assert at_risk["external_tracker_or_unpinned_branch_lines"] == []
+    assert at_risk["badge_hygiene_status"] == "AT_RISK"
+    assert at_risk["is_compliant"] is False
+    assert at_risk["total_images_or_badges"] == 6
+
+    # 4 badges (limite exacto): no es clutter.
+    ok = audit_markdown_badge_and_external_tracker_hygiene(
+        " ".join("![b](https://e.io/b.svg)" for _ in range(4))
+    )
+    assert ok["badge_clutter_lines"] == []
+    assert ok["badge_hygiene_status"] == "HEALTHY"
+    assert ok["is_compliant"] is True
+
+    # max custom 2 con 3 badges -> clutter.
+    custom = audit_markdown_badge_and_external_tracker_hygiene(
+        "![b](https://e.io/1.svg) ![b](https://e.io/2.svg) ![b](https://e.io/3.svg)",
+        max_badges_per_line=2,
+    )
+    assert custom["badge_clutter_lines"] == [1]
+    assert custom["badge_hygiene_status"] == "AT_RISK"
+
+
+def test_audit_markdown_badge_and_external_tracker_hygiene_ignores_code_and_fences():
+    """Code spans inline y fences multi-línea (``` y ~~~) se ignoran; HTTPS/relativas son sanas."""
+    from backend.services.anydoc_service import (
+        audit_markdown_badge_and_external_tracker_hygiene,
+    )
+
+    clean = audit_markdown_badge_and_external_tracker_hygiene(
+        "Texto `![img](http://span.io/x.svg)` inline ignorado.\n"
+        "```html\n"
+        "![img](http://fence.io/x.svg)\n"
+        "![t](https://pixel.wp.com/x)\n"
+        "```\n"
+        "~~~\n"
+        "![img](https://x.io/raw/main/z.svg)\n"
+        "~~~\n"
+        "![ok](https://ok.io/x.svg)\n"
+        "![rel](assets/img.png)\n"
+    )
+    assert clean["badge_hygiene_status"] == "HEALTHY"
+    assert clean["is_compliant"] is True
+    assert clean["total_images_or_badges"] == 2
+    assert clean["insecure_http_image_lines"] == []
+    assert clean["external_tracker_or_unpinned_branch_lines"] == []
+    assert clean["badge_clutter_lines"] == []
+
+    # Reset de fence: tras cerrar vuelve a auditar.
+    reset = audit_markdown_badge_and_external_tracker_hygiene(
+        "```\n"
+        "![img](http://inside.io/a.svg)\n"
+        "```\n"
+        "![after](http://outside.io/b.svg)\n"
+    )
+    assert reset["insecure_http_image_lines"] == [4]
+    assert reset["badge_hygiene_status"] == "CRITICAL"
+
+
+def test_audit_markdown_badge_and_external_tracker_hygiene_neutral_and_binding():
+    """None/vacio/whitespace -> vacio; proxys estaticos y __all__."""
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_badge_and_external_tracker_hygiene,
+    )
+    import backend.services.anydoc_service as mod
+
+    for payload in (None, "", "   \n\t"):
+        empty = audit_markdown_badge_and_external_tracker_hygiene(payload)
+        assert empty["total_images_or_badges"] == 0
+        assert empty["insecure_http_image_lines"] == []
+        assert empty["external_tracker_or_unpinned_branch_lines"] == []
+        assert empty["badge_clutter_lines"] == []
+        assert empty["badge_hygiene_status"] == "HEALTHY"
+        assert empty["is_compliant"] is True
+
+    sample = "![b](https://e.io/x.svg)"
+    assert (
+        AnyDocService.audit_markdown_badge_and_external_tracker_hygiene(sample)
+        == audit_markdown_badge_and_external_tracker_hygiene(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_badge_and_external_tracker_hygiene(sample)
+        == audit_markdown_badge_and_external_tracker_hygiene(sample)
+    )
+    assert "audit_markdown_badge_and_external_tracker_hygiene" in mod.__all__
+

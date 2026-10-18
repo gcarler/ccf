@@ -6304,3 +6304,326 @@ def test_audit_project_administrative_and_contract_closure_readiness_empty_and_s
         in mod.__all__
     )
 
+
+def test_portfolio_strategic_alignment_esg_aligned_and_misaligned():
+    """Cobertura 100% + ESG completo -> ALIGNED; lista vacía/ESG sin mitigar/cobertura baja -> MISALIGNED."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_portfolio_strategic_alignment_and_esg_sustainability,
+    )
+
+    aligned = audit_portfolio_strategic_alignment_and_esg_sustainability(
+        [
+            {
+                "objective_id": "O-1",
+                "weight_pct": 60.0,
+                "has_measurable_kr": True,
+                "kr_confidence_pct": 85.0,
+                "is_aligned": True,
+            },
+            {
+                "objective_id": "O-2",
+                "weight_pct": 40.0,
+                "has_measurable_kr": True,
+                "kr_confidence_pct": 90.0,
+                "is_aligned": True,
+            },
+        ],
+        esg_pillars={
+            "environmental_impact_assessed": True,
+            "social_community_benefit_documented": True,
+            "governance_ethics_cleared": True,
+            "high_carbon_or_social_risk_unmitigated": False,
+        },
+    )
+    assert aligned["total_objectives"] == 2
+    assert aligned["covered_weight_pct"] == 100.0
+    assert aligned["unaligned_objective_ids"] == []
+    assert aligned["low_confidence_objective_ids"] == []
+    assert aligned["esg_missing_pillars"] == []
+    assert aligned["esg_unmitigated_risk"] is False
+    assert aligned["alignment_status"] == "ALIGNED"
+    assert aligned["is_strategically_viable"] is True
+
+    low_cover = audit_portfolio_strategic_alignment_and_esg_sustainability(
+        [
+            {
+                "objective_id": "O-3",
+                "weight_pct": 50.0,
+                "has_measurable_kr": True,
+                "kr_confidence_pct": 90.0,
+                "is_aligned": True,
+            },
+            {
+                "objective_id": "O-4",
+                "weight_pct": 50.0,
+                "has_measurable_kr": False,
+                "kr_confidence_pct": 90.0,
+                "is_aligned": False,
+            },
+        ]
+    )
+    assert low_cover["covered_weight_pct"] == 50.0
+    assert low_cover["unaligned_objective_ids"] == ["O-4"]
+    assert low_cover["alignment_status"] == "MISALIGNED"
+    assert low_cover["is_strategically_viable"] is False
+
+    empty = audit_portfolio_strategic_alignment_and_esg_sustainability([])
+    assert empty["covered_weight_pct"] == 0.0
+    assert empty["alignment_status"] == "MISALIGNED"
+
+    for payload in (None, "not-a-list", 42):
+        neutral = audit_portfolio_strategic_alignment_and_esg_sustainability(payload)
+        assert neutral["alignment_status"] == "MISALIGNED"
+        assert neutral["is_strategically_viable"] is False
+
+    esg_risk = audit_portfolio_strategic_alignment_and_esg_sustainability(
+        [
+            {
+                "objective_id": "O-5",
+                "weight_pct": 100.0,
+                "has_measurable_kr": True,
+                "kr_confidence_pct": 90.0,
+                "is_aligned": True,
+            }
+        ],
+        esg_pillars={
+            "environmental_impact_assessed": True,
+            "social_community_benefit_documented": True,
+            "governance_ethics_cleared": True,
+            "high_carbon_or_social_risk_unmitigated": True,
+        },
+    )
+    assert esg_risk["esg_unmitigated_risk"] is True
+    assert esg_risk["alignment_status"] == "MISALIGNED"
+
+
+def test_portfolio_strategic_alignment_esg_at_risk_and_thresholds():
+    """Cobertura OK pero confidencia baja o pilares ESG incompletos -> AT_RISK; umbrales custom."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_portfolio_strategic_alignment_and_esg_sustainability,
+    )
+
+    low_conf = audit_portfolio_strategic_alignment_and_esg_sustainability(
+        [
+            {
+                "objective_id": "O-6",
+                "weight_pct": 100.0,
+                "has_measurable_kr": True,
+                "kr_confidence_pct": 69.9,
+                "is_aligned": True,
+            }
+        ]
+    )
+    assert low_conf["low_confidence_objective_ids"] == ["O-6"]
+    assert low_conf["covered_weight_pct"] == 100.0
+    assert low_conf["alignment_status"] == "AT_RISK"
+    assert low_conf["is_strategically_viable"] is False
+
+    # Confidencia exactamente en el umbral: no es baja.
+    at_limit = audit_portfolio_strategic_alignment_and_esg_sustainability(
+        [
+            {
+                "objective_id": "O-7",
+                "weight_pct": 100.0,
+                "has_measurable_kr": True,
+                "kr_confidence_pct": 70.0,
+                "is_aligned": True,
+            }
+        ]
+    )
+    assert at_limit["low_confidence_objective_ids"] == []
+    assert at_limit["alignment_status"] == "ALIGNED"
+
+    missing_pillars = audit_portfolio_strategic_alignment_and_esg_sustainability(
+        [
+            {
+                "objective_id": "O-8",
+                "weight_pct": 100.0,
+                "has_measurable_kr": True,
+                "kr_confidence_pct": 90.0,
+                "is_aligned": True,
+            }
+        ],
+        esg_pillars={
+            "environmental_impact_assessed": False,
+            "social_community_benefit_documented": False,
+            "governance_ethics_cleared": True,
+        },
+    )
+    assert missing_pillars["esg_missing_pillars"] == ["environmental", "social"]
+    assert missing_pillars["alignment_status"] == "AT_RISK"
+
+    # Sin esg_pillars proveído: no missing ni unmitigated.
+    no_esg = audit_portfolio_strategic_alignment_and_esg_sustainability(
+        [
+            {
+                "objective_id": "O-9",
+                "weight_pct": 100.0,
+                "has_measurable_kr": True,
+                "kr_confidence_pct": 90.0,
+                "is_aligned": True,
+            }
+        ]
+    )
+    assert no_esg["esg_missing_pillars"] == []
+    assert no_esg["esg_unmitigated_risk"] is False
+    assert no_esg["alignment_status"] == "ALIGNED"
+
+    # Umbral de cobertura custom: 85% con min 90 -> MISALIGNED.
+    custom = audit_portfolio_strategic_alignment_and_esg_sustainability(
+        [
+            {
+                "objective_id": "O-10",
+                "weight_pct": 85.0,
+                "has_measurable_kr": True,
+                "kr_confidence_pct": 90.0,
+                "is_aligned": True,
+            }
+        ],
+        min_strategic_weight_coverage_pct=90.0,
+    )
+    assert custom["covered_weight_pct"] == 85.0
+    assert custom["alignment_status"] == "MISALIGNED"
+
+    # Umbral de cobertura custom: 85% con min 80 -> dentro.
+    ok_custom = audit_portfolio_strategic_alignment_and_esg_sustainability(
+        [
+            {
+                "objective_id": "O-11",
+                "weight_pct": 85.0,
+                "has_measurable_kr": True,
+                "kr_confidence_pct": 90.0,
+                "is_aligned": True,
+            }
+        ],
+        min_strategic_weight_coverage_pct=80.0,
+    )
+    assert ok_custom["covered_weight_pct"] == 85.0
+    assert ok_custom["alignment_status"] == "ALIGNED"
+
+
+def test_portfolio_strategic_alignment_esg_rounding_and_edge_cases():
+    """Peso agregado redondeado a 2 decimales; bools no suman; informative fields."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_portfolio_strategic_alignment_and_esg_sustainability,
+    )
+
+    rounded = audit_portfolio_strategic_alignment_and_esg_sustainability(
+        [
+            {
+                "objective_id": "O-12",
+                "weight_pct": 33.333333,
+                "has_measurable_kr": True,
+                "kr_confidence_pct": 90.0,
+                "is_aligned": True,
+            },
+            {
+                "objective_id": "O-13",
+                "weight_pct": 33.333333,
+                "has_measurable_kr": True,
+                "kr_confidence_pct": 90.0,
+                "is_aligned": True,
+            },
+            {
+                "objective_id": "O-14",
+                "weight_pct": 33.333333,
+                "has_measurable_kr": True,
+                "kr_confidence_pct": 90.0,
+                "is_aligned": True,
+            },
+        ]
+    )
+    assert rounded["covered_weight_pct"] == 100.0
+    assert rounded["total_objectives"] == 3
+
+    bool_weight = audit_portfolio_strategic_alignment_and_esg_sustainability(
+        [
+            {
+                "objective_id": "O-15",
+                "weight_pct": True,
+                "has_measurable_kr": True,
+                "kr_confidence_pct": 90.0,
+                "is_aligned": True,
+            },
+            {
+                "objective_id": "O-16",
+                "weight_pct": 40.0,
+                "has_measurable_kr": True,
+                "kr_confidence_pct": 90.0,
+                "is_aligned": True,
+            },
+        ]
+    )
+    # weight_pct=True (bool) se EXCLUYE de la aritmética numérica deliberadamente:
+    # solo queda el peso real (40.0) y el status es MISALIGNED por cobertura.
+    assert bool_weight["covered_weight_pct"] == 40.0
+    assert bool_weight["alignment_status"] == "MISALIGNED"  # 40 < 80
+
+    # is_aligned False pero weight alto: NO suma al coverage aunque weight este.
+    no_contrib = audit_portfolio_strategic_alignment_and_esg_sustainability(
+        [
+            {
+                "objective_id": "O-17",
+                "weight_pct": 95.0,
+                "has_measurable_kr": False,
+                "kr_confidence_pct": 90.0,
+                "is_aligned": True,
+            }
+        ]
+    )
+    assert no_contrib["covered_weight_pct"] == 0.0
+    assert no_contrib["alignment_status"] == "MISALIGNED"
+
+
+def test_portfolio_strategic_alignment_esg_precedence_and_binding():
+    """Cadena precedence MISALIGNED > AT_RISK > ALIGNED; proxy @staticmethod."""
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_portfolio_strategic_alignment_and_esg_sustainability,
+    )
+
+    # MISALIGNED domina aunque haya AT_RISK signals.
+    dominates = audit_portfolio_strategic_alignment_and_esg_sustainability(
+        [
+            {
+                "objective_id": "O-18",
+                "weight_pct": 40.0,
+                "has_measurable_kr": True,
+                "kr_confidence_pct": 10.0,
+                "is_aligned": True,
+            }
+        ]
+    )
+    assert dominates["covered_weight_pct"] == 40.0
+    assert dominates["alignment_status"] == "MISALIGNED"
+
+    mixed = audit_portfolio_strategic_alignment_and_esg_sustainability(
+        [
+            {
+                "objective_id": "O-19",
+                "weight_pct": 100.0,
+                "has_measurable_kr": True,
+                "kr_confidence_pct": 20.0,
+                "is_aligned": True,
+            }
+        ]
+    )
+    # 100% cobertura -> no MISALIGNED por cobertura; confidencia baja -> AT_RISK.
+    assert mixed["alignment_status"] == "AT_RISK"
+
+    sample = [
+        {
+            "objective_id": "O-20",
+            "weight_pct": 100.0,
+            "has_measurable_kr": True,
+            "kr_confidence_pct": 90.0,
+            "is_aligned": True,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_portfolio_strategic_alignment_and_esg_sustainability(sample)
+        == audit_portfolio_strategic_alignment_and_esg_sustainability(sample)
+    )
+    assert "audit_portfolio_strategic_alignment_and_esg_sustainability" in mod.__all__
+

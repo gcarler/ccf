@@ -5147,4 +5147,163 @@ def test_validate_make_or_buy_breakeven_and_tco_empty_and_export():
     assert "validate_make_or_buy_breakeven_and_tco" in mod.__all__
 
 
+def test_validate_risk_response_strategy_and_contingency_triggers_compliant():
+    """Valida respuestas a amenazas y oportunidades bien alineadas, con reducción efectiva, triggers y fallback ('compliant')."""
+    from backend.schemas.projects import (
+        validate_risk_response_strategy_and_contingency_triggers,
+    )
+
+    responses = [
+        {
+            "risk_id": "RSK-01",
+            "risk_type": "threat",
+            "strategy": "mitigate",
+            "pre_response_score": 20.0,
+            "residual_score": 8.0,
+            "early_warning_trigger": "Latencia p99 > 250ms durante 15m",
+            "fallback_plan": None,
+            "action_owner_id": "USR-101",
+        },
+        {
+            "risk_id": "RSK-02",
+            "risk_type": "threat",
+            "strategy": "avoid",
+            "pre_response_score": 16.0,
+            "residual_score": 0.0,
+            "early_warning_trigger": "Retraso de homologación > 5 días",
+            "fallback_plan": "Conmutar a pasarela secundaria certificada",
+            "action_owner_id": "USR-102",
+        },
+        {
+            "risk_id": "RSK-03",
+            "risk_type": "opportunity",
+            "strategy": "exploit",
+            "pre_response_score": 8.0,
+            "residual_score": 10.0,
+            "early_warning_trigger": "Descuento por pronto pago disponible",
+            "fallback_plan": None,
+            "action_owner_id": "USR-103",
+        },
+    ]
+    res = validate_risk_response_strategy_and_contingency_triggers(responses)
+    assert res["is_valid"] is True
+    assert res["total_responses_evaluated"] == 3
+    assert res["invalid_strategy_alignment_ids"] == []
+    assert res["ineffective_mitigation_ids"] == []
+    assert res["missing_trigger_ids"] == []
+    assert res["missing_fallback_ids"] == []
+    assert res["average_risk_reduction_pct"] == 80.0
+    assert res["governance_status"] == "compliant"
+    assert res["issues"] == []
+
+
+def test_validate_risk_response_strategy_and_contingency_triggers_non_compliant():
+    """Detecta estrategia de oportunidad en amenaza, falta de responsable y mitigación/avoid inefectiva ('non_compliant')."""
+    from backend.schemas.projects import (
+        validate_risk_response_strategy_and_contingency_triggers,
+    )
+
+    responses = [
+        {
+            "risk_id": "RSK-10",
+            "risk_type": "threat",
+            "strategy": "exploit",
+            "pre_response_score": 15.0,
+            "residual_score": 10.0,
+            "early_warning_trigger": "Trigger X",
+            "fallback_plan": "Plan B",
+            "action_owner_id": "USR-201",
+        },
+        {
+            "risk_id": "RSK-11",
+            "risk_type": "threat",
+            "strategy": "mitigate",
+            "pre_response_score": 12.0,
+            "residual_score": 12.0,
+            "early_warning_trigger": "Trigger Y",
+            "fallback_plan": "Plan C",
+            "action_owner_id": "",
+        },
+        {
+            "risk_id": "RSK-12",
+            "risk_type": "threat",
+            "strategy": "avoid",
+            "pre_response_score": 18.0,
+            "residual_score": 4.0,
+            "early_warning_trigger": "Trigger Z",
+            "fallback_plan": "Plan D",
+            "action_owner_id": "USR-203",
+        },
+    ]
+    res = validate_risk_response_strategy_and_contingency_triggers(responses)
+    assert res["is_valid"] is False
+    assert res["invalid_strategy_alignment_ids"] == ["RSK-10", "RSK-11"]
+    assert res["ineffective_mitigation_ids"] == ["RSK-11", "RSK-12"]
+    assert res["governance_status"] == "non_compliant"
+    assert len(res["issues"]) >= 3
+
+
+def test_validate_risk_response_strategy_and_contingency_triggers_needs_refinement():
+    """Detecta falta de early_warning_trigger en estrategia activa y falta de fallback_plan en riesgo residual alto ('needs_refinement')."""
+    from backend.schemas.projects import (
+        validate_risk_response_strategy_and_contingency_triggers,
+    )
+
+    responses = [
+        {
+            "risk_id": "RSK-20",
+            "risk_type": "threat",
+            "strategy": "transfer",
+            "pre_response_score": 25.0,
+            "residual_score": 14.0,
+            "early_warning_trigger": "",
+            "fallback_plan": None,
+            "action_owner_id": "USR-301",
+        },
+        {
+            "risk_id": "RSK-21",
+            "risk_type": "threat",
+            "strategy": "accept",
+            "pre_response_score": 6.0,
+            "residual_score": 6.0,
+            "early_warning_trigger": None,
+            "fallback_plan": None,
+            "action_owner_id": "USR-302",
+        },
+    ]
+    res = validate_risk_response_strategy_and_contingency_triggers(responses)
+    assert res["is_valid"] is False
+    assert res["invalid_strategy_alignment_ids"] == []
+    assert res["ineffective_mitigation_ids"] == []
+    assert res["missing_trigger_ids"] == ["RSK-20"]
+    assert res["missing_fallback_ids"] == ["RSK-20"]
+    assert res["governance_status"] == "needs_refinement"
+    assert len(res["issues"]) == 2
+
+
+def test_validate_risk_response_strategy_and_contingency_triggers_empty_and_export():
+    """Verifica manejo defensivo de entradas vacías/no-secuencia y exportación en __all__."""
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_risk_response_strategy_and_contingency_triggers,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = validate_risk_response_strategy_and_contingency_triggers(payload)  # type: ignore[arg-type]
+        assert empty["is_valid"] is True
+        assert empty["total_responses_evaluated"] == 0
+        assert empty["invalid_strategy_alignment_ids"] == []
+        assert empty["ineffective_mitigation_ids"] == []
+        assert empty["missing_trigger_ids"] == []
+        assert empty["missing_fallback_ids"] == []
+        assert empty["average_risk_reduction_pct"] == 0.0
+        assert empty["governance_status"] == "compliant"
+        assert empty["issues"] == []
+
+    assert (
+        "validate_risk_response_strategy_and_contingency_triggers"
+        in mod.__all__
+    )
+
+
 

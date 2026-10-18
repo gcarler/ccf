@@ -2986,6 +2986,7 @@ __all__ = [
     "audit_executive_report_contract_claims_and_change_orders",
     "audit_executive_report_cybersecurity_vulnerability_and_patch_sla",
     "audit_executive_report_capex_opex_capitalization_compliance",
+    "audit_executive_report_key_personnel_bus_factor_and_succession",
     "ProjectExportService",
 ]
 
@@ -5325,5 +5326,159 @@ def audit_executive_report_capex_opex_capitalization_compliance(
 
 ProjectExportService.audit_executive_report_capex_opex_capitalization_compliance = staticmethod(
     audit_executive_report_capex_opex_capitalization_compliance
+)
+
+
+def audit_executive_report_key_personnel_bus_factor_and_succession(
+    critical_roles: list[dict[str, Any]],
+    *,
+    max_single_point_of_failure_roles: int = 0,
+    min_cross_training_coverage_pct: float = 80.0,
+    max_annualized_turnover_pct: float = 15.0,
+    total_team_headcount: int = 10,
+    departures_last_12m: int = 0,
+) -> dict[str, Any]:
+    """Audita rotación de personal clave, factor autobús (Bus Factor / SPOF), cobertura de entrenamiento cruzado y planes de sucesión en el reporte ejecutivo (PMI PMBOK §9.4 y §9.5)."""
+    if (
+        critical_roles is None
+        or isinstance(critical_roles, (str, bytes))
+        or not isinstance(critical_roles, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = critical_roles
+
+    try:
+        max_spof = max(0, int(max_single_point_of_failure_roles))
+    except (TypeError, ValueError):
+        max_spof = 0
+
+    try:
+        min_training_pct = float(min_cross_training_coverage_pct)
+    except (TypeError, ValueError):
+        min_training_pct = 80.0
+
+    try:
+        max_turnover_pct = float(max_annualized_turnover_pct)
+    except (TypeError, ValueError):
+        max_turnover_pct = 15.0
+
+    try:
+        headcount = max(1, int(total_team_headcount))
+    except (TypeError, ValueError):
+        headcount = 1
+
+    try:
+        departures = max(0, int(departures_last_12m))
+    except (TypeError, ValueError):
+        departures = 0
+
+    total_critical_roles = 0
+    spof_role_ids: list[str] = []
+    spof_without_succession_ids: list[str] = []
+    high_flight_risk_spof_ids: list[str] = []
+    under_trained_role_ids: list[str] = []
+    issues: list[str] = []
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_critical_roles += 1
+
+        role_id = (
+            str(raw.get("role_id") or raw.get("id") or "").strip()
+            or f"ROLE-{total_critical_roles}"
+        )
+        role_name = str(raw.get("role_name") or role_id).strip()
+
+        raw_holders = raw.get("qualified_holders_count")
+        try:
+            qualified_holders_count = (
+                int(raw_holders) if raw_holders is not None else 0
+            )
+        except (TypeError, ValueError):
+            qualified_holders_count = 0
+
+        has_documented_succession_plan = bool(
+            raw.get("has_documented_succession_plan")
+        )
+
+        raw_training = raw.get("cross_training_completion_pct")
+        try:
+            cross_training_completion_pct = (
+                float(raw_training) if raw_training is not None else 0.0
+            )
+        except (TypeError, ValueError):
+            cross_training_completion_pct = 0.0
+
+        attrition_flight_risk = (
+            str(raw.get("attrition_flight_risk") or "low").strip().lower()
+        )
+
+        is_spof = qualified_holders_count <= 1
+        if is_spof:
+            spof_role_ids.append(role_id)
+            if not has_documented_succession_plan:
+                spof_without_succession_ids.append(role_id)
+                issues.append(
+                    f"Rol crítico '{role_name}' ({role_id}) es punto único de fallo (bus factor={qualified_holders_count}) sin plan de sucesión documentado."
+                )
+            if attrition_flight_risk == "high":
+                high_flight_risk_spof_ids.append(role_id)
+                issues.append(
+                    f"Rol crítico '{role_name}' ({role_id}) es punto único de fallo con riesgo de fuga alto."
+                )
+
+        if cross_training_completion_pct < min_training_pct:
+            under_trained_role_ids.append(role_id)
+            issues.append(
+                f"Rol crítico '{role_name}' ({role_id}) tiene cobertura de cross-training ({cross_training_completion_pct:.1f}%) inferior al mínimo ({min_training_pct:.1f}%)."
+            )
+
+    annualized_turnover_pct = round((departures / headcount) * 100.0, 2)
+    turnover_breach = annualized_turnover_pct > max_turnover_pct
+    if turnover_breach:
+        issues.append(
+            f"La rotación anualizada del equipo ({annualized_turnover_pct:.2f}%) excede el umbral permitido ({max_turnover_pct:.2f}%)."
+        )
+
+    spof_roles_count = len(spof_role_ids)
+    if spof_roles_count > max_spof:
+        issues.append(
+            f"Cantidad de roles con punto único de fallo ({spof_roles_count}) supera el límite tolerado ({max_spof})."
+        )
+
+    if (
+        len(high_flight_risk_spof_ids) > 0
+        or len(spof_without_succession_ids) > 0
+        or (spof_roles_count > max_spof and turnover_breach)
+    ):
+        continuity_status = "critical_bus_factor"
+    elif (
+        spof_roles_count > max_spof
+        or len(under_trained_role_ids) > 0
+        or turnover_breach
+    ):
+        continuity_status = "at_risk"
+    else:
+        continuity_status = "resilient"
+
+    return {
+        "total_critical_roles": total_critical_roles,
+        "spof_roles_count": spof_roles_count,
+        "spof_role_ids": spof_role_ids,
+        "spof_without_succession_ids": spof_without_succession_ids,
+        "high_flight_risk_spof_ids": high_flight_risk_spof_ids,
+        "under_trained_role_ids": under_trained_role_ids,
+        "annualized_turnover_pct": annualized_turnover_pct,
+        "turnover_breach": turnover_breach,
+        "continuity_status": continuity_status,
+        "is_continuity_ready": continuity_status == "resilient",
+        "issues": issues,
+    }
+
+
+ProjectExportService.audit_executive_report_key_personnel_bus_factor_and_succession = staticmethod(
+    audit_executive_report_key_personnel_bus_factor_and_succession
 )
 

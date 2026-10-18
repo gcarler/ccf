@@ -3151,6 +3151,7 @@ __all__ = [
     "audit_stakeholder_power_interest_and_salience_drift",
     "audit_organizational_change_management_adkar_and_adoption",
     "audit_project_administrative_and_contract_closure_readiness",
+    "audit_portfolio_strategic_alignment_and_esg_sustainability",
     "ProjectLifecyclePMIService",
 ]
 
@@ -5407,5 +5408,110 @@ def audit_project_administrative_and_contract_closure_readiness(
 
 ProjectLifecyclePMIService.audit_project_administrative_and_contract_closure_readiness = staticmethod(
     audit_project_administrative_and_contract_closure_readiness
+)
+
+
+def audit_portfolio_strategic_alignment_and_esg_sustainability(
+    strategic_objectives: Sequence[Mapping[str, Any]] | None,
+    *,
+    esg_pillars: Mapping[str, Any] | None = None,
+    min_strategic_weight_coverage_pct: float = 80.0,
+    min_okr_confidence_pct: float = 70.0,
+) -> dict[str, Any]:
+    """PMI PMBOK 1.2 & Portfolio Management — alineación estratégica y ESG.
+
+    Auditoría pura sobre ``strategic_objectives`` (lista de dicts; entradas
+    no-lista/None se tratan como vacías y elementos no-dict se ignoran).
+    Cada elemento: objective_id, weight_pct (float), has_measurable_kr
+    (bool), kr_confidence_pct (float), is_aligned (bool). ``esg_pillars``
+    (dict opcional) aporta flags ambientales, sociales y de gobernanza.
+
+    Reglas:
+    1. ``covered_weight_pct``: suma de ``weight_pct`` de objetivos con
+       ``is_aligned`` AND ``has_measurable_kr`` True (redondeado a 2
+       decimales).
+    2. ``unaligned_objective_ids``: IDs sin ``is_aligned`` o sin
+       ``has_measurable_kr``.
+    3. ``low_confidence_objective_ids``: IDs con ``kr_confidence_pct <
+       min_okr_confidence_pct``.
+    4. ``esg_missing_pillars``: nombres de pilares ('environmental',
+       'social', 'governance') con flag False cuando se proveen; y
+       ``esg_unmitigated_risk`` = bool del flag de riesgo no mitigado.
+    5. ``alignment_status``: 'MISALIGNED' si la lista está vacía,
+       ``covered_weight_pct < min_strategic_weight_coverage_pct`` o riesgo
+       ESG no mitigado; 'AT_RISK' si hay breaches de menor peso; 'ALIGNED'
+       si todo cumple. ``is_strategically_viable`` = status == 'ALIGNED'.
+    """
+    raw_items = strategic_objectives if isinstance(strategic_objectives, list) else []
+    items = [entry for entry in raw_items if isinstance(entry, Mapping)]
+
+    covered_weight = 0.0
+    unaligned_ids: list[str] = []
+    low_confidence_ids: list[str] = []
+
+    for entry in items:
+        objective_id = entry.get("objective_id")
+        weight_pct = entry.get("weight_pct")
+        has_meas_kr = entry.get("has_measurable_kr")
+        kr_confidence = entry.get("kr_confidence_pct")
+        is_aligned = entry.get("is_aligned")
+
+        aligned = is_aligned is True and has_meas_kr is True
+        if aligned and isinstance(weight_pct, (int, float)) and not isinstance(weight_pct, bool):
+            covered_weight += weight_pct
+
+        if not aligned:
+            unaligned_ids.append(objective_id)
+
+        if (
+            isinstance(kr_confidence, (int, float))
+            and not isinstance(kr_confidence, bool)
+            and kr_confidence < min_okr_confidence_pct
+        ):
+            low_confidence_ids.append(objective_id)
+
+    covered_weight_pct = round(covered_weight, 2)
+
+    esg_missing_pillars: list[str] = []
+    esg_unmitigated_risk = False
+    if isinstance(esg_pillars, Mapping):
+        pillar_flags = (
+            ("environmental", "environmental_impact_assessed"),
+            ("social", "social_community_benefit_documented"),
+            ("governance", "governance_ethics_cleared"),
+        )
+        for pillar_name, flag_key in pillar_flags:
+            value = esg_pillars.get(flag_key)
+            if value is not True:
+                esg_missing_pillars.append(pillar_name)
+        risk_flag = esg_pillars.get("high_carbon_or_social_risk_unmitigated")
+        esg_unmitigated_risk = bool(risk_flag)
+
+    empty_objectives = len(items) == 0
+    weight_deficit = covered_weight_pct < min_strategic_weight_coverage_pct
+
+    # Nota: el umbral agregado valida la cobertura de peso; las desviaciones
+    # por objetivo se reflejan en unaligned/low_confidence.
+    if empty_objectives or weight_deficit or esg_unmitigated_risk:
+        alignment_status = "MISALIGNED"
+    elif unaligned_ids or low_confidence_ids or esg_missing_pillars:
+        alignment_status = "AT_RISK"
+    else:
+        alignment_status = "ALIGNED"
+
+    return {
+        "total_objectives": len(items),
+        "covered_weight_pct": covered_weight_pct,
+        "unaligned_objective_ids": unaligned_ids,
+        "low_confidence_objective_ids": low_confidence_ids,
+        "esg_missing_pillars": esg_missing_pillars,
+        "esg_unmitigated_risk": esg_unmitigated_risk,
+        "alignment_status": alignment_status,
+        "is_strategically_viable": alignment_status == "ALIGNED",
+    }
+
+
+ProjectLifecyclePMIService.audit_portfolio_strategic_alignment_and_esg_sustainability = staticmethod(
+    audit_portfolio_strategic_alignment_and_esg_sustainability
 )
 
