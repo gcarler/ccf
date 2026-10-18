@@ -4052,3 +4052,127 @@ def test_audit_wiki_rbs_coverage_empty_and_service_proxy():
         WikiPMIService.audit_wiki_risk_breakdown_structure_coverage(sample)
         == audit_wiki_risk_breakdown_structure_coverage(sample)
     )
+
+
+def test_audit_wiki_onboarding_and_kt_handover_readiness_compliant():
+    """Paquetes KT con arquitectura, guía local, shadowing >= 1, signoff y rampup en rango -> ready True."""
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_onboarding_and_kt_handover_readiness,
+    )
+
+    packages = [
+        {
+            "package_id": "KT-BACKEND",
+            "has_architecture_walkthrough": True,
+            "has_local_env_setup_guide": True,
+            "shadowing_sessions_completed": 3,
+            "successor_signoff_confirmed": True,
+            "estimated_rampup_days": 5,
+        },
+        {
+            "id": "KT-FRONTEND",
+            "has_architecture_walkthrough": True,
+            "has_local_env_setup_guide": True,
+            "shadowing_sessions_completed": 1,
+            "successor_signoff_confirmed": True,
+            "estimated_rampup_days": 10,
+        },
+    ]
+    res = audit_wiki_onboarding_and_kt_handover_readiness(packages)
+    assert res == {
+        "total_evaluated": 2,
+        "incomplete_documentation_package_ids": [],
+        "unverified_handover_package_ids": [],
+        "excessive_rampup_package_ids": [],
+        "is_kt_handover_ready": True,
+    }
+    assert (
+        WikiPMIService.audit_wiki_onboarding_and_kt_handover_readiness(packages)
+        == res
+    )
+
+
+def test_audit_wiki_onboarding_and_kt_handover_readiness_incomplete_doc_and_unverified():
+    """Detecta falta de walkthrough/guía local y falta de shadowing o signoff del sucesor."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_onboarding_and_kt_handover_readiness,
+    )
+
+    packages = [
+        {
+            "package_id": "KT-NO-DOC",
+            "has_architecture_walkthrough": True,
+            "has_local_env_setup_guide": False,
+            "shadowing_sessions_completed": 2,
+            "successor_signoff_confirmed": True,
+            "estimated_rampup_days": 4,
+        },
+        {
+            "package_id": "KT-NO-SIGNOFF",
+            "has_architecture_walkthrough": True,
+            "has_local_env_setup_guide": True,
+            "shadowing_sessions_completed": 0,
+            "successor_signoff_confirmed": False,
+            "estimated_rampup_days": 6,
+        },
+    ]
+    res = audit_wiki_onboarding_and_kt_handover_readiness(packages)
+    assert res["total_evaluated"] == 2
+    assert res["incomplete_documentation_package_ids"] == ["KT-NO-DOC"]
+    assert res["unverified_handover_package_ids"] == ["KT-NO-SIGNOFF"]
+    assert res["excessive_rampup_package_ids"] == []
+    assert res["is_kt_handover_ready"] is False
+
+
+def test_audit_wiki_onboarding_and_kt_handover_readiness_excessive_rampup():
+    """Rampup <= 0 o > max_onboarding_days se reporta en excessive_rampup_package_ids."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_onboarding_and_kt_handover_readiness,
+    )
+
+    packages = [
+        {
+            "package_id": "KT-ZERO",
+            "has_architecture_walkthrough": True,
+            "has_local_env_setup_guide": True,
+            "shadowing_sessions_completed": 2,
+            "successor_signoff_confirmed": True,
+            "estimated_rampup_days": 0,
+        },
+        {
+            "package_id": "KT-SLOW",
+            "has_architecture_walkthrough": True,
+            "has_local_env_setup_guide": True,
+            "shadowing_sessions_completed": 2,
+            "successor_signoff_confirmed": True,
+            "estimated_rampup_days": 14,
+        },
+    ]
+    res = audit_wiki_onboarding_and_kt_handover_readiness(
+        packages, max_onboarding_days=10
+    )
+    assert res["total_evaluated"] == 2
+    assert res["incomplete_documentation_package_ids"] == []
+    assert res["unverified_handover_package_ids"] == []
+    assert res["excessive_rampup_package_ids"] == ["KT-ZERO", "KT-SLOW"]
+    assert res["is_kt_handover_ready"] is False
+
+
+def test_audit_wiki_onboarding_and_kt_handover_readiness_invalid_inputs_and_export():
+    """Ignora entradas no secuencia o sin package_id válido y verifica exportación en __all__."""
+    import backend.services.wiki_pmi_service as _m
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_onboarding_and_kt_handover_readiness,
+    )
+
+    assert "audit_wiki_onboarding_and_kt_handover_readiness" in _m.__all__
+    for bad in (None, "not-a-seq", b"bytes", bytearray(b"abc"), [{"package_id": "  "}, 123]):
+        res = audit_wiki_onboarding_and_kt_handover_readiness(bad)
+        assert res == {
+            "total_evaluated": 0,
+            "incomplete_documentation_package_ids": [],
+            "unverified_handover_package_ids": [],
+            "excessive_rampup_package_ids": [],
+            "is_kt_handover_ready": True,
+        }

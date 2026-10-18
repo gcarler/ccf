@@ -2970,6 +2970,7 @@ __all__ = [
     "audit_executive_report_benefits_handover_kpis",
     "audit_executive_report_resource_spof_and_overallocation",
     "audit_executive_report_change_readiness_and_adoption",
+    "audit_executive_report_strategic_alignment_and_esg",
     "audit_executive_report_contract_closeout_and_claims",
     "ProjectExportService",
 ]
@@ -3674,4 +3675,79 @@ def audit_executive_report_contract_closeout_and_claims(
 
 ProjectExportService.audit_executive_report_contract_closeout_and_claims = staticmethod(
     audit_executive_report_contract_closeout_and_claims
+)
+
+
+def audit_executive_report_strategic_alignment_and_esg(
+    initiatives: object,
+    *,
+    min_alignment_score: float = 70.0,
+) -> dict[str, object]:
+    """Audita alineamiento estratégico portfolio-OKR e impacto ESG (sostenibilidad) de iniciativas en reportes ejecutivos según PMI PMBOK §1.2 y §2.4."""
+    total_evaluated = 0
+    unaligned_strategic_initiative_ids: list[str] = []
+    unassessed_esg_initiative_ids: list[str] = []
+    unmitigated_esg_risk_initiative_ids: list[str] = []
+
+    min_score = float(min_alignment_score)
+    items: Sequence[Any] = (
+        initiatives
+        if isinstance(initiatives, Sequence)
+        and not isinstance(initiatives, (str, bytes, bytearray))
+        else []
+    )
+
+    for item in items:
+        if not isinstance(item, Mapping):
+            continue
+        init_id = str(item.get("initiative_id") or item.get("id") or "").strip()
+        if not init_id:
+            continue
+
+        total_evaluated += 1
+
+        okr_or_pillar_code = str(item.get("okr_or_pillar_code") or "").strip()
+        try:
+            strategic_alignment_score = float(
+                item.get("strategic_alignment_score", 0.0) or 0.0
+            )
+        except (TypeError, ValueError):
+            strategic_alignment_score = 0.0
+        esg_impact_assessed = bool(item.get("esg_impact_assessed", False))
+        has_negative_environmental_or_social_impact = bool(
+            item.get("has_negative_environmental_or_social_impact", False)
+        )
+        esg_mitigation_plan_approved = bool(
+            item.get("esg_mitigation_plan_approved", False)
+        )
+
+        if not okr_or_pillar_code or strategic_alignment_score < min_score:
+            unaligned_strategic_initiative_ids.append(init_id)
+
+        if not esg_impact_assessed:
+            unassessed_esg_initiative_ids.append(init_id)
+
+        if (
+            has_negative_environmental_or_social_impact
+            and not esg_mitigation_plan_approved
+        ):
+            unmitigated_esg_risk_initiative_ids.append(init_id)
+
+    is_strategic_and_esg_compliant = bool(
+        len(unaligned_strategic_initiative_ids) == 0
+        and len(unassessed_esg_initiative_ids) == 0
+        and len(unmitigated_esg_risk_initiative_ids) == 0
+    )
+
+    return {
+        "total_evaluated": total_evaluated,
+        "unaligned_strategic_initiative_ids": unaligned_strategic_initiative_ids,
+        "unassessed_esg_initiative_ids": unassessed_esg_initiative_ids,
+        "unmitigated_esg_risk_initiative_ids": unmitigated_esg_risk_initiative_ids,
+        "is_strategic_and_esg_compliant": is_strategic_and_esg_compliant,
+    }
+
+
+ProjectExportService.audit_executive_report_strategic_alignment_and_esg = staticmethod(
+    audit_executive_report_strategic_alignment_and_esg
 )

@@ -4534,3 +4534,117 @@ def test_audit_scope_creep_and_gold_plating_drift_empty_and_service_proxy():
         ProjectCCBService.audit_scope_creep_and_gold_plating_drift(sample)
         == audit_scope_creep_and_gold_plating_drift(sample)
     )
+
+
+def test_audit_requirements_traceability_matrix_coverage_complete():
+    """Requisitos con trazabilidad hacia adelante (objetivo + WBS), casos de prueba y automatización en críticos -> complete True."""
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_requirements_traceability_matrix_coverage,
+    )
+
+    entries = [
+        {
+            "requirement_id": "REQ-01",
+            "business_objective_ref": "OBJ-FIN-1",
+            "wbs_deliverable_ref": "WBS-2.1",
+            "verification_test_case_ids": ["TC-101", "TC-102"],
+            "priority_tier": "critical",
+            "regression_suite_automated": True,
+        },
+        {
+            "id": "REQ-02",
+            "business_objective_ref": "OBJ-OPS-2",
+            "wbs_deliverable_ref": "WBS-3.4",
+            "verification_test_case_ids": ["TC-201"],
+            "priority_tier": "low",
+            "regression_suite_automated": False,
+        },
+    ]
+    res = audit_requirements_traceability_matrix_coverage(entries)
+    assert res == {
+        "total_evaluated": 2,
+        "orphan_forward_traceability_req_ids": [],
+        "untested_backward_traceability_req_ids": [],
+        "unautomated_critical_req_ids": [],
+        "is_rtm_bidirectional_complete": True,
+    }
+    assert (
+        ProjectCCBService.audit_requirements_traceability_matrix_coverage(
+            entries
+        )
+        == res
+    )
+
+
+def test_audit_requirements_traceability_matrix_coverage_orphan_and_untested():
+    """Detecta requisitos huérfanos (sin objetivo o sin WBS) y sin casos de prueba válidos."""
+    from backend.services.project_ccb_service import (
+        audit_requirements_traceability_matrix_coverage,
+    )
+
+    entries = [
+        {
+            "requirement_id": "REQ-NO-OBJ",
+            "business_objective_ref": "",
+            "wbs_deliverable_ref": "WBS-1.1",
+            "verification_test_case_ids": ["TC-1"],
+            "priority_tier": "medium",
+        },
+        {
+            "requirement_id": "REQ-NO-TEST",
+            "business_objective_ref": "OBJ-1",
+            "wbs_deliverable_ref": "WBS-1.2",
+            "verification_test_case_ids": ["   ", 123],
+            "priority_tier": "medium",
+        },
+    ]
+    res = audit_requirements_traceability_matrix_coverage(entries)
+    assert res["total_evaluated"] == 2
+    assert res["orphan_forward_traceability_req_ids"] == ["REQ-NO-OBJ"]
+    assert res["untested_backward_traceability_req_ids"] == ["REQ-NO-TEST"]
+    assert res["unautomated_critical_req_ids"] == []
+    assert res["is_rtm_bidirectional_complete"] is False
+
+
+def test_audit_requirements_traceability_matrix_coverage_unautomated_critical():
+    """Requisitos de prioridad critical/high/must/p0 sin automatización de regresión."""
+    from backend.services.project_ccb_service import (
+        audit_requirements_traceability_matrix_coverage,
+    )
+
+    entries = [
+        {
+            "requirement_id": "REQ-P0-MANUAL",
+            "business_objective_ref": "OBJ-SEC",
+            "wbs_deliverable_ref": "WBS-4.1",
+            "verification_test_case_ids": ["TC-99"],
+            "priority_tier": "P0",
+            "regression_suite_automated": False,
+        }
+    ]
+    res = audit_requirements_traceability_matrix_coverage(entries)
+    assert res["total_evaluated"] == 1
+    assert res["orphan_forward_traceability_req_ids"] == []
+    assert res["untested_backward_traceability_req_ids"] == []
+    assert res["unautomated_critical_req_ids"] == ["REQ-P0-MANUAL"]
+    assert res["is_rtm_bidirectional_complete"] is False
+
+
+def test_audit_requirements_traceability_matrix_coverage_invalid_inputs_and_export():
+    """Ignora entradas no secuencia o sin requirement_id válido y verifica exportación en __all__."""
+    import backend.services.project_ccb_service as _m
+    from backend.services.project_ccb_service import (
+        audit_requirements_traceability_matrix_coverage,
+    )
+
+    assert "audit_requirements_traceability_matrix_coverage" in _m.__all__
+    for bad in (None, "not-a-seq", b"bytes", bytearray(b"xyz"), [{"requirement_id": "  "}, 42]):
+        res = audit_requirements_traceability_matrix_coverage(bad)
+        assert res == {
+            "total_evaluated": 0,
+            "orphan_forward_traceability_req_ids": [],
+            "untested_backward_traceability_req_ids": [],
+            "unautomated_critical_req_ids": [],
+            "is_rtm_bidirectional_complete": True,
+        }

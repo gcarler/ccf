@@ -2815,6 +2815,7 @@ __all__ = [
     "audit_ccb_change_request_sla_and_aging_backlog",
     "evaluate_supplier_ncr_disposition_governance",
     "audit_scope_creep_and_gold_plating_drift",
+    "audit_requirements_traceability_matrix_coverage",
     "ProjectCCBService",
 ]
 
@@ -3464,4 +3465,84 @@ def audit_scope_creep_and_gold_plating_drift(
 
 ProjectCCBService.audit_scope_creep_and_gold_plating_drift = staticmethod(
     audit_scope_creep_and_gold_plating_drift
+)
+
+
+def audit_requirements_traceability_matrix_coverage(
+    rtm_entries: object,
+) -> dict[str, object]:
+    """Audita cobertura bidireccional de la Matriz de Trazabilidad de Requisitos (RTM: objetivo de negocio -> entregable WBS -> casos de prueba y automatización de regresión) según PMI PMBOK §5.2 y §8.2."""
+    total_evaluated = 0
+    orphan_forward_traceability_req_ids: list[str] = []
+    untested_backward_traceability_req_ids: list[str] = []
+    unautomated_critical_req_ids: list[str] = []
+
+    critical_tiers = {"critical", "high", "must", "p0"}
+
+    if isinstance(rtm_entries, Sequence) and not isinstance(
+        rtm_entries, (str, bytes, bytearray)
+    ):
+        for item in rtm_entries:
+            if not isinstance(item, Mapping):
+                continue
+            req_id = str(
+                item.get("requirement_id") or item.get("id") or ""
+            ).strip()
+            if not req_id:
+                continue
+
+            total_evaluated += 1
+            business_objective_ref = str(
+                item.get("business_objective_ref") or ""
+            ).strip()
+            wbs_deliverable_ref = str(
+                item.get("wbs_deliverable_ref") or ""
+            ).strip()
+
+            raw_tests = item.get("verification_test_case_ids")
+            if isinstance(raw_tests, Sequence) and not isinstance(
+                raw_tests, (str, bytes, bytearray)
+            ):
+                valid_test_count = sum(
+                    1
+                    for tc in raw_tests
+                    if isinstance(tc, str) and bool(tc.strip())
+                )
+            else:
+                valid_test_count = 0
+
+            priority_tier = (
+                str(item.get("priority_tier") or "medium").strip().lower()
+            )
+            regression_suite_automated = bool(
+                item.get("regression_suite_automated", False)
+            )
+
+            if not business_objective_ref or not wbs_deliverable_ref:
+                orphan_forward_traceability_req_ids.append(req_id)
+
+            if valid_test_count == 0:
+                untested_backward_traceability_req_ids.append(req_id)
+
+            if (
+                priority_tier in critical_tiers
+                and not regression_suite_automated
+            ):
+                unautomated_critical_req_ids.append(req_id)
+
+    return {
+        "total_evaluated": total_evaluated,
+        "orphan_forward_traceability_req_ids": orphan_forward_traceability_req_ids,
+        "untested_backward_traceability_req_ids": untested_backward_traceability_req_ids,
+        "unautomated_critical_req_ids": unautomated_critical_req_ids,
+        "is_rtm_bidirectional_complete": (
+            len(orphan_forward_traceability_req_ids) == 0
+            and len(untested_backward_traceability_req_ids) == 0
+            and len(unautomated_critical_req_ids) == 0
+        ),
+    }
+
+
+ProjectCCBService.audit_requirements_traceability_matrix_coverage = staticmethod(
+    audit_requirements_traceability_matrix_coverage
 )

@@ -4733,3 +4733,135 @@ def test_audit_executive_report_contract_closeout_and_claims_invalid_inputs_and_
             "missing_warranty_sla_contract_ids": [],
             "is_contract_closeout_compliant": True,
         }
+
+
+def test_audit_executive_report_strategic_alignment_and_esg_compliant():
+    """Iniciativas alineadas a OKR/pilar con score >= 70 e impacto ESG gestionado."""
+    from backend.services.project_export_service import (
+        audit_executive_report_strategic_alignment_and_esg,
+    )
+
+    initiatives = [
+        {
+            "initiative_id": "I-1",
+            "okr_or_pillar_code": "OKR-1",
+            "strategic_alignment_score": 85.0,
+            "esg_impact_assessed": True,
+        },
+        {
+            "id": "I-2",
+            "okr_or_pillar_code": "PILLAR-2",
+            "strategic_alignment_score": 70,
+            "esg_impact_assessed": True,
+            "has_negative_environmental_or_social_impact": True,
+            "esg_mitigation_plan_approved": True,
+        },
+    ]
+    res = audit_executive_report_strategic_alignment_and_esg(initiatives)
+    assert res == {
+        "total_evaluated": 2,
+        "unaligned_strategic_initiative_ids": [],
+        "unassessed_esg_initiative_ids": [],
+        "unmitigated_esg_risk_initiative_ids": [],
+        "is_strategic_and_esg_compliant": True,
+    }
+
+
+def test_audit_executive_report_strategic_alignment_and_esg_unaligned():
+    """Detecta iniciativas sin OKR/pilar o con score bajo el minimo (comparacion estricta)."""
+    from backend.services.project_export_service import (
+        audit_executive_report_strategic_alignment_and_esg,
+    )
+
+    initiatives = [
+        {"initiative_id": "N-1", "okr_or_pillar_code": "   ",
+         "strategic_alignment_score": 90.0, "esg_impact_assessed": True},
+        {"initiative_id": "N-2", "okr_or_pillar_code": "OKR-2",
+         "strategic_alignment_score": 69.99, "esg_impact_assessed": True},
+        {"initiative_id": "N-3", "okr_or_pillar_code": "OKR-3",
+         "strategic_alignment_score": "oops", "esg_impact_assessed": True},
+        {"initiative_id": "E-1", "okr_or_pillar_code": "OKR-4",
+         "strategic_alignment_score": 70.0, "esg_impact_assessed": True},
+    ]
+    res = audit_executive_report_strategic_alignment_and_esg(initiatives)
+    assert res["total_evaluated"] == 4
+    assert res["unaligned_strategic_initiative_ids"] == ["N-1", "N-2", "N-3"]
+    assert res["unassessed_esg_initiative_ids"] == []
+    assert res["unmitigated_esg_risk_initiative_ids"] == []
+    assert res["is_strategic_and_esg_compliant"] is False
+
+    # Umbral personalizado eleva la exigencia.
+    strict = audit_executive_report_strategic_alignment_and_esg(
+        initiatives, min_alignment_score=95.0
+    )
+    assert strict["unaligned_strategic_initiative_ids"] == [
+        "N-1", "N-2", "N-3", "E-1",
+    ]
+
+
+def test_audit_executive_report_strategic_alignment_and_esg_esg_gaps():
+    """Detecta ESG sin evaluar e impacto negativo sin plan de mitigacion aprobado."""
+    from backend.services.project_export_service import (
+        audit_executive_report_strategic_alignment_and_esg,
+    )
+
+    initiatives = [
+        {"initiative_id": "G-1", "okr_or_pillar_code": "OKR-1",
+         "strategic_alignment_score": 80.0},  # esg_impact_assessed default False.
+        {"initiative_id": "G-2", "okr_or_pillar_code": "OKR-2",
+         "strategic_alignment_score": 80.0, "esg_impact_assessed": True,
+         "has_negative_environmental_or_social_impact": True,
+         "esg_mitigation_plan_approved": False},
+        {"initiative_id": "G-3", "okr_or_pillar_code": "OKR-3",
+         "strategic_alignment_score": 80.0, "esg_impact_assessed": True,
+         "has_negative_environmental_or_social_impact": True,
+         "esg_mitigation_plan_approved": True},
+        {"initiative_id": "G-4", "okr_or_pillar_code": "OKR-4",
+         "strategic_alignment_score": 80.0, "esg_impact_assessed": True,
+         "has_negative_environmental_or_social_impact": False,  # sin impacto -> sin exigencia.
+         "esg_mitigation_plan_approved": False},
+    ]
+    res = audit_executive_report_strategic_alignment_and_esg(initiatives)
+    assert res["total_evaluated"] == 4
+    assert res["unassessed_esg_initiative_ids"] == ["G-1"]
+    assert res["unmitigated_esg_risk_initiative_ids"] == ["G-2"]
+    assert res["is_strategic_and_esg_compliant"] is False
+
+
+def test_audit_executive_report_strategic_alignment_and_esg_empty_and_service_proxy():
+    """Entradas vacias/None/invalidas + llamada via ProjectExportService (staticmethod + __all__)."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_strategic_alignment_and_esg,
+    )
+    import backend.services.project_export_service as _m
+
+    res_none = audit_executive_report_strategic_alignment_and_esg(None)
+    assert res_none == {
+        "total_evaluated": 0,
+        "unaligned_strategic_initiative_ids": [],
+        "unassessed_esg_initiative_ids": [],
+        "unmitigated_esg_risk_initiative_ids": [],
+        "is_strategic_and_esg_compliant": True,
+    }
+    assert audit_executive_report_strategic_alignment_and_esg("not-a-sequence")["total_evaluated"] == 0
+    assert (
+        audit_executive_report_strategic_alignment_and_esg(
+            ["not-a-mapping", {"initiative_id": "   "}, {"other_id": "x"}]
+        )["total_evaluated"]
+        == 0
+    )
+    assert "audit_executive_report_strategic_alignment_and_esg" in _m.__all__
+
+    sample = [
+        {
+            "initiative_id": "I-1",
+            "okr_or_pillar_code": "OKR-1",
+            "strategic_alignment_score": 90.0,
+            "esg_impact_assessed": True,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_strategic_alignment_and_esg(sample)
+        == audit_executive_report_strategic_alignment_and_esg(sample)
+    )

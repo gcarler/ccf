@@ -2498,6 +2498,7 @@ __all__ = [
     "audit_wiki_monte_carlo_contingency_governance",
     "audit_wiki_make_or_buy_and_source_selection_governance",
     "audit_wiki_opa_template_versioning_governance",
+    "audit_wiki_onboarding_and_kt_handover_readiness",
     "WikiPMIService",
 ]
 
@@ -3299,4 +3300,84 @@ def audit_wiki_risk_breakdown_structure_coverage(
 
 WikiPMIService.audit_wiki_risk_breakdown_structure_coverage = staticmethod(
     audit_wiki_risk_breakdown_structure_coverage
+)
+
+
+def audit_wiki_onboarding_and_kt_handover_readiness(
+    kt_packages: object,
+    *,
+    max_onboarding_days: int = 10,
+) -> dict[str, object]:
+    """Audita playbooks de onboarding y paquetes de transferencia de conocimiento (Knowledge Transfer - KT) del equipo en la Wiki según PMI PMBOK §4.4 y §9.4."""
+    total_evaluated = 0
+    incomplete_documentation_package_ids: list[str] = []
+    unverified_handover_package_ids: list[str] = []
+    excessive_rampup_package_ids: list[str] = []
+
+    if isinstance(kt_packages, Sequence) and not isinstance(
+        kt_packages, (str, bytes, bytearray)
+    ):
+        for item in kt_packages:
+            if not isinstance(item, Mapping):
+                continue
+            pkg_id = str(item.get("package_id") or item.get("id") or "").strip()
+            if not pkg_id:
+                continue
+
+            total_evaluated += 1
+            has_architecture_walkthrough = bool(
+                item.get("has_architecture_walkthrough", False)
+            )
+            has_local_env_setup_guide = bool(
+                item.get("has_local_env_setup_guide", False)
+            )
+            try:
+                shadowing_sessions_completed = int(
+                    item.get("shadowing_sessions_completed", 0) or 0
+                )
+            except (TypeError, ValueError):
+                shadowing_sessions_completed = 0
+
+            successor_signoff_confirmed = bool(
+                item.get("successor_signoff_confirmed", False)
+            )
+            try:
+                estimated_rampup_days = int(
+                    item.get("estimated_rampup_days", 0) or 0
+                )
+            except (TypeError, ValueError):
+                estimated_rampup_days = 0
+
+            if (
+                not has_architecture_walkthrough
+                or not has_local_env_setup_guide
+            ):
+                incomplete_documentation_package_ids.append(pkg_id)
+
+            if (
+                shadowing_sessions_completed < 1
+                or not successor_signoff_confirmed
+            ):
+                unverified_handover_package_ids.append(pkg_id)
+
+            if estimated_rampup_days <= 0 or estimated_rampup_days > int(
+                max_onboarding_days
+            ):
+                excessive_rampup_package_ids.append(pkg_id)
+
+    return {
+        "total_evaluated": total_evaluated,
+        "incomplete_documentation_package_ids": incomplete_documentation_package_ids,
+        "unverified_handover_package_ids": unverified_handover_package_ids,
+        "excessive_rampup_package_ids": excessive_rampup_package_ids,
+        "is_kt_handover_ready": (
+            len(incomplete_documentation_package_ids) == 0
+            and len(unverified_handover_package_ids) == 0
+            and len(excessive_rampup_package_ids) == 0
+        ),
+    }
+
+
+WikiPMIService.audit_wiki_onboarding_and_kt_handover_readiness = staticmethod(
+    audit_wiki_onboarding_and_kt_handover_readiness
 )
