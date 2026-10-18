@@ -884,5 +884,166 @@ def test_error_response_coverage_empty_openapi():
     )
 
 
+# ─── summarize_projects_operation_documentation_quality (pure helper) ─────────
+
+
+def test_operation_documentation_quality_well_documented():
+    """>= 80% con summary >= 5 chars y sin operationId duplicados -> WELL_DOCUMENTED_OPERATIONS."""
+    openapi = {
+        "paths": {
+            "/api/projects": {
+                "get": {
+                    "operationId": "list_projects",
+                    "summary": "List all projects",
+                    "tags": ["Projects"],
+                },
+                "post": {
+                    "operationId": "create_project",
+                    "summary": "Create a new project",
+                    "tags": ["Projects"],
+                },
+            },
+            "/api/projects/{project_id}": {
+                "get": {
+                    "operationId": "get_project",
+                    "summary": "Get project details",
+                    "tags": ["Projects"],
+                },
+                "patch": {
+                    "operationId": "update_project",
+                    "summary": "Update project fields",
+                },
+                "delete": {
+                    "operationId": "delete_project",
+                    "summary": "Del",  # < 5 chars -> undocumented
+                    "tags": ["Projects"],
+                },
+            },
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_operation_documentation_quality(
+        openapi
+    )
+
+    assert res == {
+        "total_operations": 5,
+        "has_summary_count": 4,
+        "has_operation_id_count": 5,
+        "has_tags_count": 4,
+        "undocumented_routes": ["DELETE /api/projects/{project_id}"],
+        "duplicate_operation_ids": [],
+        "summary_coverage_pct": 80.0,
+        "documentation_posture": "WELL_DOCUMENTED_OPERATIONS",
+    }
+
+
+def test_operation_documentation_quality_duplicate_operation_ids():
+    """operationId repetidos en rutas /api/projects -> DUPLICATE_OPERATION_IDS."""
+    openapi = {
+        "paths": {
+            "/api/projects": {
+                "get": {
+                    "operationId": "project_op",
+                    "summary": "List projects",
+                    "tags": ["Projects"],
+                },
+                "post": {
+                    "operationId": "project_op",
+                    "summary": "Create project",
+                    "tags": ["Projects"],
+                },
+            },
+            "/api/projects/{project_id}": {
+                "get": {
+                    "operationId": "detail_op",
+                    "summary": "Get project",
+                },
+                "delete": {
+                    "operationId": "detail_op",
+                    "summary": "Delete project",
+                },
+            },
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_operation_documentation_quality(
+        openapi
+    )
+
+    assert res == {
+        "total_operations": 4,
+        "has_summary_count": 4,
+        "has_operation_id_count": 4,
+        "has_tags_count": 2,
+        "undocumented_routes": [],
+        "duplicate_operation_ids": ["detail_op", "project_op"],
+        "summary_coverage_pct": 100.0,
+        "documentation_posture": "DUPLICATE_OPERATION_IDS",
+    }
+
+
+def test_operation_documentation_quality_incomplete_summaries():
+    """< 80% con summary >= 5 chars y sin duplicados -> INCOMPLETE_OPERATION_SUMMARIES."""
+    openapi = {
+        "paths": {
+            "/api/projects": {
+                "get": {
+                    "operationId": "list_projects",
+                    "summary": "List all projects",
+                },
+                "post": {
+                    "operationId": "",
+                    "summary": "   ",
+                },
+            }
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_operation_documentation_quality(
+        openapi
+    )
+
+    assert res == {
+        "total_operations": 2,
+        "has_summary_count": 1,
+        "has_operation_id_count": 1,
+        "has_tags_count": 0,
+        "undocumented_routes": ["POST /api/projects"],
+        "duplicate_operation_ids": [],
+        "summary_coverage_pct": 50.0,
+        "documentation_posture": "INCOMPLETE_OPERATION_SUMMARIES",
+    }
+
+
+def test_operation_documentation_quality_empty_openapi():
+    """OpenAPI vacío o sin rutas bajo /api/projects -> EMPTY_OPENAPI_INVENTORY."""
+    expected = {
+        "total_operations": 0,
+        "has_summary_count": 0,
+        "has_operation_id_count": 0,
+        "has_tags_count": 0,
+        "undocumented_routes": [],
+        "duplicate_operation_ids": [],
+        "summary_coverage_pct": 0.0,
+        "documentation_posture": "EMPTY_OPENAPI_INVENTORY",
+    }
+    assert (
+        audit_projects_api_contracts.summarize_projects_operation_documentation_quality({})
+        == expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_operation_documentation_quality(None)
+        == expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_operation_documentation_quality(
+            {"paths": {"/api/crm/contacts": {"get": {"operationId": "list_crm"}}}}
+        )
+        == expected
+    )
+
+
+
 
 

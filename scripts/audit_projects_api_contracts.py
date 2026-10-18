@@ -432,6 +432,72 @@ def summarize_projects_error_response_coverage(
     }
 
 
+def summarize_projects_operation_documentation_quality(
+    openapi: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Audita la calidad documental (summary, operationId y tags) en rutas /api/projects."""
+    safe_openapi = (
+        openapi
+        if isinstance(openapi, dict) and isinstance(openapi.get("paths", {}), dict)
+        else {}
+    )
+    operations = route_inventory(safe_openapi)
+    total_operations = len(operations)
+
+    has_summary_count = 0
+    has_operation_id_count = 0
+    has_tags_count = 0
+    undocumented_routes: list[str] = []
+    op_id_counts: dict[str, int] = {}
+
+    for method, path, operation in operations:
+        summary_str = str(operation.get("summary") or "").strip()
+        op_id_str = str(operation.get("operationId") or "").strip()
+
+        if len(summary_str) >= 5:
+            has_summary_count += 1
+        else:
+            undocumented_routes.append(f"{method} {path}")
+
+        if len(op_id_str) > 0:
+            has_operation_id_count += 1
+            op_id_counts[op_id_str] = op_id_counts.get(op_id_str, 0) + 1
+
+        if bool(operation.get("tags")):
+            has_tags_count += 1
+
+    undocumented_routes_sorted = sorted(undocumented_routes)
+    duplicate_operation_ids = sorted(
+        op_id for op_id, count in op_id_counts.items() if count > 1
+    )
+    summary_coverage_pct = (
+        round((has_summary_count / total_operations) * 100.0, 2)
+        if total_operations > 0
+        else 0.0
+    )
+
+    if total_operations == 0:
+        documentation_posture = "EMPTY_OPENAPI_INVENTORY"
+    elif len(duplicate_operation_ids) > 0:
+        documentation_posture = "DUPLICATE_OPERATION_IDS"
+    elif summary_coverage_pct >= 80.0:
+        documentation_posture = "WELL_DOCUMENTED_OPERATIONS"
+    else:
+        documentation_posture = "INCOMPLETE_OPERATION_SUMMARIES"
+
+    return {
+        "total_operations": total_operations,
+        "has_summary_count": has_summary_count,
+        "has_operation_id_count": has_operation_id_count,
+        "has_tags_count": has_tags_count,
+        "undocumented_routes": undocumented_routes_sorted,
+        "duplicate_operation_ids": duplicate_operation_ids,
+        "summary_coverage_pct": summary_coverage_pct,
+        "documentation_posture": documentation_posture,
+    }
+
+
+
 
 
 
