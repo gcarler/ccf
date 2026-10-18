@@ -29,6 +29,7 @@ __all__ = [
     "audit_expenses_csv_financial_totals",
     "audit_tasks_csv_schedule_completeness",
     "audit_executive_report_milestone_coverage",
+    "audit_executive_report_milestone_deliverables",
     "audit_risks_csv_register_completeness",
     "audit_stakeholders_csv_engagement_gaps",
     "audit_expenses_vendor_concentration",
@@ -284,6 +285,12 @@ class ProjectExportService:
         html_content: str | None,
     ) -> dict[str, Any]:
         return audit_executive_report_milestone_coverage(html_content)
+
+    @staticmethod
+    def audit_executive_report_milestone_deliverables(
+        report_payload: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        return audit_executive_report_milestone_deliverables(report_payload)
 
     @staticmethod
     def audit_risks_csv_register_completeness(
@@ -692,6 +699,102 @@ def audit_executive_report_milestone_coverage(
         "financial_kpi_mentions": financial_kpi_mentions,
         "coverage_score": coverage_score,
         "posture": posture,
+    }
+
+
+def audit_executive_report_milestone_deliverables(
+    report_payload: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Audita los hitos y entregables divulgados en el informe ejecutivo (PMBOK §6.2.3.3 y §5.4).
+
+    Extrae los hitos en orden desde `milestones`, `milestone_summary` o
+    `cpm_schedule['milestones']` (solo dicts). Cada hito declara `id`/
+    `milestone_id`/`code` (fallback 'MS-{idx}'), `due_date`/`target_date`/
+    `baseline_date`, `status` y evidencia de aceptacion (`accepted_by`/
+    `signoff_ref`/`deliverable_ref`):
+    - `unscheduled_milestone_ids`: hitos sin fecha base/objetivo.
+    - `unverified_completed_milestone_ids`: completados sin evidencia de signoff.
+    - `overdue_milestone_ids`: `is_overdue` True o status vencido/retrasado.
+    - `is_traceable`: sin faltantes en las 3 listas y con hitos divulgados.
+    - `milestone_posture`: 'NO_MILESTONES_DISCLOSED' sin hitos;
+      'UNVERIFIED_COMPLETED_MILESTONES'; 'UNSCHEDULED_MILESTONE_BASELINES';
+      'OVERDUE_KEY_MILESTONES'; 'VERIFIED_MILESTONE_DELIVERY_GOVERNANCE'
+    """
+    milestones: List[Dict[str, Any]] = []
+    if isinstance(report_payload, dict):
+        for source_key in ("milestones", "milestone_summary", "cpm_schedule"):
+            candidate = report_payload.get(source_key)
+            if source_key == "cpm_schedule" and isinstance(candidate, dict):
+                candidate = candidate.get("milestones")
+            if isinstance(candidate, list):
+                milestones.extend(item for item in candidate if isinstance(item, dict))
+                if milestones:
+                    break
+    total_milestones = len(milestones)
+    if total_milestones == 0:
+        return {
+            "total_milestones": 0,
+            "completed_milestones_count": 0,
+            "unscheduled_milestone_ids": [],
+            "unverified_completed_milestone_ids": [],
+            "overdue_milestone_ids": [],
+            "is_traceable": False,
+            "milestone_posture": "NO_MILESTONES_DISCLOSED",
+        }
+
+    COMPLETED_STATUS = {"completed", "achieved", "done", "completado", "logrado"}
+    OVERDUE_STATUS = {"overdue", "delayed", "vencido", "retrasado"}
+
+    unscheduled_milestone_ids: List[str] = []
+    unverified_completed_milestone_ids: List[str] = []
+    overdue_milestone_ids: List[str] = []
+    completed_milestones_count = 0
+
+    for idx, item in enumerate(milestones, start=1):
+        ms_id = str(
+            item.get("id") or item.get("milestone_id") or item.get("code") or ""
+        ).strip() or f"MS-{idx}"
+        due = str(
+            item.get("due_date") or item.get("target_date") or item.get("baseline_date") or ""
+        ).strip()
+        status = str(item.get("status") or "").strip().lower()
+        signoff = str(
+            item.get("accepted_by") or item.get("signoff_ref") or item.get("deliverable_ref") or ""
+        ).strip()
+
+        if not due:
+            unscheduled_milestone_ids.append(ms_id)
+        if status in COMPLETED_STATUS:
+            completed_milestones_count += 1
+            if not signoff:
+                unverified_completed_milestone_ids.append(ms_id)
+        elif item.get("is_overdue") is True or status in OVERDUE_STATUS:
+            overdue_milestone_ids.append(ms_id)
+
+    is_traceable = bool(
+        total_milestones > 0
+        and len(unscheduled_milestone_ids) == 0
+        and len(unverified_completed_milestone_ids) == 0
+        and len(overdue_milestone_ids) == 0
+    )
+
+    if len(unverified_completed_milestone_ids) > 0:
+        milestone_posture = "UNVERIFIED_COMPLETED_MILESTONES"
+    elif len(unscheduled_milestone_ids) > 0:
+        milestone_posture = "UNSCHEDULED_MILESTONE_BASELINES"
+    elif len(overdue_milestone_ids) > 0:
+        milestone_posture = "OVERDUE_KEY_MILESTONES"
+    else:
+        milestone_posture = "VERIFIED_MILESTONE_DELIVERY_GOVERNANCE"
+
+    return {
+        "total_milestones": total_milestones,
+        "completed_milestones_count": completed_milestones_count,
+        "unscheduled_milestone_ids": unscheduled_milestone_ids,
+        "unverified_completed_milestone_ids": unverified_completed_milestone_ids,
+        "overdue_milestone_ids": overdue_milestone_ids,
+        "is_traceable": is_traceable,
+        "milestone_posture": milestone_posture,
     }
 
 
@@ -1709,6 +1812,7 @@ __all__ = [
     "audit_expenses_csv_financial_totals",
     "audit_tasks_csv_schedule_completeness",
     "audit_executive_report_milestone_coverage",
+    "audit_executive_report_milestone_deliverables",
     "audit_risks_csv_register_completeness",
     "audit_stakeholders_csv_engagement_gaps",
     "audit_expenses_vendor_concentration",

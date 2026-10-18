@@ -2155,3 +2155,123 @@ def test_audit_executive_report_risk_burndown_no_risks_disclosed():
             "risk_burndown_posture": "NO_RISKS_DISCLOSED",
         }
 
+
+
+def test_audit_executive_report_milestone_deliverables_verified_governance():
+    """Hitos programados, completados con signoff y sin vencidos -> VERIFIED governance."""
+    from backend.services.project_export_service import (
+        audit_executive_report_milestone_deliverables as audit_fn,
+    )
+
+    res = audit_fn(
+        {
+            "milestones": [
+                {
+                    "id": "MS-1",
+                    "due_date": "2026-09-30",
+                    "status": "completed",
+                    "accepted_by": "Directoría de Evangelismo",
+                },
+                {
+                    "milestone_id": "MS-2",
+                    "target_date": "2026-12-15",
+                    "status": "in_progress",
+                },
+            ]
+        }
+    )
+    assert res["is_traceable"] is True
+    assert res["total_milestones"] == 2
+    assert res["completed_milestones_count"] == 1
+    assert res["unscheduled_milestone_ids"] == []
+    assert res["unverified_completed_milestone_ids"] == []
+    assert res["overdue_milestone_ids"] == []
+    assert res["milestone_posture"] == "VERIFIED_MILESTONE_DELIVERY_GOVERNANCE"
+
+
+def test_audit_executive_report_milestone_deliverables_unverified_completed():
+    """Hito completado sin evidencia de signoff -> UNVERIFIED_COMPLETED_MILESTONES."""
+    from backend.services.project_export_service import (
+        audit_executive_report_milestone_deliverables as audit_fn,
+    )
+
+    res = audit_fn(
+        {
+            "milestone_summary": [
+                {
+                    "code": "MS-A",
+                    "baseline_date": "2026-08-31",
+                    "status": "completado",
+                },
+                {
+                    "code": "MS-B",
+                    "baseline_date": "2026-10-01",
+                    "status": "achieved",
+                    "signoff_ref": "ACTA-2026-77",
+                },
+            ]
+        }
+    )
+    assert res["is_traceable"] is False
+    assert res["total_milestones"] == 2
+    assert res["completed_milestones_count"] == 2
+    assert res["unscheduled_milestone_ids"] == []
+    assert res["unverified_completed_milestone_ids"] == ["MS-A"]
+    assert res["overdue_milestone_ids"] == []
+    assert res["milestone_posture"] == "UNVERIFIED_COMPLETED_MILESTONES"
+
+
+def test_audit_executive_report_milestone_deliverables_unscheduled_and_overdue():
+    """Hito sin fecha (precedencia) y hito vencido identificados por pilar."""
+    from backend.services.project_export_service import (
+        audit_executive_report_milestone_deliverables as audit_fn,
+    )
+
+    res = audit_fn(
+        {
+            "cpm_schedule": {
+                "milestones": [
+                    {
+                        "id": "MS-X",
+                        "status": "in_progress",
+                    },
+                    {
+                        "id": "MS-Y",
+                        "due_date": "2026-07-01",
+                        "is_overdue": True,
+                    },
+                    {
+                        "id": "MS-Z",
+                        "target_date": "2026-11-30",
+                        "status": "retrasado",
+                    },
+                ]
+            }
+        }
+    )
+    assert res["is_traceable"] is False
+    assert res["total_milestones"] == 3
+    assert res["completed_milestones_count"] == 0
+    assert res["unscheduled_milestone_ids"] == ["MS-X"]
+    assert res["unverified_completed_milestone_ids"] == []
+    assert res["overdue_milestone_ids"] == ["MS-Y", "MS-Z"]
+    assert res["milestone_posture"] == "UNSCHEDULED_MILESTONE_BASELINES"
+
+
+def test_audit_executive_report_milestone_deliverables_empty_or_none():
+    """Payload no-dict, sin hitos o lista vacía -> NO_MILESTONES_DISCLOSED."""
+    from backend.services.project_export_service import (
+        audit_executive_report_milestone_deliverables as audit_fn,
+    )
+
+    for payload in (None, "not-a-dict", {}, {"milestones": []}, {"milestones": ["nope", 42]}):
+        res = audit_fn(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_milestones": 0,
+            "completed_milestones_count": 0,
+            "unscheduled_milestone_ids": [],
+            "unverified_completed_milestone_ids": [],
+            "overdue_milestone_ids": [],
+            "is_traceable": False,
+            "milestone_posture": "NO_MILESTONES_DISCLOSED",
+        }

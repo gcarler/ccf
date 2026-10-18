@@ -4310,7 +4310,112 @@ def evaluate_earned_schedule_performance(
     }
 
 
+def evaluate_burn_rate_runway_sustainability(
+    bac: float,
+    actual_cost: float,
+    elapsed_periods: float,
+    remaining_periods: float,
+    management_reserve: float = 0.0,
+) -> Dict[str, Any]:
+    """Evalúa la sostenibilidad de la tasa de consumo (Burn-Rate) y la pista presupuestaria restante (Runway) según PMI PMBOK §7.4."""
+    try:
+        bac_val = max(0.0, float(bac or 0.0))
+    except (TypeError, ValueError):
+        bac_val = 0.0
+    try:
+        ac_val = max(0.0, float(actual_cost or 0.0))
+    except (TypeError, ValueError):
+        ac_val = 0.0
+    try:
+        elapsed_val = max(0.0, float(elapsed_periods or 0.0))
+    except (TypeError, ValueError):
+        elapsed_val = 0.0
+    try:
+        rem_periods_val = max(0.0, float(remaining_periods or 0.0))
+    except (TypeError, ValueError):
+        rem_periods_val = 0.0
+    try:
+        mr_val = max(0.0, float(management_reserve or 0.0))
+    except (TypeError, ValueError):
+        mr_val = 0.0
+
+    if bac_val <= 0.0 or elapsed_val <= 0.0:
+        return {
+            "actual_burn_rate": 0.0,
+            "sustainable_burn_rate": 0.0,
+            "budget_runway_periods": 0.0,
+            "total_funds_runway_periods": 0.0,
+            "runway_gap_periods": 0.0,
+            "is_sustainable": True,
+            "burn_posture": "INSUFFICIENT_BURN_DATA",
+        }
+
+    remaining_bac = max(0.0, bac_val - ac_val)
+    remaining_total_funds = max(0.0, bac_val + mr_val - ac_val)
+    actual_burn_rate = ac_val / elapsed_val
+    sustainable_burn_rate = (
+        (remaining_bac / rem_periods_val) if rem_periods_val > 0.0 else remaining_bac
+    )
+    budget_runway_periods = (
+        (remaining_bac / actual_burn_rate)
+        if actual_burn_rate > 0.0
+        else rem_periods_val
+    )
+    total_funds_runway_periods = (
+        (remaining_total_funds / actual_burn_rate)
+        if actual_burn_rate > 0.0
+        else rem_periods_val
+    )
+    runway_gap_periods = budget_runway_periods - rem_periods_val
+
+    actual_burn_rate_round = round(actual_burn_rate, 2)
+    sustainable_burn_rate_round = round(sustainable_burn_rate, 2)
+    budget_runway_periods_round = round(budget_runway_periods, 2)
+    total_funds_runway_periods_round = round(total_funds_runway_periods, 2)
+    runway_gap_periods_round = round(runway_gap_periods, 2)
+
+    is_sustainable = bool(
+        ac_val <= bac_val
+        and (
+            rem_periods_val == 0.0
+            or budget_runway_periods + 1e-9 >= rem_periods_val
+        )
+    )
+
+    if ac_val >= bac_val:
+        burn_posture = "BUDGET_EXHAUSTED"
+    elif (
+        rem_periods_val > 0.0
+        and total_funds_runway_periods + 1e-9 < rem_periods_val
+    ):
+        burn_posture = "RUNWAY_SHORTFALL_BEYOND_RESERVES"
+    elif (
+        rem_periods_val > 0.0
+        and budget_runway_periods + 1e-9 < rem_periods_val <= total_funds_runway_periods + 1e-9
+    ):
+        burn_posture = "RUNWAY_REQUIRES_MANAGEMENT_RESERVE"
+    else:
+        burn_posture = "SUSTAINABLE_BURN_RATE_RUNWAY"
+
+    return {
+        "actual_burn_rate": actual_burn_rate_round,
+        "sustainable_burn_rate": sustainable_burn_rate_round,
+        "budget_runway_periods": budget_runway_periods_round,
+        "total_funds_runway_periods": total_funds_runway_periods_round,
+        "runway_gap_periods": runway_gap_periods_round,
+        "is_sustainable": is_sustainable,
+        "burn_posture": burn_posture,
+    }
+
+
+ProjectEVMService.evaluate_burn_rate_runway_sustainability = staticmethod(
+    evaluate_burn_rate_runway_sustainability
+)
+
+
 __all__ = [
     "evaluate_funding_limit_periods_reconciliation",
+    "evaluate_earned_schedule_performance",
+    "evaluate_burn_rate_runway_sustainability",
     "ProjectEVMService",
 ]

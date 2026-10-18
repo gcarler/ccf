@@ -2070,3 +2070,122 @@ def test_evaluate_funding_limit_periods_reconciliation_empty_or_none():
             "is_reconciled": True,
             "funding_posture": "NO_FUNDING_PERIODS_DEFINED",
         }
+
+
+def test_evaluate_burn_rate_runway_sustainability_sustainable():
+    """Burn-rate sostenible con budget_runway_periods >= remaining_periods -> SUSTAINABLE_BURN_RATE_RUNWAY."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_burn_rate_runway_sustainability,
+    )
+
+    # BAC=100k, AC=36k en 4 períodos -> burn_rate=9k/período.
+    # Restan 64k para 6 períodos -> sustainable_burn=10666.67, runway=7.11 >= 6.
+    res = evaluate_burn_rate_runway_sustainability(
+        bac=100000.0,
+        actual_cost=36000.0,
+        elapsed_periods=4.0,
+        remaining_periods=6.0,
+        management_reserve=10000.0,
+    )
+    assert res == {
+        "actual_burn_rate": 9000.0,
+        "sustainable_burn_rate": 10666.67,
+        "budget_runway_periods": 7.11,
+        "total_funds_runway_periods": 8.22,
+        "runway_gap_periods": 1.11,
+        "is_sustainable": True,
+        "burn_posture": "SUSTAINABLE_BURN_RATE_RUNWAY",
+    }
+    assert (
+        ProjectEVMService.evaluate_burn_rate_runway_sustainability(
+            bac=100000.0,
+            actual_cost=36000.0,
+            elapsed_periods=4.0,
+            remaining_periods=6.0,
+            management_reserve=10000.0,
+        )
+        == res
+    )
+
+
+def test_evaluate_burn_rate_runway_sustainability_requires_management_reserve():
+    """Pista BAC insuficiente pero cubierta con management_reserve -> RUNWAY_REQUIRES_MANAGEMENT_RESERVE."""
+    from backend.services.project_evm_service import (
+        evaluate_burn_rate_runway_sustainability,
+    )
+
+    # BAC=100k, AC=50k en 4 períodos -> burn_rate=12.5k/período.
+    # Restan 50k BAC (runway=4.0 < 5.0 períodos restantes), pero con MR=15k (total_funds_runway=5.2 >= 5.0).
+    res = evaluate_burn_rate_runway_sustainability(
+        bac=100000.0,
+        actual_cost=50000.0,
+        elapsed_periods=4.0,
+        remaining_periods=5.0,
+        management_reserve=15000.0,
+    )
+    assert res == {
+        "actual_burn_rate": 12500.0,
+        "sustainable_burn_rate": 10000.0,
+        "budget_runway_periods": 4.0,
+        "total_funds_runway_periods": 5.2,
+        "runway_gap_periods": -1.0,
+        "is_sustainable": False,
+        "burn_posture": "RUNWAY_REQUIRES_MANAGEMENT_RESERVE",
+    }
+
+
+def test_evaluate_burn_rate_runway_sustainability_shortfall_and_budget_exhausted():
+    """Pista insuficiente aun con MR -> RUNWAY_SHORTFALL_BEYOND_RESERVES; AC >= BAC -> BUDGET_EXHAUSTED."""
+    from backend.services.project_evm_service import (
+        evaluate_burn_rate_runway_sustainability,
+    )
+
+    shortfall_res = evaluate_burn_rate_runway_sustainability(
+        bac=100000.0,
+        actual_cost=60000.0,
+        elapsed_periods=3.0,
+        remaining_periods=5.0,
+        management_reserve=10000.0,
+    )
+    assert shortfall_res["actual_burn_rate"] == 20000.0
+    assert shortfall_res["budget_runway_periods"] == 2.0
+    assert shortfall_res["total_funds_runway_periods"] == 2.5
+    assert shortfall_res["runway_gap_periods"] == -3.0
+    assert shortfall_res["is_sustainable"] is False
+    assert shortfall_res["burn_posture"] == "RUNWAY_SHORTFALL_BEYOND_RESERVES"
+
+    exhausted_res = evaluate_burn_rate_runway_sustainability(
+        bac=80000.0,
+        actual_cost=85000.0,
+        elapsed_periods=5.0,
+        remaining_periods=2.0,
+        management_reserve=10000.0,
+    )
+    assert exhausted_res["budget_runway_periods"] == 0.0
+    assert exhausted_res["is_sustainable"] is False
+    assert exhausted_res["burn_posture"] == "BUDGET_EXHAUSTED"
+
+
+def test_evaluate_burn_rate_runway_sustainability_insufficient_data():
+    """bac <= 0 o elapsed_periods <= 0 -> INSUFFICIENT_BURN_DATA."""
+    from backend.services.project_evm_service import (
+        evaluate_burn_rate_runway_sustainability,
+    )
+
+    for bac_val, elapsed_val in ((0.0, 3.0), (50000.0, 0.0), (-10.0, -1.0)):
+        res = evaluate_burn_rate_runway_sustainability(
+            bac=bac_val,
+            actual_cost=1000.0,
+            elapsed_periods=elapsed_val,
+            remaining_periods=4.0,
+        )
+        assert res == {
+            "actual_burn_rate": 0.0,
+            "sustainable_burn_rate": 0.0,
+            "budget_runway_periods": 0.0,
+            "total_funds_runway_periods": 0.0,
+            "runway_gap_periods": 0.0,
+            "is_sustainable": True,
+            "burn_posture": "INSUFFICIENT_BURN_DATA",
+        }
