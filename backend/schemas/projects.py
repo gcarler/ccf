@@ -3789,6 +3789,7 @@ __all__ = [
     "validate_wbs_hundred_percent_rule_decomposition",
     "validate_emv_decision_tree_and_contingency_reserve",
     "validate_parametric_estimation_model_fit",
+    "validate_funding_limit_reconciliation_and_cash_flow_cliff",
 ]
 
 
@@ -5591,3 +5592,78 @@ def validate_schedule_compression_fast_tracking_and_crashing(
         "crash_cost_per_day_saved": crash_cost_per_day_saved,
         "is_valid": True,
     }
+
+
+def validate_funding_limit_reconciliation_and_cash_flow_cliff(
+    periodic_expenditures: list[float],
+    periodic_funding_limits: list[float],
+    *,
+    min_liquidity_buffer_pct: float = 5.0,
+    allow_fiscal_rescheduling_with_cr: bool = False,
+    approved_rescheduling_cr_id: str | None = None,
+) -> dict[str, Any]:
+    """Valida conciliacion de limites de financiamiento y precipicio de flujo de caja (PMBOK §7.3, §7.4)."""
+    if not isinstance(periodic_expenditures, list) or not isinstance(periodic_funding_limits, list):
+        raise ValueError("periodic_expenditures y periodic_funding_limits deben ser listas")
+    if len(periodic_expenditures) == 0:
+        raise ValueError("periodic_expenditures no puede estar vacia")
+    if len(periodic_expenditures) != len(periodic_funding_limits):
+        raise ValueError(
+            "periodic_expenditures y periodic_funding_limits deben tener la misma longitud"
+        )
+
+    exp_vals = [float(x) for x in periodic_expenditures]
+    fund_vals = [float(x) for x in periodic_funding_limits]
+    if any(x < 0.0 for x in exp_vals) or any(x < 0.0 for x in fund_vals):
+        raise ValueError("Los gastos y limites de financiamiento por periodo deben ser >= 0.0")
+
+    total_fund = sum(fund_vals)
+    if total_fund <= 0.0:
+        raise ValueError("La suma de periodic_funding_limits debe ser > 0.0")
+
+    min_buf_threshold = float(min_liquidity_buffer_pct)
+    if min_buf_threshold < 0.0 or min_buf_threshold >= 100.0:
+        raise ValueError("min_liquidity_buffer_pct debe estar en [0.0, 100.0)")
+
+    total_exp = sum(exp_vals)
+    if total_exp > total_fund + 1e-6:
+        raise ValueError(
+            "El gasto planificado total excede el limite total de financiamiento disponible"
+        )
+
+    cum_exp = 0.0
+    cum_fund = 0.0
+    funding_breach_periods: list[int] = []
+    min_period_buffer_pct: float | None = None
+
+    for period_idx, (exp, fund) in enumerate(zip(exp_vals, fund_vals), start=1):
+        cum_exp += exp
+        cum_fund += fund
+        if cum_exp > cum_fund + 1e-6:
+            funding_breach_periods.append(period_idx)
+        if cum_fund > 0.0:
+            buffer_pct = ((cum_fund - cum_exp) / cum_fund) * 100.0
+            if min_period_buffer_pct is None or buffer_pct < min_period_buffer_pct:
+                min_period_buffer_pct = buffer_pct
+
+    effective_min_buffer = min_period_buffer_pct if min_period_buffer_pct is not None else 0.0
+    has_valid_rescheduling_cr = bool(allow_fiscal_rescheduling_with_cr) and bool(
+        str(approved_rescheduling_cr_id or "").strip()
+    )
+
+    if (
+        len(funding_breach_periods) > 0 or effective_min_buffer < min_buf_threshold
+    ) and not has_valid_rescheduling_cr:
+        raise ValueError(
+            "Deficit de flujo de caja o colchon de liquidez insuficiente sin CR aprobado de reprogramacion fiscal (PMBOK §7.3.2.3)"
+        )
+
+    return {
+        "periods_count": len(periodic_expenditures),
+        "total_planned_expenditure": round(total_exp, 2),
+        "total_funding_limit": round(total_fund, 2),
+        "min_period_buffer_pct": round(effective_min_buffer, 2),
+        "funding_breach_periods": funding_breach_periods,
+        "is_valid": True,
+    }
+

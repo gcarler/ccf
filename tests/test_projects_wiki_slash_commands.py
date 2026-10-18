@@ -5263,3 +5263,153 @@ def test_audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration_custom_a
         == audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration(sample)
     )
     assert "audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration" in mod.__all__
+
+
+def test_audit_wiki_requirements_bidirectional_traceability_and_gold_plating_healthy():
+    """Matriz RTM 100% trazable hacia objetivos, WBS, casos de prueba y linea base CCB (PMBOK §5.2, §5.6)."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_requirements_bidirectional_traceability_and_gold_plating,
+    )
+
+    res = audit_wiki_requirements_bidirectional_traceability_and_gold_plating(
+        [
+            {
+                "item_id": "REQ-001",
+                "linked_business_objective_id": "OBJ-FIN-01",
+                "linked_wbs_deliverable_id": "WBS-1.2.1",
+                "linked_test_case_id": "TC-QA-101",
+                "ccb_approved_baseline": True,
+            },
+            {
+                "item_id": "REQ-002",
+                "linked_business_objective_id": "OBJ-OPS-02",
+                "linked_wbs_deliverable_id": "WBS-2.1.4",
+                "linked_test_case_id": "TC-QA-102",
+                "ccb_approved_baseline": True,
+            },
+        ]
+    )
+    assert res == {
+        "total_items": 2,
+        "fully_traced_items_count": 2,
+        "unverified_or_unbuilt_requirements_count": 0,
+        "gold_plating_or_orphan_scope_count": 0,
+        "bidirectional_traceability_pct": 100.0,
+        "traceability_governance_status": "AT_RISK" if False else "HEALTHY",
+        "violations": [],
+    }
+
+
+def test_audit_wiki_requirements_bidirectional_traceability_and_gold_plating_at_risk_forward_gap():
+    """Detecta brecha de trazabilidad hacia adelante (sin WBS o sin caso de prueba) como AT_RISK."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_requirements_bidirectional_traceability_and_gold_plating,
+    )
+
+    res = audit_wiki_requirements_bidirectional_traceability_and_gold_plating(
+        [
+            {
+                "item_id": "REQ-010",
+                "linked_business_objective_id": "OBJ-01",
+                "linked_wbs_deliverable_id": "WBS-1.1",
+                "linked_test_case_id": "TC-01",
+                "ccb_approved_baseline": True,
+            },
+            {
+                "item_id": "REQ-011",
+                "linked_business_objective_id": "OBJ-01",
+                "linked_wbs_deliverable_id": "",
+                "linked_test_case_id": "TC-02",
+                "ccb_approved_baseline": True,
+            },
+            {
+                "item_id": "REQ-012",
+                "linked_business_objective_id": "OBJ-02",
+                "linked_wbs_deliverable_id": "WBS-1.3",
+                "linked_test_case_id": None,
+                "ccb_approved_baseline": True,
+            },
+        ]
+    )
+    assert res["total_items"] == 3
+    assert res["fully_traced_items_count"] == 1
+    assert res["unverified_or_unbuilt_requirements_count"] == 2
+    assert res["gold_plating_or_orphan_scope_count"] == 0
+    assert res["bidirectional_traceability_pct"] == 33.33
+    assert res["traceability_governance_status"] == "AT_RISK"
+    assert len(res["violations"]) == 2
+    assert res["violations"][0]["item_id"] == "REQ-011"
+    assert "missing_linked_wbs_deliverable_id" in res["violations"][0]["reasons"]
+    assert res["violations"][1]["item_id"] == "REQ-012"
+    assert "missing_linked_test_case_id" in res["violations"][1]["reasons"]
+
+
+def test_audit_wiki_requirements_bidirectional_traceability_and_gold_plating_critical_scope_creep():
+    """Detecta gold-plating o alcance huerfano (sin objetivo de negocio o sin aprobacion CCB) como CRITICAL."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_requirements_bidirectional_traceability_and_gold_plating,
+    )
+
+    res = audit_wiki_requirements_bidirectional_traceability_and_gold_plating(
+        [
+            {
+                "item_id": "REQ-GP-1",
+                "linked_business_objective_id": "   ",
+                "linked_wbs_deliverable_id": "WBS-3.1",
+                "linked_test_case_id": "TC-31",
+                "ccb_approved_baseline": True,
+            },
+            {
+                "item_id": "REQ-GP-2",
+                "linked_business_objective_id": "OBJ-09",
+                "linked_wbs_deliverable_id": "WBS-3.2",
+                "linked_test_case_id": "TC-32",
+                "ccb_approved_baseline": False,
+            },
+        ]
+    )
+    assert res["total_items"] == 2
+    assert res["fully_traced_items_count"] == 0
+    assert res["unverified_or_unbuilt_requirements_count"] == 0
+    assert res["gold_plating_or_orphan_scope_count"] == 2
+    assert res["bidirectional_traceability_pct"] == 0.0
+    assert res["traceability_governance_status"] == "CRITICAL"
+    assert "missing_linked_business_objective_id" in res["violations"][0]["reasons"]
+    assert "unapproved_ccb_baseline_gold_plating" in res["violations"][1]["reasons"]
+
+
+def test_audit_wiki_requirements_bidirectional_traceability_and_gold_plating_empty_and_export():
+    """Maneja entradas vacias/no-lista con 100.0% HEALTHY y verifica staticmethod + __all__."""
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_requirements_bidirectional_traceability_and_gold_plating,
+    )
+
+    for payload in ([], None, "invalid"):
+        empty = audit_wiki_requirements_bidirectional_traceability_and_gold_plating(payload)  # type: ignore[arg-type]
+        assert empty == {
+            "total_items": 0,
+            "fully_traced_items_count": 0,
+            "unverified_or_unbuilt_requirements_count": 0,
+            "gold_plating_or_orphan_scope_count": 0,
+            "bidirectional_traceability_pct": 100.0,
+            "traceability_governance_status": "HEALTHY",
+            "violations": [],
+        }
+
+    sample = [
+        {
+            "item_id": "REQ-100",
+            "linked_business_objective_id": "OBJ-1",
+            "linked_wbs_deliverable_id": "WBS-1",
+            "linked_test_case_id": "TC-1",
+            "ccb_approved_baseline": True,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_requirements_bidirectional_traceability_and_gold_plating(sample)
+        == audit_wiki_requirements_bidirectional_traceability_and_gold_plating(sample)
+    )
+    assert "audit_wiki_requirements_bidirectional_traceability_and_gold_plating" in mod.__all__
+

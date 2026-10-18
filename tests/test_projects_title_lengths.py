@@ -4400,3 +4400,109 @@ def test_validate_schedule_compression_fast_tracking_and_crashing_domain_valueer
         fn(30.0, 27.0, 20.0, 0.0, 50000.0, True)  # type: ignore[misc]
 
     assert "validate_schedule_compression_fast_tracking_and_crashing" in mod.__all__
+
+
+def test_validate_funding_limit_reconciliation_and_cash_flow_cliff_healthy():
+    """Flujo de caja conciliado con colchon de liquidez >= 5% por periodo (PMBOK §7.3, §7.4)."""
+    from backend.schemas.projects import (
+        validate_funding_limit_reconciliation_and_cash_flow_cliff as fn,
+    )
+
+    res = fn(
+        [9000.0, 9000.0, 9000.0],
+        [10000.0, 10000.0, 10000.0],
+        min_liquidity_buffer_pct=5.0,
+    )
+    assert res == {
+        "periods_count": 3,
+        "total_planned_expenditure": 27000.0,
+        "total_funding_limit": 30000.0,
+        "min_period_buffer_pct": 10.0,
+        "funding_breach_periods": [],
+        "is_valid": True,
+    }
+
+
+def test_validate_funding_limit_reconciliation_and_cash_flow_cliff_breach_and_cr_override():
+    """Detecta brecha intermedia de financiamiento o colchon bajo y exige CR fiscal aprobado."""
+    import pytest
+
+    from backend.schemas.projects import (
+        validate_funding_limit_reconciliation_and_cash_flow_cliff as fn,
+    )
+
+    # Brecha en periodo 2 (acumulado exp 22000 > fund 20000) aunque el total cierre (28000 <= 30000)
+    with pytest.raises(ValueError, match="Deficit de flujo de caja"):
+        fn([10000.0, 12000.0, 6000.0], [10000.0, 10000.0, 10000.0])
+
+    # Con flag activado pero sin CR ID valido sigue fallando
+    with pytest.raises(ValueError, match="Deficit de flujo de caja"):
+        fn(
+            [10000.0, 12000.0, 6000.0],
+            [10000.0, 10000.0, 10000.0],
+            allow_fiscal_rescheduling_with_cr=True,
+            approved_rescheduling_cr_id="   ",
+        )
+
+    # Con CR aprobado se permite reprogramacion fiscal y se reportan los periodos en brecha
+    res = fn(
+        [10000.0, 12000.0, 6000.0],
+        [10000.0, 10000.0, 10000.0],
+        allow_fiscal_rescheduling_with_cr=True,
+        approved_rescheduling_cr_id="CR-FIN-2026-09",
+    )
+    assert res["funding_breach_periods"] == [2]
+    assert res["min_period_buffer_pct"] == -10.0
+    assert res["is_valid"] is True
+
+
+def test_validate_funding_limit_reconciliation_and_cash_flow_cliff_low_buffer_rejection():
+    """Rechaza colchon de liquidez inferior al minimo configurado aunque no exista sobregiro."""
+    import pytest
+
+    from backend.schemas.projects import (
+        validate_funding_limit_reconciliation_and_cash_flow_cliff as fn,
+    )
+
+    # Periodo 1 tiene colchon de 2% (< 5% requerido)
+    with pytest.raises(ValueError, match="colchon de liquidez insuficiente"):
+        fn([9800.0, 8000.0], [10000.0, 10000.0], min_liquidity_buffer_pct=5.0)
+
+    # Con CR de reprogramacion aprobado pasa
+    res = fn(
+        [9800.0, 8000.0],
+        [10000.0, 10000.0],
+        min_liquidity_buffer_pct=5.0,
+        allow_fiscal_rescheduling_with_cr=True,
+        approved_rescheduling_cr_id="CR-LIQ-01",
+    )
+    assert res["funding_breach_periods"] == []
+    assert res["min_period_buffer_pct"] == 2.0
+    assert res["is_valid"] is True
+
+
+def test_validate_funding_limit_reconciliation_and_cash_flow_cliff_domain_errors_and_export():
+    """Valida errores de dominio (listas vacias, longitudes, negativos, total_exp > total_fund) y __all__."""
+    import pytest
+
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_funding_limit_reconciliation_and_cash_flow_cliff as fn,
+    )
+
+    invalid_cases = [
+        (([], []), {}),
+        (([100.0, 200.0], [100.0]), {}),
+        (([-10.0, 100.0], [100.0, 100.0]), {}),
+        (([10.0, 100.0], [100.0, -5.0]), {}),
+        (([0.0, 0.0], [0.0, 0.0]), {}),
+        (([500.0, 600.0], [500.0, 500.0]), {}),  # total_exp > total_fund
+        (([100.0], [200.0]), {"min_liquidity_buffer_pct": -1.0}),
+        (([100.0], [200.0]), {"min_liquidity_buffer_pct": 100.0}),
+    ]
+    for args, kwargs in invalid_cases:
+        with pytest.raises(ValueError):
+            fn(*args, **kwargs)
+
+    assert "validate_funding_limit_reconciliation_and_cash_flow_cliff" in mod.__all__
+

@@ -5597,3 +5597,140 @@ def test_audit_quality_gate_peer_review_and_defect_density_empty_and_export():
 
 
 
+
+
+def test_audit_retrospective_action_item_closure_and_process_improvement_healthy():
+    """Acciones compliant (CLOSED verificada y en curso con owner/criterio)."""
+    from backend.services.project_ccb_service import (
+        audit_retrospective_action_item_closure_and_process_improvement,
+    )
+
+    res = audit_retrospective_action_item_closure_and_process_improvement(
+        [
+            {"action_id": "A-1", "status": "Closed", "sprints_carried_over": 2,
+             "owner_assigned": True, "measurable_success_criterion_defined": True,
+             "verified_effectiveness": True},
+            {"action_id": "A-2", "status": "in_progress", "sprints_carried_over": 1,
+             "owner_assigned": True, "measurable_success_criterion_defined": True,
+             "verified_effectiveness": False},
+        ]
+    )
+    assert res == {
+        "total_actions": 2,
+        "compliant_actions_count": 2,
+        "stalled_carryover_actions_count": 0,
+        "unowned_or_unmeasurable_actions_count": 0,
+        "unverified_closed_actions_count": 0,
+        "measurable_outcome_coverage_pct": 100.0,
+        "continuous_improvement_status": "HEALTHY",
+        "violations": [],
+    }
+
+
+def test_audit_retrospective_action_item_closure_and_process_improvement_critical():
+    """Stalled carry-over ([3>2], borde 2 == umbral no stalled) y closure sin verificación -> CRITICAL."""
+    from backend.services.project_ccb_service import (
+        audit_retrospective_action_item_closure_and_process_improvement,
+    )
+
+    res = audit_retrospective_action_item_closure_and_process_improvement(
+        [
+            {"action_id": "A-3", "status": "OPEN", "sprints_carried_over": 3,
+             "owner_assigned": True, "measurable_success_criterion_defined": True,
+             "verified_effectiveness": False},
+            {"action_id": "A-4", "status": "CLOSED", "sprints_carried_over": 0,
+             "owner_assigned": True, "measurable_success_criterion_defined": True,
+             "verified_effectiveness": False},
+        ]
+    )
+    assert res["stalled_carryover_actions_count"] == 1
+    assert res["unverified_closed_actions_count"] == 1
+    assert res["compliant_actions_count"] == 0
+    assert res["continuous_improvement_status"] == "CRITICAL"
+    assert res["violations"][0]["reasons"] == ["STALLED_CARRYOVER (3>2, status OPEN)"]
+    assert res["violations"][1]["reasons"] == ["CLOSED_WITHOUT_VERIFIED_EFFECTIVENESS"]
+
+    # Borde: 2 sprints (== umbral) con status no CLOSED no es stalled.
+    border = audit_retrospective_action_item_closure_and_process_improvement(
+        [
+            {"action_id": "A-5", "status": "OPEN", "sprints_carried_over": 2,
+             "owner_assigned": True, "measurable_success_criterion_defined": True,
+             "verified_effectiveness": False},
+        ]
+    )
+    assert border["stalled_carryover_actions_count"] == 0
+    assert border["continuous_improvement_status"] == "HEALTHY"
+
+
+def test_audit_retrospective_action_item_closure_and_process_improvement_at_risk():
+    """Unowned/unmeasurable y cobertura baja -> AT_RISK."""
+    from backend.services.project_ccb_service import (
+        audit_retrospective_action_item_closure_and_process_improvement,
+    )
+
+    res = audit_retrospective_action_item_closure_and_process_improvement(
+        [
+            {"action_id": "A-6", "status": "IN_PROGRESS", "sprints_carried_over": 1,
+             "owner_assigned": False, "measurable_success_criterion_defined": False,
+             "verified_effectiveness": False},
+            {"action_id": "A-7", "status": "IN_PROGRESS", "sprints_carried_over": 1,
+             "owner_assigned": True, "measurable_success_criterion_defined": True,
+             "verified_effectiveness": False},
+        ]
+    )
+    assert res["unowned_or_unmeasurable_actions_count"] == 1
+    assert res["measurable_outcome_coverage_pct"] == 50.0
+    assert res["continuous_improvement_status"] == "AT_RISK"
+    assert res["violations"][0]["reasons"] == [
+        "OWNER_UNASSIGNED", "SUCCESS_CRITERION_NOT_MEASURABLE",
+    ]
+
+    # Cobertura baja por si sola con umbral custom -> AT_RISK.
+    low = audit_retrospective_action_item_closure_and_process_improvement(
+        [
+            {"action_id": "A-8", "status": "IN_PROGRESS", "sprints_carried_over": 1,
+             "owner_assigned": True, "measurable_success_criterion_defined": False,
+             "verified_effectiveness": False},
+        ],
+        min_measurable_outcome_pct=90.0,
+    )
+    assert low["measurable_outcome_coverage_pct"] == 0.0
+    assert low["unowned_or_unmeasurable_actions_count"] == 1
+    assert low["continuous_improvement_status"] == "AT_RISK"
+
+
+def test_audit_retrospective_action_item_closure_and_process_improvement_custom_and_empty():
+    """Umbrales custom, entrada vacia/None y proxy estatico + __all__."""
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_retrospective_action_item_closure_and_process_improvement,
+    )
+    import backend.services.project_ccb_service as mod
+
+    # Umbral custom: 2 sprints permitidos; 3 pasa a stalled (case-insensitive).
+    custom = audit_retrospective_action_item_closure_and_process_improvement(
+        [
+            {"action_id": "A-9", "status": "open", "sprints_carried_over": 3,
+             "owner_assigned": True, "measurable_success_criterion_defined": True,
+             "verified_effectiveness": False},
+        ],
+        max_action_carryover_sprints=1,
+    )
+    assert custom["stalled_carryover_actions_count"] == 1
+    assert custom["continuous_improvement_status"] == "CRITICAL"
+
+    for payload in ([], None, 42):
+        empty = audit_retrospective_action_item_closure_and_process_improvement(payload)
+        assert empty["total_actions"] == 0
+        assert empty["measurable_outcome_coverage_pct"] == 100.0
+        assert empty["continuous_improvement_status"] == "HEALTHY"
+        assert empty["violations"] == []
+
+    sample = [{"action_id": "SM", "status": "OPEN", "sprints_carried_over": 1,
+               "owner_assigned": True, "measurable_success_criterion_defined": True,
+               "verified_effectiveness": False}]
+    assert (
+        ProjectCCBService.audit_retrospective_action_item_closure_and_process_improvement(sample)
+        == audit_retrospective_action_item_closure_and_process_improvement(sample)
+    )
+    assert "audit_retrospective_action_item_closure_and_process_improvement" in mod.__all__

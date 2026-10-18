@@ -2823,6 +2823,7 @@ __all__ = [
     "audit_ncr_capa_effectiveness_and_recurrence",
     "audit_configuration_baseline_drift_and_hotfix_governance",
     "audit_quality_gate_peer_review_and_defect_density",
+    "audit_retrospective_action_item_closure_and_process_improvement",
     "ProjectCCBService",
 ]
 
@@ -4304,3 +4305,114 @@ ProjectCCBService.audit_quality_gate_peer_review_and_defect_density = staticmeth
 
 
 
+
+
+def audit_retrospective_action_item_closure_and_process_improvement(
+    retrospective_actions: list[dict],
+    *,
+    max_action_carryover_sprints: int = 2,
+    min_measurable_outcome_pct: float = 80.0,
+) -> dict:
+    """Audita cierre de acciones de retrospectiva y mejora continua (PMBOK §8.2 y Agile Practice Guide).
+
+    Cada acción aporta action_id, status, sprints_carried_over,
+    owner_assigned, measurable_success_criterion_defined y
+    verified_effectiveness:
+    - stalled_carryover: acción no CLOSED arrastrada por más sprints
+      que el umbral.
+    - unowned_or_unmeasurable: sin responsable o sin criterio medible
+      de éxito.
+    - unverified_closed: acción CLOSED sin verificación empírica de
+      efectividad.
+    - measurable_outcome_coverage_pct: % de acciones con criterio
+      medible (2 dec, 100.0 si vacío).
+    - continuous_improvement_status: 'HEALTHY' sin hallazgos y
+      cobertura >= min; 'CRITICAL' con stalled carry-over o cierres sin
+      verificación; 'AT_RISK' en otro caso; violations con
+      {action_id, reasons}.
+    """
+    if not isinstance(retrospective_actions, list):
+        retrospective_actions = []
+    actions = [a for a in retrospective_actions if isinstance(a, dict)]
+
+    total_actions = len(actions)
+    count_measureable = sum(
+        1 for a in actions if bool(a.get("measurable_success_criterion_defined", False))
+    )
+    measurable_outcome_coverage_pct = (
+        round(count_measureable / total_actions * 100.0, 2) if total_actions > 0 else 100.0
+    )
+
+    compliant_actions_count = 0
+    stalled_carryover_actions_count = 0
+    unowned_or_unmeasurable_actions_count = 0
+    unverified_closed_actions_count = 0
+    violations: list[dict] = []
+
+    for idx, action in enumerate(actions, start=1):
+        action_id = str(action.get("action_id", f"ACTION-{idx}"))
+        reasons: list[str] = []
+        has_stalled = False
+        has_unowned = False
+        has_unverified = False
+
+        status = str(action.get("status") or "").strip().upper()
+        raw_sprints = action.get("sprints_carried_over")
+        try:
+            sprints = int(raw_sprints if raw_sprints is not None else 0)
+        except (TypeError, ValueError):
+            sprints = 0
+        owner_assigned = bool(action.get("owner_assigned", False))
+        measurable = bool(action.get("measurable_success_criterion_defined", False))
+        verified = bool(action.get("verified_effectiveness", False))
+
+        if status != "CLOSED" and sprints > int(max_action_carryover_sprints):
+            has_stalled = True
+            reasons.append(f"STALLED_CARRYOVER ({sprints}>{max_action_carryover_sprints}, status {status or 'UNKNOWN'})")
+        if (not owner_assigned) or (not measurable):
+            has_unowned = True
+            if not owner_assigned:
+                reasons.append("OWNER_UNASSIGNED")
+            if not measurable:
+                reasons.append("SUCCESS_CRITERION_NOT_MEASURABLE")
+        if status == "CLOSED" and not verified:
+            has_unverified = True
+            reasons.append("CLOSED_WITHOUT_VERIFIED_EFFECTIVENESS")
+
+        if has_stalled:
+            stalled_carryover_actions_count += 1
+        if has_unowned:
+            unowned_or_unmeasurable_actions_count += 1
+        if has_unverified:
+            unverified_closed_actions_count += 1
+        if not (has_stalled or has_unowned or has_unverified):
+            compliant_actions_count += 1
+        if reasons:
+            violations.append({"action_id": action_id, "reasons": reasons})
+
+    continuous_improvement_status = (
+        "CRITICAL"
+        if stalled_carryover_actions_count > 0 or unverified_closed_actions_count > 0
+        else (
+            "AT_RISK"
+            if unowned_or_unmeasurable_actions_count > 0
+            or measurable_outcome_coverage_pct < float(min_measurable_outcome_pct)
+            else "HEALTHY"
+        )
+    )
+
+    return {
+        "total_actions": total_actions,
+        "compliant_actions_count": compliant_actions_count,
+        "stalled_carryover_actions_count": stalled_carryover_actions_count,
+        "unowned_or_unmeasurable_actions_count": unowned_or_unmeasurable_actions_count,
+        "unverified_closed_actions_count": unverified_closed_actions_count,
+        "measurable_outcome_coverage_pct": measurable_outcome_coverage_pct,
+        "continuous_improvement_status": continuous_improvement_status,
+        "violations": violations,
+    }
+
+
+ProjectCCBService.audit_retrospective_action_item_closure_and_process_improvement = staticmethod(
+    audit_retrospective_action_item_closure_and_process_improvement
+)

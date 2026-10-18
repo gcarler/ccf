@@ -2507,6 +2507,7 @@ __all__ = [
     "audit_wiki_lessons_learned_actionable_opa_transfer",
     "audit_wiki_risk_trigger_early_warning_and_fallback",
     "audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration",
+    "audit_wiki_requirements_bidirectional_traceability_and_gold_plating",
     "WikiPMIService",
 ]
 
@@ -4138,3 +4139,91 @@ def audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration(
 WikiPMIService.audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration = staticmethod(
     audit_wiki_knowledge_transfer_bus_factor_and_sme_concentration
 )
+
+
+def audit_wiki_requirements_bidirectional_traceability_and_gold_plating(
+    requirements_trace_items: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Audita trazabilidad bidireccional RTM y detecta gold-plating / alcance huerfano (PMBOK §5.2, §5.6)."""
+    if not isinstance(requirements_trace_items, list):
+        requirements_trace_items = []
+
+    total_items = 0
+    fully_traced_items_count = 0
+    unverified_or_unbuilt_requirements_count = 0
+    gold_plating_or_orphan_scope_count = 0
+    violations: list[dict[str, Any]] = []
+
+    for raw in requirements_trace_items:
+        if not isinstance(raw, dict):
+            continue
+        total_items += 1
+        item_id = str(raw.get("item_id") or "").strip() or f"REQ-{total_items}"
+        linked_business_objective_id = raw.get("linked_business_objective_id")
+        linked_wbs_deliverable_id = raw.get("linked_wbs_deliverable_id")
+        linked_test_case_id = raw.get("linked_test_case_id")
+        ccb_approved_baseline = raw.get("ccb_approved_baseline")
+
+        has_wbs = bool(str(linked_wbs_deliverable_id or "").strip())
+        has_test = bool(str(linked_test_case_id or "").strip())
+        has_obj = bool(str(linked_business_objective_id or "").strip())
+        has_ccb = bool(ccb_approved_baseline)
+
+        forward_gap = (not has_wbs) or (not has_test)
+        gold_plating_or_orphan = (not has_obj) or (not has_ccb)
+
+        reasons: list[str] = []
+        if not has_wbs:
+            reasons.append("missing_linked_wbs_deliverable_id")
+        if not has_test:
+            reasons.append("missing_linked_test_case_id")
+        if not has_obj:
+            reasons.append("missing_linked_business_objective_id")
+        if not has_ccb:
+            reasons.append("unapproved_ccb_baseline_gold_plating")
+
+        if forward_gap:
+            unverified_or_unbuilt_requirements_count += 1
+        if gold_plating_or_orphan:
+            gold_plating_or_orphan_scope_count += 1
+
+        if not forward_gap and not gold_plating_or_orphan:
+            fully_traced_items_count += 1
+        else:
+            violations.append(
+                {
+                    "item_id": item_id,
+                    "reasons": reasons,
+                }
+            )
+
+    bidirectional_traceability_pct = (
+        round((fully_traced_items_count / total_items) * 100.0, 2)
+        if total_items > 0
+        else 100.0
+    )
+    if (
+        unverified_or_unbuilt_requirements_count == 0
+        and gold_plating_or_orphan_scope_count == 0
+    ):
+        traceability_governance_status = "HEALTHY"
+    elif gold_plating_or_orphan_scope_count > 0:
+        traceability_governance_status = "CRITICAL"
+    else:
+        traceability_governance_status = "AT_RISK"
+
+    return {
+        "total_items": total_items,
+        "fully_traced_items_count": fully_traced_items_count,
+        "unverified_or_unbuilt_requirements_count": unverified_or_unbuilt_requirements_count,
+        "gold_plating_or_orphan_scope_count": gold_plating_or_orphan_scope_count,
+        "bidirectional_traceability_pct": bidirectional_traceability_pct,
+        "traceability_governance_status": traceability_governance_status,
+        "violations": violations,
+    }
+
+
+WikiPMIService.audit_wiki_requirements_bidirectional_traceability_and_gold_plating = staticmethod(
+    audit_wiki_requirements_bidirectional_traceability_and_gold_plating
+)
+
