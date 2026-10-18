@@ -4478,6 +4478,241 @@ def summarize_projects_deprecated_and_version_lifecycle_hygiene(
     }
 
 
+def summarize_projects_polymorphic_and_composition_hygiene(
+    openapi_schema: Mapping[str, object] | None = None,
+) -> dict[str, object]:
+    """Audita bloques de composición polimórfica (anyOf, oneOf, allOf) y discriminadores en operaciones y schemas de proyectos."""
+    if openapi_schema is None:
+        from backend.app import app
+
+        schema_dict: Mapping[str, Any] = app.openapi()
+    else:
+        schema_dict = openapi_schema
+
+    total_compositions_inspected = 0
+    anyof_count = 0
+    oneof_count = 0
+    allof_count = 0
+    single_branch_compositions: list[str] = []
+    duplicate_composition_branches: list[str] = []
+    invalid_discriminators: list[str] = []
+
+    components = schema_dict.get("components", {}) if isinstance(schema_dict, Mapping) else {}
+    schemas = components.get("schemas", {}) if isinstance(components, Mapping) else {}
+    if not isinstance(schemas, Mapping):
+        schemas = {}
+
+    def _inspect_schema_node(node: object, location: str) -> None:
+        nonlocal total_compositions_inspected, anyof_count, oneof_count, allof_count
+        if not isinstance(node, Mapping):
+            return
+
+        for kw in ("anyOf", "oneOf", "allOf"):
+            branches = node.get(kw)
+            if not isinstance(branches, list):
+                continue
+
+            total_compositions_inspected += 1
+            if kw == "anyOf":
+                anyof_count += 1
+            elif kw == "oneOf":
+                oneof_count += 1
+            else:
+                allof_count += 1
+
+            comp_label = f"{location}.{kw}"
+            if len(branches) <= 1:
+                single_branch_compositions.append(comp_label)
+
+            seen_branches: set[str] = set()
+            has_duplicate = False
+            for branch in branches:
+                serialized = json.dumps(branch, sort_keys=True, default=str)
+                if serialized in seen_branches:
+                    has_duplicate = True
+                    break
+                seen_branches.add(serialized)
+            if has_duplicate:
+                duplicate_composition_branches.append(comp_label)
+
+            for idx, branch in enumerate(branches):
+                if isinstance(branch, Mapping):
+                    _inspect_schema_node(branch, f"{comp_label}[{idx}]")
+
+        if "discriminator" in node and node["discriminator"] is not None:
+            disc = node["discriminator"]
+            is_valid_disc = False
+            if isinstance(disc, Mapping):
+                prop_name = disc.get("propertyName")
+                if isinstance(prop_name, str) and bool(prop_name.strip()):
+                    mapping = disc.get("mapping")
+                    if mapping is None:
+                        is_valid_disc = True
+                    elif isinstance(mapping, Mapping):
+                        all_targets_exist = True
+                        for _map_key, target in mapping.items():
+                            if not isinstance(target, str) or not target.strip():
+                                all_targets_exist = False
+                                break
+                            target_str = target.strip()
+                            if target_str.startswith("#/components/schemas/"):
+                                target_name = target_str[len("#/components/schemas/") :]
+                            elif target_str.startswith("#/"):
+                                target_name = ""
+                            else:
+                                target_name = target_str
+                            if not target_name or target_name not in schemas:
+                                all_targets_exist = False
+                                break
+                        is_valid_disc = all_targets_exist
+            if not is_valid_disc:
+                invalid_discriminators.append(f"{location}.discriminator")
+
+        props = node.get("properties")
+        if isinstance(props, Mapping):
+            for prop_name in sorted(props.keys()):
+                _inspect_schema_node(props[prop_name], f"{location}.{prop_name}")
+
+        items = node.get("items")
+        if isinstance(items, Mapping):
+            _inspect_schema_node(items, f"{location}.items")
+
+        prefix_items = node.get("prefixItems")
+        if isinstance(prefix_items, list):
+            for idx, item in enumerate(prefix_items):
+                _inspect_schema_node(item, f"{location}.prefixItems[{idx}]")
+
+        add_props = node.get("additionalProperties")
+        if isinstance(add_props, Mapping):
+            _inspect_schema_node(add_props, f"{location}.additionalProperties")
+
+        not_schema = node.get("not")
+        if isinstance(not_schema, Mapping):
+            _inspect_schema_node(not_schema, f"{location}.not")
+
+    referenced_schemas: set[str] = set()
+    paths = schema_dict.get("paths", {}) if isinstance(schema_dict, Mapping) else {}
+    if isinstance(paths, Mapping):
+        for path in sorted(paths.keys()):
+            path_str = str(path)
+            if not path_str.startswith(("/api/projects", "/api/v1/projects", "/projects")):
+                continue
+            path_item = paths[path]
+            if not isinstance(path_item, Mapping):
+                continue
+
+            path_params = (
+                path_item.get("parameters")
+                if isinstance(path_item.get("parameters"), list)
+                else []
+            )
+            for idx, p_param in enumerate(path_params):
+                if isinstance(p_param, Mapping) and isinstance(p_param.get("schema"), Mapping):
+                    p_name = str(p_param.get("name") or f"param_{idx}")
+                    _inspect_schema_node(p_param["schema"], f"{path_str}:param.{p_name}")
+
+            for method in ("get", "post", "put", "patch", "delete", "head", "options", "trace"):
+                op_spec = path_item.get(method)
+                if not isinstance(op_spec, Mapping):
+                    continue
+
+                op_label = f"{method.upper()} {path_str}"
+                for ref in schema_refs(dict(op_spec)):
+                    referenced_schemas.add(ref)
+
+                _inspect_schema_node(op_spec, op_label)
+
+                op_params = (
+                    op_spec.get("parameters")
+                    if isinstance(op_spec.get("parameters"), list)
+                    else []
+                )
+                for idx, param in enumerate(op_params):
+                    if not isinstance(param, Mapping):
+                        continue
+                    p_name = str(param.get("name") or f"param_{idx}")
+                    if isinstance(param.get("schema"), Mapping):
+                        _inspect_schema_node(param["schema"], f"{op_label}:param.{p_name}")
+
+                req_body = op_spec.get("requestBody")
+                if isinstance(req_body, Mapping):
+                    if isinstance(req_body.get("schema"), Mapping):
+                        _inspect_schema_node(req_body["schema"], f"{op_label}:requestBody")
+                    req_content = req_body.get("content")
+                    if isinstance(req_content, Mapping):
+                        for media_type in sorted(req_content.keys()):
+                            media_obj = req_content[media_type]
+                            if isinstance(media_obj, Mapping) and isinstance(
+                                media_obj.get("schema"), Mapping
+                            ):
+                                _inspect_schema_node(
+                                    media_obj["schema"],
+                                    f"{op_label}:requestBody.{media_type}",
+                                )
+
+                responses = op_spec.get("responses")
+                if isinstance(responses, Mapping):
+                    for status_code in sorted(responses.keys()):
+                        resp_obj = responses[status_code]
+                        if not isinstance(resp_obj, Mapping):
+                            continue
+                        if isinstance(resp_obj.get("schema"), Mapping):
+                            _inspect_schema_node(
+                                resp_obj["schema"],
+                                f"{op_label}:response.{status_code}",
+                            )
+                        resp_content = resp_obj.get("content")
+                        if isinstance(resp_content, Mapping):
+                            for media_type in sorted(resp_content.keys()):
+                                media_obj = resp_content[media_type]
+                                if isinstance(media_obj, Mapping) and isinstance(
+                                    media_obj.get("schema"), Mapping
+                                ):
+                                    _inspect_schema_node(
+                                        media_obj["schema"],
+                                        f"{op_label}:response.{status_code}.{media_type}",
+                                    )
+
+    if referenced_schemas:
+        queue = list(referenced_schemas)
+        while queue:
+            current = queue.pop()
+            s_obj = schemas.get(current)
+            if isinstance(s_obj, Mapping):
+                for nested_ref in schema_refs(dict(s_obj)):
+                    if nested_ref not in referenced_schemas:
+                        referenced_schemas.add(nested_ref)
+                        queue.append(nested_ref)
+
+    for s_name in sorted(schemas.keys()):
+        s_obj = schemas[s_name]
+        if not isinstance(s_obj, Mapping):
+            continue
+        is_proj = (
+            "project" in s_name.lower()
+            or s_name.startswith(_PROJECT_DOMAIN_SCHEMA_PREFIXES)
+            or s_name in referenced_schemas
+        )
+        if not is_proj:
+            continue
+        _inspect_schema_node(s_obj, s_name)
+
+    return {
+        "total_compositions_inspected": total_compositions_inspected,
+        "anyof_count": anyof_count,
+        "oneof_count": oneof_count,
+        "allof_count": allof_count,
+        "single_branch_compositions": sorted(single_branch_compositions),
+        "duplicate_composition_branches": sorted(duplicate_composition_branches),
+        "invalid_discriminators": sorted(invalid_discriminators),
+        "is_polymorphic_hygiene_clean": (
+            len(single_branch_compositions) == 0
+            and len(duplicate_composition_branches) == 0
+            and len(invalid_discriminators) == 0
+        ),
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()

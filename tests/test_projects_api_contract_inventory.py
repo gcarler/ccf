@@ -5935,3 +5935,170 @@ def test_deprecated_and_version_lifecycle_hygiene_detects_implicit_unflagged_dep
         "ProjectMetricRead.raw_value",
     ]
     assert res["is_deprecation_hygiene_clean"] is False
+
+
+def test_polymorphic_and_composition_hygiene_clean_schema():
+    """Verifica que composiciones anyOf/oneOf/allOf válidas y discriminadores bien formados pasen la auditoría."""
+    schema = {
+        "paths": {
+            "/api/projects/events": {
+                "post": {
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/ProjectEventUnion"}
+                            }
+                        }
+                    },
+                    "responses": {"200": {"description": "OK"}},
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "ProjectRiskEvent": {
+                    "type": "object",
+                    "properties": {"event_type": {"type": "string"}},
+                },
+                "ProjectMilestoneEvent": {
+                    "type": "object",
+                    "properties": {"event_type": {"type": "string"}},
+                },
+                "ProjectEventUnion": {
+                    "oneOf": [
+                        {"$ref": "#/components/schemas/ProjectRiskEvent"},
+                        {"$ref": "#/components/schemas/ProjectMilestoneEvent"},
+                    ],
+                    "discriminator": {
+                        "propertyName": "event_type",
+                        "mapping": {
+                            "risk": "#/components/schemas/ProjectRiskEvent",
+                            "milestone": "#/components/schemas/ProjectMilestoneEvent",
+                        },
+                    },
+                    "properties": {
+                        "notes": {
+                            "anyOf": [{"type": "string"}, {"type": "null"}]
+                        },
+                        "metadata": {
+                            "allOf": [
+                                {"type": "object"},
+                                {"properties": {"trace_id": {"type": "string"}}},
+                            ]
+                        },
+                    },
+                },
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_polymorphic_and_composition_hygiene(
+        schema
+    )
+    assert res["total_compositions_inspected"] == 3
+    assert res["anyof_count"] == 1
+    assert res["oneof_count"] == 1
+    assert res["allof_count"] == 1
+    assert res["single_branch_compositions"] == []
+    assert res["duplicate_composition_branches"] == []
+    assert res["invalid_discriminators"] == []
+    assert res["is_polymorphic_hygiene_clean"] is True
+
+
+def test_polymorphic_and_composition_hygiene_detects_single_branch_and_duplicate_branches():
+    """Detecta composiciones degeneradas de una sola rama y ramas duplicadas en anyOf/oneOf."""
+    schema = {
+        "paths": {
+            "/projects/items": {
+                "get": {
+                    "responses": {"200": {"description": "OK"}},
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "ProjectDegenerateModel": {
+                    "type": "object",
+                    "properties": {
+                        "single_allof": {
+                            "allOf": [{"type": "string"}],
+                        },
+                        "dup_anyof": {
+                            "anyOf": [
+                                {"type": "string"},
+                                {"type": "string"},
+                            ],
+                        },
+                        "dup_oneof": {
+                            "oneOf": [
+                                {"type": "integer"},
+                                {"type": "integer"},
+                            ],
+                        },
+                    },
+                }
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_polymorphic_and_composition_hygiene(
+        schema
+    )
+    assert res["total_compositions_inspected"] == 3
+    assert res["anyof_count"] == 1
+    assert res["oneof_count"] == 1
+    assert res["allof_count"] == 1
+    assert res["single_branch_compositions"] == [
+        "ProjectDegenerateModel.single_allof.allOf"
+    ]
+    assert res["duplicate_composition_branches"] == [
+        "ProjectDegenerateModel.dup_anyof.anyOf",
+        "ProjectDegenerateModel.dup_oneof.oneOf",
+    ]
+    assert res["invalid_discriminators"] == []
+    assert res["is_polymorphic_hygiene_clean"] is False
+
+
+def test_polymorphic_and_composition_hygiene_detects_invalid_discriminators():
+    """Detecta discriminadores sin propertyName válido o con mapping apuntando a schemas inexistentes."""
+    schema = {
+        "paths": {},
+        "components": {
+            "schemas": {
+                "ProjectEmptyDiscriminator": {
+                    "oneOf": [{"type": "object"}, {"type": "string"}],
+                    "discriminator": {"propertyName": "   "},
+                },
+                "ProjectBrokenMappingDiscriminator": {
+                    "oneOf": [{"type": "object"}, {"type": "string"}],
+                    "discriminator": {
+                        "propertyName": "kind",
+                        "mapping": {
+                            "missing": "#/components/schemas/NonExistentProjectSchema"
+                        },
+                    },
+                },
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_polymorphic_and_composition_hygiene(
+        schema
+    )
+    assert res["total_compositions_inspected"] == 2
+    assert res["oneof_count"] == 2
+    assert res["invalid_discriminators"] == [
+        "ProjectBrokenMappingDiscriminator.discriminator",
+        "ProjectEmptyDiscriminator.discriminator",
+    ]
+    assert res["is_polymorphic_hygiene_clean"] is False
+
+
+def test_polymorphic_and_composition_hygiene_real_openapi():
+    """Verifica que el schema OpenAPI real de FastAPI para /projects cumpla la higiene de composición polimórfica."""
+    res = audit_projects_api_contracts.summarize_projects_polymorphic_and_composition_hygiene()
+    assert res["total_compositions_inspected"] > 0
+    assert res["anyof_count"] > 0
+    assert res["single_branch_compositions"] == []
+    assert res["duplicate_composition_branches"] == []
+    assert res["invalid_discriminators"] == []
+    assert res["is_polymorphic_hygiene_clean"] is True
+
+
