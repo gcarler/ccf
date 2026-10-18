@@ -3460,6 +3460,52 @@ def evaluate_funding_limit_reconciliation(
     }
 
 
+def evaluate_cpi_trend_degradation(
+    cpi_series: list[float | int] | None,
+) -> dict[str, Any]:
+    """Analiza una serie cronológica de lecturas de CPI según PMI PMBOK §7.4 (Trend Analysis)."""
+    clean_series = [
+        round(float(v), 4)
+        for v in (cpi_series or [])
+        if isinstance(v, (int, float)) and not isinstance(v, bool) and float(v) > 0.0
+    ]
+    periods_count = len(clean_series)
+    latest_cpi = clean_series[-1] if periods_count > 0 else 1.0
+    average_cpi = (
+        round(sum(clean_series) / periods_count, 4) if periods_count > 0 else 1.0
+    )
+
+    consecutive_drops = 0
+    for idx in range(periods_count - 1, 0, -1):
+        if clean_series[idx] < clean_series[idx - 1]:
+            consecutive_drops += 1
+        else:
+            break
+
+    net_drift = (
+        round(clean_series[-1] - clean_series[0], 4) if periods_count >= 2 else 0.0
+    )
+
+    if periods_count < 2:
+        posture = "INSUFFICIENT_TREND_HISTORY"
+    elif consecutive_drops >= 3 or (consecutive_drops >= 2 and latest_cpi < 0.90):
+        posture = "SYSTEMIC_CPI_EROSION"
+    elif consecutive_drops >= 1 and latest_cpi < 0.95:
+        posture = "EARLY_DEGRADATION_WARNING"
+    else:
+        posture = "IMPROVING_OR_STABLE_TREND"
+
+    return {
+        "clean_series": clean_series,
+        "periods_count": periods_count,
+        "latest_cpi": latest_cpi,
+        "average_cpi": average_cpi,
+        "consecutive_drops": consecutive_drops,
+        "net_drift": net_drift,
+        "posture": posture,
+    }
+
+
 class ProjectEVMService:
     """Fachada canónica del servicio EVM y Diagnóstico Predictivo PMI (Vol. 5 y Vol. 6)."""
 
@@ -3620,9 +3666,16 @@ class ProjectEVMService:
         )
 
     @staticmethod
+    def evaluate_cpi_trend_degradation(
+        cpi_series: list[float | int] | None,
+    ) -> dict[str, Any]:
+        return evaluate_cpi_trend_degradation(cpi_series)
+
+    @staticmethod
     def build_project_execution_matrix(
         db: Session, project: Project, now: Optional[datetime.datetime] = None
     ) -> Dict[str, Any]:
         return build_project_execution_matrix(db, project, now=now)
+
 
 

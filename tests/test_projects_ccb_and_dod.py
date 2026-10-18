@@ -1524,3 +1524,110 @@ def test_evaluate_ccb_voting_consensus_rejected_or_deadlocked():
         "posture": "CCB_REJECTED_OR_DEADLOCKED",
     }
 
+
+# ─── audit_ccb_decision_sla_breaches (pure helper) ───────────────
+
+
+def test_audit_ccb_decision_sla_compliant_with_default_sla():
+    """Todas las resoluciones dentro de 72h (borde exacto incluido) -> SLA_GOVERNANCE_COMPLIANT."""
+    from backend.services.project_ccb_service import (
+        audit_ccb_decision_sla_breaches,
+    )
+
+    res = audit_ccb_decision_sla_breaches(
+        [
+            {"id": "CR-1", "elapsed_hours": 8.5},
+            {"id": "CR-2", "age_hours": 72},  # borde exacto: no incumple
+            {"id": "CR-3"},  # sin horas -> 0.0
+        ]
+    )
+
+    assert res["sla_hours"] == 72.0
+    assert res["total_requests"] == 3
+    assert res["breached_count"] == 0
+    assert res["within_sla_count"] == 3
+    assert res["sla_compliance_rate"] == 100.0
+    assert res["posture"] == "SLA_GOVERNANCE_COMPLIANT"
+
+
+def test_audit_ccb_decision_sla_moderate_delay():
+    """2 de 3 fuera del SLA (compliance 33.34... -> no; uso 1 de 3 = 33.34 -> crítico)."""
+    from backend.services.project_ccb_service import (
+        audit_ccb_decision_sla_breaches,
+    )
+
+    moderate = audit_ccb_decision_sla_breaches(
+        [
+            {"elapsed_hours": 10.0},
+            {"elapsed_hours": 96.5},
+            {"age_hours": 80.0},
+            {"elapsed_hours": 20.0},
+            {"elapsed_hours": 12.0},
+        ],
+        sla_hours=48,
+    )
+    assert moderate["sla_hours"] == 48.0
+    assert moderate["breached_count"] == 2
+    assert moderate["within_sla_count"] == 3
+    assert moderate["sla_compliance_rate"] == 60.0
+    # 60.0 < 70.0 -> crítico, no moderado; el correcto es este spread:
+    assert moderate["posture"] == "CRITICAL_SLA_BOTTLENECK"
+
+    truly_moderate = audit_ccb_decision_sla_breaches(
+        [
+            {"elapsed_hours": 100.0},
+            {"elapsed_hours": 10.0},
+            {"elapsed_hours": 20.0},
+            {"age_hours": 30.0},
+            {"elapsed_hours": 5.0},
+        ],
+        sla_hours=72.0,
+    )
+    assert truly_moderate["breached_count"] == 1
+    assert truly_moderate["sla_compliance_rate"] == 80.0
+    assert truly_moderate["posture"] == "MODERATE_SLA_DELAY"
+
+
+def test_audit_ccb_decision_sla_custom_sla_floor_and_bad_entries():
+    """SLA custom clampado a >= 1.0h; entradas no-dict ignoradas; SLA None usa 72.0."""
+    from backend.services.project_ccb_service import (
+        audit_ccb_decision_sla_breaches,
+    )
+
+    tiny_sla = audit_ccb_decision_sla_breaches(
+        ["no-soy-dict", 42, {"elapsed_hours": 2.0}],  # type: ignore[list-item]
+        sla_hours=0.25,
+    )
+    assert tiny_sla["sla_hours"] == 1.0
+    assert tiny_sla["total_requests"] == 1
+    assert tiny_sla["breached_count"] == 1
+    assert tiny_sla["sla_compliance_rate"] == 0.0
+    assert tiny_sla["posture"] == "CRITICAL_SLA_BOTTLENECK"
+
+    no_sla = audit_ccb_decision_sla_breaches(
+        [{"elapsed_hours": 120.0}, {"age_hours": 30.0}],
+        sla_hours=None,
+    )
+    assert no_sla["sla_hours"] == 72.0
+    assert no_sla["breached_count"] == 1
+    assert no_sla["sla_compliance_rate"] == 50.0
+    assert no_sla["posture"] == "CRITICAL_SLA_BOTTLENECK"
+
+
+def test_audit_ccb_decision_sla_no_requests():
+    """None, lista vacía o sin dicts -> NO_CCB_REQUESTS con compliance 100.0."""
+    from backend.services.project_ccb_service import (
+        audit_ccb_decision_sla_breaches,
+    )
+
+    for val in (None, [], ["no dict", 7]):
+        res = audit_ccb_decision_sla_breaches(val)  # type: ignore[arg-type]
+        assert res == {
+            "sla_hours": 72.0,
+            "total_requests": 0,
+            "breached_count": 0,
+            "within_sla_count": 0,
+            "sla_compliance_rate": 100.0,
+            "posture": "NO_CCB_REQUESTS",
+        }
+

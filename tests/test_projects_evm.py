@@ -1320,6 +1320,77 @@ def test_evaluate_funding_limit_reconciliation_unconfigured_cap():
     assert none_all["posture"] == "UNCONFIGURED_FUNDING_CAP"
 
 
+def test_evaluate_cpi_trend_degradation_systemic_erosion():
+    """3 caídas consecutivas o 2 caídas con latest_cpi < 0.90 -> 'SYSTEMIC_CPI_EROSION'."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_cpi_trend_degradation,
+    )
+
+    three_drops = ProjectEVMService.evaluate_cpi_trend_degradation(
+        [1.04, 1.01, 0.98, 0.96]
+    )
+    assert three_drops == {
+        "clean_series": [1.04, 1.01, 0.98, 0.96],
+        "periods_count": 4,
+        "latest_cpi": 0.96,
+        "average_cpi": 0.9975,
+        "consecutive_drops": 3,
+        "net_drift": -0.08,
+        "posture": "SYSTEMIC_CPI_EROSION",
+    }
+
+    two_drops_low = evaluate_cpi_trend_degradation([1.0, 0.93, 0.88])
+    assert two_drops_low["consecutive_drops"] == 2
+    assert two_drops_low["latest_cpi"] == 0.88
+    assert two_drops_low["posture"] == "SYSTEMIC_CPI_EROSION"
+
+
+def test_evaluate_cpi_trend_degradation_early_warning():
+    """Caída final >= 1 con latest_cpi < 0.95 sin alcanzar erosión sistémica -> 'EARLY_DEGRADATION_WARNING'."""
+    from backend.services.project_evm_service import evaluate_cpi_trend_degradation
+
+    res = evaluate_cpi_trend_degradation([0.92, 0.97, 0.93])
+    assert res["periods_count"] == 3
+    assert res["latest_cpi"] == 0.93
+    assert res["consecutive_drops"] == 1
+    assert res["net_drift"] == 0.01
+    assert res["posture"] == "EARLY_DEGRADATION_WARNING"
+
+
+def test_evaluate_cpi_trend_degradation_improving_or_stable():
+    """Tendencia al alza o caída leve con latest_cpi >= 0.95 -> 'IMPROVING_OR_STABLE_TREND'."""
+    from backend.services.project_evm_service import evaluate_cpi_trend_degradation
+
+    up_res = evaluate_cpi_trend_degradation([0.89, 0.94, 1.02])
+    assert up_res["consecutive_drops"] == 0
+    assert up_res["net_drift"] == 0.13
+    assert up_res["posture"] == "IMPROVING_OR_STABLE_TREND"
+
+    mild_drop = evaluate_cpi_trend_degradation([1.05, 1.01, 0.97])
+    assert mild_drop["consecutive_drops"] == 2
+    assert mild_drop["latest_cpi"] == 0.97
+    assert mild_drop["posture"] == "IMPROVING_OR_STABLE_TREND"
+
+
+def test_evaluate_cpi_trend_degradation_insufficient_history():
+    """Menos de 2 lecturas válidas (> 0) -> 'INSUFFICIENT_TREND_HISTORY'."""
+    from backend.services.project_evm_service import evaluate_cpi_trend_degradation
+
+    single = evaluate_cpi_trend_degradation([0.0, -1.2, False, True, 0.95])
+    assert single["clean_series"] == [0.95]
+    assert single["periods_count"] == 1
+    assert single["latest_cpi"] == 0.95
+    assert single["net_drift"] == 0.0
+    assert single["posture"] == "INSUFFICIENT_TREND_HISTORY"
+
+    empty = evaluate_cpi_trend_degradation(None)
+    assert empty["periods_count"] == 0
+    assert empty["latest_cpi"] == 1.0
+    assert empty["average_cpi"] == 1.0
+    assert empty["posture"] == "INSUFFICIENT_TREND_HISTORY"
+
+
 if __name__ == "__main__":
     test_evm_balanced_project()
     test_evm_cost_overrun_critical()
@@ -1347,6 +1418,11 @@ if __name__ == "__main__":
     test_evaluate_funding_limit_reconciliation_reserve_drawdown_required()
     test_evaluate_funding_limit_reconciliation_ceiling_breach_critical()
     test_evaluate_funding_limit_reconciliation_unconfigured_cap()
+    test_evaluate_cpi_trend_degradation_systemic_erosion()
+    test_evaluate_cpi_trend_degradation_early_warning()
+    test_evaluate_cpi_trend_degradation_improving_or_stable()
+    test_evaluate_cpi_trend_degradation_insufficient_history()
     print("✅ All EVM tests passed successfully!")
+
 
 

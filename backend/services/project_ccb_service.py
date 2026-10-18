@@ -866,6 +866,59 @@ def evaluate_ccb_voting_consensus(
     }
 
 
+def audit_ccb_decision_sla_breaches(
+    requests: list[dict[str, Any]] | None,
+    sla_hours: float | int | None = 72.0,
+) -> dict[str, Any]:
+    """Audita incumplimientos de SLA en resoluciones CCB (PMBOK §4.6 Control Changes).
+
+    Ignora entradas que no sean dict. El SLA mínimo es 1.0h. Para cada
+    solicitud, horas transcurridas = `elapsed_hours` o `age_hours` (0.0 por
+    defecto): incumple si supera el SLA, no si es exactamente el límite.
+    - `total_requests`: solicitudes válidas evaluadas.
+    - `breached_count` / `within_sla_count`: resolución fuera/dentro del SLA.
+    - `sla_compliance_rate`: % dentro del SLA (2 decimales; 100.0 sin solicitudes).
+    - `posture`: 'NO_CCB_REQUESTS' sin solicitudes;
+      'SLA_GOVERNANCE_COMPLIANT' sin incumplimientos;
+      'MODERATE_SLA_DELAY' con compliance >= 70.0; y
+      'CRITICAL_SLA_BOTTLENECK' en otro caso.
+    """
+    items = [item for item in (requests or []) if isinstance(item, dict)]
+    safe_sla = max(1.0, round(float(sla_hours or 72.0), 2))
+    total_requests = len(items)
+
+    breached_count = 0
+    for item in items:
+        elapsed_hours = float(item.get("elapsed_hours") or item.get("age_hours") or 0.0)
+        if elapsed_hours > safe_sla:
+            breached_count += 1
+
+    within_sla_count = total_requests - breached_count
+    sla_compliance_rate = (
+        round((within_sla_count / total_requests) * 100.0, 2)
+        if total_requests > 0
+        else 100.0
+    )
+
+    if total_requests == 0:
+        posture = "NO_CCB_REQUESTS"
+    elif breached_count == 0:
+        posture = "SLA_GOVERNANCE_COMPLIANT"
+    elif sla_compliance_rate >= 70.0:
+        posture = "MODERATE_SLA_DELAY"
+    else:
+        posture = "CRITICAL_SLA_BOTTLENECK"
+
+    return {
+        "sla_hours": safe_sla,
+        "total_requests": total_requests,
+        "breached_count": breached_count,
+        "within_sla_count": within_sla_count,
+        "sla_compliance_rate": sla_compliance_rate,
+        "posture": posture,
+    }
+
+
 class ProjectCCBService:
     """Fachada canónica de Control Integrado de Cambios (CCB) y Calidad DoD PMI."""
 
@@ -1014,6 +1067,13 @@ class ProjectCCBService:
     ) -> dict[str, Any]:
         return evaluate_ccb_voting_consensus(votes, required_quorum=required_quorum)
 
+    @staticmethod
+    def audit_ccb_decision_sla_breaches(
+        requests: list[dict[str, Any]] | None,
+        sla_hours: float | int | None = 72.0,
+    ) -> dict[str, Any]:
+        return audit_ccb_decision_sla_breaches(requests, sla_hours=sla_hours)
+
 
 __all__ = [
     "list_change_requests",
@@ -1035,6 +1095,7 @@ __all__ = [
     "evaluate_dod_checklist_verification_depth",
     "evaluate_scope_creep_baseline_drift",
     "evaluate_ccb_voting_consensus",
+    "audit_ccb_decision_sla_breaches",
     "ProjectCCBService",
 ]
 
