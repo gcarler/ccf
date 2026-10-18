@@ -97,6 +97,70 @@ def declared_guards() -> dict[tuple[str, str], str]:
     return guards
 
 
+UNAUTHENTICATED_GUARD = "NO current_user dependency"
+
+
+def summarize_projects_guard_coverage(openapi: dict[str, Any]) -> dict[str, Any]:
+    """Resumen puro de cobertura de guards de seguridad del router Projects.
+
+    Inspecciona `route_inventory(openapi)` y `declared_guards()` y retorna:
+    - `total_operations`: operaciones OpenAPI bajo /api/projects.
+    - `authenticated_operations`: operaciones con guard válido (≠ NO current
+      user dependency).
+    - `unauthenticated_operations`: operaciones con guard
+      'NO current_user dependency'.
+    - `missing_guard_mappings`: operaciones OpenAPI sin entrada en el mapa
+      de guards del router.
+    - `coverage_pct`: 100.0 si no hay operaciones; si no, % autenticadas
+      (2 decimales).
+    - `guard_distribution`: conteos por nombre de guard (ordenados
+      alfabéticamente por nombre).
+    - `is_fully_guarded`: True sólo con > 0 operaciones, 0 sin autenticar
+      y 0 sin mapeo de guard.
+    """
+    operations = route_inventory(openapi)
+    guards = declared_guards()
+
+    total_operations = len(operations)
+    guard_distribution: dict[str, int] = {}
+    authenticated = 0
+    unauthenticated_operations = 0
+    missing_guard_mappings = 0
+
+    for method, path, _operation in operations:
+        guard = guards.get((method, path))
+        if guard is None:
+            missing_guard_mappings += 1
+            continue
+        guard_distribution[guard] = guard_distribution.get(guard, 0) + 1
+        if guard == UNAUTHENTICATED_GUARD:
+            unauthenticated_operations += 1
+        else:
+            authenticated += 1
+
+    coverage_pct = (
+        100.0
+        if total_operations == 0
+        else round((authenticated / total_operations) * 100.0, 2)
+    )
+
+    return {
+        "total_operations": total_operations,
+        "authenticated_operations": authenticated,
+        "unauthenticated_operations": unauthenticated_operations,
+        "missing_guard_mappings": missing_guard_mappings,
+        "coverage_pct": coverage_pct,
+        "guard_distribution": {
+            name: count for name, count in sorted(guard_distribution.items())
+        },
+        "is_fully_guarded": (
+            total_operations > 0
+            and unauthenticated_operations == 0
+            and missing_guard_mappings == 0
+        ),
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()

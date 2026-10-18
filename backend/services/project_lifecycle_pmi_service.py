@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from typing import Any
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -354,3 +355,143 @@ def finalize_closure(
     db.commit()
     db.refresh(row)
     return row
+
+
+def evaluate_automation_governance_readiness(
+    rules: list[dict[str, Any]] | None,
+) -> dict[str, Any]:
+    """Audit project automation rules configuration readiness under PMI workflow governance standards."""
+    supported_actions = {
+        "notify_assignee",
+        "notify_channel",
+        "reassign_task",
+        "change_phase",
+        "create_followup_task",
+        "set_priority",
+    }
+    supported_priorities = {"low", "medium", "high", "urgent", "critical"}
+
+    total_rules = 0
+    active_rules = 0
+    valid_active_rules = 0
+    misconfigured_active_rules = 0
+    total_executions = 0
+
+    for rule in rules or []:
+        if not isinstance(rule, dict):
+            continue
+        total_rules += 1
+        try:
+            exec_count = max(0, int(rule.get("execution_count") or 0))
+        except (TypeError, ValueError):
+            exec_count = 0
+        total_executions += exec_count
+
+        is_active = bool(rule.get("is_active", True))
+        if not is_active:
+            continue
+
+        active_rules += 1
+        action = rule.get("action_type")
+        raw_action_data = rule.get("action_data")
+        action_data = {} if raw_action_data is None else raw_action_data
+
+        is_valid = True
+        if not isinstance(action_data, dict):
+            is_valid = False
+        elif not isinstance(action, str) or action not in supported_actions:
+            is_valid = False
+        elif action == "reassign_task":
+            assignee_id = action_data.get("assignee_id")
+            if not (
+                isinstance(assignee_id, UUID)
+                or (isinstance(assignee_id, str) and assignee_id.strip() != "")
+            ):
+                is_valid = False
+        elif action == "change_phase":
+            if not any(
+                isinstance(target, str) and target.strip() != ""
+                for target in (action_data.get("phase_name"), action_data.get("node"))
+            ):
+                is_valid = False
+        elif action == "set_priority":
+            priority_val = action_data.get("priority")
+            if not isinstance(priority_val, str) or priority_val not in supported_priorities:
+                is_valid = False
+        elif action == "create_followup_task":
+            if "priority" in action_data:
+                priority_val = action_data.get("priority")
+                if not isinstance(priority_val, str) or priority_val not in supported_priorities:
+                    is_valid = False
+
+        if is_valid:
+            valid_active_rules += 1
+        else:
+            misconfigured_active_rules += 1
+
+    readiness_pct = (
+        100.0
+        if active_rules == 0
+        else round((valid_active_rules / active_rules) * 100.0, 2)
+    )
+
+    if active_rules == 0:
+        governance_status = "idle"
+    elif misconfigured_active_rules == 0:
+        governance_status = "optimal"
+    elif readiness_pct >= 50.0:
+        governance_status = "warning"
+    else:
+        governance_status = "critical"
+
+    return {
+        "total_rules": total_rules,
+        "active_rules": active_rules,
+        "valid_active_rules": valid_active_rules,
+        "misconfigured_active_rules": misconfigured_active_rules,
+        "total_executions": total_executions,
+        "readiness_pct": readiness_pct,
+        "governance_status": governance_status,
+    }
+
+
+class ProjectLifecyclePMIService:
+    """Canonical facade for PMI project lifecycle, governance maturity, and automation readiness."""
+
+    @staticmethod
+    def compute_closure_readiness_pct(
+        deliverables_accepted_verified: bool,
+        financial_reconciliation_completed: bool,
+        lessons_learned_count: int,
+        closure_status: str,
+    ) -> float:
+        return compute_closure_readiness_pct(
+            deliverables_accepted_verified=deliverables_accepted_verified,
+            financial_reconciliation_completed=financial_reconciliation_completed,
+            lessons_learned_count=lessons_learned_count,
+            closure_status=closure_status,
+        )
+
+    @staticmethod
+    def compute_governance_maturity_pct(
+        charter_status: str,
+        measurable_objectives_count: int,
+        stakeholders_total: int,
+        closure_readiness_pct: float,
+    ) -> float:
+        return compute_governance_maturity_pct(
+            charter_status=charter_status,
+            measurable_objectives_count=measurable_objectives_count,
+            stakeholders_total=stakeholders_total,
+            closure_readiness_pct=closure_readiness_pct,
+        )
+
+    @staticmethod
+    def evaluate_governance_health(summary: dict) -> dict:
+        return evaluate_governance_health(summary)
+
+    @staticmethod
+    def evaluate_automation_governance_readiness(
+        rules: list[dict[str, Any]] | None,
+    ) -> dict[str, Any]:
+        return evaluate_automation_governance_readiness(rules)
