@@ -5399,3 +5399,114 @@ def test_http_status_and_success_code_hygiene_ignores_non_project_routes():
     assert res["body_on_204_no_content_operations"] == []
     assert res["get_with_201_created_operations"] == []
     assert res["is_http_status_hygiene_compliant"] is True
+
+
+def test_security_scheme_and_auth_hygiene_live_openapi():
+    """Valida contra el esquema OpenAPI real la higiene de esquemas de seguridad en proyectos."""
+    assert "summarize_projects_security_scheme_and_auth_hygiene" in audit_projects_api_contracts.__all__
+    res = audit_projects_api_contracts.summarize_projects_security_scheme_and_auth_hygiene()
+    assert res["total_project_operations"] > 0
+    assert res["explicitly_unauthenticated_mutation_operations"] == []
+    assert res["unknown_security_scheme_references"] == []
+    assert res["is_security_scheme_hygiene_compliant"] is True
+
+
+def test_security_scheme_and_auth_hygiene_detects_unauthenticated_mutations():
+    """Detecta operaciones mutadoras que declaran explícitamente security: []."""
+    schema = {
+        "components": {
+            "securitySchemes": {
+                "BearerAuth": {"type": "http", "scheme": "bearer"},
+            }
+        },
+        "paths": {
+            "/api/v1/projects/charter": {
+                "get": {
+                    "security": [],
+                    "responses": {"200": {"description": "OK"}},
+                },
+                "post": {
+                    "security": [],
+                    "responses": {"201": {"description": "Created"}},
+                },
+                "delete": {
+                    "security": [],
+                    "responses": {"204": {"description": "No Content"}},
+                },
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_security_scheme_and_auth_hygiene(
+        schema
+    )
+    assert res["total_project_operations"] == 3
+    assert res["defined_security_schemes"] == ["BearerAuth"]
+    assert res["explicitly_unauthenticated_mutation_operations"] == [
+        "DELETE /api/v1/projects/charter",
+        "POST /api/v1/projects/charter",
+    ]
+    assert res["unknown_security_scheme_references"] == []
+    assert res["is_security_scheme_hygiene_compliant"] is False
+
+
+def test_security_scheme_and_auth_hygiene_detects_unknown_scheme_and_missing_auth_errors():
+    """Detecta referencias a esquemas de seguridad inexistentes y falta de respuestas 401/403/default."""
+    schema = {
+        "components": {
+            "securitySchemes": {
+                "BearerAuth": {"type": "http", "scheme": "bearer"},
+            }
+        },
+        "paths": {
+            "/projects/tasks": {
+                "post": {
+                    "security": [{"UnknownOAuth": ["write:tasks"]}],
+                    "responses": {"201": {"description": "Created"}},
+                },
+                "patch": {
+                    "security": [{"BearerAuth": []}],
+                    "responses": {
+                        "200": {"description": "OK"},
+                        "401": {"description": "Unauthorized"},
+                    },
+                },
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_security_scheme_and_auth_hygiene(
+        schema
+    )
+    assert res["total_project_operations"] == 2
+    assert res["defined_security_schemes"] == ["BearerAuth"]
+    assert res["explicitly_unauthenticated_mutation_operations"] == []
+    assert res["unknown_security_scheme_references"] == [
+        "POST /projects/tasks:UnknownOAuth"
+    ]
+    assert res["missing_auth_error_doc_on_secured_operations"] == [
+        "POST /projects/tasks"
+    ]
+    assert res["is_security_scheme_hygiene_compliant"] is False
+
+
+def test_security_scheme_and_auth_hygiene_ignores_non_project_routes():
+    """Ignora rutas fuera del dominio de proyectos y retorna cumplimiento limpio."""
+    schema = {
+        "components": {"securitySchemes": {}},
+        "paths": {
+            "/api/v1/public/webhook": {
+                "post": {
+                    "security": [],
+                    "responses": {"200": {"description": "OK"}},
+                }
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_security_scheme_and_auth_hygiene(
+        schema
+    )
+    assert res["total_project_operations"] == 0
+    assert res["defined_security_schemes"] == []
+    assert res["explicitly_unauthenticated_mutation_operations"] == []
+    assert res["unknown_security_scheme_references"] == []
+    assert res["missing_auth_error_doc_on_secured_operations"] == []
+    assert res["is_security_scheme_hygiene_compliant"] is True

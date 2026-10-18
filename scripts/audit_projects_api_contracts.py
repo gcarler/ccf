@@ -3888,6 +3888,99 @@ def summarize_projects_http_status_and_success_code_hygiene(
     }
 
 
+def summarize_projects_security_scheme_and_auth_hygiene(
+    openapi_schema: Mapping[str, object] | None = None,
+) -> dict[str, object]:
+    """Audita los esquemas de seguridad y exposición no autenticada en operaciones de proyectos."""
+    if openapi_schema is None:
+        from backend.app import app
+
+        schema_dict: Mapping[str, Any] = app.openapi()
+    else:
+        schema_dict = openapi_schema
+
+    components = schema_dict.get("components", {}) if isinstance(schema_dict, Mapping) else {}
+    sec_schemes_map = (
+        components.get("securitySchemes", {})
+        if isinstance(components, Mapping)
+        else {}
+    )
+    defined_security_schemes = (
+        sorted(str(k) for k in sec_schemes_map.keys())
+        if isinstance(sec_schemes_map, Mapping)
+        else []
+    )
+    defined_set = set(defined_security_schemes)
+
+    total_project_operations = 0
+    explicitly_unauthenticated_mutation_operations: list[str] = []
+    unknown_security_scheme_references: list[str] = []
+    missing_auth_error_doc_on_secured_operations: list[str] = []
+
+    paths = schema_dict.get("paths", {}) if isinstance(schema_dict, Mapping) else {}
+    if isinstance(paths, Mapping):
+        for path in sorted(paths.keys()):
+            path_str = str(path)
+            if not path_str.startswith(("/api/projects", "/api/v1/projects", "/projects")):
+                continue
+            path_item = paths[path]
+            if not isinstance(path_item, Mapping):
+                continue
+
+            for method in _AUDITED_HTTP_STATUS_METHODS:
+                op_spec = path_item.get(method)
+                if not isinstance(op_spec, Mapping):
+                    continue
+
+                total_project_operations += 1
+                op_ref = f"{method.upper()} {path_str}"
+
+                if "security" not in op_spec:
+                    continue
+
+                sec_list = op_spec.get("security")
+                if not isinstance(sec_list, list):
+                    continue
+
+                if len(sec_list) == 0:
+                    if method in _MUTATION_HTTP_METHODS:
+                        explicitly_unauthenticated_mutation_operations.append(op_ref)
+                    continue
+
+                for sec_req in sec_list:
+                    if not isinstance(sec_req, Mapping):
+                        continue
+                    for scheme_name in sorted(str(k) for k in sec_req.keys()):
+                        if scheme_name not in defined_set:
+                            unknown_security_scheme_references.append(
+                                f"{op_ref}:{scheme_name}"
+                            )
+
+                responses = op_spec.get("responses")
+                resp_map = responses if isinstance(responses, Mapping) else {}
+                status_keys = {str(k) for k in resp_map.keys()}
+                if not ({"401", "403", "default"} & status_keys):
+                    missing_auth_error_doc_on_secured_operations.append(op_ref)
+
+    return {
+        "total_project_operations": total_project_operations,
+        "defined_security_schemes": defined_security_schemes,
+        "explicitly_unauthenticated_mutation_operations": sorted(
+            explicitly_unauthenticated_mutation_operations
+        ),
+        "unknown_security_scheme_references": sorted(
+            unknown_security_scheme_references
+        ),
+        "missing_auth_error_doc_on_secured_operations": sorted(
+            missing_auth_error_doc_on_secured_operations
+        ),
+        "is_security_scheme_hygiene_compliant": (
+            len(explicitly_unauthenticated_mutation_operations) == 0
+            and len(unknown_security_scheme_references) == 0
+        ),
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()
