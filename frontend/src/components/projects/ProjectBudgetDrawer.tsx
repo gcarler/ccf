@@ -287,6 +287,18 @@ export function ProjectBudgetDrawer({
       ? "hsl(var(--warning))"
       : "hsl(var(--success))";
 
+  const bacValue = summary?.budget_allocated ?? budgetAllocated ?? 0;
+  const contingencyReserve = summary?.contingency_reserve ?? 0;
+  const workPackagesBudget =
+    summary?.work_packages_budget ?? Math.max(0, bacValue - contingencyReserve);
+  const managementReservePct = summary?.management_reserve_pct ?? 10;
+  const managementReserve =
+    summary?.management_reserve ?? Math.round(bacValue * (managementReservePct / 100));
+  const totalProjectBudget =
+    summary?.total_project_budget ?? bacValue + managementReserve;
+  const cpiRule = summary?.cpi_stability_rule ?? null;
+  const sentinel = summary?.early_warning_sentinel ?? null;
+
   return (
     <>
       <div className="flex flex-col gap-5 p-6 text-sm" style={{ color: "hsl(var(--text-primary))" }}>
@@ -351,6 +363,139 @@ export function ProjectBudgetDrawer({
               />
             </div>
           </div>
+        </div>
+
+        {/* ESTRUCTURA CANÓNICA DE RESERVAS PRESUPUESTARIAS (PMI VOL. 6 §3) */}
+        <div
+          data-testid="budget-canonical-reserves-card"
+          className="rounded-xl p-4 border space-y-3"
+          style={{
+            backgroundColor: "hsl(var(--surface-1))",
+            borderColor: "hsl(var(--border))",
+          }}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b" style={{ borderColor: "hsl(var(--border))" }}>
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "hsl(var(--primary))" }}>
+                Estructura Canónica de Reservas (PMI Vol. 6 §3)
+              </span>
+              <p className="text-[11px] mt-0.5" style={{ color: "hsl(var(--text-secondary))" }}>
+                Paquetes de Trabajo + Reserva de Contingencia (EMV) = BAC + Reserva de Gestión = Presupuesto Total
+              </p>
+            </div>
+            {sentinel && (
+              <span
+                data-testid="budget-sentinel-badge"
+                className="text-[11px] font-bold px-2.5 py-1 rounded-full border"
+                style={{
+                  backgroundColor:
+                    sentinel.severity_color === "destructive"
+                      ? "hsl(var(--destructive) / 0.12)"
+                      : sentinel.severity_color === "warning"
+                      ? "hsl(var(--warning-muted))"
+                      : "hsl(var(--success-muted))",
+                  borderColor:
+                    sentinel.severity_color === "destructive"
+                      ? "hsl(var(--destructive) / 0.35)"
+                      : sentinel.severity_color === "warning"
+                      ? "hsl(var(--warning) / 0.35)"
+                      : "hsl(var(--success) / 0.35)",
+                  color:
+                    sentinel.severity_color === "destructive"
+                      ? "hsl(var(--destructive))"
+                      : sentinel.severity_color === "warning"
+                      ? "hsl(var(--warning-text))"
+                      : "hsl(var(--success-text))",
+                }}
+              >
+                {sentinel.label}: {sentinel.protocol_action}
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-xs">
+            <div
+              className="p-2.5 rounded-lg border"
+              style={{ backgroundColor: "hsl(var(--surface-2))", borderColor: "hsl(var(--border))" }}
+            >
+              <span className="block text-[10px] uppercase font-semibold" style={{ color: "hsl(var(--text-secondary))" }}>
+                Paquetes de Trabajo
+              </span>
+              <span data-testid="budget-work-packages" className="text-sm font-bold mt-0.5 block">
+                ${workPackagesBudget.toLocaleString("es-CO")}
+              </span>
+            </div>
+            <div
+              className="p-2.5 rounded-lg border"
+              style={{ backgroundColor: "hsl(var(--surface-2))", borderColor: "hsl(var(--border))" }}
+            >
+              <span className="block text-[10px] uppercase font-semibold" style={{ color: "hsl(var(--text-secondary))" }}>
+                + Reserva Contingencia (EMV)
+              </span>
+              <span
+                data-testid="budget-contingency-reserve"
+                className="text-sm font-bold mt-0.5 block"
+                style={{ color: "hsl(var(--warning))" }}
+              >
+                ${contingencyReserve.toLocaleString("es-CO")}
+              </span>
+            </div>
+            <div
+              className="p-2.5 rounded-lg border"
+              style={{ backgroundColor: "hsl(var(--surface-2))", borderColor: "hsl(var(--border))" }}
+            >
+              <span className="block text-[10px] uppercase font-semibold" style={{ color: "hsl(var(--text-secondary))" }}>
+                = Línea Base Costos (BAC)
+              </span>
+              <span data-testid="budget-cost-baseline-bac" className="text-sm font-bold mt-0.5 block" style={{ color: "hsl(var(--primary))" }}>
+                ${bacValue.toLocaleString("es-CO")}
+              </span>
+            </div>
+            <div
+              className="p-2.5 rounded-lg border"
+              style={{ backgroundColor: "hsl(var(--surface-2))", borderColor: "hsl(var(--border))" }}
+            >
+              <span className="block text-[10px] uppercase font-semibold" style={{ color: "hsl(var(--text-secondary))" }}>
+                + Reserva Gestión ({managementReservePct}%)
+              </span>
+              <span data-testid="budget-management-reserve" className="text-sm font-bold mt-0.5 block">
+                ${managementReserve.toLocaleString("es-CO")}
+              </span>
+            </div>
+            <div
+              className="p-2.5 rounded-lg border col-span-2 sm:col-span-1"
+              style={{ backgroundColor: "hsl(var(--primary) / 0.08)", borderColor: "hsl(var(--primary) / 0.35)" }}
+            >
+              <span className="block text-[10px] uppercase font-bold" style={{ color: "hsl(var(--primary))" }}>
+                = Presupuesto Total
+              </span>
+              <span data-testid="budget-total-project-budget" className="text-sm font-extrabold mt-0.5 block" style={{ color: "hsl(var(--primary))" }}>
+                ${totalProjectBudget.toLocaleString("es-CO")}
+              </span>
+            </div>
+          </div>
+
+          {cpiRule && (
+            <div
+              data-testid="budget-cpi-stability-banner"
+              className="p-2.5 rounded-lg border text-xs flex flex-wrap items-center justify-between gap-2"
+              style={{
+                backgroundColor: cpiRule.is_irrecoverable_without_rebaseline
+                  ? "hsl(var(--destructive) / 0.08)"
+                  : "hsl(var(--surface-2))",
+                borderColor: cpiRule.is_irrecoverable_without_rebaseline
+                  ? "hsl(var(--destructive) / 0.3)"
+                  : "hsl(var(--border))",
+              }}
+            >
+              <span style={{ color: "hsl(var(--text-primary))" }}>
+                <strong>Regla del 15% Estabilidad CPI:</strong> {cpiRule.diagnostic_message}
+              </span>
+              <span className="font-mono font-bold text-[11px]" style={{ color: "hsl(var(--primary))" }}>
+                Banda CPI: [{cpiRule.expected_cpi_floor.toFixed(2)} – {cpiRule.expected_cpi_ceiling.toFixed(2)}]
+              </span>
+            </div>
+          )}
         </div>
 
         {/* BOTÓN REGISTRAR GASTO */}

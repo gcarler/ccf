@@ -264,12 +264,261 @@ def _compute_project_continuous_progress_pct(
     return _compute_tasks_weighted_progress_pct(tasks)
 
 
+def _explicit_numeric_attr(obj: Any, attr_name: str, private_name: str) -> Optional[float]:
+    d = getattr(obj, "__dict__", {})
+    if isinstance(d, dict):
+        if private_name in d and isinstance(d[private_name], (int, float)) and not isinstance(d[private_name], bool):
+            return float(d[private_name])
+        if attr_name in d and isinstance(d[attr_name], (int, float)) and not isinstance(d[attr_name], bool):
+            return float(d[attr_name])
+    try:
+        val = getattr(obj, attr_name, None)
+        if isinstance(val, (int, float)) and not isinstance(val, bool):
+            return float(val)
+    except Exception:
+        pass
+    return None
+
+
+def calculate_cpi_stability_rule(progress_pct: float, cpi: float) -> Dict[str, Any]:
+    """Evalúa la Regla Empírica del 15%-20% de Estabilidad del CPI (PMI Vol. 5 §2.1).
+
+    Una vez superado el 15% de avance físico, el CPI acumulado se estabiliza y no
+    varía más de ±0.10 (10%) hasta el cierre. Si CPI < 0.90 con avance >= 15%,
+    el sobrecosto es estadísticamente irrecuperable sin re-baselining formal.
+    """
+    prog = round(max(0.0, min(100.0, float(progress_pct))), 1)
+    curr_cpi = round(float(cpi), 2)
+    is_applicable = bool(prog >= 15.0)
+    floor_val = round(curr_cpi * 0.90, 2)
+    ceiling_val = round(curr_cpi * 1.10, 2)
+    is_irrecoverable = bool(is_applicable and curr_cpi > 0.0 and curr_cpi < 0.90)
+
+    if not is_applicable:
+        msg = (
+            f"Avance físico ({prog:.1f}%) por debajo del umbral empírico del 15% PMI; "
+            f"el CPI actual ({curr_cpi:.2f}) aún no entra en ventana de bloqueo estadístico."
+        )
+    elif is_irrecoverable:
+        msg = (
+            f"Regla del 15% PMI activa ({prog:.1f}% de avance): Con CPI={curr_cpi:.2f} "
+            f"(banda esperada [{floor_val:.2f} - {ceiling_val:.2f}]), el sobrecosto es "
+            f"estadísticamente irrecuperable sin re-baselining formal o reducción de alcance."
+        )
+    else:
+        msg = (
+            f"Regla del 15% PMI activa ({prog:.1f}% de avance): El CPI ({curr_cpi:.2f}) se encuentra "
+            f"en zona de estabilidad estadística con banda proyectada [{floor_val:.2f} - {ceiling_val:.2f}] al cierre."
+        )
+
+    return {
+        "is_applicable": is_applicable,
+        "progress_pct": prog,
+        "current_cpi": curr_cpi,
+        "expected_cpi_floor": floor_val,
+        "expected_cpi_ceiling": ceiling_val,
+        "is_irrecoverable_without_rebaseline": is_irrecoverable,
+        "diagnostic_message": msg,
+    }
+
+
+def calculate_early_warning_sentinel(cpi: float, spi: float) -> Dict[str, Any]:
+    """Clasifica el nivel de Alerta Temprana (Sentinel) en los 4 umbrales de PMI Vol. 5 §4 según min(CPI, SPI)."""
+    curr_cpi = round(float(cpi), 2)
+    curr_spi = round(float(spi), 2)
+    min_index = round(min(curr_cpi, curr_spi), 2)
+    limiting_metric = "CPI" if curr_cpi <= curr_spi else "SPI"
+
+    if curr_cpi >= 0.95 and curr_spi >= 0.95:
+        level = "normal"
+        label = "Desempeño Normal"
+        threshold_range = "CPI >= 0.95 y SPI >= 0.95"
+        protocol_action = "Reporte ordinario semanal"
+        severity_color = "success"
+    elif min_index >= 0.85:
+        level = "attention"
+        label = "Alerta Amarilla (Atención)"
+        threshold_range = "0.85 <= min(CPI, SPI) < 0.95"
+        protocol_action = "Notificación al Director de Proyecto para análisis de causa raíz"
+        severity_color = "warning"
+    elif min_index >= 0.75:
+        level = "high_risk"
+        label = "Alerta Naranja (Riesgo Alto)"
+        threshold_range = "0.75 <= min(CPI, SPI) < 0.85"
+        protocol_action = "Convocatoria a Comité de Control de Cambios (CCB) de la Sede"
+        severity_color = "warning"
+    else:
+        level = "critical"
+        label = "Alerta Roja (Crítico)"
+        threshold_range = "min(CPI, SPI) < 0.75"
+        protocol_action = "Auditoría forense inmediata por la PMO Central y suspensión preventiva"
+        severity_color = "destructive"
+
+    return {
+        "level": level,
+        "status": level,
+        "label": label,
+        "min_index": min_index,
+        "cpi": curr_cpi,
+        "spi": curr_spi,
+        "limiting_metric": limiting_metric,
+        "threshold_range": threshold_range,
+        "protocol_action": protocol_action,
+        "action": protocol_action,
+        "severity_color": severity_color,
+        "requires_ccb": level in ("high_risk", "critical"),
+        "requires_pmo_audit": level == "critical",
+    }
+
+
+def compute_project_reserves_breakdown(
+    db: Session,
+    project: Project,
+    bac: Optional[float] = None,
+) -> Dict[str, Any]:
+    """Calcula la Estructura Canónica de Reservas Presupuestarias (PMI Vol. 6 §3).
+
+    - Paquetes de Trabajo (work_packages_budget) + Reserva de Contingencia EMV (contingency_reserve)
+      = Línea Base de Costos (BAC).
+    - BAC + Reserva de Gestión (management_reserve, 10% por defecto para desconocidos-desconocidos)
+      = Presupuesto Total del Proyecto (total_project_budget).
+    """
+    base_bac = round(float(bac if bac is not None else (getattr(project, "budget_allocated", 0.0) or 0.0)), 2)
+
+    # 1. Consultar riesgos activos para cuantificar EMV (Amenazas vs Oportunidades)
+    risks: List[Any] = []
+    try:
+        raw_risks = (
+            db.query(ProjectRisk)
+            .filter(
+                ProjectRisk.project_id == project.id,
+                ProjectRisk.deleted_at.is_(None),
+            )
+            .all()
+        )
+        if isinstance(raw_risks, list):
+            risks = [r for r in raw_risks if _is_valid_id(getattr(r, "id", None))]
+    except Exception:
+        risks = []
+
+    if not risks:
+        rel_risks = getattr(project, "__dict__", {}).get("risks")
+        if isinstance(rel_risks, list):
+            risks = [r for r in rel_risks if getattr(r, "deleted_at", None) is None]
+
+    threats_emv = 0.0
+    opportunities_emv = 0.0
+    active_threats_count = 0
+    active_opportunities_count = 0
+
+    for r in risks:
+        r_status = str(getattr(r, "status", "active") or "active").lower()
+        if r_status != "active":
+            continue
+        r_type = str(getattr(r, "risk_type", "threat") or "threat").strip().lower()
+        r_prob_scale = max(1, min(5, int(_safe_float(getattr(r, "probability", 3), 3.0))))
+        r_prob_pct = _safe_float(getattr(r, "probability_pct", None), r_prob_scale * 20.0)
+        r_fin_imp = max(0.0, _safe_float(getattr(r, "financial_impact", 0.0), 0.0))
+        raw_emv = (r_prob_pct / 100.0) * r_fin_imp
+        r_emv = _safe_float(
+            getattr(r, "emv", None),
+            (-abs(raw_emv) if r_type == "opportunity" else abs(raw_emv)),
+        )
+        if r_type == "opportunity":
+            active_opportunities_count += 1
+            opportunities_emv = round(opportunities_emv - abs(r_emv), 2)
+        else:
+            active_threats_count += 1
+            threats_emv = round(threats_emv + abs(r_emv), 2)
+
+    net_emv = round(threats_emv + opportunities_emv, 2)
+
+    # 2. Reserva de Contingencia (conocidos-desconocidos, forma parte del BAC)
+    explicit_contingency = _explicit_numeric_attr(project, "contingency_reserve", "_contingency_reserve")
+    if explicit_contingency is not None:
+        contingency_reserve = round(max(0.0, explicit_contingency), 2)
+    else:
+        contingency_reserve = round(max(0.0, threats_emv), 2)
+
+    # 3. Presupuesto de Paquetes de Trabajo (EDT Nivel 2 o BAC - Contingencia)
+    components: List[Any] = []
+    try:
+        raw_comps = (
+            db.query(ProjectComponent)
+            .filter(
+                ProjectComponent.project_id == project.id,
+                ProjectComponent.deleted_at.is_(None),
+            )
+            .all()
+        )
+        if isinstance(raw_comps, list):
+            components = [
+                c
+                for c in raw_comps
+                if _is_valid_id(getattr(c, "id", None))
+                and str(getattr(c, "status", "active") or "active") != "cancelled"
+            ]
+    except Exception:
+        components = []
+
+    if not components:
+        rel_comps = getattr(project, "__dict__", {}).get("components")
+        if isinstance(rel_comps, list):
+            components = [
+                c
+                for c in rel_comps
+                if getattr(c, "deleted_at", None) is None
+                and str(getattr(c, "status", "active") or "active") != "cancelled"
+            ]
+
+    comp_budget_sum = round(
+        sum(max(0.0, _safe_float(getattr(c, "budget_allocated", 0.0))) for c in components),
+        2,
+    )
+    if components and comp_budget_sum > 0.0:
+        work_packages_budget = comp_budget_sum
+    else:
+        work_packages_budget = round(max(0.0, base_bac - contingency_reserve), 2)
+
+    effective_bac = base_bac if base_bac > 0.0 else round(work_packages_budget + contingency_reserve, 2)
+
+    # 4. Reserva de Gestión (desconocidos-desconocidos, fuera del BAC EVM, por defecto 10% del BAC)
+    explicit_mgmt_pct = _explicit_numeric_attr(project, "management_reserve_pct", "_management_reserve_pct")
+    management_reserve_pct = round(max(0.0, explicit_mgmt_pct if explicit_mgmt_pct is not None else 10.0), 2)
+
+    explicit_mgmt = _explicit_numeric_attr(project, "management_reserve", "_management_reserve")
+    if explicit_mgmt is not None:
+        management_reserve = round(max(0.0, explicit_mgmt), 2)
+    else:
+        management_reserve = round(effective_bac * (management_reserve_pct / 100.0), 2)
+
+    total_project_budget = round(effective_bac + management_reserve, 2)
+
+    return {
+        "work_packages_budget": work_packages_budget,
+        "contingency_reserve": contingency_reserve,
+        "cost_baseline_bac": effective_bac,
+        "bac": effective_bac,
+        "management_reserve": management_reserve,
+        "management_reserve_pct": management_reserve_pct,
+        "total_project_budget": total_project_budget,
+        "threats_emv": round(threats_emv, 2),
+        "opportunities_emv": round(opportunities_emv, 2),
+        "net_emv": net_emv,
+        "active_threats_count": active_threats_count,
+        "active_opportunities_count": active_opportunities_count,
+    }
+
+
 def calculate_project_evm(
     db: Session, project: Project, now: Optional[datetime] = None
 ) -> Dict[str, Any]:
     """Calcula las métricas canónicas de EVM para un proyecto dado."""
     now = _as_utc(now) or _utcnow()
     bac = float(project.budget_allocated or 0.0)
+    reserves_info = compute_project_reserves_breakdown(db, project, bac=bac)
+    if bac <= 0.0 and reserves_info["bac"] > 0.0:
+        bac = float(reserves_info["bac"])
 
     # 1. Costo Real (AC): Gastos reales registrados o campo budget_spent
     expenses_query = (
@@ -370,7 +619,10 @@ def calculate_project_evm(
 
     financial_pct = round((ac / max(bac, 1.0)) * 100.0, 1) if bac > 0 else 0.0
 
-    # 10. Diagnóstico y Semáforo
+    # 10. Diagnóstico, Semáforo, Regla del 15% de Estabilidad CPI y Early Warning Sentinel
+    cpi_stability_rule = calculate_cpi_stability_rule(progress_pct=progress_pct, cpi=cpi)
+    early_warning_sentinel = calculate_early_warning_sentinel(cpi=cpi, spi=spi)
+
     recommendations: List[str] = []
     if cpi >= 1.0 and spi >= 1.0:
         health_status = "OPTIMO"
@@ -393,6 +645,13 @@ def calculate_project_evm(
         recommendations.append(f"Alerta crítica: El proyecto presenta atraso físico (SPI: {spi}) y sobrecosto financiero (CPI: {cpi}).")
         recommendations.append("Convocar comité de proyecto para revisar la línea base y aplicar plan de contingencia.")
         recommendations.append(f"Pronóstico de costo final estimado al cierre: ${eac:,.2f} (Variación estimada: ${vac:,.2f}).")
+
+    if cpi_stability_rule["is_irrecoverable_without_rebaseline"]:
+        recommendations.append(cpi_stability_rule["diagnostic_message"])
+    if early_warning_sentinel["level"] != "normal":
+        recommendations.append(
+            f"Protocolo Sentinel ({early_warning_sentinel['label']}): {early_warning_sentinel['protocol_action']}."
+        )
 
     # 11. Conexión con Línea Base Activa (ProjectBaseline)
     active_baseline = _get_active_baseline(db, getattr(project, "id", None))
@@ -431,6 +690,12 @@ def calculate_project_evm(
         "project_id": str(project.id),
         "calculated_at": now.isoformat(),
         "bac": bac,
+        "work_packages_budget": reserves_info["work_packages_budget"],
+        "contingency_reserve": reserves_info["contingency_reserve"],
+        "management_reserve": reserves_info["management_reserve"],
+        "management_reserve_pct": reserves_info["management_reserve_pct"],
+        "total_project_budget": reserves_info["total_project_budget"],
+        "reserves": reserves_info,
         "ac": ac,
         "ev": ev,
         "pv": pv,
@@ -445,6 +710,8 @@ def calculate_project_evm(
         "vac": vac,
         "health_status": health_status,
         "health_color": health_color,
+        "cpi_stability_rule": cpi_stability_rule,
+        "early_warning_sentinel": early_warning_sentinel,
         "has_baseline": has_baseline,
         "baseline_id": baseline_id,
         "baseline_name": baseline_name,
@@ -1471,7 +1738,7 @@ def calculate_project_evm_advanced(
         now = _utcnow()
 
     # 1. EVM Estándar
-    std_evm = calculate_project_evm(db, project)
+    std_evm = calculate_project_evm(db, project, now=now)
     bac = std_evm["bac"]
     ev = std_evm["ev"]
     ac = std_evm["ac"]
@@ -1512,6 +1779,9 @@ def calculate_project_evm_advanced(
         "tcpi": tcpi,
         "quadrant": quadrant,
         "early_warnings": quadrant["alerts"],
+        "reserves": std_evm["reserves"],
+        "cpi_stability_rule": std_evm["cpi_stability_rule"],
+        "early_warning_sentinel": std_evm["early_warning_sentinel"],
     }
 
 
@@ -2464,5 +2734,89 @@ def evaluate_execution_metric(
     }
 
 
+def calculate_project_metrics(
+    first_arg: Any,
+    second_arg: Any = None,
+    *,
+    db: Optional[Session] = None,
+    now: Optional[datetime.datetime] = None,
+) -> Dict[str, Any]:
+    """Calcula las métricas EVM, Reservas Presupuestarias PMI, Regla 15% CPI y Sentinel."""
+    if hasattr(first_arg, "query"):
+        session: Session = first_arg
+        project_or_id = second_arg
+    else:
+        project_or_id = first_arg
+        session = db if db is not None else second_arg  # type: ignore[assignment]
+    if session is None:
+        raise ValueError("Database session 'db' is required for calculate_project_metrics")
+
+    if isinstance(project_or_id, (str, uuid.UUID)):
+        proj = (
+            session.query(Project)
+            .filter(Project.id == project_or_id, Project.deleted_at.is_(None))
+            .first()
+        )
+        if proj is None:
+            raise ValueError(f"Project {project_or_id} not found")
+        return calculate_project_evm(session, proj, now=now)
+    return calculate_project_evm(session, project_or_id, now=now)
 
 
+class ProjectEVMService:
+    """Fachada canónica del servicio EVM y Diagnóstico Predictivo PMI (Vol. 5 y Vol. 6)."""
+
+    def __init__(self, db: Optional[Session] = None) -> None:
+        self.db = db
+
+    @staticmethod
+    def calculate_project_metrics(
+        first_arg: Any,
+        second_arg: Any = None,
+        *,
+        db: Optional[Session] = None,
+        now: Optional[datetime.datetime] = None,
+    ) -> Dict[str, Any]:
+        return calculate_project_metrics(first_arg, second_arg, db=db, now=now)
+
+    @staticmethod
+    def calculate_project_evm(
+        db: Session,
+        project: Project,
+        now: Optional[datetime.datetime] = None,
+    ) -> Dict[str, Any]:
+        return calculate_project_evm(db, project, now=now)
+
+    @staticmethod
+    def calculate_project_evm_advanced(
+        db: Session,
+        project: Project,
+        now: Optional[datetime.datetime] = None,
+    ) -> Dict[str, Any]:
+        return calculate_project_evm_advanced(db, project, now=now)
+
+    @staticmethod
+    def calculate_cpi_stability_rule(progress_pct: float, cpi: float) -> Dict[str, Any]:
+        return calculate_cpi_stability_rule(progress_pct, cpi)
+
+    @staticmethod
+    def calculate_early_warning_sentinel(cpi: float, spi: float) -> Dict[str, Any]:
+        return calculate_early_warning_sentinel(cpi, spi)
+
+    @staticmethod
+    def compute_project_reserves_breakdown(
+        db: Session, project: Project, bac: Optional[float] = None
+    ) -> Dict[str, Any]:
+        return compute_project_reserves_breakdown(db, project, bac=bac)
+
+    @staticmethod
+    def generate_curve_s_data(
+        db: Session, project: Project, points_count: int = 8
+    ) -> List[Dict[str, Any]]:
+        return generate_curve_s_data(db, project, points_count=points_count)
+
+    @staticmethod
+    def build_project_execution_matrix(
+        db: Session, project: Project, now: Optional[datetime.datetime] = None
+    ) -> Dict[str, Any]:
+        return build_project_execution_matrix(db, project, now=now)

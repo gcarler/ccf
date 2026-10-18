@@ -214,4 +214,79 @@ describe("ProjectRiskMatrixDrawer owner flow", () => {
     expect(screen.getByText("Riesgo de prueba")).toBeInTheDocument();
     expect(screen.getByRole("complementary", { name: "Eliminar riesgo" })).toBeInTheDocument();
   });
+
+  it("renders EMV contingency reserve banner, threat/opportunity badges, and submits EMV fields", async () => {
+    mocks.apiFetch.mockImplementation((path: string, options?: { method?: string }) => {
+      if (path.endsWith("/risks-summary")) {
+        return Promise.resolve({
+          matrix_5x5: [],
+          threats_count: 1,
+          opportunities_count: 1,
+          threats_emv: 6000,
+          opportunities_emv: -2000,
+          total_emv: 4000,
+          required_contingency_reserve: 6000,
+        });
+      }
+      if (options?.method === "POST") {
+        return Promise.resolve({ ...risk, id: "risk-emv-new" });
+      }
+      return Promise.resolve([
+        {
+          ...risk,
+          id: "risk-threat-1",
+          title: "Alza de acero",
+          risk_type: "threat",
+          probability_pct: 60,
+          financial_impact: 10000,
+          emv: 6000,
+        },
+        {
+          ...risk,
+          id: "risk-opp-1",
+          title: "Descuento por pronto pago",
+          risk_type: "opportunity",
+          probability_pct: 50,
+          financial_impact: 4000,
+          emv: -2000,
+        },
+      ]);
+    });
+
+    render(<ProjectRiskMatrixDrawer projectId="project-1" isOpen onClose={vi.fn()} />);
+
+    expect(await screen.findByTestId("risk-emv-reserve-banner")).toBeInTheDocument();
+    expect(screen.getByText("Amenaza")).toBeInTheDocument();
+    expect(screen.getByText("Oportunidad")).toBeInTheDocument();
+    expect(screen.getByTestId("risk-card-emv-risk-threat-1")).toHaveTextContent(/6\.000/);
+    expect(screen.getByTestId("risk-card-emv-risk-opp-1")).toHaveTextContent(/2\.000/);
+
+    fireEvent.click(screen.getByRole("button", { name: "Registrar Riesgo" }));
+    fireEvent.change(screen.getByPlaceholderText(/ej\. Fallo en el servidor/), {
+      target: { value: "Riesgo EMV Financiero" },
+    });
+    fireEvent.change(screen.getByLabelText(/Tipología PMI \(Amenaza \/ Oportunidad\)/i), {
+      target: { value: "threat" },
+    });
+    fireEvent.change(screen.getByLabelText(/Probabilidad Cuantitativa \(%\)/i), {
+      target: { value: "40" },
+    });
+    fireEvent.change(screen.getByLabelText(/Impacto Financiero Estimado \(\$\)/i), {
+      target: { value: "5000" },
+    });
+    expect(screen.getByTestId("risk-form-live-emv")).toHaveTextContent(/2\.000/);
+
+    fireEvent.click(screen.getByRole("button", { name: "Guardar Riesgo" }));
+
+    await waitFor(() =>
+      expect(mocks.apiFetch).toHaveBeenCalledWith(
+        "/projects/project-1/risks",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining('"financial_impact":5000'),
+        }),
+      ),
+    );
+  });
 });
+

@@ -92,6 +92,50 @@ export interface ProjectExpense {
   updated_at?: string | null;
 }
 
+export type EarlyWarningSentinelLevel = 'normal' | 'attention' | 'high_risk' | 'critical';
+
+export interface ProjectCPIStabilityRule {
+  is_applicable: boolean;
+  progress_pct: number;
+  current_cpi: number;
+  expected_cpi_floor: number;
+  expected_cpi_ceiling: number;
+  is_irrecoverable_without_rebaseline: boolean;
+  diagnostic_message: string;
+}
+
+export interface ProjectEarlyWarningSentinel {
+  level: EarlyWarningSentinelLevel;
+  status?: EarlyWarningSentinelLevel;
+  label: string;
+  min_index: number;
+  cpi: number;
+  spi: number;
+  limiting_metric?: 'CPI' | 'SPI' | string;
+  threshold_range?: string;
+  threshold_condition?: string;
+  protocol_action: string;
+  action?: string;
+  severity_color?: 'success' | 'warning' | 'destructive';
+  requires_ccb?: boolean;
+  requires_pmo_audit?: boolean;
+}
+
+export interface ProjectReservesBreakdown {
+  work_packages_budget: number;
+  contingency_reserve: number;
+  cost_baseline_bac: number;
+  bac: number;
+  management_reserve: number;
+  management_reserve_pct: number;
+  total_project_budget: number;
+  threats_emv: number;
+  opportunities_emv: number;
+  net_emv: number;
+  active_threats_count: number;
+  active_opportunities_count: number;
+}
+
 export interface ProjectBudgetSummary {
   project_id: string;
   budget_allocated: number;
@@ -102,6 +146,16 @@ export interface ProjectBudgetSummary {
   planned_amount: number;
   committed_amount: number;
   paid_amount: number;
+  work_packages_budget?: number;
+  contingency_reserve?: number;
+  management_reserve?: number;
+  management_reserve_pct?: number;
+  total_project_budget?: number;
+  threats_emv?: number;
+  opportunities_emv?: number;
+  net_emv?: number;
+  cpi_stability_rule?: ProjectCPIStabilityRule | null;
+  early_warning_sentinel?: ProjectEarlyWarningSentinel | null;
   by_category: Record<string, number>;
 }
 
@@ -218,8 +272,12 @@ export interface ProjectRisk {
   project_id: string;
   title: string;
   category: 'tecnico' | 'logistico' | 'financiero' | 'reputacional' | 'operativo' | 'legal' | string;
+  risk_type?: 'threat' | 'opportunity';
   probability: number;
+  probability_pct?: number;
   impact: number;
+  financial_impact?: number;
+  emv?: number;
   severity_score: number;
   severity_level: 'low' | 'medium' | 'high' | 'critical';
   mitigation_plan?: string | null;
@@ -250,6 +308,12 @@ export interface ProjectRiskSummary {
   high_count: number;
   medium_count: number;
   low_count: number;
+  threats_count?: number;
+  opportunities_count?: number;
+  threats_emv?: number;
+  opportunities_emv?: number;
+  total_emv?: number;
+  required_contingency_reserve?: number;
   matrix_5x5: ProjectRiskMatrixCell[];
   by_category: Record<string, number>;
 }
@@ -1115,6 +1179,12 @@ export interface ProjectEVMMetrics {
   project_id: string;
   calculated_at: string;
   bac: number;
+  work_packages_budget?: number;
+  contingency_reserve?: number;
+  management_reserve?: number;
+  management_reserve_pct?: number;
+  total_project_budget?: number;
+  reserves?: ProjectReservesBreakdown | null;
   ac: number;
   ev: number;
   pv: number;
@@ -1134,6 +1204,8 @@ export interface ProjectEVMMetrics {
   baseline_progress_pct?: number | null;
   baseline_variance_cost?: number | null;
   baseline_variance_schedule?: number | null;
+  cpi_stability_rule?: ProjectCPIStabilityRule | null;
+  early_warning_sentinel?: ProjectEarlyWarningSentinel | null;
   health_status: string;
   health_color: 'success' | 'warning' | 'destructive';
   recommendations: string[];
@@ -1350,6 +1422,9 @@ export interface ProjectEVMAdvancedResponse {
   tcpi: TCPIMetrics;
   quadrant: CPIversusSPIQuadrant;
   early_warnings: EarlyWarningAlert[];
+  reserves?: ProjectReservesBreakdown | null;
+  cpi_stability_rule?: ProjectCPIStabilityRule | null;
+  early_warning_sentinel?: ProjectEarlyWarningSentinel | null;
 }
 
 export interface WBSNode {

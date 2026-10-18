@@ -130,8 +130,11 @@ export function ProjectRiskMatrixDrawer({
   const [formData, setFormData] = useState<{
     title: string;
     category: string;
+    risk_type: "threat" | "opportunity";
     probability: number;
+    probability_pct: number;
     impact: number;
+    financial_impact: number;
     mitigation_plan: string;
     contingency_plan: string;
     owner_id: string | null;
@@ -139,8 +142,11 @@ export function ProjectRiskMatrixDrawer({
   }>({
     title: "",
     category: "tecnico",
+    risk_type: "threat",
     probability: 3,
+    probability_pct: 60,
     impact: 3,
+    financial_impact: 0,
     mitigation_plan: "",
     contingency_plan: "",
     owner_id: null,
@@ -192,6 +198,47 @@ export function ProjectRiskMatrixDrawer({
     return SEVERITY_LEVELS.low;
   };
   const liveMeta = getSeverityMeta(liveSeverity);
+  const liveEmvRaw = (Number(formData.probability_pct || 0) / 100) * Number(formData.financial_impact || 0);
+  const liveEmv = formData.risk_type === "opportunity" ? -Math.abs(liveEmvRaw) : Math.abs(liveEmvRaw);
+
+  const formatCurrency = (val: number) =>
+    new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(val || 0);
+
+  const getRiskEmv = (r: ProjectRisk): number => {
+    if (typeof r.emv === "number") return r.emv;
+    const probPct = typeof r.probability_pct === "number" ? r.probability_pct : (r.probability || 3) * 20;
+    const finImp = Number(r.financial_impact || 0);
+    const raw = (probPct / 100) * finImp;
+    return r.risk_type === "opportunity" ? -Math.abs(raw) : Math.abs(raw);
+  };
+
+  const computedThreatsEmv =
+    typeof summary?.threats_emv === "number"
+      ? summary.threats_emv
+      : risks
+          .filter((r) => r.status === "active" && r.risk_type !== "opportunity")
+          .reduce((acc, r) => acc + Math.max(0, getRiskEmv(r)), 0);
+
+  const computedOpportunitiesEmv =
+    typeof summary?.opportunities_emv === "number"
+      ? summary.opportunities_emv
+      : risks
+          .filter((r) => r.status === "active" && r.risk_type === "opportunity")
+          .reduce((acc, r) => acc + Math.min(0, getRiskEmv(r)), 0);
+
+  const computedRequiredReserve =
+    typeof summary?.required_contingency_reserve === "number"
+      ? summary.required_contingency_reserve
+      : Math.max(0, computedThreatsEmv);
+
+  const computedNetEmv =
+    typeof summary?.total_emv === "number"
+      ? summary.total_emv
+      : computedThreatsEmv + computedOpportunitiesEmv;
 
   const handleCreateOrUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -202,36 +249,31 @@ export function ProjectRiskMatrixDrawer({
 
     setSaving(true);
     try {
+      const payload = {
+        title: formData.title.trim(),
+        category: formData.category,
+        risk_type: formData.risk_type,
+        probability: Number(formData.probability),
+        probability_pct: Number(formData.probability_pct),
+        impact: Number(formData.impact),
+        financial_impact: Number(formData.financial_impact || 0),
+        mitigation_plan: formData.mitigation_plan || null,
+        contingency_plan: formData.contingency_plan || null,
+        owner_id: formData.owner_id,
+        status: formData.status,
+      };
       if (editingId) {
         await apiFetch(`/projects/${projectId}/risks/${editingId}`, {
           method: "PATCH",
           token,
-          body: JSON.stringify({
-            title: formData.title.trim(),
-            category: formData.category,
-            probability: Number(formData.probability),
-            impact: Number(formData.impact),
-            mitigation_plan: formData.mitigation_plan || null,
-            contingency_plan: formData.contingency_plan || null,
-            owner_id: formData.owner_id,
-            status: formData.status,
-          }),
+          body: JSON.stringify(payload),
         });
         addToast("Riesgo actualizado con éxito", "success");
       } else {
         await apiFetch(`/projects/${projectId}/risks`, {
           method: "POST",
           token,
-          body: JSON.stringify({
-            title: formData.title.trim(),
-            category: formData.category,
-            probability: Number(formData.probability),
-            impact: Number(formData.impact),
-            mitigation_plan: formData.mitigation_plan || null,
-            contingency_plan: formData.contingency_plan || null,
-            owner_id: formData.owner_id,
-            status: formData.status,
-          }),
+          body: JSON.stringify(payload),
         });
         addToast("Riesgo registrado en la matriz RAID", "success");
       }
@@ -250,11 +292,15 @@ export function ProjectRiskMatrixDrawer({
   const handleEdit = (risk: ProjectRisk) => {
     setEditingId(risk.id);
     setIsCreating(true);
+    const prob = risk.probability || 3;
     setFormData({
       title: risk.title,
       category: risk.category || "tecnico",
-      probability: risk.probability || 3,
+      risk_type: risk.risk_type === "opportunity" ? "opportunity" : "threat",
+      probability: prob,
+      probability_pct: typeof risk.probability_pct === "number" ? risk.probability_pct : prob * 20,
       impact: risk.impact || 3,
+      financial_impact: typeof risk.financial_impact === "number" ? risk.financial_impact : 0,
       mitigation_plan: risk.mitigation_plan || "",
       contingency_plan: risk.contingency_plan || "",
       owner_id: risk.owner_id ?? null,
@@ -308,8 +354,11 @@ export function ProjectRiskMatrixDrawer({
     setFormData({
       title: "",
       category: "tecnico",
+      risk_type: "threat",
       probability: 3,
+      probability_pct: 60,
       impact: 3,
+      financial_impact: 0,
       mitigation_plan: "",
       contingency_plan: "",
       owner_id: null,
@@ -403,6 +452,73 @@ export function ProjectRiskMatrixDrawer({
             </div>
             <div className="text-[11px] font-medium mt-1" style={{ color: "hsl(var(--success-text))" }}>
               Bajo control
+            </div>
+          </div>
+        </div>
+
+        {/* CUANTIFICACIÓN EMV Y RESERVA DE CONTINGENCIA (PMI VOL. 6 §1-§3) */}
+        <div
+          data-testid="risk-emv-reserve-banner"
+          className="p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+          style={{
+            backgroundColor: "hsl(var(--surface-1))",
+            borderColor: "hsl(var(--border))",
+          }}
+        >
+          <div className="space-y-1">
+            <div className="text-xs font-bold uppercase tracking-wider" style={{ color: "hsl(var(--primary))" }}>
+              Valor Monetario Esperado (EMV) • Reserva de Contingencia PMI
+            </div>
+            <p className="text-[11px]" style={{ color: "hsl(var(--text-secondary))" }}>
+              EMV = Probabilidad (%) × Impacto Financiero ($). La suma de amenazas activas determina la Reserva de Contingencia requerida en la Línea Base de Costos (BAC).
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <div
+              className="px-3 py-2 rounded-lg border"
+              style={{
+                backgroundColor: "hsl(var(--surface-2))",
+                borderColor: "hsl(var(--border))",
+              }}
+            >
+              <span className="block text-[10px] uppercase font-semibold" style={{ color: "hsl(var(--text-secondary))" }}>
+                Reserva Contingencia Requerida
+              </span>
+              <span
+                data-testid="risk-required-contingency-reserve"
+                className="text-sm font-bold"
+                style={{ color: "hsl(var(--warning-text))" }}
+              >
+                {loading || loadError ? "—" : formatCurrency(computedRequiredReserve)}
+              </span>
+            </div>
+            <div
+              className="px-3 py-2 rounded-lg border"
+              style={{
+                backgroundColor: "hsl(var(--surface-2))",
+                borderColor: "hsl(var(--border))",
+              }}
+            >
+              <span className="block text-[10px] uppercase font-semibold" style={{ color: "hsl(var(--text-secondary))" }}>
+                Oportunidades (Ahorro EMV)
+              </span>
+              <span className="text-sm font-bold" style={{ color: "hsl(var(--success-text))" }}>
+                {loading || loadError ? "—" : formatCurrency(computedOpportunitiesEmv)}
+              </span>
+            </div>
+            <div
+              className="px-3 py-2 rounded-lg border"
+              style={{
+                backgroundColor: "hsl(var(--surface-2))",
+                borderColor: "hsl(var(--border))",
+              }}
+            >
+              <span className="block text-[10px] uppercase font-semibold" style={{ color: "hsl(var(--text-secondary))" }}>
+                EMV Total Neto
+              </span>
+              <span className="text-sm font-bold" style={{ color: "hsl(var(--text-primary))" }}>
+                {loading || loadError ? "—" : formatCurrency(computedNetEmv)}
+              </span>
             </div>
           </div>
         </div>
@@ -629,6 +745,28 @@ export function ProjectRiskMatrixDrawer({
               </div>
 
               <div>
+                <label htmlFor="risk-type" className="block text-xs font-medium mb-1" style={{ color: "hsl(var(--text-primary))" }}>
+                  Tipología PMI (Amenaza / Oportunidad)
+                </label>
+                <select
+                  id="risk-type"
+                  value={formData.risk_type}
+                  onChange={(e) =>
+                    setFormData({ ...formData, risk_type: e.target.value as "threat" | "opportunity" })
+                  }
+                  className="w-full text-xs px-3 py-2 rounded-lg border focus:outline-none"
+                  style={{
+                    backgroundColor: "hsl(var(--surface-1))",
+                    borderColor: "hsl(var(--border))",
+                    color: "hsl(var(--text-primary))",
+                  }}
+                >
+                  <option value="threat">Amenaza (Requiere Reserva +EMV)</option>
+                  <option value="opportunity">Oportunidad (Ahorro Potencial -EMV)</option>
+                </select>
+              </div>
+
+              <div>
                 <label htmlFor="risk-category" className="block text-xs font-medium mb-1" style={{ color: "hsl(var(--text-primary))" }}>
                   Categoría
                 </label>
@@ -681,7 +819,14 @@ export function ProjectRiskMatrixDrawer({
                 <select
                   id="risk-probability"
                   value={formData.probability}
-                  onChange={(e) => setFormData({ ...formData, probability: Number(e.target.value) })}
+                  onChange={(e) => {
+                    const nextProb = Number(e.target.value);
+                    setFormData({
+                      ...formData,
+                      probability: nextProb,
+                      probability_pct: nextProb * 20,
+                    });
+                  }}
                   className="w-full text-xs px-3 py-2 rounded-lg border focus:outline-none"
                   style={{
                     backgroundColor: "hsl(var(--surface-1))",
@@ -719,11 +864,63 @@ export function ProjectRiskMatrixDrawer({
                   <option value={5}>5 - Crítico / Catastrófico</option>
                 </select>
               </div>
+
+              <div>
+                <label htmlFor="risk-probability-pct" className="block text-xs font-medium mb-1" style={{ color: "hsl(var(--text-primary))" }}>
+                  Probabilidad Cuantitativa (%)
+                </label>
+                <input
+                  id="risk-probability-pct"
+                  type="number"
+                  min={0}
+                  max={100}
+                  step="1"
+                  value={formData.probability_pct}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      probability_pct: Math.max(0, Math.min(100, Number(e.target.value || 0))),
+                    })
+                  }
+                  className="w-full text-xs px-3 py-2 rounded-lg border focus:outline-none"
+                  style={{
+                    backgroundColor: "hsl(var(--surface-1))",
+                    borderColor: "hsl(var(--border))",
+                    color: "hsl(var(--text-primary))",
+                  }}
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label htmlFor="risk-financial-impact" className="block text-xs font-medium mb-1" style={{ color: "hsl(var(--text-primary))" }}>
+                  Impacto Financiero Estimado ($)
+                </label>
+                <input
+                  id="risk-financial-impact"
+                  type="number"
+                  min={0}
+                  step="100"
+                  placeholder="0"
+                  value={formData.financial_impact}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      financial_impact: Math.max(0, Number(e.target.value || 0)),
+                    })
+                  }
+                  className="w-full text-xs px-3 py-2 rounded-lg border focus:outline-none"
+                  style={{
+                    backgroundColor: "hsl(var(--surface-1))",
+                    borderColor: "hsl(var(--border))",
+                    color: "hsl(var(--text-primary))",
+                  }}
+                />
+              </div>
             </div>
 
-            {/* SEVERIDAD EN VIVO */}
+            {/* SEVERIDAD Y EMV EN VIVO */}
             <div
-              className="p-3 rounded-lg border flex items-center justify-between"
+              className="p-3 rounded-lg border flex flex-wrap items-center justify-between gap-2"
               style={{
                 backgroundColor: liveMeta.bg,
                 borderColor: liveMeta.border,
@@ -732,7 +929,8 @@ export function ProjectRiskMatrixDrawer({
               <div className="flex items-center gap-2">
                 <Flame className="w-4 h-4" style={{ color: liveMeta.color }} />
                 <span className="text-xs font-medium" style={{ color: liveMeta.color }}>
-                  Severidad Resultante: <strong>{liveSeverity}/25</strong> ({liveMeta.label})
+                  Severidad Resultante: <strong>{liveSeverity}/25</strong> ({liveMeta.label}) • EMV Calculado:{" "}
+                  <strong data-testid="risk-form-live-emv">{formatCurrency(liveEmv)}</strong>
                 </span>
               </div>
               <span
@@ -880,6 +1078,11 @@ export function ProjectRiskMatrixDrawer({
               const meta = getSeverityMeta(sev);
               const statusCfg = STATUS_CONFIG[risk.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.active;
               const StatusIcon = statusCfg.icon;
+              const isOpportunity = risk.risk_type === "opportunity";
+              const probPct =
+                typeof risk.probability_pct === "number" ? risk.probability_pct : (risk.probability || 3) * 20;
+              const finImpact = typeof risk.financial_impact === "number" ? risk.financial_impact : 0;
+              const riskEmv = getRiskEmv(risk);
 
               return (
                 <div
@@ -919,6 +1122,31 @@ export function ProjectRiskMatrixDrawer({
                         >
                           <StatusIcon className="w-3 h-3" />
                           <span>{statusCfg.label}</span>
+                        </span>
+
+                        {/* BADGE TIPOLOGÍA (AMENAZA / OPORTUNIDAD) */}
+                        <span
+                          className="text-[11px] font-semibold px-2 py-0.5 rounded-md border"
+                          style={{
+                            backgroundColor: isOpportunity ? "hsl(var(--success-muted))" : "hsl(var(--surface-2))",
+                            borderColor: isOpportunity ? "hsl(var(--success) / 0.35)" : "hsl(var(--border))",
+                            color: isOpportunity ? "hsl(var(--success-text))" : "hsl(var(--text-primary))",
+                          }}
+                        >
+                          {isOpportunity ? "Oportunidad" : "Amenaza"}
+                        </span>
+
+                        {/* BADGE EMV */}
+                        <span
+                          data-testid={`risk-card-emv-${risk.id}`}
+                          className="text-[11px] font-bold px-2 py-0.5 rounded-md border"
+                          style={{
+                            backgroundColor: "hsl(var(--surface-2))",
+                            borderColor: "hsl(var(--border))",
+                            color: isOpportunity ? "hsl(var(--success-text))" : "hsl(var(--warning-text))",
+                          }}
+                        >
+                          EMV: {formatCurrency(riskEmv)} ({probPct}% × {formatCurrency(finImpact)})
                         </span>
 
                         <span
@@ -994,7 +1222,7 @@ export function ProjectRiskMatrixDrawer({
                   {/* ACCIÓN DE CONVERSIÓN A TAREA */}
                   <div className="flex items-center justify-between pt-1 border-t text-[11px] text-[hsl(var(--text-secondary))]" style={{ borderColor: "hsl(var(--border))" }}>
                     <span>
-                      P: <strong>{risk.probability}/5</strong> | I: <strong>{risk.impact}/5</strong>
+                      P: <strong>{risk.probability}/5</strong> ({probPct}%) | I: <strong>{risk.impact}/5</strong> ({formatCurrency(finImpact)})
                       {risk.owner_name && ` • Resp: ${risk.owner_name}`}
                     </span>
 

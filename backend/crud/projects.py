@@ -1807,6 +1807,14 @@ def get_project_budget_summary(db: Session, project_id: UUID | str) -> Optional[
         cat = e.category or "general"
         by_category[cat] = round(by_category.get(cat, 0.0) + float(e.amount), 2)
 
+    from backend.services.project_evm_service import (
+        calculate_project_evm,
+        compute_project_reserves_breakdown,
+    )
+
+    reserves_info = compute_project_reserves_breakdown(db, project, bac=allocated)
+    evm_metrics = calculate_project_evm(db, project)
+
     return {
         "project_id": str(project.id),
         "budget_allocated": allocated,
@@ -1817,6 +1825,16 @@ def get_project_budget_summary(db: Session, project_id: UUID | str) -> Optional[
         "planned_amount": round(planned, 2),
         "committed_amount": round(committed, 2),
         "paid_amount": round(paid, 2),
+        "work_packages_budget": reserves_info["work_packages_budget"],
+        "contingency_reserve": reserves_info["contingency_reserve"],
+        "management_reserve": reserves_info["management_reserve"],
+        "management_reserve_pct": reserves_info["management_reserve_pct"],
+        "total_project_budget": reserves_info["total_project_budget"],
+        "threats_emv": reserves_info["threats_emv"],
+        "opportunities_emv": reserves_info["opportunities_emv"],
+        "net_emv": reserves_info["net_emv"],
+        "cpi_stability_rule": evm_metrics.get("cpi_stability_rule"),
+        "early_warning_sentinel": evm_metrics.get("early_warning_sentinel"),
         "by_category": by_category,
     }
 
@@ -1886,8 +1904,11 @@ def create_project_risk(
         project_id=project_id,
         title=risk_in.title,
         category=risk_in.category or "tecnico",
+        risk_type=getattr(risk_in, "risk_type", "threat") or "threat",
         probability=prob,
+        probability_pct=getattr(risk_in, "probability_pct", None),
         impact=imp,
+        financial_impact=float(getattr(risk_in, "financial_impact", 0.0) or 0.0),
         severity_score=sev,
         mitigation_plan=risk_in.mitigation_plan,
         contingency_plan=risk_in.contingency_plan,
@@ -1908,16 +1929,47 @@ def update_project_risk(
     risk_id: UUID | str,
     risk_in: schemas.ProjectRiskUpdate,
 ) -> Optional[models.ProjectRisk]:
+    from backend.models_projects import decode_risk_meta, encode_risk_meta
+
     row = get_project_risk(db, project_id, risk_id)
     if not row:
         return None
     data = risk_in.model_dump(exclude_unset=True)
     if "owner_id" in data:
         _assert_risk_owner_in_project_sede(db, project_id, data["owner_id"])
-    nullable_risk_fields = {"mitigation_plan", "contingency_plan", "owner_id"}
+
+    clean_plan, existing_meta = decode_risk_meta(row.contingency_plan)
+    if "contingency_plan" in data:
+        new_clean_plan, _ = decode_risk_meta(data.pop("contingency_plan"))
+    else:
+        new_clean_plan = clean_plan
+
+    r_type = data.pop("risk_type", None) or existing_meta.get("risk_type") or row.risk_type or "threat"
+    if "probability_pct" in data:
+        p_pct = data.pop("probability_pct")
+    elif "probability" in data and existing_meta.get("probability_pct") is None:
+        p_pct = None
+    else:
+        p_pct = existing_meta.get("probability_pct")
+
+    f_imp = data.pop("financial_impact", None)
+    if f_imp is None:
+        f_imp = existing_meta.get("financial_impact", row.financial_impact)
+
+    nullable_risk_fields = {"mitigation_plan", "owner_id"}
     for k, v in data.items():
         if v is not None or k in nullable_risk_fields:
             setattr(row, k, v)
+
+    row.contingency_plan = encode_risk_meta(
+        new_clean_plan,
+        risk_type=str(r_type),
+        probability_pct=float(p_pct) if p_pct is not None else None,
+        financial_impact=float(f_imp or 0.0),
+    )
+    row.__dict__["_risk_type"] = "opportunity" if str(r_type).lower() == "opportunity" else "threat"
+    row.__dict__["_probability_pct"] = float(p_pct) if p_pct is not None else None
+    row.__dict__["_financial_impact"] = float(f_imp or 0.0)
 
     # Recalcular severity_score
     prob = row.probability or 1
@@ -1945,6 +1997,8 @@ def convert_risk_to_task(
     risk_id: UUID | str,
     actor_id: Optional[UUID | str] = None,
 ) -> Optional[models.ProjectTask]:
+    from backend.models_projects import decode_risk_meta
+
     risk = get_project_risk(db, project_id, risk_id)
     if not risk:
         return None
@@ -1955,6 +2009,7 @@ def convert_risk_to_task(
 
     sev = (risk.probability or 1) * (risk.impact or 1)
     priority = "urgent" if sev >= 15 else ("high" if sev >= 10 else "medium")
+    clean_contingency, _ = decode_risk_meta(risk.contingency_plan)
 
     desc_lines = [
         "**[INCIDENCIA RAID MATERIALIZADA]**",
@@ -1962,7 +2017,7 @@ def convert_risk_to_task(
         f"- **Probabilidad:** {risk.probability}/5 | **Impacto:** {risk.impact}/5 (Severidad: {sev}/25)",
         "",
         "**Plan de Contingencia Activado:**",
-        f"{risk.contingency_plan or 'No especificado'}",
+        f"{clean_contingency or 'No especificado'}",
         "",
         "**Plan de Mitigación Previsto:**",
         f"{risk.mitigation_plan or 'No especificado'}",
@@ -2017,6 +2072,28 @@ def get_project_risks_summary(db: Session, project_id: UUID | str) -> Optional[d
     medium = sum(1 for r in risks if 5 <= (r.probability or 1) * (r.impact or 1) < 10)
     low = sum(1 for r in risks if (r.probability or 1) * (r.impact or 1) < 5)
 
+    threats_count = sum(1 for r in risks if getattr(r, "risk_type", "threat") != "opportunity")
+    opportunities_count = sum(1 for r in risks if getattr(r, "risk_type", "threat") == "opportunity")
+
+    threats_emv = round(
+        sum(
+            max(0.0, float(getattr(r, "emv", 0.0) or 0.0))
+            for r in risks
+            if r.status == "active" and getattr(r, "risk_type", "threat") != "opportunity"
+        ),
+        2,
+    )
+    opportunities_emv = round(
+        sum(
+            min(0.0, float(getattr(r, "emv", 0.0) or 0.0))
+            for r in risks
+            if r.status == "active" and getattr(r, "risk_type", "threat") == "opportunity"
+        ),
+        2,
+    )
+    total_emv = round(threats_emv + opportunities_emv, 2)
+    required_contingency_reserve = round(max(0.0, threats_emv), 2)
+
     by_category: dict[str, int] = {}
     for r in risks:
         cat = r.category or "tecnico"
@@ -2046,6 +2123,12 @@ def get_project_risks_summary(db: Session, project_id: UUID | str) -> Optional[d
         "high_count": high,
         "medium_count": medium,
         "low_count": low,
+        "threats_count": threats_count,
+        "opportunities_count": opportunities_count,
+        "threats_emv": threats_emv,
+        "opportunities_emv": opportunities_emv,
+        "total_emv": total_emv,
+        "required_contingency_reserve": required_contingency_reserve,
         "matrix_5x5": matrix_5x5,
         "by_category": by_category,
     }

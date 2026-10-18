@@ -212,4 +212,54 @@ describe("ProjectBudgetDrawer", () => {
     render(<ProjectBudgetDrawer projectId="project-1" isOpen onClose={vi.fn()} />);
     expect(await screen.findByText(/Auto-generado por Insumo \(s1\)/i)).toBeInTheDocument();
   });
+
+  it("renders Canonical Reserve Structure (Vol. 6 §3), 15% CPI Stability Rule and Early Warning Sentinel", async () => {
+    mocks.apiFetch.mockImplementation((path: string) => {
+      if (path.endsWith("/budget-summary")) {
+        return Promise.resolve({
+          ...summary,
+          budget_allocated: 100000,
+          work_packages_budget: 94000,
+          contingency_reserve: 6000,
+          management_reserve: 10000,
+          management_reserve_pct: 10,
+          total_project_budget: 110000,
+          cpi_stability_rule: {
+            is_applicable: true,
+            progress_pct: 25,
+            current_cpi: 0.78,
+            expected_cpi_floor: 0.7,
+            expected_cpi_ceiling: 0.86,
+            is_irrecoverable_without_rebaseline: true,
+            diagnostic_message:
+              "Regla del 15% de Estabilidad del CPI (Vol. 5 §2.1): Con 25.0% de avance físico (>= 15%), un CPI de 0.78 (< 0.90) es estadísticamente irrecuperable sin re-estructuración.",
+          },
+          early_warning_sentinel: {
+            level: "high_risk",
+            label: "Riesgo Alto",
+            min_index: 0.78,
+            cpi: 0.78,
+            spi: 0.95,
+            threshold_condition: "0.75 <= min(CPI, SPI) < 0.85",
+            protocol_action: "Convocatoria a Comité de Control de Cambios (CCB) de la Sede",
+          },
+        });
+      }
+      return Promise.resolve([expense]);
+    });
+
+    render(<ProjectBudgetDrawer projectId="project-1" isOpen onClose={vi.fn()} />);
+
+    expect(await screen.findByTestId("budget-canonical-reserves-card")).toBeInTheDocument();
+    expect(screen.getByTestId("budget-sentinel-badge")).toHaveTextContent(
+      /Riesgo Alto: Convocatoria a Comité de Control de Cambios/i,
+    );
+    expect(screen.getByTestId("budget-cpi-stability-banner")).toHaveTextContent(
+      /irrecuperable sin re-estructuración/i,
+    );
+    expect(
+      screen.getByText(/Convocatoria a Comité de Control de Cambios \(CCB\) de la Sede/i),
+    ).toBeInTheDocument();
+  });
 });
+

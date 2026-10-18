@@ -653,6 +653,148 @@ def test_six_submodules_connected_to_real_execution(client, db_session):
     assert (rule_ms_db.execution_count or 0) == 1
 
 
+def test_pmi_vol5_vol6_emv_reserves_cpi_stability_and_sentinel(client, db_session):
+    """
+    Verifica la Doctrina PMI Vol. 5 y Vol. 6:
+    1) Valor Monetario Esperado (EMV) y tipología threat/opportunity en Matriz de Riesgos.
+    2) Estructura Canónica de Reservas (work_packages_budget + contingency_reserve = BAC + management_reserve = total_project_budget).
+    3) Regla del 15% de Estabilidad del CPI (banda ±10% e irrecuperabilidad sin re-baseline cuando CPI < 0.90 y avance >= 15%).
+    4) Early Warning Sentinel en los 4 niveles canónicos (normal, attention, high_risk, critical).
+    """
+    from backend import models
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        calculate_cpi_stability_rule,
+        calculate_early_warning_sentinel,
+    )
+    from tests.conftest import auth_headers, seed_admin
+
+    user, persona, sede = seed_admin(db_session, email="pmi-vol5-vol6@example.com")
+    headers = auth_headers(client, email="pmi-vol5-vol6@example.com")
+    now = datetime.datetime.now(timezone.utc)
+
+    project = models.Project(
+        id=uuid.uuid4(),
+        sede_id=sede.id,
+        owner_id=persona.id,
+        title="Proyecto Doctrina PMI Vol 5 y 6",
+        status="in_progress",
+        budget_allocated=100000.0,
+        budget_spent=35000.0,
+        progress_mode="manual",
+        manual_progress=25.0,
+        start_date=now - timedelta(days=20),
+        target_date=now + timedelta(days=20),
+    )
+    db_session.add(project)
+    db_session.commit()
+
+    # 1. Crear riesgo de Amenaza (threat): prob 60%, impacto $10,000 -> EMV = +$6,000
+    r_threat = client.post(
+        f"/api/projects/{project.id}/risks",
+        json={
+            "title": "Alza en acero estructural",
+            "category": "financial",
+            "risk_type": "threat",
+            "probability": 3,
+            "probability_pct": 60.0,
+            "impact": 4,
+            "financial_impact": 10000.0,
+            "mitigation_plan": "Contrato de precio fijo con proveedor",
+            "status": "active",
+        },
+        headers=headers,
+    )
+    assert r_threat.status_code == 201, r_threat.text
+    threat_data = r_threat.json()
+    assert threat_data["risk_type"] == "threat"
+    assert threat_data["probability_pct"] == 60.0
+    assert threat_data["financial_impact"] == 10000.0
+    assert threat_data["emv"] == 6000.0
+
+    # 2. Crear riesgo de Oportunidad (opportunity): prob 50%, impacto $4,000 -> EMV = -$2,000 (ahorro esperado)
+    r_opp = client.post(
+        f"/api/projects/{project.id}/risks",
+        json={
+            "title": "Descuento por compra anticipada de luminarias",
+            "category": "financial",
+            "risk_type": "opportunity",
+            "probability": 3,
+            "probability_pct": 50.0,
+            "impact": 3,
+            "financial_impact": 4000.0,
+            "mitigation_plan": "Adelantar orden de compra",
+            "status": "active",
+        },
+        headers=headers,
+    )
+    assert r_opp.status_code == 201, r_opp.text
+    opp_data = r_opp.json()
+    assert opp_data["risk_type"] == "opportunity"
+    assert opp_data["probability_pct"] == 50.0
+    assert opp_data["financial_impact"] == 4000.0
+    assert opp_data["emv"] == -2000.0
+
+    # 3. Verificar resumen de Matriz de Riesgos (/risks-summary)
+    r_summary = client.get(f"/api/projects/{project.id}/risks-summary", headers=headers)
+    assert r_summary.status_code == 200, r_summary.text
+    summary_data = r_summary.json()
+    assert summary_data["threats_count"] == 1
+    assert summary_data["opportunities_count"] == 1
+    assert summary_data["threats_emv"] == 6000.0
+    assert summary_data["required_contingency_reserve"] == 6000.0
+    assert summary_data["opportunities_emv"] == -2000.0
+    assert summary_data["total_emv"] == 4000.0
+
+    # 4. Verificar Estructura Canónica de Reservas, Regla del 15% de CPI y Sentinel en /budget-summary y ProjectEVMService
+    r_budget = client.get(f"/api/projects/{project.id}/budget-summary", headers=headers)
+    assert r_budget.status_code == 200, r_budget.text
+    budget_data = r_budget.json()
+    # BAC = 100,000; Reserva Contingencia EMV = 6,000 -> Paquetes de Trabajo = 94,000
+    # Reserva de Gestión (10%) = 10,000 -> Presupuesto Total = 110,000
+    assert budget_data["work_packages_budget"] == 94000.0
+    assert budget_data["contingency_reserve"] == 6000.0
+    assert budget_data["management_reserve"] == 10000.0
+    assert budget_data["total_project_budget"] == 110000.0
+    # Con avance = 25% (>= 15%), EV = 25,000 y AC = 35,000 -> CPI = 0.71 (< 0.90)
+    assert budget_data["cpi_stability_rule"]["is_applicable"] is True
+    assert budget_data["cpi_stability_rule"]["is_irrecoverable_without_rebaseline"] is True
+    assert budget_data["early_warning_sentinel"]["level"] in ("critical", "high_risk")
+
+    # 5. Verificar ProjectEVMService.calculate_project_metrics directamente y niveles del Sentinel
+    evm_metrics = ProjectEVMService.calculate_project_metrics(project, db=db_session)
+    assert evm_metrics["work_packages_budget"] == 94000.0
+    assert evm_metrics["contingency_reserve"] == 6000.0
+    assert evm_metrics["management_reserve"] == 10000.0
+    assert evm_metrics["total_project_budget"] == 110000.0
+    assert evm_metrics["cpi_stability_rule"]["is_applicable"] is True
+    assert evm_metrics["cpi_stability_rule"]["is_irrecoverable_without_rebaseline"] is True
+
+    # Validar los 4 niveles canónicos de Early Warning Sentinel (Vol. 5 §4)
+    s_normal = calculate_early_warning_sentinel(0.98, 1.02)
+    assert s_normal["level"] == "normal"
+
+    s_attention = calculate_early_warning_sentinel(0.88, 0.96)
+    assert s_attention["level"] == "attention"
+
+    s_high_risk = calculate_early_warning_sentinel(0.80, 0.95)
+    assert s_high_risk["level"] == "high_risk"
+
+    s_critical = calculate_early_warning_sentinel(0.72, 0.95)
+    assert s_critical["level"] == "critical"
+
+    # Validar Regla del 15% en fase temprana (< 15%) vs fase madura (>= 15%)
+    rule_early = calculate_cpi_stability_rule(10.0, 0.80)
+    assert rule_early["is_applicable"] is False
+    assert rule_early["is_irrecoverable_without_rebaseline"] is False
+
+    rule_mature = calculate_cpi_stability_rule(20.0, 0.85)
+    assert rule_mature["is_applicable"] is True
+    assert rule_mature["expected_cpi_floor"] == 0.77
+    assert rule_mature["expected_cpi_ceiling"] == 0.94
+    assert rule_mature["is_irrecoverable_without_rebaseline"] is True
+
+
 if __name__ == "__main__":
     test_evm_balanced_project()
     test_evm_cost_overrun_critical()
@@ -660,4 +802,6 @@ if __name__ == "__main__":
     test_evm_zero_cost_edge_case()
     test_curve_s_generation()
     print("✅ All EVM tests passed successfully!")
+
+
 

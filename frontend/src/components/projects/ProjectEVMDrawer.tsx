@@ -771,6 +771,116 @@ export function ProjectEVMDrawer({
                             </div>
                         </div>
 
+                        {/* 4a. Estructura Canónica de Reservas (PMI Vol. 6 §3) + Regla 15% Estabilidad CPI & Early Warning Sentinel (PMI Vol. 5 §2.1 y §4) */}
+                        <div
+                            data-testid="evm-pmi-reserves-sentinel-section"
+                            className="p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] space-y-3"
+                        >
+                            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[hsl(var(--border))] pb-2.5">
+                                <h4 className="text-xs font-medium uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
+                                    <ShieldAlert size={14} className="text-[hsl(var(--primary))]" />
+                                    Estructura Canónica de Reservas (Vol. 6 §3) y Gobernanza Sentinel (Vol. 5 §4)
+                                </h4>
+                                {evmData.early_warning_sentinel && (
+                                    <span
+                                        data-testid="evm-sentinel-badge"
+                                        className={clsx(
+                                            "px-2.5 py-0.5 rounded-full text-2xs font-bold border",
+                                            evmData.early_warning_sentinel.level === 'normal' && "bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))] border-[hsl(var(--success)/0.3)]",
+                                            evmData.early_warning_sentinel.level === 'attention' && "bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.3)]",
+                                            (evmData.early_warning_sentinel.level === 'high_risk' || evmData.early_warning_sentinel.level === 'critical') &&
+                                                "bg-[hsl(var(--destructive)/0.12)] text-[hsl(var(--destructive))] border-[hsl(var(--destructive)/0.3)]"
+                                        )}
+                                    >
+                                        Sentinel: {evmData.early_warning_sentinel.label}
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5 text-xs">
+                                <div className="p-2.5 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                                    <span className="text-2xs uppercase text-[hsl(var(--muted-foreground))] font-semibold block">
+                                        Paquetes de Trabajo
+                                    </span>
+                                    <span className="text-sm font-extrabold text-[hsl(var(--foreground))] mt-0.5 block">
+                                        ${(evmData.work_packages_budget ?? Math.max(0, evmData.bac - (evmData.contingency_reserve ?? 0))).toLocaleString('es-CO')}
+                                    </span>
+                                    <span className="text-2xs text-[hsl(var(--muted-foreground))]">Cuentas de control EDT</span>
+                                </div>
+
+                                <div className="p-2.5 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                                    <span className="text-2xs uppercase text-[hsl(var(--muted-foreground))] font-semibold block">
+                                        + Reserva Contingencia (EMV)
+                                    </span>
+                                    <span className="text-sm font-extrabold text-[hsl(var(--warning))] mt-0.5 block">
+                                        ${(evmData.contingency_reserve ?? 0).toLocaleString('es-CO')}
+                                    </span>
+                                    <span className="text-2xs text-[hsl(var(--muted-foreground))]">Integra Línea Base (BAC)</span>
+                                </div>
+
+                                <div className="p-2.5 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                                    <span className="text-2xs uppercase text-[hsl(var(--muted-foreground))] font-semibold block">
+                                        + Reserva de Gestión ({evmData.management_reserve_pct ?? 10}%)
+                                    </span>
+                                    <span className="text-sm font-extrabold text-[hsl(var(--primary))] mt-0.5 block">
+                                        ${(evmData.management_reserve ?? Math.round(evmData.bac * 0.1)).toLocaleString('es-CO')}
+                                    </span>
+                                    <span className="text-2xs text-[hsl(var(--muted-foreground))]">Fuera de BAC (Sponsor)</span>
+                                </div>
+
+                                <div className="p-2.5 rounded-lg bg-[hsl(var(--primary)/0.08)] border border-[hsl(var(--primary)/0.25)]">
+                                    <span className="text-2xs uppercase text-[hsl(var(--primary))] font-bold block">
+                                        = Presupuesto Total
+                                    </span>
+                                    <span className="text-sm font-extrabold text-[hsl(var(--foreground))] mt-0.5 block">
+                                        ${(evmData.total_project_budget ?? (evmData.bac + Math.round(evmData.bac * 0.1))).toLocaleString('es-CO')}
+                                    </span>
+                                    <span className="text-2xs text-[hsl(var(--muted-foreground))]">BAC + Reserva de Gestión</span>
+                                </div>
+                            </div>
+
+                            {evmData.cpi_stability_rule && (
+                                <div
+                                    data-testid="evm-cpi-stability-banner"
+                                    className={clsx(
+                                        "p-3 rounded-lg border text-xs flex flex-col gap-1",
+                                        evmData.cpi_stability_rule.is_irrecoverable_without_rebaseline
+                                            ? "bg-[hsl(var(--destructive)/0.08)] border-[hsl(var(--destructive)/0.3)] text-[hsl(var(--destructive))]"
+                                            : "bg-[hsl(var(--surface-2))] border-[hsl(var(--border))] text-[hsl(var(--foreground))]"
+                                    )}
+                                >
+                                    <div className="flex flex-wrap items-center justify-between gap-2 font-bold">
+                                        <span>
+                                            Regla del 15% de Estabilidad del CPI (Vol. 5 §2.1):{' '}
+                                            {evmData.cpi_stability_rule.is_applicable ? 'Activa (Avance >= 15%)' : 'En Fase Temprana (< 15%)'}
+                                        </span>
+                                        {evmData.cpi_stability_rule.is_applicable && (
+                                            <span className="text-2xs px-2 py-0.5 rounded bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))]">
+                                                Banda esperada al cierre: [{evmData.cpi_stability_rule.expected_cpi_floor} – {evmData.cpi_stability_rule.expected_cpi_ceiling}]
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-2xs text-[hsl(var(--muted-foreground))]">
+                                        {evmData.cpi_stability_rule.diagnostic_message}
+                                    </p>
+                                </div>
+                            )}
+
+                            {evmData.early_warning_sentinel && (
+                                <div
+                                    data-testid="evm-early-warning-sentinel-protocol"
+                                    className="p-2.5 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex flex-wrap items-center justify-between gap-2 text-2xs"
+                                >
+                                    <span className="text-[hsl(var(--muted-foreground))]">
+                                        Protocolo Early Warning Sentinel (min Índice = <strong>{evmData.early_warning_sentinel.min_index}</strong> • Umbral: {evmData.early_warning_sentinel.threshold_range ?? evmData.early_warning_sentinel.threshold_condition}):
+                                    </span>
+                                    <span className="font-bold text-[hsl(var(--foreground))]">
+                                        {evmData.early_warning_sentinel.protocol_action}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+
                         {/* 4b. Tiempo Ganado (ES / SPI_t) y Tributación Jerárquica EDT */}
                         {execMatrix && execMatrix.frentes && (
                             <div className="p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] space-y-3">

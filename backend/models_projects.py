@@ -68,6 +68,18 @@ class Project(Base):
     # ``name`` (e.g. ``tests/test_crud_integration.py::TestProjectsCrud``)
     # work without renaming the canonical column. The setter keeps store/update
     # paths single-source-of-truth on ``title``.
+    def __init__(self, **kwargs: Any) -> None:
+        contingency_res = kwargs.pop("contingency_reserve", None)
+        management_res = kwargs.pop("management_reserve", None)
+        management_res_pct = kwargs.pop("management_reserve_pct", None)
+        super().__init__(**kwargs)
+        if contingency_res is not None:
+            self.__dict__["_contingency_reserve"] = round(max(0.0, float(contingency_res)), 2)
+        if management_res is not None:
+            self.__dict__["_management_reserve"] = round(max(0.0, float(management_res)), 2)
+        if management_res_pct is not None:
+            self.__dict__["_management_reserve_pct"] = round(max(0.0, float(management_res_pct)), 2)
+
     @property
     def name(self) -> str | None:
         return self.title
@@ -75,6 +87,33 @@ class Project(Base):
     @name.setter
     def name(self, value: str | None) -> None:
         self.title = value
+
+    @property
+    def contingency_reserve(self) -> float | None:
+        val = self.__dict__.get("_contingency_reserve")
+        return round(max(0.0, float(val)), 2) if val is not None else None
+
+    @contingency_reserve.setter
+    def contingency_reserve(self, value: float | None) -> None:
+        self.__dict__["_contingency_reserve"] = round(max(0.0, float(value)), 2) if value is not None else None
+
+    @property
+    def management_reserve(self) -> float | None:
+        val = self.__dict__.get("_management_reserve")
+        return round(max(0.0, float(val)), 2) if val is not None else None
+
+    @management_reserve.setter
+    def management_reserve(self, value: float | None) -> None:
+        self.__dict__["_management_reserve"] = round(max(0.0, float(value)), 2) if value is not None else None
+
+    @property
+    def management_reserve_pct(self) -> float:
+        val = self.__dict__.get("_management_reserve_pct")
+        return round(max(0.0, float(val)), 2) if val is not None else 10.0
+
+    @management_reserve_pct.setter
+    def management_reserve_pct(self, value: float | None) -> None:
+        self.__dict__["_management_reserve_pct"] = round(max(0.0, float(value)), 2) if value is not None else None
 
 
 class ProjectMilestone(Base):
@@ -627,6 +666,60 @@ class ProjectExpense(Base):
         self.__dict__["_is_auto_generated"] = bool(value)
 
 
+_RISK_META_PREFIX = "<!--ccf_risk_meta:"
+_RISK_META_SUFFIX = "-->"
+
+
+def decode_risk_meta(raw_text: str | None) -> tuple[str | None, dict[str, Any]]:
+    if not raw_text or not isinstance(raw_text, str):
+        return raw_text, {}
+    idx = raw_text.rfind(_RISK_META_PREFIX)
+    if idx == -1 or not raw_text.endswith(_RISK_META_SUFFIX):
+        return raw_text, {}
+    json_part = raw_text[idx + len(_RISK_META_PREFIX) : -len(_RISK_META_SUFFIX)]
+    clean_text = raw_text[:idx].rstrip()
+    try:
+        parsed = json.loads(json_part)
+        if isinstance(parsed, dict):
+            return (clean_text if clean_text else None), parsed
+    except Exception:
+        pass
+    return raw_text, {}
+
+
+def encode_risk_meta(
+    contingency_plan: str | None,
+    risk_type: str | None = None,
+    probability_pct: float | None = None,
+    financial_impact: float | None = None,
+) -> str | None:
+    clean_text, existing_meta = decode_risk_meta(contingency_plan)
+    r_type = str(risk_type or existing_meta.get("risk_type") or "threat").strip().lower()
+    if r_type not in ("threat", "opportunity"):
+        r_type = "threat"
+    p_pct = (
+        round(max(0.0, min(100.0, float(probability_pct))), 2)
+        if probability_pct is not None
+        else existing_meta.get("probability_pct")
+    )
+    f_imp = (
+        round(max(0.0, float(financial_impact)), 2)
+        if financial_impact is not None
+        else float(existing_meta.get("financial_impact") or 0.0)
+    )
+    if r_type == "threat" and p_pct is None and f_imp == 0.0:
+        return clean_text
+    meta: dict[str, Any] = {
+        "risk_type": r_type,
+        "probability_pct": p_pct,
+        "financial_impact": f_imp,
+    }
+    tag = f"{_RISK_META_PREFIX}{json.dumps(meta, separators=(',', ':'))}{_KPI_META_SUFFIX}"
+    if clean_text:
+        return f"{clean_text}\n{tag}"
+    return tag
+
+
 class ProjectRisk(Base):
     __tablename__ = "project_risks"
 
@@ -647,6 +740,100 @@ class ProjectRisk(Base):
 
     project = relationship("Project", back_populates="risks")
     owner = relationship("Persona", foreign_keys=[owner_id])
+
+    def __init__(self, **kwargs: Any) -> None:
+        r_type = kwargs.pop("risk_type", None)
+        p_pct = kwargs.pop("probability_pct", None)
+        f_imp = kwargs.pop("financial_impact", None)
+        kwargs.pop("emv", None)
+        super().__init__(**kwargs)
+        if r_type is not None:
+            self.risk_type = r_type
+        if p_pct is not None:
+            self.probability_pct = p_pct
+        if f_imp is not None:
+            self.financial_impact = f_imp
+
+    def _sync_risk_meta(self) -> None:
+        raw_plan = self.__dict__.get("contingency_plan")
+        _, meta = decode_risk_meta(raw_plan)
+        r_type = self.__dict__.get("_risk_type") or meta.get("risk_type") or "threat"
+        p_pct = self.__dict__.get("_probability_pct")
+        if p_pct is None and "probability_pct" in meta:
+            p_pct = meta.get("probability_pct")
+        f_imp = self.__dict__.get("_financial_impact")
+        if f_imp is None and "financial_impact" in meta:
+            f_imp = meta.get("financial_impact")
+        self.contingency_plan = encode_risk_meta(
+            raw_plan,
+            risk_type=str(r_type),
+            probability_pct=float(p_pct) if p_pct is not None else None,
+            financial_impact=float(f_imp) if f_imp is not None else 0.0,
+        )
+
+    @property
+    def risk_type(self) -> str:
+        val = self.__dict__.get("_risk_type")
+        if val in ("threat", "opportunity"):
+            return str(val)
+        _, meta = decode_risk_meta(self.__dict__.get("contingency_plan"))
+        m_val = str(meta.get("risk_type") or "threat").strip().lower()
+        return "opportunity" if m_val == "opportunity" else "threat"
+
+    @risk_type.setter
+    def risk_type(self, value: str | None) -> None:
+        norm = "opportunity" if str(value or "").strip().lower() == "opportunity" else "threat"
+        self.__dict__["_risk_type"] = norm
+        self._sync_risk_meta()
+
+    @property
+    def probability_pct(self) -> float:
+        val = self.__dict__.get("_probability_pct")
+        if val is not None:
+            return round(max(0.0, min(100.0, float(val))), 2)
+        _, meta = decode_risk_meta(self.__dict__.get("contingency_plan"))
+        m_val = meta.get("probability_pct")
+        if m_val is not None:
+            return round(max(0.0, min(100.0, float(m_val))), 2)
+        prob_scale = int(self.probability if self.probability is not None else 3)
+        prob_scale = max(1, min(5, prob_scale))
+        return round(prob_scale * 20.0, 2)
+
+    @probability_pct.setter
+    def probability_pct(self, value: float | None) -> None:
+        if value is None:
+            self.__dict__["_probability_pct"] = None
+        else:
+            self.__dict__["_probability_pct"] = round(max(0.0, min(100.0, float(value))), 2)
+        self._sync_risk_meta()
+
+    @property
+    def financial_impact(self) -> float:
+        val = self.__dict__.get("_financial_impact")
+        if val is not None:
+            return round(max(0.0, float(val)), 2)
+        _, meta = decode_risk_meta(self.__dict__.get("contingency_plan"))
+        m_val = meta.get("financial_impact")
+        if m_val is not None:
+            return round(max(0.0, float(m_val)), 2)
+        return 0.0
+
+    @financial_impact.setter
+    def financial_impact(self, value: float | None) -> None:
+        self.__dict__["_financial_impact"] = round(max(0.0, float(value or 0.0)), 2)
+        self._sync_risk_meta()
+
+    @property
+    def emv(self) -> float:
+        raw_emv = (float(self.probability_pct) / 100.0) * float(self.financial_impact)
+        if abs(raw_emv) < 1e-9:
+            return 0.0
+        signed = -abs(raw_emv) if self.risk_type == "opportunity" else abs(raw_emv)
+        return round(signed, 2)
+
+    @emv.setter
+    def emv(self, value: float | None) -> None:
+        self.__dict__["_emv"] = round(float(value), 2) if value is not None else 0.0
 
 
 class ProjectBaseline(Base):

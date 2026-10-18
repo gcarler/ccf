@@ -224,5 +224,56 @@ describe('ProjectEVMDrawer', () => {
     expect(screen.getAllByText(/PV Línea Base/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/Serie PV Línea Base en Curva S \(2 cortes\):/i)).toBeInTheDocument();
   });
+
+  it('renders Canonical Reserve Structure (Vol. 6 §3), 15% CPI Stability Rule and Early Warning Sentinel (Vol. 5 §4)', async () => {
+    mocks.apiFetch.mockResolvedValueOnce({
+      ...mockCurveSResponse,
+      summary: {
+        ...mockCurveSResponse.summary,
+        bac: 100000,
+        work_packages_budget: 94000,
+        contingency_reserve: 6000,
+        management_reserve: 10000,
+        management_reserve_pct: 10,
+        total_project_budget: 110000,
+        cpi_stability_rule: {
+          is_applicable: true,
+          progress_pct: 25,
+          current_cpi: 0.72,
+          expected_cpi_floor: 0.65,
+          expected_cpi_ceiling: 0.79,
+          is_irrecoverable_without_rebaseline: true,
+          diagnostic_message:
+            'Regla del 15% de Estabilidad del CPI (Vol. 5 §2.1): Con 25.0% de avance físico (>= 15%), un CPI de 0.72 (< 0.90) es estadísticamente irrecuperable sin re-estructuración.',
+        },
+        early_warning_sentinel: {
+          level: 'critical',
+          label: 'Crítico',
+          min_index: 0.72,
+          cpi: 0.72,
+          spi: 0.92,
+          threshold_condition: 'CPI < 0.75 o SPI < 0.75',
+          protocol_action: 'Auditoría forense inmediata por la PMO Central y suspensión preventiva',
+        },
+      },
+    });
+
+    render(
+      <ProjectEVMDrawer
+        projectId="proj-123"
+        projectTitle="Construcción Templo Sede Norte"
+        isOpen={true}
+        onClose={vi.fn()}
+      />
+    );
+
+    expect(await screen.findByTestId('evm-pmi-reserves-sentinel-section')).toBeInTheDocument();
+    expect(screen.getByTestId('evm-sentinel-badge')).toHaveTextContent('Sentinel: Crítico');
+    expect(screen.getByTestId('evm-cpi-stability-banner')).toHaveTextContent(/Banda esperada al cierre: \[0\.65 – 0\.79\]/i);
+    expect(screen.getByTestId('evm-early-warning-sentinel-protocol')).toHaveTextContent(
+      /Auditoría forense inmediata por la PMO Central y suspensión preventiva/i
+    );
+  });
 });
+
 

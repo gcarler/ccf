@@ -390,6 +390,16 @@ class ProjectBudgetSummary(BaseModel):
     planned_amount: float = 0.0
     committed_amount: float = 0.0
     paid_amount: float = 0.0
+    work_packages_budget: float = 0.0
+    contingency_reserve: float = 0.0
+    management_reserve: float = 0.0
+    management_reserve_pct: float = 10.0
+    total_project_budget: float = 0.0
+    threats_emv: float = 0.0
+    opportunities_emv: float = 0.0
+    net_emv: float = 0.0
+    cpi_stability_rule: Optional[dict] = None
+    early_warning_sentinel: Optional[dict] = None
     by_category: dict[str, float] = Field(default_factory=dict)
     model_config = orm_config
 
@@ -397,8 +407,11 @@ class ProjectBudgetSummary(BaseModel):
 class ProjectRiskBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=PROJECT_TITLE_MAX_LENGTH)
     category: str = Field(default="tecnico", max_length=50)
+    risk_type: Literal["threat", "opportunity"] = "threat"
     probability: int = Field(default=3, ge=1, le=5)
+    probability_pct: Optional[float] = Field(default=None, ge=0.0, le=100.0)
     impact: int = Field(default=3, ge=1, le=5)
+    financial_impact: float = Field(default=0.0, ge=0.0)
     mitigation_plan: Optional[str] = None
     contingency_plan: Optional[str] = None
     owner_id: Optional[UUIDStr] = None
@@ -417,8 +430,11 @@ class ProjectRiskCreate(ProjectRiskBase):
 class ProjectRiskUpdate(BaseModel):
     title: Optional[str] = Field(default=None, min_length=1, max_length=PROJECT_TITLE_MAX_LENGTH)
     category: Optional[str] = Field(default=None, max_length=50)
+    risk_type: Optional[Literal["threat", "opportunity"]] = None
     probability: Optional[int] = Field(default=None, ge=1, le=5)
+    probability_pct: Optional[float] = Field(default=None, ge=0.0, le=100.0)
     impact: Optional[int] = Field(default=None, ge=1, le=5)
+    financial_impact: Optional[float] = Field(default=None, ge=0.0)
     mitigation_plan: Optional[str] = None
     contingency_plan: Optional[str] = None
     owner_id: Optional[UUIDStr] = None
@@ -433,6 +449,9 @@ class ProjectRiskUpdate(BaseModel):
 class ProjectRisk(ProjectRiskBase):
     id: UUIDStr
     project_id: UUIDStr
+    probability_pct: float = 60.0
+    financial_impact: float = 0.0
+    emv: float = 0.0
     severity_score: int = 9
     severity_level: Literal["low", "medium", "high", "critical"] = "medium"
     owner_name: Optional[str] = None
@@ -452,8 +471,19 @@ class ProjectRisk(ProjectRiskBase):
                 else:
                     setattr(obj, "owner_name", name)
         instance = super().model_validate(obj, **kwargs)
+        if instance.contingency_plan and "<!--ccf_risk_meta:" in instance.contingency_plan:
+            idx = instance.contingency_plan.rfind("<!--ccf_risk_meta:")
+            clean = instance.contingency_plan[:idx].rstrip()
+            instance.contingency_plan = clean if clean else None
         prob = instance.probability or 1
         imp = instance.impact or 1
+        if instance.probability_pct is None:
+            instance.probability_pct = round(prob * 20.0, 2)
+        raw_emv = (float(instance.probability_pct) / 100.0) * float(instance.financial_impact or 0.0)
+        if abs(raw_emv) < 1e-9:
+            instance.emv = 0.0
+        else:
+            instance.emv = round(-abs(raw_emv) if instance.risk_type == "opportunity" else abs(raw_emv), 2)
         instance.severity_score = prob * imp
         if instance.severity_score >= 15:
             instance.severity_level = "critical"
@@ -476,6 +506,12 @@ class ProjectRiskSummary(BaseModel):
     high_count: int = 0
     medium_count: int = 0
     low_count: int = 0
+    threats_count: int = 0
+    opportunities_count: int = 0
+    threats_emv: float = 0.0
+    opportunities_emv: float = 0.0
+    total_emv: float = 0.0
+    required_contingency_reserve: float = 0.0
     matrix_5x5: List[dict] = Field(default_factory=list)
     by_category: dict[str, int] = Field(default_factory=dict)
     model_config = orm_config
@@ -1531,6 +1567,12 @@ class ProjectEVMMetrics(BaseModel):
     project_id: UUIDStr
     calculated_at: str
     bac: float = Field(..., description="Presupuesto total aprobado (Budget at Completion)")
+    work_packages_budget: float = Field(default=0.0, description="Presupuesto de paquetes de trabajo EDT")
+    contingency_reserve: float = Field(default=0.0, description="Reserva de contingencia EMV dentro de BAC")
+    management_reserve: float = Field(default=0.0, description="Reserva de gestión fuera de BAC")
+    management_reserve_pct: float = Field(default=10.0, description="Porcentaje de reserva de gestión")
+    total_project_budget: float = Field(default=0.0, description="Presupuesto Total del Proyecto (BAC + Reserva de Gestión)")
+    reserves: Optional[dict] = Field(default=None, description="Desglose canónico de reservas PMI Vol. 6 §3")
     ac: float = Field(..., description="Costo real gastado a la fecha (Actual Cost)")
     ev: float = Field(..., description="Valor ganado del avance físico (Earned Value)")
     pv: float = Field(..., description="Valor planificado según cronograma (Planned Value)")
@@ -1545,6 +1587,8 @@ class ProjectEVMMetrics(BaseModel):
     vac: float = Field(..., description="Variación presupuestaria al finalizar (BAC - EAC)")
     health_status: str = Field(..., description="Diagnóstico general de desempeño EVM")
     health_color: str = Field(..., description="Código de color semántico (success, warning, destructive)")
+    cpi_stability_rule: Optional[dict] = Field(default=None, description="Regla del 15% de Estabilidad del CPI PMI Vol. 5 §2.1")
+    early_warning_sentinel: Optional[dict] = Field(default=None, description="Protocolo Sentinel de Alerta Temprana PMI Vol. 5 §4")
     has_baseline: bool = Field(default=False, description="Indica si el proyecto tiene una línea base activa")
     baseline_id: Optional[UUIDStr] = Field(default=None, description="ID de la línea base activa")
     baseline_name: Optional[str] = Field(default=None, description="Nombre de la línea base activa")
@@ -1816,6 +1860,9 @@ class ProjectEVMAdvancedResponse(BaseModel):
     tcpi: TCPIMetrics
     quadrant: CPIversusSPIQuadrant
     early_warnings: List[EarlyWarningAlert] = Field(default_factory=list)
+    reserves: Optional[dict] = None
+    cpi_stability_rule: Optional[dict] = None
+    early_warning_sentinel: Optional[dict] = None
     model_config = orm_config
 
 
