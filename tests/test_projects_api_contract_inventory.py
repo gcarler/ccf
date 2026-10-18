@@ -1044,6 +1044,142 @@ def test_operation_documentation_quality_empty_openapi():
     )
 
 
+# ─── summarize_projects_collection_pagination_coverage (pure helper) ──────────
+
+
+def test_collection_pagination_coverage_bounded_contracts():
+    """100% de colecciones GET con parámetros de paginación o filtro -> BOUNDED_COLLECTION_CONTRACTS."""
+    openapi = {
+        "paths": {
+            "/api/projects": {
+                "get": {
+                    "parameters": [
+                        {"in": "query", "name": "limit"},
+                        {"in": "query", "name": "offset"},
+                    ]
+                }
+            },
+            "/api/v1/projects/{project_id}/tasks": {
+                "parameters": [{"in": "query", "name": "status"}],
+                "get": {"operationId": "list_tasks"},
+            },
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_collection_pagination_coverage(
+        openapi
+    )
+
+    assert res == {
+        "collection_get_count": 2,
+        "paginated_or_filtered_count": 2,
+        "unbounded_collection_ops": [],
+        "coverage_pct": 100.0,
+        "pagination_posture": "BOUNDED_COLLECTION_CONTRACTS",
+    }
+
+
+def test_collection_pagination_coverage_partial():
+    """>= 50% de colecciones GET acotadas pero >= 1 sin acotar -> PARTIAL_PAGINATION_COVERAGE."""
+    openapi = {
+        "paths": {
+            "/api/projects": {
+                "get": {
+                    "parameters": [{"in": "query", "name": "page_size"}],
+                }
+            },
+            "/api/projects/{project_id}/risks": {
+                "get": {
+                    "parameters": [{"in": "query", "name": "search"}],
+                }
+            },
+            "/api/projects/{project_id}/stakeholders": {
+                "get": {
+                    "parameters": [{"in": "header", "name": "X-Trace"}],
+                }
+            },
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_collection_pagination_coverage(
+        openapi
+    )
+
+    assert res == {
+        "collection_get_count": 3,
+        "paginated_or_filtered_count": 2,
+        "unbounded_collection_ops": ["GET /api/projects/{project_id}/stakeholders"],
+        "coverage_pct": 66.67,
+        "pagination_posture": "PARTIAL_PAGINATION_COVERAGE",
+    }
+
+
+def test_collection_pagination_coverage_unbounded_risk_and_ignores_item_routes():
+    """< 50% acotadas -> UNBOUNDED_COLLECTION_RISK e ignora rutas de detalle terminadas en '}'."""
+    openapi = {
+        "paths": {
+            "/api/projects": {"get": {"operationId": "list_projects"}},
+            "/api/projects/{project_id}": {"get": {"operationId": "get_project"}},
+            "/api/projects/{project_id}/tasks/{task_id}/": {
+                "get": {"operationId": "get_task"}
+            },
+            "/api/projects/{project_id}/expenses": {
+                "get": {"operationId": "list_expenses"}
+            },
+            "/api/projects/{project_id}/wiki": {
+                "get": {"parameters": [{"in": "query", "name": "q"}]}
+            },
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_collection_pagination_coverage(
+        openapi
+    )
+
+    assert res == {
+        "collection_get_count": 3,
+        "paginated_or_filtered_count": 1,
+        "unbounded_collection_ops": [
+            "GET /api/projects",
+            "GET /api/projects/{project_id}/expenses",
+        ],
+        "coverage_pct": 33.33,
+        "pagination_posture": "UNBOUNDED_COLLECTION_RISK",
+    }
+
+
+def test_collection_pagination_coverage_empty_or_no_collections():
+    """Esquema vacío, None o solo rutas detalle/POST -> NO_COLLECTION_OPERATIONS."""
+    expected = {
+        "collection_get_count": 0,
+        "paginated_or_filtered_count": 0,
+        "unbounded_collection_ops": [],
+        "coverage_pct": 0.0,
+        "pagination_posture": "NO_COLLECTION_OPERATIONS",
+    }
+    assert (
+        audit_projects_api_contracts.summarize_projects_collection_pagination_coverage(None)
+        == expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_collection_pagination_coverage({})
+        == expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_collection_pagination_coverage(
+            {
+                "paths": {
+                    "/api/projects/{project_id}": {"get": {"operationId": "get_one"}},
+                    "/api/projects": {"post": {"operationId": "create_one"}},
+                    "/api/crm/contacts": {"get": {"operationId": "list_crm"}},
+                }
+            }
+        )
+        == expected
+    )
+
+
+
 
 
 

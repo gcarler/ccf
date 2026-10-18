@@ -497,6 +497,99 @@ def summarize_projects_operation_documentation_quality(
     }
 
 
+PAGINATION_OR_FILTER_PARAMS = {
+    "limit",
+    "offset",
+    "page",
+    "page_size",
+    "per_page",
+    "skip",
+    "cursor",
+    "q",
+    "search",
+    "status",
+    "phase",
+    "phase_id",
+}
+
+
+def summarize_projects_collection_pagination_coverage(
+    openapi_schema: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Audita la cobertura de paginación y filtrado query en endpoints GET de colección de proyectos."""
+    empty_result: dict[str, Any] = {
+        "collection_get_count": 0,
+        "paginated_or_filtered_count": 0,
+        "unbounded_collection_ops": [],
+        "coverage_pct": 0.0,
+        "pagination_posture": "NO_COLLECTION_OPERATIONS",
+    }
+    if not isinstance(openapi_schema, dict) or not isinstance(
+        openapi_schema.get("paths"), dict
+    ):
+        return empty_result
+
+    collection_get_count = 0
+    paginated_or_filtered_count = 0
+    unbounded_collection_ops: list[str] = []
+
+    for path, path_item in sorted(openapi_schema["paths"].items()):
+        if not isinstance(path, str) or "/projects" not in path:
+            continue
+        if not isinstance(path_item, dict):
+            continue
+        op_spec = path_item.get("get")
+        if not isinstance(op_spec, dict):
+            continue
+        if path.rstrip("/").endswith("}"):
+            continue
+
+        collection_get_count += 1
+        path_params = (
+            path_item.get("parameters")
+            if isinstance(path_item.get("parameters"), list)
+            else []
+        )
+        op_params = (
+            op_spec.get("parameters")
+            if isinstance(op_spec.get("parameters"), list)
+            else []
+        )
+        query_names = {
+            str(param.get("name") or "").strip().lower()
+            for param in (*path_params, *op_params)
+            if isinstance(param, dict)
+            and str(param.get("in") or "").strip().lower() == "query"
+        }
+
+        if query_names & PAGINATION_OR_FILTER_PARAMS:
+            paginated_or_filtered_count += 1
+        else:
+            unbounded_collection_ops.append(f"GET {path}")
+
+    if collection_get_count == 0:
+        return empty_result
+
+    coverage_pct = round(
+        (paginated_or_filtered_count / collection_get_count) * 100.0, 2
+    )
+    if len(unbounded_collection_ops) == 0:
+        pagination_posture = "BOUNDED_COLLECTION_CONTRACTS"
+    elif coverage_pct >= 50.0:
+        pagination_posture = "PARTIAL_PAGINATION_COVERAGE"
+    else:
+        pagination_posture = "UNBOUNDED_COLLECTION_RISK"
+
+    return {
+        "collection_get_count": collection_get_count,
+        "paginated_or_filtered_count": paginated_or_filtered_count,
+        "unbounded_collection_ops": unbounded_collection_ops,
+        "coverage_pct": coverage_pct,
+        "pagination_posture": pagination_posture,
+    }
+
+
+
 
 
 
