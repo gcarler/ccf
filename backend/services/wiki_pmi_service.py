@@ -1448,6 +1448,101 @@ def audit_wiki_adr_lifecycle_traceability(
     }
 
 
+def audit_wiki_communication_matrix_governance(
+    channels: Optional[List[Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
+    """Audita la Matriz de Comunicaciones y el SLA de escalamiento (PMBOK §10.1.3.1).
+
+    Cada canal declara `id`/`channel_id`/`name` (fallback 'CH-{idx}'),
+    audiencia (`audience`/`stakeholders`/`recipients`), cadencia
+    (`frequency`/`cadence`/`frecuencia`), responsable (`owner`/`sender`/
+    `responsable`), tipo (`channel_type`/`purpose`) y, para canales de
+    esalamiento/incidente, `escalation_sla_hours`/`sla_hours`:
+    - `missing_audience_channel_ids` / `missing_cadence_channel_ids` /
+      `unowned_channel_ids` / `missing_escalation_sla_channel_ids`.
+    - `is_compliant`: las 4 listas de faltantes vacías.
+    - `matrix_posture`: 'NO_COMMUNICATION_CHANNELS' sin canales;
+      'MISSING_ESCALATION_SLA_PATH'; 'UNOWNED_COMMUNICATION_CHANNELS';
+      'INCOMPLETE_AUDIENCE_OR_CADENCE'; 'COMPLIANT_COMMUNICATIONS_MATRIX'.
+    """
+    ESCALATION_TYPES = {"escalation", "incident", "crisis", "escalamiento", "incidente"}
+    valid_channels = [c for c in (channels or []) if isinstance(c, dict)]
+    total_channels = len(valid_channels)
+    if total_channels == 0:
+        return {
+            "total_channels": 0,
+            "complete_channels_count": 0,
+            "missing_audience_channel_ids": [],
+            "missing_cadence_channel_ids": [],
+            "unowned_channel_ids": [],
+            "missing_escalation_sla_channel_ids": [],
+            "is_compliant": True,
+            "matrix_posture": "NO_COMMUNICATION_CHANNELS",
+        }
+
+    missing_audience_channel_ids: List[str] = []
+    missing_cadence_channel_ids: List[str] = []
+    unowned_channel_ids: List[str] = []
+    missing_escalation_sla_channel_ids: List[str] = []
+    complete_channels_count = 0
+
+    for idx, item in enumerate(valid_channels, start=1):
+        ch_id = str(item.get("id") or item.get("channel_id") or item.get("name") or "").strip() or f"CH-{idx}"
+        aud = str(item.get("audience") or item.get("stakeholders") or item.get("recipients") or "").strip()
+        cad = str(item.get("frequency") or item.get("cadence") or item.get("frecuencia") or "").strip()
+        own = str(item.get("owner") or item.get("sender") or item.get("responsable") or "").strip()
+        ctype = str(item.get("channel_type") or item.get("purpose") or "").strip().lower()
+        is_esc = bool(
+            item.get("is_escalation") is True or ctype in ESCALATION_TYPES
+        )
+        try:
+            sla = float(
+                item.get("escalation_sla_hours")
+                if item.get("escalation_sla_hours") is not None
+                else (item.get("sla_hours") or 0.0)
+            )
+        except (TypeError, ValueError):
+            sla = 0.0
+
+        if not aud:
+            missing_audience_channel_ids.append(ch_id)
+        if not cad:
+            missing_cadence_channel_ids.append(ch_id)
+        if not own:
+            unowned_channel_ids.append(ch_id)
+        if is_esc and sla <= 0.0:
+            missing_escalation_sla_channel_ids.append(ch_id)
+        if aud and cad and own and (not is_esc or sla > 0.0):
+            complete_channels_count += 1
+
+    is_compliant = bool(
+        not missing_audience_channel_ids
+        and not missing_cadence_channel_ids
+        and not unowned_channel_ids
+        and not missing_escalation_sla_channel_ids
+    )
+
+    if len(missing_escalation_sla_channel_ids) > 0:
+        matrix_posture = "MISSING_ESCALATION_SLA_PATH"
+    elif len(unowned_channel_ids) > 0:
+        matrix_posture = "UNOWNED_COMMUNICATION_CHANNELS"
+    elif len(missing_audience_channel_ids) > 0 or len(missing_cadence_channel_ids) > 0:
+        matrix_posture = "INCOMPLETE_AUDIENCE_OR_CADENCE"
+    else:
+        matrix_posture = "COMPLIANT_COMMUNICATIONS_MATRIX"
+
+    return {
+        "total_channels": total_channels,
+        "complete_channels_count": complete_channels_count,
+        "missing_audience_channel_ids": missing_audience_channel_ids,
+        "missing_cadence_channel_ids": missing_cadence_channel_ids,
+        "unowned_channel_ids": unowned_channel_ids,
+        "missing_escalation_sla_channel_ids": missing_escalation_sla_channel_ids,
+        "is_compliant": is_compliant,
+        "matrix_posture": matrix_posture,
+    }
+
+
 class WikiPMIService:
     """Fachada canónica de doctrina y gobernanza documental Wiki PMI."""
 
@@ -1566,6 +1661,12 @@ class WikiPMIService:
         return audit_wiki_lessons_learned_taxonomy(entries)
 
     @staticmethod
+    def audit_wiki_communication_matrix_governance(
+        channels: Optional[List[Dict[str, Any]]] = None,
+    ) -> Dict[str, Any]:
+        return audit_wiki_communication_matrix_governance(channels)
+
+    @staticmethod
     def audit_wiki_operational_runbook_readiness(
         markdown_text: Optional[str],
     ) -> dict:
@@ -1599,6 +1700,7 @@ __all__ = [
     "audit_wiki_meeting_minutes_governance",
     "audit_wiki_postmortem_incident_rca",
     "audit_wiki_lessons_learned_taxonomy",
+    "audit_wiki_communication_matrix_governance",
     "audit_wiki_operational_runbook_readiness",
     "audit_wiki_adr_lifecycle_traceability",
     "WikiPMIService",

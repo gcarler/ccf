@@ -1753,3 +1753,130 @@ def test_audit_wiki_adr_lifecycle_traceability_empty_or_none():
             "is_traceable": True,
             "adr_posture": "NO_ADRS_REGISTERED",
         }
+
+
+def test_audit_wiki_communication_matrix_governance_compliant():
+    """Matriz completa incluido canal de escalamiento con SLA -> COMPLIANT matrix."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_communication_matrix_governance as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "id": "CH-WEEKLY",
+                "audience": "Rpastores y líderes de sedes",
+                "frequency": "semestral por sede",
+                "owner": "Secretaría General",
+                "channel_type": "newsletter",
+            },
+            {
+                "name": "CH-INCIDENT",
+                "stakeholders": "Equipo técnico y mediación",
+                "cadence": "on-demand",
+                "responsable": "Coordinación Técnica",
+                "purpose": "Escalamiento de incidentes",
+                "escalation_sla_hours": 4.0,
+            },
+        ]
+    )
+    assert res["is_compliant"] is True
+    assert res["total_channels"] == 2
+    assert res["complete_channels_count"] == 2
+    assert res["missing_audience_channel_ids"] == []
+    assert res["missing_cadence_channel_ids"] == []
+    assert res["unowned_channel_ids"] == []
+    assert res["missing_escalation_sla_channel_ids"] == []
+    assert res["matrix_posture"] == "COMPLIANT_COMMUNICATIONS_MATRIX"
+
+
+def test_audit_wiki_communication_matrix_governance_missing_escalation_sla():
+    """Canal de escalamiento sin SLA > 0 -> MISSING_ESCALATION_SLA_PATH."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_communication_matrix_governance as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "id": "CH-REGULAR",
+                "audience": "Comunidad",
+                "frequency": "mensual",
+                "owner": "Comunicaciones",
+            },
+            {
+                "id": "CH-CRISIS",
+                "is_escalation": True,
+                "audience": "Mediación",
+                "cadence": "on-demand",
+                "owner": "Mediador General",
+                "sla_hours": 0.0,
+            },
+        ]
+    )
+    assert res["is_compliant"] is False
+    assert res["total_channels"] == 2
+    assert res["complete_channels_count"] == 1
+    assert res["missing_escalation_sla_channel_ids"] == ["CH-CRISIS"]
+    assert res["missing_audience_channel_ids"] == []
+    assert res["missing_cadence_channel_ids"] == []
+    assert res["unowned_channel_ids"] == []
+    assert res["matrix_posture"] == "MISSING_ESCALATION_SLA_PATH"
+
+
+def test_audit_wiki_communication_matrix_governance_unowned_and_incomplete():
+    """Sin audiencia, cadencia y responsable ausentes por pilar (precedencia unowned)."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_communication_matrix_governance as audit_fn,
+    )
+
+    res = audit_fn(
+        [
+            {
+                "id": "CH-1",
+                "audience": "Licensing",
+                "cadence": "quincenal",
+            },
+            {
+                "id": "CH-2",
+                "owner": "Correo General",
+                "frequency": "semanal",
+                "purpose": "incident",
+                "escalation_sla_hours": 8.0,
+            },
+            {
+                "id": "CH-3",
+                "owner": "C Après-vente",
+                "audience": "Usores veteranos",
+            },
+        ]
+    )
+    assert res["is_compliant"] is False
+    assert res["total_channels"] == 3
+    # CH-1 sin owner; CH-2 sin audiencia; CH-3 sin cadencia.
+    assert res["complete_channels_count"] == 0
+    assert res["unowned_channel_ids"] == ["CH-1"]
+    assert res["missing_audience_channel_ids"] == ["CH-2"]
+    assert res["missing_cadence_channel_ids"] == ["CH-3"]
+    assert res["missing_escalation_sla_channel_ids"] == []
+    assert res["matrix_posture"] == "UNOWNED_COMMUNICATION_CHANNELS"
+
+
+def test_audit_wiki_communication_matrix_governance_empty_or_none():
+    """None, lista vacía o entradas no-dict -> NO_COMMUNICATION_CHANNELS."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_communication_matrix_governance as audit_fn,
+    )
+
+    for payload in (None, [], ["invalid", 42, None]):
+        res = audit_fn(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_channels": 0,
+            "complete_channels_count": 0,
+            "missing_audience_channel_ids": [],
+            "missing_cadence_channel_ids": [],
+            "unowned_channel_ids": [],
+            "missing_escalation_sla_channel_ids": [],
+            "is_compliant": True,
+            "matrix_posture": "NO_COMMUNICATION_CHANNELS",
+        }
