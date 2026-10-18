@@ -7251,3 +7251,186 @@ def test_security_scheme_and_operation_auth_hygiene_real_openapi():
     assert res["is_compliant"] is True
 
 
+def test_schema_nesting_depth_and_circular_ref_hygiene_compliant_tree_and_flat_schemas():
+    """Valida que schemas planos o árboles con hijos en array/opcionales pasen sin violaciones."""
+    schema = {
+        "paths": {
+            "/api/v1/projects/wbs": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "description": "OK",
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/WbsTreeNodeResponse"}
+                                }
+                            },
+                        }
+                    }
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "WbsTreeNodeResponse": {
+                    "title": "WbsTreeNodeResponse",
+                    "type": "object",
+                    "required": ["id", "name"],
+                    "properties": {
+                        "id": {"type": "string"},
+                        "name": {"type": "string"},
+                        "children": {
+                            "type": "array",
+                            "items": {"$ref": "#/components/schemas/WbsTreeNodeResponse"},
+                        },
+                    },
+                }
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_schema_nesting_depth_and_circular_ref_hygiene(
+        schema, path_prefix="/api/v1/projects", max_inline_nesting_depth=5
+    )
+    assert res["referenced_schemas_count"] == 1
+    assert res["compliant_schemas_count"] == 1
+    assert res["direct_non_nullable_self_reference_count"] == 0
+    assert res["circular_ref_cycle_detected_count"] == 0
+    assert res["excessive_inline_nesting_depth_count"] == 0
+    assert res["max_observed_inline_depth"] <= 5
+    assert res["violations"] == []
+    assert res["hygiene_score"] == 100.0
+    assert res["is_compliant"] is True
+
+
+def test_schema_nesting_depth_and_circular_ref_hygiene_detects_direct_self_ref_and_cycle():
+    """Detecta autorreferencia directa obligatoria no nula y ciclo circular entre dos schemas."""
+    schema = {
+        "paths": {
+            "/api/v1/projects/cycles": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "description": "OK",
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/SelfLoopNode"}
+                                }
+                            },
+                        },
+                        "201": {
+                            "description": "Created",
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/AlphaNode"}
+                                }
+                            },
+                        },
+                    }
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "SelfLoopNode": {
+                    "title": "SelfLoopNode",
+                    "type": "object",
+                    "required": ["parent"],
+                    "properties": {
+                        "parent": {"$ref": "#/components/schemas/SelfLoopNode"}
+                    },
+                },
+                "AlphaNode": {
+                    "title": "AlphaNode",
+                    "type": "object",
+                    "properties": {
+                        "beta": {"$ref": "#/components/schemas/BetaNode"}
+                    },
+                },
+                "BetaNode": {
+                    "title": "BetaNode",
+                    "type": "object",
+                    "properties": {
+                        "alpha": {"$ref": "#/components/schemas/AlphaNode"}
+                    },
+                },
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_schema_nesting_depth_and_circular_ref_hygiene(
+        schema, path_prefix="/api/v1/projects"
+    )
+    assert res["referenced_schemas_count"] == 3
+    assert res["compliant_schemas_count"] == 0
+    assert res["direct_non_nullable_self_reference_count"] == 1
+    assert res["circular_ref_cycle_detected_count"] == 2
+    assert res["hygiene_score"] == 0.0
+    assert res["is_compliant"] is False
+
+
+def test_schema_nesting_depth_and_circular_ref_hygiene_detects_excessive_inline_depth():
+    """Detecta anidamiento inline excesivo cuando supera max_inline_nesting_depth."""
+    schema = {
+        "paths": {
+            "/api/v1/projects/deep": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "description": "OK",
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/DeepInlinePayload"}
+                                }
+                            },
+                        }
+                    }
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "DeepInlinePayload": {
+                    "title": "DeepInlinePayload",
+                    "type": "object",
+                    "properties": {
+                        "lvl1": {
+                            "type": "object",
+                            "properties": {
+                                "lvl2": {
+                                    "type": "object",
+                                    "properties": {
+                                        "lvl3": {
+                                            "type": "object",
+                                            "properties": {
+                                                "leaf": {"type": "string"}
+                                            },
+                                        }
+                                    },
+                                }
+                            },
+                        }
+                    },
+                }
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_schema_nesting_depth_and_circular_ref_hygiene(
+        schema, path_prefix="/api/v1/projects", max_inline_nesting_depth=2
+    )
+    assert res["referenced_schemas_count"] == 1
+    assert res["compliant_schemas_count"] == 0
+    assert res["excessive_inline_nesting_depth_count"] == 1
+    assert res["max_observed_inline_depth"] > 2
+    assert res["hygiene_score"] == 0.0
+    assert res["is_compliant"] is False
+
+
+def test_schema_nesting_depth_and_circular_ref_hygiene_real_openapi():
+    """Verifica que el schema OpenAPI real de FastAPI cumpla la higiene de anidamiento y ciclos."""
+    res = audit_projects_api_contracts.summarize_projects_schema_nesting_depth_and_circular_ref_hygiene()
+    assert res["referenced_schemas_count"] > 0
+    assert res["direct_non_nullable_self_reference_count"] == 0
+    assert res["circular_ref_cycle_detected_count"] == 0
+    assert res["excessive_inline_nesting_depth_count"] == 0
+    assert res["violations"] == []
+    assert res["hygiene_score"] == 100.0
+    assert res["is_compliant"] is True

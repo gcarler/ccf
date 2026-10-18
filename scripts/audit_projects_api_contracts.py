@@ -5976,6 +5976,240 @@ def summarize_projects_security_scheme_and_operation_auth_hygiene(
     }
 
 
+def _compute_inline_schema_nesting_depth(node: Any) -> int:
+    if not isinstance(node, Mapping) or "$ref" in node:
+        return 0
+    best = 0
+    props = node.get("properties")
+    if isinstance(props, Mapping) and len(props) > 0:
+        best = max(
+            best,
+            1 + max(_compute_inline_schema_nesting_depth(v) for v in props.values()),
+        )
+    items = node.get("items")
+    if isinstance(items, Mapping):
+        best = max(best, 1 + _compute_inline_schema_nesting_depth(items))
+    add_props = node.get("additionalProperties")
+    if isinstance(add_props, Mapping):
+        best = max(best, 1 + _compute_inline_schema_nesting_depth(add_props))
+    for kw in ("anyOf", "oneOf", "allOf"):
+        branches = node.get(kw)
+        if isinstance(branches, list) and len(branches) > 0:
+            branch_depths = [
+                _compute_inline_schema_nesting_depth(b)
+                for b in branches
+                if isinstance(b, Mapping)
+            ]
+            if branch_depths:
+                has_nested_structure = any(d > 0 for d in branch_depths)
+                best = max(
+                    best,
+                    (1 if has_nested_structure else 0) + max(branch_depths),
+                )
+    return best
+
+
+def summarize_projects_schema_nesting_depth_and_circular_ref_hygiene(
+    schema: Mapping[str, Any] | None = None,
+    *,
+    path_prefix: str = "/api/v1/projects",
+    max_inline_nesting_depth: int = 5,
+) -> dict[str, Any]:
+    """Audita la profundidad de anidamiento inline, autorreferencias obligatorias y ciclos $ref en components/schemas bajo path_prefix."""
+    if schema is None:
+        from backend.app import app
+
+        schema_dict: Mapping[str, Any] = app.openapi()
+    else:
+        schema_dict = schema
+
+    paths = schema_dict.get("paths", {}) if isinstance(schema_dict, Mapping) else {}
+    if not isinstance(paths, Mapping):
+        paths = {}
+
+    components = schema_dict.get("components", {}) if isinstance(schema_dict, Mapping) else {}
+    schemas = components.get("schemas", {}) if isinstance(components, Mapping) else {}
+    if not isinstance(schemas, Mapping):
+        schemas = {}
+
+    has_exact_prefix = any(str(p).startswith(path_prefix) for p in paths.keys())
+    if has_exact_prefix:
+        effective_prefixes: tuple[str, ...] = (path_prefix,)
+    elif path_prefix in ("/api/v1/projects", "/api/projects", "/projects"):
+        effective_prefixes = ("/api/v1/projects", "/api/projects", "/projects")
+    else:
+        effective_prefixes = (path_prefix,)
+
+    referenced_schemas: set[str] = set()
+    has_matching_paths = False
+
+    for path in sorted(paths.keys()):
+        path_str = str(path)
+        if not path_str.startswith(effective_prefixes):
+            continue
+        path_item = paths[path]
+        if not isinstance(path_item, Mapping):
+            continue
+        has_matching_paths = True
+
+        for ref in schema_refs(dict(path_item)):
+            referenced_schemas.add(ref)
+
+    if referenced_schemas:
+        queue = list(referenced_schemas)
+        while queue:
+            current = queue.pop()
+            s_obj = schemas.get(current)
+            if isinstance(s_obj, Mapping):
+                for nested_ref in schema_refs(dict(s_obj)):
+                    if nested_ref not in referenced_schemas:
+                        referenced_schemas.add(nested_ref)
+                        queue.append(nested_ref)
+    elif not has_matching_paths and schemas:
+        referenced_schemas = {str(k) for k in schemas.keys()}
+
+    referenced_existing = sorted(s for s in referenced_schemas if s in schemas)
+    existing_set = set(referenced_existing)
+
+    adj: dict[str, set[str]] = {}
+    for s_name in referenced_existing:
+        s_obj = schemas.get(s_name)
+        if not isinstance(s_obj, Mapping):
+            adj[s_name] = set()
+            continue
+        targets = {
+            ref
+            for ref in schema_refs(dict(s_obj))
+            if ref in existing_set and ref != s_name
+        }
+        adj[s_name] = targets
+
+    def _has_reachable_cycle(start_schema: str) -> bool:
+        visited: set[str] = set()
+        in_stack: set[str] = set()
+
+        def _dfs(curr: str) -> bool:
+            visited.add(curr)
+            in_stack.add(curr)
+            for nxt in sorted(adj.get(curr, ())):
+                if nxt not in visited:
+                    if _dfs(nxt):
+                        return True
+                elif nxt in in_stack:
+                    return True
+            in_stack.remove(curr)
+            return False
+
+        return _dfs(start_schema)
+
+    compliant_schemas_count = 0
+    direct_non_nullable_self_reference_count = 0
+    circular_ref_cycle_detected_count = 0
+    excessive_inline_nesting_depth_count = 0
+    max_observed_inline_depth = 0
+    violations: list[dict[str, Any]] = []
+    max_depth_limit = int(max_inline_nesting_depth)
+
+    for s_name in referenced_existing:
+        s_obj = schemas.get(s_name)
+        if not isinstance(s_obj, Mapping):
+            continue
+
+        has_violation = False
+        self_ref_uri = f"#/components/schemas/{s_name}"
+
+        raw_required = s_obj.get("required", [])
+        required_props = (
+            {str(item) for item in raw_required if isinstance(item, str)}
+            if isinstance(raw_required, list)
+            else set()
+        )
+        props = s_obj.get("properties", {})
+        has_direct_self_ref = False
+        if isinstance(props, Mapping):
+            for prop_name, prop_spec in props.items():
+                if str(prop_name) not in required_props or not isinstance(
+                    prop_spec, Mapping
+                ):
+                    continue
+                if prop_spec.get("type") == "array" or prop_spec.get("nullable") is True:
+                    continue
+                if prop_spec.get("$ref") == self_ref_uri:
+                    has_direct_self_ref = True
+                    break
+                all_of = prop_spec.get("allOf")
+                if (
+                    isinstance(all_of, list)
+                    and any(
+                        isinstance(b, Mapping) and b.get("$ref") == self_ref_uri
+                        for b in all_of
+                    )
+                ):
+                    has_direct_self_ref = True
+                    break
+
+        if has_direct_self_ref:
+            direct_non_nullable_self_reference_count += 1
+            has_violation = True
+            violations.append(
+                {
+                    "schema_name": s_name,
+                    "reason": "direct_non_nullable_self_reference",
+                }
+            )
+
+        if _has_reachable_cycle(s_name):
+            circular_ref_cycle_detected_count += 1
+            has_violation = True
+            violations.append(
+                {
+                    "schema_name": s_name,
+                    "reason": "circular_ref_cycle_detected",
+                }
+            )
+
+        observed_depth = _compute_inline_schema_nesting_depth(s_obj)
+        if observed_depth > max_observed_inline_depth:
+            max_observed_inline_depth = observed_depth
+        if observed_depth > max_depth_limit:
+            excessive_inline_nesting_depth_count += 1
+            has_violation = True
+            violations.append(
+                {
+                    "schema_name": s_name,
+                    "reason": "excessive_inline_nesting_depth",
+                }
+            )
+
+        if not has_violation:
+            compliant_schemas_count += 1
+
+    referenced_schemas_count = len(referenced_existing)
+    hygiene_score = (
+        100.0
+        if referenced_schemas_count == 0
+        else round((compliant_schemas_count / referenced_schemas_count) * 100.0, 2)
+    )
+    is_compliant = (
+        direct_non_nullable_self_reference_count == 0
+        and circular_ref_cycle_detected_count == 0
+        and excessive_inline_nesting_depth_count == 0
+    )
+
+    return {
+        "path_prefix": path_prefix,
+        "referenced_schemas_count": referenced_schemas_count,
+        "compliant_schemas_count": compliant_schemas_count,
+        "direct_non_nullable_self_reference_count": direct_non_nullable_self_reference_count,
+        "circular_ref_cycle_detected_count": circular_ref_cycle_detected_count,
+        "excessive_inline_nesting_depth_count": excessive_inline_nesting_depth_count,
+        "max_observed_inline_depth": max_observed_inline_depth,
+        "violations": violations,
+        "hygiene_score": hygiene_score,
+        "is_compliant": is_compliant,
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()
