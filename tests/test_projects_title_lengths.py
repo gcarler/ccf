@@ -5789,3 +5789,114 @@ def test_validate_three_point_pert_and_triangular_empty_and_export():
 
     assert "validate_three_point_pert_and_triangular_estimates" in mod.__all__
 
+
+def test_validate_ccpm_critical_chain_buffer_fever_chart_green_protected():
+    """Caso 1: Todas las cadenas con consumo de buffer <= umbral amarillo -> GREEN_PROTECTED."""
+    from backend.schemas.projects import (
+        validate_ccpm_critical_chain_buffer_fever_chart,
+    )
+
+    chains = [
+        {
+            "chain_id": "PB-MAIN",
+            "chain_type": "project_buffer",
+            "chain_completion_pct": 50.0,  # yellow=20+0.6*50=50, red=40+0.6*50=70
+            "buffer_consumed_pct": 40.0,
+        },
+        {
+            "chain_id": "FB-01",
+            "chain_type": "feeding_buffer",
+            "chain_completion_pct": 30.0,  # yellow=38, red=58
+            "buffer_consumed_pct": 38.0,
+        },
+    ]
+    res = validate_ccpm_critical_chain_buffer_fever_chart(chains)
+    assert res["is_valid"] is True
+    assert res["total_chains"] == 2
+    assert res["red_zone_action_chain_ids"] == []
+    assert res["yellow_zone_watch_chain_ids"] == []
+    assert res["green_zone_healthy_chain_ids"] == ["PB-MAIN", "FB-01"]
+    assert res["fever_chart_status"] == "GREEN_PROTECTED"
+    assert res["issues"] == []
+
+
+def test_validate_ccpm_critical_chain_buffer_fever_chart_yellow_plan_recovery():
+    """Caso 2: Cadena en zona amarilla (yellow_threshold < consumed <= red_threshold) -> YELLOW_PLAN_RECOVERY."""
+    from backend.schemas.projects import (
+        validate_ccpm_critical_chain_buffer_fever_chart,
+    )
+
+    chains = [
+        {
+            "chain_id": "PB-MAIN",
+            "chain_type": "project_buffer",
+            "chain_completion_pct": 50.0,  # yellow=50, red=70
+            "buffer_consumed_pct": 60.0,
+        },
+        {
+            "chain_id": "FB-02",
+            "chain_type": "feeding_buffer",
+            "chain_completion_pct": 40.0,  # yellow=44, red=64
+            "buffer_consumed_pct": 30.0,
+        },
+    ]
+    res = validate_ccpm_critical_chain_buffer_fever_chart(chains)
+    assert res["is_valid"] is False
+    assert res["total_chains"] == 2
+    assert res["red_zone_action_chain_ids"] == []
+    assert res["yellow_zone_watch_chain_ids"] == ["PB-MAIN"]
+    assert res["green_zone_healthy_chain_ids"] == ["FB-02"]
+    assert res["fever_chart_status"] == "YELLOW_PLAN_RECOVERY"
+    assert len(res["issues"]) >= 1
+
+
+def test_validate_ccpm_critical_chain_buffer_fever_chart_red_recovery_required():
+    """Caso 3: Consumo supera umbral rojo o > 100% -> RED_RECOVERY_REQUIRED."""
+    from backend.schemas.projects import (
+        validate_ccpm_critical_chain_buffer_fever_chart,
+    )
+
+    chains = [
+        {
+            "chain_id": "PB-RED",
+            "chain_type": "project_buffer",
+            "chain_completion_pct": 20.0,  # yellow=32, red=52
+            "buffer_consumed_pct": 65.0,
+        },
+        {
+            "chain_id": "FB-EXHAUSTED",
+            "chain_type": "feeding_buffer",
+            "chain_completion_pct": 100.0,  # red=100, pero > 100%
+            "buffer_consumed_pct": 105.0,
+        },
+    ]
+    res = validate_ccpm_critical_chain_buffer_fever_chart(chains)
+    assert res["is_valid"] is False
+    assert res["total_chains"] == 2
+    assert res["red_zone_action_chain_ids"] == ["PB-RED", "FB-EXHAUSTED"]
+    assert res["yellow_zone_watch_chain_ids"] == []
+    assert res["green_zone_healthy_chain_ids"] == []
+    assert res["fever_chart_status"] == "RED_RECOVERY_REQUIRED"
+    assert len(res["issues"]) >= 2
+
+
+def test_validate_ccpm_critical_chain_buffer_fever_chart_empty_and_export():
+    """Caso 4: Entradas vacías/inválidas y presencia en __all__."""
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_ccpm_critical_chain_buffer_fever_chart,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = validate_ccpm_critical_chain_buffer_fever_chart(payload)  # type: ignore[arg-type]
+        assert empty["is_valid"] is True
+        assert empty["total_chains"] == 0
+        assert empty["red_zone_action_chain_ids"] == []
+        assert empty["yellow_zone_watch_chain_ids"] == []
+        assert empty["green_zone_healthy_chain_ids"] == []
+        assert empty["fever_chart_status"] == "GREEN_PROTECTED"
+        assert empty["issues"] == []
+
+    assert "validate_ccpm_critical_chain_buffer_fever_chart" in mod.__all__
+
+

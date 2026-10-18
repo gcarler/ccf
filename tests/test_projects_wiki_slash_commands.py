@@ -6667,3 +6667,144 @@ def test_wiki_adr_chain_neutral_and_binding():
         == audit_wiki_adr_superseded_chain_and_consequences_hygiene(sample)
     )
     assert "audit_wiki_adr_superseded_chain_and_consequences_hygiene" in mod.__all__
+
+
+def test_audit_wiki_onboarding_playbook_and_kt_ready_for_handover():
+    """Caso 1: Playbook al día, setup local verificado, rampa <= 14d y >= 2 sesiones shadow con signoff -> READY_FOR_HANDOVER."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_onboarding_playbook_and_knowledge_transfer_readiness,
+    )
+
+    domains = [
+        {
+            "domain_id": "DOM-BACKEND",
+            "has_up_to_date_playbook": True,
+            "local_setup_verified_under_max_days": True,
+            "estimated_ramp_days": 10,
+            "shadow_sessions_completed": 3,
+            "independent_signoff_achieved": True,
+        },
+        {
+            "domain_id": "DOM-DEVOPS",
+            "has_up_to_date_playbook": True,
+            "local_setup_verified_under_max_days": True,
+            "estimated_ramp_days": 14,
+            "shadow_sessions_completed": 2,
+            "independent_signoff_achieved": True,
+        },
+    ]
+    res = audit_wiki_onboarding_playbook_and_knowledge_transfer_readiness(
+        domains, max_onboarding_ramp_days=14, min_shadow_sessions_completed=2
+    )
+    assert res["total_domains"] == 2
+    assert res["missing_playbook_domain_ids"] == []
+    assert res["excessive_ramp_domain_ids"] == []
+    assert res["insufficient_shadowing_domain_ids"] == []
+    assert res["kt_readiness_status"] == "READY_FOR_HANDOVER"
+    assert res["is_kt_ready"] is True
+    assert res["issues"] == []
+
+
+def test_audit_wiki_onboarding_playbook_and_kt_ramp_or_shadow_deficit():
+    """Caso 2: Playbook completo pero rampa > 14d o shadowing insuficiente -> RAMP_OR_SHADOW_DEFICIT."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_onboarding_playbook_and_knowledge_transfer_readiness,
+    )
+
+    domains = [
+        {
+            "domain_id": "DOM-BILLING",
+            "has_up_to_date_playbook": True,
+            "local_setup_verified_under_max_days": True,
+            "estimated_ramp_days": 21,
+            "shadow_sessions_completed": 1,
+            "independent_signoff_achieved": False,
+        }
+    ]
+    res = audit_wiki_onboarding_playbook_and_knowledge_transfer_readiness(
+        domains, max_onboarding_ramp_days=14, min_shadow_sessions_completed=2
+    )
+    assert res["total_domains"] == 1
+    assert res["missing_playbook_domain_ids"] == []
+    assert res["excessive_ramp_domain_ids"] == ["DOM-BILLING"]
+    assert res["insufficient_shadowing_domain_ids"] == ["DOM-BILLING"]
+    assert res["kt_readiness_status"] == "RAMP_OR_SHADOW_DEFICIT"
+    assert res["is_kt_ready"] is False
+    assert len(res["issues"]) >= 2
+
+
+def test_audit_wiki_onboarding_playbook_and_kt_blocked():
+    """Caso 3: Falta playbook actualizado o setup local no verificado -> KT_BLOCKED."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_onboarding_playbook_and_knowledge_transfer_readiness,
+    )
+
+    domains = [
+        {
+            "domain_id": "DOM-LEGACY",
+            "has_up_to_date_playbook": False,
+            "local_setup_verified_under_max_days": True,
+            "estimated_ramp_days": 30,
+            "shadow_sessions_completed": 0,
+            "independent_signoff_achieved": False,
+        },
+        {
+            "domain_id": "DOM-AUTH",
+            "has_up_to_date_playbook": True,
+            "local_setup_verified_under_max_days": False,
+            "estimated_ramp_days": 10,
+            "shadow_sessions_completed": 2,
+            "independent_signoff_achieved": True,
+        },
+    ]
+    res = audit_wiki_onboarding_playbook_and_knowledge_transfer_readiness(
+        domains, max_onboarding_ramp_days=14, min_shadow_sessions_completed=2
+    )
+    assert res["total_domains"] == 2
+    assert res["missing_playbook_domain_ids"] == ["DOM-LEGACY", "DOM-AUTH"]
+    assert res["excessive_ramp_domain_ids"] == ["DOM-LEGACY"]
+    assert res["insufficient_shadowing_domain_ids"] == ["DOM-LEGACY"]
+    assert res["kt_readiness_status"] == "KT_BLOCKED"
+    assert res["is_kt_ready"] is False
+    assert len(res["issues"]) >= 3
+
+
+def test_audit_wiki_onboarding_playbook_and_kt_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en WikiPMIService + __all__."""
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_onboarding_playbook_and_knowledge_transfer_readiness,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_wiki_onboarding_playbook_and_knowledge_transfer_readiness(payload)  # type: ignore[arg-type]
+        assert empty["total_domains"] == 0
+        assert empty["missing_playbook_domain_ids"] == []
+        assert empty["excessive_ramp_domain_ids"] == []
+        assert empty["insufficient_shadowing_domain_ids"] == []
+        assert empty["kt_readiness_status"] == "READY_FOR_HANDOVER"
+        assert empty["is_kt_ready"] is True
+        assert empty["issues"] == []
+
+    sample = [
+        {
+            "domain_id": "DOM-99",
+            "has_up_to_date_playbook": True,
+            "local_setup_verified_under_max_days": True,
+            "estimated_ramp_days": 7,
+            "shadow_sessions_completed": 3,
+            "independent_signoff_achieved": True,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_onboarding_playbook_and_knowledge_transfer_readiness(
+            sample
+        )
+        == audit_wiki_onboarding_playbook_and_knowledge_transfer_readiness(sample)
+    )
+    assert (
+        "audit_wiki_onboarding_playbook_and_knowledge_transfer_readiness"
+        in mod.__all__
+    )
+

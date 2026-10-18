@@ -2833,6 +2833,7 @@ __all__ = [
     "audit_configuration_baseline_integrity_and_version_drift",
     "audit_scope_creep_and_gold_plating_effort",
     "audit_quality_spc_control_chart_stability",
+    "audit_defect_removal_efficiency_and_uat_readiness",
     "ProjectCCBService",
 ]
 
@@ -5556,5 +5557,81 @@ def audit_quality_spc_control_chart_stability(
 
 ProjectCCBService.audit_quality_spc_control_chart_stability = staticmethod(
     audit_quality_spc_control_chart_stability
+)
+
+
+def audit_defect_removal_efficiency_and_uat_readiness(
+    *,
+    pre_release_defects_found: int = 0,
+    post_release_escaped_defects: int = 0,
+    open_sev1_blocker_defects: int = 0,
+    open_sev2_critical_defects: int = 0,
+    uat_test_cases_total: int = 0,
+    uat_test_cases_passed: int = 0,
+    min_required_dre_pct: float = 90.0,
+    min_uat_pass_rate_pct: float = 95.0,
+) -> Dict[str, object]:
+    """Auditoría PMBOK 8.3 Control Quality y 5.5 Validate Scope.
+
+    Calcula defect_removal_efficiency_dre_pct y defect_escape_ratio_pct,
+    el UAT pass rate y determina si el flujo de release está listo para
+    formal sign-off (is_uat_sign_off_ready).
+    """
+    safe_pre_release = max(0, pre_release_defects_found)
+    safe_post_release = max(0, post_release_escaped_defects)
+    total_defects = safe_pre_release + safe_post_release
+
+    if total_defects > 0:
+        defect_removal_efficiency_dre_pct = round(
+            (safe_pre_release / total_defects) * 100.0, 2
+        )
+    else:
+        defect_removal_efficiency_dre_pct = 100.0
+
+    defect_escape_ratio_pct = round(
+        100.0 - defect_removal_efficiency_dre_pct, 2
+    )
+
+    safe_uat_passed = max(0, uat_test_cases_passed)
+    if uat_test_cases_total > 0:
+        uat_pass_rate_pct = round((safe_uat_passed / uat_test_cases_total) * 100.0, 2)
+    else:
+        uat_pass_rate_pct = 0.0
+
+    blocking_conditions: List[str] = []
+    if open_sev1_blocker_defects > 0:
+        blocking_conditions.append("open_sev1_blockers")
+    if open_sev2_critical_defects > 0:
+        blocking_conditions.append("open_sev2_criticals")
+    if uat_pass_rate_pct < min_uat_pass_rate_pct:
+        blocking_conditions.append("uat_pass_rate_below_threshold")
+    if defect_removal_efficiency_dre_pct < min_required_dre_pct:
+        blocking_conditions.append("dre_below_threshold")
+
+    if open_sev1_blocker_defects > 0 or uat_pass_rate_pct < min_uat_pass_rate_pct:
+        release_gate_status = "RELEASE_BLOCKED"
+    elif (
+        open_sev2_critical_defects > 0
+        or defect_removal_efficiency_dre_pct < min_required_dre_pct
+    ):
+        release_gate_status = "CONDITIONAL_WAIVER_REQUIRED"
+    else:
+        release_gate_status = "READY_FOR_SIGN_OFF"
+
+    is_uat_sign_off_ready = release_gate_status == "READY_FOR_SIGN_OFF"
+
+    return {
+        "total_defects": total_defects,
+        "defect_removal_efficiency_dre_pct": defect_removal_efficiency_dre_pct,
+        "defect_escape_ratio_pct": defect_escape_ratio_pct,
+        "uat_pass_rate_pct": uat_pass_rate_pct,
+        "blocking_conditions": blocking_conditions,
+        "release_gate_status": release_gate_status,
+        "is_uat_sign_off_ready": is_uat_sign_off_ready,
+    }
+
+
+ProjectCCBService.audit_defect_removal_efficiency_and_uat_readiness = staticmethod(
+    audit_defect_removal_efficiency_and_uat_readiness
 )
 

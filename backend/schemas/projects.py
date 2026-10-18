@@ -3799,6 +3799,7 @@ __all__ = [
     "validate_schedule_network_pdm_lead_lag_hygiene",
     "validate_requirements_traceability_bidirectional_coverage",
     "validate_three_point_pert_and_triangular_estimates",
+    "validate_ccpm_critical_chain_buffer_fever_chart",
 ]
 
 
@@ -6761,4 +6762,86 @@ def validate_three_point_pert_and_triangular_estimates(
         "estimation_governance_status": estimation_governance_status,
         "issues": issues,
     }
+
+
+def validate_ccpm_critical_chain_buffer_fever_chart(
+    chains: list[dict[str, Any]],
+    *,
+    green_to_yellow_base_pct: float = 20.0,
+    green_to_yellow_slope: float = 0.6,
+    yellow_to_red_base_pct: float = 40.0,
+    yellow_to_red_slope: float = 0.6,
+) -> dict[str, Any]:
+    """Valida consumo de buffers CCPM en Fever Chart (Project y Feeding Buffers — PMI PMBOK §6.5.2.3)."""
+    if not isinstance(chains, list):
+        return {
+            "is_valid": True,
+            "total_chains": 0,
+            "red_zone_action_chain_ids": [],
+            "yellow_zone_watch_chain_ids": [],
+            "green_zone_healthy_chain_ids": [],
+            "fever_chart_status": "GREEN_PROTECTED",
+            "issues": [],
+        }
+
+    gy_base = float(
+        green_to_yellow_base_pct if green_to_yellow_base_pct is not None else 20.0
+    )
+    gy_slope = float(
+        green_to_yellow_slope if green_to_yellow_slope is not None else 0.6
+    )
+    yr_base = float(
+        yellow_to_red_base_pct if yellow_to_red_base_pct is not None else 40.0
+    )
+    yr_slope = float(
+        yellow_to_red_slope if yellow_to_red_slope is not None else 0.6
+    )
+
+    total_chains = 0
+    red_zone_action_chain_ids: list[str] = []
+    yellow_zone_watch_chain_ids: list[str] = []
+    green_zone_healthy_chain_ids: list[str] = []
+    issues: list[str] = []
+
+    for idx, item in enumerate(chains):
+        if not isinstance(item, dict):
+            continue
+        total_chains += 1
+        chain_id = str(item.get("chain_id") or f"CHAIN-{idx + 1}").strip()
+        completion_pct = float(item.get("chain_completion_pct") or 0.0)
+        consumed_pct = float(item.get("buffer_consumed_pct") or 0.0)
+
+        yellow_threshold = gy_base + (gy_slope * completion_pct)
+        red_threshold = yr_base + (yr_slope * completion_pct)
+
+        if consumed_pct > red_threshold or consumed_pct > 100.0:
+            red_zone_action_chain_ids.append(chain_id)
+            issues.append(
+                f"Cadena '{chain_id}' en zona ROJA del Fever Chart (buffer consumido={consumed_pct:.2f}% > umbral rojo={red_threshold:.2f}%)."
+            )
+        elif yellow_threshold < consumed_pct <= red_threshold and consumed_pct <= 100.0:
+            yellow_zone_watch_chain_ids.append(chain_id)
+            issues.append(
+                f"Cadena '{chain_id}' en zona AMARILLA del Fever Chart (buffer consumido={consumed_pct:.2f}% > umbral amarillo={yellow_threshold:.2f}%)."
+            )
+        else:
+            green_zone_healthy_chain_ids.append(chain_id)
+
+    if len(red_zone_action_chain_ids) > 0:
+        fever_chart_status = "RED_RECOVERY_REQUIRED"
+    elif len(yellow_zone_watch_chain_ids) > 0:
+        fever_chart_status = "YELLOW_PLAN_RECOVERY"
+    else:
+        fever_chart_status = "GREEN_PROTECTED"
+
+    return {
+        "is_valid": fever_chart_status == "GREEN_PROTECTED",
+        "total_chains": total_chains,
+        "red_zone_action_chain_ids": red_zone_action_chain_ids,
+        "yellow_zone_watch_chain_ids": yellow_zone_watch_chain_ids,
+        "green_zone_healthy_chain_ids": green_zone_healthy_chain_ids,
+        "fever_chart_status": fever_chart_status,
+        "issues": issues,
+    }
+
 

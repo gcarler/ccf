@@ -7141,3 +7141,115 @@ def test_audit_quality_spc_control_chart_empty_and_binding():
     )
     assert "audit_quality_spc_control_chart_stability" in mod.__all__
 
+
+
+def test_audit_defect_removal_efficiency_and_uat_readiness_blocked_paths():
+    """Caso 1: SEV1 abierto y UAT bajo umbral fuerzan RELEASE_BLOCKED."""
+    from backend.services.project_ccb_service import (
+        audit_defect_removal_efficiency_and_uat_readiness,
+    )
+
+    res = audit_defect_removal_efficiency_and_uat_readiness(
+        pre_release_defects_found=6,
+        post_release_escaped_defects=2,
+        open_sev1_blocker_defects=1,
+        uat_test_cases_total=10,
+        uat_test_cases_passed=7,
+    )
+    assert res["total_defects"] == 8
+    assert res["defect_removal_efficiency_dre_pct"] == 75.0
+    assert res["defect_escape_ratio_pct"] == 25.0
+    assert res["uat_pass_rate_pct"] == 70.0
+    assert res["blocking_conditions"] == [
+        "open_sev1_blockers",
+        "uat_pass_rate_below_threshold",
+        "dre_below_threshold",
+    ]
+    assert res["release_gate_status"] == "RELEASE_BLOCKED"
+    assert res["is_uat_sign_off_ready"] is False
+
+
+def test_audit_defect_removal_efficiency_and_uat_readiness_conditional_waiver_status_precedence():
+    """Caso 2: SEV2 crítico con DRE baja pero sin SEV1 ni UAT fallido -> CONDITIONAL_WAIVER_REQUIRED."""
+    from backend.services.project_ccb_service import (
+        audit_defect_removal_efficiency_and_uat_readiness,
+    )
+
+    res = audit_defect_removal_efficiency_and_uat_readiness(
+        pre_release_defects_found=18,
+        post_release_escaped_defects=2,
+        open_sev2_critical_defects=1,
+        uat_test_cases_total=20,
+        uat_test_cases_passed=20,
+    )
+    assert res["total_defects"] == 20
+    assert res["defect_removal_efficiency_dre_pct"] == 90.0
+    assert res["defect_escape_ratio_pct"] == 10.0
+    assert res["uat_pass_rate_pct"] == 100.0
+    # DRE 90.0 no es < min 90.0; el bloqueo viene solo del SEV2.
+    assert res["blocking_conditions"] == ["open_sev2_criticals"]
+    assert res["release_gate_status"] == "CONDITIONAL_WAIVER_REQUIRED"
+    assert res["is_uat_sign_off_ready"] is False
+
+    # Umbral DRE incumplido sin SEV2 también cae en waiver condicional.
+    res2 = audit_defect_removal_efficiency_and_uat_readiness(
+        pre_release_defects_found=9,
+        post_release_escaped_defects=1,
+        uat_test_cases_total=20,
+        uat_test_cases_passed=19,
+    )
+    assert res2["defect_removal_efficiency_dre_pct"] == 90.0
+    assert res2["uat_pass_rate_pct"] == 95.0
+    assert res2["blocking_conditions"] == []
+    assert res2["release_gate_status"] == "READY_FOR_SIGN_OFF"
+
+
+def test_audit_defect_removal_efficiency_and_uat_readiness_ready_and_dre_boundary():
+    """Caso 3: DRE y UAT sobre umbrales con defectos cerrados -> READY_FOR_SIGN_OFF."""
+    from backend.services.project_ccb_service import (
+        audit_defect_removal_efficiency_and_uat_readiness,
+    )
+
+    res = audit_defect_removal_efficiency_and_uat_readiness(
+        pre_release_defects_found=12,
+        post_release_escaped_defects=1,
+        uat_test_cases_total=40,
+        uat_test_cases_passed=39,
+    )
+    assert res["total_defects"] == 13
+    assert res["defect_removal_efficiency_dre_pct"] == round(12 / 13 * 100, 2)
+    assert res["defect_escape_ratio_pct"] == round(100 - res["defect_removal_efficiency_dre_pct"], 2)
+    assert res["uat_pass_rate_pct"] == 97.5
+    assert res["blocking_conditions"] == []
+    assert res["release_gate_status"] == "READY_FOR_SIGN_OFF"
+    assert res["is_uat_sign_off_ready"] is True
+
+
+def test_audit_defect_removal_efficiency_and_uat_readiness_empty_and_binding():
+    """Caso 4: Entradas vacías/negativas y binding en ProjectCCBService y __all__."""
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_defect_removal_efficiency_and_uat_readiness,
+    )
+
+    empty = audit_defect_removal_efficiency_and_uat_readiness(
+        pre_release_defects_found=-3,
+        post_release_escaped_defects=-1,
+        uat_test_cases_total=0,
+        uat_test_cases_passed=-2,
+    )
+    assert empty["total_defects"] == 0
+    assert empty["defect_removal_efficiency_dre_pct"] == 100.0
+    assert empty["defect_escape_ratio_pct"] == 0.0
+    assert empty["uat_pass_rate_pct"] == 0.0
+    # Sin casos UAT, el pass rate 0.0 rompe el umbral mínimo default (95.0).
+    assert empty["blocking_conditions"] == ["uat_pass_rate_below_threshold"]
+    assert empty["release_gate_status"] == "RELEASE_BLOCKED"
+    assert empty["is_uat_sign_off_ready"] is False
+
+    assert (
+        ProjectCCBService.audit_defect_removal_efficiency_and_uat_readiness()
+        == audit_defect_removal_efficiency_and_uat_readiness()
+    )
+    assert "audit_defect_removal_efficiency_and_uat_readiness" in mod.__all__

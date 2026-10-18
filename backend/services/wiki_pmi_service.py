@@ -2516,6 +2516,7 @@ __all__ = [
     "audit_wiki_blameless_postmortem_and_systemic_prevention",
     "audit_wiki_opa_and_eef_catalog_freshness",
     "audit_wiki_adr_superseded_chain_and_consequences_hygiene",
+    "audit_wiki_onboarding_playbook_and_knowledge_transfer_readiness",
     "WikiPMIService",
 ]
 
@@ -5242,3 +5243,92 @@ def audit_wiki_adr_superseded_chain_and_consequences_hygiene(
 WikiPMIService.audit_wiki_adr_superseded_chain_and_consequences_hygiene = staticmethod(
     audit_wiki_adr_superseded_chain_and_consequences_hygiene
 )
+
+
+def audit_wiki_onboarding_playbook_and_knowledge_transfer_readiness(
+    knowledge_domains: list[dict[str, Any]],
+    *,
+    max_onboarding_ramp_days: int = 14,
+    min_shadow_sessions_completed: int = 2,
+) -> dict[str, Any]:
+    """Audita playbooks de onboarding en Wiki y preparación de transferencia de conocimiento (PMI PMBOK §4.4 / §9.4)."""
+    if not isinstance(knowledge_domains, list):
+        return {
+            "total_domains": 0,
+            "missing_playbook_domain_ids": [],
+            "excessive_ramp_domain_ids": [],
+            "insufficient_shadowing_domain_ids": [],
+            "kt_readiness_status": "READY_FOR_HANDOVER",
+            "is_kt_ready": True,
+            "issues": [],
+        }
+
+    max_ramp = int(
+        max_onboarding_ramp_days if max_onboarding_ramp_days is not None else 14
+    )
+    min_shadows = int(
+        min_shadow_sessions_completed
+        if min_shadow_sessions_completed is not None
+        else 2
+    )
+
+    total_domains = 0
+    missing_playbook_domain_ids: list[str] = []
+    excessive_ramp_domain_ids: list[str] = []
+    insufficient_shadowing_domain_ids: list[str] = []
+    issues: list[str] = []
+
+    for idx, item in enumerate(knowledge_domains):
+        if not isinstance(item, dict):
+            continue
+        total_domains += 1
+        domain_id = str(item.get("domain_id") or f"DOM-{idx + 1}").strip()
+        has_playbook = bool(item.get("has_up_to_date_playbook", False))
+        local_setup_ok = bool(item.get("local_setup_verified_under_max_days", False))
+        ramp_days = int(item.get("estimated_ramp_days") or 0)
+        shadows = int(item.get("shadow_sessions_completed") or 0)
+        signoff = bool(item.get("independent_signoff_achieved", False))
+
+        if not has_playbook or not local_setup_ok:
+            missing_playbook_domain_ids.append(domain_id)
+            issues.append(
+                f"Dominio '{domain_id}' carece de playbook actualizado o verificación de entorno local."
+            )
+
+        if ramp_days > max_ramp:
+            excessive_ramp_domain_ids.append(domain_id)
+            issues.append(
+                f"Dominio '{domain_id}' excede el tiempo máximo de rampa de onboarding ({ramp_days}d > {max_ramp}d)."
+            )
+
+        if shadows < min_shadows or not signoff:
+            insufficient_shadowing_domain_ids.append(domain_id)
+            issues.append(
+                f"Dominio '{domain_id}' presenta sesiones shadow insuficientes ({shadows} < {min_shadows}) o falta signoff independiente."
+            )
+
+    if len(missing_playbook_domain_ids) > 0:
+        kt_readiness_status = "KT_BLOCKED"
+    elif (
+        len(excessive_ramp_domain_ids) > 0
+        or len(insufficient_shadowing_domain_ids) > 0
+    ):
+        kt_readiness_status = "RAMP_OR_SHADOW_DEFICIT"
+    else:
+        kt_readiness_status = "READY_FOR_HANDOVER"
+
+    return {
+        "total_domains": total_domains,
+        "missing_playbook_domain_ids": missing_playbook_domain_ids,
+        "excessive_ramp_domain_ids": excessive_ramp_domain_ids,
+        "insufficient_shadowing_domain_ids": insufficient_shadowing_domain_ids,
+        "kt_readiness_status": kt_readiness_status,
+        "is_kt_ready": kt_readiness_status == "READY_FOR_HANDOVER",
+        "issues": issues,
+    }
+
+
+WikiPMIService.audit_wiki_onboarding_playbook_and_knowledge_transfer_readiness = staticmethod(
+    audit_wiki_onboarding_playbook_and_knowledge_transfer_readiness
+)
+
