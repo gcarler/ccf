@@ -2480,3 +2480,63 @@ def validate_pmi_risk_response_strategy(
         "response_validity_status": response_validity_status,
     }
 
+
+def classify_stakeholder_power_interest_quadrant(
+    power_score: int | float | None,
+    interest_score: int | float | None,
+    high_threshold: int = 3,
+) -> dict[str, Any]:
+    """Clasifica un interesado en la matriz Poder-Interés según PMI PMBOK §13.1.2.4."""
+    is_clamped = False
+
+    if power_score is None:
+        is_clamped = True
+        power = 1
+    else:
+        raw_power = int(round(float(power_score)))
+        if raw_power < 1 or raw_power > 5:
+            is_clamped = True
+        power = min(5, max(1, raw_power))
+
+    if interest_score is None:
+        is_clamped = True
+        interest = 1
+    else:
+        raw_interest = int(round(float(interest_score)))
+        if raw_interest < 1 or raw_interest > 5:
+            is_clamped = True
+        interest = min(5, max(1, raw_interest))
+
+    cutoff = min(5, max(2, int(high_threshold or 3)))
+    is_high_power = power >= cutoff
+    is_high_interest = interest >= cutoff
+    salience_index = power * interest
+
+    if is_high_power and is_high_interest:
+        quadrant_code = "manage_closely"
+        recommended_strategy = (
+            "Involucrar activamente y gestionar de cerca en decisiones clave"
+        )
+    elif is_high_power and not is_high_interest:
+        quadrant_code = "keep_satisfied"
+        recommended_strategy = "Mantener satisfecho sin saturar con detalles operativos"
+    elif not is_high_power and is_high_interest:
+        quadrant_code = "keep_informed"
+        recommended_strategy = (
+            "Mantener informado periódicamente y consultar en su área"
+        )
+    else:
+        quadrant_code = "monitor"
+        recommended_strategy = "Monitorear con esfuerzo mínimo de comunicación"
+
+    return {
+        "power": power,
+        "interest": interest,
+        "salience_index": salience_index,
+        "is_high_power": is_high_power,
+        "is_high_interest": is_high_interest,
+        "is_clamped": is_clamped,
+        "quadrant_code": quadrant_code,
+        "recommended_strategy": recommended_strategy,
+    }
+

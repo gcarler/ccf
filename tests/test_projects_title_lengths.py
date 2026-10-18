@@ -325,3 +325,98 @@ def test_risk_response_strategy_invalid_type_and_missing_strategy():
     assert blank["strategy"] == ""
     assert blank["response_validity_status"] == "missing_strategy"
 
+
+def test_classify_stakeholder_quadrant_manage_closely_and_keep_satisfied():
+    """Verifica cuadrantes de alto poder: manage_closely y keep_satisfied."""
+    from backend.schemas.projects import classify_stakeholder_power_interest_quadrant
+
+    closely = classify_stakeholder_power_interest_quadrant(5, 4)
+    assert closely["power"] == 5
+    assert closely["interest"] == 4
+    assert closely["salience_index"] == 20
+    assert closely["is_high_power"] is True
+    assert closely["is_high_interest"] is True
+    assert closely["is_clamped"] is False
+    assert closely["quadrant_code"] == "manage_closely"
+    assert (
+        closely["recommended_strategy"]
+        == "Involucrar activamente y gestionar de cerca en decisiones clave"
+    )
+
+    satisfied = classify_stakeholder_power_interest_quadrant(4, 2)
+    assert satisfied["power"] == 4
+    assert satisfied["interest"] == 2
+    assert satisfied["salience_index"] == 8
+    assert satisfied["is_high_power"] is True
+    assert satisfied["is_high_interest"] is False
+    assert satisfied["is_clamped"] is False
+    assert satisfied["quadrant_code"] == "keep_satisfied"
+    assert (
+        satisfied["recommended_strategy"]
+        == "Mantener satisfecho sin saturar con detalles operativos"
+    )
+
+
+def test_classify_stakeholder_quadrant_keep_informed_and_monitor():
+    """Verifica cuadrantes de bajo poder: keep_informed y monitor."""
+    from backend.schemas.projects import classify_stakeholder_power_interest_quadrant
+
+    informed = classify_stakeholder_power_interest_quadrant(2, 5)
+    assert informed["power"] == 2
+    assert informed["interest"] == 5
+    assert informed["salience_index"] == 10
+    assert informed["is_high_power"] is False
+    assert informed["is_high_interest"] is True
+    assert informed["is_clamped"] is False
+    assert informed["quadrant_code"] == "keep_informed"
+    assert (
+        informed["recommended_strategy"]
+        == "Mantener informado periódicamente y consultar en su área"
+    )
+
+    monitor = classify_stakeholder_power_interest_quadrant(1, 2)
+    assert monitor["power"] == 1
+    assert monitor["interest"] == 2
+    assert monitor["salience_index"] == 2
+    assert monitor["is_high_power"] is False
+    assert monitor["is_high_interest"] is False
+    assert monitor["is_clamped"] is False
+    assert monitor["quadrant_code"] == "monitor"
+    assert (
+        monitor["recommended_strategy"]
+        == "Monitorear con esfuerzo mínimo de comunicación"
+    )
+
+
+def test_classify_stakeholder_quadrant_clamps_out_of_bounds_and_none():
+    """Verifica acotación en [1, 5] y manejo seguro de valores None."""
+    from backend.schemas.projects import classify_stakeholder_power_interest_quadrant
+
+    out_of_bounds = classify_stakeholder_power_interest_quadrant(9, -2)
+    assert out_of_bounds["power"] == 5
+    assert out_of_bounds["interest"] == 1
+    assert out_of_bounds["salience_index"] == 5
+    assert out_of_bounds["is_clamped"] is True
+    assert out_of_bounds["quadrant_code"] == "keep_satisfied"
+
+    nones = classify_stakeholder_power_interest_quadrant(None, None)
+    assert nones["power"] == 1
+    assert nones["interest"] == 1
+    assert nones["salience_index"] == 1
+    assert nones["is_clamped"] is True
+    assert nones["quadrant_code"] == "monitor"
+
+
+def test_classify_stakeholder_quadrant_custom_threshold():
+    """Verifica que un umbral personalizado high_threshold=4 reclasifique (3, 3) en monitor."""
+    from backend.schemas.projects import classify_stakeholder_power_interest_quadrant
+
+    custom = classify_stakeholder_power_interest_quadrant(3, 3, high_threshold=4)
+    assert custom["power"] == 3
+    assert custom["interest"] == 3
+    assert custom["salience_index"] == 9
+    assert custom["is_high_power"] is False
+    assert custom["is_high_interest"] is False
+    assert custom["is_clamped"] is False
+    assert custom["quadrant_code"] == "monitor"
+
