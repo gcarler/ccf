@@ -1396,6 +1396,111 @@ def extract_markdown_glossary_definitions(
     }
 
 
+def audit_markdown_mermaid_diagrams(
+    markdown_text: Optional[str | dict[str, Any]] = None,
+) -> dict[str, Any]:
+    """Extrae y audita bloques de diagramas ```mermaid ... ``` en documentos Markdown según PMI PMBOK §4.4 y §10.2."""
+    if isinstance(markdown_text, dict):
+        text = str(markdown_text.get("markdown") or "")
+    elif isinstance(markdown_text, str):
+        text = markdown_text
+    else:
+        text = ""
+
+    supported_types = (
+        "stateDiagram-v2",
+        "sequenceDiagram",
+        "stateDiagram",
+        "classDiagram",
+        "xychart-beta",
+        "erDiagram",
+        "flowchart",
+        "graph",
+        "gantt",
+    )
+    supported_map = {t.lower(): t for t in supported_types}
+    html_hazard_re = re.compile(
+        r"<\s*/?\s*(?:br|div|span|b|i|p)\b", re.IGNORECASE
+    )
+
+    mermaid_blocks: list[list[str]] = []
+    in_fence = False
+    is_mermaid = False
+    current_lines: list[str] = []
+
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not in_fence:
+            if stripped.startswith("```"):
+                lang = stripped[3:].strip().split()[0].lower() if stripped[3:].strip() else ""
+                in_fence = True
+                is_mermaid = lang == "mermaid"
+                current_lines = []
+        else:
+            if stripped.startswith("```"):
+                if is_mermaid:
+                    mermaid_blocks.append(current_lines)
+                in_fence = False
+                is_mermaid = False
+                current_lines = []
+            elif is_mermaid:
+                current_lines.append(line)
+
+    total_diagrams = len(mermaid_blocks)
+    diagram_types: list[str] = []
+    empty_diagram_indices: list[int] = []
+    unsupported_diagram_indices: list[int] = []
+    html_tag_hazard_indices: list[int] = []
+    valid_diagram_count = 0
+
+    for idx, block_lines in enumerate(mermaid_blocks, start=1):
+        useful_lines = [
+            ln.strip()
+            for ln in block_lines
+            if ln.strip() and not ln.strip().startswith("%%")
+        ]
+
+        is_empty = len(useful_lines) < 2
+        if is_empty:
+            empty_diagram_indices.append(idx)
+
+        is_unsupported = False
+        if len(useful_lines) >= 1:
+            first_token = useful_lines[0].split()[0].rstrip(":")
+            canonical_type = supported_map.get(first_token.lower())
+            if canonical_type is not None:
+                diagram_types.append(canonical_type)
+            else:
+                is_unsupported = True
+                unsupported_diagram_indices.append(idx)
+
+        has_html_hazard = any(html_hazard_re.search(ln) for ln in useful_lines)
+        if has_html_hazard:
+            html_tag_hazard_indices.append(idx)
+
+        if not is_empty and not is_unsupported and not has_html_hazard:
+            valid_diagram_count += 1
+
+    if total_diagrams == 0:
+        diagram_posture = "NO_MERMAID_DIAGRAMS"
+    elif len(empty_diagram_indices) > 0 or len(unsupported_diagram_indices) > 0:
+        diagram_posture = "INVALID_OR_UNSUPPORTED_DIAGRAM"
+    elif len(html_tag_hazard_indices) > 0:
+        diagram_posture = "HTML_LABEL_SYNTAX_HAZARD"
+    else:
+        diagram_posture = "GOVERNED_ARCHITECTURE_DIAGRAMS"
+
+    return {
+        "total_diagrams": total_diagrams,
+        "diagram_types": diagram_types,
+        "empty_diagram_indices": empty_diagram_indices,
+        "unsupported_diagram_indices": unsupported_diagram_indices,
+        "html_tag_hazard_indices": html_tag_hazard_indices,
+        "valid_diagram_count": valid_diagram_count,
+        "diagram_posture": diagram_posture,
+    }
+
+
 class AnyDocService:
     """Fachada canónica de conversión y auditoría documental AnyDoc PMI."""
 
@@ -1492,6 +1597,12 @@ class AnyDocService:
     ) -> dict[str, Any]:
         return extract_markdown_glossary_definitions(markdown_text)
 
+    @staticmethod
+    def audit_markdown_mermaid_diagrams(
+        markdown_text: Optional[str | dict[str, Any]] = None,
+    ) -> dict[str, Any]:
+        return audit_markdown_mermaid_diagrams(markdown_text)
+
 
 __all__ = [
     "ANYDOC_AVAILABLE",
@@ -1512,7 +1623,9 @@ __all__ = [
     "audit_markdown_frontmatter_metadata",
     "extract_markdown_admonition_callouts",
     "extract_markdown_glossary_definitions",
+    "audit_markdown_mermaid_diagrams",
     "AnyDocService",
 ]
+
 
 

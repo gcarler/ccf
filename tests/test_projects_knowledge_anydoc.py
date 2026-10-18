@@ -1290,4 +1290,108 @@ def test_extract_markdown_glossary_definitions_no_entries_and_fenced_ignored():
         }
 
 
+def test_audit_markdown_mermaid_diagrams_governed_architecture():
+    """Bloques mermaid con encabezado soportado, >=2 líneas útiles y sin etiquetas HTML -> 'GOVERNED_ARCHITECTURE_DIAGRAMS'."""
+    import backend.services.anydoc_service as anydoc_module
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_mermaid_diagrams,
+    )
+
+    md = (
+        "# Arquitectura de Gobernanza\n\n"
+        "```mermaid\n"
+        "%% Diagrama de flujo CCB\n"
+        "flowchart TD\n"
+        '    A["Solicitud CR"] --> B["Evaluación Impacto EVM"]\n'
+        '    B --> C["Dictamen CCB"]\n'
+        "```\n\n"
+        "```mermaid\n"
+        "stateDiagram-v2\n"
+        "    [*] --> Borrador\n"
+        "    Borrador --> Autorizado\n"
+        "```\n"
+    )
+    res = AnyDocService.audit_markdown_mermaid_diagrams(md)
+    assert res == {
+        "total_diagrams": 2,
+        "diagram_types": ["flowchart", "stateDiagram-v2"],
+        "empty_diagram_indices": [],
+        "unsupported_diagram_indices": [],
+        "html_tag_hazard_indices": [],
+        "valid_diagram_count": 2,
+        "diagram_posture": "GOVERNED_ARCHITECTURE_DIAGRAMS",
+    }
+    assert audit_markdown_mermaid_diagrams({"markdown": md}) == res
+    assert "audit_markdown_mermaid_diagrams" in anydoc_module.__all__
+
+
+def test_audit_markdown_mermaid_diagrams_invalid_or_unsupported():
+    """Bloques vacíos (<2 líneas útiles) o con tipo no soportado -> 'INVALID_OR_UNSUPPORTED_DIAGRAM'."""
+    from backend.services.anydoc_service import audit_markdown_mermaid_diagrams
+
+    md = (
+        "```mermaid\n"
+        "%% Solo comentario y una línea\n"
+        "flowchart LR\n"
+        "```\n\n"
+        "```mermaid\n"
+        "mindmap\n"
+        "  root((Proyecto))\n"
+        "    Alcance\n"
+        "```\n\n"
+        "```mermaid\n"
+        "sequenceDiagram\n"
+        "    PM->>Sponsor: Solicita firma Charter\n"
+        "```\n"
+    )
+    res = audit_markdown_mermaid_diagrams(md)
+    assert res["total_diagrams"] == 3
+    assert res["diagram_types"] == ["flowchart", "sequenceDiagram"]
+    assert res["empty_diagram_indices"] == [1]
+    assert res["unsupported_diagram_indices"] == [2]
+    assert res["html_tag_hazard_indices"] == []
+    assert res["valid_diagram_count"] == 1
+    assert res["diagram_posture"] == "INVALID_OR_UNSUPPORTED_DIAGRAM"
+
+
+def test_audit_markdown_mermaid_diagrams_html_label_hazard():
+    """Bloques válidos en tipo pero con etiquetas HTML crudas (<br>, <b>, <div>, etc.) -> 'HTML_LABEL_SYNTAX_HAZARD'."""
+    from backend.services.anydoc_service import audit_markdown_mermaid_diagrams
+
+    md = (
+        "```mermaid\n"
+        "graph TD\n"
+        '    A["Fase 1<br/>Inicio"] --> B["<b>Cierre</b>"]\n'
+        "```\n"
+    )
+    res = audit_markdown_mermaid_diagrams(md)
+    assert res["total_diagrams"] == 1
+    assert res["diagram_types"] == ["graph"]
+    assert res["empty_diagram_indices"] == []
+    assert res["unsupported_diagram_indices"] == []
+    assert res["html_tag_hazard_indices"] == [1]
+    assert res["valid_diagram_count"] == 0
+    assert res["diagram_posture"] == "HTML_LABEL_SYNTAX_HAZARD"
+
+
+def test_audit_markdown_mermaid_diagrams_no_diagrams():
+    """Texto vacío, None o solo bloques de otros lenguajes -> 'NO_MERMAID_DIAGRAMS'."""
+    from backend.services.anydoc_service import audit_markdown_mermaid_diagrams
+
+    other_code = "```python\nprint('hello')\n```\n"
+    for payload in (None, "", other_code):
+        res = audit_markdown_mermaid_diagrams(payload)
+        assert res == {
+            "total_diagrams": 0,
+            "diagram_types": [],
+            "empty_diagram_indices": [],
+            "unsupported_diagram_indices": [],
+            "html_tag_hazard_indices": [],
+            "valid_diagram_count": 0,
+            "diagram_posture": "NO_MERMAID_DIAGRAMS",
+        }
+
+
+
 
