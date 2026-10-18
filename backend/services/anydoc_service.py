@@ -944,3 +944,67 @@ def summarize_markdown_tables_schema(
         "tabular_richness_status": tabular_richness_status,
     }
 
+
+def summarize_markdown_code_blocks(
+    markdown_or_result: str | dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Audita la presencia de bloques de código cercados (```lang ... ```) en artefactos técnicos según PMI PMBOK §4.4."""
+    if isinstance(markdown_or_result, dict):
+        text = str(markdown_or_result.get("markdown") or "")
+    elif isinstance(markdown_or_result, str):
+        text = markdown_or_result
+    else:
+        text = ""
+
+    code_blocks_count = 0
+    total_code_lines = 0
+    languages_set: set[str] = set()
+    untagged_blocks_count = 0
+    unclosed_fences_count = 0
+
+    in_block = False
+    current_lang = "untagged"
+    current_lines = 0
+
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("```"):
+            if not in_block:
+                in_block = True
+                rest = stripped[3:].strip().lower()
+                current_lang = rest.split()[0] if rest else "untagged"
+                current_lines = 0
+            else:
+                in_block = False
+                code_blocks_count += 1
+                total_code_lines += current_lines
+                if current_lang == "untagged":
+                    untagged_blocks_count += 1
+                else:
+                    languages_set.add(current_lang)
+        elif in_block:
+            current_lines += 1
+
+    if in_block:
+        unclosed_fences_count += 1
+
+    languages = sorted(languages_set)
+
+    if unclosed_fences_count > 0:
+        technical_spec_status = "malformed_unclosed_fence"
+    elif code_blocks_count == 0:
+        technical_spec_status = "prose_only"
+    elif untagged_blocks_count == 0:
+        technical_spec_status = "well_typed_snippets"
+    else:
+        technical_spec_status = "mixed_untagged_snippets"
+
+    return {
+        "code_blocks_count": code_blocks_count,
+        "total_code_lines": total_code_lines,
+        "languages": languages,
+        "untagged_blocks_count": untagged_blocks_count,
+        "unclosed_fences_count": unclosed_fences_count,
+        "technical_spec_status": technical_spec_status,
+    }
+

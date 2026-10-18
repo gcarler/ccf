@@ -14,6 +14,7 @@ sys.path.insert(0, str(ROOT))
 
 OUTPUT = ROOT / "docs" / "PROJECTS_API_ROUTE_INVENTORY.md"
 PROJECT_PREFIX = "/api/projects"
+PROJECTS_PREFIX = "/api/v1/projects"
 HTTP_METHODS = {"delete", "get", "head", "options", "patch", "post", "put", "trace"}
 IGNORED_SCHEMA_REFS = {"HTTPValidationError", "ValidationError"}
 
@@ -196,6 +197,73 @@ def summarize_projects_http_method_footprint(openapi: dict[str, Any]) -> dict[st
         "method_counts": method_counts,
         "unique_schema_refs_count": unique_schema_refs_count,
         "mutation_ratio_pct": mutation_ratio_pct,
+    }
+
+
+def summarize_projects_route_path_complexity(
+    openapi: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Analiza la complejidad jerárquica de las rutas Projects en un OpenAPI.
+
+    Examina las rutas bajo ``PROJECTS_PREFIX`` ('/api/v1/projects') y retorna:
+    - `total_project_paths`: rutas con prefijo Projects.
+    - `parameterized_routes_count`: rutas con al menos un parámetro `{param}`.
+    - `deep_nested_routes_count`: rutas con >= 2 parámetros o depth >= 6 segmentos.
+    - `max_segment_depth`: profundidad máxima de segmentos (0 sin rutas).
+    - `max_path_params`: máximo de parámetros por ruta (0 sin rutas).
+    - `hierarchy_status`: 'no_project_routes' sin rutas Projects;
+      'excessive_nesting' con >= 3 parámetros o >= 8 segmentos;
+      'hierarchical_subresources' con >= 1 ruta deep-nested; y
+      'flat_collection_routes' en cualquier otro caso.
+    """
+    paths = (openapi or {}).get("paths", {})
+    if not isinstance(paths, dict):
+        paths = {}
+
+    matching_paths = [
+        path
+        for path in paths
+        if isinstance(path, str) and path.startswith(PROJECTS_PREFIX)
+    ]
+
+    depths: list[int] = []
+    param_counts: list[int] = []
+    parameterized_routes_count = 0
+    deep_nested_routes_count = 0
+
+    for path in matching_paths:
+        segments = [seg for seg in path.strip("/").split("/") if seg]
+        segment_depth = len(segments)
+        path_params_count = sum(
+            1 for seg in segments if seg.startswith("{") and seg.endswith("}")
+        )
+        depths.append(segment_depth)
+        param_counts.append(path_params_count)
+        if path_params_count >= 1:
+            parameterized_routes_count += 1
+        if path_params_count >= 2 or segment_depth >= 6:
+            deep_nested_routes_count += 1
+
+    total_project_paths = len(matching_paths)
+    max_segment_depth = max(depths, default=0)
+    max_path_params = max(param_counts, default=0)
+
+    if total_project_paths == 0:
+        hierarchy_status = "no_project_routes"
+    elif max_path_params >= 3 or max_segment_depth >= 8:
+        hierarchy_status = "excessive_nesting"
+    elif deep_nested_routes_count >= 1:
+        hierarchy_status = "hierarchical_subresources"
+    else:
+        hierarchy_status = "flat_collection_routes"
+
+    return {
+        "total_project_paths": total_project_paths,
+        "parameterized_routes_count": parameterized_routes_count,
+        "deep_nested_routes_count": deep_nested_routes_count,
+        "max_segment_depth": max_segment_depth,
+        "max_path_params": max_path_params,
+        "hierarchy_status": hierarchy_status,
     }
 
 

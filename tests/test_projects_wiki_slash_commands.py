@@ -613,3 +613,82 @@ def test_audit_wiki_page_knowledge_hygiene_stub_or_incomplete():
     assert res["hygiene_score_pct"] == 0.0
     assert res["knowledge_hygiene_status"] == "stub_or_incomplete"
 
+
+def test_summarize_wiki_revision_history_velocity_multi_author_curated():
+    """3 revisiones de 2 autores distintos con crecimiento de palabras -> 'multi_author_curated'."""
+    from backend.services.wiki_pmi_service import (
+        summarize_wiki_revision_history_velocity,
+    )
+
+    revisions = [
+        {"author_id": "author-1", "content": "Borrador inicial del acta."},
+        {
+            "changed_by": "author-2",
+            "content": "Borrador inicial del acta con objetivos y alcance.",
+        },
+        {
+            "updated_by": "author-1",
+            "markdown": "Borrador inicial del acta con objetivos y alcance aprobados por el comité.",
+        },
+    ]
+    res = summarize_wiki_revision_history_velocity(revisions)
+    assert res == {
+        "total_revisions": 3,
+        "unique_authors_count": 2,
+        "initial_word_count": 4,
+        "latest_word_count": 12,
+        "net_word_growth": 8,
+        "curation_status": "multi_author_curated",
+    }
+
+
+def test_summarize_wiki_revision_history_velocity_iteratively_refined():
+    """2 revisiones del mismo autor -> 'iteratively_refined' con unique_authors_count == 1."""
+    from backend.services.wiki_pmi_service import (
+        summarize_wiki_revision_history_velocity,
+    )
+
+    revisions = [
+        {"author_id": "author-1", "content": "Primera versión corta."},
+        {"author_id": "author-1", "content": "Segunda versión con más detalle operativo."},
+    ]
+    res = summarize_wiki_revision_history_velocity(revisions)
+    assert res["total_revisions"] == 2
+    assert res["unique_authors_count"] == 1
+    assert res["net_word_growth"] == 3
+    assert res["curation_status"] == "iteratively_refined"
+
+
+def test_summarize_wiki_revision_history_velocity_single_draft():
+    """1 sola revisión -> 'single_draft' con net_word_growth == 0."""
+    from backend.services.wiki_pmi_service import (
+        summarize_wiki_revision_history_velocity,
+    )
+
+    res = summarize_wiki_revision_history_velocity(
+        [{"author_id": "author-1", "content": "Texto único de cinco palabras"}]
+    )
+    assert res["total_revisions"] == 1
+    assert res["initial_word_count"] == 5
+    assert res["latest_word_count"] == 5
+    assert res["net_word_growth"] == 0
+    assert res["curation_status"] == "single_draft"
+
+
+def test_summarize_wiki_revision_history_velocity_unversioned():
+    """None o lista vacía -> 'unversioned' con total_revisions == 0."""
+    from backend.services.wiki_pmi_service import (
+        summarize_wiki_revision_history_velocity,
+    )
+
+    for empty_val in (None, []):
+        res = summarize_wiki_revision_history_velocity(empty_val)
+        assert res == {
+            "total_revisions": 0,
+            "unique_authors_count": 0,
+            "initial_word_count": 0,
+            "latest_word_count": 0,
+            "net_word_growth": 0,
+            "curation_status": "unversioned",
+        }
+

@@ -3260,6 +3260,46 @@ def evaluate_cost_schedule_index_csi(
     }
 
 
+def evaluate_variance_at_completion_alert(
+    bac: float,
+    eac: float,
+    management_reserve: float = 0.0,
+) -> dict[str, Any]:
+    """Evalúa la Variación a la Conclusión (VAC = BAC - EAC) y cobertura por Reserva de Gestión según PMI PMBOK §7.4.2.2."""
+    bac_val = round(max(0.0, float(bac or 0.0)), 2)
+    eac_val = round(max(0.0, float(eac or 0.0)), 2)
+    mr_val = round(max(0.0, float(management_reserve or 0.0)), 2)
+
+    cost_baseline_plus_mr = round(bac_val + mr_val, 2)
+    vac_amount = round(bac_val - eac_val, 2)
+    vac_pct = round((vac_amount / bac_val) * 100.0, 2) if bac_val > 0 else 0.0
+    overrun_amount = round(max(0.0, eac_val - bac_val), 2)
+    unfunded_overrun = round(max(0.0, overrun_amount - mr_val), 2)
+    is_covered_by_management_reserve = overrun_amount <= mr_val
+
+    if bac_val == 0.0:
+        vac_alert_status = "unbaselined"
+    elif unfunded_overrun > 0.0:
+        vac_alert_status = "budget_breach_beyond_mr"
+    elif overrun_amount > 0.0 and is_covered_by_management_reserve:
+        vac_alert_status = "overrun_absorbed_by_mr"
+    else:
+        vac_alert_status = "on_or_under_budget"
+
+    return {
+        "bac": bac_val,
+        "eac": eac_val,
+        "management_reserve": mr_val,
+        "cost_baseline_plus_mr": cost_baseline_plus_mr,
+        "vac_amount": vac_amount,
+        "vac_pct": vac_pct,
+        "overrun_amount": overrun_amount,
+        "unfunded_overrun": unfunded_overrun,
+        "is_covered_by_management_reserve": is_covered_by_management_reserve,
+        "vac_alert_status": vac_alert_status,
+    }
+
+
 class ProjectEVMService:
     """Fachada canónica del servicio EVM y Diagnóstico Predictivo PMI (Vol. 5 y Vol. 6)."""
 
@@ -3386,6 +3426,14 @@ class ProjectEVMService:
         percent_complete: float = 0.0,
     ) -> dict[str, Any]:
         return evaluate_cost_schedule_index_csi(cpi, spi, percent_complete)
+
+    @staticmethod
+    def evaluate_variance_at_completion_alert(
+        bac: float,
+        eac: float,
+        management_reserve: float = 0.0,
+    ) -> dict[str, Any]:
+        return evaluate_variance_at_completion_alert(bac, eac, management_reserve)
 
     @staticmethod
     def build_project_execution_matrix(

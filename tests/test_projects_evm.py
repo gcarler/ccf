@@ -999,6 +999,70 @@ def test_evaluate_contingency_reserve_burn_alignment_no_contingency_allocated():
     }
 
 
+def test_evaluate_variance_at_completion_alert_on_or_under_budget():
+    """Valida ahorro proyectado (VAC >= 0) con estado on_or_under_budget."""
+    from backend.services.project_evm_service import evaluate_variance_at_completion_alert
+
+    res = evaluate_variance_at_completion_alert(
+        bac=100000.0, eac=92000.0, management_reserve=5000.0
+    )
+    assert res == {
+        "bac": 100000.0,
+        "eac": 92000.0,
+        "management_reserve": 5000.0,
+        "cost_baseline_plus_mr": 105000.0,
+        "vac_amount": 8000.0,
+        "vac_pct": 8.0,
+        "overrun_amount": 0.0,
+        "unfunded_overrun": 0.0,
+        "is_covered_by_management_reserve": True,
+        "vac_alert_status": "on_or_under_budget",
+    }
+    assert (
+        ProjectEVMService.evaluate_variance_at_completion_alert(100000.0, 92000.0, 5000.0)
+        == res
+    )
+
+
+def test_evaluate_variance_at_completion_alert_overrun_absorbed_by_mr():
+    """Valida sobrecosto proyectado absorbido por la Reserva de Gestión (MR)."""
+    from backend.services.project_evm_service import evaluate_variance_at_completion_alert
+
+    res = evaluate_variance_at_completion_alert(
+        bac=100000.0, eac=108000.0, management_reserve=10000.0
+    )
+    assert res["vac_amount"] == -8000.0
+    assert res["vac_pct"] == -8.0
+    assert res["overrun_amount"] == 8000.0
+    assert res["unfunded_overrun"] == 0.0
+    assert res["is_covered_by_management_reserve"] is True
+    assert res["vac_alert_status"] == "overrun_absorbed_by_mr"
+
+
+def test_evaluate_variance_at_completion_alert_budget_breach_beyond_mr():
+    """Valida sobrecosto proyectado que excede el BAC más la Reserva de Gestión -> budget_breach_beyond_mr."""
+    from backend.services.project_evm_service import evaluate_variance_at_completion_alert
+
+    res = evaluate_variance_at_completion_alert(
+        bac=100000.0, eac=118000.0, management_reserve=10000.0
+    )
+    assert res["vac_amount"] == -18000.0
+    assert res["overrun_amount"] == 18000.0
+    assert res["unfunded_overrun"] == 8000.0
+    assert res["is_covered_by_management_reserve"] is False
+    assert res["vac_alert_status"] == "budget_breach_beyond_mr"
+
+
+def test_evaluate_variance_at_completion_alert_unbaselined():
+    """Valida proyecto sin BAC (bac=0) -> estado unbaselined y vac_pct=0.0."""
+    from backend.services.project_evm_service import evaluate_variance_at_completion_alert
+
+    res = evaluate_variance_at_completion_alert(bac=0.0, eac=5000.0)
+    assert res["bac"] == 0.0
+    assert res["vac_pct"] == 0.0
+    assert res["vac_alert_status"] == "unbaselined"
+
+
 if __name__ == "__main__":
     test_evm_balanced_project()
     test_evm_cost_overrun_critical()
@@ -1014,7 +1078,8 @@ if __name__ == "__main__":
     test_evaluate_contingency_reserve_burn_alignment_premature_depletion()
     test_evaluate_contingency_reserve_burn_alignment_reserve_exhausted()
     test_evaluate_contingency_reserve_burn_alignment_no_contingency_allocated()
+    test_evaluate_variance_at_completion_alert_on_or_under_budget()
+    test_evaluate_variance_at_completion_alert_overrun_absorbed_by_mr()
+    test_evaluate_variance_at_completion_alert_budget_breach_beyond_mr()
+    test_evaluate_variance_at_completion_alert_unbaselined()
     print("✅ All EVM tests passed successfully!")
-
-
-

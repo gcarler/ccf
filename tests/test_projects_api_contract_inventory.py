@@ -309,3 +309,108 @@ def test_http_method_footprint_empty_openapi():
         "mutation_ratio_pct": 0.0,
     }
 
+
+# ─── summarize_projects_route_path_complexity (pure helper) ────────────────────
+
+
+def test_route_path_complexity_flat_collection_routes():
+    """Rutas planas (/api/v1/projects y /api/v1/projects/{id}) → flat_collection_routes."""
+    openapi = {
+        "paths": {
+            "/api/v1/projects": {"get": {"operationId": "list_projects"}},
+            "/api/v1/projects/{id}": {
+                "get": {"operationId": "get_project"},
+                "patch": {"operationId": "update_project"},
+            },
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_route_path_complexity(openapi)
+
+    assert res == {
+        "total_project_paths": 2,
+        "parameterized_routes_count": 1,
+        "deep_nested_routes_count": 0,
+        "max_segment_depth": 4,
+        "max_path_params": 1,
+        "hierarchy_status": "flat_collection_routes",
+    }
+
+
+def test_route_path_complexity_hierarchical_subresources():
+    """Subrecursos jerárquicos (>= 2 parámetros) → hierarchical_subresources."""
+    openapi = {
+        "paths": {
+            "/api/v1/projects": {"get": {"operationId": "list_projects"}},
+            "/api/v1/projects/{id}/tasks/{task_id}": {
+                "patch": {"operationId": "update_task"}
+            },
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_route_path_complexity(openapi)
+
+    assert res == {
+        "total_project_paths": 2,
+        "parameterized_routes_count": 1,
+        "deep_nested_routes_count": 1,
+        "max_segment_depth": 6,
+        "max_path_params": 2,
+        "hierarchy_status": "hierarchical_subresources",
+    }
+
+
+def test_route_path_complexity_excessive_nesting():
+    """>= 3 parámetros o >= 8 segmentos → excessive_nesting (precedencia sobre subrecursos)."""
+    by_params = {
+        "paths": {
+            "/api/v1/projects/{id}/tasks/{task_id}/comments/{comment_id}": {
+                "get": {"operationId": "get_comment"}
+            }
+        }
+    }
+    res_params = audit_projects_api_contracts.summarize_projects_route_path_complexity(
+        by_params
+    )
+    assert res_params["max_path_params"] == 3
+    assert res_params["hierarchy_status"] == "excessive_nesting"
+
+    # Borde exacto por profundidad: 8 segmentos (>= 8) y solo 2 parámetros.
+    by_depth = {
+        "paths": {
+            "/api/v1/projects/{id}/tasks/{task_id}/comments/all": {
+                "get": {"operationId": "get_reply"}
+            }
+        }
+    }
+    res_depth = audit_projects_api_contracts.summarize_projects_route_path_complexity(
+        by_depth
+    )
+    assert res_depth["max_segment_depth"] == 8
+    assert res_depth["hierarchy_status"] == "excessive_nesting"
+
+
+def test_route_path_complexity_empty_openapi_and_non_project_routes():
+    """Esquema vacío, None, paths no-dict o sin rutas Projects → no_project_routes."""
+    assert audit_projects_api_contracts.summarize_projects_route_path_complexity(None) == {
+        "total_project_paths": 0,
+        "parameterized_routes_count": 0,
+        "deep_nested_routes_count": 0,
+        "max_segment_depth": 0,
+        "max_path_params": 0,
+        "hierarchy_status": "no_project_routes",
+    }
+    assert audit_projects_api_contracts.summarize_projects_route_path_complexity({})[
+        "hierarchy_status"
+    ] == "no_project_routes"
+    assert audit_projects_api_contracts.summarize_projects_route_path_complexity(
+        {"paths": ["/api/v1/projects"]}
+    )["hierarchy_status"] == "no_project_routes"
+    res_non_project = (
+        audit_projects_api_contracts.summarize_projects_route_path_complexity(
+            {"paths": {"/api/crm/contacts": {"get": {"operationId": "crm_list"}}}}
+        )
+    )
+    assert res_non_project["total_project_paths"] == 0
+    assert res_non_project["hierarchy_status"] == "no_project_routes"
+

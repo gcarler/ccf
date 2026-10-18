@@ -439,3 +439,48 @@ def audit_wiki_page_knowledge_hygiene(
         "knowledge_hygiene_status": knowledge_hygiene_status,
     }
 
+
+def summarize_wiki_revision_history_velocity(
+    revisions: Optional[List[Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
+    """Evalúa la evolución colaborativa, coautoría y magnitud de cambios en el historial de versiones de una página Wiki según PMI PMBOK §4.4."""
+    valid_revisions = [r for r in (revisions or []) if isinstance(r, dict)]
+    unique_authors_set: set[str] = set()
+    word_counts: List[int] = []
+
+    for rev in valid_revisions:
+        author = str(
+            rev.get("author_id")
+            or rev.get("changed_by")
+            or rev.get("updated_by")
+            or ""
+        ).strip()
+        if author:
+            unique_authors_set.add(author)
+        content_text = str(rev.get("content") or rev.get("markdown") or "").strip()
+        word_counts.append(len(content_text.split()))
+
+    total_revisions = len(valid_revisions)
+    unique_authors_count = len(unique_authors_set)
+    latest_word_count = word_counts[-1] if word_counts else 0
+    initial_word_count = word_counts[0] if word_counts else 0
+    net_word_growth = latest_word_count - initial_word_count
+
+    if total_revisions == 0:
+        curation_status = "unversioned"
+    elif total_revisions == 1:
+        curation_status = "single_draft"
+    elif total_revisions >= 2 and unique_authors_count >= 2:
+        curation_status = "multi_author_curated"
+    else:
+        curation_status = "iteratively_refined"
+
+    return {
+        "total_revisions": total_revisions,
+        "unique_authors_count": unique_authors_count,
+        "initial_word_count": initial_word_count,
+        "latest_word_count": latest_word_count,
+        "net_word_growth": net_word_growth,
+        "curation_status": curation_status,
+    }
+

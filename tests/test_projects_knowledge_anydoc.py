@@ -752,3 +752,88 @@ def test_tables_schema_no_tables_and_none():
             "tabular_richness_status": "no_tables",
         }
 
+
+# ── summarize_markdown_code_blocks (PMBOK §4.4, pure helper) ──────────────
+
+
+def test_summarize_markdown_code_blocks_well_typed_snippets():
+    """Bloques con python y sql cerrados -> 'well_typed_snippets' con lenguajes ordenados."""
+    from backend.services.anydoc_service import summarize_markdown_code_blocks
+
+    md = (
+        "# Especificación Técnica\n\n"
+        "```python\n"
+        "def calc_evm(bac, pct):\n"
+        "    return bac * pct\n"
+        "```\n\n"
+        "```SQL\n"
+        "SELECT id, title FROM projects;\n"
+        "```\n"
+    )
+    res = summarize_markdown_code_blocks(md)
+    assert res == {
+        "code_blocks_count": 2,
+        "total_code_lines": 3,
+        "languages": ["python", "sql"],
+        "untagged_blocks_count": 0,
+        "unclosed_fences_count": 0,
+        "technical_spec_status": "well_typed_snippets",
+    }
+
+
+def test_summarize_markdown_code_blocks_mixed_untagged_snippets():
+    """1 bloque con json y 1 bloque sin etiqueta -> 'mixed_untagged_snippets'."""
+    from backend.services.anydoc_service import summarize_markdown_code_blocks
+
+    md = (
+        "```json\n"
+        '{"status": "ok"}\n'
+        "```\n\n"
+        "```\n"
+        "raw log line 1\n"
+        "raw log line 2\n"
+        "```\n"
+    )
+    res = summarize_markdown_code_blocks({"markdown": md})
+    assert res == {
+        "code_blocks_count": 2,
+        "total_code_lines": 3,
+        "languages": ["json"],
+        "untagged_blocks_count": 1,
+        "unclosed_fences_count": 0,
+        "technical_spec_status": "mixed_untagged_snippets",
+    }
+
+
+def test_summarize_markdown_code_blocks_malformed_unclosed_fence():
+    """Bloque abierto sin cerrar al final -> 'malformed_unclosed_fence' con unclosed_fences_count == 1."""
+    from backend.services.anydoc_service import summarize_markdown_code_blocks
+
+    md = (
+        "```python\n"
+        "x = 1\n"
+        "```\n"
+        "```bash\n"
+        "echo 'unclosed'\n"
+    )
+    res = summarize_markdown_code_blocks(md)
+    assert res["code_blocks_count"] == 1
+    assert res["unclosed_fences_count"] == 1
+    assert res["technical_spec_status"] == "malformed_unclosed_fence"
+
+
+def test_summarize_markdown_code_blocks_prose_only_or_none():
+    """Texto sin bloques o None -> 'prose_only' con code_blocks_count == 0."""
+    from backend.services.anydoc_service import summarize_markdown_code_blocks
+
+    for val in (None, "", "Texto de gobernanza sin código.", {}):
+        res = summarize_markdown_code_blocks(val)
+        assert res == {
+            "code_blocks_count": 0,
+            "total_code_lines": 0,
+            "languages": [],
+            "untagged_blocks_count": 0,
+            "unclosed_fences_count": 0,
+            "technical_spec_status": "prose_only",
+        }
+
