@@ -445,3 +445,34 @@ def evaluate_dod_gate_compliance(summary: dict) -> dict:
         "sign_off_integrity_pct": sign_off_integrity_pct,
         "dod_gate_status": dod_gate_status,
     }
+
+
+def evaluate_project_communications_complexity(
+    participant_count: int, message_count: int = 0
+) -> dict:
+    """Calcula la complejidad de canales de comunicación N(N-1)/2 (PMBOK §10.1.2.2) y participación en sala de proyecto."""
+    n = max(0, int(participant_count or 0))
+    msgs = max(0, int(message_count or 0))
+
+    communication_channels = (n * (n - 1)) // 2 if n >= 2 else 0
+    avg_messages_per_participant = round(msgs / n, 2) if n > 0 else 0.0
+
+    if n < 2:
+        network_topology_tier = "solo_or_empty"
+    elif n <= 5:
+        network_topology_tier = "small_team"
+    elif n <= 12:
+        network_topology_tier = "medium_project"
+    else:
+        network_topology_tier = "high_complexity_network"
+
+    requires_formal_comms_plan = bool(communication_channels > 45)
+
+    return {
+        "participant_count": n,
+        "communication_channels": communication_channels,
+        "message_count": msgs,
+        "avg_messages_per_participant": avg_messages_per_participant,
+        "network_topology_tier": network_topology_tier,
+        "requires_formal_comms_plan": requires_formal_comms_plan,
+    }

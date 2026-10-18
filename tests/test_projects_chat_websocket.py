@@ -271,3 +271,76 @@ class TestChatAsynclyBroadcast:
         assert event["message"]["content"] == "Mensaje en vivo"
         assert isinstance(event["message"]["id"], str)
         assert isinstance(event["message"]["sender_id"], str)
+
+
+class TestProjectCommunicationsComplexityAnalyzer:
+    """PMBOK §10.1.2.2 communication channels complexity N(N-1)/2 and room participation metrics."""
+
+    def test_communications_complexity_solo_or_empty(self):
+        from backend.services.project_ccb_service import (
+            evaluate_project_communications_complexity,
+        )
+
+        res_zero = evaluate_project_communications_complexity(0, 0)
+        assert res_zero == {
+            "participant_count": 0,
+            "communication_channels": 0,
+            "message_count": 0,
+            "avg_messages_per_participant": 0.0,
+            "network_topology_tier": "solo_or_empty",
+            "requires_formal_comms_plan": False,
+        }
+
+        res_one = evaluate_project_communications_complexity(1, 5)
+        assert res_one["participant_count"] == 1
+        assert res_one["communication_channels"] == 0
+        assert res_one["avg_messages_per_participant"] == 5.0
+        assert res_one["network_topology_tier"] == "solo_or_empty"
+        assert res_one["requires_formal_comms_plan"] is False
+
+    def test_communications_complexity_small_team(self):
+        from backend.services.project_ccb_service import (
+            evaluate_project_communications_complexity,
+        )
+
+        res = evaluate_project_communications_complexity(5, 20)
+        assert res == {
+            "participant_count": 5,
+            "communication_channels": 10,
+            "message_count": 20,
+            "avg_messages_per_participant": 4.0,
+            "network_topology_tier": "small_team",
+            "requires_formal_comms_plan": False,
+        }
+
+    def test_communications_complexity_medium_project_threshold(self):
+        from backend.services.project_ccb_service import (
+            evaluate_project_communications_complexity,
+        )
+
+        res_10 = evaluate_project_communications_complexity(10, 35)
+        assert res_10["communication_channels"] == 45
+        assert res_10["avg_messages_per_participant"] == 3.5
+        assert res_10["network_topology_tier"] == "medium_project"
+        assert res_10["requires_formal_comms_plan"] is False
+
+        res_11 = evaluate_project_communications_complexity(11, 44)
+        assert res_11["communication_channels"] == 55
+        assert res_11["avg_messages_per_participant"] == 4.0
+        assert res_11["network_topology_tier"] == "medium_project"
+        assert res_11["requires_formal_comms_plan"] is True
+
+    def test_communications_complexity_high_complexity_network(self):
+        from backend.services.project_ccb_service import (
+            evaluate_project_communications_complexity,
+        )
+
+        res_15 = evaluate_project_communications_complexity(15, 150)
+        assert res_15 == {
+            "participant_count": 15,
+            "communication_channels": 105,
+            "message_count": 150,
+            "avg_messages_per_participant": 10.0,
+            "network_topology_tier": "high_complexity_network",
+            "requires_formal_comms_plan": True,
+        }
