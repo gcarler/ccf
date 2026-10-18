@@ -5822,6 +5822,160 @@ def summarize_projects_component_schema_naming_and_title_hygiene(
     }
 
 
+def summarize_projects_security_scheme_and_operation_auth_hygiene(
+    schema: Mapping[str, Any] | None = None,
+    *,
+    path_prefix: str = "/api/v1/projects",
+) -> dict[str, Any]:
+    """Audita la higiene de components/securitySchemes y requisitos security en operaciones bajo path_prefix."""
+    if schema is None:
+        from backend.app import app
+
+        schema_dict: Mapping[str, Any] = app.openapi()
+    else:
+        schema_dict = schema
+
+    paths = schema_dict.get("paths", {}) if isinstance(schema_dict, Mapping) else {}
+    if not isinstance(paths, Mapping):
+        paths = {}
+
+    components = schema_dict.get("components", {}) if isinstance(schema_dict, Mapping) else {}
+    sec_schemes = (
+        components.get("securitySchemes", {})
+        if isinstance(components, Mapping)
+        else {}
+    )
+    if not isinstance(sec_schemes, Mapping):
+        sec_schemes = {}
+    defined_schemes = {str(k) for k in sec_schemes.keys()}
+
+    root_security = (
+        schema_dict.get("security")
+        if isinstance(schema_dict, Mapping) and "security" in schema_dict
+        else None
+    )
+
+    has_exact_prefix = any(str(p).startswith(path_prefix) for p in paths.keys())
+    if has_exact_prefix:
+        effective_prefixes: tuple[str, ...] = (path_prefix,)
+    elif path_prefix in ("/api/v1/projects", "/api/projects", "/projects"):
+        effective_prefixes = ("/api/v1/projects", "/api/projects", "/projects")
+    else:
+        effective_prefixes = (path_prefix,)
+
+    total_operations_inspected = 0
+    compliant_operations_count = 0
+    undefined_security_scheme_reference_count = 0
+    explicit_empty_security_on_mutating_op_count = 0
+    non_list_scopes_in_security_requirement_count = 0
+    violations: list[dict[str, Any]] = []
+
+    for path in sorted(paths.keys()):
+        path_str = str(path)
+        if not path_str.startswith(effective_prefixes):
+            continue
+        path_item = paths[path]
+        if not isinstance(path_item, Mapping):
+            continue
+
+        for method in ("get", "post", "put", "patch", "delete", "head", "options", "trace"):
+            op_spec = path_item.get(method)
+            if not isinstance(op_spec, Mapping):
+                continue
+
+            total_operations_inspected += 1
+            op_label = f"{method.upper()} {path_str}"
+            has_violation = False
+
+            has_op_security = "security" in op_spec
+            effective_security = op_spec.get("security") if has_op_security else root_security
+
+            is_mutating = method in ("post", "put", "patch", "delete")
+            has_empty_override = (
+                is_mutating
+                and (
+                    (has_op_security and isinstance(effective_security, list) and len(effective_security) == 0)
+                    or (
+                        isinstance(effective_security, list)
+                        and any(
+                            isinstance(entry, Mapping) and len(entry) == 0
+                            for entry in effective_security
+                        )
+                    )
+                )
+            )
+            if has_empty_override:
+                explicit_empty_security_on_mutating_op_count += 1
+                has_violation = True
+                violations.append(
+                    {
+                        "operation": op_label,
+                        "reason": "explicit_empty_security_on_mutating_op",
+                    }
+                )
+
+            if isinstance(effective_security, list):
+                has_undefined_scheme = False
+                has_non_list_scopes = False
+                for sec_req in effective_security:
+                    if not isinstance(sec_req, Mapping):
+                        continue
+                    for scheme_name, scopes in sec_req.items():
+                        if str(scheme_name) not in defined_schemes:
+                            has_undefined_scheme = True
+                        if not isinstance(scopes, list) or any(
+                            not isinstance(item, str) for item in scopes
+                        ):
+                            has_non_list_scopes = True
+
+                if has_undefined_scheme:
+                    undefined_security_scheme_reference_count += 1
+                    has_violation = True
+                    violations.append(
+                        {
+                            "operation": op_label,
+                            "reason": "undefined_security_scheme_reference",
+                        }
+                    )
+
+                if has_non_list_scopes:
+                    non_list_scopes_in_security_requirement_count += 1
+                    has_violation = True
+                    violations.append(
+                        {
+                            "operation": op_label,
+                            "reason": "non_list_scopes_in_security_requirement",
+                        }
+                    )
+
+            if not has_violation:
+                compliant_operations_count += 1
+
+    hygiene_score = (
+        100.0
+        if total_operations_inspected == 0
+        else round((compliant_operations_count / total_operations_inspected) * 100.0, 2)
+    )
+    is_compliant = (
+        undefined_security_scheme_reference_count == 0
+        and explicit_empty_security_on_mutating_op_count == 0
+        and non_list_scopes_in_security_requirement_count == 0
+    )
+
+    return {
+        "path_prefix": path_prefix,
+        "defined_security_schemes_count": len(defined_schemes),
+        "total_operations_inspected": total_operations_inspected,
+        "compliant_operations_count": compliant_operations_count,
+        "undefined_security_scheme_reference_count": undefined_security_scheme_reference_count,
+        "explicit_empty_security_on_mutating_op_count": explicit_empty_security_on_mutating_op_count,
+        "non_list_scopes_in_security_requirement_count": non_list_scopes_in_security_requirement_count,
+        "violations": violations,
+        "hygiene_score": hygiene_score,
+        "is_compliant": is_compliant,
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()

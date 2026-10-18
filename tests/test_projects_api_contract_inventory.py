@@ -7142,3 +7142,112 @@ def test_component_schema_naming_and_title_hygiene_real_openapi():
     assert res["is_compliant"] is True
 
 
+def test_security_scheme_and_operation_auth_hygiene_clean_schema():
+    """Verifica que operaciones con securitySchemes definidos y scopes válidos pasen la auditoría."""
+    schema = {
+        "security": [{"BearerAuth": []}],
+        "paths": {
+            "/api/v1/projects/tasks": {
+                "get": {"responses": {"200": {"description": "OK"}}},
+                "post": {
+                    "security": [{"BearerAuth": ["projects:write"]}],
+                    "responses": {"201": {"description": "Created"}},
+                },
+            }
+        },
+        "components": {
+            "securitySchemes": {
+                "BearerAuth": {"type": "http", "scheme": "bearer"}
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_security_scheme_and_operation_auth_hygiene(
+        schema, path_prefix="/api/v1/projects"
+    )
+    assert res["path_prefix"] == "/api/v1/projects"
+    assert res["defined_security_schemes_count"] == 1
+    assert res["total_operations_inspected"] == 2
+    assert res["compliant_operations_count"] == 2
+    assert res["undefined_security_scheme_reference_count"] == 0
+    assert res["explicit_empty_security_on_mutating_op_count"] == 0
+    assert res["non_list_scopes_in_security_requirement_count"] == 0
+    assert res["violations"] == []
+    assert res["hygiene_score"] == 100.0
+    assert res["is_compliant"] is True
+
+
+def test_security_scheme_and_operation_auth_hygiene_detects_empty_mutating_and_undefined_scheme():
+    """Detecta security=[] o [{}] en operaciones mutantes y referencias a esquemas inexistentes."""
+    schema = {
+        "paths": {
+            "/api/v1/projects/mutate": {
+                "post": {
+                    "security": [],
+                    "responses": {"200": {"description": "OK"}},
+                },
+                "delete": {
+                    "security": [{"GhostScheme": []}],
+                    "responses": {"204": {"description": "Deleted"}},
+                },
+            }
+        },
+        "components": {
+            "securitySchemes": {
+                "BearerAuth": {"type": "http", "scheme": "bearer"}
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_security_scheme_and_operation_auth_hygiene(
+        schema, path_prefix="/api/v1/projects"
+    )
+    assert res["total_operations_inspected"] == 2
+    assert res["compliant_operations_count"] == 0
+    assert res["explicit_empty_security_on_mutating_op_count"] == 1
+    assert res["undefined_security_scheme_reference_count"] == 1
+    assert res["hygiene_score"] == 0.0
+    assert res["is_compliant"] is False
+
+
+def test_security_scheme_and_operation_auth_hygiene_detects_non_list_scopes():
+    """Detecta requisitos security cuyos scopes no son list[str]."""
+    schema = {
+        "paths": {
+            "/api/v1/projects/audit": {
+                "get": {
+                    "security": [{"BearerAuth": "projects:read"}],
+                    "responses": {"200": {"description": "OK"}},
+                },
+                "patch": {
+                    "security": [{"BearerAuth": [123]}],
+                    "responses": {"200": {"description": "OK"}},
+                },
+            }
+        },
+        "components": {
+            "securitySchemes": {
+                "BearerAuth": {"type": "http", "scheme": "bearer"}
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_security_scheme_and_operation_auth_hygiene(
+        schema, path_prefix="/api/v1/projects"
+    )
+    assert res["total_operations_inspected"] == 2
+    assert res["compliant_operations_count"] == 0
+    assert res["non_list_scopes_in_security_requirement_count"] == 2
+    assert res["hygiene_score"] == 0.0
+    assert res["is_compliant"] is False
+
+
+def test_security_scheme_and_operation_auth_hygiene_real_openapi():
+    """Verifica que el schema OpenAPI real de FastAPI cumpla la higiene de esquemas de seguridad y auth."""
+    res = audit_projects_api_contracts.summarize_projects_security_scheme_and_operation_auth_hygiene()
+    assert res["total_operations_inspected"] > 0
+    assert res["undefined_security_scheme_reference_count"] == 0
+    assert res["explicit_empty_security_on_mutating_op_count"] == 0
+    assert res["non_list_scopes_in_security_requirement_count"] == 0
+    assert res["violations"] == []
+    assert res["hygiene_score"] == 100.0
+    assert res["is_compliant"] is True
+
+
