@@ -2630,3 +2630,100 @@ def test_audit_markdown_internal_anchor_links_and_code_fence_coexistence():
     fence_res = audit_markdown_code_fence_hygiene(md)
     assert anchor_res["is_anchor_navigation_valid"] is True
     assert fence_res["is_hygienic"] is True
+
+
+def test_audit_markdown_callout_admonition_hygiene_valid_separated_callouts():
+    """Callouts canónicos separados por línea en blanco y con cuerpo válido pasan is_hygienic=True."""
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_callout_admonition_hygiene,
+    )
+
+    md = (
+        "# Guía Operativa\n"
+        "> [!NOTE]\n"
+        "> Esta nota documenta el supuesto base del cronograma.\n"
+        "\n"
+        "> [!WARNING] Riesgo de corte eléctrico en ventana de mantenimiento.\n"
+        "\n"
+        "```markdown\n"
+        "> [!INVALID_IN_CODE]\n"
+        "```\n"
+    )
+    res = audit_markdown_callout_admonition_hygiene(md)
+    assert res == {
+        "valid_callout_count": 2,
+        "detected_callout_types": ["NOTE", "WARNING"],
+        "unsupported_callout_type_lines": [],
+        "empty_callout_body_lines": [],
+        "consecutive_unseparated_callout_lines": [],
+        "is_hygienic": True,
+    }
+    assert AnyDocService.audit_markdown_callout_admonition_hygiene(md) == res
+
+
+def test_audit_markdown_callout_admonition_hygiene_unsupported_and_empty_body():
+    """Detecta tipos fuera de los 5 canónicos y bloques de alerta sin texto explicativo."""
+    from backend.services.anydoc_service import (
+        audit_markdown_callout_admonition_hygiene,
+    )
+
+    md = (
+        "> [!DANGER]\n"
+        "> Alerta con etiqueta no estándar.\n"
+        "\n"
+        "> [!IMPORTANT]\n"
+        ">\n"
+        "\n"
+        "> [!CAUTION]\n"
+    )
+    res = audit_markdown_callout_admonition_hygiene(md)
+    assert res == {
+        "valid_callout_count": 2,
+        "detected_callout_types": ["IMPORTANT", "CAUTION"],
+        "unsupported_callout_type_lines": [1],
+        "empty_callout_body_lines": [4, 7],
+        "consecutive_unseparated_callout_lines": [],
+        "is_hygienic": False,
+    }
+
+
+def test_audit_markdown_callout_admonition_hygiene_consecutive_unseparated():
+    """Detecta callouts consecutivos sin línea en blanco intermedia."""
+    from backend.services.anydoc_service import (
+        audit_markdown_callout_admonition_hygiene,
+    )
+
+    md = (
+        "> [!NOTE]\n"
+        "> Primer aviso con cuerpo.\n"
+        "> [!TIP]\n"
+        "> Segundo aviso pegado en el mismo blockquote.\n"
+    )
+    res = audit_markdown_callout_admonition_hygiene(md)
+    assert res == {
+        "valid_callout_count": 2,
+        "detected_callout_types": ["NOTE", "TIP"],
+        "unsupported_callout_type_lines": [],
+        "empty_callout_body_lines": [],
+        "consecutive_unseparated_callout_lines": [3],
+        "is_hygienic": False,
+    }
+
+
+def test_audit_markdown_callout_admonition_hygiene_empty_or_no_callouts():
+    """Texto vacío, None o sin callouts retorna contadores en cero e is_hygienic=True."""
+    from backend.services.anydoc_service import (
+        audit_markdown_callout_admonition_hygiene,
+    )
+
+    for payload in (None, "", "# Solo título\n\n> Cita normal sin callout.\n"):
+        assert audit_markdown_callout_admonition_hygiene(payload) == {
+            "valid_callout_count": 0,
+            "detected_callout_types": [],
+            "unsupported_callout_type_lines": [],
+            "empty_callout_body_lines": [],
+            "consecutive_unseparated_callout_lines": [],
+            "is_hygienic": True,
+        }
+

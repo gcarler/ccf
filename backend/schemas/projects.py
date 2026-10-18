@@ -4213,3 +4213,82 @@ def validate_rolling_wave_planning_horizon(
         "invalid_package_type_ids": invalid_package_type_ids,
         "is_valid": is_valid,
     }
+
+
+def validate_schedule_path_convergence_risk(
+    merge_nodes: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_safe_predecessors: int = 3,
+    min_near_critical_float_days: float = 2.0,
+) -> dict[str, Any]:
+    """Evalúa puntos de convergencia de rutas y sesgo de fusión (Merge Bias) en el diagrama de red según PMI PMBOK §6.3.2.1, §6.5.2 y §11.4.2.2."""
+    if not isinstance(merge_nodes, (list, tuple)):
+        merge_nodes = []
+
+    evaluated_node_count = 0
+    high_convergence_node_ids: list[str] = []
+    multi_near_critical_merge_ids: list[str] = []
+    unbuffered_merge_hotspot_ids: list[str] = []
+    invalid_node_ids: list[str] = []
+
+    for item in merge_nodes:
+        if not isinstance(item, Mapping):
+            continue
+        node_id = str(item.get("node_id") or "").strip()
+        if not node_id:
+            continue
+        evaluated_node_count += 1
+
+        raw_floats = item.get("predecessor_float_days")
+        if not isinstance(raw_floats, (list, tuple)) or len(raw_floats) == 0:
+            invalid_node_ids.append(node_id)
+            continue
+
+        parsed_floats: list[float] = []
+        has_invalid_float = False
+        for val in raw_floats:
+            if isinstance(val, bool) or not isinstance(val, (int, float)):
+                has_invalid_float = True
+                break
+            f_val = float(val)
+            if f_val < 0.0:
+                has_invalid_float = True
+                break
+            parsed_floats.append(f_val)
+
+        if has_invalid_float:
+            invalid_node_ids.append(node_id)
+            continue
+
+        predecessor_count = len(parsed_floats)
+        near_critical_predecessor_count = sum(
+            1 for f in parsed_floats if f <= float(min_near_critical_float_days)
+        )
+
+        is_high_convergence = predecessor_count > int(max_safe_predecessors)
+        is_multi_near_critical = near_critical_predecessor_count >= 2
+
+        if is_high_convergence:
+            high_convergence_node_ids.append(node_id)
+        if is_multi_near_critical:
+            multi_near_critical_merge_ids.append(node_id)
+
+        risk_mitigation_buffered = bool(item.get("risk_mitigation_buffered", False))
+        if (is_high_convergence or is_multi_near_critical) and not risk_mitigation_buffered:
+            unbuffered_merge_hotspot_ids.append(node_id)
+
+    is_valid = bool(
+        evaluated_node_count > 0
+        and len(unbuffered_merge_hotspot_ids) == 0
+        and len(invalid_node_ids) == 0
+    )
+
+    return {
+        "evaluated_node_count": evaluated_node_count,
+        "high_convergence_node_ids": high_convergence_node_ids,
+        "multi_near_critical_merge_ids": multi_near_critical_merge_ids,
+        "unbuffered_merge_hotspot_ids": unbuffered_merge_hotspot_ids,
+        "invalid_node_ids": invalid_node_ids,
+        "is_valid": is_valid,
+    }
+

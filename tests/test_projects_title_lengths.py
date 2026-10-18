@@ -2499,3 +2499,99 @@ def test_validate_rolling_wave_planning_horizon_invalid_type_and_empty():
             "invalid_package_type_ids": [],
             "is_valid": False,
         }
+
+
+def test_validate_schedule_path_convergence_risk_safe_and_buffered():
+    """Nodos con convergencia segura o hotspots mitigados con buffer pasan is_valid=True."""
+    from backend.schemas.projects import validate_schedule_path_convergence_risk
+
+    res = validate_schedule_path_convergence_risk(
+        [
+            {
+                "node_id": "M-100",
+                "predecessor_float_days": [5.0, 8.0],
+                "is_milestone": True,
+                "risk_mitigation_buffered": False,
+            },
+            {
+                "node_id": "M-200",
+                "predecessor_float_days": [0.0, 1.5, 4.0, 6.0],
+                "is_milestone": True,
+                "risk_mitigation_buffered": True,
+            },
+        ]
+    )
+    assert res == {
+        "evaluated_node_count": 2,
+        "high_convergence_node_ids": ["M-200"],
+        "multi_near_critical_merge_ids": ["M-200"],
+        "unbuffered_merge_hotspot_ids": [],
+        "invalid_node_ids": [],
+        "is_valid": True,
+    }
+
+
+def test_validate_schedule_path_convergence_risk_unbuffered_hotspots():
+    """Detecta alta convergencia (>3 predecesoras) y múltiples rutas cuasi-críticas sin buffer."""
+    from backend.schemas.projects import validate_schedule_path_convergence_risk
+
+    res = validate_schedule_path_convergence_risk(
+        [
+            {
+                "node_id": "ACT-MERGE-HIGH",
+                "predecessor_float_days": [5.0, 6.0, 7.0, 8.0],
+                "risk_mitigation_buffered": False,
+            },
+            {
+                "node_id": "ACT-MERGE-CRIT",
+                "predecessor_float_days": [0.0, 2.0],
+                "risk_mitigation_buffered": False,
+            },
+        ]
+    )
+    assert res == {
+        "evaluated_node_count": 2,
+        "high_convergence_node_ids": ["ACT-MERGE-HIGH"],
+        "multi_near_critical_merge_ids": ["ACT-MERGE-CRIT"],
+        "unbuffered_merge_hotspot_ids": ["ACT-MERGE-HIGH", "ACT-MERGE-CRIT"],
+        "invalid_node_ids": [],
+        "is_valid": False,
+    }
+
+
+def test_validate_schedule_path_convergence_risk_invalid_floats():
+    """Registra nodos con lista de holguras vacía, negativa o no numérica en invalid_node_ids."""
+    from backend.schemas.projects import validate_schedule_path_convergence_risk
+
+    res = validate_schedule_path_convergence_risk(
+        [
+            {"node_id": "N-EMPTY", "predecessor_float_days": []},
+            {"node_id": "N-NEG", "predecessor_float_days": [3.0, -1.0]},
+            {"node_id": "N-STR", "predecessor_float_days": ["bad"]},
+            {"node_id": "N-OK", "predecessor_float_days": [4.0, 5.0]},
+        ]
+    )
+    assert res == {
+        "evaluated_node_count": 4,
+        "high_convergence_node_ids": [],
+        "multi_near_critical_merge_ids": [],
+        "unbuffered_merge_hotspot_ids": [],
+        "invalid_node_ids": ["N-EMPTY", "N-NEG", "N-STR"],
+        "is_valid": False,
+    }
+
+
+def test_validate_schedule_path_convergence_risk_empty_or_non_mapping():
+    """Entradas vacías o sin nodos válidos devuelven is_valid=False."""
+    from backend.schemas.projects import validate_schedule_path_convergence_risk
+
+    for payload in (None, [], ["invalid", {"node_id": "   "}]):
+        assert validate_schedule_path_convergence_risk(payload) == {  # type: ignore[arg-type]
+            "evaluated_node_count": 0,
+            "high_convergence_node_ids": [],
+            "multi_near_critical_merge_ids": [],
+            "unbuffered_merge_hotspot_ids": [],
+            "invalid_node_ids": [],
+            "is_valid": False,
+        }
+

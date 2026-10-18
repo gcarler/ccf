@@ -2360,8 +2360,9 @@ def test_evaluate_defect_containment_and_escape_rate_empty_or_none():
 
 def test_audit_configuration_items_baseline_integrity_verified():
     """IC alineados a su base (o con CR aprobado y audit OK) -> VERIFIED baseline 100%."""
+    # Contrato v1 (compatibilidad): implementación original preservada.
     from backend.services.project_ccb_service import (
-        audit_configuration_items_baseline_integrity as audit_fn,
+        audit_configuration_items_baseline_integrity_v1 as audit_fn,
     )
 
     res = audit_fn(
@@ -2393,8 +2394,9 @@ def test_audit_configuration_items_baseline_integrity_verified():
 
 def test_audit_configuration_items_baseline_integrity_unauthorized_drift():
     """Versión desplegada distinta de la base sin CR -> UNAUTHORIZED_CONFIGURATION_DRIFT."""
+    # Contrato v1 (compatibilidad): implementación original preservada.
     from backend.services.project_ccb_service import (
-        audit_configuration_items_baseline_integrity as audit_fn,
+        audit_configuration_items_baseline_integrity_v1 as audit_fn,
     )
 
     res = audit_fn(
@@ -2425,8 +2427,9 @@ def test_audit_configuration_items_baseline_integrity_unauthorized_drift():
 
 def test_audit_configuration_items_baseline_integrity_unbaselined_and_pending():
     """Sin versiones y con PCA/FCA pendiente: ambos no verificados (d excluye a/b/c)."""
+    # Contrato v1 (compatibilidad): implementación original preservada.
     from backend.services.project_ccb_service import (
-        audit_configuration_items_baseline_integrity as audit_fn,
+        audit_configuration_items_baseline_integrity_v1 as audit_fn,
     )
 
     res = audit_fn(
@@ -2457,8 +2460,9 @@ def test_audit_configuration_items_baseline_integrity_unbaselined_and_pending():
 
 def test_audit_configuration_items_baseline_integrity_empty_or_none():
     """None, lista vacía o entradas no-dict -> NO_CONFIGURATION_ITEMS."""
+    # Contrato v1 (compatibilidad): implementación original preservada.
     from backend.services.project_ccb_service import (
-        audit_configuration_items_baseline_integrity as audit_fn,
+        audit_configuration_items_baseline_integrity_v1 as audit_fn,
     )
 
     for payload in (None, [], ["invalid", 42, None]):
@@ -3409,3 +3413,133 @@ def test_evaluate_spc_control_chart_stability_invalid_limits_or_empty():
         "rule_of_seven_violation_indices": [],
         "is_in_statistical_control": False,
     }
+
+
+def test_audit_configuration_items_baseline_integrity_v2_verified():
+    """CIs baselined, sin drift y con checksum verificado -> is_integrity_verified."""
+    from backend.services.project_ccb_service import (
+        audit_configuration_items_baseline_integrity,
+        ProjectCCBService,
+    )
+
+    res = audit_configuration_items_baseline_integrity(
+        [
+            {
+                "ci_id": "CI-API",
+                "baseline_version": "1.2.0",
+                "deployed_version": "1.2.0",
+                "checksum_verified": True,
+            },
+            {
+                "ci_id": "CI-DB",
+                "baseline_version": "2026.10",
+                "deployed_version": "2026.10",
+                "checksum_verified": True,
+            },
+        ]
+    )
+    assert res["evaluated_ci_count"] == 2
+    assert res["unbaselined_ci_ids"] == []
+    assert res["version_drift_ci_ids"] == []
+    assert res["unauthorized_drift_ci_ids"] == []
+    assert res["unverified_checksum_ci_ids"] == []
+    assert res["is_integrity_verified"] is True
+
+    static_res = ProjectCCBService.audit_configuration_items_baseline_integrity(
+        [
+            {
+                "ci_id": "CI-API",
+                "baseline_version": "1.2.0",
+                "deployed_version": "1.2.0",
+                "checksum_verified": True,
+            },
+        ]
+    )
+    assert static_res["is_integrity_verified"] is True
+
+
+def test_audit_configuration_items_baseline_integrity_v2_unbaselined_skips_drift():
+    """CI sin baseline o sin deployed -> unbaselined (continúa, no aporta drift)."""
+    from backend.services.project_ccb_service import (
+        audit_configuration_items_baseline_integrity,
+    )
+
+    res = audit_configuration_items_baseline_integrity(
+        [
+            {"ci_id": "CI-NO-BASE", "deployed_version": "1.0.0", "checksum_verified": True},
+            {"ci_id": "CI-NO-DEPLOY", "baseline_version": "1.0.0", "checksum_verified": True},
+            {
+                "ci_id": "CI-DRIFT-OK",
+                "baseline_version": "1.0.0",
+                "deployed_version": "1.1.0",
+                "approved_change_request_id": "CR-77",
+                "checksum_verified": True,
+            },
+        ]
+    )
+    assert res["evaluated_ci_count"] == 3
+    assert res["unbaselined_ci_ids"] == ["CI-NO-BASE", "CI-NO-DEPLOY"]
+    assert res["version_drift_ci_ids"] == ["CI-DRIFT-OK"]
+    assert res["unauthorized_drift_ci_ids"] == []
+    assert res["unverified_checksum_ci_ids"] == []
+    assert res["is_integrity_verified"] is False
+
+
+def test_audit_configuration_items_baseline_integrity_v2_unauthorized_drift():
+    """Drift sin CR aprobado -> unauthorized_drift; checksum falso se reporta aparte."""
+    from backend.services.project_ccb_service import (
+        audit_configuration_items_baseline_integrity,
+    )
+
+    res = audit_configuration_items_baseline_integrity(
+        [
+            {
+                "ci_id": "CI-ROGUE",
+                "baseline_version": "2.0.0",
+                "deployed_version": "2.1.0",
+                "checksum_verified": True,
+            },
+            {
+                "ci_id": "CI-DRIFT-OK",
+                "baseline_version": "2.0.0",
+                "deployed_version": "2.0.1",
+                "approved_change_request_id": "CR-88",
+                "checksum_verified": True,
+            },
+        ]
+    )
+    assert res["evaluated_ci_count"] == 2
+    assert res["version_drift_ci_ids"] == ["CI-ROGUE", "CI-DRIFT-OK"]
+    assert res["unauthorized_drift_ci_ids"] == ["CI-ROGUE"]
+    assert res["unbaselined_ci_ids"] == []
+    assert res["is_integrity_verified"] is False
+
+    res_checksum = audit_configuration_items_baseline_integrity(
+        [
+            {
+                "ci_id": "CI-BASE-SAME",
+                "baseline_version": "3.0.0",
+                "deployed_version": "3.0.0",
+            },
+        ]
+    )
+    assert res_checksum["version_drift_ci_ids"] == []
+    assert res_checksum["unverified_checksum_ci_ids"] == ["CI-BASE-SAME"]
+    assert res_checksum["is_integrity_verified"] is False
+
+
+def test_audit_configuration_items_baseline_integrity_v2_empty_or_none():
+    """None, lista vacía o entradas no-Mapping/sin ci_id -> is_integrity_verified False."""
+    from backend.services.project_ccb_service import (
+        audit_configuration_items_baseline_integrity,
+    )
+
+    for payload in (None, [], ["no-dict", 42, {"baseline_version": "1.0.0"}]):
+        assert audit_configuration_items_baseline_integrity(payload) == {  # type: ignore[arg-type]
+            "evaluated_ci_count": 0,
+            "unbaselined_ci_ids": [],
+            "version_drift_ci_ids": [],
+            "unauthorized_drift_ci_ids": [],
+            "unverified_checksum_ci_ids": [],
+            "is_integrity_verified": False,
+        }

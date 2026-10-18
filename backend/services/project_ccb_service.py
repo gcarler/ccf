@@ -1636,10 +1636,14 @@ def evaluate_defect_containment_and_escape_rate(
     }
 
 
-def audit_configuration_items_baseline_integrity(
+def audit_configuration_items_baseline_integrity_v1(
     configuration_items: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Verifica la integridad de la linea base de IC y las auditorías PCA/FCA (PMBOK §4.6).
+
+    Contrato v1 conservado para compatibilidad; la variante canónica vigente
+    es ``audit_configuration_items_baseline_integrity`` (basada en
+    ``checksum_verified`` y reporte explícito de ``version_drift_ci_ids``).
 
     Cada IC declara `id`/`ci_id`/`code` (fallback 'CI-{idx}'), version de
     base (`baseline_version`/`approved_version`), version desplegada
@@ -2248,7 +2252,7 @@ class ProjectCCBService:
 
     @staticmethod
     def audit_configuration_items_baseline_integrity(
-        configuration_items: list[dict[str, Any]] | None = None,
+        configuration_items: Sequence[Mapping[str, Any]] | None = None,
     ) -> dict[str, Any]:
         return audit_configuration_items_baseline_integrity(configuration_items)
 
@@ -2807,3 +2811,67 @@ __all__ = [
     "ProjectCCBService",
 ]
 
+
+
+def audit_configuration_items_baseline_integrity(
+    configuration_items: Sequence[Mapping[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """PMBOK §4.6.2.2 — integridad de Elementos de Configuración (CIs) frente a la línea base aprobada.
+
+    Para cada CI con ``ci_id`` válido:
+    - sin ``baseline_version`` o sin ``deployed_version`` -> ``unbaselined_ci_ids``.
+    - ``deployed_version`` != ``baseline_version`` -> ``version_drift_ci_ids``;
+      si además no hay ``approved_change_request_id`` -> ``unauthorized_drift_ci_ids``.
+    - ``checksum_verified`` falso -> ``unverified_checksum_ci_ids``.
+    """
+    if not isinstance(configuration_items, (list, tuple)):
+        configuration_items = []
+
+    evaluated_ci_count = 0
+    unbaselined_ci_ids: list[str] = []
+    version_drift_ci_ids: list[str] = []
+    unauthorized_drift_ci_ids: list[str] = []
+    unverified_checksum_ci_ids: list[str] = []
+
+    for item in configuration_items:
+        if not isinstance(item, Mapping):
+            continue
+        ci_id = str(item.get("ci_id") or "").strip()
+        if not ci_id:
+            continue
+        evaluated_ci_count += 1
+
+        baseline_version = str(item.get("baseline_version") or "").strip()
+        deployed_version = str(item.get("deployed_version") or "").strip()
+        approved_change_request_id = str(
+            item.get("approved_change_request_id") or ""
+        ).strip()
+        checksum_verified = bool(item.get("checksum_verified", False))
+
+        if not baseline_version or not deployed_version:
+            unbaselined_ci_ids.append(ci_id)
+            continue
+
+        if deployed_version != baseline_version:
+            version_drift_ci_ids.append(ci_id)
+            if not approved_change_request_id:
+                unauthorized_drift_ci_ids.append(ci_id)
+
+        if not checksum_verified:
+            unverified_checksum_ci_ids.append(ci_id)
+
+    is_integrity_verified = bool(
+        evaluated_ci_count > 0
+        and len(unbaselined_ci_ids) == 0
+        and len(unauthorized_drift_ci_ids) == 0
+        and len(unverified_checksum_ci_ids) == 0
+    )
+
+    return {
+        "evaluated_ci_count": evaluated_ci_count,
+        "unbaselined_ci_ids": unbaselined_ci_ids,
+        "version_drift_ci_ids": version_drift_ci_ids,
+        "unauthorized_drift_ci_ids": unauthorized_drift_ci_ids,
+        "unverified_checksum_ci_ids": unverified_checksum_ci_ids,
+        "is_integrity_verified": is_integrity_verified,
+    }

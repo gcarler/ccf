@@ -2362,6 +2362,13 @@ class AnyDocService:
     ) -> dict[str, Any]:
         return audit_markdown_internal_anchor_links(markdown_text)
 
+    @staticmethod
+    def audit_markdown_callout_admonition_hygiene(
+        markdown_text: str | None = None,
+    ) -> dict[str, Any]:
+        return audit_markdown_callout_admonition_hygiene(markdown_text)
+
+
 
 _CODE_FENCE_OPEN_AUDIT_RE = re.compile(r"^\s*(`{3,}|~{3,})\s*(.*)$")
 _CODE_FENCE_CLOSE_AUDIT_RE = re.compile(r"^\s*(`{3,}|~{3,})\s*$")
@@ -2818,6 +2825,126 @@ def audit_markdown_internal_anchor_links(
     }
 
 
+_CANONICAL_CALLOUT_ADMONITION_TYPES = {
+    "NOTE",
+    "TIP",
+    "IMPORTANT",
+    "WARNING",
+    "CAUTION",
+}
+_CALLOUT_ADMONITION_HEADER_RE = re.compile(
+    r"^\s*>\s*\[!([A-Za-z0-9_-]+)\](.*)$"
+)
+_BLOCKQUOTE_LINE_RE = re.compile(r"^\s*>(.*)$")
+
+
+def audit_markdown_callout_admonition_hygiene(
+    markdown_text: str | None = None,
+) -> dict[str, Any]:
+    """Audita bloques de aviso estilo GitHub (> [!NOTE], > [!TIP], > [!IMPORTANT], > [!WARNING], > [!CAUTION]) fuera de bloques cercados según PMI PMBOK §4.4 y §10.2."""
+    lines = (
+        markdown_text.splitlines()
+        if isinstance(markdown_text, str) and markdown_text
+        else []
+    )
+
+    valid_callout_count = 0
+    detected_callout_types: list[str] = []
+    unsupported_callout_type_lines: list[int] = []
+    empty_callout_body_lines: list[int] = []
+    consecutive_unseparated_callout_lines: list[int] = []
+
+    in_fence = False
+    in_callout = False
+    current_callout_line: int | None = None
+    current_callout_has_body = False
+    has_previous_callout = False
+    saw_blank_since_last_callout = True
+
+    for line_no, line in enumerate(lines, start=1):
+        stripped = line.strip()
+        if stripped.startswith("```"):
+            if in_callout:
+                assert current_callout_line is not None
+                if not current_callout_has_body:
+                    empty_callout_body_lines.append(current_callout_line)
+                in_callout = False
+                current_callout_line = None
+                current_callout_has_body = False
+                has_previous_callout = True
+                saw_blank_since_last_callout = False
+            in_fence = not in_fence
+            continue
+
+        if in_fence:
+            continue
+
+        m_header = _CALLOUT_ADMONITION_HEADER_RE.match(line)
+        if m_header:
+            if in_callout:
+                assert current_callout_line is not None
+                if not current_callout_has_body:
+                    empty_callout_body_lines.append(current_callout_line)
+                has_previous_callout = True
+                saw_blank_since_last_callout = False
+
+            if has_previous_callout and not saw_blank_since_last_callout:
+                consecutive_unseparated_callout_lines.append(line_no)
+
+            callout_type = m_header.group(1).upper()
+            inline_body = m_header.group(2).strip()
+
+            if callout_type not in _CANONICAL_CALLOUT_ADMONITION_TYPES:
+                unsupported_callout_type_lines.append(line_no)
+            else:
+                valid_callout_count += 1
+                if callout_type not in detected_callout_types:
+                    detected_callout_types.append(callout_type)
+
+            in_callout = True
+            current_callout_line = line_no
+            current_callout_has_body = bool(inline_body)
+            continue
+
+        m_quote = _BLOCKQUOTE_LINE_RE.match(line)
+        if m_quote and in_callout:
+            if m_quote.group(1).strip():
+                current_callout_has_body = True
+            continue
+
+        if in_callout:
+            assert current_callout_line is not None
+            if not current_callout_has_body:
+                empty_callout_body_lines.append(current_callout_line)
+            in_callout = False
+            current_callout_line = None
+            current_callout_has_body = False
+            has_previous_callout = True
+            saw_blank_since_last_callout = stripped == ""
+        elif has_previous_callout and stripped == "":
+            saw_blank_since_last_callout = True
+
+    if in_callout:
+        assert current_callout_line is not None
+        if not current_callout_has_body:
+            empty_callout_body_lines.append(current_callout_line)
+
+    is_hygienic = bool(
+        len(unsupported_callout_type_lines) == 0
+        and len(empty_callout_body_lines) == 0
+        and len(consecutive_unseparated_callout_lines) == 0
+    )
+
+    return {
+        "valid_callout_count": valid_callout_count,
+        "detected_callout_types": detected_callout_types,
+        "unsupported_callout_type_lines": unsupported_callout_type_lines,
+        "empty_callout_body_lines": empty_callout_body_lines,
+        "consecutive_unseparated_callout_lines": consecutive_unseparated_callout_lines,
+        "is_hygienic": is_hygienic,
+    }
+
+
 __all__ = [
     "ANYDOC_AVAILABLE",
     "SUPPORTED_EXTENSIONS",
@@ -2850,6 +2977,8 @@ __all__ = [
     "audit_markdown_mermaid_diagram_hygiene",
     "audit_markdown_footnote_reference_hygiene",
     "audit_markdown_internal_anchor_links",
+    "audit_markdown_callout_admonition_hygiene",
     "AnyDocService",
 ]
+
 
