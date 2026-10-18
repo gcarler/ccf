@@ -942,6 +942,12 @@ class ProjectLifecyclePMIService:
             exit_criteria_verified=exit_criteria_verified,
         )
 
+    @staticmethod
+    def evaluate_benefits_realization_posture(
+        benefits: list[dict[str, Any]] | None,
+    ) -> dict[str, Any]:
+        return evaluate_benefits_realization_posture(benefits)
+
 
 def audit_charter_measurable_objectives(
     objectives: list[dict[str, Any]] | None,
@@ -1086,3 +1092,75 @@ def audit_stakeholder_communication_cadence(
         "coverage_rate": coverage_rate,
         "posture": posture,
     }
+
+
+def evaluate_benefits_realization_posture(
+    benefits: list[dict[str, Any]] | None,
+) -> dict[str, Any]:
+    """Evalúa el Plan de Gestión de Beneficios (BRM) según PMI PMBOK §1.2.6 y §4.7."""
+    items = [item for item in (benefits or []) if isinstance(item, dict)]
+    total_benefits = len(items)
+
+    owner_assigned_count = 0
+    realized_count = 0
+    at_risk_count = 0
+
+    for item in items:
+        owner_str = str(
+            item.get("benefit_owner")
+            or item.get("owner")
+            or item.get("responsable")
+            or ""
+        ).strip()
+        if owner_str:
+            owner_assigned_count += 1
+
+        target_val = float(item.get("target_value") or 0.0)
+        actual_val = float(item.get("actual_value") or 0.0)
+        status_str = str(item.get("status") or "").strip().lower()
+
+        if (target_val > 0.0 and actual_val >= target_val) or status_str in (
+            "realized",
+            "achieved",
+            "cumplido",
+            "logrado",
+        ):
+            realized_count += 1
+
+        if status_str in (
+            "at_risk",
+            "en_riesgo",
+            "delayed",
+            "retrasado",
+            "off_track",
+        ):
+            at_risk_count += 1
+
+    realization_rate = (
+        round((realized_count / total_benefits) * 100.0, 2)
+        if total_benefits > 0
+        else 0.0
+    )
+
+    if total_benefits == 0:
+        posture = "NO_BENEFITS_DEFINED"
+    elif at_risk_count > 0 or owner_assigned_count < total_benefits:
+        posture = "BENEFITS_REALIZATION_AT_RISK"
+    elif (
+        at_risk_count == 0
+        and owner_assigned_count == total_benefits
+        and realization_rate >= 75.0
+    ):
+        posture = "SUSTAINED_VALUE_REALIZATION"
+    else:
+        posture = "BENEFITS_TRACKING_IN_PROGRESS"
+
+    return {
+        "total_benefits": total_benefits,
+        "owner_assigned_count": owner_assigned_count,
+        "realized_count": realized_count,
+        "at_risk_count": at_risk_count,
+        "realization_rate": realization_rate,
+        "posture": posture,
+    }
+

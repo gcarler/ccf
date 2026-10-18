@@ -1013,3 +1013,83 @@ def test_stakeholder_communication_cadence_no_stakeholders_registered():
             "posture": "NO_STAKEHOLDERS_REGISTERED",
         }
 
+
+def test_evaluate_benefits_realization_posture_sustained_value():
+    """Todos con owner, sin riesgo y realization_rate >= 75.0 -> 'SUSTAINED_VALUE_REALIZATION'."""
+    benefits = [
+        {"benefit_owner": "PMO", "target_value": 100.0, "actual_value": 110.0},
+        {"owner": "Sponsor", "status": "realized"},
+        {"responsable": "Director", "status": "logrado"},
+        {"owner": "Operaciones", "target_value": 50.0, "actual_value": 25.0, "status": "in_progress"},
+    ]
+    res = project_lifecycle_pmi_service.ProjectLifecyclePMIService.evaluate_benefits_realization_posture(
+        benefits
+    )
+    assert res == {
+        "total_benefits": 4,
+        "owner_assigned_count": 4,
+        "realized_count": 3,
+        "at_risk_count": 0,
+        "realization_rate": 75.0,
+        "posture": "SUSTAINED_VALUE_REALIZATION",
+    }
+
+
+def test_evaluate_benefits_realization_posture_at_risk():
+    """Al menos un beneficio en riesgo o sin owner asignado -> 'BENEFITS_REALIZATION_AT_RISK'."""
+    with_at_risk = [
+        {"owner": "Sponsor", "status": "achieved"},
+        {"owner": "Finanzas", "status": "en_riesgo"},
+    ]
+    res_risk = project_lifecycle_pmi_service.evaluate_benefits_realization_posture(
+        with_at_risk
+    )
+    assert res_risk["at_risk_count"] == 1
+    assert res_risk["owner_assigned_count"] == 2
+    assert res_risk["posture"] == "BENEFITS_REALIZATION_AT_RISK"
+
+    missing_owner = [
+        {"owner": "Sponsor", "status": "cumplido"},
+        {"owner": "  ", "status": "cumplido"},
+    ]
+    res_no_owner = project_lifecycle_pmi_service.evaluate_benefits_realization_posture(
+        missing_owner
+    )
+    assert res_no_owner["at_risk_count"] == 0
+    assert res_no_owner["owner_assigned_count"] == 1
+    assert res_no_owner["realization_rate"] == 100.0
+    assert res_no_owner["posture"] == "BENEFITS_REALIZATION_AT_RISK"
+
+
+def test_evaluate_benefits_realization_posture_tracking_in_progress():
+    """Todos con owner y sin riesgo pero realization_rate < 75.0 -> 'BENEFITS_TRACKING_IN_PROGRESS'."""
+    benefits = [
+        {"benefit_owner": "Líder 1", "target_value": 100.0, "actual_value": 100.0},
+        {"benefit_owner": "Líder 2", "target_value": 100.0, "actual_value": 40.0, "status": "tracking"},
+        {"benefit_owner": "Líder 3", "target_value": 100.0, "actual_value": 20.0, "status": "tracking"},
+    ]
+    res = project_lifecycle_pmi_service.evaluate_benefits_realization_posture(benefits)
+    assert res["total_benefits"] == 3
+    assert res["owner_assigned_count"] == 3
+    assert res["realized_count"] == 1
+    assert res["at_risk_count"] == 0
+    assert res["realization_rate"] == 33.33
+    assert res["posture"] == "BENEFITS_TRACKING_IN_PROGRESS"
+
+
+def test_evaluate_benefits_realization_posture_no_benefits_defined():
+    """Lista vacía, None o entradas no-dict -> 'NO_BENEFITS_DEFINED'."""
+    for empty_input in (None, [], ["invalid", 42]):
+        res = project_lifecycle_pmi_service.evaluate_benefits_realization_posture(
+            empty_input
+        )
+        assert res == {
+            "total_benefits": 0,
+            "owner_assigned_count": 0,
+            "realized_count": 0,
+            "at_risk_count": 0,
+            "realization_rate": 0.0,
+            "posture": "NO_BENEFITS_DEFINED",
+        }
+
+
