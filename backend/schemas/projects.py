@@ -3794,6 +3794,7 @@ __all__ = [
     "validate_monte_carlo_confidence_band_and_reserve_adequacy",
     "validate_resource_leveling_and_smoothing_constraints",
     "validate_wbs_100_percent_rollup_and_8_80_granularity",
+    "validate_make_or_buy_breakeven_and_tco",
 ]
 
 
@@ -6140,5 +6141,151 @@ def validate_wbs_100_percent_rollup_and_8_80_granularity(
         "is_valid": is_valid,
         "recommendations": recommendations,
     }
+
+
+def validate_make_or_buy_breakeven_and_tco(
+    decisions: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_unjustified_cost_premium_pct: float = 10.0,
+) -> dict[str, Any]:
+    """Valida análisis de decisiones Hacer vs Comprar (Make-or-Buy): Costo Total de Propiedad (TCO), protección de propiedad intelectual crítica con escrow y capacidad interna disponible (PMI PMBOK §12.1.2.3)."""
+    if (
+        decisions is None
+        or isinstance(decisions, (str, bytes))
+        or not isinstance(decisions, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = decisions
+
+    try:
+        max_prem_pct = float(max_unjustified_cost_premium_pct)
+    except (TypeError, ValueError):
+        max_prem_pct = 10.0
+
+    def _pos_float(val: Any) -> float:
+        try:
+            return max(0.0, float(val or 0.0))
+        except (TypeError, ValueError):
+            return 0.0
+
+    total_decisions = 0
+    compliant_decisions = 0
+
+    core_ip_outsourced_without_escrow_ids: list[str] = []
+    make_selected_without_capacity_ids: list[str] = []
+    unjustified_tco_premium_ids: list[str] = []
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_decisions += 1
+
+        decision_id = (
+            str(raw.get("id") or raw.get("decision_id") or "").strip()
+            or "MOB-UNKNOWN"
+        )
+        selected_option = str(raw.get("selected_option") or "").strip().lower()
+
+        make_initial_cost = _pos_float(raw.get("make_initial_cost"))
+        make_recurring_cost = _pos_float(raw.get("make_recurring_cost"))
+        buy_initial_cost = _pos_float(raw.get("buy_initial_cost"))
+        buy_recurring_cost = _pos_float(raw.get("buy_recurring_cost"))
+
+        try:
+            horizon_periods = max(1, int(raw.get("horizon_periods") or 1))
+        except (TypeError, ValueError):
+            horizon_periods = 1
+
+        is_core_proprietary_ip = bool(raw.get("is_core_proprietary_ip"))
+        ip_protection_and_escrow_signed = bool(
+            raw.get("ip_protection_and_escrow_signed")
+        )
+        internal_capacity_available = bool(
+            raw.get("internal_capacity_available")
+        )
+        strategic_override_approved = bool(
+            raw.get("strategic_override_approved")
+        )
+
+        make_tco = make_initial_cost + (make_recurring_cost * horizon_periods)
+        buy_tco = buy_initial_cost + (buy_recurring_cost * horizon_periods)
+
+        is_core_ip_violation = (
+            selected_option == "buy"
+            and is_core_proprietary_ip
+            and not ip_protection_and_escrow_signed
+        )
+        is_capacity_violation = (
+            selected_option == "make" and not internal_capacity_available
+        )
+        is_tco_premium_violation = (not strategic_override_approved) and (
+            (
+                selected_option == "make"
+                and buy_tco > 0.0
+                and ((make_tco - buy_tco) / buy_tco) * 100.0 > max_prem_pct
+            )
+            or (
+                selected_option == "buy"
+                and make_tco > 0.0
+                and ((buy_tco - make_tco) / make_tco) * 100.0 > max_prem_pct
+            )
+        )
+
+        if is_core_ip_violation:
+            core_ip_outsourced_without_escrow_ids.append(decision_id)
+        if is_capacity_violation:
+            make_selected_without_capacity_ids.append(decision_id)
+        if is_tco_premium_violation:
+            unjustified_tco_premium_ids.append(decision_id)
+
+        if (
+            not is_core_ip_violation
+            and not is_capacity_violation
+            and not is_tco_premium_violation
+        ):
+            compliant_decisions += 1
+
+    is_valid = (
+        len(core_ip_outsourced_without_escrow_ids) == 0
+        and len(make_selected_without_capacity_ids) == 0
+        and len(unjustified_tco_premium_ids) == 0
+    )
+
+    if is_valid:
+        mob_governance_status = "HEALTHY"
+    elif (
+        len(core_ip_outsourced_without_escrow_ids) > 0
+        or len(make_selected_without_capacity_ids) > 0
+    ):
+        mob_governance_status = "CRITICAL"
+    else:
+        mob_governance_status = "AT_RISK"
+
+    recommendations: list[str] = []
+    if core_ip_outsourced_without_escrow_ids:
+        recommendations.append(
+            f"Exigir contrato de protección de propiedad intelectual y depósito de código en escrow antes de externalizar IP crítica en {core_ip_outsourced_without_escrow_ids}."
+        )
+    if make_selected_without_capacity_ids:
+        recommendations.append(
+            f"Verificar disponibilidad de capacidad interna o reevaluar alternativa de adquisición para decisiones 'make' en {make_selected_without_capacity_ids}."
+        )
+    if unjustified_tco_premium_ids:
+        recommendations.append(
+            f"Justificar estratégicamente (strategic_override_approved=True) o seleccionar la opción de menor TCO (sobrecosto > {max_prem_pct}%) en {unjustified_tco_premium_ids}."
+        )
+
+    return {
+        "total_decisions": total_decisions,
+        "compliant_decisions": compliant_decisions,
+        "core_ip_outsourced_without_escrow_ids": core_ip_outsourced_without_escrow_ids,
+        "make_selected_without_capacity_ids": make_selected_without_capacity_ids,
+        "unjustified_tco_premium_ids": unjustified_tco_premium_ids,
+        "mob_governance_status": mob_governance_status,
+        "is_valid": is_valid,
+        "recommendations": recommendations,
+    }
+
 
 

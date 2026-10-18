@@ -4814,3 +4814,124 @@ def test_audit_markdown_code_fence_balance_and_language_hygiene_empty_and_servic
     )
     assert "audit_markdown_code_fence_balance_and_language_hygiene" in mod.__all__
 
+
+def test_audit_markdown_frontmatter_and_document_control_hygiene_healthy():
+    """Valida frontmatter YAML completo con claves requeridas, versión SemVer y estado aprobado ('HEALTHY')."""
+    from backend.services.anydoc_service import (
+        audit_markdown_frontmatter_and_document_control_hygiene,
+    )
+
+    md = (
+        "---\n"
+        "title: Plan de Gestión de Configuración\n"
+        "owner: PMO Lead\n"
+        "version: 1.2.0\n"
+        "status: approved\n"
+        "---\n\n"
+        "# Contenido\n"
+    )
+    res = audit_markdown_frontmatter_and_document_control_hygiene(md)
+    assert res["has_frontmatter"] is True
+    assert res["unclosed_frontmatter"] is False
+    assert res["parsed_keys"] == ["title", "owner", "version", "status"]
+    assert res["missing_or_empty_required_keys"] == []
+    assert res["duplicate_frontmatter_keys"] == []
+    assert res["malformed_frontmatter_lines"] == []
+    assert res["invalid_status_value"] is False
+    assert res["invalid_version_format"] is False
+    assert res["frontmatter_hygiene_status"] == "HEALTHY"
+    assert res["is_compliant"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_markdown_frontmatter_and_document_control_hygiene_critical():
+    """Detecta ausencia de frontmatter, frontmatter sin cerrar o claves faltantes/líneas malformadas ('CRITICAL')."""
+    from backend.services.anydoc_service import (
+        audit_markdown_frontmatter_and_document_control_hygiene,
+    )
+
+    no_fm = audit_markdown_frontmatter_and_document_control_hygiene(
+        "# Sin frontmatter\nTexto.\n"
+    )
+    assert no_fm["has_frontmatter"] is False
+    assert no_fm["frontmatter_hygiene_status"] == "CRITICAL"
+    assert no_fm["is_compliant"] is False
+
+    unclosed = audit_markdown_frontmatter_and_document_control_hygiene(
+        "---\ntitle: Abierto\nowner: PM\n"
+    )
+    assert unclosed["unclosed_frontmatter"] is True
+    assert unclosed["frontmatter_hygiene_status"] == "CRITICAL"
+    assert unclosed["is_compliant"] is False
+
+    malformed = audit_markdown_frontmatter_and_document_control_hygiene(
+        "---\n"
+        "title: Especificación\n"
+        "linea sin dos puntos\n"
+        "owner: \"\"\n"
+        "---\n"
+    )
+    assert malformed["has_frontmatter"] is True
+    assert malformed["malformed_frontmatter_lines"] == [3]
+    assert "owner" in malformed["missing_or_empty_required_keys"]
+    assert "version" in malformed["missing_or_empty_required_keys"]
+    assert malformed["frontmatter_hygiene_status"] == "CRITICAL"
+    assert malformed["is_compliant"] is False
+    assert len(malformed["recommendations"]) >= 2
+
+
+def test_audit_markdown_frontmatter_and_document_control_hygiene_at_risk():
+    """Detecta claves duplicadas, estado inválido o formato de versión no SemVer ('AT_RISK')."""
+    from backend.services.anydoc_service import (
+        audit_markdown_frontmatter_and_document_control_hygiene,
+    )
+
+    md = (
+        "---\n"
+        "title: Manual Operativo\n"
+        "owner: Arquitecto\n"
+        "owner: Director PMO\n"
+        "version: borrador-final\n"
+        "status: obsoleto\n"
+        "---\n"
+    )
+    res = audit_markdown_frontmatter_and_document_control_hygiene(md)
+    assert res["has_frontmatter"] is True
+    assert res["missing_or_empty_required_keys"] == []
+    assert res["malformed_frontmatter_lines"] == []
+    assert res["duplicate_frontmatter_keys"] == ["owner"]
+    assert res["invalid_version_format"] is True
+    assert res["invalid_status_value"] is True
+    assert res["frontmatter_hygiene_status"] == "AT_RISK"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 3
+
+
+def test_audit_markdown_frontmatter_and_document_control_hygiene_empty_and_service_binding():
+    """Manejo defensivo de entradas vacías/no-str y exposición en AnyDocService, AnydocService y __all__."""
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_frontmatter_and_document_control_hygiene,
+    )
+
+    for payload in (None, "", 42):
+        empty = audit_markdown_frontmatter_and_document_control_hygiene(payload)  # type: ignore[arg-type]
+        assert empty["has_frontmatter"] is False
+        assert empty["frontmatter_hygiene_status"] == "CRITICAL"
+        assert empty["is_compliant"] is False
+        assert len(empty["recommendations"]) >= 1
+
+    sample = "---\ntitle: Doc\nowner: PM\nversion: v2.0\nstatus: draft\n---\n"
+    assert (
+        AnyDocService.audit_markdown_frontmatter_and_document_control_hygiene(sample)
+        == audit_markdown_frontmatter_and_document_control_hygiene(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_frontmatter_and_document_control_hygiene(sample)
+        == audit_markdown_frontmatter_and_document_control_hygiene(sample)
+    )
+    assert "audit_markdown_frontmatter_and_document_control_hygiene" in mod.__all__
+
+

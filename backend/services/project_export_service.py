@@ -2985,6 +2985,7 @@ __all__ = [
     "audit_executive_report_critical_path_float_and_convergence",
     "audit_executive_report_contract_claims_and_change_orders",
     "audit_executive_report_cybersecurity_vulnerability_and_patch_sla",
+    "audit_executive_report_capex_opex_capitalization_compliance",
     "ProjectExportService",
 ]
 
@@ -5162,3 +5163,167 @@ def audit_executive_report_cybersecurity_vulnerability_and_patch_sla(
 ProjectExportService.audit_executive_report_cybersecurity_vulnerability_and_patch_sla = staticmethod(
     audit_executive_report_cybersecurity_vulnerability_and_patch_sla
 )
+
+
+def audit_executive_report_capex_opex_capitalization_compliance(
+    cost_entries: Sequence[Mapping[str, Any]] | None,
+    *,
+    capitalizable_stages: tuple[str, ...] = (
+        "application_development",
+        "construction",
+        "hardware_acquisition",
+        "implementation",
+    ),
+    non_capitalizable_stages: tuple[str, ...] = (
+        "preliminary_discovery",
+        "research",
+        "training",
+        "post_implementation_maintenance",
+        "hypercare_support",
+    ),
+    min_capex_useful_life_months: int = 12,
+) -> dict[str, Any]:
+    """Audita la clasificación contable CapEx vs OpEx en el reporte ejecutivo: elegibilidad de capitalización por etapa (ASC 350-40 / IAS 38), vida útil mínima y registro de activo fijo (PMI PMBOK §7.3 y §10.2)."""
+    if (
+        cost_entries is None
+        or isinstance(cost_entries, (str, bytes))
+        or not isinstance(cost_entries, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = cost_entries
+
+    cap_stages = {
+        str(s).strip().lower()
+        for s in (capitalizable_stages or ())
+        if str(s).strip()
+    }
+    non_cap_stages = {
+        str(s).strip().lower()
+        for s in (non_capitalizable_stages or ())
+        if str(s).strip()
+    }
+
+    try:
+        min_life = int(min_capex_useful_life_months)
+    except (TypeError, ValueError):
+        min_life = 12
+
+    total_entries = 0
+    compliant_entries = 0
+    total_capex_accum = 0.0
+    total_opex_accum = 0.0
+
+    improper_capex_in_opex_stage_ids: list[str] = []
+    unqualified_capex_asset_ids: list[str] = []
+    missed_capitalization_opportunity_ids: list[str] = []
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_entries += 1
+
+        entry_id = (
+            str(raw.get("id") or raw.get("entry_id") or "").strip()
+            or "CST-UNKNOWN"
+        )
+        classification = str(raw.get("classification") or "").strip().lower()
+        project_stage = str(raw.get("project_stage") or "").strip().lower()
+
+        try:
+            amount = max(0.0, float(raw.get("amount") or 0.0))
+        except (TypeError, ValueError):
+            amount = 0.0
+
+        try:
+            useful_life_months = max(
+                0, int(raw.get("useful_life_months") or 0)
+            )
+        except (TypeError, ValueError):
+            useful_life_months = 0
+
+        asset_register_id = str(raw.get("asset_register_id") or "").strip()
+        finance_approved = bool(raw.get("finance_approved"))
+
+        if classification == "capex":
+            total_capex_accum += amount
+        elif classification == "opex":
+            total_opex_accum += amount
+
+        is_improper_capex = (
+            classification == "capex" and project_stage in non_cap_stages
+        )
+        is_unqualified_capex = classification == "capex" and (
+            useful_life_months < min_life
+            or not asset_register_id
+            or not finance_approved
+        )
+        is_missed_capex = (
+            classification == "opex"
+            and project_stage in cap_stages
+            and useful_life_months >= min_life
+            and bool(asset_register_id)
+        )
+
+        if is_improper_capex:
+            improper_capex_in_opex_stage_ids.append(entry_id)
+        if is_unqualified_capex:
+            unqualified_capex_asset_ids.append(entry_id)
+        if is_missed_capex:
+            missed_capitalization_opportunity_ids.append(entry_id)
+
+        if (
+            not is_improper_capex
+            and not is_unqualified_capex
+            and not is_missed_capex
+        ):
+            compliant_entries += 1
+
+    is_compliant = (
+        len(improper_capex_in_opex_stage_ids) == 0
+        and len(unqualified_capex_asset_ids) == 0
+        and len(missed_capitalization_opportunity_ids) == 0
+    )
+
+    if is_compliant:
+        accounting_governance_health = "healthy"
+    elif (
+        len(improper_capex_in_opex_stage_ids) > 0
+        or len(unqualified_capex_asset_ids) > 0
+    ):
+        accounting_governance_health = "critical"
+    else:
+        accounting_governance_health = "at_risk"
+
+    recommendations: list[str] = []
+    if improper_capex_in_opex_stage_ids:
+        recommendations.append(
+            f"Reclasificar a OpEx las partidas en etapas no capitalizables (descubrimiento, capacitación, mantenimiento) en {improper_capex_in_opex_stage_ids}."
+        )
+    if unqualified_capex_asset_ids:
+        recommendations.append(
+            f"Asegurar vida útil >= {min_life} meses, ID de registro de activo fijo y aprobación de Finanzas para CapEx en {unqualified_capex_asset_ids}."
+        )
+    if missed_capitalization_opportunity_ids:
+        recommendations.append(
+            f"Evaluar la reclasificación a CapEx de activos elegibles en etapa de construcción/desarrollo en {missed_capitalization_opportunity_ids}."
+        )
+
+    return {
+        "total_entries": total_entries,
+        "compliant_entries": compliant_entries,
+        "total_capex_amount": round(total_capex_accum, 2),
+        "total_opex_amount": round(total_opex_accum, 2),
+        "improper_capex_in_opex_stage_ids": improper_capex_in_opex_stage_ids,
+        "unqualified_capex_asset_ids": unqualified_capex_asset_ids,
+        "missed_capitalization_opportunity_ids": missed_capitalization_opportunity_ids,
+        "accounting_governance_health": accounting_governance_health,
+        "is_compliant": is_compliant,
+        "recommendations": recommendations,
+    }
+
+
+ProjectExportService.audit_executive_report_capex_opex_capitalization_compliance = staticmethod(
+    audit_executive_report_capex_opex_capitalization_compliance
+)
+

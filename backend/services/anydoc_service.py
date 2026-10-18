@@ -3016,6 +3016,7 @@ __all__ = [
     "audit_markdown_admonition_and_callout_hygiene",
     "audit_markdown_raw_html_and_script_injection_hygiene",
     "audit_markdown_code_fence_balance_and_language_hygiene",
+    "audit_markdown_frontmatter_and_document_control_hygiene",
     "AnyDocService",
     "AnydocService",
 ]
@@ -5648,4 +5649,183 @@ AnyDocService.audit_markdown_code_fence_balance_and_language_hygiene = staticmet
 AnydocService.audit_markdown_code_fence_balance_and_language_hygiene = staticmethod(
     audit_markdown_code_fence_balance_and_language_hygiene
 )
+
+
+def audit_markdown_frontmatter_and_document_control_hygiene(
+    markdown_text: str | None,
+    *,
+    required_keys: tuple[str, ...] = ("title", "owner", "version", "status"),
+    allowed_statuses: tuple[str, ...] = (
+        "draft",
+        "in_review",
+        "approved",
+        "archived",
+        "superseded",
+    ),
+) -> dict[str, Any]:
+    """Audita metadatos YAML de frontmatter de control documental, versión SemVer y estado del ciclo de vida en documentos Markdown (PMI PMBOK §4.4 y §4.6)."""
+    req_keys_norm = [
+        str(k).strip().lower() for k in (required_keys or ()) if str(k).strip()
+    ]
+    allowed_norm = {
+        str(s).strip().lower()
+        for s in (allowed_statuses or ())
+        if str(s).strip()
+    }
+
+    has_frontmatter = False
+    unclosed_frontmatter = False
+    parsed_keys: list[str] = []
+    duplicate_frontmatter_keys: list[str] = []
+    malformed_frontmatter_lines: list[int] = []
+    key_values: dict[str, str] = {}
+
+    if isinstance(markdown_text, str) and markdown_text.strip():
+        lines = markdown_text.splitlines()
+        first_idx: int | None = None
+        for idx, line in enumerate(lines):
+            if line.strip():
+                first_idx = idx
+                break
+
+        if first_idx is not None and lines[first_idx].strip() == "---":
+            close_idx: int | None = None
+            for idx in range(first_idx + 1, len(lines)):
+                if lines[idx].strip() in {"---", "..."}:
+                    close_idx = idx
+                    break
+
+            if close_idx is None:
+                unclosed_frontmatter = True
+            else:
+                has_frontmatter = True
+                seen_keys: set[str] = set()
+                current_key: str | None = None
+                kv_re = re.compile(r"^([A-Za-z0-9_.-]+)\s*:\s*(.*)$")
+
+                for idx in range(first_idx + 1, close_idx):
+                    line_no = idx + 1
+                    stripped = lines[idx].strip()
+                    if not stripped or stripped.startswith("#"):
+                        continue
+
+                    if stripped.startswith("- ") or stripped == "-":
+                        if current_key is not None:
+                            item_val = stripped[1:].strip()
+                            if item_val and not key_values.get(current_key):
+                                key_values[current_key] = item_val
+                        else:
+                            malformed_frontmatter_lines.append(line_no)
+                        continue
+
+                    match = kv_re.match(stripped)
+                    if not match:
+                        malformed_frontmatter_lines.append(line_no)
+                        continue
+
+                    key_lower = match.group(1).strip().lower()
+                    raw_val = match.group(2).strip()
+                    if len(raw_val) >= 2 and (
+                        (raw_val.startswith('"') and raw_val.endswith('"'))
+                        or (raw_val.startswith("'") and raw_val.endswith("'"))
+                    ):
+                        clean_val = raw_val[1:-1].strip()
+                    else:
+                        clean_val = raw_val
+
+                    if key_lower in seen_keys:
+                        if key_lower not in duplicate_frontmatter_keys:
+                            duplicate_frontmatter_keys.append(key_lower)
+                    else:
+                        seen_keys.add(key_lower)
+                        parsed_keys.append(key_lower)
+
+                    key_values[key_lower] = clean_val
+                    current_key = key_lower
+
+    missing_or_empty_required_keys = [
+        k for k in req_keys_norm if not key_values.get(k, "")
+    ]
+
+    status_val = key_values.get("status", "")
+    invalid_status_value = bool(status_val) and (
+        status_val.lower() not in allowed_norm
+    )
+
+    version_val = key_values.get("version", "")
+    version_re = re.compile(r"^v?\d+\.\d+(?:\.\d+)?(?:-[0-9A-Za-z.-]+)?$")
+    invalid_version_format = bool(version_val) and (
+        version_re.match(version_val) is None
+    )
+
+    if (
+        not has_frontmatter
+        or unclosed_frontmatter
+        or len(malformed_frontmatter_lines) > 0
+        or len(missing_or_empty_required_keys) > 0
+    ):
+        frontmatter_hygiene_status = "CRITICAL"
+    elif (
+        len(duplicate_frontmatter_keys) > 0
+        or invalid_status_value
+        or invalid_version_format
+    ):
+        frontmatter_hygiene_status = "AT_RISK"
+    else:
+        frontmatter_hygiene_status = "HEALTHY"
+
+    is_compliant = frontmatter_hygiene_status == "HEALTHY"
+
+    recommendations: list[str] = []
+    if unclosed_frontmatter:
+        recommendations.append(
+            "Cerrar el bloque de frontmatter YAML con una línea delimitadora '---' o '...'."
+        )
+    elif not has_frontmatter:
+        recommendations.append(
+            "Incluir un bloque de frontmatter YAML al inicio del documento delimitado por '---'."
+        )
+    if malformed_frontmatter_lines:
+        recommendations.append(
+            f"Corregir la sintaxis YAML (formato 'key: value') en las líneas {malformed_frontmatter_lines}."
+        )
+    if missing_or_empty_required_keys:
+        recommendations.append(
+            f"Definir valores no vacíos para los metadatos obligatorios de control documental: {missing_or_empty_required_keys}."
+        )
+    if duplicate_frontmatter_keys:
+        recommendations.append(
+            f"Eliminar claves duplicadas en el frontmatter YAML: {duplicate_frontmatter_keys}."
+        )
+    if invalid_status_value:
+        recommendations.append(
+            f"Utilizar un estado de ciclo de vida documental permitido en {sorted(allowed_norm)}."
+        )
+    if invalid_version_format:
+        recommendations.append(
+            "Normalizar el campo 'version' al formato SemVer (ej. '1.0.0' o 'v1.2')."
+        )
+
+    return {
+        "has_frontmatter": has_frontmatter,
+        "unclosed_frontmatter": unclosed_frontmatter,
+        "parsed_keys": parsed_keys,
+        "missing_or_empty_required_keys": missing_or_empty_required_keys,
+        "duplicate_frontmatter_keys": duplicate_frontmatter_keys,
+        "malformed_frontmatter_lines": malformed_frontmatter_lines,
+        "invalid_status_value": invalid_status_value,
+        "invalid_version_format": invalid_version_format,
+        "frontmatter_hygiene_status": frontmatter_hygiene_status,
+        "is_compliant": is_compliant,
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_markdown_frontmatter_and_document_control_hygiene = staticmethod(
+    audit_markdown_frontmatter_and_document_control_hygiene
+)
+AnydocService.audit_markdown_frontmatter_and_document_control_hygiene = staticmethod(
+    audit_markdown_frontmatter_and_document_control_hygiene
+)
+
 

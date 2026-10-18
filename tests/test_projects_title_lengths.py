@@ -5007,3 +5007,144 @@ def test_validate_wbs_100_percent_rollup_and_8_80_granularity_empty_and_export()
     assert "validate_wbs_100_percent_rollup_and_8_80_granularity" in mod.__all__
 
 
+def test_validate_make_or_buy_breakeven_and_tco_healthy():
+    """Valida decisiones make y buy óptimas en TCO, con capacidad interna o protección IP/escrow."""
+    from backend.schemas.projects import (
+        validate_make_or_buy_breakeven_and_tco,
+    )
+
+    decisions = [
+        {
+            "id": "MOB-01",
+            "selected_option": "make",
+            "make_initial_cost": 20000.0,
+            "make_recurring_cost": 1000.0,
+            "buy_initial_cost": 10000.0,
+            "buy_recurring_cost": 2500.0,
+            "horizon_periods": 12,
+            "is_core_proprietary_ip": True,
+            "internal_capacity_available": True,
+        },
+        {
+            "id": "MOB-02",
+            "selected_option": "buy",
+            "make_initial_cost": 50000.0,
+            "make_recurring_cost": 3000.0,
+            "buy_initial_cost": 15000.0,
+            "buy_recurring_cost": 2000.0,
+            "horizon_periods": 12,
+            "is_core_proprietary_ip": True,
+            "ip_protection_and_escrow_signed": True,
+        },
+    ]
+    res = validate_make_or_buy_breakeven_and_tco(decisions)
+    assert res["total_decisions"] == 2
+    assert res["compliant_decisions"] == 2
+    assert res["core_ip_outsourced_without_escrow_ids"] == []
+    assert res["make_selected_without_capacity_ids"] == []
+    assert res["unjustified_tco_premium_ids"] == []
+    assert res["mob_governance_status"] == "HEALTHY"
+    assert res["is_valid"] is True
+    assert res["recommendations"] == []
+
+
+def test_validate_make_or_buy_breakeven_and_tco_critical():
+    """Detecta externalización de IP crítica sin escrow y selección make sin capacidad interna ('CRITICAL')."""
+    from backend.schemas.projects import (
+        validate_make_or_buy_breakeven_and_tco,
+    )
+
+    decisions = [
+        {
+            "decision_id": "MOB-10",
+            "selected_option": "buy",
+            "make_initial_cost": 40000.0,
+            "make_recurring_cost": 2000.0,
+            "buy_initial_cost": 10000.0,
+            "buy_recurring_cost": 1500.0,
+            "horizon_periods": 12,
+            "is_core_proprietary_ip": True,
+            "ip_protection_and_escrow_signed": False,
+        },
+        {
+            "decision_id": "MOB-11",
+            "selected_option": "make",
+            "make_initial_cost": 15000.0,
+            "make_recurring_cost": 1000.0,
+            "buy_initial_cost": 30000.0,
+            "buy_recurring_cost": 2000.0,
+            "horizon_periods": 12,
+            "internal_capacity_available": False,
+        },
+    ]
+    res = validate_make_or_buy_breakeven_and_tco(decisions)
+    assert res["total_decisions"] == 2
+    assert res["compliant_decisions"] == 0
+    assert res["core_ip_outsourced_without_escrow_ids"] == ["MOB-10"]
+    assert res["make_selected_without_capacity_ids"] == ["MOB-11"]
+    assert res["mob_governance_status"] == "CRITICAL"
+    assert res["is_valid"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_validate_make_or_buy_breakeven_and_tco_at_risk_and_override():
+    """Detecta sobrecosto TCO injustificado ('AT_RISK') y valida exención con strategic_override_approved=True."""
+    from backend.schemas.projects import (
+        validate_make_or_buy_breakeven_and_tco,
+    )
+
+    decisions = [
+        {
+            "id": "MOB-20",
+            "selected_option": "make",
+            "make_initial_cost": 60000.0,
+            "make_recurring_cost": 2000.0,
+            "buy_initial_cost": 20000.0,
+            "buy_recurring_cost": 1000.0,
+            "horizon_periods": 10,
+            "internal_capacity_available": True,
+            "strategic_override_approved": False,
+        },
+        {
+            "id": "MOB-21",
+            "selected_option": "make",
+            "make_initial_cost": 60000.0,
+            "make_recurring_cost": 2000.0,
+            "buy_initial_cost": 20000.0,
+            "buy_recurring_cost": 1000.0,
+            "horizon_periods": 10,
+            "internal_capacity_available": True,
+            "strategic_override_approved": True,
+        },
+    ]
+    res = validate_make_or_buy_breakeven_and_tco(decisions)
+    assert res["total_decisions"] == 2
+    assert res["compliant_decisions"] == 1
+    assert res["unjustified_tco_premium_ids"] == ["MOB-20"]
+    assert res["mob_governance_status"] == "AT_RISK"
+    assert res["is_valid"] is False
+    assert len(res["recommendations"]) >= 1
+
+
+def test_validate_make_or_buy_breakeven_and_tco_empty_and_export():
+    """Manejo defensivo de entradas vacías/no-secuencia y exportación en __all__."""
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_make_or_buy_breakeven_and_tco,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = validate_make_or_buy_breakeven_and_tco(payload)  # type: ignore[arg-type]
+        assert empty["total_decisions"] == 0
+        assert empty["compliant_decisions"] == 0
+        assert empty["core_ip_outsourced_without_escrow_ids"] == []
+        assert empty["make_selected_without_capacity_ids"] == []
+        assert empty["unjustified_tco_premium_ids"] == []
+        assert empty["mob_governance_status"] == "HEALTHY"
+        assert empty["is_valid"] is True
+        assert empty["recommendations"] == []
+
+    assert "validate_make_or_buy_breakeven_and_tco" in mod.__all__
+
+
+

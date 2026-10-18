@@ -6575,3 +6575,157 @@ def test_executive_report_cybersecurity_sla_neutral_and_binding():
         == audit_executive_report_cybersecurity_vulnerability_and_patch_sla(sample)
     )
     assert "audit_executive_report_cybersecurity_vulnerability_and_patch_sla" in mod.__all__
+
+
+def test_audit_executive_report_capex_opex_capitalization_compliance_healthy():
+    """Valida partidas CapEx elegibles (desarrollo/construcción, >=12m, asset ID, finanzas OK) y OpEx operativas."""
+    from backend.services.project_export_service import (
+        audit_executive_report_capex_opex_capitalization_compliance,
+    )
+
+    entries = [
+        {
+            "id": "CST-01",
+            "classification": "capex",
+            "project_stage": "application_development",
+            "amount": 50000.0,
+            "useful_life_months": 36,
+            "asset_register_id": "FA-1001",
+            "finance_approved": True,
+        },
+        {
+            "id": "CST-02",
+            "classification": "opex",
+            "project_stage": "preliminary_discovery",
+            "amount": 12000.0,
+            "useful_life_months": 0,
+            "asset_register_id": "",
+            "finance_approved": True,
+        },
+        {
+            "id": "CST-03",
+            "classification": "opex",
+            "project_stage": "training",
+            "amount": 8000.0,
+            "useful_life_months": 0,
+            "asset_register_id": "",
+            "finance_approved": True,
+        },
+    ]
+    res = audit_executive_report_capex_opex_capitalization_compliance(entries)
+    assert res["total_entries"] == 3
+    assert res["compliant_entries"] == 3
+    assert res["total_capex_amount"] == 50000.0
+    assert res["total_opex_amount"] == 20000.0
+    assert res["improper_capex_in_opex_stage_ids"] == []
+    assert res["unqualified_capex_asset_ids"] == []
+    assert res["missed_capitalization_opportunity_ids"] == []
+    assert res["accounting_governance_health"] == "healthy"
+    assert res["is_compliant"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_executive_report_capex_opex_capitalization_compliance_at_risk():
+    """Detecta oportunidad de capitalización perdida en activo elegible registrado como OpEx ('at_risk')."""
+    from backend.services.project_export_service import (
+        audit_executive_report_capex_opex_capitalization_compliance,
+    )
+
+    entries = [
+        {
+            "entry_id": "CST-10",
+            "classification": "opex",
+            "project_stage": "hardware_acquisition",
+            "amount": 35000.0,
+            "useful_life_months": 48,
+            "asset_register_id": "FA-2040",
+            "finance_approved": True,
+        }
+    ]
+    res = audit_executive_report_capex_opex_capitalization_compliance(entries)
+    assert res["total_entries"] == 1
+    assert res["compliant_entries"] == 0
+    assert res["missed_capitalization_opportunity_ids"] == ["CST-10"]
+    assert res["improper_capex_in_opex_stage_ids"] == []
+    assert res["unqualified_capex_asset_ids"] == []
+    assert res["accounting_governance_health"] == "at_risk"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 1
+
+
+def test_audit_executive_report_capex_opex_capitalization_compliance_critical():
+    """Detecta CapEx impropio en etapa OpEx y CapEx sin vida útil mínima o aprobación financiera ('critical')."""
+    from backend.services.project_export_service import (
+        audit_executive_report_capex_opex_capitalization_compliance,
+    )
+
+    entries = [
+        {
+            "entry_id": "CST-20",
+            "classification": "capex",
+            "project_stage": "research",
+            "amount": 18000.0,
+            "useful_life_months": 24,
+            "asset_register_id": "FA-3001",
+            "finance_approved": True,
+        },
+        {
+            "entry_id": "CST-21",
+            "classification": "capex",
+            "project_stage": "construction",
+            "amount": 25000.0,
+            "useful_life_months": 6,
+            "asset_register_id": "",
+            "finance_approved": False,
+        },
+    ]
+    res = audit_executive_report_capex_opex_capitalization_compliance(entries)
+    assert res["total_entries"] == 2
+    assert res["compliant_entries"] == 0
+    assert res["improper_capex_in_opex_stage_ids"] == ["CST-20"]
+    assert res["unqualified_capex_asset_ids"] == ["CST-21"]
+    assert res["accounting_governance_health"] == "critical"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_executive_report_capex_opex_capitalization_compliance_empty_and_service_binding():
+    """Manejo defensivo de entradas vacías/no-secuencia y exposición en ProjectExportService y __all__."""
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_capex_opex_capitalization_compliance,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_executive_report_capex_opex_capitalization_compliance(payload)  # type: ignore[arg-type]
+        assert empty["total_entries"] == 0
+        assert empty["compliant_entries"] == 0
+        assert empty["total_capex_amount"] == 0.0
+        assert empty["total_opex_amount"] == 0.0
+        assert empty["accounting_governance_health"] == "healthy"
+        assert empty["is_compliant"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "id": "CST-99",
+            "classification": "capex",
+            "project_stage": "implementation",
+            "amount": 10000.0,
+            "useful_life_months": 24,
+            "asset_register_id": "FA-999",
+            "finance_approved": True,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_capex_opex_capitalization_compliance(
+            sample
+        )
+        == audit_executive_report_capex_opex_capitalization_compliance(sample)
+    )
+    assert (
+        "audit_executive_report_capex_opex_capitalization_compliance"
+        in mod.__all__
+    )
+
