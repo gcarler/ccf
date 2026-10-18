@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import csv
+import io
 from typing import Optional
 from uuid import UUID
 
@@ -20,8 +22,70 @@ __all__ = [
     "generate_project_tasks_csv",
     "generate_project_expenses_csv",
     "evaluate_executive_report_completeness",
+    "audit_csv_export_integrity",
     "ProjectExportService",
 ]
+
+
+def audit_csv_export_integrity(
+    csv_content: Optional[str],
+    required_headers: Optional[list[str]] = None,
+) -> dict:
+    """Valida la integridad estructural RFC-4180 y cabeceras requeridas de un CSV exportado."""
+    has_utf8_bom = bool(
+        isinstance(csv_content, str) and csv_content.startswith("\ufeff")
+    )
+    normalized_required = [
+        str(h).strip() for h in (required_headers or []) if str(h).strip()
+    ]
+
+    if not isinstance(csv_content, str) or not csv_content.lstrip("\ufeff").strip():
+        missing_required_headers = sorted(set(normalized_required))
+        return {
+            "has_utf8_bom": has_utf8_bom,
+            "header_columns": [],
+            "data_row_count": 0,
+            "ragged_row_count": 0,
+            "missing_required_headers": missing_required_headers,
+            "is_rfc4180_compliant": False,
+        }
+
+    rows = list(csv.reader(io.StringIO(csv_content.lstrip("\ufeff"))))
+    if not rows or not any(str(col).strip() for col in rows[0]):
+        missing_required_headers = sorted(set(normalized_required))
+        return {
+            "has_utf8_bom": has_utf8_bom,
+            "header_columns": [],
+            "data_row_count": 0,
+            "ragged_row_count": 0,
+            "missing_required_headers": missing_required_headers,
+            "is_rfc4180_compliant": False,
+        }
+
+    header_columns = [str(col).strip() for col in rows[0]]
+    data_rows = rows[1:]
+    data_row_count = len(data_rows)
+    ragged_row_count = int(
+        sum(1 for row in data_rows if len(row) != len(header_columns))
+    )
+    header_set = set(header_columns)
+    missing_required_headers = sorted(
+        {req for req in normalized_required if req not in header_set}
+    )
+    is_rfc4180_compliant = bool(
+        len(header_columns) > 0
+        and ragged_row_count == 0
+        and len(missing_required_headers) == 0
+    )
+
+    return {
+        "has_utf8_bom": has_utf8_bom,
+        "header_columns": header_columns,
+        "data_row_count": data_row_count,
+        "ragged_row_count": ragged_row_count,
+        "missing_required_headers": missing_required_headers,
+        "is_rfc4180_compliant": is_rfc4180_compliant,
+    }
 
 
 def evaluate_executive_report_completeness(report_data: Optional[dict]) -> dict:
@@ -75,6 +139,15 @@ def evaluate_executive_report_completeness(report_data: Optional[dict]) -> dict:
 
 class ProjectExportService:
     """Fachada canónica de informes ejecutivos con ``governance_summary`` PMI."""
+
+    @staticmethod
+    def audit_csv_export_integrity(
+        csv_content: Optional[str],
+        required_headers: Optional[list[str]] = None,
+    ) -> dict:
+        return audit_csv_export_integrity(
+            csv_content, required_headers=required_headers
+        )
 
     @staticmethod
     def evaluate_executive_report_completeness(report_data: Optional[dict]) -> dict:

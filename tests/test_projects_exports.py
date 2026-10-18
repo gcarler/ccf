@@ -541,3 +541,91 @@ def test_evaluate_executive_report_completeness_audit_readiness(client, db_sessi
     assert full_result["completeness_pct"] == 100.0
     assert full_result["is_audit_ready"] is True
 
+
+def test_audit_csv_export_integrity_valid_bom_and_required_headers(db_session):
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_csv_export_integrity,
+    )
+
+    csv_with_bom = "\ufeffID,Título,Estado\r\n1,Tarea A,completed\r\n2,Tarea B,in_progress\r\n"
+    result = audit_csv_export_integrity(
+        csv_with_bom,
+        required_headers=["ID", "Título", "Estado"],
+    )
+    assert result == {
+        "has_utf8_bom": True,
+        "header_columns": ["ID", "Título", "Estado"],
+        "data_row_count": 2,
+        "ragged_row_count": 0,
+        "missing_required_headers": [],
+        "is_rfc4180_compliant": True,
+    }
+
+    project = create_project_factory(db_session)
+    create_task_factory(db_session, project.id, title="Tarea RFC 4180")
+    tasks_csv = ProjectExportService.generate_project_tasks_csv(db_session, project.id)
+    tasks_audit = ProjectExportService.audit_csv_export_integrity(tasks_csv)
+    assert tasks_audit["has_utf8_bom"] is True
+    assert len(tasks_audit["header_columns"]) > 0
+    assert tasks_audit["data_row_count"] == 1
+    assert tasks_audit["ragged_row_count"] == 0
+    assert tasks_audit["missing_required_headers"] == []
+    assert tasks_audit["is_rfc4180_compliant"] is True
+
+
+def test_audit_csv_export_integrity_missing_required_headers():
+    from backend.services.project_export_service import audit_csv_export_integrity
+
+    csv_text = "ID,Título\n1,Tarea 1\n"
+    result = audit_csv_export_integrity(
+        csv_text,
+        required_headers=["ID", "Estado", "Prioridad", "Título"],
+    )
+    assert result["has_utf8_bom"] is False
+    assert result["header_columns"] == ["ID", "Título"]
+    assert result["data_row_count"] == 1
+    assert result["ragged_row_count"] == 0
+    assert result["missing_required_headers"] == ["Estado", "Prioridad"]
+    assert result["is_rfc4180_compliant"] is False
+
+
+def test_audit_csv_export_integrity_ragged_rows():
+    from backend.services.project_export_service import ProjectExportService
+
+    ragged_csv = "\ufeffCol1,Col2,Col3\nA,B,C\nD,E\nF,G,H,I\n"
+    result = ProjectExportService.audit_csv_export_integrity(
+        ragged_csv,
+        required_headers=["Col1", "Col2"],
+    )
+    assert result["has_utf8_bom"] is True
+    assert result["header_columns"] == ["Col1", "Col2", "Col3"]
+    assert result["data_row_count"] == 3
+    assert result["ragged_row_count"] == 2
+    assert result["missing_required_headers"] == []
+    assert result["is_rfc4180_compliant"] is False
+
+
+def test_audit_csv_export_integrity_empty_and_none():
+    from backend.services.project_export_service import audit_csv_export_integrity
+
+    none_res = audit_csv_export_integrity(None, required_headers=["ID", "Monto"])
+    assert none_res == {
+        "has_utf8_bom": False,
+        "header_columns": [],
+        "data_row_count": 0,
+        "ragged_row_count": 0,
+        "missing_required_headers": ["ID", "Monto"],
+        "is_rfc4180_compliant": False,
+    }
+
+    empty_bom_res = audit_csv_export_integrity("\ufeff   ")
+    assert empty_bom_res == {
+        "has_utf8_bom": True,
+        "header_columns": [],
+        "data_row_count": 0,
+        "ragged_row_count": 0,
+        "missing_required_headers": [],
+        "is_rfc4180_compliant": False,
+    }
+
