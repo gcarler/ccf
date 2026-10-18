@@ -6102,3 +6102,176 @@ def test_polymorphic_and_composition_hygiene_real_openapi():
     assert res["is_polymorphic_hygiene_clean"] is True
 
 
+def test_readonly_and_writeonly_property_hygiene_clean_schema():
+    """Verifica que readOnly requerido en response y writeOnly requerido en request pasen la auditoría."""
+    schema = {
+        "paths": {
+            "/api/projects/tokens": {
+                "post": {
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/ProjectTokenCreate"}
+                            }
+                        }
+                    },
+                    "responses": {
+                        "201": {
+                            "description": "Created",
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/ProjectTokenRead"}
+                                }
+                            },
+                        }
+                    },
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "ProjectTokenCreate": {
+                    "type": "object",
+                    "required": ["label", "secret_key"],
+                    "properties": {
+                        "label": {"type": "string"},
+                        "secret_key": {"type": "string", "writeOnly": True},
+                        "id": {"type": "string", "readOnly": True},
+                    },
+                },
+                "ProjectTokenRead": {
+                    "type": "object",
+                    "required": ["id", "label"],
+                    "properties": {
+                        "id": {"type": "string", "readOnly": True},
+                        "label": {"type": "string"},
+                        "secret_key": {"type": "string", "writeOnly": True},
+                    },
+                },
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_readonly_and_writeonly_property_hygiene(
+        schema
+    )
+    assert res["total_properties_inspected"] == 6
+    assert res["readonly_properties_count"] == 2
+    assert res["writeonly_properties_count"] == 2
+    assert res["contradictory_read_write_properties"] == []
+    assert res["required_readonly_in_request_schemas"] == []
+    assert res["required_writeonly_in_response_schemas"] == []
+    assert res["is_property_directionality_hygiene_clean"] is True
+
+
+def test_readonly_and_writeonly_property_hygiene_detects_contradictory_read_write():
+    """Detecta propiedades con readOnly=True y writeOnly=True simultáneamente."""
+    schema = {
+        "paths": {},
+        "components": {
+            "schemas": {
+                "ProjectContradictorySchema": {
+                    "type": "object",
+                    "properties": {
+                        "paradox_field": {
+                            "type": "string",
+                            "readOnly": True,
+                            "writeOnly": True,
+                        },
+                        "normal_field": {"type": "string"},
+                    },
+                }
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_readonly_and_writeonly_property_hygiene(
+        schema
+    )
+    assert res["total_properties_inspected"] == 2
+    assert res["readonly_properties_count"] == 1
+    assert res["writeonly_properties_count"] == 1
+    assert res["contradictory_read_write_properties"] == [
+        "ProjectContradictorySchema.paradox_field"
+    ]
+    assert res["required_readonly_in_request_schemas"] == []
+    assert res["required_writeonly_in_response_schemas"] == []
+    assert res["is_property_directionality_hygiene_clean"] is False
+
+
+def test_readonly_and_writeonly_property_hygiene_detects_required_readonly_in_request_and_writeonly_in_response():
+    """Detecta readOnly requerido en requestBody mutativo y writeOnly requerido en response 2xx."""
+    schema = {
+        "paths": {
+            "/projects/secrets": {
+                "patch": {
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/ProjectBadRequest"}
+                            }
+                        }
+                    },
+                    "responses": {
+                        "200": {
+                            "description": "OK",
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/ProjectBadResponse"}
+                                }
+                            },
+                        }
+                    },
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "ProjectBadRequest": {
+                    "type": "object",
+                    "required": ["created_at"],
+                    "properties": {
+                        "created_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "readOnly": True,
+                        }
+                    },
+                },
+                "ProjectBadResponse": {
+                    "type": "object",
+                    "required": ["raw_password"],
+                    "properties": {
+                        "raw_password": {
+                            "type": "string",
+                            "writeOnly": True,
+                        }
+                    },
+                },
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_readonly_and_writeonly_property_hygiene(
+        schema
+    )
+    assert res["total_properties_inspected"] == 2
+    assert res["readonly_properties_count"] == 1
+    assert res["writeonly_properties_count"] == 1
+    assert res["contradictory_read_write_properties"] == []
+    assert res["required_readonly_in_request_schemas"] == [
+        "ProjectBadRequest.created_at"
+    ]
+    assert res["required_writeonly_in_response_schemas"] == [
+        "ProjectBadResponse.raw_password"
+    ]
+    assert res["is_property_directionality_hygiene_clean"] is False
+
+
+def test_readonly_and_writeonly_property_hygiene_real_openapi():
+    """Verifica que el schema OpenAPI real de FastAPI para /projects cumpla la higiene de direccionalidad readOnly/writeOnly."""
+    res = audit_projects_api_contracts.summarize_projects_readonly_and_writeonly_property_hygiene()
+    assert res["total_properties_inspected"] > 0
+    assert res["contradictory_read_write_properties"] == []
+    assert res["required_readonly_in_request_schemas"] == []
+    assert res["required_writeonly_in_response_schemas"] == []
+    assert res["is_property_directionality_hygiene_clean"] is True
+
+

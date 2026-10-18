@@ -4713,6 +4713,147 @@ def summarize_projects_polymorphic_and_composition_hygiene(
     }
 
 
+def summarize_projects_readonly_and_writeonly_property_hygiene(
+    openapi_schema: Mapping[str, object] | None = None,
+) -> dict[str, object]:
+    """Audita el uso de readOnly y writeOnly en propiedades de schemas referenciados por endpoints de proyectos."""
+    if openapi_schema is None:
+        from backend.app import app
+
+        schema_dict: Mapping[str, Any] = app.openapi()
+    else:
+        schema_dict = openapi_schema
+
+    total_properties_inspected = 0
+    readonly_properties_count = 0
+    writeonly_properties_count = 0
+    contradictory_read_write_properties: list[str] = []
+    required_readonly_in_request_schemas: list[str] = []
+    required_writeonly_in_response_schemas: list[str] = []
+
+    referenced_schemas: set[str] = set()
+    request_schemas: set[str] = set()
+    response_schemas: set[str] = set()
+
+    paths = schema_dict.get("paths", {}) if isinstance(schema_dict, Mapping) else {}
+    has_project_paths = False
+    if isinstance(paths, Mapping):
+        for path in sorted(paths.keys()):
+            path_str = str(path)
+            if not path_str.startswith(("/api/projects", "/api/v1/projects", "/projects")):
+                continue
+            path_item = paths[path]
+            if not isinstance(path_item, Mapping):
+                continue
+            has_project_paths = True
+
+            for method in ("get", "post", "put", "patch", "delete", "head", "options", "trace"):
+                op_spec = path_item.get(method)
+                if not isinstance(op_spec, Mapping):
+                    continue
+
+                for ref in schema_refs(dict(op_spec)):
+                    referenced_schemas.add(ref)
+
+                if method in ("post", "put", "patch"):
+                    req_body = op_spec.get("requestBody")
+                    if isinstance(req_body, Mapping):
+                        for ref in schema_refs(dict(req_body)):
+                            request_schemas.add(ref)
+
+                responses = op_spec.get("responses")
+                if isinstance(responses, Mapping):
+                    for status_code, resp_obj in responses.items():
+                        if str(status_code).startswith("2") and isinstance(resp_obj, Mapping):
+                            for ref in schema_refs(dict(resp_obj)):
+                                response_schemas.add(ref)
+
+    components = schema_dict.get("components", {}) if isinstance(schema_dict, Mapping) else {}
+    schemas = components.get("schemas", {}) if isinstance(components, Mapping) else {}
+    if not isinstance(schemas, Mapping):
+        schemas = {}
+
+    def _expand_refs(seed_refs: set[str]) -> None:
+        queue = list(seed_refs)
+        while queue:
+            current = queue.pop()
+            s_obj = schemas.get(current)
+            if isinstance(s_obj, Mapping):
+                for nested_ref in schema_refs(dict(s_obj)):
+                    if nested_ref not in seed_refs:
+                        seed_refs.add(nested_ref)
+                        queue.append(nested_ref)
+
+    if referenced_schemas:
+        _expand_refs(referenced_schemas)
+    if request_schemas:
+        _expand_refs(request_schemas)
+    if response_schemas:
+        _expand_refs(response_schemas)
+
+    for s_name in sorted(schemas.keys()):
+        s_obj = schemas[s_name]
+        if not isinstance(s_obj, Mapping):
+            continue
+        is_proj = (
+            not has_project_paths
+            or "project" in s_name.lower()
+            or s_name.startswith(_PROJECT_DOMAIN_SCHEMA_PREFIXES)
+            or s_name in referenced_schemas
+        )
+        if not is_proj:
+            continue
+
+        props = s_obj.get("properties", {})
+        if not isinstance(props, Mapping):
+            continue
+
+        raw_required = s_obj.get("required", [])
+        required_props = (
+            {str(item) for item in raw_required if isinstance(item, str)}
+            if isinstance(raw_required, list)
+            else set()
+        )
+
+        for prop_name in sorted(props.keys()):
+            prop_schema = props[prop_name]
+            if not isinstance(prop_schema, Mapping):
+                continue
+
+            total_properties_inspected += 1
+            qualified = f"{s_name}.{prop_name}"
+            is_readonly = prop_schema.get("readOnly") is True
+            is_writeonly = prop_schema.get("writeOnly") is True
+
+            if is_readonly:
+                readonly_properties_count += 1
+            if is_writeonly:
+                writeonly_properties_count += 1
+
+            if is_readonly and is_writeonly:
+                contradictory_read_write_properties.append(qualified)
+
+            if is_readonly and prop_name in required_props and s_name in request_schemas:
+                required_readonly_in_request_schemas.append(qualified)
+
+            if is_writeonly and prop_name in required_props and s_name in response_schemas:
+                required_writeonly_in_response_schemas.append(qualified)
+
+    return {
+        "total_properties_inspected": total_properties_inspected,
+        "readonly_properties_count": readonly_properties_count,
+        "writeonly_properties_count": writeonly_properties_count,
+        "contradictory_read_write_properties": sorted(contradictory_read_write_properties),
+        "required_readonly_in_request_schemas": sorted(required_readonly_in_request_schemas),
+        "required_writeonly_in_response_schemas": sorted(required_writeonly_in_response_schemas),
+        "is_property_directionality_hygiene_clean": (
+            len(contradictory_read_write_properties) == 0
+            and len(required_readonly_in_request_schemas) == 0
+            and len(required_writeonly_in_response_schemas) == 0
+        ),
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()
