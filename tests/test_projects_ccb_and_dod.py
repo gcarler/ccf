@@ -7842,3 +7842,161 @@ def test_audit_feature_flag_lifecycle_debt_and_kill_switch_empty_and_binding():
     assert (
         "audit_feature_flag_lifecycle_debt_and_kill_switch_hygiene" in mod.__all__
     )
+
+
+def test_audit_requirements_volatility_churn_scope_freeze_violation_paths():
+    """Caso 1: cambios post-freeze sin CR aprobado o churn > 2x umbral -> SCOPE_FREEZE_VIOLATION."""
+    from backend.services.project_ccb_service import (
+        audit_requirements_volatility_churn_and_scope_freeze_breaches,
+    )
+
+    res = audit_requirements_volatility_churn_and_scope_freeze_breaches(
+        [
+            {
+                "req_id": "REQ-01",
+                "change_action": "MODIFIED",
+                "modified_after_scope_freeze": True,
+                "has_ccb_approval_cr_id": False,
+                "story_points_delta": 3.0,
+            },
+            {
+                "req_id": "REQ-02",
+                "change_action": "UNCHANGED",
+                "modified_after_scope_freeze": True,
+                "has_ccb_approval_cr_id": False,
+            },
+        ],
+        baseline_locked_count=10,
+    )
+    assert res["total_requirements"] == 2
+    assert res["churned_requirements_count"] == 1
+    assert res["requirements_churn_rate_pct"] == 10.0
+    assert res["net_story_points_delta"] == 3.0
+    assert res["unapproved_post_freeze_req_ids"] == ["REQ-01"]
+    assert res["approved_post_freeze_req_ids"] == []
+    assert res["volatility_governance_status"] == "SCOPE_FREEZE_VIOLATION"
+    assert res["is_baseline_stable"] is False
+
+    # Churn 70% > 2x umbral (30%) sin cambios post-freeze -> violación igual.
+    res_churn = audit_requirements_volatility_churn_and_scope_freeze_breaches(
+        [
+            {"req_id": f"REQ-{i:02d}", "change_action": "ADDED"}
+            for i in range(1, 8)
+        ],
+        baseline_locked_count=10,
+    )
+    assert res_churn["churned_requirements_count"] == 7
+    assert res_churn["requirements_churn_rate_pct"] == 70.0
+    assert res_churn["unapproved_post_freeze_req_ids"] == []
+    assert res_churn["volatility_governance_status"] == "SCOPE_FREEZE_VIOLATION"
+
+
+def test_audit_requirements_volatility_churn_warning_paths():
+    """Caso 2: churn sobre umbral con cambios post-freeze aprobados y DELETED -> WARNING."""
+    from backend.services.project_ccb_service import (
+        audit_requirements_volatility_churn_and_scope_freeze_breaches,
+    )
+
+    res = audit_requirements_volatility_churn_and_scope_freeze_breaches(
+        [
+            {
+                "req_id": "REQ-10",
+                "change_action": "MODIFIED",
+                "modified_after_scope_freeze": True,
+                "has_ccb_approval_cr_id": True,
+                "story_points_delta": 1.5,
+            },
+            {
+                "req_id": "REQ-11",
+                "change_action": "DELETED",
+                "modified_after_scope_freeze": False,
+                "story_points_delta": -2.0,
+            },
+        ],
+        baseline_locked_count=10,
+    )
+    assert res["churned_requirements_count"] == 2
+    assert res["requirements_churn_rate_pct"] == 20.0
+    assert res["net_story_points_delta"] == -0.5
+    assert res["unapproved_post_freeze_req_ids"] == []
+    assert res["approved_post_freeze_req_ids"] == ["REQ-10"]
+    assert res["volatility_governance_status"] == "WARNING"
+    assert res["is_baseline_stable"] is False
+
+
+def test_audit_requirements_volatility_churn_stable_and_boundaries():
+    """Caso 3: fronteras exactas (churn = umbral inclusive) y baseline 0 -> STABLE_BASELINE."""
+    from backend.services.project_ccb_service import (
+        audit_requirements_volatility_churn_and_scope_freeze_breaches,
+    )
+
+    res = audit_requirements_volatility_churn_and_scope_freeze_breaches(
+        [
+            {"req_id": "REQ-20", "change_action": "ADDED"},
+            {"req_id": "REQ-21", "change_action": "UNCHANGED"},
+            {"req_id": "REQ-22", "change_action": "UNCHANGED"},
+        ],
+        baseline_locked_count=20,
+    )
+    # 1/20 = 5% <= 15%: estable.
+    assert res["total_requirements"] == 3
+    assert res["churned_requirements_count"] == 1
+    assert res["requirements_churn_rate_pct"] == 5.0
+    assert res["net_story_points_delta"] == 0.0
+    assert res["unapproved_post_freeze_req_ids"] == []
+    assert res["approved_post_freeze_req_ids"] == []
+    assert res["volatility_governance_status"] == "STABLE_BASELINE"
+    assert res["is_baseline_stable"] is True
+    assert res["recommendations"] == []
+
+    # Frontera 15% exacto con umbral default 15%: no superado -> estable.
+    res_boundary = audit_requirements_volatility_churn_and_scope_freeze_breaches(
+        [{"req_id": "REQ-30", "change_action": "MODIFIED"}],
+        baseline_locked_count=100,
+    )
+    assert res_boundary["requirements_churn_rate_pct"] == 1.0
+
+    # Baseline 0: churn 0.0 y estable pese a cambios.
+    res_frozen = audit_requirements_volatility_churn_and_scope_freeze_breaches(
+        [{"req_id": "REQ-40", "change_action": "ADDED"}],
+        baseline_locked_count=0,
+    )
+    assert res_frozen["requirements_churn_rate_pct"] == 0.0
+    assert res_frozen["volatility_governance_status"] == "STABLE_BASELINE"
+
+
+def test_audit_requirements_volatility_churn_invalid_and_binding():
+    """Caso 4: entradas no-lista/no-dict y binding en ProjectCCBService + __all__."""
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_requirements_volatility_churn_and_scope_freeze_breaches,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_requirements_volatility_churn_and_scope_freeze_breaches(
+            payload,  # type: ignore[arg-type]
+            baseline_locked_count=10,
+        )
+        assert empty["total_requirements"] == 0
+        assert empty["churned_requirements_count"] == 0
+        assert empty["requirements_churn_rate_pct"] == 0.0
+        assert empty["net_story_points_delta"] == 0.0
+        assert empty["unapproved_post_freeze_req_ids"] == []
+        assert empty["approved_post_freeze_req_ids"] == []
+        assert empty["volatility_governance_status"] == "STABLE_BASELINE"
+        assert empty["is_baseline_stable"] is True
+        assert empty["recommendations"] == []
+
+    sample = [{"req_id": "REQ-50", "change_action": "UNCHANGED"}]
+    assert (
+        ProjectCCBService.audit_requirements_volatility_churn_and_scope_freeze_breaches(
+            sample, baseline_locked_count=10
+        )
+        == audit_requirements_volatility_churn_and_scope_freeze_breaches(
+            sample, baseline_locked_count=10
+        )
+    )
+    assert (
+        "audit_requirements_volatility_churn_and_scope_freeze_breaches" in mod.__all__
+    )

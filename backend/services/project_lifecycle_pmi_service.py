@@ -3159,6 +3159,7 @@ __all__ = [
     "audit_project_closure_hypercare_and_bau_handover_readiness",
     "audit_organizational_change_adkar_adoption_readiness",
     "audit_benefits_realization_post_implementation_harvesting",
+    "audit_contract_claims_dispute_adr_and_liquidated_damages",
     "ProjectLifecyclePMIService",
 ]
 
@@ -6205,4 +6206,130 @@ def audit_benefits_realization_post_implementation_harvesting(
 
 ProjectLifecyclePMIService.audit_benefits_realization_post_implementation_harvesting = staticmethod(
     audit_benefits_realization_post_implementation_harvesting
+)
+
+
+def audit_contract_claims_dispute_adr_and_liquidated_damages(
+    claims: list[dict[str, Any]],
+    *,
+    legal_contingency_reserve: float = 0.0,
+    max_negotiation_days_before_adr: int = 45,
+) -> dict[str, Any]:
+    """PMI PMBOK §12.3 & §4.7 — Project Contract Claims, Dispute Resolution ADR Escalation & Liquidated Damages Exposure Auditor."""
+    valid_claims: list[dict[str, Any]] = []
+    for item in claims or []:
+        if not isinstance(item, dict):
+            continue
+        cid = str(item.get("claim_id") or "").strip()
+        if not cid:
+            continue
+        valid_claims.append({**item, "_cid": cid})
+
+    if not valid_claims:
+        return {
+            "total_claims": 0,
+            "total_claimed_amount": 0.0,
+            "total_liquidated_damages": 0.0,
+            "total_dispute_exposure": 0.0,
+            "unfunded_dispute_exposure": 0.0,
+            "overdue_adr_escalation_claim_ids": [],
+            "unsubstantiated_evidence_claim_ids": [],
+            "litigation_claim_ids": [],
+            "claims_governance_status": "CONTROLLED",
+            "is_claims_controlled": True,
+            "recommendations": [],
+        }
+
+    raw_claimed_sum = 0.0
+    raw_ld_sum = 0.0
+    overdue_adr_escalation_claim_ids: list[str] = []
+    unsubstantiated_evidence_claim_ids: list[str] = []
+    litigation_claim_ids: list[str] = []
+
+    for clm in valid_claims:
+        cid = clm["_cid"]
+        claimed_amt = max(0.0, float(clm.get("claimed_amount", 0.0) or 0.0))
+        ld_amt = max(0.0, float(clm.get("liquidated_damages_accrued", 0.0) or 0.0))
+        days_neg = max(0, int(clm.get("days_in_direct_negotiation", 0) or 0))
+        adr_init = bool(clm.get("adr_mediation_initiated", False))
+        litigated = bool(
+            clm.get(
+                "escalated_to_litigation",
+                clm.get(" escalated_to_litigation", False),
+            )
+        )
+        has_evidence = bool(clm.get("has_contemporaneous_evidence_log", True))
+
+        raw_claimed_sum += claimed_amt
+        raw_ld_sum += ld_amt
+
+        if (
+            days_neg > max_negotiation_days_before_adr
+            and not adr_init
+            and not litigated
+        ):
+            overdue_adr_escalation_claim_ids.append(cid)
+        if not has_evidence:
+            unsubstantiated_evidence_claim_ids.append(cid)
+        if litigated:
+            litigation_claim_ids.append(cid)
+
+    total_claimed_amount = round(raw_claimed_sum, 2)
+    total_liquidated_damages = round(raw_ld_sum, 2)
+    total_dispute_exposure = round(total_claimed_amount + total_liquidated_damages, 2)
+    reserve = max(0.0, float(legal_contingency_reserve or 0.0))
+    unfunded_dispute_exposure = round(
+        max(0.0, total_dispute_exposure - reserve), 2
+    )
+
+    recommendations: list[str] = []
+    if litigation_claim_ids:
+        recommendations.append(
+            f"Engage legal counsel and executive steering for claims escalated to litigation: {', '.join(litigation_claim_ids)}."
+        )
+    if unsubstantiated_evidence_claim_ids:
+        recommendations.append(
+            f"Compile contemporaneous evidence logs and change history for unsubstantiated claim(s): {', '.join(unsubstantiated_evidence_claim_ids)}."
+        )
+    if unfunded_dispute_exposure > 0:
+        recommendations.append(
+            f"Provision additional legal contingency reserve to cover unfunded dispute exposure ({unfunded_dispute_exposure:.2f})."
+        )
+    if overdue_adr_escalation_claim_ids:
+        recommendations.append(
+            f"Escalate deadlocked direct negotiations (> {max_negotiation_days_before_adr} days) to contractual ADR/mediation for claim(s): {', '.join(overdue_adr_escalation_claim_ids)}."
+        )
+    if total_liquidated_damages > 0:
+        recommendations.append(
+            f"Mitigate schedule/SLA breaches accruing liquidated damages ({total_liquidated_damages:.2f})."
+        )
+
+    if (
+        litigation_claim_ids
+        or unsubstantiated_evidence_claim_ids
+        or unfunded_dispute_exposure > 0
+    ):
+        claims_governance_status = "LITIGATION_OR_INSOLVENCY_RISK"
+    elif overdue_adr_escalation_claim_ids or total_liquidated_damages > 0:
+        claims_governance_status = "WARNING"
+    else:
+        claims_governance_status = "CONTROLLED"
+
+    return {
+        "total_claims": len(valid_claims),
+        "total_claimed_amount": total_claimed_amount,
+        "total_liquidated_damages": total_liquidated_damages,
+        "total_dispute_exposure": total_dispute_exposure,
+        "unfunded_dispute_exposure": unfunded_dispute_exposure,
+        "overdue_adr_escalation_claim_ids": overdue_adr_escalation_claim_ids,
+        "unsubstantiated_evidence_claim_ids": unsubstantiated_evidence_claim_ids,
+        "litigation_claim_ids": litigation_claim_ids,
+        "claims_governance_status": claims_governance_status,
+        "is_claims_controlled": claims_governance_status == "CONTROLLED",
+        "recommendations": recommendations,
+    }
+
+
+ProjectLifecyclePMIService.audit_contract_claims_dispute_adr_and_liquidated_damages = staticmethod(
+    audit_contract_claims_dispute_adr_and_liquidated_damages
 )

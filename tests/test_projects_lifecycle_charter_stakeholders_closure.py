@@ -7773,3 +7773,143 @@ def test_audit_benefits_realization_post_implementation_harvesting_empty_and_bin
     assert (
         "audit_benefits_realization_post_implementation_harvesting" in mod.__all__
     )
+
+
+def test_audit_contract_claims_dispute_adr_and_liquidated_damages_controlled():
+    """Caso 1: Reclamaciones cubiertas por reserva legal, negociación <=45d, con evidencia y sin penalidades -> CONTROLLED."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_contract_claims_dispute_adr_and_liquidated_damages,
+    )
+
+    claims = [
+        {
+            "claim_id": "CLM-01",
+            "claimed_amount": 30000.0,
+            "liquidated_damages_accrued": 0.0,
+            "days_in_direct_negotiation": 20,
+            "adr_mediation_initiated": False,
+            "escalated_to_litigation": False,
+            "has_contemporaneous_evidence_log": True,
+        }
+    ]
+    res = audit_contract_claims_dispute_adr_and_liquidated_damages(
+        claims, legal_contingency_reserve=50000.0, max_negotiation_days_before_adr=45
+    )
+    assert res["total_claims"] == 1
+    assert res["total_claimed_amount"] == 30000.0
+    assert res["total_liquidated_damages"] == 0.0
+    assert res["total_dispute_exposure"] == 30000.0
+    assert res["unfunded_dispute_exposure"] == 0.0
+    assert res["overdue_adr_escalation_claim_ids"] == []
+    assert res["unsubstantiated_evidence_claim_ids"] == []
+    assert res["litigation_claim_ids"] == []
+    assert res["claims_governance_status"] == "CONTROLLED"
+    assert res["is_claims_controlled"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_contract_claims_dispute_adr_and_liquidated_damages_warning():
+    """Caso 2: Negociación directa >45d sin iniciar ADR y daños liquidados >0 cubiertos por reserva -> WARNING."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_contract_claims_dispute_adr_and_liquidated_damages,
+    )
+
+    claims = [
+        {
+            "claim_id": "CLM-DELAY-10",
+            "claimed_amount": 25000.0,
+            "liquidated_damages_accrued": 5000.0,
+            "days_in_direct_negotiation": 60,
+            "adr_mediation_initiated": False,
+            "escalated_to_litigation": False,
+            "has_contemporaneous_evidence_log": True,
+        }
+    ]
+    res = audit_contract_claims_dispute_adr_and_liquidated_damages(
+        claims, legal_contingency_reserve=40000.0, max_negotiation_days_before_adr=45
+    )
+    assert res["total_claims"] == 1
+    assert res["total_dispute_exposure"] == 30000.0
+    assert res["unfunded_dispute_exposure"] == 0.0
+    assert res["overdue_adr_escalation_claim_ids"] == ["CLM-DELAY-10"]
+    assert res["unsubstantiated_evidence_claim_ids"] == []
+    assert res["litigation_claim_ids"] == []
+    assert res["claims_governance_status"] == "WARNING"
+    assert res["is_claims_controlled"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_contract_claims_dispute_adr_and_liquidated_damages_litigation_risk():
+    """Caso 3: Litigio activo, falta de evidencia contemporánea y exposición no cubierta por reserva -> LITIGATION_OR_INSOLVENCY_RISK."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_contract_claims_dispute_adr_and_liquidated_damages,
+    )
+
+    claims = [
+        {
+            "claim_id": "CLM-COURT-20",
+            "claimed_amount": 80000.0,
+            "liquidated_damages_accrued": 20000.0,
+            "days_in_direct_negotiation": 90,
+            "adr_mediation_initiated": True,
+            "escalated_to_litigation": True,
+            "has_contemporaneous_evidence_log": False,
+        }
+    ]
+    res = audit_contract_claims_dispute_adr_and_liquidated_damages(
+        claims, legal_contingency_reserve=30000.0
+    )
+    assert res["total_claims"] == 1
+    assert res["total_dispute_exposure"] == 100000.0
+    assert res["unfunded_dispute_exposure"] == 70000.0
+    assert res["unsubstantiated_evidence_claim_ids"] == ["CLM-COURT-20"]
+    assert res["litigation_claim_ids"] == ["CLM-COURT-20"]
+    assert res["claims_governance_status"] == "LITIGATION_OR_INSOLVENCY_RISK"
+    assert res["is_claims_controlled"] is False
+    assert len(res["recommendations"]) >= 3
+
+
+def test_audit_contract_claims_dispute_adr_and_liquidated_damages_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en ProjectLifecyclePMIService + __all__."""
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_contract_claims_dispute_adr_and_liquidated_damages,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_contract_claims_dispute_adr_and_liquidated_damages(payload)  # type: ignore[arg-type]
+        assert empty["total_claims"] == 0
+        assert empty["total_claimed_amount"] == 0.0
+        assert empty["total_liquidated_damages"] == 0.0
+        assert empty["total_dispute_exposure"] == 0.0
+        assert empty["unfunded_dispute_exposure"] == 0.0
+        assert empty["overdue_adr_escalation_claim_ids"] == []
+        assert empty["unsubstantiated_evidence_claim_ids"] == []
+        assert empty["litigation_claim_ids"] == []
+        assert empty["claims_governance_status"] == "CONTROLLED"
+        assert empty["is_claims_controlled"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "claim_id": "CLM-99",
+            "claimed_amount": 10000.0,
+            "liquidated_damages_accrued": 0.0,
+            "days_in_direct_negotiation": 10,
+            "adr_mediation_initiated": False,
+            "escalated_to_litigation": False,
+            "has_contemporaneous_evidence_log": True,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_contract_claims_dispute_adr_and_liquidated_damages(
+            sample, legal_contingency_reserve=20000.0
+        )
+        == audit_contract_claims_dispute_adr_and_liquidated_damages(
+            sample, legal_contingency_reserve=20000.0
+        )
+    )
+    assert (
+        "audit_contract_claims_dispute_adr_and_liquidated_damages" in mod.__all__
+    )

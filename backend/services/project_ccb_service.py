@@ -2838,6 +2838,7 @@ __all__ = [
     "audit_technical_debt_interest_and_remediation_quota",
     "audit_canary_rollout_blast_radius_and_rollback_readiness",
     "audit_feature_flag_lifecycle_debt_and_kill_switch_hygiene",
+    "audit_requirements_volatility_churn_and_scope_freeze_breaches",
     "ProjectCCBService",
 ]
 
@@ -6085,4 +6086,106 @@ def audit_feature_flag_lifecycle_debt_and_kill_switch_hygiene(
 
 ProjectCCBService.audit_feature_flag_lifecycle_debt_and_kill_switch_hygiene = staticmethod(
     audit_feature_flag_lifecycle_debt_and_kill_switch_hygiene
+)
+
+
+def audit_requirements_volatility_churn_and_scope_freeze_breaches(
+    requirements: Any,
+    *,
+    baseline_locked_count: int,
+    max_churn_rate_pct: float = 15.0,
+) -> Dict[str, object]:
+    """Auditoría PMBOK 5.6 (Control Scope) y 4.6: churn de requerimientos.
+
+    Mide la tasa de churn frente a la línea base bloqueada, separa los
+    cambios posteriores al scope freeze con y sin aprobación de CCB, y
+    determina el estado de volatilidad del baseline.
+    """
+    entries = requirements if isinstance(requirements, list) else []
+    rows = [item for item in entries if isinstance(item, dict)]
+
+    churn_actions = {"ADDED", "MODIFIED", "DELETED"}
+    unapproved_post_freeze_req_ids: List[str] = []
+    approved_post_freeze_req_ids: List[str] = []
+    churned_requirements_count = 0
+    net_story_points_delta = 0.0
+
+    for item in rows:
+        req_id = item.get("req_id")
+        change_action = item.get("change_action", "UNCHANGED")
+        story_delta = item.get("story_points_delta", 0.0)
+
+        if story_delta is not None and isinstance(story_delta, (int, float)):
+            net_story_points_delta += story_delta
+
+        if change_action in churn_actions:
+            churned_requirements_count += 1
+
+            if item.get("modified_after_scope_freeze", False) is True:
+                if item.get("has_ccb_approval_cr_id", True) is True:
+                    approved_post_freeze_req_ids.append(req_id)
+                else:
+                    unapproved_post_freeze_req_ids.append(req_id)
+
+    net_story_points_delta = round(net_story_points_delta, 2)
+
+    if baseline_locked_count > 0:
+        requirements_churn_rate_pct = round(
+            (churned_requirements_count / baseline_locked_count) * 100.0, 2
+        )
+    else:
+        requirements_churn_rate_pct = 0.0
+
+    if (
+        unapproved_post_freeze_req_ids
+        or requirements_churn_rate_pct > max_churn_rate_pct * 2
+    ):
+        volatility_governance_status = "SCOPE_FREEZE_VIOLATION"
+    elif (
+        requirements_churn_rate_pct > max_churn_rate_pct
+        or approved_post_freeze_req_ids
+    ):
+        volatility_governance_status = "WARNING"
+    else:
+        volatility_governance_status = "STABLE_BASELINE"
+
+    recommendations: List[str] = []
+    if unapproved_post_freeze_req_ids:
+        recommendations.append(
+            "Ratify with the CCB or revert post-freeze changes without approved CR: "
+            + ", ".join(str(r) for r in unapproved_post_freeze_req_ids)
+        )
+    if approved_post_freeze_req_ids:
+        recommendations.append(
+            "Track post-freeze changes with approved CRs under control scope: "
+            + ", ".join(str(r) for r in approved_post_freeze_req_ids)
+        )
+    if requirements_churn_rate_pct > max_churn_rate_pct:
+        recommendations.append(
+            f"Stabilize requirements baseline: churn rate {requirements_churn_rate_pct}% exceeds max {max_churn_rate_pct}%"
+        )
+    if net_story_points_delta > 0:
+        recommendations.append(
+            f"Verify CCB capacity impact for +{net_story_points_delta} net story points"
+        )
+    elif net_story_points_delta < 0:
+        recommendations.append(
+            f"Verify CCB capacity impact for {-net_story_points_delta} removed story points"
+        )
+
+    return {
+        "total_requirements": len(rows),
+        "churned_requirements_count": churned_requirements_count,
+        "requirements_churn_rate_pct": requirements_churn_rate_pct,
+        "net_story_points_delta": net_story_points_delta,
+        "unapproved_post_freeze_req_ids": unapproved_post_freeze_req_ids,
+        "approved_post_freeze_req_ids": approved_post_freeze_req_ids,
+        "volatility_governance_status": volatility_governance_status,
+        "is_baseline_stable": volatility_governance_status == "STABLE_BASELINE",
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.audit_requirements_volatility_churn_and_scope_freeze_breaches = staticmethod(
+    audit_requirements_volatility_churn_and_scope_freeze_breaches
 )
