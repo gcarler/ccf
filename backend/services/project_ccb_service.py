@@ -1444,6 +1444,108 @@ def audit_unapproved_scope_creep_exposure(
     }
 
 
+def evaluate_cost_of_quality_prevention_balance(
+    coq_entries: Optional[List[Dict[str, Any]]] = None,
+    max_failure_cost_share_pct: float = 35.0,
+) -> Dict[str, Any]:
+    """Evalúa el balance CoQ entre Conformidad y No Conformidad (PMBOK §8.1.2.3).
+
+    Cada entrada declara `id`/`entry_id` (fallback 'COQ-{idx}'), categoría
+    (`category`/`coq_category`/`type`) y monto (`amount`/`cost`):
+    - prevention: 'prevention', 'prevencion'. appraisal: 'appraisal',
+      'evaluacion', 'inspeccion'. fallas: 'internal_failure',
+      'external_failure', 'falla_interna', 'falla_externa', 'rework', 'warranty'.
+    - Montos <= 0.0 o categoría fuera de los conjuntos -> 'unclassified_entry_ids'.
+    - `failure_cost_share_pct` = nonconformance / total (2 decimales; 0.0 vacío).
+    - `is_balanced`: total > 0, sin entradas no clasificadas, share dentro de la
+      tolerancia y con inversión en prevention.
+    - `coq_posture`: 'NO_COQ_ENTRIES_RECORDED' vacío;
+      'INVALID_OR_UNCLASSIFIED_COQ_ENTRIES'; 'HIGH_NONCONFORMANCE_FAILURE_BURDEN';
+      'MISSING_PREVENTION_INVESTMENT'; 'OPTIMAL_CONFORMANCE_COQ_BALANCE'.
+    """
+    entries = [e for e in (coq_entries or []) if isinstance(e, dict)]
+    if not entries:
+        return {
+            "total_coq_amount": 0.0,
+            "conformance_cost": 0.0,
+            "nonconformance_cost": 0.0,
+            "failure_cost_share_pct": 0.0,
+            "unclassified_entry_ids": [],
+            "is_balanced": False,
+            "coq_posture": "NO_COQ_ENTRIES_RECORDED",
+        }
+
+    prevention_set = {"prevention", "prevencion", "prevención"}
+    appraisal_set = {"appraisal", "evaluacion", "evaluación", "inspeccion", "inspección"}
+    failure_set = {
+        "internal_failure", "external_failure",
+        "falla_interna", "falla_externa", "rework", "warranty",
+    }
+
+    unclassified_entry_ids: List[str] = []
+    prevention_cost = 0.0
+    conformance_cost = 0.0
+    nonconformance_cost = 0.0
+
+    for idx, item in enumerate(entries, start=1):
+        entry_id = str(item.get("id") or item.get("entry_id") or "").strip() or f"COQ-{idx}"
+        raw_cat = str(item.get("category") or item.get("coq_category") or item.get("type") or "").strip().lower()
+        try:
+            amount = float(item.get("amount") if item.get("amount") is not None else (item.get("cost") or 0.0))
+        except (TypeError, ValueError):
+            amount = 0.0
+
+        if amount <= 0.0 or (
+            raw_cat not in prevention_set
+            and raw_cat not in appraisal_set
+            and raw_cat not in failure_set
+        ):
+            unclassified_entry_ids.append(entry_id)
+            continue
+
+        if raw_cat in prevention_set:
+            prevention_cost += amount
+            conformance_cost += amount
+        elif raw_cat in appraisal_set:
+            conformance_cost += amount
+        else:
+            nonconformance_cost += amount
+
+    conformance_cost = round(conformance_cost, 2)
+    nonconformance_cost = round(nonconformance_cost, 2)
+    total_coq_amount = round(conformance_cost + nonconformance_cost, 2)
+    failure_cost_share_pct = (
+        round((nonconformance_cost / total_coq_amount) * 100.0, 2)
+        if total_coq_amount > 0.0
+        else 0.0
+    )
+    is_balanced = bool(
+        total_coq_amount > 0.0
+        and len(unclassified_entry_ids) == 0
+        and failure_cost_share_pct <= float(max_failure_cost_share_pct) + 1e-9
+        and prevention_cost > 0.0
+    )
+
+    if len(unclassified_entry_ids) > 0:
+        coq_posture = "INVALID_OR_UNCLASSIFIED_COQ_ENTRIES"
+    elif failure_cost_share_pct > float(max_failure_cost_share_pct) + 1e-9:
+        coq_posture = "HIGH_NONCONFORMANCE_FAILURE_BURDEN"
+    elif prevention_cost <= 0.0:
+        coq_posture = "MISSING_PREVENTION_INVESTMENT"
+    else:
+        coq_posture = "OPTIMAL_CONFORMANCE_COQ_BALANCE"
+
+    return {
+        "total_coq_amount": total_coq_amount,
+        "conformance_cost": conformance_cost,
+        "nonconformance_cost": nonconformance_cost,
+        "failure_cost_share_pct": failure_cost_share_pct,
+        "unclassified_entry_ids": unclassified_entry_ids,
+        "is_balanced": is_balanced,
+        "coq_posture": coq_posture,
+    }
+
+
 class ProjectCCBService:
     """Fachada canónica de Control Integrado de Cambios (CCB) y Calidad DoD PMI."""
 
@@ -1644,6 +1746,16 @@ class ProjectCCBService:
             work_packages, tolerance_hours_pct=tolerance_hours_pct
         )
 
+    @staticmethod
+    def evaluate_cost_of_quality_prevention_balance(
+        coq_entries: Optional[List[Dict[str, Any]]] = None,
+        max_failure_cost_share_pct: float = 35.0,
+    ) -> Dict[str, Any]:
+        return evaluate_cost_of_quality_prevention_balance(
+            coq_entries,
+            max_failure_cost_share_pct=max_failure_cost_share_pct,
+        )
+
 
 __all__ = [
     "list_change_requests",
@@ -1669,6 +1781,7 @@ __all__ = [
     "audit_emergency_change_retroactive_ratification",
     "audit_pareto_defect_root_causes",
     "audit_unapproved_scope_creep_exposure",
+    "evaluate_cost_of_quality_prevention_balance",
     "evaluate_deliverable_first_time_right_yield",
     "audit_configuration_baseline_integrity",
     "ProjectCCBService",

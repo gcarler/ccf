@@ -2173,3 +2173,87 @@ def test_audit_unapproved_scope_creep_exposure_empty_or_none():
             "is_scope_controlled": True,
             "scope_posture": "NO_WORK_PACKAGES_EVALUATED",
         }
+
+
+def test_evaluate_cost_of_quality_prevention_balance_optimal():
+    """Conformidad (prevention + appraisal) y fallas dentro del 35% -> OPTIMAL balance."""
+    from backend.services.project_ccb_service import (
+        evaluate_cost_of_quality_prevention_balance as eval_fn,
+    )
+
+    res = eval_fn(
+        [
+            {"id": "COQ-1", "category": "prevention", "amount": 8000.0},
+            {"entry_id": "COQ-2", "type": "Evaluación", "cost": 4000.0},
+        ]
+    )
+    assert res["is_balanced"] is True
+    assert res["total_coq_amount"] == 12000.0
+    assert res["conformance_cost"] == 12000.0
+    assert res["nonconformance_cost"] == 0.0
+    assert res["failure_cost_share_pct"] == 0.0
+    assert res["unclassified_entry_ids"] == []
+    assert res["coq_posture"] == "OPTIMAL_CONFORMANCE_COQ_BALANCE"
+
+
+def test_evaluate_cost_of_quality_prevention_balance_invalid_or_unclassified():
+    """Monto <= 0 o categoría fuera de los conjuntos -> INVALID_OR_UNCLASSIFIED (precedencia)."""
+    from backend.services.project_ccb_service import (
+        evaluate_cost_of_quality_prevention_balance as eval_fn,
+    )
+
+    res = eval_fn(
+        [
+            {"id": "COQ-P", "category": "prevention", "amount": 3000.0},
+            {"id": "COQ-ZERO", "category": "appraisal", "amount": 0.0},
+            {"id": "COQ-BOGUS", "category": "marketing", "amount": 1500.0},
+        ]
+    )
+    assert res["is_balanced"] is False
+    assert res["unclassified_entry_ids"] == ["COQ-ZERO", "COQ-BOGUS"]
+    assert res["total_coq_amount"] == 3000.0
+    assert res["conformance_cost"] == 3000.0
+    assert res["nonconformance_cost"] == 0.0
+    assert res["failure_cost_share_pct"] == 0.0
+    assert res["coq_posture"] == "INVALID_OR_UNCLASSIFIED_COQ_ENTRIES"
+
+
+def test_evaluate_cost_of_quality_prevention_balance_high_failure_burden():
+    """> 35% de fallas -> HIGH_NONCONFORMANCE_FAILURE_BURDEN con share exacto."""
+    from backend.services.project_ccb_service import (
+        evaluate_cost_of_quality_prevention_balance as eval_fn,
+    )
+
+    res = eval_fn(
+        [
+            {"id": "COQ-P", "category": "prevention", "amount": 3000.0},
+            {"id": "COQ-F1", "coq_category": "rework", "amount": 3000.0},
+            {"id": "COQ-F2", "category": "external_failure", "amount": 4000.0},
+        ]
+    )
+    assert res["is_balanced"] is False
+    assert res["total_coq_amount"] == 10000.0
+    assert res["conformance_cost"] == 3000.0
+    assert res["nonconformance_cost"] == 7000.0
+    assert res["failure_cost_share_pct"] == 70.0
+    assert res["unclassified_entry_ids"] == []
+    assert res["coq_posture"] == "HIGH_NONCONFORMANCE_FAILURE_BURDEN"
+
+
+def test_evaluate_cost_of_quality_prevention_balance_empty_or_none():
+    """None, lista vacía o entradas no-dict -> NO_COQ_ENTRIES_RECORDED."""
+    from backend.services.project_ccb_service import (
+        evaluate_cost_of_quality_prevention_balance as eval_fn,
+    )
+
+    for payload in (None, [], ["invalid", 42, None]):
+        res = eval_fn(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_coq_amount": 0.0,
+            "conformance_cost": 0.0,
+            "nonconformance_cost": 0.0,
+            "failure_cost_share_pct": 0.0,
+            "unclassified_entry_ids": [],
+            "is_balanced": False,
+            "coq_posture": "NO_COQ_ENTRIES_RECORDED",
+        }

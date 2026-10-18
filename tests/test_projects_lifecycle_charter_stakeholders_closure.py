@@ -1750,3 +1750,127 @@ def test_audit_team_charter_and_tuckman_governance_missing_team_charter():
         assert res["is_healthy"] is False
         assert res["team_posture"] == "MISSING_TEAM_CHARTER"
 
+
+def test_audit_phase_gate_transition_readiness_rigorous_governance():
+    """Stage-Gates aprobados con aprobador, 100% criterios cumplidos y 0 bloqueantes -> RIGOROUS_STAGE_GATE_GOVERNANCE."""
+    gates = [
+        {
+            "id": "GATE-INIT",
+            "gate_decision": "approved",
+            "approver": "Comité Directivo PMO",
+            "criteria_total": 5,
+            "criteria_met": 5,
+            "open_blockers_count": 0,
+        },
+        {
+            "gate_id": "GATE-PLAN",
+            "status": "GO",
+            "decided_by": "Patrocinador Ejecutivo",
+            "total_criteria": 8,
+            "passed_criteria": 8,
+            "blockers": 0,
+        },
+        {
+            "phase_name": "GATE-EXEC",
+            "gate_decision": "pending",
+            "approver": "",
+            "criteria_total": 10,
+            "criteria_met": 4,
+            "open_blockers_count": 2,
+        },
+    ]
+    res = project_lifecycle_pmi_service.audit_phase_gate_transition_readiness(gates)
+    assert res == {
+        "total_gates": 3,
+        "approved_gates_count": 2,
+        "bypassed_exit_criteria_gate_ids": [],
+        "unapproved_governance_gate_ids": [],
+        "blocked_transition_gate_ids": [],
+        "is_gate_compliant": True,
+        "gate_posture": "RIGOROUS_STAGE_GATE_GOVERNANCE",
+    }
+    assert (
+        project_lifecycle_pmi_service.ProjectLifecyclePMIService.audit_phase_gate_transition_readiness(
+            gates
+        )
+        == res
+    )
+
+
+def test_audit_phase_gate_transition_readiness_blocked_force_passed():
+    """Stage-Gate aprobado con open_blockers_count > 0 -> BLOCKED_GATE_TRANSITION_FORCE_PASSED."""
+    gates = [
+        {
+            "id": "GATE-QA",
+            "gate_decision": "passed",
+            "approver": "Director Técnico",
+            "criteria_total": 6,
+            "criteria_met": 6,
+            "open_blockers_count": 2,
+        }
+    ]
+    res = project_lifecycle_pmi_service.audit_phase_gate_transition_readiness(gates)
+    assert res["total_gates"] == 1
+    assert res["approved_gates_count"] == 1
+    assert res["blocked_transition_gate_ids"] == ["GATE-QA"]
+    assert res["is_gate_compliant"] is False
+    assert res["gate_posture"] == "BLOCKED_GATE_TRANSITION_FORCE_PASSED"
+
+
+def test_audit_phase_gate_transition_readiness_bypass_and_missing_signoff():
+    """Criterios incompletos -> EXIT_CRITERIA_BYPASS_DETECTED; sin approver -> MISSING_GATE_GOVERNANCE_SIGNOFF."""
+    res_bypass = project_lifecycle_pmi_service.audit_phase_gate_transition_readiness(
+        [
+            {
+                "id": "GATE-UAT",
+                "status": "aprobado",
+                "approver": "Líder Funcional",
+                "criteria_total": 10,
+                "criteria_met": 7,
+                "open_blockers_count": 0,
+            }
+        ],
+        min_exit_criteria_pass_pct=100.0,
+    )
+    assert res_bypass["bypassed_exit_criteria_gate_ids"] == ["GATE-UAT"]
+    assert res_bypass["unapproved_governance_gate_ids"] == []
+    assert res_bypass["blocked_transition_gate_ids"] == []
+    assert res_bypass["is_gate_compliant"] is False
+    assert res_bypass["gate_posture"] == "EXIT_CRITERIA_BYPASS_DETECTED"
+
+    res_unsigned = project_lifecycle_pmi_service.audit_phase_gate_transition_readiness(
+        [
+            {
+                "id": "GATE-CLOSE",
+                "gate_decision": "cerrado",
+                "approver": "   ",
+                "criteria_total": 4,
+                "criteria_met": 4,
+                "open_blockers_count": 0,
+            }
+        ]
+    )
+    assert res_unsigned["bypassed_exit_criteria_gate_ids"] == []
+    assert res_unsigned["unapproved_governance_gate_ids"] == ["GATE-CLOSE"]
+    assert res_unsigned["blocked_transition_gate_ids"] == []
+    assert res_unsigned["is_gate_compliant"] is False
+    assert res_unsigned["gate_posture"] == "MISSING_GATE_GOVERNANCE_SIGNOFF"
+
+
+def test_audit_phase_gate_transition_readiness_empty_or_none():
+    """Lista vacía, None o entradas no-dict -> NO_PHASE_GATES_EVALUATED."""
+    for payload in (None, [], ["invalid", 42]):
+        res = project_lifecycle_pmi_service.audit_phase_gate_transition_readiness(
+            payload  # type: ignore[arg-type]
+        )
+        assert res == {
+            "total_gates": 0,
+            "approved_gates_count": 0,
+            "bypassed_exit_criteria_gate_ids": [],
+            "unapproved_governance_gate_ids": [],
+            "blocked_transition_gate_ids": [],
+            "is_gate_compliant": True,
+            "gate_posture": "NO_PHASE_GATES_EVALUATED",
+        }
+
+

@@ -1793,6 +1793,98 @@ def extract_markdown_checklist_progress(
     }
 
 
+_FOOTNOTE_DEF_RE = re.compile(r"^\s*\[\^([A-Za-z0-9_-]+)\]:\s*(.*)$")
+_FOOTNOTE_REF_RE = re.compile(r"\[\^([A-Za-z0-9_-]+)\](?!:)")
+
+
+def audit_markdown_footnote_citations(
+    markdown_text: Optional[str],
+) -> Dict[str, Any]:
+    """Audita referencias de notas al pie Markdown ([^id]) y sus definiciones ([^id]: texto) según PMI PMBOK §4.4."""
+    if not markdown_text or not isinstance(markdown_text, str) or not markdown_text.strip():
+        return {
+            "referenced_footnotes_count": 0,
+            "defined_footnotes_count": 0,
+            "unresolved_footnote_refs": [],
+            "unused_footnote_defs": [],
+            "is_consistent": True,
+            "citation_posture": "NO_FOOTNOTES_PRESENT",
+        }
+
+    non_fenced_lines: List[str] = []
+    in_fence = False
+    fence_marker = ""
+    for line in markdown_text.splitlines():
+        stripped = line.strip()
+        if not in_fence:
+            if stripped.startswith("```") or stripped.startswith("~~~"):
+                in_fence = True
+                fence_marker = stripped[:3]
+                continue
+            non_fenced_lines.append(line)
+        else:
+            if stripped.startswith(fence_marker):
+                in_fence = False
+                fence_marker = ""
+            continue
+
+    valid_defs: List[str] = []
+    valid_defs_set: set[str] = set()
+    unique_refs: List[str] = []
+    unique_refs_set: set[str] = set()
+
+    for line in non_fenced_lines:
+        def_match = _FOOTNOTE_DEF_RE.match(line)
+        if def_match:
+            fn_id = def_match.group(1).lower()
+            body = def_match.group(2)
+            if body.strip():
+                if fn_id not in valid_defs_set:
+                    valid_defs_set.add(fn_id)
+                    valid_defs.append(fn_id)
+            ref_target_text = body
+        else:
+            ref_target_text = line
+
+        for ref_match in _FOOTNOTE_REF_RE.finditer(ref_target_text):
+            ref_id = ref_match.group(1).lower()
+            if ref_id not in unique_refs_set:
+                unique_refs_set.add(ref_id)
+                unique_refs.append(ref_id)
+
+    if len(valid_defs) == 0 and len(unique_refs) == 0:
+        return {
+            "referenced_footnotes_count": 0,
+            "defined_footnotes_count": 0,
+            "unresolved_footnote_refs": [],
+            "unused_footnote_defs": [],
+            "is_consistent": True,
+            "citation_posture": "NO_FOOTNOTES_PRESENT",
+        }
+
+    unresolved_footnote_refs = [r for r in unique_refs if r not in valid_defs_set]
+    unused_footnote_defs = [d for d in valid_defs if d not in unique_refs_set]
+    is_consistent = bool(
+        len(unresolved_footnote_refs) == 0 and len(unused_footnote_defs) == 0
+    )
+
+    if len(unresolved_footnote_refs) > 0:
+        citation_posture = "UNRESOLVED_CITATION_REFERENCES"
+    elif len(unused_footnote_defs) > 0:
+        citation_posture = "ORPHAN_FOOTNOTE_DEFINITIONS"
+    else:
+        citation_posture = "CONSISTENT_FOOTNOTE_CITATIONS"
+
+    return {
+        "referenced_footnotes_count": len(unique_refs),
+        "defined_footnotes_count": len(valid_defs),
+        "unresolved_footnote_refs": unresolved_footnote_refs,
+        "unused_footnote_defs": unused_footnote_defs,
+        "is_consistent": is_consistent,
+        "citation_posture": citation_posture,
+    }
+
+
 class AnyDocService:
     """Fachada canónica de conversión y auditoría documental AnyDoc PMI."""
 
@@ -1913,6 +2005,12 @@ class AnyDocService:
     ) -> Dict[str, Any]:
         return extract_markdown_checklist_progress(markdown_text)
 
+    @staticmethod
+    def audit_markdown_footnote_citations(
+        markdown_text: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        return audit_markdown_footnote_citations(markdown_text)
+
 
 __all__ = [
     "ANYDOC_AVAILABLE",
@@ -1937,5 +2035,7 @@ __all__ = [
     "audit_markdown_media_accessibility",
     "audit_markdown_toc_anchor_alignment",
     "extract_markdown_checklist_progress",
+    "audit_markdown_footnote_citations",
     "AnyDocService",
 ]
+

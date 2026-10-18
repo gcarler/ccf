@@ -1688,3 +1688,87 @@ def test_extract_markdown_checklist_progress_no_checklist_items():
             "checklist_posture": "NO_CHECKLIST_ITEMS",
         }
 
+
+def test_audit_markdown_footnote_citations_consistent():
+    """Notas al pie consistentes ignorando bloques cercados -> CONSISTENT_FOOTNOTE_CITATIONS."""
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_footnote_citations,
+    )
+
+    md = (
+        "# Informe Técnico PMI §4.4\n"
+        "El cálculo de EVM sigue el estándar oficial[^pmbok] y la guía de auditoría[^1].\n"
+        "Repetir la cita[^PMBOK] mantiene el conteo único.\n"
+        "```markdown\n"
+        "Cita fantasma en código[^ghost] y definición[^code_def]: ignorada.\n"
+        "```\n"
+        "[^pmbok]: PMI Practice Standard for Earned Value Management.\n"
+        "[^1]: Manual Operativo PMO CCF.\n"
+    )
+    res = audit_markdown_footnote_citations(md)
+    assert res == {
+        "referenced_footnotes_count": 2,
+        "defined_footnotes_count": 2,
+        "unresolved_footnote_refs": [],
+        "unused_footnote_defs": [],
+        "is_consistent": True,
+        "citation_posture": "CONSISTENT_FOOTNOTE_CITATIONS",
+    }
+    assert AnyDocService.audit_markdown_footnote_citations(md) == res
+
+
+def test_audit_markdown_footnote_citations_unresolved_references():
+    """Referencias sin definición o con definición vacía -> UNRESOLVED_CITATION_REFERENCES."""
+    from backend.services.anydoc_service import audit_markdown_footnote_citations
+
+    md = (
+        "Se requiere aprobación del comité[^ccb] y validación de arquitectura[^arch].\n"
+        "También se cita una nota con definición vacía[^empty_def].\n"
+        "[^ccb]: Comité de Control de Cambios PMBOK §4.6.\n"
+        "[^empty_def]:    \n"
+    )
+    res = audit_markdown_footnote_citations(md)
+    assert res["referenced_footnotes_count"] == 3
+    assert res["defined_footnotes_count"] == 1
+    assert res["unresolved_footnote_refs"] == ["arch", "empty_def"]
+    assert res["unused_footnote_defs"] == []
+    assert res["is_consistent"] is False
+    assert res["citation_posture"] == "UNRESOLVED_CITATION_REFERENCES"
+
+
+def test_audit_markdown_footnote_citations_orphan_definitions():
+    """Definiciones huérfanas nunca citadas en el cuerpo -> ORPHAN_FOOTNOTE_DEFINITIONS."""
+    from backend.services.anydoc_service import audit_markdown_footnote_citations
+
+    md = (
+        "El alcance está documentado en la WBS[^wbs].\n"
+        "[^wbs]: Diccionario de la EDT aprobado.\n"
+        "[^obsolete]: Nota histórica que ya no se referencia en el texto.\n"
+    )
+    res = audit_markdown_footnote_citations(md)
+    assert res["referenced_footnotes_count"] == 1
+    assert res["defined_footnotes_count"] == 2
+    assert res["unresolved_footnote_refs"] == []
+    assert res["unused_footnote_defs"] == ["obsolete"]
+    assert res["is_consistent"] is False
+    assert res["citation_posture"] == "ORPHAN_FOOTNOTE_DEFINITIONS"
+
+
+def test_audit_markdown_footnote_citations_no_footnotes_present():
+    """Texto vacío, None o sin notas al pie -> NO_FOOTNOTES_PRESENT."""
+    from backend.services.anydoc_service import audit_markdown_footnote_citations
+
+    prose_only = "# Documento sin notas\nTexto normal con [enlace](https://example.org).\n~~~md\n[^1]: En código\n~~~\n"
+    for payload in (None, "", "   ", prose_only):
+        res = audit_markdown_footnote_citations(payload)
+        assert res == {
+            "referenced_footnotes_count": 0,
+            "defined_footnotes_count": 0,
+            "unresolved_footnote_refs": [],
+            "unused_footnote_defs": [],
+            "is_consistent": True,
+            "citation_posture": "NO_FOOTNOTES_PRESENT",
+        }
+
+

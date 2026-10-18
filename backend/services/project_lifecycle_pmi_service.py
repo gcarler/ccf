@@ -1000,6 +1000,16 @@ class ProjectLifecyclePMIService:
     ) -> dict[str, Any]:
         return audit_team_charter_and_tuckman_governance(team_charter)
 
+    @staticmethod
+    def audit_phase_gate_transition_readiness(
+        phase_gates: Optional[list[dict[str, Any]]] = None,
+        min_exit_criteria_pass_pct: float = 100.0,
+    ) -> dict[str, Any]:
+        return audit_phase_gate_transition_readiness(
+            phase_gates,
+            min_exit_criteria_pass_pct=min_exit_criteria_pass_pct,
+        )
+
 
 def audit_charter_measurable_objectives(
     objectives: list[dict[str, Any]] | None,
@@ -1812,6 +1822,129 @@ def audit_team_charter_and_tuckman_governance(
     }
 
 
+def audit_phase_gate_transition_readiness(
+    phase_gates: Optional[list[dict[str, Any]]] = None,
+    min_exit_criteria_pass_pct: float = 100.0,
+) -> dict[str, Any]:
+    """Audita las revisiones de transición de fase (Stage-Gates) y criterios de salida según PMI PMBOK §2.4.2 y §4.7."""
+    items = [item for item in (phase_gates or []) if isinstance(item, dict)]
+    total_gates = len(items)
+    if total_gates == 0:
+        return {
+            "total_gates": 0,
+            "approved_gates_count": 0,
+            "bypassed_exit_criteria_gate_ids": [],
+            "unapproved_governance_gate_ids": [],
+            "blocked_transition_gate_ids": [],
+            "is_gate_compliant": True,
+            "gate_posture": "NO_PHASE_GATES_EVALUATED",
+        }
+
+    try:
+        min_pass_pct = float(min_exit_criteria_pass_pct)
+    except (TypeError, ValueError):
+        min_pass_pct = 100.0
+
+    approved_gates_count = 0
+    bypassed_exit_criteria_gate_ids: list[str] = []
+    unapproved_governance_gate_ids: list[str] = []
+    blocked_transition_gate_ids: list[str] = []
+    approved_decisions = {
+        "approved",
+        "go",
+        "passed",
+        "completed",
+        "aprobado",
+        "cerrado",
+    }
+
+    for idx, item in enumerate(items, start=1):
+        gate_id = (
+            str(
+                item.get("id")
+                or item.get("gate_id")
+                or item.get("phase_name")
+                or ""
+            ).strip()
+            or f"GATE-{idx}"
+        )
+        decision = (
+            str(item.get("gate_decision") or item.get("status") or "")
+            .strip()
+            .lower()
+        )
+        if decision not in approved_decisions:
+            continue
+
+        approved_gates_count += 1
+        approver = str(item.get("approver") or item.get("decided_by") or "").strip()
+
+        raw_total = (
+            item.get("criteria_total")
+            if item.get("criteria_total") is not None
+            else (item.get("total_criteria") or 0)
+        )
+        try:
+            c_total = max(0, int(raw_total))
+        except (TypeError, ValueError):
+            c_total = 0
+
+        raw_met = (
+            item.get("criteria_met")
+            if item.get("criteria_met") is not None
+            else (item.get("passed_criteria") or 0)
+        )
+        try:
+            c_met = max(0, int(raw_met))
+        except (TypeError, ValueError):
+            c_met = 0
+
+        raw_blockers = (
+            item.get("open_blockers_count")
+            if item.get("open_blockers_count") is not None
+            else (item.get("blockers") or 0)
+        )
+        try:
+            blockers = max(0, int(raw_blockers))
+        except (TypeError, ValueError):
+            blockers = 0
+
+        if not approver:
+            unapproved_governance_gate_ids.append(gate_id)
+
+        pass_pct = (c_met / c_total) * 100.0 if c_total > 0 else 0.0
+        if c_total <= 0 or pass_pct + 1e-9 < min_pass_pct:
+            bypassed_exit_criteria_gate_ids.append(gate_id)
+
+        if blockers > 0:
+            blocked_transition_gate_ids.append(gate_id)
+
+    is_gate_compliant = bool(
+        len(bypassed_exit_criteria_gate_ids) == 0
+        and len(unapproved_governance_gate_ids) == 0
+        and len(blocked_transition_gate_ids) == 0
+    )
+
+    if len(blocked_transition_gate_ids) > 0:
+        gate_posture = "BLOCKED_GATE_TRANSITION_FORCE_PASSED"
+    elif len(bypassed_exit_criteria_gate_ids) > 0:
+        gate_posture = "EXIT_CRITERIA_BYPASS_DETECTED"
+    elif len(unapproved_governance_gate_ids) > 0:
+        gate_posture = "MISSING_GATE_GOVERNANCE_SIGNOFF"
+    else:
+        gate_posture = "RIGOROUS_STAGE_GATE_GOVERNANCE"
+
+    return {
+        "total_gates": total_gates,
+        "approved_gates_count": approved_gates_count,
+        "bypassed_exit_criteria_gate_ids": bypassed_exit_criteria_gate_ids,
+        "unapproved_governance_gate_ids": unapproved_governance_gate_ids,
+        "blocked_transition_gate_ids": blocked_transition_gate_ids,
+        "is_gate_compliant": is_gate_compliant,
+        "gate_posture": gate_posture,
+    }
+
+
 __all__ = [
     "build_pmo_portfolio_matrix",
     "build_governance_summary",
@@ -1841,6 +1974,8 @@ __all__ = [
     "audit_project_tailoring_and_opa_compliance",
     "audit_benefits_realization_sustainability",
     "audit_team_charter_and_tuckman_governance",
+    "audit_phase_gate_transition_readiness",
     "ProjectLifecyclePMIService",
 ]
+
 
