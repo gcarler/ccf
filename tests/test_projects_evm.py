@@ -2189,3 +2189,102 @@ def test_evaluate_burn_rate_runway_sustainability_insufficient_data():
             "is_sustainable": True,
             "burn_posture": "INSUFFICIENT_BURN_DATA",
         }
+
+
+def test_evaluate_cpi_spi_stability_window_stable():
+    """Ventana estable con spreads <= 0.10 y swings <= 0.15 -> STABLE_EVM_PERFORMANCE_WINDOW."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_cpi_spi_stability_window,
+    )
+
+    snapshots = [
+        {"period": "2026-W01", "cpi": 0.98, "spi": 1.01},
+        {"period": "2026-W02", "cpi": 1.02, "spi": 0.99},
+        {"period": "2026-W03", "cpi": 1.00, "spi": 1.03},
+    ]
+    res = evaluate_cpi_spi_stability_window(
+        snapshots, max_band_width=0.10, max_period_swing=0.15
+    )
+    assert res == {
+        "evaluated_snapshots_count": 3,
+        "cpi_spread": 0.04,
+        "spi_spread": 0.04,
+        "max_observed_swing": 0.04,
+        "volatile_period_ids": [],
+        "is_index_stable": True,
+        "stability_posture": "STABLE_EVM_PERFORMANCE_WINDOW",
+    }
+    assert (
+        ProjectEVMService.evaluate_cpi_spi_stability_window(
+            snapshots, max_band_width=0.10, max_period_swing=0.15
+        )
+        == res
+    )
+
+
+def test_evaluate_cpi_spi_stability_window_volatile_period_swing():
+    """Salto brusco período a período (> max_period_swing) -> VOLATILE_PERIOD_SWING_ALERT."""
+    from backend.services.project_evm_service import (
+        evaluate_cpi_spi_stability_window,
+    )
+
+    snapshots = [
+        {"period": "2026-M01", "cpi": 1.01, "spi": 1.00},
+        {"period": "2026-M02", "cpi": 0.80, "spi": 0.98},
+        {"period": "2026-M03", "cpi": 0.82, "spi": 0.78},
+    ]
+    res = evaluate_cpi_spi_stability_window(
+        snapshots, max_band_width=0.10, max_period_swing=0.15
+    )
+    assert res["evaluated_snapshots_count"] == 3
+    assert res["cpi_spread"] == 0.21
+    assert res["spi_spread"] == 0.22
+    assert res["max_observed_swing"] == 0.21
+    assert res["volatile_period_ids"] == ["2026-M02", "2026-M03"]
+    assert res["is_index_stable"] is False
+    assert res["stability_posture"] == "VOLATILE_PERIOD_SWING_ALERT"
+
+
+def test_evaluate_cpi_spi_stability_window_wide_drift_band():
+    """Deriva gradual acumulada que supera max_band_width sin superar max_period_swing -> WIDE_INDEX_DRIFT_BAND."""
+    from backend.services.project_evm_service import (
+        evaluate_cpi_spi_stability_window,
+    )
+
+    # Pasos de 0.06 (<= 0.15 swing), pero spread total = 0.18 > 0.10 band width
+    snapshots = [
+        {"snapshot_id": "S1", "cost_performance_index": 1.04, "schedule_performance_index": 1.00},
+        {"snapshot_id": "S2", "cost_performance_index": 0.98, "schedule_performance_index": 0.99},
+        {"snapshot_id": "S3", "cost_performance_index": 0.92, "schedule_performance_index": 0.98},
+        {"snapshot_id": "S4", "cost_performance_index": 0.86, "schedule_performance_index": 0.97},
+    ]
+    res = evaluate_cpi_spi_stability_window(
+        snapshots, max_band_width=0.10, max_period_swing=0.15
+    )
+    assert res["evaluated_snapshots_count"] == 4
+    assert res["cpi_spread"] == 0.18
+    assert res["spi_spread"] == 0.03
+    assert res["max_observed_swing"] == 0.06
+    assert res["volatile_period_ids"] == []
+    assert res["is_index_stable"] is False
+    assert res["stability_posture"] == "WIDE_INDEX_DRIFT_BAND"
+
+
+def test_evaluate_cpi_spi_stability_window_empty_or_none():
+    """Lista vacía, None o snapshots sin CPI/SPI > 0 -> NO_SNAPSHOTS_EVALUATED."""
+    from backend.services.project_evm_service import (
+        evaluate_cpi_spi_stability_window,
+    )
+
+    for payload in (None, [], ["invalid", 42], [{"period": "P1", "cpi": 0.0, "spi": -1.0}]):
+        res = evaluate_cpi_spi_stability_window(payload)  # type: ignore[arg-type]
+        assert res == {
+            "evaluated_snapshots_count": 0,
+            "cpi_spread": 0.0,
+            "spi_spread": 0.0,
+            "max_observed_swing": 0.0,
+            "volatile_period_ids": [],
+            "is_index_stable": True,
+            "stability_posture": "NO_SNAPSHOTS_EVALUATED",
+        }

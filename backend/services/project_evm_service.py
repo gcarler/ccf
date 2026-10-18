@@ -4413,9 +4413,154 @@ ProjectEVMService.evaluate_burn_rate_runway_sustainability = staticmethod(
 )
 
 
+def evaluate_cpi_spi_stability_window(
+    snapshots: list[dict[str, Any]] | None = None,
+    max_band_width: float = 0.10,
+    max_period_swing: float = 0.15,
+) -> dict[str, Any]:
+    """Audita la estabilidad de ventana de los índices CPI y SPI y saltos bruscos período a período según PMI PMBOK §7.4."""
+    items = [item for item in (snapshots or []) if isinstance(item, dict)]
+
+    try:
+        band_limit = float(max_band_width)
+    except (TypeError, ValueError):
+        band_limit = 0.10
+    try:
+        swing_limit = float(max_period_swing)
+    except (TypeError, ValueError):
+        swing_limit = 0.15
+
+    def _positive_float(val: Any) -> Optional[float]:
+        if val is None or isinstance(val, bool):
+            return None
+        try:
+            num = float(val)
+        except (TypeError, ValueError):
+            return None
+        return num if num > 0.0 else None
+
+    evaluated_snapshots_count = 0
+    cpi_values: list[float] = []
+    spi_values: list[float] = []
+    volatile_period_ids: list[str] = []
+    max_swing = 0.0
+    prev_cpi: Optional[float] = None
+    prev_spi: Optional[float] = None
+
+    for idx, item in enumerate(items, start=1):
+        period_id = (
+            str(
+                item.get("period")
+                or item.get("snapshot_id")
+                or item.get("id")
+                or item.get("label")
+                or ""
+            ).strip()
+            or f"SNAP-{idx}"
+        )
+        raw_cpi = (
+            item.get("cpi")
+            if item.get("cpi") is not None
+            else item.get("cost_performance_index")
+        )
+        raw_spi = (
+            item.get("spi")
+            if item.get("spi") is not None
+            else item.get("schedule_performance_index")
+        )
+        cpi_curr = _positive_float(raw_cpi)
+        spi_curr = _positive_float(raw_spi)
+
+        if cpi_curr is None and spi_curr is None:
+            continue
+
+        evaluated_snapshots_count += 1
+        if cpi_curr is not None:
+            cpi_values.append(cpi_curr)
+        if spi_curr is not None:
+            spi_values.append(spi_curr)
+
+        is_volatile = False
+        if prev_cpi is not None and cpi_curr is not None:
+            cpi_swing = abs(cpi_curr - prev_cpi)
+            if cpi_swing > max_swing:
+                max_swing = cpi_swing
+            if cpi_swing > swing_limit + 1e-9:
+                is_volatile = True
+        if prev_spi is not None and spi_curr is not None:
+            spi_swing = abs(spi_curr - prev_spi)
+            if spi_swing > max_swing:
+                max_swing = spi_swing
+            if spi_swing > swing_limit + 1e-9:
+                is_volatile = True
+
+        if is_volatile:
+            volatile_period_ids.append(period_id)
+
+        if cpi_curr is not None:
+            prev_cpi = cpi_curr
+        if spi_curr is not None:
+            prev_spi = spi_curr
+
+    if evaluated_snapshots_count == 0:
+        return {
+            "evaluated_snapshots_count": 0,
+            "cpi_spread": 0.0,
+            "spi_spread": 0.0,
+            "max_observed_swing": 0.0,
+            "volatile_period_ids": [],
+            "is_index_stable": True,
+            "stability_posture": "NO_SNAPSHOTS_EVALUATED",
+        }
+
+    cpi_spread = (
+        round(max(cpi_values) - min(cpi_values), 4)
+        if len(cpi_values) >= 2
+        else 0.0
+    )
+    spi_spread = (
+        round(max(spi_values) - min(spi_values), 4)
+        if len(spi_values) >= 2
+        else 0.0
+    )
+    max_observed_swing = (
+        round(max_swing, 4) if evaluated_snapshots_count >= 2 else 0.0
+    )
+
+    is_index_stable = bool(
+        evaluated_snapshots_count > 0
+        and len(volatile_period_ids) == 0
+        and cpi_spread <= band_limit + 1e-9
+        and spi_spread <= band_limit + 1e-9
+    )
+
+    if len(volatile_period_ids) > 0:
+        stability_posture = "VOLATILE_PERIOD_SWING_ALERT"
+    elif cpi_spread > band_limit + 1e-9 or spi_spread > band_limit + 1e-9:
+        stability_posture = "WIDE_INDEX_DRIFT_BAND"
+    else:
+        stability_posture = "STABLE_EVM_PERFORMANCE_WINDOW"
+
+    return {
+        "evaluated_snapshots_count": evaluated_snapshots_count,
+        "cpi_spread": cpi_spread,
+        "spi_spread": spi_spread,
+        "max_observed_swing": max_observed_swing,
+        "volatile_period_ids": volatile_period_ids,
+        "is_index_stable": is_index_stable,
+        "stability_posture": stability_posture,
+    }
+
+
+ProjectEVMService.evaluate_cpi_spi_stability_window = staticmethod(
+    evaluate_cpi_spi_stability_window
+)
+
+
 __all__ = [
     "evaluate_funding_limit_periods_reconciliation",
     "evaluate_earned_schedule_performance",
     "evaluate_burn_rate_runway_sustainability",
+    "evaluate_cpi_spi_stability_window",
     "ProjectEVMService",
 ]

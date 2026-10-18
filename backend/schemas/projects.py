@@ -3337,3 +3337,117 @@ def validate_requirements_traceability_matrix(
         "rtm_posture": rtm_posture,
     }
 
+
+
+def validate_cpm_float_and_critical_path(
+    activities: list[dict[str, Any]] | None = None,
+    near_critical_threshold_days: float = 2.0,
+) -> dict[str, Any]:
+    """Valida Total Float, Free Float y la ruta crítica de un cronograma CPM (PMBOK §6.5.2.2).
+
+    Cada actividad declara `id`/`activity_id`/`wbs_code` (fallback 'ACT-{idx}'),
+    holgura total (`total_float_days`/`total_float`/`tf`), holgura libre
+    (`free_float_days`/`free_float`/`ff`) y el flag declarado
+    (`is_critical`/`critical_path`):
+    - `negative_float_activity_ids`: Total Float < 0 (alerta de retraso).
+    - `float_inversion_activity_ids`: Free Float > Total Float, o Free Float
+      negativo con Total Float >= 0 (inversión matemática CPM).
+    - `misclassified_critical_activity_ids`: TF <= 0 sin flag crítico, o
+      TF > umbral cuasi-crítico con flag crítico declarado.
+    - `critical_activities_count` (TF <= 0) y `near_critical_count`
+      (0 < TF <= umbral).
+    - `is_cpm_schedule_valid`: sin hallazgos en las 3 listas.
+    - `cpm_schedule_posture`: 'NO_ACTIVITIES_EVALUATED' sin actividades;
+      'CPM_FLOAT_INVERSION_ERROR'; 'NEGATIVE_TOTAL_FLOAT_ALERT';
+      'CRITICAL_PATH_CLASSIFICATION_DRIFT'; 'SOUND_CPM_NETWORK_SCHEDULE'.
+    """
+    records = [a for a in (activities or []) if isinstance(a, dict)]
+    if not records:
+        return {
+            "total_activities": 0,
+            "critical_activities_count": 0,
+            "near_critical_count": 0,
+            "negative_float_activity_ids": [],
+            "float_inversion_activity_ids": [],
+            "misclassified_critical_activity_ids": [],
+            "is_cpm_schedule_valid": True,
+            "cpm_schedule_posture": "NO_ACTIVITIES_EVALUATED",
+        }
+
+    total_activities = len(records)
+    critical_activities_count = 0
+    near_critical_count = 0
+    negative_float_activity_ids: list[str] = []
+    float_inversion_activity_ids: list[str] = []
+    misclassified_critical_activity_ids: list[str] = []
+
+    for idx, item in enumerate(records, start=1):
+        act_id = str(
+            item.get("id") or item.get("activity_id") or item.get("wbs_code") or f"ACT-{idx}"
+        ).strip()
+        try:
+            total_float_days = float(
+                item.get("total_float_days")
+                if item.get("total_float_days") is not None
+                else (item.get("total_float") if item.get("total_float") is not None else (item.get("tf") or 0.0))
+            )
+        except (TypeError, ValueError):
+            total_float_days = 0.0
+        try:
+            free_float_days = float(
+                item.get("free_float_days")
+                if item.get("free_float_days") is not None
+                else (item.get("free_float") if item.get("free_float") is not None else (item.get("ff") or 0.0))
+            )
+        except (TypeError, ValueError):
+            free_float_days = 0.0
+        is_critical_declared = bool(item.get("is_critical") or item.get("critical_path"))
+        threshold = float(near_critical_threshold_days)
+
+        if total_float_days < -1e-9:
+            negative_float_activity_ids.append(act_id)
+        if (
+            free_float_days > total_float_days + 1e-9
+            or (free_float_days < -1e-9 and total_float_days >= -1e-9)
+        ):
+            float_inversion_activity_ids.append(act_id)
+        if (total_float_days <= 1e-9 and not is_critical_declared) or (
+            total_float_days > threshold + 1e-9 and is_critical_declared
+        ):
+            misclassified_critical_activity_ids.append(act_id)
+        if total_float_days <= 1e-9:
+            critical_activities_count += 1
+        elif total_float_days <= threshold + 1e-9:
+            near_critical_count += 1
+
+    is_cpm_schedule_valid = bool(
+        len(negative_float_activity_ids) == 0
+        and len(float_inversion_activity_ids) == 0
+        and len(misclassified_critical_activity_ids) == 0
+    )
+    if total_activities == 0:
+        cpm_schedule_posture = "NO_ACTIVITIES_EVALUATED"
+    elif len(float_inversion_activity_ids) > 0:
+        cpm_schedule_posture = "CPM_FLOAT_INVERSION_ERROR"
+    elif len(negative_float_activity_ids) > 0:
+        cpm_schedule_posture = "NEGATIVE_TOTAL_FLOAT_ALERT"
+    elif len(misclassified_critical_activity_ids) > 0:
+        cpm_schedule_posture = "CRITICAL_PATH_CLASSIFICATION_DRIFT"
+    else:
+        cpm_schedule_posture = "SOUND_CPM_NETWORK_SCHEDULE"
+
+    return {
+        "total_activities": total_activities,
+        "critical_activities_count": critical_activities_count,
+        "near_critical_count": near_critical_count,
+        "negative_float_activity_ids": negative_float_activity_ids,
+        "float_inversion_activity_ids": float_inversion_activity_ids,
+        "misclassified_critical_activity_ids": misclassified_critical_activity_ids,
+        "is_cpm_schedule_valid": is_cpm_schedule_valid,
+        "cpm_schedule_posture": cpm_schedule_posture,
+    }
+
+
+__all__ = [
+    "validate_cpm_float_and_critical_path",
+]

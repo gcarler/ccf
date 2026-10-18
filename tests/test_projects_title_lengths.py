@@ -1500,3 +1500,121 @@ def test_validate_requirements_traceability_matrix_empty_or_none():
 
 
 
+
+
+def test_validate_cpm_float_and_critical_path_sound_network():
+    """Actividades crïticas (TF=0) y cuasi-críticas (TF dentro del umbral) -> SOUND."""
+    from backend.schemas.projects import validate_cpm_float_and_critical_path
+
+    res = validate_cpm_float_and_critical_path(
+        [
+            {
+                "id": "ACT-1",
+                "total_float_days": 0.0,
+                "free_float_days": 0.0,
+                "is_critical": True,
+            },
+            {
+                "wbs_code": "1.4",
+                "total_float": 1.5,
+                "free_float": 1.0,
+            },
+            {
+                "activity_id": "ACT-3",
+                "total_float_days": 5.0,
+                "free_float_days": 2.0,
+            },
+        ]
+    )
+    assert res["is_cpm_schedule_valid"] is True
+    assert res["total_activities"] == 3
+    assert res["critical_activities_count"] == 1
+    assert res["near_critical_count"] == 1
+    assert res["negative_float_activity_ids"] == []
+    assert res["float_inversion_activity_ids"] == []
+    assert res["misclassified_critical_activity_ids"] == []
+    assert res["cpm_schedule_posture"] == "SOUND_CPM_NETWORK_SCHEDULE"
+
+
+def test_validate_cpm_float_and_critical_path_float_inversion():
+    """Free Float mayor que Total Float -> CPM_FLOAT_INVERSION_ERROR."""
+    from backend.schemas.projects import validate_cpm_float_and_critical_path
+
+    res = validate_cpm_float_and_critical_path(
+        [
+            {
+                "id": "ACT-OK",
+                "total_float_days": 3.0,
+                "free_float_days": 1.0,
+            },
+            {
+                "id": "ACT-BAD",
+                "total_float_days": 2.0,
+                "free_float_days": 3.5,
+            },
+        ]
+    )
+    assert res["is_cpm_schedule_valid"] is False
+    assert res["total_activities"] == 2
+    assert res["critical_activities_count"] == 0
+    assert res["near_critical_count"] == 1
+    assert res["negative_float_activity_ids"] == []
+    assert res["float_inversion_activity_ids"] == ["ACT-BAD"]
+    assert res["misclassified_critical_activity_ids"] == []
+    assert res["cpm_schedule_posture"] == "CPM_FLOAT_INVERSION_ERROR"
+
+
+def test_validate_cpm_float_and_critical_path_negative_float_and_drift():
+    """TF negativo (precedencia posture) y drift del flag is_critical identificados."""
+    from backend.schemas.projects import validate_cpm_float_and_critical_path
+
+    res = validate_cpm_float_and_critical_path(
+        [
+            {
+                "id": "ACT-NEG",
+                "total_float_days": -3.0,
+                "free_float_days": -5.0,
+                "is_critical": True,
+            },
+            {
+                "id": "ACT-DRIFT",
+                "total_float_days": 0.0,
+                "free_float_days": 0.0,
+            },
+            {
+                "id": "ACT-DRIFT2",
+                "total_float_days": 7.0,
+                "critical_path": True,
+            },
+        ]
+    )
+    assert res["is_cpm_schedule_valid"] is False
+    assert res["total_activities"] == 3
+    assert res["critical_activities_count"] == 2
+    assert res["near_critical_count"] == 0
+    assert res["negative_float_activity_ids"] == ["ACT-NEG"]
+    assert res["float_inversion_activity_ids"] == []
+    assert res["misclassified_critical_activity_ids"] == [
+        "ACT-DRIFT",
+        "ACT-DRIFT2",
+    ]
+    # Precedencia: float inversion > negative > drift (FF=-5 <= TF=-3 no invierte).
+    assert res["cpm_schedule_posture"] == "NEGATIVE_TOTAL_FLOAT_ALERT"
+
+
+def test_validate_cpm_float_and_critical_path_empty_or_none():
+    """None, lista vacía o entradas no-dict -> NO_ACTIVITIES_EVALUATED."""
+    from backend.schemas.projects import validate_cpm_float_and_critical_path
+
+    for payload in (None, [], ["invalid", 42, None]):
+        res = validate_cpm_float_and_critical_path(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_activities": 0,
+            "critical_activities_count": 0,
+            "near_critical_count": 0,
+            "negative_float_activity_ids": [],
+            "float_inversion_activity_ids": [],
+            "misclassified_critical_activity_ids": [],
+            "is_cpm_schedule_valid": True,
+            "cpm_schedule_posture": "NO_ACTIVITIES_EVALUATED",
+        }

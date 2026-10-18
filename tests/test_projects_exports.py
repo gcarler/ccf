@@ -2275,3 +2275,131 @@ def test_audit_executive_report_milestone_deliverables_empty_or_none():
             "is_traceable": False,
             "milestone_posture": "NO_MILESTONES_DISCLOSED",
         }
+
+
+def test_audit_executive_report_change_control_log_traceable():
+    """Solicitudes CCB aprobadas cuantificadas, rechazadas justificadas y pendientes en SLA -> TRACEABLE_CCB_DECISION_LOG."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_change_control_log,
+    )
+
+    payload = {
+        "change_requests": [
+            {
+                "id": "CR-101",
+                "status": "approved",
+                "cost_impact": 4500.0,
+                "schedule_days_impact": 5,
+                "approved_by": "CCB-Comite-Central",
+            },
+            {
+                "cr_id": "CR-102",
+                "decision": "rejected",
+                "rationale": "Fuera del alcance autorizado en el Project Charter",
+            },
+            {
+                "code": "CR-103",
+                "state": "pending",
+                "pending_days": 6,
+            },
+        ]
+    }
+    res = audit_executive_report_change_control_log(payload, max_pending_days=14)
+    assert res == {
+        "total_change_requests": 3,
+        "approved_count": 1,
+        "unquantified_approved_cr_ids": [],
+        "overdue_pending_cr_ids": [],
+        "undocumented_decision_cr_ids": [],
+        "traceability_rate_pct": 100.0,
+        "is_ccb_log_compliant": True,
+        "ccb_log_posture": "TRACEABLE_CCB_DECISION_LOG",
+    }
+    assert (
+        ProjectExportService.audit_executive_report_change_control_log(
+            payload, max_pending_days=14
+        )
+        == res
+    )
+
+
+def test_audit_executive_report_change_control_log_unquantified_approved():
+    """CR aprobada sin impacto cuantificado o sin aprobador CCB -> UNQUANTIFIED_APPROVED_BASELINE_CHANGE."""
+    from backend.services.project_export_service import (
+        audit_executive_report_change_control_log,
+    )
+
+    res = audit_executive_report_change_control_log(
+        {
+            "ccb_log": [
+                {
+                    "id": "CR-NO-IMPACT",
+                    "status": "aprobado",
+                    "approved_by": "Director PMO",
+                },
+                {
+                    "id": "CR-NO-SIGN",
+                    "status": "implemented",
+                    "cost_impact": 1200.0,
+                    "approved_by": "   ",
+                },
+            ]
+        }
+    )
+    assert res["total_change_requests"] == 2
+    assert res["approved_count"] == 2
+    assert res["unquantified_approved_cr_ids"] == ["CR-NO-IMPACT", "CR-NO-SIGN"]
+    assert res["traceability_rate_pct"] == 0.0
+    assert res["is_ccb_log_compliant"] is False
+    assert res["ccb_log_posture"] == "UNQUANTIFIED_APPROVED_BASELINE_CHANGE"
+
+
+def test_audit_executive_report_change_control_log_overdue_and_undocumented():
+    """CR pendiente > max_pending_days -> OVERDUE_CCB_PENDING_DECISIONS; rechazo sin justificación -> UNDOCUMENTED_CCB_REJECTION_RATIONALE."""
+    from backend.services.project_export_service import (
+        audit_executive_report_change_control_log,
+    )
+
+    overdue_res = audit_executive_report_change_control_log(
+        {
+            "changes": [
+                {"id": "CR-STALE", "status": "under_review", "age_days": 21},
+            ]
+        },
+        max_pending_days=14,
+    )
+    assert overdue_res["overdue_pending_cr_ids"] == ["CR-STALE"]
+    assert overdue_res["is_ccb_log_compliant"] is False
+    assert overdue_res["ccb_log_posture"] == "OVERDUE_CCB_PENDING_DECISIONS"
+
+    undoc_res = audit_executive_report_change_control_log(
+        {
+            "change_requests": [
+                {"id": "CR-REJ", "status": "deferred", "rejection_reason": "no"},
+            ]
+        }
+    )
+    assert undoc_res["undocumented_decision_cr_ids"] == ["CR-REJ"]
+    assert undoc_res["is_ccb_log_compliant"] is False
+    assert undoc_res["ccb_log_posture"] == "UNDOCUMENTED_CCB_REJECTION_RATIONALE"
+
+
+def test_audit_executive_report_change_control_log_empty_or_none():
+    """Payload vacío, None o sin solicitudes de cambio -> NO_CHANGE_REQUESTS_LOGGED."""
+    from backend.services.project_export_service import (
+        audit_executive_report_change_control_log,
+    )
+
+    for payload in (None, {}, {"change_requests": []}, {"ccb_log": ["invalid", 99]}):
+        res = audit_executive_report_change_control_log(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_change_requests": 0,
+            "approved_count": 0,
+            "unquantified_approved_cr_ids": [],
+            "overdue_pending_cr_ids": [],
+            "undocumented_decision_cr_ids": [],
+            "traceability_rate_pct": 100.0,
+            "is_ccb_log_compliant": True,
+            "ccb_log_posture": "NO_CHANGE_REQUESTS_LOGGED",
+        }

@@ -1801,6 +1801,180 @@ def audit_executive_report_risk_burndown(
     }
 
 
+_CCB_APPROVED_STATUSES = frozenset(
+    {"approved", "aprobado", "aprobada", "implemented", "implementado"}
+)
+_CCB_REJECTED_STATUSES = frozenset(
+    {
+        "rejected",
+        "rechazado",
+        "rechazada",
+        "deferred",
+        "diferido",
+        "cancelled",
+        "cancelado",
+    }
+)
+_CCB_PENDING_STATUSES = frozenset(
+    {
+        "pending",
+        "pendiente",
+        "under_review",
+        "en_revision",
+        "open",
+        "submitted",
+        "",
+    }
+)
+
+
+def audit_executive_report_change_control_log(
+    report_payload: dict[str, Any] | None = None,
+    max_pending_days: int = 14,
+) -> dict[str, Any]:
+    """Audita el registro del Comité de Control de Cambios (CCB) en el informe ejecutivo según PMI PMBOK §4.6."""
+    raw_list: Any = None
+    if isinstance(report_payload, dict):
+        for key in ("change_requests", "ccb_log", "changes"):
+            candidate = report_payload.get(key)
+            if isinstance(candidate, list):
+                raw_list = candidate
+                break
+
+    items = [item for item in (raw_list or []) if isinstance(item, dict)]
+    total_change_requests = len(items)
+    if total_change_requests == 0:
+        return {
+            "total_change_requests": 0,
+            "approved_count": 0,
+            "unquantified_approved_cr_ids": [],
+            "overdue_pending_cr_ids": [],
+            "undocumented_decision_cr_ids": [],
+            "traceability_rate_pct": 100.0,
+            "is_ccb_log_compliant": True,
+            "ccb_log_posture": "NO_CHANGE_REQUESTS_LOGGED",
+        }
+
+    try:
+        max_days = int(max_pending_days)
+    except (TypeError, ValueError):
+        max_days = 14
+
+    approved_count = 0
+    unquantified_approved_cr_ids: list[str] = []
+    overdue_pending_cr_ids: list[str] = []
+    undocumented_decision_cr_ids: list[str] = []
+    flagged_ids: set[str] = set()
+
+    for idx, item in enumerate(items, start=1):
+        cr_id = (
+            str(
+                item.get("id")
+                or item.get("cr_id")
+                or item.get("code")
+                or f"CR-{idx}"
+            ).strip()
+            or f"CR-{idx}"
+        )
+        status = (
+            str(
+                item.get("status")
+                if item.get("status") is not None
+                else (
+                    item.get("decision")
+                    if item.get("decision") is not None
+                    else (item.get("state") or "")
+                )
+            )
+            .strip()
+            .lower()
+        )
+
+        if status in _CCB_APPROVED_STATUSES:
+            approved_count += 1
+            has_impact = (
+                item.get("cost_impact") is not None
+                or item.get("schedule_days_impact") is not None
+                or item.get("schedule_impact_days") is not None
+            )
+            has_approver = bool(
+                str(
+                    item.get("approved_by")
+                    or item.get("ccb_reference")
+                    or item.get("resolution_id")
+                    or ""
+                ).strip()
+            )
+            if not (has_impact and has_approver):
+                unquantified_approved_cr_ids.append(cr_id)
+                flagged_ids.add(cr_id)
+        elif status in _CCB_REJECTED_STATUSES:
+            rationale = str(
+                item.get("rationale")
+                or item.get("decision_rationale")
+                or item.get("rejection_reason")
+                or ""
+            ).strip()
+            if len(rationale) < 5:
+                undocumented_decision_cr_ids.append(cr_id)
+                flagged_ids.add(cr_id)
+        elif status in _CCB_PENDING_STATUSES:
+            raw_days = (
+                item.get("pending_days")
+                if item.get("pending_days") is not None
+                else (
+                    item.get("age_days")
+                    if item.get("age_days") is not None
+                    else (item.get("days_open") or 0)
+                )
+            )
+            try:
+                p_days = max(0.0, float(raw_days))
+            except (TypeError, ValueError):
+                p_days = 0.0
+            if p_days > max_days:
+                overdue_pending_cr_ids.append(cr_id)
+                flagged_ids.add(cr_id)
+
+    compliant_count = max(0, total_change_requests - len(flagged_ids))
+    traceability_rate_pct = round(
+        (compliant_count / total_change_requests) * 100.0, 2
+    )
+    is_ccb_log_compliant = bool(
+        len(unquantified_approved_cr_ids) == 0
+        and len(undocumented_decision_cr_ids) == 0
+        and len(overdue_pending_cr_ids) == 0
+    )
+
+    if len(unquantified_approved_cr_ids) > 0:
+        ccb_log_posture = "UNQUANTIFIED_APPROVED_BASELINE_CHANGE"
+    elif len(overdue_pending_cr_ids) > 0:
+        ccb_log_posture = "OVERDUE_CCB_PENDING_DECISIONS"
+    elif len(undocumented_decision_cr_ids) > 0:
+        ccb_log_posture = "UNDOCUMENTED_CCB_REJECTION_RATIONALE"
+    else:
+        ccb_log_posture = "TRACEABLE_CCB_DECISION_LOG"
+
+    return {
+        "total_change_requests": total_change_requests,
+        "approved_count": approved_count,
+        "unquantified_approved_cr_ids": unquantified_approved_cr_ids,
+        "overdue_pending_cr_ids": overdue_pending_cr_ids,
+        "undocumented_decision_cr_ids": undocumented_decision_cr_ids,
+        "traceability_rate_pct": traceability_rate_pct,
+        "is_ccb_log_compliant": is_ccb_log_compliant,
+        "ccb_log_posture": ccb_log_posture,
+    }
+
+
+ProjectExportService.audit_executive_report_risk_burndown = staticmethod(
+    audit_executive_report_risk_burndown
+)
+ProjectExportService.audit_executive_report_change_control_log = staticmethod(
+    audit_executive_report_change_control_log
+)
+
+
 __all__ = [
     "audit_csv_export_integrity",
     "evaluate_executive_report_completeness",
@@ -1822,6 +1996,7 @@ __all__ = [
     "audit_executive_report_procurement_slas",
     "audit_executive_report_stakeholder_communications",
     "audit_executive_report_risk_burndown",
+    "audit_executive_report_change_control_log",
     "ProjectExportService",
 ]
 
