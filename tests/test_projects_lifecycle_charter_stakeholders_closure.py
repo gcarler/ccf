@@ -2211,3 +2211,132 @@ def test_audit_assumption_and_constraint_log_governance_empty_or_none():
             "is_assumption_log_governed": True,
             "assumption_log_posture": "NO_ASSUMPTIONS_LOGGED",
         }
+
+
+def test_audit_stakeholder_engagement_assessment_matrix_aligned():
+    """SEAM alineada o con brecha moderada cubierta por estrategia -> ALIGNED_STAKEHOLDER_ENGAGEMENT."""
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_stakeholder_engagement_assessment_matrix,
+    )
+
+    stakeholders = [
+        {
+            "id": "SH-SPONSOR",
+            "power": "high",
+            "current_engagement": "supportive",
+            "desired_engagement": "leading",
+            "engagement_strategy": "Reuniones quincenales de comité ejecutivo",
+        },
+        {
+            "stakeholder_id": "SH-LEAD",
+            "influence": "medium",
+            "current_level": "supportive",
+            "desired_level": "supportive",
+        },
+    ]
+    res = audit_stakeholder_engagement_assessment_matrix(stakeholders)
+    assert res["total_stakeholders"] == 2
+    assert res["engagement_gap_count"] == 1
+    assert res["critical_resistant_stakeholder_ids"] == []
+    assert res["unaddressed_gap_stakeholder_ids"] == []
+    assert res["misaligned_desired_state_ids"] == []
+    assert res["is_seam_governed"] is True
+    assert res["seam_posture"] == "ALIGNED_STAKEHOLDER_ENGAGEMENT"
+    assert (
+        ProjectLifecyclePMIService.audit_stakeholder_engagement_assessment_matrix(
+            stakeholders
+        )["seam_posture"]
+        == "ALIGNED_STAKEHOLDER_ENGAGEMENT"
+    )
+
+
+def test_audit_stakeholder_engagement_assessment_matrix_critical_high_power_resistance():
+    """Interesado de alto poder en estado resistant o unaware -> CRITICAL_HIGH_POWER_RESISTANCE."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stakeholder_engagement_assessment_matrix,
+    )
+
+    res = audit_stakeholder_engagement_assessment_matrix(
+        [
+            {
+                "id": "SH-DIR",
+                "power": "critical",
+                "current_engagement": "resistant",
+                "desired_engagement": "supportive",
+                "action_plan": "Sesión de alineación estratégica",
+            },
+            {
+                "id": "SH-FIN",
+                "power": "alta",
+                "current_engagement": "desconocedor",
+                "desired_engagement": "partidario",
+                "action_plan": "Presentación de caso de negocio",
+            },
+        ]
+    )
+    assert res["total_stakeholders"] == 2
+    assert res["engagement_gap_count"] == 2
+    assert res["critical_resistant_stakeholder_ids"] == ["SH-DIR", "SH-FIN"]
+    assert res["unaddressed_gap_stakeholder_ids"] == []
+    assert res["misaligned_desired_state_ids"] == []
+    assert res["is_seam_governed"] is False
+    assert res["seam_posture"] == "CRITICAL_HIGH_POWER_RESISTANCE"
+
+
+def test_audit_stakeholder_engagement_assessment_matrix_unaddressed_gap_and_misaligned():
+    """Brecha sin estrategia -> UNADDRESSED_ENGAGEMENT_GAP; alto poder con meta < supportive -> MISALIGNED_DESIRED_ENGAGEMENT."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stakeholder_engagement_assessment_matrix,
+    )
+
+    res_gap = audit_stakeholder_engagement_assessment_matrix(
+        [
+            {
+                "id": "SH-OPS",
+                "power": "medium",
+                "current_engagement": "neutral",
+                "desired_engagement": "supportive",
+                "engagement_strategy": "",
+            }
+        ]
+    )
+    assert res_gap["engagement_gap_count"] == 1
+    assert res_gap["unaddressed_gap_stakeholder_ids"] == ["SH-OPS"]
+    assert res_gap["is_seam_governed"] is False
+    assert res_gap["seam_posture"] == "UNADDRESSED_ENGAGEMENT_GAP"
+
+    res_mis = audit_stakeholder_engagement_assessment_matrix(
+        [
+            {
+                "id": "SH-VP",
+                "power_level": "high",
+                "current_engagement": "neutral",
+                "desired_engagement": "neutral",
+            }
+        ]
+    )
+    assert res_mis["engagement_gap_count"] == 0
+    assert res_mis["misaligned_desired_state_ids"] == ["SH-VP"]
+    assert res_mis["is_seam_governed"] is False
+    assert res_mis["seam_posture"] == "MISALIGNED_DESIRED_ENGAGEMENT"
+
+
+def test_audit_stakeholder_engagement_assessment_matrix_empty_or_none():
+    """Lista vacía o None -> NO_STAKEHOLDERS_EVALUATED e is_seam_governed=True."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stakeholder_engagement_assessment_matrix,
+    )
+
+    for payload in (None, [], ["invalid", 123]):
+        res = audit_stakeholder_engagement_assessment_matrix(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_stakeholders": 0,
+            "engagement_gap_count": 0,
+            "critical_resistant_stakeholder_ids": [],
+            "unaddressed_gap_stakeholder_ids": [],
+            "misaligned_desired_state_ids": [],
+            "is_seam_governed": True,
+            "seam_posture": "NO_STAKEHOLDERS_EVALUATED",
+        }
+

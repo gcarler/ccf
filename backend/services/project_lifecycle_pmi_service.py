@@ -2300,8 +2300,135 @@ def audit_risk_appetite_and_threshold_governance(
     }
 
 
+_SEAM_LEVEL_RANK = {
+    "unaware": 1,
+    "desconocedor": 1,
+    "resistant": 2,
+    "resistente": 2,
+    "neutral": 3,
+    "supportive": 4,
+    "partidario": 4,
+    "apoyo": 4,
+    "leading": 5,
+    "lider": 5,
+    "líder": 5,
+}
+_SEAM_HIGH_POWER_VALUES = {"high", "alta", "alto", "critical", "critico", "crítico"}
+
+
+def audit_stakeholder_engagement_assessment_matrix(
+    stakeholders: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Audita la Matriz de Evaluación de Involucramiento de Interesados (SEAM) según PMI PMBOK §13.2.2.4."""
+    items = [item for item in (stakeholders or []) if isinstance(item, dict)]
+    total_stakeholders = len(items)
+    if total_stakeholders == 0:
+        return {
+            "total_stakeholders": 0,
+            "engagement_gap_count": 0,
+            "critical_resistant_stakeholder_ids": [],
+            "unaddressed_gap_stakeholder_ids": [],
+            "misaligned_desired_state_ids": [],
+            "is_seam_governed": True,
+            "seam_posture": "NO_STAKEHOLDERS_EVALUATED",
+        }
+
+    engagement_gap_count = 0
+    critical_resistant_stakeholder_ids: list[str] = []
+    unaddressed_gap_stakeholder_ids: list[str] = []
+    misaligned_desired_state_ids: list[str] = []
+
+    for idx, item in enumerate(items, start=1):
+        sh_id = (
+            str(
+                item.get("id")
+                or item.get("stakeholder_id")
+                or item.get("name")
+                or f"SH-{idx}"
+            ).strip()
+            or f"SH-{idx}"
+        )
+        curr_raw = (
+            str(
+                item.get("current_engagement")
+                or item.get("current_level")
+                or "neutral"
+            )
+            .strip()
+            .lower()
+        )
+        des_raw = (
+            str(
+                item.get("desired_engagement")
+                or item.get("desired_level")
+                or "supportive"
+            )
+            .strip()
+            .lower()
+        )
+        curr_rank = _SEAM_LEVEL_RANK.get(curr_raw, 3)
+        des_rank = _SEAM_LEVEL_RANK.get(des_raw, 4)
+
+        power = (
+            str(
+                item.get("power")
+                or item.get("influence")
+                or item.get("power_level")
+                or "medium"
+            )
+            .strip()
+            .lower()
+        )
+        is_high_power = power in _SEAM_HIGH_POWER_VALUES
+        strategy = str(
+            item.get("engagement_strategy")
+            or item.get("action_plan")
+            or item.get("communication_plan")
+            or ""
+        ).strip()
+
+        if is_high_power and curr_rank <= 2:
+            critical_resistant_stakeholder_ids.append(sh_id)
+
+        if curr_rank < des_rank:
+            engagement_gap_count += 1
+            if len(strategy) < 5:
+                unaddressed_gap_stakeholder_ids.append(sh_id)
+
+        if is_high_power and des_rank < 4:
+            misaligned_desired_state_ids.append(sh_id)
+
+    is_seam_governed = bool(
+        len(unaddressed_gap_stakeholder_ids) == 0
+        and len(misaligned_desired_state_ids) == 0
+        and len(critical_resistant_stakeholder_ids) == 0
+    )
+
+    if len(critical_resistant_stakeholder_ids) > 0:
+        seam_posture = "CRITICAL_HIGH_POWER_RESISTANCE"
+    elif len(unaddressed_gap_stakeholder_ids) > 0:
+        seam_posture = "UNADDRESSED_ENGAGEMENT_GAP"
+    elif len(misaligned_desired_state_ids) > 0:
+        seam_posture = "MISALIGNED_DESIRED_ENGAGEMENT"
+    else:
+        seam_posture = "ALIGNED_STAKEHOLDER_ENGAGEMENT"
+
+    return {
+        "total_stakeholders": total_stakeholders,
+        "engagement_gap_count": engagement_gap_count,
+        "critical_resistant_stakeholder_ids": critical_resistant_stakeholder_ids,
+        "unaddressed_gap_stakeholder_ids": unaddressed_gap_stakeholder_ids,
+        "misaligned_desired_state_ids": misaligned_desired_state_ids,
+        "is_seam_governed": is_seam_governed,
+        "seam_posture": seam_posture,
+    }
+
+
 ProjectLifecyclePMIService.audit_risk_appetite_and_threshold_governance = staticmethod(
     audit_risk_appetite_and_threshold_governance
+)
+ProjectLifecyclePMIService.audit_stakeholder_engagement_assessment_matrix = staticmethod(
+    audit_stakeholder_engagement_assessment_matrix
 )
 
 
@@ -2338,6 +2465,8 @@ __all__ = [
     "audit_phase_gate_transition_readiness",
     "audit_make_or_buy_and_vendor_bids",
     "audit_risk_appetite_and_threshold_governance",
+    "audit_stakeholder_engagement_assessment_matrix",
     "ProjectLifecyclePMIService",
 ]
+
 

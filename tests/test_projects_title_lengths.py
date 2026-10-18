@@ -1724,3 +1724,123 @@ def test_validate_emv_decision_tree_exposure_empty_or_none():
             "is_emv_valid_and_buffered": True,
             "emv_posture": "NO_RISK_SCENARIOS",
         }
+
+
+def test_validate_pdm_dependency_leads_and_lags_sound_network():
+    """Red lógica PDM válida con FS/SS/FF y SF justificado -> SOUND_PDM_LOGICAL_NETWORK."""
+    from backend.schemas.projects import validate_pdm_dependency_leads_and_lags
+
+    res = validate_pdm_dependency_leads_and_lags(
+        [
+            {
+                "id": "DEP-1",
+                "predecessor_id": "ACT-A",
+                "successor_id": "ACT-B",
+                "type": "FS",
+                "lag_days": 2.0,
+                "predecessor_duration_days": 10.0,
+            },
+            {
+                "id": "DEP-2",
+                "from_id": "ACT-B",
+                "to_id": "ACT-C",
+                "dependency_type": "SS",
+                "lag": -3.0,
+                "predecessor_duration": 8.0,
+            },
+            {
+                "id": "DEP-3",
+                "predecessor_id": "ACT-C",
+                "successor_id": "ACT-D",
+                "link_type": "SF",
+                "justification": "Transición de guardia operativa continua 24x7",
+            },
+        ]
+    )
+    assert res == {
+        "total_dependencies": 3,
+        "invalid_relationship_ids": [],
+        "excessive_lead_dependency_ids": [],
+        "unjustified_sf_dependency_ids": [],
+        "is_pdm_network_valid": True,
+        "pdm_posture": "SOUND_PDM_LOGICAL_NETWORK",
+    }
+
+
+def test_validate_pdm_dependency_leads_and_lags_invalid_relationship():
+    """Auto-dependencia o tipo desconocido -> INVALID_PDM_RELATIONSHIP."""
+    from backend.schemas.projects import validate_pdm_dependency_leads_and_lags
+
+    res = validate_pdm_dependency_leads_and_lags(
+        [
+            {
+                "id": "DEP-SELF",
+                "predecessor_id": "ACT-1",
+                "successor_id": "ACT-1",
+                "type": "FS",
+            },
+            {
+                "id": "DEP-BADTYPE",
+                "predecessor_id": "ACT-1",
+                "successor_id": "ACT-2",
+                "type": "XX",
+            },
+        ]
+    )
+    assert res["total_dependencies"] == 2
+    assert res["invalid_relationship_ids"] == ["DEP-SELF", "DEP-BADTYPE"]
+    assert res["is_pdm_network_valid"] is False
+    assert res["pdm_posture"] == "INVALID_PDM_RELATIONSHIP"
+
+
+def test_validate_pdm_dependency_leads_and_lags_excessive_lead_and_unjustified_sf():
+    """Lead negativo >= duración predecesora -> EXCESSIVE_NEGATIVE_LAG_LEAD; SF sin justificación -> UNJUSTIFIED_SF_DEPENDENCY."""
+    from backend.schemas.projects import validate_pdm_dependency_leads_and_lags
+
+    res_lead = validate_pdm_dependency_leads_and_lags(
+        [
+            {
+                "id": "DEP-LEAD",
+                "predecessor_id": "ACT-1",
+                "successor_id": "ACT-2",
+                "type": "FS",
+                "lag_days": -10.0,
+                "predecessor_duration_days": 8.0,
+            }
+        ]
+    )
+    assert res_lead["excessive_lead_dependency_ids"] == ["DEP-LEAD"]
+    assert res_lead["is_pdm_network_valid"] is False
+    assert res_lead["pdm_posture"] == "EXCESSIVE_NEGATIVE_LAG_LEAD"
+
+    res_sf = validate_pdm_dependency_leads_and_lags(
+        [
+            {
+                "id": "DEP-SF",
+                "predecessor_id": "ACT-2",
+                "successor_id": "ACT-3",
+                "type": "SF",
+                "justification": "",
+            }
+        ]
+    )
+    assert res_sf["unjustified_sf_dependency_ids"] == ["DEP-SF"]
+    assert res_sf["is_pdm_network_valid"] is False
+    assert res_sf["pdm_posture"] == "UNJUSTIFIED_SF_DEPENDENCY"
+
+
+def test_validate_pdm_dependency_leads_and_lags_empty_or_none():
+    """Lista vacía o None -> NO_DEPENDENCIES_EVALUATED e is_pdm_network_valid=True."""
+    from backend.schemas.projects import validate_pdm_dependency_leads_and_lags
+
+    for payload in (None, [], ["invalid", 99]):
+        res = validate_pdm_dependency_leads_and_lags(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_dependencies": 0,
+            "invalid_relationship_ids": [],
+            "excessive_lead_dependency_ids": [],
+            "unjustified_sf_dependency_ids": [],
+            "is_pdm_network_valid": True,
+            "pdm_posture": "NO_DEPENDENCIES_EVALUATED",
+        }
+

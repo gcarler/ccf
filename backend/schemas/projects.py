@@ -3581,7 +3581,113 @@ def validate_emv_decision_tree_exposure(
     }
 
 
+_PDM_VALID_DEPENDENCY_TYPES = {"FS", "SS", "FF", "SF"}
+
+
+def validate_pdm_dependency_leads_and_lags(
+    dependencies: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Valida tipos de dependencia lógica (FS/SS/FF/SF) y razonabilidad de adelantos/retrasos (PDM, PMI PMBOK §6.3.2.1)."""
+    items = [item for item in (dependencies or []) if isinstance(item, dict)]
+    total_dependencies = len(items)
+    if total_dependencies == 0:
+        return {
+            "total_dependencies": 0,
+            "invalid_relationship_ids": [],
+            "excessive_lead_dependency_ids": [],
+            "unjustified_sf_dependency_ids": [],
+            "is_pdm_network_valid": True,
+            "pdm_posture": "NO_DEPENDENCIES_EVALUATED",
+        }
+
+    invalid_relationship_ids: list[str] = []
+    excessive_lead_dependency_ids: list[str] = []
+    unjustified_sf_dependency_ids: list[str] = []
+
+    for idx, item in enumerate(items, start=1):
+        dep_id = (
+            str(
+                item.get("id")
+                or item.get("dependency_id")
+                or f"DEP-{idx}"
+            ).strip()
+            or f"DEP-{idx}"
+        )
+        pred_id = str(
+            item.get("predecessor_id") or item.get("from_id") or ""
+        ).strip()
+        succ_id = str(
+            item.get("successor_id") or item.get("to_id") or ""
+        ).strip()
+        dep_type = (
+            str(
+                item.get("type")
+                or item.get("dependency_type")
+                or item.get("link_type")
+                or "FS"
+            )
+            .strip()
+            .upper()
+        )
+        try:
+            lag_days = float(item.get("lag_days") or item.get("lag") or 0.0)
+        except (TypeError, ValueError):
+            lag_days = 0.0
+        try:
+            pred_duration = float(
+                item.get("predecessor_duration_days")
+                or item.get("predecessor_duration")
+                or 0.0
+            )
+        except (TypeError, ValueError):
+            pred_duration = 0.0
+        justification = str(
+            item.get("justification") or item.get("rationale") or ""
+        ).strip()
+
+        if (pred_id and succ_id and pred_id == succ_id) or (
+            dep_type not in _PDM_VALID_DEPENDENCY_TYPES
+        ):
+            invalid_relationship_ids.append(dep_id)
+
+        if (
+            lag_days < -1e-9
+            and pred_duration > 0.0
+            and abs(lag_days) >= pred_duration - 1e-9
+        ):
+            excessive_lead_dependency_ids.append(dep_id)
+
+        if dep_type == "SF" and len(justification) < 5:
+            unjustified_sf_dependency_ids.append(dep_id)
+
+    is_pdm_network_valid = bool(
+        len(invalid_relationship_ids) == 0
+        and len(excessive_lead_dependency_ids) == 0
+        and len(unjustified_sf_dependency_ids) == 0
+    )
+
+    if len(invalid_relationship_ids) > 0:
+        pdm_posture = "INVALID_PDM_RELATIONSHIP"
+    elif len(excessive_lead_dependency_ids) > 0:
+        pdm_posture = "EXCESSIVE_NEGATIVE_LAG_LEAD"
+    elif len(unjustified_sf_dependency_ids) > 0:
+        pdm_posture = "UNJUSTIFIED_SF_DEPENDENCY"
+    else:
+        pdm_posture = "SOUND_PDM_LOGICAL_NETWORK"
+
+    return {
+        "total_dependencies": total_dependencies,
+        "invalid_relationship_ids": invalid_relationship_ids,
+        "excessive_lead_dependency_ids": excessive_lead_dependency_ids,
+        "unjustified_sf_dependency_ids": unjustified_sf_dependency_ids,
+        "is_pdm_network_valid": is_pdm_network_valid,
+        "pdm_posture": pdm_posture,
+    }
+
+
 __all__ = [
     "validate_cpm_float_and_critical_path",
     "validate_emv_decision_tree_exposure",
+    "validate_pdm_dependency_leads_and_lags",
 ]
+
