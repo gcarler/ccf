@@ -5156,6 +5156,157 @@ def summarize_projects_default_value_and_type_hygiene(
     }
 
 
+def summarize_projects_additional_properties_and_map_hygiene(
+    schema: Mapping[str, Any] | None = None,
+    *,
+    path_prefix: str = "/api/v1/projects",
+) -> dict[str, Any]:
+    """Audita la higiene de additionalProperties y mapas/objetos libres en esquemas de componentes bajo path_prefix."""
+    if schema is None:
+        from backend.app import app
+
+        schema_dict: Mapping[str, Any] = app.openapi()
+    else:
+        schema_dict = schema
+
+    paths = schema_dict.get("paths", {}) if isinstance(schema_dict, Mapping) else {}
+    if not isinstance(paths, Mapping):
+        paths = {}
+
+    components = schema_dict.get("components", {}) if isinstance(schema_dict, Mapping) else {}
+    schemas = components.get("schemas", {}) if isinstance(components, Mapping) else {}
+    if not isinstance(schemas, Mapping):
+        schemas = {}
+
+    has_exact_prefix = any(str(p).startswith(path_prefix) for p in paths.keys())
+    if has_exact_prefix:
+        effective_prefixes: tuple[str, ...] = (path_prefix,)
+    elif path_prefix in ("/api/v1/projects", "/api/projects", "/projects"):
+        effective_prefixes = ("/api/v1/projects", "/api/projects", "/projects")
+    else:
+        effective_prefixes = (path_prefix,)
+
+    referenced_schemas: set[str] = set()
+    has_matching_paths = False
+
+    for path in sorted(paths.keys()):
+        path_str = str(path)
+        if not path_str.startswith(effective_prefixes):
+            continue
+        path_item = paths[path]
+        if not isinstance(path_item, Mapping):
+            continue
+        has_matching_paths = True
+
+        for ref in schema_refs(dict(path_item)):
+            referenced_schemas.add(ref)
+
+    if referenced_schemas:
+        queue = list(referenced_schemas)
+        while queue:
+            current = queue.pop()
+            s_obj = schemas.get(current)
+            if isinstance(s_obj, Mapping):
+                for nested_ref in schema_refs(dict(s_obj)):
+                    if nested_ref not in referenced_schemas:
+                        referenced_schemas.add(nested_ref)
+                        queue.append(nested_ref)
+    elif not has_matching_paths and schemas:
+        referenced_schemas = {str(k) for k in schemas.keys()}
+
+    referenced_existing = sorted(s for s in referenced_schemas if s in schemas)
+
+    total_object_schemas_inspected = 0
+    compliant_object_schemas_count = 0
+    untyped_additional_properties_true_count = 0
+    empty_additional_properties_schema_count = 0
+    vacuous_freeform_object_count = 0
+    violations: list[dict[str, Any]] = []
+
+    for s_name in referenced_existing:
+        s_obj = schemas.get(s_name)
+        if not isinstance(s_obj, Mapping):
+            continue
+
+        is_object_schema = (
+            s_obj.get("type") == "object"
+            or "properties" in s_obj
+            or "additionalProperties" in s_obj
+        )
+        if not is_object_schema:
+            continue
+
+        total_object_schemas_inspected += 1
+        schema_has_violation = False
+        add_props = s_obj.get("additionalProperties")
+
+        if add_props is True:
+            untyped_additional_properties_true_count += 1
+            schema_has_violation = True
+            violations.append(
+                {
+                    "schema_name": s_name,
+                    "reason": "untyped_additional_properties_true",
+                }
+            )
+        elif isinstance(add_props, Mapping) and not any(
+            k in add_props for k in ("type", "$ref", "anyOf", "oneOf", "allOf")
+        ):
+            empty_additional_properties_schema_count += 1
+            schema_has_violation = True
+            violations.append(
+                {
+                    "schema_name": s_name,
+                    "reason": "empty_additional_properties_schema",
+                }
+            )
+
+        props = s_obj.get("properties")
+        has_non_empty_props = isinstance(props, Mapping) and len(props) > 0
+        has_composition = any(k in s_obj for k in ("allOf", "oneOf", "anyOf"))
+        if (
+            s_obj.get("type") == "object"
+            and not has_non_empty_props
+            and not has_composition
+            and ("additionalProperties" not in s_obj or add_props is None or add_props is True)
+        ):
+            vacuous_freeform_object_count += 1
+            schema_has_violation = True
+            violations.append(
+                {
+                    "schema_name": s_name,
+                    "reason": "vacuous_freeform_object",
+                }
+            )
+
+        if not schema_has_violation:
+            compliant_object_schemas_count += 1
+
+    hygiene_score = (
+        100.0
+        if total_object_schemas_inspected == 0
+        else round((compliant_object_schemas_count / total_object_schemas_inspected) * 100.0, 2)
+    )
+    is_compliant = (
+        untyped_additional_properties_true_count == 0
+        and empty_additional_properties_schema_count == 0
+        and vacuous_freeform_object_count == 0
+    )
+
+    return {
+        "path_prefix": path_prefix,
+        "referenced_schemas_count": len(referenced_existing),
+        "total_object_schemas_inspected": total_object_schemas_inspected,
+        "compliant_object_schemas_count": compliant_object_schemas_count,
+        "untyped_additional_properties_true_count": untyped_additional_properties_true_count,
+        "empty_additional_properties_schema_count": empty_additional_properties_schema_count,
+        "vacuous_freeform_object_count": vacuous_freeform_object_count,
+        "violations": violations,
+        "hygiene_score": hygiene_score,
+        "is_compliant": is_compliant,
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()

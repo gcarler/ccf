@@ -6480,3 +6480,173 @@ def test_default_value_and_type_hygiene_real_openapi():
     assert res["is_compliant"] is True
 
 
+def test_additional_properties_and_map_hygiene_clean_schema():
+    """Verifica que esquemas con propiedades definidas, additionalProperties=False o mapas tipados pasen la auditoría."""
+    schema = {
+        "paths": {
+            "/api/v1/projects/metrics": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "description": "OK",
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/ProjectMetricsBundle"}
+                                }
+                            },
+                        }
+                    }
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "ProjectMetricsBundle": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "scores": {"$ref": "#/components/schemas/ProjectScoreMap"},
+                    },
+                },
+                "ProjectScoreMap": {
+                    "type": "object",
+                    "additionalProperties": {"type": "number"},
+                },
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_additional_properties_and_map_hygiene(
+        schema, path_prefix="/api/v1/projects"
+    )
+    assert res["path_prefix"] == "/api/v1/projects"
+    assert res["referenced_schemas_count"] == 2
+    assert res["total_object_schemas_inspected"] == 2
+    assert res["compliant_object_schemas_count"] == 2
+    assert res["untyped_additional_properties_true_count"] == 0
+    assert res["empty_additional_properties_schema_count"] == 0
+    assert res["vacuous_freeform_object_count"] == 0
+    assert res["violations"] == []
+    assert res["hygiene_score"] == 100.0
+    assert res["is_compliant"] is True
+
+
+def test_additional_properties_and_map_hygiene_detects_untyped_true_and_empty_schema():
+    """Detecta additionalProperties=True y diccionarios con esquema de valor vacío."""
+    schema = {
+        "paths": {
+            "/api/v1/projects/custom": {
+                "post": {
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/ProjectOpenInput"}
+                            }
+                        }
+                    },
+                    "responses": {
+                        "200": {
+                            "description": "OK",
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/ProjectEmptyMapOutput"}
+                                }
+                            },
+                        }
+                    },
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "ProjectOpenInput": {
+                    "type": "object",
+                    "properties": {"name": {"type": "string"}},
+                    "additionalProperties": True,
+                },
+                "ProjectEmptyMapOutput": {
+                    "type": "object",
+                    "properties": {"id": {"type": "string"}},
+                    "additionalProperties": {"title": "UntypedValue"},
+                },
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_additional_properties_and_map_hygiene(
+        schema, path_prefix="/api/v1/projects"
+    )
+    assert res["total_object_schemas_inspected"] == 2
+    assert res["compliant_object_schemas_count"] == 0
+    assert res["untyped_additional_properties_true_count"] == 1
+    assert res["empty_additional_properties_schema_count"] == 1
+    assert res["vacuous_freeform_object_count"] == 0
+    assert res["hygiene_score"] == 0.0
+    assert res["is_compliant"] is False
+    assert res["violations"] == [
+        {
+            "schema_name": "ProjectEmptyMapOutput",
+            "reason": "empty_additional_properties_schema",
+        },
+        {
+            "schema_name": "ProjectOpenInput",
+            "reason": "untyped_additional_properties_true",
+        },
+    ]
+
+
+def test_additional_properties_and_map_hygiene_detects_vacuous_freeform_object():
+    """Detecta objetos vacíos sin properties, sin composición y sin mapa tipado."""
+    schema = {
+        "paths": {
+            "/api/v1/projects/freeform": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "description": "OK",
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/ProjectVacuousObject"}
+                                }
+                            },
+                        }
+                    }
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "ProjectVacuousObject": {
+                    "type": "object",
+                    "properties": {},
+                }
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_additional_properties_and_map_hygiene(
+        schema, path_prefix="/api/v1/projects"
+    )
+    assert res["total_object_schemas_inspected"] == 1
+    assert res["compliant_object_schemas_count"] == 0
+    assert res["vacuous_freeform_object_count"] == 1
+    assert res["hygiene_score"] == 0.0
+    assert res["is_compliant"] is False
+    assert res["violations"] == [
+        {
+            "schema_name": "ProjectVacuousObject",
+            "reason": "vacuous_freeform_object",
+        }
+    ]
+
+
+def test_additional_properties_and_map_hygiene_real_openapi():
+    """Verifica que el schema OpenAPI real de FastAPI cumpla la higiene de additionalProperties y mapas."""
+    res = audit_projects_api_contracts.summarize_projects_additional_properties_and_map_hygiene()
+    assert res["referenced_schemas_count"] > 0
+    assert res["total_object_schemas_inspected"] > 0
+    assert res["untyped_additional_properties_true_count"] == 0
+    assert res["empty_additional_properties_schema_count"] == 0
+    assert res["vacuous_freeform_object_count"] == 0
+    assert res["violations"] == []
+    assert res["hygiene_score"] == 100.0
+    assert res["is_compliant"] is True
+
+
