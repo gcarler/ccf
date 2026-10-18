@@ -1014,6 +1014,99 @@ def summarize_projects_error_response_contract_coverage(
     }
 
 
+def summarize_projects_mutation_success_status_hygiene(
+    openapi_schema: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Audita la semántica de códigos HTTP de éxito (200/201/202/204) en operaciones de mutación de proyectos (PMI §4.6)."""
+    empty_result: dict[str, Any] = {
+        "total_mutation_operations": 0,
+        "valid_mutation_operations_count": 0,
+        "missing_success_status_operations": [],
+        "semantic_status_mismatch_operations": [],
+        "hygiene_rate_pct": 100.0,
+        "is_mutation_status_compliant": True,
+        "mutation_status_posture": "NO_MUTATION_OPERATIONS",
+    }
+    if not isinstance(openapi_schema, dict) or not isinstance(
+        openapi_schema.get("paths"), dict
+    ):
+        return empty_result
+
+    total_mutation_operations = 0
+    valid_mutation_operations_count = 0
+    missing_success_status_operations: list[str] = []
+    semantic_status_mismatch_operations: list[str] = []
+
+    for path_str, path_item in sorted(openapi_schema["paths"].items()):
+        if not isinstance(path_str, str) or "/projects" not in path_str:
+            continue
+        if not isinstance(path_item, dict):
+            continue
+
+        for method in ("post", "put", "patch", "delete"):
+            op_obj = path_item.get(method)
+            if not isinstance(op_obj, dict):
+                continue
+
+            total_mutation_operations += 1
+            op_key = f"{method.upper()} {path_str}"
+            responses = (
+                op_obj.get("responses")
+                if isinstance(op_obj.get("responses"), dict)
+                else {}
+            )
+            status_keys = {str(k).strip() for k in responses.keys()}
+            success_keys = status_keys & {"200", "201", "202", "204"}
+
+            if len(success_keys) == 0:
+                missing_success_status_operations.append(op_key)
+                continue
+
+            is_mismatch = False
+            if method == "delete" and (
+                "201" in status_keys or not (status_keys & {"200", "202", "204"})
+            ):
+                is_mismatch = True
+            elif method in {"put", "patch"} and not (
+                status_keys & {"200", "202", "204"}
+            ):
+                is_mismatch = True
+
+            if is_mismatch:
+                semantic_status_mismatch_operations.append(op_key)
+            else:
+                valid_mutation_operations_count += 1
+
+    if total_mutation_operations == 0:
+        return empty_result
+
+    missing_sorted = sorted(missing_success_status_operations)
+    mismatch_sorted = sorted(semantic_status_mismatch_operations)
+    hygiene_rate_pct = round(
+        (valid_mutation_operations_count / total_mutation_operations) * 100.0, 2
+    )
+    is_mutation_status_compliant = (
+        len(missing_sorted) == 0 and len(mismatch_sorted) == 0
+    )
+
+    if len(missing_sorted) > 0:
+        mutation_status_posture = "MISSING_SUCCESS_STATUS_CONTRACT"
+    elif len(mismatch_sorted) > 0:
+        mutation_status_posture = "SEMANTIC_STATUS_CODE_MISMATCH"
+    else:
+        mutation_status_posture = "CLEAN_MUTATION_STATUS_CONTRACTS"
+
+    return {
+        "total_mutation_operations": total_mutation_operations,
+        "valid_mutation_operations_count": valid_mutation_operations_count,
+        "missing_success_status_operations": missing_sorted,
+        "semantic_status_mismatch_operations": mismatch_sorted,
+        "hygiene_rate_pct": hygiene_rate_pct,
+        "is_mutation_status_compliant": is_mutation_status_compliant,
+        "mutation_status_posture": mutation_status_posture,
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()

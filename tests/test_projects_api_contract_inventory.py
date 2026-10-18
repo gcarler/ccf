@@ -1882,3 +1882,127 @@ def test_error_response_contract_coverage_empty_or_none():
         )
         == expected
     )
+
+
+# ─── summarize_projects_mutation_success_status_hygiene (pure helper) ────────
+
+
+def test_mutation_success_status_hygiene_clean_contracts():
+    """POST/PATCH/DELETE con códigos 201/200/204 semánticamente válidos -> CLEAN_MUTATION_STATUS_CONTRACTS."""
+    openapi = {
+        "paths": {
+            "/api/v1/projects": {
+                "get": {"responses": {"200": {}}},
+                "post": {"responses": {"201": {}, "422": {}}},
+            },
+            "/api/v1/projects/{project_id}": {
+                "patch": {"responses": {"200": {}, "404": {}}},
+                "delete": {"responses": {"204": {}, "404": {}}},
+            },
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_mutation_success_status_hygiene(
+        openapi
+    )
+
+    assert res == {
+        "total_mutation_operations": 3,
+        "valid_mutation_operations_count": 3,
+        "missing_success_status_operations": [],
+        "semantic_status_mismatch_operations": [],
+        "hygiene_rate_pct": 100.0,
+        "is_mutation_status_compliant": True,
+        "mutation_status_posture": "CLEAN_MUTATION_STATUS_CONTRACTS",
+    }
+
+
+def test_mutation_success_status_hygiene_missing_success_status():
+    """Operación de mutación sin código 2xx -> MISSING_SUCCESS_STATUS_CONTRACT."""
+    openapi = {
+        "paths": {
+            "/api/v1/projects": {
+                "post": {"responses": {"201": {}}},
+            },
+            "/api/v1/projects/{project_id}/archive": {
+                "post": {"responses": {"400": {}, "422": {}}},
+            },
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_mutation_success_status_hygiene(
+        openapi
+    )
+
+    assert res == {
+        "total_mutation_operations": 2,
+        "valid_mutation_operations_count": 1,
+        "missing_success_status_operations": [
+            "POST /api/v1/projects/{project_id}/archive"
+        ],
+        "semantic_status_mismatch_operations": [],
+        "hygiene_rate_pct": 50.0,
+        "is_mutation_status_compliant": False,
+        "mutation_status_posture": "MISSING_SUCCESS_STATUS_CONTRACT",
+    }
+
+
+def test_mutation_success_status_hygiene_semantic_mismatch():
+    """Operación DELETE o PATCH con código 201 inválido -> SEMANTIC_STATUS_CODE_MISMATCH."""
+    openapi = {
+        "paths": {
+            "/api/v1/projects/{project_id}": {
+                "patch": {"responses": {"201": {}}},
+                "delete": {"responses": {"201": {}, "204": {}}},
+                "put": {"responses": {"200": {}}},
+            }
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_mutation_success_status_hygiene(
+        openapi
+    )
+
+    assert res == {
+        "total_mutation_operations": 3,
+        "valid_mutation_operations_count": 1,
+        "missing_success_status_operations": [],
+        "semantic_status_mismatch_operations": [
+            "DELETE /api/v1/projects/{project_id}",
+            "PATCH /api/v1/projects/{project_id}",
+        ],
+        "hygiene_rate_pct": 33.33,
+        "is_mutation_status_compliant": False,
+        "mutation_status_posture": "SEMANTIC_STATUS_CODE_MISMATCH",
+    }
+
+
+def test_mutation_success_status_hygiene_empty_or_no_mutations():
+    """Esquema sin mutaciones o None -> NO_MUTATION_OPERATIONS."""
+    expected = {
+        "total_mutation_operations": 0,
+        "valid_mutation_operations_count": 0,
+        "missing_success_status_operations": [],
+        "semantic_status_mismatch_operations": [],
+        "hygiene_rate_pct": 100.0,
+        "is_mutation_status_compliant": True,
+        "mutation_status_posture": "NO_MUTATION_OPERATIONS",
+    }
+    assert (
+        audit_projects_api_contracts.summarize_projects_mutation_success_status_hygiene(
+            None
+        )
+        == expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_mutation_success_status_hygiene(
+            {}
+        )
+        == expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_mutation_success_status_hygiene(
+            {"paths": {"/api/v1/projects": {"get": {"responses": {"200": {}}}}}}
+        )
+        == expected
+    )
