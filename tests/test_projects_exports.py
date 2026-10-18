@@ -1387,4 +1387,152 @@ def test_audit_expenses_vendor_concentration_empty_export():
         }
 
 
+def test_audit_executive_report_change_governance_baseline_governed():
+    """Decisiones con acta CCB y pendientes < 50% -> 'BASELINE_GOVERNED'."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_change_governance,
+    )
+
+    report_data = {
+        "baseline_version": "v2.1",
+        "baseline_locked": True,
+        "change_requests": [
+            {
+                "id": "CR-101",
+                "status": "APPROVED",
+                "cost_impact": 12500.5,
+                "schedule_impact_days": 5,
+                "ccb_minutes_ref": "ACTA-CCB-2026-01",
+            },
+            {
+                "code": "CR-102",
+                "status": "approved",
+                "cost_impact": -2500.25,
+                "schedule_impact_days": 2.5,
+                "has_ccb_minutes": True,
+            },
+            {
+                "id": "CR-103",
+                "status": "REJECTED",
+                "cost_impact": 50000.0,
+                "schedule_impact_days": 20,
+                "has_ccb_minutes": True,
+            },
+            {
+                "id": "CR-104",
+                "status": "PENDING",
+                "cost_impact": 3000.0,
+                "schedule_impact_days": 1,
+            },
+        ],
+    }
+
+    res = ProjectExportService.audit_executive_report_change_governance(report_data)
+    assert res["total_requests"] == 4
+    assert res["approved_count"] == 2
+    assert res["rejected_count"] == 1
+    assert res["pending_count"] == 1
+    assert res["untraceable_decisions"] == []
+    assert res["net_approved_cost_impact"] == 10000.25
+    assert res["net_approved_schedule_days"] == 7.5
+    assert res["governance_posture"] == "BASELINE_GOVERNED"
+    assert isinstance(res["recommendations"], list) and len(res["recommendations"]) >= 1
+    assert audit_executive_report_change_governance(report_data) == res
+
+
+def test_audit_executive_report_change_governance_uncontrolled_changes():
+    """Solicitudes APPROVED o REJECTED sin acta CCB -> 'UNCONTROLLED_CHANGES'."""
+    from backend.services.project_export_service import (
+        audit_executive_report_change_governance,
+    )
+
+    report_data = {
+        "ccb_requests": [
+            {
+                "id": "CR-201",
+                "status": "APPROVED",
+                "cost_impact": 8000.0,
+                "schedule_impact_days": 4,
+                "has_ccb_minutes": False,
+                "ccb_minutes_ref": "   ",
+            },
+            {
+                "code": "CR-202",
+                "status": "REJECTED",
+                "cost_impact": 1500.0,
+                "schedule_impact_days": 0,
+            },
+            {
+                "id": "CR-203",
+                "status": "PENDING",
+                "cost_impact": 500.0,
+                "schedule_impact_days": 1,
+            },
+        ]
+    }
+
+    res = audit_executive_report_change_governance(report_data)
+    assert res["total_requests"] == 3
+    assert res["approved_count"] == 1
+    assert res["rejected_count"] == 1
+    assert res["pending_count"] == 1
+    assert res["untraceable_decisions"] == ["CR-201", "CR-202"]
+    assert res["net_approved_cost_impact"] == 8000.0
+    assert res["net_approved_schedule_days"] == 4.0
+    assert res["governance_posture"] == "UNCONTROLLED_CHANGES"
+    assert len(res["recommendations"]) >= 1
+
+
+def test_audit_executive_report_change_governance_pending_backlog_bottleneck():
+    """Sin decisiones sin traza pero pending_count / total_requests >= 0.5 -> 'PENDING_BACKLOG_BOTTLENECK'."""
+    from backend.services.project_export_service import (
+        audit_executive_report_change_governance,
+    )
+
+    report_data = {
+        "change_requests": [
+            {
+                "id": "CR-301",
+                "status": "APPROVED",
+                "cost_impact": 4200.0,
+                "schedule_impact_days": 3,
+                "ccb_minutes_ref": "CCB-MIN-09",
+            },
+            {"id": "CR-302", "status": "PENDING", "cost_impact": 1000.0},
+            {"id": "CR-303", "status": "pending", "schedule_impact_days": 5},
+            {"id": "CR-304", "status": "DEFERRED"},
+        ]
+    }
+
+    res = audit_executive_report_change_governance(report_data)
+    assert res["total_requests"] == 4
+    assert res["approved_count"] == 1
+    assert res["pending_count"] == 2
+    assert res["untraceable_decisions"] == []
+    assert res["net_approved_cost_impact"] == 4200.0
+    assert res["net_approved_schedule_days"] == 3.0
+    assert res["governance_posture"] == "PENDING_BACKLOG_BOTTLENECK"
+
+
+def test_audit_executive_report_change_governance_no_change_activity():
+    """Sin solicitudes de cambio o payload None/vacío -> 'NO_CHANGE_ACTIVITY'."""
+    from backend.services.project_export_service import (
+        audit_executive_report_change_governance,
+    )
+
+    for empty_payload in (None, {}, {"change_requests": []}):
+        res = audit_executive_report_change_governance(empty_payload)
+        assert res["total_requests"] == 0
+        assert res["approved_count"] == 0
+        assert res["rejected_count"] == 0
+        assert res["pending_count"] == 0
+        assert res["untraceable_decisions"] == []
+        assert res["net_approved_cost_impact"] == 0.0
+        assert res["net_approved_schedule_days"] == 0.0
+        assert res["governance_posture"] == "NO_CHANGE_ACTIVITY"
+        assert isinstance(res["recommendations"], list)
+
+
+
 

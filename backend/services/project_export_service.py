@@ -32,6 +32,7 @@ __all__ = [
     "audit_risks_csv_register_completeness",
     "audit_stakeholders_csv_engagement_gaps",
     "audit_expenses_vendor_concentration",
+    "audit_executive_report_change_governance",
     "ProjectExportService",
 ]
 
@@ -295,6 +296,12 @@ class ProjectExportService:
         csv_content: str | None,
     ) -> dict[str, Any]:
         return audit_expenses_vendor_concentration(csv_content)
+
+    @staticmethod
+    def audit_executive_report_change_governance(
+        report_data: Optional[dict],
+    ) -> dict[str, Any]:
+        return audit_executive_report_change_governance(report_data)
 
 
 def summarize_executive_report_risk_posture(report_data: Optional[dict]) -> dict:
@@ -937,6 +944,105 @@ def audit_expenses_vendor_concentration(
         "top_vendor_share_pct": top_vendor_share_pct,
         "posture": posture,
     }
+
+
+def audit_executive_report_change_governance(
+    report_data: Optional[dict],
+) -> dict[str, Any]:
+    """Audita la gobernanza de control de cambios y línea base del reporte ejecutivo según PMI PMBOK §10.2 y §4.6."""
+    data = report_data if isinstance(report_data, dict) else {}
+    ccb_summary = (
+        data.get("ccb_and_quality_summary")
+        if isinstance(data.get("ccb_and_quality_summary"), dict)
+        else {}
+    )
+    raw_requests = (
+        data.get("change_requests")
+        if isinstance(data.get("change_requests"), list)
+        else data.get("ccb_requests")
+        if isinstance(data.get("ccb_requests"), list)
+        else ccb_summary.get("change_requests")
+        if isinstance(ccb_summary.get("change_requests"), list)
+        else ccb_summary.get("ccb_requests")
+        if isinstance(ccb_summary.get("ccb_requests"), list)
+        else []
+    )
+
+    items = [item for item in raw_requests if isinstance(item, dict)]
+    total_requests = len(items)
+    approved_count = 0
+    rejected_count = 0
+    pending_count = 0
+    untraceable_decisions: list[str] = []
+    net_approved_cost_raw = 0.0
+    net_approved_schedule_raw = 0.0
+
+    for idx, item in enumerate(items):
+        req_id = str(item.get("id") or item.get("code") or f"CR-{idx + 1}").strip()
+        status = str(item.get("status") or "").strip().upper()
+        try:
+            cost_impact = float(item.get("cost_impact") or 0.0)
+        except (ValueError, TypeError):
+            cost_impact = 0.0
+        try:
+            schedule_impact = float(item.get("schedule_impact_days") or 0.0)
+        except (ValueError, TypeError):
+            schedule_impact = 0.0
+
+        has_minutes = bool(item.get("has_ccb_minutes")) or bool(
+            str(item.get("ccb_minutes_ref") or "").strip()
+        )
+
+        if status == "APPROVED":
+            approved_count += 1
+            net_approved_cost_raw += cost_impact
+            net_approved_schedule_raw += schedule_impact
+            if not has_minutes:
+                untraceable_decisions.append(req_id)
+        elif status == "REJECTED":
+            rejected_count += 1
+            if not has_minutes:
+                untraceable_decisions.append(req_id)
+        elif status == "PENDING":
+            pending_count += 1
+
+    net_approved_cost_impact = round(net_approved_cost_raw, 2)
+    net_approved_schedule_days = round(net_approved_schedule_raw, 2)
+
+    recommendations: list[str] = []
+    if total_requests == 0:
+        governance_posture = "NO_CHANGE_ACTIVITY"
+        recommendations.append(
+            "Mantener monitoreo de línea base conforme a PMI PMBOK §4.6."
+        )
+    elif len(untraceable_decisions) > 0:
+        governance_posture = "UNCONTROLLED_CHANGES"
+        recommendations.append(
+            "Vincular actas formales del Comité de Control de Cambios (CCB) a todas las decisiones aprobadas o rechazadas (PMI §4.6)."
+        )
+    elif pending_count / total_requests >= 0.5:
+        governance_posture = "PENDING_BACKLOG_BOTTLENECK"
+        recommendations.append(
+            "Convocar sesión extraordinaria del CCB para destrabar las solicitudes pendientes y evitar deriva de alcance/cronograma."
+        )
+    else:
+        governance_posture = "BASELINE_GOVERNED"
+        recommendations.append(
+            "Gobernanza de cambios controlada y trazable con actas CCB verificadas."
+        )
+
+    return {
+        "total_requests": total_requests,
+        "approved_count": approved_count,
+        "rejected_count": rejected_count,
+        "pending_count": pending_count,
+        "untraceable_decisions": untraceable_decisions,
+        "net_approved_cost_impact": net_approved_cost_impact,
+        "net_approved_schedule_days": net_approved_schedule_days,
+        "governance_posture": governance_posture,
+        "recommendations": recommendations,
+    }
+
 
 
 
