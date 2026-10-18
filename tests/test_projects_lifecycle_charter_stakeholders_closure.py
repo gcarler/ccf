@@ -2340,3 +2340,145 @@ def test_audit_stakeholder_engagement_assessment_matrix_empty_or_none():
             "seam_posture": "NO_STAKEHOLDERS_EVALUATED",
         }
 
+
+def test_audit_risk_residual_exposure_and_triggers_governed():
+    """Riesgos activos con exposición residual < inherente, <= max_residual_emv y con trigger/owner -> GOVERNED_RESIDUAL_RISK_POSTURE."""
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_risk_residual_exposure_and_triggers,
+    )
+
+    risks = [
+        {
+            "id": "RSK-1",
+            "status": "OPEN",
+            "inherent_probability": 0.6,
+            "inherent_impact": 20000.0,
+            "residual_probability": 0.2,
+            "residual_impact": 15000.0,
+            "response_strategy": "MITIGATE",
+            "trigger_condition": "Latencia p99 > 400ms sostenida por 10m",
+            "risk_owner_id": "USR-SRE-1",
+        },
+        {
+            "risk_id": "RSK-CLOSED",
+            "status": "CLOSED",
+            "inherent_probability": 0.9,
+            "inherent_impact": 50000.0,
+            "residual_probability": 0.9,
+            "residual_impact": 60000.0,
+        },
+    ]
+    res = audit_risk_residual_exposure_and_triggers(risks, max_residual_emv=5000.0)
+    assert res == {
+        "total_active_risks": 1,
+        "total_inherent_emv": 12000.0,
+        "total_residual_emv": 3000.0,
+        "inverted_residual_risk_ids": [],
+        "excessive_residual_risk_ids": [],
+        "missing_trigger_or_owner_ids": [],
+        "is_residual_governance_valid": True,
+        "residual_posture": "GOVERNED_RESIDUAL_RISK_POSTURE",
+    }
+    assert (
+        ProjectLifecyclePMIService.audit_risk_residual_exposure_and_triggers(
+            risks, max_residual_emv=5000.0
+        )
+        == res
+    )
+
+
+def test_audit_risk_residual_exposure_and_triggers_inverted_residual():
+    """Exposición residual > inherente -> RESIDUAL_EXCEEDS_INHERENT_EXPOSURE."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_risk_residual_exposure_and_triggers,
+    )
+
+    res = audit_risk_residual_exposure_and_triggers(
+        [
+            {
+                "id": "RSK-INV",
+                "status": "ACTIVE",
+                "inherent_probability": 0.2,
+                "inherent_impact": 10000.0,
+                "residual_probability": 0.5,
+                "residual_impact": 10000.0,
+                "response_strategy": "MITIGATE",
+                "trigger_condition": "Falla primaria",
+                "risk_owner_id": "USR-1",
+            }
+        ],
+        max_residual_emv=6000.0,
+    )
+    assert res["inverted_residual_risk_ids"] == ["RSK-INV"]
+    assert res["is_residual_governance_valid"] is False
+    assert res["residual_posture"] == "RESIDUAL_EXCEEDS_INHERENT_EXPOSURE"
+
+
+def test_audit_risk_residual_exposure_and_triggers_excessive_and_missing_trigger():
+    """Exposición residual > umbral -> EXCESSIVE_RESIDUAL_EXPOSURE; falta trigger/owner -> MISSING_RISK_TRIGGER_OR_OWNER."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_risk_residual_exposure_and_triggers,
+    )
+
+    res_exc = audit_risk_residual_exposure_and_triggers(
+        [
+            {
+                "id": "RSK-HIGH",
+                "status": "MITIGATING",
+                "inherent_probability": 0.8,
+                "inherent_impact": 20000.0,
+                "residual_probability": 0.5,
+                "residual_impact": 15000.0,
+                "response_strategy": "CONTINGENCY",
+                "trigger_condition": "Retraso aduanero > 5 días",
+                "risk_owner_id": "USR-LOG",
+            }
+        ],
+        max_residual_emv=5000.0,
+    )
+    assert res_exc["excessive_residual_risk_ids"] == ["RSK-HIGH"]
+    assert res_exc["is_residual_governance_valid"] is False
+    assert res_exc["residual_posture"] == "EXCESSIVE_RESIDUAL_EXPOSURE"
+
+    res_trig = audit_risk_residual_exposure_and_triggers(
+        [
+            {
+                "id": "RSK-NOTRIG",
+                "status": "OPEN",
+                "inherent_probability": 0.5,
+                "inherent_impact": 8000.0,
+                "residual_probability": 0.2,
+                "residual_impact": 8000.0,
+                "response_strategy": "FALLBACK",
+                "trigger_condition": "",
+                "risk_owner_id": "USR-1",
+            }
+        ],
+        max_residual_emv=5000.0,
+    )
+    assert res_trig["missing_trigger_or_owner_ids"] == ["RSK-NOTRIG"]
+    assert res_trig["is_residual_governance_valid"] is False
+    assert res_trig["residual_posture"] == "MISSING_RISK_TRIGGER_OR_OWNER"
+
+
+def test_audit_risk_residual_exposure_and_triggers_no_active_risks():
+    """Lista vacía, None o sin riesgos activos -> NO_ACTIVE_RISKS."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_risk_residual_exposure_and_triggers,
+    )
+
+    for payload in (None, [], [{"id": "RSK-1", "status": "CLOSED"}]):
+        res = audit_risk_residual_exposure_and_triggers(payload)
+        assert res == {
+            "total_active_risks": 0,
+            "total_inherent_emv": 0.0,
+            "total_residual_emv": 0.0,
+            "inverted_residual_risk_ids": [],
+            "excessive_residual_risk_ids": [],
+            "missing_trigger_or_owner_ids": [],
+            "is_residual_governance_valid": False,
+            "residual_posture": "NO_ACTIVE_RISKS",
+        }
+
+

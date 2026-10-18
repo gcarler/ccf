@@ -2009,6 +2009,98 @@ def audit_wiki_raci_matrix_governance(
     }
 
 
+_VALID_WIKI_ADR_STATUSES = {"PROPOSED", "ACCEPTED", "SUPERSEDED", "DEPRECATED"}
+
+
+def audit_wiki_adr_governance_hygiene(
+    adrs: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Audita el catálogo de Architecture Decision Records (ADRs) en la Wiki verificando estados, secciones obligatorias y cadenas de supersesión según PMI PMBOK §4.4 y §10.2."""
+    raw_items = [item for item in (adrs or []) if isinstance(item, dict)]
+
+    normalized: list[dict[str, str]] = []
+    adr_status_map: dict[str, str] = {}
+
+    for item in raw_items:
+        adr_id = str(item.get("id") or item.get("adr_id") or "").strip()
+        if not adr_id:
+            continue
+        status = str(item.get("status") or "").strip().upper()
+        context = str(item.get("context") or "").strip()
+        decision = str(item.get("decision") or "").strip()
+        consequences = str(item.get("consequences") or "").strip()
+        superseded_by_id = str(item.get("superseded_by_id") or "").strip()
+        normalized.append(
+            {
+                "adr_id": adr_id,
+                "status": status,
+                "context": context,
+                "decision": decision,
+                "consequences": consequences,
+                "superseded_by_id": superseded_by_id,
+            }
+        )
+        adr_status_map[adr_id] = status
+
+    total_adrs = len(normalized)
+    accepted_adrs_count = 0
+    invalid_status_adr_ids: list[str] = []
+    incomplete_section_adr_ids: list[str] = []
+    broken_supersession_adr_ids: list[str] = []
+
+    for rec in normalized:
+        adr_id = rec["adr_id"]
+        status = rec["status"]
+        if status == "ACCEPTED":
+            accepted_adrs_count += 1
+        if status not in _VALID_WIKI_ADR_STATUSES:
+            invalid_status_adr_ids.append(adr_id)
+        if not rec["context"] or not rec["decision"] or not rec["consequences"]:
+            incomplete_section_adr_ids.append(adr_id)
+        if status == "SUPERSEDED":
+            target_id = rec["superseded_by_id"]
+            if (
+                not target_id
+                or target_id == adr_id
+                or target_id not in adr_status_map
+                or adr_status_map[target_id] != "ACCEPTED"
+            ):
+                broken_supersession_adr_ids.append(adr_id)
+
+    is_adr_catalog_governed = bool(
+        total_adrs > 0
+        and len(invalid_status_adr_ids) == 0
+        and len(incomplete_section_adr_ids) == 0
+        and len(broken_supersession_adr_ids) == 0
+    )
+
+    if total_adrs == 0:
+        adr_posture = "EMPTY_ADR_CATALOG"
+    elif len(broken_supersession_adr_ids) > 0:
+        adr_posture = "BROKEN_ADR_SUPERSESSION_CHAIN"
+    elif len(incomplete_section_adr_ids) > 0:
+        adr_posture = "INCOMPLETE_ADR_SECTIONS"
+    elif len(invalid_status_adr_ids) > 0:
+        adr_posture = "INVALID_ADR_STATUS"
+    else:
+        adr_posture = "GOVERNED_ADR_CATALOG"
+
+    return {
+        "total_adrs": total_adrs,
+        "accepted_adrs_count": accepted_adrs_count,
+        "invalid_status_adr_ids": invalid_status_adr_ids,
+        "incomplete_section_adr_ids": incomplete_section_adr_ids,
+        "broken_supersession_adr_ids": broken_supersession_adr_ids,
+        "is_adr_catalog_governed": is_adr_catalog_governed,
+        "adr_posture": adr_posture,
+    }
+
+
+WikiPMIService.audit_wiki_adr_governance_hygiene = staticmethod(
+    audit_wiki_adr_governance_hygiene
+)
+
+
 __all__ = [
     "DEFAULT_PMI_KB_DIR",
     "CANONICAL_VOLUMES_METADATA",
@@ -2036,6 +2128,8 @@ __all__ = [
     "audit_wiki_operational_runbook_readiness",
     "audit_wiki_adr_lifecycle_traceability",
     "audit_wiki_raci_matrix_governance",
+    "audit_wiki_adr_governance_hygiene",
     "WikiPMIService",
 ]
+
 

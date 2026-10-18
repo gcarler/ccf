@@ -1844,3 +1844,126 @@ def test_validate_pdm_dependency_leads_and_lags_empty_or_none():
             "pdm_posture": "NO_DEPENDENCIES_EVALUATED",
         }
 
+
+
+def test_validate_schedule_compression_options_optimal_critical_path():
+    """> Crashing y fast-tracking moderados en ruta crítico -> OPTIMAL compression."""
+    from backend.schemas.projects import validate_schedule_compression_options
+
+    res = validate_schedule_compression_options(
+        [
+            {
+                "id": "ACT-1",
+                "is_critical": True,
+                "normal_duration_days": 10.0,
+                "crash_duration_days": 8.0,
+                "normal_cost": 5000.0,
+                "crash_cost": 7000.0,
+                "technique": "crashing",
+            },
+            {
+                "id": "ACT-2",
+                "on_critical_path": True,
+                "normal_duration": 8.0,
+                "crash_duration_days": 6.0,
+                "technique": "fast_tracking",
+                "rework_risk_pct": 15.0,
+            },
+        ]
+    )
+    assert res["is_compression_plan_sound"] is True
+    assert res["total_options"] == 2
+    assert res["non_critical_compression_ids"] == []
+    assert res["invalid_crash_slope_ids"] == []
+    assert res["high_risk_fast_track_ids"] == []
+    assert res["total_days_saved"] == 4.0
+    assert res["compression_posture"] == "OPTIMAL_CRITICAL_PATH_COMPRESSION"
+
+
+def test_validate_schedule_compression_options_invalid_slope():
+    """> Crash > normal o costo crashing menor que normal -> INVALID slope."""
+    from backend.schemas.projects import validate_schedule_compression_options
+
+    res = validate_schedule_compression_options(
+        [
+            {
+                "id": "ACT-EXPANDED",
+                "is_critical": True,
+                "normal_duration_days": 5.0,
+                "crash_duration_days": 7.0,
+            },
+            {
+                "id": "ACT-CHEAP",
+                "is_critical": True,
+                "normal_duration_days": 6.0,
+                "crash_duration_days": 4.0,
+                "normal_cost": 4000.0,
+                "crash_cost": 2500.0,
+                "technique": "crashing",
+            },
+        ]
+    )
+    assert res["is_compression_plan_sound"] is False
+    assert res["total_options"] == 2
+    assert res["invalid_crash_slope_ids"] == ["ACT-EXPANDED", "ACT-CHEAP"]
+    assert res["non_critical_compression_ids"] == []
+    assert res["high_risk_fast_track_ids"] == []
+    assert res["total_days_saved"] == 0.0
+    assert res["compression_posture"] == "INVALID_CRASH_COST_DURATION_SLOPE"
+
+
+def test_validate_schedule_compression_options_noncritical_and_risky_fasttrack():
+    """> Compresión fuera de ruta crítico y fast-tracking agresivo por pilar."""
+    from backend.schemas.projects import validate_schedule_compression_options
+
+    res = validate_schedule_compression_options(
+        [
+            {
+                "id": "ACT-WASTE",
+                "is_critical": False,
+                "normal_duration_days": 9.0,
+                "crash_duration_days": 6.0,
+            },
+            {
+                "id": "ACT-RISKY",
+                "is_critical": True,
+                "normal_duration_days": 8.0,
+                "crash_duration_days": 7.0,
+                "technique": "fast_tracking",
+                "rework_risk_pct": 40.0,
+            },
+            {
+                "id": "ACT-SQUEEZE",
+                "is_critical": True,
+                "normal_duration_days": 10.0,
+                "crash_duration_days": 4.0,
+                "technique": "ejecucion_rapida",
+                "overlap_risk_pct": 10.0,
+            },
+        ]
+    )
+    assert res["is_compression_plan_sound"] is False
+    assert res["total_options"] == 3
+    # ACT-WASTE comprimido sin ser critico; ACT-RISKY rework 40% > 25%; ACT-SQUEEZE comprime 60% > 50%.
+    assert res["non_critical_compression_ids"] == ["ACT-WASTE"]
+    assert res["high_risk_fast_track_ids"] == ["ACT-RISKY", "ACT-SQUEEZE"]
+    assert res["invalid_crash_slope_ids"] == []
+    assert res["total_days_saved"] == 0.0
+    assert res["compression_posture"] == "NON_CRITICAL_PATH_COMPRESSION_WASTE"
+
+
+def test_validate_schedule_compression_options_empty_or_none():
+    """None, lista vacía o entradas no-dict -> NO_COMPRESSION_OPTIONS."""
+    from backend.schemas.projects import validate_schedule_compression_options
+
+    for payload in (None, [], ["invalid", 42, None]):
+        res = validate_schedule_compression_options(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_options": 0,
+            "total_days_saved": 0.0,
+            "non_critical_compression_ids": [],
+            "invalid_crash_slope_ids": [],
+            "high_risk_fast_track_ids": [],
+            "is_compression_plan_sound": True,
+            "compression_posture": "NO_COMPRESSION_OPTIONS",
+        }

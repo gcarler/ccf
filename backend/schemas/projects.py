@@ -3689,5 +3689,132 @@ __all__ = [
     "validate_cpm_float_and_critical_path",
     "validate_emv_decision_tree_exposure",
     "validate_pdm_dependency_leads_and_lags",
+    "validate_schedule_compression_options",
 ]
+
+
+def validate_schedule_compression_options(
+    activities: list[dict[str, Any]] | None = None,
+    max_rework_risk_pct: float = 25.0,
+) -> dict[str, Any]:
+    """Valida opciones de compresión de cronograma crashing/fast-tracking (PMBOK §6.5.2.6).
+
+    Cada opción declara `id`/`activity_id` (fallback 'ACT-{idx}'), flag de
+    ruta crítica (`is_critical`/`on_critical_path`), duración normal y
+    comprimida, costo normal y comprimido, técnica
+    (`technique`/`compression_type`, default 'crashing') y riesgo de rework
+    (`rework_risk_pct`/`overlap_risk_pct`):
+    - `invalid_crash_slope_ids`: geometría inválida (duraciones <= 0,
+      crash > normal, o en crashing costo comprimido < costo normal).
+    - `non_critical_compression_ids`: compresión fuera de la ruta crítica.
+    - `high_risk_fast_track_ids`: fast-tracking con rework > límite o
+      compresión > 50% de la duración normal.
+    - `total_days_saved`: días ganados solo en actividades críticas sin hallazgos (2 dec).
+    - `is_compression_plan_sound`: las 3 listas vacías.
+    - `compression_posture`: 'NO_COMPRESSION_OPTIONS' sin opciones;
+      'INVALID_CRASH_COST_DURATION_SLOPE'; 'NON_CRITICAL_PATH_COMPRESSION_WASTE';
+      'EXCESSIVE_FAST_TRACK_REWORK_RISK'; 'OPTIMAL_CRITICAL_PATH_COMPRESSION'.
+    """
+    records = [a for a in (activities or []) if isinstance(a, dict)]
+    if not records:
+        return {
+            "total_options": 0,
+            "total_days_saved": 0.0,
+            "non_critical_compression_ids": [],
+            "invalid_crash_slope_ids": [],
+            "high_risk_fast_track_ids": [],
+            "is_compression_plan_sound": True,
+            "compression_posture": "NO_COMPRESSION_OPTIONS",
+        }
+
+    CRASHING_TECHNIQUES = {"crashing", "intensificacion"}
+    FAST_TRACK_TECHNIQUES = {"fast_tracking", "fast-tracking", "ejecucion_rapida"}
+
+    total_options = len(records)
+    total_days_saved_raw = 0.0
+    non_critical_compression_ids: list[str] = []
+    invalid_crash_slope_ids: list[str] = []
+    high_risk_fast_track_ids: list[str] = []
+
+    for idx, item in enumerate(records, start=1):
+        act_id = str(item.get("id") or item.get("activity_id") or f"ACT-{idx}").strip()
+        is_critical = bool(item.get("is_critical") or item.get("on_critical_path"))
+        try:
+            normal_duration = float(item.get("normal_duration_days") or item.get("normal_duration") or 0.0)
+        except (TypeError, ValueError):
+            normal_duration = 0.0
+        crash_raw = item.get("crash_duration_days")
+        if crash_raw is None:
+            crash_raw = item.get("crashed_duration")
+        crash_duration = float(crash_raw) if crash_raw is not None else normal_duration
+        try:
+            normal_cost = float(item.get("normal_cost") or 0.0)
+        except (TypeError, ValueError):
+            normal_cost = 0.0
+        cost_raw = item.get("crash_cost")
+        if cost_raw is None:
+            cost_raw = item.get("crashed_cost")
+        crash_cost = float(cost_raw) if cost_raw is not None else normal_cost
+        technique = str(item.get("technique") or item.get("compression_type") or "crashing").strip().lower()
+        try:
+            rework_risk_pct = float(item.get("rework_risk_pct") or item.get("overlap_risk_pct") or 0.0)
+        except (TypeError, ValueError):
+            rework_risk_pct = 0.0
+
+        is_invalid_slope = bool(
+            normal_duration <= 0.0
+            or crash_duration <= 0.0
+            or crash_duration > normal_duration + 1e-9
+            or (technique in CRASHING_TECHNIQUES and crash_cost < normal_cost - 1e-9)
+        )
+        is_non_critical_compression = bool(
+            crash_duration < normal_duration - 1e-9 and not is_critical
+        )
+        is_high_risk_fast_track = bool(
+            technique in FAST_TRACK_TECHNIQUES
+            and (
+                rework_risk_pct > float(max_rework_risk_pct) + 1e-9
+                or (
+                    normal_duration > 0.0
+                    and ((normal_duration - crash_duration) / normal_duration) * 100.0
+                    > 50.0 + 1e-9
+                )
+            )
+        )
+
+        if is_invalid_slope:
+            invalid_crash_slope_ids.append(act_id)
+        if is_non_critical_compression:
+            non_critical_compression_ids.append(act_id)
+        if is_high_risk_fast_track:
+            high_risk_fast_track_ids.append(act_id)
+        if is_critical and not (is_invalid_slope or is_non_critical_compression or is_high_risk_fast_track):
+            total_days_saved_raw += max(0.0, normal_duration - crash_duration)
+
+    is_compression_plan_sound = bool(
+        len(non_critical_compression_ids) == 0
+        and len(invalid_crash_slope_ids) == 0
+        and len(high_risk_fast_track_ids) == 0
+    )
+
+    if total_options == 0:
+        compression_posture = "NO_COMPRESSION_OPTIONS"
+    elif len(invalid_crash_slope_ids) > 0:
+        compression_posture = "INVALID_CRASH_COST_DURATION_SLOPE"
+    elif len(non_critical_compression_ids) > 0:
+        compression_posture = "NON_CRITICAL_PATH_COMPRESSION_WASTE"
+    elif len(high_risk_fast_track_ids) > 0:
+        compression_posture = "EXCESSIVE_FAST_TRACK_REWORK_RISK"
+    else:
+        compression_posture = "OPTIMAL_CRITICAL_PATH_COMPRESSION"
+
+    return {
+        "total_options": total_options,
+        "total_days_saved": round(total_days_saved_raw, 2),
+        "non_critical_compression_ids": non_critical_compression_ids,
+        "invalid_crash_slope_ids": invalid_crash_slope_ids,
+        "high_risk_fast_track_ids": high_risk_fast_track_ids,
+        "is_compression_plan_sound": is_compression_plan_sound,
+        "compression_posture": compression_posture,
+    }
 

@@ -2424,11 +2424,107 @@ def audit_stakeholder_engagement_assessment_matrix(
     }
 
 
+_ACTIVE_RESIDUAL_RISK_STATUSES = {"OPEN", "ACTIVE", "MITIGATING"}
+_RESPONSE_STRATEGIES_REQUIRING_TRIGGER = {"MITIGATE", "CONTINGENCY", "FALLBACK"}
+
+
+def audit_risk_residual_exposure_and_triggers(
+    risks: list[dict[str, Any]] | None = None,
+    max_residual_emv: float = 5000.0,
+) -> dict[str, Any]:
+    """Audita exposición residual de riesgos frente a la inherente y presencia de disparadores de alerta temprana según PMI PMBOK §11.7 y §4.5."""
+    items = [item for item in (risks or []) if isinstance(item, dict)]
+    try:
+        max_res_limit = max(0.0, float(max_residual_emv))
+    except (TypeError, ValueError):
+        max_res_limit = 5000.0
+
+    def _nonneg_float(val: Any) -> float:
+        if val is None or isinstance(val, bool):
+            return 0.0
+        try:
+            return max(0.0, float(val))
+        except (TypeError, ValueError):
+            return 0.0
+
+    total_active_risks = 0
+    sum_inherent = 0.0
+    sum_residual = 0.0
+    inverted_residual_risk_ids: list[str] = []
+    excessive_residual_risk_ids: list[str] = []
+    missing_trigger_or_owner_ids: list[str] = []
+
+    for item in items:
+        risk_id = str(item.get("id") or item.get("risk_id") or "").strip()
+        if not risk_id:
+            continue
+        status = str(item.get("status") or "OPEN").strip().upper()
+        if status not in _ACTIVE_RESIDUAL_RISK_STATUSES:
+            continue
+
+        total_active_risks += 1
+        inherent_emv = _nonneg_float(item.get("inherent_probability")) * _nonneg_float(
+            item.get("inherent_impact")
+        )
+        residual_emv = _nonneg_float(item.get("residual_probability")) * _nonneg_float(
+            item.get("residual_impact")
+        )
+        sum_inherent += inherent_emv
+        sum_residual += residual_emv
+
+        response_strategy = (
+            str(item.get("response_strategy") or "MITIGATE").strip().upper()
+        )
+        trigger_condition = str(item.get("trigger_condition") or "").strip()
+        risk_owner_id = str(item.get("risk_owner_id") or "").strip()
+
+        if residual_emv > inherent_emv + 1e-6:
+            inverted_residual_risk_ids.append(risk_id)
+        if residual_emv > max_res_limit:
+            excessive_residual_risk_ids.append(risk_id)
+        if response_strategy in _RESPONSE_STRATEGIES_REQUIRING_TRIGGER and (
+            not trigger_condition or not risk_owner_id
+        ):
+            missing_trigger_or_owner_ids.append(risk_id)
+
+    is_residual_governance_valid = bool(
+        total_active_risks > 0
+        and len(inverted_residual_risk_ids) == 0
+        and len(excessive_residual_risk_ids) == 0
+        and len(missing_trigger_or_owner_ids) == 0
+    )
+
+    if total_active_risks == 0:
+        residual_posture = "NO_ACTIVE_RISKS"
+    elif len(inverted_residual_risk_ids) > 0:
+        residual_posture = "RESIDUAL_EXCEEDS_INHERENT_EXPOSURE"
+    elif len(excessive_residual_risk_ids) > 0:
+        residual_posture = "EXCESSIVE_RESIDUAL_EXPOSURE"
+    elif len(missing_trigger_or_owner_ids) > 0:
+        residual_posture = "MISSING_RISK_TRIGGER_OR_OWNER"
+    else:
+        residual_posture = "GOVERNED_RESIDUAL_RISK_POSTURE"
+
+    return {
+        "total_active_risks": total_active_risks,
+        "total_inherent_emv": round(sum_inherent, 2),
+        "total_residual_emv": round(sum_residual, 2),
+        "inverted_residual_risk_ids": inverted_residual_risk_ids,
+        "excessive_residual_risk_ids": excessive_residual_risk_ids,
+        "missing_trigger_or_owner_ids": missing_trigger_or_owner_ids,
+        "is_residual_governance_valid": is_residual_governance_valid,
+        "residual_posture": residual_posture,
+    }
+
+
 ProjectLifecyclePMIService.audit_risk_appetite_and_threshold_governance = staticmethod(
     audit_risk_appetite_and_threshold_governance
 )
 ProjectLifecyclePMIService.audit_stakeholder_engagement_assessment_matrix = staticmethod(
     audit_stakeholder_engagement_assessment_matrix
+)
+ProjectLifecyclePMIService.audit_risk_residual_exposure_and_triggers = staticmethod(
+    audit_risk_residual_exposure_and_triggers
 )
 
 
@@ -2466,7 +2562,9 @@ __all__ = [
     "audit_make_or_buy_and_vendor_bids",
     "audit_risk_appetite_and_threshold_governance",
     "audit_stakeholder_engagement_assessment_matrix",
+    "audit_risk_residual_exposure_and_triggers",
     "ProjectLifecyclePMIService",
 ]
+
 
 

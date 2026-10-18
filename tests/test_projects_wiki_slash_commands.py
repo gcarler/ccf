@@ -2220,3 +2220,122 @@ def test_audit_wiki_knowledge_bus_factor_and_freshness_empty_or_none():
             "is_knowledge_resilient": True,
             "knowledge_resilience_posture": "NO_ARTICLES_EVALUATED",
         }
+
+
+def test_audit_wiki_adr_governance_hygiene_governed_catalog():
+    """Catálogo ADR con estados válidos, secciones completas y cadena de supersesión hacia ACCEPTED -> GOVERNED_ADR_CATALOG."""
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_adr_governance_hygiene,
+    )
+
+    adrs = [
+        {
+            "id": "ADR-001",
+            "status": "SUPERSEDED",
+            "context": "Uso inicial de colas en memoria",
+            "decision": "Encolar tareas en memoria local",
+            "consequences": "Pérdida en reinicios; reemplazado por ADR-002",
+            "superseded_by_id": "ADR-002",
+        },
+        {
+            "adr_id": "ADR-002",
+            "status": "ACCEPTED",
+            "context": "Persistencia de eventos críticos de proyectos",
+            "decision": "Adoptar PostgreSQL transaccional con outbox",
+            "consequences": "Garantiza entrega al menos una vez",
+        },
+    ]
+    res = audit_wiki_adr_governance_hygiene(adrs)
+    assert res == {
+        "total_adrs": 2,
+        "accepted_adrs_count": 1,
+        "invalid_status_adr_ids": [],
+        "incomplete_section_adr_ids": [],
+        "broken_supersession_adr_ids": [],
+        "is_adr_catalog_governed": True,
+        "adr_posture": "GOVERNED_ADR_CATALOG",
+    }
+    assert WikiPMIService.audit_wiki_adr_governance_hygiene(adrs) == res
+
+
+def test_audit_wiki_adr_governance_hygiene_broken_supersession_chain():
+    """ADR SUPERSEDED sin sucesor válido en estado ACCEPTED -> BROKEN_ADR_SUPERSESSION_CHAIN."""
+    from backend.services.wiki_pmi_service import audit_wiki_adr_governance_hygiene
+
+    res = audit_wiki_adr_governance_hygiene(
+        [
+            {
+                "id": "ADR-010",
+                "status": "SUPERSEDED",
+                "context": "Contexto A",
+                "decision": "Decisión A",
+                "consequences": "Consecuencia A",
+                "superseded_by_id": "ADR-999",
+            },
+            {
+                "id": "ADR-011",
+                "status": "SUPERSEDED",
+                "context": "Contexto B",
+                "decision": "Decisión B",
+                "consequences": "Consecuencia B",
+                "superseded_by_id": "ADR-011",
+            },
+        ]
+    )
+    assert res["broken_supersession_adr_ids"] == ["ADR-010", "ADR-011"]
+    assert res["is_adr_catalog_governed"] is False
+    assert res["adr_posture"] == "BROKEN_ADR_SUPERSESSION_CHAIN"
+
+
+def test_audit_wiki_adr_governance_hygiene_incomplete_sections_and_invalid_status():
+    """Secciones vacías -> INCOMPLETE_ADR_SECTIONS; estado desconocido -> INVALID_ADR_STATUS."""
+    from backend.services.wiki_pmi_service import audit_wiki_adr_governance_hygiene
+
+    res_inc = audit_wiki_adr_governance_hygiene(
+        [
+            {
+                "id": "ADR-020",
+                "status": "ACCEPTED",
+                "context": "Contexto válido",
+                "decision": "Decisión tomada",
+                "consequences": "",
+            }
+        ]
+    )
+    assert res_inc["incomplete_section_adr_ids"] == ["ADR-020"]
+    assert res_inc["is_adr_catalog_governed"] is False
+    assert res_inc["adr_posture"] == "INCOMPLETE_ADR_SECTIONS"
+
+    res_stat = audit_wiki_adr_governance_hygiene(
+        [
+            {
+                "id": "ADR-021",
+                "status": "DRAFT_UNKNOWN",
+                "context": "Contexto válido",
+                "decision": "Decisión tomada",
+                "consequences": "Impacto evaluado",
+            }
+        ]
+    )
+    assert res_stat["invalid_status_adr_ids"] == ["ADR-021"]
+    assert res_stat["is_adr_catalog_governed"] is False
+    assert res_stat["adr_posture"] == "INVALID_ADR_STATUS"
+
+
+def test_audit_wiki_adr_governance_hygiene_empty_catalog():
+    """Lista vacía o None -> EMPTY_ADR_CATALOG."""
+    from backend.services.wiki_pmi_service import audit_wiki_adr_governance_hygiene
+
+    for payload in (None, [], [{"id": ""}]):
+        res = audit_wiki_adr_governance_hygiene(payload)
+        assert res == {
+            "total_adrs": 0,
+            "accepted_adrs_count": 0,
+            "invalid_status_adr_ids": [],
+            "incomplete_section_adr_ids": [],
+            "broken_supersession_adr_ids": [],
+            "is_adr_catalog_governed": False,
+            "adr_posture": "EMPTY_ADR_CATALOG",
+        }
+
