@@ -5900,3 +5900,142 @@ def test_validate_ccpm_critical_chain_buffer_fever_chart_empty_and_export():
     assert "validate_ccpm_critical_chain_buffer_fever_chart" in mod.__all__
 
 
+
+
+def test_validate_raci_responsibility_assignment_matrix_hygiene_non_compliant_paths():
+    """Caso 1: sin accountable, multiple accountable y sin responsible -> NON_COMPLIANT."""
+    from backend.schemas.projects import (
+        validate_raci_responsibility_assignment_matrix_hygiene,
+    )
+
+    res = validate_raci_responsibility_assignment_matrix_hygiene(
+        [
+            {
+                "deliverable_id": "D-01",
+                "accountable_ids": [],
+                "responsible_ids": ["R-1"],
+                "consulted_ids": ["C-1"],
+                "informed_ids": ["I-1"],
+            },
+            {
+                "deliverable_id": "D-02",
+                "accountable_ids": ["A-1", "A-2"],
+                "responsible_ids": ["R-1", "R-2"],
+                "consulted_ids": [],
+                "informed_ids": [],
+            },
+            {
+                "deliverable_id": "D-03",
+                "accountable_ids": ["A-1"],
+                "responsible_ids": [],
+                "consulted_ids": [],
+                "informed_ids": [],
+            },
+        ]
+    )
+    assert res["total_deliverables"] == 3
+    assert res["zero_accountable_deliverable_ids"] == ["D-01"]
+    assert res["multiple_accountable_deliverable_ids"] == ["D-02"]
+    assert res["zero_responsible_deliverable_ids"] == ["D-03"]
+    assert res["overloaded_responsible_deliverable_ids"] == []
+    assert res["consultation_bottleneck_deliverable_ids"] == []
+    assert res["raci_governance_status"] == "NON_COMPLIANT"
+    assert res["is_raci_valid"] is False
+    assert len(res["recommendations"]) == 3
+
+
+def test_validate_raci_responsibility_assignment_matrix_hygiene_warning_paths():
+    """Caso 2: sobrecarga R y cuello de botella C sin brechas A/R -> WARNING."""
+    from backend.schemas.projects import (
+        validate_raci_responsibility_assignment_matrix_hygiene,
+    )
+
+    res = validate_raci_responsibility_assignment_matrix_hygiene(
+        [
+            {
+                "deliverable_id": "D-10",
+                "accountable_ids": ["A-1"],
+                "responsible_ids": ["R-1", "R-2", "R-3", "R-4"],
+                "consulted_ids": [],
+                "informed_ids": [],
+            },
+            {
+                "deliverable_id": "D-11",
+                "accountable_ids": ["A-9"],
+                "responsible_ids": ["R-9"],
+                "consulted_ids": ["C-1", "C-2", "C-3", "C-4", "C-5"],
+                "informed_ids": [],
+            },
+        ]
+    )
+    assert res["total_deliverables"] == 2
+    assert res["zero_accountable_deliverable_ids"] == []
+    assert res["multiple_accountable_deliverable_ids"] == []
+    assert res["zero_responsible_deliverable_ids"] == []
+    assert res["overloaded_responsible_deliverable_ids"] == ["D-10"]
+    assert res["consultation_bottleneck_deliverable_ids"] == ["D-11"]
+    assert res["raci_governance_status"] == "WARNING"
+    assert res["is_raci_valid"] is False
+    assert len(res["recommendations"]) == 2
+
+
+def test_validate_raci_responsibility_assignment_matrix_hygiene_compliant_and_thresholds():
+    """Caso 3: fronteras exactas de umbrales y caso COMPLIANT."""
+    from backend.schemas.projects import (
+        validate_raci_responsibility_assignment_matrix_hygiene,
+    )
+
+    res = validate_raci_responsibility_assignment_matrix_hygiene(
+        [
+            {
+                "deliverable_id": "D-20",
+                "accountable_ids": ["A-1"],
+                "responsible_ids": ["R-1", "R-2", "R-3"],
+                "consulted_ids": ["C-1", "C-2", "C-3", "C-4"],
+                "informed_ids": ["I-1"],
+            }
+        ]
+    )
+    assert res["total_deliverables"] == 1
+    assert res["overloaded_responsible_deliverable_ids"] == []
+    assert res["consultation_bottleneck_deliverable_ids"] == []
+    assert res["raci_governance_status"] == "COMPLIANT"
+    assert res["is_raci_valid"] is True
+    assert res["recommendations"] == []
+
+    tight = validate_raci_responsibility_assignment_matrix_hygiene(
+        [
+            {
+                "deliverable_id": "D-21",
+                "accountable_ids": ["A-1"],
+                "responsible_ids": ["R-1"],
+                "consulted_ids": [],
+            }
+        ],
+        max_responsible_per_deliverable=0,
+        max_consulted_per_deliverable=0,
+    )
+    assert tight["overloaded_responsible_deliverable_ids"] == ["D-21"]
+    assert tight["raci_governance_status"] == "WARNING"
+
+
+def test_validate_raci_responsibility_assignment_matrix_hygiene_invalid_entries_and_export():
+    """Caso 4: entradas no-lista/no-dict y export en __all__."""
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_raci_responsibility_assignment_matrix_hygiene,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = validate_raci_responsibility_assignment_matrix_hygiene(payload)  # type: ignore[arg-type]
+        assert empty["total_deliverables"] == 0
+        assert empty["zero_accountable_deliverable_ids"] == []
+        assert empty["multiple_accountable_deliverable_ids"] == []
+        assert empty["zero_responsible_deliverable_ids"] == []
+        assert empty["overloaded_responsible_deliverable_ids"] == []
+        assert empty["consultation_bottleneck_deliverable_ids"] == []
+        assert empty["raci_governance_status"] == "COMPLIANT"
+        assert empty["is_raci_valid"] is True
+        assert empty["recommendations"] == []
+
+    assert "validate_raci_responsibility_assignment_matrix_hygiene" in mod.__all__

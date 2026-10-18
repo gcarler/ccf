@@ -3800,6 +3800,7 @@ __all__ = [
     "validate_requirements_traceability_bidirectional_coverage",
     "validate_three_point_pert_and_triangular_estimates",
     "validate_ccpm_critical_chain_buffer_fever_chart",
+    "validate_raci_responsibility_assignment_matrix_hygiene",
 ]
 
 
@@ -6845,3 +6846,101 @@ def validate_ccpm_critical_chain_buffer_fever_chart(
     }
 
 
+
+
+def validate_raci_responsibility_assignment_matrix_hygiene(
+    deliverables_matrix: Any,
+    *,
+    max_responsible_per_deliverable: int = 3,
+    max_consulted_per_deliverable: int = 4,
+) -> Dict[str, object]:
+    """Validador PMBOK 9.1.2.2 RACI / RAM para la matriz de asignación.
+
+    Aplica la regla PMI de un único Accountable por entregable, cobertura
+    de al menos un Responsible y límites de sobrecarga en R (responsible)
+    y C (consulted). Determinista: entradas no-lista/no-dict se ignoran.
+    """
+    entries = deliverables_matrix if isinstance(deliverables_matrix, list) else []
+    rows = [item for item in entries if isinstance(item, dict)]
+
+    zero_accountable_deliverable_ids: List[str] = []
+    multiple_accountable_deliverable_ids: List[str] = []
+    zero_responsible_deliverable_ids: List[str] = []
+    overloaded_responsible_deliverable_ids: List[str] = []
+    consultation_bottleneck_deliverable_ids: List[str] = []
+
+    for row in rows:
+        deliverable_id = row.get("deliverable_id")
+        accountable_ids = row.get("accountable_ids")
+        responsible_ids = row.get("responsible_ids")
+        consulted_ids = row.get("consulted_ids")
+
+        accountable_count = len(accountable_ids) if isinstance(accountable_ids, list) else 0
+        responsible_count = len(responsible_ids) if isinstance(responsible_ids, list) else 0
+        consulted_count = len(consulted_ids) if isinstance(consulted_ids, list) else 0
+
+        if accountable_count == 0:
+            zero_accountable_deliverable_ids.append(deliverable_id)
+        elif accountable_count > 1:
+            multiple_accountable_deliverable_ids.append(deliverable_id)
+
+        if responsible_count == 0:
+            zero_responsible_deliverable_ids.append(deliverable_id)
+
+        if responsible_count > max_responsible_per_deliverable:
+            overloaded_responsible_deliverable_ids.append(deliverable_id)
+
+        if consulted_count > max_consulted_per_deliverable:
+            consultation_bottleneck_deliverable_ids.append(deliverable_id)
+
+    total_deliverables = len(rows)
+
+    if (
+        zero_accountable_deliverable_ids
+        or multiple_accountable_deliverable_ids
+        or zero_responsible_deliverable_ids
+    ):
+        raci_governance_status = "NON_COMPLIANT"
+    elif overloaded_responsible_deliverable_ids or consultation_bottleneck_deliverable_ids:
+        raci_governance_status = "WARNING"
+    else:
+        raci_governance_status = "COMPLIANT"
+
+    recommendations: List[str] = []
+    if zero_accountable_deliverable_ids:
+        recommendations.append(
+            "Assign a single accountable owner to deliverables: "
+            + ", ".join(zero_accountable_deliverable_ids)
+        )
+    if multiple_accountable_deliverable_ids:
+        recommendations.append(
+            "Keep exactly one accountable owner per deliverable (PMI single-A rule): "
+            + ", ".join(multiple_accountable_deliverable_ids)
+        )
+    if zero_responsible_deliverable_ids:
+        recommendations.append(
+            "Assign at least one responsible role to deliverables: "
+            + ", ".join(zero_responsible_deliverable_ids)
+        )
+    if overloaded_responsible_deliverable_ids:
+        recommendations.append(
+            f"Rebalance responsible assignments exceeding {max_responsible_per_deliverable} per deliverable: "
+            + ", ".join(overloaded_responsible_deliverable_ids)
+        )
+    if consultation_bottleneck_deliverable_ids:
+        recommendations.append(
+            f"Trim consultation lists exceeding {max_consulted_per_deliverable} per deliverable: "
+            + ", ".join(consultation_bottleneck_deliverable_ids)
+        )
+
+    return {
+        "total_deliverables": total_deliverables,
+        "zero_accountable_deliverable_ids": zero_accountable_deliverable_ids,
+        "multiple_accountable_deliverable_ids": multiple_accountable_deliverable_ids,
+        "zero_responsible_deliverable_ids": zero_responsible_deliverable_ids,
+        "overloaded_responsible_deliverable_ids": overloaded_responsible_deliverable_ids,
+        "consultation_bottleneck_deliverable_ids": consultation_bottleneck_deliverable_ids,
+        "raci_governance_status": raci_governance_status,
+        "is_raci_valid": raci_governance_status == "COMPLIANT",
+        "recommendations": recommendations,
+    }

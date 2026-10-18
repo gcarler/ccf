@@ -3156,6 +3156,7 @@ __all__ = [
     "audit_business_case_npv_irr_and_payback_viability",
     "audit_team_tuckman_maturity_and_psychological_safety",
     "audit_project_premortem_scenarios_and_kill_switch_criteria",
+    "audit_project_closure_hypercare_and_bau_handover_readiness",
     "ProjectLifecyclePMIService",
 ]
 
@@ -5884,3 +5885,97 @@ ProjectLifecyclePMIService.audit_project_premortem_scenarios_and_kill_switch_cri
 )
 
 
+def audit_project_closure_hypercare_and_bau_handover_readiness(
+    handover_items: list[dict[str, Any]],
+    *,
+    hypercare_days_configured: int = 30,
+    min_hypercare_days: int = 14,
+    open_sev1_incidents: int = 0,
+    open_sev2_incidents: int = 0,
+    max_allowed_sev2_incidents: int = 1,
+) -> dict[str, Any]:
+    """Audit PMI PMBOK §4.7 & §12.3 project closure hypercare warranty period, BAU handover, and KT sign-off readiness."""
+    unaccepted_bau_item_ids: list[str] = []
+    unverified_runbook_item_ids: list[str] = []
+    incomplete_kt_item_ids: list[str] = []
+    recommendations: list[str] = []
+
+    valid_items = (
+        [
+            i
+            for i in handover_items
+            if isinstance(i, dict) and str(i.get("item_id", "")).strip()
+        ]
+        if isinstance(handover_items, list)
+        else []
+    )
+
+    for item in valid_items:
+        item_id = str(item.get("item_id", "")).strip()
+
+        bau_owner_accepted = bool(item.get("bau_owner_accepted", False))
+        runbook_verified = bool(item.get("runbook_verified", False))
+        kt_session_completed = bool(item.get("kt_session_completed", False))
+
+        if not bau_owner_accepted:
+            unaccepted_bau_item_ids.append(item_id)
+        if not runbook_verified:
+            unverified_runbook_item_ids.append(item_id)
+        if not kt_session_completed:
+            incomplete_kt_item_ids.append(item_id)
+
+    insufficient_hypercare_window = bool(hypercare_days_configured < min_hypercare_days)
+    incident_gate_blocked = bool(
+        open_sev1_incidents > 0 or open_sev2_incidents > max_allowed_sev2_incidents
+    )
+
+    if incident_gate_blocked:
+        recommendations.append(
+            f"Resolve open production incidents (Sev1={open_sev1_incidents}, Sev2={open_sev2_incidents}) before transitioning out of project delivery."
+        )
+    if unaccepted_bau_item_ids:
+        recommendations.append(
+            f"Obtain formal BAU owner sign-off for handover items: {', '.join(unaccepted_bau_item_ids)}."
+        )
+    if unverified_runbook_item_ids:
+        recommendations.append(
+            f"Verify operational runbooks for handover items: {', '.join(unverified_runbook_item_ids)}."
+        )
+    if incomplete_kt_item_ids:
+        recommendations.append(
+            f"Complete knowledge transfer (KT) sessions for handover items: {', '.join(incomplete_kt_item_ids)}."
+        )
+    if insufficient_hypercare_window:
+        recommendations.append(
+            f"Extend hypercare warranty window from {hypercare_days_configured}d to at least {min_hypercare_days}d."
+        )
+
+    if incident_gate_blocked or unaccepted_bau_item_ids:
+        handover_governance_status = "BLOCKED"
+    elif (
+        unverified_runbook_item_ids
+        or incomplete_kt_item_ids
+        or insufficient_hypercare_window
+    ):
+        handover_governance_status = "CONDITIONAL_HYPERCARE"
+    else:
+        handover_governance_status = "READY_FOR_BAU"
+
+    is_bau_handover_ready = handover_governance_status == "READY_FOR_BAU"
+
+    return {
+        "total_handover_items": len(valid_items),
+        "unaccepted_bau_item_ids": unaccepted_bau_item_ids,
+        "unverified_runbook_item_ids": unverified_runbook_item_ids,
+        "incomplete_kt_item_ids": incomplete_kt_item_ids,
+        "insufficient_hypercare_window": insufficient_hypercare_window,
+        "incident_gate_blocked": incident_gate_blocked,
+        "handover_governance_status": handover_governance_status,
+        "is_bau_handover_ready": is_bau_handover_ready,
+        "recommendations": recommendations,
+    }
+
+
+ProjectLifecyclePMIService.audit_project_closure_hypercare_and_bau_handover_readiness = staticmethod(
+    audit_project_closure_hypercare_and_bau_handover_readiness
+)

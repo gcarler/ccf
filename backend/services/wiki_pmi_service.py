@@ -2517,6 +2517,7 @@ __all__ = [
     "audit_wiki_opa_and_eef_catalog_freshness",
     "audit_wiki_adr_superseded_chain_and_consequences_hygiene",
     "audit_wiki_onboarding_playbook_and_knowledge_transfer_readiness",
+    "audit_wiki_communication_matrix_cadence_and_escalation",
     "WikiPMIService",
 ]
 
@@ -5332,3 +5333,95 @@ WikiPMIService.audit_wiki_onboarding_playbook_and_knowledge_transfer_readiness =
     audit_wiki_onboarding_playbook_and_knowledge_transfer_readiness
 )
 
+
+def audit_wiki_communication_matrix_cadence_and_escalation(
+    communication_channels: list[dict[str, Any]],
+    *,
+    max_days_since_dispatch: int = 14,
+    min_open_rate_pct: float = 65.0,
+) -> dict[str, Any]:
+    """Audit PMI PMBOK §10.1 & §13.3 stakeholder communication matrix cadence, channel redundancy, and escalation paths."""
+    overdue_dispatch_channel_ids: list[str] = []
+    single_point_of_failure_channel_ids: list[str] = []
+    unowned_escalation_channel_ids: list[str] = []
+    low_engagement_channel_ids: list[str] = []
+    recommendations: list[str] = []
+
+    valid_channels = (
+        [
+            c
+            for c in communication_channels
+            if isinstance(c, dict) and str(c.get("channel_id", "")).strip()
+        ]
+        if isinstance(communication_channels, list)
+        else []
+    )
+
+    for channel in valid_channels:
+        channel_id = str(channel.get("channel_id", "")).strip()
+
+        stakeholder_tier = str(channel.get("stakeholder_tier", "CORE_TEAM")).strip().upper()
+        cadence_days = int(channel.get("cadence_days", 7) or 7)
+        days_since_last_dispatch = int(channel.get("days_since_last_dispatch", 0) or 0)
+        has_fallback_channel = bool(channel.get("has_fallback_channel", False))
+        has_escalation_owner = bool(channel.get("has_escalation_owner", True))
+        open_ack_rate_pct = float(
+            channel.get("open_ack_rate_pct", 100.0)
+            if channel.get("open_ack_rate_pct") is not None
+            else 100.0
+        )
+
+        if days_since_last_dispatch > cadence_days or days_since_last_dispatch > max_days_since_dispatch:
+            overdue_dispatch_channel_ids.append(channel_id)
+
+        if stakeholder_tier == "EXECUTIVE" and not has_fallback_channel:
+            single_point_of_failure_channel_ids.append(channel_id)
+
+        if not has_escalation_owner:
+            unowned_escalation_channel_ids.append(channel_id)
+
+        if open_ack_rate_pct < min_open_rate_pct:
+            low_engagement_channel_ids.append(channel_id)
+
+    if unowned_escalation_channel_ids:
+        recommendations.append(
+            f"Assign explicit escalation owners to communication channels: {', '.join(unowned_escalation_channel_ids)}."
+        )
+    if single_point_of_failure_channel_ids:
+        recommendations.append(
+            f"Configure redundant fallback channels for EXECUTIVE tier communications: {', '.join(single_point_of_failure_channel_ids)}."
+        )
+    if overdue_dispatch_channel_ids:
+        recommendations.append(
+            f"Trigger overdue stakeholder dispatches and restore cadence on channels: {', '.join(overdue_dispatch_channel_ids)}."
+        )
+    if low_engagement_channel_ids:
+        recommendations.append(
+            f"Revise communication format or delivery schedule to boost engagement (<{min_open_rate_pct:.1f}%) on: {', '.join(low_engagement_channel_ids)}."
+        )
+
+    if (
+        unowned_escalation_channel_ids
+        or single_point_of_failure_channel_ids
+        or len(overdue_dispatch_channel_ids) > 1
+    ):
+        communication_health_status = "CRITICAL"
+    elif len(overdue_dispatch_channel_ids) == 1 or low_engagement_channel_ids:
+        communication_health_status = "WARNING"
+    else:
+        communication_health_status = "HEALTHY"
+
+    return {
+        "total_channels": len(valid_channels),
+        "overdue_dispatch_channel_ids": overdue_dispatch_channel_ids,
+        "single_point_of_failure_channel_ids": single_point_of_failure_channel_ids,
+        "unowned_escalation_channel_ids": unowned_escalation_channel_ids,
+        "low_engagement_channel_ids": low_engagement_channel_ids,
+        "communication_health_status": communication_health_status,
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_communication_matrix_cadence_and_escalation = staticmethod(
+    audit_wiki_communication_matrix_cadence_and_escalation
+)

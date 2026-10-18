@@ -6808,3 +6808,145 @@ def test_audit_wiki_onboarding_playbook_and_kt_empty_and_binding():
         in mod.__all__
     )
 
+
+def test_audit_wiki_communication_matrix_cadence_and_escalation_healthy():
+    """Caso 1: Canales al día, canal ejecutivo con fallback, con responsable de escalamiento y apertura >= 65% -> HEALTHY."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_communication_matrix_cadence_and_escalation,
+    )
+
+    channels = [
+        {
+            "channel_id": "CH-EXEC-01",
+            "stakeholder_tier": "EXECUTIVE",
+            "cadence_days": 7,
+            "days_since_last_dispatch": 5,
+            "has_fallback_channel": True,
+            "has_escalation_owner": True,
+            "open_ack_rate_pct": 85.0,
+        },
+        {
+            "channel_id": "CH-TEAM-02",
+            "stakeholder_tier": "CORE_TEAM",
+            "cadence_days": 14,
+            "days_since_last_dispatch": 10,
+            "has_fallback_channel": False,
+            "has_escalation_owner": True,
+            "open_ack_rate_pct": 90.0,
+        },
+    ]
+    res = audit_wiki_communication_matrix_cadence_and_escalation(
+        channels, max_days_since_dispatch=14, min_open_rate_pct=65.0
+    )
+    assert res["total_channels"] == 2
+    assert res["overdue_dispatch_channel_ids"] == []
+    assert res["single_point_of_failure_channel_ids"] == []
+    assert res["unowned_escalation_channel_ids"] == []
+    assert res["low_engagement_channel_ids"] == []
+    assert res["communication_health_status"] == "HEALTHY"
+    assert res["recommendations"] == []
+
+
+def test_audit_wiki_communication_matrix_cadence_and_escalation_warning():
+    """Caso 2: 1 canal con atraso de envío o baja tasa de apertura sin SPOF ni huérfanos -> WARNING."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_communication_matrix_cadence_and_escalation,
+    )
+
+    channels = [
+        {
+            "channel_id": "CH-EXT-01",
+            "stakeholder_tier": "EXTERNAL",
+            "cadence_days": 7,
+            "days_since_last_dispatch": 10,  # > cadence_days (7)
+            "has_fallback_channel": False,
+            "has_escalation_owner": True,
+            "open_ack_rate_pct": 50.0,  # < 65%
+        }
+    ]
+    res = audit_wiki_communication_matrix_cadence_and_escalation(
+        channels, max_days_since_dispatch=14, min_open_rate_pct=65.0
+    )
+    assert res["total_channels"] == 1
+    assert res["overdue_dispatch_channel_ids"] == ["CH-EXT-01"]
+    assert res["single_point_of_failure_channel_ids"] == []
+    assert res["unowned_escalation_channel_ids"] == []
+    assert res["low_engagement_channel_ids"] == ["CH-EXT-01"]
+    assert res["communication_health_status"] == "WARNING"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_wiki_communication_matrix_cadence_and_escalation_critical():
+    """Caso 3: Canal EXECUTIVE sin fallback, canal sin escalation owner o > 1 canal vencido -> CRITICAL."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_communication_matrix_cadence_and_escalation,
+    )
+
+    channels = [
+        {
+            "channel_id": "CH-EXEC-SPOF",
+            "stakeholder_tier": "EXECUTIVE",
+            "cadence_days": 7,
+            "days_since_last_dispatch": 20,  # overdue
+            "has_fallback_channel": False,  # SPOF
+            "has_escalation_owner": False,  # unowned
+            "open_ack_rate_pct": 40.0,
+        },
+        {
+            "channel_id": "CH-TEAM-OVERDUE",
+            "stakeholder_tier": "CORE_TEAM",
+            "cadence_days": 7,
+            "days_since_last_dispatch": 12,  # overdue
+            "has_fallback_channel": True,
+            "has_escalation_owner": True,
+            "open_ack_rate_pct": 80.0,
+        },
+    ]
+    res = audit_wiki_communication_matrix_cadence_and_escalation(channels)
+    assert res["total_channels"] == 2
+    assert res["overdue_dispatch_channel_ids"] == ["CH-EXEC-SPOF", "CH-TEAM-OVERDUE"]
+    assert res["single_point_of_failure_channel_ids"] == ["CH-EXEC-SPOF"]
+    assert res["unowned_escalation_channel_ids"] == ["CH-EXEC-SPOF"]
+    assert res["low_engagement_channel_ids"] == ["CH-EXEC-SPOF"]
+    assert res["communication_health_status"] == "CRITICAL"
+    assert len(res["recommendations"]) >= 3
+
+
+def test_audit_wiki_communication_matrix_cadence_and_escalation_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en WikiPMIService + __all__."""
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_communication_matrix_cadence_and_escalation,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_wiki_communication_matrix_cadence_and_escalation(payload)  # type: ignore[arg-type]
+        assert empty["total_channels"] == 0
+        assert empty["overdue_dispatch_channel_ids"] == []
+        assert empty["single_point_of_failure_channel_ids"] == []
+        assert empty["unowned_escalation_channel_ids"] == []
+        assert empty["low_engagement_channel_ids"] == []
+        assert empty["communication_health_status"] == "HEALTHY"
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "channel_id": "CH-99",
+            "stakeholder_tier": "CORE_TEAM",
+            "cadence_days": 7,
+            "days_since_last_dispatch": 3,
+            "has_fallback_channel": True,
+            "has_escalation_owner": True,
+            "open_ack_rate_pct": 95.0,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_communication_matrix_cadence_and_escalation(sample)
+        == audit_wiki_communication_matrix_cadence_and_escalation(sample)
+    )
+    assert (
+        "audit_wiki_communication_matrix_cadence_and_escalation" in mod.__all__
+    )
+
+

@@ -7218,3 +7218,149 @@ def test_audit_project_premortem_invalid_entries_and_binding():
         == audit_project_premortem_scenarios_and_kill_switch_criteria(sample)
     )
     assert "audit_project_premortem_scenarios_and_kill_switch_criteria" in mod.__all__
+
+
+def test_audit_project_closure_hypercare_and_bau_handover_ready():
+    """Caso 1: Todos los ítems BAU aceptados, runbook verificado, KT completo, hypercare >= 14d y sin incidentes bloqueantes -> READY_FOR_BAU."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_closure_hypercare_and_bau_handover_readiness,
+    )
+
+    items = [
+        {
+            "item_id": "HND-01",
+            "domain": "RUNBOOK",
+            "bau_owner_accepted": True,
+            "runbook_verified": True,
+            "kt_session_completed": True,
+        },
+        {
+            "item_id": "HND-02",
+            "domain": "MONITORING_ALERTS",
+            "bau_owner_accepted": True,
+            "runbook_verified": True,
+            "kt_session_completed": True,
+        },
+    ]
+    res = audit_project_closure_hypercare_and_bau_handover_readiness(
+        items,
+        hypercare_days_configured=30,
+        min_hypercare_days=14,
+        open_sev1_incidents=0,
+        open_sev2_incidents=1,
+        max_allowed_sev2_incidents=1,
+    )
+    assert res["total_handover_items"] == 2
+    assert res["unaccepted_bau_item_ids"] == []
+    assert res["unverified_runbook_item_ids"] == []
+    assert res["incomplete_kt_item_ids"] == []
+    assert res["insufficient_hypercare_window"] is False
+    assert res["incident_gate_blocked"] is False
+    assert res["handover_governance_status"] == "READY_FOR_BAU"
+    assert res["is_bau_handover_ready"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_project_closure_hypercare_and_bau_handover_conditional():
+    """Caso 2: BAU aceptado y sin incidentes bloqueantes pero falta verificar runbook, KT o ventana hypercare < 14d -> CONDITIONAL_HYPERCARE."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_closure_hypercare_and_bau_handover_readiness,
+    )
+
+    items = [
+        {
+            "item_id": "HND-10",
+            "domain": "ON_CALL_ROSTER",
+            "bau_owner_accepted": True,
+            "runbook_verified": False,
+            "kt_session_completed": False,
+        }
+    ]
+    res = audit_project_closure_hypercare_and_bau_handover_readiness(
+        items,
+        hypercare_days_configured=7,
+        min_hypercare_days=14,
+        open_sev1_incidents=0,
+        open_sev2_incidents=0,
+    )
+    assert res["total_handover_items"] == 1
+    assert res["unaccepted_bau_item_ids"] == []
+    assert res["unverified_runbook_item_ids"] == ["HND-10"]
+    assert res["incomplete_kt_item_ids"] == ["HND-10"]
+    assert res["insufficient_hypercare_window"] is True
+    assert res["incident_gate_blocked"] is False
+    assert res["handover_governance_status"] == "CONDITIONAL_HYPERCARE"
+    assert res["is_bau_handover_ready"] is False
+    assert len(res["recommendations"]) >= 3
+
+
+def test_audit_project_closure_hypercare_and_bau_handover_blocked():
+    """Caso 3: Propietario BAU no acepta o hay incidentes SEV-1 / exceso de SEV-2 -> BLOCKED."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_closure_hypercare_and_bau_handover_readiness,
+    )
+
+    items = [
+        {
+            "item_id": "HND-20",
+            "domain": "SLA_WARRANTY",
+            "bau_owner_accepted": False,
+            "runbook_verified": True,
+            "kt_session_completed": True,
+        }
+    ]
+    res = audit_project_closure_hypercare_and_bau_handover_readiness(
+        items,
+        hypercare_days_configured=30,
+        min_hypercare_days=14,
+        open_sev1_incidents=1,
+        open_sev2_incidents=3,
+        max_allowed_sev2_incidents=1,
+    )
+    assert res["total_handover_items"] == 1
+    assert res["unaccepted_bau_item_ids"] == ["HND-20"]
+    assert res["incident_gate_blocked"] is True
+    assert res["handover_governance_status"] == "BLOCKED"
+    assert res["is_bau_handover_ready"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_project_closure_hypercare_and_bau_handover_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en ProjectLifecyclePMIService + __all__."""
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_project_closure_hypercare_and_bau_handover_readiness,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_project_closure_hypercare_and_bau_handover_readiness(payload)  # type: ignore[arg-type]
+        assert empty["total_handover_items"] == 0
+        assert empty["unaccepted_bau_item_ids"] == []
+        assert empty["unverified_runbook_item_ids"] == []
+        assert empty["incomplete_kt_item_ids"] == []
+        assert empty["insufficient_hypercare_window"] is False
+        assert empty["incident_gate_blocked"] is False
+        assert empty["handover_governance_status"] == "READY_FOR_BAU"
+        assert empty["is_bau_handover_ready"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "item_id": "HND-99",
+            "domain": "ARCHIVAL",
+            "bau_owner_accepted": True,
+            "runbook_verified": True,
+            "kt_session_completed": True,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_project_closure_hypercare_and_bau_handover_readiness(
+            sample
+        )
+        == audit_project_closure_hypercare_and_bau_handover_readiness(sample)
+    )
+    assert (
+        "audit_project_closure_hypercare_and_bau_handover_readiness" in mod.__all__
+    )
+
