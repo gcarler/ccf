@@ -5716,3 +5716,198 @@ def test_audit_wiki_assumptions_and_constraints_empirical_validation_empty_and_s
     )
     assert "audit_wiki_assumptions_and_constraints_empirical_validation" in mod.__all__
 
+
+
+def test_wiki_runbook_rto_rpo_readiness_healthy_and_critical():
+    """Runbook conforme -> compliant; SLA breach por target/measured -> CRITICAL."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness,
+    )
+
+    healthy = audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness(
+        [
+            {
+                "runbook_id": "RB-1",
+                "target_rto_minutes": 30.0,
+                "measured_drill_rto_minutes": 20.0,
+                "target_rpo_minutes": 15.0,
+                "measured_drill_rpo_minutes": 10.0,
+                "days_since_last_drill": 30,
+                "rollback_steps_documented": True,
+                "oncall_escalation_assigned": True,
+            }
+        ]
+    )
+    assert healthy["total_runbooks"] == 1
+    assert healthy["compliant_runbooks_count"] == 1
+    assert healthy["rto_or_rpo_sla_breach_count"] == 0
+    assert healthy["stale_or_untested_drill_count"] == 0
+    assert healthy["missing_rollback_or_escalation_count"] == 0
+    assert healthy["runbook_readiness_status"] == "HEALTHY"
+    assert healthy["violations"] == []
+
+    critical = audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness(
+        [
+            {
+                "runbook_id": "RB-2",
+                "target_rto_minutes": 0.0,
+                "target_rpo_minutes": 10.0,
+                "measured_drill_rpo_minutes": 20.0,
+                "rollback_steps_documented": True,
+                "oncall_escalation_assigned": True,
+                "days_since_last_drill": 10,
+            }
+        ]
+    )
+    assert critical["rto_or_rpo_sla_breach_count"] == 1
+    assert critical["violations"][0]["runbook_id"] == "RB-2"
+    assert critical["violations"][0]["reasons"] == ["rto_or_rpo_sla_breach"]
+    assert critical["runbook_readiness_status"] == "CRITICAL"
+
+
+def test_wiki_runbook_rto_rpo_readiness_at_risk_missing_and_dedup():
+    """Solo drill vencido -> AT_RISK; rollbacks/asignación ausentes -> CRITICAL; dedup de reasons."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness,
+    )
+
+    at_risk = audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness(
+        [
+            {
+                "runbook_id": "RB-3",
+                "days_since_last_drill": 91,
+                "target_rto_minutes": 30.0,
+                "target_rpo_minutes": 15.0,
+                "rollback_steps_documented": True,
+                "oncall_escalation_assigned": True,
+            }
+        ]
+    )
+    assert at_risk["stale_or_untested_drill_count"] == 1
+    assert at_risk["rto_or_rpo_sla_breach_count"] == 0
+    assert at_risk["missing_rollback_or_escalation_count"] == 0
+    assert at_risk["runbook_readiness_status"] == "AT_RISK"
+
+    multi = audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness(
+        [
+            {
+                "runbook_id": "RB-4",
+                "target_rto_minutes": 30.0,
+                "measured_drill_rto_minutes": 45.0,
+                "rollback_steps_documented": False,
+                "oncall_escalation_assigned": False,
+            }
+        ]
+    )
+    reasons = multi["violations"][0]["reasons"]
+    assert reasons == ["rto_or_rpo_sla_breach", "missing_rollback_or_escalation"]
+    assert multi["missing_rollback_or_escalation_count"] == 1
+    assert multi["runbook_readiness_status"] == "CRITICAL"
+
+    # Drill negativo también es stale; custom max_days_since_drill se respeta.
+    neg = audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness(
+        [{"runbook_id": "RB-5", "days_since_last_drill": -1}],
+        max_days_since_drill=30,
+    )
+    assert neg["stale_or_untested_drill_count"] == 1
+
+    tight = audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness(
+        [
+            {
+                "runbook_id": "RB-6",
+                "days_since_last_drill": 15,
+                "rollback_steps_documented": True,
+                "oncall_escalation_assigned": True,
+            }
+        ],
+        max_days_since_drill=14,
+    )
+    assert tight["stale_or_untested_drill_count"] == 1
+    assert tight["runbook_readiness_status"] == "AT_RISK"
+
+    within = audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness(
+        [
+            {
+                "runbook_id": "RB-7",
+                "days_since_last_drill": 14,
+                "rollback_steps_documented": True,
+                "oncall_escalation_assigned": True,
+            }
+        ],
+        max_days_since_drill=14,
+    )
+    assert within["runbook_readiness_status"] == "HEALTHY"
+
+
+def test_wiki_runbook_rto_rpo_readiness_ignores_bad_entries_and_fields():
+    """No-lista->[]; no-dict ignorado; faltantes de campos no violan por sí solos salvo especificados."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness,
+    )
+
+    res = audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness(
+        [
+            {
+                "runbook_id": "RB-8",
+                "rollback_steps_documented": True,
+                "oncall_escalation_assigned": True,
+            }
+        ]
+    )
+    assert res["total_runbooks"] == 1
+    assert res["compliant_runbooks_count"] == 1
+    assert res["violations"] == []
+
+    empty_non_list = audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness(None)
+    assert empty_non_list["total_runbooks"] == 0
+    assert empty_non_list["runbook_readiness_status"] == "HEALTHY"
+    assert empty_non_list["compliant_runbooks_count"] == 0
+    assert empty_non_list["violations"] == []
+
+    string_payload = audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness("RB-9")
+    assert string_payload["total_runbooks"] == 0
+
+    # Faltantes explícitos: sin rollback ni oncall -> missing.
+    missing_fields = audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness(
+        [{"runbook_id": "RB-10", "rollback_steps_documented": True}]
+    )
+    assert missing_fields["violations"][0]["reasons"] == ["missing_rollback_or_escalation"]
+    assert missing_fields["runbook_readiness_status"] == "CRITICAL"
+
+
+def test_wiki_runbook_rto_rpo_readiness_status_precedence_and_binding():
+    """Precedencia CRITICAL>AT_RISK, proxy @staticmethod de WikiPMIService y __all__."""
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness,
+    )
+
+    # target_rpo < 0 (breach) + drill vencido + rollback/oncall faltantes: un solo runbook con 3 reasons.
+    everything = audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness(
+        [
+            {
+                "runbook_id": "RB-11",
+                "target_rpo_minutes": -5.0,
+                "days_since_last_drill": 999,
+                "rollback_steps_documented": False,
+                "oncall_escalation_assigned": False,
+            }
+        ]
+    )
+    assert everything["violations"][0]["reasons"] == [
+        "rto_or_rpo_sla_breach",
+        "stale_or_untested_drill",
+        "missing_rollback_or_escalation",
+    ]
+    assert everything["rto_or_rpo_sla_breach_count"] == 1
+    assert everything["stale_or_untested_drill_count"] == 1
+    assert everything["missing_rollback_or_escalation_count"] == 1
+    assert everything["runbook_readiness_status"] == "CRITICAL"
+
+    sample = [{"runbook_id": "RB-12", "target_rto_minutes": -1.0}]
+    assert (
+        WikiPMIService.audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness(sample)
+        == audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness(sample)
+    )
+    assert "audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness" in mod.__all__

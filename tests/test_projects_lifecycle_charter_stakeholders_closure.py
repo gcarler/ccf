@@ -5756,3 +5756,170 @@ def test_audit_project_charter_measurable_criteria_and_authority_empty_and_servi
     )
     assert "audit_project_charter_measurable_criteria_and_authority" in mod.__all__
 
+
+def test_audit_stakeholder_power_interest_and_salience_drift_healthy():
+    """Valida cumplimiento en los 4 cuadrantes Poder-Interés sin resistencia ni abandono de cadencia."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stakeholder_power_interest_and_salience_drift,
+    )
+
+    stakeholders = [
+        {
+            "id": "STK-01",
+            "power_score": 5,
+            "interest_score": 5,
+            "assigned_strategy": "manage_closely",
+            "current_engagement": "leading",
+            "desired_engagement": "supportive",
+            "days_since_last_touchpoint": 7,
+        },
+        {
+            "id": "STK-02",
+            "power_score": 4,
+            "interest_score": 2,
+            "assigned_strategy": "keep_satisfied",
+            "current_engagement": "supportive",
+            "desired_engagement": "supportive",
+            "days_since_last_touchpoint": 20,
+        },
+        {
+            "id": "STK-03",
+            "power_score": 2,
+            "interest_score": 5,
+            "assigned_strategy": "keep_informed",
+            "current_engagement": "supportive",
+            "desired_engagement": "supportive",
+            "days_since_last_touchpoint": 10,
+        },
+        {
+            "id": "STK-04",
+            "power_score": 1,
+            "interest_score": 2,
+            "assigned_strategy": "monitor",
+            "current_engagement": "neutral",
+            "desired_engagement": "neutral",
+            "days_since_last_touchpoint": 30,
+        },
+    ]
+    res = audit_stakeholder_power_interest_and_salience_drift(stakeholders)
+    assert res["total_stakeholders"] == 4
+    assert res["compliant_stakeholders"] == 4
+    assert res["quadrant_strategy_mismatch_ids"] == []
+    assert res["high_power_resistant_or_gap_ids"] == []
+    assert res["neglected_manage_closely_ids"] == []
+    assert res["stakeholder_governance_health"] == "healthy"
+    assert res["is_compliant"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_stakeholder_power_interest_and_salience_drift_at_risk():
+    """Detecta desalineación de cuadrante y abandono de touchpoint en manage_closely sin brecha de alto poder ('at_risk')."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stakeholder_power_interest_and_salience_drift,
+    )
+
+    stakeholders = [
+        {
+            "stakeholder_id": "STK-10",
+            "power_score": 2,
+            "interest_score": 5,
+            "assigned_strategy": "monitor",
+            "current_engagement": "supportive",
+            "desired_engagement": "supportive",
+            "days_since_last_touchpoint": 5,
+        },
+        {
+            "stakeholder_id": "STK-11",
+            "power_score": 5,
+            "interest_score": 4,
+            "assigned_strategy": "manage_closely",
+            "current_engagement": "leading",
+            "desired_engagement": "leading",
+            "days_since_last_touchpoint": 21,
+        },
+    ]
+    res = audit_stakeholder_power_interest_and_salience_drift(stakeholders)
+    assert res["total_stakeholders"] == 2
+    assert res["compliant_stakeholders"] == 0
+    assert res["quadrant_strategy_mismatch_ids"] == ["STK-10"]
+    assert res["high_power_resistant_or_gap_ids"] == []
+    assert res["neglected_manage_closely_ids"] == ["STK-11"]
+    assert res["stakeholder_governance_health"] == "at_risk"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_stakeholder_power_interest_and_salience_drift_critical_high_power():
+    """Detecta interesado de alto poder resistente o con brecha current < desired ('critical')."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stakeholder_power_interest_and_salience_drift,
+    )
+
+    stakeholders = [
+        {
+            "id": "STK-20",
+            "power_score": 5,
+            "interest_score": 5,
+            "assigned_strategy": "manage_closely",
+            "current_engagement": "resistant",
+            "desired_engagement": "resistant",
+            "days_since_last_touchpoint": 3,
+        },
+        {
+            "id": "STK-21",
+            "power_score": 4,
+            "interest_score": 2,
+            "assigned_strategy": "keep_satisfied",
+            "current_engagement": "neutral",
+            "desired_engagement": "supportive",
+            "days_since_last_touchpoint": 5,
+        },
+    ]
+    res = audit_stakeholder_power_interest_and_salience_drift(stakeholders)
+    assert res["total_stakeholders"] == 2
+    assert res["compliant_stakeholders"] == 0
+    assert res["high_power_resistant_or_gap_ids"] == ["STK-20", "STK-21"]
+    assert res["stakeholder_governance_health"] == "critical"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 1
+
+
+def test_audit_stakeholder_power_interest_and_salience_drift_empty_and_service_binding():
+    """Manejo defensivo de entradas vacías/no-secuencia y exposición en ProjectLifecyclePMIService y __all__."""
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_stakeholder_power_interest_and_salience_drift,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_stakeholder_power_interest_and_salience_drift(payload)  # type: ignore[arg-type]
+        assert empty["total_stakeholders"] == 0
+        assert empty["compliant_stakeholders"] == 0
+        assert empty["quadrant_strategy_mismatch_ids"] == []
+        assert empty["high_power_resistant_or_gap_ids"] == []
+        assert empty["neglected_manage_closely_ids"] == []
+        assert empty["stakeholder_governance_health"] == "healthy"
+        assert empty["is_compliant"] is True
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "id": "STK-99",
+            "power_score": 5,
+            "interest_score": 5,
+            "assigned_strategy": "manage_closely",
+            "current_engagement": "supportive",
+            "desired_engagement": "supportive",
+            "days_since_last_touchpoint": 4,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_stakeholder_power_interest_and_salience_drift(
+            sample
+        )
+        == audit_stakeholder_power_interest_and_salience_drift(sample)
+    )
+    assert "audit_stakeholder_power_interest_and_salience_drift" in mod.__all__
+
+

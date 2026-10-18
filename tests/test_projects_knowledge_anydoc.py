@@ -4701,3 +4701,116 @@ def test_audit_markdown_raw_html_and_script_injection_hygiene_neutral_and_export
         == audit_markdown_raw_html_and_script_injection_hygiene(sample)
     )
     assert "audit_markdown_raw_html_and_script_injection_hygiene" in mod.__all__
+
+
+def test_audit_markdown_code_fence_balance_and_language_hygiene_healthy():
+    """Valida bloques cercados balanceados (``` y ~~~) con lenguaje especificado y contenido."""
+    from backend.services.anydoc_service import (
+        audit_markdown_code_fence_balance_and_language_hygiene,
+    )
+
+    md = (
+        "# Manual Técnico\n\n"
+        "```python\n"
+        "def calcular_cpi(ev: float, ac: float) -> float:\n"
+        "    return ev / ac\n"
+        "```\n\n"
+        "~~~yaml\n"
+        "pmo:\n"
+        "  status: active\n"
+        "~~~\n"
+    )
+    res = audit_markdown_code_fence_balance_and_language_hygiene(md)
+    assert res["total_code_blocks"] == 2
+    assert res["compliant_code_blocks"] == 2
+    assert res["unclosed_fence_start_lines"] == []
+    assert res["untagged_code_block_lines"] == []
+    assert res["empty_code_block_lines"] == []
+    assert res["mismatched_closing_fence_lines"] == []
+    assert res["fence_hygiene_status"] == "HEALTHY"
+    assert res["is_compliant"] is True
+    assert res["recommendations"] == []
+
+
+def test_audit_markdown_code_fence_balance_and_language_hygiene_at_risk():
+    """Detecta bloques sin etiqueta de lenguaje y bloques vacíos cerrados ('AT_RISK')."""
+    from backend.services.anydoc_service import (
+        audit_markdown_code_fence_balance_and_language_hygiene,
+    )
+
+    md = (
+        "```\n"
+        "SELECT * FROM projects;\n"
+        "```\n\n"
+        "```bash\n"
+        "   \n"
+        "```\n"
+    )
+    res = audit_markdown_code_fence_balance_and_language_hygiene(md)
+    assert res["total_code_blocks"] == 2
+    assert res["compliant_code_blocks"] == 0
+    assert res["unclosed_fence_start_lines"] == []
+    assert res["untagged_code_block_lines"] == [1]
+    assert res["empty_code_block_lines"] == [5]
+    assert res["mismatched_closing_fence_lines"] == []
+    assert res["fence_hygiene_status"] == "AT_RISK"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_markdown_code_fence_balance_and_language_hygiene_critical():
+    """Detecta cercas de cierre desalineadas (``` cerrado con ~~~) y bloques sin cerrar al final ('CRITICAL')."""
+    from backend.services.anydoc_service import (
+        audit_markdown_code_fence_balance_and_language_hygiene,
+    )
+
+    md = (
+        "```json\n"
+        "{\"ok\": true}\n"
+        "~~~\n"
+        "```\n\n"
+        "```sql\n"
+        "SELECT 1;\n"
+    )
+    res = audit_markdown_code_fence_balance_and_language_hygiene(md)
+    assert res["total_code_blocks"] == 2
+    assert res["compliant_code_blocks"] == 0
+    assert res["mismatched_closing_fence_lines"] == [3]
+    assert res["unclosed_fence_start_lines"] == [6]
+    assert res["fence_hygiene_status"] == "CRITICAL"
+    assert res["is_compliant"] is False
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_markdown_code_fence_balance_and_language_hygiene_empty_and_service_binding():
+    """Manejo defensivo de entradas vacías/no-str y exposición en AnyDocService, AnydocService y __all__."""
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_code_fence_balance_and_language_hygiene,
+    )
+
+    for payload in (None, "", 123):
+        empty = audit_markdown_code_fence_balance_and_language_hygiene(payload)  # type: ignore[arg-type]
+        assert empty["total_code_blocks"] == 0
+        assert empty["compliant_code_blocks"] == 0
+        assert empty["unclosed_fence_start_lines"] == []
+        assert empty["untagged_code_block_lines"] == []
+        assert empty["empty_code_block_lines"] == []
+        assert empty["mismatched_closing_fence_lines"] == []
+        assert empty["fence_hygiene_status"] == "HEALTHY"
+        assert empty["is_compliant"] is True
+        assert empty["recommendations"] == []
+
+    sample = "```python\nx = 1\n```\n"
+    assert (
+        AnyDocService.audit_markdown_code_fence_balance_and_language_hygiene(sample)
+        == audit_markdown_code_fence_balance_and_language_hygiene(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_code_fence_balance_and_language_hygiene(sample)
+        == audit_markdown_code_fence_balance_and_language_hygiene(sample)
+    )
+    assert "audit_markdown_code_fence_balance_and_language_hygiene" in mod.__all__
+

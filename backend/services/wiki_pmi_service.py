@@ -2510,6 +2510,7 @@ __all__ = [
     "audit_wiki_requirements_bidirectional_traceability_and_gold_plating",
     "audit_wiki_decision_log_daci_accountability_and_reversal",
     "audit_wiki_assumptions_and_constraints_empirical_validation",
+    "audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness",
     "WikiPMIService",
 ]
 
@@ -4507,5 +4508,122 @@ def audit_wiki_assumptions_and_constraints_empirical_validation(
 
 WikiPMIService.audit_wiki_assumptions_and_constraints_empirical_validation = staticmethod(
     audit_wiki_assumptions_and_constraints_empirical_validation
+)
+
+
+def audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness(
+    runbooks: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_days_since_drill: int = 90,
+) -> dict[str, Any]:
+    """PMI PMBOK 4.4 & 11.5 — preparación de runbooks y playbooks de contingencia.
+
+    Auditoría pura sobre la lista ``runbooks``. Entradas no-lista/``None`` se
+    tratan como lista vacía y los elementos no-dict se ignoran. Para cada
+    runbook se verifican:
+
+    1. ``rto_or_rpo_sla_breach``: ``target_rto_minutes <= 0`` OR
+       ``target_rpo_minutes < 0`` OR ``measured_drill_rto_minutes >
+       target_rto_minutes`` OR ``measured_drill_rpo_minutes >
+       target_rpo_minutes``.
+    2. ``stale_or_untested_drill``: ``days_since_last_drill < 0`` OR
+       ``days_since_last_drill > max_days_since_drill``.
+    3. ``missing_rollback_or_escalation``: ``not rollback_steps_documented``
+       OR ``not oncall_escalation_assigned``.
+
+    Retorna total_runbooks, compliant_runbooks_count, los 3 conteos de
+    violación, runbook_readiness_status (HEALTHY/AT_RISK/CRITICAL) y
+    ``violations`` (lista de dicts con ``runbook_id`` y ``reasons``).
+    """
+    items = runbooks if isinstance(runbooks, list) else []
+
+    total = 0
+    breach_count = 0
+    stale_count = 0
+    missing_count = 0
+    compliant_count = 0
+    violations: list[dict[str, Any]] = []
+
+    for entry in items:
+        if not isinstance(entry, Mapping):
+            continue
+        total += 1
+
+        runbook_id = entry.get("runbook_id")
+        reasons: list[str] = []
+
+        target_rto = entry.get("target_rto_minutes")
+        target_rpo = entry.get("target_rpo_minutes")
+        measured_rto = entry.get("measured_drill_rto_minutes")
+        measured_rpo = entry.get("measured_drill_rpo_minutes")
+
+        if target_rto is not None and target_rto <= 0:
+            reasons.append("rto_or_rpo_sla_breach")
+        if target_rpo is not None and target_rpo < 0:
+            reasons.append("rto_or_rpo_sla_breach")
+        if (
+            measured_rto is not None
+            and target_rto is not None
+            and measured_rto > target_rto
+        ):
+            reasons.append("rto_or_rpo_sla_breach")
+        if (
+            measured_rpo is not None
+            and target_rpo is not None
+            and measured_rpo > target_rpo
+        ):
+            reasons.append("rto_or_rpo_sla_breach")
+
+        days_since = entry.get("days_since_last_drill")
+        if days_since is not None and (
+            days_since < 0 or days_since > max_days_since_drill
+        ):
+            reasons.append("stale_or_untested_drill")
+
+        if not entry.get("rollback_steps_documented") or not entry.get(
+            "oncall_escalation_assigned"
+        ):
+            reasons.append("missing_rollback_or_escalation")
+
+        # Dedup preservando orden de primeras apariciones.
+        ordered_reasons = list(dict.fromkeys(reasons))
+        if not ordered_reasons:
+            compliant_count += 1
+            continue
+
+        if "rto_or_rpo_sla_breach" in ordered_reasons:
+            breach_count += 1
+        if "stale_or_untested_drill" in ordered_reasons:
+            stale_count += 1
+        if "missing_rollback_or_escalation" in ordered_reasons:
+            missing_count += 1
+
+        violations.append(
+            {
+                "runbook_id": runbook_id,
+                "reasons": ordered_reasons,
+            }
+        )
+
+    if breach_count > 0 or missing_count > 0:
+        status = "CRITICAL"
+    elif stale_count > 0:
+        status = "AT_RISK"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "total_runbooks": total,
+        "compliant_runbooks_count": compliant_count,
+        "rto_or_rpo_sla_breach_count": breach_count,
+        "stale_or_untested_drill_count": stale_count,
+        "missing_rollback_or_escalation_count": missing_count,
+        "runbook_readiness_status": status,
+        "violations": violations,
+    }
+
+
+WikiPMIService.audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness = staticmethod(
+    audit_wiki_runbook_incident_playbook_and_rto_rpo_readiness
 )
 

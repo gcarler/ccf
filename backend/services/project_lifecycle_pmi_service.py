@@ -3148,6 +3148,7 @@ __all__ = [
     "audit_team_virtual_overlap_and_onboarding_readiness",
     "audit_post_implementation_benefits_sustainment_and_handover",
     "audit_project_charter_measurable_criteria_and_authority",
+    "audit_stakeholder_power_interest_and_salience_drift",
     "ProjectLifecyclePMIService",
 ]
 
@@ -5006,4 +5007,165 @@ def audit_project_charter_measurable_criteria_and_authority(
 ProjectLifecyclePMIService.audit_project_charter_measurable_criteria_and_authority = staticmethod(
     audit_project_charter_measurable_criteria_and_authority
 )
+
+
+def audit_stakeholder_power_interest_and_salience_drift(
+    stakeholders: Sequence[Mapping[str, Any]] | None,
+    *,
+    high_power_threshold: int = 4,
+    high_interest_threshold: int = 4,
+    max_days_since_touchpoint_manage_closely: int = 14,
+) -> dict[str, Any]:
+    """Audita la alineación con la matriz Poder-Interés, brechas de involucramiento de alta influencia y cadencia de contacto en gestión de interesados (PMI PMBOK §13.1 y §13.3)."""
+    if (
+        stakeholders is None
+        or isinstance(stakeholders, (str, bytes))
+        or not isinstance(stakeholders, Sequence)
+    ):
+        items: Sequence[Any] = ()
+    else:
+        items = stakeholders
+
+    try:
+        hp_thresh = int(high_power_threshold)
+    except (TypeError, ValueError):
+        hp_thresh = 4
+
+    try:
+        hi_thresh = int(high_interest_threshold)
+    except (TypeError, ValueError):
+        hi_thresh = 4
+
+    try:
+        max_days = int(max_days_since_touchpoint_manage_closely)
+    except (TypeError, ValueError):
+        max_days = 14
+
+    engagement_rank_map = {
+        "unaware": 0,
+        "resistant": 1,
+        "neutral": 2,
+        "supportive": 3,
+        "leading": 4,
+    }
+
+    total_stakeholders = 0
+    compliant_stakeholders = 0
+    quadrant_strategy_mismatch_ids: list[str] = []
+    high_power_resistant_or_gap_ids: list[str] = []
+    neglected_manage_closely_ids: list[str] = []
+
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        total_stakeholders += 1
+
+        stakeholder_id = (
+            str(raw.get("id") or raw.get("stakeholder_id") or "").strip()
+            or "STK-UNKNOWN"
+        )
+
+        try:
+            power_score = max(1, min(5, int(raw.get("power_score") or 1)))
+        except (TypeError, ValueError):
+            power_score = 1
+
+        try:
+            interest_score = max(1, min(5, int(raw.get("interest_score") or 1)))
+        except (TypeError, ValueError):
+            interest_score = 1
+
+        assigned_strategy = str(raw.get("assigned_strategy") or "").strip().lower()
+        current_engagement = (
+            str(raw.get("current_engagement") or "").strip().lower() or "neutral"
+        )
+        desired_engagement = (
+            str(raw.get("desired_engagement") or "").strip().lower() or "supportive"
+        )
+
+        try:
+            days_since_last_touchpoint = max(
+                0, int(raw.get("days_since_last_touchpoint") or 0)
+            )
+        except (TypeError, ValueError):
+            days_since_last_touchpoint = 0
+
+        if power_score >= hp_thresh and interest_score >= hi_thresh:
+            expected_strategy = "manage_closely"
+        elif power_score >= hp_thresh and interest_score < hi_thresh:
+            expected_strategy = "keep_satisfied"
+        elif power_score < hp_thresh and interest_score >= hi_thresh:
+            expected_strategy = "keep_informed"
+        else:
+            expected_strategy = "monitor"
+
+        current_rank = engagement_rank_map.get(current_engagement, 2)
+        desired_rank = engagement_rank_map.get(desired_engagement, 3)
+
+        is_strategy_mismatch = assigned_strategy != expected_strategy
+        is_high_power_gap = power_score >= hp_thresh and (
+            current_engagement == "resistant" or current_rank < desired_rank
+        )
+        is_neglected_manage_closely = (
+            expected_strategy == "manage_closely"
+            and days_since_last_touchpoint > max_days
+        )
+
+        if is_strategy_mismatch:
+            quadrant_strategy_mismatch_ids.append(stakeholder_id)
+        if is_high_power_gap:
+            high_power_resistant_or_gap_ids.append(stakeholder_id)
+        if is_neglected_manage_closely:
+            neglected_manage_closely_ids.append(stakeholder_id)
+
+        if (
+            not is_strategy_mismatch
+            and not is_high_power_gap
+            and not is_neglected_manage_closely
+        ):
+            compliant_stakeholders += 1
+
+    is_compliant = (
+        len(quadrant_strategy_mismatch_ids) == 0
+        and len(high_power_resistant_or_gap_ids) == 0
+        and len(neglected_manage_closely_ids) == 0
+    )
+
+    if is_compliant:
+        stakeholder_governance_health = "healthy"
+    elif len(high_power_resistant_or_gap_ids) > 0:
+        stakeholder_governance_health = "critical"
+    else:
+        stakeholder_governance_health = "at_risk"
+
+    recommendations: list[str] = []
+    if quadrant_strategy_mismatch_ids:
+        recommendations.append(
+            f"Realinear la estrategia asignada con el cuadrante de la matriz Poder-Interés en {quadrant_strategy_mismatch_ids}."
+        )
+    if high_power_resistant_or_gap_ids:
+        recommendations.append(
+            f"Ejecutar plan de mitigación de resistencia y cierre de brecha de involucramiento para interesados de alto poder en {high_power_resistant_or_gap_ids}."
+        )
+    if neglected_manage_closely_ids:
+        recommendations.append(
+            f"Restablecer cadencia de contacto (<= {max_days} días) para interesados del cuadrante 'manage_closely' en {neglected_manage_closely_ids}."
+        )
+
+    return {
+        "total_stakeholders": total_stakeholders,
+        "compliant_stakeholders": compliant_stakeholders,
+        "quadrant_strategy_mismatch_ids": quadrant_strategy_mismatch_ids,
+        "high_power_resistant_or_gap_ids": high_power_resistant_or_gap_ids,
+        "neglected_manage_closely_ids": neglected_manage_closely_ids,
+        "stakeholder_governance_health": stakeholder_governance_health,
+        "is_compliant": is_compliant,
+        "recommendations": recommendations,
+    }
+
+
+ProjectLifecyclePMIService.audit_stakeholder_power_interest_and_salience_drift = staticmethod(
+    audit_stakeholder_power_interest_and_salience_drift
+)
+
 

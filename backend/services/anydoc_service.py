@@ -3015,6 +3015,7 @@ __all__ = [
     "audit_markdown_horizontal_rule_and_section_break_hygiene",
     "audit_markdown_admonition_and_callout_hygiene",
     "audit_markdown_raw_html_and_script_injection_hygiene",
+    "audit_markdown_code_fence_balance_and_language_hygiene",
     "AnyDocService",
     "AnydocService",
 ]
@@ -5493,3 +5494,158 @@ AnyDocService.audit_markdown_raw_html_and_script_injection_hygiene = staticmetho
 AnydocService.audit_markdown_raw_html_and_script_injection_hygiene = staticmethod(
     audit_markdown_raw_html_and_script_injection_hygiene
 )
+
+
+def audit_markdown_code_fence_balance_and_language_hygiene(
+    markdown_text: str | None,
+    *,
+    require_language_tag: bool = True,
+    forbid_empty_code_blocks: bool = True,
+) -> dict[str, Any]:
+    """Audita el balanceo de cercas de bloques de código (CommonMark ``` / ~~~), etiquetas de lenguaje y bloques vacíos (PMI PMBOK §4.4)."""
+    if not isinstance(markdown_text, str) or not markdown_text:
+        return {
+            "total_code_blocks": 0,
+            "compliant_code_blocks": 0,
+            "unclosed_fence_start_lines": [],
+            "untagged_code_block_lines": [],
+            "empty_code_block_lines": [],
+            "mismatched_closing_fence_lines": [],
+            "fence_hygiene_status": "HEALTHY",
+            "is_compliant": True,
+            "recommendations": [],
+        }
+
+    fence_re = re.compile(r"^(\s*)(`{3,}|~{3,})(.*)$")
+
+    total_code_blocks = 0
+    compliant_code_blocks = 0
+    unclosed_fence_start_lines: list[int] = []
+    untagged_code_block_lines: list[int] = []
+    empty_code_block_lines: list[int] = []
+    mismatched_closing_fence_lines: list[int] = []
+
+    in_fence = False
+    fence_char = ""
+    fence_len = 0
+    open_line = 0
+    block_has_non_empty_content = False
+    block_has_mismatched_close = False
+    block_is_untagged = False
+
+    for line_no, raw_line in enumerate(markdown_text.splitlines(), start=1):
+        match = fence_re.match(raw_line)
+        if not in_fence:
+            if match:
+                fence_run = match.group(2)
+                fence_char = fence_run[0]
+                fence_len = len(fence_run)
+                info_string = match.group(3).strip()
+                open_line = line_no
+                in_fence = True
+                total_code_blocks += 1
+                block_has_non_empty_content = False
+                block_has_mismatched_close = False
+                block_is_untagged = bool(require_language_tag) and info_string == ""
+                if block_is_untagged:
+                    untagged_code_block_lines.append(open_line)
+        else:
+            if match:
+                candidate_run = match.group(2)
+                candidate_char = candidate_run[0]
+                candidate_len = len(candidate_run)
+                candidate_rest = match.group(3).strip()
+
+                if (
+                    candidate_char == fence_char
+                    and candidate_len >= fence_len
+                    and candidate_rest == ""
+                ):
+                    block_is_empty = (
+                        bool(forbid_empty_code_blocks)
+                        and not block_has_non_empty_content
+                    )
+                    if block_is_empty:
+                        empty_code_block_lines.append(open_line)
+                    if (
+                        not block_is_untagged
+                        and not block_is_empty
+                        and not block_has_mismatched_close
+                    ):
+                        compliant_code_blocks += 1
+                    in_fence = False
+                    fence_char = ""
+                    fence_len = 0
+                    open_line = 0
+                elif (
+                    candidate_char != fence_char
+                    and candidate_len >= 3
+                    and candidate_rest == ""
+                ):
+                    mismatched_closing_fence_lines.append(line_no)
+                    block_has_mismatched_close = True
+                    block_has_non_empty_content = True
+                else:
+                    block_has_non_empty_content = True
+            else:
+                if raw_line.strip():
+                    block_has_non_empty_content = True
+
+    if in_fence:
+        unclosed_fence_start_lines.append(open_line)
+
+    is_compliant = (
+        len(unclosed_fence_start_lines) == 0
+        and len(untagged_code_block_lines) == 0
+        and len(empty_code_block_lines) == 0
+        and len(mismatched_closing_fence_lines) == 0
+    )
+
+    if is_compliant:
+        fence_hygiene_status = "HEALTHY"
+    elif (
+        len(unclosed_fence_start_lines) > 0
+        or len(mismatched_closing_fence_lines) > 0
+    ):
+        fence_hygiene_status = "CRITICAL"
+    else:
+        fence_hygiene_status = "AT_RISK"
+
+    recommendations: list[str] = []
+    if unclosed_fence_start_lines:
+        recommendations.append(
+            f"Cerrar explícitamente los bloques de código abiertos en las líneas {unclosed_fence_start_lines}."
+        )
+    if mismatched_closing_fence_lines:
+        recommendations.append(
+            f"Alinear el carácter delimitador de cierre (``` vs ~~~) en las líneas {mismatched_closing_fence_lines}."
+        )
+    if untagged_code_block_lines:
+        recommendations.append(
+            f"Especificar el identificador de lenguaje en las cercas de apertura de las líneas {untagged_code_block_lines}."
+        )
+    if empty_code_block_lines:
+        recommendations.append(
+            f"Eliminar o poblar los bloques de código vacíos iniciados en las líneas {empty_code_block_lines}."
+        )
+
+    return {
+        "total_code_blocks": total_code_blocks,
+        "compliant_code_blocks": compliant_code_blocks,
+        "unclosed_fence_start_lines": unclosed_fence_start_lines,
+        "untagged_code_block_lines": untagged_code_block_lines,
+        "empty_code_block_lines": empty_code_block_lines,
+        "mismatched_closing_fence_lines": mismatched_closing_fence_lines,
+        "fence_hygiene_status": fence_hygiene_status,
+        "is_compliant": is_compliant,
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_markdown_code_fence_balance_and_language_hygiene = staticmethod(
+    audit_markdown_code_fence_balance_and_language_hygiene
+)
+AnydocService.audit_markdown_code_fence_balance_and_language_hygiene = staticmethod(
+    audit_markdown_code_fence_balance_and_language_hygiene
+)
+
