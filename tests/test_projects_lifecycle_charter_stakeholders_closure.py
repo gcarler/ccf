@@ -1093,3 +1093,81 @@ def test_evaluate_benefits_realization_posture_no_benefits_defined():
         }
 
 
+# ─── audit_assumption_and_constraint_log (pure helper) ───────────
+
+
+def test_assumption_log_governed_with_defaults_and_coverage():
+    """Default type 'assumption', alias español y validados con dueño -> GOVERNED_ASSUMPTION_LOG."""
+    entries = [
+        {"status": "validated", "owner": "PM"},  # type ausente -> assumption
+        {"type": "supuesto", "status": "VALIDADO", "responsable": "Pastor"},
+        {"kind": "restricción", "status": "activo", "owner": "COO"},
+        {"type": "hipotesis", "status": "confirmed", "owner": "Tesorero"},
+        {"type": "constraint", "status": "pending", "owner": "Obras"},
+    ]
+
+    res = project_lifecycle_pmi_service.audit_assumption_and_constraint_log(entries)
+
+    assert res["total_entries"] == 5
+    assert res["assumptions_count"] == 3
+    assert res["constraints_count"] == 2
+    assert res["validated_or_active_count"] == 4
+    assert res["invalidated_count"] == 0
+    assert res["governance_coverage_rate"] == 80.0
+    assert res["posture"] == "GOVERNED_ASSUMPTION_LOG"
+
+
+def test_assumption_log_unconvertated_invalidated_takes_precedence():
+    """Invalidados sin convertir a riesgo -> UNCONVERTED_INVALIDATED_ASSUMPTIONS aunque haya alta cobertura."""
+    entries = [
+        {"type": "assumption", "status": "validated", "owner": "PM"},
+        {"type": "assumption", "status": "invalidated", "owner": "PM"},
+        {"type": "supuesto", "status": "escalated_to_risk", "owner": "DBA"},
+    ]
+
+    res = project_lifecycle_pmi_service.audit_assumption_and_constraint_log(entries)
+
+    assert res["total_entries"] == 3
+    assert res["validated_or_active_count"] == 1
+    assert res["invalidated_count"] == 2
+    assert res["governance_coverage_rate"] == 33.33
+    assert res["posture"] == "UNCONVERTED_INVALIDATED_ASSUMPTIONS"
+
+
+def test_assumption_log_unvalidated_without_owner_or_status():
+    """Validados sin dueño o sin status no cuentan; < 80% cobertura -> UNVALIDATED_ASSUMPTION_EXPOSURE."""
+    entries = [
+        {"status": "validated"},  # sin dueño -> no cuenta
+        {"owner": "PM"},  # sin status -> no cuenta
+        {"type": "restriccion", "status": "confirmado", "owner": "Finanzas"},
+        {"type": "assumption", "status": "pending", "owner": "PM"},
+    ]
+
+    res = project_lifecycle_pmi_service.audit_assumption_and_constraint_log(entries)
+
+    assert res["total_entries"] == 4
+    assert res["assumptions_count"] == 3
+    assert res["constraints_count"] == 1
+    assert res["validated_or_active_count"] == 1
+    assert res["invalidated_count"] == 0
+    assert res["governance_coverage_rate"] == 25.0
+    assert res["posture"] == "UNVALIDATED_ASSUMPTION_EXPOSURE"
+
+
+def test_assumption_log_empty_and_non_dict_entries():
+    """None, lista vacía o items no-dict -> EMPTY_ASSUMPTION_LOG con coverage 0.0."""
+    for entries in (None, [], ["no dict", 13]):
+        res = project_lifecycle_pmi_service.audit_assumption_and_constraint_log(
+            entries  # type: ignore[arg-type]
+        )
+        assert res == {
+            "total_entries": 0,
+            "assumptions_count": 0,
+            "constraints_count": 0,
+            "validated_or_active_count": 0,
+            "invalidated_count": 0,
+            "governance_coverage_rate": 0.0,
+            "posture": "EMPTY_ASSUMPTION_LOG",
+        }
+
+

@@ -1164,3 +1164,85 @@ def evaluate_benefits_realization_posture(
         "posture": posture,
     }
 
+
+def audit_assumption_and_constraint_log(
+    entries: list[dict[str, Any]] | None,
+) -> dict[str, Any]:
+    """Audita el Registro de Supuestos y Restricciones (PMBOK §4.1 / §11.2).
+
+    Ignora entradas que no sean dict y clasifica cada registro por su campo
+    `type`/`kind` (default 'assumption'):
+    - `assumptions_count`: supuestos ('assumption', 'supuesto',
+      'hipotesis'/'hipótesis').
+    - `constraints_count`: restricciones ('constraint', 'restriccion'/'restricción',
+      'limitacion'/'limitación').
+    - `validated_or_active_count`: status en ('validated', 'validado', 'active',
+      'activo', 'confirmed', 'confirmado') Y con `owner`/`responsable`.
+    - `invalidated_count`: status en ('invalidated', 'invalidado', 'false',
+      'broken', 'escalated_to_risk') que exige conversión a riesgo.
+    - `governance_coverage_rate`: % de entradas validadas/activas con dueño
+      (2 decimales; 0.0 sin entradas).
+    - `posture`: 'EMPTY_ASSUMPTION_LOG' sin entradas;
+      'UNCONVERTED_INVALIDATED_ASSUMPTIONS' con invalidados;
+      'GOVERNED_ASSUMPTION_LOG' con coverage >= 80.0; y
+      'UNVALIDATED_ASSUMPTION_EXPOSURE' en otro caso.
+    """
+    ASSUMPTION_TYPES = {"assumption", "supuesto", "hipotesis", "hipótesis"}
+    CONSTRAINT_TYPES = {
+        "constraint", "restriccion", "restricción", "limitacion", "limitación"
+    }
+    VALIDATED_STATUSES = {
+        "validated", "validado", "active", "activo", "confirmed", "confirmado"
+    }
+    INVALIDATED_STATUSES = {
+        "invalidated", "invalidado", "false", "broken", "escalated_to_risk"
+    }
+
+    items = [item for item in (entries or []) if isinstance(item, dict)]
+    total_entries = len(items)
+
+    assumptions_count = 0
+    constraints_count = 0
+    validated_or_active_count = 0
+    invalidated_count = 0
+
+    for item in items:
+        type_text = str(item.get("type") or item.get("kind") or "assumption").strip().lower()
+        status_text = str(item.get("status") or "").strip().lower()
+        owner_text = str(item.get("owner") or item.get("responsable") or "").strip()
+
+        if type_text in ASSUMPTION_TYPES:
+            assumptions_count += 1
+        elif type_text in CONSTRAINT_TYPES:
+            constraints_count += 1
+
+        if status_text in INVALIDATED_STATUSES:
+            invalidated_count += 1
+        elif status_text in VALIDATED_STATUSES and owner_text:
+            validated_or_active_count += 1
+
+    governance_coverage_rate = (
+        round((validated_or_active_count / total_entries) * 100.0, 2)
+        if total_entries > 0
+        else 0.0
+    )
+
+    if total_entries == 0:
+        posture = "EMPTY_ASSUMPTION_LOG"
+    elif invalidated_count > 0:
+        posture = "UNCONVERTED_INVALIDATED_ASSUMPTIONS"
+    elif governance_coverage_rate >= 80.0:
+        posture = "GOVERNED_ASSUMPTION_LOG"
+    else:
+        posture = "UNVALIDATED_ASSUMPTION_EXPOSURE"
+
+    return {
+        "total_entries": total_entries,
+        "assumptions_count": assumptions_count,
+        "constraints_count": constraints_count,
+        "validated_or_active_count": validated_or_active_count,
+        "invalidated_count": invalidated_count,
+        "governance_coverage_rate": governance_coverage_rate,
+        "posture": posture,
+    }
+

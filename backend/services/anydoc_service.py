@@ -1252,6 +1252,63 @@ def audit_markdown_frontmatter_metadata(
     }
 
 
+def extract_markdown_admonition_callouts(
+    markdown_or_result: str | dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Extrae bloques de alerta GFM (> [!NOTE|TIP|IMPORTANT|WARNING|CAUTION]) fuera de bloques de código según PMI PMBOK §10.2 y §4.4."""
+    if isinstance(markdown_or_result, dict):
+        text = str(markdown_or_result.get("markdown") or "")
+    elif isinstance(markdown_or_result, str):
+        text = markdown_or_result
+    else:
+        text = ""
+
+    callout_re = re.compile(
+        r"^\s*>\s*\[!(?P<kind>NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]",
+        re.IGNORECASE,
+    )
+
+    counts_by_kind: dict[str, int] = {}
+    in_fence = False
+
+    for line in text.splitlines():
+        if line.strip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+
+        match = callout_re.match(line)
+        if match:
+            kind = match.group("kind").upper()
+            counts_by_kind[kind] = counts_by_kind.get(kind, 0) + 1
+
+    total_callouts = sum(counts_by_kind.values())
+    critical_alerts_count = counts_by_kind.get("WARNING", 0) + counts_by_kind.get(
+        "CAUTION", 0
+    )
+    governance_notices_count = counts_by_kind.get("IMPORTANT", 0)
+    informational_count = counts_by_kind.get("NOTE", 0) + counts_by_kind.get("TIP", 0)
+
+    if total_callouts == 0:
+        posture = "NO_CALLOUT_ALERTS"
+    elif critical_alerts_count > 0:
+        posture = "HIGH_RISK_CAUTION_HIGHLIGHTED"
+    elif governance_notices_count > 0:
+        posture = "GOVERNANCE_EMPHASIS_PRESENT"
+    else:
+        posture = "INFORMATIONAL_GUIDANCE_ONLY"
+
+    return {
+        "total_callouts": total_callouts,
+        "critical_alerts_count": critical_alerts_count,
+        "governance_notices_count": governance_notices_count,
+        "informational_count": informational_count,
+        "counts_by_kind": counts_by_kind,
+        "posture": posture,
+    }
+
+
 class AnyDocService:
     """Fachada canónica de conversión y auditoría documental AnyDoc PMI."""
 
@@ -1336,6 +1393,12 @@ class AnyDocService:
     ) -> dict[str, Any]:
         return audit_markdown_frontmatter_metadata(markdown_or_result)
 
+    @staticmethod
+    def extract_markdown_admonition_callouts(
+        markdown_or_result: str | dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        return extract_markdown_admonition_callouts(markdown_or_result)
+
 
 __all__ = [
     "ANYDOC_AVAILABLE",
@@ -1354,6 +1417,8 @@ __all__ = [
     "extract_markdown_action_checklists",
     "audit_markdown_reference_citations",
     "audit_markdown_frontmatter_metadata",
+    "extract_markdown_admonition_callouts",
     "AnyDocService",
 ]
+
 

@@ -1113,3 +1113,89 @@ def test_frontmatter_unclosed_block_is_ignored_and_blank_prefix_tolerated():
     assert prefixed["completeness_score"] == 33.33
     assert prefixed["posture"] == "PARTIAL_FRONTMATTER"
 
+
+def test_extract_markdown_admonition_callouts_high_risk():
+    """Presencia de WARNING o CAUTION -> 'HIGH_RISK_CAUTION_HIGHLIGHTED'."""
+    import backend.services.anydoc_service as anydoc_module
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        extract_markdown_admonition_callouts,
+    )
+
+    md = (
+        "# Plan de Despliegue\n"
+        "> [!WARNING]\n"
+        "> Impacto potencial en base de datos transaccional.\n\n"
+        "  > [!caution]\n"
+        "  > Requiere respaldo previo.\n\n"
+        "> [!NOTE]\n"
+        "> Ventana de mantenimiento programada.\n"
+    )
+    res = AnyDocService.extract_markdown_admonition_callouts(md)
+    assert res == {
+        "total_callouts": 3,
+        "critical_alerts_count": 2,
+        "governance_notices_count": 0,
+        "informational_count": 1,
+        "counts_by_kind": {"WARNING": 1, "CAUTION": 1, "NOTE": 1},
+        "posture": "HIGH_RISK_CAUTION_HIGHLIGHTED",
+    }
+    assert extract_markdown_admonition_callouts({"markdown": md}) == res
+    assert "extract_markdown_admonition_callouts" in anydoc_module.__all__
+
+
+def test_extract_markdown_admonition_callouts_governance_emphasis():
+    """Sin alertas críticas pero con IMPORTANT -> 'GOVERNANCE_EMPHASIS_PRESENT'."""
+    from backend.services.anydoc_service import extract_markdown_admonition_callouts
+
+    md = (
+        "> [!IMPORTANT]\n"
+        "> Todo cambio de línea base requiere aprobación del CCB.\n\n"
+        "> [!tip]\n"
+        "> Adjuntar análisis de impacto EVM.\n"
+    )
+    res = extract_markdown_admonition_callouts(md)
+    assert res["total_callouts"] == 2
+    assert res["critical_alerts_count"] == 0
+    assert res["governance_notices_count"] == 1
+    assert res["informational_count"] == 1
+    assert res["counts_by_kind"] == {"IMPORTANT": 1, "TIP": 1}
+    assert res["posture"] == "GOVERNANCE_EMPHASIS_PRESENT"
+
+
+def test_extract_markdown_admonition_callouts_informational_only():
+    """Solo NOTE o TIP -> 'INFORMATIONAL_GUIDANCE_ONLY'."""
+    from backend.services.anydoc_service import extract_markdown_admonition_callouts
+
+    md = "> [!NOTE]\n> Nota 1\n\n> [!TIP]\n> Consejo 1\n> [!note]\n> Nota 2\n"
+    res = extract_markdown_admonition_callouts(md)
+    assert res["total_callouts"] == 3
+    assert res["critical_alerts_count"] == 0
+    assert res["governance_notices_count"] == 0
+    assert res["informational_count"] == 3
+    assert res["counts_by_kind"] == {"NOTE": 2, "TIP": 1}
+    assert res["posture"] == "INFORMATIONAL_GUIDANCE_ONLY"
+
+
+def test_extract_markdown_admonition_callouts_none_and_fenced_ignored():
+    """Sin alertas fuera de bloques ``` -> 'NO_CALLOUT_ALERTS'."""
+    from backend.services.anydoc_service import extract_markdown_admonition_callouts
+
+    md_fenced = (
+        "```markdown\n"
+        "> [!CAUTION]\n"
+        "> Ejemplo dentro de bloque de código ignorado\n"
+        "```\n"
+    )
+    for val in (None, "", {"markdown": ""}, md_fenced):
+        res = extract_markdown_admonition_callouts(val)
+        assert res == {
+            "total_callouts": 0,
+            "critical_alerts_count": 0,
+            "governance_notices_count": 0,
+            "informational_count": 0,
+            "counts_by_kind": {},
+            "posture": "NO_CALLOUT_ALERTS",
+        }
+
+
