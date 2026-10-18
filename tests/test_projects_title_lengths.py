@@ -1618,3 +1618,109 @@ def test_validate_cpm_float_and_critical_path_empty_or_none():
             "is_cpm_schedule_valid": True,
             "cpm_schedule_posture": "NO_ACTIVITIES_EVALUATED",
         }
+
+
+def test_validate_emv_decision_tree_exposure_buffered():
+    """Amenazas y oportunidades con reserva suficiente -> BUFFERED_EMV_EXPOSURE."""
+    from backend.schemas.projects import validate_emv_decision_tree_exposure
+
+    # RSK-1 amenaza: 0.4 * 20000 = +8000; RSK-2 oportunidad: 0.5 * 4000 = -2000 -> net_threat_emv = 6000.0
+    res = validate_emv_decision_tree_exposure(
+        [
+            {
+                "id": "RSK-1",
+                "probability": 0.4,
+                "impact_cost": 20000.0,
+                "type": "threat",
+                "reported_emv": 8000.0,
+            },
+            {
+                "risk_id": "RSK-2",
+                "prob": 0.5,
+                "impact_amount": 4000.0,
+                "risk_type": "opportunity",
+                "emv": -2000.0,
+            },
+        ],
+        contingency_reserve_available=7500.0,
+    )
+    assert res == {
+        "total_scenarios": 2,
+        "net_threat_emv": 6000.0,
+        "reserve_shortfall": 0.0,
+        "invalid_probability_risk_ids": [],
+        "emv_mismatch_risk_ids": [],
+        "is_emv_valid_and_buffered": True,
+        "emv_posture": "BUFFERED_EMV_EXPOSURE",
+    }
+
+
+def test_validate_emv_decision_tree_exposure_invalid_probability():
+    """Probabilidad fuera de [0.0, 1.0] -> INVALID_PROBABILITY_RANGE."""
+    from backend.schemas.projects import validate_emv_decision_tree_exposure
+
+    res = validate_emv_decision_tree_exposure(
+        [
+            {"id": "RSK-OVER", "probability": 1.5, "impact": 10000.0},
+            {"id": "RSK-NEG", "probability": -0.2, "impact": 5000.0},
+            {"id": "RSK-OK", "probability": 0.25, "impact": 4000.0},
+        ],
+        contingency_reserve_available=2000.0,
+    )
+    assert res["total_scenarios"] == 3
+    assert res["net_threat_emv"] == 1000.0
+    assert res["invalid_probability_risk_ids"] == ["RSK-OVER", "RSK-NEG"]
+    assert res["is_emv_valid_and_buffered"] is False
+    assert res["emv_posture"] == "INVALID_PROBABILITY_RANGE"
+
+
+def test_validate_emv_decision_tree_exposure_mismatch_and_shortfall():
+    """Discrepancia reported_emv -> EMV_CALCULATION_MISMATCH; déficit de reserva -> CONTINGENCY_RESERVE_EMV_SHORTFALL."""
+    from backend.schemas.projects import validate_emv_decision_tree_exposure
+
+    mismatch_res = validate_emv_decision_tree_exposure(
+        [
+            {
+                "id": "RSK-MIS",
+                "probability": 0.3,
+                "impact_cost": 10000.0,
+                "reported_emv": 4500.0,
+            }
+        ],
+        contingency_reserve_available=5000.0,
+    )
+    assert mismatch_res["emv_mismatch_risk_ids"] == ["RSK-MIS"]
+    assert mismatch_res["is_emv_valid_and_buffered"] is False
+    assert mismatch_res["emv_posture"] == "EMV_CALCULATION_MISMATCH"
+
+    shortfall_res = validate_emv_decision_tree_exposure(
+        [
+            {
+                "id": "RSK-BIG",
+                "probability": 0.5,
+                "impact_cost": 30000.0,
+            }
+        ],
+        contingency_reserve_available=10000.0,
+    )
+    assert shortfall_res["net_threat_emv"] == 15000.0
+    assert shortfall_res["reserve_shortfall"] == 5000.0
+    assert shortfall_res["is_emv_valid_and_buffered"] is False
+    assert shortfall_res["emv_posture"] == "CONTINGENCY_RESERVE_EMV_SHORTFALL"
+
+
+def test_validate_emv_decision_tree_exposure_empty_or_none():
+    """Lista vacía o None -> NO_RISK_SCENARIOS."""
+    from backend.schemas.projects import validate_emv_decision_tree_exposure
+
+    for payload in (None, [], ["invalid", 42]):
+        res = validate_emv_decision_tree_exposure(payload)  # type: ignore[arg-type]
+        assert res == {
+            "total_scenarios": 0,
+            "net_threat_emv": 0.0,
+            "reserve_shortfall": 0.0,
+            "invalid_probability_risk_ids": [],
+            "emv_mismatch_risk_ids": [],
+            "is_emv_valid_and_buffered": True,
+            "emv_posture": "NO_RISK_SCENARIOS",
+        }

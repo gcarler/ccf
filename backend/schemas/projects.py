@@ -3448,6 +3448,140 @@ def validate_cpm_float_and_critical_path(
     }
 
 
+_OPPORTUNITY_RISK_KINDS = frozenset({"opportunity", "oportunidad", "positive"})
+
+
+def validate_emv_decision_tree_exposure(
+    risk_scenarios: list[dict[str, Any]] | None = None,
+    contingency_reserve_available: float = 0.0,
+) -> dict[str, Any]:
+    """Valida el Valor Monetario Esperado (EMV) y cobertura de reserva de contingencia según PMI PMBOK §11.4.2.2."""
+    items = [item for item in (risk_scenarios or []) if isinstance(item, dict)]
+    total_scenarios = len(items)
+    if total_scenarios == 0:
+        return {
+            "total_scenarios": 0,
+            "net_threat_emv": 0.0,
+            "reserve_shortfall": 0.0,
+            "invalid_probability_risk_ids": [],
+            "emv_mismatch_risk_ids": [],
+            "is_emv_valid_and_buffered": True,
+            "emv_posture": "NO_RISK_SCENARIOS",
+        }
+
+    invalid_probability_risk_ids: list[str] = []
+    emv_mismatch_risk_ids: list[str] = []
+    net_threat_emv_raw = 0.0
+
+    for idx, item in enumerate(items, start=1):
+        risk_id = (
+            str(
+                item.get("id")
+                or item.get("risk_id")
+                or item.get("code")
+                or f"RSK-{idx}"
+            ).strip()
+            or f"RSK-{idx}"
+        )
+        raw_prob = (
+            item.get("probability")
+            if item.get("probability") is not None
+            else (
+                item.get("prob")
+                if item.get("prob") is not None
+                else item.get("p")
+            )
+        )
+        prob_val: Optional[float] = None
+        if raw_prob is not None and not isinstance(raw_prob, bool):
+            try:
+                prob_val = float(raw_prob)
+            except (TypeError, ValueError):
+                prob_val = None
+
+        if prob_val is None or prob_val < 0.0 or prob_val > 1.0:
+            invalid_probability_risk_ids.append(risk_id)
+            continue
+
+        raw_impact = (
+            item.get("impact_cost")
+            if item.get("impact_cost") is not None
+            else (
+                item.get("impact_amount")
+                if item.get("impact_amount") is not None
+                else (item.get("impact") or 0.0)
+            )
+        )
+        try:
+            impact_val = float(raw_impact)
+        except (TypeError, ValueError):
+            impact_val = 0.0
+
+        kind = (
+            str(
+                item.get("type")
+                or item.get("risk_type")
+                or item.get("nature")
+                or "threat"
+            )
+            .strip()
+            .lower()
+        )
+        if kind in _OPPORTUNITY_RISK_KINDS:
+            threat_emv = -abs(prob_val * abs(impact_val))
+        else:
+            threat_emv = abs(prob_val * abs(impact_val))
+
+        expected_emv_abs = round(prob_val * abs(impact_val), 2)
+        raw_reported = (
+            item.get("reported_emv")
+            if item.get("reported_emv") is not None
+            else item.get("emv")
+        )
+        if raw_reported is not None and not isinstance(raw_reported, bool):
+            try:
+                rep_val = float(raw_reported)
+                if abs(abs(rep_val) - expected_emv_abs) > 0.05:
+                    emv_mismatch_risk_ids.append(risk_id)
+            except (TypeError, ValueError):
+                emv_mismatch_risk_ids.append(risk_id)
+
+        net_threat_emv_raw += threat_emv
+
+    try:
+        avail_res = max(0.0, float(contingency_reserve_available or 0.0))
+    except (TypeError, ValueError):
+        avail_res = 0.0
+
+    net_threat_emv = round(max(0.0, net_threat_emv_raw), 2)
+    reserve_shortfall = round(max(0.0, net_threat_emv - avail_res), 2)
+    is_emv_valid_and_buffered = bool(
+        len(invalid_probability_risk_ids) == 0
+        and len(emv_mismatch_risk_ids) == 0
+        and reserve_shortfall <= 1e-9
+    )
+
+    if len(invalid_probability_risk_ids) > 0:
+        emv_posture = "INVALID_PROBABILITY_RANGE"
+    elif len(emv_mismatch_risk_ids) > 0:
+        emv_posture = "EMV_CALCULATION_MISMATCH"
+    elif reserve_shortfall > 1e-9:
+        emv_posture = "CONTINGENCY_RESERVE_EMV_SHORTFALL"
+    else:
+        emv_posture = "BUFFERED_EMV_EXPOSURE"
+
+    return {
+        "total_scenarios": total_scenarios,
+        "net_threat_emv": net_threat_emv,
+        "reserve_shortfall": reserve_shortfall,
+        "invalid_probability_risk_ids": invalid_probability_risk_ids,
+        "emv_mismatch_risk_ids": emv_mismatch_risk_ids,
+        "is_emv_valid_and_buffered": is_emv_valid_and_buffered,
+        "emv_posture": emv_posture,
+    }
+
+
 __all__ = [
     "validate_cpm_float_and_critical_path",
+    "validate_emv_decision_tree_exposure",
 ]
