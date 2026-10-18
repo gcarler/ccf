@@ -5508,6 +5508,7 @@ __all__ = [
     "evaluate_evm_earned_schedule_eac_t_and_tspi",
     "evaluate_evm_loe_contamination_and_variance_masking",
     "evaluate_evm_funding_limit_reconciliation_and_liquidity",
+    "evaluate_evm_subcontractor_retainage_and_progress_billing",
     "ProjectEVMService",
 ]
 
@@ -7999,5 +8000,136 @@ def evaluate_evm_funding_limit_reconciliation_and_liquidity(
 ProjectEVMService.evaluate_evm_funding_limit_reconciliation_and_liquidity = staticmethod(
     evaluate_evm_funding_limit_reconciliation_and_liquidity
 )
+
+
+def evaluate_evm_subcontractor_retainage_and_progress_billing(
+    invoices: list[dict[str, Any]],
+    *,
+    standard_retainage_pct: float = 10.0,
+    overbilling_tolerance_pct: float = 5.0,
+) -> dict[str, Any]:
+    """Evalúa facturación por avance de subcontratistas frente al EV, retención de garantía y liberación de gravámenes (PMI PMBOK §7.4 / §12.3)."""
+    if not isinstance(invoices, list):
+        return {
+            "total_invoices": 0,
+            "total_billed_to_date": 0.0,
+            "total_net_earned_value": 0.0,
+            "total_retainage_withheld": 0.0,
+            "overbilled_invoice_ids": [],
+            "retainage_shortfall_invoice_ids": [],
+            "premature_release_invoice_ids": [],
+            "missing_lien_waiver_invoice_ids": [],
+            "billing_governance_status": "COMPLIANT",
+            "recommendations": [],
+        }
+
+    ret_pct = float(
+        standard_retainage_pct if standard_retainage_pct is not None else 10.0
+    )
+    tol_pct = float(
+        overbilling_tolerance_pct if overbilling_tolerance_pct is not None else 5.0
+    )
+
+    total_invoices = 0
+    sum_billed = 0.0
+    sum_net_ev = 0.0
+    sum_retainage_withheld = 0.0
+
+    overbilled_invoice_ids: list[str] = []
+    retainage_shortfall_invoice_ids: list[str] = []
+    premature_release_invoice_ids: list[str] = []
+    missing_lien_waiver_invoice_ids: list[str] = []
+    recommendations: list[str] = []
+
+    for idx, item in enumerate(invoices):
+        if not isinstance(item, dict):
+            continue
+        total_invoices += 1
+        invoice_id = str(item.get("invoice_id") or f"INV-{idx + 1}").strip()
+        billed = max(0.0, float(item.get("billed_to_date") or 0.0))
+        verified_ev = max(0.0, float(item.get("verified_ev_to_date") or 0.0))
+        retainage_withheld = max(0.0, float(item.get("retainage_withheld") or 0.0))
+        lien_waiver_signed = bool(item.get("lien_waiver_signed", True))
+        substantial_completion = bool(
+            item.get("substantial_completion_reached", False)
+        )
+        retainage_released = max(0.0, float(item.get("retainage_released") or 0.0))
+        backcharge = max(0.0, float(item.get("defective_work_backcharge") or 0.0))
+
+        net_earned_value = max(0.0, verified_ev - backcharge)
+        sum_billed += billed
+        sum_net_ev += net_earned_value
+        sum_retainage_withheld += retainage_withheld
+
+        if net_earned_value > 0.0:
+            front_loading_pct = round(
+                ((billed - net_earned_value) / net_earned_value) * 100.0, 2
+            )
+        elif billed > 0.0:
+            front_loading_pct = 100.0
+        else:
+            front_loading_pct = 0.0
+
+        if front_loading_pct > tol_pct:
+            overbilled_invoice_ids.append(invoice_id)
+            recommendations.append(
+                f"Ajustar factura '{invoice_id}' por sobrefacturación frente a EV neto ({front_loading_pct:.2f}% > {tol_pct:.2f}%)."
+            )
+
+        expected_retainage = round(billed * (ret_pct / 100.0), 2)
+        retainage_shortfall = round(
+            max(0.0, expected_retainage - (retainage_withheld + retainage_released)),
+            2,
+        )
+        if retainage_shortfall > 0.0:
+            retainage_shortfall_invoice_ids.append(invoice_id)
+            recommendations.append(
+                f"Retener {retainage_shortfall:.2f} adicionales en factura '{invoice_id}' para cubrir la garantía contractual del {ret_pct:.1f}%."
+            )
+
+        if retainage_released > 0.0 and not substantial_completion:
+            premature_release_invoice_ids.append(invoice_id)
+            recommendations.append(
+                f"Bloquear liberación prematura de retención en factura '{invoice_id}' hasta alcanzar terminación sustancial."
+            )
+
+        if billed > 0.0 and not lien_waiver_signed:
+            missing_lien_waiver_invoice_ids.append(invoice_id)
+            recommendations.append(
+                f"Exigir firma de certificado de liberación de gravámenes (lien waiver) antes de pagar factura '{invoice_id}'."
+            )
+
+    if (
+        len(premature_release_invoice_ids) > 0
+        or len(missing_lien_waiver_invoice_ids) > 0
+        or len(overbilled_invoice_ids) > 1
+    ):
+        billing_governance_status = "CRITICAL"
+    elif (
+        len(overbilled_invoice_ids) == 1
+        or len(retainage_shortfall_invoice_ids) > 0
+    ):
+        billing_governance_status = "WARNING"
+    else:
+        billing_governance_status = "COMPLIANT"
+
+    return {
+        "total_invoices": total_invoices,
+        "total_billed_to_date": round(sum_billed, 2),
+        "total_net_earned_value": round(sum_net_ev, 2),
+        "total_retainage_withheld": round(sum_retainage_withheld, 2),
+        "overbilled_invoice_ids": overbilled_invoice_ids,
+        "retainage_shortfall_invoice_ids": retainage_shortfall_invoice_ids,
+        "premature_release_invoice_ids": premature_release_invoice_ids,
+        "missing_lien_waiver_invoice_ids": missing_lien_waiver_invoice_ids,
+        "billing_governance_status": billing_governance_status,
+        "recommendations": recommendations,
+    }
+
+
+ProjectEVMService.evaluate_evm_subcontractor_retainage_and_progress_billing = staticmethod(
+    evaluate_evm_subcontractor_retainage_and_progress_billing
+)
+
 
 

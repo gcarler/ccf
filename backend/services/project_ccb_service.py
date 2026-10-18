@@ -2834,6 +2834,7 @@ __all__ = [
     "audit_scope_creep_and_gold_plating_effort",
     "audit_quality_spc_control_chart_stability",
     "audit_defect_removal_efficiency_and_uat_readiness",
+    "audit_cost_of_quality_conformance_and_failure_ratio",
     "ProjectCCBService",
 ]
 
@@ -5634,4 +5635,143 @@ def audit_defect_removal_efficiency_and_uat_readiness(
 ProjectCCBService.audit_defect_removal_efficiency_and_uat_readiness = staticmethod(
     audit_defect_removal_efficiency_and_uat_readiness
 )
+
+
+def audit_cost_of_quality_conformance_and_failure_ratio(
+    coq_entries: list[dict[str, Any]],
+    *,
+    total_project_budget: float,
+    min_conformance_share_pct: float = 60.0,
+    max_coq_budget_share_pct: float = 15.0,
+) -> dict[str, Any]:
+    """Audita Costo de la Calidad (CoQ: Prevención/Evaluación vs Fallas Internas/Externas) y proporción óptima de conformidad (PMI PMBOK §8.2 / §8.3)."""
+    budget = max(0.0, float(total_project_budget or 0.0))
+    min_conf_pct = float(
+        min_conformance_share_pct if min_conformance_share_pct is not None else 60.0
+    )
+    max_coq_pct = float(
+        max_coq_budget_share_pct if max_coq_budget_share_pct is not None else 15.0
+    )
+
+    if not isinstance(coq_entries, list):
+        return {
+            "prevention_cost": 0.0,
+            "appraisal_cost": 0.0,
+            "internal_failure_cost": 0.0,
+            "external_failure_cost": 0.0,
+            "cost_of_conformance": 0.0,
+            "cost_of_non_conformance": 0.0,
+            "total_coq": 0.0,
+            "conformance_share_pct": 100.0,
+            "external_failure_share_pct": 0.0,
+            "coq_budget_share_pct": 0.0,
+            "prevention_starvation": False,
+            "coq_health_status": "OPTIMAL",
+            "recommendations": [],
+        }
+
+    prev_raw = 0.0
+    appr_raw = 0.0
+    int_fail_raw = 0.0
+    ext_fail_raw = 0.0
+
+    for item in coq_entries:
+        if not isinstance(item, dict):
+            continue
+        category = str(item.get("category") or "").strip().upper()
+        amount = max(0.0, float(item.get("amount") or 0.0))
+        if category == "PREVENTION":
+            prev_raw += amount
+        elif category == "APPRAISAL":
+            appr_raw += amount
+        elif category == "INTERNAL_FAILURE":
+            int_fail_raw += amount
+        elif category == "EXTERNAL_FAILURE":
+            ext_fail_raw += amount
+
+    prevention_cost = round(prev_raw, 2)
+    appraisal_cost = round(appr_raw, 2)
+    internal_failure_cost = round(int_fail_raw, 2)
+    external_failure_cost = round(ext_fail_raw, 2)
+
+    cost_of_conformance = round(prevention_cost + appraisal_cost, 2)
+    cost_of_non_conformance = round(
+        internal_failure_cost + external_failure_cost, 2
+    )
+    total_coq = round(cost_of_conformance + cost_of_non_conformance, 2)
+
+    conformance_share_pct = (
+        round((cost_of_conformance / total_coq) * 100.0, 2)
+        if total_coq > 0.0
+        else 100.0
+    )
+    external_failure_share_pct = (
+        round((external_failure_cost / total_coq) * 100.0, 2)
+        if total_coq > 0.0
+        else 0.0
+    )
+    coq_budget_share_pct = (
+        round((total_coq / budget) * 100.0, 2) if budget > 0.0 else 0.0
+    )
+    prevention_starvation = bool(
+        prevention_cost < appraisal_cost * 0.25 and cost_of_non_conformance > 0.0
+    )
+
+    recommendations: list[str] = []
+    if cost_of_non_conformance > cost_of_conformance:
+        recommendations.append(
+            "El costo de no-conformidad supera la inversión en conformidad; incrementar prevención y aseguramiento."
+        )
+    if external_failure_share_pct > 25.0:
+        recommendations.append(
+            f"La proporción de fallas externas ({external_failure_share_pct:.2f}%) supera el 25% del CoQ total."
+        )
+    if conformance_share_pct < min_conf_pct:
+        recommendations.append(
+            f"La proporción de conformidad ({conformance_share_pct:.2f}%) es inferior al mínimo objetivo ({min_conf_pct:.2f}%)."
+        )
+    if coq_budget_share_pct > max_coq_pct:
+        recommendations.append(
+            f"El CoQ total ({coq_budget_share_pct:.2f}% del presupuesto) excede el umbral máximo ({max_coq_pct:.2f}%)."
+        )
+    if prevention_starvation:
+        recommendations.append(
+            "Inversión en prevención insuficiente (< 25% del gasto en evaluación con fallas activas); reasignar hacia ingeniería preventiva."
+        )
+
+    if (
+        cost_of_non_conformance > cost_of_conformance
+        or external_failure_share_pct > 25.0
+    ):
+        coq_health_status = "CRITICAL"
+    elif (
+        conformance_share_pct < min_conf_pct
+        or coq_budget_share_pct > max_coq_pct
+        or prevention_starvation
+    ):
+        coq_health_status = "WARNING"
+    else:
+        coq_health_status = "OPTIMAL"
+
+    return {
+        "prevention_cost": prevention_cost,
+        "appraisal_cost": appraisal_cost,
+        "internal_failure_cost": internal_failure_cost,
+        "external_failure_cost": external_failure_cost,
+        "cost_of_conformance": cost_of_conformance,
+        "cost_of_non_conformance": cost_of_non_conformance,
+        "total_coq": total_coq,
+        "conformance_share_pct": conformance_share_pct,
+        "external_failure_share_pct": external_failure_share_pct,
+        "coq_budget_share_pct": coq_budget_share_pct,
+        "prevention_starvation": prevention_starvation,
+        "coq_health_status": coq_health_status,
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.audit_cost_of_quality_conformance_and_failure_ratio = staticmethod(
+    audit_cost_of_quality_conformance_and_failure_ratio
+)
+
 

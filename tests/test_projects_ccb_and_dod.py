@@ -7253,3 +7253,125 @@ def test_audit_defect_removal_efficiency_and_uat_readiness_empty_and_binding():
         == audit_defect_removal_efficiency_and_uat_readiness()
     )
     assert "audit_defect_removal_efficiency_and_uat_readiness" in mod.__all__
+
+
+def test_audit_cost_of_quality_conformance_and_failure_ratio_optimal():
+    """Caso 1: Conformidad >= 60%, CoQ <= 15% del presupuesto y sin prevención famélica -> OPTIMAL."""
+    from backend.services.project_ccb_service import (
+        audit_cost_of_quality_conformance_and_failure_ratio,
+    )
+
+    entries = [
+        {"entry_id": "E-1", "category": "PREVENTION", "amount": 15000.0, "work_package_id": "WP-1"},
+        {"entry_id": "E-2", "category": "APPRAISAL", "amount": 25000.0, "work_package_id": "WP-1"},
+        {"entry_id": "E-3", "category": "INTERNAL_FAILURE", "amount": 8000.0, "work_package_id": "WP-2"},
+        {"entry_id": "E-4", "category": "EXTERNAL_FAILURE", "amount": 2000.0, "work_package_id": "WP-2"},
+    ]
+    res = audit_cost_of_quality_conformance_and_failure_ratio(
+        entries,
+        total_project_budget=500000.0,
+        min_conformance_share_pct=60.0,
+        max_coq_budget_share_pct=15.0,
+    )
+    assert res["prevention_cost"] == 15000.0
+    assert res["appraisal_cost"] == 25000.0
+    assert res["internal_failure_cost"] == 8000.0
+    assert res["external_failure_cost"] == 2000.0
+    assert res["cost_of_conformance"] == 40000.0
+    assert res["cost_of_non_conformance"] == 10000.0
+    assert res["total_coq"] == 50000.0
+    assert res["conformance_share_pct"] == 80.0
+    assert res["external_failure_share_pct"] == 4.0
+    assert res["coq_budget_share_pct"] == 10.0
+    assert res["prevention_starvation"] is False
+    assert res["coq_health_status"] == "OPTIMAL"
+    assert res["recommendations"] == []
+
+
+def test_audit_cost_of_quality_conformance_and_failure_ratio_warning():
+    """Caso 2: Conformidad > no-conformidad pero prevention_starvation o CoQ > 15% -> WARNING."""
+    from backend.services.project_ccb_service import (
+        audit_cost_of_quality_conformance_and_failure_ratio,
+    )
+
+    entries = [
+        {"entry_id": "E-1", "category": "PREVENTION", "amount": 2000.0, "work_package_id": "WP-1"},
+        {"entry_id": "E-2", "category": "APPRAISAL", "amount": 20000.0, "work_package_id": "WP-1"},
+        {"entry_id": "E-3", "category": "INTERNAL_FAILURE", "amount": 18000.0, "work_package_id": "WP-2"},
+    ]
+    res = audit_cost_of_quality_conformance_and_failure_ratio(
+        entries,
+        total_project_budget=200000.0,
+        min_conformance_share_pct=60.0,
+        max_coq_budget_share_pct=15.0,
+    )
+    assert res["cost_of_conformance"] == 22000.0
+    assert res["cost_of_non_conformance"] == 18000.0
+    assert res["conformance_share_pct"] == 55.0
+    assert res["coq_budget_share_pct"] == 20.0
+    assert res["prevention_starvation"] is True
+    assert res["coq_health_status"] == "WARNING"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_cost_of_quality_conformance_and_failure_ratio_critical():
+    """Caso 3: No-conformidad > conformidad o falla externa > 25% del CoQ -> CRITICAL."""
+    from backend.services.project_ccb_service import (
+        audit_cost_of_quality_conformance_and_failure_ratio,
+    )
+
+    entries = [
+        {"entry_id": "E-1", "category": "PREVENTION", "amount": 5000.0, "work_package_id": "WP-1"},
+        {"entry_id": "E-2", "category": "APPRAISAL", "amount": 5000.0, "work_package_id": "WP-1"},
+        {"entry_id": "E-3", "category": "INTERNAL_FAILURE", "amount": 10000.0, "work_package_id": "WP-2"},
+        {"entry_id": "E-4", "category": "EXTERNAL_FAILURE", "amount": 15000.0, "work_package_id": "WP-2"},
+    ]
+    res = audit_cost_of_quality_conformance_and_failure_ratio(
+        entries, total_project_budget=300000.0
+    )
+    assert res["cost_of_conformance"] == 10000.0
+    assert res["cost_of_non_conformance"] == 25000.0
+    assert res["external_failure_share_pct"] == 42.86
+    assert res["coq_health_status"] == "CRITICAL"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_cost_of_quality_conformance_and_failure_ratio_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en ProjectCCBService + __all__."""
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_cost_of_quality_conformance_and_failure_ratio,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_cost_of_quality_conformance_and_failure_ratio(
+            payload, total_project_budget=0.0  # type: ignore[arg-type]
+        )
+        assert empty["prevention_cost"] == 0.0
+        assert empty["appraisal_cost"] == 0.0
+        assert empty["internal_failure_cost"] == 0.0
+        assert empty["external_failure_cost"] == 0.0
+        assert empty["cost_of_conformance"] == 0.0
+        assert empty["cost_of_non_conformance"] == 0.0
+        assert empty["total_coq"] == 0.0
+        assert empty["conformance_share_pct"] == 100.0
+        assert empty["external_failure_share_pct"] == 0.0
+        assert empty["coq_budget_share_pct"] == 0.0
+        assert empty["prevention_starvation"] is False
+        assert empty["coq_health_status"] == "OPTIMAL"
+        assert empty["recommendations"] == []
+
+    sample = [
+        {"entry_id": "E-9", "category": "PREVENTION", "amount": 5000.0, "work_package_id": "WP-9"}
+    ]
+    assert (
+        ProjectCCBService.audit_cost_of_quality_conformance_and_failure_ratio(
+            sample, total_project_budget=100000.0
+        )
+        == audit_cost_of_quality_conformance_and_failure_ratio(
+            sample, total_project_budget=100000.0
+        )
+    )
+    assert "audit_cost_of_quality_conformance_and_failure_ratio" in mod.__all__
+

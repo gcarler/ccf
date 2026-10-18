@@ -6711,3 +6711,160 @@ def test_evm_funding_limit_reconciliation_empty_and_binding():
     )
 
 
+def test_evm_subcontractor_retainage_and_progress_billing_compliant():
+    """Caso 1: Facturación alineada con EV neto, retención >= 10% y lien waiver firmado -> COMPLIANT."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_subcontractor_retainage_and_progress_billing,
+    )
+
+    invoices = [
+        {
+            "invoice_id": "INV-101",
+            "vendor_name": "Constructora Alfa",
+            "billed_to_date": 100000.0,
+            "verified_ev_to_date": 105000.0,
+            "retainage_withheld": 10000.0,
+            "lien_waiver_signed": True,
+            "substantial_completion_reached": False,
+            "retainage_released": 0.0,
+            "defective_work_backcharge": 2000.0,  # net_ev = 103000
+        },
+        {
+            "invoice_id": "INV-102",
+            "vendor_name": "Instalaciones Beta",
+            "billed_to_date": 50000.0,
+            "verified_ev_to_date": 50000.0,
+            "retainage_withheld": 0.0,
+            "lien_waiver_signed": True,
+            "substantial_completion_reached": True,
+            "retainage_released": 5000.0,
+            "defective_work_backcharge": 0.0,
+        },
+    ]
+    res = evaluate_evm_subcontractor_retainage_and_progress_billing(
+        invoices, standard_retainage_pct=10.0, overbilling_tolerance_pct=5.0
+    )
+    assert res["total_invoices"] == 2
+    assert res["total_billed_to_date"] == 150000.0
+    assert res["total_net_earned_value"] == 153000.0
+    assert res["total_retainage_withheld"] == 10000.0
+    assert res["overbilled_invoice_ids"] == []
+    assert res["retainage_shortfall_invoice_ids"] == []
+    assert res["premature_release_invoice_ids"] == []
+    assert res["missing_lien_waiver_invoice_ids"] == []
+    assert res["billing_governance_status"] == "COMPLIANT"
+    assert res["recommendations"] == []
+
+
+def test_evm_subcontractor_retainage_and_progress_billing_warning():
+    """Caso 2: 1 factura con sobrefacturación (> 5%) o déficit de retención sin liberación prematura -> WARNING."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_subcontractor_retainage_and_progress_billing,
+    )
+
+    invoices = [
+        {
+            "invoice_id": "INV-201",
+            "vendor_name": "Proveedor Gamma",
+            "billed_to_date": 110000.0,
+            "verified_ev_to_date": 100000.0,  # +10% > 5%
+            "retainage_withheld": 8000.0,  # expected 11000 -> shortfall 3000
+            "lien_waiver_signed": True,
+            "substantial_completion_reached": False,
+            "retainage_released": 0.0,
+            "defective_work_backcharge": 0.0,
+        }
+    ]
+    res = evaluate_evm_subcontractor_retainage_and_progress_billing(
+        invoices, standard_retainage_pct=10.0, overbilling_tolerance_pct=5.0
+    )
+    assert res["total_invoices"] == 1
+    assert res["overbilled_invoice_ids"] == ["INV-201"]
+    assert res["retainage_shortfall_invoice_ids"] == ["INV-201"]
+    assert res["premature_release_invoice_ids"] == []
+    assert res["missing_lien_waiver_invoice_ids"] == []
+    assert res["billing_governance_status"] == "WARNING"
+    assert len(res["recommendations"]) >= 1
+
+
+def test_evm_subcontractor_retainage_and_progress_billing_critical():
+    """Caso 3: Liberación prematura de retención, falta de lien waiver o > 1 factura sobrefacturada -> CRITICAL."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_subcontractor_retainage_and_progress_billing,
+    )
+
+    invoices = [
+        {
+            "invoice_id": "INV-301",
+            "vendor_name": "Subcontratista Delta",
+            "billed_to_date": 80000.0,
+            "verified_ev_to_date": 60000.0,
+            "retainage_withheld": 4000.0,
+            "lien_waiver_signed": False,
+            "substantial_completion_reached": False,
+            "retainage_released": 4000.0,  # prematuro
+            "defective_work_backcharge": 5000.0,
+        },
+        {
+            "invoice_id": "INV-302",
+            "vendor_name": "Subcontratista Épsilon",
+            "billed_to_date": 50000.0,
+            "verified_ev_to_date": 0.0,  # net_ev=0, billed>0 -> 100% overbilled
+            "retainage_withheld": 5000.0,
+            "lien_waiver_signed": True,
+            "substantial_completion_reached": False,
+            "retainage_released": 0.0,
+            "defective_work_backcharge": 0.0,
+        },
+    ]
+    res = evaluate_evm_subcontractor_retainage_and_progress_billing(invoices)
+    assert res["total_invoices"] == 2
+    assert res["overbilled_invoice_ids"] == ["INV-301", "INV-302"]
+    assert res["premature_release_invoice_ids"] == ["INV-301"]
+    assert res["missing_lien_waiver_invoice_ids"] == ["INV-301"]
+    assert res["billing_governance_status"] == "CRITICAL"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_evm_subcontractor_retainage_and_progress_billing_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en ProjectEVMService + __all__."""
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_subcontractor_retainage_and_progress_billing,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = evaluate_evm_subcontractor_retainage_and_progress_billing(payload)  # type: ignore[arg-type]
+        assert empty["total_invoices"] == 0
+        assert empty["total_billed_to_date"] == 0.0
+        assert empty["total_net_earned_value"] == 0.0
+        assert empty["total_retainage_withheld"] == 0.0
+        assert empty["overbilled_invoice_ids"] == []
+        assert empty["retainage_shortfall_invoice_ids"] == []
+        assert empty["premature_release_invoice_ids"] == []
+        assert empty["missing_lien_waiver_invoice_ids"] == []
+        assert empty["billing_governance_status"] == "COMPLIANT"
+        assert empty["recommendations"] == []
+
+    sample = [
+        {
+            "invoice_id": "INV-99",
+            "vendor_name": "Vendor",
+            "billed_to_date": 10000.0,
+            "verified_ev_to_date": 10000.0,
+            "retainage_withheld": 1000.0,
+        }
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_subcontractor_retainage_and_progress_billing(
+            sample
+        )
+        == evaluate_evm_subcontractor_retainage_and_progress_billing(sample)
+    )
+    assert (
+        "evaluate_evm_subcontractor_retainage_and_progress_billing" in mod.__all__
+    )
+
+
+
