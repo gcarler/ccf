@@ -2441,6 +2441,157 @@ def summarize_projects_datetime_and_temporal_field_hygiene(
     }
 
 
+_PERCENTAGE_SUFFIXES = ("_pct", "_percentage")
+_MONETARY_SUFFIXES = (
+    "_cost",
+    "_budget",
+    "_amount",
+    "_price",
+    "_reserve",
+    "_fee",
+)
+_COUNT_SUFFIXES = ("_count",)
+_ALL_NUMERIC_DOMAIN_SUFFIXES = (
+    _PERCENTAGE_SUFFIXES + _MONETARY_SUFFIXES + _COUNT_SUFFIXES
+)
+
+
+def _has_non_negative_lower_bound(branch: Mapping[str, Any]) -> bool:
+    for key in ("minimum", "exclusiveMinimum"):
+        val = branch.get(key)
+        if (
+            isinstance(val, (int, float))
+            and not isinstance(val, bool)
+            and val >= 0
+        ):
+            return True
+    return False
+
+
+def _has_both_bounds(branch: Mapping[str, Any]) -> bool:
+    has_lower = any(
+        isinstance(branch.get(k), (int, float))
+        and not isinstance(branch.get(k), bool)
+        for k in ("minimum", "exclusiveMinimum")
+    )
+    has_upper = any(
+        isinstance(branch.get(k), (int, float))
+        and not isinstance(branch.get(k), bool)
+        for k in ("maximum", "exclusiveMaximum")
+    )
+    return has_lower and has_upper
+
+
+def summarize_projects_numeric_bounds_and_currency_hygiene(
+    openapi: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Audita cotas numéricas de dominio (porcentajes, montos monetarios y conteos) en esquemas de proyectos."""
+    if not isinstance(openapi, Mapping):
+        return {
+            "total_numeric_domain_fields": 0,
+            "unbounded_percentage_fields": [],
+            "negative_allowed_monetary_fields": [],
+            "non_integer_or_negative_count_fields": [],
+            "is_numeric_bounds_hygiene_clean": False,
+        }
+
+    referenced_schemas: set[str] = set()
+    paths = openapi.get("paths")
+    if isinstance(paths, Mapping):
+        for path, path_item in paths.items():
+            if isinstance(path, str) and (
+                path.startswith("/api/projects") or path.startswith("/projects")
+            ):
+                referenced_schemas.update(schema_refs(path_item))
+
+    components = openapi.get("components")
+    schemas = (
+        components.get("schemas")
+        if isinstance(components, Mapping)
+        and isinstance(components.get("schemas"), Mapping)
+        else {}
+    )
+
+    total_numeric_domain_fields = 0
+    unbounded_percentage_fields: list[str] = []
+    negative_allowed_monetary_fields: list[str] = []
+    non_integer_or_negative_count_fields: list[str] = []
+
+    for schema_name, schema_obj in sorted(schemas.items()):
+        s_name = str(schema_name)
+        if (
+            "project" not in s_name.lower()
+            and s_name not in referenced_schemas
+        ):
+            continue
+        if not isinstance(schema_obj, Mapping):
+            continue
+        props = schema_obj.get("properties")
+        if not isinstance(props, Mapping):
+            continue
+
+        for prop_name, prop_schema in sorted(props.items()):
+            p_name = str(prop_name)
+            if not p_name.endswith(_ALL_NUMERIC_DOMAIN_SUFFIXES):
+                continue
+            if not isinstance(prop_schema, Mapping):
+                continue
+
+            composite = prop_schema.get("anyOf") or prop_schema.get("oneOf")
+            if isinstance(composite, list):
+                non_null_branches = [
+                    b
+                    for b in composite
+                    if isinstance(b, Mapping) and b.get("type") != "null"
+                ]
+            else:
+                non_null_branches = [prop_schema]
+
+            numeric_branches = [
+                b
+                for b in non_null_branches
+                if b.get("type") in {"number", "integer"}
+            ]
+            if not numeric_branches:
+                continue
+
+            total_numeric_domain_fields += 1
+            field_ref = f"{s_name}.{p_name}"
+
+            if p_name.endswith(_PERCENTAGE_SUFFIXES):
+                if not any(_has_both_bounds(b) for b in numeric_branches):
+                    unbounded_percentage_fields.append(field_ref)
+            elif p_name.endswith(_MONETARY_SUFFIXES):
+                if not any(
+                    _has_non_negative_lower_bound(b) for b in numeric_branches
+                ):
+                    negative_allowed_monetary_fields.append(field_ref)
+            elif p_name.endswith(_COUNT_SUFFIXES):
+                all_integer = all(
+                    b.get("type") == "integer" for b in numeric_branches
+                )
+                has_non_neg = any(
+                    _has_non_negative_lower_bound(b) for b in numeric_branches
+                )
+                if not (all_integer and has_non_neg):
+                    non_integer_or_negative_count_fields.append(field_ref)
+
+    is_numeric_bounds_hygiene_clean = bool(
+        total_numeric_domain_fields > 0
+        and not unbounded_percentage_fields
+        and not negative_allowed_monetary_fields
+        and not non_integer_or_negative_count_fields
+    )
+
+    return {
+        "total_numeric_domain_fields": total_numeric_domain_fields,
+        "unbounded_percentage_fields": unbounded_percentage_fields,
+        "negative_allowed_monetary_fields": negative_allowed_monetary_fields,
+        "non_integer_or_negative_count_fields": non_integer_or_negative_count_fields,
+        "is_numeric_bounds_hygiene_clean": is_numeric_bounds_hygiene_clean,
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()

@@ -3952,3 +3952,196 @@ def test_datetime_and_temporal_field_hygiene_empty_and_live_openapi():
     )
     assert live_res["total_temporal_fields"] > 0
     assert live_res["non_string_temporal_fields"] == []
+
+
+def test_numeric_bounds_and_currency_hygiene_clean_schema():
+    """Esquema limpio: porcentajes con min y max, montos no negativos y conteos enteros no negativos."""
+    schema = {
+        "paths": {
+            "/api/projects/wbs": {
+                "get": {
+                    "responses": {
+                        "200": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/WbsRollupOut"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "ProjectFinancials": {
+                    "type": "object",
+                    "properties": {
+                        "completion_pct": {
+                            "type": "number",
+                            "minimum": 0.0,
+                            "maximum": 100.0,
+                        },
+                        "approved_budget": {
+                            "type": "number",
+                            "minimum": 0.0,
+                        },
+                        "management_reserve": {
+                            "anyOf": [
+                                {"type": "number", "exclusiveMinimum": 0},
+                                {"type": "null"},
+                            ]
+                        },
+                        "task_count": {
+                            "type": "integer",
+                            "minimum": 0,
+                        },
+                        "status_pct": {
+                            "type": "string",
+                        },
+                    },
+                },
+                "WbsRollupOut": {
+                    "type": "object",
+                    "properties": {
+                        "variance_percentage": {
+                            "type": "number",
+                            "exclusiveMinimum": -100.0,
+                            "exclusiveMaximum": 100.0,
+                        },
+                        "actual_cost": {
+                            "type": "number",
+                            "minimum": 0,
+                        },
+                    },
+                },
+                "UnrelatedInvoice": {
+                    "type": "object",
+                    "properties": {
+                        "total_amount": {"type": "number"},
+                        "item_count": {"type": "number"},
+                    },
+                },
+            }
+        },
+    }
+    res = audit_projects_api_contracts.summarize_projects_numeric_bounds_and_currency_hygiene(
+        schema
+    )
+    assert res == {
+        "total_numeric_domain_fields": 6,
+        "unbounded_percentage_fields": [],
+        "negative_allowed_monetary_fields": [],
+        "non_integer_or_negative_count_fields": [],
+        "is_numeric_bounds_hygiene_clean": True,
+    }
+
+
+def test_numeric_bounds_and_currency_hygiene_unbounded_percentage_and_monetary():
+    """Detecta porcentajes sin cotas completas y montos monetarios que permiten negativos."""
+    schema = {
+        "components": {
+            "schemas": {
+                "ProjectBudgetUpdate": {
+                    "type": "object",
+                    "properties": {
+                        "progress_pct": {"type": "number", "minimum": 0},
+                        "margin_percentage": {"type": "number", "maximum": 100},
+                        "planned_cost": {"type": "number"},
+                        "contingency_reserve": {
+                            "type": "number",
+                            "minimum": -10.0,
+                        },
+                        "service_fee": {
+                            "anyOf": [
+                                {"type": "number"},
+                                {"type": "null"},
+                            ]
+                        },
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_numeric_bounds_and_currency_hygiene(
+        schema
+    )
+    assert res["total_numeric_domain_fields"] == 5
+    assert res["unbounded_percentage_fields"] == [
+        "ProjectBudgetUpdate.margin_percentage",
+        "ProjectBudgetUpdate.progress_pct",
+    ]
+    assert res["negative_allowed_monetary_fields"] == [
+        "ProjectBudgetUpdate.contingency_reserve",
+        "ProjectBudgetUpdate.planned_cost",
+        "ProjectBudgetUpdate.service_fee",
+    ]
+    assert res["non_integer_or_negative_count_fields"] == []
+    assert res["is_numeric_bounds_hygiene_clean"] is False
+
+
+def test_numeric_bounds_and_currency_hygiene_invalid_count_fields():
+    """Detecta conteos (*_count) declarados como number (no integer) o sin cota inferior >= 0."""
+    schema = {
+        "components": {
+            "schemas": {
+                "ProjectMetrics": {
+                    "type": "object",
+                    "properties": {
+                        "defect_count": {"type": "number", "minimum": 0},
+                        "milestone_count": {"type": "integer"},
+                        "risk_count": {"type": "integer", "minimum": -1},
+                        "valid_count": {"type": "integer", "minimum": 0},
+                    },
+                }
+            }
+        }
+    }
+    res = audit_projects_api_contracts.summarize_projects_numeric_bounds_and_currency_hygiene(
+        schema
+    )
+    assert res["total_numeric_domain_fields"] == 4
+    assert res["non_integer_or_negative_count_fields"] == [
+        "ProjectMetrics.defect_count",
+        "ProjectMetrics.milestone_count",
+        "ProjectMetrics.risk_count",
+    ]
+    assert res["is_numeric_bounds_hygiene_clean"] is False
+
+
+def test_numeric_bounds_and_currency_hygiene_empty_and_live_openapi():
+    """Manejo de entrada vacía/None y verificación contra el esquema OpenAPI real."""
+    empty_expected = {
+        "total_numeric_domain_fields": 0,
+        "unbounded_percentage_fields": [],
+        "negative_allowed_monetary_fields": [],
+        "non_integer_or_negative_count_fields": [],
+        "is_numeric_bounds_hygiene_clean": False,
+    }
+    assert (
+        audit_projects_api_contracts.summarize_projects_numeric_bounds_and_currency_hygiene(
+            None
+        )
+        == empty_expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_numeric_bounds_and_currency_hygiene(
+            {}
+        )
+        == empty_expected
+    )
+
+    from backend.app import app
+
+    live_res = (
+        audit_projects_api_contracts.summarize_projects_numeric_bounds_and_currency_hygiene(
+            app.openapi()
+        )
+    )
+    assert live_res["total_numeric_domain_fields"] >= 0
+    assert isinstance(live_res["unbounded_percentage_fields"], list)
+    assert isinstance(live_res["negative_allowed_monetary_fields"], list)
+    assert isinstance(live_res["non_integer_or_negative_count_fields"], list)
+
