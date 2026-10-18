@@ -1986,3 +1986,118 @@ def test_audit_make_or_buy_and_vendor_bids_empty_or_none():
             "is_compliant": True,
             "procurement_decision_posture": "NO_MAKE_OR_BUY_DECISIONS",
         }
+
+
+def test_audit_risk_appetite_and_threshold_governance_within_and_governed():
+    """Riesgos dentro del apetito -> WITHIN_RISK_APPETITE_THRESHOLDS; brecha gobernada -> GOVERNED_THRESHOLD_ESCALATION."""
+    within_res = project_lifecycle_pmi_service.audit_risk_appetite_and_threshold_governance(
+        [
+            {"id": "RSK-1", "status": "open", "cost_impact_pct": 3.0, "schedule_impact_days": 5.0},
+            {"id": "RSK-2", "status": "closed", "cost_impact_pct": 12.0, "schedule_impact_days": 20.0},
+        ],
+        max_cost_threshold_pct=5.0,
+        max_schedule_threshold_days=10.0,
+    )
+    assert within_res == {
+        "total_risks": 2,
+        "threshold_breach_count": 0,
+        "unescalated_breach_risk_ids": [],
+        "unbuffered_breach_risk_ids": [],
+        "is_threshold_governed": True,
+        "threshold_posture": "WITHIN_RISK_APPETITE_THRESHOLDS",
+    }
+
+    governed_risks = [
+        {
+            "id": "RSK-HIGH",
+            "status": "open",
+            "cost_impact_pct": 8.5,
+            "schedule_impact_days": 14.0,
+            "escalation_owner": "Patrocinador Ejecutivo",
+            "contingency_plan": "Activar proveedor secundario y turno extra",
+            "contingency_reserve": 15000.0,
+        }
+    ]
+    gov_res = project_lifecycle_pmi_service.audit_risk_appetite_and_threshold_governance(
+        governed_risks
+    )
+    assert gov_res == {
+        "total_risks": 1,
+        "threshold_breach_count": 1,
+        "unescalated_breach_risk_ids": [],
+        "unbuffered_breach_risk_ids": [],
+        "is_threshold_governed": True,
+        "threshold_posture": "GOVERNED_THRESHOLD_ESCALATION",
+    }
+    assert (
+        project_lifecycle_pmi_service.ProjectLifecyclePMIService.audit_risk_appetite_and_threshold_governance(
+            governed_risks
+        )
+        == gov_res
+    )
+
+
+def test_audit_risk_appetite_and_threshold_governance_unescalated_breach():
+    """Brecha de umbral sin dueño de escalamiento -> UNESCALATED_THRESHOLD_BREACH."""
+    res = project_lifecycle_pmi_service.audit_risk_appetite_and_threshold_governance(
+        [
+            {
+                "id": "RSK-NO-OWNER",
+                "status": "open",
+                "cost_impact_pct": 9.0,
+                "escalation_owner": "   ",
+                "contingency_plan": "Plan de contingencia documentado",
+                "contingency_reserve": 5000.0,
+            }
+        ]
+    )
+    assert res["threshold_breach_count"] == 1
+    assert res["unescalated_breach_risk_ids"] == ["RSK-NO-OWNER"]
+    assert res["unbuffered_breach_risk_ids"] == []
+    assert res["is_threshold_governed"] is False
+    assert res["threshold_posture"] == "UNESCALATED_THRESHOLD_BREACH"
+
+
+def test_audit_risk_appetite_and_threshold_governance_unbuffered_breach():
+    """Brecha con dueño pero sin plan de contingencia o reserva <= 0 -> UNBUFFERED_CONTINGENCY_BREACH."""
+    res = project_lifecycle_pmi_service.audit_risk_appetite_and_threshold_governance(
+        [
+            {
+                "id": "RSK-NO-PLAN",
+                "status": "open",
+                "schedule_impact_days": 15.0,
+                "owner": "Director PMO",
+                "contingency_plan": "tbd",
+                "contingency_reserve": 4000.0,
+            },
+            {
+                "id": "RSK-NO-RES",
+                "status": "open",
+                "exceeds_appetite": True,
+                "owner": "Director PMO",
+                "response_plan": "Reasignar cuadrilla de infraestructura",
+                "allocated_reserve": 0.0,
+            },
+        ]
+    )
+    assert res["threshold_breach_count"] == 2
+    assert res["unescalated_breach_risk_ids"] == []
+    assert res["unbuffered_breach_risk_ids"] == ["RSK-NO-PLAN", "RSK-NO-RES"]
+    assert res["is_threshold_governed"] is False
+    assert res["threshold_posture"] == "UNBUFFERED_CONTINGENCY_BREACH"
+
+
+def test_audit_risk_appetite_and_threshold_governance_empty_or_none():
+    """Lista vacía o None -> NO_RISKS_EVALUATED."""
+    for payload in (None, [], ["invalid", 42]):
+        res = project_lifecycle_pmi_service.audit_risk_appetite_and_threshold_governance(
+            payload  # type: ignore[arg-type]
+        )
+        assert res == {
+            "total_risks": 0,
+            "threshold_breach_count": 0,
+            "unescalated_breach_risk_ids": [],
+            "unbuffered_breach_risk_ids": [],
+            "is_threshold_governed": True,
+            "threshold_posture": "NO_RISKS_EVALUATED",
+        }

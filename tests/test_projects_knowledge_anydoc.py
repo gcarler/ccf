@@ -1863,3 +1863,85 @@ def test_audit_markdown_frontmatter_governance_missing_or_empty():
             "is_compliant": False,
             "frontmatter_posture": "MISSING_FRONTMATTER_BLOCK",
         }
+
+
+def test_audit_markdown_admonition_callouts_valid_governance():
+    """Alertas válidas NOTE, WARNING, CAUTION con cuerpo e ignorando bloques cercados -> VALID_CALLOUT_GOVERNANCE."""
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_admonition_callouts,
+    )
+
+    md = (
+        "# Manual Operativo\n"
+        "> [!NOTE]\n"
+        "> Esta nota explica el proceso de revisión de alcance.\n\n"
+        "> [!WARNING] Riesgo de sobrecosto si se omite el CCB.\n\n"
+        "> [!CAUTION]\n"
+        "> Acción irreversible sobre la línea base.\n"
+        "```markdown\n"
+        "> [!INVALID]\n"
+        "```\n"
+    )
+    res = audit_markdown_admonition_callouts(md)
+    assert res == {
+        "total_callouts": 3,
+        "high_severity_callouts_count": 2,
+        "unsupported_callout_types": [],
+        "empty_callout_refs": [],
+        "nested_callout_refs": [],
+        "is_callout_hygiene_valid": True,
+        "callout_posture": "VALID_CALLOUT_GOVERNANCE",
+    }
+    assert AnyDocService.audit_markdown_admonition_callouts(md) == res
+
+
+def test_audit_markdown_admonition_callouts_unsupported_type():
+    """Tipo no soportado (> [!DANGER] o > [!BUG]) -> UNSUPPORTED_CALLOUT_TYPE."""
+    from backend.services.anydoc_service import audit_markdown_admonition_callouts
+
+    md = (
+        "> [!DANGER]\n"
+        "> Alerta fuera del estándar GFM.\n\n"
+        "> [!TIP]\n"
+        "> Consejo válido.\n"
+    )
+    res = audit_markdown_admonition_callouts(md)
+    assert res["total_callouts"] == 2
+    assert res["unsupported_callout_types"] == ["DANGER"]
+    assert res["is_callout_hygiene_valid"] is False
+    assert res["callout_posture"] == "UNSUPPORTED_CALLOUT_TYPE"
+
+
+def test_audit_markdown_admonition_callouts_nested_and_empty_body():
+    """Alerta anidada (> > [!WARNING]) -> NESTED_OR_MALFORMED_CALLOUT y cuerpo vacío -> EMPTY_CALLOUT_BODY."""
+    from backend.services.anydoc_service import audit_markdown_admonition_callouts
+
+    nested_md = "> > [!WARNING]\n> Contenido anidado no permitido.\n"
+    nested_res = audit_markdown_admonition_callouts(nested_md)
+    assert nested_res["nested_callout_refs"] == ["L1:WARNING"]
+    assert nested_res["is_callout_hygiene_valid"] is False
+    assert nested_res["callout_posture"] == "NESTED_OR_MALFORMED_CALLOUT"
+
+    empty_md = "> [!IMPORTANT]\n>    \n\nPárrafo fuera de la alerta.\n"
+    empty_res = audit_markdown_admonition_callouts(empty_md)
+    assert empty_res["empty_callout_refs"] == ["L1:IMPORTANT"]
+    assert empty_res["is_callout_hygiene_valid"] is False
+    assert empty_res["callout_posture"] == "EMPTY_CALLOUT_BODY"
+
+
+def test_audit_markdown_admonition_callouts_no_callouts_found():
+    """Documento sin alertas o None -> NO_CALLOUTS_FOUND."""
+    from backend.services.anydoc_service import audit_markdown_admonition_callouts
+
+    for payload in (None, "", "   ", "> Cita normal sin marcador de alerta.\n"):
+        res = audit_markdown_admonition_callouts(payload)
+        assert res == {
+            "total_callouts": 0,
+            "high_severity_callouts_count": 0,
+            "unsupported_callout_types": [],
+            "empty_callout_refs": [],
+            "nested_callout_refs": [],
+            "is_callout_hygiene_valid": True,
+            "callout_posture": "NO_CALLOUTS_FOUND",
+        }

@@ -2054,6 +2054,152 @@ ProjectLifecyclePMIService.audit_make_or_buy_and_vendor_bids = staticmethod(
 )
 
 
+_CLOSED_RISK_THRESHOLD_STATUSES = frozenset(
+    {"closed", "cerrado", "retired", "mitigated_closed"}
+)
+
+
+def audit_risk_appetite_and_threshold_governance(
+    risks: list[dict[str, Any]] | None = None,
+    max_cost_threshold_pct: float = 5.0,
+    max_schedule_threshold_days: float = 10.0,
+) -> dict[str, Any]:
+    """Audita el apetito de riesgo, umbrales de tolerancia y escalamiento según PMI PMBOK §11.1.3 y §11.7."""
+    items = [item for item in (risks or []) if isinstance(item, dict)]
+    total_risks = len(items)
+    if total_risks == 0:
+        return {
+            "total_risks": 0,
+            "threshold_breach_count": 0,
+            "unescalated_breach_risk_ids": [],
+            "unbuffered_breach_risk_ids": [],
+            "is_threshold_governed": True,
+            "threshold_posture": "NO_RISKS_EVALUATED",
+        }
+
+    try:
+        cost_limit = float(max_cost_threshold_pct)
+    except (TypeError, ValueError):
+        cost_limit = 5.0
+    try:
+        sched_limit = float(max_schedule_threshold_days)
+    except (TypeError, ValueError):
+        sched_limit = 10.0
+
+    threshold_breach_count = 0
+    unescalated_breach_risk_ids: list[str] = []
+    unbuffered_breach_risk_ids: list[str] = []
+
+    for idx, item in enumerate(items, start=1):
+        risk_id = (
+            str(
+                item.get("id")
+                or item.get("risk_id")
+                or item.get("code")
+                or f"RSK-{idx}"
+            ).strip()
+            or f"RSK-{idx}"
+        )
+        status = (
+            str(item.get("status") or item.get("state") or "open").strip().lower()
+        )
+        if status in _CLOSED_RISK_THRESHOLD_STATUSES:
+            continue
+
+        raw_cost = (
+            item.get("cost_impact_pct")
+            if item.get("cost_impact_pct") is not None
+            else (
+                item.get("cost_exposure_pct")
+                if item.get("cost_exposure_pct") is not None
+                else (item.get("budget_impact_pct") or 0.0)
+            )
+        )
+        try:
+            cost_impact_pct = max(0.0, float(raw_cost))
+        except (TypeError, ValueError):
+            cost_impact_pct = 0.0
+
+        raw_sched = (
+            item.get("schedule_impact_days")
+            if item.get("schedule_impact_days") is not None
+            else (
+                item.get("delay_days")
+                if item.get("delay_days") is not None
+                else (item.get("schedule_exposure_days") or 0.0)
+            )
+        )
+        try:
+            schedule_impact_days = max(0.0, float(raw_sched))
+        except (TypeError, ValueError):
+            schedule_impact_days = 0.0
+
+        exceeds_threshold = (
+            (cost_impact_pct > cost_limit + 1e-9)
+            or (schedule_impact_days > sched_limit + 1e-9)
+            or bool(item.get("exceeds_appetite"))
+        )
+        if not exceeds_threshold:
+            continue
+
+        threshold_breach_count += 1
+        owner = str(
+            item.get("escalation_owner")
+            or item.get("risk_owner")
+            or item.get("owner")
+            or ""
+        ).strip()
+        if not owner:
+            unescalated_breach_risk_ids.append(risk_id)
+
+        plan = str(
+            item.get("contingency_plan")
+            or item.get("response_plan")
+            or item.get("mitigation_plan")
+            or ""
+        ).strip()
+        raw_res = (
+            item.get("contingency_reserve")
+            if item.get("contingency_reserve") is not None
+            else (item.get("allocated_reserve") or 0.0)
+        )
+        try:
+            reserve = float(raw_res)
+        except (TypeError, ValueError):
+            reserve = 0.0
+
+        if len(plan) < 5 or reserve <= 0.0:
+            unbuffered_breach_risk_ids.append(risk_id)
+
+    is_threshold_governed = bool(
+        len(unescalated_breach_risk_ids) == 0
+        and len(unbuffered_breach_risk_ids) == 0
+    )
+
+    if len(unescalated_breach_risk_ids) > 0:
+        threshold_posture = "UNESCALATED_THRESHOLD_BREACH"
+    elif len(unbuffered_breach_risk_ids) > 0:
+        threshold_posture = "UNBUFFERED_CONTINGENCY_BREACH"
+    elif threshold_breach_count > 0:
+        threshold_posture = "GOVERNED_THRESHOLD_ESCALATION"
+    else:
+        threshold_posture = "WITHIN_RISK_APPETITE_THRESHOLDS"
+
+    return {
+        "total_risks": total_risks,
+        "threshold_breach_count": threshold_breach_count,
+        "unescalated_breach_risk_ids": unescalated_breach_risk_ids,
+        "unbuffered_breach_risk_ids": unbuffered_breach_risk_ids,
+        "is_threshold_governed": is_threshold_governed,
+        "threshold_posture": threshold_posture,
+    }
+
+
+ProjectLifecyclePMIService.audit_risk_appetite_and_threshold_governance = staticmethod(
+    audit_risk_appetite_and_threshold_governance
+)
+
+
 __all__ = [
     "build_pmo_portfolio_matrix",
     "build_governance_summary",
@@ -2085,6 +2231,7 @@ __all__ = [
     "audit_team_charter_and_tuckman_governance",
     "audit_phase_gate_transition_readiness",
     "audit_make_or_buy_and_vendor_bids",
+    "audit_risk_appetite_and_threshold_governance",
     "ProjectLifecyclePMIService",
 ]
 

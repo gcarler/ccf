@@ -1982,6 +1982,126 @@ def audit_markdown_frontmatter_governance(
     }
 
 
+_CALLOUT_FENCE_AUDIT_RE = re.compile(r"^\s*(```|~~~)")
+_CALLOUT_HEADER_AUDIT_RE = re.compile(
+    r"^\s*((?:>\s*)+)\[!([A-Za-z0-9_-]+)\](.*)$"
+)
+_CALLOUT_CONTINUATION_AUDIT_RE = re.compile(r"^\s*>\s*(?!\[!)(.*)$")
+_SUPPORTED_CALLOUT_AUDIT_TYPES = frozenset(
+    {"NOTE", "TIP", "IMPORTANT", "WARNING", "CAUTION"}
+)
+_HIGH_SEVERITY_CALLOUT_AUDIT_TYPES = frozenset(
+    {"IMPORTANT", "WARNING", "CAUTION"}
+)
+
+
+def audit_markdown_admonition_callouts(
+    markdown_text: str | None = None,
+) -> dict[str, Any]:
+    """Audita bloques de alerta/admonición estilo GitHub (> [!TYPE]) en documentos Markdown según PMI PMBOK §4.4 y §10.2."""
+    if (
+        not markdown_text
+        or not isinstance(markdown_text, str)
+        or not markdown_text.strip()
+    ):
+        return {
+            "total_callouts": 0,
+            "high_severity_callouts_count": 0,
+            "unsupported_callout_types": [],
+            "empty_callout_refs": [],
+            "nested_callout_refs": [],
+            "is_callout_hygiene_valid": True,
+            "callout_posture": "NO_CALLOUTS_FOUND",
+        }
+
+    lines = markdown_text.splitlines()
+    in_fence = False
+    fence_marker = ""
+    non_fenced_indices: set[int] = set()
+    for idx, line in enumerate(lines):
+        m_fence = _CALLOUT_FENCE_AUDIT_RE.match(line)
+        if m_fence:
+            marker = m_fence.group(1)
+            if not in_fence:
+                in_fence = True
+                fence_marker = marker
+            elif marker == fence_marker:
+                in_fence = False
+                fence_marker = ""
+            continue
+        if not in_fence:
+            non_fenced_indices.add(idx)
+
+    total_callouts = 0
+    high_severity_callouts_count = 0
+    unsupported_callout_types: list[str] = []
+    empty_callout_refs: list[str] = []
+    nested_callout_refs: list[str] = []
+
+    for idx, line in enumerate(lines):
+        if idx not in non_fenced_indices:
+            continue
+        match = _CALLOUT_HEADER_AUDIT_RE.match(line)
+        if not match:
+            continue
+
+        line_no = idx + 1
+        gt_markers = re.sub(r"\s+", "", match.group(1))
+        raw_type = match.group(2).strip()
+        upper_type = raw_type.upper()
+        inline_body = match.group(3).strip()
+
+        total_callouts += 1
+        if upper_type in _HIGH_SEVERITY_CALLOUT_AUDIT_TYPES:
+            high_severity_callouts_count += 1
+
+        if len(gt_markers) > 1:
+            nested_callout_refs.append(f"L{line_no}:{raw_type}")
+
+        if upper_type not in _SUPPORTED_CALLOUT_AUDIT_TYPES:
+            unsupported_callout_types.append(raw_type)
+
+        has_body = bool(inline_body)
+        j = idx + 1
+        while j < len(lines) and j in non_fenced_indices:
+            cont_match = _CALLOUT_CONTINUATION_AUDIT_RE.match(lines[j])
+            if not cont_match:
+                break
+            if cont_match.group(1).strip():
+                has_body = True
+            j += 1
+
+        if not has_body:
+            empty_callout_refs.append(f"L{line_no}:{upper_type}")
+
+    is_callout_hygiene_valid = bool(
+        len(unsupported_callout_types) == 0
+        and len(empty_callout_refs) == 0
+        and len(nested_callout_refs) == 0
+    )
+
+    if total_callouts == 0:
+        callout_posture = "NO_CALLOUTS_FOUND"
+    elif len(unsupported_callout_types) > 0:
+        callout_posture = "UNSUPPORTED_CALLOUT_TYPE"
+    elif len(nested_callout_refs) > 0:
+        callout_posture = "NESTED_OR_MALFORMED_CALLOUT"
+    elif len(empty_callout_refs) > 0:
+        callout_posture = "EMPTY_CALLOUT_BODY"
+    else:
+        callout_posture = "VALID_CALLOUT_GOVERNANCE"
+
+    return {
+        "total_callouts": total_callouts,
+        "high_severity_callouts_count": high_severity_callouts_count,
+        "unsupported_callout_types": unsupported_callout_types,
+        "empty_callout_refs": empty_callout_refs,
+        "nested_callout_refs": nested_callout_refs,
+        "is_callout_hygiene_valid": is_callout_hygiene_valid,
+        "callout_posture": callout_posture,
+    }
+
+
 class AnyDocService:
     """Fachada canónica de conversión y auditoría documental AnyDoc PMI."""
 
@@ -2117,6 +2237,12 @@ class AnyDocService:
             markdown_text, required_keys=required_keys
         )
 
+    @staticmethod
+    def audit_markdown_admonition_callouts(
+        markdown_text: str | None = None,
+    ) -> dict[str, Any]:
+        return audit_markdown_admonition_callouts(markdown_text)
+
 
 __all__ = [
     "ANYDOC_AVAILABLE",
@@ -2143,5 +2269,6 @@ __all__ = [
     "extract_markdown_checklist_progress",
     "audit_markdown_footnote_citations",
     "audit_markdown_frontmatter_governance",
+    "audit_markdown_admonition_callouts",
     "AnyDocService",
 ]
