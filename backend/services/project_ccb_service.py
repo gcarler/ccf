@@ -2815,6 +2815,7 @@ __all__ = [
     "audit_ccb_change_request_sla_and_aging_backlog",
     "evaluate_supplier_ncr_disposition_governance",
     "audit_scope_creep_and_gold_plating_drift",
+    "audit_configuration_fca_pca_baseline_verification",
     "audit_requirements_traceability_matrix_coverage",
     "ProjectCCBService",
 ]
@@ -3545,4 +3546,75 @@ def audit_requirements_traceability_matrix_coverage(
 
 ProjectCCBService.audit_requirements_traceability_matrix_coverage = staticmethod(
     audit_requirements_traceability_matrix_coverage
+)
+
+
+def audit_configuration_fca_pca_baseline_verification(
+    configuration_audits: object,
+) -> dict[str, object]:
+    """Audita verificación de líneas base funcional (FCA) y física (PCA) de Configuration Items según PMI PMBOK §4.6 y §8.3."""
+    total_evaluated = 0
+    fca_failed_ci_ids: list[str] = []
+    pca_discrepancy_ci_ids: list[str] = []
+    mutable_version_tag_ci_ids: list[str] = []
+
+    audits: Sequence[Any] = (
+        configuration_audits
+        if isinstance(configuration_audits, Sequence)
+        and not isinstance(configuration_audits, (str, bytes, bytearray))
+        else []
+    )
+
+    for item in audits:
+        if not isinstance(item, Mapping):
+            continue
+        ci_id = str(item.get("ci_id") or item.get("id") or "").strip()
+        if not ci_id:
+            continue
+
+        total_evaluated += 1
+
+        fca_functional_test_passed = bool(
+            item.get("fca_functional_test_passed", False)
+        )
+        pca_as_built_matches_as_designed = bool(
+            item.get("pca_as_built_matches_as_designed", False)
+        )
+        try:
+            unapproved_baseline_deviations_count = int(
+                item.get("unapproved_baseline_deviations_count", 0) or 0
+            )
+        except (TypeError, ValueError):
+            unapproved_baseline_deviations_count = 0
+        version_tag_immutable = bool(item.get("version_tag_immutable", False))
+
+        if not fca_functional_test_passed:
+            fca_failed_ci_ids.append(ci_id)
+
+        if (
+            not pca_as_built_matches_as_designed
+            or unapproved_baseline_deviations_count > 0
+        ):
+            pca_discrepancy_ci_ids.append(ci_id)
+
+        if not version_tag_immutable:
+            mutable_version_tag_ci_ids.append(ci_id)
+
+    is_fca_pca_audit_compliant = bool(
+        len(fca_failed_ci_ids) == 0
+        and len(pca_discrepancy_ci_ids) == 0
+        and len(mutable_version_tag_ci_ids) == 0
+    )
+
+    return {
+        "total_evaluated": total_evaluated,
+        "fca_failed_ci_ids": fca_failed_ci_ids,
+        "pca_discrepancy_ci_ids": pca_discrepancy_ci_ids,
+        "mutable_version_tag_ci_ids": mutable_version_tag_ci_ids,
+        "is_fca_pca_audit_compliant": is_fca_pca_audit_compliant,
+    }
+
+
+ProjectCCBService.audit_configuration_fca_pca_baseline_verification = staticmethod(
+    audit_configuration_fca_pca_baseline_verification
 )

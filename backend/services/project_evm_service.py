@@ -5491,6 +5491,7 @@ __all__ = [
     "evaluate_evm_reserve_burn_vs_risk_exposure",
     "evaluate_evm_loe_masking_and_variance_distortion",
     "evaluate_evm_apportioned_effort_base_coherence",
+    "evaluate_evm_retroactive_adjustment_and_negative_period_anomalies",
     "ProjectEVMService",
 ]
 
@@ -6113,4 +6114,88 @@ def evaluate_evm_apportioned_effort_base_coherence(
 ProjectEVMService.evaluate_evm_apportioned_effort_base_coherence = staticmethod(
     evaluate_evm_apportioned_effort_base_coherence
 )
+
+
+def evaluate_evm_retroactive_adjustment_and_negative_period_anomalies(
+    period_snapshots: object,
+) -> dict[str, object]:
+    """Evalúa ajustes retroactivos de valor ganado (de-earning), reversiones de costo real (AC negativo) sin bitácora autorizada y violaciones del techo BAC según PMI PMBOK §7.4 y ANSI/EIA-748."""
+    total_evaluated = 0
+    unexplained_negative_ev_period_ids: list[str] = []
+    unexplained_negative_ac_period_ids: list[str] = []
+    ev_exceeds_bac_ceiling_period_ids: list[str] = []
+
+    if isinstance(period_snapshots, Sequence) and not isinstance(
+        period_snapshots, (str, bytes, bytearray)
+    ):
+        for item in period_snapshots:
+            if not isinstance(item, Mapping):
+                continue
+            period_id = str(
+                item.get("period_id") or item.get("id") or ""
+            ).strip()
+            if not period_id:
+                continue
+
+            total_evaluated += 1
+            try:
+                period_delta_ev = float(
+                    item.get("period_delta_ev", 0.0) or 0.0
+                )
+            except (TypeError, ValueError):
+                period_delta_ev = 0.0
+
+            try:
+                period_delta_ac = float(
+                    item.get("period_delta_ac", 0.0) or 0.0
+                )
+            except (TypeError, ValueError):
+                period_delta_ac = 0.0
+
+            try:
+                cumulative_ev = float(item.get("cumulative_ev", 0.0) or 0.0)
+            except (TypeError, ValueError):
+                cumulative_ev = 0.0
+
+            try:
+                bac = float(item.get("bac", 0.0) or 0.0)
+            except (TypeError, ValueError):
+                bac = 0.0
+
+            has_approved_retroactive_adjustment_log = bool(
+                item.get("has_approved_retroactive_adjustment_log", False)
+            )
+
+            if (
+                period_delta_ev < 0.0
+                and not has_approved_retroactive_adjustment_log
+            ):
+                unexplained_negative_ev_period_ids.append(period_id)
+
+            if (
+                period_delta_ac < 0.0
+                and not has_approved_retroactive_adjustment_log
+            ):
+                unexplained_negative_ac_period_ids.append(period_id)
+
+            if bac > 0.0 and cumulative_ev > (bac + 0.01):
+                ev_exceeds_bac_ceiling_period_ids.append(period_id)
+
+    return {
+        "total_evaluated": total_evaluated,
+        "unexplained_negative_ev_period_ids": unexplained_negative_ev_period_ids,
+        "unexplained_negative_ac_period_ids": unexplained_negative_ac_period_ids,
+        "ev_exceeds_bac_ceiling_period_ids": ev_exceeds_bac_ceiling_period_ids,
+        "is_period_accounting_clean": (
+            len(unexplained_negative_ev_period_ids) == 0
+            and len(unexplained_negative_ac_period_ids) == 0
+            and len(ev_exceeds_bac_ceiling_period_ids) == 0
+        ),
+    }
+
+
+ProjectEVMService.evaluate_evm_retroactive_adjustment_and_negative_period_anomalies = staticmethod(
+    evaluate_evm_retroactive_adjustment_and_negative_period_anomalies
+)
+
 

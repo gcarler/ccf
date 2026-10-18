@@ -4176,3 +4176,131 @@ def test_audit_wiki_onboarding_and_kt_handover_readiness_invalid_inputs_and_expo
             "excessive_rampup_package_ids": [],
             "is_kt_handover_ready": True,
         }
+
+
+def test_audit_wiki_vendor_sla_and_penalty_clause_governance_sound():
+    """Acuerdos SLA con disponibilidad [95, 100], tiempo de respuesta > 0, penalización y telemetría."""
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_vendor_sla_and_penalty_clause_governance,
+    )
+
+    slas = [
+        {
+            "sla_id": "SLA-CLOUD-01",
+            "uptime_target_pct": 99.95,
+            "max_incident_response_minutes": 15,
+            "has_service_credit_or_penalty_clause": True,
+            "breach_termination_threshold_defined": True,
+            "measurement_telemetry_automated": True,
+        },
+        {
+            "id": "SLA-SEC-02",
+            "uptime_target_pct": 95.0,
+            "max_incident_response_minutes": 30,
+            "has_service_credit_or_penalty_clause": True,
+            "breach_termination_threshold_defined": True,
+            "measurement_telemetry_automated": True,
+        },
+    ]
+    res = audit_wiki_vendor_sla_and_penalty_clause_governance(slas)
+    assert res == {
+        "total_evaluated": 2,
+        "invalid_target_bounds_sla_ids": [],
+        "toothless_penalty_clause_sla_ids": [],
+        "unmonitored_sla_ids": [],
+        "is_vendor_sla_governance_sound": True,
+    }
+    assert (
+        WikiPMIService.audit_wiki_vendor_sla_and_penalty_clause_governance(slas)
+        == res
+    )
+
+
+def test_audit_wiki_vendor_sla_invalid_bounds_and_unmonitored():
+    """Detecta disponibilidad fuera de [95, 100], tiempo de respuesta <= 0 y falta de telemetría."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_vendor_sla_and_penalty_clause_governance,
+    )
+
+    slas = [
+        {
+            "sla_id": "SLA-LOW-UPTIME",
+            "uptime_target_pct": 92.0,
+            "max_incident_response_minutes": 30,
+            "has_service_credit_or_penalty_clause": True,
+            "breach_termination_threshold_defined": True,
+            "measurement_telemetry_automated": True,
+        },
+        {
+            "sla_id": "SLA-ZERO-RESP",
+            "uptime_target_pct": 99.9,
+            "max_incident_response_minutes": 0,
+            "has_service_credit_or_penalty_clause": True,
+            "breach_termination_threshold_defined": True,
+            "measurement_telemetry_automated": False,
+        },
+    ]
+    res = audit_wiki_vendor_sla_and_penalty_clause_governance(slas)
+    assert res["total_evaluated"] == 2
+    assert res["invalid_target_bounds_sla_ids"] == [
+        "SLA-LOW-UPTIME",
+        "SLA-ZERO-RESP",
+    ]
+    assert res["toothless_penalty_clause_sla_ids"] == []
+    assert res["unmonitored_sla_ids"] == ["SLA-ZERO-RESP"]
+    assert res["is_vendor_sla_governance_sound"] is False
+
+
+def test_audit_wiki_vendor_sla_toothless_penalty_clauses():
+    """Detecta SLAs sin cláusula de crédito/penalización o sin umbral de rescisión por incumplimiento."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_vendor_sla_and_penalty_clause_governance,
+    )
+
+    slas = [
+        {
+            "sla_id": "SLA-NO-CREDIT",
+            "uptime_target_pct": 99.5,
+            "max_incident_response_minutes": 60,
+            "has_service_credit_or_penalty_clause": False,
+            "breach_termination_threshold_defined": True,
+            "measurement_telemetry_automated": True,
+        },
+        {
+            "sla_id": "SLA-NO-TERM",
+            "uptime_target_pct": 99.5,
+            "max_incident_response_minutes": 60,
+            "has_service_credit_or_penalty_clause": True,
+            "breach_termination_threshold_defined": False,
+            "measurement_telemetry_automated": True,
+        },
+    ]
+    res = audit_wiki_vendor_sla_and_penalty_clause_governance(slas)
+    assert res["total_evaluated"] == 2
+    assert res["invalid_target_bounds_sla_ids"] == []
+    assert res["toothless_penalty_clause_sla_ids"] == [
+        "SLA-NO-CREDIT",
+        "SLA-NO-TERM",
+    ]
+    assert res["unmonitored_sla_ids"] == []
+    assert res["is_vendor_sla_governance_sound"] is False
+
+
+def test_audit_wiki_vendor_sla_invalid_inputs_and_export():
+    """Ignora entradas no secuencia o sin sla_id válido y verifica exportación en __all__."""
+    import backend.services.wiki_pmi_service as _m
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_vendor_sla_and_penalty_clause_governance,
+    )
+
+    assert "audit_wiki_vendor_sla_and_penalty_clause_governance" in _m.__all__
+    for bad in (None, "not-a-seq", b"bytes", bytearray(b"xyz"), [{"sla_id": "  "}, 42]):
+        assert audit_wiki_vendor_sla_and_penalty_clause_governance(bad) == {
+            "total_evaluated": 0,
+            "invalid_target_bounds_sla_ids": [],
+            "toothless_penalty_clause_sla_ids": [],
+            "unmonitored_sla_ids": [],
+            "is_vendor_sla_governance_sound": True,
+        }
+

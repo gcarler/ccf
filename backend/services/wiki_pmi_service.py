@@ -2499,6 +2499,7 @@ __all__ = [
     "audit_wiki_make_or_buy_and_source_selection_governance",
     "audit_wiki_opa_template_versioning_governance",
     "audit_wiki_onboarding_and_kt_handover_readiness",
+    "audit_wiki_vendor_sla_and_penalty_clause_governance",
     "WikiPMIService",
 ]
 
@@ -3381,3 +3382,82 @@ def audit_wiki_onboarding_and_kt_handover_readiness(
 WikiPMIService.audit_wiki_onboarding_and_kt_handover_readiness = staticmethod(
     audit_wiki_onboarding_and_kt_handover_readiness
 )
+
+
+def audit_wiki_vendor_sla_and_penalty_clause_governance(
+    sla_agreements: object,
+) -> dict[str, object]:
+    """Audita acuerdos de nivel de servicio (SLA) de proveedores, límites de disponibilidad/respuesta, cláusulas de penalización/créditos y telemetría automatizada en la Wiki según PMI PMBOK §12.1 y §12.2."""
+    total_evaluated = 0
+    invalid_target_bounds_sla_ids: list[str] = []
+    toothless_penalty_clause_sla_ids: list[str] = []
+    unmonitored_sla_ids: list[str] = []
+
+    if isinstance(sla_agreements, Sequence) and not isinstance(
+        sla_agreements, (str, bytes, bytearray)
+    ):
+        for item in sla_agreements:
+            if not isinstance(item, Mapping):
+                continue
+            sla_id = str(item.get("sla_id") or item.get("id") or "").strip()
+            if not sla_id:
+                continue
+
+            total_evaluated += 1
+            try:
+                uptime_target_pct = float(
+                    item.get("uptime_target_pct", 0.0) or 0.0
+                )
+            except (TypeError, ValueError):
+                uptime_target_pct = 0.0
+
+            try:
+                max_incident_response_minutes = int(
+                    item.get("max_incident_response_minutes", 0) or 0
+                )
+            except (TypeError, ValueError):
+                max_incident_response_minutes = 0
+
+            has_service_credit_or_penalty_clause = bool(
+                item.get("has_service_credit_or_penalty_clause", False)
+            )
+            breach_termination_threshold_defined = bool(
+                item.get("breach_termination_threshold_defined", False)
+            )
+            measurement_telemetry_automated = bool(
+                item.get("measurement_telemetry_automated", False)
+            )
+
+            if (
+                uptime_target_pct < 95.0
+                or uptime_target_pct > 100.0
+                or max_incident_response_minutes <= 0
+            ):
+                invalid_target_bounds_sla_ids.append(sla_id)
+
+            if (
+                not has_service_credit_or_penalty_clause
+                or not breach_termination_threshold_defined
+            ):
+                toothless_penalty_clause_sla_ids.append(sla_id)
+
+            if not measurement_telemetry_automated:
+                unmonitored_sla_ids.append(sla_id)
+
+    return {
+        "total_evaluated": total_evaluated,
+        "invalid_target_bounds_sla_ids": invalid_target_bounds_sla_ids,
+        "toothless_penalty_clause_sla_ids": toothless_penalty_clause_sla_ids,
+        "unmonitored_sla_ids": unmonitored_sla_ids,
+        "is_vendor_sla_governance_sound": (
+            len(invalid_target_bounds_sla_ids) == 0
+            and len(toothless_penalty_clause_sla_ids) == 0
+            and len(unmonitored_sla_ids) == 0
+        ),
+    }
+
+
+WikiPMIService.audit_wiki_vendor_sla_and_penalty_clause_governance = staticmethod(
+    audit_wiki_vendor_sla_and_penalty_clause_governance
+)
+

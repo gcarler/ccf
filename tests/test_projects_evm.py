@@ -4284,3 +4284,130 @@ def test_evaluate_evm_apportioned_effort_base_coherence_invalid_inputs_and_expor
             "is_apportioned_effort_coherent": True,
         }
 
+
+def test_evaluate_evm_retroactive_adjustment_and_negative_period_anomalies_clean():
+    """Periodos con variaciones positivas o ajustes retroactivos autorizados y EV <= BAC."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_retroactive_adjustment_and_negative_period_anomalies,
+    )
+
+    periods = [
+        {
+            "period_id": "2026-08",
+            "period_delta_ev": 12000.0,
+            "period_delta_ac": 11500.0,
+            "cumulative_ev": 60000.0,
+            "bac": 100000.0,
+            "has_approved_retroactive_adjustment_log": False,
+        },
+        {
+            "id": "2026-09",
+            "period_delta_ev": -1500.0,
+            "period_delta_ac": -800.0,
+            "cumulative_ev": 58500.0,
+            "bac": 100000.0,
+            "has_approved_retroactive_adjustment_log": True,
+        },
+    ]
+    res = evaluate_evm_retroactive_adjustment_and_negative_period_anomalies(
+        periods
+    )
+    assert res == {
+        "total_evaluated": 2,
+        "unexplained_negative_ev_period_ids": [],
+        "unexplained_negative_ac_period_ids": [],
+        "ev_exceeds_bac_ceiling_period_ids": [],
+        "is_period_accounting_clean": True,
+    }
+    assert (
+        ProjectEVMService.evaluate_evm_retroactive_adjustment_and_negative_period_anomalies(
+            periods
+        )
+        == res
+    )
+
+
+def test_evaluate_evm_retroactive_unexplained_negative_ev_and_ac():
+    """Detecta de-earning (EV < 0) o reversión AC < 0 sin bitácora de ajuste retroactivo aprobada."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_retroactive_adjustment_and_negative_period_anomalies,
+    )
+
+    periods = [
+        {
+            "period_id": "2026-10-NEG-EV",
+            "period_delta_ev": -2500.0,
+            "period_delta_ac": 4000.0,
+            "cumulative_ev": 45000.0,
+            "bac": 100000.0,
+            "has_approved_retroactive_adjustment_log": False,
+        },
+        {
+            "period_id": "2026-11-NEG-AC",
+            "period_delta_ev": 3000.0,
+            "period_delta_ac": -1200.0,
+            "cumulative_ev": 48000.0,
+            "bac": 100000.0,
+            "has_approved_retroactive_adjustment_log": False,
+        },
+    ]
+    res = evaluate_evm_retroactive_adjustment_and_negative_period_anomalies(
+        periods
+    )
+    assert res["total_evaluated"] == 2
+    assert res["unexplained_negative_ev_period_ids"] == ["2026-10-NEG-EV"]
+    assert res["unexplained_negative_ac_period_ids"] == ["2026-11-NEG-AC"]
+    assert res["ev_exceeds_bac_ceiling_period_ids"] == []
+    assert res["is_period_accounting_clean"] is False
+
+
+def test_evaluate_evm_retroactive_ev_exceeds_bac_ceiling():
+    """Detecta cuando cumulative_ev supera el techo BAC + 0.01."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_retroactive_adjustment_and_negative_period_anomalies,
+    )
+
+    periods = [
+        {
+            "period_id": "2026-12-OVER-BAC",
+            "period_delta_ev": 15000.0,
+            "period_delta_ac": 14000.0,
+            "cumulative_ev": 105000.0,
+            "bac": 100000.0,
+            "has_approved_retroactive_adjustment_log": False,
+        }
+    ]
+    res = evaluate_evm_retroactive_adjustment_and_negative_period_anomalies(
+        periods
+    )
+    assert res["total_evaluated"] == 1
+    assert res["unexplained_negative_ev_period_ids"] == []
+    assert res["unexplained_negative_ac_period_ids"] == []
+    assert res["ev_exceeds_bac_ceiling_period_ids"] == ["2026-12-OVER-BAC"]
+    assert res["is_period_accounting_clean"] is False
+
+
+def test_evaluate_evm_retroactive_invalid_inputs_and_export():
+    """Ignora entradas no secuencia o sin period_id válido y verifica exportación en __all__."""
+    import backend.services.project_evm_service as _m
+    from backend.services.project_evm_service import (
+        evaluate_evm_retroactive_adjustment_and_negative_period_anomalies,
+    )
+
+    assert (
+        "evaluate_evm_retroactive_adjustment_and_negative_period_anomalies"
+        in _m.__all__
+    )
+    for bad in (None, "not-a-seq", b"bytes", bytearray(b"abc"), [{"period_id": "  "}, 12]):
+        assert evaluate_evm_retroactive_adjustment_and_negative_period_anomalies(
+            bad
+        ) == {
+            "total_evaluated": 0,
+            "unexplained_negative_ev_period_ids": [],
+            "unexplained_negative_ac_period_ids": [],
+            "ev_exceeds_bac_ceiling_period_ids": [],
+            "is_period_accounting_clean": True,
+        }
+
+

@@ -4648,3 +4648,116 @@ def test_audit_requirements_traceability_matrix_coverage_invalid_inputs_and_expo
             "unautomated_critical_req_ids": [],
             "is_rtm_bidirectional_complete": True,
         }
+
+
+def test_audit_configuration_fca_pca_baseline_verification_compliant():
+    """CIs con FCA pasada, PCA conforme, sin desviaciones y version_tag inmutable."""
+    from backend.services.project_ccb_service import (
+        audit_configuration_fca_pca_baseline_verification,
+    )
+
+    items = [
+        {
+            "ci_id": "CI-1",
+            "fca_functional_test_passed": True,
+            "pca_as_built_matches_as_designed": True,
+            "unapproved_baseline_deviations_count": 0,
+            "version_tag_immutable": True,
+        },
+        {
+            "id": "CI-2",
+            "fca_functional_test_passed": True,
+            "pca_as_built_matches_as_designed": True,
+            "version_tag_immutable": True,
+        },
+    ]
+    res = audit_configuration_fca_pca_baseline_verification(items)
+    assert res == {
+        "total_evaluated": 2,
+        "fca_failed_ci_ids": [],
+        "pca_discrepancy_ci_ids": [],
+        "mutable_version_tag_ci_ids": [],
+        "is_fca_pca_audit_compliant": True,
+    }
+
+
+def test_audit_configuration_fca_pca_baseline_verification_fca_and_pca_failures():
+    """Detecta FCA fallida y discrepancias PCA (as-built != as-designed o desviaciones > 0)."""
+    from backend.services.project_ccb_service import (
+        audit_configuration_fca_pca_baseline_verification,
+    )
+
+    items = [
+        {"ci_id": "F-1", "fca_functional_test_passed": False,
+         "pca_as_built_matches_as_designed": True, "version_tag_immutable": True},
+        {"ci_id": "P-1", "fca_functional_test_passed": True,
+         "pca_as_built_matches_as_designed": False, "version_tag_immutable": True},
+        {"ci_id": "P-2", "fca_functional_test_passed": True,
+         "pca_as_built_matches_as_designed": True,
+         "unapproved_baseline_deviations_count": 3, "version_tag_immutable": True},
+        {"ci_id": "OK-1", "fca_functional_test_passed": True,
+         "pca_as_built_matches_as_designed": True,
+         "unapproved_baseline_deviations_count": None,  # coercion -> 0 -> sin discrepancia.
+         "version_tag_immutable": True},
+    ]
+    res = audit_configuration_fca_pca_baseline_verification(items)
+    assert res["total_evaluated"] == 4
+    assert res["fca_failed_ci_ids"] == ["F-1"]
+    assert res["pca_discrepancy_ci_ids"] == ["P-1", "P-2"]
+    assert res["is_fca_pca_audit_compliant"] is False
+
+
+def test_audit_configuration_fca_pca_baseline_verification_mutable_tags():
+    """CIs con version_tag no inmutable quedan marcados; coerción de contador invalido."""
+    from backend.services.project_ccb_service import (
+        audit_configuration_fca_pca_baseline_verification,
+    )
+
+    items = [
+        {"ci_id": "V-1", "fca_functional_test_passed": True,
+         "pca_as_built_matches_as_designed": True, "version_tag_immutable": False},
+        {"ci_id": "V-2", "fca_functional_test_passed": True,
+         "pca_as_built_matches_as_designed": True},  # default False -> mutable.
+        {"ci_id": "OK-2", "fca_functional_test_passed": True,
+         "pca_as_built_matches_as_designed": True,
+         "unapproved_baseline_deviations_count": "oops", "version_tag_immutable": True},
+    ]
+    res = audit_configuration_fca_pca_baseline_verification(items)
+    assert res["mutable_version_tag_ci_ids"] == ["V-1", "V-2"]
+    assert res["pca_discrepancy_ci_ids"] == []
+    assert res["is_fca_pca_audit_compliant"] is False
+
+
+def test_audit_configuration_fca_pca_baseline_verification_empty_and_service_proxy():
+    """Entradas vacias/None/invalidas + llamada via ProjectCCBService (staticmethod + __all__)."""
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_configuration_fca_pca_baseline_verification,
+    )
+    import backend.services.project_ccb_service as _m
+
+    res_none = audit_configuration_fca_pca_baseline_verification(None)
+    assert res_none == {
+        "total_evaluated": 0,
+        "fca_failed_ci_ids": [],
+        "pca_discrepancy_ci_ids": [],
+        "mutable_version_tag_ci_ids": [],
+        "is_fca_pca_audit_compliant": True,
+    }
+    assert audit_configuration_fca_pca_baseline_verification("no-seq")["total_evaluated"] == 0
+    assert (
+        audit_configuration_fca_pca_baseline_verification(
+            ["no-map", {"ci_id": "   "}, {"other_id": "x"}]
+        )["total_evaluated"]
+        == 0
+    )
+    assert "audit_configuration_fca_pca_baseline_verification" in _m.__all__
+
+    sample = [
+        {"ci_id": "CI-1", "fca_functional_test_passed": True,
+         "pca_as_built_matches_as_designed": True, "version_tag_immutable": True},
+    ]
+    assert (
+        ProjectCCBService.audit_configuration_fca_pca_baseline_verification(sample)
+        == audit_configuration_fca_pca_baseline_verification(sample)
+    )
