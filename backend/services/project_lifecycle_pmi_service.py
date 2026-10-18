@@ -658,6 +658,77 @@ def evaluate_administrative_closure_audit(
     }
 
 
+def evaluate_pmo_portfolio_health_balance(
+    projects: list[dict[str, Any]] | None,
+) -> dict[str, Any]:
+    """Audita el equilibrio de salud del portafolio PMO y la concentración presupuestaria en riesgo según PMI PMBOK §1.2.3.3."""
+    valid_projects = [
+        p for p in (projects or []) if isinstance(p, dict)
+    ]
+
+    total_projects = len(valid_projects)
+    healthy_projects_count = 0
+    watchlist_projects_count = 0
+    critical_projects_count = 0
+    total_portfolio_bac = 0.0
+    budget_at_risk_bac = 0.0
+
+    for p in valid_projects:
+        bac = round(max(0.0, float(p.get("bac") or p.get("budget") or 0.0)), 2)
+        cpi = float(p.get("cpi")) if p.get("cpi") is not None else 1.0
+        spi = float(p.get("spi")) if p.get("spi") is not None else 1.0
+        health_override = str(p.get("health_status") or "").strip().lower()
+
+        total_portfolio_bac += bac
+
+        is_critical = (
+            health_override in {"red", "critical", "at_risk"}
+            or cpi < 0.85
+            or spi < 0.85
+        )
+        is_watchlist = not is_critical and (
+            health_override in {"yellow", "warning", "amber"}
+            or cpi < 0.95
+            or spi < 0.95
+        )
+
+        if is_critical:
+            critical_projects_count += 1
+            budget_at_risk_bac += bac
+        elif is_watchlist:
+            watchlist_projects_count += 1
+        else:
+            healthy_projects_count += 1
+
+    total_portfolio_bac = round(total_portfolio_bac, 2)
+    budget_at_risk_bac = round(budget_at_risk_bac, 2)
+    budget_at_risk_pct = (
+        round((budget_at_risk_bac / total_portfolio_bac) * 100.0, 2)
+        if total_portfolio_bac > 0
+        else 0.0
+    )
+
+    if total_projects == 0:
+        portfolio_status = "empty_portfolio"
+    elif budget_at_risk_pct >= 30.0 or (critical_projects_count / total_projects) >= 0.4:
+        portfolio_status = "systemic_distress"
+    elif critical_projects_count >= 1 or watchlist_projects_count > healthy_projects_count:
+        portfolio_status = "elevated_exposure"
+    else:
+        portfolio_status = "balanced_healthy"
+
+    return {
+        "total_projects": total_projects,
+        "healthy_projects_count": healthy_projects_count,
+        "watchlist_projects_count": watchlist_projects_count,
+        "critical_projects_count": critical_projects_count,
+        "total_portfolio_bac": total_portfolio_bac,
+        "budget_at_risk_bac": budget_at_risk_bac,
+        "budget_at_risk_pct": budget_at_risk_pct,
+        "portfolio_status": portfolio_status,
+    }
+
+
 class ProjectLifecyclePMIService:
     """Canonical facade for PMI project lifecycle, governance maturity, and automation readiness."""
 
@@ -716,3 +787,9 @@ class ProjectLifecyclePMIService:
         closure_data: dict[str, Any] | None,
     ) -> dict[str, Any]:
         return evaluate_administrative_closure_audit(closure_data)
+
+    @staticmethod
+    def evaluate_pmo_portfolio_health_balance(
+        projects: list[dict[str, Any]] | None,
+    ) -> dict[str, Any]:
+        return evaluate_pmo_portfolio_health_balance(projects)

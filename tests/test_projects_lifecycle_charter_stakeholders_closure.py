@@ -574,3 +574,77 @@ def test_evaluate_administrative_closure_audit_empty_or_none():
             "can_archive_project": False,
             "closure_verdict": "blocked_open_obligations",
         }
+
+
+# ── evaluate_pmo_portfolio_health_balance (PMI PMBOK §1.2.3.3) ────────────────
+
+
+def test_evaluate_pmo_portfolio_health_balance_balanced_healthy():
+    """Proyectos con CPI >= 0.95 y SPI >= 0.95 -> 'balanced_healthy' y budget_at_risk_pct=0.0."""
+    projects = [
+        {"bac": 50000.0, "cpi": 1.05, "spi": 1.00},
+        {"budget": 30000.0, "cpi": 0.98, "spi": 0.97},
+        {"bac": 20000.0, "cpi": 0.92, "spi": 0.98},
+    ]
+    res = project_lifecycle_pmi_service.evaluate_pmo_portfolio_health_balance(projects)
+    assert res == {
+        "total_projects": 3,
+        "healthy_projects_count": 2,
+        "watchlist_projects_count": 1,
+        "critical_projects_count": 0,
+        "total_portfolio_bac": 100000.0,
+        "budget_at_risk_bac": 0.0,
+        "budget_at_risk_pct": 0.0,
+        "portfolio_status": "balanced_healthy",
+    }
+    assert (
+        project_lifecycle_pmi_service.ProjectLifecyclePMIService.evaluate_pmo_portfolio_health_balance(
+            projects
+        )
+        == res
+    )
+
+
+def test_evaluate_pmo_portfolio_health_balance_elevated_exposure():
+    """1 proyecto crítico con 10% del BAC (< 30%) y 3 proyectos sanos -> 'elevated_exposure'."""
+    projects = [
+        {"bac": 10000.0, "cpi": 0.78, "spi": 0.95},
+        {"bac": 30000.0, "cpi": 1.02, "spi": 1.01},
+        {"bac": 30000.0, "cpi": 1.00, "spi": 0.99},
+        {"bac": 30000.0, "cpi": 1.04, "spi": 1.02},
+    ]
+    res = project_lifecycle_pmi_service.evaluate_pmo_portfolio_health_balance(projects)
+    assert res["total_projects"] == 4
+    assert res["healthy_projects_count"] == 3
+    assert res["critical_projects_count"] == 1
+    assert res["budget_at_risk_bac"] == 10000.0
+    assert res["budget_at_risk_pct"] == 10.0
+    assert res["portfolio_status"] == "elevated_exposure"
+
+
+def test_evaluate_pmo_portfolio_health_balance_systemic_distress():
+    """Proyecto crítico concentra >= 30% del BAC del portafolio -> 'systemic_distress'."""
+    projects = [
+        {"bac": 45000.0, "cpi": 0.96, "spi": 0.96, "health_status": "critical"},
+        {"bac": 55000.0, "cpi": 1.05, "spi": 1.02},
+    ]
+    res = project_lifecycle_pmi_service.evaluate_pmo_portfolio_health_balance(projects)
+    assert res["critical_projects_count"] == 1
+    assert res["budget_at_risk_pct"] == 45.0
+    assert res["portfolio_status"] == "systemic_distress"
+
+
+def test_evaluate_pmo_portfolio_health_balance_empty_or_none():
+    """None o [] -> 'empty_portfolio' y total_projects=0."""
+    for empty_val in (None, []):
+        res = project_lifecycle_pmi_service.evaluate_pmo_portfolio_health_balance(empty_val)
+        assert res == {
+            "total_projects": 0,
+            "healthy_projects_count": 0,
+            "watchlist_projects_count": 0,
+            "critical_projects_count": 0,
+            "total_portfolio_bac": 0.0,
+            "budget_at_risk_bac": 0.0,
+            "budget_at_risk_pct": 0.0,
+            "portfolio_status": "empty_portfolio",
+        }
