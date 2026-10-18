@@ -2924,3 +2924,99 @@ def test_audit_markdown_task_list_checklist_hygiene_empty_or_none():
             "is_checklist_hygiene_clean": True,
         }
 
+
+def test_audit_markdown_heading_hierarchy_and_duplicates_clean():
+    """Jerarquía H1 -> H2 -> H3 sin saltos, vacíos ni duplicados (ignorando bloques cercados)."""
+    from backend.services.anydoc_service import (
+        AnydocService,
+        audit_markdown_heading_hierarchy_and_duplicates,
+    )
+
+    md = (
+        "# Plan de Dirección del Proyecto\n"
+        "## Alcance y Entregables\n"
+        "### Estructura de Desglose del Trabajo ###\n"
+        "## Cronograma Maestro\n"
+        "```markdown\n"
+        "# Segundo H1 dentro de código ignorado\n"
+        "#### Salto de nivel en código ignorado\n"
+        "##\n"
+        "```\n"
+    )
+    res = audit_markdown_heading_hierarchy_and_duplicates(md)
+    assert res == {
+        "total_headings": 4,
+        "h1_count": 1,
+        "skipped_level_lines": [],
+        "empty_heading_lines": [],
+        "duplicate_heading_lines": [],
+        "is_heading_hierarchy_clean": True,
+    }
+    assert AnydocService.audit_markdown_heading_hierarchy_and_duplicates(md) == res
+
+
+def test_audit_markdown_heading_hierarchy_and_duplicates_multiple_h1_and_skipped_levels():
+    """Múltiples H1 y saltos de nivel (ej. H1 -> H3, H2 -> H4) -> is_heading_hierarchy_clean=False."""
+    from backend.services.anydoc_service import (
+        audit_markdown_heading_hierarchy_and_duplicates,
+    )
+
+    md = (
+        "# Acta de Constitución\n"
+        "### Riesgos de Alto Nivel\n"
+        "# Segundo H1 Indebido\n"
+        "## Presupuesto\n"
+        "#### Reserva de Contingencia\n"
+    )
+    res = audit_markdown_heading_hierarchy_and_duplicates(md)
+    assert res == {
+        "total_headings": 5,
+        "h1_count": 2,
+        "skipped_level_lines": [2, 5],
+        "empty_heading_lines": [],
+        "duplicate_heading_lines": [],
+        "is_heading_hierarchy_clean": False,
+    }
+
+
+def test_audit_markdown_heading_hierarchy_and_duplicates_empty_and_duplicate_titles():
+    """Encabezados sin título o duplicados en el mismo nivel (case-insensitive) se reportan por línea."""
+    from backend.services.anydoc_service import (
+        audit_markdown_heading_hierarchy_and_duplicates,
+    )
+
+    md = (
+        "# Informe de Estado\n"
+        "##   \n"
+        "## Matriz de Riesgos\n"
+        "### matriz de riesgos\n"
+        "## MATRIZ DE RIESGOS ###\n"
+        "### ###\n"
+    )
+    res = audit_markdown_heading_hierarchy_and_duplicates(md)
+    assert res == {
+        "total_headings": 6,
+        "h1_count": 1,
+        "skipped_level_lines": [],
+        "empty_heading_lines": [2, 6],
+        "duplicate_heading_lines": [5],
+        "is_heading_hierarchy_clean": False,
+    }
+
+
+def test_audit_markdown_heading_hierarchy_and_duplicates_empty_or_non_string():
+    """Entrada None, vacía o no string retorna contadores en 0 e is_heading_hierarchy_clean=True."""
+    from backend.services.anydoc_service import (
+        audit_markdown_heading_hierarchy_and_duplicates,
+    )
+
+    for payload in (None, "", 123, ["### heading"]):
+        assert audit_markdown_heading_hierarchy_and_duplicates(payload) == {  # type: ignore[arg-type]
+            "total_headings": 0,
+            "h1_count": 0,
+            "skipped_level_lines": [],
+            "empty_heading_lines": [],
+            "duplicate_heading_lines": [],
+            "is_heading_hierarchy_clean": True,
+        }
+

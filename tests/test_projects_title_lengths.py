@@ -2832,3 +2832,81 @@ def test_validate_resource_smoothing_float_boundaries_empty_or_none():
 
     for payload in (None, "activities-string", {"activity_id": "X"}, 42, [], ["no-dict", {"is_critical": True}]):
         assert validate_resource_smoothing_float_boundaries(payload) == empty_result  # type: ignore[arg-type]
+
+
+def test_validate_sprint_velocity_commitment_stability_predictable_sustainable():
+    """Velocidades estables (CV <= 25%) y compromiso dentro de [0.70, 1.15] -> predictable_sustainable."""
+    from backend.schemas.projects import validate_sprint_velocity_commitment_stability
+
+    res = validate_sprint_velocity_commitment_stability(
+        [40.0, 42.0, 38.0, 40.0],
+        42.0,
+    )
+    assert res == {
+        "sprints_analyzed": 4,
+        "mean_velocity": 40.0,
+        "velocity_cv_pct": 3.54,
+        "committed_points": 42.0,
+        "commitment_to_mean_ratio": 1.05,
+        "stability_posture": "predictable_sustainable",
+        "is_commitment_sustainable": True,
+    }
+
+
+def test_validate_sprint_velocity_commitment_stability_overcommitted_and_volatile():
+    """Compromiso > max_overcommitment_ratio -> overcommitted; CV > 25% -> volatile_velocity."""
+    from backend.schemas.projects import validate_sprint_velocity_commitment_stability
+
+    over = validate_sprint_velocity_commitment_stability(
+        [30, 32, 28],
+        36.0,
+        max_overcommitment_ratio=1.15,
+    )
+    assert over["sprints_analyzed"] == 3
+    assert over["mean_velocity"] == 30.0
+    assert over["commitment_to_mean_ratio"] == 1.2
+    assert over["stability_posture"] == "overcommitted"
+    assert over["is_commitment_sustainable"] is False
+
+    volatile = validate_sprint_velocity_commitment_stability(
+        [10.0, 50.0, 20.0, 40.0],
+        30.0,
+    )
+    assert volatile["sprints_analyzed"] == 4
+    assert volatile["mean_velocity"] == 30.0
+    assert volatile["velocity_cv_pct"] > 25.0
+    assert volatile["stability_posture"] == "volatile_velocity"
+    assert volatile["is_commitment_sustainable"] is False
+
+
+def test_validate_sprint_velocity_commitment_stability_underutilized_capacity():
+    """Ratio < 0.70 con velocidad estable -> underutilized_capacity."""
+    from backend.schemas.projects import validate_sprint_velocity_commitment_stability
+
+    res = validate_sprint_velocity_commitment_stability(
+        [50.0, 50.0, 50.0],
+        30.0,
+    )
+    assert res == {
+        "sprints_analyzed": 3,
+        "mean_velocity": 50.0,
+        "velocity_cv_pct": 0.0,
+        "committed_points": 30.0,
+        "commitment_to_mean_ratio": 0.6,
+        "stability_posture": "underutilized_capacity",
+        "is_commitment_sustainable": False,
+    }
+
+
+def test_validate_sprint_velocity_commitment_stability_insufficient_history_or_invalid():
+    """Sin historial válido, entradas booleanas/negativas o promedio 0 -> insufficient_history."""
+    from backend.schemas.projects import validate_sprint_velocity_commitment_stability
+
+    for payload in (None, "invalid", {"a": 1}, [], [True, False, -5.0, "bad"], [0.0, 0.0]):
+        res = validate_sprint_velocity_commitment_stability(payload, 25.0)  # type: ignore[arg-type]
+        assert res["mean_velocity"] == 0.0
+        assert res["velocity_cv_pct"] == 0.0
+        assert res["committed_points"] == 25.0
+        assert res["commitment_to_mean_ratio"] == 0.0
+        assert res["stability_posture"] == "insufficient_history"
+        assert res["is_commitment_sustainable"] is False

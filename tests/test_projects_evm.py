@@ -3462,3 +3462,102 @@ def test_evaluate_evm_vac_rebaseline_threshold_invalid_inputs():
         }
 
 
+
+
+def test_evaluate_evm_tcpi_eac_vs_bac_divergence_baseline_and_completed():
+    """TCPI_BAC dentro del umbral -> baseline_achievable; EV==BAC -> completed."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_tcpi_eac_vs_bac_divergence as eval_fn,
+    )
+
+    res = eval_fn({"bac": 1000.0, "ev": 300.0, "ac": 350.0, "eac": 1100.0})
+    # cpi=0.8571; tcpi_bac=700/650=1.0769 (<=1.10); tcpi_eac=700/750=0.9333.
+    assert res["tcpi_bac"] == 1.0769
+    assert res["tcpi_eac"] == 0.9333
+    assert res["tcpi_spread"] == 0.1436
+    assert res["cpi"] == 0.8571
+    assert res["efficiency_gap_vs_cpi"] == 0.0762
+    assert res["divergence_posture"] == "baseline_achievable"
+    assert res["is_eac_realistic"] is True
+
+    res_completed = eval_fn(
+        {"bac": 1000.0, "ev": 1000.0, "ac": 800.0, "eac": 900.0},
+    )
+    assert res_completed["tcpi_bac"] == 0.0
+    assert res_completed["tcpi_eac"] == 0.0
+    assert res_completed["cpi"] == 1.25
+    assert res_completed["divergence_posture"] == "completed"
+    assert res_completed["is_eac_realistic"] is True
+
+
+def test_evaluate_evm_tcpi_eac_vs_bac_divergence_rebaselined_aligned():
+    """TCPI_BAC > 1.10 pero el EAC reajusta TCPI_EAC <= 1.10 -> rebaselined_aligned."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_tcpi_eac_vs_bac_divergence as eval_fn,
+        ProjectEVMService,
+    )
+
+    res = eval_fn({"bac": 1000.0, "ev": 600.0, "ac": 700.0, "eac": 1300.0})
+    assert res["tcpi_bac"] == 1.3333
+    assert res["tcpi_eac"] == 0.6667
+    assert res["tcpi_spread"] == 0.6666
+    assert res["cpi"] == 0.8571
+    assert res["efficiency_gap_vs_cpi"] == -0.1904
+    assert res["divergence_posture"] == "rebaselined_aligned"
+    assert res["is_eac_realistic"] is True
+
+    res_static = ProjectEVMService.evaluate_evm_tcpi_eac_vs_bac_divergence(
+        {"bac": 1000.0, "ev": 600.0, "ac": 700.0, "eac": 1300.0}
+    )
+    assert res_static == res
+
+
+def test_evaluate_evm_tcpi_eac_vs_bac_divergence_unrealistic_eac():
+    """TCPI_EAC > 1.20 (y gap > 0.15) o rem_eac <= 0 -> unrealistic_eac."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_tcpi_eac_vs_bac_divergence as eval_fn,
+    )
+
+    res_thin = eval_fn({"bac": 1000.0, "ev": 500.0, "ac": 500.0, "eac": 600.0})
+    # cpi=1.0; rem_eac=100 -> tcpi_eac=5.0 > 1.20 y gap=4.0 > 0.15.
+    assert res_thin["tcpi_bac"] == 1.0
+    assert res_thin["tcpi_eac"] == 5.0
+    assert res_thin["efficiency_gap_vs_cpi"] == 4.0
+    assert res_thin["divergence_posture"] == "unrealistic_eac"
+    assert res_thin["is_eac_realistic"] is False
+
+    res_no_funds = eval_fn({"bac": 1000.0, "ev": 500.0, "ac": 600.0, "eac": 500.0})
+    # rem_eac = -100 <= 0 con trabajo pendiente -> tcpi_eac=999.0.
+    assert res_no_funds["tcpi_eac"] == 999.0
+    assert res_no_funds["tcpi_bac"] == 1.25
+    assert res_no_funds["divergence_posture"] == "unrealistic_eac"
+    assert res_no_funds["is_eac_realistic"] is False
+
+
+def test_evaluate_evm_tcpi_eac_vs_bac_divergence_invalid_inputs():
+    """None, vacío, bac<=0, eac<=0 o ev/ac negativos -> invalid_inputs."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_tcpi_eac_vs_bac_divergence as eval_fn,
+    )
+
+    invalid_result = {
+        "tcpi_bac": 0.0,
+        "tcpi_eac": 0.0,
+        "tcpi_spread": 0.0,
+        "cpi": 0.0,
+        "efficiency_gap_vs_cpi": 0.0,
+        "divergence_posture": "invalid_inputs",
+        "is_eac_realistic": False,
+    }
+
+    for payload in (
+        None,
+        {},
+        {"bac": 0.0, "ev": 100.0, "ac": 50.0, "eac": 200.0},
+        {"bac": 1000.0, "ev": 100.0, "ac": 50.0, "eac": 0.0},
+        {"bac": 1000.0, "ev": -5.0, "ac": 50.0, "eac": 200.0},
+        {"bac": 1000.0, "ev": 100.0, "ac": -1.0, "eac": 200.0},
+        42,
+        "metrics-string",
+    ):
+        assert eval_fn(payload) == invalid_result  # type: ignore[arg-type]

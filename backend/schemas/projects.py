@@ -3696,6 +3696,7 @@ __all__ = [
     "validate_schedule_buffer_fever_chart_status",
     "validate_rolling_wave_planning_horizon",
     "validate_resource_smoothing_float_boundaries",
+    "validate_sprint_velocity_commitment_stability",
 ]
 
 
@@ -4450,4 +4451,73 @@ def validate_resource_smoothing_float_boundaries(
         "float_exceeded_activity_ids": float_exceeded_activity_ids,
         "unresolved_overallocation_activity_ids": unresolved_overallocation_activity_ids,
         "is_smoothing_valid": is_smoothing_valid,
+    }
+
+
+def validate_sprint_velocity_commitment_stability(
+    historical_velocities: Sequence[float | int] | None,
+    committed_points: float,
+    *,
+    max_overcommitment_ratio: float = 1.15,
+) -> dict[str, Any]:
+    """Evalúa la estabilidad de velocidad ágil y el sobrecompromiso de capacidad del sprint según PMI PMBOK §6.4 y §9.2."""
+    valid_vels: list[float] = []
+    if (
+        historical_velocities is not None
+        and isinstance(historical_velocities, Sequence)
+        and not isinstance(historical_velocities, (str, bytes, Mapping))
+    ):
+        for v in historical_velocities:
+            if isinstance(v, bool):
+                continue
+            try:
+                fv = float(v)
+            except (TypeError, ValueError):
+                continue
+            if fv >= 0.0:
+                valid_vels.append(fv)
+
+    try:
+        committed = round(max(0.0, float(committed_points or 0.0)), 2)
+    except (TypeError, ValueError):
+        committed = 0.0
+
+    n = len(valid_vels)
+    mean_vel = (sum(valid_vels) / n) if n > 0 else 0.0
+    if n == 0 or mean_vel <= 0.0:
+        return {
+            "sprints_analyzed": n,
+            "mean_velocity": 0.0,
+            "velocity_cv_pct": 0.0,
+            "committed_points": committed,
+            "commitment_to_mean_ratio": 0.0,
+            "stability_posture": "insufficient_history",
+            "is_commitment_sustainable": False,
+        }
+
+    variance = sum((v - mean_vel) ** 2 for v in valid_vels) / n
+    std_dev = variance ** 0.5
+    velocity_cv_pct = round((std_dev / mean_vel) * 100.0, 2)
+    mean_velocity = round(mean_vel, 2)
+    commitment_to_mean_ratio = round(committed / mean_vel, 4)
+
+    if commitment_to_mean_ratio > float(max_overcommitment_ratio):
+        stability_posture = "overcommitted"
+    elif velocity_cv_pct > 25.0:
+        stability_posture = "volatile_velocity"
+    elif commitment_to_mean_ratio < 0.70:
+        stability_posture = "underutilized_capacity"
+    else:
+        stability_posture = "predictable_sustainable"
+
+    is_commitment_sustainable = bool(stability_posture == "predictable_sustainable")
+
+    return {
+        "sprints_analyzed": n,
+        "mean_velocity": mean_velocity,
+        "velocity_cv_pct": velocity_cv_pct,
+        "committed_points": committed,
+        "commitment_to_mean_ratio": commitment_to_mean_ratio,
+        "stability_posture": stability_posture,
+        "is_commitment_sustainable": is_commitment_sustainable,
     }

@@ -2380,6 +2380,12 @@ class AnyDocService:
     ) -> dict[str, Any]:
         return audit_markdown_task_list_checklist_hygiene(markdown_text)
 
+    @staticmethod
+    def audit_markdown_heading_hierarchy_and_duplicates(
+        markdown_text: str | None = None,
+    ) -> dict[str, Any]:
+        return audit_markdown_heading_hierarchy_and_duplicates(markdown_text)
+
 
 
 
@@ -2993,6 +2999,7 @@ __all__ = [
     "audit_markdown_callout_admonition_hygiene",
     "audit_markdown_table_column_alignment_hygiene",
     "audit_markdown_task_list_checklist_hygiene",
+    "audit_markdown_heading_hierarchy_and_duplicates",
     "AnyDocService",
     "AnydocService",
 ]
@@ -3185,6 +3192,90 @@ def audit_markdown_task_list_checklist_hygiene(
         "empty_task_description_lines": empty_task_description_lines,
         "unassigned_open_task_lines": unassigned_open_task_lines,
         "is_checklist_hygiene_clean": is_checklist_hygiene_clean,
+    }
+
+
+_ATX_HEADING_HIERARCHY_RE = re.compile(
+    r"^\s*(?P<hashes>#{1,6})(?:\s+(?P<title>.*))?$"
+)
+
+
+def audit_markdown_heading_hierarchy_and_duplicates(
+    markdown_text: str | None = None,
+) -> dict[str, Any]:
+    """Audita la jerarquía de encabezados ATX (H1-H6), saltos de nivel, encabezados vacíos y títulos duplicados en el mismo nivel según PMI PMBOK §4.4 y §10.2."""
+    if not isinstance(markdown_text, str) or not markdown_text:
+        return {
+            "total_headings": 0,
+            "h1_count": 0,
+            "skipped_level_lines": [],
+            "empty_heading_lines": [],
+            "duplicate_heading_lines": [],
+            "is_heading_hierarchy_clean": True,
+        }
+
+    lines = markdown_text.splitlines()
+    total_headings = 0
+    h1_count = 0
+    skipped_level_lines: list[int] = []
+    empty_heading_lines: list[int] = []
+    duplicate_heading_lines: list[int] = []
+    seen_headings: set[tuple[int, str]] = set()
+    prev_level: int | None = None
+
+    in_backtick_fence = False
+    in_tilde_fence = False
+
+    for line_num, line in enumerate(lines, start=1):
+        stripped = line.strip()
+        if not in_tilde_fence and stripped.startswith("```"):
+            in_backtick_fence = not in_backtick_fence
+            continue
+        if not in_backtick_fence and stripped.startswith("~~~"):
+            in_tilde_fence = not in_tilde_fence
+            continue
+        if in_backtick_fence or in_tilde_fence:
+            continue
+
+        match = _ATX_HEADING_HIERARCHY_RE.match(line)
+        if not match:
+            continue
+
+        total_headings += 1
+        level = len(match.group("hashes"))
+        raw_title = (match.group("title") or "").strip()
+        clean_title = re.sub(r"\s*#+\s*$", "", raw_title).strip()
+
+        if level == 1:
+            h1_count += 1
+
+        if prev_level is not None and level > prev_level + 1:
+            skipped_level_lines.append(line_num)
+        prev_level = level
+
+        if not clean_title:
+            empty_heading_lines.append(line_num)
+        else:
+            norm_key = (level, clean_title.lower())
+            if norm_key in seen_headings:
+                duplicate_heading_lines.append(line_num)
+            else:
+                seen_headings.add(norm_key)
+
+    is_heading_hierarchy_clean = bool(
+        h1_count <= 1
+        and not skipped_level_lines
+        and not empty_heading_lines
+        and not duplicate_heading_lines
+    )
+
+    return {
+        "total_headings": total_headings,
+        "h1_count": h1_count,
+        "skipped_level_lines": skipped_level_lines,
+        "empty_heading_lines": empty_heading_lines,
+        "duplicate_heading_lines": duplicate_heading_lines,
+        "is_heading_hierarchy_clean": is_heading_hierarchy_clean,
     }
 
 

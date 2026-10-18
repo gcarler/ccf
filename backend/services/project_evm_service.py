@@ -5484,7 +5484,98 @@ __all__ = [
     "evaluate_evm_joint_cost_schedule_index",
     "evaluate_evm_earned_schedule_tspi_feasibility",
     "evaluate_evm_vac_rebaseline_threshold",
+    "evaluate_evm_tcpi_eac_vs_bac_divergence",
     "ProjectEVMService",
 ]
 
 
+def evaluate_evm_tcpi_eac_vs_bac_divergence(
+    metrics: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """PMBOK §7.4 — divergencia TCPI(BAC) vs TCPI(EAC) y realismo del EAC.
+
+    - ``cpi`` = EV/AC (round 4; 1.0 si AC<=0 con EV>0; 0.0 si no).
+    - ``tcpi_bac``/``tcpi_eac`` = trabajo restante sobre fondos restantes
+      (round 4; 999.0 si fondos restantes <= 0 con trabajo pendiente).
+    - Postura: ``completed``, ``unrealistic_eac`` (rem_eac <= 0, gap > 0.15
+      o TCPI_EAC > 1.20), ``rebaselined_aligned`` (TCPI_BAC > 1.10 con
+      TCPI_EAC <= 1.10 y gap <= 0.15) o ``baseline_achievable``.
+    """
+    if not isinstance(metrics, Mapping):
+        return {
+            "tcpi_bac": 0.0,
+            "tcpi_eac": 0.0,
+            "tcpi_spread": 0.0,
+            "cpi": 0.0,
+            "efficiency_gap_vs_cpi": 0.0,
+            "divergence_posture": "invalid_inputs",
+            "is_eac_realistic": False,
+        }
+
+    def _float(value: Any) -> float:
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return 0.0
+
+    bac = _float(metrics.get("bac", 0.0) or 0.0)
+    ev = _float(metrics.get("ev", 0.0) or 0.0)
+    ac = _float(metrics.get("ac", 0.0) or 0.0)
+    eac = _float(metrics.get("eac", 0.0) or 0.0)
+
+    if bac <= 0 or ev < 0 or ac < 0 or eac <= 0:
+        return {
+            "tcpi_bac": 0.0,
+            "tcpi_eac": 0.0,
+            "tcpi_spread": 0.0,
+            "cpi": 0.0,
+            "efficiency_gap_vs_cpi": 0.0,
+            "divergence_posture": "invalid_inputs",
+            "is_eac_realistic": False,
+        }
+
+    cpi = round(ev / ac, 4) if ac > 0 else (1.0 if ev > 0 else 0.0)
+    remaining_work = max(0.0, bac - ev)
+    rem_bac = bac - ac
+    rem_eac = eac - ac
+
+    tcpi_bac = (
+        round(remaining_work / rem_bac, 4)
+        if rem_bac > 0
+        else (0.0 if remaining_work == 0 else 999.0)
+    )
+    tcpi_eac = (
+        round(remaining_work / rem_eac, 4)
+        if rem_eac > 0
+        else (0.0 if remaining_work == 0 else 999.0)
+    )
+    tcpi_spread = round(abs(tcpi_bac - tcpi_eac), 4)
+    efficiency_gap_vs_cpi = round(tcpi_eac - cpi, 4)
+
+    if remaining_work == 0:
+        divergence_posture = "completed"
+    elif rem_eac <= 0 or efficiency_gap_vs_cpi > 0.15 or tcpi_eac > 1.20:
+        divergence_posture = "unrealistic_eac"
+    elif tcpi_bac > 1.10 and tcpi_eac <= 1.10 and efficiency_gap_vs_cpi <= 0.15:
+        divergence_posture = "rebaselined_aligned"
+    else:
+        divergence_posture = "baseline_achievable"
+
+    is_eac_realistic = bool(
+        divergence_posture in {"completed", "rebaselined_aligned", "baseline_achievable"}
+    )
+
+    return {
+        "tcpi_bac": tcpi_bac,
+        "tcpi_eac": tcpi_eac,
+        "tcpi_spread": tcpi_spread,
+        "cpi": cpi,
+        "efficiency_gap_vs_cpi": efficiency_gap_vs_cpi,
+        "divergence_posture": divergence_posture,
+        "is_eac_realistic": is_eac_realistic,
+    }
+
+
+ProjectEVMService.evaluate_evm_tcpi_eac_vs_bac_divergence = staticmethod(
+    evaluate_evm_tcpi_eac_vs_bac_divergence
+)
