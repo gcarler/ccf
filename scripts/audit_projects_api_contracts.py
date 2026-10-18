@@ -928,6 +928,92 @@ def summarize_projects_operation_deprecation_hygiene(
         "deprecation_posture": deprecation_posture,
     }
 
+
+def summarize_projects_error_response_contract_coverage(
+    openapi_schema: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Audita la cobertura de contratos de respuesta de error (4xx/404/409/422/default) en endpoints de proyectos (PMI §10.2)."""
+    empty_result: dict[str, Any] = {
+        "total_projects_operations": 0,
+        "documented_error_operations_count": 0,
+        "missing_error_contract_operations": [],
+        "error_contract_coverage_pct": 100.0,
+        "is_error_contract_compliant": True,
+        "error_contract_posture": "NO_PROJECTS_OPERATIONS",
+    }
+    if not isinstance(openapi_schema, dict) or not isinstance(
+        openapi_schema.get("paths"), dict
+    ):
+        return empty_result
+
+    total_projects_operations = 0
+    documented_error_operations_count = 0
+    missing_error_contract_operations: list[str] = []
+
+    for path_str, path_item in sorted(openapi_schema["paths"].items()):
+        if not isinstance(path_str, str) or "/projects" not in path_str:
+            continue
+        if not isinstance(path_item, dict):
+            continue
+
+        for method in ("get", "post", "put", "patch", "delete"):
+            op_obj = path_item.get(method)
+            if not isinstance(op_obj, dict):
+                continue
+
+            total_projects_operations += 1
+            op_key = f"{method.upper()} {path_str}"
+            responses = (
+                op_obj.get("responses")
+                if isinstance(op_obj.get("responses"), dict)
+                else {}
+            )
+            status_keys = {str(k).strip().lower() for k in responses.keys()}
+
+            has_any_error = bool(
+                status_keys
+                & {"400", "401", "403", "404", "409", "422", "500", "default"}
+            ) or any(k.startswith("4") for k in status_keys)
+
+            has_param_error = True
+            if "{" in path_str:
+                has_param_error = bool(status_keys & {"404", "422", "default"})
+
+            has_mutation_error = True
+            if method in {"post", "put", "patch", "delete"}:
+                has_mutation_error = bool(
+                    status_keys & {"400", "409", "422", "default"}
+                )
+
+            if has_any_error and has_param_error and has_mutation_error:
+                documented_error_operations_count += 1
+            else:
+                missing_error_contract_operations.append(op_key)
+
+    if total_projects_operations == 0:
+        return empty_result
+
+    missing_sorted = sorted(missing_error_contract_operations)
+    error_contract_coverage_pct = round(
+        (documented_error_operations_count / total_projects_operations) * 100.0, 2
+    )
+    is_error_contract_compliant = len(missing_sorted) == 0
+    error_contract_posture = (
+        "MISSING_ERROR_RESPONSE_CONTRACTS"
+        if len(missing_sorted) > 0
+        else "COMPLETE_ERROR_RESPONSE_CONTRACTS"
+    )
+
+    return {
+        "total_projects_operations": total_projects_operations,
+        "documented_error_operations_count": documented_error_operations_count,
+        "missing_error_contract_operations": missing_sorted,
+        "error_contract_coverage_pct": error_contract_coverage_pct,
+        "is_error_contract_compliant": is_error_contract_compliant,
+        "error_contract_posture": error_contract_posture,
+    }
+
+
 def render_inventory(openapi: dict[str, Any]) -> str:
     operations = route_inventory(openapi)
     guards = declared_guards()

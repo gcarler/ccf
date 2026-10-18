@@ -1766,3 +1766,119 @@ def test_operation_deprecation_hygiene_empty_or_no_projects_operations():
         == expected
     )
 
+
+# ─── summarize_projects_error_response_contract_coverage (pure helper) ───────
+
+
+def test_error_response_contract_coverage_complete():
+    """Operaciones con cobertura completa de errores 4xx/404/422 -> COMPLETE_ERROR_RESPONSE_CONTRACTS."""
+    openapi = {
+        "paths": {
+            "/api/v1/projects": {
+                "get": {"responses": {"200": {}, "401": {}}},
+                "post": {"responses": {"201": {}, "422": {}}},
+            },
+            "/api/v1/projects/{project_id}": {
+                "get": {"responses": {"200": {}, "404": {}}},
+                "delete": {"responses": {"204": {}, "404": {}, "409": {}}},
+            },
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_error_response_contract_coverage(
+        openapi
+    )
+
+    assert res == {
+        "total_projects_operations": 4,
+        "documented_error_operations_count": 4,
+        "missing_error_contract_operations": [],
+        "error_contract_coverage_pct": 100.0,
+        "is_error_contract_compliant": True,
+        "error_contract_posture": "COMPLETE_ERROR_RESPONSE_CONTRACTS",
+    }
+
+
+def test_error_response_contract_coverage_missing_on_parameterized_route():
+    """Ruta parametrizada '{project_id}' sin 404/422/default -> MISSING_ERROR_RESPONSE_CONTRACTS."""
+    openapi = {
+        "paths": {
+            "/api/v1/projects/{project_id}": {
+                "get": {"responses": {"200": {}, "401": {}}},
+                "patch": {"responses": {"200": {}, "422": {}}},
+            }
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_error_response_contract_coverage(
+        openapi
+    )
+
+    assert res == {
+        "total_projects_operations": 2,
+        "documented_error_operations_count": 1,
+        "missing_error_contract_operations": ["GET /api/v1/projects/{project_id}"],
+        "error_contract_coverage_pct": 50.0,
+        "is_error_contract_compliant": False,
+        "error_contract_posture": "MISSING_ERROR_RESPONSE_CONTRACTS",
+    }
+
+
+def test_error_response_contract_coverage_missing_on_mutation():
+    """Mutación POST/PATCH sin 400/409/422/default -> MISSING_ERROR_RESPONSE_CONTRACTS."""
+    openapi = {
+        "paths": {
+            "/projects": {
+                "post": {"responses": {"201": {}, "401": {}}},
+            },
+            "/projects/{project_id}/archive": {
+                "patch": {"responses": {"200": {}, "404": {}}},
+            },
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_error_response_contract_coverage(
+        openapi
+    )
+
+    assert res == {
+        "total_projects_operations": 2,
+        "documented_error_operations_count": 0,
+        "missing_error_contract_operations": [
+            "PATCH /projects/{project_id}/archive",
+            "POST /projects",
+        ],
+        "error_contract_coverage_pct": 0.0,
+        "is_error_contract_compliant": False,
+        "error_contract_posture": "MISSING_ERROR_RESPONSE_CONTRACTS",
+    }
+
+
+def test_error_response_contract_coverage_empty_or_none():
+    """Esquema vacío, None o sin operaciones bajo /projects -> NO_PROJECTS_OPERATIONS."""
+    expected = {
+        "total_projects_operations": 0,
+        "documented_error_operations_count": 0,
+        "missing_error_contract_operations": [],
+        "error_contract_coverage_pct": 100.0,
+        "is_error_contract_compliant": True,
+        "error_contract_posture": "NO_PROJECTS_OPERATIONS",
+    }
+    assert (
+        audit_projects_api_contracts.summarize_projects_error_response_contract_coverage(
+            None
+        )
+        == expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_error_response_contract_coverage(
+            {}
+        )
+        == expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_error_response_contract_coverage(
+            {"paths": {"/api/crm/contacts": {"get": {"responses": {"200": {}}}}}}
+        )
+        == expected
+    )
