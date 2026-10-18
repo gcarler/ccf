@@ -1176,4 +1176,114 @@ def test_audit_wiki_raid_register_tables_no_raid_rows():
         assert res["raid_table_posture"] == "NO_RAID_TABLE_ROWS"
 
 
+def test_audit_wiki_meeting_minutes_governance_governed_minutes():
+    """>= 2 asistentes, agenda, decisiones y todas las acciones abiertas con @usuario -> 'GOVERNED_MEETING_MINUTES'."""
+    import backend.services.wiki_pmi_service as wiki_module
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_meeting_minutes_governance,
+    )
+
+    md = (
+        "# Acta de Comité de Proyecto — 2026-10-18\n"
+        "Participantes: @Pastor_General, @pm_sede, @finanzas_lead\n\n"
+        "## Agenda y Objetivos\n"
+        "- Revisión de avance físico WBS y EVM.\n\n"
+        "## Decisiones y Acuerdos\n"
+        "- DEC-01: Se autoriza liberación de contingencia para fase 2.\n\n"
+        "## Compromisos\n"
+        "- [x] Publicar línea base inicial @pm_sede\n"
+        "- [ ] Emitir orden de compra del proveedor @finanzas_lead (vence 2026-10-25)\n"
+    )
+
+    res = WikiPMIService.audit_wiki_meeting_minutes_governance(md)
+    assert res["attendees_mentions"] == [
+        "finanzas_lead",
+        "pastor_general",
+        "pm_sede",
+    ]
+    assert res["detected_dates"] == ["2026-10-18", "2026-10-25"]
+    assert res["has_agenda_section"] is True
+    assert res["has_decisions_record"] is True
+    assert res["total_action_items"] == 2
+    assert res["unassigned_open_actions"] == 0
+    assert res["minutes_posture"] == "GOVERNED_MEETING_MINUTES"
+    assert len(res["recommendations"]) >= 1
+    assert audit_wiki_meeting_minutes_governance(md) == res
+    assert "audit_wiki_meeting_minutes_governance" in wiki_module.__all__
+
+
+def test_audit_wiki_meeting_minutes_governance_unassigned_actions():
+    """Acciones abiertas (- [ ]) sin mención @usuario -> 'UNASSIGNED_ACTION_ITEMS'."""
+    from backend.services.wiki_pmi_service import audit_wiki_meeting_minutes_governance
+
+    md = (
+        "# Reunión Semanal PMO (2026-10-18)\n"
+        "Asistentes: @coordinador, @arquitecto\n\n"
+        "## Orden del Día\n"
+        "1. Seguimiento de entregables\n\n"
+        "## Acuerdos\n"
+        "- Se aprueba el cronograma.\n\n"
+        "## Tareas\n"
+        "- [ ] Actualizar matriz de riesgos antes del viernes\n"
+        "- [ ] Solicitar cotización adicional\n"
+        "- [ ] Validar respaldo con @arquitecto\n"
+    )
+
+    res = audit_wiki_meeting_minutes_governance(md)
+    assert res["attendees_mentions"] == ["arquitecto", "coordinador"]
+    assert res["has_agenda_section"] is True
+    assert res["has_decisions_record"] is True
+    assert res["total_action_items"] == 3
+    assert res["unassigned_open_actions"] == 2
+    assert res["minutes_posture"] == "UNASSIGNED_ACTION_ITEMS"
+
+
+def test_audit_wiki_meeting_minutes_governance_incomplete_structure():
+    """Sin acciones huérfanas pero falta decisiones o quórum < 2 -> 'INCOMPLETE_MINUTES_STRUCTURE'."""
+    from backend.services.wiki_pmi_service import audit_wiki_meeting_minutes_governance
+
+    md = (
+        "# Minuta Rápida 2026-10-18\n"
+        "Asistente: @pm_unico\n\n"
+        "## Agenda\n"
+        "- Revisar estado general\n"
+        "- [ ] Enviar resumen ejecutivo @pm_unico\n"
+    )
+
+    res = audit_wiki_meeting_minutes_governance(md)
+    assert res["attendees_mentions"] == ["pm_unico"]
+    assert res["has_agenda_section"] is True
+    assert res["has_decisions_record"] is False
+    assert res["unassigned_open_actions"] == 0
+    assert res["minutes_posture"] == "INCOMPLETE_MINUTES_STRUCTURE"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_wiki_meeting_minutes_governance_not_a_meeting_minute():
+    """Sin fechas, sin menciones @usuario y sin sección de agenda (o solo en bloque ```) -> 'NOT_A_MEETING_MINUTE'."""
+    from backend.services.wiki_pmi_service import audit_wiki_meeting_minutes_governance
+
+    fenced_only = (
+        "```markdown\n"
+        "# Agenda 2026-10-18\n"
+        "Asistentes: @user1 @user2\n"
+        "- [ ] Acción dentro de código\n"
+        "```\n"
+        "Documento técnico descriptivo sin actas.\n"
+    )
+
+    for payload in (None, "", fenced_only):
+        res = audit_wiki_meeting_minutes_governance(payload)
+        assert res["attendees_mentions"] == []
+        assert res["detected_dates"] == []
+        assert res["has_agenda_section"] is False
+        assert res["has_decisions_record"] is False
+        assert res["total_action_items"] == 0
+        assert res["unassigned_open_actions"] == 0
+        assert res["minutes_posture"] == "NOT_A_MEETING_MINUTE"
+        assert len(res["recommendations"]) == 1
+
+
+
 

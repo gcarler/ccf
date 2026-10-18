@@ -911,6 +911,127 @@ def audit_wiki_raid_register_tables(
     }
 
 
+def audit_wiki_meeting_minutes_governance(
+    markdown_text: Optional[str],
+) -> dict[str, Any]:
+    """Audita actas de reunión (Meeting Minutes) y seguimiento de acciones en Wiki Markdown según PMI PMBOK §10.2 y §4.3."""
+    text = markdown_text if isinstance(markdown_text, str) else ""
+
+    mention_re = re.compile(r"(?<!\w)@([a-zA-Z0-9_.-]+)")
+    date_re = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
+    heading_re = re.compile(r"^\s*#{1,6}\s+(?P<title>.+?)\s*$")
+    decision_code_re = re.compile(r"\bDEC-\d+\b", re.IGNORECASE)
+    action_item_re = re.compile(r"^\s*[-*+]\s+\[(?P<state>[ xX])\]\s+(?P<text>.+)$")
+
+    agenda_keywords = (
+        "agenda",
+        "objetivos",
+        "orden del dia",
+        "orden del día",
+        "temas",
+    )
+    decision_keywords = ("decisiones", "acuerdos", "decisions")
+
+    attendees_set: set[str] = set()
+    dates_set: set[str] = set()
+    has_agenda_section = False
+    has_decisions_record = False
+    total_action_items = 0
+    unassigned_open_actions = 0
+
+    in_fence = False
+    for line in text.splitlines():
+        if line.strip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+
+        for m in mention_re.finditer(line):
+            cleaned_user = m.group(1).rstrip(".").lower()
+            if cleaned_user:
+                attendees_set.add(cleaned_user)
+
+        for d in date_re.finditer(line):
+            dates_set.add(d.group(1))
+
+        if decision_code_re.search(line):
+            has_decisions_record = True
+
+        h_match = heading_re.match(line)
+        if h_match:
+            h_lower = h_match.group("title").lower()
+            if any(kw in h_lower for kw in agenda_keywords):
+                has_agenda_section = True
+            if any(kw in h_lower for kw in decision_keywords):
+                has_decisions_record = True
+
+        act_match = action_item_re.match(line)
+        if act_match:
+            total_action_items += 1
+            state = act_match.group("state").lower()
+            item_body = act_match.group("text")
+            if state != "x":
+                has_mention = any(
+                    bool(m.group(1).rstrip(".")) for m in mention_re.finditer(item_body)
+                )
+                if not has_mention:
+                    unassigned_open_actions += 1
+
+    attendees_mentions = sorted(attendees_set)
+    detected_dates = sorted(dates_set)
+
+    recommendations: list[str] = []
+    if (
+        len(detected_dates) == 0
+        and len(attendees_mentions) == 0
+        and not has_agenda_section
+    ):
+        minutes_posture = "NOT_A_MEETING_MINUTE"
+        recommendations.append(
+            "Incluir fecha ISO (YYYY-MM-DD), menciones de asistentes (@usuario) y sección de Agenda/Objetivos para estructurar un acta de reunión formal (PMBOK §10.2)."
+        )
+    elif unassigned_open_actions > 0:
+        minutes_posture = "UNASSIGNED_ACTION_ITEMS"
+        recommendations.append(
+            f"Asignar responsable explícito (@usuario) a las {unassigned_open_actions} acciones abiertas (`- [ ]`) para garantizar trazabilidad de ejecución (PMBOK §4.3 / §10.2)."
+        )
+    elif (
+        len(attendees_mentions) < 2
+        or not has_agenda_section
+        or not has_decisions_record
+    ):
+        minutes_posture = "INCOMPLETE_MINUTES_STRUCTURE"
+        if len(attendees_mentions) < 2:
+            recommendations.append(
+                "Registrar al menos 2 participantes (@usuario) para acreditar quórum de la sesión (PMBOK §10.2)."
+            )
+        if not has_agenda_section:
+            recommendations.append(
+                "Añadir encabezado de Agenda u Orden del Día (`# Agenda` / `# Objetivos`)."
+            )
+        if not has_decisions_record:
+            recommendations.append(
+                "Documentar sección de Decisiones/Acuerdos (`# Decisiones`) o códigos `DEC-XX`."
+            )
+    else:
+        minutes_posture = "GOVERNED_MEETING_MINUTES"
+        recommendations.append(
+            "Acta de reunión completa con quórum, agenda, registro de decisiones y compromisos asignados conforme a PMI PMBOK §10.2."
+        )
+
+    return {
+        "attendees_mentions": attendees_mentions,
+        "detected_dates": detected_dates,
+        "has_agenda_section": has_agenda_section,
+        "has_decisions_record": has_decisions_record,
+        "total_action_items": total_action_items,
+        "unassigned_open_actions": unassigned_open_actions,
+        "minutes_posture": minutes_posture,
+        "recommendations": recommendations,
+    }
+
+
 class WikiPMIService:
     """Fachada canónica de doctrina y gobernanza documental Wiki PMI."""
 
@@ -1010,6 +1131,12 @@ class WikiPMIService:
     ) -> dict[str, Any]:
         return audit_wiki_raid_register_tables(markdown_text)
 
+    @staticmethod
+    def audit_wiki_meeting_minutes_governance(
+        markdown_text: Optional[str],
+    ) -> dict[str, Any]:
+        return audit_wiki_meeting_minutes_governance(markdown_text)
+
 
 __all__ = [
     "DEFAULT_PMI_KB_DIR",
@@ -1029,8 +1156,10 @@ __all__ = [
     "audit_wiki_template_section_compliance",
     "audit_wiki_decision_log_entries",
     "audit_wiki_raid_register_tables",
+    "audit_wiki_meeting_minutes_governance",
     "WikiPMIService",
 ]
+
 
 
 

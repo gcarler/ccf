@@ -817,4 +817,93 @@ def test_validate_resource_allocation_utilization_zero_capacity():
     assert no_hours["posture"] == "ZERO_CAPACITY_UNAVAILABLE"
 
 
+# ─── validate_schedule_dependency_lead_lag (pure helper) ──────────
+
+
+def test_validate_schedule_dependency_lead_lag_sound_network():
+    """FS/SS con lead negativo dentro de max_lag -> SOUND_SCHEDULE_NETWORK e is_valid True."""
+    from backend.schemas.projects import validate_schedule_dependency_lead_lag
+
+    res = validate_schedule_dependency_lead_lag(
+        [
+            {"predecessor_id": "T1", "successor_id": "T2", "type": "fs", "lag_days": 3},
+            {"predecessor_id": "T2", "successor_id": "T3", "relationship": "SS", "lag_days": -2},
+            {"predecessor_id": "T3", "successor_id": "T4"},  # default FS
+            {"predecessor_id": "T4", "successor_id": "T5", "type": "SF"},
+        ],
+        max_lag_days=30,
+    )
+
+    assert res["is_valid"] is True
+    assert res["total_dependencies"] == 4
+    assert res["self_dependency_ids"] == []
+    assert res["invalid_relationship_types"] == []
+    assert res["excessive_lag_links"] == []
+    assert res["sf_relationship_count"] == 1
+    assert res["network_posture"] == "SOUND_SCHEDULE_NETWORK"
+
+
+def test_validate_schedule_dependency_lead_lag_self_links_take_precedence():
+    """Self-link + gramática inválida + lag excesivo -> CIRCULAR_SELF_LINK_DETECTED (precedencia 1)."""
+    from backend.schemas.projects import validate_schedule_dependency_lead_lag
+
+    res = validate_schedule_dependency_lead_lag(
+        [
+            {"predecessor_id": "T1", "successor_id": "T1"},
+            {"predecessor_id": "T2", "successor_id": "T3", "type": "ZZ"},
+            {"predecessor_id": "T3", "successor_id": "T4", "lag_days": 90},
+        ]
+    )
+
+    assert res["self_dependency_ids"] == ["T1"]
+    assert res["invalid_relationship_types"] == ["zz"]
+    assert res["excessive_lag_links"] == ["T3->T4"]
+    assert res["is_valid"] is False
+    assert res["network_posture"] == "CIRCULAR_SELF_LINK_DETECTED"
+
+
+def test_validate_schedule_dependency_lead_lag_invalid_and_excessive_lag():
+    """Gramática inválida sin self-links -> INVALID_DEPENDENCY_GRAMMAR; solo lag -> EXCESSIVE_LAG_DISTORTION."""
+    from backend.schemas.projects import validate_schedule_dependency_lead_lag
+
+    bad_grammar = validate_schedule_dependency_lead_lag(
+        [
+            {"predecessor_id": "T1", "successor_id": "T2", "type": "xy"},
+            {"predecessor_id": "T2", "successor_id": "T3", "lag_days": 99},
+            {"predecessor_id": "T3", "successor_id": "T4", "relationship": "ff"},
+        ]
+    )
+    assert bad_grammar["invalid_relationship_types"] == ["xy"]
+    assert bad_grammar["excessive_lag_links"] == ["T2->T3"]
+    assert bad_grammar["network_posture"] == "INVALID_DEPENDENCY_GRAMMAR"
+
+    only_lag = validate_schedule_dependency_lead_lag(
+        [
+            {"predecessor_id": "A", "successor_id": "B", "lag_days": 31},
+            {"predecessor_id": "C", "successor_id": "D", "lag_days": -45},
+        ],
+        max_lag_days=30,
+    )
+    assert only_lag["excessive_lag_links"] == ["A->B", "C->D"]
+    assert only_lag["is_valid"] is False
+    assert only_lag["network_posture"] == "EXCESSIVE_LAG_DISTORTION"
+
+
+def test_validate_schedule_dependency_lead_lag_empty_and_non_dicts():
+    """None, lista vacía o items no-dict -> NO_DEPENDENCIES_DEFINED con is_valid True."""
+    from backend.schemas.projects import validate_schedule_dependency_lead_lag
+
+    for deps in (None, [], ["no dict", 7]):
+        res = validate_schedule_dependency_lead_lag(deps)  # type: ignore[arg-type]
+        assert res == {
+            "is_valid": True,
+            "total_dependencies": 0,
+            "self_dependency_ids": [],
+            "invalid_relationship_types": [],
+            "excessive_lag_links": [],
+            "sf_relationship_count": 0,
+            "network_posture": "NO_DEPENDENCIES_DEFINED",
+        }
+
+
 

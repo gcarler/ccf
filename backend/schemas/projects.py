@@ -2787,4 +2787,80 @@ def validate_resource_allocation_utilization(
     }
 
 
+def validate_schedule_dependency_lead_lag(
+    dependencies: Optional[list[dict]],
+    max_lag_days: int = 30,
+) -> dict:
+    """Valida la red de dependencias del cronograma (PMBOK §6.3 — FS/SS/FF/SF, lead/lag).
+
+    Cada dict suele declarar `predecessor_id`, `successor_id`, `type`/
+    `relationship` (FS|SS|FF|SF case-insensitive, default 'FS') y `lag_days`
+    (default 0; admite lead negativo):
+    - `self_dependency_ids`: ids con predecessor == successor no vacío
+      (circular self-link).
+    - `invalid_relationship_types`: valores declarados fuera de la gramática.
+    - `excessive_lag_links`: enlaces 'pred->succ' con abs(lag) > max_lag_days.
+    - `sf_relationship_count`: conteo de dependencias SF.
+    - `is_valid`: las tres listas de error vacías.
+    - `network_posture`: 'NO_DEPENDENCIES_DEFINED' sin dependencias;
+      'CIRCULAR_SELF_LINK_DETECTED' con self-links;
+      'INVALID_DEPENDENCY_GRAMMAR' con tipos inválidos;
+      'EXCESSIVE_LAG_DISTORTION' con lag excesivo; y
+      'SOUND_SCHEDULE_NETWORK' en el caso válido.
+    """
+    VALID_RELATIONSHIPS = {"fs", "ss", "ff", "sf"}
+    items = [item for item in (dependencies or []) if isinstance(item, dict)]
+    safe_max_lag = float(max_lag_days) if max_lag_days is not None else 30.0
+
+    self_dependency_ids: list[str] = []
+    invalid_relationship_types: list[str] = []
+    excessive_lag_links: list[str] = []
+    sf_relationship_count = 0
+
+    for item in items:
+        predecessor_id = str(item.get("predecessor_id") or "").strip()
+        successor_id = str(item.get("successor_id") or "").strip()
+        relationship = str(
+            item.get("type") or item.get("relationship") or "FS"
+        ).strip().lower()
+        lag_days = float(item.get("lag_days") or 0.0)
+
+        if predecessor_id and predecessor_id == successor_id:
+            self_dependency_ids.append(predecessor_id)
+        if relationship not in VALID_RELATIONSHIPS:
+            invalid_relationship_types.append(relationship)
+        if abs(lag_days) > safe_max_lag:
+            excessive_lag_links.append(f"{predecessor_id}->{successor_id}")
+        if relationship == "sf":
+            sf_relationship_count += 1
+
+    total_dependencies = len(items)
+    is_valid = bool(
+        not self_dependency_ids
+        and not invalid_relationship_types
+        and not excessive_lag_links
+    )
+
+    if total_dependencies == 0:
+        network_posture = "NO_DEPENDENCIES_DEFINED"
+    elif self_dependency_ids:
+        network_posture = "CIRCULAR_SELF_LINK_DETECTED"
+    elif invalid_relationship_types:
+        network_posture = "INVALID_DEPENDENCY_GRAMMAR"
+    elif excessive_lag_links:
+        network_posture = "EXCESSIVE_LAG_DISTORTION"
+    else:
+        network_posture = "SOUND_SCHEDULE_NETWORK"
+
+    return {
+        "is_valid": is_valid,
+        "total_dependencies": total_dependencies,
+        "self_dependency_ids": self_dependency_ids,
+        "invalid_relationship_types": invalid_relationship_types,
+        "excessive_lag_links": excessive_lag_links,
+        "sf_relationship_count": sf_relationship_count,
+        "network_posture": network_posture,
+    }
+
+
 
