@@ -684,6 +684,84 @@ def summarize_projects_path_parameter_uuid_typing(
     }
 
 
+def summarize_projects_security_requirement_coverage(
+    openapi_schema: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Audita la cobertura de requisitos de seguridad OpenAPI en operaciones de proyectos."""
+    empty_result: dict[str, Any] = {
+        "total_operations": 0,
+        "secured_operations_count": 0,
+        "unsecured_operations": [],
+        "security_coverage_pct": 0.0,
+        "security_posture": "NO_PROJECTS_OPERATIONS",
+    }
+    if not isinstance(openapi_schema, dict) or not isinstance(
+        openapi_schema.get("paths"), dict
+    ):
+        return empty_result
+
+    has_root_sec = bool(
+        isinstance(openapi_schema.get("security"), list)
+        and any(
+            isinstance(s, dict) and len(s) > 0 for s in openapi_schema["security"]
+        )
+    )
+
+    total_operations = 0
+    secured_operations_count = 0
+    unsecured_operations: list[str] = []
+
+    for path, path_item in sorted(openapi_schema["paths"].items()):
+        if not isinstance(path, str) or "/projects" not in path:
+            continue
+        if not isinstance(path_item, dict):
+            continue
+
+        for method in ("get", "post", "put", "patch", "delete"):
+            op_spec = path_item.get(method)
+            if not isinstance(op_spec, dict):
+                continue
+
+            total_operations += 1
+            if "security" in op_spec:
+                is_secured = bool(
+                    isinstance(op_spec.get("security"), list)
+                    and any(
+                        isinstance(s, dict) and len(s) > 0
+                        for s in op_spec["security"]
+                    )
+                )
+            else:
+                is_secured = has_root_sec
+
+            if is_secured:
+                secured_operations_count += 1
+            else:
+                unsecured_operations.append(f"{method.upper()} {path}")
+
+    if total_operations == 0:
+        return empty_result
+
+    security_coverage_pct = round(
+        (secured_operations_count / total_operations) * 100.0, 2
+    )
+    if len(unsecured_operations) == 0:
+        security_posture = "ENFORCED_SECURITY_CONTRACTS"
+    elif security_coverage_pct >= 50.0:
+        security_posture = "PARTIAL_SECURITY_COVERAGE"
+    else:
+        security_posture = "UNPROTECTED_ENDPOINT_EXPOSURE"
+
+    return {
+        "total_operations": total_operations,
+        "secured_operations_count": secured_operations_count,
+        "unsecured_operations": unsecured_operations,
+        "security_coverage_pct": security_coverage_pct,
+        "security_posture": security_posture,
+    }
+
+
+
 
 
 

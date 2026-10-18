@@ -1349,6 +1349,127 @@ def test_path_parameter_uuid_typing_empty_or_no_id_params():
     )
 
 
+# ─── summarize_projects_security_requirement_coverage (pure helper) ──────────
+
+
+def test_security_requirement_coverage_enforced_via_root_and_operation():
+    """100% de operaciones protegidas (heredando de root security o con security explícito) -> ENFORCED_SECURITY_CONTRACTS."""
+    openapi = {
+        "security": [{"BearerAuth": []}],
+        "paths": {
+            "/api/projects": {
+                "get": {"operationId": "list_projects"},
+                "post": {
+                    "operationId": "create_project",
+                    "security": [{"OAuth2PasswordBearer": ["projects:write"]}],
+                },
+            }
+        },
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_security_requirement_coverage(
+        openapi
+    )
+
+    assert res == {
+        "total_operations": 2,
+        "secured_operations_count": 2,
+        "unsecured_operations": [],
+        "security_coverage_pct": 100.0,
+        "security_posture": "ENFORCED_SECURITY_CONTRACTS",
+    }
+
+
+def test_security_requirement_coverage_partial_when_op_overrides_with_empty():
+    """>= 50% protegidas pero una operación sobreescribe security=[] -> PARTIAL_SECURITY_COVERAGE."""
+    openapi = {
+        "security": [{"BearerAuth": []}],
+        "paths": {
+            "/api/projects": {
+                "get": {"operationId": "list_projects"},
+                "post": {"operationId": "create_project"},
+            },
+            "/api/projects/public-health": {
+                "get": {
+                    "operationId": "public_health",
+                    "security": [],
+                }
+            },
+        },
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_security_requirement_coverage(
+        openapi
+    )
+
+    assert res == {
+        "total_operations": 3,
+        "secured_operations_count": 2,
+        "unsecured_operations": ["GET /api/projects/public-health"],
+        "security_coverage_pct": 66.67,
+        "security_posture": "PARTIAL_SECURITY_COVERAGE",
+    }
+
+
+def test_security_requirement_coverage_unprotected_exposure():
+    """< 50% de operaciones protegidas -> UNPROTECTED_ENDPOINT_EXPOSURE."""
+    openapi = {
+        "paths": {
+            "/api/projects": {
+                "get": {"operationId": "list_projects"},
+                "post": {
+                    "operationId": "create_project",
+                    "security": [{}],  # empty dict does not count as valid security scheme
+                },
+            },
+            "/api/projects/{project_id}": {
+                "delete": {
+                    "operationId": "delete_project",
+                    "security": [{"BearerAuth": []}],
+                }
+            },
+        }
+    }
+
+    res = audit_projects_api_contracts.summarize_projects_security_requirement_coverage(
+        openapi
+    )
+
+    assert res == {
+        "total_operations": 3,
+        "secured_operations_count": 1,
+        "unsecured_operations": ["GET /api/projects", "POST /api/projects"],
+        "security_coverage_pct": 33.33,
+        "security_posture": "UNPROTECTED_ENDPOINT_EXPOSURE",
+    }
+
+
+def test_security_requirement_coverage_empty_or_no_projects_operations():
+    """Esquema vacío, None o sin operaciones bajo /projects -> NO_PROJECTS_OPERATIONS."""
+    expected = {
+        "total_operations": 0,
+        "secured_operations_count": 0,
+        "unsecured_operations": [],
+        "security_coverage_pct": 0.0,
+        "security_posture": "NO_PROJECTS_OPERATIONS",
+    }
+    assert (
+        audit_projects_api_contracts.summarize_projects_security_requirement_coverage(None)
+        == expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_security_requirement_coverage({})
+        == expected
+    )
+    assert (
+        audit_projects_api_contracts.summarize_projects_security_requirement_coverage(
+            {"paths": {"/api/crm/contacts": {"get": {"operationId": "list_crm"}}}}
+        )
+        == expected
+    )
+
+
+
 
 
 
