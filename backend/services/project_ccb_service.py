@@ -2877,6 +2877,7 @@ __all__ = [
     "audit_waf_owasp_crs_anomaly_threshold_and_rate_limit_gate",
     "audit_zero_downtime_db_migration_expand_contract_and_lock_gate",
     "audit_sbom_slsa_provenance_and_cisa_kev_release_gate",
+    "audit_chaos_engineering_blast_radius_and_steady_state_gate",
     "ProjectCCBService",
 ]
 
@@ -9838,4 +9839,150 @@ def audit_sbom_slsa_provenance_and_cisa_kev_release_gate(
 
 ProjectCCBService.audit_sbom_slsa_provenance_and_cisa_kev_release_gate = staticmethod(
     audit_sbom_slsa_provenance_and_cisa_kev_release_gate
+)
+
+
+def audit_chaos_engineering_blast_radius_and_steady_state_gate(
+    experiments: list[dict[str, Any]],
+    *,
+    max_blast_radius_instances_pct: float = 10.0,
+    max_abort_stop_latency_ms: float = 500.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §8.3 & §11.6 — CCB Chaos Engineering Fault-Injection Blast Radius Cap, Kill-Switch Abort Latency & Steady-State Recovery Gate Auditor."""
+    normalized_max_blast = min(
+        max(float(max_blast_radius_instances_pct), 0.1), 100.0
+    )
+    normalized_max_abort_ms = max(float(max_abort_stop_latency_ms), 10.0)
+
+    raw_experiments = experiments if isinstance(experiments, list) else []
+    evaluated_experiments: list[dict[str, Any]] = []
+    healthy_count = 0
+    warning_count = 0
+    critical_count = 0
+    unbounded_fault_count = 0
+    blast_radius_exceeded_count = 0
+    abort_latency_breach_count = 0
+
+    for idx, item in enumerate(raw_experiments, start=1):
+        if not isinstance(item, dict):
+            continue
+        experiment_id = str(
+            item.get("experiment_id") or f"chaos-exp-{idx}"
+        ).strip()
+
+        raw_targeted = item.get("targeted_instances_pct", 1.0)
+        try:
+            targeted_instances_pct = float(
+                1.0 if raw_targeted is None else raw_targeted
+            )
+        except (TypeError, ValueError):
+            targeted_instances_pct = 1.0
+
+        raw_abort = item.get("abort_stop_latency_ms", 100.0)
+        try:
+            abort_stop_latency_ms = float(
+                100.0 if raw_abort is None else raw_abort
+            )
+        except (TypeError, ValueError):
+            abort_stop_latency_ms = 100.0
+
+        steady_state_hypothesis_recovered = bool(
+            item.get("steady_state_hypothesis_recovered", True)
+        )
+        automated_halt_on_slo_breach_enabled = bool(
+            item.get("automated_halt_on_slo_breach_enabled", True)
+        )
+        customer_facing_sev1_triggered = bool(
+            item.get("customer_facing_sev1_triggered", False)
+        )
+
+        blast_radius_exceeded = targeted_instances_pct > normalized_max_blast
+        abort_latency_breached = abort_stop_latency_ms > normalized_max_abort_ms
+        unbounded_fault_injection = (
+            (blast_radius_exceeded and not automated_halt_on_slo_breach_enabled)
+            or customer_facing_sev1_triggered
+            or not steady_state_hypothesis_recovered
+        )
+
+        if unbounded_fault_injection:
+            unbounded_fault_count += 1
+        if blast_radius_exceeded:
+            blast_radius_exceeded_count += 1
+        if abort_latency_breached:
+            abort_latency_breach_count += 1
+
+        if unbounded_fault_injection:
+            experiment_status = "critical"
+            critical_count += 1
+        elif (
+            blast_radius_exceeded
+            or abort_latency_breached
+            or not automated_halt_on_slo_breach_enabled
+        ):
+            experiment_status = "warning"
+            warning_count += 1
+        else:
+            experiment_status = "healthy"
+            healthy_count += 1
+
+        evaluated_experiments.append(
+            {
+                "experiment_id": experiment_id,
+                "targeted_instances_pct": targeted_instances_pct,
+                "abort_stop_latency_ms": abort_stop_latency_ms,
+                "steady_state_hypothesis_recovered": steady_state_hypothesis_recovered,
+                "automated_halt_on_slo_breach_enabled": automated_halt_on_slo_breach_enabled,
+                "customer_facing_sev1_triggered": customer_facing_sev1_triggered,
+                "blast_radius_exceeded": blast_radius_exceeded,
+                "abort_latency_breached": abort_latency_breached,
+                "unbounded_fault_injection": unbounded_fault_injection,
+                "experiment_status": experiment_status,
+            }
+        )
+
+    total_experiments = len(evaluated_experiments)
+    chaos_gate_pass_rate_pct = (
+        round((healthy_count / total_experiments) * 100.0, 2)
+        if total_experiments > 0
+        else 100.0
+    )
+
+    recommendations: list[str] = []
+    if unbounded_fault_count > 0:
+        recommendations.append(
+            f"Suspender autorización CCB de inyección de fallos: restaurar hipótesis de estado estacionario, habilitar auto-halt por SLO y remediar impacto SEV-1 en {unbounded_fault_count} experimento(s)."
+        )
+    if blast_radius_exceeded_count > 0:
+        recommendations.append(
+            f"Acotar el radio de explosión (blast radius) <= {normalized_max_blast}% de instancias en {blast_radius_exceeded_count} experimento(s)."
+        )
+    if abort_latency_breach_count > 0:
+        recommendations.append(
+            f"Optimizar el circuito de kill-switch para garantizar abort_stop_latency_ms <= {normalized_max_abort_ms}ms en {abort_latency_breach_count} experimento(s)."
+        )
+
+    if critical_count > 0:
+        status = "critical"
+    elif warning_count > 0:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_experiments": total_experiments,
+        "healthy_count": healthy_count,
+        "warning_count": warning_count,
+        "critical_count": critical_count,
+        "unbounded_fault_count": unbounded_fault_count,
+        "blast_radius_exceeded_count": blast_radius_exceeded_count,
+        "abort_latency_breach_count": abort_latency_breach_count,
+        "chaos_gate_pass_rate_pct": chaos_gate_pass_rate_pct,
+        "status": status,
+        "experiments": evaluated_experiments,
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.audit_chaos_engineering_blast_radius_and_steady_state_gate = staticmethod(
+    audit_chaos_engineering_blast_radius_and_steady_state_gate
 )

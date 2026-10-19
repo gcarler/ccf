@@ -12801,3 +12801,118 @@ def test_audit_sbom_slsa_provenance_and_cisa_kev_release_gate_empty_and_binding(
         "audit_sbom_slsa_provenance_and_cisa_kev_release_gate"
         in mod.__all__
     )
+
+
+def test_audit_chaos_engineering_blast_radius_and_steady_state_gate_healthy():
+    from backend.services.project_ccb_service import (
+        audit_chaos_engineering_blast_radius_and_steady_state_gate,
+    )
+
+    experiments = [
+        {
+            "experiment_id": "chaos-pod-kill-az1",
+            "targeted_instances_pct": 5.0,
+            "abort_stop_latency_ms": 120.0,
+            "steady_state_hypothesis_recovered": True,
+            "automated_halt_on_slo_breach_enabled": True,
+            "customer_facing_sev1_triggered": False,
+        },
+        {
+            "experiment_id": "chaos-network-jitter-redis",
+            "targeted_instances_pct": 8.0,
+            "abort_stop_latency_ms": 210.0,
+            "steady_state_hypothesis_recovered": True,
+            "automated_halt_on_slo_breach_enabled": True,
+            "customer_facing_sev1_triggered": False,
+        },
+    ]
+    res = audit_chaos_engineering_blast_radius_and_steady_state_gate(
+        experiments
+    )
+    assert res["status"] == "healthy"
+    assert res["total_experiments"] == 2
+    assert res["healthy_count"] == 2
+    assert res["warning_count"] == 0
+    assert res["critical_count"] == 0
+    assert res["chaos_gate_pass_rate_pct"] == 100.0
+    assert res["recommendations"] == []
+
+
+def test_audit_chaos_engineering_blast_radius_and_steady_state_gate_warning():
+    from backend.services.project_ccb_service import (
+        audit_chaos_engineering_blast_radius_and_steady_state_gate,
+    )
+
+    experiments = [
+        {
+            "experiment_id": "chaos-wide-canary-slow-abort",
+            "targeted_instances_pct": 18.0,
+            "abort_stop_latency_ms": 780.0,
+            "steady_state_hypothesis_recovered": True,
+            "automated_halt_on_slo_breach_enabled": True,
+            "customer_facing_sev1_triggered": False,
+        }
+    ]
+    res = audit_chaos_engineering_blast_radius_and_steady_state_gate(
+        experiments
+    )
+    assert res["status"] == "warning"
+    assert res["total_experiments"] == 1
+    assert res["warning_count"] == 1
+    assert res["critical_count"] == 0
+    assert res["blast_radius_exceeded_count"] == 1
+    assert res["abort_latency_breach_count"] == 1
+    assert res["unbounded_fault_count"] == 0
+    assert res["experiments"][0]["experiment_status"] == "warning"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_chaos_engineering_blast_radius_and_steady_state_gate_critical():
+    from backend.services.project_ccb_service import (
+        audit_chaos_engineering_blast_radius_and_steady_state_gate,
+    )
+
+    experiments = [
+        {
+            "experiment_id": "chaos-unbounded-region-blackhole",
+            "targeted_instances_pct": 35.0,
+            "abort_stop_latency_ms": 1400.0,
+            "steady_state_hypothesis_recovered": False,
+            "automated_halt_on_slo_breach_enabled": False,
+            "customer_facing_sev1_triggered": True,
+        }
+    ]
+    res = audit_chaos_engineering_blast_radius_and_steady_state_gate(
+        experiments
+    )
+    assert res["status"] == "critical"
+    assert res["total_experiments"] == 1
+    assert res["critical_count"] == 1
+    assert res["unbounded_fault_count"] == 1
+    assert res["blast_radius_exceeded_count"] == 1
+    assert res["chaos_gate_pass_rate_pct"] == 0.0
+    assert res["experiments"][0]["experiment_status"] == "critical"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_chaos_engineering_blast_radius_and_steady_state_gate_empty_and_binding():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_chaos_engineering_blast_radius_and_steady_state_gate,
+    )
+
+    empty = audit_chaos_engineering_blast_radius_and_steady_state_gate([])
+    assert empty["status"] == "healthy"
+    assert empty["total_experiments"] == 0
+    assert empty["chaos_gate_pass_rate_pct"] == 100.0
+    assert (
+        ProjectCCBService.audit_chaos_engineering_blast_radius_and_steady_state_gate(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_chaos_engineering_blast_radius_and_steady_state_gate"
+        in mod.__all__
+    )

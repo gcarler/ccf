@@ -3197,6 +3197,7 @@ __all__ = [
     "audit_sovereign_political_risk_miga_insurance_and_arbitration_seat",
     "audit_epc_performance_guarantee_capacity_test_and_minimum_acceptance",
     "audit_spv_project_finance_dscr_llcr_covenant_and_equity_lockup",
+    "audit_ppp_concession_availability_payment_and_handback_residual_life",
     "ProjectLifecyclePMIService",
 ]
 
@@ -9896,4 +9897,184 @@ def audit_spv_project_finance_dscr_llcr_covenant_and_equity_lockup(
 
 ProjectLifecyclePMIService.audit_spv_project_finance_dscr_llcr_covenant_and_equity_lockup = staticmethod(
     audit_spv_project_finance_dscr_llcr_covenant_and_equity_lockup
+)
+
+
+def audit_ppp_concession_availability_payment_and_handback_residual_life(
+    concession_assets: list[dict[str, Any]],
+    *,
+    max_deduction_penalty_pct: float = 15.0,
+    min_handback_residual_life_years: float = 5.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §12.3 & §11.2 — Public-Private Partnership (PPP/P3) Concession Availability Payment SLA Deduction, Termination Default Threshold & Handback Residual Asset Life Auditor."""
+    normalized_max_deduction = min(max(float(max_deduction_penalty_pct), 1.0), 100.0)
+    normalized_min_residual_life = max(
+        float(min_handback_residual_life_years), 0.5
+    )
+
+    raw_assets = concession_assets if isinstance(concession_assets, list) else []
+    evaluated_assets: list[dict[str, Any]] = []
+    healthy_count = 0
+    warning_count = 0
+    critical_count = 0
+    default_threshold_breach_count = 0
+    unfunded_handback_count = 0
+    excessive_deduction_count = 0
+    handback_shortfall_count = 0
+
+    for idx, item in enumerate(raw_assets, start=1):
+        if not isinstance(item, dict):
+            continue
+        asset_id = str(item.get("asset_id") or f"ppp-asset-{idx}").strip()
+        try:
+            gross_availability_payment_usd = float(
+                item.get("gross_availability_payment_usd", 0.0) or 0.0
+            )
+        except (TypeError, ValueError):
+            gross_availability_payment_usd = 0.0
+        try:
+            sla_unavailability_deduction_usd = float(
+                item.get("sla_unavailability_deduction_usd", 0.0) or 0.0
+            )
+        except (TypeError, ValueError):
+            sla_unavailability_deduction_usd = 0.0
+
+        raw_life = item.get("inspected_residual_life_at_handback_years", 10.0)
+        try:
+            inspected_residual_life_at_handback_years = float(
+                10.0 if raw_life is None else raw_life
+            )
+        except (TypeError, ValueError):
+            inspected_residual_life_at_handback_years = 10.0
+
+        handback_escrow_reserve_funded = bool(
+            item.get("handback_escrow_reserve_funded", True)
+        )
+
+        raw_term_thresh = item.get(
+            "concessionaire_default_termination_threshold_pct", 25.0
+        )
+        try:
+            concessionaire_default_termination_threshold_pct = float(
+                25.0 if raw_term_thresh is None else raw_term_thresh
+            )
+        except (TypeError, ValueError):
+            concessionaire_default_termination_threshold_pct = 25.0
+
+        deduction_penalty_pct = (
+            round(
+                (sla_unavailability_deduction_usd / gross_availability_payment_usd)
+                * 100.0,
+                2,
+            )
+            if gross_availability_payment_usd > 0.0
+            else 0.0
+        )
+
+        concession_default_threshold_breached = (
+            deduction_penalty_pct
+            >= concessionaire_default_termination_threshold_pct
+        )
+        excessive_availability_deduction = (
+            deduction_penalty_pct > normalized_max_deduction
+        )
+        handback_residual_life_shortfall = (
+            inspected_residual_life_at_handback_years
+            < normalized_min_residual_life
+        )
+        unfunded_handback_remediation = (
+            handback_residual_life_shortfall
+            and not handback_escrow_reserve_funded
+        )
+
+        if concession_default_threshold_breached:
+            default_threshold_breach_count += 1
+        if unfunded_handback_remediation:
+            unfunded_handback_count += 1
+        if excessive_availability_deduction:
+            excessive_deduction_count += 1
+        if handback_residual_life_shortfall:
+            handback_shortfall_count += 1
+
+        if concession_default_threshold_breached or unfunded_handback_remediation:
+            asset_status = "critical"
+            critical_count += 1
+        elif (
+            excessive_availability_deduction
+            or handback_residual_life_shortfall
+            or not handback_escrow_reserve_funded
+        ):
+            asset_status = "warning"
+            warning_count += 1
+        else:
+            asset_status = "healthy"
+            healthy_count += 1
+
+        evaluated_assets.append(
+            {
+                "asset_id": asset_id,
+                "gross_availability_payment_usd": gross_availability_payment_usd,
+                "sla_unavailability_deduction_usd": sla_unavailability_deduction_usd,
+                "inspected_residual_life_at_handback_years": inspected_residual_life_at_handback_years,
+                "handback_escrow_reserve_funded": handback_escrow_reserve_funded,
+                "concessionaire_default_termination_threshold_pct": concessionaire_default_termination_threshold_pct,
+                "deduction_penalty_pct": deduction_penalty_pct,
+                "concession_default_threshold_breached": concession_default_threshold_breached,
+                "excessive_availability_deduction": excessive_availability_deduction,
+                "handback_residual_life_shortfall": handback_residual_life_shortfall,
+                "unfunded_handback_remediation": unfunded_handback_remediation,
+                "asset_status": asset_status,
+            }
+        )
+
+    total_assets = len(evaluated_assets)
+    ppp_compliance_rate_pct = (
+        round((healthy_count / total_assets) * 100.0, 2)
+        if total_assets > 0
+        else 100.0
+    )
+
+    recommendations: list[str] = []
+    if default_threshold_breach_count > 0:
+        recommendations.append(
+            f"Notificar riesgo de terminación anticipada por incumplimiento del concesionario (deducción >= umbral de default) y activar Lenders' Direct Agreement Step-In en {default_threshold_breach_count} activo(s)."
+        )
+    if unfunded_handback_count > 0:
+        recommendations.append(
+            f"Fondear inmediatamente la reserva de reversión (Handback Escrow Reserve) o ejecutar CAPEX de rehabilitación estructural en {unfunded_handback_count} activo(s) con déficit de vida residual."
+        )
+    if excessive_deduction_count > 0:
+        recommendations.append(
+            f"Corregir indisponibilidad operativa O&M para reducir penalidades por debajo de {normalized_max_deduction}% del pago por disponibilidad ({excessive_deduction_count} activo(s))."
+        )
+    if handback_shortfall_count > 0:
+        recommendations.append(
+            f"Programar renovación mayor antes del handback para garantizar vida útil residual >= {normalized_min_residual_life} años ({handback_shortfall_count} activo(s))."
+        )
+
+    if critical_count > 0:
+        status = "critical"
+    elif warning_count > 0:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_assets": total_assets,
+        "healthy_count": healthy_count,
+        "warning_count": warning_count,
+        "critical_count": critical_count,
+        "default_threshold_breach_count": default_threshold_breach_count,
+        "unfunded_handback_count": unfunded_handback_count,
+        "excessive_deduction_count": excessive_deduction_count,
+        "handback_shortfall_count": handback_shortfall_count,
+        "ppp_compliance_rate_pct": ppp_compliance_rate_pct,
+        "status": status,
+        "assets": evaluated_assets,
+        "recommendations": recommendations,
+    }
+
+
+ProjectLifecyclePMIService.audit_ppp_concession_availability_payment_and_handback_residual_life = staticmethod(
+    audit_ppp_concession_availability_payment_and_handback_residual_life
 )

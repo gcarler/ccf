@@ -12724,3 +12724,121 @@ def test_audit_spv_project_finance_dscr_llcr_covenant_and_equity_lockup_empty_an
         "audit_spv_project_finance_dscr_llcr_covenant_and_equity_lockup"
         in mod.__all__
     )
+
+
+def test_audit_ppp_concession_availability_payment_and_handback_residual_life_healthy():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_ppp_concession_availability_payment_and_handback_residual_life,
+    )
+
+    assets = [
+        {
+            "asset_id": "PPP-HIGHWAY-CORRIDOR-01",
+            "gross_availability_payment_usd": 5000000.0,
+            "sla_unavailability_deduction_usd": 150000.0,
+            "inspected_residual_life_at_handback_years": 8.5,
+            "handback_escrow_reserve_funded": True,
+            "concessionaire_default_termination_threshold_pct": 25.0,
+        },
+        {
+            "asset_id": "PPP-HOSPITAL-WING-02",
+            "gross_availability_payment_usd": 3000000.0,
+            "sla_unavailability_deduction_usd": 60000.0,
+            "inspected_residual_life_at_handback_years": 12.0,
+            "handback_escrow_reserve_funded": True,
+            "concessionaire_default_termination_threshold_pct": 25.0,
+        },
+    ]
+    res = audit_ppp_concession_availability_payment_and_handback_residual_life(
+        assets
+    )
+    assert res["status"] == "healthy"
+    assert res["total_assets"] == 2
+    assert res["healthy_count"] == 2
+    assert res["warning_count"] == 0
+    assert res["critical_count"] == 0
+    assert res["ppp_compliance_rate_pct"] == 100.0
+    assert res["recommendations"] == []
+
+
+def test_audit_ppp_concession_availability_payment_and_handback_residual_life_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_ppp_concession_availability_payment_and_handback_residual_life,
+    )
+
+    assets = [
+        {
+            "asset_id": "PPP-BRIDGE-DECK-03",
+            "gross_availability_payment_usd": 4000000.0,
+            "sla_unavailability_deduction_usd": 720000.0,
+            "inspected_residual_life_at_handback_years": 3.5,
+            "handback_escrow_reserve_funded": True,
+            "concessionaire_default_termination_threshold_pct": 25.0,
+        }
+    ]
+    res = audit_ppp_concession_availability_payment_and_handback_residual_life(
+        assets
+    )
+    assert res["status"] == "warning"
+    assert res["total_assets"] == 1
+    assert res["warning_count"] == 1
+    assert res["critical_count"] == 0
+    assert res["excessive_deduction_count"] == 1
+    assert res["handback_shortfall_count"] == 1
+    assert res["unfunded_handback_count"] == 0
+    assert res["assets"][0]["deduction_penalty_pct"] == 18.0
+    assert res["assets"][0]["asset_status"] == "warning"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_ppp_concession_availability_payment_and_handback_residual_life_critical():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_ppp_concession_availability_payment_and_handback_residual_life,
+    )
+
+    assets = [
+        {
+            "asset_id": "PPP-TUNNEL-VENT-DEFAULT",
+            "gross_availability_payment_usd": 2000000.0,
+            "sla_unavailability_deduction_usd": 600000.0,
+            "inspected_residual_life_at_handback_years": 2.0,
+            "handback_escrow_reserve_funded": False,
+            "concessionaire_default_termination_threshold_pct": 25.0,
+        }
+    ]
+    res = audit_ppp_concession_availability_payment_and_handback_residual_life(
+        assets
+    )
+    assert res["status"] == "critical"
+    assert res["total_assets"] == 1
+    assert res["critical_count"] == 1
+    assert res["default_threshold_breach_count"] == 1
+    assert res["unfunded_handback_count"] == 1
+    assert res["ppp_compliance_rate_pct"] == 0.0
+    assert res["assets"][0]["asset_status"] == "critical"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_ppp_concession_availability_payment_and_handback_residual_life_empty_and_binding():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_ppp_concession_availability_payment_and_handback_residual_life,
+    )
+
+    empty = (
+        audit_ppp_concession_availability_payment_and_handback_residual_life([])
+    )
+    assert empty["status"] == "healthy"
+    assert empty["total_assets"] == 0
+    assert empty["ppp_compliance_rate_pct"] == 100.0
+    assert (
+        ProjectLifecyclePMIService.audit_ppp_concession_availability_payment_and_handback_residual_life(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_ppp_concession_availability_payment_and_handback_residual_life"
+        in mod.__all__
+    )
