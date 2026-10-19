@@ -13949,3 +13949,153 @@ def test_executive_report_cmmc_sprs_poam_field_coercion_and_static_equality():
         ProjectExportService.audit_executive_report_cmmc_nist_800_171_cui_sprs_and_poam_closeout(110, 0)
         is not None
     )
+
+
+def test_executive_report_fda_part11_alcoa_esignature_clean():
+    """Sin excepciones ALCOA+ ni firmas repudiables ni desviaciones -> 'FDA_21_CFR_PART11_GXP_ALCOA_VALIDATED_CLEAN'."""
+    import backend.services.project_export_service as export_module
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_fda_21_cfr_part11_gxp_alcoa_and_esignature,
+    )
+
+    res = audit_executive_report_fda_21_cfr_part11_gxp_alcoa_and_esignature(0, 0)
+    assert res == {
+        "total_gxp_part11_exceptions": 0,
+        "fda_483_data_integrity_breach": False,
+        "csv_validation_or_ntp_drift_warning": False,
+        "part11_gxp_readiness_score_pct": 100.0,
+        "iq_oq_pq_validation_deviations_open": 0,
+        "part11_compliance_status": "FDA_21_CFR_PART11_GXP_ALCOA_VALIDATED_CLEAN",
+    }
+    # Vínculo estático y exportación en __all__.
+    assert (
+        ProjectExportService.audit_executive_report_fda_21_cfr_part11_gxp_alcoa_and_esignature(0, 0)
+        == res
+    )
+    assert "audit_executive_report_fda_21_cfr_part11_gxp_alcoa_and_esignature" in export_module.__all__
+
+
+def test_executive_report_fda_part11_alcoa_esignature_csv_warning():
+    """Solo desviaciones IQ/OQ/PQ o deriva NTP sin breach -> 'FDA_PART11_CSV_IQ_OQ_PQ_DEVIATION_OR_NTP_DRIFT_WARNING'."""
+    from backend.services.project_export_service import (
+        audit_executive_report_fda_21_cfr_part11_gxp_alcoa_and_esignature,
+    )
+
+    # Desviaciones IQ/OQ/PQ abiertas: -12 c/u y cuenta como ALERTA sola.
+    deviation = audit_executive_report_fda_21_cfr_part11_gxp_alcoa_and_esignature(0, 0, 2)
+    assert deviation == {
+        "total_gxp_part11_exceptions": 2,
+        "fda_483_data_integrity_breach": False,
+        "csv_validation_or_ntp_drift_warning": True,
+        "part11_gxp_readiness_score_pct": 76.0,
+        "iq_oq_pq_validation_deviations_open": 2,
+        "part11_compliance_status": "FDA_PART11_CSV_IQ_OQ_PQ_DEVIATION_OR_NTP_DRIFT_WARNING",
+    }
+
+    # Deriva NTP excedida: -15 y ALERTA sola; el contador IQ/OQ/PQ queda 0.
+    ntp = audit_executive_report_fda_21_cfr_part11_gxp_alcoa_and_esignature(
+        0, 0, clock_ntp_synchronization_drift_exceeded=True,
+    )
+    assert ntp["csv_validation_or_ntp_drift_warning"] is True
+    assert ntp["part11_gxp_readiness_score_pct"] == 85.0
+    assert ntp["iq_oq_pq_validation_deviations_open"] == 0
+    assert ntp["part11_compliance_status"] == "FDA_PART11_CSV_IQ_OQ_PQ_DEVIATION_OR_NTP_DRIFT_WARNING"
+
+    # Ambas ALERTA combinadas: -12 - 15 = 73.0 sin CRITICAL.
+    both = audit_executive_report_fda_21_cfr_part11_gxp_alcoa_and_esignature(
+        0, 0, 1, clock_ntp_synchronization_drift_exceeded=True,
+    )
+    assert both["total_gxp_part11_exceptions"] == 1
+    assert both["part11_gxp_readiness_score_pct"] == 73.0
+    assert both["part11_compliance_status"] == "FDA_PART11_CSV_IQ_OQ_PQ_DEVIATION_OR_NTP_DRIFT_WARNING"
+
+
+def test_executive_report_fda_part11_alcoa_esignature_critical_paths():
+    """ALCOA+ > 0, firmas repudiables, audit trail inactivo u override 483 -> CRITICAL con precedencia."""
+    from backend.services.project_export_service import (
+        audit_executive_report_fda_21_cfr_part11_gxp_alcoa_and_esignature,
+    )
+
+    # Una sola excepción ALCOA+ dispara breach 483: -35.
+    alcoa = audit_executive_report_fda_21_cfr_part11_gxp_alcoa_and_esignature(1, 0)
+    assert alcoa == {
+        "total_gxp_part11_exceptions": 1,
+        "fda_483_data_integrity_breach": True,
+        "csv_validation_or_ntp_drift_warning": False,
+        "part11_gxp_readiness_score_pct": 65.0,
+        "iq_oq_pq_validation_deviations_open": 0,
+        "part11_compliance_status": "CRITICAL_FDA_21_CFR_PART11_ALCOA_OR_AUDIT_TRAIL_483_BREACH",
+    }
+
+    # Firma electrónica sin vincular/repudiable: -30 y breach.
+    repudiable = audit_executive_report_fda_21_cfr_part11_gxp_alcoa_and_esignature(0, 1)
+    assert repudiable["fda_483_data_integrity_breach"] is True
+    assert repudiable["part11_gxp_readiness_score_pct"] == 70.0
+    assert repudiable["part11_compliance_status"] == "CRITICAL_FDA_21_CFR_PART11_ALCOA_OR_AUDIT_TRAIL_483_BREACH"
+
+    # Audit trail inmutable inactivo: -45 y breach sin excepciones.
+    no_trail = audit_executive_report_fda_21_cfr_part11_gxp_alcoa_and_esignature(
+        0, 0, computer_generated_immutable_audit_trail_active=False,
+    )
+    assert no_trail["fda_483_data_integrity_breach"] is True
+    assert no_trail["part11_gxp_readiness_score_pct"] == 55.0
+
+    # Override de riesgo FDA Form 483: -40 y breach directo.
+    override_483 = audit_executive_report_fda_21_cfr_part11_gxp_alcoa_and_esignature(
+        0, 0, fda_form_483_warning_letter_risk_override=True,
+    )
+    assert override_483["part11_gxp_readiness_score_pct"] == 60.0
+
+    # Precedencia CRITICAL sobre ALERTA: excepciones IQ/OQ/PQ + deriva NTP + ALCOA.
+    worst = audit_executive_report_fda_21_cfr_part11_gxp_alcoa_and_esignature(
+        1, 0, 2, clock_ntp_synchronization_drift_exceeded=True,
+    )
+    assert worst["total_gxp_part11_exceptions"] == 3
+    assert worst["csv_validation_or_ntp_drift_warning"] is True
+    assert worst["part11_gxp_readiness_score_pct"] == 26.0
+    assert worst["part11_compliance_status"] == "CRITICAL_FDA_21_CFR_PART11_ALCOA_OR_AUDIT_TRAIL_483_BREACH"
+
+
+def test_executive_report_fda_part11_alcoa_esignature_field_coercion_and_static_equality():
+    """Contadores inválidos/negativos clamp a 0; bools inválidos a defaults; floor de score en 0.0."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_fda_21_cfr_part11_gxp_alcoa_and_esignature,
+    )
+
+    # Floor: 3 excepciones ALCOA+ (105) + override 483 (40) -> 0.0 con CRITICAL.
+    floored = audit_executive_report_fda_21_cfr_part11_gxp_alcoa_and_esignature(
+        3, 0, fda_form_483_warning_letter_risk_override=True,
+    )
+    assert floored["part11_gxp_readiness_score_pct"] == 0.0
+    assert floored["fda_483_data_integrity_breach"] is True
+
+    # Tipos inválidos: contadores a 0, flags a defaults -> CLEAN.
+    coerced = audit_executive_report_fda_21_cfr_part11_gxp_alcoa_and_esignature(
+        "tres",                                 # no-int -> 0
+        None,                                   # no-int -> 0
+        1.5,                                    # no-int -> 0
+        computer_generated_immutable_audit_trail_active="yes",        # no-bool -> True
+        clock_ntp_synchronization_drift_exceeded=1,                    # no-bool -> False
+        fda_form_483_warning_letter_risk_override=None,                # no-bool -> False
+    )
+    assert coerced == {
+        "total_gxp_part11_exceptions": 0,
+        "fda_483_data_integrity_breach": False,
+        "csv_validation_or_ntp_drift_warning": False,
+        "part11_gxp_readiness_score_pct": 100.0,
+        "iq_oq_pq_validation_deviations_open": 0,
+        "part11_compliance_status": "FDA_21_CFR_PART11_GXP_ALCOA_VALIDATED_CLEAN",
+    }
+
+    # Contadores negativos clamp a 0: CLEAN con FALSES intactos.
+    negative = audit_executive_report_fda_21_cfr_part11_gxp_alcoa_and_esignature(-2, -1, -3)
+    assert negative["total_gxp_part11_exceptions"] == 0
+    assert negative["iq_oq_pq_validation_deviations_open"] == 0
+    assert negative["part11_compliance_status"] == "FDA_21_CFR_PART11_GXP_ALCOA_VALIDATED_CLEAN"
+    # Vínculo estático en ProjectExportService.
+    assert (
+        ProjectExportService.audit_executive_report_fda_21_cfr_part11_gxp_alcoa_and_esignature(0, 0)
+        is not None
+    )
