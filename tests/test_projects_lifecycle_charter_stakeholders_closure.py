@@ -8636,3 +8636,122 @@ def test_audit_regulatory_permits_and_statutory_compliance_readiness_staticmetho
         "audit_regulatory_permits_and_statutory_compliance_readiness"
         in mod.__all__
     )
+
+
+def test_audit_charter_business_case_irr_wacc_spread_and_payback_blocked():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_charter_business_case_irr_wacc_spread_and_payback,
+    )
+
+    res = audit_charter_business_case_irr_wacc_spread_and_payback(
+        [
+            {
+                "charter_id": "CHT-LOW-IRR",
+                "projected_irr_pct": 10.5,
+                "corporate_wacc_hurdle_pct": 10.0,
+                "payback_period_months": 24,
+                "has_executive_sponsor_signature": True,
+                "has_measurable_success_criteria": True,
+            },
+            {
+                "charter_id": "CHT-UNSIGNED",
+                "projected_irr_pct": 18.0,
+                "corporate_wacc_hurdle_pct": 10.0,
+                "payback_period_months": 18,
+                "has_executive_sponsor_signature": False,
+                "has_measurable_success_criteria": True,
+            },
+        ],
+        min_irr_over_wacc_spread_pct=2.0,
+        max_payback_months=36,
+    )
+    assert res["total_charters_evaluated"] == 2
+    assert res["value_destroying_charter_ids"] == ["CHT-LOW-IRR"]
+    assert res["unsigned_or_unmeasurable_charter_ids"] == ["CHT-UNSIGNED"]
+    assert res["excessive_payback_charter_ids"] == []
+    assert res["charter_viability_status"] == "CHARTER_AUTHORIZATION_BLOCKED"
+    assert res["is_charter_viable"] is False
+
+
+def test_audit_charter_business_case_irr_wacc_spread_and_payback_payback_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_charter_business_case_irr_wacc_spread_and_payback,
+    )
+
+    res = audit_charter_business_case_irr_wacc_spread_and_payback(
+        [
+            {
+                "charter_id": "CHT-LONG-HORIZON",
+                "projected_irr_pct": 16.0,
+                "corporate_wacc_hurdle_pct": 10.0,
+                "payback_period_months": 48,
+                "has_executive_sponsor_signature": True,
+                "has_measurable_success_criteria": True,
+            }
+        ],
+        min_irr_over_wacc_spread_pct=2.0,
+        max_payback_months=36,
+    )
+    assert res["value_destroying_charter_ids"] == []
+    assert res["unsigned_or_unmeasurable_charter_ids"] == []
+    assert res["excessive_payback_charter_ids"] == ["CHT-LONG-HORIZON"]
+    assert res["charter_viability_status"] == "PAYBACK_HORIZON_WARNING"
+    assert res["is_charter_viable"] is False
+
+
+def test_audit_charter_business_case_irr_wacc_spread_and_payback_sound_and_empty():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_charter_business_case_irr_wacc_spread_and_payback,
+    )
+
+    empty = audit_charter_business_case_irr_wacc_spread_and_payback(
+        [{"charter_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_charters_evaluated"] == 0
+    assert empty["charter_viability_status"] == "CHARTER_INVESTMENT_SOUND"
+    assert empty["is_charter_viable"] is True
+
+    sound = audit_charter_business_case_irr_wacc_spread_and_payback(
+        [
+            {
+                "charter_id": "CHT-PRIME-01",
+                "projected_irr_pct": 15.5,
+                "corporate_wacc_hurdle_pct": 10.0,
+                "payback_period_months": 20,
+                "has_executive_sponsor_signature": True,
+                "has_measurable_success_criteria": True,
+            }
+        ],
+        min_irr_over_wacc_spread_pct=2.0,
+        max_payback_months=36,
+    )
+    assert sound["total_charters_evaluated"] == 1
+    assert sound["charter_viability_status"] == "CHARTER_INVESTMENT_SOUND"
+    assert sound["is_charter_viable"] is True
+
+
+def test_audit_charter_business_case_irr_wacc_spread_and_payback_staticmethod_and_dunder_all():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_charter_business_case_irr_wacc_spread_and_payback,
+    )
+
+    sample = [
+        {
+            "charter_id": "CHT-99",
+            "projected_irr_pct": 14.0,
+            "corporate_wacc_hurdle_pct": 10.0,
+            "payback_period_months": 24,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_charter_business_case_irr_wacc_spread_and_payback(
+            sample
+        )
+        == audit_charter_business_case_irr_wacc_spread_and_payback(sample)
+    )
+    assert (
+        "audit_charter_business_case_irr_wacc_spread_and_payback"
+        in mod.__all__
+    )

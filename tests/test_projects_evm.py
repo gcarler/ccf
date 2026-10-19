@@ -8302,3 +8302,125 @@ def test_evaluate_evm_cpif_invalid_and_binding():
         == evaluate_evm_cpif_share_ratio_and_point_of_total_assumption(sample)
     )
     assert "evaluate_evm_cpif_share_ratio_and_point_of_total_assumption" in mod.__all__
+
+
+def test_evaluate_evm_performance_bond_and_letter_of_credit_coverage_default_exposure():
+    from backend.services.project_evm_service import (
+        evaluate_evm_performance_bond_and_letter_of_credit_coverage,
+    )
+
+    res = evaluate_evm_performance_bond_and_letter_of_credit_coverage(
+        [
+            {
+                "instrument_id": "LC-UNDERINSURED",
+                "contract_total_value": 1000000.0,
+                "bond_or_lc_face_amount": 50000.0,
+                "days_valid_after_scheduled_completion": 60,
+                "issuer_credit_rating_investment_grade": True,
+                "is_irrevocable_on_demand": True,
+            },
+            {
+                "instrument_id": "BOND-REVOCABLE",
+                "contract_total_value": 500000.0,
+                "bond_or_lc_face_amount": 75000.0,
+                "days_valid_after_scheduled_completion": 90,
+                "issuer_credit_rating_investment_grade": True,
+                "is_irrevocable_on_demand": False,
+            },
+        ],
+        min_coverage_pct_of_contract=10.0,
+        min_days_beyond_completion_buffer=30,
+    )
+    assert res["total_instruments_evaluated"] == 2
+    assert res["total_bonded_coverage_amount"] == 125000.0
+    assert res["underinsured_instrument_ids"] == ["LC-UNDERINSURED"]
+    assert res["premature_expiry_instrument_ids"] == []
+    assert res["non_compliant_issuer_or_revocable_ids"] == ["BOND-REVOCABLE"]
+    assert res["bond_governance_status"] == "COUNTERPARTY_DEFAULT_EXPOSURE"
+    assert res["is_bond_coverage_compliant"] is False
+
+
+def test_evaluate_evm_performance_bond_and_letter_of_credit_coverage_expiry_warning():
+    from backend.services.project_evm_service import (
+        evaluate_evm_performance_bond_and_letter_of_credit_coverage,
+    )
+
+    res = evaluate_evm_performance_bond_and_letter_of_credit_coverage(
+        [
+            {
+                "instrument_id": "LC-SHORT-TAIL",
+                "contract_total_value": 200000.0,
+                "bond_or_lc_face_amount": 30000.0,
+                "days_valid_after_scheduled_completion": 10,
+                "issuer_credit_rating_investment_grade": True,
+                "is_irrevocable_on_demand": True,
+            }
+        ],
+        min_coverage_pct_of_contract=10.0,
+        min_days_beyond_completion_buffer=30,
+    )
+    assert res["underinsured_instrument_ids"] == []
+    assert res["premature_expiry_instrument_ids"] == ["LC-SHORT-TAIL"]
+    assert res["non_compliant_issuer_or_revocable_ids"] == []
+    assert res["bond_governance_status"] == "EXPIRY_BUFFER_WARNING"
+    assert res["is_bond_coverage_compliant"] is False
+
+
+def test_evaluate_evm_performance_bond_and_letter_of_credit_coverage_sound_and_empty():
+    from backend.services.project_evm_service import (
+        evaluate_evm_performance_bond_and_letter_of_credit_coverage,
+    )
+
+    empty = evaluate_evm_performance_bond_and_letter_of_credit_coverage(
+        [{"instrument_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_instruments_evaluated"] == 0
+    assert empty["total_bonded_coverage_amount"] == 0.0
+    assert empty["bond_governance_status"] == "BOND_COVERAGE_SOUND"
+    assert empty["is_bond_coverage_compliant"] is True
+
+    sound = evaluate_evm_performance_bond_and_letter_of_credit_coverage(
+        [
+            {
+                "instrument_id": "LC-SOLID-01",
+                "contract_total_value": 400000.0,
+                "bond_or_lc_face_amount": 60000.0,
+                "days_valid_after_scheduled_completion": 45,
+                "issuer_credit_rating_investment_grade": True,
+                "is_irrevocable_on_demand": True,
+            }
+        ],
+        min_coverage_pct_of_contract=10.0,
+        min_days_beyond_completion_buffer=30,
+    )
+    assert sound["total_instruments_evaluated"] == 1
+    assert sound["total_bonded_coverage_amount"] == 60000.0
+    assert sound["bond_governance_status"] == "BOND_COVERAGE_SOUND"
+    assert sound["is_bond_coverage_compliant"] is True
+
+
+def test_evaluate_evm_performance_bond_and_letter_of_credit_coverage_staticmethod_and_dunder_all():
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_performance_bond_and_letter_of_credit_coverage,
+    )
+
+    sample = [
+        {
+            "instrument_id": "LC-99",
+            "contract_total_value": 100000.0,
+            "bond_or_lc_face_amount": 15000.0,
+            "days_valid_after_scheduled_completion": 60,
+        }
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_performance_bond_and_letter_of_credit_coverage(
+            sample
+        )
+        == evaluate_evm_performance_bond_and_letter_of_credit_coverage(sample)
+    )
+    assert (
+        "evaluate_evm_performance_bond_and_letter_of_credit_coverage"
+        in mod.__all__
+    )

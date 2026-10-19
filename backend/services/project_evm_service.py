@@ -5519,6 +5519,7 @@ __all__ = [
     "evaluate_evm_contingency_and_management_reserve_drawdown_governance",
     "evaluate_evm_sla_penalty_service_credits_and_earn_back",
     "evaluate_evm_cpif_share_ratio_and_point_of_total_assumption",
+    "evaluate_evm_performance_bond_and_letter_of_credit_coverage",
     "ProjectEVMService",
 ]
 
@@ -9202,5 +9203,115 @@ def evaluate_evm_cpif_share_ratio_and_point_of_total_assumption(
 
 ProjectEVMService.evaluate_evm_cpif_share_ratio_and_point_of_total_assumption = staticmethod(
     evaluate_evm_cpif_share_ratio_and_point_of_total_assumption
+)
+
+
+def evaluate_evm_performance_bond_and_letter_of_credit_coverage(
+    instruments: list[dict[str, Any]],
+    *,
+    min_coverage_pct_of_contract: float = 10.0,
+    min_days_beyond_completion_buffer: int = 30,
+) -> dict[str, Any]:
+    """PMI PMBOK §7.4 & §12.3 — EVM Letter of Credit (LC) / Performance Bond Expiry, Coverage Ratio & Drawdown Trigger Evaluator."""
+    valid_instruments: list[dict[str, Any]] = []
+    if isinstance(instruments, (list, tuple)):
+        for item in instruments:
+            if not isinstance(item, dict):
+                continue
+            iid = str(item.get("instrument_id") or "").strip()
+            if not iid:
+                continue
+            valid_instruments.append({**item, "_iid": iid})
+
+    if not valid_instruments:
+        return {
+            "total_instruments_evaluated": 0,
+            "total_bonded_coverage_amount": 0.0,
+            "underinsured_instrument_ids": [],
+            "premature_expiry_instrument_ids": [],
+            "non_compliant_issuer_or_revocable_ids": [],
+            "bond_governance_status": "BOND_COVERAGE_SOUND",
+            "is_bond_coverage_compliant": True,
+            "recommendations": [],
+        }
+
+    underinsured_instrument_ids: list[str] = []
+    premature_expiry_instrument_ids: list[str] = []
+    non_compliant_issuer_or_revocable_ids: list[str] = []
+    bonded_sum = 0.0
+
+    for inst in valid_instruments:
+        iid = inst["_iid"]
+        contract_val = max(
+            0.0, float(inst.get("contract_total_value", 0.0) or 0.0)
+        )
+        face_amt = max(
+            0.0, float(inst.get("bond_or_lc_face_amount", 0.0) or 0.0)
+        )
+        days_valid = int(
+            inst.get("days_valid_after_scheduled_completion", 60)
+            if inst.get("days_valid_after_scheduled_completion") is not None
+            else 60
+        )
+        inv_grade = bool(
+            inst.get("issuer_credit_rating_investment_grade", True)
+        )
+        irrevocable = bool(inst.get("is_irrevocable_on_demand", True))
+
+        bonded_sum += face_amt
+
+        coverage_pct = (
+            round((face_amt / contract_val) * 100.0, 2)
+            if contract_val > 0.0
+            else 100.0
+        )
+
+        if coverage_pct < min_coverage_pct_of_contract:
+            underinsured_instrument_ids.append(iid)
+
+        if days_valid < min_days_beyond_completion_buffer:
+            premature_expiry_instrument_ids.append(iid)
+
+        if not inv_grade or not irrevocable:
+            non_compliant_issuer_or_revocable_ids.append(iid)
+
+    total_bonded_coverage_amount = round(bonded_sum, 2)
+
+    recommendations: list[str] = []
+    if non_compliant_issuer_or_revocable_ids:
+        recommendations.append(
+            f"Replace revocable or sub-investment-grade surety instruments with irrevocable on-demand LCs for instrument(s): {', '.join(non_compliant_issuer_or_revocable_ids)}."
+        )
+    if underinsured_instrument_ids:
+        recommendations.append(
+            f"Increase performance bond/LC face amount to >= {min_coverage_pct_of_contract}% of contract value for instrument(s): {', '.join(underinsured_instrument_ids)}."
+        )
+    if premature_expiry_instrument_ids:
+        recommendations.append(
+            f"Extend LC/bond validity to >= {min_days_beyond_completion_buffer} days beyond scheduled completion for instrument(s): {', '.join(premature_expiry_instrument_ids)}."
+        )
+
+    if non_compliant_issuer_or_revocable_ids or underinsured_instrument_ids:
+        bond_governance_status = "COUNTERPARTY_DEFAULT_EXPOSURE"
+    elif premature_expiry_instrument_ids:
+        bond_governance_status = "EXPIRY_BUFFER_WARNING"
+    else:
+        bond_governance_status = "BOND_COVERAGE_SOUND"
+
+    return {
+        "total_instruments_evaluated": len(valid_instruments),
+        "total_bonded_coverage_amount": total_bonded_coverage_amount,
+        "underinsured_instrument_ids": underinsured_instrument_ids,
+        "premature_expiry_instrument_ids": premature_expiry_instrument_ids,
+        "non_compliant_issuer_or_revocable_ids": non_compliant_issuer_or_revocable_ids,
+        "bond_governance_status": bond_governance_status,
+        "is_bond_coverage_compliant": bond_governance_status
+        == "BOND_COVERAGE_SOUND",
+        "recommendations": recommendations,
+    }
+
+
+ProjectEVMService.evaluate_evm_performance_bond_and_letter_of_credit_coverage = staticmethod(
+    evaluate_evm_performance_bond_and_letter_of_credit_coverage
 )
 

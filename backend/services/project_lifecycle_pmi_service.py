@@ -3165,6 +3165,7 @@ __all__ = [
     "audit_steering_committee_quorum_and_decision_latency",
     "audit_warranty_defect_liability_and_escrow_release_gate",
     "audit_regulatory_permits_and_statutory_compliance_readiness",
+    "audit_charter_business_case_irr_wacc_spread_and_payback",
     "ProjectLifecyclePMIService",
 ]
 
@@ -6845,5 +6846,106 @@ def audit_regulatory_permits_and_statutory_compliance_readiness(
 
 ProjectLifecyclePMIService.audit_regulatory_permits_and_statutory_compliance_readiness = staticmethod(
     audit_regulatory_permits_and_statutory_compliance_readiness
+)
+
+
+def audit_charter_business_case_irr_wacc_spread_and_payback(
+    charters: list[dict[str, Any]],
+    *,
+    min_irr_over_wacc_spread_pct: float = 2.0,
+    max_payback_months: int = 36,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.1 & §1.2.6 — Project Charter Business Case Hurdle Rate (IRR vs WACC), Payback Horizon & Sponsor Sign-Off Auditor."""
+    valid_charters: list[dict[str, Any]] = []
+    if isinstance(charters, (list, tuple)):
+        for item in charters:
+            if not isinstance(item, dict):
+                continue
+            cid = str(item.get("charter_id") or "").strip()
+            if not cid:
+                continue
+            valid_charters.append({**item, "_cid": cid})
+
+    if not valid_charters:
+        return {
+            "total_charters_evaluated": 0,
+            "value_destroying_charter_ids": [],
+            "unsigned_or_unmeasurable_charter_ids": [],
+            "excessive_payback_charter_ids": [],
+            "charter_viability_status": "CHARTER_INVESTMENT_SOUND",
+            "is_charter_viable": True,
+            "recommendations": [],
+        }
+
+    value_destroying_charter_ids: list[str] = []
+    unsigned_or_unmeasurable_charter_ids: list[str] = []
+    excessive_payback_charter_ids: list[str] = []
+
+    for cht in valid_charters:
+        cid = cht["_cid"]
+        irr_pct = float(
+            cht.get("projected_irr_pct", 0.0)
+            if cht.get("projected_irr_pct") is not None
+            else 0.0
+        )
+        wacc_pct = float(
+            cht.get("corporate_wacc_hurdle_pct", 10.0)
+            if cht.get("corporate_wacc_hurdle_pct") is not None
+            else 10.0
+        )
+        payback_m = int(
+            cht.get("payback_period_months", 24)
+            if cht.get("payback_period_months") is not None
+            else 24
+        )
+        has_sig = bool(cht.get("has_executive_sponsor_signature", True))
+        has_criteria = bool(cht.get("has_measurable_success_criteria", True))
+
+        irr_wacc_spread_pct = round(irr_pct - wacc_pct, 2)
+
+        if irr_wacc_spread_pct < min_irr_over_wacc_spread_pct:
+            value_destroying_charter_ids.append(cid)
+
+        if not has_sig or not has_criteria:
+            unsigned_or_unmeasurable_charter_ids.append(cid)
+
+        if payback_m <= 0 or payback_m > max_payback_months:
+            excessive_payback_charter_ids.append(cid)
+
+    recommendations: list[str] = []
+    if value_destroying_charter_ids:
+        recommendations.append(
+            f"Reject or restructure project business cases with IRR-WACC spread < {min_irr_over_wacc_spread_pct}% for charter(s): {', '.join(value_destroying_charter_ids)}."
+        )
+    if unsigned_or_unmeasurable_charter_ids:
+        recommendations.append(
+            f"Obtain formal executive sponsor sign-off and define measurable success criteria prior to authorizing charter(s): {', '.join(unsigned_or_unmeasurable_charter_ids)}."
+        )
+    if excessive_payback_charter_ids:
+        recommendations.append(
+            f"Phase capital outlays to bring payback period within (0, {max_payback_months}] months for charter(s): {', '.join(excessive_payback_charter_ids)}."
+        )
+
+    if value_destroying_charter_ids or unsigned_or_unmeasurable_charter_ids:
+        charter_viability_status = "CHARTER_AUTHORIZATION_BLOCKED"
+    elif excessive_payback_charter_ids:
+        charter_viability_status = "PAYBACK_HORIZON_WARNING"
+    else:
+        charter_viability_status = "CHARTER_INVESTMENT_SOUND"
+
+    return {
+        "total_charters_evaluated": len(valid_charters),
+        "value_destroying_charter_ids": value_destroying_charter_ids,
+        "unsigned_or_unmeasurable_charter_ids": unsigned_or_unmeasurable_charter_ids,
+        "excessive_payback_charter_ids": excessive_payback_charter_ids,
+        "charter_viability_status": charter_viability_status,
+        "is_charter_viable": charter_viability_status
+        == "CHARTER_INVESTMENT_SOUND",
+        "recommendations": recommendations,
+    }
+
+
+ProjectLifecyclePMIService.audit_charter_business_case_irr_wacc_spread_and_payback = staticmethod(
+    audit_charter_business_case_irr_wacc_spread_and_payback
 )
 
