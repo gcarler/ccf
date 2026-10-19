@@ -3809,6 +3809,7 @@ __all__ = [
     "validate_ccpm_fever_chart_and_buffer_consumption",
     "validate_sprint_velocity_volatility_and_commitment_reliability",
     "validate_portfolio_efficient_frontier_and_budget_knapsack",
+    "validate_pdm_network_dangling_activities_and_negative_float",
 ]
 
 
@@ -7748,4 +7749,117 @@ def validate_portfolio_efficient_frontier_and_budget_knapsack(
         "strategically_misaligned_selected_ids": strategically_misaligned_selected_ids,
         "portfolio_optimization_status": portfolio_optimization_status,
         "is_portfolio_frontier_compliant": portfolio_optimization_status == "EFFICIENT_FRONTIER_OPTIMAL",
+    }
+
+
+def validate_pdm_network_dangling_activities_and_negative_float(
+    activities: list[dict[str, Any]],
+    *,
+    max_lag_to_duration_ratio: float = 0.5,
+) -> dict[str, Any]:
+    """PMI PMBOK §6.2 & §6.3 — Schedule Network PDM Lead/Lag Abuse, Open-Ended Activity & Negative Float Validator."""
+    valid_activities: list[dict[str, Any]] = []
+    if isinstance(activities, (list, tuple)):
+        for item in activities:
+            if not isinstance(item, dict):
+                continue
+            aid = str(item.get("activity_id") or "").strip()
+            if not aid:
+                continue
+            valid_activities.append({**item, "_aid": aid})
+
+    if not valid_activities:
+        return {
+            "total_activities_evaluated": 0,
+            "dangling_logic_activity_ids": [],
+            "negative_float_activity_ids": [],
+            "excessive_lead_or_lag_activity_ids": [],
+            "schedule_network_status": "NETWORK_INTEGRITY_SOUND",
+            "is_pdm_network_compliant": True,
+            "recommendations": [],
+        }
+
+    dangling_logic_activity_ids: list[str] = []
+    negative_float_activity_ids: list[str] = []
+    excessive_lead_or_lag_activity_ids: list[str] = []
+
+    for act in valid_activities:
+        aid = act["_aid"]
+        is_start = bool(act.get("is_start_milestone", False))
+        is_finish = bool(act.get("is_finish_milestone", False))
+        pred_cnt = int(
+            act.get("predecessor_count", 0)
+            if act.get("predecessor_count") is not None
+            else 0
+        )
+        succ_cnt = int(
+            act.get("successor_count", 0)
+            if act.get("successor_count") is not None
+            else 0
+        )
+        total_float = float(
+            act.get("total_float_days", 0.0)
+            if act.get("total_float_days") is not None
+            else 0.0
+        )
+        lead_days = float(
+            act.get("max_incoming_lead_days", 0.0)
+            if act.get("max_incoming_lead_days") is not None
+            else 0.0
+        )
+        lag_days = float(
+            act.get("max_incoming_lag_days", 0.0)
+            if act.get("max_incoming_lag_days") is not None
+            else 0.0
+        )
+        duration = float(
+            act.get("duration_days", 1.0)
+            if act.get("duration_days") is not None
+            else 1.0
+        )
+
+        if (not is_start and pred_cnt <= 0) or (
+            not is_finish and succ_cnt <= 0
+        ):
+            dangling_logic_activity_ids.append(aid)
+
+        if total_float < 0.0:
+            negative_float_activity_ids.append(aid)
+
+        if lead_days > 0.0 or (
+            duration > 0.0
+            and (lag_days / duration) > max_lag_to_duration_ratio
+        ):
+            excessive_lead_or_lag_activity_ids.append(aid)
+
+    recommendations: list[str] = []
+    if dangling_logic_activity_ids:
+        recommendations.append(
+            f"Close open-ended PDM network logic by assigning both predecessors and successors to non-milestone activity(ies): {', '.join(dangling_logic_activity_ids)}."
+        )
+    if negative_float_activity_ids:
+        recommendations.append(
+            f"Resolve negative total float via critical path re-sequencing or constraint removal in activity(ies): {', '.join(negative_float_activity_ids)}."
+        )
+    if excessive_lead_or_lag_activity_ids:
+        recommendations.append(
+            f"Eliminate negative lags (leads) and convert excessive lags (> {max_lag_to_duration_ratio * 100:.0f}% of duration) into explicit work packages in activity(ies): {', '.join(excessive_lead_or_lag_activity_ids)}."
+        )
+
+    if dangling_logic_activity_ids or negative_float_activity_ids:
+        schedule_network_status = "DCMA_LOGIC_OR_FLOAT_BREACH"
+    elif excessive_lead_or_lag_activity_ids:
+        schedule_network_status = "LEAD_LAG_DISTORTION_WARNING"
+    else:
+        schedule_network_status = "NETWORK_INTEGRITY_SOUND"
+
+    return {
+        "total_activities_evaluated": len(valid_activities),
+        "dangling_logic_activity_ids": dangling_logic_activity_ids,
+        "negative_float_activity_ids": negative_float_activity_ids,
+        "excessive_lead_or_lag_activity_ids": excessive_lead_or_lag_activity_ids,
+        "schedule_network_status": schedule_network_status,
+        "is_pdm_network_compliant": schedule_network_status
+        == "NETWORK_INTEGRITY_SOUND",
+        "recommendations": recommendations,
     }

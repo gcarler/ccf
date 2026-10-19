@@ -8804,3 +8804,140 @@ def test_audit_executive_report_wcag_accessibility_and_aria_compliance_staticmet
         "audit_executive_report_wcag_accessibility_and_aria_compliance"
         in mod.__all__
     )
+
+
+def test_audit_executive_report_watermelon_kpi_and_narrative_consistency_greenwash_detected():
+    from backend.services.project_export_service import (
+        audit_executive_report_watermelon_kpi_and_narrative_consistency,
+    )
+
+    res = audit_executive_report_watermelon_kpi_and_narrative_consistency(
+        [
+            {
+                "section_id": "SEC-CORE-INFRA",
+                "reported_rag_status": "green",
+                "underlying_cpi": 0.84,
+                "underlying_spi": 0.98,
+                "open_critical_blockers": 0,
+                "has_quantified_decision_request": True,
+            },
+            {
+                "section_id": "SEC-DATA-MIGRATION",
+                "reported_rag_status": "GREEN",
+                "underlying_cpi": 1.02,
+                "underlying_spi": 1.00,
+                "open_critical_blockers": 2,
+                "has_quantified_decision_request": True,
+            },
+        ],
+        min_spi_cpi_for_green=0.95,
+    )
+    assert res["total_sections_evaluated"] == 2
+    assert res["watermelon_greenwash_section_ids"] == [
+        "SEC-CORE-INFRA",
+        "SEC-DATA-MIGRATION",
+    ]
+    assert res["unactionable_red_amber_section_ids"] == []
+    assert res["reporting_integrity_status"] == "WATERMELON_GREENWASH_DETECTED"
+    assert res["is_reporting_transparent"] is False
+
+
+def test_audit_executive_report_watermelon_kpi_and_narrative_consistency_missing_decision_warning():
+    from backend.services.project_export_service import (
+        audit_executive_report_watermelon_kpi_and_narrative_consistency,
+    )
+
+    res = audit_executive_report_watermelon_kpi_and_narrative_consistency(
+        [
+            {
+                "section_id": "SEC-PROCUREMENT",
+                "reported_rag_status": "RED",
+                "underlying_cpi": 0.80,
+                "underlying_spi": 0.85,
+                "open_critical_blockers": 3,
+                "has_quantified_decision_request": False,
+            }
+        ],
+        min_spi_cpi_for_green=0.95,
+    )
+    assert res["watermelon_greenwash_section_ids"] == []
+    assert res["unactionable_red_amber_section_ids"] == ["SEC-PROCUREMENT"]
+    assert (
+        res["reporting_integrity_status"]
+        == "ESCALATION_DECISION_MISSING_WARNING"
+    )
+    assert res["is_reporting_transparent"] is False
+
+
+def test_audit_executive_report_watermelon_kpi_and_narrative_consistency_transparent_and_empty():
+    from backend.services.project_export_service import (
+        audit_executive_report_watermelon_kpi_and_narrative_consistency,
+    )
+
+    empty = audit_executive_report_watermelon_kpi_and_narrative_consistency(
+        [{"section_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_sections_evaluated"] == 0
+    assert (
+        empty["reporting_integrity_status"]
+        == "TRANSPARENT_EXECUTIVE_REPORTING"
+    )
+    assert empty["is_reporting_transparent"] is True
+
+    transparent = (
+        audit_executive_report_watermelon_kpi_and_narrative_consistency(
+            [
+                {
+                    "section_id": "SEC-FINANCE",
+                    "reported_rag_status": "GREEN",
+                    "underlying_cpi": 0.99,
+                    "underlying_spi": 0.97,
+                    "open_critical_blockers": 0,
+                },
+                {
+                    "section_id": "SEC-SECURITY",
+                    "reported_rag_status": "AMBER",
+                    "underlying_cpi": 0.91,
+                    "underlying_spi": 0.92,
+                    "open_critical_blockers": 1,
+                    "has_quantified_decision_request": True,
+                },
+            ]
+        )
+    )
+    assert transparent["total_sections_evaluated"] == 2
+    assert (
+        transparent["reporting_integrity_status"]
+        == "TRANSPARENT_EXECUTIVE_REPORTING"
+    )
+    assert transparent["is_reporting_transparent"] is True
+
+
+def test_audit_executive_report_watermelon_kpi_and_narrative_consistency_staticmethod_and_dunder_all():
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_watermelon_kpi_and_narrative_consistency,
+    )
+
+    sample = [
+        {
+            "section_id": "SEC-99",
+            "reported_rag_status": "GREEN",
+            "underlying_cpi": 1.0,
+            "underlying_spi": 1.0,
+            "open_critical_blockers": 0,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_watermelon_kpi_and_narrative_consistency(
+            sample
+        )
+        == audit_executive_report_watermelon_kpi_and_narrative_consistency(
+            sample
+        )
+    )
+    assert (
+        "audit_executive_report_watermelon_kpi_and_narrative_consistency"
+        in mod.__all__
+    )

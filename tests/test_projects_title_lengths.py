@@ -7073,3 +7073,145 @@ def test_validate_portfolio_frontier_invalid_and_binding():
         assert empty["is_portfolio_frontier_compliant"] is True
 
     assert "validate_portfolio_efficient_frontier_and_budget_knapsack" in mod.__all__
+
+
+def test_validate_pdm_network_dangling_activities_and_negative_float_dcma_breach():
+    from backend.schemas.projects import (
+        validate_pdm_network_dangling_activities_and_negative_float,
+    )
+
+    res = validate_pdm_network_dangling_activities_and_negative_float(
+        [
+            {
+                "activity_id": "ACT-OPEN-END",
+                "is_start_milestone": False,
+                "is_finish_milestone": False,
+                "predecessor_count": 1,
+                "successor_count": 0,
+                "total_float_days": 2.0,
+                "max_incoming_lead_days": 0.0,
+                "max_incoming_lag_days": 0.0,
+                "duration_days": 5.0,
+            },
+            {
+                "activity_id": "ACT-NEG-FLOAT",
+                "is_start_milestone": False,
+                "is_finish_milestone": False,
+                "predecessor_count": 1,
+                "successor_count": 1,
+                "total_float_days": -3.5,
+                "max_incoming_lead_days": 0.0,
+                "max_incoming_lag_days": 0.0,
+                "duration_days": 4.0,
+            },
+        ],
+        max_lag_to_duration_ratio=0.5,
+    )
+    assert res["total_activities_evaluated"] == 2
+    assert res["dangling_logic_activity_ids"] == ["ACT-OPEN-END"]
+    assert res["negative_float_activity_ids"] == ["ACT-NEG-FLOAT"]
+    assert res["excessive_lead_or_lag_activity_ids"] == []
+    assert res["schedule_network_status"] == "DCMA_LOGIC_OR_FLOAT_BREACH"
+    assert res["is_pdm_network_compliant"] is False
+
+
+def test_validate_pdm_network_dangling_activities_and_negative_float_lead_lag_warning():
+    from backend.schemas.projects import (
+        validate_pdm_network_dangling_activities_and_negative_float,
+    )
+
+    res = validate_pdm_network_dangling_activities_and_negative_float(
+        [
+            {
+                "activity_id": "ACT-LEAD",
+                "is_start_milestone": False,
+                "is_finish_milestone": False,
+                "predecessor_count": 1,
+                "successor_count": 1,
+                "total_float_days": 1.0,
+                "max_incoming_lead_days": 2.0,
+                "max_incoming_lag_days": 0.0,
+                "duration_days": 10.0,
+            },
+            {
+                "activity_id": "ACT-HEAVY-LAG",
+                "is_start_milestone": False,
+                "is_finish_milestone": False,
+                "predecessor_count": 1,
+                "successor_count": 1,
+                "total_float_days": 0.0,
+                "max_incoming_lead_days": 0.0,
+                "max_incoming_lag_days": 6.0,
+                "duration_days": 10.0,
+            },
+        ],
+        max_lag_to_duration_ratio=0.5,
+    )
+    assert res["dangling_logic_activity_ids"] == []
+    assert res["negative_float_activity_ids"] == []
+    assert res["excessive_lead_or_lag_activity_ids"] == [
+        "ACT-LEAD",
+        "ACT-HEAVY-LAG",
+    ]
+    assert res["schedule_network_status"] == "LEAD_LAG_DISTORTION_WARNING"
+    assert res["is_pdm_network_compliant"] is False
+
+
+def test_validate_pdm_network_dangling_activities_and_negative_float_sound_and_empty():
+    from backend.schemas.projects import (
+        validate_pdm_network_dangling_activities_and_negative_float,
+    )
+
+    empty = validate_pdm_network_dangling_activities_and_negative_float(
+        [{"activity_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_activities_evaluated"] == 0
+    assert empty["schedule_network_status"] == "NETWORK_INTEGRITY_SOUND"
+    assert empty["is_pdm_network_compliant"] is True
+
+    sound = validate_pdm_network_dangling_activities_and_negative_float(
+        [
+            {
+                "activity_id": "MS-START",
+                "is_start_milestone": True,
+                "is_finish_milestone": False,
+                "predecessor_count": 0,
+                "successor_count": 2,
+                "total_float_days": 0.0,
+                "duration_days": 0.0,
+            },
+            {
+                "activity_id": "ACT-WORK",
+                "is_start_milestone": False,
+                "is_finish_milestone": False,
+                "predecessor_count": 1,
+                "successor_count": 1,
+                "total_float_days": 2.0,
+                "max_incoming_lead_days": 0.0,
+                "max_incoming_lag_days": 2.0,
+                "duration_days": 10.0,
+            },
+            {
+                "activity_id": "MS-FINISH",
+                "is_start_milestone": False,
+                "is_finish_milestone": True,
+                "predecessor_count": 1,
+                "successor_count": 0,
+                "total_float_days": 0.0,
+                "duration_days": 0.0,
+            },
+        ],
+        max_lag_to_duration_ratio=0.5,
+    )
+    assert sound["total_activities_evaluated"] == 3
+    assert sound["schedule_network_status"] == "NETWORK_INTEGRITY_SOUND"
+    assert sound["is_pdm_network_compliant"] is True
+
+
+def test_validate_pdm_network_dangling_activities_and_negative_float_dunder_all():
+    import backend.schemas.projects as mod
+
+    assert (
+        "validate_pdm_network_dangling_activities_and_negative_float"
+        in mod.__all__
+    )

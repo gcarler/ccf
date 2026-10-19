@@ -3000,6 +3000,7 @@ __all__ = [
     "audit_executive_report_dora_four_keys_and_delivery_stability",
     "audit_executive_report_data_privacy_pii_masking_and_residency",
     "audit_executive_report_wcag_accessibility_and_aria_compliance",
+    "audit_executive_report_watermelon_kpi_and_narrative_consistency",
     "ProjectExportService",
 ]
 
@@ -6868,4 +6869,92 @@ def audit_executive_report_wcag_accessibility_and_aria_compliance(
 
 ProjectExportService.audit_executive_report_wcag_accessibility_and_aria_compliance = staticmethod(
     audit_executive_report_wcag_accessibility_and_aria_compliance
+)
+
+
+def audit_executive_report_watermelon_kpi_and_narrative_consistency(
+    sections: list[dict[str, Any]],
+    *,
+    min_spi_cpi_for_green: float = 0.95,
+) -> dict[str, Any]:
+    """PMI PMBOK §10.2 & §13.3 — Executive Report Board Pack Narrative Signal-to-Noise, KPI Red-Green Wash & Actionable Recommendation Auditor."""
+    valid_sections: list[dict[str, Any]] = []
+    if isinstance(sections, (list, tuple)):
+        for item in sections:
+            if not isinstance(item, dict):
+                continue
+            sid = str(item.get("section_id") or "").strip()
+            if not sid:
+                continue
+            valid_sections.append({**item, "_sid": sid})
+
+    if not valid_sections:
+        return {
+            "total_sections_evaluated": 0,
+            "watermelon_greenwash_section_ids": [],
+            "unactionable_red_amber_section_ids": [],
+            "reporting_integrity_status": "TRANSPARENT_EXECUTIVE_REPORTING",
+            "is_reporting_transparent": True,
+            "recommendations": [],
+        }
+
+    watermelon_greenwash_section_ids: list[str] = []
+    unactionable_red_amber_section_ids: list[str] = []
+
+    for sec in valid_sections:
+        sid = sec["_sid"]
+        rag = str(sec.get("reported_rag_status") or "").strip().upper()
+        cpi = float(
+            sec.get("underlying_cpi", 1.0)
+            if sec.get("underlying_cpi") is not None
+            else 1.0
+        )
+        spi = float(
+            sec.get("underlying_spi", 1.0)
+            if sec.get("underlying_spi") is not None
+            else 1.0
+        )
+        blockers = max(0, int(sec.get("open_critical_blockers", 0) or 0))
+        has_decision = bool(sec.get("has_quantified_decision_request", True))
+
+        if rag == "GREEN" and (
+            cpi < min_spi_cpi_for_green
+            or spi < min_spi_cpi_for_green
+            or blockers > 0
+        ):
+            watermelon_greenwash_section_ids.append(sid)
+
+        if rag in {"AMBER", "RED"} and not has_decision:
+            unactionable_red_amber_section_ids.append(sid)
+
+    recommendations: list[str] = []
+    if watermelon_greenwash_section_ids:
+        recommendations.append(
+            f"Eliminate 'watermelon' greenwashing by downgrading RAG status to AMBER/RED when CPI/SPI < {min_spi_cpi_for_green} or critical blockers exist in section(s): {', '.join(watermelon_greenwash_section_ids)}."
+        )
+    if unactionable_red_amber_section_ids:
+        recommendations.append(
+            f"Attach quantified executive decision requests and trade-off options to AMBER/RED section(s): {', '.join(unactionable_red_amber_section_ids)}."
+        )
+
+    if watermelon_greenwash_section_ids:
+        reporting_integrity_status = "WATERMELON_GREENWASH_DETECTED"
+    elif unactionable_red_amber_section_ids:
+        reporting_integrity_status = "ESCALATION_DECISION_MISSING_WARNING"
+    else:
+        reporting_integrity_status = "TRANSPARENT_EXECUTIVE_REPORTING"
+
+    return {
+        "total_sections_evaluated": len(valid_sections),
+        "watermelon_greenwash_section_ids": watermelon_greenwash_section_ids,
+        "unactionable_red_amber_section_ids": unactionable_red_amber_section_ids,
+        "reporting_integrity_status": reporting_integrity_status,
+        "is_reporting_transparent": reporting_integrity_status
+        == "TRANSPARENT_EXECUTIVE_REPORTING",
+        "recommendations": recommendations,
+    }
+
+
+ProjectExportService.audit_executive_report_watermelon_kpi_and_narrative_consistency = staticmethod(
+    audit_executive_report_watermelon_kpi_and_narrative_consistency
 )
