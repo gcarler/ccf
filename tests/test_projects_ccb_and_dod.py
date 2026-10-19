@@ -13024,3 +13024,112 @@ def test_audit_feature_flag_stale_toggle_debt_and_shadow_parity_gate_empty_and_b
         "audit_feature_flag_stale_toggle_debt_and_shadow_parity_gate"
         in mod.__all__
     )
+
+
+def test_audit_bgp_rpki_roa_origin_validation_and_ddos_scrubbing_gate_healthy():
+    from backend.services.project_ccb_service import (
+        audit_bgp_rpki_roa_origin_validation_and_ddos_scrubbing_gate,
+    )
+
+    prefixes = [
+        {
+            "prefix_id": "203.0.113.0/24",
+            "rpki_roa_state": "valid",
+            "irr_prefix_filter_enforced": True,
+            "route_flap_count_per_hour": 1,
+            "ddos_scrubbing_diversion_seconds": 8.5,
+            "unauthorized_asn_origin_detected": False,
+        },
+        {
+            "prefix_id": "198.51.100.0/24",
+            "rpki_roa_state": "valid",
+            "irr_prefix_filter_enforced": True,
+            "route_flap_count_per_hour": 0,
+            "ddos_scrubbing_diversion_seconds": 12.0,
+            "unauthorized_asn_origin_detected": False,
+        },
+    ]
+    res = audit_bgp_rpki_roa_origin_validation_and_ddos_scrubbing_gate(prefixes)
+    assert res["status"] == "healthy"
+    assert res["total_prefixes"] == 2
+    assert res["healthy_count"] == 2
+    assert res["warning_count"] == 0
+    assert res["critical_count"] == 0
+    assert res["bgp_resilience_rate_pct"] == 100.0
+    assert res["recommendations"] == []
+
+
+def test_audit_bgp_rpki_roa_origin_validation_and_ddos_scrubbing_gate_warning():
+    from backend.services.project_ccb_service import (
+        audit_bgp_rpki_roa_origin_validation_and_ddos_scrubbing_gate,
+    )
+
+    prefixes = [
+        {
+            "prefix_id": "192.0.2.0/24",
+            "rpki_roa_state": "not_found",
+            "irr_prefix_filter_enforced": True,
+            "route_flap_count_per_hour": 9,
+            "ddos_scrubbing_diversion_seconds": 48.0,
+            "unauthorized_asn_origin_detected": False,
+        }
+    ]
+    res = audit_bgp_rpki_roa_origin_validation_and_ddos_scrubbing_gate(prefixes)
+    assert res["status"] == "warning"
+    assert res["total_prefixes"] == 1
+    assert res["warning_count"] == 1
+    assert res["critical_count"] == 0
+    assert res["route_flapping_count"] == 1
+    assert res["scrubbing_sla_breach_count"] == 1
+    assert res["prefixes"][0]["prefix_status"] == "warning"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_bgp_rpki_roa_origin_validation_and_ddos_scrubbing_gate_critical():
+    from backend.services.project_ccb_service import (
+        audit_bgp_rpki_roa_origin_validation_and_ddos_scrubbing_gate,
+    )
+
+    prefixes = [
+        {
+            "prefix_id": "203.0.113.128/25",
+            "rpki_roa_state": "invalid",
+            "irr_prefix_filter_enforced": False,
+            "route_flap_count_per_hour": 14,
+            "ddos_scrubbing_diversion_seconds": 75.0,
+            "unauthorized_asn_origin_detected": True,
+        }
+    ]
+    res = audit_bgp_rpki_roa_origin_validation_and_ddos_scrubbing_gate(prefixes)
+    assert res["status"] == "critical"
+    assert res["total_prefixes"] == 1
+    assert res["critical_count"] == 1
+    assert res["hijack_or_invalid_roa_count"] == 1
+    assert res["unfiltered_roa_count"] == 1
+    assert res["bgp_resilience_rate_pct"] == 0.0
+    assert res["prefixes"][0]["prefix_status"] == "critical"
+    assert len(res["recommendations"]) >= 3
+
+
+def test_audit_bgp_rpki_roa_origin_validation_and_ddos_scrubbing_gate_empty_and_binding():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_bgp_rpki_roa_origin_validation_and_ddos_scrubbing_gate,
+    )
+
+    empty = audit_bgp_rpki_roa_origin_validation_and_ddos_scrubbing_gate([])
+    assert empty["status"] == "healthy"
+    assert empty["total_prefixes"] == 0
+    assert empty["bgp_resilience_rate_pct"] == 100.0
+    assert (
+        ProjectCCBService.audit_bgp_rpki_roa_origin_validation_and_ddos_scrubbing_gate(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_bgp_rpki_roa_origin_validation_and_ddos_scrubbing_gate"
+        in mod.__all__
+    )
+

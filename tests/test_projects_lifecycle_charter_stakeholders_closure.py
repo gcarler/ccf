@@ -12956,3 +12956,116 @@ def test_audit_esg_scope_emissions_cap_and_green_bond_proceeds_empty_and_binding
         "audit_esg_scope_emissions_cap_and_green_bond_proceeds"
         in mod.__all__
     )
+
+
+def test_audit_safety_critical_nqa1_hold_point_and_cfsi_quarantine_healthy():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_safety_critical_nqa1_hold_point_and_cfsi_quarantine,
+    )
+
+    inspections = [
+        {
+            "inspection_id": "nqa1-weld-vessel-01",
+            "mandatory_hold_point_bypassed": False,
+            "independent_ani_witness_signed": True,
+            "cfsi_suspect_part_detected": False,
+            "cfsi_segregated_in_quarantine": True,
+            "open_ncr_age_days": 5,
+            "material_traceability_mtr_verified": True,
+        },
+        {
+            "inspection_id": "nqa1-valve-hydro-02",
+            "mandatory_hold_point_bypassed": False,
+            "independent_ani_witness_signed": True,
+            "cfsi_suspect_part_detected": False,
+            "cfsi_segregated_in_quarantine": True,
+            "open_ncr_age_days": 12,
+            "material_traceability_mtr_verified": True,
+        },
+    ]
+    res = audit_safety_critical_nqa1_hold_point_and_cfsi_quarantine(inspections)
+    assert res["status"] == "healthy"
+    assert res["total_inspections"] == 2
+    assert res["healthy_count"] == 2
+    assert res["warning_count"] == 0
+    assert res["critical_count"] == 0
+    assert res["nqa1_compliance_rate_pct"] == 100.0
+    assert res["recommendations"] == []
+
+
+def test_audit_safety_critical_nqa1_hold_point_and_cfsi_quarantine_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_safety_critical_nqa1_hold_point_and_cfsi_quarantine,
+    )
+
+    inspections = [
+        {
+            "inspection_id": "nqa1-fastener-lot-09",
+            "mandatory_hold_point_bypassed": False,
+            "independent_ani_witness_signed": True,
+            "cfsi_suspect_part_detected": True,
+            "cfsi_segregated_in_quarantine": True,
+            "open_ncr_age_days": 45,
+            "material_traceability_mtr_verified": True,
+        }
+    ]
+    res = audit_safety_critical_nqa1_hold_point_and_cfsi_quarantine(inspections)
+    assert res["status"] == "warning"
+    assert res["total_inspections"] == 1
+    assert res["warning_count"] == 1
+    assert res["critical_count"] == 0
+    assert res["overdue_ncr_count"] == 1
+    assert res["inspections"][0]["inspection_status"] == "warning"
+    assert len(res["recommendations"]) >= 1
+
+
+def test_audit_safety_critical_nqa1_hold_point_and_cfsi_quarantine_critical():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_safety_critical_nqa1_hold_point_and_cfsi_quarantine,
+    )
+
+    inspections = [
+        {
+            "inspection_id": "nqa1-containment-flange-99",
+            "mandatory_hold_point_bypassed": True,
+            "independent_ani_witness_signed": False,
+            "cfsi_suspect_part_detected": True,
+            "cfsi_segregated_in_quarantine": False,
+            "open_ncr_age_days": 60,
+            "material_traceability_mtr_verified": False,
+        }
+    ]
+    res = audit_safety_critical_nqa1_hold_point_and_cfsi_quarantine(inspections)
+    assert res["status"] == "critical"
+    assert res["total_inspections"] == 1
+    assert res["critical_count"] == 1
+    assert res["hold_point_violation_count"] == 1
+    assert res["unquarantined_cfsi_count"] == 1
+    assert res["missing_mtr_count"] == 1
+    assert res["nqa1_compliance_rate_pct"] == 0.0
+    assert res["inspections"][0]["inspection_status"] == "critical"
+    assert len(res["recommendations"]) >= 3
+
+
+def test_audit_safety_critical_nqa1_hold_point_and_cfsi_quarantine_empty_and_binding():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_safety_critical_nqa1_hold_point_and_cfsi_quarantine,
+    )
+
+    empty = audit_safety_critical_nqa1_hold_point_and_cfsi_quarantine([])
+    assert empty["status"] == "healthy"
+    assert empty["total_inspections"] == 0
+    assert empty["nqa1_compliance_rate_pct"] == 100.0
+    assert (
+        ProjectLifecyclePMIService.audit_safety_critical_nqa1_hold_point_and_cfsi_quarantine(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_safety_critical_nqa1_hold_point_and_cfsi_quarantine"
+        in mod.__all__
+    )
+

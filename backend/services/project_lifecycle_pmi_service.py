@@ -3199,6 +3199,7 @@ __all__ = [
     "audit_spv_project_finance_dscr_llcr_covenant_and_equity_lockup",
     "audit_ppp_concession_availability_payment_and_handback_residual_life",
     "audit_esg_scope_emissions_cap_and_green_bond_proceeds",
+    "audit_safety_critical_nqa1_hold_point_and_cfsi_quarantine",
     "ProjectLifecyclePMIService",
 ]
 
@@ -10255,3 +10256,154 @@ def audit_esg_scope_emissions_cap_and_green_bond_proceeds(
 ProjectLifecyclePMIService.audit_esg_scope_emissions_cap_and_green_bond_proceeds = staticmethod(
     audit_esg_scope_emissions_cap_and_green_bond_proceeds
 )
+
+
+def audit_safety_critical_nqa1_hold_point_and_cfsi_quarantine(
+    inspections: list[dict[str, Any]],
+    *,
+    max_open_ncr_days: int = 30,
+) -> dict[str, Any]:
+    """PMI PMBOK §12.3 & §8.2 — Safety-Critical NQA-1 Quality Hold-Point Signoff, NCR Disposition & Counterfeit/Suspect Item (CFSI) Quarantine Auditor."""
+    normalized_max_ncr_days = max(int(max_open_ncr_days), 1)
+
+    raw_inspections = inspections if isinstance(inspections, list) else []
+    evaluated_inspections: list[dict[str, Any]] = []
+    healthy_count = 0
+    warning_count = 0
+    critical_count = 0
+    hold_point_violation_count = 0
+    unquarantined_cfsi_count = 0
+    missing_mtr_count = 0
+    overdue_ncr_count = 0
+
+    for idx, item in enumerate(raw_inspections, start=1):
+        if not isinstance(item, dict):
+            continue
+        inspection_id = str(
+            item.get("inspection_id") or f"nqa1-insp-{idx}"
+        ).strip()
+
+        mandatory_hold_point_bypassed = bool(
+            item.get("mandatory_hold_point_bypassed", False)
+        )
+        independent_ani_witness_signed = bool(
+            item.get("independent_ani_witness_signed", True)
+        )
+        cfsi_suspect_part_detected = bool(
+            item.get("cfsi_suspect_part_detected", False)
+        )
+        cfsi_segregated_in_quarantine = bool(
+            item.get("cfsi_segregated_in_quarantine", True)
+        )
+
+        raw_ncr_age = item.get("open_ncr_age_days", 0)
+        try:
+            open_ncr_age_days = int(0 if raw_ncr_age is None else raw_ncr_age)
+        except (TypeError, ValueError):
+            open_ncr_age_days = 0
+
+        material_traceability_mtr_verified = bool(
+            item.get("material_traceability_mtr_verified", True)
+        )
+
+        unwitnessed_hold_point_violation = (
+            mandatory_hold_point_bypassed or not independent_ani_witness_signed
+        )
+        unquarantined_cfsi_hazard = (
+            cfsi_suspect_part_detected and not cfsi_segregated_in_quarantine
+        )
+        missing_mtr_traceability = not material_traceability_mtr_verified
+        overdue_ncr_disposition = open_ncr_age_days > normalized_max_ncr_days
+
+        if unwitnessed_hold_point_violation:
+            hold_point_violation_count += 1
+        if unquarantined_cfsi_hazard:
+            unquarantined_cfsi_count += 1
+        if missing_mtr_traceability:
+            missing_mtr_count += 1
+        if overdue_ncr_disposition:
+            overdue_ncr_count += 1
+
+        if (
+            unwitnessed_hold_point_violation
+            or unquarantined_cfsi_hazard
+            or missing_mtr_traceability
+        ):
+            inspection_status = "critical"
+            critical_count += 1
+        elif cfsi_suspect_part_detected or overdue_ncr_disposition:
+            inspection_status = "warning"
+            warning_count += 1
+        else:
+            inspection_status = "healthy"
+            healthy_count += 1
+
+        evaluated_inspections.append(
+            {
+                "inspection_id": inspection_id,
+                "mandatory_hold_point_bypassed": mandatory_hold_point_bypassed,
+                "independent_ani_witness_signed": independent_ani_witness_signed,
+                "cfsi_suspect_part_detected": cfsi_suspect_part_detected,
+                "cfsi_segregated_in_quarantine": cfsi_segregated_in_quarantine,
+                "open_ncr_age_days": open_ncr_age_days,
+                "material_traceability_mtr_verified": material_traceability_mtr_verified,
+                "unwitnessed_hold_point_violation": unwitnessed_hold_point_violation,
+                "unquarantined_cfsi_hazard": unquarantined_cfsi_hazard,
+                "missing_mtr_traceability": missing_mtr_traceability,
+                "overdue_ncr_disposition": overdue_ncr_disposition,
+                "inspection_status": inspection_status,
+            }
+        )
+
+    total_inspections = len(evaluated_inspections)
+    nqa1_compliance_rate_pct = (
+        round((healthy_count / total_inspections) * 100.0, 2)
+        if total_inspections > 0
+        else 100.0
+    )
+
+    recommendations: list[str] = []
+    if hold_point_violation_count > 0:
+        recommendations.append(
+            f"Emitir orden Stop-Work inmediata y repetir inspección con firma de inspector autorizado independiente (ANI) en {hold_point_violation_count} paquete(s) con Hold-Point omitido."
+        )
+    if unquarantined_cfsi_count > 0:
+        recommendations.append(
+            f"Segregar físicamente bajo llave en área de cuarentena NQA-1 los ítems sospechosos/falsificados (CFSI) y notificar a autoridades regulatorias en {unquarantined_cfsi_count} paquete(s)."
+        )
+    if missing_mtr_count > 0:
+        recommendations.append(
+            f"Bloquear liberación de montaje hasta verificar certificados de ensayo de materiales (MTR / colada química y física) en {missing_mtr_count} paquete(s)."
+        )
+    if overdue_ncr_count > 0:
+        recommendations.append(
+            f"Resolver disposición de ingeniería para reportes de no conformidad (NCR) abiertos > {normalized_max_ncr_days} días en {overdue_ncr_count} paquete(s)."
+        )
+
+    if critical_count > 0:
+        status = "critical"
+    elif warning_count > 0:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_inspections": total_inspections,
+        "healthy_count": healthy_count,
+        "warning_count": warning_count,
+        "critical_count": critical_count,
+        "hold_point_violation_count": hold_point_violation_count,
+        "unquarantined_cfsi_count": unquarantined_cfsi_count,
+        "missing_mtr_count": missing_mtr_count,
+        "overdue_ncr_count": overdue_ncr_count,
+        "nqa1_compliance_rate_pct": nqa1_compliance_rate_pct,
+        "status": status,
+        "inspections": evaluated_inspections,
+        "recommendations": recommendations,
+    }
+
+
+ProjectLifecyclePMIService.audit_safety_critical_nqa1_hold_point_and_cfsi_quarantine = staticmethod(
+    audit_safety_critical_nqa1_hold_point_and_cfsi_quarantine
+)
+

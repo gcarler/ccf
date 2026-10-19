@@ -2879,6 +2879,7 @@ __all__ = [
     "audit_sbom_slsa_provenance_and_cisa_kev_release_gate",
     "audit_chaos_engineering_blast_radius_and_steady_state_gate",
     "audit_feature_flag_stale_toggle_debt_and_shadow_parity_gate",
+    "audit_bgp_rpki_roa_origin_validation_and_ddos_scrubbing_gate",
     "ProjectCCBService",
 ]
 
@@ -10146,3 +10147,159 @@ def audit_feature_flag_stale_toggle_debt_and_shadow_parity_gate(
 ProjectCCBService.audit_feature_flag_stale_toggle_debt_and_shadow_parity_gate = staticmethod(
     audit_feature_flag_stale_toggle_debt_and_shadow_parity_gate
 )
+
+
+def audit_bgp_rpki_roa_origin_validation_and_ddos_scrubbing_gate(
+    prefixes: list[dict[str, Any]],
+    *,
+    max_flap_count_per_hour: int = 5,
+    max_scrubbing_diversion_seconds: float = 30.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §8.3 & §11.6 — CCB BGP RPKI ROA Origin Validation, Route Flap Damping & DDoS Scrubbing Diversion Gate Auditor."""
+    normalized_max_flaps = max(int(max_flap_count_per_hour), 1)
+    normalized_max_scrubbing = max(float(max_scrubbing_diversion_seconds), 1.0)
+
+    raw_prefixes = prefixes if isinstance(prefixes, list) else []
+    evaluated_prefixes: list[dict[str, Any]] = []
+    healthy_count = 0
+    warning_count = 0
+    critical_count = 0
+    hijack_or_invalid_roa_count = 0
+    unfiltered_roa_count = 0
+    route_flapping_count = 0
+    scrubbing_sla_breach_count = 0
+
+    for idx, item in enumerate(raw_prefixes, start=1):
+        if not isinstance(item, dict):
+            continue
+        prefix_id = str(item.get("prefix_id") or f"bgp-prefix-{idx}").strip()
+
+        raw_roa = str(item.get("rpki_roa_state", "valid") or "valid")
+        rpki_roa_state = raw_roa.strip().lower()
+        irr_prefix_filter_enforced = bool(
+            item.get("irr_prefix_filter_enforced", True)
+        )
+
+        raw_flaps = item.get("route_flap_count_per_hour", 0)
+        try:
+            route_flap_count_per_hour = int(0 if raw_flaps is None else raw_flaps)
+        except (TypeError, ValueError):
+            route_flap_count_per_hour = 0
+
+        raw_diversion = item.get("ddos_scrubbing_diversion_seconds", 5.0)
+        try:
+            ddos_scrubbing_diversion_seconds = float(
+                5.0 if raw_diversion is None else raw_diversion
+            )
+        except (TypeError, ValueError):
+            ddos_scrubbing_diversion_seconds = 5.0
+
+        unauthorized_asn_origin_detected = bool(
+            item.get("unauthorized_asn_origin_detected", False)
+        )
+
+        hijack_or_invalid_roa = (
+            rpki_roa_state == "invalid" or unauthorized_asn_origin_detected
+        )
+        unfiltered_unknown_roa = (
+            rpki_roa_state != "valid" and not irr_prefix_filter_enforced
+        )
+        excessive_route_flapping = (
+            route_flap_count_per_hour > normalized_max_flaps
+        )
+        scrubbing_diversion_sla_breach = (
+            ddos_scrubbing_diversion_seconds > normalized_max_scrubbing
+        )
+
+        if hijack_or_invalid_roa:
+            hijack_or_invalid_roa_count += 1
+        if unfiltered_unknown_roa:
+            unfiltered_roa_count += 1
+        if excessive_route_flapping:
+            route_flapping_count += 1
+        if scrubbing_diversion_sla_breach:
+            scrubbing_sla_breach_count += 1
+
+        if hijack_or_invalid_roa or unfiltered_unknown_roa:
+            prefix_status = "critical"
+            critical_count += 1
+        elif (
+            rpki_roa_state != "valid"
+            or excessive_route_flapping
+            or scrubbing_diversion_sla_breach
+            or not irr_prefix_filter_enforced
+        ):
+            prefix_status = "warning"
+            warning_count += 1
+        else:
+            prefix_status = "healthy"
+            healthy_count += 1
+
+        evaluated_prefixes.append(
+            {
+                "prefix_id": prefix_id,
+                "rpki_roa_state": rpki_roa_state,
+                "irr_prefix_filter_enforced": irr_prefix_filter_enforced,
+                "route_flap_count_per_hour": route_flap_count_per_hour,
+                "ddos_scrubbing_diversion_seconds": ddos_scrubbing_diversion_seconds,
+                "unauthorized_asn_origin_detected": unauthorized_asn_origin_detected,
+                "hijack_or_invalid_roa": hijack_or_invalid_roa,
+                "unfiltered_unknown_roa": unfiltered_unknown_roa,
+                "excessive_route_flapping": excessive_route_flapping,
+                "scrubbing_diversion_sla_breach": scrubbing_diversion_sla_breach,
+                "prefix_status": prefix_status,
+            }
+        )
+
+    total_prefixes = len(evaluated_prefixes)
+    bgp_resilience_rate_pct = (
+        round((healthy_count / total_prefixes) * 100.0, 2)
+        if total_prefixes > 0
+        else 100.0
+    )
+
+    recommendations: list[str] = []
+    if hijack_or_invalid_roa_count > 0:
+        recommendations.append(
+            f"Descartar anuncios BGP con ROA RPKI inválido o ASN de origen no autorizado y activar mitigación anti-hijack en {hijack_or_invalid_roa_count} prefijo(s)."
+        )
+    if unfiltered_roa_count > 0:
+        recommendations.append(
+            f"Publicar objetos ROA RPKI firmados e imponer filtros estrictos IRR (RADB/RIPE) en {unfiltered_roa_count} prefijo(s) sin validación criptográfica."
+        )
+    if route_flapping_count > 0:
+        recommendations.append(
+            f"Aplicar Route Flap Damping (RFC 2439/7196) para contener oscilaciones > {normalized_max_flaps} flaps/hora en {route_flapping_count} prefijo(s)."
+        )
+    if scrubbing_sla_breach_count > 0:
+        recommendations.append(
+            f"Automatizar desvío BGP FlowSpec / Blackhole hacia centros de DDoS Scrubbing en <= {normalized_max_scrubbing}s en {scrubbing_sla_breach_count} prefijo(s)."
+        )
+
+    if critical_count > 0:
+        status = "critical"
+    elif warning_count > 0:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_prefixes": total_prefixes,
+        "healthy_count": healthy_count,
+        "warning_count": warning_count,
+        "critical_count": critical_count,
+        "hijack_or_invalid_roa_count": hijack_or_invalid_roa_count,
+        "unfiltered_roa_count": unfiltered_roa_count,
+        "route_flapping_count": route_flapping_count,
+        "scrubbing_sla_breach_count": scrubbing_sla_breach_count,
+        "bgp_resilience_rate_pct": bgp_resilience_rate_pct,
+        "status": status,
+        "prefixes": evaluated_prefixes,
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.audit_bgp_rpki_roa_origin_validation_and_ddos_scrubbing_gate = staticmethod(
+    audit_bgp_rpki_roa_origin_validation_and_ddos_scrubbing_gate
+)
+
