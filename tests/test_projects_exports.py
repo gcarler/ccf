@@ -10850,3 +10850,132 @@ def test_rfc3161_invalid_and_binding():
         "audit_executive_report_rfc3161_timestamping_and_non_repudiation"
         in mod.__all__
     )
+
+
+def test_audit_executive_report_siem_log_forwarding_and_retention_breach():
+    from backend.services.project_export_service import (
+        audit_executive_report_siem_log_forwarding_and_retention,
+    )
+
+    res = audit_executive_report_siem_log_forwarding_and_retention(
+        [
+            {
+                "stream_id": "  SIEM-NO-HMAC  ",
+                "tamper_evident_hmac_chaining_enabled": False,
+                "pii_tokenization_before_ingest": True,
+                "siem_ingestion_lag_seconds": 8,
+                "hot_retention_days": 180,
+            },
+            {
+                "stream_id": "SIEM-PII-LEAK",
+                "tamper_evident_hmac_chaining_enabled": True,
+                "pii_tokenization_before_ingest": False,
+                "siem_ingestion_lag_seconds": 45,
+                "hot_retention_days": 30,
+            },
+            {
+                "stream_id": "SIEM-CLEAN",
+                "tamper_evident_hmac_chaining_enabled": True,
+                "pii_tokenization_before_ingest": True,
+                "siem_ingestion_lag_seconds": 30,
+                "hot_retention_days": 90,
+            },
+        ]
+    )
+    assert res["evaluated_streams_count"] == 3
+    assert res["unhashed_or_unmasked_pii_stream_ids"] == [
+        "SIEM-NO-HMAC",
+        "SIEM-PII-LEAK",
+    ]
+    assert res["high_lag_or_short_retention_stream_ids"] == ["SIEM-PII-LEAK"]
+    assert (
+        res["siem_audit_status"] == "SIEM_TAMPER_CHAIN_OR_PII_MASKING_BREACH"
+    )
+    assert res["is_siem_audit_compliant"] is False
+
+
+def test_audit_executive_report_siem_log_forwarding_and_retention_warning():
+    from backend.services.project_export_service import (
+        audit_executive_report_siem_log_forwarding_and_retention,
+    )
+
+    res = audit_executive_report_siem_log_forwarding_and_retention(
+        [
+            {
+                "stream_id": "SIEM-HIGH-LAG",
+                "tamper_evident_hmac_chaining_enabled": True,
+                "pii_tokenization_before_ingest": True,
+                "siem_ingestion_lag_seconds": 31,
+                "hot_retention_days": 90,
+            },
+            {
+                "stream_id": "SIEM-SHORT-RET",
+                "tamper_evident_hmac_chaining_enabled": True,
+                "pii_tokenization_before_ingest": True,
+                "siem_ingestion_lag_seconds": 30,
+                "hot_retention_days": 89,
+            },
+        ],
+        max_siem_ingestion_lag_seconds=30,
+        min_hot_retention_days=90,
+    )
+    assert res["evaluated_streams_count"] == 2
+    assert res["unhashed_or_unmasked_pii_stream_ids"] == []
+    assert res["high_lag_or_short_retention_stream_ids"] == [
+        "SIEM-HIGH-LAG",
+        "SIEM-SHORT-RET",
+    ]
+    assert (
+        res["siem_audit_status"]
+        == "SIEM_INGESTION_LAG_OR_RETENTION_WARNING"
+    )
+    assert res["is_siem_audit_compliant"] is False
+
+
+def test_audit_executive_report_siem_log_forwarding_and_retention_optimal_and_defensive():
+    from backend.services.project_export_service import (
+        audit_executive_report_siem_log_forwarding_and_retention,
+    )
+
+    empty = audit_executive_report_siem_log_forwarding_and_retention(None)
+    assert empty["evaluated_streams_count"] == 0
+    assert empty["siem_audit_status"] == "SIEM_TELEMETRY_PIPELINE_OPTIMAL"
+    assert empty["is_siem_audit_compliant"] is True
+
+    defaults = audit_executive_report_siem_log_forwarding_and_retention(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"stream_id": "   "},
+            {
+                "stream_id": "SIEM-DEFAULTS",
+                "tamper_evident_hmac_chaining_enabled": None,
+                "pii_tokenization_before_ingest": None,
+                "siem_ingestion_lag_seconds": None,
+                "hot_retention_days": None,
+            },
+        ]
+    )
+    assert defaults["evaluated_streams_count"] == 1
+    assert defaults["siem_audit_status"] == "SIEM_TELEMETRY_PIPELINE_OPTIMAL"
+    assert defaults["is_siem_audit_compliant"] is True
+
+
+def test_audit_executive_report_siem_log_forwarding_and_retention_staticmethod_and_dunder_all():
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_siem_log_forwarding_and_retention,
+    )
+
+    sample = [{"stream_id": "SIEM-99", "siem_ingestion_lag_seconds": 5}]
+    assert (
+        ProjectExportService.audit_executive_report_siem_log_forwarding_and_retention(
+            sample
+        )
+        == audit_executive_report_siem_log_forwarding_and_retention(sample)
+    )
+    assert (
+        "audit_executive_report_siem_log_forwarding_and_retention"
+        in mod.__all__
+    )
+

@@ -8401,4 +8401,134 @@ def test_audit_markdown_mermaid_diagram_syntax_and_node_budget_hygiene_staticmet
     )
 
 
+def test_audit_markdown_image_alt_text_and_svg_sanitization_hygiene_breach():
+    from backend.services.anydoc_service import (
+        audit_markdown_image_alt_text_and_svg_sanitization_hygiene,
+    )
+
+    res = audit_markdown_image_alt_text_and_svg_sanitization_hygiene(
+        [
+            {
+                "image_id": "  IMG-SVG-XSS  ",
+                "svg_inline_scripts_sanitized": False,
+                "external_hotlink_blocked": True,
+                "alt_text_char_length": 25,
+                "payload_size_kb": 120.0,
+            },
+            {
+                "image_id": "IMG-HOTLINK",
+                "svg_inline_scripts_sanitized": True,
+                "external_hotlink_blocked": False,
+                "alt_text_char_length": 4,
+                "payload_size_kb": 600.0,
+            },
+            {
+                "image_id": "IMG-CLEAN",
+                "svg_inline_scripts_sanitized": True,
+                "external_hotlink_blocked": True,
+                "alt_text_char_length": 8,
+                "payload_size_kb": 500.0,
+            },
+        ]
+    )
+    assert res["evaluated_images_count"] == 3
+    assert res["unsanitized_svg_or_hotlinked_image_ids"] == [
+        "IMG-SVG-XSS",
+        "IMG-HOTLINK",
+    ]
+    assert res["missing_alt_or_bloated_payload_image_ids"] == ["IMG-HOTLINK"]
+    assert (
+        res["image_hygiene_status"]
+        == "MARKDOWN_IMAGE_SVG_XSS_OR_HOTLINK_BREACH"
+    )
+    assert res["is_image_hygiene_compliant"] is False
+
+
+def test_audit_markdown_image_alt_text_and_svg_sanitization_hygiene_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_image_alt_text_and_svg_sanitization_hygiene,
+    )
+
+    res = audit_markdown_image_alt_text_and_svg_sanitization_hygiene(
+        [
+            {
+                "image_id": "IMG-SHORT-ALT",
+                "svg_inline_scripts_sanitized": True,
+                "external_hotlink_blocked": True,
+                "alt_text_char_length": 7,
+                "payload_size_kb": 500.0,
+            },
+            {
+                "image_id": "IMG-BLOATED",
+                "svg_inline_scripts_sanitized": True,
+                "external_hotlink_blocked": True,
+                "alt_text_char_length": 8,
+                "payload_size_kb": 500.1,
+            },
+        ],
+        max_image_payload_kb=500.0,
+        min_alt_text_chars=8,
+    )
+    assert res["evaluated_images_count"] == 2
+    assert res["unsanitized_svg_or_hotlinked_image_ids"] == []
+    assert res["missing_alt_or_bloated_payload_image_ids"] == [
+        "IMG-SHORT-ALT",
+        "IMG-BLOATED",
+    ]
+    assert (
+        res["image_hygiene_status"]
+        == "MARKDOWN_IMAGE_ALT_TEXT_OR_WEIGHT_WARNING"
+    )
+    assert res["is_image_hygiene_compliant"] is False
+
+
+def test_audit_markdown_image_alt_text_and_svg_sanitization_hygiene_optimal_and_defensive():
+    from backend.services.anydoc_service import (
+        audit_markdown_image_alt_text_and_svg_sanitization_hygiene,
+    )
+
+    empty = audit_markdown_image_alt_text_and_svg_sanitization_hygiene(None)
+    assert empty["evaluated_images_count"] == 0
+    assert empty["image_hygiene_status"] == "MARKDOWN_IMAGE_HYGIENE_OPTIMAL"
+    assert empty["is_image_hygiene_compliant"] is True
+
+    defaults = audit_markdown_image_alt_text_and_svg_sanitization_hygiene(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"image_id": "   "},
+            {
+                "image_id": "IMG-DEFAULTS",
+                "svg_inline_scripts_sanitized": None,
+                "external_hotlink_blocked": None,
+                "alt_text_char_length": None,
+                "payload_size_kb": None,
+            },
+        ]
+    )
+    assert defaults["evaluated_images_count"] == 1
+    assert defaults["image_hygiene_status"] == "MARKDOWN_IMAGE_HYGIENE_OPTIMAL"
+    assert defaults["is_image_hygiene_compliant"] is True
+
+
+def test_audit_markdown_image_alt_text_and_svg_sanitization_hygiene_staticmethod_and_dunder_all():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_image_alt_text_and_svg_sanitization_hygiene,
+    )
+
+    sample = [{"image_id": "IMG-99", "payload_size_kb": 100.0}]
+    assert (
+        AnyDocService.audit_markdown_image_alt_text_and_svg_sanitization_hygiene(
+            sample
+        )
+        == audit_markdown_image_alt_text_and_svg_sanitization_hygiene(sample)
+    )
+    assert (
+        "audit_markdown_image_alt_text_and_svg_sanitization_hygiene"
+        in mod.__all__
+    )
+
+
+
 

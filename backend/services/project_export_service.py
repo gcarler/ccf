@@ -3014,6 +3014,7 @@ __all__ = [
     "audit_executive_report_accessibility_wcag_aa_contrast_and_screen_reader_parity",
     "audit_executive_report_idempotency_key_and_replay_window",
     "audit_executive_report_rfc3161_timestamping_and_non_repudiation",
+    "audit_executive_report_siem_log_forwarding_and_retention",
     "ProjectExportService",
 ]
 
@@ -8011,3 +8012,76 @@ def audit_executive_report_rfc3161_timestamping_and_non_repudiation(
 ProjectExportService.audit_executive_report_rfc3161_timestamping_and_non_repudiation = staticmethod(
     audit_executive_report_rfc3161_timestamping_and_non_repudiation
 )
+
+
+def audit_executive_report_siem_log_forwarding_and_retention(
+    streams: list[dict] | None,
+    *,
+    max_siem_ingestion_lag_seconds: int = 30,
+    min_hot_retention_days: int = 90,
+) -> dict:
+    """PMBOK §10.2 & §11.6 — Audita reenvío automatizado de bitácoras a SIEM en reportes ejecutivos, encadenamiento HMAC a prueba de manipulación, tokenización PII y paridad de retención en caliente."""
+    raw_items = streams if isinstance(streams, list) else []
+    valid_streams: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("stream_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_streams.append(item)
+
+    unhashed_or_unmasked_pii_stream_ids: list[str] = []
+    high_lag_or_short_retention_stream_ids: list[str] = []
+
+    for s in valid_streams:
+        sid = str(s["stream_id"]).strip()
+        raw_hmac = s.get("tamper_evident_hmac_chaining_enabled", True)
+        tamper_evident_hmac_chaining_enabled = bool(
+            True if raw_hmac is None else raw_hmac
+        )
+
+        raw_pii = s.get("pii_tokenization_before_ingest", True)
+        pii_tokenization_before_ingest = bool(
+            True if raw_pii is None else raw_pii
+        )
+
+        raw_lag = s.get("siem_ingestion_lag_seconds", 8)
+        siem_ingestion_lag_seconds = int(8 if raw_lag is None else raw_lag)
+
+        raw_ret = s.get("hot_retention_days", 180)
+        hot_retention_days = int(180 if raw_ret is None else raw_ret)
+
+        if (
+            not tamper_evident_hmac_chaining_enabled
+            or not pii_tokenization_before_ingest
+        ):
+            unhashed_or_unmasked_pii_stream_ids.append(sid)
+
+        if (
+            siem_ingestion_lag_seconds > max_siem_ingestion_lag_seconds
+            or hot_retention_days < min_hot_retention_days
+        ):
+            high_lag_or_short_retention_stream_ids.append(sid)
+
+    if unhashed_or_unmasked_pii_stream_ids:
+        siem_audit_status = "SIEM_TAMPER_CHAIN_OR_PII_MASKING_BREACH"
+    elif high_lag_or_short_retention_stream_ids:
+        siem_audit_status = "SIEM_INGESTION_LAG_OR_RETENTION_WARNING"
+    else:
+        siem_audit_status = "SIEM_TELEMETRY_PIPELINE_OPTIMAL"
+
+    return {
+        "evaluated_streams_count": len(valid_streams),
+        "unhashed_or_unmasked_pii_stream_ids": unhashed_or_unmasked_pii_stream_ids,
+        "high_lag_or_short_retention_stream_ids": high_lag_or_short_retention_stream_ids,
+        "siem_audit_status": siem_audit_status,
+        "is_siem_audit_compliant": siem_audit_status
+        == "SIEM_TELEMETRY_PIPELINE_OPTIMAL",
+    }
+
+
+ProjectExportService.audit_executive_report_siem_log_forwarding_and_retention = staticmethod(
+    audit_executive_report_siem_log_forwarding_and_retention
+)
+

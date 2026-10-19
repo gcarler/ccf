@@ -3043,6 +3043,7 @@ __all__ = [
     "audit_markdown_footnote_citation_reciprocity_and_key_hygiene",
     "audit_markdown_gfm_task_list_completion_and_nesting_hygiene",
     "audit_markdown_mermaid_diagram_syntax_and_node_budget_hygiene",
+    "audit_markdown_image_alt_text_and_svg_sanitization_hygiene",
     "AnydocService",
 ]
 
@@ -8589,6 +8590,74 @@ def audit_markdown_mermaid_diagram_syntax_and_node_budget_hygiene(
 AnyDocService.audit_markdown_mermaid_diagram_syntax_and_node_budget_hygiene = staticmethod(
     audit_markdown_mermaid_diagram_syntax_and_node_budget_hygiene
 )
+
+
+def audit_markdown_image_alt_text_and_svg_sanitization_hygiene(
+    images: list[dict] | None,
+    *,
+    max_image_payload_kb: float = 500.0,
+    min_alt_text_chars: int = 8,
+) -> dict:
+    """PMBOK §4.4 & §10.2 — Audita accesibilidad de texto alternativo (alt-text) en imágenes Markdown, sanitización de scripts inline en SVG, bloqueo de hotlinking externo y peso del activo."""
+    raw_items = images if isinstance(images, list) else []
+    valid_images: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("image_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_images.append(item)
+
+    unsanitized_svg_or_hotlinked_image_ids: list[str] = []
+    missing_alt_or_bloated_payload_image_ids: list[str] = []
+
+    for img in valid_images:
+        iid = str(img["image_id"]).strip()
+        raw_svg = img.get("svg_inline_scripts_sanitized", True)
+        svg_inline_scripts_sanitized = bool(
+            True if raw_svg is None else raw_svg
+        )
+
+        raw_hot = img.get("external_hotlink_blocked", True)
+        external_hotlink_blocked = bool(True if raw_hot is None else raw_hot)
+
+        raw_alt = img.get("alt_text_char_length", 25)
+        alt_text_char_length = int(25 if raw_alt is None else raw_alt)
+
+        raw_kb = img.get("payload_size_kb", 120.0)
+        payload_size_kb = float(120.0 if raw_kb is None else raw_kb)
+
+        if not svg_inline_scripts_sanitized or not external_hotlink_blocked:
+            unsanitized_svg_or_hotlinked_image_ids.append(iid)
+
+        if (
+            alt_text_char_length < min_alt_text_chars
+            or payload_size_kb > max_image_payload_kb
+        ):
+            missing_alt_or_bloated_payload_image_ids.append(iid)
+
+    if unsanitized_svg_or_hotlinked_image_ids:
+        image_hygiene_status = "MARKDOWN_IMAGE_SVG_XSS_OR_HOTLINK_BREACH"
+    elif missing_alt_or_bloated_payload_image_ids:
+        image_hygiene_status = "MARKDOWN_IMAGE_ALT_TEXT_OR_WEIGHT_WARNING"
+    else:
+        image_hygiene_status = "MARKDOWN_IMAGE_HYGIENE_OPTIMAL"
+
+    return {
+        "evaluated_images_count": len(valid_images),
+        "unsanitized_svg_or_hotlinked_image_ids": unsanitized_svg_or_hotlinked_image_ids,
+        "missing_alt_or_bloated_payload_image_ids": missing_alt_or_bloated_payload_image_ids,
+        "image_hygiene_status": image_hygiene_status,
+        "is_image_hygiene_compliant": image_hygiene_status
+        == "MARKDOWN_IMAGE_HYGIENE_OPTIMAL",
+    }
+
+
+AnyDocService.audit_markdown_image_alt_text_and_svg_sanitization_hygiene = staticmethod(
+    audit_markdown_image_alt_text_and_svg_sanitization_hygiene
+)
+
 
 
 
