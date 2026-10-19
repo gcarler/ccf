@@ -3182,6 +3182,7 @@ __all__ = [
     "audit_lessons_learned_retrospective_cadence_and_capa_closure_efficacy",
     "audit_force_majeure_relief_event_notice_and_duty_to_mitigate",
     "audit_stakeholder_escalation_sla_and_ombudsman_dispute_resolution",
+    "audit_commissioning_punch_list_a_items_and_holdback_multiplier",
     "ProjectLifecyclePMIService",
 ]
 
@@ -8347,6 +8348,132 @@ def audit_stakeholder_escalation_sla_and_ombudsman_dispute_resolution(
 
 ProjectLifecyclePMIService.audit_stakeholder_escalation_sla_and_ombudsman_dispute_resolution = staticmethod(
     audit_stakeholder_escalation_sla_and_ombudsman_dispute_resolution
+)
+
+
+def audit_commissioning_punch_list_a_items_and_holdback_multiplier(
+    system_turnovers: list[dict[str, Any]],
+    *,
+    min_b_item_holdback_multiplier: float = 1.5,
+    max_b_item_cure_days: int = 30,
+    require_joint_walkdown_signoff: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §5.5 & §4.7 — Audita cero tolerancia a ítems Categoría A de comisionamiento para completitud sustancial, multiplicador de retención monetaria para ítems Categoría B y sign-off de recorrido conjunto."""
+    raw_items = system_turnovers if isinstance(system_turnovers, list) else []
+    valid_items = [item for item in raw_items if isinstance(item, dict)]
+
+    blocked_a_item_system_ids: list[str] = []
+    underheld_or_unsigned_system_ids: list[str] = []
+    records: list[dict[str, Any]] = []
+    violations: list[str] = []
+    has_critical = False
+    has_warning = False
+
+    for idx, item in enumerate(valid_items):
+        system_id = (
+            str(
+                item.get("system_id") or item.get("id") or f"system-{idx + 1}"
+            ).strip()
+            or f"system-{idx + 1}"
+        )
+        open_category_a_safety_items = max(
+            0, int(item.get("open_category_a_safety_items") or 0)
+        )
+        open_category_b_minor_items_cost = max(
+            0.0, float(item.get("open_category_b_minor_items_cost") or 0.0)
+        )
+        retained_holdback_amount = max(
+            0.0, float(item.get("retained_holdback_amount") or 0.0)
+        )
+        b_item_cure_window_days = max(
+            0, int(item.get("b_item_cure_window_days") or 0)
+        )
+
+        raw_walkdown = item.get("joint_walkdown_signed", True)
+        joint_walkdown_signed = bool(True if raw_walkdown is None else raw_walkdown)
+
+        open_category_a_blocking_substantial_completion = (
+            open_category_a_safety_items > 0
+        )
+        insufficient_b_item_holdback_escrow = bool(
+            open_category_b_minor_items_cost > 0.0
+            and retained_holdback_amount
+            < open_category_b_minor_items_cost * min_b_item_holdback_multiplier
+        )
+        excessive_b_item_cure_window = bool(
+            open_category_b_minor_items_cost > 0.0
+            and b_item_cure_window_days > max_b_item_cure_days
+        )
+        missing_joint_walkdown_signoff = bool(
+            require_joint_walkdown_signoff and not joint_walkdown_signed
+        )
+
+        if open_category_a_blocking_substantial_completion:
+            blocked_a_item_system_ids.append(system_id)
+            has_critical = True
+            violations.append(
+                f"System '{system_id}' has {open_category_a_safety_items} open Category-A safety/operability punch-list item(s) blocking substantial completion."
+            )
+
+        if (
+            insufficient_b_item_holdback_escrow
+            or excessive_b_item_cure_window
+            or missing_joint_walkdown_signoff
+        ):
+            underheld_or_unsigned_system_ids.append(system_id)
+            has_warning = True
+            if insufficient_b_item_holdback_escrow:
+                violations.append(
+                    f"System '{system_id}' retained holdback ({retained_holdback_amount}) is below required multiplier ({min_b_item_holdback_multiplier}x of {open_category_b_minor_items_cost})."
+                )
+            if excessive_b_item_cure_window:
+                violations.append(
+                    f"System '{system_id}' Category-B cure window ({b_item_cure_window_days}d) exceeds maximum ({max_b_item_cure_days}d)."
+                )
+            if missing_joint_walkdown_signoff:
+                violations.append(
+                    f"System '{system_id}' is missing joint commissioning walkdown sign-off."
+                )
+
+        records.append(
+            {
+                "system_id": system_id,
+                "open_category_a_safety_items": open_category_a_safety_items,
+                "open_category_b_minor_items_cost": open_category_b_minor_items_cost,
+                "retained_holdback_amount": retained_holdback_amount,
+                "b_item_cure_window_days": b_item_cure_window_days,
+                "joint_walkdown_signed": joint_walkdown_signed,
+                "open_category_a_blocking_substantial_completion": open_category_a_blocking_substantial_completion,
+                "insufficient_b_item_holdback_escrow": insufficient_b_item_holdback_escrow,
+                "excessive_b_item_cure_window": excessive_b_item_cure_window,
+                "missing_joint_walkdown_signoff": missing_joint_walkdown_signoff,
+            }
+        )
+
+    if has_critical:
+        status = "critical"
+        is_compliant = False
+    elif has_warning:
+        status = "warning"
+        is_compliant = False
+    else:
+        status = "compliant"
+        is_compliant = True
+
+    return {
+        "status": status,
+        "is_compliant": is_compliant,
+        "systems_evaluated": len(records),
+        "blocked_a_item_system_ids": blocked_a_item_system_ids,
+        "underheld_or_unsigned_system_ids": underheld_or_unsigned_system_ids,
+        "records": records,
+        "violations": violations,
+        "Violations": violations,
+    }
+
+
+ProjectLifecyclePMIService.audit_commissioning_punch_list_a_items_and_holdback_multiplier = staticmethod(
+    audit_commissioning_punch_list_a_items_and_holdback_multiplier
 )
 
 

@@ -10962,3 +10962,101 @@ def test_audit_stakeholder_escalation_sla_and_ombudsman_dispute_resolution_stati
         "audit_stakeholder_escalation_sla_and_ombudsman_dispute_resolution"
         in mod.__all__
     )
+
+
+def test_audit_commissioning_punch_list_a_items_and_holdback_multiplier_compliant():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_commissioning_punch_list_a_items_and_holdback_multiplier,
+    )
+
+    res = audit_commissioning_punch_list_a_items_and_holdback_multiplier(
+        [
+            {
+                "system_id": "SYS-HVAC-01",
+                "open_category_a_safety_items": 0,
+                "open_category_b_minor_items_cost": 10000.0,
+                "retained_holdback_amount": 16000.0,
+                "b_item_cure_window_days": 15,
+                "joint_walkdown_signed": True,
+            }
+        ]
+    )
+    assert res["status"] == "compliant"
+    assert res["is_compliant"] is True
+    assert res["systems_evaluated"] == 1
+    assert res["blocked_a_item_system_ids"] == []
+    assert res["underheld_or_unsigned_system_ids"] == []
+    assert res["Violations"] == []
+
+
+def test_audit_commissioning_punch_list_a_items_and_holdback_multiplier_critical():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_commissioning_punch_list_a_items_and_holdback_multiplier,
+    )
+
+    res = audit_commissioning_punch_list_a_items_and_holdback_multiplier(
+        [
+            {
+                "system_id": "SYS-FIRE-02",
+                "open_category_a_safety_items": 2,
+                "open_category_b_minor_items_cost": 5000.0,
+                "retained_holdback_amount": 10000.0,
+                "b_item_cure_window_days": 10,
+                "joint_walkdown_signed": True,
+            }
+        ]
+    )
+    assert res["status"] == "critical"
+    assert res["is_compliant"] is False
+    assert res["blocked_a_item_system_ids"] == ["SYS-FIRE-02"]
+    assert res["records"][0]["open_category_a_blocking_substantial_completion"] is True
+    assert len(res["Violations"]) >= 1
+
+
+def test_audit_commissioning_punch_list_a_items_and_holdback_multiplier_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_commissioning_punch_list_a_items_and_holdback_multiplier,
+    )
+
+    res = audit_commissioning_punch_list_a_items_and_holdback_multiplier(
+        [
+            {
+                "id": "SYS-ELEC-03",
+                "open_category_a_safety_items": 0,
+                "open_category_b_minor_items_cost": 20000.0,
+                "retained_holdback_amount": 25000.0,
+                "b_item_cure_window_days": 45,
+                "joint_walkdown_signed": False,
+            }
+        ],
+        min_b_item_holdback_multiplier=1.5,
+        max_b_item_cure_days=30,
+    )
+    assert res["status"] == "warning"
+    assert res["is_compliant"] is False
+    assert res["blocked_a_item_system_ids"] == []
+    assert res["underheld_or_unsigned_system_ids"] == ["SYS-ELEC-03"]
+    assert res["records"][0]["insufficient_b_item_holdback_escrow"] is True
+    assert res["records"][0]["excessive_b_item_cure_window"] is True
+    assert res["records"][0]["missing_joint_walkdown_signoff"] is True
+
+
+def test_audit_commissioning_punch_list_a_items_and_holdback_multiplier_staticmethod_and_dunder_all():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_commissioning_punch_list_a_items_and_holdback_multiplier,
+    )
+
+    sample = [{"system_id": "SYS-01", "open_category_a_safety_items": 0}]
+    assert (
+        ProjectLifecyclePMIService.audit_commissioning_punch_list_a_items_and_holdback_multiplier(
+            sample
+        )
+        == audit_commissioning_punch_list_a_items_and_holdback_multiplier(sample)
+    )
+    assert (
+        "audit_commissioning_punch_list_a_items_and_holdback_multiplier"
+        in mod.__all__
+    )
+
