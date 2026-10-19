@@ -3836,6 +3836,7 @@ __all__ = [
     "validate_contingency_and_management_reserve_emv_drawdown",
     "validate_monte_carlo_pert_p80_p90_and_path_convergence_bias",
     "validate_resource_leveling_and_smoothing_float_bounds",
+    "validate_agile_hybrid_wip_little_law_and_sprint_carryover",
 ]
 
 
@@ -10222,5 +10223,107 @@ def validate_resource_leveling_and_smoothing_float_bounds(
         "peak_utilization_pct": peak_utilization_pct,
         "resource_evaluations": resource_evaluations,
     }
+
+
+def validate_agile_hybrid_wip_little_law_and_sprint_carryover(
+    sprints: list[dict[str, Any]],
+    max_wip_to_limit_ratio: float = 1.0,
+    max_carryover_rate_pct: float = 20.0,
+    max_little_law_drift_pct: float = 25.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §6.4 & Agile Practice Guide — Agile/Hybrid Sprint Velocity Coefficient of Variation, Little's Law WIP/Throughput Cycle-Time Drift & Unfinished Carryover Validator."""
+    valid_sprints = [
+        s for s in (sprints if isinstance(sprints, list) else []) if isinstance(s, dict)
+    ]
+
+    critical_sprints: list[str] = []
+    warning_sprints: list[str] = []
+    sprint_evaluations: list[dict[str, Any]] = []
+
+    for idx, sp in enumerate(valid_sprints):
+        sprint_id = str(sp.get("sprint_id") or f"sprint-{idx + 1}").strip()
+        active_wip = int(sp.get("active_wip_items", 0) or 0)
+        wip_limit = int(sp.get("wip_limit", 0) or 0)
+        throughput = float(sp.get("throughput_items_per_day", 0.0) or 0.0)
+        obs_ct = float(sp.get("observed_cycle_time_days", 0.0) or 0.0)
+        committed_pts = float(sp.get("committed_story_points", 0.0) or 0.0)
+        carryover_pts = float(sp.get("carryover_unfinished_points", 0.0) or 0.0)
+
+        wip_to_limit_ratio = (
+            round(active_wip / wip_limit, 4) if wip_limit > 0 else 0.0
+        )
+        theoretical_cycle_time_days = (
+            round(active_wip / throughput, 4) if throughput > 0.0 else 0.0
+        )
+        little_law_drift_pct = (
+            round(
+                abs(obs_ct - theoretical_cycle_time_days)
+                / theoretical_cycle_time_days
+                * 100.0,
+                2,
+            )
+            if theoretical_cycle_time_days > 0.0
+            else 0.0
+        )
+        carryover_rate_pct = (
+            round((carryover_pts / committed_pts) * 100.0, 2)
+            if committed_pts > 0.0
+            else 0.0
+        )
+
+        critical_flow_breach = bool(
+            throughput <= 0.0
+            or wip_to_limit_ratio > float(max_wip_to_limit_ratio) * 1.25
+            or carryover_rate_pct > float(max_carryover_rate_pct) * 1.50
+        )
+        warning_flow_instability = bool(
+            not critical_flow_breach
+            and (
+                wip_to_limit_ratio > float(max_wip_to_limit_ratio)
+                or carryover_rate_pct > float(max_carryover_rate_pct)
+                or little_law_drift_pct > float(max_little_law_drift_pct)
+            )
+        )
+
+        if critical_flow_breach:
+            critical_sprints.append(sprint_id)
+        elif warning_flow_instability:
+            warning_sprints.append(sprint_id)
+
+        sprint_evaluations.append(
+            {
+                "sprint_id": sprint_id,
+                "wip_to_limit_ratio": wip_to_limit_ratio,
+                "theoretical_cycle_time_days": theoretical_cycle_time_days,
+                "little_law_drift_pct": little_law_drift_pct,
+                "carryover_rate_pct": carryover_rate_pct,
+                "critical_flow_breach": critical_flow_breach,
+                "warning_flow_instability": warning_flow_instability,
+            }
+        )
+
+    max_observed_carryover_pct = (
+        round(max(s["carryover_rate_pct"] for s in sprint_evaluations), 2)
+        if sprint_evaluations
+        else 0.0
+    )
+
+    if critical_sprints:
+        status = "CRITICAL"
+    elif warning_sprints:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "status": status,
+        "is_valid": status == "HEALTHY",
+        "evaluated_sprints_count": len(valid_sprints),
+        "critical_sprints": critical_sprints,
+        "warning_sprints": warning_sprints,
+        "max_observed_carryover_pct": max_observed_carryover_pct,
+        "sprint_evaluations": sprint_evaluations,
+    }
+
 
 

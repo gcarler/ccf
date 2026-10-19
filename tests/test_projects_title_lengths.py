@@ -10768,3 +10768,129 @@ def test_validate_resource_leveling_and_smoothing_float_bounds_empty_and_exports
     )
 
 
+def test_validate_agile_hybrid_wip_little_law_and_sprint_carryover_healthy():
+    from backend.schemas.projects import (
+        validate_agile_hybrid_wip_little_law_and_sprint_carryover,
+    )
+
+    res = validate_agile_hybrid_wip_little_law_and_sprint_carryover(
+        [
+            {
+                "sprint_id": "SPR-2026-01",
+                "active_wip_items": 6,
+                "wip_limit": 8,
+                "throughput_items_per_day": 1.5,
+                "observed_cycle_time_days": 4.2,
+                "committed_story_points": 40.0,
+                "carryover_unfinished_points": 4.0,
+            },
+            {
+                "sprint_id": "SPR-2026-02",
+                "active_wip_items": 5,
+                "wip_limit": 6,
+                "throughput_items_per_day": 1.25,
+                "observed_cycle_time_days": 3.8,
+                "committed_story_points": 50.0,
+                "carryover_unfinished_points": 5.0,
+            },
+        ]
+    )
+    assert res["status"] == "HEALTHY"
+    assert res["is_valid"] is True
+    assert res["evaluated_sprints_count"] == 2
+    assert res["critical_sprints"] == []
+    assert res["warning_sprints"] == []
+    assert res["max_observed_carryover_pct"] == 10.0
+
+
+def test_validate_agile_hybrid_wip_little_law_and_sprint_carryover_critical():
+    from backend.schemas.projects import (
+        validate_agile_hybrid_wip_little_law_and_sprint_carryover,
+    )
+
+    res = validate_agile_hybrid_wip_little_law_and_sprint_carryover(
+        [
+            {
+                "sprint_id": "SPR-WIP-EXPLOSION",
+                "active_wip_items": 12,
+                "wip_limit": 8,
+                "throughput_items_per_day": 2.0,
+                "observed_cycle_time_days": 6.0,
+                "committed_story_points": 40.0,
+                "carryover_unfinished_points": 4.0,
+            },
+            {
+                "sprint_id": "SPR-CARRYOVER-SURGE",
+                "active_wip_items": 6,
+                "wip_limit": 8,
+                "throughput_items_per_day": 1.5,
+                "observed_cycle_time_days": 4.0,
+                "committed_story_points": 50.0,
+                "carryover_unfinished_points": 20.0,
+            },
+        ]
+    )
+    assert res["status"] == "CRITICAL"
+    assert res["is_valid"] is False
+    assert res["critical_sprints"] == [
+        "SPR-WIP-EXPLOSION",
+        "SPR-CARRYOVER-SURGE",
+    ]
+    assert res["warning_sprints"] == []
+    assert res["max_observed_carryover_pct"] == 40.0
+
+
+def test_validate_agile_hybrid_wip_little_law_and_sprint_carryover_warning():
+    from backend.schemas.projects import (
+        validate_agile_hybrid_wip_little_law_and_sprint_carryover,
+    )
+
+    res = validate_agile_hybrid_wip_little_law_and_sprint_carryover(
+        [
+            {
+                "sprint_id": "SPR-LITTLE-DRIFT",
+                "active_wip_items": 6,
+                "wip_limit": 6,
+                "throughput_items_per_day": 2.0,
+                "observed_cycle_time_days": 4.5,
+                "committed_story_points": 40.0,
+                "carryover_unfinished_points": 6.0,
+            },
+            {
+                "sprint_id": "SPR-MILD-CARRYOVER",
+                "active_wip_items": 5,
+                "wip_limit": 6,
+                "throughput_items_per_day": 1.0,
+                "observed_cycle_time_days": 5.0,
+                "committed_story_points": 40.0,
+                "carryover_unfinished_points": 10.0,
+            },
+        ]
+    )
+    assert res["status"] == "WARNING"
+    assert res["is_valid"] is False
+    assert res["critical_sprints"] == []
+    assert res["warning_sprints"] == [
+        "SPR-LITTLE-DRIFT",
+        "SPR-MILD-CARRYOVER",
+    ]
+    assert res["max_observed_carryover_pct"] == 25.0
+
+
+def test_validate_agile_hybrid_wip_little_law_and_sprint_carryover_empty_and_exports():
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_agile_hybrid_wip_little_law_and_sprint_carryover,
+    )
+
+    empty = validate_agile_hybrid_wip_little_law_and_sprint_carryover([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["evaluated_sprints_count"] == 0
+    assert empty["max_observed_carryover_pct"] == 0.0
+    assert (
+        "validate_agile_hybrid_wip_little_law_and_sprint_carryover"
+        in mod.__all__
+    )
+
+
+
