@@ -3188,6 +3188,7 @@ __all__ = [
     "audit_dlp_warranty_callout_sla_and_retention_bond_stepdown",
     "audit_software_escrow_deposit_verification_and_release_trigger",
     "audit_ppp_concession_handback_residual_life_and_reserve_escrow",
+    "audit_eia_environmental_permit_conditions_and_chance_find_stop_work",
     "ProjectLifecyclePMIService",
 ]
 
@@ -8898,6 +8899,66 @@ def audit_ppp_concession_handback_residual_life_and_reserve_escrow(
 ProjectLifecyclePMIService.audit_ppp_concession_handback_residual_life_and_reserve_escrow = staticmethod(
     audit_ppp_concession_handback_residual_life_and_reserve_escrow
 )
+
+
+def audit_eia_environmental_permit_conditions_and_chance_find_stop_work(
+    monitoring_zones: list[dict[str, Any]],
+    max_turbidity_ntu: float = 25.0,
+    max_noise_db: float = 85.0,
+) -> dict[str, Any]:
+    """PMBOK §12.3 & §13.3 — Project Lifecycle Environmental Impact Assessment (EIA / NEPA) Permit Condition Compliance, Cultural Heritage Chance-Find Protocol & Stop-Work Order Auditor."""
+    valid_zones = [
+        z for z in (monitoring_zones if isinstance(monitoring_zones, list) else []) if isinstance(z, dict)
+    ]
+
+    stop_work_breach_zones: list[str] = []
+    threshold_exceedance_zones: list[str] = []
+
+    for idx, z in enumerate(valid_zones):
+        zone_id = str(z.get("zone_id") or f"zone-{idx + 1}").strip()
+        permit_active = bool(z.get("permit_active", False))
+        turbidity = float(z.get("measured_turbidity_ntu", 0.0) or 0.0)
+        noise = float(z.get("measured_noise_db", 0.0) or 0.0)
+        chance_find = bool(z.get("cultural_chance_find_triggered", False))
+        work_halted = bool(z.get("work_halted_for_archaeologist", True))
+
+        if not permit_active or (chance_find and not work_halted):
+            stop_work_breach_zones.append(zone_id)
+
+        if turbidity > float(max_turbidity_ntu) or noise > float(max_noise_db):
+            threshold_exceedance_zones.append(zone_id)
+
+    recommendations: list[str] = []
+    if stop_work_breach_zones:
+        recommendations.append(
+            f"Issue immediate Stop-Work Order (SWO), verify active EIA/NEPA environmental permits, and secure archaeological clearance on: {', '.join(stop_work_breach_zones)}."
+        )
+    if threshold_exceedance_zones:
+        recommendations.append(
+            f"Deploy silt curtains/sediment traps (<= {max_turbidity_ntu} NTU) and acoustic barriers (<= {max_noise_db} dB) on: {', '.join(threshold_exceedance_zones)}."
+        )
+
+    if stop_work_breach_zones:
+        eia_compliance_status = "CRITICAL_UNPERMITTED_OR_CHANCE_FIND_BREACH"
+    elif threshold_exceedance_zones:
+        eia_compliance_status = "ENVIRONMENTAL_THRESHOLD_EXCEEDANCE_WARNING"
+    else:
+        eia_compliance_status = "EIA_PERMIT_COMPLIANT"
+
+    return {
+        "is_valid": eia_compliance_status == "EIA_PERMIT_COMPLIANT",
+        "total_zones": len(valid_zones),
+        "stop_work_breach_zones": stop_work_breach_zones,
+        "threshold_exceedance_zones": threshold_exceedance_zones,
+        "eia_compliance_status": eia_compliance_status,
+        "recommendations": recommendations,
+    }
+
+
+ProjectLifecyclePMIService.audit_eia_environmental_permit_conditions_and_chance_find_stop_work = staticmethod(
+    audit_eia_environmental_permit_conditions_and_chance_find_stop_work
+)
+
 
 
 

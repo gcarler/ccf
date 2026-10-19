@@ -11709,3 +11709,138 @@ def test_audit_ppp_concession_handback_residual_life_and_reserve_escrow_staticme
         in mod.__all__
     )
 
+
+def test_audit_eia_environmental_permit_conditions_and_chance_find_stop_work_compliant():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_eia_environmental_permit_conditions_and_chance_find_stop_work,
+    )
+
+    res = audit_eia_environmental_permit_conditions_and_chance_find_stop_work(
+        [
+            {
+                "zone_id": "WETLAND-BUFFER-A",
+                "permit_active": True,
+                "measured_turbidity_ntu": 14.2,
+                "measured_noise_db": 72.5,
+                "cultural_chance_find_triggered": False,
+                "work_halted_for_archaeologist": True,
+            },
+            {
+                "zone_id": "EXCAVATION-SECTOR-B",
+                "permit_active": True,
+                "measured_turbidity_ntu": 18.0,
+                "measured_noise_db": 81.0,
+                "cultural_chance_find_triggered": True,
+                "work_halted_for_archaeologist": True,
+            },
+        ]
+    )
+    assert res["is_valid"] is True
+    assert res["total_zones"] == 2
+    assert res["stop_work_breach_zones"] == []
+    assert res["threshold_exceedance_zones"] == []
+    assert res["eia_compliance_status"] == "EIA_PERMIT_COMPLIANT"
+    assert res["recommendations"] == []
+
+
+def test_audit_eia_environmental_permit_conditions_and_chance_find_stop_work_critical_breach():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_eia_environmental_permit_conditions_and_chance_find_stop_work,
+    )
+
+    res = audit_eia_environmental_permit_conditions_and_chance_find_stop_work(
+        [
+            {
+                "zone_id": "RIVER-CROSSING-01",
+                "permit_active": False,
+                "measured_turbidity_ntu": 12.0,
+                "measured_noise_db": 70.0,
+            },
+            {
+                "zone_id": "TRENCH-HERITAGE-02",
+                "permit_active": True,
+                "measured_turbidity_ntu": 15.0,
+                "measured_noise_db": 75.0,
+                "cultural_chance_find_triggered": True,
+                "work_halted_for_archaeologist": False,
+            },
+        ]
+    )
+    assert res["is_valid"] is False
+    assert res["stop_work_breach_zones"] == [
+        "RIVER-CROSSING-01",
+        "TRENCH-HERITAGE-02",
+    ]
+    assert res["threshold_exceedance_zones"] == []
+    assert (
+        res["eia_compliance_status"]
+        == "CRITICAL_UNPERMITTED_OR_CHANCE_FIND_BREACH"
+    )
+    assert len(res["recommendations"]) == 1
+
+
+def test_audit_eia_environmental_permit_conditions_and_chance_find_stop_work_threshold_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_eia_environmental_permit_conditions_and_chance_find_stop_work,
+    )
+
+    res = audit_eia_environmental_permit_conditions_and_chance_find_stop_work(
+        [
+            {
+                "zone_id": "ESTUARY-DREDGE-01",
+                "permit_active": True,
+                "measured_turbidity_ntu": 38.5,
+                "measured_noise_db": 79.0,
+            },
+            {
+                "zone_id": "PILE-DRIVING-02",
+                "permit_active": True,
+                "measured_turbidity_ntu": 19.0,
+                "measured_noise_db": 94.0,
+            },
+        ],
+        max_turbidity_ntu=25.0,
+        max_noise_db=85.0,
+    )
+    assert res["is_valid"] is False
+    assert res["stop_work_breach_zones"] == []
+    assert res["threshold_exceedance_zones"] == [
+        "ESTUARY-DREDGE-01",
+        "PILE-DRIVING-02",
+    ]
+    assert (
+        res["eia_compliance_status"]
+        == "ENVIRONMENTAL_THRESHOLD_EXCEEDANCE_WARNING"
+    )
+    assert len(res["recommendations"]) == 1
+
+
+def test_audit_eia_environmental_permit_conditions_and_chance_find_stop_work_staticmethod_and_dunder_all():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_eia_environmental_permit_conditions_and_chance_find_stop_work,
+    )
+
+    sample = [
+        {
+            "zone_id": "Z-1",
+            "permit_active": True,
+            "measured_turbidity_ntu": 10.0,
+            "measured_noise_db": 65.0,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_eia_environmental_permit_conditions_and_chance_find_stop_work(
+            sample
+        )
+        == audit_eia_environmental_permit_conditions_and_chance_find_stop_work(
+            sample
+        )
+    )
+    assert (
+        "audit_eia_environmental_permit_conditions_and_chance_find_stop_work"
+        in mod.__all__
+    )
+
+
