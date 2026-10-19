@@ -8894,3 +8894,126 @@ def test_audit_project_closure_lessons_learned_and_pir_archival_staticmethod_and
         in mod.__all__
     )
 
+
+def test_audit_organizational_change_adkar_readiness_and_training_breach():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_organizational_change_adkar_readiness_and_training,
+    )
+
+    result = audit_organizational_change_adkar_readiness_and_training(
+        [
+            {
+                "unit_id": "BU-OPS-1",
+                "adkar_average_score": 2.1,
+                "training_completion_pct": 95.0,
+                "change_champions_assigned": True,
+                "hypercare_floor_support_staffed": True,
+                "cutover_blocking_resistance_logged": False,
+            },
+            {
+                "unit_id": "BU-FIN-2",
+                "adkar_average_score": 4.2,
+                "training_completion_pct": 90.0,
+                "change_champions_assigned": True,
+                "hypercare_floor_support_staffed": False,
+                "cutover_blocking_resistance_logged": True,
+            },
+        ],
+        min_adkar_readiness_score=3.5,
+        min_training_completion_pct=85.0,
+    )
+    assert result["evaluated_units_count"] == 2
+    assert result["cutover_blocked_or_unstaffed_unit_ids"] == [
+        "BU-OPS-1",
+        "BU-FIN-2",
+    ]
+    assert result["low_training_or_readiness_unit_ids"] == ["BU-OPS-1"]
+    assert (
+        result["ocm_readiness_status"]
+        == "OCM_CUTOVER_BLOCKED_OR_HYPERCARE_BREACH"
+    )
+    assert result["is_ocm_cutover_ready"] is False
+
+
+def test_audit_organizational_change_adkar_readiness_and_training_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_organizational_change_adkar_readiness_and_training,
+    )
+
+    result = audit_organizational_change_adkar_readiness_and_training(
+        [
+            {
+                "unit_id": "BU-SALES",
+                "adkar_average_score": 3.2,
+                "training_completion_pct": 70.0,
+                "change_champions_assigned": False,
+                "hypercare_floor_support_staffed": True,
+                "cutover_blocking_resistance_logged": False,
+            }
+        ],
+        min_adkar_readiness_score=3.5,
+        min_training_completion_pct=85.0,
+    )
+    assert result["evaluated_units_count"] == 1
+    assert result["cutover_blocked_or_unstaffed_unit_ids"] == []
+    assert result["low_training_or_readiness_unit_ids"] == ["BU-SALES"]
+    assert result["ocm_readiness_status"] == "OCM_TRAINING_OR_ADKAR_WARNING"
+    assert result["is_ocm_cutover_ready"] is False
+
+
+def test_audit_organizational_change_adkar_readiness_and_training_optimal_and_empty():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_organizational_change_adkar_readiness_and_training,
+    )
+
+    empty = audit_organizational_change_adkar_readiness_and_training(
+        [{"unit_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_units_count"] == 0
+    assert empty["ocm_readiness_status"] == "OCM_ADOPTION_READY_OPTIMAL"
+    assert empty["is_ocm_cutover_ready"] is True
+
+    optimal = audit_organizational_change_adkar_readiness_and_training(
+        [
+            {
+                "unit_id": "BU-CORE",
+                "adkar_average_score": 4.4,
+                "training_completion_pct": 92.0,
+                "change_champions_assigned": True,
+                "hypercare_floor_support_staffed": True,
+                "cutover_blocking_resistance_logged": False,
+            }
+        ],
+        min_adkar_readiness_score=3.5,
+        min_training_completion_pct=85.0,
+    )
+    assert optimal["evaluated_units_count"] == 1
+    assert optimal["ocm_readiness_status"] == "OCM_ADOPTION_READY_OPTIMAL"
+    assert optimal["is_ocm_cutover_ready"] is True
+
+
+def test_audit_organizational_change_adkar_readiness_and_training_staticmethod_and_dunder_all():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_organizational_change_adkar_readiness_and_training,
+    )
+
+    sample = [
+        {
+            "unit_id": "BU-99",
+            "adkar_average_score": 4.0,
+            "training_completion_pct": 90.0,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_organizational_change_adkar_readiness_and_training(
+            sample
+        )
+        == audit_organizational_change_adkar_readiness_and_training(sample)
+    )
+    assert (
+        "audit_organizational_change_adkar_readiness_and_training"
+        in mod.__all__
+    )
+

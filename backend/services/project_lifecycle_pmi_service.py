@@ -3167,6 +3167,7 @@ __all__ = [
     "audit_regulatory_permits_and_statutory_compliance_readiness",
     "audit_charter_business_case_irr_wacc_spread_and_payback",
     "audit_project_closure_lessons_learned_and_pir_archival",
+    "audit_organizational_change_adkar_readiness_and_training",
     "ProjectLifecyclePMIService",
 ]
 
@@ -7025,5 +7026,79 @@ def audit_project_closure_lessons_learned_and_pir_archival(
 
 ProjectLifecyclePMIService.audit_project_closure_lessons_learned_and_pir_archival = staticmethod(
     audit_project_closure_lessons_learned_and_pir_archival
+)
+
+
+def audit_organizational_change_adkar_readiness_and_training(
+    business_units: Sequence[Mapping[str, Any]] | None,
+    *,
+    min_adkar_readiness_score: float = 3.5,
+    min_training_completion_pct: float = 85.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §13.3 & §9.4 — Organizational Change Management (OCM) ADKAR Adoption Readiness, Training Completion & Hypercare Support Auditor."""
+    valid_units = [
+        unit
+        for unit in (business_units or [])
+        if isinstance(unit, Mapping) and str(unit.get("unit_id") or "").strip()
+    ]
+
+    cutover_blocked_or_unstaffed_unit_ids: list[str] = []
+    low_training_or_readiness_unit_ids: list[str] = []
+
+    for unit in valid_units:
+        uid = str(unit.get("unit_id")).strip()
+        raw_adkar = unit.get("adkar_average_score")
+        adkar_score = float(raw_adkar if raw_adkar is not None else 4.0)
+        raw_training = unit.get("training_completion_pct")
+        training_pct = float(raw_training if raw_training is not None else 90.0)
+        champions_assigned = bool(
+            unit.get("change_champions_assigned", True)
+            if unit.get("change_champions_assigned") is not None
+            else True
+        )
+        hypercare_staffed = bool(
+            unit.get("hypercare_floor_support_staffed", True)
+            if unit.get("hypercare_floor_support_staffed") is not None
+            else True
+        )
+        blocking_resistance = bool(
+            unit.get("cutover_blocking_resistance_logged", False)
+            if unit.get("cutover_blocking_resistance_logged") is not None
+            else False
+        )
+
+        if (
+            blocking_resistance
+            or not hypercare_staffed
+            or adkar_score < 2.5
+        ):
+            cutover_blocked_or_unstaffed_unit_ids.append(uid)
+
+        if (
+            training_pct < min_training_completion_pct
+            or adkar_score < min_adkar_readiness_score
+            or not champions_assigned
+        ):
+            low_training_or_readiness_unit_ids.append(uid)
+
+    if cutover_blocked_or_unstaffed_unit_ids:
+        ocm_readiness_status = "OCM_CUTOVER_BLOCKED_OR_HYPERCARE_BREACH"
+    elif low_training_or_readiness_unit_ids:
+        ocm_readiness_status = "OCM_TRAINING_OR_ADKAR_WARNING"
+    else:
+        ocm_readiness_status = "OCM_ADOPTION_READY_OPTIMAL"
+
+    return {
+        "evaluated_units_count": len(valid_units),
+        "cutover_blocked_or_unstaffed_unit_ids": cutover_blocked_or_unstaffed_unit_ids,
+        "low_training_or_readiness_unit_ids": low_training_or_readiness_unit_ids,
+        "ocm_readiness_status": ocm_readiness_status,
+        "is_ocm_cutover_ready": ocm_readiness_status
+        == "OCM_ADOPTION_READY_OPTIMAL",
+    }
+
+
+ProjectLifecyclePMIService.audit_organizational_change_adkar_readiness_and_training = staticmethod(
+    audit_organizational_change_adkar_readiness_and_training
 )
 
