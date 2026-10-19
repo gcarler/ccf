@@ -3030,6 +3030,7 @@ __all__ = [
     "audit_markdown_frontmatter_metadata_and_classification_hygiene",
     "audit_markdown_mermaid_diagram_syntax_and_cognitive_complexity",
     "audit_markdown_footnote_citation_and_orphan_definition_hygiene",
+    "audit_markdown_task_list_checklist_owner_and_due_date_hygiene",
     "AnydocService",
 ]
 
@@ -7555,4 +7556,105 @@ AnyDocService.audit_markdown_footnote_citation_and_orphan_definition_hygiene = s
 )
 AnydocService.audit_markdown_footnote_citation_and_orphan_definition_hygiene = staticmethod(
     audit_markdown_footnote_citation_and_orphan_definition_hygiene
+)
+
+
+def audit_markdown_task_list_checklist_owner_and_due_date_hygiene(
+    checklists: list[dict[str, Any]],
+    *,
+    max_overdue_days_allowed: int = 0,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §10.2 — AnyDoc Markdown Task-List Checklist Completion Parity, Unassigned Action Item & Stale Due-Date Hygiene Auditor."""
+    valid_items: list[dict[str, Any]] = []
+    if isinstance(checklists, (list, tuple)):
+        for item in checklists:
+            if not isinstance(item, dict):
+                continue
+            iid = str(item.get("item_id") or "").strip()
+            if not iid:
+                continue
+            valid_items.append({**item, "_iid": iid})
+
+    if not valid_items:
+        return {
+            "total_items_evaluated": 0,
+            "open_items_count": 0,
+            "checked_items_count": 0,
+            "unassigned_open_item_ids": [],
+            "overdue_open_item_ids": [],
+            "malformed_syntax_item_ids": [],
+            "checklist_hygiene_status": "CHECKLIST_CLEAN",
+            "is_checklist_compliant": True,
+            "recommendations": [],
+        }
+
+    open_items_count = 0
+    checked_items_count = 0
+    unassigned_open_item_ids: list[str] = []
+    overdue_open_item_ids: list[str] = []
+    malformed_syntax_item_ids: list[str] = []
+
+    for row in valid_items:
+        iid = row["_iid"]
+        is_checked = bool(row.get("is_checked", False))
+        has_owner = bool(row.get("has_assigned_owner_handle", False))
+        has_due = bool(row.get("has_iso_due_date", False))
+        overdue = int(
+            row.get("overdue_days", 0)
+            if row.get("overdue_days") is not None
+            else 0
+        )
+        malformed = bool(row.get("has_malformed_checkbox_syntax", False))
+
+        if is_checked:
+            checked_items_count += 1
+        else:
+            open_items_count += 1
+            if not has_owner or not has_due:
+                unassigned_open_item_ids.append(iid)
+            if overdue > max_overdue_days_allowed:
+                overdue_open_item_ids.append(iid)
+
+        if malformed:
+            malformed_syntax_item_ids.append(iid)
+
+    recommendations: list[str] = []
+    if malformed_syntax_item_ids:
+        recommendations.append(
+            f"Normalize GFM checkbox syntax (`- [ ]` or `- [x]`) for item(s): {', '.join(malformed_syntax_item_ids)}."
+        )
+    if overdue_open_item_ids:
+        recommendations.append(
+            f"Escalate or close overdue open checklist action item(s) exceeding {max_overdue_days_allowed} day(s): {', '.join(overdue_open_item_ids)}."
+        )
+    if unassigned_open_item_ids:
+        recommendations.append(
+            f"Assign explicit `@owner` handle and ISO-8601 due date to open action item(s): {', '.join(unassigned_open_item_ids)}."
+        )
+
+    if overdue_open_item_ids or malformed_syntax_item_ids:
+        checklist_hygiene_status = "ACTION_GOVERNANCE_BREACH"
+    elif unassigned_open_item_ids:
+        checklist_hygiene_status = "UNASSIGNED_ACTION_WARNING"
+    else:
+        checklist_hygiene_status = "CHECKLIST_CLEAN"
+
+    return {
+        "total_items_evaluated": len(valid_items),
+        "open_items_count": open_items_count,
+        "checked_items_count": checked_items_count,
+        "unassigned_open_item_ids": unassigned_open_item_ids,
+        "overdue_open_item_ids": overdue_open_item_ids,
+        "malformed_syntax_item_ids": malformed_syntax_item_ids,
+        "checklist_hygiene_status": checklist_hygiene_status,
+        "is_checklist_compliant": checklist_hygiene_status == "CHECKLIST_CLEAN",
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_markdown_task_list_checklist_owner_and_due_date_hygiene = staticmethod(
+    audit_markdown_task_list_checklist_owner_and_due_date_hygiene
+)
+AnydocService.audit_markdown_task_list_checklist_owner_and_due_date_hygiene = staticmethod(
+    audit_markdown_task_list_checklist_owner_and_due_date_hygiene
 )

@@ -6550,3 +6550,136 @@ def test_audit_markdown_footnote_invalid_and_binding():
         == audit_markdown_footnote_citation_and_orphan_definition_hygiene(sample)
     )
     assert "audit_markdown_footnote_citation_and_orphan_definition_hygiene" in mod.__all__
+
+
+def test_audit_markdown_task_list_checklist_owner_and_due_date_hygiene_governance_breach():
+    from backend.services.anydoc_service import (
+        audit_markdown_task_list_checklist_owner_and_due_date_hygiene,
+    )
+
+    res = audit_markdown_task_list_checklist_owner_and_due_date_hygiene(
+        [
+            {
+                "item_id": "ACT-001",
+                "is_checked": False,
+                "has_assigned_owner_handle": True,
+                "has_iso_due_date": True,
+                "overdue_days": 5,
+                "has_malformed_checkbox_syntax": False,
+            },
+            {
+                "item_id": "ACT-002",
+                "is_checked": True,
+                "has_assigned_owner_handle": False,
+                "has_iso_due_date": False,
+                "overdue_days": 10,
+                "has_malformed_checkbox_syntax": True,
+            },
+        ],
+        max_overdue_days_allowed=0,
+    )
+    assert res["total_items_evaluated"] == 2
+    assert res["open_items_count"] == 1
+    assert res["checked_items_count"] == 1
+    assert res["unassigned_open_item_ids"] == []
+    assert res["overdue_open_item_ids"] == ["ACT-001"]
+    assert res["malformed_syntax_item_ids"] == ["ACT-002"]
+    assert res["checklist_hygiene_status"] == "ACTION_GOVERNANCE_BREACH"
+    assert res["is_checklist_compliant"] is False
+
+
+def test_audit_markdown_task_list_checklist_owner_and_due_date_hygiene_unassigned_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_task_list_checklist_owner_and_due_date_hygiene,
+    )
+
+    res = audit_markdown_task_list_checklist_owner_and_due_date_hygiene(
+        [
+            {
+                "item_id": "ACT-010",
+                "is_checked": False,
+                "has_assigned_owner_handle": True,
+                "has_iso_due_date": False,
+                "overdue_days": 0,
+                "has_malformed_checkbox_syntax": False,
+            }
+        ],
+        max_overdue_days_allowed=0,
+    )
+    assert res["unassigned_open_item_ids"] == ["ACT-010"]
+    assert res["overdue_open_item_ids"] == []
+    assert res["malformed_syntax_item_ids"] == []
+    assert res["checklist_hygiene_status"] == "UNASSIGNED_ACTION_WARNING"
+    assert res["is_checklist_compliant"] is False
+
+
+def test_audit_markdown_task_list_checklist_owner_and_due_date_hygiene_clean_and_empty():
+    from backend.services.anydoc_service import (
+        audit_markdown_task_list_checklist_owner_and_due_date_hygiene,
+    )
+
+    empty = audit_markdown_task_list_checklist_owner_and_due_date_hygiene(
+        [{"item_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_items_evaluated"] == 0
+    assert empty["checklist_hygiene_status"] == "CHECKLIST_CLEAN"
+    assert empty["is_checklist_compliant"] is True
+
+    clean = audit_markdown_task_list_checklist_owner_and_due_date_hygiene(
+        [
+            {
+                "item_id": "ACT-020",
+                "is_checked": False,
+                "has_assigned_owner_handle": True,
+                "has_iso_due_date": True,
+                "overdue_days": 0,
+                "has_malformed_checkbox_syntax": False,
+            },
+            {
+                "item_id": "ACT-021",
+                "is_checked": True,
+                "has_assigned_owner_handle": False,
+                "has_iso_due_date": False,
+                "overdue_days": 0,
+                "has_malformed_checkbox_syntax": False,
+            },
+        ]
+    )
+    assert clean["total_items_evaluated"] == 2
+    assert clean["open_items_count"] == 1
+    assert clean["checked_items_count"] == 1
+    assert clean["checklist_hygiene_status"] == "CHECKLIST_CLEAN"
+    assert clean["is_checklist_compliant"] is True
+
+
+def test_audit_markdown_task_list_checklist_owner_and_due_date_hygiene_staticmethod_and_dunder_all():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_task_list_checklist_owner_and_due_date_hygiene,
+    )
+
+    sample = [
+        {
+            "item_id": "ACT-99",
+            "is_checked": True,
+            "has_malformed_checkbox_syntax": False,
+        }
+    ]
+    assert (
+        AnyDocService.audit_markdown_task_list_checklist_owner_and_due_date_hygiene(
+            sample
+        )
+        == audit_markdown_task_list_checklist_owner_and_due_date_hygiene(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_task_list_checklist_owner_and_due_date_hygiene(
+            sample
+        )
+        == audit_markdown_task_list_checklist_owner_and_due_date_hygiene(sample)
+    )
+    assert (
+        "audit_markdown_task_list_checklist_owner_and_due_date_hygiene"
+        in mod.__all__
+    )

@@ -8343,3 +8343,168 @@ def test_audit_steering_committee_quorum_and_decision_latency_empty_and_binding(
         "audit_steering_committee_quorum_and_decision_latency" in mod.__all__
     )
 
+
+
+def test_audit_warranty_escrow_breach_paths():
+    """Caso 1: escrow prematuro en condiciones de riesgo -> ESCROW_OR_DEFECT_BREACH."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_warranty_defect_liability_and_escrow_release_gate,
+    )
+
+    res = audit_warranty_defect_liability_and_escrow_release_gate(
+        [
+            {
+                "contract_id": "CTR-01",
+                "warranty_elapsed_days": 30,
+                "open_sev1_sev2_latent_defects": 0,
+                "max_defect_resolution_hours_observed": 12.0,
+                "escrow_released_prematurely": True,
+                "has_final_lien_waiver_signed": True,
+            },
+            {
+                "contract_id": "CTR-02",
+                "warranty_elapsed_days": 120,
+                "open_sev1_sev2_latent_defects": 0,
+                "max_defect_resolution_hours_observed": 20.0,
+                "escrow_released_prematurely": False,
+                "has_final_lien_waiver_signed": False,
+            },
+        ]
+    )
+    assert res["total_contracts_evaluated"] == 2
+    # CTR-01: escrow liberado con DLP 30 < 90 -> prematuro.
+    assert res["premature_escrow_release_contract_ids"] == ["CTR-01"]
+    assert res["unresolved_latent_defect_contract_ids"] == []
+    assert res["sla_breach_defect_contract_ids"] == []
+    assert res["missing_lien_waiver_contract_ids"] == ["CTR-02"]
+    assert res["warranty_escrow_status"] == "ESCROW_OR_DEFECT_BREACH"
+    assert res["is_escrow_release_compliant"] is False
+
+    # Escrow prematuro disparado SOLO por defectos abiertos (DLP vencido y lien firmado).
+    res_defect = audit_warranty_defect_liability_and_escrow_release_gate(
+        [
+            {
+                "contract_id": "CTR-03",
+                "warranty_elapsed_days": 150,
+                "open_sev1_sev2_latent_defects": 2,
+                "max_defect_resolution_hours_observed": 10.0,
+                "escrow_released_prematurely": True,
+                "has_final_lien_waiver_signed": True,
+            },
+        ]
+    )
+    assert res_defect["premature_escrow_release_contract_ids"] == ["CTR-03"]
+    assert res_defect["unresolved_latent_defect_contract_ids"] == ["CTR-03"]
+    assert res_defect["warranty_escrow_status"] == "ESCROW_OR_DEFECT_BREACH"
+
+
+def test_audit_warranty_escrow_sla_warning_only():
+    """Caso 2: solo SLA de remediación excedido -> REMEDIATION_SLA_WARNING."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_warranty_defect_liability_and_escrow_release_gate,
+    )
+
+    res = audit_warranty_defect_liability_and_escrow_release_gate(
+        [
+            {
+                "contract_id": "CTR-10",
+                "warranty_elapsed_days": 100,
+                "open_sev1_sev2_latent_defects": 0,
+                "max_defect_resolution_hours_observed": 72.0,
+                "escrow_released_prematurely": False,
+                "has_final_lien_waiver_signed": True,
+            },
+        ]
+    )
+    # SLA: 72.0 > 48.0; sin defectos, DLP vencido, lien firmado, escrow en regla.
+    assert res["total_contracts_evaluated"] == 1
+    assert res["premature_escrow_release_contract_ids"] == []
+    assert res["unresolved_latent_defect_contract_ids"] == []
+    assert res["sla_breach_defect_contract_ids"] == ["CTR-10"]
+    assert res["missing_lien_waiver_contract_ids"] == []
+    assert res["warranty_escrow_status"] == "REMEDIATION_SLA_WARNING"
+    assert res["is_escrow_release_compliant"] is False
+
+    # Precisión: ESCROW_OR_DEFECT_BREACH domina sobre SLA WARNING.
+    res_mixed = audit_warranty_defect_liability_and_escrow_release_gate(
+        [
+            {
+                "contract_id": "CTR-11",
+                "warranty_elapsed_days": 100,
+                "open_sev1_sev2_latent_defects": 0,
+                "max_defect_resolution_hours_observed": 72.0,
+                "has_final_lien_waiver_signed": False,
+            },
+        ]
+    )
+    assert res_mixed["sla_breach_defect_contract_ids"] == ["CTR-11"]
+    assert res_mixed["missing_lien_waiver_contract_ids"] == ["CTR-11"]
+    assert res_mixed["warranty_escrow_status"] == "ESCROW_OR_DEFECT_BREACH"
+
+
+def test_audit_warranty_escrow_ready_and_boundaries():
+    """Caso 3: fronteras exactas (DLP = 90, SLA = 48.0 inclusive) -> WARRANTY_RELEASE_READY."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_warranty_defect_liability_and_escrow_release_gate,
+    )
+
+    res = audit_warranty_defect_liability_and_escrow_release_gate(
+        [
+            {
+                "contract_id": "CTR-20",
+                "warranty_elapsed_days": 90,
+                "open_sev1_sev2_latent_defects": 0,
+                "max_defect_resolution_hours_observed": 48.0,
+                "escrow_released_prematurely": False,
+                "has_final_lien_waiver_signed": True,
+            },
+            {
+                "contract_id": "CTR-21",
+                "warranty_elapsed_days": 365,
+                "open_sev1_sev2_latent_defects": 0,
+                "max_defect_resolution_hours_observed": 6.0,
+            },
+        ]
+    )
+    # CTR-20: DLP 90 no < 90; SLA 48.0 no > 48.0. CTR-21: defaults correctos.
+    assert res["total_contracts_evaluated"] == 2
+    assert res["premature_escrow_release_contract_ids"] == []
+    assert res["unresolved_latent_defect_contract_ids"] == []
+    assert res["sla_breach_defect_contract_ids"] == []
+    assert res["missing_lien_waiver_contract_ids"] == []
+    assert res["warranty_escrow_status"] == "WARRANTY_RELEASE_READY"
+    assert res["is_escrow_release_compliant"] is True
+
+
+def test_audit_warranty_escrow_invalid_and_binding():
+    """Caso 4: entradas no-lista/no-dict y binding + __all__."""
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_warranty_defect_liability_and_escrow_release_gate,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_warranty_defect_liability_and_escrow_release_gate(payload)  # type: ignore[arg-type]
+        assert empty["total_contracts_evaluated"] == 0
+        assert empty["premature_escrow_release_contract_ids"] == []
+        assert empty["unresolved_latent_defect_contract_ids"] == []
+        assert empty["sla_breach_defect_contract_ids"] == []
+        assert empty["missing_lien_waiver_contract_ids"] == []
+        assert empty["warranty_escrow_status"] == "WARRANTY_RELEASE_READY"
+        assert empty["is_escrow_release_compliant"] is True
+
+    sample = [
+        {
+            "contract_id": "CTR-30",
+            "warranty_elapsed_days": 200,
+            "open_sev1_sev2_latent_defects": 0,
+            "max_defect_resolution_hours_observed": 10.0,
+            "has_final_lien_waiver_signed": True,
+        },
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_warranty_defect_liability_and_escrow_release_gate(sample)
+        == audit_warranty_defect_liability_and_escrow_release_gate(sample)
+    )
+    assert "audit_warranty_defect_liability_and_escrow_release_gate" in mod.__all__

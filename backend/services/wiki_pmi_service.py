@@ -2526,6 +2526,7 @@ __all__ = [
     "audit_wiki_blameless_postmortem_five_whys_and_action_sla",
     "audit_wiki_on_call_rotation_burnout_and_escalation_readiness",
     "audit_wiki_adr_immutability_and_superseded_chain_integrity",
+    "audit_wiki_bus_factor_spok_and_cross_training_coverage",
     "WikiPMIService",
 ]
 
@@ -6190,4 +6191,96 @@ def audit_wiki_adr_immutability_and_superseded_chain_integrity(
 
 WikiPMIService.audit_wiki_adr_immutability_and_superseded_chain_integrity = staticmethod(
     audit_wiki_adr_immutability_and_superseded_chain_integrity
+)
+
+
+def audit_wiki_bus_factor_spok_and_cross_training_coverage(
+    domains: list[dict[str, Any]],
+    *,
+    min_bus_factor_contributors: int = 2,
+    max_single_author_commit_share_pct: float = 80.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §9.3 — Wiki Onboarding Bus-Factor Single-Point-of-Knowledge (SPOK), SME Concentration & Cross-Training Shadowing Auditor."""
+    valid_domains: list[dict[str, Any]] = []
+    if isinstance(domains, (list, tuple)):
+        for item in domains:
+            if not isinstance(item, dict):
+                continue
+            did = str(item.get("domain_id") or "").strip()
+            if not did:
+                continue
+            valid_domains.append({**item, "_did": did})
+
+    if not valid_domains:
+        return {
+            "total_domains_evaluated": 0,
+            "bus_factor_one_domain_ids": [],
+            "monopolized_knowledge_domain_ids": [],
+            "untrained_handover_domain_ids": [],
+            "bus_factor_governance_status": "KNOWLEDGE_RESILIENT",
+            "is_bus_factor_compliant": True,
+            "recommendations": [],
+        }
+
+    bus_factor_one_domain_ids: list[str] = []
+    monopolized_knowledge_domain_ids: list[str] = []
+    untrained_handover_domain_ids: list[str] = []
+
+    for dom in valid_domains:
+        did = dom["_did"]
+        contributors = max(
+            0, int(dom.get("active_distinct_contributors", 0) or 0)
+        )
+        top_share = float(
+            dom.get("top_author_contribution_share_pct", 100.0)
+            if dom.get("top_author_contribution_share_pct") is not None
+            else 100.0
+        )
+        has_walkthrough = bool(
+            dom.get("has_verified_onboarding_walkthrough", False)
+        )
+        has_shadowing = bool(dom.get("has_completed_shadowing_rotation", False))
+
+        if contributors < min_bus_factor_contributors:
+            bus_factor_one_domain_ids.append(did)
+        if top_share > max_single_author_commit_share_pct:
+            monopolized_knowledge_domain_ids.append(did)
+        if not has_walkthrough or not has_shadowing:
+            untrained_handover_domain_ids.append(did)
+
+    recommendations: list[str] = []
+    if bus_factor_one_domain_ids:
+        recommendations.append(
+            f"Eliminate Single-Point-of-Knowledge (SPOK) by onboarding >= {min_bus_factor_contributors} active contributors in domain(s): {', '.join(bus_factor_one_domain_ids)}."
+        )
+    if monopolized_knowledge_domain_ids:
+        recommendations.append(
+            f"Reduce SME concentration below {max_single_author_commit_share_pct}% single-author contribution share in domain(s): {', '.join(monopolized_knowledge_domain_ids)}."
+        )
+    if untrained_handover_domain_ids:
+        recommendations.append(
+            f"Complete verified onboarding walkthroughs and shadowing rotations in domain(s): {', '.join(untrained_handover_domain_ids)}."
+        )
+
+    if bus_factor_one_domain_ids or monopolized_knowledge_domain_ids:
+        bus_factor_governance_status = "CRITICAL_SPOK_EXPOSURE"
+    elif untrained_handover_domain_ids:
+        bus_factor_governance_status = "CROSS_TRAINING_GAP_WARNING"
+    else:
+        bus_factor_governance_status = "KNOWLEDGE_RESILIENT"
+
+    return {
+        "total_domains_evaluated": len(valid_domains),
+        "bus_factor_one_domain_ids": bus_factor_one_domain_ids,
+        "monopolized_knowledge_domain_ids": monopolized_knowledge_domain_ids,
+        "untrained_handover_domain_ids": untrained_handover_domain_ids,
+        "bus_factor_governance_status": bus_factor_governance_status,
+        "is_bus_factor_compliant": bus_factor_governance_status
+        == "KNOWLEDGE_RESILIENT",
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_bus_factor_spok_and_cross_training_coverage = staticmethod(
+    audit_wiki_bus_factor_spok_and_cross_training_coverage
 )

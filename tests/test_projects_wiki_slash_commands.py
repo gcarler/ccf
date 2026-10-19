@@ -8039,3 +8039,119 @@ def test_audit_wiki_adr_immutability_and_superseded_chain_integrity_staticmethod
         "audit_wiki_adr_immutability_and_superseded_chain_integrity"
         in mod.__all__
     )
+
+
+def test_audit_wiki_bus_factor_spok_and_cross_training_coverage_critical_spok():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_bus_factor_spok_and_cross_training_coverage,
+    )
+
+    res = audit_wiki_bus_factor_spok_and_cross_training_coverage(
+        [
+            {
+                "domain_id": "DOM-BILLING-ENGINE",
+                "active_distinct_contributors": 1,
+                "top_author_contribution_share_pct": 95.0,
+                "has_verified_onboarding_walkthrough": True,
+                "has_completed_shadowing_rotation": True,
+            },
+            {
+                "domain_id": "DOM-AUTH-KERNEL",
+                "active_distinct_contributors": 3,
+                "top_author_contribution_share_pct": 85.0,
+                "has_verified_onboarding_walkthrough": True,
+                "has_completed_shadowing_rotation": True,
+            },
+        ],
+        min_bus_factor_contributors=2,
+        max_single_author_commit_share_pct=80.0,
+    )
+    assert res["total_domains_evaluated"] == 2
+    assert res["bus_factor_one_domain_ids"] == ["DOM-BILLING-ENGINE"]
+    assert res["monopolized_knowledge_domain_ids"] == [
+        "DOM-BILLING-ENGINE",
+        "DOM-AUTH-KERNEL",
+    ]
+    assert res["untrained_handover_domain_ids"] == []
+    assert res["bus_factor_governance_status"] == "CRITICAL_SPOK_EXPOSURE"
+    assert res["is_bus_factor_compliant"] is False
+
+
+def test_audit_wiki_bus_factor_spok_and_cross_training_coverage_cross_training_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_bus_factor_spok_and_cross_training_coverage,
+    )
+
+    res = audit_wiki_bus_factor_spok_and_cross_training_coverage(
+        [
+            {
+                "domain_id": "DOM-REPORTING",
+                "active_distinct_contributors": 3,
+                "top_author_contribution_share_pct": 55.0,
+                "has_verified_onboarding_walkthrough": True,
+                "has_completed_shadowing_rotation": False,
+            }
+        ],
+        min_bus_factor_contributors=2,
+        max_single_author_commit_share_pct=80.0,
+    )
+    assert res["bus_factor_one_domain_ids"] == []
+    assert res["monopolized_knowledge_domain_ids"] == []
+    assert res["untrained_handover_domain_ids"] == ["DOM-REPORTING"]
+    assert res["bus_factor_governance_status"] == "CROSS_TRAINING_GAP_WARNING"
+    assert res["is_bus_factor_compliant"] is False
+
+
+def test_audit_wiki_bus_factor_spok_and_cross_training_coverage_resilient_and_empty():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_bus_factor_spok_and_cross_training_coverage,
+    )
+
+    empty = audit_wiki_bus_factor_spok_and_cross_training_coverage(
+        [{"domain_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_domains_evaluated"] == 0
+    assert empty["bus_factor_governance_status"] == "KNOWLEDGE_RESILIENT"
+    assert empty["is_bus_factor_compliant"] is True
+
+    resilient = audit_wiki_bus_factor_spok_and_cross_training_coverage(
+        [
+            {
+                "domain_id": "DOM-CORE-API",
+                "active_distinct_contributors": 4,
+                "top_author_contribution_share_pct": 45.0,
+                "has_verified_onboarding_walkthrough": True,
+                "has_completed_shadowing_rotation": True,
+            }
+        ]
+    )
+    assert resilient["total_domains_evaluated"] == 1
+    assert resilient["bus_factor_governance_status"] == "KNOWLEDGE_RESILIENT"
+    assert resilient["is_bus_factor_compliant"] is True
+
+
+def test_audit_wiki_bus_factor_spok_and_cross_training_coverage_staticmethod_and_dunder_all():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_bus_factor_spok_and_cross_training_coverage,
+    )
+
+    sample = [
+        {
+            "domain_id": "DOM-99",
+            "active_distinct_contributors": 3,
+            "top_author_contribution_share_pct": 50.0,
+            "has_verified_onboarding_walkthrough": True,
+            "has_completed_shadowing_rotation": True,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_bus_factor_spok_and_cross_training_coverage(
+            sample
+        )
+        == audit_wiki_bus_factor_spok_and_cross_training_coverage(sample)
+    )
+    assert (
+        "audit_wiki_bus_factor_spok_and_cross_training_coverage" in mod.__all__
+    )

@@ -3163,6 +3163,7 @@ __all__ = [
     "audit_stakeholder_salience_drift_and_resistance_escalation",
     "audit_procurement_rfp_bid_solvency_and_vendor_concentration",
     "audit_steering_committee_quorum_and_decision_latency",
+    "audit_warranty_defect_liability_and_escrow_release_gate",
     "ProjectLifecyclePMIService",
 ]
 
@@ -6660,5 +6661,84 @@ def audit_steering_committee_quorum_and_decision_latency(
 
 ProjectLifecyclePMIService.audit_steering_committee_quorum_and_decision_latency = staticmethod(
     audit_steering_committee_quorum_and_decision_latency
+)
+
+
+def audit_warranty_defect_liability_and_escrow_release_gate(
+    contracts: Any,
+    *,
+    min_warranty_period_days: int = 90,
+    max_latent_defect_remediation_hours: float = 48.0,
+) -> Dict[str, object]:
+    """Auditoría PMBOK 4.7 (cierre) y 12.3 (contratos): garantía y escrow.
+
+    Evalúa por contrato el periodo de responsabilidad por defectos (DLP),
+    los defectos latentes SEV1/SEV2 abiertos, el SLA de remediación
+    observado, la liberación prematura del escrow de retención y el
+    lien waiver final firmado.
+    """
+    entries = contracts if isinstance(contracts, list) else []
+    rows = [item for item in entries if isinstance(item, dict)]
+
+    premature_escrow_release_contract_ids: List[str] = []
+    unresolved_latent_defect_contract_ids: List[str] = []
+    sla_breach_defect_contract_ids: List[str] = []
+    missing_lien_waiver_contract_ids: List[str] = []
+
+    for item in rows:
+        contract_id = item.get("contract_id")
+
+        warranty_elapsed_days = item.get("warranty_elapsed_days", 0)
+        warranty_val = (
+            warranty_elapsed_days
+            if isinstance(warranty_elapsed_days, (int, float)) and warranty_elapsed_days >= 0
+            else 0
+        )
+        open_defects = item.get("open_sev1_sev2_latent_defects", 0)
+        open_defects_val = open_defects if isinstance(open_defects, (int, float)) and open_defects > 0 else 0
+        resolution_hours = item.get("max_defect_resolution_hours_observed", 0.0)
+        resolution_val = resolution_hours if isinstance(resolution_hours, (int, float)) and resolution_hours >= 0 else 0.0
+        lien_signed = item.get("has_final_lien_waiver_signed", True)
+
+        if open_defects_val > 0:
+            unresolved_latent_defect_contract_ids.append(contract_id)
+
+        if resolution_val > max_latent_defect_remediation_hours:
+            sla_breach_defect_contract_ids.append(contract_id)
+
+        if not lien_signed:
+            missing_lien_waiver_contract_ids.append(contract_id)
+
+        if item.get("escrow_released_prematurely", False) is True and (
+            warranty_val < min_warranty_period_days
+            or open_defects_val > 0
+            or not lien_signed
+        ):
+            premature_escrow_release_contract_ids.append(contract_id)
+
+    if (
+        premature_escrow_release_contract_ids
+        or unresolved_latent_defect_contract_ids
+        or missing_lien_waiver_contract_ids
+    ):
+        warranty_escrow_status = "ESCROW_OR_DEFECT_BREACH"
+    elif sla_breach_defect_contract_ids:
+        warranty_escrow_status = "REMEDIATION_SLA_WARNING"
+    else:
+        warranty_escrow_status = "WARRANTY_RELEASE_READY"
+
+    return {
+        "total_contracts_evaluated": len(rows),
+        "premature_escrow_release_contract_ids": premature_escrow_release_contract_ids,
+        "unresolved_latent_defect_contract_ids": unresolved_latent_defect_contract_ids,
+        "sla_breach_defect_contract_ids": sla_breach_defect_contract_ids,
+        "missing_lien_waiver_contract_ids": missing_lien_waiver_contract_ids,
+        "warranty_escrow_status": warranty_escrow_status,
+        "is_escrow_release_compliant": warranty_escrow_status == "WARRANTY_RELEASE_READY",
+    }
+
+
+ProjectLifecyclePMIService.audit_warranty_defect_liability_and_escrow_release_gate = staticmethod(
+    audit_warranty_defect_liability_and_escrow_release_gate
 )
 
