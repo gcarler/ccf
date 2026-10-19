@@ -9001,3 +9001,132 @@ def test_audit_markdown_mathjax_katex_delimiter_balance_and_macro_safety_staticm
         in mod.__all__
     )
 
+
+def test_audit_markdown_heading_hierarchy_and_anchor_slug_collisions_healthy():
+    from backend.services.anydoc_service import (
+        audit_markdown_heading_hierarchy_and_anchor_slug_collisions,
+    )
+
+    res = audit_markdown_heading_hierarchy_and_anchor_slug_collisions(
+        [
+            {
+                "heading_id": "H-1",
+                "level": 1,
+                "text": "Project Charter Overview",
+                "anchor_slug": "project-charter-overview",
+            },
+            {
+                "heading_id": "H-2",
+                "level": 2,
+                "text": "Scope & Objectives",
+                "anchor_slug": "scope-objectives",
+            },
+            {
+                "heading_id": "H-3",
+                "level": 3,
+                "text": "Milestone Schedule",
+                "anchor_slug": "milestone-schedule",
+            },
+        ]
+    )
+    assert res["status"] == "healthy"
+    assert res["is_clean"] is True
+    assert res["headings_evaluated"] == 3
+    assert res["structural_breach_heading_ids"] == []
+    assert res["level_skip_or_collision_heading_ids"] == []
+    assert res["Violations"] == []
+
+
+def test_audit_markdown_heading_hierarchy_and_anchor_slug_collisions_critical():
+    from backend.services.anydoc_service import (
+        audit_markdown_heading_hierarchy_and_anchor_slug_collisions,
+    )
+
+    res = audit_markdown_heading_hierarchy_and_anchor_slug_collisions(
+        [
+            {
+                "heading_id": "H-ROOT-1",
+                "level": 1,
+                "text": "Primary Title",
+                "anchor_slug": "primary-title",
+            },
+            {
+                "heading_id": "H-ROOT-2",
+                "level": 1,
+                "text": "Second H1 Title",
+                "anchor_slug": "second-h1-title",
+            },
+            {
+                "heading_id": "H-EMPTY",
+                "level": 2,
+                "text": "   ",
+                "anchor_slug": "",
+            },
+        ]
+    )
+    assert res["status"] == "critical"
+    assert res["is_clean"] is False
+    assert res["structural_breach_heading_ids"] == ["H-ROOT-2", "H-EMPTY"]
+    assert len(res["Violations"]) >= 2
+
+
+def test_audit_markdown_heading_hierarchy_and_anchor_slug_collisions_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_heading_hierarchy_and_anchor_slug_collisions,
+    )
+
+    res = audit_markdown_heading_hierarchy_and_anchor_slug_collisions(
+        [
+            {
+                "id": "H-1",
+                "level": 1,
+                "text": "Architecture",
+                "anchor_slug": "overview",
+            },
+            {
+                "id": "H-SKIP",
+                "level": 3,
+                "text": "Skipped H2 Directly to H3",
+                "anchor_slug": "skipped-h2",
+            },
+            {
+                "id": "H-DUP-SLUG",
+                "level": 3,
+                "text": "Overview Duplicate",
+                "anchor_slug": "OVERVIEW",
+            },
+        ],
+        max_heading_depth=4,
+    )
+    assert res["status"] == "warning"
+    assert res["is_clean"] is False
+    assert res["structural_breach_heading_ids"] == []
+    assert res["level_skip_or_collision_heading_ids"] == [
+        "H-SKIP",
+        "H-DUP-SLUG",
+    ]
+    assert res["records"][1]["skipped_heading_level_or_duplicate_slug"] is True
+    assert res["records"][2]["skipped_heading_level_or_duplicate_slug"] is True
+
+
+def test_audit_markdown_heading_hierarchy_and_anchor_slug_collisions_staticmethod_and_dunder_all():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_heading_hierarchy_and_anchor_slug_collisions,
+    )
+
+    sample = [
+        {"heading_id": "H-1", "level": 1, "text": "Title", "anchor_slug": "title"}
+    ]
+    assert (
+        AnyDocService.audit_markdown_heading_hierarchy_and_anchor_slug_collisions(
+            sample
+        )
+        == audit_markdown_heading_hierarchy_and_anchor_slug_collisions(sample)
+    )
+    assert (
+        "audit_markdown_heading_hierarchy_and_anchor_slug_collisions"
+        in mod.__all__
+    )
+

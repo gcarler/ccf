@@ -3048,6 +3048,7 @@ __all__ = [
     "audit_markdown_admonition_callout_syntax_and_nesting_hygiene",
     "audit_markdown_glossary_definition_list_uniqueness_and_hygiene",
     "audit_markdown_mathjax_katex_delimiter_balance_and_macro_safety",
+    "audit_markdown_heading_hierarchy_and_anchor_slug_collisions",
     "AnydocService",
 ]
 
@@ -9064,5 +9065,116 @@ def audit_markdown_mathjax_katex_delimiter_balance_and_macro_safety(
 
 AnyDocService.audit_markdown_mathjax_katex_delimiter_balance_and_macro_safety = staticmethod(
     audit_markdown_mathjax_katex_delimiter_balance_and_macro_safety
+)
+
+
+def audit_markdown_heading_hierarchy_and_anchor_slug_collisions(
+    heading_nodes: list[dict[str, Any]],
+    *,
+    max_heading_depth: int = 4,
+    forbid_multiple_h1: bool = True,
+    forbid_empty_headings: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §4.4 & §10.2 — Audita jerarquía de encabezados Markdown (saltos de nivel, múltiples H1, encabezados vacíos y colisiones de anchor slug)."""
+    raw_items = heading_nodes if isinstance(heading_nodes, list) else []
+    valid_items = [item for item in raw_items if isinstance(item, dict)]
+
+    structural_breach_heading_ids: list[str] = []
+    level_skip_or_collision_heading_ids: list[str] = []
+    records: list[dict[str, Any]] = []
+    violations: list[str] = []
+    has_critical = False
+    has_warning = False
+
+    prev_level: int | None = None
+    h1_count = 0
+    seen_slugs: set[str] = set()
+
+    for idx, item in enumerate(valid_items):
+        heading_id = (
+            str(
+                item.get("heading_id") or item.get("id") or f"h-{idx + 1}"
+            ).strip()
+            or f"h-{idx + 1}"
+        )
+
+        raw_level = item.get("level", 1)
+        level = min(6, max(1, int(1 if raw_level is None else raw_level)))
+
+        raw_text = item.get("text", "")
+        text = str("" if raw_text is None else raw_text).strip()
+
+        raw_slug = item.get("anchor_slug", "")
+        anchor_slug = str("" if raw_slug is None else raw_slug).strip().lower()
+
+        if level == 1:
+            h1_count += 1
+
+        empty_or_duplicate_h1_breach = bool(
+            (forbid_empty_headings and not text)
+            or (forbid_multiple_h1 and level == 1 and h1_count > 1)
+        )
+        skipped_heading_level_or_duplicate_slug = bool(
+            (prev_level is not None and level > prev_level + 1)
+            or (bool(anchor_slug) and anchor_slug in seen_slugs)
+            or (level > max_heading_depth)
+        )
+
+        if anchor_slug:
+            seen_slugs.add(anchor_slug)
+        prev_level = level
+
+        if empty_or_duplicate_h1_breach:
+            structural_breach_heading_ids.append(heading_id)
+            has_critical = True
+            violations.append(
+                f"Heading '{heading_id}' is empty or introduces a duplicate H1 root heading."
+            )
+
+        if skipped_heading_level_or_duplicate_slug:
+            level_skip_or_collision_heading_ids.append(heading_id)
+            has_warning = True
+            violations.append(
+                f"Heading '{heading_id}' skips outline levels, exceeds max depth ({max_heading_depth}), or collides on anchor slug '{anchor_slug}'."
+            )
+
+        records.append(
+            {
+                "heading_id": heading_id,
+                "level": level,
+                "text": text,
+                "anchor_slug": anchor_slug,
+                "empty_or_duplicate_h1_breach": empty_or_duplicate_h1_breach,
+                "skipped_heading_level_or_duplicate_slug": skipped_heading_level_or_duplicate_slug,
+            }
+        )
+
+    if has_critical:
+        status = "critical"
+        is_clean = False
+    elif has_warning:
+        status = "warning"
+        is_clean = False
+    else:
+        status = "healthy"
+        is_clean = True
+
+    return {
+        "status": status,
+        "is_clean": is_clean,
+        "headings_evaluated": len(records),
+        "structural_breach_heading_ids": structural_breach_heading_ids,
+        "level_skip_or_collision_heading_ids": level_skip_or_collision_heading_ids,
+        "records": records,
+        "violations": violations,
+        "Violations": violations,
+    }
+
+
+AnyDocService.audit_markdown_heading_hierarchy_and_anchor_slug_collisions = staticmethod(
+    audit_markdown_heading_hierarchy_and_anchor_slug_collisions
+)
+AnydocService.audit_markdown_heading_hierarchy_and_anchor_slug_collisions = staticmethod(
+    audit_markdown_heading_hierarchy_and_anchor_slug_collisions
 )
 

@@ -2862,6 +2862,7 @@ __all__ = [
     "audit_ingress_rate_limiting_token_bucket_and_waf_owasp_crs_gate",
     "audit_chaos_engineering_fault_injection_blast_radius_and_steady_state_abort_gate",
     "audit_supply_chain_sbom_slsa_provenance_and_cve_epss_gate",
+    "audit_zero_downtime_db_migration_lock_timeout_and_expand_contract_gate",
     "ProjectCCBService",
 ]
 
@@ -8349,4 +8350,121 @@ ProjectCCBService.audit_supply_chain_sbom_slsa_provenance_and_cve_epss_gate = st
 )
 
 
+def audit_zero_downtime_db_migration_lock_timeout_and_expand_contract_gate(
+    migration_scripts: list[dict[str, Any]],
+    *,
+    max_lock_timeout_ms: int = 2000,
+    max_statement_timeout_ms: int = 30000,
+    require_concurrent_index_creation: bool = True,
+    forbid_destructive_drop_in_expand_phase: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §8.3 & §11.6 — Audita migraciones de base de datos zero-downtime (lock_timeout, statement_timeout, creación concurrente de índices, patrón expand-contract y reversibilidad downgrade)."""
+    raw_items = migration_scripts if isinstance(migration_scripts, list) else []
+    valid_items = [item for item in raw_items if isinstance(item, dict)]
 
+    unsafe_ddl_migration_ids: list[str] = []
+    timeout_misconfigured_migration_ids: list[str] = []
+    records: list[dict[str, Any]] = []
+    violations: list[str] = []
+    has_critical = False
+    has_warning = False
+
+    for idx, item in enumerate(valid_items):
+        migration_id = (
+            str(
+                item.get("migration_id") or item.get("id") or f"mig-{idx + 1}"
+            ).strip()
+            or f"mig-{idx + 1}"
+        )
+
+        raw_lock = item.get("lock_timeout_ms", 1000)
+        lock_timeout_ms = max(0, int(1000 if raw_lock is None else raw_lock))
+
+        raw_stmt = item.get("statement_timeout_ms", 15000)
+        statement_timeout_ms = max(
+            0, int(15000 if raw_stmt is None else raw_stmt)
+        )
+
+        raw_non_conc = item.get("creates_index_non_concurrently", False)
+        creates_index_non_concurrently = bool(
+            False if raw_non_conc is None else raw_non_conc
+        )
+
+        raw_drop = item.get("drops_or_renames_column_in_expand_phase", False)
+        drops_or_renames_column_in_expand_phase = bool(
+            False if raw_drop is None else raw_drop
+        )
+
+        raw_rev = item.get("has_reversible_downgrade", True)
+        has_reversible_downgrade = bool(True if raw_rev is None else raw_rev)
+
+        blocking_ddl_or_destructive_expand_breach = bool(
+            (
+                require_concurrent_index_creation
+                and creates_index_non_concurrently
+            )
+            or (
+                forbid_destructive_drop_in_expand_phase
+                and drops_or_renames_column_in_expand_phase
+            )
+            or not has_reversible_downgrade
+        )
+        lock_or_statement_timeout_exceeded = bool(
+            lock_timeout_ms <= 0
+            or lock_timeout_ms > max_lock_timeout_ms
+            or statement_timeout_ms <= 0
+            or statement_timeout_ms > max_statement_timeout_ms
+        )
+
+        if blocking_ddl_or_destructive_expand_breach:
+            unsafe_ddl_migration_ids.append(migration_id)
+            has_critical = True
+            violations.append(
+                f"Migration '{migration_id}' contains blocking index creation, destructive expand-phase DDL, or lacks reversible downgrade."
+            )
+
+        if lock_or_statement_timeout_exceeded:
+            timeout_misconfigured_migration_ids.append(migration_id)
+            has_warning = True
+            violations.append(
+                f"Migration '{migration_id}' has lock_timeout_ms ({lock_timeout_ms}) or statement_timeout_ms ({statement_timeout_ms}) outside safe bounds."
+            )
+
+        records.append(
+            {
+                "migration_id": migration_id,
+                "lock_timeout_ms": lock_timeout_ms,
+                "statement_timeout_ms": statement_timeout_ms,
+                "creates_index_non_concurrently": creates_index_non_concurrently,
+                "drops_or_renames_column_in_expand_phase": drops_or_renames_column_in_expand_phase,
+                "has_reversible_downgrade": has_reversible_downgrade,
+                "blocking_ddl_or_destructive_expand_breach": blocking_ddl_or_destructive_expand_breach,
+                "lock_or_statement_timeout_exceeded": lock_or_statement_timeout_exceeded,
+            }
+        )
+
+    if has_critical:
+        status = "critical"
+        gate_passed = False
+    elif has_warning:
+        status = "warning"
+        gate_passed = False
+    else:
+        status = "healthy"
+        gate_passed = True
+
+    return {
+        "status": status,
+        "gate_passed": gate_passed,
+        "migrations_evaluated": len(records),
+        "unsafe_ddl_migration_ids": unsafe_ddl_migration_ids,
+        "timeout_misconfigured_migration_ids": timeout_misconfigured_migration_ids,
+        "records": records,
+        "violations": violations,
+        "Violations": violations,
+    }
+
+
+ProjectCCBService.audit_zero_downtime_db_migration_lock_timeout_and_expand_contract_gate = staticmethod(
+    audit_zero_downtime_db_migration_lock_timeout_and_expand_contract_gate
+)

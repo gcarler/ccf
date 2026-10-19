@@ -11134,3 +11134,103 @@ def test_audit_supply_chain_sbom_slsa_provenance_and_cve_epss_gate_staticmethod_
         "audit_supply_chain_sbom_slsa_provenance_and_cve_epss_gate"
         in mod.__all__
     )
+
+
+def test_audit_zero_downtime_db_migration_lock_timeout_and_expand_contract_gate_healthy():
+    from backend.services.project_ccb_service import (
+        audit_zero_downtime_db_migration_lock_timeout_and_expand_contract_gate,
+    )
+
+    res = audit_zero_downtime_db_migration_lock_timeout_and_expand_contract_gate(
+        [
+            {
+                "migration_id": "20261019_01_add_nullable_col",
+                "lock_timeout_ms": 1500,
+                "statement_timeout_ms": 20000,
+                "creates_index_non_concurrently": False,
+                "drops_or_renames_column_in_expand_phase": False,
+                "has_reversible_downgrade": True,
+            }
+        ]
+    )
+    assert res["status"] == "healthy"
+    assert res["gate_passed"] is True
+    assert res["migrations_evaluated"] == 1
+    assert res["unsafe_ddl_migration_ids"] == []
+    assert res["timeout_misconfigured_migration_ids"] == []
+    assert res["Violations"] == []
+
+
+def test_audit_zero_downtime_db_migration_lock_timeout_and_expand_contract_gate_critical():
+    from backend.services.project_ccb_service import (
+        audit_zero_downtime_db_migration_lock_timeout_and_expand_contract_gate,
+    )
+
+    res = audit_zero_downtime_db_migration_lock_timeout_and_expand_contract_gate(
+        [
+            {
+                "migration_id": "20261019_02_blocking_idx_and_drop",
+                "lock_timeout_ms": 1000,
+                "statement_timeout_ms": 10000,
+                "creates_index_non_concurrently": True,
+                "drops_or_renames_column_in_expand_phase": True,
+                "has_reversible_downgrade": False,
+            }
+        ]
+    )
+    assert res["status"] == "critical"
+    assert res["gate_passed"] is False
+    assert res["unsafe_ddl_migration_ids"] == [
+        "20261019_02_blocking_idx_and_drop"
+    ]
+    assert len(res["Violations"]) >= 1
+
+
+def test_audit_zero_downtime_db_migration_lock_timeout_and_expand_contract_gate_warning():
+    from backend.services.project_ccb_service import (
+        audit_zero_downtime_db_migration_lock_timeout_and_expand_contract_gate,
+    )
+
+    res = audit_zero_downtime_db_migration_lock_timeout_and_expand_contract_gate(
+        [
+            {
+                "id": "20261019_03_high_lock_timeout",
+                "lock_timeout_ms": 5000,
+                "statement_timeout_ms": 45000,
+                "creates_index_non_concurrently": False,
+                "drops_or_renames_column_in_expand_phase": False,
+                "has_reversible_downgrade": True,
+            }
+        ],
+        max_lock_timeout_ms=2000,
+        max_statement_timeout_ms=30000,
+    )
+    assert res["status"] == "warning"
+    assert res["gate_passed"] is False
+    assert res["unsafe_ddl_migration_ids"] == []
+    assert res["timeout_misconfigured_migration_ids"] == [
+        "20261019_03_high_lock_timeout"
+    ]
+    assert res["records"][0]["lock_or_statement_timeout_exceeded"] is True
+
+
+def test_audit_zero_downtime_db_migration_lock_timeout_and_expand_contract_gate_staticmethod_and_dunder_all():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_zero_downtime_db_migration_lock_timeout_and_expand_contract_gate,
+    )
+
+    sample = [{"migration_id": "MIG-1", "lock_timeout_ms": 1000}]
+    assert (
+        ProjectCCBService.audit_zero_downtime_db_migration_lock_timeout_and_expand_contract_gate(
+            sample
+        )
+        == audit_zero_downtime_db_migration_lock_timeout_and_expand_contract_gate(
+            sample
+        )
+    )
+    assert (
+        "audit_zero_downtime_db_migration_lock_timeout_and_expand_contract_gate"
+        in mod.__all__
+    )
