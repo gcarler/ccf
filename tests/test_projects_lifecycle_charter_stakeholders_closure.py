@@ -10059,3 +10059,162 @@ def test_audit_procurement_bid_integrity_and_coi_recusal_staticmethod_and_dunder
     assert "audit_procurement_bid_integrity_and_coi_recusal" in mod.__all__
 
 
+def test_audit_warranty_latent_defect_and_retention_bond_release_breach():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_warranty_latent_defect_and_retention_bond_release,
+    )
+
+    res = audit_warranty_latent_defect_and_retention_bond_release(
+        [
+            {
+                "contract_id": "  CNT-UNINSURED  ",
+                "open_punchlist_items_count": 0,
+                "performance_bond_released_prematurely": False,
+                "latent_defect_liability_insured": False,
+                "max_defect_remediation_days": 5,
+            },
+            {
+                "contract_id": "CNT-PREMATURE-BOND",
+                "open_punchlist_items_count": 0,
+                "performance_bond_released_prematurely": True,
+                "latent_defect_liability_insured": True,
+                "max_defect_remediation_days": 20,
+            },
+            {
+                "contract_id": "CNT-HOLDBACK-RELEASED",
+                "open_punchlist_items_count": 2,
+                "performance_bond_released_prematurely": False,
+                "latent_defect_liability_insured": True,
+                "max_defect_remediation_days": 5,
+                "retention_holdback_released": True,
+            },
+            {
+                "contract_id": "CNT-CLEAN",
+                "open_punchlist_items_count": 0,
+                "performance_bond_released_prematurely": False,
+                "latent_defect_liability_insured": True,
+                "max_defect_remediation_days": 15,
+            },
+        ]
+    )
+    assert res["evaluated_contracts_count"] == 4
+    assert res["premature_bond_or_uninsured_latent_contract_ids"] == [
+        "CNT-UNINSURED",
+        "CNT-PREMATURE-BOND",
+        "CNT-HOLDBACK-RELEASED",
+    ]
+    assert res["slow_remediation_or_open_punchlist_contract_ids"] == [
+        "CNT-PREMATURE-BOND",
+        "CNT-HOLDBACK-RELEASED",
+    ]
+    assert (
+        res["warranty_retention_status"]
+        == "WARRANTY_BOND_RELEASE_OR_LATENT_INSURANCE_BREACH"
+    )
+    assert res["is_warranty_retention_compliant"] is False
+
+
+def test_audit_warranty_latent_defect_and_retention_bond_release_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_warranty_latent_defect_and_retention_bond_release,
+    )
+
+    res = audit_warranty_latent_defect_and_retention_bond_release(
+        [
+            {
+                "contract_id": "CNT-SLOW-REMED",
+                "open_punchlist_items_count": 0,
+                "performance_bond_released_prematurely": False,
+                "latent_defect_liability_insured": True,
+                "max_defect_remediation_days": 16,
+            },
+            {
+                "contract_id": "CNT-OPEN-PUNCH",
+                "open_punchlist_items_count": 1,
+                "performance_bond_released_prematurely": False,
+                "latent_defect_liability_insured": True,
+                "max_defect_remediation_days": 15,
+                "retention_holdback_released": False,
+            },
+        ],
+        max_latent_defect_remediation_days=15,
+        require_punchlist_zero_before_bond_release=True,
+    )
+    assert res["evaluated_contracts_count"] == 2
+    assert res["premature_bond_or_uninsured_latent_contract_ids"] == []
+    assert res["slow_remediation_or_open_punchlist_contract_ids"] == [
+        "CNT-SLOW-REMED",
+        "CNT-OPEN-PUNCH",
+    ]
+    assert (
+        res["warranty_retention_status"]
+        == "WARRANTY_REMEDIATION_SLA_OR_PUNCHLIST_WARNING"
+    )
+    assert res["is_warranty_retention_compliant"] is False
+
+
+def test_audit_warranty_latent_defect_and_retention_bond_release_optimal_and_defensive():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_warranty_latent_defect_and_retention_bond_release,
+    )
+
+    empty = audit_warranty_latent_defect_and_retention_bond_release(None)
+    assert empty["evaluated_contracts_count"] == 0
+    assert empty["premature_bond_or_uninsured_latent_contract_ids"] == []
+    assert empty["slow_remediation_or_open_punchlist_contract_ids"] == []
+    assert (
+        empty["warranty_retention_status"]
+        == "WARRANTY_AND_RETENTION_RELEASE_OPTIMAL"
+    )
+    assert empty["is_warranty_retention_compliant"] is True
+
+    optimal = audit_warranty_latent_defect_and_retention_bond_release(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"contract_id": "   "},
+            {
+                "contract_id": "CNT-DEFAULTS",
+                "open_punchlist_items_count": None,
+                "performance_bond_released_prematurely": None,
+                "latent_defect_liability_insured": None,
+                "max_defect_remediation_days": None,
+            },
+        ]
+    )
+    assert optimal["evaluated_contracts_count"] == 1
+    assert optimal["premature_bond_or_uninsured_latent_contract_ids"] == []
+    assert optimal["slow_remediation_or_open_punchlist_contract_ids"] == []
+    assert (
+        optimal["warranty_retention_status"]
+        == "WARRANTY_AND_RETENTION_RELEASE_OPTIMAL"
+    )
+    assert optimal["is_warranty_retention_compliant"] is True
+
+
+def test_audit_warranty_latent_defect_and_retention_bond_release_staticmethod_and_dunder_all():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_warranty_latent_defect_and_retention_bond_release,
+    )
+
+    sample = [
+        {
+            "contract_id": "CNT-99",
+            "open_punchlist_items_count": 0,
+            "max_defect_remediation_days": 7,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_warranty_latent_defect_and_retention_bond_release(
+            sample
+        )
+        == audit_warranty_latent_defect_and_retention_bond_release(sample)
+    )
+    assert (
+        "audit_warranty_latent_defect_and_retention_bond_release"
+        in mod.__all__
+    )
+
+
+

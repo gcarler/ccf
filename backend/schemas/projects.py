@@ -3821,6 +3821,7 @@ __all__ = [
     "validate_rtm_bidirectional_traceability_and_gold_plating",
     "validate_schedule_crashing_and_fast_tracking_compression",
     "validate_stakeholder_salience_power_urgency_legitimacy_alignment",
+    "validate_cost_of_quality_coq_conformance_vs_failure_ratio",
 ]
 
 
@@ -8751,3 +8752,77 @@ def validate_basis_of_estimate_boe_and_padding_hygiene(
         "is_boe_hygiene_valid": boe_hygiene_status
         == "BOE_ESTIMATION_HYGIENE_OPTIMAL",
     }
+
+
+def validate_cost_of_quality_coq_conformance_vs_failure_ratio(
+    workstreams: list[dict] | None,
+    *,
+    min_conformance_spend_share_pct: float = 65.0,
+    max_external_failure_share_pct: float = 10.0,
+) -> dict:
+    """PMBOK §8.1 & §8.3 — Valida proporción de Costo de la Calidad (CoQ) entre prevención/evaluación (conformidad) y fallas internas/externas."""
+    raw_items = workstreams if isinstance(workstreams, list) else []
+    valid_workstreams: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("workstream_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_workstreams.append(item)
+
+    external_failure_or_recall_workstream_ids: list[str] = []
+    underinvested_conformance_or_missing_capa_workstream_ids: list[str] = []
+
+    for w in valid_workstreams:
+        wid = w["workstream_id"].strip()
+        raw_conf = w.get("conformance_spend_share_pct", 78.0)
+        conformance_spend_share_pct = float(
+            78.0 if raw_conf is None else raw_conf
+        )
+
+        raw_ext = w.get("external_failure_share_pct", 3.0)
+        external_failure_share_pct = float(
+            3.0 if raw_ext is None else raw_ext
+        )
+
+        raw_recall = w.get("escaped_production_recall_occurred", False)
+        escaped_production_recall_occurred = bool(
+            False if raw_recall is None else raw_recall
+        )
+
+        raw_capa = w.get("preventive_root_cause_capa_active", True)
+        preventive_root_cause_capa_active = bool(
+            True if raw_capa is None else raw_capa
+        )
+
+        if (
+            escaped_production_recall_occurred
+            or external_failure_share_pct > max_external_failure_share_pct
+        ):
+            external_failure_or_recall_workstream_ids.append(wid)
+
+        if (
+            conformance_spend_share_pct < min_conformance_spend_share_pct
+            or not preventive_root_cause_capa_active
+        ):
+            underinvested_conformance_or_missing_capa_workstream_ids.append(
+                wid
+            )
+
+    if external_failure_or_recall_workstream_ids:
+        coq_balance_status = "COQ_EXTERNAL_FAILURE_OR_RECALL_BREACH"
+    elif underinvested_conformance_or_missing_capa_workstream_ids:
+        coq_balance_status = "COQ_CONFORMANCE_UNDERINVESTMENT_WARNING"
+    else:
+        coq_balance_status = "COQ_INVESTMENT_BALANCE_OPTIMAL"
+
+    return {
+        "evaluated_workstreams_count": len(valid_workstreams),
+        "external_failure_or_recall_workstream_ids": external_failure_or_recall_workstream_ids,
+        "underinvested_conformance_or_missing_capa_workstream_ids": underinvested_conformance_or_missing_capa_workstream_ids,
+        "coq_balance_status": coq_balance_status,
+        "is_coq_balance_valid": coq_balance_status
+        == "COQ_INVESTMENT_BALANCE_OPTIMAL",
+    }
+

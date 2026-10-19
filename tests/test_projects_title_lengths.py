@@ -8729,3 +8729,141 @@ def test_validate_boe_invalid_and_dunder_all():
         "validate_basis_of_estimate_boe_and_padding_hygiene"
         in mod.__all__
     )
+
+
+def test_validate_cost_of_quality_coq_conformance_vs_failure_ratio_breach():
+    from backend.schemas.projects import (
+        validate_cost_of_quality_coq_conformance_vs_failure_ratio,
+    )
+
+    res = validate_cost_of_quality_coq_conformance_vs_failure_ratio(
+        [
+            {
+                "workstream_id": "  WS-RECALL  ",
+                "conformance_spend_share_pct": 80.0,
+                "external_failure_share_pct": 5.0,
+                "escaped_production_recall_occurred": True,
+                "preventive_root_cause_capa_active": True,
+            },
+            {
+                "workstream_id": "WS-EXT-FAILURE",
+                "conformance_spend_share_pct": 55.0,
+                "external_failure_share_pct": 12.0,
+                "escaped_production_recall_occurred": False,
+                "preventive_root_cause_capa_active": False,
+            },
+            {
+                "workstream_id": "WS-CLEAN",
+                "conformance_spend_share_pct": 65.0,
+                "external_failure_share_pct": 10.0,
+                "escaped_production_recall_occurred": False,
+                "preventive_root_cause_capa_active": True,
+            },
+        ]
+    )
+    assert res["evaluated_workstreams_count"] == 3
+    assert res["external_failure_or_recall_workstream_ids"] == [
+        "WS-RECALL",
+        "WS-EXT-FAILURE",
+    ]
+    assert res["underinvested_conformance_or_missing_capa_workstream_ids"] == [
+        "WS-EXT-FAILURE"
+    ]
+    assert res["coq_balance_status"] == "COQ_EXTERNAL_FAILURE_OR_RECALL_BREACH"
+    assert res["is_coq_balance_valid"] is False
+
+
+def test_validate_cost_of_quality_coq_conformance_vs_failure_ratio_warning():
+    from backend.schemas.projects import (
+        validate_cost_of_quality_coq_conformance_vs_failure_ratio,
+    )
+
+    res = validate_cost_of_quality_coq_conformance_vs_failure_ratio(
+        [
+            {
+                "workstream_id": "WS-UNDERINVESTED",
+                "conformance_spend_share_pct": 64.9,
+                "external_failure_share_pct": 10.0,
+                "escaped_production_recall_occurred": False,
+                "preventive_root_cause_capa_active": True,
+            },
+            {
+                "workstream_id": "WS-NO-CAPA",
+                "conformance_spend_share_pct": 65.0,
+                "external_failure_share_pct": 4.0,
+                "escaped_production_recall_occurred": False,
+                "preventive_root_cause_capa_active": False,
+            },
+        ],
+        min_conformance_spend_share_pct=65.0,
+        max_external_failure_share_pct=10.0,
+    )
+    assert res["evaluated_workstreams_count"] == 2
+    assert res["external_failure_or_recall_workstream_ids"] == []
+    assert res["underinvested_conformance_or_missing_capa_workstream_ids"] == [
+        "WS-UNDERINVESTED",
+        "WS-NO-CAPA",
+    ]
+    assert (
+        res["coq_balance_status"] == "COQ_CONFORMANCE_UNDERINVESTMENT_WARNING"
+    )
+    assert res["is_coq_balance_valid"] is False
+
+
+def test_validate_cost_of_quality_coq_conformance_vs_failure_ratio_optimal_and_boundaries():
+    from backend.schemas.projects import (
+        validate_cost_of_quality_coq_conformance_vs_failure_ratio,
+    )
+
+    res = validate_cost_of_quality_coq_conformance_vs_failure_ratio(
+        [
+            {
+                "workstream_id": "WS-BOUNDARY",
+                "conformance_spend_share_pct": 65.0,
+                "external_failure_share_pct": 10.0,
+                "escaped_production_recall_occurred": False,
+                "preventive_root_cause_capa_active": True,
+            }
+        ],
+        min_conformance_spend_share_pct=65.0,
+        max_external_failure_share_pct=10.0,
+    )
+    assert res["evaluated_workstreams_count"] == 1
+    assert res["external_failure_or_recall_workstream_ids"] == []
+    assert res["underinvested_conformance_or_missing_capa_workstream_ids"] == []
+    assert res["coq_balance_status"] == "COQ_INVESTMENT_BALANCE_OPTIMAL"
+    assert res["is_coq_balance_valid"] is True
+
+
+def test_validate_cost_of_quality_coq_conformance_vs_failure_ratio_defensive_and_dunder_all():
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_cost_of_quality_coq_conformance_vs_failure_ratio,
+    )
+
+    empty = validate_cost_of_quality_coq_conformance_vs_failure_ratio(None)
+    assert empty["evaluated_workstreams_count"] == 0
+    assert empty["coq_balance_status"] == "COQ_INVESTMENT_BALANCE_OPTIMAL"
+    assert empty["is_coq_balance_valid"] is True
+
+    defaults = validate_cost_of_quality_coq_conformance_vs_failure_ratio(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"workstream_id": "   "},
+            {
+                "workstream_id": "WS-DEFAULTS",
+                "conformance_spend_share_pct": None,
+                "external_failure_share_pct": None,
+                "escaped_production_recall_occurred": None,
+                "preventive_root_cause_capa_active": None,
+            },
+        ]
+    )
+    assert defaults["evaluated_workstreams_count"] == 1
+    assert defaults["coq_balance_status"] == "COQ_INVESTMENT_BALANCE_OPTIMAL"
+    assert defaults["is_coq_balance_valid"] is True
+    assert (
+        "validate_cost_of_quality_coq_conformance_vs_failure_ratio"
+        in mod.__all__
+    )
+

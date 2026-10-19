@@ -3175,6 +3175,7 @@ __all__ = [
     "audit_operational_readiness_orat_and_day2_handover",
     "audit_steering_committee_quorum_and_decision_velocity",
     "audit_procurement_bid_integrity_and_coi_recusal",
+    "audit_warranty_latent_defect_and_retention_bond_release",
     "ProjectLifecyclePMIService",
 ]
 
@@ -7663,4 +7664,88 @@ def audit_procurement_bid_integrity_and_coi_recusal(
 ProjectLifecyclePMIService.audit_procurement_bid_integrity_and_coi_recusal = staticmethod(
     audit_procurement_bid_integrity_and_coi_recusal
 )
+
+
+def audit_warranty_latent_defect_and_retention_bond_release(
+    contracts: list[dict] | None,
+    *,
+    max_latent_defect_remediation_days: int = 15,
+    require_punchlist_zero_before_bond_release: bool = True,
+) -> dict:
+    """PMBOK §12.3 & §4.7 — Audita remedios por defectos latentes en garantía, liberación de fianza de cumplimiento y retención escrow frente a punchlist abierto."""
+    raw_items = contracts if isinstance(contracts, list) else []
+    valid_contracts: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("contract_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_contracts.append(item)
+
+    premature_bond_or_uninsured_latent_contract_ids: list[str] = []
+    slow_remediation_or_open_punchlist_contract_ids: list[str] = []
+
+    for c in valid_contracts:
+        cid = c["contract_id"].strip()
+        raw_punch = c.get("open_punchlist_items_count", 0)
+        open_punchlist_items_count = int(0 if raw_punch is None else raw_punch)
+
+        raw_bond = c.get("performance_bond_released_prematurely", False)
+        performance_bond_released_prematurely = bool(
+            False if raw_bond is None else raw_bond
+        )
+
+        raw_insured = c.get("latent_defect_liability_insured", True)
+        latent_defect_liability_insured = bool(
+            True if raw_insured is None else raw_insured
+        )
+
+        raw_remed = c.get("max_defect_remediation_days", 5)
+        max_defect_remediation_days = int(
+            5 if raw_remed is None else raw_remed
+        )
+
+        if (
+            not latent_defect_liability_insured
+            or performance_bond_released_prematurely
+            or (
+                require_punchlist_zero_before_bond_release
+                and open_punchlist_items_count > 0
+                and bool(c.get("retention_holdback_released", False))
+            )
+        ):
+            premature_bond_or_uninsured_latent_contract_ids.append(cid)
+
+        if (
+            max_defect_remediation_days > max_latent_defect_remediation_days
+            or open_punchlist_items_count > 0
+        ):
+            slow_remediation_or_open_punchlist_contract_ids.append(cid)
+
+    if premature_bond_or_uninsured_latent_contract_ids:
+        warranty_retention_status = (
+            "WARRANTY_BOND_RELEASE_OR_LATENT_INSURANCE_BREACH"
+        )
+    elif slow_remediation_or_open_punchlist_contract_ids:
+        warranty_retention_status = (
+            "WARRANTY_REMEDIATION_SLA_OR_PUNCHLIST_WARNING"
+        )
+    else:
+        warranty_retention_status = "WARRANTY_AND_RETENTION_RELEASE_OPTIMAL"
+
+    return {
+        "evaluated_contracts_count": len(valid_contracts),
+        "premature_bond_or_uninsured_latent_contract_ids": premature_bond_or_uninsured_latent_contract_ids,
+        "slow_remediation_or_open_punchlist_contract_ids": slow_remediation_or_open_punchlist_contract_ids,
+        "warranty_retention_status": warranty_retention_status,
+        "is_warranty_retention_compliant": warranty_retention_status
+        == "WARRANTY_AND_RETENTION_RELEASE_OPTIMAL",
+    }
+
+
+ProjectLifecyclePMIService.audit_warranty_latent_defect_and_retention_bond_release = staticmethod(
+    audit_warranty_latent_defect_and_retention_bond_release
+)
+
 
