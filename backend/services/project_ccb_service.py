@@ -2866,6 +2866,7 @@ __all__ = [
     "audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate",
     "audit_k8s_pdb_quorum_drain_and_statefulset_volume_gate",
     "audit_service_mesh_mtls_strict_mode_and_tls13_cipher_gate",
+    "audit_kafka_consumer_rebalance_dlq_and_schema_registry_gate",
     "ProjectCCBService",
 ]
 
@@ -8754,5 +8755,84 @@ def audit_service_mesh_mtls_strict_mode_and_tls13_cipher_gate(
 ProjectCCBService.audit_service_mesh_mtls_strict_mode_and_tls13_cipher_gate = staticmethod(
     audit_service_mesh_mtls_strict_mode_and_tls13_cipher_gate
 )
+
+
+def audit_kafka_consumer_rebalance_dlq_and_schema_registry_gate(
+    topics: list[dict[str, Any]],
+    max_consumer_lag_records: int = 10000,
+    max_rebalances_per_hour: int = 4,
+    max_dlq_poison_pill_rate_pct: float = 0.5,
+    require_backward_or_full_compatibility: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §8.3 & §11.6 — CCB Apache Kafka Consumer Group Rebalance Storm, Dead-Letter Queue (DLQ) Poison-Pill Surge & Avro/Protobuf Schema Registry Backward/Full Compatibility Gate Auditor."""
+    valid_topics = [
+        t for t in (topics if isinstance(topics, list) else []) if isinstance(t, dict)
+    ]
+
+    incompatible_schema_or_dlq_surge_topics: list[str] = []
+    lag_or_rebalance_storm_topics: list[str] = []
+
+    allowed_compat_modes = {
+        "BACKWARD",
+        "FULL",
+        "BACKWARD_TRANSITIVE",
+        "FULL_TRANSITIVE",
+    }
+
+    for idx, t in enumerate(valid_topics):
+        topic_id = str(t.get("topic_id") or f"topic-{idx + 1}").strip()
+        lag_records = int(t.get("consumer_lag_records", 0) or 0)
+        rebalances = int(t.get("rebalances_last_hour", 0) or 0)
+        dlq_rate = float(t.get("dlq_poison_pill_rate_pct", 0.0) or 0.0)
+        compat_mode = str(t.get("schema_compatibility_mode") or "").strip().upper()
+        breaking_detected = bool(t.get("breaking_schema_evolution_detected", False))
+
+        if (
+            breaking_detected
+            or (
+                require_backward_or_full_compatibility
+                and compat_mode not in allowed_compat_modes
+            )
+            or dlq_rate > float(max_dlq_poison_pill_rate_pct)
+        ):
+            incompatible_schema_or_dlq_surge_topics.append(topic_id)
+
+        if (
+            lag_records > int(max_consumer_lag_records)
+            or rebalances > int(max_rebalances_per_hour)
+        ):
+            lag_or_rebalance_storm_topics.append(topic_id)
+
+    recommendations: list[str] = []
+    if incompatible_schema_or_dlq_surge_topics:
+        recommendations.append(
+            f"Enforce BACKWARD/FULL Schema Registry compatibility and remediate DLQ poison-pill surge (<= {max_dlq_poison_pill_rate_pct}%) on topics: {', '.join(incompatible_schema_or_dlq_surge_topics)}."
+        )
+    if lag_or_rebalance_storm_topics:
+        recommendations.append(
+            f"Stabilize consumer group cooperative sticky rebalancing (<= {max_rebalances_per_hour}/h) and drain consumer lag (<= {max_consumer_lag_records} records) on topics: {', '.join(lag_or_rebalance_storm_topics)}."
+        )
+
+    if incompatible_schema_or_dlq_surge_topics:
+        gate_decision = "REJECTED"
+    elif lag_or_rebalance_storm_topics:
+        gate_decision = "CONDITIONAL"
+    else:
+        gate_decision = "APPROVED"
+
+    return {
+        "is_valid": gate_decision == "APPROVED",
+        "total_topics": len(valid_topics),
+        "incompatible_schema_or_dlq_surge_topics": incompatible_schema_or_dlq_surge_topics,
+        "lag_or_rebalance_storm_topics": lag_or_rebalance_storm_topics,
+        "gate_decision": gate_decision,
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.audit_kafka_consumer_rebalance_dlq_and_schema_registry_gate = staticmethod(
+    audit_kafka_consumer_rebalance_dlq_and_schema_registry_gate
+)
+
 
 

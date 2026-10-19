@@ -11586,3 +11586,151 @@ def test_audit_service_mesh_mtls_strict_mode_and_tls13_cipher_gate_staticmethod_
         in mod.__all__
     )
 
+
+def test_audit_kafka_consumer_rebalance_dlq_and_schema_registry_gate_approved():
+    from backend.services.project_ccb_service import (
+        audit_kafka_consumer_rebalance_dlq_and_schema_registry_gate,
+    )
+
+    res = audit_kafka_consumer_rebalance_dlq_and_schema_registry_gate(
+        [
+            {
+                "topic_id": "orders.events.v1",
+                "consumer_lag_records": 1200,
+                "rebalances_last_hour": 1,
+                "dlq_poison_pill_rate_pct": 0.05,
+                "schema_compatibility_mode": "BACKWARD",
+                "breaking_schema_evolution_detected": False,
+            },
+            {
+                "topic_id": "payments.settled.v2",
+                "consumer_lag_records": 450,
+                "rebalances_last_hour": 0,
+                "dlq_poison_pill_rate_pct": 0.0,
+                "schema_compatibility_mode": "FULL_TRANSITIVE",
+                "breaking_schema_evolution_detected": False,
+            },
+        ]
+    )
+    assert res["is_valid"] is True
+    assert res["total_topics"] == 2
+    assert res["incompatible_schema_or_dlq_surge_topics"] == []
+    assert res["lag_or_rebalance_storm_topics"] == []
+    assert res["gate_decision"] == "APPROVED"
+    assert res["recommendations"] == []
+
+
+def test_audit_kafka_consumer_rebalance_dlq_and_schema_registry_gate_rejected_on_schema_or_dlq():
+    from backend.services.project_ccb_service import (
+        audit_kafka_consumer_rebalance_dlq_and_schema_registry_gate,
+    )
+
+    res = audit_kafka_consumer_rebalance_dlq_and_schema_registry_gate(
+        [
+            {
+                "topic_id": "orders.events.v1",
+                "consumer_lag_records": 500,
+                "rebalances_last_hour": 1,
+                "dlq_poison_pill_rate_pct": 0.1,
+                "schema_compatibility_mode": "NONE",
+                "breaking_schema_evolution_detected": False,
+            },
+            {
+                "topic_id": "inventory.mutations.v1",
+                "consumer_lag_records": 800,
+                "rebalances_last_hour": 2,
+                "dlq_poison_pill_rate_pct": 1.25,
+                "schema_compatibility_mode": "BACKWARD",
+                "breaking_schema_evolution_detected": False,
+            },
+            {
+                "topic_id": "shipments.tracking.v1",
+                "consumer_lag_records": 300,
+                "rebalances_last_hour": 0,
+                "dlq_poison_pill_rate_pct": 0.0,
+                "schema_compatibility_mode": "FULL",
+                "breaking_schema_evolution_detected": True,
+            },
+        ],
+        max_dlq_poison_pill_rate_pct=0.5,
+    )
+    assert res["is_valid"] is False
+    assert res["incompatible_schema_or_dlq_surge_topics"] == [
+        "orders.events.v1",
+        "inventory.mutations.v1",
+        "shipments.tracking.v1",
+    ]
+    assert res["lag_or_rebalance_storm_topics"] == []
+    assert res["gate_decision"] == "REJECTED"
+    assert len(res["recommendations"]) == 1
+
+
+def test_audit_kafka_consumer_rebalance_dlq_and_schema_registry_gate_conditional_on_lag_or_rebalance():
+    from backend.services.project_ccb_service import (
+        audit_kafka_consumer_rebalance_dlq_and_schema_registry_gate,
+    )
+
+    res = audit_kafka_consumer_rebalance_dlq_and_schema_registry_gate(
+        [
+            {
+                "topic_id": "telemetry.metrics.v1",
+                "consumer_lag_records": 25000,
+                "rebalances_last_hour": 2,
+                "dlq_poison_pill_rate_pct": 0.1,
+                "schema_compatibility_mode": "BACKWARD_TRANSITIVE",
+            },
+            {
+                "topic_id": "audit.logs.v1",
+                "consumer_lag_records": 1500,
+                "rebalances_last_hour": 9,
+                "dlq_poison_pill_rate_pct": 0.0,
+                "schema_compatibility_mode": "FULL",
+            },
+        ],
+        max_consumer_lag_records=10000,
+        max_rebalances_per_hour=4,
+    )
+    assert res["is_valid"] is False
+    assert res["incompatible_schema_or_dlq_surge_topics"] == []
+    assert res["lag_or_rebalance_storm_topics"] == [
+        "telemetry.metrics.v1",
+        "audit.logs.v1",
+    ]
+    assert res["gate_decision"] == "CONDITIONAL"
+    assert len(res["recommendations"]) == 1
+
+
+def test_audit_kafka_consumer_rebalance_dlq_and_schema_registry_gate_staticmethod_and_dunder_all():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_kafka_consumer_rebalance_dlq_and_schema_registry_gate,
+    )
+
+    sample = [
+        {
+            "topic_id": "custom.forward.v1",
+            "consumer_lag_records": 100,
+            "rebalances_last_hour": 0,
+            "dlq_poison_pill_rate_pct": 0.0,
+            "schema_compatibility_mode": "FORWARD",
+        }
+    ]
+    relaxed = audit_kafka_consumer_rebalance_dlq_and_schema_registry_gate(
+        sample, require_backward_or_full_compatibility=False
+    )
+    assert relaxed["is_valid"] is True
+    assert relaxed["gate_decision"] == "APPROVED"
+
+    assert (
+        ProjectCCBService.audit_kafka_consumer_rebalance_dlq_and_schema_registry_gate(
+            sample
+        )
+        == audit_kafka_consumer_rebalance_dlq_and_schema_registry_gate(sample)
+    )
+    assert (
+        "audit_kafka_consumer_rebalance_dlq_and_schema_registry_gate"
+        in mod.__all__
+    )
+
+
