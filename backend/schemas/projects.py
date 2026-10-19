@@ -3824,6 +3824,7 @@ __all__ = [
     "validate_cost_of_quality_coq_conformance_vs_failure_ratio",
     "validate_raci_matrix_single_accountable_and_role_overload",
     "validate_risk_bowtie_barrier_redundancy_and_independence",
+    "validate_moscow_prioritization_must_have_inflation_and_mvp_cap",
 ]
 
 
@@ -8958,3 +8959,72 @@ def validate_risk_bowtie_barrier_redundancy_and_independence(
         "is_bowtie_barrier_valid": bowtie_barrier_status
         == "BOWTIE_DEFENSE_IN_DEPTH_OPTIMAL",
     }
+
+
+def validate_moscow_prioritization_must_have_inflation_and_mvp_cap(
+    releases: list[dict] | None,
+    *,
+    max_must_have_effort_share_pct: float = 60.0,
+    min_could_have_contingency_share_pct: float = 20.0,
+) -> dict:
+    """PMBOK §5.2 & §5.3 — Valida inflación de Must-Have en priorización MoSCoW, reserva de contingencia Could-Have y documentación explícita de Won't-Have."""
+    raw_items = releases if isinstance(releases, list) else []
+    valid_releases: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("release_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_releases.append(item)
+
+    unprioritized_or_missing_wont_have_release_ids: list[str] = []
+    must_have_inflated_or_low_buffer_release_ids: list[str] = []
+
+    for r in valid_releases:
+        rid = str(r["release_id"]).strip()
+
+        raw_must = r.get("must_have_effort_share_pct", 55.0)
+        must_have_effort_share_pct = float(55.0 if raw_must is None else raw_must)
+
+        raw_could = r.get("could_have_effort_share_pct", 22.0)
+        could_have_effort_share_pct = float(22.0 if raw_could is None else raw_could)
+
+        raw_wont = r.get("wont_have_explicitly_documented", True)
+        wont_have_explicitly_documented = bool(True if raw_wont is None else raw_wont)
+
+        raw_unprio = r.get("unprioritized_backlog_items_count", 0)
+        unprioritized_backlog_items_count = int(0 if raw_unprio is None else raw_unprio)
+
+        if (
+            unprioritized_backlog_items_count > 0
+            or not wont_have_explicitly_documented
+        ):
+            unprioritized_or_missing_wont_have_release_ids.append(rid)
+
+        if (
+            must_have_effort_share_pct > max_must_have_effort_share_pct
+            or could_have_effort_share_pct < min_could_have_contingency_share_pct
+        ):
+            must_have_inflated_or_low_buffer_release_ids.append(rid)
+
+    if unprioritized_or_missing_wont_have_release_ids:
+        moscow_prioritization_status = (
+            "MOSCOW_UNPRIORITIZED_OR_SCOPE_BOUNDARY_BREACH"
+        )
+    elif must_have_inflated_or_low_buffer_release_ids:
+        moscow_prioritization_status = (
+            "MOSCOW_MUST_HAVE_INFLATION_OR_BUFFER_WARNING"
+        )
+    else:
+        moscow_prioritization_status = "MOSCOW_PRIORITIZATION_BALANCE_OPTIMAL"
+
+    return {
+        "evaluated_releases_count": len(valid_releases),
+        "unprioritized_or_missing_wont_have_release_ids": unprioritized_or_missing_wont_have_release_ids,
+        "must_have_inflated_or_low_buffer_release_ids": must_have_inflated_or_low_buffer_release_ids,
+        "moscow_prioritization_status": moscow_prioritization_status,
+        "is_moscow_prioritization_valid": moscow_prioritization_status
+        == "MOSCOW_PRIORITIZATION_BALANCE_OPTIMAL",
+    }
+

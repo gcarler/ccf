@@ -9178,3 +9178,154 @@ def test_validate_risk_bowtie_barrier_redundancy_and_independence_defensive_and_
         "validate_risk_bowtie_barrier_redundancy_and_independence"
         in mod.__all__
     )
+
+
+def test_validate_moscow_prioritization_must_have_inflation_and_mvp_cap_breach():
+    from backend.schemas.projects import (
+        validate_moscow_prioritization_must_have_inflation_and_mvp_cap,
+    )
+
+    res = validate_moscow_prioritization_must_have_inflation_and_mvp_cap(
+        [
+            {
+                "release_id": "REL-UNPRIO",
+                "must_have_effort_share_pct": 55.0,
+                "could_have_effort_share_pct": 22.0,
+                "wont_have_explicitly_documented": True,
+                "unprioritized_backlog_items_count": 3,
+            },
+            {
+                "release_id": "REL-NO-WONT",
+                "must_have_effort_share_pct": 75.0,
+                "could_have_effort_share_pct": 10.0,
+                "wont_have_explicitly_documented": False,
+                "unprioritized_backlog_items_count": 0,
+            },
+            {
+                "release_id": "REL-CLEAN",
+                "must_have_effort_share_pct": 58.0,
+                "could_have_effort_share_pct": 22.0,
+                "wont_have_explicitly_documented": True,
+                "unprioritized_backlog_items_count": 0,
+            },
+        ]
+    )
+    assert res["evaluated_releases_count"] == 3
+    assert res["unprioritized_or_missing_wont_have_release_ids"] == [
+        "REL-UNPRIO",
+        "REL-NO-WONT",
+    ]
+    assert res["must_have_inflated_or_low_buffer_release_ids"] == [
+        "REL-NO-WONT"
+    ]
+    assert (
+        res["moscow_prioritization_status"]
+        == "MOSCOW_UNPRIORITIZED_OR_SCOPE_BOUNDARY_BREACH"
+    )
+    assert res["is_moscow_prioritization_valid"] is False
+
+
+def test_validate_moscow_prioritization_must_have_inflation_and_mvp_cap_warning():
+    from backend.schemas.projects import (
+        validate_moscow_prioritization_must_have_inflation_and_mvp_cap,
+    )
+
+    res = validate_moscow_prioritization_must_have_inflation_and_mvp_cap(
+        [
+            {
+                "release_id": "REL-INFLATED",
+                "must_have_effort_share_pct": 65.0,
+                "could_have_effort_share_pct": 22.0,
+                "wont_have_explicitly_documented": True,
+                "unprioritized_backlog_items_count": 0,
+            },
+            {
+                "release_id": "REL-LOW-BUF",
+                "must_have_effort_share_pct": 55.0,
+                "could_have_effort_share_pct": 15.0,
+                "wont_have_explicitly_documented": True,
+                "unprioritized_backlog_items_count": 0,
+            },
+        ],
+        max_must_have_effort_share_pct=60.0,
+        min_could_have_contingency_share_pct=20.0,
+    )
+    assert res["evaluated_releases_count"] == 2
+    assert res["unprioritized_or_missing_wont_have_release_ids"] == []
+    assert res["must_have_inflated_or_low_buffer_release_ids"] == [
+        "REL-INFLATED",
+        "REL-LOW-BUF",
+    ]
+    assert (
+        res["moscow_prioritization_status"]
+        == "MOSCOW_MUST_HAVE_INFLATION_OR_BUFFER_WARNING"
+    )
+    assert res["is_moscow_prioritization_valid"] is False
+
+
+def test_validate_moscow_prioritization_must_have_inflation_and_mvp_cap_optimal_and_boundaries():
+    from backend.schemas.projects import (
+        validate_moscow_prioritization_must_have_inflation_and_mvp_cap,
+    )
+
+    res = validate_moscow_prioritization_must_have_inflation_and_mvp_cap(
+        [
+            {
+                "release_id": "REL-BOUNDARY",
+                "must_have_effort_share_pct": 60.0,
+                "could_have_effort_share_pct": 20.0,
+                "wont_have_explicitly_documented": True,
+                "unprioritized_backlog_items_count": 0,
+            }
+        ],
+        max_must_have_effort_share_pct=60.0,
+        min_could_have_contingency_share_pct=20.0,
+    )
+    assert res["evaluated_releases_count"] == 1
+    assert res["unprioritized_or_missing_wont_have_release_ids"] == []
+    assert res["must_have_inflated_or_low_buffer_release_ids"] == []
+    assert (
+        res["moscow_prioritization_status"]
+        == "MOSCOW_PRIORITIZATION_BALANCE_OPTIMAL"
+    )
+    assert res["is_moscow_prioritization_valid"] is True
+
+
+def test_validate_moscow_prioritization_must_have_inflation_and_mvp_cap_defensive_and_dunder_all():
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_moscow_prioritization_must_have_inflation_and_mvp_cap,
+    )
+
+    empty = validate_moscow_prioritization_must_have_inflation_and_mvp_cap(None)
+    assert empty["evaluated_releases_count"] == 0
+    assert (
+        empty["moscow_prioritization_status"]
+        == "MOSCOW_PRIORITIZATION_BALANCE_OPTIMAL"
+    )
+    assert empty["is_moscow_prioritization_valid"] is True
+
+    defaults = validate_moscow_prioritization_must_have_inflation_and_mvp_cap(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"release_id": "   "},
+            {
+                "release_id": "REL-DEFAULTS",
+                "must_have_effort_share_pct": None,
+                "could_have_effort_share_pct": None,
+                "wont_have_explicitly_documented": None,
+                "unprioritized_backlog_items_count": None,
+            },
+        ]
+    )
+    assert defaults["evaluated_releases_count"] == 1
+    assert (
+        defaults["moscow_prioritization_status"]
+        == "MOSCOW_PRIORITIZATION_BALANCE_OPTIMAL"
+    )
+    assert defaults["is_moscow_prioritization_valid"] is True
+    assert (
+        "validate_moscow_prioritization_must_have_inflation_and_mvp_cap"
+        in mod.__all__
+    )
+
