@@ -10470,3 +10470,151 @@ def test_audit_wiki_secrets_vault_lease_rotation_and_root_token_seal_staticmetho
         in mod.__all__
     )
 
+
+
+def test_wiki_ntp_nts_or_leap_smear_breach():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_ntp_clock_drift_and_leap_second_smearing,
+    )
+
+    res = audit_wiki_ntp_clock_drift_and_leap_second_smearing(
+        [
+            {
+                "node_id": "NODE-NO-NTS",
+                "nts_authenticated_time_sources": False,
+            },
+            {
+                "node_id": "NODE-UNSMEARED",
+                "leap_second_smearing_consistent": False,
+            },
+        ],
+        max_clock_offset_ms=10.0,
+        max_stratum_level=3,
+    )
+    assert res["evaluated_nodes_count"] == 2
+    assert res["unauthenticated_or_unsmeared_leap_node_ids"] == [
+        "NODE-NO-NTS",
+        "NODE-UNSMEARED",
+    ]
+    assert res["high_drift_or_degraded_stratum_node_ids"] == []
+    assert (
+        res["clock_sync_status"] == "CLOCK_NTS_AUTH_OR_LEAP_SMEAR_BREACH"
+    )
+    assert res["is_clock_sync_compliant"] is False
+
+
+def test_wiki_ntp_drift_or_stratum_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_ntp_clock_drift_and_leap_second_smearing,
+    )
+
+    res = audit_wiki_ntp_clock_drift_and_leap_second_smearing(
+        [
+            {
+                "node_id": "NODE-HIGH-DRIFT",
+                "observed_clock_offset_ms": 28.0,
+            },
+            {
+                "node_id": "NODE-NEGATIVE-DRIFT",
+                "observed_clock_offset_ms": -30.0,
+            },
+            {
+                "node_id": "NODE-DEGRADED-STRATUM",
+                "stratum_level": 5,
+            },
+        ],
+        max_clock_offset_ms=10.0,
+        max_stratum_level=3,
+    )
+    assert res["evaluated_nodes_count"] == 3
+    assert res["unauthenticated_or_unsmeared_leap_node_ids"] == []
+    assert res["high_drift_or_degraded_stratum_node_ids"] == [
+        "NODE-HIGH-DRIFT",
+        "NODE-NEGATIVE-DRIFT",
+        "NODE-DEGRADED-STRATUM",
+    ]
+    assert (
+        res["clock_sync_status"] == "CLOCK_OFFSET_DRIFT_OR_STRATUM_WARNING"
+    )
+    assert res["is_clock_sync_compliant"] is False
+
+
+def test_wiki_ntp_boundaries_optimal_and_defaults():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_ntp_clock_drift_and_leap_second_smearing,
+    )
+
+    res = audit_wiki_ntp_clock_drift_and_leap_second_smearing(
+        [
+            {
+                "node_id": "NODE-BOUNDARY",
+                "observed_clock_offset_ms": 10.0,
+                "stratum_level": 3,
+            },
+            {
+                "node_id": "NODE-NEG-BOUNDARY",
+                "observed_clock_offset_ms": -10.0,
+            },
+            {"node_id": "NODE-ALL-DEFAULTS"},
+        ],
+        max_clock_offset_ms=10.0,
+        max_stratum_level=3,
+    )
+    assert res["evaluated_nodes_count"] == 3
+    assert res["unauthenticated_or_unsmeared_leap_node_ids"] == []
+    assert res["high_drift_or_degraded_stratum_node_ids"] == []
+    assert res["clock_sync_status"] == "CLOCK_SYNCHRONIZATION_OPTIMAL"
+    assert res["is_clock_sync_compliant"] is True
+
+
+def test_wiki_ntp_invalid_and_binding():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_ntp_clock_drift_and_leap_second_smearing,
+    )
+
+    empty = audit_wiki_ntp_clock_drift_and_leap_second_smearing(None)
+    assert empty["evaluated_nodes_count"] == 0
+    assert empty["unauthenticated_or_unsmeared_leap_node_ids"] == []
+    assert empty["high_drift_or_degraded_stratum_node_ids"] == []
+    assert empty["clock_sync_status"] == "CLOCK_SYNCHRONIZATION_OPTIMAL"
+    assert empty["is_clock_sync_compliant"] is True
+
+    invalid = audit_wiki_ntp_clock_drift_and_leap_second_smearing(
+        [42, "not-a-dict", None, {"node_id": "   "}]  # type: ignore[list-item]
+    )
+    assert invalid["evaluated_nodes_count"] == 0
+
+    defaults = audit_wiki_ntp_clock_drift_and_leap_second_smearing(
+        [
+            {
+                "node_id": "NODE-DEFAULTS",
+                "nts_authenticated_time_sources": None,
+                "leap_second_smearing_consistent": None,
+                "observed_clock_offset_ms": None,
+                "stratum_level": None,
+            }
+        ]
+    )
+    assert defaults["evaluated_nodes_count"] == 1
+    assert defaults["clock_sync_status"] == "CLOCK_SYNCHRONIZATION_OPTIMAL"
+    assert defaults["is_clock_sync_compliant"] is True
+
+    sample = [
+        {
+            "node_id": "NODE-1",
+            "observed_clock_offset_ms": 1.0,
+            "stratum_level": 2,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_ntp_clock_drift_and_leap_second_smearing(
+            sample
+        )
+        == audit_wiki_ntp_clock_drift_and_leap_second_smearing(sample)
+    )
+    assert (
+        "audit_wiki_ntp_clock_drift_and_leap_second_smearing"
+        in mod.__all__
+    )

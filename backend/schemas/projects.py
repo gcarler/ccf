@@ -3825,6 +3825,7 @@ __all__ = [
     "validate_raci_matrix_single_accountable_and_role_overload",
     "validate_risk_bowtie_barrier_redundancy_and_independence",
     "validate_moscow_prioritization_must_have_inflation_and_mvp_cap",
+    "validate_work_package_8_80_rule_duration_and_effort_granularity",
 ]
 
 
@@ -9027,4 +9028,130 @@ def validate_moscow_prioritization_must_have_inflation_and_mvp_cap(
         "is_moscow_prioritization_valid": moscow_prioritization_status
         == "MOSCOW_PRIORITIZATION_BALANCE_OPTIMAL",
     }
+
+
+def validate_work_package_8_80_rule_duration_and_effort_granularity(
+    work_packages: list[dict[str, Any]],
+    *,
+    min_effort_hours: float = 8.0,
+    max_effort_hours: float = 80.0,
+    max_duration_days: float = 10.0,
+    require_single_owner_and_control_account: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §5.4 & §6.2 — Valida granularidad de paquetes de trabajo WBS bajo regla de 8/80 horas, ventana máxima de duración y mapeo único a cuenta de control y responsable."""
+    raw_packages = (
+        work_packages if isinstance(work_packages, (list, tuple)) else []
+    )
+    valid_packages = [item for item in raw_packages if isinstance(item, dict)]
+
+    micromanaged_wp_ids: list[str] = []
+    under_decomposed_wp_ids: list[str] = []
+    accountability_violation_wp_ids: list[str] = []
+    records: list[dict[str, Any]] = []
+    violations: list[str] = []
+
+    def _norm_str_list(raw_list: Any, single_fallback: Any) -> list[str]:
+        if isinstance(raw_list, (list, tuple)):
+            return [
+                str(x).strip()
+                for x in raw_list
+                if x is not None and str(x).strip()
+            ]
+        if single_fallback is not None and str(single_fallback).strip():
+            return [str(single_fallback).strip()]
+        return []
+
+    for idx, item in enumerate(valid_packages):
+        wp_id = (
+            str(item.get("wp_id") or item.get("id") or f"wp-{idx + 1}").strip()
+            or f"wp-{idx + 1}"
+        )
+        estimated_effort_hours = max(
+            0.0, float(item.get("estimated_effort_hours") or 0.0)
+        )
+        duration_days = max(0.0, float(item.get("duration_days") or 0.0))
+        control_account_ids = _norm_str_list(
+            item.get("control_account_ids"), item.get("control_account_id")
+        )
+        owner_ids = _norm_str_list(item.get("owner_ids"), item.get("owner_id"))
+        is_milestone = bool(item.get("is_milestone", False))
+
+        micromanaged_under_min_effort = False
+        under_decomposed_over_max_effort = False
+        excessive_duration_window = False
+
+        if not is_milestone:
+            micromanaged_under_min_effort = (
+                estimated_effort_hours < min_effort_hours
+            )
+            under_decomposed_over_max_effort = (
+                estimated_effort_hours > max_effort_hours
+            )
+            excessive_duration_window = duration_days > max_duration_days
+
+        control_account_mapping_violation = False
+        single_owner_accountability_violation = False
+        if require_single_owner_and_control_account:
+            control_account_mapping_violation = len(control_account_ids) != 1
+            single_owner_accountability_violation = len(owner_ids) != 1
+
+        if micromanaged_under_min_effort:
+            micromanaged_wp_ids.append(wp_id)
+            violations.append(
+                f"Work package '{wp_id}' effort ({estimated_effort_hours}h) is below minimum {min_effort_hours}h."
+            )
+
+        if under_decomposed_over_max_effort or excessive_duration_window:
+            under_decomposed_wp_ids.append(wp_id)
+            violations.append(
+                f"Work package '{wp_id}' exceeds 80h effort or {max_duration_days}d duration."
+            )
+
+        if (
+            control_account_mapping_violation
+            or single_owner_accountability_violation
+        ):
+            accountability_violation_wp_ids.append(wp_id)
+            violations.append(
+                f"Work package '{wp_id}' violates single owner or single control account mapping."
+            )
+
+        records.append(
+            {
+                "wp_id": wp_id,
+                "estimated_effort_hours": estimated_effort_hours,
+                "duration_days": duration_days,
+                "control_account_ids": control_account_ids,
+                "owner_ids": owner_ids,
+                "is_milestone": is_milestone,
+                "micromanaged_under_min_effort": micromanaged_under_min_effort,
+                "under_decomposed_over_max_effort": under_decomposed_over_max_effort,
+                "excessive_duration_window": excessive_duration_window,
+                "control_account_mapping_violation": control_account_mapping_violation,
+                "single_owner_accountability_violation": single_owner_accountability_violation,
+            }
+        )
+
+    if accountability_violation_wp_ids or under_decomposed_wp_ids:
+        status = "critical"
+        is_valid = False
+    elif micromanaged_wp_ids:
+        status = "warning"
+        is_valid = False
+    else:
+        status = "valid"
+        is_valid = True
+
+    return {
+        "is_valid": is_valid,
+        "status": status,
+        "packages_evaluated": len(valid_packages),
+        "micromanaged_wp_ids": micromanaged_wp_ids,
+        "under_decomposed_wp_ids": under_decomposed_wp_ids,
+        "accountability_violation_wp_ids": accountability_violation_wp_ids,
+        "records": records,
+        "violations": violations,
+        "Violations": violations,
+    }
+
 

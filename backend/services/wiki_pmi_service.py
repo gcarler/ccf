@@ -2543,6 +2543,7 @@ __all__ = [
     "audit_wiki_object_storage_worm_lock_and_ransomware_airgap",
     "audit_wiki_bgp_rpki_roa_and_ddos_scrubbing_failover",
     "audit_wiki_secrets_vault_lease_rotation_and_root_token_seal",
+    "audit_wiki_ntp_clock_drift_and_leap_second_smearing",
     "WikiPMIService",
 ]
 
@@ -7552,3 +7553,75 @@ WikiPMIService.audit_wiki_secrets_vault_lease_rotation_and_root_token_seal = sta
 )
 
 
+def audit_wiki_ntp_clock_drift_and_leap_second_smearing(
+    nodes: list[dict] | None,
+    *,
+    max_clock_offset_ms: float = 10.0,
+    max_stratum_level: int = 3,
+) -> dict:
+    """PMBOK §11.6 & §8.2 — Audita drift de sincronización NTP/PTP por stratum, fuentes de tiempo autenticadas NTS y smearing consistente de leap second."""
+    raw_items = nodes if isinstance(nodes, list) else []
+    valid_nodes: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("node_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_nodes.append(item)
+
+    def _num(value, default):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    def _bool(value, default):
+        return value if isinstance(value, bool) else default
+
+    unauthenticated_or_unsmeared_leap_node_ids: list[str] = []
+    high_drift_or_degraded_stratum_node_ids: list[str] = []
+
+    for node in valid_nodes:
+        node_id = str(node.get("node_id")).strip()
+        nts_authenticated = _bool(
+            node.get("nts_authenticated_time_sources"), True
+        )
+        smearing_consistent = _bool(
+            node.get("leap_second_smearing_consistent"), True
+        )
+        clock_offset_ms = _num(
+            node.get("observed_clock_offset_ms"), 1.5
+        )
+        stratum_level = _num(
+            node.get("stratum_level"), 2.0
+        )
+
+        if not nts_authenticated or not smearing_consistent:
+            unauthenticated_or_unsmeared_leap_node_ids.append(node_id)
+
+        if (
+            abs(clock_offset_ms) > max_clock_offset_ms
+            or stratum_level > max_stratum_level
+        ):
+            high_drift_or_degraded_stratum_node_ids.append(node_id)
+
+    if unauthenticated_or_unsmeared_leap_node_ids:
+        clock_sync_status = "CLOCK_NTS_AUTH_OR_LEAP_SMEAR_BREACH"
+    elif high_drift_or_degraded_stratum_node_ids:
+        clock_sync_status = "CLOCK_OFFSET_DRIFT_OR_STRATUM_WARNING"
+    else:
+        clock_sync_status = "CLOCK_SYNCHRONIZATION_OPTIMAL"
+
+    return {
+        "evaluated_nodes_count": len(valid_nodes),
+        "unauthenticated_or_unsmeared_leap_node_ids": unauthenticated_or_unsmeared_leap_node_ids,
+        "high_drift_or_degraded_stratum_node_ids": high_drift_or_degraded_stratum_node_ids,
+        "clock_sync_status": clock_sync_status,
+        "is_clock_sync_compliant": clock_sync_status
+        == "CLOCK_SYNCHRONIZATION_OPTIMAL",
+    }
+
+
+WikiPMIService.audit_wiki_ntp_clock_drift_and_leap_second_smearing = staticmethod(
+    audit_wiki_ntp_clock_drift_and_leap_second_smearing
+)

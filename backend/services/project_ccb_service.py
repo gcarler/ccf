@@ -2858,6 +2858,7 @@ __all__ = [
     "audit_service_mesh_mtls_strict_and_outlier_ejection_gate",
     "audit_graphql_query_depth_and_n_plus_one_batching_gate",
     "audit_blue_green_cutover_drain_and_db_backward_compatibility",
+    "audit_database_connection_pool_pgbouncer_saturation_and_idle_in_transaction_gate",
     "ProjectCCBService",
 ]
 
@@ -7721,9 +7722,6 @@ ProjectCCBService.audit_graphql_query_depth_and_n_plus_one_batching_gate = stati
 )
 
 
-
-
-
 def audit_blue_green_cutover_drain_and_db_backward_compatibility(
     cutovers: list[dict] | None,
     *,
@@ -7798,3 +7796,147 @@ def audit_blue_green_cutover_drain_and_db_backward_compatibility(
 ProjectCCBService.audit_blue_green_cutover_drain_and_db_backward_compatibility = staticmethod(
     audit_blue_green_cutover_drain_and_db_backward_compatibility
 )
+
+
+def audit_database_connection_pool_pgbouncer_saturation_and_idle_in_transaction_gate(
+    pool_samples: list[dict[str, Any]],
+    *,
+    max_pool_utilization_pct: float = 85.0,
+    max_client_wait_ms: float = 50.0,
+    max_idle_in_tx_seconds: float = 15.0,
+    require_transaction_pooling_mode: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §8.3 & §11.6 — Audita saturación de pool de conexiones PgBouncer, timeout de transacciones idle-in-transaction y modo de pooling transaccional en gates CCB."""
+    raw_samples = pool_samples if isinstance(pool_samples, (list, tuple)) else []
+    valid_samples = [item for item in raw_samples if isinstance(item, dict)]
+
+    if not valid_samples:
+        return {
+            "status": "healthy",
+            "gate_passed": True,
+            "pools_evaluated": 0,
+            "saturated_pool_ids": [],
+            "idle_in_tx_leak_pool_ids": [],
+            "records": [],
+            "violations": [],
+        }
+
+    saturated_pool_ids: list[str] = []
+    idle_in_tx_leak_pool_ids: list[str] = []
+    records: list[dict[str, Any]] = []
+    violations: list[str] = []
+    has_breach = False
+    has_critical = False
+
+    for idx, item in enumerate(valid_samples):
+        pool_id = (
+            str(item.get("pool_id") or item.get("id") or f"pool-{idx + 1}").strip()
+            or f"pool-{idx + 1}"
+        )
+        active_server_connections = max(
+            0, int(item.get("active_server_connections") or 0)
+        )
+        max_pool_size = max(0, int(item.get("max_pool_size") or 0))
+        waiting_clients_count = max(
+            0, int(item.get("waiting_clients_count") or 0)
+        )
+        max_wait_time_ms = max(0.0, float(item.get("max_wait_time_ms") or 0.0))
+        longest_idle_in_tx_seconds = max(
+            0.0, float(item.get("longest_idle_in_tx_seconds") or 0.0)
+        )
+        pooling_mode = (
+            str(item.get("pooling_mode") or "transaction").strip().lower()
+            or "transaction"
+        )
+        reserve_pool_exhausted = bool(item.get("reserve_pool_exhausted", False))
+
+        if max_pool_size > 0:
+            utilization_pct = round(
+                (active_server_connections / max_pool_size) * 100.0, 2
+            )
+        elif active_server_connections > 0:
+            utilization_pct = 100.0
+        else:
+            utilization_pct = 0.0
+
+        pool_utilization_exceeded = utilization_pct > max_pool_utilization_pct
+        client_wait_sla_breach = max_wait_time_ms > max_client_wait_ms
+        idle_in_transaction_leak = (
+            longest_idle_in_tx_seconds > max_idle_in_tx_seconds
+        )
+        invalid_pooling_mode = bool(
+            require_transaction_pooling_mode and pooling_mode != "transaction"
+        )
+
+        if (
+            pool_utilization_exceeded
+            or client_wait_sla_breach
+            or reserve_pool_exhausted
+        ):
+            saturated_pool_ids.append(pool_id)
+
+        if idle_in_transaction_leak:
+            idle_in_tx_leak_pool_ids.append(pool_id)
+
+        sample_breach = (
+            pool_utilization_exceeded
+            or client_wait_sla_breach
+            or idle_in_transaction_leak
+            or invalid_pooling_mode
+            or reserve_pool_exhausted
+        )
+        if sample_breach:
+            has_breach = True
+            violations.append(f"Pool '{pool_id}' breached PgBouncer gate SLA.")
+
+        if (
+            reserve_pool_exhausted
+            or idle_in_transaction_leak
+            or utilization_pct > 95.0
+        ):
+            has_critical = True
+
+        records.append(
+            {
+                "pool_id": pool_id,
+                "active_server_connections": active_server_connections,
+                "max_pool_size": max_pool_size,
+                "waiting_clients_count": waiting_clients_count,
+                "max_wait_time_ms": max_wait_time_ms,
+                "longest_idle_in_tx_seconds": longest_idle_in_tx_seconds,
+                "pooling_mode": pooling_mode,
+                "utilization_pct": utilization_pct,
+                "pool_utilization_exceeded": pool_utilization_exceeded,
+                "client_wait_sla_breach": client_wait_sla_breach,
+                "idle_in_transaction_leak": idle_in_transaction_leak,
+                "invalid_pooling_mode": invalid_pooling_mode,
+                "reserve_pool_exhausted": reserve_pool_exhausted,
+            }
+        )
+
+    if not has_breach:
+        status = "healthy"
+        gate_passed = True
+    elif has_critical:
+        status = "critical"
+        gate_passed = False
+    else:
+        status = "warning"
+        gate_passed = False
+
+    return {
+        "status": status,
+        "gate_passed": gate_passed,
+        "pools_evaluated": len(valid_samples),
+        "saturated_pool_ids": saturated_pool_ids,
+        "idle_in_tx_leak_pool_ids": idle_in_tx_leak_pool_ids,
+        "records": records,
+        "violations": violations,
+    }
+
+
+ProjectCCBService.audit_database_connection_pool_pgbouncer_saturation_and_idle_in_transaction_gate = staticmethod(
+    audit_database_connection_pool_pgbouncer_saturation_and_idle_in_transaction_gate
+)
+
+

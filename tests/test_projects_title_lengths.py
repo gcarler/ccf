@@ -9329,3 +9329,101 @@ def test_validate_moscow_prioritization_must_have_inflation_and_mvp_cap_defensiv
         in mod.__all__
     )
 
+
+def test_validate_work_package_8_80_rule_duration_and_effort_granularity_valid_and_milestone():
+    from backend.schemas.projects import (
+        validate_work_package_8_80_rule_duration_and_effort_granularity,
+    )
+
+    res = validate_work_package_8_80_rule_duration_and_effort_granularity(
+        [
+            {
+                "wp_id": "WP-101",
+                "estimated_effort_hours": 40.0,
+                "duration_days": 5.0,
+                "control_account_id": "CA-01",
+                "owner_id": "USR-01",
+                "is_milestone": False,
+            },
+            {
+                "wp_id": "MS-01",
+                "estimated_effort_hours": 0.0,
+                "duration_days": 0.0,
+                "control_account_ids": ["CA-01"],
+                "owner_ids": ["USR-01"],
+                "is_milestone": True,
+            },
+        ]
+    )
+    assert res["is_valid"] is True
+    assert res["status"] == "valid"
+    assert res["packages_evaluated"] == 2
+    assert res["micromanaged_wp_ids"] == []
+    assert res["under_decomposed_wp_ids"] == []
+    assert res["accountability_violation_wp_ids"] == []
+    assert res["Violations"] == []
+
+
+def test_validate_work_package_8_80_rule_duration_and_effort_granularity_critical():
+    from backend.schemas.projects import (
+        validate_work_package_8_80_rule_duration_and_effort_granularity,
+    )
+
+    res = validate_work_package_8_80_rule_duration_and_effort_granularity(
+        [
+            {
+                "wp_id": "WP-OVER-80",
+                "estimated_effort_hours": 120.0,
+                "duration_days": 15.0,
+                "control_account_ids": ["CA-01", "CA-02"],
+                "owner_ids": [],
+            }
+        ]
+    )
+    assert res["is_valid"] is False
+    assert res["status"] == "critical"
+    assert res["packages_evaluated"] == 1
+    assert res["under_decomposed_wp_ids"] == ["WP-OVER-80"]
+    assert res["accountability_violation_wp_ids"] == ["WP-OVER-80"]
+    assert len(res["Violations"]) >= 2
+
+
+def test_validate_work_package_8_80_rule_duration_and_effort_granularity_warning_micromanaged():
+    from backend.schemas.projects import (
+        validate_work_package_8_80_rule_duration_and_effort_granularity,
+    )
+
+    res = validate_work_package_8_80_rule_duration_and_effort_granularity(
+        [
+            {
+                "id": "WP-TINY",
+                "estimated_effort_hours": 4.0,
+                "duration_days": 1.0,
+                "control_account_id": "CA-01",
+                "owner_id": "USR-01",
+            }
+        ]
+    )
+    assert res["is_valid"] is False
+    assert res["status"] == "warning"
+    assert res["micromanaged_wp_ids"] == ["WP-TINY"]
+    assert res["under_decomposed_wp_ids"] == []
+    assert res["accountability_violation_wp_ids"] == []
+
+
+def test_validate_work_package_8_80_rule_duration_and_effort_granularity_empty_and_dunder_all():
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_work_package_8_80_rule_duration_and_effort_granularity,
+    )
+
+    empty = validate_work_package_8_80_rule_duration_and_effort_granularity([])
+    assert empty["is_valid"] is True
+    assert empty["status"] == "valid"
+    assert empty["packages_evaluated"] == 0
+    assert (
+        "validate_work_package_8_80_rule_duration_and_effort_granularity"
+        in mod.__all__
+    )
+
+

@@ -10520,10 +10520,6 @@ def test_audit_graphql_query_depth_and_n_plus_one_batching_gate_staticmethod_and
     )
 
 
-
-
-
-
 def test_blue_green_db_compat_or_smoke_breach():
     from backend.services.project_ccb_service import (
         audit_blue_green_cutover_drain_and_db_backward_compatibility,
@@ -10672,3 +10668,136 @@ def test_blue_green_invalid_and_binding():
         "audit_blue_green_cutover_drain_and_db_backward_compatibility"
         in mod.__all__
     )
+
+
+def test_audit_database_connection_pool_pgbouncer_saturation_and_idle_in_transaction_gate_healthy_and_empty():
+    from backend.services.project_ccb_service import (
+        audit_database_connection_pool_pgbouncer_saturation_and_idle_in_transaction_gate,
+    )
+
+    empty = audit_database_connection_pool_pgbouncer_saturation_and_idle_in_transaction_gate(
+        []
+    )
+    assert empty["status"] == "healthy"
+    assert empty["gate_passed"] is True
+    assert empty["pools_evaluated"] == 0
+    assert empty["saturated_pool_ids"] == []
+    assert empty["idle_in_tx_leak_pool_ids"] == []
+
+    healthy = audit_database_connection_pool_pgbouncer_saturation_and_idle_in_transaction_gate(
+        [
+            {
+                "pool_id": "pgbouncer-primary",
+                "active_server_connections": 40,
+                "max_pool_size": 50,
+                "waiting_clients_count": 0,
+                "max_wait_time_ms": 12.0,
+                "longest_idle_in_tx_seconds": 3.5,
+                "pooling_mode": "transaction",
+                "reserve_pool_exhausted": False,
+            }
+        ]
+    )
+    assert healthy["status"] == "healthy"
+    assert healthy["gate_passed"] is True
+    assert healthy["pools_evaluated"] == 1
+    assert healthy["records"][0]["utilization_pct"] == 80.0
+    assert healthy["saturated_pool_ids"] == []
+    assert healthy["idle_in_tx_leak_pool_ids"] == []
+
+
+def test_audit_database_connection_pool_pgbouncer_saturation_and_idle_in_transaction_gate_critical():
+    from backend.services.project_ccb_service import (
+        audit_database_connection_pool_pgbouncer_saturation_and_idle_in_transaction_gate,
+    )
+
+    res = audit_database_connection_pool_pgbouncer_saturation_and_idle_in_transaction_gate(
+        [
+            {
+                "pool_id": "pool-idle-leak",
+                "active_server_connections": 20,
+                "max_pool_size": 50,
+                "waiting_clients_count": 2,
+                "max_wait_time_ms": 10.0,
+                "longest_idle_in_tx_seconds": 25.0,
+                "pooling_mode": "transaction",
+                "reserve_pool_exhausted": False,
+            },
+            {
+                "pool_id": "pool-exhausted",
+                "active_server_connections": 49,
+                "max_pool_size": 50,
+                "waiting_clients_count": 15,
+                "max_wait_time_ms": 120.0,
+                "longest_idle_in_tx_seconds": 2.0,
+                "pooling_mode": "transaction",
+                "reserve_pool_exhausted": True,
+            },
+        ]
+    )
+    assert res["status"] == "critical"
+    assert res["gate_passed"] is False
+    assert res["pools_evaluated"] == 2
+    assert res["idle_in_tx_leak_pool_ids"] == ["pool-idle-leak"]
+    assert res["saturated_pool_ids"] == ["pool-exhausted"]
+
+
+def test_audit_database_connection_pool_pgbouncer_saturation_and_idle_in_transaction_gate_warning():
+    from backend.services.project_ccb_service import (
+        audit_database_connection_pool_pgbouncer_saturation_and_idle_in_transaction_gate,
+    )
+
+    res = audit_database_connection_pool_pgbouncer_saturation_and_idle_in_transaction_gate(
+        [
+            {
+                "pool_id": "pool-warn-util",
+                "active_server_connections": 45,
+                "max_pool_size": 50,
+                "waiting_clients_count": 3,
+                "max_wait_time_ms": 65.0,
+                "longest_idle_in_tx_seconds": 5.0,
+                "pooling_mode": "session",
+                "reserve_pool_exhausted": False,
+            }
+        ],
+        max_pool_utilization_pct=85.0,
+        max_client_wait_ms=50.0,
+        require_transaction_pooling_mode=True,
+    )
+    assert res["status"] == "warning"
+    assert res["gate_passed"] is False
+    assert res["saturated_pool_ids"] == ["pool-warn-util"]
+    assert res["records"][0]["pool_utilization_exceeded"] is True
+    assert res["records"][0]["client_wait_sla_breach"] is True
+    assert res["records"][0]["invalid_pooling_mode"] is True
+
+
+def test_audit_database_connection_pool_pgbouncer_saturation_and_idle_in_transaction_gate_staticmethod_and_dunder_all():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_database_connection_pool_pgbouncer_saturation_and_idle_in_transaction_gate,
+    )
+
+    sample = [
+        {
+            "id": "pool-zero-max",
+            "active_server_connections": 5,
+            "max_pool_size": 0,
+            "pooling_mode": "session",
+        }
+    ]
+    res = ProjectCCBService.audit_database_connection_pool_pgbouncer_saturation_and_idle_in_transaction_gate(
+        sample, require_transaction_pooling_mode=False
+    )
+    assert res == audit_database_connection_pool_pgbouncer_saturation_and_idle_in_transaction_gate(
+        sample, require_transaction_pooling_mode=False
+    )
+    assert res["records"][0]["utilization_pct"] == 100.0
+    assert res["status"] == "critical"
+    assert (
+        "audit_database_connection_pool_pgbouncer_saturation_and_idle_in_transaction_gate"
+        in mod.__all__
+    )
+
+
