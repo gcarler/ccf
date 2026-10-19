@@ -3063,6 +3063,7 @@ __all__ = [
     "audit_markdown_data_lineage_dag_freshness_and_contract_hygiene",
     "audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene",
     "audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene",
+    "audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene",
     "AnydocService",
 ]
 
@@ -10969,4 +10970,176 @@ AnyDocService.audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene
 )
 AnydocService.audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene = staticmethod(
     audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene
+)
+
+
+def audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene(
+    markdown_text: str,
+    *,
+    min_tag_coverage_pct: float = 95.0,
+    min_ri_sp_utilization_pct: float = 85.0,
+    max_cost_anomaly_drift_pct: float = 15.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §10.2 — AnyDoc Markdown FinOps Cloud Cost Tagging Coverage, RI/Savings Plans Utilization & Unit Economics Hygiene Auditor."""
+    normalized_min_tag_cov = min(max(float(min_tag_coverage_pct), 0.0), 100.0)
+    normalized_min_ri_sp = min(
+        max(float(min_ri_sp_utilization_pct), 0.0), 100.0
+    )
+    normalized_max_drift = max(float(max_cost_anomaly_drift_pct), 0.0)
+
+    text = markdown_text if isinstance(markdown_text, str) else ""
+    stripped = re.sub(r"```[\s\S]*?```|~~~[\s\S]*?~~~", "", text)
+
+    pattern = re.compile(r"<!--\s*finops\s*:(.*?)-->", re.IGNORECASE | re.DOTALL)
+    blocks: list[dict[str, Any]] = []
+    healthy_count = 0
+    warning_count = 0
+    critical_count = 0
+    missing_cost_center_count = 0
+    tag_coverage_breach_count = 0
+    ri_sp_underutilized_count = 0
+    cost_anomaly_spike_count = 0
+
+    for idx, match in enumerate(pattern.finditer(stripped), start=1):
+        raw_body = match.group(1)
+        kv: dict[str, str] = {}
+        for part in re.split(r"[;\n]", raw_body):
+            if "=" in part:
+                k, v = part.split("=", 1)
+                kv[k.strip().lower()] = v.strip()
+
+        workload = kv.get("workload") or f"finops-workload-{idx}"
+        cost_center = kv.get("cost_center", "").strip()
+        try:
+            tag_coverage_pct = float(kv.get("tag_coverage_pct", "0.0"))
+        except (TypeError, ValueError):
+            tag_coverage_pct = 0.0
+        try:
+            ri_sp_utilization_pct = float(
+                kv.get("ri_sp_utilization_pct", "0.0")
+            )
+        except (TypeError, ValueError):
+            ri_sp_utilization_pct = 0.0
+        try:
+            cost_anomaly_drift_pct = float(
+                kv.get("cost_anomaly_drift_pct", "0.0")
+            )
+        except (TypeError, ValueError):
+            cost_anomaly_drift_pct = 0.0
+        unit_metric = kv.get("unit_metric", "").strip()
+        raw_budget_alert = kv.get("budget_alert_configured", "").strip().lower()
+        budget_alert_configured = raw_budget_alert in {"true", "1", "yes"}
+
+        missing_cost_center_or_unit_metric = (
+            not cost_center
+            or cost_center.lower() == "none"
+            or not unit_metric
+            or unit_metric.lower() == "none"
+        )
+        unallocated_tag_coverage_breach = (
+            tag_coverage_pct < normalized_min_tag_cov
+        )
+        ri_sp_commitment_underutilized = (
+            ri_sp_utilization_pct < normalized_min_ri_sp
+        )
+        cost_anomaly_spike = cost_anomaly_drift_pct > normalized_max_drift
+        missing_budget_alert = not budget_alert_configured
+
+        if missing_cost_center_or_unit_metric:
+            missing_cost_center_count += 1
+        if unallocated_tag_coverage_breach:
+            tag_coverage_breach_count += 1
+        if ri_sp_commitment_underutilized:
+            ri_sp_underutilized_count += 1
+        if cost_anomaly_spike:
+            cost_anomaly_spike_count += 1
+
+        if missing_cost_center_or_unit_metric or (
+            cost_anomaly_spike and missing_budget_alert
+        ):
+            block_status = "critical"
+            critical_count += 1
+        elif (
+            unallocated_tag_coverage_breach
+            or ri_sp_commitment_underutilized
+            or cost_anomaly_spike
+            or missing_budget_alert
+        ):
+            block_status = "warning"
+            warning_count += 1
+        else:
+            block_status = "healthy"
+            healthy_count += 1
+
+        blocks.append(
+            {
+                "workload": workload,
+                "cost_center": cost_center,
+                "tag_coverage_pct": tag_coverage_pct,
+                "ri_sp_utilization_pct": ri_sp_utilization_pct,
+                "cost_anomaly_drift_pct": cost_anomaly_drift_pct,
+                "unit_metric": unit_metric,
+                "budget_alert_configured": budget_alert_configured,
+                "missing_cost_center_or_unit_metric": missing_cost_center_or_unit_metric,
+                "unallocated_tag_coverage_breach": unallocated_tag_coverage_breach,
+                "ri_sp_commitment_underutilized": ri_sp_commitment_underutilized,
+                "cost_anomaly_spike": cost_anomaly_spike,
+                "missing_budget_alert": missing_budget_alert,
+                "block_status": block_status,
+            }
+        )
+
+    total_finops_blocks = len(blocks)
+    finops_hygiene_rate_pct = (
+        round((healthy_count / total_finops_blocks) * 100.0, 2)
+        if total_finops_blocks > 0
+        else 100.0
+    )
+
+    recommendations: list[str] = []
+    if missing_cost_center_count > 0:
+        recommendations.append(
+            f"Asignar cost_center y unit_metric explícitos para trazabilidad de economía unitaria en {missing_cost_center_count} bloque(s) FinOps."
+        )
+    if tag_coverage_breach_count > 0:
+        recommendations.append(
+            f"Incrementar cobertura de etiquetado de recursos cloud (tag_coverage_pct >= {normalized_min_tag_cov}%) en {tag_coverage_breach_count} bloque(s)."
+        )
+    if ri_sp_underutilized_count > 0:
+        recommendations.append(
+            f"Rebalancear compromisos Reserved Instances / Savings Plans para alcanzar utilización >= {normalized_min_ri_sp}% en {ri_sp_underutilized_count} bloque(s)."
+        )
+    if cost_anomaly_spike_count > 0:
+        recommendations.append(
+            f"Investigar desviaciones de gasto cloud (> {normalized_max_drift}%) y activar alertas presupuestarias automáticas en {cost_anomaly_spike_count} bloque(s)."
+        )
+
+    if critical_count > 0:
+        status = "critical"
+    elif warning_count > 0:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_finops_blocks": total_finops_blocks,
+        "healthy_count": healthy_count,
+        "warning_count": warning_count,
+        "critical_count": critical_count,
+        "missing_cost_center_count": missing_cost_center_count,
+        "tag_coverage_breach_count": tag_coverage_breach_count,
+        "ri_sp_underutilized_count": ri_sp_underutilized_count,
+        "cost_anomaly_spike_count": cost_anomaly_spike_count,
+        "finops_hygiene_rate_pct": finops_hygiene_rate_pct,
+        "status": status,
+        "blocks": blocks,
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene = staticmethod(
+    audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene
+)
+AnydocService.audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene = staticmethod(
+    audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene
 )

@@ -2563,6 +2563,7 @@ __all__ = [
     "audit_wiki_websocket_presence_backpressure_and_zombie_socket_hygiene",
     "audit_wiki_distributed_lock_fencing_token_and_split_brain_guard",
     "audit_wiki_graphql_query_depth_alias_budget_and_introspection_guard",
+    "audit_wiki_presigned_url_ttl_and_bucket_public_acl_guard",
     "WikiPMIService",
 ]
 
@@ -9645,4 +9646,159 @@ def audit_wiki_graphql_query_depth_alias_budget_and_introspection_guard(
 
 WikiPMIService.audit_wiki_graphql_query_depth_alias_budget_and_introspection_guard = staticmethod(
     audit_wiki_graphql_query_depth_alias_budget_and_introspection_guard
+)
+
+
+def audit_wiki_presigned_url_ttl_and_bucket_public_acl_guard(
+    attachments: list[dict[str, Any]],
+    *,
+    max_presigned_ttl_seconds: int = 900,
+    max_upload_size_mb: float = 50.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §11.6 — Wiki Object Storage Presigned URL TTL, Content-Disposition Anti-XSS & Bucket Public ACL Block Guard Auditor."""
+    normalized_max_ttl = max(int(max_presigned_ttl_seconds), 60)
+    normalized_max_size_mb = max(float(max_upload_size_mb), 1.0)
+
+    raw_attachments = attachments if isinstance(attachments, list) else []
+    evaluated_attachments: list[dict[str, Any]] = []
+    healthy_count = 0
+    warning_count = 0
+    critical_count = 0
+    public_or_infected_count = 0
+    inline_xss_risk_count = 0
+    excessive_ttl_count = 0
+    oversized_upload_count = 0
+
+    for idx, item in enumerate(raw_attachments, start=1):
+        if not isinstance(item, dict):
+            continue
+        attachment_id = str(
+            item.get("attachment_id") or f"wiki-att-{idx}"
+        ).strip()
+
+        raw_ttl = item.get("presigned_ttl_seconds", 300)
+        try:
+            presigned_ttl_seconds = int(300 if raw_ttl is None else raw_ttl)
+        except (TypeError, ValueError):
+            presigned_ttl_seconds = 300
+
+        raw_size = item.get("size_mb", 1.0)
+        try:
+            size_mb = float(1.0 if raw_size is None else raw_size)
+        except (TypeError, ValueError):
+            size_mb = 1.0
+
+        bucket_public_access_blocked = bool(
+            item.get("bucket_public_access_blocked", True)
+        )
+        av_malware_scan_clean = bool(item.get("av_malware_scan_clean", True))
+        content_disposition_attachment_enforced = bool(
+            item.get("content_disposition_attachment_enforced", True)
+        )
+        executable_mime_sniffer_blocked = bool(
+            item.get("executable_mime_sniffer_blocked", True)
+        )
+
+        public_bucket_exposure_or_infected = (
+            not bucket_public_access_blocked or not av_malware_scan_clean
+        )
+        stored_xss_inline_execution_risk = (
+            not content_disposition_attachment_enforced
+            or not executable_mime_sniffer_blocked
+        )
+        excessive_presigned_ttl = (
+            presigned_ttl_seconds > normalized_max_ttl
+            or presigned_ttl_seconds <= 0
+        )
+        oversized_upload = size_mb > normalized_max_size_mb
+
+        if public_bucket_exposure_or_infected:
+            public_or_infected_count += 1
+        if stored_xss_inline_execution_risk:
+            inline_xss_risk_count += 1
+        if excessive_presigned_ttl:
+            excessive_ttl_count += 1
+        if oversized_upload:
+            oversized_upload_count += 1
+
+        if (
+            public_bucket_exposure_or_infected
+            or stored_xss_inline_execution_risk
+        ):
+            attachment_status = "critical"
+            critical_count += 1
+        elif excessive_presigned_ttl or oversized_upload:
+            attachment_status = "warning"
+            warning_count += 1
+        else:
+            attachment_status = "healthy"
+            healthy_count += 1
+
+        evaluated_attachments.append(
+            {
+                "attachment_id": attachment_id,
+                "presigned_ttl_seconds": presigned_ttl_seconds,
+                "size_mb": size_mb,
+                "bucket_public_access_blocked": bucket_public_access_blocked,
+                "av_malware_scan_clean": av_malware_scan_clean,
+                "content_disposition_attachment_enforced": content_disposition_attachment_enforced,
+                "executable_mime_sniffer_blocked": executable_mime_sniffer_blocked,
+                "public_bucket_exposure_or_infected": public_bucket_exposure_or_infected,
+                "stored_xss_inline_execution_risk": stored_xss_inline_execution_risk,
+                "excessive_presigned_ttl": excessive_presigned_ttl,
+                "oversized_upload": oversized_upload,
+                "attachment_status": attachment_status,
+            }
+        )
+
+    total_attachments = len(evaluated_attachments)
+    storage_security_rate_pct = (
+        round((healthy_count / total_attachments) * 100.0, 2)
+        if total_attachments > 0
+        else 100.0
+    )
+
+    recommendations: list[str] = []
+    if public_or_infected_count > 0:
+        recommendations.append(
+            f"Bloquear inmediatamente acceso público al bucket S3/Object Storage y poner en cuarentena adjuntos con detección antimalware positiva ({public_or_infected_count} adjunto(s))."
+        )
+    if inline_xss_risk_count > 0:
+        recommendations.append(
+            f"Forzar cabeceras Content-Disposition: attachment y X-Content-Type-Options: nosniff para prevenir XSS almacenado en {inline_xss_risk_count} adjunto(s)."
+        )
+    if excessive_ttl_count > 0:
+        recommendations.append(
+            f"Restringir el tiempo de expiración de Presigned URLs dentro del rango (0, {normalized_max_ttl}] segundos en {excessive_ttl_count} adjunto(s)."
+        )
+    if oversized_upload_count > 0:
+        recommendations.append(
+            f"Aplicar límite de tamaño máximo de carga <= {normalized_max_size_mb} MB en {oversized_upload_count} adjunto(s)."
+        )
+
+    if critical_count > 0:
+        status = "critical"
+    elif warning_count > 0:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_attachments": total_attachments,
+        "healthy_count": healthy_count,
+        "warning_count": warning_count,
+        "critical_count": critical_count,
+        "public_or_infected_count": public_or_infected_count,
+        "inline_xss_risk_count": inline_xss_risk_count,
+        "excessive_ttl_count": excessive_ttl_count,
+        "oversized_upload_count": oversized_upload_count,
+        "storage_security_rate_pct": storage_security_rate_pct,
+        "status": status,
+        "attachments": evaluated_attachments,
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_presigned_url_ttl_and_bucket_public_acl_guard = staticmethod(
+    audit_wiki_presigned_url_ttl_and_bucket_public_acl_guard
 )

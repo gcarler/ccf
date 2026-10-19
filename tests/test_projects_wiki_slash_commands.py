@@ -12713,3 +12713,115 @@ def test_audit_wiki_graphql_query_depth_alias_budget_and_introspection_guard_emp
         "audit_wiki_graphql_query_depth_alias_budget_and_introspection_guard"
         in mod.__all__
     )
+
+
+def test_audit_wiki_presigned_url_ttl_and_bucket_public_acl_guard_healthy():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_presigned_url_ttl_and_bucket_public_acl_guard,
+    )
+
+    attachments = [
+        {
+            "attachment_id": "wiki-att-arch-diagram.pdf",
+            "presigned_ttl_seconds": 300,
+            "size_mb": 4.2,
+            "bucket_public_access_blocked": True,
+            "av_malware_scan_clean": True,
+            "content_disposition_attachment_enforced": True,
+            "executable_mime_sniffer_blocked": True,
+        },
+        {
+            "attachment_id": "wiki-att-wbs-export.xlsx",
+            "presigned_ttl_seconds": 600,
+            "size_mb": 12.5,
+            "bucket_public_access_blocked": True,
+            "av_malware_scan_clean": True,
+            "content_disposition_attachment_enforced": True,
+            "executable_mime_sniffer_blocked": True,
+        },
+    ]
+    res = audit_wiki_presigned_url_ttl_and_bucket_public_acl_guard(attachments)
+    assert res["status"] == "healthy"
+    assert res["total_attachments"] == 2
+    assert res["healthy_count"] == 2
+    assert res["warning_count"] == 0
+    assert res["critical_count"] == 0
+    assert res["storage_security_rate_pct"] == 100.0
+    assert res["recommendations"] == []
+
+
+def test_audit_wiki_presigned_url_ttl_and_bucket_public_acl_guard_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_presigned_url_ttl_and_bucket_public_acl_guard,
+    )
+
+    attachments = [
+        {
+            "attachment_id": "wiki-att-video-recording.mp4",
+            "presigned_ttl_seconds": 3600,
+            "size_mb": 85.0,
+            "bucket_public_access_blocked": True,
+            "av_malware_scan_clean": True,
+            "content_disposition_attachment_enforced": True,
+            "executable_mime_sniffer_blocked": True,
+        }
+    ]
+    res = audit_wiki_presigned_url_ttl_and_bucket_public_acl_guard(attachments)
+    assert res["status"] == "warning"
+    assert res["total_attachments"] == 1
+    assert res["warning_count"] == 1
+    assert res["critical_count"] == 0
+    assert res["excessive_ttl_count"] == 1
+    assert res["oversized_upload_count"] == 1
+    assert res["attachments"][0]["attachment_status"] == "warning"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_wiki_presigned_url_ttl_and_bucket_public_acl_guard_critical():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_presigned_url_ttl_and_bucket_public_acl_guard,
+    )
+
+    attachments = [
+        {
+            "attachment_id": "wiki-att-malicious-svg-payload.svg",
+            "presigned_ttl_seconds": 7200,
+            "size_mb": 2.0,
+            "bucket_public_access_blocked": False,
+            "av_malware_scan_clean": False,
+            "content_disposition_attachment_enforced": False,
+            "executable_mime_sniffer_blocked": False,
+        }
+    ]
+    res = audit_wiki_presigned_url_ttl_and_bucket_public_acl_guard(attachments)
+    assert res["status"] == "critical"
+    assert res["total_attachments"] == 1
+    assert res["critical_count"] == 1
+    assert res["public_or_infected_count"] == 1
+    assert res["inline_xss_risk_count"] == 1
+    assert res["storage_security_rate_pct"] == 0.0
+    assert res["attachments"][0]["attachment_status"] == "critical"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_wiki_presigned_url_ttl_and_bucket_public_acl_guard_empty_and_binding():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_presigned_url_ttl_and_bucket_public_acl_guard,
+    )
+
+    empty = audit_wiki_presigned_url_ttl_and_bucket_public_acl_guard([])
+    assert empty["status"] == "healthy"
+    assert empty["total_attachments"] == 0
+    assert empty["storage_security_rate_pct"] == 100.0
+    assert (
+        WikiPMIService.audit_wiki_presigned_url_ttl_and_bucket_public_acl_guard(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_wiki_presigned_url_ttl_and_bucket_public_acl_guard"
+        in mod.__all__
+    )

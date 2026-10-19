@@ -10497,3 +10497,100 @@ def test_audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene_empt
         "audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene"
         in mod.__all__
     )
+
+
+def test_audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene_healthy():
+    from backend.services.anydoc_service import (
+        audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene,
+    )
+
+    md = """
+    # FinOps Cloud Cost Governance
+    <!-- finops: workload=search-indexer; cost_center=CC-402; tag_coverage_pct=98.2; ri_sp_utilization_pct=91.5; cost_anomaly_drift_pct=4.5; unit_metric=cost_per_1k_queries; budget_alert_configured=true -->
+    <!-- finops: workload=ledger-writer; cost_center=CC-108; tag_coverage_pct=96.0; ri_sp_utilization_pct=88.0; cost_anomaly_drift_pct=8.0; unit_metric=cost_per_10k_tx; budget_alert_configured=true -->
+    """
+    res = audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene(
+        md
+    )
+    assert res["status"] == "healthy"
+    assert res["total_finops_blocks"] == 2
+    assert res["healthy_count"] == 2
+    assert res["warning_count"] == 0
+    assert res["critical_count"] == 0
+    assert res["finops_hygiene_rate_pct"] == 100.0
+    assert res["recommendations"] == []
+
+
+def test_audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene,
+    )
+
+    md = """
+    <!-- finops: workload=batch-analytics; cost_center=CC-501; tag_coverage_pct=88.0; ri_sp_utilization_pct=72.0; cost_anomaly_drift_pct=18.5; unit_metric=cost_per_gb_scanned; budget_alert_configured=true -->
+    """
+    res = audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene(
+        md
+    )
+    assert res["status"] == "warning"
+    assert res["total_finops_blocks"] == 1
+    assert res["warning_count"] == 1
+    assert res["critical_count"] == 0
+    assert res["tag_coverage_breach_count"] == 1
+    assert res["ri_sp_underutilized_count"] == 1
+    assert res["cost_anomaly_spike_count"] == 1
+    assert res["blocks"][0]["block_status"] == "warning"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene_critical():
+    from backend.services.anydoc_service import (
+        audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene,
+    )
+
+    md = """
+    <!-- finops: workload=shadow-gpu-cluster; cost_center=none; tag_coverage_pct=65.0; ri_sp_utilization_pct=50.0; cost_anomaly_drift_pct=42.0; unit_metric=none; budget_alert_configured=false -->
+    """
+    res = audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene(
+        md
+    )
+    assert res["status"] == "critical"
+    assert res["total_finops_blocks"] == 1
+    assert res["critical_count"] == 1
+    assert res["missing_cost_center_count"] == 1
+    assert res["cost_anomaly_spike_count"] == 1
+    assert res["finops_hygiene_rate_pct"] == 0.0
+    assert res["blocks"][0]["block_status"] == "critical"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene_empty_and_binding():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene,
+    )
+
+    empty = audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene(
+        ""
+    )
+    assert empty["status"] == "healthy"
+    assert empty["total_finops_blocks"] == 0
+    assert empty["finops_hygiene_rate_pct"] == 100.0
+    assert (
+        AnyDocService.audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene(
+            ""
+        )
+        == empty
+    )
+    assert (
+        AnydocService.audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene(
+            ""
+        )
+        == empty
+    )
+    assert (
+        "audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene"
+        in mod.__all__
+    )
