@@ -3040,6 +3040,7 @@ __all__ = [
     "audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene",
     "audit_markdown_fenced_code_block_language_and_secret_hygiene",
     "audit_markdown_table_column_parity_and_cell_hygiene",
+    "audit_markdown_footnote_citation_reciprocity_and_key_hygiene",
     "AnydocService",
 ]
 
@@ -8357,4 +8358,84 @@ def audit_markdown_table_column_parity_and_cell_hygiene(
 AnyDocService.audit_markdown_table_column_parity_and_cell_hygiene = staticmethod(
     audit_markdown_table_column_parity_and_cell_hygiene
 )
+
+
+def audit_markdown_footnote_citation_reciprocity_and_key_hygiene(
+    footnotes: list[dict] | None,
+    *,
+    max_footnote_char_length: int = 600,
+    require_canonical_url_or_doi: bool = True,
+) -> dict:
+    """PMBOK §4.4 & §10.2 — Audita reciprocidad de citas de notas al pie Markdown, definiciones huérfanas o duplicadas e higiene de fuente canónica."""
+    raw_items = footnotes if isinstance(footnotes, list) else []
+    valid_footnotes: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("footnote_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_footnotes.append(item)
+
+    unpaired_or_duplicate_footnote_ids: list[str] = []
+    verbose_or_uncited_source_footnote_ids: list[str] = []
+
+    for f in valid_footnotes:
+        fid = f["footnote_id"].strip()
+        raw_inline = f.get("inline_reference_exists", True)
+        inline_reference_exists = bool(
+            True if raw_inline is None else raw_inline
+        )
+
+        raw_def = f.get("definition_block_exists", True)
+        definition_block_exists = bool(True if raw_def is None else raw_def)
+
+        raw_dup = f.get("duplicate_definition_count", 1)
+        duplicate_definition_count = int(1 if raw_dup is None else raw_dup)
+
+        raw_len = f.get("char_length", 180)
+        char_length = int(180 if raw_len is None else raw_len)
+
+        raw_url = f.get("canonical_url_or_doi_present", True)
+        canonical_url_or_doi_present = bool(
+            True if raw_url is None else raw_url
+        )
+
+        if (
+            not inline_reference_exists
+            or not definition_block_exists
+            or duplicate_definition_count > 1
+        ):
+            unpaired_or_duplicate_footnote_ids.append(fid)
+
+        if char_length > max_footnote_char_length or (
+            require_canonical_url_or_doi and not canonical_url_or_doi_present
+        ):
+            verbose_or_uncited_source_footnote_ids.append(fid)
+
+    if unpaired_or_duplicate_footnote_ids:
+        footnote_hygiene_status = (
+            "MARKDOWN_FOOTNOTE_UNPAIRED_OR_DUPLICATE_BREACH"
+        )
+    elif verbose_or_uncited_source_footnote_ids:
+        footnote_hygiene_status = (
+            "MARKDOWN_FOOTNOTE_LENGTH_OR_CITATION_WARNING"
+        )
+    else:
+        footnote_hygiene_status = "MARKDOWN_FOOTNOTE_HYGIENE_OPTIMAL"
+
+    return {
+        "evaluated_footnotes_count": len(valid_footnotes),
+        "unpaired_or_duplicate_footnote_ids": unpaired_or_duplicate_footnote_ids,
+        "verbose_or_uncited_source_footnote_ids": verbose_or_uncited_source_footnote_ids,
+        "footnote_hygiene_status": footnote_hygiene_status,
+        "is_footnote_hygiene_compliant": footnote_hygiene_status
+        == "MARKDOWN_FOOTNOTE_HYGIENE_OPTIMAL",
+    }
+
+
+AnyDocService.audit_markdown_footnote_citation_reciprocity_and_key_hygiene = staticmethod(
+    audit_markdown_footnote_citation_reciprocity_and_key_hygiene
+)
+
 

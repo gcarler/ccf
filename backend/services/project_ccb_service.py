@@ -2854,6 +2854,7 @@ __all__ = [
     "audit_dark_launch_shadow_traffic_parity_and_isolation",
     "audit_db_connection_pool_saturation_and_idle_tx_timeout",
     "audit_message_broker_consumer_lag_and_dlq_poison_pill_gate",
+    "audit_distributed_cache_stampede_and_hotkey_skew_gate",
     "ProjectCCBService",
 ]
 
@@ -7507,5 +7508,77 @@ def audit_message_broker_consumer_lag_and_dlq_poison_pill_gate(
 ProjectCCBService.audit_message_broker_consumer_lag_and_dlq_poison_pill_gate = staticmethod(
     audit_message_broker_consumer_lag_and_dlq_poison_pill_gate
 )
+
+
+def audit_distributed_cache_stampede_and_hotkey_skew_gate(
+    caches: list[dict] | None,
+    *,
+    min_cache_hit_ratio_pct: float = 85.0,
+    max_hotkey_traffic_share_pct: float = 25.0,
+) -> dict:
+    """PMBOK §8.3 & §11.6 — Audita protección contra thundering-herd (singleflight + TTL jitter), ratio de aciertos y asimetría de hot-keys en cachés distribuidos."""
+    raw_items = caches if isinstance(caches, list) else []
+    valid_caches: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("cache_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_caches.append(item)
+
+    stampede_unprotected_cache_ids: list[str] = []
+    low_hit_ratio_or_hotkey_skew_cache_ids: list[str] = []
+
+    for c in valid_caches:
+        cid = c["cache_id"].strip()
+        raw_lock = c.get("singleflight_stampede_lock_enabled", True)
+        singleflight_stampede_lock_enabled = bool(
+            True if raw_lock is None else raw_lock
+        )
+
+        raw_jitter = c.get("ttl_jitter_configured", True)
+        ttl_jitter_configured = bool(
+            True if raw_jitter is None else raw_jitter
+        )
+
+        raw_hit = c.get("cache_hit_ratio_pct", 94.0)
+        cache_hit_ratio_pct = float(94.0 if raw_hit is None else raw_hit)
+
+        raw_hotkey = c.get("max_single_key_traffic_share_pct", 8.0)
+        max_single_key_traffic_share_pct = float(
+            8.0 if raw_hotkey is None else raw_hotkey
+        )
+
+        if not singleflight_stampede_lock_enabled or not ttl_jitter_configured:
+            stampede_unprotected_cache_ids.append(cid)
+
+        if (
+            cache_hit_ratio_pct < min_cache_hit_ratio_pct
+            or max_single_key_traffic_share_pct > max_hotkey_traffic_share_pct
+        ):
+            low_hit_ratio_or_hotkey_skew_cache_ids.append(cid)
+
+    if stampede_unprotected_cache_ids:
+        cache_resilience_status = "CACHE_STAMPEDE_LOCK_OR_JITTER_BREACH"
+    elif low_hit_ratio_or_hotkey_skew_cache_ids:
+        cache_resilience_status = "CACHE_HIT_RATIO_OR_HOTKEY_SKEW_WARNING"
+    else:
+        cache_resilience_status = "CACHE_TIER_RESILIENCE_OPTIMAL"
+
+    return {
+        "evaluated_caches_count": len(valid_caches),
+        "stampede_unprotected_cache_ids": stampede_unprotected_cache_ids,
+        "low_hit_ratio_or_hotkey_skew_cache_ids": low_hit_ratio_or_hotkey_skew_cache_ids,
+        "cache_resilience_status": cache_resilience_status,
+        "is_cache_resilience_compliant": cache_resilience_status
+        == "CACHE_TIER_RESILIENCE_OPTIMAL",
+    }
+
+
+ProjectCCBService.audit_distributed_cache_stampede_and_hotkey_skew_gate = staticmethod(
+    audit_distributed_cache_stampede_and_hotkey_skew_gate
+)
+
 
 

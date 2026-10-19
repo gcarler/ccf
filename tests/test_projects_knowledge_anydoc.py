@@ -7959,3 +7959,173 @@ def test_table_hygiene_invalid_and_binding():
         "audit_markdown_table_column_parity_and_cell_hygiene"
         in mod.__all__
     )
+
+
+def test_audit_markdown_footnote_citation_reciprocity_and_key_hygiene_breach():
+    from backend.services.anydoc_service import (
+        audit_markdown_footnote_citation_reciprocity_and_key_hygiene,
+    )
+
+    res = audit_markdown_footnote_citation_reciprocity_and_key_hygiene(
+        [
+            {
+                "footnote_id": "  FN-ORPHAN-DEF  ",
+                "inline_reference_exists": False,
+                "definition_block_exists": True,
+                "duplicate_definition_count": 1,
+                "char_length": 150,
+                "canonical_url_or_doi_present": True,
+            },
+            {
+                "footnote_id": "FN-MISSING-DEF",
+                "inline_reference_exists": True,
+                "definition_block_exists": False,
+                "duplicate_definition_count": 1,
+                "char_length": 750,
+                "canonical_url_or_doi_present": True,
+            },
+            {
+                "footnote_id": "FN-DUPLICATE",
+                "inline_reference_exists": True,
+                "definition_block_exists": True,
+                "duplicate_definition_count": 2,
+                "char_length": 200,
+                "canonical_url_or_doi_present": True,
+            },
+            {
+                "footnote_id": "FN-CLEAN",
+                "inline_reference_exists": True,
+                "definition_block_exists": True,
+                "duplicate_definition_count": 1,
+                "char_length": 600,
+                "canonical_url_or_doi_present": True,
+            },
+        ]
+    )
+    assert res["evaluated_footnotes_count"] == 4
+    assert res["unpaired_or_duplicate_footnote_ids"] == [
+        "FN-ORPHAN-DEF",
+        "FN-MISSING-DEF",
+        "FN-DUPLICATE",
+    ]
+    assert res["verbose_or_uncited_source_footnote_ids"] == ["FN-MISSING-DEF"]
+    assert (
+        res["footnote_hygiene_status"]
+        == "MARKDOWN_FOOTNOTE_UNPAIRED_OR_DUPLICATE_BREACH"
+    )
+    assert res["is_footnote_hygiene_compliant"] is False
+
+
+def test_audit_markdown_footnote_citation_reciprocity_and_key_hygiene_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_footnote_citation_reciprocity_and_key_hygiene,
+    )
+
+    res = audit_markdown_footnote_citation_reciprocity_and_key_hygiene(
+        [
+            {
+                "footnote_id": "FN-VERBOSE",
+                "inline_reference_exists": True,
+                "definition_block_exists": True,
+                "duplicate_definition_count": 1,
+                "char_length": 601,
+                "canonical_url_or_doi_present": True,
+            },
+            {
+                "footnote_id": "FN-NO-URL",
+                "inline_reference_exists": True,
+                "definition_block_exists": True,
+                "duplicate_definition_count": 1,
+                "char_length": 600,
+                "canonical_url_or_doi_present": False,
+            },
+        ],
+        max_footnote_char_length=600,
+        require_canonical_url_or_doi=True,
+    )
+    assert res["evaluated_footnotes_count"] == 2
+    assert res["unpaired_or_duplicate_footnote_ids"] == []
+    assert res["verbose_or_uncited_source_footnote_ids"] == [
+        "FN-VERBOSE",
+        "FN-NO-URL",
+    ]
+    assert (
+        res["footnote_hygiene_status"]
+        == "MARKDOWN_FOOTNOTE_LENGTH_OR_CITATION_WARNING"
+    )
+    assert res["is_footnote_hygiene_compliant"] is False
+
+
+def test_audit_markdown_footnote_citation_reciprocity_and_key_hygiene_optimal_and_flags():
+    from backend.services.anydoc_service import (
+        audit_markdown_footnote_citation_reciprocity_and_key_hygiene,
+    )
+
+    res = audit_markdown_footnote_citation_reciprocity_and_key_hygiene(
+        [
+            {
+                "footnote_id": "FN-NO-URL-ALLOWED",
+                "inline_reference_exists": True,
+                "definition_block_exists": True,
+                "duplicate_definition_count": 1,
+                "char_length": 600,
+                "canonical_url_or_doi_present": False,
+            }
+        ],
+        max_footnote_char_length=600,
+        require_canonical_url_or_doi=False,
+    )
+    assert res["evaluated_footnotes_count"] == 1
+    assert res["unpaired_or_duplicate_footnote_ids"] == []
+    assert res["verbose_or_uncited_source_footnote_ids"] == []
+    assert res["footnote_hygiene_status"] == "MARKDOWN_FOOTNOTE_HYGIENE_OPTIMAL"
+    assert res["is_footnote_hygiene_compliant"] is True
+
+
+def test_audit_markdown_footnote_citation_reciprocity_and_key_hygiene_defensive_and_service_binding():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_footnote_citation_reciprocity_and_key_hygiene,
+    )
+
+    empty = audit_markdown_footnote_citation_reciprocity_and_key_hygiene(None)
+    assert empty["evaluated_footnotes_count"] == 0
+    assert (
+        empty["footnote_hygiene_status"] == "MARKDOWN_FOOTNOTE_HYGIENE_OPTIMAL"
+    )
+    assert empty["is_footnote_hygiene_compliant"] is True
+
+    defaults = audit_markdown_footnote_citation_reciprocity_and_key_hygiene(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"footnote_id": "   "},
+            {
+                "footnote_id": "FN-DEFAULTS",
+                "inline_reference_exists": None,
+                "definition_block_exists": None,
+                "duplicate_definition_count": None,
+                "char_length": None,
+                "canonical_url_or_doi_present": None,
+            },
+        ]
+    )
+    assert defaults["evaluated_footnotes_count"] == 1
+    assert (
+        defaults["footnote_hygiene_status"]
+        == "MARKDOWN_FOOTNOTE_HYGIENE_OPTIMAL"
+    )
+    assert defaults["is_footnote_hygiene_compliant"] is True
+
+    sample = [{"footnote_id": "FN-99", "char_length": 120}]
+    assert (
+        AnyDocService.audit_markdown_footnote_citation_reciprocity_and_key_hygiene(
+            sample
+        )
+        == audit_markdown_footnote_citation_reciprocity_and_key_hygiene(sample)
+    )
+    assert (
+        "audit_markdown_footnote_citation_reciprocity_and_key_hygiene"
+        in mod.__all__
+    )
+

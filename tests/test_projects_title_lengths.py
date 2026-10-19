@@ -8599,3 +8599,133 @@ def test_validate_stakeholder_salience_power_urgency_legitimacy_alignment_defens
         in mod.__all__
     )
 
+
+
+def test_validate_boe_undocumented_or_padding_breach():
+    from backend.schemas.projects import (
+        validate_basis_of_estimate_boe_and_padding_hygiene,
+    )
+
+    res = validate_basis_of_estimate_boe_and_padding_hygiene(
+        [
+            {
+                "estimate_id": "EST-NO-BOE",
+                "assumptions_and_constraints_documented": False,
+            },
+            {
+                "estimate_id": "EST-PADDING-BADBOE",
+                "unexplained_buffer_padding_pct": 22.0,
+            },
+        ],
+        max_parametric_r_squared_deficit=0.20,
+        max_unexplained_padding_pct=10.0,
+    )
+    assert res["evaluated_estimates_count"] == 2
+    assert res["undocumented_boe_or_hidden_padding_estimate_ids"] == [
+        "EST-NO-BOE",
+        "EST-PADDING-BADBOE",
+    ]
+    assert res["weak_calibration_or_unreviewed_estimate_ids"] == []
+    assert (
+        res["boe_hygiene_status"]
+        == "BOE_UNDOCUMENTED_OR_HIDDEN_PADDING_BREACH"
+    )
+    assert res["is_boe_hygiene_valid"] is False
+
+
+def test_validate_boe_weak_calibration_or_unreviewed_warning():
+    from backend.schemas.projects import (
+        validate_basis_of_estimate_boe_and_padding_hygiene,
+    )
+
+    res = validate_basis_of_estimate_boe_and_padding_hygiene(
+        [
+            {
+                "estimate_id": "EST-WEAK-CALIB",
+                "historical_calibration_r_squared": 0.55,
+            },
+            {
+                "estimate_id": "EST-UNREVIEWED",
+                "independent_peer_review_completed": False,
+            },
+        ],
+        max_parametric_r_squared_deficit=0.20,
+        max_unexplained_padding_pct=10.0,
+    )
+    assert res["evaluated_estimates_count"] == 2
+    assert res["undocumented_boe_or_hidden_padding_estimate_ids"] == []
+    assert res["weak_calibration_or_unreviewed_estimate_ids"] == [
+        "EST-WEAK-CALIB",
+        "EST-UNREVIEWED",
+    ]
+    assert (
+        res["boe_hygiene_status"]
+        == "BOE_WEAK_CALIBRATION_OR_UNREVIEWED_WARNING"
+    )
+    assert res["is_boe_hygiene_valid"] is False
+
+
+def test_validate_boe_boundaries_optimal_and_defaults():
+    from backend.schemas.projects import (
+        validate_basis_of_estimate_boe_and_padding_hygiene,
+    )
+
+    res = validate_basis_of_estimate_boe_and_padding_hygiene(
+        [
+            {
+                "estimate_id": "EST-BOUNDARY",
+                "historical_calibration_r_squared": 0.80,
+                "unexplained_buffer_padding_pct": 10.0,
+            },
+            {"estimate_id": "EST-ALL-DEFAULTS"},
+        ],
+        max_parametric_r_squared_deficit=0.20,
+        max_unexplained_padding_pct=10.0,
+    )
+    assert res["evaluated_estimates_count"] == 2
+    assert res["undocumented_boe_or_hidden_padding_estimate_ids"] == []
+    assert res["weak_calibration_or_unreviewed_estimate_ids"] == []
+    assert res["boe_hygiene_status"] == "BOE_ESTIMATION_HYGIENE_OPTIMAL"
+    assert res["is_boe_hygiene_valid"] is True
+
+
+def test_validate_boe_invalid_and_dunder_all():
+    from backend.schemas.projects import (
+        validate_basis_of_estimate_boe_and_padding_hygiene,
+    )
+
+    empty = validate_basis_of_estimate_boe_and_padding_hygiene(None)
+    assert empty["evaluated_estimates_count"] == 0
+    assert empty["undocumented_boe_or_hidden_padding_estimate_ids"] == []
+    assert empty["weak_calibration_or_unreviewed_estimate_ids"] == []
+    assert (
+        empty["boe_hygiene_status"] == "BOE_ESTIMATION_HYGIENE_OPTIMAL"
+    )
+    assert empty["is_boe_hygiene_valid"] is True
+
+    invalid = validate_basis_of_estimate_boe_and_padding_hygiene(
+        [42, "not-a-dict", None, {"estimate_id": "   "}]  # type: ignore[list-item]
+    )
+    assert invalid["evaluated_estimates_count"] == 0
+
+    defaults = validate_basis_of_estimate_boe_and_padding_hygiene(
+        [
+            {
+                "estimate_id": "EST-DEFAULTS",
+                "assumptions_and_constraints_documented": None,
+                "historical_calibration_r_squared": None,
+                "unexplained_buffer_padding_pct": None,
+                "independent_peer_review_completed": None,
+            }
+        ]
+    )
+    assert defaults["evaluated_estimates_count"] == 1
+    assert defaults["boe_hygiene_status"] == "BOE_ESTIMATION_HYGIENE_OPTIMAL"
+    assert defaults["is_boe_hygiene_valid"] is True
+
+    import backend.schemas.projects as mod
+
+    assert (
+        "validate_basis_of_estimate_boe_and_padding_hygiene"
+        in mod.__all__
+    )

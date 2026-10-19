@@ -10089,3 +10089,149 @@ def test_audit_message_broker_consumer_lag_and_dlq_poison_pill_gate_staticmethod
         in mod.__all__
     )
 
+
+def test_audit_distributed_cache_stampede_and_hotkey_skew_gate_breach():
+    from backend.services.project_ccb_service import (
+        audit_distributed_cache_stampede_and_hotkey_skew_gate,
+    )
+
+    res = audit_distributed_cache_stampede_and_hotkey_skew_gate(
+        [
+            {
+                "cache_id": "  REDIS-CATALOG-01  ",
+                "singleflight_stampede_lock_enabled": False,
+                "ttl_jitter_configured": True,
+                "cache_hit_ratio_pct": 95.0,
+                "max_single_key_traffic_share_pct": 10.0,
+            },
+            {
+                "cache_id": "REDIS-SESSION-02",
+                "singleflight_stampede_lock_enabled": True,
+                "ttl_jitter_configured": False,
+                "cache_hit_ratio_pct": 70.0,
+                "max_single_key_traffic_share_pct": 30.0,
+            },
+            {
+                "cache_id": "REDIS-CLEAN",
+                "singleflight_stampede_lock_enabled": True,
+                "ttl_jitter_configured": True,
+                "cache_hit_ratio_pct": 85.0,
+                "max_single_key_traffic_share_pct": 25.0,
+            },
+        ]
+    )
+    assert res["evaluated_caches_count"] == 3
+    assert res["stampede_unprotected_cache_ids"] == [
+        "REDIS-CATALOG-01",
+        "REDIS-SESSION-02",
+    ]
+    assert res["low_hit_ratio_or_hotkey_skew_cache_ids"] == [
+        "REDIS-SESSION-02"
+    ]
+    assert (
+        res["cache_resilience_status"]
+        == "CACHE_STAMPEDE_LOCK_OR_JITTER_BREACH"
+    )
+    assert res["is_cache_resilience_compliant"] is False
+
+
+def test_audit_distributed_cache_stampede_and_hotkey_skew_gate_warning():
+    from backend.services.project_ccb_service import (
+        audit_distributed_cache_stampede_and_hotkey_skew_gate,
+    )
+
+    res = audit_distributed_cache_stampede_and_hotkey_skew_gate(
+        [
+            {
+                "cache_id": "REDIS-LOW-HIT",
+                "singleflight_stampede_lock_enabled": True,
+                "ttl_jitter_configured": True,
+                "cache_hit_ratio_pct": 84.9,
+                "max_single_key_traffic_share_pct": 25.0,
+            },
+            {
+                "cache_id": "REDIS-HOTKEY",
+                "singleflight_stampede_lock_enabled": True,
+                "ttl_jitter_configured": True,
+                "cache_hit_ratio_pct": 85.0,
+                "max_single_key_traffic_share_pct": 25.1,
+            },
+        ],
+        min_cache_hit_ratio_pct=85.0,
+        max_hotkey_traffic_share_pct=25.0,
+    )
+    assert res["evaluated_caches_count"] == 2
+    assert res["stampede_unprotected_cache_ids"] == []
+    assert res["low_hit_ratio_or_hotkey_skew_cache_ids"] == [
+        "REDIS-LOW-HIT",
+        "REDIS-HOTKEY",
+    ]
+    assert (
+        res["cache_resilience_status"]
+        == "CACHE_HIT_RATIO_OR_HOTKEY_SKEW_WARNING"
+    )
+    assert res["is_cache_resilience_compliant"] is False
+
+
+def test_audit_distributed_cache_stampede_and_hotkey_skew_gate_optimal_and_defensive():
+    from backend.services.project_ccb_service import (
+        audit_distributed_cache_stampede_and_hotkey_skew_gate,
+    )
+
+    empty = audit_distributed_cache_stampede_and_hotkey_skew_gate(None)
+    assert empty["evaluated_caches_count"] == 0
+    assert empty["stampede_unprotected_cache_ids"] == []
+    assert empty["low_hit_ratio_or_hotkey_skew_cache_ids"] == []
+    assert (
+        empty["cache_resilience_status"] == "CACHE_TIER_RESILIENCE_OPTIMAL"
+    )
+    assert empty["is_cache_resilience_compliant"] is True
+
+    optimal = audit_distributed_cache_stampede_and_hotkey_skew_gate(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"cache_id": "   "},
+            {
+                "cache_id": "REDIS-DEFAULTS",
+                "singleflight_stampede_lock_enabled": None,
+                "ttl_jitter_configured": None,
+                "cache_hit_ratio_pct": None,
+                "max_single_key_traffic_share_pct": None,
+            },
+        ]
+    )
+    assert optimal["evaluated_caches_count"] == 1
+    assert optimal["stampede_unprotected_cache_ids"] == []
+    assert optimal["low_hit_ratio_or_hotkey_skew_cache_ids"] == []
+    assert (
+        optimal["cache_resilience_status"] == "CACHE_TIER_RESILIENCE_OPTIMAL"
+    )
+    assert optimal["is_cache_resilience_compliant"] is True
+
+
+def test_audit_distributed_cache_stampede_and_hotkey_skew_gate_staticmethod_and_dunder_all():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_distributed_cache_stampede_and_hotkey_skew_gate,
+    )
+
+    sample = [
+        {
+            "cache_id": "REDIS-99",
+            "cache_hit_ratio_pct": 96.0,
+            "max_single_key_traffic_share_pct": 5.0,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_distributed_cache_stampede_and_hotkey_skew_gate(
+            sample
+        )
+        == audit_distributed_cache_stampede_and_hotkey_skew_gate(sample)
+    )
+    assert (
+        "audit_distributed_cache_stampede_and_hotkey_skew_gate"
+        in mod.__all__
+    )
+
+

@@ -3815,6 +3815,7 @@ __all__ = [
     "validate_monte_carlo_p80_p90_convergence_and_tornado_sensitivity",
     "validate_benefit_cost_ratio_and_sunk_cost_governance",
     "validate_make_or_buy_tco_and_vendor_concentration",
+    "validate_basis_of_estimate_boe_and_padding_hygiene",
     "validate_resource_leveling_overallocation_and_context_switching",
     "validate_wbs_rolling_wave_horizon_and_8_80_rule",
     "validate_rtm_bidirectional_traceability_and_gold_plating",
@@ -8676,3 +8677,77 @@ def validate_stakeholder_salience_power_urgency_legitimacy_alignment(
         == "STAKEHOLDER_SALIENCE_ALIGNMENT_OPTIMAL",
     }
 
+
+
+def validate_basis_of_estimate_boe_and_padding_hygiene(
+    estimates: Any,
+    *,
+    max_parametric_r_squared_deficit: float = 0.20,
+    max_unexplained_padding_pct: float = 10.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §7.2 & §6.4 — Basis of Estimates (BOE) Parametric/Bottom-Up Calibration & Hidden Padding Hygiene Validator."""
+    entries = estimates if isinstance(estimates, (list, tuple)) else []
+    valid_estimates = [
+        estimate
+        for estimate in entries
+        if isinstance(estimate, dict)
+        and str(estimate.get("estimate_id") or "").strip()
+    ]
+
+    def _num(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    undocumented_boe_or_hidden_padding_estimate_ids: list[str] = []
+    weak_calibration_or_unreviewed_estimate_ids: list[str] = []
+
+    for estimate in valid_estimates:
+        estimate_id = str(estimate.get("estimate_id")).strip()
+        assumptions_documented = _bool(
+            estimate.get("assumptions_and_constraints_documented"),
+            True,
+        )
+        calibration_r_squared = _num(
+            estimate.get("historical_calibration_r_squared"), 0.90
+        )
+        padding_pct = _num(
+            estimate.get("unexplained_buffer_padding_pct"), 2.0
+        )
+        peer_reviewed = _bool(
+            estimate.get("independent_peer_review_completed"), True
+        )
+
+        if (
+            not assumptions_documented
+            or padding_pct > max_unexplained_padding_pct
+        ):
+            undocumented_boe_or_hidden_padding_estimate_ids.append(
+                estimate_id
+            )
+
+        if (
+            (1.0 - calibration_r_squared)
+            > max_parametric_r_squared_deficit
+            or not peer_reviewed
+        ):
+            weak_calibration_or_unreviewed_estimate_ids.append(estimate_id)
+
+    if undocumented_boe_or_hidden_padding_estimate_ids:
+        boe_hygiene_status = "BOE_UNDOCUMENTED_OR_HIDDEN_PADDING_BREACH"
+    elif weak_calibration_or_unreviewed_estimate_ids:
+        boe_hygiene_status = "BOE_WEAK_CALIBRATION_OR_UNREVIEWED_WARNING"
+    else:
+        boe_hygiene_status = "BOE_ESTIMATION_HYGIENE_OPTIMAL"
+
+    return {
+        "evaluated_estimates_count": len(valid_estimates),
+        "undocumented_boe_or_hidden_padding_estimate_ids": undocumented_boe_or_hidden_padding_estimate_ids,
+        "weak_calibration_or_unreviewed_estimate_ids": weak_calibration_or_unreviewed_estimate_ids,
+        "boe_hygiene_status": boe_hygiene_status,
+        "is_boe_hygiene_valid": boe_hygiene_status
+        == "BOE_ESTIMATION_HYGIENE_OPTIMAL",
+    }
