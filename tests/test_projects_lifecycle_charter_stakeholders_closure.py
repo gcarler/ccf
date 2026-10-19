@@ -9470,3 +9470,150 @@ def test_audit_force_majeure_claim_substantiation_and_mitigation_staticmethod_an
         in mod.__all__
     )
 
+
+def test_audit_adr_dispute_escalation_ladder_and_claim_aging_breach():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_adr_dispute_escalation_ladder_and_claim_aging,
+    )
+
+    result = audit_adr_dispute_escalation_ladder_and_claim_aging(
+        [
+            {
+                "dispute_id": "DSP-SKIPPED-LADDER",
+                "days_in_current_stage": 12,
+                "total_dispute_age_days": 25,
+                "followed_contractual_escalation_ladder": False,
+                "quantum_and_entitlement_substantiated": True,
+                "executive_mediation_attempted_before_arbitration": True,
+            },
+            {
+                "dispute_id": "DSP-UNSUBSTANTIATED",
+                "days_in_current_stage": 10,
+                "total_dispute_age_days": 20,
+                "followed_contractual_escalation_ladder": True,
+                "quantum_and_entitlement_substantiated": False,
+                "executive_mediation_attempted_before_arbitration": True,
+            },
+            {
+                "dispute_id": "DSP-NO-MEDIATION",
+                "days_in_current_stage": 15,
+                "total_dispute_age_days": 30,
+                "followed_contractual_escalation_ladder": True,
+                "quantum_and_entitlement_substantiated": True,
+                "executive_mediation_attempted_before_arbitration": False,
+            },
+        ],
+        max_negotiation_days_before_mediation=30,
+        max_total_dispute_age_days=90,
+    )
+    assert result["evaluated_disputes_count"] == 3
+    assert result["premature_litigation_or_unsubstantiated_dispute_ids"] == [
+        "DSP-SKIPPED-LADDER",
+        "DSP-UNSUBSTANTIATED",
+        "DSP-NO-MEDIATION",
+    ]
+    assert result["stagnant_negotiation_or_aged_dispute_ids"] == []
+    assert (
+        result["adr_governance_status"]
+        == "ADR_ESCALATION_BYPASS_OR_UNSUBSTANTIATED_BREACH"
+    )
+    assert result["is_adr_governance_compliant"] is False
+
+
+def test_audit_adr_dispute_escalation_ladder_and_claim_aging_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_adr_dispute_escalation_ladder_and_claim_aging,
+    )
+
+    result = audit_adr_dispute_escalation_ladder_and_claim_aging(
+        [
+            {
+                "dispute_id": "DSP-STAGE-STAGNANT",
+                "days_in_current_stage": 42,
+                "total_dispute_age_days": 60,
+                "followed_contractual_escalation_ladder": True,
+                "quantum_and_entitlement_substantiated": True,
+                "executive_mediation_attempted_before_arbitration": True,
+            },
+            {
+                "dispute_id": "DSP-OVERALL-AGED",
+                "days_in_current_stage": 20,
+                "total_dispute_age_days": 115,
+                "followed_contractual_escalation_ladder": True,
+                "quantum_and_entitlement_substantiated": True,
+                "executive_mediation_attempted_before_arbitration": True,
+            },
+        ],
+        max_negotiation_days_before_mediation=30,
+        max_total_dispute_age_days=90,
+    )
+    assert result["evaluated_disputes_count"] == 2
+    assert result["premature_litigation_or_unsubstantiated_dispute_ids"] == []
+    assert result["stagnant_negotiation_or_aged_dispute_ids"] == [
+        "DSP-STAGE-STAGNANT",
+        "DSP-OVERALL-AGED",
+    ]
+    assert (
+        result["adr_governance_status"] == "ADR_NEGOTIATION_STAGNATION_WARNING"
+    )
+    assert result["is_adr_governance_compliant"] is False
+
+
+def test_audit_adr_dispute_escalation_ladder_and_claim_aging_optimal_and_empty():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_adr_dispute_escalation_ladder_and_claim_aging,
+    )
+
+    empty = audit_adr_dispute_escalation_ladder_and_claim_aging(
+        [{"dispute_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_disputes_count"] == 0
+    assert empty["adr_governance_status"] == "ADR_DISPUTE_RESOLUTION_OPTIMAL"
+    assert empty["is_adr_governance_compliant"] is True
+
+    optimal = audit_adr_dispute_escalation_ladder_and_claim_aging(
+        [
+            {
+                "dispute_id": "DSP-CLEAN-01",
+                "days_in_current_stage": 14,
+                "total_dispute_age_days": 35,
+                "followed_contractual_escalation_ladder": True,
+                "quantum_and_entitlement_substantiated": True,
+                "executive_mediation_attempted_before_arbitration": True,
+            }
+        ],
+        max_negotiation_days_before_mediation=30,
+        max_total_dispute_age_days=90,
+    )
+    assert optimal["evaluated_disputes_count"] == 1
+    assert optimal["premature_litigation_or_unsubstantiated_dispute_ids"] == []
+    assert optimal["stagnant_negotiation_or_aged_dispute_ids"] == []
+    assert optimal["adr_governance_status"] == "ADR_DISPUTE_RESOLUTION_OPTIMAL"
+    assert optimal["is_adr_governance_compliant"] is True
+
+
+def test_audit_adr_dispute_escalation_ladder_and_claim_aging_staticmethod_and_dunder_all():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_adr_dispute_escalation_ladder_and_claim_aging,
+    )
+
+    sample = [
+        {
+            "dispute_id": "DSP-99",
+            "days_in_current_stage": 8,
+            "total_dispute_age_days": 15,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_adr_dispute_escalation_ladder_and_claim_aging(
+            sample
+        )
+        == audit_adr_dispute_escalation_ladder_and_claim_aging(sample)
+    )
+    assert (
+        "audit_adr_dispute_escalation_ladder_and_claim_aging"
+        in mod.__all__
+    )
+

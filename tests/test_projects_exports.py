@@ -9944,3 +9944,135 @@ def test_api_quota_fairness_invalid_and_binding():
         "audit_executive_report_api_quota_fairness_and_noisy_neighbor"
         in mod.__all__
     )
+
+
+def test_audit_executive_report_ai_llm_guardrails_and_grounding_breach():
+    from backend.services.project_export_service import (
+        audit_executive_report_ai_llm_guardrails_and_grounding,
+    )
+
+    result = audit_executive_report_ai_llm_guardrails_and_grounding(
+        [
+            {
+                "workload_id": "AI-NO-GUARDRAIL",
+                "prompt_injection_and_pii_redaction_active": False,
+                "rag_grounding_faithfulness_pct": 95.0,
+                "monthly_token_budget_utilization_pct": 50.0,
+                "human_in_the_loop_for_high_risk_actions": True,
+            },
+            {
+                "workload_id": "AI-NO-HITL",
+                "prompt_injection_and_pii_redaction_active": True,
+                "rag_grounding_faithfulness_pct": 95.0,
+                "monthly_token_budget_utilization_pct": 50.0,
+                "human_in_the_loop_for_high_risk_actions": False,
+            },
+            {
+                "workload_id": "AI-HALLUCINATING",
+                "prompt_injection_and_pii_redaction_active": True,
+                "rag_grounding_faithfulness_pct": 84.0,
+                "monthly_token_budget_utilization_pct": 50.0,
+                "human_in_the_loop_for_high_risk_actions": True,
+            },
+        ],
+        min_rag_grounding_faithfulness_pct=92.0,
+        max_monthly_token_budget_utilization_pct=90.0,
+    )
+    assert result["evaluated_workloads_count"] == 3
+    assert result["unguarded_or_unfaithful_workload_ids"] == [
+        "AI-NO-GUARDRAIL",
+        "AI-NO-HITL",
+        "AI-HALLUCINATING",
+    ]
+    assert result["token_budget_pressure_workload_ids"] == []
+    assert (
+        result["ai_governance_status"]
+        == "AI_GUARDRAIL_OR_HALLUCINATION_BREACH"
+    )
+    assert result["is_ai_governance_compliant"] is False
+
+
+def test_audit_executive_report_ai_llm_guardrails_and_grounding_warning():
+    from backend.services.project_export_service import (
+        audit_executive_report_ai_llm_guardrails_and_grounding,
+    )
+
+    result = audit_executive_report_ai_llm_guardrails_and_grounding(
+        [
+            {
+                "workload_id": "AI-TOKEN-SPIKE",
+                "prompt_injection_and_pii_redaction_active": True,
+                "rag_grounding_faithfulness_pct": 95.5,
+                "monthly_token_budget_utilization_pct": 96.0,
+                "human_in_the_loop_for_high_risk_actions": True,
+            }
+        ],
+        min_rag_grounding_faithfulness_pct=92.0,
+        max_monthly_token_budget_utilization_pct=90.0,
+    )
+    assert result["evaluated_workloads_count"] == 1
+    assert result["unguarded_or_unfaithful_workload_ids"] == []
+    assert result["token_budget_pressure_workload_ids"] == ["AI-TOKEN-SPIKE"]
+    assert (
+        result["ai_governance_status"]
+        == "AI_TOKEN_BUDGET_EXHAUSTION_WARNING"
+    )
+    assert result["is_ai_governance_compliant"] is False
+
+
+def test_audit_executive_report_ai_llm_guardrails_and_grounding_optimal_and_empty():
+    from backend.services.project_export_service import (
+        audit_executive_report_ai_llm_guardrails_and_grounding,
+    )
+
+    empty = audit_executive_report_ai_llm_guardrails_and_grounding(
+        [{"workload_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_workloads_count"] == 0
+    assert empty["ai_governance_status"] == "AI_GOVERNANCE_GROUNDED_OPTIMAL"
+    assert empty["is_ai_governance_compliant"] is True
+
+    optimal = audit_executive_report_ai_llm_guardrails_and_grounding(
+        [
+            {
+                "workload_id": "AI-RAG-COPILOT-1",
+                "prompt_injection_and_pii_redaction_active": True,
+                "rag_grounding_faithfulness_pct": 97.2,
+                "monthly_token_budget_utilization_pct": 62.0,
+                "human_in_the_loop_for_high_risk_actions": True,
+            }
+        ],
+        min_rag_grounding_faithfulness_pct=92.0,
+        max_monthly_token_budget_utilization_pct=90.0,
+    )
+    assert optimal["evaluated_workloads_count"] == 1
+    assert optimal["unguarded_or_unfaithful_workload_ids"] == []
+    assert optimal["token_budget_pressure_workload_ids"] == []
+    assert optimal["ai_governance_status"] == "AI_GOVERNANCE_GROUNDED_OPTIMAL"
+    assert optimal["is_ai_governance_compliant"] is True
+
+
+def test_audit_executive_report_ai_llm_guardrails_and_grounding_staticmethod_and_dunder_all():
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_ai_llm_guardrails_and_grounding,
+    )
+
+    sample = [
+        {
+            "workload_id": "AI-99",
+            "rag_grounding_faithfulness_pct": 95.0,
+            "monthly_token_budget_utilization_pct": 55.0,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_ai_llm_guardrails_and_grounding(
+            sample
+        )
+        == audit_executive_report_ai_llm_guardrails_and_grounding(sample)
+    )
+    assert (
+        "audit_executive_report_ai_llm_guardrails_and_grounding"
+        in mod.__all__
+    )

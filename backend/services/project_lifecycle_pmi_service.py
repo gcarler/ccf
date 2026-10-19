@@ -3171,6 +3171,7 @@ __all__ = [
     "audit_ip_escrow_deposit_cadence_and_license_assignment",
     "audit_joint_venture_consortium_solvency_and_step_in_rights",
     "audit_force_majeure_claim_substantiation_and_mitigation",
+    "audit_adr_dispute_escalation_ladder_and_claim_aging",
     "ProjectLifecyclePMIService",
 ]
 
@@ -7335,5 +7336,87 @@ def audit_force_majeure_claim_substantiation_and_mitigation(
 
 ProjectLifecyclePMIService.audit_force_majeure_claim_substantiation_and_mitigation = staticmethod(
     audit_force_majeure_claim_substantiation_and_mitigation
+)
+
+
+def audit_adr_dispute_escalation_ladder_and_claim_aging(
+    disputes: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_negotiation_days_before_mediation: int | float = 30,
+    max_total_dispute_age_days: int | float = 90,
+) -> dict[str, Any]:
+    """PMI PMBOK §12.3 & §4.7 — Alternative Dispute Resolution (ADR) Mediation Escalation Ladder, Claim Aging & Arbitration Readiness Auditor."""
+    valid_disputes = [
+        dsp
+        for dsp in (disputes or [])
+        if isinstance(dsp, Mapping) and str(dsp.get("dispute_id") or "").strip()
+    ]
+
+    premature_litigation_or_unsubstantiated_dispute_ids: list[str] = []
+    stagnant_negotiation_or_aged_dispute_ids: list[str] = []
+
+    for dsp in valid_disputes:
+        did = str(dsp.get("dispute_id")).strip()
+        days_in_current_stage = float(
+            dsp.get("days_in_current_stage", 10)
+            if dsp.get("days_in_current_stage") is not None
+            else 10
+        )
+        total_dispute_age_days = float(
+            dsp.get("total_dispute_age_days", 20)
+            if dsp.get("total_dispute_age_days") is not None
+            else 20
+        )
+        followed_contractual_escalation_ladder = bool(
+            dsp.get("followed_contractual_escalation_ladder", True)
+            if dsp.get("followed_contractual_escalation_ladder") is not None
+            else True
+        )
+        quantum_and_entitlement_substantiated = bool(
+            dsp.get("quantum_and_entitlement_substantiated", True)
+            if dsp.get("quantum_and_entitlement_substantiated") is not None
+            else True
+        )
+        executive_mediation_attempted_before_arbitration = bool(
+            dsp.get("executive_mediation_attempted_before_arbitration", True)
+            if dsp.get("executive_mediation_attempted_before_arbitration")
+            is not None
+            else True
+        )
+
+        if (
+            not followed_contractual_escalation_ladder
+            or not quantum_and_entitlement_substantiated
+            or not executive_mediation_attempted_before_arbitration
+        ):
+            premature_litigation_or_unsubstantiated_dispute_ids.append(did)
+
+        if (
+            days_in_current_stage > max_negotiation_days_before_mediation
+            or total_dispute_age_days > max_total_dispute_age_days
+        ):
+            stagnant_negotiation_or_aged_dispute_ids.append(did)
+
+    if premature_litigation_or_unsubstantiated_dispute_ids:
+        adr_governance_status = (
+            "ADR_ESCALATION_BYPASS_OR_UNSUBSTANTIATED_BREACH"
+        )
+    elif stagnant_negotiation_or_aged_dispute_ids:
+        adr_governance_status = "ADR_NEGOTIATION_STAGNATION_WARNING"
+    else:
+        adr_governance_status = "ADR_DISPUTE_RESOLUTION_OPTIMAL"
+
+    return {
+        "evaluated_disputes_count": len(valid_disputes),
+        "premature_litigation_or_unsubstantiated_dispute_ids": premature_litigation_or_unsubstantiated_dispute_ids,
+        "stagnant_negotiation_or_aged_dispute_ids": stagnant_negotiation_or_aged_dispute_ids,
+        "adr_governance_status": adr_governance_status,
+        "is_adr_governance_compliant": adr_governance_status
+        == "ADR_DISPUTE_RESOLUTION_OPTIMAL",
+    }
+
+
+ProjectLifecyclePMIService.audit_adr_dispute_escalation_ladder_and_claim_aging = staticmethod(
+    audit_adr_dispute_escalation_ladder_and_claim_aging
 )
 

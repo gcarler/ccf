@@ -3008,6 +3008,7 @@ __all__ = [
     "audit_executive_report_soc2_type2_continuous_evidence_and_exceptions",
     "audit_executive_report_zero_trust_pam_and_mfa_attestation",
     "audit_executive_report_api_quota_fairness_and_noisy_neighbor",
+    "audit_executive_report_ai_llm_guardrails_and_grounding",
     "ProjectExportService",
 ]
 
@@ -7545,5 +7546,80 @@ def audit_executive_report_api_quota_fairness_and_noisy_neighbor(
 
 ProjectExportService.audit_executive_report_api_quota_fairness_and_noisy_neighbor = staticmethod(
     audit_executive_report_api_quota_fairness_and_noisy_neighbor
+)
+
+
+def audit_executive_report_ai_llm_guardrails_and_grounding(
+    ai_workloads: Sequence[Mapping[str, Any]] | None,
+    *,
+    min_rag_grounding_faithfulness_pct: float = 92.0,
+    max_monthly_token_budget_utilization_pct: float = 90.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §10.2 & §11.6 — Executive Report AI/LLM Governance Guardrails, Prompt-Injection Filtering, Token Budget & Hallucination Grounding Auditor."""
+    valid_workloads = [
+        wkl
+        for wkl in (ai_workloads or [])
+        if isinstance(wkl, Mapping) and str(wkl.get("workload_id") or "").strip()
+    ]
+
+    unguarded_or_unfaithful_workload_ids: list[str] = []
+    token_budget_pressure_workload_ids: list[str] = []
+
+    for wkl in valid_workloads:
+        wid = str(wkl.get("workload_id")).strip()
+        prompt_injection_and_pii_redaction_active = bool(
+            wkl.get("prompt_injection_and_pii_redaction_active", True)
+            if wkl.get("prompt_injection_and_pii_redaction_active") is not None
+            else True
+        )
+        rag_grounding_faithfulness_pct = float(
+            wkl.get("rag_grounding_faithfulness_pct", 96.0)
+            if wkl.get("rag_grounding_faithfulness_pct") is not None
+            else 96.0
+        )
+        monthly_token_budget_utilization_pct = float(
+            wkl.get("monthly_token_budget_utilization_pct", 65.0)
+            if wkl.get("monthly_token_budget_utilization_pct") is not None
+            else 65.0
+        )
+        human_in_the_loop_for_high_risk_actions = bool(
+            wkl.get("human_in_the_loop_for_high_risk_actions", True)
+            if wkl.get("human_in_the_loop_for_high_risk_actions") is not None
+            else True
+        )
+
+        if (
+            not prompt_injection_and_pii_redaction_active
+            or not human_in_the_loop_for_high_risk_actions
+            or rag_grounding_faithfulness_pct
+            < min_rag_grounding_faithfulness_pct
+        ):
+            unguarded_or_unfaithful_workload_ids.append(wid)
+
+        if (
+            monthly_token_budget_utilization_pct
+            > max_monthly_token_budget_utilization_pct
+        ):
+            token_budget_pressure_workload_ids.append(wid)
+
+    if unguarded_or_unfaithful_workload_ids:
+        ai_governance_status = "AI_GUARDRAIL_OR_HALLUCINATION_BREACH"
+    elif token_budget_pressure_workload_ids:
+        ai_governance_status = "AI_TOKEN_BUDGET_EXHAUSTION_WARNING"
+    else:
+        ai_governance_status = "AI_GOVERNANCE_GROUNDED_OPTIMAL"
+
+    return {
+        "evaluated_workloads_count": len(valid_workloads),
+        "unguarded_or_unfaithful_workload_ids": unguarded_or_unfaithful_workload_ids,
+        "token_budget_pressure_workload_ids": token_budget_pressure_workload_ids,
+        "ai_governance_status": ai_governance_status,
+        "is_ai_governance_compliant": ai_governance_status
+        == "AI_GOVERNANCE_GROUNDED_OPTIMAL",
+    }
+
+
+ProjectExportService.audit_executive_report_ai_llm_guardrails_and_grounding = staticmethod(
+    audit_executive_report_ai_llm_guardrails_and_grounding
 )
 
