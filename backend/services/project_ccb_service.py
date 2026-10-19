@@ -2845,6 +2845,7 @@ __all__ = [
     "audit_supply_chain_slsa_provenance_and_artifact_signing",
     "audit_ecab_emergency_change_retroactive_ratification_and_abuse",
     "audit_release_freeze_blackout_window_and_change_collisions",
+    "audit_query_performance_n_plus_one_and_full_scan_gate",
     "ProjectCCBService",
 ]
 
@@ -6772,4 +6773,98 @@ def audit_release_freeze_blackout_window_and_change_collisions(
 
 ProjectCCBService.audit_release_freeze_blackout_window_and_change_collisions = staticmethod(
     audit_release_freeze_blackout_window_and_change_collisions
+)
+
+
+def audit_query_performance_n_plus_one_and_full_scan_gate(
+    queries: list[dict[str, Any]],
+    *,
+    max_p99_latency_ms: float = 200.0,
+    max_rows_scanned_to_returned_ratio: float = 50.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §8.2 & §8.3 — CCB Database Query N+1 Regression, Missing Index Full-Scan & Latency P99 Gate Auditor."""
+    valid_queries: list[dict[str, Any]] = []
+    if isinstance(queries, (list, tuple)):
+        for item in queries:
+            if not isinstance(item, dict):
+                continue
+            qid = str(item.get("query_id") or "").strip()
+            if not qid:
+                continue
+            valid_queries.append({**item, "_qid": qid})
+
+    if not valid_queries:
+        return {
+            "total_queries_evaluated": 0,
+            "n_plus_one_or_full_scan_query_ids": [],
+            "p99_latency_breach_query_ids": [],
+            "inefficient_selectivity_query_ids": [],
+            "query_gate_status": "QUERY_PLAN_OPTIMAL",
+            "is_query_performance_compliant": True,
+            "recommendations": [],
+        }
+
+    n_plus_one_or_full_scan_query_ids: list[str] = []
+    p99_latency_breach_query_ids: list[str] = []
+    inefficient_selectivity_query_ids: list[str] = []
+
+    for qry in valid_queries:
+        qid = qry["_qid"]
+        n_plus_one = bool(qry.get("triggers_n_plus_one_loop", False))
+        full_scan = bool(
+            qry.get("uses_full_table_seq_scan_on_large_table", False)
+        )
+        p99_ms = float(
+            qry.get("p99_execution_ms", 25.0)
+            if qry.get("p99_execution_ms") is not None
+            else 25.0
+        )
+        scan_ratio = float(
+            qry.get("rows_scanned_to_returned_ratio", 1.0)
+            if qry.get("rows_scanned_to_returned_ratio") is not None
+            else 1.0
+        )
+
+        if n_plus_one or full_scan:
+            n_plus_one_or_full_scan_query_ids.append(qid)
+        if p99_ms > max_p99_latency_ms:
+            p99_latency_breach_query_ids.append(qid)
+        if scan_ratio > max_rows_scanned_to_returned_ratio:
+            inefficient_selectivity_query_ids.append(qid)
+
+    recommendations: list[str] = []
+    if n_plus_one_or_full_scan_query_ids:
+        recommendations.append(
+            f"Eliminate ORM N+1 lazy-loading loops (use `joinedload`/`selectinload`) and add covering B-Tree indexes for query(ies): {', '.join(n_plus_one_or_full_scan_query_ids)}."
+        )
+    if p99_latency_breach_query_ids:
+        recommendations.append(
+            f"Optimize execution plans to bring P99 latency within <= {max_p99_latency_ms} ms for query(ies): {', '.join(p99_latency_breach_query_ids)}."
+        )
+    if inefficient_selectivity_query_ids:
+        recommendations.append(
+            f"Refine composite index selectivity to reduce rows-scanned-to-returned ratio (<= {max_rows_scanned_to_returned_ratio}) for query(ies): {', '.join(inefficient_selectivity_query_ids)}."
+        )
+
+    if n_plus_one_or_full_scan_query_ids or p99_latency_breach_query_ids:
+        query_gate_status = "PERFORMANCE_REGRESSION_BLOCKED"
+    elif inefficient_selectivity_query_ids:
+        query_gate_status = "SELECTIVITY_INDEX_WARNING"
+    else:
+        query_gate_status = "QUERY_PLAN_OPTIMAL"
+
+    return {
+        "total_queries_evaluated": len(valid_queries),
+        "n_plus_one_or_full_scan_query_ids": n_plus_one_or_full_scan_query_ids,
+        "p99_latency_breach_query_ids": p99_latency_breach_query_ids,
+        "inefficient_selectivity_query_ids": inefficient_selectivity_query_ids,
+        "query_gate_status": query_gate_status,
+        "is_query_performance_compliant": query_gate_status
+        == "QUERY_PLAN_OPTIMAL",
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.audit_query_performance_n_plus_one_and_full_scan_gate = staticmethod(
+    audit_query_performance_n_plus_one_and_full_scan_gate
 )

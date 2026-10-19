@@ -8786,3 +8786,115 @@ def test_audit_release_freeze_blackout_window_and_change_collisions_staticmethod
         "audit_release_freeze_blackout_window_and_change_collisions"
         in mod.__all__
     )
+
+
+def test_audit_query_performance_n_plus_one_and_full_scan_gate_regression_blocked():
+    from backend.services.project_ccb_service import (
+        audit_query_performance_n_plus_one_and_full_scan_gate,
+    )
+
+    res = audit_query_performance_n_plus_one_and_full_scan_gate(
+        [
+            {
+                "query_id": "QRY-LIST-TASKS",
+                "triggers_n_plus_one_loop": True,
+                "uses_full_table_seq_scan_on_large_table": False,
+                "p99_execution_ms": 80.0,
+                "rows_scanned_to_returned_ratio": 2.0,
+            },
+            {
+                "query_id": "QRY-EXPORT-LEDGER",
+                "triggers_n_plus_one_loop": False,
+                "uses_full_table_seq_scan_on_large_table": False,
+                "p99_execution_ms": 450.0,
+                "rows_scanned_to_returned_ratio": 10.0,
+            },
+        ],
+        max_p99_latency_ms=200.0,
+        max_rows_scanned_to_returned_ratio=50.0,
+    )
+    assert res["total_queries_evaluated"] == 2
+    assert res["n_plus_one_or_full_scan_query_ids"] == ["QRY-LIST-TASKS"]
+    assert res["p99_latency_breach_query_ids"] == ["QRY-EXPORT-LEDGER"]
+    assert res["inefficient_selectivity_query_ids"] == []
+    assert res["query_gate_status"] == "PERFORMANCE_REGRESSION_BLOCKED"
+    assert res["is_query_performance_compliant"] is False
+
+
+def test_audit_query_performance_n_plus_one_and_full_scan_gate_selectivity_warning():
+    from backend.services.project_ccb_service import (
+        audit_query_performance_n_plus_one_and_full_scan_gate,
+    )
+
+    res = audit_query_performance_n_plus_one_and_full_scan_gate(
+        [
+            {
+                "query_id": "QRY-FILTER-AUDIT",
+                "triggers_n_plus_one_loop": False,
+                "uses_full_table_seq_scan_on_large_table": False,
+                "p99_execution_ms": 95.0,
+                "rows_scanned_to_returned_ratio": 120.0,
+            }
+        ],
+        max_p99_latency_ms=200.0,
+        max_rows_scanned_to_returned_ratio=50.0,
+    )
+    assert res["n_plus_one_or_full_scan_query_ids"] == []
+    assert res["p99_latency_breach_query_ids"] == []
+    assert res["inefficient_selectivity_query_ids"] == ["QRY-FILTER-AUDIT"]
+    assert res["query_gate_status"] == "SELECTIVITY_INDEX_WARNING"
+    assert res["is_query_performance_compliant"] is False
+
+
+def test_audit_query_performance_n_plus_one_and_full_scan_gate_optimal_and_empty():
+    from backend.services.project_ccb_service import (
+        audit_query_performance_n_plus_one_and_full_scan_gate,
+    )
+
+    empty = audit_query_performance_n_plus_one_and_full_scan_gate(
+        [{"query_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_queries_evaluated"] == 0
+    assert empty["query_gate_status"] == "QUERY_PLAN_OPTIMAL"
+    assert empty["is_query_performance_compliant"] is True
+
+    optimal = audit_query_performance_n_plus_one_and_full_scan_gate(
+        [
+            {
+                "query_id": "QRY-INDEXED-LOOKUP",
+                "triggers_n_plus_one_loop": False,
+                "uses_full_table_seq_scan_on_large_table": False,
+                "p99_execution_ms": 12.5,
+                "rows_scanned_to_returned_ratio": 1.2,
+            }
+        ]
+    )
+    assert optimal["total_queries_evaluated"] == 1
+    assert optimal["query_gate_status"] == "QUERY_PLAN_OPTIMAL"
+    assert optimal["is_query_performance_compliant"] is True
+
+
+def test_audit_query_performance_n_plus_one_and_full_scan_gate_staticmethod_and_dunder_all():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_query_performance_n_plus_one_and_full_scan_gate,
+    )
+
+    sample = [
+        {
+            "query_id": "QRY-99",
+            "p99_execution_ms": 15.0,
+            "rows_scanned_to_returned_ratio": 1.0,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_query_performance_n_plus_one_and_full_scan_gate(
+            sample
+        )
+        == audit_query_performance_n_plus_one_and_full_scan_gate(sample)
+    )
+    assert (
+        "audit_query_performance_n_plus_one_and_full_scan_gate"
+        in mod.__all__
+    )

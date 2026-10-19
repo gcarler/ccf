@@ -9090,3 +9090,120 @@ def test_audit_executive_report_multi_region_failover_and_split_brain_fencing_st
         "audit_executive_report_multi_region_failover_and_split_brain_fencing"
         in mod.__all__
     )
+
+
+def test_audit_executive_report_backup_worm_immutability_and_restore_drills_ransomware_exposure():
+    from backend.services.project_export_service import (
+        audit_executive_report_backup_worm_immutability_and_restore_drills,
+    )
+
+    res = audit_executive_report_backup_worm_immutability_and_restore_drills(
+        [
+            {
+                "vault_id": "VLT-PG-PRIMARY",
+                "has_worm_object_lock_enabled": False,
+                "is_air_gapped_isolated_account": True,
+                "days_since_verified_restore_drill": 12,
+                "last_restore_checksum_verified": True,
+            },
+            {
+                "vault_id": "VLT-MINIO-BLOBS",
+                "has_worm_object_lock_enabled": True,
+                "is_air_gapped_isolated_account": True,
+                "days_since_verified_restore_drill": 5,
+                "last_restore_checksum_verified": False,
+            },
+        ],
+        max_days_since_restore_drill=30,
+    )
+    assert res["total_vaults_evaluated"] == 2
+    assert res["mutable_or_exposed_vault_ids"] == ["VLT-PG-PRIMARY"]
+    assert res["corrupted_restore_vault_ids"] == ["VLT-MINIO-BLOBS"]
+    assert res["stale_restore_drill_vault_ids"] == []
+    assert res["ransomware_backup_status"] == "RANSOMWARE_DESTRUCTION_EXPOSURE"
+    assert res["is_backup_resilience_compliant"] is False
+
+
+def test_audit_executive_report_backup_worm_immutability_and_restore_drills_stale_drill_warning():
+    from backend.services.project_export_service import (
+        audit_executive_report_backup_worm_immutability_and_restore_drills,
+    )
+
+    res = audit_executive_report_backup_worm_immutability_and_restore_drills(
+        [
+            {
+                "vault_id": "VLT-ARCHIVE-S3",
+                "has_worm_object_lock_enabled": True,
+                "is_air_gapped_isolated_account": True,
+                "days_since_verified_restore_drill": 65,
+                "last_restore_checksum_verified": True,
+            }
+        ],
+        max_days_since_restore_drill=30,
+    )
+    assert res["mutable_or_exposed_vault_ids"] == []
+    assert res["corrupted_restore_vault_ids"] == []
+    assert res["stale_restore_drill_vault_ids"] == ["VLT-ARCHIVE-S3"]
+    assert res["ransomware_backup_status"] == "RESTORE_DRILL_STALE_WARNING"
+    assert res["is_backup_resilience_compliant"] is False
+
+
+def test_audit_executive_report_backup_worm_immutability_and_restore_drills_verified_and_empty():
+    from backend.services.project_export_service import (
+        audit_executive_report_backup_worm_immutability_and_restore_drills,
+    )
+
+    empty = audit_executive_report_backup_worm_immutability_and_restore_drills(
+        [{"vault_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_vaults_evaluated"] == 0
+    assert empty["ransomware_backup_status"] == "IMMUTABLE_BACKUP_VERIFIED"
+    assert empty["is_backup_resilience_compliant"] is True
+
+    verified = (
+        audit_executive_report_backup_worm_immutability_and_restore_drills(
+            [
+                {
+                    "vault_id": "VLT-GOLD-01",
+                    "has_worm_object_lock_enabled": True,
+                    "is_air_gapped_isolated_account": True,
+                    "days_since_verified_restore_drill": 7,
+                    "last_restore_checksum_verified": True,
+                }
+            ],
+            max_days_since_restore_drill=30,
+        )
+    )
+    assert verified["total_vaults_evaluated"] == 1
+    assert verified["ransomware_backup_status"] == "IMMUTABLE_BACKUP_VERIFIED"
+    assert verified["is_backup_resilience_compliant"] is True
+
+
+def test_audit_executive_report_backup_worm_immutability_and_restore_drills_staticmethod_and_dunder_all():
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_backup_worm_immutability_and_restore_drills,
+    )
+
+    sample = [
+        {
+            "vault_id": "VLT-99",
+            "has_worm_object_lock_enabled": True,
+            "is_air_gapped_isolated_account": True,
+            "days_since_verified_restore_drill": 10,
+            "last_restore_checksum_verified": True,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_backup_worm_immutability_and_restore_drills(
+            sample
+        )
+        == audit_executive_report_backup_worm_immutability_and_restore_drills(
+            sample
+        )
+    )
+    assert (
+        "audit_executive_report_backup_worm_immutability_and_restore_drills"
+        in mod.__all__
+    )

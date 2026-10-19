@@ -6802,3 +6802,151 @@ def test_audit_markdown_image_alt_text_and_asset_weight_hygiene_staticmethod_and
         "audit_markdown_image_alt_text_and_asset_weight_hygiene"
         in mod.__all__
     )
+
+
+def test_audit_markdown_acronym_glossary_breach_paths():
+    """Caso 1: conflictos de definiciones o términos prohibidos -> TERMINOLOGY_CONFLICT_OR_BANNED_BREACH."""
+    from backend.services.anydoc_service import (
+        audit_markdown_acronym_expansion_and_glossary_term_hygiene,
+    )
+
+    res = audit_markdown_acronym_expansion_and_glossary_term_hygiene(
+        [
+            {
+                "doc_id": "DOC-01",
+                "unexpanded_first_use_acronyms_count": 0,
+                "deprecated_or_banned_terms_count": 0,
+                "conflicting_acronym_definitions_count": 2,
+                "has_canonical_glossary_link": True,
+            },
+            {
+                "doc_id": "DOC-02",
+                "unexpanded_first_use_acronyms_count": 3,
+                "deprecated_or_banned_terms_count": 1,
+                "conflicting_acronym_definitions_count": 0,
+                "has_canonical_glossary_link": False,
+            },
+        ]
+    )
+    assert res["total_documents_evaluated"] == 2
+    assert res["conflicting_or_banned_term_doc_ids"] == ["DOC-01", "DOC-02"]
+    assert res["unexpanded_acronym_doc_ids"] == ["DOC-02"]
+    assert res["missing_glossary_link_doc_ids"] == ["DOC-02"]
+    # BREACH domina sobre ACRONYM_OR_GLOSSARY_WARNING.
+    assert res["terminology_hygiene_status"] == "TERMINOLOGY_CONFLICT_OR_BANNED_BREACH"
+    assert res["is_terminology_compliant"] is False
+
+
+def test_audit_markdown_acronym_glossary_warning_only():
+    """Caso 2: solo acrónimos sin expandir o sin enlace al glosario -> ACRONYM_OR_GLOSSARY_WARNING."""
+    from backend.services.anydoc_service import (
+        audit_markdown_acronym_expansion_and_glossary_term_hygiene,
+    )
+
+    res = audit_markdown_acronym_expansion_and_glossary_term_hygiene(
+        [
+            {
+                "doc_id": "DOC-10",
+                "unexpanded_first_use_acronyms_count": 2,
+                "deprecated_or_banned_terms_count": 0,
+                "conflicting_acronym_definitions_count": 0,
+                "has_canonical_glossary_link": True,
+            },
+            {
+                "doc_id": "DOC-11",
+                "unexpanded_first_use_acronyms_count": 0,
+                "deprecated_or_banned_terms_count": 0,
+                "conflicting_acronym_definitions_count": 0,
+                "has_canonical_glossary_link": False,
+            },
+        ]
+    )
+    assert res["total_documents_evaluated"] == 2
+    assert res["conflicting_or_banned_term_doc_ids"] == []
+    assert res["unexpanded_acronym_doc_ids"] == ["DOC-10"]
+    assert res["missing_glossary_link_doc_ids"] == ["DOC-11"]
+    assert res["terminology_hygiene_status"] == "ACRONYM_OR_GLOSSARY_WARNING"
+    assert res["is_terminology_compliant"] is False
+
+
+def test_audit_markdown_acronym_glossary_clean_and_threshold():
+    """Caso 3: umbral tolerante de acrónimos no expandidos y caso limpio -> TERMINOLOGY_CANONICAL_CLEAN."""
+    from backend.services.anydoc_service import (
+        audit_markdown_acronym_expansion_and_glossary_term_hygiene,
+    )
+
+    res = audit_markdown_acronym_expansion_and_glossary_term_hygiene(
+        [
+            {
+                "doc_id": "DOC-20",
+                "unexpanded_first_use_acronyms_count": 1,
+                "deprecated_or_banned_terms_count": 0,
+                "conflicting_acronym_definitions_count": 0,
+                "has_canonical_glossary_link": True,
+            },
+        ],
+        max_unexpanded_acronyms_allowed=2,
+    )
+    # 1 acrónimo <= tolerancia 2; todo lo demás limpio.
+    assert res["total_documents_evaluated"] == 1
+    assert res["conflicting_or_banned_term_doc_ids"] == []
+    assert res["unexpanded_acronym_doc_ids"] == []
+    assert res["missing_glossary_link_doc_ids"] == []
+    assert res["terminology_hygiene_status"] == "TERMINOLOGY_CANONICAL_CLEAN"
+    assert res["is_terminology_compliant"] is True
+
+    # Con la tolerancia por defecto (0), el mismo doc dispara WARNING.
+    res_strict = audit_markdown_acronym_expansion_and_glossary_term_hygiene(
+        [
+            {
+                "doc_id": "DOC-21",
+                "unexpanded_first_use_acronyms_count": 1,
+                "has_canonical_glossary_link": True,
+            },
+        ],
+    )
+    assert res_strict["unexpanded_acronym_doc_ids"] == ["DOC-21"]
+    assert res_strict["terminology_hygiene_status"] == "ACRONYM_OR_GLOSSARY_WARNING"
+
+    # Doc vacío (sin campos) usa defaults -> CLEAN.
+    res_defaults = audit_markdown_acronym_expansion_and_glossary_term_hygiene(
+        [{"doc_id": "DOC-22"}]
+    )
+    assert res_defaults["terminology_hygiene_status"] == "TERMINOLOGY_CANONICAL_CLEAN"
+    assert res_defaults["is_terminology_compliant"] is True
+
+
+def test_audit_markdown_acronym_glossary_invalid_and_binding():
+    """Caso 4: entradas no-lista/no-dict y binding de ambas clases + __all__."""
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_acronym_expansion_and_glossary_term_hygiene,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_markdown_acronym_expansion_and_glossary_term_hygiene(payload)  # type: ignore[arg-type]
+        assert empty["total_documents_evaluated"] == 0
+        assert empty["conflicting_or_banned_term_doc_ids"] == []
+        assert empty["unexpanded_acronym_doc_ids"] == []
+        assert empty["missing_glossary_link_doc_ids"] == []
+        assert empty["terminology_hygiene_status"] == "TERMINOLOGY_CANONICAL_CLEAN"
+        assert empty["is_terminology_compliant"] is True
+
+    sample = [
+        {
+            "doc_id": "DOC-30",
+            "unexpanded_first_use_acronyms_count": 0,
+            "has_canonical_glossary_link": True,
+        },
+    ]
+    assert (
+        AnyDocService.audit_markdown_acronym_expansion_and_glossary_term_hygiene(sample)
+        == audit_markdown_acronym_expansion_and_glossary_term_hygiene(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_acronym_expansion_and_glossary_term_hygiene(sample)
+        == audit_markdown_acronym_expansion_and_glossary_term_hygiene(sample)
+    )
+    assert "audit_markdown_acronym_expansion_and_glossary_term_hygiene" in mod.__all__

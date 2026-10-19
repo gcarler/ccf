@@ -3032,6 +3032,7 @@ __all__ = [
     "audit_markdown_footnote_citation_and_orphan_definition_hygiene",
     "audit_markdown_task_list_checklist_owner_and_due_date_hygiene",
     "audit_markdown_image_alt_text_and_asset_weight_hygiene",
+    "audit_markdown_acronym_expansion_and_glossary_term_hygiene",
     "AnydocService",
 ]
 
@@ -7755,4 +7756,66 @@ AnyDocService.audit_markdown_image_alt_text_and_asset_weight_hygiene = staticmet
 )
 AnydocService.audit_markdown_image_alt_text_and_asset_weight_hygiene = staticmethod(
     audit_markdown_image_alt_text_and_asset_weight_hygiene
+)
+
+
+def audit_markdown_acronym_expansion_and_glossary_term_hygiene(
+    documents: Any,
+    *,
+    max_unexpanded_acronyms_allowed: int = 0,
+) -> dict[str, Any]:
+    """PMBOK 4.4 y 10.2: higiene terminológica del glosario.
+
+    Evalúa por documento la expansión de acrónimos en su primer uso,
+    la ausencia de términos prohibidos o conflictivos y el enlace
+    canónico al glosario.
+    """
+    entries = documents if isinstance(documents, list) else []
+    rows = [item for item in entries if isinstance(item, dict)]
+
+    conflicting_or_banned_term_doc_ids: list[str] = []
+    unexpanded_acronym_doc_ids: list[str] = []
+    missing_glossary_link_doc_ids: list[str] = []
+
+    for item in rows:
+        doc_id = item.get("doc_id")
+
+        conflicts = item.get("conflicting_acronym_definitions_count", 0)
+        conflicts_val = conflicts if isinstance(conflicts, (int, float)) and conflicts > 0 else 0
+        banned = item.get("deprecated_or_banned_terms_count", 0)
+        banned_val = banned if isinstance(banned, (int, float)) and banned > 0 else 0
+        unexpanded = item.get("unexpanded_first_use_acronyms_count", 0)
+        unexpanded_val = unexpanded if isinstance(unexpanded, (int, float)) and unexpanded >= 0 else 0
+
+        if conflicts_val > 0 or banned_val > 0:
+            conflicting_or_banned_term_doc_ids.append(doc_id)
+
+        if unexpanded_val > max_unexpanded_acronyms_allowed:
+            unexpanded_acronym_doc_ids.append(doc_id)
+
+        if item.get("has_canonical_glossary_link", True) is not True:
+            missing_glossary_link_doc_ids.append(doc_id)
+
+    if conflicting_or_banned_term_doc_ids:
+        terminology_hygiene_status = "TERMINOLOGY_CONFLICT_OR_BANNED_BREACH"
+    elif unexpanded_acronym_doc_ids or missing_glossary_link_doc_ids:
+        terminology_hygiene_status = "ACRONYM_OR_GLOSSARY_WARNING"
+    else:
+        terminology_hygiene_status = "TERMINOLOGY_CANONICAL_CLEAN"
+
+    return {
+        "total_documents_evaluated": len(rows),
+        "conflicting_or_banned_term_doc_ids": conflicting_or_banned_term_doc_ids,
+        "unexpanded_acronym_doc_ids": unexpanded_acronym_doc_ids,
+        "missing_glossary_link_doc_ids": missing_glossary_link_doc_ids,
+        "terminology_hygiene_status": terminology_hygiene_status,
+        "is_terminology_compliant": terminology_hygiene_status == "TERMINOLOGY_CANONICAL_CLEAN",
+    }
+
+
+AnyDocService.audit_markdown_acronym_expansion_and_glossary_term_hygiene = staticmethod(
+    audit_markdown_acronym_expansion_and_glossary_term_hygiene
+)
+AnydocService.audit_markdown_acronym_expansion_and_glossary_term_hygiene = staticmethod(
+    audit_markdown_acronym_expansion_and_glossary_term_hygiene
 )

@@ -3002,6 +3002,7 @@ __all__ = [
     "audit_executive_report_wcag_accessibility_and_aria_compliance",
     "audit_executive_report_watermelon_kpi_and_narrative_consistency",
     "audit_executive_report_multi_region_failover_and_split_brain_fencing",
+    "audit_executive_report_backup_worm_immutability_and_restore_drills",
     "ProjectExportService",
 ]
 
@@ -7058,4 +7059,91 @@ def audit_executive_report_multi_region_failover_and_split_brain_fencing(
 
 ProjectExportService.audit_executive_report_multi_region_failover_and_split_brain_fencing = staticmethod(
     audit_executive_report_multi_region_failover_and_split_brain_fencing
+)
+
+
+def audit_executive_report_backup_worm_immutability_and_restore_drills(
+    vaults: list[dict[str, Any]],
+    *,
+    max_days_since_restore_drill: int = 30,
+) -> dict[str, Any]:
+    """PMI PMBOK §11.6 & §10.2 — Executive Report Backup Immutability (WORM / Air-Gapped), Restore Verification Drill & Ransomware Resilience Auditor."""
+    valid_vaults: list[dict[str, Any]] = []
+    if isinstance(vaults, (list, tuple)):
+        for item in vaults:
+            if not isinstance(item, dict):
+                continue
+            vid = str(item.get("vault_id") or "").strip()
+            if not vid:
+                continue
+            valid_vaults.append({**item, "_vid": vid})
+
+    if not valid_vaults:
+        return {
+            "total_vaults_evaluated": 0,
+            "mutable_or_exposed_vault_ids": [],
+            "corrupted_restore_vault_ids": [],
+            "stale_restore_drill_vault_ids": [],
+            "ransomware_backup_status": "IMMUTABLE_BACKUP_VERIFIED",
+            "is_backup_resilience_compliant": True,
+            "recommendations": [],
+        }
+
+    mutable_or_exposed_vault_ids: list[str] = []
+    corrupted_restore_vault_ids: list[str] = []
+    stale_restore_drill_vault_ids: list[str] = []
+
+    for vlt in valid_vaults:
+        vid = vlt["_vid"]
+        has_worm = bool(vlt.get("has_worm_object_lock_enabled", True))
+        is_air_gapped = bool(vlt.get("is_air_gapped_isolated_account", True))
+        drill_days = int(
+            vlt.get("days_since_verified_restore_drill", 10)
+            if vlt.get("days_since_verified_restore_drill") is not None
+            else 10
+        )
+        checksum_ok = bool(vlt.get("last_restore_checksum_verified", True))
+
+        if not has_worm or not is_air_gapped:
+            mutable_or_exposed_vault_ids.append(vid)
+        if not checksum_ok:
+            corrupted_restore_vault_ids.append(vid)
+        if drill_days < 0 or drill_days > max_days_since_restore_drill:
+            stale_restore_drill_vault_ids.append(vid)
+
+    recommendations: list[str] = []
+    if mutable_or_exposed_vault_ids:
+        recommendations.append(
+            f"Enforce WORM object lock and air-gapped isolated account storage to prevent ransomware encryption on vault(s): {', '.join(mutable_or_exposed_vault_ids)}."
+        )
+    if corrupted_restore_vault_ids:
+        recommendations.append(
+            f"Remediate backup snapshot corruption and verify cryptographic restore checksums for vault(s): {', '.join(corrupted_restore_vault_ids)}."
+        )
+    if stale_restore_drill_vault_ids:
+        recommendations.append(
+            f"Execute automated backup restoration drills within <= {max_days_since_restore_drill} days for vault(s): {', '.join(stale_restore_drill_vault_ids)}."
+        )
+
+    if mutable_or_exposed_vault_ids or corrupted_restore_vault_ids:
+        ransomware_backup_status = "RANSOMWARE_DESTRUCTION_EXPOSURE"
+    elif stale_restore_drill_vault_ids:
+        ransomware_backup_status = "RESTORE_DRILL_STALE_WARNING"
+    else:
+        ransomware_backup_status = "IMMUTABLE_BACKUP_VERIFIED"
+
+    return {
+        "total_vaults_evaluated": len(valid_vaults),
+        "mutable_or_exposed_vault_ids": mutable_or_exposed_vault_ids,
+        "corrupted_restore_vault_ids": corrupted_restore_vault_ids,
+        "stale_restore_drill_vault_ids": stale_restore_drill_vault_ids,
+        "ransomware_backup_status": ransomware_backup_status,
+        "is_backup_resilience_compliant": ransomware_backup_status
+        == "IMMUTABLE_BACKUP_VERIFIED",
+        "recommendations": recommendations,
+    }
+
+
+ProjectExportService.audit_executive_report_backup_worm_immutability_and_restore_drills = staticmethod(
+    audit_executive_report_backup_worm_immutability_and_restore_drills
 )
