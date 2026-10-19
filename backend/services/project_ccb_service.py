@@ -2875,6 +2875,7 @@ __all__ = [
     "audit_wasm_wasi_sandbox_capability_and_fuel_metering_gate",
     "audit_db_connection_pool_saturation_and_deadlock_gate",
     "audit_waf_owasp_crs_anomaly_threshold_and_rate_limit_gate",
+    "audit_zero_downtime_db_migration_expand_contract_and_lock_gate",
     "ProjectCCBService",
 ]
 
@@ -9584,4 +9585,107 @@ def audit_waf_owasp_crs_anomaly_threshold_and_rate_limit_gate(
 
 ProjectCCBService.audit_waf_owasp_crs_anomaly_threshold_and_rate_limit_gate = staticmethod(
     audit_waf_owasp_crs_anomaly_threshold_and_rate_limit_gate
+)
+
+
+def audit_zero_downtime_db_migration_expand_contract_and_lock_gate(
+    migrations: list[dict[str, Any]],
+    *,
+    max_lock_timeout_ms: int = 2000,
+    max_statement_timeout_ms: int = 30000,
+) -> dict[str, Any]:
+    """PMBOK §8.3 & §11.6 — CCB Zero-Downtime Database Migration Expand/Contract Pattern, Lock-Timeout Guard & Not-Valid Constraint Backfill Gate Auditor."""
+    migration_evaluations: list[dict[str, Any]] = []
+    critical_migrations: list[str] = []
+    warning_migrations: list[str] = []
+    max_configured_lock_timeout_ms = 0
+
+    for item in migrations or []:
+        if not isinstance(item, Mapping):
+            continue
+        migration_id = (
+            str(item.get("migration_id") or "").strip() or "UNKNOWN_MIGRATION"
+        )
+        raw_lock = item.get("lock_timeout_ms_configured", 1500)
+        lock_timeout_ms_configured = int(1500 if raw_lock is None else raw_lock)
+        raw_stmt = item.get("statement_timeout_ms_configured", 15000)
+        statement_timeout_ms_configured = int(
+            15000 if raw_stmt is None else raw_stmt
+        )
+        non_concurrent_index_creation_on_large_table = bool(
+            item.get("non_concurrent_index_creation_on_large_table", False)
+        )
+        destructive_column_drop_in_same_release = bool(
+            item.get("destructive_column_drop_in_same_release", False)
+        )
+        not_null_added_without_not_valid_check = bool(
+            item.get("not_null_added_without_not_valid_check", False)
+        )
+        reversible_downgrade_tested = bool(
+            item.get("reversible_downgrade_tested", True)
+        )
+        raw_rows = item.get("estimated_backfill_rows", 1000)
+        estimated_backfill_rows = int(1000 if raw_rows is None else raw_rows)
+        batched_backfill_enabled = bool(
+            item.get("batched_backfill_enabled", True)
+        )
+
+        max_configured_lock_timeout_ms = max(
+            max_configured_lock_timeout_ms, lock_timeout_ms_configured
+        )
+
+        critical_migration_violation = (
+            non_concurrent_index_creation_on_large_table is True
+            or destructive_column_drop_in_same_release is True
+            or not_null_added_without_not_valid_check is True
+            or lock_timeout_ms_configured <= 0
+            or lock_timeout_ms_configured > max_lock_timeout_ms
+        )
+        migration_warning = (not critical_migration_violation) and (
+            not reversible_downgrade_tested
+            or statement_timeout_ms_configured > max_statement_timeout_ms
+            or (estimated_backfill_rows > 100000 and not batched_backfill_enabled)
+        )
+
+        if critical_migration_violation:
+            critical_migrations.append(migration_id)
+        elif migration_warning:
+            warning_migrations.append(migration_id)
+
+        migration_evaluations.append(
+            {
+                "migration_id": migration_id,
+                "lock_timeout_ms_configured": lock_timeout_ms_configured,
+                "statement_timeout_ms_configured": statement_timeout_ms_configured,
+                "non_concurrent_index_creation_on_large_table": non_concurrent_index_creation_on_large_table,
+                "destructive_column_drop_in_same_release": destructive_column_drop_in_same_release,
+                "not_null_added_without_not_valid_check": not_null_added_without_not_valid_check,
+                "reversible_downgrade_tested": reversible_downgrade_tested,
+                "estimated_backfill_rows": estimated_backfill_rows,
+                "batched_backfill_enabled": batched_backfill_enabled,
+                "critical_migration_violation": critical_migration_violation,
+                "migration_warning": migration_warning,
+            }
+        )
+
+    if len(critical_migrations) > 0:
+        status = "CRITICAL"
+    elif len(warning_migrations) > 0:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "status": status,
+        "release_freeze_required": status == "CRITICAL",
+        "evaluated_migrations_count": len(migration_evaluations),
+        "critical_migrations": critical_migrations,
+        "warning_migrations": warning_migrations,
+        "max_configured_lock_timeout_ms": max_configured_lock_timeout_ms,
+        "migration_evaluations": migration_evaluations,
+    }
+
+
+ProjectCCBService.audit_zero_downtime_db_migration_expand_contract_and_lock_gate = staticmethod(
+    audit_zero_downtime_db_migration_expand_contract_and_lock_gate
 )

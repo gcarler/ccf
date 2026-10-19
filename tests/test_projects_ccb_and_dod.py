@@ -12576,3 +12576,116 @@ def test_audit_waf_owasp_crs_anomaly_threshold_and_rate_limit_gate_empty_and_bin
         "audit_waf_owasp_crs_anomaly_threshold_and_rate_limit_gate"
         in mod.__all__
     )
+
+
+def test_audit_zero_downtime_db_migration_expand_contract_and_lock_gate_healthy():
+    from backend.services.project_ccb_service import (
+        audit_zero_downtime_db_migration_expand_contract_and_lock_gate,
+    )
+
+    res = audit_zero_downtime_db_migration_expand_contract_and_lock_gate(
+        [
+            {
+                "migration_id": "20261019_01_add_project_idx_concurrent",
+                "lock_timeout_ms_configured": 1500,
+                "statement_timeout_ms_configured": 15000,
+                "non_concurrent_index_creation_on_large_table": False,
+                "destructive_column_drop_in_same_release": False,
+                "not_null_added_without_not_valid_check": False,
+                "reversible_downgrade_tested": True,
+                "estimated_backfill_rows": 50000,
+                "batched_backfill_enabled": True,
+            }
+        ]
+    )
+    assert res["status"] == "HEALTHY"
+    assert res["release_freeze_required"] is False
+    assert res["evaluated_migrations_count"] == 1
+    assert res["critical_migrations"] == []
+    assert res["warning_migrations"] == []
+    assert res["max_configured_lock_timeout_ms"] == 1500
+
+
+def test_audit_zero_downtime_db_migration_expand_contract_and_lock_gate_warning():
+    from backend.services.project_ccb_service import (
+        audit_zero_downtime_db_migration_expand_contract_and_lock_gate,
+    )
+
+    res = audit_zero_downtime_db_migration_expand_contract_and_lock_gate(
+        [
+            {
+                "migration_id": "20261019_02_backfill_audit_logs_unbatched",
+                "lock_timeout_ms_configured": 1800,
+                "statement_timeout_ms_configured": 45000,
+                "non_concurrent_index_creation_on_large_table": False,
+                "destructive_column_drop_in_same_release": False,
+                "not_null_added_without_not_valid_check": False,
+                "reversible_downgrade_tested": False,
+                "estimated_backfill_rows": 250000,
+                "batched_backfill_enabled": False,
+            }
+        ]
+    )
+    assert res["status"] == "WARNING"
+    assert res["release_freeze_required"] is False
+    assert res["critical_migrations"] == []
+    assert res["warning_migrations"] == [
+        "20261019_02_backfill_audit_logs_unbatched"
+    ]
+    assert res["max_configured_lock_timeout_ms"] == 1800
+    assert res["migration_evaluations"][0]["migration_warning"] is True
+
+
+def test_audit_zero_downtime_db_migration_expand_contract_and_lock_gate_critical():
+    from backend.services.project_ccb_service import (
+        audit_zero_downtime_db_migration_expand_contract_and_lock_gate,
+    )
+
+    res = audit_zero_downtime_db_migration_expand_contract_and_lock_gate(
+        [
+            {
+                "migration_id": "20261019_03_blocking_drop_and_not_null",
+                "lock_timeout_ms_configured": 5000,
+                "statement_timeout_ms_configured": 60000,
+                "non_concurrent_index_creation_on_large_table": True,
+                "destructive_column_drop_in_same_release": True,
+                "not_null_added_without_not_valid_check": True,
+                "reversible_downgrade_tested": False,
+                "estimated_backfill_rows": 500000,
+                "batched_backfill_enabled": False,
+            }
+        ]
+    )
+    assert res["status"] == "CRITICAL"
+    assert res["release_freeze_required"] is True
+    assert res["critical_migrations"] == [
+        "20261019_03_blocking_drop_and_not_null"
+    ]
+    assert res["max_configured_lock_timeout_ms"] == 5000
+    assert (
+        res["migration_evaluations"][0]["critical_migration_violation"] is True
+    )
+
+
+def test_audit_zero_downtime_db_migration_expand_contract_and_lock_gate_empty_and_binding():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_zero_downtime_db_migration_expand_contract_and_lock_gate,
+    )
+
+    empty = audit_zero_downtime_db_migration_expand_contract_and_lock_gate([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["release_freeze_required"] is False
+    assert empty["evaluated_migrations_count"] == 0
+    assert empty["max_configured_lock_timeout_ms"] == 0
+    assert (
+        ProjectCCBService.audit_zero_downtime_db_migration_expand_contract_and_lock_gate(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_zero_downtime_db_migration_expand_contract_and_lock_gate"
+        in mod.__all__
+    )

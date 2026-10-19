@@ -5547,6 +5547,7 @@ __all__ = [
     "evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss",
     "evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun",
     "evaluate_evm_termination_for_convenience_t4c_settlement_proposal",
+    "evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium",
     "ProjectEVMService",
 ]
 
@@ -12124,4 +12125,131 @@ def evaluate_evm_termination_for_convenience_t4c_settlement_proposal(
 
 ProjectEVMService.evaluate_evm_termination_for_convenience_t4c_settlement_proposal = staticmethod(
     evaluate_evm_termination_for_convenience_t4c_settlement_proposal
+)
+
+
+def evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium(
+    base_straight_time_hours: float,
+    overtime_hours_worked: float,
+    base_hourly_wage: float,
+    *,
+    overtime_premium_multiplier: float = 1.5,
+    brt_fatigue_inefficiency_pct: float = 15.0,
+    excusable_delay_days_entitled: int = 10,
+    time_extension_days_granted_by_owner: int = 0,
+    owner_acceleration_order_or_denial_documented: bool = True,
+    max_overtime_ratio_pct: float = 35.0,
+) -> dict[str, Any]:
+    """PMBOK §6.5 & §12.3 — Evalúa aceleración dirigida vs. constructiva (constructive acceleration) de un contrato de construcción: días de demora excusables no concedidos con orden/denial documentado del owner, premium de overtime con diferencial de turno (shift premium = horas OT * wage * (multiplicador - 1)), ineficiencia por fatiga de overtime según la curva BRT sobre las horas totales y ratio de overtime excesivo.
+
+    - `ungranted_excusable_delay_days = max(0, entitled - granted)`.
+    - `constructive_acceleration_established`: días no concedidos > 0 con
+      orden/denial de aceleración del owner documentado.
+    - `overtime_ratio_pct` sobre `max(1, horas_straight)` (0.0 si <= 0).
+    - `overtime_shift_premium_cost`: horas OT * wage * (multiplicador - 1)
+      (solo el diferencial de premium; time-and-a-half paga 0.5 extra).
+    - `fatigue_lost_hours` (curva BRT): horas totales * pct de ineficiencia,
+      solo si hay horas OT > 0.
+    - `fatigue_inefficiency_cost = horas_perdidas * wage`.
+    - `recoverable_acceleration_claim`: premium + fatiga solo si la
+      aceleración constructiva está establecida (voluntad propia sin orden ni
+      demora no concedida es overtime pedido, brecha crítica en precedencia,
+      igual que un ratio > `max_overtime_ratio_pct`).
+    - Estados: 'CRITICAL_VOLUNTARY_UNORDERED_OR_EXCESSIVE_OVERTIME_BREACH' |
+      'CONSTRUCTIVE_ACCELERATION_RECOVERABLE_WARNING' |
+      'NO_ACCELERATION_BASELINE_PACE_CLEAN'.
+    """
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _int(value: Any, default: int) -> int:
+        if isinstance(value, bool) or not isinstance(value, int):
+            return default
+        return value
+
+    def _float(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    straight_hours = _float(base_straight_time_hours, 0.0)
+    ot_hours = _float(overtime_hours_worked, 0.0)
+    wage = _float(base_hourly_wage, 0.0)
+    ot_multiplier = _float(overtime_premium_multiplier, 1.5)
+    brt_pct = _float(brt_fatigue_inefficiency_pct, 15.0)
+    entitled_days = _int(excusable_delay_days_entitled, 10)
+    granted_days = _int(time_extension_days_granted_by_owner, 0)
+    order_documented = _bool(
+        owner_acceleration_order_or_denial_documented, True
+    )
+    ratio_cap = _float(max_overtime_ratio_pct, 35.0)
+
+    straight_positive = max(0.0, straight_hours)
+    ot_positive = max(0.0, ot_hours)
+
+    ungranted_excusable_delay_days = max(
+        0, entitled_days - max(0, granted_days)
+    )
+    constructive_acceleration_established = (
+        ungranted_excusable_delay_days > 0 and order_documented
+    )
+
+    if straight_hours > 0:
+        overtime_ratio_pct = round(
+            (ot_positive / max(1.0, straight_positive)) * 100.0, 2
+        )
+    else:
+        overtime_ratio_pct = 0.0
+
+    overtime_shift_premium_cost = round(
+        ot_positive
+        * max(0.0, wage)
+        * max(0.0, ot_multiplier - 1.0),
+        2,
+    )
+
+    if ot_positive > 0:
+        fatigue_lost_hours = round(
+            (straight_positive + ot_positive)
+            * (max(0.0, brt_pct) / 100.0),
+            2,
+        )
+    else:
+        fatigue_lost_hours = 0.0
+
+    fatigue_inefficiency_cost = round(
+        fatigue_lost_hours * max(0.0, wage), 2
+    )
+
+    if constructive_acceleration_established:
+        recoverable_acceleration_claim = round(
+            overtime_shift_premium_cost + fatigue_inefficiency_cost, 2
+        )
+    else:
+        recoverable_acceleration_claim = 0.0
+
+    excessive_overtime_ratio = overtime_ratio_pct > ratio_cap
+    unordered_overtime = ot_positive > 0 and (
+        not constructive_acceleration_established
+    )
+
+    if unordered_overtime or excessive_overtime_ratio:
+        acceleration_claim_status = "CRITICAL_VOLUNTARY_UNORDERED_OR_EXCESSIVE_OVERTIME_BREACH"
+    elif recoverable_acceleration_claim > 0:
+        acceleration_claim_status = "CONSTRUCTIVE_ACCELERATION_RECOVERABLE_WARNING"
+    else:
+        acceleration_claim_status = "NO_ACCELERATION_BASELINE_PACE_CLEAN"
+
+    return {
+        "constructive_acceleration_established": constructive_acceleration_established,
+        "overtime_ratio_pct": overtime_ratio_pct,
+        "overtime_shift_premium_cost": overtime_shift_premium_cost,
+        "fatigue_inefficiency_cost": fatigue_inefficiency_cost,
+        "recoverable_acceleration_claim": recoverable_acceleration_claim,
+        "acceleration_claim_status": acceleration_claim_status,
+    }
+
+
+ProjectEVMService.evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium = staticmethod(
+    evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium
 )

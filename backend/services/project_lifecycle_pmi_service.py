@@ -3195,6 +3195,7 @@ __all__ = [
     "audit_pir_hypercare_burn_in_and_bau_support_handover",
     "audit_cross_border_customs_incoterms_and_export_control_compliance",
     "audit_sovereign_political_risk_miga_insurance_and_arbitration_seat",
+    "audit_epc_performance_guarantee_capacity_test_and_minimum_acceptance",
     "ProjectLifecyclePMIService",
 ]
 
@@ -9616,4 +9617,114 @@ def audit_sovereign_political_risk_miga_insurance_and_arbitration_seat(
 
 ProjectLifecyclePMIService.audit_sovereign_political_risk_miga_insurance_and_arbitration_seat = staticmethod(
     audit_sovereign_political_risk_miga_insurance_and_arbitration_seat
+)
+
+
+def audit_epc_performance_guarantee_capacity_test_and_minimum_acceptance(
+    units: list[dict[str, Any]],
+    *,
+    min_acceptance_capacity_pct: float = 95.0,
+    guaranteed_capacity_pct: float = 100.0,
+    max_performance_ld_cap_pct: float = 15.0,
+) -> dict[str, Any]:
+    """PMBOK §12.3 & §8.2 — Turnkey EPC Performance Guarantee (PG) Net Heat-Rate / Output Capacity Test, Minimum Acceptance Threshold & Liquidated Damages Cap Auditor."""
+    unit_evaluations: list[dict[str, Any]] = []
+    critical_units: list[str] = []
+    warning_units: list[str] = []
+    observed_outputs: list[float] = []
+
+    for item in units or []:
+        if not isinstance(item, Mapping):
+            continue
+        unit_id = str(item.get("unit_id") or "").strip() or "UNKNOWN_UNIT"
+        raw_output = item.get("measured_net_output_pct", 100.0)
+        measured_net_output_pct = round(
+            float(100.0 if raw_output is None else raw_output), 2
+        )
+        measured_heat_rate_efficiency_ok = bool(
+            item.get("measured_heat_rate_efficiency_ok", True)
+        )
+        emissions_nox_sox_within_permit = bool(
+            item.get("emissions_nox_sox_within_permit", True)
+        )
+        raw_cont_hours = item.get("continuous_reliability_run_hours", 72)
+        continuous_reliability_run_hours = int(
+            72 if raw_cont_hours is None else raw_cont_hours
+        )
+        raw_req_hours = item.get("required_reliability_run_hours", 72)
+        required_reliability_run_hours = int(
+            72 if raw_req_hours is None else raw_req_hours
+        )
+        raw_ld_pct = item.get("accrued_performance_ld_pct_of_contract", 0.0)
+        accrued_performance_ld_pct_of_contract = round(
+            float(0.0 if raw_ld_pct is None else raw_ld_pct), 2
+        )
+
+        observed_outputs.append(measured_net_output_pct)
+
+        below_minimum_rejection_floor = (
+            measured_net_output_pct < min_acceptance_capacity_pct
+        )
+        below_guaranteed_but_acceptable = (
+            min_acceptance_capacity_pct
+            <= measured_net_output_pct
+            < guaranteed_capacity_pct
+        )
+
+        critical_epc_breach = (
+            below_minimum_rejection_floor
+            or not emissions_nox_sox_within_permit
+            or continuous_reliability_run_hours < required_reliability_run_hours
+            or accrued_performance_ld_pct_of_contract > max_performance_ld_cap_pct
+        )
+        epc_performance_ld_warning = (not critical_epc_breach) and (
+            below_guaranteed_but_acceptable
+            or not measured_heat_rate_efficiency_ok
+            or accrued_performance_ld_pct_of_contract > 0.0
+        )
+
+        if critical_epc_breach:
+            critical_units.append(unit_id)
+        elif epc_performance_ld_warning:
+            warning_units.append(unit_id)
+
+        unit_evaluations.append(
+            {
+                "unit_id": unit_id,
+                "measured_net_output_pct": measured_net_output_pct,
+                "measured_heat_rate_efficiency_ok": measured_heat_rate_efficiency_ok,
+                "emissions_nox_sox_within_permit": emissions_nox_sox_within_permit,
+                "continuous_reliability_run_hours": continuous_reliability_run_hours,
+                "required_reliability_run_hours": required_reliability_run_hours,
+                "accrued_performance_ld_pct_of_contract": accrued_performance_ld_pct_of_contract,
+                "below_minimum_rejection_floor": below_minimum_rejection_floor,
+                "below_guaranteed_but_acceptable": below_guaranteed_but_acceptable,
+                "critical_epc_breach": critical_epc_breach,
+                "epc_performance_ld_warning": epc_performance_ld_warning,
+            }
+        )
+
+    if len(critical_units) > 0:
+        status = "CRITICAL"
+    elif len(warning_units) > 0:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    min_observed_output_pct = (
+        min(observed_outputs) if observed_outputs else 100.0
+    )
+
+    return {
+        "status": status,
+        "evaluated_units_count": len(unit_evaluations),
+        "critical_units": critical_units,
+        "warning_units": warning_units,
+        "min_observed_output_pct": min_observed_output_pct,
+        "unit_evaluations": unit_evaluations,
+    }
+
+
+ProjectLifecyclePMIService.audit_epc_performance_guarantee_capacity_test_and_minimum_acceptance = staticmethod(
+    audit_epc_performance_guarantee_capacity_test_and_minimum_acceptance
 )

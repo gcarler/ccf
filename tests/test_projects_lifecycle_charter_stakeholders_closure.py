@@ -12500,3 +12500,108 @@ def test_audit_sovereign_political_risk_miga_insurance_and_arbitration_seat_empt
         "audit_sovereign_political_risk_miga_insurance_and_arbitration_seat"
         in mod.__all__
     )
+
+
+def test_audit_epc_performance_guarantee_capacity_test_and_minimum_acceptance_healthy():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_epc_performance_guarantee_capacity_test_and_minimum_acceptance,
+    )
+
+    res = audit_epc_performance_guarantee_capacity_test_and_minimum_acceptance(
+        [
+            {
+                "unit_id": "TURBINE-CCGT-BLOCK-01",
+                "measured_net_output_pct": 100.8,
+                "measured_heat_rate_efficiency_ok": True,
+                "emissions_nox_sox_within_permit": True,
+                "continuous_reliability_run_hours": 72,
+                "required_reliability_run_hours": 72,
+                "accrued_performance_ld_pct_of_contract": 0.0,
+            }
+        ]
+    )
+    assert res["status"] == "HEALTHY"
+    assert res["evaluated_units_count"] == 1
+    assert res["critical_units"] == []
+    assert res["warning_units"] == []
+    assert res["min_observed_output_pct"] == 100.8
+    assert res["unit_evaluations"][0]["below_minimum_rejection_floor"] is False
+
+
+def test_audit_epc_performance_guarantee_capacity_test_and_minimum_acceptance_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_epc_performance_guarantee_capacity_test_and_minimum_acceptance,
+    )
+
+    res = audit_epc_performance_guarantee_capacity_test_and_minimum_acceptance(
+        [
+            {
+                "unit_id": "SOLAR-BESS-INVERTER-02",
+                "measured_net_output_pct": 97.4,
+                "measured_heat_rate_efficiency_ok": False,
+                "emissions_nox_sox_within_permit": True,
+                "continuous_reliability_run_hours": 72,
+                "required_reliability_run_hours": 72,
+                "accrued_performance_ld_pct_of_contract": 4.5,
+            }
+        ]
+    )
+    assert res["status"] == "WARNING"
+    assert res["critical_units"] == []
+    assert res["warning_units"] == ["SOLAR-BESS-INVERTER-02"]
+    assert res["min_observed_output_pct"] == 97.4
+    assert (
+        res["unit_evaluations"][0]["below_guaranteed_but_acceptable"] is True
+    )
+    assert res["unit_evaluations"][0]["epc_performance_ld_warning"] is True
+
+
+def test_audit_epc_performance_guarantee_capacity_test_and_minimum_acceptance_critical():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_epc_performance_guarantee_capacity_test_and_minimum_acceptance,
+    )
+
+    res = audit_epc_performance_guarantee_capacity_test_and_minimum_acceptance(
+        [
+            {
+                "unit_id": "BOILER-DESAL-UNIT-03",
+                "measured_net_output_pct": 89.2,
+                "measured_heat_rate_efficiency_ok": False,
+                "emissions_nox_sox_within_permit": False,
+                "continuous_reliability_run_hours": 36,
+                "required_reliability_run_hours": 72,
+                "accrued_performance_ld_pct_of_contract": 18.0,
+            }
+        ]
+    )
+    assert res["status"] == "CRITICAL"
+    assert res["critical_units"] == ["BOILER-DESAL-UNIT-03"]
+    assert res["warning_units"] == []
+    assert res["min_observed_output_pct"] == 89.2
+    assert res["unit_evaluations"][0]["below_minimum_rejection_floor"] is True
+    assert res["unit_evaluations"][0]["critical_epc_breach"] is True
+
+
+def test_audit_epc_performance_guarantee_capacity_test_and_minimum_acceptance_empty_and_binding():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_epc_performance_guarantee_capacity_test_and_minimum_acceptance,
+    )
+
+    empty = audit_epc_performance_guarantee_capacity_test_and_minimum_acceptance(
+        []
+    )
+    assert empty["status"] == "HEALTHY"
+    assert empty["evaluated_units_count"] == 0
+    assert empty["min_observed_output_pct"] == 100.0
+    assert (
+        ProjectLifecyclePMIService.audit_epc_performance_guarantee_capacity_test_and_minimum_acceptance(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_epc_performance_guarantee_capacity_test_and_minimum_acceptance"
+        in mod.__all__
+    )

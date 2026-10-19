@@ -12556,3 +12556,162 @@ def test_t4c_settlement_field_reversion_and_guards():
         "proposal_timely": True,
         "t4c_settlement_status": "T4C_EQUITABLE_SETTLEMENT_CLEAN",
     }
+
+
+def test_acceleration_claim_no_overtime_clean():
+    """Sin overtime, sin demora entitling no concedida -> 'NO_ACCELERATION_BASELINE_PACE_CLEAN'."""
+    import backend.services.project_evm_service as evm_module
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium,
+    )
+
+    res = evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium(
+        80000.0, 0.0, 45.0,
+    )
+    assert res == {
+        "constructive_acceleration_established": True,
+        "overtime_ratio_pct": 0.0,
+        "overtime_shift_premium_cost": 0.0,
+        "fatigue_inefficiency_cost": 0.0,
+        "recoverable_acceleration_claim": 0.0,
+        "acceleration_claim_status": "NO_ACCELERATION_BASELINE_PACE_CLEAN",
+    }
+
+    # Demora excusable íntegramente concedida: sin OT y sin claim -> CLEAN
+    # con constructive_acceleration_established en False (0 dias no concedidos).
+    fully_granted = evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium(
+        80000.0, 0.0, 45.0,
+        excusable_delay_days_entitled=10,
+        time_extension_days_granted_by_owner=10,
+    )
+    assert fully_granted["constructive_acceleration_established"] is False
+    assert fully_granted["acceleration_claim_status"] == "NO_ACCELERATION_BASELINE_PACE_CLEAN"
+    assert (
+        ProjectEVMService.evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium(
+            80000.0, 0.0, 45.0
+        )
+        == res
+    )
+    assert "evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium" in evm_module.__all__
+
+
+def test_acceleration_claim_constructive_recoverable_warning():
+    """Aceleración constructiva con OT -> claim recuperable y 'CONSTRUCTIVE_ACCELERATION_RECOVERABLE_WARNING'."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium,
+    )
+
+    # Math: OT 12000 h * wage 45 * (1.5 - 1) = 270000 premium;
+    # fatiga BRT: (80000 + 12000) * 15% = 13800 h perdidas -> 621000;
+    # ratio 12000/80000 = 15% <= 35; demora 10 no concedida con denial -> recoverable.
+    recoverable = evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium(
+        80000.0, 12000.0, 45.0,
+    )
+    assert recoverable == {
+        "constructive_acceleration_established": True,
+        "overtime_ratio_pct": 15.0,
+        "overtime_shift_premium_cost": 270000.0,
+        "fatigue_inefficiency_cost": 621000.0,
+        "recoverable_acceleration_claim": 891000.0,
+        "acceleration_claim_status": "CONSTRUCTIVE_ACCELERATION_RECOVERABLE_WARNING",
+    }
+    # Frontera del ratio: exactamente 35% no es excesivo.
+    at_ratio_cap = evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium(
+        10000.0, 3500.0, 45.0,
+    )
+    assert at_ratio_cap["overtime_ratio_pct"] == 35.0
+    assert at_ratio_cap["acceleration_claim_status"] == "CONSTRUCTIVE_ACCELERATION_RECOVERABLE_WARNING"
+    # Doble time 2.0: premium usa el diferencial completo de 1.0.
+    double_time = evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium(
+        80000.0, 12000.0, 45.0,
+        overtime_premium_multiplier=2.0,
+    )
+    assert double_time["overtime_shift_premium_cost"] == 540000.0
+    assert double_time["recoverable_acceleration_claim"] == 1161000.0
+
+
+def test_acceleration_claim_voluntary_and_excessive_overtime_breach():
+    """Overtime sin aceleración constructiva (voluntario) o ratio > 35% -> 'CRITICAAL' con precedencia."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium,
+    )
+
+    # Voluntario: demora excusable concedida Integra (10-10=0) -> constructive False,
+    # con OT > 0 -> BREACH a pesar de que hay premium calculado.
+    voluntary = evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium(
+        80000.0, 12000.0, 45.0,
+        excusable_delay_days_entitled=10,
+        time_extension_days_granted_by_owner=10,
+    )
+    assert voluntary["constructive_acceleration_established"] is False
+    assert voluntary["recoverable_acceleration_claim"] == 0.0
+    assert voluntary["overtime_shift_premium_cost"] == 270000.0
+    assert voluntary["acceleration_claim_status"] == "CRITICAL_VOLUNTARY_UNORDERED_OR_EXCESSIVE_OVERTIME_BREACH"
+
+    # Denial sin documentar tampoco establece aceleración constructiva.
+    undocumented = evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium(
+        80000.0, 12000.0, 45.0,
+        owner_acceleration_order_or_denial_documented=False,
+    )
+    assert undocumented["constructive_acceleration_established"] is False
+    assert undocumented["acceleration_claim_status"] == "CRITICAL_VOLUNTARY_UNORDERED_OR_EXCESSIVE_OVERTIME_BREACH"
+
+    # Ratio excesivo: 40% > 35% dispara BREACH incluso con aceleración establecida.
+    excessive = evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium(
+        10000.0, 4000.0, 45.0,
+    )
+    assert excessive["overtime_ratio_pct"] == 40.0
+    assert excessive["constructive_acceleration_established"] is True
+    assert excessive["acceleration_claim_status"] == "CRITICAL_VOLUNTARY_UNORDERED_OR_EXCESSIVE_OVERTIME_BREACH"
+
+
+def test_acceleration_claim_zero_guards_and_field_reversion():
+    """Straight time <= 0 anula el ratio; negativos se clamp; campos inválidos revierten a defaults."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium,
+    )
+
+    # Straight time <= 0 -> ratio 0.0 incluso con OT positivo (no excesivo por ratio).
+    zero_straight = evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium(
+        0.0, 5000.0, 45.0,
+    )
+    assert zero_straight["overtime_ratio_pct"] == 0.0
+    assert zero_straight["constructive_acceleration_established"] is True
+    # Con OT > 0 hay fatiga: (0 + 5000) * 15% = 750 h -> 33750; premium 112500.
+    assert zero_straight["overtime_shift_premium_cost"] == 112500.0
+    assert zero_straight["fatigue_inefficiency_cost"] == 33750.0
+    assert zero_straight["recoverable_acceleration_claim"] == 146250.0
+
+    negatives = evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium(
+        -80000.0, -5000.0, -45.0,
+        overtime_premium_multiplier=-2.0,   # max(0, -1.0) -> 0.0 diferencial
+        brt_fatigue_inefficiency_pct=-10.0, # max(0, ...) -> 0.0
+    )
+    assert negatives["overtime_ratio_pct"] == 0.0
+    assert negatives["overtime_shift_premium_cost"] == 0.0
+    assert negatives["fatigue_inefficiency_cost"] == 0.0
+    assert negatives["recoverable_acceleration_claim"] == 0.0
+    # OT clamp a 0 -> no fataiga -> sin claim; constructive True (demora no concedida) -> CLEAN.
+    assert negatives["constructive_acceleration_established"] is True
+    assert negatives["acceleration_claim_status"] == "NO_ACCELERATION_BASELINE_PACE_CLEAN"
+
+    reverted = evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium(
+        "eighty-thousand",   # no-float -> 0.0
+        None,                # no-float -> 0.0
+        True,                # bool excluida -> 0.0
+        overtime_premium_multiplier=None,   # no-float -> 1.5
+        brt_fatigue_inefficiency_pct="fifteen",  # no-float -> 15.0
+        excusable_delay_days_entitled="ten",     # no-int -> 10
+        time_extension_days_granted_by_owner=None,  # no-int -> 0
+        owner_acceleration_order_or_denial_documented="yes",  # no-bool -> True
+        max_overtime_ratio_pct=None,  # no-float -> 35.0
+    )
+    assert reverted == {
+        "constructive_acceleration_established": True,
+        "overtime_ratio_pct": 0.0,
+        "overtime_shift_premium_cost": 0.0,
+        "fatigue_inefficiency_cost": 0.0,
+        "recoverable_acceleration_claim": 0.0,
+        "acceleration_claim_status": "NO_ACCELERATION_BASELINE_PACE_CLEAN",
+    }
