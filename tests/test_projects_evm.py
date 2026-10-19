@@ -13051,3 +13051,172 @@ def test_davis_bacon_wh347_restitution_field_coercion_and_static_equality():
     )
     assert warning["back_wages_restitution_owed"] == 50.0
     assert warning["davis_bacon_compliance_status"] == "DAVIS_BACON_WH347_DELINQUENCY_OR_WAGE_RESTITUTION_WARNING"
+
+
+def test_vecp_far_52_248_shared_savings_clean():
+    """Ahorro neto positivo con bilateral firmada y rate default 50% -> 'VECP_SHARED_SAVINGS_ACCREDITED_CLEAN'."""
+    import backend.services.project_evm_service as evm_module
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_vecp_far_52_248_shared_savings_and_development_cost_offset,
+    )
+
+    res = evaluate_evm_vecp_far_52_248_shared_savings_and_development_cost_offset(
+        50000.0,   # ahorro bruto instantáneo
+        40000.0,   # costo de desarrollo permitido
+        0.0,       # costo de implementación del gobierno
+    )
+    assert res == {
+        "clamped_sharing_rate_pct": 50.0,
+        "net_acquisition_savings": 10000.0,
+        "contractor_incentive_share_amount": 5000.0,
+        "owner_retained_net_savings": 5000.0,
+        "vecp_uneconomic_or_rejected": False,
+        "vecp_evaluation_status": "VECP_SHARED_SAVINGS_ACCREDITED_CLEAN",
+    }
+    # Otras cláusulas y desarrollo cero: bruto directo al ahorro neto.
+    assert (
+        ProjectEVMService.evaluate_evm_vecp_far_52_248_shared_savings_and_development_cost_offset(
+            8000.0, 0.0, 0.0,
+        )
+        == {
+            "clamped_sharing_rate_pct": 50.0,
+            "net_acquisition_savings": 8000.0,
+            "contractor_incentive_share_amount": 4000.0,
+            "owner_retained_net_savings": 4000.0,
+            "vecp_uneconomic_or_rejected": False,
+            "vecp_evaluation_status": "VECP_SHARED_SAVINGS_ACCREDITED_CLEAN",
+        }
+    )
+    assert "evaluate_evm_vecp_far_52_248_shared_savings_and_development_cost_offset" in evm_module.__all__
+
+
+def test_vecp_far_52_248_shared_savings_uneconomic_warning():
+    """Ahorro neto <= 0 con bilateral firmada y sin degradación -> 'VECP_NEGATIVE_NET_ACQUISITION_SAVINGS_UNECONOMIC_WARNING'."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_vecp_far_52_248_shared_savings_and_development_cost_offset,
+    )
+
+    # Ahorro neto exactamente 0.0 (bruto == desarrollo + implementación).
+    breakeven = evaluate_evm_vecp_far_52_248_shared_savings_and_development_cost_offset(
+        40000.0, 38000.0, 2000.0,
+    )
+    assert breakeven == {
+        "clamped_sharing_rate_pct": 50.0,
+        "net_acquisition_savings": 0.0,
+        "contractor_incentive_share_amount": 0.0,
+        "owner_retained_net_savings": 0.0,
+        "vecp_uneconomic_or_rejected": True,
+        "vecp_evaluation_status": "VECP_NEGATIVE_NET_ACQUISITION_SAVINGS_UNECONOMIC_WARNING",
+    }
+
+    # Ahorro neto negativo por costos de desarrollo + implementación superiores.
+    negative = evaluate_evm_vecp_far_52_248_shared_savings_and_development_cost_offset(
+        10000.0, 8000.0, 5000.0,
+        contractor_sharing_rate_pct=75.0,
+    )
+    assert negative == {
+        "clamped_sharing_rate_pct": 75.0,
+        "net_acquisition_savings": -3000.0,
+        "contractor_incentive_share_amount": 0.0,
+        "owner_retained_net_savings": 0.0,
+        "vecp_uneconomic_or_rejected": True,
+        "vecp_evaluation_status": "VECP_NEGATIVE_NET_ACQUISITION_SAVINGS_UNECONOMIC_WARNING",
+    }
+
+
+def test_vecp_far_52_248_shared_savings_critical_paths():
+    """Degradación de esencial/seguridad o modificación unilateral -> CRITICAL con shares en cero."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_vecp_far_52_248_shared_savings_and_development_cost_offset,
+    )
+
+    # Degradación de función esencial/seguridad: преимо sobre ahorro neto positivo.
+    degraded = evaluate_evm_vecp_far_52_248_shared_savings_and_development_cost_offset(
+        50000.0, 40000.0,
+        essential_function_or_safety_degraded=True,
+    )
+    assert degraded == {
+        "clamped_sharing_rate_pct": 50.0,
+        "net_acquisition_savings": 10000.0,
+        "contractor_incentive_share_amount": 0.0,
+        "owner_retained_net_savings": 0.0,
+        "vecp_uneconomic_or_rejected": True,
+        "vecp_evaluation_status": "CRITICAL_VECP_SAFETY_DEGRADATION_OR_UNILATERAL_IMPLEMENTATION_BREACH",
+    }
+
+    # Modificación unilateral (sin bilateral firmada) con ahorro neto positivo.
+    unilateral = evaluate_evm_vecp_far_52_248_shared_savings_and_development_cost_offset(
+        50000.0, 40000.0,
+        formal_contract_modification_bilateral_signed=False,
+    )
+    assert unilateral["net_acquisition_savings"] == 10000.0
+    assert unilateral["contractor_incentive_share_amount"] == 0.0
+    assert unilateral["owner_retained_net_savings"] == 0.0
+    assert unilateral["vecp_uneconomic_or_rejected"] is True
+    assert unilateral["vecp_evaluation_status"] == "CRITICAL_VECP_SAFETY_DEGRADATION_OR_UNILATERAL_IMPLEMENTATION_BREACH"
+
+    # Degradación precede también sobre WARNING: neto <= 0 con degradación.
+    degraded_breach = evaluate_evm_vecp_far_52_248_shared_savings_and_development_cost_offset(
+        10000.0, 8000.0, 5000.0,
+        essential_function_or_safety_degraded=True,
+    )
+    assert degraded_breach["net_acquisition_savings"] == -3000.0
+    assert degraded_breach["vecp_evaluation_status"] == "CRITICAL_VECP_SAFETY_DEGRADATION_OR_UNILATERAL_IMPLEMENTATION_BREACH"
+
+
+def test_vecp_far_52_248_shared_savings_field_coercion_and_static_equality():
+    """Montos negativos/inválidos clamp a 0.0; rate acotado a [20, 75] con default 50.0; bools a defaults."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_vecp_far_52_248_shared_savings_and_development_cost_offset,
+    )
+
+    # Acotes del rate: exceso -> 75.0, déficit -> 20.0.
+    assert evaluate_evm_vecp_far_52_248_shared_savings_and_development_cost_offset(
+        10000.0, 0.0, contractor_sharing_rate_pct=120.0,
+    )["clamped_sharing_rate_pct"] == 75.0
+    assert evaluate_evm_vecp_far_52_248_shared_savings_and_development_cost_offset(
+        10000.0, 0.0, contractor_sharing_rate_pct=5.0,
+    )["clamped_sharing_rate_pct"] == 20.0
+
+    # Tipo inválido para el rate -> default 50.0; montos inválidos/negativos clamp
+    # a 0.0 y bools de revert por el spec.
+    coerced = evaluate_evm_vecp_far_52_248_shared_savings_and_development_cost_offset(
+        "cincuenta-mil",   # no-float -> 0.0
+        None,              # no-float -> 0.0
+        True,              # bool excluida -> 0.0
+        contractor_sharing_rate_pct="cincuenta",              # no-float -> 50.0
+        essential_function_or_safety_degraded=1,              # no-bool -> False
+        formal_contract_modification_bilateral_signed="yes",  # no-bool -> True
+    )
+    # Ahorro neto 0.0 (todo clamp a cero) -> WARNING de sin economía.
+    assert coerced == {
+        "clamped_sharing_rate_pct": 50.0,
+        "net_acquisition_savings": 0.0,
+        "contractor_incentive_share_amount": 0.0,
+        "owner_retained_net_savings": 0.0,
+        "vecp_uneconomic_or_rejected": True,
+        "vecp_evaluation_status": "VECP_NEGATIVE_NET_ACQUISITION_SAVINGS_UNECONOMIC_WARNING",
+    }
+
+    # Rate mínimo 20.0 compartiendo ahorro: contractor 20%, owner 80%.
+    minimal_share = evaluate_evm_vecp_far_52_248_shared_savings_and_development_cost_offset(
+        10000.0, 0.0,
+        contractor_sharing_rate_pct=20.0,
+    )
+    assert minimal_share == {
+        "clamped_sharing_rate_pct": 20.0,
+        "net_acquisition_savings": 10000.0,
+        "contractor_incentive_share_amount": 2000.0,
+        "owner_retained_net_savings": 8000.0,
+        "vecp_uneconomic_or_rejected": False,
+        "vecp_evaluation_status": "VECP_SHARED_SAVINGS_ACCREDITED_CLEAN",
+    }
+    # Vínculo estático en ProjectEVMService.
+    assert (
+        ProjectEVMService.evaluate_evm_vecp_far_52_248_shared_savings_and_development_cost_offset(
+            50000.0, 40000.0,
+        )
+        is not None
+    )

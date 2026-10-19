@@ -13133,3 +13133,112 @@ def test_audit_bgp_rpki_roa_origin_validation_and_ddos_scrubbing_gate_empty_and_
         in mod.__all__
     )
 
+
+def test_audit_pqc_fips_203_204_hybrid_tls_and_hndl_deprecation_gate_healthy():
+    from backend.services.project_ccb_service import (
+        audit_pqc_fips_203_204_hybrid_tls_and_hndl_deprecation_gate,
+    )
+
+    endpoints = [
+        {
+            "endpoint_id": "pqc-ep-ingress-gateway",
+            "kem_algorithm": "X25519MLKEM768",
+            "signature_algorithm": "ML-DSA-65",
+            "handles_long_term_confidential_data_hndl": True,
+            "handshake_overhead_ms": 4.2,
+            "crypto_agility_fallback_tested": True,
+        },
+        {
+            "endpoint_id": "pqc-ep-vault-mtls",
+            "kem_algorithm": "ML-KEM-1024",
+            "signature_algorithm": "ML-DSA-87",
+            "handles_long_term_confidential_data_hndl": True,
+            "handshake_overhead_ms": 6.8,
+            "crypto_agility_fallback_tested": True,
+        },
+    ]
+    res = audit_pqc_fips_203_204_hybrid_tls_and_hndl_deprecation_gate(endpoints)
+    assert res["status"] == "healthy"
+    assert res["total_endpoints"] == 2
+    assert res["healthy_count"] == 2
+    assert res["warning_count"] == 0
+    assert res["critical_count"] == 0
+    assert res["pqc_readiness_rate_pct"] == 100.0
+    assert res["recommendations"] == []
+
+
+def test_audit_pqc_fips_203_204_hybrid_tls_and_hndl_deprecation_gate_warning():
+    from backend.services.project_ccb_service import (
+        audit_pqc_fips_203_204_hybrid_tls_and_hndl_deprecation_gate,
+    )
+
+    endpoints = [
+        {
+            "endpoint_id": "pqc-ep-ephemeral-telemetry",
+            "kem_algorithm": "X25519",
+            "signature_algorithm": "Ed25519",
+            "handles_long_term_confidential_data_hndl": False,
+            "handshake_overhead_ms": 22.5,
+            "crypto_agility_fallback_tested": False,
+        }
+    ]
+    res = audit_pqc_fips_203_204_hybrid_tls_and_hndl_deprecation_gate(endpoints)
+    assert res["status"] == "warning"
+    assert res["total_endpoints"] == 1
+    assert res["warning_count"] == 1
+    assert res["critical_count"] == 0
+    assert res["handshake_latency_exceeded_count"] == 1
+    assert res["missing_agility_count"] == 1
+    assert res["endpoints"][0]["endpoint_status"] == "warning"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_pqc_fips_203_204_hybrid_tls_and_hndl_deprecation_gate_critical():
+    from backend.services.project_ccb_service import (
+        audit_pqc_fips_203_204_hybrid_tls_and_hndl_deprecation_gate,
+    )
+
+    endpoints = [
+        {
+            "endpoint_id": "pqc-ep-legacy-archive",
+            "kem_algorithm": "RSA-1024",
+            "signature_algorithm": "SHA1-RSA",
+            "handles_long_term_confidential_data_hndl": True,
+            "handshake_overhead_ms": 28.0,
+            "crypto_agility_fallback_tested": False,
+        }
+    ]
+    res = audit_pqc_fips_203_204_hybrid_tls_and_hndl_deprecation_gate(endpoints)
+    assert res["status"] == "critical"
+    assert res["total_endpoints"] == 1
+    assert res["critical_count"] == 1
+    assert res["broken_primitive_count"] == 1
+    assert res["hndl_exposure_count"] == 1
+    assert res["pqc_readiness_rate_pct"] == 0.0
+    assert res["endpoints"][0]["endpoint_status"] == "critical"
+    assert len(res["recommendations"]) >= 3
+
+
+def test_audit_pqc_fips_203_204_hybrid_tls_and_hndl_deprecation_gate_empty_and_binding():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_pqc_fips_203_204_hybrid_tls_and_hndl_deprecation_gate,
+    )
+
+    empty = audit_pqc_fips_203_204_hybrid_tls_and_hndl_deprecation_gate([])
+    assert empty["status"] == "healthy"
+    assert empty["total_endpoints"] == 0
+    assert empty["pqc_readiness_rate_pct"] == 100.0
+    assert (
+        ProjectCCBService.audit_pqc_fips_203_204_hybrid_tls_and_hndl_deprecation_gate(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_pqc_fips_203_204_hybrid_tls_and_hndl_deprecation_gate"
+        in mod.__all__
+    )
+
+

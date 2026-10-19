@@ -13069,3 +13069,117 @@ def test_audit_safety_critical_nqa1_hold_point_and_cfsi_quarantine_empty_and_bin
         in mod.__all__
     )
 
+
+def test_audit_ma_post_merger_tsa_exit_and_synergy_realization_healthy():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_ma_post_merger_tsa_exit_and_synergy_realization,
+    )
+
+    workstreams = [
+        {
+            "workstream_id": "ma-ws-erp-consolidation",
+            "target_run_rate_synergy_usd": 500000.0,
+            "realized_run_rate_synergy_usd": 475000.0,
+            "tsa_extension_months": 1,
+            "tsa_holdover_penalty_active": False,
+            "day1_legal_entity_cutover_ready": True,
+            "key_talent_retention_breach": False,
+        },
+        {
+            "workstream_id": "ma-ws-cloud-procurement",
+            "target_run_rate_synergy_usd": 300000.0,
+            "realized_run_rate_synergy_usd": 290000.0,
+            "tsa_extension_months": 0,
+            "tsa_holdover_penalty_active": False,
+            "day1_legal_entity_cutover_ready": True,
+            "key_talent_retention_breach": False,
+        },
+    ]
+    res = audit_ma_post_merger_tsa_exit_and_synergy_realization(workstreams)
+    assert res["status"] == "healthy"
+    assert res["total_workstreams"] == 2
+    assert res["healthy_count"] == 2
+    assert res["warning_count"] == 0
+    assert res["critical_count"] == 0
+    assert res["ma_integration_rate_pct"] == 100.0
+    assert res["recommendations"] == []
+
+
+def test_audit_ma_post_merger_tsa_exit_and_synergy_realization_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_ma_post_merger_tsa_exit_and_synergy_realization,
+    )
+
+    workstreams = [
+        {
+            "workstream_id": "ma-ws-hris-payroll",
+            "target_run_rate_synergy_usd": 200000.0,
+            "realized_run_rate_synergy_usd": 140000.0,
+            "tsa_extension_months": 5,
+            "tsa_holdover_penalty_active": False,
+            "day1_legal_entity_cutover_ready": True,
+            "key_talent_retention_breach": False,
+        }
+    ]
+    res = audit_ma_post_merger_tsa_exit_and_synergy_realization(workstreams)
+    assert res["status"] == "warning"
+    assert res["total_workstreams"] == 1
+    assert res["warning_count"] == 1
+    assert res["critical_count"] == 0
+    assert res["synergy_shortfall_count"] == 1
+    assert res["tsa_extension_exceeded_count"] == 1
+    assert res["workstreams"][0]["workstream_status"] == "warning"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_ma_post_merger_tsa_exit_and_synergy_realization_critical():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_ma_post_merger_tsa_exit_and_synergy_realization,
+    )
+
+    workstreams = [
+        {
+            "workstream_id": "ma-ws-treasury-carveout",
+            "target_run_rate_synergy_usd": 400000.0,
+            "realized_run_rate_synergy_usd": 180000.0,
+            "tsa_extension_months": 6,
+            "tsa_holdover_penalty_active": True,
+            "day1_legal_entity_cutover_ready": False,
+            "key_talent_retention_breach": True,
+        }
+    ]
+    res = audit_ma_post_merger_tsa_exit_and_synergy_realization(workstreams)
+    assert res["status"] == "critical"
+    assert res["total_workstreams"] == 1
+    assert res["critical_count"] == 1
+    assert res["day1_or_holdover_crisis_count"] == 1
+    assert res["synergy_shortfall_count"] == 1
+    assert res["talent_retention_breach_count"] == 1
+    assert res["ma_integration_rate_pct"] == 0.0
+    assert res["workstreams"][0]["workstream_status"] == "critical"
+    assert len(res["recommendations"]) >= 3
+
+
+def test_audit_ma_post_merger_tsa_exit_and_synergy_realization_empty_and_binding():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_ma_post_merger_tsa_exit_and_synergy_realization,
+    )
+
+    empty = audit_ma_post_merger_tsa_exit_and_synergy_realization([])
+    assert empty["status"] == "healthy"
+    assert empty["total_workstreams"] == 0
+    assert empty["ma_integration_rate_pct"] == 100.0
+    assert (
+        ProjectLifecyclePMIService.audit_ma_post_merger_tsa_exit_and_synergy_realization(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_ma_post_merger_tsa_exit_and_synergy_realization"
+        in mod.__all__
+    )
+
+

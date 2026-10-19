@@ -2880,6 +2880,7 @@ __all__ = [
     "audit_chaos_engineering_blast_radius_and_steady_state_gate",
     "audit_feature_flag_stale_toggle_debt_and_shadow_parity_gate",
     "audit_bgp_rpki_roa_origin_validation_and_ddos_scrubbing_gate",
+    "audit_pqc_fips_203_204_hybrid_tls_and_hndl_deprecation_gate",
     "ProjectCCBService",
 ]
 
@@ -10302,4 +10303,164 @@ def audit_bgp_rpki_roa_origin_validation_and_ddos_scrubbing_gate(
 ProjectCCBService.audit_bgp_rpki_roa_origin_validation_and_ddos_scrubbing_gate = staticmethod(
     audit_bgp_rpki_roa_origin_validation_and_ddos_scrubbing_gate
 )
+
+
+def audit_pqc_fips_203_204_hybrid_tls_and_hndl_deprecation_gate(
+    endpoints: list[dict[str, Any]],
+    *,
+    max_handshake_overhead_ms: float = 15.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §8.3 & §11.6 — CCB Post-Quantum Cryptography (NIST FIPS 203/204 ML-KEM / ML-DSA), Hybrid TLS & HNDL Deprecation Gate Auditor."""
+    normalized_max_overhead = max(float(max_handshake_overhead_ms), 1.0)
+    deprecated_primitives = ("rsa-1024", "sha1", "md5", "3des", "rc4")
+
+    raw_endpoints = endpoints if isinstance(endpoints, list) else []
+    evaluated_endpoints: list[dict[str, Any]] = []
+    healthy_count = 0
+    warning_count = 0
+    critical_count = 0
+    broken_primitive_count = 0
+    hndl_exposure_count = 0
+    handshake_latency_exceeded_count = 0
+    missing_agility_count = 0
+
+    for idx, item in enumerate(raw_endpoints, start=1):
+        if not isinstance(item, dict):
+            continue
+        endpoint_id = str(
+            item.get("endpoint_id") or f"pqc-ep-{idx}"
+        ).strip()
+
+        kem_algorithm = str(
+            item.get("kem_algorithm", "X25519MLKEM768") or "X25519MLKEM768"
+        ).strip()
+        signature_algorithm = str(
+            item.get("signature_algorithm", "ML-DSA-65") or "ML-DSA-65"
+        ).strip()
+        handles_long_term_confidential_data_hndl = bool(
+            item.get("handles_long_term_confidential_data_hndl", True)
+        )
+
+        raw_overhead = item.get("handshake_overhead_ms", 3.5)
+        try:
+            handshake_overhead_ms = float(
+                3.5 if raw_overhead is None else raw_overhead
+            )
+        except (TypeError, ValueError):
+            handshake_overhead_ms = 3.5
+
+        crypto_agility_fallback_tested = bool(
+            item.get("crypto_agility_fallback_tested", True)
+        )
+
+        kem_lower = kem_algorithm.lower()
+        sig_lower = signature_algorithm.lower()
+
+        pqc_kem_enabled = any(
+            tok in kem_lower for tok in ("mlkem", "ml-kem", "kyber")
+        )
+        broken_or_deprecated_primitive = any(
+            prim in kem_lower or prim in sig_lower
+            for prim in deprecated_primitives
+        )
+        hndl_quantum_vulnerable_exposure = (
+            handles_long_term_confidential_data_hndl and not pqc_kem_enabled
+        )
+        handshake_latency_exceeded = (
+            handshake_overhead_ms > normalized_max_overhead
+        )
+        missing_crypto_agility = not crypto_agility_fallback_tested
+
+        if broken_or_deprecated_primitive:
+            broken_primitive_count += 1
+        if hndl_quantum_vulnerable_exposure:
+            hndl_exposure_count += 1
+        if handshake_latency_exceeded:
+            handshake_latency_exceeded_count += 1
+        if missing_crypto_agility:
+            missing_agility_count += 1
+
+        if broken_or_deprecated_primitive or hndl_quantum_vulnerable_exposure:
+            endpoint_status = "critical"
+            critical_count += 1
+        elif (
+            not pqc_kem_enabled
+            or handshake_latency_exceeded
+            or missing_crypto_agility
+        ):
+            endpoint_status = "warning"
+            warning_count += 1
+        else:
+            endpoint_status = "healthy"
+            healthy_count += 1
+
+        evaluated_endpoints.append(
+            {
+                "endpoint_id": endpoint_id,
+                "kem_algorithm": kem_algorithm,
+                "signature_algorithm": signature_algorithm,
+                "handles_long_term_confidential_data_hndl": handles_long_term_confidential_data_hndl,
+                "handshake_overhead_ms": handshake_overhead_ms,
+                "crypto_agility_fallback_tested": crypto_agility_fallback_tested,
+                "pqc_kem_enabled": pqc_kem_enabled,
+                "broken_or_deprecated_primitive": broken_or_deprecated_primitive,
+                "hndl_quantum_vulnerable_exposure": hndl_quantum_vulnerable_exposure,
+                "handshake_latency_exceeded": handshake_latency_exceeded,
+                "missing_crypto_agility": missing_crypto_agility,
+                "endpoint_status": endpoint_status,
+            }
+        )
+
+    total_endpoints = len(evaluated_endpoints)
+    pqc_readiness_rate_pct = (
+        round((healthy_count / total_endpoints) * 100.0, 2)
+        if total_endpoints > 0
+        else 100.0
+    )
+
+    recommendations: list[str] = []
+    if broken_primitive_count > 0:
+        recommendations.append(
+            f"Erradicar primitivas criptográficas obsoletas/rotas (RSA-1024, SHA-1, MD5, 3DES, RC4) en {broken_primitive_count} endpoint(s)."
+        )
+    if hndl_exposure_count > 0:
+        recommendations.append(
+            f"Habilitar intercambio de claves híbrido post-cuántico (X25519MLKEM768 / NIST FIPS 203 ML-KEM) para mitigar ataques Harvest-Now-Decrypt-Later (HNDL) en {hndl_exposure_count} endpoint(s)."
+        )
+    if handshake_latency_exceeded_count > 0:
+        recommendations.append(
+            f"Optimizar fragmentación TCP/QUIC y reanudación TLS 1.3 para mantener sobrecarga de handshake PQC <= {normalized_max_overhead} ms en {handshake_latency_exceeded_count} endpoint(s)."
+        )
+    if missing_agility_count > 0:
+        recommendations.append(
+            f"Validar rotación automatizada de suites criptográficas (crypto-agility fallback) en {missing_agility_count} endpoint(s)."
+        )
+
+    if critical_count > 0:
+        status = "critical"
+    elif warning_count > 0:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_endpoints": total_endpoints,
+        "healthy_count": healthy_count,
+        "warning_count": warning_count,
+        "critical_count": critical_count,
+        "broken_primitive_count": broken_primitive_count,
+        "hndl_exposure_count": hndl_exposure_count,
+        "handshake_latency_exceeded_count": handshake_latency_exceeded_count,
+        "missing_agility_count": missing_agility_count,
+        "pqc_readiness_rate_pct": pqc_readiness_rate_pct,
+        "status": status,
+        "endpoints": evaluated_endpoints,
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.audit_pqc_fips_203_204_hybrid_tls_and_hndl_deprecation_gate = staticmethod(
+    audit_pqc_fips_203_204_hybrid_tls_and_hndl_deprecation_gate
+)
+
 

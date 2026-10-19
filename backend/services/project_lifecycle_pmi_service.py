@@ -3200,6 +3200,7 @@ __all__ = [
     "audit_ppp_concession_availability_payment_and_handback_residual_life",
     "audit_esg_scope_emissions_cap_and_green_bond_proceeds",
     "audit_safety_critical_nqa1_hold_point_and_cfsi_quarantine",
+    "audit_ma_post_merger_tsa_exit_and_synergy_realization",
     "ProjectLifecyclePMIService",
 ]
 
@@ -10406,4 +10407,182 @@ def audit_safety_critical_nqa1_hold_point_and_cfsi_quarantine(
 ProjectLifecyclePMIService.audit_safety_critical_nqa1_hold_point_and_cfsi_quarantine = staticmethod(
     audit_safety_critical_nqa1_hold_point_and_cfsi_quarantine
 )
+
+
+def audit_ma_post_merger_tsa_exit_and_synergy_realization(
+    workstreams: list[dict[str, Any]],
+    *,
+    min_synergy_capture_pct: float = 85.0,
+    max_tsa_extension_months: int = 3,
+) -> dict[str, Any]:
+    """PMI PMBOK §12.3 & §4.7 — M&A Post-Merger Integration, Transition Service Agreement (TSA) Exit, Synergy Realization & Day-1 Cutover Auditor."""
+    normalized_min_synergy = min(max(float(min_synergy_capture_pct), 0.0), 100.0)
+    normalized_max_tsa_ext = max(int(max_tsa_extension_months), 0)
+
+    raw_workstreams = workstreams if isinstance(workstreams, list) else []
+    evaluated_workstreams: list[dict[str, Any]] = []
+    healthy_count = 0
+    warning_count = 0
+    critical_count = 0
+    day1_or_holdover_crisis_count = 0
+    synergy_shortfall_count = 0
+    tsa_extension_exceeded_count = 0
+    talent_retention_breach_count = 0
+
+    for idx, item in enumerate(raw_workstreams, start=1):
+        if not isinstance(item, dict):
+            continue
+        workstream_id = str(
+            item.get("workstream_id") or f"ma-ws-{idx}"
+        ).strip()
+
+        raw_target_syn = item.get("target_run_rate_synergy_usd", 100000.0)
+        try:
+            target_run_rate_synergy_usd = float(
+                100000.0 if raw_target_syn is None else raw_target_syn
+            )
+        except (TypeError, ValueError):
+            target_run_rate_synergy_usd = 100000.0
+
+        raw_realized_syn = item.get("realized_run_rate_synergy_usd", 100000.0)
+        try:
+            realized_run_rate_synergy_usd = float(
+                100000.0 if raw_realized_syn is None else raw_realized_syn
+            )
+        except (TypeError, ValueError):
+            realized_run_rate_synergy_usd = 100000.0
+
+        raw_tsa_ext = item.get("tsa_extension_months", 0)
+        try:
+            tsa_extension_months = int(0 if raw_tsa_ext is None else raw_tsa_ext)
+        except (TypeError, ValueError):
+            tsa_extension_months = 0
+
+        tsa_holdover_penalty_active = bool(
+            item.get("tsa_holdover_penalty_active", False)
+        )
+        day1_legal_entity_cutover_ready = bool(
+            item.get("day1_legal_entity_cutover_ready", True)
+        )
+        key_talent_retention_breach = bool(
+            item.get("key_talent_retention_breach", False)
+        )
+
+        synergy_capture_pct = (
+            round(
+                (realized_run_rate_synergy_usd / target_run_rate_synergy_usd)
+                * 100.0,
+                2,
+            )
+            if target_run_rate_synergy_usd > 0
+            else 100.0
+        )
+
+        day1_cutover_or_holdover_crisis = (
+            not day1_legal_entity_cutover_ready
+            or (
+                tsa_holdover_penalty_active
+                and tsa_extension_months > normalized_max_tsa_ext
+            )
+        )
+        synergy_realization_shortfall = (
+            synergy_capture_pct < normalized_min_synergy
+        )
+        tsa_extension_exceeded = tsa_extension_months > normalized_max_tsa_ext
+
+        if day1_cutover_or_holdover_crisis:
+            day1_or_holdover_crisis_count += 1
+        if synergy_realization_shortfall:
+            synergy_shortfall_count += 1
+        if tsa_extension_exceeded:
+            tsa_extension_exceeded_count += 1
+        if key_talent_retention_breach:
+            talent_retention_breach_count += 1
+
+        if day1_cutover_or_holdover_crisis or (
+            synergy_realization_shortfall and key_talent_retention_breach
+        ):
+            workstream_status = "critical"
+            critical_count += 1
+        elif (
+            synergy_realization_shortfall
+            or tsa_extension_exceeded
+            or tsa_holdover_penalty_active
+            or key_talent_retention_breach
+        ):
+            workstream_status = "warning"
+            warning_count += 1
+        else:
+            workstream_status = "healthy"
+            healthy_count += 1
+
+        evaluated_workstreams.append(
+            {
+                "workstream_id": workstream_id,
+                "target_run_rate_synergy_usd": target_run_rate_synergy_usd,
+                "realized_run_rate_synergy_usd": realized_run_rate_synergy_usd,
+                "synergy_capture_pct": synergy_capture_pct,
+                "tsa_extension_months": tsa_extension_months,
+                "tsa_holdover_penalty_active": tsa_holdover_penalty_active,
+                "day1_legal_entity_cutover_ready": day1_legal_entity_cutover_ready,
+                "key_talent_retention_breach": key_talent_retention_breach,
+                "day1_cutover_or_holdover_crisis": day1_cutover_or_holdover_crisis,
+                "synergy_realization_shortfall": synergy_realization_shortfall,
+                "tsa_extension_exceeded": tsa_extension_exceeded,
+                "workstream_status": workstream_status,
+            }
+        )
+
+    total_workstreams = len(evaluated_workstreams)
+    ma_integration_rate_pct = (
+        round((healthy_count / total_workstreams) * 100.0, 2)
+        if total_workstreams > 0
+        else 100.0
+    )
+
+    recommendations: list[str] = []
+    if day1_or_holdover_crisis_count > 0:
+        recommendations.append(
+            f"Completar alistamiento legal/operativo Día-1 y eliminar prórrogas TSA sujetas a sobretasas punitivas (holdover penalty) en {day1_or_holdover_crisis_count} frente(s) M&A."
+        )
+    if synergy_shortfall_count > 0:
+        recommendations.append(
+            f"Activar plan de recuperación de valor en IMO (Integration Management Office) para elevar captura de sinergias run-rate >= {normalized_min_synergy}% en {synergy_shortfall_count} frente(s)."
+        )
+    if tsa_extension_exceeded_count > 0:
+        recommendations.append(
+            f"Ejecutar migración final de sistemas heredados y cierre de acuerdos TSA dentro del límite <= {normalized_max_tsa_ext} mes(es) de extensión en {tsa_extension_exceeded_count} frente(s)."
+        )
+    if talent_retention_breach_count > 0:
+        recommendations.append(
+            f"Desplegar acuerdos de retención e incentivos de permanencia para roles críticos con riesgo de fuga en {talent_retention_breach_count} frente(s)."
+        )
+
+    if critical_count > 0:
+        status = "critical"
+    elif warning_count > 0:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_workstreams": total_workstreams,
+        "healthy_count": healthy_count,
+        "warning_count": warning_count,
+        "critical_count": critical_count,
+        "day1_or_holdover_crisis_count": day1_or_holdover_crisis_count,
+        "synergy_shortfall_count": synergy_shortfall_count,
+        "tsa_extension_exceeded_count": tsa_extension_exceeded_count,
+        "talent_retention_breach_count": talent_retention_breach_count,
+        "ma_integration_rate_pct": ma_integration_rate_pct,
+        "status": status,
+        "workstreams": evaluated_workstreams,
+        "recommendations": recommendations,
+    }
+
+
+ProjectLifecyclePMIService.audit_ma_post_merger_tsa_exit_and_synergy_realization = staticmethod(
+    audit_ma_post_merger_tsa_exit_and_synergy_realization
+)
+
 

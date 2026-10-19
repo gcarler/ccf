@@ -5550,6 +5550,7 @@ __all__ = [
     "evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium",
     "evaluate_evm_surety_performance_bond_t4d_takeover_and_overpayment",
     "evaluate_evm_davis_bacon_prevailing_wage_wh347_and_restitution",
+    "evaluate_evm_vecp_far_52_248_shared_savings_and_development_cost_offset",
     "ProjectEVMService",
 ]
 
@@ -12470,4 +12471,122 @@ def evaluate_evm_davis_bacon_prevailing_wage_wh347_and_restitution(
 
 ProjectEVMService.evaluate_evm_davis_bacon_prevailing_wage_wh347_and_restitution = staticmethod(
     evaluate_evm_davis_bacon_prevailing_wage_wh347_and_restitution
+)
+
+
+def evaluate_evm_vecp_far_52_248_shared_savings_and_development_cost_offset(
+    gross_instant_contract_savings: float,
+    allowable_contractor_vecp_development_cost: float,
+    government_implementation_cost: float = 0.0,
+    *,
+    contractor_sharing_rate_pct: float = 50.0,
+    essential_function_or_safety_degraded: bool = False,
+    formal_contract_modification_bilateral_signed: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §7.4 & §12.2 — Evaluador VECP (FAR 52.248-1) de Ingeniería de Valor: ahorro instantáneo bruto en contrato, costo de desarrollo permitido del contratista, costo de implementación del gobierno (Net Acquisition Savings), rate de participación acotado [20, 75] y condición de modificación bilateral con esencial/seguridad sin degradar.
+
+    Coerción: montos inválidos (`bool` excluido) o negativos clamp a 0.0;
+    `contractor_sharing_rate_pct` acotado a [20.0, 75.0] (default 50.0 si
+    tipo inválido o bool); flags inválidos revierten a sus defaults
+    (`False`/`True`).
+    Calcula:
+    - `net_acquisition_savings = bruto - desarrollo permitido -
+      implementación del gobierno`, 2 dec (puede ser negativo).
+    - `contractor_incentive_share_amount` y `owner_retained_net_savings`:
+      solo si no hay degradación de esencial/seguridad, modificación
+      bilateral firmada y ahorro neto > 0.0; comparten el ahorro neto
+      máximo(0, ...) según el rate; en caso contrario 0.0.
+    - `vecp_uneconomic_or_rejected`: degradación, sin modificación
+      bilateral, o ahorro neto <= 0.0.
+    Estados (precedencia CRITICAL > WARNING > CLEAN):
+    - 'CRITICAL_VECP_SAFETY_DEGRADATION_OR_UNILATERAL_IMPLEMENTATION_BREACH'
+      (degradación de esencial/seguridad o implementación unilateral).
+    - 'VECP_NEGATIVE_NET_ACQUISITION_SAVINGS_UNECONOMIC_WARNING'.
+    - 'VECP_SHARED_SAVINGS_ACCREDITED_CLEAN'.
+    """
+    def _float(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    def _clamp_non_negative_float(value: Any, default: float) -> float:
+        return max(0.0, _float(value, default))
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    gross_savings = _clamp_non_negative_float(
+        gross_instant_contract_savings, 0.0
+    )
+    development_cost = _clamp_non_negative_float(
+        allowable_contractor_vecp_development_cost, 0.0
+    )
+    implementation_cost = _clamp_non_negative_float(
+        government_implementation_cost, 0.0
+    )
+    if isinstance(contractor_sharing_rate_pct, bool) or not isinstance(
+        contractor_sharing_rate_pct, (int, float)
+    ):
+        clamped_sharing_rate_pct = 50.0
+    else:
+        clamped_sharing_rate_pct = float(
+            min(75.0, max(20.0, float(contractor_sharing_rate_pct)))
+        )
+    safety_degraded = _bool(essential_function_or_safety_degraded, False)
+    bilateral_signed = _bool(formal_contract_modification_bilateral_signed, True)
+
+    net_acquisition_savings = round(
+        gross_savings - development_cost - implementation_cost, 2
+    )
+
+    savings_accredited = bool(
+        (not safety_degraded)
+        and bilateral_signed
+        and net_acquisition_savings > 0.0
+    )
+
+    if savings_accredited:
+        contractor_incentive_share_amount = round(
+            max(0.0, net_acquisition_savings)
+            * (clamped_sharing_rate_pct / 100.0),
+            2,
+        )
+        owner_retained_net_savings = round(
+            max(0.0, net_acquisition_savings)
+            - contractor_incentive_share_amount,
+            2,
+        )
+    else:
+        contractor_incentive_share_amount = 0.0
+        owner_retained_net_savings = 0.0
+
+    vecp_uneconomic_or_rejected = bool(
+        safety_degraded
+        or (not bilateral_signed)
+        or (net_acquisition_savings <= 0.0)
+    )
+
+    if safety_degraded or (not bilateral_signed):
+        vecp_evaluation_status = (
+            "CRITICAL_VECP_SAFETY_DEGRADATION_OR_UNILATERAL_IMPLEMENTATION_BREACH"
+        )
+    elif net_acquisition_savings <= 0.0:
+        vecp_evaluation_status = (
+            "VECP_NEGATIVE_NET_ACQUISITION_SAVINGS_UNECONOMIC_WARNING"
+        )
+    else:
+        vecp_evaluation_status = "VECP_SHARED_SAVINGS_ACCREDITED_CLEAN"
+
+    return {
+        "clamped_sharing_rate_pct": clamped_sharing_rate_pct,
+        "net_acquisition_savings": net_acquisition_savings,
+        "contractor_incentive_share_amount": contractor_incentive_share_amount,
+        "owner_retained_net_savings": owner_retained_net_savings,
+        "vecp_uneconomic_or_rejected": vecp_uneconomic_or_rejected,
+        "vecp_evaluation_status": vecp_evaluation_status,
+    }
+
+
+ProjectEVMService.evaluate_evm_vecp_far_52_248_shared_savings_and_development_cost_offset = staticmethod(
+    evaluate_evm_vecp_far_52_248_shared_savings_and_development_cost_offset
 )
