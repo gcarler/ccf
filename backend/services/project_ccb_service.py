@@ -2851,6 +2851,8 @@ __all__ = [
     "audit_secret_scanning_pre_receive_and_leak_revocation",
     "audit_iac_terraform_drift_and_state_lock_hygiene",
     "audit_container_image_vulnerability_and_non_root_runtime_gate",
+    "audit_dark_launch_shadow_traffic_parity_and_isolation",
+    "audit_db_connection_pool_saturation_and_idle_tx_timeout",
     "ProjectCCBService",
 ]
 
@@ -7274,5 +7276,162 @@ def audit_container_image_vulnerability_and_non_root_runtime_gate(
 
 ProjectCCBService.audit_container_image_vulnerability_and_non_root_runtime_gate = staticmethod(
     audit_container_image_vulnerability_and_non_root_runtime_gate
+)
+
+
+def audit_dark_launch_shadow_traffic_parity_and_isolation(
+    shadow_campaigns: Sequence[Mapping[str, Any]] | None,
+    *,
+    min_payload_parity_pct: float = 99.5,
+    max_primary_latency_overhead_ms: float = 10.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §8.2 & §8.3 — CCB Dark-Launch Shadow Traffic Mirroring Payload Parity, Side-Effect Isolation & Latency Amplification Auditor."""
+    valid_campaigns = [
+        campaign
+        for campaign in (shadow_campaigns or [])
+        if isinstance(campaign, Mapping)
+        and str(campaign.get("campaign_id") or "").strip()
+    ]
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _num(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    side_effect_leak_or_sync_blocking_campaign_ids: list[str] = []
+    parity_mismatch_or_latency_drag_campaign_ids: list[str] = []
+
+    for campaign in valid_campaigns:
+        campaign_id = str(campaign.get("campaign_id")).strip()
+        payload_parity_pct = _num(
+            campaign.get("payload_response_parity_pct"), 99.9
+        )
+        side_effects_muted = _bool(
+            campaign.get("shadow_write_side_effects_muted"), True
+        )
+        async_fire_forget = _bool(
+            campaign.get("async_fire_and_forget_enforced"), True
+        )
+        latency_overhead_ms = _num(
+            campaign.get("primary_path_latency_overhead_ms"), 2.0
+        )
+        pii_masked = _bool(
+            campaign.get("pii_masked_in_shadow_diff_logs"), True
+        )
+
+        if (
+            not side_effects_muted
+            or not async_fire_forget
+            or not pii_masked
+        ):
+            side_effect_leak_or_sync_blocking_campaign_ids.append(campaign_id)
+
+        if (
+            payload_parity_pct < min_payload_parity_pct
+            or latency_overhead_ms > max_primary_latency_overhead_ms
+        ):
+            parity_mismatch_or_latency_drag_campaign_ids.append(campaign_id)
+
+    if side_effect_leak_or_sync_blocking_campaign_ids:
+        dark_launch_governance_status = "DARK_LAUNCH_SIDE_EFFECT_OR_PII_BREACH"
+    elif parity_mismatch_or_latency_drag_campaign_ids:
+        dark_launch_governance_status = (
+            "DARK_LAUNCH_PARITY_OR_LATENCY_WARNING"
+        )
+    else:
+        dark_launch_governance_status = "DARK_LAUNCH_SHADOW_PARITY_OPTIMAL"
+
+    return {
+        "evaluated_campaigns_count": len(valid_campaigns),
+        "side_effect_leak_or_sync_blocking_campaign_ids": side_effect_leak_or_sync_blocking_campaign_ids,
+        "parity_mismatch_or_latency_drag_campaign_ids": parity_mismatch_or_latency_drag_campaign_ids,
+        "dark_launch_governance_status": dark_launch_governance_status,
+        "is_dark_launch_compliant": dark_launch_governance_status
+        == "DARK_LAUNCH_SHADOW_PARITY_OPTIMAL",
+    }
+
+
+ProjectCCBService.audit_dark_launch_shadow_traffic_parity_and_isolation = staticmethod(
+    audit_dark_launch_shadow_traffic_parity_and_isolation
+)
+
+
+def audit_db_connection_pool_saturation_and_idle_tx_timeout(
+    db_pools: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_pool_utilization_pct: float = 80.0,
+    max_idle_in_tx_timeout_seconds: float = 30.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §8.3 & §11.6 — CCB Database Connection Pool Saturation, PgBouncer Transaction-Mode Multiplexing & Idle-in-Transaction Timeout Auditor."""
+    valid_pools = [
+        pl
+        for pl in (db_pools or [])
+        if isinstance(pl, Mapping) and str(pl.get("pool_id") or "").strip()
+    ]
+
+    leaking_or_unbounded_idle_tx_pool_ids: list[str] = []
+    high_utilization_or_unpooled_pool_ids: list[str] = []
+
+    for pl in valid_pools:
+        pid = str(pl.get("pool_id")).strip()
+        peak_active_connections_pct = float(
+            pl.get("peak_active_connections_pct", 55.0)
+            if pl.get("peak_active_connections_pct") is not None
+            else 55.0
+        )
+        idle_in_transaction_timeout_seconds = float(
+            pl.get("idle_in_transaction_timeout_seconds", 15.0)
+            if pl.get("idle_in_transaction_timeout_seconds") is not None
+            else 15.0
+        )
+        connection_leaks_detected_count = int(
+            pl.get("connection_leaks_detected_count", 0)
+            if pl.get("connection_leaks_detected_count") is not None
+            else 0
+        )
+        pgbouncer_transaction_pooling_enabled = bool(
+            pl.get("pgbouncer_transaction_pooling_enabled", True)
+            if pl.get("pgbouncer_transaction_pooling_enabled") is not None
+            else True
+        )
+
+        if (
+            connection_leaks_detected_count > 0
+            or idle_in_transaction_timeout_seconds <= 0
+            or idle_in_transaction_timeout_seconds
+            > max_idle_in_tx_timeout_seconds
+        ):
+            leaking_or_unbounded_idle_tx_pool_ids.append(pid)
+
+        if (
+            peak_active_connections_pct > max_pool_utilization_pct
+            or not pgbouncer_transaction_pooling_enabled
+        ):
+            high_utilization_or_unpooled_pool_ids.append(pid)
+
+    if leaking_or_unbounded_idle_tx_pool_ids:
+        db_pool_governance_status = "DB_POOL_LEAK_OR_UNBOUNDED_IDLE_TX_BREACH"
+    elif high_utilization_or_unpooled_pool_ids:
+        db_pool_governance_status = (
+            "DB_POOL_SATURATION_OR_MULTIPLEXING_WARNING"
+        )
+    else:
+        db_pool_governance_status = "DB_POOL_CAPACITY_OPTIMAL"
+
+    return {
+        "evaluated_pools_count": len(valid_pools),
+        "leaking_or_unbounded_idle_tx_pool_ids": leaking_or_unbounded_idle_tx_pool_ids,
+        "high_utilization_or_unpooled_pool_ids": high_utilization_or_unpooled_pool_ids,
+        "db_pool_governance_status": db_pool_governance_status,
+        "is_db_pool_compliant": db_pool_governance_status
+        == "DB_POOL_CAPACITY_OPTIMAL",
+    }
+
+
+ProjectCCBService.audit_db_connection_pool_saturation_and_idle_tx_timeout = staticmethod(
+    audit_db_connection_pool_saturation_and_idle_tx_timeout
 )
 

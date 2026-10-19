@@ -9646,3 +9646,301 @@ def test_audit_container_image_vulnerability_and_non_root_runtime_gate_staticmet
         in mod.__all__
     )
 
+
+
+def test_dark_launch_side_effect_or_pii_breach():
+    from backend.services.project_ccb_service import (
+        audit_dark_launch_shadow_traffic_parity_and_isolation,
+    )
+
+    res = audit_dark_launch_shadow_traffic_parity_and_isolation(
+        [
+            {
+                "campaign_id": "SHADOW-WRITES-LEAK",
+                "shadow_write_side_effects_muted": False,
+            },
+            {
+                "campaign_id": "SHADOW-SYNC-BLOCK",
+                "async_fire_and_forget_enforced": False,
+            },
+            {
+                "campaign_id": "SHADOW-PII-EXPOSED",
+                "pii_masked_in_shadow_diff_logs": False,
+            },
+        ],
+        min_payload_parity_pct=99.5,
+        max_primary_latency_overhead_ms=10.0,
+    )
+    assert res["evaluated_campaigns_count"] == 3
+    assert res["side_effect_leak_or_sync_blocking_campaign_ids"] == [
+        "SHADOW-WRITES-LEAK",
+        "SHADOW-SYNC-BLOCK",
+        "SHADOW-PII-EXPOSED",
+    ]
+    assert res["parity_mismatch_or_latency_drag_campaign_ids"] == []
+    assert (
+        res["dark_launch_governance_status"]
+        == "DARK_LAUNCH_SIDE_EFFECT_OR_PII_BREACH"
+    )
+    assert res["is_dark_launch_compliant"] is False
+
+
+def test_dark_launch_parity_or_latency_warning():
+    from backend.services.project_ccb_service import (
+        audit_dark_launch_shadow_traffic_parity_and_isolation,
+    )
+
+    res = audit_dark_launch_shadow_traffic_parity_and_isolation(
+        [
+            {
+                "campaign_id": "SHADOW-PARITY-DRIFT",
+                "payload_response_parity_pct": 98.0,
+            },
+            {
+                "campaign_id": "SHADOW-LATENCY-DRAG",
+                "primary_path_latency_overhead_ms": 18.0,
+            },
+        ],
+        min_payload_parity_pct=99.5,
+        max_primary_latency_overhead_ms=10.0,
+    )
+    assert res["evaluated_campaigns_count"] == 2
+    assert res["side_effect_leak_or_sync_blocking_campaign_ids"] == []
+    assert res["parity_mismatch_or_latency_drag_campaign_ids"] == [
+        "SHADOW-PARITY-DRIFT",
+        "SHADOW-LATENCY-DRAG",
+    ]
+    assert (
+        res["dark_launch_governance_status"]
+        == "DARK_LAUNCH_PARITY_OR_LATENCY_WARNING"
+    )
+    assert res["is_dark_launch_compliant"] is False
+
+
+def test_dark_launch_boundaries_optimal_and_defaults():
+    from backend.services.project_ccb_service import (
+        audit_dark_launch_shadow_traffic_parity_and_isolation,
+    )
+
+    res = audit_dark_launch_shadow_traffic_parity_and_isolation(
+        [
+            {
+                "campaign_id": "SHADOW-BOUNDARY",
+                "payload_response_parity_pct": 99.5,
+                "primary_path_latency_overhead_ms": 10.0,
+            },
+            {"campaign_id": "SHADOW-ALL-DEFAULTS"},
+        ],
+        min_payload_parity_pct=99.5,
+        max_primary_latency_overhead_ms=10.0,
+    )
+    assert res["evaluated_campaigns_count"] == 2
+    assert res["side_effect_leak_or_sync_blocking_campaign_ids"] == []
+    assert res["parity_mismatch_or_latency_drag_campaign_ids"] == []
+    assert (
+        res["dark_launch_governance_status"]
+        == "DARK_LAUNCH_SHADOW_PARITY_OPTIMAL"
+    )
+    assert res["is_dark_launch_compliant"] is True
+
+
+def test_dark_launch_invalid_and_binding():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_dark_launch_shadow_traffic_parity_and_isolation,
+    )
+
+    empty = audit_dark_launch_shadow_traffic_parity_and_isolation(None)
+    assert empty["evaluated_campaigns_count"] == 0
+    assert empty["side_effect_leak_or_sync_blocking_campaign_ids"] == []
+    assert empty["parity_mismatch_or_latency_drag_campaign_ids"] == []
+    assert (
+        empty["dark_launch_governance_status"]
+        == "DARK_LAUNCH_SHADOW_PARITY_OPTIMAL"
+    )
+    assert empty["is_dark_launch_compliant"] is True
+
+    invalid = audit_dark_launch_shadow_traffic_parity_and_isolation(
+        [42, "not-a-dict", None, {"campaign_id": "   "}]  # type: ignore[list-item]
+    )
+    assert invalid["evaluated_campaigns_count"] == 0
+
+    defaults = audit_dark_launch_shadow_traffic_parity_and_isolation(
+        [
+            {
+                "campaign_id": "SHADOW-DEFAULTS",
+                "payload_response_parity_pct": None,
+                "shadow_write_side_effects_muted": None,
+                "async_fire_and_forget_enforced": None,
+                "primary_path_latency_overhead_ms": None,
+                "pii_masked_in_shadow_diff_logs": None,
+            }
+        ]
+    )
+    assert defaults["evaluated_campaigns_count"] == 1
+    assert (
+        defaults["dark_launch_governance_status"]
+        == "DARK_LAUNCH_SHADOW_PARITY_OPTIMAL"
+    )
+    assert defaults["is_dark_launch_compliant"] is True
+
+    sample = [
+        {
+            "campaign_id": "SHADOW-1",
+            "payload_response_parity_pct": 99.8,
+            "primary_path_latency_overhead_ms": 3.0,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_dark_launch_shadow_traffic_parity_and_isolation(
+            sample
+        )
+        == audit_dark_launch_shadow_traffic_parity_and_isolation(sample)
+    )
+    assert (
+        "audit_dark_launch_shadow_traffic_parity_and_isolation"
+        in mod.__all__
+    )
+
+
+def test_audit_db_connection_pool_saturation_and_idle_tx_timeout_breach():
+    from backend.services.project_ccb_service import (
+        audit_db_connection_pool_saturation_and_idle_tx_timeout,
+    )
+
+    result = audit_db_connection_pool_saturation_and_idle_tx_timeout(
+        [
+            {
+                "pool_id": "POOL-CONN-LEAK",
+                "peak_active_connections_pct": 50.0,
+                "idle_in_transaction_timeout_seconds": 15.0,
+                "connection_leaks_detected_count": 3,
+                "pgbouncer_transaction_pooling_enabled": True,
+            },
+            {
+                "pool_id": "POOL-ZERO-IDLE-TIMEOUT",
+                "peak_active_connections_pct": 50.0,
+                "idle_in_transaction_timeout_seconds": 0.0,
+                "connection_leaks_detected_count": 0,
+                "pgbouncer_transaction_pooling_enabled": True,
+            },
+            {
+                "pool_id": "POOL-HIGH-IDLE-TIMEOUT",
+                "peak_active_connections_pct": 50.0,
+                "idle_in_transaction_timeout_seconds": 60.0,
+                "connection_leaks_detected_count": 0,
+                "pgbouncer_transaction_pooling_enabled": True,
+            },
+        ],
+        max_pool_utilization_pct=80.0,
+        max_idle_in_tx_timeout_seconds=30.0,
+    )
+    assert result["evaluated_pools_count"] == 3
+    assert result["leaking_or_unbounded_idle_tx_pool_ids"] == [
+        "POOL-CONN-LEAK",
+        "POOL-ZERO-IDLE-TIMEOUT",
+        "POOL-HIGH-IDLE-TIMEOUT",
+    ]
+    assert result["high_utilization_or_unpooled_pool_ids"] == []
+    assert (
+        result["db_pool_governance_status"]
+        == "DB_POOL_LEAK_OR_UNBOUNDED_IDLE_TX_BREACH"
+    )
+    assert result["is_db_pool_compliant"] is False
+
+
+def test_audit_db_connection_pool_saturation_and_idle_tx_timeout_warning():
+    from backend.services.project_ccb_service import (
+        audit_db_connection_pool_saturation_and_idle_tx_timeout,
+    )
+
+    result = audit_db_connection_pool_saturation_and_idle_tx_timeout(
+        [
+            {
+                "pool_id": "POOL-SATURATED",
+                "peak_active_connections_pct": 92.0,
+                "idle_in_transaction_timeout_seconds": 15.0,
+                "connection_leaks_detected_count": 0,
+                "pgbouncer_transaction_pooling_enabled": True,
+            },
+            {
+                "pool_id": "POOL-NO-PGBOUNCER",
+                "peak_active_connections_pct": 45.0,
+                "idle_in_transaction_timeout_seconds": 15.0,
+                "connection_leaks_detected_count": 0,
+                "pgbouncer_transaction_pooling_enabled": False,
+            },
+        ],
+        max_pool_utilization_pct=80.0,
+        max_idle_in_tx_timeout_seconds=30.0,
+    )
+    assert result["evaluated_pools_count"] == 2
+    assert result["leaking_or_unbounded_idle_tx_pool_ids"] == []
+    assert result["high_utilization_or_unpooled_pool_ids"] == [
+        "POOL-SATURATED",
+        "POOL-NO-PGBOUNCER",
+    ]
+    assert (
+        result["db_pool_governance_status"]
+        == "DB_POOL_SATURATION_OR_MULTIPLEXING_WARNING"
+    )
+    assert result["is_db_pool_compliant"] is False
+
+
+def test_audit_db_connection_pool_saturation_and_idle_tx_timeout_optimal_and_empty():
+    from backend.services.project_ccb_service import (
+        audit_db_connection_pool_saturation_and_idle_tx_timeout,
+    )
+
+    empty = audit_db_connection_pool_saturation_and_idle_tx_timeout(
+        [{"pool_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_pools_count"] == 0
+    assert empty["db_pool_governance_status"] == "DB_POOL_CAPACITY_OPTIMAL"
+    assert empty["is_db_pool_compliant"] is True
+
+    optimal = audit_db_connection_pool_saturation_and_idle_tx_timeout(
+        [
+            {
+                "pool_id": "POOL-PRIMARY-RW",
+                "peak_active_connections_pct": 58.0,
+                "idle_in_transaction_timeout_seconds": 10.0,
+                "connection_leaks_detected_count": 0,
+                "pgbouncer_transaction_pooling_enabled": True,
+            }
+        ],
+        max_pool_utilization_pct=80.0,
+        max_idle_in_tx_timeout_seconds=30.0,
+    )
+    assert optimal["evaluated_pools_count"] == 1
+    assert optimal["leaking_or_unbounded_idle_tx_pool_ids"] == []
+    assert optimal["high_utilization_or_unpooled_pool_ids"] == []
+    assert optimal["db_pool_governance_status"] == "DB_POOL_CAPACITY_OPTIMAL"
+    assert optimal["is_db_pool_compliant"] is True
+
+
+def test_audit_db_connection_pool_saturation_and_idle_tx_timeout_staticmethod_and_dunder_all():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_db_connection_pool_saturation_and_idle_tx_timeout,
+    )
+
+    sample = [
+        {
+            "pool_id": "POOL-99",
+            "peak_active_connections_pct": 42.0,
+            "idle_in_transaction_timeout_seconds": 12.0,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_db_connection_pool_saturation_and_idle_tx_timeout(
+            sample
+        )
+        == audit_db_connection_pool_saturation_and_idle_tx_timeout(sample)
+    )
+    assert (
+        "audit_db_connection_pool_saturation_and_idle_tx_timeout"
+        in mod.__all__
+    )

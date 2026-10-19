@@ -7675,3 +7675,140 @@ def test_audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene_staticme
         "audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene"
         in mod.__all__
     )
+
+
+def test_audit_markdown_fenced_code_block_language_and_secret_hygiene_breach():
+    from backend.services.anydoc_service import (
+        audit_markdown_fenced_code_block_language_and_secret_hygiene,
+    )
+
+    result = audit_markdown_fenced_code_block_language_and_secret_hygiene(
+        [
+            {
+                "doc_id": "DOC-UNCLOSED-FENCE",
+                "untagged_fenced_code_blocks_count": 0,
+                "unclosed_code_fences_count": 1,
+                "hardcoded_secret_or_token_patterns_count": 0,
+                "max_observed_code_line_length": 78,
+            },
+            {
+                "doc_id": "DOC-SECRET-LEAK",
+                "untagged_fenced_code_blocks_count": 0,
+                "unclosed_code_fences_count": 0,
+                "hardcoded_secret_or_token_patterns_count": 2,
+                "max_observed_code_line_length": 78,
+            },
+        ],
+        max_code_line_length=120,
+    )
+    assert result["evaluated_documents_count"] == 2
+    assert result["unclosed_fence_or_secret_leak_doc_ids"] == [
+        "DOC-UNCLOSED-FENCE",
+        "DOC-SECRET-LEAK",
+    ]
+    assert result["untagged_language_or_long_line_doc_ids"] == []
+    assert (
+        result["code_block_hygiene_status"]
+        == "CODE_BLOCK_SECRET_OR_UNCLOSED_FENCE_BREACH"
+    )
+    assert result["is_code_block_hygiene_compliant"] is False
+
+
+def test_audit_markdown_fenced_code_block_language_and_secret_hygiene_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_fenced_code_block_language_and_secret_hygiene,
+    )
+
+    result = audit_markdown_fenced_code_block_language_and_secret_hygiene(
+        [
+            {
+                "doc_id": "DOC-UNTAGGED-CODE",
+                "untagged_fenced_code_blocks_count": 3,
+                "unclosed_code_fences_count": 0,
+                "hardcoded_secret_or_token_patterns_count": 0,
+                "max_observed_code_line_length": 80,
+            },
+            {
+                "doc_id": "DOC-LONG-LINES",
+                "untagged_fenced_code_blocks_count": 0,
+                "unclosed_code_fences_count": 0,
+                "hardcoded_secret_or_token_patterns_count": 0,
+                "max_observed_code_line_length": 165,
+            },
+        ],
+        max_code_line_length=120,
+    )
+    assert result["evaluated_documents_count"] == 2
+    assert result["unclosed_fence_or_secret_leak_doc_ids"] == []
+    assert result["untagged_language_or_long_line_doc_ids"] == [
+        "DOC-UNTAGGED-CODE",
+        "DOC-LONG-LINES",
+    ]
+    assert (
+        result["code_block_hygiene_status"]
+        == "CODE_BLOCK_UNTAGGED_OR_LINE_LENGTH_WARNING"
+    )
+    assert result["is_code_block_hygiene_compliant"] is False
+
+
+def test_audit_markdown_fenced_code_block_language_and_secret_hygiene_clean_and_empty():
+    from backend.services.anydoc_service import (
+        audit_markdown_fenced_code_block_language_and_secret_hygiene,
+    )
+
+    empty = audit_markdown_fenced_code_block_language_and_secret_hygiene(
+        [{"doc_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_documents_count"] == 0
+    assert empty["code_block_hygiene_status"] == "CODE_BLOCK_HYGIENE_CLEAN"
+    assert empty["is_code_block_hygiene_compliant"] is True
+
+    clean = audit_markdown_fenced_code_block_language_and_secret_hygiene(
+        [
+            {
+                "doc_id": "DOC-CLEAN-CODE-01",
+                "untagged_fenced_code_blocks_count": 0,
+                "unclosed_code_fences_count": 0,
+                "hardcoded_secret_or_token_patterns_count": 0,
+                "max_observed_code_line_length": 92,
+            }
+        ],
+        max_code_line_length=120,
+    )
+    assert clean["evaluated_documents_count"] == 1
+    assert clean["unclosed_fence_or_secret_leak_doc_ids"] == []
+    assert clean["untagged_language_or_long_line_doc_ids"] == []
+    assert clean["code_block_hygiene_status"] == "CODE_BLOCK_HYGIENE_CLEAN"
+    assert clean["is_code_block_hygiene_compliant"] is True
+
+
+def test_audit_markdown_fenced_code_block_language_and_secret_hygiene_staticmethod_and_dunder_all():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_fenced_code_block_language_and_secret_hygiene,
+    )
+
+    sample = [
+        {
+            "doc_id": "DOC-99",
+            "max_observed_code_line_length": 88,
+        }
+    ]
+    assert (
+        AnyDocService.audit_markdown_fenced_code_block_language_and_secret_hygiene(
+            sample
+        )
+        == audit_markdown_fenced_code_block_language_and_secret_hygiene(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_fenced_code_block_language_and_secret_hygiene(
+            sample
+        )
+        == audit_markdown_fenced_code_block_language_and_secret_hygiene(sample)
+    )
+    assert (
+        "audit_markdown_fenced_code_block_language_and_secret_hygiene"
+        in mod.__all__
+    )

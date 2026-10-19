@@ -3038,6 +3038,7 @@ __all__ = [
     "audit_markdown_link_rot_and_internal_anchor_resolution_hygiene",
     "audit_markdown_math_latex_delimiter_and_macro_hygiene",
     "audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene",
+    "audit_markdown_fenced_code_block_language_and_secret_hygiene",
     "AnydocService",
 ]
 
@@ -8195,5 +8196,85 @@ AnyDocService.audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene = s
 )
 AnydocService.audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene = staticmethod(
     audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene
+)
+
+
+def audit_markdown_fenced_code_block_language_and_secret_hygiene(
+    documents: Any,
+    *,
+    max_code_line_length: int = 120,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §10.2 — AnyDoc Markdown Code-Block Language Tagging, Hardcoded Secret/Credential Pattern & Line-Length Hygiene Auditor."""
+    entries = documents if isinstance(documents, (list, tuple)) else []
+    valid_documents = [
+        doc
+        for doc in entries
+        if isinstance(doc, dict) and str(doc.get("doc_id") or "").strip()
+    ]
+
+    unclosed_fence_or_secret_leak_doc_ids: list[str] = []
+    untagged_language_or_long_line_doc_ids: list[str] = []
+
+    for doc in valid_documents:
+        did = str(doc.get("doc_id")).strip()
+        untagged_fenced_code_blocks_count = int(
+            doc.get("untagged_fenced_code_blocks_count", 0)
+            if doc.get("untagged_fenced_code_blocks_count") is not None
+            else 0
+        )
+        unclosed_code_fences_count = int(
+            doc.get("unclosed_code_fences_count", 0)
+            if doc.get("unclosed_code_fences_count") is not None
+            else 0
+        )
+        hardcoded_secret_or_token_patterns_count = int(
+            doc.get("hardcoded_secret_or_token_patterns_count", 0)
+            if doc.get("hardcoded_secret_or_token_patterns_count") is not None
+            else 0
+        )
+        max_observed_code_line_length = int(
+            doc.get("max_observed_code_line_length", 88)
+            if doc.get("max_observed_code_line_length") is not None
+            else 88
+        )
+
+        if (
+            unclosed_code_fences_count > 0
+            or hardcoded_secret_or_token_patterns_count > 0
+        ):
+            unclosed_fence_or_secret_leak_doc_ids.append(did)
+
+        if (
+            untagged_fenced_code_blocks_count > 0
+            or max_observed_code_line_length > max_code_line_length
+        ):
+            untagged_language_or_long_line_doc_ids.append(did)
+
+    if unclosed_fence_or_secret_leak_doc_ids:
+        code_block_hygiene_status = (
+            "CODE_BLOCK_SECRET_OR_UNCLOSED_FENCE_BREACH"
+        )
+    elif untagged_language_or_long_line_doc_ids:
+        code_block_hygiene_status = (
+            "CODE_BLOCK_UNTAGGED_OR_LINE_LENGTH_WARNING"
+        )
+    else:
+        code_block_hygiene_status = "CODE_BLOCK_HYGIENE_CLEAN"
+
+    return {
+        "evaluated_documents_count": len(valid_documents),
+        "unclosed_fence_or_secret_leak_doc_ids": unclosed_fence_or_secret_leak_doc_ids,
+        "untagged_language_or_long_line_doc_ids": untagged_language_or_long_line_doc_ids,
+        "code_block_hygiene_status": code_block_hygiene_status,
+        "is_code_block_hygiene_compliant": code_block_hygiene_status
+        == "CODE_BLOCK_HYGIENE_CLEAN",
+    }
+
+
+AnyDocService.audit_markdown_fenced_code_block_language_and_secret_hygiene = staticmethod(
+    audit_markdown_fenced_code_block_language_and_secret_hygiene
+)
+AnydocService.audit_markdown_fenced_code_block_language_and_secret_hygiene = staticmethod(
+    audit_markdown_fenced_code_block_language_and_secret_hygiene
 )
 

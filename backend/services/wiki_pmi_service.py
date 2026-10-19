@@ -2536,6 +2536,7 @@ __all__ = [
     "audit_wiki_observability_cardinality_and_trace_sampling",
     "audit_wiki_service_catalog_ownership_and_dependency_graph",
     "audit_wiki_tls_certificate_expiration_and_acme_renewal",
+    "audit_wiki_k8s_pdb_hpa_headroom_and_oomkill_eviction",
     "WikiPMIService",
 ]
 
@@ -7016,5 +7017,83 @@ def audit_wiki_tls_certificate_expiration_and_acme_renewal(
 
 WikiPMIService.audit_wiki_tls_certificate_expiration_and_acme_renewal = staticmethod(
     audit_wiki_tls_certificate_expiration_and_acme_renewal
+)
+
+
+def audit_wiki_k8s_pdb_hpa_headroom_and_oomkill_eviction(
+    workloads: Sequence[Mapping[str, Any]] | None,
+    *,
+    min_hpa_replica_headroom_pct: float = 20.0,
+    max_oomkill_restarts_last_7d: int = 0,
+) -> dict[str, Any]:
+    """PMI PMBOK §11.6 & §9.2 — Wiki Kubernetes PodDisruptionBudget (PDB), HPA Autoscaling Headroom & OOMKill Eviction Hygiene Auditor."""
+    valid_workloads = [
+        workload
+        for workload in (workloads or [])
+        if isinstance(workload, Mapping)
+        and str(workload.get("workload_id") or "").strip()
+    ]
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _num(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    oomkill_or_missing_pdb_workload_ids: list[str] = []
+    low_headroom_or_coupled_probes_workload_ids: list[str] = []
+
+    for workload in valid_workloads:
+        workload_id = str(workload.get("workload_id")).strip()
+        oomkill_restarts = _num(
+            workload.get("oomkill_restarts_last_7d"), 0.0
+        )
+        pdb_ok = _bool(
+            workload.get("pdb_configured_and_non_blocking"), True
+        )
+        headroom_pct = _num(
+            workload.get("hpa_replica_headroom_pct"), 35.0
+        )
+        topology_spread = _bool(
+            workload.get("multi_az_topology_spread_enforced"), True
+        )
+        probes_distinct = _bool(
+            workload.get("liveness_and_readiness_probes_distinct"), True
+        )
+
+        if (
+            oomkill_restarts > max_oomkill_restarts_last_7d
+            or not pdb_ok
+            or not topology_spread
+        ):
+            oomkill_or_missing_pdb_workload_ids.append(workload_id)
+
+        if (
+            headroom_pct < min_hpa_replica_headroom_pct
+            or not probes_distinct
+        ):
+            low_headroom_or_coupled_probes_workload_ids.append(workload_id)
+
+    if oomkill_or_missing_pdb_workload_ids:
+        k8s_resilience_status = "K8S_OOMKILL_OR_PDB_TOPOLOGY_BREACH"
+    elif low_headroom_or_coupled_probes_workload_ids:
+        k8s_resilience_status = "K8S_HPA_HEADROOM_OR_PROBE_WARNING"
+    else:
+        k8s_resilience_status = "K8S_WORKLOAD_RESILIENCE_OPTIMAL"
+
+    return {
+        "evaluated_workloads_count": len(valid_workloads),
+        "oomkill_or_missing_pdb_workload_ids": oomkill_or_missing_pdb_workload_ids,
+        "low_headroom_or_coupled_probes_workload_ids": low_headroom_or_coupled_probes_workload_ids,
+        "k8s_resilience_status": k8s_resilience_status,
+        "is_k8s_resilience_compliant": k8s_resilience_status
+        == "K8S_WORKLOAD_RESILIENCE_OPTIMAL",
+    }
+
+
+WikiPMIService.audit_wiki_k8s_pdb_hpa_headroom_and_oomkill_eviction = staticmethod(
+    audit_wiki_k8s_pdb_hpa_headroom_and_oomkill_eviction
 )
 

@@ -9472,3 +9472,159 @@ def test_audit_wiki_tls_certificate_expiration_and_acme_renewal_staticmethod_and
         in mod.__all__
     )
 
+
+
+def test_wiki_k8s_oomkill_or_pdb_topology_breach():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_k8s_pdb_hpa_headroom_and_oomkill_eviction,
+    )
+
+    res = audit_wiki_k8s_pdb_hpa_headroom_and_oomkill_eviction(
+        [
+            {
+                "workload_id": "WL-OOMKILLS",
+                "oomkill_restarts_last_7d": 3,
+            },
+            {
+                "workload_id": "WL-NO-PDB",
+                "pdb_configured_and_non_blocking": False,
+            },
+            {
+                "workload_id": "WL-SINGLE-AZ",
+                "multi_az_topology_spread_enforced": False,
+            },
+        ],
+        min_hpa_replica_headroom_pct=20.0,
+        max_oomkill_restarts_last_7d=0,
+    )
+    assert res["evaluated_workloads_count"] == 3
+    assert res["oomkill_or_missing_pdb_workload_ids"] == [
+        "WL-OOMKILLS",
+        "WL-NO-PDB",
+        "WL-SINGLE-AZ",
+    ]
+    assert res["low_headroom_or_coupled_probes_workload_ids"] == []
+    assert (
+        res["k8s_resilience_status"]
+        == "K8S_OOMKILL_OR_PDB_TOPOLOGY_BREACH"
+    )
+    assert res["is_k8s_resilience_compliant"] is False
+
+
+def test_wiki_k8s_headroom_or_coupled_probes_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_k8s_pdb_hpa_headroom_and_oomkill_eviction,
+    )
+
+    res = audit_wiki_k8s_pdb_hpa_headroom_and_oomkill_eviction(
+        [
+            {
+                "workload_id": "WL-NARROW-HEADROOM",
+                "hpa_replica_headroom_pct": 8.0,
+            },
+            {
+                "workload_id": "WL-COUPLED-PROBES",
+                "liveness_and_readiness_probes_distinct": False,
+            },
+        ],
+        min_hpa_replica_headroom_pct=20.0,
+        max_oomkill_restarts_last_7d=0,
+    )
+    assert res["evaluated_workloads_count"] == 2
+    assert res["oomkill_or_missing_pdb_workload_ids"] == []
+    assert res["low_headroom_or_coupled_probes_workload_ids"] == [
+        "WL-NARROW-HEADROOM",
+        "WL-COUPLED-PROBES",
+    ]
+    assert (
+        res["k8s_resilience_status"]
+        == "K8S_HPA_HEADROOM_OR_PROBE_WARNING"
+    )
+    assert res["is_k8s_resilience_compliant"] is False
+
+
+def test_wiki_k8s_boundaries_optimal_and_defaults():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_k8s_pdb_hpa_headroom_and_oomkill_eviction,
+    )
+
+    res = audit_wiki_k8s_pdb_hpa_headroom_and_oomkill_eviction(
+        [
+            {
+                "workload_id": "WL-BOUNDARY",
+                "hpa_replica_headroom_pct": 20.0,
+                "oomkill_restarts_last_7d": 0,
+            },
+            {"workload_id": "WL-ALL-DEFAULTS"},
+        ],
+        min_hpa_replica_headroom_pct=20.0,
+        max_oomkill_restarts_last_7d=0,
+    )
+    assert res["evaluated_workloads_count"] == 2
+    assert res["oomkill_or_missing_pdb_workload_ids"] == []
+    assert res["low_headroom_or_coupled_probes_workload_ids"] == []
+    assert (
+        res["k8s_resilience_status"]
+        == "K8S_WORKLOAD_RESILIENCE_OPTIMAL"
+    )
+    assert res["is_k8s_resilience_compliant"] is True
+
+
+def test_wiki_k8s_invalid_and_binding():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_k8s_pdb_hpa_headroom_and_oomkill_eviction,
+    )
+
+    empty = audit_wiki_k8s_pdb_hpa_headroom_and_oomkill_eviction(None)
+    assert empty["evaluated_workloads_count"] == 0
+    assert empty["oomkill_or_missing_pdb_workload_ids"] == []
+    assert empty["low_headroom_or_coupled_probes_workload_ids"] == []
+    assert (
+        empty["k8s_resilience_status"]
+        == "K8S_WORKLOAD_RESILIENCE_OPTIMAL"
+    )
+    assert empty["is_k8s_resilience_compliant"] is True
+
+    invalid = audit_wiki_k8s_pdb_hpa_headroom_and_oomkill_eviction(
+        [42, "not-a-dict", None, {"workload_id": "   "}]  # type: ignore[list-item]
+    )
+    assert invalid["evaluated_workloads_count"] == 0
+
+    defaults = audit_wiki_k8s_pdb_hpa_headroom_and_oomkill_eviction(
+        [
+            {
+                "workload_id": "WL-DEFAULTS",
+                "pdb_configured_and_non_blocking": None,
+                "oomkill_restarts_last_7d": None,
+                "hpa_replica_headroom_pct": None,
+                "multi_az_topology_spread_enforced": None,
+                "liveness_and_readiness_probes_distinct": None,
+            }
+        ]
+    )
+    assert defaults["evaluated_workloads_count"] == 1
+    assert (
+        defaults["k8s_resilience_status"]
+        == "K8S_WORKLOAD_RESILIENCE_OPTIMAL"
+    )
+    assert defaults["is_k8s_resilience_compliant"] is True
+
+    sample = [
+        {
+            "workload_id": "WL-1",
+            "hpa_replica_headroom_pct": 30.0,
+            "oomkill_restarts_last_7d": 0,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_k8s_pdb_hpa_headroom_and_oomkill_eviction(
+            sample
+        )
+        == audit_wiki_k8s_pdb_hpa_headroom_and_oomkill_eviction(sample)
+    )
+    assert (
+        "audit_wiki_k8s_pdb_hpa_headroom_and_oomkill_eviction"
+        in mod.__all__
+    )
