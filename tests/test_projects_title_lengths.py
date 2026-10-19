@@ -6926,3 +6926,150 @@ def test_validate_sprint_velocity_volatility_and_commitment_reliability_empty_an
         "validate_sprint_velocity_volatility_and_commitment_reliability"
         in mod.__all__
     )
+
+
+def test_validate_portfolio_frontier_constraint_breach_paths():
+    """Caso 1: techo de presupuesto excedido o desalineación estratégica -> PORTFOLIO_CONSTRAINT_BREACH."""
+    from backend.schemas.projects import (
+        validate_portfolio_efficient_frontier_and_budget_knapsack,
+    )
+
+    res_budget = validate_portfolio_efficient_frontier_and_budget_knapsack(
+        [
+            {
+                "project_id": "PRJ-01",
+                "expected_npv_return": 200000.0,
+                "risk_volatility_cost": 100000.0,
+                "required_capex_budget": 90000.0,
+                "strategic_fit_score": 80.0,
+                "is_selected_in_portfolio": True,
+            },
+            {
+                "project_id": "PRJ-02",
+                "expected_npv_return": 150000.0,
+                "risk_volatility_cost": 50000.0,
+                "required_capex_budget": 60000.0,
+                "strategic_fit_score": 70.0,
+                "is_selected_in_portfolio": True,
+            },
+        ],
+        total_portfolio_budget_cap=100000.0,
+    )
+    assert res_budget["total_candidates_evaluated"] == 2
+    assert res_budget["selected_projects_count"] == 2
+    assert res_budget["selected_total_capex"] == 150000.0
+    assert res_budget["is_budget_cap_exceeded"] is True
+    assert res_budget["portfolio_optimization_status"] == "PORTFOLIO_CONSTRAINT_BREACH"
+    assert res_budget["is_portfolio_frontier_compliant"] is False
+
+    # Alineación: seleccionado con fit bajo (cap no roto).
+    res_misaligned = validate_portfolio_efficient_frontier_and_budget_knapsack(
+        [
+            {
+                "project_id": "PRJ-03",
+                "expected_npv_return": 150000.0,
+                "risk_volatility_cost": 100000.0,
+                "required_capex_budget": 40000.0,
+                "strategic_fit_score": 50.0,
+                "is_selected_in_portfolio": True,
+            },
+        ]
+    )
+    assert res_misaligned["is_budget_cap_exceeded"] is False
+    assert res_misaligned["strategically_misaligned_selected_ids"] == ["PRJ-03"]
+    assert res_misaligned["portfolio_optimization_status"] == "PORTFOLIO_CONSTRAINT_BREACH"
+
+
+def test_validate_portfolio_frontier_suboptimal_warning_only():
+    """Caso 2: solo retornos dominados (ratio bajo) seleccionados -> SUBOPTIMAL_FRONTIER_WARNING."""
+    from backend.schemas.projects import (
+        validate_portfolio_efficient_frontier_and_budget_knapsack,
+    )
+
+    res = validate_portfolio_efficient_frontier_and_budget_knapsack(
+        [
+            {
+                "project_id": "PRJ-10",
+                "expected_npv_return": 100000.0,
+                "risk_volatility_cost": 100000.0,
+                "required_capex_budget": 30000.0,
+                "strategic_fit_score": 80.0,
+                "is_selected_in_portfolio": True,
+            },
+        ]
+    )
+    # ratio = 1.0 < 1.2 -> dominado; cap 30000 <= 100000; fit 80 >= 65.
+    assert res["total_candidates_evaluated"] == 1
+    assert res["selected_projects_count"] == 1
+    assert res["selected_total_capex"] == 30000.0
+    assert res["is_budget_cap_exceeded"] is False
+    assert res["dominated_suboptimal_selected_ids"] == ["PRJ-10"]
+    assert res["strategically_misaligned_selected_ids"] == []
+    assert res["portfolio_optimization_status"] == "SUBOPTIMAL_FRONTIER_WARNING"
+    assert res["is_portfolio_frontier_compliant"] is False
+
+    # Precisión: no seleccionado con mal ratio no empaña el resultado.
+    res_unselected = validate_portfolio_efficient_frontier_and_budget_knapsack(
+        [
+            {
+                "project_id": "PRJ-11",
+                "expected_npv_return": 10.0,
+                "risk_volatility_cost": 1.0,
+                "strategic_fit_score": 0.0,
+                "is_selected_in_portfolio": False,
+            },
+        ]
+    )
+    assert res_unselected["selected_projects_count"] == 0
+    assert res_unselected["selected_total_capex"] == 0.0
+    assert res_unselected["portfolio_optimization_status"] == "EFFICIENT_FRONTIER_OPTIMAL"
+
+
+def test_validate_portfolio_frontier_optimal_and_boundaries():
+    """Caso 3: fronteras exactas (ratio = min, fit = min, cap = límite) -> OPTIMAL."""
+    from backend.schemas.projects import (
+        validate_portfolio_efficient_frontier_and_budget_knapsack,
+    )
+
+    res = validate_portfolio_efficient_frontier_and_budget_knapsack(
+        [
+            {
+                "project_id": "PRJ-20",
+                "expected_npv_return": 120000.0,
+                "risk_volatility_cost": 100000.0,
+                "required_capex_budget": 100000.0,
+                "strategic_fit_score": 65.0,
+                "is_selected_in_portfolio": True,
+            },
+        ],
+        total_portfolio_budget_cap=100000.0,
+    )
+    # ratio 1.2 no < 1.2; fit 65 no < 65; cap 100000 no > 100000.
+    assert res["selected_projects_count"] == 1
+    assert res["selected_total_capex"] == 100000.0
+    assert res["is_budget_cap_exceeded"] is False
+    assert res["dominated_suboptimal_selected_ids"] == []
+    assert res["strategically_misaligned_selected_ids"] == []
+    assert res["portfolio_optimization_status"] == "EFFICIENT_FRONTIER_OPTIMAL"
+    assert res["is_portfolio_frontier_compliant"] is True
+
+
+def test_validate_portfolio_frontier_invalid_and_binding():
+    """Caso 4: entradas no-lista/no-dict y export en __all__."""
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_portfolio_efficient_frontier_and_budget_knapsack,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = validate_portfolio_efficient_frontier_and_budget_knapsack(payload)  # type: ignore[arg-type]
+        assert empty["total_candidates_evaluated"] == 0
+        assert empty["selected_projects_count"] == 0
+        assert empty["selected_total_capex"] == 0.0
+        assert empty["is_budget_cap_exceeded"] is False
+        assert empty["dominated_suboptimal_selected_ids"] == []
+        assert empty["strategically_misaligned_selected_ids"] == []
+        assert empty["portfolio_optimization_status"] == "EFFICIENT_FRONTIER_OPTIMAL"
+        assert empty["is_portfolio_frontier_compliant"] is True
+
+    assert "validate_portfolio_efficient_frontier_and_budget_knapsack" in mod.__all__

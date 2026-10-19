@@ -3808,6 +3808,7 @@ __all__ = [
     "validate_risk_probability_impact_matrix_and_appetite_thresholds",
     "validate_ccpm_fever_chart_and_buffer_consumption",
     "validate_sprint_velocity_volatility_and_commitment_reliability",
+    "validate_portfolio_efficient_frontier_and_budget_knapsack",
 ]
 
 
@@ -7678,4 +7679,73 @@ def validate_sprint_velocity_volatility_and_commitment_reliability(
         "predictability_status": predictability_status,
         "is_sprint_cadence_compliant": predictability_status == "PREDICTABLE_CADENCE",
         "recommendations": recommendations,
+    }
+
+
+def validate_portfolio_efficient_frontier_and_budget_knapsack(
+    candidates: Any,
+    *,
+    total_portfolio_budget_cap: float = 100000.0,
+    min_risk_adjusted_return_ratio: float = 1.2,
+    min_strategic_fit_score: float = 65.0,
+) -> Dict[str, object]:
+    """Validador PMBOK 1.2.3 y Standard for Portfolio Management.
+
+    Evalúa los proyectos seleccionados del portafolio: ratio de retorno
+    ajustado por riesgo (NPV / volatilidad), alineación estratégica y
+    sumatoria de CAPEX frente al techo presupuestario (knapsack).
+    """
+    entries = candidates if isinstance(candidates, list) else []
+    rows = [item for item in entries if isinstance(item, dict)]
+
+    selected_rows = [item for item in rows if item.get("is_selected_in_portfolio", False) is True]
+
+    selected_total_capex = 0.0
+    dominated_suboptimal_selected_ids: List[str] = []
+    strategically_misaligned_selected_ids: List[str] = []
+
+    for item in selected_rows:
+        project_id = item.get("project_id")
+        expected_return = item.get("expected_npv_return", 0.0)
+        volatility = item.get("risk_volatility_cost", 1.0)
+        required_capex = item.get("required_capex_budget", 0.0)
+        strategic_fit = item.get("strategic_fit_score", 0.0)
+
+        expected_val = expected_return if isinstance(expected_return, (int, float)) else 0.0
+        volatility_val = volatility if isinstance(volatility, (int, float)) else 0.0
+        capex_val = required_capex if isinstance(required_capex, (int, float)) else 0.0
+        strategic_val = strategic_fit if isinstance(strategic_fit, (int, float)) else 0.0
+
+        if volatility_val > 0:
+            ratio = round(expected_val / volatility_val, 2)
+        else:
+            ratio = 0.0
+
+        selected_total_capex += max(0.0, capex_val)
+
+        if ratio < min_risk_adjusted_return_ratio:
+            dominated_suboptimal_selected_ids.append(project_id)
+
+        if strategic_val < min_strategic_fit_score:
+            strategically_misaligned_selected_ids.append(project_id)
+
+    selected_total_capex = round(selected_total_capex, 2)
+    is_budget_cap_exceeded = selected_total_capex > total_portfolio_budget_cap
+
+    if is_budget_cap_exceeded or strategically_misaligned_selected_ids:
+        portfolio_optimization_status = "PORTFOLIO_CONSTRAINT_BREACH"
+    elif dominated_suboptimal_selected_ids:
+        portfolio_optimization_status = "SUBOPTIMAL_FRONTIER_WARNING"
+    else:
+        portfolio_optimization_status = "EFFICIENT_FRONTIER_OPTIMAL"
+
+    return {
+        "total_candidates_evaluated": len(rows),
+        "selected_projects_count": len(selected_rows),
+        "selected_total_capex": selected_total_capex,
+        "is_budget_cap_exceeded": is_budget_cap_exceeded,
+        "dominated_suboptimal_selected_ids": dominated_suboptimal_selected_ids,
+        "strategically_misaligned_selected_ids": strategically_misaligned_selected_ids,
+        "portfolio_optimization_status": portfolio_optimization_status,
+        "is_portfolio_frontier_compliant": portfolio_optimization_status == "EFFICIENT_FRONTIER_OPTIMAL",
     }

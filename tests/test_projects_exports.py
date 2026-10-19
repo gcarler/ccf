@@ -8692,3 +8692,115 @@ def test_audit_executive_report_data_privacy_pii_masking_and_residency_staticmet
         "audit_executive_report_data_privacy_pii_masking_and_residency"
         in mod.__all__
     )
+
+
+def test_audit_executive_report_wcag_accessibility_and_aria_compliance_critical_barrier():
+    from backend.services.project_export_service import (
+        audit_executive_report_wcag_accessibility_and_aria_compliance,
+    )
+
+    res = audit_executive_report_wcag_accessibility_and_aria_compliance(
+        [
+            {
+                "view_id": "VIEW-GANTT-CHART",
+                "lowest_text_contrast_ratio": 3.1,
+                "missing_aria_label_count": 4,
+                "has_keyboard_focus_trap": False,
+                "supports_prefers_reduced_motion": True,
+            },
+            {
+                "view_id": "VIEW-TASK-DRAWER",
+                "lowest_text_contrast_ratio": 5.2,
+                "missing_aria_label_count": 0,
+                "has_keyboard_focus_trap": True,
+                "supports_prefers_reduced_motion": True,
+            },
+        ],
+        min_contrast_ratio_aa=4.5,
+        max_missing_aria_labels=0,
+    )
+    assert res["total_views_evaluated"] == 2
+    assert res["contrast_failing_view_ids"] == ["VIEW-GANTT-CHART"]
+    assert res["aria_incomplete_view_ids"] == ["VIEW-GANTT-CHART"]
+    assert res["keyboard_trap_view_ids"] == ["VIEW-TASK-DRAWER"]
+    assert res["motion_unsafe_view_ids"] == []
+    assert res["accessibility_governance_status"] == "WCAG_CRITICAL_BARRIER"
+    assert res["is_wcag_aa_compliant"] is False
+
+
+def test_audit_executive_report_wcag_accessibility_and_aria_compliance_motion_warning():
+    from backend.services.project_export_service import (
+        audit_executive_report_wcag_accessibility_and_aria_compliance,
+    )
+
+    res = audit_executive_report_wcag_accessibility_and_aria_compliance(
+        [
+            {
+                "view_id": "VIEW-HERO-BANNER",
+                "lowest_text_contrast_ratio": 7.0,
+                "missing_aria_label_count": 0,
+                "has_keyboard_focus_trap": False,
+                "supports_prefers_reduced_motion": False,
+            }
+        ]
+    )
+    assert res["contrast_failing_view_ids"] == []
+    assert res["aria_incomplete_view_ids"] == []
+    assert res["keyboard_trap_view_ids"] == []
+    assert res["motion_unsafe_view_ids"] == ["VIEW-HERO-BANNER"]
+    assert res["accessibility_governance_status"] == "MOTION_PREFERENCE_WARNING"
+    assert res["is_wcag_aa_compliant"] is False
+
+
+def test_audit_executive_report_wcag_accessibility_and_aria_compliance_compliant_and_empty():
+    from backend.services.project_export_service import (
+        audit_executive_report_wcag_accessibility_and_aria_compliance,
+    )
+
+    empty = audit_executive_report_wcag_accessibility_and_aria_compliance(
+        [{"view_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_views_evaluated"] == 0
+    assert empty["accessibility_governance_status"] == "WCAG_AA_COMPLIANT"
+    assert empty["is_wcag_aa_compliant"] is True
+
+    compliant = audit_executive_report_wcag_accessibility_and_aria_compliance(
+        [
+            {
+                "view_id": "VIEW-PORTFOLIO-SUMMARY",
+                "lowest_text_contrast_ratio": 4.8,
+                "missing_aria_label_count": 0,
+                "has_keyboard_focus_trap": False,
+                "supports_prefers_reduced_motion": True,
+            }
+        ]
+    )
+    assert compliant["total_views_evaluated"] == 1
+    assert compliant["accessibility_governance_status"] == "WCAG_AA_COMPLIANT"
+    assert compliant["is_wcag_aa_compliant"] is True
+
+
+def test_audit_executive_report_wcag_accessibility_and_aria_compliance_staticmethod_and_dunder_all():
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_wcag_accessibility_and_aria_compliance,
+    )
+
+    sample = [
+        {
+            "view_id": "VIEW-99",
+            "lowest_text_contrast_ratio": 5.5,
+            "missing_aria_label_count": 0,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_wcag_accessibility_and_aria_compliance(
+            sample
+        )
+        == audit_executive_report_wcag_accessibility_and_aria_compliance(sample)
+    )
+    assert (
+        "audit_executive_report_wcag_accessibility_and_aria_compliance"
+        in mod.__all__
+    )

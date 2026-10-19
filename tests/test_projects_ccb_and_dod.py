@@ -8409,3 +8409,119 @@ def test_audit_test_pyramid_balance_and_mutation_coverage_gate_staticmethod_and_
     assert (
         "audit_test_pyramid_balance_and_mutation_coverage_gate" in mod.__all__
     )
+
+
+def test_audit_supply_chain_slsa_provenance_and_artifact_signing_tamper_risk():
+    from backend.services.project_ccb_service import (
+        audit_supply_chain_slsa_provenance_and_artifact_signing,
+    )
+
+    res = audit_supply_chain_slsa_provenance_and_artifact_signing(
+        [
+            {
+                "artifact_id": "IMG-API-GATEWAY",
+                "slsa_provenance_level": 2,
+                "is_cryptographically_signed_cosign": False,
+                "built_in_ephemeral_hermetic_runner": True,
+                "has_pinned_dependency_digests": True,
+            },
+            {
+                "artifact_id": "IMG-WORKER",
+                "slsa_provenance_level": 3,
+                "is_cryptographically_signed_cosign": True,
+                "built_in_ephemeral_hermetic_runner": False,
+                "has_pinned_dependency_digests": True,
+            },
+        ],
+        min_slsa_level=3,
+    )
+    assert res["total_artifacts_evaluated"] == 2
+    assert res["unsigned_artifact_ids"] == ["IMG-API-GATEWAY"]
+    assert res["insufficient_slsa_artifact_ids"] == [
+        "IMG-API-GATEWAY",
+        "IMG-WORKER",
+    ]
+    assert res["unpinned_digest_artifact_ids"] == []
+    assert res["supply_chain_status"] == "PROVENANCE_TAMPER_RISK"
+    assert res["is_slsa_supply_chain_compliant"] is False
+
+
+def test_audit_supply_chain_slsa_provenance_and_artifact_signing_digest_pinning_warning():
+    from backend.services.project_ccb_service import (
+        audit_supply_chain_slsa_provenance_and_artifact_signing,
+    )
+
+    res = audit_supply_chain_slsa_provenance_and_artifact_signing(
+        [
+            {
+                "artifact_id": "IMG-FRONTEND",
+                "slsa_provenance_level": 3,
+                "is_cryptographically_signed_cosign": True,
+                "built_in_ephemeral_hermetic_runner": True,
+                "has_pinned_dependency_digests": False,
+            }
+        ],
+        min_slsa_level=3,
+    )
+    assert res["unsigned_artifact_ids"] == []
+    assert res["insufficient_slsa_artifact_ids"] == []
+    assert res["unpinned_digest_artifact_ids"] == ["IMG-FRONTEND"]
+    assert res["supply_chain_status"] == "DIGEST_PINNING_WARNING"
+    assert res["is_slsa_supply_chain_compliant"] is False
+
+
+def test_audit_supply_chain_slsa_provenance_and_artifact_signing_verified_secure_and_empty():
+    from backend.services.project_ccb_service import (
+        audit_supply_chain_slsa_provenance_and_artifact_signing,
+    )
+
+    empty = audit_supply_chain_slsa_provenance_and_artifact_signing(
+        [{"artifact_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_artifacts_evaluated"] == 0
+    assert empty["supply_chain_status"] == "SLSA_VERIFIED_SECURE"
+    assert empty["is_slsa_supply_chain_compliant"] is True
+
+    secure = audit_supply_chain_slsa_provenance_and_artifact_signing(
+        [
+            {
+                "artifact_id": "IMG-CORE-SIGNED",
+                "slsa_provenance_level": 3,
+                "is_cryptographically_signed_cosign": True,
+                "built_in_ephemeral_hermetic_runner": True,
+                "has_pinned_dependency_digests": True,
+            }
+        ],
+        min_slsa_level=3,
+    )
+    assert secure["total_artifacts_evaluated"] == 1
+    assert secure["supply_chain_status"] == "SLSA_VERIFIED_SECURE"
+    assert secure["is_slsa_supply_chain_compliant"] is True
+
+
+def test_audit_supply_chain_slsa_provenance_and_artifact_signing_staticmethod_and_dunder_all():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_supply_chain_slsa_provenance_and_artifact_signing,
+    )
+
+    sample = [
+        {
+            "artifact_id": "IMG-99",
+            "slsa_provenance_level": 4,
+            "is_cryptographically_signed_cosign": True,
+            "built_in_ephemeral_hermetic_runner": True,
+            "has_pinned_dependency_digests": True,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_supply_chain_slsa_provenance_and_artifact_signing(
+            sample
+        )
+        == audit_supply_chain_slsa_provenance_and_artifact_signing(sample)
+    )
+    assert (
+        "audit_supply_chain_slsa_provenance_and_artifact_signing"
+        in mod.__all__
+    )

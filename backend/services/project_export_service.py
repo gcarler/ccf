@@ -2999,6 +2999,7 @@ __all__ = [
     "audit_executive_report_esg_carbon_footprint_and_green_cloud_pue",
     "audit_executive_report_dora_four_keys_and_delivery_stability",
     "audit_executive_report_data_privacy_pii_masking_and_residency",
+    "audit_executive_report_wcag_accessibility_and_aria_compliance",
     "ProjectExportService",
 ]
 
@@ -6766,4 +6767,105 @@ def audit_executive_report_data_privacy_pii_masking_and_residency(
 
 ProjectExportService.audit_executive_report_data_privacy_pii_masking_and_residency = staticmethod(
     audit_executive_report_data_privacy_pii_masking_and_residency
+)
+
+
+def audit_executive_report_wcag_accessibility_and_aria_compliance(
+    views: list[dict[str, Any]],
+    *,
+    min_contrast_ratio_aa: float = 4.5,
+    max_missing_aria_labels: int = 0,
+) -> dict[str, Any]:
+    """PMI PMBOK §8.2 & §10.2 — Executive Report WCAG 2.2 AA Accessibility Contrast, Screen-Reader ARIA & Keyboard Trap Compliance Auditor."""
+    valid_views: list[dict[str, Any]] = []
+    if isinstance(views, (list, tuple)):
+        for item in views:
+            if not isinstance(item, dict):
+                continue
+            vid = str(item.get("view_id") or "").strip()
+            if not vid:
+                continue
+            valid_views.append({**item, "_vid": vid})
+
+    if not valid_views:
+        return {
+            "total_views_evaluated": 0,
+            "contrast_failing_view_ids": [],
+            "aria_incomplete_view_ids": [],
+            "keyboard_trap_view_ids": [],
+            "motion_unsafe_view_ids": [],
+            "accessibility_governance_status": "WCAG_AA_COMPLIANT",
+            "is_wcag_aa_compliant": True,
+            "recommendations": [],
+        }
+
+    contrast_failing_view_ids: list[str] = []
+    aria_incomplete_view_ids: list[str] = []
+    keyboard_trap_view_ids: list[str] = []
+    motion_unsafe_view_ids: list[str] = []
+
+    for vw in valid_views:
+        vid = vw["_vid"]
+        contrast = float(
+            vw.get("lowest_text_contrast_ratio", 4.5)
+            if vw.get("lowest_text_contrast_ratio") is not None
+            else 4.5
+        )
+        missing_aria = max(0, int(vw.get("missing_aria_label_count", 0) or 0))
+        has_trap = bool(vw.get("has_keyboard_focus_trap", False))
+        supports_motion = bool(vw.get("supports_prefers_reduced_motion", True))
+
+        if contrast < min_contrast_ratio_aa:
+            contrast_failing_view_ids.append(vid)
+        if missing_aria > max_missing_aria_labels:
+            aria_incomplete_view_ids.append(vid)
+        if has_trap:
+            keyboard_trap_view_ids.append(vid)
+        if not supports_motion:
+            motion_unsafe_view_ids.append(vid)
+
+    recommendations: list[str] = []
+    if keyboard_trap_view_ids:
+        recommendations.append(
+            f"Eliminate keyboard focus traps and restore Esc/Tab navigation in view(s): {', '.join(keyboard_trap_view_ids)}."
+        )
+    if contrast_failing_view_ids:
+        recommendations.append(
+            f"Increase foreground/background luminance contrast ratio to >= {min_contrast_ratio_aa}:1 (WCAG 2.2 AA) in view(s): {', '.join(contrast_failing_view_ids)}."
+        )
+    if aria_incomplete_view_ids:
+        recommendations.append(
+            f"Add accessible ARIA labels/roles (max missing <= {max_missing_aria_labels}) for screen readers in view(s): {', '.join(aria_incomplete_view_ids)}."
+        )
+    if motion_unsafe_view_ids:
+        recommendations.append(
+            f"Honor 'prefers-reduced-motion' CSS media query for vestibular accessibility in view(s): {', '.join(motion_unsafe_view_ids)}."
+        )
+
+    if (
+        keyboard_trap_view_ids
+        or contrast_failing_view_ids
+        or aria_incomplete_view_ids
+    ):
+        accessibility_governance_status = "WCAG_CRITICAL_BARRIER"
+    elif motion_unsafe_view_ids:
+        accessibility_governance_status = "MOTION_PREFERENCE_WARNING"
+    else:
+        accessibility_governance_status = "WCAG_AA_COMPLIANT"
+
+    return {
+        "total_views_evaluated": len(valid_views),
+        "contrast_failing_view_ids": contrast_failing_view_ids,
+        "aria_incomplete_view_ids": aria_incomplete_view_ids,
+        "keyboard_trap_view_ids": keyboard_trap_view_ids,
+        "motion_unsafe_view_ids": motion_unsafe_view_ids,
+        "accessibility_governance_status": accessibility_governance_status,
+        "is_wcag_aa_compliant": accessibility_governance_status
+        == "WCAG_AA_COMPLIANT",
+        "recommendations": recommendations,
+    }
+
+
+ProjectExportService.audit_executive_report_wcag_accessibility_and_aria_compliance = staticmethod(
+    audit_executive_report_wcag_accessibility_and_aria_compliance
 )

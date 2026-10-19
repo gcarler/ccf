@@ -2842,6 +2842,7 @@ __all__ = [
     "audit_architectural_fitness_functions_and_coupling_drift",
     "audit_api_backward_compatibility_and_contract_versioning",
     "audit_test_pyramid_balance_and_mutation_coverage_gate",
+    "audit_supply_chain_slsa_provenance_and_artifact_signing",
     "ProjectCCBService",
 ]
 
@@ -6481,4 +6482,87 @@ def audit_test_pyramid_balance_and_mutation_coverage_gate(
 
 ProjectCCBService.audit_test_pyramid_balance_and_mutation_coverage_gate = staticmethod(
     audit_test_pyramid_balance_and_mutation_coverage_gate
+)
+
+
+def audit_supply_chain_slsa_provenance_and_artifact_signing(
+    artifacts: list[dict[str, Any]],
+    *,
+    min_slsa_level: int = 3,
+) -> dict[str, Any]:
+    """PMI PMBOK §11.6 & §12.3 — CCB Supply Chain SLSA Provenance Level, Artifact Cryptographic Signature & Hermetic Build Isolation Auditor."""
+    valid_artifacts: list[dict[str, Any]] = []
+    if isinstance(artifacts, (list, tuple)):
+        for item in artifacts:
+            if not isinstance(item, dict):
+                continue
+            aid = str(item.get("artifact_id") or "").strip()
+            if not aid:
+                continue
+            valid_artifacts.append({**item, "_aid": aid})
+
+    if not valid_artifacts:
+        return {
+            "total_artifacts_evaluated": 0,
+            "unsigned_artifact_ids": [],
+            "insufficient_slsa_artifact_ids": [],
+            "unpinned_digest_artifact_ids": [],
+            "supply_chain_status": "SLSA_VERIFIED_SECURE",
+            "is_slsa_supply_chain_compliant": True,
+            "recommendations": [],
+        }
+
+    unsigned_artifact_ids: list[str] = []
+    insufficient_slsa_artifact_ids: list[str] = []
+    unpinned_digest_artifact_ids: list[str] = []
+
+    for art in valid_artifacts:
+        aid = art["_aid"]
+        slsa_lvl = max(0, int(art.get("slsa_provenance_level", 0) or 0))
+        is_signed = bool(art.get("is_cryptographically_signed_cosign", False))
+        is_hermetic = bool(art.get("built_in_ephemeral_hermetic_runner", False))
+        has_pinned = bool(art.get("has_pinned_dependency_digests", True))
+
+        if not is_signed:
+            unsigned_artifact_ids.append(aid)
+        if slsa_lvl < min_slsa_level or not is_hermetic:
+            insufficient_slsa_artifact_ids.append(aid)
+        if not has_pinned:
+            unpinned_digest_artifact_ids.append(aid)
+
+    recommendations: list[str] = []
+    if unsigned_artifact_ids:
+        recommendations.append(
+            f"Sign build artifacts cryptographically with Cosign/Sigstore transparency log for artifact(s): {', '.join(unsigned_artifact_ids)}."
+        )
+    if insufficient_slsa_artifact_ids:
+        recommendations.append(
+            f"Enforce ephemeral hermetic runners and SLSA Provenance Level >= {min_slsa_level} for artifact(s): {', '.join(insufficient_slsa_artifact_ids)}."
+        )
+    if unpinned_digest_artifact_ids:
+        recommendations.append(
+            f"Pin base images and dependencies by immutable SHA-256 digests for artifact(s): {', '.join(unpinned_digest_artifact_ids)}."
+        )
+
+    if unsigned_artifact_ids or insufficient_slsa_artifact_ids:
+        supply_chain_status = "PROVENANCE_TAMPER_RISK"
+    elif unpinned_digest_artifact_ids:
+        supply_chain_status = "DIGEST_PINNING_WARNING"
+    else:
+        supply_chain_status = "SLSA_VERIFIED_SECURE"
+
+    return {
+        "total_artifacts_evaluated": len(valid_artifacts),
+        "unsigned_artifact_ids": unsigned_artifact_ids,
+        "insufficient_slsa_artifact_ids": insufficient_slsa_artifact_ids,
+        "unpinned_digest_artifact_ids": unpinned_digest_artifact_ids,
+        "supply_chain_status": supply_chain_status,
+        "is_slsa_supply_chain_compliant": supply_chain_status
+        == "SLSA_VERIFIED_SECURE",
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.audit_supply_chain_slsa_provenance_and_artifact_signing = staticmethod(
+    audit_supply_chain_slsa_provenance_and_artifact_signing
 )
