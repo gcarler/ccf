@@ -5546,6 +5546,7 @@ __all__ = [
     "evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim",
     "evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss",
     "evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun",
+    "evaluate_evm_termination_for_convenience_t4c_settlement_proposal",
     "ProjectEVMService",
 ]
 
@@ -12004,4 +12005,123 @@ def evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun(
 
 ProjectEVMService.evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun = staticmethod(
     evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun
+)
+
+
+def evaluate_evm_termination_for_convenience_t4c_settlement_proposal(
+    total_contract_ceiling: float,
+    costs_incurred_to_date: float,
+    demobilization_and_settlement_expenses: float,
+    *,
+    claimed_anticipatory_profit_on_unperformed_work: float = 0.0,
+    reasonable_profit_rate_on_performed_pct: float = 8.0,
+    estimated_cost_to_complete_unperformed: float = 0.0,
+    payments_already_received: float = 0.0,
+    proposal_submitted_days_after_t4c: int = 90,
+    max_t4c_proposal_deadline_days: int = 365,
+) -> dict[str, Any]:
+    """PMBOK §12.3 & §7.4 — Evalúa la Termination for Convenience (T4C, FAR 52.249-2) de contratos de construcción: settlement proposal con costo incurrido, profit razonable sobre trabajo performed, allowance de demobilization y settlement expenses, cap del techo del contrato, ajuste de contrato en pérdida (loss-ratio, profit a 0), qué es neto tras pagos recibidos y la barra del profit anticipatorio sobre trabajo unperformed (PMBOK §12.3, prohibido bajo FAR 52.249-2).
+
+    - `indicated_total_cost_at_completion = max(0, incurrido)
+      + max(0, estimado_a_completar)`.
+    - `is_loss_contract`: indicado > techo (con techo > 0) -> profit a 0.
+    - `allowable_profit_on_performed`: incurrido * tasa (%), 0.0 si loss.
+    - `gross_settlement_before_cap`: incurrido + profit + demobilización.
+    - `capped_gross_settlement`: min(gross, techo + demobilización) si hay
+      techo > 0; gross sin cap si no lo hay.
+    - `net_t4c_settlement_payable`: capped + menos pagos recibidos (>= 0).
+    - `proposal_timely`: `0 <= días desde la T4C <= plazo (365)`.
+    - `disallowed_anticipatory_profit_claimed`: profit sobre trabajo
+      unperformed > 0 (brecha crítica en precedencia, junto con la
+      presentación fuera del plazo).
+    - Estados: 'CRITICAL_DISALLOWED_ANTICIPATORY_PROFIT_OR_UNTIMELY_T4C_BREACH' |
+      'LOSS_CONTRACT_PROFIT_ZEROED_OR_CAPPED_WARNING' (loss o capped < gross)
+      | 'T4C_EQUITABLE_SETTLEMENT_CLEAN'.
+    """
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _int(value: Any, default: int) -> int:
+        if isinstance(value, bool) or not isinstance(value, int):
+            return default
+        return value
+
+    def _float(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    ceiling = _float(total_contract_ceiling, 0.0)
+    incurred = _float(costs_incurred_to_date, 0.0)
+    demob = _float(demobilization_and_settlement_expenses, 0.0)
+    anticipatory_claim = _float(
+        claimed_anticipatory_profit_on_unperformed_work, 0.0
+    )
+    profit_rate = _float(reasonable_profit_rate_on_performed_pct, 8.0)
+    est_to_complete = _float(estimated_cost_to_complete_unperformed, 0.0)
+    received = _float(payments_already_received, 0.0)
+    submitted_days = _int(proposal_submitted_days_after_t4c, 90)
+    deadline_days = _int(max_t4c_proposal_deadline_days, 365)
+
+    incurred_positive = max(0.0, incurred)
+    demob_positive = max(0.0, demob)
+    ceiling_positive = max(0.0, ceiling)
+
+    indicated_total_cost_at_completion = (
+        incurred_positive + max(0.0, est_to_complete)
+    )
+    is_loss_contract = (
+        indicated_total_cost_at_completion > ceiling_positive
+        and ceiling > 0
+    )
+
+    if is_loss_contract:
+        allowable_profit_on_performed = 0.0
+    else:
+        allowable_profit_on_performed = round(
+            incurred_positive * (max(0.0, profit_rate) / 100.0), 2
+        )
+
+    gross_settlement_before_cap = round(
+        incurred_positive + allowable_profit_on_performed + demob_positive, 2
+    )
+
+    if ceiling > 0:
+        capped_gross_settlement = round(
+            min(
+                gross_settlement_before_cap,
+                ceiling_positive + demob_positive,
+            ),
+            2,
+        )
+    else:
+        capped_gross_settlement = gross_settlement_before_cap
+
+    net_t4c_settlement_payable = round(
+        max(0.0, capped_gross_settlement - max(0.0, received)), 2
+    )
+
+    proposal_timely = 0 <= submitted_days <= deadline_days
+    disallowed_anticipatory_profit_claimed = anticipatory_claim > 0.0
+
+    if disallowed_anticipatory_profit_claimed or (not proposal_timely):
+        t4c_settlement_status = "CRITICAL_DISALLOWED_ANTICIPATORY_PROFIT_OR_UNTIMELY_T4C_BREACH"
+    elif is_loss_contract or gross_settlement_before_cap > capped_gross_settlement:
+        t4c_settlement_status = "LOSS_CONTRACT_PROFIT_ZEROED_OR_CAPPED_WARNING"
+    else:
+        t4c_settlement_status = "T4C_EQUITABLE_SETTLEMENT_CLEAN"
+
+    return {
+        "is_loss_contract": is_loss_contract,
+        "allowable_profit_on_performed": allowable_profit_on_performed,
+        "gross_settlement_before_cap": gross_settlement_before_cap,
+        "capped_gross_settlement": capped_gross_settlement,
+        "net_t4c_settlement_payable": net_t4c_settlement_payable,
+        "proposal_timely": proposal_timely,
+        "t4c_settlement_status": t4c_settlement_status,
+    }
+
+
+ProjectEVMService.evaluate_evm_termination_for_convenience_t4c_settlement_proposal = staticmethod(
+    evaluate_evm_termination_for_convenience_t4c_settlement_proposal
 )

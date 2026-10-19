@@ -2874,6 +2874,7 @@ __all__ = [
     "audit_vault_secret_lease_ttl_and_dynamic_credential_revocation_gate",
     "audit_wasm_wasi_sandbox_capability_and_fuel_metering_gate",
     "audit_db_connection_pool_saturation_and_deadlock_gate",
+    "audit_waf_owasp_crs_anomaly_threshold_and_rate_limit_gate",
     "ProjectCCBService",
 ]
 
@@ -9485,4 +9486,102 @@ def audit_db_connection_pool_saturation_and_deadlock_gate(
 
 ProjectCCBService.audit_db_connection_pool_saturation_and_deadlock_gate = staticmethod(
     audit_db_connection_pool_saturation_and_deadlock_gate
+)
+
+
+def audit_waf_owasp_crs_anomaly_threshold_and_rate_limit_gate(
+    policies: list[dict[str, Any]],
+    *,
+    max_inbound_anomaly_threshold: int = 5,
+    max_false_positive_rate_pct: float = 1.0,
+) -> dict[str, Any]:
+    """PMBOK §8.3 & §11.6 — CCB CDN / API Gateway WAF OWASP CRS Anomaly Score Threshold, Bot Rate-Limiting Token-Bucket & False-Positive Bypass Gate Auditor."""
+    policy_evaluations: list[dict[str, Any]] = []
+    critical_policies: list[str] = []
+    warning_policies: list[str] = []
+    max_observed_fp_rate_pct = 0.0
+
+    for item in policies or []:
+        if not isinstance(item, Mapping):
+            continue
+        policy_id = str(item.get("policy_id") or "").strip() or "UNKNOWN_POLICY"
+        waf_enforcement_mode = (
+            str(item.get("waf_enforcement_mode") or "BLOCK").strip().upper()
+        )
+        raw_threshold = item.get("inbound_anomaly_score_threshold", 5)
+        inbound_anomaly_score_threshold = int(
+            5 if raw_threshold is None else raw_threshold
+        )
+        token_bucket_rate_limit_enabled = bool(
+            item.get("token_bucket_rate_limit_enabled", True)
+        )
+        wildcard_ip_allowlist_bypass_present = bool(
+            item.get("wildcard_ip_allowlist_bypass_present", False)
+        )
+        sqli_xss_rce_rules_enabled = bool(
+            item.get("sqli_xss_rce_rules_enabled", True)
+        )
+        raw_fp = item.get("false_positive_block_rate_pct", 0.1)
+        false_positive_block_rate_pct = round(
+            float(0.1 if raw_fp is None else raw_fp), 4
+        )
+        raw_paranoia = item.get("paranoia_level", 2)
+        paranoia_level = int(2 if raw_paranoia is None else raw_paranoia)
+
+        max_observed_fp_rate_pct = max(
+            max_observed_fp_rate_pct, false_positive_block_rate_pct
+        )
+
+        critical_waf_violation = (
+            waf_enforcement_mode != "BLOCK"
+            or wildcard_ip_allowlist_bypass_present is True
+            or not sqli_xss_rce_rules_enabled
+            or not token_bucket_rate_limit_enabled
+            or inbound_anomaly_score_threshold > max_inbound_anomaly_threshold
+        )
+        waf_tuning_warning = (not critical_waf_violation) and (
+            false_positive_block_rate_pct > max_false_positive_rate_pct
+            or paranoia_level < 2
+        )
+
+        if critical_waf_violation:
+            critical_policies.append(policy_id)
+        elif waf_tuning_warning:
+            warning_policies.append(policy_id)
+
+        policy_evaluations.append(
+            {
+                "policy_id": policy_id,
+                "waf_enforcement_mode": waf_enforcement_mode,
+                "inbound_anomaly_score_threshold": inbound_anomaly_score_threshold,
+                "token_bucket_rate_limit_enabled": token_bucket_rate_limit_enabled,
+                "wildcard_ip_allowlist_bypass_present": wildcard_ip_allowlist_bypass_present,
+                "sqli_xss_rce_rules_enabled": sqli_xss_rce_rules_enabled,
+                "false_positive_block_rate_pct": false_positive_block_rate_pct,
+                "paranoia_level": paranoia_level,
+                "critical_waf_violation": critical_waf_violation,
+                "waf_tuning_warning": waf_tuning_warning,
+            }
+        )
+
+    if critical_policies:
+        status = "CRITICAL"
+    elif warning_policies:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "status": status,
+        "release_freeze_required": status == "CRITICAL",
+        "evaluated_policies_count": len(policy_evaluations),
+        "critical_policies": critical_policies,
+        "warning_policies": warning_policies,
+        "max_observed_fp_rate_pct": max_observed_fp_rate_pct,
+        "policy_evaluations": policy_evaluations,
+    }
+
+
+ProjectCCBService.audit_waf_owasp_crs_anomaly_threshold_and_rate_limit_gate = staticmethod(
+    audit_waf_owasp_crs_anomaly_threshold_and_rate_limit_gate
 )

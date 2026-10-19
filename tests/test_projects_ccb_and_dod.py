@@ -12475,3 +12475,104 @@ def test_audit_db_connection_pool_saturation_and_deadlock_gate_empty_and_binding
         "audit_db_connection_pool_saturation_and_deadlock_gate"
         in mod.__all__
     )
+
+
+def test_audit_waf_owasp_crs_anomaly_threshold_and_rate_limit_gate_healthy():
+    from backend.services.project_ccb_service import (
+        audit_waf_owasp_crs_anomaly_threshold_and_rate_limit_gate,
+    )
+
+    res = audit_waf_owasp_crs_anomaly_threshold_and_rate_limit_gate(
+        [
+            {
+                "policy_id": "waf-edge-graphql-prod",
+                "waf_enforcement_mode": "BLOCK",
+                "inbound_anomaly_score_threshold": 5,
+                "token_bucket_rate_limit_enabled": True,
+                "wildcard_ip_allowlist_bypass_present": False,
+                "sqli_xss_rce_rules_enabled": True,
+                "false_positive_block_rate_pct": 0.25,
+                "paranoia_level": 2,
+            }
+        ]
+    )
+    assert res["status"] == "HEALTHY"
+    assert res["release_freeze_required"] is False
+    assert res["evaluated_policies_count"] == 1
+    assert res["critical_policies"] == []
+    assert res["warning_policies"] == []
+    assert res["max_observed_fp_rate_pct"] == 0.25
+
+
+def test_audit_waf_owasp_crs_anomaly_threshold_and_rate_limit_gate_warning():
+    from backend.services.project_ccb_service import (
+        audit_waf_owasp_crs_anomaly_threshold_and_rate_limit_gate,
+    )
+
+    res = audit_waf_owasp_crs_anomaly_threshold_and_rate_limit_gate(
+        [
+            {
+                "policy_id": "waf-noisy-paranoia1",
+                "waf_enforcement_mode": "BLOCK",
+                "inbound_anomaly_score_threshold": 5,
+                "token_bucket_rate_limit_enabled": True,
+                "wildcard_ip_allowlist_bypass_present": False,
+                "sqli_xss_rce_rules_enabled": True,
+                "false_positive_block_rate_pct": 2.4,
+                "paranoia_level": 1,
+            }
+        ]
+    )
+    assert res["status"] == "WARNING"
+    assert res["release_freeze_required"] is False
+    assert res["critical_policies"] == []
+    assert res["warning_policies"] == ["waf-noisy-paranoia1"]
+    assert res["max_observed_fp_rate_pct"] == 2.4
+
+
+def test_audit_waf_owasp_crs_anomaly_threshold_and_rate_limit_gate_critical():
+    from backend.services.project_ccb_service import (
+        audit_waf_owasp_crs_anomaly_threshold_and_rate_limit_gate,
+    )
+
+    res = audit_waf_owasp_crs_anomaly_threshold_and_rate_limit_gate(
+        [
+            {
+                "policy_id": "waf-count-only-bypassed",
+                "waf_enforcement_mode": "COUNT",
+                "inbound_anomaly_score_threshold": 15,
+                "token_bucket_rate_limit_enabled": False,
+                "wildcard_ip_allowlist_bypass_present": True,
+                "sqli_xss_rce_rules_enabled": False,
+                "false_positive_block_rate_pct": 0.0,
+                "paranoia_level": 1,
+            }
+        ]
+    )
+    assert res["status"] == "CRITICAL"
+    assert res["release_freeze_required"] is True
+    assert res["critical_policies"] == ["waf-count-only-bypassed"]
+
+
+def test_audit_waf_owasp_crs_anomaly_threshold_and_rate_limit_gate_empty_and_binding():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_waf_owasp_crs_anomaly_threshold_and_rate_limit_gate,
+    )
+
+    empty = audit_waf_owasp_crs_anomaly_threshold_and_rate_limit_gate([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["release_freeze_required"] is False
+    assert empty["evaluated_policies_count"] == 0
+    assert empty["max_observed_fp_rate_pct"] == 0.0
+    assert (
+        ProjectCCBService.audit_waf_owasp_crs_anomaly_threshold_and_rate_limit_gate(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_waf_owasp_crs_anomaly_threshold_and_rate_limit_gate"
+        in mod.__all__
+    )

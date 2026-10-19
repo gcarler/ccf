@@ -12345,3 +12345,214 @@ def test_dsc_geotechnical_zero_overrun_guards_and_field_reversion():
         "equitable_adjustment_recoverable": 0.0,
         "dsc_claim_status": "WITHIN_GBR_GEOTECHNICAL_BASELINE_CLEAN",
     }
+
+
+def test_t4c_settlement_clean():
+    """Settlement equitativo sin loss, sin cap activo ni profit anticipatorio -> 'T4C_EQUITABLE_SETTLEMENT_CLEAN'."""
+    import backend.services.project_evm_service as evm_module
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_termination_for_convenience_t4c_settlement_proposal,
+    )
+
+    # Incurrido 400k sobre techo 1M: profit 32000, gross 452000,
+    # cap = min(452000, 1M + 20000) = 452000 sin truncamiento -> net 152000.
+    res = evaluate_evm_termination_for_convenience_t4c_settlement_proposal(
+        1000000.0,
+        400000.0,
+        20000.0,
+        payments_already_received=300000.0,
+    )
+    assert res == {
+        "is_loss_contract": False,
+        "allowable_profit_on_performed": 32000.0,
+        "gross_settlement_before_cap": 452000.0,
+        "capped_gross_settlement": 452000.0,
+        "net_t4c_settlement_payable": 152000.0,
+        "proposal_timely": True,
+        "t4c_settlement_status": "T4C_EQUITABLE_SETTLEMENT_CLEAN",
+    }
+    # Sin techo (0.0) el cap no aplica: gross pasa intacto a capped.
+    no_ceiling = evaluate_evm_termination_for_convenience_t4c_settlement_proposal(
+        0.0, 50000.0, 5000.0,
+    )
+    assert no_ceiling["gross_settlement_before_cap"] == 59000.0  # 50000 + profit 4000 (8%) + 5000
+    assert no_ceiling["capped_gross_settlement"] == 59000.0
+    assert no_ceiling["is_loss_contract"] is False
+    assert no_ceiling["t4c_settlement_status"] == "T4C_EQUITABLE_SETTLEMENT_CLEAN"
+    # Sin pagos recibidos: net == capped.
+    no_payments = evaluate_evm_termination_for_convenience_t4c_settlement_proposal(
+        100000.0, 40000.0, 5000.0,
+    )
+    assert no_payments["net_t4c_settlement_payable"] == 48200.0
+    assert (
+        ProjectEVMService.evaluate_evm_termination_for_convenience_t4c_settlement_proposal(
+            1000000.0, 400000.0, 20000.0, payments_already_received=300000.0
+        )
+        == res
+    )
+    assert "evaluate_evm_termination_for_convenience_t4c_settlement_proposal" in evm_module.__all__
+
+
+def test_t4c_settlement_loss_contract_and_cap_warning():
+    """Contrato en pérdida (profit a 0) o cap que trunca el gross -> 'LOSS_CONTRACT_PROFIT_ZEROED_OR_CAPPED_WARNING'."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_termination_for_convenience_t4c_settlement_proposal,
+    )
+
+    # Loss: indicado 1.2M > techo 1M -> profit 0, gross 520000 < cap (1M+20k)
+    # sin truncar -> net 420000.
+    loss = evaluate_evm_termination_for_convenience_t4c_settlement_proposal(
+        1000000.0,
+        500000.0,
+        20000.0,
+        estimated_cost_to_complete_unperformed=700000.0,
+        payments_already_received=100000.0,
+    )
+    assert loss == {
+        "is_loss_contract": True,
+        "allowable_profit_on_performed": 0.0,
+        "gross_settlement_before_cap": 520000.0,
+        "capped_gross_settlement": 520000.0,
+        "net_t4c_settlement_payable": 420000.0,
+        "proposal_timely": True,
+        "t4c_settlement_status": "LOSS_CONTRACT_PROFIT_ZEROED_OR_CAPPED_WARNING",
+    }
+    # Cap presente pero sin truncamiento ni loss: indicado 50k <= techo 100k
+    # -> profit 4000, gross 59000, cap min(59000, 105000) = 59000 -> CLEAN.
+    cap_no_truncation = evaluate_evm_termination_for_convenience_t4c_settlement_proposal(
+        100000.0,
+        50000.0,
+        5000.0,
+    )
+    assert cap_no_truncation["is_loss_contract"] is False
+    assert cap_no_truncation["capped_gross_settlement"] == 59000.0
+    assert cap_no_truncation["t4c_settlement_status"] == "T4C_EQUITABLE_SETTLEMENT_CLEAN"
+
+    # Cap activo sin loss: rate custom 12% con incurrido igual al techo ->
+    # indicado 100k NO es loss (no es >), profit 12000, gross 117000 >
+    # cap 105000 (techo 100k + demob 5k) -> truncated WARNING.
+    capped = evaluate_evm_termination_for_convenience_t4c_settlement_proposal(
+        100000.0,
+        100000.0,
+        5000.0,
+        reasonable_profit_rate_on_performed_pct=12.0,
+    )
+    assert capped["is_loss_contract"] is False
+    assert capped["allowable_profit_on_performed"] == 12000.0
+    assert capped["gross_settlement_before_cap"] == 117000.0
+    assert capped["capped_gross_settlement"] == 105000.0
+    assert capped["net_t4c_settlement_payable"] == 105000.0
+    assert capped["t4c_settlement_status"] == "LOSS_CONTRACT_PROFIT_ZEROED_OR_CAPPED_WARNING"
+
+    # Frontera de loss: indicado exactamente igual al techo NO es loss, pero
+    # el profit 8% eleva el gross por encima del cap -> WARNING truncado.
+    at_loss_boundary = evaluate_evm_termination_for_convenience_t4c_settlement_proposal(
+        100000.0,
+        100000.0,
+        5000.0,
+    )
+    assert at_loss_boundary["is_loss_contract"] is False
+    assert at_loss_boundary["gross_settlement_before_cap"] == 113000.0
+    assert at_loss_boundary["capped_gross_settlement"] == 105000.0
+    assert at_loss_boundary["t4c_settlement_status"] == "LOSS_CONTRACT_PROFIT_ZEROED_OR_CAPPED_WARNING"
+    # Sin estimado a completar pero incurrido bajo: no loss y sin cap activo -> CLEAN
+    modest = evaluate_evm_termination_for_convenience_t4c_settlement_proposal(
+        500000.0,
+        100000.0,
+        10000.0,
+    )
+    assert modest["is_loss_contract"] is False
+    assert modest["allowable_profit_on_performed"] == 8000.0
+    assert modest["gross_settlement_before_cap"] == 118000.0
+    assert modest["capped_gross_settlement"] == 118000.0
+    assert modest["t4c_settlement_status"] == "T4C_EQUITABLE_SETTLEMENT_CLEAN"
+
+
+def test_t4c_settlement_disallowed_profit_and_untimely_breach():
+    """Profit anticipatorio sobre trabajo unperformed o propuesta fuera del plazo -> BREACH con precedencia."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_termination_for_convenience_t4c_settlement_proposal,
+    )
+
+    # Profit anticipatorio prohibido bajo FAR 52.249-2.
+    anticipatory = evaluate_evm_termination_for_convenience_t4c_settlement_proposal(
+        1000000.0, 400000.0, 20000.0,
+        claimed_anticipatory_profit_on_unperformed_work=150000.0,
+    )
+    assert anticipatory["allowable_profit_on_performed"] == 32000.0
+    assert anticipatory["is_loss_contract"] is False
+    assert anticipatory["t4c_settlement_status"] == "CRITICAL_DISALLOWED_ANTICIPATORY_PROFIT_OR_UNTIMELY_T4C_BREACH"
+
+    # Propuesta fuera del plazo por defecto de 365 días.
+    untimely = evaluate_evm_termination_for_convenience_t4c_settlement_proposal(
+        1000000.0, 400000.0, 20000.0,
+        proposal_submitted_days_after_t4c=400,
+    )
+    assert untimely["proposal_timely"] is False
+    assert untimely["t4c_settlement_status"] == "CRITICAL_DISALLOWED_ANTICIPATORY_PROFIT_OR_UNTIMELY_T4C_BREACH"
+
+    # Frontera inclusiva: propuesta en el día 365 exacto sigue siendo puntual.
+    at_deadline = evaluate_evm_termination_for_convenience_t4c_settlement_proposal(
+        1000000.0, 400000.0, 20000.0,
+        proposal_submitted_days_after_t4c=365,
+        payments_already_received=300000.0,
+    )
+    assert at_deadline["proposal_timely"] is True
+    assert at_deadline["t4c_settlement_status"] == "T4C_EQUITABLE_SETTLEMENT_CLEAN"
+
+    # Precedencia: profit anticipatorio + contrato en pérdida -> BREACH absorbe el WARNING.
+    loss_and_anticipatory = evaluate_evm_termination_for_convenience_t4c_settlement_proposal(
+        1000000.0, 800000.0, 20000.0,
+        estimated_cost_to_complete_unperformed=500000.0,
+        claimed_anticipatory_profit_on_unperformed_work=50000.0,
+    )
+    assert loss_and_anticipatory["is_loss_contract"] is True
+    assert loss_and_anticipatory["t4c_settlement_status"] == "CRITICAL_DISALLOWED_ANTICIPATORY_PROFIT_OR_UNTIMELY_T4C_BREACH"
+
+
+def test_t4c_settlement_field_reversion_and_guards():
+    """Reverción de campos inválidos y guardas de costos negativos sin excepciones."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_termination_for_convenience_t4c_settlement_proposal,
+    )
+
+    # Costos negativos se clamp a 0 en todas las fórmulas.
+    negatives = evaluate_evm_termination_for_convenience_t4c_settlement_proposal(
+        -1000000.0,   # techo -> 0.0 (sin cap)
+        -50000.0,     # incurrido -> 0.0
+        -2000.0,      # demob -> 0.0
+        claimed_anticipatory_profit_on_unperformed_work=-100.0,  # no dispara (> 0.0 falso)
+        estimated_cost_to_complete_unperformed=-300.0,
+        payments_already_received=-50.0,
+    )
+    assert negatives == {
+        "is_loss_contract": False,
+        "allowable_profit_on_performed": 0.0,
+        "gross_settlement_before_cap": 0.0,
+        "capped_gross_settlement": 0.0,
+        "net_t4c_settlement_payable": 0.0,
+        "proposal_timely": True,
+        "t4c_settlement_status": "T4C_EQUITABLE_SETTLEMENT_CLEAN",
+    }
+
+    reverted = evaluate_evm_termination_for_convenience_t4c_settlement_proposal(
+        "one-million",    # no-float -> 0.0
+        None,             # no-float -> 0.0
+        True,             # bool excluida -> 0.0
+        claimed_anticipatory_profit_on_unperformed_work=None,   # no-float -> 0.0
+        reasonable_profit_rate_on_performed_pct="eight",  # no-float -> 8.0
+        estimated_cost_to_complete_unperformed="later",   # no-float -> 0.0
+        payments_already_received=True,                   # bool excluida -> 0.0
+        proposal_submitted_days_after_t4c="ninety",       # no-int -> 90
+        max_t4c_proposal_deadline_days=None,              # no-int -> 365
+    )
+    assert reverted == {
+        "is_loss_contract": False,
+        "allowable_profit_on_performed": 0.0,
+        "gross_settlement_before_cap": 0.0,
+        "capped_gross_settlement": 0.0,
+        "net_t4c_settlement_payable": 0.0,
+        "proposal_timely": True,
+        "t4c_settlement_status": "T4C_EQUITABLE_SETTLEMENT_CLEAN",
+    }

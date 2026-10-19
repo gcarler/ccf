@@ -12398,3 +12398,105 @@ def test_audit_cross_border_customs_incoterms_and_export_control_compliance_empt
         "audit_cross_border_customs_incoterms_and_export_control_compliance"
         in mod.__all__
     )
+
+
+def test_audit_sovereign_political_risk_miga_insurance_and_arbitration_seat_healthy():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_sovereign_political_risk_miga_insurance_and_arbitration_seat,
+    )
+
+    res = audit_sovereign_political_risk_miga_insurance_and_arbitration_seat(
+        [
+            {
+                "jurisdiction_id": "JUR-LATAM-PORT-CONCESSION",
+                "capital_at_risk_amount": 50000000.0,
+                "miga_pri_insured_amount": 47500000.0,
+                "creeping_expropriation_or_nationalization_notice": False,
+                "currency_inconvertibility_block_active": False,
+                "fx_repatriation_delay_days": 7,
+                "neutral_icsid_uncitral_arbitration_clause": True,
+                "sovereign_immunity_waiver_signed": True,
+                "stabilization_tax_clause_active": True,
+            }
+        ]
+    )
+    assert res["status"] == "HEALTHY"
+    assert res["evaluated_jurisdictions_count"] == 1
+    assert res["critical_jurisdictions"] == []
+    assert res["warning_jurisdictions"] == []
+    assert res["overall_pri_coverage_ratio"] == 0.95
+
+
+def test_audit_sovereign_political_risk_miga_insurance_and_arbitration_seat_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_sovereign_political_risk_miga_insurance_and_arbitration_seat,
+    )
+
+    res = audit_sovereign_political_risk_miga_insurance_and_arbitration_seat(
+        [
+            {
+                "jurisdiction_id": "JUR-SOLAR-IPP-FX-DELAY",
+                "capital_at_risk_amount": 20000000.0,
+                "miga_pri_insured_amount": 18500000.0,
+                "creeping_expropriation_or_nationalization_notice": False,
+                "currency_inconvertibility_block_active": False,
+                "fx_repatriation_delay_days": 45,
+                "neutral_icsid_uncitral_arbitration_clause": True,
+                "sovereign_immunity_waiver_signed": True,
+                "stabilization_tax_clause_active": False,
+            }
+        ]
+    )
+    assert res["status"] == "WARNING"
+    assert res["critical_jurisdictions"] == []
+    assert res["warning_jurisdictions"] == ["JUR-SOLAR-IPP-FX-DELAY"]
+    assert res["overall_pri_coverage_ratio"] == 0.925
+
+
+def test_audit_sovereign_political_risk_miga_insurance_and_arbitration_seat_critical():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_sovereign_political_risk_miga_insurance_and_arbitration_seat,
+    )
+
+    res = audit_sovereign_political_risk_miga_insurance_and_arbitration_seat(
+        [
+            {
+                "jurisdiction_id": "JUR-EXPROPRIATION-RISK",
+                "capital_at_risk_amount": 40000000.0,
+                "miga_pri_insured_amount": 20000000.0,
+                "creeping_expropriation_or_nationalization_notice": True,
+                "currency_inconvertibility_block_active": True,
+                "fx_repatriation_delay_days": 90,
+                "neutral_icsid_uncitral_arbitration_clause": False,
+                "sovereign_immunity_waiver_signed": False,
+                "stabilization_tax_clause_active": False,
+            }
+        ]
+    )
+    assert res["status"] == "CRITICAL"
+    assert res["critical_jurisdictions"] == ["JUR-EXPROPRIATION-RISK"]
+    assert res["overall_pri_coverage_ratio"] == 0.5
+    assert res["jurisdiction_evaluations"][0]["critical_sovereign_breach"] is True
+
+
+def test_audit_sovereign_political_risk_miga_insurance_and_arbitration_seat_empty_and_binding():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_sovereign_political_risk_miga_insurance_and_arbitration_seat,
+    )
+
+    empty = audit_sovereign_political_risk_miga_insurance_and_arbitration_seat([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["evaluated_jurisdictions_count"] == 0
+    assert empty["overall_pri_coverage_ratio"] == 1.0
+    assert (
+        ProjectLifecyclePMIService.audit_sovereign_political_risk_miga_insurance_and_arbitration_seat(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_sovereign_political_risk_miga_insurance_and_arbitration_seat"
+        in mod.__all__
+    )

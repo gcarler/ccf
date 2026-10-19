@@ -3194,6 +3194,7 @@ __all__ = [
     "audit_ip_patent_assignment_chain_and_copyleft_contamination",
     "audit_pir_hypercare_burn_in_and_bau_support_handover",
     "audit_cross_border_customs_incoterms_and_export_control_compliance",
+    "audit_sovereign_political_risk_miga_insurance_and_arbitration_seat",
     "ProjectLifecyclePMIService",
 ]
 
@@ -9498,4 +9499,121 @@ def audit_cross_border_customs_incoterms_and_export_control_compliance(
 
 ProjectLifecyclePMIService.audit_cross_border_customs_incoterms_and_export_control_compliance = staticmethod(
     audit_cross_border_customs_incoterms_and_export_control_compliance
+)
+
+
+def audit_sovereign_political_risk_miga_insurance_and_arbitration_seat(
+    jurisdictions: list[dict[str, Any]],
+    *,
+    min_pri_coverage_ratio: float = 0.90,
+    max_fx_repatriation_delay_days: int = 30,
+) -> dict[str, Any]:
+    """PMBOK §12.3 & §11.2 — Sovereign Concession Political Risk Expropriation / Currency Inconvertibility MIGA Insurance & Arbitration Seat Clause Auditor."""
+    jurisdiction_evaluations: list[dict[str, Any]] = []
+    critical_jurisdictions: list[str] = []
+    warning_jurisdictions: list[str] = []
+    total_capital_at_risk = 0.0
+    total_miga_insured = 0.0
+
+    for item in jurisdictions or []:
+        if not isinstance(item, Mapping):
+            continue
+        jurisdiction_id = (
+            str(item.get("jurisdiction_id") or "").strip()
+            or "UNKNOWN_JURISDICTION"
+        )
+        capital_at_risk_amount = float(
+            item.get("capital_at_risk_amount", 0.0) or 0.0
+        )
+        miga_pri_insured_amount = float(
+            item.get("miga_pri_insured_amount", 0.0) or 0.0
+        )
+        creeping_expropriation_or_nationalization_notice = bool(
+            item.get("creeping_expropriation_or_nationalization_notice", False)
+        )
+        currency_inconvertibility_block_active = bool(
+            item.get("currency_inconvertibility_block_active", False)
+        )
+        raw_fx_delay = item.get("fx_repatriation_delay_days", 5)
+        fx_repatriation_delay_days = int(
+            5 if raw_fx_delay is None else raw_fx_delay
+        )
+        neutral_icsid_uncitral_arbitration_clause = bool(
+            item.get("neutral_icsid_uncitral_arbitration_clause", True)
+        )
+        sovereign_immunity_waiver_signed = bool(
+            item.get("sovereign_immunity_waiver_signed", True)
+        )
+        stabilization_tax_clause_active = bool(
+            item.get("stabilization_tax_clause_active", True)
+        )
+
+        total_capital_at_risk += capital_at_risk_amount
+        total_miga_insured += miga_pri_insured_amount
+
+        pri_coverage_ratio = (
+            round(miga_pri_insured_amount / capital_at_risk_amount, 4)
+            if capital_at_risk_amount > 0
+            else 1.0
+        )
+
+        critical_sovereign_breach = (
+            creeping_expropriation_or_nationalization_notice is True
+            or currency_inconvertibility_block_active is True
+            or not neutral_icsid_uncitral_arbitration_clause
+            or not sovereign_immunity_waiver_signed
+            or pri_coverage_ratio < min_pri_coverage_ratio
+        )
+        sovereign_warning = (not critical_sovereign_breach) and (
+            fx_repatriation_delay_days > max_fx_repatriation_delay_days
+            or not stabilization_tax_clause_active
+        )
+
+        if critical_sovereign_breach:
+            critical_jurisdictions.append(jurisdiction_id)
+        elif sovereign_warning:
+            warning_jurisdictions.append(jurisdiction_id)
+
+        jurisdiction_evaluations.append(
+            {
+                "jurisdiction_id": jurisdiction_id,
+                "capital_at_risk_amount": capital_at_risk_amount,
+                "miga_pri_insured_amount": miga_pri_insured_amount,
+                "pri_coverage_ratio": pri_coverage_ratio,
+                "creeping_expropriation_or_nationalization_notice": creeping_expropriation_or_nationalization_notice,
+                "currency_inconvertibility_block_active": currency_inconvertibility_block_active,
+                "fx_repatriation_delay_days": fx_repatriation_delay_days,
+                "neutral_icsid_uncitral_arbitration_clause": neutral_icsid_uncitral_arbitration_clause,
+                "sovereign_immunity_waiver_signed": sovereign_immunity_waiver_signed,
+                "stabilization_tax_clause_active": stabilization_tax_clause_active,
+                "critical_sovereign_breach": critical_sovereign_breach,
+                "sovereign_warning": sovereign_warning,
+            }
+        )
+
+    if critical_jurisdictions:
+        status = "CRITICAL"
+    elif warning_jurisdictions:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    overall_pri_coverage_ratio = (
+        round(total_miga_insured / total_capital_at_risk, 4)
+        if total_capital_at_risk > 0
+        else 1.0
+    )
+
+    return {
+        "status": status,
+        "evaluated_jurisdictions_count": len(jurisdiction_evaluations),
+        "critical_jurisdictions": critical_jurisdictions,
+        "warning_jurisdictions": warning_jurisdictions,
+        "overall_pri_coverage_ratio": overall_pri_coverage_ratio,
+        "jurisdiction_evaluations": jurisdiction_evaluations,
+    }
+
+
+ProjectLifecyclePMIService.audit_sovereign_political_risk_miga_insurance_and_arbitration_seat = staticmethod(
+    audit_sovereign_political_risk_miga_insurance_and_arbitration_seat
 )
