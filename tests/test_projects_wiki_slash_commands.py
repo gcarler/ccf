@@ -12279,3 +12279,102 @@ def test_audit_wiki_sso_saml_oidc_assertion_signature_and_replay_guard_empty_and
         "audit_wiki_sso_saml_oidc_assertion_signature_and_replay_guard"
         in mod.__all__
     )
+
+
+def test_audit_wiki_vector_rag_index_drift_and_acl_prefilter_guard_healthy():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_vector_rag_index_drift_and_acl_prefilter_guard,
+    )
+
+    indexes = [
+        {
+            "index_id": "rag-wiki-pgvector-prod",
+            "acl_pre_filtering_enforced_before_ann": True,
+            "cross_tenant_namespace_isolated": True,
+            "embedding_model_dimension_mismatch": False,
+            "total_wiki_chunks": 20000,
+            "stale_unindexed_chunks": 300,
+            "chunk_overlap_ratio": 0.15,
+            "prompt_injection_sanitizer_active": True,
+        }
+    ]
+    res = audit_wiki_vector_rag_index_drift_and_acl_prefilter_guard(indexes)
+    assert res["status"] == "HEALTHY"
+    assert res["evaluated_indexes_count"] == 1
+    assert res["critical_indexes"] == []
+    assert res["warning_indexes"] == []
+    assert res["max_observed_drift_pct"] == 1.5
+    assert res["index_evaluations"][0]["critical_rag_breach"] is False
+
+
+def test_audit_wiki_vector_rag_index_drift_and_acl_prefilter_guard_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_vector_rag_index_drift_and_acl_prefilter_guard,
+    )
+
+    indexes = [
+        {
+            "index_id": "rag-wiki-qdrant-drifting",
+            "acl_pre_filtering_enforced_before_ann": True,
+            "cross_tenant_namespace_isolated": True,
+            "embedding_model_dimension_mismatch": False,
+            "total_wiki_chunks": 10000,
+            "stale_unindexed_chunks": 900,
+            "chunk_overlap_ratio": 0.05,
+            "prompt_injection_sanitizer_active": True,
+        }
+    ]
+    res = audit_wiki_vector_rag_index_drift_and_acl_prefilter_guard(indexes)
+    assert res["status"] == "WARNING"
+    assert res["critical_indexes"] == []
+    assert res["warning_indexes"] == ["rag-wiki-qdrant-drifting"]
+    assert res["max_observed_drift_pct"] == 9.0
+    assert res["index_evaluations"][0]["rag_quality_warning"] is True
+
+
+def test_audit_wiki_vector_rag_index_drift_and_acl_prefilter_guard_critical():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_vector_rag_index_drift_and_acl_prefilter_guard,
+    )
+
+    indexes = [
+        {
+            "index_id": "rag-wiki-acl-bypass-leak",
+            "acl_pre_filtering_enforced_before_ann": False,
+            "cross_tenant_namespace_isolated": False,
+            "embedding_model_dimension_mismatch": True,
+            "total_wiki_chunks": 10000,
+            "stale_unindexed_chunks": 2500,
+            "chunk_overlap_ratio": 0.50,
+            "prompt_injection_sanitizer_active": False,
+        }
+    ]
+    res = audit_wiki_vector_rag_index_drift_and_acl_prefilter_guard(indexes)
+    assert res["status"] == "CRITICAL"
+    assert res["critical_indexes"] == ["rag-wiki-acl-bypass-leak"]
+    assert res["warning_indexes"] == []
+    assert res["max_observed_drift_pct"] == 25.0
+    assert res["index_evaluations"][0]["critical_rag_breach"] is True
+
+
+def test_audit_wiki_vector_rag_index_drift_and_acl_prefilter_guard_empty_and_binding():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_vector_rag_index_drift_and_acl_prefilter_guard,
+    )
+
+    empty = audit_wiki_vector_rag_index_drift_and_acl_prefilter_guard([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["evaluated_indexes_count"] == 0
+    assert empty["max_observed_drift_pct"] == 0.0
+    assert (
+        WikiPMIService.audit_wiki_vector_rag_index_drift_and_acl_prefilter_guard(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_wiki_vector_rag_index_drift_and_acl_prefilter_guard"
+        in mod.__all__
+    )

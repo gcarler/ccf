@@ -10105,3 +10105,112 @@ def test_audit_markdown_postmortem_rca_blameless_and_action_item_hygiene_empty_a
         "audit_markdown_postmortem_rca_blameless_and_action_item_hygiene"
         in mod.__all__
     )
+
+
+def test_audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene_healthy():
+    from backend.services.anydoc_service import (
+        audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene,
+    )
+
+    docs = [
+        {
+            "doc_id": "doc-sec-audit-amber",
+            "tlp_banner_label": "TLP:AMBER+STRICT",
+            "unredacted_pii_phi_tokens_detected": 0,
+            "public_sharing_link_enabled": False,
+            "retention_policy_years": 7,
+            "cryptographic_watermark_embedded": True,
+            "classification_review_overdue_days": 0,
+        },
+        {
+            "doc_id": "doc-public-guide-clear",
+            "tlp_banner_label": "TLP:CLEAR",
+            "unredacted_pii_phi_tokens_detected": 0,
+            "public_sharing_link_enabled": True,
+            "retention_policy_years": 3,
+            "cryptographic_watermark_embedded": False,
+            "classification_review_overdue_days": 0,
+        },
+    ]
+    res = audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene(docs)
+    assert res["status"] == "HEALTHY"
+    assert res["evaluated_documents_count"] == 2
+    assert res["critical_documents"] == []
+    assert res["warning_documents"] == []
+    assert res["total_unredacted_pii_tokens"] == 0
+
+
+def test_audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene,
+    )
+
+    docs = [
+        {
+            "doc_id": "doc-board-red-unwatermarked",
+            "tlp_banner_label": "TLP:RED",
+            "unredacted_pii_phi_tokens_detected": 0,
+            "public_sharing_link_enabled": False,
+            "retention_policy_years": 10,
+            "cryptographic_watermark_embedded": False,
+            "classification_review_overdue_days": 15,
+        }
+    ]
+    res = audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene(docs)
+    assert res["status"] == "WARNING"
+    assert res["critical_documents"] == []
+    assert res["warning_documents"] == ["doc-board-red-unwatermarked"]
+    assert res["document_evaluations"][0]["classification_warning"] is True
+
+
+def test_audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene_critical():
+    from backend.services.anydoc_service import (
+        audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene,
+    )
+
+    docs = [
+        {
+            "doc_id": "doc-pii-leaked-red-public",
+            "tlp_banner_label": "TLP:RED",
+            "unredacted_pii_phi_tokens_detected": 14,
+            "public_sharing_link_enabled": True,
+            "retention_policy_years": 0,
+            "cryptographic_watermark_embedded": False,
+            "classification_review_overdue_days": 30,
+        }
+    ]
+    res = audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene(docs)
+    assert res["status"] == "CRITICAL"
+    assert res["critical_documents"] == ["doc-pii-leaked-red-public"]
+    assert res["total_unredacted_pii_tokens"] == 14
+    assert res["document_evaluations"][0]["critical_classification_breach"] is True
+
+
+def test_audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene_empty_and_binding():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene,
+    )
+
+    empty = audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["evaluated_documents_count"] == 0
+    assert empty["total_unredacted_pii_tokens"] == 0
+    assert (
+        AnyDocService.audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene(
+            []
+        )
+        == empty
+    )
+    assert (
+        AnydocService.audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene"
+        in mod.__all__
+    )

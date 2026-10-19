@@ -2559,6 +2559,7 @@ __all__ = [
     "audit_wiki_webhook_ssrf_cidr_blocklist_and_dns_rebinding_guard",
     "audit_wiki_outbox_cdc_debezium_connector_lag_and_tombstone_hygiene",
     "audit_wiki_sso_saml_oidc_assertion_signature_and_replay_guard",
+    "audit_wiki_vector_rag_index_drift_and_acl_prefilter_guard",
     "WikiPMIService",
 ]
 
@@ -9120,4 +9121,105 @@ def audit_wiki_sso_saml_oidc_assertion_signature_and_replay_guard(
 
 WikiPMIService.audit_wiki_sso_saml_oidc_assertion_signature_and_replay_guard = staticmethod(
     audit_wiki_sso_saml_oidc_assertion_signature_and_replay_guard
+)
+
+
+def audit_wiki_vector_rag_index_drift_and_acl_prefilter_guard(
+    indexes: list[dict[str, Any]],
+    *,
+    max_embedding_drift_pct: float = 5.0,
+    min_chunk_overlap_ratio: float = 0.10,
+    max_chunk_overlap_ratio: float = 0.40,
+) -> dict[str, Any]:
+    """PMBOK §4.4 & §11.6 — Wiki Full-Text Vector Embedding RAG Index Drift, Chunk Overlap Hallucination Guard & ACL Permission Filter Pre-Filtering Auditor."""
+    index_evaluations: list[dict[str, Any]] = []
+    critical_indexes: list[str] = []
+    warning_indexes: list[str] = []
+    max_observed_drift_pct = 0.0
+
+    for item in indexes or []:
+        if not isinstance(item, Mapping):
+            continue
+        index_id = str(item.get("index_id") or "").strip() or "UNKNOWN_INDEX"
+        acl_pre_filtering_enforced_before_ann = bool(
+            item.get("acl_pre_filtering_enforced_before_ann", True)
+        )
+        cross_tenant_namespace_isolated = bool(
+            item.get("cross_tenant_namespace_isolated", True)
+        )
+        embedding_model_dimension_mismatch = bool(
+            item.get("embedding_model_dimension_mismatch", False)
+        )
+        total_wiki_chunks = int(item.get("total_wiki_chunks", 0) or 0)
+        stale_unindexed_chunks = int(item.get("stale_unindexed_chunks", 0) or 0)
+        raw_overlap = item.get("chunk_overlap_ratio", 0.15)
+        chunk_overlap_ratio = float(
+            0.15 if raw_overlap is None else raw_overlap
+        )
+        prompt_injection_sanitizer_active = bool(
+            item.get("prompt_injection_sanitizer_active", True)
+        )
+
+        embedding_drift_pct = (
+            round((stale_unindexed_chunks / total_wiki_chunks) * 100.0, 2)
+            if total_wiki_chunks > 0
+            else 0.0
+        )
+        max_observed_drift_pct = max(
+            max_observed_drift_pct, embedding_drift_pct
+        )
+
+        critical_rag_breach = (
+            not acl_pre_filtering_enforced_before_ann
+            or not cross_tenant_namespace_isolated
+            or embedding_model_dimension_mismatch is True
+            or not prompt_injection_sanitizer_active
+            or embedding_drift_pct > max_embedding_drift_pct * 3.0
+        )
+        rag_quality_warning = (not critical_rag_breach) and (
+            embedding_drift_pct > max_embedding_drift_pct
+            or chunk_overlap_ratio < min_chunk_overlap_ratio
+            or chunk_overlap_ratio > max_chunk_overlap_ratio
+        )
+
+        if critical_rag_breach:
+            critical_indexes.append(index_id)
+        elif rag_quality_warning:
+            warning_indexes.append(index_id)
+
+        index_evaluations.append(
+            {
+                "index_id": index_id,
+                "acl_pre_filtering_enforced_before_ann": acl_pre_filtering_enforced_before_ann,
+                "cross_tenant_namespace_isolated": cross_tenant_namespace_isolated,
+                "embedding_model_dimension_mismatch": embedding_model_dimension_mismatch,
+                "total_wiki_chunks": total_wiki_chunks,
+                "stale_unindexed_chunks": stale_unindexed_chunks,
+                "embedding_drift_pct": embedding_drift_pct,
+                "chunk_overlap_ratio": chunk_overlap_ratio,
+                "prompt_injection_sanitizer_active": prompt_injection_sanitizer_active,
+                "critical_rag_breach": critical_rag_breach,
+                "rag_quality_warning": rag_quality_warning,
+            }
+        )
+
+    if len(critical_indexes) > 0:
+        status = "CRITICAL"
+    elif len(warning_indexes) > 0:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "status": status,
+        "evaluated_indexes_count": len(index_evaluations),
+        "critical_indexes": critical_indexes,
+        "warning_indexes": warning_indexes,
+        "max_observed_drift_pct": max_observed_drift_pct,
+        "index_evaluations": index_evaluations,
+    }
+
+
+WikiPMIService.audit_wiki_vector_rag_index_drift_and_acl_prefilter_guard = staticmethod(
+    audit_wiki_vector_rag_index_drift_and_acl_prefilter_guard
 )

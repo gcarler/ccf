@@ -3059,6 +3059,7 @@ __all__ = [
     "audit_markdown_latex_math_delimiter_balance_and_macro_hygiene",
     "audit_markdown_runbook_incident_escalation_and_rollback_hygiene",
     "audit_markdown_postmortem_rca_blameless_and_action_item_hygiene",
+    "audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene",
     "AnydocService",
 ]
 
@@ -10429,4 +10430,108 @@ AnyDocService.audit_markdown_postmortem_rca_blameless_and_action_item_hygiene = 
 )
 AnydocService.audit_markdown_postmortem_rca_blameless_and_action_item_hygiene = staticmethod(
     audit_markdown_postmortem_rca_blameless_and_action_item_hygiene
+)
+
+
+def audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene(
+    documents: list[dict[str, Any]],
+    *,
+    allowed_tlp_labels: tuple[str, ...] = (
+        "TLP:RED",
+        "TLP:AMBER",
+        "TLP:AMBER+STRICT",
+        "TLP:GREEN",
+        "TLP:CLEAR",
+    ),
+    min_retention_years: int = 1,
+) -> dict[str, Any]:
+    """PMBOK §4.4 & §10.2 — AnyDoc Markdown Data-Classification Sensitivity Banner (TLP:RED/AMBER/GREEN/CLEAR), PII/PHI Redaction Marker & Retention Tag Hygiene Auditor."""
+    document_evaluations: list[dict[str, Any]] = []
+    critical_documents: list[str] = []
+    warning_documents: list[str] = []
+    total_unredacted_pii_tokens = 0
+
+    for item in documents or []:
+        if not isinstance(item, dict):
+            continue
+        doc_id = str(item.get("doc_id") or "").strip() or "UNKNOWN_DOC"
+        normalized_tlp = str(item.get("tlp_banner_label") or "").strip().upper()
+        unredacted_pii_phi_tokens_detected = int(
+            item.get("unredacted_pii_phi_tokens_detected", 0) or 0
+        )
+        public_sharing_link_enabled = bool(
+            item.get("public_sharing_link_enabled", False)
+        )
+        raw_retention = item.get("retention_policy_years", 7)
+        retention_policy_years = int(7 if raw_retention is None else raw_retention)
+        cryptographic_watermark_embedded = bool(
+            item.get("cryptographic_watermark_embedded", True)
+        )
+        classification_review_overdue_days = int(
+            item.get("classification_review_overdue_days", 0) or 0
+        )
+
+        total_unredacted_pii_tokens += unredacted_pii_phi_tokens_detected
+
+        valid_tlp = normalized_tlp in allowed_tlp_labels
+        restricted_tlp = normalized_tlp in {
+            "TLP:RED",
+            "TLP:AMBER",
+            "TLP:AMBER+STRICT",
+        }
+
+        critical_classification_breach = (
+            not valid_tlp
+            or unredacted_pii_phi_tokens_detected > 0
+            or (restricted_tlp and public_sharing_link_enabled)
+            or retention_policy_years < min_retention_years
+        )
+        classification_warning = (not critical_classification_breach) and (
+            (restricted_tlp and not cryptographic_watermark_embedded)
+            or classification_review_overdue_days > 0
+        )
+
+        if critical_classification_breach:
+            critical_documents.append(doc_id)
+        elif classification_warning:
+            warning_documents.append(doc_id)
+
+        document_evaluations.append(
+            {
+                "doc_id": doc_id,
+                "tlp_banner_label": normalized_tlp,
+                "valid_tlp": valid_tlp,
+                "restricted_tlp": restricted_tlp,
+                "unredacted_pii_phi_tokens_detected": unredacted_pii_phi_tokens_detected,
+                "public_sharing_link_enabled": public_sharing_link_enabled,
+                "retention_policy_years": retention_policy_years,
+                "cryptographic_watermark_embedded": cryptographic_watermark_embedded,
+                "classification_review_overdue_days": classification_review_overdue_days,
+                "critical_classification_breach": critical_classification_breach,
+                "classification_warning": classification_warning,
+            }
+        )
+
+    if len(critical_documents) > 0:
+        status = "CRITICAL"
+    elif len(warning_documents) > 0:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "status": status,
+        "evaluated_documents_count": len(document_evaluations),
+        "critical_documents": critical_documents,
+        "warning_documents": warning_documents,
+        "total_unredacted_pii_tokens": total_unredacted_pii_tokens,
+        "document_evaluations": document_evaluations,
+    }
+
+
+AnyDocService.audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene = staticmethod(
+    audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene
+)
+AnydocService.audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene = staticmethod(
+    audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene
 )
