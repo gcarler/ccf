@@ -9917,3 +9917,141 @@ def test_audit_wiki_db_read_replica_lag_and_split_brain_fencing_staticmethod_and
         "audit_wiki_db_read_replica_lag_and_split_brain_fencing"
         in mod.__all__
     )
+
+
+def test_audit_wiki_cdn_edge_cache_purge_sla_and_origin_shield_protection_breach():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_cdn_edge_cache_purge_sla_and_origin_shield_protection,
+    )
+
+    res = audit_wiki_cdn_edge_cache_purge_sla_and_origin_shield_protection(
+        [
+            {
+                "edge_id": "  CDN-DOCS-US  ",
+                "origin_shield_enabled": False,
+                "waf_ddos_challenge_active": True,
+                "purge_propagation_seconds": 10,
+                "origin_shield_offload_pct": 95.0,
+            },
+            {
+                "edge_id": "CDN-DOCS-EU",
+                "origin_shield_enabled": True,
+                "waf_ddos_challenge_active": False,
+                "purge_propagation_seconds": 45,
+                "origin_shield_offload_pct": 85.0,
+            },
+            {
+                "edge_id": "CDN-CLEAN",
+                "origin_shield_enabled": True,
+                "waf_ddos_challenge_active": True,
+                "purge_propagation_seconds": 30,
+                "origin_shield_offload_pct": 90.0,
+            },
+        ]
+    )
+    assert res["evaluated_edges_count"] == 3
+    assert res["unshielded_or_waf_disabled_edge_ids"] == [
+        "CDN-DOCS-US",
+        "CDN-DOCS-EU",
+    ]
+    assert res["slow_purge_or_low_offload_edge_ids"] == ["CDN-DOCS-EU"]
+    assert res["cdn_edge_status"] == "CDN_ORIGIN_SHIELD_OR_WAF_BREACH"
+    assert res["is_cdn_edge_compliant"] is False
+
+
+def test_audit_wiki_cdn_edge_cache_purge_sla_and_origin_shield_protection_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_cdn_edge_cache_purge_sla_and_origin_shield_protection,
+    )
+
+    res = audit_wiki_cdn_edge_cache_purge_sla_and_origin_shield_protection(
+        [
+            {
+                "edge_id": "CDN-SLOW-PURGE",
+                "origin_shield_enabled": True,
+                "waf_ddos_challenge_active": True,
+                "purge_propagation_seconds": 31,
+                "origin_shield_offload_pct": 90.0,
+            },
+            {
+                "edge_id": "CDN-LOW-OFFLOAD",
+                "origin_shield_enabled": True,
+                "waf_ddos_challenge_active": True,
+                "purge_propagation_seconds": 30,
+                "origin_shield_offload_pct": 89.9,
+            },
+        ],
+        max_purge_propagation_seconds=30,
+        min_origin_shield_offload_pct=90.0,
+    )
+    assert res["evaluated_edges_count"] == 2
+    assert res["unshielded_or_waf_disabled_edge_ids"] == []
+    assert res["slow_purge_or_low_offload_edge_ids"] == [
+        "CDN-SLOW-PURGE",
+        "CDN-LOW-OFFLOAD",
+    ]
+    assert res["cdn_edge_status"] == "CDN_PURGE_SLA_OR_OFFLOAD_WARNING"
+    assert res["is_cdn_edge_compliant"] is False
+
+
+def test_audit_wiki_cdn_edge_cache_purge_sla_and_origin_shield_protection_optimal_and_defensive():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_cdn_edge_cache_purge_sla_and_origin_shield_protection,
+    )
+
+    empty = audit_wiki_cdn_edge_cache_purge_sla_and_origin_shield_protection(
+        None
+    )
+    assert empty["evaluated_edges_count"] == 0
+    assert empty["unshielded_or_waf_disabled_edge_ids"] == []
+    assert empty["slow_purge_or_low_offload_edge_ids"] == []
+    assert empty["cdn_edge_status"] == "CDN_EDGE_DELIVERY_OPTIMAL"
+    assert empty["is_cdn_edge_compliant"] is True
+
+    optimal = audit_wiki_cdn_edge_cache_purge_sla_and_origin_shield_protection(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"edge_id": "   "},
+            {
+                "edge_id": "CDN-DEFAULTS",
+                "origin_shield_enabled": None,
+                "waf_ddos_challenge_active": None,
+                "purge_propagation_seconds": None,
+                "origin_shield_offload_pct": None,
+            },
+        ]
+    )
+    assert optimal["evaluated_edges_count"] == 1
+    assert optimal["unshielded_or_waf_disabled_edge_ids"] == []
+    assert optimal["slow_purge_or_low_offload_edge_ids"] == []
+    assert optimal["cdn_edge_status"] == "CDN_EDGE_DELIVERY_OPTIMAL"
+    assert optimal["is_cdn_edge_compliant"] is True
+
+
+def test_audit_wiki_cdn_edge_cache_purge_sla_and_origin_shield_protection_staticmethod_and_dunder_all():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_cdn_edge_cache_purge_sla_and_origin_shield_protection,
+    )
+
+    sample = [
+        {
+            "edge_id": "CDN-99",
+            "purge_propagation_seconds": 6,
+            "origin_shield_offload_pct": 97.5,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_cdn_edge_cache_purge_sla_and_origin_shield_protection(
+            sample
+        )
+        == audit_wiki_cdn_edge_cache_purge_sla_and_origin_shield_protection(
+            sample
+        )
+    )
+    assert (
+        "audit_wiki_cdn_edge_cache_purge_sla_and_origin_shield_protection"
+        in mod.__all__
+    )
+

@@ -2539,6 +2539,7 @@ __all__ = [
     "audit_wiki_k8s_pdb_hpa_headroom_and_oomkill_eviction",
     "audit_wiki_dns_failover_ttl_and_bgp_anycast_resilience",
     "audit_wiki_db_read_replica_lag_and_split_brain_fencing",
+    "audit_wiki_cdn_edge_cache_purge_sla_and_origin_shield_protection",
     "WikiPMIService",
 ]
 
@@ -7255,3 +7256,73 @@ def audit_wiki_db_read_replica_lag_and_split_brain_fencing(
 WikiPMIService.audit_wiki_db_read_replica_lag_and_split_brain_fencing = staticmethod(
     audit_wiki_db_read_replica_lag_and_split_brain_fencing
 )
+
+
+def audit_wiki_cdn_edge_cache_purge_sla_and_origin_shield_protection(
+    edges: list[dict] | None,
+    *,
+    max_purge_propagation_seconds: int = 30,
+    min_origin_shield_offload_pct: float = 90.0,
+) -> dict:
+    """PMBOK §8.2 & §11.6 — Audita SLA de propagación de purga de caché CDN edge, protección de Origin Shield y mitigación WAF bot-challenge."""
+    raw_items = edges if isinstance(edges, list) else []
+    valid_edges: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("edge_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_edges.append(item)
+
+    unshielded_or_waf_disabled_edge_ids: list[str] = []
+    slow_purge_or_low_offload_edge_ids: list[str] = []
+
+    for e in valid_edges:
+        eid = e["edge_id"].strip()
+        raw_shield = e.get("origin_shield_enabled", True)
+        origin_shield_enabled = bool(
+            True if raw_shield is None else raw_shield
+        )
+
+        raw_waf = e.get("waf_ddos_challenge_active", True)
+        waf_ddos_challenge_active = bool(True if raw_waf is None else raw_waf)
+
+        raw_purge = e.get("purge_propagation_seconds", 8)
+        purge_propagation_seconds = int(8 if raw_purge is None else raw_purge)
+
+        raw_offload = e.get("origin_shield_offload_pct", 96.0)
+        origin_shield_offload_pct = float(
+            96.0 if raw_offload is None else raw_offload
+        )
+
+        if not origin_shield_enabled or not waf_ddos_challenge_active:
+            unshielded_or_waf_disabled_edge_ids.append(eid)
+
+        if (
+            purge_propagation_seconds > max_purge_propagation_seconds
+            or origin_shield_offload_pct < min_origin_shield_offload_pct
+        ):
+            slow_purge_or_low_offload_edge_ids.append(eid)
+
+    if unshielded_or_waf_disabled_edge_ids:
+        cdn_edge_status = "CDN_ORIGIN_SHIELD_OR_WAF_BREACH"
+    elif slow_purge_or_low_offload_edge_ids:
+        cdn_edge_status = "CDN_PURGE_SLA_OR_OFFLOAD_WARNING"
+    else:
+        cdn_edge_status = "CDN_EDGE_DELIVERY_OPTIMAL"
+
+    return {
+        "evaluated_edges_count": len(valid_edges),
+        "unshielded_or_waf_disabled_edge_ids": unshielded_or_waf_disabled_edge_ids,
+        "slow_purge_or_low_offload_edge_ids": slow_purge_or_low_offload_edge_ids,
+        "cdn_edge_status": cdn_edge_status,
+        "is_cdn_edge_compliant": cdn_edge_status
+        == "CDN_EDGE_DELIVERY_OPTIMAL",
+    }
+
+
+WikiPMIService.audit_wiki_cdn_edge_cache_purge_sla_and_origin_shield_protection = staticmethod(
+    audit_wiki_cdn_edge_cache_purge_sla_and_origin_shield_protection
+)
+

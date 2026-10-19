@@ -3011,6 +3011,7 @@ __all__ = [
     "audit_executive_report_ai_llm_guardrails_and_grounding",
     "audit_executive_report_webhook_dlq_replay_and_hmac_signing",
     "audit_executive_report_data_residency_and_scc_transfer",
+    "audit_executive_report_accessibility_wcag_aa_contrast_and_screen_reader_parity",
     "ProjectExportService",
 ]
 
@@ -7788,4 +7789,78 @@ def audit_executive_report_data_residency_and_scc_transfer(
 ProjectExportService.audit_executive_report_data_residency_and_scc_transfer = staticmethod(
     audit_executive_report_data_residency_and_scc_transfer
 )
+
+
+def audit_executive_report_accessibility_wcag_aa_contrast_and_screen_reader_parity(
+    artifacts: list[dict] | None,
+    *,
+    min_contrast_ratio: float = 4.5,
+    require_tagged_pdf_and_alt_text: bool = True,
+) -> dict:
+    """PMBOK §10.2 & §8.2 — Audita accesibilidad WCAG 2.1 AA (ratio de contraste), estructura PDF/UA etiquetada y paridad de texto alternativo para lectores de pantalla."""
+    raw_items = artifacts if isinstance(artifacts, list) else []
+    valid_artifacts: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("artifact_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_artifacts.append(item)
+
+    untagged_or_missing_alt_text_artifact_ids: list[str] = []
+    low_contrast_or_non_colorblind_artifact_ids: list[str] = []
+
+    for a in valid_artifacts:
+        aid = a["artifact_id"].strip()
+        raw_tagged = a.get("pdf_ua_tagged_structure_valid", True)
+        pdf_ua_tagged_structure_valid = bool(
+            True if raw_tagged is None else raw_tagged
+        )
+
+        raw_alt = a.get("all_charts_have_alt_text", True)
+        all_charts_have_alt_text = bool(True if raw_alt is None else raw_alt)
+
+        raw_contrast = a.get("min_observed_contrast_ratio", 7.0)
+        min_observed_contrast_ratio = float(
+            7.0 if raw_contrast is None else raw_contrast
+        )
+
+        raw_palette = a.get("colorblind_safe_palette_used", True)
+        colorblind_safe_palette_used = bool(
+            True if raw_palette is None else raw_palette
+        )
+
+        if require_tagged_pdf_and_alt_text and (
+            not pdf_ua_tagged_structure_valid or not all_charts_have_alt_text
+        ):
+            untagged_or_missing_alt_text_artifact_ids.append(aid)
+
+        if (
+            min_observed_contrast_ratio < min_contrast_ratio
+            or not colorblind_safe_palette_used
+        ):
+            low_contrast_or_non_colorblind_artifact_ids.append(aid)
+
+    if untagged_or_missing_alt_text_artifact_ids:
+        accessibility_wcag_status = "ACCESSIBILITY_PDFUA_OR_ALT_TEXT_BREACH"
+    elif low_contrast_or_non_colorblind_artifact_ids:
+        accessibility_wcag_status = "ACCESSIBILITY_CONTRAST_OR_PALETTE_WARNING"
+    else:
+        accessibility_wcag_status = "ACCESSIBILITY_WCAG_AA_OPTIMAL"
+
+    return {
+        "evaluated_artifacts_count": len(valid_artifacts),
+        "untagged_or_missing_alt_text_artifact_ids": untagged_or_missing_alt_text_artifact_ids,
+        "low_contrast_or_non_colorblind_artifact_ids": low_contrast_or_non_colorblind_artifact_ids,
+        "accessibility_wcag_status": accessibility_wcag_status,
+        "is_accessibility_wcag_compliant": accessibility_wcag_status
+        == "ACCESSIBILITY_WCAG_AA_OPTIMAL",
+    }
+
+
+ProjectExportService.audit_executive_report_accessibility_wcag_aa_contrast_and_screen_reader_parity = staticmethod(
+    audit_executive_report_accessibility_wcag_aa_contrast_and_screen_reader_parity
+)
+
 

@@ -10401,3 +10401,150 @@ def test_data_residency_invalid_and_binding():
         "audit_executive_report_data_residency_and_scc_transfer"
         in mod.__all__
     )
+
+
+def test_audit_executive_report_accessibility_wcag_aa_contrast_and_screen_reader_parity_breach():
+    from backend.services.project_export_service import (
+        audit_executive_report_accessibility_wcag_aa_contrast_and_screen_reader_parity,
+    )
+
+    res = audit_executive_report_accessibility_wcag_aa_contrast_and_screen_reader_parity(
+        [
+            {
+                "artifact_id": "  PDF-BOARD-Q1  ",
+                "pdf_ua_tagged_structure_valid": False,
+                "all_charts_have_alt_text": True,
+                "min_observed_contrast_ratio": 7.5,
+                "colorblind_safe_palette_used": True,
+            },
+            {
+                "artifact_id": "DECK-EXEC-Q2",
+                "pdf_ua_tagged_structure_valid": True,
+                "all_charts_have_alt_text": False,
+                "min_observed_contrast_ratio": 3.2,
+                "colorblind_safe_palette_used": False,
+            },
+            {
+                "artifact_id": "PDF-CLEAN",
+                "pdf_ua_tagged_structure_valid": True,
+                "all_charts_have_alt_text": True,
+                "min_observed_contrast_ratio": 4.5,
+                "colorblind_safe_palette_used": True,
+            },
+        ]
+    )
+    assert res["evaluated_artifacts_count"] == 3
+    assert res["untagged_or_missing_alt_text_artifact_ids"] == [
+        "PDF-BOARD-Q1",
+        "DECK-EXEC-Q2",
+    ]
+    assert res["low_contrast_or_non_colorblind_artifact_ids"] == [
+        "DECK-EXEC-Q2"
+    ]
+    assert (
+        res["accessibility_wcag_status"]
+        == "ACCESSIBILITY_PDFUA_OR_ALT_TEXT_BREACH"
+    )
+    assert res["is_accessibility_wcag_compliant"] is False
+
+
+def test_audit_executive_report_accessibility_wcag_aa_contrast_and_screen_reader_parity_warning():
+    from backend.services.project_export_service import (
+        audit_executive_report_accessibility_wcag_aa_contrast_and_screen_reader_parity,
+    )
+
+    res = audit_executive_report_accessibility_wcag_aa_contrast_and_screen_reader_parity(
+        [
+            {
+                "artifact_id": "PDF-LOW-CONTRAST",
+                "pdf_ua_tagged_structure_valid": True,
+                "all_charts_have_alt_text": True,
+                "min_observed_contrast_ratio": 4.4,
+                "colorblind_safe_palette_used": True,
+            },
+            {
+                "artifact_id": "PDF-BAD-PALETTE",
+                "pdf_ua_tagged_structure_valid": False,
+                "all_charts_have_alt_text": False,
+                "min_observed_contrast_ratio": 4.5,
+                "colorblind_safe_palette_used": False,
+            },
+        ],
+        min_contrast_ratio=4.5,
+        require_tagged_pdf_and_alt_text=False,
+    )
+    assert res["evaluated_artifacts_count"] == 2
+    assert res["untagged_or_missing_alt_text_artifact_ids"] == []
+    assert res["low_contrast_or_non_colorblind_artifact_ids"] == [
+        "PDF-LOW-CONTRAST",
+        "PDF-BAD-PALETTE",
+    ]
+    assert (
+        res["accessibility_wcag_status"]
+        == "ACCESSIBILITY_CONTRAST_OR_PALETTE_WARNING"
+    )
+    assert res["is_accessibility_wcag_compliant"] is False
+
+
+def test_audit_executive_report_accessibility_wcag_aa_contrast_and_screen_reader_parity_optimal_and_defensive():
+    from backend.services.project_export_service import (
+        audit_executive_report_accessibility_wcag_aa_contrast_and_screen_reader_parity,
+    )
+
+    empty = audit_executive_report_accessibility_wcag_aa_contrast_and_screen_reader_parity(
+        None
+    )
+    assert empty["evaluated_artifacts_count"] == 0
+    assert empty["untagged_or_missing_alt_text_artifact_ids"] == []
+    assert empty["low_contrast_or_non_colorblind_artifact_ids"] == []
+    assert empty["accessibility_wcag_status"] == "ACCESSIBILITY_WCAG_AA_OPTIMAL"
+    assert empty["is_accessibility_wcag_compliant"] is True
+
+    optimal = audit_executive_report_accessibility_wcag_aa_contrast_and_screen_reader_parity(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"artifact_id": "   "},
+            {
+                "artifact_id": "PDF-DEFAULTS",
+                "pdf_ua_tagged_structure_valid": None,
+                "all_charts_have_alt_text": None,
+                "min_observed_contrast_ratio": None,
+                "colorblind_safe_palette_used": None,
+            },
+        ]
+    )
+    assert optimal["evaluated_artifacts_count"] == 1
+    assert optimal["untagged_or_missing_alt_text_artifact_ids"] == []
+    assert optimal["low_contrast_or_non_colorblind_artifact_ids"] == []
+    assert (
+        optimal["accessibility_wcag_status"] == "ACCESSIBILITY_WCAG_AA_OPTIMAL"
+    )
+    assert optimal["is_accessibility_wcag_compliant"] is True
+
+
+def test_audit_executive_report_accessibility_wcag_aa_contrast_and_screen_reader_parity_staticmethod_and_dunder_all():
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_accessibility_wcag_aa_contrast_and_screen_reader_parity,
+    )
+
+    sample = [
+        {
+            "artifact_id": "PDF-99",
+            "min_observed_contrast_ratio": 7.1,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_accessibility_wcag_aa_contrast_and_screen_reader_parity(
+            sample
+        )
+        == audit_executive_report_accessibility_wcag_aa_contrast_and_screen_reader_parity(
+            sample
+        )
+    )
+    assert (
+        "audit_executive_report_accessibility_wcag_aa_contrast_and_screen_reader_parity"
+        in mod.__all__
+    )
+
