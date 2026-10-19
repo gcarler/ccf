@@ -2860,6 +2860,7 @@ __all__ = [
     "audit_blue_green_cutover_drain_and_db_backward_compatibility",
     "audit_database_connection_pool_pgbouncer_saturation_and_idle_in_transaction_gate",
     "audit_ingress_rate_limiting_token_bucket_and_waf_owasp_crs_gate",
+    "audit_chaos_engineering_fault_injection_blast_radius_and_steady_state_abort_gate",
     "ProjectCCBService",
 ]
 
@@ -8101,6 +8102,130 @@ def audit_ingress_rate_limiting_token_bucket_and_waf_owasp_crs_gate(
 
 ProjectCCBService.audit_ingress_rate_limiting_token_bucket_and_waf_owasp_crs_gate = staticmethod(
     audit_ingress_rate_limiting_token_bucket_and_waf_owasp_crs_gate
+)
+
+
+def audit_chaos_engineering_fault_injection_blast_radius_and_steady_state_abort_gate(
+    chaos_experiments: list[dict[str, Any]],
+    *,
+    max_blast_radius_pods_pct: float = 10.0,
+    max_kill_switch_abort_latency_ms: float = 500.0,
+    require_auto_abort_on_steady_state_breach: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §8.3 & §11.6 — Audita tope de blast radius de experimentos de ingeniería del caos (GameDay), aborto automático ante divergencia de hipótesis steady-state y latencia de kill-switch."""
+    raw_items = chaos_experiments if isinstance(chaos_experiments, list) else []
+    valid_items = [item for item in raw_items if isinstance(item, dict)]
+
+    unsafe_blast_or_abort_experiment_ids: list[str] = []
+    slow_kill_switch_experiment_ids: list[str] = []
+    records: list[dict[str, Any]] = []
+    violations: list[str] = []
+    has_critical = False
+    has_warning = False
+
+    for idx, item in enumerate(valid_items):
+        experiment_id = (
+            str(
+                item.get("experiment_id") or item.get("id") or f"chaos-{idx + 1}"
+            ).strip()
+            or f"chaos-{idx + 1}"
+        )
+        targeted_pods_pct = max(0.0, float(item.get("targeted_pods_pct") or 0.0))
+
+        raw_breach = item.get("steady_state_hypothesis_breached", False)
+        steady_state_hypothesis_breached = bool(
+            False if raw_breach is None else raw_breach
+        )
+
+        raw_abort = item.get("auto_abort_triggered", True)
+        auto_abort_triggered = bool(True if raw_abort is None else raw_abort)
+
+        kill_switch_abort_latency_ms = max(
+            0.0, float(item.get("kill_switch_abort_latency_ms") or 0.0)
+        )
+
+        raw_rollback = item.get("rollback_completed_cleanly", True)
+        rollback_completed_cleanly = bool(
+            True if raw_rollback is None else raw_rollback
+        )
+
+        blast_radius_cap_exceeded = targeted_pods_pct > max_blast_radius_pods_pct
+        unaborted_steady_state_breach = bool(
+            require_auto_abort_on_steady_state_breach
+            and steady_state_hypothesis_breached
+            and not auto_abort_triggered
+        )
+        kill_switch_latency_exceeded = (
+            kill_switch_abort_latency_ms > max_kill_switch_abort_latency_ms
+        )
+        incomplete_experiment_rollback = not rollback_completed_cleanly
+
+        if (
+            blast_radius_cap_exceeded
+            or unaborted_steady_state_breach
+            or incomplete_experiment_rollback
+        ):
+            unsafe_blast_or_abort_experiment_ids.append(experiment_id)
+            has_critical = True
+            if blast_radius_cap_exceeded:
+                violations.append(
+                    f"Experiment '{experiment_id}' targeted pods ({targeted_pods_pct}%) exceeds blast radius cap ({max_blast_radius_pods_pct}%)."
+                )
+            if unaborted_steady_state_breach:
+                violations.append(
+                    f"Experiment '{experiment_id}' breached steady-state hypothesis without triggering auto-abort."
+                )
+            if incomplete_experiment_rollback:
+                violations.append(
+                    f"Experiment '{experiment_id}' rollback did not complete cleanly."
+                )
+
+        if kill_switch_latency_exceeded:
+            slow_kill_switch_experiment_ids.append(experiment_id)
+            has_warning = True
+            violations.append(
+                f"Experiment '{experiment_id}' kill-switch latency ({kill_switch_abort_latency_ms}ms) exceeds {max_kill_switch_abort_latency_ms}ms."
+            )
+
+        records.append(
+            {
+                "experiment_id": experiment_id,
+                "targeted_pods_pct": targeted_pods_pct,
+                "steady_state_hypothesis_breached": steady_state_hypothesis_breached,
+                "auto_abort_triggered": auto_abort_triggered,
+                "kill_switch_abort_latency_ms": kill_switch_abort_latency_ms,
+                "rollback_completed_cleanly": rollback_completed_cleanly,
+                "blast_radius_cap_exceeded": blast_radius_cap_exceeded,
+                "unaborted_steady_state_breach": unaborted_steady_state_breach,
+                "kill_switch_latency_exceeded": kill_switch_latency_exceeded,
+                "incomplete_experiment_rollback": incomplete_experiment_rollback,
+            }
+        )
+
+    if has_critical:
+        status = "critical"
+        gate_passed = False
+    elif has_warning:
+        status = "warning"
+        gate_passed = False
+    else:
+        status = "healthy"
+        gate_passed = True
+
+    return {
+        "status": status,
+        "gate_passed": gate_passed,
+        "experiments_evaluated": len(records),
+        "unsafe_blast_or_abort_experiment_ids": unsafe_blast_or_abort_experiment_ids,
+        "slow_kill_switch_experiment_ids": slow_kill_switch_experiment_ids,
+        "records": records,
+        "violations": violations,
+        "Violations": violations,
+    }
+
+
+ProjectCCBService.audit_chaos_engineering_fault_injection_blast_radius_and_steady_state_abort_gate = staticmethod(
+    audit_chaos_engineering_fault_injection_blast_radius_and_steady_state_abort_gate
 )
 
 

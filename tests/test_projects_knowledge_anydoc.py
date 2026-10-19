@@ -8762,3 +8762,156 @@ def test_audit_markdown_admonition_callout_syntax_and_nesting_hygiene_staticmeth
 
 
 
+
+
+# ── audit_markdown_glossary_definition_list_uniqueness_and_hygiene (PMBOK §4.4 & §10.2, pure helper) ──
+
+
+def test_glossary_hygiene_optimal_terms():
+    """Términos con etiqueta única, definición >= 15 chars y citación canónica -> 'GLOSSARY_HYGIENE_OPTIMAL'."""
+    import backend.services.anydoc_service as anydoc_module
+    from backend.services.anydoc_service import AnyDocService, audit_markdown_glossary_definition_list_uniqueness_and_hygiene
+
+    entries = [
+        {
+            "term_id": "GL-001",
+            "term_label": "ISO 21500",
+            "definition_text": "Estándar internacional de gestión de proyectos.",
+            "is_circular_self_reference": False,
+            "has_canonical_citation": True,
+        },
+        {
+            "term_id": "GL-002",
+            # Defaults implícitos por campo: 'PMBOK', definición canónica, False, True.
+        },
+    ]
+    res = audit_markdown_glossary_definition_list_uniqueness_and_hygiene(entries)
+    assert res == {
+        "evaluated_terms_count": 2,
+        "duplicate_or_circular_term_ids": [],
+        "short_definition_or_uncited_term_ids": [],
+        "glossary_hygiene_status": "GLOSSARY_HYGIENE_OPTIMAL",
+        "is_glossary_compliant": True,
+    }
+    # Definición exactamente en 15 chars no es corta (comparación estricta <)
+    at_limit = audit_markdown_glossary_definition_list_uniqueness_and_hygiene(
+        [{"term_id": "GL-003", "definition_text": "m" * 15}]
+    )
+    assert at_limit["glossary_hygiene_status"] == "GLOSSARY_HYGIENE_OPTIMAL"
+    assert (
+        AnyDocService.audit_markdown_glossary_definition_list_uniqueness_and_hygiene(
+            entries
+        )
+        == res
+    )
+    assert "audit_markdown_glossary_definition_list_uniqueness_and_hygiene" in anydoc_module.__all__
+
+
+def test_glossary_duplicate_or_circular_breach():
+    """Etiqueta normalizada repetida o autorreferencia circular -> 'GLOSSARY_DUPLICATE_OR_CIRCULAR_BREACH' con precedencia sobre WARNING."""
+    from backend.services.anydoc_service import (
+        audit_markdown_glossary_definition_list_uniqueness_and_hygiene,
+    )
+
+    breach = audit_markdown_glossary_definition_list_uniqueness_and_hygiene(
+        [                {"term_id": "GL-DUP-1", "term_label": "PMBOK Guide"},
+                {"term_id": "GL-DUP-2", "term_label": "  pmbok guide  "},
+            {
+                "term_id": "GL-CIRC",
+                "term_label": "EVM",
+                "is_circular_self_reference": True,
+            },
+        ]
+    )
+    assert breach["evaluated_terms_count"] == 3
+    assert breach["duplicate_or_circular_term_ids"] == ["GL-DUP-2", "GL-CIRC"]
+    assert breach["glossary_hygiene_status"] == "GLOSSARY_DUPLICATE_OR_CIRCULAR_BREACH"
+    assert breach["is_glossary_compliant"] is False
+
+    # Breach tiene precedencia aunque también haya definiciones cortas / sin citación
+    mixed = audit_markdown_glossary_definition_list_uniqueness_and_hygiene(
+        [
+            {"term_id": "GL-SHORT", "definition_text": "Corta"},
+            {"term_id": "GL-DUP-A", "term_label": "WBS"},
+            {"term_id": "GL-DUP-B", "term_label": "WBS"},
+        ]
+    )
+    assert mixed["glossary_hygiene_status"] == "GLOSSARY_DUPLICATE_OR_CIRCULAR_BREACH"
+
+
+def test_glossary_definition_or_citation_warning():
+    """Definición < 15 caracteres o sin citación canónica (sin duplicados ni circularidad) -> 'GLOSSARY_DEFINITION_OR_CITATION_WARNING'."""
+    from backend.services.anydoc_service import (
+        audit_markdown_glossary_definition_list_uniqueness_and_hygiene,
+    )
+
+    warning = audit_markdown_glossary_definition_list_uniqueness_and_hygiene(
+        [
+            {
+                "term_id": "GL-SHORT",
+                "term_label": "SOW",
+                "definition_text": "Corta",
+                "has_canonical_citation": True,
+            },
+            {
+                "term_id": "GL-UNCITED",
+                "term_label": "RBS",
+                "definition_text": "Breakdown estructural de riesgos y categorías PMI.",
+                "has_canonical_citation": False,
+            },
+        ]
+    )
+    assert warning["evaluated_terms_count"] == 2
+    assert warning["duplicate_or_circular_term_ids"] == []
+    assert warning["short_definition_or_uncited_term_ids"] == ["GL-SHORT", "GL-UNCITED"]
+    assert warning["glossary_hygiene_status"] == (
+        "GLOSSARY_DEFINITION_OR_CITATION_WARNING"
+    )
+    assert warning["is_glossary_compliant"] is False
+
+    custom = audit_markdown_glossary_definition_list_uniqueness_and_hygiene(
+        [{"term_id": "GL-4", "definition_text": "a" * 40}],
+        min_definition_chars=50,
+    )
+    assert custom["glossary_hygiene_status"] == "GLOSSARY_DEFINITION_OR_CITATION_WARNING"
+    assert custom["short_definition_or_uncited_term_ids"] == ["GL-4"]
+
+
+def test_glossary_empty_invalid_entries_and_field_reversion():
+    """None / dicts inválidos se descartan; campos no str/no bool revierten a defaults del spec."""
+    from backend.services.anydoc_service import (
+        audit_markdown_glossary_definition_list_uniqueness_and_hygiene,
+    )
+
+    empty_res = audit_markdown_glossary_definition_list_uniqueness_and_hygiene(None)
+    assert empty_res == {
+        "evaluated_terms_count": 0,
+        "duplicate_or_circular_term_ids": [],
+        "short_definition_or_uncited_term_ids": [],
+        "glossary_hygiene_status": "GLOSSARY_HYGIENE_OPTIMAL",
+        "is_glossary_compliant": True,
+    }
+
+    invalid_res = audit_markdown_glossary_definition_list_uniqueness_and_hygiene(
+        ["no-dict", None, {"term_id": "   "}, {"term_id": 123}, {"definition_text": "algo"}]
+    )
+    assert invalid_res["evaluated_terms_count"] == 0
+
+    bad_fields = audit_markdown_glossary_definition_list_uniqueness_and_hygiene(
+        [
+            {
+                "term_id": "GL-BAD",
+                "term_label": 42,
+                "definition_text": None,
+                "is_circular_self_reference": "sí",
+                "has_canonical_citation": 1,
+            }
+        ]
+    )
+    assert bad_fields == {
+        "evaluated_terms_count": 1,
+        "duplicate_or_circular_term_ids": [],
+        "short_definition_or_uncited_term_ids": [],
+        "glossary_hygiene_status": "GLOSSARY_HYGIENE_OPTIMAL",
+        "is_glossary_compliant": True,
+    }

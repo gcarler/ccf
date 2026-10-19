@@ -10943,4 +10943,98 @@ def test_audit_ingress_rate_limiting_token_bucket_and_waf_owasp_crs_gate_staticm
     )
 
 
+def test_audit_chaos_engineering_fault_injection_blast_radius_and_steady_state_abort_gate_healthy():
+    from backend.services.project_ccb_service import (
+        audit_chaos_engineering_fault_injection_blast_radius_and_steady_state_abort_gate,
+    )
+
+    res = audit_chaos_engineering_fault_injection_blast_radius_and_steady_state_abort_gate(
+        [
+            {
+                "experiment_id": "CHAOS-LATENCY-01",
+                "targeted_pods_pct": 5.0,
+                "steady_state_hypothesis_breached": False,
+                "auto_abort_triggered": True,
+                "kill_switch_abort_latency_ms": 180.0,
+                "rollback_completed_cleanly": True,
+            }
+        ]
+    )
+    assert res["status"] == "healthy"
+    assert res["gate_passed"] is True
+    assert res["experiments_evaluated"] == 1
+    assert res["unsafe_blast_or_abort_experiment_ids"] == []
+    assert res["slow_kill_switch_experiment_ids"] == []
+    assert res["Violations"] == []
+
+
+def test_audit_chaos_engineering_fault_injection_blast_radius_and_steady_state_abort_gate_critical():
+    from backend.services.project_ccb_service import (
+        audit_chaos_engineering_fault_injection_blast_radius_and_steady_state_abort_gate,
+    )
+
+    res = audit_chaos_engineering_fault_injection_blast_radius_and_steady_state_abort_gate(
+        [
+            {
+                "experiment_id": "CHAOS-RUNAWAY",
+                "targeted_pods_pct": 35.0,
+                "steady_state_hypothesis_breached": True,
+                "auto_abort_triggered": False,
+                "kill_switch_abort_latency_ms": 200.0,
+                "rollback_completed_cleanly": False,
+            }
+        ],
+        max_blast_radius_pods_pct=10.0,
+    )
+    assert res["status"] == "critical"
+    assert res["gate_passed"] is False
+    assert res["unsafe_blast_or_abort_experiment_ids"] == ["CHAOS-RUNAWAY"]
+    assert len(res["Violations"]) >= 3
+
+
+def test_audit_chaos_engineering_fault_injection_blast_radius_and_steady_state_abort_gate_warning():
+    from backend.services.project_ccb_service import (
+        audit_chaos_engineering_fault_injection_blast_radius_and_steady_state_abort_gate,
+    )
+
+    res = audit_chaos_engineering_fault_injection_blast_radius_and_steady_state_abort_gate(
+        [
+            {
+                "id": "CHAOS-SLOW-ABORT",
+                "targeted_pods_pct": 8.0,
+                "steady_state_hypothesis_breached": True,
+                "auto_abort_triggered": True,
+                "kill_switch_abort_latency_ms": 950.0,
+                "rollback_completed_cleanly": True,
+            }
+        ],
+        max_kill_switch_abort_latency_ms=500.0,
+    )
+    assert res["status"] == "warning"
+    assert res["gate_passed"] is False
+    assert res["unsafe_blast_or_abort_experiment_ids"] == []
+    assert res["slow_kill_switch_experiment_ids"] == ["CHAOS-SLOW-ABORT"]
+    assert res["records"][0]["kill_switch_latency_exceeded"] is True
+
+
+def test_audit_chaos_engineering_fault_injection_blast_radius_and_steady_state_abort_gate_staticmethod_and_dunder_all():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_chaos_engineering_fault_injection_blast_radius_and_steady_state_abort_gate,
+    )
+
+    sample = [{"experiment_id": "CHAOS-1", "targeted_pods_pct": 4.0}]
+    assert (
+        ProjectCCBService.audit_chaos_engineering_fault_injection_blast_radius_and_steady_state_abort_gate(
+            sample
+        )
+        == audit_chaos_engineering_fault_injection_blast_radius_and_steady_state_abort_gate(
+            sample
+        )
+    )
+    assert (
+        "audit_chaos_engineering_fault_injection_blast_radius_and_steady_state_abort_gate"
+        in mod.__all__
+    )
 

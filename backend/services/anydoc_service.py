@@ -3046,6 +3046,7 @@ __all__ = [
     "audit_markdown_image_alt_text_and_svg_sanitization_hygiene",
     "audit_markdown_yaml_frontmatter_schema_and_tag_hygiene",
     "audit_markdown_admonition_callout_syntax_and_nesting_hygiene",
+    "audit_markdown_glossary_definition_list_uniqueness_and_hygiene",
     "AnydocService",
 ]
 
@@ -8888,3 +8889,70 @@ AnyDocService.audit_markdown_admonition_callout_syntax_and_nesting_hygiene = sta
 
 
 
+def audit_markdown_glossary_definition_list_uniqueness_and_hygiene(
+    entries: list[dict] | None,
+    *,
+    min_definition_chars: int = 15,
+) -> dict:
+    """PMBOK §4.4 & §10.2 — Audita la lista de definiciones del glosario Markdown: unicidad de términos, descripción no vacía/abreviada y referencias circulares de siglas."""
+    raw_items = entries if isinstance(entries, list) else []
+    valid_entries: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_term_id = item.get("term_id")
+        if not isinstance(raw_term_id, str) or not raw_term_id.strip():
+            continue
+        valid_entries.append(item)
+
+    def _bool(value, default):
+        return value if isinstance(value, bool) else default
+
+    def _str(value, default):
+        return value if isinstance(value, str) else default
+
+    duplicate_or_circular_term_ids: list[str] = []
+    short_definition_or_uncited_term_ids: list[str] = []
+    seen_labels: set[str] = set()
+
+    for entry in valid_entries:
+        term_id = str(entry.get("term_id")).strip()
+        term_label = _str(entry.get("term_label"), "PMBOK")
+        normalized_label = str(term_label).strip().lower()
+        definition_text = _str(
+            entry.get("definition_text"),
+            "Project Management Body of Knowledge canonical standard.",
+        )
+        is_circular = _bool(entry.get("is_circular_self_reference"), False)
+        has_citation = _bool(entry.get("has_canonical_citation"), True)
+
+        if normalized_label in seen_labels or bool(is_circular) is True:
+            duplicate_or_circular_term_ids.append(term_id)
+        seen_labels.add(normalized_label)
+
+        if (
+            len(str(definition_text).strip()) < int(min_definition_chars)
+            or not bool(has_citation)
+        ):
+            short_definition_or_uncited_term_ids.append(term_id)
+
+    if duplicate_or_circular_term_ids:
+        glossary_hygiene_status = "GLOSSARY_DUPLICATE_OR_CIRCULAR_BREACH"
+    elif short_definition_or_uncited_term_ids:
+        glossary_hygiene_status = "GLOSSARY_DEFINITION_OR_CITATION_WARNING"
+    else:
+        glossary_hygiene_status = "GLOSSARY_HYGIENE_OPTIMAL"
+
+    return {
+        "evaluated_terms_count": len(valid_entries),
+        "duplicate_or_circular_term_ids": duplicate_or_circular_term_ids,
+        "short_definition_or_uncited_term_ids": short_definition_or_uncited_term_ids,
+        "glossary_hygiene_status": glossary_hygiene_status,
+        "is_glossary_compliant": glossary_hygiene_status
+        == "GLOSSARY_HYGIENE_OPTIMAL",
+    }
+
+
+AnyDocService.audit_markdown_glossary_definition_list_uniqueness_and_hygiene = staticmethod(
+    audit_markdown_glossary_definition_list_uniqueness_and_hygiene
+)

@@ -9427,8 +9427,6 @@ def test_validate_work_package_8_80_rule_duration_and_effort_granularity_empty_a
     )
 
 
-
-
 # ── validate_monte_carlo_schedule_risk_p80_buffer_and_convergence (PMBOK §11.4 & §6.5, pure helper) ──
 
 
@@ -9612,3 +9610,105 @@ def test_monte_carlo_empty_invalid_fields_and_no_simulations():
         "monte_carlo_status": "MONTE_CARLO_P80_GOVERNANCE_OPTIMAL",
         "is_monte_carlo_valid": True,
     }
+
+
+def test_validate_resource_leveling_overallocation_peak_and_float_consumption_valid():
+    from backend.schemas.projects import (
+        validate_resource_leveling_overallocation_peak_and_float_consumption,
+    )
+
+    res = validate_resource_leveling_overallocation_peak_and_float_consumption(
+        [
+            {
+                "resource_id": "RES-ENG-01",
+                "optimization_mode": "Smoothing",
+                "peak_utilization_pct": 92.0,
+                "available_free_float_days": 10.0,
+                "consumed_float_days": 5.0,
+                "critical_path_extended_days": 0.0,
+                "ccb_baseline_change_approved": True,
+            }
+        ]
+    )
+    assert res["is_valid"] is True
+    assert res["status"] == "valid"
+    assert res["resources_evaluated"] == 1
+    assert res["overallocated_or_illegal_extension_resource_ids"] == []
+    assert res["float_exhaustion_resource_ids"] == []
+    assert res["records"][0]["float_consumption_pct"] == 50.0
+    assert res["Violations"] == []
+
+
+def test_validate_resource_leveling_overallocation_peak_and_float_consumption_critical():
+    from backend.schemas.projects import (
+        validate_resource_leveling_overallocation_peak_and_float_consumption,
+    )
+
+    res = validate_resource_leveling_overallocation_peak_and_float_consumption(
+        [
+            {
+                "resource_id": "RES-OVERLOAD",
+                "optimization_mode": "smoothing",
+                "peak_utilization_pct": 135.0,
+                "available_free_float_days": 5.0,
+                "consumed_float_days": 5.0,
+                "critical_path_extended_days": 3.0,
+            },
+            {
+                "id": "RES-LEVELING-NO-CCB",
+                "optimization_mode": "leveling",
+                "peak_utilization_pct": 95.0,
+                "critical_path_extended_days": 4.0,
+                "ccb_baseline_change_approved": False,
+            },
+        ]
+    )
+    assert res["is_valid"] is False
+    assert res["status"] == "critical"
+    assert res["overallocated_or_illegal_extension_resource_ids"] == [
+        "RES-OVERLOAD",
+        "RES-LEVELING-NO-CCB",
+    ]
+    assert len(res["Violations"]) >= 3
+
+
+def test_validate_resource_leveling_overallocation_peak_and_float_consumption_warning():
+    from backend.schemas.projects import (
+        validate_resource_leveling_overallocation_peak_and_float_consumption,
+    )
+
+    res = validate_resource_leveling_overallocation_peak_and_float_consumption(
+        [
+            {
+                "resource_id": "RES-FLOAT-BURN",
+                "optimization_mode": "smoothing",
+                "peak_utilization_pct": 98.0,
+                "available_free_float_days": 10.0,
+                "consumed_float_days": 9.0,
+                "critical_path_extended_days": 0.0,
+            }
+        ],
+        max_smoothing_float_consumption_pct=80.0,
+    )
+    assert res["is_valid"] is False
+    assert res["status"] == "warning"
+    assert res["overallocated_or_illegal_extension_resource_ids"] == []
+    assert res["float_exhaustion_resource_ids"] == ["RES-FLOAT-BURN"]
+    assert res["records"][0]["excessive_float_consumption"] is True
+
+
+def test_validate_resource_leveling_overallocation_peak_and_float_consumption_dunder_all():
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_resource_leveling_overallocation_peak_and_float_consumption,
+    )
+
+    empty = validate_resource_leveling_overallocation_peak_and_float_consumption([])
+    assert empty["is_valid"] is True
+    assert empty["status"] == "valid"
+    assert empty["resources_evaluated"] == 0
+    assert (
+        "validate_resource_leveling_overallocation_peak_and_float_consumption"
+        in mod.__all__
+    )
+

@@ -3827,6 +3827,7 @@ __all__ = [
     "validate_moscow_prioritization_must_have_inflation_and_mvp_cap",
     "validate_work_package_8_80_rule_duration_and_effort_granularity",
     "validate_monte_carlo_schedule_risk_p80_buffer_and_convergence",
+    "validate_resource_leveling_overallocation_peak_and_float_consumption",
 ]
 
 
@@ -9245,3 +9246,148 @@ def validate_monte_carlo_schedule_risk_p80_buffer_and_convergence(
         "is_monte_carlo_valid": monte_carlo_status
         == "MONTE_CARLO_P80_GOVERNANCE_OPTIMAL",
     }
+
+
+def validate_resource_leveling_overallocation_peak_and_float_consumption(
+    resource_allocations: list[dict[str, Any]],
+    *,
+    max_utilization_pct: float = 100.0,
+    max_smoothing_float_consumption_pct: float = 80.0,
+    forbid_critical_path_extension_in_smoothing: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §6.5 & §9.2 — Valida utilización pico en nivelación vs alisamiento de recursos (leveling vs smoothing), consumo de holgura libre y prohibición de extender ruta crítica sin aprobación CCB."""
+    raw_items = (
+        resource_allocations if isinstance(resource_allocations, list) else []
+    )
+    valid_items = [item for item in raw_items if isinstance(item, dict)]
+
+    overallocated_or_illegal_extension_resource_ids: list[str] = []
+    float_exhaustion_resource_ids: list[str] = []
+    records: list[dict[str, Any]] = []
+    violations: list[str] = []
+    has_critical = False
+    has_warning = False
+
+    for idx, item in enumerate(valid_items):
+        resource_id = (
+            str(
+                item.get("resource_id") or item.get("id") or f"res-{idx + 1}"
+            ).strip()
+            or f"res-{idx + 1}"
+        )
+
+        raw_mode = item.get("optimization_mode", "leveling")
+        optimization_mode = (
+            str("leveling" if raw_mode is None else raw_mode).strip().lower()
+            or "leveling"
+        )
+
+        peak_utilization_pct = max(
+            0.0, float(item.get("peak_utilization_pct") or 0.0)
+        )
+        available_free_float_days = max(
+            0.0, float(item.get("available_free_float_days") or 0.0)
+        )
+        consumed_float_days = max(
+            0.0, float(item.get("consumed_float_days") or 0.0)
+        )
+        critical_path_extended_days = max(
+            0.0, float(item.get("critical_path_extended_days") or 0.0)
+        )
+
+        raw_ccb = item.get("ccb_baseline_change_approved", True)
+        ccb_baseline_change_approved = bool(
+            True if raw_ccb is None else raw_ccb
+        )
+
+        if available_free_float_days > 0:
+            float_consumption_pct = round(
+                (consumed_float_days / available_free_float_days) * 100.0, 2
+            )
+        elif consumed_float_days > 0:
+            float_consumption_pct = 100.0
+        else:
+            float_consumption_pct = 0.0
+
+        overallocation_peak_exceeded = peak_utilization_pct > max_utilization_pct
+        smoothing_extended_critical_path = bool(
+            forbid_critical_path_extension_in_smoothing
+            and optimization_mode == "smoothing"
+            and critical_path_extended_days > 0
+        )
+        unapproved_leveling_baseline_shift = bool(
+            optimization_mode == "leveling"
+            and critical_path_extended_days > 0
+            and not ccb_baseline_change_approved
+        )
+        excessive_float_consumption = bool(
+            optimization_mode == "smoothing"
+            and float_consumption_pct > max_smoothing_float_consumption_pct
+        )
+
+        if (
+            overallocation_peak_exceeded
+            or smoothing_extended_critical_path
+            or unapproved_leveling_baseline_shift
+        ):
+            overallocated_or_illegal_extension_resource_ids.append(resource_id)
+            has_critical = True
+            if overallocation_peak_exceeded:
+                violations.append(
+                    f"Resource '{resource_id}' peak utilization ({peak_utilization_pct}%) exceeds {max_utilization_pct}%."
+                )
+            if smoothing_extended_critical_path:
+                violations.append(
+                    f"Resource '{resource_id}' resource smoothing extended critical path by {critical_path_extended_days}d."
+                )
+            if unapproved_leveling_baseline_shift:
+                violations.append(
+                    f"Resource '{resource_id}' leveling shifted baseline by {critical_path_extended_days}d without CCB approval."
+                )
+
+        if excessive_float_consumption:
+            float_exhaustion_resource_ids.append(resource_id)
+            has_warning = True
+            violations.append(
+                f"Resource '{resource_id}' smoothing consumed {float_consumption_pct}% of free float (> {max_smoothing_float_consumption_pct}%)."
+            )
+
+        records.append(
+            {
+                "resource_id": resource_id,
+                "optimization_mode": optimization_mode,
+                "peak_utilization_pct": peak_utilization_pct,
+                "available_free_float_days": available_free_float_days,
+                "consumed_float_days": consumed_float_days,
+                "float_consumption_pct": float_consumption_pct,
+                "critical_path_extended_days": critical_path_extended_days,
+                "ccb_baseline_change_approved": ccb_baseline_change_approved,
+                "overallocation_peak_exceeded": overallocation_peak_exceeded,
+                "smoothing_extended_critical_path": smoothing_extended_critical_path,
+                "unapproved_leveling_baseline_shift": unapproved_leveling_baseline_shift,
+                "excessive_float_consumption": excessive_float_consumption,
+            }
+        )
+
+    if has_critical:
+        status = "critical"
+        is_valid = False
+    elif has_warning:
+        status = "warning"
+        is_valid = False
+    else:
+        status = "valid"
+        is_valid = True
+
+    return {
+        "is_valid": is_valid,
+        "status": status,
+        "resources_evaluated": len(records),
+        "overallocated_or_illegal_extension_resource_ids": overallocated_or_illegal_extension_resource_ids,
+        "float_exhaustion_resource_ids": float_exhaustion_resource_ids,
+        "records": records,
+        "violations": violations,
+        "Violations": violations,
+    }
+
+
