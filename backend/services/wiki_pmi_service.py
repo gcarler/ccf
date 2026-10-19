@@ -2525,6 +2525,7 @@ __all__ = [
     "audit_wiki_database_migration_expand_contract_and_lock_safety",
     "audit_wiki_blameless_postmortem_five_whys_and_action_sla",
     "audit_wiki_on_call_rotation_burnout_and_escalation_readiness",
+    "audit_wiki_adr_immutability_and_superseded_chain_integrity",
     "WikiPMIService",
 ]
 
@@ -6102,3 +6103,91 @@ WikiPMIService.audit_wiki_on_call_rotation_burnout_and_escalation_readiness = st
     audit_wiki_on_call_rotation_burnout_and_escalation_readiness
 )
 
+
+def audit_wiki_adr_immutability_and_superseded_chain_integrity(
+    adrs: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §10.2 — Wiki Architecture Decision Record (ADR) Immutability, Superseded Chain & Context-Consequences Completeness Auditor."""
+    valid_adrs: list[dict[str, Any]] = []
+    if isinstance(adrs, (list, tuple)):
+        for item in adrs:
+            if not isinstance(item, dict):
+                continue
+            aid = str(item.get("adr_id") or "").strip()
+            if not aid:
+                continue
+            valid_adrs.append({**item, "_aid": aid})
+
+    if not valid_adrs:
+        return {
+            "total_adrs_evaluated": 0,
+            "mutated_in_place_adr_ids": [],
+            "broken_superseded_link_adr_ids": [],
+            "incomplete_structure_adr_ids": [],
+            "adr_governance_status": "ADR_LOG_INTEGRITY_VERIFIED",
+            "is_adr_log_compliant": True,
+            "recommendations": [],
+        }
+
+    known_adr_ids = {a["_aid"] for a in valid_adrs}
+    mutated_in_place_adr_ids: list[str] = []
+    broken_superseded_link_adr_ids: list[str] = []
+    incomplete_structure_adr_ids: list[str] = []
+
+    for adr in valid_adrs:
+        aid = adr["_aid"]
+        status = str(adr.get("status") or "").strip().upper()
+        raw_sup = adr.get("superseded_by_adr_id")
+        sup_id = str(raw_sup).strip() if raw_sup is not None else ""
+        mutated = bool(adr.get("was_mutated_in_place_after_acceptance", False))
+        has_sections = bool(
+            adr.get("has_context_decision_and_consequences_sections", True)
+        )
+        has_deciders = bool(adr.get("has_deciders_and_date_recorded", True))
+
+        if mutated:
+            mutated_in_place_adr_ids.append(aid)
+
+        if status == "SUPERSEDED":
+            if not sup_id or sup_id == aid or sup_id not in known_adr_ids:
+                broken_superseded_link_adr_ids.append(aid)
+
+        if not has_sections or not has_deciders:
+            incomplete_structure_adr_ids.append(aid)
+
+    recommendations: list[str] = []
+    if mutated_in_place_adr_ids:
+        recommendations.append(
+            f"Restore immutability on accepted ADR(s) and issue new superseding ADR(s) instead of mutating in place: {', '.join(mutated_in_place_adr_ids)}."
+        )
+    if broken_superseded_link_adr_ids:
+        recommendations.append(
+            f"Repair broken or self-referencing `superseded_by_adr_id` chain links on ADR(s): {', '.join(broken_superseded_link_adr_ids)}."
+        )
+    if incomplete_structure_adr_ids:
+        recommendations.append(
+            f"Complete Context, Decision, Consequences, Deciders, and Date sections in ADR(s): {', '.join(incomplete_structure_adr_ids)}."
+        )
+
+    if mutated_in_place_adr_ids or broken_superseded_link_adr_ids:
+        adr_governance_status = "IMMUTABILITY_OR_CHAIN_BREACH"
+    elif incomplete_structure_adr_ids:
+        adr_governance_status = "STRUCTURE_INCOMPLETE_WARNING"
+    else:
+        adr_governance_status = "ADR_LOG_INTEGRITY_VERIFIED"
+
+    return {
+        "total_adrs_evaluated": len(valid_adrs),
+        "mutated_in_place_adr_ids": mutated_in_place_adr_ids,
+        "broken_superseded_link_adr_ids": broken_superseded_link_adr_ids,
+        "incomplete_structure_adr_ids": incomplete_structure_adr_ids,
+        "adr_governance_status": adr_governance_status,
+        "is_adr_log_compliant": adr_governance_status
+        == "ADR_LOG_INTEGRITY_VERIFIED",
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_adr_immutability_and_superseded_chain_integrity = staticmethod(
+    audit_wiki_adr_immutability_and_superseded_chain_integrity
+)

@@ -3028,6 +3028,8 @@ __all__ = [
     "audit_markdown_table_column_parity_and_empty_cell_hygiene",
     "audit_markdown_blockquote_attribution_and_nesting_hygiene",
     "audit_markdown_frontmatter_metadata_and_classification_hygiene",
+    "audit_markdown_mermaid_diagram_syntax_and_cognitive_complexity",
+    "audit_markdown_footnote_citation_and_orphan_definition_hygiene",
     "AnydocService",
 ]
 
@@ -7401,4 +7403,156 @@ AnyDocService.audit_markdown_frontmatter_metadata_and_classification_hygiene = s
 )
 AnydocService.audit_markdown_frontmatter_metadata_and_classification_hygiene = staticmethod(
     audit_markdown_frontmatter_metadata_and_classification_hygiene
+)
+
+
+_ALLOWED_MERMAID_DIAGRAM_TYPES = (
+    "flowchart",
+    "graph",
+    "sequenceDiagram",
+    "stateDiagram",
+    "stateDiagram-v2",
+    "classDiagram",
+    "erDiagram",
+)
+
+
+def audit_markdown_mermaid_diagram_syntax_and_cognitive_complexity(
+    diagrams: Any,
+    *,
+    max_nodes_per_diagram: int = 25,
+    allowed_diagram_types: tuple[str, ...] = _ALLOWED_MERMAID_DIAGRAM_TYPES,
+) -> dict[str, Any]:
+    """PMBOK 4.4 y 10.2: higiene de diagramas Mermaid.
+
+    Evalúa por diagrama la validez del tipo, riesgos de sintaxis en
+    etiquetas (paréntesis sin entrecomillar, HTML, subgrafos desbalanceados)
+    y sobrecarga cognitiva por número de nodos.
+    """
+    entries = diagrams if isinstance(diagrams, list) else []
+    rows = [item for item in entries if isinstance(item, dict)]
+
+    unsupported_type_diagram_ids: list[str] = []
+    syntax_hazard_diagram_ids: list[str] = []
+    cognitive_overload_diagram_ids: list[str] = []
+    observed_node_counts: list[int] = []
+
+    for item in rows:
+        diagram_id = item.get("diagram_id")
+        diagram_type = item.get("diagram_type")
+        node_count = item.get("node_count", 0)
+
+        node_val = node_count if isinstance(node_count, (int, float)) and node_count >= 0 else 0
+        observed_node_counts.append(node_val)
+
+        if (
+            not isinstance(diagram_type, str)
+            or diagram_type.strip() not in allowed_diagram_types
+        ):
+            unsupported_type_diagram_ids.append(diagram_id)
+
+        if (
+            item.get("has_unquoted_parentheses_in_labels", False) is True
+            or item.get("has_html_tags_in_labels", False) is True
+            or item.get("has_balanced_subgraph_ends", True) is not True
+        ):
+            syntax_hazard_diagram_ids.append(diagram_id)
+
+        if node_val > max_nodes_per_diagram:
+            cognitive_overload_diagram_ids.append(diagram_id)
+
+    max_node_count_observed = max(observed_node_counts) if observed_node_counts else 0
+
+    if unsupported_type_diagram_ids or syntax_hazard_diagram_ids:
+        mermaid_hygiene_status = "RENDER_FAILURE_RISK"
+    elif cognitive_overload_diagram_ids:
+        mermaid_hygiene_status = "COGNITIVE_OVERLOAD_WARNING"
+    else:
+        mermaid_hygiene_status = "DIAGRAM_CLEAN"
+
+    return {
+        "total_diagrams_evaluated": len(rows),
+        "unsupported_type_diagram_ids": unsupported_type_diagram_ids,
+        "syntax_hazard_diagram_ids": syntax_hazard_diagram_ids,
+        "cognitive_overload_diagram_ids": cognitive_overload_diagram_ids,
+        "max_node_count_observed": max_node_count_observed,
+        "mermaid_hygiene_status": mermaid_hygiene_status,
+        "is_mermaid_compliant": mermaid_hygiene_status == "DIAGRAM_CLEAN",
+    }
+
+
+AnyDocService.audit_markdown_mermaid_diagram_syntax_and_cognitive_complexity = staticmethod(
+    audit_markdown_mermaid_diagram_syntax_and_cognitive_complexity
+)
+AnydocService.audit_markdown_mermaid_diagram_syntax_and_cognitive_complexity = staticmethod(
+    audit_markdown_mermaid_diagram_syntax_and_cognitive_complexity
+)
+
+
+def audit_markdown_footnote_citation_and_orphan_definition_hygiene(
+    documents: Any,
+) -> dict[str, Any]:
+    """PMBOK 4.4 y 10.2: paridad de citas y definiciones de footnotes.
+
+    Normaliza claves con ``str(k).strip()`` y detecta marcadores en línea
+    sin definición (dangling), definiciones sin referencia (orphan) y
+    definiciones vacías o duplicadas en cada documento.
+    """
+    entries = documents if isinstance(documents, list) else []
+    rows = [item for item in entries if isinstance(item, dict)]
+
+    dangling_marker_doc_ids: list[str] = []
+    orphan_definition_doc_ids: list[str] = []
+    malformed_definition_doc_ids: list[str] = []
+
+    for item in rows:
+        doc_id = item.get("doc_id")
+
+        inline_footer = item.get("inline_footnote_markers", []) or []
+        defined_keys = item.get("defined_footnote_keys", []) or []
+        empty_defs = item.get("empty_definition_keys", []) or []
+        duplicate_defs = item.get("duplicate_definition_keys", []) or []
+
+        inline_set = {
+            str(marker).strip()
+            for marker in inline_footer
+            if str(marker).strip()
+        }
+        defined_set = {
+            str(key).strip()
+            for key in defined_keys
+            if str(key).strip()
+        }
+
+        if inline_set - defined_set:
+            dangling_marker_doc_ids.append(doc_id)
+
+        if defined_set - inline_set:
+            orphan_definition_doc_ids.append(doc_id)
+
+        if empty_defs or duplicate_defs:
+            malformed_definition_doc_ids.append(doc_id)
+
+    if dangling_marker_doc_ids or malformed_definition_doc_ids:
+        footnote_hygiene_status = "BROKEN_CITATION_INTEGRITY"
+    elif orphan_definition_doc_ids:
+        footnote_hygiene_status = "ORPHAN_DEFINITION_WARNING"
+    else:
+        footnote_hygiene_status = "FOOTNOTES_CLEAN"
+
+    return {
+        "total_documents_evaluated": len(rows),
+        "dangling_marker_doc_ids": dangling_marker_doc_ids,
+        "orphan_definition_doc_ids": orphan_definition_doc_ids,
+        "malformed_definition_doc_ids": malformed_definition_doc_ids,
+        "footnote_hygiene_status": footnote_hygiene_status,
+        "is_footnote_compliant": footnote_hygiene_status == "FOOTNOTES_CLEAN",
+    }
+
+
+AnyDocService.audit_markdown_footnote_citation_and_orphan_definition_hygiene = staticmethod(
+    audit_markdown_footnote_citation_and_orphan_definition_hygiene
+)
+AnydocService.audit_markdown_footnote_citation_and_orphan_definition_hygiene = staticmethod(
+    audit_markdown_footnote_citation_and_orphan_definition_hygiene
 )

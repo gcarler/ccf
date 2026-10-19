@@ -6258,3 +6258,295 @@ def test_audit_markdown_frontmatter_metadata_and_classification_hygiene_empty_an
         "audit_markdown_frontmatter_metadata_and_classification_hygiene"
         in mod.__all__
     )
+
+
+def test_audit_markdown_mermaid_render_failure_risk_paths():
+    """Caso 1: tipo no soportado o riesgos de sintaxis -> RENDER_FAILURE_RISK."""
+    from backend.services.anydoc_service import (
+        audit_markdown_mermaid_diagram_syntax_and_cognitive_complexity,
+    )
+
+    res = audit_markdown_mermaid_diagram_syntax_and_cognitive_complexity(
+        [
+            {
+                "diagram_id": "DIA-01",
+                "diagram_type": "gitGraph",
+                "node_count": 5,
+            },
+            {
+                "diagram_id": "DIA-02",
+                "diagram_type": "flowchart",
+                "node_count": 3,
+                "has_unquoted_parentheses_in_labels": True,
+            },
+            {
+                "diagram_id": "DIA-03",
+                "diagram_type": "sequenceDiagram",
+                "node_count": 4,
+                "has_html_tags_in_labels": True,
+            },
+            {
+                "diagram_id": "DIA-04",
+                "diagram_type": "erDiagram",
+                "node_count": 2,
+                "has_balanced_subgraph_ends": False,
+            },
+        ]
+    )
+    assert res["total_diagrams_evaluated"] == 4
+    assert res["unsupported_type_diagram_ids"] == ["DIA-01"]
+    assert res["syntax_hazard_diagram_ids"] == ["DIA-02", "DIA-03", "DIA-04"]
+    assert res["cognitive_overload_diagram_ids"] == []
+    assert res["max_node_count_observed"] == 5
+    assert res["mermaid_hygiene_status"] == "RENDER_FAILURE_RISK"
+    assert res["is_mermaid_compliant"] is False
+
+    # Tipo válido con espacios alrededor del strip: sigue soportado.
+    res_trim = audit_markdown_mermaid_diagram_syntax_and_cognitive_complexity(
+        [
+            {"diagram_id": "DIA-05", "diagram_type": "  stateDiagram-v2  ", "node_count": 6},
+        ]
+    )
+    assert res_trim["unsupported_type_diagram_ids"] == []
+    assert res_trim["mermaid_hygiene_status"] == "DIAGRAM_CLEAN"
+
+
+def test_audit_markdown_mermaid_cognitive_overload_only():
+    """Caso 2: solo sobrecarga cognitiva de nodos -> COGNITIVE_OVERLOAD_WARNING."""
+    from backend.services.anydoc_service import (
+        audit_markdown_mermaid_diagram_syntax_and_cognitive_complexity,
+    )
+
+    res = audit_markdown_mermaid_diagram_syntax_and_cognitive_complexity(
+        [
+            {
+                "diagram_id": "DIA-10",
+                "diagram_type": "flowchart",
+                "node_count": 26,
+            },
+            {
+                "diagram_id": "DIA-11",
+                "diagram_type": "graph",
+                "node_count": 25,
+            },
+        ]
+    )
+    assert res["total_diagrams_evaluated"] == 2
+    assert res["unsupported_type_diagram_ids"] == []
+    assert res["syntax_hazard_diagram_ids"] == []
+    assert res["cognitive_overload_diagram_ids"] == ["DIA-10"]
+    assert res["max_node_count_observed"] == 26
+    assert res["mermaid_hygiene_status"] == "COGNITIVE_OVERLOAD_WARNING"
+    assert res["is_mermaid_compliant"] is False
+
+    # Precisión: RENDER_FAILURE_RISK domina sobre la sobrecarga cognitiva.
+    res_mixed = audit_markdown_mermaid_diagram_syntax_and_cognitive_complexity(
+        [
+            {
+                "diagram_id": "DIA-12",
+                "diagram_type": "classDiagram",
+                "node_count": 30,
+                "has_unquoted_parentheses_in_labels": True,
+            },
+        ]
+    )
+    assert res_mixed["mermaid_hygiene_status"] == "RENDER_FAILURE_RISK"
+
+
+def test_audit_markdown_mermaid_clean_and_boundaries():
+    """Caso 3: diagramas válidos con node_count en la frontera -> DIAGRAM_CLEAN."""
+    from backend.services.anydoc_service import (
+        audit_markdown_mermaid_diagram_syntax_and_cognitive_complexity,
+    )
+
+    res = audit_markdown_mermaid_diagram_syntax_and_cognitive_complexity(
+        [
+            {
+                "diagram_id": "DIA-20",
+                "diagram_type": "sequenceDiagram",
+                "node_count": 25,
+                "has_unquoted_parentheses_in_labels": False,
+                "has_html_tags_in_labels": False,
+                "has_balanced_subgraph_ends": True,
+            },
+            {
+                "diagram_id": "DIA-21",
+                "diagram_type": "flowchart",
+                "node_count": 0,
+            },
+        ]
+    )
+    assert res["total_diagrams_evaluated"] == 2
+    assert res["unsupported_type_diagram_ids"] == []
+    assert res["syntax_hazard_diagram_ids"] == []
+    assert res["cognitive_overload_diagram_ids"] == []
+    assert res["max_node_count_observed"] == 25
+    assert res["mermaid_hygiene_status"] == "DIAGRAM_CLEAN"
+    assert res["is_mermaid_compliant"] is True
+
+
+def test_audit_markdown_mermaid_invalid_and_binding():
+    """Caso 4: entradas no-lista/no-dict y binding en AnyDocService/AnydocService + __all__."""
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_mermaid_diagram_syntax_and_cognitive_complexity,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_markdown_mermaid_diagram_syntax_and_cognitive_complexity(payload)  # type: ignore[arg-type]
+        assert empty["total_diagrams_evaluated"] == 0
+        assert empty["unsupported_type_diagram_ids"] == []
+        assert empty["syntax_hazard_diagram_ids"] == []
+        assert empty["cognitive_overload_diagram_ids"] == []
+        assert empty["max_node_count_observed"] == 0
+        assert empty["mermaid_hygiene_status"] == "DIAGRAM_CLEAN"
+        assert empty["is_mermaid_compliant"] is True
+
+    sample = [
+        {"diagram_id": "DIA-30", "diagram_type": "flowchart", "node_count": 4},
+    ]
+    assert (
+        AnyDocService.audit_markdown_mermaid_diagram_syntax_and_cognitive_complexity(sample)
+        == audit_markdown_mermaid_diagram_syntax_and_cognitive_complexity(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_mermaid_diagram_syntax_and_cognitive_complexity(sample)
+        == audit_markdown_mermaid_diagram_syntax_and_cognitive_complexity(sample)
+    )
+    assert "audit_markdown_mermaid_diagram_syntax_and_cognitive_complexity" in mod.__all__
+
+
+def test_audit_markdown_footnote_broken_citation_integrity_paths():
+    """Caso 1: marcador sin definición o definiciones vacías/duplicadas -> BROKEN_CITATION_INTEGRITY."""
+    from backend.services.anydoc_service import (
+        audit_markdown_footnote_citation_and_orphan_definition_hygiene,
+    )
+
+    res = audit_markdown_footnote_citation_and_orphan_definition_hygiene(
+        [
+            {
+                "doc_id": "DOC-01",
+                "inline_footnote_markers": ["1", "2", "3"],
+                "defined_footnote_keys": ["1", "2"],
+            },
+            {
+                "doc_id": "DOC-02",
+                "inline_footnote_markers": ["5"],
+                "defined_footnote_keys": ["5"],
+                "empty_definition_keys": ["7"],
+            },
+            {
+                "doc_id": "DOC-03",
+                "inline_footnote_markers": ["8"],
+                "defined_footnote_keys": ["8"],
+                "duplicate_definition_keys": ["9"],
+            },
+        ]
+    )
+    assert res["total_documents_evaluated"] == 3
+    assert res["dangling_marker_doc_ids"] == ["DOC-01"]
+    assert res["orphan_definition_doc_ids"] == []
+    assert res["malformed_definition_doc_ids"] == ["DOC-02", "DOC-03"]
+    assert res["footnote_hygiene_status"] == "BROKEN_CITATION_INTEGRITY"
+    assert res["is_footnote_compliant"] is False
+
+
+def test_audit_markdown_footnote_orphan_warning_only():
+    """Caso 2: solo definiciones huérfanas -> ORPHAN_DEFINITION_WARNING."""
+    from backend.services.anydoc_service import (
+        audit_markdown_footnote_citation_and_orphan_definition_hygiene,
+    )
+
+    res = audit_markdown_footnote_citation_and_orphan_definition_hygiene(
+        [
+            {
+                "doc_id": "DOC-10",
+                "inline_footnote_markers": ["1"],
+                "defined_footnote_keys": ["1", "2", "3"],
+            },
+        ]
+    )
+    assert res["total_documents_evaluated"] == 1
+    assert res["dangling_marker_doc_ids"] == []
+    assert res["orphan_definition_doc_ids"] == ["DOC-10"]
+    assert res["malformed_definition_doc_ids"] == []
+    assert res["footnote_hygiene_status"] == "ORPHAN_DEFINITION_WARNING"
+    assert res["is_footnote_compliant"] is False
+
+    # Precisión: BROKEN_CITATION_INTEGRITY domina sobre orphan.
+    res_mixed = audit_markdown_footnote_citation_and_orphan_definition_hygiene(
+        [
+            {
+                "doc_id": "DOC-11",
+                "inline_footnote_markers": ["1", "x"],
+                "defined_footnote_keys": ["1", "2"],
+            },
+        ]
+    )
+    assert res_mixed["dangling_marker_doc_ids"] == ["DOC-11"]
+    assert res_mixed["orphan_definition_doc_ids"] == ["DOC-11"]
+    assert res_mixed["footnote_hygiene_status"] == "BROKEN_CITATION_INTEGRITY"
+
+
+def test_audit_markdown_footnote_clean_and_normalization():
+    """Caso 3: paridad perfecta con espacios alrededor de claves -> FOOTNOTES_CLEAN."""
+    from backend.services.anydoc_service import (
+        audit_markdown_footnote_citation_and_orphan_definition_hygiene,
+    )
+
+    res = audit_markdown_footnote_citation_and_orphan_definition_hygiene(
+        [
+            {
+                "doc_id": "DOC-20",
+                "inline_footnote_markers": [" 1 ", "2"],
+                "defined_footnote_keys": ["1", " 2 "],
+            },
+            {
+                "doc_id": "DOC-21",
+            },
+        ]
+    )
+    assert res["total_documents_evaluated"] == 2
+    assert res["dangling_marker_doc_ids"] == []
+    assert res["orphan_definition_doc_ids"] == []
+    assert res["malformed_definition_doc_ids"] == []
+    assert res["footnote_hygiene_status"] == "FOOTNOTES_CLEAN"
+    assert res["is_footnote_compliant"] is True
+
+
+def test_audit_markdown_footnote_invalid_and_binding():
+    """Caso 4: entradas no-lista/no-dict y binding + __all__."""
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_footnote_citation_and_orphan_definition_hygiene,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_markdown_footnote_citation_and_orphan_definition_hygiene(payload)  # type: ignore[arg-type]
+        assert empty["total_documents_evaluated"] == 0
+        assert empty["dangling_marker_doc_ids"] == []
+        assert empty["orphan_definition_doc_ids"] == []
+        assert empty["malformed_definition_doc_ids"] == []
+        assert empty["footnote_hygiene_status"] == "FOOTNOTES_CLEAN"
+        assert empty["is_footnote_compliant"] is True
+
+    sample = [
+        {
+            "doc_id": "DOC-30",
+            "inline_footnote_markers": ["1"],
+            "defined_footnote_keys": ["1"],
+        },
+    ]
+    assert (
+        AnyDocService.audit_markdown_footnote_citation_and_orphan_definition_hygiene(sample)
+        == audit_markdown_footnote_citation_and_orphan_definition_hygiene(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_footnote_citation_and_orphan_definition_hygiene(sample)
+        == audit_markdown_footnote_citation_and_orphan_definition_hygiene(sample)
+    )
+    assert "audit_markdown_footnote_citation_and_orphan_definition_hygiene" in mod.__all__

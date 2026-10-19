@@ -7909,3 +7909,133 @@ def test_audit_wiki_on_call_rotation_burnout_and_escalation_readiness_empty_and_
         "audit_wiki_on_call_rotation_burnout_and_escalation_readiness" in mod.__all__
     )
 
+
+def test_audit_wiki_adr_immutability_and_superseded_chain_integrity_breach():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_adr_immutability_and_superseded_chain_integrity,
+    )
+
+    res = audit_wiki_adr_immutability_and_superseded_chain_integrity(
+        [
+            {
+                "adr_id": "ADR-001",
+                "status": "ACCEPTED",
+                "superseded_by_adr_id": None,
+                "was_mutated_in_place_after_acceptance": True,
+                "has_context_decision_and_consequences_sections": True,
+                "has_deciders_and_date_recorded": True,
+            },
+            {
+                "adr_id": "ADR-002",
+                "status": "SUPERSEDED",
+                "superseded_by_adr_id": "ADR-999",
+                "was_mutated_in_place_after_acceptance": False,
+                "has_context_decision_and_consequences_sections": True,
+                "has_deciders_and_date_recorded": True,
+            },
+            {
+                "adr_id": "ADR-003",
+                "status": "SUPERSEDED",
+                "superseded_by_adr_id": "ADR-003",
+                "was_mutated_in_place_after_acceptance": False,
+                "has_context_decision_and_consequences_sections": True,
+                "has_deciders_and_date_recorded": True,
+            },
+        ]
+    )
+    assert res["total_adrs_evaluated"] == 3
+    assert res["mutated_in_place_adr_ids"] == ["ADR-001"]
+    assert res["broken_superseded_link_adr_ids"] == ["ADR-002", "ADR-003"]
+    assert res["incomplete_structure_adr_ids"] == []
+    assert res["adr_governance_status"] == "IMMUTABILITY_OR_CHAIN_BREACH"
+    assert res["is_adr_log_compliant"] is False
+
+
+def test_audit_wiki_adr_immutability_and_superseded_chain_integrity_structure_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_adr_immutability_and_superseded_chain_integrity,
+    )
+
+    res = audit_wiki_adr_immutability_and_superseded_chain_integrity(
+        [
+            {
+                "adr_id": "ADR-010",
+                "status": "PROPOSED",
+                "superseded_by_adr_id": None,
+                "was_mutated_in_place_after_acceptance": False,
+                "has_context_decision_and_consequences_sections": False,
+                "has_deciders_and_date_recorded": True,
+            }
+        ]
+    )
+    assert res["mutated_in_place_adr_ids"] == []
+    assert res["broken_superseded_link_adr_ids"] == []
+    assert res["incomplete_structure_adr_ids"] == ["ADR-010"]
+    assert res["adr_governance_status"] == "STRUCTURE_INCOMPLETE_WARNING"
+    assert res["is_adr_log_compliant"] is False
+
+
+def test_audit_wiki_adr_immutability_and_superseded_chain_integrity_verified_and_empty():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_adr_immutability_and_superseded_chain_integrity,
+    )
+
+    empty = audit_wiki_adr_immutability_and_superseded_chain_integrity(
+        [{"adr_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_adrs_evaluated"] == 0
+    assert empty["adr_governance_status"] == "ADR_LOG_INTEGRITY_VERIFIED"
+    assert empty["is_adr_log_compliant"] is True
+
+    verified = audit_wiki_adr_immutability_and_superseded_chain_integrity(
+        [
+            {
+                "adr_id": "ADR-020",
+                "status": "SUPERSEDED",
+                "superseded_by_adr_id": "ADR-021",
+                "was_mutated_in_place_after_acceptance": False,
+                "has_context_decision_and_consequences_sections": True,
+                "has_deciders_and_date_recorded": True,
+            },
+            {
+                "adr_id": "ADR-021",
+                "status": "ACCEPTED",
+                "superseded_by_adr_id": None,
+                "was_mutated_in_place_after_acceptance": False,
+                "has_context_decision_and_consequences_sections": True,
+                "has_deciders_and_date_recorded": True,
+            },
+        ]
+    )
+    assert verified["total_adrs_evaluated"] == 2
+    assert verified["broken_superseded_link_adr_ids"] == []
+    assert verified["adr_governance_status"] == "ADR_LOG_INTEGRITY_VERIFIED"
+    assert verified["is_adr_log_compliant"] is True
+
+
+def test_audit_wiki_adr_immutability_and_superseded_chain_integrity_staticmethod_and_dunder_all():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_adr_immutability_and_superseded_chain_integrity,
+    )
+
+    sample = [
+        {
+            "adr_id": "ADR-99",
+            "status": "ACCEPTED",
+            "was_mutated_in_place_after_acceptance": False,
+            "has_context_decision_and_consequences_sections": True,
+            "has_deciders_and_date_recorded": True,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_adr_immutability_and_superseded_chain_integrity(
+            sample
+        )
+        == audit_wiki_adr_immutability_and_superseded_chain_integrity(sample)
+    )
+    assert (
+        "audit_wiki_adr_immutability_and_superseded_chain_integrity"
+        in mod.__all__
+    )

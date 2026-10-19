@@ -7867,3 +7867,133 @@ def test_evaluate_evm_value_engineering_invalid_and_binding():
         == evaluate_evm_value_engineering_target_costing_and_worth_index(sample)
     )
     assert "evaluate_evm_value_engineering_target_costing_and_worth_index" in mod.__all__
+
+
+def test_evaluate_evm_contingency_and_management_reserve_drawdown_governance_unauthorized_breach():
+    from backend.services.project_evm_service import (
+        evaluate_evm_contingency_and_management_reserve_drawdown_governance,
+    )
+
+    res = evaluate_evm_contingency_and_management_reserve_drawdown_governance(
+        [
+            {
+                "drawdown_id": "DD-01",
+                "reserve_type": "CONTINGENCY",
+                "amount": 3000.0,
+                "has_linked_risk_id": False,
+                "has_sponsor_bcr_approval": False,
+            },
+            {
+                "drawdown_id": "DD-02",
+                "reserve_type": "MANAGEMENT",
+                "amount": 5000.0,
+                "has_linked_risk_id": False,
+                "has_sponsor_bcr_approval": False,
+            },
+        ],
+        contingency_reserve_initial=10000.0,
+        management_reserve_initial=10000.0,
+        project_percent_complete=50.0,
+    )
+    assert res["total_drawdowns_evaluated"] == 2
+    assert res["contingency_consumed"] == 3000.0
+    assert res["management_consumed"] == 5000.0
+    assert res["contingency_consumed_pct"] == 30.0
+    assert res["reserve_burn_to_progress_ratio"] == 0.6
+    assert res["unlinked_contingency_drawdown_ids"] == ["DD-01"]
+    assert res["unauthorized_management_drawdown_ids"] == ["DD-02"]
+    assert res["reserve_governance_status"] == "UNAUTHORIZED_OR_EXHAUSTED_BREACH"
+    assert res["is_reserve_drawdown_compliant"] is False
+
+
+def test_evaluate_evm_contingency_and_management_reserve_drawdown_governance_premature_burn_warning():
+    from backend.services.project_evm_service import (
+        evaluate_evm_contingency_and_management_reserve_drawdown_governance,
+    )
+
+    res = evaluate_evm_contingency_and_management_reserve_drawdown_governance(
+        [
+            {
+                "drawdown_id": "DD-10",
+                "reserve_type": "CONTINGENCY",
+                "amount": 7500.0,
+                "has_linked_risk_id": True,
+                "has_sponsor_bcr_approval": False,
+            }
+        ],
+        contingency_reserve_initial=10000.0,
+        management_reserve_initial=10000.0,
+        project_percent_complete=40.0,
+    )
+    assert res["unlinked_contingency_drawdown_ids"] == []
+    assert res["unauthorized_management_drawdown_ids"] == []
+    assert res["contingency_consumed_pct"] == 75.0
+    assert res["reserve_burn_to_progress_ratio"] == 1.88
+    assert res["reserve_governance_status"] == "PREMATURE_BURN_WARNING"
+    assert res["is_reserve_drawdown_compliant"] is False
+
+
+def test_evaluate_evm_contingency_and_management_reserve_drawdown_governance_protected_and_empty():
+    from backend.services.project_evm_service import (
+        evaluate_evm_contingency_and_management_reserve_drawdown_governance,
+    )
+
+    empty = evaluate_evm_contingency_and_management_reserve_drawdown_governance(
+        [{"drawdown_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_drawdowns_evaluated"] == 0
+    assert empty["contingency_consumed"] == 0.0
+    assert empty["management_consumed"] == 0.0
+    assert empty["reserve_governance_status"] == "RESERVE_PROTECTED"
+    assert empty["is_reserve_drawdown_compliant"] is True
+
+    protected = evaluate_evm_contingency_and_management_reserve_drawdown_governance(
+        [
+            {
+                "drawdown_id": "DD-20",
+                "reserve_type": "CONTINGENCY",
+                "amount": 4000.0,
+                "has_linked_risk_id": True,
+            },
+            {
+                "drawdown_id": "DD-21",
+                "reserve_type": "MANAGEMENT",
+                "amount": 2000.0,
+                "has_sponsor_bcr_approval": True,
+            },
+        ],
+        contingency_reserve_initial=10000.0,
+        management_reserve_initial=10000.0,
+        project_percent_complete=50.0,
+    )
+    assert protected["total_drawdowns_evaluated"] == 2
+    assert protected["reserve_burn_to_progress_ratio"] == 0.8
+    assert protected["reserve_governance_status"] == "RESERVE_PROTECTED"
+    assert protected["is_reserve_drawdown_compliant"] is True
+
+
+def test_evaluate_evm_contingency_and_management_reserve_drawdown_governance_staticmethod_and_dunder_all():
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_contingency_and_management_reserve_drawdown_governance,
+    )
+
+    sample = [
+        {
+            "drawdown_id": "DD-99",
+            "reserve_type": "CONTINGENCY",
+            "amount": 1000.0,
+            "has_linked_risk_id": True,
+        }
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_contingency_and_management_reserve_drawdown_governance(
+            sample
+        )
+        == evaluate_evm_contingency_and_management_reserve_drawdown_governance(sample)
+    )
+    assert (
+        "evaluate_evm_contingency_and_management_reserve_drawdown_governance"
+        in mod.__all__
+    )

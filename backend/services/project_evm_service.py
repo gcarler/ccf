@@ -5516,6 +5516,7 @@ __all__ = [
     "evaluate_evm_learning_curve_cost_improvement_and_productivity",
     "evaluate_evm_milestone_payment_holdback_and_acceptance_gate",
     "evaluate_evm_value_engineering_target_costing_and_worth_index",
+    "evaluate_evm_contingency_and_management_reserve_drawdown_governance",
     "ProjectEVMService",
 ]
 
@@ -8900,4 +8901,129 @@ def evaluate_evm_value_engineering_target_costing_and_worth_index(
 
 ProjectEVMService.evaluate_evm_value_engineering_target_costing_and_worth_index = staticmethod(
     evaluate_evm_value_engineering_target_costing_and_worth_index
+)
+
+
+def evaluate_evm_contingency_and_management_reserve_drawdown_governance(
+    drawdowns: list[dict[str, Any]],
+    *,
+    contingency_reserve_initial: float = 10000.0,
+    management_reserve_initial: float = 10000.0,
+    project_percent_complete: float = 50.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §7.4 & §11.2 — EVM Contingency vs Management Reserve Burn Rate, Unapproved Drawdown & Risk Trigger Linkage Evaluator."""
+    valid_drawdowns: list[dict[str, Any]] = []
+    if isinstance(drawdowns, (list, tuple)):
+        for item in drawdowns:
+            if not isinstance(item, dict):
+                continue
+            did = str(item.get("drawdown_id") or "").strip()
+            if not did:
+                continue
+            valid_drawdowns.append({**item, "_did": did})
+
+    if not valid_drawdowns:
+        return {
+            "total_drawdowns_evaluated": 0,
+            "contingency_consumed": 0.0,
+            "management_consumed": 0.0,
+            "contingency_consumed_pct": 0.0,
+            "reserve_burn_to_progress_ratio": 0.0,
+            "unlinked_contingency_drawdown_ids": [],
+            "unauthorized_management_drawdown_ids": [],
+            "reserve_governance_status": "RESERVE_PROTECTED",
+            "is_reserve_drawdown_compliant": True,
+            "recommendations": [],
+        }
+
+    raw_contingency_sum = 0.0
+    raw_management_sum = 0.0
+    unlinked_contingency_drawdown_ids: list[str] = []
+    unauthorized_management_drawdown_ids: list[str] = []
+
+    for dd in valid_drawdowns:
+        did = dd["_did"]
+        rtype = str(dd.get("reserve_type") or "").strip().upper()
+        amt = max(0.0, float(dd.get("amount", 0.0) or 0.0))
+        has_risk = bool(dd.get("has_linked_risk_id", False))
+        has_bcr = bool(dd.get("has_sponsor_bcr_approval", False))
+
+        if rtype == "CONTINGENCY":
+            raw_contingency_sum += amt
+            if not has_risk:
+                unlinked_contingency_drawdown_ids.append(did)
+        elif rtype == "MANAGEMENT":
+            raw_management_sum += amt
+            if not has_bcr:
+                unauthorized_management_drawdown_ids.append(did)
+
+    contingency_consumed = round(raw_contingency_sum, 2)
+    management_consumed = round(raw_management_sum, 2)
+
+    if contingency_reserve_initial > 0:
+        contingency_consumed_pct = round(
+            (contingency_consumed / contingency_reserve_initial) * 100.0, 2
+        )
+    else:
+        contingency_consumed_pct = 0.0
+
+    if project_percent_complete > 0:
+        reserve_burn_to_progress_ratio = round(
+            contingency_consumed_pct / project_percent_complete, 2
+        )
+    elif contingency_consumed_pct > 0:
+        reserve_burn_to_progress_ratio = round(contingency_consumed_pct, 2)
+    else:
+        reserve_burn_to_progress_ratio = 0.0
+
+    recommendations: list[str] = []
+    if unlinked_contingency_drawdown_ids:
+        recommendations.append(
+            f"Link contingency reserve drawdown(s) to identified Risk Register trigger(s): {', '.join(unlinked_contingency_drawdown_ids)}."
+        )
+    if unauthorized_management_drawdown_ids:
+        recommendations.append(
+            f"Obtain formal Sponsor/CCB Baseline Change Request (BCR) approval for management reserve drawdown(s): {', '.join(unauthorized_management_drawdown_ids)}."
+        )
+    if (
+        contingency_consumed > contingency_reserve_initial
+        or management_consumed > management_reserve_initial
+    ):
+        recommendations.append(
+            "Re-baseline cost reserves via formal contract/charter modification due to reserve exhaustion."
+        )
+    if reserve_burn_to_progress_ratio > 1.25:
+        recommendations.append(
+            f"Curb premature contingency reserve burn (burn-to-progress ratio {reserve_burn_to_progress_ratio:.2f} > 1.25)."
+        )
+
+    if (
+        unlinked_contingency_drawdown_ids
+        or unauthorized_management_drawdown_ids
+        or contingency_consumed > contingency_reserve_initial
+        or management_consumed > management_reserve_initial
+    ):
+        reserve_governance_status = "UNAUTHORIZED_OR_EXHAUSTED_BREACH"
+    elif reserve_burn_to_progress_ratio > 1.25:
+        reserve_governance_status = "PREMATURE_BURN_WARNING"
+    else:
+        reserve_governance_status = "RESERVE_PROTECTED"
+
+    return {
+        "total_drawdowns_evaluated": len(valid_drawdowns),
+        "contingency_consumed": contingency_consumed,
+        "management_consumed": management_consumed,
+        "contingency_consumed_pct": contingency_consumed_pct,
+        "reserve_burn_to_progress_ratio": reserve_burn_to_progress_ratio,
+        "unlinked_contingency_drawdown_ids": unlinked_contingency_drawdown_ids,
+        "unauthorized_management_drawdown_ids": unauthorized_management_drawdown_ids,
+        "reserve_governance_status": reserve_governance_status,
+        "is_reserve_drawdown_compliant": reserve_governance_status
+        == "RESERVE_PROTECTED",
+        "recommendations": recommendations,
+    }
+
+
+ProjectEVMService.evaluate_evm_contingency_and_management_reserve_drawdown_governance = staticmethod(
+    evaluate_evm_contingency_and_management_reserve_drawdown_governance
 )
