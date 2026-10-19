@@ -5522,6 +5522,7 @@ __all__ = [
     "evaluate_evm_performance_bond_and_letter_of_credit_coverage",
     "evaluate_evm_fx_hedging_collar_and_currency_exposure",
     "evaluate_evm_time_and_materials_nte_ceiling_and_rate_card",
+    "evaluate_evm_working_capital_cash_conversion_and_mobilization_advance",
     "ProjectEVMService",
 ]
 
@@ -9483,5 +9484,65 @@ def evaluate_evm_time_and_materials_nte_ceiling_and_rate_card(
 
 ProjectEVMService.evaluate_evm_time_and_materials_nte_ceiling_and_rate_card = staticmethod(
     evaluate_evm_time_and_materials_nte_ceiling_and_rate_card
+)
+
+
+def evaluate_evm_working_capital_cash_conversion_and_mobilization_advance(
+    billing_cycles: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_dso_days: float = 45.0,
+    min_cash_runway_months: float = 3.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §7.3 & §7.4 — EVM Working Capital Cash Conversion Cycle (DSO/DPO), Mobilization Advance Amortization & Liquidity Runway Evaluator."""
+    valid_cycles = [
+        cyc
+        for cyc in (billing_cycles or [])
+        if isinstance(cyc, Mapping) and str(cyc.get("cycle_id") or "").strip()
+    ]
+
+    liquidity_crunch_or_unamortized_advance_cycle_ids: list[str] = []
+    high_dso_or_positive_cash_gap_cycle_ids: list[str] = []
+
+    for cyc in valid_cycles:
+        cid = str(cyc.get("cycle_id")).strip()
+        raw_dso = cyc.get("days_sales_outstanding_dso")
+        dso = float(raw_dso if raw_dso is not None else 30.0)
+        raw_dpo = cyc.get("days_payable_outstanding_dpo")
+        dpo = float(raw_dpo if raw_dpo is not None else 35.0)
+        raw_adv = cyc.get("mobilization_advance_unamortized_balance")
+        unamortized_adv = float(raw_adv if raw_adv is not None else 0.0)
+        raw_rem = cyc.get("remaining_contract_billings")
+        rem_billings = float(raw_rem if raw_rem is not None else 100000.0)
+        raw_runway = cyc.get("available_project_cash_runway_months")
+        runway_months = float(raw_runway if raw_runway is not None else 4.0)
+
+        if (
+            runway_months < min_cash_runway_months
+            or unamortized_adv > rem_billings
+        ):
+            liquidity_crunch_or_unamortized_advance_cycle_ids.append(cid)
+
+        if dso > max_dso_days or (dso - dpo) > 15.0:
+            high_dso_or_positive_cash_gap_cycle_ids.append(cid)
+
+    if liquidity_crunch_or_unamortized_advance_cycle_ids:
+        working_capital_status = "WORKING_CAPITAL_LIQUIDITY_OR_ADVANCE_BREACH"
+    elif high_dso_or_positive_cash_gap_cycle_ids:
+        working_capital_status = "WORKING_CAPITAL_DSO_CASH_GAP_WARNING"
+    else:
+        working_capital_status = "WORKING_CAPITAL_FLOW_OPTIMAL"
+
+    return {
+        "evaluated_cycles_count": len(valid_cycles),
+        "liquidity_crunch_or_unamortized_advance_cycle_ids": liquidity_crunch_or_unamortized_advance_cycle_ids,
+        "high_dso_or_positive_cash_gap_cycle_ids": high_dso_or_positive_cash_gap_cycle_ids,
+        "working_capital_status": working_capital_status,
+        "is_working_capital_compliant": working_capital_status
+        == "WORKING_CAPITAL_FLOW_OPTIMAL",
+    }
+
+
+ProjectEVMService.evaluate_evm_working_capital_cash_conversion_and_mobilization_advance = staticmethod(
+    evaluate_evm_working_capital_cash_conversion_and_mobilization_advance
 )
 

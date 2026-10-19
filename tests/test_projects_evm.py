@@ -8721,3 +8721,131 @@ def test_evaluate_evm_time_and_materials_nte_ceiling_and_rate_card_staticmethod_
         in mod.__all__
     )
 
+
+def test_evaluate_evm_working_capital_cash_conversion_and_mobilization_advance_breach():
+    from backend.services.project_evm_service import (
+        evaluate_evm_working_capital_cash_conversion_and_mobilization_advance,
+    )
+
+    result = evaluate_evm_working_capital_cash_conversion_and_mobilization_advance(
+        [
+            {
+                "cycle_id": "CYC-RUNWAY-LOW",
+                "days_sales_outstanding_dso": 30.0,
+                "days_payable_outstanding_dpo": 35.0,
+                "mobilization_advance_unamortized_balance": 10000.0,
+                "remaining_contract_billings": 50000.0,
+                "available_project_cash_runway_months": 1.5,
+            },
+            {
+                "cycle_id": "CYC-UNAMORTIZED-ADV",
+                "days_sales_outstanding_dso": 30.0,
+                "days_payable_outstanding_dpo": 35.0,
+                "mobilization_advance_unamortized_balance": 60000.0,
+                "remaining_contract_billings": 40000.0,
+                "available_project_cash_runway_months": 5.0,
+            },
+        ],
+        max_dso_days=45.0,
+        min_cash_runway_months=3.0,
+    )
+    assert result["evaluated_cycles_count"] == 2
+    assert result["liquidity_crunch_or_unamortized_advance_cycle_ids"] == [
+        "CYC-RUNWAY-LOW",
+        "CYC-UNAMORTIZED-ADV",
+    ]
+    assert result["high_dso_or_positive_cash_gap_cycle_ids"] == []
+    assert (
+        result["working_capital_status"]
+        == "WORKING_CAPITAL_LIQUIDITY_OR_ADVANCE_BREACH"
+    )
+    assert result["is_working_capital_compliant"] is False
+
+
+def test_evaluate_evm_working_capital_cash_conversion_and_mobilization_advance_warning():
+    from backend.services.project_evm_service import (
+        evaluate_evm_working_capital_cash_conversion_and_mobilization_advance,
+    )
+
+    result = evaluate_evm_working_capital_cash_conversion_and_mobilization_advance(
+        [
+            {
+                "cycle_id": "CYC-DSO-GAP",
+                "days_sales_outstanding_dso": 52.0,
+                "days_payable_outstanding_dpo": 30.0,
+                "mobilization_advance_unamortized_balance": 5000.0,
+                "remaining_contract_billings": 80000.0,
+                "available_project_cash_runway_months": 4.5,
+            }
+        ],
+        max_dso_days=45.0,
+        min_cash_runway_months=3.0,
+    )
+    assert result["evaluated_cycles_count"] == 1
+    assert result["liquidity_crunch_or_unamortized_advance_cycle_ids"] == []
+    assert result["high_dso_or_positive_cash_gap_cycle_ids"] == ["CYC-DSO-GAP"]
+    assert (
+        result["working_capital_status"]
+        == "WORKING_CAPITAL_DSO_CASH_GAP_WARNING"
+    )
+    assert result["is_working_capital_compliant"] is False
+
+
+def test_evaluate_evm_working_capital_cash_conversion_and_mobilization_advance_optimal_and_empty():
+    from backend.services.project_evm_service import (
+        evaluate_evm_working_capital_cash_conversion_and_mobilization_advance,
+    )
+
+    empty = evaluate_evm_working_capital_cash_conversion_and_mobilization_advance(
+        [{"cycle_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_cycles_count"] == 0
+    assert empty["working_capital_status"] == "WORKING_CAPITAL_FLOW_OPTIMAL"
+    assert empty["is_working_capital_compliant"] is True
+
+    optimal = evaluate_evm_working_capital_cash_conversion_and_mobilization_advance(
+        [
+            {
+                "cycle_id": "CYC-OPT-1",
+                "days_sales_outstanding_dso": 35.0,
+                "days_payable_outstanding_dpo": 30.0,
+                "mobilization_advance_unamortized_balance": 20000.0,
+                "remaining_contract_billings": 120000.0,
+                "available_project_cash_runway_months": 6.0,
+            }
+        ],
+        max_dso_days=45.0,
+        min_cash_runway_months=3.0,
+    )
+    assert optimal["evaluated_cycles_count"] == 1
+    assert optimal["working_capital_status"] == "WORKING_CAPITAL_FLOW_OPTIMAL"
+    assert optimal["is_working_capital_compliant"] is True
+
+
+def test_evaluate_evm_working_capital_cash_conversion_and_mobilization_advance_staticmethod_and_dunder_all():
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_working_capital_cash_conversion_and_mobilization_advance,
+    )
+
+    sample = [
+        {
+            "cycle_id": "CYC-99",
+            "days_sales_outstanding_dso": 30.0,
+            "days_payable_outstanding_dpo": 35.0,
+        }
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_working_capital_cash_conversion_and_mobilization_advance(
+            sample
+        )
+        == evaluate_evm_working_capital_cash_conversion_and_mobilization_advance(
+            sample
+        )
+    )
+    assert (
+        "evaluate_evm_working_capital_cash_conversion_and_mobilization_advance"
+        in mod.__all__
+    )
+
