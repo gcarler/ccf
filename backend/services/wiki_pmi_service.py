@@ -2527,6 +2527,7 @@ __all__ = [
     "audit_wiki_on_call_rotation_burnout_and_escalation_readiness",
     "audit_wiki_adr_immutability_and_superseded_chain_integrity",
     "audit_wiki_bus_factor_spok_and_cross_training_coverage",
+    "audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene",
     "WikiPMIService",
 ]
 
@@ -6283,4 +6284,71 @@ def audit_wiki_bus_factor_spok_and_cross_training_coverage(
 
 WikiPMIService.audit_wiki_bus_factor_spok_and_cross_training_coverage = staticmethod(
     audit_wiki_bus_factor_spok_and_cross_training_coverage
+)
+
+
+def audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene(
+    credentials: Any,
+    *,
+    max_rotation_age_days: int = 90,
+    max_lease_ttl_hours: float = 24.0,
+) -> Dict[str, object]:
+    """Auditoría PMBOK 11.6 y 10.2: higiene de secretos y credenciales.
+
+    Evalúa por credencial la cadencia de rotación, el uso de claves
+    estáticas vs leases dinámicos de vault, el TTL del lease y la
+    existencia de runbook de rotación automatizado.
+    """
+    entries = credentials if isinstance(credentials, list) else []
+    rows = [item for item in entries if isinstance(item, dict)]
+
+    stale_rotation_credential_ids: List[str] = []
+    static_key_violation_ids: List[str] = []
+    excessive_lease_ttl_ids: List[str] = []
+    missing_rotation_runbook_ids: List[str] = []
+
+    for item in rows:
+        credential_id = item.get("credential_id")
+
+        days_since = item.get("days_since_last_rotation", 0)
+        days_since_val = days_since if isinstance(days_since, (int, float)) and days_since >= 0 else 0
+
+        if days_since_val > max_rotation_age_days:
+            stale_rotation_credential_ids.append(credential_id)
+
+        if (
+            item.get("is_static_long_lived_key", False) is True
+            or item.get("uses_dynamic_vault_lease", True) is not True
+        ):
+            static_key_violation_ids.append(credential_id)
+
+        lease_ttl = item.get("lease_ttl_hours", 8.0)
+        lease_ttl_val = lease_ttl if isinstance(lease_ttl, (int, float)) else 0.0
+
+        if lease_ttl_val > max_lease_ttl_hours or lease_ttl_val <= 0.0:
+            excessive_lease_ttl_ids.append(credential_id)
+
+        if item.get("has_automated_rotation_runbook", True) is not True:
+            missing_rotation_runbook_ids.append(credential_id)
+
+    if stale_rotation_credential_ids or static_key_violation_ids:
+        secret_hygiene_status = "CREDENTIAL_EXPOSURE_BREACH"
+    elif excessive_lease_ttl_ids or missing_rotation_runbook_ids:
+        secret_hygiene_status = "LEASE_OR_RUNBOOK_WARNING"
+    else:
+        secret_hygiene_status = "ZERO_STATIC_SECRETS_VERIFIED"
+
+    return {
+        "total_credentials_evaluated": len(rows),
+        "stale_rotation_credential_ids": stale_rotation_credential_ids,
+        "static_key_violation_ids": static_key_violation_ids,
+        "excessive_lease_ttl_ids": excessive_lease_ttl_ids,
+        "missing_rotation_runbook_ids": missing_rotation_runbook_ids,
+        "secret_hygiene_status": secret_hygiene_status,
+        "is_secret_hygiene_compliant": secret_hygiene_status == "ZERO_STATIC_SECRETS_VERIFIED",
+    }
+
+
+WikiPMIService.audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene = staticmethod(
+    audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene
 )

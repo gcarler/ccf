@@ -2844,6 +2844,7 @@ __all__ = [
     "audit_test_pyramid_balance_and_mutation_coverage_gate",
     "audit_supply_chain_slsa_provenance_and_artifact_signing",
     "audit_ecab_emergency_change_retroactive_ratification_and_abuse",
+    "audit_release_freeze_blackout_window_and_change_collisions",
     "ProjectCCBService",
 ]
 
@@ -6679,4 +6680,96 @@ def audit_ecab_emergency_change_retroactive_ratification_and_abuse(
 
 ProjectCCBService.audit_ecab_emergency_change_retroactive_ratification_and_abuse = staticmethod(
     audit_ecab_emergency_change_retroactive_ratification_and_abuse
+)
+
+
+def audit_release_freeze_blackout_window_and_change_collisions(
+    deployments: list[dict[str, Any]],
+    *,
+    max_concurrent_shared_infra_changes: int = 1,
+) -> dict[str, Any]:
+    """PMI PMBOK §8.3 & §4.6 — CCB Release Freeze Window, Blackout Period Exception Approval & Change Collision Auditor."""
+    valid_deployments: list[dict[str, Any]] = []
+    if isinstance(deployments, (list, tuple)):
+        for item in deployments:
+            if not isinstance(item, dict):
+                continue
+            did = str(item.get("deployment_id") or "").strip()
+            if not did:
+                continue
+            valid_deployments.append({**item, "_did": did})
+
+    if not valid_deployments:
+        return {
+            "total_deployments_evaluated": 0,
+            "unauthorized_blackout_deployment_ids": [],
+            "collision_hazard_deployment_ids": [],
+            "unattended_rollback_deployment_ids": [],
+            "release_window_status": "RELEASE_WINDOW_SAFE",
+            "is_release_window_compliant": True,
+            "recommendations": [],
+        }
+
+    unauthorized_blackout_deployment_ids: list[str] = []
+    collision_hazard_deployment_ids: list[str] = []
+    unattended_rollback_deployment_ids: list[str] = []
+
+    for dep in valid_deployments:
+        did = dep["_did"]
+        is_blackout = bool(dep.get("is_during_blackout_freeze_window", False))
+        has_waiver = bool(dep.get("has_vp_exception_waiver_signed", False))
+        concurrent_cnt = int(
+            dep.get("concurrent_shared_infra_changes_count", 1)
+            if dep.get("concurrent_shared_infra_changes_count") is not None
+            else 1
+        )
+        has_commander = bool(
+            dep.get("has_dedicated_rollback_commander_on_duty", True)
+        )
+
+        if is_blackout and not has_waiver:
+            unauthorized_blackout_deployment_ids.append(did)
+        if concurrent_cnt > max_concurrent_shared_infra_changes:
+            collision_hazard_deployment_ids.append(did)
+        if not has_commander:
+            unattended_rollback_deployment_ids.append(did)
+
+    recommendations: list[str] = []
+    if unauthorized_blackout_deployment_ids:
+        recommendations.append(
+            f"Block deployments during release freeze blackout window or obtain signed VP exception waiver for deployment(s): {', '.join(unauthorized_blackout_deployment_ids)}."
+        )
+    if unattended_rollback_deployment_ids:
+        recommendations.append(
+            f"Assign dedicated on-duty rollback commander prior to executing deployment(s): {', '.join(unattended_rollback_deployment_ids)}."
+        )
+    if collision_hazard_deployment_ids:
+        recommendations.append(
+            f"Serialize concurrent shared-infrastructure changes (<= {max_concurrent_shared_infra_changes} at a time) for deployment(s): {', '.join(collision_hazard_deployment_ids)}."
+        )
+
+    if (
+        unauthorized_blackout_deployment_ids
+        or unattended_rollback_deployment_ids
+    ):
+        release_window_status = "FREEZE_OR_COMMAND_BREACH"
+    elif collision_hazard_deployment_ids:
+        release_window_status = "CHANGE_COLLISION_WARNING"
+    else:
+        release_window_status = "RELEASE_WINDOW_SAFE"
+
+    return {
+        "total_deployments_evaluated": len(valid_deployments),
+        "unauthorized_blackout_deployment_ids": unauthorized_blackout_deployment_ids,
+        "collision_hazard_deployment_ids": collision_hazard_deployment_ids,
+        "unattended_rollback_deployment_ids": unattended_rollback_deployment_ids,
+        "release_window_status": release_window_status,
+        "is_release_window_compliant": release_window_status
+        == "RELEASE_WINDOW_SAFE",
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.audit_release_freeze_blackout_window_and_change_collisions = staticmethod(
+    audit_release_freeze_blackout_window_and_change_collisions
 )

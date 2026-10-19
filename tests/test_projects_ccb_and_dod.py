@@ -8675,3 +8675,114 @@ def test_audit_ecab_emergency_change_retroactive_ratification_and_abuse_staticme
         "audit_ecab_emergency_change_retroactive_ratification_and_abuse"
         in mod.__all__
     )
+
+
+def test_audit_release_freeze_blackout_window_and_change_collisions_freeze_breach():
+    from backend.services.project_ccb_service import (
+        audit_release_freeze_blackout_window_and_change_collisions,
+    )
+
+    res = audit_release_freeze_blackout_window_and_change_collisions(
+        [
+            {
+                "deployment_id": "DEP-BLACKOUT-01",
+                "is_during_blackout_freeze_window": True,
+                "has_vp_exception_waiver_signed": False,
+                "concurrent_shared_infra_changes_count": 1,
+                "has_dedicated_rollback_commander_on_duty": True,
+            },
+            {
+                "deployment_id": "DEP-NO-CMD-02",
+                "is_during_blackout_freeze_window": False,
+                "has_vp_exception_waiver_signed": False,
+                "concurrent_shared_infra_changes_count": 1,
+                "has_dedicated_rollback_commander_on_duty": False,
+            },
+        ],
+        max_concurrent_shared_infra_changes=1,
+    )
+    assert res["total_deployments_evaluated"] == 2
+    assert res["unauthorized_blackout_deployment_ids"] == ["DEP-BLACKOUT-01"]
+    assert res["collision_hazard_deployment_ids"] == []
+    assert res["unattended_rollback_deployment_ids"] == ["DEP-NO-CMD-02"]
+    assert res["release_window_status"] == "FREEZE_OR_COMMAND_BREACH"
+    assert res["is_release_window_compliant"] is False
+
+
+def test_audit_release_freeze_blackout_window_and_change_collisions_collision_warning():
+    from backend.services.project_ccb_service import (
+        audit_release_freeze_blackout_window_and_change_collisions,
+    )
+
+    res = audit_release_freeze_blackout_window_and_change_collisions(
+        [
+            {
+                "deployment_id": "DEP-SHARED-DB-10",
+                "is_during_blackout_freeze_window": False,
+                "has_vp_exception_waiver_signed": False,
+                "concurrent_shared_infra_changes_count": 3,
+                "has_dedicated_rollback_commander_on_duty": True,
+            }
+        ],
+        max_concurrent_shared_infra_changes=1,
+    )
+    assert res["unauthorized_blackout_deployment_ids"] == []
+    assert res["collision_hazard_deployment_ids"] == ["DEP-SHARED-DB-10"]
+    assert res["unattended_rollback_deployment_ids"] == []
+    assert res["release_window_status"] == "CHANGE_COLLISION_WARNING"
+    assert res["is_release_window_compliant"] is False
+
+
+def test_audit_release_freeze_blackout_window_and_change_collisions_safe_and_empty():
+    from backend.services.project_ccb_service import (
+        audit_release_freeze_blackout_window_and_change_collisions,
+    )
+
+    empty = audit_release_freeze_blackout_window_and_change_collisions(
+        [{"deployment_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_deployments_evaluated"] == 0
+    assert empty["release_window_status"] == "RELEASE_WINDOW_SAFE"
+    assert empty["is_release_window_compliant"] is True
+
+    safe = audit_release_freeze_blackout_window_and_change_collisions(
+        [
+            {
+                "deployment_id": "DEP-WAIVED-20",
+                "is_during_blackout_freeze_window": True,
+                "has_vp_exception_waiver_signed": True,
+                "concurrent_shared_infra_changes_count": 1,
+                "has_dedicated_rollback_commander_on_duty": True,
+            }
+        ]
+    )
+    assert safe["total_deployments_evaluated"] == 1
+    assert safe["release_window_status"] == "RELEASE_WINDOW_SAFE"
+    assert safe["is_release_window_compliant"] is True
+
+
+def test_audit_release_freeze_blackout_window_and_change_collisions_staticmethod_and_dunder_all():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_release_freeze_blackout_window_and_change_collisions,
+    )
+
+    sample = [
+        {
+            "deployment_id": "DEP-99",
+            "is_during_blackout_freeze_window": False,
+            "concurrent_shared_infra_changes_count": 1,
+            "has_dedicated_rollback_commander_on_duty": True,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_release_freeze_blackout_window_and_change_collisions(
+            sample
+        )
+        == audit_release_freeze_blackout_window_and_change_collisions(sample)
+    )
+    assert (
+        "audit_release_freeze_blackout_window_and_change_collisions"
+        in mod.__all__
+    )

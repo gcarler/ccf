@@ -8155,3 +8155,163 @@ def test_audit_wiki_bus_factor_spok_and_cross_training_coverage_staticmethod_and
     assert (
         "audit_wiki_bus_factor_spok_and_cross_training_coverage" in mod.__all__
     )
+
+
+def test_audit_wiki_secret_rotation_exposure_breach_paths():
+    """Caso 1: rotación vencida o clave estática -> CREDENTIAL_EXPOSURE_BREACH."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene,
+    )
+
+    res = audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene(
+        [
+            {
+                "credential_id": "CRD-01",
+                "days_since_last_rotation": 120,
+                "uses_dynamic_vault_lease": True,
+                "lease_ttl_hours": 8.0,
+                "has_automated_rotation_runbook": True,
+            },
+            {
+                "credential_id": "CRD-02",
+                "days_since_last_rotation": 10,
+                "is_static_long_lived_key": True,
+                "lease_ttl_hours": 8.0,
+            },
+            {
+                "credential_id": "CRD-03",
+                "days_since_last_rotation": 10,
+                "uses_dynamic_vault_lease": False,
+                "lease_ttl_hours": 8.0,
+            },
+        ]
+    )
+    assert res["total_credentials_evaluated"] == 3
+    assert res["stale_rotation_credential_ids"] == ["CRD-01"]
+    assert res["static_key_violation_ids"] == ["CRD-02", "CRD-03"]
+    assert res["excessive_lease_ttl_ids"] == []
+    assert res["missing_rotation_runbook_ids"] == []
+    assert res["secret_hygiene_status"] == "CREDENTIAL_EXPOSURE_BREACH"
+    assert res["is_secret_hygiene_compliant"] is False
+
+    # Precisión: CREDENTIAL_EXPOSURE_BREACH domina sobre LEASE_OR_RUNBOOK_WARNING.
+    res_mixed = audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene(
+        [
+            {
+                "credential_id": "CRD-04",
+                "days_since_last_rotation": 120,
+                "lease_ttl_hours": 48.0,
+                "has_automated_rotation_runbook": False,
+            },
+        ]
+    )
+    assert res_mixed["stale_rotation_credential_ids"] == ["CRD-04"]
+    assert res_mixed["excessive_lease_ttl_ids"] == ["CRD-04"]
+    assert res_mixed["missing_rotation_runbook_ids"] == ["CRD-04"]
+    assert res_mixed["secret_hygiene_status"] == "CREDENTIAL_EXPOSURE_BREACH"
+
+
+def test_audit_wiki_secret_rotation_lease_warning_only():
+    """Caso 2: solo TTL excesivo o runbook faltante -> LEASE_OR_RUNBOOK_WARNING."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene,
+    )
+
+    res = audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene(
+        [
+            {
+                "credential_id": "CRD-10",
+                "days_since_last_rotation": 30,
+                "uses_dynamic_vault_lease": True,
+                "lease_ttl_hours": 30.0,
+                "has_automated_rotation_runbook": True,
+            },
+            {
+                "credential_id": "CRD-11",
+                "days_since_last_rotation": 30,
+                "lease_ttl_hours": 8.0,
+                "has_automated_rotation_runbook": False,
+            },
+        ]
+    )
+    assert res["total_credentials_evaluated"] == 2
+    assert res["stale_rotation_credential_ids"] == []
+    assert res["static_key_violation_ids"] == []
+    assert res["excessive_lease_ttl_ids"] == ["CRD-10"]
+    assert res["missing_rotation_runbook_ids"] == ["CRD-11"]
+    assert res["secret_hygiene_status"] == "LEASE_OR_RUNBOOK_WARNING"
+    assert res["is_secret_hygiene_compliant"] is False
+
+
+def test_audit_wiki_secret_rotation_clean_and_boundaries():
+    """Caso 3: fronteras exactas (rotación = 90, TTL = 24.0 inclusive) -> ZERO_STATIC_SECRETS_VERIFIED."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene,
+    )
+
+    res = audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene(
+        [
+            {
+                "credential_id": "CRD-20",
+                "days_since_last_rotation": 90,
+                "uses_dynamic_vault_lease": True,
+                "lease_ttl_hours": 24.0,
+                "has_automated_rotation_runbook": True,
+            },
+            {
+                "credential_id": "CRD-21",
+                "days_since_last_rotation": 0,
+                "lease_ttl_hours": 8.0,
+            },
+        ]
+    )
+    # CRD-20: 90 no > 90; TTL 24.0 no > 24.0 y > 0. CRD-21: defaults correctos.
+    assert res["total_credentials_evaluated"] == 2
+    assert res["stale_rotation_credential_ids"] == []
+    assert res["static_key_violation_ids"] == []
+    assert res["excessive_lease_ttl_ids"] == []
+    assert res["missing_rotation_runbook_ids"] == []
+    assert res["secret_hygiene_status"] == "ZERO_STATIC_SECRETS_VERIFIED"
+    assert res["is_secret_hygiene_compliant"] is True
+
+    # TTL <= 0 es inválido aunque el resto estén en frontera.
+    res_ttl_zero = audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene(
+        [
+            {"credential_id": "CRD-22", "days_since_last_rotation": 0, "lease_ttl_hours": 0.0},
+        ]
+    )
+    assert res_ttl_zero["excessive_lease_ttl_ids"] == ["CRD-22"]
+    assert res_ttl_zero["secret_hygiene_status"] == "LEASE_OR_RUNBOOK_WARNING"
+
+
+def test_audit_wiki_secret_rotation_invalid_and_binding():
+    """Caso 4: entradas no-lista/no-dict y binding + __all__."""
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene(payload)  # type: ignore[arg-type]
+        assert empty["total_credentials_evaluated"] == 0
+        assert empty["stale_rotation_credential_ids"] == []
+        assert empty["static_key_violation_ids"] == []
+        assert empty["excessive_lease_ttl_ids"] == []
+        assert empty["missing_rotation_runbook_ids"] == []
+        assert empty["secret_hygiene_status"] == "ZERO_STATIC_SECRETS_VERIFIED"
+        assert empty["is_secret_hygiene_compliant"] is True
+
+    sample = [
+        {
+            "credential_id": "CRD-30",
+            "days_since_last_rotation": 15,
+            "lease_ttl_hours": 8.0,
+            "has_automated_rotation_runbook": True,
+        },
+    ]
+    assert (
+        WikiPMIService.audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene(sample)
+        == audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene(sample)
+    )
+    assert "audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene" in mod.__all__

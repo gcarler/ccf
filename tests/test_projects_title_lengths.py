@@ -7215,3 +7215,106 @@ def test_validate_pdm_network_dangling_activities_and_negative_float_dunder_all(
         "validate_pdm_network_dangling_activities_and_negative_float"
         in mod.__all__
     )
+
+
+def test_validate_risk_emv_decision_tree_and_contingency_adequacy_underfunded_or_invalid():
+    from backend.schemas.projects import (
+        validate_risk_emv_decision_tree_and_contingency_adequacy,
+    )
+
+    res = validate_risk_emv_decision_tree_and_contingency_adequacy(
+        [
+            {
+                "risk_id": "RSK-BAD-PROB",
+                "probability": 1.4,
+                "financial_impact": 5000.0,
+                "has_quantified_fallback_branch": True,
+            },
+            {
+                "risk_id": "RSK-CLOUD-OUTAGE",
+                "probability": 0.5,
+                "financial_impact": 30000.0,
+                "has_quantified_fallback_branch": True,
+            },
+        ],
+        allocated_contingency_reserve=10000.0,
+        max_underfunded_shortfall_pct=5.0,
+    )
+    assert res["total_risks_evaluated"] == 2
+    assert res["net_threat_emv"] == 15000.0
+    assert res["reserve_shortfall"] == 5000.0
+    assert res["shortfall_pct"] == 33.33
+    assert res["invalid_probability_risk_ids"] == ["RSK-BAD-PROB"]
+    assert res["emv_adequacy_status"] == "UNDERFUNDED_OR_INVALID_MODEL"
+    assert res["is_emv_adequate"] is False
+
+
+def test_validate_risk_emv_decision_tree_and_contingency_adequacy_branch_warning():
+    from backend.schemas.projects import (
+        validate_risk_emv_decision_tree_and_contingency_adequacy,
+    )
+
+    res = validate_risk_emv_decision_tree_and_contingency_adequacy(
+        [
+            {
+                "risk_id": "RSK-VENDOR-LOCK",
+                "probability": 0.4,
+                "financial_impact": 6000.0,
+                "has_quantified_fallback_branch": False,
+            }
+        ],
+        allocated_contingency_reserve=5000.0,
+        max_underfunded_shortfall_pct=5.0,
+    )
+    assert res["net_threat_emv"] == 2400.0
+    assert res["reserve_shortfall"] == 0.0
+    assert res["invalid_probability_risk_ids"] == []
+    assert res["unmodeled_high_threat_risk_ids"] == ["RSK-VENDOR-LOCK"]
+    assert res["emv_adequacy_status"] == "DECISION_TREE_BRANCH_WARNING"
+    assert res["is_emv_adequate"] is False
+
+
+def test_validate_risk_emv_decision_tree_and_contingency_adequacy_adequate_and_empty():
+    from backend.schemas.projects import (
+        validate_risk_emv_decision_tree_and_contingency_adequacy,
+    )
+
+    empty = validate_risk_emv_decision_tree_and_contingency_adequacy(
+        [{"risk_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_risks_evaluated"] == 0
+    assert empty["emv_adequacy_status"] == "EMV_RESERVE_ADEQUATE"
+    assert empty["is_emv_adequate"] is True
+
+    adequate = validate_risk_emv_decision_tree_and_contingency_adequacy(
+        [
+            {
+                "risk_id": "RSK-THREAT-01",
+                "probability": 0.3,
+                "financial_impact": 20000.0,
+                "has_quantified_fallback_branch": True,
+            },
+            {
+                "risk_id": "RSK-OPP-02",
+                "probability": 0.5,
+                "financial_impact": -4000.0,
+                "has_quantified_fallback_branch": True,
+            },
+        ],
+        allocated_contingency_reserve=5000.0,
+        max_underfunded_shortfall_pct=5.0,
+    )
+    assert adequate["total_risks_evaluated"] == 2
+    assert adequate["net_threat_emv"] == 4000.0
+    assert adequate["reserve_shortfall"] == 0.0
+    assert adequate["emv_adequacy_status"] == "EMV_RESERVE_ADEQUATE"
+    assert adequate["is_emv_adequate"] is True
+
+
+def test_validate_risk_emv_decision_tree_and_contingency_adequacy_dunder_all():
+    import backend.schemas.projects as mod
+
+    assert (
+        "validate_risk_emv_decision_tree_and_contingency_adequacy"
+        in mod.__all__
+    )

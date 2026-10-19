@@ -3810,6 +3810,7 @@ __all__ = [
     "validate_sprint_velocity_volatility_and_commitment_reliability",
     "validate_portfolio_efficient_frontier_and_budget_knapsack",
     "validate_pdm_network_dangling_activities_and_negative_float",
+    "validate_risk_emv_decision_tree_and_contingency_adequacy",
 ]
 
 
@@ -7861,5 +7862,115 @@ def validate_pdm_network_dangling_activities_and_negative_float(
         "schedule_network_status": schedule_network_status,
         "is_pdm_network_compliant": schedule_network_status
         == "NETWORK_INTEGRITY_SOUND",
+        "recommendations": recommendations,
+    }
+
+
+def validate_risk_emv_decision_tree_and_contingency_adequacy(
+    risks: list[dict[str, Any]],
+    *,
+    allocated_contingency_reserve: float = 10000.0,
+    max_underfunded_shortfall_pct: float = 5.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §11.4 & §7.3 — Risk Expected Monetary Value (EMV) Decision Tree Contingency Reserve Adequacy Validator."""
+    valid_risks: list[dict[str, Any]] = []
+    if isinstance(risks, (list, tuple)):
+        for item in risks:
+            if not isinstance(item, dict):
+                continue
+            rid = str(item.get("risk_id") or "").strip()
+            if not rid:
+                continue
+            valid_risks.append({**item, "_rid": rid})
+
+    alloc_reserve = round(float(allocated_contingency_reserve or 0.0), 2)
+
+    if not valid_risks:
+        return {
+            "total_risks_evaluated": 0,
+            "net_threat_emv": 0.0,
+            "allocated_contingency_reserve": alloc_reserve,
+            "reserve_shortfall": 0.0,
+            "shortfall_pct": 0.0,
+            "invalid_probability_risk_ids": [],
+            "unmodeled_high_threat_risk_ids": [],
+            "emv_adequacy_status": "EMV_RESERVE_ADEQUATE",
+            "is_emv_adequate": True,
+            "recommendations": [],
+        }
+
+    invalid_probability_risk_ids: list[str] = []
+    unmodeled_high_threat_risk_ids: list[str] = []
+    emv_sum = 0.0
+
+    for rsk in valid_risks:
+        rid = rsk["_rid"]
+        prob = float(
+            rsk.get("probability", 0.0)
+            if rsk.get("probability") is not None
+            else 0.0
+        )
+        impact = float(
+            rsk.get("financial_impact", 0.0)
+            if rsk.get("financial_impact") is not None
+            else 0.0
+        )
+        has_fallback = bool(rsk.get("has_quantified_fallback_branch", True))
+
+        if prob < 0.0 or prob > 1.0:
+            invalid_probability_risk_ids.append(rid)
+            continue
+
+        emv = prob * impact
+        emv_sum += emv
+
+        if emv >= 2000.0 and not has_fallback:
+            unmodeled_high_threat_risk_ids.append(rid)
+
+    net_threat_emv = round(emv_sum, 2)
+    reserve_shortfall = round(max(0.0, net_threat_emv - alloc_reserve), 2)
+    shortfall_pct = (
+        round((reserve_shortfall / net_threat_emv) * 100.0, 2)
+        if net_threat_emv > 0.0
+        else 0.0
+    )
+
+    recommendations: list[str] = []
+    if invalid_probability_risk_ids:
+        recommendations.append(
+            f"Normalize risk probabilities into [0.0, 1.0] interval for risk(s): {', '.join(invalid_probability_risk_ids)}."
+        )
+    if shortfall_pct > max_underfunded_shortfall_pct:
+        recommendations.append(
+            f"Replenish contingency reserve by {reserve_shortfall} ({shortfall_pct}% shortfall > {max_underfunded_shortfall_pct}% threshold) to cover net EMV exposure."
+        )
+    if unmodeled_high_threat_risk_ids:
+        recommendations.append(
+            f"Model quantified decision-tree fallback branches for high-EMV threat risk(s): {', '.join(unmodeled_high_threat_risk_ids)}."
+        )
+
+    if (
+        invalid_probability_risk_ids
+        or shortfall_pct > max_underfunded_shortfall_pct
+    ):
+        emv_adequacy_status = "UNDERFUNDED_OR_INVALID_MODEL"
+    elif (
+        unmodeled_high_threat_risk_ids
+        or 0.0 < shortfall_pct <= max_underfunded_shortfall_pct
+    ):
+        emv_adequacy_status = "DECISION_TREE_BRANCH_WARNING"
+    else:
+        emv_adequacy_status = "EMV_RESERVE_ADEQUATE"
+
+    return {
+        "total_risks_evaluated": len(valid_risks),
+        "net_threat_emv": net_threat_emv,
+        "allocated_contingency_reserve": alloc_reserve,
+        "reserve_shortfall": reserve_shortfall,
+        "shortfall_pct": shortfall_pct,
+        "invalid_probability_risk_ids": invalid_probability_risk_ids,
+        "unmodeled_high_threat_risk_ids": unmodeled_high_threat_risk_ids,
+        "emv_adequacy_status": emv_adequacy_status,
+        "is_emv_adequate": emv_adequacy_status == "EMV_RESERVE_ADEQUATE",
         "recommendations": recommendations,
     }
