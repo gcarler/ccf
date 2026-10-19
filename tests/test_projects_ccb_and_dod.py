@@ -10801,3 +10801,146 @@ def test_audit_database_connection_pool_pgbouncer_saturation_and_idle_in_transac
     )
 
 
+def test_audit_ingress_rate_limiting_token_bucket_and_waf_owasp_crs_gate_healthy_and_empty():
+    from backend.services.project_ccb_service import (
+        audit_ingress_rate_limiting_token_bucket_and_waf_owasp_crs_gate,
+    )
+
+    empty = audit_ingress_rate_limiting_token_bucket_and_waf_owasp_crs_gate([])
+    assert empty["status"] == "healthy"
+    assert empty["gate_passed"] is True
+    assert empty["routes_evaluated"] == 0
+    assert empty["unprotected_route_ids"] == []
+    assert empty["degraded_throttle_or_fp_route_ids"] == []
+
+    healthy = audit_ingress_rate_limiting_token_bucket_and_waf_owasp_crs_gate(
+        [
+            {
+                "route_id": "ingress-api-v1",
+                "waf_mode": "blocking",
+                "waf_crs_paranoia_level": 2,
+                "token_bucket_rps_limit": 500,
+                "burst_multiplier": 2.0,
+                "total_requests": 10000,
+                "throttled_429_requests": 200,
+                "waf_false_positive_blocks": 10,
+            }
+        ]
+    )
+    assert healthy["status"] == "healthy"
+    assert healthy["gate_passed"] is True
+    assert healthy["routes_evaluated"] == 1
+    assert healthy["records"][0]["throttle_429_rate_pct"] == 2.0
+    assert healthy["records"][0]["waf_false_positive_rate_pct"] == 0.1
+    assert healthy["unprotected_route_ids"] == []
+    assert healthy["degraded_throttle_or_fp_route_ids"] == []
+
+
+def test_audit_ingress_rate_limiting_token_bucket_and_waf_owasp_crs_gate_critical():
+    from backend.services.project_ccb_service import (
+        audit_ingress_rate_limiting_token_bucket_and_waf_owasp_crs_gate,
+    )
+
+    res = audit_ingress_rate_limiting_token_bucket_and_waf_owasp_crs_gate(
+        [
+            {
+                "route_id": "route-detection-only",
+                "waf_mode": "detection_only",
+                "waf_crs_paranoia_level": 2,
+                "token_bucket_rps_limit": 200,
+                "burst_multiplier": 1.5,
+                "total_requests": 1000,
+                "throttled_429_requests": 10,
+                "waf_false_positive_blocks": 0,
+            },
+            {
+                "route_id": "route-low-pl-no-rps",
+                "waf_mode": "blocking",
+                "waf_crs_paranoia_level": 1,
+                "token_bucket_rps_limit": 0,
+                "burst_multiplier": 1.0,
+                "total_requests": 1000,
+                "throttled_429_requests": 0,
+                "waf_false_positive_blocks": 0,
+            },
+        ],
+        min_waf_paranoia_level=2,
+        require_waf_blocking_mode=True,
+    )
+    assert res["status"] == "critical"
+    assert res["gate_passed"] is False
+    assert res["routes_evaluated"] == 2
+    assert res["unprotected_route_ids"] == [
+        "route-detection-only",
+        "route-low-pl-no-rps",
+    ]
+    assert res["records"][0]["waf_not_in_blocking_mode"] is True
+    assert res["records"][1]["insufficient_paranoia_level"] is True
+    assert res["records"][1]["missing_rate_limit_quota"] is True
+
+
+def test_audit_ingress_rate_limiting_token_bucket_and_waf_owasp_crs_gate_warning():
+    from backend.services.project_ccb_service import (
+        audit_ingress_rate_limiting_token_bucket_and_waf_owasp_crs_gate,
+    )
+
+    res = audit_ingress_rate_limiting_token_bucket_and_waf_owasp_crs_gate(
+        [
+            {
+                "route_id": "route-high-429-and-fp",
+                "waf_mode": "blocking",
+                "waf_crs_paranoia_level": 3,
+                "token_bucket_rps_limit": 100,
+                "burst_multiplier": 1.5,
+                "total_requests": 1000,
+                "throttled_429_requests": 80,
+                "waf_false_positive_blocks": 12,
+            }
+        ],
+        max_429_throttle_rate_pct=5.0,
+        max_waf_false_positive_rate_pct=0.5,
+    )
+    assert res["status"] == "warning"
+    assert res["gate_passed"] is False
+    assert res["unprotected_route_ids"] == []
+    assert res["degraded_throttle_or_fp_route_ids"] == [
+        "route-high-429-and-fp"
+    ]
+    assert res["records"][0]["excessive_429_throttling"] is True
+    assert res["records"][0]["excessive_waf_false_positives"] is True
+
+
+def test_audit_ingress_rate_limiting_token_bucket_and_waf_owasp_crs_gate_staticmethod_and_dunder_all():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_ingress_rate_limiting_token_bucket_and_waf_owasp_crs_gate,
+    )
+
+    sample = [
+        {
+            "id": "route-sample",
+            "waf_mode": "blocking",
+            "waf_crs_paranoia_level": 2,
+            "token_bucket_rps_limit": 300,
+            "burst_multiplier": 2.0,
+            "total_requests": 500,
+            "throttled_429_requests": 5,
+            "waf_false_positive_blocks": 1,
+        }
+    ]
+    res = ProjectCCBService.audit_ingress_rate_limiting_token_bucket_and_waf_owasp_crs_gate(
+        sample
+    )
+    assert res == audit_ingress_rate_limiting_token_bucket_and_waf_owasp_crs_gate(
+        sample
+    )
+    assert res["status"] == "healthy"
+    assert res["gate_passed"] is True
+    assert (
+        "audit_ingress_rate_limiting_token_bucket_and_waf_owasp_crs_gate"
+        in mod.__all__
+    )
+
+
+

@@ -2859,6 +2859,7 @@ __all__ = [
     "audit_graphql_query_depth_and_n_plus_one_batching_gate",
     "audit_blue_green_cutover_drain_and_db_backward_compatibility",
     "audit_database_connection_pool_pgbouncer_saturation_and_idle_in_transaction_gate",
+    "audit_ingress_rate_limiting_token_bucket_and_waf_owasp_crs_gate",
     "ProjectCCBService",
 ]
 
@@ -7938,5 +7939,169 @@ def audit_database_connection_pool_pgbouncer_saturation_and_idle_in_transaction_
 ProjectCCBService.audit_database_connection_pool_pgbouncer_saturation_and_idle_in_transaction_gate = staticmethod(
     audit_database_connection_pool_pgbouncer_saturation_and_idle_in_transaction_gate
 )
+
+
+def audit_ingress_rate_limiting_token_bucket_and_waf_owasp_crs_gate(
+    ingress_routes: list[dict[str, Any]],
+    *,
+    min_waf_paranoia_level: int = 2,
+    max_429_throttle_rate_pct: float = 5.0,
+    max_waf_false_positive_rate_pct: float = 0.5,
+    require_waf_blocking_mode: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §8.3 & §11.6 — Audita limitación de tasa Token-Bucket en Kubernetes Ingress, nivel de paranoia WAF OWASP CRS y mitigación de falsos positivos en gates CCB."""
+    raw_routes = (
+        ingress_routes if isinstance(ingress_routes, (list, tuple)) else []
+    )
+    valid_routes = [item for item in raw_routes if isinstance(item, dict)]
+
+    if not valid_routes:
+        return {
+            "status": "healthy",
+            "gate_passed": True,
+            "routes_evaluated": 0,
+            "unprotected_route_ids": [],
+            "degraded_throttle_or_fp_route_ids": [],
+            "records": [],
+            "violations": [],
+            "Violations": [],
+        }
+
+    unprotected_route_ids: list[str] = []
+    degraded_throttle_or_fp_route_ids: list[str] = []
+    records: list[dict[str, Any]] = []
+    violations: list[str] = []
+    has_breach = False
+    has_critical = False
+
+    for idx, item in enumerate(valid_routes):
+        route_id = (
+            str(
+                item.get("route_id") or item.get("id") or f"route-{idx + 1}"
+            ).strip()
+            or f"route-{idx + 1}"
+        )
+        waf_mode = (
+            str(item.get("waf_mode") or "blocking").strip().lower()
+            or "blocking"
+        )
+        raw_pl = item.get("waf_crs_paranoia_level")
+        waf_crs_paranoia_level = max(
+            1, int(2 if raw_pl is None else raw_pl)
+        )
+        raw_rps = item.get("token_bucket_rps_limit")
+        token_bucket_rps_limit = max(
+            0, int(0 if raw_rps is None else raw_rps)
+        )
+        raw_burst = item.get("burst_multiplier")
+        burst_multiplier = max(
+            1.0, float(1.0 if raw_burst is None else raw_burst)
+        )
+        raw_total = item.get("total_requests")
+        total_requests = max(0, int(0 if raw_total is None else raw_total))
+        raw_429 = item.get("throttled_429_requests")
+        throttled_429_requests = max(0, int(0 if raw_429 is None else raw_429))
+        raw_fp = item.get("waf_false_positive_blocks")
+        waf_false_positive_blocks = max(
+            0, int(0 if raw_fp is None else raw_fp)
+        )
+
+        if total_requests > 0:
+            throttle_429_rate_pct = round(
+                (throttled_429_requests / total_requests) * 100.0, 2
+            )
+            waf_false_positive_rate_pct = round(
+                (waf_false_positive_blocks / total_requests) * 100.0, 2
+            )
+        else:
+            throttle_429_rate_pct = (
+                100.0 if throttled_429_requests > 0 else 0.0
+            )
+            waf_false_positive_rate_pct = (
+                100.0 if waf_false_positive_blocks > 0 else 0.0
+            )
+
+        waf_not_in_blocking_mode = bool(
+            require_waf_blocking_mode and waf_mode != "blocking"
+        )
+        insufficient_paranoia_level = (
+            waf_crs_paranoia_level < min_waf_paranoia_level
+        )
+        missing_rate_limit_quota = token_bucket_rps_limit <= 0
+        excessive_429_throttling = (
+            throttle_429_rate_pct > max_429_throttle_rate_pct
+        )
+        excessive_waf_false_positives = (
+            waf_false_positive_rate_pct > max_waf_false_positive_rate_pct
+        )
+
+        is_unprotected = (
+            waf_not_in_blocking_mode
+            or insufficient_paranoia_level
+            or missing_rate_limit_quota
+        )
+        is_degraded = (
+            excessive_429_throttling or excessive_waf_false_positives
+        )
+
+        if is_unprotected:
+            unprotected_route_ids.append(route_id)
+            has_critical = True
+
+        if is_degraded:
+            degraded_throttle_or_fp_route_ids.append(route_id)
+
+        if is_unprotected or is_degraded:
+            has_breach = True
+            violations.append(
+                f"Route '{route_id}' breached Ingress rate-limiting or WAF OWASP CRS gate."
+            )
+
+        records.append(
+            {
+                "route_id": route_id,
+                "waf_mode": waf_mode,
+                "waf_crs_paranoia_level": waf_crs_paranoia_level,
+                "token_bucket_rps_limit": token_bucket_rps_limit,
+                "burst_multiplier": round(burst_multiplier, 2),
+                "total_requests": total_requests,
+                "throttled_429_requests": throttled_429_requests,
+                "waf_false_positive_blocks": waf_false_positive_blocks,
+                "throttle_429_rate_pct": throttle_429_rate_pct,
+                "waf_false_positive_rate_pct": waf_false_positive_rate_pct,
+                "waf_not_in_blocking_mode": waf_not_in_blocking_mode,
+                "insufficient_paranoia_level": insufficient_paranoia_level,
+                "missing_rate_limit_quota": missing_rate_limit_quota,
+                "excessive_429_throttling": excessive_429_throttling,
+                "excessive_waf_false_positives": excessive_waf_false_positives,
+            }
+        )
+
+    if not has_breach:
+        status = "healthy"
+        gate_passed = True
+    elif has_critical:
+        status = "critical"
+        gate_passed = False
+    else:
+        status = "warning"
+        gate_passed = False
+
+    return {
+        "status": status,
+        "gate_passed": gate_passed,
+        "routes_evaluated": len(valid_routes),
+        "unprotected_route_ids": unprotected_route_ids,
+        "degraded_throttle_or_fp_route_ids": degraded_throttle_or_fp_route_ids,
+        "records": records,
+        "violations": violations,
+        "Violations": violations,
+    }
+
+
+ProjectCCBService.audit_ingress_rate_limiting_token_bucket_and_waf_owasp_crs_gate = staticmethod(
+    audit_ingress_rate_limiting_token_bucket_and_waf_owasp_crs_gate
+)
+
 
 
