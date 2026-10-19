@@ -10433,3 +10433,186 @@ def test_evaluate_evm_subcontractor_backcharge_offset_and_joint_check_disburseme
         in mod.__all__
     )
 
+
+
+# ── evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate (PMBOK §7.4 & §12.3, pure helper) ──
+
+
+def test_equipment_fleet_billing_optimal_rates():
+    """Equipos con idle <= factor O&O, sin consumables en idle y fuel substantiado -> 'EQUIPMENT_FLEET_BILLING_OPTIMAL'."""
+    import backend.services.project_evm_service as evm_module
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate,
+    )
+
+    equipment_logs = [
+        {
+            "equipment_id": "EQ-001",
+            "ownership_hourly_rate": 100.0,
+            "operating_consumables_charged_on_idle": False,
+            "billed_idle_hourly_rate": 45.0,
+            "fuel_surcharge_pct": 3.0,
+            "fuel_index_invoice_attached": True,
+        },
+        {
+            "equipment_id": "EQ-002",
+            # Defaults implícitos por campo: 100.0 O&O, False, 45.0 idle, 3.0 fuel, invoice True.
+        },
+    ]
+    res = evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate(equipment_logs)
+    assert res == {
+        "evaluated_equipment_count": 2,
+        "overbilled_idle_or_consumables_equipment_ids": [],
+        "unsubstantiated_fuel_surcharge_equipment_ids": [],
+        "equipment_rate_status": "EQUIPMENT_FLEET_BILLING_OPTIMAL",
+        "is_equipment_billing_compliant": True,
+    }
+    # Idle exactamente en ownership * 0.50 (50.0) no es overbill (comparación estricta >)
+    at_factor = evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate(
+        [{"equipment_id": "EQ-003", "billed_idle_hourly_rate": 50.0}]
+    )
+    assert at_factor["equipment_rate_status"] == "EQUIPMENT_FLEET_BILLING_OPTIMAL"
+    # Fuel surcharge alto con invoice adjunta no es warning (condición conjunta Y)
+    fuel_with_invoice = evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate(
+        [{"equipment_id": "EQ-004", "fuel_surcharge_pct": 7.5}]
+    )
+    assert fuel_with_invoice["equipment_rate_status"] == "EQUIPMENT_FLEET_BILLING_OPTIMAL"
+    assert (
+        ProjectEVMService.evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate(
+            equipment_logs
+        )
+        == res
+    )
+    assert "evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate" in evm_module.__all__
+
+
+def test_equipment_fleet_idle_standby_overbill_breach():
+    """Consumables en idle o idle > ownership * factor -> 'IDLE_STANDBY_OR_CONSUMABLES_OVERBILL_BREACH' con precedencia sobre WARNING."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate,
+    )
+
+    breach = evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate(
+        [
+            {
+                "equipment_id": "EQ-CONSUM",
+                "operating_consumables_charged_on_idle": True,
+                "billed_idle_hourly_rate": 40.0,
+            },
+            {
+                "equipment_id": "EQ-EXPENSIVE-IDLE",
+                "ownership_hourly_rate": 100.0,
+                "billed_idle_hourly_rate": 55.0,
+            },
+        ]
+    )
+    assert breach["evaluated_equipment_count"] == 2
+    assert breach["overbilled_idle_or_consumables_equipment_ids"] == [
+        "EQ-CONSUM",
+        "EQ-EXPENSIVE-IDLE",
+    ]
+    assert breach["equipment_rate_status"] == (
+        "IDLE_STANDBY_OR_CONSUMABLES_OVERBILL_BREACH"
+    )
+    assert breach["is_equipment_billing_compliant"] is False
+
+    # Breach tiene precedencia aunque también haya fuel surcharge sin substantiation
+    mixed = evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate(
+        [
+            {"equipment_id": "EQ-FUEL-NO-INV", "fuel_surcharge_pct": 8.0, "fuel_index_invoice_attached": False},
+            {"equipment_id": "EQ-CONSUM-2", "operating_consumables_charged_on_idle": True},
+        ]
+    )
+    assert mixed["equipment_rate_status"] == "IDLE_STANDBY_OR_CONSUMABLES_OVERBILL_BREACH"
+
+    # Factor custom más permisivo (0.60) deja de marcar 55/100 como overbill
+    relaxed = evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate(
+        [{"equipment_id": "EQ-REL", "ownership_hourly_rate": 100.0, "billed_idle_hourly_rate": 55.0}],
+        max_idle_standby_rate_factor=0.60,
+    )
+    assert relaxed["equipment_rate_status"] == "EQUIPMENT_FLEET_BILLING_OPTIMAL"
+
+
+def test_equipment_fleet_fuel_surcharge_substantiation_warning():
+    """Fuel surcharge > 5.0 sin invoice del índice (con idle limpio) -> 'FUEL_SURCHARGE_SUBSTANTIATION_WARNING'."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate,
+    )
+
+    warning = evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate(
+        [
+            {
+                "equipment_id": "EQ-FUEL-A",
+                "fuel_surcharge_pct": 5.5,
+                "fuel_index_invoice_attached": False,
+            },
+            {
+                "equipment_id": "EQ-FUEL-B",
+                "fuel_surcharge_pct": 6.0,
+                "fuel_index_invoice_attached": False,
+            },
+        ]
+    )
+    assert warning["evaluated_equipment_count"] == 2
+    assert warning["overbilled_idle_or_consumables_equipment_ids"] == []
+    assert warning["unsubstantiated_fuel_surcharge_equipment_ids"] == [
+        "EQ-FUEL-A",
+        "EQ-FUEL-B",
+    ]
+    assert warning["equipment_rate_status"] == "FUEL_SURCHARGE_SUBSTANTIATION_WARNING"
+    assert warning["is_equipment_billing_compliant"] is False
+
+    # Fuel exactamente en el umbral 5.0 sin invoice no es warning (comparación estricta >)
+    at_threshold = evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate(
+        [{"equipment_id": "EQ-FUEL-C", "fuel_surcharge_pct": 5.0, "fuel_index_invoice_attached": False}]
+    )
+    assert at_threshold["equipment_rate_status"] == "EQUIPMENT_FLEET_BILLING_OPTIMAL"
+
+    custom = evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate(
+        [{"equipment_id": "EQ-FUEL-D", "fuel_surcharge_pct": 3.5, "fuel_index_invoice_attached": False}],
+        max_unsubstantiated_fuel_surcharge_pct=3.0,
+    )
+    assert custom["equipment_rate_status"] == "FUEL_SURCHARGE_SUBSTANTIATION_WARNING"
+    assert custom["unsubstantiated_fuel_surcharge_equipment_ids"] == ["EQ-FUEL-D"]
+
+
+def test_equipment_fleet_empty_invalid_and_field_reversion():
+    """None / dicts inválidos se descartan; campos no numéricos/no bool revierten a defaults del spec."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate,
+    )
+
+    empty_res = evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate(None)
+    assert empty_res == {
+        "evaluated_equipment_count": 0,
+        "overbilled_idle_or_consumables_equipment_ids": [],
+        "unsubstantiated_fuel_surcharge_equipment_ids": [],
+        "equipment_rate_status": "EQUIPMENT_FLEET_BILLING_OPTIMAL",
+        "is_equipment_billing_compliant": True,
+    }
+
+    invalid_res = evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate(
+        ["no-dict", None, {"equipment_id": "   "}, {"equipment_id": 45}, {"fuel_surcharge_pct": 9.0}]
+    )
+    assert invalid_res["evaluated_equipment_count"] == 0
+
+    bad_fields = evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate(
+        [
+            {
+                "equipment_id": "EQ-BAD",
+                "ownership_hourly_rate": "cien",
+                "operating_consumables_charged_on_idle": "sí",
+                "billed_idle_hourly_rate": None,
+                "fuel_surcharge_pct": [9.0],
+                "fuel_index_invoice_attached": 1,
+            }
+        ]
+    )
+    assert bad_fields == {
+        "evaluated_equipment_count": 1,
+        "overbilled_idle_or_consumables_equipment_ids": [],
+        "unsubstantiated_fuel_surcharge_equipment_ids": [],
+        "equipment_rate_status": "EQUIPMENT_FLEET_BILLING_OPTIMAL",
+        "is_equipment_billing_compliant": True,
+    }

@@ -5534,6 +5534,7 @@ __all__ = [
     "evaluate_evm_letter_of_credit_drawdown_and_evergreen_buffer",
     "evaluate_evm_liquidated_damages_excusable_delay_and_early_bonus",
     "evaluate_evm_subcontractor_backcharge_offset_and_joint_check_disbursement",
+    "evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate",
     "ProjectEVMService",
 ]
 
@@ -10601,3 +10602,81 @@ ProjectEVMService.evaluate_evm_subcontractor_backcharge_offset_and_joint_check_d
 
 
 
+def evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate(
+    equipment_logs: list[dict] | None,
+    *,
+    max_idle_standby_rate_factor: float = 0.50,
+    max_unsubstantiated_fuel_surcharge_pct: float = 5.0,
+) -> dict:
+    """PMBOK §7.4 & §12.3 — Evalúa tarifas O&O del parque de construcción: idle/standby, consumables en idle y substantiation de fuel surcharge."""
+    raw_items = equipment_logs if isinstance(equipment_logs, list) else []
+    valid_equipment: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_equipment_id = item.get("equipment_id")
+        if not isinstance(raw_equipment_id, str) or not raw_equipment_id.strip():
+            continue
+        valid_equipment.append(item)
+
+    def _bool(value, default):
+        return value if isinstance(value, bool) else default
+
+    def _float(value, default):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    overbilled_idle_or_consumables_equipment_ids: list[str] = []
+    unsubstantiated_fuel_surcharge_equipment_ids: list[str] = []
+
+    for equipment in valid_equipment:
+        equipment_id = str(equipment.get("equipment_id")).strip()
+        ownership_hourly_rate = _float(
+            equipment.get("ownership_hourly_rate"), 100.0
+        )
+        consumables_on_idle = _bool(
+            equipment.get("operating_consumables_charged_on_idle"), False
+        )
+        billed_idle_hourly_rate = _float(
+            equipment.get("billed_idle_hourly_rate"), 45.0
+        )
+        fuel_surcharge_pct = _float(equipment.get("fuel_surcharge_pct"), 3.0)
+        fuel_invoice_attached = _bool(
+            equipment.get("fuel_index_invoice_attached"), True
+        )
+
+        if (
+            bool(consumables_on_idle) is True
+            or float(billed_idle_hourly_rate)
+            > float(ownership_hourly_rate) * float(max_idle_standby_rate_factor)
+        ):
+            overbilled_idle_or_consumables_equipment_ids.append(equipment_id)
+
+        if (
+            float(fuel_surcharge_pct)
+            > float(max_unsubstantiated_fuel_surcharge_pct)
+            and not bool(fuel_invoice_attached)
+        ):
+            unsubstantiated_fuel_surcharge_equipment_ids.append(equipment_id)
+
+    if overbilled_idle_or_consumables_equipment_ids:
+        equipment_rate_status = "IDLE_STANDBY_OR_CONSUMABLES_OVERBILL_BREACH"
+    elif unsubstantiated_fuel_surcharge_equipment_ids:
+        equipment_rate_status = "FUEL_SURCHARGE_SUBSTANTIATION_WARNING"
+    else:
+        equipment_rate_status = "EQUIPMENT_FLEET_BILLING_OPTIMAL"
+
+    return {
+        "evaluated_equipment_count": len(valid_equipment),
+        "overbilled_idle_or_consumables_equipment_ids": overbilled_idle_or_consumables_equipment_ids,
+        "unsubstantiated_fuel_surcharge_equipment_ids": unsubstantiated_fuel_surcharge_equipment_ids,
+        "equipment_rate_status": equipment_rate_status,
+        "is_equipment_billing_compliant": equipment_rate_status
+        == "EQUIPMENT_FLEET_BILLING_OPTIMAL",
+    }
+
+
+ProjectEVMService.evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate = staticmethod(
+    evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate
+)

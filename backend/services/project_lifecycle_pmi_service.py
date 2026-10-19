@@ -3181,6 +3181,7 @@ __all__ = [
     "audit_team_burnout_overtime_and_bus_factor_redundancy",
     "audit_lessons_learned_retrospective_cadence_and_capa_closure_efficacy",
     "audit_force_majeure_relief_event_notice_and_duty_to_mitigate",
+    "audit_stakeholder_escalation_sla_and_ombudsman_dispute_resolution",
     "ProjectLifecyclePMIService",
 ]
 
@@ -8223,6 +8224,129 @@ def audit_force_majeure_relief_event_notice_and_duty_to_mitigate(
 
 ProjectLifecyclePMIService.audit_force_majeure_relief_event_notice_and_duty_to_mitigate = staticmethod(
     audit_force_majeure_relief_event_notice_and_duty_to_mitigate
+)
+
+
+def audit_stakeholder_escalation_sla_and_ombudsman_dispute_resolution(
+    grievance_cases: list[dict[str, Any]],
+    *,
+    max_initial_response_hours: float = 24.0,
+    max_resolution_cycle_days: int = 15,
+    require_adr_mediation_before_litigation: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §13.3 & §12.3 — Audita SLA de escalamiento de quejas de interesados, mediación ADR previa a litigio, salvaguardas anti-represalia y sign-off del patrocinador ejecutivo."""
+    raw_items = grievance_cases if isinstance(grievance_cases, list) else []
+    valid_items = [item for item in raw_items if isinstance(item, dict)]
+
+    adr_or_retaliation_breach_case_ids: list[str] = []
+    sla_overdue_case_ids: list[str] = []
+    records: list[dict[str, Any]] = []
+    violations: list[str] = []
+    has_critical = False
+    has_warning = False
+
+    for idx, item in enumerate(valid_items):
+        case_id = (
+            str(
+                item.get("case_id") or item.get("id") or f"case-{idx + 1}"
+            ).strip()
+            or f"case-{idx + 1}"
+        )
+        initial_response_hours = max(
+            0.0, float(item.get("initial_response_hours") or 0.0)
+        )
+        resolution_cycle_days = max(
+            0, int(item.get("resolution_cycle_days") or 0)
+        )
+
+        raw_lit = item.get("escalated_to_litigation", False)
+        escalated_to_litigation = bool(False if raw_lit is None else raw_lit)
+
+        raw_adr = item.get("adr_mediation_attempted", True)
+        adr_mediation_attempted = bool(True if raw_adr is None else raw_adr)
+
+        raw_ret = item.get("retaliation_safeguard_verified", True)
+        retaliation_safeguard_verified = bool(
+            True if raw_ret is None else raw_ret
+        )
+
+        raw_sign = item.get("sponsor_signoff_recorded", True)
+        sponsor_signoff_recorded = bool(True if raw_sign is None else raw_sign)
+
+        litigation_without_adr_or_retaliation_breach = bool(
+            (
+                require_adr_mediation_before_litigation
+                and escalated_to_litigation
+                and not adr_mediation_attempted
+            )
+            or not retaliation_safeguard_verified
+        )
+        initial_response_sla_breach = (
+            initial_response_hours > max_initial_response_hours
+        )
+        resolution_cycle_overdue_or_unsigned = bool(
+            resolution_cycle_days > max_resolution_cycle_days
+            or not sponsor_signoff_recorded
+        )
+
+        if litigation_without_adr_or_retaliation_breach:
+            adr_or_retaliation_breach_case_ids.append(case_id)
+            has_critical = True
+            violations.append(
+                f"Grievance case '{case_id}' escalated without ADR mediation or lacked retaliation safeguard verification."
+            )
+
+        if initial_response_sla_breach or resolution_cycle_overdue_or_unsigned:
+            sla_overdue_case_ids.append(case_id)
+            has_warning = True
+            if initial_response_sla_breach:
+                violations.append(
+                    f"Grievance case '{case_id}' initial response ({initial_response_hours}h) exceeds SLA ({max_initial_response_hours}h)."
+                )
+            if resolution_cycle_overdue_or_unsigned:
+                violations.append(
+                    f"Grievance case '{case_id}' resolution cycle overdue or missing executive sponsor sign-off."
+                )
+
+        records.append(
+            {
+                "case_id": case_id,
+                "initial_response_hours": initial_response_hours,
+                "resolution_cycle_days": resolution_cycle_days,
+                "escalated_to_litigation": escalated_to_litigation,
+                "adr_mediation_attempted": adr_mediation_attempted,
+                "retaliation_safeguard_verified": retaliation_safeguard_verified,
+                "sponsor_signoff_recorded": sponsor_signoff_recorded,
+                "litigation_without_adr_or_retaliation_breach": litigation_without_adr_or_retaliation_breach,
+                "initial_response_sla_breach": initial_response_sla_breach,
+                "resolution_cycle_overdue_or_unsigned": resolution_cycle_overdue_or_unsigned,
+            }
+        )
+
+    if has_critical:
+        status = "critical"
+        is_compliant = False
+    elif has_warning:
+        status = "warning"
+        is_compliant = False
+    else:
+        status = "compliant"
+        is_compliant = True
+
+    return {
+        "status": status,
+        "is_compliant": is_compliant,
+        "cases_evaluated": len(records),
+        "adr_or_retaliation_breach_case_ids": adr_or_retaliation_breach_case_ids,
+        "sla_overdue_case_ids": sla_overdue_case_ids,
+        "records": records,
+        "violations": violations,
+        "Violations": violations,
+    }
+
+
+ProjectLifecyclePMIService.audit_stakeholder_escalation_sla_and_ombudsman_dispute_resolution = staticmethod(
+    audit_stakeholder_escalation_sla_and_ombudsman_dispute_resolution
 )
 
 

@@ -2546,6 +2546,7 @@ __all__ = [
     "audit_wiki_ntp_clock_drift_and_leap_second_smearing",
     "audit_wiki_ebpf_kernel_probe_ringbuffer_drop_and_verifier_safety",
     "audit_wiki_otel_tail_sampling_baggage_and_span_drop",
+    "audit_wiki_vector_embedding_hnsw_index_recall_and_drift_reindexing",
     "WikiPMIService",
 ]
 
@@ -7886,6 +7887,125 @@ def audit_wiki_otel_tail_sampling_baggage_and_span_drop(
 
 WikiPMIService.audit_wiki_otel_tail_sampling_baggage_and_span_drop = staticmethod(
     audit_wiki_otel_tail_sampling_baggage_and_span_drop
+)
+
+
+def audit_wiki_vector_embedding_hnsw_index_recall_and_drift_reindexing(
+    vector_shards: list[dict[str, Any]],
+    *,
+    min_recall_at_10_pct: float = 95.0,
+    max_tombstone_fragmentation_pct: float = 20.0,
+    canonical_embedding_model_version: str = "text-embedding-3-large-v1",
+) -> dict[str, Any]:
+    """PMBOK §4.4 & §8.2 — Audita degradación de Recall@10 en índices vectoriales HNSW, desfase de versión del modelo de embeddings y fragmentación por tombstones."""
+    raw_items = vector_shards if isinstance(vector_shards, list) else []
+    valid_items = [item for item in raw_items if isinstance(item, dict)]
+    canonical_version = str(canonical_embedding_model_version).strip()
+
+    version_skew_or_low_recall_shard_ids: list[str] = []
+    fragmented_shard_ids: list[str] = []
+    records: list[dict[str, Any]] = []
+    violations: list[str] = []
+    has_critical = False
+    has_warning = False
+
+    for idx, item in enumerate(valid_items):
+        shard_id = (
+            str(
+                item.get("shard_id") or item.get("id") or f"shard-{idx + 1}"
+            ).strip()
+            or f"shard-{idx + 1}"
+        )
+
+        raw_recall = item.get("observed_recall_at_10_pct", 100.0)
+        observed_recall_at_10_pct = min(
+            100.0, max(0.0, float(100.0 if raw_recall is None else raw_recall))
+        )
+
+        tombstone_fragmentation_pct = max(
+            0.0, float(item.get("tombstone_fragmentation_pct") or 0.0)
+        )
+
+        raw_model = item.get(
+            "embedding_model_version", "text-embedding-3-large-v1"
+        )
+        embedding_model_version = (
+            str(
+                "text-embedding-3-large-v1" if raw_model is None else raw_model
+            ).strip()
+            or "text-embedding-3-large-v1"
+        )
+
+        p99_ann_query_latency_ms = max(
+            0.0, float(item.get("p99_ann_query_latency_ms") or 0.0)
+        )
+
+        embedding_model_version_skew = (
+            embedding_model_version != canonical_version
+        )
+        recall_at_10_degraded = (
+            observed_recall_at_10_pct < min_recall_at_10_pct
+        )
+        tombstone_fragmentation_exceeded = (
+            tombstone_fragmentation_pct > max_tombstone_fragmentation_pct
+        )
+
+        if embedding_model_version_skew or recall_at_10_degraded:
+            version_skew_or_low_recall_shard_ids.append(shard_id)
+            has_critical = True
+            if embedding_model_version_skew:
+                violations.append(
+                    f"Shard '{shard_id}' embedding model version '{embedding_model_version}' skews from canonical '{canonical_version}'."
+                )
+            if recall_at_10_degraded:
+                violations.append(
+                    f"Shard '{shard_id}' Recall@10 ({observed_recall_at_10_pct}%) below minimum ({min_recall_at_10_pct}%)."
+                )
+
+        if tombstone_fragmentation_exceeded:
+            fragmented_shard_ids.append(shard_id)
+            has_warning = True
+            violations.append(
+                f"Shard '{shard_id}' tombstone fragmentation ({tombstone_fragmentation_pct}%) exceeds {max_tombstone_fragmentation_pct}%."
+            )
+
+        records.append(
+            {
+                "shard_id": shard_id,
+                "observed_recall_at_10_pct": observed_recall_at_10_pct,
+                "tombstone_fragmentation_pct": tombstone_fragmentation_pct,
+                "embedding_model_version": embedding_model_version,
+                "p99_ann_query_latency_ms": p99_ann_query_latency_ms,
+                "embedding_model_version_skew": embedding_model_version_skew,
+                "recall_at_10_degraded": recall_at_10_degraded,
+                "tombstone_fragmentation_exceeded": tombstone_fragmentation_exceeded,
+            }
+        )
+
+    if has_critical:
+        status = "critical"
+        is_compliant = False
+    elif has_warning:
+        status = "warning"
+        is_compliant = False
+    else:
+        status = "healthy"
+        is_compliant = True
+
+    return {
+        "status": status,
+        "is_compliant": is_compliant,
+        "shards_evaluated": len(records),
+        "version_skew_or_low_recall_shard_ids": version_skew_or_low_recall_shard_ids,
+        "fragmented_shard_ids": fragmented_shard_ids,
+        "records": records,
+        "violations": violations,
+        "Violations": violations,
+    }
+
+
+WikiPMIService.audit_wiki_vector_embedding_hnsw_index_recall_and_drift_reindexing = staticmethod(
+    audit_wiki_vector_embedding_hnsw_index_recall_and_drift_reindexing
 )
 
 

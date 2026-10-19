@@ -10863,3 +10863,102 @@ def test_audit_force_majeure_relief_event_notice_and_duty_to_mitigate_staticmeth
         in mod.__all__
     )
 
+
+def test_audit_stakeholder_escalation_sla_and_ombudsman_dispute_resolution_compliant():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stakeholder_escalation_sla_and_ombudsman_dispute_resolution,
+    )
+
+    res = audit_stakeholder_escalation_sla_and_ombudsman_dispute_resolution(
+        [
+            {
+                "case_id": "GRV-101",
+                "initial_response_hours": 8.0,
+                "resolution_cycle_days": 7,
+                "escalated_to_litigation": False,
+                "adr_mediation_attempted": True,
+                "retaliation_safeguard_verified": True,
+                "sponsor_signoff_recorded": True,
+            }
+        ]
+    )
+    assert res["status"] == "compliant"
+    assert res["is_compliant"] is True
+    assert res["cases_evaluated"] == 1
+    assert res["adr_or_retaliation_breach_case_ids"] == []
+    assert res["sla_overdue_case_ids"] == []
+    assert res["Violations"] == []
+
+
+def test_audit_stakeholder_escalation_sla_and_ombudsman_dispute_resolution_critical():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stakeholder_escalation_sla_and_ombudsman_dispute_resolution,
+    )
+
+    res = audit_stakeholder_escalation_sla_and_ombudsman_dispute_resolution(
+        [
+            {
+                "case_id": "GRV-LITIGATE",
+                "initial_response_hours": 12.0,
+                "resolution_cycle_days": 10,
+                "escalated_to_litigation": True,
+                "adr_mediation_attempted": False,
+                "retaliation_safeguard_verified": False,
+                "sponsor_signoff_recorded": True,
+            }
+        ]
+    )
+    assert res["status"] == "critical"
+    assert res["is_compliant"] is False
+    assert res["adr_or_retaliation_breach_case_ids"] == ["GRV-LITIGATE"]
+    assert len(res["Violations"]) >= 1
+
+
+def test_audit_stakeholder_escalation_sla_and_ombudsman_dispute_resolution_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_stakeholder_escalation_sla_and_ombudsman_dispute_resolution,
+    )
+
+    res = audit_stakeholder_escalation_sla_and_ombudsman_dispute_resolution(
+        [
+            {
+                "id": "GRV-SLOW",
+                "initial_response_hours": 36.0,
+                "resolution_cycle_days": 22,
+                "escalated_to_litigation": False,
+                "adr_mediation_attempted": True,
+                "retaliation_safeguard_verified": True,
+                "sponsor_signoff_recorded": False,
+            }
+        ],
+        max_initial_response_hours=24.0,
+        max_resolution_cycle_days=15,
+    )
+    assert res["status"] == "warning"
+    assert res["is_compliant"] is False
+    assert res["adr_or_retaliation_breach_case_ids"] == []
+    assert res["sla_overdue_case_ids"] == ["GRV-SLOW"]
+    assert res["records"][0]["initial_response_sla_breach"] is True
+    assert res["records"][0]["resolution_cycle_overdue_or_unsigned"] is True
+
+
+def test_audit_stakeholder_escalation_sla_and_ombudsman_dispute_resolution_staticmethod_and_dunder_all():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_stakeholder_escalation_sla_and_ombudsman_dispute_resolution,
+    )
+
+    sample = [{"case_id": "GRV-1", "initial_response_hours": 4.0}]
+    assert (
+        ProjectLifecyclePMIService.audit_stakeholder_escalation_sla_and_ombudsman_dispute_resolution(
+            sample
+        )
+        == audit_stakeholder_escalation_sla_and_ombudsman_dispute_resolution(
+            sample
+        )
+    )
+    assert (
+        "audit_stakeholder_escalation_sla_and_ombudsman_dispute_resolution"
+        in mod.__all__
+    )

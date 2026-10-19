@@ -10828,3 +10828,92 @@ def test_audit_wiki_otel_tail_sampling_baggage_and_span_drop_staticmethod_and_du
     )
 
 
+def test_audit_wiki_vector_embedding_hnsw_index_recall_and_drift_reindexing_healthy():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_vector_embedding_hnsw_index_recall_and_drift_reindexing,
+    )
+
+    res = audit_wiki_vector_embedding_hnsw_index_recall_and_drift_reindexing(
+        [
+            {
+                "shard_id": "HNSW-SHARD-01",
+                "observed_recall_at_10_pct": 97.5,
+                "tombstone_fragmentation_pct": 8.0,
+                "embedding_model_version": "text-embedding-3-large-v1",
+                "p99_ann_query_latency_ms": 14.2,
+            }
+        ]
+    )
+    assert res["status"] == "healthy"
+    assert res["is_compliant"] is True
+    assert res["shards_evaluated"] == 1
+    assert res["version_skew_or_low_recall_shard_ids"] == []
+    assert res["fragmented_shard_ids"] == []
+    assert res["Violations"] == []
+
+
+def test_audit_wiki_vector_embedding_hnsw_index_recall_and_drift_reindexing_critical():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_vector_embedding_hnsw_index_recall_and_drift_reindexing,
+    )
+
+    res = audit_wiki_vector_embedding_hnsw_index_recall_and_drift_reindexing(
+        [
+            {
+                "shard_id": "HNSW-SKEW-LOW",
+                "observed_recall_at_10_pct": 88.0,
+                "tombstone_fragmentation_pct": 5.0,
+                "embedding_model_version": "text-embedding-ada-002",
+            }
+        ]
+    )
+    assert res["status"] == "critical"
+    assert res["is_compliant"] is False
+    assert res["version_skew_or_low_recall_shard_ids"] == ["HNSW-SKEW-LOW"]
+    assert len(res["Violations"]) >= 2
+
+
+def test_audit_wiki_vector_embedding_hnsw_index_recall_and_drift_reindexing_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_vector_embedding_hnsw_index_recall_and_drift_reindexing,
+    )
+
+    res = audit_wiki_vector_embedding_hnsw_index_recall_and_drift_reindexing(
+        [
+            {
+                "id": "HNSW-FRAG",
+                "observed_recall_at_10_pct": 96.0,
+                "tombstone_fragmentation_pct": 32.0,
+                "embedding_model_version": "text-embedding-3-large-v1",
+            }
+        ],
+        max_tombstone_fragmentation_pct=20.0,
+    )
+    assert res["status"] == "warning"
+    assert res["is_compliant"] is False
+    assert res["version_skew_or_low_recall_shard_ids"] == []
+    assert res["fragmented_shard_ids"] == ["HNSW-FRAG"]
+    assert res["records"][0]["tombstone_fragmentation_exceeded"] is True
+
+
+def test_audit_wiki_vector_embedding_hnsw_index_recall_and_drift_reindexing_staticmethod_and_dunder_all():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_vector_embedding_hnsw_index_recall_and_drift_reindexing,
+    )
+
+    sample = [{"shard_id": "HNSW-1", "observed_recall_at_10_pct": 98.0}]
+    assert (
+        WikiPMIService.audit_wiki_vector_embedding_hnsw_index_recall_and_drift_reindexing(
+            sample
+        )
+        == audit_wiki_vector_embedding_hnsw_index_recall_and_drift_reindexing(
+            sample
+        )
+    )
+    assert (
+        "audit_wiki_vector_embedding_hnsw_index_recall_and_drift_reindexing"
+        in mod.__all__
+    )
+
