@@ -3839,6 +3839,7 @@ __all__ = [
     "validate_agile_hybrid_wip_little_law_and_sprint_carryover",
     "validate_ccpm_fever_chart_buffer_penetration_and_feeding_buffer",
     "validate_rolling_wave_wbs_100_percent_rule_and_planning_package_horizon",
+    "validate_stakeholder_engagement_seam_gap_and_resistant_power_risk",
 ]
 
 
@@ -10458,6 +10459,68 @@ def validate_rolling_wave_wbs_100_percent_rule_and_planning_package_horizon(
     }
 
 
+def validate_stakeholder_engagement_seam_gap_and_resistant_power_risk(
+    high_power_resistant_count: int,
+    high_power_unaware_count: int,
+    desired_supportive_leading_gap_count: int = 0,
+    *,
+    overdue_key_stakeholder_touchpoints_count: int = 0,
+    salience_definitive_stakeholders_unengaged_count: int = 0,
+) -> dict[str, Any]:
+    """PMI PMBOK §13.2 & §13.3 — Valida la Matriz de Evaluación de Involucramiento de Interesados (SEAM), Grilla Poder/Interés, Saliencia Mitchell y Coalición Resistente."""
+    def _int(val: Any, default: int = 0) -> int:
+        if isinstance(val, bool) or not isinstance(val, int):
+            return default
+        return max(0, int(val))
 
+    hp_resistant = _int(high_power_resistant_count, 0)
+    hp_unaware = _int(high_power_unaware_count, 0)
+    supportive_gap = _int(desired_supportive_leading_gap_count, 0)
+    overdue_touchpoints = _int(overdue_key_stakeholder_touchpoints_count, 0)
+    definitive_unengaged = _int(
+        salience_definitive_stakeholders_unengaged_count, 0
+    )
 
+    total_high_power_at_risk = (
+        hp_resistant + hp_unaware + definitive_unengaged
+    )
+    veto_coalition_block_risk = bool(
+        (hp_resistant > 0) or (definitive_unengaged > 0)
+    )
+    seam_alignment_deficit_detected = bool(
+        (hp_unaware > 0)
+        or (supportive_gap > 0)
+        or (overdue_touchpoints > 0)
+    )
+    stakeholder_alignment_index_pct = round(
+        max(
+            0.0,
+            100.0
+            - (hp_resistant * 35.0)
+            - (definitive_unengaged * 30.0)
+            - (hp_unaware * 15.0)
+            - (supportive_gap * 8.0)
+            - (overdue_touchpoints * 6.0),
+        ),
+        2,
+    )
 
+    if veto_coalition_block_risk:
+        seam_governance_status = (
+            "CRITICAL_HIGH_POWER_RESISTANT_OR_DEFINITIVE_SALIENCE_BREACH"
+        )
+    elif seam_alignment_deficit_detected:
+        seam_governance_status = (
+            "STAKEHOLDER_SEAM_ENGAGEMENT_GAP_OR_CADENCE_DRIFT_WARNING"
+        )
+    else:
+        seam_governance_status = "STAKEHOLDER_SEAM_SUPPORTIVE_ALIGNED_CLEAN"
+
+    return {
+        "total_high_power_at_risk": total_high_power_at_risk,
+        "veto_coalition_block_risk": veto_coalition_block_risk,
+        "seam_alignment_deficit_detected": seam_alignment_deficit_detected,
+        "stakeholder_alignment_index_pct": stakeholder_alignment_index_pct,
+        "overdue_key_stakeholder_touchpoints_count": overdue_touchpoints,
+        "seam_governance_status": seam_governance_status,
+    }

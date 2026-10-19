@@ -11102,6 +11102,110 @@ def test_validate_rolling_wave_wbs_100_percent_rule_and_planning_package_horizon
     )
 
 
+def test_validate_stakeholder_engagement_seam_gap_and_resistant_power_risk_clean():
+    from backend.schemas.projects import (
+        validate_stakeholder_engagement_seam_gap_and_resistant_power_risk,
+    )
+
+    res = validate_stakeholder_engagement_seam_gap_and_resistant_power_risk(
+        high_power_resistant_count=0,
+        high_power_unaware_count=0,
+        desired_supportive_leading_gap_count=0,
+        overdue_key_stakeholder_touchpoints_count=0,
+        salience_definitive_stakeholders_unengaged_count=0,
+    )
+    assert res["total_high_power_at_risk"] == 0
+    assert res["veto_coalition_block_risk"] is False
+    assert res["seam_alignment_deficit_detected"] is False
+    assert res["stakeholder_alignment_index_pct"] == 100.0
+    assert res["overdue_key_stakeholder_touchpoints_count"] == 0
+    assert (
+        res["seam_governance_status"]
+        == "STAKEHOLDER_SEAM_SUPPORTIVE_ALIGNED_CLEAN"
+    )
 
 
+def test_validate_stakeholder_engagement_seam_gap_and_resistant_power_risk_warning():
+    from backend.schemas.projects import (
+        validate_stakeholder_engagement_seam_gap_and_resistant_power_risk,
+    )
 
+    res = validate_stakeholder_engagement_seam_gap_and_resistant_power_risk(
+        high_power_resistant_count=0,
+        high_power_unaware_count=1,
+        desired_supportive_leading_gap_count=2,
+        overdue_key_stakeholder_touchpoints_count=1,
+        salience_definitive_stakeholders_unengaged_count=0,
+    )
+    assert res["total_high_power_at_risk"] == 1
+    assert res["veto_coalition_block_risk"] is False
+    assert res["seam_alignment_deficit_detected"] is True
+    assert res["stakeholder_alignment_index_pct"] == 63.0
+    assert res["overdue_key_stakeholder_touchpoints_count"] == 1
+    assert (
+        res["seam_governance_status"]
+        == "STAKEHOLDER_SEAM_ENGAGEMENT_GAP_OR_CADENCE_DRIFT_WARNING"
+    )
+
+
+def test_validate_stakeholder_engagement_seam_gap_and_resistant_power_risk_critical():
+    from backend.schemas.projects import (
+        validate_stakeholder_engagement_seam_gap_and_resistant_power_risk,
+    )
+
+    res_resistant = validate_stakeholder_engagement_seam_gap_and_resistant_power_risk(
+        high_power_resistant_count=1,
+        high_power_unaware_count=1,
+        desired_supportive_leading_gap_count=1,
+        overdue_key_stakeholder_touchpoints_count=2,
+        salience_definitive_stakeholders_unengaged_count=0,
+    )
+    assert res_resistant["total_high_power_at_risk"] == 2
+    assert res_resistant["veto_coalition_block_risk"] is True
+    assert res_resistant["seam_alignment_deficit_detected"] is True
+    assert res_resistant["stakeholder_alignment_index_pct"] == 30.0
+    assert (
+        res_resistant["seam_governance_status"]
+        == "CRITICAL_HIGH_POWER_RESISTANT_OR_DEFINITIVE_SALIENCE_BREACH"
+    )
+
+    res_salience = validate_stakeholder_engagement_seam_gap_and_resistant_power_risk(
+        high_power_resistant_count=0,
+        high_power_unaware_count=0,
+        salience_definitive_stakeholders_unengaged_count=4,
+    )
+    assert res_salience["total_high_power_at_risk"] == 4
+    assert res_salience["veto_coalition_block_risk"] is True
+    assert res_salience["stakeholder_alignment_index_pct"] == 0.0
+    assert (
+        res_salience["seam_governance_status"]
+        == "CRITICAL_HIGH_POWER_RESISTANT_OR_DEFINITIVE_SALIENCE_BREACH"
+    )
+
+
+def test_validate_stakeholder_engagement_seam_gap_and_resistant_power_risk_coercion_and_exports():
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_stakeholder_engagement_seam_gap_and_resistant_power_risk,
+    )
+
+    res = validate_stakeholder_engagement_seam_gap_and_resistant_power_risk(
+        high_power_resistant_count=True,  # type: ignore[arg-type]
+        high_power_unaware_count=-3,
+        desired_supportive_leading_gap_count="invalid",  # type: ignore[arg-type]
+        overdue_key_stakeholder_touchpoints_count=False,  # type: ignore[arg-type]
+        salience_definitive_stakeholders_unengaged_count=-2,
+    )
+    assert res["total_high_power_at_risk"] == 0
+    assert res["veto_coalition_block_risk"] is False
+    assert res["seam_alignment_deficit_detected"] is False
+    assert res["stakeholder_alignment_index_pct"] == 100.0
+    assert res["overdue_key_stakeholder_touchpoints_count"] == 0
+    assert (
+        res["seam_governance_status"]
+        == "STAKEHOLDER_SEAM_SUPPORTIVE_ALIGNED_CLEAN"
+    )
+    assert (
+        "validate_stakeholder_engagement_seam_gap_and_resistant_power_risk"
+        in mod.__all__
+    )
