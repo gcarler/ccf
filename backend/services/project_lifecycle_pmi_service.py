@@ -3190,6 +3190,7 @@ __all__ = [
     "audit_ppp_concession_handback_residual_life_and_reserve_escrow",
     "audit_eia_environmental_permit_conditions_and_chance_find_stop_work",
     "audit_decommissioning_hazmat_manifest_and_site_remediation_clearance",
+    "audit_joint_venture_consortium_liability_and_step_in_rights",
     "ProjectLifecyclePMIService",
 ]
 
@@ -9065,4 +9066,122 @@ def audit_decommissioning_hazmat_manifest_and_site_remediation_clearance(
 
 ProjectLifecyclePMIService.audit_decommissioning_hazmat_manifest_and_site_remediation_clearance = staticmethod(
     audit_decommissioning_hazmat_manifest_and_site_remediation_clearance
+)
+
+
+def audit_joint_venture_consortium_liability_and_step_in_rights(
+    partners: list[dict[str, Any]],
+    *,
+    required_equity_sum_pct: float = 100.0,
+    equity_tolerance_pct: float = 0.05,
+    max_unfunded_cash_call_days: int = 15,
+    steering_committee_deadlock_days: int = 0,
+    max_deadlock_days: int = 30,
+) -> dict[str, Any]:
+    """PMBOK §12.3 & §11.2 — Joint Venture (JV) Consortium Proportional Liability Split, Deadlock Dispute Escalation & Defaulting Partner Step-In Rights Auditor."""
+    valid_partners = [p for p in (partners or []) if isinstance(p, Mapping)]
+    total_equity_share_pct = round(
+        sum(float(p.get("equity_share_pct", 0.0) or 0.0) for p in valid_partners), 2
+    )
+    equity_allocation_valid = (
+        True
+        if not valid_partners
+        else abs(total_equity_share_pct - required_equity_sum_pct)
+        <= equity_tolerance_pct
+    )
+
+    partner_evaluations: list[dict[str, Any]] = []
+    defaulting_partners: list[str] = []
+    warning_partners: list[str] = []
+    total_unfunded_cash_call_amount = 0.0
+
+    for item in valid_partners:
+        partner_id = str(item.get("partner_id") or "").strip() or "UNKNOWN_PARTNER"
+        equity_share_pct = float(item.get("equity_share_pct", 0.0) or 0.0)
+        capital_call_due_amount = float(
+            item.get("capital_call_due_amount", 0.0) or 0.0
+        )
+        capital_call_paid_amount = float(
+            item.get("capital_call_paid_amount", 0.0) or 0.0
+        )
+        days_past_due_cash_call = int(item.get("days_past_due_cash_call", 0) or 0)
+        insolvency_or_sanction_event = bool(
+            item.get("insolvency_or_sanction_event", False)
+        )
+        cross_indemnity_agreement_signed = bool(
+            item.get("cross_indemnity_agreement_signed", True)
+        )
+        step_in_assumption_capacity_verified = bool(
+            item.get("step_in_assumption_capacity_verified", True)
+        )
+
+        unfunded_cash_call_amount = round(
+            max(0.0, capital_call_due_amount - capital_call_paid_amount), 2
+        )
+        total_unfunded_cash_call_amount = round(
+            total_unfunded_cash_call_amount + unfunded_cash_call_amount, 2
+        )
+
+        critical_partner_default = (
+            insolvency_or_sanction_event is True
+            or not cross_indemnity_agreement_signed
+            or (
+                unfunded_cash_call_amount > 0.0
+                and days_past_due_cash_call > max_unfunded_cash_call_days
+            )
+        )
+        warning_partner_risk = (not critical_partner_default) and (
+            (
+                unfunded_cash_call_amount > 0.0
+                and days_past_due_cash_call <= max_unfunded_cash_call_days
+            )
+            or not step_in_assumption_capacity_verified
+        )
+
+        if critical_partner_default:
+            defaulting_partners.append(partner_id)
+        elif warning_partner_risk:
+            warning_partners.append(partner_id)
+
+        partner_evaluations.append(
+            {
+                "partner_id": partner_id,
+                "equity_share_pct": equity_share_pct,
+                "capital_call_due_amount": capital_call_due_amount,
+                "capital_call_paid_amount": capital_call_paid_amount,
+                "unfunded_cash_call_amount": unfunded_cash_call_amount,
+                "days_past_due_cash_call": days_past_due_cash_call,
+                "insolvency_or_sanction_event": insolvency_or_sanction_event,
+                "cross_indemnity_agreement_signed": cross_indemnity_agreement_signed,
+                "step_in_assumption_capacity_verified": step_in_assumption_capacity_verified,
+                "critical_partner_default": critical_partner_default,
+                "warning_partner_risk": warning_partner_risk,
+            }
+        )
+
+    if (
+        not equity_allocation_valid
+        or steering_committee_deadlock_days > max_deadlock_days
+        or defaulting_partners
+    ):
+        status = "CRITICAL"
+    elif steering_committee_deadlock_days > 0 or warning_partners:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "status": status,
+        "evaluated_partners_count": len(partner_evaluations),
+        "total_equity_share_pct": total_equity_share_pct,
+        "equity_allocation_valid": equity_allocation_valid,
+        "defaulting_partners": defaulting_partners,
+        "warning_partners": warning_partners,
+        "total_unfunded_cash_call_amount": total_unfunded_cash_call_amount,
+        "partner_evaluations": partner_evaluations,
+    }
+
+
+ProjectLifecyclePMIService.audit_joint_venture_consortium_liability_and_step_in_rights = staticmethod(
+    audit_joint_venture_consortium_liability_and_step_in_rights
 )

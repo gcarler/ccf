@@ -11952,3 +11952,140 @@ def test_audit_decommissioning_hazmat_manifest_and_site_remediation_clearance_em
         "audit_decommissioning_hazmat_manifest_and_site_remediation_clearance"
         in mod.__all__
     )
+
+
+def test_audit_joint_venture_consortium_liability_and_step_in_rights_healthy():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_joint_venture_consortium_liability_and_step_in_rights,
+    )
+
+    res = audit_joint_venture_consortium_liability_and_step_in_rights(
+        [
+            {
+                "partner_id": "JV-LEAD-A",
+                "equity_share_pct": 60.0,
+                "capital_call_due_amount": 3000000.0,
+                "capital_call_paid_amount": 3000000.0,
+                "days_past_due_cash_call": 0,
+                "insolvency_or_sanction_event": False,
+                "cross_indemnity_agreement_signed": True,
+                "step_in_assumption_capacity_verified": True,
+            },
+            {
+                "partner_id": "JV-CO-B",
+                "equity_share_pct": 40.0,
+                "capital_call_due_amount": 2000000.0,
+                "capital_call_paid_amount": 2000000.0,
+                "days_past_due_cash_call": 0,
+                "insolvency_or_sanction_event": False,
+                "cross_indemnity_agreement_signed": True,
+                "step_in_assumption_capacity_verified": True,
+            },
+        ]
+    )
+    assert res["status"] == "HEALTHY"
+    assert res["evaluated_partners_count"] == 2
+    assert res["total_equity_share_pct"] == 100.0
+    assert res["equity_allocation_valid"] is True
+    assert res["defaulting_partners"] == []
+    assert res["warning_partners"] == []
+    assert res["total_unfunded_cash_call_amount"] == 0.0
+
+
+def test_audit_joint_venture_consortium_liability_and_step_in_rights_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_joint_venture_consortium_liability_and_step_in_rights,
+    )
+
+    res = audit_joint_venture_consortium_liability_and_step_in_rights(
+        [
+            {
+                "partner_id": "JV-LEAD-A",
+                "equity_share_pct": 55.0,
+                "capital_call_due_amount": 1000000.0,
+                "capital_call_paid_amount": 900000.0,
+                "days_past_due_cash_call": 10,
+                "insolvency_or_sanction_event": False,
+                "cross_indemnity_agreement_signed": True,
+                "step_in_assumption_capacity_verified": True,
+            },
+            {
+                "partner_id": "JV-CO-B",
+                "equity_share_pct": 45.0,
+                "capital_call_due_amount": 800000.0,
+                "capital_call_paid_amount": 800000.0,
+                "days_past_due_cash_call": 0,
+                "insolvency_or_sanction_event": False,
+                "cross_indemnity_agreement_signed": True,
+                "step_in_assumption_capacity_verified": False,
+            },
+        ],
+        steering_committee_deadlock_days=12,
+    )
+    assert res["status"] == "WARNING"
+    assert res["equity_allocation_valid"] is True
+    assert res["defaulting_partners"] == []
+    assert res["warning_partners"] == ["JV-LEAD-A", "JV-CO-B"]
+    assert res["total_unfunded_cash_call_amount"] == 100000.0
+
+
+def test_audit_joint_venture_consortium_liability_and_step_in_rights_critical():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_joint_venture_consortium_liability_and_step_in_rights,
+    )
+
+    res = audit_joint_venture_consortium_liability_and_step_in_rights(
+        [
+            {
+                "partner_id": "JV-INSOLVENT",
+                "equity_share_pct": 50.0,
+                "capital_call_due_amount": 1500000.0,
+                "capital_call_paid_amount": 500000.0,
+                "days_past_due_cash_call": 25,
+                "insolvency_or_sanction_event": True,
+                "cross_indemnity_agreement_signed": False,
+                "step_in_assumption_capacity_verified": False,
+            },
+            {
+                "partner_id": "JV-MINOR",
+                "equity_share_pct": 30.0,
+                "capital_call_due_amount": 900000.0,
+                "capital_call_paid_amount": 900000.0,
+                "days_past_due_cash_call": 0,
+                "insolvency_or_sanction_event": False,
+                "cross_indemnity_agreement_signed": True,
+                "step_in_assumption_capacity_verified": True,
+            },
+        ],
+        steering_committee_deadlock_days=35,
+    )
+    assert res["status"] == "CRITICAL"
+    assert res["total_equity_share_pct"] == 80.0
+    assert res["equity_allocation_valid"] is False
+    assert res["defaulting_partners"] == ["JV-INSOLVENT"]
+    assert res["total_unfunded_cash_call_amount"] == 1000000.0
+
+
+def test_audit_joint_venture_consortium_liability_and_step_in_rights_empty_and_binding():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_joint_venture_consortium_liability_and_step_in_rights,
+    )
+
+    empty = audit_joint_venture_consortium_liability_and_step_in_rights([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["evaluated_partners_count"] == 0
+    assert empty["total_equity_share_pct"] == 0.0
+    assert empty["equity_allocation_valid"] is True
+    assert empty["total_unfunded_cash_call_amount"] == 0.0
+    assert (
+        ProjectLifecyclePMIService.audit_joint_venture_consortium_liability_and_step_in_rights(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_joint_venture_consortium_liability_and_step_in_rights"
+        in mod.__all__
+    )

@@ -2870,6 +2870,7 @@ __all__ = [
     "audit_graphql_federation_supergraph_composition_and_query_cost_gate",
     "audit_feature_flag_kill_switch_and_stale_debt_gate",
     "audit_otel_trace_propagation_and_collector_drop_gate",
+    "audit_ebpf_kernel_verifier_and_ringbuf_drop_gate",
     "ProjectCCBService",
 ]
 
@@ -9077,4 +9078,107 @@ def audit_otel_trace_propagation_and_collector_drop_gate(
 
 ProjectCCBService.audit_otel_trace_propagation_and_collector_drop_gate = staticmethod(
     audit_otel_trace_propagation_and_collector_drop_gate
+)
+
+
+def audit_ebpf_kernel_verifier_and_ringbuf_drop_gate(
+    programs: list[dict[str, Any]],
+    *,
+    max_verified_instructions: int = 1000000,
+    max_ringbuf_drop_pct: float = 0.05,
+    max_cpu_overhead_pct: float = 2.0,
+) -> dict[str, Any]:
+    """PMBOK §8.3 & §11.6 — CCB eBPF Kernel Verifier Complexity, RingBuffer Drop Rate, kprobe Attach Stability & CO-RE BTF Compatibility Gate Auditor."""
+    program_evaluations: list[dict[str, Any]] = []
+    critical_programs: list[str] = []
+    warning_programs: list[str] = []
+    max_observed_ringbuf_drop_pct = 0.0
+
+    for item in programs or []:
+        if not isinstance(item, Mapping):
+            continue
+        program_id = str(item.get("program_id") or "").strip() or "UNKNOWN_PROGRAM"
+        verified_instructions_count = int(
+            item.get("verified_instructions_count", 0) or 0
+        )
+        verifier_rejected = bool(item.get("verifier_rejected", False))
+        core_btf_relocation_compatible = bool(
+            item.get("core_btf_relocation_compatible", True)
+        )
+        ringbuf_events_total = int(item.get("ringbuf_events_total", 0) or 0)
+        ringbuf_events_dropped = int(item.get("ringbuf_events_dropped", 0) or 0)
+        cpu_overhead_pct = float(item.get("cpu_overhead_pct", 0.5))
+        unstable_raw_kprobe_used = bool(item.get("unstable_raw_kprobe_used", False))
+
+        ringbuf_drop_pct = (
+            round((ringbuf_events_dropped / ringbuf_events_total) * 100.0, 4)
+            if ringbuf_events_total > 0
+            else 0.0
+        )
+        instruction_utilization_pct = (
+            round(
+                (verified_instructions_count / max_verified_instructions) * 100.0, 2
+            )
+            if max_verified_instructions > 0
+            else 0.0
+        )
+        max_observed_ringbuf_drop_pct = max(
+            max_observed_ringbuf_drop_pct, ringbuf_drop_pct
+        )
+
+        critical_ebpf_violation = (
+            verifier_rejected is True
+            or not core_btf_relocation_compatible
+            or verified_instructions_count > max_verified_instructions
+            or ringbuf_drop_pct > max_ringbuf_drop_pct
+            or cpu_overhead_pct > max_cpu_overhead_pct * 2.0
+        )
+        ebpf_warning = (not critical_ebpf_violation) and (
+            unstable_raw_kprobe_used is True
+            or cpu_overhead_pct > max_cpu_overhead_pct
+            or instruction_utilization_pct >= 80.0
+        )
+
+        if critical_ebpf_violation:
+            critical_programs.append(program_id)
+        elif ebpf_warning:
+            warning_programs.append(program_id)
+
+        program_evaluations.append(
+            {
+                "program_id": program_id,
+                "verified_instructions_count": verified_instructions_count,
+                "instruction_utilization_pct": instruction_utilization_pct,
+                "verifier_rejected": verifier_rejected,
+                "core_btf_relocation_compatible": core_btf_relocation_compatible,
+                "ringbuf_events_total": ringbuf_events_total,
+                "ringbuf_events_dropped": ringbuf_events_dropped,
+                "ringbuf_drop_pct": ringbuf_drop_pct,
+                "cpu_overhead_pct": cpu_overhead_pct,
+                "unstable_raw_kprobe_used": unstable_raw_kprobe_used,
+                "critical_ebpf_violation": critical_ebpf_violation,
+                "ebpf_warning": ebpf_warning,
+            }
+        )
+
+    if critical_programs:
+        status = "CRITICAL"
+    elif warning_programs:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "status": status,
+        "release_freeze_required": status == "CRITICAL",
+        "evaluated_programs_count": len(program_evaluations),
+        "critical_programs": critical_programs,
+        "warning_programs": warning_programs,
+        "max_observed_ringbuf_drop_pct": max_observed_ringbuf_drop_pct,
+        "program_evaluations": program_evaluations,
+    }
+
+
+ProjectCCBService.audit_ebpf_kernel_verifier_and_ringbuf_drop_gate = staticmethod(
+    audit_ebpf_kernel_verifier_and_ringbuf_drop_gate
 )
