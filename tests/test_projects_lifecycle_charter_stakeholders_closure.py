@@ -9617,3 +9617,154 @@ def test_audit_adr_dispute_escalation_ladder_and_claim_aging_staticmethod_and_du
         in mod.__all__
     )
 
+
+def test_audit_operational_readiness_orat_and_day2_handover_breach():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_operational_readiness_orat_and_day2_handover,
+    )
+
+    result = audit_operational_readiness_orat_and_day2_handover(
+        [
+            {
+                "gate_id": "ORAT-SEV-DEFECT",
+                "orat_scenarios_pass_rate_pct": 99.0,
+                "sre_oncall_shadowing_hours_completed": 20.0,
+                "day2_monitoring_alerts_verified": True,
+                "operations_director_acceptance_signed": True,
+                "open_sev1_or_sev2_defects_count": 2,
+            },
+            {
+                "gate_id": "ORAT-UNSIGNED",
+                "orat_scenarios_pass_rate_pct": 100.0,
+                "sre_oncall_shadowing_hours_completed": 24.0,
+                "day2_monitoring_alerts_verified": True,
+                "operations_director_acceptance_signed": False,
+                "open_sev1_or_sev2_defects_count": 0,
+            },
+            {
+                "gate_id": "ORAT-UNVERIFIED-ALERTS",
+                "orat_scenarios_pass_rate_pct": 99.5,
+                "sre_oncall_shadowing_hours_completed": 18.0,
+                "day2_monitoring_alerts_verified": False,
+                "operations_director_acceptance_signed": True,
+                "open_sev1_or_sev2_defects_count": 0,
+            },
+        ],
+        min_orat_pass_rate_pct=98.0,
+        min_oncall_shadowing_hours=16.0,
+    )
+    assert result["evaluated_gates_count"] == 3
+    assert result["blocked_handover_or_sev_defect_gate_ids"] == [
+        "ORAT-SEV-DEFECT",
+        "ORAT-UNSIGNED",
+        "ORAT-UNVERIFIED-ALERTS",
+    ]
+    assert result["incomplete_orat_or_shadowing_gate_ids"] == []
+    assert (
+        result["orat_handover_status"]
+        == "ORAT_SEV_DEFECT_OR_UNSIGNED_HANDOVER_BREACH"
+    )
+    assert result["is_orat_handover_ready"] is False
+
+
+def test_audit_operational_readiness_orat_and_day2_handover_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_operational_readiness_orat_and_day2_handover,
+    )
+
+    result = audit_operational_readiness_orat_and_day2_handover(
+        [
+            {
+                "gate_id": "ORAT-LOW-PASS",
+                "orat_scenarios_pass_rate_pct": 94.5,
+                "sre_oncall_shadowing_hours_completed": 20.0,
+                "day2_monitoring_alerts_verified": True,
+                "operations_director_acceptance_signed": True,
+                "open_sev1_or_sev2_defects_count": 0,
+            },
+            {
+                "gate_id": "ORAT-LOW-SHADOWING",
+                "orat_scenarios_pass_rate_pct": 99.0,
+                "sre_oncall_shadowing_hours_completed": 8.0,
+                "day2_monitoring_alerts_verified": True,
+                "operations_director_acceptance_signed": True,
+                "open_sev1_or_sev2_defects_count": 0,
+            },
+        ],
+        min_orat_pass_rate_pct=98.0,
+        min_oncall_shadowing_hours=16.0,
+    )
+    assert result["evaluated_gates_count"] == 2
+    assert result["blocked_handover_or_sev_defect_gate_ids"] == []
+    assert result["incomplete_orat_or_shadowing_gate_ids"] == [
+        "ORAT-LOW-PASS",
+        "ORAT-LOW-SHADOWING",
+    ]
+    assert (
+        result["orat_handover_status"] == "ORAT_PASS_RATE_OR_SHADOWING_WARNING"
+    )
+    assert result["is_orat_handover_ready"] is False
+
+
+def test_audit_operational_readiness_orat_and_day2_handover_optimal_and_empty():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_operational_readiness_orat_and_day2_handover,
+    )
+
+    empty = audit_operational_readiness_orat_and_day2_handover(
+        [{"gate_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_gates_count"] == 0
+    assert (
+        empty["orat_handover_status"] == "ORAT_DAY2_HANDOVER_READY_OPTIMAL"
+    )
+    assert empty["is_orat_handover_ready"] is True
+
+    optimal = audit_operational_readiness_orat_and_day2_handover(
+        [
+            {
+                "gate_id": "ORAT-READY-01",
+                "orat_scenarios_pass_rate_pct": 99.2,
+                "sre_oncall_shadowing_hours_completed": 24.0,
+                "day2_monitoring_alerts_verified": True,
+                "operations_director_acceptance_signed": True,
+                "open_sev1_or_sev2_defects_count": 0,
+            }
+        ],
+        min_orat_pass_rate_pct=98.0,
+        min_oncall_shadowing_hours=16.0,
+    )
+    assert optimal["evaluated_gates_count"] == 1
+    assert optimal["blocked_handover_or_sev_defect_gate_ids"] == []
+    assert optimal["incomplete_orat_or_shadowing_gate_ids"] == []
+    assert (
+        optimal["orat_handover_status"] == "ORAT_DAY2_HANDOVER_READY_OPTIMAL"
+    )
+    assert optimal["is_orat_handover_ready"] is True
+
+
+def test_audit_operational_readiness_orat_and_day2_handover_staticmethod_and_dunder_all():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_operational_readiness_orat_and_day2_handover,
+    )
+
+    sample = [
+        {
+            "gate_id": "ORAT-99",
+            "orat_scenarios_pass_rate_pct": 100.0,
+            "sre_oncall_shadowing_hours_completed": 20.0,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_operational_readiness_orat_and_day2_handover(
+            sample
+        )
+        == audit_operational_readiness_orat_and_day2_handover(sample)
+    )
+    assert (
+        "audit_operational_readiness_orat_and_day2_handover"
+        in mod.__all__
+    )
+

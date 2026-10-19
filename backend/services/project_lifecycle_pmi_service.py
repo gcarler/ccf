@@ -3172,6 +3172,7 @@ __all__ = [
     "audit_joint_venture_consortium_solvency_and_step_in_rights",
     "audit_force_majeure_claim_substantiation_and_mitigation",
     "audit_adr_dispute_escalation_ladder_and_claim_aging",
+    "audit_operational_readiness_orat_and_day2_handover",
     "ProjectLifecyclePMIService",
 ]
 
@@ -7420,3 +7421,81 @@ ProjectLifecyclePMIService.audit_adr_dispute_escalation_ladder_and_claim_aging =
     audit_adr_dispute_escalation_ladder_and_claim_aging
 )
 
+
+def audit_operational_readiness_orat_and_day2_handover(
+    handover_gates: Sequence[Mapping[str, Any]] | None,
+    *,
+    min_orat_pass_rate_pct: float = 98.0,
+    min_oncall_shadowing_hours: float = 16.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.7 & §8.2 — Operational Readiness and Activation Testing (ORAT), Support Runbook Handover & Day-2 SLA Acceptance Auditor."""
+    valid_gates = [
+        gate
+        for gate in (handover_gates or [])
+        if isinstance(gate, Mapping) and str(gate.get("gate_id") or "").strip()
+    ]
+
+    blocked_handover_or_sev_defect_gate_ids: list[str] = []
+    incomplete_orat_or_shadowing_gate_ids: list[str] = []
+
+    for gate in valid_gates:
+        gid = str(gate.get("gate_id")).strip()
+        orat_scenarios_pass_rate_pct = float(
+            gate.get("orat_scenarios_pass_rate_pct", 100.0)
+            if gate.get("orat_scenarios_pass_rate_pct") is not None
+            else 100.0
+        )
+        sre_oncall_shadowing_hours_completed = float(
+            gate.get("sre_oncall_shadowing_hours_completed", 24.0)
+            if gate.get("sre_oncall_shadowing_hours_completed") is not None
+            else 24.0
+        )
+        day2_monitoring_alerts_verified = bool(
+            gate.get("day2_monitoring_alerts_verified", True)
+            if gate.get("day2_monitoring_alerts_verified") is not None
+            else True
+        )
+        operations_director_acceptance_signed = bool(
+            gate.get("operations_director_acceptance_signed", True)
+            if gate.get("operations_director_acceptance_signed") is not None
+            else True
+        )
+        open_sev1_or_sev2_defects_count = int(
+            gate.get("open_sev1_or_sev2_defects_count", 0)
+            if gate.get("open_sev1_or_sev2_defects_count") is not None
+            else 0
+        )
+
+        if (
+            open_sev1_or_sev2_defects_count > 0
+            or not operations_director_acceptance_signed
+            or not day2_monitoring_alerts_verified
+        ):
+            blocked_handover_or_sev_defect_gate_ids.append(gid)
+
+        if (
+            orat_scenarios_pass_rate_pct < min_orat_pass_rate_pct
+            or sre_oncall_shadowing_hours_completed < min_oncall_shadowing_hours
+        ):
+            incomplete_orat_or_shadowing_gate_ids.append(gid)
+
+    if blocked_handover_or_sev_defect_gate_ids:
+        orat_handover_status = "ORAT_SEV_DEFECT_OR_UNSIGNED_HANDOVER_BREACH"
+    elif incomplete_orat_or_shadowing_gate_ids:
+        orat_handover_status = "ORAT_PASS_RATE_OR_SHADOWING_WARNING"
+    else:
+        orat_handover_status = "ORAT_DAY2_HANDOVER_READY_OPTIMAL"
+
+    return {
+        "evaluated_gates_count": len(valid_gates),
+        "blocked_handover_or_sev_defect_gate_ids": blocked_handover_or_sev_defect_gate_ids,
+        "incomplete_orat_or_shadowing_gate_ids": incomplete_orat_or_shadowing_gate_ids,
+        "orat_handover_status": orat_handover_status,
+        "is_orat_handover_ready": orat_handover_status
+        == "ORAT_DAY2_HANDOVER_READY_OPTIMAL",
+    }
+
+
+ProjectLifecyclePMIService.audit_operational_readiness_orat_and_day2_handover = staticmethod(
+    audit_operational_readiness_orat_and_day2_handover
+)
