@@ -9338,3 +9338,141 @@ def test_audit_executive_report_vendor_sla_uptime_and_rebate_capture_staticmetho
         in mod.__all__
     )
 
+
+def test_audit_executive_report_finops_unit_economics_and_ri_coverage_breach():
+    from backend.services.project_export_service import (
+        audit_executive_report_finops_unit_economics_and_ri_coverage,
+    )
+
+    result = audit_executive_report_finops_unit_economics_and_ri_coverage(
+        [
+            {
+                "account_id": "AWS-NO-ALERT",
+                "monthly_cloud_spend": 10000.0,
+                "idle_or_unattached_resource_waste_amount": 100.0,
+                "ri_or_savings_plan_coverage_pct": 85.0,
+                "unit_cost_per_active_tenant_drift_pct": 2.0,
+                "anomaly_detection_budget_alerts_enabled": False,
+            },
+            {
+                "account_id": "AWS-HIGH-WASTE",
+                "monthly_cloud_spend": 20000.0,
+                "idle_or_unattached_resource_waste_amount": 1500.0,
+                "ri_or_savings_plan_coverage_pct": 85.0,
+                "unit_cost_per_active_tenant_drift_pct": 2.0,
+                "anomaly_detection_budget_alerts_enabled": True,
+            },
+        ],
+        min_commitment_coverage_pct=75.0,
+        max_idle_waste_pct_of_spend=5.0,
+    )
+    assert result["evaluated_accounts_count"] == 2
+    assert result["excessive_waste_or_unmonitored_account_ids"] == [
+        "AWS-NO-ALERT",
+        "AWS-HIGH-WASTE",
+    ]
+    assert result["low_ri_coverage_or_unit_drift_account_ids"] == []
+    assert (
+        result["finops_report_status"]
+        == "FINOPS_IDLE_WASTE_OR_ALERTING_BREACH"
+    )
+    assert result["is_finops_report_compliant"] is False
+
+
+def test_audit_executive_report_finops_unit_economics_and_ri_coverage_warning():
+    from backend.services.project_export_service import (
+        audit_executive_report_finops_unit_economics_and_ri_coverage,
+    )
+
+    result = audit_executive_report_finops_unit_economics_and_ri_coverage(
+        [
+            {
+                "account_id": "AWS-LOW-RI",
+                "monthly_cloud_spend": 10000.0,
+                "idle_or_unattached_resource_waste_amount": 200.0,
+                "ri_or_savings_plan_coverage_pct": 60.0,
+                "unit_cost_per_active_tenant_drift_pct": 5.0,
+                "anomaly_detection_budget_alerts_enabled": True,
+            },
+            {
+                "account_id": "AWS-UNIT-DRIFT",
+                "monthly_cloud_spend": 10000.0,
+                "idle_or_unattached_resource_waste_amount": 200.0,
+                "ri_or_savings_plan_coverage_pct": 80.0,
+                "unit_cost_per_active_tenant_drift_pct": 18.5,
+                "anomaly_detection_budget_alerts_enabled": True,
+            },
+        ],
+        min_commitment_coverage_pct=75.0,
+        max_idle_waste_pct_of_spend=5.0,
+    )
+    assert result["evaluated_accounts_count"] == 2
+    assert result["excessive_waste_or_unmonitored_account_ids"] == []
+    assert result["low_ri_coverage_or_unit_drift_account_ids"] == [
+        "AWS-LOW-RI",
+        "AWS-UNIT-DRIFT",
+    ]
+    assert (
+        result["finops_report_status"]
+        == "FINOPS_RI_COVERAGE_OR_UNIT_DRIFT_WARNING"
+    )
+    assert result["is_finops_report_compliant"] is False
+
+
+def test_audit_executive_report_finops_unit_economics_and_ri_coverage_optimal_and_empty():
+    from backend.services.project_export_service import (
+        audit_executive_report_finops_unit_economics_and_ri_coverage,
+    )
+
+    empty = audit_executive_report_finops_unit_economics_and_ri_coverage(
+        [{"account_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_accounts_count"] == 0
+    assert empty["finops_report_status"] == "FINOPS_UNIT_ECONOMICS_OPTIMAL"
+    assert empty["is_finops_report_compliant"] is True
+
+    optimal = audit_executive_report_finops_unit_economics_and_ri_coverage(
+        [
+            {
+                "account_id": "AWS-GOLD-1",
+                "monthly_cloud_spend": 15000.0,
+                "idle_or_unattached_resource_waste_amount": 300.0,
+                "ri_or_savings_plan_coverage_pct": 88.0,
+                "unit_cost_per_active_tenant_drift_pct": 3.0,
+                "anomaly_detection_budget_alerts_enabled": True,
+            }
+        ],
+        min_commitment_coverage_pct=75.0,
+        max_idle_waste_pct_of_spend=5.0,
+    )
+    assert optimal["evaluated_accounts_count"] == 1
+    assert optimal["finops_report_status"] == "FINOPS_UNIT_ECONOMICS_OPTIMAL"
+    assert optimal["is_finops_report_compliant"] is True
+
+
+def test_audit_executive_report_finops_unit_economics_and_ri_coverage_staticmethod_and_dunder_all():
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_finops_unit_economics_and_ri_coverage,
+    )
+
+    sample = [
+        {
+            "account_id": "AWS-99",
+            "monthly_cloud_spend": 10000.0,
+            "idle_or_unattached_resource_waste_amount": 100.0,
+            "ri_or_savings_plan_coverage_pct": 85.0,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_finops_unit_economics_and_ri_coverage(
+            sample
+        )
+        == audit_executive_report_finops_unit_economics_and_ri_coverage(sample)
+    )
+    assert (
+        "audit_executive_report_finops_unit_economics_and_ri_coverage"
+        in mod.__all__
+    )
+

@@ -8724,3 +8724,165 @@ def test_audit_wiki_api_deprecation_sunset_and_consumer_migration_staticmethod_a
         in mod.__all__
     )
 
+
+
+def test_wiki_runbook_automation_toil_idempotency_breach():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_runbook_automation_toil_and_idempotency,
+    )
+
+    res = audit_wiki_runbook_automation_toil_and_idempotency(
+        [
+            {
+                "runbook_id": "RB-NON-IDEMPOTENT",
+                "automation_scripts_idempotent": False,
+            },
+            {
+                "runbook_id": "RB-NOT-STAGED",
+                "peer_reviewed_and_tested_in_staging": False,
+            },
+            {
+                "runbook_id": "RB-TAIL-ONLY-WARNING",
+                "monthly_toil_hours_consumed": 14.0,
+            },
+        ],
+        max_manual_steps_allowed=3,
+        max_toil_hours_per_month=10.0,
+    )
+    assert res["evaluated_runbooks_count"] == 3
+    assert res["unsafe_or_non_idempotent_runbook_ids"] == [
+        "RB-NON-IDEMPOTENT",
+        "RB-NOT-STAGED",
+    ]
+    assert res["high_toil_or_missing_dry_run_runbook_ids"] == [
+        "RB-TAIL-ONLY-WARNING"
+    ]
+    assert (
+        res["runbook_automation_status"]
+        == "RUNBOOK_IDEMPOTENCY_OR_STAGING_BREACH"
+    )
+    assert res["is_runbook_automation_compliant"] is False
+
+
+def test_wiki_runbook_automation_toil_idempotency_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_runbook_automation_toil_and_idempotency,
+    )
+
+    res = audit_wiki_runbook_automation_toil_and_idempotency(
+        [
+            {
+                "runbook_id": "RB-TOOLONG",
+                "manual_cli_steps_count": 5,
+            },
+            {
+                "runbook_id": "RB-NO-DRY-RUN",
+                "dry_run_mode_supported": False,
+            },
+            {
+                "runbook_id": "RB-OVER-TOIL",
+                "monthly_toil_hours_consumed": 10.5,
+            },
+        ],
+        max_manual_steps_allowed=3,
+        max_toil_hours_per_month=10.0,
+    )
+    assert res["evaluated_runbooks_count"] == 3
+    assert res["unsafe_or_non_idempotent_runbook_ids"] == []
+    assert res["high_toil_or_missing_dry_run_runbook_ids"] == [
+        "RB-TOOLONG",
+        "RB-NO-DRY-RUN",
+        "RB-OVER-TOIL",
+    ]
+    assert (
+        res["runbook_automation_status"]
+        == "RUNBOOK_TOIL_OR_DRY_RUN_WARNING"
+    )
+    assert res["is_runbook_automation_compliant"] is False
+
+
+def test_wiki_runbook_automation_toil_idempotency_boundaries_optimal():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_runbook_automation_toil_and_idempotency,
+    )
+
+    res = audit_wiki_runbook_automation_toil_and_idempotency(
+        [
+            {
+                "runbook_id": "RB-BOUNDARY",
+                "manual_cli_steps_count": 3,
+                "monthly_toil_hours_consumed": 10.0,
+            },
+            {"runbook_id": "RB-ALL-DEFAULTS"},
+        ],
+        max_manual_steps_allowed=3,
+        max_toil_hours_per_month=10.0,
+    )
+    assert res["evaluated_runbooks_count"] == 2
+    assert res["unsafe_or_non_idempotent_runbook_ids"] == []
+    assert res["high_toil_or_missing_dry_run_runbook_ids"] == []
+    assert (
+        res["runbook_automation_status"]
+        == "RUNBOOK_AUTOMATION_OPTIMAL"
+    )
+    assert res["is_runbook_automation_compliant"] is True
+
+
+def test_wiki_runbook_automation_toil_idempotency_invalid_and_binding():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_runbook_automation_toil_and_idempotency,
+    )
+
+    empty = audit_wiki_runbook_automation_toil_and_idempotency(None)
+    assert empty["evaluated_runbooks_count"] == 0
+    assert empty["unsafe_or_non_idempotent_runbook_ids"] == []
+    assert empty["high_toil_or_missing_dry_run_runbook_ids"] == []
+    assert (
+        empty["runbook_automation_status"]
+        == "RUNBOOK_AUTOMATION_OPTIMAL"
+    )
+    assert empty["is_runbook_automation_compliant"] is True
+
+    invalid = audit_wiki_runbook_automation_toil_and_idempotency(
+        [42, "not-a-dict", None, {"runbook_id": "   "}]  # type: ignore[list-item]
+    )
+    assert invalid["evaluated_runbooks_count"] == 0
+
+    defaults = audit_wiki_runbook_automation_toil_and_idempotency(
+        [
+            {
+                "runbook_id": "RB-DEFAULTS",
+                "manual_cli_steps_count": None,
+                "monthly_toil_hours_consumed": None,
+                "automation_scripts_idempotent": None,
+                "dry_run_mode_supported": None,
+                "peer_reviewed_and_tested_in_staging": None,
+            }
+        ]
+    )
+    assert defaults["evaluated_runbooks_count"] == 1
+    assert (
+        defaults["runbook_automation_status"]
+        == "RUNBOOK_AUTOMATION_OPTIMAL"
+    )
+    assert defaults["is_runbook_automation_compliant"] is True
+
+    sample = [
+        {
+            "runbook_id": "RB-1",
+            "manual_cli_steps_count": 2,
+            "monthly_toil_hours_consumed": 4.0,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_runbook_automation_toil_and_idempotency(
+            sample
+        )
+        == audit_wiki_runbook_automation_toil_and_idempotency(sample)
+    )
+    assert (
+        "audit_wiki_runbook_automation_toil_and_idempotency"
+        in mod.__all__
+    )

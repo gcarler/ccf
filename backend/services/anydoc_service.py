@@ -3034,6 +3034,7 @@ __all__ = [
     "audit_markdown_image_alt_text_and_asset_weight_hygiene",
     "audit_markdown_acronym_expansion_and_glossary_term_hygiene",
     "audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene",
+    "audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene",
     "AnydocService",
 ]
 
@@ -7898,5 +7899,85 @@ AnyDocService.audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene = st
 )
 AnydocService.audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene = staticmethod(
     audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene
+)
+
+
+def audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene(
+    documents: Any,
+    *,
+    allow_whitelisted_iframes: bool = True,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §11.2 — AnyDoc Markdown Inline HTML Sanitization, Script/Event-Handler Injection & Iframe Domain Whitelist Hygiene Auditor."""
+    entries = documents if isinstance(documents, (list, tuple)) else []
+    rows = [
+        item
+        for item in entries
+        if isinstance(item, dict) and str(item.get("doc_id") or "").strip()
+    ]
+
+    xss_or_untrusted_embed_doc_ids: list[str] = []
+    raw_html_style_warning_doc_ids: list[str] = []
+
+    for item in rows:
+        doc_id = str(item.get("doc_id")).strip()
+        unsafe_scripts = int(
+            item.get("unsafe_script_or_event_handler_tags_count", 0)
+            if item.get("unsafe_script_or_event_handler_tags_count") is not None
+            else 0
+        )
+        unwhitelisted_embeds = int(
+            item.get("unwhitelisted_iframe_or_embed_count", 0)
+            if item.get("unwhitelisted_iframe_or_embed_count") is not None
+            else 0
+        )
+        whitelisted_iframes = int(
+            item.get("whitelisted_iframe_count", 0)
+            if item.get("whitelisted_iframe_count") is not None
+            else 0
+        )
+        raw_style_tags = int(
+            item.get("raw_style_or_deprecated_html_tags_count", 0)
+            if item.get("raw_style_or_deprecated_html_tags_count") is not None
+            else 0
+        )
+        csp_sandbox_enforced = bool(
+            item.get("csp_nonce_or_sandbox_enforced", True)
+            if item.get("csp_nonce_or_sandbox_enforced") is not None
+            else True
+        )
+
+        if (
+            unsafe_scripts > 0
+            or unwhitelisted_embeds > 0
+            or (not allow_whitelisted_iframes and whitelisted_iframes > 0)
+            or (whitelisted_iframes > 0 and not csp_sandbox_enforced)
+        ):
+            xss_or_untrusted_embed_doc_ids.append(doc_id)
+
+        if raw_style_tags > 0:
+            raw_html_style_warning_doc_ids.append(doc_id)
+
+    if xss_or_untrusted_embed_doc_ids:
+        html_sanitization_status = "HTML_XSS_OR_UNTRUSTED_EMBED_BREACH"
+    elif raw_html_style_warning_doc_ids:
+        html_sanitization_status = "HTML_RAW_STYLE_OR_DEPRECATED_TAG_WARNING"
+    else:
+        html_sanitization_status = "HTML_SANITIZATION_CLEAN"
+
+    return {
+        "evaluated_documents_count": len(rows),
+        "xss_or_untrusted_embed_doc_ids": xss_or_untrusted_embed_doc_ids,
+        "raw_html_style_warning_doc_ids": raw_html_style_warning_doc_ids,
+        "html_sanitization_status": html_sanitization_status,
+        "is_html_sanitization_compliant": html_sanitization_status
+        == "HTML_SANITIZATION_CLEAN",
+    }
+
+
+AnyDocService.audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene = staticmethod(
+    audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene
+)
+AnydocService.audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene = staticmethod(
+    audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene
 )
 

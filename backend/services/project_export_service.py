@@ -3004,6 +3004,7 @@ __all__ = [
     "audit_executive_report_multi_region_failover_and_split_brain_fencing",
     "audit_executive_report_backup_worm_immutability_and_restore_drills",
     "audit_executive_report_vendor_sla_uptime_and_rebate_capture",
+    "audit_executive_report_finops_unit_economics_and_ri_coverage",
     "ProjectExportService",
 ]
 
@@ -7232,5 +7233,82 @@ def audit_executive_report_vendor_sla_uptime_and_rebate_capture(
 
 ProjectExportService.audit_executive_report_vendor_sla_uptime_and_rebate_capture = staticmethod(
     audit_executive_report_vendor_sla_uptime_and_rebate_capture
+)
+
+
+def audit_executive_report_finops_unit_economics_and_ri_coverage(
+    cloud_accounts: Sequence[Mapping[str, Any]] | None,
+    *,
+    min_commitment_coverage_pct: float = 75.0,
+    max_idle_waste_pct_of_spend: float = 5.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §7.4 & §10.2 — Executive Report Cloud FinOps Unit Economics, Reserved Instance/Savings Plan Coverage & Idle Resource Waste Auditor."""
+    valid_accounts = [
+        acc
+        for acc in (cloud_accounts or [])
+        if isinstance(acc, Mapping) and str(acc.get("account_id") or "").strip()
+    ]
+
+    excessive_waste_or_unmonitored_account_ids: list[str] = []
+    low_ri_coverage_or_unit_drift_account_ids: list[str] = []
+
+    for acc in valid_accounts:
+        aid = str(acc.get("account_id")).strip()
+        spend = float(
+            acc.get("monthly_cloud_spend", 10000.0)
+            if acc.get("monthly_cloud_spend") is not None
+            else 10000.0
+        )
+        waste = float(
+            acc.get("idle_or_unattached_resource_waste_amount", 100.0)
+            if acc.get("idle_or_unattached_resource_waste_amount") is not None
+            else 100.0
+        )
+        ri_coverage = float(
+            acc.get("ri_or_savings_plan_coverage_pct", 85.0)
+            if acc.get("ri_or_savings_plan_coverage_pct") is not None
+            else 85.0
+        )
+        unit_drift = float(
+            acc.get("unit_cost_per_active_tenant_drift_pct", 0.0)
+            if acc.get("unit_cost_per_active_tenant_drift_pct") is not None
+            else 0.0
+        )
+        alerts_enabled = bool(
+            acc.get("anomaly_detection_budget_alerts_enabled", True)
+            if acc.get("anomaly_detection_budget_alerts_enabled") is not None
+            else True
+        )
+
+        if not alerts_enabled or (
+            spend > 0 and (waste / spend) * 100.0 > max_idle_waste_pct_of_spend
+        ):
+            excessive_waste_or_unmonitored_account_ids.append(aid)
+
+        if (
+            ri_coverage < min_commitment_coverage_pct
+            or unit_drift > 15.0
+        ):
+            low_ri_coverage_or_unit_drift_account_ids.append(aid)
+
+    if excessive_waste_or_unmonitored_account_ids:
+        finops_report_status = "FINOPS_IDLE_WASTE_OR_ALERTING_BREACH"
+    elif low_ri_coverage_or_unit_drift_account_ids:
+        finops_report_status = "FINOPS_RI_COVERAGE_OR_UNIT_DRIFT_WARNING"
+    else:
+        finops_report_status = "FINOPS_UNIT_ECONOMICS_OPTIMAL"
+
+    return {
+        "evaluated_accounts_count": len(valid_accounts),
+        "excessive_waste_or_unmonitored_account_ids": excessive_waste_or_unmonitored_account_ids,
+        "low_ri_coverage_or_unit_drift_account_ids": low_ri_coverage_or_unit_drift_account_ids,
+        "finops_report_status": finops_report_status,
+        "is_finops_report_compliant": finops_report_status
+        == "FINOPS_UNIT_ECONOMICS_OPTIMAL",
+    }
+
+
+ProjectExportService.audit_executive_report_finops_unit_economics_and_ri_coverage = staticmethod(
+    audit_executive_report_finops_unit_economics_and_ri_coverage
 )
 

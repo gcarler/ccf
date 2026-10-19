@@ -2531,6 +2531,7 @@ __all__ = [
     "audit_wiki_quarterly_attestation_and_orphan_page_archival",
     "audit_wiki_dr_tabletop_exercise_and_communication_tree",
     "audit_wiki_api_deprecation_sunset_and_consumer_migration",
+    "audit_wiki_runbook_automation_toil_and_idempotency",
     "WikiPMIService",
 ]
 
@@ -6624,5 +6625,79 @@ def audit_wiki_api_deprecation_sunset_and_consumer_migration(
 
 WikiPMIService.audit_wiki_api_deprecation_sunset_and_consumer_migration = staticmethod(
     audit_wiki_api_deprecation_sunset_and_consumer_migration
+)
+
+
+def audit_wiki_runbook_automation_toil_and_idempotency(
+    runbooks: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_manual_steps_allowed: int = 3,
+    max_toil_hours_per_month: float = 10.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §8.2 & §10.2 — Wiki SRE Runbook Automation Coverage, Operational Toil Cap & Script Idempotency Auditor."""
+    valid_runbooks = [
+        rb
+        for rb in (runbooks or [])
+        if isinstance(rb, Mapping) and str(rb.get("runbook_id") or "").strip()
+    ]
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _num(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    unsafe_or_non_idempotent_runbook_ids: list[str] = []
+    high_toil_or_missing_dry_run_runbook_ids: list[str] = []
+
+    for rb in valid_runbooks:
+        rid = str(rb.get("runbook_id")).strip()
+        manual_steps = _num(
+            rb.get("manual_cli_steps_count"), 1.0
+        )
+        toil_hours = _num(
+            rb.get("monthly_toil_hours_consumed"), 2.0
+        )
+        scripts_idempotent = _bool(
+            rb.get("automation_scripts_idempotent"), True
+        )
+        dry_run_supported = _bool(
+            rb.get("dry_run_mode_supported"), True
+        )
+        peer_reviewed_staging = _bool(
+            rb.get("peer_reviewed_and_tested_in_staging"), True
+        )
+
+        if not scripts_idempotent or not peer_reviewed_staging:
+            unsafe_or_non_idempotent_runbook_ids.append(rid)
+
+        if (
+            manual_steps > max_manual_steps_allowed
+            or toil_hours > max_toil_hours_per_month
+            or not dry_run_supported
+        ):
+            high_toil_or_missing_dry_run_runbook_ids.append(rid)
+
+    if unsafe_or_non_idempotent_runbook_ids:
+        runbook_automation_status = "RUNBOOK_IDEMPOTENCY_OR_STAGING_BREACH"
+    elif high_toil_or_missing_dry_run_runbook_ids:
+        runbook_automation_status = "RUNBOOK_TOIL_OR_DRY_RUN_WARNING"
+    else:
+        runbook_automation_status = "RUNBOOK_AUTOMATION_OPTIMAL"
+
+    return {
+        "evaluated_runbooks_count": len(valid_runbooks),
+        "unsafe_or_non_idempotent_runbook_ids": unsafe_or_non_idempotent_runbook_ids,
+        "high_toil_or_missing_dry_run_runbook_ids": high_toil_or_missing_dry_run_runbook_ids,
+        "runbook_automation_status": runbook_automation_status,
+        "is_runbook_automation_compliant": runbook_automation_status
+        == "RUNBOOK_AUTOMATION_OPTIMAL",
+    }
+
+
+WikiPMIService.audit_wiki_runbook_automation_toil_and_idempotency = staticmethod(
+    audit_wiki_runbook_automation_toil_and_idempotency
 )
 

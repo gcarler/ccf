@@ -7095,3 +7095,160 @@ def test_audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene_staticmet
         in mod.__all__
     )
 
+
+def test_audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene_breach():
+    from backend.services.anydoc_service import (
+        audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene,
+    )
+
+    result = audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene(
+        [
+            {
+                "doc_id": "DOC-XSS-SCRIPT",
+                "unsafe_script_or_event_handler_tags_count": 1,
+                "unwhitelisted_iframe_or_embed_count": 0,
+                "whitelisted_iframe_count": 0,
+                "raw_style_or_deprecated_html_tags_count": 0,
+                "csp_nonce_or_sandbox_enforced": True,
+            },
+            {
+                "doc_id": "DOC-UNTRUSTED-IFRAME",
+                "unsafe_script_or_event_handler_tags_count": 0,
+                "unwhitelisted_iframe_or_embed_count": 1,
+                "whitelisted_iframe_count": 0,
+                "raw_style_or_deprecated_html_tags_count": 0,
+                "csp_nonce_or_sandbox_enforced": True,
+            },
+            {
+                "doc_id": "DOC-NO-SANDBOX",
+                "unsafe_script_or_event_handler_tags_count": 0,
+                "unwhitelisted_iframe_or_embed_count": 0,
+                "whitelisted_iframe_count": 2,
+                "raw_style_or_deprecated_html_tags_count": 0,
+                "csp_nonce_or_sandbox_enforced": False,
+            },
+        ],
+        allow_whitelisted_iframes=True,
+    )
+    assert result["evaluated_documents_count"] == 3
+    assert result["xss_or_untrusted_embed_doc_ids"] == [
+        "DOC-XSS-SCRIPT",
+        "DOC-UNTRUSTED-IFRAME",
+        "DOC-NO-SANDBOX",
+    ]
+    assert result["raw_html_style_warning_doc_ids"] == []
+    assert (
+        result["html_sanitization_status"]
+        == "HTML_XSS_OR_UNTRUSTED_EMBED_BREACH"
+    )
+    assert result["is_html_sanitization_compliant"] is False
+
+
+def test_audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene_warning_and_disallowed_iframe():
+    from backend.services.anydoc_service import (
+        audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene,
+    )
+
+    warn_res = audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene(
+        [
+            {
+                "doc_id": "DOC-STYLE-WARN",
+                "unsafe_script_or_event_handler_tags_count": 0,
+                "unwhitelisted_iframe_or_embed_count": 0,
+                "whitelisted_iframe_count": 1,
+                "raw_style_or_deprecated_html_tags_count": 3,
+                "csp_nonce_or_sandbox_enforced": True,
+            }
+        ],
+        allow_whitelisted_iframes=True,
+    )
+    assert warn_res["evaluated_documents_count"] == 1
+    assert warn_res["xss_or_untrusted_embed_doc_ids"] == []
+    assert warn_res["raw_html_style_warning_doc_ids"] == ["DOC-STYLE-WARN"]
+    assert (
+        warn_res["html_sanitization_status"]
+        == "HTML_RAW_STYLE_OR_DEPRECATED_TAG_WARNING"
+    )
+    assert warn_res["is_html_sanitization_compliant"] is False
+
+    strict_iframe = audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene(
+        [
+            {
+                "doc_id": "DOC-WHITELIST-BLOCKED",
+                "whitelisted_iframe_count": 1,
+                "csp_nonce_or_sandbox_enforced": True,
+            }
+        ],
+        allow_whitelisted_iframes=False,
+    )
+    assert strict_iframe["xss_or_untrusted_embed_doc_ids"] == [
+        "DOC-WHITELIST-BLOCKED"
+    ]
+    assert (
+        strict_iframe["html_sanitization_status"]
+        == "HTML_XSS_OR_UNTRUSTED_EMBED_BREACH"
+    )
+
+
+def test_audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene_clean_and_empty():
+    from backend.services.anydoc_service import (
+        audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene,
+    )
+
+    empty = audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene(
+        [{"doc_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_documents_count"] == 0
+    assert empty["html_sanitization_status"] == "HTML_SANITIZATION_CLEAN"
+    assert empty["is_html_sanitization_compliant"] is True
+
+    clean = audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene(
+        [
+            {
+                "doc_id": "DOC-SAFE-1",
+                "unsafe_script_or_event_handler_tags_count": 0,
+                "unwhitelisted_iframe_or_embed_count": 0,
+                "whitelisted_iframe_count": 1,
+                "raw_style_or_deprecated_html_tags_count": 0,
+                "csp_nonce_or_sandbox_enforced": True,
+            }
+        ],
+        allow_whitelisted_iframes=True,
+    )
+    assert clean["evaluated_documents_count"] == 1
+    assert clean["html_sanitization_status"] == "HTML_SANITIZATION_CLEAN"
+    assert clean["is_html_sanitization_compliant"] is True
+
+
+def test_audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene_staticmethod_and_dunder_all():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene,
+    )
+
+    sample = [
+        {
+            "doc_id": "DOC-99",
+            "unsafe_script_or_event_handler_tags_count": 0,
+            "unwhitelisted_iframe_or_embed_count": 0,
+        }
+    ]
+    assert (
+        AnyDocService.audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene(
+            sample
+        )
+        == audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene(
+            sample
+        )
+        == audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene(sample)
+    )
+    assert (
+        "audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene"
+        in mod.__all__
+    )
+
