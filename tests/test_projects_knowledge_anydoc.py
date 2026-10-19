@@ -6683,3 +6683,122 @@ def test_audit_markdown_task_list_checklist_owner_and_due_date_hygiene_staticmet
         "audit_markdown_task_list_checklist_owner_and_due_date_hygiene"
         in mod.__all__
     )
+
+
+def test_audit_markdown_image_alt_text_and_asset_weight_hygiene_broken_or_inaccessible():
+    from backend.services.anydoc_service import (
+        audit_markdown_image_alt_text_and_asset_weight_hygiene,
+    )
+
+    res = audit_markdown_image_alt_text_and_asset_weight_hygiene(
+        [
+            {
+                "image_id": "IMG-BROKEN",
+                "alt_text": "Architecture diagram of multi-tenant router",
+                "asset_size_kb": 120.0,
+                "target_path_exists": False,
+                "uses_unoptimized_bmp_or_tiff": False,
+            },
+            {
+                "image_id": "IMG-TRIVIAL-ALT",
+                "alt_text": "Screenshot",
+                "asset_size_kb": 80.0,
+                "target_path_exists": True,
+                "uses_unoptimized_bmp_or_tiff": False,
+            },
+        ],
+        max_asset_size_kb=500.0,
+        min_alt_text_chars=5,
+    )
+    assert res["total_images_evaluated"] == 2
+    assert res["broken_path_image_ids"] == ["IMG-BROKEN"]
+    assert res["missing_or_trivial_alt_image_ids"] == ["IMG-TRIVIAL-ALT"]
+    assert res["oversized_or_unoptimized_image_ids"] == []
+    assert res["image_hygiene_status"] == "BROKEN_OR_INACCESSIBLE_MEDIA"
+    assert res["is_media_hygiene_compliant"] is False
+
+
+def test_audit_markdown_image_alt_text_and_asset_weight_hygiene_asset_bloat_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_image_alt_text_and_asset_weight_hygiene,
+    )
+
+    res = audit_markdown_image_alt_text_and_asset_weight_hygiene(
+        [
+            {
+                "image_id": "IMG-HEAVY-BMP",
+                "alt_text": "EVM S-Curve Baseline vs Actual Cost",
+                "asset_size_kb": 1200.0,
+                "target_path_exists": True,
+                "uses_unoptimized_bmp_or_tiff": True,
+            }
+        ],
+        max_asset_size_kb=500.0,
+        min_alt_text_chars=5,
+    )
+    assert res["broken_path_image_ids"] == []
+    assert res["missing_or_trivial_alt_image_ids"] == []
+    assert res["oversized_or_unoptimized_image_ids"] == ["IMG-HEAVY-BMP"]
+    assert res["image_hygiene_status"] == "ASSET_BLOAT_WARNING"
+    assert res["is_media_hygiene_compliant"] is False
+
+
+def test_audit_markdown_image_alt_text_and_asset_weight_hygiene_clean_and_empty():
+    from backend.services.anydoc_service import (
+        audit_markdown_image_alt_text_and_asset_weight_hygiene,
+    )
+
+    empty = audit_markdown_image_alt_text_and_asset_weight_hygiene(
+        [{"image_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_images_evaluated"] == 0
+    assert empty["image_hygiene_status"] == "MEDIA_ASSETS_CLEAN"
+    assert empty["is_media_hygiene_compliant"] is True
+
+    clean = audit_markdown_image_alt_text_and_asset_weight_hygiene(
+        [
+            {
+                "image_id": "IMG-CLEAN-SVG",
+                "alt_text": "WBS 100% Rule Decomposition Tree",
+                "asset_size_kb": 45.0,
+                "target_path_exists": True,
+                "uses_unoptimized_bmp_or_tiff": False,
+            }
+        ]
+    )
+    assert clean["total_images_evaluated"] == 1
+    assert clean["image_hygiene_status"] == "MEDIA_ASSETS_CLEAN"
+    assert clean["is_media_hygiene_compliant"] is True
+
+
+def test_audit_markdown_image_alt_text_and_asset_weight_hygiene_staticmethod_and_dunder_all():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_image_alt_text_and_asset_weight_hygiene,
+    )
+
+    sample = [
+        {
+            "image_id": "IMG-99",
+            "alt_text": "Valid accessibility caption",
+            "asset_size_kb": 95.0,
+        }
+    ]
+    assert (
+        AnyDocService.audit_markdown_image_alt_text_and_asset_weight_hygiene(
+            sample
+        )
+        == audit_markdown_image_alt_text_and_asset_weight_hygiene(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_image_alt_text_and_asset_weight_hygiene(
+            sample
+        )
+        == audit_markdown_image_alt_text_and_asset_weight_hygiene(sample)
+    )
+    assert (
+        "audit_markdown_image_alt_text_and_asset_weight_hygiene"
+        in mod.__all__
+    )

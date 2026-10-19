@@ -3031,6 +3031,7 @@ __all__ = [
     "audit_markdown_mermaid_diagram_syntax_and_cognitive_complexity",
     "audit_markdown_footnote_citation_and_orphan_definition_hygiene",
     "audit_markdown_task_list_checklist_owner_and_due_date_hygiene",
+    "audit_markdown_image_alt_text_and_asset_weight_hygiene",
     "AnydocService",
 ]
 
@@ -7657,4 +7658,101 @@ AnyDocService.audit_markdown_task_list_checklist_owner_and_due_date_hygiene = st
 )
 AnydocService.audit_markdown_task_list_checklist_owner_and_due_date_hygiene = staticmethod(
     audit_markdown_task_list_checklist_owner_and_due_date_hygiene
+)
+
+
+def audit_markdown_image_alt_text_and_asset_weight_hygiene(
+    images: list[dict[str, Any]],
+    *,
+    max_asset_size_kb: float = 500.0,
+    min_alt_text_chars: int = 5,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §10.2 — AnyDoc Markdown Image Alt-Text Accessibility, Oversized Binary Asset & Broken Relative Path Hygiene Auditor."""
+    valid_images: list[dict[str, Any]] = []
+    if isinstance(images, (list, tuple)):
+        for item in images:
+            if not isinstance(item, dict):
+                continue
+            iid = str(item.get("image_id") or "").strip()
+            if not iid:
+                continue
+            valid_images.append({**item, "_iid": iid})
+
+    if not valid_images:
+        return {
+            "total_images_evaluated": 0,
+            "broken_path_image_ids": [],
+            "missing_or_trivial_alt_image_ids": [],
+            "oversized_or_unoptimized_image_ids": [],
+            "image_hygiene_status": "MEDIA_ASSETS_CLEAN",
+            "is_media_hygiene_compliant": True,
+            "recommendations": [],
+        }
+
+    trivial_tokens = {"image", "img", "screenshot", "picture", "foto"}
+    broken_path_image_ids: list[str] = []
+    missing_or_trivial_alt_image_ids: list[str] = []
+    oversized_or_unoptimized_image_ids: list[str] = []
+
+    for img in valid_images:
+        iid = img["_iid"]
+        alt_clean = str(img.get("alt_text") or "").strip()
+        size_kb = float(
+            img.get("asset_size_kb", 100.0)
+            if img.get("asset_size_kb") is not None
+            else 100.0
+        )
+        path_exists = bool(img.get("target_path_exists", True))
+        unoptimized = bool(img.get("uses_unoptimized_bmp_or_tiff", False))
+
+        if not path_exists:
+            broken_path_image_ids.append(iid)
+
+        if (
+            len(alt_clean) < min_alt_text_chars
+            or alt_clean.lower() in trivial_tokens
+        ):
+            missing_or_trivial_alt_image_ids.append(iid)
+
+        if size_kb > max_asset_size_kb or unoptimized:
+            oversized_or_unoptimized_image_ids.append(iid)
+
+    recommendations: list[str] = []
+    if broken_path_image_ids:
+        recommendations.append(
+            f"Restore missing image files or fix broken relative paths for image(s): {', '.join(broken_path_image_ids)}."
+        )
+    if missing_or_trivial_alt_image_ids:
+        recommendations.append(
+            f"Provide descriptive accessibility alt-text (>= {min_alt_text_chars} chars, non-generic) for image(s): {', '.join(missing_or_trivial_alt_image_ids)}."
+        )
+    if oversized_or_unoptimized_image_ids:
+        recommendations.append(
+            f"Compress oversized images (<= {max_asset_size_kb} KB) and convert BMP/TIFF to WebP/PNG/SVG for image(s): {', '.join(oversized_or_unoptimized_image_ids)}."
+        )
+
+    if broken_path_image_ids or missing_or_trivial_alt_image_ids:
+        image_hygiene_status = "BROKEN_OR_INACCESSIBLE_MEDIA"
+    elif oversized_or_unoptimized_image_ids:
+        image_hygiene_status = "ASSET_BLOAT_WARNING"
+    else:
+        image_hygiene_status = "MEDIA_ASSETS_CLEAN"
+
+    return {
+        "total_images_evaluated": len(valid_images),
+        "broken_path_image_ids": broken_path_image_ids,
+        "missing_or_trivial_alt_image_ids": missing_or_trivial_alt_image_ids,
+        "oversized_or_unoptimized_image_ids": oversized_or_unoptimized_image_ids,
+        "image_hygiene_status": image_hygiene_status,
+        "is_media_hygiene_compliant": image_hygiene_status
+        == "MEDIA_ASSETS_CLEAN",
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_markdown_image_alt_text_and_asset_weight_hygiene = staticmethod(
+    audit_markdown_image_alt_text_and_asset_weight_hygiene
+)
+AnydocService.audit_markdown_image_alt_text_and_asset_weight_hygiene = staticmethod(
+    audit_markdown_image_alt_text_and_asset_weight_hygiene
 )

@@ -8140,3 +8140,165 @@ def test_evaluate_evm_sla_penalty_service_credits_and_earn_back_empty_and_bindin
         "evaluate_evm_sla_penalty_service_credits_and_earn_back" in mod.__all__
     )
 
+
+
+def test_evaluate_evm_cpif_pta_and_ceiling_breach_paths():
+    """Caso 1: sobrecosto que cruza el PTA y el techo de precio -> CEILING_OR_PTA_BREACH."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_cpif_share_ratio_and_point_of_total_assumption,
+    )
+
+    res = evaluate_evm_cpif_share_ratio_and_point_of_total_assumption(
+        [
+            {
+                "contract_id": "CPIF-01",
+                "target_cost": 100000.0,
+                "target_fee": 20000.0,
+                "actual_or_forecast_cost": 130000.0,
+                "min_fee_floor": 0.0,
+                "max_fee_ceiling": 50000.0,
+                "seller_cost_overrun_share_pct": 20.0,
+                "ceiling_price": 140000.0,
+            },
+        ]
+    )
+    assert res["total_contracts_evaluated"] == 1
+    # PTA = 100000 + (140000 - 120000) / 0.8 = 125000; actual 130000 > PTA -> breach.
+    assert res["pta_breached_contract_ids"] == ["CPIF-01"]
+    # raw_fee = 20000 + (-30000 * 0.2) = 14000 >= floor 0 -> sin hit.
+    assert res["min_fee_floor_hit_contract_ids"] == []
+    # total payable = actual 130000 + fee 14000 = 144000 > 140000 -> breach.
+    assert res["ceiling_price_exceeded_contract_ids"] == ["CPIF-01"]
+    assert res["total_final_fees_payable"] == 14000.0
+    assert res["cpif_governance_status"] == "CEILING_OR_PTA_BREACH"
+    assert res["is_cpif_compliant"] is False
+
+
+def test_evaluate_evm_cpif_fee_floor_erosion_only():
+    """Caso 2: sobrecosto erosiona el fee hasta el floor, sin ceiling_price -> WARNING."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_cpif_share_ratio_and_point_of_total_assumption,
+    )
+
+    res = evaluate_evm_cpif_share_ratio_and_point_of_total_assumption(
+        [
+            {
+                "contract_id": "CPIF-10",
+                "target_cost": 100000.0,
+                "target_fee": 20000.0,
+                "actual_or_forecast_cost": 200000.0,
+                "min_fee_floor": 5000.0,
+                "max_fee_ceiling": 30000.0,
+                "seller_cost_overrun_share_pct": 20.0,
+            },
+        ]
+    )
+    # raw_fee = 20000 + (-100000 * 0.2) = 0.0 < floor 5000 -> hit.
+    assert res["min_fee_floor_hit_contract_ids"] == ["CPIF-10"]
+    assert res["pta_breached_contract_ids"] == []
+    assert res["ceiling_price_exceeded_contract_ids"] == []
+    # final_fee clampeado al floor -> payable 5000.
+    assert res["total_final_fees_payable"] == 5000.0
+    assert res["cpif_governance_status"] == "FEE_FLOOR_EROSION_WARNING"
+    assert res["is_cpif_compliant"] is False
+
+
+def test_evaluate_evm_cpif_aligned_and_boundaries():
+    """Caso 3: ahorro compartido, sin brechas ni hits -> INCENTIVE_ALIGNED; guard share 100%."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_cpif_share_ratio_and_point_of_total_assumption,
+    )
+
+    res = evaluate_evm_cpif_share_ratio_and_point_of_total_assumption(
+        [
+            {
+                "contract_id": "CPIF-20",
+                "target_cost": 100000.0,
+                "target_fee": 20000.0,
+                "actual_or_forecast_cost": 90000.0,
+                "min_fee_floor": 0.0,
+                "max_fee_ceiling": 50000.0,
+                "seller_cost_overrun_share_pct": 20.0,
+                "ceiling_price": 140000.0,
+            },
+        ]
+    )
+    # raw_fee = 20000 + (10000 * 0.2) = 22000; dentro del rango.
+    assert res["pta_breached_contract_ids"] == []
+    assert res["min_fee_floor_hit_contract_ids"] == []
+    assert res["ceiling_price_exceeded_contract_ids"] == []
+    assert res["total_final_fees_payable"] == 22000.0
+    assert res["cpif_governance_status"] == "INCENTIVE_ALIGNED"
+    assert res["is_cpif_compliant"] is True
+
+    # Guard: share 100% debe usar PTA = target_cost sin dividir por 0; sin hits.
+    res_share_100 = evaluate_evm_cpif_share_ratio_and_point_of_total_assumption(
+        [
+            {
+                "contract_id": "CPIF-21",
+                "target_cost": 100000.0,
+                "target_fee": 20000.0,
+                "actual_or_forecast_cost": 80000.0,
+                "min_fee_floor": 0.0,
+                "max_fee_ceiling": 60000.0,
+                "seller_cost_overrun_share_pct": 100.0,
+                "ceiling_price": 140000.0,
+            },
+        ]
+    )
+    assert res_share_100["pta_breached_contract_ids"] == []
+    assert res_share_100["cpif_governance_status"] == "INCENTIVE_ALIGNED"
+
+    # Frontera del ceiling de precio: actual + fee == ceiling_price exacto no excede.
+    res_boundary = evaluate_evm_cpif_share_ratio_and_point_of_total_assumption(
+        [
+            {
+                "contract_id": "CPIF-22",
+                "target_cost": 100000.0,
+                "target_fee": 20000.0,
+                "actual_or_forecast_cost": 100000.0,
+                "min_fee_floor": 0.0,
+                "max_fee_ceiling": 40000.0,
+                "seller_cost_overrun_share_pct": 20.0,
+                "ceiling_price": 120000.0,
+            },
+        ]
+    )
+    # raw_fee = 20000; actual + fee = 120000 == ceiling_price -> no breach.
+    assert res_boundary["ceiling_price_exceeded_contract_ids"] == []
+    assert res_boundary["cpif_governance_status"] == "INCENTIVE_ALIGNED"
+
+
+def test_evaluate_evm_cpif_invalid_and_binding():
+    """Caso 4: entradas no-lista/no-dict y binding + __all__."""
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_cpif_share_ratio_and_point_of_total_assumption,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = evaluate_evm_cpif_share_ratio_and_point_of_total_assumption(payload)  # type: ignore[arg-type]
+        assert empty["total_contracts_evaluated"] == 0
+        assert empty["pta_breached_contract_ids"] == []
+        assert empty["min_fee_floor_hit_contract_ids"] == []
+        assert empty["ceiling_price_exceeded_contract_ids"] == []
+        assert empty["total_final_fees_payable"] == 0.0
+        assert empty["cpif_governance_status"] == "INCENTIVE_ALIGNED"
+        assert empty["is_cpif_compliant"] is True
+
+    sample = [
+        {
+            "contract_id": "CPIF-30",
+            "target_cost": 100000.0,
+            "target_fee": 20000.0,
+            "actual_or_forecast_cost": 100000.0,
+            "min_fee_floor": 0.0,
+            "max_fee_ceiling": 30000.0,
+        },
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_cpif_share_ratio_and_point_of_total_assumption(sample)
+        == evaluate_evm_cpif_share_ratio_and_point_of_total_assumption(sample)
+    )
+    assert "evaluate_evm_cpif_share_ratio_and_point_of_total_assumption" in mod.__all__

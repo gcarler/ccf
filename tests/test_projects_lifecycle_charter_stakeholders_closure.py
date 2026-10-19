@@ -8508,3 +8508,131 @@ def test_audit_warranty_escrow_invalid_and_binding():
         == audit_warranty_defect_liability_and_escrow_release_gate(sample)
     )
     assert "audit_warranty_defect_liability_and_escrow_release_gate" in mod.__all__
+
+
+def test_audit_regulatory_permits_and_statutory_compliance_readiness_shutdown_risk():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_regulatory_permits_and_statutory_compliance_readiness,
+    )
+
+    res = audit_regulatory_permits_and_statutory_compliance_readiness(
+        [
+            {
+                "permit_id": "PRM-ENV-01",
+                "days_until_expiration": 0,
+                "is_mandatory_for_operation": True,
+                "has_renewal_application_submitted": True,
+                "has_evidentiary_audit_trail": True,
+                "potential_statutory_fine_amount": 50000.0,
+            },
+            {
+                "permit_id": "PRM-DATA-02",
+                "days_until_expiration": 60,
+                "is_mandatory_for_operation": True,
+                "has_renewal_application_submitted": False,
+                "has_evidentiary_audit_trail": False,
+                "potential_statutory_fine_amount": 25000.0,
+            },
+        ],
+        min_renewal_buffer_days=30,
+    )
+    assert res["total_permits_evaluated"] == 2
+    assert res["expired_mandatory_permit_ids"] == ["PRM-ENV-01"]
+    assert res["unsubmitted_renewal_at_risk_permit_ids"] == []
+    assert res["missing_audit_trail_permit_ids"] == ["PRM-DATA-02"]
+    assert res["total_statutory_fine_exposure"] == 75000.0
+    assert res["regulatory_governance_status"] == "STATUTORY_SHUTDOWN_RISK"
+    assert res["is_regulatory_compliant"] is False
+
+
+def test_audit_regulatory_permits_and_statutory_compliance_readiness_renewal_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_regulatory_permits_and_statutory_compliance_readiness,
+    )
+
+    res = audit_regulatory_permits_and_statutory_compliance_readiness(
+        [
+            {
+                "permit_id": "PRM-MUNICIPAL-10",
+                "days_until_expiration": 15,
+                "is_mandatory_for_operation": True,
+                "has_renewal_application_submitted": False,
+                "has_evidentiary_audit_trail": True,
+                "potential_statutory_fine_amount": 12000.0,
+            }
+        ],
+        min_renewal_buffer_days=30,
+    )
+    assert res["expired_mandatory_permit_ids"] == []
+    assert res["unsubmitted_renewal_at_risk_permit_ids"] == ["PRM-MUNICIPAL-10"]
+    assert res["missing_audit_trail_permit_ids"] == []
+    assert res["total_statutory_fine_exposure"] == 12000.0
+    assert res["regulatory_governance_status"] == "RENEWAL_BUFFER_WARNING"
+    assert res["is_regulatory_compliant"] is False
+
+
+def test_audit_regulatory_permits_and_statutory_compliance_readiness_compliant_and_empty():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_regulatory_permits_and_statutory_compliance_readiness,
+    )
+
+    empty = audit_regulatory_permits_and_statutory_compliance_readiness(
+        [{"permit_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_permits_evaluated"] == 0
+    assert empty["total_statutory_fine_exposure"] == 0.0
+    assert empty["regulatory_governance_status"] == "REGULATORY_COMPLIANT"
+    assert empty["is_regulatory_compliant"] is True
+
+    compliant = audit_regulatory_permits_and_statutory_compliance_readiness(
+        [
+            {
+                "permit_id": "PRM-CLEAN-01",
+                "days_until_expiration": 120,
+                "is_mandatory_for_operation": True,
+                "has_renewal_application_submitted": False,
+                "has_evidentiary_audit_trail": True,
+                "potential_statutory_fine_amount": 40000.0,
+            },
+            {
+                "permit_id": "PRM-RENEWING-02",
+                "days_until_expiration": 10,
+                "is_mandatory_for_operation": True,
+                "has_renewal_application_submitted": True,
+                "has_evidentiary_audit_trail": True,
+                "potential_statutory_fine_amount": 15000.0,
+            },
+        ],
+        min_renewal_buffer_days=30,
+    )
+    assert compliant["total_permits_evaluated"] == 2
+    assert compliant["total_statutory_fine_exposure"] == 0.0
+    assert compliant["regulatory_governance_status"] == "REGULATORY_COMPLIANT"
+    assert compliant["is_regulatory_compliant"] is True
+
+
+def test_audit_regulatory_permits_and_statutory_compliance_readiness_staticmethod_and_dunder_all():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_regulatory_permits_and_statutory_compliance_readiness,
+    )
+
+    sample = [
+        {
+            "permit_id": "PRM-99",
+            "days_until_expiration": 90,
+            "is_mandatory_for_operation": True,
+            "has_evidentiary_audit_trail": True,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_regulatory_permits_and_statutory_compliance_readiness(
+            sample
+        )
+        == audit_regulatory_permits_and_statutory_compliance_readiness(sample)
+    )
+    assert (
+        "audit_regulatory_permits_and_statutory_compliance_readiness"
+        in mod.__all__
+    )

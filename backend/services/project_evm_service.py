@@ -5518,6 +5518,7 @@ __all__ = [
     "evaluate_evm_value_engineering_target_costing_and_worth_index",
     "evaluate_evm_contingency_and_management_reserve_drawdown_governance",
     "evaluate_evm_sla_penalty_service_credits_and_earn_back",
+    "evaluate_evm_cpif_share_ratio_and_point_of_total_assumption",
     "ProjectEVMService",
 ]
 
@@ -9118,5 +9119,88 @@ def evaluate_evm_sla_penalty_service_credits_and_earn_back(
 
 ProjectEVMService.evaluate_evm_sla_penalty_service_credits_and_earn_back = staticmethod(
     evaluate_evm_sla_penalty_service_credits_and_earn_back
+)
+
+
+def evaluate_evm_cpif_share_ratio_and_point_of_total_assumption(
+    contracts: Any,
+) -> Dict[str, object]:
+    """Evaluación PMBOK 12.1.1.6 y 7.4: contratos cost-plus-incentive-fee.
+
+    Calcula por contrato el fee con la fórmula de reparto comprador-
+    vendedor, el fee final acotado entre floor y ceiling, el Point of
+    Total Assumption (PTA) y las brechas de techo de precio.
+    """
+    entries = contracts if isinstance(contracts, list) else []
+    rows = [item for item in entries if isinstance(item, dict)]
+
+    pta_breached_contract_ids: List[str] = []
+    min_fee_floor_hit_contract_ids: List[str] = []
+    ceiling_price_exceeded_contract_ids: List[str] = []
+    total_final_fees_payable = 0.0
+
+    for item in rows:
+        contract_id = item.get("contract_id")
+        target_cost = item.get("target_cost", 0.0)
+        target_fee = item.get("target_fee", 0.0)
+        actual_cost = item.get("actual_or_forecast_cost", 0.0)
+        fee_floor = item.get("min_fee_floor", 0.0)
+        fee_ceiling = item.get("max_fee_ceiling", 0.0)
+        seller_share_pct = item.get("seller_cost_overrun_share_pct", 20.0)
+        ceiling_price = item.get("ceiling_price", 0.0)
+
+        target_cost_val = target_cost if isinstance(target_cost, (int, float)) else 0.0
+        target_fee_val = target_fee if isinstance(target_fee, (int, float)) else 0.0
+        actual_val = actual_cost if isinstance(actual_cost, (int, float)) else 0.0
+        floor_val = fee_floor if isinstance(fee_floor, (int, float)) else 0.0
+        ceiling_val = fee_ceiling if isinstance(fee_ceiling, (int, float)) else 0.0
+        share_pct = seller_share_pct if isinstance(seller_share_pct, (int, float)) else 20.0
+        ceiling_price_val = ceiling_price if isinstance(ceiling_price, (int, float)) else 0.0
+
+        cost_delta = target_cost_val - actual_val
+
+        raw_fee = target_fee_val + cost_delta * (share_pct / 100.0)
+        final_fee = round(min(max(raw_fee, floor_val), ceiling_val), 2)
+        total_final_fees_payable += final_fee
+
+        if share_pct < 100.0 and ceiling_price_val > 0:
+            pta_cost = round(
+                target_cost_val
+                + ((ceiling_price_val - (target_cost_val + target_fee_val))
+                   / (1.0 - share_pct / 100.0)),
+                2,
+            )
+        else:
+            pta_cost = target_cost_val
+
+        if ceiling_price_val > 0 and actual_val > pta_cost:
+            pta_breached_contract_ids.append(contract_id)
+
+        if raw_fee < floor_val:
+            min_fee_floor_hit_contract_ids.append(contract_id)
+
+        if ceiling_price_val > 0 and (actual_val + final_fee) > ceiling_price_val:
+            ceiling_price_exceeded_contract_ids.append(contract_id)
+
+    if pta_breached_contract_ids or ceiling_price_exceeded_contract_ids:
+        cpif_governance_status = "CEILING_OR_PTA_BREACH"
+    elif min_fee_floor_hit_contract_ids:
+        cpif_governance_status = "FEE_FLOOR_EROSION_WARNING"
+    else:
+        cpif_governance_status = "INCENTIVE_ALIGNED"
+
+    return {
+        "total_contracts_evaluated": len(rows),
+        "pta_breached_contract_ids": pta_breached_contract_ids,
+        "min_fee_floor_hit_contract_ids": min_fee_floor_hit_contract_ids,
+        "ceiling_price_exceeded_contract_ids": ceiling_price_exceeded_contract_ids,
+        "total_final_fees_payable": round(total_final_fees_payable, 2),
+        "cpif_governance_status": cpif_governance_status,
+        "is_cpif_compliant": cpif_governance_status == "INCENTIVE_ALIGNED",
+    }
+
+
+ProjectEVMService.evaluate_evm_cpif_share_ratio_and_point_of_total_assumption = staticmethod(
+    evaluate_evm_cpif_share_ratio_and_point_of_total_assumption
 )
 

@@ -3164,6 +3164,7 @@ __all__ = [
     "audit_procurement_rfp_bid_solvency_and_vendor_concentration",
     "audit_steering_committee_quorum_and_decision_latency",
     "audit_warranty_defect_liability_and_escrow_release_gate",
+    "audit_regulatory_permits_and_statutory_compliance_readiness",
     "ProjectLifecyclePMIService",
 ]
 
@@ -6740,5 +6741,109 @@ def audit_warranty_defect_liability_and_escrow_release_gate(
 
 ProjectLifecyclePMIService.audit_warranty_defect_liability_and_escrow_release_gate = staticmethod(
     audit_warranty_defect_liability_and_escrow_release_gate
+)
+
+
+def audit_regulatory_permits_and_statutory_compliance_readiness(
+    permits: list[dict[str, Any]],
+    *,
+    min_renewal_buffer_days: int = 30,
+) -> dict[str, Any]:
+    """PMI PMBOK §2.1 & §11.2 — Project Regulatory Compliance Permit Expiration, Statutory Fine Exposure & Sovereign Audit Readiness Auditor."""
+    valid_permits: list[dict[str, Any]] = []
+    if isinstance(permits, (list, tuple)):
+        for item in permits:
+            if not isinstance(item, dict):
+                continue
+            pid = str(item.get("permit_id") or "").strip()
+            if not pid:
+                continue
+            valid_permits.append({**item, "_pid": pid})
+
+    if not valid_permits:
+        return {
+            "total_permits_evaluated": 0,
+            "expired_mandatory_permit_ids": [],
+            "unsubmitted_renewal_at_risk_permit_ids": [],
+            "missing_audit_trail_permit_ids": [],
+            "total_statutory_fine_exposure": 0.0,
+            "regulatory_governance_status": "REGULATORY_COMPLIANT",
+            "is_regulatory_compliant": True,
+            "recommendations": [],
+        }
+
+    expired_mandatory_permit_ids: list[str] = []
+    unsubmitted_renewal_at_risk_permit_ids: list[str] = []
+    missing_audit_trail_permit_ids: list[str] = []
+    fine_sum = 0.0
+
+    for prm in valid_permits:
+        pid = prm["_pid"]
+        days_exp = int(
+            prm.get("days_until_expiration", 90)
+            if prm.get("days_until_expiration") is not None
+            else 90
+        )
+        is_mandatory = bool(prm.get("is_mandatory_for_operation", True))
+        has_renewal = bool(prm.get("has_renewal_application_submitted", False))
+        has_audit_trail = bool(prm.get("has_evidentiary_audit_trail", True))
+        fine_amt = max(
+            0.0, float(prm.get("potential_statutory_fine_amount", 0.0) or 0.0)
+        )
+
+        is_expired = is_mandatory and days_exp <= 0
+        is_renewal_risk = (
+            0 < days_exp < min_renewal_buffer_days and not has_renewal
+        )
+        is_missing_trail = not has_audit_trail
+
+        if is_expired:
+            expired_mandatory_permit_ids.append(pid)
+        if is_renewal_risk:
+            unsubmitted_renewal_at_risk_permit_ids.append(pid)
+        if is_missing_trail:
+            missing_audit_trail_permit_ids.append(pid)
+
+        if is_expired or is_renewal_risk or is_missing_trail:
+            fine_sum += fine_amt
+
+    total_statutory_fine_exposure = round(fine_sum, 2)
+
+    recommendations: list[str] = []
+    if expired_mandatory_permit_ids:
+        recommendations.append(
+            f"Suspend affected operations or obtain emergency statutory extensions for expired mandatory permit(s): {', '.join(expired_mandatory_permit_ids)}."
+        )
+    if missing_audit_trail_permit_ids:
+        recommendations.append(
+            f"Restore immutable evidentiary compliance audit trails for permit(s): {', '.join(missing_audit_trail_permit_ids)}."
+        )
+    if unsubmitted_renewal_at_risk_permit_ids:
+        recommendations.append(
+            f"Submit regulatory renewal applications immediately (within {min_renewal_buffer_days}-day buffer) for permit(s): {', '.join(unsubmitted_renewal_at_risk_permit_ids)}."
+        )
+
+    if expired_mandatory_permit_ids or missing_audit_trail_permit_ids:
+        regulatory_governance_status = "STATUTORY_SHUTDOWN_RISK"
+    elif unsubmitted_renewal_at_risk_permit_ids:
+        regulatory_governance_status = "RENEWAL_BUFFER_WARNING"
+    else:
+        regulatory_governance_status = "REGULATORY_COMPLIANT"
+
+    return {
+        "total_permits_evaluated": len(valid_permits),
+        "expired_mandatory_permit_ids": expired_mandatory_permit_ids,
+        "unsubmitted_renewal_at_risk_permit_ids": unsubmitted_renewal_at_risk_permit_ids,
+        "missing_audit_trail_permit_ids": missing_audit_trail_permit_ids,
+        "total_statutory_fine_exposure": total_statutory_fine_exposure,
+        "regulatory_governance_status": regulatory_governance_status,
+        "is_regulatory_compliant": regulatory_governance_status
+        == "REGULATORY_COMPLIANT",
+        "recommendations": recommendations,
+    }
+
+
+ProjectLifecyclePMIService.audit_regulatory_permits_and_statutory_compliance_readiness = staticmethod(
+    audit_regulatory_permits_and_statutory_compliance_readiness
 )
 
