@@ -2867,6 +2867,7 @@ __all__ = [
     "audit_k8s_pdb_quorum_drain_and_statefulset_volume_gate",
     "audit_service_mesh_mtls_strict_mode_and_tls13_cipher_gate",
     "audit_kafka_consumer_rebalance_dlq_and_schema_registry_gate",
+    "audit_graphql_federation_supergraph_composition_and_query_cost_gate",
     "ProjectCCBService",
 ]
 
@@ -8833,6 +8834,88 @@ def audit_kafka_consumer_rebalance_dlq_and_schema_registry_gate(
 ProjectCCBService.audit_kafka_consumer_rebalance_dlq_and_schema_registry_gate = staticmethod(
     audit_kafka_consumer_rebalance_dlq_and_schema_registry_gate
 )
+
+
+def audit_graphql_federation_supergraph_composition_and_query_cost_gate(
+    subgraphs: list[dict[str, Any]],
+    max_allowed_query_depth: int = 12,
+    max_allowed_complexity_cost: int = 1000,
+) -> dict[str, Any]:
+    """PMBOK §8.3 & §11.6 — CCB GraphQL Federation Subgraph Composition Supergraph Schema Breaking-Change, Query Depth/Complexity Cost & N+1 DataLoader Batching Gate Auditor."""
+    valid_subgraphs = [
+        sg for sg in (subgraphs if isinstance(subgraphs, list) else []) if isinstance(sg, dict)
+    ]
+
+    composition_or_breaking_schema_subgraphs: list[str] = []
+    unbounded_depth_or_complexity_subgraphs: list[str] = []
+    unbatched_n_plus_one_subgraphs: list[str] = []
+
+    for idx, sg in enumerate(valid_subgraphs):
+        sg_id = str(sg.get("subgraph_id") or f"subgraph-{idx + 1}").strip()
+        comp_valid = bool(sg.get("rover_composition_valid", False))
+        breaking_removals = int(sg.get("breaking_field_removals_count", 0) or 0)
+        depth_cfg = int(sg.get("max_query_depth_configured", 0) or 0)
+        cost_cfg = int(sg.get("max_query_complexity_cost_configured", 0) or 0)
+        dataloader_ok = bool(sg.get("dataloader_n_plus_one_guarded", True))
+
+        if not comp_valid or breaking_removals > 0:
+            composition_or_breaking_schema_subgraphs.append(sg_id)
+
+        if (
+            depth_cfg <= 0
+            or depth_cfg > int(max_allowed_query_depth)
+            or cost_cfg <= 0
+            or cost_cfg > int(max_allowed_complexity_cost)
+        ):
+            unbounded_depth_or_complexity_subgraphs.append(sg_id)
+
+        if not dataloader_ok:
+            unbatched_n_plus_one_subgraphs.append(sg_id)
+
+    recommendations: list[str] = []
+    if len(valid_subgraphs) == 0:
+        recommendations.append(
+            "Provide at least one GraphQL Federation subgraph configuration for supergraph gate verification."
+        )
+    if composition_or_breaking_schema_subgraphs:
+        recommendations.append(
+            f"Resolve Rover supergraph composition errors and replace breaking field removals with @deprecated transitions on: {', '.join(composition_or_breaking_schema_subgraphs)}."
+        )
+    if unbounded_depth_or_complexity_subgraphs:
+        recommendations.append(
+            f"Enforce query depth (<= {max_allowed_query_depth}) and complexity cost (<= {max_allowed_complexity_cost}) caps on: {', '.join(unbounded_depth_or_complexity_subgraphs)}."
+        )
+    if unbatched_n_plus_one_subgraphs:
+        recommendations.append(
+            f"Enable DataLoader request-scoped batching for entity resolvers on: {', '.join(unbatched_n_plus_one_subgraphs)}."
+        )
+
+    if (
+        len(composition_or_breaking_schema_subgraphs) > 0
+        or len(unbounded_depth_or_complexity_subgraphs) > 0
+        or len(valid_subgraphs) == 0
+    ):
+        gate_decision = "REJECTED"
+    elif len(unbatched_n_plus_one_subgraphs) > 0:
+        gate_decision = "CONDITIONAL"
+    else:
+        gate_decision = "APPROVED"
+
+    return {
+        "is_valid": gate_decision == "APPROVED",
+        "total_subgraphs": len(valid_subgraphs),
+        "composition_or_breaking_schema_subgraphs": composition_or_breaking_schema_subgraphs,
+        "unbounded_depth_or_complexity_subgraphs": unbounded_depth_or_complexity_subgraphs,
+        "unbatched_n_plus_one_subgraphs": unbatched_n_plus_one_subgraphs,
+        "gate_decision": gate_decision,
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.audit_graphql_federation_supergraph_composition_and_query_cost_gate = staticmethod(
+    audit_graphql_federation_supergraph_composition_and_query_cost_gate
+)
+
 
 
 

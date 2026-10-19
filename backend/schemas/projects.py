@@ -8839,14 +8839,16 @@ def validate_cost_of_quality_coq_conformance_vs_failure_ratio(
 
 
 def validate_raci_matrix_single_accountable_and_role_overload(
-    deliverables: list[dict] | None,
+    deliverables: list[dict[str, Any]] | None,
+    max_deliverables_per_responsible_role: int = 5,
+    max_consulted_roles_per_deliverable: int = 4,
     *,
     max_consulted_reviewers: int = 5,
     require_at_least_one_responsible: bool = True,
-) -> dict:
-    """PMBOK §9.1 & §9.3 — Valida matriz de asignación de responsabilidades RACI: unicidad de rinde cuentas (exactamente un 'A'), presencia de 'R' y sobrecarga de roles/consultados."""
+) -> dict[str, Any]:
+    """PMBOK §9.1 & §9.4 — Valida matriz de asignación de responsabilidades RACI: unicidad de rinde cuentas (exactamente un 'A'), presencia de 'R' y sobrecarga de roles/consultados."""
     raw_items = deliverables if isinstance(deliverables, list) else []
-    valid_deliverables: list[dict] = []
+    valid_deliverables: list[dict[str, Any]] = []
     for item in raw_items:
         if not isinstance(item, dict):
             continue
@@ -8858,16 +8860,60 @@ def validate_raci_matrix_single_accountable_and_role_overload(
     ambiguous_accountability_or_unassigned_deliverable_ids: list[str] = []
     excessive_consulted_or_role_overload_deliverable_ids: list[str] = []
 
+    zero_accountable_deliverables: list[str] = []
+    multiple_accountable_deliverables: list[str] = []
+    missing_responsible_deliverables: list[str] = []
+    excessive_consulted_deliverables: list[str] = []
+    responsible_role_counts: dict[str, int] = {}
+
+    uses_role_lists = any(
+        "accountable_roles" in d or "responsible_roles" in d
+        for d in valid_deliverables
+    )
+
     for d in valid_deliverables:
         did = d["deliverable_id"].strip()
-        raw_acc = d.get("accountable_count", 1)
-        accountable_count = int(1 if raw_acc is None else raw_acc)
 
-        raw_resp = d.get("responsible_count", 2)
-        responsible_count = int(2 if raw_resp is None else raw_resp)
+        if "accountable_roles" in d or "responsible_roles" in d:
+            acc_roles = [
+                str(r).strip()
+                for r in (d.get("accountable_roles") or [])
+                if str(r).strip()
+            ]
+            resp_roles = [
+                str(r).strip()
+                for r in (d.get("responsible_roles") or [])
+                if str(r).strip()
+            ]
+            cons_roles = [
+                str(r).strip()
+                for r in (d.get("consulted_roles") or [])
+                if str(r).strip()
+            ]
+            accountable_count = len(acc_roles)
+            responsible_count = len(resp_roles)
+            consulted_count = len(cons_roles)
+            for r in set(resp_roles):
+                responsible_role_counts[r] = responsible_role_counts.get(r, 0) + 1
+            if consulted_count > int(max_consulted_roles_per_deliverable):
+                excessive_consulted_deliverables.append(did)
+        else:
+            raw_acc = d.get("accountable_count", 1)
+            accountable_count = int(1 if raw_acc is None else raw_acc)
+            raw_resp = d.get("responsible_count", 2)
+            responsible_count = int(2 if raw_resp is None else raw_resp)
+            raw_cons = d.get("consulted_count", 2)
+            consulted_count = int(2 if raw_cons is None else raw_cons)
+            if consulted_count > int(max_consulted_roles_per_deliverable):
+                excessive_consulted_deliverables.append(did)
 
-        raw_cons = d.get("consulted_count", 2)
-        consulted_count = int(2 if raw_cons is None else raw_cons)
+        if accountable_count == 0:
+            zero_accountable_deliverables.append(did)
+        elif accountable_count > 1:
+            multiple_accountable_deliverables.append(did)
+
+        if responsible_count < 1:
+            missing_responsible_deliverables.append(did)
 
         raw_over = d.get(
             "accountable_and_responsible_same_person_overloaded", False
@@ -8881,20 +8927,72 @@ def validate_raci_matrix_single_accountable_and_role_overload(
         ):
             ambiguous_accountability_or_unassigned_deliverable_ids.append(did)
 
+        effective_consulted_cap = (
+            int(max_consulted_roles_per_deliverable)
+            if uses_role_lists
+            else int(max_consulted_reviewers)
+        )
         if (
-            consulted_count > max_consulted_reviewers
+            consulted_count > effective_consulted_cap
             or accountable_and_responsible_same_person_overloaded
         ):
             excessive_consulted_or_role_overload_deliverable_ids.append(did)
 
+    overloaded_responsible_roles = [
+        role
+        for role, cnt in responsible_role_counts.items()
+        if cnt > int(max_deliverables_per_responsible_role)
+    ]
+
     if ambiguous_accountability_or_unassigned_deliverable_ids:
         raci_governance_status = "RACI_ACCOUNTABILITY_OR_RESPONSIBLE_BREACH"
-    elif excessive_consulted_or_role_overload_deliverable_ids:
+    elif (
+        excessive_consulted_or_role_overload_deliverable_ids
+        or overloaded_responsible_roles
+    ):
         raci_governance_status = "RACI_CONSULTED_BLOAT_OR_OVERLOAD_WARNING"
     else:
         raci_governance_status = "RACI_MATRIX_ALIGNMENT_OPTIMAL"
 
+    recommendations: list[str] = []
+    if (
+        zero_accountable_deliverables
+        or multiple_accountable_deliverables
+        or missing_responsible_deliverables
+        or len(valid_deliverables) == 0
+    ):
+        status = "CRITICAL_ACCOUNTABLE_OR_RESPONSIBLE_BREACH"
+        if zero_accountable_deliverables or multiple_accountable_deliverables:
+            recommendations.append(
+                "Assign exactly one Accountable ('A') role per deliverable."
+            )
+        if missing_responsible_deliverables:
+            recommendations.append(
+                "Assign at least one Responsible ('R') role per deliverable."
+            )
+    elif overloaded_responsible_roles or excessive_consulted_deliverables:
+        status = "ROLE_OVERLOAD_OR_CONSULTED_BLOAT_WARNING"
+        if overloaded_responsible_roles:
+            recommendations.append(
+                f"Redistribute workload across Responsible ('R') roles exceeding {max_deliverables_per_responsible_role} deliverables: {', '.join(overloaded_responsible_roles)}."
+            )
+        if excessive_consulted_deliverables:
+            recommendations.append(
+                f"Move excess Consulted ('C') stakeholders (> {max_consulted_roles_per_deliverable}) to Informed ('I') on: {', '.join(excessive_consulted_deliverables)}."
+            )
+    else:
+        status = "RACI_MATRIX_BALANCED"
+
     return {
+        "is_valid": status == "RACI_MATRIX_BALANCED",
+        "total_deliverables": len(valid_deliverables),
+        "zero_accountable_deliverables": zero_accountable_deliverables,
+        "multiple_accountable_deliverables": multiple_accountable_deliverables,
+        "missing_responsible_deliverables": missing_responsible_deliverables,
+        "overloaded_responsible_roles": overloaded_responsible_roles,
+        "excessive_consulted_deliverables": excessive_consulted_deliverables,
+        "status": status,
+        "recommendations": recommendations,
         "evaluated_deliverables_count": len(valid_deliverables),
         "ambiguous_accountability_or_unassigned_deliverable_ids": ambiguous_accountability_or_unassigned_deliverable_ids,
         "excessive_consulted_or_role_overload_deliverable_ids": excessive_consulted_or_role_overload_deliverable_ids,
@@ -8902,6 +9000,7 @@ def validate_raci_matrix_single_accountable_and_role_overload(
         "is_raci_matrix_valid": raci_governance_status
         == "RACI_MATRIX_ALIGNMENT_OPTIMAL",
     }
+
 
 
 def validate_risk_bowtie_barrier_redundancy_and_independence(

@@ -11734,3 +11734,119 @@ def test_audit_kafka_consumer_rebalance_dlq_and_schema_registry_gate_staticmetho
     )
 
 
+def test_audit_graphql_federation_supergraph_composition_and_query_cost_gate_approved():
+    from backend.services.project_ccb_service import (
+        audit_graphql_federation_supergraph_composition_and_query_cost_gate,
+    )
+
+    res = audit_graphql_federation_supergraph_composition_and_query_cost_gate(
+        subgraphs=[
+            {
+                "subgraph_id": "projects-subgraph",
+                "rover_composition_valid": True,
+                "breaking_field_removals_count": 0,
+                "max_query_depth_configured": 10,
+                "max_query_complexity_cost_configured": 800,
+                "dataloader_n_plus_one_guarded": True,
+            },
+            {
+                "subgraph_id": "evm-subgraph",
+                "rover_composition_valid": True,
+                "breaking_field_removals_count": 0,
+                "max_query_depth_configured": 8,
+                "max_query_complexity_cost_configured": 500,
+                "dataloader_n_plus_one_guarded": True,
+            },
+        ]
+    )
+    assert res["is_valid"] is True
+    assert res["total_subgraphs"] == 2
+    assert res["composition_or_breaking_schema_subgraphs"] == []
+    assert res["unbounded_depth_or_complexity_subgraphs"] == []
+    assert res["unbatched_n_plus_one_subgraphs"] == []
+    assert res["gate_decision"] == "APPROVED"
+
+
+def test_audit_graphql_federation_supergraph_composition_and_query_cost_gate_rejected():
+    from backend.services.project_ccb_service import (
+        audit_graphql_federation_supergraph_composition_and_query_cost_gate,
+    )
+
+    res = audit_graphql_federation_supergraph_composition_and_query_cost_gate(
+        subgraphs=[
+            {
+                "subgraph_id": "broken-subgraph",
+                "rover_composition_valid": False,
+                "breaking_field_removals_count": 2,
+                "max_query_depth_configured": 20,
+                "max_query_complexity_cost_configured": 2500,
+                "dataloader_n_plus_one_guarded": True,
+            }
+        ],
+        max_allowed_query_depth=12,
+        max_allowed_complexity_cost=1000,
+    )
+    assert res["is_valid"] is False
+    assert res["composition_or_breaking_schema_subgraphs"] == ["broken-subgraph"]
+    assert res["unbounded_depth_or_complexity_subgraphs"] == ["broken-subgraph"]
+    assert res["gate_decision"] == "REJECTED"
+
+
+def test_audit_graphql_federation_supergraph_composition_and_query_cost_gate_conditional():
+    from backend.services.project_ccb_service import (
+        audit_graphql_federation_supergraph_composition_and_query_cost_gate,
+    )
+
+    res = audit_graphql_federation_supergraph_composition_and_query_cost_gate(
+        subgraphs=[
+            {
+                "subgraph_id": "wiki-subgraph",
+                "rover_composition_valid": True,
+                "breaking_field_removals_count": 0,
+                "max_query_depth_configured": 10,
+                "max_query_complexity_cost_configured": 600,
+                "dataloader_n_plus_one_guarded": False,
+            }
+        ]
+    )
+    assert res["is_valid"] is False
+    assert res["composition_or_breaking_schema_subgraphs"] == []
+    assert res["unbounded_depth_or_complexity_subgraphs"] == []
+    assert res["unbatched_n_plus_one_subgraphs"] == ["wiki-subgraph"]
+    assert res["gate_decision"] == "CONDITIONAL"
+
+
+def test_audit_graphql_federation_supergraph_composition_and_query_cost_gate_staticmethod_and_dunder_all():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_graphql_federation_supergraph_composition_and_query_cost_gate,
+    )
+
+    empty = audit_graphql_federation_supergraph_composition_and_query_cost_gate([])
+    assert empty["is_valid"] is False
+    assert empty["gate_decision"] == "REJECTED"
+
+    sample = [
+        {
+            "subgraph_id": "sg-1",
+            "rover_composition_valid": True,
+            "breaking_field_removals_count": 0,
+            "max_query_depth_configured": 8,
+            "max_query_complexity_cost_configured": 400,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_graphql_federation_supergraph_composition_and_query_cost_gate(
+            sample
+        )
+        == audit_graphql_federation_supergraph_composition_and_query_cost_gate(
+            sample
+        )
+    )
+    assert (
+        "audit_graphql_federation_supergraph_composition_and_query_cost_gate"
+        in mod.__all__
+    )
+
+

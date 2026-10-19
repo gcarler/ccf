@@ -10275,3 +10275,111 @@ def test_validate_rbs_bowtie_barrier_redundancy_and_residual_severity_exports():
     )
 
 
+def test_validate_raci_matrix_role_lists_balanced():
+    from backend.schemas.projects import (
+        validate_raci_matrix_single_accountable_and_role_overload,
+    )
+
+    res = validate_raci_matrix_single_accountable_and_role_overload(
+        deliverables=[
+            {
+                "deliverable_id": "DEL-ARCH-01",
+                "accountable_roles": ["Chief Architect"],
+                "responsible_roles": ["Lead Backend", "SRE"],
+                "consulted_roles": ["Security Officer", "DBA"],
+                "informed_roles": ["PMO"],
+            },
+            {
+                "deliverable_id": "DEL-API-02",
+                "accountable_roles": ["Product Owner"],
+                "responsible_roles": ["Lead Backend"],
+                "consulted_roles": ["QA Lead"],
+            },
+        ],
+        max_deliverables_per_responsible_role=5,
+        max_consulted_roles_per_deliverable=4,
+    )
+    assert res["is_valid"] is True
+    assert res["total_deliverables"] == 2
+    assert res["zero_accountable_deliverables"] == []
+    assert res["multiple_accountable_deliverables"] == []
+    assert res["missing_responsible_deliverables"] == []
+    assert res["overloaded_responsible_roles"] == []
+    assert res["excessive_consulted_deliverables"] == []
+    assert res["status"] == "RACI_MATRIX_BALANCED"
+
+
+def test_validate_raci_matrix_role_lists_accountable_and_responsible_breach():
+    from backend.schemas.projects import (
+        validate_raci_matrix_single_accountable_and_role_overload,
+    )
+
+    res = validate_raci_matrix_single_accountable_and_role_overload(
+        deliverables=[
+            {
+                "deliverable_id": "DEL-NO-A",
+                "accountable_roles": [],
+                "responsible_roles": ["Dev-1"],
+            },
+            {
+                "deliverable_id": "DEL-TWO-A-NO-R",
+                "accountable_roles": ["Sponsor", "PM"],
+                "responsible_roles": [],
+            },
+        ]
+    )
+    assert res["is_valid"] is False
+    assert res["zero_accountable_deliverables"] == ["DEL-NO-A"]
+    assert res["multiple_accountable_deliverables"] == ["DEL-TWO-A-NO-R"]
+    assert res["missing_responsible_deliverables"] == ["DEL-TWO-A-NO-R"]
+    assert res["status"] == "CRITICAL_ACCOUNTABLE_OR_RESPONSIBLE_BREACH"
+
+
+def test_validate_raci_matrix_role_lists_overload_and_consulted_bloat_warning():
+    from backend.schemas.projects import (
+        validate_raci_matrix_single_accountable_and_role_overload,
+    )
+
+    res = validate_raci_matrix_single_accountable_and_role_overload(
+        deliverables=[
+            {
+                "deliverable_id": "DEL-1",
+                "accountable_roles": ["PM"],
+                "responsible_roles": ["Lead-Dev"],
+                "consulted_roles": ["C1", "C2", "C3", "C4", "C5"],
+            },
+            {
+                "deliverable_id": "DEL-2",
+                "accountable_roles": ["PM"],
+                "responsible_roles": ["Lead-Dev"],
+            },
+            {
+                "deliverable_id": "DEL-3",
+                "accountable_roles": ["PM"],
+                "responsible_roles": ["Lead-Dev"],
+            },
+        ],
+        max_deliverables_per_responsible_role=2,
+        max_consulted_roles_per_deliverable=4,
+    )
+    assert res["is_valid"] is False
+    assert res["overloaded_responsible_roles"] == ["Lead-Dev"]
+    assert res["excessive_consulted_deliverables"] == ["DEL-1"]
+    assert res["status"] == "ROLE_OVERLOAD_OR_CONSULTED_BLOAT_WARNING"
+
+
+def test_validate_raci_matrix_role_lists_empty_and_exports():
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_raci_matrix_single_accountable_and_role_overload,
+    )
+
+    empty = validate_raci_matrix_single_accountable_and_role_overload([])
+    assert empty["is_valid"] is False
+    assert empty["status"] == "CRITICAL_ACCOUNTABLE_OR_RESPONSIBLE_BREACH"
+    assert (
+        "validate_raci_matrix_single_accountable_and_role_overload"
+        in mod.__all__
+    )
+
+

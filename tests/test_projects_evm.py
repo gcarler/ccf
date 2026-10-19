@@ -11480,3 +11480,161 @@ def test_prevailing_wage_empty_invalid_and_field_reversion():
         "prevailing_wage_status": "PREVAILING_WAGE_WH347_COMPLIANT",
         "is_prevailing_wage_compliant": True,
     }
+
+
+# ── evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer (PMBOK §7.4 & §12.3, pure helper) ──
+
+
+def test_stored_materials_billing_compliant_vouchers():
+    """Vouchers titulados, taggeados, asegurados y ONSITE/ONFFSITE_BONDED -> pagos con cap off-site 75% y share <= 15% del BAC -> 'STORED_MATERIALS_BILLING_COMPLIANT'."""
+    import backend.services.project_evm_service as evm_module
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer,
+    )
+
+    vouchers = [
+        {"voucher_id": "MV-001", "invoiced_material_cost": 100000.0, "storage_location": "ONSITE"},
+        {"voucher_id": "MV-002", "invoiced_material_cost": 200000.0, "storage_location": "OFFSITE_BONDED"},
+        {"voucher_id": "MV-003", "invoiced_material_cost": 100000.0, "storage_location": "offsite_bonded"},
+    ]
+    res = evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer(vouchers)
+    assert res == {
+        "evaluated_voucher_count": 3,
+        "total_payable_stored_materials_amount": 325000.0,
+        "disallowed_stored_materials_amount": 0.0,
+        "stored_materials_bac_share_pct": 6.5,
+        "ineligible_bill_and_hold_voucher_ids": [],
+        "stored_materials_status": "STORED_MATERIALS_BILLING_COMPLIANT",
+        "is_stored_materials_billing_compliant": True,
+    }
+    # ONSITE 100%, OFFSITE_BONDED 75% (100000 + 150000 + 75000), share 325000/5M = 6.5%
+    assert (
+        ProjectEVMService.evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer(
+            vouchers
+        )
+        == res
+    )
+    assert "evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer" in evm_module.__all__
+
+
+def test_stored_materials_unbonded_or_untitled_breach():
+    """Vouchers sin title, OFFSITE_UNBONDED o sin seguro -> 'CRITICAL_UNBONDED_OR_UNTITLED_BILL_AND_HOLD_BREACH' con importes disallowed y precedencia sobre el cap."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer,
+    )
+
+    breach = evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer(
+        [
+            {"voucher_id": "MV-UNTITLED", "invoiced_material_cost": 50000.0, "bill_of_sale_title_transferred": False},
+            {"voucher_id": "MV-UNBONDED", "invoiced_material_cost": 120000.0, "storage_location": "OFFSITE_UNBONDED"},
+            {"voucher_id": "MV-UNINSURED", "invoiced_material_cost": 80000.0, "all_risk_transit_storage_insured": False},
+        ]
+    )
+    assert breach["evaluated_voucher_count"] == 3
+    assert breach["ineligible_bill_and_hold_voucher_ids"] == [
+        "MV-UNTITLED",
+        "MV-UNBONDED",
+        "MV-UNINSURED",
+    ]
+    assert breach["total_payable_stored_materials_amount"] == 0.0
+    assert breach["disallowed_stored_materials_amount"] == 250000.0
+    assert breach["stored_materials_bac_share_pct"] == 0.0
+    assert breach["stored_materials_status"] == "CRITICAL_UNBONDED_OR_UNTITLED_BILL_AND_HOLD_BREACH"
+    assert breach["is_stored_materials_billing_compliant"] is False
+
+    # Breach precede incluso si los elegibles exceden el cap del BAC
+    mixed = evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer(
+        [
+            {"voucher_id": "MV-BIG", "invoiced_material_cost": 900000.0},
+            {"voucher_id": "MV-BAD-2", "segregated_and_tagged_for_project": False, "invoiced_material_cost": 1000.0},
+        ]
+    )
+    assert mixed["stored_materials_status"] == "CRITICAL_UNBONDED_OR_UNTITLED_BILL_AND_HOLD_BREACH"
+
+
+def test_stored_materials_bac_cap_warning():
+    """Pagos elegibles por encima del 15% del BAC -> 'STORED_MATERIALS_BAC_CAP_WARNING'."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer,
+    )
+
+    warning = evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer(
+        [{"voucher_id": "MV-HEAVY", "invoiced_material_cost": 800000.0}]
+    )
+    assert warning["evaluated_voucher_count"] == 1
+    assert warning["total_payable_stored_materials_amount"] == 800000.0
+    assert warning["stored_materials_bac_share_pct"] == 16.0
+    assert warning["ineligible_bill_and_hold_voucher_ids"] == []
+    assert warning["stored_materials_status"] == "STORED_MATERIALS_BAC_CAP_WARNING"
+    assert warning["is_stored_materials_billing_compliant"] is False
+
+    # Share exactamente en el cap 15.0 no es warning (comparación estricta >)
+    at_cap = evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer(
+        [{"voucher_id": "MV-CAP", "invoiced_material_cost": 750000.0}]
+    )
+    assert at_cap["stored_materials_bac_share_pct"] == 15.0
+    assert at_cap["stored_materials_status"] == "STORED_MATERIALS_BILLING_COMPLIANT"
+
+    # Cap custom más holgado
+    custom = evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer(
+        [{"voucher_id": "MV-4", "invoiced_material_cost": 800000.0}],
+        max_stored_materials_pct_of_bac=20.0,
+    )
+    assert custom["stored_materials_status"] == "STORED_MATERIALS_BILLING_COMPLIANT"
+
+    # Cap de anticipo off-site custom: 50% y costos negativos clampeados a 0
+    custom_advance = evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer(
+        [
+            {"voucher_id": "MV-5", "invoiced_material_cost": 200000.0, "storage_location": "offsite_bonded"},
+            {"voucher_id": "MV-6", "invoiced_material_cost": -5000.0},
+        ],
+        offsite_payment_advance_cap_pct=50.0,
+    )
+    assert custom_advance["total_payable_stored_materials_amount"] == 100000.0
+
+
+def test_stored_materials_empty_invalid_and_field_reversion():
+    """None / dicts inválidos se descartan; storage_location no str y campos no numéricos/no bool revierten a defaults del spec."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer,
+    )
+
+    empty_res = evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer(None)
+    assert empty_res == {
+        "evaluated_voucher_count": 0,
+        "total_payable_stored_materials_amount": 0.0,
+        "disallowed_stored_materials_amount": 0.0,
+        "stored_materials_bac_share_pct": 0.0,
+        "ineligible_bill_and_hold_voucher_ids": [],
+        "stored_materials_status": "STORED_MATERIALS_BILLING_COMPLIANT",
+        "is_stored_materials_billing_compliant": True,
+    }
+
+    invalid_res = evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer(
+        ["no-dict", None, {"voucher_id": "   "}, {"voucher_id": 3}]
+    )
+    assert invalid_res["evaluated_voucher_count"] == 0
+
+    bad_fields = evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer(
+        [
+            {
+                "voucher_id": "MV-BAD",
+                "invoiced_material_cost": "mucho",
+                "storage_location": 42,
+                "bill_of_sale_title_transferred": "sí",
+                "segregated_and_tagged_for_project": None,
+                "all_risk_transit_storage_insured": "no",
+            }
+        ]
+    )
+    # Reverciones: cost -> 0.0, location -> ONSITE, flags -> True -> elegible con pago 0.0
+    assert bad_fields == {
+        "evaluated_voucher_count": 1,
+        "total_payable_stored_materials_amount": 0.0,
+        "disallowed_stored_materials_amount": 0.0,
+        "stored_materials_bac_share_pct": 0.0,
+        "ineligible_bill_and_hold_voucher_ids": [],
+        "stored_materials_status": "STORED_MATERIALS_BILLING_COMPLIANT",
+        "is_stored_materials_billing_compliant": True,
+    }

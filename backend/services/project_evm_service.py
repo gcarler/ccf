@@ -5541,6 +5541,7 @@ __all__ = [
     "evaluate_evm_vecp_net_savings_and_contractor_share_split",
     "evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver",
     "evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding",
+    "evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer",
     "ProjectEVMService",
 ]
 
@@ -11436,4 +11437,129 @@ def evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding(
 
 ProjectEVMService.evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding = staticmethod(
     evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding
+)
+def evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer(
+    material_vouchers: list[dict[str, Any]] | None,
+    *,
+    current_contract_bac: float = 5000000.0,
+    max_stored_materials_pct_of_bac: float = 15.0,
+    offsite_payment_advance_cap_pct: float = 75.0,
+) -> dict[str, Any]:
+    """PMBOK §7.4 & §12.3 — Evalúa pagos de progreso por materiales almacenados (stored materials): elegibilidad bill-and-hold (title transfer, segregación/tagging, seguro all-risk, almacén bonded), cap de anticipo off-site y participación sobre el BAC vigente.
+
+    Cada voucher válido declara `voucher_id` (str no vacío),
+    `invoiced_material_cost` (default 0.0), `storage_location` (default
+    'ONSITE'; se normaliza upper: ONSITE | OFFSITE_BONDED |
+    OFFSITE_UNBONDED), `bill_of_sale_title_transferred` (default True),
+    `segregated_and_tagged_for_project` (default True) y
+    `all_risk_transit_storage_insured` (default True):
+    - Elegible: title transfer Y segregado/taggeado Y asegurado Y ubicación
+      != OFFSITE_UNBONDED. Los no elegibles son bill-and-hold improcedente
+      (brecha crítica, precedencia) y su importe es disallowed.
+    - Pago elegible: ONSITE 100% del importe; OFFSITE_BONDED
+      advance_cap_pct% del importe.
+    - `stored_materials_bac_share_pct` = total payable / BAC * 100.0;
+      share > max_stored_materials_pct_of_bac es advertencia de cap.
+    - Estados: 'CRITICAL_UNBONDED_OR_UNTITLED_BILL_AND_HOLD_BREACH' |
+      'STORED_MATERIALS_BAC_CAP_WARNING' | 'STORED_MATERIALS_BILLING_COMPLIANT'.
+    """
+    raw_items = material_vouchers if isinstance(material_vouchers, list) else []
+    valid_vouchers: list[dict[str, Any]] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_voucher_id = item.get("voucher_id")
+        if not isinstance(raw_voucher_id, str) or not raw_voucher_id.strip():
+            continue
+        valid_vouchers.append(item)
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _float(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    bac_value = _float(current_contract_bac, 5000000.0)
+    advance_cap_pct = _float(offsite_payment_advance_cap_pct, 75.0)
+
+    total_payable_stored_materials_amount = 0.0
+    disallowed_stored_materials_amount = 0.0
+    ineligible_bill_and_hold_voucher_ids: list[str] = []
+    evaluated_voucher_count = 0
+
+    for voucher in valid_vouchers:
+        evaluated_voucher_count += 1
+        voucher_id = str(voucher.get("voucher_id")).strip()
+        invoiced_cost = _float(voucher.get("invoiced_material_cost"), 0.0)
+        raw_location = voucher.get("storage_location")
+        location = (
+            raw_location.upper()
+            if isinstance(raw_location, str)
+            else "ONSITE"
+        )
+        title_transferred = _bool(
+            voucher.get("bill_of_sale_title_transferred"), True
+        )
+        segregated = _bool(
+            voucher.get("segregated_and_tagged_for_project"), True
+        )
+        insured = _bool(
+            voucher.get("all_risk_transit_storage_insured"), True
+        )
+
+        eligible = bool(
+            title_transferred
+            and segregated
+            and insured
+            and location != "OFFSITE_UNBONDED"
+        )
+
+        if not eligible:
+            ineligible_bill_and_hold_voucher_ids.append(voucher_id)
+            disallowed_stored_materials_amount = round(
+                disallowed_stored_materials_amount
+                + max(0.0, float(invoiced_cost)),
+                2,
+            )
+            continue
+
+        if location == "ONSITE":
+            payable_advance = float(invoiced_cost)
+        else:
+            payable_advance = float(invoiced_cost) * advance_cap_pct / 100.0
+        total_payable_stored_materials_amount = round(
+            total_payable_stored_materials_amount + max(0.0, payable_advance), 2
+        )
+
+    stored_materials_bac_share_pct = round(
+        total_payable_stored_materials_amount / bac_value * 100.0, 2
+    ) if bac_value > 0 else 0.0
+
+    if ineligible_bill_and_hold_voucher_ids:
+        stored_materials_status = "CRITICAL_UNBONDED_OR_UNTITLED_BILL_AND_HOLD_BREACH"
+    elif (
+        bac_value > 0
+        and stored_materials_bac_share_pct
+        > _float(max_stored_materials_pct_of_bac, 15.0)
+    ):
+        stored_materials_status = "STORED_MATERIALS_BAC_CAP_WARNING"
+    else:
+        stored_materials_status = "STORED_MATERIALS_BILLING_COMPLIANT"
+
+    return {
+        "evaluated_voucher_count": evaluated_voucher_count,
+        "total_payable_stored_materials_amount": total_payable_stored_materials_amount,
+        "disallowed_stored_materials_amount": disallowed_stored_materials_amount,
+        "stored_materials_bac_share_pct": stored_materials_bac_share_pct,
+        "ineligible_bill_and_hold_voucher_ids": ineligible_bill_and_hold_voucher_ids,
+        "stored_materials_status": stored_materials_status,
+        "is_stored_materials_billing_compliant": stored_materials_status
+        == "STORED_MATERIALS_BILLING_COMPLIANT",
+    }
+
+
+ProjectEVMService.evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer = staticmethod(
+    evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer
 )
