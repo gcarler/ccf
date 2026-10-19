@@ -10057,3 +10057,124 @@ def test_validate_ccpm_buffer_fever_chart_and_feeding_buffer_erosion_exports():
         in mod.__all__
     )
 
+
+def test_validate_rolling_wave_planning_horizon_decomposition_and_freeze_window_compliant():
+    from backend.schemas.projects import (
+        validate_rolling_wave_planning_horizon_decomposition_and_freeze_window,
+    )
+
+    res = validate_rolling_wave_planning_horizon_decomposition_and_freeze_window(
+        [
+            {
+                "node_id": "WP-NEAR-01",
+                "node_type": "WORK_PACKAGE",
+                "start_offset_days": 15,
+                "allocated_budget": 70000.0,
+                "has_assigned_owner_and_activities": True,
+                "modified_within_freeze_window": False,
+            },
+            {
+                "node_id": "PP-FAR-02",
+                "node_type": "PLANNING_PACKAGE",
+                "start_offset_days": 90,
+                "allocated_budget": 30000.0,
+                "has_assigned_owner_and_activities": False,
+                "modified_within_freeze_window": False,
+            },
+        ]
+    )
+    assert res["is_valid"] is True
+    assert res["status"] == "ROLLING_WAVE_COMPLIANT"
+    assert res["near_term_undecomposed_planning_package_ids"] == []
+    assert res["freeze_window_churn_node_ids"] == []
+    assert res["planning_package_budget_share_pct"] == 30.0
+    assert res["budget_share_exceeded"] is False
+    assert res["recommendations"] == []
+
+
+def test_validate_rolling_wave_planning_horizon_decomposition_and_freeze_window_critical():
+    from backend.schemas.projects import (
+        validate_rolling_wave_planning_horizon_decomposition_and_freeze_window,
+    )
+
+    res = validate_rolling_wave_planning_horizon_decomposition_and_freeze_window(
+        [
+            {
+                "node_id": "PP-NEAR-UNDECOMPOSED",
+                "node_type": "PLANNING_PACKAGE",
+                "start_offset_days": 45,
+                "allocated_budget": 20000.0,
+                "has_assigned_owner_and_activities": False,
+            },
+            {
+                "node_id": "WP-NEAR-NO-OWNER",
+                "node_type": "WORK_PACKAGE",
+                "start_offset_days": 20,
+                "allocated_budget": 80000.0,
+                "has_assigned_owner_and_activities": False,
+            },
+        ],
+        near_term_horizon_days=60,
+    )
+    assert res["is_valid"] is False
+    assert res["status"] == "CRITICAL_NEAR_TERM_UNDECOMPOSED_BREACH"
+    assert res["near_term_undecomposed_planning_package_ids"] == [
+        "PP-NEAR-UNDECOMPOSED",
+        "WP-NEAR-NO-OWNER",
+    ]
+    assert len(res["recommendations"]) >= 1
+
+
+def test_validate_rolling_wave_planning_horizon_decomposition_and_freeze_window_warning():
+    from backend.schemas.projects import (
+        validate_rolling_wave_planning_horizon_decomposition_and_freeze_window,
+    )
+
+    res = validate_rolling_wave_planning_horizon_decomposition_and_freeze_window(
+        [
+            {
+                "node_id": "WP-FREEZE-CHURN",
+                "node_type": "WORK_PACKAGE",
+                "start_offset_days": 10,
+                "allocated_budget": 40000.0,
+                "has_assigned_owner_and_activities": True,
+                "modified_within_freeze_window": True,
+            },
+            {
+                "node_id": "PP-FAR-HEAVY",
+                "node_type": "PLANNING_PACKAGE",
+                "start_offset_days": 120,
+                "allocated_budget": 60000.0,
+                "has_assigned_owner_and_activities": False,
+                "modified_within_freeze_window": False,
+            },
+        ],
+        freeze_window_days=30,
+        max_planning_package_budget_share_pct=40.0,
+    )
+    assert res["is_valid"] is False
+    assert res["status"] == "PLANNING_PACKAGE_SHARE_OR_FREEZE_WARNING"
+    assert res["near_term_undecomposed_planning_package_ids"] == []
+    assert res["freeze_window_churn_node_ids"] == ["WP-FREEZE-CHURN"]
+    assert res["planning_package_budget_share_pct"] == 60.0
+    assert res["budget_share_exceeded"] is True
+
+
+def test_validate_rolling_wave_planning_horizon_decomposition_and_freeze_window_dunder_all():
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_rolling_wave_planning_horizon_decomposition_and_freeze_window,
+    )
+
+    empty = validate_rolling_wave_planning_horizon_decomposition_and_freeze_window(
+        []
+    )
+    assert empty["is_valid"] is True
+    assert empty["status"] == "ROLLING_WAVE_COMPLIANT"
+    assert empty["planning_package_budget_share_pct"] == 0.0
+    assert (
+        "validate_rolling_wave_planning_horizon_decomposition_and_freeze_window"
+        in mod.__all__
+    )
+
+

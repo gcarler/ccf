@@ -3831,6 +3831,7 @@ __all__ = [
     "validate_resource_leveling_overallocation_peak_and_float_consumption",
     "validate_benefits_realization_npv_irr_payback_and_benefit_owner_alignment",
     "validate_ccpm_buffer_fever_chart_and_feeding_buffer_erosion",
+    "validate_rolling_wave_planning_horizon_decomposition_and_freeze_window",
 ]
 
 
@@ -9668,6 +9669,105 @@ def validate_ccpm_buffer_fever_chart_and_feeding_buffer_erosion(
         "red_threshold_pct": red_threshold_pct,
         "eroded_feeding_buffers": eroded_feeding_buffers,
         "bad_multitasking_resources": bad_multitasking_resources,
+        "status": status,
+        "recommendations": recommendations,
+    }
+
+
+def validate_rolling_wave_planning_horizon_decomposition_and_freeze_window(
+    nodes: list[dict[str, Any]],
+    *,
+    near_term_horizon_days: int = 60,
+    freeze_window_days: int = 30,
+    max_planning_package_budget_share_pct: float = 40.0,
+) -> dict[str, Any]:
+    """PMBOK §5.4 & §6.2 — Valida descomposición progresiva (Rolling Wave Planning) en la ventana de corto plazo, proporción presupuestaria de paquetes de planificación en horizonte lejano y estabilidad dentro de la ventana congelada (freeze window)."""
+    raw_items = nodes if isinstance(nodes, list) else []
+    valid_items = [item for item in raw_items if isinstance(item, dict)]
+
+    near_term_undecomposed_planning_package_ids: list[str] = []
+    freeze_window_churn_node_ids: list[str] = []
+    total_budget = 0.0
+    planning_package_budget = 0.0
+
+    for idx, item in enumerate(valid_items):
+        node_id = (
+            str(item.get("node_id") or item.get("id") or f"node-{idx + 1}").strip()
+            or f"node-{idx + 1}"
+        )
+        node_type = (
+            str(item.get("node_type") or "WORK_PACKAGE").strip().upper()
+            or "WORK_PACKAGE"
+        )
+        raw_offset = item.get("start_offset_days", 0)
+        start_offset_days = int(0 if raw_offset is None else raw_offset)
+
+        raw_budget = item.get("allocated_budget", 0.0)
+        allocated_budget = max(0.0, float(0.0 if raw_budget is None else raw_budget))
+
+        raw_owner = item.get("has_assigned_owner_and_activities", True)
+        has_assigned_owner_and_activities = bool(
+            True if raw_owner is None else raw_owner
+        )
+
+        raw_mod = item.get("modified_within_freeze_window", False)
+        modified_within_freeze_window = bool(False if raw_mod is None else raw_mod)
+
+        total_budget += allocated_budget
+        if node_type == "PLANNING_PACKAGE":
+            planning_package_budget += allocated_budget
+
+        if start_offset_days <= near_term_horizon_days and (
+            node_type == "PLANNING_PACKAGE"
+            or not has_assigned_owner_and_activities
+        ):
+            near_term_undecomposed_planning_package_ids.append(node_id)
+
+        if (
+            start_offset_days <= freeze_window_days
+            and modified_within_freeze_window
+        ):
+            freeze_window_churn_node_ids.append(node_id)
+
+    planning_package_budget_share_pct = (
+        round((planning_package_budget / total_budget) * 100.0, 2)
+        if total_budget > 0.0
+        else 0.0
+    )
+    budget_share_exceeded = (
+        planning_package_budget_share_pct > max_planning_package_budget_share_pct
+    )
+
+    recommendations: list[str] = []
+    if near_term_undecomposed_planning_package_ids:
+        recommendations.append(
+            f"Decompose near-term planning packages (<={near_term_horizon_days}d) into work packages with assigned owners and activities: {', '.join(near_term_undecomposed_planning_package_ids)}."
+        )
+    if freeze_window_churn_node_ids:
+        recommendations.append(
+            f"Enforce CCB change control for scope/schedule churn inside the {freeze_window_days}d freeze window on: {', '.join(freeze_window_churn_node_ids)}."
+        )
+    if budget_share_exceeded:
+        recommendations.append(
+            f"Reduce far-horizon planning package budget share ({planning_package_budget_share_pct:.2f}% > {max_planning_package_budget_share_pct:.2f}%) through progressive elaboration."
+        )
+
+    if near_term_undecomposed_planning_package_ids:
+        status = "CRITICAL_NEAR_TERM_UNDECOMPOSED_BREACH"
+        is_valid = False
+    elif freeze_window_churn_node_ids or budget_share_exceeded:
+        status = "PLANNING_PACKAGE_SHARE_OR_FREEZE_WARNING"
+        is_valid = False
+    else:
+        status = "ROLLING_WAVE_COMPLIANT"
+        is_valid = True
+
+    return {
+        "is_valid": is_valid,
+        "near_term_undecomposed_planning_package_ids": near_term_undecomposed_planning_package_ids,
+        "freeze_window_churn_node_ids": freeze_window_churn_node_ids,
+        "planning_package_budget_share_pct": planning_package_budget_share_pct,
+        "budget_share_exceeded": budget_share_exceeded,
         "status": status,
         "recommendations": recommendations,
     }
