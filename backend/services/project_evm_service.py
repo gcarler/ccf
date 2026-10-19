@@ -5529,6 +5529,7 @@ __all__ = [
     "evaluate_evm_capex_opex_software_capitalization_gate",
     "evaluate_evm_value_engineering_worth_ratio_and_vecp_gainshare",
     "evaluate_evm_cpaf_award_fee_pool_and_rollover_governance",
+    "evaluate_evm_standby_demurrage_and_force_account_rates",
     "ProjectEVMService",
 ]
 
@@ -10046,3 +10047,84 @@ def evaluate_evm_cpaf_award_fee_pool_and_rollover_governance(
 ProjectEVMService.evaluate_evm_cpaf_award_fee_pool_and_rollover_governance = staticmethod(
     evaluate_evm_cpaf_award_fee_pool_and_rollover_governance
 )
+
+
+def evaluate_evm_standby_demurrage_and_force_account_rates(
+    claims: list[dict] | None,
+    *,
+    max_standby_rate_of_active_pct: float = 50.0,
+    max_mob_demob_contract_share_pct: float = 10.0,
+) -> dict:
+    """PMBOK §7.4 & §12.3 — Evalúa reclamos de demora por equipo en espera (standby demurrage), verificación de tarifas force-account y tope de movilización/desmovilización."""
+    raw_items = claims if isinstance(claims, list) else []
+    valid_claims: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("claim_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_claims.append(item)
+
+    unverified_log_or_self_inflicted_idle_claim_ids: list[str] = []
+    excessive_standby_rate_or_mob_cap_claim_ids: list[str] = []
+
+    for c in valid_claims:
+        cid = c["claim_id"].strip()
+        raw_log = c.get("daily_field_log_countersigned", True)
+        daily_field_log_countersigned = bool(
+            True if raw_log is None else raw_log
+        )
+
+        raw_excl = c.get("contractor_caused_idle_excluded", True)
+        contractor_caused_idle_excluded = bool(
+            True if raw_excl is None else raw_excl
+        )
+
+        raw_standby = c.get("standby_rate_of_active_pct", 35.0)
+        standby_rate_of_active_pct = float(
+            35.0 if raw_standby is None else raw_standby
+        )
+
+        raw_mob = c.get("mob_demob_contract_share_pct", 6.0)
+        mob_demob_contract_share_pct = float(
+            6.0 if raw_mob is None else raw_mob
+        )
+
+        if (
+            not daily_field_log_countersigned
+            or not contractor_caused_idle_excluded
+        ):
+            unverified_log_or_self_inflicted_idle_claim_ids.append(cid)
+
+        if (
+            standby_rate_of_active_pct > max_standby_rate_of_active_pct
+            or mob_demob_contract_share_pct > max_mob_demob_contract_share_pct
+        ):
+            excessive_standby_rate_or_mob_cap_claim_ids.append(cid)
+
+    if unverified_log_or_self_inflicted_idle_claim_ids:
+        standby_demurrage_status = (
+            "DEMURRAGE_UNVERIFIED_LOG_OR_SELF_IDLE_BREACH"
+        )
+    elif excessive_standby_rate_or_mob_cap_claim_ids:
+        standby_demurrage_status = (
+            "DEMURRAGE_STANDBY_RATE_OR_MOB_CAP_WARNING"
+        )
+    else:
+        standby_demurrage_status = "DEMURRAGE_FORCE_ACCOUNT_OPTIMAL"
+
+    return {
+        "evaluated_claims_count": len(valid_claims),
+        "unverified_log_or_self_inflicted_idle_claim_ids": unverified_log_or_self_inflicted_idle_claim_ids,
+        "excessive_standby_rate_or_mob_cap_claim_ids": excessive_standby_rate_or_mob_cap_claim_ids,
+        "standby_demurrage_status": standby_demurrage_status,
+        "is_standby_demurrage_compliant": standby_demurrage_status
+        == "DEMURRAGE_FORCE_ACCOUNT_OPTIMAL",
+    }
+
+
+ProjectEVMService.evaluate_evm_standby_demurrage_and_force_account_rates = staticmethod(
+    evaluate_evm_standby_demurrage_and_force_account_rates
+)
+

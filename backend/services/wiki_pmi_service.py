@@ -2541,6 +2541,7 @@ __all__ = [
     "audit_wiki_db_read_replica_lag_and_split_brain_fencing",
     "audit_wiki_cdn_edge_cache_purge_sla_and_origin_shield_protection",
     "audit_wiki_object_storage_worm_lock_and_ransomware_airgap",
+    "audit_wiki_bgp_rpki_roa_and_ddos_scrubbing_failover",
     "WikiPMIService",
 ]
 
@@ -7399,3 +7400,80 @@ def audit_wiki_object_storage_worm_lock_and_ransomware_airgap(
 WikiPMIService.audit_wiki_object_storage_worm_lock_and_ransomware_airgap = staticmethod(
     audit_wiki_object_storage_worm_lock_and_ransomware_airgap
 )
+
+
+def audit_wiki_bgp_rpki_roa_and_ddos_scrubbing_failover(
+    prefixes: list[dict] | None,
+    *,
+    max_scrubbing_diversion_seconds: int = 45,
+    require_rpki_roa_and_bfd: bool = True,
+) -> dict:
+    """PMBOK §11.6 & §8.2 — Audita validación criptográfica RPKI ROA contra secuestro de rutas BGP, liveness BFD subsegundo en sesiones de peering y failover de centro de scrubbing DDoS."""
+    raw_items = prefixes if isinstance(prefixes, list) else []
+    valid_prefixes: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("prefix_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_prefixes.append(item)
+
+    unsigned_rpki_or_missing_bfd_prefix_ids: list[str] = []
+    slow_scrubbing_or_single_homed_prefix_ids: list[str] = []
+
+    for p in valid_prefixes:
+        pid = p["prefix_id"].strip()
+        raw_rpki = p.get("rpki_roa_cryptographically_valid", True)
+        rpki_roa_cryptographically_valid = bool(
+            True if raw_rpki is None else raw_rpki
+        )
+
+        raw_bfd = p.get("bfd_subsecond_peering_enabled", True)
+        bfd_subsecond_peering_enabled = bool(
+            True if raw_bfd is None else raw_bfd
+        )
+
+        raw_scrub = p.get("scrubbing_diversion_seconds", 15)
+        scrubbing_diversion_seconds = int(
+            15 if raw_scrub is None else raw_scrub
+        )
+
+        raw_asns = p.get("redundant_transit_asns_count", 2)
+        redundant_transit_asns_count = int(
+            2 if raw_asns is None else raw_asns
+        )
+
+        if require_rpki_roa_and_bfd and (
+            not rpki_roa_cryptographically_valid
+            or not bfd_subsecond_peering_enabled
+        ):
+            unsigned_rpki_or_missing_bfd_prefix_ids.append(pid)
+
+        if (
+            scrubbing_diversion_seconds > max_scrubbing_diversion_seconds
+            or redundant_transit_asns_count < 2
+        ):
+            slow_scrubbing_or_single_homed_prefix_ids.append(pid)
+
+    if unsigned_rpki_or_missing_bfd_prefix_ids:
+        bgp_routing_status = "BGP_RPKI_ROA_OR_BFD_LIVENESS_BREACH"
+    elif slow_scrubbing_or_single_homed_prefix_ids:
+        bgp_routing_status = "BGP_SCRUBBING_DIVERSION_OR_SINGLE_ASN_WARNING"
+    else:
+        bgp_routing_status = "BGP_ROUTING_AND_SCRUBBING_OPTIMAL"
+
+    return {
+        "evaluated_prefixes_count": len(valid_prefixes),
+        "unsigned_rpki_or_missing_bfd_prefix_ids": unsigned_rpki_or_missing_bfd_prefix_ids,
+        "slow_scrubbing_or_single_homed_prefix_ids": slow_scrubbing_or_single_homed_prefix_ids,
+        "bgp_routing_status": bgp_routing_status,
+        "is_bgp_routing_compliant": bgp_routing_status
+        == "BGP_ROUTING_AND_SCRUBBING_OPTIMAL",
+    }
+
+
+WikiPMIService.audit_wiki_bgp_rpki_roa_and_ddos_scrubbing_failover = staticmethod(
+    audit_wiki_bgp_rpki_roa_and_ddos_scrubbing_failover
+)
+

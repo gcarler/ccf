@@ -10194,3 +10194,140 @@ def test_wiki_worm_invalid_and_binding():
         "audit_wiki_object_storage_worm_lock_and_ransomware_airgap"
         in mod.__all__
     )
+
+
+def test_audit_wiki_bgp_rpki_roa_and_ddos_scrubbing_failover_breach():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_bgp_rpki_roa_and_ddos_scrubbing_failover,
+    )
+
+    res = audit_wiki_bgp_rpki_roa_and_ddos_scrubbing_failover(
+        [
+            {
+                "prefix_id": "  PFX-INVALID-ROA  ",
+                "rpki_roa_cryptographically_valid": False,
+                "bfd_subsecond_peering_enabled": True,
+                "scrubbing_diversion_seconds": 15,
+                "redundant_transit_asns_count": 2,
+            },
+            {
+                "prefix_id": "PFX-NO-BFD",
+                "rpki_roa_cryptographically_valid": True,
+                "bfd_subsecond_peering_enabled": False,
+                "scrubbing_diversion_seconds": 60,
+                "redundant_transit_asns_count": 1,
+            },
+            {
+                "prefix_id": "PFX-CLEAN",
+                "rpki_roa_cryptographically_valid": True,
+                "bfd_subsecond_peering_enabled": True,
+                "scrubbing_diversion_seconds": 45,
+                "redundant_transit_asns_count": 2,
+            },
+        ]
+    )
+    assert res["evaluated_prefixes_count"] == 3
+    assert res["unsigned_rpki_or_missing_bfd_prefix_ids"] == [
+        "PFX-INVALID-ROA",
+        "PFX-NO-BFD",
+    ]
+    assert res["slow_scrubbing_or_single_homed_prefix_ids"] == ["PFX-NO-BFD"]
+    assert res["bgp_routing_status"] == "BGP_RPKI_ROA_OR_BFD_LIVENESS_BREACH"
+    assert res["is_bgp_routing_compliant"] is False
+
+
+def test_audit_wiki_bgp_rpki_roa_and_ddos_scrubbing_failover_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_bgp_rpki_roa_and_ddos_scrubbing_failover,
+    )
+
+    res = audit_wiki_bgp_rpki_roa_and_ddos_scrubbing_failover(
+        [
+            {
+                "prefix_id": "PFX-SLOW-SCRUB",
+                "rpki_roa_cryptographically_valid": False,
+                "bfd_subsecond_peering_enabled": False,
+                "scrubbing_diversion_seconds": 46,
+                "redundant_transit_asns_count": 2,
+            },
+            {
+                "prefix_id": "PFX-SINGLE-ASN",
+                "rpki_roa_cryptographically_valid": True,
+                "bfd_subsecond_peering_enabled": True,
+                "scrubbing_diversion_seconds": 45,
+                "redundant_transit_asns_count": 1,
+            },
+        ],
+        max_scrubbing_diversion_seconds=45,
+        require_rpki_roa_and_bfd=False,
+    )
+    assert res["evaluated_prefixes_count"] == 2
+    assert res["unsigned_rpki_or_missing_bfd_prefix_ids"] == []
+    assert res["slow_scrubbing_or_single_homed_prefix_ids"] == [
+        "PFX-SLOW-SCRUB",
+        "PFX-SINGLE-ASN",
+    ]
+    assert (
+        res["bgp_routing_status"]
+        == "BGP_SCRUBBING_DIVERSION_OR_SINGLE_ASN_WARNING"
+    )
+    assert res["is_bgp_routing_compliant"] is False
+
+
+def test_audit_wiki_bgp_rpki_roa_and_ddos_scrubbing_failover_optimal_and_defensive():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_bgp_rpki_roa_and_ddos_scrubbing_failover,
+    )
+
+    empty = audit_wiki_bgp_rpki_roa_and_ddos_scrubbing_failover(None)
+    assert empty["evaluated_prefixes_count"] == 0
+    assert empty["unsigned_rpki_or_missing_bfd_prefix_ids"] == []
+    assert empty["slow_scrubbing_or_single_homed_prefix_ids"] == []
+    assert empty["bgp_routing_status"] == "BGP_ROUTING_AND_SCRUBBING_OPTIMAL"
+    assert empty["is_bgp_routing_compliant"] is True
+
+    optimal = audit_wiki_bgp_rpki_roa_and_ddos_scrubbing_failover(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"prefix_id": "   "},
+            {
+                "prefix_id": "PFX-DEFAULTS",
+                "rpki_roa_cryptographically_valid": None,
+                "bfd_subsecond_peering_enabled": None,
+                "scrubbing_diversion_seconds": None,
+                "redundant_transit_asns_count": None,
+            },
+        ]
+    )
+    assert optimal["evaluated_prefixes_count"] == 1
+    assert optimal["unsigned_rpki_or_missing_bfd_prefix_ids"] == []
+    assert optimal["slow_scrubbing_or_single_homed_prefix_ids"] == []
+    assert optimal["bgp_routing_status"] == "BGP_ROUTING_AND_SCRUBBING_OPTIMAL"
+    assert optimal["is_bgp_routing_compliant"] is True
+
+
+def test_audit_wiki_bgp_rpki_roa_and_ddos_scrubbing_failover_staticmethod_and_dunder_all():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_bgp_rpki_roa_and_ddos_scrubbing_failover,
+    )
+
+    sample = [
+        {
+            "prefix_id": "PFX-99",
+            "scrubbing_diversion_seconds": 12,
+            "redundant_transit_asns_count": 3,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_bgp_rpki_roa_and_ddos_scrubbing_failover(
+            sample
+        )
+        == audit_wiki_bgp_rpki_roa_and_ddos_scrubbing_failover(sample)
+    )
+    assert (
+        "audit_wiki_bgp_rpki_roa_and_ddos_scrubbing_failover"
+        in mod.__all__
+    )
+

@@ -9730,3 +9730,150 @@ def test_evm_cpaf_invalid_and_binding():
         "evaluate_evm_cpaf_award_fee_pool_and_rollover_governance"
         in mod.__all__
     )
+
+
+def test_evaluate_evm_standby_demurrage_and_force_account_rates_breach():
+    from backend.services.project_evm_service import (
+        evaluate_evm_standby_demurrage_and_force_account_rates,
+    )
+
+    res = evaluate_evm_standby_demurrage_and_force_account_rates(
+        [
+            {
+                "claim_id": "  CLM-UNSIGNED-LOG  ",
+                "daily_field_log_countersigned": False,
+                "contractor_caused_idle_excluded": True,
+                "standby_rate_of_active_pct": 35.0,
+                "mob_demob_contract_share_pct": 6.0,
+            },
+            {
+                "claim_id": "CLM-SELF-IDLE",
+                "daily_field_log_countersigned": True,
+                "contractor_caused_idle_excluded": False,
+                "standby_rate_of_active_pct": 65.0,
+                "mob_demob_contract_share_pct": 14.0,
+            },
+            {
+                "claim_id": "CLM-CLEAN",
+                "daily_field_log_countersigned": True,
+                "contractor_caused_idle_excluded": True,
+                "standby_rate_of_active_pct": 50.0,
+                "mob_demob_contract_share_pct": 10.0,
+            },
+        ]
+    )
+    assert res["evaluated_claims_count"] == 3
+    assert res["unverified_log_or_self_inflicted_idle_claim_ids"] == [
+        "CLM-UNSIGNED-LOG",
+        "CLM-SELF-IDLE",
+    ]
+    assert res["excessive_standby_rate_or_mob_cap_claim_ids"] == [
+        "CLM-SELF-IDLE"
+    ]
+    assert (
+        res["standby_demurrage_status"]
+        == "DEMURRAGE_UNVERIFIED_LOG_OR_SELF_IDLE_BREACH"
+    )
+    assert res["is_standby_demurrage_compliant"] is False
+
+
+def test_evaluate_evm_standby_demurrage_and_force_account_rates_warning():
+    from backend.services.project_evm_service import (
+        evaluate_evm_standby_demurrage_and_force_account_rates,
+    )
+
+    res = evaluate_evm_standby_demurrage_and_force_account_rates(
+        [
+            {
+                "claim_id": "CLM-HIGH-STANDBY",
+                "daily_field_log_countersigned": True,
+                "contractor_caused_idle_excluded": True,
+                "standby_rate_of_active_pct": 50.1,
+                "mob_demob_contract_share_pct": 10.0,
+            },
+            {
+                "claim_id": "CLM-HIGH-MOB",
+                "daily_field_log_countersigned": True,
+                "contractor_caused_idle_excluded": True,
+                "standby_rate_of_active_pct": 50.0,
+                "mob_demob_contract_share_pct": 10.1,
+            },
+        ],
+        max_standby_rate_of_active_pct=50.0,
+        max_mob_demob_contract_share_pct=10.0,
+    )
+    assert res["evaluated_claims_count"] == 2
+    assert res["unverified_log_or_self_inflicted_idle_claim_ids"] == []
+    assert res["excessive_standby_rate_or_mob_cap_claim_ids"] == [
+        "CLM-HIGH-STANDBY",
+        "CLM-HIGH-MOB",
+    ]
+    assert (
+        res["standby_demurrage_status"]
+        == "DEMURRAGE_STANDBY_RATE_OR_MOB_CAP_WARNING"
+    )
+    assert res["is_standby_demurrage_compliant"] is False
+
+
+def test_evaluate_evm_standby_demurrage_and_force_account_rates_optimal_and_defensive():
+    from backend.services.project_evm_service import (
+        evaluate_evm_standby_demurrage_and_force_account_rates,
+    )
+
+    empty = evaluate_evm_standby_demurrage_and_force_account_rates(None)
+    assert empty["evaluated_claims_count"] == 0
+    assert empty["unverified_log_or_self_inflicted_idle_claim_ids"] == []
+    assert empty["excessive_standby_rate_or_mob_cap_claim_ids"] == []
+    assert (
+        empty["standby_demurrage_status"] == "DEMURRAGE_FORCE_ACCOUNT_OPTIMAL"
+    )
+    assert empty["is_standby_demurrage_compliant"] is True
+
+    optimal = evaluate_evm_standby_demurrage_and_force_account_rates(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"claim_id": "   "},
+            {
+                "claim_id": "CLM-DEFAULTS",
+                "daily_field_log_countersigned": None,
+                "contractor_caused_idle_excluded": None,
+                "standby_rate_of_active_pct": None,
+                "mob_demob_contract_share_pct": None,
+            },
+        ]
+    )
+    assert optimal["evaluated_claims_count"] == 1
+    assert optimal["unverified_log_or_self_inflicted_idle_claim_ids"] == []
+    assert optimal["excessive_standby_rate_or_mob_cap_claim_ids"] == []
+    assert (
+        optimal["standby_demurrage_status"]
+        == "DEMURRAGE_FORCE_ACCOUNT_OPTIMAL"
+    )
+    assert optimal["is_standby_demurrage_compliant"] is True
+
+
+def test_evaluate_evm_standby_demurrage_and_force_account_rates_staticmethod_and_dunder_all():
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_standby_demurrage_and_force_account_rates,
+    )
+
+    sample = [
+        {
+            "claim_id": "CLM-99",
+            "standby_rate_of_active_pct": 30.0,
+            "mob_demob_contract_share_pct": 5.0,
+        }
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_standby_demurrage_and_force_account_rates(
+            sample
+        )
+        == evaluate_evm_standby_demurrage_and_force_account_rates(sample)
+    )
+    assert (
+        "evaluate_evm_standby_demurrage_and_force_account_rates"
+        in mod.__all__
+    )
+
