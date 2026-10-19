@@ -2557,6 +2557,7 @@ __all__ = [
     "audit_wiki_redis_cluster_hash_slot_coverage_and_aof_eviction",
     "audit_wiki_kms_envelope_key_rotation_and_hsm_tamper_seal",
     "audit_wiki_webhook_ssrf_cidr_blocklist_and_dns_rebinding_guard",
+    "audit_wiki_outbox_cdc_debezium_connector_lag_and_tombstone_hygiene",
     "WikiPMIService",
 ]
 
@@ -8927,4 +8928,100 @@ def audit_wiki_webhook_ssrf_cidr_blocklist_and_dns_rebinding_guard(
 
 WikiPMIService.audit_wiki_webhook_ssrf_cidr_blocklist_and_dns_rebinding_guard = staticmethod(
     audit_wiki_webhook_ssrf_cidr_blocklist_and_dns_rebinding_guard
+)
+
+
+def audit_wiki_outbox_cdc_debezium_connector_lag_and_tombstone_hygiene(
+    connectors: list[dict[str, Any]],
+    *,
+    max_replication_slot_lag_mb: float = 512.0,
+    max_outbox_pending_events: int = 10000,
+    max_dlq_poison_events: int = 0,
+) -> dict[str, Any]:
+    """PMBOK §4.4 & §11.6 — Wiki Kafka / Event-Sourcing Outbox Debezium CDC Connector Offset Lag, Poison Tombstone & Schema Evolution Auditor."""
+    connector_evaluations: list[dict[str, Any]] = []
+    critical_connectors: list[str] = []
+    warning_connectors: list[str] = []
+    max_observed_slot_lag_mb = 0.0
+
+    for item in connectors or []:
+        if not isinstance(item, Mapping):
+            continue
+        connector_id = (
+            str(item.get("connector_id") or "").strip() or "UNKNOWN_CONNECTOR"
+        )
+        connector_state = (
+            str(item.get("connector_state") or "RUNNING").strip().upper()
+        )
+        replication_slot_lag_mb = round(
+            float(item.get("replication_slot_lag_mb", 10.0) or 0.0), 2
+        )
+        outbox_pending_events_count = int(
+            item.get("outbox_pending_events_count", 50) or 0
+        )
+        dlq_poison_events_count = int(
+            item.get("dlq_poison_events_count", 0) or 0
+        )
+        backward_compatible_avro_schema = bool(
+            item.get("backward_compatible_avro_schema", True)
+        )
+        heartbeat_interval_configured = bool(
+            item.get("heartbeat_interval_configured", True)
+        )
+
+        max_observed_slot_lag_mb = max(
+            max_observed_slot_lag_mb, replication_slot_lag_mb
+        )
+
+        critical_cdc_breach = (
+            connector_state == "FAILED"
+            or not backward_compatible_avro_schema
+            or dlq_poison_events_count > max_dlq_poison_events
+            or replication_slot_lag_mb > max_replication_slot_lag_mb
+        )
+        cdc_backlog_warning = (not critical_cdc_breach) and (
+            connector_state == "PAUSED"
+            or outbox_pending_events_count > max_outbox_pending_events
+            or not heartbeat_interval_configured
+            or replication_slot_lag_mb >= max_replication_slot_lag_mb * 0.75
+        )
+
+        if critical_cdc_breach:
+            critical_connectors.append(connector_id)
+        elif cdc_backlog_warning:
+            warning_connectors.append(connector_id)
+
+        connector_evaluations.append(
+            {
+                "connector_id": connector_id,
+                "connector_state": connector_state,
+                "replication_slot_lag_mb": replication_slot_lag_mb,
+                "outbox_pending_events_count": outbox_pending_events_count,
+                "dlq_poison_events_count": dlq_poison_events_count,
+                "backward_compatible_avro_schema": backward_compatible_avro_schema,
+                "heartbeat_interval_configured": heartbeat_interval_configured,
+                "critical_cdc_breach": critical_cdc_breach,
+                "cdc_backlog_warning": cdc_backlog_warning,
+            }
+        )
+
+    if len(critical_connectors) > 0:
+        status = "CRITICAL"
+    elif len(warning_connectors) > 0:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "status": status,
+        "evaluated_connectors_count": len(connector_evaluations),
+        "critical_connectors": critical_connectors,
+        "warning_connectors": warning_connectors,
+        "max_observed_slot_lag_mb": max_observed_slot_lag_mb,
+        "connector_evaluations": connector_evaluations,
+    }
+
+
+WikiPMIService.audit_wiki_outbox_cdc_debezium_connector_lag_and_tombstone_hygiene = staticmethod(
+    audit_wiki_outbox_cdc_debezium_connector_lag_and_tombstone_hygiene
 )

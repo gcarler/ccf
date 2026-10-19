@@ -12069,3 +12069,105 @@ def test_audit_wiki_webhook_ssrf_cidr_blocklist_and_dns_rebinding_guard_empty_an
         "audit_wiki_webhook_ssrf_cidr_blocklist_and_dns_rebinding_guard"
         in mod.__all__
     )
+
+
+def test_audit_wiki_outbox_cdc_debezium_connector_lag_and_tombstone_hygiene_healthy():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_outbox_cdc_debezium_connector_lag_and_tombstone_hygiene,
+    )
+
+    connectors = [
+        {
+            "connector_id": "debezium-wiki-pages-outbox",
+            "connector_state": "RUNNING",
+            "replication_slot_lag_mb": 45.5,
+            "outbox_pending_events_count": 120,
+            "dlq_poison_events_count": 0,
+            "backward_compatible_avro_schema": True,
+            "heartbeat_interval_configured": True,
+        }
+    ]
+    res = audit_wiki_outbox_cdc_debezium_connector_lag_and_tombstone_hygiene(
+        connectors
+    )
+    assert res["status"] == "HEALTHY"
+    assert res["evaluated_connectors_count"] == 1
+    assert res["critical_connectors"] == []
+    assert res["warning_connectors"] == []
+    assert res["max_observed_slot_lag_mb"] == 45.5
+    assert res["connector_evaluations"][0]["critical_cdc_breach"] is False
+
+
+def test_audit_wiki_outbox_cdc_debezium_connector_lag_and_tombstone_hygiene_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_outbox_cdc_debezium_connector_lag_and_tombstone_hygiene,
+    )
+
+    connectors = [
+        {
+            "connector_id": "debezium-wiki-search-paused",
+            "connector_state": "PAUSED",
+            "replication_slot_lag_mb": 420.0,
+            "outbox_pending_events_count": 15000,
+            "dlq_poison_events_count": 0,
+            "backward_compatible_avro_schema": True,
+            "heartbeat_interval_configured": False,
+        }
+    ]
+    res = audit_wiki_outbox_cdc_debezium_connector_lag_and_tombstone_hygiene(
+        connectors
+    )
+    assert res["status"] == "WARNING"
+    assert res["critical_connectors"] == []
+    assert res["warning_connectors"] == ["debezium-wiki-search-paused"]
+    assert res["max_observed_slot_lag_mb"] == 420.0
+    assert res["connector_evaluations"][0]["cdc_backlog_warning"] is True
+
+
+def test_audit_wiki_outbox_cdc_debezium_connector_lag_and_tombstone_hygiene_critical():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_outbox_cdc_debezium_connector_lag_and_tombstone_hygiene,
+    )
+
+    connectors = [
+        {
+            "connector_id": "debezium-wiki-revisions-failed",
+            "connector_state": "FAILED",
+            "replication_slot_lag_mb": 890.0,
+            "outbox_pending_events_count": 45000,
+            "dlq_poison_events_count": 7,
+            "backward_compatible_avro_schema": False,
+            "heartbeat_interval_configured": False,
+        }
+    ]
+    res = audit_wiki_outbox_cdc_debezium_connector_lag_and_tombstone_hygiene(
+        connectors
+    )
+    assert res["status"] == "CRITICAL"
+    assert res["critical_connectors"] == ["debezium-wiki-revisions-failed"]
+    assert res["warning_connectors"] == []
+    assert res["max_observed_slot_lag_mb"] == 890.0
+    assert res["connector_evaluations"][0]["critical_cdc_breach"] is True
+
+
+def test_audit_wiki_outbox_cdc_debezium_connector_lag_and_tombstone_hygiene_empty_and_binding():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_outbox_cdc_debezium_connector_lag_and_tombstone_hygiene,
+    )
+
+    empty = audit_wiki_outbox_cdc_debezium_connector_lag_and_tombstone_hygiene([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["evaluated_connectors_count"] == 0
+    assert empty["max_observed_slot_lag_mb"] == 0.0
+    assert (
+        WikiPMIService.audit_wiki_outbox_cdc_debezium_connector_lag_and_tombstone_hygiene(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_wiki_outbox_cdc_debezium_connector_lag_and_tombstone_hygiene"
+        in mod.__all__
+    )

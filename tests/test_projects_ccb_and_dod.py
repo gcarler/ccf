@@ -12162,3 +12162,105 @@ def test_audit_ebpf_kernel_verifier_and_ringbuf_drop_gate_empty_and_binding():
         == empty
     )
     assert "audit_ebpf_kernel_verifier_and_ringbuf_drop_gate" in mod.__all__
+
+
+def test_audit_vault_secret_lease_ttl_and_dynamic_credential_revocation_gate_healthy():
+    from backend.services.project_ccb_service import (
+        audit_vault_secret_lease_ttl_and_dynamic_credential_revocation_gate,
+    )
+
+    res = audit_vault_secret_lease_ttl_and_dynamic_credential_revocation_gate(
+        [
+            {
+                "engine_id": "vault-db-postgres-prod",
+                "vault_sealed": False,
+                "unseal_shamir_threshold": 3,
+                "orphan_unrevoked_leases_count": 0,
+                "static_secret_age_days": 14,
+                "root_token_active_in_runtime": False,
+                "audit_device_sink_healthy": True,
+                "lease_renewal_jitter_configured": True,
+            }
+        ]
+    )
+    assert res["status"] == "HEALTHY"
+    assert res["release_freeze_required"] is False
+    assert res["evaluated_engines_count"] == 1
+    assert res["critical_engines"] == []
+    assert res["warning_engines"] == []
+    assert res["total_orphan_leases"] == 0
+
+
+def test_audit_vault_secret_lease_ttl_and_dynamic_credential_revocation_gate_warning():
+    from backend.services.project_ccb_service import (
+        audit_vault_secret_lease_ttl_and_dynamic_credential_revocation_gate,
+    )
+
+    res = audit_vault_secret_lease_ttl_and_dynamic_credential_revocation_gate(
+        [
+            {
+                "engine_id": "vault-kv-legacy-secrets",
+                "vault_sealed": False,
+                "unseal_shamir_threshold": 3,
+                "orphan_unrevoked_leases_count": 0,
+                "static_secret_age_days": 45,
+                "root_token_active_in_runtime": False,
+                "audit_device_sink_healthy": True,
+                "lease_renewal_jitter_configured": False,
+            }
+        ]
+    )
+    assert res["status"] == "WARNING"
+    assert res["release_freeze_required"] is False
+    assert res["critical_engines"] == []
+    assert res["warning_engines"] == ["vault-kv-legacy-secrets"]
+    assert res["engine_evaluations"][0]["vault_hygiene_warning"] is True
+
+
+def test_audit_vault_secret_lease_ttl_and_dynamic_credential_revocation_gate_critical():
+    from backend.services.project_ccb_service import (
+        audit_vault_secret_lease_ttl_and_dynamic_credential_revocation_gate,
+    )
+
+    res = audit_vault_secret_lease_ttl_and_dynamic_credential_revocation_gate(
+        [
+            {
+                "engine_id": "vault-compromised-cluster",
+                "vault_sealed": True,
+                "unseal_shamir_threshold": 2,
+                "orphan_unrevoked_leases_count": 12,
+                "static_secret_age_days": 60,
+                "root_token_active_in_runtime": True,
+                "audit_device_sink_healthy": False,
+                "lease_renewal_jitter_configured": False,
+            }
+        ]
+    )
+    assert res["status"] == "CRITICAL"
+    assert res["release_freeze_required"] is True
+    assert res["critical_engines"] == ["vault-compromised-cluster"]
+    assert res["total_orphan_leases"] == 12
+
+
+def test_audit_vault_secret_lease_ttl_and_dynamic_credential_revocation_gate_empty_and_binding():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_vault_secret_lease_ttl_and_dynamic_credential_revocation_gate,
+    )
+
+    empty = audit_vault_secret_lease_ttl_and_dynamic_credential_revocation_gate([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["release_freeze_required"] is False
+    assert empty["evaluated_engines_count"] == 0
+    assert empty["total_orphan_leases"] == 0
+    assert (
+        ProjectCCBService.audit_vault_secret_lease_ttl_and_dynamic_credential_revocation_gate(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_vault_secret_lease_ttl_and_dynamic_credential_revocation_gate"
+        in mod.__all__
+    )

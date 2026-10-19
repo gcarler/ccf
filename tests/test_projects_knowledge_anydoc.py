@@ -9890,3 +9890,107 @@ def test_audit_markdown_latex_math_delimiter_balance_and_macro_hygiene_empty_and
         "audit_markdown_latex_math_delimiter_balance_and_macro_hygiene"
         in mod.__all__
     )
+
+
+def test_audit_markdown_runbook_incident_escalation_and_rollback_hygiene_healthy():
+    from backend.services.anydoc_service import (
+        audit_markdown_runbook_incident_escalation_and_rollback_hygiene,
+    )
+
+    runbooks = [
+        {
+            "runbook_id": "rb-db-failover-tier0",
+            "service_tier": "tier-0",
+            "oncall_escalation_policy_linked": True,
+            "executable_rollback_commands_present": True,
+            "rto_minutes_documented": 15,
+            "rpo_minutes_documented": 5,
+            "days_since_last_gameday_drill": 45,
+            "hardcoded_production_credentials_in_snippet": False,
+            "diagnostic_metrics_links_valid": True,
+        }
+    ]
+    res = audit_markdown_runbook_incident_escalation_and_rollback_hygiene(runbooks)
+    assert res["status"] == "HEALTHY"
+    assert res["evaluated_runbooks_count"] == 1
+    assert res["critical_runbooks"] == []
+    assert res["warning_runbooks"] == []
+    assert res["stale_gameday_drill_count"] == 0
+    assert res["runbook_evaluations"][0]["critical_runbook_breach"] is False
+
+
+def test_audit_markdown_runbook_incident_escalation_and_rollback_hygiene_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_runbook_incident_escalation_and_rollback_hygiene,
+    )
+
+    runbooks = [
+        {
+            "runbook_id": "rb-cache-flush-tier1",
+            "service_tier": "tier-1",
+            "oncall_escalation_policy_linked": True,
+            "executable_rollback_commands_present": True,
+            "rto_minutes_documented": 30,
+            "rpo_minutes_documented": 15,
+            "days_since_last_gameday_drill": 210,
+            "hardcoded_production_credentials_in_snippet": False,
+            "diagnostic_metrics_links_valid": False,
+        }
+    ]
+    res = audit_markdown_runbook_incident_escalation_and_rollback_hygiene(runbooks)
+    assert res["status"] == "WARNING"
+    assert res["critical_runbooks"] == []
+    assert res["warning_runbooks"] == ["rb-cache-flush-tier1"]
+    assert res["stale_gameday_drill_count"] == 1
+    assert res["runbook_evaluations"][0]["runbook_staleness_warning"] is True
+
+
+def test_audit_markdown_runbook_incident_escalation_and_rollback_hygiene_critical():
+    from backend.services.anydoc_service import (
+        audit_markdown_runbook_incident_escalation_and_rollback_hygiene,
+    )
+
+    runbooks = [
+        {
+            "runbook_id": "rb-payment-gateway-leaked",
+            "service_tier": "tier-0",
+            "oncall_escalation_policy_linked": False,
+            "executable_rollback_commands_present": False,
+            "rto_minutes_documented": 0,
+            "rpo_minutes_documented": -1,
+            "days_since_last_gameday_drill": 300,
+            "hardcoded_production_credentials_in_snippet": True,
+            "diagnostic_metrics_links_valid": False,
+        }
+    ]
+    res = audit_markdown_runbook_incident_escalation_and_rollback_hygiene(runbooks)
+    assert res["status"] == "CRITICAL"
+    assert res["critical_runbooks"] == ["rb-payment-gateway-leaked"]
+    assert res["stale_gameday_drill_count"] == 1
+    assert res["runbook_evaluations"][0]["critical_runbook_breach"] is True
+
+
+def test_audit_markdown_runbook_incident_escalation_and_rollback_hygiene_empty_and_binding():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_runbook_incident_escalation_and_rollback_hygiene,
+    )
+
+    empty = audit_markdown_runbook_incident_escalation_and_rollback_hygiene([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["evaluated_runbooks_count"] == 0
+    assert empty["stale_gameday_drill_count"] == 0
+    assert (
+        AnyDocService.audit_markdown_runbook_incident_escalation_and_rollback_hygiene([])
+        == empty
+    )
+    assert (
+        AnydocService.audit_markdown_runbook_incident_escalation_and_rollback_hygiene([])
+        == empty
+    )
+    assert (
+        "audit_markdown_runbook_incident_escalation_and_rollback_hygiene"
+        in mod.__all__
+    )

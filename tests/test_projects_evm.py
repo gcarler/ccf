@@ -12010,3 +12010,165 @@ def test_force_majeure_eichleay_zero_division_guards_and_field_reversion():
         "hooh_claim_pct_of_contract": 0.0,
         "delay_claim_status": "WITHIN_BASELINE_ALLOWANCE_CLEAN",
     }
+
+
+def test_cardinal_change_within_scope_clean():
+    """CO bajo el trigger de ripple y sin directivas -> 'WITHIN_CONTRACT_SCOPE_CLEAN'."""
+    import backend.services.project_evm_service as evm_module
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss,
+    )
+
+    res = evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss(
+        100000.0,
+        5000.0,
+        68.0,
+    )
+    assert res == {
+        "change_order_hours_pct": 5.0,
+        "productivity_loss_pct": 0.0,
+        "unimpacted_base_hours_lost": 0.0,
+        "cumulative_impact_cost_claim": 0.0,
+        "is_cardinal_change_breach": False,
+        "cardinal_change_status": "WITHIN_CONTRACT_SCOPE_CLEAN",
+    }
+    # Waiver bilateral firmado neutraliza el ripple aun con CO por encima del trigger.
+    waived = evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss(
+        50000.0, 7500.0, 68.0,
+        bilateral_cumulative_waiver_signed=True,
+    )
+    assert waived["change_order_hours_pct"] == 15.0
+    assert waived["productivity_loss_pct"] == 0.0
+    assert waived["unimpacted_base_hours_lost"] == 0.0
+    assert waived["cardinal_change_status"] == "WITHIN_CONTRACT_SCOPE_CLEAN"
+    assert (
+        ProjectEVMService.evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss(
+            100000.0, 5000.0, 68.0
+        )
+        == res
+    )
+    assert "evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss" in evm_module.__all__
+
+
+def test_cardinal_change_cumulative_impact_ripple_warning():
+    """Ripple >= 10% (inclusivo) o directivas sin precio -> 'CUMULATIVE_IMPACT_RIPPLE_CLAIM_WARNING'."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss,
+    )
+
+    # Math Leonard: pct 15% -> loss 15 * 0.29 = 4.35%; horas perdidas
+    # 50000 * 0.0435 = 2175.0; claim 2175 * 68 = 147900.0.
+    ripple = evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss(
+        50000.0,
+        7500.0,
+        68.0,
+    )
+    assert ripple["change_order_hours_pct"] == 15.0
+    assert ripple["productivity_loss_pct"] == 4.35
+    assert ripple["unimpacted_base_hours_lost"] == 2175.0
+    assert ripple["cumulative_impact_cost_claim"] == 147900.0
+    assert ripple["is_cardinal_change_breach"] is False
+    assert ripple["cardinal_change_status"] == "CUMULATIVE_IMPACT_RIPPLE_CLAIM_WARNING"
+
+    # Frontera inclusiva del trigger: exactamente 10% dispara el ripple.
+    at_trigger = evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss(
+        100000.0, 10000.0, 50.0,
+    )
+    assert at_trigger["change_order_hours_pct"] == 10.0
+    assert at_trigger["productivity_loss_pct"] == 2.9
+    assert at_trigger["unimpacted_base_hours_lost"] == 2900.0
+    assert at_trigger["cardinal_change_status"] == "CUMULATIVE_IMPACT_RIPPLE_CLAIM_WARNING"
+
+    # Directivas sin precio (> 0 pero <= 10) disparan WARNING sin ripple.
+    directives = evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss(
+        100000.0, 5000.0, 68.0,
+        unpriced_field_directives_count=3,
+    )
+    assert directives["productivity_loss_pct"] == 0.0
+    assert directives["is_cardinal_change_breach"] is False
+    assert directives["cardinal_change_status"] == "CUMULATIVE_IMPACT_RIPPLE_CLAIM_WARNING"
+
+
+def test_cardinal_change_breach_thresholds():
+    """CO >= 50% (inclusivo) o directivas sin precio > 10 -> 'CRITICAL_CARDINAL_CHANGE_OR_UNPRICED_DIRECTIVE_BREACH'."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss,
+    )
+
+    # Frontera inclusiva cardinal: 50% exacto es brecha (doctrina de abandono).
+    at_cardinal = evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss(
+        1000.0, 500.0, 68.0,
+    )
+    assert at_cardinal["change_order_hours_pct"] == 50.0
+    assert at_cardinal["is_cardinal_change_breach"] is True
+    assert at_cardinal["cardinal_change_status"] == "CRITICAL_CARDINAL_CHANGE_OR_UNPRICED_DIRECTIVE_BREACH"
+
+    # Directivas 10 exactas NO son brecha (estricto > 10) -> WARNING.
+    at_directive_limit = evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss(
+        100000.0, 5000.0, 68.0,
+        unpriced_field_directives_count=10,
+    )
+    assert at_directive_limit["is_cardinal_change_breach"] is False
+    assert at_directive_limit["cardinal_change_status"] == "CUMULATIVE_IMPACT_RIPPLE_CLAIM_WARNING"
+
+    # Directivas 11 cruzan el umbral de abandono -> BREACH.
+    breach_directives = evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss(
+        100000.0, 5000.0, 68.0,
+        unpriced_field_directives_count=11,
+    )
+    assert breach_directives["change_order_hours_pct"] == 5.0
+    assert breach_directives["is_cardinal_change_breach"] is True
+    assert breach_directives["cardinal_change_status"] == "CRITICAL_CARDINAL_CHANGE_OR_UNPRICED_DIRECTIVE_BREACH"
+
+    # La precedencia BREACH absorbe el WARNING del ripple: CO 60% + directivas 11.
+    combined = evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss(
+        1000.0, 600.0, 68.0,
+        unpriced_field_directives_count=11,
+    )
+    assert combined["change_order_hours_pct"] == 60.0
+    assert combined["productivity_loss_pct"] == 17.4
+    assert combined["unimpacted_base_hours_lost"] == 174.0
+    assert combined["cumulative_impact_cost_claim"] == 11832.0
+    assert combined["is_cardinal_change_breach"] is True
+    assert combined["cardinal_change_status"] == "CRITICAL_CARDINAL_CHANGE_OR_UNPRICED_DIRECTIVE_BREACH"
+
+
+def test_cardinal_change_zero_guards_and_field_reversion():
+    """Contrato original <= 0 anula el pct; CO/rate negativos se clamp; campos inválidos revierten a defaults."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss,
+    )
+
+    zero_contract = evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss(
+        0.0, 9999.0, 68.0, unpriced_field_directives_count=15,
+    )
+    assert zero_contract["change_order_hours_pct"] == 0.0
+    assert zero_contract["is_cardinal_change_breach"] is True  # directivas 15 > 10
+    assert zero_contract["cardinal_change_status"] == "CRITICAL_CARDINAL_CHANGE_OR_UNPRICED_DIRECTIVE_BREACH"
+
+    # CO negativo se clamp a 0; contrato original positivo -> pct 0 -> CLEAN.
+    negative_co = evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss(
+        100000.0, -40000.0, 68.0,
+    )
+    assert negative_co["change_order_hours_pct"] == 0.0
+    assert negative_co["cardinal_change_status"] == "WITHIN_CONTRACT_SCOPE_CLEAN"
+
+    revertido = evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss(
+        "one-hundred",          # no-float -> 0.0
+        None,                   # no-float -> 0.0
+        True,                   # bool excluida -> 0.0
+        unpriced_field_directives_count="many",   # no-int -> 0
+        leonard_coefficient=None,                 # no-float -> 0.29
+        cardinal_change_hours_threshold_pct="half",  # no-float -> 50.0
+        cumulative_impact_trigger_pct=None,       # no-float -> 10.0
+        bilateral_cumulative_waiver_signed=1,     # no-bool -> False
+    )
+    assert revertido == {
+        "change_order_hours_pct": 0.0,
+        "productivity_loss_pct": 0.0,
+        "unimpacted_base_hours_lost": 0.0,
+        "cumulative_impact_cost_claim": 0.0,
+        "is_cardinal_change_breach": False,
+        "cardinal_change_status": "WITHIN_CONTRACT_SCOPE_CLEAN",
+    }

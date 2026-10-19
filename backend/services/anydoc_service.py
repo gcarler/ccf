@@ -3057,6 +3057,7 @@ __all__ = [
     "audit_markdown_adr_madr_sections_and_supersession_hygiene",
     "audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene",
     "audit_markdown_latex_math_delimiter_balance_and_macro_hygiene",
+    "audit_markdown_runbook_incident_escalation_and_rollback_hygiene",
     "AnydocService",
 ]
 
@@ -10225,4 +10226,104 @@ AnyDocService.audit_markdown_latex_math_delimiter_balance_and_macro_hygiene = st
 )
 AnydocService.audit_markdown_latex_math_delimiter_balance_and_macro_hygiene = staticmethod(
     audit_markdown_latex_math_delimiter_balance_and_macro_hygiene
+)
+
+
+def audit_markdown_runbook_incident_escalation_and_rollback_hygiene(
+    runbooks: list[dict[str, Any]],
+    *,
+    max_days_since_game_day_drill: int = 180,
+    require_executable_rollback_block: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §4.4 & §10.2 — AnyDoc Markdown Runbook / Playbook Incident Escalation PagerDuty/On-Call Rotation, Rollback Command Verification & RTO/RPO SLA Hygiene Auditor."""
+    runbook_evaluations: list[dict[str, Any]] = []
+    critical_runbooks: list[str] = []
+    warning_runbooks: list[str] = []
+    stale_gameday_drill_count = 0
+
+    for item in runbooks or []:
+        if not isinstance(item, dict):
+            continue
+        runbook_id = str(item.get("runbook_id") or "").strip() or "UNKNOWN_RUNBOOK"
+        service_tier = str(item.get("service_tier") or "tier-1").strip()
+        oncall_escalation_policy_linked = bool(
+            item.get("oncall_escalation_policy_linked", True)
+        )
+        executable_rollback_commands_present = bool(
+            item.get("executable_rollback_commands_present", True)
+        )
+        raw_rto = item.get("rto_minutes_documented", 15)
+        rto_minutes_documented = int(15 if raw_rto is None else raw_rto)
+        raw_rpo = item.get("rpo_minutes_documented", 5)
+        rpo_minutes_documented = int(5 if raw_rpo is None else raw_rpo)
+        raw_drill = item.get("days_since_last_gameday_drill", 60)
+        days_since_last_gameday_drill = int(60 if raw_drill is None else raw_drill)
+        hardcoded_production_credentials_in_snippet = bool(
+            item.get("hardcoded_production_credentials_in_snippet", False)
+        )
+        diagnostic_metrics_links_valid = bool(
+            item.get("diagnostic_metrics_links_valid", True)
+        )
+
+        if days_since_last_gameday_drill > max_days_since_game_day_drill:
+            stale_gameday_drill_count += 1
+
+        critical_runbook_breach = (
+            hardcoded_production_credentials_in_snippet is True
+            or not oncall_escalation_policy_linked
+            or (
+                require_executable_rollback_block
+                and not executable_rollback_commands_present
+            )
+            or rto_minutes_documented <= 0
+            or rpo_minutes_documented < 0
+        )
+        runbook_staleness_warning = (not critical_runbook_breach) and (
+            days_since_last_gameday_drill > max_days_since_game_day_drill
+            or not diagnostic_metrics_links_valid
+        )
+
+        if critical_runbook_breach:
+            critical_runbooks.append(runbook_id)
+        elif runbook_staleness_warning:
+            warning_runbooks.append(runbook_id)
+
+        runbook_evaluations.append(
+            {
+                "runbook_id": runbook_id,
+                "service_tier": service_tier,
+                "oncall_escalation_policy_linked": oncall_escalation_policy_linked,
+                "executable_rollback_commands_present": executable_rollback_commands_present,
+                "rto_minutes_documented": rto_minutes_documented,
+                "rpo_minutes_documented": rpo_minutes_documented,
+                "days_since_last_gameday_drill": days_since_last_gameday_drill,
+                "hardcoded_production_credentials_in_snippet": hardcoded_production_credentials_in_snippet,
+                "diagnostic_metrics_links_valid": diagnostic_metrics_links_valid,
+                "critical_runbook_breach": critical_runbook_breach,
+                "runbook_staleness_warning": runbook_staleness_warning,
+            }
+        )
+
+    if len(critical_runbooks) > 0:
+        status = "CRITICAL"
+    elif len(warning_runbooks) > 0:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "status": status,
+        "evaluated_runbooks_count": len(runbook_evaluations),
+        "critical_runbooks": critical_runbooks,
+        "warning_runbooks": warning_runbooks,
+        "stale_gameday_drill_count": stale_gameday_drill_count,
+        "runbook_evaluations": runbook_evaluations,
+    }
+
+
+AnyDocService.audit_markdown_runbook_incident_escalation_and_rollback_hygiene = staticmethod(
+    audit_markdown_runbook_incident_escalation_and_rollback_hygiene
+)
+AnydocService.audit_markdown_runbook_incident_escalation_and_rollback_hygiene = staticmethod(
+    audit_markdown_runbook_incident_escalation_and_rollback_hygiene
 )

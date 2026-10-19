@@ -5544,6 +5544,7 @@ __all__ = [
     "evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer",
     "evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty",
     "evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim",
+    "evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss",
     "ProjectEVMService",
 ]
 
@@ -11795,4 +11796,105 @@ def evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim(
 
 ProjectEVMService.evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim = staticmethod(
     evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim
+)
+
+
+def evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss(
+    original_contract_hours: float,
+    approved_change_order_hours: float,
+    base_labor_rate_per_hour: float,
+    *,
+    unpriced_field_directives_count: int = 0,
+    leonard_coefficient: float = 0.29,
+    cardinal_change_hours_threshold_pct: float = 50.0,
+    cumulative_impact_trigger_pct: float = 10.0,
+    bilateral_cumulative_waiver_signed: bool = False,
+) -> dict[str, Any]:
+    """PMBOK §7.4 & §12.3 — Evalúa la doctrina de cardinal change y la pérdida de productividad sinérgica por impacto acumulativo (curva de Leonard) en contratos de construcción: ripple de horas de change orders sobre el contrato original, costo del ripple sobre horas base no impactadas y umbral de abandono de contrato.
+
+    - `change_order_hours_pct = max(0, CO hours) / max(1, original hours) * 100`
+      (0.0 si el contrato original es <= 0).
+    - `ripple_triggered`: CO pct >= `cumulative_impact_trigger_pct` (10.0,
+      inclusivo) sin waiver bilateral de impacto acumulativo firmado.
+    - `productivity_loss_pct` = pct * `leonard_coefficient` (0.29) si hay
+      ripple; sobre horas base no impactadas del contrato original.
+    - `cumulative_impact_cost_claim` = horas perdidas * tarifa laboral base.
+    - `is_cardinal_change_breach`: CO pct >= umbral cardinal (50.0,
+      inclusivo, doctrina de abandono) O directivas de campo sin precio > 10
+      (estricto: 10 exacto NO es brecha).
+    - Estados: 'CRITICAL_CARDINAL_CHANGE_OR_UNPRICED_DIRECTIVE_BREACH' |
+      'CUMULATIVE_IMPACT_RIPPLE_CLAIM_WARNING' (ripple o directivas > 0) |
+      'WITHIN_CONTRACT_SCOPE_CLEAN'.
+    """
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _int(value: Any, default: int) -> int:
+        if isinstance(value, bool) or not isinstance(value, int):
+            return default
+        return value
+
+    def _float(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    original_hours = _float(original_contract_hours, 0.0)
+    change_order_hours = _float(approved_change_order_hours, 0.0)
+    labor_rate = _float(base_labor_rate_per_hour, 0.0)
+    unpriced_count = _int(unpriced_field_directives_count, 0)
+    leonard = _float(leonard_coefficient, 0.29)
+    cardinal_threshold = _float(cardinal_change_hours_threshold_pct, 50.0)
+    ripple_trigger = _float(cumulative_impact_trigger_pct, 10.0)
+    waiver_signed = _bool(bilateral_cumulative_waiver_signed, False)
+
+    if original_hours > 0:
+        change_order_hours_pct = round(
+            (max(0.0, change_order_hours) / max(1.0, original_hours)) * 100.0, 2
+        )
+    else:
+        change_order_hours_pct = 0.0
+
+    ripple_triggered = (
+        change_order_hours_pct >= ripple_trigger and (not waiver_signed)
+    )
+
+    if ripple_triggered:
+        productivity_loss_pct = round(
+            (change_order_hours_pct / 100.0) * max(0.0, leonard) * 100.0, 2
+        )
+        unimpacted_base_hours_lost = round(
+            max(0.0, original_hours) * (productivity_loss_pct / 100.0), 2
+        )
+    else:
+        productivity_loss_pct = 0.0
+        unimpacted_base_hours_lost = 0.0
+
+    cumulative_impact_cost_claim = round(
+        unimpacted_base_hours_lost * max(0.0, labor_rate), 2
+    )
+
+    is_cardinal_change_breach = (
+        change_order_hours_pct >= cardinal_threshold or unpriced_count > 10
+    )
+
+    if is_cardinal_change_breach:
+        cardinal_change_status = "CRITICAL_CARDINAL_CHANGE_OR_UNPRICED_DIRECTIVE_BREACH"
+    elif ripple_triggered or unpriced_count > 0:
+        cardinal_change_status = "CUMULATIVE_IMPACT_RIPPLE_CLAIM_WARNING"
+    else:
+        cardinal_change_status = "WITHIN_CONTRACT_SCOPE_CLEAN"
+
+    return {
+        "change_order_hours_pct": change_order_hours_pct,
+        "productivity_loss_pct": productivity_loss_pct,
+        "unimpacted_base_hours_lost": unimpacted_base_hours_lost,
+        "cumulative_impact_cost_claim": cumulative_impact_cost_claim,
+        "is_cardinal_change_breach": is_cardinal_change_breach,
+        "cardinal_change_status": cardinal_change_status,
+    }
+
+
+ProjectEVMService.evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss = staticmethod(
+    evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss
 )

@@ -12089,3 +12089,105 @@ def test_audit_joint_venture_consortium_liability_and_step_in_rights_empty_and_b
         "audit_joint_venture_consortium_liability_and_step_in_rights"
         in mod.__all__
     )
+
+
+def test_audit_ip_patent_assignment_chain_and_copyleft_contamination_healthy():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_ip_patent_assignment_chain_and_copyleft_contamination,
+    )
+
+    res = audit_ip_patent_assignment_chain_and_copyleft_contamination(
+        [
+            {
+                "deliverable_id": "DELIV-CORE-SDK",
+                "proprietary_distribution": True,
+                "total_contributors": 12,
+                "signed_ip_assignment_contributors": 12,
+                "strong_copyleft_agpl_gpl_detected": False,
+                "background_ip_license_documented": True,
+                "third_party_notice_attribution_complete": True,
+                "pending_patent_encumbrance_litigation": False,
+            }
+        ]
+    )
+    assert res["status"] == "HEALTHY"
+    assert res["evaluated_deliverables_count"] == 1
+    assert res["critical_deliverables"] == []
+    assert res["warning_deliverables"] == []
+    assert res["copyleft_contaminated_count"] == 0
+    assert res["deliverable_evaluations"][0]["assignment_coverage_pct"] == 100.0
+
+
+def test_audit_ip_patent_assignment_chain_and_copyleft_contamination_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_ip_patent_assignment_chain_and_copyleft_contamination,
+    )
+
+    res = audit_ip_patent_assignment_chain_and_copyleft_contamination(
+        [
+            {
+                "deliverable_id": "DELIV-UI-MODULE",
+                "proprietary_distribution": True,
+                "total_contributors": 8,
+                "signed_ip_assignment_contributors": 8,
+                "strong_copyleft_agpl_gpl_detected": False,
+                "background_ip_license_documented": False,
+                "third_party_notice_attribution_complete": False,
+                "pending_patent_encumbrance_litigation": False,
+            }
+        ]
+    )
+    assert res["status"] == "WARNING"
+    assert res["critical_deliverables"] == []
+    assert res["warning_deliverables"] == ["DELIV-UI-MODULE"]
+    assert res["copyleft_contaminated_count"] == 0
+    assert res["deliverable_evaluations"][0]["ip_hygiene_warning"] is True
+
+
+def test_audit_ip_patent_assignment_chain_and_copyleft_contamination_critical():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_ip_patent_assignment_chain_and_copyleft_contamination,
+    )
+
+    res = audit_ip_patent_assignment_chain_and_copyleft_contamination(
+        [
+            {
+                "deliverable_id": "DELIV-AGPL-TAINTED",
+                "proprietary_distribution": True,
+                "total_contributors": 10,
+                "signed_ip_assignment_contributors": 8,
+                "strong_copyleft_agpl_gpl_detected": True,
+                "background_ip_license_documented": True,
+                "third_party_notice_attribution_complete": True,
+                "pending_patent_encumbrance_litigation": True,
+            }
+        ]
+    )
+    assert res["status"] == "CRITICAL"
+    assert res["critical_deliverables"] == ["DELIV-AGPL-TAINTED"]
+    assert res["copyleft_contaminated_count"] == 1
+    assert res["deliverable_evaluations"][0]["assignment_coverage_pct"] == 80.0
+    assert res["deliverable_evaluations"][0]["critical_ip_breach"] is True
+
+
+def test_audit_ip_patent_assignment_chain_and_copyleft_contamination_empty_and_binding():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_ip_patent_assignment_chain_and_copyleft_contamination,
+    )
+
+    empty = audit_ip_patent_assignment_chain_and_copyleft_contamination([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["evaluated_deliverables_count"] == 0
+    assert empty["copyleft_contaminated_count"] == 0
+    assert (
+        ProjectLifecyclePMIService.audit_ip_patent_assignment_chain_and_copyleft_contamination(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_ip_patent_assignment_chain_and_copyleft_contamination"
+        in mod.__all__
+    )

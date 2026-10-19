@@ -3191,6 +3191,7 @@ __all__ = [
     "audit_eia_environmental_permit_conditions_and_chance_find_stop_work",
     "audit_decommissioning_hazmat_manifest_and_site_remediation_clearance",
     "audit_joint_venture_consortium_liability_and_step_in_rights",
+    "audit_ip_patent_assignment_chain_and_copyleft_contamination",
     "ProjectLifecyclePMIService",
 ]
 
@@ -9184,4 +9185,112 @@ def audit_joint_venture_consortium_liability_and_step_in_rights(
 
 ProjectLifecyclePMIService.audit_joint_venture_consortium_liability_and_step_in_rights = staticmethod(
     audit_joint_venture_consortium_liability_and_step_in_rights
+)
+
+
+def audit_ip_patent_assignment_chain_and_copyleft_contamination(
+    deliverables: list[dict[str, Any]],
+    *,
+    min_inventor_assignment_coverage_pct: float = 100.0,
+    allow_agpl_or_gpl_in_proprietary: bool = False,
+) -> dict[str, Any]:
+    """PMBOK §12.3 & §4.7 — Intellectual Property (IP) Patent Assignment Chain of Title, Open-Source Copyleft Contamination & Background IP License Carve-Out Auditor."""
+    deliverable_evaluations: list[dict[str, Any]] = []
+    critical_deliverables: list[str] = []
+    warning_deliverables: list[str] = []
+    copyleft_contaminated_count = 0
+
+    for item in deliverables or []:
+        if not isinstance(item, Mapping):
+            continue
+        deliverable_id = (
+            str(item.get("deliverable_id") or "").strip() or "UNKNOWN_DELIVERABLE"
+        )
+        proprietary_distribution = bool(
+            item.get("proprietary_distribution", True)
+        )
+        total_contributors = int(item.get("total_contributors", 0) or 0)
+        signed_ip_assignment_contributors = int(
+            item.get("signed_ip_assignment_contributors", 0) or 0
+        )
+        strong_copyleft_agpl_gpl_detected = bool(
+            item.get("strong_copyleft_agpl_gpl_detected", False)
+        )
+        background_ip_license_documented = bool(
+            item.get("background_ip_license_documented", True)
+        )
+        third_party_notice_attribution_complete = bool(
+            item.get("third_party_notice_attribution_complete", True)
+        )
+        pending_patent_encumbrance_litigation = bool(
+            item.get("pending_patent_encumbrance_litigation", False)
+        )
+
+        assignment_coverage_pct = (
+            round(
+                (signed_ip_assignment_contributors / total_contributors) * 100.0,
+                2,
+            )
+            if total_contributors > 0
+            else 100.0
+        )
+
+        copyleft_contaminated = bool(
+            proprietary_distribution
+            and strong_copyleft_agpl_gpl_detected
+            and not allow_agpl_or_gpl_in_proprietary
+        )
+        if copyleft_contaminated:
+            copyleft_contaminated_count += 1
+
+        critical_ip_breach = (
+            pending_patent_encumbrance_litigation is True
+            or assignment_coverage_pct < min_inventor_assignment_coverage_pct
+            or copyleft_contaminated
+        )
+        ip_hygiene_warning = (not critical_ip_breach) and (
+            not background_ip_license_documented
+            or not third_party_notice_attribution_complete
+        )
+
+        if critical_ip_breach:
+            critical_deliverables.append(deliverable_id)
+        elif ip_hygiene_warning:
+            warning_deliverables.append(deliverable_id)
+
+        deliverable_evaluations.append(
+            {
+                "deliverable_id": deliverable_id,
+                "proprietary_distribution": proprietary_distribution,
+                "total_contributors": total_contributors,
+                "signed_ip_assignment_contributors": signed_ip_assignment_contributors,
+                "assignment_coverage_pct": assignment_coverage_pct,
+                "strong_copyleft_agpl_gpl_detected": strong_copyleft_agpl_gpl_detected,
+                "background_ip_license_documented": background_ip_license_documented,
+                "third_party_notice_attribution_complete": third_party_notice_attribution_complete,
+                "pending_patent_encumbrance_litigation": pending_patent_encumbrance_litigation,
+                "critical_ip_breach": critical_ip_breach,
+                "ip_hygiene_warning": ip_hygiene_warning,
+            }
+        )
+
+    if critical_deliverables:
+        status = "CRITICAL"
+    elif warning_deliverables:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "status": status,
+        "evaluated_deliverables_count": len(deliverable_evaluations),
+        "critical_deliverables": critical_deliverables,
+        "warning_deliverables": warning_deliverables,
+        "copyleft_contaminated_count": copyleft_contaminated_count,
+        "deliverable_evaluations": deliverable_evaluations,
+    }
+
+
+ProjectLifecyclePMIService.audit_ip_patent_assignment_chain_and_copyleft_contamination = staticmethod(
+    audit_ip_patent_assignment_chain_and_copyleft_contamination
 )

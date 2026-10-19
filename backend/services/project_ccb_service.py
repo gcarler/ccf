@@ -2871,6 +2871,7 @@ __all__ = [
     "audit_feature_flag_kill_switch_and_stale_debt_gate",
     "audit_otel_trace_propagation_and_collector_drop_gate",
     "audit_ebpf_kernel_verifier_and_ringbuf_drop_gate",
+    "audit_vault_secret_lease_ttl_and_dynamic_credential_revocation_gate",
     "ProjectCCBService",
 ]
 
@@ -9181,4 +9182,98 @@ def audit_ebpf_kernel_verifier_and_ringbuf_drop_gate(
 
 ProjectCCBService.audit_ebpf_kernel_verifier_and_ringbuf_drop_gate = staticmethod(
     audit_ebpf_kernel_verifier_and_ringbuf_drop_gate
+)
+
+
+def audit_vault_secret_lease_ttl_and_dynamic_credential_revocation_gate(
+    engines: list[dict[str, Any]],
+    *,
+    max_static_secret_ttl_days: int = 30,
+    max_orphan_unrevoked_leases: int = 0,
+    min_unseal_shamir_threshold: int = 3,
+) -> dict[str, Any]:
+    """PMBOK §8.3 & §11.6 — CCB HashiCorp Vault / Secrets Manager Lease Renewal TTL, Dynamic DB Credential Revocation & Seal Quorum Gate Auditor."""
+    engine_evaluations: list[dict[str, Any]] = []
+    critical_engines: list[str] = []
+    warning_engines: list[str] = []
+    total_orphan_leases = 0
+
+    for item in engines or []:
+        if not isinstance(item, Mapping):
+            continue
+        engine_id = str(item.get("engine_id") or "").strip() or "UNKNOWN_ENGINE"
+        vault_sealed = bool(item.get("vault_sealed", False))
+        unseal_shamir_threshold = int(
+            item.get("unseal_shamir_threshold", 3) or 0
+        )
+        orphan_unrevoked_leases_count = int(
+            item.get("orphan_unrevoked_leases_count", 0) or 0
+        )
+        static_secret_age_days = int(
+            item.get("static_secret_age_days", 10) or 0
+        )
+        root_token_active_in_runtime = bool(
+            item.get("root_token_active_in_runtime", False)
+        )
+        audit_device_sink_healthy = bool(
+            item.get("audit_device_sink_healthy", True)
+        )
+        lease_renewal_jitter_configured = bool(
+            item.get("lease_renewal_jitter_configured", True)
+        )
+
+        total_orphan_leases += orphan_unrevoked_leases_count
+
+        critical_vault_violation = (
+            vault_sealed is True
+            or root_token_active_in_runtime is True
+            or not audit_device_sink_healthy
+            or unseal_shamir_threshold < min_unseal_shamir_threshold
+            or orphan_unrevoked_leases_count > max_orphan_unrevoked_leases
+        )
+        vault_hygiene_warning = (not critical_vault_violation) and (
+            static_secret_age_days > max_static_secret_ttl_days
+            or not lease_renewal_jitter_configured
+        )
+
+        if critical_vault_violation:
+            critical_engines.append(engine_id)
+        elif vault_hygiene_warning:
+            warning_engines.append(engine_id)
+
+        engine_evaluations.append(
+            {
+                "engine_id": engine_id,
+                "vault_sealed": vault_sealed,
+                "unseal_shamir_threshold": unseal_shamir_threshold,
+                "orphan_unrevoked_leases_count": orphan_unrevoked_leases_count,
+                "static_secret_age_days": static_secret_age_days,
+                "root_token_active_in_runtime": root_token_active_in_runtime,
+                "audit_device_sink_healthy": audit_device_sink_healthy,
+                "lease_renewal_jitter_configured": lease_renewal_jitter_configured,
+                "critical_vault_violation": critical_vault_violation,
+                "vault_hygiene_warning": vault_hygiene_warning,
+            }
+        )
+
+    if critical_engines:
+        status = "CRITICAL"
+    elif warning_engines:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "status": status,
+        "release_freeze_required": status == "CRITICAL",
+        "evaluated_engines_count": len(engine_evaluations),
+        "critical_engines": critical_engines,
+        "warning_engines": warning_engines,
+        "total_orphan_leases": total_orphan_leases,
+        "engine_evaluations": engine_evaluations,
+    }
+
+
+ProjectCCBService.audit_vault_secret_lease_ttl_and_dynamic_credential_revocation_gate = staticmethod(
+    audit_vault_secret_lease_ttl_and_dynamic_credential_revocation_gate
 )
