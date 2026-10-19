@@ -10717,3 +10717,96 @@ def test_evaluate_evm_foreign_exchange_fx_hedging_collar_and_revaluation_reserve
         in mod.__all__
     )
 
+
+def test_evaluate_evm_economic_price_adjustment_epa_corridor_and_share_compliant():
+    from backend.services.project_evm_service import (
+        evaluate_evm_economic_price_adjustment_epa_corridor_and_share,
+    )
+
+    res = evaluate_evm_economic_price_adjustment_epa_corridor_and_share(
+        [
+            {
+                "clause_id": "EPA-STEEL-01",
+                "baseline_commodity_cost": 100000.0,
+                "index_change_pct": 9.5,
+                "billed_epa_adjustment_amount": 4500.0,
+                "published_index_verified": True,
+            }
+        ]
+    )
+    assert res["status"] == "compliant"
+    assert res["is_compliant"] is True
+    assert res["clauses_evaluated"] == 1
+    assert res["improper_deadband_or_index_clause_ids"] == []
+    assert res["cap_exceeded_clause_ids"] == []
+    assert res["Violations"] == []
+
+
+def test_evaluate_evm_economic_price_adjustment_epa_corridor_and_share_critical():
+    from backend.services.project_evm_service import (
+        evaluate_evm_economic_price_adjustment_epa_corridor_and_share,
+    )
+
+    res = evaluate_evm_economic_price_adjustment_epa_corridor_and_share(
+        [
+            {
+                "clause_id": "EPA-COPPER-DEADBAND",
+                "baseline_commodity_cost": 50000.0,
+                "index_change_pct": 3.2,
+                "billed_epa_adjustment_amount": 1600.0,
+                "published_index_verified": False,
+            }
+        ],
+        deadband_corridor_pct=5.0,
+    )
+    assert res["status"] == "critical"
+    assert res["is_compliant"] is False
+    assert res["improper_deadband_or_index_clause_ids"] == ["EPA-COPPER-DEADBAND"]
+    assert res["records"][0]["unverified_index_or_within_deadband_billing"] is True
+    assert len(res["Violations"]) >= 1
+
+
+def test_evaluate_evm_economic_price_adjustment_epa_corridor_and_share_warning():
+    from backend.services.project_evm_service import (
+        evaluate_evm_economic_price_adjustment_epa_corridor_and_share,
+    )
+
+    res = evaluate_evm_economic_price_adjustment_epa_corridor_and_share(
+        [
+            {
+                "id": "EPA-CEMENT-CAP",
+                "baseline_commodity_cost": 100000.0,
+                "index_change_pct": 22.0,
+                "billed_epa_adjustment_amount": 18000.0,
+                "published_index_verified": True,
+            }
+        ],
+        max_owner_epa_payout_cap_pct=15.0,
+    )
+    assert res["status"] == "warning"
+    assert res["is_compliant"] is False
+    assert res["improper_deadband_or_index_clause_ids"] == []
+    assert res["cap_exceeded_clause_ids"] == ["EPA-CEMENT-CAP"]
+    assert res["records"][0]["epa_payout_cap_exceeded"] is True
+
+
+def test_evaluate_evm_economic_price_adjustment_epa_corridor_and_share_staticmethod_and_dunder_all():
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_economic_price_adjustment_epa_corridor_and_share,
+    )
+
+    sample = [{"clause_id": "EPA-01", "baseline_commodity_cost": 10000.0}]
+    assert (
+        ProjectEVMService.evaluate_evm_economic_price_adjustment_epa_corridor_and_share(
+            sample
+        )
+        == evaluate_evm_economic_price_adjustment_epa_corridor_and_share(sample)
+    )
+    assert (
+        "evaluate_evm_economic_price_adjustment_epa_corridor_and_share"
+        in mod.__all__
+    )
+
+

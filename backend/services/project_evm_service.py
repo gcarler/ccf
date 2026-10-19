@@ -5536,6 +5536,7 @@ __all__ = [
     "evaluate_evm_subcontractor_backcharge_offset_and_joint_check_disbursement",
     "evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate",
     "evaluate_evm_foreign_exchange_fx_hedging_collar_and_revaluation_reserve",
+    "evaluate_evm_economic_price_adjustment_epa_corridor_and_share",
     "ProjectEVMService",
 ]
 
@@ -10810,5 +10811,119 @@ def evaluate_evm_foreign_exchange_fx_hedging_collar_and_revaluation_reserve(
 
 ProjectEVMService.evaluate_evm_foreign_exchange_fx_hedging_collar_and_revaluation_reserve = staticmethod(
     evaluate_evm_foreign_exchange_fx_hedging_collar_and_revaluation_reserve
+)
+
+
+def evaluate_evm_economic_price_adjustment_epa_corridor_and_share(
+    commodity_clauses: list[dict[str, Any]],
+    *,
+    deadband_corridor_pct: float = 5.0,
+    max_owner_epa_payout_cap_pct: float = 15.0,
+    require_published_bls_or_lme_index: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §7.4 & §12.1 — Evalúa banda muerta (deadband corridor) de cláusulas EPA por índice de commodities, verificación de índice BLS/LME publicado y tope de ajuste asumido por el dueño."""
+    raw_items = commodity_clauses if isinstance(commodity_clauses, list) else []
+    valid_items = [item for item in raw_items if isinstance(item, dict)]
+
+    improper_deadband_or_index_clause_ids: list[str] = []
+    cap_exceeded_clause_ids: list[str] = []
+    records: list[dict[str, Any]] = []
+    violations: list[str] = []
+    has_critical = False
+    has_warning = False
+
+    for idx, item in enumerate(valid_items):
+        clause_id = (
+            str(
+                item.get("clause_id") or item.get("id") or f"epa-{idx + 1}"
+            ).strip()
+            or f"epa-{idx + 1}"
+        )
+        baseline_commodity_cost = max(
+            0.0, float(item.get("baseline_commodity_cost") or 0.0)
+        )
+        index_change_pct = float(item.get("index_change_pct") or 0.0)
+        billed_epa_adjustment_amount = max(
+            0.0, float(item.get("billed_epa_adjustment_amount") or 0.0)
+        )
+
+        raw_verified = item.get("published_index_verified", True)
+        published_index_verified = bool(
+            True if raw_verified is None else raw_verified
+        )
+
+        epa_payout_pct = (
+            round(
+                (billed_epa_adjustment_amount / baseline_commodity_cost) * 100.0,
+                2,
+            )
+            if baseline_commodity_cost > 0.0
+            else 0.0
+        )
+
+        unverified_index_or_within_deadband_billing = bool(
+            (require_published_bls_or_lme_index and not published_index_verified)
+            or (
+                abs(index_change_pct) <= deadband_corridor_pct
+                and billed_epa_adjustment_amount > 0.0
+            )
+        )
+        epa_payout_cap_exceeded = bool(
+            baseline_commodity_cost > 0.0
+            and (billed_epa_adjustment_amount / baseline_commodity_cost) * 100.0
+            > max_owner_epa_payout_cap_pct
+        )
+
+        if unverified_index_or_within_deadband_billing:
+            improper_deadband_or_index_clause_ids.append(clause_id)
+            has_critical = True
+            violations.append(
+                f"EPA clause '{clause_id}' billed within deadband corridor (|{index_change_pct}%| <= {deadband_corridor_pct}%) or lacks published BLS/LME index verification."
+            )
+
+        if epa_payout_cap_exceeded:
+            cap_exceeded_clause_ids.append(clause_id)
+            has_warning = True
+            violations.append(
+                f"EPA clause '{clause_id}' payout ({epa_payout_pct}%) exceeds maximum owner cap ({max_owner_epa_payout_cap_pct}%)."
+            )
+
+        records.append(
+            {
+                "clause_id": clause_id,
+                "baseline_commodity_cost": baseline_commodity_cost,
+                "index_change_pct": index_change_pct,
+                "billed_epa_adjustment_amount": billed_epa_adjustment_amount,
+                "epa_payout_pct": epa_payout_pct,
+                "published_index_verified": published_index_verified,
+                "unverified_index_or_within_deadband_billing": unverified_index_or_within_deadband_billing,
+                "epa_payout_cap_exceeded": epa_payout_cap_exceeded,
+            }
+        )
+
+    if has_critical:
+        status = "critical"
+        is_compliant = False
+    elif has_warning:
+        status = "warning"
+        is_compliant = False
+    else:
+        status = "compliant"
+        is_compliant = True
+
+    return {
+        "status": status,
+        "is_compliant": is_compliant,
+        "clauses_evaluated": len(records),
+        "improper_deadband_or_index_clause_ids": improper_deadband_or_index_clause_ids,
+        "cap_exceeded_clause_ids": cap_exceeded_clause_ids,
+        "records": records,
+        "violations": violations,
+        "Violations": violations,
+    }
+
+
+ProjectEVMService.evaluate_evm_economic_price_adjustment_epa_corridor_and_share = staticmethod(
+    evaluate_evm_economic_price_adjustment_epa_corridor_and_share
 )
 
