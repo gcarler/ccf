@@ -8249,3 +8249,182 @@ def test_validate_schedule_crashing_and_fast_tracking_compression_dunder_all_and
         "validate_schedule_crashing_and_fast_tracking_compression"
         in mod.__all__
     )
+
+
+def test_validate_make_or_buy_core_ip_or_lockin_breach():
+    from backend.schemas.projects import (
+        validate_make_or_buy_tco_and_vendor_concentration,
+    )
+
+    res = validate_make_or_buy_tco_and_vendor_concentration(
+        [
+            {
+                "component_id": "COMP-CORE-IP-OUTSOURCED",
+                "is_core_proprietary_ip": True,
+                "decision": "BUY",
+            },
+            {
+                "component_id": "COMP-LOCKIN-NO-EXIT",
+                "decision": "BUY",
+                "exit_portability_plan_documented": False,
+            },
+            {
+                "component_id": "COMP-CORE-IP-AND-CONCENTRATED",
+                "is_core_proprietary_ip": True,
+                "decision": "BUY",
+                "vendor_spend_share_pct": 55.0,
+            },
+        ],
+        max_single_vendor_spend_share_pct=40.0,
+        min_core_ip_internal_build=True,
+    )
+    assert res["evaluated_components_count"] == 3
+    assert res["core_ip_outsourced_or_missing_exit_component_ids"] == [
+        "COMP-CORE-IP-OUTSOURCED",
+        "COMP-LOCKIN-NO-EXIT",
+        "COMP-CORE-IP-AND-CONCENTRATED",
+    ]
+    assert res["tco_inefficient_or_concentrated_vendor_component_ids"] == [
+        "COMP-CORE-IP-AND-CONCENTRATED"
+    ]
+    assert (
+        res["make_or_buy_status"]
+        == "MAKE_OR_BUY_CORE_IP_OR_LOCKIN_BREACH"
+    )
+    assert res["is_make_or_buy_valid"] is False
+
+    exempt = validate_make_or_buy_tco_and_vendor_concentration(
+        [
+            {
+                "component_id": "COMP-CORE-IP-OFF-FLAG",
+                "is_core_proprietary_ip": True,
+                "decision": "BUY",
+            }
+        ],
+        max_single_vendor_spend_share_pct=40.0,
+        min_core_ip_internal_build=False,
+    )
+    assert exempt["core_ip_outsourced_or_missing_exit_component_ids"] == []
+
+
+def test_validate_make_or_buy_tco_or_concentration_warning():
+    from backend.schemas.projects import (
+        validate_make_or_buy_tco_and_vendor_concentration,
+    )
+
+    res = validate_make_or_buy_tco_and_vendor_concentration(
+        [
+            {
+                "component_id": "COMP-CONCENTRATED",
+                "decision": "BUY",
+                "vendor_spend_share_pct": 55.0,
+            },
+            {
+                "component_id": "COMP-TCO-DRIFT",
+                "decision": "BUY",
+                "buy_5yr_tco_usd": 200000.0,
+                "make_5yr_tco_usd": 120000.0,
+            },
+            {
+                "component_id": "COMP-WASTEFUL-MAKE",
+                "decision": "MAKE",
+                "is_core_proprietary_ip": False,
+                "make_5yr_tco_usd": 250000.0,
+                "buy_5yr_tco_usd": 100000.0,
+            },
+        ],
+        max_single_vendor_spend_share_pct=40.0,
+        min_core_ip_internal_build=True,
+    )
+    assert res["evaluated_components_count"] == 3
+    assert res["core_ip_outsourced_or_missing_exit_component_ids"] == []
+    assert res["tco_inefficient_or_concentrated_vendor_component_ids"] == [
+        "COMP-CONCENTRATED",
+        "COMP-TCO-DRIFT",
+        "COMP-WASTEFUL-MAKE",
+    ]
+    assert (
+        res["make_or_buy_status"]
+        == "MAKE_OR_BUY_TCO_OR_CONCENTRATION_WARNING"
+    )
+    assert res["is_make_or_buy_valid"] is False
+
+
+def test_validate_make_or_buy_boundaries_optimal_and_defaults():
+    from backend.schemas.projects import (
+        validate_make_or_buy_tco_and_vendor_concentration,
+    )
+
+    res = validate_make_or_buy_tco_and_vendor_concentration(
+        [
+            {
+                "component_id": "COMP-BOUNDARY",
+                "decision": "BUY",
+                "vendor_spend_share_pct": 40.0,
+                "buy_5yr_tco_usd": 150000.0,
+                "make_5yr_tco_usd": 120000.0,
+            },
+            {
+                "component_id": "COMP-MAKE-CORE",
+                "decision": "MAKE",
+                "is_core_proprietary_ip": True,
+                "make_5yr_tco_usd": 300000.0,
+                "buy_5yr_tco_usd": 100000.0,
+            },
+            {"component_id": "COMP-ALL-DEFAULTS"},
+        ],
+        max_single_vendor_spend_share_pct=40.0,
+        min_core_ip_internal_build=True,
+    )
+    assert res["evaluated_components_count"] == 3
+    assert res["core_ip_outsourced_or_missing_exit_component_ids"] == []
+    assert res["tco_inefficient_or_concentrated_vendor_component_ids"] == []
+    assert (
+        res["make_or_buy_status"] == "MAKE_OR_BUY_STRATEGY_OPTIMAL"
+    )
+    assert res["is_make_or_buy_valid"] is True
+
+
+def test_validate_make_or_buy_invalid_and_dunder_all():
+    from backend.schemas.projects import (
+        validate_make_or_buy_tco_and_vendor_concentration,
+    )
+
+    empty = validate_make_or_buy_tco_and_vendor_concentration(None)
+    assert empty["evaluated_components_count"] == 0
+    assert empty["core_ip_outsourced_or_missing_exit_component_ids"] == []
+    assert (
+        empty["tco_inefficient_or_concentrated_vendor_component_ids"]
+        == []
+    )
+    assert empty["make_or_buy_status"] == "MAKE_OR_BUY_STRATEGY_OPTIMAL"
+    assert empty["is_make_or_buy_valid"] is True
+
+    invalid = validate_make_or_buy_tco_and_vendor_concentration(
+        [42, "not-a-dict", None, {"component_id": "   "}]  # type: ignore[list-item]
+    )
+    assert invalid["evaluated_components_count"] == 0
+
+    defaults = validate_make_or_buy_tco_and_vendor_concentration(
+        [
+            {
+                "component_id": "COMP-DEFAULTS",
+                "decision": None,
+                "is_core_proprietary_ip": None,
+                "buy_5yr_tco_usd": None,
+                "make_5yr_tco_usd": None,
+                "vendor_spend_share_pct": None,
+                "exit_portability_plan_documented": None,
+            }
+        ]
+    )
+    assert defaults["evaluated_components_count"] == 1
+    assert defaults["make_or_buy_status"] == "MAKE_OR_BUY_STRATEGY_OPTIMAL"
+    assert defaults["is_make_or_buy_valid"] is True
+
+    import backend.schemas.projects as mod
+
+    assert (
+        "validate_make_or_buy_tco_and_vendor_concentration"
+        in mod.__all__
+    )

@@ -3814,6 +3814,7 @@ __all__ = [
     "validate_pert_three_point_estimation_and_delphi_convergence",
     "validate_monte_carlo_p80_p90_convergence_and_tornado_sensitivity",
     "validate_benefit_cost_ratio_and_sunk_cost_governance",
+    "validate_make_or_buy_tco_and_vendor_concentration",
     "validate_resource_leveling_overallocation_and_context_switching",
     "validate_wbs_rolling_wave_horizon_and_8_80_rule",
     "validate_rtm_bidirectional_traceability_and_gold_plating",
@@ -8504,4 +8505,93 @@ def validate_schedule_crashing_and_fast_tracking_compression(
         "schedule_compression_status": schedule_compression_status,
         "is_schedule_compression_valid": schedule_compression_status
         == "SCHEDULE_COMPRESSION_OPTIMAL",
+    }
+
+
+def validate_make_or_buy_tco_and_vendor_concentration(
+    components: Any,
+    *,
+    max_single_vendor_spend_share_pct: float = 40.0,
+    min_core_ip_internal_build: bool = True,
+) -> dict[str, Any]:
+    """PMI PMBOK §12.1 & §7.2 — Procurement Make-or-Buy Total Cost of Ownership (TCO) & Vendor Concentration Validator."""
+    entries = components if isinstance(components, (list, tuple)) else []
+    valid_components = [
+        component
+        for component in entries
+        if isinstance(component, dict)
+        and str(component.get("component_id") or "").strip()
+    ]
+
+    def _num(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    core_ip_outsourced_or_missing_exit_component_ids: list[str] = []
+    tco_inefficient_or_concentrated_vendor_component_ids: list[str] = []
+
+    for component in valid_components:
+        component_id = str(component.get("component_id")).strip()
+        decision_raw = component.get("decision")
+        if isinstance(decision_raw, str) and decision_raw.strip().upper() in (
+            "MAKE",
+            "BUY",
+        ):
+            decision = decision_raw.strip().upper()
+        else:
+            decision = "BUY"
+        is_core_ip = _bool(
+            component.get("is_core_proprietary_ip"), False
+        )
+        buy_tco = _num(
+            component.get("buy_5yr_tco_usd"), 100000.0
+        )
+        make_tco = _num(
+            component.get("make_5yr_tco_usd"), 120000.0
+        )
+        vendor_share_pct = _num(
+            component.get("vendor_spend_share_pct"), 15.0
+        )
+        exit_plan_documented = _bool(
+            component.get("exit_portability_plan_documented"), True
+        )
+
+        if (min_core_ip_internal_build and is_core_ip and decision == "BUY") or (
+            decision == "BUY" and not exit_plan_documented
+        ):
+            core_ip_outsourced_or_missing_exit_component_ids.append(
+                component_id
+            )
+
+        if (
+            decision == "BUY" and vendor_share_pct > max_single_vendor_spend_share_pct
+        ) or (
+            decision == "BUY" and buy_tco > make_tco * 1.25
+        ) or (
+            decision == "MAKE"
+            and not is_core_ip
+            and make_tco > buy_tco * 1.25
+        ):
+            tco_inefficient_or_concentrated_vendor_component_ids.append(
+                component_id
+            )
+
+    if core_ip_outsourced_or_missing_exit_component_ids:
+        make_or_buy_status = "MAKE_OR_BUY_CORE_IP_OR_LOCKIN_BREACH"
+    elif tco_inefficient_or_concentrated_vendor_component_ids:
+        make_or_buy_status = "MAKE_OR_BUY_TCO_OR_CONCENTRATION_WARNING"
+    else:
+        make_or_buy_status = "MAKE_OR_BUY_STRATEGY_OPTIMAL"
+
+    return {
+        "evaluated_components_count": len(valid_components),
+        "core_ip_outsourced_or_missing_exit_component_ids": core_ip_outsourced_or_missing_exit_component_ids,
+        "tco_inefficient_or_concentrated_vendor_component_ids": tco_inefficient_or_concentrated_vendor_component_ids,
+        "make_or_buy_status": make_or_buy_status,
+        "is_make_or_buy_valid": make_or_buy_status
+        == "MAKE_OR_BUY_STRATEGY_OPTIMAL",
     }

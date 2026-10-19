@@ -5526,6 +5526,7 @@ __all__ = [
     "evaluate_evm_liquidated_damages_cap_and_eot_relief",
     "evaluate_evm_epa_inflation_indexation_and_escalation_cap",
     "evaluate_evm_subcontractor_lien_waiver_and_flow_down",
+    "evaluate_evm_capex_opex_software_capitalization_gate",
     "ProjectEVMService",
 ]
 
@@ -9812,5 +9813,82 @@ def evaluate_evm_subcontractor_lien_waiver_and_flow_down(
 
 ProjectEVMService.evaluate_evm_subcontractor_lien_waiver_and_flow_down = staticmethod(
     evaluate_evm_subcontractor_lien_waiver_and_flow_down
+)
+
+
+def evaluate_evm_capex_opex_software_capitalization_gate(
+    work_packages: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_preliminary_or_post_impl_capex_pct: float = 0.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §7.3 & §7.4 — EVM Capital Expenditure (CapEx) vs Operational Expenditure (OpEx) Software Capitalization (ASC 350-40 / IAS 38) Phase Gate Evaluator."""
+    valid_packages = [
+        pkg
+        for pkg in (work_packages or [])
+        if isinstance(pkg, Mapping) and str(pkg.get("package_id") or "").strip()
+    ]
+
+    improper_capex_classification_package_ids: list[str] = []
+    excessive_amortization_horizon_package_ids: list[str] = []
+
+    for pkg in valid_packages:
+        pid = str(pkg.get("package_id")).strip()
+        accounting_stage = str(
+            pkg.get("accounting_stage", "application_development")
+            if pkg.get("accounting_stage") is not None
+            else "application_development"
+        ).strip()
+        capitalized_capex_amount = float(
+            pkg.get("capitalized_capex_amount", 10000.0)
+            if pkg.get("capitalized_capex_amount") is not None
+            else 10000.0
+        )
+        management_authorization_signed = bool(
+            pkg.get("management_authorization_signed", True)
+            if pkg.get("management_authorization_signed") is not None
+            else True
+        )
+        amortization_useful_life_months = int(
+            pkg.get("amortization_useful_life_months", 36)
+            if pkg.get("amortization_useful_life_months") is not None
+            else 36
+        )
+
+        if (
+            accounting_stage
+            in ("preliminary_project", "post_implementation_maintenance")
+            and capitalized_capex_amount
+            > max_preliminary_or_post_impl_capex_pct
+        ) or (
+            capitalized_capex_amount > 0
+            and not management_authorization_signed
+        ):
+            improper_capex_classification_package_ids.append(pid)
+
+        if capitalized_capex_amount > 0 and (
+            amortization_useful_life_months <= 0
+            or amortization_useful_life_months > 60
+        ):
+            excessive_amortization_horizon_package_ids.append(pid)
+
+    if improper_capex_classification_package_ids:
+        capex_governance_status = "CAPEX_ASC350_MISCLASSIFICATION_BREACH"
+    elif excessive_amortization_horizon_package_ids:
+        capex_governance_status = "CAPEX_AMORTIZATION_HORIZON_WARNING"
+    else:
+        capex_governance_status = "CAPEX_OPEX_ACCOUNTING_OPTIMAL"
+
+    return {
+        "evaluated_packages_count": len(valid_packages),
+        "improper_capex_classification_package_ids": improper_capex_classification_package_ids,
+        "excessive_amortization_horizon_package_ids": excessive_amortization_horizon_package_ids,
+        "capex_governance_status": capex_governance_status,
+        "is_capex_accounting_compliant": capex_governance_status
+        == "CAPEX_OPEX_ACCOUNTING_OPTIMAL",
+    }
+
+
+ProjectEVMService.evaluate_evm_capex_opex_software_capitalization_gate = staticmethod(
+    evaluate_evm_capex_opex_software_capitalization_gate
 )
 

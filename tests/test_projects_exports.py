@@ -10076,3 +10076,157 @@ def test_audit_executive_report_ai_llm_guardrails_and_grounding_staticmethod_and
         "audit_executive_report_ai_llm_guardrails_and_grounding"
         in mod.__all__
     )
+
+
+def test_audit_executive_report_webhook_dlq_replay_and_hmac_signing_breach():
+    from backend.services.project_export_service import (
+        audit_executive_report_webhook_dlq_replay_and_hmac_signing,
+    )
+
+    result = audit_executive_report_webhook_dlq_replay_and_hmac_signing(
+        [
+            {
+                "endpoint_id": "WH-NO-HMAC",
+                "delivery_success_rate_pct": 99.8,
+                "dlq_oldest_unreplayed_age_hours": 0.2,
+                "hmac_sha256_signature_enforced": False,
+                "replay_timestamp_tolerance_enforced": True,
+                "exponential_backoff_with_jitter_enabled": True,
+            },
+            {
+                "endpoint_id": "WH-NO-REPLAY-GUARD",
+                "delivery_success_rate_pct": 99.8,
+                "dlq_oldest_unreplayed_age_hours": 0.2,
+                "hmac_sha256_signature_enforced": True,
+                "replay_timestamp_tolerance_enforced": False,
+                "exponential_backoff_with_jitter_enabled": True,
+            },
+            {
+                "endpoint_id": "WH-STALLED-DLQ",
+                "delivery_success_rate_pct": 99.8,
+                "dlq_oldest_unreplayed_age_hours": 8.5,
+                "hmac_sha256_signature_enforced": True,
+                "replay_timestamp_tolerance_enforced": True,
+                "exponential_backoff_with_jitter_enabled": True,
+            },
+        ],
+        min_delivery_success_pct=99.5,
+        max_dlq_oldest_message_age_hours=4.0,
+    )
+    assert result["evaluated_endpoints_count"] == 3
+    assert result["unsigned_or_dlq_stalled_endpoint_ids"] == [
+        "WH-NO-HMAC",
+        "WH-NO-REPLAY-GUARD",
+        "WH-STALLED-DLQ",
+    ]
+    assert result["low_delivery_or_missing_jitter_endpoint_ids"] == []
+    assert (
+        result["webhook_reliability_status"]
+        == "WEBHOOK_HMAC_OR_DLQ_STALL_BREACH"
+    )
+    assert result["is_webhook_reliability_compliant"] is False
+
+
+def test_audit_executive_report_webhook_dlq_replay_and_hmac_signing_warning():
+    from backend.services.project_export_service import (
+        audit_executive_report_webhook_dlq_replay_and_hmac_signing,
+    )
+
+    result = audit_executive_report_webhook_dlq_replay_and_hmac_signing(
+        [
+            {
+                "endpoint_id": "WH-LOW-SUCCESS",
+                "delivery_success_rate_pct": 97.2,
+                "dlq_oldest_unreplayed_age_hours": 1.0,
+                "hmac_sha256_signature_enforced": True,
+                "replay_timestamp_tolerance_enforced": True,
+                "exponential_backoff_with_jitter_enabled": True,
+            },
+            {
+                "endpoint_id": "WH-NO-JITTER",
+                "delivery_success_rate_pct": 99.9,
+                "dlq_oldest_unreplayed_age_hours": 0.5,
+                "hmac_sha256_signature_enforced": True,
+                "replay_timestamp_tolerance_enforced": True,
+                "exponential_backoff_with_jitter_enabled": False,
+            },
+        ],
+        min_delivery_success_pct=99.5,
+        max_dlq_oldest_message_age_hours=4.0,
+    )
+    assert result["evaluated_endpoints_count"] == 2
+    assert result["unsigned_or_dlq_stalled_endpoint_ids"] == []
+    assert result["low_delivery_or_missing_jitter_endpoint_ids"] == [
+        "WH-LOW-SUCCESS",
+        "WH-NO-JITTER",
+    ]
+    assert (
+        result["webhook_reliability_status"]
+        == "WEBHOOK_DELIVERY_OR_BACKOFF_WARNING"
+    )
+    assert result["is_webhook_reliability_compliant"] is False
+
+
+def test_audit_executive_report_webhook_dlq_replay_and_hmac_signing_optimal_and_empty():
+    from backend.services.project_export_service import (
+        audit_executive_report_webhook_dlq_replay_and_hmac_signing,
+    )
+
+    empty = audit_executive_report_webhook_dlq_replay_and_hmac_signing(
+        [{"endpoint_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_endpoints_count"] == 0
+    assert (
+        empty["webhook_reliability_status"]
+        == "WEBHOOK_DELIVERY_RELIABILITY_OPTIMAL"
+    )
+    assert empty["is_webhook_reliability_compliant"] is True
+
+    optimal = audit_executive_report_webhook_dlq_replay_and_hmac_signing(
+        [
+            {
+                "endpoint_id": "WH-BILLING-EVENTS-1",
+                "delivery_success_rate_pct": 99.95,
+                "dlq_oldest_unreplayed_age_hours": 0.25,
+                "hmac_sha256_signature_enforced": True,
+                "replay_timestamp_tolerance_enforced": True,
+                "exponential_backoff_with_jitter_enabled": True,
+            }
+        ],
+        min_delivery_success_pct=99.5,
+        max_dlq_oldest_message_age_hours=4.0,
+    )
+    assert optimal["evaluated_endpoints_count"] == 1
+    assert optimal["unsigned_or_dlq_stalled_endpoint_ids"] == []
+    assert optimal["low_delivery_or_missing_jitter_endpoint_ids"] == []
+    assert (
+        optimal["webhook_reliability_status"]
+        == "WEBHOOK_DELIVERY_RELIABILITY_OPTIMAL"
+    )
+    assert optimal["is_webhook_reliability_compliant"] is True
+
+
+def test_audit_executive_report_webhook_dlq_replay_and_hmac_signing_staticmethod_and_dunder_all():
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_webhook_dlq_replay_and_hmac_signing,
+    )
+
+    sample = [
+        {
+            "endpoint_id": "WH-99",
+            "delivery_success_rate_pct": 99.8,
+            "dlq_oldest_unreplayed_age_hours": 0.4,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_webhook_dlq_replay_and_hmac_signing(
+            sample
+        )
+        == audit_executive_report_webhook_dlq_replay_and_hmac_signing(sample)
+    )
+    assert (
+        "audit_executive_report_webhook_dlq_replay_and_hmac_signing"
+        in mod.__all__
+    )

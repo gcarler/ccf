@@ -9266,3 +9266,158 @@ def test_evaluate_evm_subcontractor_lien_waiver_and_flow_down_staticmethod_and_d
         in mod.__all__
     )
 
+
+def test_evaluate_evm_capex_opex_software_capitalization_gate_breach():
+    from backend.services.project_evm_service import (
+        evaluate_evm_capex_opex_software_capitalization_gate,
+    )
+
+    result = evaluate_evm_capex_opex_software_capitalization_gate(
+        [
+            {
+                "package_id": "PKG-PRELIM-CAPEX",
+                "accounting_stage": "preliminary_project",
+                "capitalized_capex_amount": 5000.0,
+                "expensed_opex_amount": 15000.0,
+                "management_authorization_signed": True,
+                "amortization_useful_life_months": 36,
+            },
+            {
+                "package_id": "PKG-MAINT-CAPEX",
+                "accounting_stage": "post_implementation_maintenance",
+                "capitalized_capex_amount": 2500.0,
+                "expensed_opex_amount": 8000.0,
+                "management_authorization_signed": True,
+                "amortization_useful_life_months": 36,
+            },
+            {
+                "package_id": "PKG-UNAUTHORIZED-CAPEX",
+                "accounting_stage": "application_development",
+                "capitalized_capex_amount": 18000.0,
+                "expensed_opex_amount": 1000.0,
+                "management_authorization_signed": False,
+                "amortization_useful_life_months": 36,
+            },
+        ],
+        max_preliminary_or_post_impl_capex_pct=0.0,
+    )
+    assert result["evaluated_packages_count"] == 3
+    assert result["improper_capex_classification_package_ids"] == [
+        "PKG-PRELIM-CAPEX",
+        "PKG-MAINT-CAPEX",
+        "PKG-UNAUTHORIZED-CAPEX",
+    ]
+    assert result["excessive_amortization_horizon_package_ids"] == []
+    assert (
+        result["capex_governance_status"]
+        == "CAPEX_ASC350_MISCLASSIFICATION_BREACH"
+    )
+    assert result["is_capex_accounting_compliant"] is False
+
+
+def test_evaluate_evm_capex_opex_software_capitalization_gate_warning():
+    from backend.services.project_evm_service import (
+        evaluate_evm_capex_opex_software_capitalization_gate,
+    )
+
+    result = evaluate_evm_capex_opex_software_capitalization_gate(
+        [
+            {
+                "package_id": "PKG-ZERO-LIFE",
+                "accounting_stage": "application_development",
+                "capitalized_capex_amount": 12000.0,
+                "expensed_opex_amount": 1000.0,
+                "management_authorization_signed": True,
+                "amortization_useful_life_months": 0,
+            },
+            {
+                "package_id": "PKG-LONG-LIFE",
+                "accounting_stage": "application_development",
+                "capitalized_capex_amount": 12000.0,
+                "expensed_opex_amount": 1000.0,
+                "management_authorization_signed": True,
+                "amortization_useful_life_months": 84,
+            },
+        ],
+        max_preliminary_or_post_impl_capex_pct=0.0,
+    )
+    assert result["evaluated_packages_count"] == 2
+    assert result["improper_capex_classification_package_ids"] == []
+    assert result["excessive_amortization_horizon_package_ids"] == [
+        "PKG-ZERO-LIFE",
+        "PKG-LONG-LIFE",
+    ]
+    assert (
+        result["capex_governance_status"]
+        == "CAPEX_AMORTIZATION_HORIZON_WARNING"
+    )
+    assert result["is_capex_accounting_compliant"] is False
+
+
+def test_evaluate_evm_capex_opex_software_capitalization_gate_optimal_and_empty():
+    from backend.services.project_evm_service import (
+        evaluate_evm_capex_opex_software_capitalization_gate,
+    )
+
+    empty = evaluate_evm_capex_opex_software_capitalization_gate(
+        [{"package_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_packages_count"] == 0
+    assert empty["capex_governance_status"] == "CAPEX_OPEX_ACCOUNTING_OPTIMAL"
+    assert empty["is_capex_accounting_compliant"] is True
+
+    optimal = evaluate_evm_capex_opex_software_capitalization_gate(
+        [
+            {
+                "package_id": "PKG-DEV-CAPEX-01",
+                "accounting_stage": "application_development",
+                "capitalized_capex_amount": 25000.0,
+                "expensed_opex_amount": 3000.0,
+                "management_authorization_signed": True,
+                "amortization_useful_life_months": 36,
+            },
+            {
+                "package_id": "PKG-PRELIM-OPEX-01",
+                "accounting_stage": "preliminary_project",
+                "capitalized_capex_amount": 0.0,
+                "expensed_opex_amount": 8000.0,
+                "management_authorization_signed": False,
+                "amortization_useful_life_months": 0,
+            },
+        ],
+        max_preliminary_or_post_impl_capex_pct=0.0,
+    )
+    assert optimal["evaluated_packages_count"] == 2
+    assert optimal["improper_capex_classification_package_ids"] == []
+    assert optimal["excessive_amortization_horizon_package_ids"] == []
+    assert (
+        optimal["capex_governance_status"] == "CAPEX_OPEX_ACCOUNTING_OPTIMAL"
+    )
+    assert optimal["is_capex_accounting_compliant"] is True
+
+
+def test_evaluate_evm_capex_opex_software_capitalization_gate_staticmethod_and_dunder_all():
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_capex_opex_software_capitalization_gate,
+    )
+
+    sample = [
+        {
+            "package_id": "PKG-99",
+            "accounting_stage": "application_development",
+            "capitalized_capex_amount": 10000.0,
+        }
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_capex_opex_software_capitalization_gate(
+            sample
+        )
+        == evaluate_evm_capex_opex_software_capitalization_gate(sample)
+    )
+    assert (
+        "evaluate_evm_capex_opex_software_capitalization_gate"
+        in mod.__all__
+    )
+

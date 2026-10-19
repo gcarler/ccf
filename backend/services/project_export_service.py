@@ -3009,6 +3009,7 @@ __all__ = [
     "audit_executive_report_zero_trust_pam_and_mfa_attestation",
     "audit_executive_report_api_quota_fairness_and_noisy_neighbor",
     "audit_executive_report_ai_llm_guardrails_and_grounding",
+    "audit_executive_report_webhook_dlq_replay_and_hmac_signing",
     "ProjectExportService",
 ]
 
@@ -7621,5 +7622,85 @@ def audit_executive_report_ai_llm_guardrails_and_grounding(
 
 ProjectExportService.audit_executive_report_ai_llm_guardrails_and_grounding = staticmethod(
     audit_executive_report_ai_llm_guardrails_and_grounding
+)
+
+
+def audit_executive_report_webhook_dlq_replay_and_hmac_signing(
+    webhook_endpoints: Sequence[Mapping[str, Any]] | None,
+    *,
+    min_delivery_success_pct: float = 99.5,
+    max_dlq_oldest_message_age_hours: float = 4.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §10.2 & §11.6 — Executive Report Webhook Delivery Reliability, Dead-Letter Queue (DLQ) Replay SLA & HMAC Signature Verification Auditor."""
+    valid_endpoints = [
+        ep
+        for ep in (webhook_endpoints or [])
+        if isinstance(ep, Mapping) and str(ep.get("endpoint_id") or "").strip()
+    ]
+
+    unsigned_or_dlq_stalled_endpoint_ids: list[str] = []
+    low_delivery_or_missing_jitter_endpoint_ids: list[str] = []
+
+    for ep in valid_endpoints:
+        eid = str(ep.get("endpoint_id")).strip()
+        delivery_success_rate_pct = float(
+            ep.get("delivery_success_rate_pct", 99.9)
+            if ep.get("delivery_success_rate_pct") is not None
+            else 99.9
+        )
+        dlq_oldest_unreplayed_age_hours = float(
+            ep.get("dlq_oldest_unreplayed_age_hours", 0.5)
+            if ep.get("dlq_oldest_unreplayed_age_hours") is not None
+            else 0.5
+        )
+        hmac_sha256_signature_enforced = bool(
+            ep.get("hmac_sha256_signature_enforced", True)
+            if ep.get("hmac_sha256_signature_enforced") is not None
+            else True
+        )
+        replay_timestamp_tolerance_enforced = bool(
+            ep.get("replay_timestamp_tolerance_enforced", True)
+            if ep.get("replay_timestamp_tolerance_enforced") is not None
+            else True
+        )
+        exponential_backoff_with_jitter_enabled = bool(
+            ep.get("exponential_backoff_with_jitter_enabled", True)
+            if ep.get("exponential_backoff_with_jitter_enabled") is not None
+            else True
+        )
+
+        if (
+            not hmac_sha256_signature_enforced
+            or not replay_timestamp_tolerance_enforced
+            or dlq_oldest_unreplayed_age_hours
+            > max_dlq_oldest_message_age_hours
+        ):
+            unsigned_or_dlq_stalled_endpoint_ids.append(eid)
+
+        if (
+            delivery_success_rate_pct < min_delivery_success_pct
+            or not exponential_backoff_with_jitter_enabled
+        ):
+            low_delivery_or_missing_jitter_endpoint_ids.append(eid)
+
+    if unsigned_or_dlq_stalled_endpoint_ids:
+        webhook_reliability_status = "WEBHOOK_HMAC_OR_DLQ_STALL_BREACH"
+    elif low_delivery_or_missing_jitter_endpoint_ids:
+        webhook_reliability_status = "WEBHOOK_DELIVERY_OR_BACKOFF_WARNING"
+    else:
+        webhook_reliability_status = "WEBHOOK_DELIVERY_RELIABILITY_OPTIMAL"
+
+    return {
+        "evaluated_endpoints_count": len(valid_endpoints),
+        "unsigned_or_dlq_stalled_endpoint_ids": unsigned_or_dlq_stalled_endpoint_ids,
+        "low_delivery_or_missing_jitter_endpoint_ids": low_delivery_or_missing_jitter_endpoint_ids,
+        "webhook_reliability_status": webhook_reliability_status,
+        "is_webhook_reliability_compliant": webhook_reliability_status
+        == "WEBHOOK_DELIVERY_RELIABILITY_OPTIMAL",
+    }
+
+
+ProjectExportService.audit_executive_report_webhook_dlq_replay_and_hmac_signing = staticmethod(
+    audit_executive_report_webhook_dlq_replay_and_hmac_signing
 )
 
