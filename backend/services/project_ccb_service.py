@@ -2850,6 +2850,7 @@ __all__ = [
     "audit_canary_rollout_traffic_shift_and_auto_rollback_gate",
     "audit_secret_scanning_pre_receive_and_leak_revocation",
     "audit_iac_terraform_drift_and_state_lock_hygiene",
+    "audit_container_image_vulnerability_and_non_root_runtime_gate",
     "ProjectCCBService",
 ]
 
@@ -7194,5 +7195,84 @@ def audit_iac_terraform_drift_and_state_lock_hygiene(
 
 ProjectCCBService.audit_iac_terraform_drift_and_state_lock_hygiene = staticmethod(
     audit_iac_terraform_drift_and_state_lock_hygiene
+)
+
+
+def audit_container_image_vulnerability_and_non_root_runtime_gate(
+    container_images: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_high_cves_allowed: int = 0,
+    max_image_size_mb: float = 500.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §8.3 & §11.6 — CCB Container Image Vulnerability Gate, Distroless Base Hygiene & Non-Root Runtime Enforcement Auditor."""
+    valid_images = [
+        img
+        for img in (container_images or [])
+        if isinstance(img, Mapping) and str(img.get("image_id") or "").strip()
+    ]
+
+    vulnerable_or_root_runtime_image_ids: list[str] = []
+    bloated_or_writable_rootfs_image_ids: list[str] = []
+
+    for img in valid_images:
+        iid = str(img.get("image_id")).strip()
+        critical_or_high_cves_count = int(
+            img.get("critical_or_high_cves_count", 0)
+            if img.get("critical_or_high_cves_count") is not None
+            else 0
+        )
+        runs_as_non_root_uid = bool(
+            img.get("runs_as_non_root_uid", True)
+            if img.get("runs_as_non_root_uid") is not None
+            else True
+        )
+        pinned_by_sha256_digest = bool(
+            img.get("pinned_by_sha256_digest", True)
+            if img.get("pinned_by_sha256_digest") is not None
+            else True
+        )
+        image_size_mb = float(
+            img.get("image_size_mb", 180.0)
+            if img.get("image_size_mb") is not None
+            else 180.0
+        )
+        read_only_root_filesystem_enabled = bool(
+            img.get("read_only_root_filesystem_enabled", True)
+            if img.get("read_only_root_filesystem_enabled") is not None
+            else True
+        )
+
+        if (
+            critical_or_high_cves_count > max_high_cves_allowed
+            or not runs_as_non_root_uid
+            or not pinned_by_sha256_digest
+        ):
+            vulnerable_or_root_runtime_image_ids.append(iid)
+
+        if (
+            image_size_mb > max_image_size_mb
+            or not read_only_root_filesystem_enabled
+        ):
+            bloated_or_writable_rootfs_image_ids.append(iid)
+
+    if vulnerable_or_root_runtime_image_ids:
+        container_security_status = "CONTAINER_CVE_OR_ROOT_RUNTIME_BREACH"
+    elif bloated_or_writable_rootfs_image_ids:
+        container_security_status = "CONTAINER_BLOAT_OR_WRITABLE_ROOTFS_WARNING"
+    else:
+        container_security_status = "CONTAINER_RUNTIME_HARDENED_OPTIMAL"
+
+    return {
+        "evaluated_images_count": len(valid_images),
+        "vulnerable_or_root_runtime_image_ids": vulnerable_or_root_runtime_image_ids,
+        "bloated_or_writable_rootfs_image_ids": bloated_or_writable_rootfs_image_ids,
+        "container_security_status": container_security_status,
+        "is_container_security_compliant": container_security_status
+        == "CONTAINER_RUNTIME_HARDENED_OPTIMAL",
+    }
+
+
+ProjectCCBService.audit_container_image_vulnerability_and_non_root_runtime_gate = staticmethod(
+    audit_container_image_vulnerability_and_non_root_runtime_gate
 )
 

@@ -5524,6 +5524,7 @@ __all__ = [
     "evaluate_evm_time_and_materials_nte_ceiling_and_rate_card",
     "evaluate_evm_working_capital_cash_conversion_and_mobilization_advance",
     "evaluate_evm_liquidated_damages_cap_and_eot_relief",
+    "evaluate_evm_epa_inflation_indexation_and_escalation_cap",
     "ProjectEVMService",
 ]
 
@@ -9629,5 +9630,103 @@ def evaluate_evm_liquidated_damages_cap_and_eot_relief(
 
 ProjectEVMService.evaluate_evm_liquidated_damages_cap_and_eot_relief = staticmethod(
     evaluate_evm_liquidated_damages_cap_and_eot_relief
+)
+
+
+def evaluate_evm_epa_inflation_indexation_and_escalation_cap(
+    epa_clauses: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_annual_escalation_cap_pct: float = 6.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §7.4 & §12.3 — EVM Economic Price Adjustment (EPA) Inflation Indexation, Commodity Pass-Through Cap & Escalation Formula Evaluator."""
+    valid_clauses = [
+        cls_item
+        for cls_item in (epa_clauses or [])
+        if isinstance(cls_item, Mapping)
+        and str(cls_item.get("clause_id") or "").strip()
+    ]
+
+    overclaimed_or_unverified_index_clause_ids: list[str] = []
+    within_deadband_or_near_cap_clause_ids: list[str] = []
+
+    for cls_item in valid_clauses:
+        cid = str(cls_item.get("clause_id")).strip()
+        base_index_value = float(
+            cls_item.get("base_index_value", 100.0)
+            if cls_item.get("base_index_value") is not None
+            else 100.0
+        )
+        current_index_value = float(
+            cls_item.get("current_index_value", 103.0)
+            if cls_item.get("current_index_value") is not None
+            else 103.0
+        )
+        claimed_escalation_pct = float(
+            cls_item.get("claimed_escalation_pct", 3.0)
+            if cls_item.get("claimed_escalation_pct") is not None
+            else 3.0
+        )
+        contractual_cap_pct = float(
+            cls_item.get("contractual_cap_pct", max_annual_escalation_cap_pct)
+            if cls_item.get("contractual_cap_pct") is not None
+            else max_annual_escalation_cap_pct
+        )
+        deadband_threshold_pct = float(
+            cls_item.get("deadband_threshold_pct", 2.0)
+            if cls_item.get("deadband_threshold_pct") is not None
+            else 2.0
+        )
+        official_bls_or_cpi_source_verified = bool(
+            cls_item.get("official_bls_or_cpi_source_verified", True)
+            if cls_item.get("official_bls_or_cpi_source_verified") is not None
+            else True
+        )
+
+        if (
+            not official_bls_or_cpi_source_verified
+            or claimed_escalation_pct > contractual_cap_pct
+            or (
+                base_index_value > 0
+                and claimed_escalation_pct
+                > round(
+                    ((current_index_value - base_index_value) / base_index_value)
+                    * 100.0,
+                    2,
+                )
+                + 0.05
+            )
+        ):
+            overclaimed_or_unverified_index_clause_ids.append(cid)
+
+        if (
+            base_index_value > 0
+            and abs(
+                ((current_index_value - base_index_value) / base_index_value)
+                * 100.0
+            )
+            <= deadband_threshold_pct
+            and claimed_escalation_pct > 0
+        ) or claimed_escalation_pct >= (contractual_cap_pct * 0.9):
+            within_deadband_or_near_cap_clause_ids.append(cid)
+
+    if overclaimed_or_unverified_index_clause_ids:
+        epa_escalation_status = "EPA_INDEX_OVERCLAIM_OR_UNVERIFIED_BREACH"
+    elif within_deadband_or_near_cap_clause_ids:
+        epa_escalation_status = "EPA_DEADBAND_OR_CAP_PROXIMITY_WARNING"
+    else:
+        epa_escalation_status = "EPA_INDEXATION_COMPLIANT_OPTIMAL"
+
+    return {
+        "evaluated_clauses_count": len(valid_clauses),
+        "overclaimed_or_unverified_index_clause_ids": overclaimed_or_unverified_index_clause_ids,
+        "within_deadband_or_near_cap_clause_ids": within_deadband_or_near_cap_clause_ids,
+        "epa_escalation_status": epa_escalation_status,
+        "is_epa_escalation_compliant": epa_escalation_status
+        == "EPA_INDEXATION_COMPLIANT_OPTIMAL",
+    }
+
+
+ProjectEVMService.evaluate_evm_epa_inflation_indexation_and_escalation_cap = staticmethod(
+    evaluate_evm_epa_inflation_indexation_and_escalation_cap
 )
 

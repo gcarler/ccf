@@ -8974,3 +8974,155 @@ def test_evaluate_evm_liquidated_damages_cap_and_eot_relief_staticmethod_and_dun
         in mod.__all__
     )
 
+
+def test_evaluate_evm_epa_inflation_indexation_and_escalation_cap_breach():
+    from backend.services.project_evm_service import (
+        evaluate_evm_epa_inflation_indexation_and_escalation_cap,
+    )
+
+    result = evaluate_evm_epa_inflation_indexation_and_escalation_cap(
+        [
+            {
+                "clause_id": "EPA-UNVERIFIED",
+                "base_index_value": 100.0,
+                "current_index_value": 103.5,
+                "claimed_escalation_pct": 3.5,
+                "contractual_cap_pct": 6.0,
+                "deadband_threshold_pct": 2.0,
+                "official_bls_or_cpi_source_verified": False,
+            },
+            {
+                "clause_id": "EPA-OVER-CAP",
+                "base_index_value": 100.0,
+                "current_index_value": 108.0,
+                "claimed_escalation_pct": 7.0,
+                "contractual_cap_pct": 6.0,
+                "deadband_threshold_pct": 2.0,
+                "official_bls_or_cpi_source_verified": True,
+            },
+            {
+                "clause_id": "EPA-OVERCLAIMED-FORMULA",
+                "base_index_value": 100.0,
+                "current_index_value": 103.0,
+                "claimed_escalation_pct": 4.2,
+                "contractual_cap_pct": 6.0,
+                "deadband_threshold_pct": 2.0,
+                "official_bls_or_cpi_source_verified": True,
+            },
+        ],
+        max_annual_escalation_cap_pct=6.0,
+    )
+    assert result["evaluated_clauses_count"] == 3
+    assert result["overclaimed_or_unverified_index_clause_ids"] == [
+        "EPA-UNVERIFIED",
+        "EPA-OVER-CAP",
+        "EPA-OVERCLAIMED-FORMULA",
+    ]
+    assert result["within_deadband_or_near_cap_clause_ids"] == ["EPA-OVER-CAP"]
+    assert (
+        result["epa_escalation_status"]
+        == "EPA_INDEX_OVERCLAIM_OR_UNVERIFIED_BREACH"
+    )
+    assert result["is_epa_escalation_compliant"] is False
+
+
+def test_evaluate_evm_epa_inflation_indexation_and_escalation_cap_warning():
+    from backend.services.project_evm_service import (
+        evaluate_evm_epa_inflation_indexation_and_escalation_cap,
+    )
+
+    result = evaluate_evm_epa_inflation_indexation_and_escalation_cap(
+        [
+            {
+                "clause_id": "EPA-DEADBAND-CLAIM",
+                "base_index_value": 100.0,
+                "current_index_value": 101.5,
+                "claimed_escalation_pct": 1.5,
+                "contractual_cap_pct": 6.0,
+                "deadband_threshold_pct": 2.0,
+                "official_bls_or_cpi_source_verified": True,
+            },
+            {
+                "clause_id": "EPA-NEAR-CAP",
+                "base_index_value": 100.0,
+                "current_index_value": 105.5,
+                "claimed_escalation_pct": 5.5,
+                "contractual_cap_pct": 6.0,
+                "deadband_threshold_pct": 2.0,
+                "official_bls_or_cpi_source_verified": True,
+            },
+        ],
+        max_annual_escalation_cap_pct=6.0,
+    )
+    assert result["evaluated_clauses_count"] == 2
+    assert result["overclaimed_or_unverified_index_clause_ids"] == []
+    assert result["within_deadband_or_near_cap_clause_ids"] == [
+        "EPA-DEADBAND-CLAIM",
+        "EPA-NEAR-CAP",
+    ]
+    assert (
+        result["epa_escalation_status"]
+        == "EPA_DEADBAND_OR_CAP_PROXIMITY_WARNING"
+    )
+    assert result["is_epa_escalation_compliant"] is False
+
+
+def test_evaluate_evm_epa_inflation_indexation_and_escalation_cap_optimal_and_empty():
+    from backend.services.project_evm_service import (
+        evaluate_evm_epa_inflation_indexation_and_escalation_cap,
+    )
+
+    empty = evaluate_evm_epa_inflation_indexation_and_escalation_cap(
+        [{"clause_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_clauses_count"] == 0
+    assert empty["epa_escalation_status"] == "EPA_INDEXATION_COMPLIANT_OPTIMAL"
+    assert empty["is_epa_escalation_compliant"] is True
+
+    optimal = evaluate_evm_epa_inflation_indexation_and_escalation_cap(
+        [
+            {
+                "clause_id": "EPA-OPT-1",
+                "base_index_value": 100.0,
+                "current_index_value": 103.5,
+                "claimed_escalation_pct": 3.5,
+                "contractual_cap_pct": 6.0,
+                "deadband_threshold_pct": 2.0,
+                "official_bls_or_cpi_source_verified": True,
+            }
+        ],
+        max_annual_escalation_cap_pct=6.0,
+    )
+    assert optimal["evaluated_clauses_count"] == 1
+    assert optimal["overclaimed_or_unverified_index_clause_ids"] == []
+    assert optimal["within_deadband_or_near_cap_clause_ids"] == []
+    assert optimal["epa_escalation_status"] == "EPA_INDEXATION_COMPLIANT_OPTIMAL"
+    assert optimal["is_epa_escalation_compliant"] is True
+
+
+def test_evaluate_evm_epa_inflation_indexation_and_escalation_cap_staticmethod_and_dunder_all():
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_epa_inflation_indexation_and_escalation_cap,
+    )
+
+    sample = [
+        {
+            "clause_id": "EPA-99",
+            "base_index_value": 100.0,
+            "current_index_value": 103.0,
+            "claimed_escalation_pct": 3.0,
+        }
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_epa_inflation_indexation_and_escalation_cap(
+            sample
+        )
+        == evaluate_evm_epa_inflation_indexation_and_escalation_cap(sample)
+    )
+    assert (
+        "evaluate_evm_epa_inflation_indexation_and_escalation_cap"
+        in mod.__all__
+    )
+

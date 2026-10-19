@@ -3007,6 +3007,7 @@ __all__ = [
     "audit_executive_report_finops_unit_economics_and_ri_coverage",
     "audit_executive_report_soc2_type2_continuous_evidence_and_exceptions",
     "audit_executive_report_zero_trust_pam_and_mfa_attestation",
+    "audit_executive_report_api_quota_fairness_and_noisy_neighbor",
     "ProjectExportService",
 ]
 
@@ -7470,5 +7471,79 @@ def audit_executive_report_zero_trust_pam_and_mfa_attestation(
 
 ProjectExportService.audit_executive_report_zero_trust_pam_and_mfa_attestation = staticmethod(
     audit_executive_report_zero_trust_pam_and_mfa_attestation
+)
+
+
+def audit_executive_report_api_quota_fairness_and_noisy_neighbor(
+    tenant_quotas: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_single_tenant_traffic_share_pct: float = 35.0,
+    max_unthrottled_burst_multiplier: float = 3.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §8.2 & §11.6 — Executive Report Multi-Tenant API Rate-Limit Quota Fairness, Noisy-Neighbor Isolation & Token-Bucket Throttling Auditor."""
+    valid_tenants = [
+        tenant
+        for tenant in (tenant_quotas or [])
+        if isinstance(tenant, Mapping) and str(tenant.get("tenant_id") or "").strip()
+    ]
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _num(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    noisy_neighbor_or_unisolated_tenant_ids: list[str] = []
+    quota_hog_or_burst_warning_tenant_ids: list[str] = []
+
+    for tenant in valid_tenants:
+        tenant_id = str(tenant.get("tenant_id")).strip()
+        traffic_share_pct = _num(
+            tenant.get("observed_traffic_share_pct"), 10.0
+        )
+        burst_multiplier = _num(
+            tenant.get("burst_to_steady_rate_multiplier"), 1.5
+        )
+        token_bucket_enforced = _bool(
+            tenant.get("per_tenant_token_bucket_enforced"), True
+        )
+        degraded_neighbors = _bool(
+            tenant.get("caused_cross_tenant_latency_degradation"), False
+        )
+        retry_after_compliant = _bool(
+            tenant.get("retry_after_header_compliant"), True
+        )
+
+        if degraded_neighbors or not token_bucket_enforced:
+            noisy_neighbor_or_unisolated_tenant_ids.append(tenant_id)
+
+        if (
+            traffic_share_pct > max_single_tenant_traffic_share_pct
+            or burst_multiplier > max_unthrottled_burst_multiplier
+            or not retry_after_compliant
+        ):
+            quota_hog_or_burst_warning_tenant_ids.append(tenant_id)
+
+    if noisy_neighbor_or_unisolated_tenant_ids:
+        quota_fairness_status = "API_NOISY_NEIGHBOR_ISOLATION_BREACH"
+    elif quota_hog_or_burst_warning_tenant_ids:
+        quota_fairness_status = "API_QUOTA_CONCENTRATION_OR_BURST_WARNING"
+    else:
+        quota_fairness_status = "API_MULTI_TENANT_FAIRNESS_OPTIMAL"
+
+    return {
+        "evaluated_tenants_count": len(valid_tenants),
+        "noisy_neighbor_or_unisolated_tenant_ids": noisy_neighbor_or_unisolated_tenant_ids,
+        "quota_hog_or_burst_warning_tenant_ids": quota_hog_or_burst_warning_tenant_ids,
+        "quota_fairness_status": quota_fairness_status,
+        "is_quota_fairness_compliant": quota_fairness_status
+        == "API_MULTI_TENANT_FAIRNESS_OPTIMAL",
+    }
+
+
+ProjectExportService.audit_executive_report_api_quota_fairness_and_noisy_neighbor = staticmethod(
+    audit_executive_report_api_quota_fairness_and_noisy_neighbor
 )
 

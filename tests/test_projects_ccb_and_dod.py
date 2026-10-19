@@ -9492,3 +9492,157 @@ def test_audit_iac_terraform_drift_and_state_lock_hygiene_staticmethod_and_dunde
         in mod.__all__
     )
 
+
+def test_audit_container_image_vulnerability_and_non_root_runtime_gate_breach():
+    from backend.services.project_ccb_service import (
+        audit_container_image_vulnerability_and_non_root_runtime_gate,
+    )
+
+    result = audit_container_image_vulnerability_and_non_root_runtime_gate(
+        [
+            {
+                "image_id": "IMG-CVE",
+                "critical_or_high_cves_count": 2,
+                "runs_as_non_root_uid": True,
+                "pinned_by_sha256_digest": True,
+                "image_size_mb": 150.0,
+                "read_only_root_filesystem_enabled": True,
+            },
+            {
+                "image_id": "IMG-ROOT",
+                "critical_or_high_cves_count": 0,
+                "runs_as_non_root_uid": False,
+                "pinned_by_sha256_digest": True,
+                "image_size_mb": 150.0,
+                "read_only_root_filesystem_enabled": True,
+            },
+            {
+                "image_id": "IMG-UNPINNED",
+                "critical_or_high_cves_count": 0,
+                "runs_as_non_root_uid": True,
+                "pinned_by_sha256_digest": False,
+                "image_size_mb": 150.0,
+                "read_only_root_filesystem_enabled": True,
+            },
+        ],
+        max_high_cves_allowed=0,
+        max_image_size_mb=500.0,
+    )
+    assert result["evaluated_images_count"] == 3
+    assert result["vulnerable_or_root_runtime_image_ids"] == [
+        "IMG-CVE",
+        "IMG-ROOT",
+        "IMG-UNPINNED",
+    ]
+    assert result["bloated_or_writable_rootfs_image_ids"] == []
+    assert (
+        result["container_security_status"]
+        == "CONTAINER_CVE_OR_ROOT_RUNTIME_BREACH"
+    )
+    assert result["is_container_security_compliant"] is False
+
+
+def test_audit_container_image_vulnerability_and_non_root_runtime_gate_warning():
+    from backend.services.project_ccb_service import (
+        audit_container_image_vulnerability_and_non_root_runtime_gate,
+    )
+
+    result = audit_container_image_vulnerability_and_non_root_runtime_gate(
+        [
+            {
+                "image_id": "IMG-BLOATED",
+                "critical_or_high_cves_count": 0,
+                "runs_as_non_root_uid": True,
+                "pinned_by_sha256_digest": True,
+                "image_size_mb": 720.0,
+                "read_only_root_filesystem_enabled": True,
+            },
+            {
+                "image_id": "IMG-WRITABLE-ROOTFS",
+                "critical_or_high_cves_count": 0,
+                "runs_as_non_root_uid": True,
+                "pinned_by_sha256_digest": True,
+                "image_size_mb": 190.0,
+                "read_only_root_filesystem_enabled": False,
+            },
+        ],
+        max_high_cves_allowed=0,
+        max_image_size_mb=500.0,
+    )
+    assert result["evaluated_images_count"] == 2
+    assert result["vulnerable_or_root_runtime_image_ids"] == []
+    assert result["bloated_or_writable_rootfs_image_ids"] == [
+        "IMG-BLOATED",
+        "IMG-WRITABLE-ROOTFS",
+    ]
+    assert (
+        result["container_security_status"]
+        == "CONTAINER_BLOAT_OR_WRITABLE_ROOTFS_WARNING"
+    )
+    assert result["is_container_security_compliant"] is False
+
+
+def test_audit_container_image_vulnerability_and_non_root_runtime_gate_optimal_and_empty():
+    from backend.services.project_ccb_service import (
+        audit_container_image_vulnerability_and_non_root_runtime_gate,
+    )
+
+    empty = audit_container_image_vulnerability_and_non_root_runtime_gate(
+        [{"image_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_images_count"] == 0
+    assert (
+        empty["container_security_status"]
+        == "CONTAINER_RUNTIME_HARDENED_OPTIMAL"
+    )
+    assert empty["is_container_security_compliant"] is True
+
+    optimal = audit_container_image_vulnerability_and_non_root_runtime_gate(
+        [
+            {
+                "image_id": "IMG-DISTROLESS-1",
+                "critical_or_high_cves_count": 0,
+                "runs_as_non_root_uid": True,
+                "pinned_by_sha256_digest": True,
+                "image_size_mb": 95.0,
+                "read_only_root_filesystem_enabled": True,
+            }
+        ],
+        max_high_cves_allowed=0,
+        max_image_size_mb=500.0,
+    )
+    assert optimal["evaluated_images_count"] == 1
+    assert optimal["vulnerable_or_root_runtime_image_ids"] == []
+    assert optimal["bloated_or_writable_rootfs_image_ids"] == []
+    assert (
+        optimal["container_security_status"]
+        == "CONTAINER_RUNTIME_HARDENED_OPTIMAL"
+    )
+    assert optimal["is_container_security_compliant"] is True
+
+
+def test_audit_container_image_vulnerability_and_non_root_runtime_gate_staticmethod_and_dunder_all():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_container_image_vulnerability_and_non_root_runtime_gate,
+    )
+
+    sample = [
+        {
+            "image_id": "IMG-99",
+            "critical_or_high_cves_count": 0,
+            "image_size_mb": 140.0,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_container_image_vulnerability_and_non_root_runtime_gate(
+            sample
+        )
+        == audit_container_image_vulnerability_and_non_root_runtime_gate(sample)
+    )
+    assert (
+        "audit_container_image_vulnerability_and_non_root_runtime_gate"
+        in mod.__all__
+    )
+

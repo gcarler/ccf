@@ -9788,3 +9788,159 @@ def test_audit_executive_report_zero_trust_pam_and_mfa_attestation_staticmethod_
         in mod.__all__
     )
 
+
+
+def test_api_quota_fairness_noisy_neighbor_breach():
+    from backend.services.project_export_service import (
+        audit_executive_report_api_quota_fairness_and_noisy_neighbor,
+    )
+
+    res = audit_executive_report_api_quota_fairness_and_noisy_neighbor(
+        [
+            {
+                "tenant_id": "TENANT-LATENCY-KILLER",
+                "caused_cross_tenant_latency_degradation": True,
+            },
+            {
+                "tenant_id": "TENANT-NO-BUCKET",
+                "per_tenant_token_bucket_enforced": False,
+            },
+        ],
+        max_single_tenant_traffic_share_pct=35.0,
+        max_unthrottled_burst_multiplier=3.0,
+    )
+    assert res["evaluated_tenants_count"] == 2
+    assert res["noisy_neighbor_or_unisolated_tenant_ids"] == [
+        "TENANT-LATENCY-KILLER",
+        "TENANT-NO-BUCKET",
+    ]
+    assert res["quota_hog_or_burst_warning_tenant_ids"] == []
+    assert (
+        res["quota_fairness_status"]
+        == "API_NOISY_NEIGHBOR_ISOLATION_BREACH"
+    )
+    assert res["is_quota_fairness_compliant"] is False
+
+
+def test_api_quota_fairness_concentration_or_burst_warning():
+    from backend.services.project_export_service import (
+        audit_executive_report_api_quota_fairness_and_noisy_neighbor,
+    )
+
+    res = audit_executive_report_api_quota_fairness_and_noisy_neighbor(
+        [
+            {
+                "tenant_id": "TENANT-HOG",
+                "observed_traffic_share_pct": 48.0,
+            },
+            {
+                "tenant_id": "TENANT-BURST",
+                "burst_to_steady_rate_multiplier": 4.5,
+            },
+            {
+                "tenant_id": "TENANT-NO-RETRY-HEADER",
+                "retry_after_header_compliant": False,
+            },
+        ],
+        max_single_tenant_traffic_share_pct=35.0,
+        max_unthrottled_burst_multiplier=3.0,
+    )
+    assert res["evaluated_tenants_count"] == 3
+    assert res["noisy_neighbor_or_unisolated_tenant_ids"] == []
+    assert res["quota_hog_or_burst_warning_tenant_ids"] == [
+        "TENANT-HOG",
+        "TENANT-BURST",
+        "TENANT-NO-RETRY-HEADER",
+    ]
+    assert (
+        res["quota_fairness_status"]
+        == "API_QUOTA_CONCENTRATION_OR_BURST_WARNING"
+    )
+    assert res["is_quota_fairness_compliant"] is False
+
+
+def test_api_quota_fairness_boundaries_optimal_and_defaults():
+    from backend.services.project_export_service import (
+        audit_executive_report_api_quota_fairness_and_noisy_neighbor,
+    )
+
+    res = audit_executive_report_api_quota_fairness_and_noisy_neighbor(
+        [
+            {
+                "tenant_id": "TENANT-BOUNDARY",
+                "observed_traffic_share_pct": 35.0,
+                "burst_to_steady_rate_multiplier": 3.0,
+            },
+            {"tenant_id": "TENANT-ALL-DEFAULTS"},
+        ],
+        max_single_tenant_traffic_share_pct=35.0,
+        max_unthrottled_burst_multiplier=3.0,
+    )
+    assert res["evaluated_tenants_count"] == 2
+    assert res["noisy_neighbor_or_unisolated_tenant_ids"] == []
+    assert res["quota_hog_or_burst_warning_tenant_ids"] == []
+    assert (
+        res["quota_fairness_status"]
+        == "API_MULTI_TENANT_FAIRNESS_OPTIMAL"
+    )
+    assert res["is_quota_fairness_compliant"] is True
+
+
+def test_api_quota_fairness_invalid_and_binding():
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_api_quota_fairness_and_noisy_neighbor,
+    )
+
+    empty = audit_executive_report_api_quota_fairness_and_noisy_neighbor(None)
+    assert empty["evaluated_tenants_count"] == 0
+    assert empty["noisy_neighbor_or_unisolated_tenant_ids"] == []
+    assert empty["quota_hog_or_burst_warning_tenant_ids"] == []
+    assert (
+        empty["quota_fairness_status"]
+        == "API_MULTI_TENANT_FAIRNESS_OPTIMAL"
+    )
+    assert empty["is_quota_fairness_compliant"] is True
+
+    invalid = audit_executive_report_api_quota_fairness_and_noisy_neighbor(
+        [42, "not-a-dict", None, {"tenant_id": "   "}]  # type: ignore[list-item]
+    )
+    assert invalid["evaluated_tenants_count"] == 0
+
+    defaults = audit_executive_report_api_quota_fairness_and_noisy_neighbor(
+        [
+            {
+                "tenant_id": "TENANT-DEFAULTS",
+                "observed_traffic_share_pct": None,
+                "burst_to_steady_rate_multiplier": None,
+                "per_tenant_token_bucket_enforced": None,
+                "caused_cross_tenant_latency_degradation": None,
+                "retry_after_header_compliant": None,
+            }
+        ]
+    )
+    assert defaults["evaluated_tenants_count"] == 1
+    assert (
+        defaults["quota_fairness_status"]
+        == "API_MULTI_TENANT_FAIRNESS_OPTIMAL"
+    )
+    assert defaults["is_quota_fairness_compliant"] is True
+
+    sample = [
+        {
+            "tenant_id": "TENANT-1",
+            "observed_traffic_share_pct": 20.0,
+            "burst_to_steady_rate_multiplier": 2.0,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_api_quota_fairness_and_noisy_neighbor(
+            sample
+        )
+        == audit_executive_report_api_quota_fairness_and_noisy_neighbor(sample)
+    )
+    assert (
+        "audit_executive_report_api_quota_fairness_and_noisy_neighbor"
+        in mod.__all__
+    )
