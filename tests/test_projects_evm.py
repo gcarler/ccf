@@ -11129,3 +11129,175 @@ def test_vecp_empty_invalid_and_field_reversion():
     assert bad_fields["uncertified_or_negative_net_proposal_ids"] == ["VECP-BAD"]
     assert bad_fields["total_net_instant_savings"] == 0.0
     assert bad_fields["vecp_evaluation_status"] == "UNVIABLE_OR_UNCERTIFIED_VECP_BREACH"
+
+
+# ── evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver (PMBOK §7.4 & §11.5, pure helper) ──
+
+
+def test_builders_risk_coverage_sound_claims():
+    """Siniestros con subrogación endosada, retención < 2% del EAC y TCV >= EAC -> 'BUILDERS_RISK_COVERAGE_SOUND'."""
+    import backend.services.project_evm_service as evm_module
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver,
+    )
+
+    claims = [
+        {
+            "claim_id": "BR-001",
+            "physical_damage_loss": 100000.0,
+            "physical_deductible": 25000.0,
+            "delay_days": 0,
+            "waiver_of_subrogation_endorsed": True,
+        },
+        {
+            "claim_id": "BR-002",
+            # Defaults implícitos por campo: daño 0.0, deducible 25000, delay 0, endosado True.
+        },
+    ]
+    res = evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver(claims)
+    assert res == {
+        "evaluated_claim_count": 2,
+        "total_physical_recovery_amount": 75000.0,
+        "total_dsu_indemnity_amount": 0.0,
+        "total_uninsured_retained_loss": 25000.0,
+        "tcv_underinsured_gap_amount": 0.0,
+        "unendorsed_subrogation_claim_ids": [],
+        "builders_risk_status": "BUILDERS_RISK_COVERAGE_SOUND",
+        "is_builders_risk_coverage_sound": True,
+    }
+    # Retención 25000/10M = 0.25% <= 2.0% del EAC; TCV (10.0M) >= EAC (10.0M) por defaults
+    assert (
+        ProjectEVMService.evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver(
+            claims
+        )
+        == res
+    )
+    assert "evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver" in evm_module.__all__
+
+
+def test_builders_risk_dsu_indemnity_and_retention_warning():
+    """Retención > 2% del EAC con deducible + espera DSU -> 'UNINSURED_RETENTION_OR_DSU_DEDUCTIBLE_WARNING' con matemática del periodo de espera."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver,
+    )
+
+    warning = evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver(
+        [
+            {
+                "claim_id": "BR-DSU",
+                "physical_damage_loss": 100000.0,
+                "physical_deductible": 25000.0,
+                "delay_days": 40,
+            },
+        ]
+    )
+    assert warning["evaluated_claim_count"] == 1
+    # net = 100000 - 25000 = 75000; compensable DSU = max(0, 40 - 30) = 10 días -> 150000
+    # waiting indem = min(40,30)=30 días -> 450000; retenido = 25000 + 450000 = 475000
+    # pct EAC = 475000/10M = 4.75% > 2.0% -> warning
+    assert warning["total_physical_recovery_amount"] == 75000.0
+    assert warning["total_dsu_indemnity_amount"] == 150000.0
+    assert warning["total_uninsured_retained_loss"] == 475000.0
+    assert warning["builders_risk_status"] == (
+        "UNINSURED_RETENTION_OR_DSU_DEDUCTIBLE_WARNING"
+    )
+    assert warning["is_builders_risk_coverage_sound"] is False
+
+    # delay exactamente en el periodo de espera (30 == 30) no genera indemnidad DSU
+    at_waiting = evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver(
+        [{"claim_id": "BR-WAIT", "delay_days": 30}]
+    )
+    assert at_waiting["total_dsu_indemnity_amount"] == 0.0
+
+    custom = evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver(
+        [{"claim_id": "BR-3", "physical_damage_loss": 40000.0, "physical_deductible": 20000.0}],
+        max_uninsured_loss_pct_of_eac=0.1,
+    )
+    # retenido = min(40000, 20000) = 20000 -> 0.2% del EAC 10M > 0.1% -> warning
+    assert custom["total_uninsured_retained_loss"] == 20000.0
+    assert custom["builders_risk_status"] == "UNINSURED_RETENTION_OR_DSU_DEDUCTIBLE_WARNING"
+
+
+def test_builders_risk_tcv_underinsurance_or_subrogation_breach():
+    """EAC > límite TCV (gap de coaseguro) o renuncia sin endosar -> 'CRITICAL_TCV_UNDERINSURANCE_OR_SUBROGATION_BREACH' con precedencia."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver,
+    )
+
+    breach = evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver(
+        [
+            {"claim_id": "BR-UNENDORSED", "waiver_of_subrogation_endorsed": False},
+        ],
+        current_forecast_eac=10500000.0,
+    )
+    assert breach["tcv_underinsured_gap_amount"] == 500000.0
+    assert breach["unendorsed_subrogation_claim_ids"] == ["BR-UNENDORSED"]
+    assert breach["builders_risk_status"] == (
+        "CRITICAL_TCV_UNDERINSURANCE_OR_SUBROGATION_BREACH"
+    )
+    assert breach["is_builders_risk_coverage_sound"] is False
+
+    # Gap de TCV precede aunque también haya retenidas por encima del máximo
+    gap_precedence = evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver(
+        [{"claim_id": "BR-SMALL", "physical_damage_loss": 200000.0}],
+        current_forecast_eac=10100000.0,
+    )
+    assert gap_precedence["tcv_underinsured_gap_amount"] == 100000.0
+    assert gap_precedence["builders_risk_status"] == (
+        "CRITICAL_TCV_UNDERINSURANCE_OR_SUBROGATION_BREACH"
+    )
+
+    # EAC == límite TCV (gap 0) sin subrogación no breach; gap custom relajado
+    sound_gap = evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver(
+        [{"claim_id": "BR-OK"}],
+    )
+    assert sound_gap["tcv_underinsured_gap_amount"] == 0.0
+    assert sound_gap["builders_risk_status"] == "BUILDERS_RISK_COVERAGE_SOUND"
+
+
+def test_builders_risk_empty_invalid_and_field_reversion():
+    """None / dicts inválidos se descartan; campos no numéricos/no bool revierten a defaults del spec."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver,
+    )
+
+    empty_res = evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver(None)
+    assert empty_res == {
+        "evaluated_claim_count": 0,
+        "total_physical_recovery_amount": 0.0,
+        "total_dsu_indemnity_amount": 0.0,
+        "total_uninsured_retained_loss": 0.0,
+        "tcv_underinsured_gap_amount": 0.0,
+        "unendorsed_subrogation_claim_ids": [],
+        "builders_risk_status": "BUILDERS_RISK_COVERAGE_SOUND",
+        "is_builders_risk_coverage_sound": True,
+    }
+
+    invalid_res = evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver(
+        ["no-dict", None, {"claim_id": "   "}, {"claim_id": 88}]
+    )
+    assert invalid_res["evaluated_claim_count"] == 0
+
+    bad_fields = evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver(
+        [
+            {
+                "claim_id": "BR-BAD",
+                "physical_damage_loss": "mucho",
+                "physical_deductible": None,
+                "delay_days": "cuarenta",
+                "waiver_of_subrogation_endorsed": "sí",
+            }
+        ],
+        current_forecast_eac=0.0,
+    )
+    assert bad_fields == {
+        "evaluated_claim_count": 1,
+        "total_physical_recovery_amount": 0.0,
+        "total_dsu_indemnity_amount": 0.0,
+        "total_uninsured_retained_loss": 0.0,
+        "tcv_underinsured_gap_amount": 0.0,
+        "unendorsed_subrogation_claim_ids": [],
+        "builders_risk_status": "BUILDERS_RISK_COVERAGE_SOUND",
+        "is_builders_risk_coverage_sound": True,
+    }

@@ -3051,6 +3051,7 @@ __all__ = [
     "audit_markdown_heading_hierarchy_and_anchor_slug_collisions",
     "audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene",
     "audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene",
+    "audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene",
     "AnydocService",
 ]
 
@@ -9515,4 +9516,139 @@ AnyDocService.audit_markdown_json_schema_codeblock_syntax_and_secret_example_hyg
 AnydocService.audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene = staticmethod(
     audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene
 )
+
+
+def audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene(
+    markdown_text: str,
+    min_meaningful_alt_length: int = 5,
+    banned_placeholder_alts: tuple[str, ...] | list[str] = (
+        "image",
+        "img",
+        "photo",
+        "screenshot",
+        "picture",
+        "untitled",
+        "graphic",
+    ),
+) -> dict[str, Any]:
+    """PMBOK §4.4 & §10.2 — AnyDoc Markdown Accessible Media Alt-Text Coverage, Decorative Image Empty-Alt Convention & WCAG SVG Title/Role Hygiene Auditor."""
+    raw_text = markdown_text if isinstance(markdown_text, str) else ""
+    stripped_text = re.sub(r"```.*?```", "", raw_text, flags=re.DOTALL)
+
+    banned_set = {str(x).strip().lower() for x in (banned_placeholder_alts or ())}
+    min_len = max(1, int(min_meaningful_alt_length))
+    file_ext_re = re.compile(r"\.(?:png|jpe?g|gif|svg|webp)$", re.IGNORECASE)
+
+    missing_alt_images: list[dict[str, Any]] = []
+    placeholder_or_filename_alt_images: list[dict[str, Any]] = []
+    unlabeled_inline_svgs: list[dict[str, Any]] = []
+    total_images_evaluated = 0
+
+    def _check_alt(alt_val: str, src_val: str, is_decorative: bool) -> None:
+        norm = alt_val.strip()
+        if not norm:
+            if not is_decorative:
+                missing_alt_images.append({"src": src_val, "reason": "empty_non_decorative_alt"})
+            return
+        lower_alt = norm.lower()
+        if (
+            lower_alt in banned_set
+            or bool(file_ext_re.search(lower_alt))
+            or len(norm) < min_len
+        ):
+            placeholder_or_filename_alt_images.append(
+                {"src": src_val, "alt": norm}
+            )
+
+    md_img_re = re.compile(r"!\[([^\]]*)\]\(([^)]+)\)")
+    for m in md_img_re.finditer(stripped_text):
+        total_images_evaluated += 1
+        alt_text = m.group(1)
+        url_text = m.group(2).strip()
+        is_dec = "#decorative" in url_text.lower()
+        _check_alt(alt_text, url_text, is_dec)
+
+    html_img_re = re.compile(r"<img\b([^>]*?)/?>", re.IGNORECASE | re.DOTALL)
+    for m in html_img_re.finditer(stripped_text):
+        total_images_evaluated += 1
+        attrs = m.group(1)
+        src_m = re.search(r'\bsrc\s*=\s*["\']([^"\']*)["\']', attrs, re.IGNORECASE)
+        src_val = src_m.group(1) if src_m else ""
+        alt_m = re.search(r'\balt\s*=\s*["\']([^"\']*)["\']', attrs, re.IGNORECASE)
+        is_dec = bool(
+            re.search(
+                r'\b(?:role\s*=\s*["\'](?:presentation|none)["\']|aria-hidden\s*=\s*["\']true["\'])',
+                attrs,
+                re.IGNORECASE,
+            )
+            or "#decorative" in src_val.lower()
+        )
+        if alt_m is None:
+            if not is_dec:
+                missing_alt_images.append({"src": src_val, "reason": "missing_alt_attribute"})
+        else:
+            _check_alt(alt_m.group(1), src_val, is_dec)
+
+    svg_re = re.compile(r"<svg\b([^>]*)>(.*?)</svg>", re.IGNORECASE | re.DOTALL)
+    for idx, m in enumerate(svg_re.finditer(stripped_text)):
+        svg_attrs = m.group(1)
+        svg_body = m.group(2)
+        has_role_or_aria = bool(
+            re.search(
+                r'\b(?:role\s*=\s*["\']img["\']|aria-label\s*=\s*["\'][^"\']+["\']|aria-hidden\s*=\s*["\']true["\'])',
+                svg_attrs,
+                re.IGNORECASE,
+            )
+        )
+        has_title = bool(
+            re.search(r"<title\b[^>]*>.*?\S.*?</title>", svg_body, re.IGNORECASE | re.DOTALL)
+        )
+        if not (has_role_or_aria or has_title):
+            unlabeled_inline_svgs.append({"svg_index": idx})
+
+    is_valid = (
+        len(missing_alt_images) == 0
+        and len(placeholder_or_filename_alt_images) == 0
+        and len(unlabeled_inline_svgs) == 0
+    )
+
+    recommendations: list[str] = []
+    if missing_alt_images:
+        recommendations.append(
+            "Provide descriptive alt text for all informative images, or mark purely decorative images with #decorative or role='presentation'."
+        )
+    if placeholder_or_filename_alt_images:
+        recommendations.append(
+            f"Replace generic placeholder or filename alt text with meaningful descriptions (>= {min_len} chars)."
+        )
+    if unlabeled_inline_svgs:
+        recommendations.append(
+            "Add role='img' with aria-label or a <title> element (or aria-hidden='true' if decorative) to all inline <svg> blocks."
+        )
+
+    if missing_alt_images:
+        status = "CRITICAL_MISSING_ALT_ACCESSIBILITY_BREACH"
+    elif placeholder_or_filename_alt_images or unlabeled_inline_svgs:
+        status = "PLACEHOLDER_ALT_OR_SVG_WARNING"
+    else:
+        status = "WCAG_MEDIA_COMPLIANT"
+
+    return {
+        "is_valid": is_valid,
+        "total_images_evaluated": total_images_evaluated,
+        "missing_alt_images": missing_alt_images,
+        "placeholder_or_filename_alt_images": placeholder_or_filename_alt_images,
+        "unlabeled_inline_svgs": unlabeled_inline_svgs,
+        "status": status,
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene = staticmethod(
+    audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene
+)
+AnydocService.audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene = staticmethod(
+    audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene
+)
+
 

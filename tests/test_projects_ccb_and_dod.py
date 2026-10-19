@@ -11479,3 +11479,110 @@ def test_audit_k8s_pdb_quorum_drain_and_statefulset_volume_gate_staticmethod_and
         in mod.__all__
     )
 
+
+def test_audit_service_mesh_mtls_strict_mode_and_tls13_cipher_gate_approved():
+    from backend.services.project_ccb_service import (
+        audit_service_mesh_mtls_strict_mode_and_tls13_cipher_gate,
+    )
+
+    res = audit_service_mesh_mtls_strict_mode_and_tls13_cipher_gate(
+        mesh_services=[
+            {
+                "service_id": "payments-svc",
+                "peer_authn_mode": "STRICT",
+                "min_tls_version": "TLSv1_3",
+                "weak_cbc_or_rc4_ciphers_enabled": False,
+                "dual_pin_backup_spki_configured": True,
+            },
+            {
+                "service_id": "ledger-svc",
+                "peer_authn_mode": "STRICT",
+                "min_tls_version": "TLSv1_2",
+                "weak_cbc_or_rc4_ciphers_enabled": False,
+                "dual_pin_backup_spki_configured": True,
+            },
+        ]
+    )
+    assert res["is_valid"] is True
+    assert res["total_services"] == 2
+    assert res["non_strict_mtls_services"] == []
+    assert res["weak_tls_or_cipher_services"] == []
+    assert res["single_pin_lockout_risk_services"] == []
+    assert res["gate_decision"] == "APPROVED"
+
+
+def test_audit_service_mesh_mtls_strict_mode_and_tls13_cipher_gate_rejected():
+    from backend.services.project_ccb_service import (
+        audit_service_mesh_mtls_strict_mode_and_tls13_cipher_gate,
+    )
+
+    res = audit_service_mesh_mtls_strict_mode_and_tls13_cipher_gate(
+        mesh_services=[
+            {
+                "service_id": "legacy-auth-svc",
+                "peer_authn_mode": "PERMISSIVE",
+                "min_tls_version": "TLSv1_1",
+                "weak_cbc_or_rc4_ciphers_enabled": True,
+                "dual_pin_backup_spki_configured": True,
+            }
+        ],
+        require_strict_mtls=True,
+    )
+    assert res["is_valid"] is False
+    assert res["non_strict_mtls_services"] == ["legacy-auth-svc"]
+    assert res["weak_tls_or_cipher_services"] == ["legacy-auth-svc"]
+    assert res["gate_decision"] == "REJECTED"
+
+
+def test_audit_service_mesh_mtls_strict_mode_and_tls13_cipher_gate_conditional():
+    from backend.services.project_ccb_service import (
+        audit_service_mesh_mtls_strict_mode_and_tls13_cipher_gate,
+    )
+
+    res = audit_service_mesh_mtls_strict_mode_and_tls13_cipher_gate(
+        mesh_services=[
+            {
+                "service_id": "edge-proxy-svc",
+                "peer_authn_mode": "STRICT",
+                "min_tls_version": "TLSv1_3",
+                "weak_cbc_or_rc4_ciphers_enabled": False,
+                "dual_pin_backup_spki_configured": False,
+            }
+        ]
+    )
+    assert res["is_valid"] is False
+    assert res["non_strict_mtls_services"] == []
+    assert res["weak_tls_or_cipher_services"] == []
+    assert res["single_pin_lockout_risk_services"] == ["edge-proxy-svc"]
+    assert res["gate_decision"] == "CONDITIONAL"
+
+
+def test_audit_service_mesh_mtls_strict_mode_and_tls13_cipher_gate_staticmethod_and_dunder_all():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_service_mesh_mtls_strict_mode_and_tls13_cipher_gate,
+    )
+
+    empty = audit_service_mesh_mtls_strict_mode_and_tls13_cipher_gate([])
+    assert empty["is_valid"] is False
+    assert empty["gate_decision"] == "REJECTED"
+
+    sample = [
+        {
+            "service_id": "svc-1",
+            "peer_authn_mode": "STRICT",
+            "min_tls_version": "TLSv1_3",
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_service_mesh_mtls_strict_mode_and_tls13_cipher_gate(
+            sample
+        )
+        == audit_service_mesh_mtls_strict_mode_and_tls13_cipher_gate(sample)
+    )
+    assert (
+        "audit_service_mesh_mtls_strict_mode_and_tls13_cipher_gate"
+        in mod.__all__
+    )
+

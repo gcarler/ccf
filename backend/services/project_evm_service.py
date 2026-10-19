@@ -5539,6 +5539,7 @@ __all__ = [
     "evaluate_evm_economic_price_adjustment_epa_corridor_and_share",
     "evaluate_evm_surety_performance_bond_and_subcontractor_default_sdi",
     "evaluate_evm_vecp_net_savings_and_contractor_share_split",
+    "evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver",
     "ProjectEVMService",
 ]
 
@@ -11169,4 +11170,144 @@ def evaluate_evm_vecp_net_savings_and_contractor_share_split(
 
 ProjectEVMService.evaluate_evm_vecp_net_savings_and_contractor_share_split = staticmethod(
     evaluate_evm_vecp_net_savings_and_contractor_share_split
+)
+def evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver(
+    claims: list[dict[str, Any]] | None,
+    *,
+    policy_tcv_limit: float = 10000000.0,
+    current_forecast_eac: float = 10000000.0,
+    dsu_waiting_period_days: int = 30,
+    dsu_daily_indemnity_rate: float = 15000.0,
+    max_uninsured_loss_pct_of_eac: float = 2.0,
+) -> dict[str, Any]:
+    """PMBOK §7.4 & §11.5 — Evalúa la póliza Builder's Risk: límite TCV vs EAC vigente (riesgo de coaseguro por subaseguro), indemnidad DSU con periodo de espera, pérdidas retenidas no aseguradas y renuncia de subrogación endosada.
+
+    Cada siniestro válido declara `claim_id` (str no vacío),
+    `physical_damage_loss` (default 0.0), `physical_deductible`
+    (default 25000.0), `delay_days` (default 0) y
+    `waiver_of_subrogation_endorsed` (default True):
+    - `net_physical_recovery = max(0, daño - deducible)`.
+    - `compensable_dsu_days = max(0, delay_days - waiting_period)`;
+      indemnidad DSU = días compensables * tarifa diaria.
+    - `uninsured_retained_loss = (danio - recuperacion neta) + espera
+      compensada (min(delay, waiting) * tarifa diaria)`.
+    - `tcv_underinsured_gap_amount = max(0, EAC - límite TCV)`: el crecimiento
+      del EAC por encima del límite TCV sin rider es brecha crítica de
+      coaseguro.
+    - `unendorsed_subrogation_claim_ids`: renuncia de subrogación sin endosar
+      (brecha crítica, precedencia sobre la advertencia).
+    - Advertencia: total de pérdidas retenidas > max_uninsured_loss_pct_of_eac
+      del EAC.
+    - Estados: 'CRITICAL_TCV_UNDERINSURANCE_OR_SUBROGATION_BREACH' |
+      'UNINSURED_RETENTION_OR_DSU_DEDUCTIBLE_WARNING' |
+      'BUILDERS_RISK_COVERAGE_SOUND'.
+    """
+    raw_items = claims if isinstance(claims, list) else []
+    valid_claims: list[dict[str, Any]] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_claim_id = item.get("claim_id")
+        if not isinstance(raw_claim_id, str) or not raw_claim_id.strip():
+            continue
+        valid_claims.append(item)
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _int(value: Any, default: int) -> int:
+        if isinstance(value, bool) or not isinstance(value, int):
+            return default
+        return value
+
+    def _float(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    eac_value = _float(current_forecast_eac, 10000000.0)
+    tcv_limit = _float(policy_tcv_limit, 10000000.0)
+    waiting_period = _int(dsu_waiting_period_days, 30)
+    daily_rate = _float(dsu_daily_indemnity_rate, 15000.0)
+
+    total_physical_recovery_amount = 0.0
+    total_dsu_indemnity_amount = 0.0
+    total_uninsured_retained_loss = 0.0
+    unendorsed_subrogation_claim_ids: list[str] = []
+
+    for claim in valid_claims:
+        claim_id = str(claim.get("claim_id")).strip()
+        damage_loss = _float(claim.get("physical_damage_loss"), 0.0)
+        deductible = _float(claim.get("physical_deductible"), 25000.0)
+        delay_days = _int(claim.get("delay_days"), 0)
+        subro_endorsed = _bool(
+            claim.get("waiver_of_subrogation_endorsed"), True
+        )
+
+        net_physical_recovery = round(
+            max(0.0, float(damage_loss) - float(deductible)), 2
+        )
+        compensable_dsu_days = max(0, int(delay_days) - int(waiting_period))
+        dsu_indemnity = round(compensable_dsu_days * daily_rate, 2)
+        waiting_indemnified_cost = round(
+            min(max(0, int(delay_days)), max(0, int(waiting_period)))
+            * daily_rate,
+            2,
+        )
+        retained_loss = round(
+            (float(damage_loss) - net_physical_recovery) + waiting_indemnified_cost,
+            2,
+        )
+
+        total_physical_recovery_amount = round(
+            total_physical_recovery_amount + net_physical_recovery, 2
+        )
+        total_dsu_indemnity_amount = round(
+            total_dsu_indemnity_amount + dsu_indemnity, 2
+        )
+        total_uninsured_retained_loss = round(
+            total_uninsured_retained_loss + retained_loss, 2
+        )
+
+        if not bool(subro_endorsed):
+            unendorsed_subrogation_claim_ids.append(claim_id)
+
+    tcv_underinsured_gap_amount = round(max(0.0, eac_value - tcv_limit), 2)
+
+    tcv_or_subrogation_breach = (
+        tcv_underinsured_gap_amount > 0.0
+        or bool(unendorsed_subrogation_claim_ids)
+    )
+    eac_positive = eac_value > 0
+    uninsured_pct_of_eac = round(
+        total_uninsured_retained_loss / eac_value * 100.0, 2
+    ) if eac_positive else 0.0
+    retention_warning = (
+        eac_positive
+        and uninsured_pct_of_eac
+        > _float(max_uninsured_loss_pct_of_eac, 2.0)
+    )
+
+    if tcv_or_subrogation_breach:
+        builders_risk_status = "CRITICAL_TCV_UNDERINSURANCE_OR_SUBROGATION_BREACH"
+    elif retention_warning:
+        builders_risk_status = "UNINSURED_RETENTION_OR_DSU_DEDUCTIBLE_WARNING"
+    else:
+        builders_risk_status = "BUILDERS_RISK_COVERAGE_SOUND"
+
+    return {
+        "evaluated_claim_count": len(valid_claims),
+        "total_physical_recovery_amount": total_physical_recovery_amount,
+        "total_dsu_indemnity_amount": total_dsu_indemnity_amount,
+        "total_uninsured_retained_loss": total_uninsured_retained_loss,
+        "tcv_underinsured_gap_amount": tcv_underinsured_gap_amount,
+        "unendorsed_subrogation_claim_ids": unendorsed_subrogation_claim_ids,
+        "builders_risk_status": builders_risk_status,
+        "is_builders_risk_coverage_sound": builders_risk_status
+        == "BUILDERS_RISK_COVERAGE_SOUND",
+    }
+
+
+ProjectEVMService.evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver = staticmethod(
+    evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver
 )

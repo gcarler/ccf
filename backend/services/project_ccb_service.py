@@ -2865,6 +2865,7 @@ __all__ = [
     "audit_zero_downtime_db_migration_lock_timeout_and_expand_contract_gate",
     "audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate",
     "audit_k8s_pdb_quorum_drain_and_statefulset_volume_gate",
+    "audit_service_mesh_mtls_strict_mode_and_tls13_cipher_gate",
     "ProjectCCBService",
 ]
 
@@ -8674,4 +8675,84 @@ def audit_k8s_pdb_quorum_drain_and_statefulset_volume_gate(
 ProjectCCBService.audit_k8s_pdb_quorum_drain_and_statefulset_volume_gate = staticmethod(
     audit_k8s_pdb_quorum_drain_and_statefulset_volume_gate
 )
+
+
+def audit_service_mesh_mtls_strict_mode_and_tls13_cipher_gate(
+    mesh_services: list[dict[str, Any]],
+    require_strict_mtls: bool = True,
+    require_tls13_or_clean_tls12: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §8.3 & §11.6 — CCB Mutual TLS (mTLS) SPIFFE/Istio PeerAuthentication STRICT Mode, Cipher Suite TLS 1.3 Enforcement & Certificate Pinning Rotation Gate Auditor."""
+    valid_services = [
+        s for s in (mesh_services if isinstance(mesh_services, list) else []) if isinstance(s, dict)
+    ]
+
+    non_strict_mtls_services: list[str] = []
+    weak_tls_or_cipher_services: list[str] = []
+    single_pin_lockout_risk_services: list[str] = []
+
+    for idx, s in enumerate(valid_services):
+        sid = str(s.get("service_id") or f"service-{idx + 1}").strip()
+        mode = str(s.get("peer_authn_mode") or "").strip().upper()
+        tls_ver = str(s.get("min_tls_version") or "").strip()
+        weak_ciphers = bool(s.get("weak_cbc_or_rc4_ciphers_enabled", False))
+        dual_pin = bool(s.get("dual_pin_backup_spki_configured", True))
+
+        if mode == "DISABLE" or (require_strict_mtls and mode != "STRICT"):
+            non_strict_mtls_services.append(sid)
+
+        if require_tls13_or_clean_tls12 and (
+            tls_ver not in ("TLSv1_3", "TLSv1_2") or weak_ciphers
+        ):
+            weak_tls_or_cipher_services.append(sid)
+        elif not require_tls13_or_clean_tls12 and weak_ciphers:
+            weak_tls_or_cipher_services.append(sid)
+
+        if not dual_pin:
+            single_pin_lockout_risk_services.append(sid)
+
+    recommendations: list[str] = []
+    if len(valid_services) == 0:
+        recommendations.append(
+            "Provide at least one service mesh PeerAuthentication record for mTLS gate verification."
+        )
+    if non_strict_mtls_services:
+        recommendations.append(
+            f"Enforce PeerAuthentication STRICT mTLS mode on: {', '.join(non_strict_mtls_services)}."
+        )
+    if weak_tls_or_cipher_services:
+        recommendations.append(
+            f"Upgrade minimum TLS version to TLSv1_2/TLSv1_3 and disable weak CBC/RC4 cipher suites on: {', '.join(weak_tls_or_cipher_services)}."
+        )
+    if single_pin_lockout_risk_services:
+        recommendations.append(
+            f"Configure dual SPKI backup pin before certificate rotation to avoid pinning lockout on: {', '.join(single_pin_lockout_risk_services)}."
+        )
+
+    if (
+        len(non_strict_mtls_services) > 0
+        or len(weak_tls_or_cipher_services) > 0
+        or len(valid_services) == 0
+    ):
+        gate_decision = "REJECTED"
+    elif len(single_pin_lockout_risk_services) > 0:
+        gate_decision = "CONDITIONAL"
+    else:
+        gate_decision = "APPROVED"
+
+    return {
+        "is_valid": gate_decision == "APPROVED",
+        "total_services": len(valid_services),
+        "non_strict_mtls_services": non_strict_mtls_services,
+        "weak_tls_or_cipher_services": weak_tls_or_cipher_services,
+        "single_pin_lockout_risk_services": single_pin_lockout_risk_services,
+        "gate_decision": gate_decision,
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.audit_service_mesh_mtls_strict_mode_and_tls13_cipher_gate = staticmethod(
+    audit_service_mesh_mtls_strict_mode_and_tls13_cipher_gate
+)
+
 

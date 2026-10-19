@@ -9325,3 +9325,85 @@ def test_audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene_
         in mod.__all__
     )
 
+
+def test_audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene_compliant():
+    from backend.services.anydoc_service import (
+        audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene,
+    )
+
+    md = (
+        "# Architecture\n\n"
+        "![Network topology diagram for VPC peering](https://cdn.example.com/vpc.png)\n"
+        "![](https://cdn.example.com/divider.svg#decorative)\n"
+        '<img src="/banner.png" alt="" role="presentation" />\n'
+        '<svg role="img" aria-label="Status check icon"><circle r="5"/></svg>\n'
+    )
+    res = audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene(md)
+    assert res["is_valid"] is True
+    assert res["total_images_evaluated"] == 3
+    assert res["missing_alt_images"] == []
+    assert res["placeholder_or_filename_alt_images"] == []
+    assert res["unlabeled_inline_svgs"] == []
+    assert res["status"] == "WCAG_MEDIA_COMPLIANT"
+
+
+def test_audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene_missing_alt_breach():
+    from backend.services.anydoc_service import (
+        audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene,
+    )
+
+    md = (
+        "![](https://cdn.example.com/chart.png)\n"
+        '<img src="https://cdn.example.com/logo.png" />\n'
+    )
+    res = audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene(md)
+    assert res["is_valid"] is False
+    assert res["total_images_evaluated"] == 2
+    assert len(res["missing_alt_images"]) == 2
+    assert res["status"] == "CRITICAL_MISSING_ALT_ACCESSIBILITY_BREACH"
+
+
+def test_audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene_placeholder_and_svg_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene,
+    )
+
+    md = (
+        "![screenshot](https://cdn.example.com/screen1.png)\n"
+        "![diagram_v2.png](https://cdn.example.com/screen2.png)\n"
+        "<svg><path d=\"M0 0\"/></svg>\n"
+    )
+    res = audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene(md)
+    assert res["is_valid"] is False
+    assert res["missing_alt_images"] == []
+    assert len(res["placeholder_or_filename_alt_images"]) == 2
+    assert len(res["unlabeled_inline_svgs"]) == 1
+    assert res["status"] == "PLACEHOLDER_ALT_OR_SVG_WARNING"
+
+
+def test_audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene_staticmethod_and_dunder_all():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene,
+    )
+
+    sample = "![System architecture overview](https://example.com/arch.png)"
+    assert (
+        AnyDocService.audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene(
+            sample
+        )
+        == audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene(
+            sample
+        )
+        == audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene(sample)
+    )
+    assert (
+        "audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene"
+        in mod.__all__
+    )
+
