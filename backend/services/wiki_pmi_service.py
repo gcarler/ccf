@@ -2532,6 +2532,7 @@ __all__ = [
     "audit_wiki_dr_tabletop_exercise_and_communication_tree",
     "audit_wiki_api_deprecation_sunset_and_consumer_migration",
     "audit_wiki_runbook_automation_toil_and_idempotency",
+    "audit_wiki_chaos_gameday_hypothesis_and_blast_radius",
     "WikiPMIService",
 ]
 
@@ -6699,5 +6700,84 @@ def audit_wiki_runbook_automation_toil_and_idempotency(
 
 WikiPMIService.audit_wiki_runbook_automation_toil_and_idempotency = staticmethod(
     audit_wiki_runbook_automation_toil_and_idempotency
+)
+
+
+def audit_wiki_chaos_gameday_hypothesis_and_blast_radius(
+    chaos_experiments: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_blast_radius_tenants_pct: float = 5.0,
+    max_unremediated_findings_days: int | float = 14,
+) -> dict[str, Any]:
+    """PMI PMBOK §11.6 & §8.2 — Wiki Chaos Engineering GameDay Hypothesis Verification, Blast-Radius Containment & Abort-Switch Auditor."""
+    valid_experiments = [
+        exp
+        for exp in (chaos_experiments or [])
+        if isinstance(exp, Mapping) and str(exp.get("experiment_id") or "").strip()
+    ]
+
+    unsafe_or_uncontained_experiment_ids: list[str] = []
+    overdue_remediation_experiment_ids: list[str] = []
+
+    for exp in valid_experiments:
+        eid = str(exp.get("experiment_id")).strip()
+        hypothesis_defined = bool(
+            exp.get("steady_state_hypothesis_defined", True)
+            if exp.get("steady_state_hypothesis_defined") is not None
+            else True
+        )
+        abort_switch_verified = bool(
+            exp.get("automated_abort_switch_verified", True)
+            if exp.get("automated_abort_switch_verified") is not None
+            else True
+        )
+        blast_radius_pct = float(
+            exp.get("blast_radius_tenants_pct", 1.0)
+            if exp.get("blast_radius_tenants_pct") is not None
+            else 1.0
+        )
+        unremediated_gaps = int(
+            exp.get("unremediated_resilience_gaps_count", 0)
+            if exp.get("unremediated_resilience_gaps_count") is not None
+            else 0
+        )
+        days_since_gameday = float(
+            exp.get("days_since_gameday_execution", 7)
+            if exp.get("days_since_gameday_execution") is not None
+            else 7
+        )
+
+        if (
+            not hypothesis_defined
+            or not abort_switch_verified
+            or blast_radius_pct > max_blast_radius_tenants_pct
+        ):
+            unsafe_or_uncontained_experiment_ids.append(eid)
+
+        if (
+            unremediated_gaps > 0
+            and days_since_gameday > max_unremediated_findings_days
+        ):
+            overdue_remediation_experiment_ids.append(eid)
+
+    if unsafe_or_uncontained_experiment_ids:
+        chaos_gameday_status = "CHAOS_ABORT_SWITCH_OR_BLAST_RADIUS_BREACH"
+    elif overdue_remediation_experiment_ids:
+        chaos_gameday_status = "CHAOS_RESILIENCE_GAP_REMEDIATION_WARNING"
+    else:
+        chaos_gameday_status = "CHAOS_GAMEDAY_GOVERNANCE_OPTIMAL"
+
+    return {
+        "evaluated_experiments_count": len(valid_experiments),
+        "unsafe_or_uncontained_experiment_ids": unsafe_or_uncontained_experiment_ids,
+        "overdue_remediation_experiment_ids": overdue_remediation_experiment_ids,
+        "chaos_gameday_status": chaos_gameday_status,
+        "is_chaos_gameday_compliant": chaos_gameday_status
+        == "CHAOS_GAMEDAY_GOVERNANCE_OPTIMAL",
+    }
+
+
+WikiPMIService.audit_wiki_chaos_gameday_hypothesis_and_blast_radius = staticmethod(
+    audit_wiki_chaos_gameday_hypothesis_and_blast_radius
 )
 

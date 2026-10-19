@@ -3035,6 +3035,7 @@ __all__ = [
     "audit_markdown_acronym_expansion_and_glossary_term_hygiene",
     "audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene",
     "audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene",
+    "audit_markdown_link_rot_and_internal_anchor_resolution_hygiene",
     "AnydocService",
 ]
 
@@ -7979,5 +7980,75 @@ AnyDocService.audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene = stat
 )
 AnydocService.audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene = staticmethod(
     audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene
+)
+
+
+def audit_markdown_link_rot_and_internal_anchor_resolution_hygiene(
+    documents: Any,
+    *,
+    max_redirect_hops_allowed: int = 2,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §10.2 — AnyDoc Markdown Link Rot HTTP Status, Internal Anchor Resolution & External Reference Archival Hygiene Auditor."""
+    entries = documents if isinstance(documents, (list, tuple)) else []
+    rows = [
+        item
+        for item in entries
+        if isinstance(item, dict) and str(item.get("doc_id") or "").strip()
+    ]
+
+    dead_link_or_broken_anchor_doc_ids: list[str] = []
+    redirect_chain_or_unpinned_url_doc_ids: list[str] = []
+
+    for item in rows:
+        doc_id = str(item.get("doc_id")).strip()
+        dead_links = int(
+            item.get("dead_404_or_5xx_links_count", 0)
+            if item.get("dead_404_or_5xx_links_count") is not None
+            else 0
+        )
+        unresolved_anchors = int(
+            item.get("unresolved_internal_anchors_count", 0)
+            if item.get("unresolved_internal_anchors_count") is not None
+            else 0
+        )
+        redirect_hops = int(
+            item.get("max_redirect_chain_hops", 0)
+            if item.get("max_redirect_chain_hops") is not None
+            else 0
+        )
+        unpinned_urls = int(
+            item.get("unpinned_mutable_external_urls_count", 0)
+            if item.get("unpinned_mutable_external_urls_count") is not None
+            else 0
+        )
+
+        if dead_links > 0 or unresolved_anchors > 0:
+            dead_link_or_broken_anchor_doc_ids.append(doc_id)
+
+        if redirect_hops > max_redirect_hops_allowed or unpinned_urls > 0:
+            redirect_chain_or_unpinned_url_doc_ids.append(doc_id)
+
+    if dead_link_or_broken_anchor_doc_ids:
+        link_integrity_status = "LINK_ROT_OR_BROKEN_ANCHOR_BREACH"
+    elif redirect_chain_or_unpinned_url_doc_ids:
+        link_integrity_status = "LINK_REDIRECT_OR_UNPINNED_WARNING"
+    else:
+        link_integrity_status = "LINK_INTEGRITY_VERIFIED"
+
+    return {
+        "evaluated_documents_count": len(rows),
+        "dead_link_or_broken_anchor_doc_ids": dead_link_or_broken_anchor_doc_ids,
+        "redirect_chain_or_unpinned_url_doc_ids": redirect_chain_or_unpinned_url_doc_ids,
+        "link_integrity_status": link_integrity_status,
+        "is_link_integrity_compliant": link_integrity_status
+        == "LINK_INTEGRITY_VERIFIED",
+    }
+
+
+AnyDocService.audit_markdown_link_rot_and_internal_anchor_resolution_hygiene = staticmethod(
+    audit_markdown_link_rot_and_internal_anchor_resolution_hygiene
+)
+AnydocService.audit_markdown_link_rot_and_internal_anchor_resolution_hygiene = staticmethod(
+    audit_markdown_link_rot_and_internal_anchor_resolution_hygiene
 )
 

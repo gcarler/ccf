@@ -8886,3 +8886,152 @@ def test_wiki_runbook_automation_toil_idempotency_invalid_and_binding():
         "audit_wiki_runbook_automation_toil_and_idempotency"
         in mod.__all__
     )
+
+
+def test_audit_wiki_chaos_gameday_hypothesis_and_blast_radius_breach():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_chaos_gameday_hypothesis_and_blast_radius,
+    )
+
+    result = audit_wiki_chaos_gameday_hypothesis_and_blast_radius(
+        [
+            {
+                "experiment_id": "CHAOS-NO-HYP",
+                "steady_state_hypothesis_defined": False,
+                "automated_abort_switch_verified": True,
+                "blast_radius_tenants_pct": 1.0,
+                "unremediated_resilience_gaps_count": 0,
+                "days_since_gameday_execution": 5,
+            },
+            {
+                "experiment_id": "CHAOS-NO-ABORT",
+                "steady_state_hypothesis_defined": True,
+                "automated_abort_switch_verified": False,
+                "blast_radius_tenants_pct": 1.0,
+                "unremediated_resilience_gaps_count": 0,
+                "days_since_gameday_execution": 5,
+            },
+            {
+                "experiment_id": "CHAOS-WIDE-BLAST",
+                "steady_state_hypothesis_defined": True,
+                "automated_abort_switch_verified": True,
+                "blast_radius_tenants_pct": 12.5,
+                "unremediated_resilience_gaps_count": 0,
+                "days_since_gameday_execution": 5,
+            },
+        ],
+        max_blast_radius_tenants_pct=5.0,
+        max_unremediated_findings_days=14,
+    )
+    assert result["evaluated_experiments_count"] == 3
+    assert result["unsafe_or_uncontained_experiment_ids"] == [
+        "CHAOS-NO-HYP",
+        "CHAOS-NO-ABORT",
+        "CHAOS-WIDE-BLAST",
+    ]
+    assert result["overdue_remediation_experiment_ids"] == []
+    assert (
+        result["chaos_gameday_status"]
+        == "CHAOS_ABORT_SWITCH_OR_BLAST_RADIUS_BREACH"
+    )
+    assert result["is_chaos_gameday_compliant"] is False
+
+
+def test_audit_wiki_chaos_gameday_hypothesis_and_blast_radius_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_chaos_gameday_hypothesis_and_blast_radius,
+    )
+
+    result = audit_wiki_chaos_gameday_hypothesis_and_blast_radius(
+        [
+            {
+                "experiment_id": "CHAOS-STALE-GAP",
+                "steady_state_hypothesis_defined": True,
+                "automated_abort_switch_verified": True,
+                "blast_radius_tenants_pct": 2.0,
+                "unremediated_resilience_gaps_count": 2,
+                "days_since_gameday_execution": 21,
+            },
+            {
+                "experiment_id": "CHAOS-RECENT-GAP",
+                "steady_state_hypothesis_defined": True,
+                "automated_abort_switch_verified": True,
+                "blast_radius_tenants_pct": 2.0,
+                "unremediated_resilience_gaps_count": 1,
+                "days_since_gameday_execution": 10,
+            },
+        ],
+        max_blast_radius_tenants_pct=5.0,
+        max_unremediated_findings_days=14,
+    )
+    assert result["evaluated_experiments_count"] == 2
+    assert result["unsafe_or_uncontained_experiment_ids"] == []
+    assert result["overdue_remediation_experiment_ids"] == ["CHAOS-STALE-GAP"]
+    assert (
+        result["chaos_gameday_status"]
+        == "CHAOS_RESILIENCE_GAP_REMEDIATION_WARNING"
+    )
+    assert result["is_chaos_gameday_compliant"] is False
+
+
+def test_audit_wiki_chaos_gameday_hypothesis_and_blast_radius_optimal_and_empty():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_chaos_gameday_hypothesis_and_blast_radius,
+    )
+
+    empty = audit_wiki_chaos_gameday_hypothesis_and_blast_radius(
+        [{"experiment_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_experiments_count"] == 0
+    assert (
+        empty["chaos_gameday_status"] == "CHAOS_GAMEDAY_GOVERNANCE_OPTIMAL"
+    )
+    assert empty["is_chaos_gameday_compliant"] is True
+
+    optimal = audit_wiki_chaos_gameday_hypothesis_and_blast_radius(
+        [
+            {
+                "experiment_id": "CHAOS-GOLD-1",
+                "steady_state_hypothesis_defined": True,
+                "automated_abort_switch_verified": True,
+                "blast_radius_tenants_pct": 2.5,
+                "unremediated_resilience_gaps_count": 0,
+                "days_since_gameday_execution": 10,
+            }
+        ],
+        max_blast_radius_tenants_pct=5.0,
+        max_unremediated_findings_days=14,
+    )
+    assert optimal["evaluated_experiments_count"] == 1
+    assert (
+        optimal["chaos_gameday_status"] == "CHAOS_GAMEDAY_GOVERNANCE_OPTIMAL"
+    )
+    assert optimal["is_chaos_gameday_compliant"] is True
+
+
+def test_audit_wiki_chaos_gameday_hypothesis_and_blast_radius_staticmethod_and_dunder_all():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_chaos_gameday_hypothesis_and_blast_radius,
+    )
+
+    sample = [
+        {
+            "experiment_id": "CHAOS-99",
+            "steady_state_hypothesis_defined": True,
+            "automated_abort_switch_verified": True,
+            "blast_radius_tenants_pct": 1.0,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_chaos_gameday_hypothesis_and_blast_radius(
+            sample
+        )
+        == audit_wiki_chaos_gameday_hypothesis_and_blast_radius(sample)
+    )
+    assert (
+        "audit_wiki_chaos_gameday_hypothesis_and_blast_radius"
+        in mod.__all__
+    )
+

@@ -7252,3 +7252,142 @@ def test_audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene_staticmetho
         in mod.__all__
     )
 
+
+def test_audit_markdown_link_rot_and_internal_anchor_resolution_hygiene_breach():
+    from backend.services.anydoc_service import (
+        audit_markdown_link_rot_and_internal_anchor_resolution_hygiene,
+    )
+
+    result = audit_markdown_link_rot_and_internal_anchor_resolution_hygiene(
+        [
+            {
+                "doc_id": "DOC-DEAD-404",
+                "dead_404_or_5xx_links_count": 2,
+                "unresolved_internal_anchors_count": 0,
+                "max_redirect_chain_hops": 0,
+                "unpinned_mutable_external_urls_count": 0,
+            },
+            {
+                "doc_id": "DOC-BROKEN-ANCHOR",
+                "dead_404_or_5xx_links_count": 0,
+                "unresolved_internal_anchors_count": 1,
+                "max_redirect_chain_hops": 0,
+                "unpinned_mutable_external_urls_count": 0,
+            },
+        ],
+        max_redirect_hops_allowed=2,
+    )
+    assert result["evaluated_documents_count"] == 2
+    assert result["dead_link_or_broken_anchor_doc_ids"] == [
+        "DOC-DEAD-404",
+        "DOC-BROKEN-ANCHOR",
+    ]
+    assert result["redirect_chain_or_unpinned_url_doc_ids"] == []
+    assert (
+        result["link_integrity_status"] == "LINK_ROT_OR_BROKEN_ANCHOR_BREACH"
+    )
+    assert result["is_link_integrity_compliant"] is False
+
+
+def test_audit_markdown_link_rot_and_internal_anchor_resolution_hygiene_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_link_rot_and_internal_anchor_resolution_hygiene,
+    )
+
+    result = audit_markdown_link_rot_and_internal_anchor_resolution_hygiene(
+        [
+            {
+                "doc_id": "DOC-MANY-REDIRECTS",
+                "dead_404_or_5xx_links_count": 0,
+                "unresolved_internal_anchors_count": 0,
+                "max_redirect_chain_hops": 4,
+                "unpinned_mutable_external_urls_count": 0,
+            },
+            {
+                "doc_id": "DOC-UNPINNED-URL",
+                "dead_404_or_5xx_links_count": 0,
+                "unresolved_internal_anchors_count": 0,
+                "max_redirect_chain_hops": 1,
+                "unpinned_mutable_external_urls_count": 3,
+            },
+        ],
+        max_redirect_hops_allowed=2,
+    )
+    assert result["evaluated_documents_count"] == 2
+    assert result["dead_link_or_broken_anchor_doc_ids"] == []
+    assert result["redirect_chain_or_unpinned_url_doc_ids"] == [
+        "DOC-MANY-REDIRECTS",
+        "DOC-UNPINNED-URL",
+    ]
+    assert (
+        result["link_integrity_status"]
+        == "LINK_REDIRECT_OR_UNPINNED_WARNING"
+    )
+    assert result["is_link_integrity_compliant"] is False
+
+
+def test_audit_markdown_link_rot_and_internal_anchor_resolution_hygiene_verified_and_empty():
+    from backend.services.anydoc_service import (
+        audit_markdown_link_rot_and_internal_anchor_resolution_hygiene,
+    )
+
+    empty = audit_markdown_link_rot_and_internal_anchor_resolution_hygiene(
+        [{"doc_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_documents_count"] == 0
+    assert empty["link_integrity_status"] == "LINK_INTEGRITY_VERIFIED"
+    assert empty["is_link_integrity_compliant"] is True
+
+    verified = audit_markdown_link_rot_and_internal_anchor_resolution_hygiene(
+        [
+            {
+                "doc_id": "DOC-CLEAN-LINKS",
+                "dead_404_or_5xx_links_count": 0,
+                "unresolved_internal_anchors_count": 0,
+                "max_redirect_chain_hops": 1,
+                "unpinned_mutable_external_urls_count": 0,
+            }
+        ],
+        max_redirect_hops_allowed=2,
+    )
+    assert verified["evaluated_documents_count"] == 1
+    assert verified["link_integrity_status"] == "LINK_INTEGRITY_VERIFIED"
+    assert verified["is_link_integrity_compliant"] is True
+
+
+def test_audit_markdown_link_rot_and_internal_anchor_resolution_hygiene_staticmethod_and_dunder_all():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_link_rot_and_internal_anchor_resolution_hygiene,
+    )
+
+    sample = [
+        {
+            "doc_id": "DOC-99",
+            "dead_404_or_5xx_links_count": 0,
+            "unresolved_internal_anchors_count": 0,
+        }
+    ]
+    assert (
+        AnyDocService.audit_markdown_link_rot_and_internal_anchor_resolution_hygiene(
+            sample
+        )
+        == audit_markdown_link_rot_and_internal_anchor_resolution_hygiene(
+            sample
+        )
+    )
+    assert (
+        AnydocService.audit_markdown_link_rot_and_internal_anchor_resolution_hygiene(
+            sample
+        )
+        == audit_markdown_link_rot_and_internal_anchor_resolution_hygiene(
+            sample
+        )
+    )
+    assert (
+        "audit_markdown_link_rot_and_internal_anchor_resolution_hygiene"
+        in mod.__all__
+    )
+
