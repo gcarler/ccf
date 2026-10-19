@@ -3838,6 +3838,7 @@ __all__ = [
     "validate_resource_leveling_and_smoothing_float_bounds",
     "validate_agile_hybrid_wip_little_law_and_sprint_carryover",
     "validate_ccpm_fever_chart_buffer_penetration_and_feeding_buffer",
+    "validate_rolling_wave_wbs_100_percent_rule_and_planning_package_horizon",
 ]
 
 
@@ -10384,6 +10385,78 @@ def validate_ccpm_fever_chart_buffer_penetration_and_feeding_buffer(
         "excessive_multitasking": excessive_multitasking,
         "fever_chart_status": fever_chart_status,
     }
+
+
+def validate_rolling_wave_wbs_100_percent_rule_and_planning_package_horizon(
+    parent_control_account_bac: float,
+    child_work_packages_bac_sum: float,
+    child_planning_packages_bac_sum: float = 0.0,
+    *,
+    near_term_unpacked_planning_packages_count: int = 0,
+    max_work_package_duration_hours: float = 80.0,
+    actual_max_wp_duration_hours: float = 40.0,
+    wbs_tolerance_pct: float = 0.01,
+) -> dict[str, Any]:
+    """PMI PMBOK §5.4 & §6.2 — Valida Planificación Gradual (Rolling Wave), Regla del 100% de la EDT/WBS, Horizonte de Paquetes de Planificación y Regla 8/80 Horas."""
+    def _num(val: Any, default: float) -> float:
+        if isinstance(val, bool) or not isinstance(val, (int, float)):
+            return default
+        return float(val)
+
+    def _int(val: Any, default: int) -> int:
+        if isinstance(val, bool) or not isinstance(val, int):
+            return default
+        return int(val)
+
+    parent_bac = max(0.0, _num(parent_control_account_bac, 0.0))
+    wp_bac = max(0.0, _num(child_work_packages_bac_sum, 0.0))
+    pp_bac = max(0.0, _num(child_planning_packages_bac_sum, 0.0))
+    unpacked_cnt = max(0, _int(near_term_unpacked_planning_packages_count, 0))
+    max_wp_hrs = max(0.0, _num(max_work_package_duration_hours, 80.0))
+    actual_wp_hrs = max(0.0, _num(actual_max_wp_duration_hours, 40.0))
+    tol_pct = max(0.0, _num(wbs_tolerance_pct, 0.01))
+
+    total_children_bac = round(wp_bac + pp_bac, 2)
+    wbs_100_pct_variance_amount = round(
+        abs(parent_bac - total_children_bac), 2
+    )
+    if parent_bac > 0.0:
+        wbs_100_pct_variance_pct = round(
+            (wbs_100_pct_variance_amount / parent_bac) * 100.0, 4
+        )
+    else:
+        wbs_100_pct_variance_pct = 100.0 if total_children_bac > 0.0 else 0.0
+
+    wbs_100_pct_rule_violated = bool(wbs_100_pct_variance_pct > tol_pct)
+    planning_package_share_pct = (
+        round((pp_bac / total_children_bac) * 100.0, 2)
+        if total_children_bac > 0.0
+        else 0.0
+    )
+    wp_80_hour_rule_exceeded = bool(actual_wp_hrs > max_wp_hrs)
+
+    if wbs_100_pct_rule_violated or unpacked_cnt > 0:
+        rolling_wave_wbs_status = (
+            "CRITICAL_WBS_100_PERCENT_RULE_OR_NEAR_TERM_UNPACKED_BREACH"
+        )
+    elif wp_80_hour_rule_exceeded or planning_package_share_pct > 60.0:
+        rolling_wave_wbs_status = (
+            "ROLLING_WAVE_WP_DURATION_OR_HIGH_PP_SHARE_WARNING"
+        )
+    else:
+        rolling_wave_wbs_status = (
+            "ROLLING_WAVE_WBS_DECOMPOSITION_COMPLIANT_CLEAN"
+        )
+
+    return {
+        "total_children_bac": total_children_bac,
+        "wbs_100_pct_variance_amount": wbs_100_pct_variance_amount,
+        "wbs_100_pct_rule_violated": wbs_100_pct_rule_violated,
+        "planning_package_share_pct": planning_package_share_pct,
+        "wp_80_hour_rule_exceeded": wp_80_hour_rule_exceeded,
+        "rolling_wave_wbs_status": rolling_wave_wbs_status,
+    }
+
 
 
 

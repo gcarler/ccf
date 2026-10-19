@@ -10996,5 +10996,112 @@ def test_validate_ccpm_fever_chart_buffer_penetration_and_feeding_buffer_coercio
     )
 
 
+def test_validate_rolling_wave_wbs_100_percent_rule_and_planning_package_horizon_clean():
+    from backend.schemas.projects import (
+        validate_rolling_wave_wbs_100_percent_rule_and_planning_package_horizon,
+    )
+
+    res = validate_rolling_wave_wbs_100_percent_rule_and_planning_package_horizon(
+        parent_control_account_bac=100000.0,
+        child_work_packages_bac_sum=65000.0,
+        child_planning_packages_bac_sum=35000.0,
+        near_term_unpacked_planning_packages_count=0,
+        actual_max_wp_duration_hours=60.0,
+    )
+    assert res["total_children_bac"] == 100000.0
+    assert res["wbs_100_pct_variance_amount"] == 0.0
+    assert res["wbs_100_pct_rule_violated"] is False
+    assert res["planning_package_share_pct"] == 35.0
+    assert res["wp_80_hour_rule_exceeded"] is False
+    assert (
+        res["rolling_wave_wbs_status"]
+        == "ROLLING_WAVE_WBS_DECOMPOSITION_COMPLIANT_CLEAN"
+    )
+
+
+def test_validate_rolling_wave_wbs_100_percent_rule_and_planning_package_horizon_warning():
+    from backend.schemas.projects import (
+        validate_rolling_wave_wbs_100_percent_rule_and_planning_package_horizon,
+    )
+
+    res_wp = validate_rolling_wave_wbs_100_percent_rule_and_planning_package_horizon(
+        parent_control_account_bac=100000.0,
+        child_work_packages_bac_sum=70000.0,
+        child_planning_packages_bac_sum=30000.0,
+        actual_max_wp_duration_hours=120.0,
+    )
+    assert res_wp["wp_80_hour_rule_exceeded"] is True
+    assert (
+        res_wp["rolling_wave_wbs_status"]
+        == "ROLLING_WAVE_WP_DURATION_OR_HIGH_PP_SHARE_WARNING"
+    )
+
+    res_pp = validate_rolling_wave_wbs_100_percent_rule_and_planning_package_horizon(
+        parent_control_account_bac=100000.0,
+        child_work_packages_bac_sum=25000.0,
+        child_planning_packages_bac_sum=75000.0,
+        actual_max_wp_duration_hours=40.0,
+    )
+    assert res_pp["planning_package_share_pct"] == 75.0
+    assert (
+        res_pp["rolling_wave_wbs_status"]
+        == "ROLLING_WAVE_WP_DURATION_OR_HIGH_PP_SHARE_WARNING"
+    )
+
+
+def test_validate_rolling_wave_wbs_100_percent_rule_and_planning_package_horizon_critical():
+    from backend.schemas.projects import (
+        validate_rolling_wave_wbs_100_percent_rule_and_planning_package_horizon,
+    )
+
+    res_var = validate_rolling_wave_wbs_100_percent_rule_and_planning_package_horizon(
+        parent_control_account_bac=100000.0,
+        child_work_packages_bac_sum=60000.0,
+        child_planning_packages_bac_sum=30000.0,
+    )
+    assert res_var["wbs_100_pct_variance_amount"] == 10000.0
+    assert res_var["wbs_100_pct_rule_violated"] is True
+    assert (
+        res_var["rolling_wave_wbs_status"]
+        == "CRITICAL_WBS_100_PERCENT_RULE_OR_NEAR_TERM_UNPACKED_BREACH"
+    )
+
+    res_unpacked = validate_rolling_wave_wbs_100_percent_rule_and_planning_package_horizon(
+        parent_control_account_bac=100000.0,
+        child_work_packages_bac_sum=70000.0,
+        child_planning_packages_bac_sum=30000.0,
+        near_term_unpacked_planning_packages_count=2,
+    )
+    assert (
+        res_unpacked["rolling_wave_wbs_status"]
+        == "CRITICAL_WBS_100_PERCENT_RULE_OR_NEAR_TERM_UNPACKED_BREACH"
+    )
+
+
+def test_validate_rolling_wave_wbs_100_percent_rule_and_planning_package_horizon_coercion_and_exports():
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_rolling_wave_wbs_100_percent_rule_and_planning_package_horizon,
+    )
+
+    res = validate_rolling_wave_wbs_100_percent_rule_and_planning_package_horizon(
+        parent_control_account_bac=-10.0,
+        child_work_packages_bac_sum="invalid",  # type: ignore[arg-type]
+        child_planning_packages_bac_sum=-5.0,
+        near_term_unpacked_planning_packages_count=True,  # type: ignore[arg-type]
+    )
+    assert res["total_children_bac"] == 0.0
+    assert res["wbs_100_pct_rule_violated"] is False
+    assert (
+        res["rolling_wave_wbs_status"]
+        == "ROLLING_WAVE_WBS_DECOMPOSITION_COMPLIANT_CLEAN"
+    )
+    assert (
+        "validate_rolling_wave_wbs_100_percent_rule_and_planning_package_horizon"
+        in mod.__all__
+    )
+
+
+
 
 
