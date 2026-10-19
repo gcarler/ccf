@@ -3174,6 +3174,7 @@ __all__ = [
     "audit_adr_dispute_escalation_ladder_and_claim_aging",
     "audit_operational_readiness_orat_and_day2_handover",
     "audit_steering_committee_quorum_and_decision_velocity",
+    "audit_procurement_bid_integrity_and_coi_recusal",
     "ProjectLifecyclePMIService",
 ]
 
@@ -7576,3 +7577,90 @@ def audit_steering_committee_quorum_and_decision_velocity(
 ProjectLifecyclePMIService.audit_steering_committee_quorum_and_decision_velocity = staticmethod(
     audit_steering_committee_quorum_and_decision_velocity
 )
+
+
+def audit_procurement_bid_integrity_and_coi_recusal(
+    tenders: list[dict] | None,
+    *,
+    min_qualified_bidders: int = 3,
+    max_winning_bid_variance_from_igce_pct: float = 20.0,
+) -> dict:
+    """PMBOK §12.1 & §12.2 — Audita integridad de sobre cerrado, recusación por conflicto de interés (COI) y banderas rojas de colusión o varianza IGCE."""
+    raw_items = tenders if isinstance(tenders, list) else []
+    valid_tenders: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("tender_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_tenders.append(item)
+
+    compromised_seal_or_coi_tender_ids: list[str] = []
+    low_competition_or_igce_variance_tender_ids: list[str] = []
+
+    for t in valid_tenders:
+        tid = t["tender_id"].strip()
+        raw_seal = t.get("sealed_bid_opening_verified", True)
+        sealed_bid_opening_verified = bool(
+            True if raw_seal is None else raw_seal
+        )
+
+        raw_coi = t.get("coi_declarations_and_recusals_complete", True)
+        coi_declarations_and_recusals_complete = bool(
+            True if raw_coi is None else raw_coi
+        )
+
+        raw_bidders = t.get("qualified_bidders_count", 4)
+        qualified_bidders_count = int(
+            4 if raw_bidders is None else raw_bidders
+        )
+
+        raw_sole = t.get("sole_source_justification_approved", False)
+        sole_source_justification_approved = bool(
+            False if raw_sole is None else raw_sole
+        )
+
+        raw_variance = t.get("winning_bid_igce_variance_pct", 5.0)
+        winning_bid_igce_variance_pct = float(
+            5.0 if raw_variance is None else raw_variance
+        )
+
+        if (
+            not sealed_bid_opening_verified
+            or not coi_declarations_and_recusals_complete
+        ):
+            compromised_seal_or_coi_tender_ids.append(tid)
+
+        if (
+            qualified_bidders_count < min_qualified_bidders
+            and not sole_source_justification_approved
+        ) or (
+            abs(winning_bid_igce_variance_pct)
+            > max_winning_bid_variance_from_igce_pct
+        ):
+            low_competition_or_igce_variance_tender_ids.append(tid)
+
+    if compromised_seal_or_coi_tender_ids:
+        procurement_integrity_status = "PROCUREMENT_BID_SEAL_OR_COI_BREACH"
+    elif low_competition_or_igce_variance_tender_ids:
+        procurement_integrity_status = (
+            "PROCUREMENT_COMPETITION_OR_IGCE_WARNING"
+        )
+    else:
+        procurement_integrity_status = "PROCUREMENT_BID_INTEGRITY_OPTIMAL"
+
+    return {
+        "evaluated_tenders_count": len(valid_tenders),
+        "compromised_seal_or_coi_tender_ids": compromised_seal_or_coi_tender_ids,
+        "low_competition_or_igce_variance_tender_ids": low_competition_or_igce_variance_tender_ids,
+        "procurement_integrity_status": procurement_integrity_status,
+        "is_procurement_integrity_compliant": procurement_integrity_status
+        == "PROCUREMENT_BID_INTEGRITY_OPTIMAL",
+    }
+
+
+ProjectLifecyclePMIService.audit_procurement_bid_integrity_and_coi_recusal = staticmethod(
+    audit_procurement_bid_integrity_and_coi_recusal
+)
+

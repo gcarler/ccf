@@ -5527,6 +5527,7 @@ __all__ = [
     "evaluate_evm_epa_inflation_indexation_and_escalation_cap",
     "evaluate_evm_subcontractor_lien_waiver_and_flow_down",
     "evaluate_evm_capex_opex_software_capitalization_gate",
+    "evaluate_evm_value_engineering_worth_ratio_and_vecp_gainshare",
     "ProjectEVMService",
 ]
 
@@ -9891,4 +9892,80 @@ def evaluate_evm_capex_opex_software_capitalization_gate(
 ProjectEVMService.evaluate_evm_capex_opex_software_capitalization_gate = staticmethod(
     evaluate_evm_capex_opex_software_capitalization_gate
 )
+
+
+def evaluate_evm_value_engineering_worth_ratio_and_vecp_gainshare(
+    proposals: list[dict] | None,
+    *,
+    min_function_worth_index: float = 1.15,
+    max_implementation_payback_months: float = 18.0,
+) -> dict:
+    """PMBOK §7.4 & §12.3 — Evalúa índice función-valor de Ingeniería de Valor (VE), retorno de implementación y reparto de ahorros VECP."""
+    raw_items = proposals if isinstance(proposals, list) else []
+    valid_proposals: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("vecp_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_proposals.append(item)
+
+    quality_compromised_or_unaudited_vecp_ids: list[str] = []
+    low_worth_or_slow_payback_vecp_ids: list[str] = []
+
+    for p in valid_proposals:
+        vid = p["vecp_id"].strip()
+        raw_worth = p.get("function_worth_index", 1.35)
+        function_worth_index = float(1.35 if raw_worth is None else raw_worth)
+
+        raw_payback = p.get("implementation_payback_months", 8.0)
+        implementation_payback_months = float(
+            8.0 if raw_payback is None else raw_payback
+        )
+
+        raw_degrades = p.get("degrades_essential_quality_or_safety", False)
+        degrades_essential_quality_or_safety = bool(
+            False if raw_degrades is None else raw_degrades
+        )
+
+        raw_audit = p.get("independent_cost_audit_verified", True)
+        independent_cost_audit_verified = bool(
+            True if raw_audit is None else raw_audit
+        )
+
+        if (
+            degrades_essential_quality_or_safety
+            or not independent_cost_audit_verified
+        ):
+            quality_compromised_or_unaudited_vecp_ids.append(vid)
+
+        if (
+            function_worth_index < min_function_worth_index
+            or implementation_payback_months
+            > max_implementation_payback_months
+        ):
+            low_worth_or_slow_payback_vecp_ids.append(vid)
+
+    if quality_compromised_or_unaudited_vecp_ids:
+        value_engineering_status = "VECP_QUALITY_OR_AUDIT_BREACH"
+    elif low_worth_or_slow_payback_vecp_ids:
+        value_engineering_status = "VECP_LOW_WORTH_OR_PAYBACK_WARNING"
+    else:
+        value_engineering_status = "VECP_GAINSHARE_OPTIMAL"
+
+    return {
+        "evaluated_proposals_count": len(valid_proposals),
+        "quality_compromised_or_unaudited_vecp_ids": quality_compromised_or_unaudited_vecp_ids,
+        "low_worth_or_slow_payback_vecp_ids": low_worth_or_slow_payback_vecp_ids,
+        "value_engineering_status": value_engineering_status,
+        "is_value_engineering_compliant": value_engineering_status
+        == "VECP_GAINSHARE_OPTIMAL",
+    }
+
+
+ProjectEVMService.evaluate_evm_value_engineering_worth_ratio_and_vecp_gainshare = staticmethod(
+    evaluate_evm_value_engineering_worth_ratio_and_vecp_gainshare
+)
+
 

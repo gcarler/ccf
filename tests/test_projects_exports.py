@@ -10230,3 +10230,174 @@ def test_audit_executive_report_webhook_dlq_replay_and_hmac_signing_staticmethod
         "audit_executive_report_webhook_dlq_replay_and_hmac_signing"
         in mod.__all__
     )
+
+
+def test_data_residency_sovereignty_or_scc_breach():
+    from backend.services.project_export_service import (
+        audit_executive_report_data_residency_and_scc_transfer,
+    )
+
+    res = audit_executive_report_data_residency_and_scc_transfer(
+        [
+            {
+                "transfer_id": "XF-NO-SCC-STALE",
+                "is_cross_border_transfer": True,
+                "scc_and_tia_signed": False,
+                "tia_review_age_days": 370,
+            },
+            {
+                "transfer_id": "XF-NO-BYOK",
+                "sovereign_encryption_byok_active": False,
+            },
+        ],
+        require_scc_and_tia_for_cross_border=True,
+        max_tia_review_age_days=180,
+    )
+    assert res["evaluated_transfers_count"] == 2
+    assert res["unlawful_transfer_or_unencrypted_sovereignty_transfer_ids"] == [
+        "XF-NO-SCC-STALE",
+        "XF-NO-BYOK",
+    ]
+    assert res["stale_tia_or_unnotified_subprocessor_transfer_ids"] == [
+        "XF-NO-SCC-STALE"
+    ]
+    assert (
+        res["data_residency_status"]
+        == "DATA_RESIDENCY_SOVEREIGNTY_OR_SCC_BREACH"
+    )
+    assert res["is_data_residency_compliant"] is False
+
+    unenforced = audit_executive_report_data_residency_and_scc_transfer(
+        [
+            {
+                "transfer_id": "XF-SCC-FLAG-OFF",
+                "is_cross_border_transfer": True,
+                "scc_and_tia_signed": False,
+            }
+        ],
+        require_scc_and_tia_for_cross_border=False,
+        max_tia_review_age_days=180,
+    )
+    assert (
+        unenforced["unlawful_transfer_or_unencrypted_sovereignty_transfer_ids"]
+        == []
+    )
+
+
+def test_data_residency_tia_aging_or_subprocessor_warning():
+    from backend.services.project_export_service import (
+        audit_executive_report_data_residency_and_scc_transfer,
+    )
+
+    res = audit_executive_report_data_residency_and_scc_transfer(
+        [
+            {
+                "transfer_id": "XF-STALE-TIA",
+                "is_cross_border_transfer": True,
+                "tia_review_age_days": 200,
+            },
+            {
+                "transfer_id": "XF-UNNOTIFIED-PROC",
+                "is_cross_border_transfer": False,
+                "subprocessor_notified": False,
+            },
+        ],
+        require_scc_and_tia_for_cross_border=True,
+        max_tia_review_age_days=180,
+    )
+    assert res["evaluated_transfers_count"] == 2
+    assert res["unlawful_transfer_or_unencrypted_sovereignty_transfer_ids"] == []
+    assert res["stale_tia_or_unnotified_subprocessor_transfer_ids"] == [
+        "XF-STALE-TIA",
+        "XF-UNNOTIFIED-PROC",
+    ]
+    assert (
+        res["data_residency_status"]
+        == "DATA_RESIDENCY_TIA_AGING_OR_SUBPROCESSOR_WARNING"
+    )
+    assert res["is_data_residency_compliant"] is False
+
+
+def test_data_residency_boundaries_and_defaults_optimal():
+    from backend.services.project_export_service import (
+        audit_executive_report_data_residency_and_scc_transfer,
+    )
+
+    res = audit_executive_report_data_residency_and_scc_transfer(
+        [
+            {
+                "transfer_id": "XF-BOUNDARY",
+                "is_cross_border_transfer": True,
+                "tia_review_age_days": 180,
+            },
+            {"transfer_id": "XF-ALL-DEFAULTS"},
+        ],
+        require_scc_and_tia_for_cross_border=True,
+        max_tia_review_age_days=180,
+    )
+    assert res["evaluated_transfers_count"] == 2
+    assert res["unlawful_transfer_or_unencrypted_sovereignty_transfer_ids"] == []
+    assert res["stale_tia_or_unnotified_subprocessor_transfer_ids"] == []
+    assert (
+        res["data_residency_status"] == "DATA_RESIDENCY_SOVEREIGNTY_OPTIMAL"
+    )
+    assert res["is_data_residency_compliant"] is True
+
+
+def test_data_residency_invalid_and_binding():
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_data_residency_and_scc_transfer,
+    )
+
+    empty = audit_executive_report_data_residency_and_scc_transfer(None)
+    assert empty["evaluated_transfers_count"] == 0
+    assert empty["unlawful_transfer_or_unencrypted_sovereignty_transfer_ids"] == []
+    assert empty["stale_tia_or_unnotified_subprocessor_transfer_ids"] == []
+    assert (
+        empty["data_residency_status"]
+        == "DATA_RESIDENCY_SOVEREIGNTY_OPTIMAL"
+    )
+    assert empty["is_data_residency_compliant"] is True
+
+    invalid = audit_executive_report_data_residency_and_scc_transfer(
+        [42, "not-a-dict", None, {"transfer_id": "   "}]  # type: ignore[list-item]
+    )
+    assert invalid["evaluated_transfers_count"] == 0
+
+    defaults = audit_executive_report_data_residency_and_scc_transfer(
+        [
+            {
+                "transfer_id": "XF-DEFAULTS",
+                "is_cross_border_transfer": None,
+                "scc_and_tia_signed": None,
+                "sovereign_encryption_byok_active": None,
+                "tia_review_age_days": None,
+                "subprocessor_notified": None,
+            }
+        ]
+    )
+    assert defaults["evaluated_transfers_count"] == 1
+    assert (
+        defaults["data_residency_status"]
+        == "DATA_RESIDENCY_SOVEREIGNTY_OPTIMAL"
+    )
+    assert defaults["is_data_residency_compliant"] is True
+
+    sample = [
+        {
+            "transfer_id": "XF-1",
+            "tia_review_age_days": 30,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_data_residency_and_scc_transfer(
+            sample
+        )
+        == audit_executive_report_data_residency_and_scc_transfer(sample)
+    )
+    assert (
+        "audit_executive_report_data_residency_and_scc_transfer"
+        in mod.__all__
+    )

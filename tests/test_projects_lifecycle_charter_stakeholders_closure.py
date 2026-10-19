@@ -9905,3 +9905,157 @@ def test_audit_steering_committee_quorum_and_decision_velocity_staticmethod_and_
         in mod.__all__
     )
 
+
+def test_audit_procurement_bid_integrity_and_coi_recusal_breach():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_procurement_bid_integrity_and_coi_recusal,
+    )
+
+    res = audit_procurement_bid_integrity_and_coi_recusal(
+        [
+            {
+                "tender_id": "  RFP-01  ",
+                "sealed_bid_opening_verified": False,
+                "coi_declarations_and_recusals_complete": True,
+                "qualified_bidders_count": 4,
+                "sole_source_justification_approved": False,
+                "winning_bid_igce_variance_pct": 5.0,
+            },
+            {
+                "tender_id": "RFP-02",
+                "sealed_bid_opening_verified": True,
+                "coi_declarations_and_recusals_complete": False,
+                "qualified_bidders_count": 2,
+                "sole_source_justification_approved": False,
+                "winning_bid_igce_variance_pct": -25.0,
+            },
+            {
+                "tender_id": "RFP-03",
+                "sealed_bid_opening_verified": True,
+                "coi_declarations_and_recusals_complete": True,
+                "qualified_bidders_count": 3,
+                "sole_source_justification_approved": False,
+                "winning_bid_igce_variance_pct": 20.0,
+            },
+        ]
+    )
+    assert res["evaluated_tenders_count"] == 3
+    assert res["compromised_seal_or_coi_tender_ids"] == ["RFP-01", "RFP-02"]
+    assert res["low_competition_or_igce_variance_tender_ids"] == ["RFP-02"]
+    assert (
+        res["procurement_integrity_status"]
+        == "PROCUREMENT_BID_SEAL_OR_COI_BREACH"
+    )
+    assert res["is_procurement_integrity_compliant"] is False
+
+
+def test_audit_procurement_bid_integrity_and_coi_recusal_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_procurement_bid_integrity_and_coi_recusal,
+    )
+
+    res = audit_procurement_bid_integrity_and_coi_recusal(
+        [
+            {
+                "tender_id": "RFP-LOW-COMP",
+                "sealed_bid_opening_verified": True,
+                "coi_declarations_and_recusals_complete": True,
+                "qualified_bidders_count": 2,
+                "sole_source_justification_approved": False,
+                "winning_bid_igce_variance_pct": 10.0,
+            },
+            {
+                "tender_id": "RFP-IGCE-SKEW",
+                "sealed_bid_opening_verified": True,
+                "coi_declarations_and_recusals_complete": True,
+                "qualified_bidders_count": 1,
+                "sole_source_justification_approved": True,
+                "winning_bid_igce_variance_pct": -20.1,
+            },
+            {
+                "tender_id": "RFP-SOLE-APPROVED",
+                "sealed_bid_opening_verified": True,
+                "coi_declarations_and_recusals_complete": True,
+                "qualified_bidders_count": 1,
+                "sole_source_justification_approved": True,
+                "winning_bid_igce_variance_pct": -20.0,
+            },
+        ],
+        min_qualified_bidders=3,
+        max_winning_bid_variance_from_igce_pct=20.0,
+    )
+    assert res["evaluated_tenders_count"] == 3
+    assert res["compromised_seal_or_coi_tender_ids"] == []
+    assert res["low_competition_or_igce_variance_tender_ids"] == [
+        "RFP-LOW-COMP",
+        "RFP-IGCE-SKEW",
+    ]
+    assert (
+        res["procurement_integrity_status"]
+        == "PROCUREMENT_COMPETITION_OR_IGCE_WARNING"
+    )
+    assert res["is_procurement_integrity_compliant"] is False
+
+
+def test_audit_procurement_bid_integrity_and_coi_recusal_optimal_and_defensive():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_procurement_bid_integrity_and_coi_recusal,
+    )
+
+    empty = audit_procurement_bid_integrity_and_coi_recusal(None)
+    assert empty["evaluated_tenders_count"] == 0
+    assert empty["compromised_seal_or_coi_tender_ids"] == []
+    assert empty["low_competition_or_igce_variance_tender_ids"] == []
+    assert (
+        empty["procurement_integrity_status"]
+        == "PROCUREMENT_BID_INTEGRITY_OPTIMAL"
+    )
+    assert empty["is_procurement_integrity_compliant"] is True
+
+    optimal = audit_procurement_bid_integrity_and_coi_recusal(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"tender_id": "   "},
+            {
+                "tender_id": "RFP-DEFAULTS",
+                "sealed_bid_opening_verified": None,
+                "coi_declarations_and_recusals_complete": None,
+                "qualified_bidders_count": None,
+                "sole_source_justification_approved": None,
+                "winning_bid_igce_variance_pct": None,
+            },
+        ]
+    )
+    assert optimal["evaluated_tenders_count"] == 1
+    assert optimal["compromised_seal_or_coi_tender_ids"] == []
+    assert optimal["low_competition_or_igce_variance_tender_ids"] == []
+    assert (
+        optimal["procurement_integrity_status"]
+        == "PROCUREMENT_BID_INTEGRITY_OPTIMAL"
+    )
+    assert optimal["is_procurement_integrity_compliant"] is True
+
+
+def test_audit_procurement_bid_integrity_and_coi_recusal_staticmethod_and_dunder_all():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_procurement_bid_integrity_and_coi_recusal,
+    )
+
+    sample = [
+        {
+            "tender_id": "RFP-99",
+            "qualified_bidders_count": 4,
+            "winning_bid_igce_variance_pct": 4.5,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_procurement_bid_integrity_and_coi_recusal(
+            sample
+        )
+        == audit_procurement_bid_integrity_and_coi_recusal(sample)
+    )
+    assert "audit_procurement_bid_integrity_and_coi_recusal" in mod.__all__
+
+

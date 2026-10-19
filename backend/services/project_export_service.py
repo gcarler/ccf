@@ -3010,6 +3010,7 @@ __all__ = [
     "audit_executive_report_api_quota_fairness_and_noisy_neighbor",
     "audit_executive_report_ai_llm_guardrails_and_grounding",
     "audit_executive_report_webhook_dlq_replay_and_hmac_signing",
+    "audit_executive_report_data_residency_and_scc_transfer",
     "ProjectExportService",
 ]
 
@@ -7702,5 +7703,89 @@ def audit_executive_report_webhook_dlq_replay_and_hmac_signing(
 
 ProjectExportService.audit_executive_report_webhook_dlq_replay_and_hmac_signing = staticmethod(
     audit_executive_report_webhook_dlq_replay_and_hmac_signing
+)
+
+
+def audit_executive_report_data_residency_and_scc_transfer(
+    transfers: Sequence[Mapping[str, Any]] | None,
+    *,
+    require_scc_and_tia_for_cross_border: bool = True,
+    max_tia_review_age_days: int = 180,
+) -> dict[str, Any]:
+    """PMI PMBOK §10.2 & §12.2 — Executive Report Multi-Region Data Residency Sovereignty & Cross-Border SCC Transfer Auditor."""
+    valid_transfers = [
+        transfer
+        for transfer in (transfers or [])
+        if isinstance(transfer, Mapping)
+        and str(transfer.get("transfer_id") or "").strip()
+    ]
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _num(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    unlawful_transfer_or_unencrypted_sovereignty_transfer_ids: list[str] = []
+    stale_tia_or_unnotified_subprocessor_transfer_ids: list[str] = []
+
+    for transfer in valid_transfers:
+        transfer_id = str(transfer.get("transfer_id")).strip()
+        is_cross_border = _bool(
+            transfer.get("is_cross_border_transfer"), False
+        )
+        scc_tia_signed = _bool(
+            transfer.get("scc_and_tia_signed"), True
+        )
+        byok_active = _bool(
+            transfer.get("sovereign_encryption_byok_active"), True
+        )
+        tia_age_days = _num(
+            transfer.get("tia_review_age_days"), 45.0
+        )
+        subprocessor_notified = _bool(
+            transfer.get("subprocessor_notified"), True
+        )
+
+        if (
+            require_scc_and_tia_for_cross_border
+            and is_cross_border
+            and not scc_tia_signed
+        ) or not byok_active:
+            unlawful_transfer_or_unencrypted_sovereignty_transfer_ids.append(
+                transfer_id
+            )
+
+        if (
+            is_cross_border
+            and tia_age_days > max_tia_review_age_days
+        ) or not subprocessor_notified:
+            stale_tia_or_unnotified_subprocessor_transfer_ids.append(
+                transfer_id
+            )
+
+    if unlawful_transfer_or_unencrypted_sovereignty_transfer_ids:
+        data_residency_status = "DATA_RESIDENCY_SOVEREIGNTY_OR_SCC_BREACH"
+    elif stale_tia_or_unnotified_subprocessor_transfer_ids:
+        data_residency_status = (
+            "DATA_RESIDENCY_TIA_AGING_OR_SUBPROCESSOR_WARNING"
+        )
+    else:
+        data_residency_status = "DATA_RESIDENCY_SOVEREIGNTY_OPTIMAL"
+
+    return {
+        "evaluated_transfers_count": len(valid_transfers),
+        "unlawful_transfer_or_unencrypted_sovereignty_transfer_ids": unlawful_transfer_or_unencrypted_sovereignty_transfer_ids,
+        "stale_tia_or_unnotified_subprocessor_transfer_ids": stale_tia_or_unnotified_subprocessor_transfer_ids,
+        "data_residency_status": data_residency_status,
+        "is_data_residency_compliant": data_residency_status
+        == "DATA_RESIDENCY_SOVEREIGNTY_OPTIMAL",
+    }
+
+
+ProjectExportService.audit_executive_report_data_residency_and_scc_transfer = staticmethod(
+    audit_executive_report_data_residency_and_scc_transfer
 )
 

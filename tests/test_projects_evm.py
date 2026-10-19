@@ -9421,3 +9421,141 @@ def test_evaluate_evm_capex_opex_software_capitalization_gate_staticmethod_and_d
         in mod.__all__
     )
 
+
+def test_evaluate_evm_value_engineering_worth_ratio_and_vecp_gainshare_breach():
+    from backend.services.project_evm_service import (
+        evaluate_evm_value_engineering_worth_ratio_and_vecp_gainshare,
+    )
+
+    res = evaluate_evm_value_engineering_worth_ratio_and_vecp_gainshare(
+        [
+            {
+                "vecp_id": "  VECP-01  ",
+                "function_worth_index": 1.50,
+                "implementation_payback_months": 6.0,
+                "degrades_essential_quality_or_safety": True,
+                "independent_cost_audit_verified": True,
+            },
+            {
+                "vecp_id": "VECP-02",
+                "function_worth_index": 1.10,
+                "implementation_payback_months": 20.0,
+                "degrades_essential_quality_or_safety": False,
+                "independent_cost_audit_verified": False,
+            },
+            {
+                "vecp_id": "VECP-03",
+                "function_worth_index": 1.15,
+                "implementation_payback_months": 18.0,
+                "degrades_essential_quality_or_safety": False,
+                "independent_cost_audit_verified": True,
+            },
+        ]
+    )
+    assert res["evaluated_proposals_count"] == 3
+    assert res["quality_compromised_or_unaudited_vecp_ids"] == [
+        "VECP-01",
+        "VECP-02",
+    ]
+    assert res["low_worth_or_slow_payback_vecp_ids"] == ["VECP-02"]
+    assert res["value_engineering_status"] == "VECP_QUALITY_OR_AUDIT_BREACH"
+    assert res["is_value_engineering_compliant"] is False
+
+
+def test_evaluate_evm_value_engineering_worth_ratio_and_vecp_gainshare_warning():
+    from backend.services.project_evm_service import (
+        evaluate_evm_value_engineering_worth_ratio_and_vecp_gainshare,
+    )
+
+    res = evaluate_evm_value_engineering_worth_ratio_and_vecp_gainshare(
+        [
+            {
+                "vecp_id": "VECP-LOW-WORTH",
+                "function_worth_index": 1.14,
+                "implementation_payback_months": 18.0,
+                "degrades_essential_quality_or_safety": False,
+                "independent_cost_audit_verified": True,
+            },
+            {
+                "vecp_id": "VECP-SLOW-PAYBACK",
+                "function_worth_index": 1.15,
+                "implementation_payback_months": 18.1,
+                "degrades_essential_quality_or_safety": False,
+                "independent_cost_audit_verified": True,
+            },
+        ],
+        min_function_worth_index=1.15,
+        max_implementation_payback_months=18.0,
+    )
+    assert res["evaluated_proposals_count"] == 2
+    assert res["quality_compromised_or_unaudited_vecp_ids"] == []
+    assert res["low_worth_or_slow_payback_vecp_ids"] == [
+        "VECP-LOW-WORTH",
+        "VECP-SLOW-PAYBACK",
+    ]
+    assert (
+        res["value_engineering_status"] == "VECP_LOW_WORTH_OR_PAYBACK_WARNING"
+    )
+    assert res["is_value_engineering_compliant"] is False
+
+
+def test_evaluate_evm_value_engineering_worth_ratio_and_vecp_gainshare_optimal_and_defensive():
+    from backend.services.project_evm_service import (
+        evaluate_evm_value_engineering_worth_ratio_and_vecp_gainshare,
+    )
+
+    empty = evaluate_evm_value_engineering_worth_ratio_and_vecp_gainshare(None)
+    assert empty["evaluated_proposals_count"] == 0
+    assert empty["quality_compromised_or_unaudited_vecp_ids"] == []
+    assert empty["low_worth_or_slow_payback_vecp_ids"] == []
+    assert empty["value_engineering_status"] == "VECP_GAINSHARE_OPTIMAL"
+    assert empty["is_value_engineering_compliant"] is True
+
+    optimal = evaluate_evm_value_engineering_worth_ratio_and_vecp_gainshare(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"vecp_id": "   "},
+            {
+                "vecp_id": "VECP-DEFAULTS",
+                "function_worth_index": None,
+                "implementation_payback_months": None,
+                "degrades_essential_quality_or_safety": None,
+                "independent_cost_audit_verified": None,
+            },
+        ]
+    )
+    assert optimal["evaluated_proposals_count"] == 1
+    assert optimal["quality_compromised_or_unaudited_vecp_ids"] == []
+    assert optimal["low_worth_or_slow_payback_vecp_ids"] == []
+    assert optimal["value_engineering_status"] == "VECP_GAINSHARE_OPTIMAL"
+    assert optimal["is_value_engineering_compliant"] is True
+
+
+def test_evaluate_evm_value_engineering_worth_ratio_and_vecp_gainshare_staticmethod_and_dunder_all():
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_value_engineering_worth_ratio_and_vecp_gainshare,
+    )
+
+    sample = [
+        {
+            "vecp_id": "VECP-99",
+            "function_worth_index": 1.40,
+            "implementation_payback_months": 9.0,
+        }
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_value_engineering_worth_ratio_and_vecp_gainshare(
+            sample
+        )
+        == evaluate_evm_value_engineering_worth_ratio_and_vecp_gainshare(
+            sample
+        )
+    )
+    assert (
+        "evaluate_evm_value_engineering_worth_ratio_and_vecp_gainshare"
+        in mod.__all__
+    )
+
+
