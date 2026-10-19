@@ -5532,6 +5532,7 @@ __all__ = [
     "evaluate_evm_standby_demurrage_and_force_account_rates",
     "evaluate_evm_schedule_of_values_front_loading_and_stored_materials",
     "evaluate_evm_letter_of_credit_drawdown_and_evergreen_buffer",
+    "evaluate_evm_liquidated_damages_excusable_delay_and_early_bonus",
     "ProjectEVMService",
 ]
 
@@ -10282,4 +10283,173 @@ def evaluate_evm_letter_of_credit_drawdown_and_evergreen_buffer(
 ProjectEVMService.evaluate_evm_letter_of_credit_drawdown_and_evergreen_buffer = staticmethod(
     evaluate_evm_letter_of_credit_drawdown_and_evergreen_buffer
 )
+
+
+def evaluate_evm_liquidated_damages_excusable_delay_and_early_bonus(
+    milestone_contracts: list[dict[str, Any]] | None,
+    *,
+    max_ld_cap_pct_of_contract: float = 10.0,
+    require_concurrent_delay_apportionment: bool = True,
+    max_early_bonus_cap_pct: float = 5.0,
+) -> dict[str, Any]:
+    """PMBOK §7.4 & §12.3 — Evalúa topes de daños liquidados (LD), extensiones por retrasos excusables, prorrateo de retrasos concurrentes y bonos por terminación anticipada."""
+    raw_items = (
+        milestone_contracts if isinstance(milestone_contracts, list) else []
+    )
+    max_ld_cap = max(0.0, float(max_ld_cap_pct_of_contract))
+    max_bonus_cap = max(0.0, float(max_early_bonus_cap_pct))
+
+    records: list[dict[str, Any]] = []
+    ld_cap_breach_milestone_ids: list[str] = []
+    unapportioned_delay_milestone_ids: list[str] = []
+    early_bonus_breach_milestone_ids: list[str] = []
+    excusable_ld_milestone_ids: list[str] = []
+    violations: list[str] = []
+
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("milestone_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        milestone_id = raw_id.strip()
+
+        raw_cv = item.get("contract_value", 100000.0)
+        try:
+            contract_value = float(100000.0 if raw_cv is None else raw_cv)
+        except (TypeError, ValueError):
+            continue
+        if contract_value <= 0.0:
+            continue
+
+        def _non_neg_int(key: str, default: int = 0) -> int:
+            val = item.get(key, default)
+            if val is None or isinstance(val, bool):
+                return default
+            try:
+                return max(0, int(val))
+            except (TypeError, ValueError):
+                return default
+
+        def _non_neg_float(key: str, default: float = 0.0) -> float:
+            val = item.get(key, default)
+            if val is None or isinstance(val, bool):
+                return default
+            try:
+                return max(0.0, float(val))
+            except (TypeError, ValueError):
+                return default
+
+        baseline_duration_days = _non_neg_int("baseline_duration_days", 0)
+        actual_duration_days = _non_neg_int("actual_duration_days", 0)
+        excusable_delay_days = _non_neg_int("excusable_delay_days", 0)
+        concurrent_owner_delay_days = _non_neg_int(
+            "concurrent_owner_delay_days", 0
+        )
+
+        raw_app = item.get("concurrent_delay_apportioned", True)
+        concurrent_delay_apportioned = bool(
+            True if raw_app is None else raw_app
+        )
+
+        daily_ld_rate = _non_neg_float("daily_ld_rate", 0.0)
+        daily_early_bonus_rate = _non_neg_float("daily_early_bonus_rate", 0.0)
+        accrued_ld_amount = _non_neg_float("accrued_ld_amount", 0.0)
+        accrued_bonus_amount = _non_neg_float("accrued_bonus_amount", 0.0)
+
+        adjusted_completion_days = (
+            baseline_duration_days + excusable_delay_days
+        )
+        net_unexcused_delay_days = max(
+            0, actual_duration_days - adjusted_completion_days
+        )
+        early_days = max(0, adjusted_completion_days - actual_duration_days)
+
+        ld_pct_of_contract = (accrued_ld_amount / contract_value) * 100.0
+        bonus_pct_of_contract = (accrued_bonus_amount / contract_value) * 100.0
+
+        ld_cap_exceeded = ld_pct_of_contract > max_ld_cap
+        concurrent_delay_unapportioned = (
+            bool(require_concurrent_delay_apportionment)
+            and concurrent_owner_delay_days > 0
+            and not concurrent_delay_apportioned
+        )
+        early_bonus_cap_exceeded = bonus_pct_of_contract > max_bonus_cap
+        ld_assessed_during_excusable_delay = (
+            net_unexcused_delay_days == 0 and accrued_ld_amount > 0.0
+        )
+
+        if ld_cap_exceeded:
+            ld_cap_breach_milestone_ids.append(milestone_id)
+            violations.append(
+                f"{milestone_id}: ld_cap_exceeded ({ld_pct_of_contract:.2f}% > {max_ld_cap:.2f}%)"
+            )
+        if concurrent_delay_unapportioned:
+            unapportioned_delay_milestone_ids.append(milestone_id)
+            violations.append(
+                f"{milestone_id}: concurrent_delay_unapportioned ({concurrent_owner_delay_days} owner delay days)"
+            )
+        if early_bonus_cap_exceeded:
+            early_bonus_breach_milestone_ids.append(milestone_id)
+            violations.append(
+                f"{milestone_id}: early_bonus_cap_exceeded ({bonus_pct_of_contract:.2f}% > {max_bonus_cap:.2f}%)"
+            )
+        if ld_assessed_during_excusable_delay:
+            excusable_ld_milestone_ids.append(milestone_id)
+            violations.append(
+                f"{milestone_id}: ld_assessed_during_excusable_delay (accrued_ld={accrued_ld_amount:.2f} with 0 net unexcused delay days)"
+            )
+
+        records.append(
+            {
+                "milestone_id": milestone_id,
+                "contract_value": round(contract_value, 2),
+                "baseline_duration_days": baseline_duration_days,
+                "actual_duration_days": actual_duration_days,
+                "excusable_delay_days": excusable_delay_days,
+                "concurrent_owner_delay_days": concurrent_owner_delay_days,
+                "concurrent_delay_apportioned": concurrent_delay_apportioned,
+                "daily_ld_rate": round(daily_ld_rate, 2),
+                "daily_early_bonus_rate": round(daily_early_bonus_rate, 2),
+                "accrued_ld_amount": round(accrued_ld_amount, 2),
+                "accrued_bonus_amount": round(accrued_bonus_amount, 2),
+                "adjusted_completion_days": adjusted_completion_days,
+                "net_unexcused_delay_days": net_unexcused_delay_days,
+                "early_days": early_days,
+                "ld_pct_of_contract": round(ld_pct_of_contract, 2),
+                "bonus_pct_of_contract": round(bonus_pct_of_contract, 2),
+                "ld_cap_exceeded": ld_cap_exceeded,
+                "concurrent_delay_unapportioned": concurrent_delay_unapportioned,
+                "early_bonus_cap_exceeded": early_bonus_cap_exceeded,
+                "ld_assessed_during_excusable_delay": ld_assessed_during_excusable_delay,
+            }
+        )
+
+    if (
+        ld_cap_breach_milestone_ids
+        or unapportioned_delay_milestone_ids
+        or excusable_ld_milestone_ids
+    ):
+        status = "critical"
+    elif early_bonus_breach_milestone_ids:
+        status = "warning"
+    else:
+        status = "compliant"
+
+    return {
+        "status": status,
+        "is_compliant": status == "compliant",
+        "milestones_evaluated": len(records),
+        "ld_cap_breach_milestone_ids": ld_cap_breach_milestone_ids,
+        "unapportioned_delay_milestone_ids": unapportioned_delay_milestone_ids,
+        "records": records,
+        "violations": violations,
+        "Violations": violations,
+    }
+
+
+ProjectEVMService.evaluate_evm_liquidated_damages_excusable_delay_and_early_bonus = staticmethod(
+    evaluate_evm_liquidated_damages_excusable_delay_and_early_bonus
+)
+
 

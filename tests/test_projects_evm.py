@@ -10163,3 +10163,172 @@ def test_evaluate_evm_letter_of_credit_drawdown_and_evergreen_buffer_staticmetho
     )
 
 
+def test_evaluate_evm_liquidated_damages_excusable_delay_and_early_bonus_critical_breaches():
+    from backend.services.project_evm_service import (
+        evaluate_evm_liquidated_damages_excusable_delay_and_early_bonus,
+    )
+
+    res = evaluate_evm_liquidated_damages_excusable_delay_and_early_bonus(
+        [
+            {
+                "milestone_id": "MS-LD-CAP",
+                "contract_value": 100000.0,
+                "baseline_duration_days": 100,
+                "actual_duration_days": 130,
+                "excusable_delay_days": 5,
+                "concurrent_owner_delay_days": 0,
+                "concurrent_delay_apportioned": True,
+                "daily_ld_rate": 500.0,
+                "accrued_ld_amount": 12500.0,
+            },
+            {
+                "milestone_id": "MS-UNAPPORTIONED",
+                "contract_value": 200000.0,
+                "baseline_duration_days": 90,
+                "actual_duration_days": 105,
+                "excusable_delay_days": 0,
+                "concurrent_owner_delay_days": 8,
+                "concurrent_delay_apportioned": False,
+                "daily_ld_rate": 400.0,
+                "accrued_ld_amount": 6000.0,
+            },
+            {
+                "milestone_id": "MS-EXCUSABLE-LD",
+                "contract_value": 150000.0,
+                "baseline_duration_days": 60,
+                "actual_duration_days": 70,
+                "excusable_delay_days": 12,
+                "concurrent_owner_delay_days": 0,
+                "concurrent_delay_apportioned": True,
+                "daily_ld_rate": 300.0,
+                "accrued_ld_amount": 3000.0,
+            },
+        ],
+        max_ld_cap_pct_of_contract=10.0,
+        require_concurrent_delay_apportionment=True,
+    )
+    assert res["status"] == "critical"
+    assert res["is_compliant"] is False
+    assert res["milestones_evaluated"] == 3
+    assert res["ld_cap_breach_milestone_ids"] == ["MS-LD-CAP"]
+    assert res["unapportioned_delay_milestone_ids"] == ["MS-UNAPPORTIONED"]
+    assert len(res["records"]) == 3
+    assert res["records"][0]["adjusted_completion_days"] == 105
+    assert res["records"][0]["net_unexcused_delay_days"] == 25
+    assert res["records"][0]["ld_cap_exceeded"] is True
+    assert res["records"][1]["concurrent_delay_unapportioned"] is True
+    assert res["records"][2]["net_unexcused_delay_days"] == 0
+    assert res["records"][2]["early_days"] == 2
+    assert res["records"][2]["ld_assessed_during_excusable_delay"] is True
+    assert len(res["violations"]) == 3
+
+
+def test_evaluate_evm_liquidated_damages_excusable_delay_and_early_bonus_warning():
+    from backend.services.project_evm_service import (
+        evaluate_evm_liquidated_damages_excusable_delay_and_early_bonus,
+    )
+
+    res = evaluate_evm_liquidated_damages_excusable_delay_and_early_bonus(
+        [
+            {
+                "milestone_id": "MS-BONUS-EXCESS",
+                "contract_value": 100000.0,
+                "baseline_duration_days": 100,
+                "actual_duration_days": 80,
+                "excusable_delay_days": 0,
+                "daily_early_bonus_rate": 400.0,
+                "accrued_bonus_amount": 8000.0,
+            }
+        ],
+        max_early_bonus_cap_pct=5.0,
+    )
+    assert res["status"] == "warning"
+    assert res["is_compliant"] is False
+    assert res["milestones_evaluated"] == 1
+    assert res["ld_cap_breach_milestone_ids"] == []
+    assert res["unapportioned_delay_milestone_ids"] == []
+    assert res["records"][0]["early_days"] == 20
+    assert res["records"][0]["early_bonus_cap_exceeded"] is True
+    assert len(res["violations"]) == 1
+
+
+def test_evaluate_evm_liquidated_damages_excusable_delay_and_early_bonus_compliant_and_boundaries():
+    from backend.services.project_evm_service import (
+        evaluate_evm_liquidated_damages_excusable_delay_and_early_bonus,
+    )
+
+    res = evaluate_evm_liquidated_damages_excusable_delay_and_early_bonus(
+        [
+            {
+                "milestone_id": "MS-BOUNDARY-LD",
+                "contract_value": 100000.0,
+                "baseline_duration_days": 100,
+                "actual_duration_days": 115,
+                "excusable_delay_days": 5,
+                "concurrent_owner_delay_days": 3,
+                "concurrent_delay_apportioned": True,
+                "daily_ld_rate": 1000.0,
+                "accrued_ld_amount": 10000.0,
+            },
+            {
+                "milestone_id": "MS-BOUNDARY-BONUS",
+                "contract_value": 100000.0,
+                "baseline_duration_days": 100,
+                "actual_duration_days": 90,
+                "excusable_delay_days": 0,
+                "daily_early_bonus_rate": 500.0,
+                "accrued_bonus_amount": 5000.0,
+            },
+        ],
+        max_ld_cap_pct_of_contract=10.0,
+        max_early_bonus_cap_pct=5.0,
+    )
+    assert res["status"] == "compliant"
+    assert res["is_compliant"] is True
+    assert res["milestones_evaluated"] == 2
+    assert res["ld_cap_breach_milestone_ids"] == []
+    assert res["unapportioned_delay_milestone_ids"] == []
+    assert res["violations"] == []
+
+
+def test_evaluate_evm_liquidated_damages_excusable_delay_and_early_bonus_defensive_and_exports():
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_liquidated_damages_excusable_delay_and_early_bonus,
+    )
+
+    empty = evaluate_evm_liquidated_damages_excusable_delay_and_early_bonus(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"milestone_id": "   "},
+            {"milestone_id": "MS-ZERO-CV", "contract_value": 0.0},
+        ]
+    )
+    assert empty["status"] == "compliant"
+    assert empty["is_compliant"] is True
+    assert empty["milestones_evaluated"] == 0
+
+    sample = [
+        {
+            "milestone_id": "MS-99",
+            "contract_value": 50000.0,
+            "baseline_duration_days": 30,
+            "actual_duration_days": 30,
+        }
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_liquidated_damages_excusable_delay_and_early_bonus(
+            sample
+        )
+        == evaluate_evm_liquidated_damages_excusable_delay_and_early_bonus(
+            sample
+        )
+    )
+    assert (
+        "evaluate_evm_liquidated_damages_excusable_delay_and_early_bonus"
+        in mod.__all__
+    )
+
+
+
