@@ -2528,6 +2528,7 @@ __all__ = [
     "audit_wiki_adr_immutability_and_superseded_chain_integrity",
     "audit_wiki_bus_factor_spok_and_cross_training_coverage",
     "audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene",
+    "audit_wiki_quarterly_attestation_and_orphan_page_archival",
     "WikiPMIService",
 ]
 
@@ -6351,4 +6352,96 @@ def audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene(
 
 WikiPMIService.audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene = staticmethod(
     audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene
+)
+
+
+def audit_wiki_quarterly_attestation_and_orphan_page_archival(
+    pages: list[dict[str, Any]],
+    *,
+    max_days_since_attestation: int = 90,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §10.2 — Wiki Knowledge Base Quarterly Attestation SLA, Orphan Unindexed Page & Deprecated Procedure Archival Auditor."""
+    valid_pages: list[dict[str, Any]] = []
+    if isinstance(pages, (list, tuple)):
+        for item in pages:
+            if not isinstance(item, dict):
+                continue
+            pid = str(item.get("page_id") or "").strip()
+            if not pid:
+                continue
+            valid_pages.append({**item, "_pid": pid})
+
+    if not valid_pages:
+        return {
+            "total_pages_evaluated": 0,
+            "active_pages_count": 0,
+            "unattested_stale_page_ids": [],
+            "orphan_unindexed_page_ids": [],
+            "active_deprecated_procedure_page_ids": [],
+            "knowledge_curation_status": "CURATED_KNOWLEDGE_BASE",
+            "is_curation_compliant": True,
+            "recommendations": [],
+        }
+
+    unattested_stale_page_ids: list[str] = []
+    orphan_unindexed_page_ids: list[str] = []
+    active_deprecated_procedure_page_ids: list[str] = []
+    active_pages_count = 0
+
+    for pg in valid_pages:
+        pid = pg["_pid"]
+        is_archived = bool(pg.get("is_marked_archived", False))
+        if is_archived:
+            continue
+        active_pages_count += 1
+        raw_days = pg.get("days_since_owner_attestation")
+        days_since = max(0, int(raw_days if raw_days is not None else 0))
+        raw_links = pg.get("incoming_navigation_links_count")
+        in_links = int(raw_links if raw_links is not None else 1)
+        is_root = bool(pg.get("is_root_index_page", False))
+        refs_deprecated = bool(pg.get("references_deprecated_system", False))
+
+        if days_since > max_days_since_attestation:
+            unattested_stale_page_ids.append(pid)
+        if not is_root and in_links <= 0:
+            orphan_unindexed_page_ids.append(pid)
+        if refs_deprecated:
+            active_deprecated_procedure_page_ids.append(pid)
+
+    recommendations: list[str] = []
+    if active_deprecated_procedure_page_ids:
+        recommendations.append(
+            f"Archive or update active pages referencing deprecated systems/procedures: {', '.join(active_deprecated_procedure_page_ids)}."
+        )
+    if unattested_stale_page_ids:
+        recommendations.append(
+            f"Complete quarterly owner attestation (<= {max_days_since_attestation} days) for stale page(s): {', '.join(unattested_stale_page_ids)}."
+        )
+    if orphan_unindexed_page_ids:
+        recommendations.append(
+            f"Link orphan page(s) into the root navigation index or archive if obsolete: {', '.join(orphan_unindexed_page_ids)}."
+        )
+
+    if active_deprecated_procedure_page_ids or unattested_stale_page_ids:
+        knowledge_curation_status = "DEPRECATED_OR_STALE_HAZARD"
+    elif orphan_unindexed_page_ids:
+        knowledge_curation_status = "ORPHAN_DISCOVERABILITY_WARNING"
+    else:
+        knowledge_curation_status = "CURATED_KNOWLEDGE_BASE"
+
+    return {
+        "total_pages_evaluated": len(valid_pages),
+        "active_pages_count": active_pages_count,
+        "unattested_stale_page_ids": unattested_stale_page_ids,
+        "orphan_unindexed_page_ids": orphan_unindexed_page_ids,
+        "active_deprecated_procedure_page_ids": active_deprecated_procedure_page_ids,
+        "knowledge_curation_status": knowledge_curation_status,
+        "is_curation_compliant": knowledge_curation_status
+        == "CURATED_KNOWLEDGE_BASE",
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_quarterly_attestation_and_orphan_page_archival = staticmethod(
+    audit_wiki_quarterly_attestation_and_orphan_page_archival
 )

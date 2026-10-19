@@ -8315,3 +8315,139 @@ def test_audit_wiki_secret_rotation_invalid_and_binding():
         == audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene(sample)
     )
     assert "audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene" in mod.__all__
+
+
+def test_audit_wiki_quarterly_attestation_and_orphan_page_archival_deprecated_or_stale_hazard():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_quarterly_attestation_and_orphan_page_archival,
+    )
+
+    res = audit_wiki_quarterly_attestation_and_orphan_page_archival(
+        [
+            {
+                "page_id": "PG-STALE-01",
+                "days_since_owner_attestation": 120,
+                "incoming_navigation_links_count": 3,
+                "is_root_index_page": False,
+                "references_deprecated_system": False,
+                "is_marked_archived": False,
+            },
+            {
+                "page_id": "PG-DEPRECATED-02",
+                "days_since_owner_attestation": 20,
+                "incoming_navigation_links_count": 2,
+                "is_root_index_page": False,
+                "references_deprecated_system": True,
+                "is_marked_archived": False,
+            },
+            {
+                "page_id": "PG-ARCHIVED-IGNORED",
+                "days_since_owner_attestation": 999,
+                "incoming_navigation_links_count": 0,
+                "is_root_index_page": False,
+                "references_deprecated_system": True,
+                "is_marked_archived": True,
+            },
+        ],
+        max_days_since_attestation=90,
+    )
+    assert res["total_pages_evaluated"] == 3
+    assert res["active_pages_count"] == 2
+    assert res["unattested_stale_page_ids"] == ["PG-STALE-01"]
+    assert res["orphan_unindexed_page_ids"] == []
+    assert res["active_deprecated_procedure_page_ids"] == ["PG-DEPRECATED-02"]
+    assert res["knowledge_curation_status"] == "DEPRECATED_OR_STALE_HAZARD"
+    assert res["is_curation_compliant"] is False
+
+
+def test_audit_wiki_quarterly_attestation_and_orphan_page_archival_orphan_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_quarterly_attestation_and_orphan_page_archival,
+    )
+
+    res = audit_wiki_quarterly_attestation_and_orphan_page_archival(
+        [
+            {
+                "page_id": "PG-ORPHAN",
+                "days_since_owner_attestation": 30,
+                "incoming_navigation_links_count": 0,
+                "is_root_index_page": False,
+                "references_deprecated_system": False,
+                "is_marked_archived": False,
+            },
+            {
+                "page_id": "PG-ROOT-INDEX",
+                "days_since_owner_attestation": 15,
+                "incoming_navigation_links_count": 0,
+                "is_root_index_page": True,
+                "references_deprecated_system": False,
+                "is_marked_archived": False,
+            },
+        ],
+        max_days_since_attestation=90,
+    )
+    assert res["total_pages_evaluated"] == 2
+    assert res["active_pages_count"] == 2
+    assert res["unattested_stale_page_ids"] == []
+    assert res["orphan_unindexed_page_ids"] == ["PG-ORPHAN"]
+    assert res["active_deprecated_procedure_page_ids"] == []
+    assert res["knowledge_curation_status"] == "ORPHAN_DISCOVERABILITY_WARNING"
+    assert res["is_curation_compliant"] is False
+
+
+def test_audit_wiki_quarterly_attestation_and_orphan_page_archival_curated_and_empty():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_quarterly_attestation_and_orphan_page_archival,
+    )
+
+    empty = audit_wiki_quarterly_attestation_and_orphan_page_archival(
+        [{"page_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_pages_evaluated"] == 0
+    assert empty["active_pages_count"] == 0
+    assert empty["knowledge_curation_status"] == "CURATED_KNOWLEDGE_BASE"
+    assert empty["is_curation_compliant"] is True
+
+    curated = audit_wiki_quarterly_attestation_and_orphan_page_archival(
+        [
+            {
+                "page_id": "PG-OK-1",
+                "days_since_owner_attestation": 90,
+                "incoming_navigation_links_count": 4,
+                "is_root_index_page": False,
+                "references_deprecated_system": False,
+                "is_marked_archived": False,
+            }
+        ],
+        max_days_since_attestation=90,
+    )
+    assert curated["total_pages_evaluated"] == 1
+    assert curated["active_pages_count"] == 1
+    assert curated["knowledge_curation_status"] == "CURATED_KNOWLEDGE_BASE"
+    assert curated["is_curation_compliant"] is True
+
+
+def test_audit_wiki_quarterly_attestation_and_orphan_page_archival_staticmethod_and_dunder_all():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_quarterly_attestation_and_orphan_page_archival,
+    )
+
+    sample = [
+        {
+            "page_id": "PG-99",
+            "days_since_owner_attestation": 10,
+            "incoming_navigation_links_count": 2,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_quarterly_attestation_and_orphan_page_archival(
+            sample
+        )
+        == audit_wiki_quarterly_attestation_and_orphan_page_archival(sample)
+    )
+    assert (
+        "audit_wiki_quarterly_attestation_and_orphan_page_archival"
+        in mod.__all__
+    )
