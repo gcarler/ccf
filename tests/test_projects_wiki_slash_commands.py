@@ -10331,3 +10331,142 @@ def test_audit_wiki_bgp_rpki_roa_and_ddos_scrubbing_failover_staticmethod_and_du
         in mod.__all__
     )
 
+
+def test_audit_wiki_secrets_vault_lease_rotation_and_root_token_seal_breach():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_secrets_vault_lease_rotation_and_root_token_seal,
+    )
+
+    res = audit_wiki_secrets_vault_lease_rotation_and_root_token_seal(
+        [
+            {
+                "vault_id": "  VLT-ACTIVE-ROOT  ",
+                "root_tokens_revoked_and_audited": False,
+                "hsm_kms_auto_unseal_quorum_verified": True,
+                "dynamic_lease_ttl_hours": 8,
+                "static_long_lived_secrets_count": 0,
+            },
+            {
+                "vault_id": "VLT-NO-UNSEAL",
+                "root_tokens_revoked_and_audited": True,
+                "hsm_kms_auto_unseal_quorum_verified": False,
+                "dynamic_lease_ttl_hours": 36,
+                "static_long_lived_secrets_count": 2,
+            },
+            {
+                "vault_id": "VLT-CLEAN",
+                "root_tokens_revoked_and_audited": True,
+                "hsm_kms_auto_unseal_quorum_verified": True,
+                "dynamic_lease_ttl_hours": 24,
+                "static_long_lived_secrets_count": 0,
+            },
+        ]
+    )
+    assert res["evaluated_vaults_count"] == 3
+    assert res["active_root_token_or_unverified_unseal_vault_ids"] == [
+        "VLT-ACTIVE-ROOT",
+        "VLT-NO-UNSEAL",
+    ]
+    assert res["long_lease_or_static_secret_vault_ids"] == ["VLT-NO-UNSEAL"]
+    assert (
+        res["secrets_vault_status"]
+        == "VAULT_ROOT_TOKEN_OR_UNSEAL_QUORUM_BREACH"
+    )
+    assert res["is_secrets_vault_compliant"] is False
+
+
+def test_audit_wiki_secrets_vault_lease_rotation_and_root_token_seal_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_secrets_vault_lease_rotation_and_root_token_seal,
+    )
+
+    res = audit_wiki_secrets_vault_lease_rotation_and_root_token_seal(
+        [
+            {
+                "vault_id": "VLT-LONG-LEASE",
+                "root_tokens_revoked_and_audited": False,
+                "hsm_kms_auto_unseal_quorum_verified": True,
+                "dynamic_lease_ttl_hours": 25,
+                "static_long_lived_secrets_count": 0,
+            },
+            {
+                "vault_id": "VLT-STATIC-SECRETS",
+                "root_tokens_revoked_and_audited": True,
+                "hsm_kms_auto_unseal_quorum_verified": True,
+                "dynamic_lease_ttl_hours": 24,
+                "static_long_lived_secrets_count": 1,
+            },
+        ],
+        max_dynamic_lease_ttl_hours=24,
+        require_root_token_revoked=False,
+    )
+    assert res["evaluated_vaults_count"] == 2
+    assert res["active_root_token_or_unverified_unseal_vault_ids"] == []
+    assert res["long_lease_or_static_secret_vault_ids"] == [
+        "VLT-LONG-LEASE",
+        "VLT-STATIC-SECRETS",
+    ]
+    assert (
+        res["secrets_vault_status"]
+        == "VAULT_LEASE_TTL_OR_STATIC_SECRET_WARNING"
+    )
+    assert res["is_secrets_vault_compliant"] is False
+
+
+def test_audit_wiki_secrets_vault_lease_rotation_and_root_token_seal_optimal_and_defensive():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_secrets_vault_lease_rotation_and_root_token_seal,
+    )
+
+    empty = audit_wiki_secrets_vault_lease_rotation_and_root_token_seal(None)
+    assert empty["evaluated_vaults_count"] == 0
+    assert empty["active_root_token_or_unverified_unseal_vault_ids"] == []
+    assert empty["long_lease_or_static_secret_vault_ids"] == []
+    assert empty["secrets_vault_status"] == "VAULT_DYNAMIC_SECRETS_OPTIMAL"
+    assert empty["is_secrets_vault_compliant"] is True
+
+    optimal = audit_wiki_secrets_vault_lease_rotation_and_root_token_seal(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"vault_id": "   "},
+            {
+                "vault_id": "VLT-DEFAULTS",
+                "root_tokens_revoked_and_audited": None,
+                "hsm_kms_auto_unseal_quorum_verified": None,
+                "dynamic_lease_ttl_hours": None,
+                "static_long_lived_secrets_count": None,
+            },
+        ]
+    )
+    assert optimal["evaluated_vaults_count"] == 1
+    assert optimal["active_root_token_or_unverified_unseal_vault_ids"] == []
+    assert optimal["long_lease_or_static_secret_vault_ids"] == []
+    assert optimal["secrets_vault_status"] == "VAULT_DYNAMIC_SECRETS_OPTIMAL"
+    assert optimal["is_secrets_vault_compliant"] is True
+
+
+def test_audit_wiki_secrets_vault_lease_rotation_and_root_token_seal_staticmethod_and_dunder_all():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_secrets_vault_lease_rotation_and_root_token_seal,
+    )
+
+    sample = [
+        {
+            "vault_id": "VLT-99",
+            "dynamic_lease_ttl_hours": 12,
+            "static_long_lived_secrets_count": 0,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_secrets_vault_lease_rotation_and_root_token_seal(
+            sample
+        )
+        == audit_wiki_secrets_vault_lease_rotation_and_root_token_seal(sample)
+    )
+    assert (
+        "audit_wiki_secrets_vault_lease_rotation_and_root_token_seal"
+        in mod.__all__
+    )
+

@@ -3177,6 +3177,7 @@ __all__ = [
     "audit_procurement_bid_integrity_and_coi_recusal",
     "audit_warranty_latent_defect_and_retention_bond_release",
     "audit_regulatory_permit_renewal_and_stop_work_compliance",
+    "audit_site_demobilization_environmental_clearance_and_asset_disposal",
     "ProjectLifecyclePMIService",
 ]
 
@@ -7820,3 +7821,79 @@ ProjectLifecyclePMIService.audit_regulatory_permit_renewal_and_stop_work_complia
 
 
 
+def audit_site_demobilization_environmental_clearance_and_asset_disposal(
+    sites: list[dict] | None,
+    *,
+    max_demobilization_overrun_days: int = 10,
+    require_hazmat_clearance_and_data_wipe: bool = True,
+) -> dict:
+    """PMBOK §4.7 & §12.3 — Audita desmovilización de sitio, clearance ambiental hazmat, sanitización NIST 800-88 de activos TI y conciliación de superávit patrimonial."""
+    raw_items = sites if isinstance(sites, list) else []
+    valid_sites: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("site_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_sites.append(item)
+
+    def _num(value, default):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    def _bool(value, default):
+        return value if isinstance(value, bool) else default
+
+    uncleared_hazmat_or_unsanitized_asset_site_ids: list[str] = []
+    delayed_demob_or_unreconciled_surplus_site_ids: list[str] = []
+
+    for site in valid_sites:
+        site_id = str(site.get("site_id")).strip()
+        hazmat_signed = _bool(
+            site.get("environmental_hazmat_clearance_signed"), True
+        )
+        assets_sanitized = _bool(
+            site.get("it_assets_nist_800_88_sanitized"), True
+        )
+        overrun_days = _num(
+            site.get("demobilization_overrun_days"), 2.0
+        )
+        surplus_reconciled = _bool(
+            site.get("surplus_inventory_reconciled"), True
+        )
+
+        if require_hazmat_clearance_and_data_wipe and (
+            not hazmat_signed or not assets_sanitized
+        ):
+            uncleared_hazmat_or_unsanitized_asset_site_ids.append(site_id)
+
+        if (
+            overrun_days > max_demobilization_overrun_days
+            or not surplus_reconciled
+        ):
+            delayed_demob_or_unreconciled_surplus_site_ids.append(site_id)
+
+    if uncleared_hazmat_or_unsanitized_asset_site_ids:
+        demobilization_status = (
+            "DEMOB_HAZMAT_CLEARANCE_OR_DATA_SANITIZATION_BREACH"
+        )
+    elif delayed_demob_or_unreconciled_surplus_site_ids:
+        demobilization_status = "DEMOB_SCHEDULE_OR_SURPLUS_INVENTORY_WARNING"
+    else:
+        demobilization_status = "DEMOB_AND_ASSET_DISPOSAL_OPTIMAL"
+
+    return {
+        "evaluated_sites_count": len(valid_sites),
+        "uncleared_hazmat_or_unsanitized_asset_site_ids": uncleared_hazmat_or_unsanitized_asset_site_ids,
+        "delayed_demob_or_unreconciled_surplus_site_ids": delayed_demob_or_unreconciled_surplus_site_ids,
+        "demobilization_status": demobilization_status,
+        "is_demobilization_compliant": demobilization_status
+        == "DEMOB_AND_ASSET_DISPOSAL_OPTIMAL",
+    }
+
+
+ProjectLifecyclePMIService.audit_site_demobilization_environmental_clearance_and_asset_disposal = staticmethod(
+    audit_site_demobilization_environmental_clearance_and_asset_disposal
+)

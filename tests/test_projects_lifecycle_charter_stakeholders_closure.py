@@ -10371,3 +10371,166 @@ def test_audit_regulatory_permit_renewal_and_stop_work_compliance_staticmethod_a
 
 
 
+
+
+def test_demob_hazmat_or_sanitization_breach():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_site_demobilization_environmental_clearance_and_asset_disposal,
+    )
+
+    res = audit_site_demobilization_environmental_clearance_and_asset_disposal(
+        [
+            {
+                "site_id": "SITE-NO-HAZMAT",
+                "environmental_hazmat_clearance_signed": False,
+            },
+            {
+                "site_id": "SITE-UNSANITIZED",
+                "it_assets_nist_800_88_sanitized": False,
+            },
+        ],
+        max_demobilization_overrun_days=10,
+        require_hazmat_clearance_and_data_wipe=True,
+    )
+    assert res["evaluated_sites_count"] == 2
+    assert res["uncleared_hazmat_or_unsanitized_asset_site_ids"] == [
+        "SITE-NO-HAZMAT",
+        "SITE-UNSANITIZED",
+    ]
+    assert res["delayed_demob_or_unreconciled_surplus_site_ids"] == []
+    assert (
+        res["demobilization_status"]
+        == "DEMOB_HAZMAT_CLEARANCE_OR_DATA_SANITIZATION_BREACH"
+    )
+    assert res["is_demobilization_compliant"] is False
+
+    optional = audit_site_demobilization_environmental_clearance_and_asset_disposal(
+        [
+            {
+                "site_id": "SITE-FLAG-OFF",
+                "environmental_hazmat_clearance_signed": False,
+                "it_assets_nist_800_88_sanitized": False,
+            }
+        ],
+        max_demobilization_overrun_days=10,
+        require_hazmat_clearance_and_data_wipe=False,
+    )
+    assert optional["uncleared_hazmat_or_unsanitized_asset_site_ids"] == []
+
+
+def test_demob_schedule_or_surplus_inventory_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_site_demobilization_environmental_clearance_and_asset_disposal,
+    )
+
+    res = audit_site_demobilization_environmental_clearance_and_asset_disposal(
+        [
+            {
+                "site_id": "SITE-OVERRUN",
+                "demobilization_overrun_days": 14,
+            },
+            {
+                "site_id": "SITE-UNRECONCILED",
+                "surplus_inventory_reconciled": False,
+            },
+        ],
+        max_demobilization_overrun_days=10,
+        require_hazmat_clearance_and_data_wipe=True,
+    )
+    assert res["evaluated_sites_count"] == 2
+    assert res["uncleared_hazmat_or_unsanitized_asset_site_ids"] == []
+    assert res["delayed_demob_or_unreconciled_surplus_site_ids"] == [
+        "SITE-OVERRUN",
+        "SITE-UNRECONCILED",
+    ]
+    assert (
+        res["demobilization_status"]
+        == "DEMOB_SCHEDULE_OR_SURPLUS_INVENTORY_WARNING"
+    )
+    assert res["is_demobilization_compliant"] is False
+
+
+def test_demob_boundaries_optimal_and_defaults():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_site_demobilization_environmental_clearance_and_asset_disposal,
+    )
+
+    res = audit_site_demobilization_environmental_clearance_and_asset_disposal(
+        [
+            {
+                "site_id": "SITE-BOUNDARY",
+                "demobilization_overrun_days": 10,
+            },
+            {"site_id": "SITE-ALL-DEFAULTS"},
+        ],
+        max_demobilization_overrun_days=10,
+        require_hazmat_clearance_and_data_wipe=True,
+    )
+    assert res["evaluated_sites_count"] == 2
+    assert res["uncleared_hazmat_or_unsanitized_asset_site_ids"] == []
+    assert res["delayed_demob_or_unreconciled_surplus_site_ids"] == []
+    assert (
+        res["demobilization_status"] == "DEMOB_AND_ASSET_DISPOSAL_OPTIMAL"
+    )
+    assert res["is_demobilization_compliant"] is True
+
+
+def test_demob_invalid_and_binding():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_site_demobilization_environmental_clearance_and_asset_disposal,
+    )
+
+    empty = audit_site_demobilization_environmental_clearance_and_asset_disposal(
+        None
+    )
+    assert empty["evaluated_sites_count"] == 0
+    assert empty["uncleared_hazmat_or_unsanitized_asset_site_ids"] == []
+    assert empty["delayed_demob_or_unreconciled_surplus_site_ids"] == []
+    assert (
+        empty["demobilization_status"] == "DEMOB_AND_ASSET_DISPOSAL_OPTIMAL"
+    )
+    assert empty["is_demobilization_compliant"] is True
+
+    invalid = audit_site_demobilization_environmental_clearance_and_asset_disposal(
+        [42, "not-a-dict", None, {"site_id": "   "}]  # type: ignore[list-item]
+    )
+    assert invalid["evaluated_sites_count"] == 0
+
+    defaults = audit_site_demobilization_environmental_clearance_and_asset_disposal(
+        [
+            {
+                "site_id": "SITE-DEFAULTS",
+                "environmental_hazmat_clearance_signed": None,
+                "it_assets_nist_800_88_sanitized": None,
+                "demobilization_overrun_days": None,
+                "surplus_inventory_reconciled": None,
+            }
+        ]
+    )
+    assert defaults["evaluated_sites_count"] == 1
+    assert (
+        defaults["demobilization_status"]
+        == "DEMOB_AND_ASSET_DISPOSAL_OPTIMAL"
+    )
+    assert defaults["is_demobilization_compliant"] is True
+
+    sample = [
+        {
+            "site_id": "SITE-1",
+            "demobilization_overrun_days": 2,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_site_demobilization_environmental_clearance_and_asset_disposal(
+            sample
+        )
+        == audit_site_demobilization_environmental_clearance_and_asset_disposal(
+            sample
+        )
+    )
+    assert (
+        "audit_site_demobilization_environmental_clearance_and_asset_disposal"
+        in mod.__all__
+    )

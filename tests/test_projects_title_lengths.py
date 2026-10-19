@@ -9019,3 +9019,162 @@ def test_validate_raci_matrix_single_accountable_and_role_overload_defensive_and
     )
 
 
+def test_validate_risk_bowtie_barrier_redundancy_and_independence_breach():
+    from backend.schemas.projects import (
+        validate_risk_bowtie_barrier_redundancy_and_independence,
+    )
+
+    res = validate_risk_bowtie_barrier_redundancy_and_independence(
+        [
+            {
+                "hazard_id": "  HAZ-CMF  ",
+                "preventive_barriers_count": 3,
+                "mitigative_barriers_count": 2,
+                "common_mode_failure_present": True,
+                "escalation_factors_controlled": True,
+            },
+            {
+                "hazard_id": "HAZ-ZERO-PREV",
+                "preventive_barriers_count": 0,
+                "mitigative_barriers_count": 2,
+                "common_mode_failure_present": False,
+                "escalation_factors_controlled": True,
+            },
+            {
+                "hazard_id": "HAZ-ZERO-MIT",
+                "preventive_barriers_count": 2,
+                "mitigative_barriers_count": 0,
+                "common_mode_failure_present": False,
+                "escalation_factors_controlled": False,
+            },
+            {
+                "hazard_id": "HAZ-CLEAN",
+                "preventive_barriers_count": 2,
+                "mitigative_barriers_count": 2,
+                "common_mode_failure_present": False,
+                "escalation_factors_controlled": True,
+            },
+        ]
+    )
+    assert res["evaluated_hazards_count"] == 4
+    assert res["single_point_or_common_mode_hazard_ids"] == [
+        "HAZ-CMF",
+        "HAZ-ZERO-PREV",
+        "HAZ-ZERO-MIT",
+    ]
+    assert res["low_redundancy_or_escalation_hazard_ids"] == [
+        "HAZ-ZERO-PREV",
+        "HAZ-ZERO-MIT",
+    ]
+    assert (
+        res["bowtie_barrier_status"]
+        == "BOWTIE_COMMON_MODE_OR_ZERO_BARRIER_BREACH"
+    )
+    assert res["is_bowtie_barrier_valid"] is False
+
+
+def test_validate_risk_bowtie_barrier_redundancy_and_independence_warning():
+    from backend.schemas.projects import (
+        validate_risk_bowtie_barrier_redundancy_and_independence,
+    )
+
+    res = validate_risk_bowtie_barrier_redundancy_and_independence(
+        [
+            {
+                "hazard_id": "HAZ-LOW-PREV",
+                "preventive_barriers_count": 1,
+                "mitigative_barriers_count": 2,
+                "common_mode_failure_present": False,
+                "escalation_factors_controlled": True,
+            },
+            {
+                "hazard_id": "HAZ-LOW-MIT",
+                "preventive_barriers_count": 2,
+                "mitigative_barriers_count": 1,
+                "common_mode_failure_present": False,
+                "escalation_factors_controlled": True,
+            },
+            {
+                "hazard_id": "HAZ-UNCTRL-ESC",
+                "preventive_barriers_count": 3,
+                "mitigative_barriers_count": 3,
+                "common_mode_failure_present": False,
+                "escalation_factors_controlled": False,
+            },
+        ],
+        min_preventive_barriers=2,
+        min_mitigative_barriers=2,
+    )
+    assert res["evaluated_hazards_count"] == 3
+    assert res["single_point_or_common_mode_hazard_ids"] == []
+    assert res["low_redundancy_or_escalation_hazard_ids"] == [
+        "HAZ-LOW-PREV",
+        "HAZ-LOW-MIT",
+        "HAZ-UNCTRL-ESC",
+    ]
+    assert (
+        res["bowtie_barrier_status"]
+        == "BOWTIE_REDUNDANCY_OR_ESCALATION_WARNING"
+    )
+    assert res["is_bowtie_barrier_valid"] is False
+
+
+def test_validate_risk_bowtie_barrier_redundancy_and_independence_optimal_and_boundaries():
+    from backend.schemas.projects import (
+        validate_risk_bowtie_barrier_redundancy_and_independence,
+    )
+
+    res = validate_risk_bowtie_barrier_redundancy_and_independence(
+        [
+            {
+                "hazard_id": "HAZ-BOUNDARY",
+                "preventive_barriers_count": 2,
+                "mitigative_barriers_count": 2,
+                "common_mode_failure_present": False,
+                "escalation_factors_controlled": True,
+            }
+        ],
+        min_preventive_barriers=2,
+        min_mitigative_barriers=2,
+    )
+    assert res["evaluated_hazards_count"] == 1
+    assert res["single_point_or_common_mode_hazard_ids"] == []
+    assert res["low_redundancy_or_escalation_hazard_ids"] == []
+    assert res["bowtie_barrier_status"] == "BOWTIE_DEFENSE_IN_DEPTH_OPTIMAL"
+    assert res["is_bowtie_barrier_valid"] is True
+
+
+def test_validate_risk_bowtie_barrier_redundancy_and_independence_defensive_and_dunder_all():
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_risk_bowtie_barrier_redundancy_and_independence,
+    )
+
+    empty = validate_risk_bowtie_barrier_redundancy_and_independence(None)
+    assert empty["evaluated_hazards_count"] == 0
+    assert empty["bowtie_barrier_status"] == "BOWTIE_DEFENSE_IN_DEPTH_OPTIMAL"
+    assert empty["is_bowtie_barrier_valid"] is True
+
+    defaults = validate_risk_bowtie_barrier_redundancy_and_independence(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"hazard_id": "   "},
+            {
+                "hazard_id": "HAZ-DEFAULTS",
+                "preventive_barriers_count": None,
+                "mitigative_barriers_count": None,
+                "common_mode_failure_present": None,
+                "escalation_factors_controlled": None,
+            },
+        ]
+    )
+    assert defaults["evaluated_hazards_count"] == 1
+    assert (
+        defaults["bowtie_barrier_status"]
+        == "BOWTIE_DEFENSE_IN_DEPTH_OPTIMAL"
+    )
+    assert defaults["is_bowtie_barrier_valid"] is True
+    assert (
+        "validate_risk_bowtie_barrier_redundancy_and_independence"
+        in mod.__all__
+    )

@@ -2542,6 +2542,7 @@ __all__ = [
     "audit_wiki_cdn_edge_cache_purge_sla_and_origin_shield_protection",
     "audit_wiki_object_storage_worm_lock_and_ransomware_airgap",
     "audit_wiki_bgp_rpki_roa_and_ddos_scrubbing_failover",
+    "audit_wiki_secrets_vault_lease_rotation_and_root_token_seal",
     "WikiPMIService",
 ]
 
@@ -7476,4 +7477,78 @@ def audit_wiki_bgp_rpki_roa_and_ddos_scrubbing_failover(
 WikiPMIService.audit_wiki_bgp_rpki_roa_and_ddos_scrubbing_failover = staticmethod(
     audit_wiki_bgp_rpki_roa_and_ddos_scrubbing_failover
 )
+
+
+def audit_wiki_secrets_vault_lease_rotation_and_root_token_seal(
+    vaults: list[dict] | None,
+    *,
+    max_dynamic_lease_ttl_hours: int = 24,
+    require_root_token_revoked: bool = True,
+) -> dict:
+    """PMBOK §11.6 & §10.2 — Audita rotación de concesiones dinámicas (leases) en bóvedas de secretos de la Wiki, revocación/sellado de root tokens y quórum de auto-unseal Shamir/KMS."""
+    raw_items = vaults if isinstance(vaults, list) else []
+    valid_vaults: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("vault_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_vaults.append(item)
+
+    active_root_token_or_unverified_unseal_vault_ids: list[str] = []
+    long_lease_or_static_secret_vault_ids: list[str] = []
+
+    for v in valid_vaults:
+        vid = str(v["vault_id"]).strip()
+        raw_root = v.get("root_tokens_revoked_and_audited", True)
+        root_tokens_revoked_and_audited = bool(
+            True if raw_root is None else raw_root
+        )
+
+        raw_unseal = v.get("hsm_kms_auto_unseal_quorum_verified", True)
+        hsm_kms_auto_unseal_quorum_verified = bool(
+            True if raw_unseal is None else raw_unseal
+        )
+
+        raw_ttl = v.get("dynamic_lease_ttl_hours", 8)
+        dynamic_lease_ttl_hours = int(8 if raw_ttl is None else raw_ttl)
+
+        raw_static = v.get("static_long_lived_secrets_count", 0)
+        static_long_lived_secrets_count = int(
+            0 if raw_static is None else raw_static
+        )
+
+        if (
+            require_root_token_revoked and not root_tokens_revoked_and_audited
+        ) or not hsm_kms_auto_unseal_quorum_verified:
+            active_root_token_or_unverified_unseal_vault_ids.append(vid)
+
+        if (
+            dynamic_lease_ttl_hours > max_dynamic_lease_ttl_hours
+            or static_long_lived_secrets_count > 0
+        ):
+            long_lease_or_static_secret_vault_ids.append(vid)
+
+    if active_root_token_or_unverified_unseal_vault_ids:
+        secrets_vault_status = "VAULT_ROOT_TOKEN_OR_UNSEAL_QUORUM_BREACH"
+    elif long_lease_or_static_secret_vault_ids:
+        secrets_vault_status = "VAULT_LEASE_TTL_OR_STATIC_SECRET_WARNING"
+    else:
+        secrets_vault_status = "VAULT_DYNAMIC_SECRETS_OPTIMAL"
+
+    return {
+        "evaluated_vaults_count": len(valid_vaults),
+        "active_root_token_or_unverified_unseal_vault_ids": active_root_token_or_unverified_unseal_vault_ids,
+        "long_lease_or_static_secret_vault_ids": long_lease_or_static_secret_vault_ids,
+        "secrets_vault_status": secrets_vault_status,
+        "is_secrets_vault_compliant": secrets_vault_status
+        == "VAULT_DYNAMIC_SECRETS_OPTIMAL",
+    }
+
+
+WikiPMIService.audit_wiki_secrets_vault_lease_rotation_and_root_token_seal = staticmethod(
+    audit_wiki_secrets_vault_lease_rotation_and_root_token_seal
+)
+
 

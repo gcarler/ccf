@@ -3823,6 +3823,7 @@ __all__ = [
     "validate_stakeholder_salience_power_urgency_legitimacy_alignment",
     "validate_cost_of_quality_coq_conformance_vs_failure_ratio",
     "validate_raci_matrix_single_accountable_and_role_overload",
+    "validate_risk_bowtie_barrier_redundancy_and_independence",
 ]
 
 
@@ -8894,3 +8895,66 @@ def validate_raci_matrix_single_accountable_and_role_overload(
     }
 
 
+def validate_risk_bowtie_barrier_redundancy_and_independence(
+    hazards: list[dict] | None,
+    *,
+    min_preventive_barriers: int = 2,
+    min_mitigative_barriers: int = 2,
+) -> dict:
+    """PMBOK §11.4 & §11.6 — Valida redundancia de barreras preventivas/mitigativas en análisis Bow-Tie, independencia frente a fallas de modo común y control de factores de escalamiento."""
+    raw_items = hazards if isinstance(hazards, list) else []
+    valid_hazards: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("hazard_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_hazards.append(item)
+
+    single_point_or_common_mode_hazard_ids: list[str] = []
+    low_redundancy_or_escalation_hazard_ids: list[str] = []
+
+    for h in valid_hazards:
+        hid = str(h["hazard_id"]).strip()
+        raw_prev = h.get("preventive_barriers_count", 3)
+        preventive_barriers_count = int(3 if raw_prev is None else raw_prev)
+
+        raw_mit = h.get("mitigative_barriers_count", 2)
+        mitigative_barriers_count = int(2 if raw_mit is None else raw_mit)
+
+        raw_cmf = h.get("common_mode_failure_present", False)
+        common_mode_failure_present = bool(False if raw_cmf is None else raw_cmf)
+
+        raw_esc = h.get("escalation_factors_controlled", True)
+        escalation_factors_controlled = bool(True if raw_esc is None else raw_esc)
+
+        if (
+            common_mode_failure_present
+            or preventive_barriers_count < 1
+            or mitigative_barriers_count < 1
+        ):
+            single_point_or_common_mode_hazard_ids.append(hid)
+
+        if (
+            preventive_barriers_count < min_preventive_barriers
+            or mitigative_barriers_count < min_mitigative_barriers
+            or not escalation_factors_controlled
+        ):
+            low_redundancy_or_escalation_hazard_ids.append(hid)
+
+    if single_point_or_common_mode_hazard_ids:
+        bowtie_barrier_status = "BOWTIE_COMMON_MODE_OR_ZERO_BARRIER_BREACH"
+    elif low_redundancy_or_escalation_hazard_ids:
+        bowtie_barrier_status = "BOWTIE_REDUNDANCY_OR_ESCALATION_WARNING"
+    else:
+        bowtie_barrier_status = "BOWTIE_DEFENSE_IN_DEPTH_OPTIMAL"
+
+    return {
+        "evaluated_hazards_count": len(valid_hazards),
+        "single_point_or_common_mode_hazard_ids": single_point_or_common_mode_hazard_ids,
+        "low_redundancy_or_escalation_hazard_ids": low_redundancy_or_escalation_hazard_ids,
+        "bowtie_barrier_status": bowtie_barrier_status,
+        "is_bowtie_barrier_valid": bowtie_barrier_status
+        == "BOWTIE_DEFENSE_IN_DEPTH_OPTIMAL",
+    }
