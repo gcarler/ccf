@@ -3814,6 +3814,7 @@ __all__ = [
     "validate_pert_three_point_estimation_and_delphi_convergence",
     "validate_monte_carlo_p80_p90_convergence_and_tornado_sensitivity",
     "validate_resource_leveling_overallocation_and_context_switching",
+    "validate_wbs_rolling_wave_horizon_and_8_80_rule",
 ]
 
 
@@ -8223,5 +8224,70 @@ def validate_resource_leveling_overallocation_and_context_switching(
         "resource_leveling_status": resource_leveling_status,
         "is_resource_leveling_valid": resource_leveling_status
         == "RESOURCE_LEVELING_BALANCED",
+    }
+
+
+def validate_wbs_rolling_wave_horizon_and_8_80_rule(
+    wbs_elements: Sequence[Mapping[str, Any]] | None,
+    *,
+    freeze_horizon_days: int | float = 30,
+    min_work_package_hours: float = 8.0,
+    max_work_package_hours: float = 80.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §5.4 & §6.2 — WBS Rolling Wave Planning Horizon, Planning Package Decomposition Lead-Time & 8/80 Rule Validator."""
+    valid_elements = [
+        elem
+        for elem in (wbs_elements or [])
+        if isinstance(elem, Mapping)
+        and str(elem.get("element_id") or "").strip()
+    ]
+
+    undecomposed_horizon_or_unowned_ids: list[str] = []
+    sizing_rule_8_80_violation_ids: list[str] = []
+
+    for elem in valid_elements:
+        eid = str(elem.get("element_id")).strip()
+        is_planning_pkg = bool(
+            elem.get("is_unexpanded_planning_package", False)
+            if elem.get("is_unexpanded_planning_package") is not None
+            else False
+        )
+        raw_days = elem.get("days_until_scheduled_start")
+        days_until_start = float(raw_days if raw_days is not None else 45.0)
+        raw_hours = elem.get("estimated_effort_hours")
+        effort_hours = float(raw_hours if raw_hours is not None else 40.0)
+        has_owner = bool(
+            elem.get("has_single_accountable_owner", True)
+            if elem.get("has_single_accountable_owner") is not None
+            else True
+        )
+
+        if (
+            is_planning_pkg and days_until_start <= freeze_horizon_days
+        ) or not has_owner:
+            undecomposed_horizon_or_unowned_ids.append(eid)
+
+        if not is_planning_pkg and (
+            effort_hours < min_work_package_hours
+            or effort_hours > max_work_package_hours
+        ):
+            sizing_rule_8_80_violation_ids.append(eid)
+
+    if undecomposed_horizon_or_unowned_ids:
+        rolling_wave_status = (
+            "WBS_ROLLING_WAVE_DECOMPOSITION_OR_OWNERSHIP_BREACH"
+        )
+    elif sizing_rule_8_80_violation_ids:
+        rolling_wave_status = "WBS_8_80_SIZING_RULE_WARNING"
+    else:
+        rolling_wave_status = "WBS_ROLLING_WAVE_OPTIMAL"
+
+    return {
+        "evaluated_elements_count": len(valid_elements),
+        "undecomposed_horizon_or_unowned_ids": undecomposed_horizon_or_unowned_ids,
+        "sizing_rule_8_80_violation_ids": sizing_rule_8_80_violation_ids,
+        "rolling_wave_status": rolling_wave_status,
+        "is_rolling_wave_valid": rolling_wave_status
+        == "WBS_ROLLING_WAVE_OPTIMAL",
     }
 

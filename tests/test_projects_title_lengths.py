@@ -7708,3 +7708,139 @@ def test_validate_resource_leveling_overallocation_and_context_switching_default
         in mod.__all__
     )
 
+
+def test_validate_wbs_rolling_wave_horizon_and_8_80_rule_breach():
+    from backend.schemas.projects import (
+        validate_wbs_rolling_wave_horizon_and_8_80_rule,
+    )
+
+    result = validate_wbs_rolling_wave_horizon_and_8_80_rule(
+        [
+            {
+                "element_id": "WBS-PP-LATE",
+                "is_unexpanded_planning_package": True,
+                "days_until_scheduled_start": 15,
+                "estimated_effort_hours": 160.0,
+                "has_single_accountable_owner": True,
+            },
+            {
+                "element_id": "WBS-WP-UNOWNED",
+                "is_unexpanded_planning_package": False,
+                "days_until_scheduled_start": 10,
+                "estimated_effort_hours": 32.0,
+                "has_single_accountable_owner": False,
+            },
+        ],
+        freeze_horizon_days=30,
+        min_work_package_hours=8.0,
+        max_work_package_hours=80.0,
+    )
+    assert result["evaluated_elements_count"] == 2
+    assert result["undecomposed_horizon_or_unowned_ids"] == [
+        "WBS-PP-LATE",
+        "WBS-WP-UNOWNED",
+    ]
+    assert result["sizing_rule_8_80_violation_ids"] == []
+    assert (
+        result["rolling_wave_status"]
+        == "WBS_ROLLING_WAVE_DECOMPOSITION_OR_OWNERSHIP_BREACH"
+    )
+    assert result["is_rolling_wave_valid"] is False
+
+
+def test_validate_wbs_rolling_wave_horizon_and_8_80_rule_sizing_warning():
+    from backend.schemas.projects import (
+        validate_wbs_rolling_wave_horizon_and_8_80_rule,
+    )
+
+    result = validate_wbs_rolling_wave_horizon_and_8_80_rule(
+        [
+            {
+                "element_id": "WBS-WP-MICRO",
+                "is_unexpanded_planning_package": False,
+                "days_until_scheduled_start": 10,
+                "estimated_effort_hours": 4.0,
+                "has_single_accountable_owner": True,
+            },
+            {
+                "element_id": "WBS-WP-MEGA",
+                "is_unexpanded_planning_package": False,
+                "days_until_scheduled_start": 10,
+                "estimated_effort_hours": 120.0,
+                "has_single_accountable_owner": True,
+            },
+        ],
+        freeze_horizon_days=30,
+        min_work_package_hours=8.0,
+        max_work_package_hours=80.0,
+    )
+    assert result["evaluated_elements_count"] == 2
+    assert result["undecomposed_horizon_or_unowned_ids"] == []
+    assert result["sizing_rule_8_80_violation_ids"] == [
+        "WBS-WP-MICRO",
+        "WBS-WP-MEGA",
+    ]
+    assert result["rolling_wave_status"] == "WBS_8_80_SIZING_RULE_WARNING"
+    assert result["is_rolling_wave_valid"] is False
+
+
+def test_validate_wbs_rolling_wave_horizon_and_8_80_rule_optimal_and_empty():
+    from backend.schemas.projects import (
+        validate_wbs_rolling_wave_horizon_and_8_80_rule,
+    )
+
+    empty = validate_wbs_rolling_wave_horizon_and_8_80_rule(
+        [{"element_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_elements_count"] == 0
+    assert empty["rolling_wave_status"] == "WBS_ROLLING_WAVE_OPTIMAL"
+    assert empty["is_rolling_wave_valid"] is True
+
+    optimal = validate_wbs_rolling_wave_horizon_and_8_80_rule(
+        [
+            {
+                "element_id": "WBS-PP-FUTURE",
+                "is_unexpanded_planning_package": True,
+                "days_until_scheduled_start": 60,
+                "estimated_effort_hours": 240.0,
+                "has_single_accountable_owner": True,
+            },
+            {
+                "element_id": "WBS-WP-NEAR",
+                "is_unexpanded_planning_package": False,
+                "days_until_scheduled_start": 10,
+                "estimated_effort_hours": 40.0,
+                "has_single_accountable_owner": True,
+            },
+        ],
+        freeze_horizon_days=30,
+        min_work_package_hours=8.0,
+        max_work_package_hours=80.0,
+    )
+    assert optimal["evaluated_elements_count"] == 2
+    assert optimal["rolling_wave_status"] == "WBS_ROLLING_WAVE_OPTIMAL"
+    assert optimal["is_rolling_wave_valid"] is True
+
+
+def test_validate_wbs_rolling_wave_horizon_and_8_80_rule_defaults_and_dunder_all():
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_wbs_rolling_wave_horizon_and_8_80_rule,
+    )
+
+    defaults = validate_wbs_rolling_wave_horizon_and_8_80_rule(
+        [
+            {
+                "element_id": "WBS-DEF",
+                "is_unexpanded_planning_package": None,
+                "days_until_scheduled_start": None,
+                "estimated_effort_hours": None,
+                "has_single_accountable_owner": None,
+            }
+        ]
+    )
+    assert defaults["evaluated_elements_count"] == 1
+    assert defaults["rolling_wave_status"] == "WBS_ROLLING_WAVE_OPTIMAL"
+    assert defaults["is_rolling_wave_valid"] is True
+    assert "validate_wbs_rolling_wave_horizon_and_8_80_rule" in mod.__all__
+
