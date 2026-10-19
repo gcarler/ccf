@@ -11970,3 +11970,102 @@ def test_audit_wiki_kms_envelope_key_rotation_and_hsm_tamper_seal_empty_and_bind
         == empty
     )
     assert "audit_wiki_kms_envelope_key_rotation_and_hsm_tamper_seal" in mod.__all__
+
+
+def test_audit_wiki_webhook_ssrf_cidr_blocklist_and_dns_rebinding_guard_healthy():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_webhook_ssrf_cidr_blocklist_and_dns_rebinding_guard,
+    )
+
+    webhooks = [
+        {
+            "webhook_id": "wh-slack-notify-prod",
+            "resolved_ip_in_rfc1918_or_link_local": False,
+            "cloud_metadata_ip_169_254_targeted": False,
+            "dns_pinning_enforced": True,
+            "egress_proxy_mtls_verified": True,
+            "hmac_sha256_signature_enabled": True,
+            "redirect_hops_followed": 0,
+            "delivery_timeout_ms": 2500,
+        }
+    ]
+    res = audit_wiki_webhook_ssrf_cidr_blocklist_and_dns_rebinding_guard(webhooks)
+    assert res["status"] == "HEALTHY"
+    assert res["evaluated_webhooks_count"] == 1
+    assert res["critical_webhooks"] == []
+    assert res["warning_webhooks"] == []
+    assert res["ssrf_blocked_count"] == 0
+    assert res["webhook_evaluations"][0]["critical_ssrf_breach"] is False
+
+
+def test_audit_wiki_webhook_ssrf_cidr_blocklist_and_dns_rebinding_guard_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_webhook_ssrf_cidr_blocklist_and_dns_rebinding_guard,
+    )
+
+    webhooks = [
+        {
+            "webhook_id": "wh-unsigned-slow",
+            "resolved_ip_in_rfc1918_or_link_local": False,
+            "cloud_metadata_ip_169_254_targeted": False,
+            "dns_pinning_enforced": True,
+            "egress_proxy_mtls_verified": True,
+            "hmac_sha256_signature_enabled": False,
+            "redirect_hops_followed": 0,
+            "delivery_timeout_ms": 7500,
+        }
+    ]
+    res = audit_wiki_webhook_ssrf_cidr_blocklist_and_dns_rebinding_guard(webhooks)
+    assert res["status"] == "WARNING"
+    assert res["critical_webhooks"] == []
+    assert res["warning_webhooks"] == ["wh-unsigned-slow"]
+    assert res["ssrf_blocked_count"] == 0
+    assert res["webhook_evaluations"][0]["webhook_security_warning"] is True
+
+
+def test_audit_wiki_webhook_ssrf_cidr_blocklist_and_dns_rebinding_guard_critical():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_webhook_ssrf_cidr_blocklist_and_dns_rebinding_guard,
+    )
+
+    webhooks = [
+        {
+            "webhook_id": "wh-imds-ssrf-attempt",
+            "resolved_ip_in_rfc1918_or_link_local": True,
+            "cloud_metadata_ip_169_254_targeted": True,
+            "dns_pinning_enforced": False,
+            "egress_proxy_mtls_verified": False,
+            "hmac_sha256_signature_enabled": True,
+            "redirect_hops_followed": 2,
+            "delivery_timeout_ms": 3000,
+        }
+    ]
+    res = audit_wiki_webhook_ssrf_cidr_blocklist_and_dns_rebinding_guard(webhooks)
+    assert res["status"] == "CRITICAL"
+    assert res["critical_webhooks"] == ["wh-imds-ssrf-attempt"]
+    assert res["warning_webhooks"] == []
+    assert res["ssrf_blocked_count"] == 1
+    assert res["webhook_evaluations"][0]["critical_ssrf_breach"] is True
+
+
+def test_audit_wiki_webhook_ssrf_cidr_blocklist_and_dns_rebinding_guard_empty_and_binding():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_webhook_ssrf_cidr_blocklist_and_dns_rebinding_guard,
+    )
+
+    empty = audit_wiki_webhook_ssrf_cidr_blocklist_and_dns_rebinding_guard([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["evaluated_webhooks_count"] == 0
+    assert empty["ssrf_blocked_count"] == 0
+    assert (
+        WikiPMIService.audit_wiki_webhook_ssrf_cidr_blocklist_and_dns_rebinding_guard(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_wiki_webhook_ssrf_cidr_blocklist_and_dns_rebinding_guard"
+        in mod.__all__
+    )

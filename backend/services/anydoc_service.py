@@ -3056,6 +3056,7 @@ __all__ = [
     "audit_markdown_rfc2119_normative_keywords_and_requirement_traceability",
     "audit_markdown_adr_madr_sections_and_supersession_hygiene",
     "audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene",
+    "audit_markdown_latex_math_delimiter_balance_and_macro_hygiene",
     "AnydocService",
 ]
 
@@ -10123,4 +10124,105 @@ AnyDocService.audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene = s
 )
 AnydocService.audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene = staticmethod(
     audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene
+)
+
+
+def audit_markdown_latex_math_delimiter_balance_and_macro_hygiene(
+    blocks: list[dict[str, Any]],
+    *,
+    max_nesting_depth: int = 6,
+    disallowed_macros: tuple[str, ...] = (
+        "\\input",
+        "\\include",
+        "\\write18",
+        "\\catcode",
+        "\\def",
+    ),
+) -> dict[str, Any]:
+    """PMBOK §4.4 & §10.2 — AnyDoc Markdown LaTeX / KaTeX Mathematical Formula Delimiter Balance, Undefined Macro & Environment Nesting Hygiene Auditor."""
+    block_evaluations: list[dict[str, Any]] = []
+    critical_blocks: list[str] = []
+    warning_blocks: list[str] = []
+    total_unsafe_macros_detected = 0
+
+    for item in blocks or []:
+        if not isinstance(item, dict):
+            continue
+        block_id = str(item.get("block_id") or "").strip() or "UNKNOWN_BLOCK"
+        unbalanced_dollar_delimiters = int(
+            item.get("unbalanced_dollar_delimiters", 0) or 0
+        )
+        unmatched_begin_end_environments = int(
+            item.get("unmatched_begin_end_environments", 0) or 0
+        )
+        raw_macros = item.get("detected_macros")
+        detected_macros = (
+            [str(m) for m in raw_macros]
+            if isinstance(raw_macros, (list, tuple))
+            else []
+        )
+        equation_nesting_depth = int(item.get("equation_nesting_depth", 1) or 0)
+        missing_equation_label_for_numbered_env = bool(
+            item.get("missing_equation_label_for_numbered_env", False)
+        )
+        render_timeout_exceeded = bool(item.get("render_timeout_exceeded", False))
+
+        unsafe_macros_found = [
+            m for m in detected_macros if m in disallowed_macros
+        ]
+        total_unsafe_macros_detected += len(unsafe_macros_found)
+
+        critical_latex_breach = (
+            unbalanced_dollar_delimiters > 0
+            or unmatched_begin_end_environments > 0
+            or len(unsafe_macros_found) > 0
+            or render_timeout_exceeded is True
+        )
+        math_hygiene_warning = (not critical_latex_breach) and (
+            equation_nesting_depth > max_nesting_depth
+            or missing_equation_label_for_numbered_env is True
+        )
+
+        if critical_latex_breach:
+            critical_blocks.append(block_id)
+        elif math_hygiene_warning:
+            warning_blocks.append(block_id)
+
+        block_evaluations.append(
+            {
+                "block_id": block_id,
+                "unbalanced_dollar_delimiters": unbalanced_dollar_delimiters,
+                "unmatched_begin_end_environments": unmatched_begin_end_environments,
+                "detected_macros": detected_macros,
+                "unsafe_macros_found": unsafe_macros_found,
+                "equation_nesting_depth": equation_nesting_depth,
+                "missing_equation_label_for_numbered_env": missing_equation_label_for_numbered_env,
+                "render_timeout_exceeded": render_timeout_exceeded,
+                "critical_latex_breach": critical_latex_breach,
+                "math_hygiene_warning": math_hygiene_warning,
+            }
+        )
+
+    if len(critical_blocks) > 0:
+        status = "CRITICAL"
+    elif len(warning_blocks) > 0:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "status": status,
+        "evaluated_blocks_count": len(block_evaluations),
+        "critical_blocks": critical_blocks,
+        "warning_blocks": warning_blocks,
+        "total_unsafe_macros_detected": total_unsafe_macros_detected,
+        "block_evaluations": block_evaluations,
+    }
+
+
+AnyDocService.audit_markdown_latex_math_delimiter_balance_and_macro_hygiene = staticmethod(
+    audit_markdown_latex_math_delimiter_balance_and_macro_hygiene
+)
+AnydocService.audit_markdown_latex_math_delimiter_balance_and_macro_hygiene = staticmethod(
+    audit_markdown_latex_math_delimiter_balance_and_macro_hygiene
 )

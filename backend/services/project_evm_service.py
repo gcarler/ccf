@@ -5543,6 +5543,7 @@ __all__ = [
     "evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding",
     "evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer",
     "evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty",
+    "evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim",
     "ProjectEVMService",
 ]
 
@@ -11676,4 +11677,122 @@ def evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty(
 
 ProjectEVMService.evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty = staticmethod(
     evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty
+)
+
+
+def evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim(
+    contract_billings: float,
+    total_company_billings: float,
+    total_home_office_overhead: float,
+    contract_performance_days: int,
+    compensable_owner_delay_days: int,
+    *,
+    claimed_weather_delay_days: int = 0,
+    contractual_noaa_baseline_weather_days: int = 10,
+    contractor_on_standby: bool = True,
+    replacement_work_available: bool = False,
+    max_hooh_claim_pct_of_contract: float = 10.0,
+) -> dict[str, Any]:
+    """PMBOK §7.4 & §12.3 — Evalúa reclamaciones de construcción por force majeure: allowance de días de clima excusables non-compensable contra baseline contractual (NOAA) y fórmula Eichleay de overhead de home-office no absorbido (HOOH) por demora compensable del owner.
+
+    Fórmula Eichleay: `allocable_hooh = (max(0, contract_billings) /
+    max(1, total_company_billings)) * max(0, total_home_office_overhead)`
+    (0.0 si las facturaciones de compañía son <= 0); la tasa diaria
+    reparte entre días de performance del contrato (0.0 si <= 0):
+    - `eichleay_eligible`: contractor en standby, sin reemplazo disponible
+      y con demora compensable del owner > 0. Sin elegibilidad no hay claim
+      HOOH (demora compensable sin elegibilidad es brecha crítica, precedencia)
+      al igual que el claim que excede `max_hooh_claim_pct_of_contract`.
+    - `net_excusable_weather_extension_days` = excedente del clima reclamado
+      sobre el baseline contractual (excusable, non-compensable).
+    - Estados: 'CRITICAL_DISPUTED_EICHLEAY_OR_EXCESS_HOOH_BREACH' |
+      'COMPENSABLE_OR_EXCUSABLE_EXTENSION_WARNING' |
+      'WITHIN_BASELINE_ALLOWANCE_CLEAN'.
+    """
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _int(value: Any, default: int) -> int:
+        if isinstance(value, bool) or not isinstance(value, int):
+            return default
+        return value
+
+    def _float(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    contract_billed = _float(contract_billings, 0.0)
+    company_billed = _float(total_company_billings, 0.0)
+    hooh_total = _float(total_home_office_overhead, 0.0)
+    performance_days = _int(contract_performance_days, 0)
+    owner_delay_days = _int(compensable_owner_delay_days, 0)
+
+    claimed_weather = _int(claimed_weather_delay_days, 0)
+    baseline_weather = _int(contractual_noaa_baseline_weather_days, 10)
+    standby = _bool(contractor_on_standby, True)
+    replacement_available = _bool(replacement_work_available, False)
+    claim_cap = _float(max_hooh_claim_pct_of_contract, 10.0)
+
+    if company_billed > 0:
+        allocable_hooh_raw = (
+            max(0.0, contract_billed) / max(1.0, company_billed)
+        ) * max(0.0, hooh_total)
+    else:
+        allocable_hooh_raw = 0.0
+
+    if performance_days > 0:
+        daily_contract_hooh_rate_raw = allocable_hooh_raw / max(1, performance_days)
+    else:
+        daily_contract_hooh_rate_raw = 0.0
+
+    eichleay_eligible = (
+        standby
+        and (not replacement_available)
+        and owner_delay_days > 0
+    )
+
+    if eichleay_eligible:
+        unabsorbed_hooh_claim_amount = round(
+            daily_contract_hooh_rate_raw * max(0, owner_delay_days), 2
+        )
+    else:
+        unabsorbed_hooh_claim_amount = 0.0
+
+    net_excusable_weather_extension_days = max(
+        0, claimed_weather - max(0, baseline_weather)
+    )
+
+    if contract_billed > 0:
+        hooh_claim_pct_of_contract = round(
+            (unabsorbed_hooh_claim_amount / max(1.0, contract_billed)) * 100.0, 2
+        )
+    else:
+        hooh_claim_pct_of_contract = 0.0
+
+    disputed_without_eligibility = (
+        owner_delay_days > 0 and (not eichleay_eligible)
+    )
+    excess_claim = hooh_claim_pct_of_contract > claim_cap
+
+    if disputed_without_eligibility or excess_claim:
+        delay_claim_status = "CRITICAL_DISPUTED_EICHLEAY_OR_EXCESS_HOOH_BREACH"
+    elif unabsorbed_hooh_claim_amount > 0 or net_excusable_weather_extension_days > 0:
+        delay_claim_status = "COMPENSABLE_OR_EXCUSABLE_EXTENSION_WARNING"
+    else:
+        delay_claim_status = "WITHIN_BASELINE_ALLOWANCE_CLEAN"
+
+    return {
+        "allocable_hooh": round(allocable_hooh_raw, 2),
+        "daily_contract_hooh_rate": round(daily_contract_hooh_rate_raw, 2),
+        "eichleay_eligible": eichleay_eligible,
+        "unabsorbed_hooh_claim_amount": unabsorbed_hooh_claim_amount,
+        "net_excusable_weather_extension_days": net_excusable_weather_extension_days,
+        "hooh_claim_pct_of_contract": hooh_claim_pct_of_contract,
+        "delay_claim_status": delay_claim_status,
+    }
+
+
+ProjectEVMService.evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim = staticmethod(
+    evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim
 )

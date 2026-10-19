@@ -2556,6 +2556,7 @@ __all__ = [
     "audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm",
     "audit_wiki_redis_cluster_hash_slot_coverage_and_aof_eviction",
     "audit_wiki_kms_envelope_key_rotation_and_hsm_tamper_seal",
+    "audit_wiki_webhook_ssrf_cidr_blocklist_and_dns_rebinding_guard",
     "WikiPMIService",
 ]
 
@@ -8841,4 +8842,89 @@ def audit_wiki_kms_envelope_key_rotation_and_hsm_tamper_seal(
 
 WikiPMIService.audit_wiki_kms_envelope_key_rotation_and_hsm_tamper_seal = staticmethod(
     audit_wiki_kms_envelope_key_rotation_and_hsm_tamper_seal
+)
+
+
+def audit_wiki_webhook_ssrf_cidr_blocklist_and_dns_rebinding_guard(
+    webhooks: list[dict[str, Any]],
+    *,
+    max_redirect_hops: int = 0,
+    max_delivery_timeout_ms: int = 5000,
+) -> dict[str, Any]:
+    """PMBOK §4.4 & §11.6 — Wiki GraphQL / Webhook Outbound SSRF Private CIDR Blocklist, DNS Rebinding Pinning & Egress Proxy mTLS Auditor."""
+    webhook_evaluations: list[dict[str, Any]] = []
+    critical_webhooks: list[str] = []
+    warning_webhooks: list[str] = []
+
+    for item in webhooks or []:
+        if not isinstance(item, Mapping):
+            continue
+        webhook_id = str(item.get("webhook_id") or "").strip() or "UNKNOWN_WEBHOOK"
+        resolved_ip_in_rfc1918_or_link_local = bool(
+            item.get("resolved_ip_in_rfc1918_or_link_local", False)
+        )
+        cloud_metadata_ip_169_254_targeted = bool(
+            item.get("cloud_metadata_ip_169_254_targeted", False)
+        )
+        dns_pinning_enforced = bool(item.get("dns_pinning_enforced", True))
+        egress_proxy_mtls_verified = bool(
+            item.get("egress_proxy_mtls_verified", True)
+        )
+        hmac_sha256_signature_enabled = bool(
+            item.get("hmac_sha256_signature_enabled", True)
+        )
+        redirect_hops_followed = int(item.get("redirect_hops_followed", 0) or 0)
+        delivery_timeout_ms = int(item.get("delivery_timeout_ms", 3000) or 0)
+
+        critical_ssrf_breach = (
+            resolved_ip_in_rfc1918_or_link_local is True
+            or cloud_metadata_ip_169_254_targeted is True
+            or not dns_pinning_enforced
+            or not egress_proxy_mtls_verified
+            or redirect_hops_followed > max_redirect_hops
+        )
+        webhook_security_warning = (not critical_ssrf_breach) and (
+            not hmac_sha256_signature_enabled
+            or delivery_timeout_ms > max_delivery_timeout_ms
+        )
+
+        if critical_ssrf_breach:
+            critical_webhooks.append(webhook_id)
+        elif webhook_security_warning:
+            warning_webhooks.append(webhook_id)
+
+        webhook_evaluations.append(
+            {
+                "webhook_id": webhook_id,
+                "resolved_ip_in_rfc1918_or_link_local": resolved_ip_in_rfc1918_or_link_local,
+                "cloud_metadata_ip_169_254_targeted": cloud_metadata_ip_169_254_targeted,
+                "dns_pinning_enforced": dns_pinning_enforced,
+                "egress_proxy_mtls_verified": egress_proxy_mtls_verified,
+                "hmac_sha256_signature_enabled": hmac_sha256_signature_enabled,
+                "redirect_hops_followed": redirect_hops_followed,
+                "delivery_timeout_ms": delivery_timeout_ms,
+                "critical_ssrf_breach": critical_ssrf_breach,
+                "webhook_security_warning": webhook_security_warning,
+            }
+        )
+
+    if len(critical_webhooks) > 0:
+        status = "CRITICAL"
+    elif len(warning_webhooks) > 0:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "status": status,
+        "evaluated_webhooks_count": len(webhook_evaluations),
+        "critical_webhooks": critical_webhooks,
+        "warning_webhooks": warning_webhooks,
+        "ssrf_blocked_count": len(critical_webhooks),
+        "webhook_evaluations": webhook_evaluations,
+    }
+
+
+WikiPMIService.audit_wiki_webhook_ssrf_cidr_blocklist_and_dns_rebinding_guard = staticmethod(
+    audit_wiki_webhook_ssrf_cidr_blocklist_and_dns_rebinding_guard
 )

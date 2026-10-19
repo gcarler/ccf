@@ -9789,3 +9789,104 @@ def test_audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene_empty_an
         "audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene"
         in mod.__all__
     )
+
+
+def test_audit_markdown_latex_math_delimiter_balance_and_macro_hygiene_healthy():
+    from backend.services.anydoc_service import (
+        audit_markdown_latex_math_delimiter_balance_and_macro_hygiene,
+    )
+
+    blocks = [
+        {
+            "block_id": "eq-evm-cpi-01",
+            "unbalanced_dollar_delimiters": 0,
+            "unmatched_begin_end_environments": 0,
+            "detected_macros": ["\\frac", "\\sum", "\\sqrt"],
+            "equation_nesting_depth": 3,
+            "missing_equation_label_for_numbered_env": False,
+            "render_timeout_exceeded": False,
+        }
+    ]
+    res = audit_markdown_latex_math_delimiter_balance_and_macro_hygiene(blocks)
+    assert res["status"] == "HEALTHY"
+    assert res["evaluated_blocks_count"] == 1
+    assert res["critical_blocks"] == []
+    assert res["warning_blocks"] == []
+    assert res["total_unsafe_macros_detected"] == 0
+    assert res["block_evaluations"][0]["unsafe_macros_found"] == []
+
+
+def test_audit_markdown_latex_math_delimiter_balance_and_macro_hygiene_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_latex_math_delimiter_balance_and_macro_hygiene,
+    )
+
+    blocks = [
+        {
+            "block_id": "eq-monte-carlo-deep",
+            "unbalanced_dollar_delimiters": 0,
+            "unmatched_begin_end_environments": 0,
+            "detected_macros": ["\\int", "\\mathcal"],
+            "equation_nesting_depth": 8,
+            "missing_equation_label_for_numbered_env": True,
+            "render_timeout_exceeded": False,
+        }
+    ]
+    res = audit_markdown_latex_math_delimiter_balance_and_macro_hygiene(blocks)
+    assert res["status"] == "WARNING"
+    assert res["critical_blocks"] == []
+    assert res["warning_blocks"] == ["eq-monte-carlo-deep"]
+    assert res["block_evaluations"][0]["math_hygiene_warning"] is True
+
+
+def test_audit_markdown_latex_math_delimiter_balance_and_macro_hygiene_critical():
+    from backend.services.anydoc_service import (
+        audit_markdown_latex_math_delimiter_balance_and_macro_hygiene,
+    )
+
+    blocks = [
+        {
+            "block_id": "eq-rce-injection",
+            "unbalanced_dollar_delimiters": 1,
+            "unmatched_begin_end_environments": 2,
+            "detected_macros": ["\\frac", "\\write18", "\\input"],
+            "equation_nesting_depth": 4,
+            "missing_equation_label_for_numbered_env": False,
+            "render_timeout_exceeded": True,
+        }
+    ]
+    res = audit_markdown_latex_math_delimiter_balance_and_macro_hygiene(blocks)
+    assert res["status"] == "CRITICAL"
+    assert res["critical_blocks"] == ["eq-rce-injection"]
+    assert res["total_unsafe_macros_detected"] == 2
+    assert res["block_evaluations"][0]["unsafe_macros_found"] == [
+        "\\write18",
+        "\\input",
+    ]
+    assert res["block_evaluations"][0]["critical_latex_breach"] is True
+
+
+def test_audit_markdown_latex_math_delimiter_balance_and_macro_hygiene_empty_and_binding():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_latex_math_delimiter_balance_and_macro_hygiene,
+    )
+
+    empty = audit_markdown_latex_math_delimiter_balance_and_macro_hygiene([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["evaluated_blocks_count"] == 0
+    assert empty["total_unsafe_macros_detected"] == 0
+    assert (
+        AnyDocService.audit_markdown_latex_math_delimiter_balance_and_macro_hygiene([])
+        == empty
+    )
+    assert (
+        AnydocService.audit_markdown_latex_math_delimiter_balance_and_macro_hygiene([])
+        == empty
+    )
+    assert (
+        "audit_markdown_latex_math_delimiter_balance_and_macro_hygiene"
+        in mod.__all__
+    )

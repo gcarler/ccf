@@ -12781,3 +12781,181 @@ def test_soc2_type2_empty_invalid_controls_and_field_reversion():
     assert reverted["remediated_deviation_control_ids"] == []
     assert reverted["soc2_audit_status"] == "SOC2_TYPE2_UNQUALIFIED_CLEAN"
     assert reverted["is_soc2_unqualified_clean"] is True
+
+
+def test_pci_dss_cde_clean_report_and_boundaries():
+    """Segmentos CDE íntegros con ASV fresco y ROC vigente -> 'PCI_DSS_V4_AOC_CLEAN'."""
+    import backend.services.project_export_service as export_module
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_pci_dss_cde_segmentation_and_asv_scan,
+    )
+
+    segments = [
+        {
+            "segment_id": "CDE-TX-001",
+            "segmentation_pen_test_passed": True,
+            "unmasked_pan_or_sad_stored": False,
+            "highest_unresolved_asv_cvss": 0.0,
+            "asv_scan_age_days": 30,
+            "customized_approach_compensating_control_verified": True,
+        },
+        {
+            "segment_id": "CDE-TX-002",
+            # Defaults implícitos: pen-test True, sin PAN, CVSS 0.0, ASV 30 días, control True.
+        },
+        {
+            "segment_id": "CDE-TX-003",
+            "highest_unresolved_asv_cvss": 3.9,  # bajo el límite inclusivo 4.0
+        },
+    ]
+    res = audit_executive_report_pci_dss_cde_segmentation_and_asv_scan(segments)
+    assert res == {
+        "is_pci_dss_v4_compliant": True,
+        "critical_cde_breach_segment_ids": [],
+        "stale_asv_scan_segment_ids": [],
+        "roc_renewal_warning": False,
+        "evaluated_segment_count": 3,
+        "pci_dss_audit_status": "PCI_DSS_V4_AOC_CLEAN",
+    }
+    # Frontera ASV: exactamente 90 días NO es stale (estricto >).
+    at_age_limit = audit_executive_report_pci_dss_cde_segmentation_and_asv_scan(
+        [{"segment_id": "CDE-TX-004", "asv_scan_age_days": 90}]
+    )
+    assert at_age_limit["stale_asv_scan_segment_ids"] == []
+    assert at_age_limit["pci_dss_audit_status"] == "PCI_DSS_V4_AOC_CLEAN"
+    # Frontera ROC: 31 días -> sin warning (estricto <= 30).
+    roc_at_31 = audit_executive_report_pci_dss_cde_segmentation_and_asv_scan(
+        [{"segment_id": "CDE-TX-005"}], qsa_roc_days_until_expiry=31
+    )
+    assert roc_at_31["roc_renewal_warning"] is False
+    assert roc_at_31["is_pci_dss_v4_compliant"] is True
+    assert (
+        ProjectExportService.audit_executive_report_pci_dss_cde_segmentation_and_asv_scan(
+            segments
+        )
+        == res
+    )
+    assert "audit_executive_report_pci_dss_cde_segmentation_and_asv_scan" in export_module.__all__
+
+
+def test_pci_dss_cde_critical_breach_paths():
+    """Pen-test fallido, PAN/SAD almacenado, CVSS >= 4.0 o control compensatorio sin verificar -> BREACH con precedencia."""
+    from backend.services.project_export_service import (
+        audit_executive_report_pci_dss_cde_segmentation_and_asv_scan,
+    )
+
+    # Cuatro rutas de brecha crítica, cada una por segmento separado.
+    breach = audit_executive_report_pci_dss_cde_segmentation_and_asv_scan(
+        [
+            {"segment_id": "CDE-FAIL-PENTEST", "segmentation_pen_test_passed": False},
+            {"segment_id": "CDE-STORED-PAN", "unmasked_pan_or_sad_stored": True},
+            {"segment_id": "CDE-CVSS", "highest_unresolved_asv_cvss": 4.0},  # inclusivo >=
+            {"segment_id": "CDE-COMP-CTRL", "customized_approach_compensating_control_verified": False},
+        ]
+    )
+    assert breach["critical_cde_breach_segment_ids"] == [
+        "CDE-FAIL-PENTEST",
+        "CDE-STORED-PAN",
+        "CDE-CVSS",
+        "CDE-COMP-CTRL",
+    ]
+    assert breach["stale_asv_scan_segment_ids"] == []
+    assert breach["is_pci_dss_v4_compliant"] is False
+    assert breach["pci_dss_audit_status"] == "CRITICAL_CDE_PAN_OR_ASV_CVSS_BREACH"
+
+    # ROC de QSA en 0 días (expirado) dispara CRITICAL incluso sin brechas de segmentos.
+    roc_expired = audit_executive_report_pci_dss_cde_segmentation_and_asv_scan(
+        [{"segment_id": "CDE-TX-OK"}], qsa_roc_days_until_expiry=0
+    )
+    assert roc_expired["critical_cde_breach_segment_ids"] == []
+    assert roc_expired["roc_renewal_warning"] is True
+    assert roc_expired["pci_dss_audit_status"] == "CRITICAL_CDE_PAN_OR_ASV_CVSS_BREACH"
+    assert roc_expired["is_pci_dss_v4_compliant"] is False
+
+
+def test_pci_dss_cde_stale_asv_scan_and_roc_expiry_warning():
+    """ASV vencido (91 > 90), escaneo con edad negativa o ROC <= 30 -> WARNING con precedencia."""
+    from backend.services.project_export_service import (
+        audit_executive_report_pci_dss_cde_segmentation_and_asv_scan,
+    )
+
+    # Solo ASV vencido dispara WARNING.
+    stale_only = audit_executive_report_pci_dss_cde_segmentation_and_asv_scan(
+        [{"segment_id": "CDE-STALE", "asv_scan_age_days": 91}]
+    )
+    assert stale_only["critical_cde_breach_segment_ids"] == []
+    assert stale_only["stale_asv_scan_segment_ids"] == ["CDE-STALE"]
+    assert stale_only["roc_renewal_warning"] is False
+    assert stale_only["pci_dss_audit_status"] == "STALE_ASV_SCAN_OR_ROC_EXPIRY_WARNING"
+    assert stale_only["is_pci_dss_v4_compliant"] is False
+
+    # Edad negativa también es stale.
+    negative_age = audit_executive_report_pci_dss_cde_segmentation_and_asv_scan(
+        [{"segment_id": "CDE-NEG", "asv_scan_age_days": -3}]
+    )
+    assert negative_age["stale_asv_scan_segment_ids"] == ["CDE-NEG"]
+    assert negative_age["pci_dss_audit_status"] == "STALE_ASV_SCAN_OR_ROC_EXPIRY_WARNING"
+
+    # ROC en 30 días exactos -> warning por renovación sin stale.
+    roc_expiry = audit_executive_report_pci_dss_cde_segmentation_and_asv_scan(
+        [{"segment_id": "CDE-FRESH"}], qsa_roc_days_until_expiry=30
+    )
+    assert roc_expiry["roc_renewal_warning"] is True
+    assert roc_expiry["stale_asv_scan_segment_ids"] == []
+    assert roc_expiry["pci_dss_audit_status"] == "STALE_ASV_SCAN_OR_ROC_EXPIRY_WARNING"
+
+    # Un segmento en brecha con otro stale: el estado global es CRITICAL con precedencia,
+    # pero la clasificación stale es por segmento ("not in critical") y sigue registrando
+    # el ASV vencido fuera de brecha.
+    mixed = audit_executive_report_pci_dss_cde_segmentation_and_asv_scan(
+        [
+            {"segment_id": "CDE-BREACH", "segmentation_pen_test_passed": False},
+            {"segment_id": "CDE-STALE-2", "asv_scan_age_days": 120},
+        ]
+    )
+    assert mixed["critical_cde_breach_segment_ids"] == ["CDE-BREACH"]
+    assert mixed["stale_asv_scan_segment_ids"] == ["CDE-STALE-2"]
+    assert mixed["pci_dss_audit_status"] == "CRITICAL_CDE_PAN_OR_ASV_CVSS_BREACH"
+
+
+def test_pci_dss_cde_empty_invalid_segments_and_field_reversion():
+    """None, no-dicts y segment_id inválido se descartan; campos no-numéricos revierten a defaults."""
+    from backend.services.project_export_service import (
+        audit_executive_report_pci_dss_cde_segmentation_and_asv_scan,
+    )
+
+    empty = audit_executive_report_pci_dss_cde_segmentation_and_asv_scan(None)
+    assert empty == {
+        "is_pci_dss_v4_compliant": True,
+        "critical_cde_breach_segment_ids": [],
+        "stale_asv_scan_segment_ids": [],
+        "roc_renewal_warning": False,
+        "evaluated_segment_count": 0,
+        "pci_dss_audit_status": "PCI_DSS_V4_AOC_CLEAN",
+    }
+
+    reverted = audit_executive_report_pci_dss_cde_segmentation_and_asv_scan(
+        [
+            {
+                "segment_id": "CDE-REVERT",
+                "segmentation_pen_test_passed": "yes",      # no-bool -> True
+                "unmasked_pan_or_sad_stored": 1,            # no-bool -> False
+                "highest_unresolved_asv_cvss": "high",      # no-float -> 0.0
+                "asv_scan_age_days": "ninety",              # no-int -> 30
+                "customized_approach_compensating_control_verified": None,  # no-bool -> True
+            },
+            {"segment_id": "   "},  # blanco -> descartado
+            {"segment_id": 99},     # no str -> descartado
+            "not-a-dict",           # no dict -> descartado
+        ],
+        max_asv_scan_age_days="ninety",       # no-int -> 90
+        max_cvss_score_allowed=None,          # no-float -> 4.0
+        qsa_roc_days_until_expiry=None,       # no-int -> 60
+    )
+    assert reverted["evaluated_segment_count"] == 1
+    assert reverted["critical_cde_breach_segment_ids"] == []
+    assert reverted["stale_asv_scan_segment_ids"] == []
+    assert reverted["roc_renewal_warning"] is False
+    assert reverted["is_pci_dss_v4_compliant"] is True
+    assert reverted["pci_dss_audit_status"] == "PCI_DSS_V4_AOC_CLEAN"

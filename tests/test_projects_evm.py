@@ -11838,3 +11838,175 @@ def test_prompt_payment_empty_invalid_and_field_reversion():
         "prompt_payment_status": "PROMPT_PAYMENT_FLOWDOWN_COMPLIANT",
         "is_prompt_payment_compliant": True,
     }
+
+
+def test_force_majeure_eichleay_within_baseline_clean():
+    """Sin demora del owner ni clima excedente -> 'WITHIN_BASELINE_ALLOWANCE_CLEAN' con defaults."""
+    import backend.services.project_evm_service as evm_module
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim,
+    )
+
+    res = evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim(
+        100000.0,
+        500000.0,
+        200000.0,
+        200,
+        0,
+    )
+    assert res == {
+        "allocable_hooh": 40000.0,
+        "daily_contract_hooh_rate": 200.0,
+        "eichleay_eligible": False,
+        "unabsorbed_hooh_claim_amount": 0.0,
+        "net_excusable_weather_extension_days": 0,
+        "hooh_claim_pct_of_contract": 0.0,
+        "delay_claim_status": "WITHIN_BASELINE_ALLOWANCE_CLEAN",
+    }
+    # Clima dentro del baseline (5 <= 10) no genera extensión neta.
+    weather_in_allowance = evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim(
+        100000.0, 500000.0, 200000.0, 200, 0,
+        claimed_weather_delay_days=5,
+    )
+    assert weather_in_allowance["net_excusable_weather_extension_days"] == 0
+    assert weather_in_allowance["delay_claim_status"] == "WITHIN_BASELINE_ALLOWANCE_CLEAN"
+    assert (
+        ProjectEVMService.evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim(
+            100000.0, 500000.0, 200000.0, 200, 0
+        )
+        == res
+    )
+    assert "evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim" in evm_module.__all__
+
+
+def test_force_majeure_eichleay_compensable_claim_warning():
+    """Eichleay elegible (standby, sin reemplazo, demora del owner) con claim dentro del cap -> WARNING."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim,
+    )
+
+    # allocable = (100000/500000)*200000 = 40000; daily = 40000/200 = 200;
+    # claim = 200*15 = 3000; pct = 3000/100000*100 = 3.0 <= 10 -> WARNING.
+    compensable = evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim(
+        100000.0,
+        500000.0,
+        200000.0,
+        200,
+        15,
+    )
+    assert compensable == {
+        "allocable_hooh": 40000.0,
+        "daily_contract_hooh_rate": 200.0,
+        "eichleay_eligible": True,
+        "unabsorbed_hooh_claim_amount": 3000.0,
+        "net_excusable_weather_extension_days": 0,
+        "hooh_claim_pct_of_contract": 3.0,
+        "delay_claim_status": "COMPENSABLE_OR_EXCUSABLE_EXTENSION_WARNING",
+    }
+    # Clima excusable por encima del baseline también dispara WARNING: 18-10 = 8.
+    weather_only = evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim(
+        100000.0, 500000.0, 200000.0, 200, 0,
+        claimed_weather_delay_days=18,
+    )
+    assert weather_only["eichleay_eligible"] is False
+    assert weather_only["unabsorbed_hooh_claim_amount"] == 0.0
+    assert weather_only["net_excusable_weather_extension_days"] == 8
+    assert weather_only["delay_claim_status"] == "COMPENSABLE_OR_EXCUSABLE_EXTENSION_WARNING"
+
+
+def test_force_majeure_eichleay_disputed_and_excess_breach():
+    """Demora compensable sin elegibilidad o claim que excede el cap -> 'CRITICAL_DISPUTED_EICHLEAY_OR_EXCESS_HOOH_BREACH'."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim,
+    )
+
+    # Standby False con demora del owner > 0 -> disputado, sin claim, BREACH.
+    disputed = evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim(
+        100000.0, 500000.0, 200000.0, 200, 15,
+        contractor_on_standby=False,
+    )
+    assert disputed["eichleay_eligible"] is False
+    assert disputed["unabsorbed_hooh_claim_amount"] == 0.0
+    assert disputed["hooh_claim_pct_of_contract"] == 0.0
+    assert disputed["delay_claim_status"] == "CRITICAL_DISPUTED_EICHLEAY_OR_EXCESS_HOOH_BREACH"
+
+    # Reemplazo disponible -> sin elegibilidad -> BREACH igualmente.
+    replaced = evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim(
+        100000.0, 500000.0, 200000.0, 200, 15,
+        replacement_work_available=True,
+    )
+    assert replaced["eichleay_eligible"] is False
+    assert replaced["delay_claim_status"] == "CRITICAL_DISPUTED_EICHLEAY_OR_EXCESS_HOOH_BREACH"
+
+    # Claim elegible que excede el cap: claim = 10000 sobre 50000 = 20% > 10% -> BREACH.
+    excessive = evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim(
+        50000.0,
+        200000.0,
+        100000.0,
+        50,
+        20,
+    )
+    assert excessive["allocable_hooh"] == 25000.0
+    assert excessive["daily_contract_hooh_rate"] == 500.0
+    assert excessive["eichleay_eligible"] is True
+    assert excessive["unabsorbed_hooh_claim_amount"] == 10000.0
+    assert excessive["hooh_claim_pct_of_contract"] == 20.0
+    assert excessive["delay_claim_status"] == "CRITICAL_DISPUTED_EICHLEAY_OR_EXCESS_HOOH_BREACH"
+
+
+def test_force_majeure_eichleay_zero_division_guards_and_field_reversion():
+    """Guardas de división por cero (<-100 optimizado) y reverción de campos no-numéricos."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim,
+    )
+
+    # Facturación de compañía <= 0 -> allocable 0.0 con razon proteccion del denominador.
+    zero_company = evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim(
+        100000.0, 0.0, 200000.0, 200, 15,
+    )
+    assert zero_company["allocable_hooh"] == 0.0
+    assert zero_company["daily_contract_hooh_rate"] == 0.0
+    assert zero_company["eichleay_eligible"] is True
+    assert zero_company["unabsorbed_hooh_claim_amount"] == 0.0
+    assert zero_company["delay_claim_status"] == "WITHIN_BASELINE_ALLOWANCE_CLEAN"
+
+    # Días de performance <= 0 -> tasa diaria 0.0 y sin claim.
+    zero_days = evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim(
+        100000.0, 500000.0, 200000.0, 0, 15,
+    )
+    assert zero_days["daily_contract_hooh_rate"] == 0.0
+    assert zero_days["eichleay_eligible"] is True
+    assert zero_days["unabsorbed_hooh_claim_amount"] == 0.0
+    assert zero_days["delay_claim_status"] == "WITHIN_BASELINE_ALLOWANCE_CLEAN"
+
+    # Contract billings <= 0 bloquea el_pct de forma segura.
+    zero_contract = evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim(
+        0.0, 500000.0, 200000.0, 200, 15,
+    )
+    assert zero_contract["allocable_hooh"] == 0.0
+    assert zero_contract["hooh_claim_pct_of_contract"] == 0.0
+    assert zero_contract["delay_claim_status"] == "WITHIN_BASELINE_ALLOWANCE_CLEAN"
+
+    # Campos no-numéricos inválidos revierten: floats -> 0.0, ints -> 0, forexcl de bools.
+    reverted = evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim(
+        "one-hundred-thousand",   # no-float -> 0.0
+        None,                     # no-float -> 0.0
+        True,                     # bool excluida -> 0.0
+        "two-hundred",            # no-int -> 0
+        17.5,                     # no-int -> 0
+        claimed_weather_delay_days="eighteen",  # no-int -> 0
+        contractual_noaa_baseline_weather_days=None,  # no-int -> 10
+        contractor_on_standby="yes",  # no-bool -> True
+        replacement_work_available=1,  # no-bool -> False
+        max_hooh_claim_pct_of_contract="ten",  # no-float -> 10.0
+    )
+    assert reverted == {
+        "allocable_hooh": 0.0,
+        "daily_contract_hooh_rate": 0.0,
+        "eichleay_eligible": False,
+        "unabsorbed_hooh_claim_amount": 0.0,
+        "net_excusable_weather_extension_days": 0,
+        "hooh_claim_pct_of_contract": 0.0,
+        "delay_claim_status": "WITHIN_BASELINE_ALLOWANCE_CLEAN",
+    }

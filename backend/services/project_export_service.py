@@ -3027,6 +3027,7 @@ __all__ = [
     "audit_executive_report_fedramp_poam_aging_and_conmon_compliance",
     "audit_executive_report_nerc_cip_esp_perimeter_and_patch_cadence",
     "audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter",
+    "audit_executive_report_pci_dss_cde_segmentation_and_asv_scan",
     "ProjectExportService",
 ]
 
@@ -9262,4 +9263,118 @@ def audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter(
 
 ProjectExportService.audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter = staticmethod(
     audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter
+)
+
+
+def audit_executive_report_pci_dss_cde_segmentation_and_asv_scan(
+    cde_segments: list[dict[str, Any]] | None,
+    *,
+    max_asv_scan_age_days: int = 90,
+    max_cvss_score_allowed: float = 4.0,
+    qsa_roc_days_until_expiry: int = 60,
+) -> dict[str, Any]:
+    """PMBOK §10.2 & §11.6 — Audita el executive report PCI-DSS v4.0 del Cardholder Data Environment (CDE): segmentación de red con pen-test de superación, ausencia de PAN/SAD enmascarado (tokenización), frescura del escaneo trimestral ASV por CVSS no resuelto y verificación de controles compensatorios del customized approach, con vigencia del ROC/QSA al cierre.
+
+    Cada segmento CDE válido declara `segment_id` (str no vacío)
+    y `segmentation_pen_test_passed` (bool, default True),
+    `unmasked_pan_or_sad_stored` (bool, default False),
+    `highest_unresolved_asv_cvss` (float, default 0.0),
+    `asv_scan_age_days` (int, default 30) y
+    `customized_approach_compensating_control_verified` (bool, default True):
+    - `critical_cde_breach_segment_ids`: pen-test de segmentación fallido,
+      PAN/SAD almacenado sin máscara (tokenización ausente), CVSS >= límite
+      (inclusivo) o control compensatorio sin verificación (brecha crítica,
+      precedencia).
+    - `stale_asv_scan_segment_ids`: segmentos fuera de brecha con escaneo
+      ASV vencido (edad > límite) o edad negativa.
+    - `roc_renewal_warning`: vigencia del ROC <= 30 días.
+    - Estados: 'CRITICAL_CDE_PAN_OR_ASV_CVSS_BREACH' (brecha o ROC <= 0) |
+      'STALE_ASV_SCAN_OR_ROC_EXPIRY_WARNING' | 'PCI_DSS_V4_AOC_CLEAN'.
+    - `is_pci_dss_v4_compliant`: solo sin brechas, sin stale y ROC > 0.
+    """
+    raw_items = cde_segments if isinstance(cde_segments, list) else []
+    valid_segments: list[dict[str, Any]] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_segment_id = item.get("segment_id")
+        if not isinstance(raw_segment_id, str) or not raw_segment_id.strip():
+            continue
+        valid_segments.append(item)
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _int(value: Any, default: int) -> int:
+        if isinstance(value, bool) or not isinstance(value, int):
+            return default
+        return value
+
+    def _float(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    scan_age_limit = _int(max_asv_scan_age_days, 90)
+    cvss_limit = _float(max_cvss_score_allowed, 4.0)
+    roc_days = _int(qsa_roc_days_until_expiry, 60)
+
+    critical_cde_breach_segment_ids: list[str] = []
+    stale_asv_scan_segment_ids: list[str] = []
+
+    for segment in valid_segments:
+        segment_id = str(segment.get("segment_id")).strip()
+        pen_test_passed = _bool(
+            segment.get("segmentation_pen_test_passed"), True
+        )
+        unmasked_pan = _bool(
+            segment.get("unmasked_pan_or_sad_stored"), False
+        )
+        highest_cvss = _float(
+            segment.get("highest_unresolved_asv_cvss"), 0.0
+        )
+        scan_age = _int(segment.get("asv_scan_age_days"), 30)
+        comp_control_verified = _bool(
+            segment.get("customized_approach_compensating_control_verified"),
+            True,
+        )
+
+        is_critical_breach = (
+            (not pen_test_passed)
+            or unmasked_pan
+            or highest_cvss >= cvss_limit
+            or (not comp_control_verified)
+        )
+        if is_critical_breach:
+            critical_cde_breach_segment_ids.append(segment_id)
+            continue
+
+        if scan_age > scan_age_limit or scan_age < 0:
+            stale_asv_scan_segment_ids.append(segment_id)
+
+    roc_renewal_warning = roc_days <= 30
+
+    if critical_cde_breach_segment_ids or roc_days <= 0:
+        pci_dss_audit_status = "CRITICAL_CDE_PAN_OR_ASV_CVSS_BREACH"
+    elif stale_asv_scan_segment_ids or roc_renewal_warning:
+        pci_dss_audit_status = "STALE_ASV_SCAN_OR_ROC_EXPIRY_WARNING"
+    else:
+        pci_dss_audit_status = "PCI_DSS_V4_AOC_CLEAN"
+
+    return {
+        "is_pci_dss_v4_compliant": (
+            not critical_cde_breach_segment_ids
+            and not stale_asv_scan_segment_ids
+            and roc_days > 0
+        ),
+        "critical_cde_breach_segment_ids": critical_cde_breach_segment_ids,
+        "stale_asv_scan_segment_ids": stale_asv_scan_segment_ids,
+        "roc_renewal_warning": roc_renewal_warning,
+        "evaluated_segment_count": len(valid_segments),
+        "pci_dss_audit_status": pci_dss_audit_status,
+    }
+
+
+ProjectExportService.audit_executive_report_pci_dss_cde_segmentation_and_asv_scan = staticmethod(
+    audit_executive_report_pci_dss_cde_segmentation_and_asv_scan
 )
