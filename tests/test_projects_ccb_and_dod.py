@@ -8898,3 +8898,147 @@ def test_audit_query_performance_n_plus_one_and_full_scan_gate_staticmethod_and_
         "audit_query_performance_n_plus_one_and_full_scan_gate"
         in mod.__all__
     )
+
+
+def test_audit_feature_flag_stale_toggle_debt_and_kill_switch_breach():
+    from backend.services.project_ccb_service import (
+        audit_feature_flag_stale_toggle_debt_and_kill_switch,
+    )
+
+    res = audit_feature_flag_stale_toggle_debt_and_kill_switch(
+        [
+            {
+                "flag_key": "ops.circuit_breaker.payments",
+                "age_days_since_100pct_rollout": 180,
+                "is_permanent_ops_kill_switch": True,
+                "kill_switch_propagation_seconds": 120.0,
+                "has_assigned_owner_and_cleanup_ticket": True,
+                "nested_flag_dependencies_count": 0,
+            },
+            {
+                "flag_key": "release.checkout_v2",
+                "age_days_since_100pct_rollout": 10,
+                "is_permanent_ops_kill_switch": False,
+                "kill_switch_propagation_seconds": 3.0,
+                "has_assigned_owner_and_cleanup_ticket": False,
+                "nested_flag_dependencies_count": 0,
+            },
+        ],
+        max_toggle_age_days=45,
+        max_kill_switch_propagation_seconds=30.0,
+    )
+    assert res["evaluated_flags_count"] == 2
+    assert res["broken_kill_switch_or_unowned_flag_keys"] == [
+        "ops.circuit_breaker.payments",
+        "release.checkout_v2",
+    ]
+    assert res["stale_or_entangled_flag_keys"] == []
+    assert (
+        res["feature_flag_governance_status"]
+        == "FLAG_KILL_SWITCH_OR_OWNERSHIP_BREACH"
+    )
+    assert res["is_feature_flag_compliant"] is False
+
+
+def test_audit_feature_flag_stale_toggle_debt_and_kill_switch_stale_or_entangled_warning():
+    from backend.services.project_ccb_service import (
+        audit_feature_flag_stale_toggle_debt_and_kill_switch,
+    )
+
+    res = audit_feature_flag_stale_toggle_debt_and_kill_switch(
+        [
+            {
+                "flag_key": "release.legacy_banner",
+                "age_days_since_100pct_rollout": 90,
+                "is_permanent_ops_kill_switch": False,
+                "kill_switch_propagation_seconds": 5.0,
+                "has_assigned_owner_and_cleanup_ticket": True,
+                "nested_flag_dependencies_count": 0,
+            },
+            {
+                "flag_key": "release.entangled_pricing",
+                "age_days_since_100pct_rollout": 5,
+                "is_permanent_ops_kill_switch": False,
+                "kill_switch_propagation_seconds": 5.0,
+                "has_assigned_owner_and_cleanup_ticket": True,
+                "nested_flag_dependencies_count": 3,
+            },
+        ],
+        max_toggle_age_days=45,
+        max_kill_switch_propagation_seconds=30.0,
+    )
+    assert res["evaluated_flags_count"] == 2
+    assert res["broken_kill_switch_or_unowned_flag_keys"] == []
+    assert res["stale_or_entangled_flag_keys"] == [
+        "release.legacy_banner",
+        "release.entangled_pricing",
+    ]
+    assert (
+        res["feature_flag_governance_status"]
+        == "FLAG_STALE_TOGGLE_DEBT_WARNING"
+    )
+    assert res["is_feature_flag_compliant"] is False
+
+
+def test_audit_feature_flag_stale_toggle_debt_and_kill_switch_optimal_and_empty():
+    from backend.services.project_ccb_service import (
+        audit_feature_flag_stale_toggle_debt_and_kill_switch,
+    )
+
+    empty = audit_feature_flag_stale_toggle_debt_and_kill_switch(
+        [{"flag_key": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_flags_count"] == 0
+    assert empty["feature_flag_governance_status"] == "FLAG_HYGIENE_OPTIMAL"
+    assert empty["is_feature_flag_compliant"] is True
+
+    optimal = audit_feature_flag_stale_toggle_debt_and_kill_switch(
+        [
+            {
+                "flag_key": "ops.shed_load",
+                "age_days_since_100pct_rollout": 365,
+                "is_permanent_ops_kill_switch": True,
+                "kill_switch_propagation_seconds": 4.0,
+                "has_assigned_owner_and_cleanup_ticket": True,
+                "nested_flag_dependencies_count": 1,
+            },
+            {
+                "flag_key": "release.new_search",
+                "age_days_since_100pct_rollout": 45,
+                "is_permanent_ops_kill_switch": False,
+                "kill_switch_propagation_seconds": 5.0,
+                "has_assigned_owner_and_cleanup_ticket": True,
+                "nested_flag_dependencies_count": 0,
+            },
+        ],
+        max_toggle_age_days=45,
+        max_kill_switch_propagation_seconds=30.0,
+    )
+    assert optimal["evaluated_flags_count"] == 2
+    assert optimal["feature_flag_governance_status"] == "FLAG_HYGIENE_OPTIMAL"
+    assert optimal["is_feature_flag_compliant"] is True
+
+
+def test_audit_feature_flag_stale_toggle_debt_and_kill_switch_staticmethod_and_dunder_all():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_feature_flag_stale_toggle_debt_and_kill_switch,
+    )
+
+    sample = [
+        {
+            "flag_key": "release.sample",
+            "age_days_since_100pct_rollout": 10,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_feature_flag_stale_toggle_debt_and_kill_switch(
+            sample
+        )
+        == audit_feature_flag_stale_toggle_debt_and_kill_switch(sample)
+    )
+    assert (
+        "audit_feature_flag_stale_toggle_debt_and_kill_switch"
+        in mod.__all__
+    )

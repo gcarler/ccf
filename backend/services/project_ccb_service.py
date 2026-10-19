@@ -2846,6 +2846,7 @@ __all__ = [
     "audit_ecab_emergency_change_retroactive_ratification_and_abuse",
     "audit_release_freeze_blackout_window_and_change_collisions",
     "audit_query_performance_n_plus_one_and_full_scan_gate",
+    "audit_feature_flag_stale_toggle_debt_and_kill_switch",
     "ProjectCCBService",
 ]
 
@@ -6867,4 +6868,91 @@ def audit_query_performance_n_plus_one_and_full_scan_gate(
 
 ProjectCCBService.audit_query_performance_n_plus_one_and_full_scan_gate = staticmethod(
     audit_query_performance_n_plus_one_and_full_scan_gate
+)
+
+
+def audit_feature_flag_stale_toggle_debt_and_kill_switch(
+    feature_flags: list[dict[str, Any]],
+    *,
+    max_toggle_age_days: int | float = 45,
+    max_kill_switch_propagation_seconds: float = 30.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §8.3 & §11.6 — CCB Feature Flag Stale Toggle Technical Debt, Blast-Radius Ownership & Kill-Switch Latency Auditor."""
+    valid_flags: list[dict[str, Any]] = []
+    if isinstance(feature_flags, (list, tuple)):
+        for item in feature_flags:
+            if not isinstance(item, dict):
+                continue
+            fkey = str(item.get("flag_key") or "").strip()
+            if not fkey:
+                continue
+            valid_flags.append({**item, "_fkey": fkey})
+
+    if not valid_flags:
+        return {
+            "evaluated_flags_count": 0,
+            "broken_kill_switch_or_unowned_flag_keys": [],
+            "stale_or_entangled_flag_keys": [],
+            "feature_flag_governance_status": "FLAG_HYGIENE_OPTIMAL",
+            "is_feature_flag_compliant": True,
+            "recommendations": [],
+        }
+
+    broken_kill_switch_or_unowned_flag_keys: list[str] = []
+    stale_or_entangled_flag_keys: list[str] = []
+
+    for flg in valid_flags:
+        fkey = flg["_fkey"]
+        raw_age = flg.get("age_days_since_100pct_rollout")
+        age_days = float(raw_age if raw_age is not None else 0.0)
+        is_kill_switch = bool(flg.get("is_permanent_ops_kill_switch", False))
+        raw_prop = flg.get("kill_switch_propagation_seconds")
+        prop_sec = float(raw_prop if raw_prop is not None else 5.0)
+        has_owner_and_ticket = bool(
+            flg.get("has_assigned_owner_and_cleanup_ticket", True)
+        )
+        raw_nested = flg.get("nested_flag_dependencies_count")
+        nested_cnt = int(raw_nested if raw_nested is not None else 0)
+
+        if (
+            is_kill_switch
+            and prop_sec > max_kill_switch_propagation_seconds
+        ) or not has_owner_and_ticket:
+            broken_kill_switch_or_unowned_flag_keys.append(fkey)
+
+        if (
+            not is_kill_switch and age_days > max_toggle_age_days
+        ) or nested_cnt > 1:
+            stale_or_entangled_flag_keys.append(fkey)
+
+    recommendations: list[str] = []
+    if broken_kill_switch_or_unowned_flag_keys:
+        recommendations.append(
+            f"Assign explicit owner/cleanup ticket and ensure ops kill-switch propagation <= {max_kill_switch_propagation_seconds}s for flag(s): {', '.join(broken_kill_switch_or_unowned_flag_keys)}."
+        )
+    if stale_or_entangled_flag_keys:
+        recommendations.append(
+            f"Retire stale release toggles (> {max_toggle_age_days} days post-100% rollout) and decouple nested flag dependencies (> 1) for flag(s): {', '.join(stale_or_entangled_flag_keys)}."
+        )
+
+    if broken_kill_switch_or_unowned_flag_keys:
+        feature_flag_governance_status = "FLAG_KILL_SWITCH_OR_OWNERSHIP_BREACH"
+    elif stale_or_entangled_flag_keys:
+        feature_flag_governance_status = "FLAG_STALE_TOGGLE_DEBT_WARNING"
+    else:
+        feature_flag_governance_status = "FLAG_HYGIENE_OPTIMAL"
+
+    return {
+        "evaluated_flags_count": len(valid_flags),
+        "broken_kill_switch_or_unowned_flag_keys": broken_kill_switch_or_unowned_flag_keys,
+        "stale_or_entangled_flag_keys": stale_or_entangled_flag_keys,
+        "feature_flag_governance_status": feature_flag_governance_status,
+        "is_feature_flag_compliant": feature_flag_governance_status
+        == "FLAG_HYGIENE_OPTIMAL",
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.audit_feature_flag_stale_toggle_debt_and_kill_switch = staticmethod(
+    audit_feature_flag_stale_toggle_debt_and_kill_switch
 )
