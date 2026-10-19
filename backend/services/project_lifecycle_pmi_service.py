@@ -3180,6 +3180,7 @@ __all__ = [
     "audit_site_demobilization_environmental_clearance_and_asset_disposal",
     "audit_team_burnout_overtime_and_bus_factor_redundancy",
     "audit_lessons_learned_retrospective_cadence_and_capa_closure_efficacy",
+    "audit_force_majeure_relief_event_notice_and_duty_to_mitigate",
     "ProjectLifecyclePMIService",
 ]
 
@@ -8104,6 +8105,124 @@ def audit_lessons_learned_retrospective_cadence_and_capa_closure_efficacy(
 
 ProjectLifecyclePMIService.audit_lessons_learned_retrospective_cadence_and_capa_closure_efficacy = staticmethod(
     audit_lessons_learned_retrospective_cadence_and_capa_closure_efficacy
+)
+
+
+def audit_force_majeure_relief_event_notice_and_duty_to_mitigate(
+    relief_events: list[dict[str, Any]],
+    *,
+    max_notice_delay_days: int = 14,
+    long_stop_duration_days: int = 90,
+    require_mitigation_evidence_and_authority_cert: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §12.3 & §11.6 — Audita ventana de notificación de eventos de fuerza mayor (time-bar), evidencia del deber de mitigar + certificado de autoridad independiente y disparador de terminación long-stop."""
+    raw_items = relief_events if isinstance(relief_events, list) else []
+    valid_items = [item for item in raw_items if isinstance(item, dict)]
+
+    time_barred_or_unsubstantiated_event_ids: list[str] = []
+    long_stop_breach_event_ids: list[str] = []
+    records: list[dict[str, Any]] = []
+    violations: list[str] = []
+    has_critical = False
+    has_warning = False
+
+    for idx, item in enumerate(valid_items):
+        event_id = (
+            str(
+                item.get("event_id") or item.get("id") or f"fm-{idx + 1}"
+            ).strip()
+            or f"fm-{idx + 1}"
+        )
+        notice_delay_days = max(0, int(item.get("notice_delay_days") or 0))
+        continuous_disruption_days = max(
+            0, int(item.get("continuous_disruption_days") or 0)
+        )
+
+        raw_mitigate = item.get("duty_to_mitigate_documented", True)
+        duty_to_mitigate_documented = bool(
+            True if raw_mitigate is None else raw_mitigate
+        )
+
+        raw_cert = item.get("independent_authority_certificate_attached", True)
+        independent_authority_certificate_attached = bool(
+            True if raw_cert is None else raw_cert
+        )
+
+        raw_term = item.get("termination_option_triggered", False)
+        termination_option_triggered = bool(
+            False if raw_term is None else raw_term
+        )
+
+        late_notice_time_bar = notice_delay_days > max_notice_delay_days
+        missing_mitigation_or_authority_proof = bool(
+            require_mitigation_evidence_and_authority_cert
+            and (
+                not duty_to_mitigate_documented
+                or not independent_authority_certificate_attached
+            )
+        )
+        long_stop_exceeded_without_termination_review = bool(
+            continuous_disruption_days > long_stop_duration_days
+            and not termination_option_triggered
+        )
+
+        if late_notice_time_bar or missing_mitigation_or_authority_proof:
+            time_barred_or_unsubstantiated_event_ids.append(event_id)
+            has_critical = True
+            if late_notice_time_bar:
+                violations.append(
+                    f"Force majeure event '{event_id}' notice delay ({notice_delay_days}d) exceeds time-bar ({max_notice_delay_days}d)."
+                )
+            if missing_mitigation_or_authority_proof:
+                violations.append(
+                    f"Force majeure event '{event_id}' is missing duty-to-mitigate evidence or independent authority certificate."
+                )
+
+        if long_stop_exceeded_without_termination_review:
+            long_stop_breach_event_ids.append(event_id)
+            has_warning = True
+            violations.append(
+                f"Force majeure event '{event_id}' disruption ({continuous_disruption_days}d) exceeded long-stop ({long_stop_duration_days}d) without termination review."
+            )
+
+        records.append(
+            {
+                "event_id": event_id,
+                "notice_delay_days": notice_delay_days,
+                "continuous_disruption_days": continuous_disruption_days,
+                "duty_to_mitigate_documented": duty_to_mitigate_documented,
+                "independent_authority_certificate_attached": independent_authority_certificate_attached,
+                "termination_option_triggered": termination_option_triggered,
+                "late_notice_time_bar": late_notice_time_bar,
+                "missing_mitigation_or_authority_proof": missing_mitigation_or_authority_proof,
+                "long_stop_exceeded_without_termination_review": long_stop_exceeded_without_termination_review,
+            }
+        )
+
+    if has_critical:
+        status = "critical"
+        is_compliant = False
+    elif has_warning:
+        status = "warning"
+        is_compliant = False
+    else:
+        status = "compliant"
+        is_compliant = True
+
+    return {
+        "status": status,
+        "is_compliant": is_compliant,
+        "events_evaluated": len(records),
+        "time_barred_or_unsubstantiated_event_ids": time_barred_or_unsubstantiated_event_ids,
+        "long_stop_breach_event_ids": long_stop_breach_event_ids,
+        "records": records,
+        "violations": violations,
+        "Violations": violations,
+    }
+
+
+ProjectLifecyclePMIService.audit_force_majeure_relief_event_notice_and_duty_to_mitigate = staticmethod(
+    audit_force_majeure_relief_event_notice_and_duty_to_mitigate
 )
 
 

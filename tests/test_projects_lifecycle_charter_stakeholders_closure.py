@@ -10769,3 +10769,97 @@ def test_audit_lessons_learned_retrospective_cadence_and_capa_closure_efficacy_s
     )
 
 
+def test_audit_force_majeure_relief_event_notice_and_duty_to_mitigate_compliant():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_force_majeure_relief_event_notice_and_duty_to_mitigate,
+    )
+
+    res = audit_force_majeure_relief_event_notice_and_duty_to_mitigate(
+        [
+            {
+                "event_id": "FM-101",
+                "notice_delay_days": 5,
+                "continuous_disruption_days": 20,
+                "duty_to_mitigate_documented": True,
+                "independent_authority_certificate_attached": True,
+                "termination_option_triggered": False,
+            }
+        ]
+    )
+    assert res["status"] == "compliant"
+    assert res["is_compliant"] is True
+    assert res["events_evaluated"] == 1
+    assert res["time_barred_or_unsubstantiated_event_ids"] == []
+    assert res["long_stop_breach_event_ids"] == []
+    assert res["Violations"] == []
+
+
+def test_audit_force_majeure_relief_event_notice_and_duty_to_mitigate_critical():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_force_majeure_relief_event_notice_and_duty_to_mitigate,
+    )
+
+    res = audit_force_majeure_relief_event_notice_and_duty_to_mitigate(
+        [
+            {
+                "event_id": "FM-LATE-NO-PROOF",
+                "notice_delay_days": 25,
+                "continuous_disruption_days": 30,
+                "duty_to_mitigate_documented": False,
+                "independent_authority_certificate_attached": False,
+            }
+        ],
+        max_notice_delay_days=14,
+    )
+    assert res["status"] == "critical"
+    assert res["is_compliant"] is False
+    assert res["time_barred_or_unsubstantiated_event_ids"] == ["FM-LATE-NO-PROOF"]
+    assert len(res["Violations"]) >= 2
+
+
+def test_audit_force_majeure_relief_event_notice_and_duty_to_mitigate_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_force_majeure_relief_event_notice_and_duty_to_mitigate,
+    )
+
+    res = audit_force_majeure_relief_event_notice_and_duty_to_mitigate(
+        [
+            {
+                "id": "FM-LONG-STOP",
+                "notice_delay_days": 7,
+                "continuous_disruption_days": 120,
+                "duty_to_mitigate_documented": True,
+                "independent_authority_certificate_attached": True,
+                "termination_option_triggered": False,
+            }
+        ],
+        long_stop_duration_days=90,
+    )
+    assert res["status"] == "warning"
+    assert res["is_compliant"] is False
+    assert res["time_barred_or_unsubstantiated_event_ids"] == []
+    assert res["long_stop_breach_event_ids"] == ["FM-LONG-STOP"]
+    assert res["records"][0]["long_stop_exceeded_without_termination_review"] is True
+
+
+def test_audit_force_majeure_relief_event_notice_and_duty_to_mitigate_staticmethod_and_dunder_all():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_force_majeure_relief_event_notice_and_duty_to_mitigate,
+    )
+
+    sample = [{"event_id": "FM-1", "notice_delay_days": 3}]
+    assert (
+        ProjectLifecyclePMIService.audit_force_majeure_relief_event_notice_and_duty_to_mitigate(
+            sample
+        )
+        == audit_force_majeure_relief_event_notice_and_duty_to_mitigate(
+            sample
+        )
+    )
+    assert (
+        "audit_force_majeure_relief_event_notice_and_duty_to_mitigate"
+        in mod.__all__
+    )
+

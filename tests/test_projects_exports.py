@@ -11121,8 +11121,6 @@ def test_audit_executive_report_subprocessor_breach_sla_and_right_to_audit_stati
     )
 
 
-
-
 # ── audit_executive_report_forensic_watermark_and_dlp_redaction (PMBOK §10.2 & §11.6, pure helper) ──
 
 
@@ -11305,3 +11303,100 @@ def test_watermark_dlp_empty_invalid_exports_and_module_binding():
         "audit_executive_report_forensic_watermark_and_dlp_redaction"
         in export_module.__all__
     )
+
+
+def test_audit_executive_report_cold_storage_glacier_restore_rto_and_checksum_manifest_healthy():
+    from backend.services.project_export_service import (
+        audit_executive_report_cold_storage_glacier_restore_rto_and_checksum_manifest,
+    )
+
+    res = audit_executive_report_cold_storage_glacier_restore_rto_and_checksum_manifest(
+        [
+            {
+                "batch_id": "GLACIER-2026-Q1",
+                "observed_restore_rto_hours": 4.5,
+                "days_since_bitrot_scrub": 10,
+                "sha256_manifest_verified": True,
+                "corrupted_objects_count": 0,
+                "retrieval_tier": "Expedited",
+            }
+        ]
+    )
+    assert res["status"] == "healthy"
+    assert res["is_compliant"] is True
+    assert res["batches_evaluated"] == 1
+    assert res["corrupted_or_unverified_batch_ids"] == []
+    assert res["rto_or_scrub_overdue_batch_ids"] == []
+    assert res["records"][0]["retrieval_tier"] == "expedited"
+    assert res["Violations"] == []
+
+
+def test_audit_executive_report_cold_storage_glacier_restore_rto_and_checksum_manifest_critical():
+    from backend.services.project_export_service import (
+        audit_executive_report_cold_storage_glacier_restore_rto_and_checksum_manifest,
+    )
+
+    res = audit_executive_report_cold_storage_glacier_restore_rto_and_checksum_manifest(
+        [
+            {
+                "batch_id": "GLACIER-CORRUPT",
+                "observed_restore_rto_hours": 6.0,
+                "days_since_bitrot_scrub": 5,
+                "sha256_manifest_verified": False,
+                "corrupted_objects_count": 3,
+            }
+        ]
+    )
+    assert res["status"] == "critical"
+    assert res["is_compliant"] is False
+    assert res["corrupted_or_unverified_batch_ids"] == ["GLACIER-CORRUPT"]
+    assert len(res["Violations"]) >= 1
+
+
+def test_audit_executive_report_cold_storage_glacier_restore_rto_and_checksum_manifest_warning():
+    from backend.services.project_export_service import (
+        audit_executive_report_cold_storage_glacier_restore_rto_and_checksum_manifest,
+    )
+
+    res = audit_executive_report_cold_storage_glacier_restore_rto_and_checksum_manifest(
+        [
+            {
+                "id": "GLACIER-SLOW",
+                "observed_restore_rto_hours": 18.0,
+                "days_since_bitrot_scrub": 45,
+                "sha256_manifest_verified": True,
+                "corrupted_objects_count": 0,
+            }
+        ],
+        max_restore_rto_hours=12.0,
+        max_days_since_bitrot_scrub=30,
+    )
+    assert res["status"] == "warning"
+    assert res["is_compliant"] is False
+    assert res["corrupted_or_unverified_batch_ids"] == []
+    assert res["rto_or_scrub_overdue_batch_ids"] == ["GLACIER-SLOW"]
+    assert res["records"][0]["restore_rto_sla_exceeded"] is True
+    assert res["records"][0]["bitrot_scrub_overdue"] is True
+
+
+def test_audit_executive_report_cold_storage_glacier_restore_rto_and_checksum_manifest_staticmethod_and_dunder_all():
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_cold_storage_glacier_restore_rto_and_checksum_manifest,
+    )
+
+    sample = [{"batch_id": "GLACIER-1", "observed_restore_rto_hours": 3.0}]
+    assert (
+        ProjectExportService.audit_executive_report_cold_storage_glacier_restore_rto_and_checksum_manifest(
+            sample
+        )
+        == audit_executive_report_cold_storage_glacier_restore_rto_and_checksum_manifest(
+            sample
+        )
+    )
+    assert (
+        "audit_executive_report_cold_storage_glacier_restore_rto_and_checksum_manifest"
+        in mod.__all__
+    )
+

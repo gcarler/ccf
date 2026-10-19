@@ -3826,6 +3826,7 @@ __all__ = [
     "validate_risk_bowtie_barrier_redundancy_and_independence",
     "validate_moscow_prioritization_must_have_inflation_and_mvp_cap",
     "validate_work_package_8_80_rule_duration_and_effort_granularity",
+    "validate_monte_carlo_schedule_risk_p80_buffer_and_convergence",
 ]
 
 
@@ -9155,3 +9156,92 @@ def validate_work_package_8_80_rule_duration_and_effort_granularity(
     }
 
 
+def validate_monte_carlo_schedule_risk_p80_buffer_and_convergence(
+    simulations: list[dict[str, Any]] | None = None,
+    *,
+    min_iterations: int = 1000,
+    max_convergence_cv_pct: float = 1.5,
+) -> dict[str, Any]:
+    """Valida buffer de contingencia P80, convergencia e índice de criticidad de ruta en simulaciones Monte Carlo de riesgo de cronograma (PMBOK §11.4 y §6.5).
+
+    Cada simulación válida declara `simulation_id` (str no vacío), iteraciones
+    (`iterations_run`, default 5000), convergencia (`convergence_cv_pct`,
+    default 0.8), duración determinista (`deterministic_duration_days`,
+    default 100.0), duración P80 (`p80_duration_days`, default 112.0) y
+    buffer asignado (`allocated_buffer_days`, default 15.0):
+    - `required_p80_buffer_days`: max(0.0, p80 - determinista) por simulación.
+    - `underbuffered_p80_simulation_ids`: buffer asignado < requerido P80.
+    - `unconverged_or_low_iteration_simulation_ids`: iteraciones < min_iterations
+      o CV de convergencia > max_convergence_cv_pct.
+    - `monte_carlo_status`: 'P80_CONTINGENCY_BUFFER_DEFICIT_BREACH' si hay (1);
+      'MONTE_CARLO_CONVERGENCE_OR_ITERATION_WARNING' si hay (2);
+      'MONTE_CARLO_P80_GOVERNANCE_OPTIMAL' si limpio.
+    - `is_monte_carlo_valid`: solo con estado óptimo.
+    """
+    raw_items = simulations if isinstance(simulations, list) else []
+    valid: list[dict[str, Any]] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        simulation_id = item.get("simulation_id")
+        if not isinstance(simulation_id, str) or not simulation_id.strip():
+            continue
+        valid.append(item)
+
+    def _bool(value, default):
+        return value if isinstance(value, bool) else default
+
+    def _int(value, default):
+        if isinstance(value, bool) or not isinstance(value, int):
+            return default
+        return value
+
+    def _float(value, default):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    underbuffered_p80_simulation_ids: list[str] = []
+    unconverged_or_low_iteration_simulation_ids: list[str] = []
+
+    for simulation in valid:
+        simulation_id = str(simulation["simulation_id"]).strip()
+        iterations_run = _int(simulation.get("iterations_run"), 5000)
+        convergence_cv_pct = _float(simulation.get("convergence_cv_pct"), 0.8)
+        deterministic_duration_days = _float(
+            simulation.get("deterministic_duration_days"), 100.0
+        )
+        p80_duration_days = _float(simulation.get("p80_duration_days"), 112.0)
+        allocated_buffer_days = _float(
+            simulation.get("allocated_buffer_days"), 15.0
+        )
+
+        required_p80_buffer_days = max(
+            0.0,
+            float(p80_duration_days) - float(deterministic_duration_days),
+        )
+
+        if float(allocated_buffer_days) < float(required_p80_buffer_days):
+            underbuffered_p80_simulation_ids.append(simulation_id)
+
+        if (
+            int(iterations_run) < int(min_iterations)
+            or float(convergence_cv_pct) > float(max_convergence_cv_pct)
+        ):
+            unconverged_or_low_iteration_simulation_ids.append(simulation_id)
+
+    if underbuffered_p80_simulation_ids:
+        monte_carlo_status = "P80_CONTINGENCY_BUFFER_DEFICIT_BREACH"
+    elif unconverged_or_low_iteration_simulation_ids:
+        monte_carlo_status = "MONTE_CARLO_CONVERGENCE_OR_ITERATION_WARNING"
+    else:
+        monte_carlo_status = "MONTE_CARLO_P80_GOVERNANCE_OPTIMAL"
+
+    return {
+        "evaluated_simulations_count": len(valid),
+        "underbuffered_p80_simulation_ids": underbuffered_p80_simulation_ids,
+        "unconverged_or_low_iteration_simulation_ids": unconverged_or_low_iteration_simulation_ids,
+        "monte_carlo_status": monte_carlo_status,
+        "is_monte_carlo_valid": monte_carlo_status
+        == "MONTE_CARLO_P80_GOVERNANCE_OPTIMAL",
+    }

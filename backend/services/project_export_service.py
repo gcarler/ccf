@@ -3017,6 +3017,7 @@ __all__ = [
     "audit_executive_report_siem_log_forwarding_and_retention",
     "audit_executive_report_subprocessor_breach_sla_and_right_to_audit",
     "audit_executive_report_forensic_watermark_and_dlp_redaction",
+    "audit_executive_report_cold_storage_glacier_restore_rto_and_checksum_manifest",
     "ProjectExportService",
 ]
 
@@ -8242,3 +8243,123 @@ def audit_executive_report_forensic_watermark_and_dlp_redaction(
 ProjectExportService.audit_executive_report_forensic_watermark_and_dlp_redaction = staticmethod(
     audit_executive_report_forensic_watermark_and_dlp_redaction
 )
+
+
+def audit_executive_report_cold_storage_glacier_restore_rto_and_checksum_manifest(
+    archive_batches: list[dict[str, Any]],
+    *,
+    max_restore_rto_hours: float = 12.0,
+    max_days_since_bitrot_scrub: int = 30,
+    require_sha256_manifest_parity: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §10.2 & §11.6 — Audita RTO de restauración desde almacenamiento en frío (Glacier/Deep Archive), paridad de manifiesto SHA-256 y cadencia de scrubbing anti bit-rot."""
+    raw_items = archive_batches if isinstance(archive_batches, list) else []
+    valid_items = [item for item in raw_items if isinstance(item, dict)]
+
+    corrupted_or_unverified_batch_ids: list[str] = []
+    rto_or_scrub_overdue_batch_ids: list[str] = []
+    records: list[dict[str, Any]] = []
+    violations: list[str] = []
+    has_critical = False
+    has_warning = False
+
+    for idx, item in enumerate(valid_items):
+        batch_id = (
+            str(
+                item.get("batch_id") or item.get("id") or f"batch-{idx + 1}"
+            ).strip()
+            or f"batch-{idx + 1}"
+        )
+        observed_restore_rto_hours = max(
+            0.0, float(item.get("observed_restore_rto_hours") or 0.0)
+        )
+        days_since_bitrot_scrub = max(
+            0, int(item.get("days_since_bitrot_scrub") or 0)
+        )
+
+        raw_verified = item.get("sha256_manifest_verified", True)
+        sha256_manifest_verified = bool(
+            True if raw_verified is None else raw_verified
+        )
+
+        corrupted_objects_count = max(
+            0, int(item.get("corrupted_objects_count") or 0)
+        )
+
+        raw_tier = item.get("retrieval_tier", "standard")
+        retrieval_tier = (
+            str("standard" if raw_tier is None else raw_tier).strip().lower()
+            or "standard"
+        )
+
+        manifest_or_bitrot_corruption_breach = bool(
+            (require_sha256_manifest_parity and not sha256_manifest_verified)
+            or corrupted_objects_count > 0
+        )
+        restore_rto_sla_exceeded = (
+            observed_restore_rto_hours > max_restore_rto_hours
+        )
+        bitrot_scrub_overdue = (
+            days_since_bitrot_scrub > max_days_since_bitrot_scrub
+        )
+
+        if manifest_or_bitrot_corruption_breach:
+            corrupted_or_unverified_batch_ids.append(batch_id)
+            has_critical = True
+            violations.append(
+                f"Batch '{batch_id}' failed SHA-256 manifest verification or has corrupted objects."
+            )
+
+        if restore_rto_sla_exceeded or bitrot_scrub_overdue:
+            rto_or_scrub_overdue_batch_ids.append(batch_id)
+            has_warning = True
+            if restore_rto_sla_exceeded:
+                violations.append(
+                    f"Batch '{batch_id}' restore RTO ({observed_restore_rto_hours}h) exceeds SLA ({max_restore_rto_hours}h)."
+                )
+            if bitrot_scrub_overdue:
+                violations.append(
+                    f"Batch '{batch_id}' bit-rot scrub overdue ({days_since_bitrot_scrub}d > {max_days_since_bitrot_scrub}d)."
+                )
+
+        records.append(
+            {
+                "batch_id": batch_id,
+                "observed_restore_rto_hours": observed_restore_rto_hours,
+                "days_since_bitrot_scrub": days_since_bitrot_scrub,
+                "sha256_manifest_verified": sha256_manifest_verified,
+                "corrupted_objects_count": corrupted_objects_count,
+                "retrieval_tier": retrieval_tier,
+                "manifest_or_bitrot_corruption_breach": manifest_or_bitrot_corruption_breach,
+                "restore_rto_sla_exceeded": restore_rto_sla_exceeded,
+                "bitrot_scrub_overdue": bitrot_scrub_overdue,
+            }
+        )
+
+    if has_critical:
+        status = "critical"
+        is_compliant = False
+    elif has_warning:
+        status = "warning"
+        is_compliant = False
+    else:
+        status = "healthy"
+        is_compliant = True
+
+    return {
+        "status": status,
+        "is_compliant": is_compliant,
+        "batches_evaluated": len(records),
+        "corrupted_or_unverified_batch_ids": corrupted_or_unverified_batch_ids,
+        "rto_or_scrub_overdue_batch_ids": rto_or_scrub_overdue_batch_ids,
+        "records": records,
+        "violations": violations,
+        "Violations": violations,
+    }
+
+
+ProjectExportService.audit_executive_report_cold_storage_glacier_restore_rto_and_checksum_manifest = staticmethod(
+    audit_executive_report_cold_storage_glacier_restore_rto_and_checksum_manifest
+)
+
+

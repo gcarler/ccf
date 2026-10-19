@@ -9427,3 +9427,188 @@ def test_validate_work_package_8_80_rule_duration_and_effort_granularity_empty_a
     )
 
 
+
+
+# ── validate_monte_carlo_schedule_risk_p80_buffer_and_convergence (PMBOK §11.4 & §6.5, pure helper) ──
+
+
+def test_monte_carlo_p80_optimal_simulations():
+    """Simulaciones con buffer suficiente (>= requerido) e iteraciones/CV saludables -> 'MONTE_CARLO_P80_GOVERNANCE_OPTIMAL'."""
+    import backend.schemas.projects as projects_module
+    from backend.schemas.projects import (
+        validate_monte_carlo_schedule_risk_p80_buffer_and_convergence,
+    )
+
+    simulations = [
+        {
+            "simulation_id": "MC-001",
+            "iterations_run": 5000,
+            "convergence_cv_pct": 0.8,
+            "deterministic_duration_days": 100.0,
+            "p80_duration_days": 112.0,
+            "allocated_buffer_days": 15.0,
+        },
+        {
+            "simulation_id": "MC-002",
+            # Defaults implícitos por campo: 5000 iter, CV 0.8, 100.0 det, 112.0 P80, 15.0 buffer.
+        },
+    ]
+    res = validate_monte_carlo_schedule_risk_p80_buffer_and_convergence(simulations)
+    assert res == {
+        "evaluated_simulations_count": 2,
+        "underbuffered_p80_simulation_ids": [],
+        "unconverged_or_low_iteration_simulation_ids": [],
+        "monte_carlo_status": "MONTE_CARLO_P80_GOVERNANCE_OPTIMAL",
+        "is_monte_carlo_valid": True,
+    }
+    # Buffer asignado exactamente en el requerido (12.0) no es deficit (comparación estricta <)
+    exact_buffer = validate_monte_carlo_schedule_risk_p80_buffer_and_convergence(
+        [
+            {
+                "simulation_id": "MC-003",
+                "deterministic_duration_days": 100.0,
+                "p80_duration_days": 112.0,
+                "allocated_buffer_days": 12.0,
+            }
+        ]
+    )
+    assert exact_buffer["monte_carlo_status"] == "MONTE_CARLO_P80_GOVERNANCE_OPTIMAL"
+    assert "validate_monte_carlo_schedule_risk_p80_buffer_and_convergence" in projects_module.__all__
+
+
+def test_monte_carlo_p80_buffer_deficit_breach():
+    """Buffer asignado < requerido P80 -> 'P80_CONTINGENCY_BUFFER_DEFICIT_BREACH' con precedencia sobre WARNING."""
+    from backend.schemas.projects import (
+        validate_monte_carlo_schedule_risk_p80_buffer_and_convergence,
+    )
+
+    breach = validate_monte_carlo_schedule_risk_p80_buffer_and_convergence(
+        [
+            {
+                "simulation_id": "MC-DEFICIT",
+                "deterministic_duration_days": 100.0,
+                "p80_duration_days": 112.0,
+                "allocated_buffer_days": 10.0,
+            },
+            {
+                "simulation_id": "MC-ZERO-BUFFER",
+                "deterministic_duration_days": 80.0,
+                "p80_duration_days": 90.0,
+                "allocated_buffer_days": 0.0,
+            },
+        ]
+    )
+    assert breach["evaluated_simulations_count"] == 2
+    assert breach["underbuffered_p80_simulation_ids"] == ["MC-DEFICIT", "MC-ZERO-BUFFER"]
+    assert breach["monte_carlo_status"] == "P80_CONTINGENCY_BUFFER_DEFICIT_BREACH"
+    assert breach["is_monte_carlo_valid"] is False
+
+    # Breach tiene precedencia aunque también haya simulaciones sin convergencia
+    mixed = validate_monte_carlo_schedule_risk_p80_buffer_and_convergence(
+        [
+            {"simulation_id": "MC-LOW-ITER", "iterations_run": 500},
+            {"simulation_id": "MC-DEFICIT-2", "allocated_buffer_days": 5.0},
+        ]
+    )
+    assert mixed["monte_carlo_status"] == "P80_CONTINGENCY_BUFFER_DEFICIT_BREACH"
+
+
+def test_monte_carlo_convergence_or_iteration_warning():
+    """Iteraciones < 1000 o CV > 1.5 (con buffer suficiente) -> 'MONTE_CARLO_CONVERGENCE_OR_ITERATION_WARNING'."""
+    from backend.schemas.projects import (
+        validate_monte_carlo_schedule_risk_p80_buffer_and_convergence,
+    )
+
+    warning = validate_monte_carlo_schedule_risk_p80_buffer_and_convergence(
+        [
+            {
+                "simulation_id": "MC-LOW-ITER",
+                "iterations_run": 999,
+                "convergence_cv_pct": 0.5,
+            },
+            {
+                "simulation_id": "MC-HIGH-CV",
+                "iterations_run": 20000,
+                "convergence_cv_pct": 1.6,
+            },
+        ]
+    )
+    assert warning["evaluated_simulations_count"] == 2
+    assert warning["underbuffered_p80_simulation_ids"] == []
+    assert warning["unconverged_or_low_iteration_simulation_ids"] == [
+        "MC-LOW-ITER",
+        "MC-HIGH-CV",
+    ]
+    assert warning["monte_carlo_status"] == (
+        "MONTE_CARLO_CONVERGENCE_OR_ITERATION_WARNING"
+    )
+    assert warning["is_monte_carlo_valid"] is False
+
+    # CV exactamente en el umbral 1.5 con iteraciones suficientes no es warning (comparación estricta >)
+    at_threshold = validate_monte_carlo_schedule_risk_p80_buffer_and_convergence(
+        [
+            {
+                "simulation_id": "MC-THRESHOLD",
+                "iterations_run": 1000,
+                "convergence_cv_pct": 1.5,
+            }
+        ]
+    )
+    assert at_threshold["monte_carlo_status"] == "MONTE_CARLO_P80_GOVERNANCE_OPTIMAL"
+
+    custom = validate_monte_carlo_schedule_risk_p80_buffer_and_convergence(
+        [{"simulation_id": "MC-4", "iterations_run": 5000, "convergence_cv_pct": 0.9}],
+        min_iterations=6000,
+        max_convergence_cv_pct=0.8,
+    )
+    assert custom["monte_carlo_status"] == (
+        "MONTE_CARLO_CONVERGENCE_OR_ITERATION_WARNING"
+    )
+    assert custom["unconverged_or_low_iteration_simulation_ids"] == ["MC-4"]
+
+
+def test_monte_carlo_empty_invalid_fields_and_no_simulations():
+    """None / dicts inválidos se descartan; campos no numéricos revierten a defaults del spec."""
+    from backend.schemas.projects import (
+        validate_monte_carlo_schedule_risk_p80_buffer_and_convergence,
+    )
+
+    empty_res = validate_monte_carlo_schedule_risk_p80_buffer_and_convergence(None)
+    assert empty_res == {
+        "evaluated_simulations_count": 0,
+        "underbuffered_p80_simulation_ids": [],
+        "unconverged_or_low_iteration_simulation_ids": [],
+        "monte_carlo_status": "MONTE_CARLO_P80_GOVERNANCE_OPTIMAL",
+        "is_monte_carlo_valid": True,
+    }
+
+    invalid_res = validate_monte_carlo_schedule_risk_p80_buffer_and_convergence(
+        [
+            "no-dict",
+            None,
+            {"simulation_id": "   "},
+            {"simulation_id": 123},
+            {"iterations_run": 20000},
+        ]
+    )
+    assert invalid_res["evaluated_simulations_count"] == 0
+
+    bad_fields = validate_monte_carlo_schedule_risk_p80_buffer_and_convergence(
+        [
+            {
+                "simulation_id": "MC-BAD",
+                "iterations_run": "muchas",
+                "convergence_cv_pct": None,
+                "deterministic_duration_days": [100.0],
+                "p80_duration_days": "112.0",
+                "allocated_buffer_days": True,
+            }
+        ]
+    )
+    assert bad_fields == {
+        "evaluated_simulations_count": 1,
+        "underbuffered_p80_simulation_ids": [],
+        "unconverged_or_low_iteration_simulation_ids": [],
+        "monte_carlo_status": "MONTE_CARLO_P80_GOVERNANCE_OPTIMAL",
+        "is_monte_carlo_valid": True,
+    }
