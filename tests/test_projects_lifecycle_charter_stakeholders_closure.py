@@ -9768,3 +9768,140 @@ def test_audit_operational_readiness_orat_and_day2_handover_staticmethod_and_dun
         in mod.__all__
     )
 
+
+def test_audit_steering_committee_quorum_and_decision_velocity_breach():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_steering_committee_quorum_and_decision_velocity,
+    )
+
+    result = audit_steering_committee_quorum_and_decision_velocity(
+        [
+            {
+                "meeting_id": "MTG-LOW-QUORUM",
+                "voting_quorum_pct": 60.0,
+                "minutes_signed_and_published": True,
+                "max_overdue_action_days": 0,
+                "deferred_critical_decisions_count": 0,
+            },
+            {
+                "meeting_id": "MTG-UNSIGNED-MINUTES",
+                "voting_quorum_pct": 90.0,
+                "minutes_signed_and_published": False,
+                "max_overdue_action_days": 0,
+                "deferred_critical_decisions_count": 0,
+            },
+        ],
+        min_voting_quorum_pct=75.0,
+        max_action_item_overdue_days=14,
+    )
+    assert result["evaluated_meetings_count"] == 2
+    assert result["quorum_or_unsigned_minutes_meeting_ids"] == [
+        "MTG-LOW-QUORUM",
+        "MTG-UNSIGNED-MINUTES",
+    ]
+    assert result["stale_action_or_deferred_decision_meeting_ids"] == []
+    assert (
+        result["steering_governance_status"]
+        == "STEERING_QUORUM_OR_MINUTES_BREACH"
+    )
+    assert result["is_steering_governance_compliant"] is False
+
+
+def test_audit_steering_committee_quorum_and_decision_velocity_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_steering_committee_quorum_and_decision_velocity,
+    )
+
+    result = audit_steering_committee_quorum_and_decision_velocity(
+        [
+            {
+                "meeting_id": "MTG-STALE-ACTIONS",
+                "voting_quorum_pct": 85.0,
+                "minutes_signed_and_published": True,
+                "max_overdue_action_days": 22,
+                "deferred_critical_decisions_count": 0,
+            },
+            {
+                "meeting_id": "MTG-DEFERRED-DECISION",
+                "voting_quorum_pct": 88.0,
+                "minutes_signed_and_published": True,
+                "max_overdue_action_days": 4,
+                "deferred_critical_decisions_count": 2,
+            },
+        ],
+        min_voting_quorum_pct=75.0,
+        max_action_item_overdue_days=14,
+    )
+    assert result["evaluated_meetings_count"] == 2
+    assert result["quorum_or_unsigned_minutes_meeting_ids"] == []
+    assert result["stale_action_or_deferred_decision_meeting_ids"] == [
+        "MTG-STALE-ACTIONS",
+        "MTG-DEFERRED-DECISION",
+    ]
+    assert (
+        result["steering_governance_status"]
+        == "STEERING_DECISION_VELOCITY_WARNING"
+    )
+    assert result["is_steering_governance_compliant"] is False
+
+
+def test_audit_steering_committee_quorum_and_decision_velocity_optimal_and_empty():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_steering_committee_quorum_and_decision_velocity,
+    )
+
+    empty = audit_steering_committee_quorum_and_decision_velocity(
+        [{"meeting_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_meetings_count"] == 0
+    assert (
+        empty["steering_governance_status"] == "STEERING_GOVERNANCE_OPTIMAL"
+    )
+    assert empty["is_steering_governance_compliant"] is True
+
+    optimal = audit_steering_committee_quorum_and_decision_velocity(
+        [
+            {
+                "meeting_id": "MTG-STEER-Q3",
+                "voting_quorum_pct": 95.0,
+                "minutes_signed_and_published": True,
+                "max_overdue_action_days": 3,
+                "deferred_critical_decisions_count": 0,
+            }
+        ],
+        min_voting_quorum_pct=75.0,
+        max_action_item_overdue_days=14,
+    )
+    assert optimal["evaluated_meetings_count"] == 1
+    assert optimal["quorum_or_unsigned_minutes_meeting_ids"] == []
+    assert optimal["stale_action_or_deferred_decision_meeting_ids"] == []
+    assert (
+        optimal["steering_governance_status"] == "STEERING_GOVERNANCE_OPTIMAL"
+    )
+    assert optimal["is_steering_governance_compliant"] is True
+
+
+def test_audit_steering_committee_quorum_and_decision_velocity_staticmethod_and_dunder_all():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_steering_committee_quorum_and_decision_velocity,
+    )
+
+    sample = [
+        {
+            "meeting_id": "MTG-99",
+            "voting_quorum_pct": 100.0,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_steering_committee_quorum_and_decision_velocity(
+            sample
+        )
+        == audit_steering_committee_quorum_and_decision_velocity(sample)
+    )
+    assert (
+        "audit_steering_committee_quorum_and_decision_velocity"
+        in mod.__all__
+    )
+

@@ -3173,6 +3173,7 @@ __all__ = [
     "audit_force_majeure_claim_substantiation_and_mitigation",
     "audit_adr_dispute_escalation_ladder_and_claim_aging",
     "audit_operational_readiness_orat_and_day2_handover",
+    "audit_steering_committee_quorum_and_decision_velocity",
     "ProjectLifecyclePMIService",
 ]
 
@@ -7498,4 +7499,80 @@ def audit_operational_readiness_orat_and_day2_handover(
 
 ProjectLifecyclePMIService.audit_operational_readiness_orat_and_day2_handover = staticmethod(
     audit_operational_readiness_orat_and_day2_handover
+)
+
+
+def audit_steering_committee_quorum_and_decision_velocity(
+    meetings: list[dict[str, Any]] | None,
+    *,
+    min_voting_quorum_pct: float = 75.0,
+    max_action_item_overdue_days: int = 14,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.3 & §10.2 — Steering Committee Quorum Governance, Executive Decision Velocity & Action-Item Aging Auditor."""
+    raw_meetings = meetings if isinstance(meetings, list) else []
+    valid_meetings = [
+        m
+        for m in raw_meetings
+        if isinstance(m, dict)
+        and isinstance(m.get("meeting_id"), str)
+        and m["meeting_id"].strip()
+    ]
+
+    quorum_or_unsigned_minutes_meeting_ids: list[str] = []
+    stale_action_or_deferred_decision_meeting_ids: list[str] = []
+
+    for m in valid_meetings:
+        mid = str(m["meeting_id"]).strip()
+        voting_quorum_pct = float(
+            m.get("voting_quorum_pct", 100.0)
+            if m.get("voting_quorum_pct") is not None
+            else 100.0
+        )
+        minutes_signed_and_published = bool(
+            m.get("minutes_signed_and_published", True)
+            if m.get("minutes_signed_and_published") is not None
+            else True
+        )
+        max_overdue_action_days = int(
+            m.get("max_overdue_action_days", 0)
+            if m.get("max_overdue_action_days") is not None
+            else 0
+        )
+        deferred_critical_decisions_count = int(
+            m.get("deferred_critical_decisions_count", 0)
+            if m.get("deferred_critical_decisions_count") is not None
+            else 0
+        )
+
+        if (
+            voting_quorum_pct < min_voting_quorum_pct
+            or not minutes_signed_and_published
+        ):
+            quorum_or_unsigned_minutes_meeting_ids.append(mid)
+
+        if (
+            max_overdue_action_days > max_action_item_overdue_days
+            or deferred_critical_decisions_count > 0
+        ):
+            stale_action_or_deferred_decision_meeting_ids.append(mid)
+
+    if quorum_or_unsigned_minutes_meeting_ids:
+        steering_governance_status = "STEERING_QUORUM_OR_MINUTES_BREACH"
+    elif stale_action_or_deferred_decision_meeting_ids:
+        steering_governance_status = "STEERING_DECISION_VELOCITY_WARNING"
+    else:
+        steering_governance_status = "STEERING_GOVERNANCE_OPTIMAL"
+
+    return {
+        "evaluated_meetings_count": len(valid_meetings),
+        "quorum_or_unsigned_minutes_meeting_ids": quorum_or_unsigned_minutes_meeting_ids,
+        "stale_action_or_deferred_decision_meeting_ids": stale_action_or_deferred_decision_meeting_ids,
+        "steering_governance_status": steering_governance_status,
+        "is_steering_governance_compliant": steering_governance_status
+        == "STEERING_GOVERNANCE_OPTIMAL",
+    }
+
+
+ProjectLifecyclePMIService.audit_steering_committee_quorum_and_decision_velocity = staticmethod(
+    audit_steering_committee_quorum_and_decision_velocity
 )

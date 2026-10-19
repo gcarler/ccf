@@ -9628,3 +9628,140 @@ def test_wiki_k8s_invalid_and_binding():
         "audit_wiki_k8s_pdb_hpa_headroom_and_oomkill_eviction"
         in mod.__all__
     )
+
+
+def test_audit_wiki_dns_failover_ttl_and_bgp_anycast_resilience_breach():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_dns_failover_ttl_and_bgp_anycast_resilience,
+    )
+
+    result = audit_wiki_dns_failover_ttl_and_bgp_anycast_resilience(
+        [
+            {
+                "zone_id": "ZONE-NO-DNSSEC",
+                "failover_ttl_seconds": 30,
+                "dnssec_and_caa_enabled": False,
+                "multi_provider_anycast_active": True,
+                "health_check_auto_failover_verified": True,
+            },
+            {
+                "zone_id": "ZONE-UNVERIFIED-FAILOVER",
+                "failover_ttl_seconds": 30,
+                "dnssec_and_caa_enabled": True,
+                "multi_provider_anycast_active": True,
+                "health_check_auto_failover_verified": False,
+            },
+        ],
+        max_failover_ttl_seconds=60,
+        require_dnssec_and_caa_records=True,
+    )
+    assert result["evaluated_zones_count"] == 2
+    assert result["unverified_failover_or_missing_dnssec_zone_ids"] == [
+        "ZONE-NO-DNSSEC",
+        "ZONE-UNVERIFIED-FAILOVER",
+    ]
+    assert result["high_ttl_or_single_provider_zone_ids"] == []
+    assert (
+        result["dns_resilience_status"]
+        == "DNS_FAILOVER_OR_SECURITY_RECORD_BREACH"
+    )
+    assert result["is_dns_resilience_compliant"] is False
+
+
+def test_audit_wiki_dns_failover_ttl_and_bgp_anycast_resilience_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_dns_failover_ttl_and_bgp_anycast_resilience,
+    )
+
+    result = audit_wiki_dns_failover_ttl_and_bgp_anycast_resilience(
+        [
+            {
+                "zone_id": "ZONE-HIGH-TTL",
+                "failover_ttl_seconds": 300,
+                "dnssec_and_caa_enabled": True,
+                "multi_provider_anycast_active": True,
+                "health_check_auto_failover_verified": True,
+            },
+            {
+                "zone_id": "ZONE-SINGLE-PROVIDER",
+                "failover_ttl_seconds": 30,
+                "dnssec_and_caa_enabled": True,
+                "multi_provider_anycast_active": False,
+                "health_check_auto_failover_verified": True,
+            },
+        ],
+        max_failover_ttl_seconds=60,
+        require_dnssec_and_caa_records=True,
+    )
+    assert result["evaluated_zones_count"] == 2
+    assert result["unverified_failover_or_missing_dnssec_zone_ids"] == []
+    assert result["high_ttl_or_single_provider_zone_ids"] == [
+        "ZONE-HIGH-TTL",
+        "ZONE-SINGLE-PROVIDER",
+    ]
+    assert (
+        result["dns_resilience_status"]
+        == "DNS_TTL_OR_SINGLE_PROVIDER_WARNING"
+    )
+    assert result["is_dns_resilience_compliant"] is False
+
+
+def test_audit_wiki_dns_failover_ttl_and_bgp_anycast_resilience_optimal_and_empty():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_dns_failover_ttl_and_bgp_anycast_resilience,
+    )
+
+    empty = audit_wiki_dns_failover_ttl_and_bgp_anycast_resilience(
+        [{"zone_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_zones_count"] == 0
+    assert (
+        empty["dns_resilience_status"] == "DNS_ANYCAST_RESILIENCE_OPTIMAL"
+    )
+    assert empty["is_dns_resilience_compliant"] is True
+
+    optimal = audit_wiki_dns_failover_ttl_and_bgp_anycast_resilience(
+        [
+            {
+                "zone_id": "ZONE-EDGE-PROD-1",
+                "failover_ttl_seconds": 30,
+                "dnssec_and_caa_enabled": True,
+                "multi_provider_anycast_active": True,
+                "health_check_auto_failover_verified": True,
+            }
+        ],
+        max_failover_ttl_seconds=60,
+        require_dnssec_and_caa_records=True,
+    )
+    assert optimal["evaluated_zones_count"] == 1
+    assert optimal["unverified_failover_or_missing_dnssec_zone_ids"] == []
+    assert optimal["high_ttl_or_single_provider_zone_ids"] == []
+    assert (
+        optimal["dns_resilience_status"] == "DNS_ANYCAST_RESILIENCE_OPTIMAL"
+    )
+    assert optimal["is_dns_resilience_compliant"] is True
+
+
+def test_audit_wiki_dns_failover_ttl_and_bgp_anycast_resilience_staticmethod_and_dunder_all():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_dns_failover_ttl_and_bgp_anycast_resilience,
+    )
+
+    sample = [
+        {
+            "zone_id": "ZONE-99",
+            "failover_ttl_seconds": 20,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_dns_failover_ttl_and_bgp_anycast_resilience(
+            sample
+        )
+        == audit_wiki_dns_failover_ttl_and_bgp_anycast_resilience(sample)
+    )
+    assert (
+        "audit_wiki_dns_failover_ttl_and_bgp_anycast_resilience"
+        in mod.__all__
+    )

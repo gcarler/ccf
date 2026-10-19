@@ -2537,6 +2537,7 @@ __all__ = [
     "audit_wiki_service_catalog_ownership_and_dependency_graph",
     "audit_wiki_tls_certificate_expiration_and_acme_renewal",
     "audit_wiki_k8s_pdb_hpa_headroom_and_oomkill_eviction",
+    "audit_wiki_dns_failover_ttl_and_bgp_anycast_resilience",
     "WikiPMIService",
 ]
 
@@ -7095,5 +7096,80 @@ def audit_wiki_k8s_pdb_hpa_headroom_and_oomkill_eviction(
 
 WikiPMIService.audit_wiki_k8s_pdb_hpa_headroom_and_oomkill_eviction = staticmethod(
     audit_wiki_k8s_pdb_hpa_headroom_and_oomkill_eviction
+)
+
+
+def audit_wiki_dns_failover_ttl_and_bgp_anycast_resilience(
+    zones: list[dict[str, Any]] | None,
+    *,
+    max_failover_ttl_seconds: int = 60,
+    require_dnssec_and_caa_records: bool = True,
+) -> dict[str, Any]:
+    """PMI PMBOK §11.6 & §8.2 — Wiki DNS Failover TTL Hygiene, BGP Anycast Multi-Provider Resilience & DNSSEC/CAA Record Auditor."""
+    raw_zones = zones if isinstance(zones, list) else []
+    valid_zones = [
+        z
+        for z in raw_zones
+        if isinstance(z, dict)
+        and isinstance(z.get("zone_id"), str)
+        and z["zone_id"].strip()
+    ]
+
+    unverified_failover_or_missing_dnssec_zone_ids: list[str] = []
+    high_ttl_or_single_provider_zone_ids: list[str] = []
+
+    for z in valid_zones:
+        zid = str(z["zone_id"]).strip()
+        failover_ttl_seconds = int(
+            z.get("failover_ttl_seconds", 30)
+            if z.get("failover_ttl_seconds") is not None
+            else 30
+        )
+        dnssec_and_caa_enabled = bool(
+            z.get("dnssec_and_caa_enabled", True)
+            if z.get("dnssec_and_caa_enabled") is not None
+            else True
+        )
+        multi_provider_anycast_active = bool(
+            z.get("multi_provider_anycast_active", True)
+            if z.get("multi_provider_anycast_active") is not None
+            else True
+        )
+        health_check_auto_failover_verified = bool(
+            z.get("health_check_auto_failover_verified", True)
+            if z.get("health_check_auto_failover_verified") is not None
+            else True
+        )
+
+        if (
+            require_dnssec_and_caa_records and not dnssec_and_caa_enabled
+        ) or not health_check_auto_failover_verified:
+            unverified_failover_or_missing_dnssec_zone_ids.append(zid)
+
+        if (
+            failover_ttl_seconds > max_failover_ttl_seconds
+            or not multi_provider_anycast_active
+        ):
+            high_ttl_or_single_provider_zone_ids.append(zid)
+
+    if unverified_failover_or_missing_dnssec_zone_ids:
+        dns_resilience_status = "DNS_FAILOVER_OR_SECURITY_RECORD_BREACH"
+    elif high_ttl_or_single_provider_zone_ids:
+        dns_resilience_status = "DNS_TTL_OR_SINGLE_PROVIDER_WARNING"
+    else:
+        dns_resilience_status = "DNS_ANYCAST_RESILIENCE_OPTIMAL"
+
+    return {
+        "evaluated_zones_count": len(valid_zones),
+        "unverified_failover_or_missing_dnssec_zone_ids": unverified_failover_or_missing_dnssec_zone_ids,
+        "high_ttl_or_single_provider_zone_ids": high_ttl_or_single_provider_zone_ids,
+        "dns_resilience_status": dns_resilience_status,
+        "is_dns_resilience_compliant": dns_resilience_status
+        == "DNS_ANYCAST_RESILIENCE_OPTIMAL",
+    }
+
+
+WikiPMIService.audit_wiki_dns_failover_ttl_and_bgp_anycast_resilience = staticmethod(
+    audit_wiki_dns_failover_ttl_and_bgp_anycast_resilience
 )
 
