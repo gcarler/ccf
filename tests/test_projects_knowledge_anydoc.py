@@ -8267,3 +8267,138 @@ def test_audit_markdown_gfm_task_list_completion_and_nesting_hygiene_staticmetho
     )
 
 
+def test_audit_markdown_mermaid_diagram_syntax_and_node_budget_hygiene_breach():
+    from backend.services.anydoc_service import (
+        audit_markdown_mermaid_diagram_syntax_and_node_budget_hygiene,
+    )
+
+    res = audit_markdown_mermaid_diagram_syntax_and_node_budget_hygiene(
+        [
+            {
+                "diagram_id": "  MERMAID-UNSUPPORTED-HEADER  ",
+                "supported_diagram_header_valid": False,
+                "unescaped_special_chars_in_labels": 0,
+                "nodes_count": 10,
+                "edges_count": 12,
+            },
+            {
+                "diagram_id": "MERMAID-UNESCAPED-PARENS",
+                "supported_diagram_header_valid": True,
+                "unescaped_special_chars_in_labels": 3,
+                "nodes_count": 60,
+                "edges_count": 100,
+            },
+            {
+                "diagram_id": "MERMAID-CLEAN",
+                "supported_diagram_header_valid": True,
+                "unescaped_special_chars_in_labels": 0,
+                "nodes_count": 45,
+                "edges_count": 80,
+            },
+        ]
+    )
+    assert res["evaluated_diagrams_count"] == 3
+    assert res["syntax_error_or_unsupported_diagram_ids"] == [
+        "MERMAID-UNSUPPORTED-HEADER",
+        "MERMAID-UNESCAPED-PARENS",
+    ]
+    assert res["overcrowded_node_or_edge_budget_diagram_ids"] == [
+        "MERMAID-UNESCAPED-PARENS"
+    ]
+    assert (
+        res["mermaid_hygiene_status"]
+        == "MERMAID_SYNTAX_OR_LABEL_ESCAPE_BREACH"
+    )
+    assert res["is_mermaid_hygiene_compliant"] is False
+
+
+def test_audit_markdown_mermaid_diagram_syntax_and_node_budget_hygiene_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_mermaid_diagram_syntax_and_node_budget_hygiene,
+    )
+
+    res = audit_markdown_mermaid_diagram_syntax_and_node_budget_hygiene(
+        [
+            {
+                "diagram_id": "MERMAID-TOO-MANY-NODES",
+                "supported_diagram_header_valid": True,
+                "unescaped_special_chars_in_labels": 0,
+                "nodes_count": 46,
+                "edges_count": 80,
+            },
+            {
+                "diagram_id": "MERMAID-TOO-MANY-EDGES",
+                "supported_diagram_header_valid": True,
+                "unescaped_special_chars_in_labels": 0,
+                "nodes_count": 45,
+                "edges_count": 81,
+            },
+        ],
+        max_nodes_per_diagram=45,
+        max_edges_per_diagram=80,
+    )
+    assert res["evaluated_diagrams_count"] == 2
+    assert res["syntax_error_or_unsupported_diagram_ids"] == []
+    assert res["overcrowded_node_or_edge_budget_diagram_ids"] == [
+        "MERMAID-TOO-MANY-NODES",
+        "MERMAID-TOO-MANY-EDGES",
+    ]
+    assert (
+        res["mermaid_hygiene_status"] == "MERMAID_NODE_OR_EDGE_BUDGET_WARNING"
+    )
+    assert res["is_mermaid_hygiene_compliant"] is False
+
+
+def test_audit_markdown_mermaid_diagram_syntax_and_node_budget_hygiene_optimal_and_defensive():
+    from backend.services.anydoc_service import (
+        audit_markdown_mermaid_diagram_syntax_and_node_budget_hygiene,
+    )
+
+    empty = audit_markdown_mermaid_diagram_syntax_and_node_budget_hygiene(None)
+    assert empty["evaluated_diagrams_count"] == 0
+    assert empty["mermaid_hygiene_status"] == "MERMAID_DIAGRAM_HYGIENE_OPTIMAL"
+    assert empty["is_mermaid_hygiene_compliant"] is True
+
+    defaults = audit_markdown_mermaid_diagram_syntax_and_node_budget_hygiene(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"diagram_id": "   "},
+            {
+                "diagram_id": "MERMAID-DEFAULTS",
+                "supported_diagram_header_valid": None,
+                "unescaped_special_chars_in_labels": None,
+                "nodes_count": None,
+                "edges_count": None,
+            },
+        ]
+    )
+    assert defaults["evaluated_diagrams_count"] == 1
+    assert (
+        defaults["mermaid_hygiene_status"] == "MERMAID_DIAGRAM_HYGIENE_OPTIMAL"
+    )
+    assert defaults["is_mermaid_hygiene_compliant"] is True
+
+
+def test_audit_markdown_mermaid_diagram_syntax_and_node_budget_hygiene_staticmethod_and_dunder_all():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_mermaid_diagram_syntax_and_node_budget_hygiene,
+    )
+
+    sample = [{"diagram_id": "MERMAID-99", "nodes_count": 12}]
+    assert (
+        AnyDocService.audit_markdown_mermaid_diagram_syntax_and_node_budget_hygiene(
+            sample
+        )
+        == audit_markdown_mermaid_diagram_syntax_and_node_budget_hygiene(
+            sample
+        )
+    )
+    assert (
+        "audit_markdown_mermaid_diagram_syntax_and_node_budget_hygiene"
+        in mod.__all__
+    )
+
+
+

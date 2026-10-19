@@ -2856,6 +2856,7 @@ __all__ = [
     "audit_message_broker_consumer_lag_and_dlq_poison_pill_gate",
     "audit_distributed_cache_stampede_and_hotkey_skew_gate",
     "audit_service_mesh_mtls_strict_and_outlier_ejection_gate",
+    "audit_graphql_query_depth_and_n_plus_one_batching_gate",
     "ProjectCCBService",
 ]
 
@@ -7647,6 +7648,77 @@ def audit_service_mesh_mtls_strict_and_outlier_ejection_gate(
 ProjectCCBService.audit_service_mesh_mtls_strict_and_outlier_ejection_gate = staticmethod(
     audit_service_mesh_mtls_strict_and_outlier_ejection_gate
 )
+
+
+def audit_graphql_query_depth_and_n_plus_one_batching_gate(
+    operations: list[dict] | None,
+    *,
+    max_query_depth: int = 8,
+    max_complexity_cost_score: int = 500,
+) -> dict:
+    """PMBOK §8.3 & §11.6 — Audita límites de profundidad y amplificación de alias en consultas GraphQL, presupuesto de complejidad y batching DataLoader contra N+1."""
+    raw_items = operations if isinstance(operations, list) else []
+    valid_operations: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("operation_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_operations.append(item)
+
+    unbounded_depth_or_n_plus_one_operation_ids: list[str] = []
+    deep_query_or_high_complexity_operation_ids: list[str] = []
+
+    for o in valid_operations:
+        oid = o["operation_id"].strip()
+        raw_limit = o.get("depth_and_alias_limit_enforced", True)
+        depth_and_alias_limit_enforced = bool(
+            True if raw_limit is None else raw_limit
+        )
+
+        raw_dl = o.get("dataloader_batching_verified", True)
+        dataloader_batching_verified = bool(True if raw_dl is None else raw_dl)
+
+        raw_depth = o.get("observed_query_depth", 4)
+        observed_query_depth = int(4 if raw_depth is None else raw_depth)
+
+        raw_score = o.get("complexity_cost_score", 180)
+        complexity_cost_score = int(180 if raw_score is None else raw_score)
+
+        if (
+            not depth_and_alias_limit_enforced
+            or not dataloader_batching_verified
+        ):
+            unbounded_depth_or_n_plus_one_operation_ids.append(oid)
+
+        if (
+            observed_query_depth > max_query_depth
+            or complexity_cost_score > max_complexity_cost_score
+        ):
+            deep_query_or_high_complexity_operation_ids.append(oid)
+
+    if unbounded_depth_or_n_plus_one_operation_ids:
+        graphql_gate_status = "GRAPHQL_UNBOUNDED_DEPTH_OR_N_PLUS_ONE_BREACH"
+    elif deep_query_or_high_complexity_operation_ids:
+        graphql_gate_status = "GRAPHQL_COMPLEXITY_OR_DEPTH_WARNING"
+    else:
+        graphql_gate_status = "GRAPHQL_QUERY_GOVERNANCE_OPTIMAL"
+
+    return {
+        "evaluated_operations_count": len(valid_operations),
+        "unbounded_depth_or_n_plus_one_operation_ids": unbounded_depth_or_n_plus_one_operation_ids,
+        "deep_query_or_high_complexity_operation_ids": deep_query_or_high_complexity_operation_ids,
+        "graphql_gate_status": graphql_gate_status,
+        "is_graphql_gate_compliant": graphql_gate_status
+        == "GRAPHQL_QUERY_GOVERNANCE_OPTIMAL",
+    }
+
+
+ProjectCCBService.audit_graphql_query_depth_and_n_plus_one_batching_gate = staticmethod(
+    audit_graphql_query_depth_and_n_plus_one_batching_gate
+)
+
 
 
 

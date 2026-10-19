@@ -10686,3 +10686,167 @@ def test_audit_executive_report_idempotency_key_and_replay_window_staticmethod_a
         "audit_executive_report_idempotency_key_and_replay_window"
         in mod.__all__
     )
+
+
+def test_rfc3161_tsa_or_hash_chain_breach():
+    from backend.services.project_export_service import (
+        audit_executive_report_rfc3161_timestamping_and_non_repudiation,
+    )
+
+    res = audit_executive_report_rfc3161_timestamping_and_non_repudiation(
+        [
+            {
+                "package_id": "PKG-NO-TSA",
+                "rfc3161_tsa_token_verified": False,
+            },
+            {
+                "package_id": "PKG-BROKEN-CHAIN",
+                "merkle_hash_chain_intact": False,
+            },
+        ],
+        max_tsa_clock_skew_ms=500,
+        require_ocsp_stapling_and_ltv=True,
+    )
+    assert res["evaluated_packages_count"] == 2
+    assert res["broken_hash_or_missing_tsa_package_ids"] == [
+        "PKG-NO-TSA",
+        "PKG-BROKEN-CHAIN",
+    ]
+    assert res["missing_ltv_or_clock_skew_package_ids"] == []
+    assert (
+        res["non_repudiation_status"]
+        == "NON_REPUDIATION_TSA_OR_HASH_CHAIN_BREACH"
+    )
+    assert res["is_non_repudiation_compliant"] is False
+
+    ltv_optional = audit_executive_report_rfc3161_timestamping_and_non_repudiation(
+        [
+            {
+                "package_id": "PKG-LTV-OFF",
+                "ocsp_ltv_embedded": False,
+            }
+        ],
+        max_tsa_clock_skew_ms=500,
+        require_ocsp_stapling_and_ltv=False,
+    )
+    assert ltv_optional["missing_ltv_or_clock_skew_package_ids"] == []
+
+
+def test_rfc3161_ltv_or_clock_skew_warning():
+    from backend.services.project_export_service import (
+        audit_executive_report_rfc3161_timestamping_and_non_repudiation,
+    )
+
+    res = audit_executive_report_rfc3161_timestamping_and_non_repudiation(
+        [
+            {
+                "package_id": "PKG-NO-LTV",
+                "ocsp_ltv_embedded": False,
+            },
+            {
+                "package_id": "PKG-SKEW-DRIFT",
+                "tsa_clock_skew_ms": 900,
+            },
+        ],
+        max_tsa_clock_skew_ms=500,
+        require_ocsp_stapling_and_ltv=True,
+    )
+    assert res["evaluated_packages_count"] == 2
+    assert res["broken_hash_or_missing_tsa_package_ids"] == []
+    assert res["missing_ltv_or_clock_skew_package_ids"] == [
+        "PKG-NO-LTV",
+        "PKG-SKEW-DRIFT",
+    ]
+    assert (
+        res["non_repudiation_status"]
+        == "NON_REPUDIATION_LTV_OR_CLOCK_SKEW_WARNING"
+    )
+    assert res["is_non_repudiation_compliant"] is False
+
+
+def test_rfc3161_boundaries_optimal_and_defaults():
+    from backend.services.project_export_service import (
+        audit_executive_report_rfc3161_timestamping_and_non_repudiation,
+    )
+
+    res = audit_executive_report_rfc3161_timestamping_and_non_repudiation(
+        [
+            {
+                "package_id": "PKG-BOUNDARY",
+                "tsa_clock_skew_ms": 500,
+            },
+            {"package_id": "PKG-ALL-DEFAULTS"},
+        ],
+        max_tsa_clock_skew_ms=500,
+        require_ocsp_stapling_and_ltv=True,
+    )
+    assert res["evaluated_packages_count"] == 2
+    assert res["broken_hash_or_missing_tsa_package_ids"] == []
+    assert res["missing_ltv_or_clock_skew_package_ids"] == []
+    assert (
+        res["non_repudiation_status"]
+        == "NON_REPUDIATION_RFC3161_SEAL_OPTIMAL"
+    )
+    assert res["is_non_repudiation_compliant"] is True
+
+
+def test_rfc3161_invalid_and_binding():
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_rfc3161_timestamping_and_non_repudiation,
+    )
+
+    empty = audit_executive_report_rfc3161_timestamping_and_non_repudiation(
+        None
+    )
+    assert empty["evaluated_packages_count"] == 0
+    assert empty["broken_hash_or_missing_tsa_package_ids"] == []
+    assert empty["missing_ltv_or_clock_skew_package_ids"] == []
+    assert (
+        empty["non_repudiation_status"]
+        == "NON_REPUDIATION_RFC3161_SEAL_OPTIMAL"
+    )
+    assert empty["is_non_repudiation_compliant"] is True
+
+    invalid = audit_executive_report_rfc3161_timestamping_and_non_repudiation(
+        [42, "not-a-dict", None, {"package_id": "   "}]  # type: ignore[list-item]
+    )
+    assert invalid["evaluated_packages_count"] == 0
+
+    defaults = audit_executive_report_rfc3161_timestamping_and_non_repudiation(
+        [
+            {
+                "package_id": "PKG-DEFAULTS",
+                "rfc3161_tsa_token_verified": None,
+                "merkle_hash_chain_intact": None,
+                "ocsp_ltv_embedded": None,
+                "tsa_clock_skew_ms": None,
+            }
+        ]
+    )
+    assert defaults["evaluated_packages_count"] == 1
+    assert (
+        defaults["non_repudiation_status"]
+        == "NON_REPUDIATION_RFC3161_SEAL_OPTIMAL"
+    )
+    assert defaults["is_non_repudiation_compliant"] is True
+
+    sample = [
+        {
+            "package_id": "PKG-1",
+            "tsa_clock_skew_ms": 60,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_rfc3161_timestamping_and_non_repudiation(
+            sample
+        )
+        == audit_executive_report_rfc3161_timestamping_and_non_repudiation(
+            sample
+        )
+    )
+    assert (
+        "audit_executive_report_rfc3161_timestamping_and_non_repudiation"
+        in mod.__all__
+    )

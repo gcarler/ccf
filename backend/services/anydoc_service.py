@@ -3042,6 +3042,7 @@ __all__ = [
     "audit_markdown_table_column_parity_and_cell_hygiene",
     "audit_markdown_footnote_citation_reciprocity_and_key_hygiene",
     "audit_markdown_gfm_task_list_completion_and_nesting_hygiene",
+    "audit_markdown_mermaid_diagram_syntax_and_node_budget_hygiene",
     "AnydocService",
 ]
 
@@ -8516,6 +8517,79 @@ def audit_markdown_gfm_task_list_completion_and_nesting_hygiene(
 AnyDocService.audit_markdown_gfm_task_list_completion_and_nesting_hygiene = staticmethod(
     audit_markdown_gfm_task_list_completion_and_nesting_hygiene
 )
+
+
+def audit_markdown_mermaid_diagram_syntax_and_node_budget_hygiene(
+    diagrams: list[dict] | None,
+    *,
+    max_nodes_per_diagram: int = 45,
+    max_edges_per_diagram: int = 80,
+) -> dict:
+    """PMBOK §4.4 & §10.2 — Audita validez de encabezado soportado en diagramas Mermaid Markdown, escape de caracteres especiales en etiquetas y presupuesto de nodos/aristas."""
+    raw_items = diagrams if isinstance(diagrams, list) else []
+    valid_diagrams: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("diagram_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_diagrams.append(item)
+
+    syntax_error_or_unsupported_diagram_ids: list[str] = []
+    overcrowded_node_or_edge_budget_diagram_ids: list[str] = []
+
+    for d in valid_diagrams:
+        did = d["diagram_id"].strip()
+        raw_header = d.get("supported_diagram_header_valid", True)
+        supported_diagram_header_valid = bool(
+            True if raw_header is None else raw_header
+        )
+
+        raw_unesc = d.get("unescaped_special_chars_in_labels", 0)
+        unescaped_special_chars_in_labels = int(
+            0 if raw_unesc is None else raw_unesc
+        )
+
+        raw_nodes = d.get("nodes_count", 15)
+        nodes_count = int(15 if raw_nodes is None else raw_nodes)
+
+        raw_edges = d.get("edges_count", 22)
+        edges_count = int(22 if raw_edges is None else raw_edges)
+
+        if (
+            not supported_diagram_header_valid
+            or unescaped_special_chars_in_labels > 0
+        ):
+            syntax_error_or_unsupported_diagram_ids.append(did)
+
+        if (
+            nodes_count > max_nodes_per_diagram
+            or edges_count > max_edges_per_diagram
+        ):
+            overcrowded_node_or_edge_budget_diagram_ids.append(did)
+
+    if syntax_error_or_unsupported_diagram_ids:
+        mermaid_hygiene_status = "MERMAID_SYNTAX_OR_LABEL_ESCAPE_BREACH"
+    elif overcrowded_node_or_edge_budget_diagram_ids:
+        mermaid_hygiene_status = "MERMAID_NODE_OR_EDGE_BUDGET_WARNING"
+    else:
+        mermaid_hygiene_status = "MERMAID_DIAGRAM_HYGIENE_OPTIMAL"
+
+    return {
+        "evaluated_diagrams_count": len(valid_diagrams),
+        "syntax_error_or_unsupported_diagram_ids": syntax_error_or_unsupported_diagram_ids,
+        "overcrowded_node_or_edge_budget_diagram_ids": overcrowded_node_or_edge_budget_diagram_ids,
+        "mermaid_hygiene_status": mermaid_hygiene_status,
+        "is_mermaid_hygiene_compliant": mermaid_hygiene_status
+        == "MERMAID_DIAGRAM_HYGIENE_OPTIMAL",
+    }
+
+
+AnyDocService.audit_markdown_mermaid_diagram_syntax_and_node_budget_hygiene = staticmethod(
+    audit_markdown_mermaid_diagram_syntax_and_node_budget_hygiene
+)
+
 
 
 

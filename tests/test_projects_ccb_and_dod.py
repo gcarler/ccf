@@ -10382,4 +10382,143 @@ def test_audit_service_mesh_mtls_strict_and_outlier_ejection_gate_staticmethod_a
     )
 
 
+def test_audit_graphql_query_depth_and_n_plus_one_batching_gate_breach():
+    from backend.services.project_ccb_service import (
+        audit_graphql_query_depth_and_n_plus_one_batching_gate,
+    )
+
+    res = audit_graphql_query_depth_and_n_plus_one_batching_gate(
+        [
+            {
+                "operation_id": "  GQL-UNBOUNDED-ALIAS  ",
+                "depth_and_alias_limit_enforced": False,
+                "dataloader_batching_verified": True,
+                "observed_query_depth": 4,
+                "complexity_cost_score": 200,
+            },
+            {
+                "operation_id": "GQL-N-PLUS-ONE",
+                "depth_and_alias_limit_enforced": True,
+                "dataloader_batching_verified": False,
+                "observed_query_depth": 11,
+                "complexity_cost_score": 800,
+            },
+            {
+                "operation_id": "GQL-CLEAN",
+                "depth_and_alias_limit_enforced": True,
+                "dataloader_batching_verified": True,
+                "observed_query_depth": 8,
+                "complexity_cost_score": 500,
+            },
+        ]
+    )
+    assert res["evaluated_operations_count"] == 3
+    assert res["unbounded_depth_or_n_plus_one_operation_ids"] == [
+        "GQL-UNBOUNDED-ALIAS",
+        "GQL-N-PLUS-ONE",
+    ]
+    assert res["deep_query_or_high_complexity_operation_ids"] == [
+        "GQL-N-PLUS-ONE"
+    ]
+    assert (
+        res["graphql_gate_status"]
+        == "GRAPHQL_UNBOUNDED_DEPTH_OR_N_PLUS_ONE_BREACH"
+    )
+    assert res["is_graphql_gate_compliant"] is False
+
+
+def test_audit_graphql_query_depth_and_n_plus_one_batching_gate_warning():
+    from backend.services.project_ccb_service import (
+        audit_graphql_query_depth_and_n_plus_one_batching_gate,
+    )
+
+    res = audit_graphql_query_depth_and_n_plus_one_batching_gate(
+        [
+            {
+                "operation_id": "GQL-DEEP-QUERY",
+                "depth_and_alias_limit_enforced": True,
+                "dataloader_batching_verified": True,
+                "observed_query_depth": 9,
+                "complexity_cost_score": 500,
+            },
+            {
+                "operation_id": "GQL-HIGH-COMPLEXITY",
+                "depth_and_alias_limit_enforced": True,
+                "dataloader_batching_verified": True,
+                "observed_query_depth": 8,
+                "complexity_cost_score": 501,
+            },
+        ],
+        max_query_depth=8,
+        max_complexity_cost_score=500,
+    )
+    assert res["evaluated_operations_count"] == 2
+    assert res["unbounded_depth_or_n_plus_one_operation_ids"] == []
+    assert res["deep_query_or_high_complexity_operation_ids"] == [
+        "GQL-DEEP-QUERY",
+        "GQL-HIGH-COMPLEXITY",
+    ]
+    assert res["graphql_gate_status"] == "GRAPHQL_COMPLEXITY_OR_DEPTH_WARNING"
+    assert res["is_graphql_gate_compliant"] is False
+
+
+def test_audit_graphql_query_depth_and_n_plus_one_batching_gate_optimal_and_defensive():
+    from backend.services.project_ccb_service import (
+        audit_graphql_query_depth_and_n_plus_one_batching_gate,
+    )
+
+    empty = audit_graphql_query_depth_and_n_plus_one_batching_gate(None)
+    assert empty["evaluated_operations_count"] == 0
+    assert empty["unbounded_depth_or_n_plus_one_operation_ids"] == []
+    assert empty["deep_query_or_high_complexity_operation_ids"] == []
+    assert empty["graphql_gate_status"] == "GRAPHQL_QUERY_GOVERNANCE_OPTIMAL"
+    assert empty["is_graphql_gate_compliant"] is True
+
+    optimal = audit_graphql_query_depth_and_n_plus_one_batching_gate(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"operation_id": "   "},
+            {
+                "operation_id": "GQL-DEFAULTS",
+                "depth_and_alias_limit_enforced": None,
+                "dataloader_batching_verified": None,
+                "observed_query_depth": None,
+                "complexity_cost_score": None,
+            },
+        ]
+    )
+    assert optimal["evaluated_operations_count"] == 1
+    assert optimal["unbounded_depth_or_n_plus_one_operation_ids"] == []
+    assert optimal["deep_query_or_high_complexity_operation_ids"] == []
+    assert optimal["graphql_gate_status"] == "GRAPHQL_QUERY_GOVERNANCE_OPTIMAL"
+    assert optimal["is_graphql_gate_compliant"] is True
+
+
+def test_audit_graphql_query_depth_and_n_plus_one_batching_gate_staticmethod_and_dunder_all():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_graphql_query_depth_and_n_plus_one_batching_gate,
+    )
+
+    sample = [
+        {
+            "operation_id": "GQL-99",
+            "observed_query_depth": 5,
+            "complexity_cost_score": 210,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_graphql_query_depth_and_n_plus_one_batching_gate(
+            sample
+        )
+        == audit_graphql_query_depth_and_n_plus_one_batching_gate(sample)
+    )
+    assert (
+        "audit_graphql_query_depth_and_n_plus_one_batching_gate"
+        in mod.__all__
+    )
+
+
+
 

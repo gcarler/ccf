@@ -3013,6 +3013,7 @@ __all__ = [
     "audit_executive_report_data_residency_and_scc_transfer",
     "audit_executive_report_accessibility_wcag_aa_contrast_and_screen_reader_parity",
     "audit_executive_report_idempotency_key_and_replay_window",
+    "audit_executive_report_rfc3161_timestamping_and_non_repudiation",
     "ProjectExportService",
 ]
 
@@ -7938,4 +7939,75 @@ def audit_executive_report_idempotency_key_and_replay_window(
 
 ProjectExportService.audit_executive_report_idempotency_key_and_replay_window = staticmethod(
     audit_executive_report_idempotency_key_and_replay_window
+)
+
+def audit_executive_report_rfc3161_timestamping_and_non_repudiation(
+    packages: list[dict] | None,
+    *,
+    max_tsa_clock_skew_ms: int = 500,
+    require_ocsp_stapling_and_ltv: bool = True,
+) -> dict[str, Any]:
+    """PMI PMBOK §10.2 & §12.3 — Executive Report RFC 3161 Cryptographic Timestamping, eIDAS Non-Repudiation Seal & Merkle Hash-Chain Auditor."""
+    raw_items = packages if isinstance(packages, (list, tuple)) else []
+    valid_packages = [
+        package
+        for package in raw_items
+        if isinstance(package, dict)
+        and str(package.get("package_id") or "").strip()
+    ]
+
+    def _num(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    broken_hash_or_missing_tsa_package_ids: list[str] = []
+    missing_ltv_or_clock_skew_package_ids: list[str] = []
+
+    for package in valid_packages:
+        package_id = str(package.get("package_id")).strip()
+        tsa_verified = _bool(
+            package.get("rfc3161_tsa_token_verified"), True
+        )
+        hash_chain_intact = _bool(
+            package.get("merkle_hash_chain_intact"), True
+        )
+        ocsp_ltv_embedded = _bool(
+            package.get("ocsp_ltv_embedded"), True
+        )
+        clock_skew_ms = _num(
+            package.get("tsa_clock_skew_ms"), 80.0
+        )
+
+        if not tsa_verified or not hash_chain_intact:
+            broken_hash_or_missing_tsa_package_ids.append(package_id)
+
+        if (
+            require_ocsp_stapling_and_ltv
+            and not ocsp_ltv_embedded
+        ) or clock_skew_ms > max_tsa_clock_skew_ms:
+            missing_ltv_or_clock_skew_package_ids.append(package_id)
+
+    if broken_hash_or_missing_tsa_package_ids:
+        non_repudiation_status = "NON_REPUDIATION_TSA_OR_HASH_CHAIN_BREACH"
+    elif missing_ltv_or_clock_skew_package_ids:
+        non_repudiation_status = "NON_REPUDIATION_LTV_OR_CLOCK_SKEW_WARNING"
+    else:
+        non_repudiation_status = "NON_REPUDIATION_RFC3161_SEAL_OPTIMAL"
+
+    return {
+        "evaluated_packages_count": len(valid_packages),
+        "broken_hash_or_missing_tsa_package_ids": broken_hash_or_missing_tsa_package_ids,
+        "missing_ltv_or_clock_skew_package_ids": missing_ltv_or_clock_skew_package_ids,
+        "non_repudiation_status": non_repudiation_status,
+        "is_non_repudiation_compliant": non_repudiation_status
+        == "NON_REPUDIATION_RFC3161_SEAL_OPTIMAL",
+    }
+
+
+ProjectExportService.audit_executive_report_rfc3161_timestamping_and_non_repudiation = staticmethod(
+    audit_executive_report_rfc3161_timestamping_and_non_repudiation
 )
