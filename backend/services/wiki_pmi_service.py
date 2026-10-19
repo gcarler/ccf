@@ -2548,6 +2548,7 @@ __all__ = [
     "audit_wiki_otel_tail_sampling_baggage_and_span_drop",
     "audit_wiki_vector_embedding_hnsw_index_recall_and_drift_reindexing",
     "audit_wiki_graph_backlink_reciprocity_and_orphan_clusters",
+    "audit_wiki_crdt_collaborative_editing_tombstone_gc_and_causal_vector_clock",
     "WikiPMIService",
 ]
 
@@ -8084,4 +8085,112 @@ def audit_wiki_graph_backlink_reciprocity_and_orphan_clusters(
 
 WikiPMIService.audit_wiki_graph_backlink_reciprocity_and_orphan_clusters = staticmethod(
     audit_wiki_graph_backlink_reciprocity_and_orphan_clusters
+)
+
+
+def audit_wiki_crdt_collaborative_editing_tombstone_gc_and_causal_vector_clock(
+    crdt_documents: list[dict[str, Any]],
+    *,
+    max_tombstone_overhead_pct: float = 25.0,
+    max_offline_divergence_ops: int = 500,
+    require_causal_vector_convergence: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §4.4 & §10.2 — Audita edición colaborativa en tiempo real CRDT de la Wiki: convergencia causal del vector de estado, sobrecarga de tombstones sin recolectar (GC) y cola de operaciones offline sin fusionar."""
+    raw_items = crdt_documents if isinstance(crdt_documents, list) else []
+    valid_items = [item for item in raw_items if isinstance(item, dict)]
+
+    diverged_or_conflicted_doc_ids: list[str] = []
+    tombstone_or_offline_lag_doc_ids: list[str] = []
+    records: list[dict[str, Any]] = []
+    violations: list[str] = []
+    has_critical = False
+    has_warning = False
+
+    for idx, item in enumerate(valid_items):
+        doc_id = (
+            str(
+                item.get("doc_id") or item.get("id") or f"crdt-{idx + 1}"
+            ).strip()
+            or f"crdt-{idx + 1}"
+        )
+
+        raw_conv = item.get("causal_vector_converged", True)
+        causal_vector_converged = bool(True if raw_conv is None else raw_conv)
+
+        raw_tomb = item.get("tombstone_overhead_pct", 0.0)
+        tombstone_overhead_pct = max(
+            0.0, float(0.0 if raw_tomb is None else raw_tomb)
+        )
+
+        raw_ops = item.get("unmerged_offline_ops_count", 0)
+        unmerged_offline_ops_count = max(
+            0, int(0 if raw_ops is None else raw_ops)
+        )
+
+        raw_dup = item.get("duplicate_client_id_detected")
+        if raw_dup is None:
+            raw_dup = item.get("concurrent_Awareness_peers_lost", False)
+        duplicate_client_id_detected = bool(
+            False if raw_dup is None else raw_dup
+        )
+
+        causal_divergence_or_duplicate_client_breach = bool(
+            (require_causal_vector_convergence and not causal_vector_converged)
+            or duplicate_client_id_detected
+        )
+        tombstone_bloat_or_offline_ops_warning = bool(
+            tombstone_overhead_pct > max_tombstone_overhead_pct
+            or unmerged_offline_ops_count > max_offline_divergence_ops
+        )
+
+        if causal_divergence_or_duplicate_client_breach:
+            diverged_or_conflicted_doc_ids.append(doc_id)
+            has_critical = True
+            violations.append(
+                f"CRDT document '{doc_id}' has causal state-vector divergence or duplicate client ID collision."
+            )
+
+        if tombstone_bloat_or_offline_ops_warning:
+            tombstone_or_offline_lag_doc_ids.append(doc_id)
+            has_warning = True
+            violations.append(
+                f"CRDT document '{doc_id}' exceeds tombstone overhead ({tombstone_overhead_pct}%) or offline unmerged ops ({unmerged_offline_ops_count})."
+            )
+
+        records.append(
+            {
+                "doc_id": doc_id,
+                "causal_vector_converged": causal_vector_converged,
+                "tombstone_overhead_pct": tombstone_overhead_pct,
+                "unmerged_offline_ops_count": unmerged_offline_ops_count,
+                "duplicate_client_id_detected": duplicate_client_id_detected,
+                "causal_divergence_or_duplicate_client_breach": causal_divergence_or_duplicate_client_breach,
+                "tombstone_bloat_or_offline_ops_warning": tombstone_bloat_or_offline_ops_warning,
+            }
+        )
+
+    if has_critical:
+        status = "critical"
+        is_compliant = False
+    elif has_warning:
+        status = "warning"
+        is_compliant = False
+    else:
+        status = "healthy"
+        is_compliant = True
+
+    return {
+        "status": status,
+        "is_compliant": is_compliant,
+        "documents_evaluated": len(records),
+        "diverged_or_conflicted_doc_ids": diverged_or_conflicted_doc_ids,
+        "tombstone_or_offline_lag_doc_ids": tombstone_or_offline_lag_doc_ids,
+        "records": records,
+        "violations": violations,
+        "Violations": violations,
+    }
+
+
+WikiPMIService.audit_wiki_crdt_collaborative_editing_tombstone_gc_and_causal_vector_clock = staticmethod(
+    audit_wiki_crdt_collaborative_editing_tombstone_gc_and_causal_vector_clock
 )

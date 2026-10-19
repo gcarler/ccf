@@ -10918,7 +10918,6 @@ def test_audit_wiki_vector_embedding_hnsw_index_recall_and_drift_reindexing_stat
     )
 
 
-
 # ── audit_wiki_graph_backlink_reciprocity_and_orphan_clusters (PMBOK §4.4 & §10.2, pure helper) ──
 
 
@@ -11083,3 +11082,96 @@ def test_wiki_graph_empty_invalid_and_field_reversion():
         "knowledge_graph_status": "KNOWLEDGE_GRAPH_TOPOLOGY_OPTIMAL",
         "is_knowledge_graph_compliant": True,
     }
+
+
+def test_audit_wiki_crdt_collaborative_editing_tombstone_gc_and_causal_vector_clock_healthy():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_crdt_collaborative_editing_tombstone_gc_and_causal_vector_clock,
+    )
+
+    res = audit_wiki_crdt_collaborative_editing_tombstone_gc_and_causal_vector_clock(
+        [
+            {
+                "doc_id": "CRDT-CHARTER-01",
+                "causal_vector_converged": True,
+                "tombstone_overhead_pct": 8.5,
+                "unmerged_offline_ops_count": 40,
+                "duplicate_client_id_detected": False,
+            }
+        ]
+    )
+    assert res["status"] == "healthy"
+    assert res["is_compliant"] is True
+    assert res["documents_evaluated"] == 1
+    assert res["diverged_or_conflicted_doc_ids"] == []
+    assert res["tombstone_or_offline_lag_doc_ids"] == []
+    assert res["Violations"] == []
+
+
+def test_audit_wiki_crdt_collaborative_editing_tombstone_gc_and_causal_vector_clock_critical():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_crdt_collaborative_editing_tombstone_gc_and_causal_vector_clock,
+    )
+
+    res = audit_wiki_crdt_collaborative_editing_tombstone_gc_and_causal_vector_clock(
+        [
+            {
+                "doc_id": "CRDT-SPLIT-BRAIN",
+                "causal_vector_converged": False,
+                "tombstone_overhead_pct": 12.0,
+                "unmerged_offline_ops_count": 100,
+                "duplicate_client_id_detected": True,
+            }
+        ]
+    )
+    assert res["status"] == "critical"
+    assert res["is_compliant"] is False
+    assert res["diverged_or_conflicted_doc_ids"] == ["CRDT-SPLIT-BRAIN"]
+    assert len(res["Violations"]) >= 1
+
+
+def test_audit_wiki_crdt_collaborative_editing_tombstone_gc_and_causal_vector_clock_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_crdt_collaborative_editing_tombstone_gc_and_causal_vector_clock,
+    )
+
+    res = audit_wiki_crdt_collaborative_editing_tombstone_gc_and_causal_vector_clock(
+        [
+            {
+                "id": "CRDT-TOMBSTONE-BLOAT",
+                "causal_vector_converged": True,
+                "tombstone_overhead_pct": 38.0,
+                "unmerged_offline_ops_count": 820,
+                "duplicate_client_id_detected": False,
+            }
+        ],
+        max_tombstone_overhead_pct=25.0,
+        max_offline_divergence_ops=500,
+    )
+    assert res["status"] == "warning"
+    assert res["is_compliant"] is False
+    assert res["diverged_or_conflicted_doc_ids"] == []
+    assert res["tombstone_or_offline_lag_doc_ids"] == ["CRDT-TOMBSTONE-BLOAT"]
+    assert res["records"][0]["tombstone_bloat_or_offline_ops_warning"] is True
+
+
+def test_audit_wiki_crdt_collaborative_editing_tombstone_gc_and_causal_vector_clock_staticmethod_and_dunder_all():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_crdt_collaborative_editing_tombstone_gc_and_causal_vector_clock,
+    )
+
+    sample = [{"doc_id": "CRDT-1", "causal_vector_converged": True}]
+    assert (
+        WikiPMIService.audit_wiki_crdt_collaborative_editing_tombstone_gc_and_causal_vector_clock(
+            sample
+        )
+        == audit_wiki_crdt_collaborative_editing_tombstone_gc_and_causal_vector_clock(
+            sample
+        )
+    )
+    assert (
+        "audit_wiki_crdt_collaborative_editing_tombstone_gc_and_causal_vector_clock"
+        in mod.__all__
+    )

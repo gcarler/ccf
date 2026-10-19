@@ -11060,3 +11060,178 @@ def test_audit_commissioning_punch_list_a_items_and_holdback_multiplier_staticme
         in mod.__all__
     )
 
+
+
+# ── audit_jv_consortium_equity_split_and_deadlock_cure (PMBOK §12.1 & §9.3, pure helper) ──
+
+
+def test_jv_consortium_governance_optimal_agreements():
+    """JVs con equity == 100.0 (+/- 0.01), responsabilidad mancomunada, SLA <= 10 días y dilución activa -> 'JV_CONSORTIUM_GOVERNANCE_OPTIMAL'."""
+    import backend.services.project_lifecycle_pmi_service as lifecycle_module
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_jv_consortium_equity_split_and_deadlock_cure,
+    )
+
+    agreements = [
+        {
+            "jv_id": "JV-001",
+            "total_equity_share_pct": 100.0,
+            "joint_and_several_liability_bound": True,
+            "deadlock_escalation_days": 5,
+            "defaulting_partner_dilution_clause_active": True,
+        },
+        {
+            "jv_id": "JV-002",
+            # Defaults implícitos por campo: equity 100.0, True, 5 días, dilución True.
+        },
+    ]
+    res = audit_jv_consortium_equity_split_and_deadlock_cure(agreements)
+    assert res == {
+        "evaluated_jvs_count": 2,
+        "unbalanced_equity_or_unbound_liability_jv_ids": [],
+        "slow_deadlock_or_missing_dilution_jv_ids": [],
+        "jv_governance_status": "JV_CONSORTIUM_GOVERNANCE_OPTIMAL",
+        "is_jv_compliant": True,
+    }
+    # Equity dentro de la tolerancia +/- 0.01 (100.005 / 99.995) no es breach
+    at_tolerance = audit_jv_consortium_equity_split_and_deadlock_cure(
+        [{"jv_id": "JV-003", "total_equity_share_pct": 100.005}]
+    )
+    assert at_tolerance["jv_governance_status"] == "JV_CONSORTIUM_GOVERNANCE_OPTIMAL"
+    at_tolerance_below = audit_jv_consortium_equity_split_and_deadlock_cure(
+        [{"jv_id": "JV-003B", "total_equity_share_pct": 99.995}]
+    )
+    assert at_tolerance_below["jv_governance_status"] == "JV_CONSORTIUM_GOVERNANCE_OPTIMAL"
+    # Equity 100.01 excede la tolerancia en aritmética float (diff ≈ 0.0100000000093) -> breach literal
+    over_tolerance = audit_jv_consortium_equity_split_and_deadlock_cure(
+        [{"jv_id": "JV-003C", "total_equity_share_pct": 100.01}]
+    )
+    assert over_tolerance["jv_governance_status"] == "JV_EQUITY_OR_LIABILITY_BREACH"
+    # Escalación exactamente en el máximo 10 días no es warning (comparación estricta >)
+    at_sla = audit_jv_consortium_equity_split_and_deadlock_cure(
+        [{"jv_id": "JV-004", "deadlock_escalation_days": 10}]
+    )
+    assert at_sla["jv_governance_status"] == "JV_CONSORTIUM_GOVERNANCE_OPTIMAL"
+    assert (
+        ProjectLifecyclePMIService.audit_jv_consortium_equity_split_and_deadlock_cure(
+            agreements
+        )
+        == res
+    )
+    assert "audit_jv_consortium_equity_split_and_deadlock_cure" in lifecycle_module.__all__
+
+
+def test_jv_equity_or_liability_breach():
+    """Equity desviado > 0.01 de 100.0 o responsabilidad no mancomunada -> 'JV_EQUITY_OR_LIABILITY_BREACH' con precedencia sobre WARNING."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_jv_consortium_equity_split_and_deadlock_cure,
+    )
+
+    breach = audit_jv_consortium_equity_split_and_deadlock_cure(
+        [
+            {
+                "jv_id": "JV-OVER",
+                "total_equity_share_pct": 101.5,
+                "joint_and_several_liability_bound": True,
+            },
+            {
+                "jv_id": "JV-UNBOUND",
+                "total_equity_share_pct": 100.0,
+                "joint_and_several_liability_bound": False,
+            },
+        ]
+    )
+    assert breach["evaluated_jvs_count"] == 2
+    assert breach["unbalanced_equity_or_unbound_liability_jv_ids"] == [
+        "JV-OVER",
+        "JV-UNBOUND",
+    ]
+    assert breach["jv_governance_status"] == "JV_EQUITY_OR_LIABILITY_BREACH"
+    assert breach["is_jv_compliant"] is False
+
+    # Breach tiene precedencia aunque también haya JVs con SLA lento / dilución ausente
+    mixed = audit_jv_consortium_equity_split_and_deadlock_cure(
+        [
+            {"jv_id": "JV-SLOW-SLA", "deadlock_escalation_days": 21},
+            {"jv_id": "JV-OVER-2", "total_equity_share_pct": 103.3},
+        ]
+    )
+    assert mixed["jv_governance_status"] == "JV_EQUITY_OR_LIABILITY_BREACH"
+
+
+def test_jv_deadlock_or_dilution_warning():
+    """Escalación de deadlock > 10 días o cláusula de dilución inactiva (con equity/liabilidad limpios) -> 'JV_DEADLOCK_OR_DILUTION_WARNING'."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_jv_consortium_equity_split_and_deadlock_cure,
+    )
+
+    warning = audit_jv_consortium_equity_split_and_deadlock_cure(
+        [
+            {
+                "jv_id": "JV-SLOW-ESCALATION",
+                "deadlock_escalation_days": 12,
+                "defaulting_partner_dilution_clause_active": True,
+            },
+            {
+                "jv_id": "JV-NO-DILUTION",
+                "deadlock_escalation_days": 5,
+                "defaulting_partner_dilution_clause_active": False,
+            },
+        ]
+    )
+    assert warning["evaluated_jvs_count"] == 2
+    assert warning["unbalanced_equity_or_unbound_liability_jv_ids"] == []
+    assert warning["slow_deadlock_or_missing_dilution_jv_ids"] == [
+        "JV-SLOW-ESCALATION",
+        "JV-NO-DILUTION",
+    ]
+    assert warning["jv_governance_status"] == "JV_DEADLOCK_OR_DILUTION_WARNING"
+    assert warning["is_jv_compliant"] is False
+
+    custom = audit_jv_consortium_equity_split_and_deadlock_cure(
+        [{"jv_id": "JV-4", "deadlock_escalation_days": 8}],
+        max_deadlock_escalation_days=7,
+    )
+    assert custom["jv_governance_status"] == "JV_DEADLOCK_OR_DILUTION_WARNING"
+    assert custom["slow_deadlock_or_missing_dilution_jv_ids"] == ["JV-4"]
+
+
+def test_jv_empty_invalid_and_field_reversion():
+    """None / dicts inválidos se descartan; campos no numéricos/no bool revierten a defaults del spec."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_jv_consortium_equity_split_and_deadlock_cure,
+    )
+
+    empty_res = audit_jv_consortium_equity_split_and_deadlock_cure(None)
+    assert empty_res == {
+        "evaluated_jvs_count": 0,
+        "unbalanced_equity_or_unbound_liability_jv_ids": [],
+        "slow_deadlock_or_missing_dilution_jv_ids": [],
+        "jv_governance_status": "JV_CONSORTIUM_GOVERNANCE_OPTIMAL",
+        "is_jv_compliant": True,
+    }
+
+    invalid_res = audit_jv_consortium_equity_split_and_deadlock_cure(
+        ["no-dict", None, {"jv_id": "   "}, {"jv_id": 22}, {"deadlock_escalation_days": 30}]
+    )
+    assert invalid_res["evaluated_jvs_count"] == 0
+
+    bad_fields = audit_jv_consortium_equity_split_and_deadlock_cure(
+        [
+            {
+                "jv_id": "JV-BAD",
+                "total_equity_share_pct": "cien",
+                "joint_and_several_liability_bound": "sí",
+                "deadlock_escalation_days": None,
+                "defaulting_partner_dilution_clause_active": 1,
+            }
+        ]
+    )
+    assert bad_fields == {
+        "evaluated_jvs_count": 1,
+        "unbalanced_equity_or_unbound_liability_jv_ids": [],
+        "slow_deadlock_or_missing_dilution_jv_ids": [],
+        "jv_governance_status": "JV_CONSORTIUM_GOVERNANCE_OPTIMAL",
+        "is_jv_compliant": True,
+    }

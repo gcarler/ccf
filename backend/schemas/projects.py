@@ -3829,6 +3829,7 @@ __all__ = [
     "validate_monte_carlo_schedule_risk_p80_buffer_and_convergence",
     "validate_agile_hybrid_velocity_stability_and_wip_carryover",
     "validate_resource_leveling_overallocation_peak_and_float_consumption",
+    "validate_benefits_realization_npv_irr_payback_and_benefit_owner_alignment",
 ]
 
 
@@ -9470,4 +9471,116 @@ def validate_agile_hybrid_velocity_stability_and_wip_carryover(
         "velocity_wip_status": velocity_wip_status,
         "is_agile_flow_valid": velocity_wip_status
         == "AGILE_HYBRID_FLOW_OPTIMAL",
+    }
+
+
+def validate_benefits_realization_npv_irr_payback_and_benefit_owner_alignment(
+    benefit_cases: list[dict[str, Any]],
+    *,
+    min_npv_usd: float = 0.0,
+    min_irr_above_wacc_bps: float = 150.0,
+    max_payback_months: int = 36,
+    require_named_benefit_owner: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §1.2.6 & §4.1 — Valida realización de beneficios: Valor Presente Neto (NPV), tasa interna de retorno (IRR) sobre WACC en bps, período de recuperación (payback) y asignación de dueño de beneficio con línea base métrica."""
+    raw_items = benefit_cases if isinstance(benefit_cases, list) else []
+    valid_items = [item for item in raw_items if isinstance(item, dict)]
+
+    unviable_or_unowned_case_ids: list[str] = []
+    subhurdle_irr_or_payback_case_ids: list[str] = []
+    records: list[dict[str, Any]] = []
+    violations: list[str] = []
+    has_critical = False
+    has_warning = False
+
+    for idx, item in enumerate(valid_items):
+        case_id = (
+            str(item.get("case_id") or item.get("id") or f"ben-{idx + 1}").strip()
+            or f"ben-{idx + 1}"
+        )
+
+        raw_npv = item.get("npv_usd", 0.0)
+        npv_usd = float(0.0 if raw_npv is None else raw_npv)
+
+        raw_irr = item.get("irr_pct", 0.0)
+        irr_pct = float(0.0 if raw_irr is None else raw_irr)
+
+        raw_wacc = item.get("wacc_discount_rate_pct", 0.0)
+        wacc_discount_rate_pct = max(
+            0.0, float(0.0 if raw_wacc is None else raw_wacc)
+        )
+
+        raw_payback = item.get("payback_period_months", 0)
+        payback_period_months = max(
+            0, int(0 if raw_payback is None else raw_payback)
+        )
+
+        raw_owner = item.get("benefit_owner_id", "")
+        benefit_owner_id = str("" if raw_owner is None else raw_owner).strip()
+
+        raw_base = item.get("realization_metric_baseline_defined", True)
+        realization_metric_baseline_defined = bool(
+            True if raw_base is None else raw_base
+        )
+
+        irr_spread_bps = round((irr_pct - wacc_discount_rate_pct) * 100.0, 2)
+
+        negative_npv_or_unowned_benefit_breach = bool(
+            npv_usd < min_npv_usd
+            or (require_named_benefit_owner and not benefit_owner_id)
+            or not realization_metric_baseline_defined
+        )
+        irr_hurdle_or_payback_exceeded = bool(
+            irr_spread_bps < min_irr_above_wacc_bps
+            or payback_period_months > max_payback_months
+        )
+
+        if negative_npv_or_unowned_benefit_breach:
+            unviable_or_unowned_case_ids.append(case_id)
+            has_critical = True
+            violations.append(
+                f"Benefit case '{case_id}' has negative/sub-threshold NPV ({npv_usd}), missing benefit owner, or undefined realization baseline."
+            )
+
+        if irr_hurdle_or_payback_exceeded:
+            subhurdle_irr_or_payback_case_ids.append(case_id)
+            has_warning = True
+            violations.append(
+                f"Benefit case '{case_id}' IRR spread ({irr_spread_bps} bps) is below hurdle ({min_irr_above_wacc_bps} bps) or payback ({payback_period_months}m) exceeds {max_payback_months}m."
+            )
+
+        records.append(
+            {
+                "case_id": case_id,
+                "npv_usd": npv_usd,
+                "irr_pct": irr_pct,
+                "wacc_discount_rate_pct": wacc_discount_rate_pct,
+                "irr_spread_bps": irr_spread_bps,
+                "payback_period_months": payback_period_months,
+                "benefit_owner_id": benefit_owner_id,
+                "realization_metric_baseline_defined": realization_metric_baseline_defined,
+                "negative_npv_or_unowned_benefit_breach": negative_npv_or_unowned_benefit_breach,
+                "irr_hurdle_or_payback_exceeded": irr_hurdle_or_payback_exceeded,
+            }
+        )
+
+    if has_critical:
+        status = "critical"
+        is_valid = False
+    elif has_warning:
+        status = "warning"
+        is_valid = False
+    else:
+        status = "valid"
+        is_valid = True
+
+    return {
+        "is_valid": is_valid,
+        "status": status,
+        "cases_evaluated": len(records),
+        "unviable_or_unowned_case_ids": unviable_or_unowned_case_ids,
+        "subhurdle_irr_or_payback_case_ids": subhurdle_irr_or_payback_case_ids,
+        "records": records,
+        "violations": violations,
+        "Violations": violations,
     }

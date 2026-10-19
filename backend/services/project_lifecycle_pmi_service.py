@@ -3183,6 +3183,7 @@ __all__ = [
     "audit_force_majeure_relief_event_notice_and_duty_to_mitigate",
     "audit_stakeholder_escalation_sla_and_ombudsman_dispute_resolution",
     "audit_commissioning_punch_list_a_items_and_holdback_multiplier",
+    "audit_jv_consortium_equity_split_and_deadlock_cure",
     "ProjectLifecyclePMIService",
 ]
 
@@ -8477,3 +8478,83 @@ ProjectLifecyclePMIService.audit_commissioning_punch_list_a_items_and_holdback_m
 )
 
 
+def audit_jv_consortium_equity_split_and_deadlock_cure(
+    consortium_agreements: list[dict] | None,
+    *,
+    max_deadlock_escalation_days: int = 10,
+) -> dict:
+    """PMBOK §12.1 & §9.3 — Audita paridad de reparto equitativo, SLA de escalación de deadlock y ventana de cure del socio incumplidor en acuerdos de Joint Venture / consorcio."""
+    raw_items = consortium_agreements if isinstance(consortium_agreements, list) else []
+    valid_jvs: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_jv_id = item.get("jv_id")
+        if not isinstance(raw_jv_id, str) or not raw_jv_id.strip():
+            continue
+        valid_jvs.append(item)
+
+    def _bool(value, default):
+        return value if isinstance(value, bool) else default
+
+    def _int(value, default):
+        if isinstance(value, bool) or not isinstance(value, int):
+            return default
+        return value
+
+    def _float(value, default):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    unbalanced_equity_or_unbound_liability_jv_ids: list[str] = []
+    slow_deadlock_or_missing_dilution_jv_ids: list[str] = []
+
+    for agreement in valid_jvs:
+        jv_id = str(agreement.get("jv_id")).strip()
+        total_equity_share_pct = _float(
+            agreement.get("total_equity_share_pct"), 100.0
+        )
+        liability_bound = _bool(
+            agreement.get("joint_and_several_liability_bound"), True
+        )
+        deadlock_escalation_days = _int(
+            agreement.get("deadlock_escalation_days"), 5
+        )
+        dilution_clause_active = _bool(
+            agreement.get("defaulting_partner_dilution_clause_active"), True
+        )
+
+        if (
+            abs(float(total_equity_share_pct) - 100.0) > 0.01
+            or not bool(liability_bound)
+        ):
+            unbalanced_equity_or_unbound_liability_jv_ids.append(jv_id)
+
+        if (
+            int(deadlock_escalation_days)
+            > int(max_deadlock_escalation_days)
+            or not bool(dilution_clause_active)
+        ):
+            slow_deadlock_or_missing_dilution_jv_ids.append(jv_id)
+
+    if unbalanced_equity_or_unbound_liability_jv_ids:
+        jv_governance_status = "JV_EQUITY_OR_LIABILITY_BREACH"
+    elif slow_deadlock_or_missing_dilution_jv_ids:
+        jv_governance_status = "JV_DEADLOCK_OR_DILUTION_WARNING"
+    else:
+        jv_governance_status = "JV_CONSORTIUM_GOVERNANCE_OPTIMAL"
+
+    return {
+        "evaluated_jvs_count": len(valid_jvs),
+        "unbalanced_equity_or_unbound_liability_jv_ids": unbalanced_equity_or_unbound_liability_jv_ids,
+        "slow_deadlock_or_missing_dilution_jv_ids": slow_deadlock_or_missing_dilution_jv_ids,
+        "jv_governance_status": jv_governance_status,
+        "is_jv_compliant": jv_governance_status
+        == "JV_CONSORTIUM_GOVERNANCE_OPTIMAL",
+    }
+
+
+ProjectLifecyclePMIService.audit_jv_consortium_equity_split_and_deadlock_cure = staticmethod(
+    audit_jv_consortium_equity_split_and_deadlock_cure
+)

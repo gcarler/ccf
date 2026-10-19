@@ -9713,7 +9713,6 @@ def test_validate_resource_leveling_overallocation_peak_and_float_consumption_du
     )
 
 
-
 # ── validate_agile_hybrid_velocity_stability_and_wip_carryover (PMBOK §6.4 & §6.6, pure helper) ──
 
 
@@ -9879,3 +9878,99 @@ def test_agile_hybrid_empty_invalid_and_field_reversion():
         "velocity_wip_status": "AGILE_HYBRID_FLOW_OPTIMAL",
         "is_agile_flow_valid": True,
     }
+
+
+def test_validate_benefits_realization_npv_irr_payback_and_benefit_owner_alignment_valid():
+    from backend.schemas.projects import (
+        validate_benefits_realization_npv_irr_payback_and_benefit_owner_alignment,
+    )
+
+    res = validate_benefits_realization_npv_irr_payback_and_benefit_owner_alignment(
+        [
+            {
+                "case_id": "BEN-ERP-01",
+                "npv_usd": 450000.0,
+                "irr_pct": 14.5,
+                "wacc_discount_rate_pct": 9.0,
+                "payback_period_months": 24,
+                "benefit_owner_id": "VP-FIN-01",
+                "realization_metric_baseline_defined": True,
+            }
+        ]
+    )
+    assert res["is_valid"] is True
+    assert res["status"] == "valid"
+    assert res["cases_evaluated"] == 1
+    assert res["unviable_or_unowned_case_ids"] == []
+    assert res["subhurdle_irr_or_payback_case_ids"] == []
+    assert res["records"][0]["irr_spread_bps"] == 550.0
+    assert res["Violations"] == []
+
+
+def test_validate_benefits_realization_npv_irr_payback_and_benefit_owner_alignment_critical():
+    from backend.schemas.projects import (
+        validate_benefits_realization_npv_irr_payback_and_benefit_owner_alignment,
+    )
+
+    res = validate_benefits_realization_npv_irr_payback_and_benefit_owner_alignment(
+        [
+            {
+                "case_id": "BEN-NEG-NPV",
+                "npv_usd": -25000.0,
+                "irr_pct": 12.0,
+                "wacc_discount_rate_pct": 8.0,
+                "payback_period_months": 18,
+                "benefit_owner_id": "   ",
+                "realization_metric_baseline_defined": False,
+            }
+        ]
+    )
+    assert res["is_valid"] is False
+    assert res["status"] == "critical"
+    assert res["unviable_or_unowned_case_ids"] == ["BEN-NEG-NPV"]
+    assert len(res["Violations"]) >= 1
+
+
+def test_validate_benefits_realization_npv_irr_payback_and_benefit_owner_alignment_warning():
+    from backend.schemas.projects import (
+        validate_benefits_realization_npv_irr_payback_and_benefit_owner_alignment,
+    )
+
+    res = validate_benefits_realization_npv_irr_payback_and_benefit_owner_alignment(
+        [
+            {
+                "id": "BEN-SLOW-PAYBACK",
+                "npv_usd": 80000.0,
+                "irr_pct": 9.8,
+                "wacc_discount_rate_pct": 9.0,
+                "payback_period_months": 48,
+                "benefit_owner_id": "DIR-OPS-02",
+                "realization_metric_baseline_defined": True,
+            }
+        ],
+        min_irr_above_wacc_bps=150.0,
+        max_payback_months=36,
+    )
+    assert res["is_valid"] is False
+    assert res["status"] == "warning"
+    assert res["unviable_or_unowned_case_ids"] == []
+    assert res["subhurdle_irr_or_payback_case_ids"] == ["BEN-SLOW-PAYBACK"]
+    assert res["records"][0]["irr_hurdle_or_payback_exceeded"] is True
+
+
+def test_validate_benefits_realization_npv_irr_payback_and_benefit_owner_alignment_dunder_all():
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_benefits_realization_npv_irr_payback_and_benefit_owner_alignment,
+    )
+
+    empty = validate_benefits_realization_npv_irr_payback_and_benefit_owner_alignment(
+        []
+    )
+    assert empty["is_valid"] is True
+    assert empty["status"] == "valid"
+    assert empty["cases_evaluated"] == 0
+    assert (
+        "validate_benefits_realization_npv_irr_payback_and_benefit_owner_alignment"
+        in mod.__all__
+    )
