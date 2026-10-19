@@ -3062,6 +3062,7 @@ __all__ = [
     "audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene",
     "audit_markdown_data_lineage_dag_freshness_and_contract_hygiene",
     "audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene",
+    "audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene",
     "AnydocService",
 ]
 
@@ -10806,4 +10807,166 @@ AnyDocService.audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene 
 )
 AnydocService.audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene = staticmethod(
     audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene
+)
+
+
+def audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene(
+    markdown_text: str,
+    *,
+    max_unmitigated_cvss: float = 4.0,
+    require_mitre_technique: bool = True,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §10.2 — AnyDoc Markdown Threat Modeling STRIDE / MITRE ATT&CK Mapping & Residual Risk Owner Sign-Off Hygiene Auditor."""
+    normalized_max_cvss = min(max(float(max_unmitigated_cvss), 0.0), 10.0)
+    valid_stride_categories = {
+        "spoofing",
+        "tampering",
+        "repudiation",
+        "information_disclosure",
+        "denial_of_service",
+        "elevation_of_privilege",
+    }
+
+    text = markdown_text if isinstance(markdown_text, str) else ""
+    stripped = re.sub(r"```[\s\S]*?```|~~~[\s\S]*?~~~", "", text)
+
+    pattern = re.compile(
+        r"<!--\s*threat_model\s*:(.*?)-->", re.IGNORECASE | re.DOTALL
+    )
+    blocks: list[dict[str, Any]] = []
+    healthy_count = 0
+    warning_count = 0
+    critical_count = 0
+    unmitigated_high_cvss_count = 0
+    missing_risk_owner_count = 0
+    invalid_stride_count = 0
+    missing_mitre_count = 0
+
+    for idx, match in enumerate(pattern.finditer(stripped), start=1):
+        raw_body = match.group(1)
+        kv: dict[str, str] = {}
+        for part in re.split(r"[;\n]", raw_body):
+            if "=" in part:
+                k, v = part.split("=", 1)
+                kv[k.strip().lower()] = v.strip()
+
+        threat_id = kv.get("id") or f"TM-{idx}"
+        stride = kv.get("stride", "").strip().lower()
+        mitre = kv.get("mitre", "").strip()
+        try:
+            cvss = float(kv.get("cvss", "0.0"))
+        except (TypeError, ValueError):
+            cvss = 0.0
+        control = kv.get("control", "").strip()
+        threat_status = kv.get("status", "").strip().lower()
+        risk_owner = kv.get("risk_owner", "").strip()
+
+        control_missing = not control or control.lower() == "none"
+        invalid_stride_category = stride not in valid_stride_categories
+        missing_mitre_technique = bool(
+            require_mitre_technique
+            and not bool(re.match(r"^T\d+", mitre, re.IGNORECASE))
+        )
+        unmitigated_high_cvss = (
+            threat_status not in {"mitigated", "eliminated"}
+            and (cvss > normalized_max_cvss or control_missing)
+        )
+        missing_risk_owner_on_accepted = (
+            threat_status == "accepted"
+            and (not risk_owner or risk_owner.lower() == "none")
+        )
+
+        if unmitigated_high_cvss:
+            unmitigated_high_cvss_count += 1
+        if missing_risk_owner_on_accepted:
+            missing_risk_owner_count += 1
+        if invalid_stride_category:
+            invalid_stride_count += 1
+        if missing_mitre_technique:
+            missing_mitre_count += 1
+
+        if unmitigated_high_cvss or missing_risk_owner_on_accepted:
+            block_status = "critical"
+            critical_count += 1
+        elif (
+            invalid_stride_category
+            or missing_mitre_technique
+            or control_missing
+        ):
+            block_status = "warning"
+            warning_count += 1
+        else:
+            block_status = "healthy"
+            healthy_count += 1
+
+        blocks.append(
+            {
+                "id": threat_id,
+                "stride": stride,
+                "mitre": mitre,
+                "cvss": cvss,
+                "control": control,
+                "status": threat_status,
+                "risk_owner": risk_owner,
+                "invalid_stride_category": invalid_stride_category,
+                "missing_mitre_technique": missing_mitre_technique,
+                "unmitigated_high_cvss": unmitigated_high_cvss,
+                "missing_risk_owner_on_accepted": missing_risk_owner_on_accepted,
+                "block_status": block_status,
+            }
+        )
+
+    total_threat_blocks = len(blocks)
+    threat_hygiene_rate_pct = (
+        round((healthy_count / total_threat_blocks) * 100.0, 2)
+        if total_threat_blocks > 0
+        else 100.0
+    )
+
+    recommendations: list[str] = []
+    if unmitigated_high_cvss_count > 0:
+        recommendations.append(
+            f"Mitigar o eliminar amenazas con CVSS > {normalized_max_cvss} o sin control técnico asignado ({unmitigated_high_cvss_count} bloque(s))."
+        )
+    if missing_risk_owner_count > 0:
+        recommendations.append(
+            f"Asignar risk_owner explícito para riesgos residuales en estado 'accepted' ({missing_risk_owner_count} bloque(s))."
+        )
+    if invalid_stride_count > 0:
+        recommendations.append(
+            f"Clasificar amenazas usando categorías STRIDE canónicas en {invalid_stride_count} bloque(s)."
+        )
+    if missing_mitre_count > 0:
+        recommendations.append(
+            f"Vincular identificador de técnica MITRE ATT&CK (ej. T1068, T1190.001) en {missing_mitre_count} bloque(s)."
+        )
+
+    if critical_count > 0:
+        status = "critical"
+    elif warning_count > 0:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_threat_blocks": total_threat_blocks,
+        "healthy_count": healthy_count,
+        "warning_count": warning_count,
+        "critical_count": critical_count,
+        "unmitigated_high_cvss_count": unmitigated_high_cvss_count,
+        "missing_risk_owner_count": missing_risk_owner_count,
+        "invalid_stride_count": invalid_stride_count,
+        "missing_mitre_count": missing_mitre_count,
+        "threat_hygiene_rate_pct": threat_hygiene_rate_pct,
+        "status": status,
+        "blocks": blocks,
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene = staticmethod(
+    audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene
+)
+AnydocService.audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene = staticmethod(
+    audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene
 )

@@ -3032,6 +3032,7 @@ __all__ = [
     "audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window",
     "audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance",
     "audit_executive_report_fedramp_nist_800_53_poam_and_conmon_compliance",
+    "audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window",
     "ProjectExportService",
 ]
 
@@ -9824,4 +9825,115 @@ def audit_executive_report_fedramp_nist_800_53_poam_and_conmon_compliance(
 
 ProjectExportService.audit_executive_report_fedramp_nist_800_53_poam_and_conmon_compliance = staticmethod(
     audit_executive_report_fedramp_nist_800_53_poam_and_conmon_compliance
+)
+
+
+def audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window(
+    security_patches_overdue_35d_without_mitigation_plan: int,
+    unauthenticated_esp_electronic_access_points: int,
+    transient_cyber_assets_unscanned_count: int = 0,
+    *,
+    cip_004_background_check_or_revocation_24h_breach: bool = False,
+    cip_010_baseline_configuration_drift_count: int = 0,
+    bes_impact_rating: str = "HIGH",
+) -> dict[str, Any]:
+    """PMBOK §10.2 & §11.6 — Audita el executive report NERC CIP (CIP-004/005/007/010) del Bulk Electric System: parches de seguridad fuera de la ventana de 35 días sin plan de mitigación (CIP-007), puntos de acceso electrónico del ESP sin autenticación (CIP-005), activos transitorios sin escanear y drift de baseline de configuración (CIP-010), breach de background check/revocación en 24 h (CIP-004), ponderado por el impact rating BES.
+
+    - Coerción: enteros inválidos/negativos a >= 0; bools inválidos a su
+      default (False); `bes_impact_rating` normalizado con strip/upper a
+      {'HIGH', 'MEDIUM', 'LOW'} (default 'HIGH' si queda fuera del conjunto).
+    - `cip_007_patch_35d_violation` = parches sin plan > 0.
+    - `cip_005_esp_perimeter_breach` = puntos ESP sin autenticar > 0.
+    - `cip_010_tca_or_baseline_drift_detected` = TCA sin escanear > 0 o
+      drift de baseline > 0.
+    - `severe_nerc_violation_triggered` = breach ESP, breach CIP-004,
+      parche violado con rating HIGH/MEDIUM, o TCA sin escanear con HIGH
+      (brecha crítica, precedencia CRITICAL).
+    - `nerc_cip_readiness_score_pct` = 100 - 25 por parche, 45 por punto
+      ESP, 15 por TCA, 35 si CIP-004 breached, 10 por drift (floor 0, 2 dec).
+    - Estados: 'CRITICAL_NERC_CIP_ESP_PERIMETER_OR_BES_PATCH_SLA_BREACH' |
+      'NERC_CIP_BASELINE_DRIFT_OR_LOW_IMPACT_PATCH_WARNING' |
+      'NERC_CIP_BES_ESP_COMPLIANT_CLEAN'.
+    """
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _clamp_non_negative_int(value: Any, default: int) -> int:
+        if isinstance(value, bool) or not isinstance(value, int):
+            return default
+        return max(0, value)
+
+    patches_overdue = _clamp_non_negative_int(
+        security_patches_overdue_35d_without_mitigation_plan, 0
+    )
+    esp_breach_points = _clamp_non_negative_int(
+        unauthenticated_esp_electronic_access_points, 0
+    )
+    tca_unscanned = _clamp_non_negative_int(
+        transient_cyber_assets_unscanned_count, 0
+    )
+    cip004_breach = _bool(
+        cip_004_background_check_or_revocation_24h_breach, False
+    )
+    baseline_drift = _clamp_non_negative_int(
+        cip_010_baseline_configuration_drift_count, 0
+    )
+
+    raw_rating = (
+        str(bes_impact_rating).strip().upper()
+        if isinstance(bes_impact_rating, str)
+        else bes_impact_rating
+    )
+    normalized_bes_impact_rating = (
+        raw_rating if raw_rating in {"HIGH", "MEDIUM", "LOW"} else "HIGH"
+    )
+
+    cip_007_patch_35d_violation = patches_overdue > 0
+    cip_005_esp_perimeter_breach = esp_breach_points > 0
+    cip_010_tca_or_baseline_drift_detected = (
+        tca_unscanned > 0 or baseline_drift > 0
+    )
+
+    severe_nerc_violation_triggered = (
+        cip_005_esp_perimeter_breach
+        or cip004_breach
+        or (
+            cip_007_patch_35d_violation
+            and normalized_bes_impact_rating in {"HIGH", "MEDIUM"}
+        )
+        or (tca_unscanned > 0 and normalized_bes_impact_rating == "HIGH")
+    )
+
+    nerc_cip_readiness_score_pct = round(
+        max(
+            0.0,
+            100.0
+            - (patches_overdue * 25.0)
+            - (esp_breach_points * 45.0)
+            - (tca_unscanned * 15.0)
+            - (35.0 if cip004_breach else 0.0)
+            - (baseline_drift * 10.0),
+        ),
+        2,
+    )
+
+    if severe_nerc_violation_triggered:
+        nerc_cip_compliance_status = "CRITICAL_NERC_CIP_ESP_PERIMETER_OR_BES_PATCH_SLA_BREACH"
+    elif cip_007_patch_35d_violation or cip_010_tca_or_baseline_drift_detected:
+        nerc_cip_compliance_status = "NERC_CIP_BASELINE_DRIFT_OR_LOW_IMPACT_PATCH_WARNING"
+    else:
+        nerc_cip_compliance_status = "NERC_CIP_BES_ESP_COMPLIANT_CLEAN"
+
+    return {
+        "normalized_bes_impact_rating": normalized_bes_impact_rating,
+        "cip_007_patch_35d_violation": cip_007_patch_35d_violation,
+        "cip_005_esp_perimeter_breach": cip_005_esp_perimeter_breach,
+        "cip_010_tca_or_baseline_drift_detected": cip_010_tca_or_baseline_drift_detected,
+        "nerc_cip_readiness_score_pct": nerc_cip_readiness_score_pct,
+        "nerc_cip_compliance_status": nerc_cip_compliance_status,
+    }
+
+
+ProjectExportService.audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window = staticmethod(
+    audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window
 )

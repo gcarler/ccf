@@ -13651,3 +13651,162 @@ def test_fedramp_poam_conmon_field_coercion_and_static_equality():
         "unapproved_significant_change_requests": 0,
         "fedramp_compliance_status": "FEDRAMP_CONMON_ATO_COMPLIANT_CLEAN",
     }
+
+
+def test_nerc_cip_bes_esp_35d_clean():
+    """Sin parches vencidos, ESP íntegro, TCA escaneados y CIP-004 ok -> 'NERC_CIP_BES_ESP_COMPLIANT_CLEAN'."""
+    import backend.services.project_export_service as export_module
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window,
+    )
+
+    res = audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window(
+        0, 0, 0,
+    )
+    assert res == {
+        "normalized_bes_impact_rating": "HIGH",
+        "cip_007_patch_35d_violation": False,
+        "cip_005_esp_perimeter_breach": False,
+        "cip_010_tca_or_baseline_drift_detected": False,
+        "nerc_cip_readiness_score_pct": 100.0,
+        "nerc_cip_compliance_status": "NERC_CIP_BES_ESP_COMPLIANT_CLEAN",
+    }
+    # Rating normalizado con strip/upper: ' low ' -> 'LOW'.
+    normalized = audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window(
+        0, 0, 0, bes_impact_rating="  low "
+    )
+    assert normalized["normalized_bes_impact_rating"] == "LOW"
+    assert normalized["nerc_cip_compliance_status"] == "NERC_CIP_BES_ESP_COMPLIANT_CLEAN"
+    assert (
+        ProjectExportService.audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window(
+            0, 0, 0
+        )
+        == res
+    )
+    assert "audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window" in export_module.__all__
+
+
+def test_nerc_cip_bes_esp_low_impact_warning():
+    """Parche vencido con rating LOW (no severity gate) o drift de CIP-010 -> 'NERC_CIP_BASELINE_DRIFT_OR_LOW_IMPACT_PATCH_WARNING'."""
+    from backend.services.project_export_service import (
+        audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window,
+    )
+
+    # Parche 1 con LOW: violación CIP-007 sin severidad HIGH/MEDIUM -> WARNING
+    # (score 100 - 25 = 75).
+    low_impact_patch = audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window(
+        1, 0, 0, bes_impact_rating="LOW",
+    )
+    assert low_impact_patch["cip_007_patch_35d_violation"] is True
+    assert low_impact_patch["nerc_cip_readiness_score_pct"] == 75.0
+    assert low_impact_patch["nerc_cip_compliance_status"] == "NERC_CIP_BASELINE_DRIFT_OR_LOW_IMPACT_PATCH_WARNING"
+
+    # Drift de baseline CIP-010 sin parches -> WARNING (score 100 - 10 = 90).
+    baseline_drift = audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window(
+        0, 0, 0, cip_010_baseline_configuration_drift_count=1,
+    )
+    assert baseline_drift["cip_010_tca_or_baseline_drift_detected"] is True
+    assert baseline_drift["nerc_cip_readiness_score_pct"] == 90.0
+    assert baseline_drift["nerc_cip_compliance_status"] == "NERC_CIP_BASELINE_DRIFT_OR_LOW_IMPACT_PATCH_WARNING"
+
+    # TCA sin escanear con rating LOW: flag detectada, sin severidad HIGH -> WARNING.
+    tca_low = audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window(
+        0, 0, 2, bes_impact_rating="LOW",
+    )
+    assert tca_low["cip_010_tca_or_baseline_drift_detected"] is True
+    assert tca_low["nerc_cip_readiness_score_pct"] == 70.0  # 100 - 2*15
+    assert tca_low["nerc_cip_compliance_status"] == "NERC_CIP_BASELINE_DRIFT_OR_LOW_IMPACT_PATCH_WARNING"
+
+
+def test_nerc_cip_bes_esp_severe_violation_critical():
+    """ESP sin autenticar, CIP-004 breached, parches con HIGH/MEDIUM o TCA con HIGH -> CRITICAL."""
+    from backend.services.project_export_service import (
+        audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window,
+    )
+
+    esp_breach = audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window(
+        0, 1, 0,
+    )
+    assert esp_breach["cip_005_esp_perimeter_breach"] is True
+    assert esp_breach["nerc_cip_readiness_score_pct"] == 55.0  # 100 - 45
+    assert esp_breach["nerc_cip_compliance_status"] == "CRITICAL_NERC_CIP_ESP_PERIMETER_OR_BES_PATCH_SLA_BREACH"
+
+    cip004 = audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window(
+        0, 0, 0,
+        cip_004_background_check_or_revocation_24h_breach=True,
+    )
+    assert cip004["nerc_cip_readiness_score_pct"] == 65.0  # 100 - 35
+    assert cip004["nerc_cip_compliance_status"] == "CRITICAL_NERC_CIP_ESP_PERIMETER_OR_BES_PATCH_SLA_BREACH"
+
+    # Parche con HIGH: severidad dispara CRITICAL (score 75 pero status CRITICAL).
+    patch_high = audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window(
+        1, 0, 0, bes_impact_rating="HIGH",
+    )
+    assert patch_high["cip_007_patch_35d_violation"] is True
+    assert patch_high["nerc_cip_readiness_score_pct"] == 75.0
+    assert patch_high["nerc_cip_compliance_status"] == "CRITICAL_NERC_CIP_ESP_PERIMETER_OR_BES_PATCH_SLA_BREACH"
+
+    # Parche con MEDIUM: también cruza el gate HIGH/MEDIUM.
+    patch_medium = audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window(
+        1, 0, 0, bes_impact_rating="MEDIUM",
+    )
+    assert patch_medium["nerc_cip_compliance_status"] == "CRITICAL_NERC_CIP_ESP_PERIMETER_OR_BES_PATCH_SLA_BREACH"
+
+    # TCA sin escanear con HIGH: severidad dispara CRITICAL.
+    tca_high = audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window(
+        0, 0, 1, bes_impact_rating="HIGH",
+    )
+    assert tca_high["cip_010_tca_or_baseline_drift_detected"] is True
+    assert tca_high["nerc_cip_compliance_status"] == "CRITICAL_NERC_CIP_ESP_PERIMETER_OR_BES_PATCH_SLA_BREACH"
+
+    # Precedencia con floor: todo combinado -> score 0.0 con CRITICAL.
+    worst = audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window(
+        3, 2, 3,
+        cip_004_background_check_or_revocation_24h_breach=True,
+        cip_010_baseline_configuration_drift_count=4,
+        bes_impact_rating="HIGH",
+    )
+    assert worst["nerc_cip_readiness_score_pct"] == 0.0
+    assert worst["nerc_cip_compliance_status"] == "CRITICAL_NERC_CIP_ESP_PERIMETER_OR_BES_PATCH_SLA_BREACH"
+
+
+def test_nerc_cip_bes_esp_field_coercion_and_static_equality():
+    """Negativos e inválidos se clamp a >= 0; bools inválidos a False; rating inválido a 'HIGH'."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window,
+    )
+
+    coerced = audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window(
+        -5,    # negativo -> 0
+        -3,    # negativo -> 0
+        -2,    # negativo -> 0
+        cip_004_background_check_or_revocation_24h_breach="yes",   # no-bool -> False
+        cip_010_baseline_configuration_drift_count=-1,             # negativo -> 0
+    )
+    assert coerced == {
+        "normalized_bes_impact_rating": "HIGH",
+        "cip_007_patch_35d_violation": False,
+        "cip_005_esp_perimeter_breach": False,
+        "cip_010_tca_or_baseline_drift_detected": False,
+        "nerc_cip_readiness_score_pct": 100.0,
+        "nerc_cip_compliance_status": "NERC_CIP_BES_ESP_COMPLIANT_CLEAN",
+    }
+
+    reverted = audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window(
+        "three",     # no-int -> 0
+        2.5,         # no-int -> 0
+        True,        # bool excluida -> 0
+        cip_004_background_check_or_revocation_24h_breach=1,   # no-bool -> False
+        cip_010_baseline_configuration_drift_count=None,       # no-int -> 0
+        bes_impact_rating="CRITICAL",   # fuera de {HIGH, MEDIUM, LOW} -> "HIGH"
+    )
+    assert reverted == {
+        "normalized_bes_impact_rating": "HIGH",
+        "cip_007_patch_35d_violation": False,
+        "cip_005_esp_perimeter_breach": False,
+        "cip_010_tca_or_baseline_drift_detected": False,
+        "nerc_cip_readiness_score_pct": 100.0,
+        "nerc_cip_compliance_status": "NERC_CIP_BES_ESP_COMPLIANT_CLEAN",
+    }

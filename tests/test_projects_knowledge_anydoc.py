@@ -10409,3 +10409,91 @@ def test_audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene_empty
         "audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene"
         in mod.__all__
     )
+
+
+def test_audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene_healthy():
+    from backend.services.anydoc_service import (
+        audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene,
+    )
+
+    md = """
+    # Threat Modeling Matrix
+    <!-- threat_model: id=TM-101; stride=elevation_of_privilege; mitre=T1068; cvss=8.2; control=seccomp_bpf_profile; status=mitigated; risk_owner=ciso-team -->
+    <!-- threat_model: id=TM-102; stride=information_disclosure; mitre=T1190.001; cvss=3.1; control=tls13_mtls; status=accepted; risk_owner=platform-sec -->
+    """
+    res = audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene(md)
+    assert res["status"] == "healthy"
+    assert res["total_threat_blocks"] == 2
+    assert res["healthy_count"] == 2
+    assert res["warning_count"] == 0
+    assert res["critical_count"] == 0
+    assert res["threat_hygiene_rate_pct"] == 100.0
+    assert res["recommendations"] == []
+
+
+def test_audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene,
+    )
+
+    md = """
+    <!-- threat_model: id=TM-201; stride=unknown_stride; mitre=INVALID-99; cvss=6.5; control=waf_crs_rule; status=mitigated; risk_owner=sec-ops -->
+    """
+    res = audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene(md)
+    assert res["status"] == "warning"
+    assert res["total_threat_blocks"] == 1
+    assert res["warning_count"] == 1
+    assert res["critical_count"] == 0
+    assert res["invalid_stride_count"] == 1
+    assert res["missing_mitre_count"] == 1
+    assert res["blocks"][0]["block_status"] == "warning"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene_critical():
+    from backend.services.anydoc_service import (
+        audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene,
+    )
+
+    md = """
+    <!-- threat_model: id=TM-301; stride=tampering; mitre=T1565; cvss=9.1; control=none; status=accepted; risk_owner=none -->
+    """
+    res = audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene(md)
+    assert res["status"] == "critical"
+    assert res["total_threat_blocks"] == 1
+    assert res["critical_count"] == 1
+    assert res["unmitigated_high_cvss_count"] == 1
+    assert res["missing_risk_owner_count"] == 1
+    assert res["threat_hygiene_rate_pct"] == 0.0
+    assert res["blocks"][0]["block_status"] == "critical"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene_empty_and_binding():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene,
+    )
+
+    empty = audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene("")
+    assert empty["status"] == "healthy"
+    assert empty["total_threat_blocks"] == 0
+    assert empty["threat_hygiene_rate_pct"] == 100.0
+    assert (
+        AnyDocService.audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene(
+            ""
+        )
+        == empty
+    )
+    assert (
+        AnydocService.audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene(
+            ""
+        )
+        == empty
+    )
+    assert (
+        "audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene"
+        in mod.__all__
+    )

@@ -12600,3 +12600,116 @@ def test_audit_wiki_distributed_lock_fencing_token_and_split_brain_guard_empty_a
         "audit_wiki_distributed_lock_fencing_token_and_split_brain_guard"
         in mod.__all__
     )
+
+
+def test_audit_wiki_graphql_query_depth_alias_budget_and_introspection_guard_healthy():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_graphql_query_depth_alias_budget_and_introspection_guard,
+    )
+
+    queries = [
+        {
+            "query_id": "gql-wiki-page-fetch",
+            "ast_depth": 4,
+            "estimated_complexity_cost": 120,
+            "alias_count": 2,
+            "contains_schema_introspection": False,
+            "is_production_unauthenticated": False,
+            "cost_limiter_enforced_rejection": True,
+        },
+        {
+            "query_id": "gql-wiki-backlinks-tree",
+            "ast_depth": 6,
+            "estimated_complexity_cost": 450,
+            "alias_count": 5,
+            "contains_schema_introspection": False,
+            "is_production_unauthenticated": False,
+            "cost_limiter_enforced_rejection": True,
+        },
+    ]
+    res = audit_wiki_graphql_query_depth_alias_budget_and_introspection_guard(queries)
+    assert res["status"] == "healthy"
+    assert res["total_queries"] == 2
+    assert res["healthy_count"] == 2
+    assert res["warning_count"] == 0
+    assert res["critical_count"] == 0
+    assert res["graphql_shield_rate_pct"] == 100.0
+    assert res["recommendations"] == []
+
+
+def test_audit_wiki_graphql_query_depth_alias_budget_and_introspection_guard_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_graphql_query_depth_alias_budget_and_introspection_guard,
+    )
+
+    queries = [
+        {
+            "query_id": "gql-wiki-deep-rejected",
+            "ast_depth": 12,
+            "estimated_complexity_cost": 1500,
+            "alias_count": 22,
+            "contains_schema_introspection": False,
+            "is_production_unauthenticated": False,
+            "cost_limiter_enforced_rejection": True,
+        }
+    ]
+    res = audit_wiki_graphql_query_depth_alias_budget_and_introspection_guard(queries)
+    assert res["status"] == "warning"
+    assert res["total_queries"] == 1
+    assert res["warning_count"] == 1
+    assert res["critical_count"] == 0
+    assert res["depth_exceeded_count"] == 1
+    assert res["alias_amplification_count"] == 1
+    assert res["unblocked_dos_count"] == 0
+    assert res["queries"][0]["query_status"] == "warning"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_wiki_graphql_query_depth_alias_budget_and_introspection_guard_critical():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_graphql_query_depth_alias_budget_and_introspection_guard,
+    )
+
+    queries = [
+        {
+            "query_id": "gql-wiki-unblocked-dos-introspection",
+            "ast_depth": 14,
+            "estimated_complexity_cost": 3200,
+            "alias_count": 40,
+            "contains_schema_introspection": True,
+            "is_production_unauthenticated": True,
+            "cost_limiter_enforced_rejection": False,
+        }
+    ]
+    res = audit_wiki_graphql_query_depth_alias_budget_and_introspection_guard(queries)
+    assert res["status"] == "critical"
+    assert res["total_queries"] == 1
+    assert res["critical_count"] == 1
+    assert res["unauthenticated_introspection_count"] == 1
+    assert res["unblocked_dos_count"] == 1
+    assert res["graphql_shield_rate_pct"] == 0.0
+    assert res["queries"][0]["query_status"] == "critical"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_wiki_graphql_query_depth_alias_budget_and_introspection_guard_empty_and_binding():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_graphql_query_depth_alias_budget_and_introspection_guard,
+    )
+
+    empty = audit_wiki_graphql_query_depth_alias_budget_and_introspection_guard([])
+    assert empty["status"] == "healthy"
+    assert empty["total_queries"] == 0
+    assert empty["graphql_shield_rate_pct"] == 100.0
+    assert (
+        WikiPMIService.audit_wiki_graphql_query_depth_alias_budget_and_introspection_guard(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_wiki_graphql_query_depth_alias_budget_and_introspection_guard"
+        in mod.__all__
+    )

@@ -2562,6 +2562,7 @@ __all__ = [
     "audit_wiki_vector_rag_index_drift_and_acl_prefilter_guard",
     "audit_wiki_websocket_presence_backpressure_and_zombie_socket_hygiene",
     "audit_wiki_distributed_lock_fencing_token_and_split_brain_guard",
+    "audit_wiki_graphql_query_depth_alias_budget_and_introspection_guard",
     "WikiPMIService",
 ]
 
@@ -9481,4 +9482,167 @@ def audit_wiki_distributed_lock_fencing_token_and_split_brain_guard(
 
 WikiPMIService.audit_wiki_distributed_lock_fencing_token_and_split_brain_guard = staticmethod(
     audit_wiki_distributed_lock_fencing_token_and_split_brain_guard
+)
+
+
+def audit_wiki_graphql_query_depth_alias_budget_and_introspection_guard(
+    queries: list[dict[str, Any]],
+    *,
+    max_query_depth: int = 8,
+    max_complexity_cost: int = 1000,
+    max_aliases_per_query: int = 15,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §11.6 — Wiki GraphQL AST Query Depth, Alias Amplification Budget & Schema Introspection Leak Guard Auditor."""
+    normalized_max_depth = max(int(max_query_depth), 1)
+    normalized_max_cost = max(int(max_complexity_cost), 10)
+    normalized_max_aliases = max(int(max_aliases_per_query), 1)
+
+    raw_queries = queries if isinstance(queries, list) else []
+    evaluated_queries: list[dict[str, Any]] = []
+    healthy_count = 0
+    warning_count = 0
+    critical_count = 0
+    unauthenticated_introspection_count = 0
+    unblocked_dos_count = 0
+    depth_exceeded_count = 0
+    alias_amplification_count = 0
+
+    for idx, item in enumerate(raw_queries, start=1):
+        if not isinstance(item, dict):
+            continue
+        query_id = str(item.get("query_id") or f"gql-query-{idx}").strip()
+        raw_depth = item.get("ast_depth", 1)
+        try:
+            ast_depth = int(1 if raw_depth is None else raw_depth)
+        except (TypeError, ValueError):
+            ast_depth = 1
+
+        raw_cost = item.get("estimated_complexity_cost", 10)
+        try:
+            estimated_complexity_cost = int(10 if raw_cost is None else raw_cost)
+        except (TypeError, ValueError):
+            estimated_complexity_cost = 10
+
+        raw_aliases = item.get("alias_count", 0)
+        try:
+            alias_count = int(0 if raw_aliases is None else raw_aliases)
+        except (TypeError, ValueError):
+            alias_count = 0
+
+        contains_schema_introspection = bool(
+            item.get("contains_schema_introspection", False)
+        )
+        is_production_unauthenticated = bool(
+            item.get("is_production_unauthenticated", False)
+        )
+        cost_limiter_enforced_rejection = bool(
+            item.get("cost_limiter_enforced_rejection", True)
+        )
+
+        depth_limit_exceeded = ast_depth > normalized_max_depth
+        complexity_budget_exceeded = (
+            estimated_complexity_cost > normalized_max_cost
+        )
+        alias_amplification_detected = alias_count > normalized_max_aliases
+        unauthenticated_introspection_leak = (
+            contains_schema_introspection and is_production_unauthenticated
+        )
+        unblocked_dos_amplification = (
+            depth_limit_exceeded
+            or complexity_budget_exceeded
+            or alias_amplification_detected
+        ) and not cost_limiter_enforced_rejection
+
+        if unauthenticated_introspection_leak:
+            unauthenticated_introspection_count += 1
+        if unblocked_dos_amplification:
+            unblocked_dos_count += 1
+        if depth_limit_exceeded:
+            depth_exceeded_count += 1
+        if alias_amplification_detected:
+            alias_amplification_count += 1
+
+        if unauthenticated_introspection_leak or unblocked_dos_amplification:
+            query_status = "critical"
+            critical_count += 1
+        elif (
+            depth_limit_exceeded
+            or complexity_budget_exceeded
+            or alias_amplification_detected
+            or contains_schema_introspection
+        ):
+            query_status = "warning"
+            warning_count += 1
+        else:
+            query_status = "healthy"
+            healthy_count += 1
+
+        evaluated_queries.append(
+            {
+                "query_id": query_id,
+                "ast_depth": ast_depth,
+                "estimated_complexity_cost": estimated_complexity_cost,
+                "alias_count": alias_count,
+                "contains_schema_introspection": contains_schema_introspection,
+                "is_production_unauthenticated": is_production_unauthenticated,
+                "cost_limiter_enforced_rejection": cost_limiter_enforced_rejection,
+                "depth_limit_exceeded": depth_limit_exceeded,
+                "complexity_budget_exceeded": complexity_budget_exceeded,
+                "alias_amplification_detected": alias_amplification_detected,
+                "unauthenticated_introspection_leak": unauthenticated_introspection_leak,
+                "unblocked_dos_amplification": unblocked_dos_amplification,
+                "query_status": query_status,
+            }
+        )
+
+    total_queries = len(evaluated_queries)
+    graphql_shield_rate_pct = (
+        round((healthy_count / total_queries) * 100.0, 2)
+        if total_queries > 0
+        else 100.0
+    )
+
+    recommendations: list[str] = []
+    if unauthenticated_introspection_count > 0:
+        recommendations.append(
+            f"Deshabilitar introspección de esquema GraphQL (__schema/__type) para tráfico no autenticado en producción ({unauthenticated_introspection_count} consulta(s))."
+        )
+    if unblocked_dos_count > 0:
+        recommendations.append(
+            f"Activar rechazo estricto en el cost/depth limiter antes de ejecutar resolvers para {unblocked_dos_count} consulta(s) con amplificación DoS."
+        )
+    if depth_exceeded_count > 0:
+        recommendations.append(
+            f"Restringir profundidad AST GraphQL <= {normalized_max_depth} niveles en {depth_exceeded_count} consulta(s)."
+        )
+    if alias_amplification_count > 0:
+        recommendations.append(
+            f"Limitar número de alias por operación GraphQL <= {normalized_max_aliases} para prevenir ataques de batching/alias amplification ({alias_amplification_count} consulta(s))."
+        )
+
+    if critical_count > 0:
+        status = "critical"
+    elif warning_count > 0:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_queries": total_queries,
+        "healthy_count": healthy_count,
+        "warning_count": warning_count,
+        "critical_count": critical_count,
+        "unauthenticated_introspection_count": unauthenticated_introspection_count,
+        "unblocked_dos_count": unblocked_dos_count,
+        "depth_exceeded_count": depth_exceeded_count,
+        "alias_amplification_count": alias_amplification_count,
+        "graphql_shield_rate_pct": graphql_shield_rate_pct,
+        "status": status,
+        "queries": evaluated_queries,
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_graphql_query_depth_alias_budget_and_introspection_guard = staticmethod(
+    audit_wiki_graphql_query_depth_alias_budget_and_introspection_guard
 )
