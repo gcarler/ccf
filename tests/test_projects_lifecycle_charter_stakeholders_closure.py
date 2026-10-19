@@ -11477,3 +11477,114 @@ def test_audit_dlp_warranty_callout_sla_and_retention_bond_stepdown_staticmethod
         in mod.__all__
     )
 
+
+def test_audit_software_escrow_deposit_verification_and_release_trigger_verified():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_software_escrow_deposit_verification_and_release_trigger,
+    )
+
+    res = audit_software_escrow_deposit_verification_and_release_trigger(
+        escrow_deposits=[
+            {
+                "deposit_id": "ESC-CORE-V4",
+                "days_since_last_deposit": 12,
+                "clean_room_reproducible_build_verified": True,
+                "cryptographic_sbom_hash_matched": True,
+                "vendor_insolvency_or_sla_abandonment_triggered": False,
+                "beneficiary_release_executed": False,
+            },
+            {
+                "deposit_id": "ESC-LEGACY-V2",
+                "days_since_last_deposit": 5,
+                "clean_room_reproducible_build_verified": True,
+                "cryptographic_sbom_hash_matched": True,
+                "vendor_insolvency_or_sla_abandonment_triggered": True,
+                "beneficiary_release_executed": True,
+            },
+        ],
+        max_deposit_staleness_days=30,
+    )
+    assert res["is_valid"] is True
+    assert res["total_deposits"] == 2
+    assert res["unverified_build_or_hash_deposits"] == []
+    assert res["stale_escrow_deposits"] == []
+    assert res["blocked_release_trigger_deposits"] == []
+    assert res["escrow_governance_status"] == "ESCROW_CONTINUITY_VERIFIED"
+
+
+def test_audit_software_escrow_deposit_verification_and_release_trigger_critical_breach():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_software_escrow_deposit_verification_and_release_trigger,
+    )
+
+    res = audit_software_escrow_deposit_verification_and_release_trigger(
+        escrow_deposits=[
+            {
+                "deposit_id": "ESC-BROKEN-BUILD",
+                "days_since_last_deposit": 10,
+                "clean_room_reproducible_build_verified": False,
+                "cryptographic_sbom_hash_matched": True,
+                "vendor_insolvency_or_sla_abandonment_triggered": True,
+                "beneficiary_release_executed": False,
+            }
+        ]
+    )
+    assert res["is_valid"] is False
+    assert res["unverified_build_or_hash_deposits"] == ["ESC-BROKEN-BUILD"]
+    assert res["blocked_release_trigger_deposits"] == ["ESC-BROKEN-BUILD"]
+    assert res["escrow_governance_status"] == "CRITICAL_UNVERIFIED_BUILD_OR_BLOCKED_RELEASE"
+
+
+def test_audit_software_escrow_deposit_verification_and_release_trigger_stale_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_software_escrow_deposit_verification_and_release_trigger,
+    )
+
+    res = audit_software_escrow_deposit_verification_and_release_trigger(
+        escrow_deposits=[
+            {
+                "deposit_id": "ESC-STALE-01",
+                "days_since_last_deposit": 45,
+                "clean_room_reproducible_build_verified": True,
+                "cryptographic_sbom_hash_matched": True,
+            }
+        ],
+        max_deposit_staleness_days=30,
+    )
+    assert res["is_valid"] is False
+    assert res["unverified_build_or_hash_deposits"] == []
+    assert res["stale_escrow_deposits"] == ["ESC-STALE-01"]
+    assert res["blocked_release_trigger_deposits"] == []
+    assert res["escrow_governance_status"] == "STALE_DEPOSIT_SYNC_WARNING"
+
+
+def test_audit_software_escrow_deposit_verification_and_release_trigger_staticmethod_and_dunder_all():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_software_escrow_deposit_verification_and_release_trigger,
+    )
+
+    empty = audit_software_escrow_deposit_verification_and_release_trigger([])
+    assert empty["is_valid"] is False
+    assert empty["escrow_governance_status"] == "CRITICAL_UNVERIFIED_BUILD_OR_BLOCKED_RELEASE"
+
+    sample = [
+        {
+            "deposit_id": "ESC-1",
+            "days_since_last_deposit": 5,
+            "clean_room_reproducible_build_verified": True,
+            "cryptographic_sbom_hash_matched": True,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_software_escrow_deposit_verification_and_release_trigger(
+            sample
+        )
+        == audit_software_escrow_deposit_verification_and_release_trigger(sample)
+    )
+    assert (
+        "audit_software_escrow_deposit_verification_and_release_trigger"
+        in mod.__all__
+    )
+

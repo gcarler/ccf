@@ -3023,6 +3023,7 @@ __all__ = [
     "audit_executive_report_xbrl_taxonomy_and_financial_rounding_parity",
     "audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance",
     "audit_executive_report_esg_ghg_scope_emissions_and_sbti_compliance",
+    "audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance",
     "ProjectExportService",
 ]
 
@@ -8877,4 +8878,90 @@ def audit_executive_report_esg_ghg_scope_emissions_and_sbti_compliance(
 
 ProjectExportService.audit_executive_report_esg_ghg_scope_emissions_and_sbti_compliance = staticmethod(
     audit_executive_report_esg_ghg_scope_emissions_and_sbti_compliance
+)
+def audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance(
+    archives: list[dict[str, Any]] | None,
+    *,
+    max_dsar_fulfillment_days: int = 30,
+) -> dict[str, Any]:
+    """PMBOK §10.2 & §12.3 — Audita DSAR GDPR/CCPA: SLA de respuesta, verificación de right-to-erasure por crypto-shredding (KEK) y overón del legal hold en litigio (anti-spoliation).
+
+    Cada archivo válido declara `archive_id` (str no vacío), solicitud de
+    borrado (`erasure_requested`, default False), hold activo de litigio
+    (`active_litigation_legal_hold`, default False), clave KEK triturada
+    (`kek_crypto_shredded`, default False) y días de respuesta DSAR
+    (`dsar_response_days`, default 10):
+    - `unlawful_destruction_or_unerased_pii_archive_ids`: spoliation si se
+      trituró el KEK estando en legal hold, O PII sin borrar con solicitud de
+      borrado activa y sin hold (brecha crítica, precedencia).
+    - `dsar_sla_breach_archive_ids`: días de respuesta DSAR > SLA máximo
+      (estricto; == SLA es OK).
+    - Estados: 'CRITICAL_SPOLIATION_OR_ERASURE_BREACH' |
+      'DSAR_RESPONSE_SLA_WARNING' | 'PRIVACY_LEGAL_HOLD_COMPLIANT'.
+    - `is_privacy_retention_compliant`: solo con estado COMPLIANT.
+    """
+    raw_items = archives if isinstance(archives, list) else []
+    valid_archives: list[dict[str, Any]] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_archive_id = item.get("archive_id")
+        if not isinstance(raw_archive_id, str) or not raw_archive_id.strip():
+            continue
+        valid_archives.append(item)
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _int(value: Any, default: int) -> int:
+        if isinstance(value, bool) or not isinstance(value, int):
+            return default
+        return value
+
+    spoliation_or_erasure_ids: list[str] = []
+    dsar_sla_breach_archive_ids: list[str] = []
+
+    for archive in valid_archives:
+        archive_id = str(archive.get("archive_id")).strip()
+        erasure_requested = _bool(
+            archive.get("erasure_requested"), False
+        )
+        legal_hold = _bool(
+            archive.get("active_litigation_legal_hold"), False
+        )
+        kek_shredded = _bool(archive.get("kek_crypto_shredded"), False)
+        dsar_response_days = _int(archive.get("dsar_response_days"), 10)
+
+        spoliation_under_hold = bool(legal_hold) and bool(kek_shredded)
+        unerased_when_due = (
+            bool(erasure_requested)
+            and (not bool(legal_hold))
+            and (not bool(kek_shredded))
+        )
+
+        if spoliation_under_hold or unerased_when_due:
+            spoliation_or_erasure_ids.append(archive_id)
+
+        if int(dsar_response_days) > int(max_dsar_fulfillment_days):
+            dsar_sla_breach_archive_ids.append(archive_id)
+
+    if spoliation_or_erasure_ids:
+        privacy_retention_status = "CRITICAL_SPOLIATION_OR_ERASURE_BREACH"
+    elif dsar_sla_breach_archive_ids:
+        privacy_retention_status = "DSAR_RESPONSE_SLA_WARNING"
+    else:
+        privacy_retention_status = "PRIVACY_LEGAL_HOLD_COMPLIANT"
+
+    return {
+        "evaluated_archive_count": len(valid_archives),
+        "unlawful_destruction_or_unerased_pii_archive_ids": spoliation_or_erasure_ids,
+        "dsar_sla_breach_archive_ids": dsar_sla_breach_archive_ids,
+        "privacy_retention_status": privacy_retention_status,
+        "is_privacy_retention_compliant": privacy_retention_status
+        == "PRIVACY_LEGAL_HOLD_COMPLIANT",
+    }
+
+
+ProjectExportService.audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance = staticmethod(
+    audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance
 )

@@ -12093,3 +12093,162 @@ def test_esg_empty_invalid_units_and_field_reversion():
         "esg_ghg_disclosure_status": "ESG_GHG_DISCLOSURE_COMPLIANT",
         "is_esg_ghg_disclosure_compliant": True,
     }
+
+
+# ── audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance (PMBOK §10.2 & §12.3, pure helper) ──
+
+
+def test_dsar_legal_hold_compliant_archives():
+    """Archivos default (sin borrado, sin hold, KEK intacto, DSAR 10 días) -> 'PRIVACY_LEGAL_HOLD_COMPLIANT'."""
+    import backend.services.project_export_service as export_module
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance,
+    )
+
+    archives = [
+        {
+            "archive_id": "ARC-001",
+            "erasure_requested": False,
+            "active_litigation_legal_hold": False,
+            "kek_crypto_shredded": False,
+            "dsar_response_days": 10,
+        },
+        {
+            "archive_id": "ARC-002",
+            # Defaults implícitos por campo: borrado False, hold False, KEK False, DSAR 10 días.
+        },
+    ]
+    res = audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance(archives)
+    assert res == {
+        "evaluated_archive_count": 2,
+        "unlawful_destruction_or_unerased_pii_archive_ids": [],
+        "dsar_sla_breach_archive_ids": [],
+        "privacy_retention_status": "PRIVACY_LEGAL_HOLD_COMPLIANT",
+        "is_privacy_retention_compliant": True,
+    }
+    # DSAR exactamente en el SLA 30 no es breach (comparación estricta >)
+    at_sla = audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance(
+        [{"archive_id": "ARC-003", "dsar_response_days": 30}]
+    )
+    assert at_sla["privacy_retention_status"] == "PRIVACY_LEGAL_HOLD_COMPLIANT"
+    assert (
+        ProjectExportService.audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance(
+            archives
+        )
+        == res
+    )
+    assert "audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance" in export_module.__all__
+
+
+def test_dsar_critical_spoliation_or_erasure_breach():
+    """KEK triturado bajo legal hold (spoliation) o PII sin borrar con borrado solicitado sin hold -> 'CRITICAL_SPOLIATION_OR_ERASURE_BREACH' con precedencia."""
+    from backend.services.project_export_service import (
+        audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance,
+    )
+
+    breach = audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance(
+        [
+            {
+                "archive_id": "ARC-SPOLIATION",
+                "active_litigation_legal_hold": True,
+                "kek_crypto_shredded": True,
+            },
+            {
+                "archive_id": "ARC-UNERASED",
+                "erasure_requested": True,
+                "active_litigation_legal_hold": False,
+                "kek_crypto_shredded": False,
+            },
+        ]
+    )
+    assert breach["evaluated_archive_count"] == 2
+    assert breach["unlawful_destruction_or_unerased_pii_archive_ids"] == [
+        "ARC-SPOLIATION",
+        "ARC-UNERASED",
+    ]
+    assert breach["privacy_retention_status"] == "CRITICAL_SPOLIATION_OR_ERASURE_BREACH"
+    assert breach["is_privacy_retention_compliant"] is False
+
+    # Breach precede aunque también haya DSAR fuera de SLA
+    mixed = audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance(
+        [
+            {"archive_id": "ARC-SLA-LATE", "dsar_response_days": 45},
+            {"archive_id": "ARC-SPOLIATION-2", "active_litigation_legal_hold": True, "kek_crypto_shredded": True},
+        ]
+    )
+    assert mixed["dsar_sla_breach_archive_ids"] == ["ARC-SLA-LATE"]
+    assert mixed["privacy_retention_status"] == "CRITICAL_SPOLIATION_OR_ERASURE_BREACH"
+
+    # Borrado solicitado bajo legal hold y KEK intacto no es breach ni unerased (hold exime)
+    hold_exemption = audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance(
+        [{"archive_id": "ARC-HOLD", "erasure_requested": True, "active_litigation_legal_hold": True}]
+    )
+    assert hold_exemption["unlawful_destruction_or_unerased_pii_archive_ids"] == []
+    assert hold_exemption["privacy_retention_status"] == "PRIVACY_LEGAL_HOLD_COMPLIANT"
+
+
+def test_dsar_sla_breach_warning():
+    """Días de respuesta DSAR > 30 (sin spoliation/erasure) -> 'DSAR_RESPONSE_SLA_WARNING'."""
+    from backend.services.project_export_service import (
+        audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance,
+    )
+
+    warning = audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance(
+        [
+            {"archive_id": "ARC-LATE-1", "dsar_response_days": 31},
+            {"archive_id": "ARC-LATE-2", "dsar_response_days": 60},
+        ]
+    )
+    assert warning["evaluated_archive_count"] == 2
+    assert warning["unlawful_destruction_or_unerased_pii_archive_ids"] == []
+    assert warning["dsar_sla_breach_archive_ids"] == ["ARC-LATE-1", "ARC-LATE-2"]
+    assert warning["privacy_retention_status"] == "DSAR_RESPONSE_SLA_WARNING"
+    assert warning["is_privacy_retention_compliant"] is False
+
+    custom = audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance(
+        [{"archive_id": "ARC-3", "dsar_response_days": 15}],
+        max_dsar_fulfillment_days=14,
+    )
+    assert custom["privacy_retention_status"] == "DSAR_RESPONSE_SLA_WARNING"
+    assert custom["dsar_sla_breach_archive_ids"] == ["ARC-3"]
+
+
+def test_dsar_empty_invalid_archives_and_field_reversion():
+    """None / dicts inválidos se descartan; campos no numéricos/no bool revierten a defaults del spec."""
+    from backend.services.project_export_service import (
+        audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance,
+    )
+
+    empty_res = audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance(None)
+    assert empty_res == {
+        "evaluated_archive_count": 0,
+        "unlawful_destruction_or_unerased_pii_archive_ids": [],
+        "dsar_sla_breach_archive_ids": [],
+        "privacy_retention_status": "PRIVACY_LEGAL_HOLD_COMPLIANT",
+        "is_privacy_retention_compliant": True,
+    }
+
+    invalid_res = audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance(
+        ["no-dict", None, {"archive_id": "   "}, {"archive_id": 44}]
+    )
+    assert invalid_res["evaluated_archive_count"] == 0
+
+    bad_fields = audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance(
+        [
+            {
+                "archive_id": "ARC-BAD",
+                "erasure_requested": "sí",
+                "active_litigation_legal_hold": "no",
+                "kek_crypto_shredded": "quizás",
+                "dsar_response_days": "diez",
+            }
+        ]
+    )
+    assert bad_fields == {
+        "evaluated_archive_count": 1,
+        "unlawful_destruction_or_unerased_pii_archive_ids": [],
+        "dsar_sla_breach_archive_ids": [],
+        "privacy_retention_status": "PRIVACY_LEGAL_HOLD_COMPLIANT",
+        "is_privacy_retention_compliant": True,
+    }

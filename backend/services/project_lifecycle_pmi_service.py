@@ -3186,6 +3186,7 @@ __all__ = [
     "audit_jv_consortium_equity_split_and_deadlock_cure",
     "audit_final_lien_waiver_unconditional_release_and_mechanics_lien_exposure",
     "audit_dlp_warranty_callout_sla_and_retention_bond_stepdown",
+    "audit_software_escrow_deposit_verification_and_release_trigger",
     "ProjectLifecyclePMIService",
 ]
 
@@ -8738,5 +8739,81 @@ def audit_dlp_warranty_callout_sla_and_retention_bond_stepdown(
 ProjectLifecyclePMIService.audit_dlp_warranty_callout_sla_and_retention_bond_stepdown = staticmethod(
     audit_dlp_warranty_callout_sla_and_retention_bond_stepdown
 )
+
+
+def audit_software_escrow_deposit_verification_and_release_trigger(
+    escrow_deposits: list[dict[str, Any]],
+    max_deposit_staleness_days: int = 30,
+) -> dict[str, Any]:
+    """PMBOK §12.3 & §11.6 — Project Closure Escrow Source-Code Software Deposit Verification, Reproducible Build Verification & Release Trigger Insolvency Event Auditor."""
+    valid_deposits = [
+        d for d in (escrow_deposits if isinstance(escrow_deposits, list) else []) if isinstance(d, dict)
+    ]
+
+    unverified_build_or_hash_deposits: list[str] = []
+    stale_escrow_deposits: list[str] = []
+    blocked_release_trigger_deposits: list[str] = []
+
+    for idx, d in enumerate(valid_deposits):
+        did = str(d.get("deposit_id") or f"deposit-{idx + 1}").strip()
+        staleness = int(d.get("days_since_last_deposit", 0) or 0)
+        build_ok = bool(d.get("clean_room_reproducible_build_verified", False))
+        hash_ok = bool(d.get("cryptographic_sbom_hash_matched", False))
+        trigger_fired = bool(
+            d.get("vendor_insolvency_or_sla_abandonment_triggered", False)
+        )
+        release_exec = bool(d.get("beneficiary_release_executed", False))
+
+        if not build_ok or not hash_ok:
+            unverified_build_or_hash_deposits.append(did)
+        if staleness > int(max_deposit_staleness_days):
+            stale_escrow_deposits.append(did)
+        if trigger_fired and not release_exec:
+            blocked_release_trigger_deposits.append(did)
+
+    recommendations: list[str] = []
+    if len(valid_deposits) == 0:
+        recommendations.append(
+            "Register at least one software source-code escrow deposit record for closure continuity verification."
+        )
+    if unverified_build_or_hash_deposits:
+        recommendations.append(
+            f"Complete clean-room reproducible build verification and SBOM hash attestation for: {', '.join(unverified_build_or_hash_deposits)}."
+        )
+    if blocked_release_trigger_deposits:
+        recommendations.append(
+            f"Execute immediate escrow release to beneficiary upon insolvency/abandonment trigger for: {', '.join(blocked_release_trigger_deposits)}."
+        )
+    if stale_escrow_deposits:
+        recommendations.append(
+            f"Synchronize source-code escrow deposits within <= {max_deposit_staleness_days} days for: {', '.join(stale_escrow_deposits)}."
+        )
+
+    if (
+        len(unverified_build_or_hash_deposits) > 0
+        or len(blocked_release_trigger_deposits) > 0
+        or len(valid_deposits) == 0
+    ):
+        escrow_governance_status = "CRITICAL_UNVERIFIED_BUILD_OR_BLOCKED_RELEASE"
+    elif len(stale_escrow_deposits) > 0:
+        escrow_governance_status = "STALE_DEPOSIT_SYNC_WARNING"
+    else:
+        escrow_governance_status = "ESCROW_CONTINUITY_VERIFIED"
+
+    return {
+        "is_valid": escrow_governance_status == "ESCROW_CONTINUITY_VERIFIED",
+        "total_deposits": len(valid_deposits),
+        "unverified_build_or_hash_deposits": unverified_build_or_hash_deposits,
+        "stale_escrow_deposits": stale_escrow_deposits,
+        "blocked_release_trigger_deposits": blocked_release_trigger_deposits,
+        "escrow_governance_status": escrow_governance_status,
+        "recommendations": recommendations,
+    }
+
+
+ProjectLifecyclePMIService.audit_software_escrow_deposit_verification_and_release_trigger = staticmethod(
+    audit_software_escrow_deposit_verification_and_release_trigger
+)
+
 
 

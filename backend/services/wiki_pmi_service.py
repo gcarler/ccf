@@ -2551,6 +2551,7 @@ __all__ = [
     "audit_wiki_crdt_collaborative_editing_tombstone_gc_and_causal_vector_clock",
     "audit_wiki_spiffe_spire_svid_mtls_rotation_and_federation_bundle",
     "audit_wiki_search_cluster_shard_allocation_and_jvm_heap_breaker",
+    "audit_wiki_cdn_surrogate_key_purge_and_origin_shield_hit_ratio",
     "WikiPMIService",
 ]
 
@@ -8440,4 +8441,85 @@ def audit_wiki_search_cluster_shard_allocation_and_jvm_heap_breaker(
 WikiPMIService.audit_wiki_search_cluster_shard_allocation_and_jvm_heap_breaker = staticmethod(
     audit_wiki_search_cluster_shard_allocation_and_jvm_heap_breaker
 )
+
+
+def audit_wiki_cdn_surrogate_key_purge_and_origin_shield_hit_ratio(
+    pop_regions: list[dict[str, Any]],
+    max_purge_propagation_sec: float = 5.0,
+    min_cache_hit_ratio_pct: float = 85.0,
+    max_5xx_error_rate_pct: float = 0.5,
+) -> dict[str, Any]:
+    """PMBOK §4.4 & §10.2 — Wiki Content Delivery Network (CDN) Edge Cache Surrogate-Key Purge Latency, Stale-While-Revalidate Window & Origin Shield Hit-Ratio Auditor."""
+    valid_regions = [
+        r for r in (pop_regions if isinstance(pop_regions, list) else []) if isinstance(r, dict)
+    ]
+
+    slow_purge_propagation_regions: list[str] = []
+    cache_thrashing_or_unshielded_regions: list[str] = []
+    elevated_5xx_edge_regions: list[str] = []
+    any_unshielded = False
+
+    for idx, r in enumerate(valid_regions):
+        rid = str(r.get("region_id") or f"region-{idx + 1}").strip()
+        purge_sec = float(r.get("surrogate_purge_latency_sec", 0.0) or 0.0)
+        hit_pct = float(r.get("edge_cache_hit_ratio_pct", 0.0) or 0.0)
+        shield_on = bool(r.get("origin_shield_enabled", True))
+        err_5xx = float(r.get("five_xx_edge_error_rate_pct", 0.0) or 0.0)
+
+        if not shield_on:
+            any_unshielded = True
+        if purge_sec > float(max_purge_propagation_sec) or purge_sec < 0.0:
+            slow_purge_propagation_regions.append(rid)
+        if hit_pct < float(min_cache_hit_ratio_pct) or not shield_on:
+            cache_thrashing_or_unshielded_regions.append(rid)
+        if err_5xx > float(max_5xx_error_rate_pct):
+            elevated_5xx_edge_regions.append(rid)
+
+    recommendations: list[str] = []
+    if len(valid_regions) == 0:
+        recommendations.append(
+            "Provide at least one CDN PoP region telemetry record for edge cache auditing."
+        )
+    if elevated_5xx_edge_regions or any_unshielded:
+        recommendations.append(
+            "Enable origin shielding across all PoP regions and mitigate elevated 5xx edge error rates."
+        )
+    if slow_purge_propagation_regions:
+        recommendations.append(
+            f"Optimize surrogate-key fast-purge invalidation pipeline within <= {max_purge_propagation_sec}s on: {', '.join(slow_purge_propagation_regions)}."
+        )
+    if cache_thrashing_or_unshielded_regions:
+        recommendations.append(
+            f"Tune stale-while-revalidate headers and cache key normalization to reach >= {min_cache_hit_ratio_pct}% hit ratio on: {', '.join(cache_thrashing_or_unshielded_regions)}."
+        )
+
+    if (
+        len(elevated_5xx_edge_regions) > 0
+        or any_unshielded
+        or len(valid_regions) == 0
+    ):
+        cdn_edge_status = "CRITICAL_EDGE_5XX_OR_UNSHIELDED_ORIGIN_BREACH"
+    elif (
+        len(slow_purge_propagation_regions) > 0
+        or len(cache_thrashing_or_unshielded_regions) > 0
+    ):
+        cdn_edge_status = "PURGE_LATENCY_OR_CACHE_HIT_WARNING"
+    else:
+        cdn_edge_status = "CDN_EDGE_OPTIMAL"
+
+    return {
+        "is_valid": cdn_edge_status == "CDN_EDGE_OPTIMAL",
+        "total_pop_regions": len(valid_regions),
+        "slow_purge_propagation_regions": slow_purge_propagation_regions,
+        "cache_thrashing_or_unshielded_regions": cache_thrashing_or_unshielded_regions,
+        "elevated_5xx_edge_regions": elevated_5xx_edge_regions,
+        "cdn_edge_status": cdn_edge_status,
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_cdn_surrogate_key_purge_and_origin_shield_hit_ratio = staticmethod(
+    audit_wiki_cdn_surrogate_key_purge_and_origin_shield_hit_ratio
+)
+
 

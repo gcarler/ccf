@@ -11405,3 +11405,110 @@ def test_audit_wiki_search_cluster_shard_allocation_and_jvm_heap_breaker_staticm
     )
 
 
+def test_audit_wiki_cdn_surrogate_key_purge_and_origin_shield_hit_ratio_optimal():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_cdn_surrogate_key_purge_and_origin_shield_hit_ratio,
+    )
+
+    res = audit_wiki_cdn_surrogate_key_purge_and_origin_shield_hit_ratio(
+        pop_regions=[
+            {
+                "region_id": "us-east-iad",
+                "surrogate_purge_latency_sec": 1.2,
+                "edge_cache_hit_ratio_pct": 94.5,
+                "origin_shield_enabled": True,
+                "five_xx_edge_error_rate_pct": 0.05,
+            },
+            {
+                "region_id": "eu-central-fra",
+                "surrogate_purge_latency_sec": 2.4,
+                "edge_cache_hit_ratio_pct": 91.0,
+                "origin_shield_enabled": True,
+                "five_xx_edge_error_rate_pct": 0.10,
+            },
+        ]
+    )
+    assert res["is_valid"] is True
+    assert res["total_pop_regions"] == 2
+    assert res["slow_purge_propagation_regions"] == []
+    assert res["cache_thrashing_or_unshielded_regions"] == []
+    assert res["elevated_5xx_edge_regions"] == []
+    assert res["cdn_edge_status"] == "CDN_EDGE_OPTIMAL"
+
+
+def test_audit_wiki_cdn_surrogate_key_purge_and_origin_shield_hit_ratio_critical_breach():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_cdn_surrogate_key_purge_and_origin_shield_hit_ratio,
+    )
+
+    res = audit_wiki_cdn_surrogate_key_purge_and_origin_shield_hit_ratio(
+        pop_regions=[
+            {
+                "region_id": "sa-east-gru",
+                "surrogate_purge_latency_sec": 8.0,
+                "edge_cache_hit_ratio_pct": 60.0,
+                "origin_shield_enabled": False,
+                "five_xx_edge_error_rate_pct": 1.8,
+            }
+        ]
+    )
+    assert res["is_valid"] is False
+    assert res["slow_purge_propagation_regions"] == ["sa-east-gru"]
+    assert res["cache_thrashing_or_unshielded_regions"] == ["sa-east-gru"]
+    assert res["elevated_5xx_edge_regions"] == ["sa-east-gru"]
+    assert res["cdn_edge_status"] == "CRITICAL_EDGE_5XX_OR_UNSHIELDED_ORIGIN_BREACH"
+
+
+def test_audit_wiki_cdn_surrogate_key_purge_and_origin_shield_hit_ratio_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_cdn_surrogate_key_purge_and_origin_shield_hit_ratio,
+    )
+
+    res = audit_wiki_cdn_surrogate_key_purge_and_origin_shield_hit_ratio(
+        pop_regions=[
+            {
+                "region_id": "ap-northeast-nrt",
+                "surrogate_purge_latency_sec": 6.5,
+                "edge_cache_hit_ratio_pct": 78.0,
+                "origin_shield_enabled": True,
+                "five_xx_edge_error_rate_pct": 0.1,
+            }
+        ]
+    )
+    assert res["is_valid"] is False
+    assert res["slow_purge_propagation_regions"] == ["ap-northeast-nrt"]
+    assert res["cache_thrashing_or_unshielded_regions"] == ["ap-northeast-nrt"]
+    assert res["elevated_5xx_edge_regions"] == []
+    assert res["cdn_edge_status"] == "PURGE_LATENCY_OR_CACHE_HIT_WARNING"
+
+
+def test_audit_wiki_cdn_surrogate_key_purge_and_origin_shield_hit_ratio_staticmethod_and_dunder_all():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_cdn_surrogate_key_purge_and_origin_shield_hit_ratio,
+    )
+
+    empty = audit_wiki_cdn_surrogate_key_purge_and_origin_shield_hit_ratio([])
+    assert empty["is_valid"] is False
+    assert empty["cdn_edge_status"] == "CRITICAL_EDGE_5XX_OR_UNSHIELDED_ORIGIN_BREACH"
+
+    sample = [
+        {
+            "region_id": "us-west-sjc",
+            "surrogate_purge_latency_sec": 1.0,
+            "edge_cache_hit_ratio_pct": 95.0,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_cdn_surrogate_key_purge_and_origin_shield_hit_ratio(
+            sample
+        )
+        == audit_wiki_cdn_surrogate_key_purge_and_origin_shield_hit_ratio(sample)
+    )
+    assert (
+        "audit_wiki_cdn_surrogate_key_purge_and_origin_shield_hit_ratio"
+        in mod.__all__
+    )
+
+
