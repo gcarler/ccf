@@ -11175,3 +11175,115 @@ def test_audit_wiki_crdt_collaborative_editing_tombstone_gc_and_causal_vector_cl
         "audit_wiki_crdt_collaborative_editing_tombstone_gc_and_causal_vector_clock"
         in mod.__all__
     )
+
+
+def test_audit_wiki_spiffe_spire_svid_mtls_rotation_and_federation_bundle_healthy():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_spiffe_spire_svid_mtls_rotation_and_federation_bundle,
+    )
+
+    res = audit_wiki_spiffe_spire_svid_mtls_rotation_and_federation_bundle(
+        [
+            {
+                "workload_id": "WIKI-INDEXER-01",
+                "spiffe_id": "spiffe://ccf.local/ns/wiki/sa/indexer",
+                "svid_ttl_total_sec": 3600,
+                "svid_ttl_remaining_sec": 1800,
+                "node_attested": True,
+                "unix_workload_attested": True,
+                "federation_bundle_age_sec": 90,
+            }
+        ]
+    )
+    assert res["is_spiffe_zero_trust_healthy"] is True
+    assert res["spiffe_svid_federation_status"] == "SPIFFE_ZERO_TRUST_HEALTHY"
+    assert res["unattested_or_invalid_spiffe_workload_ids"] == []
+    assert res["expiring_or_expired_svid_workload_ids"] == []
+    assert res["stale_federation_bundle_workload_ids"] == []
+
+
+def test_audit_wiki_spiffe_spire_svid_mtls_rotation_and_federation_bundle_critical():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_spiffe_spire_svid_mtls_rotation_and_federation_bundle,
+    )
+
+    res = audit_wiki_spiffe_spire_svid_mtls_rotation_and_federation_bundle(
+        [
+            {
+                "workload_id": "WIKI-BAD-SPIFFE",
+                "spiffe_id": "https://ccf.local/wiki",
+                "svid_ttl_total_sec": 3600,
+                "svid_ttl_remaining_sec": 0,
+                "node_attested": False,
+                "unix_workload_attested": True,
+                "federation_bundle_age_sec": 60,
+            }
+        ]
+    )
+    assert res["is_spiffe_zero_trust_healthy"] is False
+    assert (
+        res["spiffe_svid_federation_status"]
+        == "CRITICAL_ATTESTATION_OR_SVID_EXPIRY_BREACH"
+    )
+    assert res["unattested_or_invalid_spiffe_workload_ids"] == [
+        "WIKI-BAD-SPIFFE"
+    ]
+    assert res["expiring_or_expired_svid_workload_ids"] == ["WIKI-BAD-SPIFFE"]
+
+
+def test_audit_wiki_spiffe_spire_svid_mtls_rotation_and_federation_bundle_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_spiffe_spire_svid_mtls_rotation_and_federation_bundle,
+    )
+
+    res = audit_wiki_spiffe_spire_svid_mtls_rotation_and_federation_bundle(
+        [
+            {
+                "workload_id": "WIKI-LOW-HEADROOM",
+                "spiffe_id": "spiffe://ccf.local/ns/wiki/sa/render",
+                "svid_ttl_total_sec": 3600,
+                "svid_ttl_remaining_sec": 360,
+                "node_attested": True,
+                "unix_workload_attested": True,
+                "federation_bundle_age_sec": 450,
+            }
+        ],
+        min_rotation_headroom_pct=20.0,
+        max_federation_bundle_staleness_sec=300,
+    )
+    assert res["is_spiffe_zero_trust_healthy"] is False
+    assert (
+        res["spiffe_svid_federation_status"]
+        == "SVID_ROTATION_OR_FEDERATION_BUNDLE_WARNING"
+    )
+    assert res["unattested_or_invalid_spiffe_workload_ids"] == []
+    assert res["expiring_or_expired_svid_workload_ids"] == ["WIKI-LOW-HEADROOM"]
+    assert res["stale_federation_bundle_workload_ids"] == ["WIKI-LOW-HEADROOM"]
+
+
+def test_audit_wiki_spiffe_spire_svid_mtls_rotation_and_federation_bundle_staticmethod_and_dunder_all():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_spiffe_spire_svid_mtls_rotation_and_federation_bundle,
+    )
+
+    sample = [
+        {
+            "workload_id": "WIKI-01",
+            "spiffe_id": "spiffe://ccf.local/ns/wiki/sa/api",
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_spiffe_spire_svid_mtls_rotation_and_federation_bundle(
+            sample
+        )
+        == audit_wiki_spiffe_spire_svid_mtls_rotation_and_federation_bundle(
+            sample
+        )
+    )
+    assert (
+        "audit_wiki_spiffe_spire_svid_mtls_rotation_and_federation_bundle"
+        in mod.__all__
+    )
+

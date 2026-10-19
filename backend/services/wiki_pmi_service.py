@@ -2549,6 +2549,7 @@ __all__ = [
     "audit_wiki_vector_embedding_hnsw_index_recall_and_drift_reindexing",
     "audit_wiki_graph_backlink_reciprocity_and_orphan_clusters",
     "audit_wiki_crdt_collaborative_editing_tombstone_gc_and_causal_vector_clock",
+    "audit_wiki_spiffe_spire_svid_mtls_rotation_and_federation_bundle",
     "WikiPMIService",
 ]
 
@@ -8193,4 +8194,165 @@ def audit_wiki_crdt_collaborative_editing_tombstone_gc_and_causal_vector_clock(
 
 WikiPMIService.audit_wiki_crdt_collaborative_editing_tombstone_gc_and_causal_vector_clock = staticmethod(
     audit_wiki_crdt_collaborative_editing_tombstone_gc_and_causal_vector_clock
+)
+
+
+def audit_wiki_spiffe_spire_svid_mtls_rotation_and_federation_bundle(
+    workloads: list[dict[str, Any]],
+    *,
+    min_rotation_headroom_pct: float = 20.0,
+    max_federation_bundle_staleness_sec: int = 300,
+    require_node_and_unix_attestation: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §10.2 & §11.6 — Audita identidad Zero-Trust SPIFFE/SPIRE X.509-SVID mTLS de la Wiki: margen de rotación de certificados efímeros, frescura del bundle de federación entre trust domains y atestación de nodo/proceso Unix."""
+    raw_items = workloads if isinstance(workloads, list) else []
+    valid_items = [item for item in raw_items if isinstance(item, dict)]
+
+    unattested_or_invalid_spiffe_workload_ids: list[str] = []
+    expiring_or_expired_svid_workload_ids: list[str] = []
+    stale_federation_bundle_workload_ids: list[str] = []
+    records: list[dict[str, Any]] = []
+    violations: list[str] = []
+    has_critical = False
+    has_warning = False
+
+    for idx, item in enumerate(valid_items):
+        workload_id = (
+            str(
+                item.get("workload_id")
+                or item.get("id")
+                or f"workload-{idx + 1}"
+            ).strip()
+            or f"workload-{idx + 1}"
+        )
+
+        raw_spiffe = item.get("spiffe_id", "spiffe://ccf.local/wiki/service")
+        spiffe_id = str(
+            "spiffe://ccf.local/wiki/service"
+            if raw_spiffe is None
+            else raw_spiffe
+        ).strip()
+
+        raw_total = item.get("svid_ttl_total_sec", 3600)
+        svid_ttl_total_sec = max(
+            0, int(3600 if raw_total is None else raw_total)
+        )
+
+        raw_rem = item.get("svid_ttl_remaining_sec", 1800)
+        svid_ttl_remaining_sec = int(1800 if raw_rem is None else raw_rem)
+
+        raw_node = item.get("node_attested", True)
+        node_attested = bool(True if raw_node is None else raw_node)
+
+        raw_unix = item.get("unix_workload_attested", True)
+        unix_workload_attested = bool(True if raw_unix is None else raw_unix)
+
+        raw_age = item.get("federation_bundle_age_sec", 0)
+        federation_bundle_age_sec = max(
+            0, int(0 if raw_age is None else raw_age)
+        )
+
+        valid_spiffe_prefix = (
+            spiffe_id.startswith("spiffe://") and len(spiffe_id) > len("spiffe://")
+        )
+        incomplete_attestation = bool(
+            require_node_and_unix_attestation
+            and (not node_attested or not unix_workload_attested)
+        )
+        unattested_or_invalid_spiffe = (
+            not valid_spiffe_prefix or incomplete_attestation
+        )
+
+        svid_rotation_headroom_pct = (
+            round((svid_ttl_remaining_sec / svid_ttl_total_sec) * 100.0, 2)
+            if svid_ttl_total_sec > 0
+            else 0.0
+        )
+        svid_expired = svid_ttl_total_sec <= 0 or svid_ttl_remaining_sec <= 0
+        svid_expiring_or_expired = bool(
+            svid_expired
+            or (svid_ttl_remaining_sec / svid_ttl_total_sec) * 100.0
+            < min_rotation_headroom_pct
+        )
+        stale_federation_bundle = (
+            federation_bundle_age_sec > max_federation_bundle_staleness_sec
+        )
+
+        if unattested_or_invalid_spiffe:
+            unattested_or_invalid_spiffe_workload_ids.append(workload_id)
+            has_critical = True
+            violations.append(
+                f"Workload '{workload_id}' has invalid SPIFFE ID ('{spiffe_id}') or incomplete node/unix attestation."
+            )
+
+        if svid_expiring_or_expired:
+            expiring_or_expired_svid_workload_ids.append(workload_id)
+            if svid_expired:
+                has_critical = True
+                violations.append(
+                    f"Workload '{workload_id}' X.509-SVID certificate is expired (remaining={svid_ttl_remaining_sec}s)."
+                )
+            else:
+                has_warning = True
+                violations.append(
+                    f"Workload '{workload_id}' SVID rotation headroom ({svid_rotation_headroom_pct}%) is below minimum ({min_rotation_headroom_pct}%)."
+                )
+
+        if stale_federation_bundle:
+            stale_federation_bundle_workload_ids.append(workload_id)
+            has_warning = True
+            violations.append(
+                f"Workload '{workload_id}' trust domain federation bundle age ({federation_bundle_age_sec}s) exceeds maximum ({max_federation_bundle_staleness_sec}s)."
+            )
+
+        records.append(
+            {
+                "workload_id": workload_id,
+                "spiffe_id": spiffe_id,
+                "svid_ttl_total_sec": svid_ttl_total_sec,
+                "svid_ttl_remaining_sec": svid_ttl_remaining_sec,
+                "svid_rotation_headroom_pct": svid_rotation_headroom_pct,
+                "node_attested": node_attested,
+                "unix_workload_attested": unix_workload_attested,
+                "federation_bundle_age_sec": federation_bundle_age_sec,
+                "unattested_or_invalid_spiffe": unattested_or_invalid_spiffe,
+                "svid_expiring_or_expired": svid_expiring_or_expired,
+                "stale_federation_bundle": stale_federation_bundle,
+            }
+        )
+
+    if has_critical:
+        spiffe_svid_federation_status = (
+            "CRITICAL_ATTESTATION_OR_SVID_EXPIRY_BREACH"
+        )
+        status = "critical"
+        is_spiffe_zero_trust_healthy = False
+    elif has_warning:
+        spiffe_svid_federation_status = (
+            "SVID_ROTATION_OR_FEDERATION_BUNDLE_WARNING"
+        )
+        status = "warning"
+        is_spiffe_zero_trust_healthy = False
+    else:
+        spiffe_svid_federation_status = "SPIFFE_ZERO_TRUST_HEALTHY"
+        status = "healthy"
+        is_spiffe_zero_trust_healthy = True
+
+    return {
+        "status": status,
+        "is_compliant": is_spiffe_zero_trust_healthy,
+        "is_spiffe_zero_trust_healthy": is_spiffe_zero_trust_healthy,
+        "workloads_evaluated": len(records),
+        "unattested_or_invalid_spiffe_workload_ids": unattested_or_invalid_spiffe_workload_ids,
+        "expiring_or_expired_svid_workload_ids": expiring_or_expired_svid_workload_ids,
+        "stale_federation_bundle_workload_ids": stale_federation_bundle_workload_ids,
+        "spiffe_svid_federation_status": spiffe_svid_federation_status,
+        "records": records,
+        "violations": violations,
+        "Violations": violations,
+    }
+
+
+WikiPMIService.audit_wiki_spiffe_spire_svid_mtls_rotation_and_federation_bundle = staticmethod(
+    audit_wiki_spiffe_spire_svid_mtls_rotation_and_federation_bundle
 )
