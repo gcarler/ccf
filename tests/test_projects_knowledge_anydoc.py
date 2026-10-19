@@ -9228,3 +9228,100 @@ def test_audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene_staticmeth
         "audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene"
         in mod.__all__
     )
+
+
+def test_audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene_compliant():
+    from backend.services.anydoc_service import (
+        audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene,
+    )
+
+    md = (
+        "# API Schema\n\n"
+        "```json\n"
+        "{\n"
+        '  "$schema": "https://json-schema.org/draft/2020-12/schema",\n'
+        '  "properties": {\n'
+        '    "user": {"$ref": "#/components/schemas/User"},\n'
+        '    "api_key": {"type": "string", "example": "YOUR_API_KEY"}\n'
+        "  }\n"
+        "}\n"
+        "```\n"
+    )
+    res = audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene(md)
+    assert res["is_valid"] is True
+    assert res["total_json_blocks"] == 1
+    assert res["malformed_json_blocks"] == []
+    assert res["unsafe_or_broken_schema_refs"] == []
+    assert res["leaked_secret_examples"] == []
+    assert res["status"] == "COMPLIANT"
+
+
+def test_audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene_secret_and_malformed_breach():
+    from backend.services.anydoc_service import (
+        audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene,
+    )
+
+    md = (
+        "```json\n"
+        '{"api_key": "sk-live-9876543210abcdef12345678", "authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"}\n'
+        "```\n\n"
+        "```json\n"
+        '{"unclosed": 123\n'
+        "```\n"
+    )
+    res = audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene(md)
+    assert res["is_valid"] is False
+    assert res["total_json_blocks"] == 2
+    assert len(res["malformed_json_blocks"]) == 1
+    assert len(res["leaked_secret_examples"]) == 2
+    assert res["status"] == "CRITICAL_SECRET_EXAMPLE_OR_JSON_BREACH"
+
+
+def test_audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene_schema_ref_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene,
+    )
+
+    md = (
+        "```json\n"
+        '{"$ref": "https://untrusted.example.com/schema.json", "nested": {"$ref": "#/"}}\n'
+        "```\n"
+    )
+    res = audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene(
+        md, allow_external_http_refs=False
+    )
+    assert res["is_valid"] is False
+    assert len(res["unsafe_or_broken_schema_refs"]) == 2
+    assert res["status"] == "SCHEMA_REF_OR_SYNTAX_WARNING"
+
+
+def test_audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene_staticmethod_and_dunder_all():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene,
+    )
+
+    sample = '```json\n{"ok": true}\n```'
+    assert (
+        AnyDocService.audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene(
+            sample
+        )
+        == audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene(
+            sample
+        )
+    )
+    assert (
+        AnydocService.audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene(
+            sample
+        )
+        == audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene(
+            sample
+        )
+    )
+    assert (
+        "audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene"
+        in mod.__all__
+    )
+

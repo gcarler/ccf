@@ -11354,3 +11354,128 @@ def test_audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate_staticmethod_
         "audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate"
         in mod.__all__
     )
+
+
+def test_audit_k8s_pdb_quorum_drain_and_statefulset_volume_gate_approved():
+    from backend.services.project_ccb_service import (
+        audit_k8s_pdb_quorum_drain_and_statefulset_volume_gate,
+    )
+
+    res = audit_k8s_pdb_quorum_drain_and_statefulset_volume_gate(
+        workloads=[
+            {
+                "workload_id": "api-gateway",
+                "desired_replicas": 4,
+                "ready_replicas": 4,
+                "pdb_min_available": 3,
+                "pdb_disruptions_allowed": 1,
+                "is_statefulset": False,
+                "stuck_volume_attachments": 0,
+            },
+            {
+                "workload_id": "redis-cluster",
+                "desired_replicas": 3,
+                "ready_replicas": 3,
+                "pdb_min_available": 2,
+                "pdb_disruptions_allowed": 1,
+                "is_statefulset": True,
+                "stuck_volume_attachments": 0,
+            },
+        ],
+        node_drain_timeout_sec=300,
+        max_allowed_drain_timeout_sec=600,
+    )
+    assert res["is_valid"] is True
+    assert res["total_workloads"] == 2
+    assert res["zero_disruption_quorum_breaches"] == []
+    assert res["misconfigured_100pct_pdb_workloads"] == []
+    assert res["stuck_csi_volume_workloads"] == []
+    assert res["drain_timeout_invalid"] is False
+    assert res["gate_decision"] == "APPROVED"
+
+
+def test_audit_k8s_pdb_quorum_drain_and_statefulset_volume_gate_rejected():
+    from backend.services.project_ccb_service import (
+        audit_k8s_pdb_quorum_drain_and_statefulset_volume_gate,
+    )
+
+    res = audit_k8s_pdb_quorum_drain_and_statefulset_volume_gate(
+        workloads=[
+            {
+                "workload_id": "pg-primary-sts",
+                "desired_replicas": 3,
+                "ready_replicas": 3,
+                "pdb_min_available": 3,
+                "pdb_disruptions_allowed": 0,
+                "is_statefulset": True,
+                "stuck_volume_attachments": 2,
+            }
+        ],
+        node_drain_timeout_sec=900,
+        max_allowed_drain_timeout_sec=600,
+    )
+    assert res["is_valid"] is False
+    assert res["misconfigured_100pct_pdb_workloads"] == ["pg-primary-sts"]
+    assert res["stuck_csi_volume_workloads"] == ["pg-primary-sts"]
+    assert res["drain_timeout_invalid"] is True
+    assert res["gate_decision"] == "REJECTED"
+
+
+def test_audit_k8s_pdb_quorum_drain_and_statefulset_volume_gate_conditional():
+    from backend.services.project_ccb_service import (
+        audit_k8s_pdb_quorum_drain_and_statefulset_volume_gate,
+    )
+
+    res = audit_k8s_pdb_quorum_drain_and_statefulset_volume_gate(
+        workloads=[
+            {
+                "workload_id": "checkout-svc",
+                "desired_replicas": 3,
+                "ready_replicas": 2,
+                "pdb_min_available": 2,
+                "pdb_disruptions_allowed": 0,
+                "is_statefulset": False,
+                "stuck_volume_attachments": 0,
+            }
+        ],
+        node_drain_timeout_sec=300,
+    )
+    assert res["is_valid"] is False
+    assert res["zero_disruption_quorum_breaches"] == ["checkout-svc"]
+    assert res["misconfigured_100pct_pdb_workloads"] == []
+    assert res["stuck_csi_volume_workloads"] == []
+    assert res["drain_timeout_invalid"] is False
+    assert res["gate_decision"] == "CONDITIONAL"
+
+
+def test_audit_k8s_pdb_quorum_drain_and_statefulset_volume_gate_staticmethod_and_dunder_all():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_k8s_pdb_quorum_drain_and_statefulset_volume_gate,
+    )
+
+    empty = audit_k8s_pdb_quorum_drain_and_statefulset_volume_gate([])
+    assert empty["is_valid"] is False
+    assert empty["gate_decision"] == "REJECTED"
+
+    sample = [
+        {
+            "workload_id": "web-1",
+            "desired_replicas": 3,
+            "ready_replicas": 3,
+            "pdb_min_available": 2,
+            "pdb_disruptions_allowed": 1,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_k8s_pdb_quorum_drain_and_statefulset_volume_gate(
+            sample
+        )
+        == audit_k8s_pdb_quorum_drain_and_statefulset_volume_gate(sample)
+    )
+    assert (
+        "audit_k8s_pdb_quorum_drain_and_statefulset_volume_gate"
+        in mod.__all__
+    )
+

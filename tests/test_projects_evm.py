@@ -10953,3 +10953,179 @@ def test_surety_bac_zero_none_and_invalid_exposures():
     assert bad_fields["payment_bond_coverage_ratio_pct"] == 100.0
     assert bad_fields["sdi_defaulted_exposures_count"] == 0
     assert bad_fields["bond_coverage_status"] == "BOND_ADEQUATE"
+
+
+# ── evaluate_evm_vecp_net_savings_and_contractor_share_split (PMBOK §7.4 & §12.2, pure helper) ──
+
+
+def test_vecp_portfolio_accretive_savings_split():
+    """Propuestas certificadas con net > 0 y ROI >= 1.5 -> 'VECP_PORTFOLIO_ACCRETIVE' con split 50/50 y regalía colateral limitada."""
+    import backend.services.project_evm_service as evm_module
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_vecp_net_savings_and_contractor_share_split,
+    )
+
+    proposals = [
+        {
+            "proposal_id": "VECP-A",
+            "gross_instant_contract_savings": 200000.0,
+            "contractor_development_cost": 40000.0,
+            "government_implementation_cost": 10000.0,
+            "annual_collateral_om_savings": 800000.0,
+        },
+        {
+            "proposal_id": "VECP-B",
+            "gross_instant_contract_savings": 60000.0,
+        },
+    ]
+    res = evaluate_evm_vecp_net_savings_and_contractor_share_split(proposals)
+    assert res == {
+        "evaluated_proposal_count": 2,
+        "total_net_instant_savings": 210000.0,
+        "total_contractor_share_amount": 105000.0,
+        "total_owner_net_benefit_amount": 205000.0,
+        "total_collateral_royalty_amount": 100000.0,
+        "uncertified_or_negative_net_proposal_ids": [],
+        "low_roi_proposal_ids": [],
+        "vecp_evaluation_status": "VECP_PORTFOLIO_ACCRETIVE",
+        "is_vecp_portfolio_accretive": True,
+    }
+    # VECP-A: net 150000 -> share 75000; regalía min(100000, 800000*20%) = 100000 (cap); ROI 4.0
+    assert (
+        ProjectEVMService.evaluate_evm_vecp_net_savings_and_contractor_share_split(
+            proposals
+        )
+        == res
+    )
+    assert "evaluate_evm_vecp_net_savings_and_contractor_share_split" in evm_module.__all__
+
+
+def test_vecp_unviable_or_uncertified_breach():
+    """Propuesta no certificada o con net <= 0 -> 'UNVIABLE_OR_UNCERTIFIED_VECP_BREACH' con precedencia sobre WARNING y sin acumular shares."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_vecp_net_savings_and_contractor_share_split,
+    )
+
+    breach = evaluate_evm_vecp_net_savings_and_contractor_share_split(
+        [
+            {
+                "proposal_id": "VECP-X",
+                "gross_instant_contract_savings": 50000.0,
+                "technical_equivalence_certified": False,
+            },
+            {
+                "proposal_id": "VECP-Y",
+                "gross_instant_contract_savings": 10000.0,
+                "contractor_development_cost": 30000.0,
+            },
+        ]
+    )
+    assert breach["evaluated_proposal_count"] == 2
+    assert breach["uncertified_or_negative_net_proposal_ids"] == ["VECP-X", "VECP-Y"]
+    assert breach["total_net_instant_savings"] == 0.0
+    assert breach["total_contractor_share_amount"] == 0.0
+    assert breach["vecp_evaluation_status"] == "UNVIABLE_OR_UNCERTIFIED_VECP_BREACH"
+    assert breach["is_vecp_portfolio_accretive"] is False
+    # VECP-Y también es low ROI (10000/30000 < 1.5), pero el breach precede
+    assert breach["low_roi_proposal_ids"] == ["VECP-Y"]
+
+    mixed = evaluate_evm_vecp_net_savings_and_contractor_share_split(
+        [
+            {"proposal_id": "VECP-Z", "gross_instant_contract_savings": 10000.0, "contractor_development_cost": 8000.0},
+            {"proposal_id": "VECP-UNCERT", "technical_equivalence_certified": False},
+        ]
+    )
+    assert mixed["vecp_evaluation_status"] == "UNVIABLE_OR_UNCERTIFIED_VECP_BREACH"
+
+
+def test_vecp_low_roi_warning_and_boundaries():
+    """Propuesta viable pero con ROI < 1.5 -> 'LOW_ROI_IMPLEMENTATION_WARNING'; ratio == 1.5 y regalía negativa clampeada -> OK."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_vecp_net_savings_and_contractor_share_split,
+    )
+
+    warning = evaluate_evm_vecp_net_savings_and_contractor_share_split(
+        [
+            {
+                "proposal_id": "VECP-THIN",
+                "gross_instant_contract_savings": 130000.0,
+                "contractor_development_cost": 100000.0,
+                "annual_collateral_om_savings": -5000.0,
+            }
+        ]
+    )
+    assert warning["evaluated_proposal_count"] == 1
+    # net 30000 > 0 y certificada (default) -> se acumula share y regalía (O&M negativa clampeada a 0)
+    assert warning["total_net_instant_savings"] == 30000.0
+    assert warning["total_contractor_share_amount"] == 15000.0
+    assert warning["total_owner_net_benefit_amount"] == 15000.0
+    assert warning["total_collateral_royalty_amount"] == 0.0
+    assert warning["uncertified_or_negative_net_proposal_ids"] == []
+    assert warning["low_roi_proposal_ids"] == ["VECP-THIN"]
+    assert warning["vecp_evaluation_status"] == "LOW_ROI_IMPLEMENTATION_WARNING"
+    assert warning["is_vecp_portfolio_accretive"] is False
+
+    # ROI exactamente 1.5 y royalía dentro del cap no son warning (comparación estricta <)
+    at_roi = evaluate_evm_vecp_net_savings_and_contractor_share_split(
+        [
+            {
+                "proposal_id": "VECP-RIGHT",
+                "gross_instant_contract_savings": 150000.0,
+                "contractor_development_cost": 100000.0,
+                "annual_collateral_om_savings": 100000.0,
+            }
+        ]
+    )
+    assert at_roi["low_roi_proposal_ids"] == []
+    assert at_roi["total_collateral_royalty_amount"] == 20000.0
+    assert at_roi["vecp_evaluation_status"] == "VECP_PORTFOLIO_ACCRETIVE"
+
+    custom = evaluate_evm_vecp_net_savings_and_contractor_share_split(
+        [{"proposal_id": "VECP-4", "gross_instant_contract_savings": 20000.0, "contractor_development_cost": 5000.0}],
+        min_net_savings_roi_ratio=5.0,
+    )
+    assert custom["vecp_evaluation_status"] == "LOW_ROI_IMPLEMENTATION_WARNING"
+    assert custom["low_roi_proposal_ids"] == ["VECP-4"]
+
+
+def test_vecp_empty_invalid_and_field_reversion():
+    """None / dicts inválidos se descartan; campos no numéricos/no bool revierten a defaults del spec (net 0 -> lista de breach)."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_vecp_net_savings_and_contractor_share_split,
+    )
+
+    empty_res = evaluate_evm_vecp_net_savings_and_contractor_share_split(None)
+    assert empty_res == {
+        "evaluated_proposal_count": 0,
+        "total_net_instant_savings": 0.0,
+        "total_contractor_share_amount": 0.0,
+        "total_owner_net_benefit_amount": 0.0,
+        "total_collateral_royalty_amount": 0.0,
+        "uncertified_or_negative_net_proposal_ids": [],
+        "low_roi_proposal_ids": [],
+        "vecp_evaluation_status": "VECP_PORTFOLIO_ACCRETIVE",
+        "is_vecp_portfolio_accretive": True,
+    }
+
+    invalid_res = evaluate_evm_vecp_net_savings_and_contractor_share_split(
+        ["no-dict", None, {"proposal_id": "   "}, {"proposal_id": 33}]
+    )
+    assert invalid_res["evaluated_proposal_count"] == 0
+
+    bad_fields = evaluate_evm_vecp_net_savings_and_contractor_share_split(
+        [
+            {
+                "proposal_id": "VECP-BAD",
+                "gross_instant_contract_savings": "mucho",
+                "contractor_development_cost": None,
+                "annual_collateral_om_savings": [5000.0],
+                "technical_equivalence_certified": "sí",
+            }
+        ]
+    )
+    assert bad_fields["evaluated_proposal_count"] == 1
+    # Campos no numéricos -> 0.0 -> net 0 <= 0 -> según spec cae en la lista de breach
+    assert bad_fields["uncertified_or_negative_net_proposal_ids"] == ["VECP-BAD"]
+    assert bad_fields["total_net_instant_savings"] == 0.0
+    assert bad_fields["vecp_evaluation_status"] == "UNVIABLE_OR_UNCERTIFIED_VECP_BREACH"

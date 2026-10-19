@@ -5538,6 +5538,7 @@ __all__ = [
     "evaluate_evm_foreign_exchange_fx_hedging_collar_and_revaluation_reserve",
     "evaluate_evm_economic_price_adjustment_epa_corridor_and_share",
     "evaluate_evm_surety_performance_bond_and_subcontractor_default_sdi",
+    "evaluate_evm_vecp_net_savings_and_contractor_share_split",
     "ProjectEVMService",
 ]
 
@@ -11040,4 +11041,132 @@ def evaluate_evm_surety_performance_bond_and_subcontractor_default_sdi(
 
 ProjectEVMService.evaluate_evm_surety_performance_bond_and_subcontractor_default_sdi = staticmethod(
     evaluate_evm_surety_performance_bond_and_subcontractor_default_sdi
+)
+def evaluate_evm_vecp_net_savings_and_contractor_share_split(
+    proposals: list[dict[str, Any]] | None,
+    *,
+    contractor_instant_share_pct: float = 50.0,
+    collateral_savings_royalty_pct: float = 20.0,
+    max_collateral_cap_per_proposal: float = 100000.0,
+    min_net_savings_roi_ratio: float = 1.5,
+) -> dict[str, Any]:
+    """PMBOK §7.4 & §12.2 — Evalúa VECP bajo FAR 52.248-1: ahorro neto instantáneo de adquisición, split del share del contratista, regalía de ahorros colaterales de O&M y ratio ROI mínimo de implementación.
+
+    Cada propuesta válida declara `proposal_id` (str no vacío),
+    `gross_instant_contract_savings` (default 0.0),
+    `contractor_development_cost` (default 0.0),
+    `government_implementation_cost` (default 0.0),
+    `annual_collateral_om_savings` (default 0.0) y
+    `technical_equivalence_certified` (default True):
+    - `net_instant_savings = gross - desarrollo - implementación` (por propuesta).
+    - Si net > 0 y certificada: share contratista = net * share_pct/100;
+      share propietario = net - share; regalía colateral = min(cap,
+      max(0, O&M anual) * royalty_pct/100).
+    - `owner_net_benefit` = share propietario + regalía colateral.
+    - `uncertified_or_negative_net_proposal_ids`: no certificada o net <= 0
+      (brecha de viabilidad, precedencia).
+    - `low_roi_proposal_ids`: costos > 0 y gross/costos < min ROI (advertencia).
+    - Estados: 'UNVIABLE_OR_UNCERTIFIED_VECP_BREACH' |
+      'LOW_ROI_IMPLEMENTATION_WARNING' | 'VECP_PORTFOLIO_ACCRETIVE'.
+    """
+    raw_items = proposals if isinstance(proposals, list) else []
+    valid_proposals: list[dict[str, Any]] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_proposal_id = item.get("proposal_id")
+        if not isinstance(raw_proposal_id, str) or not raw_proposal_id.strip():
+            continue
+        valid_proposals.append(item)
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _float(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    share_pct = _float(contractor_instant_share_pct, 50.0)
+    royalty_pct = _float(collateral_savings_royalty_pct, 20.0)
+    collateral_cap = _float(max_collateral_cap_per_proposal, 100000.0)
+    min_roi_ratio = _float(min_net_savings_roi_ratio, 1.5)
+
+    total_net_instant_savings = 0.0
+    total_contractor_share_amount = 0.0
+    total_owner_net_benefit_amount = 0.0
+    total_collateral_royalty_amount = 0.0
+    uncertified_or_negative_net_proposal_ids: list[str] = []
+    low_roi_proposal_ids: list[str] = []
+
+    for proposal in valid_proposals:
+        proposal_id = str(proposal.get("proposal_id")).strip()
+        gross_savings = _float(proposal.get("gross_instant_contract_savings"), 0.0)
+        development_cost = _float(proposal.get("contractor_development_cost"), 0.0)
+        implementation_cost = _float(
+            proposal.get("government_implementation_cost"), 0.0
+        )
+        annual_collateral = _float(proposal.get("annual_collateral_om_savings"), 0.0)
+        certified = _bool(
+            proposal.get("technical_equivalence_certified"), True
+        )
+
+        net_instant_savings = round(
+            gross_savings - development_cost - implementation_cost, 2
+        )
+
+        if not bool(certified) or net_instant_savings <= 0:
+            uncertified_or_negative_net_proposal_ids.append(proposal_id)
+        else:
+            contractor_instant_share = round(
+                net_instant_savings * share_pct / 100.0, 2
+            )
+            owner_instant_share = round(net_instant_savings - contractor_instant_share, 2)
+            collateral_royalty = round(
+                min(collateral_cap, max(0.0, annual_collateral) * royalty_pct / 100.0),
+                2,
+            )
+            total_net_instant_savings = round(
+                total_net_instant_savings + net_instant_savings, 2
+            )
+            total_contractor_share_amount = round(
+                total_contractor_share_amount + contractor_instant_share, 2
+            )
+            total_owner_net_benefit_amount = round(
+                total_owner_net_benefit_amount
+                + owner_instant_share
+                + collateral_royalty,
+                2,
+            )
+            total_collateral_royalty_amount = round(
+                total_collateral_royalty_amount + collateral_royalty, 2
+            )
+
+        implementation_total = development_cost + implementation_cost
+        if implementation_total > 0 and gross_savings / implementation_total < min_roi_ratio:
+            low_roi_proposal_ids.append(proposal_id)
+
+    if uncertified_or_negative_net_proposal_ids:
+        vecp_evaluation_status = "UNVIABLE_OR_UNCERTIFIED_VECP_BREACH"
+    elif low_roi_proposal_ids:
+        vecp_evaluation_status = "LOW_ROI_IMPLEMENTATION_WARNING"
+    else:
+        vecp_evaluation_status = "VECP_PORTFOLIO_ACCRETIVE"
+
+    return {
+        "evaluated_proposal_count": len(valid_proposals),
+        "total_net_instant_savings": total_net_instant_savings,
+        "total_contractor_share_amount": total_contractor_share_amount,
+        "total_owner_net_benefit_amount": total_owner_net_benefit_amount,
+        "total_collateral_royalty_amount": total_collateral_royalty_amount,
+        "uncertified_or_negative_net_proposal_ids": uncertified_or_negative_net_proposal_ids,
+        "low_roi_proposal_ids": low_roi_proposal_ids,
+        "vecp_evaluation_status": vecp_evaluation_status,
+        "is_vecp_portfolio_accretive": vecp_evaluation_status
+        == "VECP_PORTFOLIO_ACCRETIVE",
+    }
+
+
+ProjectEVMService.evaluate_evm_vecp_net_savings_and_contractor_share_split = staticmethod(
+    evaluate_evm_vecp_net_savings_and_contractor_share_split
 )

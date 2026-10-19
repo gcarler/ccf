@@ -3050,6 +3050,7 @@ __all__ = [
     "audit_markdown_mathjax_katex_delimiter_balance_and_macro_safety",
     "audit_markdown_heading_hierarchy_and_anchor_slug_collisions",
     "audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene",
+    "audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene",
     "AnydocService",
 ]
 
@@ -9356,3 +9357,162 @@ AnyDocService.audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene = sta
 AnydocService.audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene = staticmethod(
     audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene
 )
+
+
+def audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene(
+    markdown_text: str,
+    enforce_strict_json_parsing: bool = True,
+    allow_external_http_refs: bool = False,
+) -> dict[str, Any]:
+    """PMBOK §4.4 & §10.2 — AnyDoc Markdown OpenAPI / JSON-Schema Fenced Code Block Valid JSON/YAML Structure, $ref Resolution & Secret Example Leak Hygiene Auditor."""
+    import json
+
+    text = markdown_text if isinstance(markdown_text, str) else ""
+    fence_re = re.compile(r"```(jsonc?)\s*\r?\n(.*?)```", re.DOTALL | re.IGNORECASE)
+    matches = list(fence_re.finditer(text))
+
+    malformed_json_blocks: list[dict[str, Any]] = []
+    unsafe_or_broken_schema_refs: list[dict[str, Any]] = []
+    leaked_secret_examples: list[dict[str, Any]] = []
+
+    secret_keys = {
+        "example",
+        "default",
+        "api_key",
+        "access_token",
+        "secret",
+        "password",
+        "authorization",
+    }
+    safe_placeholders = {
+        "your_api_key",
+        "<token>",
+        "changeme",
+        "example_token",
+        "***",
+        "redacted",
+        "placeholder",
+        "dummy_secret",
+    }
+    secret_prefix_re = re.compile(r"^(?:sk-|ghp_|AKIA|Bearer\s+eyJ)", re.IGNORECASE)
+
+    def _looks_like_secret(val: str) -> bool:
+        s = val.strip()
+        if not s or s.lower() in safe_placeholders:
+            return False
+        if s.startswith("<") and s.endswith(">"):
+            return False
+        if secret_prefix_re.match(s):
+            return True
+        if len(s) >= 20 and " " not in s and not s.isupper():
+            has_digit = any(ch.isdigit() for ch in s)
+            has_alpha = any(ch.isalpha() for ch in s)
+            if has_digit and has_alpha:
+                return True
+        return False
+
+    def _walk(node: Any, block_idx: int, path: str) -> None:
+        if isinstance(node, dict):
+            for k, v in node.items():
+                key_str = str(k)
+                child_path = f"{path}.{key_str}" if path else key_str
+                if key_str == "$ref" and isinstance(v, str):
+                    ref_val = v.strip()
+                    if ref_val in ("", "#/"):
+                        unsafe_or_broken_schema_refs.append(
+                            {
+                                "block_index": block_idx,
+                                "path": child_path,
+                                "ref": v,
+                                "reason": "empty_or_root_broken_ref",
+                            }
+                        )
+                    elif not allow_external_http_refs and (
+                        ref_val.startswith("http://") or ref_val.startswith("https://")
+                    ):
+                        unsafe_or_broken_schema_refs.append(
+                            {
+                                "block_index": block_idx,
+                                "path": child_path,
+                                "ref": v,
+                                "reason": "external_http_ref_disallowed",
+                            }
+                        )
+                if key_str.lower() in secret_keys and isinstance(v, str):
+                    if _looks_like_secret(v):
+                        leaked_secret_examples.append(
+                            {
+                                "block_index": block_idx,
+                                "path": child_path,
+                                "key": key_str,
+                            }
+                        )
+                _walk(v, block_idx, child_path)
+        elif isinstance(node, list):
+            for i, item in enumerate(node):
+                _walk(item, block_idx, f"{path}[{i}]")
+
+    for idx, m in enumerate(matches):
+        lang = m.group(1).lower()
+        raw_body = m.group(2).strip()
+        candidate = raw_body
+        if lang == "jsonc" and not enforce_strict_json_parsing:
+            candidate = re.sub(r"//.*?$", "", raw_body, flags=re.MULTILINE)
+        try:
+            parsed = json.loads(candidate)
+        except Exception as exc:
+            malformed_json_blocks.append(
+                {
+                    "block_index": idx,
+                    "language": lang,
+                    "error": str(exc),
+                }
+            )
+            continue
+        _walk(parsed, idx, "")
+
+    is_valid = (
+        len(malformed_json_blocks) == 0
+        and len(unsafe_or_broken_schema_refs) == 0
+        and len(leaked_secret_examples) == 0
+    )
+
+    recommendations: list[str] = []
+    if malformed_json_blocks:
+        recommendations.append(
+            "Fix syntax errors in fenced JSON/JSON-Schema code blocks so all examples parse cleanly with json.loads."
+        )
+    if leaked_secret_examples:
+        recommendations.append(
+            "Sanitize credential-like values in schema examples/defaults using explicit placeholders such as 'YOUR_API_KEY' or '<token>'."
+        )
+    if unsafe_or_broken_schema_refs:
+        recommendations.append(
+            "Replace external HTTP(S) or empty '$ref' pointers with local internal component references ('#/components/schemas/...')."
+        )
+
+    if malformed_json_blocks or leaked_secret_examples:
+        status = "CRITICAL_SECRET_EXAMPLE_OR_JSON_BREACH"
+    elif unsafe_or_broken_schema_refs:
+        status = "SCHEMA_REF_OR_SYNTAX_WARNING"
+    else:
+        status = "COMPLIANT"
+
+    return {
+        "is_valid": is_valid,
+        "total_json_blocks": len(matches),
+        "malformed_json_blocks": malformed_json_blocks,
+        "unsafe_or_broken_schema_refs": unsafe_or_broken_schema_refs,
+        "leaked_secret_examples": leaked_secret_examples,
+        "status": status,
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene = staticmethod(
+    audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene
+)
+AnydocService.audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene = staticmethod(
+    audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene
+)
+

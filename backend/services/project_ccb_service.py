@@ -2864,6 +2864,7 @@ __all__ = [
     "audit_supply_chain_sbom_slsa_provenance_and_cve_epss_gate",
     "audit_zero_downtime_db_migration_lock_timeout_and_expand_contract_gate",
     "audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate",
+    "audit_k8s_pdb_quorum_drain_and_statefulset_volume_gate",
     "ProjectCCBService",
 ]
 
@@ -8587,3 +8588,90 @@ def audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate(
 ProjectCCBService.audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate = staticmethod(
     audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate
 )
+
+
+def audit_k8s_pdb_quorum_drain_and_statefulset_volume_gate(
+    workloads: list[dict[str, Any]],
+    node_drain_timeout_sec: int = 300,
+    max_allowed_drain_timeout_sec: int = 600,
+) -> dict[str, Any]:
+    """PMBOK §8.3 & §11.6 — CCB Kubernetes Pod Disruption Budget (PDB) Quorum Drain Safety, Node Cordoning Eviction Timeout & StatefulSet Volume Attachment Gate Auditor."""
+    valid_workloads = [
+        w for w in (workloads if isinstance(workloads, list) else []) if isinstance(w, dict)
+    ]
+
+    zero_disruption_quorum_breaches: list[str] = []
+    misconfigured_100pct_pdb_workloads: list[str] = []
+    stuck_csi_volume_workloads: list[str] = []
+
+    for idx, w in enumerate(valid_workloads):
+        wid = str(w.get("workload_id") or f"workload-{idx + 1}").strip()
+        desired = int(w.get("desired_replicas", 0) or 0)
+        ready = int(w.get("ready_replicas", 0) or 0)
+        min_avail = int(w.get("pdb_min_available", 0) or 0)
+        disruptions_allowed = int(w.get("pdb_disruptions_allowed", 0) or 0)
+        is_sts = bool(w.get("is_statefulset", False))
+        stuck_vols = int(w.get("stuck_volume_attachments", 0) or 0)
+
+        if disruptions_allowed <= 0 or ready <= min_avail:
+            zero_disruption_quorum_breaches.append(wid)
+        if min_avail >= desired and desired > 0:
+            misconfigured_100pct_pdb_workloads.append(wid)
+        if is_sts and stuck_vols > 0:
+            stuck_csi_volume_workloads.append(wid)
+
+    drain_timeout_invalid = (
+        int(node_drain_timeout_sec) <= 0
+        or int(node_drain_timeout_sec) > int(max_allowed_drain_timeout_sec)
+    )
+
+    recommendations: list[str] = []
+    if len(valid_workloads) == 0:
+        recommendations.append(
+            "Provide at least one Kubernetes workload with PDB metrics for node drain gate validation."
+        )
+    if misconfigured_100pct_pdb_workloads:
+        recommendations.append(
+            f"Lower pdb_min_available below desired_replicas to allow voluntary eviction on: {', '.join(misconfigured_100pct_pdb_workloads)}."
+        )
+    if stuck_csi_volume_workloads:
+        recommendations.append(
+            f"Detach stuck CSI RWO VolumeAttachments before draining StatefulSet nodes for: {', '.join(stuck_csi_volume_workloads)}."
+        )
+    if zero_disruption_quorum_breaches:
+        recommendations.append(
+            f"Restore ready_replicas above pdb_min_available (pdb_disruptions_allowed > 0) for: {', '.join(zero_disruption_quorum_breaches)}."
+        )
+    if drain_timeout_invalid:
+        recommendations.append(
+            f"Configure node_drain_timeout_sec within (0, {max_allowed_drain_timeout_sec}] seconds."
+        )
+
+    if (
+        len(stuck_csi_volume_workloads) > 0
+        or len(misconfigured_100pct_pdb_workloads) > 0
+        or drain_timeout_invalid
+        or len(valid_workloads) == 0
+    ):
+        gate_decision = "REJECTED"
+    elif len(zero_disruption_quorum_breaches) > 0:
+        gate_decision = "CONDITIONAL"
+    else:
+        gate_decision = "APPROVED"
+
+    return {
+        "is_valid": gate_decision == "APPROVED",
+        "total_workloads": len(valid_workloads),
+        "zero_disruption_quorum_breaches": zero_disruption_quorum_breaches,
+        "misconfigured_100pct_pdb_workloads": misconfigured_100pct_pdb_workloads,
+        "stuck_csi_volume_workloads": stuck_csi_volume_workloads,
+        "drain_timeout_invalid": drain_timeout_invalid,
+        "gate_decision": gate_decision,
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.audit_k8s_pdb_quorum_drain_and_statefulset_volume_gate = staticmethod(
+    audit_k8s_pdb_quorum_drain_and_statefulset_volume_gate
+)
+
