@@ -3811,6 +3811,7 @@ __all__ = [
     "validate_portfolio_efficient_frontier_and_budget_knapsack",
     "validate_pdm_network_dangling_activities_and_negative_float",
     "validate_risk_emv_decision_tree_and_contingency_adequacy",
+    "validate_pert_three_point_estimation_and_delphi_convergence",
 ]
 
 
@@ -7972,5 +7973,112 @@ def validate_risk_emv_decision_tree_and_contingency_adequacy(
         "unmodeled_high_threat_risk_ids": unmodeled_high_threat_risk_ids,
         "emv_adequacy_status": emv_adequacy_status,
         "is_emv_adequate": emv_adequacy_status == "EMV_RESERVE_ADEQUATE",
+        "recommendations": recommendations,
+    }
+
+
+def validate_pert_three_point_estimation_and_delphi_convergence(
+    estimates: list[dict[str, Any]],
+    *,
+    max_uncertainty_spread_ratio: float = 3.0,
+    max_expert_divergence_pct: float = 25.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §6.4 & §7.2 — Three-Point PERT Estimation Beta/Triangular Skewness, Wide-Band Delphi Convergence & Optimism Bias Validator."""
+    valid_estimates: list[dict[str, Any]] = []
+    if isinstance(estimates, (list, tuple)):
+        for item in estimates:
+            if not isinstance(item, dict):
+                continue
+            wpid = str(item.get("work_package_id") or "").strip()
+            if not wpid:
+                continue
+            valid_estimates.append({**item, "_wpid": wpid})
+
+    if not valid_estimates:
+        return {
+            "total_estimates_evaluated": 0,
+            "total_pert_expected_effort": 0.0,
+            "inverted_bounds_package_ids": [],
+            "excessive_spread_package_ids": [],
+            "unconverged_delphi_package_ids": [],
+            "pert_estimation_status": "PERT_CONVERGED_SOUND",
+            "is_pert_estimation_compliant": True,
+            "recommendations": [],
+        }
+
+    inverted_bounds_package_ids: list[str] = []
+    excessive_spread_package_ids: list[str] = []
+    unconverged_delphi_package_ids: list[str] = []
+    expected_sum = 0.0
+
+    for est in valid_estimates:
+        wpid = est["_wpid"]
+        opt_o = float(
+            est.get("optimistic_o", 0.0)
+            if est.get("optimistic_o") is not None
+            else 0.0
+        )
+        ml_m = float(
+            est.get("most_likely_m", 0.0)
+            if est.get("most_likely_m") is not None
+            else 0.0
+        )
+        pess_p = float(
+            est.get("pessimistic_p", 0.0)
+            if est.get("pessimistic_p") is not None
+            else 0.0
+        )
+        delphi_div = float(
+            est.get("delphi_round_divergence_pct", 0.0)
+            if est.get("delphi_round_divergence_pct") is not None
+            else 0.0
+        )
+
+        if delphi_div > max_expert_divergence_pct:
+            unconverged_delphi_package_ids.append(wpid)
+
+        if opt_o <= 0.0 or not (opt_o <= ml_m <= pess_p):
+            inverted_bounds_package_ids.append(wpid)
+            continue
+
+        pert_expected = (opt_o + 4.0 * ml_m + pess_p) / 6.0
+        expected_sum += pert_expected
+        spread_ratio = pess_p / opt_o
+
+        if spread_ratio > max_uncertainty_spread_ratio:
+            excessive_spread_package_ids.append(wpid)
+
+    total_pert_expected_effort = round(expected_sum, 2)
+
+    recommendations: list[str] = []
+    if inverted_bounds_package_ids:
+        recommendations.append(
+            f"Enforce strictly positive monotonic three-point bounds (0 < O <= M <= P) for work package(s): {', '.join(inverted_bounds_package_ids)}."
+        )
+    if unconverged_delphi_package_ids:
+        recommendations.append(
+            f"Conduct additional Wide-Band Delphi consensus rounds until expert divergence <= {max_expert_divergence_pct}% for work package(s): {', '.join(unconverged_delphi_package_ids)}."
+        )
+    if excessive_spread_package_ids:
+        recommendations.append(
+            f"Decompose work packages with P/O uncertainty cone ratio > {max_uncertainty_spread_ratio} into smaller WBS tasks: {', '.join(excessive_spread_package_ids)}."
+        )
+
+    if inverted_bounds_package_ids or unconverged_delphi_package_ids:
+        pert_estimation_status = "INVALID_BOUNDS_OR_UNCONVERGED"
+    elif excessive_spread_package_ids:
+        pert_estimation_status = "WIDE_UNCERTAINTY_CONE_WARNING"
+    else:
+        pert_estimation_status = "PERT_CONVERGED_SOUND"
+
+    return {
+        "total_estimates_evaluated": len(valid_estimates),
+        "total_pert_expected_effort": total_pert_expected_effort,
+        "inverted_bounds_package_ids": inverted_bounds_package_ids,
+        "excessive_spread_package_ids": excessive_spread_package_ids,
+        "unconverged_delphi_package_ids": unconverged_delphi_package_ids,
+        "pert_estimation_status": pert_estimation_status,
+        "is_pert_estimation_compliant": pert_estimation_status
+        == "PERT_CONVERGED_SOUND",
         "recommendations": recommendations,
     }

@@ -8451,3 +8451,121 @@ def test_audit_wiki_quarterly_attestation_and_orphan_page_archival_staticmethod_
         "audit_wiki_quarterly_attestation_and_orphan_page_archival"
         in mod.__all__
     )
+
+
+def test_audit_wiki_dr_tabletop_exercise_and_communication_tree_preparedness_breach():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_dr_tabletop_exercise_and_communication_tree,
+    )
+
+    res = audit_wiki_dr_tabletop_exercise_and_communication_tree(
+        [
+            {
+                "exercise_id": "DR-TT-REGION-OUTAGE",
+                "days_since_last_tabletop": 240,
+                "participant_attendance_pct": 95.0,
+                "out_of_band_comm_tree_verified": True,
+                "unassigned_gaps_discovered_count": 0,
+            },
+            {
+                "exercise_id": "DR-TT-RANSOMWARE",
+                "days_since_last_tabletop": 45,
+                "participant_attendance_pct": 90.0,
+                "out_of_band_comm_tree_verified": False,
+                "unassigned_gaps_discovered_count": 0,
+            },
+        ],
+        max_days_since_tabletop=180,
+        min_participant_attendance_pct=85.0,
+    )
+    assert res["total_exercises_evaluated"] == 2
+    assert res["overdue_tabletop_exercise_ids"] == ["DR-TT-REGION-OUTAGE"]
+    assert res["unverified_comm_tree_exercise_ids"] == ["DR-TT-RANSOMWARE"]
+    assert res["low_attendance_or_unassigned_gap_ids"] == []
+    assert res["tabletop_readiness_status"] == "DR_PREPAREDNESS_BREACH"
+    assert res["is_tabletop_compliant"] is False
+
+
+def test_audit_wiki_dr_tabletop_exercise_and_communication_tree_attendance_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_dr_tabletop_exercise_and_communication_tree,
+    )
+
+    res = audit_wiki_dr_tabletop_exercise_and_communication_tree(
+        [
+            {
+                "exercise_id": "DR-TT-DNS-FAILOVER",
+                "days_since_last_tabletop": 60,
+                "participant_attendance_pct": 70.0,
+                "out_of_band_comm_tree_verified": True,
+                "unassigned_gaps_discovered_count": 2,
+            }
+        ],
+        max_days_since_tabletop=180,
+        min_participant_attendance_pct=85.0,
+    )
+    assert res["overdue_tabletop_exercise_ids"] == []
+    assert res["unverified_comm_tree_exercise_ids"] == []
+    assert res["low_attendance_or_unassigned_gap_ids"] == [
+        "DR-TT-DNS-FAILOVER"
+    ]
+    assert (
+        res["tabletop_readiness_status"]
+        == "ATTENDANCE_OR_GAP_FOLLOWUP_WARNING"
+    )
+    assert res["is_tabletop_compliant"] is False
+
+
+def test_audit_wiki_dr_tabletop_exercise_and_communication_tree_verified_and_empty():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_dr_tabletop_exercise_and_communication_tree,
+    )
+
+    empty = audit_wiki_dr_tabletop_exercise_and_communication_tree(
+        [{"exercise_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_exercises_evaluated"] == 0
+    assert empty["tabletop_readiness_status"] == "TABLETOP_DRILL_VERIFIED"
+    assert empty["is_tabletop_compliant"] is True
+
+    verified = audit_wiki_dr_tabletop_exercise_and_communication_tree(
+        [
+            {
+                "exercise_id": "DR-TT-Q3-GOLD",
+                "days_since_last_tabletop": 25,
+                "participant_attendance_pct": 92.5,
+                "out_of_band_comm_tree_verified": True,
+                "unassigned_gaps_discovered_count": 0,
+            }
+        ]
+    )
+    assert verified["total_exercises_evaluated"] == 1
+    assert verified["tabletop_readiness_status"] == "TABLETOP_DRILL_VERIFIED"
+    assert verified["is_tabletop_compliant"] is True
+
+
+def test_audit_wiki_dr_tabletop_exercise_and_communication_tree_staticmethod_and_dunder_all():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_dr_tabletop_exercise_and_communication_tree,
+    )
+
+    sample = [
+        {
+            "exercise_id": "DR-TT-99",
+            "days_since_last_tabletop": 15,
+            "participant_attendance_pct": 100.0,
+            "out_of_band_comm_tree_verified": True,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_dr_tabletop_exercise_and_communication_tree(
+            sample
+        )
+        == audit_wiki_dr_tabletop_exercise_and_communication_tree(sample)
+    )
+    assert (
+        "audit_wiki_dr_tabletop_exercise_and_communication_tree"
+        in mod.__all__
+    )

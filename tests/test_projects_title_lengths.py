@@ -7318,3 +7318,104 @@ def test_validate_risk_emv_decision_tree_and_contingency_adequacy_dunder_all():
         "validate_risk_emv_decision_tree_and_contingency_adequacy"
         in mod.__all__
     )
+
+
+def test_validate_pert_three_point_estimation_and_delphi_convergence_invalid_or_unconverged():
+    from backend.schemas.projects import (
+        validate_pert_three_point_estimation_and_delphi_convergence,
+    )
+
+    res = validate_pert_three_point_estimation_and_delphi_convergence(
+        [
+            {
+                "work_package_id": "WP-INVERTED",
+                "optimistic_o": 12.0,
+                "most_likely_m": 8.0,
+                "pessimistic_p": 20.0,
+                "delphi_round_divergence_pct": 10.0,
+            },
+            {
+                "work_package_id": "WP-DELPHI-SPLIT",
+                "optimistic_o": 6.0,
+                "most_likely_m": 12.0,
+                "pessimistic_p": 18.0,
+                "delphi_round_divergence_pct": 40.0,
+            },
+        ],
+        max_uncertainty_spread_ratio=3.0,
+        max_expert_divergence_pct=25.0,
+    )
+    assert res["total_estimates_evaluated"] == 2
+    assert res["total_pert_expected_effort"] == 12.0
+    assert res["inverted_bounds_package_ids"] == ["WP-INVERTED"]
+    assert res["excessive_spread_package_ids"] == []
+    assert res["unconverged_delphi_package_ids"] == ["WP-DELPHI-SPLIT"]
+    assert res["pert_estimation_status"] == "INVALID_BOUNDS_OR_UNCONVERGED"
+    assert res["is_pert_estimation_compliant"] is False
+
+
+def test_validate_pert_three_point_estimation_and_delphi_convergence_wide_cone_warning():
+    from backend.schemas.projects import (
+        validate_pert_three_point_estimation_and_delphi_convergence,
+    )
+
+    res = validate_pert_three_point_estimation_and_delphi_convergence(
+        [
+            {
+                "work_package_id": "WP-RESEARCH-SPIKE",
+                "optimistic_o": 4.0,
+                "most_likely_m": 10.0,
+                "pessimistic_p": 20.0,
+                "delphi_round_divergence_pct": 15.0,
+            }
+        ],
+        max_uncertainty_spread_ratio=3.0,
+        max_expert_divergence_pct=25.0,
+    )
+    assert res["total_pert_expected_effort"] == 10.67
+    assert res["inverted_bounds_package_ids"] == []
+    assert res["excessive_spread_package_ids"] == ["WP-RESEARCH-SPIKE"]
+    assert res["unconverged_delphi_package_ids"] == []
+    assert res["pert_estimation_status"] == "WIDE_UNCERTAINTY_CONE_WARNING"
+    assert res["is_pert_estimation_compliant"] is False
+
+
+def test_validate_pert_three_point_estimation_and_delphi_convergence_sound_and_empty():
+    from backend.schemas.projects import (
+        validate_pert_three_point_estimation_and_delphi_convergence,
+    )
+
+    empty = validate_pert_three_point_estimation_and_delphi_convergence(
+        [{"work_package_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_estimates_evaluated"] == 0
+    assert empty["total_pert_expected_effort"] == 0.0
+    assert empty["pert_estimation_status"] == "PERT_CONVERGED_SOUND"
+    assert empty["is_pert_estimation_compliant"] is True
+
+    sound = validate_pert_three_point_estimation_and_delphi_convergence(
+        [
+            {
+                "work_package_id": "WP-API-AUTH",
+                "optimistic_o": 10.0,
+                "most_likely_m": 15.0,
+                "pessimistic_p": 26.0,
+                "delphi_round_divergence_pct": 12.0,
+            }
+        ],
+        max_uncertainty_spread_ratio=3.0,
+        max_expert_divergence_pct=25.0,
+    )
+    assert sound["total_estimates_evaluated"] == 1
+    assert sound["total_pert_expected_effort"] == 16.0
+    assert sound["pert_estimation_status"] == "PERT_CONVERGED_SOUND"
+    assert sound["is_pert_estimation_compliant"] is True
+
+
+def test_validate_pert_three_point_estimation_and_delphi_convergence_dunder_all():
+    import backend.schemas.projects as mod
+
+    assert (
+        "validate_pert_three_point_estimation_and_delphi_convergence"
+        in mod.__all__
+    )

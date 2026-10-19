@@ -2529,6 +2529,7 @@ __all__ = [
     "audit_wiki_bus_factor_spok_and_cross_training_coverage",
     "audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene",
     "audit_wiki_quarterly_attestation_and_orphan_page_archival",
+    "audit_wiki_dr_tabletop_exercise_and_communication_tree",
     "WikiPMIService",
 ]
 
@@ -6444,4 +6445,101 @@ def audit_wiki_quarterly_attestation_and_orphan_page_archival(
 
 WikiPMIService.audit_wiki_quarterly_attestation_and_orphan_page_archival = staticmethod(
     audit_wiki_quarterly_attestation_and_orphan_page_archival
+)
+
+
+def audit_wiki_dr_tabletop_exercise_and_communication_tree(
+    exercises: list[dict[str, Any]],
+    *,
+    max_days_since_tabletop: int = 180,
+    min_participant_attendance_pct: float = 85.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §11.2 & §10.2 — Wiki Disaster Recovery Tabletop Exercise Cadence, Communication Tree Verification & Recovery Runbook Drill Auditor."""
+    valid_exercises: list[dict[str, Any]] = []
+    if isinstance(exercises, (list, tuple)):
+        for item in exercises:
+            if not isinstance(item, dict):
+                continue
+            eid = str(item.get("exercise_id") or "").strip()
+            if not eid:
+                continue
+            valid_exercises.append({**item, "_eid": eid})
+
+    if not valid_exercises:
+        return {
+            "total_exercises_evaluated": 0,
+            "overdue_tabletop_exercise_ids": [],
+            "unverified_comm_tree_exercise_ids": [],
+            "low_attendance_or_unassigned_gap_ids": [],
+            "tabletop_readiness_status": "TABLETOP_DRILL_VERIFIED",
+            "is_tabletop_compliant": True,
+            "recommendations": [],
+        }
+
+    overdue_tabletop_exercise_ids: list[str] = []
+    unverified_comm_tree_exercise_ids: list[str] = []
+    low_attendance_or_unassigned_gap_ids: list[str] = []
+
+    for exc in valid_exercises:
+        eid = exc["_eid"]
+        days_since = int(
+            exc.get("days_since_last_tabletop", 30)
+            if exc.get("days_since_last_tabletop") is not None
+            else 30
+        )
+        attendance_pct = float(
+            exc.get("participant_attendance_pct", 100.0)
+            if exc.get("participant_attendance_pct") is not None
+            else 100.0
+        )
+        comm_verified = bool(exc.get("out_of_band_comm_tree_verified", True))
+        unassigned_gaps = max(
+            0, int(exc.get("unassigned_gaps_discovered_count", 0) or 0)
+        )
+
+        if days_since < 0 or days_since > max_days_since_tabletop:
+            overdue_tabletop_exercise_ids.append(eid)
+        if not comm_verified:
+            unverified_comm_tree_exercise_ids.append(eid)
+        if (
+            attendance_pct < min_participant_attendance_pct
+            or unassigned_gaps > 0
+        ):
+            low_attendance_or_unassigned_gap_ids.append(eid)
+
+    recommendations: list[str] = []
+    if overdue_tabletop_exercise_ids:
+        recommendations.append(
+            f"Conduct Disaster Recovery tabletop exercises within <= {max_days_since_tabletop} days for exercise(s): {', '.join(overdue_tabletop_exercise_ids)}."
+        )
+    if unverified_comm_tree_exercise_ids:
+        recommendations.append(
+            f"Verify out-of-band emergency communication tree contacts and fallback channels for exercise(s): {', '.join(unverified_comm_tree_exercise_ids)}."
+        )
+    if low_attendance_or_unassigned_gap_ids:
+        recommendations.append(
+            f"Enforce >= {min_participant_attendance_pct}% responder attendance and assign owners to all discovered gaps in exercise(s): {', '.join(low_attendance_or_unassigned_gap_ids)}."
+        )
+
+    if overdue_tabletop_exercise_ids or unverified_comm_tree_exercise_ids:
+        tabletop_readiness_status = "DR_PREPAREDNESS_BREACH"
+    elif low_attendance_or_unassigned_gap_ids:
+        tabletop_readiness_status = "ATTENDANCE_OR_GAP_FOLLOWUP_WARNING"
+    else:
+        tabletop_readiness_status = "TABLETOP_DRILL_VERIFIED"
+
+    return {
+        "total_exercises_evaluated": len(valid_exercises),
+        "overdue_tabletop_exercise_ids": overdue_tabletop_exercise_ids,
+        "unverified_comm_tree_exercise_ids": unverified_comm_tree_exercise_ids,
+        "low_attendance_or_unassigned_gap_ids": low_attendance_or_unassigned_gap_ids,
+        "tabletop_readiness_status": tabletop_readiness_status,
+        "is_tabletop_compliant": tabletop_readiness_status
+        == "TABLETOP_DRILL_VERIFIED",
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_dr_tabletop_exercise_and_communication_tree = staticmethod(
+    audit_wiki_dr_tabletop_exercise_and_communication_tree
 )
