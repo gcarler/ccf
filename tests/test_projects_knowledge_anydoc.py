@@ -7391,3 +7391,144 @@ def test_audit_markdown_link_rot_and_internal_anchor_resolution_hygiene_staticme
         in mod.__all__
     )
 
+
+
+def test_math_delimiter_unsafe_macro_breach():
+    from backend.services.anydoc_service import (
+        audit_markdown_math_latex_delimiter_and_macro_hygiene,
+    )
+
+    res = audit_markdown_math_latex_delimiter_and_macro_hygiene(
+        [
+            {
+                "doc_id": "DOC-UNCLOSED-DOLLAR",
+                "unclosed_dollar_or_environment_blocks_count": 1,
+            },
+            {
+                "doc_id": "DOC-UNSAFE-MACRO",
+                "unsafe_or_unsupported_katex_macros_count": 3,
+            },
+        ],
+        max_equation_nesting_depth=5,
+    )
+    assert res["evaluated_documents_count"] == 2
+    assert res["broken_delimiter_or_unsafe_macro_doc_ids"] == [
+        "DOC-UNCLOSED-DOLLAR",
+        "DOC-UNSAFE-MACRO",
+    ]
+    assert res["unresolved_eqref_or_deep_nesting_doc_ids"] == []
+    assert (
+        res["math_hygiene_status"]
+        == "MATH_DELIMITER_OR_UNSAFE_MACRO_BREACH"
+    )
+    assert res["is_math_hygiene_compliant"] is False
+
+
+def test_math_eqref_or_deep_nesting_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_math_latex_delimiter_and_macro_hygiene,
+    )
+
+    res = audit_markdown_math_latex_delimiter_and_macro_hygiene(
+        [
+            {
+                "doc_id": "DOC-EQREF",
+                "unresolved_eqref_labels_count": 2,
+            },
+            {
+                "doc_id": "DOC-DEEP-NESTING",
+                "max_observed_equation_nesting_depth": 7,
+            },
+        ],
+        max_equation_nesting_depth=5,
+    )
+    assert res["evaluated_documents_count"] == 2
+    assert res["broken_delimiter_or_unsafe_macro_doc_ids"] == []
+    assert res["unresolved_eqref_or_deep_nesting_doc_ids"] == [
+        "DOC-EQREF",
+        "DOC-DEEP-NESTING",
+    ]
+    assert res["math_hygiene_status"] == "MATH_EQREF_OR_NESTING_WARNING"
+    assert res["is_math_hygiene_compliant"] is False
+
+
+def test_math_nesting_boundary_optimal_and_defaults():
+    from backend.services.anydoc_service import (
+        audit_markdown_math_latex_delimiter_and_macro_hygiene,
+    )
+
+    res = audit_markdown_math_latex_delimiter_and_macro_hygiene(
+        [
+            {
+                "doc_id": "DOC-BOUNDARY",
+                "max_observed_equation_nesting_depth": 5,
+            },
+            {"doc_id": "DOC-ALL-DEFAULTS"},
+        ],
+        max_equation_nesting_depth=5,
+    )
+    assert res["evaluated_documents_count"] == 2
+    assert res["broken_delimiter_or_unsafe_macro_doc_ids"] == []
+    assert res["unresolved_eqref_or_deep_nesting_doc_ids"] == []
+    assert res["math_hygiene_status"] == "MATH_RENDERING_CLEAN"
+    assert res["is_math_hygiene_compliant"] is True
+
+
+def test_math_hygiene_invalid_and_binding():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_math_latex_delimiter_and_macro_hygiene,
+    )
+
+    empty = audit_markdown_math_latex_delimiter_and_macro_hygiene(None)
+    assert empty["evaluated_documents_count"] == 0
+    assert empty["broken_delimiter_or_unsafe_macro_doc_ids"] == []
+    assert empty["unresolved_eqref_or_deep_nesting_doc_ids"] == []
+    assert empty["math_hygiene_status"] == "MATH_RENDERING_CLEAN"
+    assert empty["is_math_hygiene_compliant"] is True
+
+    invalid = audit_markdown_math_latex_delimiter_and_macro_hygiene(
+        [42, "not-a-dict", None, {"doc_id": "   "}]  # type: ignore[list-item]
+    )
+    assert invalid["evaluated_documents_count"] == 0
+
+    defaults = audit_markdown_math_latex_delimiter_and_macro_hygiene(
+        [
+            {
+                "doc_id": "DOC-DEFAULTS",
+                "unclosed_dollar_or_environment_blocks_count": None,
+                "unsafe_or_unsupported_katex_macros_count": None,
+                "unresolved_eqref_labels_count": None,
+                "max_observed_equation_nesting_depth": None,
+            }
+        ]
+    )
+    assert defaults["evaluated_documents_count"] == 1
+    assert defaults["math_hygiene_status"] == "MATH_RENDERING_CLEAN"
+    assert defaults["is_math_hygiene_compliant"] is True
+
+    sample = [
+        {
+            "doc_id": "DOC-1",
+            "unresolved_eqref_labels_count": 0,
+            "max_observed_equation_nesting_depth": 3,
+        }
+    ]
+    assert (
+        AnyDocService.audit_markdown_math_latex_delimiter_and_macro_hygiene(
+            sample
+        )
+        == audit_markdown_math_latex_delimiter_and_macro_hygiene(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_math_latex_delimiter_and_macro_hygiene(
+            sample
+        )
+        == audit_markdown_math_latex_delimiter_and_macro_hygiene(sample)
+    )
+    assert (
+        "audit_markdown_math_latex_delimiter_and_macro_hygiene"
+        in mod.__all__
+    )

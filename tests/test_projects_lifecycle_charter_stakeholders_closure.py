@@ -9164,3 +9164,309 @@ def test_audit_ip_escrow_deposit_cadence_and_license_assignment_staticmethod_and
         in mod.__all__
     )
 
+
+
+def test_jv_consortium_default_or_step_in_breach():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_joint_venture_consortium_solvency_and_step_in_rights,
+    )
+
+    res = audit_joint_venture_consortium_solvency_and_step_in_rights(
+        [
+            {
+                "partner_id": "PARTNER-DEFAULT",
+                "active_default_or_insolvency_notice": True,
+            },
+            {
+                "partner_id": "PARTNER-NO-LIABILITY",
+                "joint_and_several_liability_signed": False,
+            },
+            {
+                "partner_id": "PARTNER-UNENFORCEABLE",
+                "step_in_rights_clause_enforceable": False,
+            },
+        ],
+        min_liquidity_current_ratio=1.2,
+        max_single_partner_scope_share_pct=65.0,
+    )
+    assert res["evaluated_partners_count"] == 3
+    assert res["default_or_unenforceable_step_in_partner_ids"] == [
+        "PARTNER-DEFAULT",
+        "PARTNER-NO-LIABILITY",
+        "PARTNER-UNENFORCEABLE",
+    ]
+    assert res["low_liquidity_or_concentration_partner_ids"] == []
+    assert (
+        res["consortium_governance_status"]
+        == "JV_PARTNER_DEFAULT_OR_STEP_IN_BREACH"
+    )
+    assert res["is_consortium_compliant"] is False
+
+
+def test_jv_consortium_liquidity_or_concentration_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_joint_venture_consortium_solvency_and_step_in_rights,
+    )
+
+    res = audit_joint_venture_consortium_solvency_and_step_in_rights(
+        [
+            {
+                "partner_id": "PARTNER-ILLIQUID",
+                "liquidity_current_ratio": 0.8,
+            },
+            {
+                "partner_id": "PARTNER-DOMINANT",
+                "scope_work_share_pct": 72.0,
+            },
+        ],
+        min_liquidity_current_ratio=1.2,
+        max_single_partner_scope_share_pct=65.0,
+    )
+    assert res["evaluated_partners_count"] == 2
+    assert res["default_or_unenforceable_step_in_partner_ids"] == []
+    assert res["low_liquidity_or_concentration_partner_ids"] == [
+        "PARTNER-ILLIQUID",
+        "PARTNER-DOMINANT",
+    ]
+    assert (
+        res["consortium_governance_status"]
+        == "JV_LIQUIDITY_OR_CONCENTRATION_WARNING"
+    )
+    assert res["is_consortium_compliant"] is False
+
+
+def test_jv_consortium_boundaries_optimal_and_defaults():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_joint_venture_consortium_solvency_and_step_in_rights,
+    )
+
+    res = audit_joint_venture_consortium_solvency_and_step_in_rights(
+        [
+            {
+                "partner_id": "PARTNER-BOUNDARY",
+                "liquidity_current_ratio": 1.2,
+                "scope_work_share_pct": 65.0,
+            },
+            {"partner_id": "PARTNER-ALL-DEFAULTS"},
+        ],
+        min_liquidity_current_ratio=1.2,
+        max_single_partner_scope_share_pct=65.0,
+    )
+    assert res["evaluated_partners_count"] == 2
+    assert res["default_or_unenforceable_step_in_partner_ids"] == []
+    assert res["low_liquidity_or_concentration_partner_ids"] == []
+    assert (
+        res["consortium_governance_status"]
+        == "JV_CONSORTIUM_GOVERNANCE_OPTIMAL"
+    )
+    assert res["is_consortium_compliant"] is True
+
+
+def test_jv_consortium_invalid_and_binding():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_joint_venture_consortium_solvency_and_step_in_rights,
+    )
+
+    empty = audit_joint_venture_consortium_solvency_and_step_in_rights(None)
+    assert empty["evaluated_partners_count"] == 0
+    assert empty["default_or_unenforceable_step_in_partner_ids"] == []
+    assert empty["low_liquidity_or_concentration_partner_ids"] == []
+    assert (
+        empty["consortium_governance_status"]
+        == "JV_CONSORTIUM_GOVERNANCE_OPTIMAL"
+    )
+    assert empty["is_consortium_compliant"] is True
+
+    invalid = audit_joint_venture_consortium_solvency_and_step_in_rights(
+        [42, "not-a-dict", None, {"partner_id": "   "}]  # type: ignore[list-item]
+    )
+    assert invalid["evaluated_partners_count"] == 0
+
+    defaults = audit_joint_venture_consortium_solvency_and_step_in_rights(
+        [
+            {
+                "partner_id": "PARTNER-DEFAULTS",
+                "scope_work_share_pct": None,
+                "liquidity_current_ratio": None,
+                "joint_and_several_liability_signed": None,
+                "step_in_rights_clause_enforceable": None,
+                "active_default_or_insolvency_notice": None,
+            }
+        ]
+    )
+    assert defaults["evaluated_partners_count"] == 1
+    assert (
+        defaults["consortium_governance_status"]
+        == "JV_CONSORTIUM_GOVERNANCE_OPTIMAL"
+    )
+    assert defaults["is_consortium_compliant"] is True
+
+    sample = [
+        {
+            "partner_id": "PARTNER-1",
+            "liquidity_current_ratio": 1.6,
+            "scope_work_share_pct": 40.0,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_joint_venture_consortium_solvency_and_step_in_rights(
+            sample
+        )
+        == audit_joint_venture_consortium_solvency_and_step_in_rights(sample)
+    )
+    assert (
+        "audit_joint_venture_consortium_solvency_and_step_in_rights"
+        in mod.__all__
+    )
+
+
+def test_audit_force_majeure_claim_substantiation_and_mitigation_breach():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_force_majeure_claim_substantiation_and_mitigation,
+    )
+
+    result = audit_force_majeure_claim_substantiation_and_mitigation(
+        [
+            {
+                "claim_id": "FM-LATE-NOTICE",
+                "days_elapsed_before_written_notice": 21,
+                "impacts_critical_path_directly": True,
+                "contemporaneous_evidence_attached": True,
+                "duty_to_mitigate_plan_executed": True,
+                "concurrent_contractor_culpable_delay": False,
+            },
+            {
+                "claim_id": "FM-NO-EVIDENCE",
+                "days_elapsed_before_written_notice": 5,
+                "impacts_critical_path_directly": True,
+                "contemporaneous_evidence_attached": False,
+                "duty_to_mitigate_plan_executed": True,
+                "concurrent_contractor_culpable_delay": False,
+            },
+            {
+                "claim_id": "FM-NO-MITIGATION",
+                "days_elapsed_before_written_notice": 5,
+                "impacts_critical_path_directly": True,
+                "contemporaneous_evidence_attached": True,
+                "duty_to_mitigate_plan_executed": False,
+                "concurrent_contractor_culpable_delay": False,
+            },
+        ],
+        max_notice_days_after_event=14,
+    )
+    assert result["evaluated_claims_count"] == 3
+    assert result["time_barred_or_unsubstantiated_claim_ids"] == [
+        "FM-LATE-NOTICE",
+        "FM-NO-EVIDENCE",
+        "FM-NO-MITIGATION",
+    ]
+    assert result["non_critical_or_concurrent_fault_claim_ids"] == []
+    assert (
+        result["force_majeure_governance_status"]
+        == "FORCE_MAJEURE_TIME_BARRED_OR_UNMITIGATED_BREACH"
+    )
+    assert result["is_force_majeure_claim_compliant"] is False
+
+
+def test_audit_force_majeure_claim_substantiation_and_mitigation_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_force_majeure_claim_substantiation_and_mitigation,
+    )
+
+    result = audit_force_majeure_claim_substantiation_and_mitigation(
+        [
+            {
+                "claim_id": "FM-NON-CP",
+                "days_elapsed_before_written_notice": 5,
+                "impacts_critical_path_directly": False,
+                "contemporaneous_evidence_attached": True,
+                "duty_to_mitigate_plan_executed": True,
+                "concurrent_contractor_culpable_delay": False,
+            },
+            {
+                "claim_id": "FM-CONCURRENT-FAULT",
+                "days_elapsed_before_written_notice": 5,
+                "impacts_critical_path_directly": True,
+                "contemporaneous_evidence_attached": True,
+                "duty_to_mitigate_plan_executed": True,
+                "concurrent_contractor_culpable_delay": True,
+            },
+        ],
+        max_notice_days_after_event=14,
+    )
+    assert result["evaluated_claims_count"] == 2
+    assert result["time_barred_or_unsubstantiated_claim_ids"] == []
+    assert result["non_critical_or_concurrent_fault_claim_ids"] == [
+        "FM-NON-CP",
+        "FM-CONCURRENT-FAULT",
+    ]
+    assert (
+        result["force_majeure_governance_status"]
+        == "FORCE_MAJEURE_CONCURRENT_FAULT_OR_FLOAT_WARNING"
+    )
+    assert result["is_force_majeure_claim_compliant"] is False
+
+
+def test_audit_force_majeure_claim_substantiation_and_mitigation_optimal_and_empty():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_force_majeure_claim_substantiation_and_mitigation,
+    )
+
+    empty = audit_force_majeure_claim_substantiation_and_mitigation(
+        [{"claim_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_claims_count"] == 0
+    assert (
+        empty["force_majeure_governance_status"]
+        == "FORCE_MAJEURE_CLAIM_VALIDATED_OPTIMAL"
+    )
+    assert empty["is_force_majeure_claim_compliant"] is True
+
+    optimal = audit_force_majeure_claim_substantiation_and_mitigation(
+        [
+            {
+                "claim_id": "FM-VALID-01",
+                "days_elapsed_before_written_notice": 3,
+                "impacts_critical_path_directly": True,
+                "contemporaneous_evidence_attached": True,
+                "duty_to_mitigate_plan_executed": True,
+                "concurrent_contractor_culpable_delay": False,
+            }
+        ],
+        max_notice_days_after_event=14,
+    )
+    assert optimal["evaluated_claims_count"] == 1
+    assert (
+        optimal["force_majeure_governance_status"]
+        == "FORCE_MAJEURE_CLAIM_VALIDATED_OPTIMAL"
+    )
+    assert optimal["is_force_majeure_claim_compliant"] is True
+
+
+def test_audit_force_majeure_claim_substantiation_and_mitigation_staticmethod_and_dunder_all():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_force_majeure_claim_substantiation_and_mitigation,
+    )
+
+    sample = [
+        {
+            "claim_id": "FM-99",
+            "days_elapsed_before_written_notice": 4,
+            "impacts_critical_path_directly": True,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_force_majeure_claim_substantiation_and_mitigation(
+            sample
+        )
+        == audit_force_majeure_claim_substantiation_and_mitigation(sample)
+    )
+    assert (
+        "audit_force_majeure_claim_substantiation_and_mitigation"
+        in mod.__all__
+    )
+

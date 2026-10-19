@@ -3169,6 +3169,8 @@ __all__ = [
     "audit_project_closure_lessons_learned_and_pir_archival",
     "audit_organizational_change_adkar_readiness_and_training",
     "audit_ip_escrow_deposit_cadence_and_license_assignment",
+    "audit_joint_venture_consortium_solvency_and_step_in_rights",
+    "audit_force_majeure_claim_substantiation_and_mitigation",
     "ProjectLifecyclePMIService",
 ]
 
@@ -7175,5 +7177,163 @@ def audit_ip_escrow_deposit_cadence_and_license_assignment(
 
 ProjectLifecyclePMIService.audit_ip_escrow_deposit_cadence_and_license_assignment = staticmethod(
     audit_ip_escrow_deposit_cadence_and_license_assignment
+)
+
+
+def audit_joint_venture_consortium_solvency_and_step_in_rights(
+    consortium_partners: Sequence[Mapping[str, Any]] | None,
+    *,
+    min_liquidity_current_ratio: float = 1.2,
+    max_single_partner_scope_share_pct: float = 65.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §12.1 & §13.2 — Joint Venture (JV) & Consortium Partner Solvency, Liability Cap & Default Step-In Rights Auditor."""
+    valid_partners = [
+        partner
+        for partner in (consortium_partners or [])
+        if isinstance(partner, Mapping) and str(partner.get("partner_id") or "").strip()
+    ]
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _num(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    default_or_unenforceable_step_in_partner_ids: list[str] = []
+    low_liquidity_or_concentration_partner_ids: list[str] = []
+
+    for partner in valid_partners:
+        partner_id = str(partner.get("partner_id")).strip()
+        scope_share_pct = _num(
+            partner.get("scope_work_share_pct"), 30.0
+        )
+        liquidity_ratio = _num(
+            partner.get("liquidity_current_ratio"), 1.5
+        )
+        liability_signed = _bool(
+            partner.get("joint_and_several_liability_signed"), True
+        )
+        step_in_enforceable = _bool(
+            partner.get("step_in_rights_clause_enforceable"), True
+        )
+        default_notice = _bool(
+            partner.get("active_default_or_insolvency_notice"), False
+        )
+
+        if (
+            default_notice
+            or not liability_signed
+            or not step_in_enforceable
+        ):
+            default_or_unenforceable_step_in_partner_ids.append(partner_id)
+
+        if (
+            liquidity_ratio < min_liquidity_current_ratio
+            or scope_share_pct > max_single_partner_scope_share_pct
+        ):
+            low_liquidity_or_concentration_partner_ids.append(partner_id)
+
+    if default_or_unenforceable_step_in_partner_ids:
+        consortium_governance_status = "JV_PARTNER_DEFAULT_OR_STEP_IN_BREACH"
+    elif low_liquidity_or_concentration_partner_ids:
+        consortium_governance_status = "JV_LIQUIDITY_OR_CONCENTRATION_WARNING"
+    else:
+        consortium_governance_status = "JV_CONSORTIUM_GOVERNANCE_OPTIMAL"
+
+    return {
+        "evaluated_partners_count": len(valid_partners),
+        "default_or_unenforceable_step_in_partner_ids": default_or_unenforceable_step_in_partner_ids,
+        "low_liquidity_or_concentration_partner_ids": low_liquidity_or_concentration_partner_ids,
+        "consortium_governance_status": consortium_governance_status,
+        "is_consortium_compliant": consortium_governance_status
+        == "JV_CONSORTIUM_GOVERNANCE_OPTIMAL",
+    }
+
+
+ProjectLifecyclePMIService.audit_joint_venture_consortium_solvency_and_step_in_rights = staticmethod(
+    audit_joint_venture_consortium_solvency_and_step_in_rights
+)
+
+
+def audit_force_majeure_claim_substantiation_and_mitigation(
+    force_majeure_claims: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_notice_days_after_event: int | float = 14,
+) -> dict[str, Any]:
+    """PMI PMBOK §12.2 & §12.3 — Force Majeure & Excusable Delay Claim Substantiation, Notice Window SLA & Duty-to-Mitigate Auditor."""
+    valid_claims = [
+        clm
+        for clm in (force_majeure_claims or [])
+        if isinstance(clm, Mapping) and str(clm.get("claim_id") or "").strip()
+    ]
+
+    time_barred_or_unsubstantiated_claim_ids: list[str] = []
+    non_critical_or_concurrent_fault_claim_ids: list[str] = []
+
+    for clm in valid_claims:
+        cid = str(clm.get("claim_id")).strip()
+        notice_days = float(
+            clm.get("days_elapsed_before_written_notice", 5)
+            if clm.get("days_elapsed_before_written_notice") is not None
+            else 5
+        )
+        impacts_cp = bool(
+            clm.get("impacts_critical_path_directly", True)
+            if clm.get("impacts_critical_path_directly") is not None
+            else True
+        )
+        evidence_attached = bool(
+            clm.get("contemporaneous_evidence_attached", True)
+            if clm.get("contemporaneous_evidence_attached") is not None
+            else True
+        )
+        mitigation_executed = bool(
+            clm.get("duty_to_mitigate_plan_executed", True)
+            if clm.get("duty_to_mitigate_plan_executed") is not None
+            else True
+        )
+        concurrent_fault = bool(
+            clm.get("concurrent_contractor_culpable_delay", False)
+            if clm.get("concurrent_contractor_culpable_delay") is not None
+            else False
+        )
+
+        if (
+            notice_days > max_notice_days_after_event
+            or not evidence_attached
+            or not mitigation_executed
+        ):
+            time_barred_or_unsubstantiated_claim_ids.append(cid)
+
+        if not impacts_cp or concurrent_fault:
+            non_critical_or_concurrent_fault_claim_ids.append(cid)
+
+    if time_barred_or_unsubstantiated_claim_ids:
+        force_majeure_governance_status = (
+            "FORCE_MAJEURE_TIME_BARRED_OR_UNMITIGATED_BREACH"
+        )
+    elif non_critical_or_concurrent_fault_claim_ids:
+        force_majeure_governance_status = (
+            "FORCE_MAJEURE_CONCURRENT_FAULT_OR_FLOAT_WARNING"
+        )
+    else:
+        force_majeure_governance_status = (
+            "FORCE_MAJEURE_CLAIM_VALIDATED_OPTIMAL"
+        )
+
+    return {
+        "evaluated_claims_count": len(valid_claims),
+        "time_barred_or_unsubstantiated_claim_ids": time_barred_or_unsubstantiated_claim_ids,
+        "non_critical_or_concurrent_fault_claim_ids": non_critical_or_concurrent_fault_claim_ids,
+        "force_majeure_governance_status": force_majeure_governance_status,
+        "is_force_majeure_claim_compliant": force_majeure_governance_status
+        == "FORCE_MAJEURE_CLAIM_VALIDATED_OPTIMAL",
+    }
+
+
+ProjectLifecyclePMIService.audit_force_majeure_claim_substantiation_and_mitigation = staticmethod(
+    audit_force_majeure_claim_substantiation_and_mitigation
 )
 

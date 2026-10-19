@@ -3815,6 +3815,7 @@ __all__ = [
     "validate_monte_carlo_p80_p90_convergence_and_tornado_sensitivity",
     "validate_resource_leveling_overallocation_and_context_switching",
     "validate_wbs_rolling_wave_horizon_and_8_80_rule",
+    "validate_rtm_bidirectional_traceability_and_gold_plating",
 ]
 
 
@@ -8289,5 +8290,66 @@ def validate_wbs_rolling_wave_horizon_and_8_80_rule(
         "rolling_wave_status": rolling_wave_status,
         "is_rolling_wave_valid": rolling_wave_status
         == "WBS_ROLLING_WAVE_OPTIMAL",
+    }
+
+
+def validate_rtm_bidirectional_traceability_and_gold_plating(
+    requirements: Sequence[Mapping[str, Any]] | None,
+    *,
+    min_test_case_coverage_per_req: int = 1,
+) -> dict[str, Any]:
+    """PMI PMBOK §5.2 & §5.3 — Requirements Traceability Matrix (RTM) Bidirectional Coverage, Orphan Test Case & Gold-Plating Scope Creep Validator."""
+    valid_requirements = [
+        req
+        for req in (requirements or [])
+        if isinstance(req, Mapping) and str(req.get("req_id") or "").strip()
+    ]
+
+    untested_or_gold_plating_req_ids: list[str] = []
+    untraced_objective_or_wbs_req_ids: list[str] = []
+
+    for req in valid_requirements:
+        rid = str(req.get("req_id")).strip()
+        linked_obj = req.get("linked_business_objective_id", "OBJ-1")
+        linked_wbs = req.get("linked_wbs_deliverable_id", "WBS-1.1")
+        test_cases_count = int(
+            req.get("linked_verification_test_cases_count", 2)
+            if req.get("linked_verification_test_cases_count") is not None
+            else 2
+        )
+        is_gold_plating = bool(
+            req.get("is_unapproved_gold_plating_feature", False)
+            if req.get("is_unapproved_gold_plating_feature") is not None
+            else False
+        )
+
+        if (
+            is_gold_plating
+            or test_cases_count < min_test_case_coverage_per_req
+        ):
+            untested_or_gold_plating_req_ids.append(rid)
+
+        if (
+            not linked_obj
+            or not str(linked_obj).strip()
+            or not linked_wbs
+            or not str(linked_wbs).strip()
+        ):
+            untraced_objective_or_wbs_req_ids.append(rid)
+
+    if untested_or_gold_plating_req_ids:
+        rtm_traceability_status = "RTM_GOLD_PLATING_OR_UNTESTED_BREACH"
+    elif untraced_objective_or_wbs_req_ids:
+        rtm_traceability_status = "RTM_ORPHAN_TRACEABILITY_LINK_WARNING"
+    else:
+        rtm_traceability_status = "RTM_BIDIRECTIONAL_TRACEABILITY_OPTIMAL"
+
+    return {
+        "evaluated_requirements_count": len(valid_requirements),
+        "untested_or_gold_plating_req_ids": untested_or_gold_plating_req_ids,
+        "untraced_objective_or_wbs_req_ids": untraced_objective_or_wbs_req_ids,
+        "rtm_traceability_status": rtm_traceability_status,
+        "is_rtm_traceability_valid": rtm_traceability_status
+        == "RTM_BIDIRECTIONAL_TRACEABILITY_OPTIMAL",
     }
 

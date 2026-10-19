@@ -7844,3 +7844,133 @@ def test_validate_wbs_rolling_wave_horizon_and_8_80_rule_defaults_and_dunder_all
     assert defaults["is_rolling_wave_valid"] is True
     assert "validate_wbs_rolling_wave_horizon_and_8_80_rule" in mod.__all__
 
+
+def test_validate_rtm_bidirectional_traceability_and_gold_plating_breach():
+    from backend.schemas.projects import (
+        validate_rtm_bidirectional_traceability_and_gold_plating,
+    )
+
+    result = validate_rtm_bidirectional_traceability_and_gold_plating(
+        [
+            {
+                "req_id": "REQ-GOLD-PLATE",
+                "linked_business_objective_id": "OBJ-1",
+                "linked_wbs_deliverable_id": "WBS-1.1",
+                "linked_verification_test_cases_count": 3,
+                "is_unapproved_gold_plating_feature": True,
+            },
+            {
+                "req_id": "REQ-UNTESTED",
+                "linked_business_objective_id": "OBJ-1",
+                "linked_wbs_deliverable_id": "WBS-1.1",
+                "linked_verification_test_cases_count": 0,
+                "is_unapproved_gold_plating_feature": False,
+            },
+        ],
+        min_test_case_coverage_per_req=1,
+    )
+    assert result["evaluated_requirements_count"] == 2
+    assert result["untested_or_gold_plating_req_ids"] == [
+        "REQ-GOLD-PLATE",
+        "REQ-UNTESTED",
+    ]
+    assert result["untraced_objective_or_wbs_req_ids"] == []
+    assert (
+        result["rtm_traceability_status"]
+        == "RTM_GOLD_PLATING_OR_UNTESTED_BREACH"
+    )
+    assert result["is_rtm_traceability_valid"] is False
+
+
+def test_validate_rtm_bidirectional_traceability_and_gold_plating_warning():
+    from backend.schemas.projects import (
+        validate_rtm_bidirectional_traceability_and_gold_plating,
+    )
+
+    result = validate_rtm_bidirectional_traceability_and_gold_plating(
+        [
+            {
+                "req_id": "REQ-NO-OBJ",
+                "linked_business_objective_id": None,
+                "linked_wbs_deliverable_id": "WBS-1.1",
+                "linked_verification_test_cases_count": 2,
+                "is_unapproved_gold_plating_feature": False,
+            },
+            {
+                "req_id": "REQ-BLANK-WBS",
+                "linked_business_objective_id": "OBJ-1",
+                "linked_wbs_deliverable_id": "   ",
+                "linked_verification_test_cases_count": 2,
+                "is_unapproved_gold_plating_feature": False,
+            },
+        ],
+        min_test_case_coverage_per_req=1,
+    )
+    assert result["evaluated_requirements_count"] == 2
+    assert result["untested_or_gold_plating_req_ids"] == []
+    assert result["untraced_objective_or_wbs_req_ids"] == [
+        "REQ-NO-OBJ",
+        "REQ-BLANK-WBS",
+    ]
+    assert (
+        result["rtm_traceability_status"]
+        == "RTM_ORPHAN_TRACEABILITY_LINK_WARNING"
+    )
+    assert result["is_rtm_traceability_valid"] is False
+
+
+def test_validate_rtm_bidirectional_traceability_and_gold_plating_optimal_and_empty():
+    from backend.schemas.projects import (
+        validate_rtm_bidirectional_traceability_and_gold_plating,
+    )
+
+    empty = validate_rtm_bidirectional_traceability_and_gold_plating(
+        [{"req_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_requirements_count"] == 0
+    assert (
+        empty["rtm_traceability_status"]
+        == "RTM_BIDIRECTIONAL_TRACEABILITY_OPTIMAL"
+    )
+    assert empty["is_rtm_traceability_valid"] is True
+
+    optimal = validate_rtm_bidirectional_traceability_and_gold_plating(
+        [
+            {
+                "req_id": "REQ-OPTIMAL-1",
+                "linked_business_objective_id": "OBJ-10",
+                "linked_wbs_deliverable_id": "WBS-2.1",
+                "linked_verification_test_cases_count": 2,
+                "is_unapproved_gold_plating_feature": False,
+            }
+        ],
+        min_test_case_coverage_per_req=1,
+    )
+    assert optimal["evaluated_requirements_count"] == 1
+    assert (
+        optimal["rtm_traceability_status"]
+        == "RTM_BIDIRECTIONAL_TRACEABILITY_OPTIMAL"
+    )
+    assert optimal["is_rtm_traceability_valid"] is True
+
+
+def test_validate_rtm_bidirectional_traceability_and_gold_plating_defaults_and_dunder_all():
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_rtm_bidirectional_traceability_and_gold_plating,
+    )
+
+    defaults = validate_rtm_bidirectional_traceability_and_gold_plating(
+        [{"req_id": "REQ-DEF-99"}]
+    )
+    assert defaults["evaluated_requirements_count"] == 1
+    assert (
+        defaults["rtm_traceability_status"]
+        == "RTM_BIDIRECTIONAL_TRACEABILITY_OPTIMAL"
+    )
+    assert defaults["is_rtm_traceability_valid"] is True
+    assert (
+        "validate_rtm_bidirectional_traceability_and_gold_plating"
+        in mod.__all__
+    )
+

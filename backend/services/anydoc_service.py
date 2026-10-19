@@ -3036,6 +3036,7 @@ __all__ = [
     "audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene",
     "audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene",
     "audit_markdown_link_rot_and_internal_anchor_resolution_hygiene",
+    "audit_markdown_math_latex_delimiter_and_macro_hygiene",
     "AnydocService",
 ]
 
@@ -8050,5 +8051,75 @@ AnyDocService.audit_markdown_link_rot_and_internal_anchor_resolution_hygiene = s
 )
 AnydocService.audit_markdown_link_rot_and_internal_anchor_resolution_hygiene = staticmethod(
     audit_markdown_link_rot_and_internal_anchor_resolution_hygiene
+)
+
+
+def audit_markdown_math_latex_delimiter_and_macro_hygiene(
+    documents: Any,
+    *,
+    max_equation_nesting_depth: int = 5,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §10.2 — AnyDoc Markdown LaTeX/KaTeX Math Delimiter Parity, Unsupported Macro & Equation Reference Hygiene Auditor."""
+    entries = documents if isinstance(documents, (list, tuple)) else []
+    valid_documents = [
+        doc
+        for doc in entries
+        if isinstance(doc, dict) and str(doc.get("doc_id") or "").strip()
+    ]
+
+    def _num(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    broken_delimiter_or_unsafe_macro_doc_ids: list[str] = []
+    unresolved_eqref_or_deep_nesting_doc_ids: list[str] = []
+
+    for doc in valid_documents:
+        doc_id = str(doc.get("doc_id")).strip()
+        unclosed_blocks = _num(
+            doc.get("unclosed_dollar_or_environment_blocks_count"), 0.0
+        )
+        unsafe_macros = _num(
+            doc.get("unsafe_or_unsupported_katex_macros_count"), 0.0
+        )
+        unresolved_eqrefs = _num(
+            doc.get("unresolved_eqref_labels_count"), 0.0
+        )
+        nesting_depth = _num(
+            doc.get("max_observed_equation_nesting_depth"), 2.0
+        )
+
+        if unclosed_blocks > 0 or unsafe_macros > 0:
+            broken_delimiter_or_unsafe_macro_doc_ids.append(doc_id)
+
+        if (
+            unresolved_eqrefs > 0
+            or nesting_depth > max_equation_nesting_depth
+        ):
+            unresolved_eqref_or_deep_nesting_doc_ids.append(doc_id)
+
+    if broken_delimiter_or_unsafe_macro_doc_ids:
+        math_hygiene_status = "MATH_DELIMITER_OR_UNSAFE_MACRO_BREACH"
+    elif unresolved_eqref_or_deep_nesting_doc_ids:
+        math_hygiene_status = "MATH_EQREF_OR_NESTING_WARNING"
+    else:
+        math_hygiene_status = "MATH_RENDERING_CLEAN"
+
+    return {
+        "evaluated_documents_count": len(valid_documents),
+        "broken_delimiter_or_unsafe_macro_doc_ids": broken_delimiter_or_unsafe_macro_doc_ids,
+        "unresolved_eqref_or_deep_nesting_doc_ids": unresolved_eqref_or_deep_nesting_doc_ids,
+        "math_hygiene_status": math_hygiene_status,
+        "is_math_hygiene_compliant": math_hygiene_status
+        == "MATH_RENDERING_CLEAN",
+    }
+
+
+AnyDocService.audit_markdown_math_latex_delimiter_and_macro_hygiene = staticmethod(
+    audit_markdown_math_latex_delimiter_and_macro_hygiene
+)
+AnydocService.audit_markdown_math_latex_delimiter_and_macro_hygiene = staticmethod(
+    audit_markdown_math_latex_delimiter_and_macro_hygiene
 )
 
