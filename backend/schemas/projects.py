@@ -3819,6 +3819,7 @@ __all__ = [
     "validate_wbs_rolling_wave_horizon_and_8_80_rule",
     "validate_rtm_bidirectional_traceability_and_gold_plating",
     "validate_schedule_crashing_and_fast_tracking_compression",
+    "validate_stakeholder_salience_power_urgency_legitimacy_alignment",
 ]
 
 
@@ -8595,3 +8596,83 @@ def validate_make_or_buy_tco_and_vendor_concentration(
         "is_make_or_buy_valid": make_or_buy_status
         == "MAKE_OR_BUY_STRATEGY_OPTIMAL",
     }
+
+
+def validate_stakeholder_salience_power_urgency_legitimacy_alignment(
+    stakeholders: list[dict] | None,
+    *,
+    max_engagement_gap_steps: int = 1,
+    require_definitive_stakeholder_owner: bool = True,
+) -> dict:
+    """PMBOK §13.1 & §13.3 — Valida modelo de prominencia de interesados (Poder-Urgencia-Legitimidad) y brechas de compromiso."""
+    raw_items = stakeholders if isinstance(stakeholders, list) else []
+    valid_stakeholders: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("stakeholder_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_stakeholders.append(item)
+
+    unowned_definitive_or_resistant_blocker_stakeholder_ids: list[str] = []
+    wide_engagement_gap_stakeholder_ids: list[str] = []
+
+    for s in valid_stakeholders:
+        stakeholder_id = s["stakeholder_id"].strip()
+        raw_power = s.get("high_power", True)
+        high_power = bool(True if raw_power is None else raw_power)
+
+        raw_urgency = s.get("high_urgency", True)
+        high_urgency = bool(True if raw_urgency is None else raw_urgency)
+
+        raw_legitimacy = s.get("high_legitimacy", True)
+        high_legitimacy = bool(
+            True if raw_legitimacy is None else raw_legitimacy
+        )
+
+        raw_gap = s.get("engagement_gap_steps", 0)
+        engagement_gap_steps = int(0 if raw_gap is None else raw_gap)
+
+        raw_resistant = s.get("is_resistant_with_high_power", False)
+        is_resistant_with_high_power = bool(
+            False if raw_resistant is None else raw_resistant
+        )
+
+        raw_owner = s.get("executive_owner_assigned", True)
+        executive_owner_assigned = bool(
+            True if raw_owner is None else raw_owner
+        )
+
+        is_definitive = high_power and high_urgency and high_legitimacy
+
+        if (
+            require_definitive_stakeholder_owner
+            and is_definitive
+            and not executive_owner_assigned
+        ) or is_resistant_with_high_power:
+            unowned_definitive_or_resistant_blocker_stakeholder_ids.append(
+                stakeholder_id
+            )
+
+        if engagement_gap_steps > max_engagement_gap_steps:
+            wide_engagement_gap_stakeholder_ids.append(stakeholder_id)
+
+    if unowned_definitive_or_resistant_blocker_stakeholder_ids:
+        stakeholder_salience_status = (
+            "STAKEHOLDER_SALIENCE_BLOCKER_OR_UNOWNED_BREACH"
+        )
+    elif wide_engagement_gap_stakeholder_ids:
+        stakeholder_salience_status = "STAKEHOLDER_ENGAGEMENT_GAP_WARNING"
+    else:
+        stakeholder_salience_status = "STAKEHOLDER_SALIENCE_ALIGNMENT_OPTIMAL"
+
+    return {
+        "evaluated_stakeholders_count": len(valid_stakeholders),
+        "unowned_definitive_or_resistant_blocker_stakeholder_ids": unowned_definitive_or_resistant_blocker_stakeholder_ids,
+        "wide_engagement_gap_stakeholder_ids": wide_engagement_gap_stakeholder_ids,
+        "stakeholder_salience_status": stakeholder_salience_status,
+        "is_stakeholder_salience_valid": stakeholder_salience_status
+        == "STAKEHOLDER_SALIENCE_ALIGNMENT_OPTIMAL",
+    }
+

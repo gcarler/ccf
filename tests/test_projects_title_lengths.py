@@ -8428,3 +8428,174 @@ def test_validate_make_or_buy_invalid_and_dunder_all():
         "validate_make_or_buy_tco_and_vendor_concentration"
         in mod.__all__
     )
+
+
+def test_validate_stakeholder_salience_power_urgency_legitimacy_alignment_breach():
+    from backend.schemas.projects import (
+        validate_stakeholder_salience_power_urgency_legitimacy_alignment,
+    )
+
+    res = validate_stakeholder_salience_power_urgency_legitimacy_alignment(
+        [
+            {
+                "stakeholder_id": "  SH-DEFINITIVE-NO-OWNER  ",
+                "high_power": True,
+                "high_urgency": True,
+                "high_legitimacy": True,
+                "engagement_gap_steps": 0,
+                "is_resistant_with_high_power": False,
+                "executive_owner_assigned": False,
+            },
+            {
+                "stakeholder_id": "SH-RESISTANT-BLOCKER",
+                "high_power": True,
+                "high_urgency": False,
+                "high_legitimacy": True,
+                "engagement_gap_steps": 2,
+                "is_resistant_with_high_power": True,
+                "executive_owner_assigned": True,
+            },
+            {
+                "stakeholder_id": "SH-CLEAN",
+                "high_power": True,
+                "high_urgency": True,
+                "high_legitimacy": True,
+                "engagement_gap_steps": 1,
+                "is_resistant_with_high_power": False,
+                "executive_owner_assigned": True,
+            },
+        ]
+    )
+    assert res["evaluated_stakeholders_count"] == 3
+    assert (
+        res["unowned_definitive_or_resistant_blocker_stakeholder_ids"]
+        == ["SH-DEFINITIVE-NO-OWNER", "SH-RESISTANT-BLOCKER"]
+    )
+    assert res["wide_engagement_gap_stakeholder_ids"] == [
+        "SH-RESISTANT-BLOCKER"
+    ]
+    assert (
+        res["stakeholder_salience_status"]
+        == "STAKEHOLDER_SALIENCE_BLOCKER_OR_UNOWNED_BREACH"
+    )
+    assert res["is_stakeholder_salience_valid"] is False
+
+
+def test_validate_stakeholder_salience_power_urgency_legitimacy_alignment_warning():
+    from backend.schemas.projects import (
+        validate_stakeholder_salience_power_urgency_legitimacy_alignment,
+    )
+
+    res = validate_stakeholder_salience_power_urgency_legitimacy_alignment(
+        [
+            {
+                "stakeholder_id": "SH-GAP-2",
+                "high_power": True,
+                "high_urgency": True,
+                "high_legitimacy": True,
+                "engagement_gap_steps": 2,
+                "is_resistant_with_high_power": False,
+                "executive_owner_assigned": True,
+            },
+            {
+                "stakeholder_id": "SH-UNOWNED-ALLOWED",
+                "high_power": True,
+                "high_urgency": True,
+                "high_legitimacy": True,
+                "engagement_gap_steps": 1,
+                "is_resistant_with_high_power": False,
+                "executive_owner_assigned": False,
+            },
+        ],
+        max_engagement_gap_steps=1,
+        require_definitive_stakeholder_owner=False,
+    )
+    assert res["evaluated_stakeholders_count"] == 2
+    assert res["unowned_definitive_or_resistant_blocker_stakeholder_ids"] == []
+    assert res["wide_engagement_gap_stakeholder_ids"] == ["SH-GAP-2"]
+    assert (
+        res["stakeholder_salience_status"]
+        == "STAKEHOLDER_ENGAGEMENT_GAP_WARNING"
+    )
+    assert res["is_stakeholder_salience_valid"] is False
+
+
+def test_validate_stakeholder_salience_power_urgency_legitimacy_alignment_optimal_and_boundaries():
+    from backend.schemas.projects import (
+        validate_stakeholder_salience_power_urgency_legitimacy_alignment,
+    )
+
+    res = validate_stakeholder_salience_power_urgency_legitimacy_alignment(
+        [
+            {
+                "stakeholder_id": "SH-BOUNDARY",
+                "high_power": True,
+                "high_urgency": True,
+                "high_legitimacy": True,
+                "engagement_gap_steps": 1,
+                "is_resistant_with_high_power": False,
+                "executive_owner_assigned": True,
+            },
+            {
+                "stakeholder_id": "SH-NON-DEFINITIVE-NO-OWNER",
+                "high_power": True,
+                "high_urgency": False,
+                "high_legitimacy": True,
+                "engagement_gap_steps": 0,
+                "is_resistant_with_high_power": False,
+                "executive_owner_assigned": False,
+            },
+        ]
+    )
+    assert res["evaluated_stakeholders_count"] == 2
+    assert res["unowned_definitive_or_resistant_blocker_stakeholder_ids"] == []
+    assert res["wide_engagement_gap_stakeholder_ids"] == []
+    assert (
+        res["stakeholder_salience_status"]
+        == "STAKEHOLDER_SALIENCE_ALIGNMENT_OPTIMAL"
+    )
+    assert res["is_stakeholder_salience_valid"] is True
+
+
+def test_validate_stakeholder_salience_power_urgency_legitimacy_alignment_defensive_and_dunder_all():
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_stakeholder_salience_power_urgency_legitimacy_alignment,
+    )
+
+    empty = validate_stakeholder_salience_power_urgency_legitimacy_alignment(
+        None
+    )
+    assert empty["evaluated_stakeholders_count"] == 0
+    assert (
+        empty["stakeholder_salience_status"]
+        == "STAKEHOLDER_SALIENCE_ALIGNMENT_OPTIMAL"
+    )
+    assert empty["is_stakeholder_salience_valid"] is True
+
+    defaults = validate_stakeholder_salience_power_urgency_legitimacy_alignment(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"stakeholder_id": "   "},
+            {
+                "stakeholder_id": "SH-DEFAULTS",
+                "high_power": None,
+                "high_urgency": None,
+                "high_legitimacy": None,
+                "engagement_gap_steps": None,
+                "is_resistant_with_high_power": None,
+                "executive_owner_assigned": None,
+            },
+        ]
+    )
+    assert defaults["evaluated_stakeholders_count"] == 1
+    assert (
+        defaults["stakeholder_salience_status"]
+        == "STAKEHOLDER_SALIENCE_ALIGNMENT_OPTIMAL"
+    )
+    assert defaults["is_stakeholder_salience_valid"] is True
+    assert (
+        "validate_stakeholder_salience_power_urgency_legitimacy_alignment"
+        in mod.__all__
+    )
+

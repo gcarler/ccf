@@ -7812,3 +7812,150 @@ def test_audit_markdown_fenced_code_block_language_and_secret_hygiene_staticmeth
         "audit_markdown_fenced_code_block_language_and_secret_hygiene"
         in mod.__all__
     )
+
+
+def test_table_structure_or_pipe_breach():
+    from backend.services.anydoc_service import (
+        audit_markdown_table_column_parity_and_cell_hygiene,
+    )
+
+    res = audit_markdown_table_column_parity_and_cell_hygiene(
+        [
+            {
+                "table_id": "TABLE-ROW-RAGGED",
+                "row_column_counts_consistent": False,
+            },
+            {
+                "table_id": "TABLE-NO-DELIMITER",
+                "valid_delimiter_row_present": False,
+            },
+            {
+                "table_id": "TABLE-UNESCAPED-PIPES",
+                "unescaped_inline_pipes_count": 2,
+            },
+        ],
+        max_columns_count=10,
+        max_cell_char_length=240,
+    )
+    assert res["evaluated_tables_count"] == 3
+    assert res["malformed_structure_or_pipe_table_ids"] == [
+        "TABLE-ROW-RAGGED",
+        "TABLE-NO-DELIMITER",
+        "TABLE-UNESCAPED-PIPES",
+    ]
+    assert res["wide_or_overflow_cell_table_ids"] == []
+    assert (
+        res["table_hygiene_status"]
+        == "MARKDOWN_TABLE_STRUCTURE_OR_PIPE_BREACH"
+    )
+    assert res["is_table_hygiene_compliant"] is False
+
+
+def test_table_width_or_cell_overflow_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_table_column_parity_and_cell_hygiene,
+    )
+
+    res = audit_markdown_table_column_parity_and_cell_hygiene(
+        [
+            {
+                "table_id": "TABLE-TOO-WIDE",
+                "header_columns_count": 14,
+            },
+            {
+                "table_id": "TABLE-CELL-OVERFLOW",
+                "max_observed_cell_chars": 500,
+            },
+        ],
+        max_columns_count=10,
+        max_cell_char_length=240,
+    )
+    assert res["evaluated_tables_count"] == 2
+    assert res["malformed_structure_or_pipe_table_ids"] == []
+    assert res["wide_or_overflow_cell_table_ids"] == [
+        "TABLE-TOO-WIDE",
+        "TABLE-CELL-OVERFLOW",
+    ]
+    assert (
+        res["table_hygiene_status"]
+        == "MARKDOWN_TABLE_WIDTH_OR_CELL_OVERFLOW_WARNING"
+    )
+    assert res["is_table_hygiene_compliant"] is False
+
+
+def test_table_boundaries_optimal_and_defaults():
+    from backend.services.anydoc_service import (
+        audit_markdown_table_column_parity_and_cell_hygiene,
+    )
+
+    res = audit_markdown_table_column_parity_and_cell_hygiene(
+        [
+            {
+                "table_id": "TABLE-BOUNDARY",
+                "header_columns_count": 10,
+                "max_observed_cell_chars": 240,
+            },
+            {"table_id": "TABLE-ALL-DEFAULTS"},
+        ],
+        max_columns_count=10,
+        max_cell_char_length=240,
+    )
+    assert res["evaluated_tables_count"] == 2
+    assert res["malformed_structure_or_pipe_table_ids"] == []
+    assert res["wide_or_overflow_cell_table_ids"] == []
+    assert res["table_hygiene_status"] == "MARKDOWN_TABLE_HYGIENE_OPTIMAL"
+    assert res["is_table_hygiene_compliant"] is True
+
+
+def test_table_hygiene_invalid_and_binding():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_table_column_parity_and_cell_hygiene,
+    )
+
+    empty = audit_markdown_table_column_parity_and_cell_hygiene(None)
+    assert empty["evaluated_tables_count"] == 0
+    assert empty["malformed_structure_or_pipe_table_ids"] == []
+    assert empty["wide_or_overflow_cell_table_ids"] == []
+    assert empty["table_hygiene_status"] == "MARKDOWN_TABLE_HYGIENE_OPTIMAL"
+    assert empty["is_table_hygiene_compliant"] is True
+
+    invalid = audit_markdown_table_column_parity_and_cell_hygiene(
+        [42, "not-a-dict", None, {"table_id": "   "}]  # type: ignore[list-item]
+    )
+    assert invalid["evaluated_tables_count"] == 0
+
+    defaults = audit_markdown_table_column_parity_and_cell_hygiene(
+        [
+            {
+                "table_id": "TABLE-DEFAULTS",
+                "header_columns_count": None,
+                "row_column_counts_consistent": None,
+                "valid_delimiter_row_present": None,
+                "unescaped_inline_pipes_count": None,
+                "max_observed_cell_chars": None,
+            }
+        ]
+    )
+    assert defaults["evaluated_tables_count"] == 1
+    assert defaults["table_hygiene_status"] == "MARKDOWN_TABLE_HYGIENE_OPTIMAL"
+    assert defaults["is_table_hygiene_compliant"] is True
+
+    sample = [
+        {
+            "table_id": "TABLE-1",
+            "header_columns_count": 4,
+            "max_observed_cell_chars": 100,
+        }
+    ]
+    assert (
+        AnyDocService.audit_markdown_table_column_parity_and_cell_hygiene(
+            sample
+        )
+        == audit_markdown_table_column_parity_and_cell_hygiene(sample)
+    )
+    assert (
+        "audit_markdown_table_column_parity_and_cell_hygiene"
+        in mod.__all__
+    )

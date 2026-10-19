@@ -2853,6 +2853,7 @@ __all__ = [
     "audit_container_image_vulnerability_and_non_root_runtime_gate",
     "audit_dark_launch_shadow_traffic_parity_and_isolation",
     "audit_db_connection_pool_saturation_and_idle_tx_timeout",
+    "audit_message_broker_consumer_lag_and_dlq_poison_pill_gate",
     "ProjectCCBService",
 ]
 
@@ -7434,4 +7435,77 @@ def audit_db_connection_pool_saturation_and_idle_tx_timeout(
 ProjectCCBService.audit_db_connection_pool_saturation_and_idle_tx_timeout = staticmethod(
     audit_db_connection_pool_saturation_and_idle_tx_timeout
 )
+
+
+def audit_message_broker_consumer_lag_and_dlq_poison_pill_gate(
+    topics: list[dict] | None,
+    *,
+    max_consumer_lag_messages: int = 5000,
+    max_poison_pill_retries: int = 5,
+) -> dict:
+    """PMBOK §8.3 & §11.6 — Audita lag de consumidores de broker de mensajería, cuarentena DLQ de poison-pills y compatibilidad de Schema Registry."""
+    raw_items = topics if isinstance(topics, list) else []
+    valid_topics: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("topic_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_topics.append(item)
+
+    schema_break_or_missing_dlq_topic_ids: list[str] = []
+    high_lag_or_retry_storm_topic_ids: list[str] = []
+
+    for t in valid_topics:
+        topic_id = t["topic_id"].strip()
+        raw_lag = t.get("consumer_lag_messages", 0)
+        consumer_lag_messages = int(0 if raw_lag is None else raw_lag)
+
+        raw_dlq = t.get("dlq_poison_pill_quarantine_enabled", True)
+        dlq_poison_pill_quarantine_enabled = bool(
+            True if raw_dlq is None else raw_dlq
+        )
+
+        raw_schema = t.get("schema_backward_compatible", True)
+        schema_backward_compatible = bool(
+            True if raw_schema is None else raw_schema
+        )
+
+        raw_retries = t.get("configured_max_retries", 3)
+        configured_max_retries = int(3 if raw_retries is None else raw_retries)
+
+        if (
+            not schema_backward_compatible
+            or not dlq_poison_pill_quarantine_enabled
+        ):
+            schema_break_or_missing_dlq_topic_ids.append(topic_id)
+
+        if (
+            consumer_lag_messages > max_consumer_lag_messages
+            or configured_max_retries > max_poison_pill_retries
+        ):
+            high_lag_or_retry_storm_topic_ids.append(topic_id)
+
+    if schema_break_or_missing_dlq_topic_ids:
+        message_broker_gate_status = "BROKER_SCHEMA_OR_DLQ_QUARANTINE_BREACH"
+    elif high_lag_or_retry_storm_topic_ids:
+        message_broker_gate_status = "BROKER_CONSUMER_LAG_OR_RETRY_WARNING"
+    else:
+        message_broker_gate_status = "BROKER_STREAMING_GATE_OPTIMAL"
+
+    return {
+        "evaluated_topics_count": len(valid_topics),
+        "schema_break_or_missing_dlq_topic_ids": schema_break_or_missing_dlq_topic_ids,
+        "high_lag_or_retry_storm_topic_ids": high_lag_or_retry_storm_topic_ids,
+        "message_broker_gate_status": message_broker_gate_status,
+        "is_message_broker_gate_compliant": message_broker_gate_status
+        == "BROKER_STREAMING_GATE_OPTIMAL",
+    }
+
+
+ProjectCCBService.audit_message_broker_consumer_lag_and_dlq_poison_pill_gate = staticmethod(
+    audit_message_broker_consumer_lag_and_dlq_poison_pill_gate
+)
+
 

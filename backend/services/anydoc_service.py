@@ -3039,6 +3039,7 @@ __all__ = [
     "audit_markdown_math_latex_delimiter_and_macro_hygiene",
     "audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene",
     "audit_markdown_fenced_code_block_language_and_secret_hygiene",
+    "audit_markdown_table_column_parity_and_cell_hygiene",
     "AnydocService",
 ]
 
@@ -8276,5 +8277,84 @@ AnyDocService.audit_markdown_fenced_code_block_language_and_secret_hygiene = sta
 )
 AnydocService.audit_markdown_fenced_code_block_language_and_secret_hygiene = staticmethod(
     audit_markdown_fenced_code_block_language_and_secret_hygiene
+)
+
+
+def audit_markdown_table_column_parity_and_cell_hygiene(
+    tables: Any,
+    *,
+    max_columns_count: int = 10,
+    max_cell_char_length: int = 240,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §10.2 — AnyDoc Markdown Table Column Parity, Header Separator Syntax & Cell Pipe Escaping Hygiene Auditor."""
+    entries = tables if isinstance(tables, (list, tuple)) else []
+    valid_tables = [
+        table
+        for table in entries
+        if isinstance(table, dict)
+        and str(table.get("table_id") or "").strip()
+    ]
+
+    def _num(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    malformed_structure_or_pipe_table_ids: list[str] = []
+    wide_or_overflow_cell_table_ids: list[str] = []
+
+    for table in valid_tables:
+        table_id = str(table.get("table_id")).strip()
+        header_columns = _num(
+            table.get("header_columns_count"), 4.0
+        )
+        row_counts_consistent = _bool(
+            table.get("row_column_counts_consistent"), True
+        )
+        delimiter_row_present = _bool(
+            table.get("valid_delimiter_row_present"), True
+        )
+        unescaped_pipes = _num(
+            table.get("unescaped_inline_pipes_count"), 0.0
+        )
+        max_cell_chars = _num(
+            table.get("max_observed_cell_chars"), 80.0
+        )
+
+        if (
+            not row_counts_consistent
+            or not delimiter_row_present
+            or unescaped_pipes > 0
+        ):
+            malformed_structure_or_pipe_table_ids.append(table_id)
+
+        if (
+            header_columns > max_columns_count
+            or max_cell_chars > max_cell_char_length
+        ):
+            wide_or_overflow_cell_table_ids.append(table_id)
+
+    if malformed_structure_or_pipe_table_ids:
+        table_hygiene_status = "MARKDOWN_TABLE_STRUCTURE_OR_PIPE_BREACH"
+    elif wide_or_overflow_cell_table_ids:
+        table_hygiene_status = "MARKDOWN_TABLE_WIDTH_OR_CELL_OVERFLOW_WARNING"
+    else:
+        table_hygiene_status = "MARKDOWN_TABLE_HYGIENE_OPTIMAL"
+
+    return {
+        "evaluated_tables_count": len(valid_tables),
+        "malformed_structure_or_pipe_table_ids": malformed_structure_or_pipe_table_ids,
+        "wide_or_overflow_cell_table_ids": wide_or_overflow_cell_table_ids,
+        "table_hygiene_status": table_hygiene_status,
+        "is_table_hygiene_compliant": table_hygiene_status
+        == "MARKDOWN_TABLE_HYGIENE_OPTIMAL",
+    }
+
+
+AnyDocService.audit_markdown_table_column_parity_and_cell_hygiene = staticmethod(
+    audit_markdown_table_column_parity_and_cell_hygiene
 )
 

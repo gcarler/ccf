@@ -9944,3 +9944,148 @@ def test_audit_db_connection_pool_saturation_and_idle_tx_timeout_staticmethod_an
         "audit_db_connection_pool_saturation_and_idle_tx_timeout"
         in mod.__all__
     )
+
+
+def test_audit_message_broker_consumer_lag_and_dlq_poison_pill_gate_breach():
+    from backend.services.project_ccb_service import (
+        audit_message_broker_consumer_lag_and_dlq_poison_pill_gate,
+    )
+
+    res = audit_message_broker_consumer_lag_and_dlq_poison_pill_gate(
+        [
+            {
+                "topic_id": "  TOPIC-ORDERS-V2  ",
+                "consumer_lag_messages": 120,
+                "dlq_poison_pill_quarantine_enabled": True,
+                "schema_backward_compatible": False,
+                "configured_max_retries": 3,
+            },
+            {
+                "topic_id": "TOPIC-PAYMENTS-V1",
+                "consumer_lag_messages": 8000,
+                "dlq_poison_pill_quarantine_enabled": False,
+                "schema_backward_compatible": True,
+                "configured_max_retries": 4,
+            },
+            {
+                "topic_id": "TOPIC-CLEAN",
+                "consumer_lag_messages": 5000,
+                "dlq_poison_pill_quarantine_enabled": True,
+                "schema_backward_compatible": True,
+                "configured_max_retries": 5,
+            },
+        ]
+    )
+    assert res["evaluated_topics_count"] == 3
+    assert res["schema_break_or_missing_dlq_topic_ids"] == [
+        "TOPIC-ORDERS-V2",
+        "TOPIC-PAYMENTS-V1",
+    ]
+    assert res["high_lag_or_retry_storm_topic_ids"] == ["TOPIC-PAYMENTS-V1"]
+    assert (
+        res["message_broker_gate_status"]
+        == "BROKER_SCHEMA_OR_DLQ_QUARANTINE_BREACH"
+    )
+    assert res["is_message_broker_gate_compliant"] is False
+
+
+def test_audit_message_broker_consumer_lag_and_dlq_poison_pill_gate_warning():
+    from backend.services.project_ccb_service import (
+        audit_message_broker_consumer_lag_and_dlq_poison_pill_gate,
+    )
+
+    res = audit_message_broker_consumer_lag_and_dlq_poison_pill_gate(
+        [
+            {
+                "topic_id": "TOPIC-LAG",
+                "consumer_lag_messages": 5001,
+                "dlq_poison_pill_quarantine_enabled": True,
+                "schema_backward_compatible": True,
+                "configured_max_retries": 5,
+            },
+            {
+                "topic_id": "TOPIC-RETRY-STORM",
+                "consumer_lag_messages": 5000,
+                "dlq_poison_pill_quarantine_enabled": True,
+                "schema_backward_compatible": True,
+                "configured_max_retries": 6,
+            },
+        ],
+        max_consumer_lag_messages=5000,
+        max_poison_pill_retries=5,
+    )
+    assert res["evaluated_topics_count"] == 2
+    assert res["schema_break_or_missing_dlq_topic_ids"] == []
+    assert res["high_lag_or_retry_storm_topic_ids"] == [
+        "TOPIC-LAG",
+        "TOPIC-RETRY-STORM",
+    ]
+    assert (
+        res["message_broker_gate_status"]
+        == "BROKER_CONSUMER_LAG_OR_RETRY_WARNING"
+    )
+    assert res["is_message_broker_gate_compliant"] is False
+
+
+def test_audit_message_broker_consumer_lag_and_dlq_poison_pill_gate_optimal_and_defensive():
+    from backend.services.project_ccb_service import (
+        audit_message_broker_consumer_lag_and_dlq_poison_pill_gate,
+    )
+
+    empty = audit_message_broker_consumer_lag_and_dlq_poison_pill_gate(None)
+    assert empty["evaluated_topics_count"] == 0
+    assert empty["schema_break_or_missing_dlq_topic_ids"] == []
+    assert empty["high_lag_or_retry_storm_topic_ids"] == []
+    assert (
+        empty["message_broker_gate_status"] == "BROKER_STREAMING_GATE_OPTIMAL"
+    )
+    assert empty["is_message_broker_gate_compliant"] is True
+
+    optimal = audit_message_broker_consumer_lag_and_dlq_poison_pill_gate(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"topic_id": "   "},
+            {
+                "topic_id": "TOPIC-DEFAULTS",
+                "consumer_lag_messages": None,
+                "dlq_poison_pill_quarantine_enabled": None,
+                "schema_backward_compatible": None,
+                "configured_max_retries": None,
+            },
+        ]
+    )
+    assert optimal["evaluated_topics_count"] == 1
+    assert optimal["schema_break_or_missing_dlq_topic_ids"] == []
+    assert optimal["high_lag_or_retry_storm_topic_ids"] == []
+    assert (
+        optimal["message_broker_gate_status"]
+        == "BROKER_STREAMING_GATE_OPTIMAL"
+    )
+    assert optimal["is_message_broker_gate_compliant"] is True
+
+
+def test_audit_message_broker_consumer_lag_and_dlq_poison_pill_gate_staticmethod_and_dunder_all():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_message_broker_consumer_lag_and_dlq_poison_pill_gate,
+    )
+
+    sample = [
+        {
+            "topic_id": "TOPIC-99",
+            "consumer_lag_messages": 250,
+            "configured_max_retries": 3,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_message_broker_consumer_lag_and_dlq_poison_pill_gate(
+            sample
+        )
+        == audit_message_broker_consumer_lag_and_dlq_poison_pill_gate(sample)
+    )
+    assert (
+        "audit_message_broker_consumer_lag_and_dlq_poison_pill_gate"
+        in mod.__all__
+    )
+
