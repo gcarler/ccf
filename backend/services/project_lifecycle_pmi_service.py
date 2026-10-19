@@ -3193,6 +3193,7 @@ __all__ = [
     "audit_joint_venture_consortium_liability_and_step_in_rights",
     "audit_ip_patent_assignment_chain_and_copyleft_contamination",
     "audit_pir_hypercare_burn_in_and_bau_support_handover",
+    "audit_cross_border_customs_incoterms_and_export_control_compliance",
     "ProjectLifecyclePMIService",
 ]
 
@@ -9393,4 +9394,108 @@ def audit_pir_hypercare_burn_in_and_bau_support_handover(
 
 ProjectLifecyclePMIService.audit_pir_hypercare_burn_in_and_bau_support_handover = staticmethod(
     audit_pir_hypercare_burn_in_and_bau_support_handover
+)
+
+
+def audit_cross_border_customs_incoterms_and_export_control_compliance(
+    shipments: list[dict[str, Any]],
+    *,
+    max_demurrage_detention_days: int = 5,
+    allowed_incoterms: tuple[str, ...] = (
+        "EXW",
+        "FCA",
+        "CPT",
+        "CIP",
+        "DAP",
+        "DPU",
+        "DDP",
+        "FAS",
+        "FOB",
+        "CFR",
+        "CIF",
+    ),
+) -> dict[str, Any]:
+    """PMBOK §12.3 & §11.2 — Cross-Border Customs Tariff HS-Code Classification, Incoterms 2020 DDP/CIF Risk Transfer & Export Control ECCN/ITAR License Auditor."""
+    shipment_evaluations: list[dict[str, Any]] = []
+    critical_shipments: list[str] = []
+    warning_shipments: list[str] = []
+    total_demurrage_days = 0
+
+    for item in shipments or []:
+        if not isinstance(item, Mapping):
+            continue
+        shipment_id = (
+            str(item.get("shipment_id") or "").strip() or "UNKNOWN_SHIPMENT"
+        )
+        incoterm_2020 = str(item.get("incoterm_2020") or "").strip().upper()
+        hs_code_verified = bool(item.get("hs_code_verified", True))
+        dual_use_eccn_or_itar_controlled = bool(
+            item.get("dual_use_eccn_or_itar_controlled", False)
+        )
+        export_license_granted = bool(item.get("export_license_granted", True))
+        sanctioned_entity_or_embargoed_port_hit = bool(
+            item.get("sanctioned_entity_or_embargoed_port_hit", False)
+        )
+        port_demurrage_days = int(item.get("port_demurrage_days", 0) or 0)
+        certificate_of_origin_attached = bool(
+            item.get("certificate_of_origin_attached", True)
+        )
+        customs_bond_active = bool(item.get("customs_bond_active", True))
+
+        total_demurrage_days += port_demurrage_days
+        valid_incoterm = incoterm_2020 in allowed_incoterms
+
+        critical_trade_breach = (
+            sanctioned_entity_or_embargoed_port_hit is True
+            or (dual_use_eccn_or_itar_controlled and not export_license_granted)
+            or not hs_code_verified
+            or not customs_bond_active
+            or not valid_incoterm
+        )
+        trade_logistics_warning = (not critical_trade_breach) and (
+            port_demurrage_days > max_demurrage_detention_days
+            or not certificate_of_origin_attached
+        )
+
+        if critical_trade_breach:
+            critical_shipments.append(shipment_id)
+        elif trade_logistics_warning:
+            warning_shipments.append(shipment_id)
+
+        shipment_evaluations.append(
+            {
+                "shipment_id": shipment_id,
+                "incoterm_2020": incoterm_2020,
+                "valid_incoterm": valid_incoterm,
+                "hs_code_verified": hs_code_verified,
+                "dual_use_eccn_or_itar_controlled": dual_use_eccn_or_itar_controlled,
+                "export_license_granted": export_license_granted,
+                "sanctioned_entity_or_embargoed_port_hit": sanctioned_entity_or_embargoed_port_hit,
+                "port_demurrage_days": port_demurrage_days,
+                "certificate_of_origin_attached": certificate_of_origin_attached,
+                "customs_bond_active": customs_bond_active,
+                "critical_trade_breach": critical_trade_breach,
+                "trade_logistics_warning": trade_logistics_warning,
+            }
+        )
+
+    if critical_shipments:
+        status = "CRITICAL"
+    elif warning_shipments:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "status": status,
+        "evaluated_shipments_count": len(shipment_evaluations),
+        "critical_shipments": critical_shipments,
+        "warning_shipments": warning_shipments,
+        "total_demurrage_days": total_demurrage_days,
+        "shipment_evaluations": shipment_evaluations,
+    }
+
+
+ProjectLifecyclePMIService.audit_cross_border_customs_incoterms_and_export_control_compliance = staticmethod(
+    audit_cross_border_customs_incoterms_and_export_control_compliance
 )

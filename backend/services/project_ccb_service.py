@@ -2873,6 +2873,7 @@ __all__ = [
     "audit_ebpf_kernel_verifier_and_ringbuf_drop_gate",
     "audit_vault_secret_lease_ttl_and_dynamic_credential_revocation_gate",
     "audit_wasm_wasi_sandbox_capability_and_fuel_metering_gate",
+    "audit_db_connection_pool_saturation_and_deadlock_gate",
     "ProjectCCBService",
 ]
 
@@ -9378,4 +9379,110 @@ def audit_wasm_wasi_sandbox_capability_and_fuel_metering_gate(
 
 ProjectCCBService.audit_wasm_wasi_sandbox_capability_and_fuel_metering_gate = staticmethod(
     audit_wasm_wasi_sandbox_capability_and_fuel_metering_gate
+)
+
+
+def audit_db_connection_pool_saturation_and_deadlock_gate(
+    pools: list[dict[str, Any]],
+    *,
+    max_pool_utilization_pct: float = 85.0,
+    max_wait_queue_ms: float = 100.0,
+    max_deadlock_rate_pct: float = 0.05,
+) -> dict[str, Any]:
+    """PMBOK §8.3 & §11.6 — CCB Database Connection Pool (PgBouncer / HikariCP) Saturation, Transaction Idle-in-Transaction Timeout & Deadlock Rate Gate Auditor."""
+    pool_evaluations: list[dict[str, Any]] = []
+    critical_pools: list[str] = []
+    warning_pools: list[str] = []
+    peak_pool_utilization_pct = 0.0
+
+    for item in pools or []:
+        if not isinstance(item, Mapping):
+            continue
+        pool_id = str(item.get("pool_id") or "").strip() or "UNKNOWN_POOL"
+        active_connections = int(item.get("active_connections", 0) or 0)
+        max_pool_size = int(item.get("max_pool_size", 0) or 0)
+        waiting_clients_count = int(item.get("waiting_clients_count", 0) or 0)
+        p99_connection_acquire_wait_ms = float(
+            item.get("p99_connection_acquire_wait_ms", 5.0) or 0.0
+        )
+        idle_in_transaction_timeout_configured = bool(
+            item.get("idle_in_transaction_timeout_configured", True)
+        )
+        raw_tx = item.get("total_transactions", 10000)
+        total_transactions = int(10000 if raw_tx is None else raw_tx)
+        deadlock_aborts = int(item.get("deadlock_aborts", 0) or 0)
+        connection_leak_detected = bool(
+            item.get("connection_leak_detected", False)
+        )
+
+        utilization_pct = (
+            round((active_connections / max_pool_size) * 100.0, 2)
+            if max_pool_size > 0
+            else 100.0
+        )
+        deadlock_rate_pct = (
+            round((deadlock_aborts / total_transactions) * 100.0, 4)
+            if total_transactions > 0
+            else 0.0
+        )
+        peak_pool_utilization_pct = max(
+            peak_pool_utilization_pct, utilization_pct
+        )
+
+        critical_pool_violation = (
+            connection_leak_detected is True
+            or not idle_in_transaction_timeout_configured
+            or utilization_pct > 95.0
+            or deadlock_rate_pct > max_deadlock_rate_pct
+            or p99_connection_acquire_wait_ms > max_wait_queue_ms * 2.0
+        )
+        pool_warning = (not critical_pool_violation) and (
+            utilization_pct > max_pool_utilization_pct
+            or waiting_clients_count > 0
+            or p99_connection_acquire_wait_ms > max_wait_queue_ms
+        )
+
+        if critical_pool_violation:
+            critical_pools.append(pool_id)
+        elif pool_warning:
+            warning_pools.append(pool_id)
+
+        pool_evaluations.append(
+            {
+                "pool_id": pool_id,
+                "active_connections": active_connections,
+                "max_pool_size": max_pool_size,
+                "utilization_pct": utilization_pct,
+                "waiting_clients_count": waiting_clients_count,
+                "p99_connection_acquire_wait_ms": p99_connection_acquire_wait_ms,
+                "idle_in_transaction_timeout_configured": idle_in_transaction_timeout_configured,
+                "total_transactions": total_transactions,
+                "deadlock_aborts": deadlock_aborts,
+                "deadlock_rate_pct": deadlock_rate_pct,
+                "connection_leak_detected": connection_leak_detected,
+                "critical_pool_violation": critical_pool_violation,
+                "pool_warning": pool_warning,
+            }
+        )
+
+    if critical_pools:
+        status = "CRITICAL"
+    elif warning_pools:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "status": status,
+        "release_freeze_required": status == "CRITICAL",
+        "evaluated_pools_count": len(pool_evaluations),
+        "critical_pools": critical_pools,
+        "warning_pools": warning_pools,
+        "peak_pool_utilization_pct": peak_pool_utilization_pct,
+        "pool_evaluations": pool_evaluations,
+    }
+
+
+ProjectCCBService.audit_db_connection_pool_saturation_and_deadlock_gate = staticmethod(
+    audit_db_connection_pool_saturation_and_deadlock_gate
 )

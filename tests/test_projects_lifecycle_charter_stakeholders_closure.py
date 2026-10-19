@@ -12293,3 +12293,108 @@ def test_audit_pir_hypercare_burn_in_and_bau_support_handover_empty_and_binding(
         "audit_pir_hypercare_burn_in_and_bau_support_handover"
         in mod.__all__
     )
+
+
+def test_audit_cross_border_customs_incoterms_and_export_control_compliance_healthy():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_cross_border_customs_incoterms_and_export_control_compliance,
+    )
+
+    res = audit_cross_border_customs_incoterms_and_export_control_compliance(
+        [
+            {
+                "shipment_id": "SHIP-TURBINE-DDP-01",
+                "incoterm_2020": "DDP",
+                "hs_code_verified": True,
+                "dual_use_eccn_or_itar_controlled": True,
+                "export_license_granted": True,
+                "sanctioned_entity_or_embargoed_port_hit": False,
+                "port_demurrage_days": 2,
+                "certificate_of_origin_attached": True,
+                "customs_bond_active": True,
+            }
+        ]
+    )
+    assert res["status"] == "HEALTHY"
+    assert res["evaluated_shipments_count"] == 1
+    assert res["critical_shipments"] == []
+    assert res["warning_shipments"] == []
+    assert res["total_demurrage_days"] == 2
+    assert res["shipment_evaluations"][0]["valid_incoterm"] is True
+
+
+def test_audit_cross_border_customs_incoterms_and_export_control_compliance_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_cross_border_customs_incoterms_and_export_control_compliance,
+    )
+
+    res = audit_cross_border_customs_incoterms_and_export_control_compliance(
+        [
+            {
+                "shipment_id": "SHIP-CABLE-CIF-02",
+                "incoterm_2020": "CIF",
+                "hs_code_verified": True,
+                "dual_use_eccn_or_itar_controlled": False,
+                "export_license_granted": True,
+                "sanctioned_entity_or_embargoed_port_hit": False,
+                "port_demurrage_days": 8,
+                "certificate_of_origin_attached": False,
+                "customs_bond_active": True,
+            }
+        ]
+    )
+    assert res["status"] == "WARNING"
+    assert res["critical_shipments"] == []
+    assert res["warning_shipments"] == ["SHIP-CABLE-CIF-02"]
+    assert res["total_demurrage_days"] == 8
+    assert res["shipment_evaluations"][0]["trade_logistics_warning"] is True
+
+
+def test_audit_cross_border_customs_incoterms_and_export_control_compliance_critical():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_cross_border_customs_incoterms_and_export_control_compliance,
+    )
+
+    res = audit_cross_border_customs_incoterms_and_export_control_compliance(
+        [
+            {
+                "shipment_id": "SHIP-SANCTIONED-ITAR",
+                "incoterm_2020": "DDU-LEGACY",
+                "hs_code_verified": False,
+                "dual_use_eccn_or_itar_controlled": True,
+                "export_license_granted": False,
+                "sanctioned_entity_or_embargoed_port_hit": True,
+                "port_demurrage_days": 14,
+                "certificate_of_origin_attached": False,
+                "customs_bond_active": False,
+            }
+        ]
+    )
+    assert res["status"] == "CRITICAL"
+    assert res["critical_shipments"] == ["SHIP-SANCTIONED-ITAR"]
+    assert res["total_demurrage_days"] == 14
+    assert res["shipment_evaluations"][0]["valid_incoterm"] is False
+    assert res["shipment_evaluations"][0]["critical_trade_breach"] is True
+
+
+def test_audit_cross_border_customs_incoterms_and_export_control_compliance_empty_and_binding():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_cross_border_customs_incoterms_and_export_control_compliance,
+    )
+
+    empty = audit_cross_border_customs_incoterms_and_export_control_compliance([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["evaluated_shipments_count"] == 0
+    assert empty["total_demurrage_days"] == 0
+    assert (
+        ProjectLifecyclePMIService.audit_cross_border_customs_incoterms_and_export_control_compliance(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_cross_border_customs_incoterms_and_export_control_compliance"
+        in mod.__all__
+    )

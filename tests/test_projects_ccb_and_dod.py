@@ -12369,3 +12369,109 @@ def test_audit_wasm_wasi_sandbox_capability_and_fuel_metering_gate_empty_and_bin
         "audit_wasm_wasi_sandbox_capability_and_fuel_metering_gate"
         in mod.__all__
     )
+
+
+def test_audit_db_connection_pool_saturation_and_deadlock_gate_healthy():
+    from backend.services.project_ccb_service import (
+        audit_db_connection_pool_saturation_and_deadlock_gate,
+    )
+
+    res = audit_db_connection_pool_saturation_and_deadlock_gate(
+        [
+            {
+                "pool_id": "pgbouncer-primary-rw",
+                "active_connections": 45,
+                "max_pool_size": 100,
+                "waiting_clients_count": 0,
+                "p99_connection_acquire_wait_ms": 8.5,
+                "idle_in_transaction_timeout_configured": True,
+                "total_transactions": 100000,
+                "deadlock_aborts": 2,
+                "connection_leak_detected": False,
+            }
+        ]
+    )
+    assert res["status"] == "HEALTHY"
+    assert res["release_freeze_required"] is False
+    assert res["evaluated_pools_count"] == 1
+    assert res["critical_pools"] == []
+    assert res["warning_pools"] == []
+    assert res["peak_pool_utilization_pct"] == 45.0
+
+
+def test_audit_db_connection_pool_saturation_and_deadlock_gate_warning():
+    from backend.services.project_ccb_service import (
+        audit_db_connection_pool_saturation_and_deadlock_gate,
+    )
+
+    res = audit_db_connection_pool_saturation_and_deadlock_gate(
+        [
+            {
+                "pool_id": "hikari-reporting-ro",
+                "active_connections": 90,
+                "max_pool_size": 100,
+                "waiting_clients_count": 4,
+                "p99_connection_acquire_wait_ms": 140.0,
+                "idle_in_transaction_timeout_configured": True,
+                "total_transactions": 50000,
+                "deadlock_aborts": 5,
+                "connection_leak_detected": False,
+            }
+        ]
+    )
+    assert res["status"] == "WARNING"
+    assert res["release_freeze_required"] is False
+    assert res["critical_pools"] == []
+    assert res["warning_pools"] == ["hikari-reporting-ro"]
+    assert res["peak_pool_utilization_pct"] == 90.0
+
+
+def test_audit_db_connection_pool_saturation_and_deadlock_gate_critical():
+    from backend.services.project_ccb_service import (
+        audit_db_connection_pool_saturation_and_deadlock_gate,
+    )
+
+    res = audit_db_connection_pool_saturation_and_deadlock_gate(
+        [
+            {
+                "pool_id": "pgbouncer-leaked-saturated",
+                "active_connections": 98,
+                "max_pool_size": 100,
+                "waiting_clients_count": 25,
+                "p99_connection_acquire_wait_ms": 350.0,
+                "idle_in_transaction_timeout_configured": False,
+                "total_transactions": 10000,
+                "deadlock_aborts": 20,
+                "connection_leak_detected": True,
+            }
+        ]
+    )
+    assert res["status"] == "CRITICAL"
+    assert res["release_freeze_required"] is True
+    assert res["critical_pools"] == ["pgbouncer-leaked-saturated"]
+    assert res["peak_pool_utilization_pct"] == 98.0
+    assert res["pool_evaluations"][0]["deadlock_rate_pct"] == 0.2
+
+
+def test_audit_db_connection_pool_saturation_and_deadlock_gate_empty_and_binding():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_db_connection_pool_saturation_and_deadlock_gate,
+    )
+
+    empty = audit_db_connection_pool_saturation_and_deadlock_gate([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["release_freeze_required"] is False
+    assert empty["evaluated_pools_count"] == 0
+    assert empty["peak_pool_utilization_pct"] == 0.0
+    assert (
+        ProjectCCBService.audit_db_connection_pool_saturation_and_deadlock_gate(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_db_connection_pool_saturation_and_deadlock_gate"
+        in mod.__all__
+    )

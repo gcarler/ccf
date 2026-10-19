@@ -13127,3 +13127,183 @@ def test_iso22301_bcp_drp_empty_invalid_tiers_and_field_reversion():
     assert reverted["stale_drill_or_capacity_warning_tier_ids"] == ["TIER-REVERT"]  # capacidad 42 < 100
     assert reverted["is_iso22301_drp_compliant"] is False
     assert reverted["bcp_drp_audit_status"] == "STALE_FAILOVER_DRILL_OR_CAPACITY_WARNING"
+
+
+def test_hipaa_hitech_safe_harbor_clean_and_boundaries():
+    """Workflows con BAA, cifrado, RBAC y retención íntegros sin incidentes -> 'HIPAA_HITECH_SAFE_HARBOR_CLEAN'."""
+    import backend.services.project_export_service as export_module
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window,
+    )
+
+    workflows = [
+        {
+            "workflow_id": "EPHI-CLAIMS-001",
+            "baa_signed_with_subcontractors": True,
+            "minimum_necessary_rbac_enforced": True,
+            "ephi_encrypted_at_rest_and_transit": True,
+            "unsecured_ephi_breach_individuals": 0,
+            "days_since_breach_discovery": 0,
+            "audit_log_retention_years": 6,
+        },
+        {
+            "workflow_id": "EPHI-BILLING-002",
+            # Defaults implícitos: BAA True, RBAC True, cifrado True, 0 afectados, 0 días, retención 6.
+        },
+    ]
+    res = audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window(workflows)
+    assert res == {
+        "is_hipaa_hitech_compliant": True,
+        "hipaa_willful_neglect_or_breach_workflow_ids": [],
+        "minimum_necessary_or_retention_warning_workflow_ids": [],
+        "evaluated_workflow_count": 2,
+        "hipaa_audit_status": "HIPAA_HITECH_SAFE_HARBOR_CLEAN",
+    }
+    # Frontera de retención: exactamente 6 años no es warning.
+    at_retention = audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window(
+        [{"workflow_id": "EPHI-RET", "audit_log_retention_years": 6}]
+    )
+    assert at_retention["hipaa_audit_status"] == "HIPAA_HITECH_SAFE_HARBOR_CLEAN"
+    # Frontera umbral custom: 49 afectados < 500 con días en ventana es warning
+    # (reportable), pero 0 afectados nunca lo es.
+    no_incident = audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window(
+        [{"workflow_id": "EPHI-PHI0"}],
+        hhs_wall_of_shame_affected_threshold=50,
+    )
+    assert no_incident["hipaa_audit_status"] == "HIPAA_HITECH_SAFE_HARBOR_CLEAN"
+    assert (
+        ProjectExportService.audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window(workflows)
+        == res
+    )
+    assert "audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window" in export_module.__all__
+
+
+def test_hipaa_hitech_critical_willful_neglect_breach():
+    """BAA ausente, ePHI sin cifrar, brecha fuera de la ventana o afectados >= 500 -> CRITICAL con precedencia."""
+    from backend.services.project_export_service import (
+        audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window,
+    )
+
+    breach = audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window(
+        [
+            {"workflow_id": "EPHI-NO-BAA", "baa_signed_with_subcontractors": False},
+            {"workflow_id": "EPHI-PLAINTEXT", "ephi_encrypted_at_rest_and_transit": False},
+            # Brecha de 100 afectados descubierta hace 61 días (> 60) -> no notificada.
+            {
+                "workflow_id": "EPHI-LATE-BREACH",
+                "unsecured_ephi_breach_individuals": 100,
+                "days_since_breach_discovery": 61,
+            },
+            # Afectados en el Wall of Shame: 500 exactos (inclusivo >=).
+            {"workflow_id": "EPHI-WALL-OF-SHAME", "unsecured_ephi_breach_individuals": 500},
+        ]
+    )
+    assert breach["hipaa_willful_neglect_or_breach_workflow_ids"] == [
+        "EPHI-NO-BAA",
+        "EPHI-PLAINTEXT",
+        "EPHI-LATE-BREACH",
+        "EPHI-WALL-OF-SHAME",
+    ]
+    assert breach["minimum_necessary_or_retention_warning_workflow_ids"] == []
+    assert breach["is_hipaa_hitech_compliant"] is False
+    assert breach["hipaa_audit_status"] == "CRITICAL_HIPAA_BAA_OR_HITECH_BREACH"
+
+    # Edad de brecha negativa con afectados > 0 también es breach.
+    negative_age = audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window(
+        [
+            {
+                "workflow_id": "EPHI-NEG-DAYS",
+                "unsecured_ephi_breach_individuals": 4,
+                "days_since_breach_discovery": -3,
+            }
+        ]
+    )
+    assert negative_age["hipaa_willful_neglect_or_breach_workflow_ids"] == ["EPHI-NEG-DAYS"]
+    assert negative_age["hipaa_audit_status"] == "CRITICAL_HIPAA_BAA_OR_HITECH_BREACH"
+
+
+def test_hipaa_hitech_minimum_necessary_and_reportable_incident_warning():
+    """RBAC sin enforcement, retención < 6 años o incidente reportable en ventana -> WARNING con precedencia."""
+    from backend.services.project_export_service import (
+        audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window,
+    )
+
+    no_rbac = audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window(
+        [{"workflow_id": "EPHI-NO-RBAC", "minimum_necessary_rbac_enforced": False}]
+    )
+    assert no_rbac["hipaa_willful_neglect_or_breach_workflow_ids"] == []
+    assert no_rbac["minimum_necessary_or_retention_warning_workflow_ids"] == ["EPHI-NO-RBAC"]
+    assert no_rbac["is_hipaa_hitech_compliant"] is False
+    assert no_rbac["hipaa_audit_status"] == "MINIMUM_NECESSARY_OR_REPORTABLE_INCIDENT_WARNING"
+
+    short_retention = audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window(
+        [{"workflow_id": "EPHI-RET-3Y", "audit_log_retention_years": 3}]
+    )
+    assert short_retention["minimum_necessary_or_retention_warning_workflow_ids"] == ["EPHI-RET-3Y"]
+    assert short_retention["hipaa_audit_status"] == "MINIMUM_NECESSARY_OR_REPORTABLE_INCIDENT_WARNING"
+
+    # Incidente reportable: 0 < afectados < 500 notificado dentro de la ventana.
+    reportable = audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window(
+        [
+            {
+                "workflow_id": "EPHI-IN-VENTANA",
+                "unsecured_ephi_breach_individuals": 10,
+                "days_since_breach_discovery": 45,
+            }
+        ]
+    )
+    assert reportable["minimum_necessary_or_retention_warning_workflow_ids"] == ["EPHI-IN-VENTANA"]
+    assert reportable["hipaa_audit_status"] == "MINIMUM_NECESSARY_OR_REPORTABLE_INCIDENT_WARNING"
+
+    # Clasificación warning por workflow ("not in critical"): el estado global es
+    # CRITICAL con precedencia, pero el workflow warning sigue en su lista.
+    mixed = audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window(
+        [
+            {"workflow_id": "EPHI-CRITICAL", "baa_signed_with_subcontractors": False},
+            {"workflow_id": "EPHI-WARNING", "audit_log_retention_years": 2},
+        ]
+    )
+    assert mixed["hipaa_willful_neglect_or_breach_workflow_ids"] == ["EPHI-CRITICAL"]
+    assert mixed["minimum_necessary_or_retention_warning_workflow_ids"] == ["EPHI-WARNING"]
+    assert mixed["hipaa_audit_status"] == "CRITICAL_HIPAA_BAA_OR_HITECH_BREACH"
+
+
+def test_hipaa_hitech_empty_invalid_workflows_and_field_reversion():
+    """None, no-dicts y workflow_id inválido se descartan; campos no numéricos revierten a defaults."""
+    from backend.services.project_export_service import (
+        audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window,
+    )
+
+    empty = audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window(None)
+    assert empty == {
+        "is_hipaa_hitech_compliant": True,
+        "hipaa_willful_neglect_or_breach_workflow_ids": [],
+        "minimum_necessary_or_retention_warning_workflow_ids": [],
+        "evaluated_workflow_count": 0,
+        "hipaa_audit_status": "HIPAA_HITECH_SAFE_HARBOR_CLEAN",
+    }
+
+    reverted = audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window(
+        [
+            {
+                "workflow_id": "EPHI-REVERT",
+                "baa_signed_with_subcontractors": "yes",   # no-bool -> True
+                "minimum_necessary_rbac_enforced": 1,      # no-bool -> True
+                "ephi_encrypted_at_rest_and_transit": None,  # no-bool -> True
+                "unsecured_ephi_breach_individuals": "many",   # no-int -> 0
+                "days_since_breach_discovery": 12.5,           # no-int -> 0
+                "audit_log_retention_years": None,             # no-int -> 6
+            },
+            {"workflow_id": "   "},  # blanco -> descartado
+            {"workflow_id": 5},      # no str -> descartado
+            "not-a-dict",            # no dict -> descartado
+        ],
+        max_breach_notification_days="sixty",   # no-int -> 60
+        hhs_wall_of_shame_affected_threshold=None,  # no-int -> 500
+    )
+    assert reverted["evaluated_workflow_count"] == 1
+    assert reverted["hipaa_willful_neglect_or_breach_workflow_ids"] == []
+    assert reverted["minimum_necessary_or_retention_warning_workflow_ids"] == []
+    assert reverted["is_hipaa_hitech_compliant"] is True
+    assert reverted["hipaa_audit_status"] == "HIPAA_HITECH_SAFE_HARBOR_CLEAN"

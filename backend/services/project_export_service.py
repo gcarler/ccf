@@ -3029,6 +3029,7 @@ __all__ = [
     "audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter",
     "audit_executive_report_pci_dss_cde_segmentation_and_asv_scan",
     "audit_executive_report_iso22301_bcp_drp_rto_rpo_and_failover_drill",
+    "audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window",
     "ProjectExportService",
 ]
 
@@ -9489,4 +9490,120 @@ def audit_executive_report_iso22301_bcp_drp_rto_rpo_and_failover_drill(
 
 ProjectExportService.audit_executive_report_iso22301_bcp_drp_rto_rpo_and_failover_drill = staticmethod(
     audit_executive_report_iso22301_bcp_drp_rto_rpo_and_failover_drill
+)
+
+
+def audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window(
+    ephi_workflows: list[dict[str, Any]] | None,
+    *,
+    max_breach_notification_days: int = 60,
+    hhs_wall_of_shame_affected_threshold: int = 500,
+) -> dict[str, Any]:
+    """PMBOK §10.2 & §11.6 — Audita el executive report HIPAA/HITECH de flujos de ePHI: cadena de Business Associate Agreements con subcontratistas, enforcement de acceso minimum-necessary por RBAC, cifrado de ePHI en reposo y tránsito (safe harbor), ventana HITECH de notificación de brecha en 60 días y umbral del HHS Wall of Shame de afectados.
+
+    Cada workflow válido declara `workflow_id` (str no vacío) y:
+    `baa_signed_with_subcontractors` (bool, default True),
+    `minimum_necessary_rbac_enforced` (bool, default True),
+    `ephi_encrypted_at_rest_and_transit` (bool, default True),
+    `unsecured_ephi_breach_individuals` (int, default 0),
+    `days_since_breach_discovery` (int, default 0) y
+    `audit_log_retention_years` (int, default 6):
+    - `hipaa_willful_neglect_or_breach_workflow_ids`: BAA de subcontratistas
+      ausente, ePHI sin cifrar, brecha sin cifrar notificada fuera de la
+      ventana (edad > 60 o negativa) o afectados >= 500 (inclusivo, brecha
+      crítica, precedencia).
+    - `minimum_necessary_or_retention_warning_workflow_ids`: workflows fuera
+      de brecha con RBAC minimum-necessary sin enforcement, retención de
+      audit logs < 6 años o incidente reportable dentro de la ventana
+      (0 < afectados < 500 con 0 <= días <= 60).
+    - Estados: 'CRITICAL_HIPAA_BAA_OR_HITECH_BREACH' |
+      'MINIMUM_NECESSARY_OR_REPORTABLE_INCIDENT_WARNING' |
+      'HIPAA_HITECH_SAFE_HARBOR_CLEAN'.
+    - `is_hipaa_hitech_compliant`: solo con ambas listas vacías.
+    """
+    raw_items = ephi_workflows if isinstance(ephi_workflows, list) else []
+    valid_workflows: list[dict[str, Any]] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_workflow_id = item.get("workflow_id")
+        if not isinstance(raw_workflow_id, str) or not raw_workflow_id.strip():
+            continue
+        valid_workflows.append(item)
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _int(value: Any, default: int) -> int:
+        if isinstance(value, bool) or not isinstance(value, int):
+            return default
+        return value
+
+    notification_window = _int(max_breach_notification_days, 60)
+    shame_threshold = _int(hhs_wall_of_shame_affected_threshold, 500)
+
+    hipaa_willful_neglect_or_breach_workflow_ids: list[str] = []
+    minimum_necessary_or_retention_warning_workflow_ids: list[str] = []
+
+    for workflow in valid_workflows:
+        workflow_id = str(workflow.get("workflow_id")).strip()
+        baa_signed = _bool(
+            workflow.get("baa_signed_with_subcontractors"), True
+        )
+        rbac_enforced = _bool(
+            workflow.get("minimum_necessary_rbac_enforced"), True
+        )
+        encrypted = _bool(
+            workflow.get("ephi_encrypted_at_rest_and_transit"), True
+        )
+        breach_individuals = _int(
+            workflow.get("unsecured_ephi_breach_individuals"), 0
+        )
+        breach_age = _int(workflow.get("days_since_breach_discovery"), 0)
+        retention_years = _int(workflow.get("audit_log_retention_years"), 6)
+
+        is_critical_breach = (
+            (not baa_signed)
+            or (not encrypted)
+            or (
+                breach_individuals > 0
+                and (breach_age > notification_window or breach_age < 0)
+            )
+            or breach_individuals >= shame_threshold
+        )
+        if is_critical_breach:
+            hipaa_willful_neglect_or_breach_workflow_ids.append(workflow_id)
+            continue
+
+        if (
+            (not rbac_enforced)
+            or retention_years < 6
+            or (
+                0 < breach_individuals < shame_threshold
+                and 0 <= breach_age <= notification_window
+            )
+        ):
+            minimum_necessary_or_retention_warning_workflow_ids.append(workflow_id)
+
+    if hipaa_willful_neglect_or_breach_workflow_ids:
+        hipaa_audit_status = "CRITICAL_HIPAA_BAA_OR_HITECH_BREACH"
+    elif minimum_necessary_or_retention_warning_workflow_ids:
+        hipaa_audit_status = "MINIMUM_NECESSARY_OR_REPORTABLE_INCIDENT_WARNING"
+    else:
+        hipaa_audit_status = "HIPAA_HITECH_SAFE_HARBOR_CLEAN"
+
+    return {
+        "is_hipaa_hitech_compliant": (
+            not hipaa_willful_neglect_or_breach_workflow_ids
+            and not minimum_necessary_or_retention_warning_workflow_ids
+        ),
+        "hipaa_willful_neglect_or_breach_workflow_ids": hipaa_willful_neglect_or_breach_workflow_ids,
+        "minimum_necessary_or_retention_warning_workflow_ids": minimum_necessary_or_retention_warning_workflow_ids,
+        "evaluated_workflow_count": len(valid_workflows),
+        "hipaa_audit_status": hipaa_audit_status,
+    }
+
+
+ProjectExportService.audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window = staticmethod(
+    audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window
 )
