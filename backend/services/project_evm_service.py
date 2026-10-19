@@ -5542,6 +5542,7 @@ __all__ = [
     "evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver",
     "evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding",
     "evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer",
+    "evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty",
     "ProjectEVMService",
 ]
 
@@ -11562,4 +11563,117 @@ def evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer(
 
 ProjectEVMService.evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer = staticmethod(
     evaluate_evm_stored_materials_bonded_warehouse_and_title_transfer
+)
+def evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty(
+    disbursements: list[dict[str, Any]] | None,
+    *,
+    max_flowdown_days_after_owner_receipt: int = 7,
+    annual_statutory_interest_rate_pct: float = 12.0,
+    max_disputed_withholding_multiplier: float = 1.5,
+) -> dict[str, Any]:
+    """PMBOK §7.4 & §12.2 — Evalúa Prompt Payment Act (31 U.S.C. §3905) en flow-down a subcontratistas: plazo de 7 días tras el pago del owner, interés estatutario anual prorrateado por días de retraso y retención bona fide de disputas (good-faith disputed withholding).
+
+    Cada desembolso válido declara `disbursement_id` (str no vacío),
+    `undisputed_sub_amount` (default 0.0),
+    `days_elapsed_since_owner_payment` (default 3),
+    `disputed_defect_estimate` (default 0.0),
+    `actual_withheld_amount` (default 0.0) y
+    `written_dispute_notice_served` (default True):
+    - `late_days = max(0, días transcurridos - max_flowdown_days)`.
+    - `interest_penalty = max(0, undisputed) * rate_pct/100 * late_days/365`.
+    - `abusive_withholding_disbursement_ids`: retención activa sin aviso
+      escrito de disputa o por encima de defect_estimate * multiplicador
+      (brecha crítica, precedencia).
+    - `late_flowdown_disbursement_ids`: late_days > 0 con importe undisputed
+      > 0 (advertencia de interés).
+    - Estados: 'CRITICAL_UNLAWFUL_WITHHOLDING_BREACH' |
+      'LATE_DISBURSEMENT_INTEREST_WARNING' |
+      'PROMPT_PAYMENT_FLOWDOWN_COMPLIANT'.
+    """
+    raw_items = disbursements if isinstance(disbursements, list) else []
+    valid_items: list[dict[str, Any]] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("disbursement_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_items.append(item)
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _int(value: Any, default: int) -> int:
+        if isinstance(value, bool) or not isinstance(value, int):
+            return default
+        return value
+
+    def _float(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    flowdown_limit = _int(max_flowdown_days_after_owner_receipt, 7)
+    rate_pct = _float(annual_statutory_interest_rate_pct, 12.0)
+    withholding_multiplier = _float(max_disputed_withholding_multiplier, 1.5)
+
+    total_interest_penalty_accrued = 0.0
+    abusive_withholding_disbursement_ids: list[str] = []
+    late_flowdown_disbursement_ids: list[str] = []
+
+    for disbursement in valid_items:
+        disbursement_id = str(disbursement.get("disbursement_id")).strip()
+        undisputed_amount = _float(disbursement.get("undisputed_sub_amount"), 0.0)
+        days_elapsed = _int(
+            disbursement.get("days_elapsed_since_owner_payment"), 3
+        )
+        defect_estimate = _float(disbursement.get("disputed_defect_estimate"), 0.0)
+        withheld_amount = _float(disbursement.get("actual_withheld_amount"), 0.0)
+        notice_served = _bool(
+            disbursement.get("written_dispute_notice_served"), True
+        )
+
+        late_days = max(0, int(days_elapsed) - int(flowdown_limit))
+        interest_penalty = round(
+            max(0.0, float(undisputed_amount))
+            * rate_pct
+            / 100.0
+            * (late_days / 365.0),
+            2,
+        )
+        total_interest_penalty_accrued = round(
+            total_interest_penalty_accrued + interest_penalty, 2
+        )
+
+        excessive_or_unnoticed_withholding = float(withheld_amount) > 0 and (
+            (not bool(notice_served))
+            or float(withheld_amount)
+            > max(0.0, float(defect_estimate)) * withholding_multiplier
+        )
+        if excessive_or_unnoticed_withholding:
+            abusive_withholding_disbursement_ids.append(disbursement_id)
+
+        if late_days > 0 and float(undisputed_amount) > 0:
+            late_flowdown_disbursement_ids.append(disbursement_id)
+
+    if abusive_withholding_disbursement_ids:
+        prompt_payment_status = "CRITICAL_UNLAWFUL_WITHHOLDING_BREACH"
+    elif late_flowdown_disbursement_ids:
+        prompt_payment_status = "LATE_DISBURSEMENT_INTEREST_WARNING"
+    else:
+        prompt_payment_status = "PROMPT_PAYMENT_FLOWDOWN_COMPLIANT"
+
+    return {
+        "evaluated_disbursement_count": len(valid_items),
+        "total_interest_penalty_accrued": total_interest_penalty_accrued,
+        "abusive_withholding_disbursement_ids": abusive_withholding_disbursement_ids,
+        "late_flowdown_disbursement_ids": late_flowdown_disbursement_ids,
+        "prompt_payment_status": prompt_payment_status,
+        "is_prompt_payment_compliant": prompt_payment_status
+        == "PROMPT_PAYMENT_FLOWDOWN_COMPLIANT",
+    }
+
+
+ProjectEVMService.evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty = staticmethod(
+    evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty
 )

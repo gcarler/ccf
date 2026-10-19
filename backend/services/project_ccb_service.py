@@ -2868,6 +2868,7 @@ __all__ = [
     "audit_service_mesh_mtls_strict_mode_and_tls13_cipher_gate",
     "audit_kafka_consumer_rebalance_dlq_and_schema_registry_gate",
     "audit_graphql_federation_supergraph_composition_and_query_cost_gate",
+    "audit_feature_flag_kill_switch_and_stale_debt_gate",
     "ProjectCCBService",
 ]
 
@@ -8917,5 +8918,67 @@ ProjectCCBService.audit_graphql_federation_supergraph_composition_and_query_cost
 )
 
 
+def audit_feature_flag_kill_switch_and_stale_debt_gate(
+    feature_flags: list[dict[str, Any]],
+    max_stale_100pct_rollout_days: int = 30,
+    max_initial_canary_traffic_pct: float = 10.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §8.3 & §11.6 — CCB Feature Flag Progressive Delivery Stale Flag Technical Debt, Kill-Switch Blast-Radius & Canary Exposure Cap Gate Auditor."""
+    valid_flags = [
+        f for f in (feature_flags if isinstance(feature_flags, list) else []) if isinstance(f, dict)
+    ]
+
+    missing_kill_switch_or_excessive_canary_flags: list[str] = []
+    stale_uncleaned_release_flags: list[str] = []
+    recommendations: list[str] = []
+
+    for idx, flag in enumerate(valid_flags):
+        flag_key = str(flag.get("flag_key") or f"flag-{idx + 1}").strip()
+        age_days = int(flag.get("age_days_since_100pct_rollout", 0) or 0)
+        has_kill_switch = bool(flag.get("has_automated_kill_switch_webhook", False))
+        canary_pct = float(flag.get("initial_canary_traffic_pct", 0.0) or 0.0)
+        permanent_ops = bool(flag.get("permanent_ops_toggle", False))
+
+        if (
+            not has_kill_switch
+            or canary_pct < 0.0
+            or canary_pct > float(max_initial_canary_traffic_pct)
+        ):
+            missing_kill_switch_or_excessive_canary_flags.append(flag_key)
+
+        if not permanent_ops and age_days > int(max_stale_100pct_rollout_days):
+            stale_uncleaned_release_flags.append(flag_key)
+
+    if len(valid_flags) == 0:
+        recommendations.append(
+            "Provide at least one feature flag record for progressive delivery gate evaluation."
+        )
+    if missing_kill_switch_or_excessive_canary_flags:
+        recommendations.append(
+            f"Configure automated kill-switch webhooks and cap initial canary traffic <= {max_initial_canary_traffic_pct}% on: {', '.join(missing_kill_switch_or_excessive_canary_flags)}."
+        )
+    if stale_uncleaned_release_flags:
+        recommendations.append(
+            f"Remove stale 100%-rolled-out release flags (> {max_stale_100pct_rollout_days} days) from source code: {', '.join(stale_uncleaned_release_flags)}."
+        )
+
+    if len(missing_kill_switch_or_excessive_canary_flags) > 0 or len(valid_flags) == 0:
+        gate_decision = "REJECTED"
+    elif len(stale_uncleaned_release_flags) > 0:
+        gate_decision = "CONDITIONAL"
+    else:
+        gate_decision = "APPROVED"
+
+    return {
+        "is_valid": gate_decision == "APPROVED",
+        "total_flags": len(valid_flags),
+        "missing_kill_switch_or_excessive_canary_flags": missing_kill_switch_or_excessive_canary_flags,
+        "stale_uncleaned_release_flags": stale_uncleaned_release_flags,
+        "gate_decision": gate_decision,
+        "recommendations": recommendations,
+    }
 
 
+ProjectCCBService.audit_feature_flag_kill_switch_and_stale_debt_gate = staticmethod(
+    audit_feature_flag_kill_switch_and_stale_debt_gate
+)

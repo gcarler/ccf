@@ -3833,6 +3833,7 @@ __all__ = [
     "validate_ccpm_buffer_fever_chart_and_feeding_buffer_erosion",
     "validate_rolling_wave_planning_horizon_decomposition_and_freeze_window",
     "validate_rbs_bowtie_barrier_redundancy_and_residual_severity",
+    "validate_contingency_and_management_reserve_emv_drawdown",
 ]
 
 
@@ -9951,3 +9952,79 @@ def validate_rbs_bowtie_barrier_redundancy_and_residual_severity(
     }
 
 
+def validate_contingency_and_management_reserve_emv_drawdown(
+    contingency_reserve_remaining: float,
+    open_risks_total_emv: float,
+    drawdown_transactions: list[dict[str, Any]],
+    min_contingency_emv_coverage_ratio: float = 1.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §11.5 & §7.3 — Contingency Reserve vs Management Reserve Burn Rate, Risk Trigger Authorization & Expected Monetary Value (EMV) Coverage Validator."""
+    rem_contingency = float(contingency_reserve_remaining or 0.0)
+    total_emv = float(open_risks_total_emv or 0.0)
+    min_cov = float(min_contingency_emv_coverage_ratio)
+
+    unlinked_contingency_drawdowns: list[str] = []
+    unauthorized_management_reserve_drawdowns: list[str] = []
+    recommendations: list[str] = []
+
+    valid_txs = [
+        tx for tx in (drawdown_transactions if isinstance(drawdown_transactions, list) else []) if isinstance(tx, dict)
+    ]
+
+    for idx, tx in enumerate(valid_txs):
+        tx_id = str(tx.get("tx_id") or f"tx-{idx + 1}").strip()
+        reserve_type = str(tx.get("reserve_type") or "").strip().upper()
+        amount = float(tx.get("amount", 0.0) or 0.0)
+        risk_id = str(tx.get("identified_risk_id") or "").strip()
+        sponsor_approved = bool(tx.get("ccb_executive_sponsor_approved", False))
+
+        if reserve_type == "CONTINGENCY":
+            if not risk_id or amount <= 0.0:
+                unlinked_contingency_drawdowns.append(tx_id)
+        elif reserve_type == "MANAGEMENT":
+            if not sponsor_approved or amount <= 0.0:
+                unauthorized_management_reserve_drawdowns.append(tx_id)
+
+    if total_emv > 0.0:
+        emv_coverage_ratio = round(rem_contingency / total_emv, 2)
+    else:
+        emv_coverage_ratio = 1.0 if rem_contingency >= 0.0 else 0.0
+
+    contingency_underfunded = bool(
+        rem_contingency < 0.0
+        or (total_emv > 0.0 and emv_coverage_ratio < min_cov)
+    )
+
+    if unlinked_contingency_drawdowns:
+        recommendations.append(
+            f"Link Contingency Reserve drawdowns ({', '.join(unlinked_contingency_drawdowns)}) to an active risk ID in the Risk Register (PMBOK §7.3)."
+        )
+    if unauthorized_management_reserve_drawdowns:
+        recommendations.append(
+            f"Require CCB and Executive Sponsor approval before drawing down Management Reserve ({', '.join(unauthorized_management_reserve_drawdowns)}) into the Cost Baseline."
+        )
+    if contingency_underfunded:
+        recommendations.append(
+            f"Replenish Contingency Reserve (coverage ratio {emv_coverage_ratio} < {min_cov}) or re-evaluate open risk EMV exposure."
+        )
+
+    if (
+        len(unlinked_contingency_drawdowns) > 0
+        or len(unauthorized_management_reserve_drawdowns) > 0
+        or rem_contingency < 0.0
+    ):
+        status = "CRITICAL_UNAUTHORIZED_RESERVE_DRAWDOWN_BREACH"
+    elif contingency_underfunded:
+        status = "CONTINGENCY_EMV_COVERAGE_WARNING"
+    else:
+        status = "RESERVE_GOVERNANCE_SOUND"
+
+    return {
+        "is_valid": status == "RESERVE_GOVERNANCE_SOUND",
+        "emv_coverage_ratio": emv_coverage_ratio,
+        "contingency_underfunded": contingency_underfunded,
+        "unlinked_contingency_drawdowns": unlinked_contingency_drawdowns,
+        "unauthorized_management_reserve_drawdowns": unauthorized_management_reserve_drawdowns,
+        "status": status,
+        "recommendations": recommendations,
+    }

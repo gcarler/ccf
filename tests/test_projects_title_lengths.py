@@ -10383,3 +10383,109 @@ def test_validate_raci_matrix_role_lists_empty_and_exports():
     )
 
 
+def test_validate_contingency_and_management_reserve_emv_drawdown_sound():
+    from backend.schemas.projects import (
+        validate_contingency_and_management_reserve_emv_drawdown,
+    )
+
+    txs = [
+        {
+            "tx_id": "TX-CONT-01",
+            "reserve_type": "CONTINGENCY",
+            "amount": 15000.0,
+            "identified_risk_id": "RISK-DB-LATENCY-04",
+            "ccb_executive_sponsor_approved": False,
+        },
+        {
+            "tx_id": "TX-MGMT-02",
+            "reserve_type": "MANAGEMENT",
+            "amount": 25000.0,
+            "identified_risk_id": None,
+            "ccb_executive_sponsor_approved": True,
+        },
+    ]
+    res = validate_contingency_and_management_reserve_emv_drawdown(
+        contingency_reserve_remaining=60000.0,
+        open_risks_total_emv=45000.0,
+        drawdown_transactions=txs,
+        min_contingency_emv_coverage_ratio=1.0,
+    )
+    assert res["is_valid"] is True
+    assert res["emv_coverage_ratio"] == 1.33
+    assert res["contingency_underfunded"] is False
+    assert res["unlinked_contingency_drawdowns"] == []
+    assert res["unauthorized_management_reserve_drawdowns"] == []
+    assert res["status"] == "RESERVE_GOVERNANCE_SOUND"
+
+
+def test_validate_contingency_and_management_reserve_emv_drawdown_unauthorized_breach():
+    from backend.schemas.projects import (
+        validate_contingency_and_management_reserve_emv_drawdown,
+    )
+
+    txs = [
+        {
+            "tx_id": "TX-CONT-UNLINKED",
+            "reserve_type": "CONTINGENCY",
+            "amount": 10000.0,
+            "identified_risk_id": "",
+        },
+        {
+            "tx_id": "TX-MGMT-NO-SPONSOR",
+            "reserve_type": "MANAGEMENT",
+            "amount": 30000.0,
+            "ccb_executive_sponsor_approved": False,
+        },
+    ]
+    res = validate_contingency_and_management_reserve_emv_drawdown(
+        contingency_reserve_remaining=50000.0,
+        open_risks_total_emv=40000.0,
+        drawdown_transactions=txs,
+    )
+    assert res["is_valid"] is False
+    assert res["unlinked_contingency_drawdowns"] == ["TX-CONT-UNLINKED"]
+    assert res["unauthorized_management_reserve_drawdowns"] == ["TX-MGMT-NO-SPONSOR"]
+    assert res["status"] == "CRITICAL_UNAUTHORIZED_RESERVE_DRAWDOWN_BREACH"
+
+
+def test_validate_contingency_and_management_reserve_emv_drawdown_underfunded_warning():
+    from backend.schemas.projects import (
+        validate_contingency_and_management_reserve_emv_drawdown,
+    )
+
+    res = validate_contingency_and_management_reserve_emv_drawdown(
+        contingency_reserve_remaining=20000.0,
+        open_risks_total_emv=50000.0,
+        drawdown_transactions=[
+            {
+                "tx_id": "TX-CONT-OK",
+                "reserve_type": "CONTINGENCY",
+                "amount": 5000.0,
+                "identified_risk_id": "RISK-01",
+            }
+        ],
+        min_contingency_emv_coverage_ratio=1.0,
+    )
+    assert res["is_valid"] is False
+    assert res["emv_coverage_ratio"] == 0.4
+    assert res["contingency_underfunded"] is True
+    assert res["status"] == "CONTINGENCY_EMV_COVERAGE_WARNING"
+
+
+def test_validate_contingency_and_management_reserve_emv_drawdown_exports():
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_contingency_and_management_reserve_emv_drawdown,
+    )
+
+    res = validate_contingency_and_management_reserve_emv_drawdown(
+        contingency_reserve_remaining=10000.0,
+        open_risks_total_emv=0.0,
+        drawdown_transactions=[],
+    )
+    assert res["is_valid"] is True
+    assert res["emv_coverage_ratio"] == 1.0
+    assert (
+        "validate_contingency_and_management_reserve_emv_drawdown"
+        in mod.__all__
+    )

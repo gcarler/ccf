@@ -11638,3 +11638,203 @@ def test_stored_materials_empty_invalid_and_field_reversion():
         "stored_materials_status": "STORED_MATERIALS_BILLING_COMPLIANT",
         "is_stored_materials_billing_compliant": True,
     }
+
+
+# ── evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty (PMBOK §7.4 & §12.2, pure helper) ──
+
+
+def test_prompt_payment_flowdown_compliant_disbursements():
+    """Desembolsos dentro del plazo de 7 días, sin retención o con retención bona fide -> 'PROMPT_PAYMENT_FLOWDOWN_COMPLIANT'."""
+    import backend.services.project_evm_service as evm_module
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty,
+    )
+
+    disbursements = [
+        {"disbursement_id": "PP-001"},
+        {"disbursement_id": "PP-002", "undisputed_sub_amount": 100000.0, "days_elapsed_since_owner_payment": 7},
+        {
+            "disbursement_id": "PP-003",
+            "undisputed_sub_amount": 200000.0,
+            "days_elapsed_since_owner_payment": 5,
+            "disputed_defect_estimate": 10000.0,
+            "actual_withheld_amount": 10000.0,
+        },
+    ]
+    res = evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty(disbursements)
+    assert res == {
+        "evaluated_disbursement_count": 3,
+        "total_interest_penalty_accrued": 0.0,
+        "abusive_withholding_disbursement_ids": [],
+        "late_flowdown_disbursement_ids": [],
+        "prompt_payment_status": "PROMPT_PAYMENT_FLOWDOWN_COMPLIANT",
+        "is_prompt_payment_compliant": True,
+    }
+    # PP-003: retención 10000 <= defect_estimate*1.5 = 15000 -> bona fide, no abusable
+    assert (
+        ProjectEVMService.evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty(
+            disbursements
+        )
+        == res
+    )
+    assert "evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty" in evm_module.__all__
+
+
+def test_prompt_payment_late_interest_warning():
+    """Días transcurridos > 7 con importe undisputed -> 'LATE_DISBURSEMENT_INTEREST_WARNING' con interés prorrateado."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty,
+    )
+
+    warning = evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty(
+        [
+            {
+                "disbursement_id": "PP-LATE",
+                "undisputed_sub_amount": 365000.0,
+                "days_elapsed_since_owner_payment": 10,
+            },
+            {
+                "disbursement_id": "PP-BORDER",
+                "undisputed_sub_amount": 100000.0,
+                "days_elapsed_since_owner_payment": 8,
+            },
+        ]
+    )
+    assert warning["evaluated_disbursement_count"] == 2
+    # PP-LATE: late 3 días -> 365000 * 12% * 3/365 = 360.0
+    # PP-BORDER: late 1 día -> 100000 * 12% * 1/365 = 32.88
+    assert warning["late_flowdown_disbursement_ids"] == ["PP-LATE", "PP-BORDER"]
+    assert warning["total_interest_penalty_accrued"] == 392.88
+    assert warning["abusive_withholding_disbursement_ids"] == []
+    assert warning["prompt_payment_status"] == "LATE_DISBURSEMENT_INTEREST_WARNING"
+    assert warning["is_prompt_payment_compliant"] is False
+
+    # Días exactamente en el límite 7 no son late (estricto >)
+    at_days = evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty(
+        [{"disbursement_id": "PP-TIMELY", "undisputed_sub_amount": 50000.0, "days_elapsed_since_owner_payment": 7}]
+    )
+    assert at_days["late_flowdown_disbursement_ids"] == []
+    assert at_days["total_interest_penalty_accrued"] == 0.0
+    assert at_days["prompt_payment_status"] == "PROMPT_PAYMENT_FLOWDOWN_COMPLIANT"
+
+    # Retraso sin importe undisputed no entra en la lista de late
+    zero_amount = evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty(
+        [{"disbursement_id": "PP-ZERO", "days_elapsed_since_owner_payment": 50}]
+    )
+    assert zero_amount["late_flowdown_disbursement_ids"] == []
+
+    custom = evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty(
+        [{"disbursement_id": "PP-4", "undisputed_sub_amount": 365000.0, "days_elapsed_since_owner_payment": 8}],
+        max_flowdown_days_after_owner_receipt=5,
+    )
+    # late 3 dias -> 365000*0.12*3/365 = 360.0
+    assert custom["total_interest_penalty_accrued"] == 360.0
+    assert custom["prompt_payment_status"] == "LATE_DISBURSEMENT_INTEREST_WARNING"
+
+
+def test_prompt_payment_unlawful_withholding_breach():
+    """Retención sin aviso escrito o por encima de defect*1.5 -> 'CRITICAL_UNLAWFUL_WITHHOLDING_BREACH' con precedencia."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty,
+    )
+
+    breach = evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty(
+        [
+            {
+                "disbursement_id": "PP-NO-NOTICE",
+                "undisputed_sub_amount": 80000.0,
+                "actual_withheld_amount": 5000.0,
+                "written_dispute_notice_served": False,
+            },
+            {
+                "disbursement_id": "PP-EXCESS",
+                "undisputed_sub_amount": 100000.0,
+                "disputed_defect_estimate": 10000.0,
+                "actual_withheld_amount": 30000.0,
+            },
+        ]
+    )
+    assert breach["evaluated_disbursement_count"] == 2
+    assert breach["abusive_withholding_disbursement_ids"] == [
+        "PP-NO-NOTICE",
+        "PP-EXCESS",
+    ]
+    # Retención bona fide dentro del multiplicador NO es abusable
+    bona_fide = evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty(
+        [{
+            "disbursement_id": "PP-BONA",
+            "undisputed_sub_amount": 100000.0,
+            "disputed_defect_estimate": 10000.0,
+            "actual_withheld_amount": 12000.0,
+        }]
+    )
+    assert bona_fide["abusive_withholding_disbursement_ids"] == []
+    assert bona_fide["prompt_payment_status"] == "PROMPT_PAYMENT_FLOWDOWN_COMPLIANT"
+
+    # Breach precede sobre late e interés aun así acumulado (literals del spec)
+    mixed = evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty(
+        [
+            {
+                "disbursement_id": "PP-CLEAR",
+                "undisputed_sub_amount": 182500.0,
+                "days_elapsed_since_owner_payment": 12,
+            },
+            {"disbursement_id": "PP-BAD-2", "actual_withheld_amount": 1000.0, "written_dispute_notice_served": False},
+        ]
+    )
+    assert mixed["late_flowdown_disbursement_ids"] == ["PP-CLEAR"]
+    # PP-CLEAR: late 5 días -> 182500*0.12*5/365 = 300.0
+    assert mixed["total_interest_penalty_accrued"] == 300.0
+    assert mixed["prompt_payment_status"] == "CRITICAL_UNLAWFUL_WITHHOLDING_BREACH"
+    assert mixed["is_prompt_payment_compliant"] is False
+
+    custom = evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty(
+        [{"disbursement_id": "PP-4", "actual_withheld_amount": 18000.0, "disputed_defect_estimate": 10000.0}],
+        max_disputed_withholding_multiplier=2.0,
+    )
+    assert custom["abusive_withholding_disbursement_ids"] == []
+    assert custom["prompt_payment_status"] == "PROMPT_PAYMENT_FLOWDOWN_COMPLIANT"
+
+
+def test_prompt_payment_empty_invalid_and_field_reversion():
+    """None / dicts inválidos se descartan; campos no numéricos/no bool revierten a defaults del spec."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty,
+    )
+
+    empty_res = evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty(None)
+    assert empty_res == {
+        "evaluated_disbursement_count": 0,
+        "total_interest_penalty_accrued": 0.0,
+        "abusive_withholding_disbursement_ids": [],
+        "late_flowdown_disbursement_ids": [],
+        "prompt_payment_status": "PROMPT_PAYMENT_FLOWDOWN_COMPLIANT",
+        "is_prompt_payment_compliant": True,
+    }
+
+    invalid_res = evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty(
+        ["no-dict", None, {"disbursement_id": "   "}, {"disbursement_id": 5}]
+    )
+    assert invalid_res["evaluated_disbursement_count"] == 0
+
+    bad_fields = evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty(
+        [
+            {
+                "disbursement_id": "PP-BAD",
+                "undisputed_sub_amount": "mucho",
+                "days_elapsed_since_owner_payment": "tres",
+                "disputed_defect_estimate": None,
+                "actual_withheld_amount": [5.0],
+                "written_dispute_notice_served": "sí",
+            }
+        ]
+    )
+    assert bad_fields == {
+        "evaluated_disbursement_count": 1,
+        "total_interest_penalty_accrued": 0.0,
+        "abusive_withholding_disbursement_ids": [],
+        "late_flowdown_disbursement_ids": [],
+        "prompt_payment_status": "PROMPT_PAYMENT_FLOWDOWN_COMPLIANT",
+        "is_prompt_payment_compliant": True,
+    }

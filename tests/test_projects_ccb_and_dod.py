@@ -11850,3 +11850,117 @@ def test_audit_graphql_federation_supergraph_composition_and_query_cost_gate_sta
     )
 
 
+def test_audit_feature_flag_kill_switch_and_stale_debt_gate_approved():
+    from backend.services.project_ccb_service import (
+        audit_feature_flag_kill_switch_and_stale_debt_gate,
+    )
+
+    flags = [
+        {
+            "flag_key": "ff-pmi-charter-drawer-v2",
+            "age_days_since_100pct_rollout": 12,
+            "has_automated_kill_switch_webhook": True,
+            "initial_canary_traffic_pct": 5.0,
+            "permanent_ops_toggle": False,
+        },
+        {
+            "flag_key": "ops-circuit-breaker-export-pdf",
+            "age_days_since_100pct_rollout": 180,
+            "has_automated_kill_switch_webhook": True,
+            "initial_canary_traffic_pct": 1.0,
+            "permanent_ops_toggle": True,
+        },
+    ]
+    res = audit_feature_flag_kill_switch_and_stale_debt_gate(
+        feature_flags=flags,
+        max_stale_100pct_rollout_days=30,
+        max_initial_canary_traffic_pct=10.0,
+    )
+    assert res["is_valid"] is True
+    assert res["total_flags"] == 2
+    assert res["missing_kill_switch_or_excessive_canary_flags"] == []
+    assert res["stale_uncleaned_release_flags"] == []
+    assert res["gate_decision"] == "APPROVED"
+
+
+def test_audit_feature_flag_kill_switch_and_stale_debt_gate_rejected():
+    from backend.services.project_ccb_service import (
+        audit_feature_flag_kill_switch_and_stale_debt_gate,
+    )
+
+    flags = [
+        {
+            "flag_key": "ff-unarmed-rollout",
+            "age_days_since_100pct_rollout": 5,
+            "has_automated_kill_switch_webhook": False,
+            "initial_canary_traffic_pct": 5.0,
+            "permanent_ops_toggle": False,
+        },
+        {
+            "flag_key": "ff-blast-canary-50pct",
+            "age_days_since_100pct_rollout": 2,
+            "has_automated_kill_switch_webhook": True,
+            "initial_canary_traffic_pct": 50.0,
+            "permanent_ops_toggle": False,
+        },
+    ]
+    res = audit_feature_flag_kill_switch_and_stale_debt_gate(
+        feature_flags=flags,
+        max_stale_100pct_rollout_days=30,
+        max_initial_canary_traffic_pct=10.0,
+    )
+    assert res["is_valid"] is False
+    assert res["gate_decision"] == "REJECTED"
+    assert "ff-unarmed-rollout" in res["missing_kill_switch_or_excessive_canary_flags"]
+    assert "ff-blast-canary-50pct" in res["missing_kill_switch_or_excessive_canary_flags"]
+
+
+def test_audit_feature_flag_kill_switch_and_stale_debt_gate_conditional():
+    from backend.services.project_ccb_service import (
+        audit_feature_flag_kill_switch_and_stale_debt_gate,
+    )
+
+    flags = [
+        {
+            "flag_key": "ff-stale-release-2025",
+            "age_days_since_100pct_rollout": 65,
+            "has_automated_kill_switch_webhook": True,
+            "initial_canary_traffic_pct": 5.0,
+            "permanent_ops_toggle": False,
+        }
+    ]
+    res = audit_feature_flag_kill_switch_and_stale_debt_gate(
+        feature_flags=flags,
+        max_stale_100pct_rollout_days=30,
+        max_initial_canary_traffic_pct=10.0,
+    )
+    assert res["is_valid"] is False
+    assert res["gate_decision"] == "CONDITIONAL"
+    assert res["missing_kill_switch_or_excessive_canary_flags"] == []
+    assert res["stale_uncleaned_release_flags"] == ["ff-stale-release-2025"]
+
+
+def test_audit_feature_flag_kill_switch_and_stale_debt_gate_staticmethod_and_dunder_all():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_feature_flag_kill_switch_and_stale_debt_gate,
+    )
+
+    empty = audit_feature_flag_kill_switch_and_stale_debt_gate([])
+    assert empty["is_valid"] is False
+    assert empty["gate_decision"] == "REJECTED"
+
+    sample = [
+        {
+            "flag_key": "ff-ok",
+            "age_days_since_100pct_rollout": 3,
+            "has_automated_kill_switch_webhook": True,
+            "initial_canary_traffic_pct": 2.0,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_feature_flag_kill_switch_and_stale_debt_gate(sample)
+        == audit_feature_flag_kill_switch_and_stale_debt_gate(sample)
+    )
+    assert "audit_feature_flag_kill_switch_and_stale_debt_gate" in mod.__all__
