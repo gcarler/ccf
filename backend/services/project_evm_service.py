@@ -5530,6 +5530,7 @@ __all__ = [
     "evaluate_evm_value_engineering_worth_ratio_and_vecp_gainshare",
     "evaluate_evm_cpaf_award_fee_pool_and_rollover_governance",
     "evaluate_evm_standby_demurrage_and_force_account_rates",
+    "evaluate_evm_schedule_of_values_front_loading_and_stored_materials",
     "ProjectEVMService",
 ]
 
@@ -10128,3 +10129,78 @@ ProjectEVMService.evaluate_evm_standby_demurrage_and_force_account_rates = stati
     evaluate_evm_standby_demurrage_and_force_account_rates
 )
 
+
+def evaluate_evm_schedule_of_values_front_loading_and_stored_materials(
+    line_items: list[dict[str, Any]] | None,
+    *,
+    max_early_phase_markup_skew_pct: float = 15.0,
+    max_stored_materials_share_pct: float = 20.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §7.4 & §12.3 — EVM Schedule of Values (SOV) Front-Loading Detection, Off-Site Stored Materials Insurance & Bill-of-Sale Evaluator."""
+    raw_items = line_items if isinstance(line_items, (list, tuple)) else []
+    valid_items = [
+        item
+        for item in raw_items
+        if isinstance(item, Mapping)
+        and isinstance(item.get("item_id"), str)
+        and item["item_id"].strip()
+    ]
+
+    uninsured_or_untitled_stored_material_item_ids: list[str] = []
+    front_loaded_or_excess_stored_item_ids: list[str] = []
+
+    for item in valid_items:
+        iid = str(item["item_id"]).strip()
+        early_phase_markup_skew_pct = float(
+            item.get("early_phase_markup_skew_pct", 5.0)
+            if item.get("early_phase_markup_skew_pct") is not None
+            else 5.0
+        )
+        stored_materials_share_pct = float(
+            item.get("stored_materials_share_pct", 8.0)
+            if item.get("stored_materials_share_pct") is not None
+            else 8.0
+        )
+        bonded_warehouse_and_insurance_verified = bool(
+            item.get("bonded_warehouse_and_insurance_verified", True)
+            if item.get("bonded_warehouse_and_insurance_verified") is not None
+            else True
+        )
+        unconditional_title_transfer_bill_of_sale = bool(
+            item.get("unconditional_title_transfer_bill_of_sale", True)
+            if item.get("unconditional_title_transfer_bill_of_sale") is not None
+            else True
+        )
+
+        if stored_materials_share_pct > 0.0 and (
+            not bonded_warehouse_and_insurance_verified
+            or not unconditional_title_transfer_bill_of_sale
+        ):
+            uninsured_or_untitled_stored_material_item_ids.append(iid)
+
+        if (
+            early_phase_markup_skew_pct > max_early_phase_markup_skew_pct
+            or stored_materials_share_pct > max_stored_materials_share_pct
+        ):
+            front_loaded_or_excess_stored_item_ids.append(iid)
+
+    if uninsured_or_untitled_stored_material_item_ids:
+        sov_billing_status = "SOV_STORED_MATERIAL_TITLE_OR_INSURANCE_BREACH"
+    elif front_loaded_or_excess_stored_item_ids:
+        sov_billing_status = "SOV_FRONT_LOADING_OR_STORED_CAP_WARNING"
+    else:
+        sov_billing_status = "SOV_PROGRESS_BILLING_OPTIMAL"
+
+    return {
+        "evaluated_items_count": len(valid_items),
+        "uninsured_or_untitled_stored_material_item_ids": uninsured_or_untitled_stored_material_item_ids,
+        "front_loaded_or_excess_stored_item_ids": front_loaded_or_excess_stored_item_ids,
+        "sov_billing_status": sov_billing_status,
+        "is_sov_billing_compliant": sov_billing_status
+        == "SOV_PROGRESS_BILLING_OPTIMAL",
+    }
+
+
+ProjectEVMService.evaluate_evm_schedule_of_values_front_loading_and_stored_materials = staticmethod(
+    evaluate_evm_schedule_of_values_front_loading_and_stored_materials
+)

@@ -9877,3 +9877,146 @@ def test_evaluate_evm_standby_demurrage_and_force_account_rates_staticmethod_and
         in mod.__all__
     )
 
+
+def test_evaluate_evm_schedule_of_values_front_loading_and_stored_materials_breach():
+    from backend.services.project_evm_service import (
+        evaluate_evm_schedule_of_values_front_loading_and_stored_materials,
+    )
+
+    result = evaluate_evm_schedule_of_values_front_loading_and_stored_materials(
+        [
+            {
+                "item_id": "SOV-UNINSURED",
+                "early_phase_markup_skew_pct": 6.0,
+                "stored_materials_share_pct": 12.0,
+                "bonded_warehouse_and_insurance_verified": False,
+                "unconditional_title_transfer_bill_of_sale": True,
+            },
+            {
+                "item_id": "SOV-NO-BILL-OF-SALE",
+                "early_phase_markup_skew_pct": 4.0,
+                "stored_materials_share_pct": 10.0,
+                "bonded_warehouse_and_insurance_verified": True,
+                "unconditional_title_transfer_bill_of_sale": False,
+            },
+        ],
+        max_early_phase_markup_skew_pct=15.0,
+        max_stored_materials_share_pct=20.0,
+    )
+    assert result["evaluated_items_count"] == 2
+    assert result["uninsured_or_untitled_stored_material_item_ids"] == [
+        "SOV-UNINSURED",
+        "SOV-NO-BILL-OF-SALE",
+    ]
+    assert result["front_loaded_or_excess_stored_item_ids"] == []
+    assert (
+        result["sov_billing_status"]
+        == "SOV_STORED_MATERIAL_TITLE_OR_INSURANCE_BREACH"
+    )
+    assert result["is_sov_billing_compliant"] is False
+
+
+def test_evaluate_evm_schedule_of_values_front_loading_and_stored_materials_warning():
+    from backend.services.project_evm_service import (
+        evaluate_evm_schedule_of_values_front_loading_and_stored_materials,
+    )
+
+    result = evaluate_evm_schedule_of_values_front_loading_and_stored_materials(
+        [
+            {
+                "item_id": "SOV-FRONT-LOADED",
+                "early_phase_markup_skew_pct": 24.5,
+                "stored_materials_share_pct": 5.0,
+                "bonded_warehouse_and_insurance_verified": True,
+                "unconditional_title_transfer_bill_of_sale": True,
+            },
+            {
+                "item_id": "SOV-EXCESS-STORED",
+                "early_phase_markup_skew_pct": 4.0,
+                "stored_materials_share_pct": 32.0,
+                "bonded_warehouse_and_insurance_verified": True,
+                "unconditional_title_transfer_bill_of_sale": True,
+            },
+        ],
+        max_early_phase_markup_skew_pct=15.0,
+        max_stored_materials_share_pct=20.0,
+    )
+    assert result["evaluated_items_count"] == 2
+    assert result["uninsured_or_untitled_stored_material_item_ids"] == []
+    assert result["front_loaded_or_excess_stored_item_ids"] == [
+        "SOV-FRONT-LOADED",
+        "SOV-EXCESS-STORED",
+    ]
+    assert (
+        result["sov_billing_status"]
+        == "SOV_FRONT_LOADING_OR_STORED_CAP_WARNING"
+    )
+    assert result["is_sov_billing_compliant"] is False
+
+
+def test_evaluate_evm_schedule_of_values_front_loading_and_stored_materials_optimal_and_empty():
+    from backend.services.project_evm_service import (
+        evaluate_evm_schedule_of_values_front_loading_and_stored_materials,
+    )
+
+    empty = evaluate_evm_schedule_of_values_front_loading_and_stored_materials(
+        [{"item_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_items_count"] == 0
+    assert empty["sov_billing_status"] == "SOV_PROGRESS_BILLING_OPTIMAL"
+    assert empty["is_sov_billing_compliant"] is True
+
+    optimal = evaluate_evm_schedule_of_values_front_loading_and_stored_materials(
+        [
+            {
+                "item_id": "SOV-STRUCTURAL-STEEL",
+                "early_phase_markup_skew_pct": 6.0,
+                "stored_materials_share_pct": 14.0,
+                "bonded_warehouse_and_insurance_verified": True,
+                "unconditional_title_transfer_bill_of_sale": True,
+            },
+            {
+                "item_id": "SOV-ZERO-STORED",
+                "early_phase_markup_skew_pct": 4.0,
+                "stored_materials_share_pct": 0.0,
+                "bonded_warehouse_and_insurance_verified": False,
+                "unconditional_title_transfer_bill_of_sale": False,
+            },
+        ],
+        max_early_phase_markup_skew_pct=15.0,
+        max_stored_materials_share_pct=20.0,
+    )
+    assert optimal["evaluated_items_count"] == 2
+    assert optimal["uninsured_or_untitled_stored_material_item_ids"] == []
+    assert optimal["front_loaded_or_excess_stored_item_ids"] == []
+    assert optimal["sov_billing_status"] == "SOV_PROGRESS_BILLING_OPTIMAL"
+    assert optimal["is_sov_billing_compliant"] is True
+
+
+def test_evaluate_evm_schedule_of_values_front_loading_and_stored_materials_staticmethod_and_dunder_all():
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_schedule_of_values_front_loading_and_stored_materials,
+    )
+
+    sample = [
+        {
+            "item_id": "SOV-99",
+            "early_phase_markup_skew_pct": 5.0,
+            "stored_materials_share_pct": 10.0,
+        }
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_schedule_of_values_front_loading_and_stored_materials(
+            sample
+        )
+        == evaluate_evm_schedule_of_values_front_loading_and_stored_materials(
+            sample
+        )
+    )
+    assert (
+        "evaluate_evm_schedule_of_values_front_loading_and_stored_materials"
+        in mod.__all__
+    )
+
