@@ -2533,6 +2533,7 @@ __all__ = [
     "audit_wiki_api_deprecation_sunset_and_consumer_migration",
     "audit_wiki_runbook_automation_toil_and_idempotency",
     "audit_wiki_chaos_gameday_hypothesis_and_blast_radius",
+    "audit_wiki_observability_cardinality_and_trace_sampling",
     "WikiPMIService",
 ]
 
@@ -6779,5 +6780,88 @@ def audit_wiki_chaos_gameday_hypothesis_and_blast_radius(
 
 WikiPMIService.audit_wiki_chaos_gameday_hypothesis_and_blast_radius = staticmethod(
     audit_wiki_chaos_gameday_hypothesis_and_blast_radius
+)
+
+
+def audit_wiki_observability_cardinality_and_trace_sampling(
+    telemetry_pipelines: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_metric_label_cardinality: int = 10000,
+    min_error_trace_tail_sampling_pct: float = 100.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §8.2 & §10.2 — Wiki Observability Telemetry Cardinality Explosion, OpenTelemetry Trace Sampling & Log Retention Tiering Auditor."""
+    valid_pipelines = [
+        pl
+        for pl in (telemetry_pipelines or [])
+        if isinstance(pl, Mapping) and str(pl.get("pipeline_id") or "").strip()
+    ]
+
+    cardinality_explosion_or_blind_trace_pipeline_ids: list[str] = []
+    high_cardinality_or_untiered_log_pipeline_ids: list[str] = []
+
+    for pl in valid_pipelines:
+        pid = str(pl.get("pipeline_id")).strip()
+        cardinality = int(
+            pl.get("observed_metric_series_cardinality", 1500)
+            if pl.get("observed_metric_series_cardinality") is not None
+            else 1500
+        )
+        unbounded_labels = bool(
+            pl.get("unbounded_user_id_or_uuid_labels_detected", False)
+            if pl.get("unbounded_user_id_or_uuid_labels_detected") is not None
+            else False
+        )
+        error_sampling_pct = float(
+            pl.get("error_trace_tail_sampling_pct", 100.0)
+            if pl.get("error_trace_tail_sampling_pct") is not None
+            else 100.0
+        )
+        w3c_propagated = bool(
+            pl.get("w3c_trace_context_propagated", True)
+            if pl.get("w3c_trace_context_propagated") is not None
+            else True
+        )
+        cold_tiering = bool(
+            pl.get("cold_storage_log_tiering_configured", True)
+            if pl.get("cold_storage_log_tiering_configured") is not None
+            else True
+        )
+
+        if (
+            unbounded_labels
+            or not w3c_propagated
+            or error_sampling_pct < min_error_trace_tail_sampling_pct
+        ):
+            cardinality_explosion_or_blind_trace_pipeline_ids.append(pid)
+
+        if (
+            cardinality > max_metric_label_cardinality
+            or not cold_tiering
+        ):
+            high_cardinality_or_untiered_log_pipeline_ids.append(pid)
+
+    if cardinality_explosion_or_blind_trace_pipeline_ids:
+        observability_hygiene_status = (
+            "OBSERVABILITY_CARDINALITY_OR_BLIND_TRACE_BREACH"
+        )
+    elif high_cardinality_or_untiered_log_pipeline_ids:
+        observability_hygiene_status = (
+            "OBSERVABILITY_SERIES_PRESSURE_OR_TIERING_WARNING"
+        )
+    else:
+        observability_hygiene_status = "OBSERVABILITY_TELEMETRY_OPTIMAL"
+
+    return {
+        "evaluated_pipelines_count": len(valid_pipelines),
+        "cardinality_explosion_or_blind_trace_pipeline_ids": cardinality_explosion_or_blind_trace_pipeline_ids,
+        "high_cardinality_or_untiered_log_pipeline_ids": high_cardinality_or_untiered_log_pipeline_ids,
+        "observability_hygiene_status": observability_hygiene_status,
+        "is_observability_hygiene_compliant": observability_hygiene_status
+        == "OBSERVABILITY_TELEMETRY_OPTIMAL",
+    }
+
+
+WikiPMIService.audit_wiki_observability_cardinality_and_trace_sampling = staticmethod(
+    audit_wiki_observability_cardinality_and_trace_sampling
 )
 

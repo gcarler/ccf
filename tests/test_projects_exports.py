@@ -9476,3 +9476,315 @@ def test_audit_executive_report_finops_unit_economics_and_ri_coverage_staticmeth
         in mod.__all__
     )
 
+
+
+def test_soc2_type2_exception_or_attestation_breach():
+    from backend.services.project_export_service import (
+        audit_executive_report_soc2_type2_continuous_evidence_and_exceptions,
+    )
+
+    res = audit_executive_report_soc2_type2_continuous_evidence_and_exceptions(
+        [
+            {
+                "control_id": "CC6-EXCEPTION",
+                "unremediated_control_exceptions_count": 1,
+            },
+            {
+                "control_id": "CC6-UNSIGNED",
+                "independent_auditor_sampled_and_signed": False,
+            },
+            {
+                "control_id": "CC7-STALE-STALL",
+                "bridge_letter_current": False,
+            },
+        ],
+        max_evidence_staleness_days=30,
+        min_automated_collection_pct=85.0,
+    )
+    assert res["evaluated_controls_count"] == 3
+    assert res["exception_or_unattested_control_ids"] == [
+        "CC6-EXCEPTION",
+        "CC6-UNSIGNED",
+        "CC7-STALE-STALL",
+    ]
+    assert res["stale_or_manual_evidence_control_ids"] == []
+    assert (
+        res["soc2_attestation_status"]
+        == "SOC2_CONTROL_EXCEPTION_OR_ATTESTATION_BREACH"
+    )
+    assert res["is_soc2_report_compliant"] is False
+
+
+def test_soc2_type2_evidence_freshness_or_automation_warning():
+    from backend.services.project_export_service import (
+        audit_executive_report_soc2_type2_continuous_evidence_and_exceptions,
+    )
+
+    res = audit_executive_report_soc2_type2_continuous_evidence_and_exceptions(
+        [
+            {
+                "control_id": "CC6-OLD-EVIDENCE",
+                "evidence_age_days": 45,
+            },
+            {
+                "control_id": "CC7-MANUAL",
+                "automated_evidence_collection_pct": 70.0,
+            },
+        ],
+        max_evidence_staleness_days=30,
+        min_automated_collection_pct=85.0,
+    )
+    assert res["evaluated_controls_count"] == 2
+    assert res["exception_or_unattested_control_ids"] == []
+    assert res["stale_or_manual_evidence_control_ids"] == [
+        "CC6-OLD-EVIDENCE",
+        "CC7-MANUAL",
+    ]
+    assert (
+        res["soc2_attestation_status"]
+        == "SOC2_EVIDENCE_FRESHNESS_OR_AUTOMATION_WARNING"
+    )
+    assert res["is_soc2_report_compliant"] is False
+
+
+def test_soc2_type2_boundaries_optimal_and_defaults():
+    from backend.services.project_export_service import (
+        audit_executive_report_soc2_type2_continuous_evidence_and_exceptions,
+    )
+
+    res = audit_executive_report_soc2_type2_continuous_evidence_and_exceptions(
+        [
+            {
+                "control_id": "CC8-BOUNDARY",
+                "evidence_age_days": 30,
+                "automated_evidence_collection_pct": 85.0,
+            },
+            {"control_id": "CC8-ALL-DEFAULTS"},
+        ],
+        max_evidence_staleness_days=30,
+        min_automated_collection_pct=85.0,
+    )
+    assert res["evaluated_controls_count"] == 2
+    assert res["exception_or_unattested_control_ids"] == []
+    assert res["stale_or_manual_evidence_control_ids"] == []
+    assert (
+        res["soc2_attestation_status"]
+        == "SOC2_CONTINUOUS_COMPLIANCE_OPTIMAL"
+    )
+    assert res["is_soc2_report_compliant"] is True
+
+
+def test_soc2_type2_invalid_and_binding():
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_soc2_type2_continuous_evidence_and_exceptions,
+    )
+
+    empty = audit_executive_report_soc2_type2_continuous_evidence_and_exceptions(
+        None
+    )
+    assert empty["evaluated_controls_count"] == 0
+    assert empty["exception_or_unattested_control_ids"] == []
+    assert empty["stale_or_manual_evidence_control_ids"] == []
+    assert (
+        empty["soc2_attestation_status"]
+        == "SOC2_CONTINUOUS_COMPLIANCE_OPTIMAL"
+    )
+    assert empty["is_soc2_report_compliant"] is True
+
+    invalid = audit_executive_report_soc2_type2_continuous_evidence_and_exceptions(
+        [42, "not-a-dict", None, {"control_id": "   "}]  # type: ignore[list-item]
+    )
+    assert invalid["evaluated_controls_count"] == 0
+
+    defaults = audit_executive_report_soc2_type2_continuous_evidence_and_exceptions(
+        [
+            {
+                "control_id": "CC9-DEFAULTS",
+                "unremediated_control_exceptions_count": None,
+                "evidence_age_days": None,
+                "automated_evidence_collection_pct": None,
+                "independent_auditor_sampled_and_signed": None,
+                "bridge_letter_current": None,
+            }
+        ]
+    )
+    assert defaults["evaluated_controls_count"] == 1
+    assert (
+        defaults["soc2_attestation_status"]
+        == "SOC2_CONTINUOUS_COMPLIANCE_OPTIMAL"
+    )
+    assert defaults["is_soc2_report_compliant"] is True
+
+    sample = [
+        {
+            "control_id": "CC1-1",
+            "evidence_age_days": 5,
+            "automated_evidence_collection_pct": 97.0,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_soc2_type2_continuous_evidence_and_exceptions(
+            sample
+        )
+        == audit_executive_report_soc2_type2_continuous_evidence_and_exceptions(
+            sample
+        )
+    )
+    assert (
+        "audit_executive_report_soc2_type2_continuous_evidence_and_exceptions"
+        in mod.__all__
+    )
+
+
+def test_audit_executive_report_zero_trust_pam_and_mfa_attestation_breach():
+    from backend.services.project_export_service import (
+        audit_executive_report_zero_trust_pam_and_mfa_attestation,
+    )
+
+    result = audit_executive_report_zero_trust_pam_and_mfa_attestation(
+        [
+            {
+                "domain_id": "DOM-ORPHAN",
+                "standing_privileged_admin_accounts_count": 0,
+                "phishing_resistant_mfa_enforced_pct": 100.0,
+                "max_jit_elevation_minutes_observed": 30.0,
+                "orphaned_terminated_employee_tokens_count": 2,
+                "session_recording_audit_trail_enabled": True,
+            },
+            {
+                "domain_id": "DOM-WEAK-MFA",
+                "standing_privileged_admin_accounts_count": 0,
+                "phishing_resistant_mfa_enforced_pct": 92.5,
+                "max_jit_elevation_minutes_observed": 30.0,
+                "orphaned_terminated_employee_tokens_count": 0,
+                "session_recording_audit_trail_enabled": True,
+            },
+            {
+                "domain_id": "DOM-NO-AUDIT",
+                "standing_privileged_admin_accounts_count": 0,
+                "phishing_resistant_mfa_enforced_pct": 100.0,
+                "max_jit_elevation_minutes_observed": 30.0,
+                "orphaned_terminated_employee_tokens_count": 0,
+                "session_recording_audit_trail_enabled": False,
+            },
+        ],
+        max_standing_admin_accounts_allowed=0,
+        max_jit_session_duration_minutes=60.0,
+    )
+    assert result["evaluated_domains_count"] == 3
+    assert result["zero_trust_breach_domain_ids"] == [
+        "DOM-ORPHAN",
+        "DOM-WEAK-MFA",
+        "DOM-NO-AUDIT",
+    ]
+    assert result["standing_privilege_or_long_jit_domain_ids"] == []
+    assert (
+        result["zero_trust_pam_status"]
+        == "ZERO_TRUST_MFA_OR_ORPHAN_TOKEN_BREACH"
+    )
+    assert result["is_zero_trust_pam_compliant"] is False
+
+
+def test_audit_executive_report_zero_trust_pam_and_mfa_attestation_warning():
+    from backend.services.project_export_service import (
+        audit_executive_report_zero_trust_pam_and_mfa_attestation,
+    )
+
+    result = audit_executive_report_zero_trust_pam_and_mfa_attestation(
+        [
+            {
+                "domain_id": "DOM-STANDING-ADMIN",
+                "standing_privileged_admin_accounts_count": 1,
+                "phishing_resistant_mfa_enforced_pct": 100.0,
+                "max_jit_elevation_minutes_observed": 30.0,
+                "orphaned_terminated_employee_tokens_count": 0,
+                "session_recording_audit_trail_enabled": True,
+            },
+            {
+                "domain_id": "DOM-LONG-JIT",
+                "standing_privileged_admin_accounts_count": 0,
+                "phishing_resistant_mfa_enforced_pct": 100.0,
+                "max_jit_elevation_minutes_observed": 120.0,
+                "orphaned_terminated_employee_tokens_count": 0,
+                "session_recording_audit_trail_enabled": True,
+            },
+        ],
+        max_standing_admin_accounts_allowed=0,
+        max_jit_session_duration_minutes=60.0,
+    )
+    assert result["evaluated_domains_count"] == 2
+    assert result["zero_trust_breach_domain_ids"] == []
+    assert result["standing_privilege_or_long_jit_domain_ids"] == [
+        "DOM-STANDING-ADMIN",
+        "DOM-LONG-JIT",
+    ]
+    assert (
+        result["zero_trust_pam_status"]
+        == "PAM_STANDING_ADMIN_OR_JIT_DURATION_WARNING"
+    )
+    assert result["is_zero_trust_pam_compliant"] is False
+
+
+def test_audit_executive_report_zero_trust_pam_and_mfa_attestation_optimal_and_empty():
+    from backend.services.project_export_service import (
+        audit_executive_report_zero_trust_pam_and_mfa_attestation,
+    )
+
+    empty = audit_executive_report_zero_trust_pam_and_mfa_attestation(
+        [{"domain_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_domains_count"] == 0
+    assert (
+        empty["zero_trust_pam_status"] == "ZERO_TRUST_PAM_GOVERNANCE_OPTIMAL"
+    )
+    assert empty["is_zero_trust_pam_compliant"] is True
+
+    optimal = audit_executive_report_zero_trust_pam_and_mfa_attestation(
+        [
+            {
+                "domain_id": "DOM-PROD-IAM",
+                "standing_privileged_admin_accounts_count": 0,
+                "phishing_resistant_mfa_enforced_pct": 100.0,
+                "max_jit_elevation_minutes_observed": 30.0,
+                "orphaned_terminated_employee_tokens_count": 0,
+                "session_recording_audit_trail_enabled": True,
+            }
+        ],
+        max_standing_admin_accounts_allowed=0,
+        max_jit_session_duration_minutes=60.0,
+    )
+    assert optimal["evaluated_domains_count"] == 1
+    assert (
+        optimal["zero_trust_pam_status"]
+        == "ZERO_TRUST_PAM_GOVERNANCE_OPTIMAL"
+    )
+    assert optimal["is_zero_trust_pam_compliant"] is True
+
+
+def test_audit_executive_report_zero_trust_pam_and_mfa_attestation_staticmethod_and_dunder_all():
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_zero_trust_pam_and_mfa_attestation,
+    )
+
+    sample = [
+        {
+            "domain_id": "DOM-99",
+            "standing_privileged_admin_accounts_count": 0,
+            "phishing_resistant_mfa_enforced_pct": 100.0,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_zero_trust_pam_and_mfa_attestation(
+            sample
+        )
+        == audit_executive_report_zero_trust_pam_and_mfa_attestation(sample)
+    )
+    assert (
+        "audit_executive_report_zero_trust_pam_and_mfa_attestation"
+        in mod.__all__
+    )
+

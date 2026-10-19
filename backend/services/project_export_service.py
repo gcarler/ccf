@@ -3005,6 +3005,8 @@ __all__ = [
     "audit_executive_report_backup_worm_immutability_and_restore_drills",
     "audit_executive_report_vendor_sla_uptime_and_rebate_capture",
     "audit_executive_report_finops_unit_economics_and_ri_coverage",
+    "audit_executive_report_soc2_type2_continuous_evidence_and_exceptions",
+    "audit_executive_report_zero_trust_pam_and_mfa_attestation",
     "ProjectExportService",
 ]
 
@@ -7310,5 +7312,163 @@ def audit_executive_report_finops_unit_economics_and_ri_coverage(
 
 ProjectExportService.audit_executive_report_finops_unit_economics_and_ri_coverage = staticmethod(
     audit_executive_report_finops_unit_economics_and_ri_coverage
+)
+
+
+def audit_executive_report_soc2_type2_continuous_evidence_and_exceptions(
+    trust_controls: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_evidence_staleness_days: int | float = 30,
+    min_automated_collection_pct: float = 85.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §8.2 & §10.2 — Executive Report SOC 2 Type II Trust Services Criteria Continuous Evidence Collection & Control Exception Auditor."""
+    valid_controls = [
+        control
+        for control in (trust_controls or [])
+        if isinstance(control, Mapping) and str(control.get("control_id") or "").strip()
+    ]
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _num(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    exception_or_unattested_control_ids: list[str] = []
+    stale_or_manual_evidence_control_ids: list[str] = []
+
+    for control in valid_controls:
+        control_id = str(control.get("control_id")).strip()
+        unremediated_exceptions = _num(
+            control.get("unremediated_control_exceptions_count"), 0.0
+        )
+        evidence_age_days = _num(
+            control.get("evidence_age_days"), 7.0
+        )
+        automated_collection_pct = _num(
+            control.get("automated_evidence_collection_pct"), 95.0
+        )
+        auditor_signed = _bool(
+            control.get("independent_auditor_sampled_and_signed"), True
+        )
+        bridge_current = _bool(
+            control.get("bridge_letter_current"), True
+        )
+
+        if (
+            unremediated_exceptions > 0
+            or not auditor_signed
+            or not bridge_current
+        ):
+            exception_or_unattested_control_ids.append(control_id)
+
+        if (
+            evidence_age_days > max_evidence_staleness_days
+            or automated_collection_pct < min_automated_collection_pct
+        ):
+            stale_or_manual_evidence_control_ids.append(control_id)
+
+    if exception_or_unattested_control_ids:
+        soc2_attestation_status = "SOC2_CONTROL_EXCEPTION_OR_ATTESTATION_BREACH"
+    elif stale_or_manual_evidence_control_ids:
+        soc2_attestation_status = (
+            "SOC2_EVIDENCE_FRESHNESS_OR_AUTOMATION_WARNING"
+        )
+    else:
+        soc2_attestation_status = "SOC2_CONTINUOUS_COMPLIANCE_OPTIMAL"
+
+    return {
+        "evaluated_controls_count": len(valid_controls),
+        "exception_or_unattested_control_ids": exception_or_unattested_control_ids,
+        "stale_or_manual_evidence_control_ids": stale_or_manual_evidence_control_ids,
+        "soc2_attestation_status": soc2_attestation_status,
+        "is_soc2_report_compliant": soc2_attestation_status
+        == "SOC2_CONTINUOUS_COMPLIANCE_OPTIMAL",
+    }
+
+
+ProjectExportService.audit_executive_report_soc2_type2_continuous_evidence_and_exceptions = staticmethod(
+    audit_executive_report_soc2_type2_continuous_evidence_and_exceptions
+)
+
+
+def audit_executive_report_zero_trust_pam_and_mfa_attestation(
+    access_domains: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_standing_admin_accounts_allowed: int = 0,
+    max_jit_session_duration_minutes: float = 60.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §10.2 & §11.6 — Executive Report Zero-Trust Identity Governance, Privileged Access (PAM/JIT) Standing Admin & MFA Attestation Auditor."""
+    valid_domains = [
+        dom
+        for dom in (access_domains or [])
+        if isinstance(dom, Mapping) and str(dom.get("domain_id") or "").strip()
+    ]
+
+    zero_trust_breach_domain_ids: list[str] = []
+    standing_privilege_or_long_jit_domain_ids: list[str] = []
+
+    for dom in valid_domains:
+        did = str(dom.get("domain_id")).strip()
+        standing_admins = int(
+            dom.get("standing_privileged_admin_accounts_count", 0)
+            if dom.get("standing_privileged_admin_accounts_count") is not None
+            else 0
+        )
+        mfa_pct = float(
+            dom.get("phishing_resistant_mfa_enforced_pct", 100.0)
+            if dom.get("phishing_resistant_mfa_enforced_pct") is not None
+            else 100.0
+        )
+        jit_minutes = float(
+            dom.get("max_jit_elevation_minutes_observed", 30.0)
+            if dom.get("max_jit_elevation_minutes_observed") is not None
+            else 30.0
+        )
+        orphan_tokens = int(
+            dom.get("orphaned_terminated_employee_tokens_count", 0)
+            if dom.get("orphaned_terminated_employee_tokens_count") is not None
+            else 0
+        )
+        session_recording = bool(
+            dom.get("session_recording_audit_trail_enabled", True)
+            if dom.get("session_recording_audit_trail_enabled") is not None
+            else True
+        )
+
+        if (
+            orphan_tokens > 0
+            or mfa_pct < 100.0
+            or not session_recording
+        ):
+            zero_trust_breach_domain_ids.append(did)
+
+        if (
+            standing_admins > max_standing_admin_accounts_allowed
+            or jit_minutes > max_jit_session_duration_minutes
+        ):
+            standing_privilege_or_long_jit_domain_ids.append(did)
+
+    if zero_trust_breach_domain_ids:
+        zero_trust_pam_status = "ZERO_TRUST_MFA_OR_ORPHAN_TOKEN_BREACH"
+    elif standing_privilege_or_long_jit_domain_ids:
+        zero_trust_pam_status = "PAM_STANDING_ADMIN_OR_JIT_DURATION_WARNING"
+    else:
+        zero_trust_pam_status = "ZERO_TRUST_PAM_GOVERNANCE_OPTIMAL"
+
+    return {
+        "evaluated_domains_count": len(valid_domains),
+        "zero_trust_breach_domain_ids": zero_trust_breach_domain_ids,
+        "standing_privilege_or_long_jit_domain_ids": standing_privilege_or_long_jit_domain_ids,
+        "zero_trust_pam_status": zero_trust_pam_status,
+        "is_zero_trust_pam_compliant": zero_trust_pam_status
+        == "ZERO_TRUST_PAM_GOVERNANCE_OPTIMAL",
+    }
+
+
+ProjectExportService.audit_executive_report_zero_trust_pam_and_mfa_attestation = staticmethod(
+    audit_executive_report_zero_trust_pam_and_mfa_attestation
 )
 

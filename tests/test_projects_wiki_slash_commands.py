@@ -9035,3 +9035,155 @@ def test_audit_wiki_chaos_gameday_hypothesis_and_blast_radius_staticmethod_and_d
         in mod.__all__
     )
 
+
+def test_audit_wiki_observability_cardinality_and_trace_sampling_breach():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_observability_cardinality_and_trace_sampling,
+    )
+
+    result = audit_wiki_observability_cardinality_and_trace_sampling(
+        [
+            {
+                "pipeline_id": "OTEL-UUID-LABEL",
+                "observed_metric_series_cardinality": 2000,
+                "unbounded_user_id_or_uuid_labels_detected": True,
+                "error_trace_tail_sampling_pct": 100.0,
+                "w3c_trace_context_propagated": True,
+                "cold_storage_log_tiering_configured": True,
+            },
+            {
+                "pipeline_id": "OTEL-NO-W3C",
+                "observed_metric_series_cardinality": 2000,
+                "unbounded_user_id_or_uuid_labels_detected": False,
+                "error_trace_tail_sampling_pct": 100.0,
+                "w3c_trace_context_propagated": False,
+                "cold_storage_log_tiering_configured": True,
+            },
+            {
+                "pipeline_id": "OTEL-LOW-ERR-SAMPLE",
+                "observed_metric_series_cardinality": 2000,
+                "unbounded_user_id_or_uuid_labels_detected": False,
+                "error_trace_tail_sampling_pct": 50.0,
+                "w3c_trace_context_propagated": True,
+                "cold_storage_log_tiering_configured": True,
+            },
+        ],
+        max_metric_label_cardinality=10000,
+        min_error_trace_tail_sampling_pct=100.0,
+    )
+    assert result["evaluated_pipelines_count"] == 3
+    assert result["cardinality_explosion_or_blind_trace_pipeline_ids"] == [
+        "OTEL-UUID-LABEL",
+        "OTEL-NO-W3C",
+        "OTEL-LOW-ERR-SAMPLE",
+    ]
+    assert result["high_cardinality_or_untiered_log_pipeline_ids"] == []
+    assert (
+        result["observability_hygiene_status"]
+        == "OBSERVABILITY_CARDINALITY_OR_BLIND_TRACE_BREACH"
+    )
+    assert result["is_observability_hygiene_compliant"] is False
+
+
+def test_audit_wiki_observability_cardinality_and_trace_sampling_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_observability_cardinality_and_trace_sampling,
+    )
+
+    result = audit_wiki_observability_cardinality_and_trace_sampling(
+        [
+            {
+                "pipeline_id": "OTEL-HIGH-CARD",
+                "observed_metric_series_cardinality": 25000,
+                "unbounded_user_id_or_uuid_labels_detected": False,
+                "error_trace_tail_sampling_pct": 100.0,
+                "w3c_trace_context_propagated": True,
+                "cold_storage_log_tiering_configured": True,
+            },
+            {
+                "pipeline_id": "OTEL-NO-TIERING",
+                "observed_metric_series_cardinality": 2000,
+                "unbounded_user_id_or_uuid_labels_detected": False,
+                "error_trace_tail_sampling_pct": 100.0,
+                "w3c_trace_context_propagated": True,
+                "cold_storage_log_tiering_configured": False,
+            },
+        ],
+        max_metric_label_cardinality=10000,
+        min_error_trace_tail_sampling_pct=100.0,
+    )
+    assert result["evaluated_pipelines_count"] == 2
+    assert result["cardinality_explosion_or_blind_trace_pipeline_ids"] == []
+    assert result["high_cardinality_or_untiered_log_pipeline_ids"] == [
+        "OTEL-HIGH-CARD",
+        "OTEL-NO-TIERING",
+    ]
+    assert (
+        result["observability_hygiene_status"]
+        == "OBSERVABILITY_SERIES_PRESSURE_OR_TIERING_WARNING"
+    )
+    assert result["is_observability_hygiene_compliant"] is False
+
+
+def test_audit_wiki_observability_cardinality_and_trace_sampling_optimal_and_empty():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_observability_cardinality_and_trace_sampling,
+    )
+
+    empty = audit_wiki_observability_cardinality_and_trace_sampling(
+        [{"pipeline_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_pipelines_count"] == 0
+    assert (
+        empty["observability_hygiene_status"]
+        == "OBSERVABILITY_TELEMETRY_OPTIMAL"
+    )
+    assert empty["is_observability_hygiene_compliant"] is True
+
+    optimal = audit_wiki_observability_cardinality_and_trace_sampling(
+        [
+            {
+                "pipeline_id": "OTEL-GOLD-1",
+                "observed_metric_series_cardinality": 3500,
+                "unbounded_user_id_or_uuid_labels_detected": False,
+                "error_trace_tail_sampling_pct": 100.0,
+                "w3c_trace_context_propagated": True,
+                "cold_storage_log_tiering_configured": True,
+            }
+        ],
+        max_metric_label_cardinality=10000,
+        min_error_trace_tail_sampling_pct=100.0,
+    )
+    assert optimal["evaluated_pipelines_count"] == 1
+    assert (
+        optimal["observability_hygiene_status"]
+        == "OBSERVABILITY_TELEMETRY_OPTIMAL"
+    )
+    assert optimal["is_observability_hygiene_compliant"] is True
+
+
+def test_audit_wiki_observability_cardinality_and_trace_sampling_staticmethod_and_dunder_all():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_observability_cardinality_and_trace_sampling,
+    )
+
+    sample = [
+        {
+            "pipeline_id": "OTEL-99",
+            "observed_metric_series_cardinality": 1200,
+            "error_trace_tail_sampling_pct": 100.0,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_observability_cardinality_and_trace_sampling(
+            sample
+        )
+        == audit_wiki_observability_cardinality_and_trace_sampling(sample)
+    )
+    assert (
+        "audit_wiki_observability_cardinality_and_trace_sampling"
+        in mod.__all__
+    )
+
