@@ -2524,6 +2524,7 @@ __all__ = [
     "audit_wiki_operational_runbook_idempotency_and_preflight_hygiene",
     "audit_wiki_database_migration_expand_contract_and_lock_safety",
     "audit_wiki_blameless_postmortem_five_whys_and_action_sla",
+    "audit_wiki_on_call_rotation_burnout_and_escalation_readiness",
     "WikiPMIService",
 ]
 
@@ -6024,3 +6025,80 @@ def audit_wiki_blameless_postmortem_five_whys_and_action_sla(
 WikiPMIService.audit_wiki_blameless_postmortem_five_whys_and_action_sla = staticmethod(
     audit_wiki_blameless_postmortem_five_whys_and_action_sla
 )
+
+
+def audit_wiki_on_call_rotation_burnout_and_escalation_readiness(
+    rotations: list[dict[str, Any]],
+    *,
+    min_responders_in_pool: int = 4,
+    max_after_hours_pages_per_shift: int = 8,
+) -> dict[str, Any]:
+    """PMI PMBOK §9.4 & §11.2 — Wiki On-Call Rotation Burnout Load, Shift Handoff Completeness & Pager Escalation Tree Auditor."""
+    understaffed_rotation_ids: list[str] = []
+    burnout_overload_rotation_ids: list[str] = []
+    single_point_escalation_ids: list[str] = []
+    missing_handoff_rotation_ids: list[str] = []
+
+    valid_rotations = (
+        [
+            r
+            for r in rotations
+            if isinstance(r, dict) and str(r.get("rotation_id", "")).strip()
+        ]
+        if isinstance(rotations, list)
+        else []
+    )
+
+    for rot in valid_rotations:
+        rotation_id = str(rot.get("rotation_id", "")).strip()
+        active_responders_count = int(rot.get("active_responders_count", 0) or 0)
+        after_hours_pages_count = int(rot.get("after_hours_pages_count", 0) or 0)
+        has_secondary_backup_escalation = (
+            bool(rot.get("has_secondary_backup_escalation", True))
+            if rot.get("has_secondary_backup_escalation") is not None
+            else True
+        )
+        has_shift_handoff_notes_logged = (
+            bool(rot.get("has_shift_handoff_notes_logged", True))
+            if rot.get("has_shift_handoff_notes_logged") is not None
+            else True
+        )
+
+        if active_responders_count < min_responders_in_pool:
+            understaffed_rotation_ids.append(rotation_id)
+
+        if after_hours_pages_count > max_after_hours_pages_per_shift:
+            burnout_overload_rotation_ids.append(rotation_id)
+
+        if not has_secondary_backup_escalation:
+            single_point_escalation_ids.append(rotation_id)
+
+        if not has_shift_handoff_notes_logged:
+            missing_handoff_rotation_ids.append(rotation_id)
+
+    if (
+        single_point_escalation_ids
+        or understaffed_rotation_ids
+        or burnout_overload_rotation_ids
+    ):
+        on_call_governance_status = "ESCALATION_OR_BURNOUT_CRISIS"
+    elif missing_handoff_rotation_ids:
+        on_call_governance_status = "HANDOFF_HYGIENE_WARNING"
+    else:
+        on_call_governance_status = "ROTATION_SUSTAINABLE"
+
+    return {
+        "total_rotations_evaluated": len(valid_rotations),
+        "understaffed_rotation_ids": understaffed_rotation_ids,
+        "burnout_overload_rotation_ids": burnout_overload_rotation_ids,
+        "single_point_escalation_ids": single_point_escalation_ids,
+        "missing_handoff_rotation_ids": missing_handoff_rotation_ids,
+        "on_call_governance_status": on_call_governance_status,
+        "is_on_call_compliant": on_call_governance_status == "ROTATION_SUSTAINABLE",
+    }
+
+
+WikiPMIService.audit_wiki_on_call_rotation_burnout_and_escalation_readiness = staticmethod(
+    audit_wiki_on_call_rotation_burnout_and_escalation_readiness
+)
+

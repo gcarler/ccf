@@ -7782,3 +7782,130 @@ def test_audit_wiki_blameless_postmortem_five_whys_and_action_sla_staticmethod_a
     assert (
         "audit_wiki_blameless_postmortem_five_whys_and_action_sla" in mod.__all__
     )
+
+
+def test_audit_wiki_on_call_rotation_burnout_and_escalation_readiness_sustainable():
+    """Caso 1: Rotaciones con pool >= 4, <= 8 alertas nocturnas, backup secundario y notas de handoff -> ROTATION_SUSTAINABLE."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_on_call_rotation_burnout_and_escalation_readiness,
+    )
+
+    rotations = [
+        {
+            "rotation_id": "ONCALL-CORE-PLAT",
+            "active_responders_count": 6,
+            "after_hours_pages_count": 3,
+            "has_secondary_backup_escalation": True,
+            "has_shift_handoff_notes_logged": True,
+        },
+        {
+            "rotation_id": "ONCALL-DB-SRE",
+            "active_responders_count": 4,
+            "after_hours_pages_count": 8,
+            "has_secondary_backup_escalation": True,
+            "has_shift_handoff_notes_logged": True,
+        },
+    ]
+    res = audit_wiki_on_call_rotation_burnout_and_escalation_readiness(
+        rotations, min_responders_in_pool=4, max_after_hours_pages_per_shift=8
+    )
+    assert res["total_rotations_evaluated"] == 2
+    assert res["understaffed_rotation_ids"] == []
+    assert res["burnout_overload_rotation_ids"] == []
+    assert res["single_point_escalation_ids"] == []
+    assert res["missing_handoff_rotation_ids"] == []
+    assert res["on_call_governance_status"] == "ROTATION_SUSTAINABLE"
+    assert res["is_on_call_compliant"] is True
+
+
+def test_audit_wiki_on_call_rotation_burnout_and_escalation_readiness_handoff_warning():
+    """Caso 2: Solo falta el registro de notas de cambio de turno -> HANDOFF_HYGIENE_WARNING."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_on_call_rotation_burnout_and_escalation_readiness,
+    )
+
+    rotations = [
+        {
+            "rotation_id": "ONCALL-BILLING",
+            "active_responders_count": 5,
+            "after_hours_pages_count": 4,
+            "has_secondary_backup_escalation": True,
+            "has_shift_handoff_notes_logged": False,
+        }
+    ]
+    res = audit_wiki_on_call_rotation_burnout_and_escalation_readiness(
+        rotations, min_responders_in_pool=4, max_after_hours_pages_per_shift=8
+    )
+    assert res["total_rotations_evaluated"] == 1
+    assert res["understaffed_rotation_ids"] == []
+    assert res["burnout_overload_rotation_ids"] == []
+    assert res["single_point_escalation_ids"] == []
+    assert res["missing_handoff_rotation_ids"] == ["ONCALL-BILLING"]
+    assert res["on_call_governance_status"] == "HANDOFF_HYGIENE_WARNING"
+    assert res["is_on_call_compliant"] is False
+
+
+def test_audit_wiki_on_call_rotation_burnout_and_escalation_readiness_crisis():
+    """Caso 3: Pool insuficiente (<4), exceso de alertas nocturnas (>8) o sin escalamiento secundario -> ESCALATION_OR_BURNOUT_CRISIS."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_on_call_rotation_burnout_and_escalation_readiness,
+    )
+
+    rotations = [
+        {
+            "rotation_id": "ONCALL-AUTH-CRISIS",
+            "active_responders_count": 2,
+            "after_hours_pages_count": 14,
+            "has_secondary_backup_escalation": False,
+            "has_shift_handoff_notes_logged": False,
+        }
+    ]
+    res = audit_wiki_on_call_rotation_burnout_and_escalation_readiness(
+        rotations, min_responders_in_pool=4, max_after_hours_pages_per_shift=8
+    )
+    assert res["total_rotations_evaluated"] == 1
+    assert res["understaffed_rotation_ids"] == ["ONCALL-AUTH-CRISIS"]
+    assert res["burnout_overload_rotation_ids"] == ["ONCALL-AUTH-CRISIS"]
+    assert res["single_point_escalation_ids"] == ["ONCALL-AUTH-CRISIS"]
+    assert res["missing_handoff_rotation_ids"] == ["ONCALL-AUTH-CRISIS"]
+    assert res["on_call_governance_status"] == "ESCALATION_OR_BURNOUT_CRISIS"
+    assert res["is_on_call_compliant"] is False
+
+
+def test_audit_wiki_on_call_rotation_burnout_and_escalation_readiness_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en WikiPMIService + __all__."""
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_on_call_rotation_burnout_and_escalation_readiness,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_wiki_on_call_rotation_burnout_and_escalation_readiness(payload)  # type: ignore[arg-type]
+        assert empty["total_rotations_evaluated"] == 0
+        assert empty["understaffed_rotation_ids"] == []
+        assert empty["burnout_overload_rotation_ids"] == []
+        assert empty["single_point_escalation_ids"] == []
+        assert empty["missing_handoff_rotation_ids"] == []
+        assert empty["on_call_governance_status"] == "ROTATION_SUSTAINABLE"
+        assert empty["is_on_call_compliant"] is True
+
+    sample = [
+        {
+            "rotation_id": "ONCALL-99",
+            "active_responders_count": 5,
+            "after_hours_pages_count": 2,
+            "has_secondary_backup_escalation": True,
+            "has_shift_handoff_notes_logged": True,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_on_call_rotation_burnout_and_escalation_readiness(
+            sample
+        )
+        == audit_wiki_on_call_rotation_burnout_and_escalation_readiness(sample)
+    )
+    assert (
+        "audit_wiki_on_call_rotation_burnout_and_escalation_readiness" in mod.__all__
+    )
+
