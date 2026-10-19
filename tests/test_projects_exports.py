@@ -8571,3 +8571,124 @@ def test_audit_executive_report_dora_four_keys_and_delivery_stability_staticmeth
         "audit_executive_report_dora_four_keys_and_delivery_stability"
         in mod.__all__
     )
+
+
+def test_audit_executive_report_data_privacy_pii_masking_and_residency_privacy_breach_blocked():
+    from backend.services.project_export_service import (
+        audit_executive_report_data_privacy_pii_masking_and_residency,
+    )
+
+    res = audit_executive_report_data_privacy_pii_masking_and_residency(
+        [
+            {
+                "dataset_id": "DS-USERS",
+                "contains_pii_or_phi": True,
+                "is_encrypted_and_masked_at_rest": False,
+                "retention_ttl_days": 180,
+                "storage_region": "LATAM-BOG",
+                "has_dpia_impact_assessment_signed": False,
+            },
+            {
+                "dataset_id": "DS-TELEMETRY",
+                "contains_pii_or_phi": False,
+                "is_encrypted_and_masked_at_rest": True,
+                "retention_ttl_days": 90,
+                "storage_region": "AP-SOUTH",
+                "has_dpia_impact_assessment_signed": True,
+            },
+        ],
+        max_retention_days=365,
+        allowed_regions=("EU-CENTRAL", "US-EAST", "LATAM-BOG"),
+    )
+    assert res["total_datasets_evaluated"] == 2
+    assert res["pii_datasets_count"] == 1
+    assert res["unmasked_pii_dataset_ids"] == ["DS-USERS"]
+    assert res["missing_dpia_dataset_ids"] == ["DS-USERS"]
+    assert res["unauthorized_region_dataset_ids"] == ["DS-TELEMETRY"]
+    assert res["excessive_retention_dataset_ids"] == []
+    assert res["privacy_governance_status"] == "PRIVACY_BREACH_BLOCKED"
+    assert res["is_privacy_compliant"] is False
+
+
+def test_audit_executive_report_data_privacy_pii_masking_and_residency_retention_warning():
+    from backend.services.project_export_service import (
+        audit_executive_report_data_privacy_pii_masking_and_residency,
+    )
+
+    res = audit_executive_report_data_privacy_pii_masking_and_residency(
+        [
+            {
+                "dataset_id": "DS-ARCHIVE",
+                "contains_pii_or_phi": True,
+                "is_encrypted_and_masked_at_rest": True,
+                "retention_ttl_days": 730,
+                "storage_region": "EU-CENTRAL",
+                "has_dpia_impact_assessment_signed": True,
+            }
+        ],
+        max_retention_days=365,
+    )
+    assert res["unmasked_pii_dataset_ids"] == []
+    assert res["missing_dpia_dataset_ids"] == []
+    assert res["unauthorized_region_dataset_ids"] == []
+    assert res["excessive_retention_dataset_ids"] == ["DS-ARCHIVE"]
+    assert res["privacy_governance_status"] == "RETENTION_POLICY_WARNING"
+    assert res["is_privacy_compliant"] is False
+
+
+def test_audit_executive_report_data_privacy_pii_masking_and_residency_compliant_and_empty():
+    from backend.services.project_export_service import (
+        audit_executive_report_data_privacy_pii_masking_and_residency,
+    )
+
+    empty = audit_executive_report_data_privacy_pii_masking_and_residency(
+        [{"dataset_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_datasets_evaluated"] == 0
+    assert empty["pii_datasets_count"] == 0
+    assert empty["privacy_governance_status"] == "PRIVACY_COMPLIANT"
+    assert empty["is_privacy_compliant"] is True
+
+    compliant = audit_executive_report_data_privacy_pii_masking_and_residency(
+        [
+            {
+                "dataset_id": "DS-CLEAN",
+                "contains_pii_or_phi": True,
+                "is_encrypted_and_masked_at_rest": True,
+                "retention_ttl_days": 180,
+                "storage_region": "us-east",
+                "has_dpia_impact_assessment_signed": True,
+            }
+        ]
+    )
+    assert compliant["total_datasets_evaluated"] == 1
+    assert compliant["pii_datasets_count"] == 1
+    assert compliant["privacy_governance_status"] == "PRIVACY_COMPLIANT"
+    assert compliant["is_privacy_compliant"] is True
+
+
+def test_audit_executive_report_data_privacy_pii_masking_and_residency_staticmethod_and_dunder_all():
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_data_privacy_pii_masking_and_residency,
+    )
+
+    sample = [
+        {
+            "dataset_id": "DS-99",
+            "contains_pii_or_phi": False,
+            "retention_ttl_days": 30,
+            "storage_region": "LATAM-BOG",
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_data_privacy_pii_masking_and_residency(
+            sample
+        )
+        == audit_executive_report_data_privacy_pii_masking_and_residency(sample)
+    )
+    assert (
+        "audit_executive_report_data_privacy_pii_masking_and_residency"
+        in mod.__all__
+    )

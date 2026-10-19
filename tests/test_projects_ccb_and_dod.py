@@ -8290,3 +8290,122 @@ def test_audit_api_backward_compatibility_and_contract_versioning_staticmethod_a
     assert (
         "audit_api_backward_compatibility_and_contract_versioning" in mod.__all__
     )
+
+
+def test_audit_test_pyramid_balance_and_mutation_coverage_gate_quality_gate_blocked():
+    from backend.services.project_ccb_service import (
+        audit_test_pyramid_balance_and_mutation_coverage_gate,
+    )
+
+    res = audit_test_pyramid_balance_and_mutation_coverage_gate(
+        [
+            {
+                "suite_id": "SUITE-BILLING",
+                "unit_tests_count": 70,
+                "integration_tests_count": 20,
+                "e2e_tests_count": 10,
+                "mutation_kill_score_pct": 62.0,
+                "flaky_tests_rate_pct": 4.5,
+            }
+        ],
+        min_unit_test_share_pct=60.0,
+        max_e2e_test_share_pct=20.0,
+        min_mutation_score_pct=75.0,
+        max_flaky_rate_pct=2.0,
+    )
+    assert res["total_suites_evaluated"] == 1
+    assert res["ice_cream_cone_antipattern_suite_ids"] == []
+    assert res["weak_mutation_coverage_suite_ids"] == ["SUITE-BILLING"]
+    assert res["flaky_instability_suite_ids"] == ["SUITE-BILLING"]
+    assert res["quality_pyramid_status"] == "QUALITY_GATE_BLOCKED"
+    assert res["is_test_pyramid_compliant"] is False
+
+
+def test_audit_test_pyramid_balance_and_mutation_coverage_gate_pyramid_imbalance_warning():
+    from backend.services.project_ccb_service import (
+        audit_test_pyramid_balance_and_mutation_coverage_gate,
+    )
+
+    res = audit_test_pyramid_balance_and_mutation_coverage_gate(
+        [
+            {
+                "suite_id": "SUITE-FRONTEND-E2E-HEAVY",
+                "unit_tests_count": 20,
+                "integration_tests_count": 30,
+                "e2e_tests_count": 50,
+                "mutation_kill_score_pct": 82.0,
+                "flaky_tests_rate_pct": 1.0,
+            }
+        ],
+        min_unit_test_share_pct=60.0,
+        max_e2e_test_share_pct=20.0,
+        min_mutation_score_pct=75.0,
+        max_flaky_rate_pct=2.0,
+    )
+    assert res["ice_cream_cone_antipattern_suite_ids"] == [
+        "SUITE-FRONTEND-E2E-HEAVY"
+    ]
+    assert res["weak_mutation_coverage_suite_ids"] == []
+    assert res["flaky_instability_suite_ids"] == []
+    assert res["quality_pyramid_status"] == "PYRAMID_IMBALANCE_WARNING"
+    assert res["is_test_pyramid_compliant"] is False
+
+
+def test_audit_test_pyramid_balance_and_mutation_coverage_gate_optimal_and_empty():
+    from backend.services.project_ccb_service import (
+        audit_test_pyramid_balance_and_mutation_coverage_gate,
+    )
+
+    empty = audit_test_pyramid_balance_and_mutation_coverage_gate(
+        [{"suite_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_suites_evaluated"] == 0
+    assert empty["quality_pyramid_status"] == "PYRAMID_OPTIMAL"
+    assert empty["is_test_pyramid_compliant"] is True
+
+    optimal = audit_test_pyramid_balance_and_mutation_coverage_gate(
+        [
+            {
+                "suite_id": "SUITE-CORE",
+                "unit_tests_count": 140,
+                "integration_tests_count": 40,
+                "e2e_tests_count": 20,
+                "mutation_kill_score_pct": 85.0,
+                "flaky_tests_rate_pct": 0.5,
+            }
+        ]
+    )
+    assert optimal["total_suites_evaluated"] == 1
+    assert optimal["ice_cream_cone_antipattern_suite_ids"] == []
+    assert optimal["weak_mutation_coverage_suite_ids"] == []
+    assert optimal["flaky_instability_suite_ids"] == []
+    assert optimal["quality_pyramid_status"] == "PYRAMID_OPTIMAL"
+    assert optimal["is_test_pyramid_compliant"] is True
+
+
+def test_audit_test_pyramid_balance_and_mutation_coverage_gate_staticmethod_and_dunder_all():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_test_pyramid_balance_and_mutation_coverage_gate,
+    )
+
+    sample = [
+        {
+            "suite_id": "SUITE-99",
+            "unit_tests_count": 80,
+            "integration_tests_count": 15,
+            "e2e_tests_count": 5,
+            "mutation_kill_score_pct": 80.0,
+            "flaky_tests_rate_pct": 0.0,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_test_pyramid_balance_and_mutation_coverage_gate(
+            sample
+        )
+        == audit_test_pyramid_balance_and_mutation_coverage_gate(sample)
+    )
+    assert (
+        "audit_test_pyramid_balance_and_mutation_coverage_gate" in mod.__all__
+    )

@@ -2841,6 +2841,7 @@ __all__ = [
     "audit_requirements_volatility_churn_and_scope_freeze_breaches",
     "audit_architectural_fitness_functions_and_coupling_drift",
     "audit_api_backward_compatibility_and_contract_versioning",
+    "audit_test_pyramid_balance_and_mutation_coverage_gate",
     "ProjectCCBService",
 ]
 
@@ -6376,4 +6377,108 @@ def audit_api_backward_compatibility_and_contract_versioning(
 
 ProjectCCBService.audit_api_backward_compatibility_and_contract_versioning = staticmethod(
     audit_api_backward_compatibility_and_contract_versioning
+)
+
+
+def audit_test_pyramid_balance_and_mutation_coverage_gate(
+    suites: list[dict[str, Any]],
+    *,
+    min_unit_test_share_pct: float = 60.0,
+    max_e2e_test_share_pct: float = 20.0,
+    min_mutation_score_pct: float = 75.0,
+    max_flaky_rate_pct: float = 2.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §8.2 & §8.3 — CCB Test Pyramid Balance, Flaky Test Quarantine & Mutation Coverage Gate Auditor."""
+    valid_suites: list[dict[str, Any]] = []
+    if isinstance(suites, (list, tuple)):
+        for item in suites:
+            if not isinstance(item, dict):
+                continue
+            sid = str(item.get("suite_id") or "").strip()
+            if not sid:
+                continue
+            valid_suites.append({**item, "_sid": sid})
+
+    if not valid_suites:
+        return {
+            "total_suites_evaluated": 0,
+            "ice_cream_cone_antipattern_suite_ids": [],
+            "weak_mutation_coverage_suite_ids": [],
+            "flaky_instability_suite_ids": [],
+            "quality_pyramid_status": "PYRAMID_OPTIMAL",
+            "is_test_pyramid_compliant": True,
+            "recommendations": [],
+        }
+
+    ice_cream_cone_antipattern_suite_ids: list[str] = []
+    weak_mutation_coverage_suite_ids: list[str] = []
+    flaky_instability_suite_ids: list[str] = []
+
+    for st in valid_suites:
+        sid = st["_sid"]
+        unit_cnt = max(0, int(st.get("unit_tests_count", 0) or 0))
+        integ_cnt = max(0, int(st.get("integration_tests_count", 0) or 0))
+        e2e_cnt = max(0, int(st.get("e2e_tests_count", 0) or 0))
+        mut_score = float(
+            st.get("mutation_kill_score_pct", 80.0)
+            if st.get("mutation_kill_score_pct") is not None
+            else 80.0
+        )
+        flaky_rate = max(0.0, float(st.get("flaky_tests_rate_pct", 0.0) or 0.0))
+
+        total_tests = unit_cnt + integ_cnt + e2e_cnt
+        if total_tests > 0:
+            unit_share_pct = round((unit_cnt / total_tests) * 100.0, 2)
+            e2e_share_pct = round((e2e_cnt / total_tests) * 100.0, 2)
+        else:
+            unit_share_pct = 0.0
+            e2e_share_pct = 0.0
+
+        if (
+            total_tests == 0
+            or unit_share_pct < min_unit_test_share_pct
+            or e2e_share_pct > max_e2e_test_share_pct
+        ):
+            ice_cream_cone_antipattern_suite_ids.append(sid)
+
+        if mut_score < min_mutation_score_pct:
+            weak_mutation_coverage_suite_ids.append(sid)
+
+        if flaky_rate > max_flaky_rate_pct:
+            flaky_instability_suite_ids.append(sid)
+
+    recommendations: list[str] = []
+    if weak_mutation_coverage_suite_ids:
+        recommendations.append(
+            f"Strengthen assertion quality to reach >= {min_mutation_score_pct}% mutation kill score in suite(s): {', '.join(weak_mutation_coverage_suite_ids)}."
+        )
+    if flaky_instability_suite_ids:
+        recommendations.append(
+            f"Quarantine and deterministic-refactor flaky tests exceeding {max_flaky_rate_pct}% threshold in suite(s): {', '.join(flaky_instability_suite_ids)}."
+        )
+    if ice_cream_cone_antipattern_suite_ids:
+        recommendations.append(
+            f"Rebalance test pyramid (>= {min_unit_test_share_pct}% unit, <= {max_e2e_test_share_pct}% E2E) in suite(s): {', '.join(ice_cream_cone_antipattern_suite_ids)}."
+        )
+
+    if weak_mutation_coverage_suite_ids or flaky_instability_suite_ids:
+        quality_pyramid_status = "QUALITY_GATE_BLOCKED"
+    elif ice_cream_cone_antipattern_suite_ids:
+        quality_pyramid_status = "PYRAMID_IMBALANCE_WARNING"
+    else:
+        quality_pyramid_status = "PYRAMID_OPTIMAL"
+
+    return {
+        "total_suites_evaluated": len(valid_suites),
+        "ice_cream_cone_antipattern_suite_ids": ice_cream_cone_antipattern_suite_ids,
+        "weak_mutation_coverage_suite_ids": weak_mutation_coverage_suite_ids,
+        "flaky_instability_suite_ids": flaky_instability_suite_ids,
+        "quality_pyramid_status": quality_pyramid_status,
+        "is_test_pyramid_compliant": quality_pyramid_status == "PYRAMID_OPTIMAL",
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.audit_test_pyramid_balance_and_mutation_coverage_gate = staticmethod(
+    audit_test_pyramid_balance_and_mutation_coverage_gate
 )

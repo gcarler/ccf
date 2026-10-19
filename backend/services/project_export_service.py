@@ -2998,6 +2998,7 @@ __all__ = [
     "audit_executive_report_pentest_remediation_sla_and_zero_trust",
     "audit_executive_report_esg_carbon_footprint_and_green_cloud_pue",
     "audit_executive_report_dora_four_keys_and_delivery_stability",
+    "audit_executive_report_data_privacy_pii_masking_and_residency",
     "ProjectExportService",
 ]
 
@@ -6656,4 +6657,113 @@ def audit_executive_report_dora_four_keys_and_delivery_stability(
 
 ProjectExportService.audit_executive_report_dora_four_keys_and_delivery_stability = staticmethod(
     audit_executive_report_dora_four_keys_and_delivery_stability
+)
+
+
+def audit_executive_report_data_privacy_pii_masking_and_residency(
+    datasets: list[dict[str, Any]],
+    *,
+    max_retention_days: int = 365,
+    allowed_regions: tuple[str, ...] = ("EU-CENTRAL", "US-EAST", "LATAM-BOG"),
+) -> dict[str, Any]:
+    """PMI PMBOK §10.2 & §11.6 — Executive Report Data Privacy GDPR/HIPAA PII Masking, Retention TTL & Cross-Border Residency Auditor."""
+    valid_datasets: list[dict[str, Any]] = []
+    if isinstance(datasets, (list, tuple)):
+        for item in datasets:
+            if not isinstance(item, dict):
+                continue
+            did = str(item.get("dataset_id") or "").strip()
+            if not did:
+                continue
+            valid_datasets.append({**item, "_did": did})
+
+    if not valid_datasets:
+        return {
+            "total_datasets_evaluated": 0,
+            "pii_datasets_count": 0,
+            "unmasked_pii_dataset_ids": [],
+            "missing_dpia_dataset_ids": [],
+            "unauthorized_region_dataset_ids": [],
+            "excessive_retention_dataset_ids": [],
+            "privacy_governance_status": "PRIVACY_COMPLIANT",
+            "is_privacy_compliant": True,
+            "recommendations": [],
+        }
+
+    allowed_region_set = {str(r).strip().upper() for r in allowed_regions}
+    pii_datasets_count = 0
+    unmasked_pii_dataset_ids: list[str] = []
+    missing_dpia_dataset_ids: list[str] = []
+    unauthorized_region_dataset_ids: list[str] = []
+    excessive_retention_dataset_ids: list[str] = []
+
+    for ds in valid_datasets:
+        did = ds["_did"]
+        has_pii = bool(ds.get("contains_pii_or_phi", False))
+        is_masked = bool(ds.get("is_encrypted_and_masked_at_rest", True))
+        ttl_days = int(
+            ds.get("retention_ttl_days", 90)
+            if ds.get("retention_ttl_days") is not None
+            else 90
+        )
+        region = str(ds.get("storage_region") or "LATAM-BOG").strip().upper()
+        has_dpia = bool(ds.get("has_dpia_impact_assessment_signed", True))
+
+        if has_pii:
+            pii_datasets_count += 1
+            if not is_masked:
+                unmasked_pii_dataset_ids.append(did)
+            if not has_dpia:
+                missing_dpia_dataset_ids.append(did)
+
+        if region not in allowed_region_set:
+            unauthorized_region_dataset_ids.append(did)
+
+        if ttl_days <= 0 or ttl_days > max_retention_days:
+            excessive_retention_dataset_ids.append(did)
+
+    recommendations: list[str] = []
+    if unmasked_pii_dataset_ids:
+        recommendations.append(
+            f"Enable at-rest encryption and PII/PHI column masking for dataset(s): {', '.join(unmasked_pii_dataset_ids)}."
+        )
+    if missing_dpia_dataset_ids:
+        recommendations.append(
+            f"Complete and sign Data Protection Impact Assessment (DPIA) for dataset(s): {', '.join(missing_dpia_dataset_ids)}."
+        )
+    if unauthorized_region_dataset_ids:
+        recommendations.append(
+            f"Migrate dataset(s) to authorized data-residency regions ({', '.join(allowed_regions)}): {', '.join(unauthorized_region_dataset_ids)}."
+        )
+    if excessive_retention_dataset_ids:
+        recommendations.append(
+            f"Enforce automated TTL purging within (0, {max_retention_days}] days for dataset(s): {', '.join(excessive_retention_dataset_ids)}."
+        )
+
+    if (
+        unmasked_pii_dataset_ids
+        or missing_dpia_dataset_ids
+        or unauthorized_region_dataset_ids
+    ):
+        privacy_governance_status = "PRIVACY_BREACH_BLOCKED"
+    elif excessive_retention_dataset_ids:
+        privacy_governance_status = "RETENTION_POLICY_WARNING"
+    else:
+        privacy_governance_status = "PRIVACY_COMPLIANT"
+
+    return {
+        "total_datasets_evaluated": len(valid_datasets),
+        "pii_datasets_count": pii_datasets_count,
+        "unmasked_pii_dataset_ids": unmasked_pii_dataset_ids,
+        "missing_dpia_dataset_ids": missing_dpia_dataset_ids,
+        "unauthorized_region_dataset_ids": unauthorized_region_dataset_ids,
+        "excessive_retention_dataset_ids": excessive_retention_dataset_ids,
+        "privacy_governance_status": privacy_governance_status,
+        "is_privacy_compliant": privacy_governance_status == "PRIVACY_COMPLIANT",
+        "recommendations": recommendations,
+    }
+
+
+ProjectExportService.audit_executive_report_data_privacy_pii_masking_and_residency = staticmethod(
+    audit_executive_report_data_privacy_pii_masking_and_residency
 )
