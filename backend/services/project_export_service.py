@@ -3020,6 +3020,7 @@ __all__ = [
     "audit_executive_report_cold_storage_glacier_restore_rto_and_checksum_manifest",
     "audit_executive_report_smime_pgp_envelope_and_ocsp_stapling",
     "audit_executive_report_graphql_persisted_query_apq_and_batch_export_throttling",
+    "audit_executive_report_xbrl_taxonomy_and_financial_rounding_parity",
     "ProjectExportService",
 ]
 
@@ -8621,3 +8622,80 @@ ProjectExportService.audit_executive_report_graphql_persisted_query_apq_and_batc
 
 
 
+def audit_executive_report_xbrl_taxonomy_and_financial_rounding_parity(
+    schedules: list[dict] | None,
+    *,
+    max_rounding_plug_cents: float = 2.0,
+) -> dict:
+    """PMBOK §10.2 & §7.4 — Audita tagging de taxonomía iXBRL, paridad de sumas (footing) de sub-tablas y plug de redondeo en reportes ejecutivos financieros (GAAP/IFRS)."""
+    raw_items = schedules if isinstance(schedules, list) else []
+    valid_schedules: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_schedule_id = item.get("schedule_id")
+        if not isinstance(raw_schedule_id, str) or not raw_schedule_id.strip():
+            continue
+        valid_schedules.append(item)
+
+    def _bool(value, default):
+        return value if isinstance(value, bool) else default
+
+    def _int(value, default):
+        if isinstance(value, bool) or not isinstance(value, int):
+            return default
+        return value
+
+    def _float(value, default):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    unfooted_or_invalid_ixbrl_schedule_ids: list[str] = []
+    rounding_plug_or_deprecated_tag_schedule_ids: list[str] = []
+
+    for schedule in valid_schedules:
+        schedule_id = str(schedule.get("schedule_id")).strip()
+        tags_valid = _bool(schedule.get("ixbrl_taxonomy_tags_valid"), True)
+        cross_footing_reconciled = _bool(
+            schedule.get("cross_footing_reconciled"), True
+        )
+        rounding_discrepancy_cents = _float(
+            schedule.get("rounding_discrepancy_cents"), 0.5
+        )
+        deprecated_elements = _int(
+            schedule.get("deprecated_taxonomy_elements_count"), 0
+        )
+
+        if not bool(tags_valid) or not bool(cross_footing_reconciled):
+            unfooted_or_invalid_ixbrl_schedule_ids.append(schedule_id)
+
+        if (
+            abs(float(rounding_discrepancy_cents))
+            > float(max_rounding_plug_cents)
+            or int(deprecated_elements) > 0
+        ):
+            rounding_plug_or_deprecated_tag_schedule_ids.append(schedule_id)
+
+    if unfooted_or_invalid_ixbrl_schedule_ids:
+        xbrl_reconciliation_status = "IXBRL_TAG_OR_CROSS_FOOTING_BREACH"
+    elif rounding_plug_or_deprecated_tag_schedule_ids:
+        xbrl_reconciliation_status = (
+            "ROUNDING_PLUG_OR_DEPRECATED_TAXONOMY_WARNING"
+        )
+    else:
+        xbrl_reconciliation_status = "FINANCIAL_IXBRL_RECONCILIATION_OPTIMAL"
+
+    return {
+        "evaluated_schedules_count": len(valid_schedules),
+        "unfooted_or_invalid_ixbrl_schedule_ids": unfooted_or_invalid_ixbrl_schedule_ids,
+        "rounding_plug_or_deprecated_tag_schedule_ids": rounding_plug_or_deprecated_tag_schedule_ids,
+        "xbrl_reconciliation_status": xbrl_reconciliation_status,
+        "is_xbrl_reconciled": xbrl_reconciliation_status
+        == "FINANCIAL_IXBRL_RECONCILIATION_OPTIMAL",
+    }
+
+
+ProjectExportService.audit_executive_report_xbrl_taxonomy_and_financial_rounding_parity = staticmethod(
+    audit_executive_report_xbrl_taxonomy_and_financial_rounding_parity
+)

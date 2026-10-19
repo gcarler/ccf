@@ -3049,6 +3049,7 @@ __all__ = [
     "audit_markdown_glossary_definition_list_uniqueness_and_hygiene",
     "audit_markdown_mathjax_katex_delimiter_balance_and_macro_safety",
     "audit_markdown_heading_hierarchy_and_anchor_slug_collisions",
+    "audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene",
     "AnydocService",
 ]
 
@@ -9178,3 +9179,180 @@ AnydocService.audit_markdown_heading_hierarchy_and_anchor_slug_collisions = stat
     audit_markdown_heading_hierarchy_and_anchor_slug_collisions
 )
 
+
+def audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene(
+    markdown_text: str,
+    max_nodes_per_diagram: int = 40,
+    max_edges_per_diagram: int = 80,
+    allowed_diagram_types: tuple[str, ...] | list[str] = (
+        "flowchart",
+        "graph",
+        "sequenceDiagram",
+        "stateDiagram",
+        "stateDiagram-v2",
+        "classDiagram",
+        "erDiagram",
+        "xychart-beta",
+    ),
+) -> dict[str, Any]:
+    """PMBOK §4.4 & §10.2 — Audita bloques Mermaid en Markdown: tipo de diagrama permitido, tope de complejidad de nodos/aristas, paréntesis sin comillas en etiquetas de nodo y etiquetas HTML prohibidas."""
+    text = markdown_text if isinstance(markdown_text, str) else ""
+    allowed_set = {str(t).strip() for t in (allowed_diagram_types or ())}
+
+    mermaid_block_re = re.compile(
+        r"```mermaid[ \t]*\r?\n(.*?)```", re.DOTALL | re.IGNORECASE
+    )
+    edge_re = re.compile(r"(-->>|-->|->>|-\.->|==>|---)")
+    node_decl_re = re.compile(r"\b([A-Za-z0-9_-]+)\s*(?:\[|\(|\{)")
+    edge_nodes_re = re.compile(
+        r"\b([A-Za-z0-9_-]+)\s*(?:-->>|-->|->>|-\.->|==>|---)\s*(?:\|[^|\n]*\|\s*)?([A-Za-z0-9_-]+)"
+    )
+    unquoted_paren_label_re = re.compile(
+        r"\b([A-Za-z0-9_-]+)\[(?!\s*\")([^\n\]]*[()][^\n\]]*)\]"
+    )
+    html_tag_re = re.compile(
+        r"<\s*/?\s*(?:br|b|i|span|div)\b[^>]*>", re.IGNORECASE
+    )
+
+    blocks = mermaid_block_re.findall(text)
+    unsupported_diagram_types: list[dict[str, Any]] = []
+    complexity_cap_breaches: list[dict[str, Any]] = []
+    unquoted_special_label_violations: list[dict[str, Any]] = []
+    html_tag_violations: list[dict[str, Any]] = []
+    recommendations: list[str] = []
+
+    reserved_keywords = {
+        "flowchart",
+        "graph",
+        "sequencediagram",
+        "statediagram",
+        "statediagram-v2",
+        "classdiagram",
+        "erdiagram",
+        "xychart-beta",
+        "subgraph",
+        "end",
+        "direction",
+        "td",
+        "tb",
+        "bt",
+        "rl",
+        "lr",
+    }
+
+    for idx, block_body in enumerate(blocks, start=1):
+        lines = [
+            ln.strip()
+            for ln in block_body.splitlines()
+            if ln.strip() and not ln.strip().startswith("%%")
+        ]
+        if not lines:
+            unsupported_diagram_types.append(
+                {"block_index": idx, "declared_type": ""}
+            )
+            continue
+
+        first_token = lines[0].split()[0].strip()
+        if first_token not in allowed_set:
+            unsupported_diagram_types.append(
+                {"block_index": idx, "declared_type": first_token}
+            )
+
+        body_without_header = "\n".join(lines[1:])
+        edge_count = len(edge_re.findall(body_without_header))
+
+        nodes_found: set[str] = set()
+        for m_decl in node_decl_re.finditer(body_without_header):
+            tok = m_decl.group(1)
+            if tok.lower() not in reserved_keywords:
+                nodes_found.add(tok)
+        for m_edge in edge_nodes_re.finditer(body_without_header):
+            lhs, rhs = m_edge.group(1), m_edge.group(2)
+            if lhs.lower() not in reserved_keywords:
+                nodes_found.add(lhs)
+            if rhs.lower() not in reserved_keywords:
+                nodes_found.add(rhs)
+
+        node_count = len(nodes_found)
+        if (
+            node_count > max_nodes_per_diagram
+            or edge_count > max_edges_per_diagram
+        ):
+            complexity_cap_breaches.append(
+                {
+                    "block_index": idx,
+                    "node_count": node_count,
+                    "edge_count": edge_count,
+                }
+            )
+
+        for m_lbl in unquoted_paren_label_re.finditer(body_without_header):
+            label_content = m_lbl.group(2).strip()
+            if not (
+                label_content.startswith('"') and label_content.endswith('"')
+            ):
+                unquoted_special_label_violations.append(
+                    {
+                        "block_index": idx,
+                        "node_id": m_lbl.group(1),
+                        "label": m_lbl.group(0),
+                    }
+                )
+
+        for m_html in html_tag_re.finditer(block_body):
+            html_tag_violations.append(
+                {
+                    "block_index": idx,
+                    "tag": m_html.group(0),
+                }
+            )
+
+    if unsupported_diagram_types:
+        recommendations.append(
+            "Use only supported Mermaid diagram types (flowchart, graph, sequenceDiagram, stateDiagram, stateDiagram-v2, classDiagram, erDiagram, xychart-beta)."
+        )
+    if unquoted_special_label_violations:
+        recommendations.append(
+            'Quote Mermaid node labels containing parentheses, e.g., id["Label (Extra Info)"].'
+        )
+    if complexity_cap_breaches:
+        recommendations.append(
+            f"Decompose complex Mermaid diagrams to stay within <= {max_nodes_per_diagram} nodes and <= {max_edges_per_diagram} edges."
+        )
+    if html_tag_violations:
+        recommendations.append(
+            "Remove raw HTML tags (<br>, <b>, <i>, <span>, <div>) from Mermaid labels."
+        )
+
+    is_valid = (
+        len(unsupported_diagram_types) == 0
+        and len(complexity_cap_breaches) == 0
+        and len(unquoted_special_label_violations) == 0
+        and len(html_tag_violations) == 0
+    )
+
+    if unsupported_diagram_types or unquoted_special_label_violations:
+        status = "CRITICAL_SYNTAX_RISK"
+    elif complexity_cap_breaches or html_tag_violations:
+        status = "NEEDS_MERMAID_HYGIENE"
+    else:
+        status = "COMPLIANT"
+
+    return {
+        "is_valid": is_valid,
+        "total_mermaid_blocks": len(blocks),
+        "unsupported_diagram_types": unsupported_diagram_types,
+        "complexity_cap_breaches": complexity_cap_breaches,
+        "unquoted_special_label_violations": unquoted_special_label_violations,
+        "html_tag_violations": html_tag_violations,
+        "status": status,
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene = staticmethod(
+    audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene
+)
+AnydocService.audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene = staticmethod(
+    audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene
+)

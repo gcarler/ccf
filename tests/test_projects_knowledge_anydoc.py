@@ -9130,3 +9130,101 @@ def test_audit_markdown_heading_hierarchy_and_anchor_slug_collisions_staticmetho
         in mod.__all__
     )
 
+
+def test_audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene_compliant():
+    from backend.services.anydoc_service import (
+        audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene,
+    )
+
+    md = (
+        "# Architecture\n\n"
+        "```mermaid\n"
+        "flowchart TD\n"
+        '    A["Gateway (Edge)"] --> B["Auth Service (OAuth2)"]\n'
+        '    B --> C["Database"]\n'
+        "```\n"
+    )
+    res = audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene(md)
+    assert res["is_valid"] is True
+    assert res["total_mermaid_blocks"] == 1
+    assert res["unsupported_diagram_types"] == []
+    assert res["complexity_cap_breaches"] == []
+    assert res["unquoted_special_label_violations"] == []
+    assert res["html_tag_violations"] == []
+    assert res["status"] == "COMPLIANT"
+    assert res["recommendations"] == []
+
+
+def test_audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene_critical_syntax_risk():
+    from backend.services.anydoc_service import (
+        audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene,
+    )
+
+    md = (
+        "```mermaid\n"
+        "gantt\n"
+        "    title Unsupported Gantt\n"
+        "```\n\n"
+        "```mermaid\n"
+        "flowchart LR\n"
+        "    N1[Unquoted (Parens) Label] --> N2[Clean]\n"
+        "```\n"
+    )
+    res = audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene(md)
+    assert res["is_valid"] is False
+    assert res["total_mermaid_blocks"] == 2
+    assert len(res["unsupported_diagram_types"]) == 1
+    assert res["unsupported_diagram_types"][0]["declared_type"] == "gantt"
+    assert len(res["unquoted_special_label_violations"]) == 1
+    assert res["status"] == "CRITICAL_SYNTAX_RISK"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene_needs_hygiene_complexity_and_html():
+    from backend.services.anydoc_service import (
+        audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene,
+    )
+
+    md = (
+        "```mermaid\n"
+        "flowchart TD\n"
+        '    A["Line 1<br/>Line 2"] --> B["Node B"]\n'
+        "    B --> C\n"
+        "    C --> D\n"
+        "    D --> E\n"
+        "```\n"
+    )
+    res = audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene(
+        md, max_nodes_per_diagram=3, max_edges_per_diagram=2
+    )
+    assert res["is_valid"] is False
+    assert len(res["complexity_cap_breaches"]) == 1
+    assert len(res["html_tag_violations"]) == 1
+    assert res["status"] == "NEEDS_MERMAID_HYGIENE"
+
+
+def test_audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene_staticmethod_and_dunder_all():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene,
+    )
+
+    sample = "```mermaid\nsequenceDiagram\n    Alice->>Bob: Hello\n```"
+    assert (
+        AnydocService.audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene(
+            sample
+        )
+        == audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene(sample)
+    )
+    assert (
+        AnyDocService.audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene(
+            sample
+        )
+        == audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene(sample)
+    )
+    assert (
+        "audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene"
+        in mod.__all__
+    )

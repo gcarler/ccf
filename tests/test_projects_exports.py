@@ -11605,3 +11605,170 @@ def test_audit_executive_report_graphql_persisted_query_apq_and_batch_export_thr
         in mod.__all__
     )
 
+
+
+# ── audit_executive_report_xbrl_taxonomy_and_financial_rounding_parity (PMBOK §10.2 & §7.4, pure helper) ──
+
+
+def test_xbrl_reconciliation_optimal_schedules():
+    """Schedules con tags iXBRL válidos, footing cruzado reconciliado y plug <= 2.0¢ -> 'FINANCIAL_IXBRL_RECONCILIATION_OPTIMAL'."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_xbrl_taxonomy_and_financial_rounding_parity,
+    )
+
+    schedules = [
+        {
+            "schedule_id": "XBRL-001",
+            "ixbrl_taxonomy_tags_valid": True,
+            "cross_footing_reconciled": True,
+            "rounding_discrepancy_cents": 0.5,
+            "deprecated_taxonomy_elements_count": 0,
+        },
+        {
+            "schedule_id": "XBRL-002",
+            # Defaults implícitos por campo: tags True, footing True, 0.5¢, 0 deprecados.
+        },
+    ]
+    res = audit_executive_report_xbrl_taxonomy_and_financial_rounding_parity(schedules)
+    assert res == {
+        "evaluated_schedules_count": 2,
+        "unfooted_or_invalid_ixbrl_schedule_ids": [],
+        "rounding_plug_or_deprecated_tag_schedule_ids": [],
+        "xbrl_reconciliation_status": "FINANCIAL_IXBRL_RECONCILIATION_OPTIMAL",
+        "is_xbrl_reconciled": True,
+    }
+    # Plug exactamente en el umbral 2.0¢ no es warning (comparación estricta >, valor positivo)
+    at_threshold = audit_executive_report_xbrl_taxonomy_and_financial_rounding_parity(
+        [{"schedule_id": "XBRL-003", "rounding_discrepancy_cents": 2.0}]
+    )
+    assert at_threshold["xbrl_reconciliation_status"] == (
+        "FINANCIAL_IXBRL_RECONCILIATION_OPTIMAL"
+    )
+    assert (
+        ProjectExportService.audit_executive_report_xbrl_taxonomy_and_financial_rounding_parity(
+            schedules
+        )
+        == res
+    )
+
+
+def test_xbrl_tag_or_cross_footing_breach():
+    """Tags iXBRL inválidos o footing cruzado no reconciliado -> 'IXBRL_TAG_OR_CROSS_FOOTING_BREACH' con precedencia sobre WARNING."""
+    import backend.services.project_export_service as export_module
+    from backend.services.project_export_service import (
+        audit_executive_report_xbrl_taxonomy_and_financial_rounding_parity,
+    )
+
+    breach = audit_executive_report_xbrl_taxonomy_and_financial_rounding_parity(
+        [
+            {
+                "schedule_id": "XBRL-BAD-TAGS",
+                "ixbrl_taxonomy_tags_valid": False,
+                "cross_footing_reconciled": True,
+            },
+            {
+                "schedule_id": "XBRL-UNFOOTED",
+                "ixbrl_taxonomy_tags_valid": True,
+                "cross_footing_reconciled": False,
+            },
+        ]
+    )
+    assert breach["evaluated_schedules_count"] == 2
+    assert breach["unfooted_or_invalid_ixbrl_schedule_ids"] == [
+        "XBRL-BAD-TAGS",
+        "XBRL-UNFOOTED",
+    ]
+    assert breach["xbrl_reconciliation_status"] == "IXBRL_TAG_OR_CROSS_FOOTING_BREACH"
+    assert breach["is_xbrl_reconciled"] is False
+    assert "audit_executive_report_xbrl_taxonomy_and_financial_rounding_parity" in export_module.__all__
+
+    # El breach tiene precedencia aunque también haya schedules con plug de redondeo
+    mixed = audit_executive_report_xbrl_taxonomy_and_financial_rounding_parity(
+        [
+            {"schedule_id": "XBRL-PLUG", "rounding_discrepancy_cents": 9.0},
+            {"schedule_id": "XBRL-BAD-TAGS-2", "ixbrl_taxonomy_tags_valid": False},
+        ]
+    )
+    assert mixed["xbrl_reconciliation_status"] == "IXBRL_TAG_OR_CROSS_FOOTING_BREACH"
+
+
+def test_xbrl_rounding_plug_or_deprecated_taxonomy_warning():
+    """Plug de redondeo > 2.0¢ (positivo o negativo) o elementos de taxonomía deprecados (con tags/footing limpios) -> 'ROUNDING_PLUG_OR_DEPRECATED_TAXONOMY_WARNING'."""
+    from backend.services.project_export_service import (
+        audit_executive_report_xbrl_taxonomy_and_financial_rounding_parity,
+    )
+
+    warning = audit_executive_report_xbrl_taxonomy_and_financial_rounding_parity(
+        [
+            {
+                "schedule_id": "XBRL-PLUG-NEG",
+                "rounding_discrepancy_cents": -3.0,
+                "deprecated_taxonomy_elements_count": 0,
+            },
+            {
+                "schedule_id": "XBRL-DEPRECATED",
+                "rounding_discrepancy_cents": 0.5,
+                "deprecated_taxonomy_elements_count": 1,
+            },
+        ]
+    )
+    assert warning["evaluated_schedules_count"] == 2
+    assert warning["unfooted_or_invalid_ixbrl_schedule_ids"] == []
+    assert warning["rounding_plug_or_deprecated_tag_schedule_ids"] == [
+        "XBRL-PLUG-NEG",
+        "XBRL-DEPRECATED",
+    ]
+    assert warning["xbrl_reconciliation_status"] == (
+        "ROUNDING_PLUG_OR_DEPRECATED_TAXONOMY_WARNING"
+    )
+    assert warning["is_xbrl_reconciled"] is False
+
+    custom = audit_executive_report_xbrl_taxonomy_and_financial_rounding_parity(
+        [{"schedule_id": "XBRL-4", "rounding_discrepancy_cents": 2.5}],
+        max_rounding_plug_cents=2.2,
+    )
+    assert custom["xbrl_reconciliation_status"] == (
+        "ROUNDING_PLUG_OR_DEPRECATED_TAXONOMY_WARNING"
+    )
+    assert custom["rounding_plug_or_deprecated_tag_schedule_ids"] == ["XBRL-4"]
+
+
+def test_xbrl_empty_invalid_schedules_and_field_reversion():
+    """None / dicts inválidos se descartan; campos no numéricos/no bool revierten a defaults del spec."""
+    from backend.services.project_export_service import (
+        audit_executive_report_xbrl_taxonomy_and_financial_rounding_parity,
+    )
+
+    empty_res = audit_executive_report_xbrl_taxonomy_and_financial_rounding_parity(None)
+    assert empty_res == {
+        "evaluated_schedules_count": 0,
+        "unfooted_or_invalid_ixbrl_schedule_ids": [],
+        "rounding_plug_or_deprecated_tag_schedule_ids": [],
+        "xbrl_reconciliation_status": "FINANCIAL_IXBRL_RECONCILIATION_OPTIMAL",
+        "is_xbrl_reconciled": True,
+    }
+
+    invalid_res = audit_executive_report_xbrl_taxonomy_and_financial_rounding_parity(
+        ["no-dict", None, {"schedule_id": "   "}, {"schedule_id": 77}, {"rounding_discrepancy_cents": 9.0}]
+    )
+    assert invalid_res["evaluated_schedules_count"] == 0
+
+    bad_fields = audit_executive_report_xbrl_taxonomy_and_financial_rounding_parity(
+        [
+            {
+                "schedule_id": "XBRL-BAD",
+                "ixbrl_taxonomy_tags_valid": "sí",
+                "cross_footing_reconciled": None,
+                "rounding_discrepancy_cents": "harto",
+                "deprecated_taxonomy_elements_count": [2],
+            }
+        ]
+    )
+    assert bad_fields == {
+        "evaluated_schedules_count": 1,
+        "unfooted_or_invalid_ixbrl_schedule_ids": [],
+        "rounding_plug_or_deprecated_tag_schedule_ids": [],
+        "xbrl_reconciliation_status": "FINANCIAL_IXBRL_RECONCILIATION_OPTIMAL",
+        "is_xbrl_reconciled": True,
+    }

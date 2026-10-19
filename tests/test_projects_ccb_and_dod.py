@@ -11234,3 +11234,123 @@ def test_audit_zero_downtime_db_migration_lock_timeout_and_expand_contract_gate_
         "audit_zero_downtime_db_migration_lock_timeout_and_expand_contract_gate"
         in mod.__all__
     )
+
+
+def test_audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate_approved():
+    from backend.services.project_ccb_service import (
+        audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate,
+    )
+
+    res = audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate(
+        [
+            {
+                "prefix_cidr": "203.0.113.0/24",
+                "origin_asn": 64512,
+                "rpki_roa_status": "VALID",
+                "flap_count_last_hour": 0,
+                "bgp_session_state": "ESTABLISHED",
+            },
+            {
+                "prefix_cidr": "198.51.100.0/24",
+                "origin_asn": 64512,
+                "rpki_roa_status": "VALID",
+                "flap_count_last_hour": 1,
+                "bgp_session_state": "ESTABLISHED",
+            },
+        ],
+        ddos_scrubbing_redirect_latency_sec=8.5,
+        max_scrubbing_redirect_latency_sec=30.0,
+    )
+    assert res["is_valid"] is True
+    assert res["total_prefixes"] == 2
+    assert res["rpki_roa_violations"] == []
+    assert res["route_flap_breaches"] == []
+    assert res["unestablished_sessions"] == []
+    assert res["scrubbing_sla_breached"] is False
+    assert res["gate_decision"] == "APPROVED"
+    assert res["recommendations"] == []
+
+
+def test_audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate_rejected():
+    from backend.services.project_ccb_service import (
+        audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate,
+    )
+
+    res = audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate(
+        [
+            {
+                "prefix_cidr": "203.0.113.0/24",
+                "origin_asn": 64599,
+                "rpki_roa_status": "INVALID",
+                "flap_count_last_hour": 1,
+                "bgp_session_state": "IDLE",
+            }
+        ],
+        ddos_scrubbing_redirect_latency_sec=45.0,
+        max_scrubbing_redirect_latency_sec=30.0,
+    )
+    assert res["is_valid"] is False
+    assert len(res["rpki_roa_violations"]) == 1
+    assert len(res["unestablished_sessions"]) == 1
+    assert res["scrubbing_sla_breached"] is True
+    assert res["gate_decision"] == "REJECTED"
+    assert len(res["recommendations"]) >= 3
+
+
+def test_audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate_conditional():
+    from backend.services.project_ccb_service import (
+        audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate,
+    )
+
+    res = audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate(
+        [
+            {
+                "prefix_cidr": "192.0.2.0/24",
+                "origin_asn": 64512,
+                "rpki_roa_status": "NOT_FOUND",
+                "flap_count_last_hour": 6,
+                "bgp_session_state": "ESTABLISHED",
+            }
+        ],
+        ddos_scrubbing_redirect_latency_sec=10.0,
+        max_flaps_per_hour=3,
+        require_rpki_valid=False,
+    )
+    assert res["is_valid"] is False
+    assert res["rpki_roa_violations"] == []
+    assert len(res["route_flap_breaches"]) == 1
+    assert res["unestablished_sessions"] == []
+    assert res["scrubbing_sla_breached"] is False
+    assert res["gate_decision"] == "CONDITIONAL"
+
+
+def test_audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate_staticmethod_and_dunder_all():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate,
+    )
+
+    empty = audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate([])
+    assert empty["is_valid"] is False
+    assert empty["gate_decision"] == "REJECTED"
+
+    sample = [
+        {
+            "prefix_cidr": "203.0.113.0/24",
+            "origin_asn": 64512,
+            "rpki_roa_status": "VALID",
+            "flap_count_last_hour": 0,
+            "bgp_session_state": "ESTABLISHED",
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate(
+            sample
+        )
+        == audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate(sample)
+    )
+    assert (
+        "audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate"
+        in mod.__all__
+    )

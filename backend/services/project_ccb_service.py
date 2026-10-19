@@ -2863,6 +2863,7 @@ __all__ = [
     "audit_chaos_engineering_fault_injection_blast_radius_and_steady_state_abort_gate",
     "audit_supply_chain_sbom_slsa_provenance_and_cve_epss_gate",
     "audit_zero_downtime_db_migration_lock_timeout_and_expand_contract_gate",
+    "audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate",
     "ProjectCCBService",
 ]
 
@@ -8467,4 +8468,122 @@ def audit_zero_downtime_db_migration_lock_timeout_and_expand_contract_gate(
 
 ProjectCCBService.audit_zero_downtime_db_migration_lock_timeout_and_expand_contract_gate = staticmethod(
     audit_zero_downtime_db_migration_lock_timeout_and_expand_contract_gate
+)
+
+
+def audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate(
+    prefixes: list[dict[str, Any]],
+    ddos_scrubbing_redirect_latency_sec: float = 0.0,
+    max_scrubbing_redirect_latency_sec: float = 30.0,
+    max_flaps_per_hour: int = 3,
+    require_rpki_valid: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §8.3 & §11.6 — Audita validación de origen RPKI ROA en rutas BGP Anycast, amortiguación de flaps BGP y latencia de conmutación hacia centros de limpieza DDoS."""
+    raw_items = prefixes if isinstance(prefixes, list) else []
+    valid_prefixes = [item for item in raw_items if isinstance(item, dict)]
+
+    rpki_roa_violations: list[dict[str, Any]] = []
+    route_flap_breaches: list[dict[str, Any]] = []
+    unestablished_sessions: list[dict[str, Any]] = []
+    recommendations: list[str] = []
+
+    for idx, item in enumerate(valid_prefixes):
+        prefix_cidr = (
+            str(
+                item.get("prefix_cidr")
+                or item.get("id")
+                or f"prefix-{idx + 1}"
+            ).strip()
+            or f"prefix-{idx + 1}"
+        )
+        origin_asn = int(item.get("origin_asn") or 0)
+        rpki_roa_status = (
+            str(item.get("rpki_roa_status") or "NOT_FOUND").strip().upper()
+        )
+        flap_count_last_hour = int(item.get("flap_count_last_hour") or 0)
+        bgp_session_state = (
+            str(item.get("bgp_session_state") or "IDLE").strip().upper()
+        )
+
+        if rpki_roa_status == "INVALID" or (
+            require_rpki_valid and rpki_roa_status != "VALID"
+        ):
+            rpki_roa_violations.append(
+                {
+                    "prefix_cidr": prefix_cidr,
+                    "origin_asn": origin_asn,
+                    "rpki_roa_status": rpki_roa_status,
+                }
+            )
+
+        if flap_count_last_hour > max_flaps_per_hour or flap_count_last_hour < 0:
+            route_flap_breaches.append(
+                {
+                    "prefix_cidr": prefix_cidr,
+                    "origin_asn": origin_asn,
+                    "flap_count_last_hour": flap_count_last_hour,
+                }
+            )
+
+        if bgp_session_state != "ESTABLISHED":
+            unestablished_sessions.append(
+                {
+                    "prefix_cidr": prefix_cidr,
+                    "origin_asn": origin_asn,
+                    "bgp_session_state": bgp_session_state,
+                }
+            )
+
+    latency_sec = float(ddos_scrubbing_redirect_latency_sec or 0.0)
+    scrubbing_sla_breached = bool(
+        latency_sec > max_scrubbing_redirect_latency_sec or latency_sec < 0.0
+    )
+
+    if not valid_prefixes:
+        recommendations.append(
+            "Provide at least one BGP Anycast prefix announcement for gate verification."
+        )
+    if rpki_roa_violations:
+        recommendations.append(
+            "Sign and publish valid RPKI Route Origin Authorizations (ROA) for all announced Anycast prefixes."
+        )
+    if unestablished_sessions:
+        recommendations.append(
+            "Restore all BGP peering sessions to ESTABLISHED state prior to production cutover."
+        )
+    if scrubbing_sla_breached:
+        recommendations.append(
+            f"Reduce DDoS scrubbing center BGP redirect latency within <= {max_scrubbing_redirect_latency_sec}s."
+        )
+    if route_flap_breaches:
+        recommendations.append(
+            f"Stabilize route announcements and apply BGP flap damping (<= {max_flaps_per_hour} flaps/hour)."
+        )
+
+    if (
+        len(rpki_roa_violations) > 0
+        or len(unestablished_sessions) > 0
+        or scrubbing_sla_breached
+        or len(valid_prefixes) == 0
+    ):
+        gate_decision = "REJECTED"
+    elif len(route_flap_breaches) > 0:
+        gate_decision = "CONDITIONAL"
+    else:
+        gate_decision = "APPROVED"
+
+    return {
+        "is_valid": gate_decision == "APPROVED",
+        "total_prefixes": len(valid_prefixes),
+        "rpki_roa_violations": rpki_roa_violations,
+        "route_flap_breaches": route_flap_breaches,
+        "unestablished_sessions": unestablished_sessions,
+        "scrubbing_sla_breached": scrubbing_sla_breached,
+        "gate_decision": gate_decision,
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate = staticmethod(
+    audit_bgp_anycast_rpki_roa_origin_and_ddos_scrubbing_gate
 )
