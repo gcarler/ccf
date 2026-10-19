@@ -8569,3 +8569,158 @@ def test_audit_wiki_dr_tabletop_exercise_and_communication_tree_staticmethod_and
         "audit_wiki_dr_tabletop_exercise_and_communication_tree"
         in mod.__all__
     )
+
+
+def test_audit_wiki_api_deprecation_sunset_and_consumer_migration_breach():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_api_deprecation_sunset_and_consumer_migration,
+    )
+
+    result = audit_wiki_api_deprecation_sunset_and_consumer_migration(
+        [
+            {
+                "endpoint_id": "GET /v1/legacy-tasks",
+                "notice_period_days_granted": 120,
+                "days_until_sunset": 45,
+                "active_consumers_count": 0,
+                "has_published_migration_guide_in_wiki": False,
+                "emits_rfc8594_sunset_headers": True,
+            },
+            {
+                "endpoint_id": "POST /v1/legacy-sync",
+                "notice_period_days_granted": 90,
+                "days_until_sunset": 0,
+                "active_consumers_count": 3,
+                "has_published_migration_guide_in_wiki": True,
+                "emits_rfc8594_sunset_headers": True,
+            },
+        ],
+        min_sunset_notice_days=90,
+        max_remaining_active_consumers_at_sunset=0,
+    )
+    assert result["evaluated_endpoints_count"] == 2
+    assert result["unsafe_sunset_or_undocumented_endpoint_ids"] == [
+        "GET /v1/legacy-tasks",
+        "POST /v1/legacy-sync",
+    ]
+    assert result["short_notice_or_missing_header_endpoint_ids"] == [
+        "POST /v1/legacy-sync"
+    ]
+    assert (
+        result["api_sunset_governance_status"]
+        == "API_SUNSET_BREAKING_OR_UNDOCUMENTED_BREACH"
+    )
+    assert result["is_api_sunset_compliant"] is False
+
+
+def test_audit_wiki_api_deprecation_sunset_and_consumer_migration_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_api_deprecation_sunset_and_consumer_migration,
+    )
+
+    result = audit_wiki_api_deprecation_sunset_and_consumer_migration(
+        [
+            {
+                "endpoint_id": "GET /v1/short-notice",
+                "notice_period_days_granted": 60,
+                "days_until_sunset": 30,
+                "active_consumers_count": 0,
+                "has_published_migration_guide_in_wiki": True,
+                "emits_rfc8594_sunset_headers": True,
+            },
+            {
+                "endpoint_id": "GET /v1/no-header",
+                "notice_period_days_granted": 90,
+                "days_until_sunset": 30,
+                "active_consumers_count": 0,
+                "has_published_migration_guide_in_wiki": True,
+                "emits_rfc8594_sunset_headers": False,
+            },
+            {
+                "endpoint_id": "GET /v1/imminent-consumers",
+                "notice_period_days_granted": 90,
+                "days_until_sunset": 10,
+                "active_consumers_count": 2,
+                "has_published_migration_guide_in_wiki": True,
+                "emits_rfc8594_sunset_headers": True,
+            },
+        ],
+        min_sunset_notice_days=90,
+        max_remaining_active_consumers_at_sunset=0,
+    )
+    assert result["evaluated_endpoints_count"] == 3
+    assert result["unsafe_sunset_or_undocumented_endpoint_ids"] == []
+    assert result["short_notice_or_missing_header_endpoint_ids"] == [
+        "GET /v1/short-notice",
+        "GET /v1/no-header",
+        "GET /v1/imminent-consumers",
+    ]
+    assert (
+        result["api_sunset_governance_status"]
+        == "API_SUNSET_NOTICE_OR_MIGRATION_WARNING"
+    )
+    assert result["is_api_sunset_compliant"] is False
+
+
+def test_audit_wiki_api_deprecation_sunset_and_consumer_migration_optimal_and_empty():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_api_deprecation_sunset_and_consumer_migration,
+    )
+
+    empty = audit_wiki_api_deprecation_sunset_and_consumer_migration(
+        [{"endpoint_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_endpoints_count"] == 0
+    assert (
+        empty["api_sunset_governance_status"] == "API_SUNSET_GOVERNANCE_OPTIMAL"
+    )
+    assert empty["is_api_sunset_compliant"] is True
+
+    optimal = audit_wiki_api_deprecation_sunset_and_consumer_migration(
+        [
+            {
+                "endpoint_id": "GET /v1/clean-sunset",
+                "notice_period_days_granted": 120,
+                "days_until_sunset": 30,
+                "active_consumers_count": 0,
+                "has_published_migration_guide_in_wiki": True,
+                "emits_rfc8594_sunset_headers": True,
+            }
+        ],
+        min_sunset_notice_days=90,
+        max_remaining_active_consumers_at_sunset=0,
+    )
+    assert optimal["evaluated_endpoints_count"] == 1
+    assert (
+        optimal["api_sunset_governance_status"]
+        == "API_SUNSET_GOVERNANCE_OPTIMAL"
+    )
+    assert optimal["is_api_sunset_compliant"] is True
+
+
+def test_audit_wiki_api_deprecation_sunset_and_consumer_migration_staticmethod_and_dunder_all():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_api_deprecation_sunset_and_consumer_migration,
+    )
+
+    sample = [
+        {
+            "endpoint_id": "GET /v1/status",
+            "notice_period_days_granted": 90,
+            "days_until_sunset": 45,
+            "active_consumers_count": 0,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_api_deprecation_sunset_and_consumer_migration(
+            sample
+        )
+        == audit_wiki_api_deprecation_sunset_and_consumer_migration(sample)
+    )
+    assert (
+        "audit_wiki_api_deprecation_sunset_and_consumer_migration"
+        in mod.__all__
+    )
+

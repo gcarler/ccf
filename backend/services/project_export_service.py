@@ -3003,6 +3003,7 @@ __all__ = [
     "audit_executive_report_watermelon_kpi_and_narrative_consistency",
     "audit_executive_report_multi_region_failover_and_split_brain_fencing",
     "audit_executive_report_backup_worm_immutability_and_restore_drills",
+    "audit_executive_report_vendor_sla_uptime_and_rebate_capture",
     "ProjectExportService",
 ]
 
@@ -7147,3 +7148,89 @@ def audit_executive_report_backup_worm_immutability_and_restore_drills(
 ProjectExportService.audit_executive_report_backup_worm_immutability_and_restore_drills = staticmethod(
     audit_executive_report_backup_worm_immutability_and_restore_drills
 )
+
+
+def audit_executive_report_vendor_sla_uptime_and_rebate_capture(
+    vendor_services: Sequence[Mapping[str, Any]] | None,
+    *,
+    min_contractual_uptime_pct: float = 99.9,
+    max_unclaimed_rebate_days: int | float = 30,
+) -> dict[str, Any]:
+    """PMI PMBOK §10.2 & §12.3 — Executive Report Vendor SLA Uptime Attainment, Penalty Rebate Capture & Third-Party Outage Attribution Auditor."""
+    valid_services = [
+        svc
+        for svc in (vendor_services or [])
+        if isinstance(svc, Mapping) and str(svc.get("service_id") or "").strip()
+    ]
+
+    unclaimed_rebate_or_unattributed_service_ids: list[str] = []
+    sla_uptime_deficit_service_ids: list[str] = []
+
+    for svc in valid_services:
+        sid = str(svc.get("service_id")).strip()
+        observed_uptime = float(
+            svc.get("observed_uptime_pct", 99.99)
+            if svc.get("observed_uptime_pct") is not None
+            else 99.99
+        )
+        contractual_uptime = float(
+            svc.get("contractual_sla_uptime_pct", min_contractual_uptime_pct)
+            if svc.get("contractual_sla_uptime_pct") is not None
+            else min_contractual_uptime_pct
+        )
+        eligible_rebate = bool(
+            svc.get("eligible_for_penalty_rebate", False)
+            if svc.get("eligible_for_penalty_rebate") is not None
+            else False
+        )
+        rebate_submitted = bool(
+            svc.get("rebate_claim_submitted", True)
+            if svc.get("rebate_claim_submitted") is not None
+            else True
+        )
+        days_since_breach = float(
+            svc.get("days_since_sla_breach", 0)
+            if svc.get("days_since_sla_breach") is not None
+            else 0
+        )
+        rca_attributed = bool(
+            svc.get("root_cause_attributed_and_documented", True)
+            if svc.get("root_cause_attributed_and_documented") is not None
+            else True
+        )
+
+        if (
+            eligible_rebate
+            and not rebate_submitted
+            and days_since_breach > max_unclaimed_rebate_days
+        ) or (
+            observed_uptime < contractual_uptime and not rca_attributed
+        ):
+            unclaimed_rebate_or_unattributed_service_ids.append(sid)
+
+        if observed_uptime < contractual_uptime:
+            sla_uptime_deficit_service_ids.append(sid)
+
+    if unclaimed_rebate_or_unattributed_service_ids:
+        vendor_sla_report_status = (
+            "VENDOR_SLA_REBATE_LEAKAGE_OR_ATTRIBUTION_BREACH"
+        )
+    elif sla_uptime_deficit_service_ids:
+        vendor_sla_report_status = "VENDOR_SLA_UPTIME_DEFICIT_WARNING"
+    else:
+        vendor_sla_report_status = "VENDOR_SLA_ATTAINMENT_OPTIMAL"
+
+    return {
+        "evaluated_services_count": len(valid_services),
+        "unclaimed_rebate_or_unattributed_service_ids": unclaimed_rebate_or_unattributed_service_ids,
+        "sla_uptime_deficit_service_ids": sla_uptime_deficit_service_ids,
+        "vendor_sla_report_status": vendor_sla_report_status,
+        "is_vendor_sla_report_compliant": vendor_sla_report_status
+        == "VENDOR_SLA_ATTAINMENT_OPTIMAL",
+    }
+
+
+ProjectExportService.audit_executive_report_vendor_sla_uptime_and_rebate_capture = staticmethod(
+    audit_executive_report_vendor_sla_uptime_and_rebate_capture
+)
+

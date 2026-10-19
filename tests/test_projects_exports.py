@@ -9207,3 +9207,134 @@ def test_audit_executive_report_backup_worm_immutability_and_restore_drills_stat
         "audit_executive_report_backup_worm_immutability_and_restore_drills"
         in mod.__all__
     )
+
+
+def test_audit_executive_report_vendor_sla_uptime_and_rebate_capture_breach():
+    from backend.services.project_export_service import (
+        audit_executive_report_vendor_sla_uptime_and_rebate_capture,
+    )
+
+    result = audit_executive_report_vendor_sla_uptime_and_rebate_capture(
+        [
+            {
+                "service_id": "SVC-UNCLAIMED",
+                "observed_uptime_pct": 99.5,
+                "contractual_sla_uptime_pct": 99.9,
+                "eligible_for_penalty_rebate": True,
+                "rebate_claim_submitted": False,
+                "days_since_sla_breach": 40,
+                "root_cause_attributed_and_documented": True,
+            },
+            {
+                "service_id": "SVC-UNATTR",
+                "observed_uptime_pct": 99.8,
+                "contractual_sla_uptime_pct": 99.95,
+                "eligible_for_penalty_rebate": False,
+                "rebate_claim_submitted": True,
+                "days_since_sla_breach": 5,
+                "root_cause_attributed_and_documented": False,
+            },
+        ],
+        min_contractual_uptime_pct=99.9,
+        max_unclaimed_rebate_days=30,
+    )
+    assert result["evaluated_services_count"] == 2
+    assert result["unclaimed_rebate_or_unattributed_service_ids"] == [
+        "SVC-UNCLAIMED",
+        "SVC-UNATTR",
+    ]
+    assert result["sla_uptime_deficit_service_ids"] == [
+        "SVC-UNCLAIMED",
+        "SVC-UNATTR",
+    ]
+    assert (
+        result["vendor_sla_report_status"]
+        == "VENDOR_SLA_REBATE_LEAKAGE_OR_ATTRIBUTION_BREACH"
+    )
+    assert result["is_vendor_sla_report_compliant"] is False
+
+
+def test_audit_executive_report_vendor_sla_uptime_and_rebate_capture_warning():
+    from backend.services.project_export_service import (
+        audit_executive_report_vendor_sla_uptime_and_rebate_capture,
+    )
+
+    result = audit_executive_report_vendor_sla_uptime_and_rebate_capture(
+        [
+            {
+                "service_id": "SVC-DEFICIT-1",
+                "observed_uptime_pct": 99.7,
+                "contractual_sla_uptime_pct": 99.9,
+                "eligible_for_penalty_rebate": True,
+                "rebate_claim_submitted": True,
+                "days_since_sla_breach": 10,
+                "root_cause_attributed_and_documented": True,
+            }
+        ],
+        min_contractual_uptime_pct=99.9,
+        max_unclaimed_rebate_days=30,
+    )
+    assert result["evaluated_services_count"] == 1
+    assert result["unclaimed_rebate_or_unattributed_service_ids"] == []
+    assert result["sla_uptime_deficit_service_ids"] == ["SVC-DEFICIT-1"]
+    assert result["vendor_sla_report_status"] == "VENDOR_SLA_UPTIME_DEFICIT_WARNING"
+    assert result["is_vendor_sla_report_compliant"] is False
+
+
+def test_audit_executive_report_vendor_sla_uptime_and_rebate_capture_optimal_and_empty():
+    from backend.services.project_export_service import (
+        audit_executive_report_vendor_sla_uptime_and_rebate_capture,
+    )
+
+    empty = audit_executive_report_vendor_sla_uptime_and_rebate_capture(
+        [{"service_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_services_count"] == 0
+    assert empty["vendor_sla_report_status"] == "VENDOR_SLA_ATTAINMENT_OPTIMAL"
+    assert empty["is_vendor_sla_report_compliant"] is True
+
+    optimal = audit_executive_report_vendor_sla_uptime_and_rebate_capture(
+        [
+            {
+                "service_id": "SVC-GOLD-1",
+                "observed_uptime_pct": 99.99,
+                "contractual_sla_uptime_pct": 99.95,
+                "eligible_for_penalty_rebate": False,
+                "rebate_claim_submitted": True,
+                "days_since_sla_breach": 0,
+                "root_cause_attributed_and_documented": True,
+            }
+        ],
+        min_contractual_uptime_pct=99.9,
+        max_unclaimed_rebate_days=30,
+    )
+    assert optimal["evaluated_services_count"] == 1
+    assert optimal["vendor_sla_report_status"] == "VENDOR_SLA_ATTAINMENT_OPTIMAL"
+    assert optimal["is_vendor_sla_report_compliant"] is True
+
+
+def test_audit_executive_report_vendor_sla_uptime_and_rebate_capture_staticmethod_and_dunder_all():
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_vendor_sla_uptime_and_rebate_capture,
+    )
+
+    sample = [
+        {
+            "service_id": "SVC-99",
+            "observed_uptime_pct": 99.98,
+            "contractual_sla_uptime_pct": 99.9,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_vendor_sla_uptime_and_rebate_capture(
+            sample
+        )
+        == audit_executive_report_vendor_sla_uptime_and_rebate_capture(sample)
+    )
+    assert (
+        "audit_executive_report_vendor_sla_uptime_and_rebate_capture"
+        in mod.__all__
+    )
+

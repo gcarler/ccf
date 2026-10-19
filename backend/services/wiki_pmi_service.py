@@ -2530,6 +2530,7 @@ __all__ = [
     "audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene",
     "audit_wiki_quarterly_attestation_and_orphan_page_archival",
     "audit_wiki_dr_tabletop_exercise_and_communication_tree",
+    "audit_wiki_api_deprecation_sunset_and_consumer_migration",
     "WikiPMIService",
 ]
 
@@ -6543,3 +6544,85 @@ def audit_wiki_dr_tabletop_exercise_and_communication_tree(
 WikiPMIService.audit_wiki_dr_tabletop_exercise_and_communication_tree = staticmethod(
     audit_wiki_dr_tabletop_exercise_and_communication_tree
 )
+
+
+def audit_wiki_api_deprecation_sunset_and_consumer_migration(
+    deprecated_endpoints: Sequence[Mapping[str, Any]] | None,
+    *,
+    min_sunset_notice_days: int | float = 90,
+    max_remaining_active_consumers_at_sunset: int = 0,
+) -> dict[str, Any]:
+    """PMI PMBOK §8.2 & §10.2 — Wiki API Deprecation Sunset Notice Window, Consumer Migration Tracking & Breaking-Change Runbook Auditor."""
+    valid_endpoints = [
+        ep
+        for ep in (deprecated_endpoints or [])
+        if isinstance(ep, Mapping) and str(ep.get("endpoint_id") or "").strip()
+    ]
+
+    unsafe_sunset_or_undocumented_endpoint_ids: list[str] = []
+    short_notice_or_missing_header_endpoint_ids: list[str] = []
+
+    for ep in valid_endpoints:
+        eid = str(ep.get("endpoint_id")).strip()
+        notice_days = float(
+            ep.get("notice_period_days_granted", 90)
+            if ep.get("notice_period_days_granted") is not None
+            else 90
+        )
+        days_until_sunset = float(
+            ep.get("days_until_sunset", 30)
+            if ep.get("days_until_sunset") is not None
+            else 30
+        )
+        active_consumers = int(
+            ep.get("active_consumers_count", 0)
+            if ep.get("active_consumers_count") is not None
+            else 0
+        )
+        has_migration_guide = bool(
+            ep.get("has_published_migration_guide_in_wiki", True)
+            if ep.get("has_published_migration_guide_in_wiki") is not None
+            else True
+        )
+        emits_headers = bool(
+            ep.get("emits_rfc8594_sunset_headers", True)
+            if ep.get("emits_rfc8594_sunset_headers") is not None
+            else True
+        )
+
+        if not has_migration_guide or (
+            days_until_sunset <= 0
+            and active_consumers > max_remaining_active_consumers_at_sunset
+        ):
+            unsafe_sunset_or_undocumented_endpoint_ids.append(eid)
+
+        if (
+            notice_days < min_sunset_notice_days
+            or not emits_headers
+            or (days_until_sunset <= 14 and active_consumers > 0)
+        ):
+            short_notice_or_missing_header_endpoint_ids.append(eid)
+
+    if unsafe_sunset_or_undocumented_endpoint_ids:
+        api_sunset_governance_status = (
+            "API_SUNSET_BREAKING_OR_UNDOCUMENTED_BREACH"
+        )
+    elif short_notice_or_missing_header_endpoint_ids:
+        api_sunset_governance_status = "API_SUNSET_NOTICE_OR_MIGRATION_WARNING"
+    else:
+        api_sunset_governance_status = "API_SUNSET_GOVERNANCE_OPTIMAL"
+
+    return {
+        "evaluated_endpoints_count": len(valid_endpoints),
+        "unsafe_sunset_or_undocumented_endpoint_ids": unsafe_sunset_or_undocumented_endpoint_ids,
+        "short_notice_or_missing_header_endpoint_ids": short_notice_or_missing_header_endpoint_ids,
+        "api_sunset_governance_status": api_sunset_governance_status,
+        "is_api_sunset_compliant": api_sunset_governance_status
+        == "API_SUNSET_GOVERNANCE_OPTIMAL",
+    }
+
+
+WikiPMIService.audit_wiki_api_deprecation_sunset_and_consumer_migration = staticmethod(
+    audit_wiki_api_deprecation_sunset_and_consumer_migration
+)
+
