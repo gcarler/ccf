@@ -7974,3 +7974,150 @@ def test_validate_rtm_bidirectional_traceability_and_gold_plating_defaults_and_d
         in mod.__all__
     )
 
+
+
+def test_validate_bcr_sunk_cost_or_negative_npv_breach():
+    from backend.schemas.projects import (
+        validate_benefit_cost_ratio_and_sunk_cost_governance,
+    )
+
+    res = validate_benefit_cost_ratio_and_sunk_cost_governance(
+        [
+            {
+                "case_id": "CASE-SUNK-BAD-BCR",
+                "historical_sunk_costs_included_in_justification": True,
+                "pv_expected_benefits": 100000.0,
+                "pv_future_incremental_costs": 100000.0,
+            },
+            {
+                "case_id": "CASE-NEG-NPV",
+                "net_present_value": -5000.0,
+            },
+            {
+                "case_id": "CASE-ZERO-COSTS",
+                "pv_future_incremental_costs": 0,
+            },
+            {
+                "case_id": "CASE-EXEMPT-NEG-NPV",
+                "regulatory_mandatory_exemption": True,
+                "net_present_value": -1.0,
+            },
+        ],
+        min_bcr_threshold=1.15,
+    )
+    assert res["evaluated_cases_count"] == 4
+    assert res["sunk_cost_or_negative_npv_case_ids"] == [
+        "CASE-SUNK-BAD-BCR",
+        "CASE-NEG-NPV",
+        "CASE-ZERO-COSTS",
+    ]
+    assert res["marginal_bcr_case_ids"] == ["CASE-SUNK-BAD-BCR"]
+    assert (
+        res["bcr_governance_status"]
+        == "BCR_SUNK_COST_OR_NEGATIVE_NPV_BREACH"
+    )
+    assert res["is_investment_case_valid"] is False
+
+
+def test_validate_bcr_below_hurdle_ratio_warning():
+    from backend.schemas.projects import (
+        validate_benefit_cost_ratio_and_sunk_cost_governance,
+    )
+
+    res = validate_benefit_cost_ratio_and_sunk_cost_governance(
+        [
+            {
+                "case_id": "CASE-LOW-BCR",
+                "pv_expected_benefits": 110000.0,
+                "pv_future_incremental_costs": 100000.0,
+            },
+            {
+                "case_id": "CASE-EXEMPT-LOW-BCR",
+                "regulatory_mandatory_exemption": True,
+                "pv_expected_benefits": 50000.0,
+                "pv_future_incremental_costs": 100000.0,
+            },
+        ],
+        min_bcr_threshold=1.15,
+    )
+    assert res["evaluated_cases_count"] == 2
+    assert res["sunk_cost_or_negative_npv_case_ids"] == []
+    assert res["marginal_bcr_case_ids"] == ["CASE-LOW-BCR"]
+    assert (
+        res["bcr_governance_status"]
+        == "BCR_BELOW_HURDLE_RATIO_WARNING"
+    )
+    assert res["is_investment_case_valid"] is False
+
+
+def test_validate_bcr_boundaries_optimal_and_defaults():
+    from backend.schemas.projects import (
+        validate_benefit_cost_ratio_and_sunk_cost_governance,
+    )
+
+    res = validate_benefit_cost_ratio_and_sunk_cost_governance(
+        [
+            {
+                "case_id": "CASE-BOUNDARY",
+                "pv_expected_benefits": 115000.0,
+                "pv_future_incremental_costs": 100000.0,
+            },
+            {"case_id": "CASE-ALL-DEFAULTS"},
+        ],
+        min_bcr_threshold=1.15,
+    )
+    assert res["evaluated_cases_count"] == 2
+    assert res["sunk_cost_or_negative_npv_case_ids"] == []
+    assert res["marginal_bcr_case_ids"] == []
+    assert (
+        res["bcr_governance_status"]
+        == "BCR_INVESTMENT_CASE_OPTIMAL"
+    )
+    assert res["is_investment_case_valid"] is True
+
+
+def test_validate_bcr_invalid_and_dunder_all():
+    from backend.schemas.projects import (
+        validate_benefit_cost_ratio_and_sunk_cost_governance,
+    )
+
+    empty = validate_benefit_cost_ratio_and_sunk_cost_governance(None)
+    assert empty["evaluated_cases_count"] == 0
+    assert empty["sunk_cost_or_negative_npv_case_ids"] == []
+    assert empty["marginal_bcr_case_ids"] == []
+    assert (
+        empty["bcr_governance_status"]
+        == "BCR_INVESTMENT_CASE_OPTIMAL"
+    )
+    assert empty["is_investment_case_valid"] is True
+
+    invalid = validate_benefit_cost_ratio_and_sunk_cost_governance(
+        [42, "not-a-dict", None, {"case_id": "   "}]  # type: ignore[list-item]
+    )
+    assert invalid["evaluated_cases_count"] == 0
+
+    defaults = validate_benefit_cost_ratio_and_sunk_cost_governance(
+        [
+            {
+                "case_id": "CASE-DEFAULTS",
+                "pv_expected_benefits": None,
+                "pv_future_incremental_costs": None,
+                "historical_sunk_costs_included_in_justification": None,
+                "net_present_value": None,
+                "regulatory_mandatory_exemption": None,
+            }
+        ]
+    )
+    assert defaults["evaluated_cases_count"] == 1
+    assert (
+        defaults["bcr_governance_status"]
+        == "BCR_INVESTMENT_CASE_OPTIMAL"
+    )
+    assert defaults["is_investment_case_valid"] is True
+
+    import backend.schemas.projects as mod
+
+    assert (
+        "validate_benefit_cost_ratio_and_sunk_cost_governance"
+        in mod.__all__
+    )

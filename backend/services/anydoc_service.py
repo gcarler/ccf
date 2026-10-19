@@ -3037,6 +3037,7 @@ __all__ = [
     "audit_markdown_inline_html_xss_and_iframe_whitelist_hygiene",
     "audit_markdown_link_rot_and_internal_anchor_resolution_hygiene",
     "audit_markdown_math_latex_delimiter_and_macro_hygiene",
+    "audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene",
     "AnydocService",
 ]
 
@@ -8121,5 +8122,78 @@ AnyDocService.audit_markdown_math_latex_delimiter_and_macro_hygiene = staticmeth
 )
 AnydocService.audit_markdown_math_latex_delimiter_and_macro_hygiene = staticmethod(
     audit_markdown_math_latex_delimiter_and_macro_hygiene
+)
+
+
+def audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene(
+    documents: Any,
+    *,
+    max_admonition_density_per_doc: int = 6,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §10.2 — AnyDoc Markdown Admonition/Callout Alert Severity Taxonomy, Nesting Prohibition & Consecutive Alert Hygiene Auditor."""
+    entries = documents if isinstance(documents, (list, tuple)) else []
+    valid_documents = [
+        doc
+        for doc in entries
+        if isinstance(doc, dict) and str(doc.get("doc_id") or "").strip()
+    ]
+
+    nested_or_unknown_admonition_doc_ids: list[str] = []
+    adjacent_or_overused_admonition_doc_ids: list[str] = []
+
+    for doc in valid_documents:
+        did = str(doc.get("doc_id")).strip()
+        nested_admonitions_count = int(
+            doc.get("nested_admonitions_count", 0)
+            if doc.get("nested_admonitions_count") is not None
+            else 0
+        )
+        unknown_admonition_types_count = int(
+            doc.get("unknown_admonition_types_count", 0)
+            if doc.get("unknown_admonition_types_count") is not None
+            else 0
+        )
+        consecutive_adjacent_admonitions_count = int(
+            doc.get("consecutive_adjacent_admonitions_count", 0)
+            if doc.get("consecutive_adjacent_admonitions_count") is not None
+            else 0
+        )
+        total_admonitions_count = int(
+            doc.get("total_admonitions_count", 2)
+            if doc.get("total_admonitions_count") is not None
+            else 2
+        )
+
+        if nested_admonitions_count > 0 or unknown_admonition_types_count > 0:
+            nested_or_unknown_admonition_doc_ids.append(did)
+
+        if (
+            consecutive_adjacent_admonitions_count > 0
+            or total_admonitions_count > max_admonition_density_per_doc
+        ):
+            adjacent_or_overused_admonition_doc_ids.append(did)
+
+    if nested_or_unknown_admonition_doc_ids:
+        admonition_hygiene_status = "ADMONITION_NESTING_OR_TAXONOMY_BREACH"
+    elif adjacent_or_overused_admonition_doc_ids:
+        admonition_hygiene_status = "ADMONITION_ADJACENCY_OR_FATIGUE_WARNING"
+    else:
+        admonition_hygiene_status = "ADMONITION_CALLOUT_HYGIENE_CLEAN"
+
+    return {
+        "evaluated_documents_count": len(valid_documents),
+        "nested_or_unknown_admonition_doc_ids": nested_or_unknown_admonition_doc_ids,
+        "adjacent_or_overused_admonition_doc_ids": adjacent_or_overused_admonition_doc_ids,
+        "admonition_hygiene_status": admonition_hygiene_status,
+        "is_admonition_hygiene_compliant": admonition_hygiene_status
+        == "ADMONITION_CALLOUT_HYGIENE_CLEAN",
+    }
+
+
+AnyDocService.audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene = staticmethod(
+    audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene
+)
+AnydocService.audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene = staticmethod(
+    audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene
 )
 

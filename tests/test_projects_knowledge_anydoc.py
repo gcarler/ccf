@@ -7532,3 +7532,146 @@ def test_math_hygiene_invalid_and_binding():
         "audit_markdown_math_latex_delimiter_and_macro_hygiene"
         in mod.__all__
     )
+
+
+def test_audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene_breach():
+    from backend.services.anydoc_service import (
+        audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene,
+    )
+
+    result = audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene(
+        [
+            {
+                "doc_id": "DOC-NESTED-ALERT",
+                "nested_admonitions_count": 2,
+                "unknown_admonition_types_count": 0,
+                "consecutive_adjacent_admonitions_count": 0,
+                "total_admonitions_count": 3,
+            },
+            {
+                "doc_id": "DOC-UNKNOWN-ALERT",
+                "nested_admonitions_count": 0,
+                "unknown_admonition_types_count": 1,
+                "consecutive_adjacent_admonitions_count": 0,
+                "total_admonitions_count": 2,
+            },
+        ],
+        max_admonition_density_per_doc=6,
+    )
+    assert result["evaluated_documents_count"] == 2
+    assert result["nested_or_unknown_admonition_doc_ids"] == [
+        "DOC-NESTED-ALERT",
+        "DOC-UNKNOWN-ALERT",
+    ]
+    assert result["adjacent_or_overused_admonition_doc_ids"] == []
+    assert (
+        result["admonition_hygiene_status"]
+        == "ADMONITION_NESTING_OR_TAXONOMY_BREACH"
+    )
+    assert result["is_admonition_hygiene_compliant"] is False
+
+
+def test_audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene,
+    )
+
+    result = audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene(
+        [
+            {
+                "doc_id": "DOC-ADJACENT-ALERTS",
+                "nested_admonitions_count": 0,
+                "unknown_admonition_types_count": 0,
+                "consecutive_adjacent_admonitions_count": 2,
+                "total_admonitions_count": 4,
+            },
+            {
+                "doc_id": "DOC-ALERT-FATIGUE",
+                "nested_admonitions_count": 0,
+                "unknown_admonition_types_count": 0,
+                "consecutive_adjacent_admonitions_count": 0,
+                "total_admonitions_count": 9,
+            },
+        ],
+        max_admonition_density_per_doc=6,
+    )
+    assert result["evaluated_documents_count"] == 2
+    assert result["nested_or_unknown_admonition_doc_ids"] == []
+    assert result["adjacent_or_overused_admonition_doc_ids"] == [
+        "DOC-ADJACENT-ALERTS",
+        "DOC-ALERT-FATIGUE",
+    ]
+    assert (
+        result["admonition_hygiene_status"]
+        == "ADMONITION_ADJACENCY_OR_FATIGUE_WARNING"
+    )
+    assert result["is_admonition_hygiene_compliant"] is False
+
+
+def test_audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene_clean_and_empty():
+    from backend.services.anydoc_service import (
+        audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene,
+    )
+
+    empty = audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene(
+        [{"doc_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_documents_count"] == 0
+    assert (
+        empty["admonition_hygiene_status"]
+        == "ADMONITION_CALLOUT_HYGIENE_CLEAN"
+    )
+    assert empty["is_admonition_hygiene_compliant"] is True
+
+    clean = audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene(
+        [
+            {
+                "doc_id": "DOC-CLEAN-CALLOUTS",
+                "nested_admonitions_count": 0,
+                "unknown_admonition_types_count": 0,
+                "consecutive_adjacent_admonitions_count": 0,
+                "total_admonitions_count": 3,
+            }
+        ],
+        max_admonition_density_per_doc=6,
+    )
+    assert clean["evaluated_documents_count"] == 1
+    assert clean["nested_or_unknown_admonition_doc_ids"] == []
+    assert clean["adjacent_or_overused_admonition_doc_ids"] == []
+    assert (
+        clean["admonition_hygiene_status"]
+        == "ADMONITION_CALLOUT_HYGIENE_CLEAN"
+    )
+    assert clean["is_admonition_hygiene_compliant"] is True
+
+
+def test_audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene_staticmethod_and_dunder_all():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene,
+    )
+
+    sample = [
+        {
+            "doc_id": "DOC-99",
+            "total_admonitions_count": 2,
+        }
+    ]
+    assert (
+        AnyDocService.audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene(
+            sample
+        )
+        == audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene(
+            sample
+        )
+        == audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene(sample)
+    )
+    assert (
+        "audit_markdown_admonition_callout_taxonomy_and_nesting_hygiene"
+        in mod.__all__
+    )

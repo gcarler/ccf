@@ -9331,3 +9331,144 @@ def test_audit_wiki_service_catalog_ownership_and_dependency_graph_staticmethod_
         in mod.__all__
     )
 
+
+def test_audit_wiki_tls_certificate_expiration_and_acme_renewal_breach():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_tls_certificate_expiration_and_acme_renewal,
+    )
+
+    result = audit_wiki_tls_certificate_expiration_and_acme_renewal(
+        [
+            {
+                "cert_id": "CERT-IMMINENT-EXPIRY",
+                "days_until_expiration": 4,
+                "acme_auto_renewal_enabled": True,
+                "uses_deprecated_tls10_or_tls11_or_weak_cipher": False,
+                "ocsp_stapling_and_ct_logged": True,
+            },
+            {
+                "cert_id": "CERT-WEAK-CIPHER",
+                "days_until_expiration": 45,
+                "acme_auto_renewal_enabled": True,
+                "uses_deprecated_tls10_or_tls11_or_weak_cipher": True,
+                "ocsp_stapling_and_ct_logged": True,
+            },
+        ],
+        min_days_before_expiry_warning=21,
+        critical_expiry_days_threshold=7,
+    )
+    assert result["evaluated_certificates_count"] == 2
+    assert result["expired_imminent_or_weak_cipher_cert_ids"] == [
+        "CERT-IMMINENT-EXPIRY",
+        "CERT-WEAK-CIPHER",
+    ]
+    assert result["renewal_window_or_manual_cert_ids"] == []
+    assert (
+        result["tls_certificate_status"]
+        == "TLS_CERTIFICATE_EXPIRY_OR_CIPHER_BREACH"
+    )
+    assert result["is_tls_certificate_compliant"] is False
+
+
+def test_audit_wiki_tls_certificate_expiration_and_acme_renewal_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_tls_certificate_expiration_and_acme_renewal,
+    )
+
+    result = audit_wiki_tls_certificate_expiration_and_acme_renewal(
+        [
+            {
+                "cert_id": "CERT-RENEWAL-WINDOW",
+                "days_until_expiration": 15,
+                "acme_auto_renewal_enabled": True,
+                "uses_deprecated_tls10_or_tls11_or_weak_cipher": False,
+                "ocsp_stapling_and_ct_logged": True,
+            },
+            {
+                "cert_id": "CERT-MANUAL-NO-ACME",
+                "days_until_expiration": 50,
+                "acme_auto_renewal_enabled": False,
+                "uses_deprecated_tls10_or_tls11_or_weak_cipher": False,
+                "ocsp_stapling_and_ct_logged": True,
+            },
+            {
+                "cert_id": "CERT-NO-OCSP",
+                "days_until_expiration": 50,
+                "acme_auto_renewal_enabled": True,
+                "uses_deprecated_tls10_or_tls11_or_weak_cipher": False,
+                "ocsp_stapling_and_ct_logged": False,
+            },
+        ],
+        min_days_before_expiry_warning=21,
+        critical_expiry_days_threshold=7,
+    )
+    assert result["evaluated_certificates_count"] == 3
+    assert result["expired_imminent_or_weak_cipher_cert_ids"] == []
+    assert result["renewal_window_or_manual_cert_ids"] == [
+        "CERT-RENEWAL-WINDOW",
+        "CERT-MANUAL-NO-ACME",
+        "CERT-NO-OCSP",
+    ]
+    assert (
+        result["tls_certificate_status"]
+        == "TLS_RENEWAL_WINDOW_OR_ACME_WARNING"
+    )
+    assert result["is_tls_certificate_compliant"] is False
+
+
+def test_audit_wiki_tls_certificate_expiration_and_acme_renewal_optimal_and_empty():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_tls_certificate_expiration_and_acme_renewal,
+    )
+
+    empty = audit_wiki_tls_certificate_expiration_and_acme_renewal(
+        [{"cert_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_certificates_count"] == 0
+    assert empty["tls_certificate_status"] == "TLS_CRYPTO_LIFECYCLE_OPTIMAL"
+    assert empty["is_tls_certificate_compliant"] is True
+
+    optimal = audit_wiki_tls_certificate_expiration_and_acme_renewal(
+        [
+            {
+                "cert_id": "CERT-MTLS-EDGE-1",
+                "days_until_expiration": 75,
+                "acme_auto_renewal_enabled": True,
+                "uses_deprecated_tls10_or_tls11_or_weak_cipher": False,
+                "ocsp_stapling_and_ct_logged": True,
+            }
+        ],
+        min_days_before_expiry_warning=21,
+        critical_expiry_days_threshold=7,
+    )
+    assert optimal["evaluated_certificates_count"] == 1
+    assert optimal["expired_imminent_or_weak_cipher_cert_ids"] == []
+    assert optimal["renewal_window_or_manual_cert_ids"] == []
+    assert optimal["tls_certificate_status"] == "TLS_CRYPTO_LIFECYCLE_OPTIMAL"
+    assert optimal["is_tls_certificate_compliant"] is True
+
+
+def test_audit_wiki_tls_certificate_expiration_and_acme_renewal_staticmethod_and_dunder_all():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_tls_certificate_expiration_and_acme_renewal,
+    )
+
+    sample = [
+        {
+            "cert_id": "CERT-99",
+            "days_until_expiration": 45,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_tls_certificate_expiration_and_acme_renewal(
+            sample
+        )
+        == audit_wiki_tls_certificate_expiration_and_acme_renewal(sample)
+    )
+    assert (
+        "audit_wiki_tls_certificate_expiration_and_acme_renewal"
+        in mod.__all__
+    )
+

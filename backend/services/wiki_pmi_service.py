@@ -2535,6 +2535,7 @@ __all__ = [
     "audit_wiki_chaos_gameday_hypothesis_and_blast_radius",
     "audit_wiki_observability_cardinality_and_trace_sampling",
     "audit_wiki_service_catalog_ownership_and_dependency_graph",
+    "audit_wiki_tls_certificate_expiration_and_acme_renewal",
     "WikiPMIService",
 ]
 
@@ -6938,5 +6939,82 @@ def audit_wiki_service_catalog_ownership_and_dependency_graph(
 
 WikiPMIService.audit_wiki_service_catalog_ownership_and_dependency_graph = staticmethod(
     audit_wiki_service_catalog_ownership_and_dependency_graph
+)
+
+
+def audit_wiki_tls_certificate_expiration_and_acme_renewal(
+    certificates: Sequence[Mapping[str, Any]] | None,
+    *,
+    min_days_before_expiry_warning: int | float = 21,
+    critical_expiry_days_threshold: int | float = 7,
+) -> dict[str, Any]:
+    """PMI PMBOK §11.6 & §10.2 — Wiki Certificate Authority (mTLS/TLS) Expiration Horizon, ACME Auto-Renewal & Cipher Suite Hygiene Auditor."""
+    valid_certs = [
+        crt
+        for crt in (certificates or [])
+        if isinstance(crt, Mapping) and str(crt.get("cert_id") or "").strip()
+    ]
+
+    expired_imminent_or_weak_cipher_cert_ids: list[str] = []
+    renewal_window_or_manual_cert_ids: list[str] = []
+
+    for crt in valid_certs:
+        cid = str(crt.get("cert_id")).strip()
+        days_until_expiration = float(
+            crt.get("days_until_expiration", 60)
+            if crt.get("days_until_expiration") is not None
+            else 60
+        )
+        acme_auto_renewal_enabled = bool(
+            crt.get("acme_auto_renewal_enabled", True)
+            if crt.get("acme_auto_renewal_enabled") is not None
+            else True
+        )
+        uses_deprecated_tls10_or_tls11_or_weak_cipher = bool(
+            crt.get("uses_deprecated_tls10_or_tls11_or_weak_cipher", False)
+            if crt.get("uses_deprecated_tls10_or_tls11_or_weak_cipher") is not None
+            else False
+        )
+        ocsp_stapling_and_ct_logged = bool(
+            crt.get("ocsp_stapling_and_ct_logged", True)
+            if crt.get("ocsp_stapling_and_ct_logged") is not None
+            else True
+        )
+
+        if (
+            days_until_expiration <= critical_expiry_days_threshold
+            or uses_deprecated_tls10_or_tls11_or_weak_cipher
+        ):
+            expired_imminent_or_weak_cipher_cert_ids.append(cid)
+
+        if (
+            (
+                days_until_expiration <= min_days_before_expiry_warning
+                and days_until_expiration > critical_expiry_days_threshold
+            )
+            or not acme_auto_renewal_enabled
+            or not ocsp_stapling_and_ct_logged
+        ):
+            renewal_window_or_manual_cert_ids.append(cid)
+
+    if expired_imminent_or_weak_cipher_cert_ids:
+        tls_certificate_status = "TLS_CERTIFICATE_EXPIRY_OR_CIPHER_BREACH"
+    elif renewal_window_or_manual_cert_ids:
+        tls_certificate_status = "TLS_RENEWAL_WINDOW_OR_ACME_WARNING"
+    else:
+        tls_certificate_status = "TLS_CRYPTO_LIFECYCLE_OPTIMAL"
+
+    return {
+        "evaluated_certificates_count": len(valid_certs),
+        "expired_imminent_or_weak_cipher_cert_ids": expired_imminent_or_weak_cipher_cert_ids,
+        "renewal_window_or_manual_cert_ids": renewal_window_or_manual_cert_ids,
+        "tls_certificate_status": tls_certificate_status,
+        "is_tls_certificate_compliant": tls_certificate_status
+        == "TLS_CRYPTO_LIFECYCLE_OPTIMAL",
+    }
+
+
+WikiPMIService.audit_wiki_tls_certificate_expiration_and_acme_renewal = staticmethod(
+    audit_wiki_tls_certificate_expiration_and_acme_renewal
 )
 

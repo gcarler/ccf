@@ -3813,6 +3813,7 @@ __all__ = [
     "validate_risk_emv_decision_tree_and_contingency_adequacy",
     "validate_pert_three_point_estimation_and_delphi_convergence",
     "validate_monte_carlo_p80_p90_convergence_and_tornado_sensitivity",
+    "validate_benefit_cost_ratio_and_sunk_cost_governance",
     "validate_resource_leveling_overallocation_and_context_switching",
     "validate_wbs_rolling_wave_horizon_and_8_80_rule",
     "validate_rtm_bidirectional_traceability_and_gold_plating",
@@ -8353,3 +8354,76 @@ def validate_rtm_bidirectional_traceability_and_gold_plating(
         == "RTM_BIDIRECTIONAL_TRACEABILITY_OPTIMAL",
     }
 
+
+
+def validate_benefit_cost_ratio_and_sunk_cost_governance(
+    investment_cases: Any,
+    *,
+    min_bcr_threshold: float = 1.15,
+) -> dict[str, Any]:
+    """PMI PMBOK §1.2.6 & §7.1 — Benefit-Cost Ratio (BCR), Discounted Cash Flow NPV Hurdle & Sunk-Cost Fallacy Validator."""
+    entries = investment_cases if isinstance(investment_cases, (list, tuple)) else []
+    valid_cases = [
+        case
+        for case in entries
+        if isinstance(case, dict) and str(case.get("case_id") or "").strip()
+    ]
+
+    def _num(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    sunk_cost_or_negative_npv_case_ids: list[str] = []
+    marginal_bcr_case_ids: list[str] = []
+
+    for case in valid_cases:
+        case_id = str(case.get("case_id")).strip()
+        pv_benefits = _num(
+            case.get("pv_expected_benefits"), 150000.0
+        )
+        pv_costs = _num(
+            case.get("pv_future_incremental_costs"), 100000.0
+        )
+        sunk_included = _bool(
+            case.get("historical_sunk_costs_included_in_justification"),
+            False,
+        )
+        npv = _num(
+            case.get("net_present_value"), 50000.0
+        )
+        mandatory_exemption = _bool(
+            case.get("regulatory_mandatory_exemption"), False
+        )
+
+        if sunk_included or (
+            not mandatory_exemption
+            and (pv_costs <= 0 or npv < 0)
+        ):
+            sunk_cost_or_negative_npv_case_ids.append(case_id)
+
+        if (
+            not mandatory_exemption
+            and pv_costs > 0
+            and (pv_benefits / pv_costs) < min_bcr_threshold
+        ):
+            marginal_bcr_case_ids.append(case_id)
+
+    if sunk_cost_or_negative_npv_case_ids:
+        bcr_governance_status = "BCR_SUNK_COST_OR_NEGATIVE_NPV_BREACH"
+    elif marginal_bcr_case_ids:
+        bcr_governance_status = "BCR_BELOW_HURDLE_RATIO_WARNING"
+    else:
+        bcr_governance_status = "BCR_INVESTMENT_CASE_OPTIMAL"
+
+    return {
+        "evaluated_cases_count": len(valid_cases),
+        "sunk_cost_or_negative_npv_case_ids": sunk_cost_or_negative_npv_case_ids,
+        "marginal_bcr_case_ids": marginal_bcr_case_ids,
+        "bcr_governance_status": bcr_governance_status,
+        "is_investment_case_valid": bcr_governance_status
+        == "BCR_INVESTMENT_CASE_OPTIMAL",
+    }
