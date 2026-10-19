@@ -2555,6 +2555,7 @@ __all__ = [
     "audit_wiki_postgres_logical_replication_wal_bloat_and_txid_wraparound",
     "audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm",
     "audit_wiki_redis_cluster_hash_slot_coverage_and_aof_eviction",
+    "audit_wiki_kms_envelope_key_rotation_and_hsm_tamper_seal",
     "WikiPMIService",
 ]
 
@@ -8752,4 +8753,92 @@ def audit_wiki_redis_cluster_hash_slot_coverage_and_aof_eviction(
 
 WikiPMIService.audit_wiki_redis_cluster_hash_slot_coverage_and_aof_eviction = staticmethod(
     audit_wiki_redis_cluster_hash_slot_coverage_and_aof_eviction
+)
+
+
+def audit_wiki_kms_envelope_key_rotation_and_hsm_tamper_seal(
+    key_rings: list[dict[str, Any]],
+    *,
+    max_kek_age_days: int = 365,
+    max_stale_dek_rewrap_pct: float = 5.0,
+    min_hsm_quorum_nodes: int = 2,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §11.6 — Wiki KMS Envelope Encryption Key Rotation, DEK Re-Wrapping Backlog & HSM Tamper Seal Auditor."""
+    valid_keyrings = [
+        kr for kr in (key_rings if isinstance(key_rings, list) else []) if isinstance(kr, Mapping)
+    ]
+
+    critical_keyrings: list[str] = []
+    warning_keyrings: list[str] = []
+    keyring_evaluations: list[dict[str, Any]] = []
+    max_observed_stale_dek_pct = 0.0
+
+    for idx, kr in enumerate(valid_keyrings):
+        keyring_id = str(kr.get("keyring_id") or f"keyring-{idx + 1}").strip()
+        kek_age_days = int(kr.get("kek_age_days", 0) or 0)
+        total_encrypted_pages = int(kr.get("total_encrypted_pages", 0) or 0)
+        stale_dek_pages = int(kr.get("stale_dek_version_pages", 0) or 0)
+        hsm_nodes = int(kr.get("active_hsm_partition_nodes", 0) or 0)
+        tamper_detected = bool(kr.get("hsm_tamper_event_detected", False))
+        plaintext_leak = bool(kr.get("plaintext_dek_cache_leak_detected", False))
+        auto_rotation = bool(kr.get("auto_rotation_schedule_enabled", True))
+
+        stale_dek_rewrap_pct = (
+            round((stale_dek_pages / total_encrypted_pages) * 100.0, 2)
+            if total_encrypted_pages > 0
+            else 0.0
+        )
+        if stale_dek_rewrap_pct > max_observed_stale_dek_pct:
+            max_observed_stale_dek_pct = stale_dek_rewrap_pct
+
+        critical_kms_breach = bool(
+            tamper_detected is True
+            or plaintext_leak is True
+            or hsm_nodes < int(min_hsm_quorum_nodes)
+            or kek_age_days > float(max_kek_age_days) * 1.25
+        )
+        rotation_or_rewrap_warning = bool(
+            not critical_kms_breach
+            and (
+                kek_age_days > int(max_kek_age_days)
+                or stale_dek_rewrap_pct > float(max_stale_dek_rewrap_pct)
+                or not auto_rotation
+            )
+        )
+
+        if critical_kms_breach:
+            critical_keyrings.append(keyring_id)
+        elif rotation_or_rewrap_warning:
+            warning_keyrings.append(keyring_id)
+
+        keyring_evaluations.append(
+            {
+                "keyring_id": keyring_id,
+                "kek_age_days": kek_age_days,
+                "stale_dek_rewrap_pct": stale_dek_rewrap_pct,
+                "active_hsm_partition_nodes": hsm_nodes,
+                "critical_kms_breach": critical_kms_breach,
+                "rotation_or_rewrap_warning": rotation_or_rewrap_warning,
+            }
+        )
+
+    if len(critical_keyrings) > 0:
+        status = "CRITICAL"
+    elif len(warning_keyrings) > 0:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "status": status,
+        "evaluated_keyrings_count": len(keyring_evaluations),
+        "critical_keyrings": critical_keyrings,
+        "warning_keyrings": warning_keyrings,
+        "max_observed_stale_dek_pct": max_observed_stale_dek_pct,
+        "keyring_evaluations": keyring_evaluations,
+    }
+
+
+WikiPMIService.audit_wiki_kms_envelope_key_rotation_and_hsm_tamper_seal = staticmethod(
+    audit_wiki_kms_envelope_key_rotation_and_hsm_tamper_seal
 )

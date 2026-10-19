@@ -11964,3 +11964,104 @@ def test_audit_feature_flag_kill_switch_and_stale_debt_gate_staticmethod_and_dun
         == audit_feature_flag_kill_switch_and_stale_debt_gate(sample)
     )
     assert "audit_feature_flag_kill_switch_and_stale_debt_gate" in mod.__all__
+
+
+def test_audit_otel_trace_propagation_and_collector_drop_gate_healthy():
+    from backend.services.project_ccb_service import (
+        audit_otel_trace_propagation_and_collector_drop_gate,
+    )
+
+    pipelines = [
+        {
+            "pipeline_id": "otel-prod-core-api",
+            "total_requests": 10000,
+            "w3c_traceparent_injected_requests": 9950,
+            "total_spans_ingested": 500000,
+            "collector_dropped_spans": 0,
+            "error_traces_retained_pct": 100.0,
+            "pii_redaction_processor_enabled": True,
+            "exporter_queue_utilization_pct": 42.0,
+            "broken_context_stitching_detected": False,
+        }
+    ]
+    res = audit_otel_trace_propagation_and_collector_drop_gate(pipelines)
+    assert res["status"] == "HEALTHY"
+    assert res["release_freeze_required"] is False
+    assert res["evaluated_pipelines_count"] == 1
+    assert res["critical_pipelines"] == []
+    assert res["warning_pipelines"] == []
+    assert res["worst_dropped_spans_pct"] == 0.0
+    assert res["pipeline_evaluations"][0]["w3c_propagation_pct"] == 99.5
+
+
+def test_audit_otel_trace_propagation_and_collector_drop_gate_warning():
+    from backend.services.project_ccb_service import (
+        audit_otel_trace_propagation_and_collector_drop_gate,
+    )
+
+    pipelines = [
+        {
+            "pipeline_id": "otel-edge-gateway",
+            "total_requests": 1000,
+            "w3c_traceparent_injected_requests": 975,
+            "total_spans_ingested": 100000,
+            "collector_dropped_spans": 50,
+            "error_traces_retained_pct": 100.0,
+            "pii_redaction_processor_enabled": True,
+            "exporter_queue_utilization_pct": 85.0,
+            "broken_context_stitching_detected": False,
+        }
+    ]
+    res = audit_otel_trace_propagation_and_collector_drop_gate(pipelines)
+    assert res["status"] == "WARNING"
+    assert res["release_freeze_required"] is False
+    assert res["critical_pipelines"] == []
+    assert res["warning_pipelines"] == ["otel-edge-gateway"]
+    assert res["pipeline_evaluations"][0]["w3c_propagation_pct"] == 97.5
+    assert res["pipeline_evaluations"][0]["propagation_or_queue_warning"] is True
+
+
+def test_audit_otel_trace_propagation_and_collector_drop_gate_critical():
+    from backend.services.project_ccb_service import (
+        audit_otel_trace_propagation_and_collector_drop_gate,
+    )
+
+    pipelines = [
+        {
+            "pipeline_id": "otel-payment-worker",
+            "total_requests": 5000,
+            "w3c_traceparent_injected_requests": 5000,
+            "total_spans_ingested": 100000,
+            "collector_dropped_spans": 500,
+            "error_traces_retained_pct": 85.0,
+            "pii_redaction_processor_enabled": False,
+            "exporter_queue_utilization_pct": 95.0,
+            "broken_context_stitching_detected": True,
+        }
+    ]
+    res = audit_otel_trace_propagation_and_collector_drop_gate(pipelines)
+    assert res["status"] == "CRITICAL"
+    assert res["release_freeze_required"] is True
+    assert res["critical_pipelines"] == ["otel-payment-worker"]
+    assert res["warning_pipelines"] == []
+    assert res["worst_dropped_spans_pct"] == 0.5
+    assert res["pipeline_evaluations"][0]["critical_otel_violation"] is True
+
+
+def test_audit_otel_trace_propagation_and_collector_drop_gate_empty_and_binding():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_otel_trace_propagation_and_collector_drop_gate,
+    )
+
+    empty = audit_otel_trace_propagation_and_collector_drop_gate([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["release_freeze_required"] is False
+    assert empty["evaluated_pipelines_count"] == 0
+    assert empty["worst_dropped_spans_pct"] == 0.0
+    assert (
+        ProjectCCBService.audit_otel_trace_propagation_and_collector_drop_gate([])
+        == empty
+    )
+    assert "audit_otel_trace_propagation_and_collector_drop_gate" in mod.__all__

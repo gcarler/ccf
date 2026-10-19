@@ -3026,6 +3026,7 @@ __all__ = [
     "audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance",
     "audit_executive_report_fedramp_poam_aging_and_conmon_compliance",
     "audit_executive_report_nerc_cip_esp_perimeter_and_patch_cadence",
+    "audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter",
     "ProjectExportService",
 ]
 
@@ -9151,4 +9152,114 @@ def audit_executive_report_nerc_cip_esp_perimeter_and_patch_cadence(
 
 ProjectExportService.audit_executive_report_nerc_cip_esp_perimeter_and_patch_cadence = staticmethod(
     audit_executive_report_nerc_cip_esp_perimeter_and_patch_cadence
+)
+
+
+def audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter(
+    trust_controls: list[dict[str, Any]] | None,
+    *,
+    max_allowable_deviation_rate_pct: float = 0.0,
+    bridge_letter_coverage_gap_days: int = 0,
+    max_bridge_letter_gap_days: int = 90,
+) -> dict[str, Any]:
+    """PMBOK §10.2 & §8.2 — Audita un executive report AICPA SOC 2 Type II: confianza en Trust Services Criteria (TSC), tasa de desviaciones por muestreo de testing de controles, mapeo de CUEC para subservicios carved-out y staleness del bridge letter.
+
+    Cada control TSC válido declara `control_id` (str no vacío),
+    tamaño de muestra (`sample_size`, default 25),
+    excepciones registradas (`exceptions_found`, default 0),
+    mapeo CUEC del subservicio carved-out (`subservice_cuec_mapped`,
+    default True) y respuesta de management adjunta
+    (`management_response_attached`, default True):
+    - `deviation_rate_pct = max(0, exceptions_found) / max(1, sample_size) * 100`.
+    - `qualified_opinion_or_unmapped_cuec_control_ids`: desviación > límite
+      sin respuesta de management, CUEC de subservicio no mapeado, O
+      sample_size <= 0 (brecha crítica, precedencia).
+    - `remediated_deviation_control_ids`: muestra válida, CUEC mapeado,
+      desviación por encima del límite pero con respuesta de management
+      adjunta (advertencia mitigada).
+    - `bridge_letter_stale`: cobertura del bridge letter > límite o negativa.
+    - Estados: 'CRITICAL_QUALIFIED_OPINION_OR_UNMAPPED_CUEC_BREACH' |
+      'EXCEPTION_WITH_MANAGEMENT_RESPONSE_OR_BRIDGE_WARNING' |
+      'SOC2_TYPE2_UNQUALIFIED_CLEAN'.
+    - `is_soc2_unqualified_clean`: solo con estado CLEAN sin bridge stale.
+    """
+    raw_items = trust_controls if isinstance(trust_controls, list) else []
+    valid_controls: list[dict[str, Any]] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_control_id = item.get("control_id")
+        if not isinstance(raw_control_id, str) or not raw_control_id.strip():
+            continue
+        valid_controls.append(item)
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _int(value: Any, default: int) -> int:
+        if isinstance(value, bool) or not isinstance(value, int):
+            return default
+        return value
+
+    def _float(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    ok_rate = _float(max_allowable_deviation_rate_pct, 0.0)
+    coverage_gap = _int(bridge_letter_coverage_gap_days, 0)
+    gap_limit = _int(max_bridge_letter_gap_days, 90)
+
+    qualified_opinion_or_unmapped_cuec_control_ids: list[str] = []
+    remediated_deviation_control_ids: list[str] = []
+
+    for control in valid_controls:
+        control_id = str(control.get("control_id")).strip()
+        sample_size = _int(control.get("sample_size"), 25)
+        exceptions_found = _int(control.get("exceptions_found"), 0)
+        cuec_mapped = _bool(control.get("subservice_cuec_mapped"), True)
+        management_attached = _bool(
+            control.get("management_response_attached"), True
+        )
+
+        deviation_rate_pct = (
+            max(0, int(exceptions_found)) / max(1, int(sample_size))
+        ) * 100.0
+
+        deviation_over_limit = deviation_rate_pct > ok_rate
+        zero_or_negative_sample = int(sample_size) <= 0
+
+        if (
+            (deviation_over_limit and (not bool(management_attached)))
+            or (not bool(cuec_mapped))
+            or zero_or_negative_sample
+        ):
+            qualified_opinion_or_unmapped_cuec_control_ids.append(control_id)
+        elif bool(management_attached) and deviation_over_limit:
+            remediated_deviation_control_ids.append(control_id)
+
+    bridge_letter_stale = coverage_gap < 0 or coverage_gap > gap_limit
+
+    if qualified_opinion_or_unmapped_cuec_control_ids:
+        soc2_audit_status = "CRITICAL_QUALIFIED_OPINION_OR_UNMAPPED_CUEC_BREACH"
+    elif remediated_deviation_control_ids or bridge_letter_stale:
+        soc2_audit_status = "EXCEPTION_WITH_MANAGEMENT_RESPONSE_OR_BRIDGE_WARNING"
+    else:
+        soc2_audit_status = "SOC2_TYPE2_UNQUALIFIED_CLEAN"
+
+    return {
+        "evaluated_control_count": len(valid_controls),
+        "qualified_opinion_or_unmapped_cuec_control_ids": qualified_opinion_or_unmapped_cuec_control_ids,
+        "remediated_deviation_control_ids": remediated_deviation_control_ids,
+        "bridge_letter_stale": bridge_letter_stale,
+        "soc2_audit_status": soc2_audit_status,
+        "is_soc2_unqualified_clean": (
+            soc2_audit_status == "SOC2_TYPE2_UNQUALIFIED_CLEAN"
+            and not bridge_letter_stale
+        ),
+    }
+
+
+ProjectExportService.audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter = staticmethod(
+    audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter
 )

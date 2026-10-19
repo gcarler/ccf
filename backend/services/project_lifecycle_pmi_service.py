@@ -3189,6 +3189,7 @@ __all__ = [
     "audit_software_escrow_deposit_verification_and_release_trigger",
     "audit_ppp_concession_handback_residual_life_and_reserve_escrow",
     "audit_eia_environmental_permit_conditions_and_chance_find_stop_work",
+    "audit_decommissioning_hazmat_manifest_and_site_remediation_clearance",
     "ProjectLifecyclePMIService",
 ]
 
@@ -8960,6 +8961,108 @@ ProjectLifecyclePMIService.audit_eia_environmental_permit_conditions_and_chance_
 )
 
 
+def audit_decommissioning_hazmat_manifest_and_site_remediation_clearance(
+    records: list[dict[str, Any]],
+    *,
+    min_manifest_chain_custody_pct: float = 100.0,
+    max_contaminant_ppm_ratio: float = 1.0,
+    min_salvage_recovery_ratio: float = 0.80,
+) -> dict[str, Any]:
+    """PMI PMBOK §12.3 & §4.7 — Decommissioning, HazMat Asbestos/Lead Abatement Manifest, Site Remediation Soil/Groundwater Clearance & Asset Disposal Residual Salvage Auditor."""
+    valid_records = [
+        r for r in (records if isinstance(records, list) else []) if isinstance(r, dict)
+    ]
+
+    critical_zones: list[str] = []
+    warning_zones: list[str] = []
+    zone_evaluations: list[dict[str, Any]] = []
+    total_estimated_salvage = 0.0
+    total_realized_salvage = 0.0
+
+    for idx, rec in enumerate(valid_records):
+        zone_id = str(rec.get("zone_id") or f"zone-{idx + 1}").strip()
+        hazmat_class = str(rec.get("hazmat_class") or "unknown").strip().lower()
+        manifests_completed = int(rec.get("disposal_manifests_completed", 0) or 0)
+        manifests_required = int(rec.get("disposal_manifests_required", 0) or 0)
+        post_ppm = float(rec.get("post_remediation_contaminant_ppm", 0.0) or 0.0)
+        reg_ppm = float(rec.get("regulatory_threshold_ppm", 0.0) or 0.0)
+        spill = bool(rec.get("uncontained_spill_incident", False))
+        licensed_tsdf = bool(rec.get("licensed_epa_tsdf_facility", True))
+        est_salvage = float(rec.get("estimated_salvage_value", 0.0) or 0.0)
+        real_salvage = float(rec.get("realized_salvage_value", 0.0) or 0.0)
+        clearance_cert = bool(
+            rec.get("regulatory_clearance_certificate_issued", True)
+        )
+
+        total_estimated_salvage += est_salvage
+        total_realized_salvage += real_salvage
+
+        manifest_chain_custody_pct = (
+            round((manifests_completed / manifests_required) * 100.0, 2)
+            if manifests_required > 0
+            else 100.0
+        )
+        contaminant_ppm_ratio = (
+            round(post_ppm / reg_ppm, 4) if reg_ppm > 0.0 else 0.0
+        )
+        salvage_recovery_ratio = (
+            round(real_salvage / est_salvage, 4) if est_salvage > 0.0 else 1.0
+        )
+
+        critical_hazmat_breach = bool(
+            spill is True
+            or not licensed_tsdf
+            or manifest_chain_custody_pct < float(min_manifest_chain_custody_pct)
+            or contaminant_ppm_ratio > float(max_contaminant_ppm_ratio)
+        )
+        clearance_or_salvage_warning = bool(
+            not critical_hazmat_breach
+            and (
+                not clearance_cert
+                or salvage_recovery_ratio < float(min_salvage_recovery_ratio)
+            )
+        )
+
+        if critical_hazmat_breach:
+            critical_zones.append(zone_id)
+        elif clearance_or_salvage_warning:
+            warning_zones.append(zone_id)
+
+        zone_evaluations.append(
+            {
+                "zone_id": zone_id,
+                "hazmat_class": hazmat_class,
+                "manifest_chain_custody_pct": manifest_chain_custody_pct,
+                "contaminant_ppm_ratio": contaminant_ppm_ratio,
+                "salvage_recovery_ratio": salvage_recovery_ratio,
+                "critical_hazmat_breach": critical_hazmat_breach,
+                "clearance_or_salvage_warning": clearance_or_salvage_warning,
+            }
+        )
+
+    overall_salvage_recovery_ratio = (
+        round(total_realized_salvage / total_estimated_salvage, 4)
+        if total_estimated_salvage > 0.0
+        else 1.0
+    )
+
+    if len(critical_zones) > 0:
+        status = "CRITICAL"
+    elif len(warning_zones) > 0:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "status": status,
+        "evaluated_zones_count": len(zone_evaluations),
+        "critical_zones": critical_zones,
+        "warning_zones": warning_zones,
+        "overall_salvage_recovery_ratio": overall_salvage_recovery_ratio,
+        "zone_evaluations": zone_evaluations,
+    }
 
 
-
+ProjectLifecyclePMIService.audit_decommissioning_hazmat_manifest_and_site_remediation_clearance = staticmethod(
+    audit_decommissioning_hazmat_manifest_and_site_remediation_clearance
+)

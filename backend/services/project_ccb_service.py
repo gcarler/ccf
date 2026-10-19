@@ -2869,6 +2869,7 @@ __all__ = [
     "audit_kafka_consumer_rebalance_dlq_and_schema_registry_gate",
     "audit_graphql_federation_supergraph_composition_and_query_cost_gate",
     "audit_feature_flag_kill_switch_and_stale_debt_gate",
+    "audit_otel_trace_propagation_and_collector_drop_gate",
     "ProjectCCBService",
 ]
 
@@ -8981,4 +8982,99 @@ def audit_feature_flag_kill_switch_and_stale_debt_gate(
 
 ProjectCCBService.audit_feature_flag_kill_switch_and_stale_debt_gate = staticmethod(
     audit_feature_flag_kill_switch_and_stale_debt_gate
+)
+
+
+def audit_otel_trace_propagation_and_collector_drop_gate(
+    pipelines: list[dict[str, Any]],
+    *,
+    min_w3c_traceparent_propagation_pct: float = 99.0,
+    max_collector_dropped_spans_pct: float = 0.1,
+    min_error_tail_sampling_retention_pct: float = 100.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §8.3 & §11.6 — CCB OpenTelemetry Distributed Trace Context W3C Propagation, Tail-Sampling Error Retention & Collector Queue Drop Gate Auditor."""
+    valid_pipelines = [
+        p for p in (pipelines if isinstance(pipelines, list) else []) if isinstance(p, dict)
+    ]
+
+    critical_pipelines: list[str] = []
+    warning_pipelines: list[str] = []
+    pipeline_evaluations: list[dict[str, Any]] = []
+    worst_dropped_spans_pct = 0.0
+
+    for idx, pipe in enumerate(valid_pipelines):
+        pipeline_id = str(pipe.get("pipeline_id") or f"pipeline-{idx + 1}").strip()
+        total_requests = int(pipe.get("total_requests", 0) or 0)
+        injected_requests = int(pipe.get("w3c_traceparent_injected_requests", 0) or 0)
+        total_spans = int(pipe.get("total_spans_ingested", 0) or 0)
+        dropped_spans = int(pipe.get("collector_dropped_spans", 0) or 0)
+        error_retained_pct = float(pipe.get("error_traces_retained_pct", 100.0) or 0.0)
+        pii_enabled = bool(pipe.get("pii_redaction_processor_enabled", True))
+        queue_util_pct = float(pipe.get("exporter_queue_utilization_pct", 0.0) or 0.0)
+        broken_stitching = bool(pipe.get("broken_context_stitching_detected", False))
+
+        w3c_propagation_pct = (
+            round((injected_requests / total_requests) * 100.0, 2)
+            if total_requests > 0
+            else 100.0
+        )
+        dropped_spans_pct = (
+            round((dropped_spans / total_spans) * 100.0, 4)
+            if total_spans > 0
+            else 0.0
+        )
+        if dropped_spans_pct > worst_dropped_spans_pct:
+            worst_dropped_spans_pct = dropped_spans_pct
+
+        critical_otel_violation = bool(
+            not pii_enabled
+            or broken_stitching is True
+            or dropped_spans_pct > float(max_collector_dropped_spans_pct)
+            or error_retained_pct < float(min_error_tail_sampling_retention_pct)
+        )
+        propagation_or_queue_warning = bool(
+            not critical_otel_violation
+            and (
+                w3c_propagation_pct < float(min_w3c_traceparent_propagation_pct)
+                or queue_util_pct >= 80.0
+            )
+        )
+
+        if critical_otel_violation:
+            critical_pipelines.append(pipeline_id)
+        elif propagation_or_queue_warning:
+            warning_pipelines.append(pipeline_id)
+
+        pipeline_evaluations.append(
+            {
+                "pipeline_id": pipeline_id,
+                "w3c_propagation_pct": w3c_propagation_pct,
+                "dropped_spans_pct": dropped_spans_pct,
+                "error_traces_retained_pct": error_retained_pct,
+                "exporter_queue_utilization_pct": queue_util_pct,
+                "critical_otel_violation": critical_otel_violation,
+                "propagation_or_queue_warning": propagation_or_queue_warning,
+            }
+        )
+
+    if len(critical_pipelines) > 0:
+        status = "CRITICAL"
+    elif len(warning_pipelines) > 0:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "status": status,
+        "release_freeze_required": status == "CRITICAL",
+        "evaluated_pipelines_count": len(pipeline_evaluations),
+        "critical_pipelines": critical_pipelines,
+        "warning_pipelines": warning_pipelines,
+        "worst_dropped_spans_pct": worst_dropped_spans_pct,
+        "pipeline_evaluations": pipeline_evaluations,
+    }
+
+
+ProjectCCBService.audit_otel_trace_propagation_and_collector_drop_gate = staticmethod(
+    audit_otel_trace_propagation_and_collector_drop_gate
 )

@@ -11877,3 +11877,96 @@ def test_audit_wiki_redis_cluster_hash_slot_coverage_and_aof_eviction_service_bi
         "audit_wiki_redis_cluster_hash_slot_coverage_and_aof_eviction"
         in mod.__all__
     )
+
+
+def test_audit_wiki_kms_envelope_key_rotation_and_hsm_tamper_seal_healthy():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_kms_envelope_key_rotation_and_hsm_tamper_seal,
+    )
+
+    keyrings = [
+        {
+            "keyring_id": "kr-wiki-prod-us-east",
+            "kek_age_days": 120,
+            "total_encrypted_pages": 10000,
+            "stale_dek_version_pages": 150,
+            "active_hsm_partition_nodes": 3,
+            "hsm_tamper_event_detected": False,
+            "plaintext_dek_cache_leak_detected": False,
+            "auto_rotation_schedule_enabled": True,
+        }
+    ]
+    res = audit_wiki_kms_envelope_key_rotation_and_hsm_tamper_seal(keyrings)
+    assert res["status"] == "HEALTHY"
+    assert res["evaluated_keyrings_count"] == 1
+    assert res["critical_keyrings"] == []
+    assert res["warning_keyrings"] == []
+    assert res["max_observed_stale_dek_pct"] == 1.5
+    assert res["keyring_evaluations"][0]["critical_kms_breach"] is False
+
+
+def test_audit_wiki_kms_envelope_key_rotation_and_hsm_tamper_seal_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_kms_envelope_key_rotation_and_hsm_tamper_seal,
+    )
+
+    keyrings = [
+        {
+            "keyring_id": "kr-wiki-rewrap-lag",
+            "kek_age_days": 400,
+            "total_encrypted_pages": 5000,
+            "stale_dek_version_pages": 600,
+            "active_hsm_partition_nodes": 2,
+            "hsm_tamper_event_detected": False,
+            "plaintext_dek_cache_leak_detected": False,
+            "auto_rotation_schedule_enabled": False,
+        }
+    ]
+    res = audit_wiki_kms_envelope_key_rotation_and_hsm_tamper_seal(keyrings)
+    assert res["status"] == "WARNING"
+    assert res["critical_keyrings"] == []
+    assert res["warning_keyrings"] == ["kr-wiki-rewrap-lag"]
+    assert res["max_observed_stale_dek_pct"] == 12.0
+    assert res["keyring_evaluations"][0]["rotation_or_rewrap_warning"] is True
+
+
+def test_audit_wiki_kms_envelope_key_rotation_and_hsm_tamper_seal_critical():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_kms_envelope_key_rotation_and_hsm_tamper_seal,
+    )
+
+    keyrings = [
+        {
+            "keyring_id": "kr-wiki-hsm-compromised",
+            "kek_age_days": 500,
+            "total_encrypted_pages": 2000,
+            "stale_dek_version_pages": 50,
+            "active_hsm_partition_nodes": 1,
+            "hsm_tamper_event_detected": True,
+            "plaintext_dek_cache_leak_detected": True,
+            "auto_rotation_schedule_enabled": True,
+        }
+    ]
+    res = audit_wiki_kms_envelope_key_rotation_and_hsm_tamper_seal(keyrings)
+    assert res["status"] == "CRITICAL"
+    assert res["critical_keyrings"] == ["kr-wiki-hsm-compromised"]
+    assert res["warning_keyrings"] == []
+    assert res["keyring_evaluations"][0]["critical_kms_breach"] is True
+
+
+def test_audit_wiki_kms_envelope_key_rotation_and_hsm_tamper_seal_empty_and_binding():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_kms_envelope_key_rotation_and_hsm_tamper_seal,
+    )
+
+    empty = audit_wiki_kms_envelope_key_rotation_and_hsm_tamper_seal([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["evaluated_keyrings_count"] == 0
+    assert empty["max_observed_stale_dek_pct"] == 0.0
+    assert (
+        WikiPMIService.audit_wiki_kms_envelope_key_rotation_and_hsm_tamper_seal([])
+        == empty
+    )
+    assert "audit_wiki_kms_envelope_key_rotation_and_hsm_tamper_seal" in mod.__all__

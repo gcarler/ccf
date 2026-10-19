@@ -3055,6 +3055,7 @@ __all__ = [
     "audit_markdown_task_list_checkbox_parity_and_subtask_indentation",
     "audit_markdown_rfc2119_normative_keywords_and_requirement_traceability",
     "audit_markdown_adr_madr_sections_and_supersession_hygiene",
+    "audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene",
     "AnydocService",
 ]
 
@@ -10021,4 +10022,105 @@ AnyDocService.audit_markdown_adr_madr_sections_and_supersession_hygiene = static
 )
 AnydocService.audit_markdown_adr_madr_sections_and_supersession_hygiene = staticmethod(
     audit_markdown_adr_madr_sections_and_supersession_hygiene
+)
+
+
+def audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene(
+    specs: list[dict[str, Any]],
+    *,
+    require_security_schemes: bool = True,
+    max_deprecated_unannotated_ops: int = 0,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §10.2 — AnyDoc Markdown OpenAPI / AsyncAPI Specification Block Version, OperationId Uniqueness & SecurityScheme Hygiene Auditor."""
+    valid_specs = [
+        s for s in (specs if isinstance(specs, list) else []) if isinstance(s, dict)
+    ]
+
+    critical_specs: list[str] = []
+    warning_specs: list[str] = []
+    spec_evaluations: list[dict[str, Any]] = []
+    total_duplicate_operation_ids = 0
+
+    for idx, spec in enumerate(valid_specs):
+        spec_id = str(spec.get("spec_id") or f"spec-{idx + 1}").strip()
+        spec_type = str(spec.get("spec_type") or "").strip().lower()
+        spec_version = str(spec.get("spec_version") or "").strip()
+        total_operations = int(spec.get("total_operations", 0) or 0)
+        dup_ops_raw = spec.get("duplicate_operation_ids")
+        duplicate_operation_ids = (
+            [str(op) for op in dup_ops_raw]
+            if isinstance(dup_ops_raw, (list, tuple))
+            else []
+        )
+        unauth_write_ops = int(
+            spec.get("unauthenticated_public_write_ops", 0) or 0
+        )
+        sec_schemes_defined = bool(spec.get("security_schemes_defined", True))
+        missing_error_schemas = int(
+            spec.get("missing_error_response_schemas_count", 0) or 0
+        )
+        deprecated_no_sunset = int(
+            spec.get("deprecated_without_sunset_header_count", 0) or 0
+        )
+
+        total_duplicate_operation_ids += len(duplicate_operation_ids)
+
+        supported_version = bool(
+            (spec_type == "openapi" and spec_version.startswith(("3.0.", "3.1.")))
+            or (spec_type == "asyncapi" and spec_version.startswith(("2.", "3.")))
+        )
+        critical_api_spec_breach = bool(
+            not supported_version
+            or len(duplicate_operation_ids) > 0
+            or unauth_write_ops > 0
+            or (require_security_schemes and not sec_schemes_defined)
+        )
+        schema_or_deprecation_warning = bool(
+            not critical_api_spec_breach
+            and (
+                missing_error_schemas > 0
+                or deprecated_no_sunset > int(max_deprecated_unannotated_ops)
+            )
+        )
+
+        if critical_api_spec_breach:
+            critical_specs.append(spec_id)
+        elif schema_or_deprecation_warning:
+            warning_specs.append(spec_id)
+
+        spec_evaluations.append(
+            {
+                "spec_id": spec_id,
+                "spec_type": spec_type,
+                "spec_version": spec_version,
+                "total_operations": total_operations,
+                "supported_version": supported_version,
+                "duplicate_operation_ids_count": len(duplicate_operation_ids),
+                "critical_api_spec_breach": critical_api_spec_breach,
+                "schema_or_deprecation_warning": schema_or_deprecation_warning,
+            }
+        )
+
+    if len(critical_specs) > 0:
+        status = "CRITICAL"
+    elif len(warning_specs) > 0:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "status": status,
+        "evaluated_specs_count": len(spec_evaluations),
+        "critical_specs": critical_specs,
+        "warning_specs": warning_specs,
+        "total_duplicate_operation_ids": total_duplicate_operation_ids,
+        "spec_evaluations": spec_evaluations,
+    }
+
+
+AnyDocService.audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene = staticmethod(
+    audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene
+)
+AnydocService.audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene = staticmethod(
+    audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene
 )

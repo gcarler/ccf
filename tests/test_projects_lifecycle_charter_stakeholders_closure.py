@@ -11844,3 +11844,111 @@ def test_audit_eia_environmental_permit_conditions_and_chance_find_stop_work_sta
     )
 
 
+def test_audit_decommissioning_hazmat_manifest_and_site_remediation_clearance_healthy():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_decommissioning_hazmat_manifest_and_site_remediation_clearance,
+    )
+
+    records = [
+        {
+            "zone_id": "ZONE-ASBESTOS-01",
+            "hazmat_class": "asbestos",
+            "disposal_manifests_completed": 12,
+            "disposal_manifests_required": 12,
+            "post_remediation_contaminant_ppm": 0.004,
+            "regulatory_threshold_ppm": 0.01,
+            "uncontained_spill_incident": False,
+            "licensed_epa_tsdf_facility": True,
+            "estimated_salvage_value": 50000.0,
+            "realized_salvage_value": 45000.0,
+            "regulatory_clearance_certificate_issued": True,
+        }
+    ]
+    res = audit_decommissioning_hazmat_manifest_and_site_remediation_clearance(records)
+    assert res["status"] == "HEALTHY"
+    assert res["evaluated_zones_count"] == 1
+    assert res["critical_zones"] == []
+    assert res["warning_zones"] == []
+    assert res["overall_salvage_recovery_ratio"] == 0.9
+    assert res["zone_evaluations"][0]["manifest_chain_custody_pct"] == 100.0
+    assert res["zone_evaluations"][0]["contaminant_ppm_ratio"] == 0.4
+
+
+def test_audit_decommissioning_hazmat_manifest_and_site_remediation_clearance_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_decommissioning_hazmat_manifest_and_site_remediation_clearance,
+    )
+
+    records = [
+        {
+            "zone_id": "ZONE-LEAD-02",
+            "hazmat_class": "lead",
+            "disposal_manifests_completed": 8,
+            "disposal_manifests_required": 8,
+            "post_remediation_contaminant_ppm": 15.0,
+            "regulatory_threshold_ppm": 50.0,
+            "uncontained_spill_incident": False,
+            "licensed_epa_tsdf_facility": True,
+            "estimated_salvage_value": 100000.0,
+            "realized_salvage_value": 65000.0,
+            "regulatory_clearance_certificate_issued": False,
+        }
+    ]
+    res = audit_decommissioning_hazmat_manifest_and_site_remediation_clearance(
+        records, min_salvage_recovery_ratio=0.80
+    )
+    assert res["status"] == "WARNING"
+    assert res["critical_zones"] == []
+    assert res["warning_zones"] == ["ZONE-LEAD-02"]
+    assert res["overall_salvage_recovery_ratio"] == 0.65
+    assert res["zone_evaluations"][0]["clearance_or_salvage_warning"] is True
+
+
+def test_audit_decommissioning_hazmat_manifest_and_site_remediation_clearance_critical():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_decommissioning_hazmat_manifest_and_site_remediation_clearance,
+    )
+
+    records = [
+        {
+            "zone_id": "ZONE-PCB-SPILL",
+            "hazmat_class": "pcb",
+            "disposal_manifests_completed": 7,
+            "disposal_manifests_required": 10,
+            "post_remediation_contaminant_ppm": 85.0,
+            "regulatory_threshold_ppm": 50.0,
+            "uncontained_spill_incident": True,
+            "licensed_epa_tsdf_facility": False,
+            "estimated_salvage_value": 20000.0,
+            "realized_salvage_value": 18000.0,
+            "regulatory_clearance_certificate_issued": False,
+        }
+    ]
+    res = audit_decommissioning_hazmat_manifest_and_site_remediation_clearance(records)
+    assert res["status"] == "CRITICAL"
+    assert res["critical_zones"] == ["ZONE-PCB-SPILL"]
+    assert res["warning_zones"] == []
+    assert res["zone_evaluations"][0]["critical_hazmat_breach"] is True
+
+
+def test_audit_decommissioning_hazmat_manifest_and_site_remediation_clearance_empty_and_binding():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_decommissioning_hazmat_manifest_and_site_remediation_clearance,
+    )
+
+    empty = audit_decommissioning_hazmat_manifest_and_site_remediation_clearance([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["evaluated_zones_count"] == 0
+    assert empty["overall_salvage_recovery_ratio"] == 1.0
+    assert (
+        ProjectLifecyclePMIService.audit_decommissioning_hazmat_manifest_and_site_remediation_clearance(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_decommissioning_hazmat_manifest_and_site_remediation_clearance"
+        in mod.__all__
+    )

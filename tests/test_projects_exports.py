@@ -12588,3 +12588,196 @@ def test_nerc_cip_empty_invalid_assets_and_field_reversion():
         "nerc_cip_status": "NERC_CIP_BES_COMPLIANT",
         "is_nerc_cip_compliant": True,
     }
+
+
+def test_soc2_type2_clean_report_and_compliant_defaults():
+    """Controles TSC con muestreo dentro de la tasa 0% y CUEC mapeado -> 'SOC2_TYPE2_UNQUALIFIED_CLEAN'."""
+    import backend.services.project_export_service as export_module
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter,
+    )
+
+    controls = [
+        {
+            "control_id": "TSC-CC6-001",
+            "sample_size": 25,
+            "exceptions_found": 0,
+            "subservice_cuec_mapped": True,
+            "management_response_attached": True,
+        },
+        {
+            "control_id": "TSC-A1-002",
+            # Defaults implícitos por campo: sample 25, 0 excepciones, CUEC True, respuesta True.
+        },
+        {
+            "control_id": "TSC-PI1-003",
+            "exceptions_found": 1,
+            "sample_size": 100,
+        },
+    ]
+    res = audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter(
+        controls,
+        max_allowable_deviation_rate_pct=1.0,
+    )
+    assert res == {
+        "evaluated_control_count": 3,
+        "qualified_opinion_or_unmapped_cuec_control_ids": [],
+        "remediated_deviation_control_ids": [],
+        "bridge_letter_stale": False,
+        "soc2_audit_status": "SOC2_TYPE2_UNQUALIFIED_CLEAN",
+        "is_soc2_unqualified_clean": True,
+    }
+    # Frontera estricta: 1 excepción / 100 muestras = exactly 1.0% con límite 1.0 -> dentro (estricto >)
+    at_limit = audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter(
+        [{"control_id": "TSC-CC7-004", "sample_size": 100, "exceptions_found": 1}],
+        max_allowable_deviation_rate_pct=1.0,
+    )
+    assert at_limit["soc2_audit_status"] == "SOC2_TYPE2_UNQUALIFIED_CLEAN"
+    # Bridge letter dentro del límite de 90 días con cobertura 0 por default
+    bridge_at_limit = audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter(
+        [{"control_id": "TSC-CC9-005"}],
+        bridge_letter_coverage_gap_days=90,
+    )
+    assert bridge_at_limit["bridge_letter_stale"] is False
+    assert bridge_at_limit["soc2_audit_status"] == "SOC2_TYPE2_UNQUALIFIED_CLEAN"
+    assert (
+        ProjectExportService.audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter(
+            controls,
+            max_allowable_deviation_rate_pct=1.0,
+        )
+        == res
+    )
+    assert "audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter" in export_module.__all__
+
+
+def test_soc2_type2_qualified_opinion_or_unmapped_cuec_breach():
+    """Desviación sin respuesta de management, CUEC no mapeado o sample <= 0 -> BREACH con precedencia."""
+    from backend.services.project_export_service import (
+        audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter,
+    )
+
+    breach = audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter(
+        [
+            # Desviación > 0% sin respuesta de management adjunta.
+            {
+                "control_id": "TSC-CC6-010",
+                "sample_size": 25,
+                "exceptions_found": 2,
+                "management_response_attached": False,
+            },
+        ]
+    )
+    assert breach["qualified_opinion_or_unmapped_cuec_control_ids"] == ["TSC-CC6-010"]
+    assert breach["soc2_audit_status"] == "CRITICAL_QUALIFIED_OPINION_OR_UNMAPPED_CUEC_BREACH"
+    assert breach["is_soc2_unqualified_clean"] is False
+
+    unmapped_cuec = audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter(
+        [
+            {
+                "control_id": "TSC-CC4-011",
+                "subservice_cuec_mapped": False,
+            },
+        ]
+    )
+    assert unmapped_cuec["qualified_opinion_or_unmapped_cuec_control_ids"] == ["TSC-CC4-011"]
+    assert unmapped_cuec["soc2_audit_status"] == "CRITICAL_QUALIFIED_OPINION_OR_UNMAPPED_CUEC_BREACH"
+
+    zero_sample = audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter(
+        [
+            {
+                "control_id": "TSC-A1-012",
+                "sample_size": 0,
+            },
+        ]
+    )
+    assert zero_sample["qualified_opinion_or_unmapped_cuec_control_ids"] == ["TSC-A1-012"]
+    assert zero_sample["soc2_audit_status"] == "CRITICAL_QUALIFIED_OPINION_OR_UNMAPPED_CUEC_BREACH"
+
+
+def test_soc2_type2_remediated_deviation_and_bridge_letter_warning():
+    """Desviación con respuesta de management -> WARNING mitigado; bridge letter vencida o negativa -> WARNING."""
+    from backend.services.project_export_service import (
+        audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter,
+    )
+
+    # 4 excepciones / 25 = 16% > 0 sin attached False -> remediated con respuesta adjunta.
+    mitigated = audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter(
+        [
+            {
+                "control_id": "TSC-CC8-020",
+                "sample_size": 25,
+                "exceptions_found": 4,
+                "management_response_attached": True,
+            },
+        ]
+    )
+    assert mitigated["remediated_deviation_control_ids"] == ["TSC-CC8-020"]
+    assert mitigated["qualified_opinion_or_unmapped_cuec_control_ids"] == []
+    assert mitigated["soc2_audit_status"] == "EXCEPTION_WITH_MANAGEMENT_RESPONSE_OR_BRIDGE_WARNING"
+    assert mitigated["bridge_letter_stale"] is False
+    assert mitigated["is_soc2_unqualified_clean"] is False
+
+    # Custom: límite 5% con 6/100 = 6% -> remediated.
+    custom_rate = audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter(
+        [{"control_id": "TSC-PI1-021", "sample_size": 100, "exceptions_found": 6}],
+        max_allowable_deviation_rate_pct=5.0,
+    )
+    assert custom_rate["remediated_deviation_control_ids"] == ["TSC-PI1-021"]
+
+    # Solo bridge letter vencida (91 días > 90) dispara WARNING.
+    stale_bridge = audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter(
+        [{"control_id": "TSC-CC1-022"}],
+        bridge_letter_coverage_gap_days=91,
+    )
+    assert stale_bridge["bridge_letter_stale"] is True
+    assert stale_bridge["soc2_audit_status"] == "EXCEPTION_WITH_MANAGEMENT_RESPONSE_OR_BRIDGE_WARNING"
+    assert stale_bridge["is_soc2_unqualified_clean"] is False
+
+    # Bridge letter con cobertura negativa también es stale.
+    negative_gap = audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter(
+        [{"control_id": "TSC-CC2-023"}],
+        bridge_letter_coverage_gap_days=-5,
+    )
+    assert negative_gap["bridge_letter_stale"] is True
+    assert negative_gap["soc2_audit_status"] == "EXCEPTION_WITH_MANAGEMENT_RESPONSE_OR_BRIDGE_WARNING"
+
+
+def test_soc2_type2_empty_invalid_controls_and_field_reversion():
+    """None, no-dicts y control_id inválido se descartan; campos no-int/no-bool revierten a defaults."""
+    from backend.services.project_export_service import (
+        audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter,
+    )
+
+    empty = audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter(None)
+    assert empty == {
+        "evaluated_control_count": 0,
+        "qualified_opinion_or_unmapped_cuec_control_ids": [],
+        "remediated_deviation_control_ids": [],
+        "bridge_letter_stale": False,
+        "soc2_audit_status": "SOC2_TYPE2_UNQUALIFIED_CLEAN",
+        "is_soc2_unqualified_clean": True,
+    }
+
+    reverted = audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter(
+        [
+            {
+                "control_id": "TSC-CC3-030",
+                "sample_size": "twenty-five",       # no-int -> default 25
+                "exceptions_found": None,           # no-int -> default 0
+                "subservice_cuec_mapped": "yes",    # no-bool -> default True
+                "management_response_attached": 1,  # no-bool -> default True
+            },
+            {"control_id": "   "},  # blanco -> descartado
+            {"control_id": 42},     # no str -> descartado
+            "not-a-dict",           # no dict -> descartado
+        ],
+        max_allowable_deviation_rate_pct="five",  # no-float -> default 0.0
+        bridge_letter_coverage_gap_days="ninety",  # no-int -> default 0
+        max_bridge_letter_gap_days=None,           # no-int -> default 90
+    )
+    assert reverted["evaluated_control_count"] == 1
+    assert reverted["qualified_opinion_or_unmapped_cuec_control_ids"] == []
+    assert reverted["remediated_deviation_control_ids"] == []
+    assert reverted["soc2_audit_status"] == "SOC2_TYPE2_UNQUALIFIED_CLEAN"
+    assert reverted["is_soc2_unqualified_clean"] is True

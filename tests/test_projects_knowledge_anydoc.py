@@ -9678,3 +9678,114 @@ def test_audit_markdown_adr_madr_sections_and_supersession_hygiene_service_bindi
         == audit_markdown_adr_madr_sections_and_supersession_hygiene(sample)
     )
     assert "audit_markdown_adr_madr_sections_and_supersession_hygiene" in mod.__all__
+
+
+def test_audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene_healthy():
+    from backend.services.anydoc_service import (
+        audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene,
+    )
+
+    specs = [
+        {
+            "spec_id": "ccf-projects-openapi",
+            "spec_type": "openapi",
+            "spec_version": "3.1.0",
+            "total_operations": 42,
+            "duplicate_operation_ids": [],
+            "unauthenticated_public_write_ops": 0,
+            "security_schemes_defined": True,
+            "missing_error_response_schemas_count": 0,
+            "deprecated_without_sunset_header_count": 0,
+        },
+        {
+            "spec_id": "ccf-events-asyncapi",
+            "spec_type": "asyncapi",
+            "spec_version": "2.6.0",
+            "total_operations": 12,
+            "duplicate_operation_ids": [],
+            "unauthenticated_public_write_ops": 0,
+            "security_schemes_defined": True,
+            "missing_error_response_schemas_count": 0,
+            "deprecated_without_sunset_header_count": 0,
+        },
+    ]
+    res = audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene(specs)
+    assert res["status"] == "HEALTHY"
+    assert res["evaluated_specs_count"] == 2
+    assert res["critical_specs"] == []
+    assert res["warning_specs"] == []
+    assert res["total_duplicate_operation_ids"] == 0
+
+
+def test_audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene,
+    )
+
+    specs = [
+        {
+            "spec_id": "ccf-legacy-openapi",
+            "spec_type": "openapi",
+            "spec_version": "3.0.3",
+            "total_operations": 20,
+            "duplicate_operation_ids": [],
+            "unauthenticated_public_write_ops": 0,
+            "security_schemes_defined": True,
+            "missing_error_response_schemas_count": 3,
+            "deprecated_without_sunset_header_count": 2,
+        }
+    ]
+    res = audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene(specs)
+    assert res["status"] == "WARNING"
+    assert res["critical_specs"] == []
+    assert res["warning_specs"] == ["ccf-legacy-openapi"]
+    assert res["spec_evaluations"][0]["schema_or_deprecation_warning"] is True
+
+
+def test_audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene_critical():
+    from backend.services.anydoc_service import (
+        audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene,
+    )
+
+    specs = [
+        {
+            "spec_id": "ccf-swagger-2-broken",
+            "spec_type": "openapi",
+            "spec_version": "2.0",
+            "total_operations": 15,
+            "duplicate_operation_ids": ["createProject", "updateCharter"],
+            "unauthenticated_public_write_ops": 2,
+            "security_schemes_defined": False,
+        }
+    ]
+    res = audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene(specs)
+    assert res["status"] == "CRITICAL"
+    assert res["critical_specs"] == ["ccf-swagger-2-broken"]
+    assert res["total_duplicate_operation_ids"] == 2
+    assert res["spec_evaluations"][0]["critical_api_spec_breach"] is True
+
+
+def test_audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene_empty_and_binding():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene,
+    )
+
+    empty = audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["evaluated_specs_count"] == 0
+    assert empty["total_duplicate_operation_ids"] == 0
+    assert (
+        AnyDocService.audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene([])
+        == empty
+    )
+    assert (
+        AnydocService.audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene([])
+        == empty
+    )
+    assert (
+        "audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene"
+        in mod.__all__
+    )
