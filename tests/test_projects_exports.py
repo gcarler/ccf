@@ -8941,3 +8941,152 @@ def test_audit_executive_report_watermelon_kpi_and_narrative_consistency_staticm
         "audit_executive_report_watermelon_kpi_and_narrative_consistency"
         in mod.__all__
     )
+
+
+def test_audit_executive_report_multi_region_failover_and_split_brain_fencing_failure():
+    from backend.services.project_export_service import (
+        audit_executive_report_multi_region_failover_and_split_brain_fencing,
+    )
+
+    res = audit_executive_report_multi_region_failover_and_split_brain_fencing(
+        [
+            {
+                "region_id": "us-east-1",
+                "dns_failover_ttl_seconds": 30,
+                "replication_lag_ms": 120.0,
+                "has_stonith_quorum_fencing": False,
+                "passed_automated_regional_evacuation_drill": True,
+            },
+            {
+                "region_id": "eu-west-1",
+                "dns_failover_ttl_seconds": 30,
+                "replication_lag_ms": 80.0,
+                "has_stonith_quorum_fencing": True,
+                "passed_automated_regional_evacuation_drill": False,
+            },
+        ],
+        max_dns_failover_ttl_seconds=60,
+        max_replication_lag_ms=500.0,
+    )
+    assert res["total_regions_evaluated"] == 2
+    assert res["split_brain_vulnerable_region_ids"] == ["us-east-1"]
+    assert res["failed_evacuation_drill_region_ids"] == ["eu-west-1"]
+    assert res["high_replication_lag_region_ids"] == []
+    assert res["slow_dns_ttl_region_ids"] == []
+    assert (
+        res["multi_region_resilience_status"]
+        == "SPLIT_BRAIN_OR_EVACUATION_FAILURE"
+    )
+    assert res["is_multi_region_compliant"] is False
+
+
+def test_audit_executive_report_multi_region_failover_and_split_brain_fencing_lag_and_dns_warning():
+    from backend.services.project_export_service import (
+        audit_executive_report_multi_region_failover_and_split_brain_fencing,
+    )
+
+    res = audit_executive_report_multi_region_failover_and_split_brain_fencing(
+        [
+            {
+                "region_id": "sa-east-1",
+                "dns_failover_ttl_seconds": 300,
+                "replication_lag_ms": 850.0,
+                "has_stonith_quorum_fencing": True,
+                "passed_automated_regional_evacuation_drill": True,
+            },
+            {
+                "region_id": "ap-southeast-1",
+                "dns_failover_ttl_seconds": 0,
+                "replication_lag_ms": 200.0,
+                "has_stonith_quorum_fencing": True,
+                "passed_automated_regional_evacuation_drill": True,
+            },
+        ],
+        max_dns_failover_ttl_seconds=60,
+        max_replication_lag_ms=500.0,
+    )
+    assert res["split_brain_vulnerable_region_ids"] == []
+    assert res["failed_evacuation_drill_region_ids"] == []
+    assert res["high_replication_lag_region_ids"] == ["sa-east-1"]
+    assert res["slow_dns_ttl_region_ids"] == ["sa-east-1", "ap-southeast-1"]
+    assert (
+        res["multi_region_resilience_status"]
+        == "REPLICATION_OR_DNS_LAG_WARNING"
+    )
+    assert res["is_multi_region_compliant"] is False
+
+
+def test_audit_executive_report_multi_region_failover_and_split_brain_fencing_resilient_and_empty():
+    from backend.services.project_export_service import (
+        audit_executive_report_multi_region_failover_and_split_brain_fencing,
+    )
+
+    empty = (
+        audit_executive_report_multi_region_failover_and_split_brain_fencing(
+            [{"region_id": "   "}, "invalid"]  # type: ignore[list-item]
+        )
+    )
+    assert empty["total_regions_evaluated"] == 0
+    assert (
+        empty["multi_region_resilience_status"] == "ACTIVE_ACTIVE_RESILIENT"
+    )
+    assert empty["is_multi_region_compliant"] is True
+
+    resilient = (
+        audit_executive_report_multi_region_failover_and_split_brain_fencing(
+            [
+                {
+                    "region_id": "us-east-1",
+                    "dns_failover_ttl_seconds": 30,
+                    "replication_lag_ms": 45.0,
+                    "has_stonith_quorum_fencing": True,
+                    "passed_automated_regional_evacuation_drill": True,
+                },
+                {
+                    "region_id": "us-west-2",
+                    "dns_failover_ttl_seconds": 60,
+                    "replication_lag_ms": 110.0,
+                    "has_stonith_quorum_fencing": True,
+                    "passed_automated_regional_evacuation_drill": True,
+                },
+            ],
+            max_dns_failover_ttl_seconds=60,
+            max_replication_lag_ms=500.0,
+        )
+    )
+    assert resilient["total_regions_evaluated"] == 2
+    assert (
+        resilient["multi_region_resilience_status"]
+        == "ACTIVE_ACTIVE_RESILIENT"
+    )
+    assert resilient["is_multi_region_compliant"] is True
+
+
+def test_audit_executive_report_multi_region_failover_and_split_brain_fencing_staticmethod_and_dunder_all():
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_multi_region_failover_and_split_brain_fencing,
+    )
+
+    sample = [
+        {
+            "region_id": "eu-central-1",
+            "dns_failover_ttl_seconds": 30,
+            "replication_lag_ms": 50.0,
+            "has_stonith_quorum_fencing": True,
+            "passed_automated_regional_evacuation_drill": True,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_multi_region_failover_and_split_brain_fencing(
+            sample
+        )
+        == audit_executive_report_multi_region_failover_and_split_brain_fencing(
+            sample
+        )
+    )
+    assert (
+        "audit_executive_report_multi_region_failover_and_split_brain_fencing"
+        in mod.__all__
+    )

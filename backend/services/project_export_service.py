@@ -3001,6 +3001,7 @@ __all__ = [
     "audit_executive_report_data_privacy_pii_masking_and_residency",
     "audit_executive_report_wcag_accessibility_and_aria_compliance",
     "audit_executive_report_watermelon_kpi_and_narrative_consistency",
+    "audit_executive_report_multi_region_failover_and_split_brain_fencing",
     "ProjectExportService",
 ]
 
@@ -6957,4 +6958,104 @@ def audit_executive_report_watermelon_kpi_and_narrative_consistency(
 
 ProjectExportService.audit_executive_report_watermelon_kpi_and_narrative_consistency = staticmethod(
     audit_executive_report_watermelon_kpi_and_narrative_consistency
+)
+
+
+def audit_executive_report_multi_region_failover_and_split_brain_fencing(
+    regions: list[dict[str, Any]],
+    *,
+    max_dns_failover_ttl_seconds: int = 60,
+    max_replication_lag_ms: float = 500.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §11.6 & §10.2 — Executive Report Multi-Region Active-Active Failover Split-Brain, DNS TTL & Quorum Fencing Auditor."""
+    valid_regions: list[dict[str, Any]] = []
+    if isinstance(regions, (list, tuple)):
+        for item in regions:
+            if not isinstance(item, dict):
+                continue
+            rid = str(item.get("region_id") or "").strip()
+            if not rid:
+                continue
+            valid_regions.append({**item, "_rid": rid})
+
+    if not valid_regions:
+        return {
+            "total_regions_evaluated": 0,
+            "split_brain_vulnerable_region_ids": [],
+            "failed_evacuation_drill_region_ids": [],
+            "high_replication_lag_region_ids": [],
+            "slow_dns_ttl_region_ids": [],
+            "multi_region_resilience_status": "ACTIVE_ACTIVE_RESILIENT",
+            "is_multi_region_compliant": True,
+            "recommendations": [],
+        }
+
+    split_brain_vulnerable_region_ids: list[str] = []
+    failed_evacuation_drill_region_ids: list[str] = []
+    high_replication_lag_region_ids: list[str] = []
+    slow_dns_ttl_region_ids: list[str] = []
+
+    for reg in valid_regions:
+        rid = reg["_rid"]
+        raw_ttl = reg.get("dns_failover_ttl_seconds")
+        dns_ttl = int(raw_ttl if raw_ttl is not None else 30)
+        raw_lag = reg.get("replication_lag_ms")
+        rep_lag = float(raw_lag if raw_lag is not None else 100.0)
+        has_fencing = bool(reg.get("has_stonith_quorum_fencing", True))
+        passed_drill = bool(
+            reg.get("passed_automated_regional_evacuation_drill", True)
+        )
+
+        if not has_fencing:
+            split_brain_vulnerable_region_ids.append(rid)
+        if not passed_drill:
+            failed_evacuation_drill_region_ids.append(rid)
+        if rep_lag > max_replication_lag_ms:
+            high_replication_lag_region_ids.append(rid)
+        if dns_ttl > max_dns_failover_ttl_seconds or dns_ttl <= 0:
+            slow_dns_ttl_region_ids.append(rid)
+
+    recommendations: list[str] = []
+    if split_brain_vulnerable_region_ids:
+        recommendations.append(
+            f"Configure STONITH / consensus quorum fencing to eliminate split-brain write corruption in region(s): {', '.join(split_brain_vulnerable_region_ids)}."
+        )
+    if failed_evacuation_drill_region_ids:
+        recommendations.append(
+            f"Remediate automated regional traffic evacuation drill failures in region(s): {', '.join(failed_evacuation_drill_region_ids)}."
+        )
+    if high_replication_lag_region_ids:
+        recommendations.append(
+            f"Reduce cross-region replication lag below <= {max_replication_lag_ms} ms in region(s): {', '.join(high_replication_lag_region_ids)}."
+        )
+    if slow_dns_ttl_region_ids:
+        recommendations.append(
+            f"Tune DNS failover TTL within (0, {max_dns_failover_ttl_seconds}] seconds in region(s): {', '.join(slow_dns_ttl_region_ids)}."
+        )
+
+    if (
+        split_brain_vulnerable_region_ids
+        or failed_evacuation_drill_region_ids
+    ):
+        multi_region_resilience_status = "SPLIT_BRAIN_OR_EVACUATION_FAILURE"
+    elif high_replication_lag_region_ids or slow_dns_ttl_region_ids:
+        multi_region_resilience_status = "REPLICATION_OR_DNS_LAG_WARNING"
+    else:
+        multi_region_resilience_status = "ACTIVE_ACTIVE_RESILIENT"
+
+    return {
+        "total_regions_evaluated": len(valid_regions),
+        "split_brain_vulnerable_region_ids": split_brain_vulnerable_region_ids,
+        "failed_evacuation_drill_region_ids": failed_evacuation_drill_region_ids,
+        "high_replication_lag_region_ids": high_replication_lag_region_ids,
+        "slow_dns_ttl_region_ids": slow_dns_ttl_region_ids,
+        "multi_region_resilience_status": multi_region_resilience_status,
+        "is_multi_region_compliant": multi_region_resilience_status
+        == "ACTIVE_ACTIVE_RESILIENT",
+        "recommendations": recommendations,
+    }
+
+
+ProjectExportService.audit_executive_report_multi_region_failover_and_split_brain_fencing = staticmethod(
+    audit_executive_report_multi_region_failover_and_split_brain_fencing
 )
