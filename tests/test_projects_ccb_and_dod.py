@@ -9351,3 +9351,144 @@ def test_ccb_secret_scanning_invalid_and_binding():
         "audit_secret_scanning_pre_receive_and_leak_revocation"
         in mod.__all__
     )
+
+
+def test_audit_iac_terraform_drift_and_state_lock_hygiene_breach():
+    from backend.services.project_ccb_service import (
+        audit_iac_terraform_drift_and_state_lock_hygiene,
+    )
+
+    result = audit_iac_terraform_drift_and_state_lock_hygiene(
+        [
+            {
+                "workspace_id": "WS-UNLOCKED",
+                "unmanaged_console_mutations_count": 0,
+                "drifted_resources_count": 0,
+                "hours_since_drift_detected": 0.0,
+                "remote_state_locking_and_encryption_enabled": False,
+                "destructive_plan_requires_ccb_approval": True,
+            },
+            {
+                "workspace_id": "WS-NO-CCB-GATE",
+                "unmanaged_console_mutations_count": 0,
+                "drifted_resources_count": 0,
+                "hours_since_drift_detected": 0.0,
+                "remote_state_locking_and_encryption_enabled": True,
+                "destructive_plan_requires_ccb_approval": False,
+            },
+            {
+                "workspace_id": "WS-CLICKOPS",
+                "unmanaged_console_mutations_count": 2,
+                "drifted_resources_count": 0,
+                "hours_since_drift_detected": 0.0,
+                "remote_state_locking_and_encryption_enabled": True,
+                "destructive_plan_requires_ccb_approval": True,
+            },
+        ],
+        max_drift_reconciliation_hours=24.0,
+    )
+    assert result["evaluated_workspaces_count"] == 3
+    assert result["unlocked_state_or_console_mutation_workspace_ids"] == [
+        "WS-UNLOCKED",
+        "WS-NO-CCB-GATE",
+        "WS-CLICKOPS",
+    ]
+    assert result["unreconciled_drift_workspace_ids"] == []
+    assert (
+        result["iac_governance_status"]
+        == "IAC_STATE_LOCK_OR_CONSOLE_MUTATION_BREACH"
+    )
+    assert result["is_iac_gitops_compliant"] is False
+
+
+def test_audit_iac_terraform_drift_and_state_lock_hygiene_warning():
+    from backend.services.project_ccb_service import (
+        audit_iac_terraform_drift_and_state_lock_hygiene,
+    )
+
+    result = audit_iac_terraform_drift_and_state_lock_hygiene(
+        [
+            {
+                "workspace_id": "WS-STALE-DRIFT",
+                "unmanaged_console_mutations_count": 0,
+                "drifted_resources_count": 3,
+                "hours_since_drift_detected": 36.0,
+                "remote_state_locking_and_encryption_enabled": True,
+                "destructive_plan_requires_ccb_approval": True,
+            },
+            {
+                "workspace_id": "WS-FRESH-DRIFT",
+                "unmanaged_console_mutations_count": 0,
+                "drifted_resources_count": 1,
+                "hours_since_drift_detected": 4.0,
+                "remote_state_locking_and_encryption_enabled": True,
+                "destructive_plan_requires_ccb_approval": True,
+            },
+        ],
+        max_drift_reconciliation_hours=24.0,
+    )
+    assert result["evaluated_workspaces_count"] == 2
+    assert result["unlocked_state_or_console_mutation_workspace_ids"] == []
+    assert result["unreconciled_drift_workspace_ids"] == ["WS-STALE-DRIFT"]
+    assert (
+        result["iac_governance_status"]
+        == "IAC_DRIFT_RECONCILIATION_SLA_WARNING"
+    )
+    assert result["is_iac_gitops_compliant"] is False
+
+
+def test_audit_iac_terraform_drift_and_state_lock_hygiene_optimal_and_empty():
+    from backend.services.project_ccb_service import (
+        audit_iac_terraform_drift_and_state_lock_hygiene,
+    )
+
+    empty = audit_iac_terraform_drift_and_state_lock_hygiene(
+        [{"workspace_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_workspaces_count"] == 0
+    assert empty["iac_governance_status"] == "IAC_GITOPS_PARITY_OPTIMAL"
+    assert empty["is_iac_gitops_compliant"] is True
+
+    optimal = audit_iac_terraform_drift_and_state_lock_hygiene(
+        [
+            {
+                "workspace_id": "WS-PROD-CORE",
+                "unmanaged_console_mutations_count": 0,
+                "drifted_resources_count": 0,
+                "hours_since_drift_detected": 0.0,
+                "remote_state_locking_and_encryption_enabled": True,
+                "destructive_plan_requires_ccb_approval": True,
+            }
+        ],
+        max_drift_reconciliation_hours=24.0,
+    )
+    assert optimal["evaluated_workspaces_count"] == 1
+    assert optimal["iac_governance_status"] == "IAC_GITOPS_PARITY_OPTIMAL"
+    assert optimal["is_iac_gitops_compliant"] is True
+
+
+def test_audit_iac_terraform_drift_and_state_lock_hygiene_staticmethod_and_dunder_all():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_iac_terraform_drift_and_state_lock_hygiene,
+    )
+
+    sample = [
+        {
+            "workspace_id": "WS-99",
+            "unmanaged_console_mutations_count": 0,
+            "drifted_resources_count": 0,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_iac_terraform_drift_and_state_lock_hygiene(
+            sample
+        )
+        == audit_iac_terraform_drift_and_state_lock_hygiene(sample)
+    )
+    assert (
+        "audit_iac_terraform_drift_and_state_lock_hygiene"
+        in mod.__all__
+    )
+

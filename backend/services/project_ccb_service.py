@@ -2849,6 +2849,7 @@ __all__ = [
     "audit_feature_flag_stale_toggle_debt_and_kill_switch",
     "audit_canary_rollout_traffic_shift_and_auto_rollback_gate",
     "audit_secret_scanning_pre_receive_and_leak_revocation",
+    "audit_iac_terraform_drift_and_state_lock_hygiene",
     "ProjectCCBService",
 ]
 
@@ -7115,5 +7116,83 @@ def audit_secret_scanning_pre_receive_and_leak_revocation(
 
 ProjectCCBService.audit_secret_scanning_pre_receive_and_leak_revocation = staticmethod(
     audit_secret_scanning_pre_receive_and_leak_revocation
+)
+
+
+def audit_iac_terraform_drift_and_state_lock_hygiene(
+    iac_workspaces: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_drift_reconciliation_hours: float = 24.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §8.3 & §11.6 — CCB Infrastructure-as-Code (IaC) Terraform Plan Drift, Unmanaged Manual Mutation & State Lock Hygiene Auditor."""
+    valid_workspaces = [
+        ws
+        for ws in (iac_workspaces or [])
+        if isinstance(ws, Mapping) and str(ws.get("workspace_id") or "").strip()
+    ]
+
+    unlocked_state_or_console_mutation_workspace_ids: list[str] = []
+    unreconciled_drift_workspace_ids: list[str] = []
+
+    for ws in valid_workspaces:
+        wid = str(ws.get("workspace_id")).strip()
+        console_mutations = int(
+            ws.get("unmanaged_console_mutations_count", 0)
+            if ws.get("unmanaged_console_mutations_count") is not None
+            else 0
+        )
+        drifted_resources = int(
+            ws.get("drifted_resources_count", 0)
+            if ws.get("drifted_resources_count") is not None
+            else 0
+        )
+        hours_since_drift = float(
+            ws.get("hours_since_drift_detected", 0.0)
+            if ws.get("hours_since_drift_detected") is not None
+            else 0.0
+        )
+        state_locked_encrypted = bool(
+            ws.get("remote_state_locking_and_encryption_enabled", True)
+            if ws.get("remote_state_locking_and_encryption_enabled") is not None
+            else True
+        )
+        destructive_requires_ccb = bool(
+            ws.get("destructive_plan_requires_ccb_approval", True)
+            if ws.get("destructive_plan_requires_ccb_approval") is not None
+            else True
+        )
+
+        if (
+            not state_locked_encrypted
+            or not destructive_requires_ccb
+            or console_mutations > 0
+        ):
+            unlocked_state_or_console_mutation_workspace_ids.append(wid)
+
+        if (
+            drifted_resources > 0
+            and hours_since_drift > max_drift_reconciliation_hours
+        ):
+            unreconciled_drift_workspace_ids.append(wid)
+
+    if unlocked_state_or_console_mutation_workspace_ids:
+        iac_governance_status = "IAC_STATE_LOCK_OR_CONSOLE_MUTATION_BREACH"
+    elif unreconciled_drift_workspace_ids:
+        iac_governance_status = "IAC_DRIFT_RECONCILIATION_SLA_WARNING"
+    else:
+        iac_governance_status = "IAC_GITOPS_PARITY_OPTIMAL"
+
+    return {
+        "evaluated_workspaces_count": len(valid_workspaces),
+        "unlocked_state_or_console_mutation_workspace_ids": unlocked_state_or_console_mutation_workspace_ids,
+        "unreconciled_drift_workspace_ids": unreconciled_drift_workspace_ids,
+        "iac_governance_status": iac_governance_status,
+        "is_iac_gitops_compliant": iac_governance_status
+        == "IAC_GITOPS_PARITY_OPTIMAL",
+    }
+
+
+ProjectCCBService.audit_iac_terraform_drift_and_state_lock_hygiene = staticmethod(
+    audit_iac_terraform_drift_and_state_lock_hygiene
 )
 

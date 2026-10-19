@@ -5523,6 +5523,7 @@ __all__ = [
     "evaluate_evm_fx_hedging_collar_and_currency_exposure",
     "evaluate_evm_time_and_materials_nte_ceiling_and_rate_card",
     "evaluate_evm_working_capital_cash_conversion_and_mobilization_advance",
+    "evaluate_evm_liquidated_damages_cap_and_eot_relief",
     "ProjectEVMService",
 ]
 
@@ -9544,5 +9545,89 @@ def evaluate_evm_working_capital_cash_conversion_and_mobilization_advance(
 
 ProjectEVMService.evaluate_evm_working_capital_cash_conversion_and_mobilization_advance = staticmethod(
     evaluate_evm_working_capital_cash_conversion_and_mobilization_advance
+)
+
+
+def evaluate_evm_liquidated_damages_cap_and_eot_relief(
+    milestones: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_ld_cap_pct_of_contract: float = 10.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §7.4 & §12.3 — EVM Liquidated Damages (LD) Delay Penalty Cap, Grace Period Exhaustion & Excused Extension (EOT) Evaluator."""
+    valid_milestones = [
+        ms
+        for ms in (milestones or [])
+        if isinstance(ms, Mapping) and str(ms.get("milestone_id") or "").strip()
+    ]
+
+    net_chargeable_delay_days_by_milestone: dict[str, float] = {}
+    uncapped_ld_exposure_total = 0.0
+    ld_cap_breached_milestone_ids: list[str] = []
+    active_ld_accrual_milestone_ids: list[str] = []
+
+    for ms in valid_milestones:
+        mid = str(ms.get("milestone_id")).strip()
+        total_delay = float(
+            ms.get("total_delay_days", 0)
+            if ms.get("total_delay_days") is not None
+            else 0
+        )
+        grace_days = float(
+            ms.get("grace_period_days", 5)
+            if ms.get("grace_period_days") is not None
+            else 5
+        )
+        eot_relief = float(
+            ms.get("approved_eot_relief_days", 0)
+            if ms.get("approved_eot_relief_days") is not None
+            else 0
+        )
+        daily_rate = float(
+            ms.get("daily_ld_rate", 1000.0)
+            if ms.get("daily_ld_rate") is not None
+            else 1000.0
+        )
+        contract_val = float(
+            ms.get("contract_value", 100000.0)
+            if ms.get("contract_value") is not None
+            else 100000.0
+        )
+
+        chargeable_days = max(0.0, total_delay - grace_days - eot_relief)
+        net_chargeable_delay_days_by_milestone[mid] = chargeable_days
+        milestone_ld = chargeable_days * daily_rate
+        uncapped_ld_exposure_total += milestone_ld
+
+        if (
+            contract_val > 0
+            and (milestone_ld / contract_val) * 100.0
+            >= max_ld_cap_pct_of_contract
+        ):
+            ld_cap_breached_milestone_ids.append(mid)
+
+        if chargeable_days > 0:
+            active_ld_accrual_milestone_ids.append(mid)
+
+    if ld_cap_breached_milestone_ids:
+        liquidated_damages_status = "LD_PENALTY_CAP_EXHAUSTED_BREACH"
+    elif active_ld_accrual_milestone_ids:
+        liquidated_damages_status = "LD_DELAY_ACCRUAL_ACTIVE_WARNING"
+    else:
+        liquidated_damages_status = "LD_ZERO_EXPOSURE_OPTIMAL"
+
+    return {
+        "evaluated_milestones_count": len(valid_milestones),
+        "net_chargeable_delay_days_by_milestone": net_chargeable_delay_days_by_milestone,
+        "uncapped_ld_exposure_total": round(uncapped_ld_exposure_total, 2),
+        "ld_cap_breached_milestone_ids": ld_cap_breached_milestone_ids,
+        "active_ld_accrual_milestone_ids": active_ld_accrual_milestone_ids,
+        "liquidated_damages_status": liquidated_damages_status,
+        "is_ld_exposure_compliant": liquidated_damages_status
+        == "LD_ZERO_EXPOSURE_OPTIMAL",
+    }
+
+
+ProjectEVMService.evaluate_evm_liquidated_damages_cap_and_eot_relief = staticmethod(
+    evaluate_evm_liquidated_damages_cap_and_eot_relief
 )
 

@@ -8849,3 +8849,128 @@ def test_evaluate_evm_working_capital_cash_conversion_and_mobilization_advance_s
         in mod.__all__
     )
 
+
+def test_evaluate_evm_liquidated_damages_cap_and_eot_relief_breach():
+    from backend.services.project_evm_service import (
+        evaluate_evm_liquidated_damages_cap_and_eot_relief,
+    )
+
+    result = evaluate_evm_liquidated_damages_cap_and_eot_relief(
+        [
+            {
+                "milestone_id": "MS-CAP-BREACH",
+                "total_delay_days": 20,
+                "grace_period_days": 5,
+                "approved_eot_relief_days": 3,
+                "daily_ld_rate": 1000.0,
+                "contract_value": 100000.0,
+            }
+        ],
+        max_ld_cap_pct_of_contract=10.0,
+    )
+    assert result["evaluated_milestones_count"] == 1
+    assert result["net_chargeable_delay_days_by_milestone"] == {
+        "MS-CAP-BREACH": 12.0
+    }
+    assert result["uncapped_ld_exposure_total"] == 12000.0
+    assert result["ld_cap_breached_milestone_ids"] == ["MS-CAP-BREACH"]
+    assert result["active_ld_accrual_milestone_ids"] == ["MS-CAP-BREACH"]
+    assert (
+        result["liquidated_damages_status"]
+        == "LD_PENALTY_CAP_EXHAUSTED_BREACH"
+    )
+    assert result["is_ld_exposure_compliant"] is False
+
+
+def test_evaluate_evm_liquidated_damages_cap_and_eot_relief_warning():
+    from backend.services.project_evm_service import (
+        evaluate_evm_liquidated_damages_cap_and_eot_relief,
+    )
+
+    result = evaluate_evm_liquidated_damages_cap_and_eot_relief(
+        [
+            {
+                "milestone_id": "MS-ACCRUAL-1",
+                "total_delay_days": 10,
+                "grace_period_days": 5,
+                "approved_eot_relief_days": 2,
+                "daily_ld_rate": 1000.0,
+                "contract_value": 100000.0,
+            }
+        ],
+        max_ld_cap_pct_of_contract=10.0,
+    )
+    assert result["evaluated_milestones_count"] == 1
+    assert result["net_chargeable_delay_days_by_milestone"] == {
+        "MS-ACCRUAL-1": 3.0
+    }
+    assert result["uncapped_ld_exposure_total"] == 3000.0
+    assert result["ld_cap_breached_milestone_ids"] == []
+    assert result["active_ld_accrual_milestone_ids"] == ["MS-ACCRUAL-1"]
+    assert (
+        result["liquidated_damages_status"]
+        == "LD_DELAY_ACCRUAL_ACTIVE_WARNING"
+    )
+    assert result["is_ld_exposure_compliant"] is False
+
+
+def test_evaluate_evm_liquidated_damages_cap_and_eot_relief_optimal_and_empty():
+    from backend.services.project_evm_service import (
+        evaluate_evm_liquidated_damages_cap_and_eot_relief,
+    )
+
+    empty = evaluate_evm_liquidated_damages_cap_and_eot_relief(
+        [{"milestone_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_milestones_count"] == 0
+    assert empty["uncapped_ld_exposure_total"] == 0.0
+    assert empty["liquidated_damages_status"] == "LD_ZERO_EXPOSURE_OPTIMAL"
+    assert empty["is_ld_exposure_compliant"] is True
+
+    optimal = evaluate_evm_liquidated_damages_cap_and_eot_relief(
+        [
+            {
+                "milestone_id": "MS-RELIEVED",
+                "total_delay_days": 12,
+                "grace_period_days": 5,
+                "approved_eot_relief_days": 8,
+                "daily_ld_rate": 1500.0,
+                "contract_value": 100000.0,
+            }
+        ],
+        max_ld_cap_pct_of_contract=10.0,
+    )
+    assert optimal["evaluated_milestones_count"] == 1
+    assert optimal["net_chargeable_delay_days_by_milestone"] == {
+        "MS-RELIEVED": 0.0
+    }
+    assert optimal["uncapped_ld_exposure_total"] == 0.0
+    assert optimal["liquidated_damages_status"] == "LD_ZERO_EXPOSURE_OPTIMAL"
+    assert optimal["is_ld_exposure_compliant"] is True
+
+
+def test_evaluate_evm_liquidated_damages_cap_and_eot_relief_staticmethod_and_dunder_all():
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_liquidated_damages_cap_and_eot_relief,
+    )
+
+    sample = [
+        {
+            "milestone_id": "MS-99",
+            "total_delay_days": 3,
+            "grace_period_days": 5,
+        }
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_liquidated_damages_cap_and_eot_relief(
+            sample
+        )
+        == evaluate_evm_liquidated_damages_cap_and_eot_relief(sample)
+    )
+    assert (
+        "evaluate_evm_liquidated_damages_cap_and_eot_relief"
+        in mod.__all__
+    )
+
