@@ -3019,6 +3019,7 @@ __all__ = [
     "audit_executive_report_forensic_watermark_and_dlp_redaction",
     "audit_executive_report_cold_storage_glacier_restore_rto_and_checksum_manifest",
     "audit_executive_report_smime_pgp_envelope_and_ocsp_stapling",
+    "audit_executive_report_graphql_persisted_query_apq_and_batch_export_throttling",
     "ProjectExportService",
 ]
 
@@ -8490,6 +8491,132 @@ def audit_executive_report_smime_pgp_envelope_and_ocsp_stapling(
 
 ProjectExportService.audit_executive_report_smime_pgp_envelope_and_ocsp_stapling = staticmethod(
     audit_executive_report_smime_pgp_envelope_and_ocsp_stapling
+)
+
+
+def audit_executive_report_graphql_persisted_query_apq_and_batch_export_throttling(
+    export_endpoints: list[dict[str, Any]],
+    *,
+    max_concurrent_batch_exports_per_tenant: int = 5,
+    min_apq_cache_hit_ratio_pct: float = 90.0,
+    forbid_public_schema_introspection: bool = True,
+    require_persisted_query_allowlist: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §10.2 & §11.6 — Audita enforcement de allowlist de Automated Persisted Queries (APQ), bloqueo de introspección pública de esquema y throttling de exportaciones batch concurrentes por tenant."""
+    raw_items = export_endpoints if isinstance(export_endpoints, list) else []
+    valid_items = [item for item in raw_items if isinstance(item, dict)]
+
+    security_exposed_endpoint_ids: list[str] = []
+    throttled_or_low_apq_endpoint_ids: list[str] = []
+    records: list[dict[str, Any]] = []
+    violations: list[str] = []
+    has_critical = False
+    has_warning = False
+
+    for idx, item in enumerate(valid_items):
+        endpoint_id = (
+            str(
+                item.get("endpoint_id") or item.get("id") or f"ep-{idx + 1}"
+            ).strip()
+            or f"ep-{idx + 1}"
+        )
+
+        raw_allowlist = item.get("persisted_query_allowlist_enforced", True)
+        persisted_query_allowlist_enforced = bool(
+            True if raw_allowlist is None else raw_allowlist
+        )
+
+        raw_introspect = item.get("public_introspection_enabled", False)
+        public_introspection_enabled = bool(
+            False if raw_introspect is None else raw_introspect
+        )
+
+        active_concurrent_batch_exports = max(
+            0, int(item.get("active_concurrent_batch_exports") or 0)
+        )
+
+        raw_hit = item.get("apq_cache_hit_ratio_pct", 100.0)
+        apq_cache_hit_ratio_pct = min(
+            100.0, max(0.0, float(100.0 if raw_hit is None else raw_hit))
+        )
+
+        unallowlisted_query_or_introspection_breach = bool(
+            (
+                require_persisted_query_allowlist
+                and not persisted_query_allowlist_enforced
+            )
+            or (
+                forbid_public_schema_introspection
+                and public_introspection_enabled
+            )
+        )
+        concurrent_batch_export_limit_exceeded = (
+            active_concurrent_batch_exports
+            > max_concurrent_batch_exports_per_tenant
+        )
+        apq_cache_hit_ratio_degraded = (
+            apq_cache_hit_ratio_pct < min_apq_cache_hit_ratio_pct
+        )
+
+        if unallowlisted_query_or_introspection_breach:
+            security_exposed_endpoint_ids.append(endpoint_id)
+            has_critical = True
+            violations.append(
+                f"Endpoint '{endpoint_id}' permits unallowlisted ad-hoc queries or public schema introspection."
+            )
+
+        if (
+            concurrent_batch_export_limit_exceeded
+            or apq_cache_hit_ratio_degraded
+        ):
+            throttled_or_low_apq_endpoint_ids.append(endpoint_id)
+            has_warning = True
+            if concurrent_batch_export_limit_exceeded:
+                violations.append(
+                    f"Endpoint '{endpoint_id}' concurrent batch exports ({active_concurrent_batch_exports}) exceed tenant limit ({max_concurrent_batch_exports_per_tenant})."
+                )
+            if apq_cache_hit_ratio_degraded:
+                violations.append(
+                    f"Endpoint '{endpoint_id}' APQ cache hit ratio ({apq_cache_hit_ratio_pct}%) is below minimum ({min_apq_cache_hit_ratio_pct}%)."
+                )
+
+        records.append(
+            {
+                "endpoint_id": endpoint_id,
+                "persisted_query_allowlist_enforced": persisted_query_allowlist_enforced,
+                "public_introspection_enabled": public_introspection_enabled,
+                "active_concurrent_batch_exports": active_concurrent_batch_exports,
+                "apq_cache_hit_ratio_pct": apq_cache_hit_ratio_pct,
+                "unallowlisted_query_or_introspection_breach": unallowlisted_query_or_introspection_breach,
+                "concurrent_batch_export_limit_exceeded": concurrent_batch_export_limit_exceeded,
+                "apq_cache_hit_ratio_degraded": apq_cache_hit_ratio_degraded,
+            }
+        )
+
+    if has_critical:
+        status = "critical"
+        is_compliant = False
+    elif has_warning:
+        status = "warning"
+        is_compliant = False
+    else:
+        status = "healthy"
+        is_compliant = True
+
+    return {
+        "status": status,
+        "is_compliant": is_compliant,
+        "endpoints_evaluated": len(records),
+        "security_exposed_endpoint_ids": security_exposed_endpoint_ids,
+        "throttled_or_low_apq_endpoint_ids": throttled_or_low_apq_endpoint_ids,
+        "records": records,
+        "violations": violations,
+        "Violations": violations,
+    }
+
+
+ProjectExportService.audit_executive_report_graphql_persisted_query_apq_and_batch_export_throttling = staticmethod(
+    audit_executive_report_graphql_persisted_query_apq_and_batch_export_throttling
 )
 
 

@@ -5535,6 +5535,7 @@ __all__ = [
     "evaluate_evm_liquidated_damages_excusable_delay_and_early_bonus",
     "evaluate_evm_subcontractor_backcharge_offset_and_joint_check_disbursement",
     "evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate",
+    "evaluate_evm_foreign_exchange_fx_hedging_collar_and_revaluation_reserve",
     "ProjectEVMService",
 ]
 
@@ -10601,7 +10602,6 @@ ProjectEVMService.evaluate_evm_subcontractor_backcharge_offset_and_joint_check_d
 )
 
 
-
 def evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate(
     equipment_logs: list[dict] | None,
     *,
@@ -10680,3 +10680,135 @@ def evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate(
 ProjectEVMService.evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate = staticmethod(
     evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate
 )
+
+
+def evaluate_evm_foreign_exchange_fx_hedging_collar_and_revaluation_reserve(
+    currency_tranches: list[dict[str, Any]],
+    *,
+    max_unhedged_exposure_pct: float = 15.0,
+    max_fx_rate_collar_breach_pct: float = 5.0,
+    require_revaluation_reserve_coverage: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §7.4 & §11.5 — Evalúa banda de collar de cobertura cambiaria (FX hedging), tope de exposición descubierta y reserva de revaluación mark-to-market."""
+    raw_items = currency_tranches if isinstance(currency_tranches, list) else []
+    valid_items = [item for item in raw_items if isinstance(item, dict)]
+
+    unhedged_or_underreserved_tranche_ids: list[str] = []
+    collar_drift_tranche_ids: list[str] = []
+    records: list[dict[str, Any]] = []
+    violations: list[str] = []
+    has_critical = False
+    has_warning = False
+
+    for idx, item in enumerate(valid_items):
+        tranche_id = (
+            str(
+                item.get("tranche_id") or item.get("id") or f"fx-{idx + 1}"
+            ).strip()
+            or f"fx-{idx + 1}"
+        )
+        total_foreign_commitment_usd = max(
+            0.0, float(item.get("total_foreign_commitment_usd") or 0.0)
+        )
+        hedged_notional_usd = max(
+            0.0, float(item.get("hedged_notional_usd") or 0.0)
+        )
+
+        raw_base = item.get("baseline_fx_rate", 1.0)
+        baseline_fx_rate = float(1.0 if raw_base is None else raw_base)
+
+        raw_spot = item.get("spot_fx_rate", 1.0)
+        spot_fx_rate = float(1.0 if raw_spot is None else raw_spot)
+
+        unrealized_fx_loss_usd = max(
+            0.0, float(item.get("unrealized_fx_loss_usd") or 0.0)
+        )
+        fx_revaluation_reserve_usd = max(
+            0.0, float(item.get("fx_revaluation_reserve_usd") or 0.0)
+        )
+
+        if total_foreign_commitment_usd > 0:
+            unhedged_exposure_pct = round(
+                max(0.0, total_foreign_commitment_usd - hedged_notional_usd)
+                / total_foreign_commitment_usd
+                * 100.0,
+                2,
+            )
+        else:
+            unhedged_exposure_pct = 0.0
+
+        if baseline_fx_rate > 0:
+            fx_rate_drift_pct = round(
+                abs(spot_fx_rate - baseline_fx_rate) / baseline_fx_rate * 100.0,
+                2,
+            )
+        else:
+            fx_rate_drift_pct = 0.0
+
+        unhedged_exposure_or_reserve_deficit_breach = bool(
+            unhedged_exposure_pct > max_unhedged_exposure_pct
+            or (
+                require_revaluation_reserve_coverage
+                and unrealized_fx_loss_usd > fx_revaluation_reserve_usd
+            )
+        )
+        fx_collar_band_exceeded = (
+            fx_rate_drift_pct > max_fx_rate_collar_breach_pct
+        )
+
+        if unhedged_exposure_or_reserve_deficit_breach:
+            unhedged_or_underreserved_tranche_ids.append(tranche_id)
+            has_critical = True
+            violations.append(
+                f"Tranche '{tranche_id}' exceeds unhedged exposure cap or has FX revaluation reserve deficit."
+            )
+
+        if fx_collar_band_exceeded:
+            collar_drift_tranche_ids.append(tranche_id)
+            has_warning = True
+            violations.append(
+                f"Tranche '{tranche_id}' FX rate drift ({fx_rate_drift_pct}%) exceeds collar band ({max_fx_rate_collar_breach_pct}%)."
+            )
+
+        records.append(
+            {
+                "tranche_id": tranche_id,
+                "total_foreign_commitment_usd": total_foreign_commitment_usd,
+                "hedged_notional_usd": hedged_notional_usd,
+                "unhedged_exposure_pct": unhedged_exposure_pct,
+                "baseline_fx_rate": baseline_fx_rate,
+                "spot_fx_rate": spot_fx_rate,
+                "fx_rate_drift_pct": fx_rate_drift_pct,
+                "unrealized_fx_loss_usd": unrealized_fx_loss_usd,
+                "fx_revaluation_reserve_usd": fx_revaluation_reserve_usd,
+                "unhedged_exposure_or_reserve_deficit_breach": unhedged_exposure_or_reserve_deficit_breach,
+                "fx_collar_band_exceeded": fx_collar_band_exceeded,
+            }
+        )
+
+    if has_critical:
+        status = "critical"
+        is_compliant = False
+    elif has_warning:
+        status = "warning"
+        is_compliant = False
+    else:
+        status = "compliant"
+        is_compliant = True
+
+    return {
+        "status": status,
+        "is_compliant": is_compliant,
+        "tranches_evaluated": len(records),
+        "unhedged_or_underreserved_tranche_ids": unhedged_or_underreserved_tranche_ids,
+        "collar_drift_tranche_ids": collar_drift_tranche_ids,
+        "records": records,
+        "violations": violations,
+        "Violations": violations,
+    }
+
+
+ProjectEVMService.evaluate_evm_foreign_exchange_fx_hedging_collar_and_revaluation_reserve = staticmethod(
+    evaluate_evm_foreign_exchange_fx_hedging_collar_and_revaluation_reserve
+)
+

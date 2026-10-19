@@ -2547,6 +2547,7 @@ __all__ = [
     "audit_wiki_ebpf_kernel_probe_ringbuffer_drop_and_verifier_safety",
     "audit_wiki_otel_tail_sampling_baggage_and_span_drop",
     "audit_wiki_vector_embedding_hnsw_index_recall_and_drift_reindexing",
+    "audit_wiki_graph_backlink_reciprocity_and_orphan_clusters",
     "WikiPMIService",
 ]
 
@@ -8009,3 +8010,78 @@ WikiPMIService.audit_wiki_vector_embedding_hnsw_index_recall_and_drift_reindexin
 )
 
 
+def audit_wiki_graph_backlink_reciprocity_and_orphan_clusters(
+    graph_nodes: list[dict] | None,
+    *,
+    max_orphan_cluster_ratio_pct: float = 5.0,
+) -> dict:
+    """PMBOK §4.4 & §10.2 — Audita reciprocidad de backlinks bidireccionales, clústeres de nodos huérfanos aislados y transclusiones rotas del grafo de conocimiento de la Wiki."""
+    raw_items = graph_nodes if isinstance(graph_nodes, list) else []
+    valid_nodes: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_page_id = item.get("page_id")
+        if not isinstance(raw_page_id, str) or not raw_page_id.strip():
+            continue
+        valid_nodes.append(item)
+
+    def _bool(value, default):
+        return value if isinstance(value, bool) else default
+
+    def _int(value, default):
+        if isinstance(value, bool) or not isinstance(value, int):
+            return default
+        return value
+
+    def _float(value, default):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    desynced_backlink_or_broken_transclusion_page_ids: list[str] = []
+    isolated_orphan_cluster_page_ids: list[str] = []
+
+    for node in valid_nodes:
+        page_id = str(node.get("page_id")).strip()
+        backlinks_synced = _bool(
+            node.get("bidirectional_backlinks_synced"), True
+        )
+        broken_transclusions = _int(
+            node.get("broken_transclusion_embeds_count"), 0
+        )
+        is_orphan = _bool(node.get("is_isolated_orphan_node"), False)
+        orphan_cluster_ratio_pct = _float(
+            node.get("orphan_cluster_ratio_pct"), 2.0
+        )
+
+        if not bool(backlinks_synced) or int(broken_transclusions) > 0:
+            desynced_backlink_or_broken_transclusion_page_ids.append(page_id)
+
+        if (
+            bool(is_orphan) is True
+            or float(orphan_cluster_ratio_pct)
+            > float(max_orphan_cluster_ratio_pct)
+        ):
+            isolated_orphan_cluster_page_ids.append(page_id)
+
+    if desynced_backlink_or_broken_transclusion_page_ids:
+        knowledge_graph_status = "BACKLINK_DESYNC_OR_BROKEN_TRANSCLUSION_BREACH"
+    elif isolated_orphan_cluster_page_ids:
+        knowledge_graph_status = "ORPHAN_CLUSTER_FRAGMENTATION_WARNING"
+    else:
+        knowledge_graph_status = "KNOWLEDGE_GRAPH_TOPOLOGY_OPTIMAL"
+
+    return {
+        "evaluated_pages_count": len(valid_nodes),
+        "desynced_backlink_or_broken_transclusion_page_ids": desynced_backlink_or_broken_transclusion_page_ids,
+        "isolated_orphan_cluster_page_ids": isolated_orphan_cluster_page_ids,
+        "knowledge_graph_status": knowledge_graph_status,
+        "is_knowledge_graph_compliant": knowledge_graph_status
+        == "KNOWLEDGE_GRAPH_TOPOLOGY_OPTIMAL",
+    }
+
+
+WikiPMIService.audit_wiki_graph_backlink_reciprocity_and_orphan_clusters = staticmethod(
+    audit_wiki_graph_backlink_reciprocity_and_orphan_clusters
+)

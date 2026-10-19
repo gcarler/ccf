@@ -11512,3 +11512,96 @@ def test_audit_executive_report_smime_pgp_envelope_and_ocsp_stapling_staticmetho
     )
 
 
+def test_audit_executive_report_graphql_persisted_query_apq_and_batch_export_throttling_healthy():
+    from backend.services.project_export_service import (
+        audit_executive_report_graphql_persisted_query_apq_and_batch_export_throttling,
+    )
+
+    res = audit_executive_report_graphql_persisted_query_apq_and_batch_export_throttling(
+        [
+            {
+                "endpoint_id": "GQL-EXP-01",
+                "persisted_query_allowlist_enforced": True,
+                "public_introspection_enabled": False,
+                "active_concurrent_batch_exports": 2,
+                "apq_cache_hit_ratio_pct": 96.5,
+            }
+        ]
+    )
+    assert res["status"] == "healthy"
+    assert res["is_compliant"] is True
+    assert res["endpoints_evaluated"] == 1
+    assert res["security_exposed_endpoint_ids"] == []
+    assert res["throttled_or_low_apq_endpoint_ids"] == []
+    assert res["Violations"] == []
+
+
+def test_audit_executive_report_graphql_persisted_query_apq_and_batch_export_throttling_critical():
+    from backend.services.project_export_service import (
+        audit_executive_report_graphql_persisted_query_apq_and_batch_export_throttling,
+    )
+
+    res = audit_executive_report_graphql_persisted_query_apq_and_batch_export_throttling(
+        [
+            {
+                "endpoint_id": "GQL-EXPOSED",
+                "persisted_query_allowlist_enforced": False,
+                "public_introspection_enabled": True,
+                "active_concurrent_batch_exports": 1,
+                "apq_cache_hit_ratio_pct": 95.0,
+            }
+        ]
+    )
+    assert res["status"] == "critical"
+    assert res["is_compliant"] is False
+    assert res["security_exposed_endpoint_ids"] == ["GQL-EXPOSED"]
+    assert len(res["Violations"]) >= 1
+
+
+def test_audit_executive_report_graphql_persisted_query_apq_and_batch_export_throttling_warning():
+    from backend.services.project_export_service import (
+        audit_executive_report_graphql_persisted_query_apq_and_batch_export_throttling,
+    )
+
+    res = audit_executive_report_graphql_persisted_query_apq_and_batch_export_throttling(
+        [
+            {
+                "id": "GQL-THROTTLED",
+                "persisted_query_allowlist_enforced": True,
+                "public_introspection_enabled": False,
+                "active_concurrent_batch_exports": 9,
+                "apq_cache_hit_ratio_pct": 72.0,
+            }
+        ],
+        max_concurrent_batch_exports_per_tenant=5,
+        min_apq_cache_hit_ratio_pct=90.0,
+    )
+    assert res["status"] == "warning"
+    assert res["is_compliant"] is False
+    assert res["security_exposed_endpoint_ids"] == []
+    assert res["throttled_or_low_apq_endpoint_ids"] == ["GQL-THROTTLED"]
+    assert res["records"][0]["concurrent_batch_export_limit_exceeded"] is True
+    assert res["records"][0]["apq_cache_hit_ratio_degraded"] is True
+
+
+def test_audit_executive_report_graphql_persisted_query_apq_and_batch_export_throttling_staticmethod_and_dunder_all():
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_graphql_persisted_query_apq_and_batch_export_throttling,
+    )
+
+    sample = [{"endpoint_id": "GQL-1", "active_concurrent_batch_exports": 1}]
+    assert (
+        ProjectExportService.audit_executive_report_graphql_persisted_query_apq_and_batch_export_throttling(
+            sample
+        )
+        == audit_executive_report_graphql_persisted_query_apq_and_batch_export_throttling(
+            sample
+        )
+    )
+    assert (
+        "audit_executive_report_graphql_persisted_query_apq_and_batch_export_throttling"
+        in mod.__all__
+    )
+

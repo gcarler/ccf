@@ -10434,7 +10434,6 @@ def test_evaluate_evm_subcontractor_backcharge_offset_and_joint_check_disburseme
     )
 
 
-
 # ── evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate (PMBOK §7.4 & §12.3, pure helper) ──
 
 
@@ -10616,3 +10615,105 @@ def test_equipment_fleet_empty_invalid_and_field_reversion():
         "equipment_rate_status": "EQUIPMENT_FLEET_BILLING_OPTIMAL",
         "is_equipment_billing_compliant": True,
     }
+
+
+def test_evaluate_evm_foreign_exchange_fx_hedging_collar_and_revaluation_reserve_compliant():
+    from backend.services.project_evm_service import (
+        evaluate_evm_foreign_exchange_fx_hedging_collar_and_revaluation_reserve,
+    )
+
+    res = evaluate_evm_foreign_exchange_fx_hedging_collar_and_revaluation_reserve(
+        [
+            {
+                "tranche_id": "FX-EUR-01",
+                "total_foreign_commitment_usd": 1000000.0,
+                "hedged_notional_usd": 900000.0,
+                "baseline_fx_rate": 1.10,
+                "spot_fx_rate": 1.12,
+                "unrealized_fx_loss_usd": 18000.0,
+                "fx_revaluation_reserve_usd": 25000.0,
+            }
+        ]
+    )
+    assert res["status"] == "compliant"
+    assert res["is_compliant"] is True
+    assert res["tranches_evaluated"] == 1
+    assert res["unhedged_or_underreserved_tranche_ids"] == []
+    assert res["collar_drift_tranche_ids"] == []
+    assert res["records"][0]["unhedged_exposure_pct"] == 10.0
+    assert res["records"][0]["fx_rate_drift_pct"] == 1.82
+    assert res["Violations"] == []
+
+
+def test_evaluate_evm_foreign_exchange_fx_hedging_collar_and_revaluation_reserve_critical():
+    from backend.services.project_evm_service import (
+        evaluate_evm_foreign_exchange_fx_hedging_collar_and_revaluation_reserve,
+    )
+
+    res = evaluate_evm_foreign_exchange_fx_hedging_collar_and_revaluation_reserve(
+        [
+            {
+                "tranche_id": "FX-UNHEDGED",
+                "total_foreign_commitment_usd": 500000.0,
+                "hedged_notional_usd": 200000.0,
+                "baseline_fx_rate": 1.00,
+                "spot_fx_rate": 1.03,
+                "unrealized_fx_loss_usd": 45000.0,
+                "fx_revaluation_reserve_usd": 10000.0,
+            }
+        ],
+        max_unhedged_exposure_pct=15.0,
+    )
+    assert res["status"] == "critical"
+    assert res["is_compliant"] is False
+    assert res["unhedged_or_underreserved_tranche_ids"] == ["FX-UNHEDGED"]
+    assert len(res["Violations"]) >= 1
+
+
+def test_evaluate_evm_foreign_exchange_fx_hedging_collar_and_revaluation_reserve_warning():
+    from backend.services.project_evm_service import (
+        evaluate_evm_foreign_exchange_fx_hedging_collar_and_revaluation_reserve,
+    )
+
+    res = evaluate_evm_foreign_exchange_fx_hedging_collar_and_revaluation_reserve(
+        [
+            {
+                "id": "FX-COLLAR-DRIFT",
+                "total_foreign_commitment_usd": 400000.0,
+                "hedged_notional_usd": 380000.0,
+                "baseline_fx_rate": 1.00,
+                "spot_fx_rate": 1.09,
+                "unrealized_fx_loss_usd": 10000.0,
+                "fx_revaluation_reserve_usd": 20000.0,
+            }
+        ],
+        max_fx_rate_collar_breach_pct=5.0,
+    )
+    assert res["status"] == "warning"
+    assert res["is_compliant"] is False
+    assert res["unhedged_or_underreserved_tranche_ids"] == []
+    assert res["collar_drift_tranche_ids"] == ["FX-COLLAR-DRIFT"]
+    assert res["records"][0]["fx_collar_band_exceeded"] is True
+
+
+def test_evaluate_evm_foreign_exchange_fx_hedging_collar_and_revaluation_reserve_staticmethod_and_dunder_all():
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_foreign_exchange_fx_hedging_collar_and_revaluation_reserve,
+    )
+
+    sample = [{"tranche_id": "FX-1", "total_foreign_commitment_usd": 0.0}]
+    assert (
+        ProjectEVMService.evaluate_evm_foreign_exchange_fx_hedging_collar_and_revaluation_reserve(
+            sample
+        )
+        == evaluate_evm_foreign_exchange_fx_hedging_collar_and_revaluation_reserve(
+            sample
+        )
+    )
+    assert (
+        "evaluate_evm_foreign_exchange_fx_hedging_collar_and_revaluation_reserve"
+        in mod.__all__
+    )
+

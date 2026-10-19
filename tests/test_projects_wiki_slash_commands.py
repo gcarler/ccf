@@ -10917,3 +10917,169 @@ def test_audit_wiki_vector_embedding_hnsw_index_recall_and_drift_reindexing_stat
         in mod.__all__
     )
 
+
+
+# ── audit_wiki_graph_backlink_reciprocity_and_orphan_clusters (PMBOK §4.4 & §10.2, pure helper) ──
+
+
+def test_wiki_graph_topology_optimal_nodes():
+    """Páginas con backlinks sincronizados, sin transclusiones rotas y sin orfandad -> 'KNOWLEDGE_GRAPH_TOPOLOGY_OPTIMAL'."""
+    import backend.services.wiki_pmi_service as wiki_module
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_graph_backlink_reciprocity_and_orphan_clusters,
+    )
+
+    graph_nodes = [
+        {
+            "page_id": "PG-001",
+            "bidirectional_backlinks_synced": True,
+            "broken_transclusion_embeds_count": 0,
+            "is_isolated_orphan_node": False,
+            "orphan_cluster_ratio_pct": 2.0,
+        },
+        {
+            "page_id": "PG-002",
+            # Defaults implícitos por campo: synced True, 0 rotas, False orfan, 2.0 ratio.
+        },
+    ]
+    res = audit_wiki_graph_backlink_reciprocity_and_orphan_clusters(graph_nodes)
+    assert res == {
+        "evaluated_pages_count": 2,
+        "desynced_backlink_or_broken_transclusion_page_ids": [],
+        "isolated_orphan_cluster_page_ids": [],
+        "knowledge_graph_status": "KNOWLEDGE_GRAPH_TOPOLOGY_OPTIMAL",
+        "is_knowledge_graph_compliant": True,
+    }
+    # Ratio de clúster huérfano exactamente en el umbral 5.0 no es warning (comparación estricta >)
+    at_ratio = audit_wiki_graph_backlink_reciprocity_and_orphan_clusters(
+        [{"page_id": "PG-003", "orphan_cluster_ratio_pct": 5.0}]
+    )
+    assert at_ratio["knowledge_graph_status"] == "KNOWLEDGE_GRAPH_TOPOLOGY_OPTIMAL"
+    assert (
+        WikiPMIService.audit_wiki_graph_backlink_reciprocity_and_orphan_clusters(
+            graph_nodes
+        )
+        == res
+    )
+    assert "audit_wiki_graph_backlink_reciprocity_and_orphan_clusters" in wiki_module.__all__
+
+
+def test_wiki_graph_backlink_desync_or_transclusion_breach():
+    """Backlinks no sincronizados o transclusiones rotas -> 'BACKLINK_DESYNC_OR_BROKEN_TRANSCLUSION_BREACH' con precedencia sobre WARNING."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_graph_backlink_reciprocity_and_orphan_clusters,
+    )
+
+    breach = audit_wiki_graph_backlink_reciprocity_and_orphan_clusters(
+        [
+            {
+                "page_id": "PG-DESYNC",
+                "bidirectional_backlinks_synced": False,
+                "broken_transclusion_embeds_count": 0,
+            },
+            {
+                "page_id": "PG-BROKEN-EMBED",
+                "broken_transclusion_embeds_count": 2,
+            },
+        ]
+    )
+    assert breach["evaluated_pages_count"] == 2
+    assert breach["desynced_backlink_or_broken_transclusion_page_ids"] == [
+        "PG-DESYNC",
+        "PG-BROKEN-EMBED",
+    ]
+    assert breach["knowledge_graph_status"] == (
+        "BACKLINK_DESYNC_OR_BROKEN_TRANSCLUSION_BREACH"
+    )
+    assert breach["is_knowledge_graph_compliant"] is False
+
+    # Breach tiene precedencia aunque también haya páginas huérfanas
+    mixed = audit_wiki_graph_backlink_reciprocity_and_orphan_clusters(
+        [
+            {"page_id": "PG-BROKEN-EMBED-2", "broken_transclusion_embeds_count": 1},
+            {"page_id": "PG-BROKEN-EMBED-3", "bidirectional_backlinks_synced": False},
+            {"page_id": "PG-ORPHAN", "is_isolated_orphan_node": True},
+        ]
+    )
+    assert mixed["knowledge_graph_status"] == (
+        "BACKLINK_DESYNC_OR_BROKEN_TRANSCLUSION_BREACH"
+    )
+
+
+def test_wiki_graph_orphan_cluster_fragmentation_warning():
+    """Nodos huérfanos aislados o ratio de clúster > 5.0 (con backlinks limpios) -> 'ORPHAN_CLUSTER_FRAGMENTATION_WARNING'."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_graph_backlink_reciprocity_and_orphan_clusters,
+    )
+
+    warning = audit_wiki_graph_backlink_reciprocity_and_orphan_clusters(
+        [
+            {
+                "page_id": "PG-ORPHAN-A",
+                "is_isolated_orphan_node": True,
+                "orphan_cluster_ratio_pct": 2.0,
+            },
+            {
+                "page_id": "PG-ORPHAN-B",
+                "orphan_cluster_ratio_pct": 8.5,
+            },
+        ]
+    )
+    assert warning["evaluated_pages_count"] == 2
+    assert warning["desynced_backlink_or_broken_transclusion_page_ids"] == []
+    assert warning["isolated_orphan_cluster_page_ids"] == [
+        "PG-ORPHAN-A",
+        "PG-ORPHAN-B",
+    ]
+    assert warning["knowledge_graph_status"] == (
+        "ORPHAN_CLUSTER_FRAGMENTATION_WARNING"
+    )
+    assert warning["is_knowledge_graph_compliant"] is False
+
+    custom = audit_wiki_graph_backlink_reciprocity_and_orphan_clusters(
+        [{"page_id": "PG-4", "orphan_cluster_ratio_pct": 6.0}],
+        max_orphan_cluster_ratio_pct=5.5,
+    )
+    assert custom["knowledge_graph_status"] == "ORPHAN_CLUSTER_FRAGMENTATION_WARNING"
+    assert custom["isolated_orphan_cluster_page_ids"] == ["PG-4"]
+
+
+def test_wiki_graph_empty_invalid_and_field_reversion():
+    """None / dicts inválidos se descartan; campos no numéricos/no bool revierten a defaults del spec."""
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_graph_backlink_reciprocity_and_orphan_clusters,
+    )
+
+    empty_res = audit_wiki_graph_backlink_reciprocity_and_orphan_clusters(None)
+    assert empty_res == {
+        "evaluated_pages_count": 0,
+        "desynced_backlink_or_broken_transclusion_page_ids": [],
+        "isolated_orphan_cluster_page_ids": [],
+        "knowledge_graph_status": "KNOWLEDGE_GRAPH_TOPOLOGY_OPTIMAL",
+        "is_knowledge_graph_compliant": True,
+    }
+
+    invalid_res = audit_wiki_graph_backlink_reciprocity_and_orphan_clusters(
+        ["no-dict", None, {"page_id": "   "}, {"page_id": 88}, {"broken_transclusion_embeds_count": 3}]
+    )
+    assert invalid_res["evaluated_pages_count"] == 0
+
+    bad_fields = audit_wiki_graph_backlink_reciprocity_and_orphan_clusters(
+        [
+            {
+                "page_id": "PG-BAD",
+                "bidirectional_backlinks_synced": "sí",
+                "broken_transclusion_embeds_count": "ninguna",
+                "is_isolated_orphan_node": None,
+                "orphan_cluster_ratio_pct": [9.0],
+            }
+        ]
+    )
+    assert bad_fields == {
+        "evaluated_pages_count": 1,
+        "desynced_backlink_or_broken_transclusion_page_ids": [],
+        "isolated_orphan_cluster_page_ids": [],
+        "knowledge_graph_status": "KNOWLEDGE_GRAPH_TOPOLOGY_OPTIMAL",
+        "is_knowledge_graph_compliant": True,
+    }
