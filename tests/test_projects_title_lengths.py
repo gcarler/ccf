@@ -7419,3 +7419,159 @@ def test_validate_pert_three_point_estimation_and_delphi_convergence_dunder_all(
         "validate_pert_three_point_estimation_and_delphi_convergence"
         in mod.__all__
     )
+
+
+def test_validate_monte_carlo_p80_p90_breach_convergence_or_monotonicity():
+    from backend.schemas.projects import (
+        validate_monte_carlo_p80_p90_convergence_and_tornado_sensitivity,
+    )
+
+    res = validate_monte_carlo_p80_p90_convergence_and_tornado_sensitivity(
+        [
+            {
+                "model_id": "MC-LOW-ITER",
+                "iterations_count": 4999,
+            },
+            {
+                "model_id": "MC-INVERTED",
+                "p50_estimate": 120.0,
+                "p80_estimate": 110.0,
+            },
+            {
+                "model_id": "MC-TAIL-ONLY",
+                "p90_estimate": 150.0,
+            },
+        ],
+        min_iterations_required=5000,
+        max_p90_to_p50_tail_ratio=1.35,
+    )
+    assert res["evaluated_models_count"] == 3
+    assert res["under_converged_or_inverted_model_ids"] == [
+        "MC-LOW-ITER",
+        "MC-INVERTED",
+    ]
+    assert res["underfunded_or_fat_tail_model_ids"] == ["MC-TAIL-ONLY"]
+    assert (
+        res["monte_carlo_validation_status"]
+        == "MONTE_CARLO_CONVERGENCE_OR_MONOTONICITY_BREACH"
+    )
+    assert res["is_monte_carlo_valid"] is False
+
+
+def test_validate_monte_carlo_p80_p90_underfunded_or_fat_tail_warning():
+    from backend.schemas.projects import (
+        validate_monte_carlo_p80_p90_convergence_and_tornado_sensitivity,
+    )
+
+    res = validate_monte_carlo_p80_p90_convergence_and_tornado_sensitivity(
+        [
+            {
+                "model_id": "MC-UNDERFUNDED",
+                "baseline_commitment": 105.0,
+                "p80_estimate": 110.0,
+            },
+            {
+                "model_id": "MC-FAT-TAIL",
+                "p90_estimate": 150.0,
+            },
+            {
+                "model_id": "MC-HOT-CORRELATION",
+                "top_driver_correlation_r": 0.9,
+            },
+        ],
+        min_iterations_required=5000,
+        max_p90_to_p50_tail_ratio=1.35,
+    )
+    assert res["evaluated_models_count"] == 3
+    assert res["under_converged_or_inverted_model_ids"] == []
+    assert res["underfunded_or_fat_tail_model_ids"] == [
+        "MC-UNDERFUNDED",
+        "MC-FAT-TAIL",
+        "MC-HOT-CORRELATION",
+    ]
+    assert (
+        res["monte_carlo_validation_status"]
+        == "MONTE_CARLO_P80_UNDERFUNDED_OR_TAIL_WARNING"
+    )
+    assert res["is_monte_carlo_valid"] is False
+
+
+def test_validate_monte_carlo_p80_p90_boundaries_inclusive_and_defaults():
+    from backend.schemas.projects import (
+        validate_monte_carlo_p80_p90_convergence_and_tornado_sensitivity,
+    )
+
+    res = validate_monte_carlo_p80_p90_convergence_and_tornado_sensitivity(
+        [
+            {
+                "model_id": "MC-BOUNDARY",
+                "iterations_count": 5000,
+                "p50_estimate": 100.0,
+                "p80_estimate": 115.0,
+                "p90_estimate": 135.0,
+                "baseline_commitment": 115.0,
+                "top_driver_correlation_r": 0.85,
+            },
+            {"model_id": "MC-ALL-DEFAULTS"},
+        ],
+        min_iterations_required=5000,
+        max_p90_to_p50_tail_ratio=1.35,
+    )
+    assert res["evaluated_models_count"] == 2
+    assert res["under_converged_or_inverted_model_ids"] == []
+    assert res["underfunded_or_fat_tail_model_ids"] == []
+    assert (
+        res["monte_carlo_validation_status"]
+        == "MONTE_CARLO_CONFIDENCE_OPTIMAL"
+    )
+    assert res["is_monte_carlo_valid"] is True
+
+
+def test_validate_monte_carlo_p80_p90_invalid_and_dunder_all():
+    from backend.schemas.projects import (
+        validate_monte_carlo_p80_p90_convergence_and_tornado_sensitivity,
+    )
+
+    empty = validate_monte_carlo_p80_p90_convergence_and_tornado_sensitivity(
+        None
+    )
+    assert empty["evaluated_models_count"] == 0
+    assert empty["under_converged_or_inverted_model_ids"] == []
+    assert empty["underfunded_or_fat_tail_model_ids"] == []
+    assert (
+        empty["monte_carlo_validation_status"]
+        == "MONTE_CARLO_CONFIDENCE_OPTIMAL"
+    )
+    assert empty["is_monte_carlo_valid"] is True
+
+    invalid = validate_monte_carlo_p80_p90_convergence_and_tornado_sensitivity(
+        [42, "not-a-dict", None, {"iterations_count": 9000}]  # type: ignore[list-item]
+    )
+    assert invalid["evaluated_models_count"] == 0
+
+    defaults = validate_monte_carlo_p80_p90_convergence_and_tornado_sensitivity(
+        [
+            {
+                "model_id": "MC-DEFAULTS",
+                "iterations_count": None,
+                "p50_estimate": None,
+                "p80_estimate": None,
+                "p90_estimate": None,
+                "baseline_commitment": None,
+                "top_driver_correlation_r": None,
+            }
+        ]
+    )
+    assert defaults["evaluated_models_count"] == 1
+    assert (
+        defaults["monte_carlo_validation_status"]
+        == "MONTE_CARLO_CONFIDENCE_OPTIMAL"
+    )
+    assert defaults["is_monte_carlo_valid"] is True
+
+    import backend.schemas.projects as mod
+
+    assert (
+        "validate_monte_carlo_p80_p90_convergence_and_tornado_sensitivity"
+        in mod.__all__
+    )

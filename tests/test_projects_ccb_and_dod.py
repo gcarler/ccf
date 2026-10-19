@@ -9042,3 +9042,157 @@ def test_audit_feature_flag_stale_toggle_debt_and_kill_switch_staticmethod_and_d
         "audit_feature_flag_stale_toggle_debt_and_kill_switch"
         in mod.__all__
     )
+
+
+def test_audit_canary_rollout_traffic_shift_and_auto_rollback_gate_breach():
+    from backend.services.project_ccb_service import (
+        audit_canary_rollout_traffic_shift_and_auto_rollback_gate,
+    )
+
+    result = audit_canary_rollout_traffic_shift_and_auto_rollback_gate(
+        [
+            {
+                "deployment_id": "CAN-UNARMED",
+                "initial_traffic_step_pct": 5.0,
+                "bake_time_minutes_observed": 35,
+                "observed_5xx_error_rate_pct": 0.1,
+                "automated_rollback_hook_armed": False,
+                "baseline_golden_signals_compared": True,
+            },
+            {
+                "deployment_id": "CAN-SPIKE",
+                "initial_traffic_step_pct": 5.0,
+                "bake_time_minutes_observed": 35,
+                "observed_5xx_error_rate_pct": 1.2,
+                "automated_rollback_hook_armed": True,
+                "baseline_golden_signals_compared": True,
+            },
+        ],
+        min_bake_time_minutes_per_stage=30,
+        max_canary_5xx_error_rate_pct=0.5,
+    )
+    assert result["evaluated_deployments_count"] == 2
+    assert result["unarmed_rollback_or_error_spike_deployment_ids"] == [
+        "CAN-UNARMED",
+        "CAN-SPIKE",
+    ]
+    assert result["rushed_bake_or_aggressive_step_deployment_ids"] == []
+    assert (
+        result["canary_governance_status"]
+        == "CANARY_ROLLBACK_OR_ERROR_SPIKE_BREACH"
+    )
+    assert result["is_canary_rollout_compliant"] is False
+
+
+def test_audit_canary_rollout_traffic_shift_and_auto_rollback_gate_warning():
+    from backend.services.project_ccb_service import (
+        audit_canary_rollout_traffic_shift_and_auto_rollback_gate,
+    )
+
+    result = audit_canary_rollout_traffic_shift_and_auto_rollback_gate(
+        [
+            {
+                "deployment_id": "CAN-RUSHED",
+                "initial_traffic_step_pct": 5.0,
+                "bake_time_minutes_observed": 10,
+                "observed_5xx_error_rate_pct": 0.1,
+                "automated_rollback_hook_armed": True,
+                "baseline_golden_signals_compared": True,
+            },
+            {
+                "deployment_id": "CAN-BIG-STEP",
+                "initial_traffic_step_pct": 50.0,
+                "bake_time_minutes_observed": 40,
+                "observed_5xx_error_rate_pct": 0.1,
+                "automated_rollback_hook_armed": True,
+                "baseline_golden_signals_compared": True,
+            },
+            {
+                "deployment_id": "CAN-NO-SIGNALS",
+                "initial_traffic_step_pct": 5.0,
+                "bake_time_minutes_observed": 40,
+                "observed_5xx_error_rate_pct": 0.1,
+                "automated_rollback_hook_armed": True,
+                "baseline_golden_signals_compared": False,
+            },
+        ],
+        min_bake_time_minutes_per_stage=30,
+        max_canary_5xx_error_rate_pct=0.5,
+    )
+    assert result["evaluated_deployments_count"] == 3
+    assert result["unarmed_rollback_or_error_spike_deployment_ids"] == []
+    assert result["rushed_bake_or_aggressive_step_deployment_ids"] == [
+        "CAN-RUSHED",
+        "CAN-BIG-STEP",
+        "CAN-NO-SIGNALS",
+    ]
+    assert (
+        result["canary_governance_status"]
+        == "CANARY_BAKE_TIME_OR_STEP_WARNING"
+    )
+    assert result["is_canary_rollout_compliant"] is False
+
+
+def test_audit_canary_rollout_traffic_shift_and_auto_rollback_gate_optimal_and_empty():
+    from backend.services.project_ccb_service import (
+        audit_canary_rollout_traffic_shift_and_auto_rollback_gate,
+    )
+
+    empty = audit_canary_rollout_traffic_shift_and_auto_rollback_gate(
+        [{"deployment_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_deployments_count"] == 0
+    assert (
+        empty["canary_governance_status"]
+        == "CANARY_PROGRESSIVE_DELIVERY_OPTIMAL"
+    )
+    assert empty["is_canary_rollout_compliant"] is True
+
+    optimal = audit_canary_rollout_traffic_shift_and_auto_rollback_gate(
+        [
+            {
+                "deployment_id": "CAN-GOLD-1",
+                "initial_traffic_step_pct": 5.0,
+                "bake_time_minutes_observed": 45,
+                "observed_5xx_error_rate_pct": 0.08,
+                "automated_rollback_hook_armed": True,
+                "baseline_golden_signals_compared": True,
+            }
+        ],
+        min_bake_time_minutes_per_stage=30,
+        max_canary_5xx_error_rate_pct=0.5,
+    )
+    assert optimal["evaluated_deployments_count"] == 1
+    assert (
+        optimal["canary_governance_status"]
+        == "CANARY_PROGRESSIVE_DELIVERY_OPTIMAL"
+    )
+    assert optimal["is_canary_rollout_compliant"] is True
+
+
+def test_audit_canary_rollout_traffic_shift_and_auto_rollback_gate_staticmethod_and_dunder_all():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_canary_rollout_traffic_shift_and_auto_rollback_gate,
+    )
+
+    sample = [
+        {
+            "deployment_id": "CAN-99",
+            "initial_traffic_step_pct": 5.0,
+            "bake_time_minutes_observed": 30,
+            "observed_5xx_error_rate_pct": 0.1,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_canary_rollout_traffic_shift_and_auto_rollback_gate(
+            sample
+        )
+        == audit_canary_rollout_traffic_shift_and_auto_rollback_gate(sample)
+    )
+    assert (
+        "audit_canary_rollout_traffic_shift_and_auto_rollback_gate"
+        in mod.__all__
+    )
+

@@ -3812,6 +3812,7 @@ __all__ = [
     "validate_pdm_network_dangling_activities_and_negative_float",
     "validate_risk_emv_decision_tree_and_contingency_adequacy",
     "validate_pert_three_point_estimation_and_delphi_convergence",
+    "validate_monte_carlo_p80_p90_convergence_and_tornado_sensitivity",
 ]
 
 
@@ -8081,4 +8082,75 @@ def validate_pert_three_point_estimation_and_delphi_convergence(
         "is_pert_estimation_compliant": pert_estimation_status
         == "PERT_CONVERGED_SOUND",
         "recommendations": recommendations,
+    }
+
+
+def validate_monte_carlo_p80_p90_convergence_and_tornado_sensitivity(
+    simulations: Any,
+    *,
+    min_iterations_required: int = 5000,
+    max_p90_to_p50_tail_ratio: float = 1.35,
+) -> dict[str, Any]:
+    """PMI PMBOK §11.4 & §6.5 — Monte Carlo P50/P80/P90 Confidence Interval Convergence, Tail Risk & Tornado Sensitivity Validator."""
+    valid_rows: list[dict[str, Any]] = []
+    if isinstance(simulations, (list, tuple)):
+        for item in simulations:
+            if not isinstance(item, dict):
+                continue
+            model_id = item.get("model_id")
+            if not isinstance(model_id, str) or not model_id.strip():
+                continue
+            valid_rows.append({**item, "_model_id": model_id.strip()})
+
+    def _num(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    under_converged_or_inverted_model_ids: list[str] = []
+    underfunded_or_fat_tail_model_ids: list[str] = []
+
+    for row in valid_rows:
+        model_id = row["_model_id"]
+        iterations = _num(row.get("iterations_count"), 10000.0)
+        p50 = _num(row.get("p50_estimate"), 100.0)
+        p80 = _num(row.get("p80_estimate"), 115.0)
+        p90 = _num(row.get("p90_estimate"), 125.0)
+        baseline = _num(row.get("baseline_commitment"), 115.0)
+        correlation_r = _num(row.get("top_driver_correlation_r"), 0.5)
+
+        if iterations < min_iterations_required or not (
+            0.0 < p50 <= p80 <= p90
+        ):
+            under_converged_or_inverted_model_ids.append(model_id)
+
+        if (
+            baseline < p80
+            or (p50 > 0.0 and (p90 / p50) > max_p90_to_p50_tail_ratio)
+            or abs(correlation_r) > 0.85
+        ):
+            underfunded_or_fat_tail_model_ids.append(model_id)
+
+    if under_converged_or_inverted_model_ids:
+        monte_carlo_validation_status = (
+            "MONTE_CARLO_CONVERGENCE_OR_MONOTONICITY_BREACH"
+        )
+    elif underfunded_or_fat_tail_model_ids:
+        monte_carlo_validation_status = (
+            "MONTE_CARLO_P80_UNDERFUNDED_OR_TAIL_WARNING"
+        )
+    else:
+        monte_carlo_validation_status = "MONTE_CARLO_CONFIDENCE_OPTIMAL"
+
+    return {
+        "evaluated_models_count": len(valid_rows),
+        "under_converged_or_inverted_model_ids": (
+            under_converged_or_inverted_model_ids
+        ),
+        "underfunded_or_fat_tail_model_ids": (
+            underfunded_or_fat_tail_model_ids
+        ),
+        "monte_carlo_validation_status": monte_carlo_validation_status,
+        "is_monte_carlo_valid": monte_carlo_validation_status
+        == "MONTE_CARLO_CONFIDENCE_OPTIMAL",
     }

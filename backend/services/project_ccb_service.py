@@ -2847,6 +2847,7 @@ __all__ = [
     "audit_release_freeze_blackout_window_and_change_collisions",
     "audit_query_performance_n_plus_one_and_full_scan_gate",
     "audit_feature_flag_stale_toggle_debt_and_kill_switch",
+    "audit_canary_rollout_traffic_shift_and_auto_rollback_gate",
     "ProjectCCBService",
 ]
 
@@ -6956,3 +6957,83 @@ def audit_feature_flag_stale_toggle_debt_and_kill_switch(
 ProjectCCBService.audit_feature_flag_stale_toggle_debt_and_kill_switch = staticmethod(
     audit_feature_flag_stale_toggle_debt_and_kill_switch
 )
+
+
+def audit_canary_rollout_traffic_shift_and_auto_rollback_gate(
+    canary_deployments: Sequence[Mapping[str, Any]] | None,
+    *,
+    min_bake_time_minutes_per_stage: int | float = 30,
+    max_canary_5xx_error_rate_pct: float = 0.5,
+) -> dict[str, Any]:
+    """PMI PMBOK §8.3 & §11.6 — CCB Canary Rollout Progressive Traffic Shifting, Error-Budget Burn Alert & Auto-Rollback Gate Auditor."""
+    valid_deployments = [
+        dep
+        for dep in (canary_deployments or [])
+        if isinstance(dep, Mapping) and str(dep.get("deployment_id") or "").strip()
+    ]
+
+    unarmed_rollback_or_error_spike_deployment_ids: list[str] = []
+    rushed_bake_or_aggressive_step_deployment_ids: list[str] = []
+
+    for dep in valid_deployments:
+        did = str(dep.get("deployment_id")).strip()
+        initial_step_pct = float(
+            dep.get("initial_traffic_step_pct", 5.0)
+            if dep.get("initial_traffic_step_pct") is not None
+            else 5.0
+        )
+        bake_minutes = float(
+            dep.get("bake_time_minutes_observed", 30)
+            if dep.get("bake_time_minutes_observed") is not None
+            else 30
+        )
+        error_rate_pct = float(
+            dep.get("observed_5xx_error_rate_pct", 0.05)
+            if dep.get("observed_5xx_error_rate_pct") is not None
+            else 0.05
+        )
+        rollback_armed = bool(
+            dep.get("automated_rollback_hook_armed", True)
+            if dep.get("automated_rollback_hook_armed") is not None
+            else True
+        )
+        signals_compared = bool(
+            dep.get("baseline_golden_signals_compared", True)
+            if dep.get("baseline_golden_signals_compared") is not None
+            else True
+        )
+
+        if (
+            not rollback_armed
+            or error_rate_pct > max_canary_5xx_error_rate_pct
+        ):
+            unarmed_rollback_or_error_spike_deployment_ids.append(did)
+
+        if (
+            bake_minutes < min_bake_time_minutes_per_stage
+            or initial_step_pct > 25.0
+            or not signals_compared
+        ):
+            rushed_bake_or_aggressive_step_deployment_ids.append(did)
+
+    if unarmed_rollback_or_error_spike_deployment_ids:
+        canary_governance_status = "CANARY_ROLLBACK_OR_ERROR_SPIKE_BREACH"
+    elif rushed_bake_or_aggressive_step_deployment_ids:
+        canary_governance_status = "CANARY_BAKE_TIME_OR_STEP_WARNING"
+    else:
+        canary_governance_status = "CANARY_PROGRESSIVE_DELIVERY_OPTIMAL"
+
+    return {
+        "evaluated_deployments_count": len(valid_deployments),
+        "unarmed_rollback_or_error_spike_deployment_ids": unarmed_rollback_or_error_spike_deployment_ids,
+        "rushed_bake_or_aggressive_step_deployment_ids": rushed_bake_or_aggressive_step_deployment_ids,
+        "canary_governance_status": canary_governance_status,
+        "is_canary_rollout_compliant": canary_governance_status
+        == "CANARY_PROGRESSIVE_DELIVERY_OPTIMAL",
+    }
+
+
+ProjectCCBService.audit_canary_rollout_traffic_shift_and_auto_rollback_gate = staticmethod(
+    audit_canary_rollout_traffic_shift_and_auto_rollback_gate
+)
+

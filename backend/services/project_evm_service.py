@@ -5521,6 +5521,7 @@ __all__ = [
     "evaluate_evm_cpif_share_ratio_and_point_of_total_assumption",
     "evaluate_evm_performance_bond_and_letter_of_credit_coverage",
     "evaluate_evm_fx_hedging_collar_and_currency_exposure",
+    "evaluate_evm_time_and_materials_nte_ceiling_and_rate_card",
     "ProjectEVMService",
 ]
 
@@ -9402,5 +9403,85 @@ def evaluate_evm_fx_hedging_collar_and_currency_exposure(
 
 ProjectEVMService.evaluate_evm_fx_hedging_collar_and_currency_exposure = staticmethod(
     evaluate_evm_fx_hedging_collar_and_currency_exposure
+)
+
+
+def evaluate_evm_time_and_materials_nte_ceiling_and_rate_card(
+    tm_contracts: Sequence[Mapping[str, Any]] | None,
+    *,
+    nte_early_warning_threshold_pct: float = 85.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §7.4 & §12.3 — EVM Time & Materials (T&M) Ceiling Cap (NTE), Labor Rate Card Audit & Burn-Rate Exhaustion Evaluator."""
+    valid_contracts = [
+        cnt
+        for cnt in (tm_contracts or [])
+        if isinstance(cnt, Mapping) and str(cnt.get("contract_id") or "").strip()
+    ]
+
+    nte_breach_or_rate_violation_contract_ids: list[str] = []
+    burn_ahead_of_progress_contract_ids: list[str] = []
+
+    for cnt in valid_contracts:
+        cid = str(cnt.get("contract_id")).strip()
+        ceiling = float(
+            cnt.get("not_to_exceed_ceiling", 100000.0)
+            if cnt.get("not_to_exceed_ceiling") is not None
+            else 100000.0
+        )
+        billed = float(
+            cnt.get("cumulative_billed_amount", 0.0)
+            if cnt.get("cumulative_billed_amount") is not None
+            else 0.0
+        )
+        completion_pct = float(
+            cnt.get("work_completion_pct", 0.0)
+            if cnt.get("work_completion_pct") is not None
+            else 0.0
+        )
+        overrides_count = int(
+            cnt.get("unapproved_rate_card_overrides_count", 0)
+            if cnt.get("unapproved_rate_card_overrides_count") is not None
+            else 0
+        )
+        timesheet_verified = bool(
+            cnt.get("timesheet_audit_verified", True)
+            if cnt.get("timesheet_audit_verified") is not None
+            else True
+        )
+
+        if (
+            billed > ceiling
+            or overrides_count > 0
+            or not timesheet_verified
+        ):
+            nte_breach_or_rate_violation_contract_ids.append(cid)
+
+        if ceiling > 0:
+            burn_pct = (billed / ceiling) * 100.0
+            if (
+                burn_pct >= nte_early_warning_threshold_pct
+                and completion_pct < (burn_pct - 15.0)
+            ):
+                burn_ahead_of_progress_contract_ids.append(cid)
+
+    if nte_breach_or_rate_violation_contract_ids:
+        tm_governance_status = "TM_NTE_CEILING_OR_RATE_CARD_BREACH"
+    elif burn_ahead_of_progress_contract_ids:
+        tm_governance_status = "TM_BURN_EXHAUSTION_WARNING"
+    else:
+        tm_governance_status = "TM_CONTRACT_CONTROL_OPTIMAL"
+
+    return {
+        "evaluated_contracts_count": len(valid_contracts),
+        "nte_breach_or_rate_violation_contract_ids": nte_breach_or_rate_violation_contract_ids,
+        "burn_ahead_of_progress_contract_ids": burn_ahead_of_progress_contract_ids,
+        "tm_governance_status": tm_governance_status,
+        "is_tm_contract_compliant": tm_governance_status
+        == "TM_CONTRACT_CONTROL_OPTIMAL",
+    }
+
+
+ProjectEVMService.evaluate_evm_time_and_materials_nte_ceiling_and_rate_card = staticmethod(
+    evaluate_evm_time_and_materials_nte_ceiling_and_rate_card
 )
 

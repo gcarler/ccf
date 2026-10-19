@@ -8590,3 +8590,134 @@ def test_evaluate_evm_fx_hedging_invalid_and_binding():
         == evaluate_evm_fx_hedging_collar_and_currency_exposure(sample)
     )
     assert "evaluate_evm_fx_hedging_collar_and_currency_exposure" in mod.__all__
+
+
+def test_evaluate_evm_time_and_materials_nte_ceiling_and_rate_card_breach():
+    from backend.services.project_evm_service import (
+        evaluate_evm_time_and_materials_nte_ceiling_and_rate_card,
+    )
+
+    result = evaluate_evm_time_and_materials_nte_ceiling_and_rate_card(
+        [
+            {
+                "contract_id": "TM-OVER-NTE",
+                "not_to_exceed_ceiling": 100000.0,
+                "cumulative_billed_amount": 105000.0,
+                "work_completion_pct": 95.0,
+                "unapproved_rate_card_overrides_count": 0,
+                "timesheet_audit_verified": True,
+            },
+            {
+                "contract_id": "TM-BAD-RATE",
+                "not_to_exceed_ceiling": 100000.0,
+                "cumulative_billed_amount": 50000.0,
+                "work_completion_pct": 55.0,
+                "unapproved_rate_card_overrides_count": 2,
+                "timesheet_audit_verified": True,
+            },
+            {
+                "contract_id": "TM-UNVERIFIED-TS",
+                "not_to_exceed_ceiling": 100000.0,
+                "cumulative_billed_amount": 40000.0,
+                "work_completion_pct": 45.0,
+                "unapproved_rate_card_overrides_count": 0,
+                "timesheet_audit_verified": False,
+            },
+        ],
+        nte_early_warning_threshold_pct=85.0,
+    )
+    assert result["evaluated_contracts_count"] == 3
+    assert result["nte_breach_or_rate_violation_contract_ids"] == [
+        "TM-OVER-NTE",
+        "TM-BAD-RATE",
+        "TM-UNVERIFIED-TS",
+    ]
+    assert result["burn_ahead_of_progress_contract_ids"] == []
+    assert (
+        result["tm_governance_status"]
+        == "TM_NTE_CEILING_OR_RATE_CARD_BREACH"
+    )
+    assert result["is_tm_contract_compliant"] is False
+
+
+def test_evaluate_evm_time_and_materials_nte_ceiling_and_rate_card_warning():
+    from backend.services.project_evm_service import (
+        evaluate_evm_time_and_materials_nte_ceiling_and_rate_card,
+    )
+
+    result = evaluate_evm_time_and_materials_nte_ceiling_and_rate_card(
+        [
+            {
+                "contract_id": "TM-BURN-AHEAD",
+                "not_to_exceed_ceiling": 100000.0,
+                "cumulative_billed_amount": 90000.0,
+                "work_completion_pct": 65.0,
+                "unapproved_rate_card_overrides_count": 0,
+                "timesheet_audit_verified": True,
+            }
+        ],
+        nte_early_warning_threshold_pct=85.0,
+    )
+    assert result["evaluated_contracts_count"] == 1
+    assert result["nte_breach_or_rate_violation_contract_ids"] == []
+    assert result["burn_ahead_of_progress_contract_ids"] == ["TM-BURN-AHEAD"]
+    assert result["tm_governance_status"] == "TM_BURN_EXHAUSTION_WARNING"
+    assert result["is_tm_contract_compliant"] is False
+
+
+def test_evaluate_evm_time_and_materials_nte_ceiling_and_rate_card_optimal_and_empty():
+    from backend.services.project_evm_service import (
+        evaluate_evm_time_and_materials_nte_ceiling_and_rate_card,
+    )
+
+    empty = evaluate_evm_time_and_materials_nte_ceiling_and_rate_card(
+        [{"contract_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_contracts_count"] == 0
+    assert empty["tm_governance_status"] == "TM_CONTRACT_CONTROL_OPTIMAL"
+    assert empty["is_tm_contract_compliant"] is True
+
+    optimal = evaluate_evm_time_and_materials_nte_ceiling_and_rate_card(
+        [
+            {
+                "contract_id": "TM-GOLD-1",
+                "not_to_exceed_ceiling": 100000.0,
+                "cumulative_billed_amount": 88000.0,
+                "work_completion_pct": 85.0,
+                "unapproved_rate_card_overrides_count": 0,
+                "timesheet_audit_verified": True,
+            }
+        ],
+        nte_early_warning_threshold_pct=85.0,
+    )
+    assert optimal["evaluated_contracts_count"] == 1
+    assert optimal["tm_governance_status"] == "TM_CONTRACT_CONTROL_OPTIMAL"
+    assert optimal["is_tm_contract_compliant"] is True
+
+
+def test_evaluate_evm_time_and_materials_nte_ceiling_and_rate_card_staticmethod_and_dunder_all():
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_time_and_materials_nte_ceiling_and_rate_card,
+    )
+
+    sample = [
+        {
+            "contract_id": "TM-99",
+            "not_to_exceed_ceiling": 100000.0,
+            "cumulative_billed_amount": 50000.0,
+            "work_completion_pct": 55.0,
+        }
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_time_and_materials_nte_ceiling_and_rate_card(
+            sample
+        )
+        == evaluate_evm_time_and_materials_nte_ceiling_and_rate_card(sample)
+    )
+    assert (
+        "evaluate_evm_time_and_materials_nte_ceiling_and_rate_card"
+        in mod.__all__
+    )
+
