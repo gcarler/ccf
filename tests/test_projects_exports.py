@@ -10979,3 +10979,145 @@ def test_audit_executive_report_siem_log_forwarding_and_retention_staticmethod_a
         in mod.__all__
     )
 
+
+def test_audit_executive_report_subprocessor_breach_sla_and_right_to_audit_breach():
+    from backend.services.project_export_service import (
+        audit_executive_report_subprocessor_breach_sla_and_right_to_audit,
+    )
+
+    res = audit_executive_report_subprocessor_breach_sla_and_right_to_audit(
+        [
+            {
+                "subprocessor_id": "  SP-FOURTH-PARTY  ",
+                "right_to_audit_clause_signed": True,
+                "unapproved_fourth_party_delegation": True,
+                "contractual_breach_notice_hours": 12,
+                "annual_pen_test_report_provided": True,
+            },
+            {
+                "subprocessor_id": "SP-NO-AUDIT-CLAUSE",
+                "right_to_audit_clause_signed": False,
+                "unapproved_fourth_party_delegation": False,
+                "contractual_breach_notice_hours": 48,
+                "annual_pen_test_report_provided": False,
+            },
+            {
+                "subprocessor_id": "SP-CLEAN",
+                "right_to_audit_clause_signed": True,
+                "unapproved_fourth_party_delegation": False,
+                "contractual_breach_notice_hours": 24,
+                "annual_pen_test_report_provided": True,
+            },
+        ]
+    )
+    assert res["evaluated_subprocessors_count"] == 3
+    assert res["unauthorized_fourth_party_or_no_audit_subprocessor_ids"] == [
+        "SP-FOURTH-PARTY",
+        "SP-NO-AUDIT-CLAUSE",
+    ]
+    assert res["slow_breach_sla_or_missing_pentest_subprocessor_ids"] == [
+        "SP-NO-AUDIT-CLAUSE"
+    ]
+    assert (
+        res["subprocessor_governance_status"]
+        == "SUBPROCESSOR_FOURTH_PARTY_OR_AUDIT_RIGHT_BREACH"
+    )
+    assert res["is_subprocessor_governance_compliant"] is False
+
+
+def test_audit_executive_report_subprocessor_breach_sla_and_right_to_audit_warning():
+    from backend.services.project_export_service import (
+        audit_executive_report_subprocessor_breach_sla_and_right_to_audit,
+    )
+
+    res = audit_executive_report_subprocessor_breach_sla_and_right_to_audit(
+        [
+            {
+                "subprocessor_id": "SP-SLOW-SLA",
+                "right_to_audit_clause_signed": False,
+                "unapproved_fourth_party_delegation": False,
+                "contractual_breach_notice_hours": 25,
+                "annual_pen_test_report_provided": True,
+            },
+            {
+                "subprocessor_id": "SP-NO-PENTEST",
+                "right_to_audit_clause_signed": True,
+                "unapproved_fourth_party_delegation": False,
+                "contractual_breach_notice_hours": 24,
+                "annual_pen_test_report_provided": False,
+            },
+        ],
+        max_breach_notification_hours=24,
+        require_right_to_audit_clause=False,
+    )
+    assert res["evaluated_subprocessors_count"] == 2
+    assert res["unauthorized_fourth_party_or_no_audit_subprocessor_ids"] == []
+    assert res["slow_breach_sla_or_missing_pentest_subprocessor_ids"] == [
+        "SP-SLOW-SLA",
+        "SP-NO-PENTEST",
+    ]
+    assert (
+        res["subprocessor_governance_status"]
+        == "SUBPROCESSOR_BREACH_SLA_OR_PENTEST_WARNING"
+    )
+    assert res["is_subprocessor_governance_compliant"] is False
+
+
+def test_audit_executive_report_subprocessor_breach_sla_and_right_to_audit_optimal_and_defensive():
+    from backend.services.project_export_service import (
+        audit_executive_report_subprocessor_breach_sla_and_right_to_audit,
+    )
+
+    empty = audit_executive_report_subprocessor_breach_sla_and_right_to_audit(
+        None
+    )
+    assert empty["evaluated_subprocessors_count"] == 0
+    assert (
+        empty["subprocessor_governance_status"]
+        == "SUBPROCESSOR_COMPLIANCE_CHAIN_OPTIMAL"
+    )
+    assert empty["is_subprocessor_governance_compliant"] is True
+
+    defaults = audit_executive_report_subprocessor_breach_sla_and_right_to_audit(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"subprocessor_id": "   "},
+            {
+                "subprocessor_id": "SP-DEFAULTS",
+                "right_to_audit_clause_signed": None,
+                "unapproved_fourth_party_delegation": None,
+                "contractual_breach_notice_hours": None,
+                "annual_pen_test_report_provided": None,
+            },
+        ]
+    )
+    assert defaults["evaluated_subprocessors_count"] == 1
+    assert (
+        defaults["subprocessor_governance_status"]
+        == "SUBPROCESSOR_COMPLIANCE_CHAIN_OPTIMAL"
+    )
+    assert defaults["is_subprocessor_governance_compliant"] is True
+
+
+def test_audit_executive_report_subprocessor_breach_sla_and_right_to_audit_staticmethod_and_dunder_all():
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_subprocessor_breach_sla_and_right_to_audit,
+    )
+
+    sample = [{"subprocessor_id": "SP-99", "contractual_breach_notice_hours": 6}]
+    assert (
+        ProjectExportService.audit_executive_report_subprocessor_breach_sla_and_right_to_audit(
+            sample
+        )
+        == audit_executive_report_subprocessor_breach_sla_and_right_to_audit(
+            sample
+        )
+    )
+    assert (
+        "audit_executive_report_subprocessor_breach_sla_and_right_to_audit"
+        in mod.__all__
+    )
+
+

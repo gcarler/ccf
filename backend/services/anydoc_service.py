@@ -3044,6 +3044,7 @@ __all__ = [
     "audit_markdown_gfm_task_list_completion_and_nesting_hygiene",
     "audit_markdown_mermaid_diagram_syntax_and_node_budget_hygiene",
     "audit_markdown_image_alt_text_and_svg_sanitization_hygiene",
+    "audit_markdown_yaml_frontmatter_schema_and_tag_hygiene",
     "AnydocService",
 ]
 
@@ -8657,6 +8658,85 @@ def audit_markdown_image_alt_text_and_svg_sanitization_hygiene(
 AnyDocService.audit_markdown_image_alt_text_and_svg_sanitization_hygiene = staticmethod(
     audit_markdown_image_alt_text_and_svg_sanitization_hygiene
 )
+
+
+def audit_markdown_yaml_frontmatter_schema_and_tag_hygiene(
+    documents: list[dict] | None,
+    *,
+    max_tags_per_document: int = 8,
+    require_owner_and_iso_date: bool = True,
+) -> dict:
+    """PMBOK §4.4 & §10.2 — Audita completitud del esquema YAML frontmatter en documentos Markdown, validez de fechas ISO-8601, propietario responsable e higiene de taxonomía de etiquetas."""
+    raw_items = documents if isinstance(documents, list) else []
+    valid_documents: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("document_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_documents.append(item)
+
+    invalid_yaml_or_missing_metadata_document_ids: list[str] = []
+    tag_sprawl_or_non_canonical_document_ids: list[str] = []
+
+    for d in valid_documents:
+        did = str(d["document_id"]).strip()
+        raw_yaml = d.get("yaml_delimiters_and_syntax_valid", True)
+        yaml_delimiters_and_syntax_valid = bool(
+            True if raw_yaml is None else raw_yaml
+        )
+
+        raw_owner = d.get("owner_and_iso8601_date_present", True)
+        owner_and_iso8601_date_present = bool(
+            True if raw_owner is None else raw_owner
+        )
+
+        raw_tags = d.get("tags_count", 3)
+        tags_count = int(3 if raw_tags is None else raw_tags)
+
+        raw_non_canon = d.get("non_canonical_tags_count", 0)
+        non_canonical_tags_count = int(
+            0 if raw_non_canon is None else raw_non_canon
+        )
+
+        if not yaml_delimiters_and_syntax_valid or (
+            require_owner_and_iso_date and not owner_and_iso8601_date_present
+        ):
+            invalid_yaml_or_missing_metadata_document_ids.append(did)
+
+        if (
+            tags_count > max_tags_per_document
+            or non_canonical_tags_count > 0
+            or tags_count < 1
+        ):
+            tag_sprawl_or_non_canonical_document_ids.append(did)
+
+    if invalid_yaml_or_missing_metadata_document_ids:
+        frontmatter_hygiene_status = (
+            "FRONTMATTER_YAML_SYNTAX_OR_METADATA_BREACH"
+        )
+    elif tag_sprawl_or_non_canonical_document_ids:
+        frontmatter_hygiene_status = (
+            "FRONTMATTER_TAG_TAXONOMY_OR_SPRAWL_WARNING"
+        )
+    else:
+        frontmatter_hygiene_status = "FRONTMATTER_SCHEMA_HYGIENE_OPTIMAL"
+
+    return {
+        "evaluated_documents_count": len(valid_documents),
+        "invalid_yaml_or_missing_metadata_document_ids": invalid_yaml_or_missing_metadata_document_ids,
+        "tag_sprawl_or_non_canonical_document_ids": tag_sprawl_or_non_canonical_document_ids,
+        "frontmatter_hygiene_status": frontmatter_hygiene_status,
+        "is_frontmatter_hygiene_compliant": frontmatter_hygiene_status
+        == "FRONTMATTER_SCHEMA_HYGIENE_OPTIMAL",
+    }
+
+
+AnyDocService.audit_markdown_yaml_frontmatter_schema_and_tag_hygiene = staticmethod(
+    audit_markdown_yaml_frontmatter_schema_and_tag_hygiene
+)
+
 
 
 

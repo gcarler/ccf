@@ -8530,5 +8530,151 @@ def test_audit_markdown_image_alt_text_and_svg_sanitization_hygiene_staticmethod
     )
 
 
+def test_audit_markdown_yaml_frontmatter_schema_and_tag_hygiene_breach():
+    from backend.services.anydoc_service import (
+        audit_markdown_yaml_frontmatter_schema_and_tag_hygiene,
+    )
+
+    res = audit_markdown_yaml_frontmatter_schema_and_tag_hygiene(
+        [
+            {
+                "document_id": "  DOC-BAD-YAML  ",
+                "yaml_delimiters_and_syntax_valid": False,
+                "owner_and_iso8601_date_present": True,
+                "tags_count": 3,
+                "non_canonical_tags_count": 0,
+            },
+            {
+                "document_id": "DOC-MISSING-OWNER",
+                "yaml_delimiters_and_syntax_valid": True,
+                "owner_and_iso8601_date_present": False,
+                "tags_count": 10,
+                "non_canonical_tags_count": 2,
+            },
+            {
+                "document_id": "DOC-CLEAN",
+                "yaml_delimiters_and_syntax_valid": True,
+                "owner_and_iso8601_date_present": True,
+                "tags_count": 8,
+                "non_canonical_tags_count": 0,
+            },
+        ]
+    )
+    assert res["evaluated_documents_count"] == 3
+    assert res["invalid_yaml_or_missing_metadata_document_ids"] == [
+        "DOC-BAD-YAML",
+        "DOC-MISSING-OWNER",
+    ]
+    assert res["tag_sprawl_or_non_canonical_document_ids"] == [
+        "DOC-MISSING-OWNER"
+    ]
+    assert (
+        res["frontmatter_hygiene_status"]
+        == "FRONTMATTER_YAML_SYNTAX_OR_METADATA_BREACH"
+    )
+    assert res["is_frontmatter_hygiene_compliant"] is False
+
+
+def test_audit_markdown_yaml_frontmatter_schema_and_tag_hygiene_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_yaml_frontmatter_schema_and_tag_hygiene,
+    )
+
+    res = audit_markdown_yaml_frontmatter_schema_and_tag_hygiene(
+        [
+            {
+                "document_id": "DOC-SPRAWL",
+                "yaml_delimiters_and_syntax_valid": True,
+                "owner_and_iso8601_date_present": False,
+                "tags_count": 9,
+                "non_canonical_tags_count": 0,
+            },
+            {
+                "document_id": "DOC-NON-CANONICAL",
+                "yaml_delimiters_and_syntax_valid": True,
+                "owner_and_iso8601_date_present": True,
+                "tags_count": 2,
+                "non_canonical_tags_count": 1,
+            },
+            {
+                "document_id": "DOC-ZERO-TAGS",
+                "yaml_delimiters_and_syntax_valid": True,
+                "owner_and_iso8601_date_present": True,
+                "tags_count": 0,
+                "non_canonical_tags_count": 0,
+            },
+        ],
+        max_tags_per_document=8,
+        require_owner_and_iso_date=False,
+    )
+    assert res["evaluated_documents_count"] == 3
+    assert res["invalid_yaml_or_missing_metadata_document_ids"] == []
+    assert res["tag_sprawl_or_non_canonical_document_ids"] == [
+        "DOC-SPRAWL",
+        "DOC-NON-CANONICAL",
+        "DOC-ZERO-TAGS",
+    ]
+    assert (
+        res["frontmatter_hygiene_status"]
+        == "FRONTMATTER_TAG_TAXONOMY_OR_SPRAWL_WARNING"
+    )
+    assert res["is_frontmatter_hygiene_compliant"] is False
+
+
+def test_audit_markdown_yaml_frontmatter_schema_and_tag_hygiene_optimal_and_defensive():
+    from backend.services.anydoc_service import (
+        audit_markdown_yaml_frontmatter_schema_and_tag_hygiene,
+    )
+
+    empty = audit_markdown_yaml_frontmatter_schema_and_tag_hygiene(None)
+    assert empty["evaluated_documents_count"] == 0
+    assert (
+        empty["frontmatter_hygiene_status"]
+        == "FRONTMATTER_SCHEMA_HYGIENE_OPTIMAL"
+    )
+    assert empty["is_frontmatter_hygiene_compliant"] is True
+
+    defaults = audit_markdown_yaml_frontmatter_schema_and_tag_hygiene(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"document_id": "   "},
+            {
+                "document_id": "DOC-DEFAULTS",
+                "yaml_delimiters_and_syntax_valid": None,
+                "owner_and_iso8601_date_present": None,
+                "tags_count": None,
+                "non_canonical_tags_count": None,
+            },
+        ]
+    )
+    assert defaults["evaluated_documents_count"] == 1
+    assert (
+        defaults["frontmatter_hygiene_status"]
+        == "FRONTMATTER_SCHEMA_HYGIENE_OPTIMAL"
+    )
+    assert defaults["is_frontmatter_hygiene_compliant"] is True
+
+
+def test_audit_markdown_yaml_frontmatter_schema_and_tag_hygiene_staticmethod_and_dunder_all():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_yaml_frontmatter_schema_and_tag_hygiene,
+    )
+
+    sample = [{"document_id": "DOC-99", "tags_count": 4}]
+    assert (
+        AnyDocService.audit_markdown_yaml_frontmatter_schema_and_tag_hygiene(
+            sample
+        )
+        == audit_markdown_yaml_frontmatter_schema_and_tag_hygiene(sample)
+    )
+    assert (
+        "audit_markdown_yaml_frontmatter_schema_and_tag_hygiene"
+        in mod.__all__
+    )
+
+
+
 
 

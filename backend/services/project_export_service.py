@@ -3015,6 +3015,7 @@ __all__ = [
     "audit_executive_report_idempotency_key_and_replay_window",
     "audit_executive_report_rfc3161_timestamping_and_non_repudiation",
     "audit_executive_report_siem_log_forwarding_and_retention",
+    "audit_executive_report_subprocessor_breach_sla_and_right_to_audit",
     "ProjectExportService",
 ]
 
@@ -8084,4 +8085,86 @@ def audit_executive_report_siem_log_forwarding_and_retention(
 ProjectExportService.audit_executive_report_siem_log_forwarding_and_retention = staticmethod(
     audit_executive_report_siem_log_forwarding_and_retention
 )
+
+
+def audit_executive_report_subprocessor_breach_sla_and_right_to_audit(
+    subprocessors: list[dict] | None,
+    *,
+    max_breach_notification_hours: int = 24,
+    require_right_to_audit_clause: bool = True,
+) -> dict:
+    """PMBOK §10.2 & §12.3 — Audita concentración de subencargados (fourth-party), cláusula contractual de derecho de auditoría (Right-to-Audit), SLA de notificación de brechas y pruebas de penetración anuales."""
+    raw_items = subprocessors if isinstance(subprocessors, list) else []
+    valid_subprocessors: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("subprocessor_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_subprocessors.append(item)
+
+    unauthorized_fourth_party_or_no_audit_subprocessor_ids: list[str] = []
+    slow_breach_sla_or_missing_pentest_subprocessor_ids: list[str] = []
+
+    for sp in valid_subprocessors:
+        sid = str(sp["subprocessor_id"]).strip()
+        raw_rta = sp.get("right_to_audit_clause_signed", True)
+        right_to_audit_clause_signed = bool(
+            True if raw_rta is None else raw_rta
+        )
+
+        raw_fp = sp.get("unapproved_fourth_party_delegation", False)
+        unapproved_fourth_party_delegation = bool(
+            False if raw_fp is None else raw_fp
+        )
+
+        raw_hours = sp.get("contractual_breach_notice_hours", 12)
+        contractual_breach_notice_hours = int(
+            12 if raw_hours is None else raw_hours
+        )
+
+        raw_pentest = sp.get("annual_pen_test_report_provided", True)
+        annual_pen_test_report_provided = bool(
+            True if raw_pentest is None else raw_pentest
+        )
+
+        if unapproved_fourth_party_delegation or (
+            require_right_to_audit_clause and not right_to_audit_clause_signed
+        ):
+            unauthorized_fourth_party_or_no_audit_subprocessor_ids.append(sid)
+
+        if (
+            contractual_breach_notice_hours > max_breach_notification_hours
+            or not annual_pen_test_report_provided
+        ):
+            slow_breach_sla_or_missing_pentest_subprocessor_ids.append(sid)
+
+    if unauthorized_fourth_party_or_no_audit_subprocessor_ids:
+        subprocessor_governance_status = (
+            "SUBPROCESSOR_FOURTH_PARTY_OR_AUDIT_RIGHT_BREACH"
+        )
+    elif slow_breach_sla_or_missing_pentest_subprocessor_ids:
+        subprocessor_governance_status = (
+            "SUBPROCESSOR_BREACH_SLA_OR_PENTEST_WARNING"
+        )
+    else:
+        subprocessor_governance_status = (
+            "SUBPROCESSOR_COMPLIANCE_CHAIN_OPTIMAL"
+        )
+
+    return {
+        "evaluated_subprocessors_count": len(valid_subprocessors),
+        "unauthorized_fourth_party_or_no_audit_subprocessor_ids": unauthorized_fourth_party_or_no_audit_subprocessor_ids,
+        "slow_breach_sla_or_missing_pentest_subprocessor_ids": slow_breach_sla_or_missing_pentest_subprocessor_ids,
+        "subprocessor_governance_status": subprocessor_governance_status,
+        "is_subprocessor_governance_compliant": subprocessor_governance_status
+        == "SUBPROCESSOR_COMPLIANCE_CHAIN_OPTIMAL",
+    }
+
+
+ProjectExportService.audit_executive_report_subprocessor_breach_sla_and_right_to_audit = staticmethod(
+    audit_executive_report_subprocessor_breach_sla_and_right_to_audit
+)
+
 
