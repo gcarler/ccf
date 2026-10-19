@@ -10893,4 +10893,108 @@ def test_validate_agile_hybrid_wip_little_law_and_sprint_carryover_empty_and_exp
     )
 
 
+def test_validate_ccpm_fever_chart_buffer_penetration_and_feeding_buffer_green():
+    from backend.schemas.projects import (
+        validate_ccpm_fever_chart_buffer_penetration_and_feeding_buffer,
+    )
+
+    res = validate_ccpm_fever_chart_buffer_penetration_and_feeding_buffer(
+        critical_chain_completed_pct=50.0,
+        project_buffer_consumed_pct=30.0,
+        feeding_buffer_consumed_pct=40.0,
+        resource_multitasking_index_pct=10.0,
+    )
+    assert res["red_zone_limit_pct"] == 66.83
+    assert res["yellow_zone_limit_pct"] == 41.79
+    assert res["buffer_burn_ratio"] == 0.6
+    assert res["feeding_buffer_exhausted"] is False
+    assert res["excessive_multitasking"] is False
+    assert (
+        res["fever_chart_status"]
+        == "FEVER_GREEN_ZONE_FLOW_PROTECTED_CLEAN"
+    )
+
+
+def test_validate_ccpm_fever_chart_buffer_penetration_and_feeding_buffer_yellow():
+    from backend.schemas.projects import (
+        validate_ccpm_fever_chart_buffer_penetration_and_feeding_buffer,
+    )
+
+    res_pb = validate_ccpm_fever_chart_buffer_penetration_and_feeding_buffer(
+        critical_chain_completed_pct=50.0,
+        project_buffer_consumed_pct=50.0,
+        feeding_buffer_consumed_pct=30.0,
+    )
+    assert (
+        res_pb["fever_chart_status"]
+        == "FEVER_YELLOW_ZONE_OR_MULTITASKING_CONTENTION_WARNING"
+    )
+
+    res_multi = validate_ccpm_fever_chart_buffer_penetration_and_feeding_buffer(
+        critical_chain_completed_pct=50.0,
+        project_buffer_consumed_pct=20.0,
+        feeding_buffer_consumed_pct=80.0,
+        resource_multitasking_index_pct=22.0,
+    )
+    assert res_multi["excessive_multitasking"] is True
+    assert (
+        res_multi["fever_chart_status"]
+        == "FEVER_YELLOW_ZONE_OR_MULTITASKING_CONTENTION_WARNING"
+    )
+
+
+def test_validate_ccpm_fever_chart_buffer_penetration_and_feeding_buffer_red():
+    from backend.schemas.projects import (
+        validate_ccpm_fever_chart_buffer_penetration_and_feeding_buffer,
+    )
+
+    res_red = validate_ccpm_fever_chart_buffer_penetration_and_feeding_buffer(
+        critical_chain_completed_pct=40.0,
+        project_buffer_consumed_pct=70.0,
+        feeding_buffer_consumed_pct=50.0,
+    )
+    assert (
+        res_red["fever_chart_status"]
+        == "CRITICAL_FEVER_RED_ZONE_OR_FEEDING_BUFFER_EXHAUSTED_BREACH"
+    )
+
+    res_fb = validate_ccpm_fever_chart_buffer_penetration_and_feeding_buffer(
+        critical_chain_completed_pct=80.0,
+        project_buffer_consumed_pct=25.0,
+        feeding_buffer_consumed_pct=100.0,
+    )
+    assert res_fb["feeding_buffer_exhausted"] is True
+    assert (
+        res_fb["fever_chart_status"]
+        == "CRITICAL_FEVER_RED_ZONE_OR_FEEDING_BUFFER_EXHAUSTED_BREACH"
+    )
+
+
+def test_validate_ccpm_fever_chart_buffer_penetration_and_feeding_buffer_coercion_and_exports():
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_ccpm_fever_chart_buffer_penetration_and_feeding_buffer,
+    )
+
+    res = validate_ccpm_fever_chart_buffer_penetration_and_feeding_buffer(
+        critical_chain_completed_pct=-10.0,
+        project_buffer_consumed_pct="invalid",  # type: ignore[arg-type]
+        feeding_buffer_consumed_pct=-5.0,
+        resource_multitasking_index_pct=False,  # type: ignore[arg-type]
+    )
+    assert res["red_zone_limit_pct"] == 33.33
+    assert res["yellow_zone_limit_pct"] == 16.66
+    assert res["buffer_burn_ratio"] == 0.0
+    assert res["feeding_buffer_exhausted"] is False
+    assert (
+        res["fever_chart_status"]
+        == "FEVER_GREEN_ZONE_FLOW_PROTECTED_CLEAN"
+    )
+    assert (
+        "validate_ccpm_fever_chart_buffer_penetration_and_feeding_buffer"
+        in mod.__all__
+    )
+
+
+
 

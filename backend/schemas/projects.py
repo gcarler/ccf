@@ -3837,6 +3837,7 @@ __all__ = [
     "validate_monte_carlo_pert_p80_p90_and_path_convergence_bias",
     "validate_resource_leveling_and_smoothing_float_bounds",
     "validate_agile_hybrid_wip_little_law_and_sprint_carryover",
+    "validate_ccpm_fever_chart_buffer_penetration_and_feeding_buffer",
 ]
 
 
@@ -10324,6 +10325,66 @@ def validate_agile_hybrid_wip_little_law_and_sprint_carryover(
         "max_observed_carryover_pct": max_observed_carryover_pct,
         "sprint_evaluations": sprint_evaluations,
     }
+
+
+def validate_ccpm_fever_chart_buffer_penetration_and_feeding_buffer(
+    critical_chain_completed_pct: float,
+    project_buffer_consumed_pct: float,
+    feeding_buffer_consumed_pct: float = 0.0,
+    *,
+    red_zone_base_threshold_pct: float = 33.33,
+    red_zone_slope_factor: float = 0.67,
+    resource_multitasking_index_pct: float = 0.0,
+    max_multitasking_index_pct: float = 15.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §6.5 & §9.4 — Valida penetración de Project/Feeding Buffer en Fever Chart CCPM e índice de multitarea de recursos."""
+    def _num(val: Any, default: float) -> float:
+        if isinstance(val, bool) or not isinstance(val, (int, float)):
+            return default
+        return float(val)
+
+    cc_pct = min(100.0, max(0.0, _num(critical_chain_completed_pct, 0.0)))
+    pb_pct = max(0.0, _num(project_buffer_consumed_pct, 0.0))
+    fb_pct = max(0.0, _num(feeding_buffer_consumed_pct, 0.0))
+    red_base = max(0.0, _num(red_zone_base_threshold_pct, 33.33))
+    red_slope = max(0.0, _num(red_zone_slope_factor, 0.67))
+    multi_idx = max(0.0, _num(resource_multitasking_index_pct, 0.0))
+    max_multi = max(0.0, _num(max_multitasking_index_pct, 15.0))
+
+    red_zone_limit_pct = round(red_base + (cc_pct * red_slope), 2)
+    yellow_zone_limit_pct = round(
+        (red_base * 0.5) + (cc_pct * red_slope * 0.75), 2
+    )
+    buffer_burn_ratio = (
+        round(pb_pct / max(1.0, cc_pct), 2) if pb_pct > 0.0 else 0.0
+    )
+    feeding_buffer_exhausted = bool(fb_pct >= 100.0)
+    excessive_multitasking = bool(multi_idx > max_multi)
+
+    if pb_pct > red_zone_limit_pct or feeding_buffer_exhausted:
+        fever_chart_status = (
+            "CRITICAL_FEVER_RED_ZONE_OR_FEEDING_BUFFER_EXHAUSTED_BREACH"
+        )
+    elif (
+        pb_pct > yellow_zone_limit_pct
+        or excessive_multitasking
+        or fb_pct >= 75.0
+    ):
+        fever_chart_status = (
+            "FEVER_YELLOW_ZONE_OR_MULTITASKING_CONTENTION_WARNING"
+        )
+    else:
+        fever_chart_status = "FEVER_GREEN_ZONE_FLOW_PROTECTED_CLEAN"
+
+    return {
+        "red_zone_limit_pct": red_zone_limit_pct,
+        "yellow_zone_limit_pct": yellow_zone_limit_pct,
+        "buffer_burn_ratio": buffer_burn_ratio,
+        "feeding_buffer_exhausted": feeding_buffer_exhausted,
+        "excessive_multitasking": excessive_multitasking,
+        "fever_chart_status": fever_chart_status,
+    }
+
 
 
 
