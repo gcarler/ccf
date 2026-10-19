@@ -11512,3 +11512,120 @@ def test_audit_wiki_cdn_surrogate_key_purge_and_origin_shield_hit_ratio_staticme
     )
 
 
+def test_audit_wiki_postgres_logical_replication_wal_bloat_and_txid_wraparound_healthy():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_postgres_logical_replication_wal_bloat_and_txid_wraparound,
+    )
+
+    res = audit_wiki_postgres_logical_replication_wal_bloat_and_txid_wraparound(
+        replication_slots=[
+            {
+                "slot_name": "wiki_cdc_slot_1",
+                "active": True,
+                "retained_wal_gb": 2.5,
+                "replica_lag_seconds": 1.8,
+                "max_table_txid_age_millions": 45.0,
+            },
+            {
+                "slot_name": "wiki_read_replica_2",
+                "active": True,
+                "retained_wal_gb": 1.1,
+                "replica_lag_seconds": 0.4,
+                "max_table_txid_age_millions": 45.0,
+            },
+        ]
+    )
+    assert res["is_valid"] is True
+    assert res["total_slots"] == 2
+    assert res["inactive_or_wal_bloated_slots"] == []
+    assert res["lagging_replication_slots"] == []
+    assert res["txid_wraparound_risk_slots"] == []
+    assert res["replication_health_status"] == "REPLICATION_AND_VACUUM_HEALTHY"
+
+
+def test_audit_wiki_postgres_logical_replication_wal_bloat_and_txid_wraparound_critical_breach():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_postgres_logical_replication_wal_bloat_and_txid_wraparound,
+    )
+
+    res = audit_wiki_postgres_logical_replication_wal_bloat_and_txid_wraparound(
+        replication_slots=[
+            {
+                "slot_name": "wiki_orphaned_slot",
+                "active": False,
+                "retained_wal_gb": 48.0,
+                "replica_lag_seconds": 600.0,
+                "max_table_txid_age_millions": 215.0,
+            }
+        ]
+    )
+    assert res["is_valid"] is False
+    assert res["inactive_or_wal_bloated_slots"] == ["wiki_orphaned_slot"]
+    assert res["lagging_replication_slots"] == ["wiki_orphaned_slot"]
+    assert res["txid_wraparound_risk_slots"] == ["wiki_orphaned_slot"]
+    assert (
+        res["replication_health_status"]
+        == "CRITICAL_WAL_EXHAUSTION_OR_TXID_WRAPAROUND"
+    )
+
+
+def test_audit_wiki_postgres_logical_replication_wal_bloat_and_txid_wraparound_lag_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_postgres_logical_replication_wal_bloat_and_txid_wraparound,
+    )
+
+    res = audit_wiki_postgres_logical_replication_wal_bloat_and_txid_wraparound(
+        replication_slots=[
+            {
+                "slot_name": "wiki_analytics_slot",
+                "active": True,
+                "retained_wal_gb": 8.0,
+                "replica_lag_seconds": 45.0,
+                "max_table_txid_age_millions": 60.0,
+            }
+        ],
+        max_replica_lag_seconds=30.0,
+    )
+    assert res["is_valid"] is False
+    assert res["inactive_or_wal_bloated_slots"] == []
+    assert res["lagging_replication_slots"] == ["wiki_analytics_slot"]
+    assert res["txid_wraparound_risk_slots"] == []
+    assert res["replication_health_status"] == "REPLICA_LAG_WARNING"
+
+
+def test_audit_wiki_postgres_logical_replication_wal_bloat_and_txid_wraparound_staticmethod_and_dunder_all():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_postgres_logical_replication_wal_bloat_and_txid_wraparound,
+    )
+
+    empty = audit_wiki_postgres_logical_replication_wal_bloat_and_txid_wraparound([])
+    assert empty["is_valid"] is False
+    assert (
+        empty["replication_health_status"]
+        == "CRITICAL_WAL_EXHAUSTION_OR_TXID_WRAPAROUND"
+    )
+
+    sample = [
+        {
+            "slot_name": "slot_1",
+            "active": True,
+            "retained_wal_gb": 1.0,
+            "replica_lag_seconds": 2.0,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_postgres_logical_replication_wal_bloat_and_txid_wraparound(
+            sample
+        )
+        == audit_wiki_postgres_logical_replication_wal_bloat_and_txid_wraparound(
+            sample
+        )
+    )
+    assert (
+        "audit_wiki_postgres_logical_replication_wal_bloat_and_txid_wraparound"
+        in mod.__all__
+    )
+
+

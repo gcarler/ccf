@@ -3187,6 +3187,7 @@ __all__ = [
     "audit_final_lien_waiver_unconditional_release_and_mechanics_lien_exposure",
     "audit_dlp_warranty_callout_sla_and_retention_bond_stepdown",
     "audit_software_escrow_deposit_verification_and_release_trigger",
+    "audit_ppp_concession_handback_residual_life_and_reserve_escrow",
     "ProjectLifecyclePMIService",
 ]
 
@@ -8814,6 +8815,90 @@ def audit_software_escrow_deposit_verification_and_release_trigger(
 ProjectLifecyclePMIService.audit_software_escrow_deposit_verification_and_release_trigger = staticmethod(
     audit_software_escrow_deposit_verification_and_release_trigger
 )
+
+
+def audit_ppp_concession_handback_residual_life_and_reserve_escrow(
+    concession_assets: list[dict[str, Any]],
+    handback_reserve_escrow_balance: float = 0.0,
+    required_escrow_coverage_ratio: float = 1.25,
+) -> dict[str, Any]:
+    """PMBOK §12.3 & §4.7 — Project Closure Public-Private Partnership (PPP / P3) Concession Handback Residual Asset Life, Handback Reserve Escrow & Independent Engineer Certification Auditor."""
+    valid_assets = [
+        a for a in (concession_assets if isinstance(concession_assets, list) else []) if isinstance(a, dict)
+    ]
+
+    deficient_residual_life_assets: list[str] = []
+    uncertified_handback_assets: list[str] = []
+
+    for idx, a in enumerate(valid_assets):
+        aid = str(a.get("asset_id") or f"asset-{idx + 1}").strip()
+        assessed_life = float(a.get("assessed_residual_design_life_years", 0.0) or 0.0)
+        contracted_life = float(a.get("contracted_min_residual_life_years", 0.0) or 0.0)
+        ie_certified = bool(a.get("independent_engineer_certified", True))
+
+        if assessed_life < contracted_life:
+            deficient_residual_life_assets.append(aid)
+        if not ie_certified:
+            uncertified_handback_assets.append(aid)
+
+    total_rehabilitation_capex = round(
+        sum(
+            max(0.0, float(a.get("rehabilitation_capex_required", 0.0) or 0.0))
+            for a in valid_assets
+        ),
+        2,
+    )
+    required_handback_escrow = round(
+        total_rehabilitation_capex * float(required_escrow_coverage_ratio), 2
+    )
+    escrow_sufficient = float(handback_reserve_escrow_balance) >= required_handback_escrow
+
+    recommendations: list[str] = []
+    if len(valid_assets) == 0:
+        recommendations.append(
+            "Provide at least one PPP concession asset record for handback inspection auditing."
+        )
+    if deficient_residual_life_assets:
+        recommendations.append(
+            f"Execute heavy lifecycle rehabilitation works to restore contracted residual design life on: {', '.join(deficient_residual_life_assets)}."
+        )
+    if not escrow_sufficient:
+        recommendations.append(
+            f"Top up Handback Reserve Account (HRA) escrow to cover >= {required_handback_escrow:.2f} rehabilitation requirement."
+        )
+    if uncertified_handback_assets:
+        recommendations.append(
+            f"Obtain Independent Engineer (IE) handback certificate sign-off for: {', '.join(uncertified_handback_assets)}."
+        )
+
+    if (
+        len(deficient_residual_life_assets) > 0
+        or not escrow_sufficient
+        or len(valid_assets) == 0
+    ):
+        handback_status = "CRITICAL_HANDBACK_DEFICIENCY_OR_ESCROW_SHORTFALL"
+    elif len(uncertified_handback_assets) > 0:
+        handback_status = "PENDING_INDEPENDENT_ENGINEER_SIGNOFF"
+    else:
+        handback_status = "PPP_HANDBACK_COMPLIANT"
+
+    return {
+        "is_valid": handback_status == "PPP_HANDBACK_COMPLIANT",
+        "total_assets": len(valid_assets),
+        "deficient_residual_life_assets": deficient_residual_life_assets,
+        "uncertified_handback_assets": uncertified_handback_assets,
+        "total_rehabilitation_capex": total_rehabilitation_capex,
+        "required_handback_escrow": required_handback_escrow,
+        "escrow_sufficient": escrow_sufficient,
+        "handback_status": handback_status,
+        "recommendations": recommendations,
+    }
+
+
+ProjectLifecyclePMIService.audit_ppp_concession_handback_residual_life_and_reserve_escrow = staticmethod(
+    audit_ppp_concession_handback_residual_life_and_reserve_escrow
+)
+
 
 
 

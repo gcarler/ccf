@@ -11588,3 +11588,124 @@ def test_audit_software_escrow_deposit_verification_and_release_trigger_staticme
         in mod.__all__
     )
 
+
+def test_audit_ppp_concession_handback_residual_life_and_reserve_escrow_compliant():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_ppp_concession_handback_residual_life_and_reserve_escrow,
+    )
+
+    res = audit_ppp_concession_handback_residual_life_and_reserve_escrow(
+        concession_assets=[
+            {
+                "asset_id": "BRIDGE-DECK-01",
+                "assessed_residual_design_life_years": 12.5,
+                "contracted_min_residual_life_years": 10.0,
+                "rehabilitation_capex_required": 100000.0,
+                "independent_engineer_certified": True,
+            },
+            {
+                "asset_id": "TUNNEL-VENT-02",
+                "assessed_residual_design_life_years": 8.0,
+                "contracted_min_residual_life_years": 5.0,
+                "rehabilitation_capex_required": 60000.0,
+                "independent_engineer_certified": True,
+            },
+        ],
+        handback_reserve_escrow_balance=250000.0,
+        required_escrow_coverage_ratio=1.25,
+    )
+    assert res["is_valid"] is True
+    assert res["total_assets"] == 2
+    assert res["deficient_residual_life_assets"] == []
+    assert res["uncertified_handback_assets"] == []
+    assert res["total_rehabilitation_capex"] == 160000.0
+    assert res["required_handback_escrow"] == 200000.0
+    assert res["escrow_sufficient"] is True
+    assert res["handback_status"] == "PPP_HANDBACK_COMPLIANT"
+
+
+def test_audit_ppp_concession_handback_residual_life_and_reserve_escrow_critical_deficiency():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_ppp_concession_handback_residual_life_and_reserve_escrow,
+    )
+
+    res = audit_ppp_concession_handback_residual_life_and_reserve_escrow(
+        concession_assets=[
+            {
+                "asset_id": "PAVEMENT-SEC-04",
+                "assessed_residual_design_life_years": 3.5,
+                "contracted_min_residual_life_years": 7.0,
+                "rehabilitation_capex_required": 400000.0,
+                "independent_engineer_certified": False,
+            }
+        ],
+        handback_reserve_escrow_balance=300000.0,
+        required_escrow_coverage_ratio=1.25,
+    )
+    assert res["is_valid"] is False
+    assert res["deficient_residual_life_assets"] == ["PAVEMENT-SEC-04"]
+    assert res["uncertified_handback_assets"] == ["PAVEMENT-SEC-04"]
+    assert res["required_handback_escrow"] == 500000.0
+    assert res["escrow_sufficient"] is False
+    assert (
+        res["handback_status"]
+        == "CRITICAL_HANDBACK_DEFICIENCY_OR_ESCROW_SHORTFALL"
+    )
+
+
+def test_audit_ppp_concession_handback_residual_life_and_reserve_escrow_pending_ie_signoff():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_ppp_concession_handback_residual_life_and_reserve_escrow,
+    )
+
+    res = audit_ppp_concession_handback_residual_life_and_reserve_escrow(
+        concession_assets=[
+            {
+                "asset_id": "TOLL-GANTRY-01",
+                "assessed_residual_design_life_years": 9.0,
+                "contracted_min_residual_life_years": 5.0,
+                "rehabilitation_capex_required": 0.0,
+                "independent_engineer_certified": False,
+            }
+        ],
+        handback_reserve_escrow_balance=50000.0,
+    )
+    assert res["is_valid"] is False
+    assert res["deficient_residual_life_assets"] == []
+    assert res["uncertified_handback_assets"] == ["TOLL-GANTRY-01"]
+    assert res["escrow_sufficient"] is True
+    assert res["handback_status"] == "PENDING_INDEPENDENT_ENGINEER_SIGNOFF"
+
+
+def test_audit_ppp_concession_handback_residual_life_and_reserve_escrow_staticmethod_and_dunder_all():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_ppp_concession_handback_residual_life_and_reserve_escrow,
+    )
+
+    empty = audit_ppp_concession_handback_residual_life_and_reserve_escrow([])
+    assert empty["is_valid"] is False
+    assert (
+        empty["handback_status"]
+        == "CRITICAL_HANDBACK_DEFICIENCY_OR_ESCROW_SHORTFALL"
+    )
+
+    sample = [
+        {
+            "asset_id": "AST-1",
+            "assessed_residual_design_life_years": 10.0,
+            "contracted_min_residual_life_years": 5.0,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_ppp_concession_handback_residual_life_and_reserve_escrow(
+            sample
+        )
+        == audit_ppp_concession_handback_residual_life_and_reserve_escrow(sample)
+    )
+    assert (
+        "audit_ppp_concession_handback_residual_life_and_reserve_escrow"
+        in mod.__all__
+    )
+

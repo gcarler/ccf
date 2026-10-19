@@ -2552,6 +2552,7 @@ __all__ = [
     "audit_wiki_spiffe_spire_svid_mtls_rotation_and_federation_bundle",
     "audit_wiki_search_cluster_shard_allocation_and_jvm_heap_breaker",
     "audit_wiki_cdn_surrogate_key_purge_and_origin_shield_hit_ratio",
+    "audit_wiki_postgres_logical_replication_wal_bloat_and_txid_wraparound",
     "WikiPMIService",
 ]
 
@@ -8521,5 +8522,80 @@ def audit_wiki_cdn_surrogate_key_purge_and_origin_shield_hit_ratio(
 WikiPMIService.audit_wiki_cdn_surrogate_key_purge_and_origin_shield_hit_ratio = staticmethod(
     audit_wiki_cdn_surrogate_key_purge_and_origin_shield_hit_ratio
 )
+
+
+def audit_wiki_postgres_logical_replication_wal_bloat_and_txid_wraparound(
+    replication_slots: list[dict[str, Any]],
+    max_retained_wal_gb: float = 20.0,
+    max_replica_lag_seconds: float = 30.0,
+    txid_autovacuum_freeze_max_age_millions: float = 200.0,
+) -> dict[str, Any]:
+    """PMBOK §4.4 & §11.6 — Wiki Postgres Logical Replication Slot WAL Bloat, Replication Lag LSN Byte Delta & Dead-Tuple Autovacuum Freeze-Age Auditor."""
+    valid_slots = [
+        s for s in (replication_slots if isinstance(replication_slots, list) else []) if isinstance(s, dict)
+    ]
+
+    inactive_or_wal_bloated_slots: list[str] = []
+    lagging_replication_slots: list[str] = []
+    txid_wraparound_risk_slots: list[str] = []
+
+    for idx, s in enumerate(valid_slots):
+        sname = str(s.get("slot_name") or f"slot-{idx + 1}").strip()
+        active = bool(s.get("active", False))
+        retained_gb = float(s.get("retained_wal_gb", 0.0) or 0.0)
+        lag_sec = float(s.get("replica_lag_seconds", 0.0) or 0.0)
+        txid_age_m = float(s.get("max_table_txid_age_millions", 50.0) or 0.0)
+
+        if not active or retained_gb > float(max_retained_wal_gb):
+            inactive_or_wal_bloated_slots.append(sname)
+        if lag_sec > float(max_replica_lag_seconds):
+            lagging_replication_slots.append(sname)
+        if txid_age_m >= float(txid_autovacuum_freeze_max_age_millions):
+            txid_wraparound_risk_slots.append(sname)
+
+    recommendations: list[str] = []
+    if len(valid_slots) == 0:
+        recommendations.append(
+            "Provide at least one PostgreSQL logical replication slot record for WAL and vacuum health auditing."
+        )
+    if inactive_or_wal_bloated_slots:
+        recommendations.append(
+            f"Drop or resume inactive logical replication slots and cap max_slot_wal_keep_size on: {', '.join(inactive_or_wal_bloated_slots)}."
+        )
+    if txid_wraparound_risk_slots:
+        recommendations.append(
+            f"Execute emergency VACUUM FREEZE to prevent XID wraparound shutdown on: {', '.join(txid_wraparound_risk_slots)}."
+        )
+    if lagging_replication_slots:
+        recommendations.append(
+            f"Investigate WAL sender/receiver I/O bottleneck for lagging replication slots (> {max_replica_lag_seconds}s): {', '.join(lagging_replication_slots)}."
+        )
+
+    if (
+        len(inactive_or_wal_bloated_slots) > 0
+        or len(txid_wraparound_risk_slots) > 0
+        or len(valid_slots) == 0
+    ):
+        replication_health_status = "CRITICAL_WAL_EXHAUSTION_OR_TXID_WRAPAROUND"
+    elif len(lagging_replication_slots) > 0:
+        replication_health_status = "REPLICA_LAG_WARNING"
+    else:
+        replication_health_status = "REPLICATION_AND_VACUUM_HEALTHY"
+
+    return {
+        "is_valid": replication_health_status == "REPLICATION_AND_VACUUM_HEALTHY",
+        "total_slots": len(valid_slots),
+        "inactive_or_wal_bloated_slots": inactive_or_wal_bloated_slots,
+        "lagging_replication_slots": lagging_replication_slots,
+        "txid_wraparound_risk_slots": txid_wraparound_risk_slots,
+        "replication_health_status": replication_health_status,
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_postgres_logical_replication_wal_bloat_and_txid_wraparound = staticmethod(
+    audit_wiki_postgres_logical_replication_wal_bloat_and_txid_wraparound
+)
+
 
 
