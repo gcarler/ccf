@@ -2553,6 +2553,7 @@ __all__ = [
     "audit_wiki_search_cluster_shard_allocation_and_jvm_heap_breaker",
     "audit_wiki_cdn_surrogate_key_purge_and_origin_shield_hit_ratio",
     "audit_wiki_postgres_logical_replication_wal_bloat_and_txid_wraparound",
+    "audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm",
     "WikiPMIService",
 ]
 
@@ -8598,4 +8599,66 @@ WikiPMIService.audit_wiki_postgres_logical_replication_wal_bloat_and_txid_wrapar
 )
 
 
+def audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm(
+    buckets: list[dict[str, Any]],
+    allowed_max_presigned_url_ttl_sec: int = 3600,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §11.6 — Wiki Object Storage S3/MinIO erasure coding parity drive rebuild, versioning Object-Lock WORM compliance & presigned URL expiry cap auditor."""
+    quorum_lost_or_unlocked_buckets: list[str] = []
+    degraded_parity_or_long_presigned_ttl_buckets: list[str] = []
+    recommendations: list[str] = []
 
+    valid_buckets = [b for b in (buckets or []) if isinstance(b, Mapping)]
+
+    for bucket in valid_buckets:
+        name = str(bucket.get("bucket_name") or "").strip()
+        if not name:
+            continue
+
+        online_drives = int(bucket.get("online_drives_count", 0) or 0)
+        total_drives = int(bucket.get("total_drives_count", 0) or 0)
+        parity_shards = int(bucket.get("parity_shards_ec_m", 0) or 0)
+        worm_enabled = bool(bucket.get("versioning_and_object_lock_enabled", True))
+        max_ttl = int(bucket.get("max_presigned_url_ttl_sec", 3600) or 0)
+
+        failed_drives = max(0, total_drives - online_drives)
+        write_quorum = total_drives - parity_shards
+
+        if (
+            total_drives <= 0
+            or failed_drives > parity_shards
+            or online_drives < write_quorum
+            or not worm_enabled
+        ):
+            quorum_lost_or_unlocked_buckets.append(name)
+            recommendations.append(
+                f"Restore erasure-coding quorum ({online_drives}/{total_drives} drives, EC:{parity_shards}) and enforce Object-Lock WORM on bucket '{name}'."
+            )
+        if 0 < failed_drives <= parity_shards or max_ttl > int(
+            allowed_max_presigned_url_ttl_sec
+        ):
+            degraded_parity_or_long_presigned_ttl_buckets.append(name)
+            recommendations.append(
+                f"Heal degraded parity drives ({failed_drives} offline) and cap presigned URL TTL ({max_ttl}s <= {allowed_max_presigned_url_ttl_sec}s) on bucket '{name}'."
+            )
+
+    if len(valid_buckets) == 0 or len(quorum_lost_or_unlocked_buckets) > 0:
+        storage_status = "CRITICAL_ERASURE_QUORUM_OR_WORM_LOCK_BREACH"
+    elif len(degraded_parity_or_long_presigned_ttl_buckets) > 0:
+        storage_status = "DEGRADED_PARITY_HEALING_OR_TTL_WARNING"
+    else:
+        storage_status = "OBJECT_STORAGE_WORM_OPTIMAL"
+
+    return {
+        "is_valid": storage_status == "OBJECT_STORAGE_WORM_OPTIMAL",
+        "total_buckets": len(valid_buckets),
+        "quorum_lost_or_unlocked_buckets": quorum_lost_or_unlocked_buckets,
+        "degraded_parity_or_long_presigned_ttl_buckets": degraded_parity_or_long_presigned_ttl_buckets,
+        "storage_status": storage_status,
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm = staticmethod(
+    audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm
+)

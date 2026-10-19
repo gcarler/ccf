@@ -9493,3 +9493,91 @@ def test_audit_markdown_task_list_checkbox_parity_and_subtask_indentation_static
         in mod.__all__
     )
 
+
+def test_audit_markdown_rfc2119_normative_keywords_and_requirement_traceability_compliant():
+    from backend.services.anydoc_service import (
+        audit_markdown_rfc2119_normative_keywords_and_requirement_traceability,
+    )
+
+    md = (
+        "# Security Requirements\n\n"
+        "- [REQ-SEC-01] All internal API calls MUST use mutual TLS.\n"
+        "- [REQ-SEC-02] Services MUST NOT log plaintext credentials.\n"
+        "- [REQ-SEC-03] Tokens SHALL expire within 15 minutes.\n"
+        "- [REQ-SEC-04] Clients SHOULD cache public JWKS keys.\n"
+    )
+    res = audit_markdown_rfc2119_normative_keywords_and_requirement_traceability(md)
+    assert res["is_valid"] is True
+    assert res["total_normative_statements"] == 4
+    assert res["lowercase_normative_keyword_lines"] == []
+    assert res["untraced_mandatory_requirement_lines"] == []
+    assert res["ambiguous_modal_ratio_pct"] == 25.0
+    assert res["excessive_ambiguity"] is False
+    assert res["status"] == "RFC2119_SPEC_COMPLIANT"
+
+
+def test_audit_markdown_rfc2119_normative_keywords_and_requirement_traceability_untraced_breach():
+    from backend.services.anydoc_service import (
+        audit_markdown_rfc2119_normative_keywords_and_requirement_traceability,
+    )
+
+    md = (
+        "- The gateway MUST reject unsigned JWT tokens.\n"
+        "- [REQ-NET-01] Payloads SHALL be compressed.\n"
+    )
+    res = audit_markdown_rfc2119_normative_keywords_and_requirement_traceability(md)
+    assert res["is_valid"] is False
+    assert len(res["untraced_mandatory_requirement_lines"]) == 1
+    assert res["status"] == "CRITICAL_UNTRACED_MANDATORY_REQUIREMENT_BREACH"
+
+
+def test_audit_markdown_rfc2119_normative_keywords_and_requirement_traceability_lowercase_and_ambiguity_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_rfc2119_normative_keywords_and_requirement_traceability,
+    )
+
+    md = (
+        "- [REQ-01] The worker must retry idempotent jobs.\n"
+        "- [REQ-02] Clients SHOULD send correlation headers.\n"
+        "- [REQ-03] Clients MAY compress small payloads.\n"
+    )
+    res = audit_markdown_rfc2119_normative_keywords_and_requirement_traceability(
+        md, max_ambiguous_modal_ratio_pct=25.0
+    )
+    assert res["is_valid"] is False
+    assert res["untraced_mandatory_requirement_lines"] == []
+    assert len(res["lowercase_normative_keyword_lines"]) == 1
+    assert res["excessive_ambiguity"] is True
+    assert res["status"] == "LOWERCASE_OR_AMBIGUOUS_MODAL_WARNING"
+
+
+def test_audit_markdown_rfc2119_normative_keywords_and_requirement_traceability_staticmethod_and_dunder_all():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_rfc2119_normative_keywords_and_requirement_traceability,
+    )
+
+    sample = "- [REQ-CORE-01] Nodes MUST validate quorum."
+    assert (
+        AnyDocService.audit_markdown_rfc2119_normative_keywords_and_requirement_traceability(
+            sample
+        )
+        == audit_markdown_rfc2119_normative_keywords_and_requirement_traceability(
+            sample
+        )
+    )
+    assert (
+        AnydocService.audit_markdown_rfc2119_normative_keywords_and_requirement_traceability(
+            sample
+        )
+        == audit_markdown_rfc2119_normative_keywords_and_requirement_traceability(
+            sample
+        )
+    )
+    assert (
+        "audit_markdown_rfc2119_normative_keywords_and_requirement_traceability"
+        in mod.__all__
+    )
+

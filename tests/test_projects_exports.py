@@ -12428,3 +12428,163 @@ def test_fedramp_empty_invalid_poams_and_field_reversion():
         "fedramp_conmon_status": "FEDRAMP_CONMON_ATO_HEALTHY",
         "is_fedramp_ato_compliant": True,
     }
+
+
+# ── audit_executive_report_nerc_cip_esp_perimeter_and_patch_cadence (PMBOK §10.2 & §11.6, pure helper) ──
+
+
+def test_nerc_cip_bes_compliant_assets():
+    """Activos BES con ESP, USB sanitizado y patch assessment dentro de la cadencia 35 días -> 'NERC_CIP_BES_COMPLIANT'."""
+    import backend.services.project_export_service as export_module
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_nerc_cip_esp_perimeter_and_patch_cadence,
+    )
+
+    assets = [
+        {
+            "asset_id": "BES-001",
+            "esp_eacms_protected": True,
+            "transient_usb_sanitized": True,
+            "patch_assessment_days": 20,
+            "mitigation_plan_active": False,
+        },
+        {
+            "asset_id": "BES-002",
+            # Defaults implícitos por campo: ESP True, USB True, 20 días, mitigación False.
+        },
+        {
+            "asset_id": "BES-003",
+            "mitigation_plan_active": True,
+        },
+    ]
+    res = audit_executive_report_nerc_cip_esp_perimeter_and_patch_cadence(assets)
+    assert res == {
+        "evaluated_asset_count": 3,
+        "breached_esp_or_unmitigated_patch_asset_ids": [],
+        "overdue_patch_under_mitigation_asset_ids": [],
+        "nerc_cip_status": "NERC_CIP_BES_COMPLIANT",
+        "is_nerc_cip_compliant": True,
+    }
+    # Assessment exactamente en 35 días está dentro de la cadencia (estricto >)
+    at_cadence = audit_executive_report_nerc_cip_esp_perimeter_and_patch_cadence(
+        [{"asset_id": "BES-4", "patch_assessment_days": 35}]
+    )
+    assert at_cadence["nerc_cip_status"] == "NERC_CIP_BES_COMPLIANT"
+    assert (
+        ProjectExportService.audit_executive_report_nerc_cip_esp_perimeter_and_patch_cadence(
+            assets
+        )
+        == res
+    )
+    assert "audit_executive_report_nerc_cip_esp_perimeter_and_patch_cadence" in export_module.__all__
+
+
+def test_nerc_cip_critical_esp_or_unmitigated_breach():
+    """Sin ESP, USB no sanitizado o patch overdue sin plan -> 'CRITICAL_ESP_OR_UNMITIGATED_PATCH_BREACH' con precedencia."""
+    from backend.services.project_export_service import (
+        audit_executive_report_nerc_cip_esp_perimeter_and_patch_cadence,
+    )
+
+    breach = audit_executive_report_nerc_cip_esp_perimeter_and_patch_cadence(
+        [
+            {"asset_id": "BES-NO-ESP", "esp_eacms_protected": False},
+            {"asset_id": "BES-DIRTY-USB", "transient_usb_sanitized": False},
+            {"asset_id": "BES-OVERDUE", "patch_assessment_days": 50, "mitigation_plan_active": False},
+        ]
+    )
+    assert breach["evaluated_asset_count"] == 3
+    assert breach["breached_esp_or_unmitigated_patch_asset_ids"] == [
+        "BES-NO-ESP",
+        "BES-DIRTY-USB",
+        "BES-OVERDUE",
+    ]
+    assert breach["nerc_cip_status"] == "CRITICAL_ESP_OR_UNMITIGATED_PATCH_BREACH"
+    assert breach["is_nerc_cip_compliant"] is False
+
+    # Breach precede aunque también haya activos bajo plan de mitigación
+    mixed = audit_executive_report_nerc_cip_esp_perimeter_and_patch_cadence(
+        [
+            {"asset_id": "BES-MITIGATED", "patch_assessment_days": 60, "mitigation_plan_active": True},
+            {"asset_id": "BES-NO-ESP-2", "esp_eacms_protected": False},
+        ]
+    )
+    assert "BES-MITIGATED" in mixed["overdue_patch_under_mitigation_asset_ids"]
+    assert mixed["nerc_cip_status"] == "CRITICAL_ESP_OR_UNMITIGATED_PATCH_BREACH"
+
+
+def test_nerc_cip_patch_overdue_under_mitigation_warning():
+    """ESP y USB limpios con assessment > 35 pero bajo plan activo -> 'CIP_007_MITIGATION_PLAN_WARNING'."""
+    from backend.services.project_export_service import (
+        audit_executive_report_nerc_cip_esp_perimeter_and_patch_cadence,
+    )
+
+    warning = audit_executive_report_nerc_cip_esp_perimeter_and_patch_cadence(
+        [
+            {
+                "asset_id": "BES-MIT-A",
+                "patch_assessment_days": 40,
+                "mitigation_plan_active": True,
+            },
+            {
+                "asset_id": "BES-MIT-B",
+                "patch_assessment_days": 90,
+                "mitigation_plan_active": True,
+            },
+        ]
+    )
+    assert warning["evaluated_asset_count"] == 2
+    assert warning["breached_esp_or_unmitigated_patch_asset_ids"] == []
+    assert warning["overdue_patch_under_mitigation_asset_ids"] == [
+        "BES-MIT-A",
+        "BES-MIT-B",
+    ]
+    assert warning["nerc_cip_status"] == "CIP_007_MITIGATION_PLAN_WARNING"
+    assert warning["is_nerc_cip_compliant"] is False
+
+    custom = audit_executive_report_nerc_cip_esp_perimeter_and_patch_cadence(
+        [{"asset_id": "BES-3", "patch_assessment_days": 25, "mitigation_plan_active": True}],
+        max_patch_assessment_days=20,
+    )
+    assert custom["nerc_cip_status"] == "CIP_007_MITIGATION_PLAN_WARNING"
+    assert custom["overdue_patch_under_mitigation_asset_ids"] == ["BES-3"]
+
+
+def test_nerc_cip_empty_invalid_assets_and_field_reversion():
+    """None / dicts inválidos se descartan; campos no numéricos/no bool revierten a defaults del spec."""
+    from backend.services.project_export_service import (
+        audit_executive_report_nerc_cip_esp_perimeter_and_patch_cadence,
+    )
+
+    empty_res = audit_executive_report_nerc_cip_esp_perimeter_and_patch_cadence(None)
+    assert empty_res == {
+        "evaluated_asset_count": 0,
+        "breached_esp_or_unmitigated_patch_asset_ids": [],
+        "overdue_patch_under_mitigation_asset_ids": [],
+        "nerc_cip_status": "NERC_CIP_BES_COMPLIANT",
+        "is_nerc_cip_compliant": True,
+    }
+
+    invalid_res = audit_executive_report_nerc_cip_esp_perimeter_and_patch_cadence(
+        ["no-dict", None, {"asset_id": "   "}, {"asset_id": 12}]
+    )
+    assert invalid_res["evaluated_asset_count"] == 0
+
+    bad_fields = audit_executive_report_nerc_cip_esp_perimeter_and_patch_cadence(
+        [
+            {
+                "asset_id": "BES-BAD",
+                "esp_eacms_protected": "sí",
+                "transient_usb_sanitized": None,
+                "patch_assessment_days": "veinte",
+                "mitigation_plan_active": [True],
+            }
+        ]
+    )
+    assert bad_fields == {
+        "evaluated_asset_count": 1,
+        "breached_esp_or_unmitigated_patch_asset_ids": [],
+        "overdue_patch_under_mitigation_asset_ids": [],
+        "nerc_cip_status": "NERC_CIP_BES_COMPLIANT",
+        "is_nerc_cip_compliant": True,
+    }

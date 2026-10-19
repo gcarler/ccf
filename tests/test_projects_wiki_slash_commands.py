@@ -11629,3 +11629,122 @@ def test_audit_wiki_postgres_logical_replication_wal_bloat_and_txid_wraparound_s
     )
 
 
+def test_audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm_optimal():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm,
+    )
+
+    buckets = [
+        {
+            "bucket_name": "ccf-wiki-media-prod",
+            "online_drives_count": 16,
+            "total_drives_count": 16,
+            "parity_shards_ec_m": 4,
+            "versioning_and_object_lock_enabled": True,
+            "max_presigned_url_ttl_sec": 900,
+        },
+        {
+            "bucket_name": "ccf-wiki-backups-worm",
+            "online_drives_count": 12,
+            "total_drives_count": 12,
+            "parity_shards_ec_m": 4,
+            "versioning_and_object_lock_enabled": True,
+            "max_presigned_url_ttl_sec": 1800,
+        },
+    ]
+    res = audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm(
+        buckets=buckets,
+        allowed_max_presigned_url_ttl_sec=3600,
+    )
+    assert res["is_valid"] is True
+    assert res["storage_status"] == "OBJECT_STORAGE_WORM_OPTIMAL"
+    assert res["quorum_lost_or_unlocked_buckets"] == []
+    assert res["degraded_parity_or_long_presigned_ttl_buckets"] == []
+
+
+def test_audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm_critical_breach():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm,
+    )
+
+    buckets = [
+        {
+            "bucket_name": "ccf-wiki-media-quorum-lost",
+            "online_drives_count": 10,
+            "total_drives_count": 16,
+            "parity_shards_ec_m": 4,
+            "versioning_and_object_lock_enabled": True,
+            "max_presigned_url_ttl_sec": 900,
+        },
+        {
+            "bucket_name": "ccf-wiki-unlocked-bucket",
+            "online_drives_count": 16,
+            "total_drives_count": 16,
+            "parity_shards_ec_m": 4,
+            "versioning_and_object_lock_enabled": False,
+            "max_presigned_url_ttl_sec": 900,
+        },
+    ]
+    res = audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm(buckets=buckets)
+    assert res["is_valid"] is False
+    assert res["storage_status"] == "CRITICAL_ERASURE_QUORUM_OR_WORM_LOCK_BREACH"
+    assert "ccf-wiki-media-quorum-lost" in res["quorum_lost_or_unlocked_buckets"]
+    assert "ccf-wiki-unlocked-bucket" in res["quorum_lost_or_unlocked_buckets"]
+
+
+def test_audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm_degraded_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm,
+    )
+
+    buckets = [
+        {
+            "bucket_name": "ccf-wiki-degraded-drives",
+            "online_drives_count": 14,
+            "total_drives_count": 16,
+            "parity_shards_ec_m": 4,
+            "versioning_and_object_lock_enabled": True,
+            "max_presigned_url_ttl_sec": 900,
+        },
+        {
+            "bucket_name": "ccf-wiki-long-ttl",
+            "online_drives_count": 16,
+            "total_drives_count": 16,
+            "parity_shards_ec_m": 4,
+            "versioning_and_object_lock_enabled": True,
+            "max_presigned_url_ttl_sec": 86400,
+        },
+    ]
+    res = audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm(
+        buckets=buckets,
+        allowed_max_presigned_url_ttl_sec=3600,
+    )
+    assert res["is_valid"] is False
+    assert res["storage_status"] == "DEGRADED_PARITY_HEALING_OR_TTL_WARNING"
+    assert (
+        "ccf-wiki-degraded-drives"
+        in res["degraded_parity_or_long_presigned_ttl_buckets"]
+    )
+    assert "ccf-wiki-long-ttl" in res["degraded_parity_or_long_presigned_ttl_buckets"]
+
+
+def test_audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm_service_binding():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm,
+    )
+
+    sample = [
+        {
+            "bucket_name": "bucket-1",
+            "online_drives_count": 8,
+            "total_drives_count": 8,
+            "parity_shards_ec_m": 2,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm(sample)
+        == audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm(sample)
+    )
+    assert "audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm" in mod.__all__

@@ -3053,6 +3053,7 @@ __all__ = [
     "audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene",
     "audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene",
     "audit_markdown_task_list_checkbox_parity_and_subtask_indentation",
+    "audit_markdown_rfc2119_normative_keywords_and_requirement_traceability",
     "AnydocService",
 ]
 
@@ -9783,4 +9784,101 @@ AnydocService.audit_markdown_task_list_checkbox_parity_and_subtask_indentation =
 )
 
 
+def audit_markdown_rfc2119_normative_keywords_and_requirement_traceability(
+    markdown_text: str,
+    max_ambiguous_modal_ratio_pct: float = 25.0,
+    require_req_id_for_must_statements: bool = True,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §10.2 — AnyDoc Markdown RFC 2119 / BCP 14 normative keyword uppercase consistency, ambiguous modal verb & testability ID traceability auditor."""
+    text = str(markdown_text or "")
+    lines = text.splitlines()
 
+    lowercase_normative_keyword_lines: list[int] = []
+    untraced_mandatory_requirement_lines: list[int] = []
+    recommendations: list[str] = []
+
+    lowercase_mandatory_pattern = re.compile(
+        r"\b(?:must(?:\s+not)?|shall(?:\s+not)?|required)\b"
+    )
+    uppercase_mandatory_pattern = re.compile(
+        r"\b(?:MUST(?:\s+NOT)?|SHALL(?:\s+NOT)?|REQUIRED)\b"
+    )
+    ambiguous_modal_pattern = re.compile(
+        r"\b(?:SHOULD(?:\s+NOT)?|MAY|OPTIONAL|should(?:\s+not)?|may|optional)\b"
+    )
+    req_id_pattern = re.compile(r"\bREQ-[A-Z0-9-]+\b")
+
+    in_fenced_block = False
+    total_normative_statements = 0
+    ambiguous_modal_count = 0
+
+    for idx, raw_line in enumerate(lines, start=1):
+        stripped = raw_line.strip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            in_fenced_block = not in_fenced_block
+            continue
+        if in_fenced_block or not stripped or stripped.startswith("#"):
+            continue
+
+        has_lower_mandatory = bool(lowercase_mandatory_pattern.search(raw_line))
+        has_upper_mandatory = bool(uppercase_mandatory_pattern.search(raw_line))
+        has_ambiguous_modal = bool(ambiguous_modal_pattern.search(raw_line))
+
+        if has_lower_mandatory or has_upper_mandatory or has_ambiguous_modal:
+            total_normative_statements += 1
+
+        if has_lower_mandatory:
+            lowercase_normative_keyword_lines.append(idx)
+
+        if has_upper_mandatory and require_req_id_for_must_statements:
+            if not req_id_pattern.search(raw_line):
+                untraced_mandatory_requirement_lines.append(idx)
+
+        if has_ambiguous_modal and not has_upper_mandatory and not has_lower_mandatory:
+            ambiguous_modal_count += 1
+
+    ambiguous_modal_ratio_pct = (
+        round((ambiguous_modal_count / total_normative_statements) * 100.0, 2)
+        if total_normative_statements > 0
+        else 0.0
+    )
+    excessive_ambiguity = ambiguous_modal_ratio_pct > float(max_ambiguous_modal_ratio_pct)
+
+    if untraced_mandatory_requirement_lines:
+        recommendations.append(
+            f"Tag mandatory MUST/SHALL statements on lines {untraced_mandatory_requirement_lines} with explicit traceability IDs (e.g., REQ-xxx)."
+        )
+    if lowercase_normative_keyword_lines:
+        recommendations.append(
+            f"Capitalize RFC 2119 / BCP 14 normative modal verbs on lines {lowercase_normative_keyword_lines} (MUST, SHALL, REQUIRED)."
+        )
+    if excessive_ambiguity:
+        recommendations.append(
+            f"Reduce ambiguous modal ratio ({ambiguous_modal_ratio_pct}% > {max_ambiguous_modal_ratio_pct}%) by converting SHOULD/MAY statements into testable criteria."
+        )
+
+    if len(untraced_mandatory_requirement_lines) > 0:
+        status = "CRITICAL_UNTRACED_MANDATORY_REQUIREMENT_BREACH"
+    elif len(lowercase_normative_keyword_lines) > 0 or excessive_ambiguity:
+        status = "LOWERCASE_OR_AMBIGUOUS_MODAL_WARNING"
+    else:
+        status = "RFC2119_SPEC_COMPLIANT"
+
+    return {
+        "is_valid": status == "RFC2119_SPEC_COMPLIANT",
+        "total_normative_statements": total_normative_statements,
+        "lowercase_normative_keyword_lines": lowercase_normative_keyword_lines,
+        "untraced_mandatory_requirement_lines": untraced_mandatory_requirement_lines,
+        "ambiguous_modal_ratio_pct": ambiguous_modal_ratio_pct,
+        "excessive_ambiguity": excessive_ambiguity,
+        "status": status,
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_markdown_rfc2119_normative_keywords_and_requirement_traceability = staticmethod(
+    audit_markdown_rfc2119_normative_keywords_and_requirement_traceability
+)
+AnydocService.audit_markdown_rfc2119_normative_keywords_and_requirement_traceability = staticmethod(
+    audit_markdown_rfc2119_normative_keywords_and_requirement_traceability
+)

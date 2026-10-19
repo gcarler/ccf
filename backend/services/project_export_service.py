@@ -3025,6 +3025,7 @@ __all__ = [
     "audit_executive_report_esg_ghg_scope_emissions_and_sbti_compliance",
     "audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance",
     "audit_executive_report_fedramp_poam_aging_and_conmon_compliance",
+    "audit_executive_report_nerc_cip_esp_perimeter_and_patch_cadence",
     "ProjectExportService",
 ]
 
@@ -9068,4 +9069,86 @@ def audit_executive_report_fedramp_poam_aging_and_conmon_compliance(
 
 ProjectExportService.audit_executive_report_fedramp_poam_aging_and_conmon_compliance = staticmethod(
     audit_executive_report_fedramp_poam_aging_and_conmon_compliance
+)
+def audit_executive_report_nerc_cip_esp_perimeter_and_patch_cadence(
+    bes_assets: list[dict[str, Any]] | None,
+    *,
+    max_patch_assessment_days: int = 35,
+) -> dict[str, Any]:
+    """PMBOK §10.2 & §11.6 — Audita NERC CIP sobre activos del Bulk Electric System: ESP/E-ACMS vigente, sanitización de transient cyber assets (USB), cadencia CIP-007 de assessment de parches 35 días y plan de mitigación activo como desvío.
+
+    Cada activo BES válido declara `asset_id` (str no vacío),
+    perímetro ESP/E-ACMS (`esp_eacms_protected`, default True),
+    USB transitorio sanitizado (`transient_usb_sanitized`, default True),
+    días desde assessment de parches (`patch_assessment_days`, default 20)
+    y plan de mitigación activo (`mitigation_plan_active`, default False):
+    - `breached_esp_or_unmitigated_patch_asset_ids`: sin ESP/E-ACMS, USB no
+      sanitizado, O patch assessment > 35 días sin plan de mitigación
+      (brecha crítica, precedencia).
+    - `overdue_patch_under_mitigation_asset_ids`: ESP y USB limpios con
+      patch assessment > 35 días pero bajo plan de mitigación activo
+      (advertencia CIP-007).
+    - Estados: 'CRITICAL_ESP_OR_UNMITIGATED_PATCH_BREACH' |
+      'CIP_007_MITIGATION_PLAN_WARNING' | 'NERC_CIP_BES_COMPLIANT'.
+    - `is_nerc_cip_compliant`: solo con estado COMPLIANT (frontera estricta:
+      == 35 días es dentro de cadencia).
+    """
+    raw_items = bes_assets if isinstance(bes_assets, list) else []
+    valid_assets: list[dict[str, Any]] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_asset_id = item.get("asset_id")
+        if not isinstance(raw_asset_id, str) or not raw_asset_id.strip():
+            continue
+        valid_assets.append(item)
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _int(value: Any, default: int) -> int:
+        if isinstance(value, bool) or not isinstance(value, int):
+            return default
+        return value
+
+    breached_esp_or_unmitigated_patch_asset_ids: list[str] = []
+    overdue_patch_under_mitigation_asset_ids: list[str] = []
+
+    for asset in valid_assets:
+        asset_id = str(asset.get("asset_id")).strip()
+        esp_protected = _bool(asset.get("esp_eacms_protected"), True)
+        usb_sanitized = _bool(asset.get("transient_usb_sanitized"), True)
+        patch_days = _int(asset.get("patch_assessment_days"), 20)
+        mitigation_active = _bool(asset.get("mitigation_plan_active"), False)
+
+        patch_overdue = int(patch_days) > int(max_patch_assessment_days)
+
+        if (
+            (not bool(esp_protected))
+            or (not bool(usb_sanitized))
+            or (patch_overdue and (not bool(mitigation_active)))
+        ):
+            breached_esp_or_unmitigated_patch_asset_ids.append(asset_id)
+        elif bool(esp_protected) and bool(usb_sanitized) and patch_overdue:
+            overdue_patch_under_mitigation_asset_ids.append(asset_id)
+
+    if breached_esp_or_unmitigated_patch_asset_ids:
+        nerc_cip_status = "CRITICAL_ESP_OR_UNMITIGATED_PATCH_BREACH"
+    elif overdue_patch_under_mitigation_asset_ids:
+        nerc_cip_status = "CIP_007_MITIGATION_PLAN_WARNING"
+    else:
+        nerc_cip_status = "NERC_CIP_BES_COMPLIANT"
+
+    return {
+        "evaluated_asset_count": len(valid_assets),
+        "breached_esp_or_unmitigated_patch_asset_ids": breached_esp_or_unmitigated_patch_asset_ids,
+        "overdue_patch_under_mitigation_asset_ids": overdue_patch_under_mitigation_asset_ids,
+        "nerc_cip_status": nerc_cip_status,
+        "is_nerc_cip_compliant": nerc_cip_status
+        == "NERC_CIP_BES_COMPLIANT",
+    }
+
+
+ProjectExportService.audit_executive_report_nerc_cip_esp_perimeter_and_patch_cadence = staticmethod(
+    audit_executive_report_nerc_cip_esp_perimeter_and_patch_cadence
 )
