@@ -2848,6 +2848,7 @@ __all__ = [
     "audit_query_performance_n_plus_one_and_full_scan_gate",
     "audit_feature_flag_stale_toggle_debt_and_kill_switch",
     "audit_canary_rollout_traffic_shift_and_auto_rollback_gate",
+    "audit_secret_scanning_pre_receive_and_leak_revocation",
     "ProjectCCBService",
 ]
 
@@ -7035,5 +7036,84 @@ def audit_canary_rollout_traffic_shift_and_auto_rollback_gate(
 
 ProjectCCBService.audit_canary_rollout_traffic_shift_and_auto_rollback_gate = staticmethod(
     audit_canary_rollout_traffic_shift_and_auto_rollback_gate
+)
+
+
+def audit_secret_scanning_pre_receive_and_leak_revocation(
+    repositories: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_revocation_minutes_sla: float = 15.0,
+    max_false_positive_bypass_rate_pct: float = 5.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §11.6 & §8.3 — CCB Secret Scanning Pre-Receive Gate, High-Entropy Token Leak & Git History Revocation SLA Auditor."""
+    valid_repositories = [
+        repo
+        for repo in (repositories or [])
+        if isinstance(repo, Mapping) and str(repo.get("repo_id") or "").strip()
+    ]
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _num(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    active_leak_or_unprotected_repo_ids: list[str] = []
+    slow_revocation_or_high_bypass_repo_ids: list[str] = []
+
+    for repo in valid_repositories:
+        rid = str(repo.get("repo_id")).strip()
+        hook_enforced = _bool(
+            repo.get("pre_receive_secret_hook_enforced"), True
+        )
+        unrevoked_leaks = _num(
+            repo.get("unrevoked_leaked_secrets_count"), 0.0
+        )
+        revocation_minutes = _num(
+            repo.get("max_observed_revocation_minutes"), 5.0
+        )
+        bypass_rate_pct = _num(
+            repo.get("push_bypass_rate_pct"), 1.0
+        )
+        history_purged = _bool(
+            repo.get("git_history_purged_on_leak"), True
+        )
+
+        if (
+            not hook_enforced
+            or unrevoked_leaks > 0
+            or not history_purged
+        ):
+            active_leak_or_unprotected_repo_ids.append(rid)
+
+        if (
+            revocation_minutes > max_revocation_minutes_sla
+            or bypass_rate_pct > max_false_positive_bypass_rate_pct
+        ):
+            slow_revocation_or_high_bypass_repo_ids.append(rid)
+
+    if active_leak_or_unprotected_repo_ids:
+        secret_scanning_governance_status = "SECRET_LEAK_OR_HOOK_BYPASS_BREACH"
+    elif slow_revocation_or_high_bypass_repo_ids:
+        secret_scanning_governance_status = (
+            "SECRET_REVOCATION_SLA_OR_BYPASS_WARNING"
+        )
+    else:
+        secret_scanning_governance_status = "SECRET_HYGIENE_ZERO_LEAK_OPTIMAL"
+
+    return {
+        "evaluated_repos_count": len(valid_repositories),
+        "active_leak_or_unprotected_repo_ids": active_leak_or_unprotected_repo_ids,
+        "slow_revocation_or_high_bypass_repo_ids": slow_revocation_or_high_bypass_repo_ids,
+        "secret_scanning_governance_status": secret_scanning_governance_status,
+        "is_secret_scanning_compliant": secret_scanning_governance_status
+        == "SECRET_HYGIENE_ZERO_LEAK_OPTIMAL",
+    }
+
+
+ProjectCCBService.audit_secret_scanning_pre_receive_and_leak_revocation = staticmethod(
+    audit_secret_scanning_pre_receive_and_leak_revocation
 )
 

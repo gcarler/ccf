@@ -3168,6 +3168,7 @@ __all__ = [
     "audit_charter_business_case_irr_wacc_spread_and_payback",
     "audit_project_closure_lessons_learned_and_pir_archival",
     "audit_organizational_change_adkar_readiness_and_training",
+    "audit_ip_escrow_deposit_cadence_and_license_assignment",
     "ProjectLifecyclePMIService",
 ]
 
@@ -7100,5 +7101,79 @@ def audit_organizational_change_adkar_readiness_and_training(
 
 ProjectLifecyclePMIService.audit_organizational_change_adkar_readiness_and_training = staticmethod(
     audit_organizational_change_adkar_readiness_and_training
+)
+
+
+def audit_ip_escrow_deposit_cadence_and_license_assignment(
+    ip_deliverables: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_days_since_escrow_deposit: int | float = 90,
+) -> dict[str, Any]:
+    """PMI PMBOK §12.1 & §12.3 — Intellectual Property (IP) Escrow Deposit Cadence, Source-Code Build Verification & License Assignment Auditor."""
+    valid_deliverables = [
+        dlv
+        for dlv in (ip_deliverables or [])
+        if isinstance(dlv, Mapping) and str(dlv.get("deliverable_id") or "").strip()
+    ]
+
+    unassigned_ip_or_copyleft_deliverable_ids: list[str] = []
+    stale_or_unverified_escrow_deliverable_ids: list[str] = []
+
+    for dlv in valid_deliverables:
+        did = str(dlv.get("deliverable_id")).strip()
+        requires_escrow = bool(
+            dlv.get("requires_source_code_escrow", True)
+            if dlv.get("requires_source_code_escrow") is not None
+            else True
+        )
+        days_since_deposit = float(
+            dlv.get("days_since_last_escrow_deposit", 30)
+            if dlv.get("days_since_last_escrow_deposit") is not None
+            else 30
+        )
+        build_verified = bool(
+            dlv.get("independent_escrow_build_verified", True)
+            if dlv.get("independent_escrow_build_verified") is not None
+            else True
+        )
+        ip_signed = bool(
+            dlv.get("ip_assignment_and_patent_waiver_signed", True)
+            if dlv.get("ip_assignment_and_patent_waiver_signed") is not None
+            else True
+        )
+        copyleft_detected = bool(
+            dlv.get("copyleft_contamination_detected", False)
+            if dlv.get("copyleft_contamination_detected") is not None
+            else False
+        )
+
+        if not ip_signed or copyleft_detected:
+            unassigned_ip_or_copyleft_deliverable_ids.append(did)
+
+        if requires_escrow and (
+            days_since_deposit > max_days_since_escrow_deposit
+            or not build_verified
+        ):
+            stale_or_unverified_escrow_deliverable_ids.append(did)
+
+    if unassigned_ip_or_copyleft_deliverable_ids:
+        ip_escrow_governance_status = "IP_ASSIGNMENT_OR_COPYLEFT_BREACH"
+    elif stale_or_unverified_escrow_deliverable_ids:
+        ip_escrow_governance_status = "IP_ESCROW_DEPOSIT_OR_BUILD_WARNING"
+    else:
+        ip_escrow_governance_status = "IP_ESCROW_GOVERNANCE_OPTIMAL"
+
+    return {
+        "evaluated_deliverables_count": len(valid_deliverables),
+        "unassigned_ip_or_copyleft_deliverable_ids": unassigned_ip_or_copyleft_deliverable_ids,
+        "stale_or_unverified_escrow_deliverable_ids": stale_or_unverified_escrow_deliverable_ids,
+        "ip_escrow_governance_status": ip_escrow_governance_status,
+        "is_ip_escrow_compliant": ip_escrow_governance_status
+        == "IP_ESCROW_GOVERNANCE_OPTIMAL",
+    }
+
+
+ProjectLifecyclePMIService.audit_ip_escrow_deposit_cadence_and_license_assignment = staticmethod(
+    audit_ip_escrow_deposit_cadence_and_license_assignment
 )
 

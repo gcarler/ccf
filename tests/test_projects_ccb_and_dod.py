@@ -9196,3 +9196,158 @@ def test_audit_canary_rollout_traffic_shift_and_auto_rollback_gate_staticmethod_
         in mod.__all__
     )
 
+
+
+def test_ccb_secret_scanning_leak_or_hook_bypass_breach():
+    from backend.services.project_ccb_service import (
+        audit_secret_scanning_pre_receive_and_leak_revocation,
+    )
+
+    res = audit_secret_scanning_pre_receive_and_leak_revocation(
+        [
+            {
+                "repo_id": "REPO-NO-HOOK",
+                "pre_receive_secret_hook_enforced": False,
+            },
+            {
+                "repo_id": "REPO-ACTIVE-LEAK",
+                "unrevoked_leaked_secrets_count": 2,
+            },
+            {
+                "repo_id": "REPO-HISTORY-DIRTY",
+                "git_history_purged_on_leak": False,
+            },
+        ],
+        max_revocation_minutes_sla=15.0,
+        max_false_positive_bypass_rate_pct=5.0,
+    )
+    assert res["evaluated_repos_count"] == 3
+    assert res["active_leak_or_unprotected_repo_ids"] == [
+        "REPO-NO-HOOK",
+        "REPO-ACTIVE-LEAK",
+        "REPO-HISTORY-DIRTY",
+    ]
+    assert res["slow_revocation_or_high_bypass_repo_ids"] == []
+    assert (
+        res["secret_scanning_governance_status"]
+        == "SECRET_LEAK_OR_HOOK_BYPASS_BREACH"
+    )
+    assert res["is_secret_scanning_compliant"] is False
+
+
+def test_ccb_secret_scanning_revocation_sla_or_bypass_warning():
+    from backend.services.project_ccb_service import (
+        audit_secret_scanning_pre_receive_and_leak_revocation,
+    )
+
+    res = audit_secret_scanning_pre_receive_and_leak_revocation(
+        [
+            {
+                "repo_id": "REPO-SLOW-REVOKE",
+                "max_observed_revocation_minutes": 22.0,
+            },
+            {
+                "repo_id": "REPO-HIGH-BYPASS",
+                "push_bypass_rate_pct": 7.5,
+            },
+        ],
+        max_revocation_minutes_sla=15.0,
+        max_false_positive_bypass_rate_pct=5.0,
+    )
+    assert res["evaluated_repos_count"] == 2
+    assert res["active_leak_or_unprotected_repo_ids"] == []
+    assert res["slow_revocation_or_high_bypass_repo_ids"] == [
+        "REPO-SLOW-REVOKE",
+        "REPO-HIGH-BYPASS",
+    ]
+    assert (
+        res["secret_scanning_governance_status"]
+        == "SECRET_REVOCATION_SLA_OR_BYPASS_WARNING"
+    )
+    assert res["is_secret_scanning_compliant"] is False
+
+
+def test_ccb_secret_scanning_boundaries_optimal_and_defaults():
+    from backend.services.project_ccb_service import (
+        audit_secret_scanning_pre_receive_and_leak_revocation,
+    )
+
+    res = audit_secret_scanning_pre_receive_and_leak_revocation(
+        [
+            {
+                "repo_id": "REPO-BOUNDARY",
+                "max_observed_revocation_minutes": 15.0,
+                "push_bypass_rate_pct": 5.0,
+            },
+            {"repo_id": "REPO-ALL-DEFAULTS"},
+        ],
+        max_revocation_minutes_sla=15.0,
+        max_false_positive_bypass_rate_pct=5.0,
+    )
+    assert res["evaluated_repos_count"] == 2
+    assert res["active_leak_or_unprotected_repo_ids"] == []
+    assert res["slow_revocation_or_high_bypass_repo_ids"] == []
+    assert (
+        res["secret_scanning_governance_status"]
+        == "SECRET_HYGIENE_ZERO_LEAK_OPTIMAL"
+    )
+    assert res["is_secret_scanning_compliant"] is True
+
+
+def test_ccb_secret_scanning_invalid_and_binding():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_secret_scanning_pre_receive_and_leak_revocation,
+    )
+
+    empty = audit_secret_scanning_pre_receive_and_leak_revocation(None)
+    assert empty["evaluated_repos_count"] == 0
+    assert empty["active_leak_or_unprotected_repo_ids"] == []
+    assert empty["slow_revocation_or_high_bypass_repo_ids"] == []
+    assert (
+        empty["secret_scanning_governance_status"]
+        == "SECRET_HYGIENE_ZERO_LEAK_OPTIMAL"
+    )
+    assert empty["is_secret_scanning_compliant"] is True
+
+    invalid = audit_secret_scanning_pre_receive_and_leak_revocation(
+        [42, "not-a-dict", None, {"repo_id": "   "}]  # type: ignore[list-item]
+    )
+    assert invalid["evaluated_repos_count"] == 0
+
+    defaults = audit_secret_scanning_pre_receive_and_leak_revocation(
+        [
+            {
+                "repo_id": "REPO-DEFAULTS",
+                "pre_receive_secret_hook_enforced": None,
+                "unrevoked_leaked_secrets_count": None,
+                "max_observed_revocation_minutes": None,
+                "push_bypass_rate_pct": None,
+                "git_history_purged_on_leak": None,
+            }
+        ]
+    )
+    assert defaults["evaluated_repos_count"] == 1
+    assert (
+        defaults["secret_scanning_governance_status"]
+        == "SECRET_HYGIENE_ZERO_LEAK_OPTIMAL"
+    )
+    assert defaults["is_secret_scanning_compliant"] is True
+
+    sample = [
+        {
+            "repo_id": "REPO-1",
+            "max_observed_revocation_minutes": 8.0,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_secret_scanning_pre_receive_and_leak_revocation(
+            sample
+        )
+        == audit_secret_scanning_pre_receive_and_leak_revocation(sample)
+    )
+    assert (
+        "audit_secret_scanning_pre_receive_and_leak_revocation"
+        in mod.__all__
+    )

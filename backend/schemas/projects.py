@@ -3813,6 +3813,7 @@ __all__ = [
     "validate_risk_emv_decision_tree_and_contingency_adequacy",
     "validate_pert_three_point_estimation_and_delphi_convergence",
     "validate_monte_carlo_p80_p90_convergence_and_tornado_sensitivity",
+    "validate_resource_leveling_overallocation_and_context_switching",
 ]
 
 
@@ -8154,3 +8155,73 @@ def validate_monte_carlo_p80_p90_convergence_and_tornado_sensitivity(
         "is_monte_carlo_valid": monte_carlo_validation_status
         == "MONTE_CARLO_CONFIDENCE_OPTIMAL",
     }
+
+
+def validate_resource_leveling_overallocation_and_context_switching(
+    resource_allocations: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_allocation_utilization_pct: float = 100.0,
+    max_concurrent_work_packages: int = 3,
+) -> dict[str, Any]:
+    """PMI PMBOK §9.2 & §6.4 — Resource Leveling Overallocation Peak, Context-Switching Fragmentation & Burnout Threshold Validator."""
+    valid_resources = [
+        res
+        for res in (resource_allocations or [])
+        if isinstance(res, Mapping) and str(res.get("resource_id") or "").strip()
+    ]
+
+    overallocated_or_burnout_resource_ids: list[str] = []
+    fragmented_context_switching_resource_ids: list[str] = []
+
+    for res in valid_resources:
+        rid = str(res.get("resource_id")).strip()
+        allocated_hours = float(
+            res.get("allocated_hours_per_week", 36.0)
+            if res.get("allocated_hours_per_week") is not None
+            else 36.0
+        )
+        capacity_hours = float(
+            res.get("available_capacity_hours_per_week", 40.0)
+            if res.get("available_capacity_hours_per_week") is not None
+            else 40.0
+        )
+        concurrent_tasks = int(
+            res.get("concurrent_active_tasks_count", 2)
+            if res.get("concurrent_active_tasks_count") is not None
+            else 2
+        )
+        overtime_weeks = int(
+            res.get("sustained_overtime_weeks_count", 0)
+            if res.get("sustained_overtime_weeks_count") is not None
+            else 0
+        )
+
+        if (
+            capacity_hours <= 0
+            or (
+                (allocated_hours / capacity_hours) * 100.0
+                > max_allocation_utilization_pct
+            )
+            or overtime_weeks > 2
+        ):
+            overallocated_or_burnout_resource_ids.append(rid)
+
+        if concurrent_tasks > max_concurrent_work_packages:
+            fragmented_context_switching_resource_ids.append(rid)
+
+    if overallocated_or_burnout_resource_ids:
+        resource_leveling_status = "RESOURCE_OVERALLOCATION_OR_BURNOUT_BREACH"
+    elif fragmented_context_switching_resource_ids:
+        resource_leveling_status = "RESOURCE_CONTEXT_SWITCHING_WARNING"
+    else:
+        resource_leveling_status = "RESOURCE_LEVELING_BALANCED"
+
+    return {
+        "evaluated_resources_count": len(valid_resources),
+        "overallocated_or_burnout_resource_ids": overallocated_or_burnout_resource_ids,
+        "fragmented_context_switching_resource_ids": fragmented_context_switching_resource_ids,
+        "resource_leveling_status": resource_leveling_status,
+        "is_resource_leveling_valid": resource_leveling_status
+        == "RESOURCE_LEVELING_BALANCED",
+    }
+

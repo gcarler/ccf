@@ -7575,3 +7575,136 @@ def test_validate_monte_carlo_p80_p90_invalid_and_dunder_all():
         "validate_monte_carlo_p80_p90_convergence_and_tornado_sensitivity"
         in mod.__all__
     )
+
+
+def test_validate_resource_leveling_overallocation_and_context_switching_breach():
+    from backend.schemas.projects import (
+        validate_resource_leveling_overallocation_and_context_switching,
+    )
+
+    result = validate_resource_leveling_overallocation_and_context_switching(
+        [
+            {
+                "resource_id": "RES-OVERALLOC",
+                "allocated_hours_per_week": 48.0,
+                "available_capacity_hours_per_week": 40.0,
+                "concurrent_active_tasks_count": 2,
+                "sustained_overtime_weeks_count": 1,
+            },
+            {
+                "resource_id": "RES-BURNOUT",
+                "allocated_hours_per_week": 38.0,
+                "available_capacity_hours_per_week": 40.0,
+                "concurrent_active_tasks_count": 2,
+                "sustained_overtime_weeks_count": 3,
+            },
+            {
+                "resource_id": "RES-ZERO-CAP",
+                "allocated_hours_per_week": 10.0,
+                "available_capacity_hours_per_week": 0.0,
+                "concurrent_active_tasks_count": 1,
+                "sustained_overtime_weeks_count": 0,
+            },
+        ],
+        max_allocation_utilization_pct=100.0,
+        max_concurrent_work_packages=3,
+    )
+    assert result["evaluated_resources_count"] == 3
+    assert result["overallocated_or_burnout_resource_ids"] == [
+        "RES-OVERALLOC",
+        "RES-BURNOUT",
+        "RES-ZERO-CAP",
+    ]
+    assert result["fragmented_context_switching_resource_ids"] == []
+    assert (
+        result["resource_leveling_status"]
+        == "RESOURCE_OVERALLOCATION_OR_BURNOUT_BREACH"
+    )
+    assert result["is_resource_leveling_valid"] is False
+
+
+def test_validate_resource_leveling_overallocation_and_context_switching_warning():
+    from backend.schemas.projects import (
+        validate_resource_leveling_overallocation_and_context_switching,
+    )
+
+    result = validate_resource_leveling_overallocation_and_context_switching(
+        [
+            {
+                "resource_id": "RES-FRAGMENTED",
+                "allocated_hours_per_week": 36.0,
+                "available_capacity_hours_per_week": 40.0,
+                "concurrent_active_tasks_count": 5,
+                "sustained_overtime_weeks_count": 1,
+            }
+        ],
+        max_allocation_utilization_pct=100.0,
+        max_concurrent_work_packages=3,
+    )
+    assert result["evaluated_resources_count"] == 1
+    assert result["overallocated_or_burnout_resource_ids"] == []
+    assert result["fragmented_context_switching_resource_ids"] == [
+        "RES-FRAGMENTED"
+    ]
+    assert (
+        result["resource_leveling_status"]
+        == "RESOURCE_CONTEXT_SWITCHING_WARNING"
+    )
+    assert result["is_resource_leveling_valid"] is False
+
+
+def test_validate_resource_leveling_overallocation_and_context_switching_balanced_and_empty():
+    from backend.schemas.projects import (
+        validate_resource_leveling_overallocation_and_context_switching,
+    )
+
+    empty = validate_resource_leveling_overallocation_and_context_switching(
+        [{"resource_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_resources_count"] == 0
+    assert empty["resource_leveling_status"] == "RESOURCE_LEVELING_BALANCED"
+    assert empty["is_resource_leveling_valid"] is True
+
+    balanced = validate_resource_leveling_overallocation_and_context_switching(
+        [
+            {
+                "resource_id": "RES-BALANCED-1",
+                "allocated_hours_per_week": 36.0,
+                "available_capacity_hours_per_week": 40.0,
+                "concurrent_active_tasks_count": 2,
+                "sustained_overtime_weeks_count": 0,
+            }
+        ],
+        max_allocation_utilization_pct=100.0,
+        max_concurrent_work_packages=3,
+    )
+    assert balanced["evaluated_resources_count"] == 1
+    assert balanced["resource_leveling_status"] == "RESOURCE_LEVELING_BALANCED"
+    assert balanced["is_resource_leveling_valid"] is True
+
+
+def test_validate_resource_leveling_overallocation_and_context_switching_defaults_and_dunder_all():
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_resource_leveling_overallocation_and_context_switching,
+    )
+
+    defaults = validate_resource_leveling_overallocation_and_context_switching(
+        [
+            {
+                "resource_id": "RES-DEF",
+                "allocated_hours_per_week": None,
+                "available_capacity_hours_per_week": None,
+                "concurrent_active_tasks_count": None,
+                "sustained_overtime_weeks_count": None,
+            }
+        ]
+    )
+    assert defaults["evaluated_resources_count"] == 1
+    assert defaults["resource_leveling_status"] == "RESOURCE_LEVELING_BALANCED"
+    assert defaults["is_resource_leveling_valid"] is True
+    assert (
+        "validate_resource_leveling_overallocation_and_context_switching"
+        in mod.__all__
+    )
+

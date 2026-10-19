@@ -9017,3 +9017,150 @@ def test_audit_organizational_change_adkar_readiness_and_training_staticmethod_a
         in mod.__all__
     )
 
+
+def test_audit_ip_escrow_deposit_cadence_and_license_assignment_breach():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_ip_escrow_deposit_cadence_and_license_assignment,
+    )
+
+    result = audit_ip_escrow_deposit_cadence_and_license_assignment(
+        [
+            {
+                "deliverable_id": "DLV-UNSIGNED-IP",
+                "requires_source_code_escrow": True,
+                "days_since_last_escrow_deposit": 20,
+                "independent_escrow_build_verified": True,
+                "ip_assignment_and_patent_waiver_signed": False,
+                "copyleft_contamination_detected": False,
+            },
+            {
+                "deliverable_id": "DLV-AGPL-CONTAM",
+                "requires_source_code_escrow": True,
+                "days_since_last_escrow_deposit": 20,
+                "independent_escrow_build_verified": True,
+                "ip_assignment_and_patent_waiver_signed": True,
+                "copyleft_contamination_detected": True,
+            },
+        ],
+        max_days_since_escrow_deposit=90,
+    )
+    assert result["evaluated_deliverables_count"] == 2
+    assert result["unassigned_ip_or_copyleft_deliverable_ids"] == [
+        "DLV-UNSIGNED-IP",
+        "DLV-AGPL-CONTAM",
+    ]
+    assert result["stale_or_unverified_escrow_deliverable_ids"] == []
+    assert (
+        result["ip_escrow_governance_status"]
+        == "IP_ASSIGNMENT_OR_COPYLEFT_BREACH"
+    )
+    assert result["is_ip_escrow_compliant"] is False
+
+
+def test_audit_ip_escrow_deposit_cadence_and_license_assignment_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_ip_escrow_deposit_cadence_and_license_assignment,
+    )
+
+    result = audit_ip_escrow_deposit_cadence_and_license_assignment(
+        [
+            {
+                "deliverable_id": "DLV-STALE-ESCROW",
+                "requires_source_code_escrow": True,
+                "days_since_last_escrow_deposit": 120,
+                "independent_escrow_build_verified": True,
+                "ip_assignment_and_patent_waiver_signed": True,
+                "copyleft_contamination_detected": False,
+            },
+            {
+                "deliverable_id": "DLV-UNVERIFIED-BUILD",
+                "requires_source_code_escrow": True,
+                "days_since_last_escrow_deposit": 30,
+                "independent_escrow_build_verified": False,
+                "ip_assignment_and_patent_waiver_signed": True,
+                "copyleft_contamination_detected": False,
+            },
+            {
+                "deliverable_id": "DLV-NO-ESCROW-REQ",
+                "requires_source_code_escrow": False,
+                "days_since_last_escrow_deposit": 999,
+                "independent_escrow_build_verified": False,
+                "ip_assignment_and_patent_waiver_signed": True,
+                "copyleft_contamination_detected": False,
+            },
+        ],
+        max_days_since_escrow_deposit=90,
+    )
+    assert result["evaluated_deliverables_count"] == 3
+    assert result["unassigned_ip_or_copyleft_deliverable_ids"] == []
+    assert result["stale_or_unverified_escrow_deliverable_ids"] == [
+        "DLV-STALE-ESCROW",
+        "DLV-UNVERIFIED-BUILD",
+    ]
+    assert (
+        result["ip_escrow_governance_status"]
+        == "IP_ESCROW_DEPOSIT_OR_BUILD_WARNING"
+    )
+    assert result["is_ip_escrow_compliant"] is False
+
+
+def test_audit_ip_escrow_deposit_cadence_and_license_assignment_optimal_and_empty():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_ip_escrow_deposit_cadence_and_license_assignment,
+    )
+
+    empty = audit_ip_escrow_deposit_cadence_and_license_assignment(
+        [{"deliverable_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_deliverables_count"] == 0
+    assert (
+        empty["ip_escrow_governance_status"] == "IP_ESCROW_GOVERNANCE_OPTIMAL"
+    )
+    assert empty["is_ip_escrow_compliant"] is True
+
+    optimal = audit_ip_escrow_deposit_cadence_and_license_assignment(
+        [
+            {
+                "deliverable_id": "DLV-GOLD-1",
+                "requires_source_code_escrow": True,
+                "days_since_last_escrow_deposit": 30,
+                "independent_escrow_build_verified": True,
+                "ip_assignment_and_patent_waiver_signed": True,
+                "copyleft_contamination_detected": False,
+            }
+        ],
+        max_days_since_escrow_deposit=90,
+    )
+    assert optimal["evaluated_deliverables_count"] == 1
+    assert (
+        optimal["ip_escrow_governance_status"]
+        == "IP_ESCROW_GOVERNANCE_OPTIMAL"
+    )
+    assert optimal["is_ip_escrow_compliant"] is True
+
+
+def test_audit_ip_escrow_deposit_cadence_and_license_assignment_staticmethod_and_dunder_all():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_ip_escrow_deposit_cadence_and_license_assignment,
+    )
+
+    sample = [
+        {
+            "deliverable_id": "DLV-99",
+            "requires_source_code_escrow": True,
+            "days_since_last_escrow_deposit": 45,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_ip_escrow_deposit_cadence_and_license_assignment(
+            sample
+        )
+        == audit_ip_escrow_deposit_cadence_and_license_assignment(sample)
+    )
+    assert (
+        "audit_ip_escrow_deposit_cadence_and_license_assignment"
+        in mod.__all__
+    )
+
