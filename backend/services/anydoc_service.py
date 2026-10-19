@@ -3054,6 +3054,7 @@ __all__ = [
     "audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene",
     "audit_markdown_task_list_checkbox_parity_and_subtask_indentation",
     "audit_markdown_rfc2119_normative_keywords_and_requirement_traceability",
+    "audit_markdown_adr_madr_sections_and_supersession_hygiene",
     "AnydocService",
 ]
 
@@ -9881,4 +9882,143 @@ AnyDocService.audit_markdown_rfc2119_normative_keywords_and_requirement_traceabi
 )
 AnydocService.audit_markdown_rfc2119_normative_keywords_and_requirement_traceability = staticmethod(
     audit_markdown_rfc2119_normative_keywords_and_requirement_traceability
+)
+
+
+def audit_markdown_adr_madr_sections_and_supersession_hygiene(
+    markdown_text: str,
+    required_madr_sections: tuple[str, ...] | list[str] = (
+        "Status",
+        "Context",
+        "Decision",
+        "Consequences",
+    ),
+    allowed_statuses: tuple[str, ...] | list[str] = (
+        "PROPOSED",
+        "ACCEPTED",
+        "REJECTED",
+        "DEPRECATED",
+        "SUPERSEDED",
+    ),
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §10.2 — AnyDoc Markdown Architecture Decision Record (ADR) MADR v3 mandatory sections, superseded status link reciprocity & decision driver hygiene auditor."""
+    text = str(markdown_text or "")
+    lines = text.splitlines()
+
+    sections: dict[str, list[str]] = {}
+    heading_order: list[str] = []
+    current_heading: str | None = None
+    in_fenced_block = False
+
+    for raw_line in lines:
+        stripped = raw_line.strip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            in_fenced_block = not in_fenced_block
+            continue
+        if in_fenced_block:
+            continue
+
+        if stripped.startswith("## ") and not stripped.startswith("###"):
+            h2_title = stripped[3:].strip()
+            current_heading = h2_title
+            heading_order.append(h2_title)
+            sections.setdefault(h2_title, [])
+        elif stripped.startswith("# "):
+            current_heading = None
+        elif current_heading is not None:
+            sections[current_heading].append(raw_line)
+
+    missing_required_sections: list[str] = []
+    matched_section_bodies: dict[str, str] = {}
+
+    for req_sec in required_madr_sections:
+        req_lower = str(req_sec).strip().lower()
+        found_body: str | None = None
+        for h_title in heading_order:
+            h_lower = h_title.lower()
+            if h_lower == req_lower or h_lower.startswith(req_lower):
+                found_body = "\n".join(sections.get(h_title, [])).strip()
+                break
+        if found_body is None:
+            missing_required_sections.append(str(req_sec))
+        else:
+            matched_section_bodies[req_lower] = found_body
+
+    status_body = matched_section_bodies.get("status", "")
+    allowed_upper = [str(s).strip().upper() for s in allowed_statuses if str(s).strip()]
+
+    matched_status: str | None = None
+    for st in allowed_upper:
+        if re.search(rf"\b{re.escape(st)}\b", status_body, flags=re.IGNORECASE):
+            matched_status = st
+            break
+
+    invalid_or_missing_status = matched_status is None
+    superseded_without_target_ref = False
+
+    if matched_status == "SUPERSEDED":
+        has_adr_ref = bool(re.search(r"\bADR-\d+\b", status_body, flags=re.IGNORECASE))
+        has_md_link = bool(re.search(r"\[[^\]]+\]\([^)]+\)", status_body))
+        if not (has_adr_ref or has_md_link):
+            superseded_without_target_ref = True
+
+    consequences_body = matched_section_bodies.get("consequences", "")
+    bullet_lines = [
+        ln
+        for ln in consequences_body.splitlines()
+        if re.match(r"^\s*[-*+]\s+\S+", ln)
+    ]
+    has_pos_and_neg = bool(
+        re.search(r"\b(?:positive|good|pros?|benefits?)\b", consequences_body, flags=re.IGNORECASE)
+        and re.search(
+            r"\b(?:negative|bad|cons?|trade-?offs?|risks?)\b",
+            consequences_body,
+            flags=re.IGNORECASE,
+        )
+    )
+    incomplete_consequences_analysis = not (
+        bool(consequences_body.strip()) and (len(bullet_lines) >= 2 or has_pos_and_neg)
+    )
+
+    recommendations: list[str] = []
+    if missing_required_sections:
+        recommendations.append(
+            f"Add missing mandatory MADR v3 level-2 sections: {', '.join(missing_required_sections)}."
+        )
+    if invalid_or_missing_status:
+        recommendations.append(
+            f"Declare a valid ADR lifecycle status ({', '.join(allowed_upper)}) under '## Status'."
+        )
+    if superseded_without_target_ref:
+        recommendations.append(
+            "Link the SUPERSEDED status to the successor ADR identifier (e.g., ADR-0058 or Markdown link)."
+        )
+    if incomplete_consequences_analysis:
+        recommendations.append(
+            "Document both positive benefits and negative trade-offs (at least 2 bullet items) under '## Consequences'."
+        )
+
+    if len(missing_required_sections) > 0 or invalid_or_missing_status:
+        status = "CRITICAL_MISSING_MADR_SECTION_OR_STATUS_BREACH"
+    elif superseded_without_target_ref or incomplete_consequences_analysis:
+        status = "INCOMPLETE_CONSEQUENCES_OR_SUPERSESSION_WARNING"
+    else:
+        status = "MADR_ADR_COMPLIANT"
+
+    return {
+        "is_valid": status == "MADR_ADR_COMPLIANT",
+        "missing_required_sections": missing_required_sections,
+        "invalid_or_missing_status": invalid_or_missing_status,
+        "superseded_without_target_ref": superseded_without_target_ref,
+        "incomplete_consequences_analysis": incomplete_consequences_analysis,
+        "status": status,
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_markdown_adr_madr_sections_and_supersession_hygiene = staticmethod(
+    audit_markdown_adr_madr_sections_and_supersession_hygiene
+)
+AnydocService.audit_markdown_adr_madr_sections_and_supersession_hygiene = staticmethod(
+    audit_markdown_adr_madr_sections_and_supersession_hygiene
 )

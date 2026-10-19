@@ -11748,3 +11748,132 @@ def test_audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm_service_bindin
         == audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm(sample)
     )
     assert "audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm" in mod.__all__
+
+
+def test_audit_wiki_redis_cluster_hash_slot_coverage_and_aof_eviction_optimal():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_redis_cluster_hash_slot_coverage_and_aof_eviction,
+    )
+
+    shards = [
+        {
+            "shard_id": "redis-shard-01",
+            "assigned_slots_count": 5461,
+            "connected_healthy_replicas": 2,
+            "memory_used_pct": 62.5,
+            "evicted_keys_per_sec": 0.0,
+            "aof_Delayed_fsync_count": 0,
+        },
+        {
+            "shard_id": "redis-shard-02",
+            "assigned_slots_count": 5461,
+            "connected_healthy_replicas": 2,
+            "memory_used_pct": 58.0,
+            "evicted_keys_per_sec": 1.2,
+            "aof_Delayed_fsync_count": 0,
+        },
+        {
+            "shard_id": "redis-shard-03",
+            "assigned_slots_count": 5462,
+            "connected_healthy_replicas": 2,
+            "memory_used_pct": 64.0,
+            "evicted_keys_per_sec": 0.5,
+            "aof_Delayed_fsync_count": 0,
+        },
+    ]
+    res = audit_wiki_redis_cluster_hash_slot_coverage_and_aof_eviction(shards=shards)
+    assert res["is_valid"] is True
+    assert res["total_shards"] == 3
+    assert res["total_assigned_slots"] == 16384
+    assert res["unassigned_hash_slots_gap"] == 0
+    assert res["unreplicated_single_point_shards"] == []
+    assert res["memory_pressure_or_aof_stalled_shards"] == []
+    assert res["redis_cluster_status"] == "REDIS_CLUSTER_OPTIMAL"
+
+
+def test_audit_wiki_redis_cluster_hash_slot_coverage_and_aof_eviction_clusterdown_or_unreplicated():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_redis_cluster_hash_slot_coverage_and_aof_eviction,
+    )
+
+    shards = [
+        {
+            "shard_id": "redis-shard-gap",
+            "assigned_slots_count": 8000,
+            "connected_healthy_replicas": 1,
+            "memory_used_pct": 50.0,
+        },
+        {
+            "shard_id": "redis-shard-no-replica",
+            "assigned_slots_count": 8000,
+            "connected_healthy_replicas": 0,
+            "memory_used_pct": 55.0,
+        },
+    ]
+    res = audit_wiki_redis_cluster_hash_slot_coverage_and_aof_eviction(shards=shards)
+    assert res["is_valid"] is False
+    assert res["total_assigned_slots"] == 16000
+    assert res["unassigned_hash_slots_gap"] == 384
+    assert res["unreplicated_single_point_shards"] == ["redis-shard-no-replica"]
+    assert res["redis_cluster_status"] == "CRITICAL_CLUSTERDOWN_SLOT_GAP_OR_UNREPLICATED"
+
+
+def test_audit_wiki_redis_cluster_hash_slot_coverage_and_aof_eviction_memory_or_aof_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_redis_cluster_hash_slot_coverage_and_aof_eviction,
+    )
+
+    shards = [
+        {
+            "shard_id": "redis-shard-oom-risk",
+            "assigned_slots_count": 8192,
+            "connected_healthy_replicas": 1,
+            "memory_used_pct": 92.0,
+            "evicted_keys_per_sec": 45.0,
+            "aof_Delayed_fsync_count": 0,
+        },
+        {
+            "shard_id": "redis-shard-aof-stall",
+            "assigned_slots_count": 8192,
+            "connected_healthy_replicas": 1,
+            "memory_used_pct": 60.0,
+            "evicted_keys_per_sec": 0.0,
+            "aof_Delayed_fsync_count": 4,
+        },
+    ]
+    res = audit_wiki_redis_cluster_hash_slot_coverage_and_aof_eviction(shards=shards)
+    assert res["is_valid"] is False
+    assert res["unassigned_hash_slots_gap"] == 0
+    assert res["unreplicated_single_point_shards"] == []
+    assert res["memory_pressure_or_aof_stalled_shards"] == [
+        "redis-shard-oom-risk",
+        "redis-shard-aof-stall",
+    ]
+    assert res["redis_cluster_status"] == "MEMORY_EVICTION_OR_AOF_FSYNC_WARNING"
+
+
+def test_audit_wiki_redis_cluster_hash_slot_coverage_and_aof_eviction_service_binding():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_redis_cluster_hash_slot_coverage_and_aof_eviction,
+    )
+
+    sample = [
+        {
+            "shard_id": "s1",
+            "assigned_slots_count": 16384,
+            "connected_healthy_replicas": 1,
+            "memory_used_pct": 40.0,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_redis_cluster_hash_slot_coverage_and_aof_eviction(
+            sample
+        )
+        == audit_wiki_redis_cluster_hash_slot_coverage_and_aof_eviction(sample)
+    )
+    assert (
+        "audit_wiki_redis_cluster_hash_slot_coverage_and_aof_eviction"
+        in mod.__all__
+    )

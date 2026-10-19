@@ -2554,6 +2554,7 @@ __all__ = [
     "audit_wiki_cdn_surrogate_key_purge_and_origin_shield_hit_ratio",
     "audit_wiki_postgres_logical_replication_wal_bloat_and_txid_wraparound",
     "audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm",
+    "audit_wiki_redis_cluster_hash_slot_coverage_and_aof_eviction",
     "WikiPMIService",
 ]
 
@@ -8661,4 +8662,94 @@ def audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm(
 
 WikiPMIService.audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm = staticmethod(
     audit_wiki_s3_erasure_coding_quorum_and_object_lock_worm
+)
+
+
+def audit_wiki_redis_cluster_hash_slot_coverage_and_aof_eviction(
+    shards: list[dict[str, Any]],
+    total_required_hash_slots: int = 16384,
+    min_replicas_per_master: int = 1,
+    max_memory_used_pct: float = 85.0,
+    max_evicted_keys_per_sec: float = 10.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §11.6 — Wiki Redis Cluster hash-slot coverage (16384 slots), master-replica failover quorum, eviction OOM & AOF fsync lag auditor."""
+    valid_shards = [s for s in (shards or []) if isinstance(s, Mapping)]
+
+    total_assigned_slots = sum(
+        max(0, int(s.get("assigned_slots_count", 0) or 0)) for s in valid_shards
+    )
+    unassigned_hash_slots_gap = max(
+        0, int(total_required_hash_slots) - total_assigned_slots
+    )
+
+    unreplicated_single_point_shards: list[str] = []
+    memory_pressure_or_aof_stalled_shards: list[str] = []
+    recommendations: list[str] = []
+
+    for idx, shard in enumerate(valid_shards):
+        shard_id = str(shard.get("shard_id") or f"shard-{idx + 1}").strip()
+        replicas = int(shard.get("connected_healthy_replicas", 0) or 0)
+        mem_pct = float(shard.get("memory_used_pct", 0.0) or 0.0)
+        evicted_sec = float(shard.get("evicted_keys_per_sec", 0.0) or 0.0)
+        raw_aof_delayed = shard.get(
+            "aof_delayed_fsync_count", shard.get("aof_Delayed_fsync_count", 0)
+        )
+        aof_delayed = int(raw_aof_delayed or 0)
+
+        if replicas < int(min_replicas_per_master):
+            unreplicated_single_point_shards.append(shard_id)
+
+        if (
+            mem_pct > float(max_memory_used_pct)
+            or evicted_sec > float(max_evicted_keys_per_sec)
+            or aof_delayed > 0
+        ):
+            memory_pressure_or_aof_stalled_shards.append(shard_id)
+
+    if len(valid_shards) == 0:
+        recommendations.append(
+            "Provide Redis Cluster master shard telemetry for 16384 hash-slot coverage verification."
+        )
+    if (
+        unassigned_hash_slots_gap > 0
+        or total_assigned_slots != int(total_required_hash_slots)
+    ):
+        recommendations.append(
+            f"Rebalance and assign all {total_required_hash_slots} Redis Cluster hash slots (current assigned: {total_assigned_slots}, gap: {unassigned_hash_slots_gap}) to prevent CLUSTERDOWN."
+        )
+    if unreplicated_single_point_shards:
+        recommendations.append(
+            f"Attach at least {min_replicas_per_master} healthy replica(s) per master shard on: {', '.join(unreplicated_single_point_shards)}."
+        )
+    if memory_pressure_or_aof_stalled_shards:
+        recommendations.append(
+            f"Scale shard memory (<={max_memory_used_pct}%), reduce eviction thrashing, and resolve AOF delayed fsync stalls on: {', '.join(memory_pressure_or_aof_stalled_shards)}."
+        )
+
+    if (
+        len(valid_shards) == 0
+        or unassigned_hash_slots_gap > 0
+        or total_assigned_slots != int(total_required_hash_slots)
+        or len(unreplicated_single_point_shards) > 0
+    ):
+        redis_cluster_status = "CRITICAL_CLUSTERDOWN_SLOT_GAP_OR_UNREPLICATED"
+    elif len(memory_pressure_or_aof_stalled_shards) > 0:
+        redis_cluster_status = "MEMORY_EVICTION_OR_AOF_FSYNC_WARNING"
+    else:
+        redis_cluster_status = "REDIS_CLUSTER_OPTIMAL"
+
+    return {
+        "is_valid": redis_cluster_status == "REDIS_CLUSTER_OPTIMAL",
+        "total_shards": len(valid_shards),
+        "total_assigned_slots": total_assigned_slots,
+        "unassigned_hash_slots_gap": unassigned_hash_slots_gap,
+        "unreplicated_single_point_shards": unreplicated_single_point_shards,
+        "memory_pressure_or_aof_stalled_shards": memory_pressure_or_aof_stalled_shards,
+        "redis_cluster_status": redis_cluster_status,
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_redis_cluster_hash_slot_coverage_and_aof_eviction = staticmethod(
+    audit_wiki_redis_cluster_hash_slot_coverage_and_aof_eviction
 )

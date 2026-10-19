@@ -9581,3 +9581,100 @@ def test_audit_markdown_rfc2119_normative_keywords_and_requirement_traceability_
         in mod.__all__
     )
 
+
+def test_audit_markdown_adr_madr_sections_and_supersession_hygiene_compliant():
+    from backend.services.anydoc_service import (
+        audit_markdown_adr_madr_sections_and_supersession_hygiene,
+    )
+
+    md = """# ADR-0042: Adopt PostgreSQL Logical Replication for Read Scaling
+
+## Status
+SUPERSEDED by [ADR-0058](./adr-0058.md)
+
+## Context
+High read traffic on the primary database requires horizontal read scaling.
+
+## Decision
+We will configure logical replication slots with dedicated analytics subscribers.
+
+## Consequences
+- Positive: Isolates analytical queries from OLTP write transactions.
+- Negative: Requires monitoring WAL retention bloat on replication slots.
+"""
+    res = audit_markdown_adr_madr_sections_and_supersession_hygiene(markdown_text=md)
+    assert res["is_valid"] is True
+    assert res["missing_required_sections"] == []
+    assert res["invalid_or_missing_status"] is False
+    assert res["superseded_without_target_ref"] is False
+    assert res["incomplete_consequences_analysis"] is False
+    assert res["status"] == "MADR_ADR_COMPLIANT"
+
+
+def test_audit_markdown_adr_madr_sections_and_supersession_hygiene_critical_breach():
+    from backend.services.anydoc_service import (
+        audit_markdown_adr_madr_sections_and_supersession_hygiene,
+    )
+
+    md = """# ADR-0043: Custom RPC Protocol
+
+## Status
+DRAFT_WIP
+
+## Context
+Need faster serialization.
+"""
+    res = audit_markdown_adr_madr_sections_and_supersession_hygiene(markdown_text=md)
+    assert res["is_valid"] is False
+    assert "Decision" in res["missing_required_sections"]
+    assert "Consequences" in res["missing_required_sections"]
+    assert res["invalid_or_missing_status"] is True
+    assert res["status"] == "CRITICAL_MISSING_MADR_SECTION_OR_STATUS_BREACH"
+
+
+def test_audit_markdown_adr_madr_sections_and_supersession_hygiene_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_adr_madr_sections_and_supersession_hygiene,
+    )
+
+    md = """# ADR-0044: Legacy Auth Token Format
+
+## Status
+SUPERSEDED
+
+## Context
+Legacy tokens lacked key rotation IDs.
+
+## Decision
+Use asymmetric JWTs.
+
+## Consequences
+- Only one bullet listed without trade-off analysis.
+"""
+    res = audit_markdown_adr_madr_sections_and_supersession_hygiene(markdown_text=md)
+    assert res["is_valid"] is False
+    assert res["missing_required_sections"] == []
+    assert res["invalid_or_missing_status"] is False
+    assert res["superseded_without_target_ref"] is True
+    assert res["incomplete_consequences_analysis"] is True
+    assert res["status"] == "INCOMPLETE_CONSEQUENCES_OR_SUPERSESSION_WARNING"
+
+
+def test_audit_markdown_adr_madr_sections_and_supersession_hygiene_service_binding():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_adr_madr_sections_and_supersession_hygiene,
+    )
+
+    sample = "## Status\nACCEPTED\n## Context\nCtx\n## Decision\nDec\n## Consequences\n- Good\n- Bad\n"
+    assert (
+        AnyDocService.audit_markdown_adr_madr_sections_and_supersession_hygiene(sample)
+        == audit_markdown_adr_madr_sections_and_supersession_hygiene(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_adr_madr_sections_and_supersession_hygiene(sample)
+        == audit_markdown_adr_madr_sections_and_supersession_hygiene(sample)
+    )
+    assert "audit_markdown_adr_madr_sections_and_supersession_hygiene" in mod.__all__
