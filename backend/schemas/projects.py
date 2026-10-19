@@ -3832,6 +3832,7 @@ __all__ = [
     "validate_benefits_realization_npv_irr_payback_and_benefit_owner_alignment",
     "validate_ccpm_buffer_fever_chart_and_feeding_buffer_erosion",
     "validate_rolling_wave_planning_horizon_decomposition_and_freeze_window",
+    "validate_rbs_bowtie_barrier_redundancy_and_residual_severity",
 ]
 
 
@@ -9771,4 +9772,83 @@ def validate_rolling_wave_planning_horizon_decomposition_and_freeze_window(
         "status": status,
         "recommendations": recommendations,
     }
+
+
+def validate_rbs_bowtie_barrier_redundancy_and_residual_severity(
+    risk_events: list[dict[str, Any]],
+    high_severity_threshold: float = 15.0,
+    min_barriers_per_side_for_high_risk: int = 2,
+    max_acceptable_residual_score: float = 8.0,
+) -> dict[str, Any]:
+    """PMBOK §11.2 & §11.4 — Risk Breakdown Structure (RBS) Bowtie Threat/Consequence Barrier Redundancy, Preventive/Mitigative Control Effectiveness & Single-Point-of-Failure (SPOF) Validator."""
+    valid_risks = [
+        r for r in (risk_events if isinstance(risk_events, list) else []) if isinstance(r, dict)
+    ]
+
+    underprotected_bowtie_risk_ids: list[str] = []
+    spof_or_inverted_residual_risk_ids: list[str] = []
+    unacceptable_residual_risk_ids: list[str] = []
+
+    high_thresh = float(high_severity_threshold)
+    min_barriers = int(min_barriers_per_side_for_high_risk)
+    max_res = float(max_acceptable_residual_score)
+
+    for idx, r in enumerate(valid_risks):
+        rid = str(r.get("risk_id") or f"risk-{idx + 1}").strip()
+        inherent = float(r.get("inherent_severity_score", 0.0) or 0.0)
+        prev_barriers = int(r.get("active_preventive_barriers", 0) or 0)
+        rec_barriers = int(r.get("active_recovery_barriers", 0) or 0)
+        spof = bool(r.get("common_mode_failure_spof", False))
+        residual = float(r.get("residual_severity_score", 0.0) or 0.0)
+
+        if inherent >= high_thresh and (
+            prev_barriers < min_barriers or rec_barriers < min_barriers
+        ):
+            underprotected_bowtie_risk_ids.append(rid)
+
+        if spof or residual > inherent:
+            spof_or_inverted_residual_risk_ids.append(rid)
+
+        if residual > max_res:
+            unacceptable_residual_risk_ids.append(rid)
+
+    recommendations: list[str] = []
+    if len(valid_risks) == 0:
+        recommendations.append(
+            "Provide at least one RBS Bowtie risk event record for barrier redundancy validation."
+        )
+    if underprotected_bowtie_risk_ids:
+        recommendations.append(
+            f"Add independent preventive and recovery barriers (>= {min_barriers} per side) for high-severity risks: {', '.join(underprotected_bowtie_risk_ids)}."
+        )
+    if spof_or_inverted_residual_risk_ids:
+        recommendations.append(
+            f"Eliminate common-mode failure SPOFs and verify residual risk reduction on: {', '.join(spof_or_inverted_residual_risk_ids)}."
+        )
+    if unacceptable_residual_risk_ids:
+        recommendations.append(
+            f"Deploy additional risk response controls to reduce residual severity score <= {max_res} on: {', '.join(unacceptable_residual_risk_ids)}."
+        )
+
+    if (
+        len(underprotected_bowtie_risk_ids) > 0
+        or len(spof_or_inverted_residual_risk_ids) > 0
+        or len(valid_risks) == 0
+    ):
+        status = "CRITICAL_BOWTIE_SPOF_OR_BARRIER_DEFICIT"
+    elif len(unacceptable_residual_risk_ids) > 0:
+        status = "RESIDUAL_RISK_THRESHOLD_WARNING"
+    else:
+        status = "BOWTIE_BARRIERS_ROBUST"
+
+    return {
+        "is_valid": status == "BOWTIE_BARRIERS_ROBUST",
+        "total_risks": len(valid_risks),
+        "underprotected_bowtie_risk_ids": underprotected_bowtie_risk_ids,
+        "spof_or_inverted_residual_risk_ids": spof_or_inverted_residual_risk_ids,
+        "unacceptable_residual_risk_ids": unacceptable_residual_risk_ids,
+        "status": status,
+        "recommendations": recommendations,
+    }
+
 

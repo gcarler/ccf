@@ -9407,3 +9407,89 @@ def test_audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene_static
         in mod.__all__
     )
 
+
+def test_audit_markdown_task_list_checkbox_parity_and_subtask_indentation_compliant():
+    from backend.services.anydoc_service import (
+        audit_markdown_task_list_checkbox_parity_and_subtask_indentation,
+    )
+
+    md = (
+        "# Cutover Checklist\n\n"
+        "- [x] Complete DB schema review\n"
+        "  - [x] Verify expand migration\n"
+        "  - [x] Verify index concurrency\n"
+        "- [ ] Execute cutover\n"
+        "  - [ ] [BLOCKED] Await CAB approval PROJ-402\n"
+    )
+    res = audit_markdown_task_list_checkbox_parity_and_subtask_indentation(md)
+    assert res["is_valid"] is True
+    assert res["total_task_items"] == 5
+    assert res["completed_task_items"] == 3
+    assert res["parent_checked_with_open_subtasks"] == []
+    assert res["malformed_indentation_items"] == []
+    assert res["untracked_blocked_items"] == []
+    assert res["status"] == "TASK_LIST_HYGIENE_COMPLIANT"
+
+
+def test_audit_markdown_task_list_checkbox_parity_and_subtask_indentation_parent_child_breach():
+    from backend.services.anydoc_service import (
+        audit_markdown_task_list_checkbox_parity_and_subtask_indentation,
+    )
+
+    md = (
+        "- [x] Release v2.4 to production\n"
+        "  - [x] Run unit tests\n"
+        "  - [ ] Complete security sign-off\n"
+    )
+    res = audit_markdown_task_list_checkbox_parity_and_subtask_indentation(md)
+    assert res["is_valid"] is False
+    assert len(res["parent_checked_with_open_subtasks"]) == 1
+    assert res["status"] == "CRITICAL_PARENT_CHILD_COMPLETION_BREACH"
+
+
+def test_audit_markdown_task_list_checkbox_parity_and_subtask_indentation_indentation_and_blocker_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_task_list_checkbox_parity_and_subtask_indentation,
+    )
+
+    md = (
+        "- [ ] Parent task\n"
+        "   - [ ] Odd 3-space indentation subtask\n"
+        "- [ ] BLOCKED waiting on vendor credentials\n"
+    )
+    res = audit_markdown_task_list_checkbox_parity_and_subtask_indentation(
+        md, indentation_step_spaces=2, require_blocker_ticket_ref=True
+    )
+    assert res["is_valid"] is False
+    assert res["parent_checked_with_open_subtasks"] == []
+    assert len(res["malformed_indentation_items"]) == 1
+    assert len(res["untracked_blocked_items"]) == 1
+    assert res["status"] == "INDENTATION_OR_UNTRACKED_BLOCKER_WARNING"
+
+
+def test_audit_markdown_task_list_checkbox_parity_and_subtask_indentation_staticmethod_and_dunder_all():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_task_list_checkbox_parity_and_subtask_indentation,
+    )
+
+    sample = "- [x] Done task\n  - [x] Subtask done\n"
+    assert (
+        AnyDocService.audit_markdown_task_list_checkbox_parity_and_subtask_indentation(
+            sample
+        )
+        == audit_markdown_task_list_checkbox_parity_and_subtask_indentation(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_task_list_checkbox_parity_and_subtask_indentation(
+            sample
+        )
+        == audit_markdown_task_list_checkbox_parity_and_subtask_indentation(sample)
+    )
+    assert (
+        "audit_markdown_task_list_checkbox_parity_and_subtask_indentation"
+        in mod.__all__
+    )
+

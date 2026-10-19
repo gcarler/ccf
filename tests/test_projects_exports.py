@@ -12252,3 +12252,179 @@ def test_dsar_empty_invalid_archives_and_field_reversion():
         "privacy_retention_status": "PRIVACY_LEGAL_HOLD_COMPLIANT",
         "is_privacy_retention_compliant": True,
     }
+
+
+# ── audit_executive_report_fedramp_poam_aging_and_conmon_compliance (PMBOK §10.2 & §11.6, pure helper) ──
+
+
+def test_fedramp_conmon_ato_healthy_poams():
+    """Ítems POA&M con severities saludables, dentro de SLA y ConMon adjunto -> 'FEDRAMP_CONMON_ATO_HEALTHY'."""
+    import backend.services.project_export_service as export_module
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_fedramp_poam_aging_and_conmon_compliance,
+    )
+
+    poam_items = [
+        {
+            "poam_id": "POAM-001",
+            "severity": "MODERATE",
+            "days_open": 15,
+            "monthly_conmon_scan_attached": True,
+        },
+        {
+            "poam_id": "POAM-002",
+            # Defaults implícitos por campo: MODERATE, 15 días, vendor False, ConMon adjunto True.
+        },
+        {
+            "poam_id": "POAM-003",
+            "severity": "high",
+            "days_open": 30,
+        },
+    ]
+    res = audit_executive_report_fedramp_poam_aging_and_conmon_compliance(poam_items)
+    assert res == {
+        "evaluated_poam_count": 3,
+        "overdue_high_or_unscanned_poam_ids": [],
+        "overdue_moderate_or_vendor_deviation_poam_ids": [],
+        "fedramp_conmon_status": "FEDRAMP_CONMON_ATO_HEALTHY",
+        "is_fedramp_ato_compliant": True,
+    }
+    # HIGH exactamente en 30 y MODERATE exactamente en 90 no son overdue (estricto >)
+    at_thresholds = audit_executive_report_fedramp_poam_aging_and_conmon_compliance(
+        [{"poam_id": "POAM-4", "severity": "HIGH", "days_open": 30}, {"poam_id": "POAM-5", "severity": "moderate", "days_open": 90}]
+    )
+    assert at_thresholds["fedramp_conmon_status"] == "FEDRAMP_CONMON_ATO_HEALTHY"
+    assert (
+        ProjectExportService.audit_executive_report_fedramp_poam_aging_and_conmon_compliance(
+            poam_items
+        )
+        == res
+    )
+    assert "audit_executive_report_fedramp_poam_aging_and_conmon_compliance" in export_module.__all__
+
+
+def test_fedramp_critical_high_poam_or_conmon_breach():
+    """HIGH > 30 sin vendor deviation o ConMon sin adjuntar -> 'CRITICAL_HIGH_POAM_OR_CONMON_BREACH' con precedencia."""
+    from backend.services.project_export_service import (
+        audit_executive_report_fedramp_poam_aging_and_conmon_compliance,
+    )
+
+    breach = audit_executive_report_fedramp_poam_aging_and_conmon_compliance(
+        [
+            {
+                "poam_id": "POAM-HIGH",
+                "severity": "HIGH",
+                "days_open": 45,
+                "vendor_dependency_approved": False,
+            },
+            {
+                "poam_id": "POAM-NOSCAN",
+                "monthly_conmon_scan_attached": False,
+            },
+        ]
+    )
+    assert breach["evaluated_poam_count"] == 2
+    assert breach["overdue_high_or_unscanned_poam_ids"] == [
+        "POAM-HIGH",
+        "POAM-NOSCAN",
+    ]
+    assert breach["fedramp_conmon_status"] == "CRITICAL_HIGH_POAM_OR_CONMON_BREACH"
+    assert breach["is_fedramp_ato_compliant"] is False
+
+    # Breach precede aunque también haya MODERATE aged o deviation aprobada
+    mixed = audit_executive_report_fedramp_poam_aging_and_conmon_compliance(
+        [
+            {"poam_id": "POAM-MOD-OLD", "severity": "MODERATE", "days_open": 120},
+            {"poam_id": "POAM-NOSCAN-2", "monthly_conmon_scan_attached": False},
+        ]
+    )
+    assert mixed["fedramp_conmon_status"] == "CRITICAL_HIGH_POAM_OR_CONMON_BREACH"
+
+    # HIGH overdue CON deviation aprobada NO es critical, pero sí aparece como warning en la otra lista
+    deviation_only = audit_executive_report_fedramp_poam_aging_and_conmon_compliance(
+        [{"poam_id": "POAM-DEV", "severity": "HIGH", "days_open": 60, "vendor_dependency_approved": True}]
+    )
+    assert deviation_only["overdue_high_or_unscanned_poam_ids"] == []
+    assert deviation_only["overdue_moderate_or_vendor_deviation_poam_ids"] == ["POAM-DEV"]
+    assert deviation_only["fedramp_conmon_status"] == "MODERATE_AGING_OR_DEVIATION_WARNING"
+
+
+def test_fedramp_moderate_aging_or_deviation_warning():
+    """MODERATE > 90 días o HIGH > 30 con vendor approval (con ConMon adjunto) -> 'MODERATE_AGING_OR_DEVIATION_WARNING'."""
+    from backend.services.project_export_service import (
+        audit_executive_report_fedramp_poam_aging_and_conmon_compliance,
+    )
+
+    warning = audit_executive_report_fedramp_poam_aging_and_conmon_compliance(
+        [
+            {"poam_id": "POAM-MOD", "severity": "moderate", "days_open": 95},
+            {
+                "poam_id": "POAM-HIGH-DEV",
+                "severity": "HIGH",
+                "days_open": 40,
+                "vendor_dependency_approved": True,
+            },
+        ]
+    )
+    assert warning["evaluated_poam_count"] == 2
+    assert warning["overdue_high_or_unscanned_poam_ids"] == []
+    assert warning["overdue_moderate_or_vendor_deviation_poam_ids"] == [
+        "POAM-MOD",
+        "POAM-HIGH-DEV",
+    ]
+    assert warning["fedramp_conmon_status"] == "MODERATE_AGING_OR_DEVIATION_WARNING"
+    assert warning["is_fedramp_ato_compliant"] is False
+
+    custom = audit_executive_report_fedramp_poam_aging_and_conmon_compliance(
+        [{"poam_id": "POAM-3", "severity": "MODERATE", "days_open": 60}],
+        max_moderate_severity_days=45,
+    )
+    assert custom["fedramp_conmon_status"] == "MODERATE_AGING_OR_DEVIATION_WARNING"
+    assert custom["overdue_moderate_or_vendor_deviation_poam_ids"] == ["POAM-3"]
+
+    # LOW nunca es overdue
+    low_ok = audit_executive_report_fedramp_poam_aging_and_conmon_compliance(
+        [{"poam_id": "POAM-LOW", "severity": "LOW", "days_open": 400}]
+    )
+    assert low_ok["fedramp_conmon_status"] == "FEDRAMP_CONMON_ATO_HEALTHY"
+
+
+def test_fedramp_empty_invalid_poams_and_field_reversion():
+    """None / dicts inválidos se descartan; severity no str y campos no numéricos/no bool revierten a defaults del spec."""
+    from backend.services.project_export_service import (
+        audit_executive_report_fedramp_poam_aging_and_conmon_compliance,
+    )
+
+    empty_res = audit_executive_report_fedramp_poam_aging_and_conmon_compliance(None)
+    assert empty_res == {
+        "evaluated_poam_count": 0,
+        "overdue_high_or_unscanned_poam_ids": [],
+        "overdue_moderate_or_vendor_deviation_poam_ids": [],
+        "fedramp_conmon_status": "FEDRAMP_CONMON_ATO_HEALTHY",
+        "is_fedramp_ato_compliant": True,
+    }
+
+    invalid_res = audit_executive_report_fedramp_poam_aging_and_conmon_compliance(
+        ["no-dict", None, {"poam_id": "   "}, {"poam_id": 7}]
+    )
+    assert invalid_res["evaluated_poam_count"] == 0
+
+    bad_fields = audit_executive_report_fedramp_poam_aging_and_conmon_compliance(
+        [
+            {
+                "poam_id": "POAM-BAD",
+                "severity": 42,
+                "days_open": "quince",
+                "vendor_dependency_approved": "sí",
+                "monthly_conmon_scan_attached": None,
+            }
+        ]
+    )
+    assert bad_fields == {
+        "evaluated_poam_count": 1,
+        "overdue_high_or_unscanned_poam_ids": [],
+        "overdue_moderate_or_vendor_deviation_poam_ids": [],
+        "fedramp_conmon_status": "FEDRAMP_CONMON_ATO_HEALTHY",
+        "is_fedramp_ato_compliant": True,
+    }

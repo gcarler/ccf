@@ -11301,3 +11301,182 @@ def test_builders_risk_empty_invalid_and_field_reversion():
         "builders_risk_status": "BUILDERS_RISK_COVERAGE_SOUND",
         "is_builders_risk_coverage_sound": True,
     }
+
+
+# ── evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding (PMBOK §7.4 & §12.2, pure helper) ──
+
+
+def test_prevailing_wage_wh347_compliant_payrolls():
+    """Nóminas con tarifa+fringe pagados >= prevaleciente y filing WH-347 puntual -> 'PREVAILING_WAGE_WH347_COMPLIANT'."""
+    import backend.services.project_evm_service as evm_module
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding,
+    )
+
+    payrolls = [
+        {
+            "payroll_id": "PB-001",
+            # Defaults implícitos por campo: tarifa 40/prev 40, fringe 15/15, 40h, 0 viol, delay 0, ratio True.
+        },
+        {
+            "payroll_id": "PB-002",
+            "paid_hourly_rate": 40.0,
+            "prevailing_wage_rate": 40.0,
+            "paid_fringe_rate": 20.0,
+            "required_fringe_rate": 15.0,
+        },
+    ]
+    res = evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding(payrolls)
+    assert res == {
+        "evaluated_payroll_count": 2,
+        "total_wage_restitution_withholding": 0.0,
+        "total_statutory_liquidated_damages": 0.0,
+        "underpaid_or_ratio_breach_payroll_ids": [],
+        "late_wh347_certified_payroll_ids": [],
+        "prevailing_wage_status": "PREVAILING_WAGE_WH347_COMPLIANT",
+        "is_prevailing_wage_compliant": True,
+    }
+    assert (
+        ProjectEVMService.evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding(
+            payrolls
+        )
+        == res
+    )
+    assert "evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding" in evm_module.__all__
+
+
+def test_prevailing_wage_underpayment_restitution_and_ld_penalty():
+    """Shortfall salarial y ratio de aprendices incumplido -> 'CRITICAL_WAGE_UNDERPAYMENT_OR_RATIO_BREACH' con restitución retensionada y LD estatutario por día de violación."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding,
+    )
+
+    breach = evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding(
+        [
+            {
+                "payroll_id": "PB-UNDER",
+                "paid_hourly_rate": 38.0,
+                "prevailing_wage_rate": 40.0,
+                "hours_worked": 40.0,
+                "violation_worker_days": 5,
+            },
+            {
+                "payroll_id": "PB-RATIO",
+                "apprentice_ratio_compliant": False,
+                "violation_worker_days": 3,
+            },
+        ]
+    )
+    assert breach["evaluated_payroll_count"] == 2
+    # PB-UNDER: shortfall = (40+15)-(38+15) = 2.0/h * 40h = 80 restitución; LD = 5*31 = 155
+    # PB-RATIO: shortfall 0 pero ratio incumplido; LD = 3*31 = 93
+    assert breach["underpaid_or_ratio_breach_payroll_ids"] == ["PB-UNDER", "PB-RATIO"]
+    assert breach["total_wage_restitution_withholding"] == 80.0
+    assert breach["total_statutory_liquidated_damages"] == 248.0
+    assert breach["prevailing_wage_status"] == "CRITICAL_WAGE_UNDERPAYMENT_OR_RATIO_BREACH"
+    assert breach["is_prevailing_wage_compliant"] is False
+
+    # LD custom por día: 50 -> PB-A sin shortfall ni ratio-breach no acumula LD (0.0); PB-B ratio incumplido -> 3*50 = 150
+    custom_ld = evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding(
+        [
+            {"payroll_id": "PB-A", "violation_worker_days": 5},
+            {"payroll_id": "PB-B", "apprentice_ratio_compliant": False, "violation_worker_days": 3},
+        ],
+        statutory_liquidated_damages_per_violation_day=50.0,
+    )
+    assert custom_ld["total_statutory_liquidated_damages"] == 150.0
+    assert custom_ld["underpaid_or_ratio_breach_payroll_ids"] == ["PB-B"]
+
+    # Breach precede incluso si además hay WH-347 atrasado
+    with_late = evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding(
+        [
+            {"payroll_id": "PB-LATE", "wh347_filing_delay_days": 9},
+            {"payroll_id": "PB-UNDER-2", "paid_hourly_rate": 30.0},
+        ]
+    )
+    assert with_late["late_wh347_certified_payroll_ids"] == ["PB-LATE"]
+    assert with_late["prevailing_wage_status"] == "CRITICAL_WAGE_UNDERPAYMENT_OR_RATIO_BREACH"
+
+
+def test_prevailing_wage_late_wh347_warning():
+    """Filing WH-347 > 7 días (nóminas salarially limpias) -> 'LATE_WH347_CERTIFICATION_WARNING'."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding,
+    )
+
+    warning = evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding(
+        [
+            {"payroll_id": "PB-LATE-1", "wh347_filing_delay_days": 8},
+            {"payroll_id": "PB-LATE-2", "wh347_filing_delay_days": 21},
+        ]
+    )
+    assert warning["evaluated_payroll_count"] == 2
+    assert warning["total_wage_restitution_withholding"] == 0.0
+    assert warning["total_statutory_liquidated_damages"] == 0.0
+    assert warning["underpaid_or_ratio_breach_payroll_ids"] == []
+    assert warning["late_wh347_certified_payroll_ids"] == ["PB-LATE-1", "PB-LATE-2"]
+    assert warning["prevailing_wage_status"] == "LATE_WH347_CERTIFICATION_WARNING"
+    assert warning["is_prevailing_wage_compliant"] is False
+
+    # Delay exactamente en el máximo 7 no es warning (comparación estricta >)
+    at_delay = evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding(
+        [{"payroll_id": "PB-TIMELY", "wh347_filing_delay_days": 7}]
+    )
+    assert at_delay["prevailing_wage_status"] == "PREVAILING_WAGE_WH347_COMPLIANT"
+
+    custom = evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding(
+        [{"payroll_id": "PB-4", "wh347_filing_delay_days": 3}],
+        max_wh347_filing_delay_days=2,
+    )
+    assert custom["prevailing_wage_status"] == "LATE_WH347_CERTIFICATION_WARNING"
+    assert custom["late_wh347_certified_payroll_ids"] == ["PB-4"]
+
+
+def test_prevailing_wage_empty_invalid_and_field_reversion():
+    """None / dicts inválidos se descartan; campos no numéricos/no bool revierten a defaults del spec (compliant)."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding,
+    )
+
+    empty_res = evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding(None)
+    assert empty_res == {
+        "evaluated_payroll_count": 0,
+        "total_wage_restitution_withholding": 0.0,
+        "total_statutory_liquidated_damages": 0.0,
+        "underpaid_or_ratio_breach_payroll_ids": [],
+        "late_wh347_certified_payroll_ids": [],
+        "prevailing_wage_status": "PREVAILING_WAGE_WH347_COMPLIANT",
+        "is_prevailing_wage_compliant": True,
+    }
+
+    invalid_res = evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding(
+        ["no-dict", None, {"payroll_id": "   "}, {"payroll_id": 9}]
+    )
+    assert invalid_res["evaluated_payroll_count"] == 0
+
+    bad_fields = evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding(
+        [
+            {
+                "payroll_id": "PB-BAD",
+                "paid_hourly_rate": "bajo",
+                "prevailing_wage_rate": None,
+                "paid_fringe_rate": [15.0],
+                "required_fringe_rate": "quince",
+                "hours_worked": "ocho",
+                "violation_worker_days": "tres",
+                "wh347_filing_delay_days": True,
+                "apprentice_ratio_compliant": "sí",
+            }
+        ]
+    )
+    # Reverciones a defaults: rates 40/40 -> shortfall 0, delay True -> 0 -> compliant
+    assert bad_fields == {
+        "evaluated_payroll_count": 1,
+        "total_wage_restitution_withholding": 0.0,
+        "total_statutory_liquidated_damages": 0.0,
+        "underpaid_or_ratio_breach_payroll_ids": [],
+        "late_wh347_certified_payroll_ids": [],
+        "prevailing_wage_status": "PREVAILING_WAGE_WH347_COMPLIANT",
+        "is_prevailing_wage_compliant": True,
+    }

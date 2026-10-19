@@ -10178,3 +10178,100 @@ def test_validate_rolling_wave_planning_horizon_decomposition_and_freeze_window_
     )
 
 
+def test_validate_rbs_bowtie_barrier_redundancy_and_residual_severity_robust():
+    from backend.schemas.projects import (
+        validate_rbs_bowtie_barrier_redundancy_and_residual_severity,
+    )
+
+    res = validate_rbs_bowtie_barrier_redundancy_and_residual_severity(
+        risk_events=[
+            {
+                "risk_id": "RBS-CYBER-01",
+                "inherent_severity_score": 20.0,
+                "active_preventive_barriers": 3,
+                "active_recovery_barriers": 2,
+                "common_mode_failure_spof": False,
+                "residual_severity_score": 5.0,
+            },
+            {
+                "risk_id": "RBS-SUPPLY-02",
+                "inherent_severity_score": 12.0,
+                "active_preventive_barriers": 1,
+                "active_recovery_barriers": 1,
+                "common_mode_failure_spof": False,
+                "residual_severity_score": 4.0,
+            },
+        ]
+    )
+    assert res["is_valid"] is True
+    assert res["total_risks"] == 2
+    assert res["underprotected_bowtie_risk_ids"] == []
+    assert res["spof_or_inverted_residual_risk_ids"] == []
+    assert res["unacceptable_residual_risk_ids"] == []
+    assert res["status"] == "BOWTIE_BARRIERS_ROBUST"
+
+
+def test_validate_rbs_bowtie_barrier_redundancy_and_residual_severity_critical_deficit_and_spof():
+    from backend.schemas.projects import (
+        validate_rbs_bowtie_barrier_redundancy_and_residual_severity,
+    )
+
+    res = validate_rbs_bowtie_barrier_redundancy_and_residual_severity(
+        risk_events=[
+            {
+                "risk_id": "RBS-CRIT-01",
+                "inherent_severity_score": 18.0,
+                "active_preventive_barriers": 1,
+                "active_recovery_barriers": 2,
+                "common_mode_failure_spof": True,
+                "residual_severity_score": 10.0,
+            }
+        ]
+    )
+    assert res["is_valid"] is False
+    assert res["underprotected_bowtie_risk_ids"] == ["RBS-CRIT-01"]
+    assert res["spof_or_inverted_residual_risk_ids"] == ["RBS-CRIT-01"]
+    assert res["unacceptable_residual_risk_ids"] == ["RBS-CRIT-01"]
+    assert res["status"] == "CRITICAL_BOWTIE_SPOF_OR_BARRIER_DEFICIT"
+
+
+def test_validate_rbs_bowtie_barrier_redundancy_and_residual_severity_residual_warning():
+    from backend.schemas.projects import (
+        validate_rbs_bowtie_barrier_redundancy_and_residual_severity,
+    )
+
+    res = validate_rbs_bowtie_barrier_redundancy_and_residual_severity(
+        risk_events=[
+            {
+                "risk_id": "RBS-RES-03",
+                "inherent_severity_score": 16.0,
+                "active_preventive_barriers": 2,
+                "active_recovery_barriers": 2,
+                "common_mode_failure_spof": False,
+                "residual_severity_score": 9.5,
+            }
+        ],
+        max_acceptable_residual_score=8.0,
+    )
+    assert res["is_valid"] is False
+    assert res["underprotected_bowtie_risk_ids"] == []
+    assert res["spof_or_inverted_residual_risk_ids"] == []
+    assert res["unacceptable_residual_risk_ids"] == ["RBS-RES-03"]
+    assert res["status"] == "RESIDUAL_RISK_THRESHOLD_WARNING"
+
+
+def test_validate_rbs_bowtie_barrier_redundancy_and_residual_severity_exports():
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_rbs_bowtie_barrier_redundancy_and_residual_severity,
+    )
+
+    empty = validate_rbs_bowtie_barrier_redundancy_and_residual_severity([])
+    assert empty["is_valid"] is False
+    assert empty["status"] == "CRITICAL_BOWTIE_SPOF_OR_BARRIER_DEFICIT"
+    assert (
+        "validate_rbs_bowtie_barrier_redundancy_and_residual_severity"
+        in mod.__all__
+    )
+
+

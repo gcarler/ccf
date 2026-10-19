@@ -5540,6 +5540,7 @@ __all__ = [
     "evaluate_evm_surety_performance_bond_and_subcontractor_default_sdi",
     "evaluate_evm_vecp_net_savings_and_contractor_share_split",
     "evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver",
+    "evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding",
     "ProjectEVMService",
 ]
 
@@ -11310,4 +11311,129 @@ def evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver(
 
 ProjectEVMService.evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver = staticmethod(
     evaluate_evm_builders_risk_dsu_indemnity_and_subrogation_waiver
+)
+def evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding(
+    payrolls: list[dict[str, Any]] | None,
+    *,
+    statutory_liquidated_damages_per_violation_day: float = 31.0,
+    max_wh347_filing_delay_days: int = 7,
+) -> dict[str, Any]:
+    """PMBOK §7.4 & §12.2 — Evalúa Davis-Bacon: shortfall de salario prevalecente + beneficios, retención de restitución salarial, WH-347 certificado atrasado y daños liquidados estatutarios por día de violación.
+
+    Cada nómina válida declara `payroll_id` (str no vacío), tarifa pagada
+    (`paid_hourly_rate`, default 40.0), tarifa prevaleciente
+    (`prevailing_wage_rate`, default 40.0), fringe pagado
+    (`paid_fringe_rate`, default 15.0), fringe requerido
+    (`required_fringe_rate`, default 15.0), horas trabajadas
+    (`hours_worked`, default 40.0), días de violación por trabajador
+    (`violation_worker_days`, default 0), atraso de filing WH-347
+    (`wh347_filing_delay_days`, default 0) y cumplimiento de ratio de
+    aprendices (`apprentice_ratio_compliant`, default True):
+    - `hourly_shortfall = max(0, (prev + fringe_req) - (paid + fringe_pag))`.
+    - `wage_restitution_due = shortfall * max(0, horas)`.
+    - `statutory_ld_penalty`: violación_worker_days * LD por día, solo si
+      shortfall > 0 o ratio de aprendices incumplido; si no, 0.0.
+    - `underpaid_or_ratio_breach_payroll_ids`: shortfall > 0 o ratio incumplido
+      (brecha crítica, precedencia).
+    - `late_wh347_certified_payroll_ids`: atraso de filing > máximo
+      (estricto; == máximo es OK) (advertencia).
+    - Estados: 'CRITICAL_WAGE_UNDERPAYMENT_OR_RATIO_BREACH' |
+      'LATE_WH347_CERTIFICATION_WARNING' | 'PREVAILING_WAGE_WH347_COMPLIANT'.
+    """
+    raw_items = payrolls if isinstance(payrolls, list) else []
+    valid_payrolls: list[dict[str, Any]] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_payroll_id = item.get("payroll_id")
+        if not isinstance(raw_payroll_id, str) or not raw_payroll_id.strip():
+            continue
+        valid_payrolls.append(item)
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _int(value: Any, default: int) -> int:
+        if isinstance(value, bool) or not isinstance(value, int):
+            return default
+        return value
+
+    def _float(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    ld_per_day = _float(
+        statutory_liquidated_damages_per_violation_day, 31.0
+    )
+
+    total_wage_restitution_withholding = 0.0
+    total_statutory_liquidated_damages = 0.0
+    underpaid_or_ratio_breach_payroll_ids: list[str] = []
+    late_wh347_certified_payroll_ids: list[str] = []
+
+    for payroll in valid_payrolls:
+        payroll_id = str(payroll.get("payroll_id")).strip()
+        paid_rate = _float(payroll.get("paid_hourly_rate"), 40.0)
+        prevailing_rate = _float(payroll.get("prevailing_wage_rate"), 40.0)
+        paid_fringe = _float(payroll.get("paid_fringe_rate"), 15.0)
+        required_fringe = _float(payroll.get("required_fringe_rate"), 15.0)
+        hours_worked = _float(payroll.get("hours_worked"), 40.0)
+        violation_days = _int(payroll.get("violation_worker_days"), 0)
+        filing_delay_days = _int(payroll.get("wh347_filing_delay_days"), 0)
+        ratio_compliant = _bool(
+            payroll.get("apprentice_ratio_compliant"), True
+        )
+
+        hourly_shortfall = round(
+            max(
+                0.0,
+                (float(prevailing_rate) + float(required_fringe))
+                - (float(paid_rate) + float(paid_fringe)),
+            ),
+            2,
+        )
+        wage_restitution_due = round(
+            hourly_shortfall * max(0.0, float(hours_worked)), 2
+        )
+
+        if hourly_shortfall > 0 or not bool(ratio_compliant):
+            underpaid_or_ratio_breach_payroll_ids.append(payroll_id)
+            statutory_ld_penalty = round(
+                max(0, int(violation_days)) * ld_per_day, 2
+            )
+        else:
+            statutory_ld_penalty = 0.0
+
+        total_wage_restitution_withholding = round(
+            total_wage_restitution_withholding + wage_restitution_due, 2
+        )
+        total_statutory_liquidated_damages = round(
+            total_statutory_liquidated_damages + statutory_ld_penalty, 2
+        )
+
+        if int(filing_delay_days) > int(max_wh347_filing_delay_days):
+            late_wh347_certified_payroll_ids.append(payroll_id)
+
+    if underpaid_or_ratio_breach_payroll_ids:
+        prevailing_wage_status = "CRITICAL_WAGE_UNDERPAYMENT_OR_RATIO_BREACH"
+    elif late_wh347_certified_payroll_ids:
+        prevailing_wage_status = "LATE_WH347_CERTIFICATION_WARNING"
+    else:
+        prevailing_wage_status = "PREVAILING_WAGE_WH347_COMPLIANT"
+
+    return {
+        "evaluated_payroll_count": len(valid_payrolls),
+        "total_wage_restitution_withholding": total_wage_restitution_withholding,
+        "total_statutory_liquidated_damages": total_statutory_liquidated_damages,
+        "underpaid_or_ratio_breach_payroll_ids": underpaid_or_ratio_breach_payroll_ids,
+        "late_wh347_certified_payroll_ids": late_wh347_certified_payroll_ids,
+        "prevailing_wage_status": prevailing_wage_status,
+        "is_prevailing_wage_compliant": prevailing_wage_status
+        == "PREVAILING_WAGE_WH347_COMPLIANT",
+    }
+
+
+ProjectEVMService.evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding = staticmethod(
+    evaluate_evm_prevailing_wage_wh347_payroll_and_restitution_withholding
 )

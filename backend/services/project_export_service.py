@@ -3024,6 +3024,7 @@ __all__ = [
     "audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance",
     "audit_executive_report_esg_ghg_scope_emissions_and_sbti_compliance",
     "audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance",
+    "audit_executive_report_fedramp_poam_aging_and_conmon_compliance",
     "ProjectExportService",
 ]
 
@@ -8964,4 +8965,107 @@ def audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance(
 
 ProjectExportService.audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance = staticmethod(
     audit_executive_report_dsar_crypto_shredding_and_legal_hold_compliance
+)
+def audit_executive_report_fedramp_poam_aging_and_conmon_compliance(
+    poam_items: list[dict[str, Any]] | None,
+    *,
+    max_high_severity_days: int = 30,
+    max_moderate_severity_days: int = 90,
+) -> dict[str, Any]:
+    """PMBOK §10.2 & §11.6 — Audita el POA&M FedRAMP/NIST SP 800-53: envejecimiento de hallazgos HIGH/MODERATE, validez de deviation request por dependencia de vendedor y entregable de ConMon mensual adjunto.
+
+    Cada ítem POA&M válido declara `poam_id` (str no vacío), severity
+    (`severity`, default 'MODERATE'; se normaliza upper y solo distingue
+    HIGH/MODERATE/LOW), días abiertos (`days_open`, default 15),
+    deviation request aprobado por dependencia de vendedor
+    (`vendor_dependency_approved`, default False) y escaneo ConMon mensual
+    adjunto (`monthly_conmon_scan_attached`, default True):
+    - `overdue_high_or_unscanned_poam_ids`: HIGH abierta > 30 días SIN vendor
+      deviation approval, O ConMon mensual sin adjuntar (brecha crítica,
+      precedencia).
+    - `overdue_moderate_or_vendor_deviation_poam_ids`: MODERATE > 90 días, O
+      HIGH > 30 días CON vendor deviation approval (advertencia).
+    - Estados: 'CRITICAL_HIGH_POAM_OR_CONMON_BREACH' |
+      'MODERATE_AGING_OR_DEVIATION_WARNING' | 'FEDRAMP_CONMON_ATO_HEALTHY'.
+    - `is_fedramp_ato_compliant`: solo con estado HEALTHY.
+    """
+    raw_items = poam_items if isinstance(poam_items, list) else []
+    valid_items: list[dict[str, Any]] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_poam_id = item.get("poam_id")
+        if not isinstance(raw_poam_id, str) or not raw_poam_id.strip():
+            continue
+        valid_items.append(item)
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _int(value: Any, default: int) -> int:
+        if isinstance(value, bool) or not isinstance(value, int):
+            return default
+        return value
+
+    overdue_high_or_unscanned_poam_ids: list[str] = []
+    overdue_moderate_or_vendor_deviation_poam_ids: list[str] = []
+
+    for poam in valid_items:
+        poam_id = str(poam.get("poam_id")).strip()
+        raw_severity = poam.get("severity")
+        severity = (
+            raw_severity.upper()
+            if isinstance(raw_severity, str)
+            else "MODERATE"
+        )
+        days_open = _int(poam.get("days_open"), 15)
+        vendor_approved = _bool(
+            poam.get("vendor_dependency_approved"), False
+        )
+        scan_attached = _bool(
+            poam.get("monthly_conmon_scan_attached"), True
+        )
+
+        high_overdue_unapproved = bool(
+            severity == "HIGH"
+            and int(days_open) > int(max_high_severity_days)
+            and (not bool(vendor_approved))
+        )
+        unscanned = not bool(scan_attached)
+
+        moderate_overdue = bool(
+            severity == "MODERATE"
+            and int(days_open) > int(max_moderate_severity_days)
+        )
+        high_overdue_approved = bool(
+            severity == "HIGH"
+            and int(days_open) > int(max_high_severity_days)
+            and bool(vendor_approved)
+        )
+
+        if high_overdue_unapproved or unscanned:
+            overdue_high_or_unscanned_poam_ids.append(poam_id)
+
+        if moderate_overdue or high_overdue_approved:
+            overdue_moderate_or_vendor_deviation_poam_ids.append(poam_id)
+
+    if overdue_high_or_unscanned_poam_ids:
+        fedramp_conmon_status = "CRITICAL_HIGH_POAM_OR_CONMON_BREACH"
+    elif overdue_moderate_or_vendor_deviation_poam_ids:
+        fedramp_conmon_status = "MODERATE_AGING_OR_DEVIATION_WARNING"
+    else:
+        fedramp_conmon_status = "FEDRAMP_CONMON_ATO_HEALTHY"
+
+    return {
+        "evaluated_poam_count": len(valid_items),
+        "overdue_high_or_unscanned_poam_ids": overdue_high_or_unscanned_poam_ids,
+        "overdue_moderate_or_vendor_deviation_poam_ids": overdue_moderate_or_vendor_deviation_poam_ids,
+        "fedramp_conmon_status": fedramp_conmon_status,
+        "is_fedramp_ato_compliant": fedramp_conmon_status
+        == "FEDRAMP_CONMON_ATO_HEALTHY",
+    }
+
+
+ProjectExportService.audit_executive_report_fedramp_poam_aging_and_conmon_compliance = staticmethod(
+    audit_executive_report_fedramp_poam_aging_and_conmon_compliance
 )

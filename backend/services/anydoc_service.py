@@ -3052,6 +3052,7 @@ __all__ = [
     "audit_markdown_mermaid_diagram_syntax_and_complexity_hygiene",
     "audit_markdown_json_schema_codeblock_syntax_and_secret_example_hygiene",
     "audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene",
+    "audit_markdown_task_list_checkbox_parity_and_subtask_indentation",
     "AnydocService",
 ]
 
@@ -9650,5 +9651,136 @@ AnyDocService.audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene =
 AnydocService.audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene = staticmethod(
     audit_markdown_wcag_image_alt_text_and_svg_accessibility_hygiene
 )
+
+
+def audit_markdown_task_list_checkbox_parity_and_subtask_indentation(
+    markdown_text: str,
+    indentation_step_spaces: int = 2,
+    require_blocker_ticket_ref: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §4.4 & §10.2 — AnyDoc Markdown GFM Task-List Checkbox Completion Parity, Nested Subtask Indentation Hygiene & Stale Blocked-Item Tag Auditor."""
+    raw_text = markdown_text if isinstance(markdown_text, str) else ""
+    stripped_text = re.sub(r"```.*?```", "", raw_text, flags=re.DOTALL)
+
+    step = max(1, int(indentation_step_spaces))
+    task_line_re = re.compile(r"^([ \t]*)(?:[-*+]|\d+\.)\s+\[([ xX])\]\s+(.*)$")
+    blocker_marker_re = re.compile(r"\b(?:BLOCKED|bloqueado)\b|\[BLOCKED\]", re.IGNORECASE)
+    ticket_ref_re = re.compile(r"(?:#\d+|\b[A-Z]{2,}-\d+\b)")
+
+    parsed_items: list[dict[str, Any]] = []
+    malformed_indentation_items: list[dict[str, Any]] = []
+    untracked_blocked_items: list[dict[str, Any]] = []
+
+    for line_no, raw_line in enumerate(stripped_text.splitlines(), start=1):
+        m = task_line_re.match(raw_line)
+        if not m:
+            continue
+        indent_str = m.group(1)
+        mark = m.group(2)
+        body = m.group(3).strip()
+        is_checked = mark.lower() == "x"
+        indent_spaces = len(indent_str.replace("\t", " " * step))
+
+        if "\t" in indent_str or (indent_spaces % step != 0):
+            malformed_indentation_items.append(
+                {
+                    "line": line_no,
+                    "indent_spaces": indent_spaces,
+                    "text": body,
+                }
+            )
+
+        if (
+            not is_checked
+            and require_blocker_ticket_ref
+            and blocker_marker_re.search(body)
+            and not ticket_ref_re.search(body)
+        ):
+            untracked_blocked_items.append(
+                {
+                    "line": line_no,
+                    "text": body,
+                }
+            )
+
+        parsed_items.append(
+            {
+                "line": line_no,
+                "indent": indent_spaces,
+                "checked": is_checked,
+                "text": body,
+            }
+        )
+
+    parent_checked_with_open_subtasks: list[dict[str, Any]] = []
+    for i, item in enumerate(parsed_items):
+        if not item["checked"]:
+            continue
+        parent_indent = item["indent"]
+        has_open_child = False
+        for j in range(i + 1, len(parsed_items)):
+            nxt = parsed_items[j]
+            if nxt["indent"] <= parent_indent:
+                break
+            if not nxt["checked"]:
+                has_open_child = True
+                break
+        if has_open_child:
+            parent_checked_with_open_subtasks.append(
+                {
+                    "line": item["line"],
+                    "text": item["text"],
+                }
+            )
+
+    total_task_items = len(parsed_items)
+    completed_task_items = sum(1 for it in parsed_items if it["checked"])
+
+    is_valid = (
+        len(parent_checked_with_open_subtasks) == 0
+        and len(malformed_indentation_items) == 0
+        and len(untracked_blocked_items) == 0
+    )
+
+    recommendations: list[str] = []
+    if parent_checked_with_open_subtasks:
+        recommendations.append(
+            "Do not mark parent GFM checklist items as [x] while child subtasks remain open [ ]."
+        )
+    if malformed_indentation_items:
+        recommendations.append(
+            f"Normalize nested task-list indentation to multiples of {step} spaces without tab characters."
+        )
+    if untracked_blocked_items:
+        recommendations.append(
+            "Attach a traceable issue/ticket reference (e.g., #123 or PROJ-456) to all open BLOCKED task items."
+        )
+
+    if parent_checked_with_open_subtasks:
+        status = "CRITICAL_PARENT_CHILD_COMPLETION_BREACH"
+    elif malformed_indentation_items or untracked_blocked_items:
+        status = "INDENTATION_OR_UNTRACKED_BLOCKER_WARNING"
+    else:
+        status = "TASK_LIST_HYGIENE_COMPLIANT"
+
+    return {
+        "is_valid": is_valid,
+        "total_task_items": total_task_items,
+        "completed_task_items": completed_task_items,
+        "parent_checked_with_open_subtasks": parent_checked_with_open_subtasks,
+        "malformed_indentation_items": malformed_indentation_items,
+        "untracked_blocked_items": untracked_blocked_items,
+        "status": status,
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_markdown_task_list_checkbox_parity_and_subtask_indentation = staticmethod(
+    audit_markdown_task_list_checkbox_parity_and_subtask_indentation
+)
+AnydocService.audit_markdown_task_list_checkbox_parity_and_subtask_indentation = staticmethod(
+    audit_markdown_task_list_checkbox_parity_and_subtask_indentation
+)
+
 
 
