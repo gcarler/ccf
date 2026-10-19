@@ -3834,6 +3834,7 @@ __all__ = [
     "validate_rolling_wave_planning_horizon_decomposition_and_freeze_window",
     "validate_rbs_bowtie_barrier_redundancy_and_residual_severity",
     "validate_contingency_and_management_reserve_emv_drawdown",
+    "validate_monte_carlo_pert_p80_p90_and_path_convergence_bias",
 ]
 
 
@@ -10028,3 +10029,101 @@ def validate_contingency_and_management_reserve_emv_drawdown(
         "status": status,
         "recommendations": recommendations,
     }
+
+
+def validate_monte_carlo_pert_p80_p90_and_path_convergence_bias(
+    activities: list[dict[str, Any]],
+    max_p80_buffer_shortfall_days: float = 0.0,
+    max_parallel_merge_paths_without_buffer: int = 2,
+    max_cv_skew_ratio: float = 0.50,
+) -> dict[str, Any]:
+    """PMI PMBOK §6.4 & §11.4 — Schedule Monte Carlo PERT Three-Point Estimation (O/M/P), P80/P90 Confidence Buffer & Merge-Point Path Convergence Bias Validator."""
+    valid_activities = [
+        a for a in (activities if isinstance(activities, list) else []) if isinstance(a, dict)
+    ]
+
+    critical_activities: list[str] = []
+    warning_activities: list[str] = []
+    activity_evaluations: list[dict[str, Any]] = []
+    total_p80_shortfall = 0.0
+
+    for idx, act in enumerate(valid_activities):
+        activity_id = str(act.get("activity_id") or f"act-{idx + 1}").strip()
+        opt_days = float(act.get("optimistic_days", 0.0) or 0.0)
+        ml_days = float(act.get("most_likely_days", 0.0) or 0.0)
+        pess_days = float(act.get("pessimistic_days", 0.0) or 0.0)
+        det_days = float(act.get("deterministic_baseline_days", 0.0) or 0.0)
+        p80_days = float(act.get("p80_simulated_days", 0.0) or 0.0)
+        p90_days = float(act.get("p90_simulated_days", 0.0) or 0.0)
+        raw_conv = act.get("converging_predecessor_paths_count", 1)
+        conv_paths = int(1 if raw_conv is None else raw_conv)
+        merge_buf = float(act.get("merge_buffer_days", 0.0) or 0.0)
+        on_crit = bool(act.get("on_critical_path", False))
+
+        pert_mean_days = round((opt_days + 4.0 * ml_days + pess_days) / 6.0, 4)
+        pert_std_dev_days = round((pess_days - opt_days) / 6.0, 4)
+        cv_ratio = (
+            round(pert_std_dev_days / pert_mean_days, 4)
+            if pert_mean_days > 0.0
+            else 0.0
+        )
+        p80_shortfall_days = round(
+            max(0.0, p80_days - (det_days + merge_buf)), 4
+        )
+        total_p80_shortfall += p80_shortfall_days
+
+        critical_estimation_breach = bool(
+            opt_days > ml_days
+            or ml_days > pess_days
+            or (
+                on_crit
+                and p80_shortfall_days > float(max_p80_buffer_shortfall_days)
+            )
+            or (
+                conv_paths > int(max_parallel_merge_paths_without_buffer)
+                and merge_buf <= 0.0
+            )
+        )
+        warning_skew_or_buffer = bool(
+            not critical_estimation_breach
+            and (
+                p80_shortfall_days > float(max_p80_buffer_shortfall_days)
+                or cv_ratio > float(max_cv_skew_ratio)
+            )
+        )
+
+        if critical_estimation_breach:
+            critical_activities.append(activity_id)
+        elif warning_skew_or_buffer:
+            warning_activities.append(activity_id)
+
+        activity_evaluations.append(
+            {
+                "activity_id": activity_id,
+                "pert_mean_days": pert_mean_days,
+                "pert_std_dev_days": pert_std_dev_days,
+                "cv_ratio": cv_ratio,
+                "p80_shortfall_days": p80_shortfall_days,
+                "p90_simulated_days": p90_days,
+                "critical_estimation_breach": critical_estimation_breach,
+                "warning_skew_or_buffer": warning_skew_or_buffer,
+            }
+        )
+
+    if critical_activities:
+        status = "CRITICAL"
+    elif warning_activities:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "status": status,
+        "is_valid": status == "HEALTHY",
+        "evaluated_activities_count": len(valid_activities),
+        "critical_activities": critical_activities,
+        "warning_activities": warning_activities,
+        "total_p80_shortfall_days": round(total_p80_shortfall, 4),
+        "activity_evaluations": activity_evaluations,
+    }
+

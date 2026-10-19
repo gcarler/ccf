@@ -10489,3 +10489,160 @@ def test_validate_contingency_and_management_reserve_emv_drawdown_exports():
         "validate_contingency_and_management_reserve_emv_drawdown"
         in mod.__all__
     )
+
+
+def test_validate_monte_carlo_pert_p80_p90_and_path_convergence_bias_healthy():
+    from backend.schemas.projects import (
+        validate_monte_carlo_pert_p80_p90_and_path_convergence_bias,
+    )
+
+    res = validate_monte_carlo_pert_p80_p90_and_path_convergence_bias(
+        [
+            {
+                "activity_id": "ACT-FOUNDATION-01",
+                "optimistic_days": 8.0,
+                "most_likely_days": 10.0,
+                "pessimistic_days": 14.0,
+                "deterministic_baseline_days": 10.0,
+                "p80_simulated_days": 12.0,
+                "p90_simulated_days": 13.0,
+                "converging_predecessor_paths_count": 3,
+                "merge_buffer_days": 2.5,
+                "on_critical_path": True,
+            },
+            {
+                "activity_id": "ACT-PIPING-02",
+                "optimistic_days": 5.0,
+                "most_likely_days": 6.0,
+                "pessimistic_days": 7.0,
+                "deterministic_baseline_days": 6.0,
+                "p80_simulated_days": 6.5,
+                "p90_simulated_days": 6.8,
+                "converging_predecessor_paths_count": 1,
+                "merge_buffer_days": 0.5,
+                "on_critical_path": False,
+            },
+        ]
+    )
+    assert res["status"] == "HEALTHY"
+    assert res["is_valid"] is True
+    assert res["evaluated_activities_count"] == 2
+    assert res["critical_activities"] == []
+    assert res["warning_activities"] == []
+    assert res["total_p80_shortfall_days"] == 0.0
+    assert res["activity_evaluations"][0]["pert_mean_days"] == 10.3333
+    assert res["activity_evaluations"][0]["pert_std_dev_days"] == 1.0
+
+
+def test_validate_monte_carlo_pert_p80_p90_and_path_convergence_bias_critical():
+    from backend.schemas.projects import (
+        validate_monte_carlo_pert_p80_p90_and_path_convergence_bias,
+    )
+
+    res = validate_monte_carlo_pert_p80_p90_and_path_convergence_bias(
+        [
+            {
+                "activity_id": "ACT-INVERTED-OMP",
+                "optimistic_days": 15.0,
+                "most_likely_days": 10.0,
+                "pessimistic_days": 20.0,
+                "deterministic_baseline_days": 12.0,
+                "p80_simulated_days": 12.0,
+                "p90_simulated_days": 15.0,
+            },
+            {
+                "activity_id": "ACT-CRIT-SHORTFALL",
+                "optimistic_days": 10.0,
+                "most_likely_days": 12.0,
+                "pessimistic_days": 20.0,
+                "deterministic_baseline_days": 12.0,
+                "p80_simulated_days": 16.5,
+                "p90_simulated_days": 18.0,
+                "converging_predecessor_paths_count": 1,
+                "merge_buffer_days": 1.0,
+                "on_critical_path": True,
+            },
+            {
+                "activity_id": "ACT-UNBUFFERED-MERGE",
+                "optimistic_days": 4.0,
+                "most_likely_days": 5.0,
+                "pessimistic_days": 6.0,
+                "deterministic_baseline_days": 5.0,
+                "p80_simulated_days": 5.0,
+                "p90_simulated_days": 5.5,
+                "converging_predecessor_paths_count": 4,
+                "merge_buffer_days": 0.0,
+                "on_critical_path": False,
+            },
+        ]
+    )
+    assert res["status"] == "CRITICAL"
+    assert res["is_valid"] is False
+    assert res["critical_activities"] == [
+        "ACT-INVERTED-OMP",
+        "ACT-CRIT-SHORTFALL",
+        "ACT-UNBUFFERED-MERGE",
+    ]
+    assert res["warning_activities"] == []
+    assert res["total_p80_shortfall_days"] == 3.5
+
+
+def test_validate_monte_carlo_pert_p80_p90_and_path_convergence_bias_warning():
+    from backend.schemas.projects import (
+        validate_monte_carlo_pert_p80_p90_and_path_convergence_bias,
+    )
+
+    res = validate_monte_carlo_pert_p80_p90_and_path_convergence_bias(
+        [
+            {
+                "activity_id": "ACT-NONCRIT-SHORTFALL",
+                "optimistic_days": 5.0,
+                "most_likely_days": 6.0,
+                "pessimistic_days": 9.0,
+                "deterministic_baseline_days": 6.0,
+                "p80_simulated_days": 8.0,
+                "p90_simulated_days": 8.5,
+                "converging_predecessor_paths_count": 1,
+                "merge_buffer_days": 0.5,
+                "on_critical_path": False,
+            },
+            {
+                "activity_id": "ACT-HIGH-CV-SKEW",
+                "optimistic_days": 2.0,
+                "most_likely_days": 4.0,
+                "pessimistic_days": 26.0,
+                "deterministic_baseline_days": 10.0,
+                "p80_simulated_days": 9.5,
+                "p90_simulated_days": 12.0,
+                "converging_predecessor_paths_count": 1,
+                "merge_buffer_days": 0.0,
+                "on_critical_path": False,
+            },
+        ],
+        max_cv_skew_ratio=0.40,
+    )
+    assert res["status"] == "WARNING"
+    assert res["is_valid"] is False
+    assert res["critical_activities"] == []
+    assert res["warning_activities"] == [
+        "ACT-NONCRIT-SHORTFALL",
+        "ACT-HIGH-CV-SKEW",
+    ]
+    assert res["total_p80_shortfall_days"] == 1.5
+
+
+def test_validate_monte_carlo_pert_p80_p90_and_path_convergence_bias_empty_and_exports():
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_monte_carlo_pert_p80_p90_and_path_convergence_bias,
+    )
+
+    empty = validate_monte_carlo_pert_p80_p90_and_path_convergence_bias([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["evaluated_activities_count"] == 0
+    assert empty["total_p80_shortfall_days"] == 0.0
+    assert (
+        "validate_monte_carlo_pert_p80_p90_and_path_convergence_bias"
+        in mod.__all__
+    )
+
