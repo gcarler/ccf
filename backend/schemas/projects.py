@@ -3827,6 +3827,7 @@ __all__ = [
     "validate_moscow_prioritization_must_have_inflation_and_mvp_cap",
     "validate_work_package_8_80_rule_duration_and_effort_granularity",
     "validate_monte_carlo_schedule_risk_p80_buffer_and_convergence",
+    "validate_agile_hybrid_velocity_stability_and_wip_carryover",
     "validate_resource_leveling_overallocation_peak_and_float_consumption",
 ]
 
@@ -9391,3 +9392,82 @@ def validate_resource_leveling_overallocation_peak_and_float_consumption(
     }
 
 
+def validate_agile_hybrid_velocity_stability_and_wip_carryover(
+    iterations: list[dict[str, Any]] | None = None,
+    *,
+    max_carryover_rate_pct: float = 15.0,
+    max_velocity_volatility_cv_pct: float = 20.0,
+) -> dict[str, Any]:
+    """Valida estabilidad de velocidad, brechas de límite WIP Kanban y deuda de carryover en iteraciones ágiles/híbridas (PMBOK §6.4 y §6.6).
+
+    Cada iteración válida declara `iteration_id` (str no vacío), items WIP
+    activos (`active_wip_items`, default 6), límite Kanban
+    (`kanban_wip_limit`, default 8), deuda de carryover
+    (`carryover_points_pct`, default 10.0) y volatilidad de velocidad
+    (`velocity_volatility_cv_pct`, default 12.0):
+    - `wip_breach_or_high_carryover_iteration_ids`: WIP activo > límite
+      Kanban o carryover > max_carryover_rate_pct.
+    - `volatile_velocity_iteration_ids`: volatilidad CV > umbral.
+    - `velocity_wip_status`: 'WIP_LIMIT_OR_CARRYOVER_DEBT_BREACH' si hay (1);
+      'VELOCITY_VOLATILITY_INSTABILITY_WARNING' si hay (2);
+      'AGILE_HYBRID_FLOW_OPTIMAL' si limpio.
+    - `is_agile_flow_valid`: solo con estado óptimo.
+    """
+    raw_items = iterations if isinstance(iterations, list) else []
+    valid: list[dict[str, Any]] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_iteration_id = item.get("iteration_id")
+        if not isinstance(raw_iteration_id, str) or not raw_iteration_id.strip():
+            continue
+        valid.append(item)
+
+    def _int(value, default):
+        if isinstance(value, bool) or not isinstance(value, int):
+            return default
+        return value
+
+    def _float(value, default):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    wip_breach_or_high_carryover_iteration_ids: list[str] = []
+    volatile_velocity_iteration_ids: list[str] = []
+
+    for iteration in valid:
+        iteration_id = str(iteration["iteration_id"]).strip()
+        active_wip_items = _int(iteration.get("active_wip_items"), 6)
+        kanban_wip_limit = _int(iteration.get("kanban_wip_limit"), 8)
+        carryover_points_pct = _float(iteration.get("carryover_points_pct"), 10.0)
+        velocity_volatility_cv_pct = _float(
+            iteration.get("velocity_volatility_cv_pct"), 12.0
+        )
+
+        if (
+            int(active_wip_items) > int(kanban_wip_limit)
+            or float(carryover_points_pct) > float(max_carryover_rate_pct)
+        ):
+            wip_breach_or_high_carryover_iteration_ids.append(iteration_id)
+
+        if float(velocity_volatility_cv_pct) > float(
+            max_velocity_volatility_cv_pct
+        ):
+            volatile_velocity_iteration_ids.append(iteration_id)
+
+    if wip_breach_or_high_carryover_iteration_ids:
+        velocity_wip_status = "WIP_LIMIT_OR_CARRYOVER_DEBT_BREACH"
+    elif volatile_velocity_iteration_ids:
+        velocity_wip_status = "VELOCITY_VOLATILITY_INSTABILITY_WARNING"
+    else:
+        velocity_wip_status = "AGILE_HYBRID_FLOW_OPTIMAL"
+
+    return {
+        "evaluated_iterations_count": len(valid),
+        "wip_breach_or_high_carryover_iteration_ids": wip_breach_or_high_carryover_iteration_ids,
+        "volatile_velocity_iteration_ids": volatile_velocity_iteration_ids,
+        "velocity_wip_status": velocity_wip_status,
+        "is_agile_flow_valid": velocity_wip_status
+        == "AGILE_HYBRID_FLOW_OPTIMAL",
+    }

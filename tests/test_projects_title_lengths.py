@@ -9712,3 +9712,170 @@ def test_validate_resource_leveling_overallocation_peak_and_float_consumption_du
         in mod.__all__
     )
 
+
+
+# ── validate_agile_hybrid_velocity_stability_and_wip_carryover (PMBOK §6.4 & §6.6, pure helper) ──
+
+
+def test_agile_hybrid_flow_optimal_iterations():
+    """Iteraciones con WIP <= límite, carryover <= 15.0 y CV <= 20.0 -> 'AGILE_HYBRID_FLOW_OPTIMAL'."""
+    import backend.schemas.projects as projects_module
+    from backend.schemas.projects import (
+        validate_agile_hybrid_velocity_stability_and_wip_carryover,
+    )
+
+    iterations = [
+        {
+            "iteration_id": "ITER-001",
+            "active_wip_items": 6,
+            "kanban_wip_limit": 8,
+            "carryover_points_pct": 10.0,
+            "velocity_volatility_cv_pct": 12.0,
+        },
+        {
+            "iteration_id": "ITER-002",
+            # Defaults implícitos por campo: 6 WIP, límite 8, 10.0 carryover, 12.0 CV.
+        },
+    ]
+    res = validate_agile_hybrid_velocity_stability_and_wip_carryover(iterations)
+    assert res == {
+        "evaluated_iterations_count": 2,
+        "wip_breach_or_high_carryover_iteration_ids": [],
+        "volatile_velocity_iteration_ids": [],
+        "velocity_wip_status": "AGILE_HYBRID_FLOW_OPTIMAL",
+        "is_agile_flow_valid": True,
+    }
+    # WIP exactamente en el límite (8 == 8) no es breach (comparación estricta >)
+    at_wip_limit = validate_agile_hybrid_velocity_stability_and_wip_carryover(
+        [{"iteration_id": "ITER-003", "active_wip_items": 8, "kanban_wip_limit": 8}]
+    )
+    assert at_wip_limit["velocity_wip_status"] == "AGILE_HYBRID_FLOW_OPTIMAL"
+    # Carryover exactamente en el umbral 15.0 no es breach (comparación estricta >)
+    at_carryover = validate_agile_hybrid_velocity_stability_and_wip_carryover(
+        [{"iteration_id": "ITER-004", "carryover_points_pct": 15.0}]
+    )
+    assert at_carryover["velocity_wip_status"] == "AGILE_HYBRID_FLOW_OPTIMAL"
+    assert "validate_agile_hybrid_velocity_stability_and_wip_carryover" in projects_module.__all__
+
+
+def test_agile_hybrid_wip_or_carryover_breach():
+    """WIP activo > límite Kanban o carryover > 15.0 -> 'WIP_LIMIT_OR_CARRYOVER_DEBT_BREACH' con precedencia sobre WARNING."""
+    from backend.schemas.projects import (
+        validate_agile_hybrid_velocity_stability_and_wip_carryover,
+    )
+
+    breach = validate_agile_hybrid_velocity_stability_and_wip_carryover(
+        [
+            {
+                "iteration_id": "ITER-WIP-BREACH",
+                "active_wip_items": 9,
+                "kanban_wip_limit": 8,
+            },
+            {
+                "iteration_id": "ITER-CARRYOVER",
+                "carryover_points_pct": 18.5,
+            },
+        ]
+    )
+    assert breach["evaluated_iterations_count"] == 2
+    assert breach["wip_breach_or_high_carryover_iteration_ids"] == [
+        "ITER-WIP-BREACH",
+        "ITER-CARRYOVER",
+    ]
+    assert breach["volatile_velocity_iteration_ids"] == []
+    assert breach["velocity_wip_status"] == "WIP_LIMIT_OR_CARRYOVER_DEBT_BREACH"
+    assert breach["is_agile_flow_valid"] is False
+
+    # Breach tiene precedencia aunque también haya iteraciones volátiles
+    mixed = validate_agile_hybrid_velocity_stability_and_wip_carryover(
+        [
+            {"iteration_id": "ITER-VOLATILE", "velocity_volatility_cv_pct": 25.0},
+            {"iteration_id": "ITER-WIP-BREACH-2", "active_wip_items": 10},
+        ]
+    )
+    assert mixed["velocity_wip_status"] == "WIP_LIMIT_OR_CARRYOVER_DEBT_BREACH"
+
+    # Carryover <= 16.0 con límite custom deja la iteración como limpia
+    custom = validate_agile_hybrid_velocity_stability_and_wip_carryover(
+        [{"iteration_id": "ITER-3", "carryover_points_pct": 16.0}],
+        max_carryover_rate_pct=16.0,
+    )
+    assert custom["velocity_wip_status"] == "AGILE_HYBRID_FLOW_OPTIMAL"
+
+
+def test_agile_hybrid_velocity_volatility_warning():
+    """CV de velodidad > 20.0 (con WIP y carryover limpios) -> 'VELOCITY_VOLATILITY_INSTABILITY_WARNING'."""
+    from backend.schemas.projects import (
+        validate_agile_hybrid_velocity_stability_and_wip_carryover,
+    )
+
+    warning = validate_agile_hybrid_velocity_stability_and_wip_carryover(
+        [
+            {
+                "iteration_id": "ITER-VOL-A",
+                "velocity_volatility_cv_pct": 22.5,
+            },
+            {
+                "iteration_id": "ITER-VOL-B",
+                "velocity_volatility_cv_pct": 30.0,
+            },
+        ]
+    )
+    assert warning["evaluated_iterations_count"] == 2
+    assert warning["wip_breach_or_high_carryover_iteration_ids"] == []
+    assert warning["volatile_velocity_iteration_ids"] == ["ITER-VOL-A", "ITER-VOL-B"]
+    assert warning["velocity_wip_status"] == "VELOCITY_VOLATILITY_INSTABILITY_WARNING"
+    assert warning["is_agile_flow_valid"] is False
+
+    # CV exactamente en el umbral 20.0 no es warning (comparación estricta >)
+    at_threshold = validate_agile_hybrid_velocity_stability_and_wip_carryover(
+        [{"iteration_id": "ITER-VOL-C", "velocity_volatility_cv_pct": 20.0}]
+    )
+    assert at_threshold["velocity_wip_status"] == "AGILE_HYBRID_FLOW_OPTIMAL"
+
+    custom = validate_agile_hybrid_velocity_stability_and_wip_carryover(
+        [{"iteration_id": "ITER-VOL-D", "velocity_volatility_cv_pct": 15.0}],
+        max_velocity_volatility_cv_pct=14.0,
+    )
+    assert custom["velocity_wip_status"] == "VELOCITY_VOLATILITY_INSTABILITY_WARNING"
+    assert custom["volatile_velocity_iteration_ids"] == ["ITER-VOL-D"]
+
+
+def test_agile_hybrid_empty_invalid_and_field_reversion():
+    """None / dicts inválidos se descartan; campos no numéricos revierten a defaults del spec."""
+    from backend.schemas.projects import (
+        validate_agile_hybrid_velocity_stability_and_wip_carryover,
+    )
+
+    empty_res = validate_agile_hybrid_velocity_stability_and_wip_carryover(None)
+    assert empty_res == {
+        "evaluated_iterations_count": 0,
+        "wip_breach_or_high_carryover_iteration_ids": [],
+        "volatile_velocity_iteration_ids": [],
+        "velocity_wip_status": "AGILE_HYBRID_FLOW_OPTIMAL",
+        "is_agile_flow_valid": True,
+    }
+
+    invalid_res = validate_agile_hybrid_velocity_stability_and_wip_carryover(
+        ["no-dict", None, {"iteration_id": "   "}, {"iteration_id": 7}, {"active_wip_items": 20}]
+    )
+    assert invalid_res["evaluated_iterations_count"] == 0
+
+    bad_fields = validate_agile_hybrid_velocity_stability_and_wip_carryover(
+        [
+            {
+                "iteration_id": "ITER-BAD",
+                "active_wip_items": "nueve",
+                "kanban_wip_limit": None,
+                "carryover_points_pct": "diez",
+                "velocity_volatility_cv_pct": [25.0],
+            }
+        ]
+    )
+    assert bad_fields == {
+        "evaluated_iterations_count": 1,
+        "wip_breach_or_high_carryover_iteration_ids": [],
+        "volatile_velocity_iteration_ids": [],
+        "velocity_wip_status": "AGILE_HYBRID_FLOW_OPTIMAL",
+        "is_agile_flow_valid": True,
+    }

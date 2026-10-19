@@ -2861,6 +2861,7 @@ __all__ = [
     "audit_database_connection_pool_pgbouncer_saturation_and_idle_in_transaction_gate",
     "audit_ingress_rate_limiting_token_bucket_and_waf_owasp_crs_gate",
     "audit_chaos_engineering_fault_injection_blast_radius_and_steady_state_abort_gate",
+    "audit_supply_chain_sbom_slsa_provenance_and_cve_epss_gate",
     "ProjectCCBService",
 ]
 
@@ -8226,6 +8227,125 @@ def audit_chaos_engineering_fault_injection_blast_radius_and_steady_state_abort_
 
 ProjectCCBService.audit_chaos_engineering_fault_injection_blast_radius_and_steady_state_abort_gate = staticmethod(
     audit_chaos_engineering_fault_injection_blast_radius_and_steady_state_abort_gate
+)
+
+
+def audit_supply_chain_sbom_slsa_provenance_and_cve_epss_gate(
+    artifact_releases: list[dict[str, Any]],
+    *,
+    min_slsa_level: int = 3,
+    max_allowed_epss_score: float = 0.10,
+    forbid_cisa_kev_vulnerabilities: bool = True,
+    require_signed_sbom_attestation: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §8.3 & §12.2 — Audita atestación Cosign de SBOM, nivel de procedencia SLSA de compilación, vulnerabilidades en el catálogo CISA KEV y puntuación de explotabilidad EPSS."""
+    raw_items = artifact_releases if isinstance(artifact_releases, list) else []
+    valid_items = [item for item in raw_items if isinstance(item, dict)]
+
+    blocked_supply_chain_artifact_ids: list[str] = []
+    epss_or_unpinned_warning_artifact_ids: list[str] = []
+    records: list[dict[str, Any]] = []
+    violations: list[str] = []
+    has_critical = False
+    has_warning = False
+
+    for idx, item in enumerate(valid_items):
+        artifact_id = (
+            str(
+                item.get("artifact_id") or item.get("id") or f"art-{idx + 1}"
+            ).strip()
+            or f"art-{idx + 1}"
+        )
+
+        raw_slsa = item.get("slsa_provenance_level", 3)
+        slsa_provenance_level = max(
+            0, int(3 if raw_slsa is None else raw_slsa)
+        )
+
+        raw_sbom = item.get("sbom_cosign_attested", True)
+        sbom_cosign_attested = bool(True if raw_sbom is None else raw_sbom)
+
+        cisa_kev_count = max(0, int(item.get("cisa_kev_count") or 0))
+        max_observed_epss_score = min(
+            1.0, max(0.0, float(item.get("max_observed_epss_score") or 0.0))
+        )
+        unpinned_transitive_deps_count = max(
+            0, int(item.get("unpinned_transitive_deps_count") or 0)
+        )
+
+        kev_or_unsigned_sbom_breach = bool(
+            (forbid_cisa_kev_vulnerabilities and cisa_kev_count > 0)
+            or (require_signed_sbom_attestation and not sbom_cosign_attested)
+        )
+        slsa_level_insufficient = slsa_provenance_level < min_slsa_level
+        epss_threshold_exceeded = (
+            max_observed_epss_score > max_allowed_epss_score
+        )
+        unpinned_dependencies_present = unpinned_transitive_deps_count > 0
+
+        if kev_or_unsigned_sbom_breach or slsa_level_insufficient:
+            blocked_supply_chain_artifact_ids.append(artifact_id)
+            has_critical = True
+            if kev_or_unsigned_sbom_breach:
+                violations.append(
+                    f"Artifact '{artifact_id}' has CISA KEV vulnerabilities or lacks signed SBOM attestation."
+                )
+            if slsa_level_insufficient:
+                violations.append(
+                    f"Artifact '{artifact_id}' SLSA level ({slsa_provenance_level}) is below required minimum ({min_slsa_level})."
+                )
+
+        if epss_threshold_exceeded or unpinned_dependencies_present:
+            epss_or_unpinned_warning_artifact_ids.append(artifact_id)
+            has_warning = True
+            if epss_threshold_exceeded:
+                violations.append(
+                    f"Artifact '{artifact_id}' max EPSS score ({max_observed_epss_score}) exceeds threshold ({max_allowed_epss_score})."
+                )
+            if unpinned_dependencies_present:
+                violations.append(
+                    f"Artifact '{artifact_id}' has {unpinned_transitive_deps_count} unpinned transitive dependencies."
+                )
+
+        records.append(
+            {
+                "artifact_id": artifact_id,
+                "slsa_provenance_level": slsa_provenance_level,
+                "sbom_cosign_attested": sbom_cosign_attested,
+                "cisa_kev_count": cisa_kev_count,
+                "max_observed_epss_score": max_observed_epss_score,
+                "unpinned_transitive_deps_count": unpinned_transitive_deps_count,
+                "kev_or_unsigned_sbom_breach": kev_or_unsigned_sbom_breach,
+                "slsa_level_insufficient": slsa_level_insufficient,
+                "epss_threshold_exceeded": epss_threshold_exceeded,
+                "unpinned_dependencies_present": unpinned_dependencies_present,
+            }
+        )
+
+    if has_critical:
+        status = "critical"
+        gate_passed = False
+    elif has_warning:
+        status = "warning"
+        gate_passed = False
+    else:
+        status = "healthy"
+        gate_passed = True
+
+    return {
+        "status": status,
+        "gate_passed": gate_passed,
+        "artifacts_evaluated": len(records),
+        "blocked_supply_chain_artifact_ids": blocked_supply_chain_artifact_ids,
+        "epss_or_unpinned_warning_artifact_ids": epss_or_unpinned_warning_artifact_ids,
+        "records": records,
+        "violations": violations,
+        "Violations": violations,
+    }
+
+
+ProjectCCBService.audit_supply_chain_sbom_slsa_provenance_and_cve_epss_gate = staticmethod(
+    audit_supply_chain_sbom_slsa_provenance_and_cve_epss_gate
 )
 
 

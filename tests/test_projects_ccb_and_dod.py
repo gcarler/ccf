@@ -11038,3 +11038,99 @@ def test_audit_chaos_engineering_fault_injection_blast_radius_and_steady_state_a
         in mod.__all__
     )
 
+
+def test_audit_supply_chain_sbom_slsa_provenance_and_cve_epss_gate_healthy():
+    from backend.services.project_ccb_service import (
+        audit_supply_chain_sbom_slsa_provenance_and_cve_epss_gate,
+    )
+
+    res = audit_supply_chain_sbom_slsa_provenance_and_cve_epss_gate(
+        [
+            {
+                "artifact_id": "ART-BACKEND-2.4",
+                "slsa_provenance_level": 3,
+                "sbom_cosign_attested": True,
+                "cisa_kev_count": 0,
+                "max_observed_epss_score": 0.02,
+                "unpinned_transitive_deps_count": 0,
+            }
+        ]
+    )
+    assert res["status"] == "healthy"
+    assert res["gate_passed"] is True
+    assert res["artifacts_evaluated"] == 1
+    assert res["blocked_supply_chain_artifact_ids"] == []
+    assert res["epss_or_unpinned_warning_artifact_ids"] == []
+    assert res["Violations"] == []
+
+
+def test_audit_supply_chain_sbom_slsa_provenance_and_cve_epss_gate_critical():
+    from backend.services.project_ccb_service import (
+        audit_supply_chain_sbom_slsa_provenance_and_cve_epss_gate,
+    )
+
+    res = audit_supply_chain_sbom_slsa_provenance_and_cve_epss_gate(
+        [
+            {
+                "artifact_id": "ART-KEV-UNSIGNED",
+                "slsa_provenance_level": 1,
+                "sbom_cosign_attested": False,
+                "cisa_kev_count": 2,
+                "max_observed_epss_score": 0.05,
+                "unpinned_transitive_deps_count": 0,
+            }
+        ],
+        min_slsa_level=3,
+    )
+    assert res["status"] == "critical"
+    assert res["gate_passed"] is False
+    assert res["blocked_supply_chain_artifact_ids"] == ["ART-KEV-UNSIGNED"]
+    assert len(res["Violations"]) >= 2
+
+
+def test_audit_supply_chain_sbom_slsa_provenance_and_cve_epss_gate_warning():
+    from backend.services.project_ccb_service import (
+        audit_supply_chain_sbom_slsa_provenance_and_cve_epss_gate,
+    )
+
+    res = audit_supply_chain_sbom_slsa_provenance_and_cve_epss_gate(
+        [
+            {
+                "id": "ART-HIGH-EPSS",
+                "slsa_provenance_level": 3,
+                "sbom_cosign_attested": True,
+                "cisa_kev_count": 0,
+                "max_observed_epss_score": 0.35,
+                "unpinned_transitive_deps_count": 4,
+            }
+        ],
+        max_allowed_epss_score=0.10,
+    )
+    assert res["status"] == "warning"
+    assert res["gate_passed"] is False
+    assert res["blocked_supply_chain_artifact_ids"] == []
+    assert res["epss_or_unpinned_warning_artifact_ids"] == ["ART-HIGH-EPSS"]
+    assert res["records"][0]["epss_threshold_exceeded"] is True
+    assert res["records"][0]["unpinned_dependencies_present"] is True
+
+
+def test_audit_supply_chain_sbom_slsa_provenance_and_cve_epss_gate_staticmethod_and_dunder_all():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_supply_chain_sbom_slsa_provenance_and_cve_epss_gate,
+    )
+
+    sample = [{"artifact_id": "ART-1", "slsa_provenance_level": 3}]
+    assert (
+        ProjectCCBService.audit_supply_chain_sbom_slsa_provenance_and_cve_epss_gate(
+            sample
+        )
+        == audit_supply_chain_sbom_slsa_provenance_and_cve_epss_gate(
+            sample
+        )
+    )
+    assert (
+        "audit_supply_chain_sbom_slsa_provenance_and_cve_epss_gate"
+        in mod.__all__
+    )

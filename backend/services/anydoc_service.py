@@ -3047,6 +3047,7 @@ __all__ = [
     "audit_markdown_yaml_frontmatter_schema_and_tag_hygiene",
     "audit_markdown_admonition_callout_syntax_and_nesting_hygiene",
     "audit_markdown_glossary_definition_list_uniqueness_and_hygiene",
+    "audit_markdown_mathjax_katex_delimiter_balance_and_macro_safety",
     "AnydocService",
 ]
 
@@ -8884,11 +8885,6 @@ AnyDocService.audit_markdown_admonition_callout_syntax_and_nesting_hygiene = sta
 )
 
 
-
-
-
-
-
 def audit_markdown_glossary_definition_list_uniqueness_and_hygiene(
     entries: list[dict] | None,
     *,
@@ -8956,3 +8952,117 @@ def audit_markdown_glossary_definition_list_uniqueness_and_hygiene(
 AnyDocService.audit_markdown_glossary_definition_list_uniqueness_and_hygiene = staticmethod(
     audit_markdown_glossary_definition_list_uniqueness_and_hygiene
 )
+
+
+def audit_markdown_mathjax_katex_delimiter_balance_and_macro_safety(
+    equation_blocks: list[dict[str, Any]],
+    *,
+    max_macro_expansion_depth: int = 10,
+    forbid_dangerous_latex_commands: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §4.4 & §10.2 — Audita balance de delimitadores LaTeX en línea/bloque (MathJax/KaTeX), colisiones de símbolos de moneda no escapados y profundidad/seguridad de expansión de macros."""
+    raw_items = equation_blocks if isinstance(equation_blocks, list) else []
+    valid_items = [item for item in raw_items if isinstance(item, dict)]
+
+    unbalanced_or_unsafe_block_ids: list[str] = []
+    macro_or_currency_warning_block_ids: list[str] = []
+    records: list[dict[str, Any]] = []
+    violations: list[str] = []
+    has_critical = False
+    has_warning = False
+
+    dangerous_cmds = ("\\input", "\\include", "\\write18", "\\def\\def")
+
+    for idx, item in enumerate(valid_items):
+        block_id = (
+            str(
+                item.get("block_id") or item.get("id") or f"eq-{idx + 1}"
+            ).strip()
+            or f"eq-{idx + 1}"
+        )
+
+        raw_bal = item.get("delimiters_balanced", True)
+        delimiters_balanced = bool(True if raw_bal is None else raw_bal)
+
+        raw_curr = item.get("unescaped_currency_collision", False)
+        unescaped_currency_collision = bool(
+            False if raw_curr is None else raw_curr
+        )
+
+        macro_expansion_depth = max(
+            0, int(item.get("macro_expansion_depth") or 0)
+        )
+
+        raw_unsafe = item.get("contains_unsafe_command", False)
+        contains_unsafe_command = bool(
+            False if raw_unsafe is None else raw_unsafe
+        )
+
+        raw_expr = item.get("latex_expression", "")
+        latex_expression = str("" if raw_expr is None else raw_expr)
+
+        has_dangerous_cmd_in_expr = any(
+            cmd in latex_expression for cmd in dangerous_cmds
+        )
+        unbalanced_or_unsafe_latex_breach = not delimiters_balanced or bool(
+            forbid_dangerous_latex_commands
+            and (contains_unsafe_command or has_dangerous_cmd_in_expr)
+        )
+        macro_depth_or_currency_collision_warning = bool(
+            macro_expansion_depth > max_macro_expansion_depth
+            or unescaped_currency_collision
+        )
+
+        if unbalanced_or_unsafe_latex_breach:
+            unbalanced_or_unsafe_block_ids.append(block_id)
+            has_critical = True
+            violations.append(
+                f"Equation block '{block_id}' has unbalanced delimiters or dangerous LaTeX commands."
+            )
+
+        if macro_depth_or_currency_collision_warning:
+            macro_or_currency_warning_block_ids.append(block_id)
+            has_warning = True
+            violations.append(
+                f"Equation block '{block_id}' exceeds macro expansion depth or has unescaped currency collision."
+            )
+
+        records.append(
+            {
+                "block_id": block_id,
+                "delimiters_balanced": delimiters_balanced,
+                "unescaped_currency_collision": unescaped_currency_collision,
+                "macro_expansion_depth": macro_expansion_depth,
+                "contains_unsafe_command": contains_unsafe_command,
+                "latex_expression": latex_expression,
+                "unbalanced_or_unsafe_latex_breach": unbalanced_or_unsafe_latex_breach,
+                "macro_depth_or_currency_collision_warning": macro_depth_or_currency_collision_warning,
+            }
+        )
+
+    if has_critical:
+        status = "critical"
+        is_clean = False
+    elif has_warning:
+        status = "warning"
+        is_clean = False
+    else:
+        status = "healthy"
+        is_clean = True
+
+    return {
+        "status": status,
+        "is_clean": is_clean,
+        "blocks_evaluated": len(records),
+        "unbalanced_or_unsafe_block_ids": unbalanced_or_unsafe_block_ids,
+        "macro_or_currency_warning_block_ids": macro_or_currency_warning_block_ids,
+        "records": records,
+        "violations": violations,
+        "Violations": violations,
+    }
+
+
+AnyDocService.audit_markdown_mathjax_katex_delimiter_balance_and_macro_safety = staticmethod(
+    audit_markdown_mathjax_katex_delimiter_balance_and_macro_safety
+)
+

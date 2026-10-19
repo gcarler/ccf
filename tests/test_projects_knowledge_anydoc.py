@@ -8758,12 +8758,6 @@ def test_audit_markdown_admonition_callout_syntax_and_nesting_hygiene_staticmeth
     )
 
 
-
-
-
-
-
-
 # ── audit_markdown_glossary_definition_list_uniqueness_and_hygiene (PMBOK §4.4 & §10.2, pure helper) ──
 
 
@@ -8915,3 +8909,95 @@ def test_glossary_empty_invalid_entries_and_field_reversion():
         "glossary_hygiene_status": "GLOSSARY_HYGIENE_OPTIMAL",
         "is_glossary_compliant": True,
     }
+
+
+def test_audit_markdown_mathjax_katex_delimiter_balance_and_macro_safety_healthy():
+    from backend.services.anydoc_service import (
+        audit_markdown_mathjax_katex_delimiter_balance_and_macro_safety,
+    )
+
+    res = audit_markdown_mathjax_katex_delimiter_balance_and_macro_safety(
+        [
+            {
+                "block_id": "EQ-EVM-CPI",
+                "delimiters_balanced": True,
+                "unescaped_currency_collision": False,
+                "macro_expansion_depth": 2,
+                "contains_unsafe_command": False,
+                "latex_expression": r"CPI = \frac{EV}{AC}",
+            }
+        ]
+    )
+    assert res["status"] == "healthy"
+    assert res["is_clean"] is True
+    assert res["blocks_evaluated"] == 1
+    assert res["unbalanced_or_unsafe_block_ids"] == []
+    assert res["macro_or_currency_warning_block_ids"] == []
+    assert res["Violations"] == []
+
+
+def test_audit_markdown_mathjax_katex_delimiter_balance_and_macro_safety_critical():
+    from backend.services.anydoc_service import (
+        audit_markdown_mathjax_katex_delimiter_balance_and_macro_safety,
+    )
+
+    res = audit_markdown_mathjax_katex_delimiter_balance_and_macro_safety(
+        [
+            {
+                "block_id": "EQ-UNSAFE",
+                "delimiters_balanced": False,
+                "latex_expression": r"\write18{rm -rf /}",
+            }
+        ]
+    )
+    assert res["status"] == "critical"
+    assert res["is_clean"] is False
+    assert res["unbalanced_or_unsafe_block_ids"] == ["EQ-UNSAFE"]
+    assert len(res["Violations"]) >= 1
+
+
+def test_audit_markdown_mathjax_katex_delimiter_balance_and_macro_safety_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_mathjax_katex_delimiter_balance_and_macro_safety,
+    )
+
+    res = audit_markdown_mathjax_katex_delimiter_balance_and_macro_safety(
+        [
+            {
+                "id": "EQ-DEEP-MACRO",
+                "delimiters_balanced": True,
+                "unescaped_currency_collision": True,
+                "macro_expansion_depth": 18,
+                "latex_expression": r"x + y = z",
+            }
+        ],
+        max_macro_expansion_depth=10,
+    )
+    assert res["status"] == "warning"
+    assert res["is_clean"] is False
+    assert res["unbalanced_or_unsafe_block_ids"] == []
+    assert res["macro_or_currency_warning_block_ids"] == ["EQ-DEEP-MACRO"]
+    assert res["records"][0]["macro_depth_or_currency_collision_warning"] is True
+
+
+def test_audit_markdown_mathjax_katex_delimiter_balance_and_macro_safety_staticmethod_and_dunder_all():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_mathjax_katex_delimiter_balance_and_macro_safety,
+    )
+
+    sample = [{"block_id": "EQ-1", "latex_expression": "a^2 + b^2 = c^2"}]
+    assert (
+        AnyDocService.audit_markdown_mathjax_katex_delimiter_balance_and_macro_safety(
+            sample
+        )
+        == audit_markdown_mathjax_katex_delimiter_balance_and_macro_safety(
+            sample
+        )
+    )
+    assert (
+        "audit_markdown_mathjax_katex_delimiter_balance_and_macro_safety"
+        in mod.__all__
+    )
+
