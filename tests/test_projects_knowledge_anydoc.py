@@ -9994,3 +9994,114 @@ def test_audit_markdown_runbook_incident_escalation_and_rollback_hygiene_empty_a
         "audit_markdown_runbook_incident_escalation_and_rollback_hygiene"
         in mod.__all__
     )
+
+
+def test_audit_markdown_postmortem_rca_blameless_and_action_item_hygiene_healthy():
+    from backend.services.anydoc_service import (
+        audit_markdown_postmortem_rca_blameless_and_action_item_hygiene,
+    )
+
+    postmortems = [
+        {
+            "incident_id": "inc-2026-041-db-deadlock",
+            "five_whys_depth_completed": 5,
+            "total_remediation_actions": 4,
+            "actions_with_owner_and_due_date": 4,
+            "blaming_language_detected": False,
+            "customer_impact_timeline_documented": True,
+            "automated_regression_test_linked": True,
+            "repeat_incident_without_prior_action_closed": False,
+        }
+    ]
+    res = audit_markdown_postmortem_rca_blameless_and_action_item_hygiene(
+        postmortems
+    )
+    assert res["status"] == "HEALTHY"
+    assert res["evaluated_postmortems_count"] == 1
+    assert res["critical_postmortems"] == []
+    assert res["warning_postmortems"] == []
+    assert res["total_unassigned_actions"] == 0
+    assert res["postmortem_evaluations"][0]["critical_rca_breach"] is False
+
+
+def test_audit_markdown_postmortem_rca_blameless_and_action_item_hygiene_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_postmortem_rca_blameless_and_action_item_hygiene,
+    )
+
+    postmortems = [
+        {
+            "incident_id": "inc-2026-042-cdn-spike",
+            "five_whys_depth_completed": 4,
+            "total_remediation_actions": 3,
+            "actions_with_owner_and_due_date": 3,
+            "blaming_language_detected": False,
+            "customer_impact_timeline_documented": False,
+            "automated_regression_test_linked": False,
+            "repeat_incident_without_prior_action_closed": False,
+        }
+    ]
+    res = audit_markdown_postmortem_rca_blameless_and_action_item_hygiene(
+        postmortems
+    )
+    assert res["status"] == "WARNING"
+    assert res["critical_postmortems"] == []
+    assert res["warning_postmortems"] == ["inc-2026-042-cdn-spike"]
+    assert res["total_unassigned_actions"] == 0
+    assert res["postmortem_evaluations"][0]["rca_hygiene_warning"] is True
+
+
+def test_audit_markdown_postmortem_rca_blameless_and_action_item_hygiene_critical():
+    from backend.services.anydoc_service import (
+        audit_markdown_postmortem_rca_blameless_and_action_item_hygiene,
+    )
+
+    postmortems = [
+        {
+            "incident_id": "inc-2026-043-blamed-repeat",
+            "five_whys_depth_completed": 2,
+            "total_remediation_actions": 5,
+            "actions_with_owner_and_due_date": 2,
+            "blaming_language_detected": True,
+            "customer_impact_timeline_documented": False,
+            "automated_regression_test_linked": False,
+            "repeat_incident_without_prior_action_closed": True,
+        }
+    ]
+    res = audit_markdown_postmortem_rca_blameless_and_action_item_hygiene(
+        postmortems
+    )
+    assert res["status"] == "CRITICAL"
+    assert res["critical_postmortems"] == ["inc-2026-043-blamed-repeat"]
+    assert res["total_unassigned_actions"] == 3
+    assert res["postmortem_evaluations"][0]["critical_rca_breach"] is True
+
+
+def test_audit_markdown_postmortem_rca_blameless_and_action_item_hygiene_empty_and_binding():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_postmortem_rca_blameless_and_action_item_hygiene,
+    )
+
+    empty = audit_markdown_postmortem_rca_blameless_and_action_item_hygiene([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["evaluated_postmortems_count"] == 0
+    assert empty["total_unassigned_actions"] == 0
+    assert (
+        AnyDocService.audit_markdown_postmortem_rca_blameless_and_action_item_hygiene(
+            []
+        )
+        == empty
+    )
+    assert (
+        AnydocService.audit_markdown_postmortem_rca_blameless_and_action_item_hygiene(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_markdown_postmortem_rca_blameless_and_action_item_hygiene"
+        in mod.__all__
+    )

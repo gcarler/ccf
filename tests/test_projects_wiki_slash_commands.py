@@ -12171,3 +12171,111 @@ def test_audit_wiki_outbox_cdc_debezium_connector_lag_and_tombstone_hygiene_empt
         "audit_wiki_outbox_cdc_debezium_connector_lag_and_tombstone_hygiene"
         in mod.__all__
     )
+
+
+def test_audit_wiki_sso_saml_oidc_assertion_signature_and_replay_guard_healthy():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_sso_saml_oidc_assertion_signature_and_replay_guard,
+    )
+
+    providers = [
+        {
+            "idp_id": "idp-okta-saml2-prod",
+            "protocol": "saml2",
+            "xml_dsig_wrapping_protection_enabled": True,
+            "assertion_replay_jti_cache_enforced": True,
+            "pkce_s256_required": True,
+            "allowed_clock_skew_seconds": 60,
+            "idp_signing_cert_days_remaining": 140,
+            "jit_deprovisioning_scim_synced": True,
+        },
+        {
+            "idp_id": "idp-entra-oidc-prod",
+            "protocol": "oidc",
+            "xml_dsig_wrapping_protection_enabled": True,
+            "assertion_replay_jti_cache_enforced": True,
+            "pkce_s256_required": True,
+            "allowed_clock_skew_seconds": 30,
+            "idp_signing_cert_days_remaining": 90,
+            "jit_deprovisioning_scim_synced": True,
+        },
+    ]
+    res = audit_wiki_sso_saml_oidc_assertion_signature_and_replay_guard(providers)
+    assert res["status"] == "HEALTHY"
+    assert res["evaluated_providers_count"] == 2
+    assert res["critical_providers"] == []
+    assert res["warning_providers"] == []
+    assert res["min_cert_days_remaining"] == 90
+
+
+def test_audit_wiki_sso_saml_oidc_assertion_signature_and_replay_guard_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_sso_saml_oidc_assertion_signature_and_replay_guard,
+    )
+
+    providers = [
+        {
+            "idp_id": "idp-saml2-expiring-cert",
+            "protocol": "saml2",
+            "xml_dsig_wrapping_protection_enabled": True,
+            "assertion_replay_jti_cache_enforced": True,
+            "pkce_s256_required": True,
+            "allowed_clock_skew_seconds": 180,
+            "idp_signing_cert_days_remaining": 14,
+            "jit_deprovisioning_scim_synced": False,
+        }
+    ]
+    res = audit_wiki_sso_saml_oidc_assertion_signature_and_replay_guard(providers)
+    assert res["status"] == "WARNING"
+    assert res["critical_providers"] == []
+    assert res["warning_providers"] == ["idp-saml2-expiring-cert"]
+    assert res["min_cert_days_remaining"] == 14
+    assert res["provider_evaluations"][0]["sso_hygiene_warning"] is True
+
+
+def test_audit_wiki_sso_saml_oidc_assertion_signature_and_replay_guard_critical():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_sso_saml_oidc_assertion_signature_and_replay_guard,
+    )
+
+    providers = [
+        {
+            "idp_id": "idp-saml2-xsw-vulnerable",
+            "protocol": "saml2",
+            "xml_dsig_wrapping_protection_enabled": False,
+            "assertion_replay_jti_cache_enforced": False,
+            "pkce_s256_required": False,
+            "allowed_clock_skew_seconds": 300,
+            "idp_signing_cert_days_remaining": 0,
+            "jit_deprovisioning_scim_synced": False,
+        }
+    ]
+    res = audit_wiki_sso_saml_oidc_assertion_signature_and_replay_guard(providers)
+    assert res["status"] == "CRITICAL"
+    assert res["critical_providers"] == ["idp-saml2-xsw-vulnerable"]
+    assert res["warning_providers"] == []
+    assert res["min_cert_days_remaining"] == 0
+    assert res["provider_evaluations"][0]["critical_sso_breach"] is True
+
+
+def test_audit_wiki_sso_saml_oidc_assertion_signature_and_replay_guard_empty_and_binding():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_sso_saml_oidc_assertion_signature_and_replay_guard,
+    )
+
+    empty = audit_wiki_sso_saml_oidc_assertion_signature_and_replay_guard([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["evaluated_providers_count"] == 0
+    assert empty["min_cert_days_remaining"] == 0
+    assert (
+        WikiPMIService.audit_wiki_sso_saml_oidc_assertion_signature_and_replay_guard(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_wiki_sso_saml_oidc_assertion_signature_and_replay_guard"
+        in mod.__all__
+    )

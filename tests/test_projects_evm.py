@@ -12172,3 +12172,176 @@ def test_cardinal_change_zero_guards_and_field_reversion():
         "is_cardinal_change_breach": False,
         "cardinal_change_status": "WITHIN_CONTRACT_SCOPE_CLEAN",
     }
+
+
+def test_dsc_geotechnical_within_baseline_clean():
+    """Costo real bajo el GBR y aviso puntual -> 'WITHIN_GBR_GEOTECHNICAL_BASELINE_CLEAN'."""
+    import backend.services.project_evm_service as evm_module
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun,
+    )
+
+    res = evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun(
+        100000.0,
+        95000.0,
+    )
+    # La fórmula literal del spec (max(0, actual) - max(0, baseline), sin clamp
+    # exterior) produce un overrun negativo cuando el actual queda bajo baseline.
+    assert res == {
+        "geotechnical_overrun_amount": -5000.0,
+        "overrun_pct_of_gbr": -5.0,
+        "notice_timely": True,
+        "claim_barred_by_disturbance_or_late_notice": False,
+        "equitable_adjustment_recoverable": 0.0,
+        "dsc_claim_status": "WITHIN_GBR_GEOTECHNICAL_BASELINE_CLEAN",
+    }
+    # Overrun positivo por debajo de la materialidad 15% no genera claim ni warning.
+    below_materiality = evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun(
+        100000.0, 110000.0,
+    )
+    assert below_materiality["geotechnical_overrun_amount"] == 10000.0
+    assert below_materiality["overrun_pct_of_gbr"] == 10.0
+    assert below_materiality["notice_timely"] is True
+    assert below_materiality["claim_barred_by_disturbance_or_late_notice"] is False
+    assert below_materiality["equitable_adjustment_recoverable"] == 0.0
+    assert below_materiality["dsc_claim_status"] == "WITHIN_GBR_GEOTECHNICAL_BASELINE_CLEAN"
+    # Baseline 0: overrun existe pero pct 0.0 -> nunca >= materialidad -> CLEAN.
+    zero_baseline = evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun(
+        0.0, 5000.0,
+    )
+    assert zero_baseline["geotechnical_overrun_amount"] == 5000.0
+    assert zero_baseline["overrun_pct_of_gbr"] == 0.0
+    assert zero_baseline["dsc_claim_status"] == "WITHIN_GBR_GEOTECHNICAL_BASELINE_CLEAN"
+    assert (
+        ProjectEVMService.evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun(
+            100000.0, 95000.0
+        )
+        == res
+    )
+    assert "evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun" in evm_module.__all__
+
+
+def test_dsc_geotechnical_equitable_adjustment_recoverable_warning():
+    """Overrun >= materialidad con aviso puntual -> recoverable y 'EQUITABLE_ADJUSTMENT_OR_LATE_NOTICE_WARNING'."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun,
+    )
+
+    recoverable = evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun(
+        100000.0,
+        120000.0,
+    )
+    assert recoverable == {
+        "geotechnical_overrun_amount": 20000.0,
+        "overrun_pct_of_gbr": 20.0,
+        "notice_timely": True,
+        "claim_barred_by_disturbance_or_late_notice": False,
+        "equitable_adjustment_recoverable": 20000.0,
+        "dsc_claim_status": "EQUITABLE_ADJUSTMENT_OR_LATE_NOTICE_WARNING",
+    }
+    # Frontera inclusiva de materialidad: exactamente 15.0% es recuperable.
+    at_materiality = evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun(
+        100000.0, 115000.0,
+    )
+    assert at_materiality["overrun_pct_of_gbr"] == 15.0
+    assert at_materiality["equitable_adjustment_recoverable"] == 15000.0
+    # Type II con datos desorientadores es igualmente válida.
+    type_ii = evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun(
+        100000.0, 130000.0,
+        dsc_claim_type="type_ii",  # normalizado a mayúsculas
+        days_to_written_notice=7,
+    )
+    assert type_ii["equitable_adjustment_recoverable"] == 30000.0
+
+    # Aviso tardío sin perjuicio establecido NO bara el claim (sigue recoverable
+    # si pasa materialidad) pero convierte notice_timely en False -> WARNING.
+    late_no_prejudice = evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun(
+        100000.0, 125000.0,
+        days_to_written_notice=30,
+    )
+    assert late_no_prejudice["notice_timely"] is False
+    assert late_no_prejudice["claim_barred_by_disturbance_or_late_notice"] is False
+    assert late_no_prejudice["equitable_adjustment_recoverable"] == 25000.0
+    assert late_no_prejudice["dsc_claim_status"] == "EQUITABLE_ADJUSTMENT_OR_LATE_NOTICE_WARNING"
+
+
+def test_dsc_geotechnical_claim_barred_breach():
+    """Disturbio previo, aviso tardío con perjuicio o tipo DSC inválido -> 'CRITICAL_DSC_CLAIM_BARRED_OR_INVALID_BREACH'."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun,
+    )
+
+    disturbed = evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun(
+        100000.0, 125000.0,
+        site_disturbed_before_owner_inspection=True,
+    )
+    assert disturbed["claim_barred_by_disturbance_or_late_notice"] is True
+    assert disturbed["equitable_adjustment_recoverable"] == 0.0
+    assert disturbed["dsc_claim_status"] == "CRITICAL_DSC_CLAIM_BARRED_OR_INVALID_BREACH"
+
+    late_with_prejudice = evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun(
+        100000.0, 125000.0,
+        days_to_written_notice=45,  # fuera de 14
+        owner_prejudice_established=True,
+    )
+    assert late_with_prejudice["notice_timely"] is False
+    assert late_with_prejudice["claim_barred_by_disturbance_or_late_notice"] is True
+    assert late_with_prejudice["equitable_adjustment_recoverable"] == 0.0
+    assert late_with_prejudice["dsc_claim_status"] == "CRITICAL_DSC_CLAIM_BARRED_OR_INVALID_BREACH"
+
+    invalid_type = evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun(
+        100000.0, 125000.0,
+        dsc_claim_type="TYPE_III",  # inválido (Tipo III no existe)
+    )
+    assert invalid_type["claim_barred_by_disturbance_or_late_notice"] is True
+    assert invalid_type["equitable_adjustment_recoverable"] == 0.0
+    assert invalid_type["dsc_claim_status"] == "CRITICAL_DSC_CLAIM_BARRED_OR_INVALID_BREACH"
+
+
+def test_dsc_geotechnical_zero_overrun_guards_and_field_reversion():
+    """Aviso en frontera (0 y 14 días), guardas de costos negativos y reverción de campos inválidos."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun,
+    )
+
+    # Frontera de la ventana: aviso en el día 14 exacto sigue siendo puntual.
+    at_window = evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun(
+        100000.0, 120000.0, days_to_written_notice=14,
+    )
+    assert at_window["notice_timely"] is True
+    assert at_window["equitable_adjustment_recoverable"] == 20000.0
+    # Aviso en el día 0 exacto también es puntual.
+    at_zero = evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun(
+        100000.0, 120000.0, days_to_written_notice=0,
+    )
+    assert at_zero["notice_timely"] is True
+
+    # Costos negativos se clamp a 0: actual -5000 sobre baseline -20000 -> overrun 0.
+    negative_costs = evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun(
+        -20000.0, -5000.0,
+    )
+    assert negative_costs["geotechnical_overrun_amount"] == 0.0
+    assert negative_costs["overrun_pct_of_gbr"] == 0.0
+    assert negative_costs["dsc_claim_status"] == "WITHIN_GBR_GEOTECHNICAL_BASELINE_CLEAN"
+
+    reverted = evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun(
+        "one-hundred-thousand",   # no-float -> 0.0
+        None,                     # no-float -> 0.0
+        dsc_claim_type=None,      # str(None) 'none' -> tipo inválido
+        days_to_written_notice="seven",   # no-int -> default 3 (puntual)
+        max_contractual_notice_days=None,  # no-int -> default 14
+        site_disturbed_before_owner_inspection="yes",  # no-bool -> False
+        owner_prejudice_established=1,  # no-bool -> False
+        materiality_threshold_pct="fiftteen",  # no-float -> 15.0
+    )
+    assert reverted == {
+        "geotechnical_overrun_amount": 0.0,
+        "overrun_pct_of_gbr": 0.0,
+        "notice_timely": True,
+        # tipo inválido bara el claim según el spec, pero sin overrun positivo
+        # el estado crítico no dispara (requiere overrun > 0).
+        "claim_barred_by_disturbance_or_late_notice": True,
+        "equitable_adjustment_recoverable": 0.0,
+        "dsc_claim_status": "WITHIN_GBR_GEOTECHNICAL_BASELINE_CLEAN",
+    }

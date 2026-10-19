@@ -5545,6 +5545,7 @@ __all__ = [
     "evaluate_evm_prompt_payment_act_flowdown_and_interest_penalty",
     "evaluate_evm_force_majeure_weather_days_and_eichleay_hooh_claim",
     "evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss",
+    "evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun",
     "ProjectEVMService",
 ]
 
@@ -11897,4 +11898,110 @@ def evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss(
 
 ProjectEVMService.evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss = staticmethod(
     evaluate_evm_cardinal_change_and_cumulative_impact_leonard_loss
+)
+
+
+def evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun(
+    gbr_baseline_excavation_cost: float,
+    actual_geotechnical_cost: float,
+    *,
+    dsc_claim_type: str = "TYPE_I",
+    days_to_written_notice: int = 3,
+    max_contractual_notice_days: int = 14,
+    site_disturbed_before_owner_inspection: bool = False,
+    owner_prejudice_established: bool = False,
+    materiality_threshold_pct: float = 15.0,
+) -> dict[str, Any]:
+    """PMBOK §7.4 & §12.3 — Evalúa condiciones del sitio diferentes (Differing Site Conditions, FAR 52.236-2 Tipo I condiciones físicas inusual y Tipo II datos físicos desorientadores), overrun contra el Geotechnical Baseline Report (GBR) y la ventana de aviso escrito al owner sin disturbio ni perjuicio.
+
+    - `geotechnical_overrun_amount = max(0, costo_geotecnico_real)
+      - max(0, baseline_GBR)` (2 dec).
+    - `overrun_pct_of_gbr` sobre `max(1, baseline)` (0.0 si baseline <= 0).
+    - `valid_dsc_type`: 'TYPE_I' / 'TYPE_II' normalizados a mayúsculas.
+    - `notice_timely`: `0 <= días_aviso <= ventana_contractual`.
+    - `claim_barred_by_disturbance_or_late_notice`: sitio disturbado antes
+      de la inspección del owner, aviso tardío con perjuicio establecido, o
+      tipo de claim DSC inválido (brecha crítica en precedencia).
+    - `equitable_adjustment_recoverable`: monto del overrun solo si el claim
+      no está barrado y `overrun_pct >= materiality_threshold_pct` (15.0,
+      inclusive).
+    - Estados: 'CRITICAL_DSC_CLAIM_BARRED_OR_INVALID_BREACH' (overrun barrado)
+      | 'EQUITABLE_ADJUSTMENT_OR_LATE_NOTICE_WARNING' (recuperable o aviso
+      tardío) | 'WITHIN_GBR_GEOTECHNICAL_BASELINE_CLEAN'.
+    """
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _int(value: Any, default: int) -> int:
+        if isinstance(value, bool) or not isinstance(value, int):
+            return default
+        return value
+
+    def _float(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    baseline_cost = _float(gbr_baseline_excavation_cost, 0.0)
+    actual_cost = _float(actual_geotechnical_cost, 0.0)
+    notice_days = _int(days_to_written_notice, 3)
+    notice_window = _int(max_contractual_notice_days, 14)
+    disturbed = _bool(site_disturbed_before_owner_inspection, False)
+    prejudice = _bool(owner_prejudice_established, False)
+    materiality = _float(materiality_threshold_pct, 15.0)
+
+    geotechnical_overrun_amount = round(
+        max(0.0, actual_cost) - max(0.0, baseline_cost), 2
+    )
+
+    if baseline_cost > 0:
+        overrun_pct_of_gbr = round(
+            (geotechnical_overrun_amount / max(1.0, baseline_cost)) * 100.0, 2
+        )
+    else:
+        overrun_pct_of_gbr = 0.0
+
+    valid_dsc_type = (
+        str(dsc_claim_type).strip().upper() in {"TYPE_I", "TYPE_II"}
+    )
+    notice_timely = 0 <= notice_days <= notice_window
+
+    claim_barred_by_disturbance_or_late_notice = (
+        disturbed
+        or ((not notice_timely) and prejudice)
+        or (not valid_dsc_type)
+    )
+
+    if (not claim_barred_by_disturbance_or_late_notice) and (
+        overrun_pct_of_gbr >= materiality
+    ):
+        equitable_adjustment_recoverable = round(
+            geotechnical_overrun_amount, 2
+        )
+    else:
+        equitable_adjustment_recoverable = 0.0
+
+    if geotechnical_overrun_amount > 0 and (
+        claim_barred_by_disturbance_or_late_notice
+    ):
+        dsc_claim_status = "CRITICAL_DSC_CLAIM_BARRED_OR_INVALID_BREACH"
+    elif equitable_adjustment_recoverable > 0 or (
+        geotechnical_overrun_amount > 0 and (not notice_timely)
+    ):
+        dsc_claim_status = "EQUITABLE_ADJUSTMENT_OR_LATE_NOTICE_WARNING"
+    else:
+        dsc_claim_status = "WITHIN_GBR_GEOTECHNICAL_BASELINE_CLEAN"
+
+    return {
+        "geotechnical_overrun_amount": geotechnical_overrun_amount,
+        "overrun_pct_of_gbr": overrun_pct_of_gbr,
+        "notice_timely": notice_timely,
+        "claim_barred_by_disturbance_or_late_notice": claim_barred_by_disturbance_or_late_notice,
+        "equitable_adjustment_recoverable": equitable_adjustment_recoverable,
+        "dsc_claim_status": dsc_claim_status,
+    }
+
+
+ProjectEVMService.evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun = staticmethod(
+    evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun
 )

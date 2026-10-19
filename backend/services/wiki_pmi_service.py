@@ -2558,6 +2558,7 @@ __all__ = [
     "audit_wiki_kms_envelope_key_rotation_and_hsm_tamper_seal",
     "audit_wiki_webhook_ssrf_cidr_blocklist_and_dns_rebinding_guard",
     "audit_wiki_outbox_cdc_debezium_connector_lag_and_tombstone_hygiene",
+    "audit_wiki_sso_saml_oidc_assertion_signature_and_replay_guard",
     "WikiPMIService",
 ]
 
@@ -9024,4 +9025,99 @@ def audit_wiki_outbox_cdc_debezium_connector_lag_and_tombstone_hygiene(
 
 WikiPMIService.audit_wiki_outbox_cdc_debezium_connector_lag_and_tombstone_hygiene = staticmethod(
     audit_wiki_outbox_cdc_debezium_connector_lag_and_tombstone_hygiene
+)
+
+
+def audit_wiki_sso_saml_oidc_assertion_signature_and_replay_guard(
+    providers: list[dict[str, Any]],
+    *,
+    max_clock_skew_seconds: int = 120,
+    max_idp_cert_days_before_expiry: int = 30,
+) -> dict[str, Any]:
+    """PMBOK §4.4 & §11.6 — Wiki OIDC / SAML 2.0 Federated Single Sign-On (SSO) Assertion Signature XML-DSig Wrapping, Clock Skew Replay & JIT Group Sync Auditor."""
+    provider_evaluations: list[dict[str, Any]] = []
+    critical_providers: list[str] = []
+    warning_providers: list[str] = []
+    observed_cert_days: list[int] = []
+
+    for item in providers or []:
+        if not isinstance(item, Mapping):
+            continue
+        idp_id = str(item.get("idp_id") or "").strip() or "UNKNOWN_IDP"
+        protocol = str(item.get("protocol") or "oidc").strip().lower()
+        xml_dsig_wrapping_protection_enabled = bool(
+            item.get("xml_dsig_wrapping_protection_enabled", True)
+        )
+        assertion_replay_jti_cache_enforced = bool(
+            item.get("assertion_replay_jti_cache_enforced", True)
+        )
+        pkce_s256_required = bool(item.get("pkce_s256_required", True))
+        raw_skew = item.get("allowed_clock_skew_seconds", 60)
+        allowed_clock_skew_seconds = int(60 if raw_skew is None else raw_skew)
+        raw_cert_days = item.get("idp_signing_cert_days_remaining", 180)
+        idp_signing_cert_days_remaining = int(
+            180 if raw_cert_days is None else raw_cert_days
+        )
+        jit_deprovisioning_scim_synced = bool(
+            item.get("jit_deprovisioning_scim_synced", True)
+        )
+
+        observed_cert_days.append(idp_signing_cert_days_remaining)
+
+        critical_sso_breach = (
+            (protocol == "saml2" and not xml_dsig_wrapping_protection_enabled)
+            or (protocol == "oidc" and not pkce_s256_required)
+            or not assertion_replay_jti_cache_enforced
+            or idp_signing_cert_days_remaining <= 0
+            or allowed_clock_skew_seconds > max_clock_skew_seconds * 2
+        )
+        sso_hygiene_warning = (not critical_sso_breach) and (
+            idp_signing_cert_days_remaining <= max_idp_cert_days_before_expiry
+            or allowed_clock_skew_seconds > max_clock_skew_seconds
+            or not jit_deprovisioning_scim_synced
+        )
+
+        if critical_sso_breach:
+            critical_providers.append(idp_id)
+        elif sso_hygiene_warning:
+            warning_providers.append(idp_id)
+
+        provider_evaluations.append(
+            {
+                "idp_id": idp_id,
+                "protocol": protocol,
+                "xml_dsig_wrapping_protection_enabled": xml_dsig_wrapping_protection_enabled,
+                "assertion_replay_jti_cache_enforced": assertion_replay_jti_cache_enforced,
+                "pkce_s256_required": pkce_s256_required,
+                "allowed_clock_skew_seconds": allowed_clock_skew_seconds,
+                "idp_signing_cert_days_remaining": idp_signing_cert_days_remaining,
+                "jit_deprovisioning_scim_synced": jit_deprovisioning_scim_synced,
+                "critical_sso_breach": critical_sso_breach,
+                "sso_hygiene_warning": sso_hygiene_warning,
+            }
+        )
+
+    if len(critical_providers) > 0:
+        status = "CRITICAL"
+    elif len(warning_providers) > 0:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    min_cert_days_remaining = (
+        min(observed_cert_days) if observed_cert_days else 0
+    )
+
+    return {
+        "status": status,
+        "evaluated_providers_count": len(provider_evaluations),
+        "critical_providers": critical_providers,
+        "warning_providers": warning_providers,
+        "min_cert_days_remaining": min_cert_days_remaining,
+        "provider_evaluations": provider_evaluations,
+    }
+
+
+WikiPMIService.audit_wiki_sso_saml_oidc_assertion_signature_and_replay_guard = staticmethod(
+    audit_wiki_sso_saml_oidc_assertion_signature_and_replay_guard
 )

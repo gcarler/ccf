@@ -3058,6 +3058,7 @@ __all__ = [
     "audit_markdown_openapi_spec_blocks_and_security_scheme_hygiene",
     "audit_markdown_latex_math_delimiter_balance_and_macro_hygiene",
     "audit_markdown_runbook_incident_escalation_and_rollback_hygiene",
+    "audit_markdown_postmortem_rca_blameless_and_action_item_hygiene",
     "AnydocService",
 ]
 
@@ -10326,4 +10327,106 @@ AnyDocService.audit_markdown_runbook_incident_escalation_and_rollback_hygiene = 
 )
 AnydocService.audit_markdown_runbook_incident_escalation_and_rollback_hygiene = staticmethod(
     audit_markdown_runbook_incident_escalation_and_rollback_hygiene
+)
+
+
+def audit_markdown_postmortem_rca_blameless_and_action_item_hygiene(
+    postmortems: list[dict[str, Any]],
+    *,
+    min_five_whys_depth: int = 3,
+    max_unassigned_action_items: int = 0,
+) -> dict[str, Any]:
+    """PMBOK §4.4 & §10.2 — AnyDoc Markdown Post-Mortem / Root Cause Analysis (RCA) 5-Whys Blameless Taxonomy, Action-Item Owner/Due-Date & Recurrence Prevention Hygiene Auditor."""
+    postmortem_evaluations: list[dict[str, Any]] = []
+    critical_postmortems: list[str] = []
+    warning_postmortems: list[str] = []
+    total_unassigned_actions = 0
+
+    for item in postmortems or []:
+        if not isinstance(item, dict):
+            continue
+        incident_id = (
+            str(item.get("incident_id") or "").strip() or "UNKNOWN_INCIDENT"
+        )
+        raw_depth = item.get("five_whys_depth_completed", 5)
+        five_whys_depth_completed = int(5 if raw_depth is None else raw_depth)
+        total_remediation_actions = int(
+            item.get("total_remediation_actions", 0) or 0
+        )
+        actions_with_owner_and_due_date = int(
+            item.get("actions_with_owner_and_due_date", 0) or 0
+        )
+        blaming_language_detected = bool(
+            item.get("blaming_language_detected", False)
+        )
+        customer_impact_timeline_documented = bool(
+            item.get("customer_impact_timeline_documented", True)
+        )
+        automated_regression_test_linked = bool(
+            item.get("automated_regression_test_linked", True)
+        )
+        repeat_incident_without_prior_action_closed = bool(
+            item.get("repeat_incident_without_prior_action_closed", False)
+        )
+
+        unassigned_actions_count = max(
+            0, total_remediation_actions - actions_with_owner_and_due_date
+        )
+        total_unassigned_actions += unassigned_actions_count
+
+        critical_rca_breach = (
+            blaming_language_detected is True
+            or repeat_incident_without_prior_action_closed is True
+            or total_remediation_actions <= 0
+            or unassigned_actions_count > max_unassigned_action_items
+            or five_whys_depth_completed < min_five_whys_depth
+        )
+        rca_hygiene_warning = (not critical_rca_breach) and (
+            not customer_impact_timeline_documented
+            or not automated_regression_test_linked
+        )
+
+        if critical_rca_breach:
+            critical_postmortems.append(incident_id)
+        elif rca_hygiene_warning:
+            warning_postmortems.append(incident_id)
+
+        postmortem_evaluations.append(
+            {
+                "incident_id": incident_id,
+                "five_whys_depth_completed": five_whys_depth_completed,
+                "total_remediation_actions": total_remediation_actions,
+                "actions_with_owner_and_due_date": actions_with_owner_and_due_date,
+                "unassigned_actions_count": unassigned_actions_count,
+                "blaming_language_detected": blaming_language_detected,
+                "customer_impact_timeline_documented": customer_impact_timeline_documented,
+                "automated_regression_test_linked": automated_regression_test_linked,
+                "repeat_incident_without_prior_action_closed": repeat_incident_without_prior_action_closed,
+                "critical_rca_breach": critical_rca_breach,
+                "rca_hygiene_warning": rca_hygiene_warning,
+            }
+        )
+
+    if len(critical_postmortems) > 0:
+        status = "CRITICAL"
+    elif len(warning_postmortems) > 0:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "status": status,
+        "evaluated_postmortems_count": len(postmortem_evaluations),
+        "critical_postmortems": critical_postmortems,
+        "warning_postmortems": warning_postmortems,
+        "total_unassigned_actions": total_unassigned_actions,
+        "postmortem_evaluations": postmortem_evaluations,
+    }
+
+
+AnyDocService.audit_markdown_postmortem_rca_blameless_and_action_item_hygiene = staticmethod(
+    audit_markdown_postmortem_rca_blameless_and_action_item_hygiene
+)
+AnydocService.audit_markdown_postmortem_rca_blameless_and_action_item_hygiene = staticmethod(
+    audit_markdown_postmortem_rca_blameless_and_action_item_hygiene
 )
