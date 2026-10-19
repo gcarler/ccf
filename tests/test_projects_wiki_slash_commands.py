@@ -11287,3 +11287,121 @@ def test_audit_wiki_spiffe_spire_svid_mtls_rotation_and_federation_bundle_static
         in mod.__all__
     )
 
+
+def test_audit_wiki_search_cluster_shard_allocation_and_jvm_heap_breaker_green_optimal():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_search_cluster_shard_allocation_and_jvm_heap_breaker,
+    )
+
+    res = audit_wiki_search_cluster_shard_allocation_and_jvm_heap_breaker(
+        indices=[
+            {
+                "index_name": "wiki-pages-v1",
+                "unassigned_primary_shards": 0,
+                "unassigned_replica_shards": 0,
+                "search_thread_pool_rejections": 0,
+                "indexing_lag_docs": 12,
+            },
+            {
+                "index_name": "wiki-embeddings-v1",
+                "unassigned_primary_shards": 0,
+                "unassigned_replica_shards": 0,
+                "search_thread_pool_rejections": 0,
+                "indexing_lag_docs": 0,
+            },
+        ],
+        max_node_jvm_heap_used_pct=68.5,
+        jvm_parent_circuit_breaker_limit_pct=85.0,
+        quorum_master_nodes_present=True,
+    )
+    assert res["is_valid"] is True
+    assert res["total_indices"] == 2
+    assert res["red_unassigned_primary_indices"] == []
+    assert res["degraded_replica_or_rejected_indices"] == []
+    assert res["jvm_circuit_breaker_tripped"] is False
+    assert res["split_brain_risk"] is False
+    assert res["cluster_health_status"] == "GREEN_OPTIMAL"
+
+
+def test_audit_wiki_search_cluster_shard_allocation_and_jvm_heap_breaker_red_critical_outage():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_search_cluster_shard_allocation_and_jvm_heap_breaker,
+    )
+
+    res = audit_wiki_search_cluster_shard_allocation_and_jvm_heap_breaker(
+        indices=[
+            {
+                "index_name": "wiki-pages-v1",
+                "unassigned_primary_shards": 2,
+                "unassigned_replica_shards": 1,
+                "search_thread_pool_rejections": 0,
+            }
+        ],
+        max_node_jvm_heap_used_pct=91.0,
+        jvm_parent_circuit_breaker_limit_pct=85.0,
+        quorum_master_nodes_present=False,
+    )
+    assert res["is_valid"] is False
+    assert res["red_unassigned_primary_indices"] == ["wiki-pages-v1"]
+    assert res["jvm_circuit_breaker_tripped"] is True
+    assert res["split_brain_risk"] is True
+    assert res["cluster_health_status"] == "RED_CRITICAL_OUTAGE"
+
+
+def test_audit_wiki_search_cluster_shard_allocation_and_jvm_heap_breaker_yellow_replica_or_queue():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_search_cluster_shard_allocation_and_jvm_heap_breaker,
+    )
+
+    res = audit_wiki_search_cluster_shard_allocation_and_jvm_heap_breaker(
+        indices=[
+            {
+                "index_name": "wiki-attachments-v1",
+                "unassigned_primary_shards": 0,
+                "unassigned_replica_shards": 2,
+                "search_thread_pool_rejections": 5,
+            }
+        ],
+        max_node_jvm_heap_used_pct=72.0,
+        jvm_parent_circuit_breaker_limit_pct=85.0,
+        quorum_master_nodes_present=True,
+    )
+    assert res["is_valid"] is False
+    assert res["red_unassigned_primary_indices"] == []
+    assert res["degraded_replica_or_rejected_indices"] == ["wiki-attachments-v1"]
+    assert res["jvm_circuit_breaker_tripped"] is False
+    assert res["split_brain_risk"] is False
+    assert res["cluster_health_status"] == "YELLOW_REPLICA_OR_QUEUE_PRESSURE"
+
+
+def test_audit_wiki_search_cluster_shard_allocation_and_jvm_heap_breaker_staticmethod_and_dunder_all():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_search_cluster_shard_allocation_and_jvm_heap_breaker,
+    )
+
+    empty = audit_wiki_search_cluster_shard_allocation_and_jvm_heap_breaker([])
+    assert empty["is_valid"] is False
+    assert empty["cluster_health_status"] == "RED_CRITICAL_OUTAGE"
+
+    sample = [
+        {
+            "index_name": "wiki-idx-1",
+            "unassigned_primary_shards": 0,
+            "unassigned_replica_shards": 0,
+            "search_thread_pool_rejections": 0,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_search_cluster_shard_allocation_and_jvm_heap_breaker(
+            sample
+        )
+        == audit_wiki_search_cluster_shard_allocation_and_jvm_heap_breaker(sample)
+    )
+    assert (
+        "audit_wiki_search_cluster_shard_allocation_and_jvm_heap_breaker"
+        in mod.__all__
+    )
+
+

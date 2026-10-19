@@ -11937,3 +11937,159 @@ def test_bim_empty_invalid_models_and_field_reversion():
         "bim_cobie_handover_status": "BIM_COBIE_HANDOVER_READY",
         "is_bim_cobie_handover_ready": True,
     }
+
+
+# ── audit_executive_report_esg_ghg_scope_emissions_and_sbti_compliance (PMBOK §10.2 & §13.3, pure helper) ──
+
+
+def test_esg_ghg_disclosure_compliant_units():
+    """Unidades con Scope 1/2/3 completo, ISO 14064 asegurado, intensidad <= 45 y offsets <= 10% -> 'ESG_GHG_DISCLOSURE_COMPLIANT'."""
+    import backend.services.project_export_service as export_module
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_esg_ghg_scope_emissions_and_sbti_compliance,
+    )
+
+    units = [
+        {
+            "unit_id": "ESG-001",
+            "scope_1_2_3_complete": True,
+            "third_party_iso14064_assured": True,
+            "carbon_intensity_tco2e_per_musd": 30.0,
+            "unverified_carbon_offset_pct": 0.0,
+        },
+        {
+            "unit_id": "ESG-002",
+            # Defaults implícitos por campo: completo True, asegurado True, 30.0, 0.0.
+        },
+    ]
+    res = audit_executive_report_esg_ghg_scope_emissions_and_sbti_compliance(units)
+    assert res == {
+        "evaluated_unit_count": 2,
+        "unassured_or_incomplete_scope_unit_ids": [],
+        "intensity_or_offset_greenwashing_unit_ids": [],
+        "esg_ghg_disclosure_status": "ESG_GHG_DISCLOSURE_COMPLIANT",
+        "is_esg_ghg_disclosure_compliant": True,
+    }
+    # Intensidad exactamente en el cap 45.0 y offsets exactamente en 10.0 no son warning (comparaciones estrictas)
+    at_thresholds = audit_executive_report_esg_ghg_scope_emissions_and_sbti_compliance(
+        [{"unit_id": "ESG-003", "carbon_intensity_tco2e_per_musd": 45.0, "unverified_carbon_offset_pct": 10.0}]
+    )
+    assert at_thresholds["esg_ghg_disclosure_status"] == "ESG_GHG_DISCLOSURE_COMPLIANT"
+    assert (
+        ProjectExportService.audit_executive_report_esg_ghg_scope_emissions_and_sbti_compliance(
+            units
+        )
+        == res
+    )
+    assert "audit_executive_report_esg_ghg_scope_emissions_and_sbti_compliance" in export_module.__all__
+
+
+def test_esg_critical_scope_omission_or_unassured_breach():
+    """Scope 1/2/3 incompleto o sin aseguramiento ISO 14064 -> 'CRITICAL_SCOPE_OMISSION_OR_UNASSURED_BREACH' con precedencia sobre WARNING."""
+    from backend.services.project_export_service import (
+        audit_executive_report_esg_ghg_scope_emissions_and_sbti_compliance,
+    )
+
+    breach = audit_executive_report_esg_ghg_scope_emissions_and_sbti_compliance(
+        [
+            {"unit_id": "ESG-INCOMPLETE", "scope_1_2_3_complete": False},
+            {"unit_id": "ESG-UNASSURED", "third_party_iso14064_assured": False},
+        ]
+    )
+    assert breach["evaluated_unit_count"] == 2
+    assert breach["unassured_or_incomplete_scope_unit_ids"] == [
+        "ESG-INCOMPLETE",
+        "ESG-UNASSURED",
+    ]
+    assert breach["esg_ghg_disclosure_status"] == (
+        "CRITICAL_SCOPE_OMISSION_OR_UNASSURED_BREACH"
+    )
+    assert breach["is_esg_ghg_disclosure_compliant"] is False
+
+    # Breach precede aunque también haya unidades con intensidad/offset altos
+    mixed = audit_executive_report_esg_ghg_scope_emissions_and_sbti_compliance(
+        [
+            {"unit_id": "ESG-HIGH-INTENSITY", "carbon_intensity_tco2e_per_musd": 60.0},
+            {"unit_id": "ESG-SCOPE-MISSING", "scope_1_2_3_complete": False},
+        ]
+    )
+    assert mixed["esg_ghg_disclosure_status"] == (
+        "CRITICAL_SCOPE_OMISSION_OR_UNASSURED_BREACH"
+    )
+
+
+def test_esg_intensity_or_offset_greenwashing_warning():
+    """Intensidad > 45.0 tCO2e/MUSD u offsets sin verificar > 10% (scopes/aseguramiento limpios) -> 'CARBON_INTENSITY_OR_OFFSET_WARNING'."""
+    from backend.services.project_export_service import (
+        audit_executive_report_esg_ghg_scope_emissions_and_sbti_compliance,
+    )
+
+    warning = audit_executive_report_esg_ghg_scope_emissions_and_sbti_compliance(
+        [
+            {
+                "unit_id": "ESG-HEAVY",
+                "carbon_intensity_tco2e_per_musd": 52.5,
+                "unverified_carbon_offset_pct": 0.0,
+            },
+            {
+                "unit_id": "ESG-OFFSET-HYPE",
+                "unverified_carbon_offset_pct": 12.0,
+            },
+        ]
+    )
+    assert warning["evaluated_unit_count"] == 2
+    assert warning["unassured_or_incomplete_scope_unit_ids"] == []
+    assert warning["intensity_or_offset_greenwashing_unit_ids"] == [
+        "ESG-HEAVY",
+        "ESG-OFFSET-HYPE",
+    ]
+    assert warning["esg_ghg_disclosure_status"] == "CARBON_INTENSITY_OR_OFFSET_WARNING"
+    assert warning["is_esg_ghg_disclosure_compliant"] is False
+
+    custom = audit_executive_report_esg_ghg_scope_emissions_and_sbti_compliance(
+        [{"unit_id": "ESG-4", "carbon_intensity_tco2e_per_musd": 40.0}],
+        max_carbon_intensity_tco2e_per_musd=35.0,
+    )
+    assert custom["esg_ghg_disclosure_status"] == "CARBON_INTENSITY_OR_OFFSET_WARNING"
+    assert custom["intensity_or_offset_greenwashing_unit_ids"] == ["ESG-4"]
+
+
+def test_esg_empty_invalid_units_and_field_reversion():
+    """None / dicts inválidos se descartan; campos no numéricos/no bool revierten a defaults del spec."""
+    from backend.services.project_export_service import (
+        audit_executive_report_esg_ghg_scope_emissions_and_sbti_compliance,
+    )
+
+    empty_res = audit_executive_report_esg_ghg_scope_emissions_and_sbti_compliance(None)
+    assert empty_res == {
+        "evaluated_unit_count": 0,
+        "unassured_or_incomplete_scope_unit_ids": [],
+        "intensity_or_offset_greenwashing_unit_ids": [],
+        "esg_ghg_disclosure_status": "ESG_GHG_DISCLOSURE_COMPLIANT",
+        "is_esg_ghg_disclosure_compliant": True,
+    }
+
+    invalid_res = audit_executive_report_esg_ghg_scope_emissions_and_sbti_compliance(
+        ["no-dict", None, {"unit_id": "   "}, {"unit_id": 5}, {"carbon_intensity_tco2e_per_musd": 90.0}]
+    )
+    assert invalid_res["evaluated_unit_count"] == 0
+
+    bad_fields = audit_executive_report_esg_ghg_scope_emissions_and_sbti_compliance(
+        [
+            {
+                "unit_id": "ESG-BAD",
+                "scope_1_2_3_complete": "sí",
+                "third_party_iso14064_assured": None,
+                "carbon_intensity_tco2e_per_musd": "alto",
+                "unverified_carbon_offset_pct": [15.0],
+            }
+        ]
+    )
+    assert bad_fields == {
+        "evaluated_unit_count": 1,
+        "unassured_or_incomplete_scope_unit_ids": [],
+        "intensity_or_offset_greenwashing_unit_ids": [],
+        "esg_ghg_disclosure_status": "ESG_GHG_DISCLOSURE_COMPLIANT",
+        "is_esg_ghg_disclosure_compliant": True,
+    }

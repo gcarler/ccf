@@ -2550,6 +2550,7 @@ __all__ = [
     "audit_wiki_graph_backlink_reciprocity_and_orphan_clusters",
     "audit_wiki_crdt_collaborative_editing_tombstone_gc_and_causal_vector_clock",
     "audit_wiki_spiffe_spire_svid_mtls_rotation_and_federation_bundle",
+    "audit_wiki_search_cluster_shard_allocation_and_jvm_heap_breaker",
     "WikiPMIService",
 ]
 
@@ -8356,3 +8357,87 @@ def audit_wiki_spiffe_spire_svid_mtls_rotation_and_federation_bundle(
 WikiPMIService.audit_wiki_spiffe_spire_svid_mtls_rotation_and_federation_bundle = staticmethod(
     audit_wiki_spiffe_spire_svid_mtls_rotation_and_federation_bundle
 )
+
+
+def audit_wiki_search_cluster_shard_allocation_and_jvm_heap_breaker(
+    indices: list[dict[str, Any]],
+    max_node_jvm_heap_used_pct: float = 70.0,
+    jvm_parent_circuit_breaker_limit_pct: float = 85.0,
+    quorum_master_nodes_present: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §4.4 & §11.6 — Wiki Distributed Search Elasticsearch/OpenSearch Shard Split-Brain, Unassigned Primary/Replica Shards & JVM Heap Circuit-Breaker Auditor."""
+    valid_indices = [
+        idx for idx in (indices if isinstance(indices, list) else []) if isinstance(idx, dict)
+    ]
+
+    red_unassigned_primary_indices: list[str] = []
+    degraded_replica_or_rejected_indices: list[str] = []
+
+    for i, item in enumerate(valid_indices):
+        idx_name = str(item.get("index_name") or f"index-{i + 1}").strip()
+        unassigned_prim = int(item.get("unassigned_primary_shards", 0) or 0)
+        unassigned_rep = int(item.get("unassigned_replica_shards", 0) or 0)
+        rejections = int(item.get("search_thread_pool_rejections", 0) or 0)
+
+        if unassigned_prim > 0:
+            red_unassigned_primary_indices.append(idx_name)
+        if unassigned_rep > 0 or rejections > 0:
+            degraded_replica_or_rejected_indices.append(idx_name)
+
+    heap_pct = float(max_node_jvm_heap_used_pct)
+    breaker_limit_pct = float(jvm_parent_circuit_breaker_limit_pct)
+    jvm_circuit_breaker_tripped = (
+        heap_pct >= breaker_limit_pct or heap_pct > 100.0 or heap_pct < 0.0
+    )
+    split_brain_risk = not bool(quorum_master_nodes_present)
+
+    recommendations: list[str] = []
+    if len(valid_indices) == 0:
+        recommendations.append(
+            "Provide at least one search index configuration for cluster health auditing."
+        )
+    if red_unassigned_primary_indices:
+        recommendations.append(
+            f"Restore primary shard allocation immediately for RED indices: {', '.join(red_unassigned_primary_indices)}."
+        )
+    if degraded_replica_or_rejected_indices:
+        recommendations.append(
+            f"Rebalance unassigned replica shards and scale search thread pools for: {', '.join(degraded_replica_or_rejected_indices)}."
+        )
+    if jvm_circuit_breaker_tripped:
+        recommendations.append(
+            f"Reduce JVM heap pressure ({heap_pct:.2f}% >= {breaker_limit_pct:.2f}%) or scale data nodes to clear parent circuit-breaker."
+        )
+    if split_brain_risk:
+        recommendations.append(
+            "Restore master-eligible node quorum (discovery.zen.minimum_master_nodes / cluster.initial_master_nodes) to prevent split-brain."
+        )
+
+    if (
+        len(red_unassigned_primary_indices) > 0
+        or jvm_circuit_breaker_tripped
+        or split_brain_risk
+        or len(valid_indices) == 0
+    ):
+        cluster_health_status = "RED_CRITICAL_OUTAGE"
+    elif len(degraded_replica_or_rejected_indices) > 0:
+        cluster_health_status = "YELLOW_REPLICA_OR_QUEUE_PRESSURE"
+    else:
+        cluster_health_status = "GREEN_OPTIMAL"
+
+    return {
+        "is_valid": cluster_health_status == "GREEN_OPTIMAL",
+        "total_indices": len(valid_indices),
+        "red_unassigned_primary_indices": red_unassigned_primary_indices,
+        "degraded_replica_or_rejected_indices": degraded_replica_or_rejected_indices,
+        "jvm_circuit_breaker_tripped": jvm_circuit_breaker_tripped,
+        "split_brain_risk": split_brain_risk,
+        "cluster_health_status": cluster_health_status,
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_search_cluster_shard_allocation_and_jvm_heap_breaker = staticmethod(
+    audit_wiki_search_cluster_shard_allocation_and_jvm_heap_breaker
+)
+

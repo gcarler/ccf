@@ -3185,6 +3185,7 @@ __all__ = [
     "audit_commissioning_punch_list_a_items_and_holdback_multiplier",
     "audit_jv_consortium_equity_split_and_deadlock_cure",
     "audit_final_lien_waiver_unconditional_release_and_mechanics_lien_exposure",
+    "audit_dlp_warranty_callout_sla_and_retention_bond_stepdown",
     "ProjectLifecyclePMIService",
 ]
 
@@ -8648,4 +8649,94 @@ def audit_final_lien_waiver_unconditional_release_and_mechanics_lien_exposure(
 ProjectLifecyclePMIService.audit_final_lien_waiver_unconditional_release_and_mechanics_lien_exposure = staticmethod(
     audit_final_lien_waiver_unconditional_release_and_mechanics_lien_exposure
 )
+
+
+def audit_dlp_warranty_callout_sla_and_retention_bond_stepdown(
+    warranty_claims: list[dict[str, Any]],
+    retention_bank_guarantee_amount: float = 0.0,
+    estimated_unresolved_remediation_cost: float = 0.0,
+    chronic_recurrence_threshold: int = 3,
+) -> dict[str, Any]:
+    """PMBOK §12.3 & §4.7 — Project Closure Latent Defect Liability Period (DLP) Warranty Callout SLA, Root-Cause Recurrence & Retention Bank Guarantee Step-Down Auditor."""
+    valid_claims = [
+        c for c in (warranty_claims if isinstance(warranty_claims, list) else []) if isinstance(c, dict)
+    ]
+
+    sla_breached_claims: list[str] = []
+    chronic_latent_defect_claims: list[str] = []
+    open_emergency_safety_claims: list[str] = []
+    all_resolved = True
+
+    for idx, c in enumerate(valid_claims):
+        cid = str(c.get("claim_id") or f"claim-{idx + 1}").strip()
+        sev = str(c.get("severity") or "").strip().upper()
+        elapsed = float(c.get("response_hours_elapsed", 0.0) or 0.0)
+        target = float(c.get("sla_target_hours", 0.0) or 0.0)
+        recur = int(c.get("recurrence_count", 1) or 1)
+        resolved = bool(c.get("resolved", True))
+
+        if not resolved:
+            all_resolved = False
+        if elapsed > target:
+            sla_breached_claims.append(cid)
+        if recur >= int(chronic_recurrence_threshold):
+            chronic_latent_defect_claims.append(cid)
+        if sev == "EMERGENCY_SAFETY" and not resolved:
+            open_emergency_safety_claims.append(cid)
+
+    guarantee_amt = float(retention_bank_guarantee_amount)
+    unresolved_cost = max(0.0, float(estimated_unresolved_remediation_cost))
+    guarantee_covers_remediation = (
+        guarantee_amt >= unresolved_cost and guarantee_amt >= 0.0
+    )
+
+    recommendations: list[str] = []
+    if open_emergency_safety_claims:
+        recommendations.append(
+            f"Remediate open EMERGENCY_SAFETY warranty claims immediately: {', '.join(open_emergency_safety_claims)}."
+        )
+    if chronic_latent_defect_claims:
+        recommendations.append(
+            f"Execute root-cause engineering redesign for chronic latent defects (recurrence >= {chronic_recurrence_threshold}): {', '.join(chronic_latent_defect_claims)}."
+        )
+    if not guarantee_covers_remediation:
+        recommendations.append(
+            f"Call or top up retention bank guarantee ({guarantee_amt:.2f} < {unresolved_cost:.2f} unresolved remediation exposure)."
+        )
+    if sla_breached_claims or not all_resolved:
+        recommendations.append(
+            "Hold DLP retention bond step-down until all warranty claims are resolved and SLA penalties settled."
+        )
+
+    if (
+        len(open_emergency_safety_claims) > 0
+        or len(chronic_latent_defect_claims) > 0
+        or not guarantee_covers_remediation
+    ):
+        stepdown_decision = "BLOCK_RELEASE_AND_CALL_BANK_GUARANTEE"
+    elif (
+        len(sla_breached_claims) == 0
+        and all_resolved
+        and guarantee_covers_remediation
+    ):
+        stepdown_decision = "APPROVE_FINAL_CERTIFICATE_AND_BOND_RELEASE"
+    else:
+        stepdown_decision = "HOLD_STEPDOWN_PENDING_SLA_REMEDIATION"
+
+    return {
+        "is_valid": stepdown_decision == "APPROVE_FINAL_CERTIFICATE_AND_BOND_RELEASE",
+        "total_claims": len(valid_claims),
+        "sla_breached_claims": sla_breached_claims,
+        "chronic_latent_defect_claims": chronic_latent_defect_claims,
+        "open_emergency_safety_claims": open_emergency_safety_claims,
+        "guarantee_covers_remediation": guarantee_covers_remediation,
+        "stepdown_decision": stepdown_decision,
+        "recommendations": recommendations,
+    }
+
+
+ProjectLifecyclePMIService.audit_dlp_warranty_callout_sla_and_retention_bond_stepdown = staticmethod(
+    audit_dlp_warranty_callout_sla_and_retention_bond_stepdown
+)
+
 

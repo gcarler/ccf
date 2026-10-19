@@ -11356,3 +11356,124 @@ def test_audit_final_lien_waiver_unconditional_release_and_mechanics_lien_exposu
         )
     )
 
+
+def test_audit_dlp_warranty_callout_sla_and_retention_bond_stepdown_approved():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_dlp_warranty_callout_sla_and_retention_bond_stepdown,
+    )
+
+    res = audit_dlp_warranty_callout_sla_and_retention_bond_stepdown(
+        warranty_claims=[
+            {
+                "claim_id": "DLP-01",
+                "severity": "MAJOR_FUNCTIONAL",
+                "response_hours_elapsed": 12.0,
+                "sla_target_hours": 24.0,
+                "recurrence_count": 1,
+                "resolved": True,
+            },
+            {
+                "claim_id": "DLP-02",
+                "severity": "MINOR_COSMETIC",
+                "response_hours_elapsed": 48.0,
+                "sla_target_hours": 72.0,
+                "recurrence_count": 1,
+                "resolved": True,
+            },
+        ],
+        retention_bank_guarantee_amount=150000.0,
+        estimated_unresolved_remediation_cost=0.0,
+        chronic_recurrence_threshold=3,
+    )
+    assert res["is_valid"] is True
+    assert res["total_claims"] == 2
+    assert res["sla_breached_claims"] == []
+    assert res["chronic_latent_defect_claims"] == []
+    assert res["open_emergency_safety_claims"] == []
+    assert res["guarantee_covers_remediation"] is True
+    assert res["stepdown_decision"] == "APPROVE_FINAL_CERTIFICATE_AND_BOND_RELEASE"
+
+
+def test_audit_dlp_warranty_callout_sla_and_retention_bond_stepdown_block_and_call_guarantee():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_dlp_warranty_callout_sla_and_retention_bond_stepdown,
+    )
+
+    res = audit_dlp_warranty_callout_sla_and_retention_bond_stepdown(
+        warranty_claims=[
+            {
+                "claim_id": "DLP-EMERG-99",
+                "severity": "EMERGENCY_SAFETY",
+                "response_hours_elapsed": 6.0,
+                "sla_target_hours": 4.0,
+                "recurrence_count": 4,
+                "resolved": False,
+            }
+        ],
+        retention_bank_guarantee_amount=40000.0,
+        estimated_unresolved_remediation_cost=75000.0,
+        chronic_recurrence_threshold=3,
+    )
+    assert res["is_valid"] is False
+    assert res["sla_breached_claims"] == ["DLP-EMERG-99"]
+    assert res["chronic_latent_defect_claims"] == ["DLP-EMERG-99"]
+    assert res["open_emergency_safety_claims"] == ["DLP-EMERG-99"]
+    assert res["guarantee_covers_remediation"] is False
+    assert res["stepdown_decision"] == "BLOCK_RELEASE_AND_CALL_BANK_GUARANTEE"
+
+
+def test_audit_dlp_warranty_callout_sla_and_retention_bond_stepdown_hold_pending_sla():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_dlp_warranty_callout_sla_and_retention_bond_stepdown,
+    )
+
+    res = audit_dlp_warranty_callout_sla_and_retention_bond_stepdown(
+        warranty_claims=[
+            {
+                "claim_id": "DLP-SLA-LATE",
+                "severity": "MAJOR_FUNCTIONAL",
+                "response_hours_elapsed": 30.0,
+                "sla_target_hours": 24.0,
+                "recurrence_count": 1,
+                "resolved": False,
+            }
+        ],
+        retention_bank_guarantee_amount=100000.0,
+        estimated_unresolved_remediation_cost=20000.0,
+    )
+    assert res["is_valid"] is False
+    assert res["sla_breached_claims"] == ["DLP-SLA-LATE"]
+    assert res["chronic_latent_defect_claims"] == []
+    assert res["open_emergency_safety_claims"] == []
+    assert res["guarantee_covers_remediation"] is True
+    assert res["stepdown_decision"] == "HOLD_STEPDOWN_PENDING_SLA_REMEDIATION"
+
+
+def test_audit_dlp_warranty_callout_sla_and_retention_bond_stepdown_staticmethod_and_dunder_all():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_dlp_warranty_callout_sla_and_retention_bond_stepdown,
+    )
+
+    sample = [
+        {
+            "claim_id": "DLP-1",
+            "severity": "MINOR_COSMETIC",
+            "response_hours_elapsed": 10.0,
+            "sla_target_hours": 24.0,
+            "recurrence_count": 1,
+            "resolved": True,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_dlp_warranty_callout_sla_and_retention_bond_stepdown(
+            sample
+        )
+        == audit_dlp_warranty_callout_sla_and_retention_bond_stepdown(sample)
+    )
+    assert (
+        "audit_dlp_warranty_callout_sla_and_retention_bond_stepdown"
+        in mod.__all__
+    )
+

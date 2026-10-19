@@ -3022,6 +3022,7 @@ __all__ = [
     "audit_executive_report_graphql_persisted_query_apq_and_batch_export_throttling",
     "audit_executive_report_xbrl_taxonomy_and_financial_rounding_parity",
     "audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance",
+    "audit_executive_report_esg_ghg_scope_emissions_and_sbti_compliance",
     "ProjectExportService",
 ]
 
@@ -8790,4 +8791,90 @@ def audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance(
 
 ProjectExportService.audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance = staticmethod(
     audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance
+)
+def audit_executive_report_esg_ghg_scope_emissions_and_sbti_compliance(
+    reporting_units: list[dict[str, Any]] | None,
+    *,
+    max_carbon_intensity_tco2e_per_musd: float = 45.0,
+    max_unverified_offset_share_pct: float = 10.0,
+) -> dict[str, Any]:
+    """PMBOK §10.2 & §13.3 — Audita el reporte ESG: contabilidad GHG Protocol Scope 1/2/3, aseguramiento ISO 14064 de terceros, intensidad de carbono embadido por MUSD y proporción de offsets sin verificar (anti-greenwashing).
+
+    Cada unidad de reporte válida declara `unit_id` (str no vacío),
+    contabilidad Scope 1/2/3 completa (`scope_1_2_3_complete`, default
+    True), aseguramiento ISO 14064 (`third_party_iso14064_assured`,
+    default True), intensidad (`carbon_intensity_tco2e_per_musd`, default
+    30.0) y offsets sin verificar (`unverified_carbon_offset_pct`,
+    default 0.0):
+    - `unassured_or_incomplete_scope_unit_ids`: Scope 1/2/3 incompleto o sin
+      aseguramiento ISO 14064 de terceros (brecha crítica, precedencia).
+    - `intensity_or_offset_greenwashing_unit_ids`: intensidad > cap por MUSD
+      u offsets sin verificar > share máximo (advertencia de greenwashing).
+    - `esg_ghg_disclosure_status`: 'CRITICAL_SCOPE_OMISSION_OR_UNASSURED_BREACH'
+      si hay (1); 'CARBON_INTENSITY_OR_OFFSET_WARNING' si hay (2);
+      'ESG_GHG_DISCLOSURE_COMPLIANT' si limpio.
+    - `is_esg_ghg_disclosure_compliant`: solo con estado COMPLIANT.
+    """
+    raw_items = reporting_units if isinstance(reporting_units, list) else []
+    valid_units: list[dict[str, Any]] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_unit_id = item.get("unit_id")
+        if not isinstance(raw_unit_id, str) or not raw_unit_id.strip():
+            continue
+        valid_units.append(item)
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _float(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    unassured_or_incomplete_scope_unit_ids: list[str] = []
+    intensity_or_offset_greenwashing_unit_ids: list[str] = []
+
+    for unit in valid_units:
+        unit_id = str(unit.get("unit_id")).strip()
+        scope_complete = _bool(unit.get("scope_1_2_3_complete"), True)
+        iso_assured = _bool(unit.get("third_party_iso14064_assured"), True)
+        carbon_intensity = _float(
+            unit.get("carbon_intensity_tco2e_per_musd"), 30.0
+        )
+        unverified_offset_pct = _float(
+            unit.get("unverified_carbon_offset_pct"), 0.0
+        )
+
+        if (not bool(scope_complete)) or (not bool(iso_assured)):
+            unassured_or_incomplete_scope_unit_ids.append(unit_id)
+
+        if (
+            float(carbon_intensity)
+            > float(max_carbon_intensity_tco2e_per_musd)
+            or float(unverified_offset_pct)
+            > float(max_unverified_offset_share_pct)
+        ):
+            intensity_or_offset_greenwashing_unit_ids.append(unit_id)
+
+    if unassured_or_incomplete_scope_unit_ids:
+        esg_ghg_disclosure_status = "CRITICAL_SCOPE_OMISSION_OR_UNASSURED_BREACH"
+    elif intensity_or_offset_greenwashing_unit_ids:
+        esg_ghg_disclosure_status = "CARBON_INTENSITY_OR_OFFSET_WARNING"
+    else:
+        esg_ghg_disclosure_status = "ESG_GHG_DISCLOSURE_COMPLIANT"
+
+    return {
+        "evaluated_unit_count": len(valid_units),
+        "unassured_or_incomplete_scope_unit_ids": unassured_or_incomplete_scope_unit_ids,
+        "intensity_or_offset_greenwashing_unit_ids": intensity_or_offset_greenwashing_unit_ids,
+        "esg_ghg_disclosure_status": esg_ghg_disclosure_status,
+        "is_esg_ghg_disclosure_compliant": esg_ghg_disclosure_status
+        == "ESG_GHG_DISCLOSURE_COMPLIANT",
+    }
+
+
+ProjectExportService.audit_executive_report_esg_ghg_scope_emissions_and_sbti_compliance = staticmethod(
+    audit_executive_report_esg_ghg_scope_emissions_and_sbti_compliance
 )
