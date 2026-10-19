@@ -3033,6 +3033,7 @@ __all__ = [
     "audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance",
     "audit_executive_report_fedramp_nist_800_53_poam_and_conmon_compliance",
     "audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window",
+    "audit_executive_report_cmmc_nist_800_171_cui_sprs_and_poam_closeout",
     "ProjectExportService",
 ]
 
@@ -9936,4 +9937,121 @@ def audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window(
 
 ProjectExportService.audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window = staticmethod(
     audit_executive_report_nerc_cip_bes_esp_perimeter_and_patch_35d_window
+)
+
+
+def audit_executive_report_cmmc_nist_800_171_cui_sprs_and_poam_closeout(
+    sprs_assessment_score: int,
+    open_poam_controls_over_180d: int,
+    unimplemented_5_point_critical_controls: int = 0,
+    *,
+    c3pao_or_dibcac_certification_valid: bool = True,
+    dfars_7012_cyber_incident_72h_reporting_breach: bool = False,
+    unencrypted_itar_or_cui_export_detected: bool = False,
+) -> dict[str, Any]:
+    """PMBOK §10.2 & §11.6 — Auditor CMMC 2.0 Nivel 2 / NIST SP 800-171 (DFARS 252.204-7012) de reporte ejecutivo: puntaje SPRS, controles críticos de 5 puntos sin implementar, cierre de POA&M a más de 180 días, certificación C3PAO/DIBCAC vigente, reporte de incidentes ciber 72h y exportación CUI/ITAR sin cifrar.
+
+    Coerción: `sprs_assessment_score` se acota a entero en [-203, 110]
+    (default 110 si tipo inválido o bool); contadores enteros se clamp a >= 0
+    (default 0 si tipo inválido o bool); flags inválidos revierten a sus
+    defaults (`True`/`False`/`False`).
+    Calcula:
+    - `sprs_score_deficit_from_110 = 110 - puntaje`.
+    - `conditional_certification_eligible`: puntaje >= 88 sin críticos de
+      5 puntos y sin POA&M > 180 días abiertos.
+    - `dod_contract_ineligibility_triggered`: puntaje < 88, críticos sin
+      implementar, POA&M > 180 días, certificación C3PAO/DIBCAC inválida,
+      breach DFARS 7012 de 72h o exportación CUI/ITAR sin cifrar.
+    - `cmmc_posture_index_pct`: ((puntaje + 203) / 313.0) * 100 acotado a
+      [0, 100], con penalizaciones -20 por POA&M > 180d, -25 por crítico
+      sin implementar, -35 sin certificación, -40 por breach 72h y -50 por
+      CUI/ITAR sin cifrar, con floor 0.0 (2 dec).
+    Estados (precedencia CRITICAL > WARNING > CLEAN):
+    - 'CRITICAL_CMMC_DOD_CONTRACT_STOP_WORK_OR_CUI_SPILLAGE_BREACH'.
+    - 'CMMC_CONDITIONAL_LEVEL2_POAM_ACTIVE_WARNING': puntaje < 110.
+    - 'CMMC_FINAL_LEVEL2_FULL_110_SPRS_CLEAN'.
+    """
+    def _coerce_bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _coerce_counter(value: Any) -> int:
+        if isinstance(value, bool) or not isinstance(value, int):
+            return 0
+        return max(0, int(value))
+
+    if isinstance(sprs_assessment_score, bool) or not isinstance(
+        sprs_assessment_score, int
+    ):
+        clamped_sprs_score = 110
+    else:
+        clamped_sprs_score = int(
+            min(110, max(-203, int(sprs_assessment_score)))
+        )
+
+    open_poam = _coerce_counter(open_poam_controls_over_180d)
+    unimplemented_critical = _coerce_counter(
+        unimplemented_5_point_critical_controls
+    )
+    cert_valid = _coerce_bool(c3pao_or_dibcac_certification_valid, True)
+    incident_72h_breach = _coerce_bool(
+        dfars_7012_cyber_incident_72h_reporting_breach, False
+    )
+    cui_itar_exposed = _coerce_bool(
+        unencrypted_itar_or_cui_export_detected, False
+    )
+
+    sprs_score_deficit_from_110 = 110 - clamped_sprs_score
+
+    conditional_certification_eligible = bool(
+        clamped_sprs_score >= 88
+        and unimplemented_critical == 0
+        and open_poam == 0
+    )
+
+    dod_contract_ineligibility_triggered = bool(
+        clamped_sprs_score < 88
+        or unimplemented_critical > 0
+        or open_poam > 0
+        or (not cert_valid)
+        or incident_72h_breach
+        or cui_itar_exposed
+    )
+
+    base_posture = min(100.0, ((clamped_sprs_score + 203) / 313.0) * 100.0)
+    cmmc_posture_index_pct = round(
+        max(
+            0.0,
+            base_posture
+            - (open_poam * 20.0)
+            - (unimplemented_critical * 25.0)
+            - (0.0 if cert_valid else 35.0)
+            - (40.0 if incident_72h_breach else 0.0)
+            - (50.0 if cui_itar_exposed else 0.0),
+        ),
+        2,
+    )
+
+    if dod_contract_ineligibility_triggered:
+        cmmc_compliance_status = (
+            "CRITICAL_CMMC_DOD_CONTRACT_STOP_WORK_OR_CUI_SPILLAGE_BREACH"
+        )
+    elif clamped_sprs_score < 110:
+        cmmc_compliance_status = (
+            "CMMC_CONDITIONAL_LEVEL2_POAM_ACTIVE_WARNING"
+        )
+    else:
+        cmmc_compliance_status = "CMMC_FINAL_LEVEL2_FULL_110_SPRS_CLEAN"
+
+    return {
+        "clamped_sprs_score": clamped_sprs_score,
+        "sprs_score_deficit_from_110": sprs_score_deficit_from_110,
+        "conditional_certification_eligible": conditional_certification_eligible,
+        "dod_contract_ineligibility_triggered": dod_contract_ineligibility_triggered,
+        "cmmc_posture_index_pct": cmmc_posture_index_pct,
+        "cmmc_compliance_status": cmmc_compliance_status,
+    }
+
+
+ProjectExportService.audit_executive_report_cmmc_nist_800_171_cui_sprs_and_poam_closeout = staticmethod(
+    audit_executive_report_cmmc_nist_800_171_cui_sprs_and_poam_closeout
 )
