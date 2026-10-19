@@ -10320,3 +10320,92 @@ def test_audit_markdown_data_lineage_dag_freshness_and_contract_hygiene_empty_an
         "audit_markdown_data_lineage_dag_freshness_and_contract_hygiene"
         in mod.__all__
     )
+
+
+def test_audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene_healthy():
+    from backend.services.anydoc_service import (
+        audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene,
+    )
+
+    md = """
+    # Service Level Objectives
+    <!-- slo: service=checkout-api; indicator=availability; target_pct=99.95; window_days=30; fast_burn_factor=14.4; slow_burn_factor=1.0; multiwindow=1h/5m,6h/30m; exhaustion_policy=freeze_releases -->
+    <!-- slo: service=ledger-writer; indicator=latency_p99; target_pct=99.5; window_days=28; fast_burn_factor=10.0; slow_burn_factor=2.0; multiwindow=2h/10m; exhaustion_policy=halt_deploys -->
+    """
+    res = audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene(md)
+    assert res["status"] == "healthy"
+    assert res["total_slo_blocks"] == 2
+    assert res["healthy_count"] == 2
+    assert res["warning_count"] == 0
+    assert res["critical_count"] == 0
+    assert res["slo_hygiene_rate_pct"] == 100.0
+    assert res["recommendations"] == []
+
+
+def test_audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene,
+    )
+
+    md = """
+    <!-- slo: service=search-indexer; indicator=availability; target_pct=99.9; window_days=30; fast_burn_factor=20.0; slow_burn_factor=1.0; multiwindow=1h/5m; exhaustion_policy=none -->
+    """
+    res = audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene(md)
+    assert res["status"] == "warning"
+    assert res["total_slo_blocks"] == 1
+    assert res["warning_count"] == 1
+    assert res["critical_count"] == 0
+    assert res["burn_factor_violation_count"] == 1
+    assert res["missing_exhaustion_policy_count"] == 1
+    assert res["slo_hygiene_rate_pct"] == 0.0
+    assert len(res["recommendations"]) >= 1
+
+
+def test_audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene_critical():
+    from backend.services.anydoc_service import (
+        audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene,
+    )
+
+    md = """
+    <!-- slo: service=auth-gateway; indicator=availability; target_pct=95.0; window_days=30; fast_burn_factor=1.0; slow_burn_factor=2.0; multiwindow=none; exhaustion_policy=none -->
+    """
+    res = audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene(md)
+    assert res["status"] == "critical"
+    assert res["total_slo_blocks"] == 1
+    assert res["critical_count"] == 1
+    assert res["invalid_slo_target_count"] == 1
+    assert res["burn_factor_violation_count"] == 1
+    assert res["missing_multiwindow_count"] == 1
+    assert res["missing_exhaustion_policy_count"] == 1
+    assert res["blocks"][0]["block_status"] == "critical"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene_empty_and_binding():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene,
+    )
+
+    empty = audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene("")
+    assert empty["status"] == "healthy"
+    assert empty["total_slo_blocks"] == 0
+    assert empty["slo_hygiene_rate_pct"] == 100.0
+    assert (
+        AnyDocService.audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene(
+            ""
+        )
+        == empty
+    )
+    assert (
+        AnydocService.audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene(
+            ""
+        )
+        == empty
+    )
+    assert (
+        "audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene"
+        in mod.__all__
+    )

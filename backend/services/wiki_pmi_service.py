@@ -2561,6 +2561,7 @@ __all__ = [
     "audit_wiki_sso_saml_oidc_assertion_signature_and_replay_guard",
     "audit_wiki_vector_rag_index_drift_and_acl_prefilter_guard",
     "audit_wiki_websocket_presence_backpressure_and_zombie_socket_hygiene",
+    "audit_wiki_distributed_lock_fencing_token_and_split_brain_guard",
     "WikiPMIService",
 ]
 
@@ -9329,4 +9330,155 @@ def audit_wiki_websocket_presence_backpressure_and_zombie_socket_hygiene(
 
 WikiPMIService.audit_wiki_websocket_presence_backpressure_and_zombie_socket_hygiene = staticmethod(
     audit_wiki_websocket_presence_backpressure_and_zombie_socket_hygiene
+)
+
+
+def audit_wiki_distributed_lock_fencing_token_and_split_brain_guard(
+    lock_events: list[dict[str, Any]],
+    *,
+    max_heartbeat_skew_ms: float = 1500.0,
+    min_quorum_nodes: int = 3,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §11.6 — Wiki Distributed Lock Fencing Token Monotonicity, Lease Heartbeat & Split-Brain Guard Auditor."""
+    normalized_max_skew = max(float(max_heartbeat_skew_ms), 50.0)
+    normalized_min_quorum = max(int(min_quorum_nodes), 1)
+
+    raw_events = lock_events if isinstance(lock_events, list) else []
+    events: list[dict[str, Any]] = []
+    healthy_count = 0
+    warning_count = 0
+    critical_count = 0
+    unblocked_split_brain_count = 0
+    stale_fencing_token_count = 0
+    quorum_shortfall_count = 0
+    heartbeat_skew_breach_count = 0
+
+    for idx, item in enumerate(raw_events, start=1):
+        if not isinstance(item, dict):
+            continue
+        event_id = str(item.get("event_id") or f"lock-evt-{idx}").strip()
+        page_id = str(item.get("page_id") or f"page-{idx}").strip()
+        try:
+            fencing_token = int(item.get("fencing_token", 0) or 0)
+        except (TypeError, ValueError):
+            fencing_token = 0
+        try:
+            storage_highest_token = int(item.get("storage_highest_token", 0) or 0)
+        except (TypeError, ValueError):
+            storage_highest_token = 0
+        try:
+            quorum_acks = int(item.get("quorum_acks", 0) or 0)
+        except (TypeError, ValueError):
+            quorum_acks = 0
+        lease_expired_before_commit = bool(
+            item.get("lease_expired_before_commit", False)
+        )
+        try:
+            heartbeat_skew_ms = float(item.get("heartbeat_skew_ms", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            heartbeat_skew_ms = 0.0
+        storage_rejected_stale_token = bool(
+            item.get("storage_rejected_stale_token", True)
+        )
+
+        stale_fencing_token_detected = (
+            fencing_token < storage_highest_token or fencing_token <= 0
+        )
+        unblocked_split_brain_write = (
+            stale_fencing_token_detected or lease_expired_before_commit
+        ) and not storage_rejected_stale_token
+        quorum_shortfall = quorum_acks < normalized_min_quorum
+        heartbeat_skew_breach = heartbeat_skew_ms > normalized_max_skew
+
+        if unblocked_split_brain_write:
+            unblocked_split_brain_count += 1
+        if stale_fencing_token_detected:
+            stale_fencing_token_count += 1
+        if quorum_shortfall:
+            quorum_shortfall_count += 1
+        if heartbeat_skew_breach:
+            heartbeat_skew_breach_count += 1
+
+        if unblocked_split_brain_write or quorum_shortfall:
+            event_status = "critical"
+            critical_count += 1
+        elif (
+            stale_fencing_token_detected
+            or lease_expired_before_commit
+            or heartbeat_skew_breach
+        ):
+            event_status = "warning"
+            warning_count += 1
+        else:
+            event_status = "healthy"
+            healthy_count += 1
+
+        events.append(
+            {
+                "event_id": event_id,
+                "page_id": page_id,
+                "fencing_token": fencing_token,
+                "storage_highest_token": storage_highest_token,
+                "quorum_acks": quorum_acks,
+                "lease_expired_before_commit": lease_expired_before_commit,
+                "heartbeat_skew_ms": heartbeat_skew_ms,
+                "storage_rejected_stale_token": storage_rejected_stale_token,
+                "stale_fencing_token_detected": stale_fencing_token_detected,
+                "unblocked_split_brain_write": unblocked_split_brain_write,
+                "quorum_shortfall": quorum_shortfall,
+                "heartbeat_skew_breach": heartbeat_skew_breach,
+                "event_status": event_status,
+            }
+        )
+
+    total_events = len(events)
+    fencing_integrity_rate_pct = (
+        round((healthy_count / total_events) * 100.0, 2)
+        if total_events > 0
+        else 100.0
+    )
+
+    recommendations: list[str] = []
+    if unblocked_split_brain_count > 0:
+        recommendations.append(
+            f"Bloquear inmediatamente escrituras con fencing_token obsoleto o lease expirado en la capa de almacenamiento ({unblocked_split_brain_count} evento(s) split-brain)."
+        )
+    if quorum_shortfall_count > 0:
+        recommendations.append(
+            f"Exigir quórum mínimo de {normalized_min_quorum} nodos antes de conceder el lock distribuido ({quorum_shortfall_count} evento(s))."
+        )
+    if stale_fencing_token_count > 0:
+        recommendations.append(
+            f"Auditar emisores con fencing_token <= storage_highest_token por pausas GC o particiones de red ({stale_fencing_token_count} evento(s))."
+        )
+    if heartbeat_skew_breach_count > 0:
+        recommendations.append(
+            f"Reducir heartbeat_skew_ms por debajo de {normalized_max_skew}ms para evitar expiraciones prematuras de lease ({heartbeat_skew_breach_count} evento(s))."
+        )
+
+    if critical_count > 0:
+        status = "critical"
+    elif warning_count > 0:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_events": total_events,
+        "healthy_count": healthy_count,
+        "warning_count": warning_count,
+        "critical_count": critical_count,
+        "unblocked_split_brain_count": unblocked_split_brain_count,
+        "stale_fencing_token_count": stale_fencing_token_count,
+        "quorum_shortfall_count": quorum_shortfall_count,
+        "heartbeat_skew_breach_count": heartbeat_skew_breach_count,
+        "fencing_integrity_rate_pct": fencing_integrity_rate_pct,
+        "status": status,
+        "events": events,
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_distributed_lock_fencing_token_and_split_brain_guard = staticmethod(
+    audit_wiki_distributed_lock_fencing_token_and_split_brain_guard
 )

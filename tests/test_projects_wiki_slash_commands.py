@@ -12483,3 +12483,120 @@ def test_audit_wiki_websocket_presence_backpressure_and_zombie_socket_hygiene_em
         "audit_wiki_websocket_presence_backpressure_and_zombie_socket_hygiene"
         in mod.__all__
     )
+
+
+def test_audit_wiki_distributed_lock_fencing_token_and_split_brain_guard_healthy():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_distributed_lock_fencing_token_and_split_brain_guard,
+    )
+
+    events = [
+        {
+            "event_id": "lock-evt-101",
+            "page_id": "wiki-architecture-charter",
+            "fencing_token": 42,
+            "storage_highest_token": 41,
+            "quorum_acks": 3,
+            "lease_expired_before_commit": False,
+            "heartbeat_skew_ms": 180.0,
+            "storage_rejected_stale_token": True,
+        },
+        {
+            "event_id": "lock-evt-102",
+            "page_id": "wiki-evm-handbook",
+            "fencing_token": 43,
+            "storage_highest_token": 42,
+            "quorum_acks": 5,
+            "lease_expired_before_commit": False,
+            "heartbeat_skew_ms": 220.0,
+            "storage_rejected_stale_token": True,
+        },
+    ]
+    res = audit_wiki_distributed_lock_fencing_token_and_split_brain_guard(events)
+    assert res["status"] == "healthy"
+    assert res["total_events"] == 2
+    assert res["healthy_count"] == 2
+    assert res["warning_count"] == 0
+    assert res["critical_count"] == 0
+    assert res["fencing_integrity_rate_pct"] == 100.0
+    assert res["recommendations"] == []
+
+
+def test_audit_wiki_distributed_lock_fencing_token_and_split_brain_guard_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_distributed_lock_fencing_token_and_split_brain_guard,
+    )
+
+    events = [
+        {
+            "event_id": "lock-evt-stale-rejected",
+            "page_id": "wiki-runbook-prod",
+            "fencing_token": 18,
+            "storage_highest_token": 20,
+            "quorum_acks": 3,
+            "lease_expired_before_commit": True,
+            "heartbeat_skew_ms": 2100.0,
+            "storage_rejected_stale_token": True,
+        }
+    ]
+    res = audit_wiki_distributed_lock_fencing_token_and_split_brain_guard(events)
+    assert res["status"] == "warning"
+    assert res["total_events"] == 1
+    assert res["warning_count"] == 1
+    assert res["critical_count"] == 0
+    assert res["stale_fencing_token_count"] == 1
+    assert res["heartbeat_skew_breach_count"] == 1
+    assert res["unblocked_split_brain_count"] == 0
+    assert res["events"][0]["event_status"] == "warning"
+    assert len(res["recommendations"]) >= 1
+
+
+def test_audit_wiki_distributed_lock_fencing_token_and_split_brain_guard_critical():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_distributed_lock_fencing_token_and_split_brain_guard,
+    )
+
+    events = [
+        {
+            "event_id": "lock-evt-split-brain-write",
+            "page_id": "wiki-ccb-ledger",
+            "fencing_token": 12,
+            "storage_highest_token": 15,
+            "quorum_acks": 1,
+            "lease_expired_before_commit": True,
+            "heartbeat_skew_ms": 3400.0,
+            "storage_rejected_stale_token": False,
+        }
+    ]
+    res = audit_wiki_distributed_lock_fencing_token_and_split_brain_guard(events)
+    assert res["status"] == "critical"
+    assert res["total_events"] == 1
+    assert res["critical_count"] == 1
+    assert res["unblocked_split_brain_count"] == 1
+    assert res["quorum_shortfall_count"] == 1
+    assert res["fencing_integrity_rate_pct"] == 0.0
+    assert res["events"][0]["event_status"] == "critical"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_wiki_distributed_lock_fencing_token_and_split_brain_guard_empty_and_binding():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_distributed_lock_fencing_token_and_split_brain_guard,
+    )
+
+    empty = audit_wiki_distributed_lock_fencing_token_and_split_brain_guard([])
+    assert empty["status"] == "healthy"
+    assert empty["total_events"] == 0
+    assert empty["fencing_integrity_rate_pct"] == 100.0
+    assert (
+        WikiPMIService.audit_wiki_distributed_lock_fencing_token_and_split_brain_guard(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_wiki_distributed_lock_fencing_token_and_split_brain_guard"
+        in mod.__all__
+    )

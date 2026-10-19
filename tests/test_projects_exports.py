@@ -13498,3 +13498,156 @@ def test_dora_eu_empty_invalid_providers_and_field_reversion():
     assert reverted["concentration_or_tlpt_warning_provider_ids"] == []
     assert reverted["is_dora_resilience_compliant"] is True
     assert reverted["dora_audit_status"] == "EU_DORA_OPERATIONAL_RESILIENCE_CLEAN"
+
+
+def test_fedramp_poam_conmon_clean():
+    """Sin POA&Ms vencidos, ConMon a tiempo y 3PAO vigente -> 'FEDRAMP_CONMON_ATO_COMPLIANT_CLEAN'."""
+    import backend.services.project_export_service as export_module
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_fedramp_nist_800_53_poam_and_conmon_compliance,
+    )
+
+    res = audit_executive_report_fedramp_nist_800_53_poam_and_conmon_compliance(
+        0, 0, 0,
+    )
+    assert res == {
+        "total_overdue_poams": 0,
+        "ato_suspension_risk_triggered": False,
+        "conmon_delinquency_detected": False,
+        "fedramp_posture_score_pct": 100.0,
+        "unapproved_significant_change_requests": 0,
+        "fedramp_compliance_status": "FEDRAMP_CONMON_ATO_COMPLIANT_CLEAN",
+    }
+    # LOW POA&Ms over 180 <= 2 no causa delinquency de ConMon.
+    low_within_tolerance = audit_executive_report_fedramp_nist_800_53_poam_and_conmon_compliance(
+        0, 0, 2,
+    )
+    assert low_within_tolerance["conmon_delinquency_detected"] is False
+    assert low_within_tolerance["fedramp_posture_score_pct"] == 92.0  # 100 - 2*4
+    assert low_within_tolerance["fedramp_compliance_status"] == "FEDRAMP_CONMON_ATO_COMPLIANT_CLEAN"
+    assert (
+        ProjectExportService.audit_executive_report_fedramp_nist_800_53_poam_and_conmon_compliance(
+            0, 0, 0
+        )
+        == res
+    )
+    assert "audit_executive_report_fedramp_nist_800_53_poam_and_conmon_compliance" in export_module.__all__
+
+
+def test_fedramp_poam_conmon_aging_warning():
+    """ConMon fuera de plazo, MODERATE POA&Ms > 90d o LOW > 180d > 2 -> WARNING con precedencia."""
+    from backend.services.project_export_service import (
+        audit_executive_report_fedramp_nist_800_53_poam_and_conmon_compliance,
+    )
+
+    delinquent_conmon = audit_executive_report_fedramp_nist_800_53_poam_and_conmon_compliance(
+        0, 0, 0,
+        conmon_monthly_scan_submitted_on_time=False,
+    )
+    assert delinquent_conmon["conmon_delinquency_detected"] is True
+    assert delinquent_conmon["ato_suspension_risk_triggered"] is False
+    assert delinquent_conmon["fedramp_posture_score_pct"] == 80.0  # 100 - 20
+    assert delinquent_conmon["fedramp_compliance_status"] == "FEDRAMP_CONMON_OR_MODERATE_POAM_AGING_WARNING"
+
+    moderate_aging = audit_executive_report_fedramp_nist_800_53_poam_and_conmon_compliance(
+        0, 2, 0,
+    )
+    assert moderate_aging["total_overdue_poams"] == 2
+    assert moderate_aging["conmon_delinquency_detected"] is True
+    assert moderate_aging["fedramp_posture_score_pct"] == 76.0  # 100 - 2*12
+    assert moderate_aging["fedramp_compliance_status"] == "FEDRAMP_CONMON_OR_MODERATE_POAM_AGING_WARNING"
+
+    too_many_low = audit_executive_report_fedramp_nist_800_53_poam_and_conmon_compliance(
+        0, 0, 3,
+    )
+    assert too_many_low["conmon_delinquency_detected"] is True  # 3 > 2
+    assert too_many_low["fedramp_compliance_status"] == "FEDRAMP_CONMON_OR_MODERATE_POAM_AGING_WARNING"
+
+
+def test_fedramp_poam_ato_suspension_critical():
+    """HIGH POA&Ms > 0, 3PAO SAR no vigente o RFC sin aprobar -> CRITICAL con precedencia."""
+    from backend.services.project_export_service import (
+        audit_executive_report_fedramp_nist_800_53_poam_and_conmon_compliance,
+    )
+
+    high_breach = audit_executive_report_fedramp_nist_800_53_poam_and_conmon_compliance(
+        1, 0, 0,
+    )
+    assert high_breach["total_overdue_poams"] == 1
+    assert high_breach["ato_suspension_risk_triggered"] is True
+    assert high_breach["conmon_delinquency_detected"] is False
+    assert high_breach["fedramp_posture_score_pct"] == 65.0  # 100 - 35
+    assert high_breach["fedramp_compliance_status"] == "CRITICAL_FEDRAMP_ATO_SUSPENSION_OR_HIGH_POAM_SLA_BREACH"
+
+    stale_sar = audit_executive_report_fedramp_nist_800_53_poam_and_conmon_compliance(
+        0, 0, 0,
+        annual_3pao_sar_attestation_current=False,
+    )
+    assert stale_sar["ato_suspension_risk_triggered"] is True
+    assert stale_sar["fedramp_posture_score_pct"] == 60.0  # 100 - 40
+    assert stale_sar["fedramp_compliance_status"] == "CRITICAL_FEDRAMP_ATO_SUSPENSION_OR_HIGH_POAM_SLA_BREACH"
+
+    unapproved_change = audit_executive_report_fedramp_nist_800_53_poam_and_conmon_compliance(
+        0, 0, 0,
+        unapproved_significant_change_requests=1,
+    )
+    assert unapproved_change["unapproved_significant_change_requests"] == 1
+    assert unapproved_change["ato_suspension_risk_triggered"] is True
+    assert unapproved_change["fedramp_posture_score_pct"] == 75.0  # 100 - 25
+    assert unapproved_change["fedramp_compliance_status"] == "CRITICAL_FEDRAMP_ATO_SUSPENSION_OR_HIGH_POAM_SLA_BREACH"
+
+    # Precedencia y floor del score: HIGH 2 + MODERATE 3 + LOW 7 + ConMon fail
+    # + SAR vencida + 2 RFC -> score clamp a 0 con CRITICAL.
+    worst_case = audit_executive_report_fedramp_nist_800_53_poam_and_conmon_compliance(
+        2, 3, 7,
+        conmon_monthly_scan_submitted_on_time=False,
+        annual_3pao_sar_attestation_current=False,
+        unapproved_significant_change_requests=2,
+    )
+    assert worst_case["total_overdue_poams"] == 12
+    assert worst_case["ato_suspension_risk_triggered"] is True
+    assert worst_case["conmon_delinquency_detected"] is True
+    assert worst_case["fedramp_posture_score_pct"] == 0.0
+    assert worst_case["fedramp_compliance_status"] == "CRITICAL_FEDRAMP_ATO_SUSPENSION_OR_HIGH_POAM_SLA_BREACH"
+
+
+def test_fedramp_poam_conmon_field_coercion_and_static_equality():
+    """Negativos e inválidos se clamp a >= 0 o default; igualdad módulo-vs-clase."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_fedramp_nist_800_53_poam_and_conmon_compliance,
+    )
+
+    # Negativos y tipos inválidos se coercionan a >= 0 / defaults True.
+    coerced = audit_executive_report_fedramp_nist_800_53_poam_and_conmon_compliance(
+        -5,                            # negativo -> 0
+        -2,                            # negativo -> 0
+        -7,                            # negativo -> 0
+        unapproved_significant_change_requests=-1,  # negativo -> 0
+    )
+    assert coerced == {
+        "total_overdue_poams": 0,
+        "ato_suspension_risk_triggered": False,
+        "conmon_delinquency_detected": False,
+        "fedramp_posture_score_pct": 100.0,
+        "unapproved_significant_change_requests": 0,
+        "fedramp_compliance_status": "FEDRAMP_CONMON_ATO_COMPLIANT_CLEAN",
+    }
+
+    reverted = audit_executive_report_fedramp_nist_800_53_poam_and_conmon_compliance(
+        "five",          # no-int -> 0
+        2.5,             # no-int -> 0
+        True,            # bool excluida -> 0
+        conmon_monthly_scan_submitted_on_time="yes",       # no-bool -> True
+        annual_3pao_sar_attestation_current=None,          # no-bool -> True
+        unapproved_significant_change_requests="two",      # no-int -> 0
+    )
+    assert reverted == {
+        "total_overdue_poams": 0,
+        "ato_suspension_risk_triggered": False,
+        "conmon_delinquency_detected": False,
+        "fedramp_posture_score_pct": 100.0,
+        "unapproved_significant_change_requests": 0,
+        "fedramp_compliance_status": "FEDRAMP_CONMON_ATO_COMPLIANT_CLEAN",
+    }

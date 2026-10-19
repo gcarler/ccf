@@ -3061,6 +3061,7 @@ __all__ = [
     "audit_markdown_postmortem_rca_blameless_and_action_item_hygiene",
     "audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene",
     "audit_markdown_data_lineage_dag_freshness_and_contract_hygiene",
+    "audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene",
     "AnydocService",
 ]
 
@@ -10633,4 +10634,176 @@ AnyDocService.audit_markdown_data_lineage_dag_freshness_and_contract_hygiene = s
 )
 AnydocService.audit_markdown_data_lineage_dag_freshness_and_contract_hygiene = staticmethod(
     audit_markdown_data_lineage_dag_freshness_and_contract_hygiene
+)
+
+
+def audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene(
+    markdown_text: str,
+    *,
+    min_slo_target_pct: float = 99.0,
+    max_fast_burn_factor: float = 14.4,
+    require_multiwindow_alert: bool = True,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §10.2 — AnyDoc Markdown SLO, Error Budget Burn-Rate & Multi-Window Alert Hygiene Auditor."""
+    normalized_min_slo = min(max(float(min_slo_target_pct), 50.0), 99.999)
+    normalized_max_fast_burn = max(float(max_fast_burn_factor), 1.0)
+
+    text = markdown_text if isinstance(markdown_text, str) else ""
+    stripped = re.sub(r"```[\s\S]*?```|~~~[\s\S]*?~~~", "", text)
+
+    pattern = re.compile(r"<!--\s*slo\s*:(.*?)-->", re.IGNORECASE | re.DOTALL)
+    blocks: list[dict[str, Any]] = []
+    healthy_count = 0
+    warning_count = 0
+    critical_count = 0
+    invalid_slo_target_count = 0
+    burn_factor_violation_count = 0
+    missing_multiwindow_count = 0
+    missing_exhaustion_policy_count = 0
+
+    for idx, match in enumerate(pattern.finditer(stripped), start=1):
+        raw_body = match.group(1)
+        kv: dict[str, str] = {}
+        for part in re.split(r"[;\n]", raw_body):
+            if "=" in part:
+                k, v = part.split("=", 1)
+                kv[k.strip().lower()] = v.strip()
+
+        service = kv.get("service") or f"slo-service-{idx}"
+        indicator = kv.get("indicator") or "availability"
+        try:
+            target_pct = float(kv.get("target_pct", "0.0"))
+        except (TypeError, ValueError):
+            target_pct = 0.0
+        try:
+            window_days = int(float(kv.get("window_days", "30")))
+        except (TypeError, ValueError):
+            window_days = 30
+        try:
+            fast_burn_factor = float(kv.get("fast_burn_factor", "0.0"))
+        except (TypeError, ValueError):
+            fast_burn_factor = 0.0
+        try:
+            slow_burn_factor = float(kv.get("slow_burn_factor", "0.0"))
+        except (TypeError, ValueError):
+            slow_burn_factor = 0.0
+        multiwindow = kv.get("multiwindow", "").strip()
+        exhaustion_policy = kv.get("exhaustion_policy", "").strip()
+
+        sub_threshold_or_invalid_slo_target = (
+            target_pct < normalized_min_slo or target_pct >= 100.0
+        )
+        excessive_or_inverted_burn_factor = (
+            fast_burn_factor > normalized_max_fast_burn
+            or fast_burn_factor <= slow_burn_factor
+            or slow_burn_factor <= 0.0
+        )
+        missing_multiwindow_pair = bool(
+            require_multiwindow_alert
+            and (
+                not multiwindow
+                or multiwindow.lower() == "none"
+                or "/" not in multiwindow
+            )
+        )
+        missing_exhaustion_policy = bool(
+            not exhaustion_policy or exhaustion_policy.lower() == "none"
+        )
+
+        if sub_threshold_or_invalid_slo_target:
+            invalid_slo_target_count += 1
+        if excessive_or_inverted_burn_factor:
+            burn_factor_violation_count += 1
+        if missing_multiwindow_pair:
+            missing_multiwindow_count += 1
+        if missing_exhaustion_policy:
+            missing_exhaustion_policy_count += 1
+
+        if sub_threshold_or_invalid_slo_target or (
+            missing_multiwindow_pair and missing_exhaustion_policy
+        ):
+            block_status = "critical"
+            critical_count += 1
+        elif (
+            excessive_or_inverted_burn_factor
+            or missing_multiwindow_pair
+            or missing_exhaustion_policy
+        ):
+            block_status = "warning"
+            warning_count += 1
+        else:
+            block_status = "healthy"
+            healthy_count += 1
+
+        blocks.append(
+            {
+                "service": service,
+                "indicator": indicator,
+                "target_pct": target_pct,
+                "window_days": window_days,
+                "fast_burn_factor": fast_burn_factor,
+                "slow_burn_factor": slow_burn_factor,
+                "multiwindow": multiwindow,
+                "exhaustion_policy": exhaustion_policy,
+                "sub_threshold_or_invalid_slo_target": sub_threshold_or_invalid_slo_target,
+                "excessive_or_inverted_burn_factor": excessive_or_inverted_burn_factor,
+                "missing_multiwindow_pair": missing_multiwindow_pair,
+                "missing_exhaustion_policy": missing_exhaustion_policy,
+                "block_status": block_status,
+            }
+        )
+
+    total_slo_blocks = len(blocks)
+    slo_hygiene_rate_pct = (
+        round((healthy_count / total_slo_blocks) * 100.0, 2)
+        if total_slo_blocks > 0
+        else 100.0
+    )
+
+    recommendations: list[str] = []
+    if invalid_slo_target_count > 0:
+        recommendations.append(
+            f"Calibrar target_pct dentro del rango [{normalized_min_slo}%, <100.0%) en {invalid_slo_target_count} bloque(s) SLO."
+        )
+    if burn_factor_violation_count > 0:
+        recommendations.append(
+            f"Ajustar fast_burn_factor <= {normalized_max_fast_burn} y > slow_burn_factor (> 0) en {burn_factor_violation_count} bloque(s) SLO."
+        )
+    if missing_multiwindow_count > 0:
+        recommendations.append(
+            f"Configurar alertas multi-ventana (ej. 1h/5m,6h/30m) en {missing_multiwindow_count} bloque(s) SLO."
+        )
+    if missing_exhaustion_policy_count > 0:
+        recommendations.append(
+            f"Definir exhaustion_policy explícita (ej. freeze_releases) en {missing_exhaustion_policy_count} bloque(s) SLO."
+        )
+
+    if critical_count > 0:
+        status = "critical"
+    elif warning_count > 0:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_slo_blocks": total_slo_blocks,
+        "healthy_count": healthy_count,
+        "warning_count": warning_count,
+        "critical_count": critical_count,
+        "invalid_slo_target_count": invalid_slo_target_count,
+        "burn_factor_violation_count": burn_factor_violation_count,
+        "missing_multiwindow_count": missing_multiwindow_count,
+        "missing_exhaustion_policy_count": missing_exhaustion_policy_count,
+        "slo_hygiene_rate_pct": slo_hygiene_rate_pct,
+        "status": status,
+        "blocks": blocks,
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene = staticmethod(
+    audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene
+)
+AnydocService.audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene = staticmethod(
+    audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene
 )

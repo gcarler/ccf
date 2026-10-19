@@ -3031,6 +3031,7 @@ __all__ = [
     "audit_executive_report_iso22301_bcp_drp_rto_rpo_and_failover_drill",
     "audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window",
     "audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance",
+    "audit_executive_report_fedramp_nist_800_53_poam_and_conmon_compliance",
     "ProjectExportService",
 ]
 
@@ -9724,4 +9725,103 @@ def audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance(
 
 ProjectExportService.audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance = staticmethod(
     audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance
+)
+
+
+def audit_executive_report_fedramp_nist_800_53_poam_and_conmon_compliance(
+    open_high_poams_over_30d: int,
+    open_moderate_poams_over_90d: int,
+    open_low_poams_over_180d: int,
+    *,
+    conmon_monthly_scan_submitted_on_time: bool = True,
+    annual_3pao_sar_attestation_current: bool = True,
+    unapproved_significant_change_requests: int = 0,
+) -> dict[str, Any]:
+    """PMBOK §10.2 & §11.6 — Audita el executive report FedRAMP / NIST SP 800-53 Rev. 5: aging de POA&Ms habiertos por severidad (HIGH sobre 30 días, MODERATE sobre 90, LOW sobre 180), ConMon mensual de escaneo entregado a tiempo, atestación anual del SAR del 3PAO vigente y RFC de significant change sin aprobar, con score de posture y riesgo de suspensión del ATO.
+
+    - `total_overdue_poams` = suma de los tres aging clamps a >= 0.
+    - `ato_suspension_risk_triggered`: HIGH POA&Ms > 0, atestación 3PAO no
+      vigente, o RFC significant change sin aprobar (brecha crítica,
+      precedencia CRITICAL).
+    - `conmon_delinquency_detected`: escaneo ConMon fuera de plazo,
+      MODERATE POA&Ms > 90 días, o LOW POA&Ms over 180 > 2 (advertencia).
+    - `fedramp_posture_score_pct` = 100 - 35 por HIGH POA&M, 12 por
+      MODERATE, 4 por LOW, 20 si ConMon fails, 40 si atestación vencida,
+      25 por RFC no aprobado (clamp a >= 0, 2 dec).
+    - Estados: 'CRITICAL_FEDRAMP_ATO_SUSPENSION_OR_HIGH_POAM_SLA_BREACH' |
+      'FEDRAMP_CONMON_OR_MODERATE_POAM_AGING_WARNING' |
+      'FEDRAMP_CONMON_ATO_COMPLIANT_CLEAN'.
+    """
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _int(value: Any, default: int) -> int:
+        if isinstance(value, bool) or not isinstance(value, int):
+            return default
+        return value
+
+    def _clamp_non_negative_int(value: Any, default: int) -> int:
+        coerced = _int(value, default)
+        return max(0, coerced)
+
+    high_over_30d = _clamp_non_negative_int(open_high_poams_over_30d, 0)
+    moderate_over_90d = _clamp_non_negative_int(
+        open_moderate_poams_over_90d, 0
+    )
+    low_over_180d = _clamp_non_negative_int(open_low_poams_over_180d, 0)
+    conmon_on_time = _bool(conmon_monthly_scan_submitted_on_time, True)
+    sar_attestation_current = _bool(annual_3pao_sar_attestation_current, True)
+    unapproved_changes = _clamp_non_negative_int(
+        unapproved_significant_change_requests, 0
+    )
+
+    total_overdue_poams = (
+        high_over_30d + moderate_over_90d + low_over_180d
+    )
+
+    ato_suspension_risk_triggered = (
+        high_over_30d > 0
+        or (not sar_attestation_current)
+        or unapproved_changes > 0
+    )
+
+    conmon_delinquency_detected = (
+        (not conmon_on_time)
+        or moderate_over_90d > 0
+        or low_over_180d > 2
+    )
+
+    fedramp_posture_score_pct = round(
+        max(
+            0.0,
+            100.0
+            - (high_over_30d * 35.0)
+            - (moderate_over_90d * 12.0)
+            - (low_over_180d * 4.0)
+            - (0.0 if conmon_on_time else 20.0)
+            - (0.0 if sar_attestation_current else 40.0)
+            - (unapproved_changes * 25.0),
+        ),
+        2,
+    )
+
+    if ato_suspension_risk_triggered:
+        fedramp_compliance_status = "CRITICAL_FEDRAMP_ATO_SUSPENSION_OR_HIGH_POAM_SLA_BREACH"
+    elif conmon_delinquency_detected:
+        fedramp_compliance_status = "FEDRAMP_CONMON_OR_MODERATE_POAM_AGING_WARNING"
+    else:
+        fedramp_compliance_status = "FEDRAMP_CONMON_ATO_COMPLIANT_CLEAN"
+
+    return {
+        "total_overdue_poams": total_overdue_poams,
+        "ato_suspension_risk_triggered": ato_suspension_risk_triggered,
+        "conmon_delinquency_detected": conmon_delinquency_detected,
+        "fedramp_posture_score_pct": fedramp_posture_score_pct,
+        "unapproved_significant_change_requests": unapproved_changes,
+        "fedramp_compliance_status": fedramp_compliance_status,
+    }
+
+
+ProjectExportService.audit_executive_report_fedramp_nist_800_53_poam_and_conmon_compliance = staticmethod(
+    audit_executive_report_fedramp_nist_800_53_poam_and_conmon_compliance
 )
