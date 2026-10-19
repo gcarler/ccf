@@ -12875,3 +12875,179 @@ def test_surety_bond_t4d_takeover_field_coercion_and_static_equality():
         ProjectEVMService.evaluate_evm_surety_performance_bond_t4d_takeover_and_overpayment
         is not None
     )
+
+
+def test_davis_bacon_wh347_restitution_clean():
+    """Sin shortfall, semanas sin certificar ni falsificación -> 'DAVIS_BACON_WH347_PREVAILING_WAGE_COMPLIANT_CLEAN'."""
+    import backend.services.project_evm_service as evm_module
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_davis_bacon_prevailing_wage_wh347_and_restitution,
+    )
+
+    res = evaluate_evm_davis_bacon_prevailing_wage_wh347_and_restitution(
+        40.0,     # horas por oficio
+        55.0,     # tarifa + fringe pagada
+        55.0,     # tarifa prevaleciente WD + fringe
+    )
+    assert res == {
+        "hourly_wage_shortfall": 0.0,
+        "back_wages_restitution_owed": 0.0,
+        "cwssa_liquidated_damages": 0.0,
+        "total_contract_withholding_amount": 0.0,
+        "three_year_debarment_risk_triggered": False,
+        "davis_bacon_compliance_status": "DAVIS_BACON_WH347_PREVAILING_WAGE_COMPLIANT_CLEAN",
+    }
+    # Tarifa pagada por encima del WD prevaleciente tampoco genera shortfall ni hallazgos.
+    over = evaluate_evm_davis_bacon_prevailing_wage_wh347_and_restitution(
+        40.0, 62.5, 55.0,
+    )
+    assert over["hourly_wage_shortfall"] == 0.0
+    assert over["davis_bacon_compliance_status"] == "DAVIS_BACON_WH347_PREVAILING_WAGE_COMPLIANT_CLEAN"
+    # Vínculo estático y exportación en __all__.
+    assert (
+        ProjectEVMService.evaluate_evm_davis_bacon_prevailing_wage_wh347_and_restitution(
+            40.0, 55.0, 55.0,
+        )
+        == res
+    )
+    assert "evaluate_evm_davis_bacon_prevailing_wage_wh347_and_restitution" in evm_module.__all__
+
+
+def test_davis_bacon_wh347_restitution_warning_paths():
+    """Shortfall con LD de Copeland o solo semanas sin certificar -> 'DAVIS_BACON_WH347_DELINQUENCY_OR_WAGE_RESTITUTION_WARNING'."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_davis_bacon_prevailing_wage_wh347_and_restitution,
+    )
+
+    # LD por defecto 31.0/día: (2 semanas * 5 + 1 trabajador * 5) * 31.0 = 465.0.
+    ld_only = evaluate_evm_davis_bacon_prevailing_wage_wh347_and_restitution(
+        40.0, 55.0, 55.0,
+        uncertified_wh347_payroll_weeks_count=2,
+        apprentice_ratio_exceeded_workers_count=1,
+    )
+    assert ld_only == {
+        "hourly_wage_shortfall": 0.0,
+        "back_wages_restitution_owed": 0.0,
+        "cwssa_liquidated_damages": 465.0,
+        "total_contract_withholding_amount": 465.0,
+        "three_year_debarment_risk_triggered": False,
+        "davis_bacon_compliance_status": "DAVIS_BACON_WH347_DELINQUENCY_OR_WAGE_RESTITUTION_WARNING",
+    }
+
+    # Shortfall con restitución <= 10000 y solo 2 semanas sin certificar (< 4): WARNING.
+    # shortfall 7.5 * 1200 h = 9000.0 de restitución, LD 3 semanas * 5 * 20.0 = 300.0.
+    restitution = evaluate_evm_davis_bacon_prevailing_wage_wh347_and_restitution(
+        1200.0, 47.5, 55.0,
+        uncertified_wh347_payroll_weeks_count=3,
+        copeland_act_liquidated_damages_per_day=20.0,
+    )
+    assert restitution == {
+        "hourly_wage_shortfall": 7.5,
+        "back_wages_restitution_owed": 9000.0,
+        "cwssa_liquidated_damages": 300.0,
+        "total_contract_withholding_amount": 9300.0,
+        "three_year_debarment_risk_triggered": False,
+        "davis_bacon_compliance_status": "DAVIS_BACON_WH347_DELINQUENCY_OR_WAGE_RESTITUTION_WARNING",
+    }
+
+
+def test_davis_bacon_wh347_restitution_critical_breach_paths():
+    """Falsificación/kickback, shortfall con >= 4 semanas sin certificar o restitución > 10000 -> CRITICAL."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_davis_bacon_prevailing_wage_wh347_and_restitution,
+    )
+
+    # Ruta directa: nómina falsificada detectada con entradas en cero.
+    falsified = evaluate_evm_davis_bacon_prevailing_wage_wh347_and_restitution(
+        0.0, 0.0, 0.0,
+        falsified_payroll_or_kickback_detected=True,
+    )
+    assert falsified["three_year_debarment_risk_triggered"] is True
+    assert falsified["total_contract_withholding_amount"] == 0.0
+    assert falsified["davis_bacon_compliance_status"] == "CRITICAL_DAVIS_BACON_DEBARMENT_OR_KICKBACK_WITHHOLDING_BREACH"
+
+    # Ruta estructural: shortfall > 0 con 4 semanas de WH-347 sin certificar.
+    # shortfall 8.0 * 100 h = 800.0; LD (4 + 0) * 5 * 31.0 = 620.0.
+    delinquent = evaluate_evm_davis_bacon_prevailing_wage_wh347_and_restitution(
+        100.0, 44.0, 52.0,
+        uncertified_wh347_payroll_weeks_count=4,
+    )
+    assert delinquent == {
+        "hourly_wage_shortfall": 8.0,
+        "back_wages_restitution_owed": 800.0,
+        "cwssa_liquidated_damages": 620.0,
+        "total_contract_withholding_amount": 1420.0,
+        "three_year_debarment_risk_triggered": True,
+        "davis_bacon_compliance_status": "CRITICAL_DAVIS_BACON_DEBARMENT_OR_KICKBACK_WITHHOLDING_BREACH",
+    }
+
+    # Ruta de umbral: restitución sola > 10000.0 sin semanas sin certificar.
+    # shortfall 9.0 * 1200 h = 10800.0.
+    over_threshold = evaluate_evm_davis_bacon_prevailing_wage_wh347_and_restitution(
+        1200.0, 46.0, 55.0,
+    )
+    assert over_threshold["three_year_debarment_risk_triggered"] is False
+    assert over_threshold["back_wages_restitution_owed"] == 10800.0
+    assert over_threshold["davis_bacon_compliance_status"] == "CRITICAL_DAVIS_BACON_DEBARMENT_OR_KICKBACK_WITHHOLDING_BREACH"
+
+    # Precedencia CRITICAL: restitución > 10000 + LD + semanas sin certificar.
+    worst = evaluate_evm_davis_bacon_prevailing_wage_wh347_and_restitution(
+        1200.0, 46.0, 55.0,
+        uncertified_wh347_payroll_weeks_count=2,
+        copeland_act_liquidated_damages_per_day=45.0,
+    )
+    assert worst["cwssa_liquidated_damages"] == 450.0
+    assert worst["total_contract_withholding_amount"] == 11250.0
+    assert worst["davis_bacon_compliance_status"] == "CRITICAL_DAVIS_BACON_DEBARMENT_OR_KICKBACK_WITHHOLDING_BREACH"
+
+
+def test_davis_bacon_wh347_restitution_field_coercion_and_static_equality():
+    """Negativos e inválidos se clamp a 0.0; bools/strings inválidos revierten a defaults."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_davis_bacon_prevailing_wage_wh347_and_restitution,
+    )
+
+    # Negativos clamp a 0.0 en todas las entradas numéricas: CLEAN sin retención.
+    coerced = evaluate_evm_davis_bacon_prevailing_wage_wh347_and_restitution(
+        -40.0, -55.0, -55.0,
+        uncertified_wh347_payroll_weeks_count=-2,
+        apprentice_ratio_exceeded_workers_count=-3,
+        copeland_act_liquidated_damages_per_day=-31.0,
+    )
+    assert coerced == {
+        "hourly_wage_shortfall": 0.0,
+        "back_wages_restitution_owed": 0.0,
+        "cwssa_liquidated_damages": 0.0,
+        "total_contract_withholding_amount": 0.0,
+        "three_year_debarment_risk_triggered": False,
+        "davis_bacon_compliance_status": "DAVIS_BACON_WH347_PREVAILING_WAGE_COMPLIANT_CLEAN",
+    }
+
+    # Tipos inválidos: floats de revert a 0.0, ints a 0, bool a False, LD a 31.0,
+    # excluyendo bools de los numéricos.
+    reverted = evaluate_evm_davis_bacon_prevailing_wage_wh347_and_restitution(
+        "cuarenta",          # no-float -> 0.0
+        None,                # no-float -> 0.0
+        True,                # bool excluida -> 0.0
+        uncertified_wh347_payroll_weeks_count="cuatro",      # no-int -> 0
+        apprentice_ratio_exceeded_workers_count=1.5,          # no-int -> 0
+        falsified_payroll_or_kickback_detected="yes",         # no-bool -> False
+        copeland_act_liquidated_damages_per_day="treinta-y-uno",  # no-float -> 31.0
+    )
+    assert reverted == {
+        "hourly_wage_shortfall": 0.0,
+        "back_wages_restitution_owed": 0.0,
+        "cwssa_liquidated_damages": 0.0,
+        "total_contract_withholding_amount": 0.0,
+        "three_year_debarment_risk_triggered": False,
+        "davis_bacon_compliance_status": "DAVIS_BACON_WH347_PREVAILING_WAGE_COMPLIANT_CLEAN",
+    }
+
+    # Igualdad estática y warning residual: prevaleciente 55 vs pagado 50 con
+    # defaults -> shortfall 5.0 * 10 h = 50.0 retención.
+    warning = evaluate_evm_davis_bacon_prevailing_wage_wh347_and_restitution(
+        10.0, 50.0, 55.0,
+    )
+    assert warning["back_wages_restitution_owed"] == 50.0
+    assert warning["davis_bacon_compliance_status"] == "DAVIS_BACON_WH347_DELINQUENCY_OR_WAGE_RESTITUTION_WARNING"

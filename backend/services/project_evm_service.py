@@ -5549,6 +5549,7 @@ __all__ = [
     "evaluate_evm_termination_for_convenience_t4c_settlement_proposal",
     "evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium",
     "evaluate_evm_surety_performance_bond_t4d_takeover_and_overpayment",
+    "evaluate_evm_davis_bacon_prevailing_wage_wh347_and_restitution",
     "ProjectEVMService",
 ]
 
@@ -12352,4 +12353,121 @@ def evaluate_evm_surety_performance_bond_t4d_takeover_and_overpayment(
 
 ProjectEVMService.evaluate_evm_surety_performance_bond_t4d_takeover_and_overpayment = staticmethod(
     evaluate_evm_surety_performance_bond_t4d_takeover_and_overpayment
+)
+
+
+def evaluate_evm_davis_bacon_prevailing_wage_wh347_and_restitution(
+    hours_worked_by_craft: float,
+    actual_hourly_rate_plus_fringe_paid: float,
+    wd_prevailing_hourly_rate_plus_fringe: float,
+    *,
+    uncertified_wh347_payroll_weeks_count: int = 0,
+    apprentice_ratio_exceeded_workers_count: int = 0,
+    falsified_payroll_or_kickback_detected: bool = False,
+    copeland_act_liquidated_damages_per_day: float = 31.0,
+) -> dict[str, Any]:
+    """PMBOK §9.4 & §12.3 — Evaluador Davis-Bacon (FAR 52.222-6) de salario prevaleciente + fringe, restitución de back wages, nómina certificada WH-347 sin certificar, ratio de aprendices excedido y riesgo de inhabilitación de 3 años por nómina falsificada o kickbacks (Copeland Act LD 31.0/día).
+
+    Coerción de entradas: floats inválidos (`bool` excluido) o negativos
+    clamp a 0.0; enteros inválidos (`bool` excluido) o negativos clamp a 0;
+    flags inválidos revierten a su default (`False`); LD por día de tipo
+    inválido revierte a su default 31.0.
+    Calcula:
+    - `hourly_wage_shortfall = max(0.0, prevaleciente - pagado)`, 2 dec.
+    - `back_wages_restitution_owed = horas * shortfall`, 2 dec.
+    - `cwssa_liquidated_damages = (semanas WH-347 sin certificar * 5 +
+      trabajadores con ratio de aprendices excedido * 5) * LD/día`, 2 dec.
+    - `total_contract_withholding_amount` = restitución + LD, 2 dec.
+    - `three_year_debarment_risk_triggered`: falsificación/kickback o
+      shortfall > 0 con >= 4 semanas de WH-347 sin certificar.
+    Estados con precedencia CRITICAL > WARNING > CLEAN:
+    - 'CRITICAL_DAVIS_BACON_DEBARMENT_OR_KICKBACK_WITHHOLDING_BREACH':
+      riesgo de inhabilitación o restitución > 10000.0.
+    - 'DAVIS_BACON_WH347_DELINQUENCY_OR_WAGE_RESTITUTION_WARNING':
+      retención total > 0.0.
+    - 'DAVIS_BACON_WH347_PREVAILING_WAGE_COMPLIANT_CLEAN': sin hallazgos.
+    """
+    def _float(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    def _clamp_non_negative_float(value: Any, default: float) -> float:
+        return max(0.0, _float(value, default))
+
+    def _clamp_non_negative_int(value: Any, default: int) -> int:
+        if isinstance(value, bool) or not isinstance(value, int):
+            return default
+        return max(0, int(value))
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    hours_worked = _clamp_non_negative_float(hours_worked_by_craft, 0.0)
+    actual_rate_paid = _clamp_non_negative_float(
+        actual_hourly_rate_plus_fringe_paid, 0.0
+    )
+    prevailing_rate = _clamp_non_negative_float(
+        wd_prevailing_hourly_rate_plus_fringe, 0.0
+    )
+    uncertified_weeks = _clamp_non_negative_int(
+        uncertified_wh347_payroll_weeks_count, 0
+    )
+    apprentices_exceeded = _clamp_non_negative_int(
+        apprentice_ratio_exceeded_workers_count, 0
+    )
+    falsified_or_kickback = _bool(
+        falsified_payroll_or_kickback_detected, False
+    )
+    ld_per_day = _clamp_non_negative_float(
+        copeland_act_liquidated_damages_per_day, 31.0
+    )
+
+    hourly_wage_shortfall = round(
+        max(0.0, prevailing_rate - actual_rate_paid), 2
+    )
+    back_wages_restitution_owed = round(
+        hours_worked * hourly_wage_shortfall, 2
+    )
+    cwssa_liquidated_damages = round(
+        (uncertified_weeks * 5 + apprentices_exceeded * 5) * ld_per_day,
+        2,
+    )
+    total_contract_withholding_amount = round(
+        back_wages_restitution_owed + cwssa_liquidated_damages, 2
+    )
+    three_year_debarment_risk_triggered = bool(
+        falsified_or_kickback
+        or (hourly_wage_shortfall > 0.0 and uncertified_weeks >= 4)
+    )
+
+    if (
+        three_year_debarment_risk_triggered
+        or back_wages_restitution_owed > 10000.0
+    ):
+        davis_bacon_compliance_status = (
+            "CRITICAL_DAVIS_BACON_DEBARMENT_OR_KICKBACK_WITHHOLDING_BREACH"
+        )
+    elif total_contract_withholding_amount > 0.0:
+        davis_bacon_compliance_status = (
+            "DAVIS_BACON_WH347_DELINQUENCY_OR_WAGE_RESTITUTION_WARNING"
+        )
+    else:
+        davis_bacon_compliance_status = (
+            "DAVIS_BACON_WH347_PREVAILING_WAGE_COMPLIANT_CLEAN"
+        )
+
+    return {
+        "hourly_wage_shortfall": hourly_wage_shortfall,
+        "back_wages_restitution_owed": back_wages_restitution_owed,
+        "cwssa_liquidated_damages": cwssa_liquidated_damages,
+        "total_contract_withholding_amount": total_contract_withholding_amount,
+        "three_year_debarment_risk_triggered":
+            three_year_debarment_risk_triggered,
+        "davis_bacon_compliance_status": davis_bacon_compliance_status,
+    }
+
+
+ProjectEVMService.evaluate_evm_davis_bacon_prevailing_wage_wh347_and_restitution = staticmethod(
+    evaluate_evm_davis_bacon_prevailing_wage_wh347_and_restitution
 )

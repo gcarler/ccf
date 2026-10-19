@@ -2564,6 +2564,7 @@ __all__ = [
     "audit_wiki_distributed_lock_fencing_token_and_split_brain_guard",
     "audit_wiki_graphql_query_depth_alias_budget_and_introspection_guard",
     "audit_wiki_presigned_url_ttl_and_bucket_public_acl_guard",
+    "audit_wiki_fts_bm25_index_bloat_and_reindex_lock_guard",
     "WikiPMIService",
 ]
 
@@ -9802,3 +9803,163 @@ def audit_wiki_presigned_url_ttl_and_bucket_public_acl_guard(
 WikiPMIService.audit_wiki_presigned_url_ttl_and_bucket_public_acl_guard = staticmethod(
     audit_wiki_presigned_url_ttl_and_bucket_public_acl_guard
 )
+
+
+def audit_wiki_fts_bm25_index_bloat_and_reindex_lock_guard(
+    indices: list[dict[str, Any]],
+    *,
+    max_bloat_ratio_pct: float = 30.0,
+    max_p99_search_latency_ms: float = 120.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §11.6 — Wiki Full-Text Search (BM25 / GIN Trigram) Index Bloat, Reindex Concurrently Guard & P99 Latency Auditor."""
+    normalized_max_bloat = min(max(float(max_bloat_ratio_pct), 1.0), 95.0)
+    normalized_max_latency = max(float(max_p99_search_latency_ms), 5.0)
+
+    raw_indices = indices if isinstance(indices, list) else []
+    evaluated_indices: list[dict[str, Any]] = []
+    healthy_count = 0
+    warning_count = 0
+    critical_count = 0
+    blocking_reindex_count = 0
+    bloat_exceeded_count = 0
+    latency_breach_count = 0
+    gin_or_locale_drift_count = 0
+
+    for idx, item in enumerate(raw_indices, start=1):
+        if not isinstance(item, dict):
+            continue
+        index_id = str(item.get("index_id") or f"wiki-fts-idx-{idx}").strip()
+
+        raw_bloat = item.get("dead_tuple_bloat_pct", 5.0)
+        try:
+            dead_tuple_bloat_pct = float(5.0 if raw_bloat is None else raw_bloat)
+        except (TypeError, ValueError):
+            dead_tuple_bloat_pct = 5.0
+
+        raw_latency = item.get("p99_search_latency_ms", 25.0)
+        try:
+            p99_search_latency_ms = float(
+                25.0 if raw_latency is None else raw_latency
+            )
+        except (TypeError, ValueError):
+            p99_search_latency_ms = 25.0
+
+        reindex_uses_concurrently = bool(
+            item.get("reindex_uses_concurrently", True)
+        )
+
+        raw_gin_overflow = item.get("gin_pending_list_overflow_kb", 0.0)
+        try:
+            gin_pending_list_overflow_kb = float(
+                0.0 if raw_gin_overflow is None else raw_gin_overflow
+            )
+        except (TypeError, ValueError):
+            gin_pending_list_overflow_kb = 0.0
+
+        dictionary_stemmer_locale_mismatch = bool(
+            item.get("dictionary_stemmer_locale_mismatch", False)
+        )
+
+        blocking_reindex_table_lock = not reindex_uses_concurrently
+        bloat_threshold_exceeded = dead_tuple_bloat_pct > normalized_max_bloat
+        search_latency_slo_breach = (
+            p99_search_latency_ms > normalized_max_latency
+        )
+        gin_fastupdate_or_locale_drift = (
+            gin_pending_list_overflow_kb > 4096.0
+            or dictionary_stemmer_locale_mismatch
+        )
+
+        if blocking_reindex_table_lock:
+            blocking_reindex_count += 1
+        if bloat_threshold_exceeded:
+            bloat_exceeded_count += 1
+        if search_latency_slo_breach:
+            latency_breach_count += 1
+        if gin_fastupdate_or_locale_drift:
+            gin_or_locale_drift_count += 1
+
+        if blocking_reindex_table_lock or (
+            bloat_threshold_exceeded and search_latency_slo_breach
+        ):
+            index_status = "critical"
+            critical_count += 1
+        elif (
+            bloat_threshold_exceeded
+            or search_latency_slo_breach
+            or gin_fastupdate_or_locale_drift
+        ):
+            index_status = "warning"
+            warning_count += 1
+        else:
+            index_status = "healthy"
+            healthy_count += 1
+
+        evaluated_indices.append(
+            {
+                "index_id": index_id,
+                "dead_tuple_bloat_pct": dead_tuple_bloat_pct,
+                "p99_search_latency_ms": p99_search_latency_ms,
+                "reindex_uses_concurrently": reindex_uses_concurrently,
+                "gin_pending_list_overflow_kb": gin_pending_list_overflow_kb,
+                "dictionary_stemmer_locale_mismatch": dictionary_stemmer_locale_mismatch,
+                "blocking_reindex_table_lock": blocking_reindex_table_lock,
+                "bloat_threshold_exceeded": bloat_threshold_exceeded,
+                "search_latency_slo_breach": search_latency_slo_breach,
+                "gin_fastupdate_or_locale_drift": gin_fastupdate_or_locale_drift,
+                "index_status": index_status,
+            }
+        )
+
+    total_indices = len(evaluated_indices)
+    fts_health_rate_pct = (
+        round((healthy_count / total_indices) * 100.0, 2)
+        if total_indices > 0
+        else 100.0
+    )
+
+    recommendations: list[str] = []
+    if blocking_reindex_count > 0:
+        recommendations.append(
+            f"Exigir REINDEX INDEX CONCURRENTLY para evitar bloqueos exclusivos de tabla (AccessExclusiveLock) en {blocking_reindex_count} índice(s) FTS."
+        )
+    if bloat_exceeded_count > 0:
+        recommendations.append(
+            f"Compactar índices con dead_tuple_bloat_pct > {normalized_max_bloat}% mediante autovacuum agresivo o reindexación concurrente en {bloat_exceeded_count} índice(s)."
+        )
+    if latency_breach_count > 0:
+        recommendations.append(
+            f"Optimizar consultas BM25/GIN para reducir latencia p99 <= {normalized_max_latency} ms en {latency_breach_count} índice(s)."
+        )
+    if gin_or_locale_drift_count > 0:
+        recommendations.append(
+            f"Purgar GIN pending list (gin_clean_pending_list) <= 4096 KB y alinear configuración de stemmer/diccionario en {gin_or_locale_drift_count} índice(s)."
+        )
+
+    if critical_count > 0:
+        status = "critical"
+    elif warning_count > 0:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_indices": total_indices,
+        "healthy_count": healthy_count,
+        "warning_count": warning_count,
+        "critical_count": critical_count,
+        "blocking_reindex_count": blocking_reindex_count,
+        "bloat_exceeded_count": bloat_exceeded_count,
+        "latency_breach_count": latency_breach_count,
+        "gin_or_locale_drift_count": gin_or_locale_drift_count,
+        "fts_health_rate_pct": fts_health_rate_pct,
+        "status": status,
+        "indices": evaluated_indices,
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_fts_bm25_index_bloat_and_reindex_lock_guard = staticmethod(
+    audit_wiki_fts_bm25_index_bloat_and_reindex_lock_guard
+)
+

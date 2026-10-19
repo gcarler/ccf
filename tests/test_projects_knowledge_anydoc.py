@@ -10594,3 +10594,101 @@ def test_audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene_emp
         "audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene"
         in mod.__all__
     )
+
+
+def test_audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygiene_healthy():
+    from backend.services.anydoc_service import (
+        audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygiene,
+    )
+
+    md = """
+    # Accessibility Audit Report
+    <!-- wcag_audit: component=architecture-diagram; contrast_ratio=7.1; alt_text=Diagrama de flujo del bus de eventos; heading_jump_skipped=false; keyboard_trap_detected=false; aria_landmarks_valid=true -->
+    <!-- wcag_audit: component=kpi-summary-table; contrast_ratio=5.4; alt_text=Tabla comparativa de indicadores EVM del trimestre; heading_jump_skipped=false; keyboard_trap_detected=false; aria_landmarks_valid=true -->
+    """
+    res = audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygiene(
+        md
+    )
+    assert res["status"] == "healthy"
+    assert res["total_wcag_blocks"] == 2
+    assert res["healthy_count"] == 2
+    assert res["warning_count"] == 0
+    assert res["critical_count"] == 0
+    assert res["wcag_compliance_rate_pct"] == 100.0
+    assert res["recommendations"] == []
+
+
+def test_audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygiene_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygiene,
+    )
+
+    md = """
+    <!-- wcag_audit: component=milestone-badge; contrast_ratio=3.8; alt_text=Insignia de estado del hito Q3; heading_jump_skipped=true; keyboard_trap_detected=false; aria_landmarks_valid=true -->
+    """
+    res = audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygiene(
+        md
+    )
+    assert res["status"] == "warning"
+    assert res["total_wcag_blocks"] == 1
+    assert res["warning_count"] == 1
+    assert res["critical_count"] == 0
+    assert res["contrast_shortfall_count"] == 1
+    assert res["heading_jump_count"] == 1
+    assert res["blocks"][0]["block_status"] == "warning"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygiene_critical():
+    from backend.services.anydoc_service import (
+        audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygiene,
+    )
+
+    md = """
+    <!-- wcag_audit: component=embedded-modal-chart; contrast_ratio=2.4; alt_text=image; heading_jump_skipped=true; keyboard_trap_detected=true; aria_landmarks_valid=false -->
+    """
+    res = audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygiene(
+        md
+    )
+    assert res["status"] == "critical"
+    assert res["total_wcag_blocks"] == 1
+    assert res["critical_count"] == 1
+    assert res["keyboard_or_aria_breach_count"] == 1
+    assert res["contrast_shortfall_count"] == 1
+    assert res["missing_alt_text_count"] == 1
+    assert res["wcag_compliance_rate_pct"] == 0.0
+    assert res["blocks"][0]["block_status"] == "critical"
+    assert len(res["recommendations"]) >= 3
+
+
+def test_audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygiene_empty_and_binding():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygiene,
+    )
+
+    empty = audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygiene(
+        ""
+    )
+    assert empty["status"] == "healthy"
+    assert empty["total_wcag_blocks"] == 0
+    assert empty["wcag_compliance_rate_pct"] == 100.0
+    assert (
+        AnyDocService.audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygiene(
+            ""
+        )
+        == empty
+    )
+    assert (
+        AnydocService.audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygiene(
+            ""
+        )
+        == empty
+    )
+    assert (
+        "audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygiene"
+        in mod.__all__
+    )
+

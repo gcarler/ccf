@@ -12825,3 +12825,113 @@ def test_audit_wiki_presigned_url_ttl_and_bucket_public_acl_guard_empty_and_bind
         "audit_wiki_presigned_url_ttl_and_bucket_public_acl_guard"
         in mod.__all__
     )
+
+
+def test_audit_wiki_fts_bm25_index_bloat_and_reindex_lock_guard_healthy():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_fts_bm25_index_bloat_and_reindex_lock_guard,
+    )
+
+    indices = [
+        {
+            "index_id": "idx_wiki_pages_fts_es_gin",
+            "dead_tuple_bloat_pct": 8.4,
+            "p99_search_latency_ms": 34.0,
+            "reindex_uses_concurrently": True,
+            "gin_pending_list_overflow_kb": 512.0,
+            "dictionary_stemmer_locale_mismatch": False,
+        },
+        {
+            "index_id": "idx_wiki_pages_title_trgm_gin",
+            "dead_tuple_bloat_pct": 12.1,
+            "p99_search_latency_ms": 19.5,
+            "reindex_uses_concurrently": True,
+            "gin_pending_list_overflow_kb": 128.0,
+            "dictionary_stemmer_locale_mismatch": False,
+        },
+    ]
+    res = audit_wiki_fts_bm25_index_bloat_and_reindex_lock_guard(indices)
+    assert res["status"] == "healthy"
+    assert res["total_indices"] == 2
+    assert res["healthy_count"] == 2
+    assert res["warning_count"] == 0
+    assert res["critical_count"] == 0
+    assert res["fts_health_rate_pct"] == 100.0
+    assert res["recommendations"] == []
+
+
+def test_audit_wiki_fts_bm25_index_bloat_and_reindex_lock_guard_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_fts_bm25_index_bloat_and_reindex_lock_guard,
+    )
+
+    indices = [
+        {
+            "index_id": "idx_wiki_revisions_bm25",
+            "dead_tuple_bloat_pct": 38.5,
+            "p99_search_latency_ms": 85.0,
+            "reindex_uses_concurrently": True,
+            "gin_pending_list_overflow_kb": 6144.0,
+            "dictionary_stemmer_locale_mismatch": True,
+        }
+    ]
+    res = audit_wiki_fts_bm25_index_bloat_and_reindex_lock_guard(indices)
+    assert res["status"] == "warning"
+    assert res["total_indices"] == 1
+    assert res["warning_count"] == 1
+    assert res["critical_count"] == 0
+    assert res["bloat_exceeded_count"] == 1
+    assert res["gin_or_locale_drift_count"] == 1
+    assert res["indices"][0]["index_status"] == "warning"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_wiki_fts_bm25_index_bloat_and_reindex_lock_guard_critical():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_fts_bm25_index_bloat_and_reindex_lock_guard,
+    )
+
+    indices = [
+        {
+            "index_id": "idx_wiki_corpus_tsvector_gin",
+            "dead_tuple_bloat_pct": 54.0,
+            "p99_search_latency_ms": 290.0,
+            "reindex_uses_concurrently": False,
+            "gin_pending_list_overflow_kb": 8192.0,
+            "dictionary_stemmer_locale_mismatch": True,
+        }
+    ]
+    res = audit_wiki_fts_bm25_index_bloat_and_reindex_lock_guard(indices)
+    assert res["status"] == "critical"
+    assert res["total_indices"] == 1
+    assert res["critical_count"] == 1
+    assert res["blocking_reindex_count"] == 1
+    assert res["bloat_exceeded_count"] == 1
+    assert res["latency_breach_count"] == 1
+    assert res["fts_health_rate_pct"] == 0.0
+    assert res["indices"][0]["index_status"] == "critical"
+    assert len(res["recommendations"]) >= 3
+
+
+def test_audit_wiki_fts_bm25_index_bloat_and_reindex_lock_guard_empty_and_binding():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_fts_bm25_index_bloat_and_reindex_lock_guard,
+    )
+
+    empty = audit_wiki_fts_bm25_index_bloat_and_reindex_lock_guard([])
+    assert empty["status"] == "healthy"
+    assert empty["total_indices"] == 0
+    assert empty["fts_health_rate_pct"] == 100.0
+    assert (
+        WikiPMIService.audit_wiki_fts_bm25_index_bloat_and_reindex_lock_guard(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_wiki_fts_bm25_index_bloat_and_reindex_lock_guard"
+        in mod.__all__
+    )
+

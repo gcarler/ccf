@@ -3198,6 +3198,7 @@ __all__ = [
     "audit_epc_performance_guarantee_capacity_test_and_minimum_acceptance",
     "audit_spv_project_finance_dscr_llcr_covenant_and_equity_lockup",
     "audit_ppp_concession_availability_payment_and_handback_residual_life",
+    "audit_esg_scope_emissions_cap_and_green_bond_proceeds",
     "ProjectLifecyclePMIService",
 ]
 
@@ -10077,4 +10078,180 @@ def audit_ppp_concession_availability_payment_and_handback_residual_life(
 
 ProjectLifecyclePMIService.audit_ppp_concession_availability_payment_and_handback_residual_life = staticmethod(
     audit_ppp_concession_availability_payment_and_handback_residual_life
+)
+
+
+def audit_esg_scope_emissions_cap_and_green_bond_proceeds(
+    work_packages: list[dict[str, Any]],
+    *,
+    max_embodied_carbon_overrun_pct: float = 10.0,
+    min_green_taxonomy_alignment_pct: float = 90.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §12.3 & §11.2 — ESG Scope 1-2-3 Embodied Carbon Emissions Cap, ICMA Green Bond Use-of-Proceeds Taxonomy & Verified Carbon Offset Retirement Auditor."""
+    normalized_max_overrun = max(float(max_embodied_carbon_overrun_pct), 0.0)
+    normalized_min_taxonomy = min(
+        max(float(min_green_taxonomy_alignment_pct), 0.0), 100.0
+    )
+
+    raw_packages = work_packages if isinstance(work_packages, list) else []
+    evaluated_packages: list[dict[str, Any]] = []
+    healthy_count = 0
+    warning_count = 0
+    critical_count = 0
+    greenwashing_breach_count = 0
+    carbon_cap_breach_count = 0
+    taxonomy_shortfall_count = 0
+
+    for idx, item in enumerate(raw_packages, start=1):
+        if not isinstance(item, dict):
+            continue
+        package_id = str(item.get("package_id") or f"esg-pkg-{idx}").strip()
+
+        raw_base = item.get("baseline_tco2e", 100.0)
+        try:
+            baseline_tco2e = float(100.0 if raw_base is None else raw_base)
+        except (TypeError, ValueError):
+            baseline_tco2e = 100.0
+
+        raw_act = item.get("actual_tco2e", 100.0)
+        try:
+            actual_tco2e = float(100.0 if raw_act is None else raw_act)
+        except (TypeError, ValueError):
+            actual_tco2e = 100.0
+
+        raw_offsets = item.get("retired_verified_carbon_offsets_tco2e", 0.0)
+        try:
+            retired_verified_carbon_offsets_tco2e = float(
+                0.0 if raw_offsets is None else raw_offsets
+            )
+        except (TypeError, ValueError):
+            retired_verified_carbon_offsets_tco2e = 0.0
+
+        raw_tax = item.get("green_taxonomy_aligned_spend_pct", 100.0)
+        try:
+            green_taxonomy_aligned_spend_pct = float(
+                100.0 if raw_tax is None else raw_tax
+            )
+        except (TypeError, ValueError):
+            green_taxonomy_aligned_spend_pct = 100.0
+
+        third_party_esg_assurance_verified = bool(
+            item.get("third_party_esg_assurance_verified", True)
+        )
+        fossil_fuel_exclusion_violated = bool(
+            item.get("fossil_fuel_exclusion_violated", False)
+        )
+
+        net_actual_tco2e = round(
+            max(0.0, actual_tco2e - retired_verified_carbon_offsets_tco2e), 2
+        )
+        carbon_overrun_pct = (
+            round(
+                ((net_actual_tco2e - baseline_tco2e) / baseline_tco2e) * 100.0,
+                2,
+            )
+            if baseline_tco2e > 0.0
+            else 0.0
+        )
+
+        embodied_carbon_cap_breached = (
+            carbon_overrun_pct > normalized_max_overrun
+        )
+        greenwashing_or_exclusion_breach = (
+            fossil_fuel_exclusion_violated
+            or (
+                not third_party_esg_assurance_verified
+                and retired_verified_carbon_offsets_tco2e > 0.0
+            )
+        )
+        taxonomy_alignment_shortfall = (
+            green_taxonomy_aligned_spend_pct < normalized_min_taxonomy
+        )
+
+        if greenwashing_or_exclusion_breach:
+            greenwashing_breach_count += 1
+        if embodied_carbon_cap_breached:
+            carbon_cap_breach_count += 1
+        if taxonomy_alignment_shortfall:
+            taxonomy_shortfall_count += 1
+
+        if greenwashing_or_exclusion_breach or (
+            embodied_carbon_cap_breached and taxonomy_alignment_shortfall
+        ):
+            package_status = "critical"
+            critical_count += 1
+        elif (
+            embodied_carbon_cap_breached
+            or taxonomy_alignment_shortfall
+            or not third_party_esg_assurance_verified
+        ):
+            package_status = "warning"
+            warning_count += 1
+        else:
+            package_status = "healthy"
+            healthy_count += 1
+
+        evaluated_packages.append(
+            {
+                "package_id": package_id,
+                "baseline_tco2e": baseline_tco2e,
+                "actual_tco2e": actual_tco2e,
+                "retired_verified_carbon_offsets_tco2e": retired_verified_carbon_offsets_tco2e,
+                "net_actual_tco2e": net_actual_tco2e,
+                "carbon_overrun_pct": carbon_overrun_pct,
+                "green_taxonomy_aligned_spend_pct": green_taxonomy_aligned_spend_pct,
+                "third_party_esg_assurance_verified": third_party_esg_assurance_verified,
+                "fossil_fuel_exclusion_violated": fossil_fuel_exclusion_violated,
+                "embodied_carbon_cap_breached": embodied_carbon_cap_breached,
+                "greenwashing_or_exclusion_breach": greenwashing_or_exclusion_breach,
+                "taxonomy_alignment_shortfall": taxonomy_alignment_shortfall,
+                "package_status": package_status,
+            }
+        )
+
+    total_packages = len(evaluated_packages)
+    esg_compliance_rate_pct = (
+        round((healthy_count / total_packages) * 100.0, 2)
+        if total_packages > 0
+        else 100.0
+    )
+
+    recommendations: list[str] = []
+    if greenwashing_breach_count > 0:
+        recommendations.append(
+            f"Suspender desembolso de Bono Verde: eliminar gasto en combustibles fósiles excluidos y exigir verificación independiente (SPO/Assurance) para créditos de carbono retirados en {greenwashing_breach_count} paquete(s)."
+        )
+    if carbon_cap_breach_count > 0:
+        recommendations.append(
+            f"Reducir emisiones de carbono embebido (Alcance 1-2-3) o retirar créditos verificados adicionales para contener sobrecosto de tCO2e <= {normalized_max_overrun}% en {carbon_cap_breach_count} paquete(s)."
+        )
+    if taxonomy_shortfall_count > 0:
+        recommendations.append(
+            f"Reasignar CAPEX hacia partidas elegibles ICMA/EU Green Taxonomy (>= {normalized_min_taxonomy}%) en {taxonomy_shortfall_count} paquete(s)."
+        )
+
+    if critical_count > 0:
+        status = "critical"
+    elif warning_count > 0:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_packages": total_packages,
+        "healthy_count": healthy_count,
+        "warning_count": warning_count,
+        "critical_count": critical_count,
+        "greenwashing_breach_count": greenwashing_breach_count,
+        "carbon_cap_breach_count": carbon_cap_breach_count,
+        "taxonomy_shortfall_count": taxonomy_shortfall_count,
+        "esg_compliance_rate_pct": esg_compliance_rate_pct,
+        "status": status,
+        "packages": evaluated_packages,
+        "recommendations": recommendations,
+    }
+
+
+ProjectLifecyclePMIService.audit_esg_scope_emissions_cap_and_green_bond_proceeds = staticmethod(
+    audit_esg_scope_emissions_cap_and_green_bond_proceeds
 )

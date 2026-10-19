@@ -2878,6 +2878,7 @@ __all__ = [
     "audit_zero_downtime_db_migration_expand_contract_and_lock_gate",
     "audit_sbom_slsa_provenance_and_cisa_kev_release_gate",
     "audit_chaos_engineering_blast_radius_and_steady_state_gate",
+    "audit_feature_flag_stale_toggle_debt_and_shadow_parity_gate",
     "ProjectCCBService",
 ]
 
@@ -9985,4 +9986,163 @@ def audit_chaos_engineering_blast_radius_and_steady_state_gate(
 
 ProjectCCBService.audit_chaos_engineering_blast_radius_and_steady_state_gate = staticmethod(
     audit_chaos_engineering_blast_radius_and_steady_state_gate
+)
+
+
+def audit_feature_flag_stale_toggle_debt_and_shadow_parity_gate(
+    flags: list[dict[str, Any]],
+    *,
+    max_flag_age_days: int = 45,
+    min_shadow_parity_pct: float = 99.9,
+) -> dict[str, Any]:
+    """PMI PMBOK §8.3 & §11.6 — CCB Feature Flag Stale Toggle Debt, Kill-Switch Safe Default-Off Fallthrough & Shadow-Traffic Parity Gate Auditor."""
+    normalized_max_age = max(int(max_flag_age_days), 1)
+    normalized_min_parity = min(max(float(min_shadow_parity_pct), 50.0), 100.0)
+
+    raw_flags = flags if isinstance(flags, list) else []
+    evaluated_flags: list[dict[str, Any]] = []
+    healthy_count = 0
+    warning_count = 0
+    critical_count = 0
+    unsafe_or_crash_count = 0
+    shadow_parity_breach_count = 0
+    stale_toggle_debt_count = 0
+    nesting_hazard_count = 0
+
+    for idx, item in enumerate(raw_flags, start=1):
+        if not isinstance(item, dict):
+            continue
+        flag_id = str(item.get("flag_id") or f"ff-toggle-{idx}").strip()
+
+        raw_age = item.get("age_days_at_100_pct", 0)
+        try:
+            age_days_at_100_pct = int(0 if raw_age is None else raw_age)
+        except (TypeError, ValueError):
+            age_days_at_100_pct = 0
+
+        raw_parity = item.get("shadow_traffic_parity_pct", 100.0)
+        try:
+            shadow_traffic_parity_pct = float(
+                100.0 if raw_parity is None else raw_parity
+            )
+        except (TypeError, ValueError):
+            shadow_traffic_parity_pct = 100.0
+
+        safe_default_off_fallthrough_verified = bool(
+            item.get("safe_default_off_fallthrough_verified", True)
+        )
+
+        raw_depth = item.get("nested_flag_dependency_depth", 0)
+        try:
+            nested_flag_dependency_depth = int(
+                0 if raw_depth is None else raw_depth
+            )
+        except (TypeError, ValueError):
+            nested_flag_dependency_depth = 0
+
+        caused_unhandled_exception_in_canary = bool(
+            item.get("caused_unhandled_exception_in_canary", False)
+        )
+
+        unsafe_fallthrough_or_canary_crash = (
+            not safe_default_off_fallthrough_verified
+            or caused_unhandled_exception_in_canary
+        )
+        shadow_parity_breach = (
+            shadow_traffic_parity_pct < normalized_min_parity
+        )
+        stale_toggle_debt = age_days_at_100_pct > normalized_max_age
+        combinatorial_nesting_hazard = nested_flag_dependency_depth > 2
+
+        if unsafe_fallthrough_or_canary_crash:
+            unsafe_or_crash_count += 1
+        if shadow_parity_breach:
+            shadow_parity_breach_count += 1
+        if stale_toggle_debt:
+            stale_toggle_debt_count += 1
+        if combinatorial_nesting_hazard:
+            nesting_hazard_count += 1
+
+        if unsafe_fallthrough_or_canary_crash or (
+            shadow_parity_breach and combinatorial_nesting_hazard
+        ):
+            flag_status = "critical"
+            critical_count += 1
+        elif (
+            shadow_parity_breach
+            or stale_toggle_debt
+            or combinatorial_nesting_hazard
+        ):
+            flag_status = "warning"
+            warning_count += 1
+        else:
+            flag_status = "healthy"
+            healthy_count += 1
+
+        evaluated_flags.append(
+            {
+                "flag_id": flag_id,
+                "age_days_at_100_pct": age_days_at_100_pct,
+                "shadow_traffic_parity_pct": shadow_traffic_parity_pct,
+                "safe_default_off_fallthrough_verified": safe_default_off_fallthrough_verified,
+                "nested_flag_dependency_depth": nested_flag_dependency_depth,
+                "caused_unhandled_exception_in_canary": caused_unhandled_exception_in_canary,
+                "unsafe_fallthrough_or_canary_crash": unsafe_fallthrough_or_canary_crash,
+                "shadow_parity_breach": shadow_parity_breach,
+                "stale_toggle_debt": stale_toggle_debt,
+                "combinatorial_nesting_hazard": combinatorial_nesting_hazard,
+                "flag_status": flag_status,
+            }
+        )
+
+    total_flags = len(evaluated_flags)
+    flag_hygiene_rate_pct = (
+        round((healthy_count / total_flags) * 100.0, 2)
+        if total_flags > 0
+        else 100.0
+    )
+
+    recommendations: list[str] = []
+    if unsafe_or_crash_count > 0:
+        recommendations.append(
+            f"Bloquear promoción en CCB: verificar fallthrough seguro con flag en OFF y corregir excepciones no controladas en canary ({unsafe_or_crash_count} flag(s))."
+        )
+    if shadow_parity_breach_count > 0:
+        recommendations.append(
+            f"Alcanzar paridad de respuestas en dark-launch / shadow-traffic >= {normalized_min_parity}% antes de conmutar tráfico productivo ({shadow_parity_breach_count} flag(s))."
+        )
+    if stale_toggle_debt_count > 0:
+        recommendations.append(
+            f"Purgar del código fuente feature flags estabilizados al 100% con antigüedad > {normalized_max_age} días ({stale_toggle_debt_count} flag(s))."
+        )
+    if nesting_hazard_count > 0:
+        recommendations.append(
+            f"Aplanar dependencias anidadas entre feature flags (profundidad <= 2) para evitar explosión combinatoria de estados ({nesting_hazard_count} flag(s))."
+        )
+
+    if critical_count > 0:
+        status = "critical"
+    elif warning_count > 0:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_flags": total_flags,
+        "healthy_count": healthy_count,
+        "warning_count": warning_count,
+        "critical_count": critical_count,
+        "unsafe_or_crash_count": unsafe_or_crash_count,
+        "shadow_parity_breach_count": shadow_parity_breach_count,
+        "stale_toggle_debt_count": stale_toggle_debt_count,
+        "nesting_hazard_count": nesting_hazard_count,
+        "flag_hygiene_rate_pct": flag_hygiene_rate_pct,
+        "status": status,
+        "flags": evaluated_flags,
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.audit_feature_flag_stale_toggle_debt_and_shadow_parity_gate = staticmethod(
+    audit_feature_flag_stale_toggle_debt_and_shadow_parity_gate
 )

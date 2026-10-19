@@ -12842,3 +12842,117 @@ def test_audit_ppp_concession_availability_payment_and_handback_residual_life_em
         "audit_ppp_concession_availability_payment_and_handback_residual_life"
         in mod.__all__
     )
+
+
+def test_audit_esg_scope_emissions_cap_and_green_bond_proceeds_healthy():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_esg_scope_emissions_cap_and_green_bond_proceeds,
+    )
+
+    packages = [
+        {
+            "package_id": "WP-SOLAR-ROOFTOP-01",
+            "baseline_tco2e": 500.0,
+            "actual_tco2e": 520.0,
+            "retired_verified_carbon_offsets_tco2e": 10.0,
+            "green_taxonomy_aligned_spend_pct": 96.5,
+            "third_party_esg_assurance_verified": True,
+            "fossil_fuel_exclusion_violated": False,
+        },
+        {
+            "package_id": "WP-LOW-CARBON-CONCRETE-02",
+            "baseline_tco2e": 1000.0,
+            "actual_tco2e": 980.0,
+            "retired_verified_carbon_offsets_tco2e": 0.0,
+            "green_taxonomy_aligned_spend_pct": 92.0,
+            "third_party_esg_assurance_verified": True,
+            "fossil_fuel_exclusion_violated": False,
+        },
+    ]
+    res = audit_esg_scope_emissions_cap_and_green_bond_proceeds(packages)
+    assert res["status"] == "healthy"
+    assert res["total_packages"] == 2
+    assert res["healthy_count"] == 2
+    assert res["warning_count"] == 0
+    assert res["critical_count"] == 0
+    assert res["esg_compliance_rate_pct"] == 100.0
+    assert res["recommendations"] == []
+
+
+def test_audit_esg_scope_emissions_cap_and_green_bond_proceeds_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_esg_scope_emissions_cap_and_green_bond_proceeds,
+    )
+
+    packages = [
+        {
+            "package_id": "WP-STEEL-FOUNDATION-03",
+            "baseline_tco2e": 400.0,
+            "actual_tco2e": 480.0,
+            "retired_verified_carbon_offsets_tco2e": 0.0,
+            "green_taxonomy_aligned_spend_pct": 95.0,
+            "third_party_esg_assurance_verified": True,
+            "fossil_fuel_exclusion_violated": False,
+        }
+    ]
+    res = audit_esg_scope_emissions_cap_and_green_bond_proceeds(packages)
+    assert res["status"] == "warning"
+    assert res["total_packages"] == 1
+    assert res["warning_count"] == 1
+    assert res["critical_count"] == 0
+    assert res["carbon_cap_breach_count"] == 1
+    assert res["taxonomy_shortfall_count"] == 0
+    assert res["packages"][0]["carbon_overrun_pct"] == 20.0
+    assert res["packages"][0]["package_status"] == "warning"
+    assert len(res["recommendations"]) >= 1
+
+
+def test_audit_esg_scope_emissions_cap_and_green_bond_proceeds_critical():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_esg_scope_emissions_cap_and_green_bond_proceeds,
+    )
+
+    packages = [
+        {
+            "package_id": "WP-DIESEL-GENSET-GREENWASH",
+            "baseline_tco2e": 300.0,
+            "actual_tco2e": 450.0,
+            "retired_verified_carbon_offsets_tco2e": 50.0,
+            "green_taxonomy_aligned_spend_pct": 60.0,
+            "third_party_esg_assurance_verified": False,
+            "fossil_fuel_exclusion_violated": True,
+        }
+    ]
+    res = audit_esg_scope_emissions_cap_and_green_bond_proceeds(packages)
+    assert res["status"] == "critical"
+    assert res["total_packages"] == 1
+    assert res["critical_count"] == 1
+    assert res["greenwashing_breach_count"] == 1
+    assert res["carbon_cap_breach_count"] == 1
+    assert res["taxonomy_shortfall_count"] == 1
+    assert res["esg_compliance_rate_pct"] == 0.0
+    assert res["packages"][0]["package_status"] == "critical"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_esg_scope_emissions_cap_and_green_bond_proceeds_empty_and_binding():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_esg_scope_emissions_cap_and_green_bond_proceeds,
+    )
+
+    empty = audit_esg_scope_emissions_cap_and_green_bond_proceeds([])
+    assert empty["status"] == "healthy"
+    assert empty["total_packages"] == 0
+    assert empty["esg_compliance_rate_pct"] == 100.0
+    assert (
+        ProjectLifecyclePMIService.audit_esg_scope_emissions_cap_and_green_bond_proceeds(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_esg_scope_emissions_cap_and_green_bond_proceeds"
+        in mod.__all__
+    )

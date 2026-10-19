@@ -3064,6 +3064,7 @@ __all__ = [
     "audit_markdown_slo_error_budget_burn_rate_and_multiwindow_hygiene",
     "audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene",
     "audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene",
+    "audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygiene",
     "AnydocService",
 ]
 
@@ -11143,3 +11144,168 @@ AnyDocService.audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygien
 AnydocService.audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene = staticmethod(
     audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene
 )
+
+
+def audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygiene(
+    markdown_text: str,
+    *,
+    min_contrast_ratio: float = 4.5,
+    require_descriptive_alt_text: bool = True,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §10.2 — AnyDoc Markdown WCAG 2.2 AA Accessibility, Contrast Ratio, Alt-Text Coverage & Heading Hierarchy Hygiene Auditor."""
+    normalized_min_contrast = min(max(float(min_contrast_ratio), 1.0), 21.0)
+    generic_invalid_alt = {
+        "",
+        "none",
+        "image",
+        "img",
+        "photo",
+        "screenshot",
+        "diagram",
+        "picture",
+    }
+
+    text = markdown_text if isinstance(markdown_text, str) else ""
+    stripped = re.sub(r"```[\s\S]*?```|~~~[\s\S]*?~~~", "", text)
+
+    pattern = re.compile(
+        r"<!--\s*wcag_audit\s*:(.*?)-->", re.IGNORECASE | re.DOTALL
+    )
+    blocks: list[dict[str, Any]] = []
+    healthy_count = 0
+    warning_count = 0
+    critical_count = 0
+    keyboard_or_aria_breach_count = 0
+    contrast_shortfall_count = 0
+    missing_alt_text_count = 0
+    heading_jump_count = 0
+
+    for idx, match in enumerate(pattern.finditer(stripped), start=1):
+        raw_body = match.group(1)
+        kv: dict[str, str] = {}
+        for part in re.split(r"[;\n]", raw_body):
+            if "=" in part:
+                k, v = part.split("=", 1)
+                kv[k.strip().lower()] = v.strip()
+
+        component = kv.get("component") or f"wcag-component-{idx}"
+        try:
+            contrast_ratio = float(kv.get("contrast_ratio", "4.5"))
+        except (TypeError, ValueError):
+            contrast_ratio = 0.0
+
+        alt_text = kv.get("alt_text", "").strip()
+        raw_heading_jump = kv.get("heading_jump_skipped", "false").strip().lower()
+        heading_jump_skipped = raw_heading_jump in {"true", "1", "yes"}
+        raw_keyboard_trap = (
+            kv.get("keyboard_trap_detected", "false").strip().lower()
+        )
+        keyboard_trap_detected = raw_keyboard_trap in {"true", "1", "yes"}
+        raw_aria_valid = kv.get("aria_landmarks_valid", "true").strip().lower()
+        aria_landmarks_valid = raw_aria_valid not in {"false", "0", "no"}
+
+        keyboard_trap_or_aria_broken = (
+            keyboard_trap_detected or not aria_landmarks_valid
+        )
+        contrast_ratio_shortfall = contrast_ratio < normalized_min_contrast
+        non_descriptive_or_missing_alt = bool(require_descriptive_alt_text) and (
+            alt_text.lower() in generic_invalid_alt or len(alt_text) < 5
+        )
+        heading_hierarchy_violation = heading_jump_skipped
+
+        if keyboard_trap_or_aria_broken:
+            keyboard_or_aria_breach_count += 1
+        if contrast_ratio_shortfall:
+            contrast_shortfall_count += 1
+        if non_descriptive_or_missing_alt:
+            missing_alt_text_count += 1
+        if heading_hierarchy_violation:
+            heading_jump_count += 1
+
+        if keyboard_trap_or_aria_broken or (
+            contrast_ratio_shortfall and non_descriptive_or_missing_alt
+        ):
+            block_status = "critical"
+            critical_count += 1
+        elif (
+            contrast_ratio_shortfall
+            or non_descriptive_or_missing_alt
+            or heading_hierarchy_violation
+        ):
+            block_status = "warning"
+            warning_count += 1
+        else:
+            block_status = "healthy"
+            healthy_count += 1
+
+        blocks.append(
+            {
+                "component": component,
+                "contrast_ratio": contrast_ratio,
+                "alt_text": alt_text,
+                "heading_jump_skipped": heading_jump_skipped,
+                "keyboard_trap_detected": keyboard_trap_detected,
+                "aria_landmarks_valid": aria_landmarks_valid,
+                "keyboard_trap_or_aria_broken": keyboard_trap_or_aria_broken,
+                "contrast_ratio_shortfall": contrast_ratio_shortfall,
+                "non_descriptive_or_missing_alt": non_descriptive_or_missing_alt,
+                "heading_hierarchy_violation": heading_hierarchy_violation,
+                "block_status": block_status,
+            }
+        )
+
+    total_wcag_blocks = len(blocks)
+    wcag_compliance_rate_pct = (
+        round((healthy_count / total_wcag_blocks) * 100.0, 2)
+        if total_wcag_blocks > 0
+        else 100.0
+    )
+
+    recommendations: list[str] = []
+    if keyboard_or_aria_breach_count > 0:
+        recommendations.append(
+            f"Eliminar trampas de foco por teclado (keyboard trap) y restaurar landmarks ARIA semánticos válidos en {keyboard_or_aria_breach_count} bloque(s) WCAG."
+        )
+    if contrast_shortfall_count > 0:
+        recommendations.append(
+            f"Elevar el ratio de contraste luminoso >= {normalized_min_contrast}:1 conforme a WCAG 2.2 AA en {contrast_shortfall_count} bloque(s)."
+        )
+    if missing_alt_text_count > 0:
+        recommendations.append(
+            f"Proveer texto alternativo (alt_text) descriptivo y específico (>= 5 caracteres, sin etiquetas genéricas) en {missing_alt_text_count} bloque(s)."
+        )
+    if heading_jump_count > 0:
+        recommendations.append(
+            f"Corregir saltos en la jerarquía de encabezados (H1->H2->H3 sin omitir niveles) en {heading_jump_count} bloque(s)."
+        )
+
+    if critical_count > 0:
+        status = "critical"
+    elif warning_count > 0:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_wcag_blocks": total_wcag_blocks,
+        "healthy_count": healthy_count,
+        "warning_count": warning_count,
+        "critical_count": critical_count,
+        "keyboard_or_aria_breach_count": keyboard_or_aria_breach_count,
+        "contrast_shortfall_count": contrast_shortfall_count,
+        "missing_alt_text_count": missing_alt_text_count,
+        "heading_jump_count": heading_jump_count,
+        "wcag_compliance_rate_pct": wcag_compliance_rate_pct,
+        "status": status,
+        "blocks": blocks,
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygiene = staticmethod(
+    audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygiene
+)
+AnydocService.audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygiene = staticmethod(
+    audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygiene
+)
+

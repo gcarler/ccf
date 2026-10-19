@@ -12916,3 +12916,111 @@ def test_audit_chaos_engineering_blast_radius_and_steady_state_gate_empty_and_bi
         "audit_chaos_engineering_blast_radius_and_steady_state_gate"
         in mod.__all__
     )
+
+
+def test_audit_feature_flag_stale_toggle_debt_and_shadow_parity_gate_healthy():
+    from backend.services.project_ccb_service import (
+        audit_feature_flag_stale_toggle_debt_and_shadow_parity_gate,
+    )
+
+    flags = [
+        {
+            "flag_id": "ff-checkout-v2-router",
+            "age_days_at_100_pct": 12,
+            "shadow_traffic_parity_pct": 99.98,
+            "safe_default_off_fallthrough_verified": True,
+            "nested_flag_dependency_depth": 1,
+            "caused_unhandled_exception_in_canary": False,
+        },
+        {
+            "flag_id": "ff-evm-batch-aggregator",
+            "age_days_at_100_pct": 5,
+            "shadow_traffic_parity_pct": 100.0,
+            "safe_default_off_fallthrough_verified": True,
+            "nested_flag_dependency_depth": 0,
+            "caused_unhandled_exception_in_canary": False,
+        },
+    ]
+    res = audit_feature_flag_stale_toggle_debt_and_shadow_parity_gate(flags)
+    assert res["status"] == "healthy"
+    assert res["total_flags"] == 2
+    assert res["healthy_count"] == 2
+    assert res["warning_count"] == 0
+    assert res["critical_count"] == 0
+    assert res["flag_hygiene_rate_pct"] == 100.0
+    assert res["recommendations"] == []
+
+
+def test_audit_feature_flag_stale_toggle_debt_and_shadow_parity_gate_warning():
+    from backend.services.project_ccb_service import (
+        audit_feature_flag_stale_toggle_debt_and_shadow_parity_gate,
+    )
+
+    flags = [
+        {
+            "flag_id": "ff-legacy-search-v1-toggle",
+            "age_days_at_100_pct": 75,
+            "shadow_traffic_parity_pct": 99.5,
+            "safe_default_off_fallthrough_verified": True,
+            "nested_flag_dependency_depth": 2,
+            "caused_unhandled_exception_in_canary": False,
+        }
+    ]
+    res = audit_feature_flag_stale_toggle_debt_and_shadow_parity_gate(flags)
+    assert res["status"] == "warning"
+    assert res["total_flags"] == 1
+    assert res["warning_count"] == 1
+    assert res["critical_count"] == 0
+    assert res["stale_toggle_debt_count"] == 1
+    assert res["shadow_parity_breach_count"] == 1
+    assert res["flags"][0]["flag_status"] == "warning"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_feature_flag_stale_toggle_debt_and_shadow_parity_gate_critical():
+    from backend.services.project_ccb_service import (
+        audit_feature_flag_stale_toggle_debt_and_shadow_parity_gate,
+    )
+
+    flags = [
+        {
+            "flag_id": "ff-unsafe-payment-split",
+            "age_days_at_100_pct": 90,
+            "shadow_traffic_parity_pct": 94.0,
+            "safe_default_off_fallthrough_verified": False,
+            "nested_flag_dependency_depth": 4,
+            "caused_unhandled_exception_in_canary": True,
+        }
+    ]
+    res = audit_feature_flag_stale_toggle_debt_and_shadow_parity_gate(flags)
+    assert res["status"] == "critical"
+    assert res["total_flags"] == 1
+    assert res["critical_count"] == 1
+    assert res["unsafe_or_crash_count"] == 1
+    assert res["nesting_hazard_count"] == 1
+    assert res["flag_hygiene_rate_pct"] == 0.0
+    assert res["flags"][0]["flag_status"] == "critical"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_feature_flag_stale_toggle_debt_and_shadow_parity_gate_empty_and_binding():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_feature_flag_stale_toggle_debt_and_shadow_parity_gate,
+    )
+
+    empty = audit_feature_flag_stale_toggle_debt_and_shadow_parity_gate([])
+    assert empty["status"] == "healthy"
+    assert empty["total_flags"] == 0
+    assert empty["flag_hygiene_rate_pct"] == 100.0
+    assert (
+        ProjectCCBService.audit_feature_flag_stale_toggle_debt_and_shadow_parity_gate(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_feature_flag_stale_toggle_debt_and_shadow_parity_gate"
+        in mod.__all__
+    )
