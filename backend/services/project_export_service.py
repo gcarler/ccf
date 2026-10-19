@@ -3028,6 +3028,7 @@ __all__ = [
     "audit_executive_report_nerc_cip_esp_perimeter_and_patch_cadence",
     "audit_executive_report_soc2_type2_tsc_deviations_and_cuec_bridge_letter",
     "audit_executive_report_pci_dss_cde_segmentation_and_asv_scan",
+    "audit_executive_report_iso22301_bcp_drp_rto_rpo_and_failover_drill",
     "ProjectExportService",
 ]
 
@@ -9377,4 +9378,115 @@ def audit_executive_report_pci_dss_cde_segmentation_and_asv_scan(
 
 ProjectExportService.audit_executive_report_pci_dss_cde_segmentation_and_asv_scan = staticmethod(
     audit_executive_report_pci_dss_cde_segmentation_and_asv_scan
+)
+
+
+def audit_executive_report_iso22301_bcp_drp_rto_rpo_and_failover_drill(
+    recovery_tiers: list[dict[str, Any]] | None,
+    *,
+    max_drill_age_days: int = 180,
+    min_alternate_site_capacity_pct: float = 100.0,
+) -> dict[str, Any]:
+    """PMBOK §10.2 & §11.6 — Audita el executive report ISO 22301 de continuidad de negocio y plan de recuperación ante desastres (BCP/DRP): SLA de failover RTO/RPO medidos contra objetivos por tier, verificación de fencing anti split-brain del warm-standby, frescura del drill trimestral-completo de failover y capacidad del sitio alternativo.
+
+    Cada tier válido declara `tier_id` (str no vacío) y:
+    `target_rto_minutes` (float, default 60.0), `measured_rto_minutes`
+    (default 30.0), `target_rpo_minutes` (default 15.0),
+    `measured_rpo_minutes` (default 5.0), `split_brain_fencing_verified`
+    (bool, default True), `alternate_site_capacity_pct` (default 100.0) y
+    `days_since_last_full_failover_drill` (int, default 60):
+    - `rto_rpo_or_fencing_breach_tier_ids`: RTO o RPO medidos por encima
+      del objetivo, objetivos inválidos (RTO <= 0, RPO < 0) o fencing
+      split-brain sin verificación (brecha crítica, precedencia).
+    - `stale_drill_or_capacity_warning_tier_ids`: tiers fuera de brecha con
+      drill completo vencido (edad > límite) o edad negativa, o capacidad del
+      sitio alternativo por debajo del mínimo (estricto <: igual al mínimo OK).
+    - Estados: 'CRITICAL_RTO_RPO_SLA_OR_SPLIT_BRAIN_BREACH' |
+      'STALE_FAILOVER_DRILL_OR_CAPACITY_WARNING' | 'ISO22301_BCP_DRP_READY_CLEAN'.
+    - `is_iso22301_drp_compliant`: solo con ambas listas vacías.
+    """
+    raw_items = recovery_tiers if isinstance(recovery_tiers, list) else []
+    valid_tiers: list[dict[str, Any]] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_tier_id = item.get("tier_id")
+        if not isinstance(raw_tier_id, str) or not raw_tier_id.strip():
+            continue
+        valid_tiers.append(item)
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _int(value: Any, default: int) -> int:
+        if isinstance(value, bool) or not isinstance(value, int):
+            return default
+        return value
+
+    def _float(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    drill_age_limit = _int(max_drill_age_days, 180)
+    capacity_floor = _float(min_alternate_site_capacity_pct, 100.0)
+
+    rto_rpo_or_fencing_breach_tier_ids: list[str] = []
+    stale_drill_or_capacity_warning_tier_ids: list[str] = []
+
+    for tier in valid_tiers:
+        tier_id = str(tier.get("tier_id")).strip()
+        target_rto = _float(tier.get("target_rto_minutes"), 60.0)
+        measured_rto = _float(tier.get("measured_rto_minutes"), 30.0)
+        target_rpo = _float(tier.get("target_rpo_minutes"), 15.0)
+        measured_rpo = _float(tier.get("measured_rpo_minutes"), 5.0)
+        fencing_verified = _bool(
+            tier.get("split_brain_fencing_verified"), True
+        )
+        capacity_pct = _float(
+            tier.get("alternate_site_capacity_pct"), 100.0
+        )
+        drill_age = _int(
+            tier.get("days_since_last_full_failover_drill"), 60
+        )
+
+        is_critical_breach = (
+            measured_rto > target_rto
+            or measured_rpo > target_rpo
+            or target_rto <= 0
+            or target_rpo < 0
+            or (not fencing_verified)
+        )
+        if is_critical_breach:
+            rto_rpo_or_fencing_breach_tier_ids.append(tier_id)
+            continue
+
+        if (
+            drill_age > drill_age_limit
+            or drill_age < 0
+            or capacity_pct < capacity_floor
+        ):
+            stale_drill_or_capacity_warning_tier_ids.append(tier_id)
+
+    if rto_rpo_or_fencing_breach_tier_ids:
+        bcp_drp_audit_status = "CRITICAL_RTO_RPO_SLA_OR_SPLIT_BRAIN_BREACH"
+    elif stale_drill_or_capacity_warning_tier_ids:
+        bcp_drp_audit_status = "STALE_FAILOVER_DRILL_OR_CAPACITY_WARNING"
+    else:
+        bcp_drp_audit_status = "ISO22301_BCP_DRP_READY_CLEAN"
+
+    return {
+        "is_iso22301_drp_compliant": (
+            not rto_rpo_or_fencing_breach_tier_ids
+            and not stale_drill_or_capacity_warning_tier_ids
+        ),
+        "rto_rpo_or_fencing_breach_tier_ids": rto_rpo_or_fencing_breach_tier_ids,
+        "stale_drill_or_capacity_warning_tier_ids": stale_drill_or_capacity_warning_tier_ids,
+        "evaluated_tier_count": len(valid_tiers),
+        "bcp_drp_audit_status": bcp_drp_audit_status,
+    }
+
+
+ProjectExportService.audit_executive_report_iso22301_bcp_drp_rto_rpo_and_failover_drill = staticmethod(
+    audit_executive_report_iso22301_bcp_drp_rto_rpo_and_failover_drill
 )

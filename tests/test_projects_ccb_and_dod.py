@@ -12264,3 +12264,108 @@ def test_audit_vault_secret_lease_ttl_and_dynamic_credential_revocation_gate_emp
         "audit_vault_secret_lease_ttl_and_dynamic_credential_revocation_gate"
         in mod.__all__
     )
+
+
+def test_audit_wasm_wasi_sandbox_capability_and_fuel_metering_gate_healthy():
+    from backend.services.project_ccb_service import (
+        audit_wasm_wasi_sandbox_capability_and_fuel_metering_gate,
+    )
+
+    res = audit_wasm_wasi_sandbox_capability_and_fuel_metering_gate(
+        [
+            {
+                "module_id": "wasm-envoy-authz-filter",
+                "unrestricted_host_filesystem_preopen": False,
+                "raw_socket_capability_granted": False,
+                "fuel_metering_enabled": True,
+                "epoch_interruption_configured": True,
+                "linear_memory_limit_mb": 32.0,
+                "total_invocations": 100000,
+                "fuel_exhaustion_traps": 10,
+                "cryptographic_module_signature_verified": True,
+            }
+        ]
+    )
+    assert res["status"] == "HEALTHY"
+    assert res["release_freeze_required"] is False
+    assert res["evaluated_modules_count"] == 1
+    assert res["critical_modules"] == []
+    assert res["warning_modules"] == []
+    assert res["max_observed_trap_rate_pct"] == 0.01
+
+
+def test_audit_wasm_wasi_sandbox_capability_and_fuel_metering_gate_warning():
+    from backend.services.project_ccb_service import (
+        audit_wasm_wasi_sandbox_capability_and_fuel_metering_gate,
+    )
+
+    res = audit_wasm_wasi_sandbox_capability_and_fuel_metering_gate(
+        [
+            {
+                "module_id": "wasm-udf-transform",
+                "unrestricted_host_filesystem_preopen": False,
+                "raw_socket_capability_granted": False,
+                "fuel_metering_enabled": True,
+                "epoch_interruption_configured": False,
+                "linear_memory_limit_mb": 58.0,
+                "total_invocations": 10000,
+                "fuel_exhaustion_traps": 25,
+                "cryptographic_module_signature_verified": True,
+            }
+        ]
+    )
+    assert res["status"] == "WARNING"
+    assert res["release_freeze_required"] is False
+    assert res["critical_modules"] == []
+    assert res["warning_modules"] == ["wasm-udf-transform"]
+    assert res["max_observed_trap_rate_pct"] == 0.25
+
+
+def test_audit_wasm_wasi_sandbox_capability_and_fuel_metering_gate_critical():
+    from backend.services.project_ccb_service import (
+        audit_wasm_wasi_sandbox_capability_and_fuel_metering_gate,
+    )
+
+    res = audit_wasm_wasi_sandbox_capability_and_fuel_metering_gate(
+        [
+            {
+                "module_id": "wasm-untrusted-plugin",
+                "unrestricted_host_filesystem_preopen": True,
+                "raw_socket_capability_granted": True,
+                "fuel_metering_enabled": False,
+                "epoch_interruption_configured": False,
+                "linear_memory_limit_mb": 128.0,
+                "total_invocations": 5000,
+                "fuel_exhaustion_traps": 50,
+                "cryptographic_module_signature_verified": False,
+            }
+        ]
+    )
+    assert res["status"] == "CRITICAL"
+    assert res["release_freeze_required"] is True
+    assert res["critical_modules"] == ["wasm-untrusted-plugin"]
+    assert res["max_observed_trap_rate_pct"] == 1.0
+
+
+def test_audit_wasm_wasi_sandbox_capability_and_fuel_metering_gate_empty_and_binding():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_wasm_wasi_sandbox_capability_and_fuel_metering_gate,
+    )
+
+    empty = audit_wasm_wasi_sandbox_capability_and_fuel_metering_gate([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["release_freeze_required"] is False
+    assert empty["evaluated_modules_count"] == 0
+    assert empty["max_observed_trap_rate_pct"] == 0.0
+    assert (
+        ProjectCCBService.audit_wasm_wasi_sandbox_capability_and_fuel_metering_gate(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_wasm_wasi_sandbox_capability_and_fuel_metering_gate"
+        in mod.__all__
+    )

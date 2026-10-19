@@ -2872,6 +2872,7 @@ __all__ = [
     "audit_otel_trace_propagation_and_collector_drop_gate",
     "audit_ebpf_kernel_verifier_and_ringbuf_drop_gate",
     "audit_vault_secret_lease_ttl_and_dynamic_credential_revocation_gate",
+    "audit_wasm_wasi_sandbox_capability_and_fuel_metering_gate",
     "ProjectCCBService",
 ]
 
@@ -9276,4 +9277,105 @@ def audit_vault_secret_lease_ttl_and_dynamic_credential_revocation_gate(
 
 ProjectCCBService.audit_vault_secret_lease_ttl_and_dynamic_credential_revocation_gate = staticmethod(
     audit_vault_secret_lease_ttl_and_dynamic_credential_revocation_gate
+)
+
+
+def audit_wasm_wasi_sandbox_capability_and_fuel_metering_gate(
+    modules: list[dict[str, Any]],
+    *,
+    max_linear_memory_mb: float = 64.0,
+    max_fuel_exhaustion_trap_rate_pct: float = 0.1,
+) -> dict[str, Any]:
+    """PMBOK §8.3 & §11.6 — CCB WebAssembly (Wasm) WASI Sandbox Capability Isolation, Fuel Metering Exhaustion & Linear Memory Bounds Gate Auditor."""
+    module_evaluations: list[dict[str, Any]] = []
+    critical_modules: list[str] = []
+    warning_modules: list[str] = []
+    max_observed_trap_rate_pct = 0.0
+
+    for item in modules or []:
+        if not isinstance(item, Mapping):
+            continue
+        module_id = str(item.get("module_id") or "").strip() or "UNKNOWN_MODULE"
+        unrestricted_host_filesystem_preopen = bool(
+            item.get("unrestricted_host_filesystem_preopen", False)
+        )
+        raw_socket_capability_granted = bool(
+            item.get("raw_socket_capability_granted", False)
+        )
+        fuel_metering_enabled = bool(item.get("fuel_metering_enabled", True))
+        epoch_interruption_configured = bool(
+            item.get("epoch_interruption_configured", True)
+        )
+        linear_memory_limit_mb = float(
+            item.get("linear_memory_limit_mb", 32.0) or 0.0
+        )
+        raw_invocations = item.get("total_invocations", 1000)
+        total_invocations = int(1000 if raw_invocations is None else raw_invocations)
+        fuel_exhaustion_traps = int(item.get("fuel_exhaustion_traps", 0) or 0)
+        cryptographic_module_signature_verified = bool(
+            item.get("cryptographic_module_signature_verified", True)
+        )
+
+        trap_rate_pct = (
+            round((fuel_exhaustion_traps / total_invocations) * 100.0, 4)
+            if total_invocations > 0
+            else 0.0
+        )
+        max_observed_trap_rate_pct = max(max_observed_trap_rate_pct, trap_rate_pct)
+
+        critical_wasm_violation = (
+            unrestricted_host_filesystem_preopen is True
+            or raw_socket_capability_granted is True
+            or not fuel_metering_enabled
+            or not cryptographic_module_signature_verified
+            or linear_memory_limit_mb > max_linear_memory_mb
+        )
+        wasm_warning = (not critical_wasm_violation) and (
+            not epoch_interruption_configured
+            or trap_rate_pct > max_fuel_exhaustion_trap_rate_pct
+            or linear_memory_limit_mb >= max_linear_memory_mb * 0.85
+        )
+
+        if critical_wasm_violation:
+            critical_modules.append(module_id)
+        elif wasm_warning:
+            warning_modules.append(module_id)
+
+        module_evaluations.append(
+            {
+                "module_id": module_id,
+                "unrestricted_host_filesystem_preopen": unrestricted_host_filesystem_preopen,
+                "raw_socket_capability_granted": raw_socket_capability_granted,
+                "fuel_metering_enabled": fuel_metering_enabled,
+                "epoch_interruption_configured": epoch_interruption_configured,
+                "linear_memory_limit_mb": linear_memory_limit_mb,
+                "total_invocations": total_invocations,
+                "fuel_exhaustion_traps": fuel_exhaustion_traps,
+                "trap_rate_pct": trap_rate_pct,
+                "cryptographic_module_signature_verified": cryptographic_module_signature_verified,
+                "critical_wasm_violation": critical_wasm_violation,
+                "wasm_warning": wasm_warning,
+            }
+        )
+
+    if critical_modules:
+        status = "CRITICAL"
+    elif warning_modules:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "status": status,
+        "release_freeze_required": status == "CRITICAL",
+        "evaluated_modules_count": len(module_evaluations),
+        "critical_modules": critical_modules,
+        "warning_modules": warning_modules,
+        "max_observed_trap_rate_pct": max_observed_trap_rate_pct,
+        "module_evaluations": module_evaluations,
+    }
+
+
+ProjectCCBService.audit_wasm_wasi_sandbox_capability_and_fuel_metering_gate = staticmethod(
+    audit_wasm_wasi_sandbox_capability_and_fuel_metering_gate
 )

@@ -3192,6 +3192,7 @@ __all__ = [
     "audit_decommissioning_hazmat_manifest_and_site_remediation_clearance",
     "audit_joint_venture_consortium_liability_and_step_in_rights",
     "audit_ip_patent_assignment_chain_and_copyleft_contamination",
+    "audit_pir_hypercare_burn_in_and_bau_support_handover",
     "ProjectLifecyclePMIService",
 ]
 
@@ -9293,4 +9294,103 @@ def audit_ip_patent_assignment_chain_and_copyleft_contamination(
 
 ProjectLifecyclePMIService.audit_ip_patent_assignment_chain_and_copyleft_contamination = staticmethod(
     audit_ip_patent_assignment_chain_and_copyleft_contamination
+)
+
+
+def audit_pir_hypercare_burn_in_and_bau_support_handover(
+    streams: list[dict[str, Any]],
+    *,
+    max_p1_p2_escaped_defects: int = 0,
+    min_kt_shadowing_completion_pct: float = 100.0,
+    min_burn_in_stability_days: int = 14,
+) -> dict[str, Any]:
+    """PMBOK §12.3 & §4.7 — Post-Implementation Review (PIR) Operational Hypercare Burn-In Defect Escape Rate, Knowledge Transfer Shadowing Sign-Off & BAU Support Handover Auditor."""
+    stream_evaluations: list[dict[str, Any]] = []
+    critical_streams: list[str] = []
+    warning_streams: list[str] = []
+    total_open_p1_p2_defects = 0
+
+    for item in streams or []:
+        if not isinstance(item, Mapping):
+            continue
+        stream_id = str(item.get("stream_id") or "").strip() or "UNKNOWN_STREAM"
+        p1_p2_escaped_defects_open = int(
+            item.get("p1_p2_escaped_defects_open", 0) or 0
+        )
+        kt_sessions_completed = int(item.get("kt_sessions_completed", 0) or 0)
+        kt_sessions_planned = int(item.get("kt_sessions_planned", 0) or 0)
+        raw_burn_in = item.get("consecutive_stable_burn_in_days", 14)
+        consecutive_stable_burn_in_days = int(
+            14 if raw_burn_in is None else raw_burn_in
+        )
+        bau_ops_team_signoff_granted = bool(
+            item.get("bau_ops_team_signoff_granted", True)
+        )
+        sla_breaches_during_hypercare = int(
+            item.get("sla_breaches_during_hypercare", 0) or 0
+        )
+        project_team_prematurely_demobilized = bool(
+            item.get("project_team_prematurely_demobilized", False)
+        )
+
+        total_open_p1_p2_defects += p1_p2_escaped_defects_open
+
+        kt_completion_pct = (
+            round((kt_sessions_completed / kt_sessions_planned) * 100.0, 2)
+            if kt_sessions_planned > 0
+            else 100.0
+        )
+
+        critical_handover_breach = (
+            p1_p2_escaped_defects_open > max_p1_p2_escaped_defects
+            or project_team_prematurely_demobilized is True
+            or not bau_ops_team_signoff_granted
+            or kt_completion_pct < min_kt_shadowing_completion_pct * 0.80
+        )
+        hypercare_warning = (not critical_handover_breach) and (
+            kt_completion_pct < min_kt_shadowing_completion_pct
+            or consecutive_stable_burn_in_days < min_burn_in_stability_days
+            or sla_breaches_during_hypercare > 0
+        )
+
+        if critical_handover_breach:
+            critical_streams.append(stream_id)
+        elif hypercare_warning:
+            warning_streams.append(stream_id)
+
+        stream_evaluations.append(
+            {
+                "stream_id": stream_id,
+                "p1_p2_escaped_defects_open": p1_p2_escaped_defects_open,
+                "kt_sessions_completed": kt_sessions_completed,
+                "kt_sessions_planned": kt_sessions_planned,
+                "kt_completion_pct": kt_completion_pct,
+                "consecutive_stable_burn_in_days": consecutive_stable_burn_in_days,
+                "bau_ops_team_signoff_granted": bau_ops_team_signoff_granted,
+                "sla_breaches_during_hypercare": sla_breaches_during_hypercare,
+                "project_team_prematurely_demobilized": project_team_prematurely_demobilized,
+                "critical_handover_breach": critical_handover_breach,
+                "hypercare_warning": hypercare_warning,
+            }
+        )
+
+    if critical_streams:
+        status = "CRITICAL"
+    elif warning_streams:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "status": status,
+        "evaluated_streams_count": len(stream_evaluations),
+        "critical_streams": critical_streams,
+        "warning_streams": warning_streams,
+        "total_open_p1_p2_defects": total_open_p1_p2_defects,
+        "stream_evaluations": stream_evaluations,
+    }
+
+
+ProjectLifecyclePMIService.audit_pir_hypercare_burn_in_and_bau_support_handover = staticmethod(
+    audit_pir_hypercare_burn_in_and_bau_support_handover
 )

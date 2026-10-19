@@ -12191,3 +12191,105 @@ def test_audit_ip_patent_assignment_chain_and_copyleft_contamination_empty_and_b
         "audit_ip_patent_assignment_chain_and_copyleft_contamination"
         in mod.__all__
     )
+
+
+def test_audit_pir_hypercare_burn_in_and_bau_support_handover_healthy():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_pir_hypercare_burn_in_and_bau_support_handover,
+    )
+
+    res = audit_pir_hypercare_burn_in_and_bau_support_handover(
+        [
+            {
+                "stream_id": "STREAM-ERP-FINANCE",
+                "p1_p2_escaped_defects_open": 0,
+                "kt_sessions_completed": 10,
+                "kt_sessions_planned": 10,
+                "consecutive_stable_burn_in_days": 21,
+                "bau_ops_team_signoff_granted": True,
+                "sla_breaches_during_hypercare": 0,
+                "project_team_prematurely_demobilized": False,
+            }
+        ]
+    )
+    assert res["status"] == "HEALTHY"
+    assert res["evaluated_streams_count"] == 1
+    assert res["critical_streams"] == []
+    assert res["warning_streams"] == []
+    assert res["total_open_p1_p2_defects"] == 0
+    assert res["stream_evaluations"][0]["kt_completion_pct"] == 100.0
+
+
+def test_audit_pir_hypercare_burn_in_and_bau_support_handover_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_pir_hypercare_burn_in_and_bau_support_handover,
+    )
+
+    res = audit_pir_hypercare_burn_in_and_bau_support_handover(
+        [
+            {
+                "stream_id": "STREAM-CRM-PORTAL",
+                "p1_p2_escaped_defects_open": 0,
+                "kt_sessions_completed": 9,
+                "kt_sessions_planned": 10,
+                "consecutive_stable_burn_in_days": 10,
+                "bau_ops_team_signoff_granted": True,
+                "sla_breaches_during_hypercare": 2,
+                "project_team_prematurely_demobilized": False,
+            }
+        ]
+    )
+    assert res["status"] == "WARNING"
+    assert res["critical_streams"] == []
+    assert res["warning_streams"] == ["STREAM-CRM-PORTAL"]
+    assert res["stream_evaluations"][0]["kt_completion_pct"] == 90.0
+    assert res["stream_evaluations"][0]["hypercare_warning"] is True
+
+
+def test_audit_pir_hypercare_burn_in_and_bau_support_handover_critical():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_pir_hypercare_burn_in_and_bau_support_handover,
+    )
+
+    res = audit_pir_hypercare_burn_in_and_bau_support_handover(
+        [
+            {
+                "stream_id": "STREAM-CORE-BILLING",
+                "p1_p2_escaped_defects_open": 3,
+                "kt_sessions_completed": 5,
+                "kt_sessions_planned": 10,
+                "consecutive_stable_burn_in_days": 4,
+                "bau_ops_team_signoff_granted": False,
+                "sla_breaches_during_hypercare": 5,
+                "project_team_prematurely_demobilized": True,
+            }
+        ]
+    )
+    assert res["status"] == "CRITICAL"
+    assert res["critical_streams"] == ["STREAM-CORE-BILLING"]
+    assert res["total_open_p1_p2_defects"] == 3
+    assert res["stream_evaluations"][0]["kt_completion_pct"] == 50.0
+    assert res["stream_evaluations"][0]["critical_handover_breach"] is True
+
+
+def test_audit_pir_hypercare_burn_in_and_bau_support_handover_empty_and_binding():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_pir_hypercare_burn_in_and_bau_support_handover,
+    )
+
+    empty = audit_pir_hypercare_burn_in_and_bau_support_handover([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["evaluated_streams_count"] == 0
+    assert empty["total_open_p1_p2_defects"] == 0
+    assert (
+        ProjectLifecyclePMIService.audit_pir_hypercare_burn_in_and_bau_support_handover(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_pir_hypercare_burn_in_and_bau_support_handover"
+        in mod.__all__
+    )

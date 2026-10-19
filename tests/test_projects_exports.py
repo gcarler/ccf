@@ -12959,3 +12959,171 @@ def test_pci_dss_cde_empty_invalid_segments_and_field_reversion():
     assert reverted["roc_renewal_warning"] is False
     assert reverted["is_pci_dss_v4_compliant"] is True
     assert reverted["pci_dss_audit_status"] == "PCI_DSS_V4_AOC_CLEAN"
+
+
+def test_iso22301_bcp_drp_ready_clean_and_boundaries():
+    """Tiers con RTO/RPO dentro del SLA, fencing verificado y drill fresco -> 'ISO22301_BCP_DRP_READY_CLEAN'."""
+    import backend.services.project_export_service as export_module
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_iso22301_bcp_drp_rto_rpo_and_failover_drill,
+    )
+
+    tiers = [
+        {
+            "tier_id": "TIER-0",
+            "target_rto_minutes": 60.0,
+            "measured_rto_minutes": 45.0,
+            "target_rpo_minutes": 15.0,
+            "measured_rpo_minutes": 10.0,
+            "split_brain_fencing_verified": True,
+            "alternate_site_capacity_pct": 100.0,
+            "days_since_last_full_failover_drill": 60,
+        },
+        {
+            "tier_id": "TIER-1",
+            # Defaults implícitos: RTO 60/30, RPO 15/5, fencing True, capacidad 100, drill 60.
+        },
+    ]
+    res = audit_executive_report_iso22301_bcp_drp_rto_rpo_and_failover_drill(tiers)
+    assert res == {
+        "is_iso22301_drp_compliant": True,
+        "rto_rpo_or_fencing_breach_tier_ids": [],
+        "stale_drill_or_capacity_warning_tier_ids": [],
+        "evaluated_tier_count": 2,
+        "bcp_drp_audit_status": "ISO22301_BCP_DRP_READY_CLEAN",
+    }
+    # Frontera: measured == target NO es breach; drill 180 exacto NO stale;
+    # capacidad 100.0 == mínimo NO warning (estricto <).
+    at_bounds = audit_executive_report_iso22301_bcp_drp_rto_rpo_and_failover_drill(
+        [
+            {
+                "tier_id": "TIER-B",
+                "measured_rto_minutes": 60.0,
+                "measured_rpo_minutes": 15.0,
+                "days_since_last_full_failover_drill": 180,
+                "alternate_site_capacity_pct": 100.0,
+            }
+        ]
+    )
+    assert at_bounds["rto_rpo_or_fencing_breach_tier_ids"] == []
+    assert at_bounds["stale_drill_or_capacity_warning_tier_ids"] == []
+    assert at_bounds["bcp_drp_audit_status"] == "ISO22301_BCP_DRP_READY_CLEAN"
+    # Frontera capacidad custom: exactly el floor custom 80.0 no es warning.
+    capacity_at_floor = audit_executive_report_iso22301_bcp_drp_rto_rpo_and_failover_drill(
+        [{"tier_id": "TIER-C", "alternate_site_capacity_pct": 80.0}],
+        min_alternate_site_capacity_pct=80.0,
+    )
+    assert capacity_at_floor["stale_drill_or_capacity_warning_tier_ids"] == []
+    assert (
+        ProjectExportService.audit_executive_report_iso22301_bcp_drp_rto_rpo_and_failover_drill(tiers)
+        == res
+    )
+    assert "audit_executive_report_iso22301_bcp_drp_rto_rpo_and_failover_drill" in export_module.__all__
+
+
+def test_iso22301_bcp_drp_critical_rto_rpo_fencing_breach():
+    """RTO/RPO medidos fuera del SLA, objetivos inválidos o fencing sin verificar -> BREACH con precedencia."""
+    from backend.services.project_export_service import (
+        audit_executive_report_iso22301_bcp_drp_rto_rpo_and_failover_drill,
+    )
+
+    breach = audit_executive_report_iso22301_bcp_drp_rto_rpo_and_failover_drill(
+        [
+            {"tier_id": "TIER-RTO", "measured_rto_minutes": 75.0},  # 75 > 60
+            {"tier_id": "TIER-RPO", "measured_rpo_minutes": 20.0},  # 20 > 15
+            {"tier_id": "TIER-ZERO-RTO", "target_rto_minutes": 0.0},
+            {"tier_id": "TIER-NEG-RPO", "target_rpo_minutes": -5.0},
+            {"tier_id": "TIER-SPLIT", "split_brain_fencing_verified": False},
+        ]
+    )
+    assert breach["rto_rpo_or_fencing_breach_tier_ids"] == [
+        "TIER-RTO",
+        "TIER-RPO",
+        "TIER-ZERO-RTO",
+        "TIER-NEG-RPO",
+        "TIER-SPLIT",
+    ]
+    assert breach["stale_drill_or_capacity_warning_tier_ids"] == []
+    assert breach["is_iso22301_drp_compliant"] is False
+    assert breach["bcp_drp_audit_status"] == "CRITICAL_RTO_RPO_SLA_OR_SPLIT_BRAIN_BREACH"
+
+
+def test_iso22301_bcp_drp_stale_drill_and_capacity_warning():
+    """Drill vencido (181 > 180), edad negativa o capacidad bajo el mínimo -> WARNING con precedencia."""
+    from backend.services.project_export_service import (
+        audit_executive_report_iso22301_bcp_drp_rto_rpo_and_failover_drill,
+    )
+
+    stale_only = audit_executive_report_iso22301_bcp_drp_rto_rpo_and_failover_drill(
+        [{"tier_id": "TIER-STALE", "days_since_last_full_failover_drill": 181}]
+    )
+    assert stale_only["rto_rpo_or_fencing_breach_tier_ids"] == []
+    assert stale_only["stale_drill_or_capacity_warning_tier_ids"] == ["TIER-STALE"]
+    assert stale_only["is_iso22301_drp_compliant"] is False
+    assert stale_only["bcp_drp_audit_status"] == "STALE_FAILOVER_DRILL_OR_CAPACITY_WARNING"
+
+    negative_age = audit_executive_report_iso22301_bcp_drp_rto_rpo_and_failover_drill(
+        [{"tier_id": "TIER-NEG", "days_since_last_full_failover_drill": -7}]
+    )
+    assert negative_age["stale_drill_or_capacity_warning_tier_ids"] == ["TIER-NEG"]
+    assert negative_age["bcp_drp_audit_status"] == "STALE_FAILOVER_DRILL_OR_CAPACITY_WARNING"
+
+    low_capacity = audit_executive_report_iso22301_bcp_drp_rto_rpo_and_failover_drill(
+        [{"tier_id": "TIER-CAP", "alternate_site_capacity_pct": 99.5}]
+    )
+    assert low_capacity["stale_drill_or_capacity_warning_tier_ids"] == ["TIER-CAP"]
+    assert low_capacity["bcp_drp_audit_status"] == "STALE_FAILOVER_DRILL_OR_CAPACITY_WARNING"
+
+    # Clasificación warning por tier ("not in critical"): el estado global es CRITICAL
+    # con precedencia, pero el tier stale sigue registrado en su lista.
+    mixed = audit_executive_report_iso22301_bcp_drp_rto_rpo_and_failover_drill(
+        [
+            {"tier_id": "TIER-BREACH", "measured_rpo_minutes": 30.0},
+            {"tier_id": "TIER-STALE-2", "days_since_last_full_failover_drill": 365},
+        ]
+    )
+    assert mixed["rto_rpo_or_fencing_breach_tier_ids"] == ["TIER-BREACH"]
+    assert mixed["stale_drill_or_capacity_warning_tier_ids"] == ["TIER-STALE-2"]
+    assert mixed["bcp_drp_audit_status"] == "CRITICAL_RTO_RPO_SLA_OR_SPLIT_BRAIN_BREACH"
+
+
+def test_iso22301_bcp_drp_empty_invalid_tiers_and_field_reversion():
+    """None, no-dicts y tier_id inválido se descartan; campos no numéricos revierten a defaults."""
+    from backend.services.project_export_service import (
+        audit_executive_report_iso22301_bcp_drp_rto_rpo_and_failover_drill,
+    )
+
+    empty = audit_executive_report_iso22301_bcp_drp_rto_rpo_and_failover_drill(None)
+    assert empty == {
+        "is_iso22301_drp_compliant": True,
+        "rto_rpo_or_fencing_breach_tier_ids": [],
+        "stale_drill_or_capacity_warning_tier_ids": [],
+        "evaluated_tier_count": 0,
+        "bcp_drp_audit_status": "ISO22301_BCP_DRP_READY_CLEAN",
+    }
+
+    reverted = audit_executive_report_iso22301_bcp_drp_rto_rpo_and_failover_drill(
+        [
+            {
+                "tier_id": "TIER-REVERT",
+                "target_rto_minutes": "sixty",        # no-float -> 60.0
+                "measured_rto_minutes": None,         # no-float -> 30.0
+                "target_rpo_minutes": True,           # bool excluida -> 15.0
+                "measured_rpo_minutes": "five",       # no-float -> 5.0
+                "split_brain_fencing_verified": "yes",    # no-bool -> True
+                "alternate_site_capacity_pct": 42,        # int/float válidos -> 42.0 -> < 100
+                "days_since_last_full_failover_drill": "sixty",  # no-int -> 60
+            },
+            {"tier_id": "   "},  # blanco -> descartado
+            {"tier_id": 7},      # no str -> descartado
+            "not-a-dict",        # no dict -> descartado
+        ],
+        max_drill_age_days="half-year",          # no-int -> 180
+        min_alternate_site_capacity_pct=None,    # no-float -> 100.0
+    )
+    assert reverted["evaluated_tier_count"] == 1
+    assert reverted["rto_rpo_or_fencing_breach_tier_ids"] == []
+    assert reverted["stale_drill_or_capacity_warning_tier_ids"] == ["TIER-REVERT"]  # capacidad 42 < 100
+    assert reverted["is_iso22301_drp_compliant"] is False
+    assert reverted["bcp_drp_audit_status"] == "STALE_FAILOVER_DRILL_OR_CAPACITY_WARNING"
