@@ -5517,6 +5517,7 @@ __all__ = [
     "evaluate_evm_milestone_payment_holdback_and_acceptance_gate",
     "evaluate_evm_value_engineering_target_costing_and_worth_index",
     "evaluate_evm_contingency_and_management_reserve_drawdown_governance",
+    "evaluate_evm_sla_penalty_service_credits_and_earn_back",
     "ProjectEVMService",
 ]
 
@@ -9027,3 +9028,95 @@ def evaluate_evm_contingency_and_management_reserve_drawdown_governance(
 ProjectEVMService.evaluate_evm_contingency_and_management_reserve_drawdown_governance = staticmethod(
     evaluate_evm_contingency_and_management_reserve_drawdown_governance
 )
+
+
+def evaluate_evm_sla_penalty_service_credits_and_earn_back(
+    billing_periods: list[dict[str, Any]],
+    *,
+    min_sla_uptime_pct: float = 99.9,
+    max_at_risk_fee_pool_pct: float = 15.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §7.4 & §12.3 — EVM Managed Services SLA Uptime Penalty Deducts, Service Credit Cap & Earn-Back Clawback Evaluator."""
+    sla_breach_period_ids: list[str] = []
+    uncollected_penalty_period_ids: list[str] = []
+    premature_earn_back_period_ids: list[str] = []
+    fee_pool_cap_exceeded_period_ids: list[str] = []
+
+    valid_periods = (
+        [
+            p
+            for p in billing_periods
+            if isinstance(p, dict) and str(p.get("period_id", "")).strip()
+        ]
+        if isinstance(billing_periods, list)
+        else []
+    )
+
+    net_credits_raw = 0.0
+
+    for period in valid_periods:
+        period_id = str(period.get("period_id", "")).strip()
+        monthly_base_fee = float(period.get("monthly_base_fee", 0.0) or 0.0)
+        observed_uptime_pct = float(
+            period.get("observed_uptime_pct", 100.0)
+            if period.get("observed_uptime_pct") is not None
+            else 100.0
+        )
+        penalty_credit_claimed = float(
+            period.get("penalty_credit_claimed", 0.0) or 0.0
+        )
+        earn_back_credit_applied = float(
+            period.get("earn_back_credit_applied", 0.0) or 0.0
+        )
+        consecutive_clean_months_for_earn_back = int(
+            period.get("consecutive_clean_months_for_earn_back", 0) or 0
+        )
+
+        net_credits_raw += max(0.0, penalty_credit_claimed) - max(
+            0.0, earn_back_credit_applied
+        )
+
+        if observed_uptime_pct < min_sla_uptime_pct:
+            sla_breach_period_ids.append(period_id)
+            if penalty_credit_claimed <= 0.0:
+                uncollected_penalty_period_ids.append(period_id)
+
+        if (
+            earn_back_credit_applied > 0.0
+            and consecutive_clean_months_for_earn_back < 3
+        ):
+            premature_earn_back_period_ids.append(period_id)
+
+        if (
+            monthly_base_fee > 0.0
+            and (penalty_credit_claimed / monthly_base_fee) * 100.0
+            > max_at_risk_fee_pool_pct
+        ):
+            fee_pool_cap_exceeded_period_ids.append(period_id)
+
+    net_service_credits_retained = round(net_credits_raw, 2)
+
+    if uncollected_penalty_period_ids or premature_earn_back_period_ids:
+        sla_financial_governance_status = "PENALTY_OR_EARNBACK_LEAKAGE"
+    elif fee_pool_cap_exceeded_period_ids or sla_breach_period_ids:
+        sla_financial_governance_status = "AT_RISK_CAP_EXCEEDED_WARNING"
+    else:
+        sla_financial_governance_status = "SLA_CREDITS_BALANCED"
+
+    return {
+        "total_periods_evaluated": len(valid_periods),
+        "sla_breach_period_ids": sla_breach_period_ids,
+        "uncollected_penalty_period_ids": uncollected_penalty_period_ids,
+        "premature_earn_back_period_ids": premature_earn_back_period_ids,
+        "fee_pool_cap_exceeded_period_ids": fee_pool_cap_exceeded_period_ids,
+        "net_service_credits_retained": net_service_credits_retained,
+        "sla_financial_governance_status": sla_financial_governance_status,
+        "is_sla_credit_compliant": sla_financial_governance_status
+        == "SLA_CREDITS_BALANCED",
+    }
+
+
+ProjectEVMService.evaluate_evm_sla_penalty_service_credits_and_earn_back = staticmethod(
+    evaluate_evm_sla_penalty_service_credits_and_earn_back
+)
+

@@ -7997,3 +7997,146 @@ def test_evaluate_evm_contingency_and_management_reserve_drawdown_governance_sta
         "evaluate_evm_contingency_and_management_reserve_drawdown_governance"
         in mod.__all__
     )
+
+
+def test_evaluate_evm_sla_penalty_service_credits_and_earn_back_balanced():
+    """Caso 1: Periodos cumpliendo SLA (>=99.9%) y earn-back elegible (>=3 meses limpios) -> SLA_CREDITS_BALANCED."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_sla_penalty_service_credits_and_earn_back,
+    )
+
+    periods = [
+        {
+            "period_id": "2026-01",
+            "monthly_base_fee": 50000.0,
+            "observed_uptime_pct": 99.95,
+            "penalty_credit_claimed": 0.0,
+            "earn_back_credit_applied": 0.0,
+            "consecutive_clean_months_for_earn_back": 2,
+        },
+        {
+            "period_id": "2026-02",
+            "monthly_base_fee": 50000.0,
+            "observed_uptime_pct": 99.98,
+            "penalty_credit_claimed": 0.0,
+            "earn_back_credit_applied": 1500.0,
+            "consecutive_clean_months_for_earn_back": 3,
+        },
+    ]
+    res = evaluate_evm_sla_penalty_service_credits_and_earn_back(
+        periods, min_sla_uptime_pct=99.9, max_at_risk_fee_pool_pct=15.0
+    )
+    assert res["total_periods_evaluated"] == 2
+    assert res["sla_breach_period_ids"] == []
+    assert res["uncollected_penalty_period_ids"] == []
+    assert res["premature_earn_back_period_ids"] == []
+    assert res["fee_pool_cap_exceeded_period_ids"] == []
+    assert res["net_service_credits_retained"] == -1500.0
+    assert res["sla_financial_governance_status"] == "SLA_CREDITS_BALANCED"
+    assert res["is_sla_credit_compliant"] is True
+
+
+def test_evaluate_evm_sla_penalty_service_credits_and_earn_back_warning():
+    """Caso 2: Incumplimiento de SLA con penalidad cobrada y/o superando el tope at-risk (>15%) -> AT_RISK_CAP_EXCEEDED_WARNING."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_sla_penalty_service_credits_and_earn_back,
+    )
+
+    periods = [
+        {
+            "period_id": "2026-03",
+            "monthly_base_fee": 50000.0,
+            "observed_uptime_pct": 99.5,  # < 99.9%
+            "penalty_credit_claimed": 10000.0,  # 20% > 15% cap
+            "earn_back_credit_applied": 0.0,
+            "consecutive_clean_months_for_earn_back": 0,
+        }
+    ]
+    res = evaluate_evm_sla_penalty_service_credits_and_earn_back(
+        periods, min_sla_uptime_pct=99.9, max_at_risk_fee_pool_pct=15.0
+    )
+    assert res["total_periods_evaluated"] == 1
+    assert res["sla_breach_period_ids"] == ["2026-03"]
+    assert res["uncollected_penalty_period_ids"] == []
+    assert res["premature_earn_back_period_ids"] == []
+    assert res["fee_pool_cap_exceeded_period_ids"] == ["2026-03"]
+    assert res["net_service_credits_retained"] == 10000.0
+    assert res["sla_financial_governance_status"] == "AT_RISK_CAP_EXCEEDED_WARNING"
+    assert res["is_sla_credit_compliant"] is False
+
+
+def test_evaluate_evm_sla_penalty_service_credits_and_earn_back_leakage():
+    """Caso 3: Brecha de SLA sin cobro de penalidad o earn-back prematuro (<3 meses limpios) -> PENALTY_OR_EARNBACK_LEAKAGE."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_sla_penalty_service_credits_and_earn_back,
+    )
+
+    periods = [
+        {
+            "period_id": "2026-04-UNCOLLECTED",
+            "monthly_base_fee": 50000.0,
+            "observed_uptime_pct": 99.4,
+            "penalty_credit_claimed": 0.0,
+            "earn_back_credit_applied": 0.0,
+            "consecutive_clean_months_for_earn_back": 0,
+        },
+        {
+            "period_id": "2026-05-PREMATURE",
+            "monthly_base_fee": 50000.0,
+            "observed_uptime_pct": 99.95,
+            "penalty_credit_claimed": 4000.0,
+            "earn_back_credit_applied": 1500.0,
+            "consecutive_clean_months_for_earn_back": 1,  # < 3
+        },
+    ]
+    res = evaluate_evm_sla_penalty_service_credits_and_earn_back(
+        periods, min_sla_uptime_pct=99.9, max_at_risk_fee_pool_pct=15.0
+    )
+    assert res["total_periods_evaluated"] == 2
+    assert res["sla_breach_period_ids"] == ["2026-04-UNCOLLECTED"]
+    assert res["uncollected_penalty_period_ids"] == ["2026-04-UNCOLLECTED"]
+    assert res["premature_earn_back_period_ids"] == ["2026-05-PREMATURE"]
+    assert res["net_service_credits_retained"] == 2500.0
+    assert res["sla_financial_governance_status"] == "PENALTY_OR_EARNBACK_LEAKAGE"
+    assert res["is_sla_credit_compliant"] is False
+
+
+def test_evaluate_evm_sla_penalty_service_credits_and_earn_back_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en ProjectEVMService + __all__."""
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_sla_penalty_service_credits_and_earn_back,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = evaluate_evm_sla_penalty_service_credits_and_earn_back(payload)  # type: ignore[arg-type]
+        assert empty["total_periods_evaluated"] == 0
+        assert empty["sla_breach_period_ids"] == []
+        assert empty["uncollected_penalty_period_ids"] == []
+        assert empty["premature_earn_back_period_ids"] == []
+        assert empty["fee_pool_cap_exceeded_period_ids"] == []
+        assert empty["net_service_credits_retained"] == 0.0
+        assert empty["sla_financial_governance_status"] == "SLA_CREDITS_BALANCED"
+        assert empty["is_sla_credit_compliant"] is True
+
+    sample = [
+        {
+            "period_id": "2026-99",
+            "monthly_base_fee": 20000.0,
+            "observed_uptime_pct": 99.99,
+            "penalty_credit_claimed": 0.0,
+            "earn_back_credit_applied": 0.0,
+            "consecutive_clean_months_for_earn_back": 4,
+        }
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_sla_penalty_service_credits_and_earn_back(
+            sample
+        )
+        == evaluate_evm_sla_penalty_service_credits_and_earn_back(sample)
+    )
+    assert (
+        "evaluate_evm_sla_penalty_service_credits_and_earn_back" in mod.__all__
+    )
+
