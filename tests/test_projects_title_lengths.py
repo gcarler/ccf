@@ -8121,3 +8121,131 @@ def test_validate_bcr_invalid_and_dunder_all():
         "validate_benefit_cost_ratio_and_sunk_cost_governance"
         in mod.__all__
     )
+
+
+def test_validate_schedule_crashing_and_fast_tracking_compression_breach():
+    from backend.schemas.projects import (
+        validate_schedule_crashing_and_fast_tracking_compression,
+    )
+
+    result = validate_schedule_crashing_and_fast_tracking_compression(
+        [
+            {
+                "activity_id": "ACT-EXCESSIVE-OVERLAP",
+                "is_on_critical_path": True,
+                "crash_cost_per_day_saved": 1200.0,
+                "fast_track_overlap_pct": 55.0,
+                "rework_probability_increase_pct": 10.0,
+            },
+            {
+                "activity_id": "ACT-HIGH-REWORK",
+                "is_on_critical_path": True,
+                "crash_cost_per_day_saved": 1200.0,
+                "fast_track_overlap_pct": 20.0,
+                "rework_probability_increase_pct": 40.0,
+            },
+        ],
+        max_fast_track_overlap_pct=35.0,
+        max_crash_cost_per_day_saved=5000.0,
+    )
+    assert result["evaluated_activities_count"] == 2
+    assert result["excessive_overlap_or_rework_activity_ids"] == [
+        "ACT-EXCESSIVE-OVERLAP",
+        "ACT-HIGH-REWORK",
+    ]
+    assert result["non_critical_or_expensive_crash_activity_ids"] == []
+    assert (
+        result["schedule_compression_status"]
+        == "SCHEDULE_COMPRESSION_REWORK_OR_OVERLAP_BREACH"
+    )
+    assert result["is_schedule_compression_valid"] is False
+
+
+def test_validate_schedule_crashing_and_fast_tracking_compression_warning():
+    from backend.schemas.projects import (
+        validate_schedule_crashing_and_fast_tracking_compression,
+    )
+
+    result = validate_schedule_crashing_and_fast_tracking_compression(
+        [
+            {
+                "activity_id": "ACT-NON-CRITICAL-CRASH",
+                "is_on_critical_path": False,
+                "crash_cost_per_day_saved": 1200.0,
+                "fast_track_overlap_pct": 10.0,
+                "rework_probability_increase_pct": 5.0,
+            },
+            {
+                "activity_id": "ACT-EXPENSIVE-CRASH",
+                "is_on_critical_path": True,
+                "crash_cost_per_day_saved": 8500.0,
+                "fast_track_overlap_pct": 10.0,
+                "rework_probability_increase_pct": 5.0,
+            },
+        ],
+        max_fast_track_overlap_pct=35.0,
+        max_crash_cost_per_day_saved=5000.0,
+    )
+    assert result["evaluated_activities_count"] == 2
+    assert result["excessive_overlap_or_rework_activity_ids"] == []
+    assert result["non_critical_or_expensive_crash_activity_ids"] == [
+        "ACT-NON-CRITICAL-CRASH",
+        "ACT-EXPENSIVE-CRASH",
+    ]
+    assert (
+        result["schedule_compression_status"]
+        == "SCHEDULE_COMPRESSION_INEFFICIENT_CRASH_WARNING"
+    )
+    assert result["is_schedule_compression_valid"] is False
+
+
+def test_validate_schedule_crashing_and_fast_tracking_compression_optimal_and_empty():
+    from backend.schemas.projects import (
+        validate_schedule_crashing_and_fast_tracking_compression,
+    )
+
+    empty = validate_schedule_crashing_and_fast_tracking_compression(
+        [{"activity_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_activities_count"] == 0
+    assert empty["schedule_compression_status"] == "SCHEDULE_COMPRESSION_OPTIMAL"
+    assert empty["is_schedule_compression_valid"] is True
+
+    optimal = validate_schedule_crashing_and_fast_tracking_compression(
+        [
+            {
+                "activity_id": "ACT-OPT-CRASH-1",
+                "is_on_critical_path": True,
+                "crash_cost_per_day_saved": 1800.0,
+                "fast_track_overlap_pct": 20.0,
+                "rework_probability_increase_pct": 8.0,
+            }
+        ],
+        max_fast_track_overlap_pct=35.0,
+        max_crash_cost_per_day_saved=5000.0,
+    )
+    assert optimal["evaluated_activities_count"] == 1
+    assert optimal["excessive_overlap_or_rework_activity_ids"] == []
+    assert optimal["non_critical_or_expensive_crash_activity_ids"] == []
+    assert (
+        optimal["schedule_compression_status"]
+        == "SCHEDULE_COMPRESSION_OPTIMAL"
+    )
+    assert optimal["is_schedule_compression_valid"] is True
+
+
+def test_validate_schedule_crashing_and_fast_tracking_compression_dunder_all_and_defaults():
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_schedule_crashing_and_fast_tracking_compression,
+    )
+
+    res = validate_schedule_crashing_and_fast_tracking_compression(
+        [{"activity_id": "ACT-DEFAULT-01"}]
+    )
+    assert res["evaluated_activities_count"] == 1
+    assert res["is_schedule_compression_valid"] is True
+    assert (
+        "validate_schedule_crashing_and_fast_tracking_compression"
+        in mod.__all__
+    )

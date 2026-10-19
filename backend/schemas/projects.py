@@ -3817,6 +3817,7 @@ __all__ = [
     "validate_resource_leveling_overallocation_and_context_switching",
     "validate_wbs_rolling_wave_horizon_and_8_80_rule",
     "validate_rtm_bidirectional_traceability_and_gold_plating",
+    "validate_schedule_crashing_and_fast_tracking_compression",
 ]
 
 
@@ -8426,4 +8427,81 @@ def validate_benefit_cost_ratio_and_sunk_cost_governance(
         "bcr_governance_status": bcr_governance_status,
         "is_investment_case_valid": bcr_governance_status
         == "BCR_INVESTMENT_CASE_OPTIMAL",
+    }
+
+
+def validate_schedule_crashing_and_fast_tracking_compression(
+    compression_candidates: Any,
+    *,
+    max_fast_track_overlap_pct: float = 35.0,
+    max_crash_cost_per_day_saved: float = 5000.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §6.5 & §6.3 — Schedule Crashing & Fast-Tracking Rework Risk, Cost-Slope Efficiency & Parallel Overlap Cap Validator."""
+    entries = (
+        compression_candidates
+        if isinstance(compression_candidates, (list, tuple))
+        else []
+    )
+    valid_activities = [
+        act
+        for act in entries
+        if isinstance(act, dict) and str(act.get("activity_id") or "").strip()
+    ]
+
+    excessive_overlap_or_rework_activity_ids: list[str] = []
+    non_critical_or_expensive_crash_activity_ids: list[str] = []
+
+    for act in valid_activities:
+        aid = str(act.get("activity_id")).strip()
+        is_on_critical_path = bool(
+            act.get("is_on_critical_path", True)
+            if act.get("is_on_critical_path") is not None
+            else True
+        )
+        crash_cost_per_day_saved = float(
+            act.get("crash_cost_per_day_saved", 1500.0)
+            if act.get("crash_cost_per_day_saved") is not None
+            else 1500.0
+        )
+        fast_track_overlap_pct = float(
+            act.get("fast_track_overlap_pct", 15.0)
+            if act.get("fast_track_overlap_pct") is not None
+            else 15.0
+        )
+        rework_probability_increase_pct = float(
+            act.get("rework_probability_increase_pct", 5.0)
+            if act.get("rework_probability_increase_pct") is not None
+            else 5.0
+        )
+
+        if (
+            fast_track_overlap_pct > max_fast_track_overlap_pct
+            or rework_probability_increase_pct > 25.0
+        ):
+            excessive_overlap_or_rework_activity_ids.append(aid)
+
+        if (
+            not is_on_critical_path
+            or crash_cost_per_day_saved > max_crash_cost_per_day_saved
+        ):
+            non_critical_or_expensive_crash_activity_ids.append(aid)
+
+    if excessive_overlap_or_rework_activity_ids:
+        schedule_compression_status = (
+            "SCHEDULE_COMPRESSION_REWORK_OR_OVERLAP_BREACH"
+        )
+    elif non_critical_or_expensive_crash_activity_ids:
+        schedule_compression_status = (
+            "SCHEDULE_COMPRESSION_INEFFICIENT_CRASH_WARNING"
+        )
+    else:
+        schedule_compression_status = "SCHEDULE_COMPRESSION_OPTIMAL"
+
+    return {
+        "evaluated_activities_count": len(valid_activities),
+        "excessive_overlap_or_rework_activity_ids": excessive_overlap_or_rework_activity_ids,
+        "non_critical_or_expensive_crash_activity_ids": non_critical_or_expensive_crash_activity_ids,
+        "schedule_compression_status": schedule_compression_status,
+        "is_schedule_compression_valid": schedule_compression_status
+        == "SCHEDULE_COMPRESSION_OPTIMAL",
     }

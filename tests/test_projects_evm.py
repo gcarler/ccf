@@ -9126,3 +9126,143 @@ def test_evaluate_evm_epa_inflation_indexation_and_escalation_cap_staticmethod_a
         in mod.__all__
     )
 
+
+def test_evaluate_evm_subcontractor_lien_waiver_and_flow_down_breach():
+    from backend.services.project_evm_service import (
+        evaluate_evm_subcontractor_lien_waiver_and_flow_down,
+    )
+
+    result = evaluate_evm_subcontractor_lien_waiver_and_flow_down(
+        [
+            {
+                "voucher_id": "VCH-NO-LIEN-WAIVER",
+                "unconditional_lien_waiver_signed": False,
+                "mandatory_flow_down_clauses_accepted": True,
+                "days_since_prime_payment_received": 2,
+                "subcontractor_paid": True,
+                "certified_payroll_attached": True,
+            },
+            {
+                "voucher_id": "VCH-NO-FLOW-DOWN",
+                "unconditional_lien_waiver_signed": True,
+                "mandatory_flow_down_clauses_accepted": False,
+                "days_since_prime_payment_received": 2,
+                "subcontractor_paid": True,
+                "certified_payroll_attached": True,
+            },
+            {
+                "voucher_id": "VCH-NO-PAYROLL",
+                "unconditional_lien_waiver_signed": True,
+                "mandatory_flow_down_clauses_accepted": True,
+                "days_since_prime_payment_received": 2,
+                "subcontractor_paid": True,
+                "certified_payroll_attached": False,
+            },
+        ],
+        max_payment_disbursement_lag_days=10,
+    )
+    assert result["evaluated_vouchers_count"] == 3
+    assert result["missing_lien_waiver_or_flow_down_voucher_ids"] == [
+        "VCH-NO-LIEN-WAIVER",
+        "VCH-NO-FLOW-DOWN",
+        "VCH-NO-PAYROLL",
+    ]
+    assert result["overdue_disbursement_voucher_ids"] == []
+    assert (
+        result["subcontractor_payment_status"]
+        == "SUBCONTRACT_LIEN_OR_FLOW_DOWN_BREACH"
+    )
+    assert result["is_subcontract_payment_compliant"] is False
+
+
+def test_evaluate_evm_subcontractor_lien_waiver_and_flow_down_warning():
+    from backend.services.project_evm_service import (
+        evaluate_evm_subcontractor_lien_waiver_and_flow_down,
+    )
+
+    result = evaluate_evm_subcontractor_lien_waiver_and_flow_down(
+        [
+            {
+                "voucher_id": "VCH-PAY-DELAYED",
+                "unconditional_lien_waiver_signed": True,
+                "mandatory_flow_down_clauses_accepted": True,
+                "days_since_prime_payment_received": 16,
+                "subcontractor_paid": False,
+                "certified_payroll_attached": True,
+            }
+        ],
+        max_payment_disbursement_lag_days=10,
+    )
+    assert result["evaluated_vouchers_count"] == 1
+    assert result["missing_lien_waiver_or_flow_down_voucher_ids"] == []
+    assert result["overdue_disbursement_voucher_ids"] == ["VCH-PAY-DELAYED"]
+    assert (
+        result["subcontractor_payment_status"]
+        == "SUBCONTRACT_PAY_DISBURSEMENT_LAG_WARNING"
+    )
+    assert result["is_subcontract_payment_compliant"] is False
+
+
+def test_evaluate_evm_subcontractor_lien_waiver_and_flow_down_optimal_and_empty():
+    from backend.services.project_evm_service import (
+        evaluate_evm_subcontractor_lien_waiver_and_flow_down,
+    )
+
+    empty = evaluate_evm_subcontractor_lien_waiver_and_flow_down(
+        [{"voucher_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_vouchers_count"] == 0
+    assert (
+        empty["subcontractor_payment_status"]
+        == "SUBCONTRACT_FLOW_DOWN_COMPLIANT_OPTIMAL"
+    )
+    assert empty["is_subcontract_payment_compliant"] is True
+
+    optimal = evaluate_evm_subcontractor_lien_waiver_and_flow_down(
+        [
+            {
+                "voucher_id": "VCH-OPT-1",
+                "unconditional_lien_waiver_signed": True,
+                "mandatory_flow_down_clauses_accepted": True,
+                "days_since_prime_payment_received": 4,
+                "subcontractor_paid": True,
+                "certified_payroll_attached": True,
+            }
+        ],
+        max_payment_disbursement_lag_days=10,
+    )
+    assert optimal["evaluated_vouchers_count"] == 1
+    assert optimal["missing_lien_waiver_or_flow_down_voucher_ids"] == []
+    assert optimal["overdue_disbursement_voucher_ids"] == []
+    assert (
+        optimal["subcontractor_payment_status"]
+        == "SUBCONTRACT_FLOW_DOWN_COMPLIANT_OPTIMAL"
+    )
+    assert optimal["is_subcontract_payment_compliant"] is True
+
+
+def test_evaluate_evm_subcontractor_lien_waiver_and_flow_down_staticmethod_and_dunder_all():
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_subcontractor_lien_waiver_and_flow_down,
+    )
+
+    sample = [
+        {
+            "voucher_id": "VCH-99",
+            "days_since_prime_payment_received": 2,
+            "subcontractor_paid": True,
+        }
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_subcontractor_lien_waiver_and_flow_down(
+            sample
+        )
+        == evaluate_evm_subcontractor_lien_waiver_and_flow_down(sample)
+    )
+    assert (
+        "evaluate_evm_subcontractor_lien_waiver_and_flow_down"
+        in mod.__all__
+    )
+

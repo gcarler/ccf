@@ -5525,6 +5525,7 @@ __all__ = [
     "evaluate_evm_working_capital_cash_conversion_and_mobilization_advance",
     "evaluate_evm_liquidated_damages_cap_and_eot_relief",
     "evaluate_evm_epa_inflation_indexation_and_escalation_cap",
+    "evaluate_evm_subcontractor_lien_waiver_and_flow_down",
     "ProjectEVMService",
 ]
 
@@ -9728,5 +9729,88 @@ def evaluate_evm_epa_inflation_indexation_and_escalation_cap(
 
 ProjectEVMService.evaluate_evm_epa_inflation_indexation_and_escalation_cap = staticmethod(
     evaluate_evm_epa_inflation_indexation_and_escalation_cap
+)
+
+
+def evaluate_evm_subcontractor_lien_waiver_and_flow_down(
+    subcontract_vouchers: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_payment_disbursement_lag_days: int | float = 10,
+) -> dict[str, Any]:
+    """PMI PMBOK §7.4 & §12.3 — EVM Subcontractor Back-to-Back Flow-Down Clause, Lien Waiver Release & Pay-When-Paid Compliance Evaluator."""
+    valid_vouchers = [
+        vch
+        for vch in (subcontract_vouchers or [])
+        if isinstance(vch, Mapping) and str(vch.get("voucher_id") or "").strip()
+    ]
+
+    missing_lien_waiver_or_flow_down_voucher_ids: list[str] = []
+    overdue_disbursement_voucher_ids: list[str] = []
+
+    for vch in valid_vouchers:
+        vid = str(vch.get("voucher_id")).strip()
+        unconditional_lien_waiver_signed = bool(
+            vch.get("unconditional_lien_waiver_signed", True)
+            if vch.get("unconditional_lien_waiver_signed") is not None
+            else True
+        )
+        mandatory_flow_down_clauses_accepted = bool(
+            vch.get("mandatory_flow_down_clauses_accepted", True)
+            if vch.get("mandatory_flow_down_clauses_accepted") is not None
+            else True
+        )
+        days_since_prime_payment_received = float(
+            vch.get("days_since_prime_payment_received", 3)
+            if vch.get("days_since_prime_payment_received") is not None
+            else 3
+        )
+        subcontractor_paid = bool(
+            vch.get("subcontractor_paid", True)
+            if vch.get("subcontractor_paid") is not None
+            else True
+        )
+        certified_payroll_attached = bool(
+            vch.get("certified_payroll_attached", True)
+            if vch.get("certified_payroll_attached") is not None
+            else True
+        )
+
+        if (
+            not unconditional_lien_waiver_signed
+            or not mandatory_flow_down_clauses_accepted
+            or not certified_payroll_attached
+        ):
+            missing_lien_waiver_or_flow_down_voucher_ids.append(vid)
+
+        if (
+            not subcontractor_paid
+            and days_since_prime_payment_received
+            > max_payment_disbursement_lag_days
+        ):
+            overdue_disbursement_voucher_ids.append(vid)
+
+    if missing_lien_waiver_or_flow_down_voucher_ids:
+        subcontractor_payment_status = "SUBCONTRACT_LIEN_OR_FLOW_DOWN_BREACH"
+    elif overdue_disbursement_voucher_ids:
+        subcontractor_payment_status = (
+            "SUBCONTRACT_PAY_DISBURSEMENT_LAG_WARNING"
+        )
+    else:
+        subcontractor_payment_status = (
+            "SUBCONTRACT_FLOW_DOWN_COMPLIANT_OPTIMAL"
+        )
+
+    return {
+        "evaluated_vouchers_count": len(valid_vouchers),
+        "missing_lien_waiver_or_flow_down_voucher_ids": missing_lien_waiver_or_flow_down_voucher_ids,
+        "overdue_disbursement_voucher_ids": overdue_disbursement_voucher_ids,
+        "subcontractor_payment_status": subcontractor_payment_status,
+        "is_subcontract_payment_compliant": subcontractor_payment_status
+        == "SUBCONTRACT_FLOW_DOWN_COMPLIANT_OPTIMAL",
+    }
+
+
+ProjectEVMService.evaluate_evm_subcontractor_lien_waiver_and_flow_down = staticmethod(
+    evaluate_evm_subcontractor_lien_waiver_and_flow_down
 )
 
