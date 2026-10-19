@@ -3835,6 +3835,7 @@ __all__ = [
     "validate_rbs_bowtie_barrier_redundancy_and_residual_severity",
     "validate_contingency_and_management_reserve_emv_drawdown",
     "validate_monte_carlo_pert_p80_p90_and_path_convergence_bias",
+    "validate_resource_leveling_and_smoothing_float_bounds",
 ]
 
 
@@ -10126,4 +10127,100 @@ def validate_monte_carlo_pert_p80_p90_and_path_convergence_bias(
         "total_p80_shortfall_days": round(total_p80_shortfall, 4),
         "activity_evaluations": activity_evaluations,
     }
+
+
+def validate_resource_leveling_and_smoothing_float_bounds(
+    resources: list[dict[str, Any]],
+    max_utilization_pct: float = 100.0,
+    smoothing_mode_only: bool = True,
+    max_float_consumption_pct_in_smoothing: float = 100.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §6.5 & §9.2 — Schedule Resource Leveling vs. Resource Smoothing Peak Utilization Histogram, Critical Path Extension & Total Float Consumption Validator."""
+    valid_resources = [
+        r for r in (resources if isinstance(resources, list) else []) if isinstance(r, dict)
+    ]
+
+    critical_resources: list[str] = []
+    warning_resources: list[str] = []
+    resource_evaluations: list[dict[str, Any]] = []
+
+    for idx, res in enumerate(valid_resources):
+        resource_id = str(res.get("resource_id") or f"res-{idx + 1}").strip()
+        alloc_hours = float(res.get("allocated_hours", 0.0) or 0.0)
+        cap_hours = float(res.get("available_capacity_hours", 0.0) or 0.0)
+        avail_float = float(res.get("available_total_float_days", 0.0) or 0.0)
+        delay_days = float(res.get("delay_applied_days", 0.0) or 0.0)
+        cp_ext_days = float(res.get("critical_path_extended_days", 0.0) or 0.0)
+
+        utilization_pct = (
+            round((alloc_hours / cap_hours) * 100.0, 2)
+            if cap_hours > 0.0
+            else 0.0
+        )
+        float_consumption_pct = (
+            round((delay_days / avail_float) * 100.0, 2)
+            if avail_float > 0.0
+            else (100.0 if delay_days > 0.0 else 0.0)
+        )
+
+        critical_resource_breach = bool(
+            utilization_pct > float(max_utilization_pct)
+            or (
+                smoothing_mode_only
+                and (
+                    cp_ext_days > 0.0
+                    or delay_days > avail_float
+                    or float_consumption_pct
+                    > float(max_float_consumption_pct_in_smoothing)
+                )
+            )
+        )
+        warning_resource_strain = bool(
+            not critical_resource_breach
+            and (
+                utilization_pct >= 90.0
+                or float_consumption_pct >= 80.0
+                or (not smoothing_mode_only and cp_ext_days > 0.0)
+            )
+        )
+
+        if critical_resource_breach:
+            critical_resources.append(resource_id)
+        elif warning_resource_strain:
+            warning_resources.append(resource_id)
+
+        resource_evaluations.append(
+            {
+                "resource_id": resource_id,
+                "utilization_pct": utilization_pct,
+                "float_consumption_pct": float_consumption_pct,
+                "critical_path_extended_days": cp_ext_days,
+                "critical_resource_breach": critical_resource_breach,
+                "warning_resource_strain": warning_resource_strain,
+            }
+        )
+
+    peak_utilization_pct = (
+        round(max(r["utilization_pct"] for r in resource_evaluations), 2)
+        if resource_evaluations
+        else 0.0
+    )
+
+    if critical_resources:
+        status = "CRITICAL"
+    elif warning_resources:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "status": status,
+        "is_valid": status == "HEALTHY",
+        "evaluated_resources_count": len(valid_resources),
+        "critical_resources": critical_resources,
+        "warning_resources": warning_resources,
+        "peak_utilization_pct": peak_utilization_pct,
+        "resource_evaluations": resource_evaluations,
+    }
+
 

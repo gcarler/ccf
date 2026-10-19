@@ -10646,3 +10646,125 @@ def test_validate_monte_carlo_pert_p80_p90_and_path_convergence_bias_empty_and_e
         in mod.__all__
     )
 
+
+def test_validate_resource_leveling_and_smoothing_float_bounds_healthy():
+    from backend.schemas.projects import (
+        validate_resource_leveling_and_smoothing_float_bounds,
+    )
+
+    res = validate_resource_leveling_and_smoothing_float_bounds(
+        [
+            {
+                "resource_id": "RES-CRANE-01",
+                "allocated_hours": 140.0,
+                "available_capacity_hours": 160.0,
+                "available_total_float_days": 10.0,
+                "delay_applied_days": 5.0,
+                "critical_path_extended_days": 0.0,
+            },
+            {
+                "resource_id": "RES-WELDER-02",
+                "allocated_hours": 120.0,
+                "available_capacity_hours": 160.0,
+                "available_total_float_days": 8.0,
+                "delay_applied_days": 2.0,
+                "critical_path_extended_days": 0.0,
+            },
+        ]
+    )
+    assert res["status"] == "HEALTHY"
+    assert res["is_valid"] is True
+    assert res["evaluated_resources_count"] == 2
+    assert res["critical_resources"] == []
+    assert res["warning_resources"] == []
+    assert res["peak_utilization_pct"] == 87.5
+
+
+def test_validate_resource_leveling_and_smoothing_float_bounds_critical():
+    from backend.schemas.projects import (
+        validate_resource_leveling_and_smoothing_float_bounds,
+    )
+
+    res = validate_resource_leveling_and_smoothing_float_bounds(
+        [
+            {
+                "resource_id": "RES-OVERALLOC-01",
+                "allocated_hours": 180.0,
+                "available_capacity_hours": 160.0,
+                "available_total_float_days": 5.0,
+                "delay_applied_days": 1.0,
+                "critical_path_extended_days": 0.0,
+            },
+            {
+                "resource_id": "RES-SMOOTHING-CP-SLIP",
+                "allocated_hours": 130.0,
+                "available_capacity_hours": 160.0,
+                "available_total_float_days": 4.0,
+                "delay_applied_days": 6.0,
+                "critical_path_extended_days": 2.0,
+            },
+        ],
+        smoothing_mode_only=True,
+    )
+    assert res["status"] == "CRITICAL"
+    assert res["is_valid"] is False
+    assert res["critical_resources"] == [
+        "RES-OVERALLOC-01",
+        "RES-SMOOTHING-CP-SLIP",
+    ]
+    assert res["warning_resources"] == []
+    assert res["peak_utilization_pct"] == 112.5
+
+
+def test_validate_resource_leveling_and_smoothing_float_bounds_warning():
+    from backend.schemas.projects import (
+        validate_resource_leveling_and_smoothing_float_bounds,
+    )
+
+    res = validate_resource_leveling_and_smoothing_float_bounds(
+        [
+            {
+                "resource_id": "RES-HIGH-UTIL",
+                "allocated_hours": 152.0,
+                "available_capacity_hours": 160.0,
+                "available_total_float_days": 10.0,
+                "delay_applied_days": 3.0,
+                "critical_path_extended_days": 0.0,
+            },
+            {
+                "resource_id": "RES-LEVELING-CP-EXTENSION",
+                "allocated_hours": 128.0,
+                "available_capacity_hours": 160.0,
+                "available_total_float_days": 5.0,
+                "delay_applied_days": 5.0,
+                "critical_path_extended_days": 3.0,
+            },
+        ],
+        smoothing_mode_only=False,
+    )
+    assert res["status"] == "WARNING"
+    assert res["is_valid"] is False
+    assert res["critical_resources"] == []
+    assert res["warning_resources"] == [
+        "RES-HIGH-UTIL",
+        "RES-LEVELING-CP-EXTENSION",
+    ]
+    assert res["peak_utilization_pct"] == 95.0
+
+
+def test_validate_resource_leveling_and_smoothing_float_bounds_empty_and_exports():
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_resource_leveling_and_smoothing_float_bounds,
+    )
+
+    empty = validate_resource_leveling_and_smoothing_float_bounds([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["evaluated_resources_count"] == 0
+    assert empty["peak_utilization_pct"] == 0.0
+    assert (
+        "validate_resource_leveling_and_smoothing_float_bounds"
+        in mod.__all__
+    )
+
+
