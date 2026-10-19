@@ -10692,3 +10692,93 @@ def test_audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygien
         in mod.__all__
     )
 
+
+def test_audit_markdown_ai_model_card_bias_fairness_and_red_team_hygiene_healthy():
+    from backend.services.anydoc_service import (
+        audit_markdown_ai_model_card_bias_fairness_and_red_team_hygiene,
+    )
+
+    md = """
+    # AI Model Cards Governance
+    <!-- ai_model_card: model=rag-assistant-v4; risk_tier=high; disparate_impact_ratio=0.88; jailbreak_success_rate_pct=0.5; training_data_copyright_cleared=true; human_in_the_loop_override=true -->
+    <!-- ai_model_card: model=doc-classifier-v2; risk_tier=limited; disparate_impact_ratio=0.94; jailbreak_success_rate_pct=0.2; training_data_copyright_cleared=true; human_in_the_loop_override=false -->
+    """
+    res = audit_markdown_ai_model_card_bias_fairness_and_red_team_hygiene(md)
+    assert res["status"] == "healthy"
+    assert res["total_model_cards"] == 2
+    assert res["healthy_count"] == 2
+    assert res["warning_count"] == 0
+    assert res["critical_count"] == 0
+    assert res["model_card_hygiene_rate_pct"] == 100.0
+    assert res["recommendations"] == []
+
+
+def test_audit_markdown_ai_model_card_bias_fairness_and_red_team_hygiene_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_ai_model_card_bias_fairness_and_red_team_hygiene,
+    )
+
+    md = """
+    <!-- ai_model_card: model=resume-ranker-v1; risk_tier=high; disparate_impact_ratio=0.71; jailbreak_success_rate_pct=1.2; training_data_copyright_cleared=true; human_in_the_loop_override=true -->
+    """
+    res = audit_markdown_ai_model_card_bias_fairness_and_red_team_hygiene(md)
+    assert res["status"] == "warning"
+    assert res["total_model_cards"] == 1
+    assert res["warning_count"] == 1
+    assert res["critical_count"] == 0
+    assert res["bias_rule_violation_count"] == 1
+    assert res["blocks"][0]["block_status"] == "warning"
+    assert len(res["recommendations"]) >= 1
+
+
+def test_audit_markdown_ai_model_card_bias_fairness_and_red_team_hygiene_critical():
+    from backend.services.anydoc_service import (
+        audit_markdown_ai_model_card_bias_fairness_and_red_team_hygiene,
+    )
+
+    md = """
+    <!-- ai_model_card: model=social-scoring-v0; risk_tier=unacceptable; disparate_impact_ratio=0.62; jailbreak_success_rate_pct=8.5; training_data_copyright_cleared=false; human_in_the_loop_override=false -->
+    """
+    res = audit_markdown_ai_model_card_bias_fairness_and_red_team_hygiene(md)
+    assert res["status"] == "critical"
+    assert res["total_model_cards"] == 1
+    assert res["critical_count"] == 1
+    assert res["prohibited_tier_count"] == 1
+    assert res["copyright_or_hitl_breach_count"] == 1
+    assert res["bias_rule_violation_count"] == 1
+    assert res["jailbreak_exceeded_count"] == 1
+    assert res["model_card_hygiene_rate_pct"] == 0.0
+    assert res["blocks"][0]["block_status"] == "critical"
+    assert len(res["recommendations"]) >= 3
+
+
+def test_audit_markdown_ai_model_card_bias_fairness_and_red_team_hygiene_empty_and_binding():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_ai_model_card_bias_fairness_and_red_team_hygiene,
+    )
+
+    empty = audit_markdown_ai_model_card_bias_fairness_and_red_team_hygiene("")
+    assert empty["status"] == "healthy"
+    assert empty["total_model_cards"] == 0
+    assert empty["model_card_hygiene_rate_pct"] == 100.0
+    assert (
+        AnyDocService.audit_markdown_ai_model_card_bias_fairness_and_red_team_hygiene(
+            ""
+        )
+        == empty
+    )
+    assert (
+        AnydocService.audit_markdown_ai_model_card_bias_fairness_and_red_team_hygiene(
+            ""
+        )
+        == empty
+    )
+    assert (
+        "audit_markdown_ai_model_card_bias_fairness_and_red_team_hygiene"
+        in mod.__all__
+    )
+
+

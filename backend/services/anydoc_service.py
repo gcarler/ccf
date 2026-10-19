@@ -3065,6 +3065,7 @@ __all__ = [
     "audit_markdown_threat_model_stride_mitre_and_residual_risk_hygiene",
     "audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene",
     "audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygiene",
+    "audit_markdown_ai_model_card_bias_fairness_and_red_team_hygiene",
     "AnydocService",
 ]
 
@@ -11308,4 +11309,183 @@ AnyDocService.audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_h
 AnydocService.audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygiene = staticmethod(
     audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygiene
 )
+
+
+def audit_markdown_ai_model_card_bias_fairness_and_red_team_hygiene(
+    markdown_text: str,
+    *,
+    min_disparate_impact_ratio: float = 0.80,
+    max_jailbreak_success_rate_pct: float = 2.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §10.2 — AnyDoc Markdown AI Model Card (EU AI Act / NIST AI RMF), Bias/Fairness Disparate Impact & Red-Team Jailbreak Rate Hygiene Auditor."""
+    normalized_min_di = min(max(float(min_disparate_impact_ratio), 0.1), 1.0)
+    normalized_max_jb = min(
+        max(float(max_jailbreak_success_rate_pct), 0.0), 100.0
+    )
+
+    text = markdown_text if isinstance(markdown_text, str) else ""
+    stripped = re.sub(r"```[\s\S]*?```|~~~[\s\S]*?~~~", "", text)
+
+    pattern = re.compile(
+        r"<!--\s*ai_model_card\s*:(.*?)-->", re.IGNORECASE | re.DOTALL
+    )
+    blocks: list[dict[str, Any]] = []
+    healthy_count = 0
+    warning_count = 0
+    critical_count = 0
+    copyright_or_hitl_breach_count = 0
+    bias_rule_violation_count = 0
+    jailbreak_exceeded_count = 0
+    prohibited_tier_count = 0
+
+    for idx, match in enumerate(pattern.finditer(stripped), start=1):
+        raw_body = match.group(1)
+        kv: dict[str, str] = {}
+        for part in re.split(r"[;\n]", raw_body):
+            if "=" in part:
+                k, v = part.split("=", 1)
+                kv[k.strip().lower()] = v.strip()
+
+        model = kv.get("model") or f"ai-model-{idx}"
+        risk_tier = kv.get("risk_tier", "limited").strip().lower()
+        try:
+            disparate_impact_ratio = float(
+                kv.get("disparate_impact_ratio", "1.0")
+            )
+        except (TypeError, ValueError):
+            disparate_impact_ratio = 0.0
+        try:
+            jailbreak_success_rate_pct = float(
+                kv.get("jailbreak_success_rate_pct", "0.0")
+            )
+        except (TypeError, ValueError):
+            jailbreak_success_rate_pct = 0.0
+
+        raw_copyright = (
+            kv.get("training_data_copyright_cleared", "true").strip().lower()
+        )
+        training_data_copyright_cleared = raw_copyright not in {
+            "false",
+            "0",
+            "no",
+        }
+        raw_hitl = kv.get("human_in_the_loop_override", "true").strip().lower()
+        human_in_the_loop_override = raw_hitl not in {"false", "0", "no"}
+
+        prohibited_ai_tier = risk_tier == "unacceptable"
+        unmitigated_high_risk_or_copyright_breach = (
+            not training_data_copyright_cleared
+            or (
+                risk_tier in {"high", "unacceptable"}
+                and not human_in_the_loop_override
+            )
+        )
+        four_fifths_bias_rule_violated = (
+            disparate_impact_ratio < normalized_min_di
+            or disparate_impact_ratio > 1.25
+        )
+        red_team_jailbreak_threshold_exceeded = (
+            jailbreak_success_rate_pct > normalized_max_jb
+        )
+
+        if unmitigated_high_risk_or_copyright_breach:
+            copyright_or_hitl_breach_count += 1
+        if four_fifths_bias_rule_violated:
+            bias_rule_violation_count += 1
+        if red_team_jailbreak_threshold_exceeded:
+            jailbreak_exceeded_count += 1
+        if prohibited_ai_tier:
+            prohibited_tier_count += 1
+
+        if (
+            prohibited_ai_tier
+            or unmitigated_high_risk_or_copyright_breach
+            or (
+                four_fifths_bias_rule_violated
+                and red_team_jailbreak_threshold_exceeded
+            )
+        ):
+            block_status = "critical"
+            critical_count += 1
+        elif (
+            four_fifths_bias_rule_violated
+            or red_team_jailbreak_threshold_exceeded
+        ):
+            block_status = "warning"
+            warning_count += 1
+        else:
+            block_status = "healthy"
+            healthy_count += 1
+
+        blocks.append(
+            {
+                "model": model,
+                "risk_tier": risk_tier,
+                "disparate_impact_ratio": disparate_impact_ratio,
+                "jailbreak_success_rate_pct": jailbreak_success_rate_pct,
+                "training_data_copyright_cleared": training_data_copyright_cleared,
+                "human_in_the_loop_override": human_in_the_loop_override,
+                "unmitigated_high_risk_or_copyright_breach": unmitigated_high_risk_or_copyright_breach,
+                "four_fifths_bias_rule_violated": four_fifths_bias_rule_violated,
+                "red_team_jailbreak_threshold_exceeded": red_team_jailbreak_threshold_exceeded,
+                "prohibited_ai_tier": prohibited_ai_tier,
+                "block_status": block_status,
+            }
+        )
+
+    total_model_cards = len(blocks)
+    model_card_hygiene_rate_pct = (
+        round((healthy_count / total_model_cards) * 100.0, 2)
+        if total_model_cards > 0
+        else 100.0
+    )
+
+    recommendations: list[str] = []
+    if prohibited_tier_count > 0:
+        recommendations.append(
+            f"Bloquear despliegue de modelos clasificados en nivel de riesgo prohibido ('unacceptable' según EU AI Act Art. 5) en {prohibited_tier_count} Model Card(s)."
+        )
+    if copyright_or_hitl_breach_count > 0:
+        recommendations.append(
+            f"Acreditar limpieza de derechos de autor del corpus de entrenamiento y habilitar supervisión humana efectiva (HITL override) para sistemas de alto riesgo en {copyright_or_hitl_breach_count} Model Card(s)."
+        )
+    if bias_rule_violation_count > 0:
+        recommendations.append(
+            f"Recalibrar pesos y muestreo demográfico para cumplir la regla de cuatro quintos (Disparate Impact Ratio en [{normalized_min_di}, 1.25]) en {bias_rule_violation_count} Model Card(s)."
+        )
+    if jailbreak_exceeded_count > 0:
+        recommendations.append(
+            f"Reforzar guardrails contra inyección de prompts y ataques adversariales para reducir tasa de éxito de jailbreak <= {normalized_max_jb}% en {jailbreak_exceeded_count} Model Card(s)."
+        )
+
+    if critical_count > 0:
+        status = "critical"
+    elif warning_count > 0:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_model_cards": total_model_cards,
+        "healthy_count": healthy_count,
+        "warning_count": warning_count,
+        "critical_count": critical_count,
+        "copyright_or_hitl_breach_count": copyright_or_hitl_breach_count,
+        "bias_rule_violation_count": bias_rule_violation_count,
+        "jailbreak_exceeded_count": jailbreak_exceeded_count,
+        "prohibited_tier_count": prohibited_tier_count,
+        "model_card_hygiene_rate_pct": model_card_hygiene_rate_pct,
+        "status": status,
+        "blocks": blocks,
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_markdown_ai_model_card_bias_fairness_and_red_team_hygiene = staticmethod(
+    audit_markdown_ai_model_card_bias_fairness_and_red_team_hygiene
+)
+AnydocService.audit_markdown_ai_model_card_bias_fairness_and_red_team_hygiene = staticmethod(
+    audit_markdown_ai_model_card_bias_fairness_and_red_team_hygiene
+)
+
 

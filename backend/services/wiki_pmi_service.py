@@ -2565,6 +2565,7 @@ __all__ = [
     "audit_wiki_graphql_query_depth_alias_budget_and_introspection_guard",
     "audit_wiki_presigned_url_ttl_and_bucket_public_acl_guard",
     "audit_wiki_fts_bm25_index_bloat_and_reindex_lock_guard",
+    "audit_wiki_crdt_vector_clock_divergence_and_tombstone_gc_guard",
     "WikiPMIService",
 ]
 
@@ -9962,4 +9963,159 @@ def audit_wiki_fts_bm25_index_bloat_and_reindex_lock_guard(
 WikiPMIService.audit_wiki_fts_bm25_index_bloat_and_reindex_lock_guard = staticmethod(
     audit_wiki_fts_bm25_index_bloat_and_reindex_lock_guard
 )
+
+
+def audit_wiki_crdt_vector_clock_divergence_and_tombstone_gc_guard(
+    replicas: list[dict[str, Any]],
+    *,
+    max_causal_lag_ops: int = 500,
+    max_tombstone_ratio_pct: float = 25.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §11.6 — Wiki Multi-Region CRDT Vector-Clock Causal Divergence & Tombstone GC Compaction Guard Auditor."""
+    normalized_max_lag = max(int(max_causal_lag_ops), 1)
+    normalized_max_tombstone = min(max(float(max_tombstone_ratio_pct), 1.0), 95.0)
+
+    raw_replicas = replicas if isinstance(replicas, list) else []
+    evaluated_replicas: list[dict[str, Any]] = []
+    healthy_count = 0
+    warning_count = 0
+    critical_count = 0
+    corruption_or_resurrection_count = 0
+    move_cycle_count = 0
+    causal_lag_exceeded_count = 0
+    tombstone_bloat_count = 0
+
+    for idx, item in enumerate(raw_replicas, start=1):
+        if not isinstance(item, dict):
+            continue
+        replica_id = str(
+            item.get("replica_id") or f"wiki-crdt-replica-{idx}"
+        ).strip()
+
+        raw_lag = item.get("unmerged_causal_lag_ops", 0)
+        try:
+            unmerged_causal_lag_ops = int(0 if raw_lag is None else raw_lag)
+        except (TypeError, ValueError):
+            unmerged_causal_lag_ops = 0
+
+        raw_tombstone = item.get("tombstone_overhead_pct", 5.0)
+        try:
+            tombstone_overhead_pct = float(
+                5.0 if raw_tombstone is None else raw_tombstone
+            )
+        except (TypeError, ValueError):
+            tombstone_overhead_pct = 5.0
+
+        gc_grace_period_expired_before_anti_entropy = bool(
+            item.get("gc_grace_period_expired_before_anti_entropy", False)
+        )
+        state_vector_checksum_matched = bool(
+            item.get("state_vector_checksum_matched", True)
+        )
+        concurrent_move_cycle_detected = bool(
+            item.get("concurrent_move_cycle_detected", False)
+        )
+
+        zombie_resurrection_or_checksum_corruption = (
+            gc_grace_period_expired_before_anti_entropy
+            or not state_vector_checksum_matched
+        )
+        causal_divergence_lag_exceeded = (
+            unmerged_causal_lag_ops > normalized_max_lag
+        )
+        tombstone_bloat_exceeded = (
+            tombstone_overhead_pct > normalized_max_tombstone
+        )
+        tree_move_cycle_anomaly = concurrent_move_cycle_detected
+
+        if zombie_resurrection_or_checksum_corruption:
+            corruption_or_resurrection_count += 1
+        if tree_move_cycle_anomaly:
+            move_cycle_count += 1
+        if causal_divergence_lag_exceeded:
+            causal_lag_exceeded_count += 1
+        if tombstone_bloat_exceeded:
+            tombstone_bloat_count += 1
+
+        if (
+            zombie_resurrection_or_checksum_corruption
+            or tree_move_cycle_anomaly
+        ):
+            replica_status = "critical"
+            critical_count += 1
+        elif causal_divergence_lag_exceeded or tombstone_bloat_exceeded:
+            replica_status = "warning"
+            warning_count += 1
+        else:
+            replica_status = "healthy"
+            healthy_count += 1
+
+        evaluated_replicas.append(
+            {
+                "replica_id": replica_id,
+                "unmerged_causal_lag_ops": unmerged_causal_lag_ops,
+                "tombstone_overhead_pct": tombstone_overhead_pct,
+                "gc_grace_period_expired_before_anti_entropy": gc_grace_period_expired_before_anti_entropy,
+                "state_vector_checksum_matched": state_vector_checksum_matched,
+                "concurrent_move_cycle_detected": concurrent_move_cycle_detected,
+                "zombie_resurrection_or_checksum_corruption": zombie_resurrection_or_checksum_corruption,
+                "causal_divergence_lag_exceeded": causal_divergence_lag_exceeded,
+                "tombstone_bloat_exceeded": tombstone_bloat_exceeded,
+                "tree_move_cycle_anomaly": tree_move_cycle_anomaly,
+                "replica_status": replica_status,
+            }
+        )
+
+    total_replicas = len(evaluated_replicas)
+    crdt_convergence_rate_pct = (
+        round((healthy_count / total_replicas) * 100.0, 2)
+        if total_replicas > 0
+        else 100.0
+    )
+
+    recommendations: list[str] = []
+    if corruption_or_resurrection_count > 0:
+        recommendations.append(
+            f"Suspender purgado de tombstones antes del ciclo anti-entropía y reconciliar checksum del vector de estado en {corruption_or_resurrection_count} réplica(s) CRDT."
+        )
+    if move_cycle_count > 0:
+        recommendations.append(
+            f"Ejecutar algoritmo Kleppmann tree-move undo/redo para deshacer ciclos concurrentes en {move_cycle_count} réplica(s) CRDT."
+        )
+    if causal_lag_exceeded_count > 0:
+        recommendations.append(
+            f"Acelerar difusión gossip de deltas de reloj vectorial para mantener operaciones sin fusionar <= {normalized_max_lag} en {causal_lag_exceeded_count} réplica(s)."
+        )
+    if tombstone_bloat_count > 0:
+        recommendations.append(
+            f"Ejecutar compactación GC de tombstones tras quórum causal para reducir sobrecarga <= {normalized_max_tombstone}% en {tombstone_bloat_count} réplica(s)."
+        )
+
+    if critical_count > 0:
+        status = "critical"
+    elif warning_count > 0:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_replicas": total_replicas,
+        "healthy_count": healthy_count,
+        "warning_count": warning_count,
+        "critical_count": critical_count,
+        "corruption_or_resurrection_count": corruption_or_resurrection_count,
+        "move_cycle_count": move_cycle_count,
+        "causal_lag_exceeded_count": causal_lag_exceeded_count,
+        "tombstone_bloat_count": tombstone_bloat_count,
+        "crdt_convergence_rate_pct": crdt_convergence_rate_pct,
+        "status": status,
+        "replicas": evaluated_replicas,
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_crdt_vector_clock_divergence_and_tombstone_gc_guard = staticmethod(
+    audit_wiki_crdt_vector_clock_divergence_and_tombstone_gc_guard
+)
+
 

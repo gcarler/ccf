@@ -12935,3 +12935,112 @@ def test_audit_wiki_fts_bm25_index_bloat_and_reindex_lock_guard_empty_and_bindin
         in mod.__all__
     )
 
+
+def test_audit_wiki_crdt_vector_clock_divergence_and_tombstone_gc_guard_healthy():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_crdt_vector_clock_divergence_and_tombstone_gc_guard,
+    )
+
+    replicas = [
+        {
+            "replica_id": "wiki-crdt-us-east-1",
+            "unmerged_causal_lag_ops": 42,
+            "tombstone_overhead_pct": 8.5,
+            "gc_grace_period_expired_before_anti_entropy": False,
+            "state_vector_checksum_matched": True,
+            "concurrent_move_cycle_detected": False,
+        },
+        {
+            "replica_id": "wiki-crdt-eu-west-1",
+            "unmerged_causal_lag_ops": 115,
+            "tombstone_overhead_pct": 12.0,
+            "gc_grace_period_expired_before_anti_entropy": False,
+            "state_vector_checksum_matched": True,
+            "concurrent_move_cycle_detected": False,
+        },
+    ]
+    res = audit_wiki_crdt_vector_clock_divergence_and_tombstone_gc_guard(replicas)
+    assert res["status"] == "healthy"
+    assert res["total_replicas"] == 2
+    assert res["healthy_count"] == 2
+    assert res["warning_count"] == 0
+    assert res["critical_count"] == 0
+    assert res["crdt_convergence_rate_pct"] == 100.0
+    assert res["recommendations"] == []
+
+
+def test_audit_wiki_crdt_vector_clock_divergence_and_tombstone_gc_guard_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_crdt_vector_clock_divergence_and_tombstone_gc_guard,
+    )
+
+    replicas = [
+        {
+            "replica_id": "wiki-crdt-sa-east-1",
+            "unmerged_causal_lag_ops": 820,
+            "tombstone_overhead_pct": 34.0,
+            "gc_grace_period_expired_before_anti_entropy": False,
+            "state_vector_checksum_matched": True,
+            "concurrent_move_cycle_detected": False,
+        }
+    ]
+    res = audit_wiki_crdt_vector_clock_divergence_and_tombstone_gc_guard(replicas)
+    assert res["status"] == "warning"
+    assert res["total_replicas"] == 1
+    assert res["warning_count"] == 1
+    assert res["critical_count"] == 0
+    assert res["causal_lag_exceeded_count"] == 1
+    assert res["tombstone_bloat_count"] == 1
+    assert res["replicas"][0]["replica_status"] == "warning"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_wiki_crdt_vector_clock_divergence_and_tombstone_gc_guard_critical():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_crdt_vector_clock_divergence_and_tombstone_gc_guard,
+    )
+
+    replicas = [
+        {
+            "replica_id": "wiki-crdt-ap-northeast-1",
+            "unmerged_causal_lag_ops": 1400,
+            "tombstone_overhead_pct": 48.0,
+            "gc_grace_period_expired_before_anti_entropy": True,
+            "state_vector_checksum_matched": False,
+            "concurrent_move_cycle_detected": True,
+        }
+    ]
+    res = audit_wiki_crdt_vector_clock_divergence_and_tombstone_gc_guard(replicas)
+    assert res["status"] == "critical"
+    assert res["total_replicas"] == 1
+    assert res["critical_count"] == 1
+    assert res["corruption_or_resurrection_count"] == 1
+    assert res["move_cycle_count"] == 1
+    assert res["crdt_convergence_rate_pct"] == 0.0
+    assert res["replicas"][0]["replica_status"] == "critical"
+    assert len(res["recommendations"]) >= 3
+
+
+def test_audit_wiki_crdt_vector_clock_divergence_and_tombstone_gc_guard_empty_and_binding():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_crdt_vector_clock_divergence_and_tombstone_gc_guard,
+    )
+
+    empty = audit_wiki_crdt_vector_clock_divergence_and_tombstone_gc_guard([])
+    assert empty["status"] == "healthy"
+    assert empty["total_replicas"] == 0
+    assert empty["crdt_convergence_rate_pct"] == 100.0
+    assert (
+        WikiPMIService.audit_wiki_crdt_vector_clock_divergence_and_tombstone_gc_guard(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_wiki_crdt_vector_clock_divergence_and_tombstone_gc_guard"
+        in mod.__all__
+    )
+
+
