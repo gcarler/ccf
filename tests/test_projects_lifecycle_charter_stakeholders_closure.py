@@ -10217,4 +10217,157 @@ def test_audit_warranty_latent_defect_and_retention_bond_release_staticmethod_an
     )
 
 
+def test_audit_regulatory_permit_renewal_and_stop_work_compliance_breach():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_regulatory_permit_renewal_and_stop_work_compliance,
+    )
+
+    res = audit_regulatory_permit_renewal_and_stop_work_compliance(
+        [
+            {
+                "permit_id": "  PRM-EXPIRED  ",
+                "days_until_expiration": 0,
+                "renewal_application_submitted": True,
+                "stop_work_order_active": False,
+                "open_minor_citations_count": 0,
+            },
+            {
+                "permit_id": "PRM-STOP-WORK",
+                "days_until_expiration": 90,
+                "renewal_application_submitted": True,
+                "stop_work_order_active": True,
+                "open_minor_citations_count": 4,
+            },
+            {
+                "permit_id": "PRM-CLEAN",
+                "days_until_expiration": 45,
+                "renewal_application_submitted": False,
+                "stop_work_order_active": False,
+                "open_minor_citations_count": 2,
+            },
+        ]
+    )
+    assert res["evaluated_permits_count"] == 3
+    assert res["expired_or_stop_work_permit_ids"] == [
+        "PRM-EXPIRED",
+        "PRM-STOP-WORK",
+    ]
+    assert res["renewal_window_or_citation_permit_ids"] == ["PRM-STOP-WORK"]
+    assert (
+        res["regulatory_permit_status"]
+        == "PERMIT_EXPIRATION_OR_STOP_WORK_BREACH"
+    )
+    assert res["is_regulatory_permit_compliant"] is False
+
+
+def test_audit_regulatory_permit_renewal_and_stop_work_compliance_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_regulatory_permit_renewal_and_stop_work_compliance,
+    )
+
+    res = audit_regulatory_permit_renewal_and_stop_work_compliance(
+        [
+            {
+                "permit_id": "PRM-UNRENEWED-WINDOW",
+                "days_until_expiration": 44,
+                "renewal_application_submitted": False,
+                "stop_work_order_active": False,
+                "open_minor_citations_count": 2,
+            },
+            {
+                "permit_id": "PRM-CITATIONS",
+                "days_until_expiration": 100,
+                "renewal_application_submitted": True,
+                "stop_work_order_active": False,
+                "open_minor_citations_count": 3,
+            },
+            {
+                "permit_id": "PRM-RENEWED-IN-WINDOW",
+                "days_until_expiration": 10,
+                "renewal_application_submitted": True,
+                "stop_work_order_active": False,
+                "open_minor_citations_count": 2,
+            },
+        ],
+        min_renewal_lead_time_days=45,
+        max_open_minor_citations=2,
+    )
+    assert res["evaluated_permits_count"] == 3
+    assert res["expired_or_stop_work_permit_ids"] == []
+    assert res["renewal_window_or_citation_permit_ids"] == [
+        "PRM-UNRENEWED-WINDOW",
+        "PRM-CITATIONS",
+    ]
+    assert (
+        res["regulatory_permit_status"]
+        == "PERMIT_RENEWAL_LEAD_TIME_OR_CITATION_WARNING"
+    )
+    assert res["is_regulatory_permit_compliant"] is False
+
+
+def test_audit_regulatory_permit_renewal_and_stop_work_compliance_optimal_and_defensive():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_regulatory_permit_renewal_and_stop_work_compliance,
+    )
+
+    empty = audit_regulatory_permit_renewal_and_stop_work_compliance(None)
+    assert empty["evaluated_permits_count"] == 0
+    assert empty["expired_or_stop_work_permit_ids"] == []
+    assert empty["renewal_window_or_citation_permit_ids"] == []
+    assert (
+        empty["regulatory_permit_status"]
+        == "PERMIT_REGULATORY_COMPLIANCE_OPTIMAL"
+    )
+    assert empty["is_regulatory_permit_compliant"] is True
+
+    optimal = audit_regulatory_permit_renewal_and_stop_work_compliance(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"permit_id": "   "},
+            {
+                "permit_id": "PRM-DEFAULTS",
+                "days_until_expiration": None,
+                "renewal_application_submitted": None,
+                "stop_work_order_active": None,
+                "open_minor_citations_count": None,
+            },
+        ]
+    )
+    assert optimal["evaluated_permits_count"] == 1
+    assert optimal["expired_or_stop_work_permit_ids"] == []
+    assert optimal["renewal_window_or_citation_permit_ids"] == []
+    assert (
+        optimal["regulatory_permit_status"]
+        == "PERMIT_REGULATORY_COMPLIANCE_OPTIMAL"
+    )
+    assert optimal["is_regulatory_permit_compliant"] is True
+
+
+def test_audit_regulatory_permit_renewal_and_stop_work_compliance_staticmethod_and_dunder_all():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_regulatory_permit_renewal_and_stop_work_compliance,
+    )
+
+    sample = [
+        {
+            "permit_id": "PRM-99",
+            "days_until_expiration": 180,
+            "open_minor_citations_count": 0,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_regulatory_permit_renewal_and_stop_work_compliance(
+            sample
+        )
+        == audit_regulatory_permit_renewal_and_stop_work_compliance(sample)
+    )
+    assert (
+        "audit_regulatory_permit_renewal_and_stop_work_compliance"
+        in mod.__all__
+    )
+
+
+
 

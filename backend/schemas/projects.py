@@ -3822,6 +3822,7 @@ __all__ = [
     "validate_schedule_crashing_and_fast_tracking_compression",
     "validate_stakeholder_salience_power_urgency_legitimacy_alignment",
     "validate_cost_of_quality_coq_conformance_vs_failure_ratio",
+    "validate_raci_matrix_single_accountable_and_role_overload",
 ]
 
 
@@ -8825,4 +8826,71 @@ def validate_cost_of_quality_coq_conformance_vs_failure_ratio(
         "is_coq_balance_valid": coq_balance_status
         == "COQ_INVESTMENT_BALANCE_OPTIMAL",
     }
+
+
+def validate_raci_matrix_single_accountable_and_role_overload(
+    deliverables: list[dict] | None,
+    *,
+    max_consulted_reviewers: int = 5,
+    require_at_least_one_responsible: bool = True,
+) -> dict:
+    """PMBOK §9.1 & §9.3 — Valida matriz de asignación de responsabilidades RACI: unicidad de rinde cuentas (exactamente un 'A'), presencia de 'R' y sobrecarga de roles/consultados."""
+    raw_items = deliverables if isinstance(deliverables, list) else []
+    valid_deliverables: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("deliverable_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_deliverables.append(item)
+
+    ambiguous_accountability_or_unassigned_deliverable_ids: list[str] = []
+    excessive_consulted_or_role_overload_deliverable_ids: list[str] = []
+
+    for d in valid_deliverables:
+        did = d["deliverable_id"].strip()
+        raw_acc = d.get("accountable_count", 1)
+        accountable_count = int(1 if raw_acc is None else raw_acc)
+
+        raw_resp = d.get("responsible_count", 2)
+        responsible_count = int(2 if raw_resp is None else raw_resp)
+
+        raw_cons = d.get("consulted_count", 2)
+        consulted_count = int(2 if raw_cons is None else raw_cons)
+
+        raw_over = d.get(
+            "accountable_and_responsible_same_person_overloaded", False
+        )
+        accountable_and_responsible_same_person_overloaded = bool(
+            False if raw_over is None else raw_over
+        )
+
+        if accountable_count != 1 or (
+            require_at_least_one_responsible and responsible_count < 1
+        ):
+            ambiguous_accountability_or_unassigned_deliverable_ids.append(did)
+
+        if (
+            consulted_count > max_consulted_reviewers
+            or accountable_and_responsible_same_person_overloaded
+        ):
+            excessive_consulted_or_role_overload_deliverable_ids.append(did)
+
+    if ambiguous_accountability_or_unassigned_deliverable_ids:
+        raci_governance_status = "RACI_ACCOUNTABILITY_OR_RESPONSIBLE_BREACH"
+    elif excessive_consulted_or_role_overload_deliverable_ids:
+        raci_governance_status = "RACI_CONSULTED_BLOAT_OR_OVERLOAD_WARNING"
+    else:
+        raci_governance_status = "RACI_MATRIX_ALIGNMENT_OPTIMAL"
+
+    return {
+        "evaluated_deliverables_count": len(valid_deliverables),
+        "ambiguous_accountability_or_unassigned_deliverable_ids": ambiguous_accountability_or_unassigned_deliverable_ids,
+        "excessive_consulted_or_role_overload_deliverable_ids": excessive_consulted_or_role_overload_deliverable_ids,
+        "raci_governance_status": raci_governance_status,
+        "is_raci_matrix_valid": raci_governance_status
+        == "RACI_MATRIX_ALIGNMENT_OPTIMAL",
+    }
+
 

@@ -3176,6 +3176,7 @@ __all__ = [
     "audit_steering_committee_quorum_and_decision_velocity",
     "audit_procurement_bid_integrity_and_coi_recusal",
     "audit_warranty_latent_defect_and_retention_bond_release",
+    "audit_regulatory_permit_renewal_and_stop_work_compliance",
     "ProjectLifecyclePMIService",
 ]
 
@@ -7747,5 +7748,75 @@ def audit_warranty_latent_defect_and_retention_bond_release(
 ProjectLifecyclePMIService.audit_warranty_latent_defect_and_retention_bond_release = staticmethod(
     audit_warranty_latent_defect_and_retention_bond_release
 )
+
+
+def audit_regulatory_permit_renewal_and_stop_work_compliance(
+    permits: list[dict] | None,
+    *,
+    min_renewal_lead_time_days: int = 45,
+    max_open_minor_citations: int = 2,
+) -> dict:
+    """PMBOK §12.3 & §2.1 — Audita horizonte de renovación de permisos y licencias regulatorias, consentimiento ambiental/HSE y órdenes de suspensión de obra (stop-work)."""
+    raw_items = permits if isinstance(permits, list) else []
+    valid_permits: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("permit_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_permits.append(item)
+
+    expired_or_stop_work_permit_ids: list[str] = []
+    renewal_window_or_citation_permit_ids: list[str] = []
+
+    for p in valid_permits:
+        pid = p["permit_id"].strip()
+        raw_exp = p.get("days_until_expiration", 120)
+        days_until_expiration = int(120 if raw_exp is None else raw_exp)
+
+        raw_renew = p.get("renewal_application_submitted", True)
+        renewal_application_submitted = bool(
+            True if raw_renew is None else raw_renew
+        )
+
+        raw_stop = p.get("stop_work_order_active", False)
+        stop_work_order_active = bool(False if raw_stop is None else raw_stop)
+
+        raw_cit = p.get("open_minor_citations_count", 0)
+        open_minor_citations_count = int(0 if raw_cit is None else raw_cit)
+
+        if days_until_expiration <= 0 or stop_work_order_active:
+            expired_or_stop_work_permit_ids.append(pid)
+
+        if (
+            0 < days_until_expiration < min_renewal_lead_time_days
+            and not renewal_application_submitted
+        ) or open_minor_citations_count > max_open_minor_citations:
+            renewal_window_or_citation_permit_ids.append(pid)
+
+    if expired_or_stop_work_permit_ids:
+        regulatory_permit_status = "PERMIT_EXPIRATION_OR_STOP_WORK_BREACH"
+    elif renewal_window_or_citation_permit_ids:
+        regulatory_permit_status = (
+            "PERMIT_RENEWAL_LEAD_TIME_OR_CITATION_WARNING"
+        )
+    else:
+        regulatory_permit_status = "PERMIT_REGULATORY_COMPLIANCE_OPTIMAL"
+
+    return {
+        "evaluated_permits_count": len(valid_permits),
+        "expired_or_stop_work_permit_ids": expired_or_stop_work_permit_ids,
+        "renewal_window_or_citation_permit_ids": renewal_window_or_citation_permit_ids,
+        "regulatory_permit_status": regulatory_permit_status,
+        "is_regulatory_permit_compliant": regulatory_permit_status
+        == "PERMIT_REGULATORY_COMPLIANCE_OPTIMAL",
+    }
+
+
+ProjectLifecyclePMIService.audit_regulatory_permit_renewal_and_stop_work_compliance = staticmethod(
+    audit_regulatory_permit_renewal_and_stop_work_compliance
+)
+
 
 

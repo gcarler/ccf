@@ -2540,6 +2540,7 @@ __all__ = [
     "audit_wiki_dns_failover_ttl_and_bgp_anycast_resilience",
     "audit_wiki_db_read_replica_lag_and_split_brain_fencing",
     "audit_wiki_cdn_edge_cache_purge_sla_and_origin_shield_protection",
+    "audit_wiki_object_storage_worm_lock_and_ransomware_airgap",
     "WikiPMIService",
 ]
 
@@ -7326,3 +7327,75 @@ WikiPMIService.audit_wiki_cdn_edge_cache_purge_sla_and_origin_shield_protection 
     audit_wiki_cdn_edge_cache_purge_sla_and_origin_shield_protection
 )
 
+def audit_wiki_object_storage_worm_lock_and_ransomware_airgap(
+    buckets: list[dict] | None,
+    *,
+    min_retention_lock_days: int = 90,
+    max_cross_account_replication_lag_minutes: int = 15,
+) -> dict:
+    """PMBOK §11.6 & §10.2 — Audita object-lock WORM inmutable, MFA-Delete/block público y air-gap cross-account anti-ransomware."""
+    raw_items = buckets if isinstance(buckets, list) else []
+    valid_buckets: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("bucket_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_buckets.append(item)
+
+    def _num(value, default):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    def _bool(value, default):
+        return value if isinstance(value, bool) else default
+
+    mutable_or_public_exposed_bucket_ids: list[str] = []
+    short_retention_or_slow_airgap_bucket_ids: list[str] = []
+
+    for bucket in valid_buckets:
+        bucket_id = str(bucket.get("bucket_id")).strip()
+        worm_lock = _bool(
+            bucket.get("worm_compliance_lock_enabled"), True
+        )
+        mfa_delete_block = _bool(
+            bucket.get("mfa_delete_and_public_block_enforced"), True
+        )
+        retention_days = _num(
+            bucket.get("retention_lock_days"), 365.0
+        )
+        airgap_lag_minutes = _num(
+            bucket.get("cross_account_airgap_lag_minutes"), 5.0
+        )
+
+        if not worm_lock or not mfa_delete_block:
+            mutable_or_public_exposed_bucket_ids.append(bucket_id)
+
+        if (
+            retention_days < min_retention_lock_days
+            or airgap_lag_minutes > max_cross_account_replication_lag_minutes
+        ):
+            short_retention_or_slow_airgap_bucket_ids.append(bucket_id)
+
+    if mutable_or_public_exposed_bucket_ids:
+        worm_airgap_status = "WORM_OBJECT_LOCK_OR_EXPOSURE_BREACH"
+    elif short_retention_or_slow_airgap_bucket_ids:
+        worm_airgap_status = "WORM_RETENTION_OR_AIRGAP_LAG_WARNING"
+    else:
+        worm_airgap_status = "WORM_RANSOMWARE_AIRGAP_OPTIMAL"
+
+    return {
+        "evaluated_buckets_count": len(valid_buckets),
+        "mutable_or_public_exposed_bucket_ids": mutable_or_public_exposed_bucket_ids,
+        "short_retention_or_slow_airgap_bucket_ids": short_retention_or_slow_airgap_bucket_ids,
+        "worm_airgap_status": worm_airgap_status,
+        "is_worm_airgap_compliant": worm_airgap_status
+        == "WORM_RANSOMWARE_AIRGAP_OPTIMAL",
+    }
+
+
+WikiPMIService.audit_wiki_object_storage_worm_lock_and_ransomware_airgap = staticmethod(
+    audit_wiki_object_storage_worm_lock_and_ransomware_airgap
+)

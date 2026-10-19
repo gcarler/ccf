@@ -8867,3 +8867,155 @@ def test_validate_cost_of_quality_coq_conformance_vs_failure_ratio_defensive_and
         in mod.__all__
     )
 
+
+def test_validate_raci_matrix_single_accountable_and_role_overload_breach():
+    from backend.schemas.projects import (
+        validate_raci_matrix_single_accountable_and_role_overload,
+    )
+
+    res = validate_raci_matrix_single_accountable_and_role_overload(
+        [
+            {
+                "deliverable_id": "  DELIV-MULTI-A  ",
+                "accountable_count": 2,
+                "responsible_count": 2,
+                "consulted_count": 3,
+                "accountable_and_responsible_same_person_overloaded": False,
+            },
+            {
+                "deliverable_id": "DELIV-ZERO-A",
+                "accountable_count": 0,
+                "responsible_count": 2,
+                "consulted_count": 2,
+                "accountable_and_responsible_same_person_overloaded": False,
+            },
+            {
+                "deliverable_id": "DELIV-ZERO-R",
+                "accountable_count": 1,
+                "responsible_count": 0,
+                "consulted_count": 8,
+                "accountable_and_responsible_same_person_overloaded": True,
+            },
+            {
+                "deliverable_id": "DELIV-CLEAN",
+                "accountable_count": 1,
+                "responsible_count": 1,
+                "consulted_count": 5,
+                "accountable_and_responsible_same_person_overloaded": False,
+            },
+        ]
+    )
+    assert res["evaluated_deliverables_count"] == 4
+    assert res["ambiguous_accountability_or_unassigned_deliverable_ids"] == [
+        "DELIV-MULTI-A",
+        "DELIV-ZERO-A",
+        "DELIV-ZERO-R",
+    ]
+    assert res["excessive_consulted_or_role_overload_deliverable_ids"] == [
+        "DELIV-ZERO-R"
+    ]
+    assert (
+        res["raci_governance_status"]
+        == "RACI_ACCOUNTABILITY_OR_RESPONSIBLE_BREACH"
+    )
+    assert res["is_raci_matrix_valid"] is False
+
+
+def test_validate_raci_matrix_single_accountable_and_role_overload_warning():
+    from backend.schemas.projects import (
+        validate_raci_matrix_single_accountable_and_role_overload,
+    )
+
+    res = validate_raci_matrix_single_accountable_and_role_overload(
+        [
+            {
+                "deliverable_id": "DELIV-TOO-MANY-C",
+                "accountable_count": 1,
+                "responsible_count": 0,
+                "consulted_count": 6,
+                "accountable_and_responsible_same_person_overloaded": False,
+            },
+            {
+                "deliverable_id": "DELIV-OVERLOADED-AR",
+                "accountable_count": 1,
+                "responsible_count": 1,
+                "consulted_count": 5,
+                "accountable_and_responsible_same_person_overloaded": True,
+            },
+        ],
+        max_consulted_reviewers=5,
+        require_at_least_one_responsible=False,
+    )
+    assert res["evaluated_deliverables_count"] == 2
+    assert res["ambiguous_accountability_or_unassigned_deliverable_ids"] == []
+    assert res["excessive_consulted_or_role_overload_deliverable_ids"] == [
+        "DELIV-TOO-MANY-C",
+        "DELIV-OVERLOADED-AR",
+    ]
+    assert (
+        res["raci_governance_status"]
+        == "RACI_CONSULTED_BLOAT_OR_OVERLOAD_WARNING"
+    )
+    assert res["is_raci_matrix_valid"] is False
+
+
+def test_validate_raci_matrix_single_accountable_and_role_overload_optimal_and_boundaries():
+    from backend.schemas.projects import (
+        validate_raci_matrix_single_accountable_and_role_overload,
+    )
+
+    res = validate_raci_matrix_single_accountable_and_role_overload(
+        [
+            {
+                "deliverable_id": "DELIV-BOUNDARY",
+                "accountable_count": 1,
+                "responsible_count": 1,
+                "consulted_count": 5,
+                "accountable_and_responsible_same_person_overloaded": False,
+            }
+        ],
+        max_consulted_reviewers=5,
+        require_at_least_one_responsible=True,
+    )
+    assert res["evaluated_deliverables_count"] == 1
+    assert res["ambiguous_accountability_or_unassigned_deliverable_ids"] == []
+    assert res["excessive_consulted_or_role_overload_deliverable_ids"] == []
+    assert res["raci_governance_status"] == "RACI_MATRIX_ALIGNMENT_OPTIMAL"
+    assert res["is_raci_matrix_valid"] is True
+
+
+def test_validate_raci_matrix_single_accountable_and_role_overload_defensive_and_dunder_all():
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_raci_matrix_single_accountable_and_role_overload,
+    )
+
+    empty = validate_raci_matrix_single_accountable_and_role_overload(None)
+    assert empty["evaluated_deliverables_count"] == 0
+    assert empty["raci_governance_status"] == "RACI_MATRIX_ALIGNMENT_OPTIMAL"
+    assert empty["is_raci_matrix_valid"] is True
+
+    defaults = validate_raci_matrix_single_accountable_and_role_overload(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"deliverable_id": "   "},
+            {
+                "deliverable_id": "DELIV-DEFAULTS",
+                "accountable_count": None,
+                "responsible_count": None,
+                "consulted_count": None,
+                "accountable_and_responsible_same_person_overloaded": None,
+            },
+        ]
+    )
+    assert defaults["evaluated_deliverables_count"] == 1
+    assert (
+        defaults["raci_governance_status"] == "RACI_MATRIX_ALIGNMENT_OPTIMAL"
+    )
+    assert defaults["is_raci_matrix_valid"] is True
+    assert (
+        "validate_raci_matrix_single_accountable_and_role_overload"
+        in mod.__all__
+    )
+
+

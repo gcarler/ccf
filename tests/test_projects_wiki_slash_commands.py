@@ -10055,3 +10055,142 @@ def test_audit_wiki_cdn_edge_cache_purge_sla_and_origin_shield_protection_static
         in mod.__all__
     )
 
+
+
+def test_wiki_worm_exposure_breach():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_object_storage_worm_lock_and_ransomware_airgap,
+    )
+
+    res = audit_wiki_object_storage_worm_lock_and_ransomware_airgap(
+        [
+            {
+                "bucket_id": "BUCKET-NO-WORM",
+                "worm_compliance_lock_enabled": False,
+            },
+            {
+                "bucket_id": "BUCKET-PUBLIC",
+                "mfa_delete_and_public_block_enforced": False,
+            },
+        ],
+        min_retention_lock_days=90,
+        max_cross_account_replication_lag_minutes=15,
+    )
+    assert res["evaluated_buckets_count"] == 2
+    assert res["mutable_or_public_exposed_bucket_ids"] == [
+        "BUCKET-NO-WORM",
+        "BUCKET-PUBLIC",
+    ]
+    assert res["short_retention_or_slow_airgap_bucket_ids"] == []
+    assert (
+        res["worm_airgap_status"] == "WORM_OBJECT_LOCK_OR_EXPOSURE_BREACH"
+    )
+    assert res["is_worm_airgap_compliant"] is False
+
+
+def test_wiki_worm_retention_or_airgap_lag_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_object_storage_worm_lock_and_ransomware_airgap,
+    )
+
+    res = audit_wiki_object_storage_worm_lock_and_ransomware_airgap(
+        [
+            {
+                "bucket_id": "BUCKET-SHORT-RETENTION",
+                "retention_lock_days": 30,
+            },
+            {
+                "bucket_id": "BUCKET-SLOW-AIRGAP",
+                "cross_account_airgap_lag_minutes": 45,
+            },
+        ],
+        min_retention_lock_days=90,
+        max_cross_account_replication_lag_minutes=15,
+    )
+    assert res["evaluated_buckets_count"] == 2
+    assert res["mutable_or_public_exposed_bucket_ids"] == []
+    assert res["short_retention_or_slow_airgap_bucket_ids"] == [
+        "BUCKET-SHORT-RETENTION",
+        "BUCKET-SLOW-AIRGAP",
+    ]
+    assert (
+        res["worm_airgap_status"] == "WORM_RETENTION_OR_AIRGAP_LAG_WARNING"
+    )
+    assert res["is_worm_airgap_compliant"] is False
+
+
+def test_wiki_worm_boundaries_optimal_and_defaults():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_object_storage_worm_lock_and_ransomware_airgap,
+    )
+
+    res = audit_wiki_object_storage_worm_lock_and_ransomware_airgap(
+        [
+            {
+                "bucket_id": "BUCKET-BOUNDARY",
+                "retention_lock_days": 90,
+                "cross_account_airgap_lag_minutes": 15,
+            },
+            {"bucket_id": "BUCKET-ALL-DEFAULTS"},
+        ],
+        min_retention_lock_days=90,
+        max_cross_account_replication_lag_minutes=15,
+    )
+    assert res["evaluated_buckets_count"] == 2
+    assert res["mutable_or_public_exposed_bucket_ids"] == []
+    assert res["short_retention_or_slow_airgap_bucket_ids"] == []
+    assert res["worm_airgap_status"] == "WORM_RANSOMWARE_AIRGAP_OPTIMAL"
+    assert res["is_worm_airgap_compliant"] is True
+
+
+def test_wiki_worm_invalid_and_binding():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_object_storage_worm_lock_and_ransomware_airgap,
+    )
+
+    empty = audit_wiki_object_storage_worm_lock_and_ransomware_airgap(None)
+    assert empty["evaluated_buckets_count"] == 0
+    assert empty["mutable_or_public_exposed_bucket_ids"] == []
+    assert empty["short_retention_or_slow_airgap_bucket_ids"] == []
+    assert empty["worm_airgap_status"] == "WORM_RANSOMWARE_AIRGAP_OPTIMAL"
+    assert empty["is_worm_airgap_compliant"] is True
+
+    invalid = audit_wiki_object_storage_worm_lock_and_ransomware_airgap(
+        [42, "not-a-dict", None, {"bucket_id": "   "}]  # type: ignore[list-item]
+    )
+    assert invalid["evaluated_buckets_count"] == 0
+
+    defaults = audit_wiki_object_storage_worm_lock_and_ransomware_airgap(
+        [
+            {
+                "bucket_id": "BUCKET-DEFAULTS",
+                "worm_compliance_lock_enabled": None,
+                "mfa_delete_and_public_block_enforced": None,
+                "retention_lock_days": None,
+                "cross_account_airgap_lag_minutes": None,
+            }
+        ]
+    )
+    assert defaults["evaluated_buckets_count"] == 1
+    assert defaults["worm_airgap_status"] == "WORM_RANSOMWARE_AIRGAP_OPTIMAL"
+    assert defaults["is_worm_airgap_compliant"] is True
+
+    sample = [
+        {
+            "bucket_id": "BUCKET-1",
+            "retention_lock_days": 365,
+            "cross_account_airgap_lag_minutes": 5,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_object_storage_worm_lock_and_ransomware_airgap(
+            sample
+        )
+        == audit_wiki_object_storage_worm_lock_and_ransomware_airgap(sample)
+    )
+    assert (
+        "audit_wiki_object_storage_worm_lock_and_ransomware_airgap"
+        in mod.__all__
+    )
