@@ -11209,3 +11209,118 @@ def test_validate_stakeholder_engagement_seam_gap_and_resistant_power_risk_coerc
         "validate_stakeholder_engagement_seam_gap_and_resistant_power_risk"
         in mod.__all__
     )
+
+
+def test_validate_requirements_traceability_matrix_rtm_and_gold_plating_clean():
+    from backend.schemas.projects import (
+        validate_requirements_traceability_matrix_rtm_and_gold_plating,
+    )
+
+    res = validate_requirements_traceability_matrix_rtm_and_gold_plating(
+        total_baselined_requirements=100,
+        requirements_traced_to_wbs_and_tests=98,
+        wbs_deliverables_without_parent_requirement_gold_plating=0,
+        unverified_mandatory_regulatory_reqs=0,
+        deferred_non_critical_reqs=0,
+        min_bidirectional_coverage_pct=95.0,
+    )
+    assert res["untraced_requirements_count"] == 2
+    assert res["bidirectional_rtm_coverage_pct"] == 98.0
+    assert res["gold_plating_scope_creep_detected"] is False
+    assert res["rtm_coverage_shortfall"] is False
+    assert res["unverified_mandatory_regulatory_reqs"] == 0
+    assert (
+        res["rtm_governance_status"]
+        == "RTM_BIDIRECTIONAL_TRACEABILITY_COMPLIANT_CLEAN"
+    )
+
+
+def test_validate_requirements_traceability_matrix_rtm_and_gold_plating_warning():
+    from backend.schemas.projects import (
+        validate_requirements_traceability_matrix_rtm_and_gold_plating,
+    )
+
+    res = validate_requirements_traceability_matrix_rtm_and_gold_plating(
+        total_baselined_requirements=100,
+        requirements_traced_to_wbs_and_tests=90,
+        wbs_deliverables_without_parent_requirement_gold_plating=2,
+        unverified_mandatory_regulatory_reqs=0,
+        deferred_non_critical_reqs=1,
+        min_bidirectional_coverage_pct=95.0,
+    )
+    assert res["untraced_requirements_count"] == 10
+    assert res["bidirectional_rtm_coverage_pct"] == 90.0
+    assert res["gold_plating_scope_creep_detected"] is True
+    assert res["rtm_coverage_shortfall"] is True
+    assert (
+        res["rtm_governance_status"]
+        == "RTM_COVERAGE_SHORTFALL_OR_MINOR_GOLD_PLATING_WARNING"
+    )
+
+
+def test_validate_requirements_traceability_matrix_rtm_and_gold_plating_critical():
+    from backend.schemas.projects import (
+        validate_requirements_traceability_matrix_rtm_and_gold_plating,
+    )
+
+    res_reg = validate_requirements_traceability_matrix_rtm_and_gold_plating(
+        total_baselined_requirements=100,
+        requirements_traced_to_wbs_and_tests=99,
+        wbs_deliverables_without_parent_requirement_gold_plating=0,
+        unverified_mandatory_regulatory_reqs=1,
+    )
+    assert res_reg["unverified_mandatory_regulatory_reqs"] == 1
+    assert (
+        res_reg["rtm_governance_status"]
+        == "CRITICAL_RTM_REGULATORY_UNVERIFIED_OR_GOLD_PLATING_BREACH"
+    )
+
+    res_gp = validate_requirements_traceability_matrix_rtm_and_gold_plating(
+        total_baselined_requirements=100,
+        requirements_traced_to_wbs_and_tests=100,
+        wbs_deliverables_without_parent_requirement_gold_plating=3,
+    )
+    assert res_gp["gold_plating_scope_creep_detected"] is True
+    assert (
+        res_gp["rtm_governance_status"]
+        == "CRITICAL_RTM_REGULATORY_UNVERIFIED_OR_GOLD_PLATING_BREACH"
+    )
+
+    res_cov = validate_requirements_traceability_matrix_rtm_and_gold_plating(
+        total_baselined_requirements=100,
+        requirements_traced_to_wbs_and_tests=75,
+    )
+    assert res_cov["bidirectional_rtm_coverage_pct"] == 75.0
+    assert (
+        res_cov["rtm_governance_status"]
+        == "CRITICAL_RTM_REGULATORY_UNVERIFIED_OR_GOLD_PLATING_BREACH"
+    )
+
+
+def test_validate_requirements_traceability_matrix_rtm_and_gold_plating_coercion_and_exports():
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_requirements_traceability_matrix_rtm_and_gold_plating,
+    )
+
+    res = validate_requirements_traceability_matrix_rtm_and_gold_plating(
+        total_baselined_requirements=50,
+        requirements_traced_to_wbs_and_tests=80,
+        wbs_deliverables_without_parent_requirement_gold_plating=True,  # type: ignore[arg-type]
+        unverified_mandatory_regulatory_reqs=-2,
+        deferred_non_critical_reqs="invalid",  # type: ignore[arg-type]
+        min_bidirectional_coverage_pct=True,  # type: ignore[arg-type]
+    )
+    assert res["untraced_requirements_count"] == 0
+    assert res["bidirectional_rtm_coverage_pct"] == 100.0
+    assert res["gold_plating_scope_creep_detected"] is False
+    assert res["rtm_coverage_shortfall"] is False
+    assert res["unverified_mandatory_regulatory_reqs"] == 0
+    assert (
+        res["rtm_governance_status"]
+        == "RTM_BIDIRECTIONAL_TRACEABILITY_COMPLIANT_CLEAN"
+    )
+    assert (
+        "validate_requirements_traceability_matrix_rtm_and_gold_plating"
+        in mod.__all__
+    )

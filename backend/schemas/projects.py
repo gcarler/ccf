@@ -3840,6 +3840,7 @@ __all__ = [
     "validate_ccpm_fever_chart_buffer_penetration_and_feeding_buffer",
     "validate_rolling_wave_wbs_100_percent_rule_and_planning_package_horizon",
     "validate_stakeholder_engagement_seam_gap_and_resistant_power_risk",
+    "validate_requirements_traceability_matrix_rtm_and_gold_plating",
 ]
 
 
@@ -10523,4 +10524,75 @@ def validate_stakeholder_engagement_seam_gap_and_resistant_power_risk(
         "stakeholder_alignment_index_pct": stakeholder_alignment_index_pct,
         "overdue_key_stakeholder_touchpoints_count": overdue_touchpoints,
         "seam_governance_status": seam_governance_status,
+    }
+
+
+def validate_requirements_traceability_matrix_rtm_and_gold_plating(
+    total_baselined_requirements: int,
+    requirements_traced_to_wbs_and_tests: int,
+    wbs_deliverables_without_parent_requirement_gold_plating: int = 0,
+    *,
+    unverified_mandatory_regulatory_reqs: int = 0,
+    deferred_non_critical_reqs: int = 0,
+    min_bidirectional_coverage_pct: float = 95.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §5.2 & §5.5 — Valida la Matriz de Trazabilidad de Requisitos (RTM), cobertura bidireccional hacia EDT/WBS y casos de prueba, gold-plating de entregables huérfanos y requisitos regulatorios obligatorios no verificados."""
+    def _int(val: Any, default: int = 0) -> int:
+        if isinstance(val, bool) or not isinstance(val, int):
+            return default
+        return max(0, int(val))
+
+    def _float(val: Any, default: float = 95.0) -> float:
+        if isinstance(val, bool) or not isinstance(val, (int, float)):
+            return default
+        return float(val)
+
+    total_reqs = _int(total_baselined_requirements, 0)
+    traced_reqs = min(total_reqs, _int(requirements_traced_to_wbs_and_tests, 0))
+    gold_plating_cnt = _int(
+        wbs_deliverables_without_parent_requirement_gold_plating, 0
+    )
+    unverified_reg_cnt = _int(unverified_mandatory_regulatory_reqs, 0)
+    deferred_cnt = _int(deferred_non_critical_reqs, 0)
+    min_cov_pct = min(
+        100.0, max(50.0, _float(min_bidirectional_coverage_pct, 95.0))
+    )
+
+    untraced_requirements_count = max(0, total_reqs - traced_reqs)
+    bidirectional_rtm_coverage_pct = (
+        round((traced_reqs / total_reqs) * 100.0, 2)
+        if total_reqs > 0
+        else 100.0
+    )
+    gold_plating_scope_creep_detected = bool(gold_plating_cnt > 0)
+    rtm_coverage_shortfall = bool(
+        bidirectional_rtm_coverage_pct < min_cov_pct
+    )
+
+    if (
+        unverified_reg_cnt > 0
+        or gold_plating_cnt >= 3
+        or bidirectional_rtm_coverage_pct < 80.0
+    ):
+        rtm_governance_status = (
+            "CRITICAL_RTM_REGULATORY_UNVERIFIED_OR_GOLD_PLATING_BREACH"
+        )
+    elif (
+        rtm_coverage_shortfall
+        or gold_plating_scope_creep_detected
+        or deferred_cnt > 0
+    ):
+        rtm_governance_status = (
+            "RTM_COVERAGE_SHORTFALL_OR_MINOR_GOLD_PLATING_WARNING"
+        )
+    else:
+        rtm_governance_status = "RTM_BIDIRECTIONAL_TRACEABILITY_COMPLIANT_CLEAN"
+
+    return {
+        "untraced_requirements_count": untraced_requirements_count,
+        "bidirectional_rtm_coverage_pct": bidirectional_rtm_coverage_pct,
+        "gold_plating_scope_creep_detected": gold_plating_scope_creep_detected,
+        "rtm_coverage_shortfall": rtm_coverage_shortfall,
+        "unverified_mandatory_regulatory_reqs": unverified_reg_cnt,
+        "rtm_governance_status": rtm_governance_status,
     }
