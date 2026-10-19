@@ -2544,6 +2544,7 @@ __all__ = [
     "audit_wiki_bgp_rpki_roa_and_ddos_scrubbing_failover",
     "audit_wiki_secrets_vault_lease_rotation_and_root_token_seal",
     "audit_wiki_ntp_clock_drift_and_leap_second_smearing",
+    "audit_wiki_ebpf_kernel_probe_ringbuffer_drop_and_verifier_safety",
     "WikiPMIService",
 ]
 
@@ -7625,3 +7626,131 @@ def audit_wiki_ntp_clock_drift_and_leap_second_smearing(
 WikiPMIService.audit_wiki_ntp_clock_drift_and_leap_second_smearing = staticmethod(
     audit_wiki_ntp_clock_drift_and_leap_second_smearing
 )
+
+
+def audit_wiki_ebpf_kernel_probe_ringbuffer_drop_and_verifier_safety(
+    probe_samples: list[dict[str, Any]],
+    *,
+    max_ringbuffer_drop_rate_pct: float = 0.5,
+    max_cpu_overhead_pct: float = 2.0,
+    require_btf_core_portability: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §11.6 & §8.2 — Audita seguridad del verificador eBPF, tasa de descarte en ring-buffer, sobrecarga de CPU y portabilidad BTF CO-RE."""
+    raw_items = probe_samples if isinstance(probe_samples, list) else []
+    valid_items = [item for item in raw_items if isinstance(item, dict)]
+
+    unsafe_probe_ids: list[str] = []
+    dropping_or_high_cpu_probe_ids: list[str] = []
+    records: list[dict[str, Any]] = []
+    violations: list[str] = []
+    has_critical = False
+    has_warning = False
+
+    for idx, item in enumerate(valid_items):
+        probe_id = (
+            str(
+                item.get("probe_id") or item.get("id") or f"probe-{idx + 1}"
+            ).strip()
+            or f"probe-{idx + 1}"
+        )
+
+        raw_verifier = item.get("verifier_passed", True)
+        verifier_passed = bool(True if raw_verifier is None else raw_verifier)
+
+        raw_btf = item.get("btf_core_enabled", True)
+        btf_core_enabled = bool(True if raw_btf is None else raw_btf)
+
+        events_emitted = max(0, int(item.get("events_emitted") or 0))
+        events_dropped = max(0, int(item.get("events_dropped") or 0))
+        cpu_overhead_pct = max(0.0, float(item.get("cpu_overhead_pct") or 0.0))
+
+        raw_loop = item.get("unbounded_loop_detected", False)
+        unbounded_loop_detected = bool(False if raw_loop is None else raw_loop)
+
+        total_events = events_emitted + events_dropped
+        if total_events > 0:
+            ringbuffer_drop_rate_pct = round(
+                (events_dropped / total_events) * 100.0, 4
+            )
+        else:
+            ringbuffer_drop_rate_pct = 0.0
+
+        verifier_or_loop_safety_breach = (
+            not verifier_passed or unbounded_loop_detected
+        )
+        ringbuffer_drop_rate_exceeded = (
+            ringbuffer_drop_rate_pct > max_ringbuffer_drop_rate_pct
+        )
+        cpu_overhead_budget_exceeded = cpu_overhead_pct > max_cpu_overhead_pct
+        btf_core_missing = bool(
+            require_btf_core_portability and not btf_core_enabled
+        )
+
+        if verifier_or_loop_safety_breach:
+            unsafe_probe_ids.append(probe_id)
+            has_critical = True
+            violations.append(
+                f"Probe '{probe_id}' failed eBPF verifier or has unbounded loop."
+            )
+
+        if ringbuffer_drop_rate_exceeded or cpu_overhead_budget_exceeded:
+            dropping_or_high_cpu_probe_ids.append(probe_id)
+            has_warning = True
+            if ringbuffer_drop_rate_exceeded:
+                violations.append(
+                    f"Probe '{probe_id}' ringbuffer drop rate {ringbuffer_drop_rate_pct}% exceeds {max_ringbuffer_drop_rate_pct}%."
+                )
+            if cpu_overhead_budget_exceeded:
+                violations.append(
+                    f"Probe '{probe_id}' CPU overhead {cpu_overhead_pct}% exceeds {max_cpu_overhead_pct}%."
+                )
+
+        if btf_core_missing:
+            has_warning = True
+            violations.append(
+                f"Probe '{probe_id}' is missing BTF CO-RE portability."
+            )
+
+        records.append(
+            {
+                "probe_id": probe_id,
+                "verifier_passed": verifier_passed,
+                "btf_core_enabled": btf_core_enabled,
+                "events_emitted": events_emitted,
+                "events_dropped": events_dropped,
+                "ringbuffer_drop_rate_pct": ringbuffer_drop_rate_pct,
+                "cpu_overhead_pct": cpu_overhead_pct,
+                "unbounded_loop_detected": unbounded_loop_detected,
+                "verifier_or_loop_safety_breach": verifier_or_loop_safety_breach,
+                "ringbuffer_drop_rate_exceeded": ringbuffer_drop_rate_exceeded,
+                "cpu_overhead_budget_exceeded": cpu_overhead_budget_exceeded,
+                "btf_core_missing": btf_core_missing,
+            }
+        )
+
+    if has_critical:
+        status = "critical"
+        is_compliant = False
+    elif has_warning:
+        status = "warning"
+        is_compliant = False
+    else:
+        status = "healthy"
+        is_compliant = True
+
+    return {
+        "status": status,
+        "is_compliant": is_compliant,
+        "probes_evaluated": len(records),
+        "unsafe_probe_ids": unsafe_probe_ids,
+        "dropping_or_high_cpu_probe_ids": dropping_or_high_cpu_probe_ids,
+        "records": records,
+        "violations": violations,
+        "Violations": violations,
+    }
+
+
+WikiPMIService.audit_wiki_ebpf_kernel_probe_ringbuffer_drop_and_verifier_safety = staticmethod(
+    audit_wiki_ebpf_kernel_probe_ringbuffer_drop_and_verifier_safety
+)
+

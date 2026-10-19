@@ -10331,4 +10331,105 @@ def test_evaluate_evm_liquidated_damages_excusable_delay_and_early_bonus_defensi
     )
 
 
+def test_evaluate_evm_subcontractor_backcharge_offset_and_joint_check_disbursement_compliant():
+    from backend.services.project_evm_service import (
+        evaluate_evm_subcontractor_backcharge_offset_and_joint_check_disbursement,
+    )
+
+    res = evaluate_evm_subcontractor_backcharge_offset_and_joint_check_disbursement(
+        [
+            {
+                "subcontract_id": "SUB-101",
+                "subcontract_value": 200000.0,
+                "backcharge_amount": 10000.0,
+                "cure_notice_hours_given": 72.0,
+                "photo_and_cost_substantiation_attached": True,
+                "lower_tier_supplier_arrears_amount": 15000.0,
+                "joint_check_agreement_active": True,
+                "unconditional_lien_waiver_on_file": True,
+            }
+        ]
+    )
+    assert res["status"] == "compliant"
+    assert res["is_compliant"] is True
+    assert res["subcontracts_evaluated"] == 1
+    assert res["improper_backcharge_subcontract_ids"] == []
+    assert res["lien_risk_subcontract_ids"] == []
+    assert res["records"][0]["backcharge_pct"] == 5.0
+    assert res["Violations"] == []
+
+
+def test_evaluate_evm_subcontractor_backcharge_offset_and_joint_check_disbursement_critical():
+    from backend.services.project_evm_service import (
+        evaluate_evm_subcontractor_backcharge_offset_and_joint_check_disbursement,
+    )
+
+    res = evaluate_evm_subcontractor_backcharge_offset_and_joint_check_disbursement(
+        [
+            {
+                "subcontract_id": "SUB-BREACH",
+                "subcontract_value": 100000.0,
+                "backcharge_amount": 8000.0,
+                "cure_notice_hours_given": 12.0,
+                "photo_and_cost_substantiation_attached": False,
+                "lower_tier_supplier_arrears_amount": 25000.0,
+                "joint_check_agreement_active": False,
+                "unconditional_lien_waiver_on_file": False,
+            }
+        ]
+    )
+    assert res["status"] == "critical"
+    assert res["is_compliant"] is False
+    assert res["improper_backcharge_subcontract_ids"] == ["SUB-BREACH"]
+    assert res["lien_risk_subcontract_ids"] == ["SUB-BREACH"]
+    assert len(res["Violations"]) >= 3
+
+
+def test_evaluate_evm_subcontractor_backcharge_offset_and_joint_check_disbursement_warning():
+    from backend.services.project_evm_service import (
+        evaluate_evm_subcontractor_backcharge_offset_and_joint_check_disbursement,
+    )
+
+    res = evaluate_evm_subcontractor_backcharge_offset_and_joint_check_disbursement(
+        [
+            {
+                "id": "SUB-CAP-WARN",
+                "subcontract_value": 100000.0,
+                "backcharge_amount": 20000.0,
+                "cure_notice_hours_given": 72.0,
+                "photo_and_cost_substantiation_attached": True,
+                "lower_tier_supplier_arrears_amount": 0.0,
+                "joint_check_agreement_active": True,
+                "unconditional_lien_waiver_on_file": True,
+            }
+        ],
+        max_backcharge_pct_of_subcontract=15.0,
+    )
+    assert res["status"] == "warning"
+    assert res["is_compliant"] is False
+    assert res["improper_backcharge_subcontract_ids"] == ["SUB-CAP-WARN"]
+    assert res["lien_risk_subcontract_ids"] == []
+    assert res["records"][0]["backcharge_cap_exceeded"] is True
+
+
+def test_evaluate_evm_subcontractor_backcharge_offset_and_joint_check_disbursement_staticmethod_and_dunder_all():
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_subcontractor_backcharge_offset_and_joint_check_disbursement,
+    )
+
+    sample = [{"subcontract_id": "SUB-1", "subcontract_value": 50000.0}]
+    assert (
+        ProjectEVMService.evaluate_evm_subcontractor_backcharge_offset_and_joint_check_disbursement(
+            sample
+        )
+        == evaluate_evm_subcontractor_backcharge_offset_and_joint_check_disbursement(
+            sample
+        )
+    )
+    assert (
+        "evaluate_evm_subcontractor_backcharge_offset_and_joint_check_disbursement"
+        in mod.__all__
+    )
 

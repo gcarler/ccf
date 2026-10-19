@@ -10471,7 +10471,6 @@ def test_audit_wiki_secrets_vault_lease_rotation_and_root_token_seal_staticmetho
     )
 
 
-
 def test_wiki_ntp_nts_or_leap_smear_breach():
     from backend.services.wiki_pmi_service import (
         audit_wiki_ntp_clock_drift_and_leap_second_smearing,
@@ -10618,3 +10617,105 @@ def test_wiki_ntp_invalid_and_binding():
         "audit_wiki_ntp_clock_drift_and_leap_second_smearing"
         in mod.__all__
     )
+
+
+def test_audit_wiki_ebpf_kernel_probe_ringbuffer_drop_and_verifier_safety_healthy():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_ebpf_kernel_probe_ringbuffer_drop_and_verifier_safety,
+    )
+
+    res = audit_wiki_ebpf_kernel_probe_ringbuffer_drop_and_verifier_safety(
+        [
+            {
+                "probe_id": "EBPF-NET-01",
+                "verifier_passed": True,
+                "btf_core_enabled": True,
+                "events_emitted": 100000,
+                "events_dropped": 100,
+                "cpu_overhead_pct": 0.8,
+                "unbounded_loop_detected": False,
+            }
+        ],
+        max_ringbuffer_drop_rate_pct=0.5,
+        max_cpu_overhead_pct=2.0,
+    )
+    assert res["status"] == "healthy"
+    assert res["is_compliant"] is True
+    assert res["probes_evaluated"] == 1
+    assert res["unsafe_probe_ids"] == []
+    assert res["dropping_or_high_cpu_probe_ids"] == []
+    assert res["Violations"] == []
+    assert res["records"][0]["ringbuffer_drop_rate_pct"] == 0.0999
+
+
+def test_audit_wiki_ebpf_kernel_probe_ringbuffer_drop_and_verifier_safety_critical():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_ebpf_kernel_probe_ringbuffer_drop_and_verifier_safety,
+    )
+
+    res = audit_wiki_ebpf_kernel_probe_ringbuffer_drop_and_verifier_safety(
+        [
+            {
+                "probe_id": "EBPF-BAD-VERIFY",
+                "verifier_passed": False,
+                "unbounded_loop_detected": True,
+                "events_emitted": 500,
+                "events_dropped": 0,
+            }
+        ]
+    )
+    assert res["status"] == "critical"
+    assert res["is_compliant"] is False
+    assert res["unsafe_probe_ids"] == ["EBPF-BAD-VERIFY"]
+    assert len(res["Violations"]) >= 1
+
+
+def test_audit_wiki_ebpf_kernel_probe_ringbuffer_drop_and_verifier_safety_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_ebpf_kernel_probe_ringbuffer_drop_and_verifier_safety,
+    )
+
+    res = audit_wiki_ebpf_kernel_probe_ringbuffer_drop_and_verifier_safety(
+        [
+            {
+                "id": "EBPF-HIGH-DROP",
+                "verifier_passed": True,
+                "btf_core_enabled": False,
+                "events_emitted": 900,
+                "events_dropped": 100,
+                "cpu_overhead_pct": 3.5,
+            }
+        ],
+        max_ringbuffer_drop_rate_pct=0.5,
+        max_cpu_overhead_pct=2.0,
+        require_btf_core_portability=True,
+    )
+    assert res["status"] == "warning"
+    assert res["is_compliant"] is False
+    assert res["unsafe_probe_ids"] == []
+    assert res["dropping_or_high_cpu_probe_ids"] == ["EBPF-HIGH-DROP"]
+    assert res["records"][0]["ringbuffer_drop_rate_pct"] == 10.0
+    assert res["records"][0]["btf_core_missing"] is True
+
+
+def test_audit_wiki_ebpf_kernel_probe_ringbuffer_drop_and_verifier_safety_staticmethod_and_dunder_all():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_ebpf_kernel_probe_ringbuffer_drop_and_verifier_safety,
+    )
+
+    sample = [{"probe_id": "EBPF-1", "events_emitted": 1000, "events_dropped": 0}]
+    assert (
+        WikiPMIService.audit_wiki_ebpf_kernel_probe_ringbuffer_drop_and_verifier_safety(
+            sample
+        )
+        == audit_wiki_ebpf_kernel_probe_ringbuffer_drop_and_verifier_safety(
+            sample
+        )
+    )
+    assert (
+        "audit_wiki_ebpf_kernel_probe_ringbuffer_drop_and_verifier_safety"
+        in mod.__all__
+    )
+

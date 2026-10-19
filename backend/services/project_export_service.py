@@ -3016,6 +3016,7 @@ __all__ = [
     "audit_executive_report_rfc3161_timestamping_and_non_repudiation",
     "audit_executive_report_siem_log_forwarding_and_retention",
     "audit_executive_report_subprocessor_breach_sla_and_right_to_audit",
+    "audit_executive_report_forensic_watermark_and_dlp_redaction",
     "ProjectExportService",
 ]
 
@@ -8168,3 +8169,76 @@ ProjectExportService.audit_executive_report_subprocessor_breach_sla_and_right_to
 )
 
 
+def audit_executive_report_forensic_watermark_and_dlp_redaction(
+    exports: list[dict] | None,
+    *,
+    min_redaction_confidence_pct: float = 98.0,
+) -> dict:
+    """PMBOK §10.2 & §11.6 — Audita watermark forense, fingerprinting esteganográfico del destinatario y redacción DLP de PII en exportaciones ejecutivas."""
+    raw_items = exports if isinstance(exports, list) else []
+    valid_exports: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("export_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_exports.append(item)
+
+    def _num(value, default):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    def _bool(value, default):
+        return value if isinstance(value, bool) else default
+
+    unwatermarked_or_unredacted_pii_export_ids: list[str] = []
+    missing_stego_or_low_dlp_confidence_export_ids: list[str] = []
+
+    for export in valid_exports:
+        export_id = str(export.get("export_id")).strip()
+        watermark_embedded = _bool(
+            export.get("forensic_watermark_embedded"), True
+        )
+        stego_bound = _bool(
+            export.get("stego_recipient_fingerprint_bound"), True
+        )
+        pii_entities = _num(
+            export.get("unredacted_pii_entities_count"), 0.0
+        )
+        dlp_confidence_pct = _num(
+            export.get("dlp_redaction_confidence_pct"), 99.5
+        )
+
+        if not watermark_embedded or pii_entities > 0:
+            unwatermarked_or_unredacted_pii_export_ids.append(export_id)
+
+        if (
+            not stego_bound
+            or dlp_confidence_pct < min_redaction_confidence_pct
+        ):
+            missing_stego_or_low_dlp_confidence_export_ids.append(export_id)
+
+    if unwatermarked_or_unredacted_pii_export_ids:
+        watermark_dlp_status = "WATERMARK_OR_PII_LEAK_BREACH"
+    elif missing_stego_or_low_dlp_confidence_export_ids:
+        watermark_dlp_status = (
+            "STEGO_FINGERPRINT_OR_DLP_CONFIDENCE_WARNING"
+        )
+    else:
+        watermark_dlp_status = "FORENSIC_WATERMARK_AND_DLP_OPTIMAL"
+
+    return {
+        "evaluated_exports_count": len(valid_exports),
+        "unwatermarked_or_unredacted_pii_export_ids": unwatermarked_or_unredacted_pii_export_ids,
+        "missing_stego_or_low_dlp_confidence_export_ids": missing_stego_or_low_dlp_confidence_export_ids,
+        "watermark_dlp_status": watermark_dlp_status,
+        "is_watermark_dlp_compliant": watermark_dlp_status
+        == "FORENSIC_WATERMARK_AND_DLP_OPTIMAL",
+    }
+
+
+ProjectExportService.audit_executive_report_forensic_watermark_and_dlp_redaction = staticmethod(
+    audit_executive_report_forensic_watermark_and_dlp_redaction
+)

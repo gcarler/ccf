@@ -11121,3 +11121,187 @@ def test_audit_executive_report_subprocessor_breach_sla_and_right_to_audit_stati
     )
 
 
+
+
+# ── audit_executive_report_forensic_watermark_and_dlp_redaction (PMBOK §10.2 & §11.6, pure helper) ──
+
+
+def test_watermark_dlp_optimal_exports():
+    """Exportaciones con watermark, fingerprint estego y DLP >= 98.0 -> 'FORENSIC_WATERMARK_AND_DLP_OPTIMAL'."""
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_forensic_watermark_and_dlp_redaction,
+    )
+
+    exports = [
+        {
+            "export_id": "EXP-001",
+            "forensic_watermark_embedded": True,
+            "stego_recipient_fingerprint_bound": True,
+            "unredacted_pii_entities_count": 0,
+            "dlp_redaction_confidence_pct": 99.5,
+        },
+        {
+            "export_id": "EXP-002",
+            # Defaults implícitos por campo: watermark/stego True, 0 PII, 99.5 DLP.
+        },
+    ]
+    res = audit_executive_report_forensic_watermark_and_dlp_redaction(exports)
+    assert res == {
+        "evaluated_exports_count": 2,
+        "unwatermarked_or_unredacted_pii_export_ids": [],
+        "missing_stego_or_low_dlp_confidence_export_ids": [],
+        "watermark_dlp_status": "FORENSIC_WATERMARK_AND_DLP_OPTIMAL",
+        "is_watermark_dlp_compliant": True,
+    }
+    # Confianza DLP exactamente en el umbral 98.0 no es "baja" (comparación estricta <).
+    at_threshold = audit_executive_report_forensic_watermark_and_dlp_redaction(
+        [{"export_id": "EXP-003", "dlp_redaction_confidence_pct": 98.0}]
+    )
+    assert at_threshold["watermark_dlp_status"] == "FORENSIC_WATERMARK_AND_DLP_OPTIMAL"
+    assert (
+        ProjectExportService.audit_executive_report_forensic_watermark_and_dlp_redaction(
+            exports
+        )
+        == res
+    )
+
+
+def test_watermark_dlp_breach_precedence():
+    """Sin watermark o PII sin redactar -> 'WATERMARK_OR_PII_LEAK_BREACH' con precedencia sobre WARNING."""
+    from backend.services.project_export_service import (
+        audit_executive_report_forensic_watermark_and_dlp_redaction,
+    )
+
+    breach = audit_executive_report_forensic_watermark_and_dlp_redaction(
+        [
+            {
+                "export_id": "EXP-BREACH-WM",
+                "forensic_watermark_embedded": False,
+            },
+            {
+                "export_id": "EXP-BREACH-PII",
+                "unredacted_pii_entities_count": 3,
+            },
+        ]
+    )
+    assert breach["evaluated_exports_count"] == 2
+    assert breach["unwatermarked_or_unredacted_pii_export_ids"] == [
+        "EXP-BREACH-WM",
+        "EXP-BREACH-PII",
+    ]
+    assert breach["watermark_dlp_status"] == "WATERMARK_OR_PII_LEAK_BREACH"
+    assert breach["is_watermark_dlp_compliant"] is False
+
+    # El breach tiene precedencia aunque también haya exportaciones con WARNING
+    mixed = audit_executive_report_forensic_watermark_and_dlp_redaction(
+        [
+            {"export_id": "EXP-STEGO-OPEN", "stego_recipient_fingerprint_bound": False},
+            {"export_id": "EXP-WM-FALSE"},
+            {"forensic_watermark_embedded": False, "export_id": "EXP-WM-FALSE-2"},
+        ]
+    )
+    assert mixed["watermark_dlp_status"] == "WATERMARK_OR_PII_LEAK_BREACH"
+
+
+def test_watermark_dlp_low_dlp_confidence_warning():
+    """Fingerprint estego ausente o confianza DLP < 98.0 -> 'STEGO_FINGERPRINT_OR_DLP_CONFIDENCE_WARNING' (sin PII ni watermark faltante)."""
+    from backend.services.project_export_service import (
+        audit_executive_report_forensic_watermark_and_dlp_redaction,
+    )
+
+    warning = audit_executive_report_forensic_watermark_and_dlp_redaction(
+        [
+            {
+                "export_id": "EXP-STEGO-OPEN",
+                "stego_recipient_fingerprint_bound": False,
+                "dlp_redaction_confidence_pct": 99.9,
+            },
+            {
+                "export_id": "EXP-DLP-LOW",
+                "dlp_redaction_confidence_pct": 97.5,
+            },
+        ]
+    )
+    assert warning["evaluated_exports_count"] == 2
+    assert warning["unwatermarked_or_unredacted_pii_export_ids"] == []
+    assert warning["missing_stego_or_low_dlp_confidence_export_ids"] == [
+        "EXP-STEGO-OPEN",
+        "EXP-DLP-LOW",
+    ]
+    assert warning["watermark_dlp_status"] == (
+        "STEGO_FINGERPRINT_OR_DLP_CONFIDENCE_WARNING"
+    )
+    assert warning["is_watermark_dlp_compliant"] is False
+
+    custom = audit_executive_report_forensic_watermark_and_dlp_redaction(
+        [{"export_id": "EXP-4", "dlp_redaction_confidence_pct": 99.0}],
+        min_redaction_confidence_pct=99.5,
+    )
+    assert custom["watermark_dlp_status"] == (
+        "STEGO_FINGERPRINT_OR_DLP_CONFIDENCE_WARNING"
+    )
+    assert custom["missing_stego_or_low_dlp_confidence_export_ids"] == ["EXP-4"]
+
+
+def test_watermark_dlp_empty_invalid_exports_and_module_binding():
+    """None / dicts inválidos se ignoran; defaults por campo y binding __all__ + ProjectExportService."""
+    import backend.services.project_export_service as export_module
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_forensic_watermark_and_dlp_redaction,
+    )
+
+    empty_res = audit_executive_report_forensic_watermark_and_dlp_redaction(None)
+    assert empty_res == {
+        "evaluated_exports_count": 0,
+        "unwatermarked_or_unredacted_pii_export_ids": [],
+        "missing_stego_or_low_dlp_confidence_export_ids": [],
+        "watermark_dlp_status": "FORENSIC_WATERMARK_AND_DLP_OPTIMAL",
+        "is_watermark_dlp_compliant": True,
+    }
+
+    invalid_res = audit_executive_report_forensic_watermark_and_dlp_redaction(
+        ["no-dict", None, {"export_id": "   "}, {"export_id": 123}, {"no_id": True}]
+    )
+    assert invalid_res["evaluated_exports_count"] == 0
+
+    # Campos no numéricos / no booleanos revierten a defaults del spec
+    bad_fields = audit_executive_report_forensic_watermark_and_dlp_redaction(
+        [
+            {
+                "export_id": "EXP-BAD",
+                "forensic_watermark_embedded": "yes",
+                "stego_recipient_fingerprint_bound": None,
+                "unredacted_pii_entities_count": "tres",
+                "dlp_redaction_confidence_pct": "alta",
+            }
+        ]
+    )
+    assert bad_fields == {
+        "evaluated_exports_count": 1,
+        "unwatermarked_or_unredacted_pii_export_ids": [],
+        "missing_stego_or_low_dlp_confidence_export_ids": [],
+        "watermark_dlp_status": "FORENSIC_WATERMARK_AND_DLP_OPTIMAL",
+        "is_watermark_dlp_compliant": True,
+    }
+
+    sample = [
+        {
+            "export_id": "EXP-BIND",
+            "forensic_watermark_embedded": True,
+            "stego_recipient_fingerprint_bound": True,
+            "unredacted_pii_entities_count": 0,
+            "dlp_redaction_confidence_pct": 99.5,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_forensic_watermark_and_dlp_redaction(
+            sample
+        )
+        == audit_executive_report_forensic_watermark_and_dlp_redaction(sample)
+    )
+    assert (
+        "audit_executive_report_forensic_watermark_and_dlp_redaction"
+        in export_module.__all__
+    )

@@ -5533,6 +5533,7 @@ __all__ = [
     "evaluate_evm_schedule_of_values_front_loading_and_stored_materials",
     "evaluate_evm_letter_of_credit_drawdown_and_evergreen_buffer",
     "evaluate_evm_liquidated_damages_excusable_delay_and_early_bonus",
+    "evaluate_evm_subcontractor_backcharge_offset_and_joint_check_disbursement",
     "ProjectEVMService",
 ]
 
@@ -10451,5 +10452,152 @@ def evaluate_evm_liquidated_damages_excusable_delay_and_early_bonus(
 ProjectEVMService.evaluate_evm_liquidated_damages_excusable_delay_and_early_bonus = staticmethod(
     evaluate_evm_liquidated_damages_excusable_delay_and_early_bonus
 )
+
+
+def evaluate_evm_subcontractor_backcharge_offset_and_joint_check_disbursement(
+    subcontract_ledgers: list[dict[str, Any]],
+    *,
+    min_cure_notice_hours: float = 48.0,
+    max_backcharge_pct_of_subcontract: float = 15.0,
+    require_joint_check_on_supplier_arrears: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §7.4 & §12.3 — Evalúa ventana de aviso de subsanación (cure notice) de contracargos a subcontratistas, tope porcentual de compensación y acuerdos de cheque conjunto / liberación de gravamen (lien waiver)."""
+    raw_items = subcontract_ledgers if isinstance(subcontract_ledgers, list) else []
+    valid_items = [item for item in raw_items if isinstance(item, dict)]
+
+    improper_backcharge_subcontract_ids: list[str] = []
+    lien_risk_subcontract_ids: list[str] = []
+    records: list[dict[str, Any]] = []
+    violations: list[str] = []
+    has_critical = False
+    has_warning = False
+
+    for idx, item in enumerate(valid_items):
+        subcontract_id = (
+            str(
+                item.get("subcontract_id") or item.get("id") or f"sub-{idx + 1}"
+            ).strip()
+            or f"sub-{idx + 1}"
+        )
+        subcontract_value = max(0.0, float(item.get("subcontract_value") or 0.0))
+        backcharge_amount = max(0.0, float(item.get("backcharge_amount") or 0.0))
+        cure_notice_hours_given = max(
+            0.0, float(item.get("cure_notice_hours_given") or 0.0)
+        )
+
+        raw_subst = item.get("photo_and_cost_substantiation_attached", True)
+        photo_and_cost_substantiation_attached = bool(
+            True if raw_subst is None else raw_subst
+        )
+
+        lower_tier_supplier_arrears_amount = max(
+            0.0, float(item.get("lower_tier_supplier_arrears_amount") or 0.0)
+        )
+
+        raw_joint = item.get("joint_check_agreement_active", True)
+        joint_check_agreement_active = bool(
+            True if raw_joint is None else raw_joint
+        )
+
+        raw_waiver = item.get("unconditional_lien_waiver_on_file", True)
+        unconditional_lien_waiver_on_file = bool(
+            True if raw_waiver is None else raw_waiver
+        )
+
+        if subcontract_value > 0:
+            backcharge_pct = round(
+                (backcharge_amount / subcontract_value) * 100.0, 2
+            )
+        elif backcharge_amount > 0:
+            backcharge_pct = 100.0
+        else:
+            backcharge_pct = 0.0
+
+        cure_notice_or_substantiation_breach = bool(
+            backcharge_amount > 0
+            and (
+                cure_notice_hours_given < min_cure_notice_hours
+                or not photo_and_cost_substantiation_attached
+            )
+        )
+        backcharge_cap_exceeded = (
+            backcharge_pct > max_backcharge_pct_of_subcontract
+        )
+        unprotected_supplier_arrears = bool(
+            require_joint_check_on_supplier_arrears
+            and lower_tier_supplier_arrears_amount > 0
+            and not joint_check_agreement_active
+        )
+        missing_lien_waiver = not unconditional_lien_waiver_on_file
+
+        if cure_notice_or_substantiation_breach or backcharge_cap_exceeded:
+            improper_backcharge_subcontract_ids.append(subcontract_id)
+            if cure_notice_or_substantiation_breach:
+                has_critical = True
+                violations.append(
+                    f"Subcontract '{subcontract_id}' has backcharge without required cure notice or substantiation."
+                )
+            if backcharge_cap_exceeded:
+                has_warning = True
+                violations.append(
+                    f"Subcontract '{subcontract_id}' backcharge {backcharge_pct}% exceeds cap {max_backcharge_pct_of_subcontract}%."
+                )
+
+        if unprotected_supplier_arrears or missing_lien_waiver:
+            lien_risk_subcontract_ids.append(subcontract_id)
+            has_critical = True
+            if unprotected_supplier_arrears:
+                violations.append(
+                    f"Subcontract '{subcontract_id}' has lower-tier supplier arrears without active joint-check agreement."
+                )
+            if missing_lien_waiver:
+                violations.append(
+                    f"Subcontract '{subcontract_id}' is missing unconditional lien waiver on file."
+                )
+
+        records.append(
+            {
+                "subcontract_id": subcontract_id,
+                "subcontract_value": subcontract_value,
+                "backcharge_amount": backcharge_amount,
+                "backcharge_pct": backcharge_pct,
+                "cure_notice_hours_given": cure_notice_hours_given,
+                "photo_and_cost_substantiation_attached": photo_and_cost_substantiation_attached,
+                "lower_tier_supplier_arrears_amount": lower_tier_supplier_arrears_amount,
+                "joint_check_agreement_active": joint_check_agreement_active,
+                "unconditional_lien_waiver_on_file": unconditional_lien_waiver_on_file,
+                "cure_notice_or_substantiation_breach": cure_notice_or_substantiation_breach,
+                "backcharge_cap_exceeded": backcharge_cap_exceeded,
+                "unprotected_supplier_arrears": unprotected_supplier_arrears,
+                "missing_lien_waiver": missing_lien_waiver,
+            }
+        )
+
+    if has_critical:
+        status = "critical"
+        is_compliant = False
+    elif has_warning:
+        status = "warning"
+        is_compliant = False
+    else:
+        status = "compliant"
+        is_compliant = True
+
+    return {
+        "status": status,
+        "is_compliant": is_compliant,
+        "subcontracts_evaluated": len(records),
+        "improper_backcharge_subcontract_ids": improper_backcharge_subcontract_ids,
+        "lien_risk_subcontract_ids": lien_risk_subcontract_ids,
+        "records": records,
+        "violations": violations,
+        "Violations": violations,
+    }
+
+
+ProjectEVMService.evaluate_evm_subcontractor_backcharge_offset_and_joint_check_disbursement = staticmethod(
+    evaluate_evm_subcontractor_backcharge_offset_and_joint_check_disbursement
+)
+
 
 
