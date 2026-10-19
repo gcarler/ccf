@@ -2538,6 +2538,7 @@ __all__ = [
     "audit_wiki_tls_certificate_expiration_and_acme_renewal",
     "audit_wiki_k8s_pdb_hpa_headroom_and_oomkill_eviction",
     "audit_wiki_dns_failover_ttl_and_bgp_anycast_resilience",
+    "audit_wiki_db_read_replica_lag_and_split_brain_fencing",
     "WikiPMIService",
 ]
 
@@ -7173,3 +7174,84 @@ WikiPMIService.audit_wiki_dns_failover_ttl_and_bgp_anycast_resilience = staticme
     audit_wiki_dns_failover_ttl_and_bgp_anycast_resilience
 )
 
+
+def audit_wiki_db_read_replica_lag_and_split_brain_fencing(
+    clusters: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_replication_lag_ms: float = 250.0,
+    max_failover_rto_seconds: int = 30,
+) -> dict[str, Any]:
+    """PMI PMBOK §11.6 & §8.2 — Wiki Database Read-Replica Replication Lag, Automated Failover Promotion & Split-Brain STONITH Fencing Auditor."""
+    raw_clusters = clusters if isinstance(clusters, (list, tuple)) else []
+    valid_clusters = [
+        c
+        for c in raw_clusters
+        if isinstance(c, Mapping)
+        and isinstance(c.get("cluster_id"), str)
+        and c["cluster_id"].strip()
+    ]
+
+    split_brain_or_unarchived_wal_cluster_ids: list[str] = []
+    high_lag_or_slow_promotion_cluster_ids: list[str] = []
+
+    for c in valid_clusters:
+        cid = str(c["cluster_id"]).strip()
+        replication_lag_ms = float(
+            c.get("replication_lag_ms", 45.0)
+            if c.get("replication_lag_ms") is not None
+            else 45.0
+        )
+        split_brain_stonith_fencing_enabled = bool(
+            c.get("split_brain_stonith_fencing_enabled", True)
+            if c.get("split_brain_stonith_fencing_enabled") is not None
+            else True
+        )
+        quorum_synchronous_commit_verified = bool(
+            c.get("quorum_synchronous_commit_verified", True)
+            if c.get("quorum_synchronous_commit_verified") is not None
+            else True
+        )
+        failover_promotion_rto_seconds = int(
+            c.get("failover_promotion_rto_seconds", 12)
+            if c.get("failover_promotion_rto_seconds") is not None
+            else 12
+        )
+        wal_archiving_continuous = bool(
+            c.get("wal_archiving_continuous", True)
+            if c.get("wal_archiving_continuous") is not None
+            else True
+        )
+
+        if (
+            not split_brain_stonith_fencing_enabled
+            or not quorum_synchronous_commit_verified
+            or not wal_archiving_continuous
+        ):
+            split_brain_or_unarchived_wal_cluster_ids.append(cid)
+
+        if (
+            replication_lag_ms > max_replication_lag_ms
+            or failover_promotion_rto_seconds > max_failover_rto_seconds
+        ):
+            high_lag_or_slow_promotion_cluster_ids.append(cid)
+
+    if split_brain_or_unarchived_wal_cluster_ids:
+        db_ha_fencing_status = "DB_SPLIT_BRAIN_OR_WAL_DURABILITY_BREACH"
+    elif high_lag_or_slow_promotion_cluster_ids:
+        db_ha_fencing_status = "DB_REPLICA_LAG_OR_FAILOVER_RTO_WARNING"
+    else:
+        db_ha_fencing_status = "DB_HA_REPLICATION_FENCING_OPTIMAL"
+
+    return {
+        "evaluated_clusters_count": len(valid_clusters),
+        "split_brain_or_unarchived_wal_cluster_ids": split_brain_or_unarchived_wal_cluster_ids,
+        "high_lag_or_slow_promotion_cluster_ids": high_lag_or_slow_promotion_cluster_ids,
+        "db_ha_fencing_status": db_ha_fencing_status,
+        "is_db_ha_fencing_compliant": db_ha_fencing_status
+        == "DB_HA_REPLICATION_FENCING_OPTIMAL",
+    }
+
+
+WikiPMIService.audit_wiki_db_read_replica_lag_and_split_brain_fencing = staticmethod(
+    audit_wiki_db_read_replica_lag_and_split_brain_fencing
+)

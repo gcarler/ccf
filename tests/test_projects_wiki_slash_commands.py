@@ -9765,3 +9765,155 @@ def test_audit_wiki_dns_failover_ttl_and_bgp_anycast_resilience_staticmethod_and
         "audit_wiki_dns_failover_ttl_and_bgp_anycast_resilience"
         in mod.__all__
     )
+
+
+def test_audit_wiki_db_read_replica_lag_and_split_brain_fencing_breach():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_db_read_replica_lag_and_split_brain_fencing,
+    )
+
+    result = audit_wiki_db_read_replica_lag_and_split_brain_fencing(
+        [
+            {
+                "cluster_id": "DB-NO-STONITH",
+                "replication_lag_ms": 50.0,
+                "split_brain_stonith_fencing_enabled": False,
+                "quorum_synchronous_commit_verified": True,
+                "failover_promotion_rto_seconds": 10,
+                "wal_archiving_continuous": True,
+            },
+            {
+                "cluster_id": "DB-NO-QUORUM",
+                "replication_lag_ms": 60.0,
+                "split_brain_stonith_fencing_enabled": True,
+                "quorum_synchronous_commit_verified": False,
+                "failover_promotion_rto_seconds": 15,
+                "wal_archiving_continuous": True,
+            },
+            {
+                "cluster_id": "DB-UNARCHIVED-WAL",
+                "replication_lag_ms": 30.0,
+                "split_brain_stonith_fencing_enabled": True,
+                "quorum_synchronous_commit_verified": True,
+                "failover_promotion_rto_seconds": 8,
+                "wal_archiving_continuous": False,
+            },
+        ],
+        max_replication_lag_ms=250.0,
+        max_failover_rto_seconds=30,
+    )
+    assert result["evaluated_clusters_count"] == 3
+    assert result["split_brain_or_unarchived_wal_cluster_ids"] == [
+        "DB-NO-STONITH",
+        "DB-NO-QUORUM",
+        "DB-UNARCHIVED-WAL",
+    ]
+    assert result["high_lag_or_slow_promotion_cluster_ids"] == []
+    assert (
+        result["db_ha_fencing_status"]
+        == "DB_SPLIT_BRAIN_OR_WAL_DURABILITY_BREACH"
+    )
+    assert result["is_db_ha_fencing_compliant"] is False
+
+
+def test_audit_wiki_db_read_replica_lag_and_split_brain_fencing_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_db_read_replica_lag_and_split_brain_fencing,
+    )
+
+    result = audit_wiki_db_read_replica_lag_and_split_brain_fencing(
+        [
+            {
+                "cluster_id": "DB-HIGH-LAG",
+                "replication_lag_ms": 480.0,
+                "split_brain_stonith_fencing_enabled": True,
+                "quorum_synchronous_commit_verified": True,
+                "failover_promotion_rto_seconds": 12,
+                "wal_archiving_continuous": True,
+            },
+            {
+                "cluster_id": "DB-SLOW-PROMOTION",
+                "replication_lag_ms": 80.0,
+                "split_brain_stonith_fencing_enabled": True,
+                "quorum_synchronous_commit_verified": True,
+                "failover_promotion_rto_seconds": 65,
+                "wal_archiving_continuous": True,
+            },
+        ],
+        max_replication_lag_ms=250.0,
+        max_failover_rto_seconds=30,
+    )
+    assert result["evaluated_clusters_count"] == 2
+    assert result["split_brain_or_unarchived_wal_cluster_ids"] == []
+    assert result["high_lag_or_slow_promotion_cluster_ids"] == [
+        "DB-HIGH-LAG",
+        "DB-SLOW-PROMOTION",
+    ]
+    assert (
+        result["db_ha_fencing_status"]
+        == "DB_REPLICA_LAG_OR_FAILOVER_RTO_WARNING"
+    )
+    assert result["is_db_ha_fencing_compliant"] is False
+
+
+def test_audit_wiki_db_read_replica_lag_and_split_brain_fencing_optimal_and_empty():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_db_read_replica_lag_and_split_brain_fencing,
+    )
+
+    empty = audit_wiki_db_read_replica_lag_and_split_brain_fencing(
+        [{"cluster_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_clusters_count"] == 0
+    assert (
+        empty["db_ha_fencing_status"] == "DB_HA_REPLICATION_FENCING_OPTIMAL"
+    )
+    assert empty["is_db_ha_fencing_compliant"] is True
+
+    optimal = audit_wiki_db_read_replica_lag_and_split_brain_fencing(
+        [
+            {
+                "cluster_id": "DB-PRIMARY-HA-01",
+                "replication_lag_ms": 35.0,
+                "split_brain_stonith_fencing_enabled": True,
+                "quorum_synchronous_commit_verified": True,
+                "failover_promotion_rto_seconds": 10,
+                "wal_archiving_continuous": True,
+            }
+        ],
+        max_replication_lag_ms=250.0,
+        max_failover_rto_seconds=30,
+    )
+    assert optimal["evaluated_clusters_count"] == 1
+    assert optimal["split_brain_or_unarchived_wal_cluster_ids"] == []
+    assert optimal["high_lag_or_slow_promotion_cluster_ids"] == []
+    assert (
+        optimal["db_ha_fencing_status"] == "DB_HA_REPLICATION_FENCING_OPTIMAL"
+    )
+    assert optimal["is_db_ha_fencing_compliant"] is True
+
+
+def test_audit_wiki_db_read_replica_lag_and_split_brain_fencing_staticmethod_and_dunder_all():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_db_read_replica_lag_and_split_brain_fencing,
+    )
+
+    sample = [
+        {
+            "cluster_id": "DB-99",
+            "replication_lag_ms": 25.0,
+            "failover_promotion_rto_seconds": 8,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_db_read_replica_lag_and_split_brain_fencing(
+            sample
+        )
+        == audit_wiki_db_read_replica_lag_and_split_brain_fencing(sample)
+    )
+    assert (
+        "audit_wiki_db_read_replica_lag_and_split_brain_fencing"
+        in mod.__all__
+    )
