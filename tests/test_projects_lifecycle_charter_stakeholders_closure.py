@@ -12605,3 +12605,122 @@ def test_audit_epc_performance_guarantee_capacity_test_and_minimum_acceptance_em
         "audit_epc_performance_guarantee_capacity_test_and_minimum_acceptance"
         in mod.__all__
     )
+
+
+def test_audit_spv_project_finance_dscr_llcr_covenant_and_equity_lockup_healthy():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_spv_project_finance_dscr_llcr_covenant_and_equity_lockup,
+    )
+
+    tranches = [
+        {
+            "tranche_id": "SPV-SENIOR-TERM-A",
+            "cfads_amount": 14500000.0,
+            "scheduled_debt_service_amount": 10000000.0,
+            "npv_future_cfads": 150000000.0,
+            "outstanding_senior_debt": 100000000.0,
+            "dsra_funded_months": 6.0,
+            "required_dsra_months": 6.0,
+            "equity_dividend_distributed_during_lockup": False,
+        },
+        {
+            "tranche_id": "SPV-SENIOR-TERM-B",
+            "cfads_amount": 6600000.0,
+            "scheduled_debt_service_amount": 5000000.0,
+            "npv_future_cfads": 70000000.0,
+            "outstanding_senior_debt": 50000000.0,
+            "dsra_funded_months": 6.0,
+            "required_dsra_months": 6.0,
+            "equity_dividend_distributed_during_lockup": False,
+        },
+    ]
+    res = audit_spv_project_finance_dscr_llcr_covenant_and_equity_lockup(tranches)
+    assert res["status"] == "healthy"
+    assert res["total_tranches"] == 2
+    assert res["healthy_count"] == 2
+    assert res["warning_count"] == 0
+    assert res["critical_count"] == 0
+    assert res["covenant_compliance_rate_pct"] == 100.0
+    assert res["recommendations"] == []
+
+
+def test_audit_spv_project_finance_dscr_llcr_covenant_and_equity_lockup_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_spv_project_finance_dscr_llcr_covenant_and_equity_lockup,
+    )
+
+    tranches = [
+        {
+            "tranche_id": "SPV-SOLAR-LOCKUP-TRANCHE",
+            "cfads_amount": 11200000.0,
+            "scheduled_debt_service_amount": 10000000.0,
+            "npv_future_cfads": 125000000.0,
+            "outstanding_senior_debt": 100000000.0,
+            "dsra_funded_months": 4.5,
+            "required_dsra_months": 6.0,
+            "equity_dividend_distributed_during_lockup": False,
+        }
+    ]
+    res = audit_spv_project_finance_dscr_llcr_covenant_and_equity_lockup(tranches)
+    assert res["status"] == "warning"
+    assert res["total_tranches"] == 1
+    assert res["warning_count"] == 1
+    assert res["critical_count"] == 0
+    assert res["lockup_triggered_count"] == 1
+    assert res["illegal_dividend_leakage_count"] == 0
+    assert res["tranches"][0]["dscr_ratio"] == 1.12
+    assert res["tranches"][0]["llcr_ratio"] == 1.25
+    assert res["tranches"][0]["tranche_status"] == "warning"
+    assert len(res["recommendations"]) >= 1
+
+
+def test_audit_spv_project_finance_dscr_llcr_covenant_and_equity_lockup_critical():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_spv_project_finance_dscr_llcr_covenant_and_equity_lockup,
+    )
+
+    tranches = [
+        {
+            "tranche_id": "SPV-TOLLROAD-DEFAULT-LEAK",
+            "cfads_amount": 9800000.0,
+            "scheduled_debt_service_amount": 10000000.0,
+            "npv_future_cfads": 110000000.0,
+            "outstanding_senior_debt": 100000000.0,
+            "dsra_funded_months": 2.0,
+            "required_dsra_months": 6.0,
+            "equity_dividend_distributed_during_lockup": True,
+        }
+    ]
+    res = audit_spv_project_finance_dscr_llcr_covenant_and_equity_lockup(tranches)
+    assert res["status"] == "critical"
+    assert res["total_tranches"] == 1
+    assert res["critical_count"] == 1
+    assert res["default_dscr_breach_count"] == 1
+    assert res["lockup_triggered_count"] == 1
+    assert res["illegal_dividend_leakage_count"] == 1
+    assert res["covenant_compliance_rate_pct"] == 0.0
+    assert res["tranches"][0]["tranche_status"] == "critical"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_spv_project_finance_dscr_llcr_covenant_and_equity_lockup_empty_and_binding():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_spv_project_finance_dscr_llcr_covenant_and_equity_lockup,
+    )
+
+    empty = audit_spv_project_finance_dscr_llcr_covenant_and_equity_lockup([])
+    assert empty["status"] == "healthy"
+    assert empty["total_tranches"] == 0
+    assert empty["covenant_compliance_rate_pct"] == 100.0
+    assert (
+        ProjectLifecyclePMIService.audit_spv_project_finance_dscr_llcr_covenant_and_equity_lockup(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_spv_project_finance_dscr_llcr_covenant_and_equity_lockup"
+        in mod.__all__
+    )

@@ -3196,6 +3196,7 @@ __all__ = [
     "audit_cross_border_customs_incoterms_and_export_control_compliance",
     "audit_sovereign_political_risk_miga_insurance_and_arbitration_seat",
     "audit_epc_performance_guarantee_capacity_test_and_minimum_acceptance",
+    "audit_spv_project_finance_dscr_llcr_covenant_and_equity_lockup",
     "ProjectLifecyclePMIService",
 ]
 
@@ -9727,4 +9728,172 @@ def audit_epc_performance_guarantee_capacity_test_and_minimum_acceptance(
 
 ProjectLifecyclePMIService.audit_epc_performance_guarantee_capacity_test_and_minimum_acceptance = staticmethod(
     audit_epc_performance_guarantee_capacity_test_and_minimum_acceptance
+)
+
+
+def audit_spv_project_finance_dscr_llcr_covenant_and_equity_lockup(
+    tranches: list[dict[str, Any]],
+    *,
+    lockup_dscr_threshold: float = 1.20,
+    default_dscr_threshold: float = 1.05,
+    min_llcr_threshold: float = 1.30,
+) -> dict[str, Any]:
+    """PMI PMBOK §12.3 & §11.2 — SPV Non-Recourse Project Finance DSCR/LLCR Covenants, Equity Distribution Lock-Up & DSRA Reserve Auditor."""
+    normalized_default_dscr = max(float(default_dscr_threshold), 1.0)
+    normalized_lockup_dscr = max(float(lockup_dscr_threshold), normalized_default_dscr)
+    normalized_min_llcr = max(float(min_llcr_threshold), 1.0)
+
+    raw_tranches = tranches if isinstance(tranches, list) else []
+    evaluated_tranches: list[dict[str, Any]] = []
+    healthy_count = 0
+    warning_count = 0
+    critical_count = 0
+    default_dscr_breach_count = 0
+    lockup_triggered_count = 0
+    illegal_dividend_leakage_count = 0
+
+    for idx, item in enumerate(raw_tranches, start=1):
+        if not isinstance(item, dict):
+            continue
+        tranche_id = str(item.get("tranche_id") or f"tranche-{idx}").strip()
+        try:
+            cfads_amount = float(item.get("cfads_amount", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            cfads_amount = 0.0
+        try:
+            scheduled_debt_service_amount = float(
+                item.get("scheduled_debt_service_amount", 0.0) or 0.0
+            )
+        except (TypeError, ValueError):
+            scheduled_debt_service_amount = 0.0
+        try:
+            npv_future_cfads = float(item.get("npv_future_cfads", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            npv_future_cfads = 0.0
+        try:
+            outstanding_senior_debt = float(
+                item.get("outstanding_senior_debt", 0.0) or 0.0
+            )
+        except (TypeError, ValueError):
+            outstanding_senior_debt = 0.0
+
+        raw_dsra = item.get("dsra_funded_months", 6.0)
+        try:
+            dsra_funded_months = float(6.0 if raw_dsra is None else raw_dsra)
+        except (TypeError, ValueError):
+            dsra_funded_months = 6.0
+
+        raw_req_dsra = item.get("required_dsra_months", 6.0)
+        try:
+            required_dsra_months = float(6.0 if raw_req_dsra is None else raw_req_dsra)
+        except (TypeError, ValueError):
+            required_dsra_months = 6.0
+
+        equity_dividend_distributed_during_lockup = bool(
+            item.get("equity_dividend_distributed_during_lockup", False)
+        )
+
+        dscr_ratio = (
+            round(cfads_amount / scheduled_debt_service_amount, 2)
+            if scheduled_debt_service_amount > 0.0
+            else 99.99
+        )
+        llcr_ratio = (
+            round(npv_future_cfads / outstanding_senior_debt, 2)
+            if outstanding_senior_debt > 0.0
+            else 99.99
+        )
+
+        event_of_default_dscr_breach = dscr_ratio < normalized_default_dscr
+        equity_distribution_lockup_triggered = (
+            dscr_ratio < normalized_lockup_dscr
+            or llcr_ratio < normalized_min_llcr
+            or dsra_funded_months < required_dsra_months
+        )
+        illegal_dividend_leakage = (
+            equity_distribution_lockup_triggered
+            and equity_dividend_distributed_during_lockup
+        )
+
+        if event_of_default_dscr_breach:
+            default_dscr_breach_count += 1
+        if equity_distribution_lockup_triggered:
+            lockup_triggered_count += 1
+        if illegal_dividend_leakage:
+            illegal_dividend_leakage_count += 1
+
+        if event_of_default_dscr_breach or illegal_dividend_leakage:
+            tranche_status = "critical"
+            critical_count += 1
+        elif equity_distribution_lockup_triggered:
+            tranche_status = "warning"
+            warning_count += 1
+        else:
+            tranche_status = "healthy"
+            healthy_count += 1
+
+        evaluated_tranches.append(
+            {
+                "tranche_id": tranche_id,
+                "cfads_amount": cfads_amount,
+                "scheduled_debt_service_amount": scheduled_debt_service_amount,
+                "npv_future_cfads": npv_future_cfads,
+                "outstanding_senior_debt": outstanding_senior_debt,
+                "dsra_funded_months": dsra_funded_months,
+                "required_dsra_months": required_dsra_months,
+                "equity_dividend_distributed_during_lockup": equity_dividend_distributed_during_lockup,
+                "dscr_ratio": dscr_ratio,
+                "llcr_ratio": llcr_ratio,
+                "event_of_default_dscr_breach": event_of_default_dscr_breach,
+                "equity_distribution_lockup_triggered": equity_distribution_lockup_triggered,
+                "illegal_dividend_leakage": illegal_dividend_leakage,
+                "tranche_status": tranche_status,
+            }
+        )
+
+    total_tranches = len(evaluated_tranches)
+    covenant_compliance_rate_pct = (
+        round((healthy_count / total_tranches) * 100.0, 2)
+        if total_tranches > 0
+        else 100.0
+    )
+
+    recommendations: list[str] = []
+    if default_dscr_breach_count > 0:
+        recommendations.append(
+            f"Activar protocolo de cura o waiver ante sindicato bancario por Event of Default (DSCR < {normalized_default_dscr}x) en {default_dscr_breach_count} tramo(s)."
+        )
+    if illegal_dividend_leakage_count > 0:
+        recommendations.append(
+            f"Exigir clawback inmediato de dividendos distribuidos a sponsors durante período de Equity Lock-Up en {illegal_dividend_leakage_count} tramo(s)."
+        )
+    if lockup_triggered_count > 0:
+        recommendations.append(
+            f"Retener flujo excedente en cuenta cascada (Cash Sweep) y fondear DSRA hasta restituir DSCR >= {normalized_lockup_dscr}x y LLCR >= {normalized_min_llcr}x ({lockup_triggered_count} tramo(s))."
+        )
+
+    if critical_count > 0:
+        status = "critical"
+    elif warning_count > 0:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_tranches": total_tranches,
+        "healthy_count": healthy_count,
+        "warning_count": warning_count,
+        "critical_count": critical_count,
+        "default_dscr_breach_count": default_dscr_breach_count,
+        "lockup_triggered_count": lockup_triggered_count,
+        "illegal_dividend_leakage_count": illegal_dividend_leakage_count,
+        "covenant_compliance_rate_pct": covenant_compliance_rate_pct,
+        "status": status,
+        "tranches": evaluated_tranches,
+        "recommendations": recommendations,
+    }
+
+
+ProjectLifecyclePMIService.audit_spv_project_finance_dscr_llcr_covenant_and_equity_lockup = staticmethod(
+    audit_spv_project_finance_dscr_llcr_covenant_and_equity_lockup
 )

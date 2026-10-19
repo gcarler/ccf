@@ -12715,3 +12715,163 @@ def test_acceleration_claim_zero_guards_and_field_reversion():
         "recoverable_acceleration_claim": 0.0,
         "acceleration_claim_status": "NO_ACCELERATION_BASELINE_PACE_CLEAN",
     }
+
+
+def test_surety_bond_t4d_takeover_clean():
+    """Balance no pagado cubre el costo de reemplazo -> 'CONTRACT_BALANCE_SUFFICIENT_NO_BOND_CALL_CLEAN'."""
+    import backend.services.project_evm_service as evm_module
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_surety_performance_bond_t4d_takeover_and_overpayment,
+    )
+
+    res = evaluate_evm_surety_performance_bond_t4d_takeover_and_overpayment(
+        250000.0,   # balance no pagado
+        200000.0,   # costo de reemplazo menor
+        500000.0,   # penal sum
+    )
+    assert res == {
+        "net_completion_deficit": 0.0,
+        "effective_bond_penal_cap": 500000.0,
+        "surety_recoverable_indemnity": 0.0,
+        "unbonded_owner_exposure": 0.0,
+        "bond_discharge_or_exhaustion_breach": False,
+        "t4d_surety_status": "CONTRACT_BALANCE_SUFFICIENT_NO_BOND_CALL_CLEAN",
+    }
+    # Igualdad exacta (reemplazo == balance) también es CLEAN.
+    exact = evaluate_evm_surety_performance_bond_t4d_takeover_and_overpayment(
+        300000.0, 300000.0, 800000.0,
+    )
+    assert exact["net_completion_deficit"] == 0.0
+    assert exact["t4d_surety_status"] == "CONTRACT_BALANCE_SUFFICIENT_NO_BOND_CALL_CLEAN"
+    assert (
+        ProjectEVMService.evaluate_evm_surety_performance_bond_t4d_takeover_and_overpayment(
+            250000.0, 200000.0, 500000.0
+        )
+        == res
+    )
+    assert "evaluate_evm_surety_performance_bond_t4d_takeover_and_overpayment" in evm_module.__all__
+
+
+def test_surety_bond_t4d_takeover_indemnified_warning():
+    """Deficit íntegramente cubierto por el penal sum (o solo sobrepago detectado) -> 'SURETY_BOND_INDEMNIFIED_TAKEOVER_WARNING'."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_surety_performance_bond_t4d_takeover_and_overpayment,
+    )
+
+    # Deficit 250000 < penal 500000: indemnidad completa, sin exposición -> WARNING.
+    indemnified = evaluate_evm_surety_performance_bond_t4d_takeover_and_overpayment(
+        100000.0, 350000.0, 500000.0,
+    )
+    assert indemnified == {
+        "net_completion_deficit": 250000.0,
+        "effective_bond_penal_cap": 500000.0,
+        "surety_recoverable_indemnity": 250000.0,
+        "unbonded_owner_exposure": 0.0,
+        "bond_discharge_or_exhaustion_breach": False,
+        "t4d_surety_status": "SURETY_BOND_INDEMNIFIED_TAKEOVER_WARNING",
+    }
+    # Solo sobrepago front-loading detectado sin deficit -> WARNING igualmente;
+    # la afianzadora deduce pro-tanto: cap 500000 - 25000 = 475000.
+    overpayment_only = evaluate_evm_surety_performance_bond_t4d_takeover_and_overpayment(
+        300000.0, 280000.0, 500000.0,
+        front_loaded_overpayment_detected_amount=25000.0,
+    )
+    assert overpayment_only["net_completion_deficit"] == 0.0
+    assert overpayment_only["effective_bond_penal_cap"] == 475000.0
+    assert overpayment_only["surety_recoverable_indemnity"] == 0.0
+    assert overpayment_only["unbonded_owner_exposure"] == 0.0
+    assert overpayment_only["bond_discharge_or_exhaustion_breach"] is False
+    assert overpayment_only["t4d_surety_status"] == "SURETY_BOND_INDEMNIFIED_TAKEOVER_WARNING"
+
+
+def test_surety_bond_t4d_takeover_critical_breach_paths():
+    """Cure notice sin expirar, takeover sin ejecutar o penal sum agotado -> CRITICAL con precedencia."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_surety_performance_bond_t4d_takeover_and_overpayment,
+    )
+
+    # Penal sum agotado: deficit 300000 > cap 150000 (200000 - overpayment 50000)
+    # -> indemnidad limitada al cap, exposición 150000 -> BREACH.
+    exhausted = evaluate_evm_surety_performance_bond_t4d_takeover_and_overpayment(
+        100000.0,               # balance
+        400000.0,               # reemplazo
+        200000.0,               # penal sum
+        front_loaded_overpayment_detected_amount=50000.0,
+    )
+    assert exhausted == {
+        "net_completion_deficit": 300000.0,
+        "effective_bond_penal_cap": 150000.0,
+        "surety_recoverable_indemnity": 150000.0,
+        "unbonded_owner_exposure": 150000.0,
+        "bond_discharge_or_exhaustion_breach": True,
+        "t4d_surety_status": "CRITICAL_SURETY_DISCHARGE_OR_PENAL_SUM_EXHAUSTION_BREACH",
+    }
+
+    # Cure notice de 10 días sin expirar: indemnidad no ejecutable -> exposición total.
+    cure_pending = evaluate_evm_surety_performance_bond_t4d_takeover_and_overpayment(
+        100000.0, 350000.0, 500000.0,
+        cure_notice_10_day_expired=False,
+    )
+    assert cure_pending["net_completion_deficit"] == 250000.0
+    assert cure_pending["effective_bond_penal_cap"] == 500000.0
+    assert cure_pending["surety_recoverable_indemnity"] == 0.0
+    assert cure_pending["unbonded_owner_exposure"] == 250000.0
+    assert cure_pending["bond_discharge_or_exhaustion_breach"] is True
+    assert cure_pending["t4d_surety_status"] == "CRITICAL_SURETY_DISCHARGE_OR_PENAL_SUM_EXHAUSTION_BREACH"
+
+    # Takeover agreement sin ejecutar -> indemnidad no ejecutable -> CRITICAL igualmente.
+    takeover_pending = evaluate_evm_surety_performance_bond_t4d_takeover_and_overpayment(
+        100000.0, 350000.0, 500000.0,
+        surety_takeover_agreement_executed=False,
+    )
+    assert takeover_pending["surety_recoverable_indemnity"] == 0.0
+    assert takeover_pending["unbonded_owner_exposure"] == 250000.0
+    assert takeover_pending["bond_discharge_or_exhaustion_breach"] is True
+    assert takeover_pending["t4d_surety_status"] == "CRITICAL_SURETY_DISCHARGE_OR_PENAL_SUM_EXHAUSTION_BREACH"
+
+
+def test_surety_bond_t4d_takeover_field_coercion_and_static_equality():
+    """Negativos e inválidos se clamp a 0.0; bools inválidos revierten a True/True."""
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_surety_performance_bond_t4d_takeover_and_overpayment,
+    )
+
+    # Negativos y tipos inválidos de clamp a 0.0 (sin deficit ni breach).
+    coerced = evaluate_evm_surety_performance_bond_t4d_takeover_and_overpayment(
+        -100000.0, -50000.0, -200000.0,
+        front_loaded_overpayment_detected_amount=-15000.0,
+        cure_notice_10_day_expired="yes",
+        surety_takeover_agreement_executed=None,
+    )
+    assert coerced == {
+        "net_completion_deficit": 0.0,
+        "effective_bond_penal_cap": 0.0,
+        "surety_recoverable_indemnity": 0.0,
+        "unbonded_owner_exposure": 0.0,
+        "bond_discharge_or_exhaustion_breach": False,
+        "t4d_surety_status": "CONTRACT_BALANCE_SUFFICIENT_NO_BOND_CALL_CLEAN",
+    }
+
+    reverted = evaluate_evm_surety_performance_bond_t4d_takeover_and_overpayment(
+        "余额",              # no-float -> 0.0
+        None,                # no-float -> 0.0
+        True,                # bool excluida -> 0.0
+        front_loaded_overpayment_detected_amount="ten",   # no-float -> 0.0
+        cure_notice_10_day_expired=1,    # no-bool -> True (default)
+        surety_takeover_agreement_executed="executed",   # no-bool -> True (default)
+    )
+    assert reverted == {
+        "net_completion_deficit": 0.0,
+        "effective_bond_penal_cap": 0.0,
+        "surety_recoverable_indemnity": 0.0,
+        "unbonded_owner_exposure": 0.0,
+        "bond_discharge_or_exhaustion_breach": False,
+        "t4d_surety_status": "CONTRACT_BALANCE_SUFFICIENT_NO_BOND_CALL_CLEAN",
+    }
+    # Vínculo estático en ProjectEVMService.
+    assert (
+        ProjectEVMService.evaluate_evm_surety_performance_bond_t4d_takeover_and_overpayment
+        is not None
+    )

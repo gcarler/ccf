@@ -12689,3 +12689,115 @@ def test_audit_zero_downtime_db_migration_expand_contract_and_lock_gate_empty_an
         "audit_zero_downtime_db_migration_expand_contract_and_lock_gate"
         in mod.__all__
     )
+
+
+def test_audit_sbom_slsa_provenance_and_cisa_kev_release_gate_healthy():
+    from backend.services.project_ccb_service import (
+        audit_sbom_slsa_provenance_and_cisa_kev_release_gate,
+    )
+
+    artifacts = [
+        {
+            "artifact_id": "ghcr.io/ccf/api-gateway:v2.4.0",
+            "slsa_provenance_level": 3,
+            "cosign_signature_verified": True,
+            "sbom_spdx_cyclonedx_attached": True,
+            "cisa_kev_active_count": 0,
+            "highest_unpatched_cvss": 4.2,
+            "vex_not_affected_justification_signed": False,
+        },
+        {
+            "artifact_id": "ghcr.io/ccf/worker-billing:v2.4.0",
+            "slsa_provenance_level": 4,
+            "cosign_signature_verified": True,
+            "sbom_spdx_cyclonedx_attached": True,
+            "cisa_kev_active_count": 1,
+            "highest_unpatched_cvss": 8.8,
+            "vex_not_affected_justification_signed": True,
+        },
+    ]
+    res = audit_sbom_slsa_provenance_and_cisa_kev_release_gate(artifacts)
+    assert res["status"] == "healthy"
+    assert res["total_artifacts"] == 2
+    assert res["healthy_count"] == 2
+    assert res["warning_count"] == 0
+    assert res["critical_count"] == 0
+    assert res["supply_chain_gate_pass_rate_pct"] == 100.0
+    assert res["recommendations"] == []
+
+
+def test_audit_sbom_slsa_provenance_and_cisa_kev_release_gate_warning():
+    from backend.services.project_ccb_service import (
+        audit_sbom_slsa_provenance_and_cisa_kev_release_gate,
+    )
+
+    artifacts = [
+        {
+            "artifact_id": "ghcr.io/ccf/legacy-exporter:v1.9.2",
+            "slsa_provenance_level": 2,
+            "cosign_signature_verified": True,
+            "sbom_spdx_cyclonedx_attached": True,
+            "cisa_kev_active_count": 0,
+            "highest_unpatched_cvss": 7.8,
+            "vex_not_affected_justification_signed": False,
+        }
+    ]
+    res = audit_sbom_slsa_provenance_and_cisa_kev_release_gate(artifacts)
+    assert res["status"] == "warning"
+    assert res["total_artifacts"] == 1
+    assert res["warning_count"] == 1
+    assert res["critical_count"] == 0
+    assert res["slsa_shortfall_count"] == 1
+    assert res["cvss_exceeded_count"] == 1
+    assert res["artifacts"][0]["artifact_status"] == "warning"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_sbom_slsa_provenance_and_cisa_kev_release_gate_critical():
+    from backend.services.project_ccb_service import (
+        audit_sbom_slsa_provenance_and_cisa_kev_release_gate,
+    )
+
+    artifacts = [
+        {
+            "artifact_id": "ghcr.io/ccf/unverified-image:latest",
+            "slsa_provenance_level": 1,
+            "cosign_signature_verified": False,
+            "sbom_spdx_cyclonedx_attached": False,
+            "cisa_kev_active_count": 2,
+            "highest_unpatched_cvss": 9.8,
+            "vex_not_affected_justification_signed": False,
+        }
+    ]
+    res = audit_sbom_slsa_provenance_and_cisa_kev_release_gate(artifacts)
+    assert res["status"] == "critical"
+    assert res["total_artifacts"] == 1
+    assert res["critical_count"] == 1
+    assert res["unsigned_or_missing_sbom_count"] == 1
+    assert res["active_kev_unmitigated_count"] == 1
+    assert res["supply_chain_gate_pass_rate_pct"] == 0.0
+    assert res["artifacts"][0]["artifact_status"] == "critical"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_sbom_slsa_provenance_and_cisa_kev_release_gate_empty_and_binding():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_sbom_slsa_provenance_and_cisa_kev_release_gate,
+    )
+
+    empty = audit_sbom_slsa_provenance_and_cisa_kev_release_gate([])
+    assert empty["status"] == "healthy"
+    assert empty["total_artifacts"] == 0
+    assert empty["supply_chain_gate_pass_rate_pct"] == 100.0
+    assert (
+        ProjectCCBService.audit_sbom_slsa_provenance_and_cisa_kev_release_gate(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_sbom_slsa_provenance_and_cisa_kev_release_gate"
+        in mod.__all__
+    )

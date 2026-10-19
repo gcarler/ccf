@@ -5548,6 +5548,7 @@ __all__ = [
     "evaluate_evm_differing_site_conditions_dsc_geotechnical_overrun",
     "evaluate_evm_termination_for_convenience_t4c_settlement_proposal",
     "evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium",
+    "evaluate_evm_surety_performance_bond_t4d_takeover_and_overpayment",
     "ProjectEVMService",
 ]
 
@@ -12252,4 +12253,103 @@ def evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium(
 
 ProjectEVMService.evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium = staticmethod(
     evaluate_evm_acceleration_claim_overtime_inefficiency_and_shift_premium
+)
+
+
+def evaluate_evm_surety_performance_bond_t4d_takeover_and_overpayment(
+    remaining_contract_balance_unpaid: float,
+    estimated_cost_to_complete_by_replacement: float,
+    performance_bond_penal_sum: float,
+    *,
+    front_loaded_overpayment_detected_amount: float = 0.0,
+    cure_notice_10_day_expired: bool = True,
+    surety_takeover_agreement_executed: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §7.4 & §12.3 — Evalúa la ejecución de la fianza de cumplimiento (surety performance bond) tras una Termination for Default (T4D): deficit de completion contra el balance no pagado del contrato, ejecución del takeover agreement de la afianzadora, deducción pro-tanto del sobrepago por front-loading negligente del propietario del penal sum, indemne indemnización de la afianzadora y exposición no afianzada del propietario.
+
+    - `net_completion_deficit` = max(0, costo_reemplazo - balance_no_pagado).
+    - `effective_bond_penal_cap` = penal_sum - sobrepago_front_loading
+      (la afianzadora deduce pro-tanto el sobrepago negligente del owner).
+    - `surety_recoverable_indemnity` = min(deficit, cap) solo si el cure
+      notice de 10 días expiró con el takeover agreement ejecutado; si falta
+      cualquiera de los dos, la indemnización no es ejecutable.
+    - `unbonded_owner_exposure` = deficit - indemnidad, exposición que el
+      penal sum no cubre.
+    - `bond_discharge_or_exhaustion_breach`: cure notice sin expirar, takeover
+      sin ejecutar, o exposición no afianzada > 0.
+    - Estados (precedencia): 'CRITICAL_SURETY_DISCHARGE_OR_PENAL_SUM_EXHAUSTION_BREACH'
+      (deficit con breach) | 'SURETY_BOND_INDEMNIFIED_TAKEOVER_WARNING'
+      (deficit o sobrepago detectado) |
+      'CONTRACT_BALANCE_SUFFICIENT_NO_BOND_CALL_CLEAN'.
+    """
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _float(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    def _clamp_non_negative_float(value: Any, default: float) -> float:
+        coerced = _float(value, default)
+        return max(0.0, coerced)
+
+    balance_unpaid = _clamp_non_negative_float(
+        remaining_contract_balance_unpaid, 0.0
+    )
+    replacement_cost = _clamp_non_negative_float(
+        estimated_cost_to_complete_by_replacement, 0.0
+    )
+    penal_sum = _clamp_non_negative_float(
+        performance_bond_penal_sum, 0.0
+    )
+    front_load_overpayment = _clamp_non_negative_float(
+        front_loaded_overpayment_detected_amount, 0.0
+    )
+    cure_expired = _bool(cure_notice_10_day_expired, True)
+    takeover_executed = _bool(surety_takeover_agreement_executed, True)
+
+    net_completion_deficit = round(
+        max(0.0, replacement_cost - balance_unpaid), 2
+    )
+    effective_bond_penal_cap = round(
+        max(0.0, penal_sum - front_load_overpayment), 2
+    )
+
+    if cure_expired and takeover_executed:
+        surety_recoverable_indemnity = round(
+            min(net_completion_deficit, effective_bond_penal_cap), 2
+        )
+    else:
+        surety_recoverable_indemnity = 0.0
+
+    unbonded_owner_exposure = round(
+        max(0.0, net_completion_deficit - surety_recoverable_indemnity), 2
+    )
+
+    bond_discharge_or_exhaustion_breach = (
+        (not cure_expired)
+        or (not takeover_executed)
+        or unbonded_owner_exposure > 0.0
+    )
+
+    if net_completion_deficit > 0.0 and bond_discharge_or_exhaustion_breach:
+        t4d_surety_status = "CRITICAL_SURETY_DISCHARGE_OR_PENAL_SUM_EXHAUSTION_BREACH"
+    elif net_completion_deficit > 0.0 or front_load_overpayment > 0.0:
+        t4d_surety_status = "SURETY_BOND_INDEMNIFIED_TAKEOVER_WARNING"
+    else:
+        t4d_surety_status = "CONTRACT_BALANCE_SUFFICIENT_NO_BOND_CALL_CLEAN"
+
+    return {
+        "net_completion_deficit": net_completion_deficit,
+        "effective_bond_penal_cap": effective_bond_penal_cap,
+        "surety_recoverable_indemnity": surety_recoverable_indemnity,
+        "unbonded_owner_exposure": unbonded_owner_exposure,
+        "bond_discharge_or_exhaustion_breach": bond_discharge_or_exhaustion_breach,
+        "t4d_surety_status": t4d_surety_status,
+    }
+
+
+ProjectEVMService.evaluate_evm_surety_performance_bond_t4d_takeover_and_overpayment = staticmethod(
+    evaluate_evm_surety_performance_bond_t4d_takeover_and_overpayment
 )

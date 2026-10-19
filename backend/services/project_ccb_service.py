@@ -2876,6 +2876,7 @@ __all__ = [
     "audit_db_connection_pool_saturation_and_deadlock_gate",
     "audit_waf_owasp_crs_anomaly_threshold_and_rate_limit_gate",
     "audit_zero_downtime_db_migration_expand_contract_and_lock_gate",
+    "audit_sbom_slsa_provenance_and_cisa_kev_release_gate",
     "ProjectCCBService",
 ]
 
@@ -9688,4 +9689,153 @@ def audit_zero_downtime_db_migration_expand_contract_and_lock_gate(
 
 ProjectCCBService.audit_zero_downtime_db_migration_expand_contract_and_lock_gate = staticmethod(
     audit_zero_downtime_db_migration_expand_contract_and_lock_gate
+)
+
+
+def audit_sbom_slsa_provenance_and_cisa_kev_release_gate(
+    artifacts: list[dict[str, Any]],
+    *,
+    min_slsa_level: int = 3,
+    max_cvss_unpatched: float = 7.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §8.3 & §11.6 — CCB Supply Chain SBOM (SPDX/CycloneDX), SLSA Provenance Level, Cosign Signature & CISA KEV Exploited Vulnerability Release Gate Auditor."""
+    normalized_min_slsa = min(max(int(min_slsa_level), 1), 4)
+    normalized_max_cvss = min(max(float(max_cvss_unpatched), 0.0), 10.0)
+
+    raw_artifacts = artifacts if isinstance(artifacts, list) else []
+    evaluated_artifacts: list[dict[str, Any]] = []
+    healthy_count = 0
+    warning_count = 0
+    critical_count = 0
+    unsigned_or_missing_sbom_count = 0
+    active_kev_unmitigated_count = 0
+    slsa_shortfall_count = 0
+    cvss_exceeded_count = 0
+
+    for idx, item in enumerate(raw_artifacts, start=1):
+        if not isinstance(item, dict):
+            continue
+        artifact_id = str(item.get("artifact_id") or f"artifact-{idx}").strip()
+        try:
+            slsa_provenance_level = int(item.get("slsa_provenance_level", 0) or 0)
+        except (TypeError, ValueError):
+            slsa_provenance_level = 0
+        cosign_signature_verified = bool(
+            item.get("cosign_signature_verified", True)
+        )
+        sbom_spdx_cyclonedx_attached = bool(
+            item.get("sbom_spdx_cyclonedx_attached", True)
+        )
+        try:
+            cisa_kev_active_count = int(item.get("cisa_kev_active_count", 0) or 0)
+        except (TypeError, ValueError):
+            cisa_kev_active_count = 0
+        try:
+            highest_unpatched_cvss = float(
+                item.get("highest_unpatched_cvss", 0.0) or 0.0
+            )
+        except (TypeError, ValueError):
+            highest_unpatched_cvss = 0.0
+        vex_not_affected_justification_signed = bool(
+            item.get("vex_not_affected_justification_signed", False)
+        )
+
+        unsigned_or_missing_sbom = (
+            not cosign_signature_verified or not sbom_spdx_cyclonedx_attached
+        )
+        active_kev_unmitigated = (
+            cisa_kev_active_count > 0 and not vex_not_affected_justification_signed
+        )
+        slsa_level_shortfall = slsa_provenance_level < normalized_min_slsa
+        cvss_threshold_exceeded = (
+            highest_unpatched_cvss > normalized_max_cvss
+            and not vex_not_affected_justification_signed
+        )
+
+        if unsigned_or_missing_sbom:
+            unsigned_or_missing_sbom_count += 1
+        if active_kev_unmitigated:
+            active_kev_unmitigated_count += 1
+        if slsa_level_shortfall:
+            slsa_shortfall_count += 1
+        if cvss_threshold_exceeded:
+            cvss_exceeded_count += 1
+
+        if unsigned_or_missing_sbom or active_kev_unmitigated:
+            artifact_status = "critical"
+            critical_count += 1
+        elif slsa_level_shortfall or cvss_threshold_exceeded:
+            artifact_status = "warning"
+            warning_count += 1
+        else:
+            artifact_status = "healthy"
+            healthy_count += 1
+
+        evaluated_artifacts.append(
+            {
+                "artifact_id": artifact_id,
+                "slsa_provenance_level": slsa_provenance_level,
+                "cosign_signature_verified": cosign_signature_verified,
+                "sbom_spdx_cyclonedx_attached": sbom_spdx_cyclonedx_attached,
+                "cisa_kev_active_count": cisa_kev_active_count,
+                "highest_unpatched_cvss": highest_unpatched_cvss,
+                "vex_not_affected_justification_signed": vex_not_affected_justification_signed,
+                "unsigned_or_missing_sbom": unsigned_or_missing_sbom,
+                "active_kev_unmitigated": active_kev_unmitigated,
+                "slsa_level_shortfall": slsa_level_shortfall,
+                "cvss_threshold_exceeded": cvss_threshold_exceeded,
+                "artifact_status": artifact_status,
+            }
+        )
+
+    total_artifacts = len(evaluated_artifacts)
+    supply_chain_gate_pass_rate_pct = (
+        round((healthy_count / total_artifacts) * 100.0, 2)
+        if total_artifacts > 0
+        else 100.0
+    )
+
+    recommendations: list[str] = []
+    if unsigned_or_missing_sbom_count > 0:
+        recommendations.append(
+            f"Bloquear despliegue en CCB: exigir firma criptográfica Sigstore/Cosign verificada y SBOM SPDX/CycloneDX adjunto en {unsigned_or_missing_sbom_count} artefacto(s)."
+        )
+    if active_kev_unmitigated_count > 0:
+        recommendations.append(
+            f"Parchear inmediatamente vulnerabilidades presentes en el catálogo CISA KEV o adjuntar atestación VEX firmada en {active_kev_unmitigated_count} artefacto(s)."
+        )
+    if slsa_shortfall_count > 0:
+        recommendations.append(
+            f"Elevar el pipeline de compilación aislada para alcanzar SLSA Provenance >= Nivel {normalized_min_slsa} en {slsa_shortfall_count} artefacto(s)."
+        )
+    if cvss_exceeded_count > 0:
+        recommendations.append(
+            f"Remediar CVEs con puntaje CVSS > {normalized_max_cvss} o emitir justificación VEX 'not_affected' firmada en {cvss_exceeded_count} artefacto(s)."
+        )
+
+    if critical_count > 0:
+        status = "critical"
+    elif warning_count > 0:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_artifacts": total_artifacts,
+        "healthy_count": healthy_count,
+        "warning_count": warning_count,
+        "critical_count": critical_count,
+        "unsigned_or_missing_sbom_count": unsigned_or_missing_sbom_count,
+        "active_kev_unmitigated_count": active_kev_unmitigated_count,
+        "slsa_shortfall_count": slsa_shortfall_count,
+        "cvss_exceeded_count": cvss_exceeded_count,
+        "supply_chain_gate_pass_rate_pct": supply_chain_gate_pass_rate_pct,
+        "status": status,
+        "artifacts": evaluated_artifacts,
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.audit_sbom_slsa_provenance_and_cisa_kev_release_gate = staticmethod(
+    audit_sbom_slsa_provenance_and_cisa_kev_release_gate
 )
