@@ -12378,3 +12378,108 @@ def test_audit_wiki_vector_rag_index_drift_and_acl_prefilter_guard_empty_and_bin
         "audit_wiki_vector_rag_index_drift_and_acl_prefilter_guard"
         in mod.__all__
     )
+
+
+def test_audit_wiki_websocket_presence_backpressure_and_zombie_socket_hygiene_healthy():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_websocket_presence_backpressure_and_zombie_socket_hygiene,
+    )
+
+    gateways = [
+        {
+            "gateway_id": "ws-wiki-presence-eu-01",
+            "active_connections": 5000,
+            "zombie_unacked_ping_connections": 40,
+            "send_buffer_utilization_pct": 42.5,
+            "slow_consumer_disconnect_policy_enabled": True,
+            "fanout_latency_p99_ms": 65.0,
+            "per_ip_connection_rate_limit_enforced": True,
+            "ephemeral_port_exhaustion_risk": False,
+        }
+    ]
+    res = audit_wiki_websocket_presence_backpressure_and_zombie_socket_hygiene(
+        gateways
+    )
+    assert res["status"] == "HEALTHY"
+    assert res["evaluated_gateways_count"] == 1
+    assert res["critical_gateways"] == []
+    assert res["warning_gateways"] == []
+    assert res["peak_send_buffer_utilization_pct"] == 42.5
+    assert res["gateway_evaluations"][0]["zombie_socket_ratio_pct"] == 0.8
+
+
+def test_audit_wiki_websocket_presence_backpressure_and_zombie_socket_hygiene_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_websocket_presence_backpressure_and_zombie_socket_hygiene,
+    )
+
+    gateways = [
+        {
+            "gateway_id": "ws-wiki-presence-us-congested",
+            "active_connections": 4000,
+            "zombie_unacked_ping_connections": 140,
+            "send_buffer_utilization_pct": 88.0,
+            "slow_consumer_disconnect_policy_enabled": True,
+            "fanout_latency_p99_ms": 340.0,
+            "per_ip_connection_rate_limit_enforced": True,
+            "ephemeral_port_exhaustion_risk": False,
+        }
+    ]
+    res = audit_wiki_websocket_presence_backpressure_and_zombie_socket_hygiene(
+        gateways
+    )
+    assert res["status"] == "WARNING"
+    assert res["critical_gateways"] == []
+    assert res["warning_gateways"] == ["ws-wiki-presence-us-congested"]
+    assert res["peak_send_buffer_utilization_pct"] == 88.0
+    assert res["gateway_evaluations"][0]["ws_backpressure_warning"] is True
+
+
+def test_audit_wiki_websocket_presence_backpressure_and_zombie_socket_hygiene_critical():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_websocket_presence_backpressure_and_zombie_socket_hygiene,
+    )
+
+    gateways = [
+        {
+            "gateway_id": "ws-wiki-presence-ap-saturated",
+            "active_connections": 10000,
+            "zombie_unacked_ping_connections": 900,
+            "send_buffer_utilization_pct": 98.5,
+            "slow_consumer_disconnect_policy_enabled": False,
+            "fanout_latency_p99_ms": 620.0,
+            "per_ip_connection_rate_limit_enforced": False,
+            "ephemeral_port_exhaustion_risk": True,
+        }
+    ]
+    res = audit_wiki_websocket_presence_backpressure_and_zombie_socket_hygiene(
+        gateways
+    )
+    assert res["status"] == "CRITICAL"
+    assert res["critical_gateways"] == ["ws-wiki-presence-ap-saturated"]
+    assert res["warning_gateways"] == []
+    assert res["peak_send_buffer_utilization_pct"] == 98.5
+    assert res["gateway_evaluations"][0]["critical_ws_breach"] is True
+
+
+def test_audit_wiki_websocket_presence_backpressure_and_zombie_socket_hygiene_empty_and_binding():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_websocket_presence_backpressure_and_zombie_socket_hygiene,
+    )
+
+    empty = audit_wiki_websocket_presence_backpressure_and_zombie_socket_hygiene([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["evaluated_gateways_count"] == 0
+    assert empty["peak_send_buffer_utilization_pct"] == 0.0
+    assert (
+        WikiPMIService.audit_wiki_websocket_presence_backpressure_and_zombie_socket_hygiene(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_wiki_websocket_presence_backpressure_and_zombie_socket_hygiene"
+        in mod.__all__
+    )

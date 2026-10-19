@@ -3030,6 +3030,7 @@ __all__ = [
     "audit_executive_report_pci_dss_cde_segmentation_and_asv_scan",
     "audit_executive_report_iso22301_bcp_drp_rto_rpo_and_failover_drill",
     "audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window",
+    "audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance",
     "ProjectExportService",
 ]
 
@@ -9606,4 +9607,121 @@ def audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window(
 
 ProjectExportService.audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window = staticmethod(
     audit_executive_report_hipaa_hitech_ephi_baa_and_breach_window
+)
+
+
+def audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance(
+    ict_providers: list[dict[str, Any]] | None,
+    *,
+    max_single_provider_spend_share_pct: float = 40.0,
+    max_initial_incident_notification_hours: float = 4.0,
+    max_tlpt_age_months: int = 36,
+) -> dict[str, Any]:
+    """PMBOK §10.2 & §11.6 — Audita el executive report EU DORA del resiliencia operativa digital: riesgo de concentración en proveedores ICT de funciones críticas o importantes (share de gasto y estrategia de salida/substitutabilidad probada), SLA de notificación inicial de incidentes ICT mayor en 4 horas, vigencia del TLPT (Threat-Led Penetration Testing) y mantenimiento del Register of Information.
+
+    Cada proveedor válido declara `provider_id` (str no vacío) y:
+    `critical_or_important_function` (bool, default True),
+    `spend_share_pct` (float, default 15.0),
+    `exit_strategy_and_substitutability_tested` (bool, default True),
+    `major_ict_incident_notification_hours` (float, default 2.0),
+    `tlpt_threat_led_pentest_age_months` (int, default 12) y
+    `register_of_information_maintained` (bool, default True):
+    - `dora_non_compliant_provider_ids`: proveedor de función crítica sin
+      estrategia de salida probada, notificación inicial > 4 horas o negativa,
+      o register sin mantener (brecha crítica, precedencia).
+    - `concentration_or_tlpt_warning_provider_ids`: proveedores fuera de
+      brecha con share de gasto > 40% o TLPT vencido (edad > 36 meses) o
+      edad negativa.
+    - Estados: 'CRITICAL_DORA_EXIT_STRATEGY_OR_INCIDENT_SLA_BREACH' |
+      'ICT_CONCENTRATION_OR_STALE_TLPT_WARNING' |
+      'EU_DORA_OPERATIONAL_RESILIENCE_CLEAN'.
+    - `is_dora_resilience_compliant`: solo con ambas listas vacías.
+    """
+    raw_items = ict_providers if isinstance(ict_providers, list) else []
+    valid_providers: list[dict[str, Any]] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_provider_id = item.get("provider_id")
+        if not isinstance(raw_provider_id, str) or not raw_provider_id.strip():
+            continue
+        valid_providers.append(item)
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _int(value: Any, default: int) -> int:
+        if isinstance(value, bool) or not isinstance(value, int):
+            return default
+        return value
+
+    def _float(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    spend_share_cap = _float(max_single_provider_spend_share_pct, 40.0)
+    notification_sla = _float(max_initial_incident_notification_hours, 4.0)
+    tlpt_age_limit = _int(max_tlpt_age_months, 36)
+
+    dora_non_compliant_provider_ids: list[str] = []
+    concentration_or_tlpt_warning_provider_ids: list[str] = []
+
+    for provider in valid_providers:
+        provider_id = str(provider.get("provider_id")).strip()
+        critical_function = _bool(
+            provider.get("critical_or_important_function"), True
+        )
+        spend_share = _float(provider.get("spend_share_pct"), 15.0)
+        exit_tested = _bool(
+            provider.get("exit_strategy_and_substitutability_tested"), True
+        )
+        notification_hours = _float(
+            provider.get("major_ict_incident_notification_hours"), 2.0
+        )
+        tlpt_age_months = _int(
+            provider.get("tlpt_threat_led_pentest_age_months"), 12
+        )
+        register_maintained = _bool(
+            provider.get("register_of_information_maintained"), True
+        )
+
+        is_critical_breach = (
+            (critical_function and (not exit_tested))
+            or notification_hours > notification_sla
+            or notification_hours < 0
+            or (not register_maintained)
+        )
+        if is_critical_breach:
+            dora_non_compliant_provider_ids.append(provider_id)
+            continue
+
+        if (
+            spend_share > spend_share_cap
+            or tlpt_age_months > tlpt_age_limit
+            or tlpt_age_months < 0
+        ):
+            concentration_or_tlpt_warning_provider_ids.append(provider_id)
+
+    if dora_non_compliant_provider_ids:
+        dora_audit_status = "CRITICAL_DORA_EXIT_STRATEGY_OR_INCIDENT_SLA_BREACH"
+    elif concentration_or_tlpt_warning_provider_ids:
+        dora_audit_status = "ICT_CONCENTRATION_OR_STALE_TLPT_WARNING"
+    else:
+        dora_audit_status = "EU_DORA_OPERATIONAL_RESILIENCE_CLEAN"
+
+    return {
+        "is_dora_resilience_compliant": (
+            not dora_non_compliant_provider_ids
+            and not concentration_or_tlpt_warning_provider_ids
+        ),
+        "dora_non_compliant_provider_ids": dora_non_compliant_provider_ids,
+        "concentration_or_tlpt_warning_provider_ids": concentration_or_tlpt_warning_provider_ids,
+        "evaluated_provider_count": len(valid_providers),
+        "dora_audit_status": dora_audit_status,
+    }
+
+
+ProjectExportService.audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance = staticmethod(
+    audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance
 )

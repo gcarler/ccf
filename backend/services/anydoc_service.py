@@ -3060,6 +3060,7 @@ __all__ = [
     "audit_markdown_runbook_incident_escalation_and_rollback_hygiene",
     "audit_markdown_postmortem_rca_blameless_and_action_item_hygiene",
     "audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene",
+    "audit_markdown_data_lineage_dag_freshness_and_contract_hygiene",
     "AnydocService",
 ]
 
@@ -10534,4 +10535,102 @@ AnyDocService.audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene
 )
 AnydocService.audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene = staticmethod(
     audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene
+)
+
+
+def audit_markdown_data_lineage_dag_freshness_and_contract_hygiene(
+    models: list[dict[str, Any]],
+    *,
+    max_freshness_lag_minutes: int = 60,
+    max_fanout_downstream_dependents: int = 20,
+) -> dict[str, Any]:
+    """PMBOK §4.4 & §10.2 — AnyDoc Markdown Data-Lineage / dbt / Airflow DAG Dependency Acyclicity, SLA Freshness Assertion & Schema Contract Hygiene Auditor."""
+    model_evaluations: list[dict[str, Any]] = []
+    critical_models: list[str] = []
+    warning_models: list[str] = []
+    max_observed_freshness_lag_minutes = 0
+
+    for item in models or []:
+        if not isinstance(item, dict):
+            continue
+        model_id = str(item.get("model_id") or "").strip() or "UNKNOWN_MODEL"
+        circular_dependency_detected = bool(
+            item.get("circular_dependency_detected", False)
+        )
+        primary_key_uniqueness_not_null_tested = bool(
+            item.get("primary_key_uniqueness_not_null_tested", True)
+        )
+        schema_contract_enforced = bool(
+            item.get("schema_contract_enforced", True)
+        )
+        raw_lag = item.get("freshness_lag_minutes", 15)
+        freshness_lag_minutes = int(15 if raw_lag is None else raw_lag)
+        raw_fanout = item.get("downstream_dependents_count", 5)
+        downstream_dependents_count = int(
+            5 if raw_fanout is None else raw_fanout
+        )
+        owner_team_documented = bool(item.get("owner_team_documented", True))
+        pii_columns_masked_in_mart = bool(
+            item.get("pii_columns_masked_in_mart", True)
+        )
+
+        max_observed_freshness_lag_minutes = max(
+            max_observed_freshness_lag_minutes, freshness_lag_minutes
+        )
+
+        critical_lineage_breach = (
+            circular_dependency_detected is True
+            or not primary_key_uniqueness_not_null_tested
+            or not pii_columns_masked_in_mart
+            or freshness_lag_minutes > max_freshness_lag_minutes * 2
+        )
+        lineage_hygiene_warning = (not critical_lineage_breach) and (
+            freshness_lag_minutes > max_freshness_lag_minutes
+            or downstream_dependents_count > max_fanout_downstream_dependents
+            or not schema_contract_enforced
+            or not owner_team_documented
+        )
+
+        if critical_lineage_breach:
+            critical_models.append(model_id)
+        elif lineage_hygiene_warning:
+            warning_models.append(model_id)
+
+        model_evaluations.append(
+            {
+                "model_id": model_id,
+                "circular_dependency_detected": circular_dependency_detected,
+                "primary_key_uniqueness_not_null_tested": primary_key_uniqueness_not_null_tested,
+                "schema_contract_enforced": schema_contract_enforced,
+                "freshness_lag_minutes": freshness_lag_minutes,
+                "downstream_dependents_count": downstream_dependents_count,
+                "owner_team_documented": owner_team_documented,
+                "pii_columns_masked_in_mart": pii_columns_masked_in_mart,
+                "critical_lineage_breach": critical_lineage_breach,
+                "lineage_hygiene_warning": lineage_hygiene_warning,
+            }
+        )
+
+    if len(critical_models) > 0:
+        status = "CRITICAL"
+    elif len(warning_models) > 0:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "status": status,
+        "evaluated_models_count": len(model_evaluations),
+        "critical_models": critical_models,
+        "warning_models": warning_models,
+        "max_observed_freshness_lag_minutes": max_observed_freshness_lag_minutes,
+        "model_evaluations": model_evaluations,
+    }
+
+
+AnyDocService.audit_markdown_data_lineage_dag_freshness_and_contract_hygiene = staticmethod(
+    audit_markdown_data_lineage_dag_freshness_and_contract_hygiene
+)
+AnydocService.audit_markdown_data_lineage_dag_freshness_and_contract_hygiene = staticmethod(
+    audit_markdown_data_lineage_dag_freshness_and_contract_hygiene
 )

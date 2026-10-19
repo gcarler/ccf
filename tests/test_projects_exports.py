@@ -13307,3 +13307,194 @@ def test_hipaa_hitech_empty_invalid_workflows_and_field_reversion():
     assert reverted["minimum_necessary_or_retention_warning_workflow_ids"] == []
     assert reverted["is_hipaa_hitech_compliant"] is True
     assert reverted["hipaa_audit_status"] == "HIPAA_HITECH_SAFE_HARBOR_CLEAN"
+
+
+def test_dora_eu_resilience_clean_and_boundaries():
+    """Proveedores ICT íntegros con exit strategy, SLA e TLPT frescos -> 'EU_DORA_OPERATIONAL_RESILIENCE_CLEAN'."""
+    import backend.services.project_export_service as export_module
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance,
+    )
+
+    providers = [
+        {
+            "provider_id": "ICT-CLOUD-EU-001",
+            "critical_or_important_function": True,
+            "spend_share_pct": 15.0,
+            "exit_strategy_and_substitutability_tested": True,
+            "major_ict_incident_notification_hours": 2.0,
+            "tlpt_threat_led_pentest_age_months": 12,
+            "register_of_information_maintained": True,
+        },
+        {
+            "provider_id": "ICT-CORE-BANKING-002",
+            # Defaults implícitos: crítico True, share 15, exit True, 2.0 h, TLPT 12 meses, register True.
+        },
+    ]
+    res = audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance(providers)
+    assert res == {
+        "is_dora_resilience_compliant": True,
+        "dora_non_compliant_provider_ids": [],
+        "concentration_or_tlpt_warning_provider_ids": [],
+        "evaluated_provider_count": 2,
+        "dora_audit_status": "EU_DORA_OPERATIONAL_RESILIENCE_CLEAN",
+    }
+    # Fronteras: SLA 4.0 exacto OK; share 40.0 exacto OK; TLPT 36 meses exacto OK.
+    at_bounds = audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance(
+        [
+            {
+                "provider_id": "ICT-BOUNDS",
+                "major_ict_incident_notification_hours": 4.0,
+                "spend_share_pct": 40.0,
+                "tlpt_threat_led_pentest_age_months": 36,
+            }
+        ]
+    )
+    assert at_bounds["dora_non_compliant_provider_ids"] == []
+    assert at_bounds["concentration_or_tlpt_warning_provider_ids"] == []
+    assert at_bounds["dora_audit_status"] == "EU_DORA_OPERATIONAL_RESILIENCE_CLEAN"
+    # Función no crítica SIN exit strategy no dispara brecha (condición crítica calificada).
+    non_critical_no_exit = audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance(
+        [
+            {
+                "provider_id": "ICT-NON-CRITICAL",
+                "critical_or_important_function": False,
+                "exit_strategy_and_substitutability_tested": False,
+            }
+        ]
+    )
+    assert non_critical_no_exit["dora_non_compliant_provider_ids"] == []
+    assert non_critical_no_exit["dora_audit_status"] == "EU_DORA_OPERATIONAL_RESILIENCE_CLEAN"
+    assert (
+        ProjectExportService.audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance(providers)
+        == res
+    )
+    assert "audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance" in export_module.__all__
+
+
+def test_dora_eu_critical_exit_strategy_incident_sla_breach():
+    """Exit strategy sin probar en función crítica, SLA vencido, horas negativas o register sin mantener -> CRITICAL."""
+    from backend.services.project_export_service import (
+        audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance,
+    )
+
+    breach = audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance(
+        [
+            {
+                "provider_id": "ICT-NO-EXIT",
+                "exit_strategy_and_substitutability_tested": False,
+            },
+            {
+                "provider_id": "ICT-LATE-INCIDENT",
+                "major_ict_incident_notification_hours": 4.5,  # > 4.0
+            },
+            {
+                "provider_id": "ICT-NEG-HOURS",
+                "major_ict_incident_notification_hours": -1.0,
+            },
+            {
+                "provider_id": "ICT-NO-REGISTER",
+                "register_of_information_maintained": False,
+            },
+        ]
+    )
+    assert breach["dora_non_compliant_provider_ids"] == [
+        "ICT-NO-EXIT",
+        "ICT-LATE-INCIDENT",
+        "ICT-NEG-HOURS",
+        "ICT-NO-REGISTER",
+    ]
+    assert breach["concentration_or_tlpt_warning_provider_ids"] == []
+    assert breach["is_dora_resilience_compliant"] is False
+    assert breach["dora_audit_status"] == "CRITICAL_DORA_EXIT_STRATEGY_OR_INCIDENT_SLA_BREACH"
+
+
+def test_dora_eu_concentration_and_stale_tlpt_warning():
+    """Share de gasto > 40% o TLPT vencido (> 36 meses) o edad negativa -> WARNING con precedencia."""
+    from backend.services.project_export_service import (
+        audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance,
+    )
+
+    concentration = audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance(
+        [{"provider_id": "ICT-CONCENTRATED", "spend_share_pct": 55.0}]
+    )
+    assert concentration["dora_non_compliant_provider_ids"] == []
+    assert concentration["concentration_or_tlpt_warning_provider_ids"] == ["ICT-CONCENTRATED"]
+    assert concentration["is_dora_resilience_compliant"] is False
+    assert concentration["dora_audit_status"] == "ICT_CONCENTRATION_OR_STALE_TLPT_WARNING"
+
+    stale_tlpt = audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance(
+        [{"provider_id": "ICT-STALE-TLPT", "tlpt_threat_led_pentest_age_months": 37}]
+    )
+    assert stale_tlpt["concentration_or_tlpt_warning_provider_ids"] == ["ICT-STALE-TLPT"]
+    assert stale_tlpt["dora_audit_status"] == "ICT_CONCENTRATION_OR_STALE_TLPT_WARNING"
+
+    negative_tlpt = audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance(
+        [{"provider_id": "ICT-NEG-TLPT", "tlpt_threat_led_pentest_age_months": -4}]
+    )
+    assert negative_tlpt["concentration_or_tlpt_warning_provider_ids"] == ["ICT-NEG-TLPT"]
+    assert negative_tlpt["dora_audit_status"] == "ICT_CONCENTRATION_OR_STALE_TLPT_WARNING"
+
+    # Custom: cap de share 30% con proveedor a 30.0 exacto OK y a 30.5 -> warning.
+    custom_cap = audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance(
+        [
+            {"provider_id": "ICT-AT-CAP", "spend_share_pct": 30.0},
+            {"provider_id": "ICT-DOL-CAP", "spend_share_pct": 30.5},
+        ],
+        max_single_provider_spend_share_pct=30.0,
+    )
+    assert custom_cap["concentration_or_tlpt_warning_provider_ids"] == ["ICT-DOL-CAP"]
+
+    # Clasificación warning por proveedor ("not in critical"): el estado global es
+    # CRITICAL con precedencia, pero el proveedor warning sigue en su lista.
+    mixed = audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance(
+        [
+            {"provider_id": "ICT-BREACH", "register_of_information_maintained": False},
+            {"provider_id": "ICT-WARNING", "spend_share_pct": 90.0},
+        ]
+    )
+    assert mixed["dora_non_compliant_provider_ids"] == ["ICT-BREACH"]
+    assert mixed["concentration_or_tlpt_warning_provider_ids"] == ["ICT-WARNING"]
+    assert mixed["dora_audit_status"] == "CRITICAL_DORA_EXIT_STRATEGY_OR_INCIDENT_SLA_BREACH"
+
+
+def test_dora_eu_empty_invalid_providers_and_field_reversion():
+    """None, no-dicts y provider_id inválido se descartan; campos no numéricos revierten a defaults."""
+    from backend.services.project_export_service import (
+        audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance,
+    )
+
+    empty = audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance(None)
+    assert empty == {
+        "is_dora_resilience_compliant": True,
+        "dora_non_compliant_provider_ids": [],
+        "concentration_or_tlpt_warning_provider_ids": [],
+        "evaluated_provider_count": 0,
+        "dora_audit_status": "EU_DORA_OPERATIONAL_RESILIENCE_CLEAN",
+    }
+
+    reverted = audit_executive_report_dora_eu_ict_concentration_and_tlpt_compliance(
+        [
+            {
+                "provider_id": "ICT-REVERT",
+                "critical_or_important_function": "yes",   # no-bool -> True
+                "spend_share_pct": "fifteen",              # no-float -> 15.0
+                "exit_strategy_and_substitutability_tested": None,  # no-bool -> True
+                "major_ict_incident_notification_hours": "two",    # no-float -> 2.0
+                "tlpt_threat_led_pentest_age_months": 12.5,        # no-int -> 12
+                "register_of_information_maintained": 1,           # no-bool -> True
+            },
+            {"provider_id": "   "},  # blanco -> descartado
+            {"provider_id": 3},      # no str -> descartado
+            "not-a-dict",            # no dict -> descartado
+        ],
+        max_single_provider_spend_share_pct="forty",       # no-float -> 40.0
+        max_initial_incident_notification_hours=None,      # no-float -> 4.0
+        max_tlpt_age_months="three-years",                 # no-int -> 36
+    )
+    assert reverted["evaluated_provider_count"] == 1
+    assert reverted["dora_non_compliant_provider_ids"] == []
+    assert reverted["concentration_or_tlpt_warning_provider_ids"] == []
+    assert reverted["is_dora_resilience_compliant"] is True
+    assert reverted["dora_audit_status"] == "EU_DORA_OPERATIONAL_RESILIENCE_CLEAN"

@@ -10214,3 +10214,109 @@ def test_audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene_empt
         "audit_markdown_tlp_classification_banner_and_pii_redaction_hygiene"
         in mod.__all__
     )
+
+
+def test_audit_markdown_data_lineage_dag_freshness_and_contract_hygiene_healthy():
+    from backend.services.anydoc_service import (
+        audit_markdown_data_lineage_dag_freshness_and_contract_hygiene,
+    )
+
+    models = [
+        {
+            "model_id": "mart_project_evm_daily",
+            "circular_dependency_detected": False,
+            "primary_key_uniqueness_not_null_tested": True,
+            "schema_contract_enforced": True,
+            "freshness_lag_minutes": 25,
+            "downstream_dependents_count": 8,
+            "owner_team_documented": True,
+            "pii_columns_masked_in_mart": True,
+        }
+    ]
+    res = audit_markdown_data_lineage_dag_freshness_and_contract_hygiene(models)
+    assert res["status"] == "HEALTHY"
+    assert res["evaluated_models_count"] == 1
+    assert res["critical_models"] == []
+    assert res["warning_models"] == []
+    assert res["max_observed_freshness_lag_minutes"] == 25
+    assert res["model_evaluations"][0]["critical_lineage_breach"] is False
+
+
+def test_audit_markdown_data_lineage_dag_freshness_and_contract_hygiene_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_data_lineage_dag_freshness_and_contract_hygiene,
+    )
+
+    models = [
+        {
+            "model_id": "int_donor_contributions_agg",
+            "circular_dependency_detected": False,
+            "primary_key_uniqueness_not_null_tested": True,
+            "schema_contract_enforced": False,
+            "freshness_lag_minutes": 85,
+            "downstream_dependents_count": 28,
+            "owner_team_documented": False,
+            "pii_columns_masked_in_mart": True,
+        }
+    ]
+    res = audit_markdown_data_lineage_dag_freshness_and_contract_hygiene(models)
+    assert res["status"] == "WARNING"
+    assert res["critical_models"] == []
+    assert res["warning_models"] == ["int_donor_contributions_agg"]
+    assert res["max_observed_freshness_lag_minutes"] == 85
+    assert res["model_evaluations"][0]["lineage_hygiene_warning"] is True
+
+
+def test_audit_markdown_data_lineage_dag_freshness_and_contract_hygiene_critical():
+    from backend.services.anydoc_service import (
+        audit_markdown_data_lineage_dag_freshness_and_contract_hygiene,
+    )
+
+    models = [
+        {
+            "model_id": "mart_member_directory_unmasked",
+            "circular_dependency_detected": True,
+            "primary_key_uniqueness_not_null_tested": False,
+            "schema_contract_enforced": False,
+            "freshness_lag_minutes": 180,
+            "downstream_dependents_count": 35,
+            "owner_team_documented": False,
+            "pii_columns_masked_in_mart": False,
+        }
+    ]
+    res = audit_markdown_data_lineage_dag_freshness_and_contract_hygiene(models)
+    assert res["status"] == "CRITICAL"
+    assert res["critical_models"] == ["mart_member_directory_unmasked"]
+    assert res["warning_models"] == []
+    assert res["max_observed_freshness_lag_minutes"] == 180
+    assert res["model_evaluations"][0]["critical_lineage_breach"] is True
+
+
+def test_audit_markdown_data_lineage_dag_freshness_and_contract_hygiene_empty_and_binding():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_data_lineage_dag_freshness_and_contract_hygiene,
+    )
+
+    empty = audit_markdown_data_lineage_dag_freshness_and_contract_hygiene([])
+    assert empty["status"] == "HEALTHY"
+    assert empty["evaluated_models_count"] == 0
+    assert empty["max_observed_freshness_lag_minutes"] == 0
+    assert (
+        AnyDocService.audit_markdown_data_lineage_dag_freshness_and_contract_hygiene(
+            []
+        )
+        == empty
+    )
+    assert (
+        AnydocService.audit_markdown_data_lineage_dag_freshness_and_contract_hygiene(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_markdown_data_lineage_dag_freshness_and_contract_hygiene"
+        in mod.__all__
+    )

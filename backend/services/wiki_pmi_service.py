@@ -2560,6 +2560,7 @@ __all__ = [
     "audit_wiki_outbox_cdc_debezium_connector_lag_and_tombstone_hygiene",
     "audit_wiki_sso_saml_oidc_assertion_signature_and_replay_guard",
     "audit_wiki_vector_rag_index_drift_and_acl_prefilter_guard",
+    "audit_wiki_websocket_presence_backpressure_and_zombie_socket_hygiene",
     "WikiPMIService",
 ]
 
@@ -9222,4 +9223,110 @@ def audit_wiki_vector_rag_index_drift_and_acl_prefilter_guard(
 
 WikiPMIService.audit_wiki_vector_rag_index_drift_and_acl_prefilter_guard = staticmethod(
     audit_wiki_vector_rag_index_drift_and_acl_prefilter_guard
+)
+
+
+def audit_wiki_websocket_presence_backpressure_and_zombie_socket_hygiene(
+    gateways: list[dict[str, Any]],
+    *,
+    max_zombie_socket_ratio_pct: float = 2.0,
+    max_send_buffer_utilization_pct: float = 80.0,
+    max_fanout_latency_p99_ms: float = 250.0,
+) -> dict[str, Any]:
+    """PMBOK §4.4 & §11.6 — Wiki WebSocket / SSE Real-Time Presence Fan-Out Backpressure, Slow-Consumer RingBuffer Drop & Heartbeat Ping/Pong Zombie Connection Auditor."""
+    gateway_evaluations: list[dict[str, Any]] = []
+    critical_gateways: list[str] = []
+    warning_gateways: list[str] = []
+    peak_send_buffer_utilization_pct = 0.0
+
+    for item in gateways or []:
+        if not isinstance(item, Mapping):
+            continue
+        gateway_id = str(item.get("gateway_id") or "").strip() or "UNKNOWN_GATEWAY"
+        active_connections = int(item.get("active_connections", 0) or 0)
+        zombie_unacked_ping_connections = int(
+            item.get("zombie_unacked_ping_connections", 0) or 0
+        )
+        raw_buf = item.get("send_buffer_utilization_pct", 30.0)
+        send_buffer_utilization_pct = round(
+            float(30.0 if raw_buf is None else raw_buf), 2
+        )
+        slow_consumer_disconnect_policy_enabled = bool(
+            item.get("slow_consumer_disconnect_policy_enabled", True)
+        )
+        raw_lat = item.get("fanout_latency_p99_ms", 45.0)
+        fanout_latency_p99_ms = round(
+            float(45.0 if raw_lat is None else raw_lat), 2
+        )
+        per_ip_connection_rate_limit_enforced = bool(
+            item.get("per_ip_connection_rate_limit_enforced", True)
+        )
+        ephemeral_port_exhaustion_risk = bool(
+            item.get("ephemeral_port_exhaustion_risk", False)
+        )
+
+        zombie_socket_ratio_pct = (
+            round(
+                (zombie_unacked_ping_connections / active_connections) * 100.0, 2
+            )
+            if active_connections > 0
+            else 0.0
+        )
+        peak_send_buffer_utilization_pct = max(
+            peak_send_buffer_utilization_pct, send_buffer_utilization_pct
+        )
+
+        critical_ws_breach = (
+            ephemeral_port_exhaustion_risk is True
+            or not slow_consumer_disconnect_policy_enabled
+            or not per_ip_connection_rate_limit_enforced
+            or send_buffer_utilization_pct > 95.0
+            or fanout_latency_p99_ms > max_fanout_latency_p99_ms * 2.0
+        )
+        ws_backpressure_warning = (not critical_ws_breach) and (
+            zombie_socket_ratio_pct > max_zombie_socket_ratio_pct
+            or send_buffer_utilization_pct > max_send_buffer_utilization_pct
+            or fanout_latency_p99_ms > max_fanout_latency_p99_ms
+        )
+
+        if critical_ws_breach:
+            critical_gateways.append(gateway_id)
+        elif ws_backpressure_warning:
+            warning_gateways.append(gateway_id)
+
+        gateway_evaluations.append(
+            {
+                "gateway_id": gateway_id,
+                "active_connections": active_connections,
+                "zombie_unacked_ping_connections": zombie_unacked_ping_connections,
+                "zombie_socket_ratio_pct": zombie_socket_ratio_pct,
+                "send_buffer_utilization_pct": send_buffer_utilization_pct,
+                "slow_consumer_disconnect_policy_enabled": slow_consumer_disconnect_policy_enabled,
+                "fanout_latency_p99_ms": fanout_latency_p99_ms,
+                "per_ip_connection_rate_limit_enforced": per_ip_connection_rate_limit_enforced,
+                "ephemeral_port_exhaustion_risk": ephemeral_port_exhaustion_risk,
+                "critical_ws_breach": critical_ws_breach,
+                "ws_backpressure_warning": ws_backpressure_warning,
+            }
+        )
+
+    if len(critical_gateways) > 0:
+        status = "CRITICAL"
+    elif len(warning_gateways) > 0:
+        status = "WARNING"
+    else:
+        status = "HEALTHY"
+
+    return {
+        "status": status,
+        "evaluated_gateways_count": len(gateway_evaluations),
+        "critical_gateways": critical_gateways,
+        "warning_gateways": warning_gateways,
+        "peak_send_buffer_utilization_pct": peak_send_buffer_utilization_pct,
+        "gateway_evaluations": gateway_evaluations,
+    }
+
+
+WikiPMIService.audit_wiki_websocket_presence_backpressure_and_zombie_socket_hygiene = staticmethod(
+    audit_wiki_websocket_presence_backpressure_and_zombie_socket_hygiene
 )
