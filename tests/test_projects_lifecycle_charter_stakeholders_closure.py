@@ -8050,3 +8050,157 @@ def test_audit_stakeholder_salience_drift_and_resistance_escalation_staticmethod
     assert (
         "audit_stakeholder_salience_drift_and_resistance_escalation" in mod.__all__
     )
+
+
+def test_audit_procurement_rfp_bid_solvency_and_vendor_concentration_award_blocked():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_procurement_rfp_bid_solvency_and_vendor_concentration,
+    )
+
+    res = audit_procurement_rfp_bid_solvency_and_vendor_concentration(
+        [
+            {
+                "bid_id": "BID-101",
+                "vendor_id": "VND-A",
+                "technical_evaluation_score": 58.0,
+                "altman_z_solvency_score": 1.2,
+                "proposed_contract_value": 120000.0,
+                "is_awarded_winner": True,
+                "has_conflict_of_interest_declaration": True,
+            },
+            {
+                "bid_id": "BID-102",
+                "vendor_id": "VND-B",
+                "technical_evaluation_score": 88.0,
+                "altman_z_solvency_score": 3.1,
+                "proposed_contract_value": 100000.0,
+                "is_awarded_winner": False,
+                "has_conflict_of_interest_declaration": False,
+            },
+        ],
+        min_technical_score=70.0,
+        min_altman_z_solvency_score=1.8,
+        max_single_vendor_spend_share_pct=60.0,
+    )
+    assert res["total_bids_evaluated"] == 2
+    assert res["awarded_bids_count"] == 1
+    assert res["total_awarded_spend"] == 120000.0
+    assert res["technically_unqualified_award_ids"] == ["BID-101"]
+    assert res["insolvent_vendor_award_ids"] == ["BID-101"]
+    assert res["missing_coi_declaration_bid_ids"] == ["BID-102"]
+    assert res["concentrated_vendor_ids"] == ["VND-A"]
+    assert res["procurement_governance_status"] == "AWARD_BLOCKED"
+    assert res["is_procurement_compliant"] is False
+
+
+def test_audit_procurement_rfp_bid_solvency_and_vendor_concentration_concentration_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_procurement_rfp_bid_solvency_and_vendor_concentration,
+    )
+
+    res = audit_procurement_rfp_bid_solvency_and_vendor_concentration(
+        [
+            {
+                "bid_id": "BID-201",
+                "vendor_id": "VND-DOMINANT",
+                "technical_evaluation_score": 85.0,
+                "altman_z_solvency_score": 2.9,
+                "proposed_contract_value": 80000.0,
+                "is_awarded_winner": True,
+                "has_conflict_of_interest_declaration": True,
+            },
+            {
+                "bid_id": "BID-202",
+                "vendor_id": "VND-SECONDARY",
+                "technical_evaluation_score": 82.0,
+                "altman_z_solvency_score": 2.4,
+                "proposed_contract_value": 20000.0,
+                "is_awarded_winner": True,
+                "has_conflict_of_interest_declaration": True,
+            },
+        ],
+        min_technical_score=70.0,
+        min_altman_z_solvency_score=1.8,
+        max_single_vendor_spend_share_pct=60.0,
+    )
+    assert res["awarded_bids_count"] == 2
+    assert res["total_awarded_spend"] == 100000.0
+    assert res["technically_unqualified_award_ids"] == []
+    assert res["insolvent_vendor_award_ids"] == []
+    assert res["missing_coi_declaration_bid_ids"] == []
+    assert res["concentrated_vendor_ids"] == ["VND-DOMINANT"]
+    assert res["procurement_governance_status"] == "CONCENTRATION_RISK_WARNING"
+    assert res["is_procurement_compliant"] is False
+
+
+def test_audit_procurement_rfp_bid_solvency_and_vendor_concentration_compliant_and_empty():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_procurement_rfp_bid_solvency_and_vendor_concentration,
+    )
+
+    empty = audit_procurement_rfp_bid_solvency_and_vendor_concentration(
+        [{"bid_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_bids_evaluated"] == 0
+    assert empty["awarded_bids_count"] == 0
+    assert empty["total_awarded_spend"] == 0.0
+    assert empty["procurement_governance_status"] == "PROCUREMENT_COMPLIANT"
+    assert empty["is_procurement_compliant"] is True
+
+    compliant = audit_procurement_rfp_bid_solvency_and_vendor_concentration(
+        [
+            {
+                "bid_id": "BID-301",
+                "vendor_id": "VND-1",
+                "technical_evaluation_score": 90.0,
+                "altman_z_solvency_score": 3.0,
+                "proposed_contract_value": 50000.0,
+                "is_awarded_winner": True,
+                "has_conflict_of_interest_declaration": True,
+            },
+            {
+                "bid_id": "BID-302",
+                "vendor_id": "VND-2",
+                "technical_evaluation_score": 88.0,
+                "altman_z_solvency_score": 2.7,
+                "proposed_contract_value": 50000.0,
+                "is_awarded_winner": True,
+                "has_conflict_of_interest_declaration": True,
+            },
+        ],
+        max_single_vendor_spend_share_pct=60.0,
+    )
+    assert compliant["awarded_bids_count"] == 2
+    assert compliant["concentrated_vendor_ids"] == []
+    assert compliant["procurement_governance_status"] == "PROCUREMENT_COMPLIANT"
+    assert compliant["is_procurement_compliant"] is True
+
+
+def test_audit_procurement_rfp_bid_solvency_and_vendor_concentration_staticmethod_and_dunder_all():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_procurement_rfp_bid_solvency_and_vendor_concentration,
+    )
+
+    sample = [
+        {
+            "bid_id": "BID-99",
+            "vendor_id": "VND-99",
+            "technical_evaluation_score": 80.0,
+            "altman_z_solvency_score": 2.5,
+            "proposed_contract_value": 10000.0,
+            "is_awarded_winner": False,
+            "has_conflict_of_interest_declaration": True,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_procurement_rfp_bid_solvency_and_vendor_concentration(
+            sample
+        )
+        == audit_procurement_rfp_bid_solvency_and_vendor_concentration(sample)
+    )
+    assert (
+        "audit_procurement_rfp_bid_solvency_and_vendor_concentration"
+        in mod.__all__
+    )

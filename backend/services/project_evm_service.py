@@ -5515,6 +5515,7 @@ __all__ = [
     "evaluate_evm_capex_opex_classification_and_amortization",
     "evaluate_evm_learning_curve_cost_improvement_and_productivity",
     "evaluate_evm_milestone_payment_holdback_and_acceptance_gate",
+    "evaluate_evm_value_engineering_target_costing_and_worth_index",
     "ProjectEVMService",
 ]
 
@@ -8822,4 +8823,81 @@ def evaluate_evm_milestone_payment_holdback_and_acceptance_gate(
 
 ProjectEVMService.evaluate_evm_milestone_payment_holdback_and_acceptance_gate = staticmethod(
     evaluate_evm_milestone_payment_holdback_and_acceptance_gate
+)
+
+
+def evaluate_evm_value_engineering_target_costing_and_worth_index(
+    functions: Any,
+    *,
+    min_value_index: float = 0.85,
+    max_over_engineering_cost_ratio: float = 1.25,
+) -> Dict[str, object]:
+    """Evaluación PMBOK 7.2 y 8.1: value engineering y target costing.
+
+    Calcula por función el índice de valor (worth / costo estimado) y el
+    ratio contra el costo objetivo admisible, detectando funciones de
+    bajo valor, sobrecostos de over-engineering y gold-plating, y
+    sumando el ahorro potencial de costo.
+    """
+    entries = functions if isinstance(functions, list) else []
+    rows = [item for item in entries if isinstance(item, dict)]
+
+    low_value_index_function_ids: List[str] = []
+    target_cost_exceeded_function_ids: List[str] = []
+    gold_plating_function_ids: List[str] = []
+    total_potential_cost_savings = 0.0
+
+    for item in rows:
+        function_id = item.get("function_id")
+        estimated_cost = item.get("estimated_function_cost", 0.0)
+        worth = item.get("essential_function_worth", 0.0)
+        target_cost = item.get("target_allowable_cost", 0.0)
+
+        estimated_val = estimated_cost if isinstance(estimated_cost, (int, float)) else 0.0
+        worth_val = worth if isinstance(worth, (int, float)) else 0.0
+        target_val = target_cost if isinstance(target_cost, (int, float)) else 0.0
+
+        if estimated_val > 0:
+            value_index = round(worth_val / estimated_val, 2)
+        else:
+            value_index = 1.0
+
+        if target_val > 0:
+            target_cost_ratio = round(estimated_val / target_val, 2)
+        else:
+            target_cost_ratio = 1.0
+
+        if value_index < min_value_index:
+            low_value_index_function_ids.append(function_id)
+
+        if target_cost_ratio > max_over_engineering_cost_ratio:
+            target_cost_exceeded_function_ids.append(function_id)
+
+        if item.get("is_gold_plated_non_essential", False) is True:
+            gold_plating_function_ids.append(function_id)
+
+        total_potential_cost_savings += max(0.0, estimated_val - worth_val)
+
+    total_potential_cost_savings = round(total_potential_cost_savings, 2)
+
+    if gold_plating_function_ids or target_cost_exceeded_function_ids:
+        value_engineering_status = "GOLD_PLATING_OR_SEVERE_OVERRUN"
+    elif low_value_index_function_ids:
+        value_engineering_status = "SUBOPTIMAL_VALUE_INDEX"
+    else:
+        value_engineering_status = "VALUE_OPTIMIZED"
+
+    return {
+        "total_functions_evaluated": len(rows),
+        "low_value_index_function_ids": low_value_index_function_ids,
+        "target_cost_exceeded_function_ids": target_cost_exceeded_function_ids,
+        "gold_plating_function_ids": gold_plating_function_ids,
+        "total_potential_cost_savings": total_potential_cost_savings,
+        "value_engineering_status": value_engineering_status,
+        "is_value_engineered_compliant": value_engineering_status == "VALUE_OPTIMIZED",
+    }
+
+
+ProjectEVMService.evaluate_evm_value_engineering_target_costing_and_worth_index = staticmethod(
+    evaluate_evm_value_engineering_target_costing_and_worth_index
 )

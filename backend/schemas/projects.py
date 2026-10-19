@@ -3807,6 +3807,7 @@ __all__ = [
     "validate_wbs_work_package_8_80_granularity_and_dictionary",
     "validate_risk_probability_impact_matrix_and_appetite_thresholds",
     "validate_ccpm_fever_chart_and_buffer_consumption",
+    "validate_sprint_velocity_volatility_and_commitment_reliability",
 ]
 
 
@@ -7580,5 +7581,101 @@ def validate_ccpm_fever_chart_and_buffer_consumption(
         "max_buffer_burn_index": max_buffer_burn_index,
         "fever_chart_status": fever_chart_status,
         "is_ccpm_buffer_compliant": len(unmitigated_red_zone_chain_ids) == 0,
+        "recommendations": recommendations,
+    }
+
+
+def validate_sprint_velocity_volatility_and_commitment_reliability(
+    sprints: list[dict[str, Any]],
+    *,
+    min_say_do_ratio_pct: float = 80.0,
+    max_carryover_rate_pct: float = 20.0,
+    max_velocity_cv_pct: float = 30.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §6.4 & §9.2 — Agile Sprint Capacity Velocity Volatility, Commitment Reliability & Carryover Debt Validator."""
+    valid_sprints: list[dict[str, Any]] = []
+    if isinstance(sprints, (list, tuple)):
+        for item in sprints:
+            if not isinstance(item, dict):
+                continue
+            sid = str(item.get("sprint_id") or "").strip()
+            if not sid:
+                continue
+            valid_sprints.append({**item, "_sid": sid})
+
+    if not valid_sprints:
+        return {
+            "total_sprints_evaluated": 0,
+            "mean_velocity": 0.0,
+            "velocity_cv_pct": 0.0,
+            "unreliable_commitment_sprint_ids": [],
+            "excessive_carryover_sprint_ids": [],
+            "predictability_status": "PREDICTABLE_CADENCE",
+            "is_sprint_cadence_compliant": True,
+            "recommendations": [],
+        }
+
+    unreliable_commitment_sprint_ids: list[str] = []
+    excessive_carryover_sprint_ids: list[str] = []
+    completed_points_list: list[float] = []
+
+    for sp in valid_sprints:
+        sid = sp["_sid"]
+        committed = max(0.0, float(sp.get("committed_story_points", 0.0) or 0.0))
+        completed = max(0.0, float(sp.get("completed_story_points", 0.0) or 0.0))
+        carryover = max(0.0, float(sp.get("carryover_story_points", 0.0) or 0.0))
+
+        completed_points_list.append(completed)
+
+        if committed > 0:
+            say_do_ratio_pct = round((completed / committed) * 100.0, 2)
+            carryover_rate_pct = round((carryover / committed) * 100.0, 2)
+        else:
+            say_do_ratio_pct = 100.0
+            carryover_rate_pct = 100.0 if carryover > 0 else 0.0
+
+        if say_do_ratio_pct < min_say_do_ratio_pct:
+            unreliable_commitment_sprint_ids.append(sid)
+        if carryover_rate_pct > max_carryover_rate_pct:
+            excessive_carryover_sprint_ids.append(sid)
+
+    n = len(valid_sprints)
+    mean_velocity = round(sum(completed_points_list) / n, 2)
+    if mean_velocity > 0 and n > 1:
+        variance = sum((x - mean_velocity) ** 2 for x in completed_points_list) / n
+        std_dev = variance ** 0.5
+        velocity_cv_pct = round((std_dev / mean_velocity) * 100.0, 2)
+    else:
+        velocity_cv_pct = 0.0
+
+    recommendations: list[str] = []
+    if unreliable_commitment_sprint_ids:
+        recommendations.append(
+            f"Improve sprint backlog refinement and capacity planning to achieve >= {min_say_do_ratio_pct}% Say/Do ratio on sprint(s): {', '.join(unreliable_commitment_sprint_ids)}."
+        )
+    if excessive_carryover_sprint_ids:
+        recommendations.append(
+            f"Slice user stories smaller to cap carryover debt (<= {max_carryover_rate_pct}%) on sprint(s): {', '.join(excessive_carryover_sprint_ids)}."
+        )
+    if velocity_cv_pct > max_velocity_cv_pct:
+        recommendations.append(
+            f"Stabilize team allocation and reduce mid-sprint interruptions to bring velocity CV ({velocity_cv_pct:.2f}%) within {max_velocity_cv_pct:.2f}%."
+        )
+
+    if unreliable_commitment_sprint_ids or excessive_carryover_sprint_ids:
+        predictability_status = "UNPREDICTABLE_CHURN"
+    elif velocity_cv_pct > max_velocity_cv_pct:
+        predictability_status = "VOLATILE_VELOCITY"
+    else:
+        predictability_status = "PREDICTABLE_CADENCE"
+
+    return {
+        "total_sprints_evaluated": n,
+        "mean_velocity": mean_velocity,
+        "velocity_cv_pct": velocity_cv_pct,
+        "unreliable_commitment_sprint_ids": unreliable_commitment_sprint_ids,
+        "excessive_carryover_sprint_ids": excessive_carryover_sprint_ids,
+        "predictability_status": predictability_status,
+        "is_sprint_cadence_compliant": predictability_status == "PREDICTABLE_CADENCE",
         "recommendations": recommendations,
     }

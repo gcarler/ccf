@@ -7724,3 +7724,146 @@ def test_evaluate_evm_milestone_payment_holdback_and_acceptance_gate_staticmetho
         "evaluate_evm_milestone_payment_holdback_and_acceptance_gate"
         in mod.__all__
     )
+
+
+def test_evaluate_evm_value_engineering_gold_plating_and_overrun_paths():
+    """Caso 1: gold-plating o target cost excedido -> GOLD_PLATING_OR_SEVERE_OVERRUN."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_value_engineering_target_costing_and_worth_index,
+    )
+
+    res = evaluate_evm_value_engineering_target_costing_and_worth_index(
+        [
+            {
+                "function_id": "FN-01",
+                "estimated_function_cost": 100.0,
+                "essential_function_worth": 60.0,
+                "target_allowable_cost": 80.0,
+            },
+            {
+                "function_id": "FN-02",
+                "estimated_function_cost": 50.0,
+                "essential_function_worth": 10.0,
+                "target_allowable_cost": 40.0,
+                "is_gold_plated_non_essential": True,
+            },
+        ]
+    )
+    assert res["total_functions_evaluated"] == 2
+    # FN-01: value_index 0.6 < 0.85 -> low value; target_ratio 1.25 no > 1.25.
+    # FN-02: value_index 0.2 < 0.85 -> tambien low value.
+    assert res["low_value_index_function_ids"] == ["FN-01", "FN-02"]
+    assert res["target_cost_exceeded_function_ids"] == []
+    assert res["gold_plating_function_ids"] == ["FN-02"]
+    # Ahorros potenciales: (100-60) + (50-10) = 80.0.
+    assert res["total_potential_cost_savings"] == 80.0
+    assert res["value_engineering_status"] == "GOLD_PLATING_OR_SEVERE_OVERRUN"
+    assert res["is_value_engineered_compliant"] is False
+
+    res_overrun = evaluate_evm_value_engineering_target_costing_and_worth_index(
+        [
+            {
+                "function_id": "FN-03",
+                "estimated_function_cost": 130.0,
+                "essential_function_worth": 120.0,
+                "target_allowable_cost": 100.0,
+            },
+        ]
+    )
+    # value_index 0.92 >= 0.85; ratio 1.3 > 1.25 -> overrun severo.
+    assert res_overrun["low_value_index_function_ids"] == []
+    assert res_overrun["target_cost_exceeded_function_ids"] == ["FN-03"]
+    assert res_overrun["value_engineering_status"] == "GOLD_PLATING_OR_SEVERE_OVERRUN"
+
+
+def test_evaluate_evm_value_engineering_suboptimal_value_only():
+    """Caso 2: solo índice de valor bajo, sin gold-plating ni overrun -> SUBOPTIMAL_VALUE_INDEX."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_value_engineering_target_costing_and_worth_index,
+    )
+
+    res = evaluate_evm_value_engineering_target_costing_and_worth_index(
+        [
+            {
+                "function_id": "FN-10",
+                "estimated_function_cost": 200.0,
+                "essential_function_worth": 140.0,
+                "target_allowable_cost": 200.0,
+            },
+        ]
+    )
+    # value_index 0.7 < 0.85; ratio 1.0 <= 1.25.
+    assert res["total_functions_evaluated"] == 1
+    assert res["low_value_index_function_ids"] == ["FN-10"]
+    assert res["target_cost_exceeded_function_ids"] == []
+    assert res["gold_plating_function_ids"] == []
+    assert res["total_potential_cost_savings"] == 60.0
+    assert res["value_engineering_status"] == "SUBOPTIMAL_VALUE_INDEX"
+    assert res["is_value_engineered_compliant"] is False
+
+
+def test_evaluate_evm_value_engineering_optimized_and_boundaries():
+    """Caso 3: fronteras exactas (value_index = min, ratio = max) y costos 0 -> VALUE_OPTIMIZED."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_value_engineering_target_costing_and_worth_index,
+    )
+
+    res = evaluate_evm_value_engineering_target_costing_and_worth_index(
+        [
+            {
+                "function_id": "FN-20",
+                "estimated_function_cost": 100.0,
+                "essential_function_worth": 85.0,
+                "target_allowable_cost": 80.0,
+            },
+            {
+                "function_id": "FN-21",
+                "estimated_function_cost": 0.0,
+                "essential_function_worth": 0.0,
+                "target_allowable_cost": 0.0,
+            },
+        ]
+    )
+    # FN-20: value_index 0.85 no < 0.85; ratio 1.25 no > 1.25 -> dentro de frontera.
+    # FN-21: costos 0 -> índices neutros 1.0.
+    assert res["total_functions_evaluated"] == 2
+    assert res["low_value_index_function_ids"] == []
+    assert res["target_cost_exceeded_function_ids"] == []
+    assert res["gold_plating_function_ids"] == []
+    # Ahorros: FN-20 aporta 85-85? no: max(0, 100-85) = 15; FN-21 aporta 0.
+    assert res["total_potential_cost_savings"] == 15.0
+    assert res["value_engineering_status"] == "VALUE_OPTIMIZED"
+    assert res["is_value_engineered_compliant"] is True
+
+
+def test_evaluate_evm_value_engineering_invalid_and_binding():
+    """Caso 4: entradas no-lista/no-dict y binding + __all__."""
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_value_engineering_target_costing_and_worth_index,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = evaluate_evm_value_engineering_target_costing_and_worth_index(payload)  # type: ignore[arg-type]
+        assert empty["total_functions_evaluated"] == 0
+        assert empty["low_value_index_function_ids"] == []
+        assert empty["target_cost_exceeded_function_ids"] == []
+        assert empty["gold_plating_function_ids"] == []
+        assert empty["total_potential_cost_savings"] == 0.0
+        assert empty["value_engineering_status"] == "VALUE_OPTIMIZED"
+        assert empty["is_value_engineered_compliant"] is True
+
+    sample = [
+        {
+            "function_id": "FN-30",
+            "estimated_function_cost": 10.0,
+            "essential_function_worth": 10.0,
+            "target_allowable_cost": 10.0,
+        },
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_value_engineering_target_costing_and_worth_index(sample)
+        == evaluate_evm_value_engineering_target_costing_and_worth_index(sample)
+    )
+    assert "evaluate_evm_value_engineering_target_costing_and_worth_index" in mod.__all__

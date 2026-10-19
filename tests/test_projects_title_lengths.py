@@ -6808,3 +6808,121 @@ def test_validate_ccpm_fever_chart_and_buffer_consumption_empty_and_export():
         assert empty["is_ccpm_buffer_compliant"] is True
 
     assert "validate_ccpm_fever_chart_and_buffer_consumption" in mod.__all__
+
+
+def test_validate_sprint_velocity_volatility_and_commitment_reliability_unpredictable_churn():
+    from backend.schemas.projects import (
+        validate_sprint_velocity_volatility_and_commitment_reliability,
+    )
+
+    res = validate_sprint_velocity_volatility_and_commitment_reliability(
+        [
+            {
+                "sprint_id": "SPR-01",
+                "committed_story_points": 40.0,
+                "completed_story_points": 20.0,
+                "carryover_story_points": 15.0,
+                "unplanned_scope_added_points": 5.0,
+            },
+            {
+                "sprint_id": "SPR-02",
+                "committed_story_points": 40.0,
+                "completed_story_points": 36.0,
+                "carryover_story_points": 4.0,
+                "unplanned_scope_added_points": 0.0,
+            },
+        ],
+        min_say_do_ratio_pct=80.0,
+        max_carryover_rate_pct=20.0,
+        max_velocity_cv_pct=30.0,
+    )
+    assert res["total_sprints_evaluated"] == 2
+    assert res["mean_velocity"] == 28.0
+    assert res["unreliable_commitment_sprint_ids"] == ["SPR-01"]
+    assert res["excessive_carryover_sprint_ids"] == ["SPR-01"]
+    assert res["predictability_status"] == "UNPREDICTABLE_CHURN"
+    assert res["is_sprint_cadence_compliant"] is False
+
+
+def test_validate_sprint_velocity_volatility_and_commitment_reliability_volatile_velocity():
+    from backend.schemas.projects import (
+        validate_sprint_velocity_volatility_and_commitment_reliability,
+    )
+
+    res = validate_sprint_velocity_volatility_and_commitment_reliability(
+        [
+            {
+                "sprint_id": "SPR-10",
+                "committed_story_points": 20.0,
+                "completed_story_points": 20.0,
+                "carryover_story_points": 0.0,
+            },
+            {
+                "sprint_id": "SPR-11",
+                "committed_story_points": 60.0,
+                "completed_story_points": 60.0,
+                "carryover_story_points": 0.0,
+            },
+        ],
+        min_say_do_ratio_pct=80.0,
+        max_carryover_rate_pct=20.0,
+        max_velocity_cv_pct=30.0,
+    )
+    assert res["unreliable_commitment_sprint_ids"] == []
+    assert res["excessive_carryover_sprint_ids"] == []
+    assert res["mean_velocity"] == 40.0
+    assert res["velocity_cv_pct"] == 50.0
+    assert res["predictability_status"] == "VOLATILE_VELOCITY"
+    assert res["is_sprint_cadence_compliant"] is False
+
+
+def test_validate_sprint_velocity_volatility_and_commitment_reliability_predictable_cadence():
+    from backend.schemas.projects import (
+        validate_sprint_velocity_volatility_and_commitment_reliability,
+    )
+
+    res = validate_sprint_velocity_volatility_and_commitment_reliability(
+        [
+            {
+                "sprint_id": "SPR-20",
+                "committed_story_points": 40.0,
+                "completed_story_points": 38.0,
+                "carryover_story_points": 2.0,
+            },
+            {
+                "sprint_id": "SPR-21",
+                "committed_story_points": 40.0,
+                "completed_story_points": 42.0,
+                "carryover_story_points": 0.0,
+            },
+        ]
+    )
+    assert res["total_sprints_evaluated"] == 2
+    assert res["mean_velocity"] == 40.0
+    assert res["velocity_cv_pct"] == 5.0
+    assert res["unreliable_commitment_sprint_ids"] == []
+    assert res["excessive_carryover_sprint_ids"] == []
+    assert res["predictability_status"] == "PREDICTABLE_CADENCE"
+    assert res["is_sprint_cadence_compliant"] is True
+
+
+def test_validate_sprint_velocity_volatility_and_commitment_reliability_empty_and_export():
+    import backend.schemas.projects as mod
+    from backend.schemas.projects import (
+        validate_sprint_velocity_volatility_and_commitment_reliability,
+    )
+
+    for payload in (None, [], "invalid", [{"sprint_id": "   "}]):
+        empty = validate_sprint_velocity_volatility_and_commitment_reliability(payload)  # type: ignore[arg-type]
+        assert empty["total_sprints_evaluated"] == 0
+        assert empty["mean_velocity"] == 0.0
+        assert empty["velocity_cv_pct"] == 0.0
+        assert empty["unreliable_commitment_sprint_ids"] == []
+        assert empty["excessive_carryover_sprint_ids"] == []
+        assert empty["predictability_status"] == "PREDICTABLE_CADENCE"
+        assert empty["is_sprint_cadence_compliant"] is True
+
+    assert (
+        "validate_sprint_velocity_volatility_and_commitment_reliability"
+        in mod.__all__
+    )

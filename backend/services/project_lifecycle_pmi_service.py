@@ -3161,6 +3161,7 @@ __all__ = [
     "audit_benefits_realization_post_implementation_harvesting",
     "audit_contract_claims_dispute_adr_and_liquidated_damages",
     "audit_stakeholder_salience_drift_and_resistance_escalation",
+    "audit_procurement_rfp_bid_solvency_and_vendor_concentration",
     "ProjectLifecyclePMIService",
 ]
 
@@ -6457,4 +6458,128 @@ def audit_stakeholder_salience_drift_and_resistance_escalation(
 
 ProjectLifecyclePMIService.audit_stakeholder_salience_drift_and_resistance_escalation = staticmethod(
     audit_stakeholder_salience_drift_and_resistance_escalation
+)
+
+
+def audit_procurement_rfp_bid_solvency_and_vendor_concentration(
+    bids: list[dict[str, Any]],
+    *,
+    min_technical_score: float = 70.0,
+    min_altman_z_solvency_score: float = 1.8,
+    max_single_vendor_spend_share_pct: float = 60.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §12.1 & §12.2 — Project Procurement RFP Bid Evaluation, Vendor Financial Solvency & Single-Source Concentration Risk Auditor."""
+    valid_bids: list[dict[str, Any]] = []
+    if isinstance(bids, (list, tuple)):
+        for item in bids:
+            if not isinstance(item, dict):
+                continue
+            bid_id = str(item.get("bid_id") or "").strip()
+            if not bid_id:
+                continue
+            valid_bids.append({**item, "_bid_id": bid_id})
+
+    if not valid_bids:
+        return {
+            "total_bids_evaluated": 0,
+            "awarded_bids_count": 0,
+            "total_awarded_spend": 0.0,
+            "technically_unqualified_award_ids": [],
+            "insolvent_vendor_award_ids": [],
+            "missing_coi_declaration_bid_ids": [],
+            "concentrated_vendor_ids": [],
+            "procurement_governance_status": "PROCUREMENT_COMPLIANT",
+            "is_procurement_compliant": True,
+            "recommendations": [],
+        }
+
+    awarded_bids_count = 0
+    raw_awarded_spend = 0.0
+    technically_unqualified_award_ids: list[str] = []
+    insolvent_vendor_award_ids: list[str] = []
+    missing_coi_declaration_bid_ids: list[str] = []
+    vendor_spend_map: dict[str, float] = {}
+
+    for b in valid_bids:
+        bid_id = b["_bid_id"]
+        vendor_id = str(b.get("vendor_id") or "").strip()
+        tech_score = float(b.get("technical_evaluation_score", 0.0) or 0.0)
+        z_score = float(
+            b.get("altman_z_solvency_score", 2.5)
+            if b.get("altman_z_solvency_score") is not None
+            else 2.5
+        )
+        contract_val = max(0.0, float(b.get("proposed_contract_value", 0.0) or 0.0))
+        is_winner = bool(b.get("is_awarded_winner", False))
+        has_coi = bool(b.get("has_conflict_of_interest_declaration", True))
+
+        if not has_coi:
+            missing_coi_declaration_bid_ids.append(bid_id)
+
+        if is_winner:
+            awarded_bids_count += 1
+            raw_awarded_spend += contract_val
+            if tech_score < min_technical_score:
+                technically_unqualified_award_ids.append(bid_id)
+            if z_score < min_altman_z_solvency_score:
+                insolvent_vendor_award_ids.append(bid_id)
+            if vendor_id:
+                vendor_spend_map[vendor_id] = (
+                    vendor_spend_map.get(vendor_id, 0.0) + contract_val
+                )
+
+    total_awarded_spend = round(raw_awarded_spend, 2)
+    concentrated_vendor_ids: list[str] = []
+    if total_awarded_spend > 0:
+        for vid, v_spend in vendor_spend_map.items():
+            share_pct = round((v_spend / total_awarded_spend) * 100.0, 2)
+            if share_pct > max_single_vendor_spend_share_pct:
+                concentrated_vendor_ids.append(vid)
+
+    recommendations: list[str] = []
+    if technically_unqualified_award_ids:
+        recommendations.append(
+            f"Disqualify or re-evaluate awarded bid(s) below minimum technical score ({min_technical_score}): {', '.join(technically_unqualified_award_ids)}."
+        )
+    if insolvent_vendor_award_ids:
+        recommendations.append(
+            f"Require performance bond or reject financially distressed awarded bid(s) (Altman Z < {min_altman_z_solvency_score}): {', '.join(insolvent_vendor_award_ids)}."
+        )
+    if missing_coi_declaration_bid_ids:
+        recommendations.append(
+            f"Collect signed Conflict of Interest (COI) declarations for bid(s): {', '.join(missing_coi_declaration_bid_ids)}."
+        )
+    if concentrated_vendor_ids:
+        recommendations.append(
+            f"Diversify procurement awards to reduce single-vendor spend concentration (> {max_single_vendor_spend_share_pct}%) for vendor(s): {', '.join(concentrated_vendor_ids)}."
+        )
+
+    if (
+        technically_unqualified_award_ids
+        or insolvent_vendor_award_ids
+        or missing_coi_declaration_bid_ids
+    ):
+        procurement_governance_status = "AWARD_BLOCKED"
+    elif concentrated_vendor_ids:
+        procurement_governance_status = "CONCENTRATION_RISK_WARNING"
+    else:
+        procurement_governance_status = "PROCUREMENT_COMPLIANT"
+
+    return {
+        "total_bids_evaluated": len(valid_bids),
+        "awarded_bids_count": awarded_bids_count,
+        "total_awarded_spend": total_awarded_spend,
+        "technically_unqualified_award_ids": technically_unqualified_award_ids,
+        "insolvent_vendor_award_ids": insolvent_vendor_award_ids,
+        "missing_coi_declaration_bid_ids": missing_coi_declaration_bid_ids,
+        "concentrated_vendor_ids": concentrated_vendor_ids,
+        "procurement_governance_status": procurement_governance_status,
+        "is_procurement_compliant": procurement_governance_status
+        == "PROCUREMENT_COMPLIANT",
+        "recommendations": recommendations,
+    }
+
+
+ProjectLifecyclePMIService.audit_procurement_rfp_bid_solvency_and_vendor_concentration = staticmethod(
+    audit_procurement_rfp_bid_solvency_and_vendor_concentration
 )
