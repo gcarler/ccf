@@ -2534,6 +2534,7 @@ __all__ = [
     "audit_wiki_runbook_automation_toil_and_idempotency",
     "audit_wiki_chaos_gameday_hypothesis_and_blast_radius",
     "audit_wiki_observability_cardinality_and_trace_sampling",
+    "audit_wiki_service_catalog_ownership_and_dependency_graph",
     "WikiPMIService",
 ]
 
@@ -6863,5 +6864,79 @@ def audit_wiki_observability_cardinality_and_trace_sampling(
 
 WikiPMIService.audit_wiki_observability_cardinality_and_trace_sampling = staticmethod(
     audit_wiki_observability_cardinality_and_trace_sampling
+)
+
+
+def audit_wiki_service_catalog_ownership_and_dependency_graph(
+    catalog_services: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_dependency_fan_out: int = 15,
+) -> dict[str, Any]:
+    """PMI PMBOK §9.1 & §10.2 — Wiki Service Catalog Tier-1 Ownership, PagerDuty Escalation Policy & Circular Dependency Graph Auditor."""
+    valid_services = [
+        svc
+        for svc in (catalog_services or [])
+        if isinstance(svc, Mapping) and str(svc.get("service_id") or "").strip()
+    ]
+
+    unowned_or_circular_dependency_service_ids: list[str] = []
+    high_fan_out_or_unlinked_slo_service_ids: list[str] = []
+
+    for svc in valid_services:
+        sid = str(svc.get("service_id")).strip()
+        raw_tier = svc.get("criticality_tier")
+        tier = int(raw_tier if raw_tier is not None else 2)
+        has_owner = bool(
+            svc.get("has_accountable_team_owner", True)
+            if svc.get("has_accountable_team_owner") is not None
+            else True
+        )
+        has_pagerduty = bool(
+            svc.get("has_pagerduty_escalation_policy", True)
+            if svc.get("has_pagerduty_escalation_policy") is not None
+            else True
+        )
+        circular_dep = bool(
+            svc.get("circular_runtime_dependency_detected", False)
+            if svc.get("circular_runtime_dependency_detected") is not None
+            else False
+        )
+        raw_fan_out = svc.get("synchronous_downstream_fan_out_count")
+        fan_out = int(raw_fan_out if raw_fan_out is not None else 4)
+        slo_linked = bool(
+            svc.get("slo_dashboard_linked_in_wiki", True)
+            if svc.get("slo_dashboard_linked_in_wiki") is not None
+            else True
+        )
+
+        if (
+            not has_owner
+            or circular_dep
+            or (tier == 1 and not has_pagerduty)
+        ):
+            unowned_or_circular_dependency_service_ids.append(sid)
+
+        if fan_out > max_dependency_fan_out or not slo_linked:
+            high_fan_out_or_unlinked_slo_service_ids.append(sid)
+
+    if unowned_or_circular_dependency_service_ids:
+        service_catalog_status = "SERVICE_CATALOG_OWNERSHIP_OR_CYCLE_BREACH"
+    elif high_fan_out_or_unlinked_slo_service_ids:
+        service_catalog_status = "SERVICE_CATALOG_FAN_OUT_OR_SLO_WARNING"
+    else:
+        service_catalog_status = "SERVICE_CATALOG_GOVERNANCE_OPTIMAL"
+
+    return {
+        "evaluated_services_count": len(valid_services),
+        "unowned_or_circular_dependency_service_ids": unowned_or_circular_dependency_service_ids,
+        "high_fan_out_or_unlinked_slo_service_ids": high_fan_out_or_unlinked_slo_service_ids,
+        "service_catalog_status": service_catalog_status,
+        "is_service_catalog_compliant": service_catalog_status
+        == "SERVICE_CATALOG_GOVERNANCE_OPTIMAL",
+    }
+
+
+WikiPMIService.audit_wiki_service_catalog_ownership_and_dependency_graph = staticmethod(
+    audit_wiki_service_catalog_ownership_and_dependency_graph
 )
 

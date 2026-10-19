@@ -9187,3 +9187,147 @@ def test_audit_wiki_observability_cardinality_and_trace_sampling_staticmethod_an
         in mod.__all__
     )
 
+
+def test_audit_wiki_service_catalog_ownership_and_dependency_graph_breach():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_service_catalog_ownership_and_dependency_graph,
+    )
+
+    result = audit_wiki_service_catalog_ownership_and_dependency_graph(
+        [
+            {
+                "service_id": "SVC-TIER1-NO-PD",
+                "criticality_tier": 1,
+                "has_accountable_team_owner": True,
+                "has_pagerduty_escalation_policy": False,
+                "circular_runtime_dependency_detected": False,
+                "synchronous_downstream_fan_out_count": 3,
+                "slo_dashboard_linked_in_wiki": True,
+            },
+            {
+                "service_id": "SVC-CYCLE-UNOWNED",
+                "criticality_tier": 2,
+                "has_accountable_team_owner": False,
+                "has_pagerduty_escalation_policy": False,
+                "circular_runtime_dependency_detected": True,
+                "synchronous_downstream_fan_out_count": 5,
+                "slo_dashboard_linked_in_wiki": True,
+            },
+        ],
+        max_dependency_fan_out=15,
+    )
+    assert result["evaluated_services_count"] == 2
+    assert result["unowned_or_circular_dependency_service_ids"] == [
+        "SVC-TIER1-NO-PD",
+        "SVC-CYCLE-UNOWNED",
+    ]
+    assert result["high_fan_out_or_unlinked_slo_service_ids"] == []
+    assert (
+        result["service_catalog_status"]
+        == "SERVICE_CATALOG_OWNERSHIP_OR_CYCLE_BREACH"
+    )
+    assert result["is_service_catalog_compliant"] is False
+
+
+def test_audit_wiki_service_catalog_ownership_and_dependency_graph_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_service_catalog_ownership_and_dependency_graph,
+    )
+
+    result = audit_wiki_service_catalog_ownership_and_dependency_graph(
+        [
+            {
+                "service_id": "SVC-CHATTY-GATEWAY",
+                "criticality_tier": 1,
+                "has_accountable_team_owner": True,
+                "has_pagerduty_escalation_policy": True,
+                "circular_runtime_dependency_detected": False,
+                "synchronous_downstream_fan_out_count": 22,
+                "slo_dashboard_linked_in_wiki": False,
+            }
+        ],
+        max_dependency_fan_out=15,
+    )
+    assert result["evaluated_services_count"] == 1
+    assert result["unowned_or_circular_dependency_service_ids"] == []
+    assert result["high_fan_out_or_unlinked_slo_service_ids"] == [
+        "SVC-CHATTY-GATEWAY"
+    ]
+    assert (
+        result["service_catalog_status"]
+        == "SERVICE_CATALOG_FAN_OUT_OR_SLO_WARNING"
+    )
+    assert result["is_service_catalog_compliant"] is False
+
+
+def test_audit_wiki_service_catalog_ownership_and_dependency_graph_optimal_and_empty():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_service_catalog_ownership_and_dependency_graph,
+    )
+
+    empty = audit_wiki_service_catalog_ownership_and_dependency_graph(
+        [{"service_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_services_count"] == 0
+    assert (
+        empty["service_catalog_status"]
+        == "SERVICE_CATALOG_GOVERNANCE_OPTIMAL"
+    )
+    assert empty["is_service_catalog_compliant"] is True
+
+    optimal = audit_wiki_service_catalog_ownership_and_dependency_graph(
+        [
+            {
+                "service_id": "SVC-PAYMENTS-CORE",
+                "criticality_tier": 1,
+                "has_accountable_team_owner": True,
+                "has_pagerduty_escalation_policy": True,
+                "circular_runtime_dependency_detected": False,
+                "synchronous_downstream_fan_out_count": 6,
+                "slo_dashboard_linked_in_wiki": True,
+            },
+            {
+                "service_id": "SVC-TIER3-BATCH",
+                "criticality_tier": 3,
+                "has_accountable_team_owner": True,
+                "has_pagerduty_escalation_policy": False,
+                "circular_runtime_dependency_detected": False,
+                "synchronous_downstream_fan_out_count": 2,
+                "slo_dashboard_linked_in_wiki": True,
+            },
+        ],
+        max_dependency_fan_out=15,
+    )
+    assert optimal["evaluated_services_count"] == 2
+    assert (
+        optimal["service_catalog_status"]
+        == "SERVICE_CATALOG_GOVERNANCE_OPTIMAL"
+    )
+    assert optimal["is_service_catalog_compliant"] is True
+
+
+def test_audit_wiki_service_catalog_ownership_and_dependency_graph_staticmethod_and_dunder_all():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_service_catalog_ownership_and_dependency_graph,
+    )
+
+    sample = [
+        {
+            "service_id": "SVC-99",
+            "criticality_tier": 2,
+            "synchronous_downstream_fan_out_count": 4,
+        }
+    ]
+    assert (
+        WikiPMIService.audit_wiki_service_catalog_ownership_and_dependency_graph(
+            sample
+        )
+        == audit_wiki_service_catalog_ownership_and_dependency_graph(sample)
+    )
+    assert (
+        "audit_wiki_service_catalog_ownership_and_dependency_graph"
+        in mod.__all__
+    )
+
