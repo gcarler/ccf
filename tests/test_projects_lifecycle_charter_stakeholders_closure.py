@@ -11235,3 +11235,124 @@ def test_jv_empty_invalid_and_field_reversion():
         "jv_governance_status": "JV_CONSORTIUM_GOVERNANCE_OPTIMAL",
         "is_jv_compliant": True,
     }
+
+
+def test_audit_final_lien_waiver_unconditional_release_and_mechanics_lien_exposure_lien_free():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_final_lien_waiver_unconditional_release_and_mechanics_lien_exposure,
+    )
+
+    res = audit_final_lien_waiver_unconditional_release_and_mechanics_lien_exposure(
+        contractors=[
+            {
+                "contractor_id": "GC-01",
+                "contract_final_amount": 500000.0,
+                "paid_to_date_amount": 500000.0,
+                "unconditional_final_waiver_signed": True,
+                "sub_tier_affidavits_complete": True,
+                "recorded_mechanics_lien_amount": 0.0,
+            },
+            {
+                "contractor_id": "MEP-02",
+                "contract_final_amount": 250000.0,
+                "paid_to_date_amount": 240000.0,
+                "unconditional_final_waiver_signed": True,
+                "sub_tier_affidavits_complete": True,
+                "recorded_mechanics_lien_amount": 0.0,
+            },
+        ],
+        retainage_escrow_balance=25000.0,
+    )
+    assert res["is_valid"] is True
+    assert res["status"] == "LIEN_FREE_READY_FOR_CLOSEOUT"
+    assert res["total_contractors"] == 2
+    assert res["missing_waiver_or_affidavit_contractors"] == []
+    assert res["active_mechanics_liens"] == []
+    assert res["total_mechanics_lien_amount"] == 0.0
+    assert res["required_lien_discharge_bond_amount"] == 0.0
+    assert res["unpaid_balance_total"] == 10000.0
+    assert res["escrow_covers_lien_bond"] is True
+
+
+def test_audit_final_lien_waiver_unconditional_release_and_mechanics_lien_exposure_hold_pending_waivers():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_final_lien_waiver_unconditional_release_and_mechanics_lien_exposure,
+    )
+
+    res = audit_final_lien_waiver_unconditional_release_and_mechanics_lien_exposure(
+        contractors=[
+            {
+                "contractor_id": "SUB-HVAC",
+                "contract_final_amount": 120000.0,
+                "paid_to_date_amount": 100000.0,
+                "unconditional_final_waiver_signed": False,
+                "sub_tier_affidavits_complete": True,
+                "recorded_mechanics_lien_amount": 0.0,
+            }
+        ],
+        retainage_escrow_balance=20000.0,
+    )
+    assert res["is_valid"] is False
+    assert res["status"] == "HOLD_FINAL_RELEASE_PENDING_WAIVERS"
+    assert res["missing_waiver_or_affidavit_contractors"] == ["SUB-HVAC"]
+    assert res["active_mechanics_liens"] == []
+    assert res["unpaid_balance_total"] == 20000.0
+
+
+def test_audit_final_lien_waiver_unconditional_release_and_mechanics_lien_exposure_critical_mechanics_lien():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_final_lien_waiver_unconditional_release_and_mechanics_lien_exposure,
+    )
+
+    res = audit_final_lien_waiver_unconditional_release_and_mechanics_lien_exposure(
+        contractors=[
+            {
+                "contractor_id": "SUB-STEEL",
+                "contract_final_amount": 300000.0,
+                "paid_to_date_amount": 250000.0,
+                "unconditional_final_waiver_signed": False,
+                "sub_tier_affidavits_complete": False,
+                "recorded_mechanics_lien_amount": 40000.0,
+            }
+        ],
+        retainage_escrow_balance=50000.0,
+        lien_bonding_off_multiplier=1.50,
+    )
+    assert res["is_valid"] is False
+    assert res["status"] == "CRITICAL_MECHANICS_LIEN_ENCUMBRANCE"
+    assert res["active_mechanics_liens"] == ["SUB-STEEL"]
+    assert res["total_mechanics_lien_amount"] == 40000.0
+    assert res["required_lien_discharge_bond_amount"] == 60000.0
+    assert res["escrow_covers_lien_bond"] is False
+
+
+def test_audit_final_lien_waiver_unconditional_release_and_mechanics_lien_exposure_staticmethod_and_exports():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_final_lien_waiver_unconditional_release_and_mechanics_lien_exposure,
+    )
+
+    assert (
+        "audit_final_lien_waiver_unconditional_release_and_mechanics_lien_exposure"
+        in mod.__all__
+    )
+    sample = [
+        {
+            "contractor_id": "GC-1",
+            "contract_final_amount": 10000.0,
+            "paid_to_date_amount": 10000.0,
+            "unconditional_final_waiver_signed": True,
+            "sub_tier_affidavits_complete": True,
+            "recorded_mechanics_lien_amount": 0.0,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_final_lien_waiver_unconditional_release_and_mechanics_lien_exposure(
+            sample
+        )
+        == audit_final_lien_waiver_unconditional_release_and_mechanics_lien_exposure(
+            sample
+        )
+    )
+

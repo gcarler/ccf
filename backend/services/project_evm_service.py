@@ -5537,6 +5537,7 @@ __all__ = [
     "evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate",
     "evaluate_evm_foreign_exchange_fx_hedging_collar_and_revaluation_reserve",
     "evaluate_evm_economic_price_adjustment_epa_corridor_and_share",
+    "evaluate_evm_surety_performance_bond_and_subcontractor_default_sdi",
     "ProjectEVMService",
 ]
 
@@ -10603,6 +10604,7 @@ ProjectEVMService.evaluate_evm_subcontractor_backcharge_offset_and_joint_check_d
 )
 
 
+
 def evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate(
     equipment_logs: list[dict] | None,
     *,
@@ -10927,3 +10929,115 @@ ProjectEVMService.evaluate_evm_economic_price_adjustment_epa_corridor_and_share 
     evaluate_evm_economic_price_adjustment_epa_corridor_and_share
 )
 
+def evaluate_evm_surety_performance_bond_and_subcontractor_default_sdi(
+    current_bac: float,
+    original_contract_sum: float,
+    performance_bond_penal_sum: float,
+    payment_bond_penal_sum: float,
+    sdi_subcontractor_exposures: list[dict[str, Any]] | None = None,
+    *,
+    sdi_deductible_per_loss: float = 50000.0,
+    sdi_coinsurance_pct: float = 10.0,
+    min_bond_coverage_ratio_pct: float = 100.0,
+    max_unendorsed_bac_growth_pct: float = 10.0,
+) -> dict[str, Any]:
+    """PMBOK §7.4 & §12.2 — Evalúa cobertura de fianzas de performance/payment (penal sum) vs BAC vigente, crecimiento de BAC sin rider de fianza, pérdidas retenidas de SDI e indemnización neta por incumplimiento de subcontratistas.
+
+    - Cobertura de cada fianza: `(penal_sum / current_bac) * 100.0`; si el BAC
+      no es positivo se asume 100.0 (noevaluable, sin subcobertura).
+    - Crecimiento de BAC sin rider: `((current_bac / original_contract_sum) - 1)
+      * 100.0`; si la suma original no es positiva se asume 0.0.
+    - SDI por exposición válida (subcontractor_id str no vacío): retención =
+      min(costo, deducible) + coaseguro% aplicado al exceso sobre el deducible;
+      indemnización neta = max(0, costo - retención).
+    - Estados (precedencia): 'CRITICAL_BOND_UNDERCOVERAGE' si alguna fianza
+      cubre menos del mínimo; 'RIDER_ENDORSEMENT_REQUIRED' si el crecimiento
+      de BAC excede el máximo no endosado; 'BOND_ADEQUATE' si limpio.
+    """
+    def _safe_float(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    def _coverage_ratio_pct(penal_sum: float) -> float:
+        bac = _safe_float(current_bac, 0.0)
+        sum_val = _safe_float(penal_sum, 0.0)
+        if bac <= 0:
+            return 100.0
+        return round(sum_val / bac * 100.0, 2)
+
+    performance_coverage_ratio_pct = _coverage_ratio_pct(performance_bond_penal_sum)
+    payment_coverage_ratio_pct = _coverage_ratio_pct(payment_bond_penal_sum)
+
+    bac_value = _safe_float(current_bac, 0.0)
+    original_sum = _safe_float(original_contract_sum, 0.0)
+    if original_sum > 0 and bac_value > 0:
+        bac_growth_pct = round((bac_value / original_sum - 1.0) * 100.0, 2)
+    else:
+        bac_growth_pct = 0.0
+
+    deductible = _safe_float(sdi_deductible_per_loss, 50000.0)
+    coinsurance_pct = _safe_float(sdi_coinsurance_pct, 10.0)
+
+    raw_exposures = (
+        sdi_subcontractor_exposures if isinstance(sdi_subcontractor_exposures, list) else []
+    )
+    valid_exposures = []
+    for item in raw_exposures:
+        if not isinstance(item, dict):
+            continue
+        subcontractor_id = item.get("subcontractor_id")
+        if not isinstance(subcontractor_id, str) or not subcontractor_id.strip():
+            continue
+        valid_exposures.append(item)
+
+    defaulted_exposures_count = 0
+    sdi_retained_loss_total = 0.0
+    sdi_net_recoverable_total = 0.0
+    for exposure in valid_exposures:
+        if exposure.get("status") != "DEFAULTED":
+            continue
+        defaulted_exposures_count += 1
+        exposure_cost = _safe_float(exposure.get("exposure_cost"), 0.0)
+        if exposure_cost <= 0:
+            continue
+        retained_loss = min(exposure_cost, deductible)
+        if exposure_cost > deductible:
+            retained_loss += (exposure_cost - deductible) * coinsurance_pct / 100.0
+        sdi_retained_loss_total += round(retained_loss, 2)
+        sdi_net_recoverable_total += round(max(0.0, exposure_cost - retained_loss), 2)
+
+    sdi_retained_loss_total = round(sdi_retained_loss_total, 2)
+    sdi_net_recoverable_total = round(sdi_net_recoverable_total, 2)
+
+    critical_bond_undercoverage = (
+        performance_coverage_ratio_pct < _safe_float(min_bond_coverage_ratio_pct, 100.0)
+        or payment_coverage_ratio_pct < _safe_float(min_bond_coverage_ratio_pct, 100.0)
+    )
+    rider_endorsement_required = bac_growth_pct > _safe_float(
+        max_unendorsed_bac_growth_pct, 10.0
+    )
+
+    if critical_bond_undercoverage:
+        bond_coverage_status = "CRITICAL_BOND_UNDERCOVERAGE"
+    elif rider_endorsement_required:
+        bond_coverage_status = "RIDER_ENDORSEMENT_REQUIRED"
+    else:
+        bond_coverage_status = "BOND_ADEQUATE"
+
+    return {
+        "bac_growth_pct": bac_growth_pct,
+        "performance_bond_coverage_ratio_pct": performance_coverage_ratio_pct,
+        "payment_bond_coverage_ratio_pct": payment_coverage_ratio_pct,
+        "sdi_evaluated_subcontractors_count": len(valid_exposures),
+        "sdi_defaulted_exposures_count": defaulted_exposures_count,
+        "sdi_retained_loss_total": sdi_retained_loss_total,
+        "sdi_net_recoverable_total": sdi_net_recoverable_total,
+        "bond_coverage_status": bond_coverage_status,
+        "is_surety_coverage_adequate": bond_coverage_status == "BOND_ADEQUATE",
+    }
+
+
+ProjectEVMService.evaluate_evm_surety_performance_bond_and_subcontractor_default_sdi = staticmethod(
+    evaluate_evm_surety_performance_bond_and_subcontractor_default_sdi
+)

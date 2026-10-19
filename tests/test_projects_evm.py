@@ -10434,6 +10434,7 @@ def test_evaluate_evm_subcontractor_backcharge_offset_and_joint_check_disburseme
     )
 
 
+
 # ── evaluate_evm_equipment_fleet_ownership_operating_and_idle_rate (PMBOK §7.4 & §12.3, pure helper) ──
 
 
@@ -10810,3 +10811,145 @@ def test_evaluate_evm_economic_price_adjustment_epa_corridor_and_share_staticmet
     )
 
 
+
+
+# ── evaluate_evm_surety_performance_bond_and_subcontractor_default_sdi (PMBOK §7.4 & §12.2, pure helper) ──
+
+
+def test_surety_bond_adequate_coverage_and_sdi_active_only():
+    """Cobertura >= 100% de ambos fianzas, crecimiento <= 10% y solo subcontratistas activos -> 'BOND_ADEQUATE'."""
+    import backend.services.project_evm_service as evm_module
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_surety_performance_bond_and_subcontractor_default_sdi,
+    )
+
+    exposures = [{"subcontractor_id": "SUB-001", "status": "ACTIVE", "exposure_cost": 300000.0}]
+    res = evaluate_evm_surety_performance_bond_and_subcontractor_default_sdi(
+        1000000.0, 1000000.0, 1000000.0, 1050000.0, exposures
+    )
+    assert res == {
+        "bac_growth_pct": 0.0,
+        "performance_bond_coverage_ratio_pct": 100.0,
+        "payment_bond_coverage_ratio_pct": 105.0,
+        "sdi_evaluated_subcontractors_count": 1,
+        "sdi_defaulted_exposures_count": 0,
+        "sdi_retained_loss_total": 0.0,
+        "sdi_net_recoverable_total": 0.0,
+        "bond_coverage_status": "BOND_ADEQUATE",
+        "is_surety_coverage_adequate": True,
+    }
+    assert (
+        ProjectEVMService.evaluate_evm_surety_performance_bond_and_subcontractor_default_sdi(
+            1000000.0, 1000000.0, 1000000.0, 1050000.0, exposures
+        )
+        == res
+    )
+    assert "evaluate_evm_surety_performance_bond_and_subcontractor_default_sdi" in evm_module.__all__
+
+
+def test_surety_rider_endorsement_required_growth():
+    """Crecimiento de BAC 10.1% > 10.0% sin rider, con cobertura suficiente -> 'RIDER_ENDORSEMENT_REQUIRED'."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_surety_performance_bond_and_subcontractor_default_sdi,
+    )
+
+    res = evaluate_evm_surety_performance_bond_and_subcontractor_default_sdi(
+        1101000.0, 1000000.0, 1101000.0, 1150000.0, []
+    )
+    assert res["bac_growth_pct"] == 10.1
+    assert res["performance_bond_coverage_ratio_pct"] == 100.0
+    assert res["payment_bond_coverage_ratio_pct"] == 104.45
+    assert res["bond_coverage_status"] == "RIDER_ENDORSEMENT_REQUIRED"
+    assert res["is_surety_coverage_adequate"] is False
+
+    # Crecimiento exactamente en 10.0 no exige rider (comparación estricta >)
+    at_threshold = evaluate_evm_surety_performance_bond_and_subcontractor_default_sdi(
+        1100000.0, 1000000.0, 1100000.0, 1100000.0, []
+    )
+    assert at_threshold["bac_growth_pct"] == 10.0
+    assert at_threshold["bond_coverage_status"] == "BOND_ADEQUATE"
+
+
+def test_surety_critical_undercoverage_and_sdi_retention_math():
+    """Performance bond 50% < 100% -> 'CRITICAL_BOND_UNDERCOVERAGE' (precedencia) con retención SDI (deducible + coaseguro) y neto recuperable."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_surety_performance_bond_and_subcontractor_default_sdi,
+    )
+
+    exposures = [
+        {"subcontractor_id": "SUB-D1", "status": "DEFAULTED", "exposure_cost": 120000.0},
+        {"subcontractor_id": "SUB-D2", "status": "DEFAULTED", "exposure_cost": 70000.0},
+        {"subcontractor_id": "SUB-A1", "status": "ACTIVE", "exposure_cost": 200000.0},
+        "no-dict",
+        {"subcontractor_id": "   "},
+    ]
+    res = evaluate_evm_surety_performance_bond_and_subcontractor_default_sdi(
+        1000000.0, 1000000.0, 500000.0, 1000000.0, exposures
+    )
+    assert res["sdi_evaluated_subcontractors_count"] == 3
+    assert res["sdi_defaulted_exposures_count"] == 2
+    # SUB-D1: retencion = 50000 + 70000*10% = 57000 -> neto 63000
+    # SUB-D2: retencion = 50000 + 20000*10% = 52000 -> neto 18000
+    # SUB-A1 activo no genera perdida; invalidos se descartan
+    assert res["sdi_retained_loss_total"] == 109000.0
+    assert res["sdi_net_recoverable_total"] == 81000.0
+    assert res["performance_bond_coverage_ratio_pct"] == 50.0
+    assert res["bond_coverage_status"] == "CRITICAL_BOND_UNDERCOVERAGE"
+    assert res["is_surety_coverage_adequate"] is False
+
+    # Sin rider por debajo del min de cobertura: la subcobertura tiene precedencia
+    under_with_growth = evaluate_evm_surety_performance_bond_and_subcontractor_default_sdi(
+        1200000.0, 1000000.0, 600000.0, 1200000.0, []
+    )
+    assert under_with_growth["bac_growth_pct"] == 20.0
+    assert under_with_growth["bond_coverage_status"] == "CRITICAL_BOND_UNDERCOVERAGE"
+
+    # Deducible y coaseguro custom: costo bajo el deducible se retiene completo
+    under_deductible = evaluate_evm_surety_performance_bond_and_subcontractor_default_sdi(
+        1000000.0, 1000000.0, 1000000.0, 1000000.0,
+        [{"subcontractor_id": "SUB-SMALL", "status": "DEFAULTED", "exposure_cost": 8000.0}],
+        sdi_deductible_per_loss=20000.0,
+        sdi_coinsurance_pct=20.0,
+    )
+    assert under_deductible["sdi_retained_loss_total"] == 8000.0
+    assert under_deductible["sdi_net_recoverable_total"] == 0.0
+    assert under_deductible["bond_coverage_status"] == "BOND_ADEQUATE"
+
+
+def test_surety_bac_zero_none_and_invalid_exposures():
+    """BAC <= 0 y suma original no positiva no subcobertizan ni exigen rider; exposiciones inválidas se descartan."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_surety_performance_bond_and_subcontractor_default_sdi,
+    )
+
+    res = evaluate_evm_surety_performance_bond_and_subcontractor_default_sdi(
+        0.0, 0.0, 0.0, 0.0, None
+    )
+    assert res == {
+        "bac_growth_pct": 0.0,
+        "performance_bond_coverage_ratio_pct": 100.0,
+        "payment_bond_coverage_ratio_pct": 100.0,
+        "sdi_evaluated_subcontractors_count": 0,
+        "sdi_defaulted_exposures_count": 0,
+        "sdi_retained_loss_total": 0.0,
+        "sdi_net_recoverable_total": 0.0,
+        "bond_coverage_status": "BOND_ADEQUATE",
+        "is_surety_coverage_adequate": True,
+    }
+
+    invalid = evaluate_evm_surety_performance_bond_and_subcontractor_default_sdi(
+        1000000.0, 1000000.0, 1000000.0, 1000000.0,
+        ["no-dict", None, {"subcontractor_id": ""}, {"subcontractor_id": 9}],
+    )
+    assert invalid["sdi_evaluated_subcontractors_count"] == 0
+
+    bad_fields = evaluate_evm_surety_performance_bond_and_subcontractor_default_sdi(
+        "millón", 1000000.0, None, True,
+        [{"subcontractor_id": "SUB-BAD", "status": "ACTIVE", "exposure_cost": "mucho"}],
+    )
+    # current_bac no numerico -> neutral (cobertura 100.0, sin subcobertura ni rider)
+    assert bad_fields["performance_bond_coverage_ratio_pct"] == 100.0
+    assert bad_fields["payment_bond_coverage_ratio_pct"] == 100.0
+    assert bad_fields["sdi_defaulted_exposures_count"] == 0
+    assert bad_fields["bond_coverage_status"] == "BOND_ADEQUATE"

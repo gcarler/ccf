@@ -3830,6 +3830,7 @@ __all__ = [
     "validate_agile_hybrid_velocity_stability_and_wip_carryover",
     "validate_resource_leveling_overallocation_peak_and_float_consumption",
     "validate_benefits_realization_npv_irr_payback_and_benefit_owner_alignment",
+    "validate_ccpm_buffer_fever_chart_and_feeding_buffer_erosion",
 ]
 
 
@@ -9584,3 +9585,90 @@ def validate_benefits_realization_npv_irr_payback_and_benefit_owner_alignment(
         "violations": violations,
         "Violations": violations,
     }
+
+
+def validate_ccpm_buffer_fever_chart_and_feeding_buffer_erosion(
+    critical_chain_completed_pct: float,
+    project_buffer_consumed_pct: float,
+    feeding_buffers: list[dict[str, Any]],
+    concurrent_active_tasks_per_resource: dict[str, int] | None = None,
+    green_yellow_intercept_pct: float = 20.0,
+    green_yellow_slope: float = 0.60,
+    yellow_red_intercept_pct: float = 40.0,
+    yellow_red_slope: float = 0.60,
+) -> dict[str, Any]:
+    """PMBOK §6.3 & §6.5 — Critical Chain Project Management (CCPM) Project Buffer Consumption Fever Chart, Feeding Buffer Erosion & Multitasking Resource Contention Validator."""
+    cc_pct = float(critical_chain_completed_pct)
+    pb_pct = float(project_buffer_consumed_pct)
+    gy_int = float(green_yellow_intercept_pct)
+    gy_slope = float(green_yellow_slope)
+    yr_int = float(yellow_red_intercept_pct)
+    yr_slope = float(yellow_red_slope)
+
+    yellow_threshold_pct = round(gy_int + gy_slope * cc_pct, 2)
+    red_threshold_pct = round(yr_int + yr_slope * cc_pct, 2)
+
+    if pb_pct > red_threshold_pct or pb_pct > 100.0:
+        fever_chart_zone = "RED"
+    elif pb_pct > yellow_threshold_pct:
+        fever_chart_zone = "YELLOW"
+    else:
+        fever_chart_zone = "GREEN"
+
+    valid_feeding = [
+        fb for fb in (feeding_buffers if isinstance(feeding_buffers, list) else []) if isinstance(fb, dict)
+    ]
+    eroded_feeding_buffers: list[str] = []
+    for idx, fb in enumerate(valid_feeding):
+        cid = str(fb.get("chain_id") or f"chain-{idx + 1}").strip()
+        fc_completed = float(fb.get("feeding_chain_completed_pct", 0.0) or 0.0)
+        fb_consumed = float(fb.get("feeding_buffer_consumed_pct", 0.0) or 0.0)
+        fb_red_limit = yr_int + yr_slope * fc_completed
+        if fb_consumed > fb_red_limit:
+            eroded_feeding_buffers.append(cid)
+
+    bad_multitasking_resources: list[str] = []
+    if isinstance(concurrent_active_tasks_per_resource, dict):
+        for res_id, active_cnt in concurrent_active_tasks_per_resource.items():
+            if int(active_cnt or 0) > 1:
+                bad_multitasking_resources.append(str(res_id))
+
+    is_valid = (
+        fever_chart_zone != "RED"
+        and len(eroded_feeding_buffers) == 0
+        and len(bad_multitasking_resources) == 0
+        and 0.0 <= cc_pct <= 100.0
+        and pb_pct >= 0.0
+    )
+
+    recommendations: list[str] = []
+    if fever_chart_zone == "RED":
+        recommendations.append(
+            f"Project buffer consumption ({pb_pct:.2f}%) breached RED fever threshold ({red_threshold_pct:.2f}%); execute buffer recovery plan."
+        )
+    elif fever_chart_zone == "YELLOW":
+        recommendations.append(
+            f"Project buffer in YELLOW watch zone ({pb_pct:.2f}% > {yellow_threshold_pct:.2f}%); prepare buffer recovery contingencies."
+        )
+    if eroded_feeding_buffers:
+        recommendations.append(
+            f"Mitigate feeding buffer erosion before critical chain merge on: {', '.join(eroded_feeding_buffers)}."
+        )
+    if bad_multitasking_resources:
+        recommendations.append(
+            f"Eliminate bad multitasking (enforce single-piece relay ethic) for resources: {', '.join(bad_multitasking_resources)}."
+        )
+
+    status = "VALID" if is_valid else "CRITICAL_CCPM_FEVER_OR_CONTENTION_BREACH"
+
+    return {
+        "is_valid": is_valid,
+        "fever_chart_zone": fever_chart_zone,
+        "yellow_threshold_pct": yellow_threshold_pct,
+        "red_threshold_pct": red_threshold_pct,
+        "eroded_feeding_buffers": eroded_feeding_buffers,
+        "bad_multitasking_resources": bad_multitasking_resources,
+        "status": status,
+        "recommendations": recommendations,
+    }
+

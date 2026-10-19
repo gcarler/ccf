@@ -11772,3 +11772,168 @@ def test_xbrl_empty_invalid_schedules_and_field_reversion():
         "xbrl_reconciliation_status": "FINANCIAL_IXBRL_RECONCILIATION_OPTIMAL",
         "is_xbrl_reconciled": True,
     }
+
+
+# ── audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance (PMBOK §4.7 & §10.2, pure helper) ──
+
+
+def test_bim_cobie_handover_ready_models():
+    """Disciplinas con IFC4 válido, LOD 500, 0 choques duros y COBie 100% -> 'BIM_COBIE_HANDOVER_READY'."""
+    import backend.services.project_export_service as export_module
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance,
+    )
+
+    models = [
+        {
+            "model_id": "BIM-ARCH",
+            "ifc_schema_valid": True,
+            "achieved_lod": 500,
+            "hard_clash_count": 0,
+            "cobie_completeness_pct": 100.0,
+        },
+        {
+            "model_id": "BIM-MEP",
+            # Defaults implícitos por campo: IFC True, LOD 500, 0 choques, COBie 100.0.
+        },
+    ]
+    res = audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance(models)
+    assert res == {
+        "evaluated_model_count": 2,
+        "invalid_ifc_or_hard_clash_model_ids": [],
+        "lod_or_cobie_incomplete_model_ids": [],
+        "bim_cobie_handover_status": "BIM_COBIE_HANDOVER_READY",
+        "is_bim_cobie_handover_ready": True,
+    }
+    # Choque duro exactamente en el máximo permitido (0 == 0) no es breach
+    at_clash_limit = audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance(
+        [{"model_id": "BIM-STRUCT", "hard_clash_count": 0, "max_unresolved_hard_clashes": None}]
+    )
+    assert at_clash_limit["bim_cobie_handover_status"] == "BIM_COBIE_HANDOVER_READY"
+    assert (
+        ProjectExportService.audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance(
+            models
+        )
+        == res
+    )
+    assert "audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance" in export_module.__all__
+
+
+def test_bim_critical_ifc_or_clash_breach():
+    """Esquema IFC inválido o choques duros > 0 -> 'CRITICAL_IFC_SCHEMA_OR_CLASH_BREACH' con precedencia sobre WARNING."""
+    from backend.services.project_export_service import (
+        audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance,
+    )
+
+    breach = audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance(
+        [
+            {"model_id": "BIM-BAD-SCHEMA", "ifc_schema_valid": False, "hard_clash_count": 0},
+            {"model_id": "BIM-CLASHES", "hard_clash_count": 3},
+        ]
+    )
+    assert breach["evaluated_model_count"] == 2
+    assert breach["invalid_ifc_or_hard_clash_model_ids"] == [
+        "BIM-BAD-SCHEMA",
+        "BIM-CLASHES",
+    ]
+    assert breach["bim_cobie_handover_status"] == "CRITICAL_IFC_SCHEMA_OR_CLASH_BREACH"
+    assert breach["is_bim_cobie_handover_ready"] is False
+
+    # Breach precede aunque también haya modelos LOD/COBie incompletos
+    mixed = audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance(
+        [
+            {"model_id": "BIM-LOW-LOD", "achieved_lod": 350},
+            {"model_id": "BIM-CLASHES-2", "ifc_schema_valid": False},
+        ]
+    )
+    assert mixed["bim_cobie_handover_status"] == "CRITICAL_IFC_SCHEMA_OR_CLASH_BREACH"
+
+    # Presupuesto custom de choques permite 2 choques sin breach
+    tolerant = audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance(
+        [{"model_id": "BIM-SOME-CLASHES", "hard_clash_count": 2}],
+        max_unresolved_hard_clashes=2,
+    )
+    assert tolerant["bim_cobie_handover_status"] == "BIM_COBIE_HANDOVER_READY"
+
+
+def test_bim_lod_or_cobie_completeness_warning():
+    """LOD < 500 o COBie < 98.0 (con IFC/clash limpios) -> 'LOD_OR_COBIE_COMPLETENESS_WARNING'."""
+    from backend.services.project_export_service import (
+        audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance,
+    )
+
+    warning = audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance(
+        [
+            {
+                "model_id": "BIM-LOD-400",
+                "achieved_lod": 400,
+                "cobie_completeness_pct": 100.0,
+            },
+            {
+                "model_id": "BIM-COBIE-GAPS",
+                "cobie_completeness_pct": 95.5,
+            },
+        ]
+    )
+    assert warning["evaluated_model_count"] == 2
+    assert warning["invalid_ifc_or_hard_clash_model_ids"] == []
+    assert warning["lod_or_cobie_incomplete_model_ids"] == [
+        "BIM-LOD-400",
+        "BIM-COBIE-GAPS",
+    ]
+    assert warning["bim_cobie_handover_status"] == "LOD_OR_COBIE_COMPLETENESS_WARNING"
+    assert warning["is_bim_cobie_handover_ready"] is False
+
+    # LOD exactamente en 500 y COBie exactamente en 98.0 no son warning (comparaciones estrictas)
+    at_thresholds = audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance(
+        [{"model_id": "BIM-EDGE", "achieved_lod": 500, "cobie_completeness_pct": 98.0}]
+    )
+    assert at_thresholds["bim_cobie_handover_status"] == "BIM_COBIE_HANDOVER_READY"
+
+    custom = audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance(
+        [{"model_id": "BIM-4", "achieved_lod": 500, "cobie_completeness_pct": 99.0}],
+        min_cobie_attribute_completeness_pct=99.5,
+    )
+    assert custom["bim_cobie_handover_status"] == "LOD_OR_COBIE_COMPLETENESS_WARNING"
+    assert custom["lod_or_cobie_incomplete_model_ids"] == ["BIM-4"]
+
+
+def test_bim_empty_invalid_models_and_field_reversion():
+    """None / dicts inválidos se descartan; campos no numéricos/no bool revierten a defaults del spec."""
+    from backend.services.project_export_service import (
+        audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance,
+    )
+
+    empty_res = audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance(None)
+    assert empty_res == {
+        "evaluated_model_count": 0,
+        "invalid_ifc_or_hard_clash_model_ids": [],
+        "lod_or_cobie_incomplete_model_ids": [],
+        "bim_cobie_handover_status": "BIM_COBIE_HANDOVER_READY",
+        "is_bim_cobie_handover_ready": True,
+    }
+
+    invalid_res = audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance(
+        ["no-dict", None, {"model_id": "   "}, {"model_id": 12}, {"hard_clash_count": 2}]
+    )
+    assert invalid_res["evaluated_model_count"] == 0
+
+    bad_fields = audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance(
+        [
+            {
+                "model_id": "BIM-BAD",
+                "ifc_schema_valid": "sí",
+                "achieved_lod": "quinientos",
+                "hard_clash_count": None,
+                "cobie_completeness_pct": [99.0],
+            }
+        ]
+    )
+    assert bad_fields == {
+        "evaluated_model_count": 1,
+        "invalid_ifc_or_hard_clash_model_ids": [],
+        "lod_or_cobie_incomplete_model_ids": [],
+        "bim_cobie_handover_status": "BIM_COBIE_HANDOVER_READY",
+        "is_bim_cobie_handover_ready": True,
+    }

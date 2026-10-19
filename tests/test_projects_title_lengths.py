@@ -9974,3 +9974,86 @@ def test_validate_benefits_realization_npv_irr_payback_and_benefit_owner_alignme
         "validate_benefits_realization_npv_irr_payback_and_benefit_owner_alignment"
         in mod.__all__
     )
+
+
+def test_validate_ccpm_buffer_fever_chart_and_feeding_buffer_erosion_green_and_yellow_valid():
+    from backend.schemas.projects import (
+        validate_ccpm_buffer_fever_chart_and_feeding_buffer_erosion,
+    )
+
+    res_green = validate_ccpm_buffer_fever_chart_and_feeding_buffer_erosion(
+        critical_chain_completed_pct=50.0,
+        project_buffer_consumed_pct=35.0,
+        feeding_buffers=[
+            {
+                "chain_id": "FB-01",
+                "feeding_chain_completed_pct": 60.0,
+                "feeding_buffer_consumed_pct": 40.0,
+            }
+        ],
+        concurrent_active_tasks_per_resource={"ENG-01": 1, "ENG-02": 1},
+    )
+    assert res_green["is_valid"] is True
+    assert res_green["fever_chart_zone"] == "GREEN"
+    assert res_green["yellow_threshold_pct"] == 50.0
+    assert res_green["red_threshold_pct"] == 70.0
+    assert res_green["eroded_feeding_buffers"] == []
+    assert res_green["bad_multitasking_resources"] == []
+
+    res_yellow = validate_ccpm_buffer_fever_chart_and_feeding_buffer_erosion(
+        critical_chain_completed_pct=50.0,
+        project_buffer_consumed_pct=60.0,
+        feeding_buffers=[],
+        concurrent_active_tasks_per_resource={"ENG-01": 1},
+    )
+    assert res_yellow["is_valid"] is True
+    assert res_yellow["fever_chart_zone"] == "YELLOW"
+
+
+def test_validate_ccpm_buffer_fever_chart_and_feeding_buffer_erosion_red_zone_breach():
+    from backend.schemas.projects import (
+        validate_ccpm_buffer_fever_chart_and_feeding_buffer_erosion,
+    )
+
+    res = validate_ccpm_buffer_fever_chart_and_feeding_buffer_erosion(
+        critical_chain_completed_pct=30.0,
+        project_buffer_consumed_pct=65.0,
+        feeding_buffers=[],
+    )
+    assert res["is_valid"] is False
+    assert res["fever_chart_zone"] == "RED"
+    assert res["yellow_threshold_pct"] == 38.0
+    assert res["red_threshold_pct"] == 58.0
+
+
+def test_validate_ccpm_buffer_fever_chart_and_feeding_buffer_erosion_feeding_buffer_and_multitasking():
+    from backend.schemas.projects import (
+        validate_ccpm_buffer_fever_chart_and_feeding_buffer_erosion,
+    )
+
+    res = validate_ccpm_buffer_fever_chart_and_feeding_buffer_erosion(
+        critical_chain_completed_pct=50.0,
+        project_buffer_consumed_pct=30.0,
+        feeding_buffers=[
+            {
+                "chain_id": "FB-CRIT-02",
+                "feeding_chain_completed_pct": 20.0,
+                "feeding_buffer_consumed_pct": 60.0,
+            }
+        ],
+        concurrent_active_tasks_per_resource={"DEV-A": 1, "DEV-B": 3},
+    )
+    assert res["is_valid"] is False
+    assert res["fever_chart_zone"] == "GREEN"
+    assert res["eroded_feeding_buffers"] == ["FB-CRIT-02"]
+    assert res["bad_multitasking_resources"] == ["DEV-B"]
+
+
+def test_validate_ccpm_buffer_fever_chart_and_feeding_buffer_erosion_exports():
+    import backend.schemas.projects as mod
+
+    assert (
+        "validate_ccpm_buffer_fever_chart_and_feeding_buffer_erosion"
+        in mod.__all__
+    )
+

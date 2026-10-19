@@ -3021,6 +3021,7 @@ __all__ = [
     "audit_executive_report_smime_pgp_envelope_and_ocsp_stapling",
     "audit_executive_report_graphql_persisted_query_apq_and_batch_export_throttling",
     "audit_executive_report_xbrl_taxonomy_and_financial_rounding_parity",
+    "audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance",
     "ProjectExportService",
 ]
 
@@ -8698,4 +8699,95 @@ def audit_executive_report_xbrl_taxonomy_and_financial_rounding_parity(
 
 ProjectExportService.audit_executive_report_xbrl_taxonomy_and_financial_rounding_parity = staticmethod(
     audit_executive_report_xbrl_taxonomy_and_financial_rounding_parity
+)
+def audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance(
+    models: list[dict[str, Any]] | None,
+    *,
+    required_lod_level: int = 500,
+    min_cobie_attribute_completeness_pct: float = 98.0,
+    max_unresolved_hard_clashes: int = 0,
+) -> dict[str, Any]:
+    """PMBOK §4.7 & §10.2 — Audita handover del gemelo digital as-built: validación de esquema IFC4, cláusulas de choque duros sin resolver, completitud del registro de activos COBie y nivel de desarrollo (LOD) alcanzado por disciplina.
+
+    Cada modelo/disciplina válido declara `model_id` (str no vacío),
+    esquema IFC válido (`ifc_schema_valid`, default True), LOD alcanzado
+    (`achieved_lod`, default 500), choques duros sin resolver
+    (`hard_clash_count`, default 0) y completitud de atributos COBie
+    (`cobie_completeness_pct`, default 100.0):
+    - `invalid_ifc_or_hard_clash_model_ids`: esquema IFC inválido o choques
+      duros > max_unresolved_hard_clashes (brecha crítica).
+    - `lod_or_cobie_incomplete_model_ids`: LOD < required_lod_level o
+      completitud COBie < mínimo (advertencia de completitud).
+    - `bim_cobie_handover_status`: 'CRITICAL_IFC_SCHEMA_OR_CLASH_BREACH' si
+      hay (1); 'LOD_OR_COBIE_COMPLETENESS_WARNING' si hay (2);
+      'BIM_COBIE_HANDOVER_READY' si limpio.
+    - `is_bim_cobie_handover_ready`: solo con estado 'BIM_COBIE_HANDOVER_READY'.
+    """
+    raw_items = models if isinstance(models, list) else []
+    valid_models: list[dict[str, Any]] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_model_id = item.get("model_id")
+        if not isinstance(raw_model_id, str) or not raw_model_id.strip():
+            continue
+        valid_models.append(item)
+
+    def _bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    def _int(value: Any, default: int) -> int:
+        if isinstance(value, bool) or not isinstance(value, int):
+            return default
+        return value
+
+    def _float(value: Any, default: float) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    invalid_ifc_or_hard_clash_model_ids: list[str] = []
+    lod_or_cobie_incomplete_model_ids: list[str] = []
+
+    for model in valid_models:
+        model_id = str(model.get("model_id")).strip()
+        ifc_schema_valid = _bool(model.get("ifc_schema_valid"), True)
+        achieved_lod = _int(model.get("achieved_lod"), 500)
+        hard_clash_count = _int(model.get("hard_clash_count"), 0)
+        cobie_completeness_pct = _float(
+            model.get("cobie_completeness_pct"), 100.0
+        )
+
+        if (
+            not bool(ifc_schema_valid)
+            or int(hard_clash_count) > int(max_unresolved_hard_clashes)
+        ):
+            invalid_ifc_or_hard_clash_model_ids.append(model_id)
+
+        if (
+            int(achieved_lod) < int(required_lod_level)
+            or float(cobie_completeness_pct)
+            < float(min_cobie_attribute_completeness_pct)
+        ):
+            lod_or_cobie_incomplete_model_ids.append(model_id)
+
+    if invalid_ifc_or_hard_clash_model_ids:
+        bim_cobie_handover_status = "CRITICAL_IFC_SCHEMA_OR_CLASH_BREACH"
+    elif lod_or_cobie_incomplete_model_ids:
+        bim_cobie_handover_status = "LOD_OR_COBIE_COMPLETENESS_WARNING"
+    else:
+        bim_cobie_handover_status = "BIM_COBIE_HANDOVER_READY"
+
+    return {
+        "evaluated_model_count": len(valid_models),
+        "invalid_ifc_or_hard_clash_model_ids": invalid_ifc_or_hard_clash_model_ids,
+        "lod_or_cobie_incomplete_model_ids": lod_or_cobie_incomplete_model_ids,
+        "bim_cobie_handover_status": bim_cobie_handover_status,
+        "is_bim_cobie_handover_ready": bim_cobie_handover_status
+        == "BIM_COBIE_HANDOVER_READY",
+    }
+
+
+ProjectExportService.audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance = staticmethod(
+    audit_executive_report_bim_ifc_cobie_handover_and_lod_compliance
 )

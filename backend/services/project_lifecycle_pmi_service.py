@@ -3184,6 +3184,7 @@ __all__ = [
     "audit_stakeholder_escalation_sla_and_ombudsman_dispute_resolution",
     "audit_commissioning_punch_list_a_items_and_holdback_multiplier",
     "audit_jv_consortium_equity_split_and_deadlock_cure",
+    "audit_final_lien_waiver_unconditional_release_and_mechanics_lien_exposure",
     "ProjectLifecyclePMIService",
 ]
 
@@ -8558,3 +8559,93 @@ def audit_jv_consortium_equity_split_and_deadlock_cure(
 ProjectLifecyclePMIService.audit_jv_consortium_equity_split_and_deadlock_cure = staticmethod(
     audit_jv_consortium_equity_split_and_deadlock_cure
 )
+
+
+def audit_final_lien_waiver_unconditional_release_and_mechanics_lien_exposure(
+    contractors: list[dict[str, Any]],
+    retainage_escrow_balance: float = 0.0,
+    lien_bonding_off_multiplier: float = 1.50,
+) -> dict[str, Any]:
+    """PMBOK §12.3 & §4.7 — Project Closure Final Lien Waiver Unconditional Release, Subcontractor Affidavit Parity & Mechanics Lien Exposure Auditor."""
+    valid_contractors = [
+        c for c in (contractors if isinstance(contractors, list) else []) if isinstance(c, dict)
+    ]
+    escrow_bal = max(0.0, float(retainage_escrow_balance or 0.0))
+    bond_mult = max(1.0, float(lien_bonding_off_multiplier or 1.50))
+
+    missing_waiver_or_affidavit_contractors: list[str] = []
+    active_mechanics_liens: list[str] = []
+
+    for idx, c in enumerate(valid_contractors):
+        cid = str(c.get("contractor_id") or f"contractor-{idx + 1}").strip()
+        waiver_signed = bool(c.get("unconditional_final_waiver_signed", False))
+        affidavits_complete = bool(c.get("sub_tier_affidavits_complete", False))
+        lien_amt = max(0.0, float(c.get("recorded_mechanics_lien_amount", 0.0) or 0.0))
+
+        if not waiver_signed or not affidavits_complete:
+            missing_waiver_or_affidavit_contractors.append(cid)
+        if lien_amt > 0.0:
+            active_mechanics_liens.append(cid)
+
+    total_mechanics_lien_amount = round(
+        sum(
+            max(0.0, float(c.get("recorded_mechanics_lien_amount", 0.0) or 0.0))
+            for c in valid_contractors
+        ),
+        2,
+    )
+    required_lien_discharge_bond_amount = round(
+        total_mechanics_lien_amount * bond_mult, 2
+    )
+    unpaid_balance_total = round(
+        sum(
+            max(
+                0.0,
+                float(c.get("contract_final_amount", 0.0) or 0.0)
+                - float(c.get("paid_to_date_amount", 0.0) or 0.0),
+            )
+            for c in valid_contractors
+        ),
+        2,
+    )
+    escrow_covers_lien_bond = escrow_bal >= required_lien_discharge_bond_amount
+
+    recommendations: list[str] = []
+    if len(valid_contractors) == 0 or len(active_mechanics_liens) > 0:
+        status = "CRITICAL_MECHANICS_LIEN_ENCUMBRANCE"
+        if len(valid_contractors) == 0:
+            recommendations.append(
+                "No contractor closeout records provided; verify procurement closeout roster."
+            )
+        if active_mechanics_liens:
+            recommendations.append(
+                f"Discharge or bond off active mechanics liens ({required_lien_discharge_bond_amount:.2f} required) for: {', '.join(active_mechanics_liens)}."
+            )
+    elif len(missing_waiver_or_affidavit_contractors) > 0:
+        status = "HOLD_FINAL_RELEASE_PENDING_WAIVERS"
+        recommendations.append(
+            f"Withhold final retainage release until unconditional final waivers and sub-tier affidavits are executed for: {', '.join(missing_waiver_or_affidavit_contractors)}."
+        )
+    else:
+        status = "LIEN_FREE_READY_FOR_CLOSEOUT"
+
+    is_valid = status == "LIEN_FREE_READY_FOR_CLOSEOUT"
+
+    return {
+        "is_valid": is_valid,
+        "total_contractors": len(valid_contractors),
+        "missing_waiver_or_affidavit_contractors": missing_waiver_or_affidavit_contractors,
+        "active_mechanics_liens": active_mechanics_liens,
+        "total_mechanics_lien_amount": total_mechanics_lien_amount,
+        "required_lien_discharge_bond_amount": required_lien_discharge_bond_amount,
+        "unpaid_balance_total": unpaid_balance_total,
+        "escrow_covers_lien_bond": escrow_covers_lien_bond,
+        "status": status,
+        "recommendations": recommendations,
+    }
+
+
+ProjectLifecyclePMIService.audit_final_lien_waiver_unconditional_release_and_mechanics_lien_exposure = staticmethod(
+    audit_final_lien_waiver_unconditional_release_and_mechanics_lien_exposure
+)
+
