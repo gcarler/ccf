@@ -8129,3 +8129,141 @@ def test_audit_markdown_footnote_citation_reciprocity_and_key_hygiene_defensive_
         in mod.__all__
     )
 
+
+def test_audit_markdown_gfm_task_list_completion_and_nesting_hygiene_breach():
+    from backend.services.anydoc_service import (
+        audit_markdown_gfm_task_list_completion_and_nesting_hygiene,
+    )
+
+    res = audit_markdown_gfm_task_list_completion_and_nesting_hygiene(
+        [
+            {
+                "checklist_id": "  CHK-INCONSISTENT-PARENT  ",
+                "parent_checked_with_unchecked_children": True,
+                "malformed_gfm_checkbox_syntax_count": 0,
+                "observed_nesting_depth": 2,
+                "unassigned_blocker_items_count": 0,
+            },
+            {
+                "checklist_id": "CHK-MALFORMED-SYNTAX",
+                "parent_checked_with_unchecked_children": False,
+                "malformed_gfm_checkbox_syntax_count": 2,
+                "observed_nesting_depth": 5,
+                "unassigned_blocker_items_count": 1,
+            },
+            {
+                "checklist_id": "CHK-CLEAN",
+                "parent_checked_with_unchecked_children": False,
+                "malformed_gfm_checkbox_syntax_count": 0,
+                "observed_nesting_depth": 3,
+                "unassigned_blocker_items_count": 0,
+            },
+        ]
+    )
+    assert res["evaluated_checklists_count"] == 3
+    assert res["inconsistent_parent_or_syntax_checklist_ids"] == [
+        "CHK-INCONSISTENT-PARENT",
+        "CHK-MALFORMED-SYNTAX",
+    ]
+    assert res["deep_nesting_or_unassigned_blocker_checklist_ids"] == [
+        "CHK-MALFORMED-SYNTAX"
+    ]
+    assert (
+        res["task_list_hygiene_status"]
+        == "MARKDOWN_TASK_LIST_PARITY_OR_SYNTAX_BREACH"
+    )
+    assert res["is_task_list_hygiene_compliant"] is False
+
+
+def test_audit_markdown_gfm_task_list_completion_and_nesting_hygiene_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_gfm_task_list_completion_and_nesting_hygiene,
+    )
+
+    res = audit_markdown_gfm_task_list_completion_and_nesting_hygiene(
+        [
+            {
+                "checklist_id": "CHK-DEEP-NESTING",
+                "parent_checked_with_unchecked_children": True,
+                "malformed_gfm_checkbox_syntax_count": 0,
+                "observed_nesting_depth": 4,
+                "unassigned_blocker_items_count": 0,
+            },
+            {
+                "checklist_id": "CHK-UNASSIGNED-BLOCKER",
+                "parent_checked_with_unchecked_children": False,
+                "malformed_gfm_checkbox_syntax_count": 0,
+                "observed_nesting_depth": 3,
+                "unassigned_blocker_items_count": 1,
+            },
+        ],
+        max_nesting_depth=3,
+        require_children_complete_when_parent_checked=False,
+    )
+    assert res["evaluated_checklists_count"] == 2
+    assert res["inconsistent_parent_or_syntax_checklist_ids"] == []
+    assert res["deep_nesting_or_unassigned_blocker_checklist_ids"] == [
+        "CHK-DEEP-NESTING",
+        "CHK-UNASSIGNED-BLOCKER",
+    ]
+    assert (
+        res["task_list_hygiene_status"]
+        == "MARKDOWN_TASK_LIST_NESTING_OR_BLOCKER_WARNING"
+    )
+    assert res["is_task_list_hygiene_compliant"] is False
+
+
+def test_audit_markdown_gfm_task_list_completion_and_nesting_hygiene_optimal_and_defensive():
+    from backend.services.anydoc_service import (
+        audit_markdown_gfm_task_list_completion_and_nesting_hygiene,
+    )
+
+    empty = audit_markdown_gfm_task_list_completion_and_nesting_hygiene(None)
+    assert empty["evaluated_checklists_count"] == 0
+    assert (
+        empty["task_list_hygiene_status"]
+        == "MARKDOWN_TASK_LIST_HYGIENE_OPTIMAL"
+    )
+    assert empty["is_task_list_hygiene_compliant"] is True
+
+    defaults = audit_markdown_gfm_task_list_completion_and_nesting_hygiene(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"checklist_id": "   "},
+            {
+                "checklist_id": "CHK-DEFAULTS",
+                "parent_checked_with_unchecked_children": None,
+                "malformed_gfm_checkbox_syntax_count": None,
+                "observed_nesting_depth": None,
+                "unassigned_blocker_items_count": None,
+            },
+        ]
+    )
+    assert defaults["evaluated_checklists_count"] == 1
+    assert (
+        defaults["task_list_hygiene_status"]
+        == "MARKDOWN_TASK_LIST_HYGIENE_OPTIMAL"
+    )
+    assert defaults["is_task_list_hygiene_compliant"] is True
+
+
+def test_audit_markdown_gfm_task_list_completion_and_nesting_hygiene_staticmethod_and_dunder_all():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_gfm_task_list_completion_and_nesting_hygiene,
+    )
+
+    sample = [{"checklist_id": "CHK-99", "observed_nesting_depth": 2}]
+    assert (
+        AnyDocService.audit_markdown_gfm_task_list_completion_and_nesting_hygiene(
+            sample
+        )
+        == audit_markdown_gfm_task_list_completion_and_nesting_hygiene(sample)
+    )
+    assert (
+        "audit_markdown_gfm_task_list_completion_and_nesting_hygiene"
+        in mod.__all__
+    )
+
+

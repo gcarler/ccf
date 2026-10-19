@@ -5528,6 +5528,7 @@ __all__ = [
     "evaluate_evm_subcontractor_lien_waiver_and_flow_down",
     "evaluate_evm_capex_opex_software_capitalization_gate",
     "evaluate_evm_value_engineering_worth_ratio_and_vecp_gainshare",
+    "evaluate_evm_cpaf_award_fee_pool_and_rollover_governance",
     "ProjectEVMService",
 ]
 
@@ -9969,3 +9970,79 @@ ProjectEVMService.evaluate_evm_value_engineering_worth_ratio_and_vecp_gainshare 
 )
 
 
+def evaluate_evm_cpaf_award_fee_pool_and_rollover_governance(
+    periods: list[dict] | None,
+    *,
+    max_base_fee_pct: float = 3.0,
+    allow_unearned_fee_rollover: bool = False,
+) -> dict:
+    """PMBOK §12.1 & §7.4 — Evalúa pool de evaluación subjetiva CPAF, determinaciones unilaterales del board y rollover de honorarios no devengados."""
+    raw_items = periods if isinstance(periods, list) else []
+    valid_periods: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("period_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_periods.append(item)
+
+    def _num(value, default):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    def _bool(value, default):
+        return value if isinstance(value, bool) else default
+
+    unauthorized_rollover_or_unpublished_plan_period_ids: list[str] = []
+    excessive_base_or_overrun_rewarded_period_ids: list[str] = []
+
+    for period in valid_periods:
+        period_id = str(period.get("period_id")).strip()
+        base_fee_pct = _num(period.get("base_fee_pct"), 2.0)
+        plan_published = _bool(
+            period.get("award_fee_plan_published_in_advance"), True
+        )
+        fee_rolled_over = _bool(
+            period.get("unearned_fee_rolled_over"), False
+        )
+        cost_overrun = _bool(
+            period.get("cost_overrun_occurred"), False
+        )
+        award_fee_granted_pct = _num(
+            period.get("award_fee_granted_pct"), 80.0
+        )
+
+        if not plan_published or (
+            not allow_unearned_fee_rollover and fee_rolled_over
+        ):
+            unauthorized_rollover_or_unpublished_plan_period_ids.append(
+                period_id
+            )
+
+        if base_fee_pct > max_base_fee_pct or (
+            cost_overrun and award_fee_granted_pct > 50.0
+        ):
+            excessive_base_or_overrun_rewarded_period_ids.append(period_id)
+
+    if unauthorized_rollover_or_unpublished_plan_period_ids:
+        cpaf_governance_status = "CPAF_UNPUBLISHED_PLAN_OR_ROLLOVER_BREACH"
+    elif excessive_base_or_overrun_rewarded_period_ids:
+        cpaf_governance_status = "CPAF_BASE_FEE_OR_OVERRUN_REWARD_WARNING"
+    else:
+        cpaf_governance_status = "CPAF_AWARD_FEE_GOVERNANCE_OPTIMAL"
+
+    return {
+        "evaluated_periods_count": len(valid_periods),
+        "unauthorized_rollover_or_unpublished_plan_period_ids": unauthorized_rollover_or_unpublished_plan_period_ids,
+        "excessive_base_or_overrun_rewarded_period_ids": excessive_base_or_overrun_rewarded_period_ids,
+        "cpaf_governance_status": cpaf_governance_status,
+        "is_cpaf_governance_compliant": cpaf_governance_status
+        == "CPAF_AWARD_FEE_GOVERNANCE_OPTIMAL",
+    }
+
+
+ProjectEVMService.evaluate_evm_cpaf_award_fee_pool_and_rollover_governance = staticmethod(
+    evaluate_evm_cpaf_award_fee_pool_and_rollover_governance
+)

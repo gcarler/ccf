@@ -10235,3 +10235,151 @@ def test_audit_distributed_cache_stampede_and_hotkey_skew_gate_staticmethod_and_
     )
 
 
+def test_audit_service_mesh_mtls_strict_and_outlier_ejection_gate_breach():
+    from backend.services.project_ccb_service import (
+        audit_service_mesh_mtls_strict_and_outlier_ejection_gate,
+    )
+
+    res = audit_service_mesh_mtls_strict_and_outlier_ejection_gate(
+        [
+            {
+                "mesh_id": "  MESH-PROD-EAST  ",
+                "mtls_strict_mode_enforced": False,
+                "outlier_detection_configured": True,
+                "sidecar_cpu_overhead_pct": 5.0,
+                "max_ejection_percent": 15.0,
+            },
+            {
+                "mesh_id": "MESH-PROD-WEST",
+                "mtls_strict_mode_enforced": True,
+                "outlier_detection_configured": False,
+                "sidecar_cpu_overhead_pct": 18.0,
+                "max_ejection_percent": 50.0,
+            },
+            {
+                "mesh_id": "MESH-CLEAN",
+                "mtls_strict_mode_enforced": True,
+                "outlier_detection_configured": True,
+                "sidecar_cpu_overhead_pct": 12.0,
+                "max_ejection_percent": 30.0,
+            },
+        ]
+    )
+    assert res["evaluated_meshes_count"] == 3
+    assert res["permissive_mtls_or_missing_outlier_mesh_ids"] == [
+        "MESH-PROD-EAST",
+        "MESH-PROD-WEST",
+    ]
+    assert res["high_sidecar_overhead_or_cascading_ejection_mesh_ids"] == [
+        "MESH-PROD-WEST"
+    ]
+    assert (
+        res["service_mesh_gate_status"]
+        == "MESH_PERMISSIVE_MTLS_OR_OUTLIER_BREACH"
+    )
+    assert res["is_service_mesh_gate_compliant"] is False
+
+
+def test_audit_service_mesh_mtls_strict_and_outlier_ejection_gate_warning():
+    from backend.services.project_ccb_service import (
+        audit_service_mesh_mtls_strict_and_outlier_ejection_gate,
+    )
+
+    res = audit_service_mesh_mtls_strict_and_outlier_ejection_gate(
+        [
+            {
+                "mesh_id": "MESH-HIGH-CPU",
+                "mtls_strict_mode_enforced": True,
+                "outlier_detection_configured": True,
+                "sidecar_cpu_overhead_pct": 12.1,
+                "max_ejection_percent": 30.0,
+            },
+            {
+                "mesh_id": "MESH-HIGH-EJECTION",
+                "mtls_strict_mode_enforced": True,
+                "outlier_detection_configured": True,
+                "sidecar_cpu_overhead_pct": 12.0,
+                "max_ejection_percent": 30.1,
+            },
+        ],
+        max_sidecar_cpu_overhead_pct=12.0,
+        max_ejected_endpoints_share_pct=30.0,
+    )
+    assert res["evaluated_meshes_count"] == 2
+    assert res["permissive_mtls_or_missing_outlier_mesh_ids"] == []
+    assert res["high_sidecar_overhead_or_cascading_ejection_mesh_ids"] == [
+        "MESH-HIGH-CPU",
+        "MESH-HIGH-EJECTION",
+    ]
+    assert (
+        res["service_mesh_gate_status"]
+        == "MESH_SIDECAR_OVERHEAD_OR_EJECTION_WARNING"
+    )
+    assert res["is_service_mesh_gate_compliant"] is False
+
+
+def test_audit_service_mesh_mtls_strict_and_outlier_ejection_gate_optimal_and_defensive():
+    from backend.services.project_ccb_service import (
+        audit_service_mesh_mtls_strict_and_outlier_ejection_gate,
+    )
+
+    empty = audit_service_mesh_mtls_strict_and_outlier_ejection_gate(None)
+    assert empty["evaluated_meshes_count"] == 0
+    assert empty["permissive_mtls_or_missing_outlier_mesh_ids"] == []
+    assert empty["high_sidecar_overhead_or_cascading_ejection_mesh_ids"] == []
+    assert (
+        empty["service_mesh_gate_status"]
+        == "MESH_ZERO_TRUST_RESILIENCE_OPTIMAL"
+    )
+    assert empty["is_service_mesh_gate_compliant"] is True
+
+    optimal = audit_service_mesh_mtls_strict_and_outlier_ejection_gate(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"mesh_id": "   "},
+            {
+                "mesh_id": "MESH-DEFAULTS",
+                "mtls_strict_mode_enforced": None,
+                "outlier_detection_configured": None,
+                "sidecar_cpu_overhead_pct": None,
+                "max_ejection_percent": None,
+            },
+        ]
+    )
+    assert optimal["evaluated_meshes_count"] == 1
+    assert optimal["permissive_mtls_or_missing_outlier_mesh_ids"] == []
+    assert optimal["high_sidecar_overhead_or_cascading_ejection_mesh_ids"] == []
+    assert (
+        optimal["service_mesh_gate_status"]
+        == "MESH_ZERO_TRUST_RESILIENCE_OPTIMAL"
+    )
+    assert optimal["is_service_mesh_gate_compliant"] is True
+
+
+def test_audit_service_mesh_mtls_strict_and_outlier_ejection_gate_staticmethod_and_dunder_all():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_service_mesh_mtls_strict_and_outlier_ejection_gate,
+    )
+
+    sample = [
+        {
+            "mesh_id": "MESH-99",
+            "sidecar_cpu_overhead_pct": 4.0,
+            "max_ejection_percent": 15.0,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_service_mesh_mtls_strict_and_outlier_ejection_gate(
+            sample
+        )
+        == audit_service_mesh_mtls_strict_and_outlier_ejection_gate(sample)
+    )
+    assert (
+        "audit_service_mesh_mtls_strict_and_outlier_ejection_gate"
+        in mod.__all__
+    )
+
+
+

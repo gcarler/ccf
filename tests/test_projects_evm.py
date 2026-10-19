@@ -9559,3 +9559,174 @@ def test_evaluate_evm_value_engineering_worth_ratio_and_vecp_gainshare_staticmet
     )
 
 
+
+
+def test_evm_cpaf_unpublished_plan_or_rollover_breach():
+    from backend.services.project_evm_service import (
+        evaluate_evm_cpaf_award_fee_pool_and_rollover_governance,
+    )
+
+    res = evaluate_evm_cpaf_award_fee_pool_and_rollover_governance(
+        [
+            {
+                "period_id": "P-NO-PLAN",
+                "award_fee_plan_published_in_advance": False,
+            },
+            {
+                "period_id": "P-ROLLOVER-HIGH-BASE",
+                "unearned_fee_rolled_over": True,
+                "base_fee_pct": 5.0,
+            },
+        ],
+        max_base_fee_pct=3.0,
+        allow_unearned_fee_rollover=False,
+    )
+    assert res["evaluated_periods_count"] == 2
+    assert res["unauthorized_rollover_or_unpublished_plan_period_ids"] == [
+        "P-NO-PLAN",
+        "P-ROLLOVER-HIGH-BASE",
+    ]
+    assert res["excessive_base_or_overrun_rewarded_period_ids"] == [
+        "P-ROLLOVER-HIGH-BASE"
+    ]
+    assert (
+        res["cpaf_governance_status"]
+        == "CPAF_UNPUBLISHED_PLAN_OR_ROLLOVER_BREACH"
+    )
+    assert res["is_cpaf_governance_compliant"] is False
+
+    rollover_allowed = evaluate_evm_cpaf_award_fee_pool_and_rollover_governance(
+        [
+            {
+                "period_id": "P-ROLLOVER-ALLOWED",
+                "unearned_fee_rolled_over": True,
+            }
+        ],
+        max_base_fee_pct=3.0,
+        allow_unearned_fee_rollover=True,
+    )
+    assert (
+        rollover_allowed["unauthorized_rollover_or_unpublished_plan_period_ids"]
+        == []
+    )
+
+
+def test_evm_cpaf_base_fee_or_overrun_reward_warning():
+    from backend.services.project_evm_service import (
+        evaluate_evm_cpaf_award_fee_pool_and_rollover_governance,
+    )
+
+    res = evaluate_evm_cpaf_award_fee_pool_and_rollover_governance(
+        [
+            {
+                "period_id": "P-HIGH-BASE",
+                "base_fee_pct": 4.0,
+            },
+            {
+                "period_id": "P-OVERRUN-REWARDED",
+                "cost_overrun_occurred": True,
+                "award_fee_granted_pct": 90.0,
+            },
+        ],
+        max_base_fee_pct=3.0,
+        allow_unearned_fee_rollover=False,
+    )
+    assert res["evaluated_periods_count"] == 2
+    assert res["unauthorized_rollover_or_unpublished_plan_period_ids"] == []
+    assert res["excessive_base_or_overrun_rewarded_period_ids"] == [
+        "P-HIGH-BASE",
+        "P-OVERRUN-REWARDED",
+    ]
+    assert (
+        res["cpaf_governance_status"]
+        == "CPAF_BASE_FEE_OR_OVERRUN_REWARD_WARNING"
+    )
+    assert res["is_cpaf_governance_compliant"] is False
+
+
+def test_evm_cpaf_boundaries_optimal_and_defaults():
+    from backend.services.project_evm_service import (
+        evaluate_evm_cpaf_award_fee_pool_and_rollover_governance,
+    )
+
+    res = evaluate_evm_cpaf_award_fee_pool_and_rollover_governance(
+        [
+            {
+                "period_id": "P-BOUNDARY",
+                "base_fee_pct": 3.0,
+                "cost_overrun_occurred": True,
+                "award_fee_granted_pct": 50.0,
+            },
+            {"period_id": "P-ALL-DEFAULTS"},
+        ],
+        max_base_fee_pct=3.0,
+        allow_unearned_fee_rollover=False,
+    )
+    assert res["evaluated_periods_count"] == 2
+    assert res["unauthorized_rollover_or_unpublished_plan_period_ids"] == []
+    assert res["excessive_base_or_overrun_rewarded_period_ids"] == []
+    assert (
+        res["cpaf_governance_status"]
+        == "CPAF_AWARD_FEE_GOVERNANCE_OPTIMAL"
+    )
+    assert res["is_cpaf_governance_compliant"] is True
+
+
+def test_evm_cpaf_invalid_and_binding():
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_cpaf_award_fee_pool_and_rollover_governance,
+    )
+
+    empty = evaluate_evm_cpaf_award_fee_pool_and_rollover_governance(None)
+    assert empty["evaluated_periods_count"] == 0
+    assert empty["unauthorized_rollover_or_unpublished_plan_period_ids"] == []
+    assert empty["excessive_base_or_overrun_rewarded_period_ids"] == []
+    assert (
+        empty["cpaf_governance_status"]
+        == "CPAF_AWARD_FEE_GOVERNANCE_OPTIMAL"
+    )
+    assert empty["is_cpaf_governance_compliant"] is True
+
+    invalid = evaluate_evm_cpaf_award_fee_pool_and_rollover_governance(
+        [42, "not-a-dict", None, {"period_id": "   "}]  # type: ignore[list-item]
+    )
+    assert invalid["evaluated_periods_count"] == 0
+
+    defaults = evaluate_evm_cpaf_award_fee_pool_and_rollover_governance(
+        [
+            {
+                "period_id": "P-DEFAULTS",
+                "base_fee_pct": None,
+                "award_fee_plan_published_in_advance": None,
+                "unearned_fee_rolled_over": None,
+                "cost_overrun_occurred": None,
+                "award_fee_granted_pct": None,
+            }
+        ]
+    )
+    assert defaults["evaluated_periods_count"] == 1
+    assert (
+        defaults["cpaf_governance_status"]
+        == "CPAF_AWARD_FEE_GOVERNANCE_OPTIMAL"
+    )
+    assert defaults["is_cpaf_governance_compliant"] is True
+
+    sample = [
+        {
+            "period_id": "P-1",
+            "base_fee_pct": 2.0,
+            "award_fee_granted_pct": 80.0,
+        }
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_cpaf_award_fee_pool_and_rollover_governance(
+            sample
+        )
+        == evaluate_evm_cpaf_award_fee_pool_and_rollover_governance(sample)
+    )
+    assert (
+        "evaluate_evm_cpaf_award_fee_pool_and_rollover_governance"
+        in mod.__all__
+    )

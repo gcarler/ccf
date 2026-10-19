@@ -2855,6 +2855,7 @@ __all__ = [
     "audit_db_connection_pool_saturation_and_idle_tx_timeout",
     "audit_message_broker_consumer_lag_and_dlq_poison_pill_gate",
     "audit_distributed_cache_stampede_and_hotkey_skew_gate",
+    "audit_service_mesh_mtls_strict_and_outlier_ejection_gate",
     "ProjectCCBService",
 ]
 
@@ -7579,6 +7580,74 @@ def audit_distributed_cache_stampede_and_hotkey_skew_gate(
 ProjectCCBService.audit_distributed_cache_stampede_and_hotkey_skew_gate = staticmethod(
     audit_distributed_cache_stampede_and_hotkey_skew_gate
 )
+
+
+def audit_service_mesh_mtls_strict_and_outlier_ejection_gate(
+    meshes: list[dict] | None,
+    *,
+    max_sidecar_cpu_overhead_pct: float = 12.0,
+    max_ejected_endpoints_share_pct: float = 30.0,
+) -> dict:
+    """PMBOK §8.3 & §11.6 — Audita aplicación estricta de mTLS en Service Mesh, sobrecarga de CPU de sidecar proxy y eyección de outliers de circuit-breaker."""
+    raw_items = meshes if isinstance(meshes, list) else []
+    valid_meshes: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("mesh_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_meshes.append(item)
+
+    permissive_mtls_or_missing_outlier_mesh_ids: list[str] = []
+    high_sidecar_overhead_or_cascading_ejection_mesh_ids: list[str] = []
+
+    for m in valid_meshes:
+        mid = m["mesh_id"].strip()
+        raw_mtls = m.get("mtls_strict_mode_enforced", True)
+        mtls_strict_mode_enforced = bool(True if raw_mtls is None else raw_mtls)
+
+        raw_outlier = m.get("outlier_detection_configured", True)
+        outlier_detection_configured = bool(
+            True if raw_outlier is None else raw_outlier
+        )
+
+        raw_cpu = m.get("sidecar_cpu_overhead_pct", 4.5)
+        sidecar_cpu_overhead_pct = float(4.5 if raw_cpu is None else raw_cpu)
+
+        raw_eject = m.get("max_ejection_percent", 20.0)
+        max_ejection_percent = float(20.0 if raw_eject is None else raw_eject)
+
+        if not mtls_strict_mode_enforced or not outlier_detection_configured:
+            permissive_mtls_or_missing_outlier_mesh_ids.append(mid)
+
+        if (
+            sidecar_cpu_overhead_pct > max_sidecar_cpu_overhead_pct
+            or max_ejection_percent > max_ejected_endpoints_share_pct
+        ):
+            high_sidecar_overhead_or_cascading_ejection_mesh_ids.append(mid)
+
+    if permissive_mtls_or_missing_outlier_mesh_ids:
+        service_mesh_gate_status = "MESH_PERMISSIVE_MTLS_OR_OUTLIER_BREACH"
+    elif high_sidecar_overhead_or_cascading_ejection_mesh_ids:
+        service_mesh_gate_status = "MESH_SIDECAR_OVERHEAD_OR_EJECTION_WARNING"
+    else:
+        service_mesh_gate_status = "MESH_ZERO_TRUST_RESILIENCE_OPTIMAL"
+
+    return {
+        "evaluated_meshes_count": len(valid_meshes),
+        "permissive_mtls_or_missing_outlier_mesh_ids": permissive_mtls_or_missing_outlier_mesh_ids,
+        "high_sidecar_overhead_or_cascading_ejection_mesh_ids": high_sidecar_overhead_or_cascading_ejection_mesh_ids,
+        "service_mesh_gate_status": service_mesh_gate_status,
+        "is_service_mesh_gate_compliant": service_mesh_gate_status
+        == "MESH_ZERO_TRUST_RESILIENCE_OPTIMAL",
+    }
+
+
+ProjectCCBService.audit_service_mesh_mtls_strict_and_outlier_ejection_gate = staticmethod(
+    audit_service_mesh_mtls_strict_and_outlier_ejection_gate
+)
+
 
 
 

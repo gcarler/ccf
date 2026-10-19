@@ -3041,6 +3041,7 @@ __all__ = [
     "audit_markdown_fenced_code_block_language_and_secret_hygiene",
     "audit_markdown_table_column_parity_and_cell_hygiene",
     "audit_markdown_footnote_citation_reciprocity_and_key_hygiene",
+    "audit_markdown_gfm_task_list_completion_and_nesting_hygiene",
     "AnydocService",
 ]
 
@@ -8437,5 +8438,84 @@ def audit_markdown_footnote_citation_reciprocity_and_key_hygiene(
 AnyDocService.audit_markdown_footnote_citation_reciprocity_and_key_hygiene = staticmethod(
     audit_markdown_footnote_citation_reciprocity_and_key_hygiene
 )
+
+
+def audit_markdown_gfm_task_list_completion_and_nesting_hygiene(
+    checklists: list[dict] | None,
+    *,
+    max_nesting_depth: int = 3,
+    require_children_complete_when_parent_checked: bool = True,
+) -> dict:
+    """PMBOK §4.4 & §10.2 — Audita paridad de completitud de checkboxes GFM en listas de tareas Markdown, profundidad de anidación y bloqueadores sin dueño."""
+    raw_items = checklists if isinstance(checklists, list) else []
+    valid_checklists: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("checklist_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_checklists.append(item)
+
+    inconsistent_parent_or_syntax_checklist_ids: list[str] = []
+    deep_nesting_or_unassigned_blocker_checklist_ids: list[str] = []
+
+    for c in valid_checklists:
+        cid = c["checklist_id"].strip()
+        raw_parent = c.get("parent_checked_with_unchecked_children", False)
+        parent_checked_with_unchecked_children = bool(
+            False if raw_parent is None else raw_parent
+        )
+
+        raw_syntax = c.get("malformed_gfm_checkbox_syntax_count", 0)
+        malformed_gfm_checkbox_syntax_count = int(
+            0 if raw_syntax is None else raw_syntax
+        )
+
+        raw_depth = c.get("observed_nesting_depth", 2)
+        observed_nesting_depth = int(2 if raw_depth is None else raw_depth)
+
+        raw_blockers = c.get("unassigned_blocker_items_count", 0)
+        unassigned_blocker_items_count = int(
+            0 if raw_blockers is None else raw_blockers
+        )
+
+        if (
+            require_children_complete_when_parent_checked
+            and parent_checked_with_unchecked_children
+        ) or malformed_gfm_checkbox_syntax_count > 0:
+            inconsistent_parent_or_syntax_checklist_ids.append(cid)
+
+        if (
+            observed_nesting_depth > max_nesting_depth
+            or unassigned_blocker_items_count > 0
+        ):
+            deep_nesting_or_unassigned_blocker_checklist_ids.append(cid)
+
+    if inconsistent_parent_or_syntax_checklist_ids:
+        task_list_hygiene_status = (
+            "MARKDOWN_TASK_LIST_PARITY_OR_SYNTAX_BREACH"
+        )
+    elif deep_nesting_or_unassigned_blocker_checklist_ids:
+        task_list_hygiene_status = (
+            "MARKDOWN_TASK_LIST_NESTING_OR_BLOCKER_WARNING"
+        )
+    else:
+        task_list_hygiene_status = "MARKDOWN_TASK_LIST_HYGIENE_OPTIMAL"
+
+    return {
+        "evaluated_checklists_count": len(valid_checklists),
+        "inconsistent_parent_or_syntax_checklist_ids": inconsistent_parent_or_syntax_checklist_ids,
+        "deep_nesting_or_unassigned_blocker_checklist_ids": deep_nesting_or_unassigned_blocker_checklist_ids,
+        "task_list_hygiene_status": task_list_hygiene_status,
+        "is_task_list_hygiene_compliant": task_list_hygiene_status
+        == "MARKDOWN_TASK_LIST_HYGIENE_OPTIMAL",
+    }
+
+
+AnyDocService.audit_markdown_gfm_task_list_completion_and_nesting_hygiene = staticmethod(
+    audit_markdown_gfm_task_list_completion_and_nesting_hygiene
+)
+
 
 
