@@ -3033,6 +3033,7 @@ __all__ = [
     "audit_markdown_task_list_checklist_owner_and_due_date_hygiene",
     "audit_markdown_image_alt_text_and_asset_weight_hygiene",
     "audit_markdown_acronym_expansion_and_glossary_term_hygiene",
+    "audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene",
     "AnydocService",
 ]
 
@@ -7819,3 +7820,83 @@ AnyDocService.audit_markdown_acronym_expansion_and_glossary_term_hygiene = stati
 AnydocService.audit_markdown_acronym_expansion_and_glossary_term_hygiene = staticmethod(
     audit_markdown_acronym_expansion_and_glossary_term_hygiene
 )
+
+
+def audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene(
+    documents: Any,
+    *,
+    max_heading_depth_allowed: int = 4,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §10.2 — AnyDoc Markdown Heading Hierarchy Skip-Level, Duplicate Anchor ID & TOC Synchronization Hygiene Auditor."""
+    entries = documents if isinstance(documents, (list, tuple)) else []
+    rows = [
+        item
+        for item in entries
+        if isinstance(item, dict) and str(item.get("doc_id") or "").strip()
+    ]
+
+    broken_anchor_or_h1_doc_ids: list[str] = []
+    hierarchy_skip_or_toc_drift_doc_ids: list[str] = []
+
+    for item in rows:
+        doc_id = str(item.get("doc_id")).strip()
+        has_single_h1_root = bool(
+            item.get("has_single_h1_root", True)
+            if item.get("has_single_h1_root") is not None
+            else True
+        )
+        skipped_levels = int(
+            item.get("skipped_heading_levels_count", 0)
+            if item.get("skipped_heading_levels_count") is not None
+            else 0
+        )
+        duplicate_anchors = int(
+            item.get("duplicate_anchor_slugs_count", 0)
+            if item.get("duplicate_anchor_slugs_count") is not None
+            else 0
+        )
+        max_depth = int(
+            item.get("max_heading_depth_observed", 2)
+            if item.get("max_heading_depth_observed") is not None
+            else 2
+        )
+        toc_synced = bool(
+            item.get("toc_synchronized_with_headings", True)
+            if item.get("toc_synchronized_with_headings") is not None
+            else True
+        )
+
+        if not has_single_h1_root or duplicate_anchors > 0:
+            broken_anchor_or_h1_doc_ids.append(doc_id)
+
+        if (
+            skipped_levels > 0
+            or not toc_synced
+            or max_depth > max_heading_depth_allowed
+        ):
+            hierarchy_skip_or_toc_drift_doc_ids.append(doc_id)
+
+    if broken_anchor_or_h1_doc_ids:
+        heading_hygiene_status = "HEADING_ANCHOR_OR_H1_BREACH"
+    elif hierarchy_skip_or_toc_drift_doc_ids:
+        heading_hygiene_status = "HEADING_HIERARCHY_OR_TOC_WARNING"
+    else:
+        heading_hygiene_status = "HEADING_STRUCTURE_CLEAN"
+
+    return {
+        "evaluated_documents_count": len(rows),
+        "broken_anchor_or_h1_doc_ids": broken_anchor_or_h1_doc_ids,
+        "hierarchy_skip_or_toc_drift_doc_ids": hierarchy_skip_or_toc_drift_doc_ids,
+        "heading_hygiene_status": heading_hygiene_status,
+        "is_heading_hygiene_compliant": heading_hygiene_status
+        == "HEADING_STRUCTURE_CLEAN",
+    }
+
+
+AnyDocService.audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene = staticmethod(
+    audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene
+)
+AnydocService.audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene = staticmethod(
+    audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene
+)
+

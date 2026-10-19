@@ -8424,3 +8424,169 @@ def test_evaluate_evm_performance_bond_and_letter_of_credit_coverage_staticmetho
         "evaluate_evm_performance_bond_and_letter_of_credit_coverage"
         in mod.__all__
     )
+
+
+def test_evaluate_evm_fx_hedging_var_breach_paths():
+    """Caso 1: VaR sin cubrir sobre el umbral del BAC -> FX_TRANSLATION_VAR_BREACH."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_fx_hedging_collar_and_currency_exposure,
+    )
+
+    res = evaluate_evm_fx_hedging_collar_and_currency_exposure(
+        [
+            {
+                "currency_code": "EUR",
+                "exposure_in_base_currency": 200000.0,
+                "hedged_amount_in_base_currency": 0.0,
+                "spot_volatility_var_pct": 10.0,
+                "has_active_fx_collar_or_forward": False,
+                "total_project_bac": 500000.0,
+            },
+        ]
+    )
+    assert res["total_fx_exposure_base"] == 200000.0
+    assert res["total_hedged_base"] == 0.0
+    assert res["aggregate_hedge_coverage_pct"] == 0.0
+    # VaR sin cubrir = 200000 * 10% = 20000; pct del BAC = 20000 / 500000 = 4.0% > 2.0%.
+    assert res["total_unhedged_fx_var_amount"] == 20000.0
+    assert res["unhedged_fx_var_pct_of_bac"] == 4.0
+    assert res["underhedged_currency_codes"] == ["EUR"]
+    assert res["fx_exposure_status"] == "FX_TRANSLATION_VAR_BREACH"
+    assert res["is_fx_compliant"] is False
+
+    # Precisión: FX_TRANSLATION_VAR_BREACH domina sobre FX_HEDGE_COVERAGE_WARNING.
+    res_mixed = evaluate_evm_fx_hedging_collar_and_currency_exposure(
+        [
+            {
+                "currency_code": "EUR",
+                "exposure_in_base_currency": 200000.0,
+                "hedged_amount_in_base_currency": 200000.0,
+                "spot_volatility_var_pct": 10.0,
+                "has_active_fx_collar_or_forward": False,
+                "total_project_bac": 500000.0,
+            },
+        ]
+    )
+    # Coverage 100%, pero sin collar activo -> WARNING... el VaR es 0.0 <= 2.0.
+    assert res_mixed["unhedged_fx_var_pct_of_bac"] == 0.0
+    assert res_mixed["underhedged_currency_codes"] == ["EUR"]
+    assert res_mixed["fx_exposure_status"] == "FX_HEDGE_COVERAGE_WARNING"
+
+
+def test_evaluate_evm_fx_hedging_warning_only_paths():
+    """Caso 2: sub-cobertura por collar ausente o ratio bajo con VaR en umbral -> WARNING."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_fx_hedging_collar_and_currency_exposure,
+    )
+
+    res = evaluate_evm_fx_hedging_collar_and_currency_exposure(
+        [
+            {
+                "currency_code": "EUR",
+                "exposure_in_base_currency": 100000.0,
+                "hedged_amount_in_base_currency": 75000.0,
+                "spot_volatility_var_pct": 5.0,
+                "has_active_fx_collar_or_forward": True,
+                "total_project_bac": 400000.0,
+            },
+        ]
+    )
+    # Coverage 75% < 80% -> underhedged; VaR = 25000 * 5% = 1250; / 400000 = 0.31% <= 2.0%.
+    assert res["total_fx_exposure_base"] == 100000.0
+    assert res["total_hedged_base"] == 75000.0
+    assert res["aggregate_hedge_coverage_pct"] == 75.0
+    assert res["total_unhedged_fx_var_amount"] == 1250.0
+    assert res["unhedged_fx_var_pct_of_bac"] == 0.31
+    assert res["underhedged_currency_codes"] == ["EUR"]
+    assert res["fx_exposure_status"] == "FX_HEDGE_COVERAGE_WARNING"
+    assert res["is_fx_compliant"] is False
+
+
+def test_evaluate_evm_fx_hedging_optimal_and_boundaries():
+    """Caso 3: cobertura completa y fronteras exactas (80% y 2.0% inclusive) -> FX_HEDGED_OPTIMAL."""
+    from backend.services.project_evm_service import (
+        evaluate_evm_fx_hedging_collar_and_currency_exposure,
+    )
+
+    res = evaluate_evm_fx_hedging_collar_and_currency_exposure(
+        [
+            {
+                "currency_code": "EUR",
+                "exposure_in_base_currency": 100000.0,
+                "hedged_amount_in_base_currency": 100000.0,
+                "spot_volatility_var_pct": 5.0,
+                "has_active_fx_collar_or_forward": True,
+                "total_project_bac": 400000.0,
+            },
+        ]
+    )
+    assert res["total_fx_exposure_base"] == 100000.0
+    assert res["total_hedged_base"] == 100000.0
+    assert res["aggregate_hedge_coverage_pct"] == 100.0
+    assert res["total_unhedged_fx_var_amount"] == 0.0
+    assert res["unhedged_fx_var_pct_of_bac"] == 0.0
+    assert res["underhedged_currency_codes"] == []
+    assert res["fx_exposure_status"] == "FX_HEDGED_OPTIMAL"
+    assert res["is_fx_compliant"] is True
+
+    # Fronteras: coverage 80.0% exacto y VaR 2.0% exacto no disparan nada.
+    res_boundary = evaluate_evm_fx_hedging_collar_and_currency_exposure(
+        [
+            {
+                "currency_code": "GBP",
+                "exposure_in_base_currency": 50000.0,
+                "hedged_amount_in_base_currency": 40000.0,
+                "spot_volatility_var_pct": 8.0,
+                "has_active_fx_collar_or_forward": True,
+                "total_project_bac": 50000.0,
+            },
+        ]
+    )
+    # coverage 80.0% no < 80.0; VaR = 10000 * 8% = 800; / 50000 = 1.6% <= 2.0.
+    assert res_boundary["underhedged_currency_codes"] == []
+    assert res_boundary["unhedged_fx_var_pct_of_bac"] == 1.6
+    assert res_boundary["fx_exposure_status"] == "FX_HEDGED_OPTIMAL"
+
+    # Tranche sin exposición (exposure 0): coverage 100.0 por defecto y VaR 0.
+    res_no_exposure = evaluate_evm_fx_hedging_collar_and_currency_exposure(
+        [
+            {"currency_code": "CHF", "exposure_in_base_currency": 0.0, "hedged_amount_in_base_currency": 0.0},
+        ]
+    )
+    assert res_no_exposure["aggregate_hedge_coverage_pct"] == 100.0
+    assert res_no_exposure["total_unhedged_fx_var_amount"] == 0.0
+    assert res_no_exposure["underhedged_currency_codes"] == []
+    assert res_no_exposure["fx_exposure_status"] == "FX_HEDGED_OPTIMAL"
+
+
+def test_evaluate_evm_fx_hedging_invalid_and_binding():
+    """Caso 4: entradas no-lista/no-dict y binding + __all__."""
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_fx_hedging_collar_and_currency_exposure,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = evaluate_evm_fx_hedging_collar_and_currency_exposure(payload)  # type: ignore[arg-type]
+        assert empty["total_fx_exposure_base"] == 0.0
+        assert empty["total_hedged_base"] == 0.0
+        assert empty["aggregate_hedge_coverage_pct"] == 100.0
+        assert empty["total_unhedged_fx_var_amount"] == 0.0
+        assert empty["unhedged_fx_var_pct_of_bac"] == 0.0
+        assert empty["underhedged_currency_codes"] == []
+        assert empty["fx_exposure_status"] == "FX_HEDGED_OPTIMAL"
+        assert empty["is_fx_compliant"] is True
+
+    sample = [
+        {
+            "currency_code": "EUR",
+            "exposure_in_base_currency": 10000.0,
+            "hedged_amount_in_base_currency": 10000.0,
+        },
+    ]
+    assert (
+        ProjectEVMService.evaluate_evm_fx_hedging_collar_and_currency_exposure(sample)
+        == evaluate_evm_fx_hedging_collar_and_currency_exposure(sample)
+    )
+    assert "evaluate_evm_fx_hedging_collar_and_currency_exposure" in mod.__all__

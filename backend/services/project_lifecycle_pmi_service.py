@@ -3166,6 +3166,7 @@ __all__ = [
     "audit_warranty_defect_liability_and_escrow_release_gate",
     "audit_regulatory_permits_and_statutory_compliance_readiness",
     "audit_charter_business_case_irr_wacc_spread_and_payback",
+    "audit_project_closure_lessons_learned_and_pir_archival",
     "ProjectLifecyclePMIService",
 ]
 
@@ -6947,5 +6948,82 @@ def audit_charter_business_case_irr_wacc_spread_and_payback(
 
 ProjectLifecyclePMIService.audit_charter_business_case_irr_wacc_spread_and_payback = staticmethod(
     audit_charter_business_case_irr_wacc_spread_and_payback
+)
+
+
+def audit_project_closure_lessons_learned_and_pir_archival(
+    closure_packages: Sequence[Mapping[str, Any]] | None,
+    *,
+    max_days_to_pir_completion: int | float = 30,
+    min_actionable_lessons_count: int = 3,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.7 & §12.3 — Project Closure Lessons Learned Indexing, PIR & Archival Sign-Off Auditor."""
+    valid_packages = [
+        pkg
+        for pkg in (closure_packages or [])
+        if isinstance(pkg, Mapping) and str(pkg.get("package_id") or "").strip()
+    ]
+
+    unarchived_or_unsigned_package_ids: list[str] = []
+    overdue_or_incomplete_pir_package_ids: list[str] = []
+    insufficient_lessons_package_ids: list[str] = []
+
+    for pkg in valid_packages:
+        pid = str(pkg.get("package_id")).strip()
+        days_to_pir = float(
+            pkg.get("days_since_handover_to_pir", 0)
+            if pkg.get("days_since_handover_to_pir") is not None
+            else 0
+        )
+        pir_completed = bool(
+            pkg.get("pir_completed", True)
+            if pkg.get("pir_completed") is not None
+            else True
+        )
+        lessons_count = int(
+            pkg.get("actionable_lessons_documented_count", 0)
+            if pkg.get("actionable_lessons_documented_count") is not None
+            else 0
+        )
+        indexed_opa = bool(
+            pkg.get("indexed_in_organizational_process_assets", True)
+            if pkg.get("indexed_in_organizational_process_assets") is not None
+            else True
+        )
+        sponsor_signed = bool(
+            pkg.get("sponsor_final_archival_signed", True)
+            if pkg.get("sponsor_final_archival_signed") is not None
+            else True
+        )
+
+        if not sponsor_signed or not indexed_opa:
+            unarchived_or_unsigned_package_ids.append(pid)
+
+        if not pir_completed or days_to_pir > max_days_to_pir_completion:
+            overdue_or_incomplete_pir_package_ids.append(pid)
+
+        if lessons_count < min_actionable_lessons_count:
+            insufficient_lessons_package_ids.append(pid)
+
+    if unarchived_or_unsigned_package_ids or overdue_or_incomplete_pir_package_ids:
+        closure_archival_status = "CLOSURE_ARCHIVAL_GOVERNANCE_BREACH"
+    elif insufficient_lessons_package_ids:
+        closure_archival_status = "CLOSURE_LESSONS_DENSITY_WARNING"
+    else:
+        closure_archival_status = "CLOSURE_OPA_ARCHIVED_OPTIMAL"
+
+    return {
+        "evaluated_closure_packages_count": len(valid_packages),
+        "unarchived_or_unsigned_package_ids": unarchived_or_unsigned_package_ids,
+        "overdue_or_incomplete_pir_package_ids": overdue_or_incomplete_pir_package_ids,
+        "insufficient_lessons_package_ids": insufficient_lessons_package_ids,
+        "closure_archival_status": closure_archival_status,
+        "is_closure_archival_compliant": closure_archival_status
+        == "CLOSURE_OPA_ARCHIVED_OPTIMAL",
+    }
+
+
+ProjectLifecyclePMIService.audit_project_closure_lessons_learned_and_pir_archival = staticmethod(
+    audit_project_closure_lessons_learned_and_pir_archival
 )
 

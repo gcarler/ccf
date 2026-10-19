@@ -5520,6 +5520,7 @@ __all__ = [
     "evaluate_evm_sla_penalty_service_credits_and_earn_back",
     "evaluate_evm_cpif_share_ratio_and_point_of_total_assumption",
     "evaluate_evm_performance_bond_and_letter_of_credit_coverage",
+    "evaluate_evm_fx_hedging_collar_and_currency_exposure",
     "ProjectEVMService",
 ]
 
@@ -9313,5 +9314,93 @@ def evaluate_evm_performance_bond_and_letter_of_credit_coverage(
 
 ProjectEVMService.evaluate_evm_performance_bond_and_letter_of_credit_coverage = staticmethod(
     evaluate_evm_performance_bond_and_letter_of_credit_coverage
+)
+
+
+def evaluate_evm_fx_hedging_collar_and_currency_exposure(
+    currency_tranches: Any,
+    *,
+    min_hedge_coverage_pct: float = 80.0,
+    max_unhedged_fx_var_pct_of_bac: float = 2.0,
+) -> Dict[str, object]:
+    """Evaluación PMBOK 7.4 y 11.2: cobertura FX y exposición de traducción.
+
+    Agrega por tranche la exposición y cobertura en moneda base, calcula
+    el VaR de las fracciones sin cubrir frente al BAC total del proyecto
+    y detecta monedas sub-cubiertas o sin collar/forward activo.
+    """
+    entries = currency_tranches if isinstance(currency_tranches, list) else []
+    rows = [item for item in entries if isinstance(item, dict)]
+
+    total_fx_exposure_base = 0.0
+    total_hedged_base = 0.0
+    total_unhedged_fx_var_amount = 0.0
+    total_bac = 0.0
+    underhedged_currency_codes: List[str] = []
+
+    for item in rows:
+        currency_code = item.get("currency_code")
+        exposure = item.get("exposure_in_base_currency", 0.0)
+        hedged = item.get("hedged_amount_in_base_currency", 0.0)
+        var_pct = item.get("spot_volatility_var_pct", 5.0)
+        has_collar = item.get("has_active_fx_collar_or_forward", True)
+        bac = item.get("total_project_bac", 100000.0)
+
+        exposure_val = exposure if isinstance(exposure, (int, float)) and exposure >= 0 else 0.0
+        hedged_raw = hedged if isinstance(hedged, (int, float)) and hedged >= 0 else 0.0
+        var_pct_val = var_pct if isinstance(var_pct, (int, float)) and var_pct >= 0 else 0.0
+        bac_val = bac if isinstance(bac, (int, float)) and bac >= 0 else 0.0
+
+        # El monto cubierto no puede exceder la exposición de la tranche.
+        hedged_val = min(hedged_raw, exposure_val)
+
+        total_fx_exposure_base += exposure_val
+        total_hedged_base += hedged_val
+        total_unhedged_fx_var_amount += (
+            max(0.0, exposure_val - hedged_val) * (var_pct_val / 100.0)
+        )
+        total_bac += bac_val
+
+        if exposure_val > 0:
+            hedge_coverage_pct = round((hedged_val / exposure_val) * 100.0, 2)
+        else:
+            hedge_coverage_pct = 100.0
+
+        if exposure_val > 0 and (hedge_coverage_pct < min_hedge_coverage_pct or has_collar is not True):
+            underhedged_currency_codes.append(currency_code)
+
+    aggregate_hedge_coverage_pct = (
+        round((total_hedged_base / total_fx_exposure_base) * 100.0, 2)
+        if total_fx_exposure_base > 0
+        else 100.0
+    )
+
+    unhedged_fx_var_pct_of_bac = (
+        round((total_unhedged_fx_var_amount / total_bac) * 100.0, 2)
+        if total_bac > 0
+        else 0.0
+    )
+
+    if unhedged_fx_var_pct_of_bac > max_unhedged_fx_var_pct_of_bac:
+        fx_exposure_status = "FX_TRANSLATION_VAR_BREACH"
+    elif underhedged_currency_codes:
+        fx_exposure_status = "FX_HEDGE_COVERAGE_WARNING"
+    else:
+        fx_exposure_status = "FX_HEDGED_OPTIMAL"
+
+    return {
+        "total_fx_exposure_base": round(total_fx_exposure_base, 2),
+        "total_hedged_base": round(total_hedged_base, 2),
+        "aggregate_hedge_coverage_pct": aggregate_hedge_coverage_pct,
+        "total_unhedged_fx_var_amount": round(total_unhedged_fx_var_amount, 2),
+        "unhedged_fx_var_pct_of_bac": unhedged_fx_var_pct_of_bac,
+        "underhedged_currency_codes": underhedged_currency_codes,
+        "fx_exposure_status": fx_exposure_status,
+        "is_fx_compliant": fx_exposure_status == "FX_HEDGED_OPTIMAL",
+    }
+
+
+ProjectEVMService.evaluate_evm_fx_hedging_collar_and_currency_exposure = staticmethod(
+    evaluate_evm_fx_hedging_collar_and_currency_exposure
 )
 

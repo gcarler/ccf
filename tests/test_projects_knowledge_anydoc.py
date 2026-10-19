@@ -6950,3 +6950,148 @@ def test_audit_markdown_acronym_glossary_invalid_and_binding():
         == audit_markdown_acronym_expansion_and_glossary_term_hygiene(sample)
     )
     assert "audit_markdown_acronym_expansion_and_glossary_term_hygiene" in mod.__all__
+
+
+def test_audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene_breach():
+    from backend.services.anydoc_service import (
+        audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene,
+    )
+
+    result = audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene(
+        [
+            {
+                "doc_id": "DOC-H1-MISS",
+                "has_single_h1_root": False,
+                "skipped_heading_levels_count": 0,
+                "duplicate_anchor_slugs_count": 0,
+                "max_heading_depth_observed": 3,
+                "toc_synchronized_with_headings": True,
+            },
+            {
+                "doc_id": "DOC-ANCHOR-DUP",
+                "has_single_h1_root": True,
+                "skipped_heading_levels_count": 0,
+                "duplicate_anchor_slugs_count": 2,
+                "max_heading_depth_observed": 3,
+                "toc_synchronized_with_headings": True,
+            },
+        ],
+        max_heading_depth_allowed=4,
+    )
+    assert result["evaluated_documents_count"] == 2
+    assert result["broken_anchor_or_h1_doc_ids"] == ["DOC-H1-MISS", "DOC-ANCHOR-DUP"]
+    assert result["hierarchy_skip_or_toc_drift_doc_ids"] == []
+    assert result["heading_hygiene_status"] == "HEADING_ANCHOR_OR_H1_BREACH"
+    assert result["is_heading_hygiene_compliant"] is False
+
+
+def test_audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene,
+    )
+
+    result = audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene(
+        [
+            {
+                "doc_id": "DOC-SKIP",
+                "has_single_h1_root": True,
+                "skipped_heading_levels_count": 1,
+                "duplicate_anchor_slugs_count": 0,
+                "max_heading_depth_observed": 4,
+                "toc_synchronized_with_headings": True,
+            },
+            {
+                "doc_id": "DOC-TOC-DRIFT",
+                "has_single_h1_root": True,
+                "skipped_heading_levels_count": 0,
+                "duplicate_anchor_slugs_count": 0,
+                "max_heading_depth_observed": 3,
+                "toc_synchronized_with_headings": False,
+            },
+            {
+                "doc_id": "DOC-DEEP",
+                "has_single_h1_root": True,
+                "skipped_heading_levels_count": 0,
+                "duplicate_anchor_slugs_count": 0,
+                "max_heading_depth_observed": 5,
+                "toc_synchronized_with_headings": True,
+            },
+        ],
+        max_heading_depth_allowed=4,
+    )
+    assert result["evaluated_documents_count"] == 3
+    assert result["broken_anchor_or_h1_doc_ids"] == []
+    assert result["hierarchy_skip_or_toc_drift_doc_ids"] == [
+        "DOC-SKIP",
+        "DOC-TOC-DRIFT",
+        "DOC-DEEP",
+    ]
+    assert result["heading_hygiene_status"] == "HEADING_HIERARCHY_OR_TOC_WARNING"
+    assert result["is_heading_hygiene_compliant"] is False
+
+
+def test_audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene_clean_and_empty():
+    from backend.services.anydoc_service import (
+        audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene,
+    )
+
+    empty = audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene(
+        [{"doc_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_documents_count"] == 0
+    assert empty["heading_hygiene_status"] == "HEADING_STRUCTURE_CLEAN"
+    assert empty["is_heading_hygiene_compliant"] is True
+
+    clean = audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene(
+        [
+            {
+                "doc_id": "DOC-CLEAN-1",
+                "has_single_h1_root": True,
+                "skipped_heading_levels_count": 0,
+                "duplicate_anchor_slugs_count": 0,
+                "max_heading_depth_observed": 4,
+                "toc_synchronized_with_headings": True,
+            }
+        ],
+        max_heading_depth_allowed=4,
+    )
+    assert clean["evaluated_documents_count"] == 1
+    assert clean["heading_hygiene_status"] == "HEADING_STRUCTURE_CLEAN"
+    assert clean["is_heading_hygiene_compliant"] is True
+
+
+def test_audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene_staticmethod_and_dunder_all():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene,
+    )
+
+    sample = [
+        {
+            "doc_id": "DOC-99",
+            "has_single_h1_root": True,
+            "skipped_heading_levels_count": 0,
+            "duplicate_anchor_slugs_count": 0,
+            "max_heading_depth_observed": 3,
+            "toc_synchronized_with_headings": True,
+        }
+    ]
+    assert (
+        AnyDocService.audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene(
+            sample
+        )
+        == audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene(sample)
+    )
+    assert (
+        AnydocService.audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene(
+            sample
+        )
+        == audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene(sample)
+    )
+    assert (
+        "audit_markdown_heading_hierarchy_and_duplicate_anchor_hygiene"
+        in mod.__all__
+    )
+

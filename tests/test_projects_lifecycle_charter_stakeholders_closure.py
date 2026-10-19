@@ -8755,3 +8755,142 @@ def test_audit_charter_business_case_irr_wacc_spread_and_payback_staticmethod_an
         "audit_charter_business_case_irr_wacc_spread_and_payback"
         in mod.__all__
     )
+
+
+def test_audit_project_closure_lessons_learned_and_pir_archival_breaches():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_closure_lessons_learned_and_pir_archival,
+    )
+
+    result = audit_project_closure_lessons_learned_and_pir_archival(
+        [
+            {
+                "package_id": "CLS-001",
+                "days_since_handover_to_pir": 15,
+                "pir_completed": True,
+                "actionable_lessons_documented_count": 4,
+                "indexed_in_organizational_process_assets": False,
+                "sponsor_final_archival_signed": True,
+            },
+            {
+                "package_id": "CLS-002",
+                "days_since_handover_to_pir": 20,
+                "pir_completed": True,
+                "actionable_lessons_documented_count": 5,
+                "indexed_in_organizational_process_assets": True,
+                "sponsor_final_archival_signed": False,
+            },
+            {
+                "package_id": "CLS-003",
+                "days_since_handover_to_pir": 45,
+                "pir_completed": True,
+                "actionable_lessons_documented_count": 6,
+                "indexed_in_organizational_process_assets": True,
+                "sponsor_final_archival_signed": True,
+            },
+            {
+                "package_id": "CLS-004",
+                "days_since_handover_to_pir": 10,
+                "pir_completed": False,
+                "actionable_lessons_documented_count": 3,
+                "indexed_in_organizational_process_assets": True,
+                "sponsor_final_archival_signed": True,
+            },
+        ],
+        max_days_to_pir_completion=30,
+        min_actionable_lessons_count=3,
+    )
+    assert result["evaluated_closure_packages_count"] == 4
+    assert result["unarchived_or_unsigned_package_ids"] == ["CLS-001", "CLS-002"]
+    assert result["overdue_or_incomplete_pir_package_ids"] == ["CLS-003", "CLS-004"]
+    assert result["insufficient_lessons_package_ids"] == []
+    assert result["closure_archival_status"] == "CLOSURE_ARCHIVAL_GOVERNANCE_BREACH"
+    assert result["is_closure_archival_compliant"] is False
+
+
+def test_audit_project_closure_lessons_learned_and_pir_archival_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_closure_lessons_learned_and_pir_archival,
+    )
+
+    result = audit_project_closure_lessons_learned_and_pir_archival(
+        [
+            {
+                "package_id": "CLS-WARN-1",
+                "days_since_handover_to_pir": 30,
+                "pir_completed": True,
+                "actionable_lessons_documented_count": 2,
+                "indexed_in_organizational_process_assets": True,
+                "sponsor_final_archival_signed": True,
+            }
+        ],
+        max_days_to_pir_completion=30,
+        min_actionable_lessons_count=3,
+    )
+    assert result["evaluated_closure_packages_count"] == 1
+    assert result["unarchived_or_unsigned_package_ids"] == []
+    assert result["overdue_or_incomplete_pir_package_ids"] == []
+    assert result["insufficient_lessons_package_ids"] == ["CLS-WARN-1"]
+    assert result["closure_archival_status"] == "CLOSURE_LESSONS_DENSITY_WARNING"
+    assert result["is_closure_archival_compliant"] is False
+
+
+def test_audit_project_closure_lessons_learned_and_pir_archival_optimal_and_empty():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_closure_lessons_learned_and_pir_archival,
+    )
+
+    empty = audit_project_closure_lessons_learned_and_pir_archival(
+        [{"package_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_closure_packages_count"] == 0
+    assert empty["closure_archival_status"] == "CLOSURE_OPA_ARCHIVED_OPTIMAL"
+    assert empty["is_closure_archival_compliant"] is True
+
+    optimal = audit_project_closure_lessons_learned_and_pir_archival(
+        [
+            {
+                "package_id": "CLS-OPT-1",
+                "days_since_handover_to_pir": 25,
+                "pir_completed": True,
+                "actionable_lessons_documented_count": 5,
+                "indexed_in_organizational_process_assets": True,
+                "sponsor_final_archival_signed": True,
+            }
+        ],
+        max_days_to_pir_completion=30,
+        min_actionable_lessons_count=3,
+    )
+    assert optimal["evaluated_closure_packages_count"] == 1
+    assert optimal["closure_archival_status"] == "CLOSURE_OPA_ARCHIVED_OPTIMAL"
+    assert optimal["is_closure_archival_compliant"] is True
+
+
+def test_audit_project_closure_lessons_learned_and_pir_archival_staticmethod_and_dunder_all():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_project_closure_lessons_learned_and_pir_archival,
+    )
+
+    sample = [
+        {
+            "package_id": "CLS-99",
+            "days_since_handover_to_pir": 12,
+            "pir_completed": True,
+            "actionable_lessons_documented_count": 3,
+            "indexed_in_organizational_process_assets": True,
+            "sponsor_final_archival_signed": True,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_project_closure_lessons_learned_and_pir_archival(
+            sample
+        )
+        == audit_project_closure_lessons_learned_and_pir_archival(sample)
+    )
+    assert (
+        "audit_project_closure_lessons_learned_and_pir_archival"
+        in mod.__all__
+    )
+
