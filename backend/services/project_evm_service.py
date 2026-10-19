@@ -5531,6 +5531,7 @@ __all__ = [
     "evaluate_evm_cpaf_award_fee_pool_and_rollover_governance",
     "evaluate_evm_standby_demurrage_and_force_account_rates",
     "evaluate_evm_schedule_of_values_front_loading_and_stored_materials",
+    "evaluate_evm_letter_of_credit_drawdown_and_evergreen_buffer",
     "ProjectEVMService",
 ]
 
@@ -10204,3 +10205,81 @@ def evaluate_evm_schedule_of_values_front_loading_and_stored_materials(
 ProjectEVMService.evaluate_evm_schedule_of_values_front_loading_and_stored_materials = staticmethod(
     evaluate_evm_schedule_of_values_front_loading_and_stored_materials
 )
+
+
+def evaluate_evm_letter_of_credit_drawdown_and_evergreen_buffer(
+    letters: list[dict] | None,
+    *,
+    min_expiry_buffer_days: int = 60,
+    require_tier1_bank_and_irrevocable: bool = True,
+) -> dict:
+    """PMBOK §7.4 & §12.3 — Evalúa giro documental de cartas de crédito (LC) irrevocables, colchón evergreen de expiración y calificación crediticia del banco emisor."""
+    raw_items = letters if isinstance(letters, list) else []
+    valid_letters: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("lc_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_letters.append(item)
+
+    revocable_or_subprime_bank_lc_ids: list[str] = []
+    expiring_buffer_or_underfunded_lc_ids: list[str] = []
+
+    for lc in valid_letters:
+        lid = str(lc["lc_id"]).strip()
+        raw_irrev = lc.get("is_irrevocable_and_unconditional", True)
+        is_irrevocable_and_unconditional = bool(
+            True if raw_irrev is None else raw_irrev
+        )
+
+        raw_bank = lc.get("issuing_bank_investment_grade_verified", True)
+        issuing_bank_investment_grade_verified = bool(
+            True if raw_bank is None else raw_bank
+        )
+
+        raw_days = lc.get("days_until_expiry", 120)
+        days_until_expiry = int(120 if raw_days is None else raw_days)
+
+        raw_cov = lc.get("undrawn_coverage_adequacy_pct", 105.0)
+        undrawn_coverage_adequacy_pct = float(
+            105.0 if raw_cov is None else raw_cov
+        )
+
+        if (
+            require_tier1_bank_and_irrevocable
+            and (
+                not is_irrevocable_and_unconditional
+                or not issuing_bank_investment_grade_verified
+            )
+        ) or days_until_expiry <= 0:
+            revocable_or_subprime_bank_lc_ids.append(lid)
+
+        if (
+            0 < days_until_expiry < min_expiry_buffer_days
+            or undrawn_coverage_adequacy_pct < 100.0
+        ):
+            expiring_buffer_or_underfunded_lc_ids.append(lid)
+
+    if revocable_or_subprime_bank_lc_ids:
+        letter_of_credit_status = "LC_REVOCABLE_OR_BANK_SOLVENCY_BREACH"
+    elif expiring_buffer_or_underfunded_lc_ids:
+        letter_of_credit_status = "LC_EXPIRY_BUFFER_OR_COVERAGE_WARNING"
+    else:
+        letter_of_credit_status = "LC_DOCUMENTARY_SECURITY_OPTIMAL"
+
+    return {
+        "evaluated_letters_count": len(valid_letters),
+        "revocable_or_subprime_bank_lc_ids": revocable_or_subprime_bank_lc_ids,
+        "expiring_buffer_or_underfunded_lc_ids": expiring_buffer_or_underfunded_lc_ids,
+        "letter_of_credit_status": letter_of_credit_status,
+        "is_letter_of_credit_compliant": letter_of_credit_status
+        == "LC_DOCUMENTARY_SECURITY_OPTIMAL",
+    }
+
+
+ProjectEVMService.evaluate_evm_letter_of_credit_drawdown_and_evergreen_buffer = staticmethod(
+    evaluate_evm_letter_of_credit_drawdown_and_evergreen_buffer
+)
+

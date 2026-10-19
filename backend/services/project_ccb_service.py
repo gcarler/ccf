@@ -2857,6 +2857,7 @@ __all__ = [
     "audit_distributed_cache_stampede_and_hotkey_skew_gate",
     "audit_service_mesh_mtls_strict_and_outlier_ejection_gate",
     "audit_graphql_query_depth_and_n_plus_one_batching_gate",
+    "audit_blue_green_cutover_drain_and_db_backward_compatibility",
     "ProjectCCBService",
 ]
 
@@ -7723,3 +7724,77 @@ ProjectCCBService.audit_graphql_query_depth_and_n_plus_one_batching_gate = stati
 
 
 
+def audit_blue_green_cutover_drain_and_db_backward_compatibility(
+    cutovers: list[dict] | None,
+    *,
+    min_standby_warm_retention_minutes: int = 60,
+    max_inflight_dropped_requests: int = 0,
+) -> dict:
+    """PMBOK §8.3 & §11.6 — Audita cutover blue-green, drain de conexiones en vuelo, smoke test green y compatibilidad expand-contract de esquema DB."""
+    raw_items = cutovers if isinstance(cutovers, list) else []
+    valid_cutovers: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("cutover_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_cutovers.append(item)
+
+    def _num(value, default):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return float(value)
+
+    def _bool(value, default):
+        return value if isinstance(value, bool) else default
+
+    incompatible_db_or_failed_smoke_cutover_ids: list[str] = []
+    dropped_requests_or_cold_standby_cutover_ids: list[str] = []
+
+    for cutover in valid_cutovers:
+        cutover_id = str(cutover.get("cutover_id")).strip()
+        db_compatible = _bool(
+            cutover.get("expand_contract_db_schema_compatible"), True
+        )
+        smoke_passed = _bool(
+            cutover.get("synthetic_smoke_test_green_passed"), True
+        )
+        dropped_requests = _num(
+            cutover.get("inflight_dropped_requests_count"), 0.0
+        )
+        warm_retention = _num(
+            cutover.get("blue_standby_warm_retention_minutes"), 120.0
+        )
+
+        if not db_compatible or not smoke_passed:
+            incompatible_db_or_failed_smoke_cutover_ids.append(cutover_id)
+
+        if (
+            dropped_requests > max_inflight_dropped_requests
+            or warm_retention < min_standby_warm_retention_minutes
+        ):
+            dropped_requests_or_cold_standby_cutover_ids.append(cutover_id)
+
+    if incompatible_db_or_failed_smoke_cutover_ids:
+        blue_green_cutover_status = "BLUE_GREEN_DB_COMPAT_OR_SMOKE_BREACH"
+    elif dropped_requests_or_cold_standby_cutover_ids:
+        blue_green_cutover_status = (
+            "BLUE_GREEN_DRAIN_DROP_OR_WARM_STANDBY_WARNING"
+        )
+    else:
+        blue_green_cutover_status = "BLUE_GREEN_ZERO_DOWNTIME_OPTIMAL"
+
+    return {
+        "evaluated_cutovers_count": len(valid_cutovers),
+        "incompatible_db_or_failed_smoke_cutover_ids": incompatible_db_or_failed_smoke_cutover_ids,
+        "dropped_requests_or_cold_standby_cutover_ids": dropped_requests_or_cold_standby_cutover_ids,
+        "blue_green_cutover_status": blue_green_cutover_status,
+        "is_blue_green_cutover_compliant": blue_green_cutover_status
+        == "BLUE_GREEN_ZERO_DOWNTIME_OPTIMAL",
+    }
+
+
+ProjectCCBService.audit_blue_green_cutover_drain_and_db_backward_compatibility = staticmethod(
+    audit_blue_green_cutover_drain_and_db_backward_compatibility
+)

@@ -10020,3 +10020,146 @@ def test_evaluate_evm_schedule_of_values_front_loading_and_stored_materials_stat
         in mod.__all__
     )
 
+
+def test_evaluate_evm_letter_of_credit_drawdown_and_evergreen_buffer_breach():
+    from backend.services.project_evm_service import (
+        evaluate_evm_letter_of_credit_drawdown_and_evergreen_buffer,
+    )
+
+    res = evaluate_evm_letter_of_credit_drawdown_and_evergreen_buffer(
+        [
+            {
+                "lc_id": "  LC-REVOCABLE  ",
+                "is_irrevocable_and_unconditional": False,
+                "issuing_bank_investment_grade_verified": True,
+                "days_until_expiry": 120,
+                "undrawn_coverage_adequacy_pct": 105.0,
+            },
+            {
+                "lc_id": "LC-SUBPRIME-BANK",
+                "is_irrevocable_and_unconditional": True,
+                "issuing_bank_investment_grade_verified": False,
+                "days_until_expiry": 30,
+                "undrawn_coverage_adequacy_pct": 90.0,
+            },
+            {
+                "lc_id": "LC-EXPIRED",
+                "is_irrevocable_and_unconditional": True,
+                "issuing_bank_investment_grade_verified": True,
+                "days_until_expiry": 0,
+                "undrawn_coverage_adequacy_pct": 105.0,
+            },
+            {
+                "lc_id": "LC-CLEAN",
+                "is_irrevocable_and_unconditional": True,
+                "issuing_bank_investment_grade_verified": True,
+                "days_until_expiry": 60,
+                "undrawn_coverage_adequacy_pct": 100.0,
+            },
+        ]
+    )
+    assert res["evaluated_letters_count"] == 4
+    assert res["revocable_or_subprime_bank_lc_ids"] == [
+        "LC-REVOCABLE",
+        "LC-SUBPRIME-BANK",
+        "LC-EXPIRED",
+    ]
+    assert res["expiring_buffer_or_underfunded_lc_ids"] == [
+        "LC-SUBPRIME-BANK"
+    ]
+    assert (
+        res["letter_of_credit_status"]
+        == "LC_REVOCABLE_OR_BANK_SOLVENCY_BREACH"
+    )
+    assert res["is_letter_of_credit_compliant"] is False
+
+
+def test_evaluate_evm_letter_of_credit_drawdown_and_evergreen_buffer_warning():
+    from backend.services.project_evm_service import (
+        evaluate_evm_letter_of_credit_drawdown_and_evergreen_buffer,
+    )
+
+    res = evaluate_evm_letter_of_credit_drawdown_and_evergreen_buffer(
+        [
+            {
+                "lc_id": "LC-EXPIRING-SOON",
+                "is_irrevocable_and_unconditional": False,
+                "issuing_bank_investment_grade_verified": False,
+                "days_until_expiry": 59,
+                "undrawn_coverage_adequacy_pct": 100.0,
+            },
+            {
+                "lc_id": "LC-UNDERFUNDED",
+                "is_irrevocable_and_unconditional": True,
+                "issuing_bank_investment_grade_verified": True,
+                "days_until_expiry": 60,
+                "undrawn_coverage_adequacy_pct": 99.9,
+            },
+        ],
+        min_expiry_buffer_days=60,
+        require_tier1_bank_and_irrevocable=False,
+    )
+    assert res["evaluated_letters_count"] == 2
+    assert res["revocable_or_subprime_bank_lc_ids"] == []
+    assert res["expiring_buffer_or_underfunded_lc_ids"] == [
+        "LC-EXPIRING-SOON",
+        "LC-UNDERFUNDED",
+    ]
+    assert (
+        res["letter_of_credit_status"]
+        == "LC_EXPIRY_BUFFER_OR_COVERAGE_WARNING"
+    )
+    assert res["is_letter_of_credit_compliant"] is False
+
+
+def test_evaluate_evm_letter_of_credit_drawdown_and_evergreen_buffer_optimal_and_defensive():
+    from backend.services.project_evm_service import (
+        evaluate_evm_letter_of_credit_drawdown_and_evergreen_buffer,
+    )
+
+    empty = evaluate_evm_letter_of_credit_drawdown_and_evergreen_buffer(None)
+    assert empty["evaluated_letters_count"] == 0
+    assert empty["letter_of_credit_status"] == "LC_DOCUMENTARY_SECURITY_OPTIMAL"
+    assert empty["is_letter_of_credit_compliant"] is True
+
+    defaults = evaluate_evm_letter_of_credit_drawdown_and_evergreen_buffer(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"lc_id": "   "},
+            {
+                "lc_id": "LC-DEFAULTS",
+                "is_irrevocable_and_unconditional": None,
+                "issuing_bank_investment_grade_verified": None,
+                "days_until_expiry": None,
+                "undrawn_coverage_adequacy_pct": None,
+            },
+        ]
+    )
+    assert defaults["evaluated_letters_count"] == 1
+    assert (
+        defaults["letter_of_credit_status"]
+        == "LC_DOCUMENTARY_SECURITY_OPTIMAL"
+    )
+    assert defaults["is_letter_of_credit_compliant"] is True
+
+
+def test_evaluate_evm_letter_of_credit_drawdown_and_evergreen_buffer_staticmethod_and_dunder_all():
+    import backend.services.project_evm_service as mod
+    from backend.services.project_evm_service import (
+        ProjectEVMService,
+        evaluate_evm_letter_of_credit_drawdown_and_evergreen_buffer,
+    )
+
+    sample = [{"lc_id": "LC-99", "days_until_expiry": 90}]
+    assert (
+        ProjectEVMService.evaluate_evm_letter_of_credit_drawdown_and_evergreen_buffer(
+            sample
+        )
+        == evaluate_evm_letter_of_credit_drawdown_and_evergreen_buffer(sample)
+    )
+    assert (
+        "evaluate_evm_letter_of_credit_drawdown_and_evergreen_buffer"
+        in mod.__all__
+    )
+
+

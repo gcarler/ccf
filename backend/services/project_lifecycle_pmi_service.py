@@ -3178,6 +3178,7 @@ __all__ = [
     "audit_warranty_latent_defect_and_retention_bond_release",
     "audit_regulatory_permit_renewal_and_stop_work_compliance",
     "audit_site_demobilization_environmental_clearance_and_asset_disposal",
+    "audit_team_burnout_overtime_and_bus_factor_redundancy",
     "ProjectLifecyclePMIService",
 ]
 
@@ -7897,3 +7898,78 @@ def audit_site_demobilization_environmental_clearance_and_asset_disposal(
 ProjectLifecyclePMIService.audit_site_demobilization_environmental_clearance_and_asset_disposal = staticmethod(
     audit_site_demobilization_environmental_clearance_and_asset_disposal
 )
+
+
+def audit_team_burnout_overtime_and_bus_factor_redundancy(
+    squads: list[dict] | None,
+    *,
+    max_sustained_overtime_pct: float = 15.0,
+    min_bus_factor_owners: int = 2,
+) -> dict:
+    """PMBOK §9.4 & §9.5 — Audita seguridad psicológica del equipo, límite de horas extra sostenidas (burnout), rotación no planificada y redundancia de conocimiento (bus-factor)."""
+    raw_items = squads if isinstance(squads, list) else []
+    valid_squads: list[dict] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        raw_id = item.get("squad_id")
+        if not isinstance(raw_id, str) or not raw_id.strip():
+            continue
+        valid_squads.append(item)
+
+    single_point_bus_factor_or_toxic_culture_squad_ids: list[str] = []
+    high_overtime_or_attrition_squad_ids: list[str] = []
+
+    for s in valid_squads:
+        sid = str(s["squad_id"]).strip()
+        raw_bf = s.get("bus_factor_qualified_owners", 3)
+        bus_factor_qualified_owners = int(3 if raw_bf is None else raw_bf)
+
+        raw_safe = s.get("retaliation_free_incident_culture_verified", True)
+        retaliation_free_incident_culture_verified = bool(
+            True if raw_safe is None else raw_safe
+        )
+
+        raw_ot = s.get("sustained_overtime_pct", 5.0)
+        sustained_overtime_pct = float(5.0 if raw_ot is None else raw_ot)
+
+        raw_attr = s.get("unplanned_attrition_last_quarter_count", 0)
+        unplanned_attrition_last_quarter_count = int(
+            0 if raw_attr is None else raw_attr
+        )
+
+        if (
+            bus_factor_qualified_owners < min_bus_factor_owners
+            or not retaliation_free_incident_culture_verified
+        ):
+            single_point_bus_factor_or_toxic_culture_squad_ids.append(sid)
+
+        if (
+            sustained_overtime_pct > max_sustained_overtime_pct
+            or unplanned_attrition_last_quarter_count > 0
+        ):
+            high_overtime_or_attrition_squad_ids.append(sid)
+
+    if single_point_bus_factor_or_toxic_culture_squad_ids:
+        team_sustainability_status = "TEAM_BUS_FACTOR_OR_SAFETY_BREACH"
+    elif high_overtime_or_attrition_squad_ids:
+        team_sustainability_status = "TEAM_OVERTIME_OR_ATTRITION_WARNING"
+    else:
+        team_sustainability_status = (
+            "TEAM_SUSTAINABILITY_AND_REDUNDANCY_OPTIMAL"
+        )
+
+    return {
+        "evaluated_squads_count": len(valid_squads),
+        "single_point_bus_factor_or_toxic_culture_squad_ids": single_point_bus_factor_or_toxic_culture_squad_ids,
+        "high_overtime_or_attrition_squad_ids": high_overtime_or_attrition_squad_ids,
+        "team_sustainability_status": team_sustainability_status,
+        "is_team_sustainability_compliant": team_sustainability_status
+        == "TEAM_SUSTAINABILITY_AND_REDUNDANCY_OPTIMAL",
+    }
+
+
+ProjectLifecyclePMIService.audit_team_burnout_overtime_and_bus_factor_redundancy = staticmethod(
+    audit_team_burnout_overtime_and_bus_factor_redundancy
+)
+

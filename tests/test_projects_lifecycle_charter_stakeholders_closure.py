@@ -10534,3 +10534,138 @@ def test_demob_invalid_and_binding():
         "audit_site_demobilization_environmental_clearance_and_asset_disposal"
         in mod.__all__
     )
+
+
+def test_audit_team_burnout_overtime_and_bus_factor_redundancy_breach():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_team_burnout_overtime_and_bus_factor_redundancy,
+    )
+
+    res = audit_team_burnout_overtime_and_bus_factor_redundancy(
+        [
+            {
+                "squad_id": "  SQD-SPOF  ",
+                "bus_factor_qualified_owners": 1,
+                "retaliation_free_incident_culture_verified": True,
+                "sustained_overtime_pct": 5.0,
+                "unplanned_attrition_last_quarter_count": 0,
+            },
+            {
+                "squad_id": "SQD-TOXIC",
+                "bus_factor_qualified_owners": 3,
+                "retaliation_free_incident_culture_verified": False,
+                "sustained_overtime_pct": 22.0,
+                "unplanned_attrition_last_quarter_count": 2,
+            },
+            {
+                "squad_id": "SQD-CLEAN",
+                "bus_factor_qualified_owners": 2,
+                "retaliation_free_incident_culture_verified": True,
+                "sustained_overtime_pct": 15.0,
+                "unplanned_attrition_last_quarter_count": 0,
+            },
+        ]
+    )
+    assert res["evaluated_squads_count"] == 3
+    assert res["single_point_bus_factor_or_toxic_culture_squad_ids"] == [
+        "SQD-SPOF",
+        "SQD-TOXIC",
+    ]
+    assert res["high_overtime_or_attrition_squad_ids"] == ["SQD-TOXIC"]
+    assert (
+        res["team_sustainability_status"] == "TEAM_BUS_FACTOR_OR_SAFETY_BREACH"
+    )
+    assert res["is_team_sustainability_compliant"] is False
+
+
+def test_audit_team_burnout_overtime_and_bus_factor_redundancy_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_team_burnout_overtime_and_bus_factor_redundancy,
+    )
+
+    res = audit_team_burnout_overtime_and_bus_factor_redundancy(
+        [
+            {
+                "squad_id": "SQD-OVERTIME",
+                "bus_factor_qualified_owners": 2,
+                "retaliation_free_incident_culture_verified": True,
+                "sustained_overtime_pct": 15.1,
+                "unplanned_attrition_last_quarter_count": 0,
+            },
+            {
+                "squad_id": "SQD-ATTRITION",
+                "bus_factor_qualified_owners": 2,
+                "retaliation_free_incident_culture_verified": True,
+                "sustained_overtime_pct": 15.0,
+                "unplanned_attrition_last_quarter_count": 1,
+            },
+        ],
+        max_sustained_overtime_pct=15.0,
+        min_bus_factor_owners=2,
+    )
+    assert res["evaluated_squads_count"] == 2
+    assert res["single_point_bus_factor_or_toxic_culture_squad_ids"] == []
+    assert res["high_overtime_or_attrition_squad_ids"] == [
+        "SQD-OVERTIME",
+        "SQD-ATTRITION",
+    ]
+    assert (
+        res["team_sustainability_status"]
+        == "TEAM_OVERTIME_OR_ATTRITION_WARNING"
+    )
+    assert res["is_team_sustainability_compliant"] is False
+
+
+def test_audit_team_burnout_overtime_and_bus_factor_redundancy_optimal_and_defensive():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_team_burnout_overtime_and_bus_factor_redundancy,
+    )
+
+    empty = audit_team_burnout_overtime_and_bus_factor_redundancy(None)
+    assert empty["evaluated_squads_count"] == 0
+    assert (
+        empty["team_sustainability_status"]
+        == "TEAM_SUSTAINABILITY_AND_REDUNDANCY_OPTIMAL"
+    )
+    assert empty["is_team_sustainability_compliant"] is True
+
+    defaults = audit_team_burnout_overtime_and_bus_factor_redundancy(
+        [
+            "not-a-dict",  # type: ignore[list-item]
+            {"squad_id": "   "},
+            {
+                "squad_id": "SQD-DEFAULTS",
+                "bus_factor_qualified_owners": None,
+                "retaliation_free_incident_culture_verified": None,
+                "sustained_overtime_pct": None,
+                "unplanned_attrition_last_quarter_count": None,
+            },
+        ]
+    )
+    assert defaults["evaluated_squads_count"] == 1
+    assert (
+        defaults["team_sustainability_status"]
+        == "TEAM_SUSTAINABILITY_AND_REDUNDANCY_OPTIMAL"
+    )
+    assert defaults["is_team_sustainability_compliant"] is True
+
+
+def test_audit_team_burnout_overtime_and_bus_factor_redundancy_staticmethod_and_dunder_all():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_team_burnout_overtime_and_bus_factor_redundancy,
+    )
+
+    sample = [{"squad_id": "SQD-99", "sustained_overtime_pct": 4.0}]
+    assert (
+        ProjectLifecyclePMIService.audit_team_burnout_overtime_and_bus_factor_redundancy(
+            sample
+        )
+        == audit_team_burnout_overtime_and_bus_factor_redundancy(sample)
+    )
+    assert (
+        "audit_team_burnout_overtime_and_bus_factor_redundancy"
+        in mod.__all__
+    )
+

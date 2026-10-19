@@ -10522,3 +10522,153 @@ def test_audit_graphql_query_depth_and_n_plus_one_batching_gate_staticmethod_and
 
 
 
+
+
+def test_blue_green_db_compat_or_smoke_breach():
+    from backend.services.project_ccb_service import (
+        audit_blue_green_cutover_drain_and_db_backward_compatibility,
+    )
+
+    res = audit_blue_green_cutover_drain_and_db_backward_compatibility(
+        [
+            {
+                "cutover_id": "CG-INCOMPATIBLE-DB",
+                "expand_contract_db_schema_compatible": False,
+            },
+            {
+                "cutover_id": "CG-SMOKE-FAILED",
+                "synthetic_smoke_test_green_passed": False,
+            },
+        ],
+        min_standby_warm_retention_minutes=60,
+        max_inflight_dropped_requests=0,
+    )
+    assert res["evaluated_cutovers_count"] == 2
+    assert res["incompatible_db_or_failed_smoke_cutover_ids"] == [
+        "CG-INCOMPATIBLE-DB",
+        "CG-SMOKE-FAILED",
+    ]
+    assert res["dropped_requests_or_cold_standby_cutover_ids"] == []
+    assert (
+        res["blue_green_cutover_status"]
+        == "BLUE_GREEN_DB_COMPAT_OR_SMOKE_BREACH"
+    )
+    assert res["is_blue_green_cutover_compliant"] is False
+
+
+def test_blue_green_drain_drop_or_cold_standby_warning():
+    from backend.services.project_ccb_service import (
+        audit_blue_green_cutover_drain_and_db_backward_compatibility,
+    )
+
+    res = audit_blue_green_cutover_drain_and_db_backward_compatibility(
+        [
+            {
+                "cutover_id": "CG-REQUESTS-DROPPED",
+                "inflight_dropped_requests_count": 3,
+            },
+            {
+                "cutover_id": "CG-COLD-STANDBY",
+                "blue_standby_warm_retention_minutes": 15,
+            },
+        ],
+        min_standby_warm_retention_minutes=60,
+        max_inflight_dropped_requests=0,
+    )
+    assert res["evaluated_cutovers_count"] == 2
+    assert res["incompatible_db_or_failed_smoke_cutover_ids"] == []
+    assert res["dropped_requests_or_cold_standby_cutover_ids"] == [
+        "CG-REQUESTS-DROPPED",
+        "CG-COLD-STANDBY",
+    ]
+    assert (
+        res["blue_green_cutover_status"]
+        == "BLUE_GREEN_DRAIN_DROP_OR_WARM_STANDBY_WARNING"
+    )
+    assert res["is_blue_green_cutover_compliant"] is False
+
+
+def test_blue_green_boundaries_optimal_and_defaults():
+    from backend.services.project_ccb_service import (
+        audit_blue_green_cutover_drain_and_db_backward_compatibility,
+    )
+
+    res = audit_blue_green_cutover_drain_and_db_backward_compatibility(
+        [
+            {
+                "cutover_id": "CG-BOUNDARY",
+                "inflight_dropped_requests_count": 0,
+                "blue_standby_warm_retention_minutes": 60,
+            },
+            {"cutover_id": "CG-ALL-DEFAULTS"},
+        ],
+        min_standby_warm_retention_minutes=60,
+        max_inflight_dropped_requests=0,
+    )
+    assert res["evaluated_cutovers_count"] == 2
+    assert res["incompatible_db_or_failed_smoke_cutover_ids"] == []
+    assert res["dropped_requests_or_cold_standby_cutover_ids"] == []
+    assert (
+        res["blue_green_cutover_status"]
+        == "BLUE_GREEN_ZERO_DOWNTIME_OPTIMAL"
+    )
+    assert res["is_blue_green_cutover_compliant"] is True
+
+
+def test_blue_green_invalid_and_binding():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_blue_green_cutover_drain_and_db_backward_compatibility,
+    )
+
+    empty = audit_blue_green_cutover_drain_and_db_backward_compatibility(None)
+    assert empty["evaluated_cutovers_count"] == 0
+    assert empty["incompatible_db_or_failed_smoke_cutover_ids"] == []
+    assert empty["dropped_requests_or_cold_standby_cutover_ids"] == []
+    assert (
+        empty["blue_green_cutover_status"]
+        == "BLUE_GREEN_ZERO_DOWNTIME_OPTIMAL"
+    )
+    assert empty["is_blue_green_cutover_compliant"] is True
+
+    invalid = audit_blue_green_cutover_drain_and_db_backward_compatibility(
+        [42, "not-a-dict", None, {"cutover_id": "   "}]  # type: ignore[list-item]
+    )
+    assert invalid["evaluated_cutovers_count"] == 0
+
+    defaults = audit_blue_green_cutover_drain_and_db_backward_compatibility(
+        [
+            {
+                "cutover_id": "CG-DEFAULTS",
+                "expand_contract_db_schema_compatible": None,
+                "synthetic_smoke_test_green_passed": None,
+                "inflight_dropped_requests_count": None,
+                "blue_standby_warm_retention_minutes": None,
+            }
+        ]
+    )
+    assert defaults["evaluated_cutovers_count"] == 1
+    assert (
+        defaults["blue_green_cutover_status"]
+        == "BLUE_GREEN_ZERO_DOWNTIME_OPTIMAL"
+    )
+    assert defaults["is_blue_green_cutover_compliant"] is True
+
+    sample = [
+        {
+            "cutover_id": "CG-1",
+            "blue_standby_warm_retention_minutes": 120,
+            "inflight_dropped_requests_count": 0,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_blue_green_cutover_drain_and_db_backward_compatibility(
+            sample
+        )
+        == audit_blue_green_cutover_drain_and_db_backward_compatibility(sample)
+    )
+    assert (
+        "audit_blue_green_cutover_drain_and_db_backward_compatibility"
+        in mod.__all__
+    )
