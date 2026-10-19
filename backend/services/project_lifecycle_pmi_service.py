@@ -3162,6 +3162,7 @@ __all__ = [
     "audit_contract_claims_dispute_adr_and_liquidated_damages",
     "audit_stakeholder_salience_drift_and_resistance_escalation",
     "audit_procurement_rfp_bid_solvency_and_vendor_concentration",
+    "audit_steering_committee_quorum_and_decision_latency",
     "ProjectLifecyclePMIService",
 ]
 
@@ -6583,3 +6584,81 @@ def audit_procurement_rfp_bid_solvency_and_vendor_concentration(
 ProjectLifecyclePMIService.audit_procurement_rfp_bid_solvency_and_vendor_concentration = staticmethod(
     audit_procurement_rfp_bid_solvency_and_vendor_concentration
 )
+
+
+def audit_steering_committee_quorum_and_decision_latency(
+    sessions: list[dict[str, Any]],
+    *,
+    min_quorum_attendance_pct: float = 75.0,
+    max_blocker_decision_days: float = 5.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §2.4 & §4.3 — Project Steering Committee Voting Quorum, Blocker Decision Latency & Executive Escalation SLA Auditor."""
+    quorum_failed_session_ids: list[str] = []
+    decision_sla_breach_session_ids: list[str] = []
+    unrecorded_minutes_session_ids: list[str] = []
+
+    valid_sessions = (
+        [
+            s
+            for s in sessions
+            if isinstance(s, dict) and str(s.get("session_id", "")).strip()
+        ]
+        if isinstance(sessions, list)
+        else []
+    )
+
+    for sess in valid_sessions:
+        session_id = str(sess.get("session_id", "")).strip()
+        voting_members_invited = int(sess.get("voting_members_invited", 0) or 0)
+        voting_members_present = int(sess.get("voting_members_present", 0) or 0)
+        blocker_escalation_age_days = float(
+            sess.get("blocker_escalation_age_days", 0.0) or 0.0
+        )
+        has_signed_minutes_and_action_owners = (
+            bool(sess.get("has_signed_minutes_and_action_owners", True))
+            if sess.get("has_signed_minutes_and_action_owners") is not None
+            else True
+        )
+        was_critical_decision_deferred_without_owner = bool(
+            sess.get("was_critical_decision_deferred_without_owner", False)
+        )
+
+        attendance_pct = (
+            round((voting_members_present / voting_members_invited) * 100.0, 2)
+            if voting_members_invited > 0
+            else 0.0
+        )
+
+        if attendance_pct < min_quorum_attendance_pct:
+            quorum_failed_session_ids.append(session_id)
+
+        if (
+            blocker_escalation_age_days > max_blocker_decision_days
+            or was_critical_decision_deferred_without_owner
+        ):
+            decision_sla_breach_session_ids.append(session_id)
+
+        if not has_signed_minutes_and_action_owners:
+            unrecorded_minutes_session_ids.append(session_id)
+
+    if quorum_failed_session_ids or decision_sla_breach_session_ids:
+        steering_governance_status = "GOVERNANCE_PARALYSIS"
+    elif unrecorded_minutes_session_ids:
+        steering_governance_status = "MINUTES_HYGIENE_WARNING"
+    else:
+        steering_governance_status = "EFFECTIVE_STEERING"
+
+    return {
+        "total_sessions_evaluated": len(valid_sessions),
+        "quorum_failed_session_ids": quorum_failed_session_ids,
+        "decision_sla_breach_session_ids": decision_sla_breach_session_ids,
+        "unrecorded_minutes_session_ids": unrecorded_minutes_session_ids,
+        "steering_governance_status": steering_governance_status,
+        "is_steering_compliant": steering_governance_status == "EFFECTIVE_STEERING",
+    }
+
+
+ProjectLifecyclePMIService.audit_steering_committee_quorum_and_decision_latency = staticmethod(
+    audit_steering_committee_quorum_and_decision_latency
+)
+

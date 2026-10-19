@@ -8204,3 +8204,142 @@ def test_audit_procurement_rfp_bid_solvency_and_vendor_concentration_staticmetho
         "audit_procurement_rfp_bid_solvency_and_vendor_concentration"
         in mod.__all__
     )
+
+
+def test_audit_steering_committee_quorum_and_decision_latency_effective():
+    """Caso 1: Sesiones con quórum >= 75%, bloqueos resueltos <= 5 días y actas firmadas -> EFFECTIVE_STEERING."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_steering_committee_quorum_and_decision_latency,
+    )
+
+    sessions = [
+        {
+            "session_id": "STEER-2026-01",
+            "voting_members_invited": 8,
+            "voting_members_present": 7,  # 87.5%
+            "blocker_escalation_age_days": 2.5,
+            "has_signed_minutes_and_action_owners": True,
+            "was_critical_decision_deferred_without_owner": False,
+        },
+        {
+            "session_id": "STEER-2026-02",
+            "voting_members_invited": 4,
+            "voting_members_present": 3,  # 75.0%
+            "blocker_escalation_age_days": 5.0,
+            "has_signed_minutes_and_action_owners": True,
+            "was_critical_decision_deferred_without_owner": False,
+        },
+    ]
+    res = audit_steering_committee_quorum_and_decision_latency(
+        sessions, min_quorum_attendance_pct=75.0, max_blocker_decision_days=5.0
+    )
+    assert res["total_sessions_evaluated"] == 2
+    assert res["quorum_failed_session_ids"] == []
+    assert res["decision_sla_breach_session_ids"] == []
+    assert res["unrecorded_minutes_session_ids"] == []
+    assert res["steering_governance_status"] == "EFFECTIVE_STEERING"
+    assert res["is_steering_compliant"] is True
+
+
+def test_audit_steering_committee_quorum_and_decision_latency_minutes_warning():
+    """Caso 2: Quórum y SLA cumplidos pero falta acta firmada y responsables -> MINUTES_HYGIENE_WARNING."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_steering_committee_quorum_and_decision_latency,
+    )
+
+    sessions = [
+        {
+            "session_id": "STEER-2026-03",
+            "voting_members_invited": 5,
+            "voting_members_present": 5,
+            "blocker_escalation_age_days": 1.0,
+            "has_signed_minutes_and_action_owners": False,
+            "was_critical_decision_deferred_without_owner": False,
+        }
+    ]
+    res = audit_steering_committee_quorum_and_decision_latency(
+        sessions, min_quorum_attendance_pct=75.0, max_blocker_decision_days=5.0
+    )
+    assert res["total_sessions_evaluated"] == 1
+    assert res["quorum_failed_session_ids"] == []
+    assert res["decision_sla_breach_session_ids"] == []
+    assert res["unrecorded_minutes_session_ids"] == ["STEER-2026-03"]
+    assert res["steering_governance_status"] == "MINUTES_HYGIENE_WARNING"
+    assert res["is_steering_compliant"] is False
+
+
+def test_audit_steering_committee_quorum_and_decision_latency_paralysis():
+    """Caso 3: Falta de quórum (<75%), bloqueo >5 días o decisión diferida sin responsable -> GOVERNANCE_PARALYSIS."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_steering_committee_quorum_and_decision_latency,
+    )
+
+    sessions = [
+        {
+            "session_id": "STEER-NO-QUORUM",
+            "voting_members_invited": 6,
+            "voting_members_present": 3,  # 50% < 75%
+            "blocker_escalation_age_days": 8.0,  # > 5d
+            "has_signed_minutes_and_action_owners": False,
+            "was_critical_decision_deferred_without_owner": False,
+        },
+        {
+            "session_id": "STEER-DEFERRED",
+            "voting_members_invited": 4,
+            "voting_members_present": 4,
+            "blocker_escalation_age_days": 2.0,
+            "has_signed_minutes_and_action_owners": True,
+            "was_critical_decision_deferred_without_owner": True,
+        },
+    ]
+    res = audit_steering_committee_quorum_and_decision_latency(
+        sessions, min_quorum_attendance_pct=75.0, max_blocker_decision_days=5.0
+    )
+    assert res["total_sessions_evaluated"] == 2
+    assert res["quorum_failed_session_ids"] == ["STEER-NO-QUORUM"]
+    assert res["decision_sla_breach_session_ids"] == [
+        "STEER-NO-QUORUM",
+        "STEER-DEFERRED",
+    ]
+    assert res["unrecorded_minutes_session_ids"] == ["STEER-NO-QUORUM"]
+    assert res["steering_governance_status"] == "GOVERNANCE_PARALYSIS"
+    assert res["is_steering_compliant"] is False
+
+
+def test_audit_steering_committee_quorum_and_decision_latency_empty_and_binding():
+    """Caso 4: Entradas vacías/inválidas y binding en ProjectLifecyclePMIService + __all__."""
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_steering_committee_quorum_and_decision_latency,
+    )
+
+    for payload in (None, [], "invalid", ["not-a-dict"]):
+        empty = audit_steering_committee_quorum_and_decision_latency(payload)  # type: ignore[arg-type]
+        assert empty["total_sessions_evaluated"] == 0
+        assert empty["quorum_failed_session_ids"] == []
+        assert empty["decision_sla_breach_session_ids"] == []
+        assert empty["unrecorded_minutes_session_ids"] == []
+        assert empty["steering_governance_status"] == "EFFECTIVE_STEERING"
+        assert empty["is_steering_compliant"] is True
+
+    sample = [
+        {
+            "session_id": "STEER-99",
+            "voting_members_invited": 4,
+            "voting_members_present": 4,
+            "blocker_escalation_age_days": 1.0,
+            "has_signed_minutes_and_action_owners": True,
+            "was_critical_decision_deferred_without_owner": False,
+        }
+    ]
+    assert (
+        ProjectLifecyclePMIService.audit_steering_committee_quorum_and_decision_latency(
+            sample
+        )
+        == audit_steering_committee_quorum_and_decision_latency(sample)
+    )
+    assert (
+        "audit_steering_committee_quorum_and_decision_latency" in mod.__all__
+    )
+
