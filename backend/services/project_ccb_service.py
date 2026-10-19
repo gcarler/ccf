@@ -2843,6 +2843,7 @@ __all__ = [
     "audit_api_backward_compatibility_and_contract_versioning",
     "audit_test_pyramid_balance_and_mutation_coverage_gate",
     "audit_supply_chain_slsa_provenance_and_artifact_signing",
+    "audit_ecab_emergency_change_retroactive_ratification_and_abuse",
     "ProjectCCBService",
 ]
 
@@ -6565,4 +6566,117 @@ def audit_supply_chain_slsa_provenance_and_artifact_signing(
 
 ProjectCCBService.audit_supply_chain_slsa_provenance_and_artifact_signing = staticmethod(
     audit_supply_chain_slsa_provenance_and_artifact_signing
+)
+
+
+def audit_ecab_emergency_change_retroactive_ratification_and_abuse(
+    changes: list[dict[str, Any]],
+    *,
+    max_retroactive_ratification_hours: float = 48.0,
+    max_emergency_change_ratio_pct: float = 15.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.6 — CCB Emergency Change Advisory Board (ECAB) Retroactive Ratification SLA, Break-Glass Abuse & Post-Implementation Review Auditor."""
+    valid_changes: list[dict[str, Any]] = []
+    if isinstance(changes, (list, tuple)):
+        for item in changes:
+            if not isinstance(item, dict):
+                continue
+            cid = str(item.get("change_id") or "").strip()
+            if not cid:
+                continue
+            valid_changes.append({**item, "_cid": cid})
+
+    if not valid_changes:
+        return {
+            "total_changes_evaluated": 0,
+            "emergency_changes_count": 0,
+            "emergency_change_ratio_pct": 0.0,
+            "unratified_or_late_ecab_ids": [],
+            "unjustified_break_glass_ids": [],
+            "missing_pir_emergency_ids": [],
+            "ecab_governance_status": "ECAB_GOVERNED",
+            "is_ecab_compliant": True,
+            "recommendations": [],
+        }
+
+    unratified_or_late_ecab_ids: list[str] = []
+    unjustified_break_glass_ids: list[str] = []
+    missing_pir_emergency_ids: list[str] = []
+    emergency_changes_count = 0
+
+    for chg in valid_changes:
+        cid = chg["_cid"]
+        is_emerg = bool(chg.get("is_emergency_break_glass", False))
+        if not is_emerg:
+            continue
+        emergency_changes_count += 1
+        hours_to_rat = max(
+            0.0, float(chg.get("hours_to_ecab_ratification", 0.0) or 0.0)
+        )
+        has_signoff = bool(chg.get("has_ecab_retroactive_signoff", True))
+        has_sev1 = bool(chg.get("has_linked_sev1_incident_id", True))
+        has_pir = bool(
+            chg.get("has_post_implementation_review_completed", True)
+        )
+
+        if (
+            not has_signoff
+            or hours_to_rat > max_retroactive_ratification_hours
+        ):
+            unratified_or_late_ecab_ids.append(cid)
+        if not has_sev1:
+            unjustified_break_glass_ids.append(cid)
+        if not has_pir:
+            missing_pir_emergency_ids.append(cid)
+
+    total_changes = len(valid_changes)
+    emergency_change_ratio_pct = (
+        round((emergency_changes_count / total_changes) * 100.0, 2)
+        if total_changes > 0
+        else 0.0
+    )
+
+    recommendations: list[str] = []
+    if unratified_or_late_ecab_ids:
+        recommendations.append(
+            f"Convene ECAB for retroactive sign-off within <= {max_retroactive_ratification_hours}h SLA for emergency change(s): {', '.join(unratified_or_late_ecab_ids)}."
+        )
+    if unjustified_break_glass_ids:
+        recommendations.append(
+            f"Enforce linked SEV-1 incident justification to prevent break-glass CCB bypass abuse on change(s): {', '.join(unjustified_break_glass_ids)}."
+        )
+    if missing_pir_emergency_ids:
+        recommendations.append(
+            f"Complete mandatory Post-Implementation Review (PIR) for emergency change(s): {', '.join(missing_pir_emergency_ids)}."
+        )
+    if emergency_change_ratio_pct > max_emergency_change_ratio_pct:
+        recommendations.append(
+            f"Reduce emergency change ratio ({emergency_change_ratio_pct}% > {max_emergency_change_ratio_pct}% max) by tightening standard CCB planning cadence."
+        )
+
+    if unratified_or_late_ecab_ids or unjustified_break_glass_ids:
+        ecab_governance_status = "ECAB_BYPASS_ABUSE_DETECTED"
+    elif (
+        missing_pir_emergency_ids
+        or emergency_change_ratio_pct > max_emergency_change_ratio_pct
+    ):
+        ecab_governance_status = "EMERGENCY_RATIO_OR_PIR_WARNING"
+    else:
+        ecab_governance_status = "ECAB_GOVERNED"
+
+    return {
+        "total_changes_evaluated": total_changes,
+        "emergency_changes_count": emergency_changes_count,
+        "emergency_change_ratio_pct": emergency_change_ratio_pct,
+        "unratified_or_late_ecab_ids": unratified_or_late_ecab_ids,
+        "unjustified_break_glass_ids": unjustified_break_glass_ids,
+        "missing_pir_emergency_ids": missing_pir_emergency_ids,
+        "ecab_governance_status": ecab_governance_status,
+        "is_ecab_compliant": ecab_governance_status == "ECAB_GOVERNED",
+        "recommendations": recommendations,
+    }
+
+
+ProjectCCBService.audit_ecab_emergency_change_retroactive_ratification_and_abuse = staticmethod(
+    audit_ecab_emergency_change_retroactive_ratification_and_abuse
 )

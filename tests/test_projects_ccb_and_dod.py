@@ -8525,3 +8525,153 @@ def test_audit_supply_chain_slsa_provenance_and_artifact_signing_staticmethod_an
         "audit_supply_chain_slsa_provenance_and_artifact_signing"
         in mod.__all__
     )
+
+
+def test_audit_ecab_emergency_change_retroactive_ratification_and_abuse_bypass_detected():
+    from backend.services.project_ccb_service import (
+        audit_ecab_emergency_change_retroactive_ratification_and_abuse,
+    )
+
+    res = audit_ecab_emergency_change_retroactive_ratification_and_abuse(
+        [
+            {
+                "change_id": "CHG-EMERG-01",
+                "is_emergency_break_glass": True,
+                "hours_to_ecab_ratification": 72.0,
+                "has_ecab_retroactive_signoff": True,
+                "has_linked_sev1_incident_id": True,
+                "has_post_implementation_review_completed": True,
+            },
+            {
+                "change_id": "CHG-EMERG-02",
+                "is_emergency_break_glass": True,
+                "hours_to_ecab_ratification": 12.0,
+                "has_ecab_retroactive_signoff": False,
+                "has_linked_sev1_incident_id": False,
+                "has_post_implementation_review_completed": True,
+            },
+            {
+                "change_id": "CHG-STD-01",
+                "is_emergency_break_glass": False,
+                "hours_to_ecab_ratification": 999.0,
+                "has_ecab_retroactive_signoff": False,
+                "has_linked_sev1_incident_id": False,
+                "has_post_implementation_review_completed": False,
+            },
+        ],
+        max_retroactive_ratification_hours=48.0,
+        max_emergency_change_ratio_pct=15.0,
+    )
+    assert res["total_changes_evaluated"] == 3
+    assert res["emergency_changes_count"] == 2
+    assert res["emergency_change_ratio_pct"] == 66.67
+    assert res["unratified_or_late_ecab_ids"] == [
+        "CHG-EMERG-01",
+        "CHG-EMERG-02",
+    ]
+    assert res["unjustified_break_glass_ids"] == ["CHG-EMERG-02"]
+    assert res["missing_pir_emergency_ids"] == []
+    assert res["ecab_governance_status"] == "ECAB_BYPASS_ABUSE_DETECTED"
+    assert res["is_ecab_compliant"] is False
+
+
+def test_audit_ecab_emergency_change_retroactive_ratification_and_abuse_ratio_or_pir_warning():
+    from backend.services.project_ccb_service import (
+        audit_ecab_emergency_change_retroactive_ratification_and_abuse,
+    )
+
+    res = audit_ecab_emergency_change_retroactive_ratification_and_abuse(
+        [
+            {
+                "change_id": "CHG-EMERG-PIR",
+                "is_emergency_break_glass": True,
+                "hours_to_ecab_ratification": 24.0,
+                "has_ecab_retroactive_signoff": True,
+                "has_linked_sev1_incident_id": True,
+                "has_post_implementation_review_completed": False,
+            },
+            {"change_id": "CHG-STD-1", "is_emergency_break_glass": False},
+            {"change_id": "CHG-STD-2", "is_emergency_break_glass": False},
+            {"change_id": "CHG-STD-3", "is_emergency_break_glass": False},
+            {"change_id": "CHG-STD-4", "is_emergency_break_glass": False},
+            {"change_id": "CHG-STD-5", "is_emergency_break_glass": False},
+            {"change_id": "CHG-STD-6", "is_emergency_break_glass": False},
+            {"change_id": "CHG-STD-7", "is_emergency_break_glass": False},
+            {"change_id": "CHG-STD-8", "is_emergency_break_glass": False},
+            {"change_id": "CHG-STD-9", "is_emergency_break_glass": False},
+        ],
+        max_retroactive_ratification_hours=48.0,
+        max_emergency_change_ratio_pct=15.0,
+    )
+    assert res["total_changes_evaluated"] == 10
+    assert res["emergency_changes_count"] == 1
+    assert res["emergency_change_ratio_pct"] == 10.0
+    assert res["unratified_or_late_ecab_ids"] == []
+    assert res["unjustified_break_glass_ids"] == []
+    assert res["missing_pir_emergency_ids"] == ["CHG-EMERG-PIR"]
+    assert res["ecab_governance_status"] == "EMERGENCY_RATIO_OR_PIR_WARNING"
+    assert res["is_ecab_compliant"] is False
+
+
+def test_audit_ecab_emergency_change_retroactive_ratification_and_abuse_governed_and_empty():
+    from backend.services.project_ccb_service import (
+        audit_ecab_emergency_change_retroactive_ratification_and_abuse,
+    )
+
+    empty = audit_ecab_emergency_change_retroactive_ratification_and_abuse(
+        [{"change_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["total_changes_evaluated"] == 0
+    assert empty["emergency_changes_count"] == 0
+    assert empty["emergency_change_ratio_pct"] == 0.0
+    assert empty["ecab_governance_status"] == "ECAB_GOVERNED"
+    assert empty["is_ecab_compliant"] is True
+
+    governed = audit_ecab_emergency_change_retroactive_ratification_and_abuse(
+        [
+            {
+                "change_id": "CHG-EMERG-OK",
+                "is_emergency_break_glass": True,
+                "hours_to_ecab_ratification": 18.0,
+                "has_ecab_retroactive_signoff": True,
+                "has_linked_sev1_incident_id": True,
+                "has_post_implementation_review_completed": True,
+            },
+            *[
+                {"change_id": f"CHG-STD-{i}", "is_emergency_break_glass": False}
+                for i in range(9)
+            ],
+        ],
+        max_retroactive_ratification_hours=48.0,
+        max_emergency_change_ratio_pct=15.0,
+    )
+    assert governed["total_changes_evaluated"] == 10
+    assert governed["emergency_changes_count"] == 1
+    assert governed["emergency_change_ratio_pct"] == 10.0
+    assert governed["ecab_governance_status"] == "ECAB_GOVERNED"
+    assert governed["is_ecab_compliant"] is True
+
+
+def test_audit_ecab_emergency_change_retroactive_ratification_and_abuse_staticmethod_and_dunder_all():
+    import backend.services.project_ccb_service as mod
+    from backend.services.project_ccb_service import (
+        ProjectCCBService,
+        audit_ecab_emergency_change_retroactive_ratification_and_abuse,
+    )
+
+    sample = [
+        {
+            "change_id": "CHG-100",
+            "is_emergency_break_glass": False,
+        }
+    ]
+    assert (
+        ProjectCCBService.audit_ecab_emergency_change_retroactive_ratification_and_abuse(
+            sample
+        )
+        == audit_ecab_emergency_change_retroactive_ratification_and_abuse(sample)
+    )
+    assert (
+        "audit_ecab_emergency_change_retroactive_ratification_and_abuse"
+        in mod.__all__
+    )
