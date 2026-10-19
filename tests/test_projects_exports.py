@@ -11400,3 +11400,115 @@ def test_audit_executive_report_cold_storage_glacier_restore_rto_and_checksum_ma
         in mod.__all__
     )
 
+
+def test_audit_executive_report_smime_pgp_envelope_and_ocsp_stapling_healthy():
+    from backend.services.project_export_service import (
+        audit_executive_report_smime_pgp_envelope_and_ocsp_stapling,
+    )
+
+    res = audit_executive_report_smime_pgp_envelope_and_ocsp_stapling(
+        [
+            {
+                "envelope_id": "ENV-EXEC-01",
+                "envelope_encrypted": True,
+                "key_strength_bits": 4096,
+                "recipient_cert_revoked": False,
+                "ocsp_response_age_hours": 4.0,
+                "dual_custodian_key_escrow_verified": True,
+            }
+        ],
+        min_rsa_or_eddsa_strength_bits=3072,
+        max_ocsp_response_age_hours=24.0,
+    )
+    assert res["status"] == "healthy"
+    assert res["is_compliant"] is True
+    assert res["envelopes_evaluated"] == 1
+    assert res["compromised_or_unencrypted_envelope_ids"] == []
+    assert res["stale_ocsp_or_escrow_envelope_ids"] == []
+    assert res["Violations"] == []
+
+
+def test_audit_executive_report_smime_pgp_envelope_and_ocsp_stapling_critical():
+    from backend.services.project_export_service import (
+        audit_executive_report_smime_pgp_envelope_and_ocsp_stapling,
+    )
+
+    res = audit_executive_report_smime_pgp_envelope_and_ocsp_stapling(
+        [
+            {
+                "envelope_id": "ENV-REVOKED",
+                "envelope_encrypted": True,
+                "key_strength_bits": 4096,
+                "recipient_cert_revoked": True,
+                "ocsp_response_age_hours": 2.0,
+            },
+            {
+                "envelope_id": "ENV-WEAK-KEY",
+                "envelope_encrypted": True,
+                "key_strength_bits": 2048,
+                "recipient_cert_revoked": False,
+                "ocsp_response_age_hours": 2.0,
+            },
+        ],
+        min_rsa_or_eddsa_strength_bits=3072,
+    )
+    assert res["status"] == "critical"
+    assert res["is_compliant"] is False
+    assert res["compromised_or_unencrypted_envelope_ids"] == [
+        "ENV-REVOKED",
+        "ENV-WEAK-KEY",
+    ]
+    assert res["records"][0]["unencrypted_or_revoked_cert_breach"] is True
+    assert res["records"][1]["weak_cipher_key_strength"] is True
+    assert len(res["Violations"]) == 2
+
+
+def test_audit_executive_report_smime_pgp_envelope_and_ocsp_stapling_warning():
+    from backend.services.project_export_service import (
+        audit_executive_report_smime_pgp_envelope_and_ocsp_stapling,
+    )
+
+    res = audit_executive_report_smime_pgp_envelope_and_ocsp_stapling(
+        [
+            {
+                "id": "ENV-STALE-OCSP-NO-ESCROW",
+                "envelope_encrypted": True,
+                "key_strength_bits": 4096,
+                "recipient_cert_revoked": False,
+                "ocsp_response_age_hours": 36.0,
+                "dual_custodian_key_escrow_verified": False,
+            }
+        ],
+        max_ocsp_response_age_hours=24.0,
+        require_dual_custodian_key_escrow=True,
+    )
+    assert res["status"] == "warning"
+    assert res["is_compliant"] is False
+    assert res["compromised_or_unencrypted_envelope_ids"] == []
+    assert res["stale_ocsp_or_escrow_envelope_ids"] == [
+        "ENV-STALE-OCSP-NO-ESCROW"
+    ]
+    assert res["records"][0]["stale_ocsp_staple"] is True
+    assert res["records"][0]["missing_dual_control_escrow"] is True
+
+
+def test_audit_executive_report_smime_pgp_envelope_and_ocsp_stapling_staticmethod_and_dunder_all():
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_smime_pgp_envelope_and_ocsp_stapling,
+    )
+
+    sample = [{"envelope_id": "ENV-1", "ocsp_response_age_hours": 2.0}]
+    assert (
+        ProjectExportService.audit_executive_report_smime_pgp_envelope_and_ocsp_stapling(
+            sample
+        )
+        == audit_executive_report_smime_pgp_envelope_and_ocsp_stapling(sample)
+    )
+    assert (
+        "audit_executive_report_smime_pgp_envelope_and_ocsp_stapling"
+        in mod.__all__
+    )
+
+

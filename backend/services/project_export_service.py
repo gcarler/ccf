@@ -3018,6 +3018,7 @@ __all__ = [
     "audit_executive_report_subprocessor_breach_sla_and_right_to_audit",
     "audit_executive_report_forensic_watermark_and_dlp_redaction",
     "audit_executive_report_cold_storage_glacier_restore_rto_and_checksum_manifest",
+    "audit_executive_report_smime_pgp_envelope_and_ocsp_stapling",
     "ProjectExportService",
 ]
 
@@ -8361,5 +8362,135 @@ def audit_executive_report_cold_storage_glacier_restore_rto_and_checksum_manifes
 ProjectExportService.audit_executive_report_cold_storage_glacier_restore_rto_and_checksum_manifest = staticmethod(
     audit_executive_report_cold_storage_glacier_restore_rto_and_checksum_manifest
 )
+
+
+def audit_executive_report_smime_pgp_envelope_and_ocsp_stapling(
+    dispatch_envelopes: list[dict[str, Any]],
+    *,
+    min_rsa_or_eddsa_strength_bits: int = 3072,
+    max_ocsp_response_age_hours: float = 24.0,
+    require_dual_custodian_key_escrow: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §10.2 & §11.6 — Audita cifrado de sobre S/MIME y OpenPGP en reportes ejecutivos, revocación de certificados OCSP/CRL del destinatario y custodia de llaves bajo control dual."""
+    raw_items = (
+        dispatch_envelopes if isinstance(dispatch_envelopes, list) else []
+    )
+    valid_items = [item for item in raw_items if isinstance(item, dict)]
+
+    compromised_or_unencrypted_envelope_ids: list[str] = []
+    stale_ocsp_or_escrow_envelope_ids: list[str] = []
+    records: list[dict[str, Any]] = []
+    violations: list[str] = []
+    has_critical = False
+    has_warning = False
+
+    for idx, item in enumerate(valid_items):
+        envelope_id = (
+            str(
+                item.get("envelope_id")
+                or item.get("id")
+                or f"envelope-{idx + 1}"
+            ).strip()
+            or f"envelope-{idx + 1}"
+        )
+
+        raw_enc = item.get("envelope_encrypted", True)
+        envelope_encrypted = bool(True if raw_enc is None else raw_enc)
+
+        raw_bits = item.get("key_strength_bits", 4096)
+        key_strength_bits = max(0, int(4096 if raw_bits is None else raw_bits))
+
+        raw_rev = item.get("recipient_cert_revoked", False)
+        recipient_cert_revoked = bool(False if raw_rev is None else raw_rev)
+
+        raw_ocsp = item.get("ocsp_response_age_hours", 0.0)
+        ocsp_response_age_hours = max(
+            0.0, float(0.0 if raw_ocsp is None else raw_ocsp)
+        )
+
+        raw_escrow = item.get("dual_custodian_key_escrow_verified", True)
+        dual_custodian_key_escrow_verified = bool(
+            True if raw_escrow is None else raw_escrow
+        )
+
+        unencrypted_or_revoked_cert_breach = (
+            not envelope_encrypted or recipient_cert_revoked
+        )
+        weak_cipher_key_strength = (
+            key_strength_bits < min_rsa_or_eddsa_strength_bits
+        )
+        stale_ocsp_staple = (
+            ocsp_response_age_hours > max_ocsp_response_age_hours
+        )
+        missing_dual_control_escrow = bool(
+            require_dual_custodian_key_escrow
+            and not dual_custodian_key_escrow_verified
+        )
+
+        if unencrypted_or_revoked_cert_breach or weak_cipher_key_strength:
+            compromised_or_unencrypted_envelope_ids.append(envelope_id)
+            has_critical = True
+            if unencrypted_or_revoked_cert_breach:
+                violations.append(
+                    f"Envelope '{envelope_id}' is unencrypted or uses a revoked recipient certificate."
+                )
+            if weak_cipher_key_strength:
+                violations.append(
+                    f"Envelope '{envelope_id}' key strength ({key_strength_bits} bits) is below minimum ({min_rsa_or_eddsa_strength_bits} bits)."
+                )
+
+        if stale_ocsp_staple or missing_dual_control_escrow:
+            stale_ocsp_or_escrow_envelope_ids.append(envelope_id)
+            has_warning = True
+            if stale_ocsp_staple:
+                violations.append(
+                    f"Envelope '{envelope_id}' OCSP staple age ({ocsp_response_age_hours}h) exceeds maximum ({max_ocsp_response_age_hours}h)."
+                )
+            if missing_dual_control_escrow:
+                violations.append(
+                    f"Envelope '{envelope_id}' lacks verified dual-custodian key escrow."
+                )
+
+        records.append(
+            {
+                "envelope_id": envelope_id,
+                "envelope_encrypted": envelope_encrypted,
+                "key_strength_bits": key_strength_bits,
+                "recipient_cert_revoked": recipient_cert_revoked,
+                "ocsp_response_age_hours": ocsp_response_age_hours,
+                "dual_custodian_key_escrow_verified": dual_custodian_key_escrow_verified,
+                "unencrypted_or_revoked_cert_breach": unencrypted_or_revoked_cert_breach,
+                "weak_cipher_key_strength": weak_cipher_key_strength,
+                "stale_ocsp_staple": stale_ocsp_staple,
+                "missing_dual_control_escrow": missing_dual_control_escrow,
+            }
+        )
+
+    if has_critical:
+        status = "critical"
+        is_compliant = False
+    elif has_warning:
+        status = "warning"
+        is_compliant = False
+    else:
+        status = "healthy"
+        is_compliant = True
+
+    return {
+        "status": status,
+        "is_compliant": is_compliant,
+        "envelopes_evaluated": len(records),
+        "compromised_or_unencrypted_envelope_ids": compromised_or_unencrypted_envelope_ids,
+        "stale_ocsp_or_escrow_envelope_ids": stale_ocsp_or_escrow_envelope_ids,
+        "records": records,
+        "violations": violations,
+        "Violations": violations,
+    }
+
+
+ProjectExportService.audit_executive_report_smime_pgp_envelope_and_ocsp_stapling = staticmethod(
+    audit_executive_report_smime_pgp_envelope_and_ocsp_stapling
+)
+
 
 
