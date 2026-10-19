@@ -2545,6 +2545,7 @@ __all__ = [
     "audit_wiki_secrets_vault_lease_rotation_and_root_token_seal",
     "audit_wiki_ntp_clock_drift_and_leap_second_smearing",
     "audit_wiki_ebpf_kernel_probe_ringbuffer_drop_and_verifier_safety",
+    "audit_wiki_otel_tail_sampling_baggage_and_span_drop",
     "WikiPMIService",
 ]
 
@@ -7753,4 +7754,138 @@ def audit_wiki_ebpf_kernel_probe_ringbuffer_drop_and_verifier_safety(
 WikiPMIService.audit_wiki_ebpf_kernel_probe_ringbuffer_drop_and_verifier_safety = staticmethod(
     audit_wiki_ebpf_kernel_probe_ringbuffer_drop_and_verifier_safety
 )
+
+
+def audit_wiki_otel_tail_sampling_baggage_and_span_drop(
+    collector_pipelines: list[dict[str, Any]],
+    *,
+    max_span_drop_rate_pct: float = 1.0,
+    min_error_trace_retention_pct: float = 100.0,
+    max_baggage_header_bytes: int = 8192,
+    require_w3c_tracecontext: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §11.6 & §8.2 — Audita muestreo tail-based OpenTelemetry, propagación W3C TraceContext, desbordamiento de baggage y descarte de spans en colectores."""
+    raw_items = (
+        collector_pipelines if isinstance(collector_pipelines, list) else []
+    )
+    valid_items = [item for item in raw_items if isinstance(item, dict)]
+
+    trace_loss_pipeline_ids: list[str] = []
+    degraded_pipeline_ids: list[str] = []
+    records: list[dict[str, Any]] = []
+    violations: list[str] = []
+    has_critical = False
+    has_warning = False
+
+    for idx, item in enumerate(valid_items):
+        pipeline_id = (
+            str(
+                item.get("pipeline_id")
+                or item.get("id")
+                or f"pipeline-{idx + 1}"
+            ).strip()
+            or f"pipeline-{idx + 1}"
+        )
+
+        raw_w3c = item.get("w3c_tracecontext_enforced", True)
+        w3c_tracecontext_enforced = bool(True if raw_w3c is None else raw_w3c)
+
+        raw_err_ret = item.get("error_trace_retention_pct", 100.0)
+        error_trace_retention_pct = float(
+            100.0 if raw_err_ret is None else raw_err_ret
+        )
+
+        spans_received = max(0, int(item.get("spans_received") or 0))
+        spans_dropped_queue_full = max(
+            0, int(item.get("spans_dropped_queue_full") or 0)
+        )
+        max_observed_baggage_bytes = max(
+            0, int(item.get("max_observed_baggage_bytes") or 0)
+        )
+
+        span_drop_rate_pct = (
+            round((spans_dropped_queue_full / spans_received) * 100.0, 4)
+            if spans_received > 0
+            else 0.0
+        )
+
+        missing_w3c_tracecontext = bool(
+            require_w3c_tracecontext and not w3c_tracecontext_enforced
+        )
+        error_trace_sampling_loss = (
+            error_trace_retention_pct < min_error_trace_retention_pct
+        )
+        span_drop_budget_exceeded = (
+            span_drop_rate_pct > max_span_drop_rate_pct
+        )
+        baggage_size_overflow = (
+            max_observed_baggage_bytes > max_baggage_header_bytes
+        )
+
+        if missing_w3c_tracecontext or error_trace_sampling_loss:
+            trace_loss_pipeline_ids.append(pipeline_id)
+            has_critical = True
+            if missing_w3c_tracecontext:
+                violations.append(
+                    f"Pipeline '{pipeline_id}' does not enforce W3C TraceContext propagation."
+                )
+            if error_trace_sampling_loss:
+                violations.append(
+                    f"Pipeline '{pipeline_id}' error trace retention {error_trace_retention_pct}% is below {min_error_trace_retention_pct}%."
+                )
+
+        if span_drop_budget_exceeded or baggage_size_overflow:
+            degraded_pipeline_ids.append(pipeline_id)
+            has_warning = True
+            if span_drop_budget_exceeded:
+                violations.append(
+                    f"Pipeline '{pipeline_id}' span drop rate {span_drop_rate_pct}% exceeds {max_span_drop_rate_pct}%."
+                )
+            if baggage_size_overflow:
+                violations.append(
+                    f"Pipeline '{pipeline_id}' baggage header size {max_observed_baggage_bytes}B exceeds {max_baggage_header_bytes}B."
+                )
+
+        records.append(
+            {
+                "pipeline_id": pipeline_id,
+                "w3c_tracecontext_enforced": w3c_tracecontext_enforced,
+                "error_trace_retention_pct": error_trace_retention_pct,
+                "spans_received": spans_received,
+                "spans_dropped_queue_full": spans_dropped_queue_full,
+                "span_drop_rate_pct": span_drop_rate_pct,
+                "max_observed_baggage_bytes": max_observed_baggage_bytes,
+                "missing_w3c_tracecontext": missing_w3c_tracecontext,
+                "error_trace_sampling_loss": error_trace_sampling_loss,
+                "span_drop_budget_exceeded": span_drop_budget_exceeded,
+                "baggage_size_overflow": baggage_size_overflow,
+            }
+        )
+
+    if has_critical:
+        status = "critical"
+        is_compliant = False
+    elif has_warning:
+        status = "warning"
+        is_compliant = False
+    else:
+        status = "healthy"
+        is_compliant = True
+
+    return {
+        "status": status,
+        "is_compliant": is_compliant,
+        "pipelines_evaluated": len(records),
+        "trace_loss_pipeline_ids": trace_loss_pipeline_ids,
+        "degraded_pipeline_ids": degraded_pipeline_ids,
+        "records": records,
+        "violations": violations,
+        "Violations": violations,
+    }
+
+
+WikiPMIService.audit_wiki_otel_tail_sampling_baggage_and_span_drop = staticmethod(
+    audit_wiki_otel_tail_sampling_baggage_and_span_drop
+)
+
 

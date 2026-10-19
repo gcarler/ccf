@@ -10719,3 +10719,112 @@ def test_audit_wiki_ebpf_kernel_probe_ringbuffer_drop_and_verifier_safety_static
         in mod.__all__
     )
 
+
+def test_audit_wiki_otel_tail_sampling_baggage_and_span_drop_healthy():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_otel_tail_sampling_baggage_and_span_drop,
+    )
+
+    res = audit_wiki_otel_tail_sampling_baggage_and_span_drop(
+        [
+            {
+                "pipeline_id": "OTEL-GATEWAY-01",
+                "w3c_tracecontext_enforced": True,
+                "error_trace_retention_pct": 100.0,
+                "spans_received": 50000,
+                "spans_dropped_queue_full": 250,
+                "max_observed_baggage_bytes": 2048,
+            }
+        ],
+        max_span_drop_rate_pct=1.0,
+        min_error_trace_retention_pct=100.0,
+        max_baggage_header_bytes=8192,
+    )
+    assert res["status"] == "healthy"
+    assert res["is_compliant"] is True
+    assert res["pipelines_evaluated"] == 1
+    assert res["trace_loss_pipeline_ids"] == []
+    assert res["degraded_pipeline_ids"] == []
+    assert res["Violations"] == []
+    assert res["records"][0]["span_drop_rate_pct"] == 0.5
+
+
+def test_audit_wiki_otel_tail_sampling_baggage_and_span_drop_critical():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_otel_tail_sampling_baggage_and_span_drop,
+    )
+
+    res = audit_wiki_otel_tail_sampling_baggage_and_span_drop(
+        [
+            {
+                "pipeline_id": "OTEL-NO-W3C",
+                "w3c_tracecontext_enforced": False,
+                "error_trace_retention_pct": 100.0,
+                "spans_received": 1000,
+                "spans_dropped_queue_full": 0,
+            },
+            {
+                "pipeline_id": "OTEL-ERR-LOSS",
+                "w3c_tracecontext_enforced": True,
+                "error_trace_retention_pct": 85.0,
+                "spans_received": 1000,
+                "spans_dropped_queue_full": 0,
+            },
+        ]
+    )
+    assert res["status"] == "critical"
+    assert res["is_compliant"] is False
+    assert res["trace_loss_pipeline_ids"] == ["OTEL-NO-W3C", "OTEL-ERR-LOSS"]
+    assert res["records"][0]["missing_w3c_tracecontext"] is True
+    assert res["records"][1]["error_trace_sampling_loss"] is True
+    assert len(res["Violations"]) == 2
+
+
+def test_audit_wiki_otel_tail_sampling_baggage_and_span_drop_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_otel_tail_sampling_baggage_and_span_drop,
+    )
+
+    res = audit_wiki_otel_tail_sampling_baggage_and_span_drop(
+        [
+            {
+                "id": "OTEL-DROP-AND-BAGGAGE",
+                "w3c_tracecontext_enforced": True,
+                "error_trace_retention_pct": 100.0,
+                "spans_received": 1000,
+                "spans_dropped_queue_full": 25,
+                "max_observed_baggage_bytes": 12288,
+            }
+        ],
+        max_span_drop_rate_pct=1.0,
+        max_baggage_header_bytes=8192,
+    )
+    assert res["status"] == "warning"
+    assert res["is_compliant"] is False
+    assert res["trace_loss_pipeline_ids"] == []
+    assert res["degraded_pipeline_ids"] == ["OTEL-DROP-AND-BAGGAGE"]
+    assert res["records"][0]["span_drop_rate_pct"] == 2.5
+    assert res["records"][0]["span_drop_budget_exceeded"] is True
+    assert res["records"][0]["baggage_size_overflow"] is True
+
+
+def test_audit_wiki_otel_tail_sampling_baggage_and_span_drop_staticmethod_and_dunder_all():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_otel_tail_sampling_baggage_and_span_drop,
+    )
+
+    sample = [{"pipeline_id": "OTEL-1", "spans_received": 0}]
+    assert (
+        WikiPMIService.audit_wiki_otel_tail_sampling_baggage_and_span_drop(
+            sample
+        )
+        == audit_wiki_otel_tail_sampling_baggage_and_span_drop(sample)
+    )
+    assert (
+        "audit_wiki_otel_tail_sampling_baggage_and_span_drop"
+        in mod.__all__
+    )
+
+
