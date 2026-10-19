@@ -3045,6 +3045,7 @@ __all__ = [
     "audit_markdown_mermaid_diagram_syntax_and_node_budget_hygiene",
     "audit_markdown_image_alt_text_and_svg_sanitization_hygiene",
     "audit_markdown_yaml_frontmatter_schema_and_tag_hygiene",
+    "audit_markdown_admonition_callout_syntax_and_nesting_hygiene",
     "AnydocService",
 ]
 
@@ -8736,6 +8737,151 @@ def audit_markdown_yaml_frontmatter_schema_and_tag_hygiene(
 AnyDocService.audit_markdown_yaml_frontmatter_schema_and_tag_hygiene = staticmethod(
     audit_markdown_yaml_frontmatter_schema_and_tag_hygiene
 )
+
+
+_ADMONITION_NESTING_HEADER_RE = re.compile(r"^\s*(>+)\s*\[!([A-Za-z0-9_-]+)\](.*)$")
+_ADMONITION_NESTING_BQ_LINE_RE = re.compile(r"^\s*(>+)(.*)$")
+
+
+def audit_markdown_admonition_callout_syntax_and_nesting_hygiene(
+    markdown_text: str,
+    *,
+    allowed_alert_types: tuple[str, ...] = (
+        "NOTE",
+        "TIP",
+        "IMPORTANT",
+        "WARNING",
+        "CAUTION",
+    ),
+    forbid_consecutive_alerts: bool = True,
+    forbid_nested_alerts: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §4.4 & §10.2 — Audita sintaxis de alertas/callouts GitHub-Flavored Markdown (`> [!TYPE]`), espaciado entre alertas consecutivas y prohibición de anidamiento."""
+    text = markdown_text if isinstance(markdown_text, str) else ""
+    lines = text.splitlines()
+    allowed_set = {
+        str(t).strip().upper() for t in (allowed_alert_types or ()) if str(t).strip()
+    }
+
+    unsupported_alert_types: list[str] = []
+    nested_alert_lines: list[int] = []
+    consecutive_alert_lines: list[int] = []
+    empty_or_inline_alert_lines: list[int] = []
+    records: list[dict[str, Any]] = []
+    violations: list[str] = []
+
+    n = len(lines)
+    idx = 0
+    seen_any_alert = False
+    had_non_blank_separator_since_last_alert = True
+
+    while idx < n:
+        line = lines[idx]
+        header_match = _ADMONITION_NESTING_HEADER_RE.match(line)
+        if not header_match:
+            if line.strip():
+                bq_match = _ADMONITION_NESTING_BQ_LINE_RE.match(line)
+                if not bq_match:
+                    had_non_blank_separator_since_last_alert = True
+            idx += 1
+            continue
+
+        line_no = idx + 1
+        quote_markers = header_match.group(1).replace(" ", "")
+        quote_depth = len(quote_markers)
+        alert_type = header_match.group(2).strip().upper()
+        inline_tail = header_match.group(3).strip()
+
+        body_lines_count = 0
+        scan = idx + 1
+        while scan < n:
+            next_line = lines[scan]
+            if _ADMONITION_NESTING_HEADER_RE.match(next_line):
+                break
+            bq_next = _ADMONITION_NESTING_BQ_LINE_RE.match(next_line)
+            if not bq_next:
+                break
+            if bq_next.group(2).strip():
+                body_lines_count += 1
+            scan += 1
+
+        nested_alert_violation = bool(forbid_nested_alerts and quote_depth > 1)
+        unsupported_alert_type = alert_type not in allowed_set
+        empty_or_inline_header_alert = bool(
+            inline_tail or body_lines_count == 0
+        )
+        consecutive_alerts_violation = bool(
+            forbid_consecutive_alerts
+            and seen_any_alert
+            and not had_non_blank_separator_since_last_alert
+        )
+
+        if unsupported_alert_type:
+            unsupported_alert_types.append(alert_type)
+            violations.append(
+                f"Line {line_no}: unsupported alert type '{alert_type}'."
+            )
+        if nested_alert_violation:
+            nested_alert_lines.append(line_no)
+            violations.append(
+                f"Line {line_no}: nested admonition callout is forbidden."
+            )
+        if consecutive_alerts_violation:
+            consecutive_alert_lines.append(line_no)
+            violations.append(
+                f"Line {line_no}: consecutive alerts without intervening text."
+            )
+        if empty_or_inline_header_alert:
+            empty_or_inline_alert_lines.append(line_no)
+            violations.append(
+                f"Line {line_no}: alert has inline header text or empty body."
+            )
+
+        records.append(
+            {
+                "line": line_no,
+                "alert_type": alert_type,
+                "quote_depth": quote_depth,
+                "body_lines_count": body_lines_count,
+                "nested_alert_violation": nested_alert_violation,
+                "unsupported_alert_type": unsupported_alert_type,
+                "empty_or_inline_header_alert": empty_or_inline_header_alert,
+                "consecutive_alerts_violation": consecutive_alerts_violation,
+            }
+        )
+
+        seen_any_alert = True
+        had_non_blank_separator_since_last_alert = False
+        idx = scan
+
+    if unsupported_alert_types or nested_alert_lines:
+        status = "critical"
+        is_clean = False
+    elif consecutive_alert_lines or empty_or_inline_alert_lines:
+        status = "warning"
+        is_clean = False
+    else:
+        status = "healthy"
+        is_clean = True
+
+    return {
+        "is_clean": is_clean,
+        "status": status,
+        "alerts_detected": len(records),
+        "unsupported_alert_types": unsupported_alert_types,
+        "nested_alert_lines": nested_alert_lines,
+        "consecutive_alert_lines": consecutive_alert_lines,
+        "empty_or_inline_alert_lines": empty_or_inline_alert_lines,
+        "records": records,
+        "violations": violations,
+        "Violations": violations,
+    }
+
+
+AnyDocService.audit_markdown_admonition_callout_syntax_and_nesting_hygiene = staticmethod(
+    audit_markdown_admonition_callout_syntax_and_nesting_hygiene
+)
+
 
 
 

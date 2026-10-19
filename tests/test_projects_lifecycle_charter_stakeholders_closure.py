@@ -10669,3 +10669,103 @@ def test_audit_team_burnout_overtime_and_bus_factor_redundancy_staticmethod_and_
         in mod.__all__
     )
 
+
+def test_audit_lessons_learned_retrospective_cadence_and_capa_closure_efficacy_compliant():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_lessons_learned_retrospective_cadence_and_capa_closure_efficacy,
+    )
+
+    res = audit_lessons_learned_retrospective_cadence_and_capa_closure_efficacy(
+        [
+            {
+                "lesson_id": "LL-101",
+                "days_since_retrospective": 14,
+                "root_cause_documented": True,
+                "capa_status": "verified_closed",
+                "capa_effectiveness_score": 92.0,
+                "recurrence_count": 0,
+                "archived_to_opa_repository": True,
+            }
+        ]
+    )
+    assert res["is_compliant"] is True
+    assert res["status"] == "compliant"
+    assert res["lessons_evaluated"] == 1
+    assert res["overdue_retrospective_lesson_ids"] == []
+    assert res["ineffective_capa_lesson_ids"] == []
+    assert res["Violations"] == []
+
+
+def test_audit_lessons_learned_retrospective_cadence_and_capa_closure_efficacy_critical():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_lessons_learned_retrospective_cadence_and_capa_closure_efficacy,
+    )
+
+    res = audit_lessons_learned_retrospective_cadence_and_capa_closure_efficacy(
+        [
+            {
+                "lesson_id": "LL-NO-RCA",
+                "days_since_retrospective": 10,
+                "root_cause_documented": False,
+                "capa_status": "open",
+                "capa_effectiveness_score": 50.0,
+                "recurrence_count": 2,
+                "archived_to_opa_repository": True,
+            }
+        ]
+    )
+    assert res["is_compliant"] is False
+    assert res["status"] == "critical"
+    assert res["ineffective_capa_lesson_ids"] == ["LL-NO-RCA"]
+    assert len(res["Violations"]) >= 2
+
+
+def test_audit_lessons_learned_retrospective_cadence_and_capa_closure_efficacy_warning():
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_lessons_learned_retrospective_cadence_and_capa_closure_efficacy,
+    )
+
+    res = audit_lessons_learned_retrospective_cadence_and_capa_closure_efficacy(
+        [
+            {
+                "id": "LL-OVERDUE",
+                "days_since_retrospective": 45,
+                "root_cause_documented": True,
+                "capa_status": "closed",
+                "capa_effectiveness_score": 85.0,
+                "recurrence_count": 0,
+                "archived_to_opa_repository": False,
+            }
+        ],
+        max_days_since_retrospective=30,
+        require_opa_repository_archival=True,
+    )
+    assert res["is_compliant"] is False
+    assert res["status"] == "warning"
+    assert res["overdue_retrospective_lesson_ids"] == ["LL-OVERDUE"]
+    assert res["ineffective_capa_lesson_ids"] == []
+    assert res["records"][0]["opa_archival_missing"] is True
+
+
+def test_audit_lessons_learned_retrospective_cadence_and_capa_closure_efficacy_staticmethod_and_dunder_all():
+    import backend.services.project_lifecycle_pmi_service as mod
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_lessons_learned_retrospective_cadence_and_capa_closure_efficacy,
+    )
+
+    sample = [{"lesson_id": "LL-99", "days_since_retrospective": 5}]
+    assert (
+        ProjectLifecyclePMIService.audit_lessons_learned_retrospective_cadence_and_capa_closure_efficacy(
+            sample
+        )
+        == audit_lessons_learned_retrospective_cadence_and_capa_closure_efficacy(
+            sample
+        )
+    )
+    assert (
+        "audit_lessons_learned_retrospective_cadence_and_capa_closure_efficacy"
+        in mod.__all__
+    )
+
+

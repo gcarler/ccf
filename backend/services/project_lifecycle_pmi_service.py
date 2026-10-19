@@ -3179,6 +3179,7 @@ __all__ = [
     "audit_regulatory_permit_renewal_and_stop_work_compliance",
     "audit_site_demobilization_environmental_clearance_and_asset_disposal",
     "audit_team_burnout_overtime_and_bus_factor_redundancy",
+    "audit_lessons_learned_retrospective_cadence_and_capa_closure_efficacy",
     "ProjectLifecyclePMIService",
 ]
 
@@ -7972,4 +7973,137 @@ def audit_team_burnout_overtime_and_bus_factor_redundancy(
 ProjectLifecyclePMIService.audit_team_burnout_overtime_and_bus_factor_redundancy = staticmethod(
     audit_team_burnout_overtime_and_bus_factor_redundancy
 )
+
+
+def audit_lessons_learned_retrospective_cadence_and_capa_closure_efficacy(
+    lesson_records: list[dict[str, Any]],
+    *,
+    max_days_since_retrospective: int = 30,
+    min_capa_effectiveness_score: float = 80.0,
+    require_opa_repository_archival: bool = True,
+) -> dict[str, Any]:
+    """PMBOK §4.4 & §8.2 — Audita cadencia de retrospectivas de lecciones aprendidas, análisis de causa raíz, efectividad de cierre CAPA sin recurrencias e institucionalización en repositorio OPA."""
+    raw_records = (
+        lesson_records if isinstance(lesson_records, (list, tuple)) else []
+    )
+    valid_records = [item for item in raw_records if isinstance(item, dict)]
+
+    overdue_retrospective_lesson_ids: list[str] = []
+    ineffective_capa_lesson_ids: list[str] = []
+    records: list[dict[str, Any]] = []
+    violations: list[str] = []
+    has_critical = False
+    has_warning = False
+
+    for idx, item in enumerate(valid_records):
+        lesson_id = (
+            str(
+                item.get("lesson_id") or item.get("id") or f"lesson-{idx + 1}"
+            ).strip()
+            or f"lesson-{idx + 1}"
+        )
+        days_since_retrospective = max(
+            0, int(item.get("days_since_retrospective") or 0)
+        )
+        raw_rca = item.get("root_cause_documented", True)
+        root_cause_documented = bool(True if raw_rca is None else raw_rca)
+
+        raw_status = item.get("capa_status", "verified_closed")
+        capa_status = (
+            str("verified_closed" if raw_status is None else raw_status)
+            .strip()
+            .lower()
+            or "verified_closed"
+        )
+
+        raw_score = item.get("capa_effectiveness_score", 100.0)
+        capa_effectiveness_score = min(
+            100.0, max(0.0, float(100.0 if raw_score is None else raw_score))
+        )
+
+        recurrence_count = max(0, int(item.get("recurrence_count") or 0))
+
+        raw_opa = item.get("archived_to_opa_repository", True)
+        archived_to_opa_repository = bool(True if raw_opa is None else raw_opa)
+
+        retrospective_cadence_overdue = (
+            days_since_retrospective > max_days_since_retrospective
+        )
+        missing_root_cause_analysis = not root_cause_documented
+        ineffective_capa_or_recurrence = (
+            capa_effectiveness_score < min_capa_effectiveness_score
+            or recurrence_count > 0
+            or capa_status not in {"verified_closed", "closed"}
+        )
+        opa_archival_missing = bool(
+            require_opa_repository_archival and not archived_to_opa_repository
+        )
+
+        if retrospective_cadence_overdue:
+            overdue_retrospective_lesson_ids.append(lesson_id)
+            has_warning = True
+            violations.append(
+                f"Lesson '{lesson_id}' retrospective cadence overdue ({days_since_retrospective}d > {max_days_since_retrospective}d)."
+            )
+
+        if missing_root_cause_analysis or ineffective_capa_or_recurrence:
+            ineffective_capa_lesson_ids.append(lesson_id)
+            has_critical = True
+            if missing_root_cause_analysis:
+                violations.append(
+                    f"Lesson '{lesson_id}' is missing documented root-cause analysis."
+                )
+            if ineffective_capa_or_recurrence:
+                violations.append(
+                    f"Lesson '{lesson_id}' has ineffective or recurring CAPA."
+                )
+
+        if opa_archival_missing:
+            has_warning = True
+            violations.append(
+                f"Lesson '{lesson_id}' is not archived to the OPA repository."
+            )
+
+        records.append(
+            {
+                "lesson_id": lesson_id,
+                "days_since_retrospective": days_since_retrospective,
+                "root_cause_documented": root_cause_documented,
+                "capa_status": capa_status,
+                "capa_effectiveness_score": capa_effectiveness_score,
+                "recurrence_count": recurrence_count,
+                "archived_to_opa_repository": archived_to_opa_repository,
+                "retrospective_cadence_overdue": retrospective_cadence_overdue,
+                "missing_root_cause_analysis": missing_root_cause_analysis,
+                "ineffective_capa_or_recurrence": ineffective_capa_or_recurrence,
+                "opa_archival_missing": opa_archival_missing,
+            }
+        )
+
+    if has_critical:
+        status = "critical"
+        is_compliant = False
+    elif has_warning:
+        status = "warning"
+        is_compliant = False
+    else:
+        status = "compliant"
+        is_compliant = True
+
+    return {
+        "status": status,
+        "is_compliant": is_compliant,
+        "lessons_evaluated": len(valid_records),
+        "overdue_retrospective_lesson_ids": overdue_retrospective_lesson_ids,
+        "ineffective_capa_lesson_ids": ineffective_capa_lesson_ids,
+        "records": records,
+        "violations": violations,
+        "Violations": violations,
+    }
+
+
+ProjectLifecyclePMIService.audit_lessons_learned_retrospective_cadence_and_capa_closure_efficacy = staticmethod(
+    audit_lessons_learned_retrospective_cadence_and_capa_closure_efficacy
+)
+
 

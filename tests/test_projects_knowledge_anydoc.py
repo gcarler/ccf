@@ -8675,6 +8675,90 @@ def test_audit_markdown_yaml_frontmatter_schema_and_tag_hygiene_staticmethod_and
     )
 
 
+def test_audit_markdown_admonition_callout_syntax_and_nesting_hygiene_healthy():
+    from backend.services.anydoc_service import (
+        audit_markdown_admonition_callout_syntax_and_nesting_hygiene,
+    )
+
+    md = (
+        "# Governance Guide\n\n"
+        "> [!NOTE]\n"
+        "> Keep all baseline artifacts under configuration control.\n\n"
+        "Some explanatory paragraph between callouts.\n\n"
+        "> [!WARNING]\n"
+        "> Do not bypass CCB gate reviews.\n"
+    )
+    res = audit_markdown_admonition_callout_syntax_and_nesting_hygiene(md)
+    assert res["is_clean"] is True
+    assert res["status"] == "healthy"
+    assert res["alerts_detected"] == 2
+    assert res["unsupported_alert_types"] == []
+    assert res["nested_alert_lines"] == []
+    assert res["consecutive_alert_lines"] == []
+    assert res["empty_or_inline_alert_lines"] == []
+    assert res["Violations"] == []
+
+
+def test_audit_markdown_admonition_callout_syntax_and_nesting_hygiene_critical_nested_and_unsupported():
+    from backend.services.anydoc_service import (
+        audit_markdown_admonition_callout_syntax_and_nesting_hygiene,
+    )
+
+    md = (
+        "> [!DANGER]\n"
+        "> Unsupported callout type.\n\n"
+        "Paragraph separator.\n\n"
+        ">> [!NOTE]\n"
+        ">> Nested callout block.\n"
+    )
+    res = audit_markdown_admonition_callout_syntax_and_nesting_hygiene(md)
+    assert res["is_clean"] is False
+    assert res["status"] == "critical"
+    assert res["alerts_detected"] == 2
+    assert res["unsupported_alert_types"] == ["DANGER"]
+    assert res["nested_alert_lines"] == [6]
+    assert len(res["Violations"]) >= 2
+
+
+def test_audit_markdown_admonition_callout_syntax_and_nesting_hygiene_warning_consecutive_and_inline():
+    from backend.services.anydoc_service import (
+        audit_markdown_admonition_callout_syntax_and_nesting_hygiene,
+    )
+
+    md = (
+        "> [!TIP] Inline header text not allowed\n"
+        "> Body line.\n\n"
+        "> [!IMPORTANT]\n"
+    )
+    res = audit_markdown_admonition_callout_syntax_and_nesting_hygiene(md)
+    assert res["is_clean"] is False
+    assert res["status"] == "warning"
+    assert res["alerts_detected"] == 2
+    assert res["consecutive_alert_lines"] == [4]
+    assert res["empty_or_inline_alert_lines"] == [1, 4]
+
+
+def test_audit_markdown_admonition_callout_syntax_and_nesting_hygiene_staticmethod_and_dunder_all():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_admonition_callout_syntax_and_nesting_hygiene,
+    )
+
+    md = "> [!CAUTION]\n> Verify backups before migration.\n"
+    assert (
+        AnyDocService.audit_markdown_admonition_callout_syntax_and_nesting_hygiene(
+            md
+        )
+        == audit_markdown_admonition_callout_syntax_and_nesting_hygiene(md)
+    )
+    assert (
+        "audit_markdown_admonition_callout_syntax_and_nesting_hygiene"
+        in mod.__all__
+    )
+
+
+
 
 
 
