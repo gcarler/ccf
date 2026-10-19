@@ -10548,3 +10548,141 @@ def test_audit_executive_report_accessibility_wcag_aa_contrast_and_screen_reader
         in mod.__all__
     )
 
+
+def test_audit_executive_report_idempotency_key_and_replay_window_breach():
+    from backend.services.project_export_service import (
+        audit_executive_report_idempotency_key_and_replay_window,
+    )
+
+    result = audit_executive_report_idempotency_key_and_replay_window(
+        [
+            {
+                "endpoint_id": "EP-NO-KEY",
+                "idempotency_key_enforced": False,
+                "payload_fingerprint_mismatch_rejected": True,
+                "idempotency_ttl_hours": 48,
+                "concurrent_in_flight_lock_active": True,
+            },
+            {
+                "endpoint_id": "EP-NO-HASH-CHECK",
+                "idempotency_key_enforced": True,
+                "payload_fingerprint_mismatch_rejected": False,
+                "idempotency_ttl_hours": 48,
+                "concurrent_in_flight_lock_active": True,
+            },
+        ],
+        min_idempotency_ttl_hours=24,
+        require_payload_hash_validation=True,
+    )
+    assert result["evaluated_endpoints_count"] == 2
+    assert result["duplicate_mutation_or_unhashed_endpoint_ids"] == [
+        "EP-NO-KEY",
+        "EP-NO-HASH-CHECK",
+    ]
+    assert result["short_ttl_or_missing_inflight_lock_endpoint_ids"] == []
+    assert (
+        result["idempotency_gate_status"]
+        == "IDEMPOTENCY_DEDUPLICATION_OR_HASH_BREACH"
+    )
+    assert result["is_idempotency_gate_compliant"] is False
+
+
+def test_audit_executive_report_idempotency_key_and_replay_window_warning():
+    from backend.services.project_export_service import (
+        audit_executive_report_idempotency_key_and_replay_window,
+    )
+
+    result = audit_executive_report_idempotency_key_and_replay_window(
+        [
+            {
+                "endpoint_id": "EP-SHORT-TTL",
+                "idempotency_key_enforced": True,
+                "payload_fingerprint_mismatch_rejected": True,
+                "idempotency_ttl_hours": 6,
+                "concurrent_in_flight_lock_active": True,
+            },
+            {
+                "endpoint_id": "EP-NO-INFLIGHT-LOCK",
+                "idempotency_key_enforced": True,
+                "payload_fingerprint_mismatch_rejected": False,
+                "idempotency_ttl_hours": 48,
+                "concurrent_in_flight_lock_active": False,
+            },
+        ],
+        min_idempotency_ttl_hours=24,
+        require_payload_hash_validation=False,
+    )
+    assert result["evaluated_endpoints_count"] == 2
+    assert result["duplicate_mutation_or_unhashed_endpoint_ids"] == []
+    assert result["short_ttl_or_missing_inflight_lock_endpoint_ids"] == [
+        "EP-SHORT-TTL",
+        "EP-NO-INFLIGHT-LOCK",
+    ]
+    assert (
+        result["idempotency_gate_status"]
+        == "IDEMPOTENCY_TTL_OR_INFLIGHT_LOCK_WARNING"
+    )
+    assert result["is_idempotency_gate_compliant"] is False
+
+
+def test_audit_executive_report_idempotency_key_and_replay_window_optimal_and_empty():
+    from backend.services.project_export_service import (
+        audit_executive_report_idempotency_key_and_replay_window,
+    )
+
+    empty = audit_executive_report_idempotency_key_and_replay_window(
+        [{"endpoint_id": "   "}, "invalid"]  # type: ignore[list-item]
+    )
+    assert empty["evaluated_endpoints_count"] == 0
+    assert (
+        empty["idempotency_gate_status"]
+        == "IDEMPOTENCY_REPLAY_PROTECTION_OPTIMAL"
+    )
+    assert empty["is_idempotency_gate_compliant"] is True
+
+    optimal = audit_executive_report_idempotency_key_and_replay_window(
+        [
+            {
+                "endpoint_id": "EP-PAYMENTS-POST",
+                "idempotency_key_enforced": True,
+                "payload_fingerprint_mismatch_rejected": True,
+                "idempotency_ttl_hours": 48,
+                "concurrent_in_flight_lock_active": True,
+            }
+        ],
+        min_idempotency_ttl_hours=24,
+        require_payload_hash_validation=True,
+    )
+    assert optimal["evaluated_endpoints_count"] == 1
+    assert optimal["duplicate_mutation_or_unhashed_endpoint_ids"] == []
+    assert optimal["short_ttl_or_missing_inflight_lock_endpoint_ids"] == []
+    assert (
+        optimal["idempotency_gate_status"]
+        == "IDEMPOTENCY_REPLAY_PROTECTION_OPTIMAL"
+    )
+    assert optimal["is_idempotency_gate_compliant"] is True
+
+
+def test_audit_executive_report_idempotency_key_and_replay_window_staticmethod_and_dunder_all():
+    import backend.services.project_export_service as mod
+    from backend.services.project_export_service import (
+        ProjectExportService,
+        audit_executive_report_idempotency_key_and_replay_window,
+    )
+
+    sample = [
+        {
+            "endpoint_id": "EP-99",
+            "idempotency_ttl_hours": 72,
+        }
+    ]
+    assert (
+        ProjectExportService.audit_executive_report_idempotency_key_and_replay_window(
+            sample
+        )
+        == audit_executive_report_idempotency_key_and_replay_window(sample)
+    )
+    assert (
+        "audit_executive_report_idempotency_key_and_replay_window"
+        in mod.__all__
+    )

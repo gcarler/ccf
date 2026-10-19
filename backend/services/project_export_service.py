@@ -3012,6 +3012,7 @@ __all__ = [
     "audit_executive_report_webhook_dlq_replay_and_hmac_signing",
     "audit_executive_report_data_residency_and_scc_transfer",
     "audit_executive_report_accessibility_wcag_aa_contrast_and_screen_reader_parity",
+    "audit_executive_report_idempotency_key_and_replay_window",
     "ProjectExportService",
 ]
 
@@ -7864,3 +7865,77 @@ ProjectExportService.audit_executive_report_accessibility_wcag_aa_contrast_and_s
 )
 
 
+def audit_executive_report_idempotency_key_and_replay_window(
+    endpoints: list[dict[str, Any]] | None,
+    *,
+    min_idempotency_ttl_hours: int = 24,
+    require_payload_hash_validation: bool = True,
+) -> dict[str, Any]:
+    """PMI PMBOK §10.2 & §11.6 — Executive Report API Idempotency-Key Deduplication, Payload Fingerprint Mismatch & Replay Window TTL Auditor."""
+    raw_items = endpoints if isinstance(endpoints, (list, tuple)) else []
+    valid_endpoints = [
+        ep
+        for ep in raw_items
+        if isinstance(ep, Mapping)
+        and isinstance(ep.get("endpoint_id"), str)
+        and ep["endpoint_id"].strip()
+    ]
+
+    duplicate_mutation_or_unhashed_endpoint_ids: list[str] = []
+    short_ttl_or_missing_inflight_lock_endpoint_ids: list[str] = []
+
+    for ep in valid_endpoints:
+        eid = str(ep["endpoint_id"]).strip()
+        idempotency_key_enforced = bool(
+            ep.get("idempotency_key_enforced", True)
+            if ep.get("idempotency_key_enforced") is not None
+            else True
+        )
+        payload_fingerprint_mismatch_rejected = bool(
+            ep.get("payload_fingerprint_mismatch_rejected", True)
+            if ep.get("payload_fingerprint_mismatch_rejected") is not None
+            else True
+        )
+        idempotency_ttl_hours = int(
+            ep.get("idempotency_ttl_hours", 48)
+            if ep.get("idempotency_ttl_hours") is not None
+            else 48
+        )
+        concurrent_in_flight_lock_active = bool(
+            ep.get("concurrent_in_flight_lock_active", True)
+            if ep.get("concurrent_in_flight_lock_active") is not None
+            else True
+        )
+
+        if not idempotency_key_enforced or (
+            require_payload_hash_validation
+            and not payload_fingerprint_mismatch_rejected
+        ):
+            duplicate_mutation_or_unhashed_endpoint_ids.append(eid)
+
+        if (
+            idempotency_ttl_hours < min_idempotency_ttl_hours
+            or not concurrent_in_flight_lock_active
+        ):
+            short_ttl_or_missing_inflight_lock_endpoint_ids.append(eid)
+
+    if duplicate_mutation_or_unhashed_endpoint_ids:
+        idempotency_gate_status = "IDEMPOTENCY_DEDUPLICATION_OR_HASH_BREACH"
+    elif short_ttl_or_missing_inflight_lock_endpoint_ids:
+        idempotency_gate_status = "IDEMPOTENCY_TTL_OR_INFLIGHT_LOCK_WARNING"
+    else:
+        idempotency_gate_status = "IDEMPOTENCY_REPLAY_PROTECTION_OPTIMAL"
+
+    return {
+        "evaluated_endpoints_count": len(valid_endpoints),
+        "duplicate_mutation_or_unhashed_endpoint_ids": duplicate_mutation_or_unhashed_endpoint_ids,
+        "short_ttl_or_missing_inflight_lock_endpoint_ids": short_ttl_or_missing_inflight_lock_endpoint_ids,
+        "idempotency_gate_status": idempotency_gate_status,
+        "is_idempotency_gate_compliant": idempotency_gate_status
+        == "IDEMPOTENCY_REPLAY_PROTECTION_OPTIMAL",
+    }
+
+
+ProjectExportService.audit_executive_report_idempotency_key_and_replay_window = staticmethod(
+    audit_executive_report_idempotency_key_and_replay_window
+)
