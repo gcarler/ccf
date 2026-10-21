@@ -13159,4 +13159,142 @@ def test_audit_wiki_cdn_surrogate_key_purge_and_cache_poisoning_guard_empty_and_
     )
 
 
+def test_audit_wiki_semantic_drift_and_vector_embedding_stale_invalidation_healthy():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_semantic_drift_and_vector_embedding_stale_invalidation,
+    )
 
+    pages = [
+        {
+            "page_id": "wiki-doc-pmi-01",
+            "title": "PMI Quality Management Plan",
+            "current_revision": 5,
+            "embedded_revision": 5,
+            "embedding_age_days": 12.0,
+            "cosine_distance_from_centroid": 0.14,
+            "is_outdated_model": False,
+            "has_unindexed_major_edit": False,
+        }
+    ]
+    res = audit_wiki_semantic_drift_and_vector_embedding_stale_invalidation(
+        pages,
+        cosine_distance_threshold=0.25,
+        stale_days_threshold=30,
+        critical_drift_distance=0.50,
+    )
+    assert res["status"] == "healthy"
+    assert res["total_pages"] == 1
+    assert res["healthy_count"] == 1
+    assert res["warning_count"] == 0
+    assert res["critical_count"] == 0
+    assert res["stale_embedding_count"] == 0
+    assert res["semantic_drift_count"] == 0
+    assert res["critical_drift_count"] == 0
+    assert res["reindexing_required_count"] == 0
+    assert res["vector_semantic_health_rate_pct"] == 100.0
+    assert res["average_cosine_distance"] == 0.14
+    assert res["pages"][0]["page_status"] == "healthy"
+    assert res["recommendations"] == []
+
+
+def test_audit_wiki_semantic_drift_and_vector_embedding_stale_invalidation_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_semantic_drift_and_vector_embedding_stale_invalidation,
+    )
+
+    pages = [
+        {
+            "page_id": "wiki-doc-pmi-02",
+            "title": "PMI Risk Register Guidance",
+            "current_revision": 8,
+            "embedded_revision": 6,  # revision lag -> stale
+            "embedding_age_days": 15.0,
+            "cosine_distance_from_centroid": 0.20,
+            "is_outdated_model": False,
+            "has_unindexed_major_edit": False,
+        },
+        {
+            "page_id": "wiki-doc-pmi-03",
+            "title": "PMI Procurement Strategy",
+            "current_revision": 3,
+            "embedded_revision": 3,
+            "embedding_age_days": 10.0,
+            "cosine_distance_from_centroid": 0.32,  # > 0.25 -> drift warning
+            "is_outdated_model": False,
+            "has_unindexed_major_edit": False,
+        },
+    ]
+    res = audit_wiki_semantic_drift_and_vector_embedding_stale_invalidation(
+        pages,
+        cosine_distance_threshold=0.25,
+        stale_days_threshold=30,
+        critical_drift_distance=0.50,
+    )
+    assert res["status"] == "warning"
+    assert res["total_pages"] == 2
+    assert res["healthy_count"] == 0
+    assert res["warning_count"] == 2
+    assert res["critical_count"] == 0
+    assert res["stale_embedding_count"] == 1
+    assert res["semantic_drift_count"] == 1
+    assert res["reindexing_required_count"] == 2
+    assert res["vector_semantic_health_rate_pct"] == 0.0
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_wiki_semantic_drift_and_vector_embedding_stale_invalidation_critical():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_semantic_drift_and_vector_embedding_stale_invalidation,
+    )
+
+    pages = [
+        {
+            "page_id": "wiki-doc-pmi-04",
+            "title": "PMI EVM Baseline Standard",
+            "current_revision": 12,
+            "embedded_revision": 10,
+            "embedding_age_days": 45.0,
+            "cosine_distance_from_centroid": 0.58,  # >= 0.50 -> critical drift
+            "is_outdated_model": True,
+            "has_unindexed_major_edit": True,
+        }
+    ]
+    res = audit_wiki_semantic_drift_and_vector_embedding_stale_invalidation(
+        pages,
+        cosine_distance_threshold=0.25,
+        stale_days_threshold=30,
+        critical_drift_distance=0.50,
+    )
+    assert res["status"] == "critical"
+    assert res["total_pages"] == 1
+    assert res["critical_count"] == 1
+    assert res["critical_drift_count"] == 1
+    assert res["stale_embedding_count"] == 1
+    assert res["semantic_drift_count"] == 1
+    assert res["reindexing_required_count"] == 1
+    assert res["pages"][0]["page_status"] == "critical"
+    assert len(res["recommendations"]) >= 3
+
+
+def test_audit_wiki_semantic_drift_and_vector_embedding_stale_invalidation_empty_and_binding():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_semantic_drift_and_vector_embedding_stale_invalidation,
+    )
+
+    empty = audit_wiki_semantic_drift_and_vector_embedding_stale_invalidation(None)
+    assert empty["status"] == "healthy"
+    assert empty["total_pages"] == 0
+    assert empty["vector_semantic_health_rate_pct"] == 100.0
+    assert empty["average_cosine_distance"] == 0.0
+    assert (
+        WikiPMIService.audit_wiki_semantic_drift_and_vector_embedding_stale_invalidation(
+            None
+        )
+        == empty
+    )
+    assert (
+        "audit_wiki_semantic_drift_and_vector_embedding_stale_invalidation"
+        in mod.__all__
+    )

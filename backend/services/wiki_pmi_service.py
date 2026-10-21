@@ -2567,6 +2567,7 @@ __all__ = [
     "audit_wiki_fts_bm25_index_bloat_and_reindex_lock_guard",
     "audit_wiki_crdt_vector_clock_divergence_and_tombstone_gc_guard",
     "audit_wiki_cdn_surrogate_key_purge_and_cache_poisoning_guard",
+    "audit_wiki_semantic_drift_and_vector_embedding_stale_invalidation",
     "WikiPMIService",
 ]
 
@@ -10279,4 +10280,189 @@ WikiPMIService.audit_wiki_cdn_surrogate_key_purge_and_cache_poisoning_guard = st
 )
 
 
+def audit_wiki_semantic_drift_and_vector_embedding_stale_invalidation(
+    pages: list[dict[str, Any]] | None,
+    *,
+    cosine_distance_threshold: float = 0.25,
+    stale_days_threshold: int = 30,
+    critical_drift_distance: float = 0.50,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & ISO/IEC 42001 — Auditor Wiki PMI de Detección de Deriva Semántica,
 
+    Umbrales de Cosine Distance e Invalidación de Embeddings Vectoriales Estancados.
+
+    Evalúa:
+    - Cosine distance de embeddings vectoriales contra centroides semánticos de temas canónicos.
+    - Detección de embeddings desactualizados (revisión embutida < revisión actual, antigüedad > stale_days_threshold).
+    - Desfase por migraciones de modelo de embedding o cambios mayores no indexados.
+    - Cálculo de tasa de salud semántica vectorial y generación de recomendaciones accionables.
+    """
+    try:
+        norm_distance_threshold = float(cosine_distance_threshold)
+        if not (0.0 <= norm_distance_threshold <= 1.0):
+            norm_distance_threshold = 0.25
+    except (TypeError, ValueError):
+        norm_distance_threshold = 0.25
+
+    try:
+        norm_stale_days = int(stale_days_threshold)
+        if norm_stale_days < 1:
+            norm_stale_days = 30
+    except (TypeError, ValueError):
+        norm_stale_days = 30
+
+    try:
+        norm_critical_distance = float(critical_drift_distance)
+        if not (0.0 <= norm_critical_distance <= 1.0):
+            norm_critical_distance = 0.50
+    except (TypeError, ValueError):
+        norm_critical_distance = 0.50
+
+    raw_pages = pages if isinstance(pages, list) else []
+    evaluated_pages: list[dict[str, Any]] = []
+
+    healthy_count = 0
+    warning_count = 0
+    critical_count = 0
+    stale_embedding_count = 0
+    semantic_drift_count = 0
+    critical_drift_count = 0
+    reindexing_required_count = 0
+    total_cosine_distance = 0.0
+
+    for idx, item in enumerate(raw_pages, start=1):
+        if not isinstance(item, dict):
+            continue
+
+        page_id = str(item.get("page_id") or f"wiki-page-{idx}").strip()
+        title = str(item.get("title") or f"Wiki Document {idx}").strip()
+
+        try:
+            current_revision = max(1, int(item.get("current_revision", 1) or 1))
+        except (TypeError, ValueError):
+            current_revision = 1
+
+        try:
+            embedded_revision = max(0, int(item.get("embedded_revision", current_revision) or 0))
+        except (TypeError, ValueError):
+            embedded_revision = 0
+
+        try:
+            embedding_age_days = max(0.0, float(item.get("embedding_age_days", 0.0) or 0.0))
+        except (TypeError, ValueError):
+            embedding_age_days = 0.0
+
+        try:
+            cosine_dist = float(item.get("cosine_distance_from_centroid", 0.0) or 0.0)
+            cosine_distance_from_centroid = round(min(max(cosine_dist, 0.0), 1.0), 4)
+        except (TypeError, ValueError):
+            cosine_distance_from_centroid = 0.0
+
+        is_outdated_model = bool(item.get("is_outdated_model", False))
+        has_unindexed_major_edit = bool(item.get("has_unindexed_major_edit", False))
+
+        revision_lag = embedded_revision < current_revision
+        age_exceeded = embedding_age_days > norm_stale_days
+        is_embedding_stale = bool(revision_lag or age_exceeded or has_unindexed_major_edit or is_outdated_model)
+
+        has_semantic_drift = bool(cosine_distance_from_centroid > norm_distance_threshold)
+        is_critical_drift = bool(cosine_distance_from_centroid >= norm_critical_distance or (is_outdated_model and has_semantic_drift))
+
+        needs_reindexing = bool(is_embedding_stale or has_semantic_drift)
+
+        if is_embedding_stale:
+            stale_embedding_count += 1
+        if has_semantic_drift:
+            semantic_drift_count += 1
+        if is_critical_drift:
+            critical_drift_count += 1
+        if needs_reindexing:
+            reindexing_required_count += 1
+
+        total_cosine_distance += cosine_distance_from_centroid
+
+        if is_critical_drift or (is_embedding_stale and has_semantic_drift):
+            page_status = "critical"
+            critical_count += 1
+        elif is_embedding_stale or has_semantic_drift:
+            page_status = "warning"
+            warning_count += 1
+        else:
+            page_status = "healthy"
+            healthy_count += 1
+
+        evaluated_pages.append(
+            {
+                "page_id": page_id,
+                "title": title,
+                "current_revision": current_revision,
+                "embedded_revision": embedded_revision,
+                "embedding_age_days": embedding_age_days,
+                "cosine_distance_from_centroid": cosine_distance_from_centroid,
+                "is_outdated_model": is_outdated_model,
+                "has_unindexed_major_edit": has_unindexed_major_edit,
+                "is_embedding_stale": is_embedding_stale,
+                "has_semantic_drift": has_semantic_drift,
+                "is_critical_drift": is_critical_drift,
+                "needs_reindexing": needs_reindexing,
+                "page_status": page_status,
+            }
+        )
+
+    total_pages = len(evaluated_pages)
+    vector_semantic_health_rate_pct = (
+        round((healthy_count / total_pages) * 100.0, 2)
+        if total_pages > 0
+        else 100.0
+    )
+    average_cosine_distance = (
+        round(total_cosine_distance / total_pages, 4)
+        if total_pages > 0
+        else 0.0
+    )
+
+    recommendations: list[str] = []
+    if critical_drift_count > 0:
+        recommendations.append(
+            f"Regenerar inmediatamente embeddings con deriva crítica (distancia >= {norm_critical_distance} o modelo obsoleto) en {critical_drift_count} página(s)."
+        )
+    if stale_embedding_count > 0:
+        recommendations.append(
+            f"Invalidar y reindexar embeddings estancados (antigüedad > {norm_stale_days} días o revisiones pendientes) en {stale_embedding_count} página(s)."
+        )
+    if semantic_drift_count > 0:
+        recommendations.append(
+            f"Recalibrar centroides vectoriales temáticos para mitigar deriva moderada (distancia > {norm_distance_threshold}) en {semantic_drift_count} página(s)."
+        )
+    if reindexing_required_count > 0:
+        recommendations.append(
+            f"Ejecutar job asíncrono de reindexación semántica por lotes para {reindexing_required_count} página(s) prioritarias."
+        )
+
+    if critical_count > 0:
+        status = "critical"
+    elif warning_count > 0:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_pages": total_pages,
+        "healthy_count": healthy_count,
+        "warning_count": warning_count,
+        "critical_count": critical_count,
+        "stale_embedding_count": stale_embedding_count,
+        "semantic_drift_count": semantic_drift_count,
+        "critical_drift_count": critical_drift_count,
+        "reindexing_required_count": reindexing_required_count,
+        "average_cosine_distance": average_cosine_distance,
+        "vector_semantic_health_rate_pct": vector_semantic_health_rate_pct,
+        "status": status,
+        "pages": evaluated_pages,
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_semantic_drift_and_vector_embedding_stale_invalidation = staticmethod(
+    audit_wiki_semantic_drift_and_vector_embedding_stale_invalidation
+)
