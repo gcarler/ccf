@@ -38,6 +38,10 @@ class DummyQuery:
         return []
 
     def first(self):
+        if self.model is models.Persona.id:
+            return (uuid.uuid4(),)
+        if self.model is models.Persona:
+            return type("P", (), {"sede_id": None, "id": uuid.uuid4()})()
         return None
 
     def count(self):
