@@ -208,7 +208,7 @@ export function getValidProjectStatus(value: string | null | undefined): Project
 
 // ─── PMI RAG — salud del proyecto (semaforo §4.x) ──────────────────────────────
 // Slugs canónicos alineados con `ProjectRecord.health_status`. Los valores
-// legacy 'amber'/'red'/'green' de la franja ejecutiva se normalizan aquí.
+// heredados 'amber'/'red'/'green' de la franja ejecutiva se normalizan aquí.
 export const PMI_HEALTH_STATUSES = ['on_track', 'at_risk', 'off_track', 'completed'] as const;
 export type PmiHealthStatus = (typeof PMI_HEALTH_STATUSES)[number];
 
@@ -219,7 +219,7 @@ export const PMI_HEALTH_LABELS: Record<PmiHealthStatus, string> = {
     completed: 'Cerrado',
 };
 
-/** Normaliza alias legacy/de UI al enum canónico de salud PMI (default: on_track). */
+/** Normaliza alias heredados/de UI al enum canónico de salud PMI (default: on_track). */
 export function normalizePmiHealthStatus(value: string | null | undefined): PmiHealthStatus {
     const normalized = (value ?? '').trim().toLowerCase();
     if (normalized === 'green' || normalized === 'on_track') return 'on_track';
