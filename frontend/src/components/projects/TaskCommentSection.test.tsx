@@ -52,6 +52,51 @@ describe('TaskCommentSection', () => {
     expect(await screen.findByText(/Sin comentarios aún/)).toBeInTheDocument();
   });
 
+  it('summarizes PMI categories, badges comments and filters by category', async () => {
+    mockApiFetch.mockResolvedValueOnce([
+      { id: 'blocker', project_id: 'p1', author_id: 'u1', author_name: 'Juan', content: '[BLOQUEO EDT] Falta acceso', created_at: '2026-01-01T10:00:00Z', updated_at: '2026-01-01T10:00:00Z', is_resolved: false },
+      { id: 'decision', project_id: 'p1', author_id: 'u2', author_name: 'Ana', content: 'decisión: usar el adaptador B', created_at: '2026-01-01T11:00:00Z', updated_at: '2026-01-01T11:00:00Z', is_resolved: false },
+      { id: 'evidence', project_id: 'p1', author_id: 'u3', author_name: 'Luis', content: 'Entrega del paquete', created_at: '2026-01-01T12:00:00Z', updated_at: '2026-01-01T12:00:00Z', is_resolved: false, attachments: [{ name: 'acta.pdf', url: 'https://example.com/acta.pdf', size: 1000, type: 'application/pdf' }] },
+      { id: 'pinned', project_id: 'p1', author_id: 'u4', author_name: 'Marta', content: '[INCIDENTE] Servicio restaurado', created_at: '2026-01-01T13:00:00Z', updated_at: '2026-01-01T13:00:00Z', is_resolved: false, is_pinned: true },
+    ] as ProjectCommentItem[]);
+
+    render(<TaskCommentSection task={task} token="test-token" onDeleteComment={vi.fn()} />);
+
+    expect(await screen.findByTestId('task-comments-pmi-summary')).toBeInTheDocument();
+    expect(screen.getByTestId('task-comments-pmi-count-blocker')).toHaveTextContent('2');
+    expect(screen.getByTestId('task-comments-pmi-count-decision')).toHaveTextContent('1');
+    expect(screen.getByTestId('task-comments-pmi-count-evidence')).toHaveTextContent('1');
+    expect(screen.getByTestId('task-comments-pmi-count-pinned')).toHaveTextContent('1');
+    expect(screen.getAllByTestId('task-comment-pmi-badge-blocker')).toHaveLength(2);
+    expect(screen.getByTestId('task-comment-pmi-badge-decision')).toBeInTheDocument();
+    expect(screen.getByTestId('task-comment-pmi-badge-evidence')).toBeInTheDocument();
+    expect(screen.getAllByText('Fijado')).toHaveLength(2);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Decisión Técnica (1)' }));
+    expect(screen.getByText('decisión: usar el adaptador B')).toBeInTheDocument();
+    expect(screen.queryByText('[BLOQUEO EDT] Falta acceso')).not.toBeInTheDocument();
+    expect(screen.queryByText('Entrega del paquete')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Decisión Técnica (1)' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('inserts, replaces and toggles PMI tag prefixes while preserving the draft', async () => {
+    mockApiFetch.mockResolvedValueOnce([]);
+    render(<TaskCommentSection task={task} token="test-token" onDeleteComment={vi.fn()} />);
+    await screen.findByText(/Sin comentarios aún/);
+
+    const input = screen.getByRole('textbox', { name: 'Escribe un comentario' });
+    fireEvent.change(input, { target: { value: 'Mi borrador sin perder' } });
+    fireEvent.click(screen.getByTestId('task-comment-tag-blocker'));
+    expect(input).toHaveValue('[BLOQUEO EDT] Mi borrador sin perder');
+
+    fireEvent.click(screen.getByTestId('task-comment-tag-decision'));
+    expect(input).toHaveValue('[DECISIÓN TÉCNICA] Mi borrador sin perder');
+
+    fireEvent.click(screen.getByTestId('task-comment-tag-decision'));
+    expect(input).toHaveValue('Mi borrador sin perder');
+    expect(screen.getByTestId('task-comments-pmi-tags')).toBeInTheDocument();
+  });
+
   it('exposes named comment actions on touch and keyboard focus without axe violations', async () => {
     mockApiFetch.mockResolvedValueOnce([
       { id: 'c1', project_id: 'p1', author_id: 'u1', author_name: 'Juan', content: 'Hola', created_at: '2026-01-01T10:00:00Z', updated_at: '2026-01-01T10:00:00Z', is_resolved: false, is_pinned: false },

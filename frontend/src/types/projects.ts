@@ -368,12 +368,14 @@ export interface ProjectTaskRecord {
   status: string;
   priority: string;
   assignee_id?: string | null;
+  assignees?: Array<{ id: string; name?: string }>;
   parent_id?: string | null;
   component_id?: string | null;
   start_date?: string | null;
   due_date?: string | null;
   node?: string | null;
   physical_progress_pct?: number;
+  progress?: number;
   progress_pct?: number;
   progress?: number | null;
   estimated_hours?: number;
