@@ -57,6 +57,8 @@ export interface ProjectKPI {
   last_spi?: number | null;
   frente?: string | null;
   is_auto_synced?: boolean;
+  is_orphaned?: boolean;
+  target_value_valid?: boolean;
   due_date?: string | null;
   created_at?: string;
   updated_at?: string | null;
@@ -1082,6 +1084,8 @@ export interface ProjectIndicator {
   component_name?: string | null;
   frente?: string | null;
   is_auto_synced?: boolean;
+  is_orphaned?: boolean;
+  target_value_valid?: boolean;
   created_by?: string | null;
   creator_name?: string | null;
   sede_id?: string | null;

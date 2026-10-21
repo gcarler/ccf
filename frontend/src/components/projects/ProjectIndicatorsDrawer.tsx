@@ -869,6 +869,24 @@ export function ProjectIndicatorsDrawer({
                                     EDT: {ind.component_name}
                                   </span>
                                 )}
+                                {ind.is_orphaned && (
+                                  <span
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[hsl(var(--destructive))]/10 text-[hsl(var(--destructive))] text-2xs font-bold border border-[hsl(var(--destructive))]/30"
+                                    title="El componente EDT vinculado fue eliminado. Actualice o cambie el vínculo del indicador."
+                                  >
+                                    <AlertTriangle size={10} />
+                                    EDT eliminado (huérfano)
+                                  </span>
+                                )}
+                                {ind.target_value_valid === false && (
+                                  <span
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[hsl(var(--warning))]/10 text-[hsl(var(--warning))] text-2xs font-bold border border-[hsl(var(--warning))]/30"
+                                    title="Defina una meta cuantitativa mayor a 0 para habilitar el cálculo de SPI."
+                                  >
+                                    <AlertTriangle size={10} />
+                                    Meta inválida (&lt;= 0)
+                                  </span>
+                                )}
                               </div>
                             )}
                             {ind.description && (

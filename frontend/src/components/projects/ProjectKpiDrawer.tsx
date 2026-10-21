@@ -899,6 +899,29 @@ export function ProjectKpiDrawer({
                       </p>
                     )}
 
+                    {(kpi.is_orphaned || kpi.target_value_valid === false) && (
+                      <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                        {kpi.is_orphaned && (
+                          <span
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[hsl(var(--destructive))]/10 text-[hsl(var(--destructive))] text-2xs font-bold border border-[hsl(var(--destructive))]/30"
+                            title="El componente EDT vinculado fue eliminado. Actualice o cambie el vínculo del KPI."
+                          >
+                            <AlertTriangle size={10} />
+                            EDT eliminado (huérfano)
+                          </span>
+                        )}
+                        {kpi.target_value_valid === false && (
+                          <span
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[hsl(var(--warning))]/10 text-[hsl(var(--warning))] text-2xs font-bold border border-[hsl(var(--warning))]/30"
+                            title="Defina una meta cuantitativa mayor a 0 para habilitar el cálculo de SPI."
+                          >
+                            <AlertTriangle size={10} />
+                            Meta inválida (&lt;= 0)
+                          </span>
+                        )}
+                      </div>
+                    )}
+
                     {/* Progress values and bar */}
                     <div className="space-y-1 pt-1">
                       <div className="flex items-center justify-between text-2xs">
