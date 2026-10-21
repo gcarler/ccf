@@ -2568,6 +2568,7 @@ __all__ = [
     "audit_wiki_crdt_vector_clock_divergence_and_tombstone_gc_guard",
     "audit_wiki_cdn_surrogate_key_purge_and_cache_poisoning_guard",
     "audit_wiki_semantic_drift_and_vector_embedding_stale_invalidation",
+    "audit_wiki_content_sanitization_and_polyglot_injection_guard",
     "WikiPMIService",
 ]
 
@@ -10466,3 +10467,207 @@ def audit_wiki_semantic_drift_and_vector_embedding_stale_invalidation(
 WikiPMIService.audit_wiki_semantic_drift_and_vector_embedding_stale_invalidation = staticmethod(
     audit_wiki_semantic_drift_and_vector_embedding_stale_invalidation
 )
+
+
+def audit_wiki_content_sanitization_and_polyglot_injection_guard(
+    documents: Sequence[Mapping[str, Any]] | None,
+    *,
+    enforce_strict_csp: Any = True,
+    allow_data_images: Any = False,
+    max_untrusted_elements_threshold: Any = 0,
+) -> dict[str, Any]:
+    """Auditor Wiki PMI de Sanitización de Contenido, Prevención XSS, Inyección Polyglot y Compliance CSP (PMBOK §4.4, ISO/IEC 25010 & OWASP ASVS 5.0).
+
+    Evalúa contenido de documentos Wiki para neutralizar vulnerabilidades de Cross-Site Scripting (XSS),
+    inyecciones políglotas SVG/XML/HTML, enlaces con esquemas no seguros y posturas débiles de Content Security Policy (CSP).
+    """
+    if not isinstance(documents, (list, tuple)):
+        return {
+            "total_documents": 0,
+            "clean_documents_count": 0,
+            "warning_documents_count": 0,
+            "critical_documents_count": 0,
+            "xss_vectors_detected": 0,
+            "polyglot_vectors_detected": 0,
+            "dangerous_protocols_detected": 0,
+            "permissive_elements_detected": 0,
+            "csp_violations_count": 0,
+            "status": "CLEAN_WIKI_CONTENT_SECURITY_OPTIMAL",
+            "is_wiki_content_secure": True,
+            "documents": [],
+            "recommendations": ["No se proveyeron documentos Wiki para auditar."],
+        }
+
+    strict_csp = enforce_strict_csp if isinstance(enforce_strict_csp, bool) else True
+    permit_data_img = allow_data_images if isinstance(allow_data_images, bool) else False
+    try:
+        threshold = max(0, int(max_untrusted_elements_threshold))
+    except (ValueError, TypeError):
+        threshold = 0
+
+    re_script = re.compile(r"<\s*script[\s>/]", re.IGNORECASE)
+    re_dangerous_proto = re.compile(r"(?:href|src|action|data)\s*=\s*['\"]?\s*(?:javascript|vbscript):", re.IGNORECASE)
+    re_dangerous_data = re.compile(r"(?:href|src)\s*=\s*['\"]?\s*data:(?:text/html|text/javascript|application/javascript|image/svg\+xml)", re.IGNORECASE)
+    re_on_handlers = re.compile(r"<\s*[^>]+\s+on[a-z]+\s*=", re.IGNORECASE)
+    re_eval_polyglot = re.compile(r"(?:eval|Function|setTimeout|setInterval)\s*\(\s*['\"`]", re.IGNORECASE)
+    re_svg_polyglot = re.compile(r"<\s*svg[^>]*>[\s\S]*?(?:<\s*script|on[a-z]+\s*=)", re.IGNORECASE)
+    re_raw_iframe = re.compile(r"<\s*iframe[\s>/]", re.IGNORECASE)
+    re_raw_embed = re.compile(r"<\s*(?:object|embed|applet)[\s>/]", re.IGNORECASE)
+    re_data_img = re.compile(r"(?:src|href)\s*=\s*['\"]?\s*data:image/[a-zA-Z0-9.+_-]+;base64,", re.IGNORECASE)
+
+    total_docs = 0
+    clean_docs = 0
+    warning_docs = 0
+    critical_docs = 0
+    total_xss = 0
+    total_polyglot = 0
+    total_proto = 0
+    total_permissive = 0
+    total_csp_viols = 0
+
+    evaluated_docs: list[dict[str, Any]] = []
+    recommendations: list[str] = []
+
+    for idx, doc in enumerate(documents):
+        if not isinstance(doc, Mapping):
+            continue
+        total_docs += 1
+        doc_id = str(doc.get("document_id") or doc.get("id") or f"doc-{idx + 1}")
+        title = str(doc.get("title") or "Sin título")
+        content = str(doc.get("content") or "")
+        csp_header = doc.get("csp_header")
+
+        doc_critical_findings: list[str] = []
+        doc_warning_findings: list[str] = []
+
+        # Check script tags
+        if re_script.search(content):
+            doc_critical_findings.append("Etiqueta <script> detectada en el cuerpo del documento Wiki.")
+            total_xss += 1
+
+        # Check DOM on* handlers
+        if re_on_handlers.search(content):
+            doc_critical_findings.append("Manejadores de eventos DOM inline (on*) detectados.")
+            total_xss += 1
+
+        # Check dangerous URI protocols
+        if re_dangerous_proto.search(content) or "javascript:" in content.lower():
+            doc_critical_findings.append("Esquema de URI ejecutable prohibido (javascript: o vbscript:).")
+            total_proto += 1
+
+        # Check dangerous data: types
+        if re_dangerous_data.search(content):
+            doc_critical_findings.append("URI scheme data: peligroso (HTML/JS/SVG) capaz de ejecutar script.")
+            total_proto += 1
+
+        # Check polyglots (SVG script or eval)
+        is_svg_polyglot = bool(
+            re.search(r"<\s*svg\b[^>]*(?:on[a-z]+\s*=|<\s*script)", content, re.IGNORECASE)
+            or re_svg_polyglot.search(content)
+        )
+        if is_svg_polyglot or re_eval_polyglot.search(content):
+            doc_critical_findings.append("Vector de inyección políglota SVG/DOM/eval detectado.")
+            total_polyglot += 1
+
+        # Check embed / object
+        if re_raw_embed.search(content):
+            doc_critical_findings.append("Elemento activo <object>, <embed> o <applet> prohibido.")
+            total_permissive += 1
+
+        # Check iframe
+        if re_raw_iframe.search(content):
+            sandbox_flags = doc.get("sandbox_flags")
+            if not sandbox_flags:
+                m_sb = re.search(r'sandbox\s*=\s*["\']([^"\']+)["\']', content, re.IGNORECASE)
+                if m_sb:
+                    sandbox_flags = m_sb.group(1).split()
+            if isinstance(sandbox_flags, (list, tuple, set)):
+                flags_set = {str(f).strip().lower() for f in sandbox_flags}
+                if "allow-scripts" in flags_set and "allow-same-origin" in flags_set:
+                    doc_critical_findings.append("Iframe con configuración insegura: 'allow-scripts' y 'allow-same-origin' concurrentes.")
+                    total_xss += 1
+                else:
+                    doc_warning_findings.append("Elemento <iframe> presente en Markdown.")
+                    total_permissive += 1
+            else:
+                doc_warning_findings.append("Elemento <iframe> sin directiva explícita de sandbox.")
+                total_permissive += 1
+
+        # Check data images
+        if re_data_img.search(content) and not permit_data_img:
+            doc_warning_findings.append("Imágenes inline en Base64 (data:image/...) no autorizadas por política.")
+            total_permissive += 1
+
+        # Check CSP header if enforced or provided
+        if strict_csp:
+            if not csp_header:
+                doc_warning_findings.append("Cabecera Content-Security-Policy ausente o no configurada.")
+                total_csp_viols += 1
+            elif isinstance(csp_header, str):
+                lower_csp = csp_header.lower()
+                if "'unsafe-inline'" in lower_csp or "unsafe-inline" in lower_csp:
+                    doc_warning_findings.append("Directiva CSP contiene 'unsafe-inline' sin nonce/hash estricto.")
+                    total_csp_viols += 1
+                if "'unsafe-eval'" in lower_csp or "unsafe-eval" in lower_csp:
+                    doc_critical_findings.append("Directiva CSP permite 'unsafe-eval', debilitando el entorno.")
+                    total_csp_viols += 1
+            elif isinstance(csp_header, Mapping):
+                script_src = str(csp_header.get("script-src") or "")
+                if "unsafe-inline" in script_src:
+                    doc_warning_findings.append("CSP script-src incluye 'unsafe-inline'.")
+                    total_csp_viols += 1
+                if "unsafe-eval" in script_src:
+                    doc_critical_findings.append("CSP script-src incluye 'unsafe-eval'.")
+                    total_csp_viols += 1
+
+        # Determine doc status
+        if doc_critical_findings:
+            doc_status = "CRITICAL"
+            critical_docs += 1
+        elif len(doc_warning_findings) > threshold:
+            doc_status = "WARNING"
+            warning_docs += 1
+        else:
+            doc_status = "CLEAN"
+            clean_docs += 1
+
+        evaluated_docs.append({
+            "document_id": doc_id,
+            "title": title,
+            "status": doc_status,
+            "critical_findings": doc_critical_findings,
+            "warning_findings": doc_warning_findings,
+            "is_secure": doc_status == "CLEAN",
+        })
+
+    if critical_docs > 0:
+        overall_status = "CRITICAL_MALICIOUS_POLYGLOT_XSS_DETECTED"
+        recommendations.append("Bloquear publicación de contenido con vectores ejecutables XSS o políglotas.")
+    elif warning_docs > 0:
+        overall_status = "WARNING_PERMISSIVE_MARKDOWN_ELEMENTS"
+        recommendations.append("Revisar directivas CSP y elementos permisivos (iframes, imágenes base64).")
+    else:
+        overall_status = "CLEAN_WIKI_CONTENT_SECURITY_OPTIMAL"
+        recommendations.append("Contenido sanitizado y postura CSP óptima bajo OWASP ASVS 5.0.")
+
+    return {
+        "total_documents": total_docs,
+        "clean_documents_count": clean_docs,
+        "warning_documents_count": warning_docs,
+        "critical_documents_count": critical_docs,
+        "xss_vectors_detected": total_xss,
+        "polyglot_vectors_detected": total_polyglot,
+        "dangerous_protocols_detected": total_proto,
+        "permissive_elements_detected": total_permissive,
+        "csp_violations_count": total_csp_viols,
+        "status": overall_status,
+        "is_wiki_content_secure": overall_status == "CLEAN_WIKI_CONTENT_SECURITY_OPTIMAL",
+        "documents": evaluated_docs,
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_content_sanitization_and_polyglot_injection_guard = staticmethod(
+    audit_wiki_content_sanitization_and_polyglot_injection_guard
+)
+

