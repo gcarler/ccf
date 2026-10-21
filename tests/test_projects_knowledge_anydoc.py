@@ -11000,3 +11000,127 @@ def test_audit_anydoc_ieee829_verification_traceability_matrix_empty_coercion_an
     assert (
         "audit_anydoc_ieee829_verification_traceability_matrix" in mod.__all__
     )
+
+
+def test_audit_anydoc_iso29148_requirements_quality_and_ambiguity_metrics_healthy():
+    from backend.services.anydoc_service import (
+        audit_anydoc_iso29148_requirements_quality_and_ambiguity_metrics,
+    )
+
+    result = audit_anydoc_iso29148_requirements_quality_and_ambiguity_metrics(
+        [
+            {
+                "requirement_id": "REQ-ISO-01",
+                "statement": "The service shall return a response within 200 ms.",
+                "verification_method": "test",
+            },
+            {
+                "id": "REQ-ISO-02",
+                "statement": "El sistema deberá mostrar 10 resultados por página.",
+                "verification_method": "inspección",
+            },
+        ]
+    )
+
+    assert result["status"] == "healthy"
+    assert result["severity"] == "none"
+    assert result["total_requirements"] == 2
+    assert result["healthy_count"] == 2
+    assert result["singularity_rate_pct"] == 100.0
+    assert result["verifiability_rate_pct"] == 100.0
+    assert result["verification_method_assignment_rate_pct"] == 100.0
+    assert result["ambiguity_rate_pct"] == 0.0
+
+
+def test_audit_anydoc_iso29148_requirements_quality_and_ambiguity_metrics_warning():
+    from backend.services.anydoc_service import (
+        audit_anydoc_iso29148_requirements_quality_and_ambiguity_metrics,
+    )
+
+    result = audit_anydoc_iso29148_requirements_quality_and_ambiguity_metrics(
+        [
+            {
+                "id": "REQ-ISO-WARN",
+                "statement": "The app shall store and display records quickly.",
+            }
+        ]
+    )
+
+    assert result["status"] == "warning"
+    assert result["severity"] == "warning"
+    assert result["singular_requirement_count"] == 0
+    assert result["verifiable_requirement_count"] == 0
+    assert result["verification_method_assigned_count"] == 0
+    assert result["vague_requirement_count"] == 1
+    assert result["vague_qualifier_occurrence_count"] == 1
+    assert result["requirements"][0]["is_singular"] is False
+    assert result["requirements"][0]["missing_verification_method"] is True
+    assert result["recommendations"]
+
+
+def test_audit_anydoc_iso29148_requirements_quality_and_ambiguity_metrics_critical():
+    from backend.services.anydoc_service import (
+        audit_anydoc_iso29148_requirements_quality_and_ambiguity_metrics,
+    )
+
+    result = audit_anydoc_iso29148_requirements_quality_and_ambiguity_metrics(
+        [
+            {
+                "requirement_id": "REQ-ISO-CRIT",
+                "statement": "The service shall be nice.",
+                "is_verifiable": False,
+                "verification_method": "test",
+            }
+        ]
+    )
+
+    assert result["status"] == "critical"
+    assert result["severity"] == "critical"
+    assert result["critical_count"] == 1
+    assert result["verifiability_rate_pct"] == 0.0
+    assert result["requirements"][0]["status"] == "critical"
+
+
+def test_audit_anydoc_iso29148_requirements_quality_and_ambiguity_metrics_empty_coercion_binding():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_anydoc_iso29148_requirements_quality_and_ambiguity_metrics,
+    )
+
+    empty = audit_anydoc_iso29148_requirements_quality_and_ambiguity_metrics()
+    assert empty["status"] == "healthy"
+    assert empty["total_requirements"] == 0
+    assert empty["singularity_rate_pct"] == 100.0
+    assert (
+        AnyDocService.audit_anydoc_iso29148_requirements_quality_and_ambiguity_metrics(
+            None
+        )
+        == empty
+    )
+    assert (
+        AnydocService.audit_anydoc_iso29148_requirements_quality_and_ambiguity_metrics(
+            None
+        )
+        == empty
+    )
+
+    coerced = audit_anydoc_iso29148_requirements_quality_and_ambiguity_metrics(
+        [
+            None,
+            42,
+            {
+                "id": "REQ-ISO-COERCE",
+                "statement": "API shall return code 200.",
+                "verification_method": "test",
+            },
+        ]
+    )
+    assert coerced["status"] == "warning"
+    assert coerced["invalid_record_count"] == 2
+    assert coerced["healthy_count"] == 1
+    assert (
+        "audit_anydoc_iso29148_requirements_quality_and_ambiguity_metrics"
+        in mod.__all__
+    )

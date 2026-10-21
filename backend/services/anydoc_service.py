@@ -3069,6 +3069,7 @@ __all__ = [
     "audit_markdown_ai_model_card_bias_fairness_and_red_team_hygiene",
     "audit_markdown_rfc2119_normative_keyword_and_testability_hygiene",
     "audit_anydoc_ieee829_verification_traceability_matrix",
+    "audit_anydoc_iso29148_requirements_quality_and_ambiguity_metrics",
     "AnydocService",
 ]
 
@@ -12004,4 +12005,305 @@ AnyDocService.audit_anydoc_ieee829_verification_traceability_matrix = staticmeth
 )
 AnydocService.audit_anydoc_ieee829_verification_traceability_matrix = staticmethod(
     audit_anydoc_ieee829_verification_traceability_matrix
+)
+
+
+def audit_anydoc_iso29148_requirements_quality_and_ambiguity_metrics(
+    requirements: Any = None,
+    *,
+    require_verification_method: bool = True,
+) -> dict[str, Any]:
+    """Assess requirement singularity, verifiability, ambiguity, and verification method assignment."""
+    vague_qualifiers = (
+        "as appropriate",
+        "as needed",
+        "as soon as possible",
+        "easy",
+        "fast",
+        "flexible",
+        "intuitive",
+        "minimal",
+        "quickly",
+        "robust",
+        "secure",
+        "sufficient",
+        "timely",
+        "user friendly",
+        "adequado",
+        "adecuadamente",
+        "aproximadamente",
+        "conveniente",
+        "eficiente",
+        "fácil",
+        "flexible",
+        "intuitivo",
+        "lo antes posible",
+        "mínimo",
+        "rápido",
+        "robusto",
+        "seguro",
+        "según corresponda",
+        "según sea necesario",
+        "suficiente",
+        "oportunamente",
+    )
+    valid_verification_methods = {
+        "analysis",
+        "demonstration",
+        "inspection",
+        "measurement",
+        "test",
+        "automated_test",
+        "unit_test",
+        "integration_test",
+        "análisis",
+        "demostración",
+        "inspección",
+        "medición",
+        "prueba",
+        "test automatizado",
+    }
+    observable_actions = (
+        "allow",
+        "create",
+        "deny",
+        "display",
+        "emit",
+        "log",
+        "reject",
+        "return",
+        "store",
+        "write",
+        "aceptar",
+        "almacenar",
+        "calcular",
+        "crear",
+        "denegar",
+        "devolver",
+        "emitir",
+        "guardar",
+        "mostrar",
+        "rechazar",
+        "registrar",
+        "responder",
+        "validar",
+    )
+    normative_verbs = (
+        "must",
+        "shall",
+        "should",
+        "debe",
+        "deberá",
+        "deberia",
+        "debería",
+    )
+    action_pattern = re.compile(
+        r"\b(?:" + "|".join(re.escape(word) for word in observable_actions) + r")\w*\b",
+        re.IGNORECASE,
+    )
+    normative_pattern = re.compile(
+        r"\b(?:" + "|".join(re.escape(word) for word in normative_verbs) + r")\b",
+        re.IGNORECASE,
+    )
+    conjunction_pattern = re.compile(r"\b(?:and|or|y|o|as well as|así como)\b|;", re.IGNORECASE)
+
+    if isinstance(requirements, Mapping):
+        candidates: list[Any] = [requirements]
+    elif isinstance(requirements, str):
+        candidates = [requirements]
+    elif isinstance(requirements, Sequence) and not isinstance(requirements, (bytes, bytearray)):
+        candidates = list(requirements)
+    else:
+        candidates = []
+    invalid_record_count = 0
+    records: list[dict[str, Any]] = []
+    for item in candidates:
+        if isinstance(item, Mapping):
+            records.append(dict(item))
+        elif isinstance(item, str):
+            records.append({"statement": item})
+        else:
+            invalid_record_count += 1
+
+    def first_nonempty(record: Mapping[str, Any], keys: tuple[str, ...]) -> Any:
+        for key in keys:
+            value = record.get(key)
+            if value is not None and str(value).strip():
+                return value
+        return None
+
+    def explicit_bool(record: Mapping[str, Any], keys: tuple[str, ...]) -> bool | None:
+        for key in keys:
+            if key in record:
+                value = record[key]
+                if isinstance(value, bool):
+                    return value
+                if isinstance(value, str):
+                    normalized = value.strip().lower()
+                    if normalized in {"true", "yes", "si", "sí", "1"}:
+                        return True
+                    if normalized in {"false", "no", "0"}:
+                        return False
+        return None
+
+    requirement_rows: list[dict[str, Any]] = []
+    missing_id_count = 0
+    critical_count = 0
+    warning_count = 0
+    vague_qualifier_occurrence_count = 0
+    for index, record in enumerate(records, start=1):
+        raw_id = first_nonempty(record, ("requirement_id", "req_id", "id", "identifier", "code"))
+        req_id = str(raw_id).strip() if raw_id is not None else f"REQ-{index}"
+        if raw_id is None:
+            missing_id_count += 1
+
+        raw_statement = first_nonempty(
+            record,
+            ("statement", "requirement", "text", "description", "shall_statement", "title"),
+        )
+        statement = str(raw_statement).strip() if raw_statement is not None else ""
+        statement_lower = statement.casefold()
+        vague_terms = [
+            term
+            for term in vague_qualifiers
+            if re.search(rf"(?<!\w){re.escape(term)}(?!\w)", statement_lower)
+        ]
+        vague_occurrences = sum(
+            len(re.findall(rf"(?<!\w){re.escape(term)}(?!\w)", statement_lower))
+            for term in set(vague_terms)
+        )
+        vague_qualifier_occurrence_count += vague_occurrences
+
+        explicit_singularity = explicit_bool(record, ("is_singular", "singular", "atomic"))
+        action_count = len(action_pattern.findall(statement))
+        normative_count = len(normative_pattern.findall(statement))
+        appears_compound = bool(conjunction_pattern.search(statement)) and (
+            action_count > 1 or normative_count > 1
+        )
+        is_singular = explicit_singularity if explicit_singularity is not None else not appears_compound
+
+        acceptance_criteria = first_nonempty(
+            record,
+            ("acceptance_criteria", "acceptance_criterion", "verification_criteria", "measurable_criteria"),
+        )
+        explicit_verifiability = explicit_bool(record, ("is_verifiable", "verifiable", "testable"))
+        measurable_value = bool(re.search(r"\b\d+(?:[.,]\d+)?\s*(?:%|ms|s|sec|seconds?|min|minutes?|hours?|h|days?|bytes?|kb|mb|gb|users?)\b", statement_lower))
+        verifiability_evidence = bool(acceptance_criteria) or measurable_value or bool(action_count)
+        is_verifiable = (
+            explicit_verifiability
+            if explicit_verifiability is not None
+            else verifiability_evidence and not vague_terms
+        )
+
+        raw_method = first_nonempty(
+            record,
+            ("verification_method", "verification", "method", "verification_type"),
+        )
+        method = str(raw_method).strip().casefold() if raw_method is not None else ""
+        method_assigned = bool(method) and method in valid_verification_methods
+        method_required = bool(require_verification_method)
+        missing_verification_method = method_required and not method
+        invalid_verification_method = bool(method) and method not in valid_verification_methods
+        missing_statement = not statement
+        explicit_unverifiable = explicit_verifiability is False
+
+        row_critical = missing_statement or explicit_unverifiable
+        row_warning = (
+            not is_singular
+            or not is_verifiable
+            or bool(vague_terms)
+            or missing_verification_method
+            or invalid_verification_method
+            or raw_id is None
+        )
+        if row_critical:
+            critical_count += 1
+            row_status = "critical"
+        elif row_warning:
+            warning_count += 1
+            row_status = "warning"
+        else:
+            row_status = "healthy"
+
+        requirement_rows.append(
+            {
+                "requirement_id": req_id,
+                "statement": statement,
+                "is_singular": is_singular,
+                "is_verifiable": is_verifiable,
+                "verifiability_evidence": verifiability_evidence,
+                "vague_qualifiers": sorted(set(vague_terms)),
+                "vague_qualifier_occurrence_count": vague_occurrences,
+                "verification_method": method or None,
+                "verification_method_assigned": method_assigned,
+                "missing_verification_method": missing_verification_method,
+                "invalid_verification_method": invalid_verification_method,
+                "status": row_status,
+            }
+        )
+
+    total_requirements = len(requirement_rows)
+    healthy_count = sum(row["status"] == "healthy" for row in requirement_rows)
+    singular_count = sum(row["is_singular"] for row in requirement_rows)
+    verifiable_count = sum(row["is_verifiable"] for row in requirement_rows)
+    method_assigned_count = sum(row["verification_method_assigned"] for row in requirement_rows)
+    vague_requirement_count = sum(bool(row["vague_qualifiers"]) for row in requirement_rows)
+    if invalid_record_count or missing_id_count:
+        warning_count += invalid_record_count + missing_id_count
+    if critical_count:
+        status = "critical"
+        severity = "critical"
+    elif warning_count:
+        status = "warning"
+        severity = "warning"
+    else:
+        status = "healthy"
+        severity = "none"
+
+    def rate(count: int) -> float:
+        return round(count / total_requirements * 100.0, 2) if total_requirements else 100.0
+
+    recommendations: list[str] = []
+    if any(not row["is_singular"] for row in requirement_rows):
+        recommendations.append("Split compound requirements so each statement expresses one obligation.")
+    if vague_requirement_count:
+        recommendations.append("Replace vague qualifiers with observable thresholds or acceptance criteria.")
+    if any(not row["is_verifiable"] for row in requirement_rows):
+        recommendations.append("Add objective acceptance criteria that allow an independent verification decision.")
+    if any(row["missing_verification_method"] or row["invalid_verification_method"] for row in requirement_rows):
+        recommendations.append("Assign a canonical verification method: test, analysis, inspection, demonstration, or measurement.")
+    if missing_id_count:
+        recommendations.append("Assign a stable unique ID to every requirement for traceability.")
+    if invalid_record_count:
+        recommendations.append("Provide each requirement as text or a mapping with a requirement statement.")
+
+    return {
+        "status": status,
+        "severity": severity,
+        "is_valid": status == "healthy",
+        "total_requirements": total_requirements,
+        "healthy_count": healthy_count,
+        "warning_count": warning_count,
+        "critical_count": critical_count,
+        "singular_requirement_count": singular_count,
+        "verifiable_requirement_count": verifiable_count,
+        "verification_method_assigned_count": method_assigned_count,
+        "vague_requirement_count": vague_requirement_count,
+        "vague_qualifier_occurrence_count": vague_qualifier_occurrence_count,
+        "missing_id_count": missing_id_count,
+        "invalid_record_count": invalid_record_count,
+        "singularity_rate_pct": rate(singular_count),
+        "verifiability_rate_pct": rate(verifiable_count),
+        "verification_method_assignment_rate_pct": rate(method_assigned_count),
+        "ambiguity_rate_pct": rate(vague_requirement_count),
+        "requirements": requirement_rows,
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_anydoc_iso29148_requirements_quality_and_ambiguity_metrics = staticmethod(
+    audit_anydoc_iso29148_requirements_quality_and_ambiguity_metrics
+)
+AnydocService.audit_anydoc_iso29148_requirements_quality_and_ambiguity_metrics = staticmethod(
+    audit_anydoc_iso29148_requirements_quality_and_ambiguity_metrics
 )
