@@ -14,6 +14,7 @@ import re
 import time
 import xml.etree.ElementTree as ET
 import zipfile
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -3067,6 +3068,7 @@ __all__ = [
     "audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygiene",
     "audit_markdown_ai_model_card_bias_fairness_and_red_team_hygiene",
     "audit_markdown_rfc2119_normative_keyword_and_testability_hygiene",
+    "audit_anydoc_ieee829_verification_traceability_matrix",
     "AnydocService",
 ]
 
@@ -11675,4 +11677,331 @@ AnyDocService.audit_markdown_rfc2119_normative_keyword_and_testability_hygiene =
 )
 AnydocService.audit_markdown_rfc2119_normative_keyword_and_testability_hygiene = staticmethod(
     audit_markdown_rfc2119_normative_keyword_and_testability_hygiene
+)
+
+
+def audit_anydoc_ieee829_verification_traceability_matrix(
+    requirement_specs: Any = None,
+    test_cases: Any = None,
+    *,
+    requirements: Any = None,
+    specifications: Any = None,
+) -> dict[str, Any]:
+    """Audit bidirectional requirement/test traceability and execution evidence (IEEE 829)."""
+    passed_statuses = {
+        "pass",
+        "passed",
+        "verified",
+        "success",
+        "successful",
+        "complete",
+        "completed",
+        "approved",
+    }
+    failed_statuses = {
+        "fail",
+        "failed",
+        "error",
+        "rejected",
+        "not_passed",
+        "not passed",
+    }
+
+    def coerce_records(value: Any) -> tuple[list[dict[str, Any]], int]:
+        if isinstance(value, Mapping):
+            candidates: list[Any] = [value]
+        elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            candidates = list(value)
+        else:
+            candidates = []
+        records = [dict(item) for item in candidates if isinstance(item, Mapping)]
+        return records, len(candidates) - len(records)
+
+    def first_value(record: Mapping[str, Any], keys: tuple[str, ...]) -> Any:
+        for key in keys:
+            value = record.get(key)
+            if value is not None and str(value).strip():
+                return value
+        return None
+
+    def normalize_id(value: Any) -> str:
+        if value is None or isinstance(value, (Mapping, list, tuple, set)):
+            return ""
+        return str(value).strip().upper()
+
+    def normalize_references(value: Any) -> list[str]:
+        if isinstance(value, Mapping):
+            values: Sequence[Any] = list(value.keys())
+        elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            values = value
+        elif value is None:
+            values = []
+        else:
+            values = [value]
+        normalized: list[str] = []
+        for item in values:
+            req_id = normalize_id(item)
+            if req_id and req_id not in normalized:
+                normalized.append(req_id)
+        return normalized
+
+    spec_input = requirement_specs
+    if spec_input is None:
+        spec_input = requirements if requirements is not None else specifications
+    specs, invalid_spec_record_count = coerce_records(spec_input)
+    cases, invalid_test_record_count = coerce_records(test_cases)
+
+    requirements: list[dict[str, Any]] = []
+    requirement_by_id: dict[str, dict[str, Any]] = {}
+    missing_requirement_ids: list[str] = []
+    duplicate_requirement_ids: list[str] = []
+    for index, spec in enumerate(specs, start=1):
+        req_id = normalize_id(
+            first_value(
+                spec,
+                ("requirement_id", "req_id", "id", "identifier", "code"),
+            )
+        )
+        if not req_id:
+            req_id = f"__MISSING_REQ_ID_{index}__"
+            missing_requirement_ids.append(req_id)
+        elif req_id in requirement_by_id:
+            duplicate_requirement_ids.append(req_id)
+            continue
+
+        row = {
+            "requirement_id": req_id,
+            "title": str(first_value(spec, ("title", "name", "summary")) or ""),
+            "linked_test_case_ids": [],
+            "passed_test_case_ids": [],
+            "failed_test_case_ids": [],
+            "is_verified": False,
+        }
+        requirements.append(row)
+        requirement_by_id[req_id] = row
+
+    test_rows: list[dict[str, Any]] = []
+    missing_test_case_ids: list[str] = []
+    duplicate_test_case_ids: list[str] = []
+    seen_test_case_ids: set[str] = set()
+    orphan_test_case_ids: list[str] = []
+    unexecuted_test_case_ids: list[str] = []
+    failed_test_case_ids: list[str] = []
+    unknown_requirement_reference_count = 0
+
+    for index, case in enumerate(cases, start=1):
+        test_id = normalize_id(
+            first_value(
+                case,
+                ("test_case_id", "test_id", "case_id", "id", "identifier", "code"),
+            )
+        )
+        if not test_id:
+            test_id = f"__MISSING_TEST_CASE_ID_{index}__"
+            missing_test_case_ids.append(test_id)
+        elif test_id in seen_test_case_ids:
+            duplicate_test_case_ids.append(test_id)
+            continue
+        seen_test_case_ids.add(test_id)
+
+        raw_references = first_value(
+            case,
+            (
+                "requirement_ids",
+                "req_ids",
+                "traces_to_requirements",
+                "related_requirement_ids",
+                "requirement_refs",
+                "linked_requirements",
+                "covers",
+                "traces_to",
+                "verifies",
+                "requirements",
+                "requirement_id",
+                "req_id",
+            ),
+        )
+        references = normalize_references(raw_references)
+        linked_req_ids = [req_id for req_id in references if req_id in requirement_by_id]
+        unknown_req_ids = [req_id for req_id in references if req_id not in requirement_by_id]
+        unknown_requirement_reference_count += len(unknown_req_ids)
+        status_value = first_value(
+            case,
+            (
+                "execution_status",
+                "test_result",
+                "execution_result",
+                "result",
+                "verification_status",
+                "test_status",
+                "status",
+                "outcome",
+            ),
+        )
+        if status_value is None:
+            status_value = first_value(case, ("passed", "is_passed"))
+            if status_value is True:
+                status_value = "passed"
+            elif status_value is False:
+                status_value = "failed"
+        if status_value is None:
+            status_value = first_value(case, ("verified", "is_verified"))
+            if status_value is True:
+                status_value = "verified"
+        execution_status = str(status_value or "").strip().lower().replace("-", "_")
+        is_passed = execution_status in passed_statuses
+        is_failed = execution_status in failed_statuses
+        if not is_passed and not is_failed:
+            unexecuted_test_case_ids.append(test_id)
+        if is_failed:
+            failed_test_case_ids.append(test_id)
+        if not linked_req_ids:
+            orphan_test_case_ids.append(test_id)
+
+        row = {
+            "test_case_id": test_id,
+            "requirement_ids": linked_req_ids,
+            "unknown_requirement_ids": unknown_req_ids,
+            "execution_status": execution_status or "not_executed",
+            "is_passed": is_passed,
+            "is_failed": is_failed,
+            "is_orphan": not linked_req_ids,
+        }
+        test_rows.append(row)
+        for req_id in linked_req_ids:
+            requirement = requirement_by_id[req_id]
+            requirement["linked_test_case_ids"].append(test_id)
+            if is_passed:
+                requirement["passed_test_case_ids"].append(test_id)
+            if is_failed:
+                requirement["failed_test_case_ids"].append(test_id)
+
+    unverified_requirement_ids: list[str] = []
+    untested_requirement_ids: list[str] = []
+    for requirement in requirements:
+        has_linked_tests = bool(requirement["linked_test_case_ids"])
+        has_passed_tests = bool(requirement["passed_test_case_ids"])
+        requirement["is_verified"] = has_passed_tests
+        if not has_linked_tests:
+            untested_requirement_ids.append(requirement["requirement_id"])
+        if not has_passed_tests:
+            unverified_requirement_ids.append(requirement["requirement_id"])
+
+    total_requirements = len(requirements)
+    total_test_cases = len(test_rows)
+    covered_requirement_count = sum(bool(row["linked_test_case_ids"]) for row in requirements)
+    traced_test_case_count = sum(bool(row["requirement_ids"]) for row in test_rows)
+    verified_requirement_count = sum(bool(row["passed_test_case_ids"]) for row in requirements)
+    requirement_coverage_pct = (
+        round(covered_requirement_count / total_requirements * 100.0, 2)
+        if total_requirements
+        else 100.0
+    )
+    test_case_traceability_pct = (
+        round(traced_test_case_count / total_test_cases * 100.0, 2)
+        if total_test_cases
+        else 100.0
+    )
+    verification_coverage_pct = (
+        round(verified_requirement_count / total_requirements * 100.0, 2)
+        if total_requirements
+        else 100.0
+    )
+
+    critical_count = len(unverified_requirement_ids) + len(failed_test_case_ids)
+    warning_count = sum(
+        (
+            len(orphan_test_case_ids),
+            len(unexecuted_test_case_ids),
+            len(missing_requirement_ids),
+            len(missing_test_case_ids),
+            len(duplicate_requirement_ids),
+            len(duplicate_test_case_ids),
+            unknown_requirement_reference_count,
+            invalid_spec_record_count,
+            invalid_test_record_count,
+        )
+    )
+    if critical_count:
+        status = "critical"
+        severity = "critical"
+    elif warning_count:
+        status = "warning"
+        severity = "warning"
+    else:
+        status = "healthy"
+        severity = "none"
+
+    recommendations: list[str] = []
+    if untested_requirement_ids:
+        recommendations.append(
+            "Add IEEE 829 test-case links for requirements without mapped verification: "
+            + ", ".join(untested_requirement_ids)
+            + "."
+        )
+    if unverified_requirement_ids:
+        recommendations.append(
+            "Execute and pass at least one linked test case for each unverified requirement: "
+            + ", ".join(unverified_requirement_ids)
+            + "."
+        )
+    if orphan_test_case_ids:
+        recommendations.append(
+            "Link orphan test cases to known requirement IDs: " + ", ".join(orphan_test_case_ids) + "."
+        )
+    if unexecuted_test_case_ids:
+        recommendations.append(
+            "Record execution results (pass/fail) for planned test cases: "
+            + ", ".join(unexecuted_test_case_ids)
+            + "."
+        )
+    if failed_test_case_ids:
+        recommendations.append(
+            "Resolve failing test cases before treating linked requirements as verified: "
+            + ", ".join(failed_test_case_ids)
+            + "."
+        )
+
+    return {
+        "status": status,
+        "severity": severity,
+        "is_valid": status == "healthy",
+        "total_requirements": total_requirements,
+        "total_test_cases": total_test_cases,
+        "covered_requirement_count": covered_requirement_count,
+        "traced_test_case_count": traced_test_case_count,
+        "verified_requirement_count": verified_requirement_count,
+        "unverified_requirement_count": len(unverified_requirement_ids),
+        "untested_requirement_count": len(untested_requirement_ids),
+        "orphan_test_case_count": len(orphan_test_case_ids),
+        "unexecuted_test_case_count": len(unexecuted_test_case_ids),
+        "failed_test_case_count": len(failed_test_case_ids),
+        "warning_count": warning_count,
+        "critical_count": critical_count,
+        "requirement_coverage_pct": requirement_coverage_pct,
+        "test_case_traceability_pct": test_case_traceability_pct,
+        "verification_coverage_pct": verification_coverage_pct,
+        "missing_requirement_ids": missing_requirement_ids,
+        "missing_test_case_ids": missing_test_case_ids,
+        "duplicate_requirement_ids": duplicate_requirement_ids,
+        "duplicate_test_case_ids": duplicate_test_case_ids,
+        "unverified_requirement_ids": unverified_requirement_ids,
+        "untested_requirement_ids": untested_requirement_ids,
+        "orphan_test_case_ids": orphan_test_case_ids,
+        "unexecuted_test_case_ids": unexecuted_test_case_ids,
+        "failed_test_case_ids": failed_test_case_ids,
+        "invalid_spec_record_count": invalid_spec_record_count,
+        "invalid_test_record_count": invalid_test_record_count,
+        "unknown_requirement_reference_count": unknown_requirement_reference_count,
+        "requirements": requirements,
+        "test_cases": test_rows,
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_anydoc_ieee829_verification_traceability_matrix = staticmethod(
+    audit_anydoc_ieee829_verification_traceability_matrix
+)
+AnydocService.audit_anydoc_ieee829_verification_traceability_matrix = staticmethod(
+    audit_anydoc_ieee829_verification_traceability_matrix
 )

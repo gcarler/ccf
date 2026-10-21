@@ -10871,3 +10871,132 @@ def test_audit_markdown_rfc2119_normative_keyword_and_testability_hygiene_empty_
         "audit_markdown_rfc2119_normative_keyword_and_testability_hygiene"
         in mod.__all__
     )
+
+
+def test_audit_anydoc_ieee829_verification_traceability_matrix_healthy_bidirectional():
+    from backend.services.anydoc_service import (
+        audit_anydoc_ieee829_verification_traceability_matrix,
+    )
+
+    requirements = [
+        {"requirement_id": "REQ-01", "title": "Authenticate users"},
+        {"id": "REQ-02", "summary": "Encrypt stored data"},
+    ]
+    test_cases = [
+        {
+            "test_case_id": "TC-01",
+            "requirement_ids": ["REQ-01"],
+            "execution_status": "passed",
+        },
+        {
+            "id": "TC-02",
+            "req_id": "REQ-02",
+            "result": "pass",
+        },
+    ]
+    result = audit_anydoc_ieee829_verification_traceability_matrix(
+        requirements, test_cases
+    )
+
+    assert result["status"] == "healthy"
+    assert result["severity"] == "none"
+    assert result["is_valid"] is True
+    assert result["total_requirements"] == 2
+    assert result["total_test_cases"] == 2
+    assert result["requirement_coverage_pct"] == 100.0
+    assert result["test_case_traceability_pct"] == 100.0
+    assert result["verification_coverage_pct"] == 100.0
+    assert result["unverified_requirement_ids"] == []
+    assert result["orphan_test_case_ids"] == []
+
+
+def test_audit_anydoc_ieee829_verification_traceability_matrix_warning_orphan_case():
+    from backend.services.anydoc_service import (
+        audit_anydoc_ieee829_verification_traceability_matrix,
+    )
+
+    result = audit_anydoc_ieee829_verification_traceability_matrix(
+        [{"requirement_id": "REQ-OK"}],
+        [
+            {
+                "test_case_id": "TC-PASS",
+                "requirement_id": "REQ-OK",
+                "execution_status": "passed",
+            },
+            {
+                "test_case_id": "TC-ORPHAN",
+                "requirement_id": "REQ-UNKNOWN",
+                "execution_status": "passed",
+            },
+        ],
+    )
+
+    assert result["status"] == "warning"
+    assert result["severity"] == "warning"
+    assert result["orphan_test_case_count"] == 1
+    assert result["orphan_test_case_ids"] == ["TC-ORPHAN"]
+    assert result["unknown_requirement_reference_count"] == 1
+    assert result["test_case_traceability_pct"] == 50.0
+    assert result["recommendations"]
+
+
+def test_audit_anydoc_ieee829_verification_traceability_matrix_critical_unverified():
+    from backend.services.anydoc_service import (
+        audit_anydoc_ieee829_verification_traceability_matrix,
+    )
+
+    result = audit_anydoc_ieee829_verification_traceability_matrix(
+        [{"requirement_id": "REQ-CRITICAL"}],
+        [
+            {
+                "test_case_id": "TC-FAIL",
+                "requirement_id": "REQ-CRITICAL",
+                "execution_status": "failed",
+            }
+        ],
+    )
+
+    assert result["status"] == "critical"
+    assert result["severity"] == "critical"
+    assert result["unverified_requirement_count"] == 1
+    assert result["untested_requirement_count"] == 0
+    assert result["failed_test_case_ids"] == ["TC-FAIL"]
+    assert result["verification_coverage_pct"] == 0.0
+    assert result["requirements"][0]["is_verified"] is False
+
+
+def test_audit_anydoc_ieee829_verification_traceability_matrix_empty_coercion_and_binding():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_anydoc_ieee829_verification_traceability_matrix,
+    )
+
+    empty = audit_anydoc_ieee829_verification_traceability_matrix()
+    assert empty["status"] == "healthy"
+    assert empty["requirement_coverage_pct"] == 100.0
+    assert empty["test_case_traceability_pct"] == 100.0
+    assert (
+        AnyDocService.audit_anydoc_ieee829_verification_traceability_matrix(
+            None, None
+        )
+        == empty
+    )
+    assert (
+        AnydocService.audit_anydoc_ieee829_verification_traceability_matrix(
+            None, None
+        )
+        == empty
+    )
+
+    coerced = audit_anydoc_ieee829_verification_traceability_matrix(
+        "invalid", [None, "invalid", {"test_case_id": "TC-1"}]
+    )
+    assert coerced["status"] == "warning"
+    assert coerced["invalid_spec_record_count"] == 0
+    assert coerced["invalid_test_record_count"] == 2
+    assert coerced["orphan_test_case_ids"] == ["TC-1"]
+    assert (
+        "audit_anydoc_ieee829_verification_traceability_matrix" in mod.__all__
+    )
