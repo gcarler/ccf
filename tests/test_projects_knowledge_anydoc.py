@@ -10782,3 +10782,92 @@ def test_audit_markdown_ai_model_card_bias_fairness_and_red_team_hygiene_empty_a
     )
 
 
+def test_audit_markdown_rfc2119_normative_keyword_and_testability_hygiene_healthy():
+    from backend.services.anydoc_service import (
+        audit_markdown_rfc2119_normative_keyword_and_testability_hygiene,
+    )
+
+    md = """
+    # Normative Requirements Matrix
+    <!-- req_spec: id=REQ-401; rfc2119_level=MUST; statement=El sistema procesara lotes en menos de 200ms; verification=automated_load_test; test_case_id=TC-882 -->
+    <!-- req_spec: id=REQ-402; rfc2119_level=SHOULD; statement=El panel exportara reportes en formato CSV firmados con SHA-256; verification=integration_test; test_case_id=TC-883 -->
+    """
+    res = audit_markdown_rfc2119_normative_keyword_and_testability_hygiene(md)
+    assert res["status"] == "healthy"
+    assert res["total_req_blocks"] == 2
+    assert res["healthy_count"] == 2
+    assert res["warning_count"] == 0
+    assert res["critical_count"] == 0
+    assert res["req_testability_rate_pct"] == 100.0
+    assert res["recommendations"] == []
+
+
+def test_audit_markdown_rfc2119_normative_keyword_and_testability_hygiene_warning():
+    from backend.services.anydoc_service import (
+        audit_markdown_rfc2119_normative_keyword_and_testability_hygiene,
+    )
+
+    md = """
+    <!-- req_spec: id=REQ-405; rfc2119_level=SHOULD; statement=El modulo respondera aproximadamente en 2 segundos aproximadamente etc; verification=inspection; test_case_id=TC-901 -->
+    <!-- req_spec: id=REQ-406; rfc2119_level=MAY; statement=El servicio conservara registros durante 4 horas; verification=manual_guess; test_case_id=TC-902 -->
+    """
+    res = audit_markdown_rfc2119_normative_keyword_and_testability_hygiene(md)
+    assert res["status"] == "warning"
+    assert res["total_req_blocks"] == 2
+    assert res["warning_count"] == 2
+    assert res["critical_count"] == 0
+    assert res["ambiguity_exceeded_count"] == 1
+    assert res["blocks"][0]["ambiguous_term_count"] == 3
+    assert res["blocks"][0]["block_status"] == "warning"
+    assert res["blocks"][1]["invalid_verification_method"] is True
+    assert res["blocks"][1]["block_status"] == "warning"
+    assert len(res["recommendations"]) >= 1
+
+
+def test_audit_markdown_rfc2119_normative_keyword_and_testability_hygiene_critical():
+    from backend.services.anydoc_service import (
+        audit_markdown_rfc2119_normative_keyword_and_testability_hygiene,
+    )
+
+    md = """
+    <!-- req_spec: id=REQ-499; rfc2119_level=MUST; statement=El servicio escalara según sea necesario con umbral TBD; verification=manual_guess; test_case_id=none -->
+    """
+    res = audit_markdown_rfc2119_normative_keyword_and_testability_hygiene(md)
+    assert res["status"] == "critical"
+    assert res["total_req_blocks"] == 1
+    assert res["critical_count"] == 1
+    assert res["untestable_mandatory_count"] == 1
+    assert res["ambiguity_exceeded_count"] == 1
+    assert res["req_testability_rate_pct"] == 0.0
+    assert res["blocks"][0]["block_status"] == "critical"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_markdown_rfc2119_normative_keyword_and_testability_hygiene_empty_and_binding():
+    import backend.services.anydoc_service as mod
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        AnydocService,
+        audit_markdown_rfc2119_normative_keyword_and_testability_hygiene,
+    )
+
+    empty = audit_markdown_rfc2119_normative_keyword_and_testability_hygiene("")
+    assert empty["status"] == "healthy"
+    assert empty["total_req_blocks"] == 0
+    assert empty["req_testability_rate_pct"] == 100.0
+    assert (
+        AnyDocService.audit_markdown_rfc2119_normative_keyword_and_testability_hygiene(
+            ""
+        )
+        == empty
+    )
+    assert (
+        AnydocService.audit_markdown_rfc2119_normative_keyword_and_testability_hygiene(
+            ""
+        )
+        == empty
+    )
+    assert (
+        "audit_markdown_rfc2119_normative_keyword_and_testability_hygiene"
+        in mod.__all__
+    )

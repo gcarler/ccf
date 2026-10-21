@@ -3066,6 +3066,7 @@ __all__ = [
     "audit_markdown_finops_cloud_cost_tagging_and_unit_economics_hygiene",
     "audit_markdown_wcag_accessibility_alt_text_and_heading_hierarchy_hygiene",
     "audit_markdown_ai_model_card_bias_fairness_and_red_team_hygiene",
+    "audit_markdown_rfc2119_normative_keyword_and_testability_hygiene",
     "AnydocService",
 ]
 
@@ -11489,3 +11490,189 @@ AnydocService.audit_markdown_ai_model_card_bias_fairness_and_red_team_hygiene = 
 )
 
 
+def audit_markdown_rfc2119_normative_keyword_and_testability_hygiene(
+    markdown_text: str,
+    *,
+    max_ambiguous_terms_per_block: int = 0,
+    require_verification_method: bool = True,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §5.2 — AnyDoc Markdown RFC 2119 Normative Keyword (MUST/SHOULD/MAY), Lexical Ambiguity & Verification Traceability Hygiene Auditor."""
+    normalized_max_ambiguous = max(int(max_ambiguous_terms_per_block), 0)
+    valid_rfc2119_keywords = {
+        "MUST",
+        "MUST NOT",
+        "REQUIRED",
+        "SHALL",
+        "SHALL NOT",
+        "SHOULD",
+        "SHOULD NOT",
+        "RECOMMENDED",
+        "MAY",
+        "OPTIONAL",
+    }
+    mandatory_keywords = {"MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT"}
+    valid_verification_methods = {
+        "inspection",
+        "analysis",
+        "demonstration",
+        "test",
+        "automated_load_test",
+        "unit_test",
+        "integration_test",
+    }
+    ambiguous_terms = (
+        "aproximadamente",
+        "etc",
+        "rápido",
+        "fácil",
+        "adecuado",
+        "según sea necesario",
+        "tbd",
+        "tba",
+    )
+
+    text = markdown_text if isinstance(markdown_text, str) else ""
+    stripped = re.sub(r"```[\s\S]*?```|~~~[\s\S]*?~~~", "", text)
+
+    pattern = re.compile(
+        r"<!--\s*req_spec\s*:(.*?)-->", re.IGNORECASE | re.DOTALL
+    )
+    blocks: list[dict[str, Any]] = []
+    healthy_count = 0
+    warning_count = 0
+    critical_count = 0
+    untestable_mandatory_count = 0
+    invalid_keyword_count = 0
+    invalid_verification_count = 0
+    ambiguity_exceeded_count = 0
+
+    for idx, match in enumerate(pattern.finditer(stripped), start=1):
+        raw_body = match.group(1)
+        kv: dict[str, str] = {}
+        for part in re.split(r"[;\n]", raw_body):
+            if "=" in part:
+                k, v = part.split("=", 1)
+                kv[k.strip().lower()] = v.strip()
+
+        req_id = kv.get("id") or f"REQ-{idx}"
+        rfc2119_level = kv.get("rfc2119_level", "").strip()
+        statement = kv.get("statement", "").strip()
+        verification = kv.get("verification", "").strip()
+        test_case_id = kv.get("test_case_id", "").strip()
+
+        invalid_rfc2119_keyword = rfc2119_level not in valid_rfc2119_keywords
+        missing_test_case = not test_case_id or test_case_id.lower() == "none"
+        invalid_verification = (
+            bool(require_verification_method)
+            and verification.lower() not in valid_verification_methods
+        )
+        untestable_mandatory_requirement = (
+            rfc2119_level.upper() in mandatory_keywords
+            and (missing_test_case or invalid_verification)
+        )
+
+        stmt_lower = statement.lower()
+        ambiguous_term_count = sum(
+            len(re.findall(rf"\b{re.escape(term)}\b", stmt_lower))
+            for term in ambiguous_terms
+        )
+        ambiguity_threshold_exceeded = (
+            ambiguous_term_count > normalized_max_ambiguous
+        )
+
+        if untestable_mandatory_requirement:
+            untestable_mandatory_count += 1
+        if invalid_rfc2119_keyword:
+            invalid_keyword_count += 1
+        if invalid_verification:
+            invalid_verification_count += 1
+        if ambiguity_threshold_exceeded:
+            ambiguity_exceeded_count += 1
+
+        if untestable_mandatory_requirement or (
+            invalid_rfc2119_keyword and ambiguity_threshold_exceeded
+        ):
+            block_status = "critical"
+            critical_count += 1
+        elif (
+            invalid_rfc2119_keyword
+            or ambiguity_threshold_exceeded
+            or missing_test_case
+            or invalid_verification
+        ):
+            block_status = "warning"
+            warning_count += 1
+        else:
+            block_status = "healthy"
+            healthy_count += 1
+
+        blocks.append(
+            {
+                "id": req_id,
+                "rfc2119_level": rfc2119_level,
+                "statement": statement,
+                "verification": verification,
+                "test_case_id": test_case_id,
+                "invalid_rfc2119_keyword": invalid_rfc2119_keyword,
+                "invalid_verification_method": invalid_verification,
+                "untestable_mandatory_requirement": untestable_mandatory_requirement,
+                "ambiguous_term_count": ambiguous_term_count,
+                "ambiguity_threshold_exceeded": ambiguity_threshold_exceeded,
+                "block_status": block_status,
+            }
+        )
+
+    total_req_blocks = len(blocks)
+    req_testability_rate_pct = (
+        round((healthy_count / total_req_blocks) * 100.0, 2)
+        if total_req_blocks > 0
+        else 100.0
+    )
+
+    recommendations: list[str] = []
+    if untestable_mandatory_count > 0:
+        recommendations.append(
+            f"Vincular test_case_id explícito y método de verificación canónico (test/analysis/inspection/demonstration) en {untestable_mandatory_count} requisito(s) mandatorio(s) RFC 2119."
+        )
+    if invalid_keyword_count > 0:
+        recommendations.append(
+            f"Normalizar nivel normativo en mayúsculas estrictas según IETF RFC 2119 (MUST, SHOULD, MAY) en {invalid_keyword_count} bloque(s)."
+        )
+    if invalid_verification_count > 0:
+        recommendations.append(
+            f"Usar métodos de verificación canónicos (test, analysis, inspection o demonstration) en {invalid_verification_count} requisito(s)."
+        )
+    if ambiguity_exceeded_count > 0:
+        recommendations.append(
+            f"Reemplazar términos léxicos vagos o indefinidos (TBD/TBA/etc/aproximadamente) por umbrales cuantitativos verificables en {ambiguity_exceeded_count} requisito(s)."
+        )
+
+    if critical_count > 0:
+        status = "critical"
+    elif warning_count > 0:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_req_blocks": total_req_blocks,
+        "healthy_count": healthy_count,
+        "warning_count": warning_count,
+        "critical_count": critical_count,
+        "untestable_mandatory_count": untestable_mandatory_count,
+        "invalid_keyword_count": invalid_keyword_count,
+        "invalid_verification_count": invalid_verification_count,
+        "ambiguity_exceeded_count": ambiguity_exceeded_count,
+        "req_testability_rate_pct": req_testability_rate_pct,
+        "status": status,
+        "blocks": blocks,
+        "recommendations": recommendations,
+    }
+
+
+AnyDocService.audit_markdown_rfc2119_normative_keyword_and_testability_hygiene = staticmethod(
+    audit_markdown_rfc2119_normative_keyword_and_testability_hygiene
+)
+AnydocService.audit_markdown_rfc2119_normative_keyword_and_testability_hygiene = staticmethod(
+    audit_markdown_rfc2119_normative_keyword_and_testability_hygiene
+)
