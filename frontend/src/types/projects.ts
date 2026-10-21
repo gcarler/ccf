@@ -375,9 +375,8 @@ export interface ProjectTaskRecord {
   due_date?: string | null;
   node?: string | null;
   physical_progress_pct?: number;
-  progress?: number;
-  progress_pct?: number;
   progress?: number | null;
+  progress_pct?: number;
   estimated_hours?: number;
   actual_hours?: number;
   budget_allocated?: number | null;
