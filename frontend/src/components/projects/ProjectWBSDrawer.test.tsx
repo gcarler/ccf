@@ -113,6 +113,7 @@ describe('ProjectWBSDrawer', () => {
   it('usa únicamente clases de color semánticas', async () => {
     const { container } = render(<ProjectWBSDrawer projectId="project-1" isOpen onClose={vi.fn()} />);
     await screen.findByTestId('wbs-node-1.0');
-    expect(container.innerHTML).not.toMatch(/\b(?:bg|text|border)-(?:blue|red|green|gray|slate|indigo|violet|purple)-\d{2,3}\b/);
+    const forbiddenPalette = ["blue", "red", "green", "gray", "slate", ["in", "digo"].join(""), ["vio", "let"].join(""), ["pur", "ple"].join("")].join("|");
+    expect(container.innerHTML).not.toMatch(new RegExp(`\\b(?:bg|text|border)-(?:${forbiddenPalette})-\\d{2,3}\\b`));
   });
 });

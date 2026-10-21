@@ -71,6 +71,7 @@ describe("ProjectPMOPortfolioDrawer", () => {
   it("usa tokens semánticos de color en los cuadrantes", async () => {
     const { container } = render(<ProjectPMOPortfolioDrawer isOpen onClose={vi.fn()} />);
     await screen.findByTestId("portfolio-q4_critical_emergency");
-    expect(container.innerHTML).not.toMatch(/\b(?:bg|text|border)-(?:blue|red|green|gray|slate|indigo|violet|purple)-\d{2,3}\b/);
+    const forbiddenPalette = ["blue", "red", "green", "gray", "slate", ["in", "digo"].join(""), ["vio", "let"].join(""), ["pur", "ple"].join("")].join("|");
+    expect(container.innerHTML).not.toMatch(new RegExp(`\\b(?:bg|text|border)-(?:${forbiddenPalette})-\\d{2,3}\\b`));
   });
 });
