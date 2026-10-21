@@ -482,7 +482,7 @@ def send_to_tmux(event: dict) -> tuple[bool, str]:
         return False, "Sesión tmux inválida"
     try:
         panes = subprocess.run(
-            ["tmux", "list-panes", "-t", target, "-F", "#{pane_id} #{pane_active}"],
+            ["tmux", "list-panes", "-s", "-t", f"={target}:", "-F", "#{pane_id} #{pane_active}"],
             capture_output=True, text=True, timeout=5, check=False,
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
