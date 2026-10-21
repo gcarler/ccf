@@ -425,6 +425,8 @@ from backend.crud.projects import (
     create_project_indicator_record,
     get_project_indicator_records,
     sync_project_indicators_and_kpis,
+    notify_project_execution_change,
+    notify_project_execution_change_safe,
     toggle_task_favorite,
     get_project_user_favorites,
     pin_project_comment,

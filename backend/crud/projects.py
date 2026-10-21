@@ -484,6 +484,7 @@ def create_project_task(db: Session, task: schemas.ProjectTaskCreate):
             sync_parent_task_rollup(db, parent_id)
         except Exception:
             pass
+    notify_project_execution_change_safe(db, project_id)
     return db_task
 
 
@@ -623,6 +624,7 @@ def update_project_task(db: Session, task_id, payload: schemas.ProjectTaskUpdate
         prev_progress_pct=prev_progress,
         requested_status=update_data.get("status"),
     )
+    notify_project_execution_change_safe(db, row.project_id)
     return row
 
 
@@ -631,6 +633,7 @@ def delete_project_task(db: Session, task_id) -> bool:
     if not row:
         return False
     parent_id = row.parent_id
+    project_id = row.project_id
     row.deleted_at = datetime.now(timezone.utc)
     db.commit()
     if parent_id:
@@ -639,6 +642,7 @@ def delete_project_task(db: Session, task_id) -> bool:
             sync_parent_task_rollup(db, parent_id)
         except Exception:
             pass
+    notify_project_execution_change_safe(db, project_id)
     return True
 
 
@@ -1309,6 +1313,7 @@ def _prepare_kpi_response(
             row.__dict__["frente"] = eval_res.get("frente")
             row.__dict__["component_name"] = eval_res.get("component_name")
             row.__dict__["is_auto_synced"] = True
+            row.__dict__["is_orphaned"] = bool(eval_res.get("orphaned"))
             return row
 
     target = float(row.target_value or 0.0)
@@ -1317,6 +1322,8 @@ def _prepare_kpi_response(
     row.__dict__["frente"] = "manual"
     row.__dict__["component_name"] = None
     row.__dict__["is_auto_synced"] = False
+    row.__dict__["is_orphaned"] = False
+    row.__dict__["target_value_valid"] = bool(target > 0)
     return row
 
 
@@ -1774,6 +1781,7 @@ def create_project_expense(
             },
             actor_persona_id=created_by,
         )
+    notify_project_execution_change_safe(db, project_id, actor_id=created_by)
     if row.creator:
         row.creator_name = row.creator.nombre_completo
     if getattr(row, "task", None):
@@ -1817,6 +1825,7 @@ def update_project_expense(
             },
             actor_persona_id=row.created_by,
         )
+    notify_project_execution_change_safe(db, project_id, actor_id=row.created_by)
     if row.creator:
         row.creator_name = row.creator.nombre_completo
     if getattr(row, "task", None):
@@ -1831,6 +1840,7 @@ def delete_project_expense(db: Session, project_id: UUID | str, expense_id: UUID
     row.deleted_at = datetime.now(timezone.utc)
     db.commit()
     recalculate_project_budget(db, project_id)
+    notify_project_execution_change_safe(db, project_id)
     return True
 
 
@@ -2982,6 +2992,8 @@ def create_project_time_log(
     if time_log.task_id:
         sync_task_time_logs(db, time_log.task_id)
 
+    notify_project_execution_change_safe(db, project_id, actor_id=persona_id)
+
     # Cargar relaciones
     db.query(models.ProjectTimeLog).options(
         selectinload(models.ProjectTimeLog.persona),
@@ -3041,6 +3053,7 @@ def delete_project_time_log(
     db.commit()
     if affected_task_id:
         sync_task_time_logs(db, affected_task_id)
+    notify_project_execution_change_safe(db, project_id)
     return True
 
 
@@ -5365,6 +5378,7 @@ def _prepare_indicator_response(
             ind.__dict__["component_name"] = eval_res.get("component_name")
             ind.__dict__["frente"] = eval_res.get("frente")
             ind.__dict__["is_auto_synced"] = True
+            ind.__dict__["is_orphaned"] = bool(eval_res.get("orphaned"))
         else:
             if records:
                 sorted_recs = sorted(records, key=lambda x: x.reported_at or x.created_at)
@@ -5376,6 +5390,14 @@ def _prepare_indicator_response(
             ind.__dict__["component_name"] = None
             ind.__dict__["frente"] = "manual"
             ind.__dict__["is_auto_synced"] = False
+            ind.__dict__["is_orphaned"] = False
+
+        try:
+            _t = float(ind.target_value) if ind.target_value is not None else None
+        except (TypeError, ValueError):
+            _t = None
+        # G5: bandera para que el panel alerte metas inválidas (<= 0).
+        ind.__dict__["target_value_valid"] = bool(_t is not None and _t > 0)
     return ind
 
 
@@ -5654,10 +5676,10 @@ def create_project_indicator_record(
     actual = float(record_in.actual_value or 0.0)
 
     # SPI is derived from the persisted measurement; never trust a client-supplied score.
-    if target > 0:
-        spi = round(actual / target, 2)
-    else:
-        spi = 1.0 if actual >= 0 else 0.0
+    # G4: 4 decimales, consistente con evaluate_execution_metric.
+    # G5: con meta inválida (<= 0) no se fabrica SPI ficticio; queda None hasta
+    # que el indicador defina una meta válida (UI: "no disponible").
+    spi: Optional[float] = round(actual / target, 4) if target > 0 else None
 
     rep_at = record_in.reported_at or datetime.now(timezone.utc)
     if not hasattr(rep_at, "tzinfo") or not rep_at.tzinfo:
@@ -5711,6 +5733,14 @@ def get_project_indicator_records(
     )
 
     return [_prepare_record_response(r) for r in records]
+
+
+AUTO_SYNC_NOTE_PREFIX = "Sincronización automática desde ejecución real"
+
+
+def _is_auto_sync_record(rec: models.ProjectIndicatorRecord) -> bool:
+    """G3: identifica records escritos por el motor de sincronización automática."""
+    return str(getattr(rec, "notes", "") or "").startswith(AUTO_SYNC_NOTE_PREFIX)
 
 
 def sync_project_indicators_and_kpis(
@@ -5898,17 +5928,26 @@ def sync_project_indicators_and_kpis(
             ind.updated_at = now
             synced_indicators_count += 1
 
-            # Registrar o actualizar medición automática del período actual
-            existing_rec = (
+            # Historial de medición solo con actor canónico (Axioma de autoría):
+            # el refresco reactivo de current_value ocurre igual; el record del
+            # período se persiste ante el primer sync ejecutado por un usuario.
+            if not eff_actor:
+                continue
+
+            # G3: el upsert toca EXCLUSIVAMENTE records de origen automático.
+            # Los records manuales del mismo período se preservan intactos y
+            # coexisten con el record automático como orígenes distintos.
+            period_recs = (
                 db.query(models.ProjectIndicatorRecord)
                 .filter(
                     models.ProjectIndicatorRecord.indicator_id == ind.id,
                     models.ProjectIndicatorRecord.period == eff_period,
                     models.ProjectIndicatorRecord.deleted_at.is_(None),
                 )
-                .first()
+                .all()
             )
-            spi_val = round(float(eval_res.get("spi") or 0.0), 2)
+            existing_rec = next((r for r in period_recs if _is_auto_sync_record(r)), None)
+            spi_val = round(float(eval_res.get("spi") or 0.0), 4)
             if existing_rec:
                 existing_rec.actual_value = float(eval_res["current_value"])
                 existing_rec.target_value = float(ind.target_value or eval_res.get("suggested_target") or 100.0)
@@ -5922,7 +5961,7 @@ def sync_project_indicators_and_kpis(
                         target_value=float(ind.target_value or eval_res.get("suggested_target") or 100.0),
                         actual_value=float(eval_res["current_value"]),
                         spi=spi_val,
-                        notes=f"Sincronización automática desde ejecución real ({src}).",
+                        notes=f"{AUTO_SYNC_NOTE_PREFIX} ({src}).",
                         reported_by=eff_actor,
                         reported_at=now,
                         created_at=now,
@@ -6057,6 +6096,84 @@ def sync_project_indicators_and_kpis(
         "indicators": final_indicators,
         "kpis": final_kpis,
     }
+
+
+def notify_project_execution_change(
+    db: Session,
+    project_id: UUID | str,
+    *,
+    actor_id: Optional[UUID | str] = None,
+    sede_id: Optional[UUID | str] = None,
+) -> Optional[dict]:
+    """Hook reactivo (F6/G2): recalcula indicadores y KPIs auto tras mutar ejecución.
+
+    - Solo actúa si el proyecto ya tiene indicadores o KPIs vinculados
+      (source_type diferente de "manual"); en proyectos sin vincular es no-op.
+    - No siembra nada: la siembra de las 6 Familias Pro es decisión explícita
+      del endpoint de sincronización.
+    - El historial de mediciones (records) solo se persiste con actor canónico
+      (Axioma de autoría); el refresco de current_value es inmediato.
+    """
+    project_uuid = _to_uuid(project_id)
+    if project_uuid is None:
+        return None
+
+    ind_rows = (
+        db.query(models.ProjectIndicator)
+        .filter(
+            models.ProjectIndicator.project_id == project_uuid,
+            models.ProjectIndicator.deleted_at.is_(None),
+        )
+        .all()
+    )
+    has_auto = any(
+        (str(getattr(r, "source_type", "manual") or "manual")).strip() != "manual"
+        for r in ind_rows
+    )
+    if not has_auto:
+        k_rows = (
+            db.query(models.ProjectKPI)
+            .filter(
+                models.ProjectKPI.project_id == project_uuid,
+                models.ProjectKPI.deleted_at.is_(None),
+            )
+            .all()
+        )
+        has_auto = any(
+            (str(getattr(k, "source_type", "manual") or "manual")).strip() != "manual"
+            for k in k_rows
+        )
+    if not has_auto:
+        return None
+
+    return sync_project_indicators_and_kpis(
+        db,
+        project_uuid,
+        actor_id=actor_id,
+        sede_id=sede_id,
+        seed_pro_families=False,
+        seed_pro_indicators=False,
+        seed_kpis=False,
+        seed_pro_kpis=False,
+    )
+
+
+def notify_project_execution_change_safe(
+    db: Session,
+    project_id: UUID | str,
+    *,
+    actor_id: Optional[UUID | str] = None,
+    sede_id: Optional[UUID | str] = None,
+) -> Optional[dict]:
+    """Wrapper a prueba de fallos: una falla del recálculo no rompe la mutación origen."""
+    try:
+        return notify_project_execution_change(db, project_id, actor_id=actor_id, sede_id=sede_id)
+    except Exception:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        return None
 
 
 

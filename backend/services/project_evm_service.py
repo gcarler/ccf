@@ -2806,6 +2806,10 @@ def evaluate_execution_metric(
                 comp_data = c
                 break
 
+    # G6: un vínculo hacia un componente EDT eliminado/inexistente es huérfano.
+    # Solo los componentes activos de la matriz participan en la evaluación.
+    is_orphaned = comp_id_str is not None and comp_data is None
+
     ft = exec_matrix["frente_tiempo"]
     ff = exec_matrix["frente_financiero"]
     fc = exec_matrix["frente_cruce_evm"]
@@ -2891,15 +2895,20 @@ def evaluate_execution_metric(
         c_name = comp_data.get("name")
         comp_label = f"[{c_code}] {c_name}" if c_code and c_name else (c_name or c_code)
 
+    orphan_reason = "component_not_present_in_active_edt" if is_orphaned else None
     return {
         "is_auto": True,
         "source_type": src,
         "frente": frente,
-        "current_value": round(current_val, 2),
+        # G6: el valor de un componente muerto no se sustituye silenciosamente
+        # por el global del proyecto; se devuelve None y se marca el huérfano.
+        "current_value": None if is_orphaned else round(current_val, 2),
         "suggested_target": round(eff_target, 2),
-        "spi": spi,
+        "spi": None if is_orphaned else spi,
         "unit": unit,
         "component_name": comp_label,
+        "orphaned": is_orphaned,
+        "orphan_reason": orphan_reason,
     }
 
 
