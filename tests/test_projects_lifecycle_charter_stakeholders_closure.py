@@ -13604,3 +13604,250 @@ def test_monte_carlo_schedule_variance_field_coercion_and_empty_collection():
     assert explicit_90["target_confidence_percentile"] == 90.0
     assert explicit_90["target_confidence_days"] == 26.41
 
+
+def test_unallowable_costs_far31_healthy_clean_case():
+    """Solo costos admisibles con base CAS 401 explícita en el indirecto -> 'HEALTHY_FAR_PART_31_COMPLIANT'."""
+    import backend.services.project_lifecycle_pmi_service as lse_module
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_project_lifecycle_unallowable_costs_and_cost_accounting_standards_cas,
+    )
+
+    res = audit_project_lifecycle_unallowable_costs_and_cost_accounting_standards_cas(
+        [
+            {"item_id": "LAB-05", "amount": 10000.0, "category": "direct_labor",
+             "is_indirect": False, "allocation_basis": ""},
+            {"item_id": "OHI-06", "amount": 3000.0, "category": "other_indirect",
+             "is_indirect": True, "allocation_basis": "machine_hours"},
+        ],
+    )
+    assert res == {
+        "items_evaluated": 2,
+        "skipped_invalid_entries": 0,
+        "total_cost_amount": 13000.0,
+        "direct_costs_total": 10000.0,
+        "indirect_costs_total": 3000.0,
+        "unallowable_item_ids": [],
+        "unallowable_costs_total": 0.0,
+        "executive_compensation_item_ids": [],
+        "executive_compensation_cap_amount": None,
+        "executive_compensation_cap_excess_item_ids": [],
+        "executive_compensation_cap_excess_amount": 0.0,
+        "cas_401_missing_basis_item_ids": [],
+        "cas_401_inconsistent_basis_item_ids": [],
+        "cas_401_allocation_basis_inconsistent": False,
+        "net_allowable_ceiling_amount": 13000.0,
+        "records": [
+            {
+                "item_id": "LAB-05",
+                "amount": 10000.0,
+                "category": "direct_labor",
+                "is_indirect": False,
+                "allocation_basis": "",
+                "is_fully_unallowable": False,
+                "cap_excess_unallowable_amount": 0.0,
+                "cas_401_missing_basis": False,
+            },
+            {
+                "item_id": "OHI-06",
+                "amount": 3000.0,
+                "category": "other_indirect",
+                "is_indirect": True,
+                "allocation_basis": "machine_hours",
+                "is_fully_unallowable": False,
+                "cap_excess_unallowable_amount": 0.0,
+                "cas_401_missing_basis": False,
+            },
+        ],
+        "compliance_status": "HEALTHY_FAR_PART_31_COMPLIANT",
+        "is_far_31_compliant": True,
+    }
+    assert (
+        ProjectLifecyclePMIService
+        .audit_project_lifecycle_unallowable_costs_and_cost_accounting_standards_cas
+        is not None
+    )
+    assert (
+        "audit_project_lifecycle_unallowable_costs_and_cost_accounting_standards_cas"
+        in lse_module.__all__
+    )
+
+
+def test_unallowable_costs_far31_critical_exposure_and_precedence():
+    """Alcohol/ocio 500, sanciones 1200, cabildeo 800 y exceso ejecutivo 500 sobre tope 2000 -> 'CRITICAL_UNALLOWABLE_COST_EXPOSURE' con precedencia sobre deficiencias CAS 401."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_lifecycle_unallowable_costs_and_cost_accounting_standards_cas,
+    )
+
+    res = audit_project_lifecycle_unallowable_costs_and_cost_accounting_standards_cas(
+        [
+            {"item_id": "ALC-01", "amount": 500.0, "category": "alcohol_entertainment"},
+            {"item_id": "FINE-02", "amount": 1200.0, "category": "fines_penalties"},
+            {"item_id": "LOB-03", "amount": 800.0, "category": "lobbying"},
+            {"item_id": "EXE-04", "amount": 2500.0, "category": "executive_compensation"},
+            {"item_id": "LAB-05", "amount": 10000.0, "category": "direct_labor"},
+            {"item_id": "OHI-06", "amount": 3000.0, "category": "other_indirect",
+             "is_indirect": True, "allocation_basis": "machine_hours"},
+        ],
+        executive_compensation_cap_amount=2000.0,
+    )
+    assert res["total_cost_amount"] == 18000.0
+    assert res["direct_costs_total"] == 15000.0
+    assert res["indirect_costs_total"] == 3000.0
+    assert res["unallowable_item_ids"] == ["ALC-01", "FINE-02", "LOB-03"]
+    assert res["unallowable_costs_total"] == 2500.0
+    assert res["executive_compensation_cap_excess_item_ids"] == ["EXE-04"]
+    assert res["executive_compensation_cap_excess_amount"] == 500.0
+    assert res["net_allowable_ceiling_amount"] == 15000.0  # 18000 - 2500 - 500
+    assert res["compliance_status"] == "CRITICAL_UNALLOWABLE_COST_EXPOSURE"
+    assert res["is_far_31_compliant"] is False
+    assert res["records"][3]["cap_excess_unallowable_amount"] == 500.0
+
+    # Precedencia: costos inadmisibles (CRITICAL) dominan la deficiencia CAS 401
+    # concurrente (indirecto sin base).
+    precedence = audit_project_lifecycle_unallowable_costs_and_cost_accounting_standards_cas(
+        [
+            {"item_id": "ALC-01", "amount": 500.0, "category": "alcohol_entertainment"},
+            {"item_id": "OHI-06", "amount": 3000.0, "is_indirect": True},
+        ],
+    )
+    assert precedence["cas_401_missing_basis_item_ids"] == ["OHI-06"]
+    assert precedence["compliance_status"] == "CRITICAL_UNALLOWABLE_COST_EXPOSURE"
+
+
+def test_unallowable_costs_far31_cas401_warning_and_cap_edges():
+    """Indirecto sin base y bases múltiples inconsistentes -> 'WARNING_CAS_401_ALLOCATION_DEFICIENCY'; tope exacto no genera exceso y tope inválido revierte a None."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_lifecycle_unallowable_costs_and_cost_accounting_standards_cas,
+    )
+
+    missing = audit_project_lifecycle_unallowable_costs_and_cost_accounting_standards_cas(
+        [
+            {"item_id": "LAB-05", "amount": 10000.0, "category": "direct_labor"},
+            {"item_id": "OHI-06", "amount": 3000.0, "category": "other_indirect",
+             "is_indirect": True},
+        ],
+    )
+    assert missing["total_cost_amount"] == 13000.0
+    assert missing["cas_401_missing_basis_item_ids"] == ["OHI-06"]
+    assert missing["net_allowable_ceiling_amount"] == 13000.0
+    assert missing["compliance_status"] == "WARNING_CAS_401_ALLOCATION_DEFICIENCY"
+    assert missing["is_far_31_compliant"] is False
+
+    inconsistent = audit_project_lifecycle_unallowable_costs_and_cost_accounting_standards_cas(
+        [
+            {"item_id": "OHI-06", "amount": 2000.0, "is_indirect": True,
+             "allocation_basis": "machine_hours"},
+            {"item_id": "OHI-07", "amount": 1500.0, "is_indirect": True,
+             "allocation_basis": "labor_hours"},
+        ],
+    )
+    assert inconsistent["cas_401_inconsistent_basis_item_ids"] == ["OHI-07"]
+    assert inconsistent["cas_401_allocation_basis_inconsistent"] is True
+    assert inconsistent["indirect_costs_total"] == 3500.0
+    assert inconsistent["compliance_status"] == "WARNING_CAS_401_ALLOCATION_DEFICIENCY"
+
+    # Borde exacto: compensación ejecutiva igual al tope no genera exceso.
+    at_cap = audit_project_lifecycle_unallowable_costs_and_cost_accounting_standards_cas(
+        [{"item_id": "EXE-04", "amount": 2000.0, "category": "executive_compensation"}],
+        executive_compensation_cap_amount=2000.0,
+    )
+    assert at_cap["executive_compensation_cap_excess_amount"] == 0.0
+    assert at_cap["net_allowable_ceiling_amount"] == 2000.0
+    assert at_cap["compliance_status"] == "HEALTHY_FAR_PART_31_COMPLIANT"
+
+    # Sin tope (inválido -> None): compensación ejecutiva íntegra admisible.
+    no_cap = audit_project_lifecycle_unallowable_costs_and_cost_accounting_standards_cas(
+        [{"item_id": "EXE-04", "amount": 2500.0, "category": "executive_compensation"}],
+        executive_compensation_cap_amount="cap",
+    )
+    assert no_cap["executive_compensation_cap_amount"] is None
+    assert no_cap["net_allowable_ceiling_amount"] == 2500.0
+    assert no_cap["compliance_status"] == "HEALTHY_FAR_PART_31_COMPLIANT"
+
+
+def test_unallowable_costs_far31_field_coercion_and_empty_collection():
+    """Colecciones y tipos inválidos reverten a defaults; montos negativos clamp a 0.0 y categorías canónicas sin importar mayúsculas."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_lifecycle_unallowable_costs_and_cost_accounting_standards_cas,
+    )
+
+    empty = audit_project_lifecycle_unallowable_costs_and_cost_accounting_standards_cas(
+        "costs"
+    )
+    assert empty == {
+        "items_evaluated": 0,
+        "skipped_invalid_entries": 0,
+        "total_cost_amount": 0.0,
+        "direct_costs_total": 0.0,
+        "indirect_costs_total": 0.0,
+        "unallowable_item_ids": [],
+        "unallowable_costs_total": 0.0,
+        "executive_compensation_item_ids": [],
+        "executive_compensation_cap_amount": None,
+        "executive_compensation_cap_excess_item_ids": [],
+        "executive_compensation_cap_excess_amount": 0.0,
+        "cas_401_missing_basis_item_ids": [],
+        "cas_401_inconsistent_basis_item_ids": [],
+        "cas_401_allocation_basis_inconsistent": False,
+        "net_allowable_ceiling_amount": 0.0,
+        "records": [],
+        "compliance_status": "HEALTHY_FAR_PART_31_COMPLIANT",
+        "is_far_31_compliant": True,
+    }
+    assert (audit_project_lifecycle_unallowable_costs_and_cost_accounting_standards_cas([])
+            == empty)
+
+    # Coerción: entradas no dict y sin item_id se saltan; monto no numérico ->
+    # 0.0; categoría no string -> "other"; is_indirect no bool -> False;
+    # basis no string -> ""; tope negativo -> None; categoría canónica en
+    # minúsculas aunque venga en mayúsculas y con espacios; monto negativo
+    # clamp a 0.0 (el item queda marcado inadmisible por categoría con
+    # exposición 0.0).
+    coerced = audit_project_lifecycle_unallowable_costs_and_cost_accounting_standards_cas(
+        [
+            {"item_id": "", "amount": 10.0},
+            "rotten",
+            {"item_id": "BAD-09", "amount": "amount", "category": True,
+             "is_indirect": "yes", "allocation_basis": 3},
+            {"item_id": "NEG-10", "amount": -250.0, "category": "ALCOHOL_ENTERTAINMENT "},
+        ],
+        executive_compensation_cap_amount=-100,
+    )
+    assert coerced["skipped_invalid_entries"] == 2
+    assert coerced["items_evaluated"] == 2
+    assert coerced["records"][0] == {
+        "item_id": "BAD-09",
+        "amount": 0.0,
+        "category": "other",
+        "is_indirect": False,
+        "allocation_basis": "",
+        "is_fully_unallowable": False,
+        "cap_excess_unallowable_amount": 0.0,
+        "cas_401_missing_basis": False,
+    }
+    assert coerced["records"][1] == {
+        "item_id": "NEG-10",
+        "amount": 0.0,
+        "category": "alcohol_entertainment",
+        "is_indirect": False,
+        "allocation_basis": "",
+        "is_fully_unallowable": True,
+        "cap_excess_unallowable_amount": 0.0,
+        "cas_401_missing_basis": False,
+    }
+    assert coerced["unallowable_item_ids"] == ["NEG-10"]
+    assert coerced["unallowable_costs_total"] == 0.0
+    assert coerced["net_allowable_ceiling_amount"] == 0.0
+    assert coerced["executive_compensation_cap_amount"] is None
+    assert coerced["compliance_status"] == "CRITICAL_UNALLOWABLE_COST_EXPOSURE"
+
+    # Bools excluidos de montos: True no es un monto válido.
+    bool_amount = audit_project_lifecycle_unallowable_costs_and_cost_accounting_standards_cas(
+        [{"item_id": "B-01", "amount": True}],
+        executive_compensation_cap_amount=True,
+    )
+    assert bool_amount["records"][0]["amount"] == 0.0
+    assert bool_amount["executive_compensation_cap_amount"] is None
+    assert bool_amount["total_cost_amount"] == 0.0
+    assert bool_amount["compliance_status"] == "HEALTHY_FAR_PART_31_COMPLIANT"

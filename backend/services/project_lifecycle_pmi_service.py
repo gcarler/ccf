@@ -3204,6 +3204,7 @@ __all__ = [
     "audit_ma_post_merger_tsa_exit_and_synergy_realization",
     "audit_contract_termination_for_convenience_t4c_settlement_and_demobilization",
     "audit_monte_carlo_schedule_float_variance_and_confidence_interval",
+    "audit_project_lifecycle_unallowable_costs_and_cost_accounting_standards_cas",
     "ProjectLifecyclePMIService",
 ]
 
@@ -10975,3 +10976,212 @@ ProjectLifecyclePMIService.audit_monte_carlo_schedule_float_variance_and_confide
     audit_monte_carlo_schedule_float_variance_and_confidence_interval
 )
 
+
+def audit_project_lifecycle_unallowable_costs_and_cost_accounting_standards_cas(
+    cost_items: Sequence[Mapping[str, Any]] | None,
+    *,
+    executive_compensation_cap_amount: Any = None,
+) -> dict[str, Any]:
+    """PMBOK §7.2 & §7.4 / FAR Part 31 & 52.216-7 / CAS 401 — Auditor de costos inadmisibles, topes de compensación ejecutiva e integridad de asignación de costos directos/indirectos.
+
+    Clasificación FAR 31.205 (categoría en minúsculas):
+    - ``alcohol_entertainment`` -> no reembolsable en su totalidad (§31.205-14/49).
+    - ``fines_penalties`` -> no reembolsable en su totalidad (§31.205-15).
+    - ``lobbying`` -> no reembolsable en su totalidad (§31.205-22).
+    - ``executive_compensation`` -> admisible solo hasta el tope; el exceso
+      sobre ``executive_compensation_cap_amount`` es inadmisible.
+    - cualquier otra categoría -> admisible sujeta a integridad CAS 401.
+
+    Integridad CAS 401: los items indirectos deben declarar
+    ``allocation_basis``; múltiples bases distintas entre indirectos marcan
+    inconsistencia contra la base declarada por el primer indirecto.
+
+    Coerción estricta:
+    - ``cost_items`` que no sea list/tuple revierte a vacío; entradas no dict
+      o sin ``item_id`` no vacío se cuentan en ``skipped_invalid_entries``.
+    - ``amount`` no numérico (bool excluido) revierte a 0.0 y los negativos
+      clamp a 0.0.
+    - ``category`` no string vacía invalida a "other".
+    - ``is_indirect`` no booleano revierte a False.
+    - ``allocation_basis`` no string revierte a cadena vacía.
+    - ``executive_compensation_cap_amount`` inválido, bool o <= 0 revierte a
+      None (sin tope).
+
+    Cálculos:
+    - ``total_cost_amount`` / ``direct_costs_total`` / ``indirect_costs_total``.
+    - ``unallowable_costs_total``: suma de categorías completamente
+      inadmisibles.
+    - ``executive_compensation_cap_excess_amount``: suma de los excesos
+      individuales sobre el tope.
+    - ``net_allowable_ceiling_amount``: total − inadmisibles − excesos
+      (floor 0.0).
+
+    Estados (precedencia CRITICAL > WARNING > HEALTHY):
+    - 'CRITICAL_UNALLOWABLE_COST_EXPOSURE': existen costos totalmente
+      inadmisibles o excesos de compensación ejecutiva.
+    - 'WARNING_CAS_401_ALLOCATION_DEFICIENCY': bases de asignación faltantes
+      o inconsistentes en items indirectos.
+    - 'HEALTHY_FAR_PART_31_COMPLIANT': sin costos inadmisibles ni
+      deficiencias CAS 401.
+    """
+    results: dict[str, Any] = {
+        "items_evaluated": 0,
+        "skipped_invalid_entries": 0,
+        "total_cost_amount": 0.0,
+        "direct_costs_total": 0.0,
+        "indirect_costs_total": 0.0,
+        "unallowable_item_ids": [],
+        "unallowable_costs_total": 0.0,
+        "executive_compensation_item_ids": [],
+        "executive_compensation_cap_amount": None,
+        "executive_compensation_cap_excess_item_ids": [],
+        "executive_compensation_cap_excess_amount": 0.0,
+        "cas_401_missing_basis_item_ids": [],
+        "cas_401_inconsistent_basis_item_ids": [],
+        "cas_401_allocation_basis_inconsistent": False,
+        "net_allowable_ceiling_amount": 0.0,
+        "records": [],
+        "compliance_status": "HEALTHY_FAR_PART_31_COMPLIANT",
+        "is_far_31_compliant": True,
+    }
+
+    def _coerce_amount(value: Any) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return 0.0
+        return max(0.0, float(value))
+
+    if not isinstance(cost_items, (list, tuple)):
+        return results
+
+    if (
+        isinstance(executive_compensation_cap_amount, (int, float))
+        and not isinstance(executive_compensation_cap_amount, bool)
+        and float(executive_compensation_cap_amount) > 0.0
+    ):
+        cap = float(executive_compensation_cap_amount)
+    else:
+        cap = None
+    results["executive_compensation_cap_amount"] = cap
+
+    fully_unallowable_categories = {
+        "alcohol_entertainment",
+        "fines_penalties",
+        "lobbying",
+    }
+
+    total_cost = 0.0
+    direct_cost = 0.0
+    indirect_cost = 0.0
+    unallowable_total = 0.0
+    excess_total = 0.0
+    indirect_bases: list[tuple[str, str]] = []  # (item_id, basis)
+    records: list[dict[str, Any]] = []
+
+    for entry in cost_items:
+        if not isinstance(entry, Mapping):
+            results["skipped_invalid_entries"] += 1
+            continue
+        item_id = str(entry.get("item_id") or "").strip()
+        if not item_id:
+            results["skipped_invalid_entries"] += 1
+            continue
+
+        amount = _coerce_amount(entry.get("amount"))
+        raw_category = entry.get("category")
+        if not isinstance(raw_category, str):
+            category = "other"
+        else:
+            category = raw_category.strip().lower() or "other"
+        raw_indirect = entry.get("is_indirect")
+        is_indirect = raw_indirect if isinstance(raw_indirect, bool) else False
+        raw_basis = entry.get("allocation_basis")
+        allocation_basis = raw_basis if isinstance(raw_basis, str) else ""
+
+        is_fully_unallowable = category in fully_unallowable_categories
+        cap_excess = 0.0
+        is_executive = category == "executive_compensation"
+        if is_executive:
+            results["executive_compensation_item_ids"].append(item_id)
+            if cap is not None and amount > cap:
+                cap_excess = amount - cap
+
+        missing_basis = is_indirect and not allocation_basis
+        if is_indirect and allocation_basis:
+            indirect_bases.append((item_id, allocation_basis))
+
+        records.append(
+            {
+                "item_id": item_id,
+                "amount": amount,
+                "category": category,
+                "is_indirect": is_indirect,
+                "allocation_basis": allocation_basis,
+                "is_fully_unallowable": is_fully_unallowable,
+                "cap_excess_unallowable_amount": cap_excess,
+                "cas_401_missing_basis": missing_basis,
+            }
+        )
+        results["items_evaluated"] += 1
+
+        total_cost += amount
+        if is_indirect:
+            indirect_cost += amount
+        else:
+            direct_cost += amount
+        if is_fully_unallowable:
+            results["unallowable_item_ids"].append(item_id)
+            unallowable_total += amount
+        if cap_excess > 0.0:
+            results["executive_compensation_cap_excess_item_ids"].append(item_id)
+            excess_total += cap_excess
+        if missing_basis:
+            results["cas_401_missing_basis_item_ids"].append(item_id)
+
+    results["records"] = records
+    # CAS 401: las bases múltiples se contrastan contra la declarada por el
+    # primer indirecto con base explícita.
+    if len(set(basis for _, basis in indirect_bases)) > 1:
+        dominant_basis = indirect_bases[0][1]
+        results["cas_401_inconsistent_basis_item_ids"] = [
+            item_id for item_id, basis in indirect_bases if basis != dominant_basis
+        ]
+        results["cas_401_allocation_basis_inconsistent"] = True
+
+    total_cost_amount = round(total_cost, 2)
+    unallowable_costs_total = round(unallowable_total, 2)
+    executive_compensation_cap_excess_amount = round(excess_total, 2)
+    results["total_cost_amount"] = total_cost_amount
+    results["direct_costs_total"] = round(direct_cost, 2)
+    results["indirect_costs_total"] = round(indirect_cost, 2)
+    results["unallowable_costs_total"] = unallowable_costs_total
+    results["executive_compensation_cap_excess_amount"] = (
+        executive_compensation_cap_excess_amount
+    )
+    net_allowable_ceiling_amount = round(
+        max(0.0, total_cost - unallowable_total - excess_total),
+        2,
+    )
+    results["net_allowable_ceiling_amount"] = net_allowable_ceiling_amount
+
+    has_unallowable = bool(
+        results["unallowable_item_ids"]
+        or results["executive_compensation_cap_excess_item_ids"]
+    )
+    has_cas_deficiency = bool(
+        results["cas_401_missing_basis_item_ids"]
+        or results["cas_401_inconsistent_basis_item_ids"]
+    )
+    if has_unallowable:
+        compliance_status = "CRITICAL_UNALLOWABLE_COST_EXPOSURE"
+    elif has_cas_deficiency:
+        compliance_status = "WARNING_CAS_401_ALLOCATION_DEFICIENCY"
+    else:
+        compliance_status = "HEALTHY_FAR_PART_31_COMPLIANT"
+    results["compliance_status"] = compliance_status
+    results["is_far_31_compliant"] = compliance_status == "HEALTHY_FAR_PART_31_COMPLIANT"
+    return results
+
+
+ProjectLifecyclePMIService.audit_project_lifecycle_unallowable_costs_and_cost_accounting_standards_cas = staticmethod(
+    audit_project_lifecycle_unallowable_costs_and_cost_accounting_standards_cas
+)
