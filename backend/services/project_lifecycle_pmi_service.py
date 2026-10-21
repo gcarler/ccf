@@ -3205,6 +3205,7 @@ __all__ = [
     "audit_contract_termination_for_convenience_t4c_settlement_and_demobilization",
     "audit_monte_carlo_schedule_float_variance_and_confidence_interval",
     "audit_project_lifecycle_unallowable_costs_and_cost_accounting_standards_cas",
+    "audit_project_lifecycle_asc606_revenue_recognition_and_over_under_billing_wip",
     "ProjectLifecyclePMIService",
 ]
 
@@ -11184,4 +11185,168 @@ def audit_project_lifecycle_unallowable_costs_and_cost_accounting_standards_cas(
 
 ProjectLifecyclePMIService.audit_project_lifecycle_unallowable_costs_and_cost_accounting_standards_cas = staticmethod(
     audit_project_lifecycle_unallowable_costs_and_cost_accounting_standards_cas
+)
+
+
+def audit_project_lifecycle_asc606_revenue_recognition_and_over_under_billing_wip(
+    cost_incurred_to_date: Any,
+    total_estimated_cost_at_completion: Any,
+    contract_amount: Any,
+    *,
+    approved_change_orders: Sequence[Mapping[str, Any]] | None = None,
+    invoiced_billed_to_date: Any = 0.0,
+    materiality_threshold_pct: Any = 5.0,
+) -> dict[str, Any]:
+    """PMBOK §7.4 / ASC 606 & IFRS 15 / GAAP-IFRS — Auditor de reconocimiento de ingresos por método cost-to-cost, varianza facturación WIP (overbilling/underbilling) y provisión de contratos onerosos.
+
+    Lógica canónica:
+    - ``adjusted_contract_amount`` = ``contract_amount`` + suma de montos de
+      ``approved_change_orders``.
+    - ``cost_completion_pct`` = costo incurrido / costo estimado total (0-1;
+      0.0 si no hay base de estimación).
+    - ``earned_revenue_to_date`` = contrato ajustado × porcentaje de avance.
+    - ``overbilling_deferred_liability_amount`` = facturado − devengado si
+      positivo (pasivo diferido); ``underbilling_accrued_asset_amount`` =
+      devengado − facturado si positivo (activo devengado no facturado).
+    - ``billing_imbalance_pct`` = varianza facturación sobre contrato
+      ajustado; material si alcanza ``materiality_threshold_pct`` (>=).
+    - ``onerous_contract_provision_amount`` = costo estimado − contrato
+      ajustado si positivo: contrato oneroso con pérdida esperada.
+
+    Coerción estricta:
+    - ``approved_change_orders`` si no es list/tuple revierte a vacío;
+      entradas no dict o sin ``change_order_id`` no vacío se descartan y se
+      cuentan en ``skipped_invalid_change_order_entries``.
+    - Montos no numéricos (``bool`` estrictamente excluido) revierten a 0.0
+      y los negativos clamp a 0.0 (falsos y valores inválidos también).
+    - ``materiality_threshold_pct`` no numérico o bool revierte a 5.0 y se
+      acota a [0.0, 100.0].
+
+    Estados (precedencia CRITICAL > WARNING > HEALTHY):
+    - 'CRITICAL_ONEROUS_CONTRACT_LOSS_PROVISION': costo estimado supera el
+      contrato ajustado (provisión por pérdida esperada > 0).
+    - 'WARNING_MATERIAL_WIP_BILLING_IMBALANCE': overbilling o underbilling
+      material según el umbral.
+    - 'HEALTHY_ASC_606_REVENUE_ALIGNED': devengado alineado con facturación
+      y margen contractual positivo.
+    """
+    results: dict[str, Any] = {
+        "adjusted_contract_amount": 0.0,
+        "contract_amount": 0.0,
+        "approved_change_order_amount": 0.0,
+        "approved_change_order_ids": [],
+        "skipped_invalid_change_order_entries": 0,
+        "cost_incurred_to_date": 0.0,
+        "total_estimated_cost_at_completion": 0.0,
+        "cost_completion_pct": 0.0,
+        "earned_revenue_to_date": 0.0,
+        "invoiced_billed_to_date": 0.0,
+        "billing_variance_amount": 0.0,
+        "overbilling_deferred_liability_amount": 0.0,
+        "underbilling_accrued_asset_amount": 0.0,
+        "billing_imbalance_pct": 0.0,
+        "materiality_threshold_pct": 5.0,
+        "is_imbalance_material": False,
+        "contractual_margin_amount": 0.0,
+        "contractual_margin_pct": 0.0,
+        "onerous_contract_provision_amount": 0.0,
+        "compliance_status": "HEALTHY_ASC_606_REVENUE_ALIGNED",
+        "is_asc_606_aligned": True,
+    }
+
+    def _coerce_amount(value: Any) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return 0.0
+        return max(0.0, float(value))
+
+    costs_incurred = _coerce_amount(cost_incurred_to_date)
+    estimated_total = _coerce_amount(total_estimated_cost_at_completion)
+    contract = _coerce_amount(contract_amount)
+    billed = _coerce_amount(invoiced_billed_to_date)
+
+    if (
+        isinstance(materiality_threshold_pct, (int, float))
+        and not isinstance(materiality_threshold_pct, bool)
+    ):
+        threshold = min(100.0, max(0.0, float(materiality_threshold_pct)))
+    else:
+        threshold = 5.0
+
+    change_order_amount = 0.0
+    change_order_ids: list[str] = []
+    if isinstance(approved_change_orders, (list, tuple)):
+        for order in approved_change_orders:
+            if not isinstance(order, Mapping):
+                results["skipped_invalid_change_order_entries"] += 1
+                continue
+            order_id = str(order.get("change_order_id") or "").strip()
+            if not order_id:
+                results["skipped_invalid_change_order_entries"] += 1
+                continue
+            change_order_amount += _coerce_amount(order.get("amount"))
+            change_order_ids.append(order_id)
+
+    adjusted_contract = round(contract + change_order_amount, 2)
+    completion_pct = (
+        costs_incurred / estimated_total
+        if estimated_total > 0.0
+        else 0.0
+    )
+    completion_pct = min(1.0, max(0.0, completion_pct))
+    earned_revenue = round(adjusted_contract * completion_pct, 2)
+
+    billing_variance = round(billed - earned_revenue, 2)
+    overbilling = round(max(0.0, billed - earned_revenue), 2)
+    underbilling = round(max(0.0, earned_revenue - billed), 2)
+    imbalance_pct = (
+        round(abs(billing_variance) / adjusted_contract * 100.0, 2)
+        if adjusted_contract > 0.0
+        else 0.0
+    )
+    is_material = adjusted_contract > 0.0 and imbalance_pct >= threshold
+
+    contractual_margin_amount = round(adjusted_contract - estimated_total, 2)
+    contractual_margin_pct = (
+        round(contractual_margin_amount / adjusted_contract * 100.0, 2)
+        if adjusted_contract > 0.0
+        else 0.0
+    )
+    onerous_provision = round(max(0.0, estimated_total - adjusted_contract), 2)
+
+    if onerous_provision > 0.0:
+        compliance_status = "CRITICAL_ONEROUS_CONTRACT_LOSS_PROVISION"
+    elif is_material:
+        compliance_status = "WARNING_MATERIAL_WIP_BILLING_IMBALANCE"
+    else:
+        compliance_status = "HEALTHY_ASC_606_REVENUE_ALIGNED"
+
+    results.update(
+        {
+            "adjusted_contract_amount": adjusted_contract,
+            "contract_amount": round(contract, 2),
+            "approved_change_order_amount": round(change_order_amount, 2),
+            "approved_change_order_ids": change_order_ids,
+            "cost_incurred_to_date": round(costs_incurred, 2),
+            "total_estimated_cost_at_completion": round(estimated_total, 2),
+            "cost_completion_pct": round(completion_pct, 4),
+            "earned_revenue_to_date": earned_revenue,
+            "invoiced_billed_to_date": round(billed, 2),
+            "billing_variance_amount": billing_variance,
+            "overbilling_deferred_liability_amount": overbilling,
+            "underbilling_accrued_asset_amount": underbilling,
+            "billing_imbalance_pct": imbalance_pct,
+            "materiality_threshold_pct": threshold,
+            "is_imbalance_material": is_material,
+            "contractual_margin_amount": contractual_margin_amount,
+            "contractual_margin_pct": contractual_margin_pct,
+            "onerous_contract_provision_amount": onerous_provision,
+            "compliance_status": compliance_status,
+            "is_asc_606_aligned": compliance_status == "HEALTHY_ASC_606_REVENUE_ALIGNED",
+        }
+    )
+    return results
+
+
+ProjectLifecyclePMIService.audit_project_lifecycle_asc606_revenue_recognition_and_over_under_billing_wip = staticmethod(
+    audit_project_lifecycle_asc606_revenue_recognition_and_over_under_billing_wip
 )

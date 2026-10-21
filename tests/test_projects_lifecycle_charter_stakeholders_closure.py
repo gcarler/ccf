@@ -13851,3 +13851,227 @@ def test_unallowable_costs_far31_field_coercion_and_empty_collection():
     assert bool_amount["executive_compensation_cap_amount"] is None
     assert bool_amount["total_cost_amount"] == 0.0
     assert bool_amount["compliance_status"] == "HEALTHY_FAR_PART_31_COMPLIANT"
+
+
+def test_asc606_wip_revenue_healthy_clean_case():
+    """Cost-to-cost 50% sobre contrato ajustado 1,050,000 con desviación de facturación menor al umbral -> 'HEALTHY_ASC_606_REVENUE_ALIGNED'."""
+    import backend.services.project_lifecycle_pmi_service as lse_module
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_project_lifecycle_asc606_revenue_recognition_and_over_under_billing_wip,
+    )
+
+    res = audit_project_lifecycle_asc606_revenue_recognition_and_over_under_billing_wip(
+        400000.0, 800000.0, 1000000.0,
+        approved_change_orders=[{"change_order_id": "CO-01", "amount": 50000.0}],
+        invoiced_billed_to_date=560000.0,
+    )
+    assert res == {
+        "adjusted_contract_amount": 1050000.0,
+        "contract_amount": 1000000.0,
+        "approved_change_order_amount": 50000.0,
+        "approved_change_order_ids": ["CO-01"],
+        "skipped_invalid_change_order_entries": 0,
+        "cost_incurred_to_date": 400000.0,
+        "total_estimated_cost_at_completion": 800000.0,
+        "cost_completion_pct": 0.5,
+        "earned_revenue_to_date": 525000.0,
+        "invoiced_billed_to_date": 560000.0,
+        "billing_variance_amount": 35000.0,
+        "overbilling_deferred_liability_amount": 35000.0,
+        "underbilling_accrued_asset_amount": 0.0,
+        "billing_imbalance_pct": 3.33,
+        "materiality_threshold_pct": 5.0,
+        "is_imbalance_material": False,
+        "contractual_margin_amount": 250000.0,
+        "contractual_margin_pct": 23.81,
+        "onerous_contract_provision_amount": 0.0,
+        "compliance_status": "HEALTHY_ASC_606_REVENUE_ALIGNED",
+        "is_asc_606_aligned": True,
+    }
+    assert (
+        ProjectLifecyclePMIService
+        .audit_project_lifecycle_asc606_revenue_recognition_and_over_under_billing_wip
+        is not None
+    )
+    assert (
+        "audit_project_lifecycle_asc606_revenue_recognition_and_over_under_billing_wip"
+        in lse_module.__all__
+    )
+
+
+def test_asc606_wip_revenue_warning_over_under_billing_and_thresholds():
+    """Overbilling y underbilling de 75,000 (7.14% >= 5.0%) -> 'WARNING_MATERIAL_WIP_BILLING_IMBALANCE'; el umbral modula el veredicto y el borde 5.0% exacto es material."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_lifecycle_asc606_revenue_recognition_and_over_under_billing_wip,
+    )
+
+    base = dict(cost_incurred_to_date=400000.0, total_estimated_cost_at_completion=800000.0,
+                contract_amount=1000000.0)
+    co = [{"change_order_id": "CO-01", "amount": 50000.0}]
+
+    over = audit_project_lifecycle_asc606_revenue_recognition_and_over_under_billing_wip(
+        **base, approved_change_orders=co, invoiced_billed_to_date=600000.0)
+    assert over["billing_variance_amount"] == 75000.0
+    assert over["overbilling_deferred_liability_amount"] == 75000.0  # pasivo diferido
+    assert over["underbilling_accrued_asset_amount"] == 0.0
+    assert over["billing_imbalance_pct"] == 7.14
+    assert over["is_imbalance_material"] is True
+    assert over["compliance_status"] == "WARNING_MATERIAL_WIP_BILLING_IMBALANCE"
+
+    under = audit_project_lifecycle_asc606_revenue_recognition_and_over_under_billing_wip(
+        **base, approved_change_orders=co, invoiced_billed_to_date=450000.0)
+    assert under["billing_variance_amount"] == -75000.0
+    assert under["underbilling_accrued_asset_amount"] == 75000.0  # activo devengado
+    assert under["overbilling_deferred_liability_amount"] == 0.0
+    assert under["compliance_status"] == "WARNING_MATERIAL_WIP_BILLING_IMBALANCE"
+
+    # Umbral relajado a 10: la misma varianza 7.14 deja de ser material -> HEALTHY.
+    relieved = audit_project_lifecycle_asc606_revenue_recognition_and_over_under_billing_wip(
+        **base, approved_change_orders=co, invoiced_billed_to_date=600000.0,
+        materiality_threshold_pct=10.0)
+    assert relieved["materiality_threshold_pct"] == 10.0
+    assert relieved["is_imbalance_material"] is False
+    assert relieved["compliance_status"] == "HEALTHY_ASC_606_REVENUE_ALIGNED"
+
+    # Umbral ajustado a 3: la varianza 3.33* pasa a ser material -> WARNING.
+    tightened = audit_project_lifecycle_asc606_revenue_recognition_and_over_under_billing_wip(
+        **base, approved_change_orders=co, invoiced_billed_to_date=560000.0,
+        materiality_threshold_pct=3.0)
+    assert tightened["is_imbalance_material"] is True
+    assert tightened["compliance_status"] == "WARNING_MATERIAL_WIP_BILLING_IMBALANCE"
+
+    # Borde exacto: varianza 52,500 es exactamente 5.0% del contrato ajustado.
+    border = audit_project_lifecycle_asc606_revenue_recognition_and_over_under_billing_wip(
+        **base, approved_change_orders=co, invoiced_billed_to_date=577500.0)
+    assert border["billing_imbalance_pct"] == 5.0
+    assert border["is_imbalance_material"] is True
+    assert border["compliance_status"] == "WARNING_MATERIAL_WIP_BILLING_IMBALANCE"
+
+    # Varianza cero: facturación exactamente igual al devengado -> HEALTHY.
+    zero = audit_project_lifecycle_asc606_revenue_recognition_and_over_under_billing_wip(
+        **base, approved_change_orders=co, invoiced_billed_to_date=525000.0)
+    assert zero["billing_variance_amount"] == 0.0
+    assert zero["compliance_status"] == "HEALTHY_ASC_606_REVENUE_ALIGNED"
+
+
+def test_asc606_wip_revenue_critical_onerous_contract_and_precedence():
+    """Costo estimado 1,200,000 supera contrato ajustado 1,050,000: provisión 150,000 y margen -14.29 -> 'CRITICAL_ONEROUS_CONTRACT_LOSS_PROVISION' con precedencia sobre el WARNING de facturación."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_lifecycle_asc606_revenue_recognition_and_over_under_billing_wip,
+    )
+
+    co = [{"change_order_id": "CO-01", "amount": 50000.0}]
+    critical = audit_project_lifecycle_asc606_revenue_recognition_and_over_under_billing_wip(
+        600000.0, 1200000.0, 1000000.0,
+        approved_change_orders=co,
+        invoiced_billed_to_date=600000.0,
+    )
+    assert critical["onerous_contract_provision_amount"] == 150000.0
+    assert critical["contractual_margin_amount"] == -150000.0
+    assert critical["contractual_margin_pct"] == -14.29
+    assert critical["is_imbalance_material"] is True  # overbilling 75,000 concurrente
+    assert critical["compliance_status"] == "CRITICAL_ONEROUS_CONTRACT_LOSS_PROVISION"
+    assert critical["is_asc_606_aligned"] is False
+
+    # Sin onerosidad ni materialidad: desequilibrio no material con cambio de
+    # umbral devuelve el veredicto alineado.
+    aligned = audit_project_lifecycle_asc606_revenue_recognition_and_over_under_billing_wip(
+        600000.0, 1200000.0, 1000000.0,
+        approved_change_orders=co,
+        invoiced_billed_to_date=620000.0,
+        materiality_threshold_pct=50.0,
+    )
+    # Provisión sigue > 0 aunque el umbral desactive el WARNING de billing: CRITICAL.
+    assert aligned["onerous_contract_provision_amount"] == 150000.0
+    assert aligned["compliance_status"] == "CRITICAL_ONEROUS_CONTRACT_LOSS_PROVISION"
+
+
+def test_asc606_wip_revenue_field_coercion_and_empty_collection():
+    """Montos no numéricos (bool excluido) a 0.0, colecciones corruptas a vacío con conteo de descartes, y umbral inválido/-negativo con defaults."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_project_lifecycle_asc606_revenue_recognition_and_over_under_billing_wip,
+    )
+
+    coerced = audit_project_lifecycle_asc606_revenue_recognition_and_over_under_billing_wip(
+        "cost", "estimated", "contract",
+        approved_change_orders="orders",
+        invoiced_billed_to_date=True,
+        materiality_threshold_pct="five",
+    )
+    assert coerced == {
+        "adjusted_contract_amount": 0.0,
+        "contract_amount": 0.0,
+        "approved_change_order_amount": 0.0,
+        "approved_change_order_ids": [],
+        "skipped_invalid_change_order_entries": 0,
+        "cost_incurred_to_date": 0.0,
+        "total_estimated_cost_at_completion": 0.0,
+        "cost_completion_pct": 0.0,
+        "earned_revenue_to_date": 0.0,
+        "invoiced_billed_to_date": 0.0,
+        "billing_variance_amount": 0.0,
+        "overbilling_deferred_liability_amount": 0.0,
+        "underbilling_accrued_asset_amount": 0.0,
+        "billing_imbalance_pct": 0.0,
+        "materiality_threshold_pct": 5.0,
+        "is_imbalance_material": False,
+        "contractual_margin_amount": 0.0,
+        "contractual_margin_pct": 0.0,
+        "onerous_contract_provision_amount": 0.0,
+        "compliance_status": "HEALTHY_ASC_606_REVENUE_ALIGNED",
+        "is_asc_606_aligned": True,
+    }
+
+    # Ordenes de cambio: entradas no dict, sin id y con monto inválido se
+    # descartan y cuentan; negativos clamp a 0.0; bools excluidos;
+    # umbral negativo se acota a 0.0 (cualquier varianza pasa a material).
+    mixed = audit_project_lifecycle_asc606_revenue_recognition_and_over_under_billing_wip(
+        400000.0, 800000.0, 1000000.0,
+        approved_change_orders=[
+            "rotten",
+            {"amount": 100.0},
+            {"change_order_id": "", "amount": 200.0},
+            {"change_order_id": "CO-BAD", "amount": "amount"},
+            {"change_order_id": "CO-NEG", "amount": -300.0},
+            {"change_order_id": "CO-BOOL", "amount": True},
+            {"change_order_id": "CO-OK", "amount": 50000.0},
+        ],
+        invoiced_billed_to_date=560000.0,
+        materiality_threshold_pct=-10,
+    )
+    assert mixed["skipped_invalid_change_order_entries"] == 3
+    assert mixed["approved_change_order_ids"] == ["CO-BAD", "CO-NEG", "CO-BOOL", "CO-OK"]
+    assert mixed["approved_change_order_amount"] == 50000.0
+    assert mixed["adjusted_contract_amount"] == 1050000.0
+    assert mixed["materiality_threshold_pct"] == 0.0  # -10 acotado a 0.0
+    assert mixed["billing_imbalance_pct"] == 3.33
+    assert mixed["is_imbalance_material"] is True  # 3.33 >= 0.0
+    assert mixed["compliance_status"] == "WARNING_MATERIAL_WIP_BILLING_IMBALANCE"
+
+    # Base de estimación no positiva: pct 0.0 sin división por cero y sin
+    # devengado; estimación por arriba del contrato ajustado marca oneroso.
+    no_estimate = audit_project_lifecycle_asc606_revenue_recognition_and_over_under_billing_wip(
+        400000.0, 0.0, 0.0,
+        invoiced_billed_to_date="billed",
+    )
+    assert no_estimate["cost_completion_pct"] == 0.0
+    assert no_estimate["earned_revenue_to_date"] == 0.0
+    assert no_estimate["invoiced_billed_to_date"] == 0.0
+    assert no_estimate["billing_imbalance_pct"] == 0.0
+    assert no_estimate["onerous_contract_provision_amount"] == 0.0
+    assert no_estimate["compliance_status"] == "HEALTHY_ASC_606_REVENUE_ALIGNED"
+
+    # Lista de ordenes inválida a vacío y umbral bool revierte al default 5.0.
+    weird = audit_project_lifecycle_asc606_revenue_recognition_and_over_under_billing_wip(
+        400000.0, 800000.0, 1000000.0,
+        approved_change_orders=None,
+        invoiced_billed_to_date=600000.0,
+        materiality_threshold_pct=True,
+    )
+    assert weird["approved_change_order_amount"] == 0.0
+    assert weird["adjusted_contract_amount"] == 1000000.0
+    assert weird["materiality_threshold_pct"] == 5.0  # bool excluido -> default
+    assert weird["earned_revenue_to_date"] == 500000.0  # pct 0.5 sin CO
+    assert weird["billing_imbalance_pct"] == 10.0  # 100,000/1,000,000
+    assert weird["compliance_status"] == "WARNING_MATERIAL_WIP_BILLING_IMBALANCE"
