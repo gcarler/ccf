@@ -3201,6 +3201,7 @@ __all__ = [
     "audit_esg_scope_emissions_cap_and_green_bond_proceeds",
     "audit_safety_critical_nqa1_hold_point_and_cfsi_quarantine",
     "audit_ma_post_merger_tsa_exit_and_synergy_realization",
+    "audit_contract_termination_for_convenience_t4c_settlement_and_demobilization",
     "ProjectLifecyclePMIService",
 ]
 
@@ -10585,4 +10586,141 @@ ProjectLifecyclePMIService.audit_ma_post_merger_tsa_exit_and_synergy_realization
     audit_ma_post_merger_tsa_exit_and_synergy_realization
 )
 
+
+def audit_contract_termination_for_convenience_t4c_settlement_and_demobilization(
+    work_completed_value: float,
+    unrecoverable_direct_costs: float,
+    subcontractor_cancellation_settlements: float,
+    demobilization_expenses: float,
+    *,
+    profit_percentage_on_completed_work: float = 10.0,
+    advance_payments_received: float = 0.0,
+    max_contract_ceiling_value: float | None = None,
+    settlement_audit_exceptions_flag: bool = False,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.7 & §12.3 / FAR 52.249-2 — Auditor de liquidación por terminación por conveniencia (T4C): obra ejecutada más utilidad porcentual, costos directos no recuperables, liquidaciones de subcontratistas cancelados y gastos de desmovilización, neto de pagos anticipados y acotado por techo contractual máximo.
+
+    Coerción: montos inválidos (`bool` excluido) o negativos clamp a 0.0;
+    `profit_percentage_on_completed_work` inválido o negativo revierte a 10.0;
+    `advance_payments_received` inválido o negativo a 0.0;
+    `max_contract_ceiling_value` inválido o <= 0 revierte a None (sin techo);
+    `settlement_audit_exceptions_flag` inválida revierte a False.
+
+    Calcula:
+    - `gross_completed_work_value`: obra ejecutada × (1 + utilidad%/100).
+    - `total_settlement_amount`: gross + no recuperables + subcontratistas +
+      desmovilización (2 dec).
+    - `net_settlement_after_advance_deduction`: total − anticipos, floor 0.0.
+    - `settlement_payable_within_ceiling`: min(net, techo) si hay techo;
+      igual a `net` sin techo.
+    - `settlement_beyond_contract_ceiling_amount`: exceso sobre el techo (2 dec).
+    - `settlement_audit_exception_breach`: flag de excepciones activa o techo
+      excedido.
+    - `indirect_settlement_components_present`: liquidaciones de
+      subcontratistas > 0 o desmovilización > 0.
+
+    Estados (precedencia CRITICAL > WARNING > CLEAN):
+    - 'CRITICAL_T4C_SETTLEMENT_AUDIT_EXCEPTION_OR_CEILING_BREACH'.
+    - 'T4C_SUBCONTRACTOR_AND_DEMOBILIZATION_SETTLEMENT_WARNING'.
+    - 'T4C_SETTLEMENT_CLEAN_UNDER_FAR_52_249_2'.
+    """
+
+    def _coerce_amount(value: Any, default: float = 0.0) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        return max(0.0, float(value))
+
+    def _coerce_bool(value: Any, default: bool) -> bool:
+        return value if isinstance(value, bool) else default
+
+    work_completed = _coerce_amount(work_completed_value)
+    unrecoverable = _coerce_amount(unrecoverable_direct_costs)
+    subcontractor_settlements = _coerce_amount(subcontractor_cancellation_settlements)
+    demobilization = _coerce_amount(demobilization_expenses)
+
+    def _coerce_profit(value: Any, default: float = 10.0) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return default
+        percent = float(value)
+        return default if percent < 0.0 else percent
+
+    profit_pct = _coerce_profit(profit_percentage_on_completed_work)
+    advances = _coerce_amount(advance_payments_received)
+    ceiling = (
+        _coerce_amount(max_contract_ceiling_value)
+        if isinstance(max_contract_ceiling_value, (int, float))
+        and not isinstance(max_contract_ceiling_value, bool)
+        else None if max_contract_ceiling_value is not None else None
+    )
+    # Un techo negativo es inválido: revierte a None (sin techo).
+    if ceiling is not None and ceiling <= 0.0:
+        ceiling = None
+    exceptions_flag = _coerce_bool(settlement_audit_exceptions_flag, False)
+
+    gross_completed_work_value = round(
+        work_completed * (1.0 + profit_pct / 100.0),
+        2,
+    )
+    total_settlement_amount = round(
+        gross_completed_work_value
+        + unrecoverable
+        + subcontractor_settlements
+        + demobilization,
+        2,
+    )
+    net_settlement_after_advance_deduction = round(
+        max(0.0, total_settlement_amount - advances),
+        2,
+    )
+    if ceiling is not None:
+        settlement_payable_within_ceiling = round(min(net_settlement_after_advance_deduction, ceiling), 2)
+        settlement_beyond_contract_ceiling_amount = round(
+            max(0.0, net_settlement_after_advance_deduction - ceiling),
+            2,
+        )
+    else:
+        settlement_payable_within_ceiling = net_settlement_after_advance_deduction
+        settlement_beyond_contract_ceiling_amount = 0.0
+
+    settlement_audit_exception_breach = bool(
+        exceptions_flag or settlement_beyond_contract_ceiling_amount > 0.0
+    )
+    indirect_settlement_components_present = bool(
+        subcontractor_settlements > 0.0 or demobilization > 0.0
+    )
+
+    if settlement_audit_exception_breach:
+        settlement_audit_status = (
+            "CRITICAL_T4C_SETTLEMENT_AUDIT_EXCEPTION_OR_CEILING_BREACH"
+        )
+    elif indirect_settlement_components_present:
+        settlement_audit_status = (
+            "T4C_SUBCONTRACTOR_AND_DEMOBILIZATION_SETTLEMENT_WARNING"
+        )
+    else:
+        settlement_audit_status = "T4C_SETTLEMENT_CLEAN_UNDER_FAR_52_249_2"
+
+    return {
+        "gross_completed_work_value": gross_completed_work_value,
+        "unrecoverable_direct_costs": unrecoverable,
+        "subcontractor_cancellation_settlements": subcontractor_settlements,
+        "demobilization_expenses": demobilization,
+        "profit_percentage_on_completed_work": profit_pct,
+        "advance_payments_received": advances,
+        "max_contract_ceiling_value": ceiling,
+        "total_settlement_amount": total_settlement_amount,
+        "net_settlement_after_advance_deduction": net_settlement_after_advance_deduction,
+        "settlement_payable_within_ceiling": settlement_payable_within_ceiling,
+        "settlement_beyond_contract_ceiling_amount": settlement_beyond_contract_ceiling_amount,
+        "settlement_audit_exception_breach": settlement_audit_exception_breach,
+        "indirect_settlement_components_present": indirect_settlement_components_present,
+        "settlement_audit_status": settlement_audit_status,
+        "is_t4c_settlement_audited": settlement_audit_status
+        == "T4C_SETTLEMENT_CLEAN_UNDER_FAR_52_249_2",
+    }
+
+
+ProjectLifecyclePMIService.audit_contract_termination_for_convenience_t4c_settlement_and_demobilization = staticmethod(
+    audit_contract_termination_for_convenience_t4c_settlement_and_demobilization
+)
 

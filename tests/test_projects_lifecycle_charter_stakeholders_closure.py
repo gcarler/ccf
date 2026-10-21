@@ -13183,3 +13183,140 @@ def test_audit_ma_post_merger_tsa_exit_and_synergy_realization_empty_and_binding
     )
 
 
+def test_t4c_settlement_clean_case():
+    """Sin costos indirectos ni excepciones -> 'T4C_SETTLEMENT_CLEAN_UNDER_FAR_52_249_2'."""
+    import backend.services.project_lifecycle_pmi_service as lse_module
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_contract_termination_for_convenience_t4c_settlement_and_demobilization,
+    )
+
+    res = audit_contract_termination_for_convenience_t4c_settlement_and_demobilization(
+        100000.0,   # obra ejecutada
+        0.0,        # no recuperables
+        0.0,        # subcontratistas
+        0.0,        # desmovilización
+    )
+    assert res == {
+        "gross_completed_work_value": 110000.0,
+        "unrecoverable_direct_costs": 0.0,
+        "subcontractor_cancellation_settlements": 0.0,
+        "demobilization_expenses": 0.0,
+        "profit_percentage_on_completed_work": 10.0,
+        "advance_payments_received": 0.0,
+        "max_contract_ceiling_value": None,
+        "total_settlement_amount": 110000.0,
+        "net_settlement_after_advance_deduction": 110000.0,
+        "settlement_payable_within_ceiling": 110000.0,
+        "settlement_beyond_contract_ceiling_amount": 0.0,
+        "settlement_audit_exception_breach": False,
+        "indirect_settlement_components_present": False,
+        "settlement_audit_status": "T4C_SETTLEMENT_CLEAN_UNDER_FAR_52_249_2",
+        "is_t4c_settlement_audited": True,
+    }
+    assert (
+        ProjectLifecyclePMIService
+        .audit_contract_termination_for_convenience_t4c_settlement_and_demobilization
+        is not None
+    )
+    assert (
+        "audit_contract_termination_for_convenience_t4c_settlement_and_demobilization"
+        in lse_module.__all__
+    )
+
+
+def test_t4c_settlement_subcontractor_and_demobilization_warning():
+    """Liquidaciones de subcontratistas o desmovilización > 0 sin techo ni flag -> WARNING."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_contract_termination_for_convenience_t4c_settlement_and_demobilization,
+    )
+
+    res = audit_contract_termination_for_convenience_t4c_settlement_and_demobilization(
+        200000.0,       # obra ejecutada
+        15000.0,        # no recuperables
+        40000.0,        # liquidaciones de subcontratistas
+        25000.0,        # desmovilización
+        profit_percentage_on_completed_work=10.0,
+        advance_payments_received=30000.0,
+    )
+    # gross = 200000 * 1.10 = 220000; total = 220000 + 15000 + 40000 + 25000 = 300000;
+    # net = 300000 - 30000 = 270000.
+    assert res["gross_completed_work_value"] == 220000.0
+    assert res["total_settlement_amount"] == 300000.0
+    assert res["net_settlement_after_advance_deduction"] == 270000.0
+    assert res["settlement_audit_exception_breach"] is False
+    assert res["indirect_settlement_components_present"] is True
+    assert res["settlement_audit_status"] == "T4C_SUBCONTRACTOR_AND_DEMOBILIZATION_SETTLEMENT_WARNING"
+    assert res["is_t4c_settlement_audited"] is False
+
+
+def test_t4c_settlement_critical_ceiling_and_exception_flag():
+    """Techo excedido o flag de excepciones -> CRITICAL con precedencia."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_contract_termination_for_convenience_t4c_settlement_and_demobilization,
+    )
+
+    # Techo contractual 250000 < net 270000 -> exceso 20000 -> CRITICAL.
+    over_ceiling = audit_contract_termination_for_convenience_t4c_settlement_and_demobilization(
+        200000.0, 15000.0, 40000.0, 25000.0,
+        advance_payments_received=30000.0,
+        max_contract_ceiling_value=250000.0,
+    )
+    assert over_ceiling["settlement_payable_within_ceiling"] == 250000.0
+    assert over_ceiling["settlement_beyond_contract_ceiling_amount"] == 20000.0
+    assert over_ceiling["settlement_audit_exception_breach"] is True
+    assert over_ceiling["settlement_audit_status"] == "CRITICAL_T4C_SETTLEMENT_AUDIT_EXCEPTION_OR_CEILING_BREACH"
+
+    # Flag de excepciones activa fuerza CRITICAL incluso sin exceso de techo.
+    flagged = audit_contract_termination_for_convenience_t4c_settlement_and_demobilization(
+        100000.0, 0.0, 0.0, 0.0,
+        settlement_audit_exceptions_flag=True,
+    )
+    assert flagged["settlement_audit_exception_breach"] is True
+    assert flagged["settlement_audit_status"] == "CRITICAL_T4C_SETTLEMENT_AUDIT_EXCEPTION_OR_CEILING_BREACH"
+
+
+def test_t4c_settlement_field_coercion_and_zero_advance_loss():
+    """Negativos e inválidos se clamp a 0.0; bools revierten a defaults; anticipos nunca producen pago negativo."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_contract_termination_for_convenience_t4c_settlement_and_demobilization,
+    )
+
+    # Anticipo 500000 > total 110000 -> net floor 0.0, sin estado adverso.
+    overpaid = audit_contract_termination_for_convenience_t4c_settlement_and_demobilization(
+        100000.0, 0.0, 0.0, 0.0,
+        advance_payments_received=500000.0,
+    )
+    assert overpaid["net_settlement_after_advance_deduction"] == 0.0
+    assert overpaid["settlement_payable_within_ceiling"] == 0.0
+    assert overpaid["settlement_audit_status"] == "T4C_SETTLEMENT_CLEAN_UNDER_FAR_52_249_2"
+
+    # Coerción completa: negativos -> 0.0, bools excluidos, tipos inválidos a defaults.
+    coerced = audit_contract_termination_for_convenience_t4c_settlement_and_demobilization(
+        -100000.0,          # no-float/precio negativo -> 0.0
+        " debts",           # no-float -> 0.0
+        True,               # bool excluido -> 0.0
+        None,               # no-float -> 0.0
+        profit_percentage_on_completed_work=-5.0,     # negativo -> default 10.0
+        advance_payments_received="advance",           # no-float -> 0.0
+        max_contract_ceiling_value="ceiling",          # no-float -> None
+        settlement_audit_exceptions_flag="trigger",    # no-bool -> False
+    )
+    assert coerced == {
+        "gross_completed_work_value": 0.0,
+        "unrecoverable_direct_costs": 0.0,
+        "subcontractor_cancellation_settlements": 0.0,
+        "demobilization_expenses": 0.0,
+        "profit_percentage_on_completed_work": 10.0,
+        "advance_payments_received": 0.0,
+        "max_contract_ceiling_value": None,
+        "total_settlement_amount": 0.0,
+        "net_settlement_after_advance_deduction": 0.0,
+        "settlement_payable_within_ceiling": 0.0,
+        "settlement_beyond_contract_ceiling_amount": 0.0,
+        "settlement_audit_exception_breach": False,
+        "indirect_settlement_components_present": False,
+        "settlement_audit_status": "T4C_SETTLEMENT_CLEAN_UNDER_FAR_52_249_2",
+        "is_t4c_settlement_audited": True,
+    }
+
