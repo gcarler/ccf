@@ -13044,3 +13044,119 @@ def test_audit_wiki_crdt_vector_clock_divergence_and_tombstone_gc_guard_empty_an
     )
 
 
+def test_audit_wiki_cdn_surrogate_key_purge_and_cache_poisoning_guard_healthy():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_cdn_surrogate_key_purge_and_cache_poisoning_guard,
+    )
+
+    edge_pops = [
+        {
+            "pop_id": "wiki-cdn-pop-bog-01",
+            "surrogate_key_purge_latency_ms": 180.0,
+            "origin_shield_hit_ratio_pct": 95.4,
+            "unkeyed_header_forwarded_to_cache": False,
+            "private_authenticated_response_cached_public": False,
+            "stale_while_revalidate_configured": True,
+        },
+        {
+            "pop_id": "wiki-cdn-pop-mia-02",
+            "surrogate_key_purge_latency_ms": 310.0,
+            "origin_shield_hit_ratio_pct": 91.2,
+            "unkeyed_header_forwarded_to_cache": False,
+            "private_authenticated_response_cached_public": False,
+            "stale_while_revalidate_configured": True,
+        },
+    ]
+    res = audit_wiki_cdn_surrogate_key_purge_and_cache_poisoning_guard(
+        edge_pops
+    )
+    assert res["status"] == "healthy"
+    assert res["total_pops"] == 2
+    assert res["healthy_count"] == 2
+    assert res["warning_count"] == 0
+    assert res["critical_count"] == 0
+    assert res["cdn_edge_safety_rate_pct"] == 100.0
+    assert res["recommendations"] == []
+
+
+def test_audit_wiki_cdn_surrogate_key_purge_and_cache_poisoning_guard_warning():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_cdn_surrogate_key_purge_and_cache_poisoning_guard,
+    )
+
+    edge_pops = [
+        {
+            "pop_id": "wiki-cdn-pop-mad-01",
+            "surrogate_key_purge_latency_ms": 3400.0,
+            "origin_shield_hit_ratio_pct": 90.0,
+            "unkeyed_header_forwarded_to_cache": False,
+            "private_authenticated_response_cached_public": False,
+            "stale_while_revalidate_configured": False,
+        }
+    ]
+    res = audit_wiki_cdn_surrogate_key_purge_and_cache_poisoning_guard(
+        edge_pops
+    )
+    assert res["status"] == "warning"
+    assert res["total_pops"] == 1
+    assert res["warning_count"] == 1
+    assert res["critical_count"] == 0
+    assert res["purge_sla_breach_count"] == 1
+    assert res["missing_swr_count"] == 1
+    assert res["pops"][0]["pop_status"] == "warning"
+    assert len(res["recommendations"]) >= 2
+
+
+def test_audit_wiki_cdn_surrogate_key_purge_and_cache_poisoning_guard_critical():
+    from backend.services.wiki_pmi_service import (
+        audit_wiki_cdn_surrogate_key_purge_and_cache_poisoning_guard,
+    )
+
+    edge_pops = [
+        {
+            "pop_id": "wiki-cdn-pop-gru-99",
+            "surrogate_key_purge_latency_ms": 4800.0,
+            "origin_shield_hit_ratio_pct": 62.0,
+            "unkeyed_header_forwarded_to_cache": True,
+            "private_authenticated_response_cached_public": True,
+            "stale_while_revalidate_configured": False,
+        }
+    ]
+    res = audit_wiki_cdn_surrogate_key_purge_and_cache_poisoning_guard(
+        edge_pops
+    )
+    assert res["status"] == "critical"
+    assert res["total_pops"] == 1
+    assert res["critical_count"] == 1
+    assert res["poisoning_or_auth_leak_count"] == 1
+    assert res["purge_sla_breach_count"] == 1
+    assert res["origin_shield_degraded_count"] == 1
+    assert res["cdn_edge_safety_rate_pct"] == 0.0
+    assert res["pops"][0]["pop_status"] == "critical"
+    assert len(res["recommendations"]) >= 3
+
+
+def test_audit_wiki_cdn_surrogate_key_purge_and_cache_poisoning_guard_empty_and_binding():
+    import backend.services.wiki_pmi_service as mod
+    from backend.services.wiki_pmi_service import (
+        WikiPMIService,
+        audit_wiki_cdn_surrogate_key_purge_and_cache_poisoning_guard,
+    )
+
+    empty = audit_wiki_cdn_surrogate_key_purge_and_cache_poisoning_guard([])
+    assert empty["status"] == "healthy"
+    assert empty["total_pops"] == 0
+    assert empty["cdn_edge_safety_rate_pct"] == 100.0
+    assert (
+        WikiPMIService.audit_wiki_cdn_surrogate_key_purge_and_cache_poisoning_guard(
+            []
+        )
+        == empty
+    )
+    assert (
+        "audit_wiki_cdn_surrogate_key_purge_and_cache_poisoning_guard"
+        in mod.__all__
+    )
+
+
+

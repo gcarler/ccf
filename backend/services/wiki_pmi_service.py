@@ -2566,6 +2566,7 @@ __all__ = [
     "audit_wiki_presigned_url_ttl_and_bucket_public_acl_guard",
     "audit_wiki_fts_bm25_index_bloat_and_reindex_lock_guard",
     "audit_wiki_crdt_vector_clock_divergence_and_tombstone_gc_guard",
+    "audit_wiki_cdn_surrogate_key_purge_and_cache_poisoning_guard",
     "WikiPMIService",
 ]
 
@@ -10117,5 +10118,165 @@ def audit_wiki_crdt_vector_clock_divergence_and_tombstone_gc_guard(
 WikiPMIService.audit_wiki_crdt_vector_clock_divergence_and_tombstone_gc_guard = staticmethod(
     audit_wiki_crdt_vector_clock_divergence_and_tombstone_gc_guard
 )
+
+
+def audit_wiki_cdn_surrogate_key_purge_and_cache_poisoning_guard(
+    edge_pops: list[dict[str, Any]],
+    *,
+    max_purge_propagation_ms: float = 2000.0,
+    min_origin_shield_hit_pct: float = 85.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §4.4 & §11.6 — Wiki CDN Edge Surrogate-Key Purge Propagation, Unkeyed Header Cache Poisoning Guard & Origin Shield Auditor."""
+    normalized_max_purge_ms = max(float(max_purge_propagation_ms), 50.0)
+    normalized_min_shield_pct = min(
+        max(float(min_origin_shield_hit_pct), 0.0), 100.0
+    )
+
+    raw_pops = edge_pops if isinstance(edge_pops, list) else []
+    evaluated_pops: list[dict[str, Any]] = []
+    healthy_count = 0
+    warning_count = 0
+    critical_count = 0
+    poisoning_or_auth_leak_count = 0
+    purge_sla_breach_count = 0
+    origin_shield_degraded_count = 0
+    missing_swr_count = 0
+
+    for idx, item in enumerate(raw_pops, start=1):
+        if not isinstance(item, dict):
+            continue
+        pop_id = str(item.get("pop_id") or f"wiki-cdn-pop-{idx}").strip()
+
+        raw_purge = item.get("surrogate_key_purge_latency_ms", 250.0)
+        try:
+            surrogate_key_purge_latency_ms = float(
+                250.0 if raw_purge is None else raw_purge
+            )
+        except (TypeError, ValueError):
+            surrogate_key_purge_latency_ms = 250.0
+
+        raw_shield = item.get("origin_shield_hit_ratio_pct", 94.0)
+        try:
+            origin_shield_hit_ratio_pct = float(
+                94.0 if raw_shield is None else raw_shield
+            )
+        except (TypeError, ValueError):
+            origin_shield_hit_ratio_pct = 94.0
+
+        unkeyed_header_forwarded_to_cache = bool(
+            item.get("unkeyed_header_forwarded_to_cache", False)
+        )
+        private_authenticated_response_cached_public = bool(
+            item.get("private_authenticated_response_cached_public", False)
+        )
+        stale_while_revalidate_configured = bool(
+            item.get("stale_while_revalidate_configured", True)
+        )
+
+        cache_poisoning_or_auth_leak = (
+            unkeyed_header_forwarded_to_cache
+            or private_authenticated_response_cached_public
+        )
+        purge_propagation_sla_breach = (
+            surrogate_key_purge_latency_ms > normalized_max_purge_ms
+        )
+        origin_shield_degraded = (
+            origin_shield_hit_ratio_pct < normalized_min_shield_pct
+        )
+        missing_swr_resilience = not stale_while_revalidate_configured
+
+        if cache_poisoning_or_auth_leak:
+            poisoning_or_auth_leak_count += 1
+        if purge_propagation_sla_breach:
+            purge_sla_breach_count += 1
+        if origin_shield_degraded:
+            origin_shield_degraded_count += 1
+        if missing_swr_resilience:
+            missing_swr_count += 1
+
+        if cache_poisoning_or_auth_leak or (
+            purge_propagation_sla_breach and origin_shield_degraded
+        ):
+            pop_status = "critical"
+            critical_count += 1
+        elif (
+            purge_propagation_sla_breach
+            or origin_shield_degraded
+            or missing_swr_resilience
+        ):
+            pop_status = "warning"
+            warning_count += 1
+        else:
+            pop_status = "healthy"
+            healthy_count += 1
+
+        evaluated_pops.append(
+            {
+                "pop_id": pop_id,
+                "surrogate_key_purge_latency_ms": surrogate_key_purge_latency_ms,
+                "origin_shield_hit_ratio_pct": origin_shield_hit_ratio_pct,
+                "unkeyed_header_forwarded_to_cache": unkeyed_header_forwarded_to_cache,
+                "private_authenticated_response_cached_public": private_authenticated_response_cached_public,
+                "stale_while_revalidate_configured": stale_while_revalidate_configured,
+                "cache_poisoning_or_auth_leak": cache_poisoning_or_auth_leak,
+                "purge_propagation_sla_breach": purge_propagation_sla_breach,
+                "origin_shield_degraded": origin_shield_degraded,
+                "missing_swr_resilience": missing_swr_resilience,
+                "pop_status": pop_status,
+            }
+        )
+
+    total_pops = len(evaluated_pops)
+    cdn_edge_safety_rate_pct = (
+        round((healthy_count / total_pops) * 100.0, 2)
+        if total_pops > 0
+        else 100.0
+    )
+
+    recommendations: list[str] = []
+    if poisoning_or_auth_leak_count > 0:
+        recommendations.append(
+            f"Bloquear cabeceras no incluidas en Cache-Key (X-Forwarded-Host/X-Original-URL) y forzar Cache-Control: private, no-store en respuestas autenticadas en {poisoning_or_auth_leak_count} PoP(s) CDN."
+        )
+    if purge_sla_breach_count > 0:
+        recommendations.append(
+            f"Optimizar invalidación instantánea por Surrogate-Key para propagar purgas en <= {normalized_max_purge_ms} ms en {purge_sla_breach_count} PoP(s)."
+        )
+    if origin_shield_degraded_count > 0:
+        recommendations.append(
+            f"Consolidar colapso de peticiones (Request Collapsing) en Origin Shield para sostener hit ratio >= {normalized_min_shield_pct}% en {origin_shield_degraded_count} PoP(s)."
+        )
+    if missing_swr_count > 0:
+        recommendations.append(
+            f"Activar directivas stale-while-revalidate y stale-if-error en cabeceras Cache-Control en {missing_swr_count} PoP(s)."
+        )
+
+    if critical_count > 0:
+        status = "critical"
+    elif warning_count > 0:
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "total_pops": total_pops,
+        "healthy_count": healthy_count,
+        "warning_count": warning_count,
+        "critical_count": critical_count,
+        "poisoning_or_auth_leak_count": poisoning_or_auth_leak_count,
+        "purge_sla_breach_count": purge_sla_breach_count,
+        "origin_shield_degraded_count": origin_shield_degraded_count,
+        "missing_swr_count": missing_swr_count,
+        "cdn_edge_safety_rate_pct": cdn_edge_safety_rate_pct,
+        "status": status,
+        "pops": evaluated_pops,
+        "recommendations": recommendations,
+    }
+
+
+WikiPMIService.audit_wiki_cdn_surrogate_key_purge_and_cache_poisoning_guard = staticmethod(
+    audit_wiki_cdn_surrogate_key_purge_and_cache_poisoning_guard
+)
+
 
 
