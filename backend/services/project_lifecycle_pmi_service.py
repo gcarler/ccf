@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import re
 
 from datetime import datetime, timezone
@@ -3202,6 +3203,7 @@ __all__ = [
     "audit_safety_critical_nqa1_hold_point_and_cfsi_quarantine",
     "audit_ma_post_merger_tsa_exit_and_synergy_realization",
     "audit_contract_termination_for_convenience_t4c_settlement_and_demobilization",
+    "audit_monte_carlo_schedule_float_variance_and_confidence_interval",
     "ProjectLifecyclePMIService",
 ]
 
@@ -10722,5 +10724,254 @@ def audit_contract_termination_for_convenience_t4c_settlement_and_demobilization
 
 ProjectLifecyclePMIService.audit_contract_termination_for_convenience_t4c_settlement_and_demobilization = staticmethod(
     audit_contract_termination_for_convenience_t4c_settlement_and_demobilization
+)
+
+def audit_monte_carlo_schedule_float_variance_and_confidence_interval(
+    activities: Sequence[Mapping[str, Any]] | None,
+    *,
+    committed_contractual_finish_days: Any = None,
+    target_confidence_percentile: Any = 80.0,
+    critical_path_float_tolerance_days: Any = 0.0,
+) -> dict[str, Any]:
+    """PMI PMBOK §6.5 & §11.4 — Auditor de riesgo de cronograma Monte Carlo: holgura total en ruta crítica, varianza probabilística de duraciones (PERT optimista/más probable/pesimista) y percentiles de confianza P50/P80/P90 contra la fecha contractual comprometida.
+
+    Coerción estricta:
+    - `activities` que no sea list/tuple revierte a colección vacía; entradas no
+      dict o sin `activity_id` no vacío se ignoran (contadas en
+      `skipped_invalid_activity_entries`).
+    - Duraciones (`optimistic_days`, `most_likely_days`, `pessimistic_days`):
+      no numéricas (bool excluido) revierten a 0.0 y las negativas clamp a 0.0;
+      si O > M o M > P se reordena la tríada de forma determinista y se marca
+      `distribution_order_normalized`.
+    - `total_float_days` no numérico revierte a 0.0; los negativos se
+      conservan (son señal de violación de restricciones).
+    - `is_critical_path` ausente o no booleano revierte a True (conservador).
+    - `committed_contractual_finish_days` inválido, bool o negativo revierte a
+      None (sin compromiso contra el cual contrastar).
+    - `target_confidence_percentile` inválido o bool revierte a 80.0 y se
+      acota a [50.0, 99.0].
+    - `critical_path_float_tolerance_days` inválido o negativo revierte a 0.0.
+
+    Cálculos (solo actividades de ruta crítica agregan al plan):
+    - `expected_duration_days`: suma de medias PERT (O + 4M + P)/6.
+    - `schedule_variance_days2` / `schedule_std_dev_days`: suma de varianzas
+      PERT ((P − O)/6)² y su raíz cuadrada.
+    - `p50_days`, `p80_days`, `p90_days`: media y colas normales con z = 0,
+      0.8416 y 1.2816 (aproximación normal de la simulación Monte Carlo).
+    - `target_confidence_days`: percentil objetivo con z interpolado por
+      tabla de puntos próximos {50, 60, 70, 80, 85, 90, 95, 99}.
+    - `schedule_buffer_to_p90_days`: fecha comprometida − P90 (None sin
+      compromiso; negativa implica incumplimiento al 90% de confianza).
+    - `contingency_buffer_required_days`: P90 − P50 (reserva para asegurar
+      terminación con 90% de confianza).
+    - `required_buffer_to_target_days`: percentil objetivo − media.
+    - `critical_path_total_float_days` y su varianza poblacional: la holgura
+      de la ruta crítica ha de ser ~0; holgura > tolerancia en actividades
+      críticas es contradictoria y holgura negativa incumple restricciones.
+
+    Estados (precedencia CRITICAL > WARNING > HEALTHY):
+    - 'CRITICAL_SCHEDULE_CONFIDENCE_BREACH': la fecha comprometida no cubre
+      ni la mediana (compromiso < P50) o existe holgura total negativa que
+      rompe restricciones.
+    - 'WARNING_SCHEDULE_CONTINGENCY_EROSION': la fecha comprometida cubre la
+      mediana pero no el percentil P90 (P50 <= compromiso < P90: la reserva
+      de contingencia se erosiona) o hay holgura positiva contradictoria en
+      la ruta crítica.
+    - 'HEALTHY_SCHEDULE_CONFIDENCE_OPTIMAL': compromiso cubierto con margen
+      sobre P90 o sin holguras anómalas.
+    """
+
+    _Z_BY_PERCENTILE: tuple[tuple[float, float], ...] = (
+        (50.0, 0.0),
+        (60.0, 0.2533),
+        (70.0, 0.5244),
+        (80.0, 0.8416),
+        (85.0, 1.0364),
+        (90.0, 1.2816),
+        (95.0, 1.6449),
+        (99.0, 2.3263),
+    )
+
+    results: dict[str, Any] = {
+        "activities_evaluated": 0,
+        "critical_activity_ids": [],
+        "contradictory_critical_float_activity_ids": [],
+        "negative_total_float_activity_ids": [],
+        "normalized_distribution_activity_ids": [],
+        "skipped_invalid_activity_entries": 0,
+        "expected_duration_days": 0.0,
+        "schedule_variance_days2": 0.0,
+        "schedule_std_dev_days": 0.0,
+        "p50_days": 0.0,
+        "p80_days": 0.0,
+        "p90_days": 0.0,
+        "target_confidence_percentile": 80.0,
+        "target_confidence_days": 0.0,
+        "committed_contractual_finish_days": None,
+        "schedule_buffer_to_p90_days": None,
+        "contingency_buffer_required_days": 0.0,
+        "required_buffer_to_target_days": 0.0,
+        "critical_path_total_float_days": 0.0,
+        "critical_path_total_float_variance_days2": 0.0,
+        "records": [],
+        "schedule_confidence_status": "HEALTHY_SCHEDULE_CONFIDENCE_OPTIMAL",
+        "is_schedule_confidence_healthy": True,
+    }
+
+    def _coerce_duration(value: Any) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return 0.0
+        return max(0.0, float(value))
+
+    if not isinstance(activities, (list, tuple)):
+        return results
+
+    def _coerce_percentile(value: Any) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return 80.0
+        return min(99.0, max(50.0, float(value)))
+
+    def _coerce_tolerance(value: Any) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return 0.0
+        return max(0.0, float(value))
+
+    committed: float | None
+    if (
+        isinstance(committed_contractual_finish_days, (int, float))
+        and not isinstance(committed_contractual_finish_days, bool)
+        and float(committed_contractual_finish_days) >= 0.0
+    ):
+        committed = float(committed_contractual_finish_days)
+    else:
+        committed = None
+    target_pct = _coerce_percentile(target_confidence_percentile)
+    float_tolerance = _coerce_tolerance(critical_path_float_tolerance_days)
+
+    results["target_confidence_percentile"] = target_pct
+    results["committed_contractual_finish_days"] = committed
+
+    expected_total = 0.0
+    variance_total = 0.0
+    critical_float_values: list[float] = []
+    records: list[dict[str, Any]] = []
+
+    for entry in activities:
+        if not isinstance(entry, Mapping):
+            results["skipped_invalid_activity_entries"] += 1
+            continue
+        activity_id = str(entry.get("activity_id") or "").strip()
+        if not activity_id:
+            results["skipped_invalid_activity_entries"] += 1
+            continue
+
+        optimistic = _coerce_duration(entry.get("optimistic_days"))
+        most_likely = _coerce_duration(entry.get("most_likely_days"))
+        pessimistic = _coerce_duration(entry.get("pessimistic_days"))
+        ordered = (optimistic, most_likely, pessimistic)
+        normalized = tuple(sorted(ordered))
+        if normalized != ordered:
+            optimistic, most_likely, pessimistic = normalized
+            results["normalized_distribution_activity_ids"].append(activity_id)
+
+        raw_critical = entry.get("is_critical_path", True)
+        is_critical = raw_critical if isinstance(raw_critical, bool) else True
+        raw_float = entry.get("total_float_days")
+        if isinstance(raw_float, bool) or not isinstance(raw_float, (int, float)):
+            total_float = 0.0
+        else:
+            total_float = float(raw_float)
+
+        pert_expected = (optimistic + 4.0 * most_likely + pessimistic) / 6.0
+        pert_variance = ((pessimistic - optimistic) / 6.0) ** 2
+
+        records.append(
+            {
+                "activity_id": activity_id,
+                "optimistic_days": optimistic,
+                "most_likely_days": most_likely,
+                "pessimistic_days": pessimistic,
+                "pert_expected_days": pert_expected,
+                "pert_variance_days2": pert_variance,
+                "total_float_days": total_float,
+                "is_critical_path": is_critical,
+                "distribution_order_normalized": normalized != ordered,
+            }
+        )
+        results["activities_evaluated"] += 1
+
+        if total_float < 0.0:
+            results["negative_total_float_activity_ids"].append(activity_id)
+        if is_critical:
+            results["critical_activity_ids"].append(activity_id)
+            expected_total += pert_expected
+            variance_total += pert_variance
+            critical_float_values.append(total_float)
+            if total_float > float_tolerance:
+                results["contradictory_critical_float_activity_ids"].append(
+                    activity_id
+                )
+
+    results["records"] = records
+    std_dev = math.sqrt(variance_total)
+    mean_expected = expected_total
+
+    p50_days = round(mean_expected, 2)
+    p80_days = round(mean_expected + 0.8416 * std_dev, 2)
+    p90_days = round(mean_expected + 1.2816 * std_dev, 2)
+    results["expected_duration_days"] = p50_days
+    results["schedule_variance_days2"] = round(variance_total, 2)
+    results["schedule_std_dev_days"] = round(std_dev, 2)
+    results["p50_days"] = p50_days
+    results["p80_days"] = p80_days
+    results["p90_days"] = p90_days
+
+    z_target = min(_Z_BY_PERCENTILE, key=lambda p: abs(p[0] - target_pct))[1]
+    target_days = round(mean_expected + z_target * std_dev, 2)
+    results["target_confidence_days"] = target_days
+    contingency_buffer_required_days = round(p90_days - p50_days, 2)
+    required_buffer_to_target_days = round(target_days - p50_days, 2)
+    results["contingency_buffer_required_days"] = contingency_buffer_required_days
+    results["required_buffer_to_target_days"] = required_buffer_to_target_days
+
+    results["critical_path_total_float_days"] = round(
+        sum(critical_float_values), 2
+    )
+    if critical_float_values:
+        mean_float = sum(critical_float_values) / len(critical_float_values)
+        results["critical_path_total_float_variance_days2"] = round(
+            sum((f - mean_float) ** 2 for f in critical_float_values)
+            / len(critical_float_values),
+            2,
+        )
+
+    has_negative_float = bool(results["negative_total_float_activity_ids"])
+    commitment_below_median = committed is not None and committed < p50_days
+    commitment_below_p90 = committed is not None and committed < p90_days
+    has_contradictory_critical_float = bool(
+        results["contradictory_critical_float_activity_ids"]
+    )
+
+    if commitment_below_median or has_negative_float:
+        schedule_confidence_status = "CRITICAL_SCHEDULE_CONFIDENCE_BREACH"
+    elif commitment_below_p90 or has_contradictory_critical_float:
+        schedule_confidence_status = "WARNING_SCHEDULE_CONTINGENCY_EROSION"
+    else:
+        schedule_confidence_status = "HEALTHY_SCHEDULE_CONFIDENCE_OPTIMAL"
+
+    results["schedule_confidence_status"] = schedule_confidence_status
+    results["is_schedule_confidence_healthy"] = (
+        schedule_confidence_status == "HEALTHY_SCHEDULE_CONFIDENCE_OPTIMAL"
+    )
+    results["schedule_buffer_to_p90_days"] = (
+        round(committed - p90_days, 2)
+        if committed is not None
+        else None
+    )
+    return results
+
+
+ProjectLifecyclePMIService.audit_monte_carlo_schedule_float_variance_and_confidence_interval = staticmethod(
+    audit_monte_carlo_schedule_float_variance_and_confidence_interval
 )
 

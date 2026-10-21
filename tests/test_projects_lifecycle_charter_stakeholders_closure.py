@@ -13320,3 +13320,287 @@ def test_t4c_settlement_field_coercion_and_zero_advance_loss():
         "is_t4c_settlement_audited": True,
     }
 
+def _mc_activity(activity_id: str, *, optimistic=5, most_likely=20, pessimistic=35,
+                 is_critical=True, total_float=0.0):
+    """Actividad de cronograma con distribución triangular [5, 20, 35]: media PERT 20 y varianza 25."""
+    return {
+        "activity_id": activity_id,
+        "optimistic_days": optimistic,
+        "most_likely_days": most_likely,
+        "pessimistic_days": pessimistic,
+        "is_critical_path": is_critical,
+        "total_float_days": total_float,
+    }
+
+
+def test_monte_carlo_schedule_confidence_healthy_clean_case():
+    """Compromiso 30d cubre P90 26.41d -> 'HEALTHY_SCHEDULE_CONFIDENCE_OPTIMAL'; la actividad no crítica no agrega al plan."""
+    import backend.services.project_lifecycle_pmi_service as lse_module
+    from backend.services.project_lifecycle_pmi_service import (
+        ProjectLifecyclePMIService,
+        audit_monte_carlo_schedule_float_variance_and_confidence_interval,
+    )
+
+    res = audit_monte_carlo_schedule_float_variance_and_confidence_interval(
+        [
+            _mc_activity("A"),
+            _mc_activity("B", optimistic=0, most_likely=18, pessimistic=36,
+                         is_critical=False, total_float=5.0),
+        ],
+        committed_contractual_finish_days=30.0,
+    )
+    assert res == {
+        "activities_evaluated": 2,
+        "critical_activity_ids": ["A"],
+        "contradictory_critical_float_activity_ids": [],
+        "negative_total_float_activity_ids": [],
+        "normalized_distribution_activity_ids": [],
+        "skipped_invalid_activity_entries": 0,
+        "expected_duration_days": 20.0,
+        "schedule_variance_days2": 25.0,
+        "schedule_std_dev_days": 5.0,
+        "p50_days": 20.0,
+        "p80_days": 24.21,
+        "p90_days": 26.41,
+        "target_confidence_percentile": 80.0,
+        "target_confidence_days": 24.21,
+        "committed_contractual_finish_days": 30.0,
+        "schedule_buffer_to_p90_days": 3.59,
+        "contingency_buffer_required_days": 6.41,
+        "required_buffer_to_target_days": 4.21,
+        "critical_path_total_float_days": 0.0,
+        "critical_path_total_float_variance_days2": 0.0,
+        "records": [
+            {
+                "activity_id": "A",
+                "optimistic_days": 5.0,
+                "most_likely_days": 20.0,
+                "pessimistic_days": 35.0,
+                "pert_expected_days": 20.0,
+                "pert_variance_days2": 25.0,
+                "total_float_days": 0.0,
+                "is_critical_path": True,
+                "distribution_order_normalized": False,
+            },
+            {
+                "activity_id": "B",
+                "optimistic_days": 0.0,
+                "most_likely_days": 18.0,
+                "pessimistic_days": 36.0,
+                "pert_expected_days": 18.0,
+                "pert_variance_days2": 36.0,
+                "total_float_days": 5.0,
+                "is_critical_path": False,
+                "distribution_order_normalized": False,
+            },
+        ],
+        "schedule_confidence_status": "HEALTHY_SCHEDULE_CONFIDENCE_OPTIMAL",
+        "is_schedule_confidence_healthy": True,
+    }
+    assert (
+        ProjectLifecyclePMIService
+        .audit_monte_carlo_schedule_float_variance_and_confidence_interval
+        is not None
+    )
+    assert (
+        "audit_monte_carlo_schedule_float_variance_and_confidence_interval"
+        in lse_module.__all__
+    )
+
+
+def test_monte_carlo_schedule_confidence_warning_erosion_and_contradictory_float():
+    """Compromiso entre P50 y P80 erosiona la confianza y holgura positiva en ruta crítica es contradictoria: WARNING."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_monte_carlo_schedule_float_variance_and_confidence_interval,
+    )
+
+    # Compromiso 22d: 20 <= 22 < P80 24.21 -> WARNING; buffer a P90 = -4.41.
+    erosion = audit_monte_carlo_schedule_float_variance_and_confidence_interval(
+        [_mc_activity("A")],
+        committed_contractual_finish_days=22.0,
+    )
+    assert erosion["p50_days"] == 20.0
+    assert erosion["p80_days"] == 24.21
+    assert erosion["target_confidence_days"] == 24.21
+    assert erosion["schedule_buffer_to_p90_days"] == -4.41
+    assert erosion["contingency_buffer_required_days"] == 6.41
+    assert erosion["schedule_confidence_status"] == "WARNING_SCHEDULE_CONTINGENCY_EROSION"
+    assert erosion["is_schedule_confidence_healthy"] is False
+
+    # Dos críticas con holguras 8.0 y 10.0 superan la tolerancia 0.0 -> WARNING
+    # contradictorio sin compromiso; varianza de holgura poblacional 1.0.
+    contradictory = audit_monte_carlo_schedule_float_variance_and_confidence_interval(
+        [_mc_activity("A", total_float=8.0), _mc_activity("D", total_float=10.0)],
+    )
+    assert contradictory["contradictory_critical_float_activity_ids"] == ["A", "D"]
+    assert contradictory["critical_path_total_float_days"] == 18.0
+    assert contradictory["critical_path_total_float_variance_days2"] == 1.0
+    assert contradictory["negative_total_float_activity_ids"] == []
+    assert contradictory["committed_contractual_finish_days"] is None
+    assert contradictory["schedule_confidence_status"] == "WARNING_SCHEDULE_CONTINGENCY_EROSION"
+
+
+def test_monte_carlo_schedule_confidence_critical_breach_and_precedence():
+    """Compromiso bajo la mediana P50 20d no garantiza ni el 50% de confianza y holgura negativa rompe restricciones: CRITICAL con precedencia sobre WARNING."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_monte_carlo_schedule_float_variance_and_confidence_interval,
+    )
+
+    # Compromiso 15d < P50 20 (y también bajo P90 26.41): CRITICAL.
+    breach = audit_monte_carlo_schedule_float_variance_and_confidence_interval(
+        [_mc_activity("A")],
+        committed_contractual_finish_days=15.0,
+    )
+    assert breach["schedule_buffer_to_p90_days"] == -11.41
+    assert breach["schedule_confidence_status"] == "CRITICAL_SCHEDULE_CONFIDENCE_BREACH"
+    assert breach["negative_total_float_activity_ids"] == []
+
+    # Borde superior del WARNING: compromiso 25d cubre P50 20 y P80 24.21 pero
+    # no P90 26.41 -> la reserva para 90% está erosionada: WARNING, no CRITICAL.
+    late_warning = audit_monte_carlo_schedule_float_variance_and_confidence_interval(
+        [_mc_activity("A")],
+        committed_contractual_finish_days=25.0,
+    )
+    assert late_warning["schedule_buffer_to_p90_days"] == -1.41
+    assert late_warning["schedule_confidence_status"] == "WARNING_SCHEDULE_CONTINGENCY_EROSION"
+
+    # Borde exacto: compromiso igual a la mediana P50 20d entra en WARNING (inclusivo).
+    median_edge = audit_monte_carlo_schedule_float_variance_and_confidence_interval(
+        [_mc_activity("A")],
+        committed_contractual_finish_days=20.0,
+    )
+    assert median_edge["schedule_buffer_to_p90_days"] == -6.41
+    assert median_edge["schedule_confidence_status"] == "WARNING_SCHEDULE_CONTINGENCY_EROSION"
+
+    # Holgura negativa -3.0 sin compromiso: restricciones rotas -> CRITICAL.
+    negative = audit_monte_carlo_schedule_float_variance_and_confidence_interval(
+        [_mc_activity("A", total_float=-3.0)],
+    )
+    assert negative["negative_total_float_activity_ids"] == ["A"]
+    assert negative["contradictory_critical_float_activity_ids"] == []
+    assert negative["schedule_confidence_status"] == "CRITICAL_SCHEDULE_CONFIDENCE_BREACH"
+
+    # Precedencia: holgura negativa CRITICAL domina sobre la holgura
+    # contradictoria WARNING en el mismo plan.
+    precedence = audit_monte_carlo_schedule_float_variance_and_confidence_interval(
+        [_mc_activity("A", total_float=-3.0), _mc_activity("D", total_float=10.0)],
+    )
+    assert precedence["schedule_confidence_status"] == "CRITICAL_SCHEDULE_CONFIDENCE_BREACH"
+
+    # Borde exacto: compromiso igual a P90 no incumple (>=) -> HEALTHY con buffer 0.
+    borderline = audit_monte_carlo_schedule_float_variance_and_confidence_interval(
+        [_mc_activity("A")],
+        committed_contractual_finish_days=26.41,
+    )
+    assert borderline["schedule_buffer_to_p90_days"] == 0.0
+    assert borderline["schedule_confidence_status"] == "HEALTHY_SCHEDULE_CONFIDENCE_OPTIMAL"
+
+
+def test_monte_carlo_schedule_variance_field_coercion_and_empty_collection():
+    """Colecciones y tipos inválidos reverten a defaults seguros; tríadas desordenadas se normalizan y percentiles objetivo se acotan."""
+    from backend.services.project_lifecycle_pmi_service import (
+        audit_monte_carlo_schedule_float_variance_and_confidence_interval,
+    )
+
+    empty = audit_monte_carlo_schedule_float_variance_and_confidence_interval("cycles")
+    assert empty == {
+        "activities_evaluated": 0,
+        "critical_activity_ids": [],
+        "contradictory_critical_float_activity_ids": [],
+        "negative_total_float_activity_ids": [],
+        "normalized_distribution_activity_ids": [],
+        "skipped_invalid_activity_entries": 0,
+        "expected_duration_days": 0.0,
+        "schedule_variance_days2": 0.0,
+        "schedule_std_dev_days": 0.0,
+        "p50_days": 0.0,
+        "p80_days": 0.0,
+        "p90_days": 0.0,
+        "target_confidence_percentile": 80.0,
+        "target_confidence_days": 0.0,
+        "committed_contractual_finish_days": None,
+        "schedule_buffer_to_p90_days": None,
+        "contingency_buffer_required_days": 0.0,
+        "required_buffer_to_target_days": 0.0,
+        "critical_path_total_float_days": 0.0,
+        "critical_path_total_float_variance_days2": 0.0,
+        "records": [],
+        "schedule_confidence_status": "HEALTHY_SCHEDULE_CONFIDENCE_OPTIMAL",
+        "is_schedule_confidence_healthy": True,
+    }
+    assert audit_monte_carlo_schedule_float_variance_and_confidence_interval([]) == empty
+
+    # Coerción: entradas no dict y sin activity_id se saltan; duraciones no
+    # numéricas (bool excluido) a 0.0; float no numérico a 0.0;
+    # is_critical_path ausente revierte a True; compromiso no numérico a None;
+    # percentil bool a 80.0 y acotado a [50, 99]; tolerancia negativa a 0.0;
+    # tríada invertida se normaliza (5, 20, 35).
+    coerced = audit_monte_carlo_schedule_float_variance_and_confidence_interval(
+        [
+            "rotten",
+            {"optimistic_days": 5, "most_likely_days": 20, "pessimistic_days": 35},
+            {
+                "activity_id": "X",
+                "optimistic_days": 35,
+                "most_likely_days": 20,
+                "pessimistic_days": 5,
+                "total_float_days": 4.0,  # holgura positiva critic con tolerancia 0 -> WARNING
+            },
+        ],
+        committed_contractual_finish_days="soon",
+        target_confidence_percentile=True,
+        critical_path_float_tolerance_days=-2,
+    )
+    assert coerced["skipped_invalid_activity_entries"] == 2
+    assert coerced["activities_evaluated"] == 1
+    assert coerced["critical_activity_ids"] == ["X"]  # ausente -> True conservador
+    assert coerced["normalized_distribution_activity_ids"] == ["X"]
+    assert coerced["committed_contractual_finish_days"] is None
+    assert coerced["schedule_buffer_to_p90_days"] is None
+    assert coerced["target_confidence_percentile"] == 80.0
+    assert coerced["records"][0] == {
+        "activity_id": "X",
+        "optimistic_days": 5.0,
+        "most_likely_days": 20.0,
+        "pessimistic_days": 35.0,
+        "pert_expected_days": 20.0,
+        "pert_variance_days2": 25.0,
+        "total_float_days": 4.0,
+        "is_critical_path": True,
+        "distribution_order_normalized": True,
+    }
+    assert coerced["contradictory_critical_float_activity_ids"] == ["X"]
+    assert coerced["p50_days"] == 20.0
+    assert coerced["p90_days"] == 26.41
+    assert coerced["schedule_confidence_status"] == "WARNING_SCHEDULE_CONTINGENCY_EROSION"
+
+    # Duraciones totalmente inválidas -> plan de 0.0 dias; bools excluidos;
+    # compromiso negativo a None; percentil acotado a 50.
+    fully_invalid = audit_monte_carlo_schedule_float_variance_and_confidence_interval(
+        [{"activity_id": "Y", "optimistic_days": "5", "most_likely_days": True,
+          "pessimistic_days": None, "total_float_days": "late"}],
+        committed_contractual_finish_days=-5.0,
+        target_confidence_percentile=-20,
+    )
+    assert fully_invalid["records"][0]["pert_expected_days"] == 0.0
+    assert fully_invalid["records"][0]["pert_variance_days2"] == 0.0
+    assert fully_invalid["p50_days"] == 0.0
+    assert fully_invalid["committed_contractual_finish_days"] is None
+    assert fully_invalid["target_confidence_percentile"] == 50.0
+    assert fully_invalid["target_confidence_days"] == 0.0
+    assert fully_invalid["schedule_confidence_status"] == "HEALTHY_SCHEDULE_CONFIDENCE_OPTIMAL"
+
+    clamped_high = audit_monte_carlo_schedule_float_variance_and_confidence_interval(
+        [_mc_activity("A")],
+        target_confidence_percentile=150,
+    )
+    assert clamped_high["target_confidence_percentile"] == 99.0
+    assert clamped_high["target_confidence_days"] == 31.63
+
+    explicit_90 = audit_monte_carlo_schedule_float_variance_and_confidence_interval(
+        [_mc_activity("A")],
+        target_confidence_percentile=90,
+    )
+    assert explicit_90["target_confidence_percentile"] == 90.0
+    assert explicit_90["target_confidence_days"] == 26.41
+
