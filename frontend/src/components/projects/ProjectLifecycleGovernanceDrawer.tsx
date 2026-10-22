@@ -65,6 +65,7 @@ interface Closure {
 }
 
 interface ProjectLifecycleGovernanceDrawerProps {
+    embedded?: boolean;
   projectId: string;
   isOpen: boolean;
   onClose: () => void;
@@ -112,6 +113,7 @@ function parseArray(value: string) {
 }
 
 export function ProjectLifecycleGovernanceDrawer({
+    embedded = false,
   projectId,
   isOpen,
   onClose,
@@ -238,6 +240,7 @@ export function ProjectLifecycleGovernanceDrawer({
 
   return (
     <RightPanel
+      embedded={embedded}
       open={isOpen}
       onClose={onClose}
       title="Gobernanza PMI del proyecto"

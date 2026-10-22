@@ -14,6 +14,8 @@ import { useWorkspaceSocket } from "@/hooks/useWorkspaceSocket";
 import { DSTooltip } from "@/design";
 import type { WsEvent } from "@/types/directMessages";
 import type { ProjectTaskRecord } from "@/types/projects";
+import { useResizablePanel } from "@/hooks/useResizablePanel";
+import { PanelResizeHandle } from "@/components/ui/PanelResizeHandle";
 import { formatDate } from "@/lib/format";
 
 type ContextTab = "chat" | "activity" | "details" | "inbox" | "tools";
@@ -113,14 +115,6 @@ export default function ProjectContextPanel({
   const [toolsSearch, setToolsSearch] = useState("");
   const [internalMaximized, setInternalMaximized] = useState(false);
   const [internalMinimized, setInternalMinimized] = useState(false);
-  const [width, setWidth] = useState<number>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("workspace:s3_width");
-      if (saved && !isNaN(Number(saved))) return Math.max(300, Math.min(Number(saved), 1200));
-    }
-    return 380;
-  });
-  const [isDragging, setIsDragging] = useState(false);
   const panelRef = useRef<HTMLElement>(null);
 
   const isMaximized = controlledMaximized ?? controlledExpanded ?? internalMaximized;
@@ -129,34 +123,14 @@ export default function ProjectContextPanel({
   const toggleMaximize = onToggleMaximize ?? onToggleExpand ?? (() => setInternalMaximized((v) => !v));
   const toggleMinimize = onToggleMinimize ?? (() => setInternalMinimized((v) => !v));
 
-  const handleResizeDrag = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    const startX = e.clientX;
-    const startWidth = panelRef.current?.offsetWidth ?? width;
-    setIsDragging(true);
-    document.body.style.cursor = "col-resize";
-    document.body.style.userSelect = "none";
-
-    const onMouseMove = (ev: MouseEvent) => {
-      const maxAllowed = typeof window !== "undefined" ? window.innerWidth - 80 : 1200;
-      const next = Math.max(300, Math.min(startWidth + (startX - ev.clientX), maxAllowed));
-      setWidth(next);
-      try {
-        localStorage.setItem("workspace:s3_width", String(next));
-      } catch {}
-    };
-
-    const onMouseUp = () => {
-      setIsDragging(false);
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
-    };
-
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
-  }, [width]);
+  const resize = useResizablePanel({
+    storageKey: "workspace:s3_width",
+    defaultWidth: 380,
+    reservedWidth: 320,
+    constrainToParent: true,
+    panelRef,
+    enabled: !isMaximized && !isMinimized,
+  });
 
   const tabRefs = useRef<Partial<Record<ContextTab, HTMLButtonElement | null>>>({});
   const { items: projectInbox, unreadCount: projectInboxUnread, loading: inboxLoading, error: inboxError, refresh: refreshProjectInbox, markAsRead } = useProjectInbox(project?.id);
@@ -380,24 +354,15 @@ export default function ProjectContextPanel({
       aria-label="Contexto del proyecto"
       className={clsx(
         "relative flex min-h-0 shrink-0 flex-col overflow-hidden border-t border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] lg:border-l lg:border-t-0",
-        isDragging ? "select-none" : "transition-[width] duration-150 ease-out",
+        resize.dragging ? "select-none" : "transition-[width] duration-150 ease-out",
         isMaximized
           ? "w-full flex-1 max-w-full lg:w-full lg:max-w-none"
           : "max-h-[48dvh] w-full lg:max-h-none",
         className,
       )}
-      style={!isMaximized ? { width: typeof window !== "undefined" && window.innerWidth >= 1024 ? `${width}px` : undefined } : undefined}
+      style={!isMaximized ? resize.style : undefined}
     >
-      {/* Resizer manual en el borde izquierdo (solo en desktop y cuando no está maximizado) */}
-      {!isMaximized && (
-        <div
-          onMouseDown={handleResizeDrag}
-          className="hidden lg:block absolute left-0 top-0 h-full w-2.5 -translate-x-1 cursor-col-resize group/resize z-30 select-none"
-          title="Arrastra para ajustar el ancho manualmente"
-        >
-          <div className="h-full w-0.5 mx-auto bg-transparent group-hover/resize:bg-[hsl(var(--primary))] transition-colors" />
-        </div>
-      )}
+      {!isMaximized && <PanelResizeHandle resize={resize} label="Ajustar ancho del contexto" />}
 
       <div className="flex items-center justify-between border-b border-[hsl(var(--border))] px-3 py-2">
         <div className="min-w-0 pr-2">

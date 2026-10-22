@@ -74,8 +74,8 @@ const TOOLBAR_ICON_BUTTON_CLASS =
 
 // Hub unificado de gestión: metadatos de los módulos de control.
 const PROJECT_HUB_MODULE_META: ProjectHubModuleMeta[] = [
-  { key: 'components', label: 'Componentes (EDT)', icon: Layers },
-  { key: 'wbs', label: 'Diccionario EDT', icon: ListTree },
+  { key: 'components', label: 'Componentes EDT', icon: Layers },
+  { key: 'wbs', label: 'EDT / WBS y Diccionario', icon: ListTree },
   { key: 'labels', label: 'Etiquetas', icon: Tag },
   { key: 'kpis', label: 'KPIs', icon: Target },
   { key: 'progress', label: 'Avance', icon: Sliders },
@@ -451,7 +451,7 @@ export default function ProjectDetailPage() {
       },
       {
         id: 'project-detail-hub-components',
-        label: 'Abrir Componentes (EDT)',
+        label: 'Abrir Componentes EDT',
         description: 'Estructura de Desglose de Trabajo (Nivel 2 WBS/EDT)',
         icon: Layers,
         group: 'Hub de gestión',
@@ -459,7 +459,7 @@ export default function ProjectDetailPage() {
       },
       {
         id: 'project-detail-hub-wbs',
-        label: 'Abrir Diccionario EDT',
+        label: 'Abrir EDT / WBS y Diccionario',
         description: 'Diccionario de la EDT, codificación jerárquica y Regla del 100%',
         icon: ListTree,
         group: 'Hub de gestión',
@@ -548,8 +548,8 @@ export default function ProjectDetailPage() {
   }[] = [
     { key: 'whiteboard', label: 'Pizarra', icon: PencilRuler, onSelect: () => setWhiteboardOpen(true) },
     { key: 'phases', label: 'Fases', icon: Edit3, onSelect: () => setShowPhaseManager(true) },
-    { key: 'components', label: 'Componentes (EDT)', icon: Layers, onSelect: () => openHubModule('components') },
-    { key: 'wbs', label: 'Diccionario EDT', icon: ListTree, onSelect: () => openHubModule('wbs') },
+    { key: 'components', label: 'Componentes EDT', icon: Layers, onSelect: () => openHubModule('components') },
+    { key: 'wbs', label: 'EDT / WBS y Diccionario', icon: ListTree, onSelect: () => openHubModule('wbs') },
     { key: 'labels', label: 'Etiquetas', icon: Tag, onSelect: () => openHubModule('labels') },
     { key: 'kpis', label: 'KPIs', icon: Target, onSelect: () => openHubModule('kpis') },
     { key: 'progress', label: 'Avance', icon: Sliders, onSelect: () => openHubModule('progress') },
@@ -571,6 +571,7 @@ export default function ProjectDetailPage() {
   const moduleRenderers = {
     components: () => (
       <ProjectComponentDrawer
+        embedded
         projectId={project?.id || id}
         projectTitle={project?.title}
         isOpen
@@ -580,6 +581,7 @@ export default function ProjectDetailPage() {
     ),
     wbs: () => (
       <ProjectWBSDrawer
+        embedded
         projectId={project?.id || id}
         projectTitle={project?.title}
         isOpen
@@ -698,6 +700,7 @@ export default function ProjectDetailPage() {
     ),
     governance: () => (
       <ProjectLifecycleGovernanceDrawer
+        embedded
         projectId={project?.id || id}
         isOpen
         onClose={() => closeHubModule('governance')}
@@ -823,24 +826,6 @@ export default function ProjectDetailPage() {
                   </button>
                 </DSTooltip>
               )}
-              <button
-                type="button"
-                onClick={() => openHubModule('components')}
-                aria-label="Componentes (EDT)"
-                className="flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-[calc(0.625rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-2xs font-semibold text-[hsl(var(--foreground))] shadow-sm transition-colors hover:bg-[hsl(var(--surface-2))] active:scale-95"
-              >
-                <Layers size={14} aria-hidden="true" className="text-[hsl(var(--primary))]" />
-                <span className="hidden md:inline">Componentes (EDT)</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => openHubModule('wbs')}
-                aria-label="Diccionario EDT"
-                className={TOOLBAR_ICON_BUTTON_CLASS}
-              >
-                <ListTree size={15} aria-hidden="true" className="text-[hsl(var(--primary))]" />
-                <span className="hidden md:inline">Diccionario EDT</span>
-              </button>
               <button
                 type="button"
                 onClick={() => {

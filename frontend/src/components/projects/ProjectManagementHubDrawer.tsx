@@ -103,6 +103,9 @@ export function ProjectManagementHubDrawer({
       title={title}
       subtitle="Navega entre los módulos de control con pestañas"
       width={isMaximized ? 'w-screen max-w-none' : 'w-full sm:w-[90vw] lg:w-[78vw] xl:w-[74vw] 2xl:w-[70vw] max-w-none'}
+      resizeStorageKey="workspace:project_tools_width"
+      resizeDefaultWidth={960}
+      maximized={isMaximized}
       contentClassName="bg-[hsl(var(--surface-1))] flex flex-col"
     >
       {isOpen && (
@@ -112,6 +115,20 @@ export function ProjectManagementHubDrawer({
             isMaximized && 'mx-auto w-full px-4 sm:px-6 lg:px-8'
           )}
         >
+          <div className="shrink-0 border-b border-[hsl(var(--border))] px-3 py-2">
+            <select
+              aria-label="Abrir herramienta"
+              value=""
+              onChange={event => {
+                const selected = moduleMeta.find(module => module.key === event.currentTarget.value);
+                if (selected) onActivateModule(selected.key);
+              }}
+              className="w-full min-w-0 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 py-1.5 text-xs text-[hsl(var(--foreground))]"
+            >
+              <option value="">Abrir herramienta…</option>
+              {moduleMeta.map(module => <option key={module.key} value={module.key}>{module.label}</option>)}
+            </select>
+          </div>
           {/* Tira de pestañas abiertas + controles del panel */}
           <div className="flex min-h-10 shrink-0 items-center gap-1 overflow-x-auto border-b border-[hsl(var(--border))] px-3 py-1.5">
             <div

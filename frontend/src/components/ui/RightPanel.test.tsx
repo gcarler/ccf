@@ -61,4 +61,15 @@ describe('RightPanel', () => {
     const results = await axe(container);
     expect(results.violations).toHaveLength(0);
   });
+  it('embeds tool content without creating a second overlay or focus trap', () => {
+    renderWithProvider(
+      <RightPanel open title="Centro de gestión">
+        <RightPanel embedded open title="Diccionario"><button>Editar paquete</button></RightPanel>
+      </RightPanel>
+    );
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    expect(screen.getByRole('region', { name: 'Diccionario' })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Cerrar panel' })).toHaveLength(1);
+  });
+
 });
