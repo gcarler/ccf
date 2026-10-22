@@ -93,7 +93,7 @@ export default function ProjectIndicatorsPage() {
     } catch {
       if (activeLoadController.current !== controller) return;
       setLoadError(true);
-      toast.error("Error al cargar indicadores MGA");
+      toast.error("Error al cargar indicadores del proyecto");
     } finally {
       if (activeLoadController.current === controller) {
         activeLoadController.current = null;
@@ -244,14 +244,14 @@ export default function ProjectIndicatorsPage() {
               onClick={() => setIsDrawerOpen(true)}
               className="px-3 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-bold uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all flex items-center gap-2 shadow-sm"
             >
-              <Plus size={15} /> Asistente CREMA & Medición
+              <Plus size={15} /> Asistente de Calidad & Medición
             </button>
           </div>
         </div>
       </div>
 
       <div className="p-6 space-y-6 max-w-7xl mx-auto w-full">
-        {/* Cintillo de Síntesis Metodológica MGA-PMI §7.4 */}
+        {/* Cintillo de Síntesis de Desempeño y Resultados */}
         {hasLoadedIndicators && !loadError && (
           <div
             data-testid="project-indicators-pmi-synthesis"
@@ -259,13 +259,13 @@ export default function ProjectIndicatorsPage() {
           >
             <div className="flex flex-wrap items-center gap-4">
               <span className="text-[hsl(var(--text-primary))]">
-                Síntesis MGA-PMI §7.4
+                Síntesis de Desempeño y Resultados
               </span>
               <span>
                 Cobertura Automática WBS/EVM: {pmiSynthesis.automatedCount}/{indicators.length} automatizados
               </span>
               <span>SPI Promedio IDP: {pmiSynthesis.avgSpi}</span>
-              <span>Calidad CREMA: {spiStats.avgCrema}/100</span>
+              <span>Calidad de Indicadores: {spiStats.avgCrema}/100</span>
             </div>
             <span
               className={clsx(
@@ -518,7 +518,7 @@ export default function ProjectIndicatorsPage() {
           </div>
         )}
 
-        {/* Barra de Filtros por Nivel MGA */}
+        {/* Barra de Filtros por Nivel de Impacto */}
         {hasLoadedIndicators && !loadError && (
           <div className="flex items-center justify-between gap-3 border-b border-[hsl(var(--border))] pb-3 overflow-x-auto">
             <div className="flex items-center gap-1.5 text-2xs">
@@ -605,7 +605,7 @@ export default function ProjectIndicatorsPage() {
               onClick={() => setIsDrawerOpen(true)}
               className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold uppercase tracking-wider hover:opacity-90 active:scale-95 transition-all flex items-center gap-2 shadow-sm"
             >
-              <Plus size={14} /> Abrir Asistente CREMA
+              <Plus size={14} /> Abrir Asistente de Calidad
             </button>
           </div>
         ) : (

@@ -62,7 +62,7 @@ describe("ProjectIndicatorsPage loading recovery", () => {
     expect(container.innerHTML).not.toMatch(/--(?:foreground|muted-foreground)\b/);
     expect(screen.queryByText("Sin indicadores configurados")).not.toBeInTheDocument();
     expect(screen.queryByText("Total Indicadores")).not.toBeInTheDocument();
-    expect(mocks.toastError).toHaveBeenCalledWith("Error al cargar indicadores MGA");
+    expect(mocks.toastError).toHaveBeenCalledWith("Error al cargar indicadores del proyecto");
 
     await user.click(screen.getByRole("button", { name: "Reintentar" }));
     expect(await screen.findByText("Sin indicadores configurados")).toBeInTheDocument();
@@ -241,7 +241,7 @@ describe("ProjectIndicatorsPage loading recovery", () => {
     const synthesis = screen.getByTestId("project-indicators-pmi-synthesis");
     expect(synthesis).toHaveTextContent("Cobertura Automática WBS/EVM: 1/2 automatizados");
     expect(synthesis).toHaveTextContent("SPI Promedio IDP: 0.90");
-    expect(synthesis).toHaveTextContent("Calidad CREMA: 85/100");
+    expect(synthesis).toHaveTextContent("Calidad de Indicadores: 85/100");
     expect(synthesis).toHaveTextContent("Requiere Acción Correctiva (1)");
     expect(container.innerHTML).not.toMatch(/--(?:foreground|muted-foreground)\b/);
   });

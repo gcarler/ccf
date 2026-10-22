@@ -148,7 +148,7 @@ export function ProjectIndicatorsDrawer({
       setHasLoadedIndicators(true);
     } catch {
       setLoadError(true);
-      toast.error("Error al cargar indicadores MGA del proyecto");
+      toast.error("Error al cargar indicadores del proyecto");
     } finally {
       setLoading(false);
     }
@@ -200,10 +200,10 @@ export function ProjectIndicatorsDrawer({
     }
   };
 
-  // Ejecución del Asistente CREMA en Tiempo Real
+  // Ejecución del Asistente de Calidad en Tiempo Real
   const handleValidateCrema = async () => {
     if (!token || !projectId || !name.trim()) {
-      toast.error("Ingrese el nombre del indicador para ejecutar el asistente CREMA");
+      toast.error("Ingrese el nombre del indicador para ejecutar el asistente de calidad");
       return;
     }
     setValidatingCrema(true);
@@ -226,9 +226,9 @@ export function ProjectIndicatorsDrawer({
         }
       );
       setCremaResult(res);
-      toast.success(`Evaluación CREMA completada: ${res.score}/100 pts (${res.status})`);
+      toast.success(`Evaluación de calidad completada: ${res.score}/100 pts (${res.status})`);
     } catch {
-      toast.error("Error al evaluar con el asistente CREMA");
+      toast.error("Error al evaluar con el asistente de calidad");
     } finally {
       setValidatingCrema(false);
     }
@@ -312,7 +312,7 @@ export function ProjectIndicatorsDrawer({
           body: JSON.stringify(payload),
           token,
         });
-        toast.success("Indicador creado con evaluación CREMA");
+        toast.success("Indicador creado con evaluación de calidad");
       }
 
       resetForm();
@@ -498,7 +498,7 @@ export function ProjectIndicatorsDrawer({
               <div>
                 <h2 className="text-sm font-bold flex items-center gap-2">
                   <BarChart3 size={18} className="text-[hsl(var(--primary))]" />
-                  Indicadores y Desempeño del Proyecto (IDP)
+                  Indicadores y Resultados
                 </h2>
                 <p className="text-2xs text-[hsl(var(--text-secondary))]">
                   Monitoreo riguroso de eficacia, productos y semáforo SPI de avance periódico
@@ -506,11 +506,11 @@ export function ProjectIndicatorsDrawer({
               </div>
               <div className="flex items-center gap-1.5 bg-[hsl(var(--surface-1))] p-1 rounded-lg border border-[hsl(var(--border))]">
                 <span className="text-2xs font-semibold px-2 text-[hsl(var(--text-secondary))]">
-                  Calidad CREMA:
+                  Calidad de Indicadores:
                 </span>
                 <span
                   className={clsx(
-                    " font-extraboldpx-2 py-0.5 rounded",
+                    "font-extrabold px-2 py-0.5 rounded",
                     spiStats.avgCrema >= 85
                       ? "bg-[hsl(var(--success))]/15 text-[hsl(var(--success))]"
                       : spiStats.avgCrema >= 70
@@ -596,7 +596,7 @@ export function ProjectIndicatorsDrawer({
                     : "bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))]"
                 )}
               >
-                <Plus size={13} /> {editingId ? "Editar Indicador" : "Nuevo Indicador & Asistente CREMA"}
+                <Plus size={13} /> {editingId ? "Editar Indicador" : "Nuevo Indicador & Asistente de Calidad"}
               </button>
               {targetIndicator && (
                 <button
@@ -636,7 +636,7 @@ export function ProjectIndicatorsDrawer({
                 >
                   <div>
                     <h3 id="pmi-value-chain-governance-title" className="text-sm font-bold text-[hsl(var(--text-primary))]">
-                      Gobernanza PMI de Cadena de Valor y Madurez CREMA (Vol. 1 &amp; 5)
+                      Cadena de Valor y Calidad de Resultados (PMI Vol. 1 &amp; 5)
                     </h3>
                     <p className="mt-1 text-xs text-[hsl(var(--text-secondary))]">
                       Traza la gestión que produce entregables y los resultados que realizan beneficios.
@@ -666,12 +666,12 @@ export function ProjectIndicatorsDrawer({
 
                   <div className="grid gap-2 sm:grid-cols-2">
                     <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
-                      <p className="text-xs font-bold text-[hsl(var(--text-primary))]">Índice de Madurez Metodológica CREMA</p>
+                      <p className="text-xs font-bold text-[hsl(var(--text-primary))]">Índice de Calidad de Indicadores</p>
                       <p className="mt-1 text-sm font-extrabold text-[hsl(var(--primary))]">
                         {valueChainStats.validatedCremaCount}/{indicators.length} validados · {valueChainStats.validatedCremaPercent.toFixed(1)}%
                       </p>
                       <p className="text-2xs text-[hsl(var(--text-secondary))]">
-                        Puntaje CREMA promedio: {valueChainStats.averageCremaScore === null ? "—" : `${valueChainStats.averageCremaScore.toFixed(1)}/100`}
+                        Puntaje de calidad promedio: {valueChainStats.averageCremaScore === null ? "—" : `${valueChainStats.averageCremaScore.toFixed(1)}/100`}
                       </p>
                     </div>
                     <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
@@ -687,7 +687,7 @@ export function ProjectIndicatorsDrawer({
                 </section>
               )}
 
-              {/* Filtro por Nivel MGA */}
+              {/* Filtro por Nivel de Impacto */}
               <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1">
                 <div className="flex items-center gap-1.5 text-2xs">
                   <span className="text-[hsl(var(--text-secondary))] font-semibold flex items-center gap-1">
@@ -756,7 +756,7 @@ export function ProjectIndicatorsDrawer({
                   <div className="max-w-xs">
                     <h3 className="text-xs font-bold">No hay indicadores en este nivel</h3>
                     <p className="text-2xs text-[hsl(var(--text-secondary))] mt-1">
-                      Cree indicadores de resultado o producto para el proyecto y califíquelos con el Asistente CREMA.
+                      Cree indicadores de resultado o producto para el proyecto y califíquelos con el Asistente de Calidad.
                     </p>
                   </div>
                   <button
@@ -787,7 +787,7 @@ export function ProjectIndicatorsDrawer({
                         className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]/50 hover:bg-[hsl(var(--surface-2))] transition-all overflow-hidden"
                       >
                         <div className="p-4 space-y-3">
-                          {/* Fila Superior: Código, Nivel MGA y Score CREMA */}
+                          {/* Fila Superior: Código, Nivel de Impacto y Score de Calidad */}
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-mono font-extrabold px-2 py-0.5 rounded bg-[hsl(var(--surface-3))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))]">
@@ -812,9 +812,9 @@ export function ProjectIndicatorsDrawer({
                                       ? "bg-[hsl(var(--primary))]/15 border-[hsl(var(--primary))]/30 text-[hsl(var(--primary))]"
                                       : "bg-[hsl(var(--warning))]/15 border-[hsl(var(--warning))]/30 text-[hsl(var(--warning))]"
                                   )}
-                                  title="Calificación metodológica CREMA"
+                                  title="Calificación de calidad del indicador"
                                 >
-                                  <Sparkles size={10} /> CREMA: {ind.crema_score}/100
+                                  <Sparkles size={10} /> Calidad: {ind.crema_score}/100
                                 </span>
                               )}
 
@@ -1048,14 +1048,14 @@ export function ProjectIndicatorsDrawer({
             </div>
           )}
 
-          {/* TAB 2: FORMULARIO Y ASISTENTE METODOLÓGICO CREMA */}
+          {/* TAB 2: FORMULARIO Y ASISTENTE DE CALIDAD */}
           {activeTab === "form" && (
             <form onSubmit={handleSaveIndicator} className="space-y-4">
               <div className="p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]/60 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className=" font-boldflex items-center gap-1.5 text-[hsl(var(--text-primary))]">
+                  <h3 className="font-bold flex items-center gap-1.5 text-[hsl(var(--text-primary))]">
                     <Layers size={14} className="text-[hsl(var(--primary))]" />
-                    {editingId ? "Editar Indicador IDP" : "Definición del Indicador IDP"}
+                    {editingId ? "Editar Indicador" : "Definición del Indicador"}
                   </h3>
                   <button
                     type="button"
@@ -1064,7 +1064,7 @@ export function ProjectIndicatorsDrawer({
                     className="px-2.5 py-1 rounded-md bg-[hsl(var(--primary))]/15 text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/25 text-2xs font-medium uppercase tracking-wide border border-[hsl(var(--primary))]/30 transition-all flex items-center gap-1.5"
                   >
                     <Sparkles size={12} className={clsx(validatingCrema && "animate-spin")} />
-                    {validatingCrema ? "Auditando..." : "Auditar Criterios CREMA"}
+                    {validatingCrema ? "Auditando..." : "Auditar Calidad del Indicador"}
                   </button>
                 </div>
 
@@ -1163,7 +1163,7 @@ export function ProjectIndicatorsDrawer({
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">
-                      Nivel del Indicador (IDP) *
+                      Nivel de Impacto / Categoría *
                     </label>
                     <select
                       value={level}
@@ -1258,14 +1258,14 @@ export function ProjectIndicatorsDrawer({
                 </div>
               </div>
 
-              {/* PANEL DEL ASISTENTE CREMA */}
+              {/* PANEL DEL ASISTENTE DE CALIDAD */}
               {cremaResult && (
                 <div className="p-4 rounded-xl border border-[hsl(var(--primary))]/30 bg-[hsl(var(--primary))]/5 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Award size={18} className="text-[hsl(var(--primary))]" />
-                      <h4 className=" font-boldtext-[hsl(var(--text-primary))]">
-                        Diagnóstico de Calidad CREMA (IDP)
+                      <h4 className="font-bold text-[hsl(var(--text-primary))]">
+                        Diagnóstico de Calidad del Indicador
                       </h4>
                     </div>
                     <div className="flex items-center gap-2">
@@ -1341,7 +1341,7 @@ export function ProjectIndicatorsDrawer({
                   className="px-4 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-medium uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-1.5 shadow-md"
                 >
                   <Save size={13} className={clsx(submitting && "animate-spin")} />
-                  {submitting ? "Guardando..." : editingId ? "Actualizar Indicador" : "Crear Indicador con Sello CREMA"}
+                  {submitting ? "Guardando..." : editingId ? "Actualizar Indicador" : "Crear Indicador con Sello de Calidad"}
                 </button>
               </div>
             </form>

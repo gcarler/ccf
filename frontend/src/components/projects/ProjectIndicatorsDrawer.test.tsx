@@ -36,7 +36,7 @@ describe("ProjectIndicatorsDrawer loading recovery", () => {
     expect((await axe(container)).violations).toEqual([]);
     expect(screen.queryByText("No hay indicadores en este nivel")).not.toBeInTheDocument();
     expect(screen.queryByText("Total Ind.")).not.toBeInTheDocument();
-    expect(mocks.toastError).toHaveBeenCalledWith("Error al cargar indicadores MGA del proyecto");
+    expect(mocks.toastError).toHaveBeenCalledWith("Error al cargar indicadores del proyecto");
 
     await user.click(screen.getByRole("button", { name: "Reintentar" }));
     expect(await screen.findByText("No hay indicadores en este nivel")).toBeInTheDocument();
@@ -150,10 +150,10 @@ describe("ProjectIndicatorsDrawer loading recovery", () => {
     const { container } = renderDrawer();
 
     expect(await screen.findByRole("heading", {
-      name: "Gobernanza PMI de Cadena de Valor y Madurez CREMA (Vol. 1 & 5)",
+      name: "Cadena de Valor y Calidad de Resultados (PMI Vol. 1 & 5)",
     })).toBeInTheDocument();
     const governancePanel = screen.getByRole("region", {
-      name: "Gobernanza PMI de Cadena de Valor y Madurez CREMA (Vol. 1 & 5)",
+      name: "Cadena de Valor y Calidad de Resultados (PMI Vol. 1 & 5)",
     });
     expect(within(governancePanel).getByText("2 indicadores")).toBeInTheDocument();
     expect(within(governancePanel).getByText("1 indicador")).toBeInTheDocument();
@@ -161,7 +161,7 @@ describe("ProjectIndicatorsDrawer loading recovery", () => {
     expect(within(governancePanel).getByText("SPI promedio: 0.80")).toBeInTheDocument();
     expect(within(governancePanel).getByText("SPI promedio: —")).toBeInTheDocument();
     expect(within(governancePanel).getByText("2/3 validados · 66.7%")).toBeInTheDocument();
-    expect(within(governancePanel).getByText("Puntaje CREMA promedio: 85.0/100")).toBeInTheDocument();
+    expect(within(governancePanel).getByText("Puntaje de calidad promedio: 85.0/100")).toBeInTheDocument();
     expect(within(governancePanel).getByText("0.93")).toBeInTheDocument();
     expect(within(governancePanel).getByText(/Promedio de SPI actual en 3 de 3 indicadores/)).toBeInTheDocument();
     expect(within(governancePanel).getByRole("alert")).toHaveTextContent(

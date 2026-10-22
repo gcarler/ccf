@@ -59,7 +59,7 @@ export const KPI_EXECUTION_SOURCES: Array<{
   {
     id: "pro_edt_progress",
     label: "Pro 1 — Avance Físico Ponderado EDT",
-    group: "6 Familias Pro (PMI / MGA)",
+    group: "6 Familias Pro (Resultados y PMI)",
     frente: "tiempo",
     unit: "%",
     defaultTarget: 100,
@@ -68,7 +68,7 @@ export const KPI_EXECUTION_SOURCES: Array<{
   {
     id: "pro_hours_efficiency",
     label: "Pro 2 — Eficiencia de Esfuerzo (Horas)",
-    group: "6 Familias Pro (PMI / MGA)",
+    group: "6 Familias Pro (Resultados y PMI)",
     frente: "tiempo",
     unit: "%",
     defaultTarget: 100,
@@ -77,7 +77,7 @@ export const KPI_EXECUTION_SOURCES: Array<{
   {
     id: "pro_cost_efficiency",
     label: "Pro 3 — Eficiencia Financiera (CPI)",
-    group: "6 Familias Pro (PMI / MGA)",
+    group: "6 Familias Pro (Resultados y PMI)",
     frente: "financiero",
     unit: "índice",
     defaultTarget: 1,
@@ -86,7 +86,7 @@ export const KPI_EXECUTION_SOURCES: Array<{
   {
     id: "pro_milestones_ontime",
     label: "Pro 4 — Cumplimiento de Hitos a Tiempo",
-    group: "6 Familias Pro (PMI / MGA)",
+    group: "6 Familias Pro (Resultados y PMI)",
     frente: "tiempo",
     unit: "%",
     defaultTarget: 100,
@@ -95,7 +95,7 @@ export const KPI_EXECUTION_SOURCES: Array<{
   {
     id: "pro_raid_mitigated",
     label: "Pro 5 — Mitigación de Riesgos RAID",
-    group: "6 Familias Pro (PMI / MGA)",
+    group: "6 Familias Pro (Resultados y PMI)",
     frente: "cruce_evm",
     unit: "%",
     defaultTarget: 100,
@@ -104,7 +104,7 @@ export const KPI_EXECUTION_SOURCES: Array<{
   {
     id: "pro_global_health",
     label: "Pro 6 — Índice Global de Salud (Tiempo×Costo)",
-    group: "6 Familias Pro (PMI / MGA)",
+    group: "6 Familias Pro (Resultados y PMI)",
     frente: "cruce_evm",
     unit: "%",
     defaultTarget: 100,

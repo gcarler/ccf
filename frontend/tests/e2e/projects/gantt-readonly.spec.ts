@@ -155,7 +155,7 @@ test('Projects Gantt valida dependencias y estados con API mockeada sin mutacion
   const actionsDrawer = page.getByRole('dialog', { name: 'Acciones del proyecto' });
   await expect(actionsDrawer).toBeVisible();
   await expectNoSeriousAccessibilityViolations(page, '[role="dialog"][aria-label="Acciones del proyecto"]');
-  for (const actionName of ['Pizarra', 'Fases', 'Presupuesto', 'Riesgos', 'Automatizaciones', 'Indicadores (IDP)', 'Editar proyecto']) {
+  for (const actionName of ['Pizarra', 'Fases', 'Presupuesto', 'Riesgos', 'Automatizaciones', 'Indicadores y Resultados', 'Editar proyecto']) {
     await expect(actionsDrawer.getByRole('button', { name: actionName })).toBeVisible();
   }
   const closeActions = actionsDrawer.getByRole('button', { name: 'Cerrar panel' });
