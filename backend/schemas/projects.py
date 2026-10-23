@@ -993,7 +993,17 @@ class ProjectBase(BaseModel):
 
 
 class ProjectCreate(ProjectBase):
-    pass
+    @model_validator(mode="after")
+    def _dates_order(self) -> "ProjectCreate":
+        # Regla canónica (Esperado 4 §12): la fecha de inicio no puede exceder
+        # la fecha objetivo. Evita proyectos con línea base temporal inválida
+        # (PV=0 / SPI=2.0 falsamente favorable en el motor EVM).
+        # IMPORTANTE: vive SOLO en los modelos de entrada; si se heredara al
+        # response model, proyectos heredados con fechas invertidas quedarían
+        # irrecuperables por 500 en el GET de detalle (hallazgo 2026-10-23).
+        if self.start_date and self.target_date and self.start_date > self.target_date:
+            raise ValueError("start_date no puede ser posterior a target_date del proyecto")
+        return self
 
 
 class ProjectUpdate(BaseModel):
@@ -1016,6 +1026,12 @@ class ProjectUpdate(BaseModel):
     budget_allocated: Optional[float] = None
     budget_spent: Optional[float] = None
     health_override: Optional[Literal["on_track", "at_risk", "off_track"]] = None
+
+    @model_validator(mode="after")
+    def _dates_order_partial(self) -> "ProjectUpdate":
+        if self.start_date and self.target_date and self.start_date > self.target_date:
+            raise ValueError("start_date no puede ser posterior a target_date del proyecto")
+        return self
 
 
 class ProjectMilestoneBase(BaseModel):

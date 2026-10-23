@@ -4345,6 +4345,25 @@ def update_project(
     update_data = payload.model_dump(exclude_unset=True)
     if "owner_id" in update_data:
         _assert_assignee_in_sede(db, update_data["owner_id"], user_sede)
+    # Guard canónico de orden temporal: validar contra los valores efectivos
+    # finales (el PATCH es parcial, así que cada fecha faltante se resuelve
+    # con la existente en la línea base del proyecto). Se normaliza a UTC
+    # porque SQLite devuelve datetimes naive y el payload llega aware.
+    def _as_utc_for_compare(v: Any) -> Optional[datetime]:
+        if v is None or not isinstance(v, datetime):
+            return None
+        return v.replace(tzinfo=timezone.utc) if v.tzinfo is None else v
+
+    eff_start = _as_utc_for_compare(update_data.get("start_date", project.start_date))
+    eff_target = _as_utc_for_compare(update_data.get("target_date", project.target_date))
+    old_start = _as_utc_for_compare(project.start_date)
+    old_target = _as_utc_for_compare(project.target_date)
+    already_inverted = bool(old_start and old_target and old_start > old_target)
+    if eff_start and eff_target and eff_start > eff_target and not already_inverted:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="start_date no puede ser posterior a target_date del proyecto",
+        )
     changed_fields = []
     for key, value in update_data.items():
         old_value = getattr(project, key, None)
