@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { AlertCircle, BookOpen, CheckCircle2, CircleHelp, ListTree, Search } from 'lucide-react';
 
 interface ProjectWBSDrawerProps {
+    embedded?: boolean;
     projectId: string;
     projectTitle?: string;
     isOpen: boolean;
@@ -77,6 +78,7 @@ function formatMoney(value: number | null | undefined): string {
 }
 
 export function ProjectWBSDrawer({
+    embedded = false,
     projectId,
     projectTitle = 'Proyecto',
     isOpen,
@@ -177,6 +179,7 @@ export function ProjectWBSDrawer({
 
     return (
         <RightPanel
+            embedded={embedded}
             isOpen={isOpen}
             onClose={onClose}
             title={<div className="flex items-center gap-2"><ListTree className="text-[hsl(var(--primary))]" size={18} /><span className="font-bold text-sm uppercase tracking-tight">EDT / WBS y Diccionario</span></div>}
@@ -188,7 +191,7 @@ export function ProjectWBSDrawer({
                 {error && !treeData && <div role="alert" className="flex items-center gap-2 rounded-lg border border-[hsl(var(--destructive)/0.35)] bg-[hsl(var(--destructive)/0.08)] p-3 text-sm text-[hsl(var(--destructive))]"><AlertCircle size={17} />{error}</div>}
                 {treeData && codedRoot && (
                     <>
-                        <div className="grid gap-3 lg:grid-cols-[minmax(0,1.1fr)_minmax(300px,0.9fr)]">
+                        <div className="grid gap-3 grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))]">
                             <section className="space-y-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3" aria-label="Árbol WBS">
                                 <div className="flex flex-wrap items-center justify-between gap-2">
                                     <h3 className="flex items-center gap-2 text-sm font-bold text-[hsl(var(--text-primary))]"><ListTree size={16} />Estructura jerárquica</h3>
@@ -232,7 +235,7 @@ export function ProjectWBSDrawer({
 
                         <section className="space-y-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4" aria-label="Validación de la Regla del 100%">
                             <h3 className="text-sm font-bold text-[hsl(var(--text-primary))]">Validador en vivo • Regla del 100%</h3>
-                            <div className="grid gap-2 md:grid-cols-2">
+                            <div className="grid gap-2 grid-cols-[repeat(auto-fit,minmax(min(100%,240px),1fr))]">
                                 <ValidationResult label="Peso técnico de componentes" value={`${componentWeightSum.toFixed(1)}%`} valid={componentWeights.length > 0 && componentWeightSum >= 99.99 && componentWeightSum <= 100.01} />
                                 <ValidationResult label="Presupuesto de componentes vs BAC del proyecto" value={`${formatMoney(componentBudgets)} / ${formatMoney(projectBudget)}`} valid={budgetBalanced} detail={budgetDifference === null ? 'BAC del proyecto no disponible' : `Diferencia: ${formatMoney(budgetDifference)}`} />
                                 {lowerLevelRules.map(({ branch, activityWeight, valid }) => <ValidationResult key={branch.node.id} label={`Peso de actividades • ${branch.code} ${branch.node.title}`} value={`${activityWeight.toFixed(1)}%`} valid={valid} />)}

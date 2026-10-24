@@ -1,13 +1,22 @@
 "use client";
 
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import clsx from 'clsx';
+import { useResizablePanel } from '@/hooks/useResizablePanel';
+import { PanelResizeHandle } from './PanelResizeHandle';
 
 interface RightPanelProps {
+    /** Render the tool inside an existing hub, without another overlay. */
+    embedded?: boolean;
+    /** Opt in to persistent resizing and an overlay above workspace navigation. */
+    resizeStorageKey?: string;
+    resizeDefaultWidth?: number;
+    maximized?: boolean;
     /** Título del panel. Acepta string o nodo React (p. ej. icono + texto). */
     title?: React.ReactNode;
     /** Subtítulo opcional renderizado bajo el título. Acepta string o nodo React. */
@@ -41,6 +50,10 @@ interface RightPanelProps {
  * También soporta modo controlado pasando `open` (o su alias `isOpen`) y `onClose`.
  */
 function RightPanel({
+    embedded = false,
+    resizeStorageKey,
+    resizeDefaultWidth = 960,
+    maximized = false,
     title = 'Actividad',
     subtitle,
     description,
@@ -59,8 +72,11 @@ function RightPanel({
     const isControlled = open !== undefined;
     const isOpen = isControlled ? open : layers.RIGHT;
     const panelRef = useRef<HTMLDivElement>(null);
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
 
-    const isOverlay = isControlled || rightMode === 'overlay';
+    const isOverlay = !embedded && (isControlled || rightMode === 'overlay');
+    const resize = useResizablePanel({ storageKey: resizeStorageKey ?? 'workspace:right_panel_width', defaultWidth: resizeDefaultWidth, panelRef, enabled: Boolean(resizeStorageKey) && !maximized && !embedded && Boolean(isOpen) && mounted });
 
     const handleClose = () => {
         if (isControlled) {
@@ -73,9 +89,23 @@ function RightPanel({
     // Focus trap + Escape: only in controlled/overlay mode where the panel
     // behaves as a modal drawer. In push mode it is part of the normal layout.
     useFocusTrap(panelRef, {
-        active: isOpen && isOverlay,
+        active: isOpen && isOverlay && (!resizeStorageKey || mounted),
         onEscape: handleClose,
     });
+
+    if (embedded) {
+        if (!isOpen) return null;
+        return (
+            <section className="flex min-h-0 min-w-0 flex-1 flex-col" aria-label={typeof title === 'string' ? title : 'Herramienta del proyecto'}>
+                <div className="shrink-0 border-b border-[hsl(var(--border))] px-4 py-3">
+                    <div className="text-sm font-semibold">{title}</div>
+                    {subtitle && <div className="mt-1 text-xs text-[hsl(var(--text-secondary))]">{subtitle}</div>}
+                    {description && <div className="mt-1 text-xs">{description}</div>}
+                </div>
+                <div className={clsx('min-h-0 min-w-0 flex-1 overflow-auto', contentClassName)}>{children}</div>
+            </section>
+        );
+    }
 
     const PanelContainer = isOverlay ? motion.div : motion.aside;
 
@@ -92,12 +122,12 @@ function RightPanel({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: typeof width === 'number' ? width : 480, opacity: 0 }}
             transition={{ type: 'tween', duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-            style={widthStyle}
+            style={resizeStorageKey && !maximized ? resize.style : widthStyle}
             className={clsx(
                 'flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-elevated))] border-l border-[hsl(var(--border))] dark:border-[hsl(var(--border))]',
                 widthClass,
                 isControlled || rightMode === 'overlay'
-                    ? 'fixed right-0 top-10 h-[calc(100vh-2.5rem)] z-[35] shadow-[-24px_0_60px_hsl(var(--shadow-floating))]'
+                    ? clsx('fixed right-0 top-10 h-[calc(100vh-2.5rem)] shadow-[-24px_0_60px_hsl(var(--shadow-floating))]', resizeStorageKey ? 'z-[80]' : 'z-[35]')
                     : 'relative h-full z-[25] shadow-[-8px_0_24px_hsl(var(--shadow-floating))]',
                 className,
             )}
@@ -106,6 +136,7 @@ function RightPanel({
             aria-modal={isOverlay ? 'true' : undefined}
             aria-label={typeof title === 'string' ? title : 'Panel'}
         >
+            {resizeStorageKey && !maximized && <PanelResizeHandle resize={resize} />}
             {/* Panel header */}
             <div className="shrink-0 px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.625rem+var(--density-pad-y-delta,0px))] border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))] flex items-start justify-between gap-[calc(0.5rem+var(--density-gap-delta,0px))]">
                 <div className="min-w-0">
@@ -142,7 +173,7 @@ function RightPanel({
     );
 
     if (isControlled || rightMode === 'overlay') {
-        return (
+        const overlay = (
             <>
                 {showTrigger && trigger}
                 <AnimatePresence>
@@ -156,7 +187,8 @@ function RightPanel({
                                 exit={{ opacity: 0 }}
                                 transition={{ duration: 0.2 }}
                                 className={clsx(
-                                    'z-[34] bg-[hsl(var(--bg-muted))]/20 backdrop-blur-[1px]',
+                                    'bg-[hsl(var(--bg-muted))]/20 backdrop-blur-[1px]',
+                                    resizeStorageKey ? 'z-[79]' : 'z-[34]',
                                     isControlled ? 'fixed inset-x-0 bottom-0 top-10' : 'absolute inset-0'
                                 )}
                                 onClick={handleClose}
@@ -168,6 +200,8 @@ function RightPanel({
                 </AnimatePresence>
             </>
         );
+        // Project tools must escape the workspace's central stacking context.
+        return resizeStorageKey ? (mounted ? createPortal(overlay, document.body) : null) : overlay;
     }
 
     // Push mode: panel is inline, AnimatePresence handles width
