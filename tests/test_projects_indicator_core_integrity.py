@@ -37,3 +37,52 @@ def test_empty_components_remain_in_budget_denominator(db_session, empty_budget)
     if empty_budget == 900:
         assert sum(evm.calculate_component_evm(db_session, component, now=NOW)["ev"]
                    for component in (completed, empty)) == result["ev"]
+
+
+@pytest.mark.parametrize("component_budgets", [(900, 100), (100, 900)])
+def test_earned_hours_do_not_follow_component_money_weights(db_session, component_budgets):
+    project = make_project(db_session)
+    components = [models.ProjectComponent(id=uuid4(), project_id=project.id, code=str(i), name=str(i), budget_allocated=budget)
+                  for i, budget in enumerate(component_budgets)]
+    db_session.add_all(components)
+    db_session.flush()
+    for component, hours, pct in zip(components, [10, 90], [100, 0]):
+        db_session.add(models.ProjectTask(id=uuid4(), project_id=project.id, component_id=component.id,
+                                         title="Leaf", estimated_hours=hours, physical_progress_pct=pct,
+                                         status="completed" if pct == 100 else "todo"))
+    db_session.commit()
+    result = evm.build_project_execution_matrix(db_session, project, now=NOW)
+    assert result["frente_tiempo"]["total_estimated_hours"] == 100
+    assert result["frente_tiempo"]["earned_hours"] == 10
+    assert result["frente_tiempo"]["time_progress_pct"] == component_budgets[0] / 10
+
+
+def test_effort_counts_leaf_scope_once_and_includes_parent_actual_hours(db_session):
+    from tests.conftest import seed_admin
+    _, person, _ = seed_admin(db_session, email="leaf-effort-integrity@example.com")
+    project = make_project(db_session)
+    component = models.ProjectComponent(id=uuid4(), project_id=project.id, code="1", name="Scope", budget_allocated=1000)
+    db_session.add(component)
+    db_session.flush()
+    parent = models.ProjectTask(id=uuid4(), project_id=project.id, component_id=component.id,
+                                title="Container", estimated_hours=100, physical_progress_pct=90, status="in_progress")
+    db_session.add(parent)
+    db_session.flush()
+    db_session.add_all([
+        models.ProjectTask(id=uuid4(), project_id=project.id, component_id=component.id, parent_id=parent.id,
+                           title="Completed 10h", estimated_hours=10, physical_progress_pct=100, status="completed"),
+        models.ProjectTask(id=uuid4(), project_id=project.id, component_id=component.id, parent_id=parent.id,
+                           title="Pending 90h", estimated_hours=90, physical_progress_pct=0, status="todo"),
+        models.ProjectTimeLog(project_id=project.id, task_id=parent.id, persona_id=person.id, hours=20, date=NOW),
+    ])
+    db_session.commit()
+    matrix = evm.build_project_execution_matrix(db_session, project, now=NOW)
+    effort = matrix["frente_tiempo"]
+    assert effort["total_estimated_hours"] == 100
+    assert effort["earned_hours"] == 10
+    assert effort["actual_hours"] == 20
+    assert effort["hours_efficiency_pct"] == 50
+    component_effort = matrix["rollup_hierarchy"]["components"][0]
+    assert component_effort["estimated_hours"] == 100
+    assert component_effort["actual_hours"] == 20
+    assert component_effort["hours_efficiency_pct"] == 50
