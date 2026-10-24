@@ -53,19 +53,24 @@ from backend.crud.crm_.personas import (
     persona_prefix_search_order,
 )
 from backend.crud.projects import (
+    CircularDependencyError,
     _prepare_kpi_response,
-    create_milestone as _projects_create_milestone,
-    delete_milestone as _projects_delete_milestone,
     evaluate_task_mutation_automations,
     get_user_persona_id,
     sync_supply_expense,
     trigger_project_automations_safe,
 )
+from backend.crud.projects import (
+    create_milestone as _projects_create_milestone,
+)
+from backend.crud.projects import (
+    delete_milestone as _projects_delete_milestone,
+)
 from backend.mesh_websockets import manager
+from backend.services import project_lifecycle_pmi_service
 from backend.services.comment_notifications import notify_mention
 from backend.services.mention_parser import resolve_mentions
 from backend.services.project_evm_service import build_project_execution_matrix
-from backend.services import project_lifecycle_pmi_service
 from backend.services.task_notifications import notify_task_assigned
 
 settings = get_settings()
@@ -4944,7 +4949,7 @@ def create_task_dependency(
     _ensure_task_in_project(db, project_id, str(payload.successor_id))
     try:
         dep = crud.create_task_dependency(db, _to_uuid(project_id), payload)
-    except crud.CircularDependencyError as exc:
+    except CircularDependencyError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(exc),
