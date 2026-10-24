@@ -28,6 +28,7 @@ import clsx from "clsx";
 import { toast } from "sonner";
 
 interface ProjectComponentDrawerProps {
+    embedded?: boolean;
   projectId: string;
   projectTitle?: string;
   isOpen: boolean;
@@ -71,6 +72,7 @@ export const PROJECT_COMPONENT_COLOR_PRESETS: readonly string[] = [
 const COLOR_PRESETS = PROJECT_COMPONENT_COLOR_PRESETS;
 
 export function ProjectComponentDrawer({
+    embedded = false,
   projectId,
   projectTitle = "Proyecto",
   isOpen,
@@ -237,13 +239,14 @@ export function ProjectComponentDrawer({
 
   return (
     <RightPanel
+      embedded={embedded}
       isOpen={isOpen}
       onClose={onClose}
       width="w-full sm:w-[88vw] lg:w-[72vw] xl:w-[64vw] max-w-6xl"
       title={
         <div className="flex items-center gap-2">
           <Layers className="h-5 w-5 text-primary" style={{ color: "hsl(var(--primary))" }} />
-          <span className="font-semibold text-base">Estructura de Desglose (EDT Nivel 2)</span>
+          <span className="font-semibold text-base">Componentes EDT</span>
         </div>
       }
       subtitle={`Gestión de paquetes de trabajo y regla del 100% — ${projectTitle}`}

@@ -302,7 +302,7 @@ describe("ProjectContextPanel", () => {
 
   it("renders the manual resize handle when not maximized", () => {
     renderPanel();
-    expect(screen.getByTitle("Arrastra para ajustar el ancho manualmente")).toBeInTheDocument();
+    expect(screen.getByRole("separator", { name: "Ajustar ancho del contexto" })).toBeInTheDocument();
   });
 
   it("allows minimizing and restoring the panel", async () => {

@@ -11,7 +11,7 @@ import {
 
 const META: ProjectHubModuleMeta[] = [
   { key: "kpis", label: "KPIs", icon: Target },
-  { key: "wbs", label: "Diccionario EDT", icon: ListTree },
+  { key: "wbs", label: "EDT / WBS y Diccionario", icon: ListTree },
   { key: "drive", label: "Drive", icon: FolderArchive },
   { key: "governance", label: "Gobernanza PMI", icon: ClipboardCheck },
 ];
@@ -20,7 +20,7 @@ const RENDERERS = {
   kpis: () => <div data-testid="kpis-content">KPIs</div>,
   drive: () => <div data-testid="drive-content">Drive</div>,
   governance: () => <div data-testid="governance-content">Gobernanza PMI</div>,
-  wbs: () => <div data-testid="wbs-content">Diccionario EDT</div>,
+  wbs: () => <div data-testid="wbs-content">EDT / WBS y Diccionario</div>,
 };
 
 function renderHub(
@@ -153,14 +153,14 @@ describe("ProjectManagementHubDrawer", () => {
   it("renderiza correctamente el módulo 'components' cuando está activo", () => {
     renderHub({
       openModules: ["components"],
-      moduleMeta: [{ key: "components", label: "Componentes (EDT)", icon: Target }],
+      moduleMeta: [{ key: "components", label: "Componentes EDT", icon: Target }],
       activeModule: "components",
       moduleRenderers: {
         components: () => <div data-testid="components-content">Componentes EDT</div>,
       },
     });
     expect(screen.getByTestId("components-content")).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /Componentes \(EDT\)/ })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: /Componentes EDT/ })).toHaveAttribute("aria-selected", "true");
   });
 
   it("expone Gobernanza PMI en las pestañas del hub y monta su renderer activo", async () => {
@@ -183,17 +183,17 @@ describe("ProjectManagementHubDrawer", () => {
     expect(screen.getByTestId("governance-content")).toBeInTheDocument();
   });
 
-  it("expone el Diccionario EDT en el Hub y monta solo su renderer activo", async () => {
+  it("expone el EDT / WBS y Diccionario en el Hub y monta solo su renderer activo", async () => {
     const user = userEvent.setup();
     const { props } = renderHub({
       openModules: ["wbs"],
       activeModule: "wbs",
     });
 
-    expect(screen.getByRole("tab", { name: /Diccionario EDT/ })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: /EDT \/ WBS y Diccionario/ })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByTestId("wbs-content")).toBeInTheDocument();
     expect(screen.queryByTestId("governance-content")).not.toBeInTheDocument();
-    await user.click(screen.getByRole("tab", { name: /Diccionario EDT/ }));
+    await user.click(screen.getByRole("tab", { name: /EDT \/ WBS y Diccionario/ }));
     expect(props.onActivateModule).toHaveBeenCalledWith("wbs");
   });
 });
