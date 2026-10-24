@@ -255,12 +255,11 @@ def _compute_project_continuous_progress_pct(
                 c_bac = max(0.0, _safe_float(getattr(comp, "budget_allocated", 0.0)))
                 comp_entries.append((c_pct, c_bac, len(c_tasks)))
 
-            total_comp_budget = sum(b for _, b, cnt in comp_entries if cnt > 0)
+            # Budgeted scope remains in the denominator even before tasks exist.
+            total_comp_budget = sum(b for _, b, _ in comp_entries)
             if total_comp_budget > 0 and not unassigned_tasks:
-                weighted_ev = sum(pct * b for pct, b, cnt in comp_entries if cnt > 0 and b > 0)
-                budget_denom = sum(b for _, b, cnt in comp_entries if cnt > 0 and b > 0)
-                if budget_denom > 0:
-                    return round(weighted_ev / budget_denom, 1)
+                weighted_ev = sum(pct * b for pct, b, _ in comp_entries if b > 0)
+                return round(weighted_ev / total_comp_budget, 1)
 
     return _compute_tasks_weighted_progress_pct(tasks)
 

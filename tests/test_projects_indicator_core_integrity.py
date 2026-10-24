@@ -1,0 +1,39 @@
+"""Numerical regression oracles for project indicator consolidation (H02/H04/H05)."""
+from datetime import datetime, timedelta, timezone
+from uuid import uuid4
+
+import pytest
+
+from backend import models
+from backend.services import project_evm_service as evm
+
+NOW = datetime(2026, 10, 24, tzinfo=timezone.utc)
+
+
+def make_project(db):
+    row = models.Project(id=uuid4(), title="Indicator core integrity", budget_allocated=1000,
+                         budget_spent=0, progress_mode="auto_tasks", start_date=NOW-timedelta(days=10),
+                         target_date=NOW+timedelta(days=10))
+    db.add(row)
+    db.flush()
+    return row
+
+
+@pytest.mark.parametrize("empty_budget", [900, 0])
+def test_empty_components_remain_in_budget_denominator(db_session, empty_budget):
+    project = make_project(db_session)
+    completed = models.ProjectComponent(id=uuid4(), project_id=project.id, code="1", name="Complete", budget_allocated=100)
+    empty = models.ProjectComponent(id=uuid4(), project_id=project.id, code="2", name="Empty", budget_allocated=empty_budget)
+    db_session.add_all([completed, empty])
+    db_session.flush()
+    db_session.add(models.ProjectTask(id=uuid4(), project_id=project.id, component_id=completed.id,
+                                     title="Completed work", status="completed", estimated_hours=10,
+                                     physical_progress_pct=100, due_date=NOW))
+    db_session.commit()
+    result = evm.calculate_project_evm(db_session, project, now=NOW)
+    expected_pct = 10 if empty_budget == 900 else 100
+    assert result["progress_percentage"] == expected_pct
+    assert result["ev"] == 1000 * expected_pct / 100
+    if empty_budget == 900:
+        assert sum(evm.calculate_component_evm(db_session, component, now=NOW)["ev"]
+                   for component in (completed, empty)) == result["ev"]
