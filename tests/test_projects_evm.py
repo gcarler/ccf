@@ -3493,8 +3493,10 @@ def test_evaluate_evm_tcpi_eac_vs_bac_divergence_baseline_and_completed():
 def test_evaluate_evm_tcpi_eac_vs_bac_divergence_rebaselined_aligned():
     """TCPI_BAC > 1.10 pero el EAC reajusta TCPI_EAC <= 1.10 -> rebaselined_aligned."""
     from backend.services.project_evm_service import (
-        evaluate_evm_tcpi_eac_vs_bac_divergence as eval_fn,
         ProjectEVMService,
+    )
+    from backend.services.project_evm_service import (
+        evaluate_evm_tcpi_eac_vs_bac_divergence as eval_fn,
     )
 
     res = eval_fn({"bac": 1000.0, "ev": 600.0, "ac": 700.0, "eac": 1300.0})
@@ -4958,7 +4960,6 @@ def test_evaluate_evm_rolling_wave_invalid_package_and_export():
 
 def test_evaluate_evm_tspi_achievable_and_earned_schedule_consumed():
     """tspi_pd <= 1.0 -> ACHIEVABLE; res_es == 0 -> tspi_pd 0.0 aunque plazo agotado."""
-    import pytest
 
     from backend.services.project_evm_service import (
         evaluate_evm_to_complete_schedule_performance_index_tspi as fn,
@@ -5050,6 +5051,8 @@ def test_evaluate_evm_tspi_proxy_staticmethod_and_all():
     import backend.services.project_evm_service as mod
     from backend.services.project_evm_service import (
         ProjectEVMService,
+    )
+    from backend.services.project_evm_service import (
         evaluate_evm_to_complete_schedule_performance_index_tspi as fn,
     )
 
