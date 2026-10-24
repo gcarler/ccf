@@ -120,6 +120,7 @@ MODULE_PREFIXES: dict[str, tuple[str, ...]] = {
         "backend/crud/projects",
         "backend/models_projects",
         "backend/schemas/projects",
+        "backend/services/project_evm_service.py",
         "frontend/src/app/plataforma/projects/",
         "frontend/src/components/projects/",
         "frontend/tests/e2e/projects/",

@@ -60,3 +60,14 @@ def test_docs_branch_accepts_governance_files_only():
         "docs/branch-governance-protocol",
         ["backend/api/academy.py"],
     ) == ["backend/api/academy.py"]
+
+
+def test_projects_owns_evm_service_but_not_other_module_services():
+    assert ownership_violations(
+        "feature/projects-indicator-core",
+        ["backend/services/project_evm_service.py"],
+    ) == []
+    assert ownership_violations(
+        "feature/projects-indicator-core",
+        ["backend/services/knowledge_base.py", "backend/services/academic_engine_service.py"],
+    ) == ["backend/services/knowledge_base.py", "backend/services/academic_engine_service.py"]
