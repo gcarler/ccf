@@ -4393,6 +4393,12 @@ def delete_project(
 ):
     """Marca el proyecto como eliminado sin purgar físicamente sus relaciones.
 
+    Aunque el DELETE es soft (no borra filas físicamente), sí hace
+    soft-delete en cascada de los artefactos del motor de indicadores
+    (``project_indicators``, ``project_kpis`` y sus registros), para que
+    el proyecto retirado no deje filas huérfanas activas en los paneles
+    de indicadores (hallazgo motor-ot226 G7).
+
     Solo se actualiza ``Project.deleted_at``; tareas, hitos y demás registros
     relacionados se conservan en la base de datos y dejan de estar disponibles
     en las consultas activas que primero validan el proyecto.
@@ -4416,7 +4422,30 @@ def delete_project(
     """
     user_sede = get_user_sede_id(db, current_user.id)
     project = _ensure_project(db, project_id, user_sede=user_sede)
-    project.deleted_at = datetime.now(timezone.utc)
+    now_ts = datetime.now(timezone.utc)
+    project.deleted_at = now_ts
+    # Soft-delete en cascada del motor de indicadores: sin esto quedan
+    # filas vivas de project_indicators / project_kpis apuntando a un
+    # proyecto retirado (huérfanos detectados en auditoría del motor).
+    # Se usa UPDATE masivo (no iteración ORM) y siempre con
+    # ``deleted_at IS NULL`` para ser idempotente y reversible.
+    db.query(models.ProjectIndicator).filter(
+        models.ProjectIndicator.project_id == project.id,
+        models.ProjectIndicator.deleted_at.is_(None),
+    ).update({"deleted_at": now_ts}, synchronize_session=False)
+    db.query(models.ProjectKPI).filter(
+        models.ProjectKPI.project_id == project.id,
+        models.ProjectKPI.deleted_at.is_(None),
+    ).update({"deleted_at": now_ts}, synchronize_session=False)
+    indicator_ids = (
+        db.query(models.ProjectIndicator.id)
+        .filter(models.ProjectIndicator.project_id == project.id)
+        .subquery()
+    )
+    db.query(models.ProjectIndicatorRecord).filter(
+        models.ProjectIndicatorRecord.indicator_id.in_(indicator_ids),
+        models.ProjectIndicatorRecord.deleted_at.is_(None),
+    ).update({"deleted_at": now_ts}, synchronize_session=False)
     db.commit()
     return {"ok": True, "deleted": project_id}
 

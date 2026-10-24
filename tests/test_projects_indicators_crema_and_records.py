@@ -437,3 +437,88 @@ def test_hook_reactivo_responde_con_sede_invalida_retornando_none(db_session):
         db_session, project.id, actor_id=persona.id, sede_id=otra_sede_id
     )
     assert res is None
+
+
+# ──────────────────────────────────────────────────────────────────────
+# G7 — soft-delete del proyecto hace cascade del motor de indicadores
+# ──────────────────────────────────────────────────────────────────────
+
+
+def test_delete_proyecto_marca_indicators_kpis_records_en_cascada(client, db_session):
+    """DELETE /api/projects/{id}: proyecto retirado no deja filas vivas huérfanas.
+
+    El DELETE es soft (doctrina) pero además marca ``deleted_at`` de
+    project_indicators / project_kpis / project_indicator_records del
+    proyecto, para que no queden filas activas apuntando a un proyecto
+    retirado (huérfanos detectados en la auditoría del motor).
+    """
+    from tests.conftest import auth_headers
+
+    user, persona, sede = seed_admin(db_session, email="del-cascade-ind@example.com")
+    headers = auth_headers(client, email="del-cascade-ind@example.com")
+
+    now = datetime.datetime.now(timezone.utc)
+    project = models.Project(
+        id=uuid.uuid4(),
+        title="Proyecto Cascade Soft Delete",
+        sede_id=sede.id,
+        budget_allocated=10000.0,
+        progress_mode="manual",
+        manual_progress=50.0,
+        start_date=now - timedelta(days=5),
+        target_date=now + timedelta(days=5),
+    )
+    db_session.add(project)
+    db_session.flush()
+
+    ind = models.ProjectIndicator(
+        id=uuid.uuid4(),
+        project_id=project.id,
+        name="Indicador Cascade",
+        target_value=10.0,
+        current_value=5.0,
+    )
+    kpi = models.ProjectKPI(
+        id=uuid.uuid4(),
+        project_id=project.id,
+        title="KPI Cascade",
+        unit="unidades",
+        target_value=10.0,
+    )
+    db_session.add_all([ind, kpi])
+    db_session.flush()
+    rec = models.ProjectIndicatorRecord(
+        id=uuid.uuid4(),
+        indicator_id=ind.id,
+        period="2026-M10",
+        target_value=10.0,
+        actual_value=5.0,
+    )
+    db_session.add(rec)
+    db_session.commit()
+
+    resp = client.delete(f"/api/projects/{project.id}", headers=headers)
+    assert resp.status_code == 200, resp.text
+
+    db_session.expire_all()
+    assert (
+        db_session.query(models.ProjectIndicator)
+        .filter(models.ProjectIndicator.id == ind.id)
+        .one()
+        .deleted_at
+        is not None
+    )
+    assert (
+        db_session.query(models.ProjectKPI)
+        .filter(models.ProjectKPI.id == kpi.id)
+        .one()
+        .deleted_at
+        is not None
+    )
+    assert (
+        db_session.query(models.ProjectIndicatorRecord)
+        .filter(models.ProjectIndicatorRecord.id == rec.id)
+        .one()
+        .deleted_at
+        is not None
+    )
