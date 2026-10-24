@@ -86,3 +86,36 @@ def test_effort_counts_leaf_scope_once_and_includes_parent_actual_hours(db_sessi
     assert component_effort["estimated_hours"] == 100
     assert component_effort["actual_hours"] == 20
     assert component_effort["hours_efficiency_pct"] == 50
+
+
+@pytest.mark.parametrize("planned_hours,physical_pct,status", [(100, 20, "todo"), (0, 30, "in_progress"), (100, 100, "completed")])
+def test_time_log_lifecycle_preserves_physical_measurement(db_session, planned_hours, physical_pct, status):
+    from backend import schemas
+    from backend.crud import projects as crud
+    from tests.conftest import seed_admin
+    _, person, _ = seed_admin(db_session, email="time-progress-integrity@example.com")
+    project = make_project(db_session)
+    task = models.ProjectTask(id=uuid4(), project_id=project.id, title="Measured work", estimated_hours=planned_hours,
+                              physical_progress_pct=physical_pct, status=status)
+    db_session.add(task)
+    db_session.commit()
+    log_ids = []
+    for day in range(4):
+        log = crud.create_project_time_log(db_session, project.id,
+                                          schemas.ProjectTimeLogCreate(task_id=task.id, hours=20, date=NOW-timedelta(days=day)),
+                                          persona_id=person.id, created_by=person.id)
+        log_ids.append(log.id)
+    db_session.expire_all()
+    assert task.actual_hours == 80
+    assert task.physical_progress_pct == physical_pct
+    assert task.status == ("in_progress" if status == "todo" else status)
+    if planned_hours == 100 and physical_pct == 20:
+        effort = evm.build_project_execution_matrix(db_session, project, now=NOW)["frente_tiempo"]
+        assert effort["earned_hours"] == 20
+        assert effort["actual_hours"] == 80
+        assert effort["hours_efficiency_pct"] == 25
+    for log_id in log_ids:
+        assert crud.delete_project_time_log(db_session, project.id, log_id)
+    db_session.expire_all()
+    assert task.actual_hours == 0
+    assert task.physical_progress_pct == physical_pct

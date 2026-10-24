@@ -2876,7 +2876,7 @@ def list_project_baselines(db: Session, project_id: UUID | str) -> list[models.P
 
 
 def sync_task_time_logs(db: Session, task_id: Any) -> None:
-    """Sincroniza las horas registradas en ProjectTimeLog con la tarea (actual_hours, avance y roll-up EDT)."""
+    """Synchronize actual effort without deriving physical achievement from hours spent."""
     if not task_id:
         return
     task = (
@@ -2911,15 +2911,13 @@ def sync_task_time_logs(db: Session, task_id: Any) -> None:
         .first()
         is not None
     )
-    est_h = float(getattr(task, "estimated_hours", 0.0) or 0.0)
-    if not has_subtasks and est_h > 0.0 and task.status not in ("completed", "done"):
-        derived_pct = round(min(100.0, (actual_h / est_h) * 100.0), 1)
-        task.physical_progress_pct = derived_pct
-        if actual_h > 0.0 and task.status == "todo":
-            task.status = "in_progress"
-        task.updated_at = datetime.now(timezone.utc)
-        db.commit()
-        db.refresh(task)
+    # Consuming effort does not certify delivery. Preserve the independently
+    # reported physical measurement, including explicit zero and completion.
+    if actual_h > 0.0 and task.status == "todo":
+        task.status = "in_progress"
+    task.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(task)
 
     try:
         from backend.services.project_evm_service import sync_parent_task_rollup
