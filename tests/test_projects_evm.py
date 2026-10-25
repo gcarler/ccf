@@ -384,7 +384,7 @@ def test_six_submodules_connected_to_real_execution(client, db_session):
     1) Automatizaciones (task_completed, milestone_completed, expense_approved)
     2) Suministros -> ProjectExpense (AC de tarea, componente y proyecto)
     3) Línea Base -> EVM y Curva S (baseline_bac, baseline_pv, varianzas)
-    4) TimeTracking -> actual_hours, physical_progress_pct y roll-up EDT al padre
+    4) TimeTracking -> actual_hours sin inferir logro físico y roll-up EDT al padre
     5) Workload -> horas estimadas, horas reales registradas y % utilización
     6) Ruta Crítica CPM -> exclusión de padres contenedores EDT y lag_days
     """
@@ -511,7 +511,7 @@ def test_six_submodules_connected_to_real_execution(client, db_session):
     db_session.add_all([leaf_1, leaf_2])
     db_session.commit()
 
-    # ── 2. TimeTracking -> actual_hours, avance físico de tarea y roll-up al padre ──
+    # ── 2. TimeTracking updates effort, preserving independent physical progress ──
     r_log = client.post(
         f"/api/projects/{project.id}/time-logs",
         json={
@@ -528,10 +528,10 @@ def test_six_submodules_connected_to_real_execution(client, db_session):
     refreshed_leaf_2 = db_session.query(models.ProjectTask).filter_by(id=leaf_2.id).first()
     refreshed_parent = db_session.query(models.ProjectTask).filter_by(id=parent_task.id).first()
     assert refreshed_leaf_2.actual_hours == 5.0
-    assert refreshed_leaf_2.physical_progress_pct == 50.0
+    assert refreshed_leaf_2.physical_progress_pct == 0.0
     assert refreshed_leaf_2.status == "in_progress"
-    # Padre tiene 2 subtareas de 10h cada una (0% y 50% -> 25% ponderado)
-    assert refreshed_parent.physical_progress_pct == 25.0
+    # Neither child has reported completed scope: effort alone earns no progress.
+    assert refreshed_parent.physical_progress_pct == 0.0
 
     # ── 3. Suministros -> Costo Real AC (ProjectExpense + budget_spent + EVM) ──
     r_sup = client.post(
@@ -3493,8 +3493,10 @@ def test_evaluate_evm_tcpi_eac_vs_bac_divergence_baseline_and_completed():
 def test_evaluate_evm_tcpi_eac_vs_bac_divergence_rebaselined_aligned():
     """TCPI_BAC > 1.10 pero el EAC reajusta TCPI_EAC <= 1.10 -> rebaselined_aligned."""
     from backend.services.project_evm_service import (
-        evaluate_evm_tcpi_eac_vs_bac_divergence as eval_fn,
         ProjectEVMService,
+    )
+    from backend.services.project_evm_service import (
+        evaluate_evm_tcpi_eac_vs_bac_divergence as eval_fn,
     )
 
     res = eval_fn({"bac": 1000.0, "ev": 600.0, "ac": 700.0, "eac": 1300.0})
@@ -4958,7 +4960,6 @@ def test_evaluate_evm_rolling_wave_invalid_package_and_export():
 
 def test_evaluate_evm_tspi_achievable_and_earned_schedule_consumed():
     """tspi_pd <= 1.0 -> ACHIEVABLE; res_es == 0 -> tspi_pd 0.0 aunque plazo agotado."""
-    import pytest
 
     from backend.services.project_evm_service import (
         evaluate_evm_to_complete_schedule_performance_index_tspi as fn,
@@ -5050,6 +5051,8 @@ def test_evaluate_evm_tspi_proxy_staticmethod_and_all():
     import backend.services.project_evm_service as mod
     from backend.services.project_evm_service import (
         ProjectEVMService,
+    )
+    from backend.services.project_evm_service import (
         evaluate_evm_to_complete_schedule_performance_index_tspi as fn,
     )
 
