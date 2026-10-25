@@ -255,12 +255,11 @@ def _compute_project_continuous_progress_pct(
                 c_bac = max(0.0, _safe_float(getattr(comp, "budget_allocated", 0.0)))
                 comp_entries.append((c_pct, c_bac, len(c_tasks)))
 
-            total_comp_budget = sum(b for _, b, cnt in comp_entries if cnt > 0)
+            # Budgeted scope remains in the denominator even before tasks exist.
+            total_comp_budget = sum(b for _, b, _ in comp_entries)
             if total_comp_budget > 0 and not unassigned_tasks:
-                weighted_ev = sum(pct * b for pct, b, cnt in comp_entries if cnt > 0 and b > 0)
-                budget_denom = sum(b for _, b, cnt in comp_entries if cnt > 0 and b > 0)
-                if budget_denom > 0:
-                    return round(weighted_ev / budget_denom, 1)
+                weighted_ev = sum(pct * b for pct, b, _ in comp_entries if b > 0)
+                return round(weighted_ev / total_comp_budget, 1)
 
     return _compute_tasks_weighted_progress_pct(tasks)
 
@@ -2376,26 +2375,29 @@ def build_project_execution_matrix(
             hours_by_task[str(tid)] = hours_by_task.get(str(tid), 0.0) + h
     total_actual_hours = round(total_actual_hours, 2)
 
-    # Esfuerzo estimado total (evitando doble conteo entre padre e hijas cuando el padre no suma sus hijas)
-    def _calc_subtree_hours(t: Any, visited_ids: set[str]) -> tuple[float, float]:
+    # Planned and earned effort belong to leaf work packages. Container
+    # estimates describe their children and must not be counted a second time.
+    def _calc_subtree_hours(t: Any, visited_ids: set[str]) -> tuple[float, float, float]:
         tid_raw = getattr(t, "id", None)
         tid = str(tid_raw) if _is_valid_id(tid_raw) else None
         if tid and tid in visited_ids:
-            return 0.0, 0.0
+            return 0.0, 0.0, 0.0
         if tid:
             visited_ids.add(tid)
         own_est = max(0.0, _safe_float(getattr(t, "estimated_hours", 0.0)))
         own_act = hours_by_task.get(tid, 0.0) if tid else 0.0
         ch_list = children_by_parent.get(tid, []) if tid else []
-        ch_est_sum = 0.0
-        ch_act_sum = 0.0
-        for ch in ch_list:
-            ce, ca = _calc_subtree_hours(ch, visited_ids)
-            ch_est_sum += ce
-            ch_act_sum += ca
-        tot_est = (own_est + ch_est_sum) if own_est > 0 else ch_est_sum
-        tot_act = own_act + ch_act_sum
-        return round(tot_est, 2), round(tot_act, 2)
+        if not ch_list:
+            pct = max(0.0, min(100.0, _safe_float(getattr(t, "physical_progress_pct", 0.0))))
+            if getattr(t, "status", None) in ("completed", "done") and pct == 0.0:
+                pct = 100.0
+            return own_est, own_act, own_est * pct / 100.0
+        child_totals = [_calc_subtree_hours(ch, visited_ids) for ch in ch_list]
+        return (
+            sum(planned for planned, _, _ in child_totals),
+            own_act + sum(actual for _, actual, _ in child_totals),
+            sum(earned for _, _, earned in child_totals),
+        )
 
     root_tasks_all = [
         t
@@ -2404,13 +2406,15 @@ def build_project_execution_matrix(
     ]
     visited_global: set[str] = set()
     total_estimated_hours = 0.0
+    earned_hours = 0.0
     for rt in root_tasks_all:
-        re, _ = _calc_subtree_hours(rt, visited_global)
+        re, _, earned = _calc_subtree_hours(rt, visited_global)
         total_estimated_hours += re
+        earned_hours += earned
     total_estimated_hours = round(total_estimated_hours, 2)
+    earned_hours = round(earned_hours, 2)
 
     progress_pct = float(std_evm["progress_percentage"])
-    earned_hours = round(total_estimated_hours * (progress_pct / 100.0), 2)
     if total_estimated_hours > 0 and total_actual_hours > 0:
         hours_efficiency_pct = round(min(150.0, (earned_hours / total_actual_hours) * 100.0), 1)
         hours_utilization_pct = round((total_actual_hours / total_estimated_hours) * 100.0, 1)
@@ -2488,12 +2492,14 @@ def build_project_execution_matrix(
         c_visited: set[str] = set()
         c_est_hours = 0.0
         c_act_hours = 0.0
+        c_earned_h = 0.0
         c_subtasks_count = 0
         activities_summary: List[Dict[str, Any]] = []
         for rt in c_root_tasks:
-            re, ra = _calc_subtree_hours(rt, c_visited)
+            re, ra, earned = _calc_subtree_hours(rt, c_visited)
             c_est_hours += re
             c_act_hours += ra
+            c_earned_h += earned
             rt_id = str(rt.id) if _is_valid_id(getattr(rt, "id", None)) else ""
             rt_children = children_by_parent.get(rt_id, []) if rt_id else []
             c_subtasks_count += len(rt_children)
@@ -2517,7 +2523,6 @@ def build_project_execution_matrix(
             else (round((c_bac / total_comp_budget) * 100.0, 1) if total_comp_budget > 0 else round(100.0 / max(len(components), 1), 1))
         )
         if c_est_hours > 0 and c_act_hours > 0:
-            c_earned_h = c_est_hours * (float(comp_evm["physical_progress_pct"]) / 100.0)
             c_hours_eff = round(min(150.0, (c_earned_h / c_act_hours) * 100.0), 1)
         else:
             c_hours_eff = float(comp_evm["physical_progress_pct"])
