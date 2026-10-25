@@ -26,6 +26,8 @@ MODULE_PREFIXES: dict[str, tuple[str, ...]] = {
         "backend/models.py",
         "backend/schemas/__init__.py",
         "backend/analytics/",
+        "tests/test_analytics_pastoral_helpers.py",
+        "frontend/next.config.mjs",
         "backend/services/knowledge_base.py",
         "backend/api/workspace_shared/",
         ".github/workflows/",
