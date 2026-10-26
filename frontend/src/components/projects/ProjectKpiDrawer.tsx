@@ -284,14 +284,15 @@ export function ProjectKpiDrawer({
       setFormData((prev) => ({ ...prev, source_type: newSource }));
       return;
     }
+    const isManual = newSource === "manual";
     setFormData((prev) => ({
       ...prev,
       source_type: newSource,
-      unit: newSource === "manual" ? prev.unit : meta.unit,
-      target_value: newSource === "manual" ? prev.target_value : meta.defaultTarget,
-      category: newSource === "manual" ? prev.category : meta.category,
+      unit: isManual ? prev.unit : meta.unit,
+      target_value: isManual ? prev.target_value : meta.defaultTarget,
+      category: isManual ? prev.category : meta.category,
       title:
-        !prev.title.trim() && newSource !== "manual"
+        !prev.title.trim() && !isManual
           ? meta.label.replace(/^Pro \d+ — /, "").replace(/^Frente [^—]+ — /, "")
           : prev.title,
     }));
@@ -487,13 +488,14 @@ export function ProjectKpiDrawer({
 
   const kpiMetrics = kpis.map((kpi) => {
     const percentage = kpi.target_value > 0
-      ? Math.max(0, Math.min(100, (kpi.current_value / kpi.target_value) * 100))
+      ? Math.max(0, Math.min(100, ((kpi.current_value || 0) / kpi.target_value) * 100))
       : 0;
     const sourceFront = kpi.frente
       || KPI_EXECUTION_SOURCES.find((source) => source.id === kpi.source_type)?.frente
       || "manual";
+    const cleanSpi = typeof kpi.last_spi === "number" && !isNaN(kpi.last_spi) && isFinite(kpi.last_spi) ? kpi.last_spi : null;
     const measurementFront = MEASUREMENT_FRONTS.find((front) => front.id === sourceFront)?.id ?? "manual";
-    return { kpi, percentage, measurementFront };
+    return { kpi, percentage, measurementFront, spi: cleanSpi };
   });
   const globalBenefitsIndex = kpiMetrics.length > 0
     ? kpiMetrics.reduce((total, item) => total + item.percentage, 0) / kpiMetrics.length
@@ -830,6 +832,7 @@ export function ProjectKpiDrawer({
                 const sourceMeta = KPI_EXECUTION_SOURCES.find((s) => s.id === kpi.source_type);
                 const frenteKey = kpi.frente || sourceMeta?.frente || "";
                 const frenteBadge = FRENTE_BADGES[frenteKey];
+                const spiValue = typeof kpi.last_spi === "number" && !isNaN(kpi.last_spi) && isFinite(kpi.last_spi) ? kpi.last_spi : null;
 
                 return (
                   <div
@@ -932,9 +935,9 @@ export function ProjectKpiDrawer({
                           </span>
                         </span>
                         <div className="flex items-center gap-2">
-                          {typeof kpi.last_spi === "number" && (
+                          {typeof spiValue === "number" && (
                             <span className="px-1.5 py-0.5 rounded bg-[hsl(var(--surface-3))] text-2xs font-bold text-[hsl(var(--text-secondary))]">
-                              SPI {kpi.last_spi.toFixed(2)}
+                              SPI {spiValue.toFixed(2)}
                             </span>
                           )}
                           <span className={clsx("font-extrabold tracking-tight", status.color)}>

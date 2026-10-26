@@ -152,12 +152,13 @@ export default function ProjectIndicatorsPage() {
     let scoredCount = 0;
 
     indicators.forEach((i) => {
-      if (i.last_spi !== null && i.last_spi !== undefined) {
-        if (i.last_spi >= 1.0) optimal++;
-        else if (i.last_spi >= 0.8) warning++;
+      const spi = i.last_spi;
+      if (typeof spi === "number" && isFinite(spi) && !isNaN(spi)) {
+        if (spi >= 1.0) optimal++;
+        else if (spi >= 0.8) warning++;
         else critical++;
       }
-      if (i.crema_score !== null && i.crema_score !== undefined) {
+      if (i.crema_score !== null && i.crema_score !== undefined && typeof i.crema_score === "number" && isFinite(i.crema_score)) {
         totalScore += i.crema_score;
         scoredCount++;
       }
@@ -172,7 +173,7 @@ export default function ProjectIndicatorsPage() {
       Boolean(i.source_type && i.source_type !== "manual")
     ).length;
     const withSpi = indicators.filter(
-      (i) => i.last_spi !== null && i.last_spi !== undefined
+      (i) => typeof i.last_spi === "number" && isFinite(i.last_spi) && !isNaN(i.last_spi)
     );
     const avgSpi =
       withSpi.length > 0
@@ -180,7 +181,7 @@ export default function ProjectIndicatorsPage() {
             withSpi.reduce((acc, row) => acc + (row.last_spi ?? 0), 0) /
             withSpi.length
           ).toFixed(2)
-        : "1.00";
+        : "Sin datos";
     return { automatedCount, avgSpi };
   }, [indicators]);
 

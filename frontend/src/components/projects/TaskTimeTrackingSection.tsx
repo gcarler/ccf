@@ -115,15 +115,13 @@ export default function TaskTimeTrackingSection({
   const totalHours = logs.reduce((acc, l) => acc + (l.hours || 0), 0);
   const effectiveActualHours = totalHours > 0 ? totalHours : (task.actual_hours ?? 0);
   const estimatedHours = task.estimated_hours ?? 0;
+  const reportedPhysicalProgress = task.physical_progress_pct ?? task.progress_pct ?? (task.status === "done" || task.status === "completed" ? 100 : null);
   const physicalProgressImpact =
-    estimatedHours > 0
+    estimatedHours > 0 && reportedPhysicalProgress === null
       ? Math.min(100, Math.round((effectiveActualHours / estimatedHours) * 100))
-      : Math.round(task.physical_progress_pct ?? 0);
-  const reportedPhysicalProgress = task.physical_progress_pct
-    ?? task.progress_pct
-    ?? (task.status === "done" || task.status === "completed" ? 100 : physicalProgressImpact);
-  const earnedEffortProgress = Number.isFinite(reportedPhysicalProgress)
-    ? Math.min(100, Math.max(0, reportedPhysicalProgress))
+      : null;
+  const earnedEffortProgress = Number.isFinite(reportedPhysicalProgress as number)
+    ? Math.min(100, Math.max(0, reportedPhysicalProgress as number))
     : 0;
   const earnedHours = estimatedHours * earnedEffortProgress / 100;
   const laborEfficiencyIndex = effectiveActualHours > 0 && estimatedHours > 0
@@ -193,7 +191,7 @@ export default function TaskTimeTrackingSection({
               color: "hsl(var(--primary))",
             }}
           >
-            Avance Físico: {physicalProgressImpact}%
+            {reportedPhysicalProgress !== null ? `${reportedPhysicalProgress}%` : physicalProgressImpact !== null ? `${physicalProgressImpact}%` : "No reportado"}
           </span>
         </div>
         {estimatedHours > 0 && (
@@ -204,7 +202,7 @@ export default function TaskTimeTrackingSection({
             <div
               className="h-full rounded-full transition-all duration-300"
               style={{
-                width: `${Math.min(100, Math.max(0, physicalProgressImpact))}%`,
+                width: `${physicalProgressImpact !== null ? Math.min(100, Math.max(0, physicalProgressImpact)) : 0}%`,
                 backgroundColor: "hsl(var(--primary))",
               }}
             />
