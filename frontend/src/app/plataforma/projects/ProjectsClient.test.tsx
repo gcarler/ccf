@@ -147,9 +147,10 @@ describe('ProjectsClient scroll-to-list (fix carrera 100ms vs ~300ms)', () => {
     );
   });
 
-  it('abre la Matriz PMO CPI×SPI desde las acciones del portafolio', () => {
+  it('abre la Matriz PMO CPI×SPI desde el menú Herramientas del portafolio', () => {
     render(<ProjectsClient initialProjects={[]} initialViewType="list" />);
-    fireEvent.click(screen.getByRole('button', { name: 'Matriz PMO (CPI×SPI)' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Herramientas' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Matriz PMO (CPI×SPI)' }));
     expect(screen.getByRole('dialog', { name: 'Matriz PMO CPI por SPI' })).toBeInTheDocument();
   });
 
