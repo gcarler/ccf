@@ -16,6 +16,8 @@ interface RightPanelProps {
     /** Opt in to persistent resizing and an overlay above workspace navigation. */
     resizeStorageKey?: string;
     resizeDefaultWidth?: number;
+    /** Habilita redimensión manual persistente (usa resizeStorageKey o 'workspace:right_panel_width' por defecto). */
+    resizable?: boolean;
     maximized?: boolean;
     /** Título del panel. Acepta string o nodo React (p. ej. icono + texto). */
     title?: React.ReactNode;
@@ -53,6 +55,7 @@ function RightPanel({
     embedded = false,
     resizeStorageKey,
     resizeDefaultWidth = 960,
+    resizable,
     maximized = false,
     title = 'Actividad',
     subtitle,
@@ -75,8 +78,16 @@ function RightPanel({
     const [mounted, setMounted] = useState(false);
     useEffect(() => setMounted(true), []);
 
+    const effectiveStorageKey = resizeStorageKey ?? (resizable ? 'workspace:right_panel_width' : undefined);
+    const hasResizing = Boolean(effectiveStorageKey) && !maximized && !embedded;
+
     const isOverlay = !embedded && (isControlled || rightMode === 'overlay');
-    const resize = useResizablePanel({ storageKey: resizeStorageKey ?? 'workspace:right_panel_width', defaultWidth: resizeDefaultWidth, panelRef, enabled: Boolean(resizeStorageKey) && !maximized && !embedded && Boolean(isOpen) && mounted });
+    const resize = useResizablePanel({
+        storageKey: effectiveStorageKey ?? 'workspace:right_panel_width',
+        defaultWidth: resizeDefaultWidth,
+        panelRef,
+        enabled: hasResizing && Boolean(isOpen) && mounted,
+    });
 
     const handleClose = () => {
         if (isControlled) {
@@ -89,7 +100,7 @@ function RightPanel({
     // Focus trap + Escape: only in controlled/overlay mode where the panel
     // behaves as a modal drawer. In push mode it is part of the normal layout.
     useFocusTrap(panelRef, {
-        active: isOpen && isOverlay && (!resizeStorageKey || mounted),
+        active: isOpen && isOverlay && (!hasResizing || mounted),
         onEscape: handleClose,
     });
 
@@ -122,12 +133,12 @@ function RightPanel({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: typeof width === 'number' ? width : 480, opacity: 0 }}
             transition={{ type: 'tween', duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-            style={resizeStorageKey && !maximized ? resize.style : widthStyle}
+            style={hasResizing ? resize.style : widthStyle}
             className={clsx(
                 'flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-elevated))] border-l border-[hsl(var(--border))] dark:border-[hsl(var(--border))]',
                 widthClass,
                 isControlled || rightMode === 'overlay'
-                    ? clsx('fixed right-0 top-10 h-[calc(100vh-2.5rem)] shadow-[-24px_0_60px_hsl(var(--shadow-floating))]', resizeStorageKey ? 'z-[80]' : 'z-[35]')
+                    ? clsx('fixed right-0 top-10 h-[calc(100vh-2.5rem)] shadow-[-24px_0_60px_hsl(var(--shadow-floating))]', hasResizing ? 'z-[80]' : 'z-[35]')
                     : 'relative h-full z-[25] shadow-[-8px_0_24px_hsl(var(--shadow-floating))]',
                 className,
             )}
@@ -136,7 +147,6 @@ function RightPanel({
             aria-modal={isOverlay ? 'true' : undefined}
             aria-label={typeof title === 'string' ? title : 'Panel'}
         >
-            {resizeStorageKey && !maximized && <PanelResizeHandle resize={resize} />}
             {/* Panel header */}
             <div className="shrink-0 px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.625rem+var(--density-pad-y-delta,0px))] border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))] flex items-start justify-between gap-[calc(0.5rem+var(--density-gap-delta,0px))]">
                 <div className="min-w-0">
@@ -165,6 +175,8 @@ function RightPanel({
                 </div>
             </div>
 
+            {hasResizing && <PanelResizeHandle resize={resize} />}
+
             {/* Scrollable content */}
             <div className={clsx('flex-1 overflow-y-auto overflow-x-hidden', contentClassName)}>
                 {children}
@@ -188,7 +200,7 @@ function RightPanel({
                                 transition={{ duration: 0.2 }}
                                 className={clsx(
                                     'bg-[hsl(var(--bg-muted))]/20 backdrop-blur-[1px]',
-                                    resizeStorageKey ? 'z-[79]' : 'z-[34]',
+                                    hasResizing ? 'z-[79]' : 'z-[34]',
                                     isControlled ? 'fixed inset-x-0 bottom-0 top-10' : 'absolute inset-0'
                                 )}
                                 onClick={handleClose}
@@ -201,7 +213,7 @@ function RightPanel({
             </>
         );
         // Project tools must escape the workspace's central stacking context.
-        return resizeStorageKey ? (mounted ? createPortal(overlay, document.body) : null) : overlay;
+        return hasResizing ? (mounted ? createPortal(overlay, document.body) : null) : overlay;
     }
 
     // Push mode: panel is inline, AnimatePresence handles width

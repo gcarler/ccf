@@ -72,4 +72,23 @@ describe('RightPanel', () => {
     expect(screen.getAllByRole('button', { name: 'Cerrar panel' })).toHaveLength(1);
   });
 
+  it('renders a manual resize handle when resizable or resizeStorageKey is provided', () => {
+    window.innerWidth = 1200;
+    renderWithProvider(
+      <RightPanel open resizable title="Panel ajustable">
+        <p>Contenido ajustable</p>
+      </RightPanel>
+    );
+    expect(screen.getByRole('separator', { name: 'Ajustar ancho del panel' })).toBeInTheDocument();
+  });
+
+  it('renders a manual resize handle with custom storage key', () => {
+    window.innerWidth = 1200;
+    renderWithProvider(
+      <RightPanel open resizeStorageKey="workspace:project_tools_width" resizeDefaultWidth={960} title="Herramientas">
+        <p>Herramientas de gestión</p>
+      </RightPanel>
+    );
+    expect(screen.getByRole('separator', { name: 'Ajustar ancho del panel' })).toBeInTheDocument();
+  });
 });

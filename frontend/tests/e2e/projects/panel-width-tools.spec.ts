@@ -129,6 +129,12 @@ test('project tools share one resizable drawer and retain width across tools and
   await expect(
     context.getByRole('button', { name: 'Componentes EDT', exact: true })
   ).toBeVisible();
+  await expect(
+    context.getByRole('button', { name: 'Desglose de Paquetes WBS', exact: true })
+  ).toBeVisible();
+  await expect(
+    context.getByRole('button', { name: 'Matriz PMO', exact: true })
+  ).toBeVisible();
   await context
     .getByRole('button', { name: 'EDT / WBS y Diccionario', exact: true })
     .click();

@@ -14,6 +14,7 @@ const META: ProjectHubModuleMeta[] = [
   { key: "wbs", label: "EDT / WBS y Diccionario", icon: ListTree },
   { key: "drive", label: "Drive", icon: FolderArchive },
   { key: "governance", label: "Gobernanza PMI", icon: ClipboardCheck },
+  { key: "pmo", label: "Matriz PMO", icon: ClipboardCheck },
 ];
 
 const RENDERERS = {
@@ -21,6 +22,7 @@ const RENDERERS = {
   drive: () => <div data-testid="drive-content">Drive</div>,
   governance: () => <div data-testid="governance-content">Gobernanza PMI</div>,
   wbs: () => <div data-testid="wbs-content">EDT / WBS y Diccionario</div>,
+  pmo: () => <div data-testid="pmo-content">Matriz PMO</div>,
 };
 
 function renderHub(
@@ -195,5 +197,19 @@ describe("ProjectManagementHubDrawer", () => {
     expect(screen.queryByTestId("governance-content")).not.toBeInTheDocument();
     await user.click(screen.getByRole("tab", { name: /EDT \/ WBS y Diccionario/ }));
     expect(props.onActivateModule).toHaveBeenCalledWith("wbs");
+  });
+
+  it("expone Matriz PMO en el Hub y monta solo su renderer activo", async () => {
+    const user = userEvent.setup();
+    const { props } = renderHub({
+      openModules: ["pmo"],
+      activeModule: "pmo",
+    });
+
+    expect(screen.getByRole("tab", { name: /Matriz PMO/ })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByTestId("pmo-content")).toBeInTheDocument();
+    expect(screen.queryByTestId("kpis-content")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: /Matriz PMO/ }));
+    expect(props.onActivateModule).toHaveBeenCalledWith("pmo");
   });
 });

@@ -133,7 +133,9 @@ export function ProjectPMIKnowledgeDrawer({
                     Compendio Canónico de 7 Volúmenes • Estándar de Gestión CCF
                 </span>
             }
-            width="w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl"
+            width="w-full sm:w-[92vw] lg:w-[80vw] xl:w-[72vw] max-w-none"
+            resizeStorageKey="workspace:project_tools_width"
+            resizeDefaultWidth={960}
         >
             <div className="p-4 sm:p-6 space-y-6">
                 {/* Search Bar & Sync Action */}

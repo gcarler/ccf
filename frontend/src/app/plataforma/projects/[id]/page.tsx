@@ -88,6 +88,7 @@ const PROJECT_HUB_MODULE_META: ProjectHubModuleMeta[] = [
   { key: 'reports', label: 'Reportes', icon: FileText },
   { key: 'indicators', label: 'Indicadores y Resultados', icon: BarChart3 },
   { key: 'ccb', label: 'Control de Cambios (CCB)', icon: Gavel },
+  { key: 'pmo', label: 'Matriz PMO', icon: BarChart3 },
   { key: 'evm', label: 'Valor Ganado (EVM / CPI)', icon: TrendingUp },
   { key: 'drive', label: 'Drive', icon: FolderArchive },
   { key: 'governance', label: 'Gobernanza PMI', icon: ClipboardCheck },
@@ -281,6 +282,13 @@ const ProjectWBSDrawer = dynamic(
     ),
   { loading: ProjectDrawerLoading }
 );
+const ProjectPMOPortfolioDrawer = dynamic(
+  () =>
+    import('@/components/projects/ProjectPMOPortfolioDrawer').then(
+      module => module.ProjectPMOPortfolioDrawer
+    ),
+  { loading: ProjectDrawerLoading }
+);
 
 /**
  * Orquestador de la página de detalle de un proyecto.
@@ -466,6 +474,22 @@ export default function ProjectDetailPage() {
         action: () => openHubModule('wbs'),
       },
       {
+        id: 'project-detail-hub-wbs-breakdown',
+        label: 'Abrir Desglose de Paquetes WBS',
+        description: 'Estructura jerárquica WBS, paquetes de trabajo y regla del 100%',
+        icon: ListTree,
+        group: 'Hub de gestión',
+        action: () => openHubModule('wbs'),
+      },
+      {
+        id: 'project-detail-hub-pmo',
+        label: 'Abrir Matriz PMO',
+        description: 'Diagnóstico multi-proyecto CPI vs SPI y portafolio PMO',
+        icon: BarChart3,
+        group: 'Hub de gestión',
+        action: () => openHubModule('pmo'),
+      },
+      {
         id: 'project-detail-hub-kpis',
         label: 'Abrir KPIs',
         description: 'Indicadores clave de desempeño del proyecto',
@@ -549,7 +573,9 @@ export default function ProjectDetailPage() {
     { key: 'whiteboard', label: 'Pizarra', icon: PencilRuler, onSelect: () => setWhiteboardOpen(true) },
     { key: 'phases', label: 'Fases', icon: Edit3, onSelect: () => setShowPhaseManager(true) },
     { key: 'components', label: 'Componentes EDT', icon: Layers, onSelect: () => openHubModule('components') },
-    { key: 'wbs', label: 'EDT / WBS y Diccionario', icon: ListTree, onSelect: () => openHubModule('wbs') },
+    { key: 'wbs', label: 'Desglose de Paquetes WBS', icon: ListTree, onSelect: () => openHubModule('wbs') },
+    { key: 'wbs_dict', label: 'EDT / WBS y Diccionario', icon: ListTree, onSelect: () => openHubModule('wbs') },
+    { key: 'pmo', label: 'Matriz PMO', icon: BarChart3, onSelect: () => openHubModule('pmo') },
     { key: 'labels', label: 'Etiquetas', icon: Tag, onSelect: () => openHubModule('labels') },
     { key: 'kpis', label: 'KPIs', icon: Target, onSelect: () => openHubModule('kpis') },
     { key: 'progress', label: 'Avance', icon: Sliders, onSelect: () => openHubModule('progress') },
@@ -708,9 +734,17 @@ export default function ProjectDetailPage() {
     ),
     ccb: () => (
       <ProjectChangeControlDrawer
+        embedded
         projectId={project?.id || id}
         isOpen
         onClose={() => closeHubModule('ccb')}
+      />
+    ),
+    pmo: () => (
+      <ProjectPMOPortfolioDrawer
+        embedded
+        isOpen
+        onClose={() => closeHubModule('pmo')}
       />
     ),
   } satisfies Partial<Record<ProjectHubModuleKey, () => React.ReactNode>>;
