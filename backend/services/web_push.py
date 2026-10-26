@@ -25,7 +25,11 @@ from cryptography.hazmat.primitives.asymmetric import ec, utils
 logger = logging.getLogger("CCF-WebPush")
 
 # Fallback in-memory and persistent state file
-_DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+_DATA_DIR = (
+    Path(os.environ["CCF_RUNTIME_DIR"]) / "backend" / "data"
+    if os.getenv("CCF_RUNTIME_DIR")
+    else Path(__file__).resolve().parent.parent / "data"
+)
 _VAPID_FILE = _DATA_DIR / "vapid_keys.json"
 _SUBSCRIPTIONS_FILE = _DATA_DIR / "web_push_subscriptions.json"
 
