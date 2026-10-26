@@ -71,3 +71,26 @@ def test_projects_owns_evm_service_but_not_other_module_services():
         "feature/projects-indicator-core",
         ["backend/services/knowledge_base.py", "backend/services/academic_engine_service.py"],
     ) == ["backend/services/knowledge_base.py", "backend/services/academic_engine_service.py"]
+
+
+def test_ci_and_shared_facades_have_platform_ownership():
+    paths = [".github/workflows/ci.yml", "requirements.txt", ".coveragerc",
+             "backend/models.py", "backend/schemas/__init__.py", "alembic/env.py",
+             "frontend/vitest.config.ts"]
+    assert ownership_violations("feature/platform-ci", paths) == []
+    assert ownership_violations("feature/projects-ci", paths) == paths
+
+
+def test_projects_owns_pmi_services_but_no_unrelated_apis():
+    paths = ["backend/services/project_ccb_service.py", "backend/services/anydoc_service.py",
+             "backend/services/wiki_pmi_service.py"]
+    assert ownership_violations("feature/projects-pmi-quality", paths) == []
+    foreign = ["backend/api/messaging.py", "backend/services/academic_engine_service.py"]
+    assert ownership_violations("feature/projects-pmi-quality", foreign) == foreign
+
+
+def test_finance_has_an_explicit_owner_and_rejects_foreign_module_files():
+    own = ["backend/api/finance_suite.py", "tests/test_finance_multi_approval.py", "docs/FINANCE_API_CONTRACTS.md"]
+    assert ownership_violations("feature/finance-quality", own) == []
+    foreign = ["backend/api/projects.py", "backend/api/crm/personas.py"]
+    assert ownership_violations("feature/finance-quality", foreign) == foreign

@@ -8,13 +8,13 @@ Valida:
 """
 
 from pathlib import Path
+
 from sqlalchemy import inspect
-from backend.core.database import engine
 
 
-def test_axiom_1_kernel_personas_integrity():
+def test_axiom_1_kernel_personas_integrity(db_session):
     """Valida que personas.id sea la identidad canónica y auth_users comparta el UUID."""
-    inspector = inspect(engine)
+    inspector = inspect(db_session.get_bind())
     tables = inspector.get_table_names()
     assert "personas" in tables, "La tabla 'personas' no existe en PostgreSQL"
     assert "auth_users" in tables, "La tabla 'auth_users' no existe en PostgreSQL"
@@ -35,9 +35,9 @@ def test_axiom_1_kernel_personas_integrity():
     assert len(set(persona_fks)) >= 100, f"Se esperaban >= 100 tablas referenciando personas.id, se hallaron {len(set(persona_fks))}"
 
 
-def test_axiom_3_multi_tenant_isolation():
+def test_axiom_3_multi_tenant_isolation(db_session):
     """Valida que las tablas de dominio posean aislamiento por sede_id."""
-    inspector = inspect(engine)
+    inspector = inspect(db_session.get_bind())
     tables = inspector.get_table_names()
 
     required_tenant_tables = [
@@ -69,9 +69,9 @@ def test_axiom_2_zero_utcnow():
     assert len(violations) == 0, f"Archivos con datetime.utcnow() deprecado: {violations}"
 
 
-def test_zero_commercial_payment_gateways_in_db():
+def test_zero_commercial_payment_gateways_in_db(db_session):
     """Valida que no existan tablas ni columnas para pasarelas comerciales externas."""
-    inspector = inspect(engine)
+    inspector = inspect(db_session.get_bind())
     tables = inspector.get_table_names()
     forbidden = ["stripe", "wompi", "mercadopago", "paypal", "payu"]
 
