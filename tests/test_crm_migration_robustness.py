@@ -1,11 +1,12 @@
 import os
 import subprocess
+import sys
 import uuid
 from pathlib import Path
 
 import pytest
 from sqlalchemy import create_engine, text
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.engine import make_url
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -15,13 +16,8 @@ def _run_alembic(*args: str, database_url: str) -> subprocess.CompletedProcess[s
     env["ENVIRONMENT"] = "test"
     env["DATABASE_URL"] = database_url
 
-    # Ensure we use the venv's alembic binary if available
-    alembic_bin = str(ROOT / "venv" / "bin" / "alembic")
-    if not os.path.exists(alembic_bin):
-        alembic_bin = "alembic"
-
     return subprocess.run(
-        [alembic_bin, *args],
+        [sys.executable, "-m", "alembic", *args],
         cwd=str(ROOT),
         env=env,
         text=True,
@@ -43,15 +39,35 @@ def test_sqlite_baseline_migration_is_explicitly_unsupported(tmp_path):
     assert "sqlalchemy.exc" in output.lower()
 
 
+def _postgres_test_url():
+    raw = os.environ.get("CRM_MIGRATION_DATABASE_URL")
+    if not raw:
+        pytest.skip("Set CRM_MIGRATION_DATABASE_URL to an isolated PostgreSQL test database")
+    url = make_url(raw)
+    if (
+        url.get_backend_name() != "postgresql"
+        or bool(url.query)
+        or url.host not in {"localhost", "127.0.0.1", "::1"}
+        or not url.database
+        or not url.database.startswith("ccf_test_")
+        or os.environ.get("CRM_MIGRATION_TARGET_DATABASE") != url.database
+    ):
+        pytest.fail("CRM migrations require a confirmed isolated loopback ccf_test_* database")
+    return url.set(drivername="postgresql+psycopg2")
+
+
 def _postgres_engine_or_skip():
-    engine = create_engine("postgresql://ccf_admin:ccf_password_secret_123@localhost:5432/ccf_db")
-    try:
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-    except OperationalError:
-        engine.dispose()
-        pytest.skip("PostgreSQL local no está disponible")
+    # A configured CI database must be reachable; failure is not silently skipped.
+    engine = create_engine(_postgres_test_url())
+    with engine.connect() as conn:
+        conn.execute(text("SELECT 1"))
     return engine
+
+
+def _schema_url(schema):
+    return _postgres_test_url().update_query_dict(
+        {"options": f"-csearch_path={schema}"}
+    ).render_as_string(hide_password=False)
 
 
 def test_postgresql_baseline_migration_failure():
@@ -60,7 +76,7 @@ def test_postgresql_baseline_migration_failure():
     It can fail due to "type citext does not exist" (lack of CITEXT extension) or
     "already exists" if the schema was not completely fresh.
     """
-    pg_url = "postgresql://ccf_admin:ccf_password_secret_123@localhost:5432/ccf_db?options=-csearch_path=baseline_fail_schema"
+    pg_url = _schema_url("baseline_fail_schema")
 
     # Recreate the schema clean
     engine = _postgres_engine_or_skip()
@@ -164,7 +180,7 @@ def test_crm_automation_graph_migration_logic_postgresql():
     """
     Verify the upgrade/downgrade logic on PostgreSQL, including the lossy downgrade behavior.
     """
-    pg_url = "postgresql://ccf_admin:ccf_password_secret_123@localhost:5432/ccf_db?options=-csearch_path=graph_migration_test"
+    pg_url = _schema_url("graph_migration_test")
     engine = _postgres_engine_or_skip()
 
     with engine.connect() as conn:
@@ -251,3 +267,17 @@ def test_crm_automation_graph_migration_logic_postgresql():
         ).fetchone()
         assert res_autos is not None
         assert res_autos[1] in (b_id, d_id)
+
+
+@pytest.mark.parametrize("raw,target", [
+    ("postgresql+psycopg2://postgres@127.0.0.1:5432/ccf_db", "ccf_db"),
+    ("postgresql+psycopg2://postgres@example.org/ccf_test_crm", "ccf_test_crm"),
+    ("postgresql+psycopg2://postgres@localhost/ccf_test_crm?host=remote.invalid", "ccf_test_crm"),
+    ("postgresql+psycopg2://postgres@localhost/ccf_test_crm?dbname=ccf_db", "ccf_test_crm"),
+    ("postgresql+psycopg2://postgres@localhost/ccf_test_crm", "wrong_test"),
+])
+def test_postgres_migration_target_rejects_unsafe_databases(monkeypatch, raw, target):
+    monkeypatch.setenv("CRM_MIGRATION_DATABASE_URL", raw)
+    monkeypatch.setenv("CRM_MIGRATION_TARGET_DATABASE", target)
+    with pytest.raises(pytest.fail.Exception, match="confirmed isolated"):
+        _postgres_test_url()
