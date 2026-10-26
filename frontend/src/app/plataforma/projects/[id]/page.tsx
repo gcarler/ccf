@@ -474,14 +474,6 @@ export default function ProjectDetailPage() {
         action: () => openHubModule('wbs'),
       },
       {
-        id: 'project-detail-hub-wbs-breakdown',
-        label: 'Abrir Desglose de Paquetes WBS',
-        description: 'Estructura jerárquica WBS, paquetes de trabajo y regla del 100%',
-        icon: ListTree,
-        group: 'Hub de gestión',
-        action: () => openHubModule('wbs'),
-      },
-      {
         id: 'project-detail-hub-pmo',
         label: 'Abrir Matriz PMO',
         description: 'Diagnóstico multi-proyecto CPI vs SPI y portafolio PMO',
@@ -574,7 +566,6 @@ export default function ProjectDetailPage() {
     { key: 'phases', label: 'Fases', icon: Edit3, onSelect: () => setShowPhaseManager(true) },
     { key: 'components', label: 'Componentes EDT', icon: Layers, onSelect: () => openHubModule('components') },
     { key: 'wbs', label: 'Desglose de Paquetes WBS', icon: ListTree, onSelect: () => openHubModule('wbs') },
-    { key: 'wbs_dict', label: 'EDT / WBS y Diccionario', icon: ListTree, onSelect: () => openHubModule('wbs') },
     { key: 'pmo', label: 'Matriz PMO', icon: BarChart3, onSelect: () => openHubModule('pmo') },
     { key: 'labels', label: 'Etiquetas', icon: Tag, onSelect: () => openHubModule('labels') },
     { key: 'kpis', label: 'KPIs', icon: Target, onSelect: () => openHubModule('kpis') },

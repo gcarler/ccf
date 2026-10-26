@@ -136,7 +136,7 @@ test('project tools share one resizable drawer and retain width across tools and
     context.getByRole('button', { name: 'Matriz PMO', exact: true })
   ).toBeVisible();
   await context
-    .getByRole('button', { name: 'EDT / WBS y Diccionario', exact: true })
+    .getByRole('button', { name: 'Desglose de Paquetes WBS', exact: true })
     .click();
   const hub = page.getByRole('dialog', {
     name: 'Centro de gestión del proyecto',
@@ -199,13 +199,13 @@ test('project tools share one resizable drawer and retain width across tools and
   await page.screenshot({ path: '/tmp/ccf-project-tools-desktop.png' });
   await hub.getByRole('button', { name: 'Cerrar panel', exact: true }).click();
   await context
-    .getByRole('button', { name: 'EDT / WBS y Diccionario', exact: true })
+    .getByRole('button', { name: 'Desglose de Paquetes WBS', exact: true })
     .click();
   await expect(hub).toHaveCSS('width', '1036px');
   await page.reload();
   await context.getByRole('tab', { name: 'Herramientas' }).click();
   await context
-    .getByRole('button', { name: 'EDT / WBS y Diccionario', exact: true })
+    .getByRole('button', { name: 'Desglose de Paquetes WBS', exact: true })
     .click();
   await expect(hub).toHaveCSS('width', '1036px');
   await hub.getByRole('separator').focus();
