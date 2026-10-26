@@ -39,6 +39,19 @@ interface RightPanelProps {
     className?: string;
     /** Clases adicionales para el área de contenido */
     contentClassName?: string;
+    /**
+     * Renderiza el backdrop difuminado que bloquea el resto de la pantalla.
+     * `false` → panel no modal: el resto de la plataforma sigue accesible
+     * (coexistencia de herramientas laterales, axioma “sin modales bloqueantes”).
+     * Default `true` para preservar el comportamiento de drawers aislados.
+     */
+    hasBackdrop?: boolean;
+    /**
+     * Desplazamiento (px) desde el borde derecho de la ventana: el panel
+     * usa `right: offsetRightpx` en vez de `right: 0`, para no tapar
+     * paneles adyacentes (por ejemplo el sidebar de contexto del proyecto).
+     */
+    offsetRight?: number;
 }
 
 /**
@@ -69,6 +82,8 @@ function RightPanel({
     onClose,
     className,
     contentClassName,
+    hasBackdrop = true,
+    offsetRight,
 }: RightPanelProps) {
     const { layers, closeLayer, rightMode } = useSidebarLayers();
     const open = controlledOpen ?? isOpenAlias;
@@ -99,8 +114,10 @@ function RightPanel({
 
     // Focus trap + Escape: only in controlled/overlay mode where the panel
     // behaves as a modal drawer. In push mode it is part of the normal layout.
+    // Sin backdrop el panel NO es modal: no captura el foco ni bloquea el resto
+    // de la pantalla, para que otras herramientas sigan disponibles.
     useFocusTrap(panelRef, {
-        active: isOpen && isOverlay && (!hasResizing || mounted),
+        active: isOpen && isOverlay && hasBackdrop && (!hasResizing || mounted),
         onEscape: handleClose,
     });
 
@@ -125,6 +142,13 @@ function RightPanel({
         : undefined;
     const widthClass = typeof width === 'string' ? width : undefined;
 
+    const panelStyle = {
+        ...(hasResizing ? (resize.style as React.CSSProperties) : widthStyle),
+        ...(offsetRight !== undefined
+            ? { right: offsetRight ? `${offsetRight}px` : 0 }
+            : null),
+    };
+
     const panel = (
         <PanelContainer
             ref={panelRef}
@@ -133,7 +157,7 @@ function RightPanel({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: typeof width === 'number' ? width : 480, opacity: 0 }}
             transition={{ type: 'tween', duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-            style={hasResizing ? resize.style : widthStyle}
+            style={panelStyle}
             className={clsx(
                 'flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-elevated))] border-l border-[hsl(var(--border))] dark:border-[hsl(var(--border))]',
                 widthClass,
@@ -144,7 +168,7 @@ function RightPanel({
             )}
             tabIndex={-1}
             role={isOverlay ? 'dialog' : 'complementary'}
-            aria-modal={isOverlay ? 'true' : undefined}
+            aria-modal={isOverlay && hasBackdrop ? 'true' : undefined}
             aria-label={typeof title === 'string' ? title : 'Panel'}
         >
             {/* Panel header */}
@@ -191,21 +215,24 @@ function RightPanel({
                 <AnimatePresence>
                     {isOpen && (
                         <>
-                            {/* Backdrop */}
-                            <motion.div
-                                key="right-backdrop"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 0.2 }}
-                                className={clsx(
-                                    'bg-[hsl(var(--bg-muted))]/20 backdrop-blur-[1px]',
-                                    hasResizing ? 'z-[79]' : 'z-[34]',
-                                    isControlled ? 'fixed inset-x-0 bottom-0 top-10' : 'absolute inset-0'
-                                )}
-                                onClick={handleClose}
-                                aria-hidden="true"
-                            />
+                            {/* Backdrop: solo en modo modal (hasBackdrop); sin él el resto
+                                de la plataforma permanece clickeable y sin difuminado. */}
+                            {hasBackdrop && (
+                                <motion.div
+                                    key="right-backdrop"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className={clsx(
+                                        'bg-[hsl(var(--bg-muted))]/20 backdrop-blur-[1px]',
+                                        hasResizing ? 'z-[79]' : 'z-[34]',
+                                        isControlled ? 'fixed inset-x-0 bottom-0 top-10' : 'absolute inset-0'
+                                    )}
+                                    onClick={handleClose}
+                                    aria-hidden="true"
+                                />
+                            )}
                             {panel}
                         </>
                     )}

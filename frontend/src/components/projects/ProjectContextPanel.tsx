@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Activity, Bell, CheckCircle2, ChevronLeft, ExternalLink, Inbox, Maximize2, MessageSquare, Minimize2, Minus, Users, Wrench, X } from "lucide-react";
 import clsx from "clsx";
 import { useProjectUpdate } from "@/context/ProjectUpdateContext";
@@ -39,6 +39,8 @@ interface ProjectContextPanelProps {
     onSelect?: () => void | Promise<void>;
     variant?: "warning" | "destructive";
   }>;
+  /** Notifica el ancho actual (px) al montar y cada vez que el usuario redimensiona el panel (coexistencia con paneles adyacentes). */
+  onWidthChange?: (width: number) => void;
 }
 
 /** Orden por defecto (TKT-PRO-SCROLLBARS-AND-MOVABLE-TABS-01): donde reordenar las pestañas sigue respetando esta secuencia base. */
@@ -98,6 +100,7 @@ export default function ProjectContextPanel({
   isMinimized: controlledMinimized,
   onToggleMinimize,
   tools,
+  onWidthChange,
 }: ProjectContextPanelProps) {
   const { project, tasks, activities, reloadProject } = useProjectUpdate();
   const { token } = useAuth();
@@ -133,6 +136,12 @@ export default function ProjectContextPanel({
   });
 
   const tabRefs = useRef<Partial<Record<ContextTab, HTMLButtonElement | null>>>({});
+
+  // Publica el ancho actual del sidebar: el detalle lo usa para desplazar el
+  // hub de herramientas (offsetRight) y lograr coexistencia lado a lado.
+  useEffect(() => {
+    onWidthChange?.(resize.width);
+  }, [resize.width, onWidthChange]);
   const { items: projectInbox, unreadCount: projectInboxUnread, loading: inboxLoading, error: inboxError, refresh: refreshProjectInbox, markAsRead } = useProjectInbox(project?.id);
   const { notifications } = useNotifications();
   const handleInboxSocketEvent = useCallback((payload: WsEvent) => {

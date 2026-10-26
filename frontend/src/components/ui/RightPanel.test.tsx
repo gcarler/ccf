@@ -91,4 +91,51 @@ describe('RightPanel', () => {
     );
     expect(screen.getByRole('separator', { name: 'Ajustar ancho del panel' })).toBeInTheDocument();
   });
+
+  describe('hasBackdrop=false (paneles no modales / coexistencia)', () => {
+    it('no renderiza backdrop (sin difuminado ni bloqueo de clics externos)', () => {
+      const { container } = renderWithProvider(
+        <RightPanel open hasBackdrop={false} title="Herramienta no modal">
+          <p>Contenido libre</p>
+        </RightPanel>
+      );
+      expect(container.querySelector('[class*="backdrop-blur"]')).toBeNull();
+    });
+
+    it('omite aria-modal en el panel', () => {
+      renderWithProvider(
+        <RightPanel open hasBackdrop={false} title="Herramienta no modal">
+          <p>Contenido libre</p>
+        </RightPanel>
+      );
+      expect(screen.getByRole('dialog')).not.toHaveAttribute('aria-modal');
+    });
+
+    it('mantiene aria-modal="true" cuando el backdrop está activo (default)', () => {
+      renderWithProvider(
+        <RightPanel open title="Drawer modal">
+          <p>Contenido</p>
+        </RightPanel>
+      );
+      expect(screen.getByRole('dialog')).toHaveAttribute('aria-modal', 'true');
+    });
+
+    it('desplaza el panel a la derecha según offsetRight', () => {
+      renderWithProvider(
+        <RightPanel open hasBackdrop={false} offsetRight={380} title="Panel desplazado">
+          <p>Coexistencia</p>
+        </RightPanel>
+      );
+      expect(screen.getByRole('dialog', { name: 'Panel desplazado' })).toHaveStyle({ right: '380px' });
+    });
+
+    it('aplica right: 0 cuando offsetRight === 0', () => {
+      renderWithProvider(
+        <RightPanel open hasBackdrop={false} offsetRight={0} title="Panel pegado">
+          <p>Coexistencia</p>
+        </RightPanel>
+      );
+      expect(screen.getByRole('dialog', { name: 'Panel pegado' })).toHaveStyle({ right: '0px' });
+    });
+  });
 });
