@@ -27,6 +27,7 @@ MODULE_PREFIXES: dict[str, tuple[str, ...]] = {
         "backend/schemas/__init__.py",
         "backend/analytics/",
         "tests/test_analytics_pastoral_helpers.py",
+        "tests/test_endpoint_coverage.py",
         "frontend/next.config.mjs",
         "backend/services/knowledge_base.py",
         "backend/api/workspace_shared/",
@@ -98,6 +99,8 @@ MODULE_PREFIXES: dict[str, tuple[str, ...]] = {
     ),
     "cms": (
         "backend/api/cms",
+        "backend/api/_cms_helpers/",
+        "backend/exceptions/cms.py",
         "backend/api/cms_v2",
         "backend/api/enterprise_cms",
         "backend/crud/cms",
