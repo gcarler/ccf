@@ -54,18 +54,22 @@ from backend.crud.crm_.personas import (
 )
 from backend.crud.projects import (
     _prepare_kpi_response,
-    create_milestone as _projects_create_milestone,
-    delete_milestone as _projects_delete_milestone,
     evaluate_task_mutation_automations,
     get_user_persona_id,
     sync_supply_expense,
     trigger_project_automations_safe,
 )
+from backend.crud.projects import (
+    create_milestone as _projects_create_milestone,
+)
+from backend.crud.projects import (
+    delete_milestone as _projects_delete_milestone,
+)
 from backend.mesh_websockets import manager
+from backend.services import project_lifecycle_pmi_service
 from backend.services.comment_notifications import notify_mention
 from backend.services.mention_parser import resolve_mentions
 from backend.services.project_evm_service import build_project_execution_matrix
-from backend.services import project_lifecycle_pmi_service
 from backend.services.task_notifications import notify_task_assigned
 
 settings = get_settings()
@@ -2096,7 +2100,7 @@ def update_task(
             from backend.services.project_evm_service import sync_parent_task_rollup
             sync_parent_task_rollup(db, task.parent_id)
         except Exception:
-            pass
+            logger.debug("Best-effort update_task failed; retaining fallback")
     evaluate_task_mutation_automations(
         db,
         task,
@@ -3692,7 +3696,7 @@ async def upload_task_attachment(
                 sede_id=user_sede,
             )
         except Exception:
-            pass
+            logger.debug("Best-effort upload_task_attachment failed; retaining fallback")
     _log_project_activity(
         db,
         project_id,
@@ -3819,7 +3823,7 @@ def update_project_task(
             from backend.services.project_evm_service import sync_parent_task_rollup
             sync_parent_task_rollup(db, task.parent_id)
         except Exception:
-            pass
+            logger.debug("Best-effort update_project_task failed; retaining fallback")
     evaluate_task_mutation_automations(
         db,
         task,
@@ -4044,7 +4048,7 @@ def create_subtask(
         from backend.services.project_evm_service import sync_parent_task_rollup
         sync_parent_task_rollup(db, db_subtask.parent_id)
     except Exception:
-        pass
+        logger.debug("Best-effort create_subtask failed; retaining fallback")
     if getattr(db_subtask, "assignee_id", None):
         notify_task_assigned(
             db,
@@ -4096,7 +4100,7 @@ def update_subtask(
             from backend.services.project_evm_service import sync_parent_task_rollup
             sync_parent_task_rollup(db, subtask.parent_id)
         except Exception:
-            pass
+            logger.debug("Best-effort update_subtask failed; retaining fallback")
     evaluate_task_mutation_automations(
         db,
         subtask,
@@ -6650,7 +6654,7 @@ async def upload_project_file_endpoint(
                 db.add(att)
                 db.commit()
         except Exception:
-            pass
+            logger.debug("Best-effort upload_project_file_endpoint failed; retaining fallback")
 
     _log_project_activity(
         db,

@@ -13,7 +13,7 @@ import unicodedata
 from collections.abc import Mapping, Sequence
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Sequence
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -2812,7 +2812,7 @@ def audit_wiki_definition_of_ready_gate_hygiene(
             "unestimated_item_ids": [],
             "blocked_dependency_item_ids": [],
             "missing_spec_link_item_ids": [],
-            "dor_pass_rate_pct": 0.0,
+            "dor_pass_rate_pct": 0.0,  # nosec B105 # audit status/readiness metric, not a credential
             "is_sprint_ready": False,
         }
 
@@ -6373,11 +6373,11 @@ def audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene(
             missing_rotation_runbook_ids.append(credential_id)
 
     if stale_rotation_credential_ids or static_key_violation_ids:
-        secret_hygiene_status = "CREDENTIAL_EXPOSURE_BREACH"
+        secret_hygiene_status = "CREDENTIAL_EXPOSURE_BREACH"  # nosec B105 # audit status/readiness metric, not a credential
     elif excessive_lease_ttl_ids or missing_rotation_runbook_ids:
-        secret_hygiene_status = "LEASE_OR_RUNBOOK_WARNING"
+        secret_hygiene_status = "LEASE_OR_RUNBOOK_WARNING"  # nosec B105 # audit status/readiness metric, not a credential
     else:
-        secret_hygiene_status = "ZERO_STATIC_SECRETS_VERIFIED"
+        secret_hygiene_status = "ZERO_STATIC_SECRETS_VERIFIED"  # nosec B105 # audit status/readiness metric, not a credential
 
     return {
         "total_credentials_evaluated": len(rows),
@@ -6386,7 +6386,7 @@ def audit_wiki_secret_rotation_cadence_and_vault_lease_hygiene(
         "excessive_lease_ttl_ids": excessive_lease_ttl_ids,
         "missing_rotation_runbook_ids": missing_rotation_runbook_ids,
         "secret_hygiene_status": secret_hygiene_status,
-        "is_secret_hygiene_compliant": secret_hygiene_status == "ZERO_STATIC_SECRETS_VERIFIED",
+        "is_secret_hygiene_compliant": secret_hygiene_status == "ZERO_STATIC_SECRETS_VERIFIED",  # nosec B105 # audit status/readiness metric, not a credential
     }
 
 
