@@ -45,6 +45,7 @@ async function openBuilder(user: ReturnType<typeof userEvent.setup>) {
 describe("ProjectAutomationsDrawer", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(apiFetch).mockReset();
   });
 
   it("uses only defined semantic text tokens in the automation builder", async () => {
