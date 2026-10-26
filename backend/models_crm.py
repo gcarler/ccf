@@ -617,11 +617,30 @@ class Persona(Base):
         UUID(as_uuid=True), ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True
     )
     origen_grupo_id = Column(
-        UUID(as_uuid=True), ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True
+        UUID(as_uuid=True),
+        ForeignKey(
+            "grupos_evangelismo.id", ondelete="SET NULL",
+            name="personas_origen_grupo_id_fkey", use_alter=True,
+        ),
+        nullable=True,
+        index=True,
     )
-    origen_sesion_id = Column(UUID(as_uuid=True), ForeignKey("sesiones_grupo.id", ondelete="SET NULL"), nullable=True)
+    origen_sesion_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey(
+            "sesiones_grupo.id", ondelete="SET NULL",
+            name="personas_origen_sesion_id_fkey", use_alter=True,
+        ),
+        nullable=True,
+    )
     origen_evento_id = Column(
-        UUID(as_uuid=True), ForeignKey("crm_events.id", ondelete="SET NULL"), nullable=True, index=True
+        UUID(as_uuid=True),
+        ForeignKey(
+            "crm_events.id", ondelete="SET NULL",
+            name="personas_origen_evento_id_fkey", use_alter=True,
+        ),
+        nullable=True,
+        index=True,
     )
     origen_fecha = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
