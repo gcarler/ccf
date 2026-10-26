@@ -22,11 +22,17 @@ COMMON_PREFIXES = (
 MODULE_PREFIXES: dict[str, tuple[str, ...]] = {
     "platform": (
         "backend/core/",
+        "backend/app.py",
+        "backend/api/public.py",
+        "backend/exceptions/http.py",
+        "tests/test_structured_http_errors.py",
+        "tests/test_forensic_db_integrity.py",
         # Shared public facades and infrastructure have platform ownership.
         "backend/models.py",
         "backend/schemas/__init__.py",
         "backend/analytics/",
         "tests/test_analytics_pastoral_helpers.py",
+        "tests/test_endpoint_coverage.py",
         "frontend/next.config.mjs",
         "backend/services/knowledge_base.py",
         "backend/api/workspace_shared/",
@@ -98,6 +104,8 @@ MODULE_PREFIXES: dict[str, tuple[str, ...]] = {
     ),
     "cms": (
         "backend/api/cms",
+        "backend/api/_cms_helpers/",
+        "backend/exceptions/cms.py",
         "backend/api/cms_v2",
         "backend/api/enterprise_cms",
         "backend/crud/cms",
@@ -153,6 +161,15 @@ MODULE_PREFIXES: dict[str, tuple[str, ...]] = {
         "tests/test_anydoc_native_extractors.py",
         "docs/PROJECTS_",
         "docs/ESTADO_PROYECTOS.md",
+    ),
+    "finance": (
+        "backend/api/finance_suite.py",
+        "backend/models_finance_suite.py",
+        "backend/schemas/finance_suite.py",
+        "tests/test_finance_",
+        "docs/FINANCE_",
+        "frontend/src/app/plataforma/finances/",
+        "frontend/src/components/finance/",
     ),
     "agenda": (
         "backend/api/agenda",
