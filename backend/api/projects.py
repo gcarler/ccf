@@ -45,7 +45,11 @@ from backend.core.permissions import (
     require_staff_or_admin,
 )
 from backend.core.storage import storage_service
-from backend.core.uploads import MAX_UPLOAD_SIZE, sanitize_filename
+from backend.core.uploads import (
+    MAX_UPLOAD_SIZE,
+    assert_upload_is_safe,
+    sanitize_filename,
+)
 from backend.crud.crm import get_user_sede_id
 from backend.crud.crm_.personas import (
     normalize_search_expr,
@@ -3650,6 +3654,10 @@ async def upload_task_attachment(
 
     if len(contents) > MAX_UPLOAD_SIZE:
         raise HTTPException(status_code=400, detail="File exceeds maximum size")
+    try:
+        assert_upload_is_safe(filename, file.content_type)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
 
     url = storage_service.save_file(contents, filename, subfolder="projects")
 
@@ -6601,6 +6609,10 @@ async def upload_project_file_endpoint(
 
     if len(contents) > MAX_UPLOAD_SIZE:
         raise HTTPException(status_code=400, detail="El archivo excede el tamaño máximo permitido")
+    try:
+        assert_upload_is_safe(filename, file.content_type)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
 
     url = storage_service.save_file(contents, filename, subfolder="projects/boveda")
     persona_id = _get_persona_id_for_user(db, current_user.id)

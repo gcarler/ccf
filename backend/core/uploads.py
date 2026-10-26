@@ -88,6 +88,51 @@ def validate_mime_extension_alignment(filename: str, content_type: Optional[str]
         )
 
 
+# Extensiones y tipos MIME ejecutables o activos (server-side / XSS) que
+# deben rechazarse en cualquier endpoint de subida de archivos de plataforma.
+# Defense-in-depth: la bóveda documental de proyectos y los adjuntos de tarea
+# no deben aceptar payloads ejecutables (PHP/EXE/DLL), HTML activo (que corre
+# en el origen de la plataforma) ni SVG con scripts (XSS).
+UNSAFE_UPLOAD_EXTENSIONS = frozenset(
+    {
+        "exe", "com", "msi", "bat", "cmd", "scr", "ps1", "psm1", "vbs", "wsf",
+        "sh", "bash", "dll", "jar", "py", "pl", "cgi", "so", "bin",
+        "php", "php3", "php4", "php5", "phtml", "jsp", "jspx", "asp", "aspx",
+        "ashx", "asmx", "asbx", "cfm", "htaccess",
+        "html", "htm", "xhtml", "svg", "js", "mjs",
+    }
+)
+UNSAFE_UPLOAD_CONTENT_TYPES = frozenset(
+    {
+        "application/x-msdownload", "application/x-ms-installer", "application/x-exe",
+        "application/x-dosexec", "application/vnd.microsoft.portable-executable",
+        "application/x-httpd-php", "application/x-php", "text/x-php",
+        "application/x-asp", "text/html", "application/xhtml+xml",
+        "image/svg+xml", "application/javascript", "text/javascript",
+        "application/x-javascript", "application/x-bat", "application/x-msi",
+        "application/x-sh", "application/x-shellscript", "application/java-archive",
+        "application/x-msdos-program",
+    }
+)
+
+
+def assert_upload_is_safe(filename: str, content_type: Optional[str]) -> None:
+    """Rechaza archivos ejecutables o activos (HTML/SVG/JS/PHP/EXE) por
+    extensión o ``content_type``. Debe llamarse en cada endpoint de subida
+    antes de persistir el archivo; lanza ``ValueError`` y el caller debe
+    traducirlo a ``HTTPException`` del código HTTP apropiado."""
+    ext = Path((filename or "").lstrip()).suffix.lower().lstrip(".")
+    if ext in UNSAFE_UPLOAD_EXTENSIONS:
+        raise ValueError(
+            f"File extension '.{ext}' is not permitted (active content blocked)"
+        )
+    ct = (content_type or "").lower().split(";", 1)[0].strip()
+    if ct in UNSAFE_UPLOAD_CONTENT_TYPES:
+        raise ValueError(
+            f"Content-Type '{content_type}' is not permitted (active content blocked)"
+        )
+
+
 def save_upload(contents: bytes, filename: str, uploads_dir: str) -> str:
     if len(contents) > MAX_UPLOAD_SIZE:
         raise ValueError("File exceeds maximum size")

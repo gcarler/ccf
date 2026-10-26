@@ -347,6 +347,7 @@ from backend.crud.identity import (
 # ── Projects ───────────────────────────────────────────────────────────────
 from backend.crud.projects import (
     calculate_critical_path,
+    CircularDependencyError,
     create_activity_log,
     create_default_phases,
     create_project,
