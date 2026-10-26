@@ -236,4 +236,13 @@ class TestEndpointCoverage:
             resp = client.delete(path, headers=headers)
         else:
             return
+        if method == "GET" and path == "/api/v3/auth/google":
+            from backend.api.auth_v3 import _google_oauth_ready
+
+            # OAuth is optional in isolated CI; its documented unavailable
+            # response is part of this endpoint's contract, not a server crash.
+            if not _google_oauth_ready():
+                assert resp.status_code == 503
+                assert resp.json()["detail"] == "Google OAuth no configurado"
+                return
         assert resp.status_code in (200, 201, 400, 401, 403, 404, 405, 422, 424, 500, 501)
