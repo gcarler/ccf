@@ -17,6 +17,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
+from backend.crud.cms._shared import validate_cms_actor_site
 
 _logger = logging.getLogger(__name__)
 
@@ -81,7 +82,14 @@ def get_cms_form_by_id(db: Session, form_id: uuid.UUID) -> models.CmsForm | None
 
 
 
-def create_cms_form(db: Session, site_id: uuid.UUID, payload: schemas.CmsFormCreate) -> models.CmsForm:
+def create_cms_form(
+    db: Session,
+    site_id: uuid.UUID,
+    payload: schemas.CmsFormCreate,
+    *,
+    actor_user_id: uuid.UUID | str | None = None,
+) -> models.CmsForm:
+    validate_cms_actor_site(db, actor_user_id, site_id)
     row = models.CmsForm(
         site_id=site_id,
         name=payload.name,
@@ -105,7 +113,14 @@ def create_cms_form(db: Session, site_id: uuid.UUID, payload: schemas.CmsFormCre
 
 
 
-def update_cms_form(db: Session, row: models.CmsForm, payload: schemas.CmsFormUpdate) -> models.CmsForm:
+def update_cms_form(
+    db: Session,
+    row: models.CmsForm,
+    payload: schemas.CmsFormUpdate,
+    *,
+    actor_user_id: uuid.UUID | str | None = None,
+) -> models.CmsForm:
+    validate_cms_actor_site(db, actor_user_id, row.site_id)
     data = payload.model_dump(exclude_unset=True)
     for field, val in data.items():
         setattr(row, field, val)
@@ -119,7 +134,13 @@ def update_cms_form(db: Session, row: models.CmsForm, payload: schemas.CmsFormUp
 
 
 
-def delete_cms_form(db: Session, row: models.CmsForm) -> bool:
+def delete_cms_form(
+    db: Session,
+    row: models.CmsForm,
+    *,
+    actor_user_id: uuid.UUID | str | None = None,
+) -> bool:
+    validate_cms_actor_site(db, actor_user_id, row.site_id)
     row.is_active = False
     row.deleted_at = datetime.now(timezone.utc)
     db.commit()
