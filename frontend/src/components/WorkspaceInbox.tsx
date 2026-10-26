@@ -70,7 +70,10 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
     const { status: socketStatus } = useWorkspaceSocket({
         clientId: user?.id ? `user-${user.id}` : undefined,
         rooms: ['notifications'],
-        enabled: isOpen,
+        // El handshake WS exige JWT en query params (close 4001 sin token):
+        // sin esto el inbox abría el socket anónimo y la consola acumulaba 403.
+        token,
+        enabled: isOpen && !!token,
         onEvent: handleSocketEvent
     });
 

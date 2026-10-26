@@ -84,7 +84,7 @@ logger = logging.getLogger(__name__)
 # emite hoy y no tiene un guard de participación, por lo que hubiera sido un
 # canal cross-sede sin autorización.
 _VALID_ROOM_RE = re.compile(
-    r"^(global|project_[0-9a-f-]{36}|dm_[0-9a-f-]{36}|general|staff)$",
+    r"^(global|project_[0-9a-f-]{36}|dm_[0-9a-f-]{36}|general|staff|notifications)$",
     re.IGNORECASE,
 )
 
