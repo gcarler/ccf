@@ -251,6 +251,8 @@ def get_event_session_detail(
         .filter(
             models.EventAttendance.event_id == event_id,
             models.EventAttendance.session_date == session_date,
+            models.EventAttendance.attended.is_(True),
+            models.EventAttendance.deleted_at.is_(None),
         )
         .all()
     )

@@ -1,0 +1,59 @@
+{
+  "scope": [
+    "H02",
+    "H04",
+    "H05"
+  ],
+  "baseline": "d697ed734066111403861b9811048958faecb884",
+  "reference": "/root/ccf-indicator-audit-20261024/PLAN_CIERRE_INDICADORES_2026-10-24.txt",
+  "rules": {
+    "H02": "Budgeted active components without tasks have zero progress and remain in the monetary denominator. Existing unassigned-task fallback remains unchanged in this correction.",
+    "H04": "Estimated/earned effort sums leaf work-package estimated hours and independently reported progress, without parent-container double counting. EH=sum(leaf_estimated_hours*leaf_progress/100), independent of component budget weights. Actual hours include all active logs, including parent/general work.",
+    "H05": "Creating/deleting time logs updates actual hours and may transition todo to in_progress, but never derives or overwrites physical progress from actual/estimated hours. Parent physical rollups remain derived from child physical measurements."
+  },
+  "examples": [
+    {
+      "component_budgets": [
+        100,
+        900
+      ],
+      "progress": [
+        100,
+        0
+      ],
+      "expected_project_progress": 10,
+      "expected_ev_at_bac1000": 100
+    },
+    {
+      "component_budgets": [
+        900,
+        100
+      ],
+      "leaf_hours": [
+        10,
+        90
+      ],
+      "progress": [
+        100,
+        0
+      ],
+      "expected_eh": 10,
+      "expected_total_planned_hours": 100
+    },
+    {
+      "planned_hours": 100,
+      "physical_progress": 20,
+      "actual_hours": 80,
+      "expected_earned_hours": 20,
+      "expected_lei": 0.25
+    }
+  ],
+  "exclusions": [
+    "Baseline time-phasing/approval redesign",
+    "PV calculation rewrite",
+    "Undefined CPI/SPI contracts",
+    "Financial cutoff",
+    "Frontend changes",
+    "Historical data repair"
+  ]
+}
