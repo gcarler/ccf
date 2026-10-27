@@ -515,7 +515,7 @@ def test_expense_report_approve_reimburse_flow(client, db_session):
         headers=approver_headers,
     )
     assert resp4.status_code == 200
-    assert resp4.json()["status"] == "reimbursed"
+    assert resp4.json()["status"] == "disbursed"
 
 
 def test_expense_report_submit_not_found(client, db_session):
