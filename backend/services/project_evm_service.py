@@ -19,10 +19,13 @@ para control físico-financiero de proyectos:
 from __future__ import annotations
 
 import datetime
+import logging
 import uuid
 from collections.abc import Mapping, Sequence
 from datetime import timedelta, timezone
 from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 try:
     from sqlalchemy.orm import Session
@@ -126,7 +129,7 @@ def _get_active_baseline(db: Session, project_id: Any) -> Optional[Any]:
         ):
             return candidate
     except Exception:
-        pass
+        logger.debug("Best-effort _get_active_baseline failed; retaining fallback")
     return None
 
 
@@ -276,7 +279,7 @@ def _explicit_numeric_attr(obj: Any, attr_name: str, private_name: str) -> Optio
         if isinstance(val, (int, float)) and not isinstance(val, bool):
             return float(val)
     except Exception:
-        pass
+        logger.debug("Best-effort _explicit_numeric_attr failed; retaining fallback")
     return None
 
 
@@ -511,7 +514,7 @@ def compute_project_reserves_breakdown(
 
 
 def calculate_project_evm(
-    db: Session, project: Project, now: Optional[datetime] = None
+    db: Session, project: Project, now: Optional[datetime.datetime] = None
 ) -> Dict[str, Any]:
     """Calcula las métricas canónicas de EVM para un proyecto dado."""
     now = _as_utc(now) or _utcnow()
@@ -2268,7 +2271,7 @@ EXECUTION_SOURCES_CATALOG: List[Dict[str, Any]] = [
 
 
 def build_project_execution_matrix(
-    db: Session, project: Project, now: Optional[datetime] = None
+    db: Session, project: Project, now: Optional[datetime.datetime] = None
 ) -> Dict[str, Any]:
     """Construye la Matriz Integral de Ejecución en 3 Frentes + Tributación Jerárquica + 6 Familias Pro.
 

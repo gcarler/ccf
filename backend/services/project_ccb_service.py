@@ -14,10 +14,9 @@ Reglas doctrinales implementadas:
 
 from __future__ import annotations
 
-import uuid as _uuid
 from collections.abc import Mapping, Sequence
 from datetime import timedelta, timezone
-from typing import Any, Optional, Union
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from sqlalchemy import func
@@ -7127,13 +7126,13 @@ def audit_secret_scanning_pre_receive_and_leak_revocation(
             slow_revocation_or_high_bypass_repo_ids.append(rid)
 
     if active_leak_or_unprotected_repo_ids:
-        secret_scanning_governance_status = "SECRET_LEAK_OR_HOOK_BYPASS_BREACH"
+        secret_scanning_governance_status = "SECRET_LEAK_OR_HOOK_BYPASS_BREACH"  # nosec B105 # audit status/readiness metric, not a credential
     elif slow_revocation_or_high_bypass_repo_ids:
         secret_scanning_governance_status = (
-            "SECRET_REVOCATION_SLA_OR_BYPASS_WARNING"
+            "SECRET_REVOCATION_SLA_OR_BYPASS_WARNING"  # nosec B105 # audit status/readiness metric, not a credential
         )
     else:
-        secret_scanning_governance_status = "SECRET_HYGIENE_ZERO_LEAK_OPTIMAL"
+        secret_scanning_governance_status = "SECRET_HYGIENE_ZERO_LEAK_OPTIMAL"  # nosec B105 # audit status/readiness metric, not a credential
 
     return {
         "evaluated_repos_count": len(valid_repositories),
@@ -7141,7 +7140,7 @@ def audit_secret_scanning_pre_receive_and_leak_revocation(
         "slow_revocation_or_high_bypass_repo_ids": slow_revocation_or_high_bypass_repo_ids,
         "secret_scanning_governance_status": secret_scanning_governance_status,
         "is_secret_scanning_compliant": secret_scanning_governance_status
-        == "SECRET_HYGIENE_ZERO_LEAK_OPTIMAL",
+        == "SECRET_HYGIENE_ZERO_LEAK_OPTIMAL",  # nosec B105 # audit status/readiness metric, not a credential
     }
 
 

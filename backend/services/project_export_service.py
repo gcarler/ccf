@@ -6,7 +6,7 @@ import csv
 import io
 import re
 from collections.abc import Mapping, Sequence
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from sqlalchemy.orm import Session
