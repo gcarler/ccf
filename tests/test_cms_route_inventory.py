@@ -22,7 +22,7 @@ def test_cms_route_inventory_has_no_duplicate_method_path_pairs():
     assert not duplicates, f"CMS duplicate method/path routes mounted: {duplicates}"
 
 
-def test_cms_v1_mount_contains_only_media_and_metrics_surface():
+def test_cms_v1_mount_contains_media_metrics_and_read_only_compatibility_feeds():
     mounted = set(_mounted_methods_and_paths())
 
     assert ("GET", "/api/cms/media") in mounted
@@ -36,7 +36,18 @@ def test_cms_v1_mount_contains_only_media_and_metrics_surface():
         "/api/admin/testimonials",
         "/api/admin/announcements",
     )
-    assert not any(path.startswith(legacy) for _, path in mounted for legacy in legacy_prefixes)
+    # d885e76ac restored these two read-only, sede-scoped feeds intentionally.
+    compatibility = {
+        ("GET", "/api/cms/testimonials"),
+        ("GET", "/api/cms/announcements"),
+    }
+    assert compatibility <= mounted
+    assert {
+        (method, route.path)
+        for route in app.routes
+        if any(getattr(route, "path", "").startswith(legacy) for legacy in legacy_prefixes)
+        for method in (getattr(route, "methods", set()) or set())
+    } == compatibility
 
 
 def test_cms_v2_mount_remains_separate_from_v1_media_routes():
