@@ -131,28 +131,27 @@ class KnowledgeIndexer:
             relevance = 0.6 if p.status == "planning" else 0.75
 
             try:
-                from backend.services.project_evm_service import (
-                    calculate_cpi_spi_quadrant,
-                    calculate_project_evm,
-                )
+                from backend.services.project_evm_service import calculate_project_evm_advanced
 
-                evm = calculate_project_evm(self.db, p.id)
-                quad = calculate_cpi_spi_quadrant(evm.cpi, evm.spi)
+                advanced = calculate_project_evm_advanced(self.db, p)
+                evm = advanced["standard_evm"]
+                quad = advanced["quadrant"]
+                planned_pct = (evm["pv"] / evm["bac"] * 100.0) if evm["bac"] > 0 else 0.0
 
                 evm_section = (
                     f"\n--- Salud EVM (Earned Value Management) ---\n"
-                    f"Presupuesto BAC: ${evm.bac:,.2f} | Planificado PV: ${evm.pv:,.2f} | Ganado EV: ${evm.ev:,.2f} | Costo Real AC: ${evm.ac:,.2f}\n"
-                    f"Variación Costo CV: ${evm.cv:,.2f} | Variación Cronograma SV: ${evm.sv:,.2f}\n"
-                    f"Índice Desempeño Costo (CPI): {evm.cpi:.2f} ({'En presupuesto' if evm.cpi >= 1.0 else 'Sobre costo'})\n"
-                    f"Índice Desempeño Cronograma (SPI): {evm.spi:.2f} ({'A tiempo/adelantado' if evm.spi >= 1.0 else 'Con retraso'})\n"
-                    f"Avance Físico Real: {evm.progreso_real_pct:.1f}% | Avance Planificado: {evm.progreso_planificado_pct:.1f}%\n"
-                    f"Cuadrante PMI: {quad.name} ({quad.status.value}) — {quad.description}"
+                    f"Presupuesto BAC: ${evm['bac']:,.2f} | Planificado PV: ${evm['pv']:,.2f} | Ganado EV: ${evm['ev']:,.2f} | Costo Real AC: ${evm['ac']:,.2f}\n"
+                    f"Variación Costo CV: ${evm['cv']:,.2f} | Variación Cronograma SV: ${evm['sv']:,.2f}\n"
+                    f"Índice Desempeño Costo (CPI): {evm['cpi']:.2f} ({'En presupuesto' if evm['cpi'] >= 1.0 else 'Sobre costo'})\n"
+                    f"Índice Desempeño Cronograma (SPI): {evm['spi']:.2f} ({'A tiempo/adelantado' if evm['spi'] >= 1.0 else 'Con retraso'})\n"
+                    f"Avance Físico Real: {evm['progress_percentage']:.1f}% | Avance Planificado: {planned_pct:.1f}%\n"
+                    f"Cuadrante PMI: {quad['name']} ({quad['health_status']}) — {quad['description']}"
                 )
                 summary_text = (
-                    f"{p.title} [{p.status.upper()}] — CPI: {evm.cpi:.2f}, SPI: {evm.spi:.2f} ({quad.name}). "
-                    f"Avance: {evm.progreso_real_pct:.1f}%."
+                    f"{p.title} [{p.status.upper()}] — CPI: {evm['cpi']:.2f}, SPI: {evm['spi']:.2f} ({quad['name']}). "
+                    f"Avance: {evm['progress_percentage']:.1f}%."
                 )
-                if quad.status.value in ("critical", "risk"):
+                if quad["health_status"] in ("CRITICO", "RIESGO"):
                     relevance = 0.90
             except Exception as e:
                 logger.debug("No se pudo calcular EVM para indexar proyecto %s: %s", p.id, e)
