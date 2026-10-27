@@ -104,7 +104,7 @@ describe("TaskDimensionsSection Component", () => {
     });
 
     // Horas reales registradas
-    expect(await screen.findByText("12 h")).toBeInTheDocument();
+    expect(screen.getByText("12 h")).toBeInTheDocument();
 
     // Avance físico asignado
     expect(screen.getByText("40%")).toBeInTheDocument();
