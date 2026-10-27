@@ -240,3 +240,19 @@ async def test_convert_document_endpoint_file_url_resolution():
     # Limpiar archivo temporal
     if os.path.exists(test_file_path):
         os.remove(test_file_path)
+
+
+def test_native_docx_rejects_entity_expansion():
+    """Imported XML must not expand attacker-controlled document entities."""
+    from backend.services.anydoc_service import _extract_docx_to_markdown
+
+    document = b'''<?xml version="1.0"?>
+<!DOCTYPE document [<!ENTITY injected "ENTITY_EXPANSION_MUST_NOT_APPEAR">]>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:body><w:p><w:r><w:t>&injected;</w:t></w:r></w:p></w:body>
+</w:document>'''
+    archive = io.BytesIO()
+    with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as package:
+        package.writestr("word/document.xml", document)
+    result = _extract_docx_to_markdown(archive.getvalue())
+    assert "ENTITY_EXPANSION_MUST_NOT_APPEAR" not in result

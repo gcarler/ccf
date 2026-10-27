@@ -428,3 +428,54 @@ def test_public_announcements_feed_remains_global(client, db_session):
     assert "items" in data
     assert "total" in data
     assert isinstance(data["items"], list)
+
+
+def test_cms_pastoral_delete_blocks_cross_sede_idor(client, db_session):
+    (_, _, _), (_, _, sede_b) = _seed_two_sedes(db_session)
+    pastor_b = _pastor_in(db_session, sede_b.id, "delete-idor-b")
+    db_session.commit()
+    headers_a = auth_headers(client, email="cmsFase5A@example.com")
+
+    response = client.delete(
+        f"/api/cms/v2/cms/pastoral-team/{pastor_b.id}", headers=headers_a,
+    )
+    assert response.status_code == 404
+    db_session.refresh(pastor_b)
+    assert pastor_b.is_pastoral_leader is True
+
+
+def test_cms_pastoral_crud_blocks_admin_cross_sede_before_mutation(db_session):
+    import pytest
+    from fastapi import HTTPException
+
+    from backend import schemas
+    from backend.crud.cms.pastoral import update_pastoral_profile
+
+    (admin_a, _, _), (_, _, sede_b) = _seed_two_sedes(db_session)
+    pastor_b = _pastor_in(db_session, sede_b.id, "crud-idor-b")
+    db_session.commit()
+    original_bio = pastor_b.bio_full
+
+    with pytest.raises(HTTPException) as caught:
+        update_pastoral_profile(
+            db_session, pastor_b, schemas.PastoralProfileUpdate(bio_full="unauthorized"),
+            actor_user_id=admin_a.id,
+        )
+    assert caught.value.status_code == 404
+    db_session.refresh(pastor_b)
+    assert pastor_b.bio_full == original_bio
+
+
+def test_cms_pastoral_update_preserves_global_profiles(client, db_session):
+    _seed_two_sedes(db_session)
+    global_pastor = _pastor_in(db_session, None, "central-profile")
+    db_session.commit()
+    headers_a = auth_headers(client, email="cmsFase5A@example.com")
+
+    response = client.patch(
+        f"/api/cms/v2/cms/pastoral-team/{global_pastor.id}", headers=headers_a,
+        json={"bio_short": "Global pastor updated"},
+    )
+    assert response.status_code == 200
+    db_session.refresh(global_pastor)
+    assert global_pastor.bio_short == "Global pastor updated"

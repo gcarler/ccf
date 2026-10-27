@@ -12,11 +12,12 @@ import io
 import logging
 import re
 import time
-import xml.etree.ElementTree as ET
 import zipfile
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+from defusedxml import ElementTree as ET
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +110,7 @@ def detect_document_format(
                     if anydoc_fmt:
                         return str(anydoc_fmt)
                 except Exception:
-                    pass
+                    logger.debug("Best-effort detect_document_format failed; retaining fallback")
 
     if data and ANYDOC_AVAILABLE:
         try:
@@ -117,7 +118,7 @@ def detect_document_format(
             if detected:
                 return str(detected)
         except Exception:
-            pass
+            logger.debug("Best-effort detect_document_format failed; retaining fallback")
 
     # Inspección de cabeceras binarias básicas si no hay anydoc
     if data:
@@ -137,7 +138,7 @@ def detect_document_format(
                     if "content.xml" in namelist:
                         return "odt"
             except Exception:
-                pass
+                logger.debug("Best-effort detect_document_format failed; retaining fallback")
         if data.startswith(b"{\\rtf"):
             return "rtf"
 
@@ -486,7 +487,7 @@ def _extract_rtf_or_legacy(data: bytes) -> str:
             if lines:
                 return "\n\n".join(lines)
     except Exception:
-        pass
+        logger.debug("Best-effort _extract_rtf_or_legacy failed; retaining fallback")
     return _extract_plain_strings(data)
 
 
@@ -499,7 +500,7 @@ def _extract_plain_strings(data: bytes) -> str:
         if meaningful:
             return "\n\n".join(meaningful[:200])
     except Exception:
-        pass
+        logger.debug("Best-effort _extract_plain_strings failed; retaining fallback")
     return "*(Contenido binario disponible para descarga)*"
 
 
@@ -2438,7 +2439,7 @@ def audit_markdown_code_fence_hygiene(
         else:
             if stripped.startswith("```"):
                 closed_block_count += 1
-                assert open_line is not None
+                assert open_line is not None  # nosec B101 # internal parser-state invariant, never authorization or input validation
                 if lang_tag == "":
                     untagged_fence_lines.append(open_line)
                 else:
@@ -2529,7 +2530,7 @@ def audit_markdown_image_asset_hygiene(
                 not url_part
                 or url_lower.startswith("http://")
                 or url_lower.startswith("javascript:")
-                or url_part.startswith("/tmp/")
+                or url_part.startswith("/tmp/")  # nosec B108 # rejects temporary-path URLs; does not create files
             )
 
             if has_missing_alt:
@@ -2885,7 +2886,7 @@ def audit_markdown_callout_admonition_hygiene(
         stripped = line.strip()
         if stripped.startswith("```"):
             if in_callout:
-                assert current_callout_line is not None
+                assert current_callout_line is not None  # nosec B101 # internal parser-state invariant, never authorization or input validation
                 if not current_callout_has_body:
                     empty_callout_body_lines.append(current_callout_line)
                 in_callout = False
@@ -2902,7 +2903,7 @@ def audit_markdown_callout_admonition_hygiene(
         m_header = _CALLOUT_ADMONITION_HEADER_RE.match(line)
         if m_header:
             if in_callout:
-                assert current_callout_line is not None
+                assert current_callout_line is not None  # nosec B101 # internal parser-state invariant, never authorization or input validation
                 if not current_callout_has_body:
                     empty_callout_body_lines.append(current_callout_line)
                 has_previous_callout = True
@@ -2933,7 +2934,7 @@ def audit_markdown_callout_admonition_hygiene(
             continue
 
         if in_callout:
-            assert current_callout_line is not None
+            assert current_callout_line is not None  # nosec B101 # internal parser-state invariant, never authorization or input validation
             if not current_callout_has_body:
                 empty_callout_body_lines.append(current_callout_line)
             in_callout = False
@@ -2945,7 +2946,7 @@ def audit_markdown_callout_admonition_hygiene(
             saw_blank_since_last_callout = True
 
     if in_callout:
-        assert current_callout_line is not None
+        assert current_callout_line is not None  # nosec B101 # internal parser-state invariant, never authorization or input validation
         if not current_callout_has_body:
             empty_callout_body_lines.append(current_callout_line)
 
@@ -3122,18 +3123,14 @@ def audit_markdown_table_column_alignment_hygiene(
         header_cells = _row_cells(block_lines[0])
         expected_cols = len(header_cells)
 
-        block_ok = True
-
         if len(block_lines) < 2:
             malformed_delimiter_table_indices.append(table_index)
-            block_ok = False
         else:
             delim_cells = _row_cells(block_lines[1])
             if len(delim_cells) != expected_cols or not all(
                 _GFM_DELIMITER_CELL_RE.match(cell) for cell in delim_cells
             ):
                 malformed_delimiter_table_indices.append(table_index)
-                block_ok = False
 
         if "" in header_cells:
             empty_header_cell_table_indices.append(table_index)
@@ -3141,7 +3138,6 @@ def audit_markdown_table_column_alignment_hygiene(
         for data_line in block_lines[2:]:
             if len(_row_cells(data_line)) != expected_cols:
                 ragged_column_table_indices.append(table_index)
-                block_ok = False
                 break
 
     for line in lines:
@@ -3670,7 +3666,7 @@ def audit_markdown_frontmatter_metadata_hygiene(
     if not has_valid_frontmatter:
         missing_required_keys = list(req_keys)
     else:
-        assert first_non_empty_idx is not None and closing_idx is not None
+        assert first_non_empty_idx is not None and closing_idx is not None  # nosec B101 # internal parser-state invariant, never authorization or input validation
         seen_keys: set[str] = set()
         parsed_map: dict[str, str] = {}
 
@@ -7155,17 +7151,17 @@ def audit_markdown_table_column_parity_and_empty_cell_hygiene(
     if missing_separator_table_lines:
         recommendations.append(
             "Add a GFM separator row like |---|---| under the table header at lines: "
-            + ", ".join(str(l) for l in missing_separator_table_lines)
+            + ", ".join(str(line_number) for line_number in missing_separator_table_lines)
         )
     if mismatched_column_row_lines:
         recommendations.append(
             "Fix column count mismatch at table row lines: "
-            + ", ".join(str(l) for l in mismatched_column_row_lines)
+            + ", ".join(str(line_number) for line_number in mismatched_column_row_lines)
         )
     if wide_table_header_lines:
         recommendations.append(
             f"Reduce tables wider than {max_columns_per_table} columns; wide headers at lines: "
-            + ", ".join(str(l) for l in wide_table_header_lines)
+            + ", ".join(str(line_number) for line_number in wide_table_header_lines)
         )
     if empty_cell_ratio_pct > max_empty_cell_ratio_pct:
         recommendations.append(

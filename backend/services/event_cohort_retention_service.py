@@ -621,7 +621,7 @@ def get_attendee_spiritual_journey(
     is_leader = len(ministries) > 0 or "LIDER" in (persona.church_role or "").upper()
 
     score = 0.0
-    milestones = []
+    milestones: list[dict[str, Any]] = []
     if has_decision:
         score += 20.0
         milestones.append({"title": "Decisión de Fe", "date": persona.church_join_date or persona.created_at, "pts": 20})

@@ -180,7 +180,7 @@ class TestExpenseWorkflow:
             report_number=f"ER-{uuid.uuid4().hex[:6]}",
             employee_id=uuid.uuid4(),
             total_amount=100,
-            status="draft",
+            status="disbursed",
             sede_id=sede.id,
         )
         db_session.add(r)

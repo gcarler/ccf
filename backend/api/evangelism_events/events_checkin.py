@@ -235,7 +235,7 @@ def _get_user_display_name(db: Session, user_id) -> str:
         if user:
             return user.username or user.email or str(user.id)
     except Exception:
-        pass
+        logger.debug("Best-effort _get_user_display_name failed; retaining fallback")
     return "Operador de Puerta"
 
 

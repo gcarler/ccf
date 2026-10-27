@@ -17,6 +17,7 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
+from backend.crud.cms._shared import validate_cms_actor_site
 
 _logger = logging.getLogger(__name__)
 
@@ -56,8 +57,13 @@ def get_cms_newsletter(db: Session, site_id: uuid.UUID, newsletter_id: uuid.UUID
 
 
 def create_cms_newsletter(
-    db: Session, site_id: uuid.UUID, payload: schemas.CmsNewsletterCreate
+    db: Session,
+    site_id: uuid.UUID,
+    payload: schemas.CmsNewsletterCreate,
+    *,
+    actor_user_id: uuid.UUID | str | None = None,
 ) -> models.CmsNewsletter:
+    validate_cms_actor_site(db, actor_user_id, site_id)
     row = models.CmsNewsletter(
         site_id=site_id,
         name=payload.name,
@@ -74,8 +80,13 @@ def create_cms_newsletter(
 
 
 def update_cms_newsletter(
-    db: Session, row: models.CmsNewsletter, payload: schemas.CmsNewsletterUpdate
+    db: Session,
+    row: models.CmsNewsletter,
+    payload: schemas.CmsNewsletterUpdate,
+    *,
+    actor_user_id: uuid.UUID | str | None = None,
 ) -> models.CmsNewsletter:
+    validate_cms_actor_site(db, actor_user_id, row.site_id)
     data = payload.model_dump(exclude_unset=True)
     for field, val in data.items():
         setattr(row, field, val)
@@ -85,14 +96,26 @@ def update_cms_newsletter(
 
 
 
-def delete_cms_newsletter(db: Session, row: models.CmsNewsletter) -> bool:
+def delete_cms_newsletter(
+    db: Session,
+    row: models.CmsNewsletter,
+    *,
+    actor_user_id: uuid.UUID | str | None = None,
+) -> bool:
+    validate_cms_actor_site(db, actor_user_id, row.site_id)
     row.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return True
 
 
 
-def send_cms_newsletter(db: Session, row: models.CmsNewsletter) -> models.CmsNewsletter:
+def send_cms_newsletter(
+    db: Session,
+    row: models.CmsNewsletter,
+    *,
+    actor_user_id: uuid.UUID | str | None = None,
+) -> models.CmsNewsletter:
+    validate_cms_actor_site(db, actor_user_id, row.site_id)
     active_count = (
         db.query(func.count(models.CmsSubscriber.id))
         .filter(
@@ -179,8 +202,13 @@ def get_cms_subscriber(db: Session, site_id: uuid.UUID, subscriber_id: uuid.UUID
 
 
 def create_cms_subscriber(
-    db: Session, site_id: uuid.UUID, payload: schemas.CmsSubscriberCreate
+    db: Session,
+    site_id: uuid.UUID,
+    payload: schemas.CmsSubscriberCreate,
+    *,
+    actor_user_id: uuid.UUID | str | None = None,
 ) -> models.CmsSubscriber:
+    validate_cms_actor_site(db, actor_user_id, site_id)
     email_clean = payload.email.strip().lower()
     existing = (
         db.query(models.CmsSubscriber)
@@ -212,7 +240,14 @@ def create_cms_subscriber(
 
 
 
-def import_cms_subscribers(db: Session, site_id: uuid.UUID, payload: schemas.CmsSubscriberImportPayload) -> dict:
+def import_cms_subscribers(
+    db: Session,
+    site_id: uuid.UUID,
+    payload: schemas.CmsSubscriberImportPayload,
+    *,
+    actor_user_id: uuid.UUID | str | None = None,
+) -> dict:
+    validate_cms_actor_site(db, actor_user_id, site_id)
     imported_count = 0
     items_to_process: list[tuple[str, str | None]] = []
 
@@ -272,8 +307,13 @@ def import_cms_subscribers(db: Session, site_id: uuid.UUID, payload: schemas.Cms
 
 
 def update_cms_subscriber(
-    db: Session, row: models.CmsSubscriber, payload: schemas.CmsSubscriberUpdate
+    db: Session,
+    row: models.CmsSubscriber,
+    payload: schemas.CmsSubscriberUpdate,
+    *,
+    actor_user_id: uuid.UUID | str | None = None,
 ) -> models.CmsSubscriber:
+    validate_cms_actor_site(db, actor_user_id, row.site_id)
     data = payload.model_dump(exclude_unset=True)
     if "is_active" in data:
         if data["is_active"] is False and row.is_active:
@@ -288,7 +328,13 @@ def update_cms_subscriber(
 
 
 
-def delete_cms_subscriber(db: Session, row: models.CmsSubscriber) -> bool:
+def delete_cms_subscriber(
+    db: Session,
+    row: models.CmsSubscriber,
+    *,
+    actor_user_id: uuid.UUID | str | None = None,
+) -> bool:
+    validate_cms_actor_site(db, actor_user_id, row.site_id)
     row.is_active = False
     row.deleted_at = datetime.now(timezone.utc)
     db.commit()

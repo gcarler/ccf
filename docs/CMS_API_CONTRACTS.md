@@ -15,10 +15,12 @@ Referencia RBAC:
 
 ## 2. CMS v1 — `backend/api/cms/v1.py` (compatibilidad de media)
 
-La superficie v1 actualmente montada conserva únicamente media y métricas. Los
-feeds administrativos legacy de testimonios/anuncios no son rutas activas; el
-contenido editorial nuevo usa CMS v2 con categorías `testimonials` y
-`announcements`.
+La superficie v1 conserva media, métricas y dos feeds de compatibilidad de sólo
+lectura: `GET /cms/testimonials` y `GET /cms/announcements`, restaurados en
+`d885e76ac`. Ambos requieren `cms:read`, filtran por la sede del actor antes de
+paginar y retornan contenido aprobado/publicado. Las mutaciones y rutas
+`/admin/testimonials*` y `/admin/announcements*` siguen retiradas; el contenido
+editorial nuevo usa CMS v2 con categorías `testimonials` y `announcements`.
 
 Rutas efectivamente montadas:
 
@@ -31,6 +33,8 @@ Rutas efectivamente montadas:
 | `POST` | `/cms/media/{item_id}/optimize` |
 | `POST` | `/cms/media/cleanup` |
 | `GET` | `/cms/metrics` |
+| `GET` | `/cms/testimonials` |
+| `GET` | `/cms/announcements` |
 
 Reglas:
 

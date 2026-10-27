@@ -54,6 +54,7 @@ from backend.core.logging import observability_middleware
 from backend.core.rate_limit import academy_limiter
 from backend.core.security_headers import mount_security_headers
 from backend.exceptions.cms import CmsError
+from backend.exceptions.http import StructuredHTTPException
 from backend.mcp_academy import academy_mcp_app
 from backend.mcp_agenda import agenda_mcp_app
 from backend.mcp_crm import crm_mcp_app
@@ -207,6 +208,13 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
             content["detail"] = exc.detail.get("message", str(exc.detail))
     else:
         content = {"detail": exc.detail}
+    return JSONResponse(status_code=exc.status_code, content=content, headers=exc.headers)
+
+
+@app.exception_handler(StructuredHTTPException)
+async def structured_http_exception_handler(request: Request, exc: StarletteHTTPException):
+    content = dict(exc.detail) if isinstance(exc.detail, dict) else {}
+    content["detail"] = exc.detail
     return JSONResponse(status_code=exc.status_code, content=content, headers=exc.headers)
 
 
