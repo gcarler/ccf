@@ -1,13 +1,12 @@
 """Test suite for Super-PRO Academic System: Programs, Study Plans, Credits & Grading Schemes."""
 
 import uuid
-import pytest
 
 from backend import models
-from tests.conftest import auth_headers, seed_admin
 from backend.services.academic_engine_service import (
     validate_grading_scheme_cuts,
 )
+from tests.conftest import auth_headers, seed_admin
 
 
 def test_validate_grading_scheme_cuts_logic():
@@ -636,9 +635,9 @@ def test_009_tsc_no_emit_clean():
 def test_010_all_academy_tests_pass():
     from backend.services.academic_engine_service import (
         calculate_and_sync_offering_grades,
-        compute_student_transcript_summary,
         check_prerequisites_satisfied,
         close_offering_grades,
+        compute_student_transcript_summary,
     )
     assert callable(calculate_and_sync_offering_grades)
     assert callable(compute_student_transcript_summary)
@@ -1409,7 +1408,7 @@ def test_031_award_achievement_generates_hash_and_portfolio_entry(client, db_ses
     admin, _, _ = seed_admin(db_session)
     headers = auth_headers(client, email=admin.email, password="testpass123")
 
-    from backend.models import Persona, AcademyPortfolioEntry
+    from backend.models import AcademyPortfolioEntry, Persona
     student = Persona(first_name="LogroEstudiante", last_name="Verificable")
     db_session.add(student)
     db_session.commit()
@@ -1854,7 +1853,7 @@ def test_042_recommendation_mark_viewed(client, db_session):
 
 def test_043_available_mentors_list(client, db_session):
     """Test creating a mentor profile and querying available mentors."""
-    mentor_user, _, _ = seed_admin(db_session, email="mentor_prof1@example.com")
+    mentor_user, _, mentor_sede = seed_admin(db_session, email="mentor_prof1@example.com")
     headers_mentor = auth_headers(client, email="mentor_prof1@example.com", password="testpass123")
 
     prof_r = client.post("/api/academy/mentorship/mentor-profile", json={
@@ -1870,7 +1869,12 @@ def test_043_available_mentors_list(client, db_session):
     assert "Hermenéutica" in prof_data["expertise"]
 
     # Student queries available mentors
-    student, _, _ = seed_admin(db_session, email="student_mentee1@example.com")
+    student, student_persona, _ = seed_admin(db_session, email="student_mentee1@example.com")
+    # The positive inventory scenario belongs to one sede; cross-sede and
+    # ministerial visibility are covered explicitly by the tenant regressions.
+    student.sede_id = mentor_sede.id
+    student_persona.sede_id = mentor_sede.id
+    db_session.commit()
     headers_st = auth_headers(client, email="student_mentee1@example.com", password="testpass123")
     list_r = client.get("/api/academy/mentorship/available-mentors", headers=headers_st)
     assert list_r.status_code == 200
@@ -2090,7 +2094,7 @@ def test_051_get_calendar_events_filter_by_date_range_and_type(client, db_sessio
 
     # Query outside the date range -> should not contain it
     r_empty = client.get(
-        f"/api/academy/calendar/events?event_type=socratic_defense&start_date=2026-11-10T00:00:00Z&end_date=2026-11-15T23:59:59Z",
+        "/api/academy/calendar/events?event_type=socratic_defense&start_date=2026-11-10T00:00:00Z&end_date=2026-11-15T23:59:59Z",
         headers=headers,
     )
     assert r_empty.status_code == 200
