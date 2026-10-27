@@ -14,6 +14,7 @@ from backend import models, schemas
 from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.core.rate_limit import rate_limiter
+from backend.exceptions.http import StructuredHTTPException
 from backend.models_academy_core import Course, Enrollment, Lesson
 
 # plan_followup: identidad por desafío single-use (identify/verify + register
@@ -617,7 +618,7 @@ def _settings_public_base_url() -> str:
 
 
 def _reg_error_to_http(exc: RegistrationError) -> HTTPException:
-    return HTTPException(status_code=exc.status_code, detail={"code": exc.code, "detail": exc.detail})
+    return StructuredHTTPException(status_code=exc.status_code, detail={"code": exc.code, "detail": exc.detail})
 
 
 @router.get("/events/{event_id}", response_model=schemas.PublicEventRead)
@@ -746,7 +747,7 @@ def _validate_event_form_data(db: Session, event: models.CrmEvent, payload: sche
     """
     form = db.query(models.CmsForm).filter(models.CmsForm.id == event.form_id).first()
     if not form or not form.is_active:
-        raise HTTPException(
+        raise StructuredHTTPException(
             status_code=404,
             detail={"code": "FORM_NOT_FOUND", "detail": "El formulario asociado al evento ya no está disponible."},
         )
@@ -756,7 +757,7 @@ def _validate_event_form_data(db: Session, event: models.CrmEvent, payload: sche
     if form.captcha_enabled:
         token = (payload.captcha_token or "").strip()
         if not token:
-            raise HTTPException(
+            raise StructuredHTTPException(
                 status_code=400,
                 detail={"code": "CAPTCHA_REQUIRED", "detail": "Captcha requerido para este formulario."},
             )
@@ -767,7 +768,7 @@ def _validate_event_form_data(db: Session, event: models.CrmEvent, payload: sche
         # ``asyncio.run`` cuando ya hay un event loop activo (p.ej. tests).
         ok = _run_hcaptcha_sync(token, remote_ip=None)
         if not ok:
-            raise HTTPException(
+            raise StructuredHTTPException(
                 status_code=400,
                 detail={"code": "CAPTCHA_FAILED", "detail": "Captcha inválido."},
             )
@@ -780,7 +781,7 @@ def _validate_event_form_data(db: Session, event: models.CrmEvent, payload: sche
             honeypot_enabled=False,  # honeypot no aplica en preregistro (ver docstring)
         )
     except ValidationError as exc:
-        raise HTTPException(
+        raise StructuredHTTPException(
             status_code=422,
             detail={"code": exc.code, "detail": exc.detail, "field_id": exc.field_id},
         ) from None
