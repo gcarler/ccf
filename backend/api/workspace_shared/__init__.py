@@ -1,12 +1,17 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any, Dict
 
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
-DATA_DIR = Path(__file__).resolve().parents[2] / "data"
+DATA_DIR = (
+    Path(os.environ["CCF_RUNTIME_DIR"]) / "backend" / "data"
+    if os.getenv("CCF_RUNTIME_DIR")
+    else Path(__file__).resolve().parents[2] / "data"
+)
 FLAGS_FILE = DATA_DIR / "feature_flags.json"
 AUDIT_FILE = DATA_DIR / "feature_flags_audit.ndjson"
 INCIDENTS_FILE = DATA_DIR / "feature_flags_incidents.json"
