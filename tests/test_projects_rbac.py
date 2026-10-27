@@ -187,6 +187,15 @@ _READ_ENDPOINTS = [
     ("GET", f"/api/projects/{FAKE}/tasks-rollup"),
     ("GET", f"/api/projects/{FAKE}/tasks/{FAKE_TASK}/dimensions"),
     ("GET", f"/api/projects/{FAKE}/wbs-tree"),
+    # PMI governance endpoints retain their declared module/project guard.
+    ("GET", "/api/projects/pmo-portfolio-matrix"),
+    ("GET", f"/api/projects/{FAKE}/charter"),
+    ("GET", f"/api/projects/{FAKE}/stakeholders"),
+    ("GET", f"/api/projects/{FAKE}/closure"),
+    ("GET", f"/api/projects/{FAKE}/change-requests"),
+    ("GET", f"/api/projects/{FAKE}/tasks/{FAKE_TASK}/dod-acceptance"),
+    ("GET", f"/api/projects/{FAKE}/tasks/{FAKE_TASK}/dod-status"),
+    ("GET", f"/api/projects/{FAKE}/quality-summary"),
 ]
 
 # Endpoints where Miembro should receive 403 (module-level access denied)
@@ -232,6 +241,11 @@ _READ_ENDPOINTS_MIEMBRO_403 = [
     ("GET", f"/api/projects/{FAKE}/time-tracking-summary"),
     ("GET", f"/api/projects/{FAKE}/workload"),
     ("GET", "/api/projects/pmi-doctrine"),
+    # PMI governance endpoints retain their declared module/project guard.
+    ("GET", "/api/projects/pmo-portfolio-matrix"),
+    ("GET", f"/api/projects/{FAKE}/charter"),
+    ("GET", f"/api/projects/{FAKE}/stakeholders"),
+    ("GET", f"/api/projects/{FAKE}/closure"),
 ]
 
 # Endpoints protected by require_project_access with a project/task ID:
@@ -256,6 +270,11 @@ _READ_ENDPOINTS_MIEMBRO_404 = [
     ("GET", f"/api/projects/{FAKE}/tasks-rollup"),
     ("GET", f"/api/projects/{FAKE}/tasks/{FAKE_TASK}/dimensions"),
     ("GET", f"/api/projects/{FAKE}/wbs-tree"),
+    # PMI governance endpoints retain their declared module/project guard.
+    ("GET", f"/api/projects/{FAKE}/change-requests"),
+    ("GET", f"/api/projects/{FAKE}/tasks/{FAKE_TASK}/dod-acceptance"),
+    ("GET", f"/api/projects/{FAKE}/tasks/{FAKE_TASK}/dod-status"),
+    ("GET", f"/api/projects/{FAKE}/quality-summary"),
 ]
 
 # Endpoints scoped to a project ID but still protected by

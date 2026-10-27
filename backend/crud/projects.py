@@ -2,11 +2,14 @@
 
 import csv
 import io
+
+# ── Helper ──────────────────────────────────────────────
+import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from urllib.parse import urlsplit
 from uuid import UUID
-from xml.sax.saxutils import escape as escape_xml_text
+from xml.sax.saxutils import escape as escape_xml_text  # nosec B406 # output text escaping only; never parses XML
 
 from sqlalchemy import and_, case, func
 from sqlalchemy.orm import Session, load_only, selectinload
@@ -16,8 +19,7 @@ from backend.crud.crm import resolve_persona_id_for_user
 from backend.models_shared import _utcnow
 from backend.schemas.projects import TASK_TITLE_MAX_LENGTH
 
-# ── Helper ──────────────────────────────────────────────
-
+logger = logging.getLogger(__name__)
 
 def get_user_persona_id(db: Session, user_id: UUID | str | None) -> Optional[UUID]:
     """Obtiene persona.id desde el identificador canónico del usuario."""
@@ -483,7 +485,7 @@ def create_project_task(db: Session, task: schemas.ProjectTaskCreate):
             from backend.services.project_evm_service import sync_parent_task_rollup
             sync_parent_task_rollup(db, parent_id)
         except Exception:
-            pass
+            logger.debug("Best-effort create_project_task failed; retaining fallback")
     notify_project_execution_change_safe(db, project_id)
     return db_task
 
@@ -616,7 +618,7 @@ def update_project_task(db: Session, task_id, payload: schemas.ProjectTaskUpdate
             from backend.services.project_evm_service import sync_parent_task_rollup
             sync_parent_task_rollup(db, row.parent_id)
         except Exception:
-            pass
+            logger.debug("Best-effort update_project_task failed; retaining fallback")
     evaluate_task_mutation_automations(
         db,
         row,
@@ -641,7 +643,7 @@ def delete_project_task(db: Session, task_id) -> bool:
             from backend.services.project_evm_service import sync_parent_task_rollup
             sync_parent_task_rollup(db, parent_id)
         except Exception:
-            pass
+            logger.debug("Best-effort delete_project_task failed; retaining fallback")
     notify_project_execution_change_safe(db, project_id)
     return True
 
@@ -2926,7 +2928,7 @@ def sync_task_time_logs(db: Session, task_id: Any) -> None:
         elif has_subtasks:
             sync_parent_task_rollup(db, task.id)
     except Exception:
-        pass
+        logger.debug("Best-effort sync_task_time_logs failed; retaining fallback")
 
 
 def _prepare_time_log_response(log: models.ProjectTimeLog) -> models.ProjectTimeLog:
@@ -6170,7 +6172,7 @@ def notify_project_execution_change_safe(
         try:
             db.rollback()
         except Exception:
-            pass
+            logger.debug("Best-effort notify_project_execution_change_safe failed; retaining fallback")
         return None
 
 
@@ -6474,7 +6476,7 @@ def link_drive_file(
     db: Session,
     project_id: UUID | str,
     *,
-    payload: Optional[Any] = None,
+    payload: schemas.ProjectFileLinkDrivePayload | dict[str, Any] | None = None,
     drive_url: Optional[str] = None,
     name: Optional[str] = None,
     description: Optional[str] = None,
@@ -6486,7 +6488,7 @@ def link_drive_file(
 ) -> models.ProjectFile:
     """Vincula un documento o carpeta de Google Drive a la bóveda del proyecto."""
     if payload is not None:
-        data = payload.model_dump() if hasattr(payload, "model_dump") else (payload.dict() if hasattr(payload, "dict") else dict(payload))
+        data = schemas.ProjectFileLinkDrivePayload.model_validate(payload).model_dump()
         drive_url = data.get("drive_url", drive_url)
         name = data.get("name", name)
         description = data.get("description", description)

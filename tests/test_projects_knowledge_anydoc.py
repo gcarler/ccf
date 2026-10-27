@@ -213,31 +213,27 @@ def test_knowledge_indexer_projects_evm_enrichment():
 
     indexer = KnowledgeIndexer(db)
 
-    # Simular cálculo de EVM en el servicio
-    mock_evm = MagicMock()
-    mock_evm.bac = 100000.0
-    mock_evm.pv = 50000.0
-    mock_evm.ev = 55000.0
-    mock_evm.ac = 48000.0
-    mock_evm.cv = 7000.0
-    mock_evm.sv = 5000.0
-    mock_evm.cpi = 1.15
-    mock_evm.spi = 1.10
-    mock_evm.progreso_real_pct = 55.0
-    mock_evm.progreso_planificado_pct = 50.0
-
-    mock_quad = MagicMock()
-    mock_quad.name = "Zona Óptima"
-    mock_quad.status.value = "optimal"
-    mock_quad.description = "Bajo presupuesto y adelantado en cronograma."
+    # Exercise the real dictionary contract returned by the canonical EVM engine.
+    mock_evm = {
+        "bac": 100000.0, "pv": 50000.0, "ev": 55000.0, "ac": 48000.0,
+        "cv": 7000.0, "sv": 5000.0, "cpi": 1.15, "spi": 1.10,
+        "progress_percentage": 55.0,
+    }
+    mock_quad = {
+        "name": "Zona Óptima", "health_status": "OPTIMO",
+        "description": "Bajo presupuesto y adelantado en cronograma.",
+    }
 
     with (
-        patch("backend.services.project_evm_service.calculate_project_evm", return_value=mock_evm),
-        patch("backend.services.project_evm_service.calculate_cpi_spi_quadrant", return_value=mock_quad),
+        patch(
+            "backend.services.project_evm_service.calculate_project_evm_advanced",
+            return_value={"standard_evm": mock_evm, "quadrant": mock_quad},
+        ) as calculate,
         patch.object(indexer, "_upsert_kb") as mock_upsert,
     ):
         count = indexer._index_projects(agent_id=None)
         assert count == 1
+        calculate.assert_called_once_with(db, mock_project)
         assert mock_upsert.call_count == 1
 
         call_kwargs = mock_upsert.call_args[1]
@@ -2732,8 +2728,8 @@ def test_audit_markdown_callout_admonition_hygiene_empty_or_no_callouts():
 def test_audit_markdown_table_column_alignment_hygiene_clean_tables():
     """Tablas GFM limpias (alineaciones :---, :---:, ---:) e ignores en fences -> clean."""
     from backend.services.anydoc_service import (
-        audit_markdown_table_column_alignment_hygiene,
         AnyDocService,
+        audit_markdown_table_column_alignment_hygiene,
     )
 
     md = (
@@ -3484,7 +3480,7 @@ def test_audit_markdown_code_fence_secret_leak_detection():
     )
 
     leaky_bits = (
-        ('```bash\napi_key=abc123realkey\n```\n', 'api_key='), 
+        ('```bash\napi_key=abc123realkey\n```\n', 'api_key='),
         ('```yaml\nsecret_key=deadbeef1234\n```\n', 'secret_key='),
         ('```sh\ntoken=ghp_abcdefghijklmnopqrst1234\n```\n', 'ghp_'),
         ('```json\nAuthorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\n```\n', 'bearer'),
@@ -3498,11 +3494,11 @@ def test_audit_markdown_code_fence_secret_leak_detection():
 
     # Placeholders que contienen REDACTED, EXAMPLE, YOUR_, < o *** no se reportan.
     placeholders = (
-        "```bash\napi_key=REDACTED\n```\n", 
-        "```py\npassword=EXAMPLE_PLACEHOLDER\n```\n", 
-        "```env\nDB_PASSWORD=YOUR_SECRET_HERE\n```\n", 
-        "```env\nTOKEN=<paste-your-token>\n```\n", 
-        "```env\nAWS_SECRET_ACCESS_KEY=***\n```\n", 
+        "```bash\napi_key=REDACTED\n```\n",
+        "```py\npassword=EXAMPLE_PLACEHOLDER\n```\n",
+        "```env\nDB_PASSWORD=YOUR_SECRET_HERE\n```\n",
+        "```env\nTOKEN=<paste-your-token>\n```\n",
+        "```env\nAWS_SECRET_ACCESS_KEY=***\n```\n",
     )
     for doc in placeholders:
         res = audit_markdown_code_fence_language_and_secret_hygiene(doc)
@@ -4444,11 +4440,11 @@ def test_audit_markdown_horizontal_rule_and_section_break_hygiene_setext_and_bla
 
 def test_audit_markdown_horizontal_rule_and_section_break_hygiene_frontmatter_and_empty():
     """Front-matter valido ignorado; degenerado (sin YAML) tratado como HRs; vacio/None + __all__."""
+    import backend.services.anydoc_service as mod
     from backend.services.anydoc_service import (
         AnyDocService,
         audit_markdown_horizontal_rule_and_section_break_hygiene,
     )
-    import backend.services.anydoc_service as mod
 
     fm = audit_markdown_horizontal_rule_and_section_break_hygiene(
         "---\ny: 1\nz: 2\n---\n\nTexto.\n\n***\n"
@@ -4677,12 +4673,12 @@ def test_audit_markdown_raw_html_and_script_injection_hygiene_ignores():
 
 def test_audit_markdown_raw_html_and_script_injection_hygiene_neutral_and_export():
     """Entradas no-str/None, proxies estaticos de AnyDocService/AnydocService y __all__."""
+    import backend.services.anydoc_service as mod
     from backend.services.anydoc_service import (
         AnyDocService,
         AnydocService,
         audit_markdown_raw_html_and_script_injection_hygiene,
     )
-    import backend.services.anydoc_service as mod
 
     for payload in (None, "", 42):
         empty = audit_markdown_raw_html_and_script_injection_hygiene(payload)
@@ -5042,12 +5038,12 @@ def test_audit_markdown_badge_and_external_tracker_hygiene_ignores_code_and_fenc
 
 def test_audit_markdown_badge_and_external_tracker_hygiene_neutral_and_binding():
     """None/vacio/whitespace -> vacio; proxys estaticos y __all__."""
+    import backend.services.anydoc_service as mod
     from backend.services.anydoc_service import (
         AnyDocService,
         AnydocService,
         audit_markdown_badge_and_external_tracker_hygiene,
     )
-    import backend.services.anydoc_service as mod
 
     for payload in (None, "", "   \n\t"):
         empty = audit_markdown_badge_and_external_tracker_hygiene(payload)
@@ -5283,12 +5279,12 @@ def test_audit_markdown_acronym_glossary_exempt_and_code_ignores():
 
 def test_audit_markdown_acronym_glossary_neutral_and_binding():
     """None/vacío/whitespace -> vacío; doble proxy estático y entrada en __all__."""
+    import backend.services.anydoc_service as mod
     from backend.services.anydoc_service import (
         AnyDocService,
         AnydocService,
         audit_markdown_acronym_and_glossary_first_use_hygiene,
     )
-    import backend.services.anydoc_service as mod
 
     for payload in (None, "", "   \n\t"):
         empty = audit_markdown_acronym_and_glossary_first_use_hygiene(payload)
@@ -8764,7 +8760,10 @@ def test_audit_markdown_admonition_callout_syntax_and_nesting_hygiene_staticmeth
 def test_glossary_hygiene_optimal_terms():
     """Términos con etiqueta única, definición >= 15 chars y citación canónica -> 'GLOSSARY_HYGIENE_OPTIMAL'."""
     import backend.services.anydoc_service as anydoc_module
-    from backend.services.anydoc_service import AnyDocService, audit_markdown_glossary_definition_list_uniqueness_and_hygiene
+    from backend.services.anydoc_service import (
+        AnyDocService,
+        audit_markdown_glossary_definition_list_uniqueness_and_hygiene,
+    )
 
     entries = [
         {

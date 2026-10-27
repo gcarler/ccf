@@ -2106,7 +2106,7 @@ def update_task(
             from backend.services.project_evm_service import sync_parent_task_rollup
             sync_parent_task_rollup(db, task.parent_id)
         except Exception:
-            pass
+            logger.debug("Best-effort update_task failed; retaining fallback")
     evaluate_task_mutation_automations(
         db,
         task,
@@ -3712,7 +3712,7 @@ async def upload_task_attachment(
                 sede_id=user_sede,
             )
         except Exception:
-            pass
+            logger.debug("Best-effort upload_task_attachment failed; retaining fallback")
     _log_project_activity(
         db,
         project_id,
@@ -3839,7 +3839,7 @@ def update_project_task(
             from backend.services.project_evm_service import sync_parent_task_rollup
             sync_parent_task_rollup(db, task.parent_id)
         except Exception:
-            pass
+            logger.debug("Best-effort update_project_task failed; retaining fallback")
     evaluate_task_mutation_automations(
         db,
         task,
@@ -4064,7 +4064,7 @@ def create_subtask(
         from backend.services.project_evm_service import sync_parent_task_rollup
         sync_parent_task_rollup(db, db_subtask.parent_id)
     except Exception:
-        pass
+        logger.debug("Best-effort create_subtask failed; retaining fallback")
     if getattr(db_subtask, "assignee_id", None):
         notify_task_assigned(
             db,
@@ -4116,7 +4116,7 @@ def update_subtask(
             from backend.services.project_evm_service import sync_parent_task_rollup
             sync_parent_task_rollup(db, subtask.parent_id)
         except Exception:
-            pass
+            logger.debug("Best-effort update_subtask failed; retaining fallback")
     evaluate_task_mutation_automations(
         db,
         subtask,
@@ -6671,7 +6671,7 @@ async def upload_project_file_endpoint(
                 db.add(att)
                 db.commit()
         except Exception:
-            pass
+            logger.debug("Best-effort upload_project_file_endpoint failed; retaining fallback")
 
     _log_project_activity(
         db,
