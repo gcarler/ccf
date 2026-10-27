@@ -33,14 +33,16 @@ from backend.crud.cms import (
     update_cms_newsletter,
     update_cms_subscriber,
 )
+from tests.conftest import seed_admin
 
 UTC = dt.timezone.utc
 
 
-def _site(db, key: str = "crud-batch") -> models.CmsSite:
+def _site(db, key: str = "crud-batch", *, sede_id: uuid.UUID | None = None) -> models.CmsSite:
     site = models.CmsSite(
         id=uuid.uuid4(),
         site_key=key,
+        sede_id=sede_id,
         name=key,
         base_path=f"/{key}",
         is_active=True,
@@ -68,13 +70,15 @@ def _page_with_sections(db, site: models.CmsSite):
 
 class TestNewsletterCrudDirect:
     def test_newsletter_lifecycle_and_send_dispatch(self, db_session, monkeypatch):
-        site = _site(db_session, "newsletter-direct")
+        actor, _, sede = seed_admin(db_session)
+        site = _site(db_session, "newsletter-direct", sede_id=sede.id)
         newsletter = create_cms_newsletter(
             db_session,
             site.id,
             schemas.CmsNewsletterCreate(
                 name="N1", subject="S1", content_html="<p>body</p>"
             ),
+            actor_user_id=actor.id,
         )
         fetched = get_cms_newsletter(db_session, site.id, newsletter.id)
         assert fetched is not None and fetched.id == newsletter.id
@@ -84,6 +88,7 @@ class TestNewsletterCrudDirect:
             db_session,
             newsletter,
             schemas.CmsNewsletterUpdate(name="N2", status="scheduled"),
+            actor_user_id=actor.id,
         )
         assert updated.name == "N2"
         assert updated.status == "scheduled"
@@ -92,29 +97,33 @@ class TestNewsletterCrudDirect:
             db_session,
             site.id,
             schemas.CmsSubscriberCreate(email=" USER@EXAMPLE.COM ", name="User"),
+            actor_user_id=actor.id,
         )
         inactive = create_cms_subscriber(
             db_session,
             site.id,
             schemas.CmsSubscriberCreate(email="inactive@example.com", is_active=False),
+            actor_user_id=actor.id,
         )
         calls: list[str] = []
         monkeypatch.setattr(
             "backend.services.email.send_email",
             lambda **kwargs: calls.append(kwargs["to"]),
         )
-        sent = send_cms_newsletter(db_session, newsletter)
+        sent = send_cms_newsletter(db_session, newsletter, actor_user_id=actor.id)
         assert sent.status == "sent"
         assert sent.recipient_count == 1
         assert calls == ["user@example.com"]
         assert inactive.is_active is False
 
     def test_subscriber_search_pagination_import_and_public_flows(self, db_session):
-        site = _site(db_session, "subscriber-direct")
+        actor, _, sede = seed_admin(db_session)
+        site = _site(db_session, "subscriber-direct", sede_id=sede.id)
         existing = create_cms_subscriber(
             db_session,
             site.id,
             schemas.CmsSubscriberCreate(email="existing@example.com", is_active=False),
+            actor_user_id=actor.id,
         )
         reactivated = create_cms_subscriber(
             db_session,
@@ -122,6 +131,7 @@ class TestNewsletterCrudDirect:
             schemas.CmsSubscriberCreate(
                 email="EXISTING@example.com", name="Reactivated", is_active=True
             ),
+            actor_user_id=actor.id,
         )
         assert reactivated.id == existing.id
         assert reactivated.is_active is True
@@ -136,6 +146,7 @@ class TestNewsletterCrudDirect:
             schemas.CmsSubscriberImportPayload(
                 emails=["emails@example.com", "second@example.com", "  "]
             ),
+            actor_user_id=actor.id,
         )
         assert imported["imported_count"] == 2
         csv_import = import_cms_subscribers(
@@ -144,6 +155,7 @@ class TestNewsletterCrudDirect:
             schemas.CmsSubscriberImportPayload(
                 csv_content="csv@example.com, CSV Name\nnot-an-email\n"
             ),
+            actor_user_id=actor.id,
         )
         assert csv_import["imported_count"] == 1
         item_import = import_cms_subscribers(
@@ -152,6 +164,7 @@ class TestNewsletterCrudDirect:
             schemas.CmsSubscriberImportPayload(
                 subscribers=[schemas.CmsSubscriberImportItem(email="item@example.com", name="Item")]
             ),
+            actor_user_id=actor.id,
         )
         assert item_import["imported_count"] == 1
 
@@ -163,11 +176,13 @@ class TestNewsletterCrudDirect:
         assert get_cms_subscriber(db_session, site.id, created.id) is not None
 
         updated = update_cms_subscriber(
-            db_session, created, schemas.CmsSubscriberUpdate(is_active=False)
+            db_session, created, schemas.CmsSubscriberUpdate(is_active=False),
+            actor_user_id=actor.id,
         )
         assert updated.unsubscribed_at is not None
         updated = update_cms_subscriber(
-            db_session, updated, schemas.CmsSubscriberUpdate(is_active=True)
+            db_session, updated, schemas.CmsSubscriberUpdate(is_active=True),
+            actor_user_id=actor.id,
         )
         assert updated.unsubscribed_at is None
 

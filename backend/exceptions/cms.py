@@ -171,6 +171,27 @@ class CmsValidationError(CmsError):
     detail: str = "Validation error"
 
 
+class FormValidationError(CmsValidationError):
+    """Preserve field-level form errors for the public renderer and CMS editor."""
+
+    def __init__(
+        self,
+        *,
+        code: str,
+        detail: str,
+        field_id: str | None = None,
+        status_code: int = 422,
+    ):
+        super().__init__(detail=detail, status_code=status_code, error_code=code)
+        self.field_id = field_id
+
+    def to_dict(self) -> dict:
+        detail = {"code": self.error_code, "detail": self.detail}
+        if self.field_id is not None:
+            detail["field_id"] = self.field_id
+        return {**detail, "detail": detail}
+
+
 class InvalidSlugError(CmsValidationError):
     detail: str = "Slug is required"
 

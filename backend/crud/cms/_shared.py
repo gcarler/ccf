@@ -305,14 +305,11 @@ def _crud_scope_re_check_pastoral_profile(
         editor o administrador autorizado puede gestionarlo.
       - Si el actor no tiene sede (superadmin), acceso global permitido.
       - Si la sede del pastor coincide con la del actor (str match), permitido.
-      - Si el actor tiene rol administrativo de plataforma (admin, administrador,
-        super administrador), acceso global permitido.
+      - Un rol administrativo con sede conserva el aislamiento de esa sede.
       - En cualquier otro caso (editor de Sede B mutando pastor asignado a Sede A),
         bloqueado con 404 defensivo.
     """
     from fastapi import HTTPException as _HTTPException
-
-    from backend.core.permissions import normalize_role
 
     # 1. Pastores globales (sin sede fija asignada)
     if target_persona_sede is None:
@@ -325,19 +322,6 @@ def _crud_scope_re_check_pastoral_profile(
     # 3. Misma sede
     if str(target_persona_sede) == str(actor_sede):
         return
-
-    # 4. Administradores con rol global en la plataforma
-    try:
-        actor_uuid = uuid.UUID(str(actor_user_id))
-        user = db.query(models.User).filter(models.User.id == actor_uuid).first()
-        if user:
-            role = normalize_role(getattr(user, "role", ""))
-            if not role and hasattr(user, "rol_plataforma") and user.rol_plataforma:
-                role = normalize_role(user.rol_plataforma.nombre)
-            if role in {"admin", "administrador", "super administrador"}:
-                return
-    except Exception:
-        pass
 
     _logger.warning(
         "Axioma 3 scope violation: update_pastoral_profile cross-sede "

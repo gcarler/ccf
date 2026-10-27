@@ -8,7 +8,7 @@ from html import escape
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -22,7 +22,7 @@ from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.core.permissions import require_module_access
 from backend.core.rate_limit import rate_limiter
-from backend.exceptions.cms import FormNotFoundError
+from backend.exceptions.cms import FormNotFoundError, FormValidationError
 from backend.services.form_validation import ValidationError, validate_field_spec, validate_submission, verify_hcaptcha
 
 logger = logging.getLogger(__name__)
@@ -143,11 +143,11 @@ def submit_public_form_v2(
     # 1. hCaptcha
     if form.captcha_enabled:
         if not payload.captcha_token:
-            raise HTTPException(status_code=400, detail={"code": "CAPTCHA_REQUIRED", "detail": "Captcha requerido"})
+            raise FormValidationError(status_code=400, code="CAPTCHA_REQUIRED", detail="Captcha requerido")
         remote_ip = request.client.host if request.client else None
         ok = _run_hcaptcha_sync(payload.captcha_token, remote_ip=remote_ip)
         if not ok:
-            raise HTTPException(status_code=400, detail={"code": "CAPTCHA_FAILED", "detail": "Captcha inválido"})
+            raise FormValidationError(status_code=400, code="CAPTCHA_FAILED", detail="Captcha inválido")
 
     # 2. Honeypot — los bots lo rellenan. Manny: responder 200 para no delatar.
     if bool(form.honeypot_enabled) and payload.hp:
@@ -163,10 +163,7 @@ def submit_public_form_v2(
             honeypot_enabled=False,
         )
     except ValidationError as exc:
-        raise HTTPException(
-            status_code=422,
-            detail={"code": exc.code, "detail": exc.detail, "field_id": exc.field_id},
-        ) from None
+        raise FormValidationError(code=exc.code, detail=exc.detail, field_id=exc.field_id) from None
 
     # 4. Persistir
     client_ip = request.client.host if request.client else None
@@ -325,15 +322,9 @@ def _validate_fields_spec(fields: list[dict]) -> None:
         try:
             validate_field_spec(spec)
         except ValidationError as exc:
-            raise HTTPException(
-                status_code=422,
-                detail={"code": exc.code, "detail": exc.detail, "field_id": exc.field_id},
-            ) from None
+            raise FormValidationError(code=exc.code, detail=exc.detail, field_id=exc.field_id) from None
         fid = (spec.get("id") or "").strip()
         if fid and fid in seen_ids:
-            raise HTTPException(
-                status_code=422,
-                detail={"code": "DUPLICATE_FIELD_ID", "detail": f"Campo duplicado: {fid}", "field_id": fid},
-            )
+            raise FormValidationError(code="DUPLICATE_FIELD_ID", detail=f"Campo duplicado: {fid}", field_id=fid)
         if fid:
             seen_ids.add(fid)
