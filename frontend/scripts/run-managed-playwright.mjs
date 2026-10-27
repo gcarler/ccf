@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
 import { restoreNextConfig, snapshotNextConfig } from './preserve-next-config.mjs';
+import { planPlaywrightPhases, runPlaywrightPhases } from './managed-playwright-phases.mjs';
 
 const rawArgs = process.argv.slice(2);
 const authEnabled = rawArgs.includes('--auth');
@@ -14,6 +15,8 @@ const hasWorkersFlag = rawArgs.includes('--workers');
 const args = rawArgs.filter(
   (arg) => arg !== '--auth' && arg !== '--academy-roles' && arg !== '--reuse-build',
 );
+// Planning validates the opt-in before creating directories or starting processes.
+const testPhases = planPlaywrightPhases(args, process.env.CCF_E2E_FULL_AFTER_FOCUSED === '1');
 
 async function resolveManagedPort() {
   if (process.env.PLAYWRIGHT_PORT) {
@@ -181,7 +184,7 @@ if (authEnabled) {
 }
 
 const startBin = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-const startServer = spawn(startBin, ['run', 'start', '--', '-p', port], {
+const startServer = spawn(startBin, ['run', 'start', '--', '-H', '127.0.0.1', '-p', port], {
   // npm launches `next start` as a child. On Unix, a detached process group
   // lets cleanup terminate both the npm wrapper and its Next descendant when
   // Playwright or this runner is interrupted. Windows uses taskkill /T below.
@@ -256,15 +259,8 @@ async function waitForServerReady(baseUrl, timeoutMs = 120_000) {
 await waitForServerReady(env.PLAYWRIGHT_BASE_URL);
 
 const npxBin = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-const result = spawnSync(npxBin, ['playwright', 'test', ...args], {
-  stdio: 'inherit',
-  env,
-});
+const testStatus = runPlaywrightPhases(testPhases, npxBin, env, spawnSync);
 
 stopServer();
 
-if (result.error) {
-  throw result.error;
-}
-
-process.exit(result.status ?? 1);
+process.exit(testStatus);
