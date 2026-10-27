@@ -16,6 +16,7 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
+from backend.crud.cms._shared import validate_cms_actor_site
 
 _logger = logging.getLogger(__name__)
 
@@ -52,7 +53,14 @@ def get_cms_popup(db: Session, site_id: uuid.UUID, popup_id: uuid.UUID) -> model
 
 
 
-def create_cms_popup(db: Session, site_id: uuid.UUID, payload: schemas.CmsPopupCreate) -> models.CmsPopup:
+def create_cms_popup(
+    db: Session,
+    site_id: uuid.UUID,
+    payload: schemas.CmsPopupCreate,
+    *,
+    actor_user_id: uuid.UUID | str | None = None,
+) -> models.CmsPopup:
+    validate_cms_actor_site(db, actor_user_id, site_id)
     row = models.CmsPopup(
         site_id=site_id,
         name=payload.name,
@@ -69,7 +77,14 @@ def create_cms_popup(db: Session, site_id: uuid.UUID, payload: schemas.CmsPopupC
 
 
 
-def update_cms_popup(db: Session, row: models.CmsPopup, payload: schemas.CmsPopupUpdate) -> models.CmsPopup:
+def update_cms_popup(
+    db: Session,
+    row: models.CmsPopup,
+    payload: schemas.CmsPopupUpdate,
+    *,
+    actor_user_id: uuid.UUID | str | None = None,
+) -> models.CmsPopup:
+    validate_cms_actor_site(db, actor_user_id, row.site_id)
     data = payload.model_dump(exclude_unset=True)
     for field, val in data.items():
         setattr(row, field, val)
@@ -79,7 +94,13 @@ def update_cms_popup(db: Session, row: models.CmsPopup, payload: schemas.CmsPopu
 
 
 
-def delete_cms_popup(db: Session, row: models.CmsPopup) -> bool:
+def delete_cms_popup(
+    db: Session,
+    row: models.CmsPopup,
+    *,
+    actor_user_id: uuid.UUID | str | None = None,
+) -> bool:
+    validate_cms_actor_site(db, actor_user_id, row.site_id)
     row.is_active = False
     row.deleted_at = datetime.now(timezone.utc)
     db.commit()

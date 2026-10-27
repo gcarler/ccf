@@ -94,3 +94,11 @@ def test_finance_has_an_explicit_owner_and_rejects_foreign_module_files():
     assert ownership_violations("feature/finance-quality", own) == []
     foreign = ["backend/api/projects.py", "backend/api/crm/personas.py"]
     assert ownership_violations("feature/finance-quality", foreign) == foreign
+
+
+def test_projects_owns_only_its_exact_deployed_coq_revision():
+    own = "alembic/canonical_versions/20261024_0001_add_coq_amount_to_project_dod_acceptances.py"
+    foreign = "alembic/canonical_versions/20261018_0001_other.py"
+    assert ownership_violations("feature/projects-quality", [own]) == []
+    assert ownership_violations("feature/projects-quality", [foreign]) == [foreign]
+    assert ownership_violations("feature/academy-quality", [own]) == [own]

@@ -45,7 +45,12 @@ from backend.core.permissions import (
     require_staff_or_admin,
 )
 from backend.core.storage import storage_service
-from backend.core.uploads import MAX_UPLOAD_SIZE, sanitize_filename
+from backend.core.uploads import (
+    MAX_UPLOAD_SIZE,
+    ensure_allowed_extension,
+    sanitize_filename,
+    validate_mime_extension_alignment,
+)
 from backend.crud.crm import get_user_sede_id
 from backend.crud.crm_.personas import (
     normalize_search_expr,
@@ -53,6 +58,7 @@ from backend.crud.crm_.personas import (
     persona_prefix_search_order,
 )
 from backend.crud.projects import (
+    CircularDependencyError,
     _prepare_kpi_response,
     evaluate_task_mutation_automations,
     get_user_persona_id,
@@ -3638,6 +3644,15 @@ async def whiteboard_collab_ws(websocket: WebSocket, project_id: str):
 # --- ATTACHMENTS & SUPPLIES ---
 
 
+def _validate_project_upload_type(filename: str, content_type: Optional[str]) -> None:
+    """Reject unsupported uploads before reading or persisting their contents."""
+    try:
+        ensure_allowed_extension(filename)
+        validate_mime_extension_alignment(filename, content_type)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
 @router.post("/{project_id}/tasks/{task_id}/attachments", response_model=schemas.ProjectTask)
 async def upload_task_attachment(
     project_id: str,
@@ -3650,6 +3665,7 @@ async def upload_task_attachment(
     _ensure_project(db, project_id, user_sede=user_sede)
     task = _ensure_task_in_project(db, project_id, task_id)
     filename = sanitize_filename(file.filename or "file")
+    _validate_project_upload_type(filename, file.content_type)
     contents = await file.read()
 
     if len(contents) > MAX_UPLOAD_SIZE:
@@ -4948,7 +4964,7 @@ def create_task_dependency(
     _ensure_task_in_project(db, project_id, str(payload.successor_id))
     try:
         dep = crud.create_task_dependency(db, _to_uuid(project_id), payload)
-    except crud.CircularDependencyError as exc:
+    except CircularDependencyError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(exc),
@@ -6601,6 +6617,7 @@ async def upload_project_file_endpoint(
         _ensure_phase_in_project(db, project_id, phase_id)
 
     filename = sanitize_filename(file.filename or "archivo")
+    _validate_project_upload_type(filename, file.content_type)
     contents = await file.read()
 
     if len(contents) > MAX_UPLOAD_SIZE:
