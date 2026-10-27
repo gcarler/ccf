@@ -1,7 +1,8 @@
 fastapi
 uvicorn[standard]
 gunicorn
-sqlalchemy
+# Stay on the tested ORM family; the Docker lock also uses SQLAlchemy 2.0.
+sqlalchemy>=2.0.49,<2.1
 psycopg2-binary
 pydantic
 pydantic[email]
