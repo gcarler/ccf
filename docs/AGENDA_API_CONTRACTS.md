@@ -71,6 +71,20 @@ Semántica RFC 5545 "sólo esta ocurrencia", sobre el par `event_id + occurrence
 - Fuera de alcance v2: edición "ésta y siguientes" (partición de series).
 - El agregador `GET /api/system/calendar` expande las series con ventana acotada `today-90d .. today+2y`.
 
+### 3.3 Lectura operativa en el detalle de Agenda
+
+`/plataforma/agenda/events/{id}` muestra los recursos disponibles y las reservas
+del evento mediante las lecturas autenticadas de este módulo. El calendario
+compartido mantiene su contrato de agregación de eventos.
+
+- Los recursos exponen `name`, `resource_type`, `capacity` e `is_active`.
+- Las reservas exponen `resource_id`, `starts_at` y `ends_at`; el nombre se
+  resuelve contra el inventario visible para el mismo actor.
+- Las listas ofrecen carga, vacío, error y reintento sin formularios de mutación.
+- Los fixtures E2E anteriores usaban campos inexistentes (`location`, `type`,
+  `resourceName`, `startsAt` y `endsAt`). QA ahora verifica nombre, tipo,
+  capacidad, cantidad y horario conforme al contrato real, en la ruta propietaria.
+
 ## 4. `GET /api/system/calendar`
 
 Contrato formal:
