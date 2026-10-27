@@ -1,6 +1,7 @@
 import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
+import { apiFetch } from '@/lib/http';
 import {
     ThemeProvider,
     useTheme,
@@ -63,6 +64,46 @@ describe('ThemeContext & AppearanceContext', () => {
         document.documentElement.removeAttribute('data-accent');
         document.documentElement.className = '';
         vi.clearAllMocks();
+        vi.mocked(apiFetch).mockReset().mockResolvedValue({});
+    });
+
+    it('loads remote preferences without writing them back until the user changes a setting', async () => {
+        vi.useFakeTimers();
+        vi.mocked(apiFetch).mockResolvedValue({ settings: { theme_mode: 'night' } });
+        try {
+            render(<ThemeProvider><ConsumerComponent /></ThemeProvider>);
+            await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+            expect(screen.getByTestId('theme-val')).toHaveTextContent('night');
+            expect(apiFetch).toHaveBeenCalledTimes(1);
+            expect(apiFetch).toHaveBeenCalledWith('/v3/auth/preferences', { silent: true });
+
+            act(() => { screen.getByTestId('set-day').click(); });
+            await act(async () => { await vi.advanceTimersByTimeAsync(600); });
+            expect(apiFetch).toHaveBeenLastCalledWith('/v3/auth/preferences', expect.objectContaining({
+                method: 'PUT', body: { settings: expect.objectContaining({ theme_mode: 'day' }) },
+            }));
+            expect(apiFetch).toHaveBeenCalledTimes(2);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('preserves a user change when the initial remote profile arrives later', async () => {
+        vi.useFakeTimers();
+        let resolveProfile: (value: unknown) => void = () => undefined;
+        vi.mocked(apiFetch).mockImplementationOnce(() => new Promise(resolve => { resolveProfile = resolve; }));
+        try {
+            render(<ThemeProvider><ConsumerComponent /></ThemeProvider>);
+            act(() => { screen.getByTestId('set-night').click(); });
+            await act(async () => { resolveProfile({ settings: { theme_mode: 'day' } }); });
+            expect(screen.getByTestId('theme-val')).toHaveTextContent('night');
+            await act(async () => { await vi.advanceTimersByTimeAsync(600); });
+            expect(apiFetch).toHaveBeenLastCalledWith('/v3/auth/preferences', expect.objectContaining({
+                method: 'PUT', body: { settings: expect.objectContaining({ theme_mode: 'night' }) },
+            }));
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
     it('initializes with default values and injects them to root html element', () => {

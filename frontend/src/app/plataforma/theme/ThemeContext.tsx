@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { apiFetch } from '@/lib/http';
 
 export type ThemeMode = 'day' | 'night';
@@ -283,7 +283,7 @@ const themeTokens: Record<ThemeMode, Record<string, string>> = {
         '--bg-primary': '0 0% 100%',
         '--bg-secondary': '210 40% 98%',
         '--text-primary': '222 47% 11%',
-        '--text-secondary': '215 16% 47%',
+        '--text-secondary': '215 20% 40%',
         '--surface-1': '0 0% 100%',
         '--surface-2': '210 40% 98%',
         '--surface-3': '210 40% 96.1%',
@@ -315,6 +315,13 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     const [accent, setAccentState] = useState<AccentId>('ccf-blue');
     const [isMounted, setIsMounted] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
+    const preferenceRevision = useRef(0);
+    const syncedRevision = useRef(0);
+    const [preferenceChange, setPreferenceChange] = useState(0);
+    const markPreferenceChanged = () => {
+        preferenceRevision.current += 1;
+        setPreferenceChange(revision => revision + 1);
+    };
 
     // ── Step 1: Read saved preferences once on mount ─────────────────
     useEffect(() => {
@@ -413,6 +420,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
 
     // ── Step 3: Remote profile synchronization ────────────────────────
     const syncPreferences = useCallback(async () => {
+        const revision = preferenceRevision.current;
         setIsSyncing(true);
         try {
             await apiFetch('/v3/auth/preferences', {
@@ -428,6 +436,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
                 },
                 silent: true,
             });
+            syncedRevision.current = Math.max(syncedRevision.current, revision);
         } catch {
             // Silent fallback to local storage
         } finally {
@@ -437,12 +446,12 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
 
     // Trigger background sync after user changes preferences
     useEffect(() => {
-        if (!isMounted) return;
+        if (!isMounted || preferenceRevision.current === syncedRevision.current) return;
         const timer = setTimeout(() => {
             syncPreferences();
         }, 600);
         return () => clearTimeout(timer);
-    }, [theme, uiScale, uiDensity, zoomPercentage, accent, isMounted, syncPreferences]);
+    }, [theme, uiScale, uiDensity, zoomPercentage, accent, isMounted, syncPreferences, preferenceChange]);
 
     // Initial background reconciliation from remote profile
     useEffect(() => {
@@ -461,7 +470,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
                     };
                 }>('/v3/auth/preferences', { silent: true });
 
-                if (!active || !res?.settings) return;
+                if (!active || !res?.settings || preferenceRevision.current > 0) return;
 
                 const remoteSettings = res.settings;
                 if (remoteSettings.theme_mode && (remoteSettings.theme_mode === 'day' || remoteSettings.theme_mode === 'night')) {
@@ -491,10 +500,17 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
         };
     }, [isMounted]);
 
-    const setTheme = (mode: ThemeMode) => setThemeState(mode);
-    const toggleTheme = () => setThemeState(prev => (prev === 'day' ? 'night' : 'day'));
+    const setTheme = (mode: ThemeMode) => {
+        markPreferenceChanged();
+        setThemeState(mode);
+    };
+    const toggleTheme = () => {
+        markPreferenceChanged();
+        setThemeState(prev => (prev === 'day' ? 'night' : 'day'));
+    };
 
     const setUiScale = (scale: UiScaleId) => {
+        markPreferenceChanged();
         setUiScaleState(scale);
         const option = UI_SCALE_OPTIONS[scale];
         if (option) {
@@ -503,10 +519,12 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const setUiDensity = (density: UiDensity) => {
+        markPreferenceChanged();
         setUiDensityState(density);
     };
 
     const setZoomPercentage = (zoom: number) => {
+        markPreferenceChanged();
         const clamped = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Math.round(zoom)));
         setZoomPercentageState(clamped);
         if (clamped <= 95) setUiScaleState('compact');
@@ -535,9 +553,13 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const setAccent = (newAccent: AccentId) => setAccentState(newAccent);
+    const setAccent = (newAccent: AccentId) => {
+        markPreferenceChanged();
+        setAccentState(newAccent);
+    };
 
     const resetToDefaults = () => {
+        markPreferenceChanged();
         setThemeState('day');
         setUiScaleState('normal');
         setUiDensityState('ultra-compact');
