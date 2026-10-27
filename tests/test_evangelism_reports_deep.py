@@ -89,8 +89,8 @@ class TestReportsWithData:
         resp = c.get(f"/api/evangelism/reports/strategy/{sid}/summary", headers=h)
         assert _ok(resp.status_code), f"summary: {resp.status_code} {resp.text[:100]}"
 
-    def test_cross_sede_403(self, full, db_session):
-        """Group from another sede returns 403."""
+    def test_cross_sede_is_indistinguishable_from_missing_group(self, full, db_session):
+        """A foreign group must return the canonical existence-safe 404."""
         c, h, s = full["c"], full["h"], full["s"]
         other_sede = models.Sede(id=uuid.uuid4(), nombre="Other", ciudad="Other", es_activa=True)
         db_session.add(other_sede)
@@ -104,7 +104,11 @@ class TestReportsWithData:
         db_session.add(g)
         db_session.commit()
         resp = c.get(f"/api/evangelism/reports/group/{g.id}/attendance-pdf", headers=h)
-        assert resp.status_code == 403
+        assert resp.status_code == 404
+        missing = c.get(f"/api/evangelism/reports/group/{uuid.uuid4()}/attendance-pdf", headers=h)
+        assert missing.status_code == 404
+        assert resp.json() == missing.json()
+        assert "Other Group" not in resp.text
 
     def test_summary_no_grupos(self, full, db_session):
         """Strategy with no linked grupos returns empty list."""
