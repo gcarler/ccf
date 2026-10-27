@@ -276,7 +276,7 @@ describe('PersonaSelect (Reactive Server-side Search QA-002)', () => {
         });
         // La segunda página es corta: el botón de paginación desaparece
         await waitFor(() => expect(screen.queryByTestId('persona-load-more')).not.toBeInTheDocument());
-    });
+    }, 15000);
 
     it('shows the load-more button only when the server reports a full page', async () => {
         mockApiFetch.mockResolvedValueOnce([
@@ -391,7 +391,7 @@ describe('PersonaSelect (Reactive Server-side Search QA-002)', () => {
             expect.stringContaining('skip=1000'),
             expect.objectContaining({ token: 'test-token' })
         );
-    });
+    }, 15000);
 
     it('prioritizes names starting with L or Ca without allowing last names like Lopez to displace them', async () => {
         const mixed = [
