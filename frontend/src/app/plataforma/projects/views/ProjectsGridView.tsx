@@ -41,7 +41,7 @@ export default function ProjectsGridView({ projects, onUpdate, onDelete }: Proje
                         <ShieldCheck size={14} className="text-[hsl(var(--primary))]" />
                         Capacidad Portafolio: {projects.length} proyecto(s)
                     </span>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-bold border border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-bold border border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success-text))]">
                         <CheckCircle2 size={11} />
                         En Ruta: {gridMetrics.onTrackCount}
                     </span>
@@ -49,7 +49,7 @@ export default function ProjectsGridView({ projects, onUpdate, onDelete }: Proje
                         className={clsx(
                             'inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-bold border',
                             gridMetrics.atRiskCount > 0
-                                ? 'border-[hsl(var(--warning)/0.35)] bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning))]'
+                                ? 'border-[hsl(var(--warning)/0.35)] bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning-text))]'
                                 : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))]'
                         )}
                     >
@@ -69,7 +69,7 @@ export default function ProjectsGridView({ projects, onUpdate, onDelete }: Proje
                     className={clsx(
                         'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-2xs font-bold transition-all border',
                         onlyAttentionRequired
-                            ? 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.4)]'
+                            ? 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning-text))] border-[hsl(var(--warning)/0.4)]'
                             : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))] hover:text-[hsl(var(--foreground))]'
                     )}
                 >

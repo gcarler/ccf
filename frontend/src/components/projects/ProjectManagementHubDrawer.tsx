@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useId } from "react";
 import { Maximize2, Minimize2, X, type LucideIcon } from "lucide-react";
 import clsx from "clsx";
 import { RightPanel } from "@/components/ui/RightPanel";
@@ -12,6 +12,7 @@ import { RightPanel } from "@/components/ui/RightPanel";
 export type ProjectHubModuleKey =
   | 'components'
   | 'wbs'
+  | 'pmo'
   | 'labels'
   | 'kpis'
   | 'progress'
@@ -52,6 +53,17 @@ interface ProjectManagementHubDrawerProps {
   /** Título del hub sobre el panel. */
   title?: string;
   /**
+   * Modo incrustado: cuando true, el RightPanel no se fija a la ventana
+   * (se usa cuando el hub se monta dentro de otro contenedor de herramientas).
+   */
+  embedded?: boolean;
+  /**
+   * Desplazamiento lateral (px) para coexistir con paneles adyacentes: el hub
+   * NO es modal (sin backdrop ni focus-trap), así que se retira del borde
+   * derecho el ancho del sidebar de contexto del proyecto para no taparlo.
+   */
+  offsetRight?: number;
+  /**
    * Renderers por módulo. Solo se invoca el del módulo activo, de modo que
    * nunca coexisten múltiples panels de módulo superpuestos.
    */
@@ -81,9 +93,12 @@ export function ProjectManagementHubDrawer({
   onCloseModule,
   onCloseHub,
   title = 'Centro de gestión del proyecto',
+  embedded,
+  offsetRight,
   moduleRenderers,
 }: ProjectManagementHubDrawerProps) {
   const [isMaximized, setIsMaximized] = useState(false);
+  const tabId = useId();
 
   const openMeta = useMemo(
     () =>
@@ -98,6 +113,9 @@ export function ProjectManagementHubDrawer({
 
   return (
     <RightPanel
+      embedded={embedded}
+      hasBackdrop={false}
+      offsetRight={offsetRight}
       open={isOpen}
       onClose={onCloseHub}
       title={title}
@@ -132,17 +150,29 @@ export function ProjectManagementHubDrawer({
           {/* Tira de pestañas abiertas + controles del panel */}
           <div className="flex min-h-10 shrink-0 items-center gap-1 overflow-x-auto border-b border-[hsl(var(--border))] px-3 py-1.5">
             <div
-              role="tablist"
+              role="group"
               aria-label="Módulos de gestión abiertos"
               className="flex min-w-0 flex-1 items-center gap-1"
             >
+              <div
+                role="tablist"
+                aria-label="Herramientas abiertas"
+                aria-owns={openMeta.map(({ key }) => `${tabId}-${key}`).join(' ')}
+                className="sr-only"
+              />
               {openMeta.map(({ key, label, icon }) => {
                 const TabIcon = icon;
                 const isActive = key === activeModule;
                 return (
                   <div
                     key={key}
+                    role="presentation"
+                    className="group flex shrink-0 items-center gap-1"
+                  >
+                  <button
+                    type="button"
                     role="tab"
+                    id={`${tabId}-${key}`}
                     aria-selected={isActive}
                     tabIndex={0}
                     onClick={() => onActivateModule(key)}
@@ -161,6 +191,7 @@ export function ProjectManagementHubDrawer({
                   >
                     <TabIcon size={13} aria-hidden="true" className="shrink-0" />
                     <span className="max-w-[10rem] truncate">{label}</span>
+                  </button>
                     <button
                       type="button"
                       aria-label={`Cerrar ${label}`}

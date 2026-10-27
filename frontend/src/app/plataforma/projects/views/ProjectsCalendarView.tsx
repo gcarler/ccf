@@ -49,8 +49,8 @@ export default function ProjectsCalendarView({ projects, onEventClick }: Project
                     className={clsx(
                         'rounded-full border px-2 py-0.5',
                         noBaselineCount > 0
-                            ? 'bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.4)]'
-                            : 'bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))] border-[hsl(var(--success)/0.4)]'
+                            ? 'bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning-text))] border-[hsl(var(--warning)/0.4)]'
+                            : 'bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.4)]'
                     )}
                 >
                     Sin Linea Base: {noBaselineCount}
@@ -59,7 +59,7 @@ export default function ProjectsCalendarView({ projects, onEventClick }: Project
                     className={clsx(
                         'rounded-full border px-2 py-0.5',
                         onHoldCount > 0
-                            ? 'bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.4)]'
+                            ? 'bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning-text))] border-[hsl(var(--warning)/0.4)]'
                             : 'bg-[hsl(var(--border))] text-[hsl(var(--text-secondary))]'
                     )}
                 >

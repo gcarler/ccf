@@ -44,6 +44,8 @@ interface ProjectsShellProps {
     onSearch?: (term: string) => void;
     searchValue?: string;
     rightActions?: ReactNode;
+    /** Muestra/oculta el badge de dominio PMI del head (default true para no romper consumidores existentes). */
+    showPmiDomain?: boolean;
     children: ReactNode;
 }
 
@@ -55,6 +57,7 @@ export default function ProjectsShell({
     onSearch,
     searchValue,
     rightActions,
+    showPmiDomain = true,
     children
 }: ProjectsShellProps) {
     // Selector de tema claro/oscuro/apariencia visible junto al perfil (TKT-...-01)
@@ -70,13 +73,15 @@ export default function ProjectsShell({
                 searchValue={searchValue}
                 rightActions={
                     <div className="flex items-center gap-1.5 shrink-0">
-                        <span
-                            data-testid="projects-shell-pmi-domain"
-                            title="Dominio de Gobernanza PMI activo"
-                            className="hidden md:inline-block max-w-45 truncate rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-2 py-0.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]"
-                        >
-                            {getPmiDomainLabel(viewType)}
-                        </span>
+                        {showPmiDomain !== false && (
+                            <span
+                                data-testid="projects-shell-pmi-domain"
+                                title="Dominio de Gobernanza PMI activo"
+                                className="hidden md:inline-block max-w-45 truncate rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-2 py-0.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]"
+                            >
+                                {getPmiDomainLabel(viewType)}
+                            </span>
+                        )}
                         {rightActions}
                         <ThemeToggle variant="pill" onOpenAppearance={() => setShowAppearance(true)} />
                         <div className="w-px h-4 bg-[hsl(var(--border))] mx-0.5 shrink-0" />

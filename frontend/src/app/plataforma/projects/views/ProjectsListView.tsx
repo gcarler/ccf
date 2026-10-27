@@ -45,8 +45,8 @@ export default function ProjectsListView({ projects, onUpdate }: ProjectsListVie
                     className={clsx(
                         'flex items-center gap-1 px-2 py-0.5 rounded-full border',
                         noSponsorCount > 0
-                            ? 'bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.4)]'
-                            : 'bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))] border-[hsl(var(--success)/0.4)]'
+                            ? 'bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning-text))] border-[hsl(var(--warning)/0.4)]'
+                            : 'bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.4)]'
                     )}
                 >
                     <UserCog size={10} aria-hidden="true" /> Sin Sponsor/PM: {noSponsorCount}
@@ -108,8 +108,8 @@ export default function ProjectsListView({ projects, onUpdate }: ProjectsListVie
                             className={clsx(
                                 'rounded-full border px-2 py-0.5',
                                 project.owner_id
-                                    ? 'bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))] border-[hsl(var(--success)/0.4)]'
-                                    : 'bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.4)]'
+                                    ? 'bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.4)]'
+                                    : 'bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning-text))] border-[hsl(var(--warning)/0.4)]'
                             )}
                         >
                             {project.owner_id ? 'Gobernanza Activa' : 'Sin Sponsor PMI'}

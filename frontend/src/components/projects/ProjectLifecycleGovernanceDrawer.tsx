@@ -245,7 +245,9 @@ export function ProjectLifecycleGovernanceDrawer({
       onClose={onClose}
       title="Gobernanza PMI del proyecto"
       subtitle="Acta de Constitución · Interesados · Cierre formal"
-      width="w-full sm:max-w-3xl"
+      width="w-full sm:max-w-3xl max-w-none"
+      resizeStorageKey="workspace:project_tools_width"
+      resizeDefaultWidth={768}
       contentClassName="bg-[hsl(var(--surface-1))]"
     >
       <div className="flex h-full min-h-0 flex-col">

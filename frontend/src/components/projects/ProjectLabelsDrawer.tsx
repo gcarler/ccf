@@ -720,6 +720,8 @@ export function ProjectLabelsDrawer({
       title="Etiquetas del proyecto"
       subtitle="Gestiona, renombra y elimina etiquetas de actividades"
       width="w-full sm:w-[480px] max-w-none"
+      resizeStorageKey="workspace:project_tools_width"
+      resizeDefaultWidth={480}
     >
       {drawerContent}
     </RightPanel>

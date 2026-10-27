@@ -69,6 +69,12 @@ test('project tools share one resizable drawer and retain width across tools and
           children: [],
         },
       };
+    else if (path.endsWith('/pmo-portfolio-matrix'))
+      body = {
+        portfolio_totals: { total_projects: 0, total_bac: 0, total_ev: 0, total_ac: 0, portfolio_cpi: null, portfolio_spi: null, portfolio_csi: null },
+        quadrants_distribution: { q1_optimal: 0, q2_cost_acceleration: 0, q3_underutilized_capacity: 0, q4_critical_emergency: 0 },
+        projects_matrix: [],
+      };
     else if (path.endsWith('/analytics'))
       body = {
         risk_level: 'bajo',
@@ -129,8 +135,14 @@ test('project tools share one resizable drawer and retain width across tools and
   await expect(
     context.getByRole('button', { name: 'Componentes EDT', exact: true })
   ).toBeVisible();
+  await expect(
+    context.getByRole('button', { name: 'Desglose de Paquetes WBS', exact: true })
+  ).toBeVisible();
+  await expect(
+    context.getByRole('button', { name: 'Matriz PMO', exact: true })
+  ).toBeVisible();
   await context
-    .getByRole('button', { name: 'EDT / WBS y Diccionario', exact: true })
+    .getByRole('button', { name: 'Desglose de Paquetes WBS', exact: true })
     .click();
   const hub = page.getByRole('dialog', {
     name: 'Centro de gestión del proyecto',
@@ -152,19 +164,35 @@ test('project tools share one resizable drawer and retain width across tools and
   await page.mouse.down();
   await page.mouse.move(handleBox.x - 96, handleBox.y + 100, { steps: 6 });
   await page.mouse.up();
-  await expect(hub).toHaveCSS('width', '1036px');
+  await expect.poll(async () => Math.round((await hub.boundingBox())?.width ?? 0)).toBe(988);
+  const persistedToolWidth = Math.round((await hub.boundingBox())!.width);
+  const contextBox = (await context.boundingBox())!;
+  const hubBox = (await hub.boundingBox())!;
+  expect(hubBox.x).toBeGreaterThanOrEqual(48);
+  expect(hubBox.x + hubBox.width).toBeLessThanOrEqual(contextBox.x + 1);
+  await expect(contextHandle).toHaveAttribute('aria-valuenow', '404');
+  await contextHandle.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(contextHandle).toHaveAttribute('aria-valuenow', '380');
+  await expect(hub).toHaveCSS('width', `${persistedToolWidth}px`);
+  await expect(hub).not.toHaveAttribute('aria-modal', 'true');
+  await context.getByRole('tab', { name: 'Detalles', exact: true }).click();
+  await expect(context.getByRole('tabpanel', { name: 'Detalles' })).toBeVisible();
+  await expect(hub).toBeVisible();
+  await context.getByRole('tab', { name: 'Herramientas', exact: true }).click();
+  await context.getByRole('button', { name: 'Matriz PMO', exact: true }).click();
+  await expect(hub.getByTestId('pmo-portfolio-drawer')).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(1);
   await hub
     .getByRole('button', { name: 'Pantalla completa', exact: true })
     .click();
   await hub
     .getByRole('button', { name: 'Salir de pantalla completa', exact: true })
     .click();
-  await expect(hub).toHaveCSS('width', '1036px');
-  await hub
-    .getByRole('combobox', { name: 'Abrir herramienta' })
-    .selectOption('components');
+  await expect(hub).toHaveCSS('width', `${persistedToolWidth}px`);
+  await context.getByRole('button', { name: 'Componentes EDT', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(1);
-  await expect(hub).toHaveCSS('width', '1036px');
+  await expect(hub).toHaveCSS('width', `${persistedToolWidth}px`);
   await hub.getByRole('tab', { name: /EDT \/ WBS y Diccionario/ }).click();
   await expect(hub.getByTestId('project-wbs-drawer')).toBeVisible();
   await expect(
@@ -184,24 +212,24 @@ test('project tools share one resizable drawer and retain width across tools and
     await expect(page.getByRole('dialog')).toHaveCount(1);
     await hub.getByRole('separator').focus();
     await page.keyboard.press('ArrowRight');
-    await expect(hub).toHaveCSS('width', '1012px');
+    await expect(hub).toHaveCSS('width', `${persistedToolWidth - 24}px`);
     await page.keyboard.press('ArrowLeft');
-    await expect(hub).toHaveCSS('width', '1036px');
+    await expect(hub).toHaveCSS('width', `${persistedToolWidth}px`);
   }
   await hub.getByRole('tab', { name: /EDT \/ WBS y Diccionario/ }).click();
   await expect(hub.getByRole('tab', { name: /EDT \/ WBS y Diccionario/ })).toHaveAttribute('aria-selected', 'true');
   await page.screenshot({ path: '/tmp/ccf-project-tools-desktop.png' });
   await hub.getByRole('button', { name: 'Cerrar panel', exact: true }).click();
   await context
-    .getByRole('button', { name: 'EDT / WBS y Diccionario', exact: true })
+    .getByRole('button', { name: 'Desglose de Paquetes WBS', exact: true })
     .click();
-  await expect(hub).toHaveCSS('width', '1036px');
+  await expect(hub).toHaveCSS('width', `${persistedToolWidth}px`);
   await page.reload();
   await context.getByRole('tab', { name: 'Herramientas' }).click();
   await context
-    .getByRole('button', { name: 'EDT / WBS y Diccionario', exact: true })
+    .getByRole('button', { name: 'Desglose de Paquetes WBS', exact: true })
     .click();
-  await expect(hub).toHaveCSS('width', '1036px');
+  await expect(hub).toHaveCSS('width', `${persistedToolWidth}px`);
   await hub.getByRole('separator').focus();
   await page.keyboard.press('Home');
   await expect(hub).toHaveCSS('width', '300px');

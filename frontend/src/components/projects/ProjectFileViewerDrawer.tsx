@@ -631,7 +631,9 @@ export function ProjectFileViewerDrawer({
         open={isOpen}
         onClose={onClose}
         title="Visor Universal Embebido"
-        width={880}
+        width="w-full sm:w-[92vw] lg:w-[84vw] xl:w-[76vw] max-w-none"
+        resizeStorageKey="workspace:project_tools_width"
+        resizeDefaultWidth={960}
       >
         <div
           role="alert"
@@ -682,7 +684,9 @@ export function ProjectFileViewerDrawer({
       open={isOpen}
       onClose={onClose}
       title="Visor Universal Embebido"
-      width={880}
+      width="w-full sm:w-[92vw] lg:w-[84vw] xl:w-[76vw] max-w-none"
+      resizeStorageKey="workspace:project_tools_width"
+      resizeDefaultWidth={960}
     >
       <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))]">
         {/* Cabecera del Visor */}
