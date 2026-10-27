@@ -25,7 +25,7 @@ from fastapi import (
 )
 from fastapi.responses import JSONResponse
 from jose import jwt as _jwt
-from sqlalchemy import Integer, and_, cast, func, or_
+from sqlalchemy import Integer, and_, cast, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
@@ -58,18 +58,22 @@ from backend.crud.crm_.personas import (
 )
 from backend.crud.projects import (
     _prepare_kpi_response,
-    create_milestone as _projects_create_milestone,
-    delete_milestone as _projects_delete_milestone,
     evaluate_task_mutation_automations,
     get_user_persona_id,
     sync_supply_expense,
     trigger_project_automations_safe,
 )
+from backend.crud.projects import (
+    create_milestone as _projects_create_milestone,
+)
+from backend.crud.projects import (
+    delete_milestone as _projects_delete_milestone,
+)
 from backend.mesh_websockets import manager
+from backend.services import project_lifecycle_pmi_service
 from backend.services.comment_notifications import notify_mention
 from backend.services.mention_parser import resolve_mentions
 from backend.services.project_evm_service import build_project_execution_matrix
-from backend.services import project_lifecycle_pmi_service
 from backend.services.task_notifications import notify_task_assigned
 
 settings = get_settings()
@@ -4445,10 +4449,8 @@ def delete_project(
         models.ProjectKPI.project_id == project.id,
         models.ProjectKPI.deleted_at.is_(None),
     ).update({"deleted_at": now_ts}, synchronize_session=False)
-    indicator_ids = (
-        db.query(models.ProjectIndicator.id)
-        .filter(models.ProjectIndicator.project_id == project.id)
-        .subquery()
+    indicator_ids = select(models.ProjectIndicator.id).where(
+        models.ProjectIndicator.project_id == project.id
     )
     db.query(models.ProjectIndicatorRecord).filter(
         models.ProjectIndicatorRecord.indicator_id.in_(indicator_ids),

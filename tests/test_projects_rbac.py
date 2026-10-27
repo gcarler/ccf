@@ -187,6 +187,15 @@ _READ_ENDPOINTS = [
     ("GET", f"/api/projects/{FAKE}/tasks-rollup"),
     ("GET", f"/api/projects/{FAKE}/tasks/{FAKE_TASK}/dimensions"),
     ("GET", f"/api/projects/{FAKE}/wbs-tree"),
+    # PMI Lifecycle / Calidad / Portafolio PMO
+    ("GET", "/api/projects/pmo-portfolio-matrix"),
+    ("GET", f"/api/projects/{FAKE}/charter"),
+    ("GET", f"/api/projects/{FAKE}/stakeholders"),
+    ("GET", f"/api/projects/{FAKE}/closure"),
+    ("GET", f"/api/projects/{FAKE}/change-requests"),
+    ("GET", f"/api/projects/{FAKE}/quality-summary"),
+    ("GET", f"/api/projects/{FAKE}/tasks/{FAKE_TASK}/dod-acceptance"),
+    ("GET", f"/api/projects/{FAKE}/tasks/{FAKE_TASK}/dod-status"),
 ]
 
 # Endpoints where Miembro should receive 403 (module-level access denied)
@@ -256,6 +265,10 @@ _READ_ENDPOINTS_MIEMBRO_404 = [
     ("GET", f"/api/projects/{FAKE}/tasks-rollup"),
     ("GET", f"/api/projects/{FAKE}/tasks/{FAKE_TASK}/dimensions"),
     ("GET", f"/api/projects/{FAKE}/wbs-tree"),
+    ("GET", f"/api/projects/{FAKE}/change-requests"),
+    ("GET", f"/api/projects/{FAKE}/quality-summary"),
+    ("GET", f"/api/projects/{FAKE}/tasks/{FAKE_TASK}/dod-acceptance"),
+    ("GET", f"/api/projects/{FAKE}/tasks/{FAKE_TASK}/dod-status"),
 ]
 
 # Endpoints scoped to a project ID but still protected by
@@ -268,6 +281,10 @@ _READ_ENDPOINTS_MIEMBRO_403_PROJECT_SCOPED = [
     ("GET", f"/api/projects/{FAKE}/export/summary-pdf"),
     ("GET", f"/api/projects/{FAKE}/export/tasks-csv"),
     ("GET", f"/api/projects/{FAKE}/export/expenses-csv"),
+    ("GET", "/api/projects/pmo-portfolio-matrix"),
+    ("GET", f"/api/projects/{FAKE}/charter"),
+    ("GET", f"/api/projects/{FAKE}/stakeholders"),
+    ("GET", f"/api/projects/{FAKE}/closure"),
 ]
 
 # (method, path, json_payload or None)
