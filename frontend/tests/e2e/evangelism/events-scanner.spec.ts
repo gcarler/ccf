@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import type { PostEventAnalyticsData } from '../../../src/app/plataforma/evangelism/types';
 import { installMockPlatformSession } from '../helpers/mockPlatformSession';
 
 type RoleDefinition = {
@@ -115,6 +116,22 @@ const ANALYTICS_DATA = {
   ],
 };
 
+const POST_EVENT_ANALYTICS: PostEventAnalyticsData = {
+  event_id: 'event-1', event_name: 'Noche de Esperanza', event_date: '2026-07-17', capacity_max: null,
+  attendance_metrics: {
+    total_registered: 0, total_confirmed: 0, total_attended: 0, total_absent: 0,
+    total_walk_ins: 0, total_cancelled: 0, attendance_rate: 0, no_show_rate: 0, capacity_utilization: null,
+  },
+  conversion_funnel: [],
+  visitor_retention: {
+    new_visitors_count: 0, retained_30d_count: 0, retained_30d_rate: 0,
+    retained_60d_count: 0, retained_60d_rate: 0, retained_90d_count: 0,
+    retained_90d_rate: 0, health_status: 'HEALTHY',
+  },
+  crm_breakdown: { total_cases_created: 0, pending_followup_count: 0, cases_by_stage: [] },
+  attendees_funnel_summary: [],
+};
+
 const TODAY = new Date().toISOString().split('T')[0];
 
 async function installEvangelismEventsMocks(
@@ -147,6 +164,7 @@ async function installEvangelismEventsMocks(
       attendance_rate: 100,
     },
   };
+  let lastCheckinPayload: { qr_token: string } | null = null;
   let nextEventId = 10;
   let lastAssignmentsPayload: { session_date: string; assignments: SessionAssignment[] } | null = null;
 
@@ -347,6 +365,11 @@ async function installEvangelismEventsMocks(
       return;
     }
 
+    if (rawPath.endsWith('/post-event-analytics')) {
+      await route.fulfill({ status: 200, json: POST_EVENT_ANALYTICS });
+      return;
+    }
+
     if (rawPath.endsWith('/analytics')) {
       await route.fulfill({
         status: 200,
@@ -375,6 +398,25 @@ async function installEvangelismEventsMocks(
         contentType: 'application/json',
         body: JSON.stringify({ ok: true }),
       });
+      return;
+    }
+
+    if (rawPath.includes('/sessions/') && rawPath.endsWith('/occupancy')) {
+      await route.fulfill({ status: 200, json: {
+        checked_in_count: 0, capacity_max: 100, percentage: 0,
+      } });
+      return;
+    }
+    if (rawPath.includes('/sessions/') && rawPath.endsWith('/checkin')) {
+      lastCheckinPayload = route.request().postDataJSON() as { qr_token: string };
+      if (lastCheckinPayload.qr_token !== 'CCF-PER-VALID-ABIGAIL') {
+        await route.fulfill({ status: 400, json: { detail: 'Token inválido' } });
+      } else {
+        await route.fulfill({ status: 200, json: {
+          status: 'authorized', message: 'Ingreso registrado', persona_id: 'persona-abigail',
+          persona_name: 'Abigail Monsalve', occupancy: { count: 1, capacity_max: 100, percentage: 1 },
+        } });
+      }
       return;
     }
 
@@ -426,6 +468,7 @@ async function installEvangelismEventsMocks(
 
   return {
     getLastAssignmentsPayload: () => lastAssignmentsPayload,
+    getLastCheckinPayload: () => lastCheckinPayload,
   };
 }
 
@@ -475,6 +518,7 @@ test.describe('Evangelism events and scanner deep smoke', () => {
     await expect(page.locator('body')).toContainText(/Evento con seguimiento/i);
 
     await page.getByRole('button', { name: /Analítica/i }).click();
+    await page.getByRole('button', { name: /Histórico Mensual/i }).click();
     await expect(page.locator('body')).toContainText(/Promedio Histórico/i);
     await expect(page.locator('body')).toContainText(/42/i);
 
@@ -509,25 +553,27 @@ test.describe('Evangelism events and scanner deep smoke', () => {
     await page.goto('/plataforma/evangelism/events/event-1', { waitUntil: 'load' });
     await expect(page.getByRole('button', { name: /Configurar sesión/i })).toHaveCount(0);
     await page.getByRole('button', { name: /Analítica/i }).click();
+    await page.getByRole('button', { name: /Histórico Mensual/i }).click();
     await expect(page.locator('body')).toContainText(/Promedio Histórico/i);
   });
 
   test('validates scanner tokens from the standalone route and recovers after errors', async ({ page }) => {
-    await installEvangelismEventsMocks(page);
-
+    const mocks = await installEvangelismEventsMocks(page);
     await page.goto('/plataforma/evangelism/scanner', { waitUntil: 'load' });
-    await page.waitForLoadState('domcontentloaded');
-
-    await expect(page.locator('body')).toContainText(/Escáner de Asistencia/i);
-    await page.getByPlaceholder(/Ingresar Token Manualmente/i).fill('CCF-PER-INVALIDO');
-    await page.getByRole('button', { name: /Validar Token/i }).click();
-    await expect(page.locator('body')).toContainText(/Buscando Código/i);
-
-    await page.getByPlaceholder(/Ingresar Token Manualmente/i).fill('CCF-PER-VALID-ABIGAIL');
-    await page.getByRole('button', { name: /Validar Token/i }).click();
+    await expect(page.locator('body')).toContainText(/Gatekeeper: Scanner y Control de Aforo/i);
+    await expect(page.locator('body')).toContainText(/Noche de Esperanza/i);
+    const tokenInput = page.getByPlaceholder('Escaneando... (esperando lectura de código)');
+    await tokenInput.fill('CCF-PER-INVALIDO');
+    await page.getByRole('button', { name: 'Validar Ingreso' }).click();
+    await expect(page.getByRole('heading', { name: 'CÓDIGO NO VÁLIDO' })).toBeVisible();
+    await expect.poll(() => mocks.getLastCheckinPayload()).toEqual({ qr_token: 'CCF-PER-INVALIDO' });
+    await page.getByRole('button', { name: /Continuar \/ Siguiente/i }).click();
+    await tokenInput.fill('CCF-PER-VALID-ABIGAIL');
+    await page.getByRole('button', { name: 'Validar Ingreso' }).click();
+    await expect(page.getByRole('heading', { name: 'ACCESO AUTORIZADO' })).toBeVisible();
     await expect(page.locator('body')).toContainText(/Abigail Monsalve/i);
-    await expect(page.locator('body')).toContainText(/VALIDADO/i);
-    await page.getByRole('button', { name: /Escanear Siguiente/i }).click();
-    await expect(page.locator('body')).toContainText(/Buscando Código/i);
+    await expect.poll(() => mocks.getLastCheckinPayload()).toEqual({ qr_token: 'CCF-PER-VALID-ABIGAIL' });
+    await page.getByRole('button', { name: /Continuar \/ Siguiente/i }).click();
+    await expect(tokenInput).toBeFocused();
   });
 });

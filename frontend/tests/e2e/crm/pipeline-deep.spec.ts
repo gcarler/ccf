@@ -73,7 +73,7 @@ async function installPipelineMocks(page: Page) {
     localStorage.setItem('crm_pipeline_view', 'table');
   });
 
-  await page.route('**/api/crm/casos', async (route) => {
+  await page.route(/\/api\/crm\/casos(?:\?.*)?$/, async (route) => {
     if (route.request().method() === 'POST') {
       createPayload = route.request().postDataJSON() as Record<string, unknown>;
       await route.fulfill({
@@ -90,7 +90,7 @@ async function installPipelineMocks(page: Page) {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify(CASES),
+      body: JSON.stringify({ cases: CASES, total: CASES.length, page: 1, page_size: 100, total_pages: 1 }),
     });
   });
 
