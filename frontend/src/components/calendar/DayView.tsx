@@ -32,7 +32,7 @@ export default function DayView({
   );
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div role="region" aria-label="Vista diaria" className="flex-1 flex flex-col overflow-hidden">
       <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-thin">
         <div className="flex" style={{ height: HOUR_HEIGHT * 24 }}>
           <div className="w-20 shrink-0 relative">

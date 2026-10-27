@@ -42,6 +42,7 @@ const MIXED_EVENTS: CalendarItem[] = [
 ];
 
 async function installFilterMocks(page: Page) {
+  await page.clock.setFixedTime(new Date('2026-07-28T08:00:00.000Z'));
   await installMockPlatformSession(page, {
     role: 'admin',
     permissions: { 'spiritual_life:read': 'allow', 'spiritual_life:edit': 'allow' },
@@ -62,8 +63,8 @@ test.describe('Event type filters @agenda', () => {
     await page.goto('/plataforma/calendar');
 
     await expect(page.locator('text=Filtrar por tipo')).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('text=Agenda')).toBeVisible();
-    await expect(page.locator('text=Evento')).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Agenda/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Evento \d+$/ })).toBeVisible();
   });
 
   test('displays event counts per type', async ({ page }) => {

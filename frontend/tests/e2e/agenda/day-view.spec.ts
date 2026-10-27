@@ -34,6 +34,7 @@ const DAY_EVENTS: CalendarItem[] = [
 ];
 
 async function installMocks(page: Page) {
+  await page.clock.setFixedTime(new Date('2026-07-28T08:00:00.000Z'));
   await installMockPlatformSession(page, {
     role: 'admin',
     permissions: { 'spiritual_life:read': 'allow', 'spiritual_life:edit': 'allow' },
@@ -56,8 +57,8 @@ test.describe('Day view @agenda', () => {
     await page.click('button:has-text("Semana")');
     await page.click('button:has-text("Día")');
 
-    await expect(page.locator('text=Reunión matutina')).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('text=Sala B')).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Vista diaria', exact: true }).getByText('Reunión matutina', { exact: true })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('region', { name: 'Vista diaria', exact: true }).getByText('Sala B', { exact: true })).toBeVisible();
   });
 
   test('shows multiple events in day timeline', async ({ page }) => {
@@ -67,8 +68,8 @@ test.describe('Day view @agenda', () => {
     await page.click('button:has-text("Semana")');
     await page.click('button:has-text("Día")');
 
-    await expect(page.locator('text=Reunión matutina')).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('text=Taller de oración')).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Vista diaria', exact: true }).getByText('Reunión matutina', { exact: true })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('region', { name: 'Vista diaria', exact: true }).getByText('Taller de oración', { exact: true })).toBeVisible();
   });
 
   test('day view shows event locations', async ({ page }) => {
@@ -78,6 +79,6 @@ test.describe('Day view @agenda', () => {
     await page.click('button:has-text("Semana")');
     await page.click('button:has-text("Día")');
 
-    await expect(page.locator('text=Templo')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('region', { name: 'Vista diaria', exact: true }).getByText('Templo', { exact: true })).toBeVisible({ timeout: 10000 });
   });
 });

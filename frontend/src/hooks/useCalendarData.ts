@@ -23,27 +23,22 @@ export function useCalendarData({ token, calendarView }: UseCalendarDataOptions)
 
   const fetchCalendar = useCallback(async () => {
     if (!token) return;
-    try {
-      const data = await apiFetch<Array<Record<string, unknown>>>(
-        `/system/calendar?view=${calendarView}`,
-        { token },
-      ).catch(() => []);
-      if (Array.isArray(data)) {
-        setEvents(data.map((e: Record<string, unknown>) => ({
-          id: e.id as string,
-          title: e.title as string,
-          start: new Date(e.start as string),
-          end: e.end ? new Date(e.end as string) : undefined,
-          color: getEventTypeColor(e.type as CalEventType),
-          type: e.type as CalEventType,
-          allDay: (e.allDay as boolean) ?? false,
-          href: e.href as string | undefined,
-          location: e.location as string | undefined,
-        })));
-      }
-    } catch {
-      // Silently handle fetch errors
-    }
+    const data = await apiFetch<Array<Record<string, unknown>>>(
+      `/system/calendar?view=${calendarView}`,
+      { token },
+    );
+    if (!Array.isArray(data)) throw new Error('Invalid calendar response');
+    setEvents(data.map((e: Record<string, unknown>) => ({
+      id: e.id as string,
+      title: e.title as string,
+      start: new Date(e.start as string),
+      end: e.end ? new Date(e.end as string) : undefined,
+      color: getEventTypeColor(e.type as CalEventType),
+      type: e.type as CalEventType,
+      allDay: (e.allDay as boolean) ?? false,
+      href: e.href as string | undefined,
+      location: e.location as string | undefined,
+    })));
   }, [token, calendarView]);
 
   const refresh = useCallback(async () => {
