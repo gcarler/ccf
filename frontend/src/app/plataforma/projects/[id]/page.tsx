@@ -903,7 +903,13 @@ export default function ProjectDetailPage() {
               value=""
               onChange={(event) => {
                 const key = event.currentTarget.value as ProjectHubModuleKey | '';
-                if (key) openHubModule(key);
+                if (!key) return;
+                // Conmutación directa vía la acción canónica de la herramienta:
+                // cubre módulos del hub (openHubModule) y acciones propias
+                // (Pizarra, Fases, Editar proyecto) con una sola entrada.
+                const action = projectActions.find((item) => item.key === key);
+                if (action) void action.onSelect();
+                else openHubModule(key);
               }}
               className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] transition-colors focus:outline-2 focus:outline-[hsl(var(--primary))]"
             >
@@ -914,22 +920,6 @@ export default function ProjectDetailPage() {
                 </option>
               ))}
             </select>
-            <button
-              type="button"
-              data-testid="project-detail-quick-evm"
-              onClick={() => openHubModule('evm')}
-              className="rounded-md border border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.08)] px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.16)] transition-colors"
-            >
-              EVM / CPI×SPI
-            </button>
-            <button
-              type="button"
-              data-testid="project-detail-quick-governance"
-              onClick={() => openHubModule('governance')}
-              className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] transition-colors"
-            >
-              Gobernanza PMI
-            </button>
           </div>
         </div>
 
