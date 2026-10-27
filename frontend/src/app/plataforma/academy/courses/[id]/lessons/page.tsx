@@ -143,7 +143,7 @@ export default function LessonsPage() {
                 setViewType={setViewType}
                 availableViews={['table', 'list']}
                 leftActions={
-                    <button onClick={() => router.back()} className="p-2.5 hover:bg-[hsl(var(--surface-2))] rounded-md transition-all border border-transparent hover:border-[hsl(var(--border))]">
+                    <button type="button" aria-label="Volver" onClick={() => router.back()} className="p-2.5 hover:bg-[hsl(var(--surface-2))] rounded-md transition-all border border-transparent hover:border-[hsl(var(--border))]">
                         <ArrowLeft size={18} className="text-[hsl(var(--text-secondary))]" />
                     </button>
                 }
