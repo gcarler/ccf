@@ -66,7 +66,12 @@ class TestReportsEdgeCases:
         g = models.GrupoEvangelismo(id=uuid.uuid4(), nombre="Other", sede_id=other.id)
         db_session.add(g)
         db_session.commit()
-        assert (
-            full["c"].get(f"/api/evangelism/reports/group/{g.id}/attendance-excel", headers=full["h"]).status_code
-            == 403
+        response = full["c"].get(
+            f"/api/evangelism/reports/group/{g.id}/attendance-excel", headers=full["h"]
         )
+        missing = full["c"].get(
+            f"/api/evangelism/reports/group/{uuid.uuid4()}/attendance-excel", headers=full["h"]
+        )
+        assert response.status_code == missing.status_code == 404
+        assert response.json() == missing.json()
+        assert "Other" not in response.text

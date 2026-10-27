@@ -195,7 +195,12 @@ class EstrategiaEvangelismo(Base):
     is_public = Column(Boolean, default=False, index=True)
     status = Column(String(50), default="active")
     default_role_id = Column(
-        UUID(as_uuid=True), ForeignKey("estrategia_roles_personalizados.id", ondelete="SET NULL"), nullable=True
+        UUID(as_uuid=True),
+        ForeignKey(
+            "estrategia_roles_personalizados.id", ondelete="SET NULL",
+            name="estrategias_evangelismo_default_role_id_fkey", use_alter=True,
+        ),
+        nullable=True,
     )
 
     # Fechas
