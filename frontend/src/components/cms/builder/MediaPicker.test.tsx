@@ -17,6 +17,19 @@ describe("MediaPicker", () => {
     vi.clearAllMocks();
   });
 
+  it("mounts outside the editor stacking context so workspace chrome cannot cover media controls", async () => {
+    vi.mocked(apiFetch).mockResolvedValueOnce({ items: [], total: 0 });
+    const { container } = render(
+      <div style={{ transform: 'translateX(0)', isolation: 'isolate' }}>
+        <MediaPicker open token="token" onClose={vi.fn()} onSelect={vi.fn()} />
+      </div>,
+    );
+    const layer = await screen.findByTestId('cms-media-picker-layer');
+    expect(layer.parentElement).toBe(document.body);
+    expect(container).not.toContainElement(layer);
+    expect(await screen.findByRole('dialog', { name: 'Biblioteca CMS' })).toBeInTheDocument();
+  });
+
   it("returns null when not open", () => {
     const { container } = render(
       <MediaPicker open={false} onClose={vi.fn()} onSelect={vi.fn()} />

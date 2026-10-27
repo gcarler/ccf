@@ -238,7 +238,7 @@ test.describe('CMS builder flow', () => {
     await page.getByRole('button', { name: 'Guardar' }).click();
 
     // The newly created page should appear in the list
-    await expect(page.getByText('Acerca de')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Acerca de', exact: true })).toBeVisible();
     // The slug should be auto-generated: "acerca-de"
     await expect(page.getByText('/acerca-de')).toBeVisible();
   });
@@ -252,8 +252,8 @@ test.describe('CMS builder flow', () => {
     await expect(archiveButton).toBeVisible();
     await archiveButton.click();
 
-    // Confirmation dialog should appear
-    await expect(page.getByText('¿Archivar página?')).toBeVisible();
+    // The archive confirmation drawer should appear
+    await expect(page.getByRole('dialog', { name: 'Archivar página', exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Landing Page', exact: true })).toBeVisible();
 
     // Cancel the action — page should still be visible
@@ -262,8 +262,8 @@ test.describe('CMS builder flow', () => {
 
     // Re-open dialog and confirm archive
     await archiveButton.click();
-    await expect(page.getByText('¿Archivar página?')).toBeVisible();
-    await page.getByRole('button', { name: 'Archivar', exact: true }).click();
+    await expect(page.getByRole('dialog', { name: 'Archivar página', exact: true })).toBeVisible();
+    await page.getByRole('dialog', { name: 'Archivar página', exact: true }).getByRole('button', { name: 'Archivar', exact: true }).click();
 
     // Page status should update to archived — wait for the badge to appear
     await expect(page.getByText('Archivado').first()).toBeVisible({ timeout: 5000 });
